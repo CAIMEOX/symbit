@@ -388,6 +388,13 @@ fn make_application(
     Some(expr) => expr
     None =>
       match callee {
+        @symcore.Expr::IdentityFunction =>
+          raise ParseError::UnsupportedConstruct(
+            span=span(0, 0),
+            "BadArgumentsError: Lambda(_x, _x) takes exactly 1 argument (" +
+            args.length().to_string() +
+            " given)",
+          )
         @symcore.Expr::Lambda(vars, _) =>
           match @symcore.lambda_arity(vars) {
             Some(expected) =>

@@ -469,6 +469,7 @@ test "ast parser compatibility entrypoint" {
   inspect(@symprint.to_string(ast_parse_expr("beta(x)")), content="beta(x, x)")
   inspect(@symprint.to_string(ast_parse_expr("Max()")), content="-oo")
   inspect(@symprint.to_string(ast_parse_expr("Min(x)")), content="x")
+  inspect(@symprint.to_string(ast_parse_expr("lambda x: x")), content="Lambda(_x, _x)")
   match ast_parse_expr("lambda x: x + 1") {
     @symcore.Expr::Lambda(@symcore.Expr::Symbol("x"), body) =>
       inspect(@symprint.to_string(body), content="x + 1")

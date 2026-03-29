@@ -5,22 +5,23 @@ fn variant_rank(expr : Expr) -> Int {
     Expr::Mul(_) => 1
     Expr::FunctionHead(_) => 2
     Expr::UndefinedFunction(_) => 3
-    Expr::Dummy(_, _) | Expr::Wild(_) => 4
-    Expr::NumberSymbol(_) => 5
-    Expr::Symbol(_) => 6
-    Expr::Apply(_, _) => 7
-    Expr::Derivative(_, _) => 8
-    Expr::Dict(_) => 9
-    Expr::Relational(_, _, _) => 10
-    Expr::Lambda(_, _) => 11
-    Expr::Subs(_, _, _) => 12
-    Expr::Tuple(_) => 13
-    Expr::Mod(_, _) => 14
-    Expr::Boolean(_) => 15
-    Expr::Add(_) => 16
-    Expr::Number(_) => 17
-    Expr::Float(_) => 18
-    Expr::ComplexFloat(_) => 19
+    Expr::IdentityFunction => 4
+    Expr::Dummy(_, _) | Expr::Wild(_) => 5
+    Expr::NumberSymbol(_) => 6
+    Expr::Symbol(_) => 7
+    Expr::Apply(_, _) => 8
+    Expr::Derivative(_, _) => 9
+    Expr::Dict(_) => 10
+    Expr::Relational(_, _, _) => 11
+    Expr::Lambda(_, _) => 12
+    Expr::Subs(_, _, _) => 13
+    Expr::Tuple(_) => 14
+    Expr::Mod(_, _) => 15
+    Expr::Boolean(_) => 16
+    Expr::Add(_) => 17
+    Expr::Number(_) => 18
+    Expr::Float(_) => 19
+    Expr::ComplexFloat(_) => 20
     Expr::Function(_, _) => abort("legacy function should be normalized")
   }
 }
@@ -257,6 +258,11 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::Wild(name_b) => name_a.compare(wild_display_name(name_b))
         Expr::FunctionHead(name_b) => name_a.compare(name_b)
         Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
+        _ => 0
+      }
+    Expr::IdentityFunction =>
+      match b {
+        Expr::IdentityFunction => 0
         _ => 0
       }
     Expr::Apply(head_a, args_a) =>
@@ -505,6 +511,7 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
     }
     Expr::NumberSymbol(kind) => hasher.combine_string(number_symbol_name(kind))
     Expr::Boolean(value) => hasher.combine_bool(value)
+    Expr::IdentityFunction => hasher.combine_string("IdentityFunction")
     Expr::Symbol(name) => hasher.combine_string(name)
     Expr::Dummy(name, id) => {
       hasher.combine_string(name)

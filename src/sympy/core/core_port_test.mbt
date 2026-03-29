@@ -949,17 +949,23 @@ test "symcore parity lambda identity and application stay canonical" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let z = @symcore.Expr::Symbol("z")
+  let id = @symcore.lambda_expr(x, x)
   inspect(
-    core_expr_sstr(@symcore.lambda_expr(x, x)),
+    core_expr_sstr(id),
     content="Lambda(_x, _x)",
   )
   inspect(
     core_expr_sstr(@symcore.lambda_expr(@symcore.Expr::Tuple([x]), x)),
     content="Lambda(_x, _x)",
   )
+  inspect(core_func_sstr(id), content="IdentityFunction")
+  inspect(core_args_sstr(id), content="()")
+  inspect(@symcore.has(id, x), content="false")
+  inspect(core_xreplace_sstr(id, x, y), content="Lambda(_x, _x)")
+  inspect(core_expr_sstr(@symcore.subst(id, { "x": y })), content="Lambda(_x, _x)")
   inspect(
     core_expr_sstr(
-      @symcore.apply(@symcore.lambda_expr(x, x), [y]).unwrap_or(@symcore.int(0)),
+      @symcore.apply(id, [y]).unwrap_or(@symcore.int(0)),
     ),
     content="y",
   )

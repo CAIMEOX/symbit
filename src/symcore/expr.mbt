@@ -5,6 +5,7 @@ pub(all) enum Expr {
   ComplexFloat(ComplexFloat)
   NumberSymbol(NumberSymbolKind)
   Boolean(Bool)
+  IdentityFunction
   Symbol(String)
   Dummy(String, Int)
   Wild(String)
@@ -33,6 +34,7 @@ impl Show for Expr with to_string(self) {
     Expr::NumberSymbol(kind) => number_symbol_name(kind)
     Expr::Boolean(true) => "True"
     Expr::Boolean(false) => "False"
+    Expr::IdentityFunction => "Lambda(_x, _x)"
     Expr::Symbol(s) => s
     Expr::Dummy(name, _) => dummy_display_name(name)
     Expr::Wild(name) => wild_display_name(name)
@@ -165,6 +167,12 @@ pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
   let head = normalize_legacy_expr(head)
   let args = args.map(normalize_legacy_expr)
   match head {
+    Expr::IdentityFunction =>
+      if args.length() == 1 {
+        Some(args[0])
+      } else {
+        None
+      }
     Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
     Expr::UndefinedFunction(name) =>
       Some(Expr::Apply(Expr::UndefinedFunction(name), args))
@@ -179,6 +187,12 @@ pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
   let head = normalize_legacy_expr(head)
   let args = args.map(normalize_legacy_expr)
   match head {
+    Expr::IdentityFunction =>
+      if args.length() == 1 {
+        Some(args[0])
+      } else {
+        None
+      }
     Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
     Expr::UndefinedFunction(name) =>
       Some(applied_undefined_function(name, args))

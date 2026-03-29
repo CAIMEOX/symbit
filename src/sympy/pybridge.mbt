@@ -100,6 +100,7 @@ fn expr_to_sympy_cached(
         ),
         OracleArg::PyObj(expr_to_sympy_cached(value, dummy_cache, wild_cache)),
       ])
+    @symcore.Expr::IdentityFunction => sympy_attr_obj("sympy.S.IdentityFunction")
     @symcore.Expr::Lambda(vars, body) =>
       sympy_call_obj("sympy.Lambda", [
         OracleArg::PyObj(expr_to_sympy_cached(vars, dummy_cache, wild_cache)),
@@ -120,6 +121,26 @@ fn ensure_sympy_module() -> @py.PyModule raise {
     Some(sympy) => sympy
     None => fail("sympy-missing")
   }
+}
+
+///|
+fn sympy_attr_obj(path : String) -> @py.PyObject raise {
+  let parts : Array[String] = []
+  for part in path.trim().split(".") {
+    parts.push(part.to_string())
+  }
+  guard !parts.is_empty() && parts[0] == "sympy" else {
+    fail("sympy-attr-invalid:\{path}")
+  }
+  let mut current = ensure_sympy_module().obj()
+  for i in 1..<parts.length() {
+    let part = parts[i]
+    match current.get_attr(part, print_err=true) {
+      Some(obj) => current = objenum_to_obj(obj)
+      None => fail("sympy-attr-missing:\{path}")
+    }
+  }
+  current
 }
 
 ///|

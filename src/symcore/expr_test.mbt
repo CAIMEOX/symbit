@@ -611,7 +611,7 @@ test "replace performs preorder structural rewrites on canonical applications" {
         fn(_node : Expr) -> Expr { add([x, int(1)]) },
       ),
     ),
-    content="x + sin((x + 1)) + 1",
+    content="x + sin(x + 1) + 1",
   )
   inspect(
     @symprint.to_string(
@@ -829,14 +829,23 @@ test "lambda canonicalizes identity forms and applies canonically" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let z = Expr::Symbol("z")
-  inspect(@symprint.to_string(lambda_expr(x, x)), content="Lambda(_x, _x)")
+  let id = lambda_expr(x, x)
+  inspect(@symprint.to_string(id), content="Lambda(_x, _x)")
   inspect(
     @symprint.to_string(lambda_expr(Expr::Tuple([x]), x)),
     content="Lambda(_x, _x)",
   )
   inspect(
+    @symprint.to_string(func(id).unwrap_or(int(0))),
+    content="<class 'sympy.functions.elementary.miscellaneous.IdentityFunction'>",
+  )
+  json_inspect(args(id).map(@symprint.to_string), content=[])
+  inspect(has(id, x), content="false")
+  inspect(@symprint.to_string(xreplace(id, [(x, y)])), content="Lambda(_x, _x)")
+  inspect(@symprint.to_string(subst(id, { "x": y })), content="Lambda(_x, _x)")
+  inspect(
     @symprint.to_string(
-      apply(lambda_expr(x, x), [y]).unwrap_or(int(0)),
+      apply(id, [y]).unwrap_or(int(0)),
     ),
     content="y",
   )

@@ -31,6 +31,7 @@ pub enum ExprForm {
   Symbol(String)
   Dummy(String, Int)
   Wild(String)
+  IdentityFunction
   FunctionHead(String)
   UndefinedFunction(String)
   Apply(Expr, Array[Expr])
@@ -111,6 +112,7 @@ pub fn standalone_function_head_display_name(name : String) -> String {
     "Dict" => "<class 'sympy.core.containers.Dict'>"
     "Derivative" => "<class 'sympy.core.function.Derivative'>"
     "Lambda" => "<class 'sympy.core.function.Lambda'>"
+    "IdentityFunction" => "<class 'sympy.functions.elementary.miscellaneous.IdentityFunction'>"
     "Subs" => "<class 'sympy.core.function.Subs'>"
     _ => name
   }
@@ -197,8 +199,7 @@ fn is_lambda_signature_atom(expr : Expr) -> Bool {
 
 ///|
 fn lambda_identity_expr() -> Expr {
-  let x = dummy(name="x")
-  Expr::Lambda(x, x)
+  Expr::IdentityFunction
 }
 
 ///|
@@ -308,6 +309,7 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::ComplexFloat(z) => ExprForm::ComplexFloat(z)
     Expr::NumberSymbol(kind) => ExprForm::NumberSymbol(kind)
     Expr::Boolean(value) => ExprForm::Boolean(value)
+    Expr::IdentityFunction => ExprForm::IdentityFunction
     Expr::Dummy(name, id) => ExprForm::Dummy(name, id)
     Expr::Wild(name) => ExprForm::Wild(name)
     Expr::FunctionHead(name) => ExprForm::FunctionHead(name)
@@ -528,6 +530,7 @@ pub fn is_atomic(expr : Expr) -> Bool {
     | ExprForm::Symbol(_)
     | ExprForm::Dummy(_, _)
     | ExprForm::Wild(_)
+    | ExprForm::IdentityFunction
     | ExprForm::FunctionHead(_)
     | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => true
@@ -546,6 +549,7 @@ pub fn head_name(expr : Expr) -> String {
     ExprForm::Symbol(name) => name
     ExprForm::Dummy(name, _) => dummy_display_name(name)
     ExprForm::Wild(name) => wild_display_name(name)
+    ExprForm::IdentityFunction => "IdentityFunction"
     ExprForm::FunctionHead(name) => name
     ExprForm::UndefinedFunction(name) => name
     ExprForm::Boolean(true) => "True"
@@ -803,6 +807,7 @@ pub fn func(expr : Expr) -> Expr? {
         ExprForm::Symbol(_) => Some(Expr::FunctionHead("Symbol"))
         ExprForm::Dummy(_, _) => Some(Expr::FunctionHead("Dummy"))
         ExprForm::Wild(_) => Some(Expr::FunctionHead("Wild"))
+        ExprForm::IdentityFunction => Some(Expr::FunctionHead("IdentityFunction"))
         ExprForm::Boolean(value) =>
           Some(Expr::FunctionHead(boolean_func_name(value)))
         ExprForm::FunctionHead(_) | ExprForm::UndefinedFunction(_) => None
@@ -874,6 +879,7 @@ pub fn args(expr : Expr) -> Array[Expr] {
     | ExprForm::Symbol(_)
     | ExprForm::Dummy(_, _)
     | ExprForm::Wild(_)
+    | ExprForm::IdentityFunction
     | ExprForm::FunctionHead(_)
     | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => []
@@ -984,6 +990,7 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
     | ExprForm::NumberSymbol(_)
     | ExprForm::Dummy(_, _)
     | ExprForm::Wild(_)
+    | ExprForm::IdentityFunction
     | ExprForm::FunctionHead(_)
     | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => ()

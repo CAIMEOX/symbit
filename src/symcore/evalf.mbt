@@ -804,6 +804,7 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
             None => expr
           }
       }
+    Expr::IdentityFunction => expr
     Expr::Boolean(_) => expr
     Expr::Dummy(_, _) | Expr::Wild(_) => expr
     Expr::FunctionHead(_) => expr

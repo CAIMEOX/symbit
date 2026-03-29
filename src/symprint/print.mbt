@@ -42,6 +42,7 @@ pub fn debug_repr(expr : Expr) -> String {
     @symcore.ExprForm::Dummy(name, id) =>
       "dummy:\{@symcore.dummy_display_name(name)}#\{id}"
     @symcore.ExprForm::Wild(name) => "wild:\{@symcore.wild_display_name(name)}"
+    @symcore.ExprForm::IdentityFunction => "(call IdentityFunction)"
     @symcore.ExprForm::FunctionHead(name) => "fhead:\{name}"
     @symcore.ExprForm::UndefinedFunction(name) => "ufunc:\{name}"
     @symcore.ExprForm::Boolean(true) => "sym:True"
@@ -125,7 +126,7 @@ pub fn to_string(expr : Expr) -> String {
 fn format_expr(expr : Expr, parent_prec : Int) -> String {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => {
-      let rendered = args.map(child => format_expr(child, 5)).join(", ")
+      let rendered = args.map(child => format_expr(child, 0)).join(", ")
       let body = "\{name}(\{rendered})"
       return if 5 < parent_prec { "(\{body})" } else { body }
     }
@@ -145,6 +146,7 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
     @symcore.ExprForm::Symbol(name) => name
     @symcore.ExprForm::Dummy(name, _) => @symcore.dummy_display_name(name)
     @symcore.ExprForm::Wild(name) => @symcore.wild_display_name(name)
+    @symcore.ExprForm::IdentityFunction => "Lambda(_x, _x)"
     @symcore.ExprForm::FunctionHead(name) =>
       @symcore.standalone_function_head_display_name(name)
     @symcore.ExprForm::UndefinedFunction(name) => name
@@ -219,7 +221,7 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
     @symcore.ExprForm::Lambda(vars, body) =>
       "Lambda(\{format_expr(vars, 0)}, \{format_expr(body, 0)})"
     @symcore.ExprForm::Apply(head, args) => {
-      let rendered = args.map(child => format_expr(child, prec)).join(", ")
+      let rendered = args.map(child => format_expr(child, 0)).join(", ")
       "\{format_expr(head, prec)}(\{rendered})"
     }
   }

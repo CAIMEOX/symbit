@@ -59,25 +59,25 @@ test "symparse composes explicit calls with transformed default syntax" {
   inspect(
     parse_repr("(x + 1)!^2"),
     content=(
-      #|factorial((x + 1))**2
+      #|factorial(x + 1)**2
     ),
   )
   inspect(
     parse_repr("(x + 1)!!^2"),
     content=(
-      #|factorial2((x + 1))**2
+      #|factorial2(x + 1)**2
     ),
   )
   inspect(
     parse_repr("cos^2(x + y)"),
     content=(
-      #|cos((x + y))**2
+      #|cos(x + y)**2
     ),
   )
   inspect(
     parse_repr("cos x^2 + sin(x)^2"),
     content=(
-      #|sin(x)**2 + cos((x**2))
+      #|sin(x)**2 + cos(x**2)
     ),
   )
 }
