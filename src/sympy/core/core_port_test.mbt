@@ -2720,6 +2720,30 @@ test "symcore parity subst beta-reduces callable heads to lambda" {
 }
 
 ///|
+test "symcore parity callable substitution in derivative variables follows source" {
+  let x = @symcore.Expr::Symbol("x")
+  let gx = @symcore.applied_undefined_function("g", [x])
+  let expr = @symcore.Expr::Derivative(gx, [gx, @symcore.int(1)])
+  inspect(
+    core_expr_sstr(
+      @symcore.subst(expr, { "g": @symcore.Expr::UndefinedFunction("f") }),
+    ),
+    content=core_subst_expr_sstr(
+      expr,
+      @symcore.Expr::UndefinedFunction("g"),
+      @symcore.Expr::UndefinedFunction("f"),
+    ),
+  )
+  let invalid = @symcore.subst(expr, { "g": @symcore.Expr::FunctionHead("cos") })
+  inspect(@symcore.has(invalid, @symcore.Expr::FunctionHead("Subs")).to_string(), content="true")
+  inspect(
+    @symcore.has(invalid, @symcore.function("cos", [x])).to_string(),
+    content="true",
+  )
+  inspect(core_free_symbols_sstr(invalid), content="('x',)")
+}
+
+///|
 test "symcore parity lambda identity and application stay canonical" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")

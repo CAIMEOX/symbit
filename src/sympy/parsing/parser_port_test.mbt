@@ -1592,6 +1592,14 @@ test "symparse parity explicit core constructor calls stay canonical" {
     parse_error_detail("Derivative(sin(x), (x, -1))"),
     content=parse_error_oracle("Derivative(sin(x), (x, -1))"),
   )
+  inspect(
+    parse_error_detail("Derivative(sin(x), sin(x))"),
+    content="ValueError: \nCan't calculate derivative wrt sin(x).",
+  )
+  inspect(
+    ast_parse_error_detail("Derivative(sin(x), sin(x))", {}),
+    content="ValueError: \nCan't calculate derivative wrt sin(x).",
+  )
   inspect(parse_error_detail("Dict(x)"), content=parse_error_oracle("Dict(x)"))
   inspect(
     parse_error_detail("Dict((x, y, z))"),

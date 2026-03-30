@@ -439,13 +439,49 @@ fn subst_derivative(
   } else {
     subst(inner, rename_env)
   }
-  let rebuilt = Expr::Derivative(subst(renamed_inner, inner_env), renamed_args)
+  let mut rebuilt_inner = subst(renamed_inner, inner_env)
+  let rebuilt_args : Array[Expr] = []
+  let residual_vars : Array[Expr] = []
+  let residual_values : Array[Expr] = []
+  let pair_count = renamed_args.length() / 2
+  for i in 0..<pair_count {
+    let wrt = subst(renamed_args[i * 2], inner_env)
+    let order = renamed_args[i * 2 + 1]
+    if expr_can_diff_wrt(wrt) {
+      rebuilt_args.push(wrt)
+      rebuilt_args.push(order)
+    } else {
+      let xi = dummy(name="xi_\{i}")
+      rebuilt_inner = xreplace(rebuilt_inner, [(wrt, xi)])
+      rebuilt_args.push(xi)
+      rebuilt_args.push(order)
+      residual_vars.push(xi)
+      residual_values.push(wrt)
+    }
+  }
+  let rebuilt = Expr::Derivative(rebuilt_inner, rebuilt_args)
   let outer_keys : Array[String] = []
   for key in outer_env.keys() {
     outer_keys.push(key)
   }
   outer_keys.sort()
-  let mut out = rebuilt
+  let mut out = if residual_vars.is_empty() {
+    rebuilt
+  } else {
+    subs_expr(
+      rebuilt,
+      if residual_vars.length() == 1 {
+        residual_vars[0]
+      } else {
+        Expr::Tuple(residual_vars)
+      },
+      if residual_values.length() == 1 {
+        residual_values[0]
+      } else {
+        Expr::Tuple(residual_values)
+      },
+    )
+  }
   for key in outer_keys {
     match outer_env.get(key) {
       Some(value) => out = subs_expr(out, Expr::Symbol(key), subst(value, env))

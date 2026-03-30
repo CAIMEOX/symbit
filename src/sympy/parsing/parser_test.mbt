@@ -1213,6 +1213,16 @@ test "symparse explicit core constructor calls stay canonical" {
     detail == "ValueError: order of differentiation must be nonnegative" else {
     fail("expected negative derivative order error")
   }
+  guard (try? parse_expr("Derivative(sin(x), sin(x))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "ValueError: \nCan't calculate derivative wrt sin(x)." else {
+    fail("expected defined-function derivative variable error")
+  }
+  guard (try? ast_parse_expr("Derivative(sin(x), sin(x))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "ValueError: \nCan't calculate derivative wrt sin(x)." else {
+    fail("expected ast parser defined-function derivative variable error")
+  }
   guard (try? parse_expr("Lambda()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail ==

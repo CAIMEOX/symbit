@@ -250,9 +250,52 @@ pub fn derivative(expr : Expr, wrt : Expr, order? : Expr = int(1)) -> Expr {
 }
 
 ///|
+fn expr_can_diff_wrt(expr : Expr) -> Bool {
+  match normalize_legacy_expr(expr) {
+    Expr::Symbol(_) | Expr::Dummy(_, _) => true
+    Expr::Apply(Expr::UndefinedFunction(_), _) => true
+    Expr::Derivative(inner, deriv_args) =>
+      match normalize_legacy_expr(inner) {
+        Expr::Apply(Expr::UndefinedFunction(_), inner_args) => {
+          let mut all_symbol_args = true
+          for arg in inner_args {
+            match normalize_legacy_expr(arg) {
+              Expr::Symbol(_) | Expr::Dummy(_, _) => ()
+              _ => {
+                all_symbol_args = false
+                break
+              }
+            }
+          }
+          if !all_symbol_args {
+            return false
+          }
+          for pair in derivative_constructor_pairs(deriv_args[:]) {
+            let (wrt, order) = pair
+            if !expr_can_diff_wrt(wrt) || !derivative_order_is_positive_integer(order) {
+              return false
+            }
+          }
+          true
+        }
+        _ => false
+      }
+    _ => false
+  }
+}
+
+///|
 fn derivative_order_is_zero(expr : Expr) -> Bool {
   match normalize_legacy_expr(expr) {
     Expr::Number(n) => n.is_integral() && n.is_zero()
+    _ => false
+  }
+}
+
+///|
+fn derivative_order_is_positive_integer(expr : Expr) -> Bool {
+  match normalize_legacy_expr(expr) {
+    Expr::Number(n) => n.is_integral() && n.numerator().compare(0N) > 0
     _ => false
   }
 }
@@ -349,7 +392,7 @@ fn derivative_constructor_pairs(
 pub fn derivative_signature_error(deriv_args : ArrayView[Expr]) -> String? {
   for pair in derivative_constructor_pairs(deriv_args) {
     let (wrt, order) = pair
-    if is_number_atom(wrt) || bool_value(wrt) is Some(_) {
+    if !expr_can_diff_wrt(wrt) {
       return Some("Can't calculate derivative wrt " + expr_display(wrt) + ".")
     }
     if derivative_order_is_negative_integer(order) {

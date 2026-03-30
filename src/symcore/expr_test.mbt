@@ -1211,6 +1211,41 @@ test "subst beta-reduces callable heads to lambda replacements" {
 }
 
 ///|
+test "derivative constructors and callable substitution follow SymPy source" {
+  let x = Expr::Symbol("x")
+  let gx = applied_undefined_function("g", [x])
+  match function("Derivative", [function("sin", [x]), function("sin", [x])]) {
+    Expr::Apply(Expr::FunctionHead("Derivative"), _) => ()
+    other =>
+      fail(
+        "expected invalid derivative variable to stay canonical Apply, got \{@symprint.to_string(other)}",
+      )
+  }
+  inspect(
+    @symprint.to_string(
+      subst(Expr::Derivative(gx, [gx, int(1)]), { "g": Expr::UndefinedFunction("f") }),
+    ),
+    content="Derivative(f(x), f(x))",
+  )
+  let invalid = subst(
+    Expr::Derivative(gx, [gx, int(1)]),
+    { "g": Expr::FunctionHead("cos") },
+  )
+  match invalid {
+    Expr::Subs(Expr::Derivative(inner, [wrt, order]), variable, value) => {
+      inspect((inner == wrt).to_string(), content="true")
+      inspect((variable == wrt).to_string(), content="true")
+      inspect(@symprint.to_string(order), content="1")
+      inspect(@symprint.to_string(value), content="cos(x)")
+    }
+    other =>
+      fail(
+        "expected invalid callable substitution to wrap derivative in Subs, got \{@symprint.to_string(other)}",
+      )
+  }
+}
+
+///|
 test "lambda canonicalizes identity forms and applies canonically" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
