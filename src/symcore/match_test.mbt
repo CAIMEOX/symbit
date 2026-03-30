@@ -481,4 +481,29 @@ test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
     }
     None => fail("expected wild-on-wild additive match from SymPy source")
   }
+
+  let q_excluding_p = Expr::Wild("q", [p], [])
+  let r_plain = Expr::Wild("r", [], [])
+  match expr_match(add([q_excluding_p, r_plain]), p) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(q_excluding_p).unwrap_or(int(-1))), content="0")
+      inspect(@symprint.to_string(env.get(r_plain).unwrap_or(int(-1))), content="p_")
+    }
+    None => fail("expected source-style additive wild-on-wild match with exclude=[p]")
+  }
+  match expr_match(mul([q_excluding_p, r_plain]), p) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(q_excluding_p).unwrap_or(int(-1))), content="1")
+      inspect(@symprint.to_string(env.get(r_plain).unwrap_or(int(-1))), content="p_")
+    }
+    None => fail("expected source-style multiplicative wild-on-wild match with exclude=[p]")
+  }
+
+  let r_excluding_p = Expr::Wild("r", [p], [])
+  guard expr_match(add([q_excluding_p, r_excluding_p]), p) is None else {
+    fail("expected additive wild-on-wild match to fail when both wilds exclude p")
+  }
+  guard expr_match(mul([q_excluding_p, r_excluding_p]), p) is None else {
+    fail("expected multiplicative wild-on-wild match to fail when both wilds exclude p")
+  }
 }

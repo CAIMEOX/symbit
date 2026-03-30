@@ -364,6 +364,37 @@ test "symcore source-driven exclude and wild-on-wild examples" {
     ),
     content="p_=0",
   )
+  let q_excluding_p = @symcore.Expr::Wild("q", [p], [])
+  let r_plain = @symcore.Expr::Wild("r", [], [])
+  inspect(
+    core_match_sstr(
+      @symcore.add([q_excluding_p, r_plain]),
+      p,
+    ),
+    content="q_=0|r_=p_",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([q_excluding_p, r_plain]),
+      p,
+    ),
+    content="q_=1|r_=p_",
+  )
+  let r_excluding_p = @symcore.Expr::Wild("r", [p], [])
+  inspect(
+    core_match_sstr(
+      @symcore.add([q_excluding_p, r_excluding_p]),
+      p,
+    ),
+    content="None",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([q_excluding_p, r_excluding_p]),
+      p,
+    ),
+    content="None",
+  )
 }
 
 ///|
