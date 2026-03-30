@@ -276,6 +276,19 @@ pub fn expr_match(
   if pattern == expr {
     return Some(clone_match_env(repl_dict))
   }
+  match pattern {
+    Expr::Pow(base, exp) if is_one(expr) && !expr_contains_wild(base) =>
+      return expr_match(exp, int(0), repl_dict=repl_dict)
+    _ => ()
+  }
+  match pattern {
+    Expr::Mul(_) =>
+      match expr {
+        Expr::Mul(_) => ()
+        _ => return expr_match(pattern, Expr::Mul([int(1), expr]), repl_dict=repl_dict)
+      }
+    _ => ()
+  }
   match (pattern, expr) {
     (Expr::Add(pattern_items), Expr::Add(expr_items)) =>
       return match_commutative_items(

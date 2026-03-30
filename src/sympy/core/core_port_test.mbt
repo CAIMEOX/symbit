@@ -174,6 +174,31 @@ test "symcore source-driven commutative wildcard matching examples" {
     ),
     content="a_=x|b_=y",
   )
+  inspect(
+    core_match_sstr(
+      @symcore.add([@symcore.mul([a, x]), b]),
+      @symcore.add([@symcore.mul([@symcore.int(4), x]), @symcore.int(5)]),
+    ),
+    content="a_=4|b_=5",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([@symcore.Expr::Wild("a", [x], []), x]),
+      @symcore.mul([@symcore.int(3), @symcore.pow(x, @symcore.int(2))]),
+    ),
+    content="None",
+  )
+  inspect(
+    core_match_sstr(@symcore.pow(x, a), @symcore.int(1)),
+    content="a_=0",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([a, @symcore.function("cos", [@symcore.mul([b, x])])]),
+      @symcore.function("cos", [@symcore.mul([@symcore.int(5), x])]),
+    ),
+    content="a_=1|b_=5",
+  )
 }
 
 ///|

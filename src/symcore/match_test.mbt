@@ -153,3 +153,43 @@ test "expr_match handles source-style commutative wildcard matching" {
     None => fail("expected excluded wild to isolate scalar factor")
   }
 }
+
+///|
+test "expr_match follows SymPy source examples for add mul and powers" {
+  let x = Expr::Symbol("x")
+  let p = Expr::Wild("p", [], [])
+  let q = Expr::Wild("q", [], [])
+  let a_excluding_x = Expr::Wild("a", [x], [])
+
+  match expr_match(add([mul([p, x]), q]), add([mul([int(4), x]), int(5)])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="4")
+      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="5")
+    }
+    None => fail("expected linear add match from SymPy source examples")
+  }
+
+  assert_false(
+    expr_match(
+      mul([a_excluding_x, x]),
+      mul([int(3), pow(x, int(2))]),
+    ) is Some(_),
+  )
+
+  match expr_match(pow(x, p), int(1)) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(99))), content="0")
+    None => fail("expected 1 to match x**p with p = 0")
+  }
+
+  match expr_match(
+    mul([p, function("cos", [mul([q, x])])]),
+    function("cos", [mul([int(5), x])]),
+  ) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
+      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="5")
+    }
+    None => fail("expected cosine coefficient match from SymPy source examples")
+  }
+}
