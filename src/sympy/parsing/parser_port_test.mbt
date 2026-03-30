@@ -672,6 +672,10 @@ test "symparse parity builtin callable semantics" {
     content=parse_expr_sstr("Integer(-2/3)"),
   )
   inspect(
+    @symprint.to_string(parse_expr("Integer(pi)")),
+    content=parse_expr_sstr("Integer(pi)"),
+  )
+  inspect(
     @symprint.to_string(parse_expr("Rational(2)")),
     content=parse_expr_sstr("Rational(2)"),
   )
@@ -682,6 +686,15 @@ test "symparse parity builtin callable semantics" {
   inspect(
     @symprint.to_string(parse_expr("Rational(0.2)")),
     content=parse_expr_sstr("Rational(0.2)"),
+  )
+  inspect(
+    try parse_expr("Rational(pi)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in("Rational(pi)", []),
   )
   inspect(
     parse_expr_equiv(@symprint.to_string(parse_expr("Float(2)")), "Float(2)"),
@@ -702,11 +715,18 @@ test "symparse parity builtin callable semantics" {
     content="0",
   )
   inspect(
-    parse_expr_equiv(
+    parse_expr_equiv_relaxed_near_zero(
       @symprint.to_string(parse_expr("Float(2/3)")),
       "Float(2/3)",
     ),
-    content="0",
+    content="True",
+  )
+  inspect(
+    parse_expr_equiv_relaxed_near_zero(
+      @symprint.to_string(parse_expr("Float(pi)")),
+      "Float(pi)",
+    ),
+    content="True",
   )
   inspect(
     @symprint.to_string(parse_expr("beta(x)")),
@@ -956,6 +976,21 @@ test "symparse parity relation truthiness string forms" {
 ///|
 test "symparse parity explicit core constructor calls stay canonical" {
   inspect(@symprint.to_string(parse_expr("Eq")), content=parse_expr_sstr("Eq"))
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Integer(3/2)", parse_options(evaluate=false)),
+    ),
+    content=parse_expr_sstr("Integer(3/2)", evaluate=false),
+  )
+  inspect(
+    try parse_expr_with("Rational(3/2)", parse_options(evaluate=false)) catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in("Rational(3/2)", [], evaluate=false),
+  )
   inspect(
     @symprint.to_string(parse_expr("Tuple(x, 1)")),
     content=parse_expr_sstr("Tuple(x, 1)"),

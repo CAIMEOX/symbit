@@ -1,28 +1,16 @@
 ///|
 fn make_add(args : Array[Expr], options : ParseOptions) -> Expr {
-  if options.evaluate {
-    @symcore.add(args)
-  } else {
-    @symcore.raw_add(args)
-  }
+  @symcore.with_evaluate(options.evaluate, fn() { @symcore.add(args) })
 }
 
 ///|
 fn make_mul(args : Array[Expr], options : ParseOptions) -> Expr {
-  if options.evaluate {
-    @symcore.mul(args)
-  } else {
-    @symcore.raw_mul(args)
-  }
+  @symcore.with_evaluate(options.evaluate, fn() { @symcore.mul(args) })
 }
 
 ///|
 fn make_pow(base : Expr, exp : Expr, options : ParseOptions) -> Expr {
-  if options.evaluate {
-    @symcore.pow(base, exp)
-  } else {
-    @symcore.raw_pow(base, exp)
-  }
+  @symcore.with_evaluate(options.evaluate, fn() { @symcore.pow(base, exp) })
 }
 
 ///|
@@ -273,11 +261,7 @@ fn make_application(
   options : ParseOptions,
 ) -> Expr raise ParseError {
   let apply_named = fn(name : String, args : Array[Expr]) -> Expr {
-    if options.evaluate {
-      @symcore.function(name, args)
-    } else {
-      @symcore.raw_function(name, args)
-    }
+    @symcore.with_evaluate(options.evaluate, fn() { @symcore.function(name, args) })
   }
   let exact_arity_error = fn(
     name : String,
@@ -292,6 +276,48 @@ fn make_application(
     )
   }
   let apply_builtin = fn(name : String) -> Expr raise ParseError {
+    let integer_constructor_result = fn(args : Array[Expr]) -> Expr raise ParseError {
+      let lowered = apply_named(name, args)
+      match lowered {
+        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Integer"), [arg]) =>
+          raise ParseError::UnsupportedConstruct(
+            span=span(0, 0),
+            "TypeError: Argument of Integer should be of numeric type, got " +
+            @symprint.to_string(arg) +
+            ".",
+          )
+        _ => lowered
+      }
+    }
+    let rational_constructor_result = fn(args : Array[Expr]) -> Expr raise ParseError {
+      let lowered = apply_named(name, args)
+      match lowered {
+        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [arg]) =>
+          raise ParseError::UnsupportedConstruct(
+            span=span(0, 0),
+            "TypeError: invalid input: " + @symprint.to_string(arg),
+          )
+        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [lhs, rhs]) =>
+          if @symcore.is_zero(rhs) {
+            if @symcore.is_zero(lhs) {
+              raise ParseError::UnsupportedConstruct(
+                span=span(0, 0),
+                "ValueError: Indeterminate 0/0",
+              )
+            } else {
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ComplexInfinity,
+              )
+            }
+          } else {
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: invalid input: " + @symprint.to_string(rhs),
+            )
+          }
+        _ => lowered
+      }
+    }
     match name {
       "log" =>
         match args.length() {
@@ -402,7 +428,7 @@ fn make_application(
               span=span(0, 0),
               "TypeError: Integer.__new__() missing 1 required positional argument: 'i'",
             )
-          1 => apply_named(name, args)
+          1 => integer_constructor_result(args)
           given => exact_arity_error(name, 1, given)
         }
       "Rational" =>
@@ -412,7 +438,7 @@ fn make_application(
               span=span(0, 0),
               "TypeError: Rational.__new__() missing 1 required positional argument: 'p'",
             )
-          1 | 2 => apply_named(name, args)
+          1 | 2 => rational_constructor_result(args)
           given => exact_arity_error(name, 2, given)
         }
       "Float" =>
@@ -445,11 +471,9 @@ fn make_application(
       return apply_builtin(name)
     _ => ()
   }
-  let lowered = if options.evaluate {
+  let lowered = @symcore.with_evaluate(options.evaluate, fn() {
     @symcore.apply(callee, args)
-  } else {
-    @symcore.raw_apply(callee, args)
-  }
+  })
   match lowered {
     Some(expr) => expr
     None =>
@@ -467,7 +491,7 @@ fn make_application(
               raise ParseError::UnsupportedConstruct(
                 span=span(0, 0),
                 "BadArgumentsError: " +
-                @symcore.expr_display(callee) +
+                @symprint.to_string(callee) +
                 " takes exactly " +
                 expected.to_string() +
                 " argument" +

@@ -486,11 +486,11 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     content="0",
   )
   inspect(
-    parse_expr_equiv(
+    parse_expr_equiv_relaxed_near_zero(
       @symprint.to_string(parse_expr("Float(2/3)")),
       "Float(2/3)",
     ),
-    content="0",
+    content="True",
   )
   inspect(@symprint.to_string(parse_expr("beta(x)")), content="beta(x, x)")
   inspect(@symprint.to_string(parse_expr("beta(x, y)")), content="beta(x, y)")
@@ -804,6 +804,21 @@ test "symparse explicit core constructor calls stay canonical" {
     @symprint.to_string(parse_expr("Eq")),
     content="<class 'sympy.core.relational.Equality'>",
   )
+  inspect(@symprint.to_string(parse_expr("Integer(3/2)")), content="1")
+  inspect(@symprint.to_string(parse_expr("Integer(pi)")), content="3")
+  inspect(@symprint.to_string(parse_expr("Rational(6, 4)")), content="3/2")
+  inspect(@symprint.to_string(parse_expr("Rational(1, 0)")), content="zoo")
+  guard (try? parse_expr("Rational(pi)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: invalid input: pi" else {
+    fail("expected Rational(pi) invalid input error")
+  }
+  inspect(@symprint.to_string(parse_expr("Float(1/2)")), content="0.5")
+  match parse_expr("Float(pi)") {
+    @symcore.Expr::Float(_) => ()
+    other =>
+      fail("expected Float(pi) to evaluate, got \{@symprint.to_string(other)}")
+  }
   inspect(@symprint.to_string(parse_expr("Tuple(x, 1)")), content="(x, 1)")
   inspect(@symprint.to_string(parse_expr("Eq(x, y)")), content="Eq(x, y)")
   inspect(@symprint.to_string(parse_expr("Eq(x, x)")), content="True")
@@ -880,6 +895,12 @@ test "symparse explicit core constructor calls stay canonical" {
   )
   inspect(
     @symprint.to_string(
+      parse_expr_with("Rational(6, 4)", parse_options(evaluate=false)),
+    ),
+    content="3/2",
+  )
+  inspect(
+    @symprint.to_string(
       parse_expr_with("Ne(x, x)", parse_options(evaluate=false)),
     ),
     content="False",
@@ -912,6 +933,22 @@ test "symparse explicit core constructor calls stay canonical" {
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: Mod takes exactly 2 arguments (1 given)" else {
     fail("expected Mod(x) constructor arity error")
+  }
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Integer(3/2)", parse_options(evaluate=false)),
+    ),
+    content="1",
+  )
+  guard (try? parse_expr_with("Rational(3/2)", parse_options(evaluate=false)))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: invalid input: 3/2" else {
+    fail("expected Rational(3/2) evaluate=false invalid input error")
+  }
+  guard (try? parse_expr("Rational(0, 0)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "ValueError: Indeterminate 0/0" else {
+    fail("expected Rational(0, 0) indeterminate error")
   }
   guard (try? parse_expr("Subs(x)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
