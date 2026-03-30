@@ -42,6 +42,8 @@ pub fn canonical_derivative_args(ArrayView[Expr]) -> Array[Expr]
 
 pub fn children(Expr) -> ArrayView[Expr]
 
+pub fn common_kind(Array[Kind]) -> Kind
+
 pub fn compare_expr(Expr, Expr) -> Int
 
 pub fn complex_float_from_exact_parts(@symnum.BigRational, @symnum.BigRational, prec? : Int) -> ComplexFloat
@@ -100,6 +102,20 @@ pub fn function(String, Array[Expr]) -> Expr
 
 pub fn function_head_name(Expr) -> String?
 
+pub fn fuzzy_and(Array[Bool?]) -> Bool?
+
+pub fn fuzzy_bool(Bool?) -> Bool?
+
+pub fn fuzzy_group(Array[Bool?], quick_exit? : Bool) -> Bool?
+
+pub fn fuzzy_nand(Array[Bool?]) -> Bool?
+
+pub fn fuzzy_not(Bool?) -> Bool?
+
+pub fn fuzzy_or(Array[Bool?]) -> Bool?
+
+pub fn fuzzy_xor(Array[Bool?]) -> Bool?
+
 pub fn has(Expr, Expr) -> Bool
 
 pub fn head_name(Expr) -> String
@@ -129,6 +145,8 @@ pub fn is_number_symbol(Expr) -> Bool
 pub fn is_one(Expr) -> Bool
 
 pub fn is_real_number_atom(Expr) -> Bool
+
+pub fn is_singleton_expr(Expr) -> Bool
 
 pub fn is_true(Expr) -> Bool
 
@@ -188,7 +206,13 @@ pub fn relational_parts(Expr) -> (RelOp, Expr, Expr)?
 
 pub fn replace(Expr, (Expr) -> Bool, (Expr) -> Expr) -> Expr
 
+pub fn s(SympifyInput) -> Expr
+
+pub fn singleton_expr_by_name(String) -> Expr?
+
 pub fn singleton_head(Expr) -> Expr?
+
+pub fn singleton_instance_name(Expr) -> String?
 
 pub fn sort_exprs_in_place(Array[Expr]) -> Unit
 
@@ -211,6 +235,8 @@ pub fn sympify_dict(Array[(SympifyInput, SympifyInput)]) -> Expr
 pub fn sympify_name(String) -> Expr
 
 pub fn sympify_tuple(Array[SympifyInput]) -> Expr
+
+pub fn torf(Array[Bool?]) -> Bool?
 
 pub fn tuple_items(Expr) -> Array[Expr]?
 
@@ -408,6 +434,8 @@ pub(all) enum WildProperty {
 }
 
 // Type aliases
+pub type FuzzyBool = Bool?
+
 pub type MatchEnv = Map[Expr, Expr]
 
 // Traits

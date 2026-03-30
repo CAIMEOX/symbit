@@ -81,4 +81,21 @@ test "expr_kind follows source-driven core kinds" {
     kind_name(expr_kind(lambda_expr(x, x))),
     content="UndefinedKind",
   )
+  inspect(kind_name(common_kind([Kind::NumberKind, Kind::NumberKind])), content="NumberKind")
+  inspect(
+    kind_name(common_kind([Kind::NumberKind, Kind::UndefinedKind])),
+    content="UndefinedKind",
+  )
+  inspect(
+    kind_name(expr_kind(add([Expr::Tuple([x]), Expr::Tuple([y])]))),
+    content="TupleKind(NumberKind)",
+  )
+  inspect(
+    kind_name(expr_kind(derivative(Expr::Tuple([x, y]), x))),
+    content="TupleKind(NumberKind, NumberKind)",
+  )
+  inspect(
+    kind_name(expr_kind(subs_expr(Expr::Tuple([x]), x, y))),
+    content="TupleKind(NumberKind)",
+  )
 }

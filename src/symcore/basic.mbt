@@ -136,6 +136,53 @@ pub fn kind_name(kind : Kind) -> String {
 }
 
 ///|
+fn kind_is_undefined(kind : Kind) -> Bool {
+  match kind {
+    Kind::UndefinedKind => true
+    _ => false
+  }
+}
+
+///|
+fn combine_kinds(lhs : Kind, rhs : Kind) -> Kind {
+  match (lhs, rhs) {
+    (Kind::UndefinedKind, _) | (_, Kind::UndefinedKind) => Kind::UndefinedKind
+    (Kind::NumberKind, Kind::NumberKind) => Kind::NumberKind
+    (Kind::BooleanKind, Kind::BooleanKind) => Kind::BooleanKind
+    (Kind::TupleKind(items_lhs), Kind::TupleKind(items_rhs)) =>
+      if items_lhs.length() != items_rhs.length() {
+        Kind::UndefinedKind
+      } else {
+        let out : Array[Kind] = []
+        for i in 0..<items_lhs.length() {
+          out.push(combine_kinds(items_lhs[i], items_rhs[i]))
+        }
+        if out.any(kind_is_undefined) {
+          Kind::UndefinedKind
+        } else {
+          Kind::TupleKind(out)
+        }
+      }
+    _ => Kind::UndefinedKind
+  }
+}
+
+///|
+pub fn common_kind(kinds : Array[Kind]) -> Kind {
+  if kinds.is_empty() {
+    return Kind::UndefinedKind
+  }
+  let mut current = kinds[0]
+  for i in 1..<kinds.length() {
+    current = combine_kinds(current, kinds[i])
+    if kind_is_undefined(current) {
+      return current
+    }
+  }
+  current
+}
+
+///|
 pub fn number_symbol_kind_from_name(name : String) -> NumberSymbolKind? {
   match name {
     "I" => Some(NumberSymbolKind::ImaginaryUnit)
@@ -923,14 +970,17 @@ pub fn expr_kind(expr : Expr) -> Kind {
     | ExprForm::NumberSymbol(_)
     | ExprForm::Symbol(_)
     | ExprForm::Dummy(_, _)
-    | ExprForm::Wild(_, _, _)
-    | ExprForm::Apply(_, _)
-    | ExprForm::Add(_)
-    | ExprForm::Mul(_)
-    | ExprForm::Pow(_, _)
-    | ExprForm::Mod(_, _)
-    | ExprForm::Derivative(_, _)
-    | ExprForm::Subs(_, _, _) => Kind::NumberKind
+    | ExprForm::Wild(_, _, _) => Kind::NumberKind
+    ExprForm::Apply(_, _) => Kind::NumberKind
+    ExprForm::Add(items) | ExprForm::Mul(items) => common_kind(items.map(expr_kind))
+    ExprForm::Pow(base, exp) =>
+      match expr_kind(exp) {
+        Kind::NumberKind => expr_kind(base)
+        _ => Kind::UndefinedKind
+      }
+    ExprForm::Mod(lhs, rhs) =>
+      common_kind([expr_kind(lhs), expr_kind(rhs)])
+    ExprForm::Derivative(inner, _) | ExprForm::Subs(inner, _, _) => expr_kind(inner)
   }
 }
 
