@@ -916,13 +916,13 @@ test "symcore source-driven kinds distinguish logical applications" {
   )
   inspect(
     @symcore.kind_name(@symcore.expr_kind(@symcore.function("sin", [x]))),
-    content="UndefinedKind",
+    content="NumberKind",
   )
   inspect(
     @symcore.kind_name(
       @symcore.expr_kind(@symcore.applied_undefined_function("f", [x])),
     ),
-    content="UndefinedKind",
+    content="NumberKind",
   )
 }
 

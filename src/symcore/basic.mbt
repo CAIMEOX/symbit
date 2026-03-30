@@ -1056,8 +1056,14 @@ fn application_kind(head : Expr, args : Array[Expr]) -> Kind {
       } else {
         match name {
           "Tuple" => Kind::TupleKind(args.map(expr_kind))
-          "Dict" | "Lambda" | "Subs" | "Derivative" => Kind::UndefinedKind
-          _ => Kind::UndefinedKind
+          "Dict" | "Lambda" => Kind::UndefinedKind
+          "Subs" | "Derivative" =>
+            if args.is_empty() {
+              Kind::UndefinedKind
+            } else {
+              expr_kind(args[0])
+            }
+          _ => Kind::NumberKind
         }
       }
     None => Kind::UndefinedKind
