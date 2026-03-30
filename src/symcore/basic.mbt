@@ -24,6 +24,7 @@ pub(all) enum RelOp {
 
 ///|
 pub(all) enum WildProperty {
+  Symbol
   Integer
   Rational
   Real
@@ -115,6 +116,7 @@ pub fn wild_display_name(name : String) -> String {
 ///|
 pub fn wild_property_name(property : WildProperty) -> String {
   match property {
+    WildProperty::Symbol => "symbol"
     WildProperty::Integer => "integer"
     WildProperty::Rational => "rational"
     WildProperty::Real => "real"

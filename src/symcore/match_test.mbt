@@ -26,6 +26,7 @@ test "wild_matches respects exclude and direct properties" {
     [],
     [WildProperty::Positive, WildProperty::Integer],
   )
+  let s = Expr::Wild("s", [], [WildProperty::Symbol])
   match wild_matches(a, function("sin", [x])) {
     Some(env) =>
       inspect(
@@ -38,6 +39,11 @@ test "wild_matches respects exclude and direct properties" {
   assert_false(wild_matches(b, function("sin", [x])) is Some(_))
   assert_true(wild_matches(p, int(2)) is Some(_))
   assert_false(wild_matches(p, rational_from_ints(1, 2)) is Some(_))
+  assert_true(wild_matches(s, y) is Some(_))
+  assert_false(wild_matches(s, int(3)) is Some(_))
+  assert_false(
+    wild_matches(s, Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)) is Some(_),
+  )
   assert_false(
     wild_matches(
       p,
@@ -416,5 +422,63 @@ test "expr_match covers more SymPy source factorization and derivative examples"
       inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="-1")
     }
     None => fail("expected derivative wildcard coefficient match")
+  }
+}
+
+///|
+test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let a = Expr::Symbol("a")
+  let p = Expr::Wild("p", [int(1), x], [])
+  let q = Expr::Wild("q", [], [])
+  let r = Expr::Wild(
+    "r",
+    [Expr::FunctionHead("sin"), y],
+    [],
+  )
+
+  guard expr_match(r, function("sin", [x])) is None else {
+    fail("expected exclude=[sin, y] to reject sin(x)")
+  }
+  guard expr_match(r, function("cos", [y])) is None else {
+    fail("expected exclude=[sin, y] to reject cos(y)")
+  }
+
+  match expr_match(
+    add([mul([p, pow(x, int(2))]), mul([q, x]), r]),
+    add([mul([int(3), pow(x, int(2))]), mul([y, x]), a]),
+  ) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3")
+      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="y")
+      inspect(@symprint.to_string(env.get(r).unwrap_or(int(0))), content="a")
+    }
+    None => fail("expected source-style exclude match on quadratic polynomial")
+  }
+
+  guard expr_match(add([x, p]), add([x, int(1)])) is None else {
+    fail("expected x + 1 not to match x + p when p excludes 1 and x")
+  }
+  guard expr_match(add([p, int(1)]), add([x, int(1)])) is None else {
+    fail("expected x + 1 not to match p + 1 when p excludes 1 and x")
+  }
+  match expr_match(add([x, int(1), p]), add([x, int(1)])) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(1))), content="0")
+    None => fail("expected x + 1 + p to bind p=0 from SymPy source")
+  }
+
+  match expr_match(
+    add([q, r]),
+    p,
+  ) {
+    Some(env) => {
+      let q_value = @symprint.to_string(env.get(q).unwrap_or(int(-1)))
+      let r_value = @symprint.to_string(env.get(r).unwrap_or(int(-1)))
+      let options = ["q_=p_|r_=0", "q_=0|r_=p_"]
+      inspect(options.contains("q_=\{q_value}|r_=\{r_value}"), content="true")
+    }
+    None => fail("expected wild-on-wild additive match from SymPy source")
   }
 }

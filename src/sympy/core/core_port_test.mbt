@@ -117,6 +117,7 @@ test "symcore parity wild match exclude and properties" {
   let a = @symcore.Expr::Wild("a", [], [])
   let b = @symcore.Expr::Wild("b", [x], [])
   let p = @symcore.Expr::Wild("p", [], [@symcore.WildProperty::Positive])
+  let s = @symcore.Expr::Wild("s", [], [@symcore.WildProperty::Symbol])
   let seeded : Map[@symcore.Expr, @symcore.Expr] = {}
   seeded.set(a, y)
   inspect(core_match_sstr(a, @symcore.mul([@symcore.int(2), y])), content="a_=2*y")
@@ -124,6 +125,8 @@ test "symcore parity wild match exclude and properties" {
   inspect(core_match_sstr(b, @symcore.mul([@symcore.int(2), x])), content="None")
   inspect(core_match_sstr(p, @symcore.int(2)), content="p_=2")
   inspect(core_match_sstr(p, @symcore.int(-2)), content="None")
+  inspect(core_match_sstr(s, y), content="s_=y")
+  inspect(core_match_sstr(s, @symcore.int(3)), content="None")
   inspect(
     @symcore.wild_matches(a, x, repl_dict=seeded)
     .map(env => env.get(a).map(core_expr_sstr).unwrap_or(""))
@@ -301,6 +304,65 @@ test "symcore source-driven factorization and derivative wildcard examples" {
       @symcore.add([@symcore.mul([@symcore.int(3), dfx]), @symcore.int(-1)]),
     ),
     content="p_=3|q_=-1",
+  )
+}
+
+///|
+test "symcore source-driven exclude and wild-on-wild examples" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let a = @symcore.Expr::Symbol("a")
+  let p = @symcore.Expr::Wild("p", [@symcore.int(1), x], [])
+  let q = @symcore.Expr::Wild("q", [], [])
+  let r = @symcore.Expr::Wild(
+    "r",
+    [@symcore.Expr::FunctionHead("sin"), y],
+    [],
+  )
+
+  inspect(
+    core_match_sstr(r, @symcore.function("sin", [x])),
+    content="None",
+  )
+  inspect(
+    core_match_sstr(r, @symcore.function("cos", [y])),
+    content="None",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([
+        @symcore.mul([p, @symcore.pow(x, @symcore.int(2))]),
+        @symcore.mul([q, x]),
+        r,
+      ]),
+      @symcore.add([
+        @symcore.mul([@symcore.int(3), @symcore.pow(x, @symcore.int(2))]),
+        @symcore.mul([y, x]),
+        a,
+      ]),
+    ),
+    content="p_=3|q_=y|r_=a",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([x, p]),
+      @symcore.add([x, @symcore.int(1)]),
+    ),
+    content="None",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([p, @symcore.int(1)]),
+      @symcore.add([x, @symcore.int(1)]),
+    ),
+    content="None",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([x, @symcore.int(1), p]),
+      @symcore.add([x, @symcore.int(1)]),
+    ),
+    content="p_=0",
   )
 }
 

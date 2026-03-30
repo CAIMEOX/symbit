@@ -450,6 +450,13 @@ fn wild_property_matches(property : WildProperty, expr : Expr) -> Bool {
     None => ()
   }
   match property {
+    WildProperty::Symbol =>
+      match expr_form(expr) {
+        ExprForm::Symbol(_)
+        | ExprForm::Dummy(_, _)
+        | ExprForm::Wild(_, _, _) => true
+        _ => false
+      }
     WildProperty::Integer =>
       match expr_form(expr) {
         ExprForm::Number(value) => value.is_integral()

@@ -4,6 +4,15 @@ fn wild_property_resolver(
   expr : @symcore.Expr,
 ) -> Bool? {
   match property {
+    @symcore.WildProperty::Symbol =>
+      Some(
+        match @symcore.expr_form(expr) {
+          @symcore.ExprForm::Symbol(_)
+          | @symcore.ExprForm::Dummy(_, _)
+          | @symcore.ExprForm::Wild(_, _, _) => true
+          _ => false
+        },
+      )
     @symcore.WildProperty::Integer => tri_to_bool_option(is_integer(expr))
     @symcore.WildProperty::Rational => tri_to_bool_option(is_rational(expr))
     @symcore.WildProperty::Real => tri_to_bool_option(is_real(expr))

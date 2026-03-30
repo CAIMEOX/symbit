@@ -375,6 +375,7 @@ fn sympy_wild_property_callable(
   property : @symcore.WildProperty,
 ) -> @py.PyObject raise {
   let attr = match property {
+    @symcore.WildProperty::Symbol => "is_Symbol"
     @symcore.WildProperty::Integer => "is_integer"
     @symcore.WildProperty::Rational => "is_rational"
     @symcore.WildProperty::Real => "is_real"
