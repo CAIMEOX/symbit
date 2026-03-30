@@ -199,6 +199,42 @@ test "symcore source-driven commutative wildcard matching examples" {
     ),
     content="a_=1|b_=5",
   )
+  inspect(
+    core_match_sstr(
+      @symcore.add([@symcore.mul([@symcore.int(3), x]), a]),
+      @symcore.add([@symcore.mul([@symcore.int(4), x]), @symcore.int(5)]),
+    ),
+    content="a_=x + 5",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([
+        @symcore.mul([@symcore.int(4), x]),
+        @symcore.mul([a, @symcore.Expr::Symbol("y")]),
+      ]),
+      @symcore.mul([@symcore.int(4), x]),
+    ),
+    content="a_=0",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([
+        a,
+        @symcore.pow(
+          @symcore.add([@symcore.mul([b, x]), c]),
+          @symcore.int(-1),
+        ),
+      ]),
+      @symcore.mul([
+        @symcore.int(3),
+        @symcore.pow(
+          @symcore.add([@symcore.mul([@symcore.int(4), x]), @symcore.int(5)]),
+          @symcore.int(-1),
+        ),
+      ]),
+    ),
+    content="a_=3|b_=4|c_=5",
+  )
 }
 
 ///|

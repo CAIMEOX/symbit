@@ -479,6 +479,32 @@ fn mul_exact_to_float(lhs : Float, rhs : @symnum.BigRational) -> Float {
 }
 
 ///|
+fn split_add_term_coeff(term : Expr) -> (@symnum.BigRational, Expr)? {
+  match term {
+    Expr::Number(value) => Some((value, int(1)))
+    Expr::Mul(items) => {
+      let mut coeff = @symnum.BigRational::one()
+      let rest : Array[Expr] = []
+      for item in items {
+        match item {
+          Expr::Number(value) => coeff = coeff.mul_r(value)
+          Expr::Float(_) | Expr::ComplexFloat(_) => return None
+          _ => rest.push(item)
+        }
+      }
+      let base = match rest.length() {
+        0 => int(1)
+        1 => rest[0]
+        _ => Expr::Mul(rest)
+      }
+      Some((coeff, base))
+    }
+    Expr::Float(_) | Expr::ComplexFloat(_) => None
+    _ => Some((@symnum.BigRational::one(), term))
+  }
+}
+
+///|
 fn complex_from_exact_unchecked(
   value : @symnum.BigRational,
   prec : Int,
@@ -672,25 +698,44 @@ pub fn add(args : Array[Expr]) -> Expr {
       _ => flat.push(arg)
     }
   }
-  sort_exprs_in_place(flat)
-  let merged : Array[Expr] = []
-  let mut idx = 0
-  while idx < flat.length() {
-    let term = flat[idx]
-    let mut count = 1
-    while idx + count < flat.length() &&
-          compare_expr(flat[idx + count], term) == 0 {
-      count += 1
+  let bases : Array[Expr] = []
+  let coeffs : Array[@symnum.BigRational] = []
+  let passthrough : Array[Expr] = []
+  for term in flat {
+    match split_add_term_coeff(term) {
+      Some((coeff, base)) => {
+        let mut merged = false
+        for i in 0..<bases.length() {
+          if compare_expr(bases[i], base) == 0 {
+            coeffs[i] = coeffs[i].add_r(coeff)
+            merged = true
+            break
+          }
+        }
+        if !merged {
+          bases.push(base)
+          coeffs.push(coeff)
+        }
+      }
+      None => passthrough.push(term)
     }
-    if count == 1 {
-      merged.push(term)
-    } else {
-      merged.push(mul([int(count), term]))
-    }
-    idx += count
   }
   flat.clear()
-  for term in merged {
+  for i in 0..<bases.length() {
+    let coeff = coeffs[i]
+    if coeff.is_zero() {
+      continue
+    }
+    let base = bases[i]
+    if expr_is_one(base) {
+      flat.push(Expr::Number(coeff))
+    } else if coeff.is_one() {
+      flat.push(base)
+    } else {
+      flat.push(mul([Expr::Number(coeff), base]))
+    }
+  }
+  for term in passthrough {
     flat.push(term)
   }
   match complex_sum {
@@ -708,6 +753,7 @@ pub fn add(args : Array[Expr]) -> Expr {
         None => if !const_sum.is_zero() { flat.push(Expr::Number(const_sum)) }
       }
   }
+  sort_exprs_in_place(flat)
   match flat.length() {
     0 =>
       match complex_sum {

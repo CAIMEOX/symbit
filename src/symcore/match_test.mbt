@@ -193,3 +193,95 @@ test "expr_match follows SymPy source examples for add mul and powers" {
     None => fail("expected cosine coefficient match from SymPy source examples")
   }
 }
+
+///|
+test "expr_match covers more SymPy source add and mul examples" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let a = Expr::Symbol("a")
+  let b = Expr::Symbol("b")
+  let c = Expr::Symbol("c")
+  let p = Expr::Wild("p", [], [])
+  let q = Expr::Wild("q", [], [])
+  let r = Expr::Wild("r", [], [])
+
+  match expr_match(add([b, p]), add([a, b, c, x])) {
+    Some(env) =>
+      inspect(
+        @symprint.to_string(env.get(p).unwrap_or(int(0))),
+        content="a + c + x",
+      )
+    None => fail("expected additive remainder match from SymPy source")
+  }
+
+  match expr_match(add([a, p, c]), add([a, b, c, x])) {
+    Some(env) =>
+      inspect(
+        @symprint.to_string(env.get(p).unwrap_or(int(0))),
+        content="b + x",
+      )
+    None => fail("expected additive middle remainder match from SymPy source")
+  }
+
+  match expr_match(add([b, p, c]), add([a, b, c, x])) {
+    Some(env) =>
+      inspect(
+        @symprint.to_string(env.get(p).unwrap_or(int(0))),
+        content="a + x",
+      )
+    None => fail("expected additive mixed remainder match from SymPy source")
+  }
+
+  match expr_match(add([mul([p, x]), int(5)]), add([mul([int(4), x]), int(5)])) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="4")
+    None => fail("expected linear coefficient match from SymPy source")
+  }
+
+  match expr_match(add([mul([int(3), x]), p]), add([mul([int(4), x]), int(5)])) {
+    Some(env) =>
+      inspect(
+        @symprint.to_string(env.get(p).unwrap_or(int(0))),
+        content="x + 5",
+      )
+    None => fail("expected additive fallback match from SymPy source")
+  }
+
+  match expr_match(
+    add([mul([int(4), x]), mul([p, y])]),
+    mul([int(4), x]),
+  ) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="0")
+    None => fail("expected additive embedding to expose zero coefficient")
+  }
+
+  match expr_match(mul([p, x]), x) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
+    None => fail("expected x to match p*x with p = 1")
+  }
+
+  match expr_match(
+    mul([pow(x, p), function("exp", [mul([x, q])])]),
+    function("exp", [x]),
+  ) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(99))), content="0")
+      inspect(@symprint.to_string(env.get(q).unwrap_or(int(99))), content="1")
+    }
+    None => fail("expected exponential source match with implicit x**0")
+  }
+
+  match expr_match(
+    mul([p, pow(add([mul([q, x]), r]), int(-1))]),
+    mul([int(3), pow(add([mul([int(4), x]), int(5)]), int(-1))]),
+  ) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3")
+      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="4")
+      inspect(@symprint.to_string(env.get(r).unwrap_or(int(0))), content="5")
+    }
+    None => fail("expected reciprocal linear form match from SymPy source")
+  }
+}

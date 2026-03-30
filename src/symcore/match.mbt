@@ -61,6 +61,47 @@ fn combine_commutative_items(items : Array[Expr], is_add : Bool) -> Expr {
 }
 
 ///|
+fn common_add_wild_factor(
+  items : Array[Expr],
+) -> (Expr, Array[Expr])? {
+  let mut common : Expr? = None
+  let remainders : Array[Expr] = []
+  for item in items {
+    match item {
+      Expr::Mul(factors) => {
+        let wild_factors : Array[Expr] = []
+        let plain_factors : Array[Expr] = []
+        for factor in factors {
+          if expr_contains_wild(factor) {
+            wild_factors.push(factor)
+          } else {
+            plain_factors.push(factor)
+          }
+        }
+        guard wild_factors.length() == 1 else { return None }
+        let factor = wild_factors[0]
+        match common {
+          Some(existing) if compare_expr(existing, factor) != 0 => return None
+          Some(_) => ()
+          None => common = Some(factor)
+        }
+        remainders.push(combine_commutative_items(plain_factors, false))
+      }
+      _ if expr_contains_wild(item) => {
+        match common {
+          Some(existing) if compare_expr(existing, item) != 0 => return None
+          Some(_) => ()
+          None => common = Some(item)
+        }
+        remainders.push(int(1))
+      }
+      _ => return None
+    }
+  }
+  common.map(factor => (factor, remainders))
+}
+
+///|
 fn remove_exact_commutative_items(
   exact_items : Array[Expr],
   expr_items : Array[Expr],
@@ -114,6 +155,21 @@ fn match_commutative_items(
     } else {
       exact_items.push(item)
     }
+  }
+  if is_add && wild_items.length() == 1 {
+    let remainder = match remove_exact_commutative_items(exact_items, expr_items) {
+      Some(items) => combine_commutative_items(items, true)
+      None =>
+        match exact_items.length() {
+          0 => combine_commutative_items(expr_items, true)
+          _ =>
+            add([
+              combine_commutative_items(expr_items, true),
+              mul([int(-1), combine_commutative_items(exact_items, true)]),
+            ])
+        }
+    }
+    return expr_match(wild_items[0], remainder, repl_dict=repl_dict)
   }
   let remaining_expr = match remove_exact_commutative_items(exact_items, expr_items) {
     Some(items) => items
@@ -277,6 +333,36 @@ pub fn expr_match(
     return Some(clone_match_env(repl_dict))
   }
   match pattern {
+    Expr::Add(pattern_items) => {
+      match common_add_wild_factor(pattern_items) {
+        Some((factor, remainders)) =>
+          return expr_match(
+            mul([factor, combine_commutative_items(remainders, true)]),
+            expr,
+            repl_dict=repl_dict,
+          )
+        None => ()
+      }
+      match expr {
+        Expr::Add(_) => ()
+        _ => return expr_match(pattern, Expr::Add([expr]), repl_dict=repl_dict)
+      }
+    }
+    Expr::Mul(pattern_items) if is_zero(expr) => {
+      let wild_items : Array[Expr] = []
+      for item in pattern_items {
+        if expr_contains_wild(item) {
+          wild_items.push(item)
+        }
+      }
+      if !wild_items.is_empty() {
+        return expr_match(
+          combine_commutative_items(wild_items, false),
+          int(0),
+          repl_dict=repl_dict,
+        )
+      }
+    }
     Expr::Pow(base, exp) if is_one(expr) && !expr_contains_wild(base) =>
       return expr_match(exp, int(0), repl_dict=repl_dict)
     _ => ()
