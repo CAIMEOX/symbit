@@ -78,7 +78,11 @@ fn match_count_ops(expr : Expr) -> Int {
             _ => false
           }
           if is_one(denominator) {
-            let mut count = if items.is_empty() { 0 } else { items.length() - 1 }
+            let mut count = if items.is_empty() {
+              0
+            } else {
+              items.length() - 1
+            }
             for item in items {
               count += match_count_ops(item)
             }
@@ -102,8 +106,7 @@ fn match_count_ops(expr : Expr) -> Int {
         Some(value) if value.compare(-1N) == 0 => 1 + match_count_ops(base)
         _ => 1 + match_count_ops(base) + match_count_ops(exp)
       }
-    Expr::Mod(lhs, rhs) =>
-      1 + match_count_ops(lhs) + match_count_ops(rhs)
+    Expr::Mod(lhs, rhs) => 1 + match_count_ops(lhs) + match_count_ops(rhs)
     Expr::Apply(head, args) => {
       let mut count = 1 + match_count_ops(head)
       for arg in args {
@@ -136,7 +139,9 @@ fn match_count_ops(expr : Expr) -> Int {
       count
     }
     Expr::Subs(inner, variable, value) =>
-      1 + match_count_ops(inner) + match_count_ops(variable) +
+      1 +
+      match_count_ops(inner) +
+      match_count_ops(variable) +
       match_count_ops(value)
     Expr::Lambda(vars, body) =>
       1 + match_count_ops(vars) + match_count_ops(body)
@@ -154,40 +159,41 @@ fn split_fraction_for_match(expr : Expr) -> (Expr, Expr)? {
     if exponent.compare(1N) == 0 {
       items.push(base)
     } else {
-      items.push(pow(base, Expr::Number(@symnum.BigRational::from_bigint(exponent))))
+      items.push(
+        pow(base, Expr::Number(@symnum.BigRational::from_bigint(exponent))),
+      )
     }
   }
   let push_term = fn(term : Expr, sign : Int) -> Bool {
     match normalize_legacy_expr(term) {
       Expr::Number(value) => {
-        coeff =
-          if sign >= 0 {
-            coeff.mul_r(value)
-          } else {
-            coeff.div_r(value) catch { _ => return false }
+        coeff = if sign >= 0 {
+          coeff.mul_r(value)
+        } else {
+          coeff.div_r(value) catch {
+            _ => return false
           }
+        }
         true
       }
       Expr::Pow(base, exp) =>
         match exact_integer_value(exp) {
-          Some(value) if value.compare(0N) < 0 =>
-            {
-              if sign >= 0 {
-                push_power(denom_items, base, value.neg())
-              } else {
-                push_power(numer_items, base, value.neg())
-              }
-              true
+          Some(value) if value.compare(0N) < 0 => {
+            if sign >= 0 {
+              push_power(denom_items, base, value.neg())
+            } else {
+              push_power(numer_items, base, value.neg())
             }
-          Some(value) =>
-            {
-              if sign >= 0 {
-                push_power(numer_items, base, value)
-              } else {
-                push_power(denom_items, base, value)
-              }
-              true
+            true
+          }
+          Some(value) => {
+            if sign >= 0 {
+              push_power(numer_items, base, value)
+            } else {
+              push_power(denom_items, base, value)
             }
+            true
+          }
           None => {
             if sign >= 0 {
               numer_items.push(term)
@@ -208,30 +214,32 @@ fn split_fraction_for_match(expr : Expr) -> (Expr, Expr)? {
     }
   }
   match expr {
-    Expr::Mul(items) => {
+    Expr::Mul(items) =>
       for item in items {
         if !push_term(item, 1) {
           return None
         }
       }
-    }
-    Expr::Pow(_, _) | Expr::Number(_) => {
-      if !push_term(expr, 1) {
-        return None
-      }
-    }
+    Expr::Pow(_, _) | Expr::Number(_) => if !push_term(expr, 1) { return None }
     _ => return None
   }
   if coeff.denominator().compare(1N) != 0 {
-    denom_items.push(Expr::Number(@symnum.BigRational::from_bigint(coeff.denominator())))
+    denom_items.push(
+      Expr::Number(@symnum.BigRational::from_bigint(coeff.denominator())),
+    )
   }
   if coeff.numerator().compare(1N) != 0 || numer_items.is_empty() {
-    numer_items.insert(0, Expr::Number(@symnum.BigRational::from_bigint(coeff.numerator())))
+    numer_items.insert(
+      0,
+      Expr::Number(@symnum.BigRational::from_bigint(coeff.numerator())),
+    )
   }
-  Some((
-    combine_commutative_items(numer_items, false),
-    combine_commutative_items(denom_items, false),
-  ))
+  Some(
+    (
+      combine_commutative_items(numer_items, false),
+      combine_commutative_items(denom_items, false),
+    ),
+  )
 }
 
 ///|
@@ -422,7 +430,8 @@ fn match_commutative_items(
             ])
         }
     }
-    if exact_items.length() > 0 && match_count_ops(remainder) > match_count_ops(expr_sum) {
+    if exact_items.length() > 0 &&
+      match_count_ops(remainder) > match_count_ops(expr_sum) {
       return None
     }
     return expr_match(wild_items[0], remainder, repl_dict~)

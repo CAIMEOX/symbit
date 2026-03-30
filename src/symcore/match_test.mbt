@@ -874,7 +874,11 @@ test "expr_match follows more SymPy source mixed additive term cases" {
   let xw = Expr::Wild("X", [], [])
   let yw = Expr::Wild("Y", [], [])
 
-  match expr_match(add([mul([int(5), xw]), mul([int(-1), yw])]), add([mul([int(5), y]), mul([int(-1), x])])) {
+  match
+    expr_match(
+      add([mul([int(5), xw]), mul([int(-1), yw])]),
+      add([mul([int(5), y]), mul([int(-1), x])]),
+    ) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(xw).unwrap_or(int(0))), content="y")
       inspect(@symprint.to_string(env.get(yw).unwrap_or(int(0))), content="x")
@@ -882,7 +886,8 @@ test "expr_match follows more SymPy source mixed additive term cases" {
     None => fail("expected source-driven 5*X - Y term match")
   }
 
-  match expr_match(add([x, mul([xw, z])]), add([x, mul([add([y, int(-1)]), z])])) {
+  match
+    expr_match(add([x, mul([xw, z])]), add([x, mul([add([y, int(-1)]), z])])) {
     Some(env) => {
       let matched = env.get(xw).unwrap_or(int(0))
       if compare_expr(matched, add([y, int(-1)])) != 0 {
@@ -901,7 +906,10 @@ test "expr_match follows more SymPy source mixed additive term cases" {
         mul([
           int(-1),
           function("log", [mul([xw, pow(y, int(-1))])]),
-          add([int(1), mul([int(-1), function("exp", [mul([x, pow(y, int(-1))])])])]),
+          add([
+            int(1),
+            mul([int(-1), function("exp", [mul([x, pow(y, int(-1))])])]),
+          ]),
         ]),
       ]),
       add([
@@ -909,7 +917,10 @@ test "expr_match follows more SymPy source mixed additive term cases" {
         mul([
           int(-1),
           function("log", [mul([x, pow(y, int(-1))])]),
-          add([int(1), mul([int(-1), function("exp", [mul([x, pow(y, int(-1))])])])]),
+          add([
+            int(1),
+            mul([int(-1), function("exp", [mul([x, pow(y, int(-1))])])]),
+          ]),
         ]),
       ]),
     ) {
@@ -944,12 +955,17 @@ test "expr_match follows more SymPy source collected derivative coefficient case
       let matched_b = env.get(b3).unwrap_or(int(0))
       let matched_c = env.get(c3).unwrap_or(int(0))
       if compare_expr(matched_a, pow(add([x, int(-2)]), int(2))) != 0 {
-        fail("expected a3 to match (x - 2)**2, got \{@symprint.to_string(matched_a)}")
+        fail(
+          "expected a3 to match (x - 2)**2, got \{@symprint.to_string(matched_a)}",
+        )
       }
       if compare_expr(matched_b, add([x, int(-2)])) != 0 {
-        fail("expected b3 to match x - 2, got \{@symprint.to_string(matched_b)}")
+        fail(
+          "expected b3 to match x - 2, got \{@symprint.to_string(matched_b)}",
+        )
       }
-      if compare_expr(matched_c, add([pow(add([x, int(-2)]), int(2)), int(-4)])) != 0 {
+      if compare_expr(matched_c, add([pow(add([x, int(-2)]), int(2)), int(-4)])) !=
+        0 {
         fail(
           "expected c3 to match (x - 2)**2 - 4, got \{@symprint.to_string(matched_c)}",
         )
@@ -971,18 +987,25 @@ test "expr_match follows more SymPy source collected derivative coefficient case
       let matched_a = env.get(a3).unwrap_or(int(0))
       let matched_b = env.get(b3).unwrap_or(int(0))
       let matched_c = env.get(c3).unwrap_or(int(0))
-      if compare_expr(matched_a, add([x, int(-4), mul([int(4), pow(x, int(-1))])])) != 0 {
+      if compare_expr(
+          matched_a,
+          add([x, int(-4), mul([int(4), pow(x, int(-1))])]),
+        ) !=
+        0 {
         fail(
           "expected a3 to match x - 4 + 4/x, got \{@symprint.to_string(matched_a)}",
         )
       }
-      if compare_expr(matched_b, add([int(1), mul([int(-2), pow(x, int(-1))])])) != 0 {
+      if compare_expr(matched_b, add([int(1), mul([int(-2), pow(x, int(-1))])])) !=
+        0 {
         fail(
           "expected b3 to match 1 - 2/x, got \{@symprint.to_string(matched_b)}",
         )
       }
       if compare_expr(matched_c, add([x, int(-4)])) != 0 {
-        fail("expected c3 to match x - 4, got \{@symprint.to_string(matched_c)}")
+        fail(
+          "expected c3 to match x - 4, got \{@symprint.to_string(matched_c)}",
+        )
       }
     }
     None => fail("expected collected rational derivative coefficient match")
@@ -995,7 +1018,11 @@ test "expr_match follows more SymPy source float and derivative remainder cases"
   let a = Expr::Wild("a", [], [])
   let b = Expr::Wild("b", [], [])
   let float_arg = Expr::Float(@symcore.Float::from_double(0.12345))
-  match expr_match(mul([a, pow(function("cos", [b]), int(2))]), pow(function("cos", [float_arg]), int(2))) {
+  match
+    expr_match(
+      mul([a, pow(function("cos", [b]), int(2))]),
+      pow(function("cos", [float_arg]), int(2)),
+    ) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
       let matched_b = env.get(b).unwrap_or(int(0))
@@ -1035,14 +1062,12 @@ test "expr_match follows more SymPy source product-derivative coefficient cases"
   let a = Expr::Wild("a", [fx, gx], [])
   let b = Expr::Wild("b", [fx, gx], [])
   let c = Expr::Wild("c", [fx, gx], [])
-  let expr = add([
-    mul([dgx, dfx]),
-    mul([gx, d2fx]),
-  ])
+  let expr = add([mul([dgx, dfx]), mul([gx, d2fx])])
   match expr_match(add([mul([dgx, dfx]), mul([gx, d2fx]), c]), expr) {
     Some(env) =>
       inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
-    None => fail("expected source-driven zero remainder product-derivative match")
+    None =>
+      fail("expected source-driven zero remainder product-derivative match")
   }
   match expr_match(add([mul([a, dgx, dfx]), mul([b, gx, d2fx]), c]), expr) {
     Some(env) => {
@@ -1093,7 +1118,8 @@ test "expr_match follows more SymPy source multiplicative wildcard power cases" 
       inspect(@symprint.to_string(env.get(aw).unwrap_or(int(0))), content="7")
       inspect(@symprint.to_string(env.get(bw).unwrap_or(int(1))), content="0")
     }
-    None => fail("expected source-driven scaled multiplicative wildcard power match")
+    None =>
+      fail("expected source-driven scaled multiplicative wildcard power match")
   }
 }
 
@@ -1116,13 +1142,13 @@ test "expr_match follows more SymPy source additive exclude ambiguity cases" {
         let mut saw_rest = false
         for _, value in env {
           saw_zero = saw_zero || compare_expr(value, int(0)) == 0
-          saw_rest =
-            saw_rest || compare_expr(value, expected_rest) == 0
+          saw_rest = saw_rest || compare_expr(value, expected_rest) == 0
         }
         assert_true(saw_zero)
         assert_true(saw_rest)
       }
-      None => fail("expected additive exclude ambiguity match from SymPy source")
+      None =>
+        fail("expected additive exclude ambiguity match from SymPy source")
     }
   }
 }
@@ -1139,7 +1165,9 @@ test "expr_match follows more SymPy source trig and infinity wildcard cases" {
         mul([function("sin", [p]), function("sin", [q]), c]),
         pow(function("sin", [x]), int(2)),
       )
-      .unwrap_or({}).get(c).unwrap_or(int(-1)),
+      .unwrap_or({})
+      .get(c)
+      .unwrap_or(int(-1)),
     ),
     content="1",
   )
@@ -1174,7 +1202,8 @@ test "expr_match follows more SymPy source trig and infinity wildcard cases" {
       assert_true(
         compare_expr(env.get(a).unwrap_or(int(0)), mul([int(-1), x])) == 0,
       )
-    None => fail("expected infinity coefficient wildcard match from SymPy source")
+    None =>
+      fail("expected infinity coefficient wildcard match from SymPy source")
   }
 }
 
@@ -1183,26 +1212,17 @@ test "expr_match follows more SymPy source reciprocal edge cases" {
   let x = Expr::Symbol("x")
   let a = Expr::Wild("a", [], [])
   assert_false(
-    expr_match(
-      add([a, mul([int(-1), x])]),
-      add([x, int(-2)]),
-    )
-    is Some(_),
+    expr_match(add([a, mul([int(-1), x])]), add([x, int(-2)])) is Some(_),
   )
   assert_false(
-    expr_match(
-      mul([a, x]),
-      mul([int(6), pow(x, int(-1))]),
-    )
-    is Some(_),
+    expr_match(mul([a, x]), mul([int(6), pow(x, int(-1))])) is Some(_),
   )
   inspect(
     @symprint.to_string(
-      expr_match(
-        mul([a, pow(x, int(-1))]),
-        mul([int(6), pow(x, int(-2))]),
-      )
-      .unwrap_or({}).get(a).unwrap_or(int(0)),
+      expr_match(mul([a, pow(x, int(-1))]), mul([int(6), pow(x, int(-2))]))
+      .unwrap_or({})
+      .get(a)
+      .unwrap_or(int(0)),
     ),
     content="6/x",
   )
@@ -1236,7 +1256,11 @@ test "expr_match follows more SymPy source polynomial coefficient cases" {
     }
     None => fail("expected source-driven polynomial coefficient match")
   }
-  match expr_match(pattern, add([mul([int(4), pow(x, int(3))]), mul([int(2), x]), int(1)])) {
+  match
+    expr_match(
+      pattern,
+      add([mul([int(4), pow(x, int(3))]), mul([int(2), x]), int(1)]),
+    ) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="4")
       inspect(@symprint.to_string(env.get(b).unwrap_or(int(1))), content="0")
@@ -1246,14 +1270,17 @@ test "expr_match follows more SymPy source polynomial coefficient cases" {
     None => fail("expected source-driven polynomial coefficient zero fill")
   }
   let sqrt2 = function("sqrt", [int(2)])
-  match expr_match(
-    add([a, mul([b, x]), mul([c, pow(x, int(2))])]),
-    add([x, sqrt2, int(3)]),
-  ) {
+  match
+    expr_match(
+      add([a, mul([b, x]), mul([c, pow(x, int(2))])]),
+      add([x, sqrt2, int(3)]),
+    ) {
     Some(env) => {
       let a_value = env.get(a).unwrap_or(int(0))
       if compare_expr(a_value, add([sqrt2, int(3)])) != 0 {
-        fail("expected constant coefficient to match sqrt(2) + 3, got \{@symprint.to_string(a_value)}")
+        fail(
+          "expected constant coefficient to match sqrt(2) + 3, got \{@symprint.to_string(a_value)}",
+        )
       }
       inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="1")
       inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
@@ -1278,24 +1305,37 @@ test "expr_match follows more SymPy source gamma collection cases" {
       function("log", [mul([int(2), Expr::NumberSymbol(NumberSymbolKind::Pi)])]),
     ]),
   ])
-  let pattern = add([
-    mul([a, function("log", [gamma])]),
-    mul([b, gamma]),
-    c,
-  ])
+  let pattern = add([mul([a, function("log", [gamma])]), mul([b, gamma]), c])
   match expr_match(pattern, eq) {
     Some(env) => {
-      inspect(
-        @symprint.to_string(env.get(a).unwrap_or(int(0))),
-        content="-1/2",
-      )
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="-1/2")
       let b_value = env.get(b).unwrap_or(int(0))
-      if compare_expr(b_value, mul([rational_from_ints(-1, 2), pow(add([x, mul([int(-1), mu])]), int(2))])) != 0 {
-        fail("expected gamma coefficient match, got \{@symprint.to_string(b_value)}")
+      if compare_expr(
+          b_value,
+          mul([
+            rational_from_ints(-1, 2),
+            pow(add([x, mul([int(-1), mu])]), int(2)),
+          ]),
+        ) !=
+        0 {
+        fail(
+          "expected gamma coefficient match, got \{@symprint.to_string(b_value)}",
+        )
       }
       let c_value = env.get(c).unwrap_or(int(0))
-      if compare_expr(c_value, mul([rational_from_ints(1, 2), function("log", [mul([int(2), Expr::NumberSymbol(NumberSymbolKind::Pi)])])])) != 0 {
-        fail("expected gamma remainder match, got \{@symprint.to_string(c_value)}")
+      if compare_expr(
+          c_value,
+          mul([
+            rational_from_ints(1, 2),
+            function("log", [
+              mul([int(2), Expr::NumberSymbol(NumberSymbolKind::Pi)]),
+            ]),
+          ]),
+        ) !=
+        0 {
+        fail(
+          "expected gamma remainder match, got \{@symprint.to_string(c_value)}",
+        )
       }
     }
     None => fail("expected source-driven gamma collection match")
@@ -1324,7 +1364,10 @@ test "expr_match follows more SymPy source expanded gamma collection cases" {
       ]),
     ]),
     mul([rational_from_ints(1, 2), function("log", [int(2)])]),
-    mul([rational_from_ints(1, 2), function("log", [Expr::NumberSymbol(NumberSymbolKind::Pi)])]),
+    mul([
+      rational_from_ints(1, 2),
+      function("log", [Expr::NumberSymbol(NumberSymbolKind::Pi)]),
+    ]),
   ])
 
   let expected_gamma_coeff = add([
@@ -1334,34 +1377,56 @@ test "expr_match follows more SymPy source expanded gamma collection cases" {
   ])
   let expected_const = add([
     mul([rational_from_ints(1, 2), function("log", [int(2)])]),
-    mul([rational_from_ints(1, 2), function("log", [Expr::NumberSymbol(NumberSymbolKind::Pi)])]),
+    mul([
+      rational_from_ints(1, 2),
+      function("log", [Expr::NumberSymbol(NumberSymbolKind::Pi)]),
+    ]),
   ])
 
-  match expr_match(add([mul([a, function("log", [gamma])]), mul([b, gamma]), c]), expanded) {
+  match
+    expr_match(
+      add([mul([a, function("log", [gamma])]), mul([b, gamma]), c]),
+      expanded,
+    ) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="-1/2")
       let b_value = env.get(b).unwrap_or(int(0))
       if compare_expr(b_value, expected_gamma_coeff) != 0 {
-        fail("expected expanded gamma coefficient match, got \{@symprint.to_string(b_value)}")
+        fail(
+          "expected expanded gamma coefficient match, got \{@symprint.to_string(b_value)}",
+        )
       }
       let c_value = env.get(c).unwrap_or(int(0))
       if compare_expr(c_value, expected_const) != 0 {
-        fail("expected expanded gamma constant match, got \{@symprint.to_string(c_value)}")
+        fail(
+          "expected expanded gamma constant match, got \{@symprint.to_string(c_value)}",
+        )
       }
     }
     None => fail("expected source-driven expanded gamma match")
   }
 
-  match expr_match(add([mul([g1, function("log", [gamma])]), mul([g2, gamma]), g3]), expanded) {
+  match
+    expr_match(
+      add([mul([g1, function("log", [gamma])]), mul([g2, gamma]), g3]),
+      expanded,
+    ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(g1).unwrap_or(int(0))), content="-1/2")
+      inspect(
+        @symprint.to_string(env.get(g1).unwrap_or(int(0))),
+        content="-1/2",
+      )
       let g2_value = env.get(g2).unwrap_or(int(0))
       if compare_expr(g2_value, expected_gamma_coeff) != 0 {
-        fail("expected expanded excluded gamma coefficient match, got \{@symprint.to_string(g2_value)}")
+        fail(
+          "expected expanded excluded gamma coefficient match, got \{@symprint.to_string(g2_value)}",
+        )
       }
       let g3_value = env.get(g3).unwrap_or(int(0))
       if compare_expr(g3_value, expected_const) != 0 {
-        fail("expected expanded excluded gamma constant match, got \{@symprint.to_string(g3_value)}")
+        fail(
+          "expected expanded excluded gamma constant match, got \{@symprint.to_string(g3_value)}",
+        )
       }
     }
     None => fail("expected source-driven expanded gamma excluded match")
