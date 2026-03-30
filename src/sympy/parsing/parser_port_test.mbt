@@ -699,6 +699,7 @@ test "symparse parity builtin callable semantics" {
     @symprint.to_string(parse_expr("S(sin(x))")),
     content=parse_expr_sstr("S(sin(x))"),
   )
+  inspect(@symprint.to_string(parse_expr("S(x, y)")), content=parse_expr_sstr("S(x, y)"))
   inspect(
     try parse_expr("Rational(pi)") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
@@ -970,6 +971,7 @@ test "symparse parity builtin callable semantics" {
     @symprint.to_string(ast_parse_expr("S(sin(x))")),
     content=ast_parse_expr_sstr("S(sin(x))"),
   )
+  inspect(@symprint.to_string(ast_parse_expr("S(x, y)")), content=ast_parse_expr_sstr("S(x, y)"))
   inspect(
     try ast_parse_expr("pi(x)") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail

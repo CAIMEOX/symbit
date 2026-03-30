@@ -381,6 +381,10 @@ test "formal application helpers roundtrip named and undefined heads" {
     Some(expr) => inspect(@symprint.to_string(expr), content="sin(x)")
     _ => fail("expected S raw constructor semantics through apply")
   }
+  match apply(Expr::FunctionHead("S"), [x, Expr::Symbol("y")]) {
+    Some(expr) => inspect(@symprint.to_string(expr), content="x")
+    _ => fail("expected multi-arg S to return first sympified argument")
+  }
   match apply(Expr::FunctionHead("S"), []) {
     Some(Expr::Apply(Expr::FunctionHead("S"), [])) => ()
     _ => fail("expected unsupported S arity to stay canonical Apply")
@@ -757,6 +761,9 @@ test "xreplace performs exact structural replacement" {
     ),
     content="Derivative(y + sin(z), z)",
   )
+  let legacy_sinx = Expr::Function("sin", [x])
+  inspect(@symprint.to_string(xreplace(function("sin", [x]), [(legacy_sinx, y)])), content="y")
+  assert_true(has(function("sin", [x]), legacy_sinx))
 }
 
 ///|

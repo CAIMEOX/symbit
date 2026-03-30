@@ -32,3 +32,33 @@ test "with_distribute and with_exp_is_pow control canonical constructors" {
     content="E**x",
   )
 }
+
+///|
+test "legacy normalization ignores temporary constructor parameters" {
+  let x = Expr::Symbol("x")
+  let half = rational_from_ints(3, 2)
+  inspect(
+    @symprint.to_string(
+      with_evaluate(false, fn() {
+        normalize_legacy_expr(Expr::Function("Eq", [x, x]))
+      }),
+    ),
+    content="True",
+  )
+  inspect(
+    @symprint.to_string(
+      with_evaluate(false, fn() {
+        normalize_legacy_expr(Expr::Function("Integer", [half]))
+      }),
+    ),
+    content="1",
+  )
+  inspect(
+    @symprint.to_string(
+      with_exp_is_pow(true, fn() {
+        normalize_legacy_expr(Expr::Function("exp", [x]))
+      }),
+    ),
+    content="exp(x)",
+  )
+}

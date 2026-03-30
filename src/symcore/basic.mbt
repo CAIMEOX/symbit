@@ -541,7 +541,13 @@ pub fn sorted_dict_entries(items : Array[(Expr, Expr)]) -> Array[(Expr, Expr)] {
 
 ///|
 fn normalize_legacy_function(name : String, args : Array[Expr]) -> Expr {
-  function(name, args.map(normalize_legacy_expr))
+  with_evaluate(true, fn() {
+    with_distribute(true, fn() {
+      with_exp_is_pow(false, fn() {
+        function(name, args.map(normalize_legacy_expr))
+      })
+    })
+  })
 }
 
 ///|
@@ -1443,6 +1449,8 @@ pub fn free_symbols(expr : Expr) -> Array[Expr] {
 
 ///|
 pub fn has(expr : Expr, needle : Expr) -> Bool {
+  let expr = normalize_legacy_expr(expr)
+  let needle = normalize_legacy_expr(needle)
   if expr == needle {
     return true
   }

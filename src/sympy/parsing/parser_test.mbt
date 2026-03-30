@@ -664,6 +664,7 @@ test "ast parser compatibility entrypoint" {
   inspect(@symprint.to_string(ast_parse_expr("S(False)")), content="False")
   inspect(@symprint.to_string(ast_parse_expr("S(1/2)")), content="1/2")
   inspect(@symprint.to_string(ast_parse_expr("S(sin(x))")), content="sin(x)")
+  inspect(@symprint.to_string(ast_parse_expr("S(x, y)")), content="x")
   guard (try? ast_parse_expr("pi(x)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: 'Pi' object is not callable" else {
@@ -854,6 +855,7 @@ test "symparse explicit core constructor calls stay canonical" {
   inspect(@symprint.to_string(parse_expr("S(False)")), content="False")
   inspect(@symprint.to_string(parse_expr("S(1/2)")), content="1/2")
   inspect(@symprint.to_string(parse_expr("S(sin(x))")), content="sin(x)")
+  inspect(@symprint.to_string(parse_expr("S(x, y)")), content="x")
   guard (try? parse_expr("Rational(pi)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: invalid input: pi" else {

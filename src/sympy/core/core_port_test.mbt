@@ -519,6 +519,13 @@ test "symcore source-driven S constructor semantics stay canonical" {
     ),
     content="()",
   )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(@symcore.Expr::FunctionHead("S"), [x, @symcore.Expr::Symbol("y")])
+      .unwrap_or(@symcore.int(0)),
+    ),
+    content="x",
+  )
 }
 
 ///|
@@ -676,6 +683,36 @@ test "symcore parity xreplace exact structural replacement" {
     content="x + y + z",
   )
   inspect(core_xreplace_sstr(expr, x, @symcore.int(2)), content="y + f(2) + 2")
+}
+
+///|
+test "symcore legacy compatibility normalizes against canonical needles and parameters" {
+  let x = @symcore.Expr::Symbol("x")
+  let legacy_sinx = @symcore.Expr::Function("sin", [x])
+  inspect(
+    @symcore.has(@symcore.function("sin", [x]), legacy_sinx).to_string(),
+    content="true",
+  )
+  inspect(
+    core_expr_sstr(@symcore.xreplace(@symcore.function("sin", [x]), [(legacy_sinx, x)])),
+    content="x",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.with_evaluate(false, fn() {
+        @symcore.normalize_legacy_expr(@symcore.Expr::Function("Eq", [x, x]))
+      }),
+    ),
+    content="True",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.with_exp_is_pow(true, fn() {
+        @symcore.normalize_legacy_expr(@symcore.Expr::Function("exp", [x]))
+      }),
+    ),
+    content="exp(x)",
+  )
 }
 
 ///|

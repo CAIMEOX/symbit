@@ -551,11 +551,16 @@ pub fn replace(
 
 ///|
 pub fn xreplace(expr : Expr, rules : Array[(Expr, Expr)]) -> Expr {
-  for rule in rules {
+  let expr = normalize_legacy_expr(expr)
+  let normalized_rules = rules.map(rule => {
+    let (old_expr, new_expr) = rule
+    (normalize_legacy_expr(old_expr), normalize_legacy_expr(new_expr))
+  })
+  for rule in normalized_rules {
     let (old_expr, new_expr) = rule
     if expr == old_expr {
       return new_expr
     }
   }
-  map_children(expr, child => xreplace(child, rules))
+  map_children(expr, child => xreplace(child, normalized_rules))
 }
