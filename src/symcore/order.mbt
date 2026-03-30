@@ -6,7 +6,7 @@ fn variant_rank(expr : Expr) -> Int {
     Expr::FunctionHead(_) => 2
     Expr::UndefinedFunction(_) => 3
     Expr::IdentityFunction => 4
-    Expr::Dummy(_, _) | Expr::Wild(_, _, _) => 5
+    Expr::Dummy(_, _) | Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => 5
     Expr::NumberSymbol(_) => 6
     Expr::Symbol(_) => 7
     Expr::Apply(_, _) => 8
@@ -233,6 +233,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::Symbol(sb) => sa.compare(sb)
         Expr::Dummy(name_b, _) => sa.compare(dummy_display_name(name_b))
         Expr::Wild(name_b, _, _) => sa.compare(wild_display_name(name_b))
+        Expr::WildFunction(name_b, _) => sa.compare(wild_display_name(name_b))
         _ => 0
       }
     Expr::Dummy(name_a, id_a) =>
@@ -249,6 +250,8 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
           }
         }
         Expr::Wild(name_b, _, _) =>
+          dummy_display_name(name_a).compare(wild_display_name(name_b))
+        Expr::WildFunction(name_b, _) =>
           dummy_display_name(name_a).compare(wild_display_name(name_b))
         _ => 0
       }
@@ -272,6 +275,36 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
             }
           }
         }
+        Expr::WildFunction(name_b, nargs_b) => {
+          let name_cmp = name_a.compare(name_b)
+          if name_cmp != 0 {
+            name_cmp
+          } else {
+            compare_int_arrays([], nargs_b)
+          }
+        }
+        Expr::FunctionHead(name_b) => wild_display_name(name_a).compare(name_b)
+        Expr::UndefinedFunction(name_b) =>
+          wild_display_name(name_a).compare(name_b)
+        _ => 0
+      }
+    Expr::WildFunction(name_a, nargs_a) =>
+      match b {
+        Expr::NumberSymbol(nb) =>
+          wild_display_name(name_a).compare(number_symbol_name(nb))
+        Expr::Symbol(sb) => wild_display_name(name_a).compare(sb)
+        Expr::Dummy(name_b, _) =>
+          wild_display_name(name_a).compare(dummy_display_name(name_b))
+        Expr::Wild(name_b, _, _) =>
+          wild_display_name(name_a).compare(wild_display_name(name_b))
+        Expr::WildFunction(name_b, nargs_b) => {
+          let name_cmp = name_a.compare(name_b)
+          if name_cmp != 0 {
+            name_cmp
+          } else {
+            compare_int_arrays(nargs_a, nargs_b)
+          }
+        }
         Expr::FunctionHead(name_b) => wild_display_name(name_a).compare(name_b)
         Expr::UndefinedFunction(name_b) =>
           wild_display_name(name_a).compare(name_b)
@@ -283,6 +316,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::Symbol(sb) => name_a.compare(sb)
         Expr::Dummy(name_b, _) => name_a.compare(dummy_display_name(name_b))
         Expr::Wild(name_b, _, _) => name_a.compare(wild_display_name(name_b))
+        Expr::WildFunction(name_b, _) => name_a.compare(wild_display_name(name_b))
         Expr::FunctionHead(name_b) => name_a.compare(name_b)
         Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
         _ => 0
@@ -293,6 +327,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::Symbol(sb) => name_a.compare(sb)
         Expr::Dummy(name_b, _) => name_a.compare(dummy_display_name(name_b))
         Expr::Wild(name_b, _, _) => name_a.compare(wild_display_name(name_b))
+        Expr::WildFunction(name_b, _) => name_a.compare(wild_display_name(name_b))
         Expr::FunctionHead(name_b) => name_a.compare(name_b)
         Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
         _ => 0
@@ -472,6 +507,20 @@ fn compare_arrays(xs : Array[Expr], ys : Array[Expr]) -> Int {
 }
 
 ///|
+fn compare_int_arrays(xs : Array[Int], ys : Array[Int]) -> Int {
+  let len_x = xs.length()
+  let len_y = ys.length()
+  let min_len = if len_x < len_y { len_x } else { len_y }
+  for i in 0..<min_len {
+    let cmp = cmp_int(xs[i], ys[i])
+    if cmp != 0 {
+      return cmp
+    }
+  }
+  cmp_int(len_x, len_y)
+}
+
+///|
 fn compare_dict_items(
   xs : Array[(Expr, Expr)],
   ys : Array[(Expr, Expr)],
@@ -561,6 +610,12 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
       }
       for property in properties {
         hasher.combine_string(wild_property_name(property))
+      }
+    }
+    Expr::WildFunction(name, nargs) => {
+      hasher.combine_string(name)
+      for arity in nargs {
+        hasher.combine_int(arity)
       }
     }
     Expr::FunctionHead(name) => hasher.combine_string(name)

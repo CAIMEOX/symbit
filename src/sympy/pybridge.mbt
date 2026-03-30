@@ -27,6 +27,8 @@ fn expr_to_sympy_cached(
     @symcore.Expr::Dummy(name, id) => sympy_dummy_obj(name, id, dummy_cache)
     @symcore.Expr::Wild(name, exclude, properties) =>
       sympy_wild_obj(name, exclude, properties, dummy_cache, wild_cache)
+    @symcore.Expr::WildFunction(name, nargs) =>
+      sympy_wild_function_obj(name, nargs)
     @symcore.Expr::FunctionHead(name) => sympy_function_head_obj(name)
     @symcore.Expr::UndefinedFunction(name) => sympy_undefined_function_obj(name)
     @symcore.Expr::Apply(head, args) =>
@@ -421,6 +423,20 @@ fn sympy_wild_obj(
 ///|
 fn sympy_undefined_function_obj(name : String) -> @py.PyObject raise {
   sympy_call_obj("sympy.Function", [OracleArg::Str(name)])
+}
+
+///|
+fn sympy_wild_function_obj(
+  name : String,
+  nargs : Array[Int],
+) -> @py.PyObject raise {
+  let kwargs : Map[String, OracleArg] = {}
+  match nargs {
+    [] => ()
+    [arity] => kwargs["nargs"] = OracleArg::Int(arity)
+    _ => kwargs["nargs"] = OracleArg::IntList(nargs)
+  }
+  sympy_call_obj("sympy.WildFunction", [OracleArg::Str(name)], kwargs~)
 }
 
 ///|

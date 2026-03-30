@@ -60,6 +60,7 @@ pub enum ExprForm {
   Symbol(String)
   Dummy(String, Int)
   Wild(String, Array[Expr], Array[WildProperty])
+  WildFunction(String, Array[Int])
   IdentityFunction
   FunctionHead(String)
   UndefinedFunction(String)
@@ -431,7 +432,8 @@ fn lambda_signature_items(vars : Expr) -> Array[Expr] {
 ///|
 fn is_lambda_signature_atom(expr : Expr) -> Bool {
   match normalize_legacy_expr(expr) {
-    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_, _, _) => true
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_, _, _) =>
+      true
     _ => false
   }
 }
@@ -582,6 +584,7 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Dummy(name, id) => ExprForm::Dummy(name, id)
     Expr::Wild(name, exclude, properties) =>
       ExprForm::Wild(name, exclude, properties)
+    Expr::WildFunction(name, nargs) => ExprForm::WildFunction(name, nargs)
     Expr::FunctionHead(name) => ExprForm::FunctionHead(name)
     Expr::UndefinedFunction(name) => ExprForm::UndefinedFunction(name)
     Expr::Apply(head, args) => ExprForm::Apply(head, args)
@@ -800,6 +803,7 @@ pub fn is_atomic(expr : Expr) -> Bool {
     | ExprForm::Symbol(_)
     | ExprForm::Dummy(_, _)
     | ExprForm::Wild(_, _, _)
+    | ExprForm::WildFunction(_, _)
     | ExprForm::IdentityFunction
     | ExprForm::FunctionHead(_)
     | ExprForm::UndefinedFunction(_)
@@ -819,6 +823,7 @@ pub fn head_name(expr : Expr) -> String {
     ExprForm::Symbol(name) => name
     ExprForm::Dummy(name, _) => dummy_display_name(name)
     ExprForm::Wild(name, _, _) => wild_display_name(name)
+    ExprForm::WildFunction(name, _) => wild_display_name(name)
     ExprForm::IdentityFunction => "IdentityFunction"
     ExprForm::FunctionHead(name) => name
     ExprForm::UndefinedFunction(name) => name
@@ -879,7 +884,7 @@ pub fn dummy_parts(expr : Expr) -> (String, Int)? {
 ///|
 pub fn wild_name(expr : Expr) -> String? {
   match expr {
-    Expr::Wild(name, _, _) => Some(name)
+    Expr::Wild(name, _, _) | Expr::WildFunction(name, _) => Some(name)
     _ => None
   }
 }
@@ -889,6 +894,14 @@ pub fn wild_parts(expr : Expr) -> (String, Array[Expr], Array[WildProperty])? {
   match expr {
     Expr::Wild(name, exclude, properties) =>
       Some((name, exclude.copy(), properties.copy()))
+    _ => None
+  }
+}
+
+///|
+pub fn wild_function_parts(expr : Expr) -> (String, Array[Int])? {
+  match expr {
+    Expr::WildFunction(name, nargs) => Some((name, nargs.copy()))
     _ => None
   }
 }
@@ -906,6 +919,7 @@ pub fn function_head_name(expr : Expr) -> String? {
   match expr_form(expr) {
     ExprForm::FunctionHead(name) => Some(name)
     ExprForm::UndefinedFunction(name) => Some(name)
+    ExprForm::WildFunction(name, _) => Some(name)
     _ => None
   }
 }
@@ -1030,6 +1044,7 @@ pub fn expr_kind(expr : Expr) -> Kind {
     | ExprForm::Symbol(_)
     | ExprForm::Dummy(_, _)
     | ExprForm::Wild(_, _, _) => Kind::NumberKind
+    ExprForm::WildFunction(_, _) => Kind::UndefinedKind
     ExprForm::Apply(head, args) => application_kind(head, args)
     ExprForm::Add(items) | ExprForm::Mul(items) => common_kind(items.map(expr_kind))
     ExprForm::Pow(base, exp) =>
@@ -1203,6 +1218,7 @@ pub fn func(expr : Expr) -> Expr? {
         ExprForm::Symbol(_) => Some(Expr::FunctionHead("Symbol"))
         ExprForm::Dummy(_, _) => Some(Expr::FunctionHead("Dummy"))
         ExprForm::Wild(_, _, _) => Some(Expr::FunctionHead("Wild"))
+        ExprForm::WildFunction(_, _) => Some(Expr::FunctionHead("WildFunction"))
         ExprForm::IdentityFunction =>
           Some(Expr::FunctionHead("IdentityFunction"))
         ExprForm::Boolean(value) =>
@@ -1276,6 +1292,7 @@ pub fn args(expr : Expr) -> Array[Expr] {
     | ExprForm::Symbol(_)
     | ExprForm::Dummy(_, _)
     | ExprForm::Wild(_, _, _)
+    | ExprForm::WildFunction(_, _)
     | ExprForm::IdentityFunction
     | ExprForm::FunctionHead(_)
     | ExprForm::UndefinedFunction(_)
@@ -1334,6 +1351,7 @@ fn remove_bound_symbol(out : Map[String, Expr], expr : Expr) -> Unit {
     Expr::Symbol(name) => ignore(out.remove("sym:\{name}"))
     Expr::Dummy(_, id) => ignore(out.remove("dummy:\{id}"))
     Expr::Wild(name, _, _) => ignore(out.remove("wild:\{name}"))
+    Expr::WildFunction(name, _) => ignore(out.remove("wildf:\{name}"))
     Expr::Tuple(items) =>
       for item in items {
         remove_bound_symbol(out, item)
@@ -1376,6 +1394,10 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
       out.set("wild:\{name}", expr)
       return
     }
+    Expr::WildFunction(name, _) => {
+      out.set("wildf:\{name}", expr)
+      return
+    }
     Expr::FunctionHead(_) | Expr::UndefinedFunction(_) | Expr::Boolean(_) =>
       return
     _ => ()
@@ -1387,6 +1409,7 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
     | ExprForm::NumberSymbol(_)
     | ExprForm::Dummy(_, _)
     | ExprForm::Wild(_, _, _)
+    | ExprForm::WildFunction(_, _)
     | ExprForm::IdentityFunction
     | ExprForm::FunctionHead(_)
     | ExprForm::UndefinedFunction(_)

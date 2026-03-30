@@ -9,6 +9,7 @@ pub(all) enum Expr {
   Symbol(String)
   Dummy(String, Int)
   Wild(String, Array[Expr], Array[WildProperty])
+  WildFunction(String, Array[Int])
   FunctionHead(String)
   UndefinedFunction(String)
   Apply(Expr, Array[Expr])
@@ -38,6 +39,7 @@ impl Show for Expr with to_string(self) {
     Expr::Symbol(s) => s
     Expr::Dummy(name, _) => dummy_display_name(name)
     Expr::Wild(name, _, _) => wild_display_name(name)
+    Expr::WildFunction(name, _) => wild_display_name(name)
     Expr::FunctionHead(name) => standalone_function_head_display_name(name)
     Expr::UndefinedFunction(name) => name
     Expr::Apply(head, args) =>
@@ -380,6 +382,11 @@ pub fn applied_undefined_function(name : String, args : Array[Expr]) -> Expr {
 }
 
 ///|
+fn wild_function_accepts_arity(nargs : Array[Int], arity : Int) -> Bool {
+  nargs.is_empty() || nargs.contains(arity)
+}
+
+///|
 pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
   let head = normalize_legacy_expr(head)
   let args = args.map(normalize_legacy_expr)
@@ -393,6 +400,12 @@ pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
     Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
     Expr::UndefinedFunction(name) =>
       Some(Expr::Apply(Expr::UndefinedFunction(name), args))
+    Expr::WildFunction(name, nargs) =>
+      if wild_function_accepts_arity(nargs, args.length()) {
+        Some(Expr::Apply(Expr::WildFunction(name, nargs), args))
+      } else {
+        None
+      }
     Expr::FunctionHead(name) => Some(raw_function(name, args))
     _ => None
   }
@@ -412,6 +425,12 @@ pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
     Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
     Expr::UndefinedFunction(name) =>
       Some(applied_undefined_function(name, args))
+    Expr::WildFunction(name, nargs) =>
+      if wild_function_accepts_arity(nargs, args.length()) {
+        Some(Expr::Apply(Expr::WildFunction(name, nargs), args))
+      } else {
+        None
+      }
     Expr::FunctionHead(name) =>
       Some(if current_evaluate() { function(name, args) } else { raw_function(name, args) })
     _ => None

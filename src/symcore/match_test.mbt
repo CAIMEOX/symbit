@@ -285,3 +285,136 @@ test "expr_match covers more SymPy source add and mul examples" {
     None => fail("expected reciprocal linear form match from SymPy source")
   }
 }
+
+///|
+test "expr_match covers source function-head and complex wildcard examples" {
+  let x = Expr::Symbol("x")
+  let a = Expr::Symbol("a")
+  let b = Expr::Symbol("b")
+  let p = Expr::Wild("p", [], [])
+  let q = Expr::Wild("q", [], [])
+  let g = Expr::WildFunction("g", [])
+  let w = Expr::Wild("w", [], [])
+  let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
+
+  match expr_match(mul([p, Expr::Apply(g, [mul([q, x])])]), function("cos", [mul([int(5), x])])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
+      inspect(
+        @symprint.to_string(env.get(g).unwrap_or(int(0))),
+        content="cos",
+      )
+      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="5")
+    }
+    None => fail("expected function-head wild match from SymPy source")
+  }
+
+  match expr_match(mul([p, g]), function("cos", [mul([int(5), x])])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
+      inspect(
+        @symprint.to_string(env.get(g).unwrap_or(int(0))),
+        content="cos(5*x)",
+      )
+    }
+    None => fail("expected bare wild-function match from SymPy source")
+  }
+
+  match expr_match(g, g) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(g).unwrap_or(int(0))), content="g_")
+    None => fail("expected WildFunction to match itself like SymPy source")
+  }
+
+  match expr_match(add([w, imag]), add([int(1), imag])) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="1")
+    None => fail("expected additive complex match from SymPy source")
+  }
+
+  match expr_match(mul([w, imag]), mul([int(2), imag])) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="2")
+    None => fail("expected multiplicative complex match from SymPy source")
+  }
+
+  let wr = Expr::Wild("wr", [], [])
+  let wi = Expr::Wild("wi", [], [])
+  match expr_match(add([wr, mul([wi, imag])]), add([a, mul([b, imag])])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(wr).unwrap_or(int(0))), content="a")
+      inspect(@symprint.to_string(env.get(wi).unwrap_or(int(0))), content="b")
+    }
+    None => fail("expected cartesian complex decomposition match")
+  }
+}
+
+///|
+test "expr_match covers more SymPy source factorization and derivative examples" {
+  let x = Expr::Symbol("x")
+  let a = Expr::Symbol("a")
+  let b = Expr::Symbol("b")
+  let c = Expr::Symbol("c")
+  let p = Expr::Wild("p", [], [])
+  let ax = Expr::Wild("a", [x], [])
+  let q = Expr::Wild("q", [], [])
+  let fx = applied_undefined_function("f", [x])
+  let dfx = derivative(fx, x)
+
+  match expr_match(
+    add([
+      mul([p, pow(x, int(2))]),
+      mul([p, x]),
+      mul([int(2), p]),
+    ]),
+    add([mul([int(3), x]), int(3), mul([int(6), pow(x, int(-1))])]),
+  ) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3/x")
+    None => fail("expected common-factor wild match from SymPy source")
+  }
+
+  assert_false(
+    expr_match(
+      add([
+        mul([ax, pow(x, int(2))]),
+        mul([ax, x]),
+        mul([int(2), ax]),
+      ]),
+      add([mul([int(3), x]), int(3), mul([int(6), pow(x, int(-1))])]),
+    ) is Some(_),
+  )
+
+  match expr_match(
+    mul([add([p, b]), add([p, c])]),
+    mul([add([a, b]), add([a, c])]),
+  ) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="a")
+    None => fail("expected repeated additive factor match from SymPy source")
+  }
+
+  match expr_match(mul([p, q]), add([mul([x, Expr::Symbol("y")]), int(1)])) {
+    Some(env) => {
+      let lhs = @symprint.to_string(env.get(p).unwrap_or(int(0)))
+      let rhs = @symprint.to_string(env.get(q).unwrap_or(int(0)))
+      let allowed = [
+        ("1", "x*y + 1"),
+        ("x*y + 1", "1"),
+      ]
+      assert_true(allowed.contains((lhs, rhs)))
+    }
+    None => fail("expected interface-style wildcard product match")
+  }
+
+  match expr_match(
+    add([mul([p, dfx]), q]),
+    add([mul([int(3), dfx]), int(-1)]),
+  ) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3")
+      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="-1")
+    }
+    None => fail("expected derivative wildcard coefficient match")
+  }
+}

@@ -83,7 +83,7 @@ fn expr_to_evalf_float(expr : Expr, prec : Int) -> Float? {
       }
     Expr::NumberSymbol(kind) => evalf_number_symbol_constant(kind, prec)
     Expr::Boolean(_) => None
-    Expr::Dummy(_, _) | Expr::Wild(_, _, _) => None
+    Expr::Dummy(_, _) | Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => None
     Expr::FunctionHead(_) => None
     Expr::UndefinedFunction(_) => None
     Expr::Apply(_, _)
@@ -123,7 +123,7 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
           }
       }
     Expr::Boolean(_) => None
-    Expr::Dummy(_, _) | Expr::Wild(_, _, _) => None
+    Expr::Dummy(_, _) | Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => None
     Expr::FunctionHead(_) => None
     Expr::UndefinedFunction(_) => None
     Expr::Apply(head, args) =>
@@ -806,7 +806,7 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
       }
     Expr::IdentityFunction => expr
     Expr::Boolean(_) => expr
-    Expr::Dummy(_, _) | Expr::Wild(_, _, _) => expr
+    Expr::Dummy(_, _) | Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => expr
     Expr::FunctionHead(_) => expr
     Expr::UndefinedFunction(_) => expr
     Expr::Apply(head, args) => {

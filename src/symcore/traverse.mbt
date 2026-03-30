@@ -462,7 +462,7 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
         Some(value) => value
         None => expr
       }
-    Expr::Dummy(_, _) | Expr::Wild(_, _, _) => expr
+    Expr::Dummy(_, _) | Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => expr
     Expr::Number(_)
     | Expr::Float(_)
     | Expr::ComplexFloat(_)

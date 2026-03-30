@@ -43,6 +43,8 @@ pub fn debug_repr(expr : Expr) -> String {
     @symcore.ExprForm::Dummy(name, id) =>
       "dummy:\{@symcore.dummy_display_name(name)}#\{id}"
     @symcore.ExprForm::Wild(name, _, _) => "wild:\{@symcore.wild_display_name(name)}"
+    @symcore.ExprForm::WildFunction(name, _) =>
+      "wild_function:\{@symcore.wild_display_name(name)}"
     @symcore.ExprForm::IdentityFunction => "(call IdentityFunction)"
     @symcore.ExprForm::FunctionHead(name) => "fhead:\{name}"
     @symcore.ExprForm::UndefinedFunction(name) => "ufunc:\{name}"
@@ -230,6 +232,7 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
     @symcore.ExprForm::Symbol(name) => name
     @symcore.ExprForm::Dummy(name, _) => @symcore.dummy_display_name(name)
     @symcore.ExprForm::Wild(name, _, _) => @symcore.wild_display_name(name)
+    @symcore.ExprForm::WildFunction(name, _) => @symcore.wild_display_name(name)
     @symcore.ExprForm::IdentityFunction => "Lambda(_x, _x)"
     @symcore.ExprForm::FunctionHead(name) =>
       @symcore.standalone_function_head_display_name(name)

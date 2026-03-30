@@ -1040,6 +1040,12 @@ test "lambda canonicalizes identity forms and applies canonically" {
     ),
     content="6",
   )
+  inspect(
+    @symprint.to_string(
+      lambda_expr(Expr::WildFunction("f", []), add([x, int(1)])),
+    ),
+    content="Lambda(f_, x + 1)",
+  )
 }
 
 ///|

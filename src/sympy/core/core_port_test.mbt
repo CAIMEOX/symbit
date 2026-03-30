@@ -238,6 +238,73 @@ test "symcore source-driven commutative wildcard matching examples" {
 }
 
 ///|
+test "symcore source-driven factorization and derivative wildcard examples" {
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let c = @symcore.Expr::Symbol("c")
+  let p = @symcore.Expr::Wild("p", [], [])
+  let ax = @symcore.Expr::Wild("a", [x], [])
+  let q = @symcore.Expr::Wild("q", [], [])
+  let g = @symcore.Expr::WildFunction("g", [])
+  let fx = @symcore.applied_undefined_function("f", [x])
+  let dfx = @symcore.derivative(fx, x)
+
+  inspect(
+    core_match_sstr(
+      @symcore.add([
+        @symcore.mul([p, @symcore.pow(x, @symcore.int(2))]),
+        @symcore.mul([p, x]),
+        @symcore.mul([@symcore.int(2), p]),
+      ]),
+      @symcore.add([
+        @symcore.mul([@symcore.int(3), x]),
+        @symcore.int(3),
+        @symcore.mul([@symcore.int(6), @symcore.pow(x, @symcore.int(-1))]),
+      ]),
+    ),
+    content="p_=3/x",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([
+        @symcore.mul([ax, @symcore.pow(x, @symcore.int(2))]),
+        @symcore.mul([ax, x]),
+        @symcore.mul([@symcore.int(2), ax]),
+      ]),
+      @symcore.add([
+        @symcore.mul([@symcore.int(3), x]),
+        @symcore.int(3),
+        @symcore.mul([@symcore.int(6), @symcore.pow(x, @symcore.int(-1))]),
+      ]),
+    ),
+    content="None",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([@symcore.add([p, b]), @symcore.add([p, c])]),
+      @symcore.mul([@symcore.add([a, b]), @symcore.add([a, c])]),
+    ),
+    content="p_=a",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([p, g]),
+      @symcore.function("cos", [@symcore.mul([@symcore.int(5), x])]),
+    ),
+    content="g_=cos(5*x)|p_=1",
+  )
+  inspect(core_match_sstr(g, g), content="g_=g_")
+  inspect(
+    core_match_sstr(
+      @symcore.add([@symcore.mul([p, dfx]), q]),
+      @symcore.add([@symcore.mul([@symcore.int(3), dfx]), @symcore.int(-1)]),
+    ),
+    content="p_=3|q_=-1",
+  )
+}
+
+///|
 test "symcore parity formal application helpers" {
   let x = @symcore.Expr::Symbol("x")
   match @symcore.apply(@symcore.Expr::FunctionHead("sin"), [x]) {
@@ -1370,6 +1437,15 @@ test "symcore parity lambda identity and application stay canonical" {
       ).unwrap_or(@symcore.int(0)),
     ),
     content="6",
+  )
+  let invalid = @symcore.lambda_expr(
+    @symcore.Expr::WildFunction("f", []),
+    @symcore.add([x, @symcore.int(1)]),
+  )
+  inspect(@symcore.application_name(invalid).unwrap_or(""), content="Lambda")
+  json_inspect(
+    @symcore.application_args(invalid).unwrap_or([]).map(@symcore.expr_display),
+    content=["f_", "(x + 1)"],
   )
 }
 
