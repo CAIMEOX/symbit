@@ -27,6 +27,15 @@ fn clone_match_env(env : MatchEnv) -> MatchEnv {
 }
 
 ///|
+fn match_env_rules(env : MatchEnv) -> Array[(Expr, Expr)] {
+  let out : Array[(Expr, Expr)] = []
+  for key, value in env {
+    out.push((key, value))
+  }
+  out
+}
+
+///|
 fn expr_contains_wild(expr : Expr) -> Bool {
   let expr = normalize_legacy_expr(expr)
   match expr {
@@ -244,19 +253,9 @@ pub fn wild_matches(
           return None
         }
       }
-      match repl_dict.get(pattern) {
-        Some(existing) =>
-          if existing == expr {
-            Some(clone_match_env(repl_dict))
-          } else {
-            None
-          }
-        None => {
-          let out = clone_match_env(repl_dict)
-          out.set(pattern, expr)
-          Some(out)
-        }
-      }
+      let out = clone_match_env(repl_dict)
+      out.set(pattern, expr)
+      Some(out)
     }
     _ => None
   }
@@ -319,7 +318,8 @@ pub fn expr_match(
     None => return None
   }
   for i in 0..<pattern_args.length() {
-    match expr_match(pattern_args[i], expr_args[i], repl_dict=current) {
+    let substituted_pattern = xreplace(pattern_args[i], match_env_rules(current))
+    match expr_match(substituted_pattern, expr_args[i], repl_dict=current) {
       Some(value) => current = value
       None => return None
     }

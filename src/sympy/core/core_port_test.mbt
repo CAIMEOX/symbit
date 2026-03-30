@@ -117,11 +117,19 @@ test "symcore parity wild match exclude and properties" {
   let a = @symcore.Expr::Wild("a", [], [])
   let b = @symcore.Expr::Wild("b", [x], [])
   let p = @symcore.Expr::Wild("p", [], [@symcore.WildProperty::Positive])
+  let seeded : Map[@symcore.Expr, @symcore.Expr] = {}
+  seeded.set(a, y)
   inspect(core_match_sstr(a, @symcore.mul([@symcore.int(2), y])), content="a_=2*y")
   inspect(core_match_sstr(b, @symcore.mul([@symcore.int(2), y])), content="b_=2*y")
   inspect(core_match_sstr(b, @symcore.mul([@symcore.int(2), x])), content="None")
   inspect(core_match_sstr(p, @symcore.int(2)), content="p_=2")
   inspect(core_match_sstr(p, @symcore.int(-2)), content="None")
+  inspect(
+    @symcore.wild_matches(a, x, repl_dict=seeded)
+    .map(env => env.get(a).map(core_expr_sstr).unwrap_or(""))
+    .unwrap_or("None"),
+    content="x",
+  )
 }
 
 ///|
@@ -152,6 +160,19 @@ test "symcore source-driven commutative wildcard matching examples" {
       @symcore.mul([@symcore.int(2), @symcore.pow(x, @symcore.int(3)), y, z]),
     ),
     content="a_=2|b_=x**3*y*z",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.apply(@symcore.Expr::FunctionHead("f"), [
+        a,
+        @symcore.add([a, b]),
+      ]).unwrap_or(@symcore.int(0)),
+      @symcore.apply(@symcore.Expr::FunctionHead("f"), [
+        x,
+        @symcore.add([x, y]),
+      ]).unwrap_or(@symcore.int(0)),
+    ),
+    content="a_=x|b_=y",
   )
 }
 

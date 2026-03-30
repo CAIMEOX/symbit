@@ -44,6 +44,14 @@ test "wild_matches respects exclude and direct properties" {
       Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity),
     ) is Some(_),
   )
+  let seeded : MatchEnv = {}
+  seeded.set(a, y)
+  let overridden = wild_matches(a, x, repl_dict=seeded)
+  match overridden {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="x")
+    None => fail("expected direct wild match to override prior env entry")
+  }
 }
 
 ///|
@@ -86,6 +94,24 @@ test "expr_match uses full wild identity and structural recursion" {
       apply(Expr::FunctionHead("f"), [x, x]).unwrap_or(int(0)),
     ) is Some(_),
   )
+  let b_nested = Expr::Wild("b", [], [])
+  let nested_pattern = apply(
+    Expr::FunctionHead("f"),
+    [a, add([a, b_nested])],
+  ).unwrap_or(int(0))
+  match expr_match(
+    nested_pattern,
+    apply(Expr::FunctionHead("f"), [x, add([x, y])]).unwrap_or(int(0)),
+  ) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="x")
+      inspect(
+        @symprint.to_string(env.get(b_nested).unwrap_or(int(0))),
+        content="y",
+      )
+    }
+    None => fail("expected recursive matching to xreplace current wild bindings")
+  }
 }
 
 ///|
