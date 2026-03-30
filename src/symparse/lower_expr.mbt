@@ -121,11 +121,28 @@ fn make_function(
     )
   }
   let integer_invalid_input = fn(arg : Expr) -> Expr raise ParseError {
+    let arg = @symcore.normalize_legacy_expr(arg)
+    let message = match arg {
+      @symcore.Expr::ComplexFloat(_) =>
+        "TypeError: Cannot convert non-comparable expression to int"
+      _ =>
+        match @symcore.number_symbol_kind(arg) {
+          Some(@symcore.NumberSymbolKind::Infinity)
+          | Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
+            "TypeError: Cannot convert " + @symprint.to_string(arg) + " to int"
+          Some(@symcore.NumberSymbolKind::NaN)
+          | Some(@symcore.NumberSymbolKind::ImaginaryUnit)
+          | Some(@symcore.NumberSymbolKind::ComplexInfinity) =>
+            "TypeError: Cannot convert non-comparable expression to int"
+          _ =>
+            "TypeError: Argument of Integer should be of numeric type, got " +
+            @symprint.to_string(arg) +
+            "."
+        }
+    }
     raise ParseError::UnsupportedConstruct(
       span=span(0, 0),
-      "TypeError: Argument of Integer should be of numeric type, got " +
-      @symprint.to_string(arg) +
-      ".",
+      message,
     )
   }
   let rational_invalid_input = fn(arg : Expr) -> Expr raise ParseError {
@@ -329,17 +346,34 @@ fn make_application(
       " (\{given} given)",
     )
   }
+  let integer_invalid_input = fn(arg : Expr) -> Expr raise ParseError {
+    let arg = @symcore.normalize_legacy_expr(arg)
+    let message = match arg {
+      @symcore.Expr::ComplexFloat(_) =>
+        "TypeError: Cannot convert non-comparable expression to int"
+      _ =>
+        match @symcore.number_symbol_kind(arg) {
+          Some(@symcore.NumberSymbolKind::Infinity)
+          | Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
+            "TypeError: Cannot convert " + @symprint.to_string(arg) + " to int"
+          Some(@symcore.NumberSymbolKind::NaN)
+          | Some(@symcore.NumberSymbolKind::ImaginaryUnit)
+          | Some(@symcore.NumberSymbolKind::ComplexInfinity) =>
+            "TypeError: Cannot convert non-comparable expression to int"
+          _ =>
+            "TypeError: Argument of Integer should be of numeric type, got " +
+            @symprint.to_string(arg) +
+            "."
+        }
+    }
+    raise ParseError::UnsupportedConstruct(span=span(0, 0), message)
+  }
   let apply_builtin = fn(name : String) -> Expr raise ParseError {
     let integer_constructor_result = fn(args : Array[Expr]) -> Expr raise ParseError {
       let lowered = apply_named(name, args)
       match lowered {
         @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Integer"), [arg]) =>
-          raise ParseError::UnsupportedConstruct(
-            span=span(0, 0),
-            "TypeError: Argument of Integer should be of numeric type, got " +
-            @symprint.to_string(arg) +
-            ".",
-          )
+          integer_invalid_input(arg)
         _ => lowered
       }
     }

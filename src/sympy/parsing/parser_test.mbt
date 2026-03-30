@@ -535,6 +535,28 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     detail == "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
     fail("expected Integer(sin(x)) invalid input error")
   }
+  inspect(@symprint.to_string(parse_expr("Integer(pi)")), content="3")
+  inspect(@symprint.to_string(parse_expr("Integer(E)")), content="2")
+  guard (try? parse_expr("Integer(oo)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert oo to int" else {
+    fail("expected Integer(oo) conversion error")
+  }
+  guard (try? parse_expr("Integer(nan)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert non-comparable expression to int" else {
+    fail("expected Integer(nan) non-comparable error")
+  }
+  guard (try? parse_expr("Integer(I)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert non-comparable expression to int" else {
+    fail("expected Integer(I) non-comparable error")
+  }
+  guard (try? parse_expr("Integer(zoo)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert non-comparable expression to int" else {
+    fail("expected Integer(zoo) non-comparable error")
+  }
   guard (try? parse_expr("Rational()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail ==
@@ -695,6 +717,28 @@ test "ast parser compatibility entrypoint" {
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
     fail("expected ast parser Integer(sin(x)) invalid input error")
+  }
+  inspect(@symprint.to_string(ast_parse_expr("Integer(pi)")), content="3")
+  inspect(@symprint.to_string(ast_parse_expr("Integer(E)")), content="2")
+  guard (try? ast_parse_expr("Integer(oo)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert oo to int" else {
+    fail("expected ast parser Integer(oo) conversion error")
+  }
+  guard (try? ast_parse_expr("Integer(nan)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert non-comparable expression to int" else {
+    fail("expected ast parser Integer(nan) non-comparable error")
+  }
+  guard (try? ast_parse_expr("Integer(I)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert non-comparable expression to int" else {
+    fail("expected ast parser Integer(I) non-comparable error")
+  }
+  guard (try? ast_parse_expr("Integer(zoo)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert non-comparable expression to int" else {
+    fail("expected ast parser Integer(zoo) non-comparable error")
   }
   guard (try? ast_parse_expr("S()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&

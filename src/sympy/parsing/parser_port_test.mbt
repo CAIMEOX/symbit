@@ -1193,6 +1193,44 @@ test "symparse parity explicit core constructor calls stay canonical" {
     @symprint.to_string(parse_expr("Derivative(sin(x), x, y, 2)")),
     content=parse_expr_sstr("Derivative(sin(x), x, y, 2)"),
   )
+  inspect(@symprint.to_string(parse_expr("Integer(pi)")), content="3")
+  inspect(@symprint.to_string(parse_expr("Integer(E)")), content="2")
+  inspect(
+    try parse_expr("Integer(oo)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert oo to int",
+  )
+  inspect(
+    try parse_expr("Integer(nan)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert non-comparable expression to int",
+  )
+  inspect(
+    try parse_expr("Integer(I)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert non-comparable expression to int",
+  )
+  inspect(
+    try parse_expr("Integer(zoo)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert non-comparable expression to int",
+  )
   inspect(
     @symprint.to_string(parse_expr("Subs(x + y, x, z)")),
     content=parse_expr_sstr("Subs(x + y, x, z)"),
@@ -1252,6 +1290,44 @@ test "symparse parity explicit core constructor calls stay canonical" {
   inspect(
     @symprint.to_string(ast_parse_expr("Derivative(sin(x), (x, 0))")),
     content=ast_parse_expr_sstr("Derivative(sin(x), (x, 0))"),
+  )
+  inspect(@symprint.to_string(ast_parse_expr("Integer(pi)")), content="3")
+  inspect(@symprint.to_string(ast_parse_expr("Integer(E)")), content="2")
+  inspect(
+    try ast_parse_expr("Integer(oo)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert oo to int",
+  )
+  inspect(
+    try ast_parse_expr("Integer(nan)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert non-comparable expression to int",
+  )
+  inspect(
+    try ast_parse_expr("Integer(I)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert non-comparable expression to int",
+  )
+  inspect(
+    try ast_parse_expr("Integer(zoo)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert non-comparable expression to int",
   )
   inspect(
     @symprint.to_string(ast_parse_expr("Lambda(x, x + 1)")),
