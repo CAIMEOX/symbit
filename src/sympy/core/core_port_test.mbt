@@ -821,6 +821,171 @@ test "symcore source-driven multiplicative wildcard power matches" {
 }
 
 ///|
+test "symcore source-driven polynomial coefficient matches" {
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Wild("a", [x], [])
+  let b = @symcore.Expr::Wild("b", [x], [])
+  let c = @symcore.Expr::Wild("c", [x], [])
+  let d = @symcore.Expr::Wild("d", [x], [])
+  let pattern = @symcore.add([
+    @symcore.mul([a, @symcore.pow(x, @symcore.int(3))]),
+    @symcore.mul([b, @symcore.pow(x, @symcore.int(2))]),
+    @symcore.mul([c, x]),
+    d,
+  ])
+  inspect(
+    core_match_sstr(
+      pattern,
+      @symcore.add([
+        @symcore.mul([@symcore.int(4), @symcore.pow(x, @symcore.int(3))]),
+        @symcore.mul([@symcore.int(3), @symcore.pow(x, @symcore.int(2))]),
+        @symcore.mul([@symcore.int(2), x]),
+        @symcore.int(1),
+      ]),
+    ),
+    content="a_=4|b_=3|c_=2|d_=1",
+  )
+  inspect(
+    core_match_sstr(
+      pattern,
+      @symcore.add([
+        @symcore.mul([@symcore.int(4), @symcore.pow(x, @symcore.int(3))]),
+        @symcore.mul([@symcore.int(2), x]),
+        @symcore.int(1),
+      ]),
+    ),
+    content="a_=4|b_=0|c_=2|d_=1",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([
+        a,
+        @symcore.mul([b, x]),
+        @symcore.mul([c, @symcore.pow(x, @symcore.int(2))]),
+      ]),
+      @symcore.add([x, @symcore.function("sqrt", [@symcore.int(2)]), @symcore.int(3)]),
+    ),
+    content="a_=sqrt(2) + 3|b_=1|c_=0",
+  )
+}
+
+///|
+test "symcore source-driven gamma collection matches" {
+  let gamma = @symcore.Expr::Symbol("gamma")
+  let mu = @symcore.Expr::Symbol("mu")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Wild("a", [gamma], [])
+  let b = @symcore.Expr::Wild("b", [gamma], [])
+  let c = @symcore.Expr::Wild("c", [gamma], [])
+  let eq = @symcore.mul([
+    @symcore.rational_from_ints(1, 2),
+    @symcore.add([
+      @symcore.mul([
+        @symcore.int(-1),
+        gamma,
+        @symcore.pow(@symcore.add([x, @symcore.mul([@symcore.int(-1), mu])]), @symcore.int(2)),
+      ]),
+      @symcore.mul([@symcore.int(-1), @symcore.function("log", [gamma])]),
+      @symcore.function("log", [@symcore.mul([@symcore.int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])]),
+    ]),
+  ])
+  let pattern = @symcore.add([
+    @symcore.mul([a, @symcore.function("log", [gamma])]),
+    @symcore.mul([b, gamma]),
+    c,
+  ])
+  match @symcore.expr_match(pattern, eq) {
+    Some(env) => {
+      inspect(core_expr_sstr(env.get(a).unwrap_or(@symcore.int(0))), content="-1/2")
+      let b_value = env.get(b).unwrap_or(@symcore.int(0))
+      inspect(
+        (@symcore.compare_expr(
+          b_value,
+          @symcore.mul([
+            @symcore.rational_from_ints(-1, 2),
+            @symcore.pow(@symcore.add([x, @symcore.mul([@symcore.int(-1), mu])]), @symcore.int(2)),
+          ]),
+        ) == 0).to_string(),
+        content="true",
+      )
+      let c_value = env.get(c).unwrap_or(@symcore.int(0))
+      inspect(
+        (@symcore.compare_expr(
+          c_value,
+          @symcore.mul([
+            @symcore.rational_from_ints(1, 2),
+            @symcore.function("log", [@symcore.mul([@symcore.int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])]),
+          ]),
+        ) == 0).to_string(),
+        content="true",
+      )
+    }
+    None => fail("expected source-driven gamma collection match")
+  }
+}
+
+///|
+test "symcore source-driven expanded gamma collection matches" {
+  let gamma = @symcore.Expr::Symbol("gamma")
+  let mu = @symcore.Expr::Symbol("mu")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Wild("a", [gamma], [])
+  let b = @symcore.Expr::Wild("b", [gamma], [])
+  let c = @symcore.Expr::Wild("c", [gamma], [])
+  let g1 = @symcore.Expr::Wild("g1", [gamma], [])
+  let g2 = @symcore.Expr::Wild("g2", [gamma], [])
+  let g3 = @symcore.Expr::Wild("g3", [gamma], [])
+  let expanded = @symcore.add([
+    @symcore.mul([@symcore.rational_from_ints(-1, 2), @symcore.function("log", [gamma])]),
+    @symcore.mul([
+      gamma,
+      @symcore.add([
+        @symcore.mul([@symcore.rational_from_ints(-1, 2), @symcore.pow(mu, @symcore.int(2))]),
+        @symcore.mul([mu, x]),
+        @symcore.mul([@symcore.rational_from_ints(-1, 2), @symcore.pow(x, @symcore.int(2))]),
+      ]),
+    ]),
+    @symcore.mul([@symcore.rational_from_ints(1, 2), @symcore.function("log", [@symcore.int(2)])]),
+    @symcore.mul([@symcore.rational_from_ints(1, 2), @symcore.function("log", [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])]),
+  ])
+  let expected_gamma_coeff = @symcore.add([
+    @symcore.mul([@symcore.rational_from_ints(-1, 2), @symcore.pow(mu, @symcore.int(2))]),
+    @symcore.mul([mu, x]),
+    @symcore.mul([@symcore.rational_from_ints(-1, 2), @symcore.pow(x, @symcore.int(2))]),
+  ])
+  let expected_const = @symcore.add([
+    @symcore.mul([@symcore.rational_from_ints(1, 2), @symcore.function("log", [@symcore.int(2)])]),
+    @symcore.mul([@symcore.rational_from_ints(1, 2), @symcore.function("log", [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])]),
+  ])
+  let first_pattern = @symcore.add([
+    @symcore.mul([a, @symcore.function("log", [gamma])]),
+    @symcore.mul([b, gamma]),
+    c,
+  ])
+  let second_pattern = @symcore.add([
+    @symcore.mul([g1, @symcore.function("log", [gamma])]),
+    @symcore.mul([g2, gamma]),
+    g3,
+  ])
+  match @symcore.expr_match(first_pattern, expanded) {
+    Some(env) => {
+      inspect(core_expr_sstr(env.get(a).unwrap_or(@symcore.int(0))), content="-1/2")
+      inspect((@symcore.compare_expr(env.get(b).unwrap_or(@symcore.int(0)), expected_gamma_coeff) == 0).to_string(), content="true")
+      inspect((@symcore.compare_expr(env.get(c).unwrap_or(@symcore.int(0)), expected_const) == 0).to_string(), content="true")
+    }
+    None => fail("expected source-driven expanded gamma match")
+  }
+  match @symcore.expr_match(second_pattern, expanded) {
+    Some(env) => {
+      inspect(core_expr_sstr(env.get(g1).unwrap_or(@symcore.int(0))), content="-1/2")
+      inspect((@symcore.compare_expr(env.get(g2).unwrap_or(@symcore.int(0)), expected_gamma_coeff) == 0).to_string(), content="true")
+      inspect((@symcore.compare_expr(env.get(g3).unwrap_or(@symcore.int(0)), expected_const) == 0).to_string(), content="true")
+    }
+    None => fail("expected source-driven expanded gamma excluded match")
+  }
+}
+
+///|
 test "symcore parity formal application helpers" {
   let x = @symcore.Expr::Symbol("x")
   match @symcore.apply(@symcore.Expr::FunctionHead("sin"), [x]) {
