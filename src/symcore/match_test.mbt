@@ -1,15 +1,17 @@
 ///|
 test "wild helpers expose exclude and property payloads" {
   let x = Expr::Symbol("x")
-  let wild = Expr::Wild("a", [x], [WildProperty::Integer, WildProperty::Positive])
+  let wild = Expr::Wild("a", [x], [
+    WildProperty::Integer,
+    WildProperty::Positive,
+  ])
   match wild_parts(wild) {
     Some((name, exclude, properties)) => {
       inspect(name, content="a")
       json_inspect(exclude.map(@symprint.to_string), content=["x"])
-      json_inspect(
-        properties.map(wild_property_name),
-        content=["integer", "positive"],
-      )
+      json_inspect(properties.map(wild_property_name), content=[
+        "integer", "positive",
+      ])
     }
     None => fail("expected wild parts")
   }
@@ -21,11 +23,7 @@ test "wild_matches respects exclude and direct properties" {
   let y = Expr::Symbol("y")
   let a = Expr::Wild("a", [], [])
   let b = Expr::Wild("b", [x], [])
-  let p = Expr::Wild(
-    "p",
-    [],
-    [WildProperty::Positive, WildProperty::Integer],
-  )
+  let p = Expr::Wild("p", [], [WildProperty::Positive, WildProperty::Integer])
   let s = Expr::Wild("s", [], [WildProperty::Symbol])
   match wild_matches(a, function("sin", [x])) {
     Some(env) =>
@@ -42,13 +40,12 @@ test "wild_matches respects exclude and direct properties" {
   assert_true(wild_matches(s, y) is Some(_))
   assert_false(wild_matches(s, int(3)) is Some(_))
   assert_false(
-    wild_matches(s, Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)) is Some(_),
+    wild_matches(s, Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit))
+    is Some(_),
   )
   assert_false(
-    wild_matches(
-      p,
-      Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity),
-    ) is Some(_),
+    wild_matches(p, Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity))
+    is Some(_),
   )
   let seeded : MatchEnv = {}
   seeded.set(a, y)
@@ -74,17 +71,20 @@ test "expr_match uses full wild identity and structural recursion" {
     None => fail("expected repeated wild match")
   }
   assert_false(
-    expr_match(pattern, apply(Expr::FunctionHead("f"), [x, y]).unwrap_or(int(0))) is
-    Some(_),
+    expr_match(
+      pattern,
+      apply(Expr::FunctionHead("f"), [x, y]).unwrap_or(int(0)),
+    )
+    is Some(_),
   )
-  let distinct_pattern = apply(
-    Expr::FunctionHead("f"),
-    [a, a_excluding_x],
-  ).unwrap_or(int(0))
-  match expr_match(
-    distinct_pattern,
-    apply(Expr::FunctionHead("f"), [y, y]).unwrap_or(int(0)),
-  ) {
+  let distinct_pattern = apply(Expr::FunctionHead("f"), [a, a_excluding_x]).unwrap_or(
+    int(0),
+  )
+  match
+    expr_match(
+      distinct_pattern,
+      apply(Expr::FunctionHead("f"), [y, y]).unwrap_or(int(0)),
+    ) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="y")
       inspect(
@@ -98,17 +98,18 @@ test "expr_match uses full wild identity and structural recursion" {
     expr_match(
       distinct_pattern,
       apply(Expr::FunctionHead("f"), [x, x]).unwrap_or(int(0)),
-    ) is Some(_),
+    )
+    is Some(_),
   )
   let b_nested = Expr::Wild("b", [], [])
-  let nested_pattern = apply(
-    Expr::FunctionHead("f"),
-    [a, add([a, b_nested])],
-  ).unwrap_or(int(0))
-  match expr_match(
-    nested_pattern,
-    apply(Expr::FunctionHead("f"), [x, add([x, y])]).unwrap_or(int(0)),
-  ) {
+  let nested_pattern = apply(Expr::FunctionHead("f"), [a, add([a, b_nested])]).unwrap_or(
+    int(0),
+  )
+  match
+    expr_match(
+      nested_pattern,
+      apply(Expr::FunctionHead("f"), [x, add([x, y])]).unwrap_or(int(0)),
+    ) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="x")
       inspect(
@@ -116,7 +117,8 @@ test "expr_match uses full wild identity and structural recursion" {
         content="y",
       )
     }
-    None => fail("expected recursive matching to xreplace current wild bindings")
+    None =>
+      fail("expected recursive matching to xreplace current wild bindings")
   }
 }
 
@@ -176,10 +178,8 @@ test "expr_match follows SymPy source examples for add mul and powers" {
   }
 
   assert_false(
-    expr_match(
-      mul([a_excluding_x, x]),
-      mul([int(3), pow(x, int(2))]),
-    ) is Some(_),
+    expr_match(mul([a_excluding_x, x]), mul([int(3), pow(x, int(2))]))
+    is Some(_),
   )
 
   match expr_match(pow(x, p), int(1)) {
@@ -188,10 +188,11 @@ test "expr_match follows SymPy source examples for add mul and powers" {
     None => fail("expected 1 to match x**p with p = 0")
   }
 
-  match expr_match(
-    mul([p, function("cos", [mul([q, x])])]),
-    function("cos", [mul([int(5), x])]),
-  ) {
+  match
+    expr_match(
+      mul([p, function("cos", [mul([q, x])])]),
+      function("cos", [mul([int(5), x])]),
+    ) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
       inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="5")
@@ -238,13 +239,15 @@ test "expr_match covers more SymPy source add and mul examples" {
     None => fail("expected additive mixed remainder match from SymPy source")
   }
 
-  match expr_match(add([mul([p, x]), int(5)]), add([mul([int(4), x]), int(5)])) {
+  match
+    expr_match(add([mul([p, x]), int(5)]), add([mul([int(4), x]), int(5)])) {
     Some(env) =>
       inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="4")
     None => fail("expected linear coefficient match from SymPy source")
   }
 
-  match expr_match(add([mul([int(3), x]), p]), add([mul([int(4), x]), int(5)])) {
+  match
+    expr_match(add([mul([int(3), x]), p]), add([mul([int(4), x]), int(5)])) {
     Some(env) =>
       inspect(
         @symprint.to_string(env.get(p).unwrap_or(int(0))),
@@ -253,10 +256,7 @@ test "expr_match covers more SymPy source add and mul examples" {
     None => fail("expected additive fallback match from SymPy source")
   }
 
-  match expr_match(
-    add([mul([int(4), x]), mul([p, y])]),
-    mul([int(4), x]),
-  ) {
+  match expr_match(add([mul([int(4), x]), mul([p, y])]), mul([int(4), x])) {
     Some(env) =>
       inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="0")
     None => fail("expected additive embedding to expose zero coefficient")
@@ -268,10 +268,11 @@ test "expr_match covers more SymPy source add and mul examples" {
     None => fail("expected x to match p*x with p = 1")
   }
 
-  match expr_match(
-    mul([pow(x, p), function("exp", [mul([x, q])])]),
-    function("exp", [x]),
-  ) {
+  match
+    expr_match(
+      mul([pow(x, p), function("exp", [mul([x, q])])]),
+      function("exp", [x]),
+    ) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(p).unwrap_or(int(99))), content="0")
       inspect(@symprint.to_string(env.get(q).unwrap_or(int(99))), content="1")
@@ -279,10 +280,11 @@ test "expr_match covers more SymPy source add and mul examples" {
     None => fail("expected exponential source match with implicit x**0")
   }
 
-  match expr_match(
-    mul([p, pow(add([mul([q, x]), r]), int(-1))]),
-    mul([int(3), pow(add([mul([int(4), x]), int(5)]), int(-1))]),
-  ) {
+  match
+    expr_match(
+      mul([p, pow(add([mul([q, x]), r]), int(-1))]),
+      mul([int(3), pow(add([mul([int(4), x]), int(5)]), int(-1))]),
+    ) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3")
       inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="4")
@@ -303,13 +305,14 @@ test "expr_match covers source function-head and complex wildcard examples" {
   let w = Expr::Wild("w", [], [])
   let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
 
-  match expr_match(mul([p, Expr::Apply(g, [mul([q, x])])]), function("cos", [mul([int(5), x])])) {
+  match
+    expr_match(
+      mul([p, Expr::Apply(g, [mul([q, x])])]),
+      function("cos", [mul([int(5), x])]),
+    ) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
-      inspect(
-        @symprint.to_string(env.get(g).unwrap_or(int(0))),
-        content="cos",
-      )
+      inspect(@symprint.to_string(env.get(g).unwrap_or(int(0))), content="cos")
       inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="5")
     }
     None => fail("expected function-head wild match from SymPy source")
@@ -367,14 +370,11 @@ test "expr_match covers more SymPy source factorization and derivative examples"
   let fx = applied_undefined_function("f", [x])
   let dfx = derivative(fx, x)
 
-  match expr_match(
-    add([
-      mul([p, pow(x, int(2))]),
-      mul([p, x]),
-      mul([int(2), p]),
-    ]),
-    add([mul([int(3), x]), int(3), mul([int(6), pow(x, int(-1))])]),
-  ) {
+  match
+    expr_match(
+      add([mul([p, pow(x, int(2))]), mul([p, x]), mul([int(2), p])]),
+      add([mul([int(3), x]), int(3), mul([int(6), pow(x, int(-1))])]),
+    ) {
     Some(env) =>
       inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3/x")
     None => fail("expected common-factor wild match from SymPy source")
@@ -382,19 +382,14 @@ test "expr_match covers more SymPy source factorization and derivative examples"
 
   assert_false(
     expr_match(
-      add([
-        mul([ax, pow(x, int(2))]),
-        mul([ax, x]),
-        mul([int(2), ax]),
-      ]),
+      add([mul([ax, pow(x, int(2))]), mul([ax, x]), mul([int(2), ax])]),
       add([mul([int(3), x]), int(3), mul([int(6), pow(x, int(-1))])]),
-    ) is Some(_),
+    )
+    is Some(_),
   )
 
-  match expr_match(
-    mul([add([p, b]), add([p, c])]),
-    mul([add([a, b]), add([a, c])]),
-  ) {
+  match
+    expr_match(mul([add([p, b]), add([p, c])]), mul([add([a, b]), add([a, c])])) {
     Some(env) =>
       inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="a")
     None => fail("expected repeated additive factor match from SymPy source")
@@ -404,19 +399,14 @@ test "expr_match covers more SymPy source factorization and derivative examples"
     Some(env) => {
       let lhs = @symprint.to_string(env.get(p).unwrap_or(int(0)))
       let rhs = @symprint.to_string(env.get(q).unwrap_or(int(0)))
-      let allowed = [
-        ("1", "x*y + 1"),
-        ("x*y + 1", "1"),
-      ]
+      let allowed = [("1", "x*y + 1"), ("x*y + 1", "1")]
       assert_true(allowed.contains((lhs, rhs)))
     }
     None => fail("expected interface-style wildcard product match")
   }
 
-  match expr_match(
-    add([mul([p, dfx]), q]),
-    add([mul([int(3), dfx]), int(-1)]),
-  ) {
+  match
+    expr_match(add([mul([p, dfx]), q]), add([mul([int(3), dfx]), int(-1)])) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3")
       inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="-1")
@@ -432,11 +422,7 @@ test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
   let a = Expr::Symbol("a")
   let p = Expr::Wild("p", [int(1), x], [])
   let q = Expr::Wild("q", [], [])
-  let r = Expr::Wild(
-    "r",
-    [Expr::FunctionHead("sin"), y],
-    [],
-  )
+  let r = Expr::Wild("r", [Expr::FunctionHead("sin"), y], [])
 
   guard expr_match(r, function("sin", [x])) is None else {
     fail("expected exclude=[sin, y] to reject sin(x)")
@@ -445,10 +431,11 @@ test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
     fail("expected exclude=[sin, y] to reject cos(y)")
   }
 
-  match expr_match(
-    add([mul([p, pow(x, int(2))]), mul([q, x]), r]),
-    add([mul([int(3), pow(x, int(2))]), mul([y, x]), a]),
-  ) {
+  match
+    expr_match(
+      add([mul([p, pow(x, int(2))]), mul([q, x]), r]),
+      add([mul([int(3), pow(x, int(2))]), mul([y, x]), a]),
+    ) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3")
       inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="y")
@@ -469,10 +456,7 @@ test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
     None => fail("expected x + 1 + p to bind p=0 from SymPy source")
   }
 
-  match expr_match(
-    add([q, r]),
-    p,
-  ) {
+  match expr_match(add([q, r]), p) {
     Some(env) => {
       let q_value = @symprint.to_string(env.get(q).unwrap_or(int(-1)))
       let r_value = @symprint.to_string(env.get(r).unwrap_or(int(-1)))
@@ -486,25 +470,45 @@ test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
   let r_plain = Expr::Wild("r", [], [])
   match expr_match(add([q_excluding_p, r_plain]), p) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(q_excluding_p).unwrap_or(int(-1))), content="0")
-      inspect(@symprint.to_string(env.get(r_plain).unwrap_or(int(-1))), content="p_")
+      inspect(
+        @symprint.to_string(env.get(q_excluding_p).unwrap_or(int(-1))),
+        content="0",
+      )
+      inspect(
+        @symprint.to_string(env.get(r_plain).unwrap_or(int(-1))),
+        content="p_",
+      )
     }
-    None => fail("expected source-style additive wild-on-wild match with exclude=[p]")
+    None =>
+      fail("expected source-style additive wild-on-wild match with exclude=[p]")
   }
   match expr_match(mul([q_excluding_p, r_plain]), p) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(q_excluding_p).unwrap_or(int(-1))), content="1")
-      inspect(@symprint.to_string(env.get(r_plain).unwrap_or(int(-1))), content="p_")
+      inspect(
+        @symprint.to_string(env.get(q_excluding_p).unwrap_or(int(-1))),
+        content="1",
+      )
+      inspect(
+        @symprint.to_string(env.get(r_plain).unwrap_or(int(-1))),
+        content="p_",
+      )
     }
-    None => fail("expected source-style multiplicative wild-on-wild match with exclude=[p]")
+    None =>
+      fail(
+        "expected source-style multiplicative wild-on-wild match with exclude=[p]",
+      )
   }
 
   let r_excluding_p = Expr::Wild("r", [p], [])
   guard expr_match(add([q_excluding_p, r_excluding_p]), p) is None else {
-    fail("expected additive wild-on-wild match to fail when both wilds exclude p")
+    fail(
+      "expected additive wild-on-wild match to fail when both wilds exclude p",
+    )
   }
   guard expr_match(mul([q_excluding_p, r_excluding_p]), p) is None else {
-    fail("expected multiplicative wild-on-wild match to fail when both wilds exclude p")
+    fail(
+      "expected multiplicative wild-on-wild match to fail when both wilds exclude p",
+    )
   }
 }
 
@@ -536,8 +540,13 @@ test "expr_match follows SymPy source derivative exclusion examples" {
 
   let seeded : MatchEnv = {}
   seeded.set(b, pow(x, int(2)))
-  let substituted_pattern = xreplace(add([mul([a, d2]), b]), [(b, pow(x, int(2)))])
-  assert_false(expr_match(substituted_pattern, add([d1, pow(x, int(2))]), repl_dict=seeded) is Some(_))
+  let substituted_pattern = xreplace(add([mul([a, d2]), b]), [
+    (b, pow(x, int(2))),
+  ])
+  assert_false(
+    expr_match(substituted_pattern, add([d1, pow(x, int(2))]), repl_dict=seeded)
+    is Some(_),
+  )
 }
 
 ///|

@@ -224,10 +224,13 @@ fn exact_numeric_expr_to_rational(expr : Expr) -> @symnum.BigRational? {
       Some(acc)
     }
     Expr::Pow(base, exp) =>
-      match (exact_numeric_expr_to_rational(base), exact_numeric_expr_to_rational(exp)) {
-        (Some(base_value), Some(exp_value)) if exp_value.is_integral() => {
+      match
+        (
+          exact_numeric_expr_to_rational(base),
+          exact_numeric_expr_to_rational(exp),
+        ) {
+        (Some(base_value), Some(exp_value)) if exp_value.is_integral() =>
           pow_exact_rational(base_value, exp_value.numerator())
-        }
         _ => None
       }
     other => atomic_numeric_expr_to_exact_rational(other)
@@ -257,11 +260,12 @@ fn constructor_integer_value(arg : Expr) -> Expr {
         Expr::Float(value) => {
           let exact : Result[(BigInt, BigInt), @symnum.MpfError] = try? value.to_rational()
           match exact {
-            Ok((num, den)) => trunc_exact_rational(
-              @symnum.BigRational::new(num, den) catch {
-                _ => return Expr::Apply(Expr::FunctionHead("Integer"), [arg])
-              },
-            )
+            Ok((num, den)) =>
+              trunc_exact_rational(
+                @symnum.BigRational::new(num, den) catch {
+                  _ => return Expr::Apply(Expr::FunctionHead("Integer"), [arg])
+                },
+              )
             Err(_) => Expr::Apply(Expr::FunctionHead("Integer"), [arg])
           }
         }
@@ -293,7 +297,7 @@ fn constructor_rational(args : Array[Expr]) -> Expr {
           atomic_numeric_expr_to_exact_rational(lhs),
           atomic_numeric_expr_to_exact_rational(rhs),
         ) {
-        (Some(lhs_value), Some(rhs_value)) => {
+        (Some(lhs_value), Some(rhs_value)) =>
           if rhs_value.is_zero() {
             if lhs_value.is_zero() {
               Expr::NumberSymbol(NumberSymbolKind::NaN)
@@ -301,15 +305,14 @@ fn constructor_rational(args : Array[Expr]) -> Expr {
               Expr::NumberSymbol(NumberSymbolKind::ComplexInfinity)
             }
           } else {
-          let exact : Result[@symnum.BigRational, @symnum.RationalError] = try? lhs_value.div_r(
-            rhs_value,
-          )
-          match exact {
-            Ok(value) => Expr::Number(value)
-            Err(_) => Expr::Apply(Expr::FunctionHead("Rational"), args)
+            let exact : Result[@symnum.BigRational, @symnum.RationalError] = try? lhs_value.div_r(
+              rhs_value,
+            )
+            match exact {
+              Ok(value) => Expr::Number(value)
+              Err(_) => Expr::Apply(Expr::FunctionHead("Rational"), args)
+            }
           }
-        }
-        }
         _ => Expr::Apply(Expr::FunctionHead("Rational"), args)
       }
     _ => Expr::Apply(Expr::FunctionHead("Rational"), args)
@@ -327,7 +330,7 @@ fn constructor_float(args : Array[Expr]) -> Expr {
       Some(value) => {
         let approx : Result[Float, @symnum.MpfError] = try? Float::from_exact(
           value,
-          prec=prec,
+          prec~,
         )
         match approx {
           Ok(value) => Expr::Float(value)
@@ -335,7 +338,7 @@ fn constructor_float(args : Array[Expr]) -> Expr {
         }
       }
       None =>
-        match evalf(normalize_legacy_expr(arg), prec=prec) {
+        match evalf(normalize_legacy_expr(arg), prec~) {
           Expr::Float(value) => Expr::Float(value)
           Expr::NumberSymbol(NumberSymbolKind::Infinity) =>
             Expr::NumberSymbol(NumberSymbolKind::Infinity)
@@ -432,7 +435,13 @@ pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
         None
       }
     Expr::FunctionHead(name) =>
-      Some(if current_evaluate() { function(name, args) } else { raw_function(name, args) })
+      Some(
+        if current_evaluate() {
+          function(name, args)
+        } else {
+          raw_function(name, args)
+        },
+      )
     _ => None
   }
 }
@@ -1011,13 +1020,13 @@ pub fn mul(args : Array[Expr]) -> Expr {
         match float_prod {
           Some(value) =>
             if value.is_finite() && !expr_is_one(Expr::Float(value)) {
-              return add(
-                add_args.map(term => mul([Expr::Float(value), term])),
-              )
+              return add(add_args.map(term => mul([Expr::Float(value), term])))
             }
           None =>
             if !const_prod.is_one() {
-              return add(add_args.map(term => mul([Expr::Number(const_prod), term])))
+              return add(
+                add_args.map(term => mul([Expr::Number(const_prod), term])),
+              )
             }
         }
       _ => ()

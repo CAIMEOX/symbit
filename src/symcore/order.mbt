@@ -136,10 +136,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
       }
       return -1
     }
-    (
-      Expr::Pow(base_a, _),
-      Expr::Wild(name_b, exclude_b, properties_b),
-    ) => {
+    (Expr::Pow(base_a, _), Expr::Wild(name_b, exclude_b, properties_b)) => {
       let base_cmp = compare_expr(
         base_a,
         Expr::Wild(name_b, exclude_b, properties_b),
@@ -316,7 +313,8 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::Symbol(sb) => name_a.compare(sb)
         Expr::Dummy(name_b, _) => name_a.compare(dummy_display_name(name_b))
         Expr::Wild(name_b, _, _) => name_a.compare(wild_display_name(name_b))
-        Expr::WildFunction(name_b, _) => name_a.compare(wild_display_name(name_b))
+        Expr::WildFunction(name_b, _) =>
+          name_a.compare(wild_display_name(name_b))
         Expr::FunctionHead(name_b) => name_a.compare(name_b)
         Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
         _ => 0
@@ -327,7 +325,8 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::Symbol(sb) => name_a.compare(sb)
         Expr::Dummy(name_b, _) => name_a.compare(dummy_display_name(name_b))
         Expr::Wild(name_b, _, _) => name_a.compare(wild_display_name(name_b))
-        Expr::WildFunction(name_b, _) => name_a.compare(wild_display_name(name_b))
+        Expr::WildFunction(name_b, _) =>
+          name_a.compare(wild_display_name(name_b))
         Expr::FunctionHead(name_b) => name_a.compare(name_b)
         Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
         _ => 0

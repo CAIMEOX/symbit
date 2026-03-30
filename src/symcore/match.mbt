@@ -61,9 +61,7 @@ fn combine_commutative_items(items : Array[Expr], is_add : Bool) -> Expr {
 }
 
 ///|
-fn common_add_wild_factor(
-  items : Array[Expr],
-) -> (Expr, Array[Expr])? {
+fn common_add_wild_factor(items : Array[Expr]) -> (Expr, Array[Expr])? {
   let mut common : Expr? = None
   let remainders : Array[Expr] = []
   for item in items {
@@ -164,9 +162,12 @@ fn match_commutative_items(
       exact_items.push(item)
     }
   }
-  wild_items.sort_by((lhs, rhs) => cmp_int(wild_priority(lhs), wild_priority(rhs)))
+  wild_items.sort_by((lhs, rhs) => {
+    cmp_int(wild_priority(lhs), wild_priority(rhs))
+  })
   if is_add && wild_items.length() == 1 {
-    let remainder = match remove_exact_commutative_items(exact_items, expr_items) {
+    let remainder = match
+      remove_exact_commutative_items(exact_items, expr_items) {
       Some(items) => combine_commutative_items(items, true)
       None =>
         match exact_items.length() {
@@ -178,16 +179,25 @@ fn match_commutative_items(
             ])
         }
     }
-    return expr_match(wild_items[0], remainder, repl_dict=repl_dict)
+    return expr_match(wild_items[0], remainder, repl_dict~)
   }
-  let remaining_expr = match remove_exact_commutative_items(exact_items, expr_items) {
+  let remaining_expr = match
+    remove_exact_commutative_items(exact_items, expr_items) {
     Some(items) => items
     None => return None
   }
   if wild_items.is_empty() {
-    return if remaining_expr.is_empty() { Some(clone_match_env(repl_dict)) } else { None }
+    return if remaining_expr.is_empty() {
+      Some(clone_match_env(repl_dict))
+    } else {
+      None
+    }
   }
-  letrec go = (remaining_patterns : Array[Expr], remaining_items : Array[Expr], env : MatchEnv) => {
+  letrec go = (
+    remaining_patterns : Array[Expr],
+    remaining_items : Array[Expr],
+    env : MatchEnv,
+  ) => {
     match remaining_patterns.length() {
       0 => if remaining_items.is_empty() { Some(env) } else { None }
       1 =>
@@ -205,7 +215,9 @@ fn match_commutative_items(
             if (mask == 0) != empty_last {
               continue
             }
-            let (selected, leftover) = split_items_by_mask(remaining_items, mask)
+            let (selected, leftover) = split_items_by_mask(
+              remaining_items, mask,
+            )
             let candidate = combine_commutative_items(selected, is_add)
             match expr_match(current, candidate, repl_dict=env) {
               Some(next_env) =>
@@ -281,9 +293,7 @@ fn exact_rational_pow(
 }
 
 ///|
-fn monomial_parts(
-  expr : Expr,
-) -> (@symnum.BigRational, Array[(Expr, BigInt)])? {
+fn monomial_parts(expr : Expr) -> (@symnum.BigRational, Array[(Expr, BigInt)])? {
   let mut coeff = @symnum.BigRational::one()
   let factors : Array[(Expr, BigInt)] = []
   let merge = fn(term : Expr, exponent : BigInt) -> Bool {
@@ -336,32 +346,29 @@ fn monomial_expr(
     items.push(Expr::Number(coeff))
   }
   let ordered = factors.copy()
-  ordered.sort_by((lhs, rhs) => {
-    compare_expr(lhs.0, rhs.0)
-  })
+  ordered.sort_by((lhs, rhs) => compare_expr(lhs.0, rhs.0))
   for factor in ordered {
     let (base, exponent) = factor
     if exponent.compare(1N) == 0 {
       items.push(base)
     } else {
-      items.push(pow(base, Expr::Number(@symnum.BigRational::from_bigint(exponent))))
+      items.push(
+        pow(base, Expr::Number(@symnum.BigRational::from_bigint(exponent))),
+      )
     }
   }
   combine_commutative_items(items, false)
 }
 
 ///|
-fn divide_monomial_expr(
-  expr : Expr,
-  factor : Expr,
-) -> Expr? {
+fn divide_monomial_expr(expr : Expr, factor : Expr) -> Expr? {
   match (monomial_parts(expr), monomial_parts(factor)) {
     (Some((expr_coeff, expr_factors)), Some((factor_coeff, factor_factors))) =>
       if factor_coeff.is_zero() {
         None
       } else {
-        let quotient_coeff = expr_coeff.div_r(factor_coeff) catch { _ =>
-          return None
+        let quotient_coeff = expr_coeff.div_r(factor_coeff) catch {
+          _ => return None
         }
         let quotient_factors = expr_factors.copy()
         for factor_item in factor_factors {
@@ -396,7 +403,8 @@ fn divide_add_by_exact_template(
       let expr_term = remaining_expr[i]
       match divide_monomial_expr(expr_term, factor_term) {
         Some(candidate) => {
-          if quotient is Some(existing) && compare_expr(existing, candidate) != 0 {
+          if quotient is Some(existing) &&
+            compare_expr(existing, candidate) != 0 {
             continue
           }
           let leftover = remaining_expr.copy()
@@ -415,10 +423,7 @@ fn divide_add_by_exact_template(
 }
 
 ///|
-fn divide_expr_by_exact_factor(
-  expr : Expr,
-  factor : Expr,
-) -> Expr? {
+fn divide_expr_by_exact_factor(expr : Expr, factor : Expr) -> Expr? {
   let expr = normalize_legacy_expr(expr)
   let factor = normalize_legacy_expr(factor)
   if is_one(factor) {
@@ -452,9 +457,8 @@ fn wild_property_matches(property : WildProperty, expr : Expr) -> Bool {
   match property {
     WildProperty::Symbol =>
       match expr_form(expr) {
-        ExprForm::Symbol(_)
-        | ExprForm::Dummy(_, _)
-        | ExprForm::Wild(_, _, _) => true
+        ExprForm::Symbol(_) | ExprForm::Dummy(_, _) | ExprForm::Wild(_, _, _) =>
+          true
         _ => false
       }
     WildProperty::Integer =>
@@ -539,10 +543,7 @@ pub fn wild_matches(
 }
 
 ///|
-fn wild_function_matches_arity(
-  nargs : Array[Int],
-  arity : Int,
-) -> Bool {
+fn wild_function_matches_arity(nargs : Array[Int], arity : Int) -> Bool {
   nargs.is_empty() || nargs.contains(arity)
 }
 
@@ -562,7 +563,10 @@ pub fn wild_function_matches(
           out.set(pattern, expr)
           Some(out)
         }
-        Expr::Apply(_, args) if wild_function_matches_arity(nargs, args.length()) => {
+        Expr::Apply(_, args) if wild_function_matches_arity(
+            nargs,
+            args.length(),
+          ) => {
           let out = clone_match_env(repl_dict)
           out.set(pattern, expr)
           Some(out)
@@ -581,11 +585,11 @@ pub fn expr_match(
 ) -> MatchEnv? {
   let pattern = normalize_legacy_expr(pattern)
   let expr = normalize_legacy_expr(expr)
-  match wild_matches(pattern, expr, repl_dict=repl_dict) {
+  match wild_matches(pattern, expr, repl_dict~) {
     Some(result) => return Some(result)
     None => ()
   }
-  match wild_function_matches(pattern, expr, repl_dict=repl_dict) {
+  match wild_function_matches(pattern, expr, repl_dict~) {
     Some(result) => return Some(result)
     None => ()
   }
@@ -596,8 +600,7 @@ pub fn expr_match(
     Expr::Apply(Expr::WildFunction(name, nargs), pattern_args) =>
       match expr {
         Expr::Apply(expr_head, expr_args) =>
-          if
-            wild_function_matches_arity(nargs, expr_args.length()) &&
+          if wild_function_matches_arity(nargs, expr_args.length()) &&
             pattern_args.length() == expr_args.length() {
             let wild_fn = Expr::WildFunction(name, nargs)
             let mut current = clone_match_env(repl_dict)
@@ -613,7 +616,8 @@ pub fn expr_match(
                 pattern_args[i],
                 match_env_rules(current),
               )
-              match expr_match(substituted_pattern, expr_args[i], repl_dict=current) {
+              match
+                expr_match(substituted_pattern, expr_args[i], repl_dict=current) {
                 Some(value) => current = value
                 None => return None
               }
@@ -628,11 +632,12 @@ pub fn expr_match(
     Expr::Add(pattern_items) => {
       match common_add_wild_factor(pattern_items) {
         Some((factor, remainders)) =>
-          match expr_match(
-            mul([factor, combine_commutative_items(remainders, true)]),
-            expr,
-            repl_dict=repl_dict,
-          ) {
+          match
+            expr_match(
+              mul([factor, combine_commutative_items(remainders, true)]),
+              expr,
+              repl_dict~,
+            ) {
             Some(result) => return Some(result)
             None => ()
           }
@@ -640,7 +645,7 @@ pub fn expr_match(
       }
       match expr {
         Expr::Add(_) => ()
-        _ => return expr_match(pattern, Expr::Add([expr]), repl_dict=repl_dict)
+        _ => return expr_match(pattern, Expr::Add([expr]), repl_dict~)
       }
     }
     Expr::Mul(pattern_items) if is_zero(expr) => {
@@ -654,7 +659,7 @@ pub fn expr_match(
         return expr_match(
           combine_commutative_items(wild_items, false),
           int(0),
-          repl_dict=repl_dict,
+          repl_dict~,
         )
       }
     }
@@ -669,9 +674,13 @@ pub fn expr_match(
         }
       }
       if wild_items.length() == 1 && !exact_items.is_empty() {
-        match divide_expr_by_exact_factor(expr, combine_commutative_items(exact_items, false)) {
+        match
+          divide_expr_by_exact_factor(
+            expr,
+            combine_commutative_items(exact_items, false),
+          ) {
           Some(quotient) =>
-            match expr_match(wild_items[0], quotient, repl_dict=repl_dict) {
+            match expr_match(wild_items[0], quotient, repl_dict~) {
               Some(result) => return Some(result)
               None => ()
             }
@@ -680,31 +689,23 @@ pub fn expr_match(
       }
     }
     Expr::Pow(base, exp) if is_one(expr) && !expr_contains_wild(base) =>
-      return expr_match(exp, int(0), repl_dict=repl_dict)
+      return expr_match(exp, int(0), repl_dict~)
     _ => ()
   }
   match pattern {
     Expr::Mul(_) =>
       match expr {
         Expr::Mul(_) => ()
-        _ => return expr_match(pattern, Expr::Mul([int(1), expr]), repl_dict=repl_dict)
+        _ => return expr_match(pattern, Expr::Mul([int(1), expr]), repl_dict~)
       }
     _ => ()
   }
   match (pattern, expr) {
     (Expr::Add(pattern_items), Expr::Add(expr_items)) =>
-      return match_commutative_items(
-        pattern_items,
-        expr_items,
-        true,
-        repl_dict,
-      )
+      return match_commutative_items(pattern_items, expr_items, true, repl_dict)
     (Expr::Mul(pattern_items), Expr::Mul(expr_items)) =>
       return match_commutative_items(
-        pattern_items,
-        expr_items,
-        false,
-        repl_dict,
+        pattern_items, expr_items, false, repl_dict,
       )
     _ => ()
   }
@@ -724,16 +725,15 @@ pub fn expr_match(
     Some(value) => value
     None => return None
   }
-  let mut current = match expr_match(
-    pattern_func,
-    expr_func,
-    repl_dict=repl_dict,
-  ) {
+  let mut current = match expr_match(pattern_func, expr_func, repl_dict~) {
     Some(value) => value
     None => return None
   }
   for i in 0..<pattern_args.length() {
-    let substituted_pattern = xreplace(pattern_args[i], match_env_rules(current))
+    let substituted_pattern = xreplace(
+      pattern_args[i],
+      match_env_rules(current),
+    )
     match expr_match(substituted_pattern, expr_args[i], repl_dict=current) {
       Some(value) => current = value
       None => return None

@@ -1,7 +1,9 @@
 ///|
 let evaluate_ref : Ref[Bool] = { val: true }
+
 ///|
 let distribute_ref : Ref[Bool] = { val: true }
+
 ///|
 let exp_is_pow_ref : Ref[Bool] = { val: false }
 

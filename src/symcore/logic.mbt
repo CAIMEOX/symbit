@@ -58,10 +58,7 @@ pub fn fuzzy_and(args : Array[FuzzyBool]) -> FuzzyBool {
     let current = fuzzy_bool(arg)
     match current {
       Some(false) => return Some(false)
-      _ =>
-        if out == Some(true) {
-          out = current
-        }
+      _ => if out == Some(true) { out = current }
     }
   }
   out
@@ -82,10 +79,7 @@ pub fn fuzzy_or(args : Array[FuzzyBool]) -> FuzzyBool {
     let current = fuzzy_bool(arg)
     match current {
       Some(true) => return Some(true)
-      _ =>
-        if out == Some(false) {
-          out = current
-        }
+      _ => if out == Some(false) { out = current }
     }
   }
   out

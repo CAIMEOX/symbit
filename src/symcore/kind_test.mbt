@@ -61,10 +61,7 @@ test "expr_kind follows source-driven core kinds" {
     kind_name(expr_kind(Expr::Tuple([x, Expr::Boolean(true)]))),
     content="TupleKind(NumberKind, BooleanKind)",
   )
-  inspect(
-    kind_name(expr_kind(Expr::Dict([(x, y)]))),
-    content="UndefinedKind",
-  )
+  inspect(kind_name(expr_kind(Expr::Dict([(x, y)]))), content="UndefinedKind")
   inspect(
     kind_name(expr_kind(Expr::FunctionHead("sin"))),
     content="UndefinedKind",
@@ -73,27 +70,26 @@ test "expr_kind follows source-driven core kinds" {
     kind_name(expr_kind(Expr::UndefinedFunction("f"))),
     content="UndefinedKind",
   )
-  inspect(
-    kind_name(expr_kind(function("sin", [x]))),
-    content="UndefinedKind",
-  )
+  inspect(kind_name(expr_kind(function("sin", [x]))), content="UndefinedKind")
   inspect(
     kind_name(expr_kind(applied_undefined_function("f", [x]))),
     content="UndefinedKind",
   )
   inspect(
-    kind_name(expr_kind(function("And", [Expr::Boolean(true), Expr::Boolean(false)]))),
+    kind_name(
+      expr_kind(function("And", [Expr::Boolean(true), Expr::Boolean(false)])),
+    ),
     content="BooleanKind",
   )
   inspect(
     kind_name(expr_kind(function("Or", [Expr::Boolean(true), x]))),
     content="BooleanKind",
   )
+  inspect(kind_name(expr_kind(lambda_expr(x, x))), content="UndefinedKind")
   inspect(
-    kind_name(expr_kind(lambda_expr(x, x))),
-    content="UndefinedKind",
+    kind_name(common_kind([Kind::NumberKind, Kind::NumberKind])),
+    content="NumberKind",
   )
-  inspect(kind_name(common_kind([Kind::NumberKind, Kind::NumberKind])), content="NumberKind")
   inspect(
     kind_name(common_kind([Kind::NumberKind, Kind::UndefinedKind])),
     content="UndefinedKind",

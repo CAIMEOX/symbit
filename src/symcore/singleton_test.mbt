@@ -6,7 +6,10 @@ test "singleton helpers expose SymPy-style singleton names and S shortcut" {
     Some("Pi"),
   )
   assert_eq(singleton_instance_name(Expr::Boolean(true)), Some("true"))
-  inspect(@symprint.to_string(singleton_expr_by_name("Half").unwrap_or(int(0))), content="1/2")
+  inspect(
+    @symprint.to_string(singleton_expr_by_name("Half").unwrap_or(int(0))),
+    content="1/2",
+  )
   assert_true(is_singleton_expr(Expr::NumberSymbol(NumberSymbolKind::Infinity)))
   inspect(@symprint.to_string(s(SympifyInput::FromInt(5))), content="5")
 }

@@ -200,16 +200,23 @@ pub fn core_parameters_sstr(
   let eval_text = if evaluate { "True" } else { "False" }
   let distribute_text = if distribute { "True" } else { "False" }
   let exp_is_pow_text = if exp_is_pow { "True" } else { "False" }
-  let script =
-    "import contextlib\n" +
+  let script = "import contextlib\n" +
     "from sympy.core.parameters import evaluate, distribute, _exp_is_pow\n" +
     "x = sympy.Symbol('x')\n" +
     "y = sympy.Symbol('y')\n" +
     "with contextlib.ExitStack() as _stack:\n" +
-    "    _stack.enter_context(evaluate(" + eval_text + "))\n" +
-    "    _stack.enter_context(distribute(" + distribute_text + "))\n" +
-    "    _stack.enter_context(_exp_is_pow(" + exp_is_pow_text + "))\n" +
-    "    __result__ = sympy.sstr(" + expr_code + ")\n"
+    "    _stack.enter_context(evaluate(" +
+    eval_text +
+    "))\n" +
+    "    _stack.enter_context(distribute(" +
+    distribute_text +
+    "))\n" +
+    "    _stack.enter_context(_exp_is_pow(" +
+    exp_is_pow_text +
+    "))\n" +
+    "    __result__ = sympy.sstr(" +
+    expr_code +
+    ")\n"
   core_exec_result_str(script)
 }
 
