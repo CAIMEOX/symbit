@@ -643,8 +643,18 @@ test "function constructors follow SymPy core semantics" {
     @symprint.to_string(
       function("Rational", [raw_mul([int(3), raw_pow(int(2), int(-1))])]),
     ),
-    content="Rational(3/2)",
+    content="3/2",
   )
+  match
+    with_evaluate(false, fn() {
+      function("Rational", [raw_mul([int(3), raw_pow(int(2), int(-1))])])
+    }) {
+    Expr::Apply(Expr::FunctionHead("Rational"), [_]) => ()
+    other =>
+      fail(
+        "expected evaluate=false Rational raw expression to stay unevaluated, got \{@symprint.to_string(other)}",
+      )
+  }
   match function("Float", [Expr::NumberSymbol(NumberSymbolKind::Pi)]) {
     Expr::Float(_) => ()
     other =>

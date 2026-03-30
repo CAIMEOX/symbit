@@ -600,6 +600,49 @@ test "symcore source-driven exclude cases around additive coefficients" {
 }
 
 ///|
+test "symcore source-driven trig exclude and duplicate-function matches" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let p = @symcore.Expr::Wild("p", [], [])
+  let q = @symcore.Expr::Wild("q", [], [])
+  let c = @symcore.Expr::Wild("c", [], [])
+  let r = @symcore.Expr::Wild("r", [@symcore.Expr::FunctionHead("sin"), y], [])
+
+  inspect(
+    core_match_sstr(
+      @symcore.add([r, @symcore.mul([p, @symcore.function("sin", [q])])]),
+      @symcore.add([
+        @symcore.function("cos", [x]),
+        @symcore.mul([@symcore.int(5), @symcore.function("sin", [y])]),
+      ]),
+    ),
+    content="p_=5|q_=y|r_=cos(x)",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([
+        @symcore.function("sin", [p]),
+        @symcore.function("sin", [q]),
+        c,
+      ]),
+      @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
+    ),
+    content="c_=1|p_=x|q_=x",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([
+        @symcore.function("sin", [p]),
+        @symcore.function("sin", [q]),
+        c,
+      ]),
+      @symcore.mul([@symcore.int(2), @symcore.function("sin", [x])]),
+    ),
+    content="c_=0|p_=x|q_=x",
+  )
+}
+
+///|
 test "symcore parity formal application helpers" {
   let x = @symcore.Expr::Symbol("x")
   match @symcore.apply(@symcore.Expr::FunctionHead("sin"), [x]) {
@@ -1013,6 +1056,30 @@ test "symcore source-driven Integer and Rational constructor semantics" {
       @symcore.function("Integer", [@symcore.Expr::Boolean(false)]),
     ),
     content="0",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function("Rational", [
+        @symcore.raw_mul([
+          @symcore.int(3),
+          @symcore.raw_pow(@symcore.int(2), @symcore.int(-1)),
+        ]),
+      ]),
+    ),
+    content="3/2",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.with_evaluate(false, fn() {
+        @symcore.function("Rational", [
+          @symcore.raw_mul([
+            @symcore.int(3),
+            @symcore.raw_pow(@symcore.int(2), @symcore.int(-1)),
+          ]),
+        ])
+      }),
+    ),
+    content="3/2",
   )
   inspect(
     core_expr_sstr(

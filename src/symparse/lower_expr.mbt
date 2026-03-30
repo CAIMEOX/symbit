@@ -130,7 +130,9 @@ fn make_function(
         match @symcore.number_symbol_kind(evaluated) {
           Some(@symcore.NumberSymbolKind::Infinity)
           | Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
-            "TypeError: Cannot convert " + @symprint.to_string(evaluated) + " to int"
+            "TypeError: Cannot convert " +
+            @symprint.to_string(evaluated) +
+            " to int"
           Some(@symcore.NumberSymbolKind::NaN)
           | Some(@symcore.NumberSymbolKind::ImaginaryUnit)
           | Some(@symcore.NumberSymbolKind::ComplexInfinity) =>
@@ -141,10 +143,7 @@ fn make_function(
             "."
         }
     }
-    raise ParseError::UnsupportedConstruct(
-      span=span(0, 0),
-      message,
-    )
+    raise ParseError::UnsupportedConstruct(span=span(0, 0), message)
   }
   let rational_invalid_input = fn(arg : Expr) -> Expr raise ParseError {
     raise ParseError::UnsupportedConstruct(
@@ -209,7 +208,9 @@ fn make_function(
         too_many_constructor_error("Integer", 1, args.length())
       }
     ("Rational", [arg]) => {
-      let constructed = @symcore.function(name, canonical_args)
+      let constructed = @symcore.with_evaluate(_options.evaluate, fn() {
+        @symcore.function(name, canonical_args)
+      })
       match constructed {
         @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), _) =>
           rational_invalid_input(arg)
@@ -217,17 +218,21 @@ fn make_function(
       }
     }
     ("Rational", [lhs, rhs]) => {
-      if
-        @symcore.function(name, [lhs]) is
-        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), _) {
+      if @symcore.with_evaluate(_options.evaluate, fn() {
+          @symcore.function(name, [lhs])
+        })
+        is @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), _) {
         return rational_invalid_input(lhs)
       }
-      if
-        @symcore.function(name, [rhs]) is
-        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), _) {
+      if @symcore.with_evaluate(_options.evaluate, fn() {
+          @symcore.function(name, [rhs])
+        })
+        is @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), _) {
         return rational_invalid_input(rhs)
       }
-      @symcore.function(name, canonical_args)
+      @symcore.with_evaluate(_options.evaluate, fn() {
+        @symcore.function(name, canonical_args)
+      })
     }
     ("Rational", args) =>
       if args.is_empty() {
@@ -333,7 +338,9 @@ fn make_application(
   options : ParseOptions,
 ) -> Expr raise ParseError {
   let apply_named = fn(name : String, args : Array[Expr]) -> Expr {
-    @symcore.with_evaluate(options.evaluate, fn() { @symcore.function(name, args) })
+    @symcore.with_evaluate(options.evaluate, fn() {
+      @symcore.function(name, args)
+    })
   }
   let exact_arity_error = fn(
     name : String,
@@ -357,7 +364,9 @@ fn make_application(
         match @symcore.number_symbol_kind(evaluated) {
           Some(@symcore.NumberSymbolKind::Infinity)
           | Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
-            "TypeError: Cannot convert " + @symprint.to_string(evaluated) + " to int"
+            "TypeError: Cannot convert " +
+            @symprint.to_string(evaluated) +
+            " to int"
           Some(@symcore.NumberSymbolKind::NaN)
           | Some(@symcore.NumberSymbolKind::ImaginaryUnit)
           | Some(@symcore.NumberSymbolKind::ComplexInfinity) =>
@@ -371,7 +380,9 @@ fn make_application(
     raise ParseError::UnsupportedConstruct(span=span(0, 0), message)
   }
   let apply_builtin = fn(name : String) -> Expr raise ParseError {
-    let integer_constructor_result = fn(args : Array[Expr]) -> Expr raise ParseError {
+    let integer_constructor_result = fn(
+      args : Array[Expr],
+    ) -> Expr raise ParseError {
       let lowered = apply_named(name, args)
       match lowered {
         @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Integer"), [arg]) =>
@@ -379,29 +390,37 @@ fn make_application(
         _ => lowered
       }
     }
-    let rational_constructor_result = fn(args : Array[Expr]) -> Expr raise ParseError {
+    let rational_constructor_result = fn(
+      args : Array[Expr],
+    ) -> Expr raise ParseError {
       match args {
         [arg] =>
-          if
-            apply_named(name, [arg]) is
-            @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [_]) {
+          if apply_named(name, [arg])
+            is @symcore.Expr::Apply(
+              @symcore.Expr::FunctionHead("Rational"),
+              [_]
+            ) {
             raise ParseError::UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: invalid input: " + @symprint.to_string(arg),
             )
           }
         [lhs, rhs] => {
-          if
-            apply_named(name, [lhs]) is
-            @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [_]) {
+          if apply_named(name, [lhs])
+            is @symcore.Expr::Apply(
+              @symcore.Expr::FunctionHead("Rational"),
+              [_]
+            ) {
             raise ParseError::UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: invalid input: " + @symprint.to_string(lhs),
             )
           }
-          if
-            apply_named(name, [rhs]) is
-            @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [_]) {
+          if apply_named(name, [rhs])
+            is @symcore.Expr::Apply(
+              @symcore.Expr::FunctionHead("Rational"),
+              [_]
+            ) {
             raise ParseError::UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: invalid input: " + @symprint.to_string(rhs),
@@ -417,7 +436,10 @@ fn make_application(
             span=span(0, 0),
             "TypeError: invalid input: " + @symprint.to_string(arg),
           )
-        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [lhs, rhs]) =>
+        @symcore.Expr::Apply(
+          @symcore.Expr::FunctionHead("Rational"),
+          [lhs, rhs]
+        ) =>
           if @symcore.is_zero(rhs) {
             if @symcore.is_zero(lhs) {
               raise ParseError::UnsupportedConstruct(

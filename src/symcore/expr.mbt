@@ -285,18 +285,21 @@ fn constructor_integer(args : Array[Expr]) -> Expr {
 
 ///|
 fn constructor_rational(args : Array[Expr]) -> Expr {
+  let exact_rational_input = fn(arg : Expr) {
+    if current_evaluate() {
+      exact_numeric_expr_to_rational(arg)
+    } else {
+      atomic_numeric_expr_to_exact_rational(arg)
+    }
+  }
   match args {
     [arg] =>
-      match atomic_numeric_expr_to_exact_rational(arg) {
+      match exact_rational_input(arg) {
         Some(value) => Expr::Number(value)
         None => Expr::Apply(Expr::FunctionHead("Rational"), args)
       }
     [lhs, rhs] =>
-      match
-        (
-          atomic_numeric_expr_to_exact_rational(lhs),
-          atomic_numeric_expr_to_exact_rational(rhs),
-        ) {
+      match (exact_rational_input(lhs), exact_rational_input(rhs)) {
         (Some(lhs_value), Some(rhs_value)) =>
           if rhs_value.is_zero() {
             if lhs_value.is_zero() {

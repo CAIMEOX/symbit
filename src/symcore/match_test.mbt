@@ -813,3 +813,55 @@ test "expr_match follows SymPy source exclude cases around additive coefficients
     None => fail("expected x + sin(x) to match a*f(x) + b from SymPy source")
   }
 }
+
+///|
+test "expr_match follows more SymPy source trig exclude and duplicate-function cases" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let p = Expr::Wild("p", [], [])
+  let q = Expr::Wild("q", [], [])
+  let c = Expr::Wild("c", [], [])
+  let r = Expr::Wild("r", [Expr::FunctionHead("sin"), y], [])
+
+  match
+    expr_match(
+      add([r, mul([p, function("sin", [q])])]),
+      add([function("cos", [x]), mul([int(5), function("sin", [y])])]),
+    ) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="5")
+      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="y")
+      inspect(
+        @symprint.to_string(env.get(r).unwrap_or(int(0))),
+        content="cos(x)",
+      )
+    }
+    None => fail("expected source-driven exclude/trig match")
+  }
+
+  match
+    expr_match(
+      mul([function("sin", [p]), function("sin", [q]), c]),
+      pow(function("sin", [x]), int(2)),
+    ) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(c).unwrap_or(int(0))), content="1")
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="x")
+      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="x")
+    }
+    None => fail("expected repeated sine product match")
+  }
+
+  match
+    expr_match(
+      add([function("sin", [p]), function("sin", [q]), c]),
+      mul([int(2), function("sin", [x])]),
+    ) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(c).unwrap_or(int(0))), content="0")
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="x")
+      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="x")
+    }
+    None => fail("expected repeated sine additive match")
+  }
+}

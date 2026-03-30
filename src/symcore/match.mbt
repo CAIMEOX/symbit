@@ -717,6 +717,53 @@ fn positive_root_for_match(expr : Expr, degree : BigInt) -> Expr {
 }
 
 ///|
+fn expand_multiplicative_coeff_for_add_match(expr : Expr) -> Expr? {
+  match monomial_parts(expr) {
+    Some((coeff, factors)) => {
+      let one = @symnum.BigRational::one()
+      let neg_one = @symnum.BigRational::from_int(-1)
+      if coeff.compare(one) > 0 {
+        Some(
+          raw_add([
+            monomial_expr(one, factors),
+            monomial_expr(coeff.add_r(neg_one), factors),
+          ]),
+        )
+      } else if coeff.compare(neg_one) < 0 {
+        Some(
+          raw_add([
+            monomial_expr(neg_one, factors),
+            monomial_expr(coeff.add_r(one), factors),
+          ]),
+        )
+      } else {
+        None
+      }
+    }
+    None => None
+  }
+}
+
+///|
+fn expand_positive_power_for_mul_match(expr : Expr) -> Expr? {
+  match normalize_legacy_expr(expr) {
+    Expr::Pow(base, exp) =>
+      match exact_integer_value(exp) {
+        Some(n) if n.compare(1N) > 0 && n.compare(32N) <= 0 => {
+          let count = n.to_int()
+          let factors : Array[Expr] = []
+          for _ in 0..<count {
+            factors.push(base)
+          }
+          Some(raw_mul(factors))
+        }
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
 pub fn wild_matches(
   pattern : Expr,
   expr : Expr,
@@ -847,7 +894,11 @@ pub fn expr_match(
       }
       match expr {
         Expr::Add(_) => ()
-        _ => return expr_match(pattern, Expr::Add([expr]), repl_dict~)
+        _ =>
+          match expand_multiplicative_coeff_for_add_match(expr) {
+            Some(expanded) => return expr_match(pattern, expanded, repl_dict~)
+            None => return expr_match(pattern, Expr::Add([expr]), repl_dict~)
+          }
       }
     }
     Expr::Mul(pattern_items) if is_zero(expr) => {
@@ -888,6 +939,10 @@ pub fn expr_match(
             }
           None => ()
         }
+      }
+      match expand_positive_power_for_mul_match(expr) {
+        Some(expanded) => return expr_match(pattern, expanded, repl_dict~)
+        None => ()
       }
     }
     Expr::Pow(base, exp) if is_one(expr) && !expr_contains_wild(base) =>
