@@ -1518,32 +1518,65 @@ fn exact_number_matches_head(
   match kind {
     ExactNumberKind::Zero =>
       match needle_name {
-        "Zero" | "Integer" | "Rational" | "Number" | "Basic" => true
+        "Zero"
+        | "Integer"
+        | "Rational"
+        | "Number"
+        | "AtomicExpr"
+        | "Atom"
+        | "Expr"
+        | "Basic" => true
         _ => false
       }
     ExactNumberKind::One =>
       match needle_name {
-        "One" | "Integer" | "Rational" | "Number" | "Basic" => true
+        "One"
+        | "Integer"
+        | "Rational"
+        | "Number"
+        | "AtomicExpr"
+        | "Atom"
+        | "Expr"
+        | "Basic" => true
         _ => false
       }
     ExactNumberKind::NegativeOne =>
       match needle_name {
-        "NegativeOne" | "Integer" | "Rational" | "Number" | "Basic" => true
+        "NegativeOne"
+        | "Integer"
+        | "Rational"
+        | "Number"
+        | "AtomicExpr"
+        | "Atom"
+        | "Expr"
+        | "Basic" => true
         _ => false
       }
     ExactNumberKind::Half =>
       match needle_name {
-        "Half" | "Rational" | "Number" | "Basic" => true
+        "Half"
+        | "Rational"
+        | "Number"
+        | "AtomicExpr"
+        | "Atom"
+        | "Expr"
+        | "Basic" => true
         _ => false
       }
     ExactNumberKind::Integer =>
       match needle_name {
-        "Integer" | "Rational" | "Number" | "Basic" => true
+        "Integer"
+        | "Rational"
+        | "Number"
+        | "AtomicExpr"
+        | "Atom"
+        | "Expr"
+        | "Basic" => true
         _ => false
       }
     ExactNumberKind::Rational =>
       match needle_name {
-        "Rational" | "Number" | "Basic" => true
+        "Rational" | "Number" | "AtomicExpr" | "Atom" | "Expr" | "Basic" => true
         _ => false
       }
   }
@@ -1560,32 +1593,34 @@ fn expr_matches_class_head(expr : Expr, needle_name : String) -> Bool {
       )
     ExprForm::Float(_) =>
       match needle_name {
-        "Float" | "Number" | "Basic" => true
+        "Float" | "Number" | "AtomicExpr" | "Atom" | "Expr" | "Basic" => true
         _ => false
       }
     ExprForm::ComplexFloat(_) =>
       match needle_name {
-        "ComplexFloat" | "Number" | "Basic" => true
+        "ComplexFloat" | "Number" | "AtomicExpr" | "Atom" | "Expr" | "Basic" =>
+          true
         _ => false
       }
     ExprForm::NumberSymbol(_) =>
       match needle_name {
-        "NumberSymbol" | "Number" | "Basic" => true
+        "NumberSymbol" | "Number" | "AtomicExpr" | "Atom" | "Expr" | "Basic" =>
+          true
         _ => false
       }
     ExprForm::Symbol(_) =>
       match needle_name {
-        "Symbol" | "Basic" => true
+        "Symbol" | "AtomicExpr" | "Atom" | "Expr" | "Basic" => true
         _ => false
       }
     ExprForm::Dummy(_, _) =>
       match needle_name {
-        "Dummy" | "Symbol" | "Basic" => true
+        "Dummy" | "Symbol" | "AtomicExpr" | "Atom" | "Expr" | "Basic" => true
         _ => false
       }
     ExprForm::Wild(_, _, _) =>
       match needle_name {
-        "Wild" | "Symbol" | "Basic" => true
+        "Wild" | "Symbol" | "AtomicExpr" | "Atom" | "Expr" | "Basic" => true
         _ => false
       }
     ExprForm::WildFunction(_, _) =>
@@ -1615,22 +1650,22 @@ fn expr_matches_class_head(expr : Expr, needle_name : String) -> Bool {
       }
     ExprForm::Add(_) =>
       match needle_name {
-        "Add" | "Basic" => true
+        "Add" | "Expr" | "Basic" => true
         _ => false
       }
     ExprForm::Mul(_) =>
       match needle_name {
-        "Mul" | "Basic" => true
+        "Mul" | "Expr" | "Basic" => true
         _ => false
       }
     ExprForm::Pow(_, _) =>
       match needle_name {
-        "Pow" | "Basic" => true
+        "Pow" | "Expr" | "Basic" => true
         _ => false
       }
     ExprForm::Mod(_, _) =>
       match needle_name {
-        "Mod" | "Basic" => true
+        "Mod" | "Function" | "Application" | "Expr" | "Basic" => true
         _ => false
       }
     ExprForm::Tuple(_) =>
@@ -1650,22 +1685,22 @@ fn expr_matches_class_head(expr : Expr, needle_name : String) -> Bool {
       }
     ExprForm::Derivative(_, _) =>
       match needle_name {
-        "Derivative" | "Basic" => true
+        "Derivative" | "Expr" | "Basic" => true
         _ => false
       }
     ExprForm::Subs(_, _, _) =>
       match needle_name {
-        "Subs" | "Basic" => true
+        "Subs" | "Expr" | "Basic" => true
         _ => false
       }
     ExprForm::Lambda(_, _) =>
       match needle_name {
-        "Lambda" | "Basic" => true
+        "Lambda" | "Expr" | "Basic" => true
         _ => false
       }
     ExprForm::Apply(_, _) =>
       match needle_name {
-        "Basic" => true
+        "Function" | "Application" | "Expr" | "Basic" => true
         _ => false
       }
   }

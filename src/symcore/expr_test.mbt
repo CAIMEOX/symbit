@@ -121,6 +121,23 @@ test "has follows SymPy class-head and additive subset semantics" {
   )
   assert_true(has(Expr::Dummy("d", 1), Expr::FunctionHead("Symbol")))
   assert_true(has(Expr::Wild("p", [], []), Expr::FunctionHead("Symbol")))
+  assert_true(has(int(1), Expr::FunctionHead("Atom")))
+  assert_true(has(int(1), Expr::FunctionHead("Expr")))
+  assert_true(has(x, Expr::FunctionHead("AtomicExpr")))
+  assert_true(has(function("sin", [x]), Expr::FunctionHead("Application")))
+  assert_true(has(function("sin", [x]), Expr::FunctionHead("Function")))
+  assert_true(has(add([x, y]), Expr::FunctionHead("Expr")))
+  assert_true(has(mod_expr(x, int(2)), Expr::FunctionHead("Function")))
+  assert_true(has(subs_expr(x, x, int(0)), Expr::FunctionHead("Expr")))
+  assert_false(
+    has(Expr::Tuple([Expr::Boolean(true)]), Expr::FunctionHead("Expr")),
+  )
+  assert_false(
+    has(
+      Expr::Relational(RelOp::Eq, Expr::Boolean(true), Expr::Boolean(false)),
+      Expr::FunctionHead("Expr"),
+    ),
+  )
   assert_true(has(add([x, y, int(1)]), add([x, int(1)])))
   assert_false(has(add([x, y]), add([x, z])))
   assert_true(has(mul([x, y, z]), mul([x, y])))
@@ -820,6 +837,18 @@ test "preorder and postorder traversal stay structural" {
   json_inspect(postorder(expr).map(@symprint.to_string), content=[
     "x", "f(x)", "x", "1", "(x, 1)", "Derivative(f(x), x)", "x", "2", "Mod(x, 2)",
     "Derivative(f(x), x) + Mod(x, 2)",
+  ])
+}
+
+///|
+test "preorder and postorder canonicalize legacy roots before traversal" {
+  let x = Expr::Symbol("x")
+  let legacy = Expr::Function("sin", [x])
+  json_inspect(preorder(legacy).map(@symprint.to_string), content=[
+    "sin(x)", "x",
+  ])
+  json_inspect(postorder(legacy).map(@symprint.to_string), content=[
+    "x", "sin(x)",
   ])
 }
 

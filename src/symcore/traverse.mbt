@@ -59,6 +59,7 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
 
 ///|
 pub fn preorder(expr : Expr) -> Array[Expr] {
+  let expr = normalize_legacy_expr(expr)
   let out : Array[Expr] = [expr]
   for child in children(expr) {
     for item in preorder(child) {
@@ -70,6 +71,7 @@ pub fn preorder(expr : Expr) -> Array[Expr] {
 
 ///|
 pub fn postorder(expr : Expr) -> Array[Expr] {
+  let expr = normalize_legacy_expr(expr)
   let out : Array[Expr] = []
   for child in children(expr) {
     for item in postorder(child) {

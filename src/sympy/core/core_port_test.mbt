@@ -1245,6 +1245,68 @@ test "symcore parity has follows source-driven class-head and subset semantics" 
     content="true",
   )
   inspect(
+    @symcore.has(@symcore.int(1), @symcore.Expr::FunctionHead("Atom")).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(@symcore.int(1), @symcore.Expr::FunctionHead("Expr")).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(x, @symcore.Expr::FunctionHead("AtomicExpr")).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.function("sin", [x]),
+      @symcore.Expr::FunctionHead("Application"),
+    ).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.function("sin", [x]),
+      @symcore.Expr::FunctionHead("Function"),
+    ).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(@symcore.add([x, y]), @symcore.Expr::FunctionHead("Expr")).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.mod_expr(x, @symcore.int(2)),
+      @symcore.Expr::FunctionHead("Function"),
+    ).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.subs_expr(x, x, @symcore.int(0)),
+      @symcore.Expr::FunctionHead("Expr"),
+    ).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.Expr::Tuple([@symcore.Expr::Boolean(true)]),
+      @symcore.Expr::FunctionHead("Expr"),
+    ).to_string(),
+    content="false",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        @symcore.Expr::Boolean(true),
+        @symcore.Expr::Boolean(false),
+      ),
+      @symcore.Expr::FunctionHead("Expr"),
+    ).to_string(),
+    content="false",
+  )
+  inspect(
     @symcore.has(
       @symcore.add([x, y, @symcore.int(1)]),
       @symcore.add([x, @symcore.int(1)]),
