@@ -541,7 +541,8 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
   }
   guard (try? parse_expr("Integer(sin(x))"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
+    detail ==
+    "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
     fail("expected Integer(sin(x)) invalid input error")
   }
   inspect(@symprint.to_string(parse_expr("Integer(pi)")), content="3")
@@ -705,9 +706,18 @@ test "ast parser compatibility entrypoint" {
     ),
     content="0",
   )
-  inspect(@symprint.to_string(ast_parse_expr("Rational(1.0, 3)")), content="1/3")
-  inspect(@symprint.to_string(ast_parse_expr("Rational(1, 3.0)")), content="1/3")
-  inspect(@symprint.to_string(ast_parse_expr("Rational(1/2, 1/3)")), content="3/2")
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(1.0, 3)")),
+    content="1/3",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(1, 3.0)")),
+    content="1/3",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(1/2, 1/3)")),
+    content="3/2",
+  )
   inspect(@symprint.to_string(ast_parse_expr("Rational(1, 1/3)")), content="3")
   inspect(@symprint.to_string(ast_parse_expr("Rational(True)")), content="1")
   inspect(@symprint.to_string(ast_parse_expr("Rational(False)")), content="0")
@@ -743,7 +753,8 @@ test "ast parser compatibility entrypoint" {
   }
   guard (try? ast_parse_expr("Integer(sin(x))"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
+    detail ==
+    "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
     fail("expected ast parser Integer(sin(x)) invalid input error")
   }
   inspect(@symprint.to_string(ast_parse_expr("Integer(pi)")), content="3")
@@ -804,6 +815,16 @@ test "ast parser compatibility entrypoint" {
     detail == "TypeError: invalid input: sin(x)" else {
     fail("expected ast parser Rational(2, sin(x)) rhs invalid input error")
   }
+  guard (try? ast_parse_expr("Subs(x, (x, x), (0, 1))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "ValueError: The following expressions appear more than once: x" else {
+    fail("expected ast parser duplicate Subs variables error")
+  }
+  inspect(@symprint.to_string(ast_parse_expr("Subs(x, (), ())")), content="x")
+  inspect(
+    @symprint.to_string(ast_parse_expr("Subs(Subs(x, x, 0), y, 1)")),
+    content="Subs(x, (x, y), (0, 1))",
+  )
   inspect(
     @symprint.to_string(ast_parse_expr("Rational(True, False)")),
     content="zoo",
@@ -1078,7 +1099,9 @@ test "symparse explicit core constructor calls stay canonical" {
     content="Derivative(x, x)",
   )
   inspect(
-    @symprint.to_string(parse_expr_with("S(x + x)", parse_options(evaluate=false))),
+    @symprint.to_string(
+      parse_expr_with("S(x + x)", parse_options(evaluate=false)),
+    ),
     content="x + x",
   )
   guard (try? parse_expr("Eq()"))
@@ -1136,6 +1159,16 @@ test "symparse explicit core constructor calls stay canonical" {
     "ValueError: Number of point values must be the same as the number of variables." else {
     fail("expected Subs variable/value arity error")
   }
+  guard (try? parse_expr("Subs(x, (x, x), (0, 1))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "ValueError: The following expressions appear more than once: x" else {
+    fail("expected duplicate Subs variables error")
+  }
+  inspect(@symprint.to_string(parse_expr("Subs(x, (), ())")), content="x")
+  inspect(
+    @symprint.to_string(parse_expr("Subs(Subs(x, x, 0), y, 1)")),
+    content="Subs(x, (x, y), (0, 1))",
+  )
   guard (try? parse_expr("Dict(x)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: object of type 'Symbol' has no len()" else {

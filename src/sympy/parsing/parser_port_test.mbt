@@ -735,7 +735,10 @@ test "symparse parity builtin callable semantics" {
     @symprint.to_string(parse_expr("S(sin(x))")),
     content=parse_expr_sstr("S(sin(x))"),
   )
-  inspect(@symprint.to_string(parse_expr("S(x, y)")), content=parse_expr_sstr("S(x, y)"))
+  inspect(
+    @symprint.to_string(parse_expr("S(x, y)")),
+    content=parse_expr_sstr("S(x, y)"),
+  )
   inspect(
     try parse_expr("Rational(pi)") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
@@ -950,7 +953,9 @@ test "symparse parity builtin callable semantics" {
     content=parse_expr_error_sstr_in("sqrt(x, y)", [], evaluate=false),
   )
   inspect(
-    @symprint.to_string(parse_expr_with("S(x + x)", parse_options(evaluate=false))),
+    @symprint.to_string(
+      parse_expr_with("S(x + x)", parse_options(evaluate=false)),
+    ),
     content=parse_expr_sstr("S(x + x)", evaluate=false),
   )
   inspect(
@@ -1088,7 +1093,10 @@ test "symparse parity builtin callable semantics" {
     @symprint.to_string(ast_parse_expr("S(sin(x))")),
     content=ast_parse_expr_sstr("S(sin(x))"),
   )
-  inspect(@symprint.to_string(ast_parse_expr("S(x, y)")), content=ast_parse_expr_sstr("S(x, y)"))
+  inspect(
+    @symprint.to_string(ast_parse_expr("S(x, y)")),
+    content=ast_parse_expr_sstr("S(x, y)"),
+  )
   inspect(
     try ast_parse_expr("pi(x)") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
@@ -1178,6 +1186,20 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content="TypeError: invalid input: sin(x)",
+  )
+  inspect(
+    try ast_parse_expr("Subs(x, (x, x), (0, 1))") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="ValueError: The following expressions appear more than once: x",
+  )
+  inspect(@symprint.to_string(ast_parse_expr("Subs(x, (), ())")), content="x")
+  inspect(
+    @symprint.to_string(ast_parse_expr("Subs(Subs(x, x, 0), y, 1)")),
+    content="Subs(x, (x, y), (0, 1))",
   )
   inspect(
     @symprint.to_string(ast_parse_expr("Rational(True, False)")),
@@ -1500,6 +1522,20 @@ test "symparse parity explicit core constructor calls stay canonical" {
   inspect(
     parse_error_detail("Subs(x + y, (x, y), z)"),
     content=parse_error_oracle("Subs(x + y, (x, y), z)"),
+  )
+  inspect(
+    try parse_expr("Subs(x, (x, x), (0, 1))") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="ValueError: The following expressions appear more than once: x",
+  )
+  inspect(@symprint.to_string(parse_expr("Subs(x, (), ())")), content="x")
+  inspect(
+    @symprint.to_string(parse_expr("Subs(Subs(x, x, 0), y, 1)")),
+    content="Subs(x, (x, y), (0, 1))",
   )
   inspect(
     parse_error_detail("Derivative(sin(x), (1, 2))"),

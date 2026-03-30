@@ -120,9 +120,18 @@ test "symcore parity wild match exclude and properties" {
   let s = @symcore.Expr::Wild("s", [], [@symcore.WildProperty::Symbol])
   let seeded : Map[@symcore.Expr, @symcore.Expr] = {}
   seeded.set(a, y)
-  inspect(core_match_sstr(a, @symcore.mul([@symcore.int(2), y])), content="a_=2*y")
-  inspect(core_match_sstr(b, @symcore.mul([@symcore.int(2), y])), content="b_=2*y")
-  inspect(core_match_sstr(b, @symcore.mul([@symcore.int(2), x])), content="None")
+  inspect(
+    core_match_sstr(a, @symcore.mul([@symcore.int(2), y])),
+    content="a_=2*y",
+  )
+  inspect(
+    core_match_sstr(b, @symcore.mul([@symcore.int(2), y])),
+    content="b_=2*y",
+  )
+  inspect(
+    core_match_sstr(b, @symcore.mul([@symcore.int(2), x])),
+    content="None",
+  )
   inspect(core_match_sstr(p, @symcore.int(2)), content="p_=2")
   inspect(core_match_sstr(p, @symcore.int(-2)), content="None")
   inspect(core_match_sstr(s, y), content="s_=y")
@@ -166,14 +175,12 @@ test "symcore source-driven commutative wildcard matching examples" {
   )
   inspect(
     core_match_sstr(
-      @symcore.apply(@symcore.Expr::FunctionHead("f"), [
-        a,
-        @symcore.add([a, b]),
-      ]).unwrap_or(@symcore.int(0)),
-      @symcore.apply(@symcore.Expr::FunctionHead("f"), [
-        x,
-        @symcore.add([x, y]),
-      ]).unwrap_or(@symcore.int(0)),
+      @symcore.apply(@symcore.Expr::FunctionHead("f"), [a, @symcore.add([a, b])]).unwrap_or(
+        @symcore.int(0),
+      ),
+      @symcore.apply(@symcore.Expr::FunctionHead("f"), [x, @symcore.add([x, y])]).unwrap_or(
+        @symcore.int(0),
+      ),
     ),
     content="a_=x|b_=y",
   )
@@ -191,10 +198,7 @@ test "symcore source-driven commutative wildcard matching examples" {
     ),
     content="None",
   )
-  inspect(
-    core_match_sstr(@symcore.pow(x, a), @symcore.int(1)),
-    content="a_=0",
-  )
+  inspect(core_match_sstr(@symcore.pow(x, a), @symcore.int(1)), content="a_=0")
   inspect(
     core_match_sstr(
       @symcore.mul([a, @symcore.function("cos", [@symcore.mul([b, x])])]),
@@ -223,10 +227,7 @@ test "symcore source-driven commutative wildcard matching examples" {
     core_match_sstr(
       @symcore.mul([
         a,
-        @symcore.pow(
-          @symcore.add([@symcore.mul([b, x]), c]),
-          @symcore.int(-1),
-        ),
+        @symcore.pow(@symcore.add([@symcore.mul([b, x]), c]), @symcore.int(-1)),
       ]),
       @symcore.mul([
         @symcore.int(3),
@@ -313,10 +314,12 @@ test "symcore source-driven derivative exclusion examples" {
   let f = @symcore.Expr::UndefinedFunction("f")
   let fx = @symcore.apply(f, [x]).unwrap_or(@symcore.int(0))
   let d1 = @symcore.derivative(fx, x)
-  let d2 = @symcore.Expr::Derivative(
-    fx,
-    [x, @symcore.int(1), x, @symcore.int(1)],
-  )
+  let d2 = @symcore.Expr::Derivative(fx, [
+    x,
+    @symcore.int(1),
+    x,
+    @symcore.int(1),
+  ])
   let a = @symcore.Expr::Wild("a", [f, x], [])
   let b = @symcore.Expr::Wild("b", [f], [])
 
@@ -340,14 +343,14 @@ test "symcore source-driven derivative exclusion examples" {
   let seeded : @symcore.MatchEnv = {}
   seeded.set(b, @symcore.pow(x, @symcore.int(2)))
   inspect(
-    match @symcore.expr_match(
-      @symcore.xreplace(
-        @symcore.add([@symcore.mul([a, d2]), b]),
-        [(b, @symcore.pow(x, @symcore.int(2)))],
-      ),
-      @symcore.add([d1, @symcore.pow(x, @symcore.int(2))]),
-      repl_dict=seeded,
-    ) {
+    match
+      @symcore.expr_match(
+        @symcore.xreplace(@symcore.add([@symcore.mul([a, d2]), b]), [
+          (b, @symcore.pow(x, @symcore.int(2))),
+        ]),
+        @symcore.add([d1, @symcore.pow(x, @symcore.int(2))]),
+        repl_dict=seeded,
+      ) {
       Some(_) => "Some"
       None => "None"
     },
@@ -366,17 +369,11 @@ test "symcore source-driven derivative remainder and coefficient bug examples" {
   let p = @symcore.Expr::Wild("p", [], [])
 
   inspect(
-    core_match_sstr(
-      @symcore.add([@symcore.mul([a, dfx]), b]),
-      dfx,
-    ),
+    core_match_sstr(@symcore.add([@symcore.mul([a, dfx]), b]), dfx),
     content="a_=1|b_=0",
   )
   inspect(
-    core_match_sstr(
-      @symcore.mul([@symcore.int(-1), p, x]),
-      x,
-    ),
+    core_match_sstr(@symcore.mul([@symcore.int(-1), p, x]), x),
     content="p_=-1",
   )
   inspect(
@@ -387,10 +384,7 @@ test "symcore source-driven derivative remainder and coefficient bug examples" {
     content="p_=1",
   )
   inspect(
-    core_match_sstr(
-      @symcore.mul([@symcore.int(3), p, x]),
-      x,
-    ),
+    core_match_sstr(@symcore.mul([@symcore.int(3), p, x]), x),
     content="p_=1/3",
   )
 }
@@ -402,20 +396,10 @@ test "symcore source-driven exclude and wild-on-wild examples" {
   let a = @symcore.Expr::Symbol("a")
   let p = @symcore.Expr::Wild("p", [@symcore.int(1), x], [])
   let q = @symcore.Expr::Wild("q", [], [])
-  let r = @symcore.Expr::Wild(
-    "r",
-    [@symcore.Expr::FunctionHead("sin"), y],
-    [],
-  )
+  let r = @symcore.Expr::Wild("r", [@symcore.Expr::FunctionHead("sin"), y], [])
 
-  inspect(
-    core_match_sstr(r, @symcore.function("sin", [x])),
-    content="None",
-  )
-  inspect(
-    core_match_sstr(r, @symcore.function("cos", [y])),
-    content="None",
-  )
+  inspect(core_match_sstr(r, @symcore.function("sin", [x])), content="None")
+  inspect(core_match_sstr(r, @symcore.function("cos", [y])), content="None")
   inspect(
     core_match_sstr(
       @symcore.add([
@@ -432,10 +416,7 @@ test "symcore source-driven exclude and wild-on-wild examples" {
     content="p_=3|q_=y|r_=a",
   )
   inspect(
-    core_match_sstr(
-      @symcore.add([x, p]),
-      @symcore.add([x, @symcore.int(1)]),
-    ),
+    core_match_sstr(@symcore.add([x, p]), @symcore.add([x, @symcore.int(1)])),
     content="None",
   )
   inspect(
@@ -455,32 +436,20 @@ test "symcore source-driven exclude and wild-on-wild examples" {
   let q_excluding_p = @symcore.Expr::Wild("q", [p], [])
   let r_plain = @symcore.Expr::Wild("r", [], [])
   inspect(
-    core_match_sstr(
-      @symcore.add([q_excluding_p, r_plain]),
-      p,
-    ),
+    core_match_sstr(@symcore.add([q_excluding_p, r_plain]), p),
     content="q_=0|r_=p_",
   )
   inspect(
-    core_match_sstr(
-      @symcore.mul([q_excluding_p, r_plain]),
-      p,
-    ),
+    core_match_sstr(@symcore.mul([q_excluding_p, r_plain]), p),
     content="q_=1|r_=p_",
   )
   let r_excluding_p = @symcore.Expr::Wild("r", [p], [])
   inspect(
-    core_match_sstr(
-      @symcore.add([q_excluding_p, r_excluding_p]),
-      p,
-    ),
+    core_match_sstr(@symcore.add([q_excluding_p, r_excluding_p]), p),
     content="None",
   )
   inspect(
-    core_match_sstr(
-      @symcore.mul([q_excluding_p, r_excluding_p]),
-      p,
-    ),
+    core_match_sstr(@symcore.mul([q_excluding_p, r_excluding_p]), p),
     content="None",
   )
 }
@@ -801,9 +770,7 @@ test "symcore source-driven kinds distinguish logical applications" {
     content="BooleanKind",
   )
   inspect(
-    @symcore.kind_name(
-      @symcore.expr_kind(@symcore.function("sin", [x])),
-    ),
+    @symcore.kind_name(@symcore.expr_kind(@symcore.function("sin", [x]))),
     content="UndefinedKind",
   )
   inspect(
@@ -857,8 +824,10 @@ test "symcore source-driven S constructor semantics stay canonical" {
   )
   inspect(
     core_expr_sstr(
-      @symcore.apply(@symcore.Expr::FunctionHead("S"), [x, @symcore.Expr::Symbol("y")])
-      .unwrap_or(@symcore.int(0)),
+      @symcore.apply(@symcore.Expr::FunctionHead("S"), [
+        x,
+        @symcore.Expr::Symbol("y"),
+      ]).unwrap_or(@symcore.int(0)),
     ),
     content="x",
   )
@@ -867,15 +836,27 @@ test "symcore source-driven S constructor semantics stay canonical" {
 ///|
 test "symcore source-driven Integer and Rational constructor semantics" {
   inspect(
-    core_expr_sstr(@symcore.function("Integer", [@symcore.Expr::Float(@symcore.Float::from_double(0.9))])),
+    core_expr_sstr(
+      @symcore.function("Integer", [
+        @symcore.Expr::Float(@symcore.Float::from_double(0.9)),
+      ]),
+    ),
     content="0",
   )
   inspect(
-    core_expr_sstr(@symcore.function("Integer", [@symcore.Expr::Float(@symcore.Float::from_double(10.5))])),
+    core_expr_sstr(
+      @symcore.function("Integer", [
+        @symcore.Expr::Float(@symcore.Float::from_double(10.5)),
+      ]),
+    ),
     content="10",
   )
   inspect(
-    core_expr_sstr(@symcore.function("Integer", [@symcore.Expr::Float(@symcore.Float::from_double(-3.8))])),
+    core_expr_sstr(
+      @symcore.function("Integer", [
+        @symcore.Expr::Float(@symcore.Float::from_double(-3.8)),
+      ]),
+    ),
     content="-3",
   )
   inspect(
@@ -883,39 +864,44 @@ test "symcore source-driven Integer and Rational constructor semantics" {
     content="1",
   )
   inspect(
-    core_expr_sstr(@symcore.function("Integer", [@symcore.Expr::Boolean(false)])),
+    core_expr_sstr(
+      @symcore.function("Integer", [@symcore.Expr::Boolean(false)]),
+    ),
     content="0",
   )
   inspect(
     core_expr_sstr(
-      @symcore.function(
-        "Rational",
-        [@symcore.Expr::Float(@symcore.Float::from_double(1.0)), @symcore.int(3)],
-      ),
+      @symcore.function("Rational", [
+        @symcore.Expr::Float(@symcore.Float::from_double(1.0)),
+        @symcore.int(3),
+      ]),
     ),
     content="1/3",
   )
   inspect(
     core_expr_sstr(
-      @symcore.function(
-        "Rational",
-        [@symcore.int(1), @symcore.Expr::Float(@symcore.Float::from_double(3.0))],
-      ),
+      @symcore.function("Rational", [
+        @symcore.int(1),
+        @symcore.Expr::Float(@symcore.Float::from_double(3.0)),
+      ]),
     ),
     content="1/3",
   )
   inspect(
     core_expr_sstr(
-      @symcore.function(
-        "Rational",
-        [@symcore.rational_from_ints(1, 2), @symcore.rational_from_ints(1, 3)],
-      ),
+      @symcore.function("Rational", [
+        @symcore.rational_from_ints(1, 2),
+        @symcore.rational_from_ints(1, 3),
+      ]),
     ),
     content="3/2",
   )
   inspect(
     core_expr_sstr(
-      @symcore.function("Rational", [@symcore.int(1), @symcore.rational_from_ints(1, 3)]),
+      @symcore.function("Rational", [
+        @symcore.int(1),
+        @symcore.rational_from_ints(1, 3),
+      ]),
     ),
     content="3",
   )
@@ -1043,7 +1029,10 @@ test "symcore parity free_symbols and atoms helpers" {
 ///|
 test "symcore parity has sees callable heads in applications" {
   let x = @symcore.Expr::Symbol("x")
-  let dfx = @symcore.derivative(@symcore.applied_undefined_function("f", [x]), x)
+  let dfx = @symcore.derivative(
+    @symcore.applied_undefined_function("f", [x]),
+    x,
+  )
   inspect(
     @symcore.has(
       @symcore.function("sin", [x]),
@@ -1113,7 +1102,9 @@ test "symcore legacy compatibility normalizes against canonical needles and para
     content="true",
   )
   inspect(
-    core_expr_sstr(@symcore.xreplace(@symcore.function("sin", [x]), [(legacy_sinx, x)])),
+    core_expr_sstr(
+      @symcore.xreplace(@symcore.function("sin", [x]), [(legacy_sinx, x)]),
+    ),
     content="x",
   )
   inspect(
@@ -1232,6 +1223,33 @@ test "symcore parity subst respects lambda and Subs binders" {
   inspect(
     core_subst_symbol_sstr(multi, "y", w),
     content="Subs(w + x, (x, w), (w, z))",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.subs_expr(
+        @symcore.add([x, y]),
+        @symcore.Expr::Tuple([]),
+        @symcore.Expr::Tuple([]),
+      ),
+    ),
+    content="x + y",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.subs_expr(
+        @symcore.subs_expr(x, x, @symcore.int(0)),
+        y,
+        @symcore.int(1),
+      ),
+    ),
+    content="Subs(x, (x, y), (0, 1))",
+  )
+  inspect(
+    @symcore.subs_signature_error(
+      @symcore.Expr::Tuple([x, x]),
+      @symcore.Expr::Tuple([@symcore.int(0), @symcore.int(1)]),
+    ).unwrap_or(""),
+    content="The following expressions appear more than once: x",
   )
 }
 
@@ -1401,7 +1419,10 @@ test "symcore parity free_symbols for wild undefined applications and dict" {
     core_free_symbols_sstr(@symcore.applied_undefined_function("f", [x])),
     content="('x',)",
   )
-  inspect(core_free_symbols_sstr(@symcore.Expr::Wild("w", [], [])), content="('w_',)")
+  inspect(
+    core_free_symbols_sstr(@symcore.Expr::Wild("w", [], [])),
+    content="('w_',)",
+  )
   inspect(
     core_free_symbols_sstr(@symcore.Expr::Dict([(x, y), (@symcore.int(1), z)])),
     content="('x', 'y', 'z')",
@@ -1469,8 +1490,7 @@ test "symcore parity free_symbols through apply lambda and Subs" {
     @symcore.has(
       @symcore.subst(@symcore.subs_expr(x, x, @symcore.int(1)), subs_env),
       y,
-    )
-    .to_string(),
+    ).to_string(),
     content="true",
   )
 }
@@ -1860,9 +1880,6 @@ test "symcore parity parameters control exp and distribution" {
         @symcore.mul([@symcore.int(2), @symcore.add([x, @symcore.int(1)])])
       }),
     ),
-    content=core_parameters_sstr(
-      "sympy.Integer(2)*(x + 1)",
-      distribute=false,
-    ),
+    content=core_parameters_sstr("sympy.Integer(2)*(x + 1)", distribute=false),
   )
 }

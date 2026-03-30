@@ -402,10 +402,33 @@ fn subs_items(expr : Expr) -> Array[Expr] {
 }
 
 ///|
+fn subs_items_expr(items : Array[Expr]) -> Expr {
+  match items {
+    [] => Expr::Tuple([])
+    [item] => item
+    _ => Expr::Tuple(items)
+  }
+}
+
+///|
 pub fn subs_signature_error(variable : Expr, value : Expr) -> String? {
   let variables = subs_items(variable)
   let values = subs_items(value)
-  if variables.length() != values.length() {
+  let repeated : Array[String] = []
+  for variable in variables {
+    let count = variables.filter(current => current == variable).length()
+    if count > 1 {
+      let name = variable.to_string()
+      if !repeated.contains(name) {
+        repeated.push(name)
+      }
+    }
+  }
+  if !repeated.is_empty() {
+    Some(
+      "The following expressions appear more than once: " + repeated.join(", "),
+    )
+  } else if variables.length() != values.length() {
     Some("Number of point values must be the same as the number of variables.")
   } else {
     None
@@ -419,7 +442,23 @@ pub fn subs_expr(expr : Expr, variable : Expr, value : Expr) -> Expr {
   let value = normalize_legacy_expr(value)
   match subs_signature_error(variable, value) {
     Some(_) => Expr::Apply(Expr::FunctionHead("Subs"), [expr, variable, value])
-    None => Expr::Subs(expr, variable, value)
+    None => {
+      let variables = subs_items(variable)
+      let values = subs_items(value)
+      if values.is_empty() {
+        expr
+      } else {
+        match expr {
+          Expr::Subs(inner, inner_variable, inner_value) =>
+            Expr::Subs(
+              inner,
+              subs_items_expr(subs_items(inner_variable) + variables),
+              subs_items_expr(subs_items(inner_value) + values),
+            )
+          _ => Expr::Subs(expr, variable, value)
+        }
+      }
+    }
   }
 }
 
@@ -434,8 +473,7 @@ fn lambda_signature_items(vars : Expr) -> Array[Expr] {
 ///|
 fn is_lambda_signature_atom(expr : Expr) -> Bool {
   match normalize_legacy_expr(expr) {
-    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_, _, _) =>
-      true
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_, _, _) => true
     _ => false
   }
 }
@@ -929,8 +967,7 @@ pub fn function_head_name(expr : Expr) -> String? {
 ///|
 pub fn exact_number_kind(expr : Expr) -> ExactNumberKind? {
   match expr_form(expr) {
-    ExprForm::Number(value) =>
-      Some(exact_number_kind_from_rational(value))
+    ExprForm::Number(value) => Some(exact_number_kind_from_rational(value))
     _ => None
   }
 }
@@ -989,8 +1026,7 @@ pub fn singleton_head(expr : Expr) -> Expr? {
 ///|
 pub fn exact_number_num_den(expr : Expr) -> (BigInt, BigInt)? {
   match expr_form(expr) {
-    ExprForm::Number(value) =>
-      Some((value.numerator(), value.denominator()))
+    ExprForm::Number(value) => Some((value.numerator(), value.denominator()))
     _ => None
   }
 }
@@ -1048,15 +1084,16 @@ pub fn expr_kind(expr : Expr) -> Kind {
     | ExprForm::Wild(_, _, _) => Kind::NumberKind
     ExprForm::WildFunction(_, _) => Kind::UndefinedKind
     ExprForm::Apply(head, args) => application_kind(head, args)
-    ExprForm::Add(items) | ExprForm::Mul(items) => common_kind(items.map(expr_kind))
+    ExprForm::Add(items) | ExprForm::Mul(items) =>
+      common_kind(items.map(expr_kind))
     ExprForm::Pow(base, exp) =>
       match expr_kind(exp) {
         Kind::NumberKind => expr_kind(base)
         _ => Kind::UndefinedKind
       }
-    ExprForm::Mod(lhs, rhs) =>
-      common_kind([expr_kind(lhs), expr_kind(rhs)])
-    ExprForm::Derivative(inner, _) | ExprForm::Subs(inner, _, _) => expr_kind(inner)
+    ExprForm::Mod(lhs, rhs) => common_kind([expr_kind(lhs), expr_kind(rhs)])
+    ExprForm::Derivative(inner, _) | ExprForm::Subs(inner, _, _) =>
+      expr_kind(inner)
   }
 }
 

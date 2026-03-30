@@ -74,15 +74,14 @@ test "free_symbols respects bound variables" {
     content=[],
   )
   json_inspect(
-    free_symbols(lambda_expr(Expr::Tuple([]), mul([x, y]))).map(@symprint.to_string),
+    free_symbols(lambda_expr(Expr::Tuple([]), mul([x, y]))).map(
+      @symprint.to_string,
+    ),
     content=["x", "y"],
   )
   let subs_structural = subs_expr(x, x, int(0))
   inspect(has(subs_structural, x), content="true")
-  json_inspect(
-    free_symbols(subs_structural).map(@symprint.to_string),
-    content=[],
-  )
+  json_inspect(free_symbols(subs_structural).map(@symprint.to_string), content=[])
   let subs_env : Map[String, Expr] = {}
   subs_env.set("x", y)
   inspect(has(subst(subs_expr(x, x, int(1)), subs_env), y), content="true")
@@ -100,10 +99,7 @@ test "has sees callable heads in canonical applications" {
   assert_true(has(pow(x, int(2)), Expr::FunctionHead("Symbol")))
   assert_false(has(pow(x, int(2)), Expr::FunctionHead("Wild")))
   assert_true(
-    has(
-      mul([int(2), Expr::Wild("p", [], [])]),
-      Expr::FunctionHead("Wild"),
-    ),
+    has(mul([int(2), Expr::Wild("p", [], [])]), Expr::FunctionHead("Wild")),
   )
 }
 
@@ -566,27 +562,32 @@ test "function constructors follow SymPy core semantics" {
   )
   inspect(
     @symprint.to_string(
-      function(
-        "Integer",
-        [raw_mul([int(3), raw_pow(int(2), int(-1))])],
-      ),
+      function("Integer", [raw_mul([int(3), raw_pow(int(2), int(-1))])]),
     ),
     content="1",
   )
   inspect(
-    @symprint.to_string(function("Integer", [Expr::NumberSymbol(NumberSymbolKind::Pi)])),
+    @symprint.to_string(
+      function("Integer", [Expr::NumberSymbol(NumberSymbolKind::Pi)]),
+    ),
     content="3",
   )
   inspect(
-    @symprint.to_string(function("Integer", [Expr::Float(Float::from_double(0.9))])),
+    @symprint.to_string(
+      function("Integer", [Expr::Float(Float::from_double(0.9))]),
+    ),
     content="0",
   )
   inspect(
-    @symprint.to_string(function("Integer", [Expr::Float(Float::from_double(10.5))])),
+    @symprint.to_string(
+      function("Integer", [Expr::Float(Float::from_double(10.5))]),
+    ),
     content="10",
   )
   inspect(
-    @symprint.to_string(function("Integer", [Expr::Float(Float::from_double(-3.8))])),
+    @symprint.to_string(
+      function("Integer", [Expr::Float(Float::from_double(-3.8))]),
+    ),
     content="-3",
   )
   inspect(
@@ -599,10 +600,7 @@ test "function constructors follow SymPy core semantics" {
   )
   inspect(
     @symprint.to_string(
-      function(
-        "Rational",
-        [raw_mul([int(3), raw_pow(int(2), int(-1))])],
-      ),
+      function("Rational", [raw_mul([int(3), raw_pow(int(2), int(-1))])]),
     ),
     content="Rational(3/2)",
   )
@@ -648,7 +646,9 @@ test "function constructors follow SymPy core semantics" {
     content="3/2",
   )
   inspect(
-    @symprint.to_string(function("Rational", [int(1), rational_from_ints(1, 3)])),
+    @symprint.to_string(
+      function("Rational", [int(1), rational_from_ints(1, 3)]),
+    ),
     content="3",
   )
   inspect(
@@ -680,6 +680,22 @@ test "invalid Subs signatures stay as canonical applications" {
     Expr::Apply(Expr::FunctionHead("Subs"), _) => ()
     _ => fail("expected invalid Subs signature to remain an application")
   }
+  inspect(
+    @symprint.to_string(
+      subs_expr(add([x, y]), Expr::Tuple([]), Expr::Tuple([])),
+    ),
+    content="x + y",
+  )
+  inspect(
+    @symprint.to_string(subs_expr(subs_expr(x, x, int(0)), y, int(1))),
+    content="Subs(x, (x, y), (0, 1))",
+  )
+  inspect(
+    subs_signature_error(Expr::Tuple([x, x]), Expr::Tuple([int(0), int(1)])).unwrap_or(
+      "",
+    ),
+    content="The following expressions appear more than once: x",
+  )
 }
 
 ///|
@@ -831,7 +847,10 @@ test "xreplace performs exact structural replacement" {
     content="Derivative(y + sin(z), z)",
   )
   let legacy_sinx = Expr::Function("sin", [x])
-  inspect(@symprint.to_string(xreplace(function("sin", [x]), [(legacy_sinx, y)])), content="y")
+  inspect(
+    @symprint.to_string(xreplace(function("sin", [x]), [(legacy_sinx, y)])),
+    content="y",
+  )
   assert_true(has(function("sin", [x]), legacy_sinx))
 }
 
