@@ -585,3 +585,137 @@ test "expr_match follows more SymPy source derivative and coefficient bugs" {
     None => fail("expected rational coefficient match bug6 from SymPy source")
   }
 }
+
+///|
+test "expr_match follows SymPy source reciprocal wildcard examples" {
+  let x = Expr::Symbol("x")
+  let w = Expr::Wild("w", [x], [])
+  let y = Expr::Wild("y", [], [])
+
+  match expr_match(pow(y, int(-1)), pow(x, int(-1))) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(y).unwrap_or(int(0))), content="x")
+    None => fail("expected y**-1 to match x**-1 before reciprocal examples")
+  }
+
+  match expr_match(mul([w, pow(y, int(-1))]), mul([int(3), pow(x, int(-1))])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="3")
+      inspect(@symprint.to_string(env.get(y).unwrap_or(int(0))), content="x")
+    }
+    None => fail("expected 3/x to match w/y from SymPy source")
+  }
+
+  match expr_match(mul([w, y]), mul([int(3), x])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="3")
+      inspect(@symprint.to_string(env.get(y).unwrap_or(int(0))), content="x")
+    }
+    None => fail("expected 3*x to match w*y from SymPy source")
+  }
+
+  match expr_match(mul([y, pow(w, int(-1))]), mul([x, rational_from_ints(1, 3)])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="3")
+      inspect(@symprint.to_string(env.get(y).unwrap_or(int(0))), content="x")
+    }
+    None => fail("expected x/3 to match y/w from SymPy source")
+  }
+
+  match expr_match(mul([y, pow(w, int(-1))]), mul([int(3), x])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="1/3")
+      inspect(@symprint.to_string(env.get(y).unwrap_or(int(0))), content="x")
+    }
+    None => fail("expected 3*x to match y/w from SymPy source")
+  }
+
+  match expr_match(mul([w, pow(y, int(-1))]), mul([x, rational_from_ints(1, 3)])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="1/3")
+      inspect(
+        @symprint.to_string(env.get(y).unwrap_or(int(0))),
+        content="x**-1",
+      )
+    }
+    None => fail("expected x/3 to match w/y from SymPy source")
+  }
+
+  match expr_match(mul([w, pow(y, int(-1))]), mul([int(3), x])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="3")
+      inspect(
+        @symprint.to_string(env.get(y).unwrap_or(int(0))),
+        content="x**-1",
+      )
+    }
+    None => fail("expected 3*x to match w/y from SymPy source")
+  }
+
+  match expr_match(mul([w, y]), mul([int(3), pow(x, int(-1))])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="3")
+      inspect(
+        @symprint.to_string(env.get(y).unwrap_or(int(0))),
+        content="x**-1",
+      )
+    }
+    None => fail("expected 3/x to match w*y from SymPy source")
+  }
+
+  let a = Expr::Wild("a", [], [])
+  guard expr_match(pow(a, int(-1)), int(0)) is None else {
+    fail("expected 0 not to match 1/a from SymPy source")
+  }
+  match expr_match(pow(a, int(-1)), int(3)) {
+    Some(env) =>
+      inspect(
+        @symprint.to_string(env.get(a).unwrap_or(int(0))),
+        content="1/3",
+      )
+    None => fail("expected 3 to match 1/a from SymPy source")
+  }
+  match expr_match(pow(a, int(-2)), int(3)) {
+    Some(env) =>
+      inspect(
+        @symprint.to_string(env.get(a).unwrap_or(int(0))),
+        content="3**(-1/2)",
+      )
+    None => fail("expected 3 to match 1/a**2 from SymPy source")
+  }
+}
+
+///|
+test "expr_match follows SymPy source implicit zero-power wildcard examples" {
+  let x = Expr::Symbol("x")
+  let f = Expr::UndefinedFunction("f")
+  let fx = apply(f, [x]).unwrap_or(int(0))
+  let a = Expr::Wild("a", [], [])
+  let b = Expr::Wild("b", [], [])
+  let c = Expr::Wild("c", [], [])
+
+  match expr_match(mul([a, pow(fx, c)]), x) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="x")
+      inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
+    }
+    None => fail("expected x to match a*f(x)**c from SymPy source")
+  }
+
+  match expr_match(mul([a, b]), x) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="x")
+    }
+    None => fail("expected x to match a*b from SymPy source")
+  }
+
+  match expr_match(mul([a, b, pow(fx, c)]), x) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="x")
+      inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
+    }
+    None => fail("expected x to match a*b*f(x)**c from SymPy source")
+  }
+}

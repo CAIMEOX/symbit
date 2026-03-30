@@ -390,6 +390,99 @@ test "symcore source-driven derivative remainder and coefficient bug examples" {
 }
 
 ///|
+test "symcore source-driven reciprocal wildcard examples" {
+  let x = @symcore.Expr::Symbol("x")
+  let w = @symcore.Expr::Wild("w", [x], [])
+  let y = @symcore.Expr::Wild("y", [], [])
+
+  inspect(
+    core_match_sstr(
+      @symcore.mul([w, @symcore.pow(y, @symcore.int(-1))]),
+      @symcore.mul([@symcore.int(3), @symcore.pow(x, @symcore.int(-1))]),
+    ),
+    content="w_=3|y_=x",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([w, y]),
+      @symcore.mul([@symcore.int(3), x]),
+    ),
+    content="w_=3|y_=x",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([y, @symcore.pow(w, @symcore.int(-1))]),
+      @symcore.mul([x, @symcore.rational_from_ints(1, 3)]),
+    ),
+    content="w_=3|y_=x",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([y, @symcore.pow(w, @symcore.int(-1))]),
+      @symcore.mul([@symcore.int(3), x]),
+    ),
+    content="w_=1/3|y_=x",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([w, @symcore.pow(y, @symcore.int(-1))]),
+      @symcore.mul([x, @symcore.rational_from_ints(1, 3)]),
+    ),
+    content="w_=1/3|y_=1/x",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([w, @symcore.pow(y, @symcore.int(-1))]),
+      @symcore.mul([@symcore.int(3), x]),
+    ),
+    content="w_=3|y_=1/x",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([w, y]),
+      @symcore.mul([@symcore.int(3), @symcore.pow(x, @symcore.int(-1))]),
+    ),
+    content="w_=3|y_=1/x",
+  )
+  let a = @symcore.Expr::Wild("a", [], [])
+  inspect(
+    core_match_sstr(@symcore.pow(a, @symcore.int(-1)), @symcore.int(0)),
+    content="None",
+  )
+  inspect(
+    core_match_sstr(@symcore.pow(a, @symcore.int(-1)), @symcore.int(3)),
+    content="a_=1/3",
+  )
+  inspect(
+    core_match_sstr(@symcore.pow(a, @symcore.int(-2)), @symcore.int(3)),
+    content="a_=sqrt(3)/3",
+  )
+}
+
+///|
+test "symcore source-driven implicit zero-power wildcard examples" {
+  let x = @symcore.Expr::Symbol("x")
+  let f = @symcore.Expr::UndefinedFunction("f")
+  let fx = @symcore.apply(f, [x]).unwrap_or(@symcore.int(0))
+  let a = @symcore.Expr::Wild("a", [], [])
+  let b = @symcore.Expr::Wild("b", [], [])
+  let c = @symcore.Expr::Wild("c", [], [])
+
+  inspect(
+    core_match_sstr(@symcore.mul([a, @symcore.pow(fx, c)]), x),
+    content="a_=x|c_=0",
+  )
+  inspect(
+    core_match_sstr(@symcore.mul([a, b]), x),
+    content="a_=1|b_=x",
+  )
+  inspect(
+    core_match_sstr(@symcore.mul([a, b, @symcore.pow(fx, c)]), x),
+    content="a_=1|b_=x|c_=0",
+  )
+}
+
+///|
 test "symcore source-driven exclude and wild-on-wild examples" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")

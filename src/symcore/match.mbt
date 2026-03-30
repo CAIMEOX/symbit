@@ -139,6 +139,75 @@ fn split_items_by_mask(
 }
 
 ///|
+fn is_plain_pattern_wild(expr : Expr) -> Bool {
+  match normalize_legacy_expr(expr) {
+    Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => true
+    _ => false
+  }
+}
+
+///|
+fn expr_shape_rank(expr : Expr) -> Int {
+  match normalize_legacy_expr(expr) {
+    Expr::Add(_) => 0
+    Expr::Mul(_) => 1
+    Expr::Pow(_, _) => 2
+    Expr::Mod(_, _) => 3
+    Expr::Apply(_, _) => 4
+    Expr::Tuple(_) => 5
+    Expr::Dict(_) => 6
+    Expr::Relational(_, _, _) => 7
+    Expr::Derivative(_, _) => 8
+    Expr::Subs(_, _, _) => 9
+    Expr::Lambda(_, _) => 10
+    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => 11
+    Expr::NumberSymbol(_) => 12
+    Expr::Symbol(_) | Expr::Dummy(_, _) => 13
+    Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => 14
+    Expr::Boolean(_) => 15
+    Expr::FunctionHead(_) | Expr::UndefinedFunction(_) | Expr::IdentityFunction => 16
+    Expr::Function(_, _) => 17
+  }
+}
+
+///|
+fn mask_selected_count(mask : Int, length : Int) -> Int {
+  let mut out = 0
+  for i in 0..<length {
+    if mask.land(1 << i) != 0 {
+      out += 1
+    }
+  }
+  out
+}
+
+///|
+fn commutative_mask_score(
+  pattern : Expr,
+  remaining_patterns_len : Int,
+  remaining_items : Array[Expr],
+  is_add : Bool,
+  mask : Int,
+) -> Int {
+  let selected_count = mask_selected_count(mask, remaining_items.length())
+  if !is_add && is_plain_pattern_wild(pattern) &&
+    remaining_items.length() < remaining_patterns_len {
+    return if selected_count == 0 {
+      0
+    } else {
+      1000 + selected_count
+    }
+  }
+  let (selected, _) = split_items_by_mask(remaining_items, mask)
+  let candidate = combine_commutative_items(selected, is_add)
+  let pattern_rank = expr_shape_rank(pattern)
+  let candidate_rank = expr_shape_rank(candidate)
+  let shape_penalty = if pattern_rank == candidate_rank { 0 } else { 100 }
+  let empty_penalty = if selected_count == 0 { 10000 } else { 0 }
+  shape_penalty + empty_penalty + selected_count
+}
+
+///|
 fn match_commutative_items(
   pattern_items : Array[Expr],
   expr_items : Array[Expr],
@@ -209,24 +278,38 @@ fn match_commutative_items(
       _ => {
         let current = remaining_patterns[0]
         let rest = remaining_patterns[1:].to_array()
+        let masks : Array[Int] = []
         let max_mask = 1 << remaining_items.length()
-        for empty_last in [false, true] {
-          for mask in 0..<max_mask {
-            if (mask == 0) != empty_last {
-              continue
-            }
-            let (selected, leftover) = split_items_by_mask(
-              remaining_items, mask,
-            )
-            let candidate = combine_commutative_items(selected, is_add)
-            match expr_match(current, candidate, repl_dict=env) {
-              Some(next_env) =>
-                match go(rest, leftover, next_env) {
-                  Some(done) => return Some(done)
-                  None => ()
-                }
-              None => ()
-            }
+        for mask in 0..<max_mask {
+          masks.push(mask)
+        }
+        masks.sort_by((lhs, rhs) => {
+          let lhs_score = commutative_mask_score(
+            current,
+            remaining_patterns.length(),
+            remaining_items,
+            is_add,
+            lhs,
+          )
+          let rhs_score = commutative_mask_score(
+            current,
+            remaining_patterns.length(),
+            remaining_items,
+            is_add,
+            rhs,
+          )
+          cmp_int(lhs_score, rhs_score)
+        })
+        for mask in masks {
+          let (selected, leftover) = split_items_by_mask(remaining_items, mask)
+          let candidate = combine_commutative_items(selected, is_add)
+          match expr_match(current, candidate, repl_dict=env) {
+            Some(next_env) =>
+              match go(rest, leftover, next_env) {
+                Some(done) => return Some(done)
+                None => ()
+              }
+            None => ()
           }
         }
         None
@@ -515,6 +598,59 @@ fn wild_property_matches(property : WildProperty, expr : Expr) -> Bool {
 }
 
 ///|
+fn is_exact_negative_one(expr : Expr) -> Bool {
+  match expr_form(expr) {
+    ExprForm::Number(value) => value.compare(@symnum.BigRational::from_int(-1)) == 0
+    _ => false
+  }
+}
+
+///|
+fn exact_integer_value(expr : Expr) -> BigInt? {
+  match expr_form(expr) {
+    ExprForm::Number(value) if value.is_integral() => Some(value.numerator())
+    _ => None
+  }
+}
+
+///|
+fn reciprocal_for_match(expr : Expr) -> Expr {
+  let expr = normalize_legacy_expr(expr)
+  match expr {
+    Expr::Pow(base, exp) if is_exact_negative_one(exp) => base
+    Expr::Number(value) =>
+      if value.is_zero() {
+        pow(expr, int(-1))
+      } else {
+        Expr::Number(
+          @symnum.BigRational::new(value.denominator(), value.numerator()) catch {
+            _ => return pow(expr, int(-1))
+          },
+        )
+      }
+    Expr::NumberSymbol(NumberSymbolKind::Infinity)
+    | Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
+    | Expr::NumberSymbol(NumberSymbolKind::ComplexInfinity) => int(0)
+    Expr::NumberSymbol(NumberSymbolKind::NaN) => expr
+    _ => pow(expr, int(-1))
+  }
+}
+
+///|
+fn reciprocal_root_for_match(expr : Expr, degree : BigInt) -> Expr {
+  if degree.compare(1N) == 0 {
+    reciprocal_for_match(expr)
+  } else {
+    let exponent = Expr::Number(
+      @symnum.BigRational::new(-1N, degree) catch {
+        _ => return reciprocal_for_match(expr)
+      },
+    )
+    pow(normalize_legacy_expr(expr), exponent)
+  }
+}
+
+///|
 pub fn wild_matches(
   pattern : Expr,
   expr : Expr,
@@ -690,6 +826,19 @@ pub fn expr_match(
     }
     Expr::Pow(base, exp) if is_one(expr) && !expr_contains_wild(base) =>
       return expr_match(exp, int(0), repl_dict~)
+    Expr::Pow(base, exp) =>
+      match exact_integer_value(exp) {
+        Some(n) if n.compare(0N) < 0 =>
+          if is_zero(expr) {
+            return None
+          } else {
+            match expr_match(base, reciprocal_root_for_match(expr, -n), repl_dict~) {
+              Some(result) => return Some(result)
+              None => ()
+            }
+          }
+        _ => ()
+      }
     _ => ()
   }
   match pattern {
