@@ -61,6 +61,180 @@ fn combine_commutative_items(items : Array[Expr], is_add : Bool) -> Expr {
 }
 
 ///|
+fn match_count_ops(expr : Expr) -> Int {
+  match normalize_legacy_expr(expr) {
+    Expr::Add(items) => {
+      let mut count = if items.is_empty() { 0 } else { items.length() - 1 }
+      for item in items {
+        count += match_count_ops(item)
+      }
+      count
+    }
+    Expr::Mul(items) =>
+      match split_fraction_for_match(Expr::Mul(items)) {
+        Some((numerator, denominator)) => {
+          let numerator_is_exact_integer = match numerator {
+            Expr::Number(value) => value.is_integral()
+            _ => false
+          }
+          if is_one(denominator) {
+            let mut count = if items.is_empty() { 0 } else { items.length() - 1 }
+            for item in items {
+              count += match_count_ops(item)
+            }
+            count
+          } else if numerator_is_exact_integer {
+            1 + match_count_ops(denominator)
+          } else {
+            1 + match_count_ops(numerator) + match_count_ops(denominator)
+          }
+        }
+        None => {
+          let mut count = if items.is_empty() { 0 } else { items.length() - 1 }
+          for item in items {
+            count += match_count_ops(item)
+          }
+          count
+        }
+      }
+    Expr::Pow(base, exp) =>
+      match exact_integer_value(exp) {
+        Some(value) if value.compare(-1N) == 0 => 1 + match_count_ops(base)
+        _ => 1 + match_count_ops(base) + match_count_ops(exp)
+      }
+    Expr::Mod(lhs, rhs) =>
+      1 + match_count_ops(lhs) + match_count_ops(rhs)
+    Expr::Apply(head, args) => {
+      let mut count = 1 + match_count_ops(head)
+      for arg in args {
+        count += match_count_ops(arg)
+      }
+      count
+    }
+    Expr::Tuple(items) => {
+      let mut count = 0
+      for item in items {
+        count += match_count_ops(item)
+      }
+      count
+    }
+    Expr::Dict(items) => {
+      let mut count = 0
+      for item in items {
+        let (key, value) = item
+        count += match_count_ops(key) + match_count_ops(value)
+      }
+      count
+    }
+    Expr::Relational(_, lhs, rhs) =>
+      1 + match_count_ops(lhs) + match_count_ops(rhs)
+    Expr::Derivative(inner, deriv_args) => {
+      let mut count = 1 + match_count_ops(inner)
+      for arg in deriv_args {
+        count += match_count_ops(arg)
+      }
+      count
+    }
+    Expr::Subs(inner, variable, value) =>
+      1 + match_count_ops(inner) + match_count_ops(variable) +
+      match_count_ops(value)
+    Expr::Lambda(vars, body) =>
+      1 + match_count_ops(vars) + match_count_ops(body)
+    _ => 0
+  }
+}
+
+///|
+fn split_fraction_for_match(expr : Expr) -> (Expr, Expr)? {
+  let expr = normalize_legacy_expr(expr)
+  let numer_items : Array[Expr] = []
+  let denom_items : Array[Expr] = []
+  let mut coeff = @symnum.BigRational::one()
+  let push_power = fn(items : Array[Expr], base : Expr, exponent : BigInt) {
+    if exponent.compare(1N) == 0 {
+      items.push(base)
+    } else {
+      items.push(pow(base, Expr::Number(@symnum.BigRational::from_bigint(exponent))))
+    }
+  }
+  let push_term = fn(term : Expr, sign : Int) -> Bool {
+    match normalize_legacy_expr(term) {
+      Expr::Number(value) => {
+        coeff =
+          if sign >= 0 {
+            coeff.mul_r(value)
+          } else {
+            coeff.div_r(value) catch { _ => return false }
+          }
+        true
+      }
+      Expr::Pow(base, exp) =>
+        match exact_integer_value(exp) {
+          Some(value) if value.compare(0N) < 0 =>
+            {
+              if sign >= 0 {
+                push_power(denom_items, base, value.neg())
+              } else {
+                push_power(numer_items, base, value.neg())
+              }
+              true
+            }
+          Some(value) =>
+            {
+              if sign >= 0 {
+                push_power(numer_items, base, value)
+              } else {
+                push_power(denom_items, base, value)
+              }
+              true
+            }
+          None => {
+            if sign >= 0 {
+              numer_items.push(term)
+            } else {
+              denom_items.push(term)
+            }
+            true
+          }
+        }
+      other => {
+        if sign >= 0 {
+          numer_items.push(other)
+        } else {
+          denom_items.push(other)
+        }
+        true
+      }
+    }
+  }
+  match expr {
+    Expr::Mul(items) => {
+      for item in items {
+        if !push_term(item, 1) {
+          return None
+        }
+      }
+    }
+    Expr::Pow(_, _) | Expr::Number(_) => {
+      if !push_term(expr, 1) {
+        return None
+      }
+    }
+    _ => return None
+  }
+  if coeff.denominator().compare(1N) != 0 {
+    denom_items.push(Expr::Number(@symnum.BigRational::from_bigint(coeff.denominator())))
+  }
+  if coeff.numerator().compare(1N) != 0 || numer_items.is_empty() {
+    numer_items.insert(0, Expr::Number(@symnum.BigRational::from_bigint(coeff.numerator())))
+  }
+  Some((
+    combine_commutative_items(numer_items, false),
+    combine_commutative_items(denom_items, false),
+  ))
+}
+
+///|
 fn common_add_wild_factor(items : Array[Expr]) -> (Expr, Array[Expr])? {
   let mut common : Expr? = None
   let remainders : Array[Expr] = []
@@ -234,18 +408,22 @@ fn match_commutative_items(
     cmp_int(wild_priority(lhs), wild_priority(rhs))
   })
   if is_add && wild_items.length() == 1 {
+    let expr_sum = combine_commutative_items(expr_items, true)
     let remainder = match
       remove_exact_commutative_items(exact_items, expr_items) {
       Some(items) => combine_commutative_items(items, true)
       None =>
         match exact_items.length() {
-          0 => combine_commutative_items(expr_items, true)
+          0 => expr_sum
           _ =>
             add([
-              combine_commutative_items(expr_items, true),
+              expr_sum,
               mul([int(-1), combine_commutative_items(exact_items, true)]),
             ])
         }
+    }
+    if exact_items.length() > 0 && match_count_ops(remainder) > match_count_ops(expr_sum) {
+      return None
     }
     return expr_match(wild_items[0], remainder, repl_dict~)
   }
@@ -941,9 +1119,13 @@ pub fn expr_match(
             combine_commutative_items(exact_items, false),
           ) {
           Some(quotient) =>
-            match expr_match(wild_items[0], quotient, repl_dict~) {
-              Some(result) => return Some(result)
-              None => ()
+            if match_count_ops(quotient) > match_count_ops(expr) {
+              ()
+            } else {
+              match expr_match(wild_items[0], quotient, repl_dict~) {
+                Some(result) => return Some(result)
+                None => ()
+              }
             }
           None => ()
         }

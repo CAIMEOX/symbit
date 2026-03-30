@@ -1098,6 +1098,117 @@ test "expr_match follows more SymPy source multiplicative wildcard power cases" 
 }
 
 ///|
+test "expr_match follows more SymPy source additive exclude ambiguity cases" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let eighth = rational_from_ints(1, 8)
+  let expr = mul([int(-1), x, add([eighth, mul([int(-1), y])])])
+  let expected_rest = add([mul([int(-1), eighth]), y])
+  let patterns : Array[Expr] = [
+    add([mul([Expr::Wild("coeff", [x], []), x]), Expr::Wild("rest", [], [])]),
+    add([mul([Expr::Wild("w", [x], []), x]), Expr::Wild("rest", [], [])]),
+    add([mul([Expr::Wild("e", [x], []), x]), Expr::Wild("rest", [], [])]),
+  ]
+  for pattern in patterns {
+    match expr_match(pattern, expr) {
+      Some(env) => {
+        let mut saw_zero = false
+        let mut saw_rest = false
+        for _, value in env {
+          saw_zero = saw_zero || compare_expr(value, int(0)) == 0
+          saw_rest =
+            saw_rest || compare_expr(value, expected_rest) == 0
+        }
+        assert_true(saw_zero)
+        assert_true(saw_rest)
+      }
+      None => fail("expected additive exclude ambiguity match from SymPy source")
+    }
+  }
+}
+
+///|
+test "expr_match follows more SymPy source trig and infinity wildcard cases" {
+  let x = Expr::Symbol("x")
+  let p = Expr::Wild("p", [], [])
+  let q = Expr::Wild("q", [], [])
+  let c = Expr::Wild("c", [], [])
+  inspect(
+    @symprint.to_string(
+      expr_match(
+        mul([function("sin", [p]), function("sin", [q]), c]),
+        pow(function("sin", [x]), int(2)),
+      )
+      .unwrap_or({}).get(c).unwrap_or(int(-1)),
+    ),
+    content="1",
+  )
+  match
+    expr_match(
+      add([function("sin", [p]), function("sin", [q]), c]),
+      mul([int(2), function("sin", [x])]),
+    ) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="x")
+      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="x")
+      inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
+    }
+    None => fail("expected trig additive wildcard match from SymPy source")
+  }
+  let a = Expr::Wild("a", [], [])
+  match
+    expr_match(
+      mul([
+        Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit),
+        a,
+        Expr::NumberSymbol(NumberSymbolKind::Infinity),
+      ]),
+      mul([
+        int(-1),
+        Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit),
+        x,
+        Expr::NumberSymbol(NumberSymbolKind::Infinity),
+      ]),
+    ) {
+    Some(env) =>
+      assert_true(
+        compare_expr(env.get(a).unwrap_or(int(0)), mul([int(-1), x])) == 0,
+      )
+    None => fail("expected infinity coefficient wildcard match from SymPy source")
+  }
+}
+
+///|
+test "expr_match follows more SymPy source reciprocal edge cases" {
+  let x = Expr::Symbol("x")
+  let a = Expr::Wild("a", [], [])
+  assert_false(
+    expr_match(
+      add([a, mul([int(-1), x])]),
+      add([x, int(-2)]),
+    )
+    is Some(_),
+  )
+  assert_false(
+    expr_match(
+      mul([a, x]),
+      mul([int(6), pow(x, int(-1))]),
+    )
+    is Some(_),
+  )
+  inspect(
+    @symprint.to_string(
+      expr_match(
+        mul([a, pow(x, int(-1))]),
+        mul([int(6), pow(x, int(-2))]),
+      )
+      .unwrap_or({}).get(a).unwrap_or(int(0)),
+    ),
+    content="6/x",
+  )
+}
+
+///|
 test "expr_match follows more SymPy source polynomial coefficient cases" {
   let x = Expr::Symbol("x")
   let a = Expr::Wild("a", [x], [])

@@ -821,6 +821,116 @@ test "symcore source-driven multiplicative wildcard power matches" {
 }
 
 ///|
+test "symcore source-driven additive exclude ambiguity matches" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let eighth = @symcore.rational_from_ints(1, 8)
+  let expr = @symcore.mul([
+    @symcore.int(-1),
+    x,
+    @symcore.add([eighth, @symcore.mul([@symcore.int(-1), y])]),
+  ])
+  let expected_rest = @symcore.add([@symcore.mul([@symcore.int(-1), eighth]), y])
+  let patterns : Array[@symcore.Expr] = [
+    @symcore.add([
+      @symcore.mul([@symcore.Expr::Wild("coeff", [x], []), x]),
+      @symcore.Expr::Wild("rest", [], []),
+    ]),
+    @symcore.add([
+      @symcore.mul([@symcore.Expr::Wild("w", [x], []), x]),
+      @symcore.Expr::Wild("rest", [], []),
+    ]),
+    @symcore.add([
+      @symcore.mul([@symcore.Expr::Wild("e", [x], []), x]),
+      @symcore.Expr::Wild("rest", [], []),
+    ]),
+  ]
+  for pattern in patterns {
+    match @symcore.expr_match(pattern, expr) {
+      Some(env) => {
+        let mut saw_zero = false
+        let mut saw_rest = false
+        for _, value in env {
+          saw_zero = saw_zero || @symcore.compare_expr(value, @symcore.int(0)) == 0
+          saw_rest =
+            saw_rest ||
+            @symcore.compare_expr(value, expected_rest) == 0
+        }
+        inspect(saw_zero.to_string(), content="true")
+        inspect(saw_rest.to_string(), content="true")
+      }
+      None => fail("expected additive exclude ambiguity match from SymPy source")
+    }
+  }
+}
+
+///|
+test "symcore source-driven trig and infinity wildcard matches" {
+  let x = @symcore.Expr::Symbol("x")
+  let p = @symcore.Expr::Wild("p", [], [])
+  let q = @symcore.Expr::Wild("q", [], [])
+  let c = @symcore.Expr::Wild("c", [], [])
+  inspect(
+    core_match_sstr(
+      @symcore.mul([@symcore.function("sin", [p]), @symcore.function("sin", [q]), c]),
+      @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
+    ),
+    content="c_=1|p_=x|q_=x",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([@symcore.function("sin", [p]), @symcore.function("sin", [q]), c]),
+      @symcore.mul([@symcore.int(2), @symcore.function("sin", [x])]),
+    ),
+    content="c_=0|p_=x|q_=x",
+  )
+  let a = @symcore.Expr::Wild("a", [], [])
+  inspect(
+    core_match_sstr(
+      @symcore.mul([
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+        a,
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+      ]),
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+        x,
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+      ]),
+    ),
+    content="a_=-x",
+  )
+}
+
+///|
+test "symcore source-driven reciprocal edge matches" {
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Wild("a", [], [])
+  inspect(
+    core_match_sstr(
+      @symcore.add([a, @symcore.mul([@symcore.int(-1), x])]),
+      @symcore.add([x, @symcore.int(-2)]),
+    ),
+    content="None",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([a, x]),
+      @symcore.mul([@symcore.int(6), @symcore.pow(x, @symcore.int(-1))]),
+    ),
+    content="None",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([a, @symcore.pow(x, @symcore.int(-1))]),
+      @symcore.mul([@symcore.int(6), @symcore.pow(x, @symcore.int(-2))]),
+    ),
+    content="a_=6/x",
+  )
+}
+
+///|
 test "symcore source-driven polynomial coefficient matches" {
   let x = @symcore.Expr::Symbol("x")
   let a = @symcore.Expr::Wild("a", [x], [])
