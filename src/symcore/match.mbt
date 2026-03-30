@@ -651,6 +651,14 @@ fn reciprocal_root_for_match(expr : Expr, degree : BigInt) -> Expr {
 }
 
 ///|
+fn base_exp_for_match(expr : Expr) -> (Expr, Expr) {
+  match normalize_legacy_expr(expr) {
+    Expr::Pow(base, exp) => (base, exp)
+    other => (other, int(1))
+  }
+}
+
+///|
 fn positive_root_for_match(expr : Expr, degree : BigInt) -> Expr {
   let expr = normalize_legacy_expr(expr)
   if degree.compare(1N) == 0 {
@@ -947,7 +955,7 @@ pub fn expr_match(
     }
     Expr::Pow(base, exp) if is_one(expr) && !expr_contains_wild(base) =>
       return expr_match(exp, int(0), repl_dict~)
-    Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) => {
       match exact_integer_value(exp) {
         Some(n) if n.compare(0N) > 0 =>
           match expr_match(base, positive_root_for_match(expr, n), repl_dict~) {
@@ -966,6 +974,21 @@ pub fn expr_match(
           }
         _ => ()
       }
+      let (expr_base, expr_exp) = base_exp_for_match(expr)
+      match expr_match(base, expr_base, repl_dict~) {
+        Some(next_env) =>
+          match
+            expr_match(
+              xreplace(exp, match_env_rules(next_env)),
+              expr_exp,
+              repl_dict=next_env,
+            ) {
+            Some(result) => return Some(result)
+            None => ()
+          }
+        None => ()
+      }
+    }
     _ => ()
   }
   match pattern {

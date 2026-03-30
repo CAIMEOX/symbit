@@ -988,3 +988,111 @@ test "expr_match follows more SymPy source collected derivative coefficient case
     None => fail("expected collected rational derivative coefficient match")
   }
 }
+
+///|
+test "expr_match follows more SymPy source float and derivative remainder cases" {
+  let x = Expr::Symbol("x")
+  let a = Expr::Wild("a", [], [])
+  let b = Expr::Wild("b", [], [])
+  let float_arg = Expr::Float(@symcore.Float::from_double(0.12345))
+  match expr_match(mul([a, pow(function("cos", [b]), int(2))]), pow(function("cos", [float_arg]), int(2))) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
+      let matched_b = env.get(b).unwrap_or(int(0))
+      if compare_expr(matched_b, float_arg) != 0 {
+        fail(
+          "expected source-driven float wildcard to bind exact float arg, got \{@symprint.to_string(matched_b)}",
+        )
+      }
+    }
+    None => fail("expected source-driven float wildcard match")
+  }
+
+  let f = Expr::UndefinedFunction("f")
+  let fx = apply(f, [x]).unwrap_or(int(0))
+  let dfx = derivative(fx, x)
+  let aw = Expr::Wild("a", [fx], [])
+  let bw = Expr::Wild("b", [fx], [])
+  match expr_match(add([mul([aw, dfx]), bw]), dfx) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(aw).unwrap_or(int(0))), content="1")
+      inspect(@symprint.to_string(env.get(bw).unwrap_or(int(1))), content="0")
+    }
+    None => fail("expected source-driven derivative remainder match")
+  }
+}
+
+///|
+test "expr_match follows more SymPy source product-derivative coefficient cases" {
+  let x = Expr::Symbol("x")
+  let f = Expr::UndefinedFunction("f")
+  let g = Expr::UndefinedFunction("g")
+  let fx = apply(f, [x]).unwrap_or(int(0))
+  let gx = apply(g, [x]).unwrap_or(int(0))
+  let dgx = derivative(gx, x)
+  let dfx = derivative(fx, x)
+  let d2fx = Expr::Derivative(fx, [x, int(2)])
+  let a = Expr::Wild("a", [fx, gx], [])
+  let b = Expr::Wild("b", [fx, gx], [])
+  let c = Expr::Wild("c", [fx, gx], [])
+  let expr = add([
+    mul([dgx, dfx]),
+    mul([gx, d2fx]),
+  ])
+  match expr_match(add([mul([dgx, dfx]), mul([gx, d2fx]), c]), expr) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
+    None => fail("expected source-driven zero remainder product-derivative match")
+  }
+  match expr_match(add([mul([a, dgx, dfx]), mul([b, gx, d2fx]), c]), expr) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="1")
+      inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
+    }
+    None => fail("expected source-driven coefficient product-derivative match")
+  }
+}
+
+///|
+test "expr_match follows more SymPy source multiplicative wildcard power cases" {
+  let x = Expr::Symbol("x")
+  let z = Expr::Symbol("z")
+  let phi = Expr::Symbol("phi")
+  let r = Expr::Symbol("r")
+  let c = Expr::Wild("c", [], [])
+  let aw = Expr::Wild("A", [], [])
+  let bw = Expr::Wild("B", [], [])
+  let nw = Expr::Wild("N", [], [])
+  let lw = Expr::Wild("l", [int(0)], [])
+  let eq = mul([z, function("sin", [mul([int(2), phi])]), pow(r, int(7))])
+  let pattern = mul([
+    c,
+    pow(function("sin", [mul([phi, nw])]), lw),
+    pow(r, aw),
+    pow(function("log", [r]), bw),
+  ])
+  match expr_match(pattern, eq) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(c).unwrap_or(int(0))), content="z")
+      inspect(@symprint.to_string(env.get(lw).unwrap_or(int(0))), content="1")
+      inspect(@symprint.to_string(env.get(nw).unwrap_or(int(0))), content="2")
+      inspect(@symprint.to_string(env.get(aw).unwrap_or(int(0))), content="7")
+      inspect(@symprint.to_string(env.get(bw).unwrap_or(int(1))), content="0")
+    }
+    None => fail("expected source-driven multiplicative wildcard power match")
+  }
+  match expr_match(pattern, mul([mul([int(-7), x]), eq])) {
+    Some(env) => {
+      inspect(
+        @symprint.to_string(env.get(c).unwrap_or(int(0))),
+        content="-7*x*z",
+      )
+      inspect(@symprint.to_string(env.get(lw).unwrap_or(int(0))), content="1")
+      inspect(@symprint.to_string(env.get(nw).unwrap_or(int(0))), content="2")
+      inspect(@symprint.to_string(env.get(aw).unwrap_or(int(0))), content="7")
+      inspect(@symprint.to_string(env.get(bw).unwrap_or(int(1))), content="0")
+    }
+    None => fail("expected source-driven scaled multiplicative wildcard power match")
+  }
+}

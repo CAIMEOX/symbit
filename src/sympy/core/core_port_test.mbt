@@ -741,6 +741,86 @@ test "symcore source-driven collected derivative coefficient matches" {
 }
 
 ///|
+test "symcore source-driven derivative remainder matches" {
+  let x = @symcore.Expr::Symbol("x")
+  let f = @symcore.Expr::UndefinedFunction("f")
+  let fx = @symcore.apply(f, [x]).unwrap_or(@symcore.int(0))
+  let dfx = @symcore.derivative(fx, x)
+  let a = @symcore.Expr::Wild("a", [fx], [])
+  let b = @symcore.Expr::Wild("b", [fx], [])
+  inspect(
+    core_match_sstr(@symcore.add([@symcore.mul([a, dfx]), b]), dfx),
+    content="a_=1|b_=0",
+  )
+}
+
+///|
+test "symcore source-driven product-derivative coefficient matches" {
+  let x = @symcore.Expr::Symbol("x")
+  let f = @symcore.Expr::UndefinedFunction("f")
+  let g = @symcore.Expr::UndefinedFunction("g")
+  let fx = @symcore.apply(f, [x]).unwrap_or(@symcore.int(0))
+  let gx = @symcore.apply(g, [x]).unwrap_or(@symcore.int(0))
+  let dgx = @symcore.derivative(gx, x)
+  let dfx = @symcore.derivative(fx, x)
+  let d2fx = @symcore.Expr::Derivative(fx, [x, @symcore.int(2)])
+  let a = @symcore.Expr::Wild("a", [fx, gx], [])
+  let b = @symcore.Expr::Wild("b", [fx, gx], [])
+  let c = @symcore.Expr::Wild("c", [fx, gx], [])
+  let expr = @symcore.add([@symcore.mul([dgx, dfx]), @symcore.mul([gx, d2fx])])
+  inspect(
+    core_match_sstr(
+      @symcore.add([@symcore.mul([dgx, dfx]), @symcore.mul([gx, d2fx]), c]),
+      expr,
+    ),
+    content="c_=0",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([
+        @symcore.mul([a, dgx, dfx]),
+        @symcore.mul([b, gx, d2fx]),
+        c,
+      ]),
+      expr,
+    ),
+    content="a_=1|b_=1|c_=0",
+  )
+}
+
+///|
+test "symcore source-driven multiplicative wildcard power matches" {
+  let x = @symcore.Expr::Symbol("x")
+  let z = @symcore.Expr::Symbol("z")
+  let phi = @symcore.Expr::Symbol("phi")
+  let r = @symcore.Expr::Symbol("r")
+  let c = @symcore.Expr::Wild("c", [], [])
+  let aw = @symcore.Expr::Wild("A", [], [])
+  let bw = @symcore.Expr::Wild("B", [], [])
+  let nw = @symcore.Expr::Wild("N", [], [])
+  let lw = @symcore.Expr::Wild("l", [@symcore.int(0)], [])
+  let pattern = @symcore.mul([
+    c,
+    @symcore.pow(@symcore.function("sin", [@symcore.mul([phi, nw])]), lw),
+    @symcore.pow(r, aw),
+    @symcore.pow(@symcore.function("log", [r]), bw),
+  ])
+  let eq = @symcore.mul([
+    z,
+    @symcore.function("sin", [@symcore.mul([@symcore.int(2), phi])]),
+    @symcore.pow(r, @symcore.int(7)),
+  ])
+  inspect(
+    core_match_sstr(pattern, eq),
+    content="A_=7|B_=0|N_=2|c_=z|l_=1",
+  )
+  inspect(
+    core_match_sstr(pattern, @symcore.mul([@symcore.mul([@symcore.int(-7), x]), eq])),
+    content="A_=7|B_=0|N_=2|c_=-7*x*z|l_=1",
+  )
+}
+
+///|
 test "symcore parity formal application helpers" {
   let x = @symcore.Expr::Symbol("x")
   match @symcore.apply(@symcore.Expr::FunctionHead("sin"), [x]) {
