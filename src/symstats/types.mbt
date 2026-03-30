@@ -329,7 +329,7 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
     | @symcore.Expr::Boolean(_)
     | @symcore.Expr::Symbol(_)
     | @symcore.Expr::Dummy(_, _)
-    | @symcore.Expr::Wild(_)
+    | @symcore.Expr::Wild(_, _, _)
     | @symcore.Expr::FunctionHead(_)
     | @symcore.Expr::UndefinedFunction(_) => expr
     @symcore.Expr::Apply(head, args) =>

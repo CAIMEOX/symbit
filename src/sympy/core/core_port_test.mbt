@@ -99,7 +99,7 @@ test "symcore parity number symbols render as SymPy core singletons" {
 ///|
 test "symcore parity dummy wild and undefined-function heads" {
   inspect(core_expr_sstr(@symcore.dummy(name="x")), content="_x")
-  inspect(core_expr_sstr(@symcore.Expr::Wild("x")), content="x_")
+  inspect(core_expr_sstr(@symcore.Expr::Wild("x", [], [])), content="x_")
   inspect(core_expr_sstr(@symcore.Expr::FunctionHead("sin")), content="sin")
   inspect(core_expr_sstr(@symcore.Expr::UndefinedFunction("f")), content="f")
   inspect(
@@ -108,6 +108,20 @@ test "symcore parity dummy wild and undefined-function heads" {
     ),
     content="f(x)",
   )
+}
+
+///|
+test "symcore parity wild match exclude and properties" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let a = @symcore.Expr::Wild("a", [], [])
+  let b = @symcore.Expr::Wild("b", [x], [])
+  let p = @symcore.Expr::Wild("p", [], [@symcore.WildProperty::Positive])
+  inspect(core_match_sstr(a, @symcore.mul([@symcore.int(2), y])), content="a_=2*y")
+  inspect(core_match_sstr(b, @symcore.mul([@symcore.int(2), y])), content="b_=2*y")
+  inspect(core_match_sstr(b, @symcore.mul([@symcore.int(2), x])), content="None")
+  inspect(core_match_sstr(p, @symcore.int(2)), content="p_=2")
+  inspect(core_match_sstr(p, @symcore.int(-2)), content="None")
 }
 
 ///|
@@ -390,7 +404,7 @@ test "symcore parity func for atomic core nodes" {
   )
   inspect(local_func_name(@symcore.Expr::Symbol("x")), content="Symbol")
   inspect(local_func_name(@symcore.dummy(name="x")), content="Dummy")
-  inspect(local_func_name(@symcore.Expr::Wild("x")), content="Wild")
+  inspect(local_func_name(@symcore.Expr::Wild("x", [], [])), content="Wild")
   inspect(local_func_name(@symcore.Expr::Boolean(true)), content="BooleanTrue")
 }
 
@@ -818,7 +832,7 @@ test "symcore parity free_symbols for wild undefined applications and dict" {
     core_free_symbols_sstr(@symcore.applied_undefined_function("f", [x])),
     content="('x',)",
   )
-  inspect(core_free_symbols_sstr(@symcore.Expr::Wild("w")), content="('w_',)")
+  inspect(core_free_symbols_sstr(@symcore.Expr::Wild("w", [], [])), content="('w_',)")
   inspect(
     core_free_symbols_sstr(@symcore.Expr::Dict([(x, y), (@symcore.int(1), z)])),
     content="('x', 'y', 'z')",

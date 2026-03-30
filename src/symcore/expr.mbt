@@ -8,7 +8,7 @@ pub(all) enum Expr {
   IdentityFunction
   Symbol(String)
   Dummy(String, Int)
-  Wild(String)
+  Wild(String, Array[Expr], Array[WildProperty])
   FunctionHead(String)
   UndefinedFunction(String)
   Apply(Expr, Array[Expr])
@@ -37,7 +37,7 @@ impl Show for Expr with to_string(self) {
     Expr::IdentityFunction => "Lambda(_x, _x)"
     Expr::Symbol(s) => s
     Expr::Dummy(name, _) => dummy_display_name(name)
-    Expr::Wild(name) => wild_display_name(name)
+    Expr::Wild(name, _, _) => wild_display_name(name)
     Expr::FunctionHead(name) => standalone_function_head_display_name(name)
     Expr::UndefinedFunction(name) => name
     Expr::Apply(head, args) =>
@@ -143,7 +143,7 @@ pub fn rational_from_ints(
 }
 
 ///|
-fn numeric_expr_to_exact_rational(expr : Expr) -> @symnum.BigRational? {
+fn atomic_numeric_expr_to_exact_rational(expr : Expr) -> @symnum.BigRational? {
   match normalize_legacy_expr(expr) {
     Expr::Number(value) => Some(value)
     Expr::Float(value) => {
@@ -168,19 +168,111 @@ fn numeric_expr_to_exact_rational(expr : Expr) -> @symnum.BigRational? {
 }
 
 ///|
+fn pow_exact_rational(
+  base : @symnum.BigRational,
+  exponent : BigInt,
+) -> @symnum.BigRational? {
+  if exponent.is_zero() {
+    return Some(@symnum.BigRational::one())
+  }
+  let mut power = exponent
+  let mut base_value = base
+  if power.compare(0N) < 0 {
+    power = power.neg()
+    let reciprocal : Result[@symnum.BigRational, @symnum.RationalError] = try? base.reciprocal()
+    match reciprocal {
+      Ok(value) => base_value = value
+      Err(_) => return None
+    }
+  }
+  let mut acc = @symnum.BigRational::one()
+  while power.compare(0N) > 0 {
+    if power.mod(2N).compare(0N) != 0 {
+      acc = acc.mul_r(base_value)
+    }
+    power = power.div(2N)
+    if power.compare(0N) > 0 {
+      base_value = base_value.mul_r(base_value)
+    }
+  }
+  Some(acc)
+}
+
+///|
+fn exact_numeric_expr_to_rational(expr : Expr) -> @symnum.BigRational? {
+  match normalize_legacy_expr(expr) {
+    Expr::Add(args) => {
+      let mut acc = @symnum.BigRational::zero()
+      for arg in args {
+        match exact_numeric_expr_to_rational(arg) {
+          Some(value) => acc = acc.add_r(value)
+          None => return None
+        }
+      }
+      Some(acc)
+    }
+    Expr::Mul(args) => {
+      let mut acc = @symnum.BigRational::one()
+      for arg in args {
+        match exact_numeric_expr_to_rational(arg) {
+          Some(value) => acc = acc.mul_r(value)
+          None => return None
+        }
+      }
+      Some(acc)
+    }
+    Expr::Pow(base, exp) =>
+      match (exact_numeric_expr_to_rational(base), exact_numeric_expr_to_rational(exp)) {
+        (Some(base_value), Some(exp_value)) if exp_value.is_integral() => {
+          pow_exact_rational(base_value, exp_value.numerator())
+        }
+        _ => None
+      }
+    other => atomic_numeric_expr_to_exact_rational(other)
+  }
+}
+
+///|
+pub fn exact_numeric_expr_num_den(expr : Expr) -> (BigInt, BigInt)? {
+  match exact_numeric_expr_to_rational(expr) {
+    Some(value) => Some((value.numerator(), value.denominator()))
+    None => None
+  }
+}
+
+///|
 fn trunc_exact_rational(value : @symnum.BigRational) -> Expr {
   let truncated = value.numerator().div(value.denominator())
   Expr::Number(@symnum.BigRational::from_bigint(truncated))
 }
 
 ///|
+fn constructor_integer_value(arg : Expr) -> Expr {
+  match exact_numeric_expr_to_rational(arg) {
+    Some(value) => trunc_exact_rational(value)
+    None =>
+      match evalf(normalize_legacy_expr(arg)) {
+        Expr::Float(value) => {
+          let exact : Result[(BigInt, BigInt), @symnum.MpfError] = try? value.to_rational()
+          match exact {
+            Ok((num, den)) => trunc_exact_rational(
+              @symnum.BigRational::new(num, den) catch {
+                _ => return Expr::Apply(Expr::FunctionHead("Integer"), [arg])
+              },
+            )
+            Err(_) => Expr::Apply(Expr::FunctionHead("Integer"), [arg])
+          }
+        }
+        Expr::Number(value) => trunc_exact_rational(value)
+        _ => Expr::Apply(Expr::FunctionHead("Integer"), [arg])
+      }
+  }
+}
+
+///|
 fn constructor_integer(args : Array[Expr]) -> Expr {
   match args {
-    [arg] =>
-      match numeric_expr_to_exact_rational(arg) {
-        Some(value) => trunc_exact_rational(value)
-        None => Expr::Apply(Expr::FunctionHead("Integer"), args)
-      }
+    [arg] => constructor_integer_value(arg)
     _ => Expr::Apply(Expr::FunctionHead("Integer"), args)
   }
 }
@@ -189,15 +281,15 @@ fn constructor_integer(args : Array[Expr]) -> Expr {
 fn constructor_rational(args : Array[Expr]) -> Expr {
   match args {
     [arg] =>
-      match numeric_expr_to_exact_rational(arg) {
+      match atomic_numeric_expr_to_exact_rational(arg) {
         Some(value) => Expr::Number(value)
         None => Expr::Apply(Expr::FunctionHead("Rational"), args)
       }
     [lhs, rhs] =>
       match
         (
-          numeric_expr_to_exact_rational(lhs),
-          numeric_expr_to_exact_rational(rhs),
+          atomic_numeric_expr_to_exact_rational(lhs),
+          atomic_numeric_expr_to_exact_rational(rhs),
         ) {
         (Some(lhs_value), Some(rhs_value)) => {
           let exact : Result[@symnum.BigRational, @symnum.RationalError] = try? lhs_value.div_r(
@@ -216,38 +308,45 @@ fn constructor_rational(args : Array[Expr]) -> Expr {
 
 ///|
 fn constructor_float(args : Array[Expr]) -> Expr {
+  let float_from_numeric = fn(
+    arg : Expr,
+    prec : Int,
+    fallback_args : Array[Expr],
+  ) -> Expr {
+    match exact_numeric_expr_to_rational(arg) {
+      Some(value) => {
+        let approx : Result[Float, @symnum.MpfError] = try? Float::from_exact(
+          value,
+          prec=prec,
+        )
+        match approx {
+          Ok(value) => Expr::Float(value)
+          Err(_) => Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+        }
+      }
+      None =>
+        match evalf(normalize_legacy_expr(arg), prec=prec) {
+          Expr::Float(value) => Expr::Float(value)
+          Expr::NumberSymbol(NumberSymbolKind::Infinity) =>
+            Expr::NumberSymbol(NumberSymbolKind::Infinity)
+          Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity) =>
+            Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
+          Expr::NumberSymbol(NumberSymbolKind::NaN) =>
+            Expr::NumberSymbol(NumberSymbolKind::NaN)
+          _ => Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+        }
+    }
+  }
   match args {
     [Expr::Float(value)] => Expr::Float(value)
-    [arg] =>
-      match numeric_expr_to_exact_rational(arg) {
-        Some(value) => {
-          let approx : Result[Float, @symnum.MpfError] = try? Float::from_exact(
-            value,
-            prec=53,
-          )
-          match approx {
-            Ok(value) => Expr::Float(value)
-            Err(_) => Expr::Apply(Expr::FunctionHead("Float"), args)
-          }
-        }
-        None => Expr::Apply(Expr::FunctionHead("Float"), args)
-      }
+    [arg] => float_from_numeric(arg, 53, args)
     [arg, Expr::Number(prec)] if prec.is_integral() &&
       prec.numerator().compare(0N) > 0 =>
-      match numeric_expr_to_exact_rational(arg) {
-        Some(value) => {
-          let bits = @symnum.dps_to_prec(prec.numerator().to_int())
-          let approx : Result[Float, @symnum.MpfError] = try? Float::from_exact(
-            value,
-            prec=bits,
-          )
-          match approx {
-            Ok(value) => Expr::Float(value)
-            Err(_) => Expr::Apply(Expr::FunctionHead("Float"), args)
-          }
-        }
-        None => Expr::Apply(Expr::FunctionHead("Float"), args)
-      }
+      float_from_numeric(
+        arg,
+        @symnum.dps_to_prec(prec.numerator().to_int()),
+        args,
+      )
     _ => Expr::Apply(Expr::FunctionHead("Float"), args)
   }
 }
@@ -305,7 +404,8 @@ pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
     Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
     Expr::UndefinedFunction(name) =>
       Some(applied_undefined_function(name, args))
-    Expr::FunctionHead(name) => Some(function(name, args))
+    Expr::FunctionHead(name) =>
+      Some(if current_evaluate() { function(name, args) } else { raw_function(name, args) })
     _ => None
   }
 }
@@ -455,6 +555,9 @@ fn mul_float_to_complex(lhs : ComplexFloat, rhs : Float) -> ComplexFloat {
 
 ///|
 pub fn add(args : Array[Expr]) -> Expr {
+  if !current_evaluate() {
+    return raw_add(args.map(normalize_legacy_expr))
+  }
   let flat : Array[Expr] = Array::new()
   let mut const_sum = @symnum.BigRational::zero()
   let mut float_sum : Float? = None
@@ -637,6 +740,9 @@ fn expr_is_one(expr : Expr) -> Bool {
 
 ///|
 pub fn mul(args : Array[Expr]) -> Expr {
+  if !current_evaluate() {
+    return raw_mul(args.map(normalize_legacy_expr))
+  }
   let flat : Array[Expr] = Array::new()
   let mut const_prod = @symnum.BigRational::one()
   let mut float_prod : Float? = None
@@ -907,6 +1013,9 @@ fn is_zero_base_expr(expr : Expr) -> Bool {
 
 ///|
 pub fn pow(base : Expr, exp : Expr) -> Expr {
+  if !current_evaluate() {
+    return raw_pow(normalize_legacy_expr(base), normalize_legacy_expr(exp))
+  }
   if expr_is_zero(exp) {
     Expr::Number(@symnum.BigRational::one())
   } else if expr_is_one(exp) {
@@ -981,6 +1090,9 @@ fn constructor_derivative(name : String, args : Array[Expr]) -> Expr {
 
 ///|
 pub fn function(name : String, args : Array[Expr]) -> Expr {
+  if !current_evaluate() {
+    return raw_function(name, args)
+  }
   let args = args.map(normalize_legacy_expr)
   match (name, args) {
     ("True", []) => Expr::Boolean(true)

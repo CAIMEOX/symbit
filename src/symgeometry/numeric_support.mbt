@@ -28,7 +28,7 @@ fn geo_expr_real_double(expr : Expr) -> Double? {
         None
       }
     Expr::Dummy(_, _)
-    | Expr::Wild(_)
+    | Expr::Wild(_, _, _)
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) => None
     Expr::Dict(_) => None

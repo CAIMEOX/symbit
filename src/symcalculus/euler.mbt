@@ -161,7 +161,7 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
     | Expr::Boolean(_) => @symcore.int(0)
     Expr::Symbol(_)
     | Expr::Dummy(_, _)
-    | Expr::Wild(_)
+    | Expr::Wild(_, _, _)
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) => @symcore.int(0)
     Expr::Apply(head, args) =>

@@ -11,6 +11,7 @@ pub(all) enum SympifyInput {
   SymbolName(String)
   DummyName(String)
   WildName(String)
+  WildSpec(String, Array[SympifyInput], Array[WildProperty])
   FunctionHeadName(String)
   UndefinedFunctionName(String)
   Application(SympifyInput, Array[SympifyInput])
@@ -31,7 +32,9 @@ pub fn sympify(input : SympifyInput) -> Expr {
     SympifyInput::NumberSymbol(kind) => Expr::NumberSymbol(kind)
     SympifyInput::SymbolName(name) => Expr::Symbol(name)
     SympifyInput::DummyName(name) => dummy(name~)
-    SympifyInput::WildName(name) => Expr::Wild(name)
+    SympifyInput::WildName(name) => Expr::Wild(name, [], [])
+    SympifyInput::WildSpec(name, exclude, properties) =>
+      Expr::Wild(name, exclude.map(sympify), properties)
     SympifyInput::FunctionHeadName(name) => Expr::FunctionHead(name)
     SympifyInput::UndefinedFunctionName(name) => Expr::UndefinedFunction(name)
     SympifyInput::Application(head, args) => {

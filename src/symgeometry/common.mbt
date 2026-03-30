@@ -194,7 +194,7 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
     | Expr::NumberSymbol(_) => Some([expr, int(0), int(0)])
     Expr::Symbol(_)
     | Expr::Dummy(_, _)
-    | Expr::Wild(_)
+    | Expr::Wild(_, _, _)
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) =>
       if @symcore.compare_expr(expr, wrt) == 0 {

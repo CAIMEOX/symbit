@@ -124,7 +124,7 @@ test "number symbols are structured constants" {
 test "dummy and wild are distinct structured symbols" {
   let d1 = dummy(name="x")
   let d2 = dummy(name="x")
-  let w = Expr::Wild("x")
+  let w = Expr::Wild("x", [], [])
   assert_false(d1 == d2)
   inspect(@symprint.to_string(d1), content="_x")
   inspect(@symprint.to_string(w), content="x_")
@@ -133,7 +133,7 @@ test "dummy and wild are distinct structured symbols" {
     _ => fail("expected dummy expr form")
   }
   match expr_form(w) {
-    ExprForm::Wild(name) => inspect(name, content="x")
+    ExprForm::Wild(name, _, _) => inspect(name, content="x")
     _ => fail("expected wild expr form")
   }
   match dummy_parts(d1) {
@@ -268,7 +268,7 @@ test "func exposes canonical heads for atomic core nodes" {
     content="<class 'sympy.core.symbol.Dummy'>",
   )
   inspect(
-    @symprint.to_string(func(Expr::Wild("x")).unwrap_or(int(0))),
+    @symprint.to_string(func(Expr::Wild("x", [], [])).unwrap_or(int(0))),
     content="<class 'sympy.core.symbol.Wild'>",
   )
   inspect(
@@ -521,6 +521,33 @@ test "function constructors follow SymPy core semantics" {
     ),
     content="Subs(x + y, (x, y), z)",
   )
+  inspect(
+    @symprint.to_string(
+      function(
+        "Integer",
+        [raw_mul([int(3), raw_pow(int(2), int(-1))])],
+      ),
+    ),
+    content="1",
+  )
+  inspect(
+    @symprint.to_string(function("Integer", [Expr::NumberSymbol(NumberSymbolKind::Pi)])),
+    content="3",
+  )
+  inspect(
+    @symprint.to_string(
+      function(
+        "Rational",
+        [raw_mul([int(3), raw_pow(int(2), int(-1))])],
+      ),
+    ),
+    content="Rational(3*2**-1)",
+  )
+  match function("Float", [Expr::NumberSymbol(NumberSymbolKind::Pi)]) {
+    Expr::Float(_) => ()
+    other =>
+      fail("expected Float(pi) to evaluate, got \{@symprint.to_string(other)}")
+  }
 }
 
 ///|

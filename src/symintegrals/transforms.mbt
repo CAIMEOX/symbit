@@ -586,7 +586,7 @@ fn poly_coeffs_general(expr : Expr, var_name : String) -> Array[Expr]? {
         Some([expr])
       }
     @symcore.Expr::Dummy(_, _)
-    | @symcore.Expr::Wild(_)
+    | @symcore.Expr::Wild(_, _, _)
     | @symcore.Expr::FunctionHead(_)
     | @symcore.Expr::UndefinedFunction(_) => Some([expr])
     @symcore.Expr::Apply(_, _) =>

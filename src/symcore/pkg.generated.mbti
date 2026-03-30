@@ -46,9 +46,15 @@ pub fn compare_expr(Expr, Expr) -> Int
 
 pub fn complex_float_from_exact_parts(@symnum.BigRational, @symnum.BigRational, prec? : Int) -> ComplexFloat
 
+pub fn current_evaluate() -> Bool
+
 pub fn derivative(Expr, Expr, order? : Expr) -> Expr
 
+pub fn derivative_constructor_expr(Expr, ArrayView[Expr]) -> Expr
+
 pub fn derivative_parts(Expr) -> (Expr, Array[Expr])?
+
+pub fn derivative_signature_error(ArrayView[Expr]) -> String?
 
 pub fn dict_items(Expr) -> Array[(Expr, Expr)]?
 
@@ -60,9 +66,21 @@ pub fn dummy_parts(Expr) -> (String, Int)?
 
 pub fn evalf(Expr, prec? : Int) -> Expr
 
+pub fn exact_number_head_name(ExactNumberKind) -> String
+
+pub fn exact_number_kind(Expr) -> ExactNumberKind?
+
+pub fn exact_number_num_den(Expr) -> (@bigint.BigInt, @bigint.BigInt)?
+
+pub fn exact_numeric_expr_num_den(Expr) -> (@bigint.BigInt, @bigint.BigInt)?
+
 pub fn expr_display(Expr) -> String
 
 pub fn expr_form(Expr) -> ExprForm
+
+pub fn expr_kind(Expr) -> Kind
+
+pub fn expr_match(Expr, Expr, repl_dict? : Map[Expr, Expr]) -> Map[Expr, Expr]?
 
 pub fn float_from_double(Double, prec? : Int, rnd? : @mpf.RoundMode) -> Float
 
@@ -111,6 +129,8 @@ pub fn is_real_number_atom(Expr) -> Bool
 pub fn is_true(Expr) -> Bool
 
 pub fn is_zero(Expr) -> Bool
+
+pub fn kind_name(Kind) -> String
 
 pub fn lambda_arity(Expr) -> Int?
 
@@ -164,6 +184,8 @@ pub fn relational_parts(Expr) -> (RelOp, Expr, Expr)?
 
 pub fn replace(Expr, (Expr) -> Bool, (Expr) -> Expr) -> Expr
 
+pub fn singleton_head(Expr) -> Expr?
+
 pub fn sort_exprs_in_place(Array[Expr]) -> Unit
 
 pub fn sorted_dict_entries(Array[(Expr, Expr)]) -> Array[(Expr, Expr)]
@@ -173,6 +195,8 @@ pub fn standalone_function_head_display_name(String) -> String
 pub fn subs_expr(Expr, Expr, Expr) -> Expr
 
 pub fn subs_parts(Expr) -> (Expr, Expr, Expr)?
+
+pub fn subs_signature_error(Expr, Expr) -> String?
 
 pub fn subst(Expr, Map[String, Expr]) -> Expr
 
@@ -190,7 +214,15 @@ pub fn undefined_application_parts(Expr) -> (String, Array[Expr])?
 
 pub fn wild_display_name(String) -> String
 
+pub fn wild_matches(Expr, Expr, repl_dict? : Map[Expr, Expr]) -> Map[Expr, Expr]?
+
 pub fn wild_name(Expr) -> String?
+
+pub fn wild_parts(Expr) -> (String, Array[Expr], Array[WildProperty])?
+
+pub fn wild_property_name(WildProperty) -> String
+
+pub fn[T] with_evaluate(Bool, () -> T) -> T
 
 pub fn xreplace(Expr, Array[(Expr, Expr)]) -> Expr
 
@@ -219,6 +251,15 @@ pub impl Mul for ComplexFloat
 pub impl Neg for ComplexFloat
 pub impl Show for ComplexFloat
 
+pub(all) enum ExactNumberKind {
+  Zero
+  One
+  NegativeOne
+  Half
+  Integer
+  Rational
+}
+
 pub(all) enum Expr {
   Number(@symnum.BigRational)
   Float(Float)
@@ -228,7 +269,7 @@ pub(all) enum Expr {
   IdentityFunction
   Symbol(String)
   Dummy(String, Int)
-  Wild(String)
+  Wild(String, Array[Expr], Array[WildProperty])
   FunctionHead(String)
   UndefinedFunction(String)
   Apply(Expr, Array[Expr])
@@ -259,7 +300,7 @@ pub enum ExprForm {
   NumberSymbol(NumberSymbolKind)
   Symbol(String)
   Dummy(String, Int)
-  Wild(String)
+  Wild(String, Array[Expr], Array[WildProperty])
   IdentityFunction
   FunctionHead(String)
   UndefinedFunction(String)
@@ -300,6 +341,13 @@ pub impl Mul for Float
 pub impl Neg for Float
 pub impl Show for Float
 
+pub(all) enum Kind {
+  NumberKind
+  BooleanKind
+  TupleKind(Array[Kind])
+  UndefinedKind
+}
+
 pub(all) enum NumberSymbolKind {
   ImaginaryUnit
   Pi
@@ -333,6 +381,7 @@ pub(all) enum SympifyInput {
   SymbolName(String)
   DummyName(String)
   WildName(String)
+  WildSpec(String, Array[SympifyInput], Array[WildProperty])
   FunctionHeadName(String)
   UndefinedFunctionName(String)
   Application(SympifyInput, Array[SympifyInput])
@@ -340,7 +389,18 @@ pub(all) enum SympifyInput {
   Dict(Array[(SympifyInput, SympifyInput)])
 }
 
+pub(all) enum WildProperty {
+  Integer
+  Rational
+  Real
+  Positive
+  Negative
+  Finite
+  Nonzero
+}
+
 // Type aliases
+pub type MatchEnv = Map[Expr, Expr]
 
 // Traits
 

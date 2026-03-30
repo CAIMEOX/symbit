@@ -891,7 +891,7 @@ fn is_rational_form(expr : Expr, k_name : String) -> Bool {
     | Expr::Boolean(_) => true
     Expr::Symbol(_)
     | Expr::Dummy(_, _)
-    | Expr::Wild(_)
+    | Expr::Wild(_, _, _)
     | Expr::FunctionHead(_) => true
     Expr::UndefinedFunction(_) => false
     Expr::Apply(_, args) => {

@@ -248,6 +248,24 @@ pub fn core_evalf_sstr(expr : @symcore.Expr) -> String raise {
 }
 
 ///|
+pub fn core_match_sstr(
+  pattern : @symcore.Expr,
+  expr : @symcore.Expr,
+) -> String raise {
+  let globals = @py.PyDict::new()
+  globals.set("pattern", @sympy.expr_to_sympy(pattern))
+  globals.set("expr", @sympy.expr_to_sympy(expr))
+  py_str_obj(
+    core_eval_with_globals(
+      "('None' if pattern.matches(expr) is None else '|'.join(" +
+      "f'{sympy.sstr(k)}={sympy.sstr(v)}' " +
+      "for k, v in sorted(pattern.matches(expr).items(), key=lambda kv: sympy.sstr(kv[0]))))",
+      globals,
+    ),
+  )
+}
+
+///|
 pub fn core_preorder_sstr(expr : @symcore.Expr) -> String raise {
   let globals = @py.PyDict::new()
   globals.set("expr", @sympy.expr_to_sympy(expr))

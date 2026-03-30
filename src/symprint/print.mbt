@@ -42,7 +42,7 @@ pub fn debug_repr(expr : Expr) -> String {
     @symcore.ExprForm::Symbol(name) => "sym:\{name}"
     @symcore.ExprForm::Dummy(name, id) =>
       "dummy:\{@symcore.dummy_display_name(name)}#\{id}"
-    @symcore.ExprForm::Wild(name) => "wild:\{@symcore.wild_display_name(name)}"
+    @symcore.ExprForm::Wild(name, _, _) => "wild:\{@symcore.wild_display_name(name)}"
     @symcore.ExprForm::IdentityFunction => "(call IdentityFunction)"
     @symcore.ExprForm::FunctionHead(name) => "fhead:\{name}"
     @symcore.ExprForm::UndefinedFunction(name) => "ufunc:\{name}"
@@ -124,6 +124,89 @@ pub fn to_string(expr : Expr) -> String {
 }
 
 ///|
+fn exact_abs_expr(expr : Expr) -> Expr {
+  match @symcore.exact_number_num_den(expr) {
+    Some((num, den)) if num.compare(0N) < 0 => {
+      let value = @symnum.BigRational::new((-num), den) catch {
+        _ => abort("exact_abs_expr: invalid denominator")
+      }
+      @symcore.Expr::Number(value)
+    }
+    _ => expr
+  }
+}
+
+///|
+fn exact_positive_denominator_pow(base : Expr, exp : Expr) -> Expr? {
+  match @symcore.exact_number_num_den(exp) {
+    Some((num, den)) if num.compare(0N) < 0 => {
+      let positive = @symnum.BigRational::new((-num), den) catch {
+        _ => abort("exact_positive_denominator_pow: invalid denominator")
+      }
+      if positive.is_one() {
+        Some(base)
+      } else {
+        Some(@symcore.raw_pow(base, @symcore.Expr::Number(positive)))
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn format_mul(expr : Expr, args : Array[Expr], parent_prec : Int) -> String {
+  let prec = precedence(expr)
+  let numerators : Array[Expr] = []
+  let denominators : Array[Expr] = []
+  let mut sign = ""
+  for arg in args {
+    match @symcore.expr_form(arg) {
+      @symcore.ExprForm::Pow(base, exp) =>
+        match exact_positive_denominator_pow(base, exp) {
+          Some(den) => denominators.push(den)
+          None => numerators.push(arg)
+        }
+      _ =>
+        match @symcore.exact_number_num_den(arg) {
+          Some((num, den)) => {
+            let abs_num = if num.compare(0N) < 0 { -num } else { num }
+            if num.compare(0N) < 0 {
+              sign = if sign == "" { "-" } else { "" }
+            }
+            if den.compare(1N) != 0 {
+              numerators.push(@symcore.int(abs_num.to_int()))
+              denominators.push(@symcore.int(den.to_int()))
+            } else {
+              numerators.push(exact_abs_expr(arg))
+            }
+          }
+          None => numerators.push(arg)
+        }
+    }
+  }
+
+  if numerators.is_empty() {
+    numerators.push(@symcore.int(1))
+  }
+
+  let numerator_text = numerators
+    .map(child => format_expr(child, prec))
+    .join("*")
+  let body = if denominators.is_empty() {
+    sign + numerator_text
+  } else if denominators.length() == 1 {
+    let denom_text = format_expr(denominators[0], prec)
+    sign + numerator_text + "/" + denom_text
+  } else {
+    let denom_text = denominators
+      .map(child => format_expr(child, prec))
+      .join("*")
+    sign + numerator_text + "/(" + denom_text + ")"
+  }
+  if prec < parent_prec { "(" + body + ")" } else { body }
+}
+
+///|
 fn format_expr(expr : Expr, parent_prec : Int) -> String {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => {
@@ -146,7 +229,7 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
     @symcore.ExprForm::NumberSymbol(kind) => @symcore.number_symbol_name(kind)
     @symcore.ExprForm::Symbol(name) => name
     @symcore.ExprForm::Dummy(name, _) => @symcore.dummy_display_name(name)
-    @symcore.ExprForm::Wild(name) => @symcore.wild_display_name(name)
+    @symcore.ExprForm::Wild(name, _, _) => @symcore.wild_display_name(name)
     @symcore.ExprForm::IdentityFunction => "Lambda(_x, _x)"
     @symcore.ExprForm::FunctionHead(name) =>
       @symcore.standalone_function_head_display_name(name)
@@ -155,8 +238,7 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
     @symcore.ExprForm::Boolean(false) => "False"
     @symcore.ExprForm::Add(args) =>
       args.map(child => format_expr(child, prec)).join(" + ")
-    @symcore.ExprForm::Mul(args) =>
-      args.map(child => format_expr(child, prec)).join("*")
+    @symcore.ExprForm::Mul(args) => return format_mul(expr, args, parent_prec)
     @symcore.ExprForm::Pow(base, exp) => {
       let base_str = format_expr(base, prec)
       let exp_str = format_expr(exp, prec)

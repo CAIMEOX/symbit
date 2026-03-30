@@ -24,7 +24,8 @@ fn expr_to_sympy_cached(
     @symcore.Expr::NumberSymbol(kind) => sympy_number_symbol_obj(kind)
     @symcore.Expr::Symbol(name) => sympy_symbol_obj(name)
     @symcore.Expr::Dummy(name, id) => sympy_dummy_obj(name, id, dummy_cache)
-    @symcore.Expr::Wild(name) => sympy_wild_obj(name, wild_cache)
+    @symcore.Expr::Wild(name, exclude, properties) =>
+      sympy_wild_obj(name, exclude, properties, dummy_cache, wild_cache)
     @symcore.Expr::FunctionHead(name) => sympy_function_head_obj(name)
     @symcore.Expr::UndefinedFunction(name) => sympy_undefined_function_obj(name)
     @symcore.Expr::Apply(head, args) =>
@@ -337,15 +338,66 @@ fn sympy_dummy_obj(
 }
 
 ///|
+fn sympy_wild_cache_key(
+  name : String,
+  exclude : Array[@symcore.Expr],
+  properties : Array[@symcore.WildProperty],
+) -> String {
+  let parts : Array[String] = [name]
+  for item in exclude {
+    parts.push(@symprint.debug_repr(item))
+  }
+  for property in properties {
+    parts.push(@symcore.wild_property_name(property))
+  }
+  parts.join("|")
+}
+
+///|
+fn sympy_wild_property_callable(
+  property : @symcore.WildProperty,
+) -> @py.PyObject raise {
+  let attr = match property {
+    @symcore.WildProperty::Integer => "is_integer"
+    @symcore.WildProperty::Rational => "is_rational"
+    @symcore.WildProperty::Real => "is_real"
+    @symcore.WildProperty::Positive => "is_positive"
+    @symcore.WildProperty::Negative => "is_negative"
+    @symcore.WildProperty::Finite => "is_finite"
+    @symcore.WildProperty::Nonzero => "is_nonzero"
+  }
+  sympy_eval_obj("lambda k: getattr(k, '" + attr + "', None)")
+}
+
+///|
 fn sympy_wild_obj(
   name : String,
+  exclude : Array[@symcore.Expr],
+  properties : Array[@symcore.WildProperty],
+  dummy_cache : Map[Int, @py.PyObject],
   wild_cache : Map[String, @py.PyObject],
 ) -> @py.PyObject raise {
-  match wild_cache.get(name) {
+  let cache_key = sympy_wild_cache_key(name, exclude, properties)
+  match wild_cache.get(cache_key) {
     Some(obj) => obj
     None => {
-      let obj = sympy_call_obj("sympy.Wild", [OracleArg::Str(name)])
-      wild_cache.set(name, obj)
+      let exclude_list = @py.PyList::new()
+      for item in exclude {
+        exclude_list.append(expr_to_sympy_cached(item, dummy_cache, wild_cache))
+      }
+      let property_list = @py.PyList::new()
+      for property in properties {
+        property_list.append(sympy_wild_property_callable(property))
+      }
+      let obj = sympy_call_obj(
+        "sympy.Wild",
+        [OracleArg::Str(name)],
+        kwargs={
+          "exclude": OracleArg::PyObj(exclude_list.obj()),
+          "properties": OracleArg::PyObj(property_list.obj()),
+        },
+      )
+      wild_cache.set(cache_key, obj)
       obj
     }
   }

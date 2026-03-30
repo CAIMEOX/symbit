@@ -290,7 +290,7 @@ fn lambda_match_signature(
   rules : Array[(Expr, Expr)],
 ) -> Bool {
   match normalize_legacy_expr(param) {
-    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => {
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_, _, _) => {
       rules.push((param, arg))
       true
     }
@@ -320,7 +320,7 @@ pub fn apply_lambda_expr(vars : Expr, body : Expr, args : Array[Expr]) -> Expr? 
   let args = args.map(normalize_legacy_expr)
   let rules : Array[(Expr, Expr)] = []
   match vars {
-    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) =>
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_, _, _) =>
       if args.length() == 1 {
         rules.push((vars, args[0]))
       } else {
@@ -462,7 +462,7 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
         Some(value) => value
         None => expr
       }
-    Expr::Dummy(_, _) | Expr::Wild(_) => expr
+    Expr::Dummy(_, _) | Expr::Wild(_, _, _) => expr
     Expr::Number(_)
     | Expr::Float(_)
     | Expr::ComplexFloat(_)

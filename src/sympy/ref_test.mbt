@@ -113,7 +113,7 @@ test "sympy ref: expr_to_sympy normalizes legacy function inputs" {
 ///|
 test "sympy ref: expr_to_sympy dummy and wild" {
   let dummy_expr = @symcore.dummy(name="x")
-  let wild_expr = @symcore.Expr::Wild("x")
+  let wild_expr = @symcore.Expr::Wild("x", [], [])
   inspect(py_str_obj(expr_to_sympy(dummy_expr)), content="_x")
   inspect(py_str_obj(expr_to_sympy(wild_expr)), content="x_")
 }

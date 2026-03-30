@@ -78,7 +78,7 @@ test "pretty printers understand number symbols" {
 ///|
 test "pretty printers render dummy and wild names like SymPy" {
   let d = @symcore.dummy(name="x")
-  let w = @symcore.Expr::Wild("x")
+  let w = @symcore.Expr::Wild("x", [], [])
   inspect(to_string(d), content="_x")
   assert_true(debug_repr(d).has_prefix("dummy:_x#"))
   inspect(to_string(w), content="x_")

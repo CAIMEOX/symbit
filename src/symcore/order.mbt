@@ -6,7 +6,7 @@ fn variant_rank(expr : Expr) -> Int {
     Expr::FunctionHead(_) => 2
     Expr::UndefinedFunction(_) => 3
     Expr::IdentityFunction => 4
-    Expr::Dummy(_, _) | Expr::Wild(_) => 5
+    Expr::Dummy(_, _) | Expr::Wild(_, _, _) => 5
     Expr::NumberSymbol(_) => 6
     Expr::Symbol(_) => 7
     Expr::Apply(_, _) => 8
@@ -99,6 +99,25 @@ fn compare_apply_heads(head_a : Expr, head_b : Expr) -> Int {
 }
 
 ///|
+fn compare_wild_properties(
+  props_a : Array[WildProperty],
+  props_b : Array[WildProperty],
+) -> Int {
+  let len_a = props_a.length()
+  let len_b = props_b.length()
+  let min_len = if len_a < len_b { len_a } else { len_b }
+  for i in 0..<min_len {
+    let cmp = wild_property_name(props_a[i]).compare(
+      wild_property_name(props_b[i]),
+    )
+    if cmp != 0 {
+      return cmp
+    }
+  }
+  cmp_int(len_a, len_b)
+}
+
+///|
 pub fn compare_expr(a : Expr, b : Expr) -> Int {
   let a = normalize_legacy_expr(a)
   let b = normalize_legacy_expr(b)
@@ -117,8 +136,14 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
       }
       return -1
     }
-    (Expr::Pow(base_a, _), Expr::Wild(name_b)) => {
-      let base_cmp = compare_expr(base_a, Expr::Wild(name_b))
+    (
+      Expr::Pow(base_a, _),
+      Expr::Wild(name_b, exclude_b, properties_b),
+    ) => {
+      let base_cmp = compare_expr(
+        base_a,
+        Expr::Wild(name_b, exclude_b, properties_b),
+      )
       if base_cmp != 0 {
         return base_cmp
       }
@@ -147,7 +172,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         _ => return 1
       }
     }
-    (Expr::Wild(name_a), Expr::Pow(base_b, _)) => {
+    (Expr::Wild(name_a, _, _), Expr::Pow(base_b, _)) => {
       let base_cmp = compare_symbol_base(wild_display_name(name_a), base_b)
       if base_cmp != 0 {
         return base_cmp
@@ -207,7 +232,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::NumberSymbol(nb) => sa.compare(number_symbol_name(nb))
         Expr::Symbol(sb) => sa.compare(sb)
         Expr::Dummy(name_b, _) => sa.compare(dummy_display_name(name_b))
-        Expr::Wild(name_b) => sa.compare(wild_display_name(name_b))
+        Expr::Wild(name_b, _, _) => sa.compare(wild_display_name(name_b))
         _ => 0
       }
     Expr::Dummy(name_a, id_a) =>
@@ -223,18 +248,30 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
             cmp_int(id_a, id_b)
           }
         }
-        Expr::Wild(name_b) =>
+        Expr::Wild(name_b, _, _) =>
           dummy_display_name(name_a).compare(wild_display_name(name_b))
         _ => 0
       }
-    Expr::Wild(name_a) =>
+    Expr::Wild(name_a, exclude_a, properties_a) =>
       match b {
         Expr::NumberSymbol(nb) =>
           wild_display_name(name_a).compare(number_symbol_name(nb))
         Expr::Symbol(sb) => wild_display_name(name_a).compare(sb)
         Expr::Dummy(name_b, _) =>
           wild_display_name(name_a).compare(dummy_display_name(name_b))
-        Expr::Wild(name_b) => name_a.compare(name_b)
+        Expr::Wild(name_b, exclude_b, properties_b) => {
+          let name_cmp = name_a.compare(name_b)
+          if name_cmp != 0 {
+            name_cmp
+          } else {
+            let exclude_cmp = compare_arrays(exclude_a, exclude_b)
+            if exclude_cmp != 0 {
+              exclude_cmp
+            } else {
+              compare_wild_properties(properties_a, properties_b)
+            }
+          }
+        }
         Expr::FunctionHead(name_b) => wild_display_name(name_a).compare(name_b)
         Expr::UndefinedFunction(name_b) =>
           wild_display_name(name_a).compare(name_b)
@@ -245,7 +282,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::NumberSymbol(nb) => name_a.compare(number_symbol_name(nb))
         Expr::Symbol(sb) => name_a.compare(sb)
         Expr::Dummy(name_b, _) => name_a.compare(dummy_display_name(name_b))
-        Expr::Wild(name_b) => name_a.compare(wild_display_name(name_b))
+        Expr::Wild(name_b, _, _) => name_a.compare(wild_display_name(name_b))
         Expr::FunctionHead(name_b) => name_a.compare(name_b)
         Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
         _ => 0
@@ -255,7 +292,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::NumberSymbol(nb) => name_a.compare(number_symbol_name(nb))
         Expr::Symbol(sb) => name_a.compare(sb)
         Expr::Dummy(name_b, _) => name_a.compare(dummy_display_name(name_b))
-        Expr::Wild(name_b) => name_a.compare(wild_display_name(name_b))
+        Expr::Wild(name_b, _, _) => name_a.compare(wild_display_name(name_b))
         Expr::FunctionHead(name_b) => name_a.compare(name_b)
         Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
         _ => 0
@@ -395,7 +432,7 @@ fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
       }
     Expr::Symbol(sb) => sym_name.compare(sb)
     Expr::Dummy(name, _) => sym_name.compare(dummy_display_name(name))
-    Expr::Wild(name) => sym_name.compare(wild_display_name(name))
+    Expr::Wild(name, _, _) => sym_name.compare(wild_display_name(name))
     Expr::FunctionHead(name) => sym_name.compare(name)
     Expr::UndefinedFunction(name) => sym_name.compare(name)
     Expr::Apply(head, args) =>
@@ -517,7 +554,15 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
       hasher.combine_string(name)
       hasher.combine_int(id)
     }
-    Expr::Wild(name) => hasher.combine_string(name)
+    Expr::Wild(name, exclude, properties) => {
+      hasher.combine_string(name)
+      for item in exclude {
+        item.hash_combine(hasher)
+      }
+      for property in properties {
+        hasher.combine_string(wild_property_name(property))
+      }
+    }
     Expr::FunctionHead(name) => hasher.combine_string(name)
     Expr::UndefinedFunction(name) => hasher.combine_string(name)
     Expr::Apply(head, args) => {

@@ -136,7 +136,7 @@ pub fn Float::to_double(
 pub fn Float::format(self : Float, dps? : Int) -> String {
   let digits = match dps {
     Some(v) if v > 0 => v
-    _ => @symnum.repr_dps(self.prec)
+    _ => if self.prec < 5 { 0 } else { @symnum.prec_to_dps(self.prec) }
   }
   @symnum.to_str(self.value, dps=digits) catch {
     _ => "<float>"

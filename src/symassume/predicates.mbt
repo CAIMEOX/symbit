@@ -43,7 +43,7 @@ pub fn is_zero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_zero(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_zero
     @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::Wild(_, _, _)
     | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(value) => tri_of_bool(!value)
@@ -79,7 +79,7 @@ pub fn is_nonzero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_nonzero(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_nonzero
     @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::Wild(_, _, _)
     | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(value) => tri_of_bool(value)
@@ -113,7 +113,7 @@ pub fn is_integer(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_integer(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_integer
     @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::Wild(_, _, _)
     | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
@@ -147,7 +147,7 @@ pub fn is_rational(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_rational(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_rational
     @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::Wild(_, _, _)
     | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
@@ -181,7 +181,7 @@ pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_real(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_real
     @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::Wild(_, _, _)
     | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
@@ -220,7 +220,7 @@ pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_positive(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_positive
     @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::Wild(_, _, _)
     | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(value) => tri_of_bool(value)
@@ -261,7 +261,7 @@ pub fn is_nonnegative(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_nonnegative(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_nonnegative
     @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::Wild(_, _, _)
     | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
