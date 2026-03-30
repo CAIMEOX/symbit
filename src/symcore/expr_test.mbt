@@ -1007,6 +1007,25 @@ test "subst respects Subs bound variables" {
 }
 
 ///|
+test "Subs equality and ordering use canonical variable semantics" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let z = Expr::Symbol("z")
+  let a = subs_expr(x, x, int(0))
+  let b = subs_expr(y, y, int(0))
+  inspect((a == b).to_string(), content="true")
+  inspect(compare_expr(a, b), content="0")
+  let fxy = function("f", [x, y])
+  let left = subs_expr(fxy, Expr::Tuple([x, y]), Expr::Tuple([int(0), int(1)]))
+  let right = subs_expr(fxy, Expr::Tuple([y, x]), Expr::Tuple([int(1), int(0)]))
+  inspect((left == right).to_string(), content="true")
+  inspect(compare_expr(left, right), content="0")
+  let nonbinding_left = subs_expr(x, y, int(0))
+  let nonbinding_right = subs_expr(x, z, int(0))
+  inspect((nonbinding_left == nonbinding_right).to_string(), content="false")
+}
+
+///|
 test "subst respects derivative binding and capture rules" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")

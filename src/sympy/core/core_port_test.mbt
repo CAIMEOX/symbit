@@ -1282,6 +1282,38 @@ test "symcore parity subst respects derivative binding and capture" {
 }
 
 ///|
+test "symcore parity Subs equality is canonical in bound variables" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
+  inspect(
+    (@symcore.subs_expr(x, x, @symcore.int(0)) ==
+    @symcore.subs_expr(y, y, @symcore.int(0))).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.compare_expr(
+      @symcore.subs_expr(
+        @symcore.function("f", [x, y]),
+        @symcore.Expr::Tuple([x, y]),
+        @symcore.Expr::Tuple([@symcore.int(0), @symcore.int(1)]),
+      ),
+      @symcore.subs_expr(
+        @symcore.function("f", [x, y]),
+        @symcore.Expr::Tuple([y, x]),
+        @symcore.Expr::Tuple([@symcore.int(1), @symcore.int(0)]),
+      ),
+    ),
+    content="0",
+  )
+  inspect(
+    (@symcore.subs_expr(x, y, @symcore.int(0)) ==
+    @symcore.subs_expr(x, z, @symcore.int(0))).to_string(),
+    content="false",
+  )
+}
+
+///|
 test "symcore parity default sort order around functions symbols and mod" {
   let x = @symcore.Expr::Symbol("x")
   inspect(

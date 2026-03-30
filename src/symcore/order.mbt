@@ -424,16 +424,17 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
     Expr::Subs(inner_a, variable_a, value_a) =>
       match b {
         Expr::Subs(inner_b, variable_b, value_b) => {
-          let inner_cmp = compare_expr(inner_a, inner_b)
+          let inner_cmp = compare_expr(
+            subs_canonical_inner(inner_a, variable_a, value_a),
+            subs_canonical_inner(inner_b, variable_b, value_b),
+          )
           if inner_cmp != 0 {
             inner_cmp
           } else {
-            let variable_cmp = compare_expr(variable_a, variable_b)
-            if variable_cmp != 0 {
-              variable_cmp
-            } else {
-              compare_expr(value_a, value_b)
-            }
+            compare_arrays(
+              subs_hashable_pairs(inner_a, variable_a, value_a),
+              subs_hashable_pairs(inner_b, variable_b, value_b),
+            )
           }
         }
         _ => 0
@@ -503,6 +504,85 @@ fn compare_arrays(xs : Array[Expr], ys : Array[Expr]) -> Int {
     }
   }
   cmp_int(len_x, len_y)
+}
+
+///|
+fn subs_items_for_order(expr : Expr) -> Array[Expr] {
+  match normalize_legacy_expr(expr) {
+    Expr::Tuple(items) => items
+    other => [other]
+  }
+}
+
+///|
+fn canonical_subs_placeholder(index : Int) -> Expr {
+  Expr::Dummy("__subs", -index - 1)
+}
+
+///|
+fn canonical_subs_point_placeholders(
+  point : Array[Expr],
+) -> Array[(Expr, Expr)] {
+  let unique = point.copy()
+  unique.sort_by(compare_expr)
+  let deduped : Array[Expr] = []
+  for item in unique {
+    if deduped.is_empty() ||
+      compare_expr(deduped[deduped.length() - 1], item) != 0 {
+      deduped.push(item)
+    }
+  }
+  let out : Array[(Expr, Expr)] = []
+  for i in 0..<deduped.length() {
+    out.push((deduped[i], canonical_subs_placeholder(i)))
+  }
+  out
+}
+
+///|
+fn canonical_subs_placeholder_for(
+  mapping : Array[(Expr, Expr)],
+  point : Expr,
+) -> Expr {
+  for item in mapping {
+    let (current, placeholder) = item
+    if compare_expr(current, point) == 0 {
+      return placeholder
+    }
+  }
+  abort("missing Subs canonical placeholder")
+}
+
+///|
+fn subs_canonical_inner(inner : Expr, variable : Expr, value : Expr) -> Expr {
+  let variables = subs_items_for_order(variable)
+  let values = subs_items_for_order(value)
+  let placeholders = canonical_subs_point_placeholders(values)
+  let rules : Array[(Expr, Expr)] = []
+  for i in 0..<variables.length() {
+    rules.push(
+      (variables[i], canonical_subs_placeholder_for(placeholders, values[i])),
+    )
+  }
+  xreplace(inner, rules)
+}
+
+///|
+fn subs_hashable_pairs(
+  inner : Expr,
+  variable : Expr,
+  value : Expr,
+) -> Array[Expr] {
+  let variables = subs_items_for_order(variable)
+  let values = subs_items_for_order(value)
+  let pairs : Array[Expr] = []
+  for i in 0..<variables.length() {
+    if !has(inner, variables[i]) {
+      pairs.push(Expr::Tuple([variables[i], values[i]]))
+    }
+  }
+  pairs.sort_by(compare_expr)
+  pairs
 }
 
 ///|
@@ -655,9 +735,10 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
       }
     }
     Expr::Subs(inner, variable, value) => {
-      inner.hash_combine(hasher)
-      variable.hash_combine(hasher)
-      value.hash_combine(hasher)
+      subs_canonical_inner(inner, variable, value).hash_combine(hasher)
+      for pair in subs_hashable_pairs(inner, variable, value) {
+        pair.hash_combine(hasher)
+      }
     }
     Expr::Lambda(vars, body) => {
       vars.hash_combine(hasher)
