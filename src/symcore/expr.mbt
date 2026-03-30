@@ -1107,6 +1107,15 @@ fn constructor_derivative(name : String, args : Array[Expr]) -> Expr {
 }
 
 ///|
+fn constructor_singleton_registry(name : String, args : Array[Expr]) -> Expr {
+  match args.length() {
+    0 => Expr::Apply(Expr::FunctionHead(name), args)
+    given if given <= 6 => normalize_legacy_expr(args[0])
+    _ => Expr::Apply(Expr::FunctionHead(name), args)
+  }
+}
+
+///|
 pub fn function(name : String, args : Array[Expr]) -> Expr {
   if !current_evaluate() {
     return raw_function(name, args)
@@ -1116,6 +1125,7 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
     ("True", []) => Expr::Boolean(true)
     ("False", []) => Expr::Boolean(false)
     ("Tuple", _) => Expr::Tuple(args)
+    ("S", _) => constructor_singleton_registry(name, args)
     ("Integer", _) => constructor_integer(args)
     ("Rational", _) => constructor_rational(args)
     ("Float", _) => constructor_float(args)
@@ -1178,6 +1188,7 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
     ("True", []) => Expr::Boolean(true)
     ("False", []) => Expr::Boolean(false)
     ("Tuple", _) => Expr::Tuple(args)
+    ("S", _) => constructor_singleton_registry(name, args)
     ("Integer", _) => constructor_integer(args)
     ("Rational", _) => constructor_rational(args)
     ("Float", _) => constructor_float(args)

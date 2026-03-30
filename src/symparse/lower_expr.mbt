@@ -421,6 +421,20 @@ fn make_application(
               "TypeError: beta takes at least 1 argument (\{given} given)",
             )
         }
+      "S" =>
+        match args.length() {
+          0 =>
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'",
+            )
+          given if given <= 6 => @symcore.normalize_legacy_expr(args[0])
+          given =>
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: SingletonRegistry.__call__() takes from 2 to 7 positional arguments but \{given + 1} were given",
+            )
+        }
       "Integer" =>
         match args.length() {
           0 =>

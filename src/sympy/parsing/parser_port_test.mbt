@@ -688,6 +688,14 @@ test "symparse parity builtin callable semantics" {
     content=parse_expr_sstr("Rational(0.2)"),
   )
   inspect(
+    @symprint.to_string(parse_expr("S(1/2)")),
+    content=parse_expr_sstr("S(1/2)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("S(sin(x))")),
+    content=parse_expr_sstr("S(sin(x))"),
+  )
+  inspect(
     try parse_expr("Rational(pi)") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
@@ -812,6 +820,15 @@ test "symparse parity builtin callable semantics" {
     content=parse_expr_error_sstr_in("Float()", []),
   )
   inspect(
+    try parse_expr("S()") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'",
+  )
+  inspect(
     try parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)) catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
@@ -819,6 +836,10 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content=parse_expr_error_sstr_in("sqrt(x, y)", [], evaluate=false),
+  )
+  inspect(
+    @symprint.to_string(parse_expr_with("S(x + x)", parse_options(evaluate=false))),
+    content=parse_expr_sstr("S(x + x)", evaluate=false),
   )
   inspect(
     parse_expr_equiv(
@@ -908,6 +929,14 @@ test "symparse parity builtin callable semantics" {
     content="0",
   )
   inspect(
+    @symprint.to_string(ast_parse_expr("S(1/2)")),
+    content=ast_parse_expr_sstr("S(1/2)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("S(sin(x))")),
+    content=ast_parse_expr_sstr("S(sin(x))"),
+  )
+  inspect(
     try ast_parse_expr("pi(x)") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
@@ -924,6 +953,15 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content=ast_parse_expr_error_sstr("Integer()"),
+  )
+  inspect(
+    try ast_parse_expr("S()") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'",
   )
 }
 

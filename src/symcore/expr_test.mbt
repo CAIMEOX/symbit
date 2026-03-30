@@ -373,6 +373,18 @@ test "formal application helpers roundtrip named and undefined heads" {
       inspect(n.to_string(), content="1")
     _ => fail("expected Tuple constructor semantics through apply")
   }
+  match apply(Expr::FunctionHead("S"), [add([x, x])]) {
+    Some(expr) => inspect(@symprint.to_string(expr), content="2*x")
+    _ => fail("expected S constructor semantics through apply")
+  }
+  match raw_apply(Expr::FunctionHead("S"), [function("sin", [x])]) {
+    Some(expr) => inspect(@symprint.to_string(expr), content="sin(x)")
+    _ => fail("expected S raw constructor semantics through apply")
+  }
+  match apply(Expr::FunctionHead("S"), []) {
+    Some(Expr::Apply(Expr::FunctionHead("S"), [])) => ()
+    _ => fail("expected unsupported S arity to stay canonical Apply")
+  }
   assert_false(apply(Expr::Symbol("g"), [x]) is Some(_))
   assert_false(raw_apply(Expr::Symbol("g"), [x]) is Some(_))
   assert_false(apply(int(1), [x]) is Some(_))

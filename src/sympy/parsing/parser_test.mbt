@@ -648,6 +648,8 @@ test "ast parser compatibility entrypoint" {
     ),
     content="0",
   )
+  inspect(@symprint.to_string(ast_parse_expr("S(1/2)")), content="1/2")
+  inspect(@symprint.to_string(ast_parse_expr("S(sin(x))")), content="sin(x)")
   guard (try? ast_parse_expr("pi(x)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: 'Pi' object is not callable" else {
@@ -658,6 +660,12 @@ test "ast parser compatibility entrypoint" {
     detail ==
     "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
     fail("expected ast parser Integer constructor arity error")
+  }
+  guard (try? ast_parse_expr("S()"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail ==
+    "TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'" else {
+    fail("expected ast parser S constructor arity error")
   }
   inspect(
     @symprint.to_string(
@@ -808,6 +816,8 @@ test "symparse explicit core constructor calls stay canonical" {
   inspect(@symprint.to_string(parse_expr("Integer(pi)")), content="3")
   inspect(@symprint.to_string(parse_expr("Rational(6, 4)")), content="3/2")
   inspect(@symprint.to_string(parse_expr("Rational(1, 0)")), content="zoo")
+  inspect(@symprint.to_string(parse_expr("S(1/2)")), content="1/2")
+  inspect(@symprint.to_string(parse_expr("S(sin(x))")), content="sin(x)")
   guard (try? parse_expr("Rational(pi)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: invalid input: pi" else {
@@ -917,6 +927,10 @@ test "symparse explicit core constructor calls stay canonical" {
     ),
     content="Derivative(x, x)",
   )
+  inspect(
+    @symprint.to_string(parse_expr_with("S(x + x)", parse_options(evaluate=false))),
+    content="x + x",
+  )
   guard (try? parse_expr("Eq()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail ==
@@ -933,6 +947,12 @@ test "symparse explicit core constructor calls stay canonical" {
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: Mod takes exactly 2 arguments (1 given)" else {
     fail("expected Mod(x) constructor arity error")
+  }
+  guard (try? parse_expr("S()"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail ==
+    "TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'" else {
+    fail("expected S() constructor arity error")
   }
   inspect(
     @symprint.to_string(

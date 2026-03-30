@@ -409,6 +409,35 @@ test "symcore parity func for atomic core nodes" {
 }
 
 ///|
+test "symcore source-driven S constructor semantics stay canonical" {
+  let x = @symcore.Expr::Symbol("x")
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(@symcore.Expr::FunctionHead("S"), [
+        @symcore.function("sin", [x]),
+      ]).unwrap_or(@symcore.int(0)),
+    ),
+    content="sin(x)",
+  )
+  inspect(
+    local_func_name(
+      @symcore.apply(@symcore.Expr::FunctionHead("S"), []).unwrap_or(
+        @symcore.int(0),
+      ),
+    ),
+    content="S",
+  )
+  inspect(
+    local_args_sstr(
+      @symcore.apply(@symcore.Expr::FunctionHead("S"), []).unwrap_or(
+        @symcore.int(0),
+      ),
+    ),
+    content="()",
+  )
+}
+
+///|
 test "symcore parity dict and tuple containers" {
   inspect(
     core_expr_sstr(
