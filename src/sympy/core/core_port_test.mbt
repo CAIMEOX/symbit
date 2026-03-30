@@ -1043,6 +1043,7 @@ test "symcore parity free_symbols and atoms helpers" {
 ///|
 test "symcore parity has sees callable heads in applications" {
   let x = @symcore.Expr::Symbol("x")
+  let dfx = @symcore.derivative(@symcore.applied_undefined_function("f", [x]), x)
   inspect(
     @symcore.has(
       @symcore.function("sin", [x]),
@@ -1062,6 +1063,31 @@ test "symcore parity has sees callable heads in applications" {
       @symcore.applied_undefined_function("f", [x]),
       @symcore.Expr::UndefinedFunction("f"),
     ).to_string(),
+  )
+  inspect(
+    @symcore.has(dfx, @symcore.Expr::FunctionHead("Derivative")).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.pow(x, @symcore.int(2)),
+      @symcore.Expr::FunctionHead("Symbol"),
+    ).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.pow(x, @symcore.int(2)),
+      @symcore.Expr::FunctionHead("Wild"),
+    ).to_string(),
+    content="false",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.mul([@symcore.int(2), @symcore.Expr::Wild("p", [], [])]),
+      @symcore.Expr::FunctionHead("Wild"),
+    ).to_string(),
+    content="true",
   )
 }
 
@@ -1421,6 +1447,31 @@ test "symcore parity free_symbols through apply lambda and Subs" {
   inspect(
     core_free_symbols_sstr(@symcore.subs_expr(@symcore.add([x, y]), x, z)),
     content="('y', 'z')",
+  )
+  inspect(
+    core_free_symbols_sstr(
+      @symcore.lambda_expr(@symcore.Expr::Tuple([]), @symcore.int(42)),
+    ),
+    content="()",
+  )
+  inspect(
+    core_free_symbols_sstr(
+      @symcore.lambda_expr(@symcore.Expr::Tuple([]), @symcore.mul([x, y])),
+    ),
+    content="('x', 'y')",
+  )
+  let subs_structural = @symcore.subs_expr(x, x, @symcore.int(0))
+  inspect(@symcore.has(subs_structural, x).to_string(), content="true")
+  inspect(core_free_symbols_sstr(subs_structural), content="()")
+  let subs_env : Map[String, @symcore.Expr] = {}
+  subs_env.set("x", y)
+  inspect(
+    @symcore.has(
+      @symcore.subst(@symcore.subs_expr(x, x, @symcore.int(1)), subs_env),
+      y,
+    )
+    .to_string(),
+    content="true",
   )
 }
 

@@ -69,6 +69,23 @@ test "free_symbols respects bound variables" {
   ])
   inspect(has(lam, z), content="true")
   inspect(has(lam, y), content="true")
+  json_inspect(
+    free_symbols(lambda_expr(Expr::Tuple([]), int(42))).map(@symprint.to_string),
+    content=[],
+  )
+  json_inspect(
+    free_symbols(lambda_expr(Expr::Tuple([]), mul([x, y]))).map(@symprint.to_string),
+    content=["x", "y"],
+  )
+  let subs_structural = subs_expr(x, x, int(0))
+  inspect(has(subs_structural, x), content="true")
+  json_inspect(
+    free_symbols(subs_structural).map(@symprint.to_string),
+    content=[],
+  )
+  let subs_env : Map[String, Expr] = {}
+  subs_env.set("x", y)
+  inspect(has(subst(subs_expr(x, x, int(1)), subs_env), y), content="true")
 }
 
 ///|
@@ -77,6 +94,16 @@ test "has sees callable heads in canonical applications" {
   assert_true(has(function("sin", [x]), Expr::FunctionHead("sin")))
   assert_true(
     has(applied_undefined_function("f", [x]), Expr::UndefinedFunction("f")),
+  )
+  let dfx = derivative(applied_undefined_function("f", [x]), x)
+  assert_true(has(dfx, Expr::FunctionHead("Derivative")))
+  assert_true(has(pow(x, int(2)), Expr::FunctionHead("Symbol")))
+  assert_false(has(pow(x, int(2)), Expr::FunctionHead("Wild")))
+  assert_true(
+    has(
+      mul([int(2), Expr::Wild("p", [], [])]),
+      Expr::FunctionHead("Wild"),
+    ),
   )
 }
 

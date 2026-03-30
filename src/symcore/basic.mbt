@@ -1499,6 +1499,10 @@ pub fn has(expr : Expr, needle : Expr) -> Bool {
   if expr == needle {
     return true
   }
+  match func(expr) {
+    Some(head) if head == needle => return true
+    _ => ()
+  }
   match application_parts(expr) {
     Some((head, app_args)) => {
       if has(head, needle) {
