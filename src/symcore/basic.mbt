@@ -954,6 +954,39 @@ pub fn exact_number_num_den(expr : Expr) -> (BigInt, BigInt)? {
 }
 
 ///|
+fn is_boolean_application_head(name : String) -> Bool {
+  match name {
+    "And"
+    | "Or"
+    | "Not"
+    | "Xor"
+    | "Nand"
+    | "Nor"
+    | "Implies"
+    | "Equivalent"
+    | "ITE" => true
+    _ => false
+  }
+}
+
+///|
+fn application_kind(head : Expr, args : Array[Expr]) -> Kind {
+  match function_head_name(head) {
+    Some(name) =>
+      if is_boolean_application_head(name) {
+        Kind::BooleanKind
+      } else {
+        match name {
+          "Tuple" => Kind::TupleKind(args.map(expr_kind))
+          "Dict" | "Lambda" | "Subs" | "Derivative" => Kind::UndefinedKind
+          _ => Kind::NumberKind
+        }
+      }
+    None => Kind::UndefinedKind
+  }
+}
+
+///|
 pub fn expr_kind(expr : Expr) -> Kind {
   let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
@@ -971,7 +1004,7 @@ pub fn expr_kind(expr : Expr) -> Kind {
     | ExprForm::Symbol(_)
     | ExprForm::Dummy(_, _)
     | ExprForm::Wild(_, _, _) => Kind::NumberKind
-    ExprForm::Apply(_, _) => Kind::NumberKind
+    ExprForm::Apply(head, args) => application_kind(head, args)
     ExprForm::Add(items) | ExprForm::Mul(items) => common_kind(items.map(expr_kind))
     ExprForm::Pow(base, exp) =>
       match expr_kind(exp) {

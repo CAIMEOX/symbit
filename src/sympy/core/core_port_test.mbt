@@ -207,6 +207,40 @@ test "symcore parity formal application helpers" {
     ),
     content="(x, 1)",
   )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(@symcore.Expr::FunctionHead("Rational"), [
+        @symcore.Expr::Boolean(true),
+      ]).unwrap_or(@symcore.int(0)),
+    ),
+    content="1",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(@symcore.Expr::FunctionHead("Rational"), [
+        @symcore.int(1),
+        @symcore.Expr::Boolean(false),
+      ]).unwrap_or(@symcore.int(0)),
+    ),
+    content="zoo",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(@symcore.Expr::FunctionHead("Rational"), [
+        @symcore.Expr::Boolean(false),
+        @symcore.Expr::Boolean(false),
+      ]).unwrap_or(@symcore.int(0)),
+    ),
+    content="nan",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(@symcore.Expr::FunctionHead("S"), [
+        @symcore.Expr::Boolean(true),
+      ]).unwrap_or(@symcore.int(0)),
+    ),
+    content="True",
+  )
 }
 
 ///|
@@ -391,6 +425,25 @@ test "symcore parity displayed func heads for atomic core nodes" {
       @symcore.func(@symcore.Expr::Symbol("x")).unwrap_or(@symcore.int(0)),
     ),
     content="<class 'sympy.core.symbol.Symbol'>",
+  )
+}
+
+///|
+test "symcore source-driven kinds distinguish logical applications" {
+  let x = @symcore.Expr::Symbol("x")
+  inspect(
+    @symcore.kind_name(
+      @symcore.expr_kind(
+        @symcore.function("And", [@symcore.Expr::Boolean(true), x]),
+      ),
+    ),
+    content="BooleanKind",
+  )
+  inspect(
+    @symcore.kind_name(
+      @symcore.expr_kind(@symcore.function("sin", [x])),
+    ),
+    content="NumberKind",
   )
 }
 

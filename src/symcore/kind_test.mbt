@@ -78,6 +78,14 @@ test "expr_kind follows source-driven core kinds" {
     content="NumberKind",
   )
   inspect(
+    kind_name(expr_kind(function("And", [Expr::Boolean(true), Expr::Boolean(false)]))),
+    content="BooleanKind",
+  )
+  inspect(
+    kind_name(expr_kind(function("Or", [Expr::Boolean(true), x]))),
+    content="BooleanKind",
+  )
+  inspect(
     kind_name(expr_kind(lambda_expr(x, x))),
     content="UndefinedKind",
   )

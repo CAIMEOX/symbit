@@ -292,6 +292,13 @@ fn constructor_rational(args : Array[Expr]) -> Expr {
           atomic_numeric_expr_to_exact_rational(rhs),
         ) {
         (Some(lhs_value), Some(rhs_value)) => {
+          if rhs_value.is_zero() {
+            if lhs_value.is_zero() {
+              Expr::NumberSymbol(NumberSymbolKind::NaN)
+            } else {
+              Expr::NumberSymbol(NumberSymbolKind::ComplexInfinity)
+            }
+          } else {
           let exact : Result[@symnum.BigRational, @symnum.RationalError] = try? lhs_value.div_r(
             rhs_value,
           )
@@ -299,6 +306,7 @@ fn constructor_rational(args : Array[Expr]) -> Expr {
             Ok(value) => Expr::Number(value)
             Err(_) => Expr::Apply(Expr::FunctionHead("Rational"), args)
           }
+        }
         }
         _ => Expr::Apply(Expr::FunctionHead("Rational"), args)
       }

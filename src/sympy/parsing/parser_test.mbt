@@ -634,6 +634,8 @@ test "ast parser compatibility entrypoint" {
     ),
     content="0",
   )
+  inspect(@symprint.to_string(ast_parse_expr("Rational(True)")), content="1")
+  inspect(@symprint.to_string(ast_parse_expr("Rational(False)")), content="0")
   inspect(
     parse_expr_equiv(
       @symprint.to_string(ast_parse_expr("Float(2.5)")),
@@ -648,6 +650,8 @@ test "ast parser compatibility entrypoint" {
     ),
     content="0",
   )
+  inspect(@symprint.to_string(ast_parse_expr("S(True)")), content="True")
+  inspect(@symprint.to_string(ast_parse_expr("S(False)")), content="False")
   inspect(@symprint.to_string(ast_parse_expr("S(1/2)")), content="1/2")
   inspect(@symprint.to_string(ast_parse_expr("S(sin(x))")), content="sin(x)")
   guard (try? ast_parse_expr("pi(x)"))
@@ -667,6 +671,14 @@ test "ast parser compatibility entrypoint" {
     "TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'" else {
     fail("expected ast parser S constructor arity error")
   }
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(True, False)")),
+    content="zoo",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(False, False)")),
+    content="nan",
+  )
   inspect(
     @symprint.to_string(
       ast_parse_expr("f", local_bindings={
@@ -816,6 +828,10 @@ test "symparse explicit core constructor calls stay canonical" {
   inspect(@symprint.to_string(parse_expr("Integer(pi)")), content="3")
   inspect(@symprint.to_string(parse_expr("Rational(6, 4)")), content="3/2")
   inspect(@symprint.to_string(parse_expr("Rational(1, 0)")), content="zoo")
+  inspect(@symprint.to_string(parse_expr("Rational(True)")), content="1")
+  inspect(@symprint.to_string(parse_expr("Rational(False)")), content="0")
+  inspect(@symprint.to_string(parse_expr("S(True)")), content="True")
+  inspect(@symprint.to_string(parse_expr("S(False)")), content="False")
   inspect(@symprint.to_string(parse_expr("S(1/2)")), content="1/2")
   inspect(@symprint.to_string(parse_expr("S(sin(x))")), content="sin(x)")
   guard (try? parse_expr("Rational(pi)"))
@@ -965,11 +981,15 @@ test "symparse explicit core constructor calls stay canonical" {
     detail == "TypeError: invalid input: 3/2" else {
     fail("expected Rational(3/2) evaluate=false invalid input error")
   }
-  guard (try? parse_expr("Rational(0, 0)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "ValueError: Indeterminate 0/0" else {
-    fail("expected Rational(0, 0) indeterminate error")
-  }
+  inspect(@symprint.to_string(parse_expr("Rational(0, 0)")), content="nan")
+  inspect(
+    @symprint.to_string(parse_expr("Rational(True, False)")),
+    content="zoo",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Rational(False, False)")),
+    content="nan",
+  )
   guard (try? parse_expr("Subs(x)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail ==

@@ -560,6 +560,32 @@ test "function constructors follow SymPy core semantics" {
     other =>
       fail("expected Float(pi) to evaluate, got \{@symprint.to_string(other)}")
   }
+  inspect(
+    @symprint.to_string(function("Rational", [Expr::Boolean(true)])),
+    content="1",
+  )
+  inspect(
+    @symprint.to_string(function("Rational", [Expr::Boolean(false)])),
+    content="0",
+  )
+  inspect(
+    @symprint.to_string(function("Rational", [int(1), Expr::Boolean(false)])),
+    content="zoo",
+  )
+  inspect(
+    @symprint.to_string(
+      function("Rational", [Expr::Boolean(false), Expr::Boolean(false)]),
+    ),
+    content="nan",
+  )
+  inspect(
+    @symprint.to_string(function("S", [Expr::Boolean(true)])),
+    content="True",
+  )
+  inspect(
+    @symprint.to_string(function("S", [Expr::Boolean(false)])),
+    content="False",
+  )
 }
 
 ///|

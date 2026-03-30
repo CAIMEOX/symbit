@@ -687,6 +687,10 @@ test "symparse parity builtin callable semantics" {
     @symprint.to_string(parse_expr("Rational(0.2)")),
     content=parse_expr_sstr("Rational(0.2)"),
   )
+  inspect(@symprint.to_string(parse_expr("Rational(True)")), content="1")
+  inspect(@symprint.to_string(parse_expr("Rational(False)")), content="0")
+  inspect(@symprint.to_string(parse_expr("S(True)")), content="True")
+  inspect(@symprint.to_string(parse_expr("S(False)")), content="False")
   inspect(
     @symprint.to_string(parse_expr("S(1/2)")),
     content=parse_expr_sstr("S(1/2)"),
@@ -829,6 +833,14 @@ test "symparse parity builtin callable semantics" {
     content="TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'",
   )
   inspect(
+    @symprint.to_string(parse_expr("Rational(True, False)")),
+    content="zoo",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Rational(False, False)")),
+    content="nan",
+  )
+  inspect(
     try parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)) catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
@@ -914,6 +926,10 @@ test "symparse parity builtin callable semantics" {
     @symprint.to_string(ast_parse_expr("Rational(0.2)")),
     content=ast_parse_expr_sstr("Rational(0.2)"),
   )
+  inspect(@symprint.to_string(ast_parse_expr("Rational(True)")), content="1")
+  inspect(@symprint.to_string(ast_parse_expr("Rational(False)")), content="0")
+  inspect(@symprint.to_string(ast_parse_expr("S(True)")), content="True")
+  inspect(@symprint.to_string(ast_parse_expr("S(False)")), content="False")
   inspect(
     parse_expr_equiv(
       @symprint.to_string(ast_parse_expr("Float(2.5)")),
@@ -962,6 +978,14 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content="TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(True, False)")),
+    content="zoo",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(False, False)")),
+    content="nan",
   )
 }
 
