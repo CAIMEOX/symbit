@@ -558,6 +558,16 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     detail == "TypeError: Cannot convert non-comparable expression to int" else {
     fail("expected Integer(I) non-comparable error")
   }
+  guard (try? parse_expr("Integer(I*pi)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert non-comparable expression to int" else {
+    fail("expected Integer(I*pi) non-comparable error")
+  }
+  guard (try? parse_expr("Integer(1 + I)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert non-comparable expression to int" else {
+    fail("expected Integer(1 + I) non-comparable error")
+  }
   guard (try? parse_expr("Integer(zoo)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: Cannot convert non-comparable expression to int" else {
@@ -746,6 +756,16 @@ test "ast parser compatibility entrypoint" {
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: Cannot convert non-comparable expression to int" else {
     fail("expected ast parser Integer(I) non-comparable error")
+  }
+  guard (try? ast_parse_expr("Integer(I*pi)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert non-comparable expression to int" else {
+    fail("expected ast parser Integer(I*pi) non-comparable error")
+  }
+  guard (try? ast_parse_expr("Integer(1 + I)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Cannot convert non-comparable expression to int" else {
+    fail("expected ast parser Integer(1 + I) non-comparable error")
   }
   guard (try? ast_parse_expr("Integer(zoo)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&

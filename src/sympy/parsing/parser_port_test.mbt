@@ -840,6 +840,24 @@ test "symparse parity builtin callable semantics" {
     content="TypeError: Argument of Integer should be of numeric type, got sin(x).",
   )
   inspect(
+    try parse_expr("Integer(I*pi)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert non-comparable expression to int",
+  )
+  inspect(
+    try parse_expr("Integer(1 + I)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert non-comparable expression to int",
+  )
+  inspect(
     try parse_expr("Rational()") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
@@ -1073,6 +1091,24 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content="TypeError: Argument of Integer should be of numeric type, got sin(x).",
+  )
+  inspect(
+    try ast_parse_expr("Integer(I*pi)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert non-comparable expression to int",
+  )
+  inspect(
+    try ast_parse_expr("Integer(1 + I)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Cannot convert non-comparable expression to int",
   )
   inspect(
     try ast_parse_expr("S()") catch {

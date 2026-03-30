@@ -122,14 +122,15 @@ fn make_function(
   }
   let integer_invalid_input = fn(arg : Expr) -> Expr raise ParseError {
     let arg = @symcore.normalize_legacy_expr(arg)
-    let message = match arg {
+    let evaluated = @symcore.evalf(arg)
+    let message = match evaluated {
       @symcore.Expr::ComplexFloat(_) =>
         "TypeError: Cannot convert non-comparable expression to int"
       _ =>
-        match @symcore.number_symbol_kind(arg) {
+        match @symcore.number_symbol_kind(evaluated) {
           Some(@symcore.NumberSymbolKind::Infinity)
           | Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
-            "TypeError: Cannot convert " + @symprint.to_string(arg) + " to int"
+            "TypeError: Cannot convert " + @symprint.to_string(evaluated) + " to int"
           Some(@symcore.NumberSymbolKind::NaN)
           | Some(@symcore.NumberSymbolKind::ImaginaryUnit)
           | Some(@symcore.NumberSymbolKind::ComplexInfinity) =>
@@ -348,14 +349,15 @@ fn make_application(
   }
   let integer_invalid_input = fn(arg : Expr) -> Expr raise ParseError {
     let arg = @symcore.normalize_legacy_expr(arg)
-    let message = match arg {
+    let evaluated = @symcore.evalf(arg)
+    let message = match evaluated {
       @symcore.Expr::ComplexFloat(_) =>
         "TypeError: Cannot convert non-comparable expression to int"
       _ =>
-        match @symcore.number_symbol_kind(arg) {
+        match @symcore.number_symbol_kind(evaluated) {
           Some(@symcore.NumberSymbolKind::Infinity)
           | Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
-            "TypeError: Cannot convert " + @symprint.to_string(arg) + " to int"
+            "TypeError: Cannot convert " + @symprint.to_string(evaluated) + " to int"
           Some(@symcore.NumberSymbolKind::NaN)
           | Some(@symcore.NumberSymbolKind::ImaginaryUnit)
           | Some(@symcore.NumberSymbolKind::ComplexInfinity) =>
