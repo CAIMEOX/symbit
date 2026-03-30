@@ -32,16 +32,30 @@ fn expr_to_sympy_cached(
       sympy_apply_obj(head, args, dummy_cache, wild_cache)
     @symcore.Expr::Boolean(value) => sympy_bool_obj(value)
     @symcore.Expr::Add(args) =>
-      sympy_nary_obj("sympy.Add", args, "0", dummy_cache, wild_cache)
+      sympy_nary_obj(
+        "sympy.Add",
+        args,
+        "0",
+        dummy_cache,
+        wild_cache,
+        kwargs={ "evaluate": OracleArg::Bool(false) },
+      )
     @symcore.Expr::Mul(args) =>
-      sympy_nary_obj("sympy.Mul", args, "1", dummy_cache, wild_cache)
+      sympy_nary_obj(
+        "sympy.Mul",
+        args,
+        "1",
+        dummy_cache,
+        wild_cache,
+        kwargs={ "evaluate": OracleArg::Bool(false) },
+      )
     @symcore.Expr::Pow(base, exp) => {
       let base_obj = expr_to_sympy_cached(base, dummy_cache, wild_cache)
       let exp_obj = expr_to_sympy_cached(exp, dummy_cache, wild_cache)
       sympy_call_obj("sympy.Pow", [
         OracleArg::PyObj(base_obj),
         OracleArg::PyObj(exp_obj),
-      ])
+      ], kwargs={ "evaluate": OracleArg::Bool(false) })
     }
     @symcore.Expr::Mod(lhs, rhs) =>
       sympy_call_obj("sympy.Mod", [
@@ -433,6 +447,7 @@ fn sympy_nary_obj(
   identity : String,
   dummy_cache : Map[Int, @py.PyObject],
   wild_cache : Map[String, @py.PyObject],
+  kwargs? : Map[String, OracleArg] = {},
 ) -> @py.PyObject raise {
   if args.is_empty() {
     return sympy_call_obj("sympy.Integer", [OracleArg::Str(identity)])
@@ -443,7 +458,7 @@ fn sympy_nary_obj(
       OracleArg::PyObj(expr_to_sympy_cached(arg, dummy_cache, wild_cache)),
     )
   }
-  sympy_call_obj(path, packed)
+  sympy_call_obj(path, packed, kwargs~)
 }
 
 ///|

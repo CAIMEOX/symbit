@@ -541,7 +541,7 @@ test "function constructors follow SymPy core semantics" {
         [raw_mul([int(3), raw_pow(int(2), int(-1))])],
       ),
     ),
-    content="Rational(3*2**-1)",
+    content="Rational(3/2)",
   )
   match function("Float", [Expr::NumberSymbol(NumberSymbolKind::Pi)]) {
     Expr::Float(_) => ()

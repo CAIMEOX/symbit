@@ -16,3 +16,19 @@ test "with_evaluate controls core constructor evaluation" {
   inspect(@symprint.debug_repr(add([x, x])), content="(* 2 sym:x)")
   inspect(@symprint.debug_repr(function("Eq", [x, x])), content="sym:True")
 }
+
+///|
+test "with_distribute and with_exp_is_pow control canonical constructors" {
+  let x = Expr::Symbol("x")
+  let distributed = mul([int(2), add([x, int(1)])])
+  inspect(@symprint.to_string(distributed), content="2*x + 2")
+  inspect(
+    @symprint.to_string(with_distribute(false, fn() { mul([int(2), add([x, int(1)])]) })),
+    content="2*(x + 1)",
+  )
+  inspect(@symprint.to_string(function("exp", [x])), content="exp(x)")
+  inspect(
+    @symprint.to_string(with_exp_is_pow(true, fn() { function("exp", [x]) })),
+    content="E**x",
+  )
+}

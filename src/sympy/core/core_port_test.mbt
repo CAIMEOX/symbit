@@ -1235,3 +1235,31 @@ test "symcore parity multi-variable derivative substitution stays canonical" {
     content=core_subst_expr_sstr(expr, x, z),
   )
 }
+
+///|
+test "symcore parity parameters control exp and distribution" {
+  let x = @symcore.Expr::Symbol("x")
+  inspect(
+    core_expr_sstr(
+      @symcore.with_exp_is_pow(true, fn() { @symcore.function("exp", [x]) }),
+    ),
+    content=core_parameters_sstr("sympy.exp(x)", exp_is_pow=true),
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.mul([@symcore.int(2), @symcore.add([x, @symcore.int(1)])]),
+    ),
+    content=core_parameters_sstr("sympy.Integer(2)*(x + 1)", distribute=true),
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.with_distribute(false, fn() {
+        @symcore.mul([@symcore.int(2), @symcore.add([x, @symcore.int(1)])])
+      }),
+    ),
+    content=core_parameters_sstr(
+      "sympy.Integer(2)*(x + 1)",
+      distribute=false,
+    ),
+  )
+}

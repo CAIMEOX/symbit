@@ -46,7 +46,11 @@ pub fn compare_expr(Expr, Expr) -> Int
 
 pub fn complex_float_from_exact_parts(@symnum.BigRational, @symnum.BigRational, prec? : Int) -> ComplexFloat
 
+pub fn current_distribute() -> Bool
+
 pub fn current_evaluate() -> Bool
+
+pub fn current_exp_is_pow() -> Bool
 
 pub fn derivative(Expr, Expr, order? : Expr) -> Expr
 
@@ -222,7 +226,11 @@ pub fn wild_parts(Expr) -> (String, Array[Expr], Array[WildProperty])?
 
 pub fn wild_property_name(WildProperty) -> String
 
+pub fn[T] with_distribute(Bool, () -> T) -> T
+
 pub fn[T] with_evaluate(Bool, () -> T) -> T
+
+pub fn[T] with_exp_is_pow(Bool, () -> T) -> T
 
 pub fn xreplace(Expr, Array[(Expr, Expr)]) -> Expr
 

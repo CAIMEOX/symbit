@@ -142,6 +142,78 @@ fn core_eval_with_globals(
 }
 
 ///|
+fn core_exec_result_str(script : String) -> String raise {
+  let state = py_gil_ensure()
+  let res = try {
+    let builtins = match @py.pyimport("builtins") {
+      Some(mod) => mod
+      None => fail("py-builtins-missing")
+    }
+    let exec_obj = match builtins.get_attr("exec", print_err=true) {
+      Some(obj) => obj
+      None => fail("py-exec-missing")
+    }
+    let eval_obj = match builtins.get_attr("eval", print_err=true) {
+      Some(obj) => obj
+      None => fail("py-eval-missing")
+    }
+    let eval_callable = py_callable_from_enum(eval_obj)
+    let globals = @py.PyDict::new()
+    globals.set("__builtins__", builtins.obj())
+    let sympy_mod = match @py.pyimport("sympy") {
+      Some(mod) => mod.obj()
+      None => fail("py-sympy-missing")
+    }
+    globals.set("sympy", sympy_mod)
+    let exec_args = @sympy.py_pack_args([
+      @sympy.OracleArg::Str(script),
+      @sympy.OracleArg::PyObj(globals.obj()),
+      @sympy.OracleArg::PyObj(globals.obj()),
+    ])
+    ignore(@sympy.py_call_object(py_callable_from_enum(exec_obj), exec_args))
+    let eval_args = @sympy.py_pack_args([
+      @sympy.OracleArg::Str("__result__"),
+      @sympy.OracleArg::PyObj(globals.obj()),
+      @sympy.OracleArg::PyObj(globals.obj()),
+    ])
+    match @sympy.py_call_object(eval_callable, eval_args) {
+      Some(obj) => py_str_obj(objenum_to_obj(obj))
+      None => fail("py-eval-result-none")
+    }
+  } catch {
+    err => {
+      py_gil_release(state)
+      raise err
+    }
+  }
+  py_gil_release(state)
+  res
+}
+
+///|
+pub fn core_parameters_sstr(
+  expr_code : String,
+  evaluate? : Bool = true,
+  distribute? : Bool = true,
+  exp_is_pow? : Bool = false,
+) -> String raise {
+  let eval_text = if evaluate { "True" } else { "False" }
+  let distribute_text = if distribute { "True" } else { "False" }
+  let exp_is_pow_text = if exp_is_pow { "True" } else { "False" }
+  let script =
+    "import contextlib\n" +
+    "from sympy.core.parameters import evaluate, distribute, _exp_is_pow\n" +
+    "x = sympy.Symbol('x')\n" +
+    "y = sympy.Symbol('y')\n" +
+    "with contextlib.ExitStack() as _stack:\n" +
+    "    _stack.enter_context(evaluate(" + eval_text + "))\n" +
+    "    _stack.enter_context(distribute(" + distribute_text + "))\n" +
+    "    _stack.enter_context(_exp_is_pow(" + exp_is_pow_text + "))\n" +
+    "    __result__ = sympy.sstr(" + expr_code + ")\n"
+  core_exec_result_str(script)
+}
+
+///|
 pub fn core_free_symbols_sstr(expr : @symcore.Expr) -> String raise {
   let globals = @py.PyDict::new()
   globals.set("expr", @sympy.expr_to_sympy(expr))

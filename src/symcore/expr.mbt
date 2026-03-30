@@ -932,6 +932,24 @@ pub fn mul(args : Array[Expr]) -> Expr {
       _ => ()
     }
   }
+  if current_distribute() && complex_prod is None && merged.length() == 1 {
+    match merged[0] {
+      Expr::Add(add_args) =>
+        match float_prod {
+          Some(value) =>
+            if value.is_finite() && !expr_is_one(Expr::Float(value)) {
+              return add(
+                add_args.map(term => mul([Expr::Float(value), term])),
+              )
+            }
+          None =>
+            if !const_prod.is_one() {
+              return add(add_args.map(term => mul([Expr::Number(const_prod), term])))
+            }
+        }
+      _ => ()
+    }
+  }
   match complex_prod {
     Some(value) =>
       if merged.is_empty() {
@@ -1111,6 +1129,8 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
     ("Derivative", _) => constructor_derivative(name, args)
     ("Subs", [expr, variable, value]) => subs_expr(expr, variable, value)
     ("Lambda", [vars, body]) => lambda_expr(vars, body)
+    ("exp", [arg]) if current_exp_is_pow() =>
+      pow(Expr::NumberSymbol(NumberSymbolKind::Exp1), arg)
     ("Dict", items) => {
       let entries : Array[(Expr, Expr)] = []
       for item in items {
