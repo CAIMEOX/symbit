@@ -125,6 +125,37 @@ test "symcore parity wild match exclude and properties" {
 }
 
 ///|
+test "symcore source-driven commutative wildcard matching examples" {
+  let a = @symcore.Expr::Wild("a", [], [])
+  let b = @symcore.Expr::Wild("b", [], [])
+  let c = @symcore.Expr::Wild("c", [], [])
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
+  inspect(
+    core_match_sstr(@symcore.mul([a, x]), @symcore.mul([@symcore.int(3), x])),
+    content="a_=3",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([a, @symcore.mul([@symcore.function("sin", [b]), c])]),
+      @symcore.add([x, @symcore.mul([@symcore.function("sin", [y]), z])]),
+    ),
+    content="a_=x|b_=y|c_=z",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([
+        @symcore.Expr::Wild("a", [x, y, z], []),
+        @symcore.Expr::Wild("b", [], []),
+      ]),
+      @symcore.mul([@symcore.int(2), @symcore.pow(x, @symcore.int(3)), y, z]),
+    ),
+    content="a_=2|b_=x**3*y*z",
+  )
+}
+
+///|
 test "symcore parity formal application helpers" {
   let x = @symcore.Expr::Symbol("x")
   match @symcore.apply(@symcore.Expr::FunctionHead("sin"), [x]) {

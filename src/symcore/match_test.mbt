@@ -87,3 +87,43 @@ test "expr_match uses full wild identity and structural recursion" {
     ) is Some(_),
   )
 }
+
+///|
+test "expr_match handles source-style commutative wildcard matching" {
+  let a = Expr::Wild("a", [], [])
+  let b = Expr::Wild("b", [], [])
+  let c = Expr::Wild("c", [], [])
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let z = Expr::Symbol("z")
+
+  match expr_match(mul([a, x]), mul([int(3), x])) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="3")
+    None => fail("expected a*x to match 3*x")
+  }
+
+  let pattern = add([a, mul([function("sin", [b]), c])])
+  let match_expr = add([x, mul([function("sin", [y]), z])])
+  match expr_match(pattern, match_expr) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="x")
+      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="y")
+      inspect(@symprint.to_string(env.get(c).unwrap_or(int(0))), content="z")
+    }
+    None => fail("expected source-style commutative add match")
+  }
+
+  let a0 = Expr::Wild("a", [x, y, z], [])
+  let b0 = Expr::Wild("b", [], [])
+  match expr_match(mul([a0, b0]), mul([int(2), pow(x, int(3)), y, z])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a0).unwrap_or(int(0))), content="2")
+      inspect(
+        @symprint.to_string(env.get(b0).unwrap_or(int(0))),
+        content="x**3*y*z",
+      )
+    }
+    None => fail("expected excluded wild to isolate scalar factor")
+  }
+}
