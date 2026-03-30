@@ -865,3 +865,126 @@ test "expr_match follows more SymPy source trig exclude and duplicate-function c
     None => fail("expected repeated sine additive match")
   }
 }
+
+///|
+test "expr_match follows more SymPy source mixed additive term cases" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let z = Expr::Symbol("z")
+  let xw = Expr::Wild("X", [], [])
+  let yw = Expr::Wild("Y", [], [])
+
+  match expr_match(add([mul([int(5), xw]), mul([int(-1), yw])]), add([mul([int(5), y]), mul([int(-1), x])])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(xw).unwrap_or(int(0))), content="y")
+      inspect(@symprint.to_string(env.get(yw).unwrap_or(int(0))), content="x")
+    }
+    None => fail("expected source-driven 5*X - Y term match")
+  }
+
+  match expr_match(add([x, mul([xw, z])]), add([x, mul([add([y, int(-1)]), z])])) {
+    Some(env) => {
+      let matched = env.get(xw).unwrap_or(int(0))
+      if compare_expr(matched, add([y, int(-1)])) != 0 {
+        fail(
+          "expected source-driven x + X*z term match to bind X to y - 1, got \{@symprint.to_string(matched)}",
+        )
+      }
+    }
+    None => fail("expected source-driven x + X*z term match")
+  }
+
+  match
+    expr_match(
+      add([
+        x,
+        mul([
+          int(-1),
+          function("log", [mul([xw, pow(y, int(-1))])]),
+          add([int(1), mul([int(-1), function("exp", [mul([x, pow(y, int(-1))])])])]),
+        ]),
+      ]),
+      add([
+        x,
+        mul([
+          int(-1),
+          function("log", [mul([x, pow(y, int(-1))])]),
+          add([int(1), mul([int(-1), function("exp", [mul([x, pow(y, int(-1))])])])]),
+        ]),
+      ]),
+    ) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(xw).unwrap_or(int(0))), content="x")
+    None => fail("expected source-driven logarithmic term match")
+  }
+}
+
+///|
+test "expr_match follows more SymPy source collected derivative coefficient cases" {
+  let x = Expr::Symbol("x")
+  let fx = function("f", [x])
+  let d1 = Expr::Derivative(fx, [x, int(1)])
+  let d2 = Expr::Derivative(fx, [x, int(2)])
+  let a3 = Expr::Wild("a3", [fx, d1, d2], [])
+  let b3 = Expr::Wild("b3", [fx, d1, d2], [])
+  let c3 = Expr::Wild("c3", [fx, d1, d2], [])
+  let pattern = add([mul([a3, d2]), mul([b3, d1]), mul([c3, fx])])
+
+  match
+    expr_match(
+      pattern,
+      add([
+        mul([pow(add([x, int(-2)]), int(2)), d2]),
+        mul([add([x, int(-2)]), d1]),
+        mul([add([pow(add([x, int(-2)]), int(2)), int(-4)]), fx]),
+      ]),
+    ) {
+    Some(env) => {
+      let matched_a = env.get(a3).unwrap_or(int(0))
+      let matched_b = env.get(b3).unwrap_or(int(0))
+      let matched_c = env.get(c3).unwrap_or(int(0))
+      if compare_expr(matched_a, pow(add([x, int(-2)]), int(2))) != 0 {
+        fail("expected a3 to match (x - 2)**2, got \{@symprint.to_string(matched_a)}")
+      }
+      if compare_expr(matched_b, add([x, int(-2)])) != 0 {
+        fail("expected b3 to match x - 2, got \{@symprint.to_string(matched_b)}")
+      }
+      if compare_expr(matched_c, add([pow(add([x, int(-2)]), int(2)), int(-4)])) != 0 {
+        fail(
+          "expected c3 to match (x - 2)**2 - 4, got \{@symprint.to_string(matched_c)}",
+        )
+      }
+    }
+    None => fail("expected collected derivative coefficient match")
+  }
+
+  match
+    expr_match(
+      pattern,
+      add([
+        mul([add([x, int(-4), mul([int(4), pow(x, int(-1))])]), d2]),
+        mul([add([int(1), mul([int(-2), pow(x, int(-1))])]), d1]),
+        mul([add([x, int(-4)]), fx]),
+      ]),
+    ) {
+    Some(env) => {
+      let matched_a = env.get(a3).unwrap_or(int(0))
+      let matched_b = env.get(b3).unwrap_or(int(0))
+      let matched_c = env.get(c3).unwrap_or(int(0))
+      if compare_expr(matched_a, add([x, int(-4), mul([int(4), pow(x, int(-1))])])) != 0 {
+        fail(
+          "expected a3 to match x - 4 + 4/x, got \{@symprint.to_string(matched_a)}",
+        )
+      }
+      if compare_expr(matched_b, add([int(1), mul([int(-2), pow(x, int(-1))])])) != 0 {
+        fail(
+          "expected b3 to match 1 - 2/x, got \{@symprint.to_string(matched_b)}",
+        )
+      }
+      if compare_expr(matched_c, add([x, int(-4)])) != 0 {
+        fail("expected c3 to match x - 4, got \{@symprint.to_string(matched_c)}")
+      }
+    }
+    None => fail("expected collected rational derivative coefficient match")
+  }
+}

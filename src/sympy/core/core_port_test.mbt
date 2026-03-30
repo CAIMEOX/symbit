@@ -643,6 +643,104 @@ test "symcore source-driven trig exclude and duplicate-function matches" {
 }
 
 ///|
+test "symcore source-driven mixed additive term matches" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
+  let xw = @symcore.Expr::Wild("X", [], [])
+  let yw = @symcore.Expr::Wild("Y", [], [])
+
+  inspect(
+    core_match_sstr(
+      @symcore.add([
+        @symcore.mul([@symcore.int(5), xw]),
+        @symcore.mul([@symcore.int(-1), yw]),
+      ]),
+      @symcore.add([
+        @symcore.mul([@symcore.int(5), y]),
+        @symcore.mul([@symcore.int(-1), x]),
+      ]),
+    ),
+    content="X_=y|Y_=x",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([x, @symcore.mul([xw, z])]),
+      @symcore.add([x, @symcore.mul([@symcore.add([y, @symcore.int(-1)]), z])]),
+    ),
+    content="X_=y - 1",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([
+        x,
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcore.function("log", [@symcore.mul([xw, @symcore.pow(y, @symcore.int(-1))])]),
+          @symcore.add([
+            @symcore.int(1),
+            @symcore.mul([
+              @symcore.int(-1),
+              @symcore.function("exp", [@symcore.mul([x, @symcore.pow(y, @symcore.int(-1))])]),
+            ]),
+          ]),
+        ]),
+      ]),
+      @symcore.add([
+        x,
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcore.function("log", [@symcore.mul([x, @symcore.pow(y, @symcore.int(-1))])]),
+          @symcore.add([
+            @symcore.int(1),
+            @symcore.mul([
+              @symcore.int(-1),
+              @symcore.function("exp", [@symcore.mul([x, @symcore.pow(y, @symcore.int(-1))])]),
+            ]),
+          ]),
+        ]),
+      ]),
+    ),
+    content="X_=x",
+  )
+}
+
+///|
+test "symcore source-driven collected derivative coefficient matches" {
+  let x = @symcore.Expr::Symbol("x")
+  let fx = @symcore.function("f", [x])
+  let d1 = @symcore.Expr::Derivative(fx, [x, @symcore.int(1)])
+  let d2 = @symcore.Expr::Derivative(fx, [x, @symcore.int(2)])
+  let a3 = @symcore.Expr::Wild("a3", [fx, d1, d2], [])
+  let b3 = @symcore.Expr::Wild("b3", [fx, d1, d2], [])
+  let c3 = @symcore.Expr::Wild("c3", [fx, d1, d2], [])
+  let pattern = @symcore.add([@symcore.mul([a3, d2]), @symcore.mul([b3, d1]), @symcore.mul([c3, fx])])
+
+  inspect(
+    core_match_sstr(
+      pattern,
+      @symcore.add([
+        @symcore.mul([@symcore.pow(@symcore.add([x, @symcore.int(-2)]), @symcore.int(2)), d2]),
+        @symcore.mul([@symcore.add([x, @symcore.int(-2)]), d1]),
+        @symcore.mul([@symcore.add([@symcore.pow(@symcore.add([x, @symcore.int(-2)]), @symcore.int(2)), @symcore.int(-4)]), fx]),
+      ]),
+    ),
+    content="a3_=(x - 2)**2|b3_=x - 2|c3_=(x - 2)**2 - 4",
+  )
+  inspect(
+    core_match_sstr(
+      pattern,
+      @symcore.add([
+        @symcore.mul([@symcore.add([x, @symcore.int(-4), @symcore.mul([@symcore.int(4), @symcore.pow(x, @symcore.int(-1))])]), d2]),
+        @symcore.mul([@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-2), @symcore.pow(x, @symcore.int(-1))])]), d1]),
+        @symcore.mul([@symcore.add([x, @symcore.int(-4)]), fx]),
+      ]),
+    ),
+    content="a3_=x - 4 + 4/x|b3_=1 - 2/x|c3_=x - 4",
+  )
+}
+
+///|
 test "symcore parity formal application helpers" {
   let x = @symcore.Expr::Symbol("x")
   match @symcore.apply(@symcore.Expr::FunctionHead("sin"), [x]) {
