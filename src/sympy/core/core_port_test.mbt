@@ -308,6 +308,94 @@ test "symcore source-driven factorization and derivative wildcard examples" {
 }
 
 ///|
+test "symcore source-driven derivative exclusion examples" {
+  let x = @symcore.Expr::Symbol("x")
+  let f = @symcore.Expr::UndefinedFunction("f")
+  let fx = @symcore.apply(f, [x]).unwrap_or(@symcore.int(0))
+  let d1 = @symcore.derivative(fx, x)
+  let d2 = @symcore.Expr::Derivative(
+    fx,
+    [x, @symcore.int(1), x, @symcore.int(1)],
+  )
+  let a = @symcore.Expr::Wild("a", [f, x], [])
+  let b = @symcore.Expr::Wild("b", [f], [])
+
+  inspect(core_match_sstr(d1, d1), content="")
+  inspect(core_match_sstr(d1, d2), content="None")
+  inspect(core_match_sstr(d2, d1), content="None")
+  inspect(
+    core_match_sstr(
+      @symcore.add([@symcore.mul([a, d1]), b]),
+      @symcore.add([d1, @symcore.pow(x, @symcore.int(2))]),
+    ),
+    content="a_=1|b_=x**2",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.add([@symcore.mul([a, d2]), b]),
+      @symcore.add([d1, @symcore.pow(x, @symcore.int(2))]),
+    ),
+    content="None",
+  )
+  let seeded : @symcore.MatchEnv = {}
+  seeded.set(b, @symcore.pow(x, @symcore.int(2)))
+  inspect(
+    match @symcore.expr_match(
+      @symcore.xreplace(
+        @symcore.add([@symcore.mul([a, d2]), b]),
+        [(b, @symcore.pow(x, @symcore.int(2)))],
+      ),
+      @symcore.add([d1, @symcore.pow(x, @symcore.int(2))]),
+      repl_dict=seeded,
+    ) {
+      Some(_) => "Some"
+      None => "None"
+    },
+    content="None",
+  )
+}
+
+///|
+test "symcore source-driven derivative remainder and coefficient bug examples" {
+  let x = @symcore.Expr::Symbol("x")
+  let f = @symcore.Expr::UndefinedFunction("f")
+  let fx = @symcore.apply(f, [x]).unwrap_or(@symcore.int(0))
+  let dfx = @symcore.derivative(fx, x)
+  let a = @symcore.Expr::Wild("a", [fx], [])
+  let b = @symcore.Expr::Wild("b", [fx], [])
+  let p = @symcore.Expr::Wild("p", [], [])
+
+  inspect(
+    core_match_sstr(
+      @symcore.add([@symcore.mul([a, dfx]), b]),
+      dfx,
+    ),
+    content="a_=1|b_=0",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([@symcore.int(-1), p, x]),
+      x,
+    ),
+    content="p_=-1",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([@symcore.int(-1), p, x]),
+      @symcore.mul([@symcore.int(-1), x]),
+    ),
+    content="p_=1",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.mul([@symcore.int(3), p, x]),
+      x,
+    ),
+    content="p_=1/3",
+  )
+}
+
+///|
 test "symcore source-driven exclude and wild-on-wild examples" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")

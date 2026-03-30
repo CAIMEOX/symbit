@@ -507,3 +507,72 @@ test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
     fail("expected multiplicative wild-on-wild match to fail when both wilds exclude p")
   }
 }
+
+///|
+test "expr_match follows SymPy source derivative exclusion examples" {
+  let x = Expr::Symbol("x")
+  let f = Expr::UndefinedFunction("f")
+  let fx = apply(f, [x]).unwrap_or(int(0))
+  let d1 = derivative(fx, x)
+  let d2 = Expr::Derivative(fx, [x, int(1), x, int(1)])
+  let a = Expr::Wild("a", [f, x], [])
+  let b = Expr::Wild("b", [f], [])
+
+  assert_true(expr_match(d1, d1) is Some(_))
+  assert_false(expr_match(d1, d2) is Some(_))
+  assert_false(expr_match(d2, d1) is Some(_))
+
+  match expr_match(add([mul([a, d1]), b]), add([d1, pow(x, int(2))])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="x**2")
+    }
+    None => fail("expected first-derivative wildcard match from SymPy source")
+  }
+
+  assert_false(
+    expr_match(add([mul([a, d2]), b]), add([d1, pow(x, int(2))])) is Some(_),
+  )
+
+  let seeded : MatchEnv = {}
+  seeded.set(b, pow(x, int(2)))
+  let substituted_pattern = xreplace(add([mul([a, d2]), b]), [(b, pow(x, int(2)))])
+  assert_false(expr_match(substituted_pattern, add([d1, pow(x, int(2))]), repl_dict=seeded) is Some(_))
+}
+
+///|
+test "expr_match follows more SymPy source derivative and coefficient bugs" {
+  let x = Expr::Symbol("x")
+  let f = Expr::UndefinedFunction("f")
+  let fx = apply(f, [x]).unwrap_or(int(0))
+  let dfx = derivative(fx, x)
+  let a = Expr::Wild("a", [fx], [])
+  let b = Expr::Wild("b", [fx], [])
+  let p = Expr::Wild("p", [], [])
+
+  match expr_match(add([mul([a, dfx]), b]), dfx) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.to_string(env.get(b).unwrap_or(int(1))), content="0")
+    }
+    None => fail("expected derivative remainder-zero match from SymPy source")
+  }
+
+  match expr_match(mul([int(-1), p, x]), x) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="-1")
+    None => fail("expected negative coefficient match bug4 from SymPy source")
+  }
+
+  match expr_match(mul([int(-1), p, x]), mul([int(-1), x])) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
+    None => fail("expected negative coefficient match bug5 from SymPy source")
+  }
+
+  match expr_match(mul([int(3), p, x]), x) {
+    Some(env) =>
+      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1/3")
+    None => fail("expected rational coefficient match bug6 from SymPy source")
+  }
+}
