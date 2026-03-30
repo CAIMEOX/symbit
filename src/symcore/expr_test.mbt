@@ -551,6 +551,14 @@ test "function constructors follow SymPy core semantics" {
     content="3",
   )
   inspect(
+    @symprint.to_string(function("Integer", [Expr::Float(Float::from_double(0.9))])),
+    content="0",
+  )
+  inspect(
+    @symprint.to_string(function("Integer", [Expr::Float(Float::from_double(10.5))])),
+    content="10",
+  )
+  inspect(
     @symprint.to_string(
       function(
         "Rational",
@@ -581,6 +589,28 @@ test "function constructors follow SymPy core semantics" {
       function("Rational", [Expr::Boolean(false), Expr::Boolean(false)]),
     ),
     content="nan",
+  )
+  inspect(
+    @symprint.to_string(
+      function("Rational", [Expr::Float(Float::from_double(1.0)), int(3)]),
+    ),
+    content="1/3",
+  )
+  inspect(
+    @symprint.to_string(
+      function("Rational", [int(1), Expr::Float(Float::from_double(3.0))]),
+    ),
+    content="1/3",
+  )
+  inspect(
+    @symprint.to_string(
+      function("Rational", [rational_from_ints(1, 2), rational_from_ints(1, 3)]),
+    ),
+    content="3/2",
+  )
+  inspect(
+    @symprint.to_string(function("Rational", [int(1), rational_from_ints(1, 3)])),
+    content="3",
   )
   inspect(
     @symprint.to_string(function("S", [Expr::Boolean(true)])),

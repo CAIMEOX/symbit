@@ -446,6 +446,8 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     ),
     content="0",
   )
+  inspect(@symprint.to_string(parse_expr("Integer(0.9)")), content="0")
+  inspect(@symprint.to_string(parse_expr("Integer(10.5)")), content="10")
   inspect(
     parse_expr_equiv(
       @symprint.to_string(parse_expr("Rational(2)")),
@@ -467,6 +469,10 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     ),
     content="0",
   )
+  inspect(@symprint.to_string(parse_expr("Rational(1.0, 3)")), content="1/3")
+  inspect(@symprint.to_string(parse_expr("Rational(1, 3.0)")), content="1/3")
+  inspect(@symprint.to_string(parse_expr("Rational(1/2, 1/3)")), content="3/2")
+  inspect(@symprint.to_string(parse_expr("Rational(1, 1/3)")), content="3")
   inspect(
     parse_expr_equiv(@symprint.to_string(parse_expr("Float(2)")), "Float(2)"),
     content="0",
@@ -667,6 +673,8 @@ test "ast parser compatibility entrypoint" {
     ),
     content="0",
   )
+  inspect(@symprint.to_string(ast_parse_expr("Integer(0.9)")), content="0")
+  inspect(@symprint.to_string(ast_parse_expr("Integer(10.5)")), content="10")
   inspect(
     parse_expr_equiv(
       @symprint.to_string(ast_parse_expr("Rational(2, 3)")),
@@ -681,6 +689,10 @@ test "ast parser compatibility entrypoint" {
     ),
     content="0",
   )
+  inspect(@symprint.to_string(ast_parse_expr("Rational(1.0, 3)")), content="1/3")
+  inspect(@symprint.to_string(ast_parse_expr("Rational(1, 3.0)")), content="1/3")
+  inspect(@symprint.to_string(ast_parse_expr("Rational(1/2, 1/3)")), content="3/2")
+  inspect(@symprint.to_string(ast_parse_expr("Rational(1, 1/3)")), content="3")
   inspect(@symprint.to_string(ast_parse_expr("Rational(True)")), content="1")
   inspect(@symprint.to_string(ast_parse_expr("Rational(False)")), content="0")
   inspect(

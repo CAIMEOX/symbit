@@ -672,6 +672,14 @@ test "symparse parity builtin callable semantics" {
     content=parse_expr_sstr("Integer(-2/3)"),
   )
   inspect(
+    @symprint.to_string(parse_expr("Integer(0.9)")),
+    content=parse_expr_sstr("Integer(0.9)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Integer(10.5)")),
+    content=parse_expr_sstr("Integer(10.5)"),
+  )
+  inspect(
     @symprint.to_string(parse_expr("Integer(pi)")),
     content=parse_expr_sstr("Integer(pi)"),
   )
@@ -686,6 +694,22 @@ test "symparse parity builtin callable semantics" {
   inspect(
     @symprint.to_string(parse_expr("Rational(0.2)")),
     content=parse_expr_sstr("Rational(0.2)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Rational(1.0, 3)")),
+    content=parse_expr_sstr("Rational(1.0, 3)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Rational(1, 3.0)")),
+    content=parse_expr_sstr("Rational(1, 3.0)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Rational(1/2, 1/3)")),
+    content=parse_expr_sstr("Rational(1/2, 1/3)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Rational(1, 1/3)")),
+    content=parse_expr_sstr("Rational(1, 1/3)"),
   )
   inspect(@symprint.to_string(parse_expr("Rational(True)")), content="1")
   inspect(@symprint.to_string(parse_expr("Rational(False)")), content="0")
@@ -965,12 +989,36 @@ test "symparse parity builtin callable semantics" {
     content=ast_parse_expr_sstr("Integer(2/3)"),
   )
   inspect(
+    @symprint.to_string(ast_parse_expr("Integer(0.9)")),
+    content=ast_parse_expr_sstr("Integer(0.9)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Integer(10.5)")),
+    content=ast_parse_expr_sstr("Integer(10.5)"),
+  )
+  inspect(
     @symprint.to_string(ast_parse_expr("Rational(2, 3)")),
     content=ast_parse_expr_sstr("Rational(2, 3)"),
   )
   inspect(
     @symprint.to_string(ast_parse_expr("Rational(0.2)")),
     content=ast_parse_expr_sstr("Rational(0.2)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(1.0, 3)")),
+    content=ast_parse_expr_sstr("Rational(1.0, 3)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(1, 3.0)")),
+    content=ast_parse_expr_sstr("Rational(1, 3.0)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(1/2, 1/3)")),
+    content=ast_parse_expr_sstr("Rational(1/2, 1/3)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(1, 1/3)")),
+    content=ast_parse_expr_sstr("Rational(1, 1/3)"),
   )
   inspect(@symprint.to_string(ast_parse_expr("Rational(True)")), content="1")
   inspect(@symprint.to_string(ast_parse_expr("Rational(False)")), content="0")

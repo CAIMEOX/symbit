@@ -740,6 +740,51 @@ test "symcore source-driven S constructor semantics stay canonical" {
 }
 
 ///|
+test "symcore source-driven Integer and Rational constructor semantics" {
+  inspect(
+    core_expr_sstr(@symcore.function("Integer", [@symcore.Expr::Float(@symcore.Float::from_double(0.9))])),
+    content="0",
+  )
+  inspect(
+    core_expr_sstr(@symcore.function("Integer", [@symcore.Expr::Float(@symcore.Float::from_double(10.5))])),
+    content="10",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function(
+        "Rational",
+        [@symcore.Expr::Float(@symcore.Float::from_double(1.0)), @symcore.int(3)],
+      ),
+    ),
+    content="1/3",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function(
+        "Rational",
+        [@symcore.int(1), @symcore.Expr::Float(@symcore.Float::from_double(3.0))],
+      ),
+    ),
+    content="1/3",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function(
+        "Rational",
+        [@symcore.rational_from_ints(1, 2), @symcore.rational_from_ints(1, 3)],
+      ),
+    ),
+    content="3/2",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function("Rational", [@symcore.int(1), @symcore.rational_from_ints(1, 3)]),
+    ),
+    content="3",
+  )
+}
+
+///|
 test "symcore parity dict and tuple containers" {
   inspect(
     core_expr_sstr(
