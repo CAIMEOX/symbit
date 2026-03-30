@@ -344,6 +344,36 @@ fn make_application(
       }
     }
     let rational_constructor_result = fn(args : Array[Expr]) -> Expr raise ParseError {
+      match args {
+        [arg] =>
+          if
+            apply_named(name, [arg]) is
+            @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [_]) {
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: invalid input: " + @symprint.to_string(arg),
+            )
+          }
+        [lhs, rhs] => {
+          if
+            apply_named(name, [lhs]) is
+            @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [_]) {
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: invalid input: " + @symprint.to_string(lhs),
+            )
+          }
+          if
+            apply_named(name, [rhs]) is
+            @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [_]) {
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: invalid input: " + @symprint.to_string(rhs),
+            )
+          }
+        }
+        _ => ()
+      }
       let lowered = apply_named(name, args)
       match lowered {
         @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [arg]) =>

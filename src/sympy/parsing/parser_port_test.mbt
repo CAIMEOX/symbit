@@ -834,6 +834,33 @@ test "symparse parity builtin callable semantics" {
     content="TypeError: invalid input: sin(x)",
   )
   inspect(
+    try parse_expr("Rational(sin(x), 2)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: invalid input: sin(x)",
+  )
+  inspect(
+    try parse_expr("Rational(sin(x), 0)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: invalid input: sin(x)",
+  )
+  inspect(
+    try parse_expr("Rational(2, sin(x))") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: invalid input: sin(x)",
+  )
+  inspect(
     try parse_expr("Float()") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
@@ -1010,6 +1037,33 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("Rational(sin(x))") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: invalid input: sin(x)",
+  )
+  inspect(
+    try ast_parse_expr("Rational(sin(x), 2)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: invalid input: sin(x)",
+  )
+  inspect(
+    try ast_parse_expr("Rational(sin(x), 0)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: invalid input: sin(x)",
+  )
+  inspect(
+    try ast_parse_expr("Rational(2, sin(x))") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {

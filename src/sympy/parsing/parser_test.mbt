@@ -546,6 +546,21 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     detail == "TypeError: invalid input: sin(x)" else {
     fail("expected Rational(sin(x)) invalid input error")
   }
+  guard (try? parse_expr("Rational(sin(x), 2)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: invalid input: sin(x)" else {
+    fail("expected Rational(sin(x), 2) lhs invalid input error")
+  }
+  guard (try? parse_expr("Rational(sin(x), 0)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: invalid input: sin(x)" else {
+    fail("expected Rational(sin(x), 0) lhs invalid input error")
+  }
+  guard (try? parse_expr("Rational(2, sin(x))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: invalid input: sin(x)" else {
+    fail("expected Rational(2, sin(x)) rhs invalid input error")
+  }
   guard (try? parse_expr("Float()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail ==
@@ -691,6 +706,21 @@ test "ast parser compatibility entrypoint" {
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: invalid input: sin(x)" else {
     fail("expected ast parser Rational(sin(x)) invalid input error")
+  }
+  guard (try? ast_parse_expr("Rational(sin(x), 2)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: invalid input: sin(x)" else {
+    fail("expected ast parser Rational(sin(x), 2) lhs invalid input error")
+  }
+  guard (try? ast_parse_expr("Rational(sin(x), 0)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: invalid input: sin(x)" else {
+    fail("expected ast parser Rational(sin(x), 0) lhs invalid input error")
+  }
+  guard (try? ast_parse_expr("Rational(2, sin(x))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: invalid input: sin(x)" else {
+    fail("expected ast parser Rational(2, sin(x)) rhs invalid input error")
   }
   inspect(
     @symprint.to_string(ast_parse_expr("Rational(True, False)")),
