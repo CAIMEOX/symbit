@@ -614,7 +614,8 @@ test "expr_match follows SymPy source reciprocal wildcard examples" {
     None => fail("expected 3*x to match w*y from SymPy source")
   }
 
-  match expr_match(mul([y, pow(w, int(-1))]), mul([x, rational_from_ints(1, 3)])) {
+  match
+    expr_match(mul([y, pow(w, int(-1))]), mul([x, rational_from_ints(1, 3)])) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="3")
       inspect(@symprint.to_string(env.get(y).unwrap_or(int(0))), content="x")
@@ -630,7 +631,8 @@ test "expr_match follows SymPy source reciprocal wildcard examples" {
     None => fail("expected 3*x to match y/w from SymPy source")
   }
 
-  match expr_match(mul([w, pow(y, int(-1))]), mul([x, rational_from_ints(1, 3)])) {
+  match
+    expr_match(mul([w, pow(y, int(-1))]), mul([x, rational_from_ints(1, 3)])) {
     Some(env) => {
       inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="1/3")
       inspect(
@@ -669,10 +671,7 @@ test "expr_match follows SymPy source reciprocal wildcard examples" {
   }
   match expr_match(pow(a, int(-1)), int(3)) {
     Some(env) =>
-      inspect(
-        @symprint.to_string(env.get(a).unwrap_or(int(0))),
-        content="1/3",
-      )
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1/3")
     None => fail("expected 3 to match 1/a from SymPy source")
   }
   match expr_match(pow(a, int(-2)), int(3)) {
@@ -682,6 +681,46 @@ test "expr_match follows SymPy source reciprocal wildcard examples" {
         content="3**(-1/2)",
       )
     None => fail("expected 3 to match 1/a**2 from SymPy source")
+  }
+}
+
+///|
+test "expr_match follows SymPy source positive power wildcard examples" {
+  let x = Expr::Symbol("x")
+  let r = Expr::Symbol("r")
+  let e = Expr::Symbol("e")
+  let y = Expr::Wild("y", [], [])
+  let a = Expr::Wild("a", [], [])
+
+  match expr_match(pow(y, int(2)), pow(x, r)) {
+    Some(env) =>
+      inspect(
+        @symprint.to_string(env.get(y).unwrap_or(int(0))),
+        content="x**(1*r/2)",
+      )
+    None => fail("expected x**r to match y**2 from SymPy source")
+  }
+
+  match expr_match(pow(y, int(2)), pow(x, e)) {
+    Some(env) =>
+      inspect(
+        @symprint.to_string(env.get(y).unwrap_or(int(0))),
+        content="x**(1*e/2)",
+      )
+    None => fail("expected x**e to match y**2 from SymPy source")
+  }
+
+  match
+    expr_match(
+      pow(a, int(2)),
+      mul([int(-1), Expr::NumberSymbol(NumberSymbolKind::Pi)]),
+    ) {
+    Some(env) =>
+      inspect(
+        @symprint.to_string(env.get(a).unwrap_or(int(0))),
+        content="I*pi**(1/2)",
+      )
+    None => fail("expected -pi to match a**2 from SymPy source")
   }
 }
 

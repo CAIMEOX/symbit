@@ -1511,6 +1511,202 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
 }
 
 ///|
+fn exact_number_matches_head(
+  kind : ExactNumberKind,
+  needle_name : String,
+) -> Bool {
+  match kind {
+    ExactNumberKind::Zero =>
+      match needle_name {
+        "Zero" | "Integer" | "Rational" | "Number" | "Basic" => true
+        _ => false
+      }
+    ExactNumberKind::One =>
+      match needle_name {
+        "One" | "Integer" | "Rational" | "Number" | "Basic" => true
+        _ => false
+      }
+    ExactNumberKind::NegativeOne =>
+      match needle_name {
+        "NegativeOne" | "Integer" | "Rational" | "Number" | "Basic" => true
+        _ => false
+      }
+    ExactNumberKind::Half =>
+      match needle_name {
+        "Half" | "Rational" | "Number" | "Basic" => true
+        _ => false
+      }
+    ExactNumberKind::Integer =>
+      match needle_name {
+        "Integer" | "Rational" | "Number" | "Basic" => true
+        _ => false
+      }
+    ExactNumberKind::Rational =>
+      match needle_name {
+        "Rational" | "Number" | "Basic" => true
+        _ => false
+      }
+  }
+}
+
+///|
+fn expr_matches_class_head(expr : Expr, needle_name : String) -> Bool {
+  let expr = normalize_legacy_expr(expr)
+  match expr_form(expr) {
+    ExprForm::Number(value) =>
+      exact_number_matches_head(
+        exact_number_kind_from_rational(value),
+        needle_name,
+      )
+    ExprForm::Float(_) =>
+      match needle_name {
+        "Float" | "Number" | "Basic" => true
+        _ => false
+      }
+    ExprForm::ComplexFloat(_) =>
+      match needle_name {
+        "ComplexFloat" | "Number" | "Basic" => true
+        _ => false
+      }
+    ExprForm::NumberSymbol(_) =>
+      match needle_name {
+        "NumberSymbol" | "Number" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Symbol(_) =>
+      match needle_name {
+        "Symbol" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Dummy(_, _) =>
+      match needle_name {
+        "Dummy" | "Symbol" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Wild(_, _, _) =>
+      match needle_name {
+        "Wild" | "Symbol" | "Basic" => true
+        _ => false
+      }
+    ExprForm::WildFunction(_, _) =>
+      match needle_name {
+        "WildFunction" | "Basic" => true
+        _ => false
+      }
+    ExprForm::FunctionHead(_) =>
+      match needle_name {
+        "FunctionClass" | "Basic" => true
+        _ => false
+      }
+    ExprForm::UndefinedFunction(_) =>
+      match needle_name {
+        "UndefinedFunction" | "FunctionClass" | "Basic" => true
+        _ => false
+      }
+    ExprForm::IdentityFunction =>
+      match needle_name {
+        "IdentityFunction" | "FunctionClass" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Boolean(_) =>
+      match needle_name {
+        "Boolean" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Add(_) =>
+      match needle_name {
+        "Add" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Mul(_) =>
+      match needle_name {
+        "Mul" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Pow(_, _) =>
+      match needle_name {
+        "Pow" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Mod(_, _) =>
+      match needle_name {
+        "Mod" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Tuple(_) =>
+      match needle_name {
+        "Tuple" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Dict(_) =>
+      match needle_name {
+        "Dict" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Relational(_, _, _) =>
+      match needle_name {
+        "Relational" | "Boolean" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Derivative(_, _) =>
+      match needle_name {
+        "Derivative" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Subs(_, _, _) =>
+      match needle_name {
+        "Subs" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Lambda(_, _) =>
+      match needle_name {
+        "Lambda" | "Basic" => true
+        _ => false
+      }
+    ExprForm::Apply(_, _) =>
+      match needle_name {
+        "Basic" => true
+        _ => false
+      }
+  }
+}
+
+///|
+fn contains_commutative_subexpr(
+  expr_items : Array[Expr],
+  needle_items : Array[Expr],
+) -> Bool {
+  let remaining = expr_items.copy()
+  for needle_item in needle_items {
+    let mut found = false
+    for i in 0..<remaining.length() {
+      if remaining[i] == needle_item {
+        ignore(remaining.remove(i))
+        found = true
+        break
+      }
+    }
+    if !found {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn has_matcher(expr : Expr, needle : Expr) -> Bool {
+  let expr = normalize_legacy_expr(expr)
+  let needle = normalize_legacy_expr(needle)
+  match (expr_form(expr), expr_form(needle)) {
+    (ExprForm::Add(expr_items), ExprForm::Add(needle_items)) =>
+      contains_commutative_subexpr(expr_items, needle_items)
+    (ExprForm::Mul(expr_items), ExprForm::Mul(needle_items)) =>
+      contains_commutative_subexpr(expr_items, needle_items)
+    _ => false
+  }
+}
+
+///|
 pub fn free_symbols(expr : Expr) -> Array[Expr] {
   let out : Map[String, Expr] = {}
   free_symbol_map(expr, out)
@@ -1536,9 +1732,17 @@ pub fn has(expr : Expr, needle : Expr) -> Bool {
   if expr == needle {
     return true
   }
+  match needle {
+    Expr::FunctionHead(name) if expr_matches_class_head(expr, name) =>
+      return true
+    _ => ()
+  }
   match func(expr) {
     Some(head) if head == needle => return true
     _ => ()
+  }
+  if has_matcher(expr, needle) {
+    return true
   }
   match application_parts(expr) {
     Some((head, app_args)) => {

@@ -104,6 +104,30 @@ test "has sees callable heads in canonical applications" {
 }
 
 ///|
+test "has follows SymPy class-head and additive subset semantics" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let z = Expr::Symbol("z")
+
+  assert_true(has(int(1), Expr::FunctionHead("Integer")))
+  assert_true(has(int(1), Expr::FunctionHead("Rational")))
+  assert_true(has(rational_from_ints(1, 2), Expr::FunctionHead("Rational")))
+  assert_false(has(rational_from_ints(1, 2), Expr::FunctionHead("Integer")))
+  assert_true(
+    has(
+      Expr::NumberSymbol(NumberSymbolKind::Pi),
+      Expr::FunctionHead("NumberSymbol"),
+    ),
+  )
+  assert_true(has(Expr::Dummy("d", 1), Expr::FunctionHead("Symbol")))
+  assert_true(has(Expr::Wild("p", [], []), Expr::FunctionHead("Symbol")))
+  assert_true(has(add([x, y, int(1)]), add([x, int(1)])))
+  assert_false(has(add([x, y]), add([x, z])))
+  assert_true(has(mul([x, y, z]), mul([x, y])))
+  assert_false(has(mul([x, y]), mul([x, z])))
+}
+
+///|
 test "plain symbol names no longer coerce to core singletons" {
   inspect(@symprint.debug_repr(Expr::Symbol("pi")), content="sym:pi")
   inspect(@symprint.debug_repr(Expr::Symbol("True")), content="sym:True")

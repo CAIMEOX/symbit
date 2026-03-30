@@ -403,10 +403,7 @@ test "symcore source-driven reciprocal wildcard examples" {
     content="w_=3|y_=x",
   )
   inspect(
-    core_match_sstr(
-      @symcore.mul([w, y]),
-      @symcore.mul([@symcore.int(3), x]),
-    ),
+    core_match_sstr(@symcore.mul([w, y]), @symcore.mul([@symcore.int(3), x])),
     content="w_=3|y_=x",
   )
   inspect(
@@ -460,6 +457,34 @@ test "symcore source-driven reciprocal wildcard examples" {
 }
 
 ///|
+test "symcore source-driven positive power wildcard examples" {
+  let x = @symcore.Expr::Symbol("x")
+  let r = @symcore.Expr::Symbol("r")
+  let e = @symcore.Expr::Symbol("e")
+  let y = @symcore.Expr::Wild("y", [], [])
+  let a = @symcore.Expr::Wild("a", [], [])
+
+  inspect(
+    core_match_sstr(@symcore.pow(y, @symcore.int(2)), @symcore.pow(x, r)),
+    content="y_=sqrt(x**r)",
+  )
+  inspect(
+    core_match_sstr(@symcore.pow(y, @symcore.int(2)), @symcore.pow(x, e)),
+    content="y_=sqrt(x**e)",
+  )
+  inspect(
+    core_match_sstr(
+      @symcore.pow(a, @symcore.int(2)),
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+      ]),
+    ),
+    content="a_=I*sqrt(pi)",
+  )
+}
+
+///|
 test "symcore source-driven implicit zero-power wildcard examples" {
   let x = @symcore.Expr::Symbol("x")
   let f = @symcore.Expr::UndefinedFunction("f")
@@ -472,10 +497,7 @@ test "symcore source-driven implicit zero-power wildcard examples" {
     core_match_sstr(@symcore.mul([a, @symcore.pow(fx, c)]), x),
     content="a_=x|c_=0",
   )
-  inspect(
-    core_match_sstr(@symcore.mul([a, b]), x),
-    content="a_=1|b_=x",
-  )
+  inspect(core_match_sstr(@symcore.mul([a, b]), x), content="a_=1|b_=x")
   inspect(
     core_match_sstr(@symcore.mul([a, b, @symcore.pow(fx, c)]), x),
     content="a_=1|b_=x|c_=0",
@@ -1170,6 +1192,76 @@ test "symcore parity has sees callable heads in applications" {
       @symcore.Expr::FunctionHead("Wild"),
     ).to_string(),
     content="true",
+  )
+}
+
+///|
+test "symcore parity has follows source-driven class-head and subset semantics" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
+
+  inspect(
+    @symcore.has(@symcore.int(1), @symcore.Expr::FunctionHead("Integer")).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(@symcore.int(1), @symcore.Expr::FunctionHead("Rational")).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.rational_from_ints(1, 2),
+      @symcore.Expr::FunctionHead("Rational"),
+    ).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.rational_from_ints(1, 2),
+      @symcore.Expr::FunctionHead("Integer"),
+    ).to_string(),
+    content="false",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+      @symcore.Expr::FunctionHead("NumberSymbol"),
+    ).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.Expr::Dummy("d", 1),
+      @symcore.Expr::FunctionHead("Symbol"),
+    ).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.Expr::Wild("p", [], []),
+      @symcore.Expr::FunctionHead("Symbol"),
+    ).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(
+      @symcore.add([x, y, @symcore.int(1)]),
+      @symcore.add([x, @symcore.int(1)]),
+    ).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(@symcore.add([x, y]), @symcore.add([x, z])).to_string(),
+    content="false",
+  )
+  inspect(
+    @symcore.has(@symcore.mul([x, y, z]), @symcore.mul([x, y])).to_string(),
+    content="true",
+  )
+  inspect(
+    @symcore.has(@symcore.mul([x, y]), @symcore.mul([x, z])).to_string(),
+    content="false",
   )
 }
 

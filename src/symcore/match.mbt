@@ -165,7 +165,9 @@ fn expr_shape_rank(expr : Expr) -> Int {
     Expr::Symbol(_) | Expr::Dummy(_, _) => 13
     Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => 14
     Expr::Boolean(_) => 15
-    Expr::FunctionHead(_) | Expr::UndefinedFunction(_) | Expr::IdentityFunction => 16
+    Expr::FunctionHead(_)
+    | Expr::UndefinedFunction(_)
+    | Expr::IdentityFunction => 16
     Expr::Function(_, _) => 17
   }
 }
@@ -190,13 +192,10 @@ fn commutative_mask_score(
   mask : Int,
 ) -> Int {
   let selected_count = mask_selected_count(mask, remaining_items.length())
-  if !is_add && is_plain_pattern_wild(pattern) &&
+  if !is_add &&
+    is_plain_pattern_wild(pattern) &&
     remaining_items.length() < remaining_patterns_len {
-    return if selected_count == 0 {
-      0
-    } else {
-      1000 + selected_count
-    }
+    return if selected_count == 0 { 0 } else { 1000 + selected_count }
   }
   let (selected, _) = split_items_by_mask(remaining_items, mask)
   let candidate = combine_commutative_items(selected, is_add)
@@ -600,7 +599,8 @@ fn wild_property_matches(property : WildProperty, expr : Expr) -> Bool {
 ///|
 fn is_exact_negative_one(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::Number(value) => value.compare(@symnum.BigRational::from_int(-1)) == 0
+    ExprForm::Number(value) =>
+      value.compare(@symnum.BigRational::from_int(-1)) == 0
     _ => false
   }
 }
@@ -647,6 +647,72 @@ fn reciprocal_root_for_match(expr : Expr, degree : BigInt) -> Expr {
       },
     )
     pow(normalize_legacy_expr(expr), exponent)
+  }
+}
+
+///|
+fn positive_root_for_match(expr : Expr, degree : BigInt) -> Expr {
+  let expr = normalize_legacy_expr(expr)
+  if degree.compare(1N) == 0 {
+    return expr
+  }
+  let one_over_degree_result : Result[
+    @symnum.BigRational,
+    @symnum.RationalError,
+  ] = try? @symnum.BigRational::new(1N, degree)
+  let one_over_degree = match one_over_degree_result {
+    Ok(value) => Expr::Number(value)
+    Err(_) => return pow(expr, int(1))
+  }
+  match expr {
+    Expr::Number(value) =>
+      if exact_number_sign(value) < 0 && degree.mod(2N).compare(0N) == 0 {
+        let magnitude_result : Result[
+          @symnum.BigRational,
+          @symnum.RationalError,
+        ] = try? @symnum.BigRational::new(
+          value.numerator().neg(),
+          value.denominator(),
+        )
+        let magnitude = match magnitude_result {
+          Ok(ratio) => Expr::Number(ratio)
+          Err(_) => return pow(expr, one_over_degree)
+        }
+        mul([
+          Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit),
+          pow(magnitude, one_over_degree),
+        ])
+      } else {
+        pow(expr, one_over_degree)
+      }
+    Expr::Mul(items) =>
+      if degree.mod(2N).compare(0N) == 0 && !items.is_empty() {
+        let mut minus_idx = -1
+        for i in 0..<items.length() {
+          if is_exact_negative_one(items[i]) {
+            minus_idx = i
+            break
+          }
+        }
+        if minus_idx >= 0 {
+          let remainder : Array[Expr] = []
+          for i in 0..<items.length() {
+            if i != minus_idx {
+              remainder.push(items[i])
+            }
+          }
+          let magnitude = combine_commutative_items(remainder, false)
+          return mul([
+            Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit),
+            positive_root_for_match(magnitude, degree),
+          ])
+        }
+        pow(expr, one_over_degree)
+      } else {
+        pow(expr, one_over_degree)
+      }
+    Expr::Pow(base, exp) => pow(base, mul([exp, one_over_degree]))
+    _ => pow(expr, one_over_degree)
   }
 }
 
@@ -828,11 +894,17 @@ pub fn expr_match(
       return expr_match(exp, int(0), repl_dict~)
     Expr::Pow(base, exp) =>
       match exact_integer_value(exp) {
+        Some(n) if n.compare(0N) > 0 =>
+          match expr_match(base, positive_root_for_match(expr, n), repl_dict~) {
+            Some(result) => return Some(result)
+            None => ()
+          }
         Some(n) if n.compare(0N) < 0 =>
           if is_zero(expr) {
             return None
           } else {
-            match expr_match(base, reciprocal_root_for_match(expr, -n), repl_dict~) {
+            match
+              expr_match(base, reciprocal_root_for_match(expr, -n), repl_dict~) {
               Some(result) => return Some(result)
               None => ()
             }
