@@ -120,6 +120,20 @@ fn make_function(
       " (\{given} given)",
     )
   }
+  let integer_invalid_input = fn(arg : Expr) -> Expr raise ParseError {
+    raise ParseError::UnsupportedConstruct(
+      span=span(0, 0),
+      "TypeError: Argument of Integer should be of numeric type, got " +
+      @symprint.to_string(arg) +
+      ".",
+    )
+  }
+  let rational_invalid_input = fn(arg : Expr) -> Expr raise ParseError {
+    raise ParseError::UnsupportedConstruct(
+      span=span(0, 0),
+      "TypeError: invalid input: " + @symprint.to_string(arg),
+    )
+  }
   let dict_item_error = fn(item : Expr) -> Expr raise ParseError {
     match @symcore.tuple_items(item) {
       Some([_, _]) => @symcore.function(name, canonical_args)
@@ -162,6 +176,47 @@ fn make_function(
     }
   }
   match (name, canonical_args) {
+    ("Integer", [arg]) => {
+      let constructed = @symcore.function(name, canonical_args)
+      match constructed {
+        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Integer"), _) =>
+          integer_invalid_input(arg)
+        _ => constructed
+      }
+    }
+    ("Integer", args) =>
+      if args.is_empty() {
+        missing_constructor_error("Integer", ["i"])
+      } else {
+        too_many_constructor_error("Integer", 1, args.length())
+      }
+    ("Rational", [arg]) => {
+      let constructed = @symcore.function(name, canonical_args)
+      match constructed {
+        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), _) =>
+          rational_invalid_input(arg)
+        _ => constructed
+      }
+    }
+    ("Rational", [lhs, rhs]) => {
+      if
+        @symcore.function(name, [lhs]) is
+        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), _) {
+        return rational_invalid_input(lhs)
+      }
+      if
+        @symcore.function(name, [rhs]) is
+        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), _) {
+        return rational_invalid_input(rhs)
+      }
+      @symcore.function(name, canonical_args)
+    }
+    ("Rational", args) =>
+      if args.is_empty() {
+        missing_constructor_error("Rational", ["p"])
+      } else {
+        too_many_constructor_error("Rational", 2, args.length())
+      }
     ("Eq", [_, _])
     | ("Ne", [_, _])
     | ("Lt", [_, _])

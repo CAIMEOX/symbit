@@ -806,6 +806,15 @@ test "symparse parity builtin callable semantics" {
     content=parse_expr_error_sstr_in("Integer()", []),
   )
   inspect(
+    try parse_expr("Integer(sin(x))") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Argument of Integer should be of numeric type, got sin(x).",
+  )
+  inspect(
     try parse_expr("Rational()") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
@@ -813,6 +822,15 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content=parse_expr_error_sstr_in("Rational()", []),
+  )
+  inspect(
+    try parse_expr("Rational(sin(x))") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: invalid input: sin(x)",
   )
   inspect(
     try parse_expr("Float()") catch {
@@ -971,6 +989,15 @@ test "symparse parity builtin callable semantics" {
     content=ast_parse_expr_error_sstr("Integer()"),
   )
   inspect(
+    try ast_parse_expr("Integer(sin(x))") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: Argument of Integer should be of numeric type, got sin(x).",
+  )
+  inspect(
     try ast_parse_expr("S()") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
@@ -978,6 +1005,15 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content="TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'",
+  )
+  inspect(
+    try ast_parse_expr("Rational(sin(x))") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="TypeError: invalid input: sin(x)",
   )
   inspect(
     @symprint.to_string(ast_parse_expr("Rational(True, False)")),

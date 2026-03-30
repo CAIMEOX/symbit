@@ -10,7 +10,12 @@ fn wild_property_resolver(
     @symcore.WildProperty::Positive => tri_to_bool_option(is_positive(expr))
     @symcore.WildProperty::Negative =>
       tri_to_bool_option(is_positive(@symcore.mul([@symcore.int(-1), expr])))
-    @symcore.WildProperty::Finite => None
+    @symcore.WildProperty::Finite =>
+      if @symcore.is_number_atom(expr) {
+        Some(@symcore.is_finite_number_atom(expr))
+      } else {
+        tri_to_bool_option(ask(q_finite(expr)) catch { _ => return None })
+      }
     @symcore.WildProperty::Nonzero => tri_to_bool_option(is_nonzero(expr))
   }
 }

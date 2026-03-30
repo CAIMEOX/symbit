@@ -100,7 +100,7 @@ impl Show for Expr with to_string(self) {
     Expr::Lambda(vars, body) =>
       "Lambda(" + vars.to_string() + ", " + body.to_string() + ")"
     Expr::Function(name, args) =>
-      name + "(" + args.map(child => child.to_string()).join(", ") + ")"
+      normalize_legacy_function(name, args).to_string()
   }
 }
 

@@ -530,11 +530,21 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
     fail("expected Integer constructor arity error")
   }
+  guard (try? parse_expr("Integer(sin(x))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
+    fail("expected Integer(sin(x)) invalid input error")
+  }
   guard (try? parse_expr("Rational()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail ==
     "TypeError: Rational.__new__() missing 1 required positional argument: 'p'" else {
     fail("expected Rational constructor arity error")
+  }
+  guard (try? parse_expr("Rational(sin(x))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: invalid input: sin(x)" else {
+    fail("expected Rational(sin(x)) invalid input error")
   }
   guard (try? parse_expr("Float()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
@@ -665,11 +675,21 @@ test "ast parser compatibility entrypoint" {
     "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
     fail("expected ast parser Integer constructor arity error")
   }
+  guard (try? ast_parse_expr("Integer(sin(x))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
+    fail("expected ast parser Integer(sin(x)) invalid input error")
+  }
   guard (try? ast_parse_expr("S()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail ==
     "TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'" else {
     fail("expected ast parser S constructor arity error")
+  }
+  guard (try? ast_parse_expr("Rational(sin(x))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: invalid input: sin(x)" else {
+    fail("expected ast parser Rational(sin(x)) invalid input error")
   }
   inspect(
     @symprint.to_string(ast_parse_expr("Rational(True, False)")),
