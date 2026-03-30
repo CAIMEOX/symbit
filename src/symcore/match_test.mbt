@@ -758,3 +758,58 @@ test "expr_match follows SymPy source implicit zero-power wildcard examples" {
     None => fail("expected x to match a*b*f(x)**c from SymPy source")
   }
 }
+
+///|
+test "expr_match follows SymPy source exclude cases around additive coefficients" {
+  let x = Expr::Symbol("x")
+  let f = Expr::UndefinedFunction("f")
+  let fx = apply(f, [x]).unwrap_or(int(0))
+  let a = Expr::Wild("a", [fx], [])
+  let b = Expr::Wild("b", [fx], [])
+  let pattern = add([mul([a, fx]), b])
+
+  match expr_match(pattern, function("sin", [x])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="0")
+      inspect(
+        @symprint.to_string(env.get(b).unwrap_or(int(0))),
+        content="sin(x)",
+      )
+    }
+    None => fail("expected sin(x) to match a*f(x) + b from SymPy source")
+  }
+
+  match expr_match(pattern, add([fx, function("sin", [x])])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(
+        @symprint.to_string(env.get(b).unwrap_or(int(0))),
+        content="sin(x)",
+      )
+    }
+    None => fail("expected f(x) + sin(x) to match a*f(x) + b from SymPy source")
+  }
+
+  match expr_match(pattern, add([fx, x, function("sin", [x])])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(
+        @symprint.to_string(env.get(b).unwrap_or(int(0))),
+        content="x + sin(x)",
+      )
+    }
+    None =>
+      fail("expected f(x) + x + sin(x) to match a*f(x) + b from SymPy source")
+  }
+
+  match expr_match(pattern, add([x, function("sin", [x])])) {
+    Some(env) => {
+      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="0")
+      inspect(
+        @symprint.to_string(env.get(b).unwrap_or(int(0))),
+        content="x + sin(x)",
+      )
+    }
+    None => fail("expected x + sin(x) to match a*f(x) + b from SymPy source")
+  }
+}

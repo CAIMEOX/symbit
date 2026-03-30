@@ -570,6 +570,36 @@ test "symcore source-driven exclude and wild-on-wild examples" {
 }
 
 ///|
+test "symcore source-driven exclude cases around additive coefficients" {
+  let x = @symcore.Expr::Symbol("x")
+  let f = @symcore.Expr::UndefinedFunction("f")
+  let fx = @symcore.apply(f, [x]).unwrap_or(@symcore.int(0))
+  let a = @symcore.Expr::Wild("a", [fx], [])
+  let b = @symcore.Expr::Wild("b", [fx], [])
+  let pattern = @symcore.add([@symcore.mul([a, fx]), b])
+
+  inspect(
+    core_match_sstr(pattern, @symcore.function("sin", [x])),
+    content="a_=0|b_=sin(x)",
+  )
+  inspect(
+    core_match_sstr(pattern, @symcore.add([fx, @symcore.function("sin", [x])])),
+    content="a_=1|b_=sin(x)",
+  )
+  inspect(
+    core_match_sstr(
+      pattern,
+      @symcore.add([fx, x, @symcore.function("sin", [x])]),
+    ),
+    content="a_=1|b_=x + sin(x)",
+  )
+  inspect(
+    core_match_sstr(pattern, @symcore.add([x, @symcore.function("sin", [x])])),
+    content="a_=0|b_=x + sin(x)",
+  )
+}
+
+///|
 test "symcore parity formal application helpers" {
   let x = @symcore.Expr::Symbol("x")
   match @symcore.apply(@symcore.Expr::FunctionHead("sin"), [x]) {
