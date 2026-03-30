@@ -676,12 +676,16 @@ test "symcore source-driven mixed additive term matches" {
         x,
         @symcore.mul([
           @symcore.int(-1),
-          @symcore.function("log", [@symcore.mul([xw, @symcore.pow(y, @symcore.int(-1))])]),
+          @symcore.function("log", [
+            @symcore.mul([xw, @symcore.pow(y, @symcore.int(-1))]),
+          ]),
           @symcore.add([
             @symcore.int(1),
             @symcore.mul([
               @symcore.int(-1),
-              @symcore.function("exp", [@symcore.mul([x, @symcore.pow(y, @symcore.int(-1))])]),
+              @symcore.function("exp", [
+                @symcore.mul([x, @symcore.pow(y, @symcore.int(-1))]),
+              ]),
             ]),
           ]),
         ]),
@@ -690,12 +694,16 @@ test "symcore source-driven mixed additive term matches" {
         x,
         @symcore.mul([
           @symcore.int(-1),
-          @symcore.function("log", [@symcore.mul([x, @symcore.pow(y, @symcore.int(-1))])]),
+          @symcore.function("log", [
+            @symcore.mul([x, @symcore.pow(y, @symcore.int(-1))]),
+          ]),
           @symcore.add([
             @symcore.int(1),
             @symcore.mul([
               @symcore.int(-1),
-              @symcore.function("exp", [@symcore.mul([x, @symcore.pow(y, @symcore.int(-1))])]),
+              @symcore.function("exp", [
+                @symcore.mul([x, @symcore.pow(y, @symcore.int(-1))]),
+              ]),
             ]),
           ]),
         ]),
@@ -714,15 +722,28 @@ test "symcore source-driven collected derivative coefficient matches" {
   let a3 = @symcore.Expr::Wild("a3", [fx, d1, d2], [])
   let b3 = @symcore.Expr::Wild("b3", [fx, d1, d2], [])
   let c3 = @symcore.Expr::Wild("c3", [fx, d1, d2], [])
-  let pattern = @symcore.add([@symcore.mul([a3, d2]), @symcore.mul([b3, d1]), @symcore.mul([c3, fx])])
+  let pattern = @symcore.add([
+    @symcore.mul([a3, d2]),
+    @symcore.mul([b3, d1]),
+    @symcore.mul([c3, fx]),
+  ])
 
   inspect(
     core_match_sstr(
       pattern,
       @symcore.add([
-        @symcore.mul([@symcore.pow(@symcore.add([x, @symcore.int(-2)]), @symcore.int(2)), d2]),
+        @symcore.mul([
+          @symcore.pow(@symcore.add([x, @symcore.int(-2)]), @symcore.int(2)),
+          d2,
+        ]),
         @symcore.mul([@symcore.add([x, @symcore.int(-2)]), d1]),
-        @symcore.mul([@symcore.add([@symcore.pow(@symcore.add([x, @symcore.int(-2)]), @symcore.int(2)), @symcore.int(-4)]), fx]),
+        @symcore.mul([
+          @symcore.add([
+            @symcore.pow(@symcore.add([x, @symcore.int(-2)]), @symcore.int(2)),
+            @symcore.int(-4),
+          ]),
+          fx,
+        ]),
       ]),
     ),
     content="a3_=(x - 2)**2|b3_=x - 2|c3_=(x - 2)**2 - 4",
@@ -731,8 +752,21 @@ test "symcore source-driven collected derivative coefficient matches" {
     core_match_sstr(
       pattern,
       @symcore.add([
-        @symcore.mul([@symcore.add([x, @symcore.int(-4), @symcore.mul([@symcore.int(4), @symcore.pow(x, @symcore.int(-1))])]), d2]),
-        @symcore.mul([@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-2), @symcore.pow(x, @symcore.int(-1))])]), d1]),
+        @symcore.mul([
+          @symcore.add([
+            x,
+            @symcore.int(-4),
+            @symcore.mul([@symcore.int(4), @symcore.pow(x, @symcore.int(-1))]),
+          ]),
+          d2,
+        ]),
+        @symcore.mul([
+          @symcore.add([
+            @symcore.int(1),
+            @symcore.mul([@symcore.int(-2), @symcore.pow(x, @symcore.int(-1))]),
+          ]),
+          d1,
+        ]),
         @symcore.mul([@symcore.add([x, @symcore.int(-4)]), fx]),
       ]),
     ),
@@ -777,11 +811,7 @@ test "symcore source-driven product-derivative coefficient matches" {
   )
   inspect(
     core_match_sstr(
-      @symcore.add([
-        @symcore.mul([a, dgx, dfx]),
-        @symcore.mul([b, gx, d2fx]),
-        c,
-      ]),
+      @symcore.add([@symcore.mul([a, dgx, dfx]), @symcore.mul([b, gx, d2fx]), c]),
       expr,
     ),
     content="a_=1|b_=1|c_=0",
@@ -810,12 +840,12 @@ test "symcore source-driven multiplicative wildcard power matches" {
     @symcore.function("sin", [@symcore.mul([@symcore.int(2), phi])]),
     @symcore.pow(r, @symcore.int(7)),
   ])
+  inspect(core_match_sstr(pattern, eq), content="A_=7|B_=0|N_=2|c_=z|l_=1")
   inspect(
-    core_match_sstr(pattern, eq),
-    content="A_=7|B_=0|N_=2|c_=z|l_=1",
-  )
-  inspect(
-    core_match_sstr(pattern, @symcore.mul([@symcore.mul([@symcore.int(-7), x]), eq])),
+    core_match_sstr(
+      pattern,
+      @symcore.mul([@symcore.mul([@symcore.int(-7), x]), eq]),
+    ),
     content="A_=7|B_=0|N_=2|c_=-7*x*z|l_=1",
   )
 }
@@ -851,15 +881,16 @@ test "symcore source-driven additive exclude ambiguity matches" {
         let mut saw_zero = false
         let mut saw_rest = false
         for _, value in env {
-          saw_zero = saw_zero || @symcore.compare_expr(value, @symcore.int(0)) == 0
-          saw_rest =
-            saw_rest ||
+          saw_zero = saw_zero ||
+            @symcore.compare_expr(value, @symcore.int(0)) == 0
+          saw_rest = saw_rest ||
             @symcore.compare_expr(value, expected_rest) == 0
         }
         inspect(saw_zero.to_string(), content="true")
         inspect(saw_rest.to_string(), content="true")
       }
-      None => fail("expected additive exclude ambiguity match from SymPy source")
+      None =>
+        fail("expected additive exclude ambiguity match from SymPy source")
     }
   }
 }
@@ -872,14 +903,22 @@ test "symcore source-driven trig and infinity wildcard matches" {
   let c = @symcore.Expr::Wild("c", [], [])
   inspect(
     core_match_sstr(
-      @symcore.mul([@symcore.function("sin", [p]), @symcore.function("sin", [q]), c]),
+      @symcore.mul([
+        @symcore.function("sin", [p]),
+        @symcore.function("sin", [q]),
+        c,
+      ]),
       @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
     ),
     content="c_=1|p_=x|q_=x",
   )
   inspect(
     core_match_sstr(
-      @symcore.add([@symcore.function("sin", [p]), @symcore.function("sin", [q]), c]),
+      @symcore.add([
+        @symcore.function("sin", [p]),
+        @symcore.function("sin", [q]),
+        c,
+      ]),
       @symcore.mul([@symcore.int(2), @symcore.function("sin", [x])]),
     ),
     content="c_=0|p_=x|q_=x",
@@ -973,7 +1012,11 @@ test "symcore source-driven polynomial coefficient matches" {
         @symcore.mul([b, x]),
         @symcore.mul([c, @symcore.pow(x, @symcore.int(2))]),
       ]),
-      @symcore.add([x, @symcore.function("sqrt", [@symcore.int(2)]), @symcore.int(3)]),
+      @symcore.add([
+        x,
+        @symcore.function("sqrt", [@symcore.int(2)]),
+        @symcore.int(3),
+      ]),
     ),
     content="a_=sqrt(2) + 3|b_=1|c_=0",
   )
@@ -993,10 +1036,18 @@ test "symcore source-driven gamma collection matches" {
       @symcore.mul([
         @symcore.int(-1),
         gamma,
-        @symcore.pow(@symcore.add([x, @symcore.mul([@symcore.int(-1), mu])]), @symcore.int(2)),
+        @symcore.pow(
+          @symcore.add([x, @symcore.mul([@symcore.int(-1), mu])]),
+          @symcore.int(2),
+        ),
       ]),
       @symcore.mul([@symcore.int(-1), @symcore.function("log", [gamma])]),
-      @symcore.function("log", [@symcore.mul([@symcore.int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])]),
+      @symcore.function("log", [
+        @symcore.mul([
+          @symcore.int(2),
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        ]),
+      ]),
     ]),
   ])
   let pattern = @symcore.add([
@@ -1006,16 +1057,23 @@ test "symcore source-driven gamma collection matches" {
   ])
   match @symcore.expr_match(pattern, eq) {
     Some(env) => {
-      inspect(core_expr_sstr(env.get(a).unwrap_or(@symcore.int(0))), content="-1/2")
+      inspect(
+        core_expr_sstr(env.get(a).unwrap_or(@symcore.int(0))),
+        content="-1/2",
+      )
       let b_value = env.get(b).unwrap_or(@symcore.int(0))
       inspect(
         (@symcore.compare_expr(
           b_value,
           @symcore.mul([
             @symcore.rational_from_ints(-1, 2),
-            @symcore.pow(@symcore.add([x, @symcore.mul([@symcore.int(-1), mu])]), @symcore.int(2)),
+            @symcore.pow(
+              @symcore.add([x, @symcore.mul([@symcore.int(-1), mu])]),
+              @symcore.int(2),
+            ),
           ]),
-        ) == 0).to_string(),
+        ) ==
+        0).to_string(),
         content="true",
       )
       let c_value = env.get(c).unwrap_or(@symcore.int(0))
@@ -1024,9 +1082,15 @@ test "symcore source-driven gamma collection matches" {
           c_value,
           @symcore.mul([
             @symcore.rational_from_ints(1, 2),
-            @symcore.function("log", [@symcore.mul([@symcore.int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])]),
+            @symcore.function("log", [
+              @symcore.mul([
+                @symcore.int(2),
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+              ]),
+            ]),
           ]),
-        ) == 0).to_string(),
+        ) ==
+        0).to_string(),
         content="true",
       )
     }
@@ -1046,26 +1110,57 @@ test "symcore source-driven expanded gamma collection matches" {
   let g2 = @symcore.Expr::Wild("g2", [gamma], [])
   let g3 = @symcore.Expr::Wild("g3", [gamma], [])
   let expanded = @symcore.add([
-    @symcore.mul([@symcore.rational_from_ints(-1, 2), @symcore.function("log", [gamma])]),
+    @symcore.mul([
+      @symcore.rational_from_ints(-1, 2),
+      @symcore.function("log", [gamma]),
+    ]),
     @symcore.mul([
       gamma,
       @symcore.add([
-        @symcore.mul([@symcore.rational_from_ints(-1, 2), @symcore.pow(mu, @symcore.int(2))]),
+        @symcore.mul([
+          @symcore.rational_from_ints(-1, 2),
+          @symcore.pow(mu, @symcore.int(2)),
+        ]),
         @symcore.mul([mu, x]),
-        @symcore.mul([@symcore.rational_from_ints(-1, 2), @symcore.pow(x, @symcore.int(2))]),
+        @symcore.mul([
+          @symcore.rational_from_ints(-1, 2),
+          @symcore.pow(x, @symcore.int(2)),
+        ]),
       ]),
     ]),
-    @symcore.mul([@symcore.rational_from_ints(1, 2), @symcore.function("log", [@symcore.int(2)])]),
-    @symcore.mul([@symcore.rational_from_ints(1, 2), @symcore.function("log", [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])]),
+    @symcore.mul([
+      @symcore.rational_from_ints(1, 2),
+      @symcore.function("log", [@symcore.int(2)]),
+    ]),
+    @symcore.mul([
+      @symcore.rational_from_ints(1, 2),
+      @symcore.function("log", [
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+      ]),
+    ]),
   ])
   let expected_gamma_coeff = @symcore.add([
-    @symcore.mul([@symcore.rational_from_ints(-1, 2), @symcore.pow(mu, @symcore.int(2))]),
+    @symcore.mul([
+      @symcore.rational_from_ints(-1, 2),
+      @symcore.pow(mu, @symcore.int(2)),
+    ]),
     @symcore.mul([mu, x]),
-    @symcore.mul([@symcore.rational_from_ints(-1, 2), @symcore.pow(x, @symcore.int(2))]),
+    @symcore.mul([
+      @symcore.rational_from_ints(-1, 2),
+      @symcore.pow(x, @symcore.int(2)),
+    ]),
   ])
   let expected_const = @symcore.add([
-    @symcore.mul([@symcore.rational_from_ints(1, 2), @symcore.function("log", [@symcore.int(2)])]),
-    @symcore.mul([@symcore.rational_from_ints(1, 2), @symcore.function("log", [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])]),
+    @symcore.mul([
+      @symcore.rational_from_ints(1, 2),
+      @symcore.function("log", [@symcore.int(2)]),
+    ]),
+    @symcore.mul([
+      @symcore.rational_from_ints(1, 2),
+      @symcore.function("log", [
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+      ]),
+    ]),
   ])
   let first_pattern = @symcore.add([
     @symcore.mul([a, @symcore.function("log", [gamma])]),
@@ -1079,17 +1174,51 @@ test "symcore source-driven expanded gamma collection matches" {
   ])
   match @symcore.expr_match(first_pattern, expanded) {
     Some(env) => {
-      inspect(core_expr_sstr(env.get(a).unwrap_or(@symcore.int(0))), content="-1/2")
-      inspect((@symcore.compare_expr(env.get(b).unwrap_or(@symcore.int(0)), expected_gamma_coeff) == 0).to_string(), content="true")
-      inspect((@symcore.compare_expr(env.get(c).unwrap_or(@symcore.int(0)), expected_const) == 0).to_string(), content="true")
+      inspect(
+        core_expr_sstr(env.get(a).unwrap_or(@symcore.int(0))),
+        content="-1/2",
+      )
+      inspect(
+        (@symcore.compare_expr(
+          env.get(b).unwrap_or(@symcore.int(0)),
+          expected_gamma_coeff,
+        ) ==
+        0).to_string(),
+        content="true",
+      )
+      inspect(
+        (@symcore.compare_expr(
+          env.get(c).unwrap_or(@symcore.int(0)),
+          expected_const,
+        ) ==
+        0).to_string(),
+        content="true",
+      )
     }
     None => fail("expected source-driven expanded gamma match")
   }
   match @symcore.expr_match(second_pattern, expanded) {
     Some(env) => {
-      inspect(core_expr_sstr(env.get(g1).unwrap_or(@symcore.int(0))), content="-1/2")
-      inspect((@symcore.compare_expr(env.get(g2).unwrap_or(@symcore.int(0)), expected_gamma_coeff) == 0).to_string(), content="true")
-      inspect((@symcore.compare_expr(env.get(g3).unwrap_or(@symcore.int(0)), expected_const) == 0).to_string(), content="true")
+      inspect(
+        core_expr_sstr(env.get(g1).unwrap_or(@symcore.int(0))),
+        content="-1/2",
+      )
+      inspect(
+        (@symcore.compare_expr(
+          env.get(g2).unwrap_or(@symcore.int(0)),
+          expected_gamma_coeff,
+        ) ==
+        0).to_string(),
+        content="true",
+      )
+      inspect(
+        (@symcore.compare_expr(
+          env.get(g3).unwrap_or(@symcore.int(0)),
+          expected_const,
+        ) ==
+        0).to_string(),
+        content="true",
+      )
     }
     None => fail("expected source-driven expanded gamma excluded match")
   }
@@ -1569,6 +1698,61 @@ test "symcore source-driven Integer and Rational constructor semantics" {
       ]),
     ),
     content="3",
+  )
+}
+
+///|
+test "symcore source-driven Float tuple constructor semantics" {
+  inspect(
+    core_expr_sstr(
+      @symcore.function("Float", [
+        @symcore.Expr::Tuple([
+          @symcore.int(0),
+          @symcore.int(0),
+          @symcore.int(-123),
+        ]),
+      ]),
+    ),
+    content="0",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function("Float", [
+        @symcore.Expr::Tuple([
+          @symcore.int(0),
+          @symcore.int(0),
+          @symcore.int(-123),
+          @symcore.int(-1),
+        ]),
+      ]),
+    ),
+    content="nan",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function("Float", [
+        @symcore.Expr::Tuple([
+          @symcore.int(0),
+          @symcore.int(0),
+          @symcore.int(-456),
+          @symcore.int(-2),
+        ]),
+      ]),
+    ),
+    content="oo",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function("Float", [
+        @symcore.Expr::Tuple([
+          @symcore.int(1),
+          @symcore.int(0),
+          @symcore.int(-789),
+          @symcore.int(-3),
+        ]),
+      ]),
+    ),
+    content="-oo",
   )
 }
 

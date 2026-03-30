@@ -324,6 +324,102 @@ fn constructor_rational(args : Array[Expr]) -> Expr {
 
 ///|
 fn constructor_float(args : Array[Expr]) -> Expr {
+  let exact_integer_atom = fn(arg : Expr) -> BigInt? {
+    match normalize_legacy_expr(arg) {
+      Expr::Number(value) if value.is_integral() => Some(value.numerator())
+      _ => None
+    }
+  }
+  let small_int = fn(value : BigInt) -> Int? {
+    if value.bit_length() > 30 {
+      None
+    } else {
+      Some(value.to_int())
+    }
+  }
+  let float_from_mpf = fn(value : @symnum.Mpf, prec : Int) -> Expr {
+    if value == @symnum.fnan {
+      Expr::NumberSymbol(NumberSymbolKind::NaN)
+    } else if value == @symnum.finf {
+      Expr::NumberSymbol(NumberSymbolKind::Infinity)
+    } else if value == @symnum.fninf {
+      Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
+    } else if @symnum.is_zero(value) {
+      int(0)
+    } else {
+      Expr::Float(Float::from_mpf(value, prec~))
+    }
+  }
+  let float_from_tuple = fn(
+    items : Array[Expr],
+    prec : Int,
+    fallback_args : Array[Expr],
+  ) -> Expr {
+    let ints : Array[BigInt] = []
+    for item in items {
+      match exact_integer_atom(item) {
+        Some(value) => ints.push(value)
+        None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+      }
+    }
+    match ints {
+      [sign, man, exp] => {
+        let sign_i = match small_int(sign) {
+          Some(value) => value
+          None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+        }
+        let exp_i = match small_int(exp) {
+          Some(value) => value
+          None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+        }
+        guard (sign_i == 0 || sign_i == 1) && man.compare(0N) >= 0 else {
+          return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+        }
+        let bc = man.bit_length()
+        float_from_mpf(
+          @symnum.mpf_normalize(
+            sign_i, man, exp_i, bc, prec, @symnum.round_nearest,
+          ),
+          prec,
+        )
+      }
+      [sign, man, exp, bc] => {
+        let sign_i = match small_int(sign) {
+          Some(value) => value
+          None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+        }
+        let exp_i = match small_int(exp) {
+          Some(value) => value
+          None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+        }
+        let bc_i = match small_int(bc) {
+          Some(value) => value
+          None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+        }
+        if man.compare(0N) == 0 {
+          match bc_i {
+            -1 => return Expr::NumberSymbol(NumberSymbolKind::NaN)
+            -2 | -3 =>
+              return Expr::NumberSymbol(
+                if sign_i == 1 {
+                  NumberSymbolKind::NegativeInfinity
+                } else {
+                  NumberSymbolKind::Infinity
+                },
+              )
+            _ => ()
+          }
+        }
+        float_from_mpf(
+          @symnum.mpf_normalize(
+            sign_i, man, exp_i, bc_i, prec, @symnum.round_nearest,
+          ),
+          prec,
+        )
+      }
+      _ => Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+    }
+  }
   let float_from_numeric = fn(
     arg : Expr,
     prec : Int,
@@ -355,7 +451,15 @@ fn constructor_float(args : Array[Expr]) -> Expr {
   }
   match args {
     [Expr::Float(value)] => Expr::Float(value)
+    [Expr::Tuple(items)] => float_from_tuple(items, 53, args)
     [arg] => float_from_numeric(arg, 53, args)
+    [Expr::Tuple(items), Expr::Number(prec)] if prec.is_integral() &&
+      prec.numerator().compare(0N) > 0 =>
+      float_from_tuple(
+        items,
+        @symnum.dps_to_prec(prec.numerator().to_int()),
+        args,
+      )
     [arg, Expr::Number(prec)] if prec.is_integral() &&
       prec.numerator().compare(0N) > 0 =>
       float_from_numeric(

@@ -432,6 +432,43 @@ test "formal application helpers roundtrip named and undefined heads" {
       )
     _ => fail("expected Float precision constructor semantics through apply")
   }
+  match
+    apply(Expr::FunctionHead("Float"), [
+      Expr::Tuple([int(0), int(0), int(-123)]),
+    ]) {
+    Some(Expr::Number(n)) => inspect(n.to_string(), content="0")
+    _ => fail("expected Float 3-tuple zero semantics through apply")
+  }
+  match
+    apply(Expr::FunctionHead("Float"), [
+      Expr::Tuple([int(0), int(0), int(-123), int(-1)]),
+    ]) {
+    Some(Expr::NumberSymbol(NumberSymbolKind::NaN)) => ()
+    _ => fail("expected Float special tuple NaN semantics through apply")
+  }
+  match
+    apply(Expr::FunctionHead("Float"), [
+      Expr::Tuple([int(0), int(0), int(-456), int(-2)]),
+    ]) {
+    Some(Expr::NumberSymbol(NumberSymbolKind::Infinity)) => ()
+    _ => fail("expected Float special tuple infinity semantics through apply")
+  }
+  match
+    apply(Expr::FunctionHead("Float"), [
+      Expr::Tuple([int(1), int(0), int(-789), int(-3)]),
+    ]) {
+    Some(Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)) => ()
+    _ =>
+      fail(
+        "expected Float special tuple negative infinity semantics through apply",
+      )
+  }
+  inspect(
+    @symprint.to_string(
+      function("Float", [Expr::Tuple([int(2), int(1), int(0)])]),
+    ),
+    content="Float((2, 1, 0))",
+  )
   match apply(Expr::FunctionHead("Tuple"), [x, int(1)]) {
     Some(Expr::Tuple([Expr::Symbol("x"), Expr::Number(n)])) =>
       inspect(n.to_string(), content="1")

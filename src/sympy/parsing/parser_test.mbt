@@ -501,6 +501,19 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     ),
     content="True",
   )
+  inspect(@symprint.to_string(parse_expr("Float((0, 0, -123))")), content="0")
+  inspect(
+    @symprint.to_string(parse_expr("Float((0, 0, -123, -1))")),
+    content="nan",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Float((0, 0, -456, -2))")),
+    content="oo",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Float((1, 0, -789, -3))")),
+    content="-oo",
+  )
   inspect(@symprint.to_string(parse_expr("beta(x)")), content="beta(x, x)")
   inspect(@symprint.to_string(parse_expr("beta(x, y)")), content="beta(x, y)")
   guard (try? parse_expr("pi(x)"))
@@ -608,6 +621,11 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     detail ==
     "TypeError: Float.__new__() missing 1 required positional argument: 'num'" else {
     fail("expected Float constructor arity error")
+  }
+  guard (try? parse_expr("Float((2, 1, 0))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "ValueError: malformed mpf: (2, 1, 0)" else {
+    fail("expected Float malformed mpf error")
   }
   guard (try? parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
@@ -750,6 +768,11 @@ test "ast parser compatibility entrypoint" {
     detail ==
     "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
     fail("expected ast parser Integer constructor arity error")
+  }
+  guard (try? ast_parse_expr("Float((2, 1, 0))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "ValueError: malformed mpf: (2, 1, 0)" else {
+    fail("expected ast parser Float malformed mpf error")
   }
   guard (try? ast_parse_expr("Integer(sin(x))"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&

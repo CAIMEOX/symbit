@@ -773,6 +773,19 @@ test "symparse parity builtin callable semantics" {
     ),
     content="True",
   )
+  inspect(@symprint.to_string(parse_expr("Float((0, 0, -123))")), content="0")
+  inspect(
+    @symprint.to_string(parse_expr("Float((0, 0, -123, -1))")),
+    content="nan",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Float((0, 0, -456, -2))")),
+    content="oo",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Float((1, 0, -789, -3))")),
+    content="-oo",
+  )
   inspect(
     parse_expr_equiv_relaxed_near_zero(
       @symprint.to_string(parse_expr("Float(pi)")),
@@ -925,6 +938,15 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content=parse_expr_error_sstr_in("Float()", []),
+  )
+  inspect(
+    try parse_expr("Float((2, 1, 0))") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="ValueError: malformed mpf: (2, 1, 0)",
   )
   inspect(
     try parse_expr("S()") catch {
@@ -1086,6 +1108,22 @@ test "symparse parity builtin callable semantics" {
     content="0",
   )
   inspect(
+    @symprint.to_string(ast_parse_expr("Float((0, 0, -123))")),
+    content="0",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Float((0, 0, -123, -1))")),
+    content="nan",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Float((0, 0, -456, -2))")),
+    content="oo",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Float((1, 0, -789, -3))")),
+    content="-oo",
+  )
+  inspect(
     @symprint.to_string(ast_parse_expr("S(1/2)")),
     content=ast_parse_expr_sstr("S(1/2)"),
   )
@@ -1114,6 +1152,15 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content=ast_parse_expr_error_sstr("Integer()"),
+  )
+  inspect(
+    try ast_parse_expr("Float((2, 1, 0))") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content="ValueError: malformed mpf: (2, 1, 0)",
   )
   inspect(
     try ast_parse_expr("Integer(sin(x))") catch {

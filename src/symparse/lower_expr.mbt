@@ -151,6 +151,19 @@ fn make_function(
       "TypeError: invalid input: " + @symprint.to_string(arg),
     )
   }
+  let float_tuple_repr = fn(expr : Expr) -> String {
+    match @symcore.tuple_items(expr) {
+      Some(items) =>
+        "(" + items.map(item => @symprint.to_string(item)).join(", ") + ")"
+      None => @symprint.to_string(expr)
+    }
+  }
+  let float_malformed_mpf = fn(arg : Expr) -> Expr raise ParseError {
+    raise ParseError::UnsupportedConstruct(
+      span=span(0, 0),
+      "ValueError: malformed mpf: " + float_tuple_repr(arg),
+    )
+  }
   let dict_item_error = fn(item : Expr) -> Expr raise ParseError {
     match @symcore.tuple_items(item) {
       Some([_, _]) => @symcore.function(name, canonical_args)
@@ -239,6 +252,47 @@ fn make_function(
         missing_constructor_error("Rational", ["p"])
       } else {
         too_many_constructor_error("Rational", 2, args.length())
+      }
+    ("Float", [arg]) => {
+      let constructed = @symcore.with_evaluate(_options.evaluate, fn() {
+        @symcore.function(name, canonical_args)
+      })
+      match constructed {
+        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Float"), _) if @symcore.tuple_items(
+            arg,
+          )
+          is Some(items) &&
+          items.length() == 3 => float_malformed_mpf(arg)
+        _ => constructed
+      }
+    }
+    ("Float", [arg, @symcore.Expr::Number(prec)]) if prec.is_integral() &&
+      prec.numerator().compare(0N) > 0 => {
+      let constructed = @symcore.with_evaluate(_options.evaluate, fn() {
+        @symcore.function(name, canonical_args)
+      })
+      match constructed {
+        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Float"), _) if @symcore.tuple_items(
+            arg,
+          )
+          is Some(items) &&
+          items.length() == 3 => float_malformed_mpf(arg)
+        _ => constructed
+      }
+    }
+    ("Float", args) =>
+      match args.length() {
+        0 => missing_constructor_error("Float", ["num"])
+        1 | 2 =>
+          @symcore.with_evaluate(_options.evaluate, fn() {
+            @symcore.function(name, canonical_args)
+          })
+        3 =>
+          raise ParseError::UnsupportedConstruct(
+            span=span(0, 0),
+            "ValueError: Both decimal and binary precision supplied. Supply only one.",
+          )
+        given => exact_arity_error(name, 2, given)
       }
     ("Eq", [_, _])
     | ("Ne", [_, _])
@@ -341,6 +395,19 @@ fn make_application(
     @symcore.with_evaluate(options.evaluate, fn() {
       @symcore.function(name, args)
     })
+  }
+  let float_tuple_repr = fn(expr : Expr) -> String {
+    match @symcore.tuple_items(expr) {
+      Some(items) =>
+        "(" + items.map(item => @symprint.to_string(item)).join(", ") + ")"
+      None => @symprint.to_string(expr)
+    }
+  }
+  let float_malformed_mpf = fn(arg : Expr) -> Expr raise ParseError {
+    raise ParseError::UnsupportedConstruct(
+      span=span(0, 0),
+      "ValueError: malformed mpf: " + float_tuple_repr(arg),
+    )
   }
   let exact_arity_error = fn(
     name : String,
@@ -604,7 +671,17 @@ fn make_application(
               span=span(0, 0),
               "TypeError: Float.__new__() missing 1 required positional argument: 'num'",
             )
-          1 | 2 => apply_named(name, args)
+          1 | 2 => {
+            let constructed = apply_named(name, args)
+            match constructed {
+              @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Float"), _) if @symcore.tuple_items(
+                  args[0],
+                )
+                is Some(items) &&
+                items.length() == 3 => float_malformed_mpf(args[0])
+              _ => constructed
+            }
+          }
           3 =>
             raise ParseError::UnsupportedConstruct(
               span=span(0, 0),
