@@ -716,7 +716,13 @@ test "symcore source-driven kinds distinguish logical applications" {
     @symcore.kind_name(
       @symcore.expr_kind(@symcore.function("sin", [x])),
     ),
-    content="NumberKind",
+    content="UndefinedKind",
+  )
+  inspect(
+    @symcore.kind_name(
+      @symcore.expr_kind(@symcore.applied_undefined_function("f", [x])),
+    ),
+    content="UndefinedKind",
   )
 }
 
@@ -779,6 +785,18 @@ test "symcore source-driven Integer and Rational constructor semantics" {
   inspect(
     core_expr_sstr(@symcore.function("Integer", [@symcore.Expr::Float(@symcore.Float::from_double(10.5))])),
     content="10",
+  )
+  inspect(
+    core_expr_sstr(@symcore.function("Integer", [@symcore.Expr::Float(@symcore.Float::from_double(-3.8))])),
+    content="-3",
+  )
+  inspect(
+    core_expr_sstr(@symcore.function("Integer", [@symcore.Expr::Boolean(true)])),
+    content="1",
+  )
+  inspect(
+    core_expr_sstr(@symcore.function("Integer", [@symcore.Expr::Boolean(false)])),
+    content="0",
   )
   inspect(
     core_expr_sstr(

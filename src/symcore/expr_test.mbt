@@ -559,6 +559,18 @@ test "function constructors follow SymPy core semantics" {
     content="10",
   )
   inspect(
+    @symprint.to_string(function("Integer", [Expr::Float(Float::from_double(-3.8))])),
+    content="-3",
+  )
+  inspect(
+    @symprint.to_string(function("Integer", [Expr::Boolean(true)])),
+    content="1",
+  )
+  inspect(
+    @symprint.to_string(function("Integer", [Expr::Boolean(false)])),
+    content="0",
+  )
+  inspect(
     @symprint.to_string(
       function(
         "Rational",

@@ -75,7 +75,11 @@ test "expr_kind follows source-driven core kinds" {
   )
   inspect(
     kind_name(expr_kind(function("sin", [x]))),
-    content="NumberKind",
+    content="UndefinedKind",
+  )
+  inspect(
+    kind_name(expr_kind(applied_undefined_function("f", [x]))),
+    content="UndefinedKind",
   )
   inspect(
     kind_name(expr_kind(function("And", [Expr::Boolean(true), Expr::Boolean(false)]))),

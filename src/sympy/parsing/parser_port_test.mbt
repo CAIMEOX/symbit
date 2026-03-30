@@ -680,6 +680,18 @@ test "symparse parity builtin callable semantics" {
     content=parse_expr_sstr("Integer(10.5)"),
   )
   inspect(
+    @symprint.to_string(parse_expr("Integer(-3.8)")),
+    content=parse_expr_sstr("Integer(-3.8)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Integer(True)")),
+    content=parse_expr_sstr("Integer(True)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Integer(False)")),
+    content=parse_expr_sstr("Integer(False)"),
+  )
+  inspect(
     @symprint.to_string(parse_expr("Integer(pi)")),
     content=parse_expr_sstr("Integer(pi)"),
   )
@@ -1013,6 +1025,18 @@ test "symparse parity builtin callable semantics" {
   inspect(
     @symprint.to_string(ast_parse_expr("Integer(10.5)")),
     content=ast_parse_expr_sstr("Integer(10.5)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Integer(-3.8)")),
+    content=ast_parse_expr_sstr("Integer(-3.8)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Integer(True)")),
+    content=ast_parse_expr_sstr("Integer(True)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Integer(False)")),
+    content=ast_parse_expr_sstr("Integer(False)"),
   )
   inspect(
     @symprint.to_string(ast_parse_expr("Rational(2, 3)")),
