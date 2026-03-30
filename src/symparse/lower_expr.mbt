@@ -69,8 +69,7 @@ fn canonicalize_constructor_expr(expr : Expr) -> Expr {
       let args = args.map(canonicalize_constructor_expr)
       @symcore.apply(head, args).unwrap_or(Expr::Apply(head, args))
     }
-    Expr::Function(_, _) => @symcore.normalize_legacy_expr(expr)
-    _ => expr
+    _ => @symcore.normalize_legacy_expr(expr)
   }
 }
 
