@@ -541,13 +541,33 @@ pub fn sorted_dict_entries(items : Array[(Expr, Expr)]) -> Array[(Expr, Expr)] {
 
 ///|
 fn normalize_legacy_function(name : String, args : Array[Expr]) -> Expr {
-  with_evaluate(true, fn() {
-    with_distribute(true, fn() {
-      with_exp_is_pow(false, fn() {
-        function(name, args.map(normalize_legacy_expr))
+  let normalized_args = args.map(normalize_legacy_expr)
+  match name {
+    "True"
+    | "False"
+    | "Tuple"
+    | "S"
+    | "Integer"
+    | "Rational"
+    | "Float"
+    | "Eq"
+    | "Ne"
+    | "Lt"
+    | "Le"
+    | "Gt"
+    | "Ge"
+    | "Mod"
+    | "Derivative"
+    | "Subs"
+    | "Lambda"
+    | "Dict" =>
+      with_evaluate(true, fn() {
+        with_distribute(true, fn() {
+          with_exp_is_pow(false, fn() { function(name, normalized_args) })
+        })
       })
-    })
-  })
+    _ => Expr::Apply(Expr::FunctionHead(name), normalized_args)
+  }
 }
 
 ///|
