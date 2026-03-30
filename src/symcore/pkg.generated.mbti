@@ -42,6 +42,8 @@ pub fn canonical_derivative_args(ArrayView[Expr]) -> Array[Expr]
 
 pub fn children(Expr) -> ArrayView[Expr]
 
+pub fn clear_wild_property_resolver() -> Unit
+
 pub fn common_kind(Array[Kind]) -> Kind
 
 pub fn compare_expr(Expr, Expr) -> Int
@@ -207,6 +209,8 @@ pub fn relational_parts(Expr) -> (RelOp, Expr, Expr)?
 pub fn replace(Expr, (Expr) -> Bool, (Expr) -> Expr) -> Expr
 
 pub fn s(SympifyInput) -> Expr
+
+pub fn set_wild_property_resolver((WildProperty, Expr) -> Bool?) -> Unit
 
 pub fn singleton_expr_by_name(String) -> Expr?
 
@@ -437,6 +441,8 @@ pub(all) enum WildProperty {
 pub type FuzzyBool = Bool?
 
 pub type MatchEnv = Map[Expr, Expr]
+
+pub type WildPropertyResolver = (WildProperty, Expr) -> Bool?
 
 // Traits
 
