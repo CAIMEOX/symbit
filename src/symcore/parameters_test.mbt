@@ -1,4 +1,9 @@
 ///|
+pub(all) suberror ParameterTestError {
+  Boom
+}
+
+///|
 test "with_evaluate controls core constructor evaluation" {
   let x = Expr::Symbol("x")
   let half = rational_from_ints(3, 2)
@@ -61,4 +66,56 @@ test "legacy normalization ignores temporary constructor parameters" {
     ),
     content="exp(x)",
   )
+}
+
+///|
+test "parameter helpers restore state after raised errors" {
+  inspect(current_evaluate(), content="true")
+  inspect(current_distribute(), content="true")
+  inspect(current_exp_is_pow(), content="false")
+
+  let saw_evaluate_false : Ref[Bool] = { val: false }
+  let evaluate_result =
+    try {
+      with_evaluate_raise(false, fn() -> Int raise {
+        saw_evaluate_false.val = !current_evaluate()
+        raise ParameterTestError::Boom
+      })
+    } catch {
+      ParameterTestError::Boom => 1
+      _ => 0
+    }
+  inspect(evaluate_result, content="1")
+  inspect(saw_evaluate_false.val, content="true")
+  inspect(current_evaluate(), content="true")
+
+  let saw_distribute_false : Ref[Bool] = { val: false }
+  let distribute_result =
+    try {
+      with_distribute_raise(false, fn() -> Int raise {
+        saw_distribute_false.val = !current_distribute()
+        raise ParameterTestError::Boom
+      })
+    } catch {
+      ParameterTestError::Boom => 2
+      _ => 0
+    }
+  inspect(distribute_result, content="2")
+  inspect(saw_distribute_false.val, content="true")
+  inspect(current_distribute(), content="true")
+
+  let saw_exp_true : Ref[Bool] = { val: false }
+  let exp_result =
+    try {
+      with_exp_is_pow_raise(true, fn() -> Int raise {
+        saw_exp_true.val = current_exp_is_pow()
+        raise ParameterTestError::Boom
+      })
+    } catch {
+      ParameterTestError::Boom => 3
+      _ => 0
+    }
+  inspect(exp_result, content="3")
+  inspect(saw_exp_true.val, content="true")
+  inspect(current_exp_is_pow(), content="false")
 }

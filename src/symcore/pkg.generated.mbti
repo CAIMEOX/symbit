@@ -248,6 +248,10 @@ pub fn undefined_application_parts(Expr) -> (String, Array[Expr])?
 
 pub fn wild_display_name(String) -> String
 
+pub fn wild_function_matches(Expr, Expr, repl_dict? : Map[Expr, Expr]) -> Map[Expr, Expr]?
+
+pub fn wild_function_parts(Expr) -> (String, Array[Int])?
+
 pub fn wild_matches(Expr, Expr, repl_dict? : Map[Expr, Expr]) -> Map[Expr, Expr]?
 
 pub fn wild_name(Expr) -> String?
@@ -258,9 +262,15 @@ pub fn wild_property_name(WildProperty) -> String
 
 pub fn[T] with_distribute(Bool, () -> T) -> T
 
+pub fn[T] with_distribute_raise(Bool, () -> T raise) -> T raise
+
 pub fn[T] with_evaluate(Bool, () -> T) -> T
 
+pub fn[T] with_evaluate_raise(Bool, () -> T raise) -> T raise
+
 pub fn[T] with_exp_is_pow(Bool, () -> T) -> T
+
+pub fn[T] with_exp_is_pow_raise(Bool, () -> T raise) -> T raise
 
 pub fn xreplace(Expr, Array[(Expr, Expr)]) -> Expr
 
@@ -308,6 +318,7 @@ pub(all) enum Expr {
   Symbol(String)
   Dummy(String, Int)
   Wild(String, Array[Expr], Array[WildProperty])
+  WildFunction(String, Array[Int])
   FunctionHead(String)
   UndefinedFunction(String)
   Apply(Expr, Array[Expr])
@@ -339,6 +350,7 @@ pub enum ExprForm {
   Symbol(String)
   Dummy(String, Int)
   Wild(String, Array[Expr], Array[WildProperty])
+  WildFunction(String, Array[Int])
   IdentityFunction
   FunctionHead(String)
   UndefinedFunction(String)
@@ -428,6 +440,7 @@ pub(all) enum SympifyInput {
 }
 
 pub(all) enum WildProperty {
+  Symbol
   Integer
   Rational
   Real

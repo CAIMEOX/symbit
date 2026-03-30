@@ -46,3 +46,51 @@ pub fn[T] with_exp_is_pow(value : Bool, thunk : () -> T) -> T {
   exp_is_pow_ref.val = old
   result
 }
+
+///|
+pub fn[T] with_evaluate_raise(value : Bool, thunk : () -> T raise) -> T raise {
+  let old = evaluate_ref.val
+  evaluate_ref.val = value
+  try {
+    let result = thunk()
+    evaluate_ref.val = old
+    result
+  } catch {
+    e => {
+      evaluate_ref.val = old
+      raise e
+    }
+  }
+}
+
+///|
+pub fn[T] with_distribute_raise(value : Bool, thunk : () -> T raise) -> T raise {
+  let old = distribute_ref.val
+  distribute_ref.val = value
+  try {
+    let result = thunk()
+    distribute_ref.val = old
+    result
+  } catch {
+    e => {
+      distribute_ref.val = old
+      raise e
+    }
+  }
+}
+
+///|
+pub fn[T] with_exp_is_pow_raise(value : Bool, thunk : () -> T raise) -> T raise {
+  let old = exp_is_pow_ref.val
+  exp_is_pow_ref.val = value
+  try {
+    let result = thunk()
+    exp_is_pow_ref.val = old
+    result
+  } catch {
+    e => {
+      exp_is_pow_ref.val = old
+      raise e
+    }
+  }
+}
