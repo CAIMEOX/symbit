@@ -286,6 +286,21 @@ fn expr_mentions_any_symbol_name(expr : Expr, names : Array[String]) -> Bool {
 }
 
 ///|
+fn expr_contains_exact_subexpr(expr : Expr, target : Expr) -> Bool {
+  let expr = normalize_legacy_expr(expr)
+  let target = normalize_legacy_expr(target)
+  if expr == target {
+    return true
+  }
+  for child in children(expr) {
+    if expr_contains_exact_subexpr(child, target) {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn lambda_match_signature(
   param : Expr,
   arg : Expr,
@@ -385,6 +400,7 @@ fn subst_derivative(
   for wrt_name in original_wrt_names {
     match env.get(wrt_name) {
       Some(value) => {
+        let value = normalize_legacy_expr(value)
         let safe_rename = match value {
           Expr::Symbol(new_name) =>
             new_name == wrt_name ||
@@ -393,7 +409,9 @@ fn subst_derivative(
               !original_wrt_names.contains(new_name)
             )
           Expr::Dummy(_, _) => true
-          _ => false
+          _ =>
+            expr_can_diff_wrt(value) &&
+            !expr_contains_exact_subexpr(inner, value)
         }
         if safe_rename {
           rename_env.set(wrt_name, value)
@@ -484,7 +502,8 @@ fn subst_derivative(
   }
   for key in outer_keys {
     match outer_env.get(key) {
-      Some(value) => out = subs_expr(out, Expr::Symbol(key), subst(value, env))
+      Some(value) =>
+        out = subs_expr(out, Expr::Symbol(key), normalize_legacy_expr(value))
       None => ()
     }
   }

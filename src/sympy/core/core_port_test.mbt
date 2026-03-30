@@ -2260,6 +2260,15 @@ test "symcore parity subst respects derivative binding and capture" {
     ),
     content="Subs(Derivative(y + f(x), x), y, x)",
   )
+  inspect(
+    core_expr_sstr(
+      @symcore.subst(
+        @symcore.derivative(@symcore.function("f", [x, y]), y),
+        { "y": @symcore.applied_undefined_function("g", [y]) },
+      ),
+    ),
+    content="Derivative(f(x, g(y)), g(y))",
+  )
 }
 
 ///|

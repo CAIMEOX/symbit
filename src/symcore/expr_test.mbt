@@ -1167,6 +1167,11 @@ test "subst respects derivative binding and capture rules" {
     @symprint.to_string(subst(mixed, { "x": z })),
     content="Derivative(y + sin(z), z, y)",
   )
+  let gy = applied_undefined_function("g", [y])
+  inspect(
+    @symprint.to_string(subst(derivative(function("f", [x, y]), y), { "y": gy })),
+    content="Derivative(f(x, g(y)), g(y))",
+  )
 }
 
 ///|

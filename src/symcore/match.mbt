@@ -350,7 +350,7 @@ fn expr_shape_rank(expr : Expr) -> Int {
     Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_)
     | Expr::IdentityFunction => 16
-    Expr::Function(_, _) => 17
+    Expr::Function(_, _) => abort("legacy function should be normalized")
   }
 }
 
