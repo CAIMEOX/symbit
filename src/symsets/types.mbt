@@ -18,6 +18,7 @@ pub(all) enum Set {
   Integers
   Rationals
   Reals
+  Complexes
 }
 
 ///|
@@ -60,6 +61,11 @@ pub fn rationals() -> Set {
 ///|
 pub fn reals() -> Set {
   Set::Reals
+}
+
+///|
+pub fn complexes() -> Set {
+  Set::Complexes
 }
 
 ///|
@@ -223,9 +229,10 @@ fn variant_rank(set : Set) -> Int {
     Set::Integers => 9
     Set::Rationals => 10
     Set::Reals => 11
-    Set::Union(_) => 12
-    Set::Intersection(_) => 13
-    Set::Complement(_, _) => 14
+    Set::Complexes => 12
+    Set::Union(_) => 13
+    Set::Intersection(_) => 14
+    Set::Complement(_, _) => 15
   }
 }
 

@@ -56,7 +56,8 @@ fn set_is_empty(set : Set) -> SetBool {
     | Set::Naturals0
     | Set::Integers
     | Set::Rationals
-    | Set::Reals => SetBool::False
+    | Set::Reals
+    | Set::Complexes => SetBool::False
     Set::ProductSet(items) => {
       for item in items {
         match set_is_empty(item) {
@@ -720,6 +721,42 @@ fn finite_contains(items : Array[Expr], elem : Expr) -> SetBool {
 
 ///|
 fn contains_numerical_set(kind : Set, elem : Expr) -> SetBool {
+  let is_noncomplex_infinite = fn(expr : Expr) {
+    match @symcore.number_symbol_kind(expr) {
+      Some(@symcore.NumberSymbolKind::ComplexInfinity) => true
+      _ => false
+    }
+  }
+  if kind == Set::Complexes {
+    return match
+      @symassume.tri_to_bool_option(
+        @symassume.ask_predicate(elem, @symassume.Predicate::IsReal),
+      ) {
+      Some(true) => SetBool::True
+      Some(false) =>
+        match elem {
+          Expr::ComplexFloat(_) => SetBool::True
+          _ =>
+            if @symcore.is_complex_number_atom(elem) &&
+              !is_noncomplex_infinite(elem) {
+              SetBool::True
+            } else {
+              SetBool::Unknown
+            }
+        }
+      None =>
+        match elem {
+          Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) =>
+            SetBool::True
+          _ =>
+            if @symcore.is_number_symbol(elem) && !is_noncomplex_infinite(elem) {
+              SetBool::True
+            } else {
+              SetBool::Unknown
+            }
+        }
+    }
+  }
   match expr_number_value(elem) {
     Some(value) => {
       let is_int = value.is_integral()
@@ -825,7 +862,8 @@ pub fn contains(set : Set, elem : Expr) -> SetBool {
     | Set::Naturals0
     | Set::Integers
     | Set::Rationals
-    | Set::Reals => contains_numerical_set(set, elem)
+    | Set::Reals
+    | Set::Complexes => contains_numerical_set(set, elem)
     Set::Union(items) => {
       let mut acc = SetBool::False
       for item in items {
@@ -908,6 +946,14 @@ pub fn is_subset(a : Set, b : Set) -> SetBool {
       }
       acc
     }
+    (
+      Set::Naturals
+      | Set::Naturals0
+      | Set::Integers
+      | Set::Rationals
+      | Set::Reals,
+      Set::Complexes,
+    ) => SetBool::True
     _ => SetBool::Unknown
   }
 }

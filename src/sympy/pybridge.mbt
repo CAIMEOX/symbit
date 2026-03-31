@@ -35,30 +35,21 @@ fn expr_to_sympy_cached(
       sympy_apply_obj(head, args, dummy_cache, wild_cache)
     @symcore.Expr::Boolean(value) => sympy_bool_obj(value)
     @symcore.Expr::Add(args) =>
-      sympy_nary_obj(
-        "sympy.Add",
-        args,
-        "0",
-        dummy_cache,
-        wild_cache,
-        kwargs={ "evaluate": OracleArg::Bool(false) },
-      )
+      sympy_nary_obj("sympy.Add", args, "0", dummy_cache, wild_cache, kwargs={
+        "evaluate": OracleArg::Bool(false),
+      })
     @symcore.Expr::Mul(args) =>
-      sympy_nary_obj(
-        "sympy.Mul",
-        args,
-        "1",
-        dummy_cache,
-        wild_cache,
-        kwargs={ "evaluate": OracleArg::Bool(false) },
-      )
+      sympy_nary_obj("sympy.Mul", args, "1", dummy_cache, wild_cache, kwargs={
+        "evaluate": OracleArg::Bool(false),
+      })
     @symcore.Expr::Pow(base, exp) => {
       let base_obj = expr_to_sympy_cached(base, dummy_cache, wild_cache)
       let exp_obj = expr_to_sympy_cached(exp, dummy_cache, wild_cache)
-      sympy_call_obj("sympy.Pow", [
-        OracleArg::PyObj(base_obj),
-        OracleArg::PyObj(exp_obj),
-      ], kwargs={ "evaluate": OracleArg::Bool(false) })
+      sympy_call_obj(
+        "sympy.Pow",
+        [OracleArg::PyObj(base_obj), OracleArg::PyObj(exp_obj)],
+        kwargs={ "evaluate": OracleArg::Bool(false) },
+      )
     }
     @symcore.Expr::Mod(lhs, rhs) =>
       sympy_call_obj("sympy.Mod", [
@@ -121,7 +112,8 @@ fn expr_to_sympy_cached(
         ),
         OracleArg::PyObj(expr_to_sympy_cached(value, dummy_cache, wild_cache)),
       ])
-    @symcore.Expr::IdentityFunction => sympy_attr_obj("sympy.S.IdentityFunction")
+    @symcore.Expr::IdentityFunction =>
+      sympy_attr_obj("sympy.S.IdentityFunction")
     @symcore.Expr::Lambda(vars, body) =>
       sympy_call_obj("sympy.Lambda", [
         OracleArg::PyObj(expr_to_sympy_cached(vars, dummy_cache, wild_cache)),
@@ -191,7 +183,7 @@ pub fn sympy_number_obj(n : @symnum.BigRational) -> @py.PyObject raise {
 fn sympy_float_obj(value : @symcore.Float) -> @py.PyObject raise {
   let dps = @symnum.prec_to_dps(value.precision())
   sympy_call_obj("sympy.Float", [
-    OracleArg::Str(value.format(dps=dps)),
+    OracleArg::Str(value.format(dps~)),
     OracleArg::Int(dps),
   ])
 }
@@ -407,14 +399,10 @@ fn sympy_wild_obj(
       for property in properties {
         property_list.append(sympy_wild_property_callable(property))
       }
-      let obj = sympy_call_obj(
-        "sympy.Wild",
-        [OracleArg::Str(name)],
-        kwargs={
-          "exclude": OracleArg::PyObj(exclude_list.obj()),
-          "properties": OracleArg::PyObj(property_list.obj()),
-        },
-      )
+      let obj = sympy_call_obj("sympy.Wild", [OracleArg::Str(name)], kwargs={
+        "exclude": OracleArg::PyObj(exclude_list.obj()),
+        "properties": OracleArg::PyObj(property_list.obj()),
+      })
       wild_cache.set(cache_key, obj)
       obj
     }

@@ -36,6 +36,7 @@ pub fn to_string(set : Set) -> String {
     Set::Integers => "Integers"
     Set::Rationals => "Rationals"
     Set::Reals => "Reals"
+    Set::Complexes => "Complexes"
     Set::FiniteSet(items) => {
       let rendered = items.map(expr_str).join(", ")
       "{" + rendered + "}"

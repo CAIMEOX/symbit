@@ -42,7 +42,8 @@ pub fn debug_repr(expr : Expr) -> String {
     @symcore.ExprForm::Symbol(name) => "sym:\{name}"
     @symcore.ExprForm::Dummy(name, id) =>
       "dummy:\{@symcore.dummy_display_name(name)}#\{id}"
-    @symcore.ExprForm::Wild(name, _, _) => "wild:\{@symcore.wild_display_name(name)}"
+    @symcore.ExprForm::Wild(name, _, _) =>
+      "wild:\{@symcore.wild_display_name(name)}"
     @symcore.ExprForm::WildFunction(name, _) =>
       "wild_function:\{@symcore.wild_display_name(name)}"
     @symcore.ExprForm::IdentityFunction => "(call IdentityFunction)"
@@ -129,7 +130,7 @@ pub fn to_string(expr : Expr) -> String {
 fn exact_abs_expr(expr : Expr) -> Expr {
   match @symcore.exact_number_num_den(expr) {
     Some((num, den)) if num.compare(0N) < 0 => {
-      let value = @symnum.BigRational::new((-num), den) catch {
+      let value = @symnum.BigRational::new(-num, den) catch {
         _ => abort("exact_abs_expr: invalid denominator")
       }
       @symcore.Expr::Number(value)
@@ -142,7 +143,7 @@ fn exact_abs_expr(expr : Expr) -> Expr {
 fn exact_positive_denominator_pow(base : Expr, exp : Expr) -> Expr? {
   match @symcore.exact_number_num_den(exp) {
     Some((num, den)) if num.compare(0N) < 0 => {
-      let positive = @symnum.BigRational::new((-num), den) catch {
+      let positive = @symnum.BigRational::new(-num, den) catch {
         _ => abort("exact_positive_denominator_pow: invalid denominator")
       }
       if positive.is_one() {
@@ -205,7 +206,11 @@ fn format_mul(expr : Expr, args : Array[Expr], parent_prec : Int) -> String {
       .join("*")
     sign + numerator_text + "/(" + denom_text + ")"
   }
-  if prec < parent_prec { "(" + body + ")" } else { body }
+  if prec < parent_prec {
+    "(" + body + ")"
+  } else {
+    body
+  }
 }
 
 ///|

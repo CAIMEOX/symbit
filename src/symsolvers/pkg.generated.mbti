@@ -1,0 +1,184 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symsolvers"
+
+import {
+  "CAIMEOX/symbit/symassume",
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symmatrices",
+  "CAIMEOX/symbit/sympolys",
+  "CAIMEOX/symbit/symsets",
+}
+
+// Values
+pub let allhints : Array[String]
+
+pub fn canonical_odes(Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr) -> Array[Array[@symcore.Expr]] raise SolverError
+
+pub fn check_assumptions(@symcore.Expr, against? : @symcore.Expr?, assumptions? : Map[String, Bool?], env? : Map[String, @symassume.SymbolFacts]) -> Bool? raise SolverError
+
+pub fn checkinfsol(@symcore.Expr, Array[Map[String, @symcore.Expr]], func? : @symcore.Expr?, order? : Int?) -> Array[(Bool, @symcore.Expr)] raise SolverError
+
+pub fn checkodesol(@symcore.Expr, @symcore.Expr, func? : @symcore.Expr?) -> (Bool, @symcore.Expr) raise SolverError
+
+pub fn checkpdesol(@symcore.Expr, @symcore.Expr, func? : @symcore.Expr?) -> (Bool, @symcore.Expr) raise SolverError
+
+pub fn checksol(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> Bool? raise SolverError
+
+pub fn classify_diop(@symcore.Expr, syms? : Array[@symcore.Expr]) -> (Array[@symcore.Expr], Map[String, @symcore.Expr], String) raise SolverError
+
+pub fn classify_ode(@symcore.Expr, func? : @symcore.Expr?) -> Array[String] raise SolverError
+
+pub fn classify_pde(@symcore.Expr, func? : @symcore.Expr?) -> Array[String] raise SolverError
+
+pub let complexes : @symsets.Set
+
+pub fn constantsimp(@symcore.Expr, Array[@symcore.Expr]) -> @symcore.Expr raise SolverError
+
+pub fn decompogen(@symcore.Expr, @symcore.Expr) -> Array[@symcore.Expr] raise SolverError
+
+pub fn det_quick(@symmatrices.Matrix, algorithm? : String?) -> @symcore.Expr raise SolverError
+
+pub fn diop_solve(@symcore.Expr, param? : @symcore.Expr, syms? : Array[@symcore.Expr]) -> DiopSolveResult raise SolverError
+
+pub fn diophantine(@symcore.Expr, param? : @symcore.Expr, syms? : Array[@symcore.Expr]) -> @symsets.Set raise SolverError
+
+pub fn dsolve(@symcore.Expr, func? : @symcore.Expr?, hint? : String) -> @symcore.Expr raise SolverError
+
+pub fn factor_system(Array[@symcore.Expr], gens? : Array[@symcore.Expr]) -> Array[Array[@symcore.Expr]] raise SolverError
+
+pub fn failing_assumptions(@symcore.Expr, Map[String, Bool?], env? : Map[String, @symassume.SymbolFacts]) -> Map[String, Bool?]
+
+pub fn homogeneous_order(@symcore.Expr, Array[@symcore.Expr]) -> @symcore.Expr? raise SolverError
+
+pub fn infinitesimals(@symcore.Expr, func? : @symcore.Expr?, order? : Int?, hint? : String, match_env? : Map[String, @symcore.Expr]?) -> Array[Map[String, @symcore.Expr]] raise SolverError
+
+pub fn inv_quick(@symmatrices.Matrix) -> @symmatrices.Matrix raise SolverError
+
+pub fn linear_eq_to_matrix(Array[@symcore.Expr], Array[@symcore.Expr]) -> (@symmatrices.Matrix, @symmatrices.Matrix) raise SolverError
+
+pub fn linear_ode_to_matrix(Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr, Int) -> (Array[@symmatrices.Matrix], @symmatrices.Matrix) raise SolverError
+
+pub fn linodesolve(@symmatrices.Matrix, @symcore.Expr, rhs? : @symmatrices.Matrix?, antiderivative? : @symmatrices.Matrix?, type_hint? : String, doit? : Bool, tau? : @symcore.Expr?) -> @symmatrices.Matrix raise SolverError
+
+pub fn linprog(Array[@symcore.Expr], a? : @symmatrices.Matrix?, b? : Array[@symcore.Expr]?, a_eq? : @symmatrices.Matrix?, b_eq? : Array[@symcore.Expr]?, bounds? : Array[(@symcore.Expr?, @symcore.Expr?)]?) -> (@symcore.Expr, Array[@symcore.Expr]) raise SolverError
+
+pub fn linsolve(LinsolveInput, Array[@symcore.Expr]) -> @symsets.Set raise SolverError
+
+pub fn linsolve_augmented_matrix_input(@symmatrices.Matrix) -> LinsolveInput
+
+pub fn linsolve_equations_input(Array[@symcore.Expr]) -> LinsolveInput
+
+pub fn lpmax(@symcore.Expr, Array[@symcore.Expr]) -> (@symcore.Expr, Map[String, @symcore.Expr]) raise SolverError
+
+pub fn lpmin(@symcore.Expr, Array[@symcore.Expr]) -> (@symcore.Expr, Map[String, @symcore.Expr]) raise SolverError
+
+pub fn nonlinsolve(Array[@symcore.Expr], Array[@symcore.Expr]) -> @symsets.Set raise SolverError
+
+pub fn nsolve(@symcore.Expr, @symcore.Expr, @symcore.Expr, x1? : @symcore.Expr?, prec? : Int, solver? : String) -> @symcore.Expr raise SolverError
+
+pub fn ode_order(@symcore.Expr, @symcore.Expr) -> Int
+
+pub fn pde_separate(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], strategy? : String) -> Array[@symcore.Expr]? raise SolverError
+
+pub fn pde_separate_add(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr]) -> Array[@symcore.Expr]? raise SolverError
+
+pub fn pde_separate_mul(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr]) -> Array[@symcore.Expr]? raise SolverError
+
+pub fn pdsolve(@symcore.Expr, func? : @symcore.Expr?, hint? : String) -> @symcore.Expr raise SolverError
+
+pub fn reduce_abs_inequalities(Array[(@symcore.Expr, String)], @symcore.Expr) -> @symcore.Expr raise SolverError
+
+pub fn reduce_abs_inequality(@symcore.Expr, String, @symcore.Expr) -> @symcore.Expr raise SolverError
+
+pub fn reduce_inequalities(Array[@symcore.Expr], symbols? : Array[@symcore.Expr]) -> @symcore.Expr raise SolverError
+
+pub fn rsolve(@symcore.Expr, @symcore.Expr, init? : RsolveInit?) -> @symcore.Expr? raise SolverError
+
+pub fn rsolve_hyper(Array[@symcore.Expr], @symcore.Expr, @symcore.Expr) -> @symcore.Expr? raise SolverError
+
+pub fn rsolve_init_dict(Map[String, @symcore.Expr]) -> RsolveInit
+
+pub fn rsolve_init_list(Array[@symcore.Expr]) -> RsolveInit
+
+pub fn rsolve_poly(Array[@symcore.Expr], @symcore.Expr, @symcore.Expr, shift? : Int) -> @symcore.Expr? raise SolverError
+
+pub fn rsolve_ratio(Array[@symcore.Expr], @symcore.Expr, @symcore.Expr) -> @symcore.Expr? raise SolverError
+
+pub fn solve(SolveInput, symbols? : Array[@symcore.Expr]) -> SolveResult raise SolverError
+
+pub fn solve_expr_input(@symcore.Expr) -> SolveInput
+
+pub fn solve_exprs_input(Array[@symcore.Expr]) -> SolveInput
+
+pub fn solve_linear(@symcore.Expr, rhs? : @symcore.Expr, symbols? : Array[@symcore.Expr], exclude? : Array[@symcore.Expr]) -> (@symcore.Expr, @symcore.Expr) raise SolverError
+
+pub fn solve_linear_system(@symmatrices.Matrix, Array[@symcore.Expr]) -> Map[String, @symcore.Expr]? raise SolverError
+
+pub fn solve_linear_system_LU(@symmatrices.Matrix, Array[@symcore.Expr]) -> Map[String, @symcore.Expr]? raise SolverError
+
+pub fn solve_matrix_input(@symmatrices.Matrix) -> SolveInput
+
+pub fn solve_poly_inequality(@sympolys.Poly, String) -> Array[@symsets.Set] raise SolverError
+
+pub fn solve_poly_system(Array[@symcore.Expr], Array[@symcore.Expr]) -> Array[@symcore.Expr] raise SolverError
+
+pub fn solve_rational_inequalities(Array[Array[((@sympolys.Poly, @sympolys.Poly), String)]]) -> @symsets.Set raise SolverError
+
+pub fn solve_triangulated(Array[@symcore.Expr], Array[@symcore.Expr]) -> Array[@symcore.Expr] raise SolverError
+
+pub fn solve_undetermined_coeffs(@symcore.Expr, Array[@symcore.Expr], syms? : Array[@symcore.Expr], dict? : Bool) -> SolveResult? raise SolverError
+
+pub fn solve_univariate_inequality(@symcore.Expr, @symcore.Expr, relational? : Bool, domain? : @symsets.Set, continuous? : Bool) -> InequalityResult raise SolverError
+
+pub fn solveset(@symcore.Expr, symbol? : @symcore.Expr?, domain? : @symsets.Set) -> @symsets.Set raise SolverError
+
+pub fn substitution(Array[@symcore.Expr], Array[@symcore.Expr]) -> @symsets.Set raise SolverError
+
+// Errors
+pub(all) suberror SolverError {
+  ValueError(String)
+  ShapeError(String)
+  InfeasibleLPError(String)
+  UnboundedLPError(String)
+}
+pub impl Eq for SolverError
+pub impl Show for SolverError
+
+// Types and methods
+pub enum DiopSolveResult {
+  Tuple(Array[@symcore.Expr])
+  Set(@symsets.Set)
+}
+
+pub enum InequalityResult {
+  Set(@symsets.Set)
+  Relational(@symcore.Expr)
+}
+
+pub enum LinsolveInput {
+  Equations(Array[@symcore.Expr])
+  AugmentedMatrix(@symmatrices.Matrix)
+}
+
+pub enum RsolveInit {
+  List(Array[@symcore.Expr])
+  Dict(Map[String, @symcore.Expr])
+}
+
+pub enum SolveInput {
+  Expr(@symcore.Expr)
+  Exprs(Array[@symcore.Expr])
+  Matrix(@symmatrices.Matrix)
+}
+
+pub enum SolveResult {
+  List(Array[@symcore.Expr])
+  Dict(Map[String, @symcore.Expr])
+  Dicts(Array[Map[String, @symcore.Expr]])
+}
+
+// Type aliases
+pub type RationalInequality = ((@sympolys.Poly, @sympolys.Poly), String)
+
+// Traits
+

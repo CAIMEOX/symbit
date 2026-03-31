@@ -11,6 +11,8 @@ pub fn compare_set(Set, Set) -> Int
 
 pub fn complement(Set, Set) -> Set
 
+pub fn complexes() -> Set
+
 pub fn condition_set(@symcore.Expr, @symlogic.BoolExpr, base? : Set) -> Set
 
 pub fn contains(Set, @symcore.Expr) -> SetBool
@@ -66,6 +68,7 @@ pub(all) enum Set {
   Integers
   Rationals
   Reals
+  Complexes
 }
 pub impl Compare for Set
 pub impl Eq for Set

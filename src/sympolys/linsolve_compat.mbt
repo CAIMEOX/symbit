@@ -78,8 +78,7 @@ fn expr_is_zero(expr : Expr) -> Bool {
 fn expr_has_floating_leaf(expr : Expr) -> Bool {
   match expr {
     Expr::Float(_) | Expr::ComplexFloat(_) => true
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(expr_has_floating_leaf)
+    Expr::Add(args) | Expr::Mul(args) => args.any(expr_has_floating_leaf)
     _ if @symcore.application_parts(expr) is Some(_) =>
       @symcore.application_args(expr).unwrap_or([]).any(expr_has_floating_leaf)
     Expr::Pow(base, exp) =>
@@ -319,9 +318,9 @@ fn expr_depends_on_syms(expr : Expr, symset : Map[String, Bool]) -> Bool {
     Expr::Pow(base, exp) =>
       expr_depends_on_syms(base, symset) || expr_depends_on_syms(exp, symset)
     _ if @symcore.application_parts(expr) is Some(_) =>
-      @symcore.application_args(expr).unwrap_or([]).any(fn(child) {
-        expr_depends_on_syms(child, symset)
-      })
+      @symcore.application_args(expr)
+      .unwrap_or([])
+      .any(fn(child) { expr_depends_on_syms(child, symset) })
     _ => false
   }
 }
