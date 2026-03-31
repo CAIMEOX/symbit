@@ -15,7 +15,11 @@ test "physics.quantum.kind: local kinds" {
   assert_true(quantum_kind(dagger(k)) == QuantumKind::QBra)
   assert_true(
     quantum_kind(
-      commutator(a, operator([@symcore.Expr::Symbol("B")]).as_expr(), evaluate=false),
+      commutator(
+        a,
+        operator([@symcore.Expr::Symbol("B")]).as_expr(),
+        evaluate=false,
+      ),
     ) ==
     QuantumKind::QOperator,
   )

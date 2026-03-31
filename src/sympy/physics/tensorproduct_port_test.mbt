@@ -15,7 +15,8 @@ test "physics.quantum.tensorproduct: parity" {
     quantum_eval_str(
       @symprint.to_string(
         @symquant.tensor_product([
-          @symcore.Expr::Symbol("x") * operator([@symcore.Expr::Symbol("A")]).as_expr(),
+          @symcore.Expr::Symbol("x") *
+          operator([@symcore.Expr::Symbol("A")]).as_expr(),
           @symcore.int(2) * operator([@symcore.Expr::Symbol("B")]).as_expr(),
         ]).as_expr(),
       ),

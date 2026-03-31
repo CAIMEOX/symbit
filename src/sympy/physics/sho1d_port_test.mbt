@@ -62,7 +62,9 @@ test "physics.quantum.sho1d: symbolic parity" {
     quantum_qapply_str("LoweringOp(a)*SHOKet(k)"),
     quantum_eval_str(
       @symprint.to_string(
-        qapply(@symcore.raw_mul([lowering_op(), sho_ket(@symcore.Expr::Symbol("k"))])),
+        qapply(
+          @symcore.raw_mul([lowering_op(), sho_ket(@symcore.Expr::Symbol("k"))]),
+        ),
       ),
     ),
     "lowering symbolic qapply parity",

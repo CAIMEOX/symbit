@@ -45,10 +45,15 @@ test "physics.mechanics particle and rigidbody core" {
   let p = o.locatenew("PP", n.x().scale(@symcore.Expr::Symbol("r")))
   p.set_vel(
     n,
-    n.x().scale(@symcore.Expr::Symbol("v1")) + n.z().scale(@symcore.Expr::Symbol("v3")),
+    n.x().scale(@symcore.Expr::Symbol("v1")) +
+    n.z().scale(@symcore.Expr::Symbol("v3")),
   )
 
-  let part = particle("pa", point=Some(p), mass=Some(@symcore.Expr::Symbol("m")))
+  let part = particle(
+    "pa",
+    point=Some(p),
+    mass=Some(@symcore.Expr::Symbol("m")),
+  )
   inspect(part.repr(), content="Particle('pa', masscenter=PP, mass=m)")
   inspect(
     @symvector.vsprint(part.linear_momentum(n)),
@@ -83,7 +88,9 @@ test "physics.mechanics wrapper functions and substitutions" {
   let p = o.locatenew("FP", n.x())
   p.set_vel(n, n.x().scale(@symcore.int(10)))
   let pa = particle("Pa", point=Some(p), mass=Some(@symcore.int(1)))
-  pa.set_potential_energy(@symcore.Expr::Symbol("g") * @symcore.Expr::Symbol("h"))
+  pa.set_potential_energy(
+    @symcore.Expr::Symbol("g") * @symcore.Expr::Symbol("h"),
+  )
 
   let ac = o.locatenew("FAc", n.y().scale(@symcore.int(2)))
   ac.set_vel(n, n.y().scale(@symcore.int(5)))
@@ -97,7 +104,9 @@ test "physics.mechanics wrapper functions and substitutions" {
     inertia=Some(inertia_tuple(@symvector.outer(n.z(), n.z()), ac)),
   )
   rb.set_potential_energy(
-    @symcore.Expr::Symbol("M") * @symcore.Expr::Symbol("g") * @symcore.Expr::Symbol("h"),
+    @symcore.Expr::Symbol("M") *
+    @symcore.Expr::Symbol("g") *
+    @symcore.Expr::Symbol("h"),
   )
 
   inspect(
@@ -121,12 +130,17 @@ test "physics.mechanics wrapper functions and substitutions" {
   let x = @symvector.dynamicsymbol("x")
   let y = @symvector.dynamicsymbol("y")
   let expr = @symelem.cos(x + y) * @symelem.tan(x + y) +
-    @symcore.Expr::Symbol("b") * @symcalculus.diff(x, @symvector.dynamicsymbols_t)
+    @symcore.Expr::Symbol("b") *
+    @symcalculus.diff(x, @symvector.dynamicsymbols_t)
   let replaced = msubs_expr(
     expr,
     [
       (x, @symcore.int(0)),
-      (y, @symcore.rational_from_ints(1, 2) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
+      (
+        y,
+        @symcore.rational_from_ints(1, 2) *
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+      ),
       (@symcalculus.diff(x, @symvector.dynamicsymbols_t), @symcore.int(1)),
     ],
     smart=true,

@@ -28,7 +28,11 @@ test "physics.mechanics parity lagrange simple pendulum" {
   o.set_vel(n, @symvector.vector_zero())
   let p = o.locatenew("PLP", a.x().scale(@symcore.Expr::Symbol("l")))
   ignore(p.v2pt_theory(o, n, a))
-  let pa = particle("PLPa", point=Some(p), mass=Some(@symcore.Expr::Symbol("m")))
+  let pa = particle(
+    "PLPa",
+    point=Some(p),
+    mass=Some(@symcore.Expr::Symbol("m")),
+  )
   pa.set_potential_energy(
     @symcore.int(-1) *
     @symcore.Expr::Symbol("m") *

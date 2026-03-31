@@ -250,10 +250,9 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
           }
         }
         _ =>
-          return @symcore.raw_apply(
-            head,
-            args.map(wavefunction_simplify_expr),
-          ).unwrap_or(Expr::Apply(head, args.map(wavefunction_simplify_expr)))
+          return @symcore.raw_apply(head, args.map(wavefunction_simplify_expr)).unwrap_or(
+            Expr::Apply(head, args.map(wavefunction_simplify_expr)),
+          )
       }
     None => ()
   }
@@ -895,10 +894,9 @@ fn quantum_replace_exact(
 fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
   match @symcore.application_parts(expr) {
     Some((head, args)) =>
-      return @symcore.raw_apply(
-        head,
-        args.map(wavefunction_eval_derivatives),
-      ).unwrap_or(expr)
+      return @symcore.raw_apply(head, args.map(wavefunction_eval_derivatives)).unwrap_or(
+        expr,
+      )
     None => ()
   }
   match @symcore.expr_form(expr) {

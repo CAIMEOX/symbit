@@ -548,7 +548,11 @@ pub fn permutation_operator(lhs : Expr, rhs : Expr) -> Expr {
 fn sq_swap_indices(expr : Expr, lhs : String, rhs : String) -> Expr {
   let tmp = "__perm_tmp__"
   sq_subst_one(
-    sq_subst_one(sq_subst_one(expr, lhs, Expr::Symbol(tmp)), rhs, Expr::Symbol(lhs)),
+    sq_subst_one(
+      sq_subst_one(expr, lhs, Expr::Symbol(tmp)),
+      rhs,
+      Expr::Symbol(lhs),
+    ),
     tmp,
     Expr::Symbol(rhs),
   )

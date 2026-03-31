@@ -21,7 +21,11 @@ test "physics.mechanics parity kane spring mass damper" {
   let n = @symvector.reference_frame("PKN")
   let p = @symvector.point("PKP")
   p.set_vel(n, n.x().scale(u))
-  let pa = particle("PKPa", point=Some(p), mass=Some(@symcore.Expr::Symbol("m")))
+  let pa = particle(
+    "PKPa",
+    point=Some(p),
+    mass=Some(@symcore.Expr::Symbol("m")),
+  )
   let km = kanes_method(n, [q], [u], [
     @symcalculus.diff(q, @symvector.dynamicsymbols_t) - u,
   ])

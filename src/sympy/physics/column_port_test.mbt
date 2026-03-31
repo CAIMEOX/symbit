@@ -1,6 +1,10 @@
 ///|
 test "physics.continuum_mechanics.column: oracle parity" {
-  let c = column(@symcore.int(10), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1), @symcore.Expr::Symbol("A"))
+  let c = column(
+    @symcore.int(10),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1),
+    @symcore.Expr::Symbol("A"),
+  )
   ignore(c.apply_support(@symcore.int(0)))
   ignore(c.apply_support(@symcore.int(10)))
   c.apply_load(@symcore.int(-1), @symcore.int(5), -1)

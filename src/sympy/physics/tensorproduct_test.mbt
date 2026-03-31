@@ -16,7 +16,10 @@ test "physics.quantum.tensorproduct: symbolic and matrix subset" {
     content="Dagger(A)xDagger(B)",
   )
   quantum_test_assert_expr_equal(
-    @symquant.tensor_product([@symcore.Expr::Symbol("x") * a, @symcore.int(2) * b]).as_expr(),
+    @symquant.tensor_product([
+      @symcore.Expr::Symbol("x") * a,
+      @symcore.int(2) * b,
+    ]).as_expr(),
     "2*x*TensorProduct(Operator(A), Operator(B))",
     "tensorproduct scalar normalization",
   )
@@ -34,7 +37,10 @@ test "physics.quantum.tensorproduct: symbolic and matrix subset" {
           @symquant.tensor_product([a, b]).as_expr(),
           @symcore.int(2),
         ),
-        @symquant.tensor_product([c, operator([@symcore.Expr::Symbol("D")]).as_expr()]).as_expr(),
+        @symquant.tensor_product([
+          c,
+          operator([@symcore.Expr::Symbol("D")]).as_expr(),
+        ]).as_expr(),
         x,
       ]),
     ),

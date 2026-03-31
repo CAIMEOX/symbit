@@ -47,6 +47,7 @@ fn sq_sign_expr(sign : Int, expr : Expr) -> Expr {
 }
 
 ///|
+
 ///|
 fn sq_fermion_ket_expr(items : Array[Expr]) -> Expr {
   @symcore.raw_function("FockStateFermionKet", [Expr::Tuple(items)])

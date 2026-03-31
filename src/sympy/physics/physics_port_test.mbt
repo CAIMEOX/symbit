@@ -139,7 +139,11 @@ test "physics: qho, sho, and pring parity" {
       @symcore.Expr::Symbol("l"),
       @symcore.Expr::Symbol("hw"),
     ),
-    e_nl(@symcore.Expr::Symbol("n"), @symcore.Expr::Symbol("l"), @symcore.Expr::Symbol("hw")),
+    e_nl(
+      @symcore.Expr::Symbol("n"),
+      @symcore.Expr::Symbol("l"),
+      @symcore.Expr::Symbol("hw"),
+    ),
     "E_nl",
   )
 
@@ -575,8 +579,16 @@ test "physics: rotational harmonic parity" {
     "wigner_d_small(1/2,beta)",
   )
   physics_assert_matrix_equiv(
-    @symphysics.wigner_d_small(half, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * physics_frac(1, 2)),
-    wigner_d_small(half, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * physics_frac(1, 2)),
+    @symphysics.wigner_d_small(
+      half,
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+      physics_frac(1, 2),
+    ),
+    wigner_d_small(
+      half,
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+      physics_frac(1, 2),
+    ),
     "wigner_d_small(1/2,pi/2)",
   )
   physics_assert_matrix_equiv(

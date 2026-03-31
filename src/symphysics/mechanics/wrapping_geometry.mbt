@@ -172,7 +172,8 @@ fn mechanics_try_numeric(expr : Expr) -> @symnum.BigRational? {
         _ => None
       }
     _ if @symcore.application_has_name(expr, "sqrt", arity=1) =>
-      match mechanics_try_numeric(@symcore.application_args(expr).unwrap_or([])[0]) {
+      match
+        mechanics_try_numeric(@symcore.application_args(expr).unwrap_or([])[0]) {
         Some(value) => mechanics_rational_exact_sqrt(value)
         None => None
       }

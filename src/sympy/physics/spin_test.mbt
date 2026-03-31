@@ -73,7 +73,8 @@ test "physics.quantum.spin: local rotations and Wigner D" {
       @symcore.int(1),
       @symcore.int(1),
       @symcore.int(0),
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * quantum_test_frac(1, 2),
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+      quantum_test_frac(1, 2),
     ).doit(),
   )
   assert_true(expr_equal(wigner_d_value, "-sqrt(2)/2"))

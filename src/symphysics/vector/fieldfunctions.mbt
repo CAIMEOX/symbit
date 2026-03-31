@@ -68,11 +68,11 @@ fn integrate_scalar(expr : Expr, wrt : Expr) -> Expr raise VectorError {
           raise VectorError::ValueError("unsupported power antiderivative")
       }
     _ if @symcore.application_has_name(expr, "sin", arity=1) &&
-      @symcore.compare_expr(@symcore.application_args(expr).unwrap()[0], wrt) == 0 =>
-      simplify_expr(expr_neg(@symelem.cos(wrt)))
+      @symcore.compare_expr(@symcore.application_args(expr).unwrap()[0], wrt) ==
+      0 => simplify_expr(expr_neg(@symelem.cos(wrt)))
     _ if @symcore.application_has_name(expr, "cos", arity=1) &&
-      @symcore.compare_expr(@symcore.application_args(expr).unwrap()[0], wrt) == 0 =>
-      simplify_expr(@symelem.sin(wrt))
+      @symcore.compare_expr(@symcore.application_args(expr).unwrap()[0], wrt) ==
+      0 => simplify_expr(@symelem.sin(wrt))
     _ => raise VectorError::ValueError("unsupported antiderivative")
   }
 }

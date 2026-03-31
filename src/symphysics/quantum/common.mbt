@@ -135,7 +135,8 @@ fn quantum_is_scalar_like(expr : Expr) -> Bool {
     Some((head, args)) =>
       return match @symcore.function_head_name(head) {
         Some(name) =>
-          !quantum_reserved_operator_name(name) && args.all(quantum_is_scalar_like)
+          !quantum_reserved_operator_name(name) &&
+          args.all(quantum_is_scalar_like)
         None => false
       }
     None => ()

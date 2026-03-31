@@ -10,7 +10,9 @@ pub enum OpticsMediumArg {
 
 ///|
 fn is_infinite_expr(expr : Expr) -> Bool {
-  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) || expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
+  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) ||
+  expr ==
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
 }
 
 ///|

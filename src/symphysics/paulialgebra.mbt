@@ -82,8 +82,11 @@ fn pauli_power_atom(expr : Expr) -> (Int, String)? {
 ///|
 fn ncsymbol_expr_name(expr : Expr) -> String? {
   match @symcore.application_args(expr) {
-    Some([Expr::Symbol(name)]) if @symcore.application_has_name(expr, "NCSymbol", arity=1) =>
-      Some(name)
+    Some([Expr::Symbol(name)]) if @symcore.application_has_name(
+        expr,
+        "NCSymbol",
+        arity=1,
+      ) => Some(name)
     _ => None
   }
 }
@@ -258,7 +261,9 @@ pub fn evaluate_pauli_product(arg : Expr) -> Expr {
       }
     Expr::Add(parts) => @symcore.add(parts.map(evaluate_pauli_product))
     _ if @symcore.application_has_name(arg, "TensorProduct") =>
-      tensor_product(@symcore.application_args(arg).unwrap().map(evaluate_pauli_product))
+      tensor_product(
+        @symcore.application_args(arg).unwrap().map(evaluate_pauli_product),
+      )
     Expr::Mul(parts) => {
       let scalars : Array[Expr] = Array::new()
       let ordered : Array[Expr] = Array::new()
@@ -299,9 +304,9 @@ pub fn evaluate_pauli_product(arg : Expr) -> Expr {
                 flush_current()
                 ordered.push(
                   tensor_product(
-                    @symcore.application_args(part).unwrap().map(
-                      evaluate_pauli_product,
-                    ),
+                    @symcore.application_args(part)
+                    .unwrap()
+                    .map(evaluate_pauli_product),
                   ),
                 )
               }

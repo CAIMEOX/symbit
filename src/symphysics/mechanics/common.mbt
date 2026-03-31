@@ -97,9 +97,9 @@ fn mech_expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     Expr::Add(args) | Expr::Mul(args) =>
       args.any(fn(arg) { mech_expr_depends_on(arg, wrt) })
     _ if @symcore.application_parts(expr) is Some(_) =>
-      @symcore.application_args(expr).unwrap_or([]).any(fn(arg) {
-        mech_expr_depends_on(arg, wrt)
-      })
+      @symcore.application_args(expr)
+      .unwrap_or([])
+      .any(fn(arg) { mech_expr_depends_on(arg, wrt) })
     Expr::Pow(base, exp) =>
       mech_expr_depends_on(base, wrt) || mech_expr_depends_on(exp, wrt)
     _ => false
@@ -171,7 +171,9 @@ fn mech_pi_half() -> Expr {
 fn mech_eval_special_trig(expr : Expr) -> Expr {
   match expr {
     _ if @symcore.application_has_name(expr, "sin", arity=1) => {
-      let arg = mech_eval_special_trig(@symcore.application_args(expr).unwrap_or([])[0])
+      let arg = mech_eval_special_trig(
+        @symcore.application_args(expr).unwrap_or([])[0],
+      )
       if @symcore.compare_expr(arg, int(0)) == 0 {
         int(0)
       } else if @symcore.compare_expr(arg, mech_pi_half()) == 0 {
@@ -181,7 +183,9 @@ fn mech_eval_special_trig(expr : Expr) -> Expr {
       }
     }
     _ if @symcore.application_has_name(expr, "cos", arity=1) => {
-      let arg = mech_eval_special_trig(@symcore.application_args(expr).unwrap_or([])[0])
+      let arg = mech_eval_special_trig(
+        @symcore.application_args(expr).unwrap_or([])[0],
+      )
       if @symcore.compare_expr(arg, int(0)) == 0 {
         int(1)
       } else if @symcore.compare_expr(arg, mech_pi_half()) == 0 {
@@ -242,12 +246,13 @@ fn mech_apply_subs_exact(
             @symcore.application_has_name(expr, "Derivative") {
             expr
           } else {
-            match @symcore.raw_apply(
-              head,
-              args.map(arg => {
-                mech_apply_subs_exact(arg, subs, ignore_derivative_children~)
-              }),
-            ) {
+            match
+              @symcore.raw_apply(
+                head,
+                args.map(arg => {
+                  mech_apply_subs_exact(arg, subs, ignore_derivative_children~)
+                }),
+              ) {
               Some(value) => value
               None => expr
             }

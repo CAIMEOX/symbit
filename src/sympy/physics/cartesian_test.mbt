@@ -45,7 +45,11 @@ test "physics.quantum.cartesian: local qapply, overlaps, and basis representatio
     "<px|x>",
   )
 
-  let pos3 = position_ket_3d(x~, y=@symcore.Expr::Symbol("y"), z=@symcore.Expr::Symbol("z"))
+  let pos3 = position_ket_3d(
+    x~,
+    y=@symcore.Expr::Symbol("y"),
+    z=@symcore.Expr::Symbol("z"),
+  )
   quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([x_op(), pos3])),
     "x*PositionKet3D(x, y, z)",

@@ -31,7 +31,11 @@ test "physics.mechanics parity linearizer from kane and lagrange" {
     km.kanes_equations([pa.as_bodylike()], [
       force_load(
         p,
-        n.x().scale(f - @symcore.Expr::Symbol("k") * q - @symcore.Expr::Symbol("c") * u),
+        n
+        .x()
+        .scale(
+          f - @symcore.Expr::Symbol("k") * q - @symcore.Expr::Symbol("c") * u,
+        ),
       ),
     ]),
   )
@@ -109,7 +113,11 @@ test "physics.mechanics parity linearizer from kane and lagrange" {
   oo.set_vel(nn, @symvector.vector_zero())
   let pp = oo.locatenew("LPP", aa.x().scale(@symcore.Expr::Symbol("l")))
   ignore(pp.v2pt_theory(oo, nn, aa))
-  let lpa = particle("LPa", point=Some(pp), mass=Some(@symcore.Expr::Symbol("m")))
+  let lpa = particle(
+    "LPa",
+    point=Some(pp),
+    mass=Some(@symcore.Expr::Symbol("m")),
+  )
   lpa.set_potential_energy(
     @symcore.int(-1) *
     @symcore.Expr::Symbol("m") *

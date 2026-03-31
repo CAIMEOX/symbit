@@ -5,7 +5,10 @@ test "physics.quantum.piab: parity" {
     quantum_eval_str(
       @symprint.to_string(
         qapply(
-          @symcore.raw_mul([piab_hamiltonian(), piab_ket(@symcore.Expr::Symbol("n"))]),
+          @symcore.raw_mul([
+            piab_hamiltonian(),
+            piab_ket(@symcore.Expr::Symbol("n")),
+          ]),
         ),
       ),
     ),

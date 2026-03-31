@@ -16,7 +16,9 @@ test "physics.mechanics parity system assembly" {
     bob.as_bodylike(),
     child_interframe=Some(joint_interframe_frame(bob_frame)),
     child_point=Some(
-      joint_attachment_offset(bob_frame.y().scale(@symcore.Expr::Symbol("l")).neg()),
+      joint_attachment_offset(
+        bob_frame.y().scale(@symcore.Expr::Symbol("l")).neg(),
+      ),
     ),
     joint_axis=Some(cart.frame().z()),
   )

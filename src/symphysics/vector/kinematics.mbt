@@ -73,14 +73,14 @@ fn motion_integral_scalar(expr : Expr, lower : Expr, upper : Expr) -> Expr {
       @symcore.compare_expr(
         @symcore.application_args(expr).unwrap()[0],
         dynamicsymbols_t,
-      ) == 0 =>
-      simplify_expr(@symelem.cos(lower) - @symelem.cos(upper))
+      ) ==
+      0 => simplify_expr(@symelem.cos(lower) - @symelem.cos(upper))
     _ if @symcore.application_has_name(expr, "cos", arity=1) &&
       @symcore.compare_expr(
         @symcore.application_args(expr).unwrap()[0],
         dynamicsymbols_t,
-      ) == 0 =>
-      simplify_expr(@symelem.sin(upper) - @symelem.sin(lower))
+      ) ==
+      0 => simplify_expr(@symelem.sin(upper) - @symelem.sin(lower))
     _ => motion_integral_symbolic(expr, lower, upper)
   }
 }

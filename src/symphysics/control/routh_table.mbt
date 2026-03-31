@@ -165,7 +165,8 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn expr_depends_on(expr : @symcore.Expr, variable : String) -> Bool {
   match @symcore.application_args(expr) {
-    Some(call_args) => return call_args.any(arg => expr_depends_on(arg, variable))
+    Some(call_args) =>
+      return call_args.any(arg => expr_depends_on(arg, variable))
     None => ()
   }
   match @symcore.expr_form(expr) {

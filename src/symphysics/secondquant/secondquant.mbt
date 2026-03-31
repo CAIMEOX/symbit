@@ -39,6 +39,7 @@ pub enum BosonicBasisSet {
 } derive(Eq)
 
 ///|
+
 ///|
 fn sq_tuple_string(items : Array[Expr]) -> String {
   let rendered = items.map(@symprint.to_string).join(", ")

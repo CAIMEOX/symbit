@@ -130,10 +130,11 @@ fn rename_symbol(
     _ =>
       match @symcore.application_parts(expr) {
         Some((head, args)) =>
-          match @symcore.raw_apply(
-            head,
-            args.map(arg => rename_symbol(arg, old_name, new_name)),
-          ) {
+          match
+            @symcore.raw_apply(
+              head,
+              args.map(arg => rename_symbol(arg, old_name, new_name)),
+            ) {
             Some(next) => next
             None => expr
           }
@@ -728,22 +729,42 @@ pub fn Truss::apply_support(
       None =>
         if kind == "pinned" {
           self.apply_load([
-            (location, @symcore.Expr::Symbol(reaction_x_name(location)), int_expr(0)),
-            (location, @symcore.Expr::Symbol(reaction_y_name(location)), int_expr(90)),
+            (
+              location,
+              @symcore.Expr::Symbol(reaction_x_name(location)),
+              int_expr(0),
+            ),
+            (
+              location,
+              @symcore.Expr::Symbol(reaction_y_name(location)),
+              int_expr(90),
+            ),
           ])
         } else {
           self.apply_load([
-            (location, @symcore.Expr::Symbol(reaction_y_name(location)), int_expr(90)),
+            (
+              location,
+              @symcore.Expr::Symbol(reaction_y_name(location)),
+              int_expr(90),
+            ),
           ])
         }
       Some(existing) =>
         if existing == "pinned" && kind == "roller" {
           self.remove_load([
-            (location, @symcore.Expr::Symbol(reaction_x_name(location)), int_expr(0)),
+            (
+              location,
+              @symcore.Expr::Symbol(reaction_x_name(location)),
+              int_expr(0),
+            ),
           ])
         } else if existing == "roller" && kind == "pinned" {
           self.apply_load([
-            (location, @symcore.Expr::Symbol(reaction_x_name(location)), int_expr(0)),
+            (
+              location,
+              @symcore.Expr::Symbol(reaction_x_name(location)),
+              int_expr(0),
+            ),
           ])
         }
     }
