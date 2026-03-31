@@ -39,6 +39,11 @@ fn g(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+fn h(expr : @symcore.Expr) -> @symcore.Expr {
+  @symcore.applied_undefined_function("h", [expr])
+}
+
+///|
 fn u(xv : @symcore.Expr, yv : @symcore.Expr) -> @symcore.Expr {
   @symcore.applied_undefined_function("u", [xv, yv])
 }
@@ -77,6 +82,21 @@ fn expr_matrix_text(items : Array[Array[@symcore.Expr]]) -> String {
 }
 
 ///|
+fn local_infinitesimals_text(items : Array[Map[String, @symcore.Expr]]) -> String {
+  let rendered : Array[String] = []
+  for item in items {
+    rendered.push(
+      "{xi: " +
+      @symprint.to_string(item.get("xi").unwrap_or(@symcore.int(0))) +
+      ", eta: " +
+      @symprint.to_string(item.get("eta").unwrap_or(@symcore.int(0))) +
+      "}",
+    )
+  }
+  "[" + rendered.join(", ") + "]"
+}
+
+///|
 fn normalize_text(text : String) -> String {
   text
   .replace_all(old="/1", new="")
@@ -84,7 +104,6 @@ fn normalize_text(text : String) -> String {
   .replace_all(old=" + -", new=" - ")
   .replace_all(old="-t_0 + 3", new="3 - t_0")
   .replace_all(old="exp(1*x**3/3)", new="exp(x**3/3)")
-  .replace_all(old="-g(x) + 20*f(x)", new="20*f(x) - g(x)")
 }
 
 ///|
@@ -551,7 +570,7 @@ test "solve_undetermined_coeffs matches coefficients into symbolic dicts" {
 }
 
 ///|
-test "ode and pde helpers cover low-level source-compatible entry points" {
+test "canonical_odes covers low-level source-compatible entry points" {
   let c1 = @symcore.Expr::Symbol("C1")
   let c2 = @symcore.Expr::Symbol("C2")
   inspect(allhints.length().to_string(), content="45")
@@ -577,30 +596,93 @@ test "ode and pde helpers cover low-level source-compatible entry points" {
     ),
   ]
   let canonical = canonical_odes(system, [f(x()), g(x())], x())
-  let expected_canonical = [
+  inspect(canonical.length().to_string(), content="1")
+  inspect(
+    normalize_text(expr_matrix_text(canonical)),
+    content="[[Eq(Derivative(f(x), x), 7*f(x) + 12*g(x)), Eq(Derivative(g(x), x), 20*f(x) - g(x))]]",
+  )
+}
+
+///|
+test "linear_ode_to_matrix covers low-level source-compatible entry points" {
+  let system = [
     @symcore.Expr::Relational(
       @symcore.RelOp::Eq,
-      @symcalculus.diff(f(x()), x()),
-      @symcore.add([@symcore.int(7) * f(x()), @symcore.int(12) * g(x())]),
+      @symcalculus.diff(f(x()), x()) - @symcore.int(7) * f(x()),
+      @symcore.int(12) * g(x()),
     ),
     @symcore.Expr::Relational(
       @symcore.RelOp::Eq,
-      @symcalculus.diff(g(x()), x()),
-      @symcore.add([@symcore.int(20) * f(x()), @symcore.int(-1) * g(x())]),
+      @symcalculus.diff(g(x()), x()) + g(x()),
+      @symcore.int(20) * f(x()),
     ),
   ]
-  inspect(
-    (
-      canonical.length() == 1 &&
-      @symcore.compare_expr(canonical[0][0], expected_canonical[0]) == 0 &&
-      @symcore.compare_expr(canonical[0][1], expected_canonical[1]) == 0
-    ).to_string(),
-    content="true",
-  )
   let (a_mats, b_mat) = linear_ode_to_matrix(system, [f(x()), g(x())], x(), 1)
   inspect(a_mats[0].to_string(), content="Matrix([[1, 0], [0, 1]])")
   inspect(a_mats[1].to_string(), content="Matrix([[7, 12], [20, -1]])")
   inspect(b_mat.to_string(), content="Matrix([[0], [0]])")
+}
+
+///|
+test "canonical_odes and linear_ode_to_matrix handle nonlinear branches and higher order systems" {
+  let nonlinear_system = [
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      (@symcalculus.diff(f(x()), x()) ^ @symcore.int(2)) +
+      @symcore.mul([@symcore.int(-2), @symcalculus.diff(f(x()), x())]) +
+      @symcore.int(1),
+      @symcore.int(4),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.add([
+        @symcore.mul([@symcore.int(-1), y(), f(x())]),
+        @symcalculus.diff(g(x()), x()),
+      ]),
+      @symcore.int(0),
+    ),
+  ]
+  let canonical = canonical_odes(nonlinear_system, [f(x()), g(x())], x())
+  inspect(canonical.length().to_string(), content="2")
+  inspect(
+    normalize_text(expr_list_text(canonical[0])),
+    content="[Eq(Derivative(f(x), x), -1), Eq(Derivative(g(x), x), y*f(x))]",
+  )
+  inspect(
+    normalize_text(expr_list_text(canonical[1])),
+    content="[Eq(Derivative(f(x), x), 3), Eq(Derivative(g(x), x), y*f(x))]",
+  )
+
+  let higher_order = [
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcalculus.diff(@symcalculus.diff(f(x()), x()), x()),
+      @symcore.add([
+        @symcalculus.diff(f(x()), x()),
+        f(x()),
+        g(x()),
+        @symcore.int(1),
+      ]),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcalculus.diff(@symcalculus.diff(g(x()), x()), x()),
+      @symcore.add([
+        @symcore.int(2) * @symcalculus.diff(g(x()), x()),
+        @symcore.mul([@symcore.int(-1), f(x())]),
+      ]),
+    ),
+  ]
+  let (a_mats, b_mat) = linear_ode_to_matrix(higher_order, [f(x()), g(x())], x(), 2)
+  inspect(a_mats.length().to_string(), content="3")
+  inspect(a_mats[0].to_string(), content="Matrix([[1, 0], [0, 1]])")
+  inspect(a_mats[1].to_string(), content="Matrix([[1, 0], [0, 2]])")
+  inspect(a_mats[2].to_string(), content="Matrix([[1, 1], [-1, 0]])")
+  inspect(b_mat.to_string(), content="Matrix([[1], [0]])")
+}
+
+///|
+test "linodesolve covers low-level source-compatible entry points" {
   inspect(
     linodesolve(@symmatrices.matrix([[@symcore.int(1)]]), x()).to_string(),
     content="Matrix([[C1*exp(x)]])",
@@ -629,6 +711,10 @@ test "ode and pde helpers cover low-level source-compatible entry points" {
     ),
   content=(#|Matrix([[C1*exp(x) + C2*exp(3*x) - C2*exp(x)], [C2*exp(3*x)]])
   ))
+}
+
+///|
+test "lie helpers cover source-compatible infinitesimal entry points" {
   let lie_eq = @symcalculus.diff(f(x()), x()) - (x() ^ @symcore.int(2)) * f(x())
   let infs = infinitesimals(lie_eq, func=Some(f(x())))
   inspect(
@@ -642,6 +728,402 @@ test "ode and pde helpers cover low-level source-compatible entry points" {
   let inf_check = checkinfsol(lie_eq, infs, func=Some(f(x())))
   inspect(inf_check[0].0.to_string(), content="true")
   inspect(@symprint.to_string(inf_check[0].1), content="0")
+}
+
+///|
+test "lie heuristics expose abaco1_simple explicitly" {
+  let lie_eq = @symcalculus.diff(f(x()), x()) - (x() ^ @symcore.int(2)) * f(x())
+  let abaco = infinitesimals(lie_eq, func=Some(f(x())), hint="abaco1_simple")
+  inspect(abaco.length().to_string(), content="3")
+  inspect(
+    normalize_text(@symprint.to_string(abaco[1].get("eta").unwrap_or(@symcore.int(0)))),
+    content="f(x)",
+  )
+  inspect(
+    normalize_text(@symprint.to_string(abaco[2].get("xi").unwrap_or(@symcore.int(0)))),
+    content="x**-2",
+  )
+  let checks = checkinfsol(lie_eq, abaco, func=Some(f(x())))
+  inspect(checks.all(item => item.0).to_string(), content="true")
+}
+
+///|
+test "canonical_odes matches additional SymPy explicit linear case" {
+  let system_1 = [
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcalculus.diff(@symcalculus.diff(f(x()), x()), x()),
+      f(x()) + @symcore.int(2) * g(x()),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      g(x()) + @symcore.int(1),
+      @symcalculus.diff(g(x()), x()) + f(x()),
+    ),
+  ]
+  inspect(ode_order(system_1[0], f(x())).to_string(), content="2")
+  inspect(ode_order(system_1[1], g(x())).to_string(), content="1")
+  inspect(
+    normalize_text(expr_matrix_text(canonical_odes(system_1, [f(x()), g(x())], x()))),
+    content="[[Eq(Derivative(f(x), x, x), f(x) + 2*g(x)), Eq(Derivative(g(x), x), -f(x) + g(x) + 1)]]",
+  )
+}
+
+///|
+test "canonical_odes matches additional SymPy triangular nonlinear case" {
+  let system_2 = [
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcalculus.diff(f(x()), x()),
+      @symcalculus.diff(h(x()), x()) + f(x()),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcalculus.diff(g(x()), x()) ^ @symcore.int(2),
+      f(x()) + h(x()),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcalculus.diff(h(x()), x()),
+      f(x()),
+    ),
+  ]
+  inspect(canonical_odes(system_2, [f(x()), g(x()), h(x())], x()).length().to_string(), content="2")
+  inspect(
+    normalize_text(expr_list_text(canonical_odes(system_2, [f(x()), g(x()), h(x())], x())[0])),
+    content="[Eq(Derivative(f(x), x), 2*f(x)), Eq(Derivative(g(x), x), -sqrt(f(x) + h(x))), Eq(Derivative(h(x), x), f(x))]",
+  )
+  inspect(
+    normalize_text(expr_list_text(canonical_odes(system_2, [f(x()), g(x()), h(x())], x())[1])),
+    content="[Eq(Derivative(f(x), x), 2*f(x)), Eq(Derivative(g(x), x), sqrt(f(x) + h(x))), Eq(Derivative(h(x), x), f(x))]",
+  )
+}
+
+///|
+test "linear_ode_to_matrix matches additional SymPy matrix forms and errors" {
+  let system_3 = [
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.int(2) * @symcalculus.diff(f(x()), x()) +
+      @symcore.int(3) * @symcalculus.diff(h(x()), x()),
+      f(x()) + g(x()),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.int(4) * @symcalculus.diff(h(x()), x()) +
+      @symcore.int(5) * @symcalculus.diff(g(x()), x()),
+      f(x()) + h(x()),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.int(5) * @symcalculus.diff(f(x()), x()) +
+      @symcore.int(4) * @symcalculus.diff(g(x()), x()),
+      g(x()) + h(x()),
+    ),
+  ]
+  let (a_sys3, b_sys3) = linear_ode_to_matrix(system_3, [f(x()), g(x()), h(x())], x(), 1)
+  inspect(a_sys3[0].to_string(), content="Matrix([[2, 0, 3], [0, 5, 4], [5, 4, 0]])")
+  inspect(a_sys3[1].to_string(), content="Matrix([[1, 1, 0], [1, 0, 1], [0, 1, 1]])")
+  inspect(b_sys3.to_string(), content="Matrix([[0], [0], [0]])")
+
+  let system_4 = [
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcalculus.diff(@symcalculus.diff(f(x()), x()), x()) + h(x()),
+      @symcalculus.diff(f(x()), x()) + g(x()),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.int(2) * @symcalculus.diff(@symcalculus.diff(h(x()), x()), x()) +
+      @symcalculus.diff(@symcalculus.diff(g(x()), x()), x()) +
+      @symcalculus.diff(g(x()), x()) +
+      g(x()),
+      @symcore.int(0),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.int(3) * @symcalculus.diff(h(x()), x()),
+      @symcore.int(4),
+    ),
+  ]
+  let (a_sys4, b_sys4) = linear_ode_to_matrix(system_4, [f(x()), g(x()), h(x())], x(), 2)
+  inspect(a_sys4[0].to_string(), content="Matrix([[1, 0, 0], [0, 1, 2], [0, 0, 0]])")
+  inspect(a_sys4[1].to_string(), content="Matrix([[1, 0, 0], [0, -1, 0], [0, 0, -3]])")
+  inspect(a_sys4[2].to_string(), content="Matrix([[0, 1, -1], [0, -1, 0], [0, 0, 0]])")
+  inspect(b_sys4.to_string(), content="Matrix([[0], [0], [4]])")
+
+  let bad_order : Result[(Array[@symmatrices.Matrix], @symmatrices.Matrix), SolverError] = try?
+    linear_ode_to_matrix(
+      [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcalculus.diff(@symcalculus.diff(f(x()), x()), x()),
+          g(x()),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcalculus.diff(f(x()), x()) + @symcalculus.diff(g(x()), x()),
+          f(x()),
+        ),
+      ],
+      [f(x()), g(x())],
+      x(),
+      1,
+    )
+  inspect(
+    match bad_order {
+      Err(err) => err.to_string()
+      Ok(_) => "ok"
+    },
+    content="ValueError(\"Cannot represent system in 1-order form\")",
+  )
+
+  let nonlinear : Result[(Array[@symmatrices.Matrix], @symmatrices.Matrix), SolverError] = try?
+    linear_ode_to_matrix(
+      [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcalculus.diff(f(x()), x()),
+          f(x()) ^ @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcalculus.diff(g(x()), x()),
+          f(x()) + g(x()),
+        ),
+      ],
+      [f(x()), g(x())],
+      x(),
+      1,
+    )
+  inspect(
+    match nonlinear {
+      Err(err) => err.to_string()
+      Ok(_) => "ok"
+    },
+    content="ValueError(\"The system of ODEs is nonlinear.\")",
+  )
+}
+
+///|
+test "lie heuristic abaco1_product follows SymPy reference case" {
+  let abaco1_product_eq = @symcalculus.diff(f(x()), x()) -
+    @symcore.mul([
+      f(x()),
+      @symcore.add([
+        x() * @symcore.function(
+          "log",
+          [
+            @symcore.mul([
+              x() ^ @symcore.int(2),
+              f(x()) ^ @symcore.int(-1),
+            ]),
+          ],
+        ),
+        @symcore.int(2),
+      ]),
+      x() ^ @symcore.int(-1),
+    ])
+  let abaco1_product_inf = infinitesimals(
+    abaco1_product_eq,
+    func=Some(f(x())),
+    hint="abaco1_product",
+  )
+  inspect(
+    normalize_text(local_infinitesimals_text(abaco1_product_inf)),
+    content="[{xi: 0, eta: f(x)*exp(-x)}]",
+  )
+  inspect(
+    checkinfsol(abaco1_product_eq, abaco1_product_inf, func=Some(f(x())))[0].0.to_string(),
+    content="true",
+  )
+}
+
+///|
+test "lie heuristic chi follows SymPy reference case" {
+  let chi_eq = x() * @symcalculus.diff(f(x()), x()) + @symcore.int(1) - (f(x()) ^ @symcore.int(2))
+  let chi_inf = infinitesimals(chi_eq, func=Some(f(x())), hint="chi")
+  inspect(checkinfsol(chi_eq, chi_inf, func=Some(f(x())))[0].0.to_string(), content="true")
+}
+
+///|
+test "lie heuristic function_sum and abaco2_similar follow SymPy reference cases" {
+  let function_sum_eq = @symcalculus.diff(f(x()), x()) -
+    @symcore.add([
+      @symcore.mul([
+        @symcore.int(3),
+        @symcore.add([
+          @symcore.int(1),
+          @symcore.mul([
+            x() ^ @symcore.int(2),
+            f(x()) ^ @symcore.int(-2),
+          ]),
+        ]),
+        @symcore.function(
+          "atan",
+          [@symcore.mul([f(x()), x() ^ @symcore.int(-1)])],
+        ),
+      ]),
+      @symcore.mul([
+        @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-2), f(x())])]),
+        x() ^ @symcore.int(-1),
+      ]),
+      @symcore.mul([
+        @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-3), f(x())])]),
+        x(),
+        f(x()) ^ @symcore.int(-2),
+      ]),
+    ])
+  let function_sum_inf = infinitesimals(
+    function_sum_eq,
+    func=Some(f(x())),
+    hint="function_sum",
+  )
+  inspect(
+    normalize_text(local_infinitesimals_text(function_sum_inf)),
+    content="[{xi: 0, eta: f(x)**-2 + x**-2}]",
+  )
+  inspect(
+    checkinfsol(function_sum_eq, function_sum_inf, func=Some(f(x())))[0].0.to_string(),
+    content="true",
+  )
+
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let big_f = @symcore.applied_undefined_function("F", [
+    a * x() + b * f(x()),
+  ])
+  let similar_eq_1 = @symcalculus.diff(f(x()), x()) - big_f
+  let similar_inf_1 = infinitesimals(
+    similar_eq_1,
+    func=Some(f(x())),
+    hint="abaco2_similar",
+  )
+  inspect(
+    normalize_text(local_infinitesimals_text(similar_inf_1)),
+    content="[{xi: 1, eta: -a*b**-1}]",
+  )
+  inspect(
+    checkinfsol(similar_eq_1, similar_inf_1, func=Some(f(x())))[0].0.to_string(),
+    content="true",
+  )
+
+  let similar_eq_2 = @symcalculus.diff(f(x()), x()) -
+    @symcore.mul([
+      f(x()) ^ @symcore.int(2),
+      @symcore.add([
+        @symcore.function(
+          "sin",
+          [@symcore.add([f(x()), @symcore.mul([@symcore.int(-1), x()])])],
+        ),
+        @symcore.mul([@symcore.int(-1), x() ^ @symcore.int(2)]),
+        @symcore.mul([@symcore.int(2), x(), f(x())]),
+      ]) ^ @symcore.int(-1),
+    ])
+  let similar_inf_2 = infinitesimals(
+    similar_eq_2,
+    func=Some(f(x())),
+    hint="abaco2_similar",
+  )
+  inspect(
+    normalize_text(local_infinitesimals_text(similar_inf_2)),
+    content="[{xi: f(x)**2, eta: f(x)**2}]",
+  )
+  inspect(
+    checkinfsol(similar_eq_2, similar_inf_2, func=Some(f(x())))[0].0.to_string(),
+    content="true",
+  )
+
+}
+
+///|
+test "lie heuristic abaco2_unique_unknown and linear follow SymPy reference cases" {
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let m = @symcore.Expr::Symbol("m")
+  let n = @symcore.Expr::Symbol("n")
+  let unknown_f = @symcore.applied_undefined_function("F", [
+    @symcore.add([
+      @symcore.mul([x() ^ a, a ^ @symcore.int(-1)]),
+      @symcore.mul([f(x()) ^ b, b ^ @symcore.int(-1)]),
+    ]),
+  ])
+  let unique_unknown_eq_1 = @symcalculus.diff(f(x()), x()) -
+    @symcore.mul([
+      x() ^ (@symcore.add([a, @symcore.int(-1)])),
+      f(x()) ^ (@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), b])])),
+      unknown_f,
+    ])
+  let unique_unknown_inf_1 = infinitesimals(
+    unique_unknown_eq_1,
+    func=Some(f(x())),
+    hint="abaco2_unique_unknown",
+  )
+  inspect(
+    normalize_text(local_infinitesimals_text(unique_unknown_inf_1)),
+    content="[{xi: x*x**-a, eta: -f(x)*f(x)**-b}]",
+  )
+  inspect(
+    checkinfsol(unique_unknown_eq_1, unique_unknown_inf_1, func=Some(f(x())))[0].0.to_string(),
+    content="true",
+  )
+
+  let unique_unknown_eq_2 = @symcalculus.diff(f(x()), x()) +
+    @symcore.function(
+      "tan",
+      [
+        @symcore.applied_undefined_function("F", [
+          @symcore.add([
+            x() ^ @symcore.int(2),
+            f(x()) ^ @symcore.int(2),
+          ]),
+        ]) + @symcore.function(
+          "atan",
+          [@symcore.mul([x(), f(x()) ^ @symcore.int(-1)])],
+        ),
+      ],
+    )
+  let unique_unknown_inf_2 = infinitesimals(
+    unique_unknown_eq_2,
+    func=Some(f(x())),
+    hint="abaco2_unique_unknown",
+  )
+  inspect(
+    normalize_text(local_infinitesimals_text(unique_unknown_inf_2)),
+    content="[{xi: -f(x), eta: x}]",
+  )
+  inspect(
+    checkinfsol(unique_unknown_eq_2, unique_unknown_inf_2, func=Some(f(x())))[0].0.to_string(),
+    content="true",
+  )
+
+  let unique_unknown_eq_3 =
+    (
+      x() * @symcalculus.diff(f(x()), x()) + f(x()) + @symcore.int(2) * x()
+    ) ^ @symcore.int(2) -
+    @symcore.int(4) * x() * f(x()) -
+    @symcore.int(4) * (x() ^ @symcore.int(2)) -
+    @symcore.int(4) * a
+  let unique_unknown_inf_3 = infinitesimals(
+    unique_unknown_eq_3,
+    func=Some(f(x())),
+    hint="abaco2_unique_unknown",
+  )
+  inspect(
+    checkinfsol(unique_unknown_eq_3, unique_unknown_inf_3, func=Some(f(x())))[0].0.to_string(),
+    content="true",
+  )
+
+  let linear_eq =
+    x() ^ (@symcore.add([n * (@symcore.add([m, @symcore.int(1)])), @symcore.mul([@symcore.int(-1), m])])) *
+    @symcalculus.diff(f(x()), x()) -
+    a * (f(x()) ^ n) -
+    b * (x() ^ (@symcore.mul([n, @symcore.add([m, @symcore.int(1)])])))
+  let linear_inf = infinitesimals(linear_eq, func=Some(f(x())), hint="linear")
+  inspect(checkinfsol(linear_eq, linear_inf, func=Some(f(x())))[0].0.to_string(), content="true")
+}
+
+test "ode and pde high-level helpers cover source-compatible entry points" {
   let ode = @symcore.Expr::Relational(
     @symcore.RelOp::Eq,
     @symcalculus.diff(f(x()), x()),

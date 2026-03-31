@@ -238,14 +238,50 @@ fn solver_derivative_vars(deriv_args : Array[Expr]) -> Array[Expr] {
 }
 
 ///|
+fn solver_application_signature(expr : Expr) -> (String, Array[Expr])? {
+  match @symcore.application_parts(expr) {
+    Some((head, args)) =>
+      match @symcore.function_head_name(head) {
+        Some(name) => Some((name, args))
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
 fn solver_is_same_undefined_application(lhs : Expr, rhs : Expr) -> Bool {
   if @symcore.compare_expr(lhs, rhs) == 0 {
     return true
   }
-  match (@symcore.undefined_application_parts(lhs), @symcore.undefined_application_parts(rhs)) {
+  match (solver_application_signature(lhs), solver_application_signature(rhs)) {
     (Some((lname, largs)), Some((rname, rargs))) =>
       lname == rname && solver_expr_arrays_equal(largs, rargs)
     _ => false
+  }
+}
+
+///|
+fn solver_derivative_signature(expr : Expr) -> (Expr, Array[Expr])? {
+  match @symcore.derivative_parts(expr) {
+    Some((inner, args)) => {
+      let vars = solver_derivative_vars(args)
+      match solver_derivative_signature(inner) {
+        Some((base, inner_vars)) => {
+          let out = inner_vars.copy()
+          for item in vars {
+            out.push(item)
+          }
+          Some((base, out))
+        }
+        None =>
+          match solver_application_signature(inner) {
+            Some(_) => Some((inner, vars))
+            None => None
+          }
+      }
+    }
+    None => None
   }
 }
 
@@ -254,12 +290,35 @@ fn solver_is_same_target(lhs : Expr, rhs : Expr) -> Bool {
   if solver_is_same_undefined_application(lhs, rhs) {
     return true
   }
-  match (@symcore.derivative_parts(lhs), @symcore.derivative_parts(rhs)) {
-    (Some((linner, largs)), Some((rinner, rargs))) =>
-      solver_is_same_undefined_application(linner, rinner) &&
-      solver_expr_arrays_equal(solver_derivative_vars(largs), solver_derivative_vars(rargs))
+  match (solver_derivative_signature(lhs), solver_derivative_signature(rhs)) {
+    (Some((lbase, lvars)), Some((rbase, rvars))) =>
+      solver_is_same_undefined_application(lbase, rbase) &&
+      solver_expr_arrays_equal(lvars, rvars)
     _ => @symcore.compare_expr(lhs, rhs) == 0
   }
+}
+
+///|
+fn solver_expr_has_target(expr : Expr, target : Expr) -> Bool {
+  for node in @symcore.preorder(expr) {
+    if solver_is_same_target(node, target) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn solver_replace_targets(
+  expr : Expr,
+  replacements : Array[(Expr, Expr)],
+) -> Expr {
+  for pair in replacements {
+    if solver_is_same_target(expr, pair.0) {
+      return pair.1
+    }
+  }
+  @symcore.map_children(expr, child => solver_replace_targets(child, replacements))
 }
 
 ///|
@@ -363,40 +422,21 @@ pub fn homogeneous_order(eq : Expr, symbols : Array[Expr]) -> Expr? raise Solver
 ///|
 pub fn ode_order(expr : Expr, func : Expr) -> Int {
   let normalized = solver_normalize_equation(expr)
-  match @symcore.derivative_parts(normalized) {
-    Some((inner, deriv_args)) => {
-      let total = solver_derivative_vars(deriv_args).length()
-      if solver_is_same_undefined_application(inner, func) {
-        return total
+  let mut best = 0
+  match solver_derivative_signature(normalized) {
+    Some((base, vars)) =>
+      if solver_is_same_undefined_application(base, func) {
+        best = vars.length()
       }
-      let mut nested = 0
-      for arg in @symcore.args(inner) {
-        let order = ode_order(arg, func)
-        if order > nested {
-          nested = order
-        }
-      }
-      let promoted = total + nested
-      let mut child_best = 0
-      for arg in @symcore.args(normalized) {
-        let order = ode_order(arg, func)
-        if order > child_best {
-          child_best = order
-        }
-      }
-      if promoted > child_best { promoted } else { child_best }
-    }
-    None => {
-      let mut best = 0
-      for arg in @symcore.args(normalized) {
-        let order = ode_order(arg, func)
-        if order > best {
-          best = order
-        }
-      }
-      best
+    None => ()
+  }
+  for arg in @symcore.args(normalized) {
+    let current = ode_order(arg, func)
+    if current > best {
+      best = current
     }
   }
+  best
 }
 
 ///|
@@ -414,7 +454,7 @@ fn solver_linear_factor_coeff(term : Expr, target : Expr) -> Expr? {
             return None
           }
           seen = true
-        } else if @symcore.has(arg, target) {
+        } else if solver_expr_has_target(arg, target) {
           return None
         } else {
           factors.push(arg)
@@ -422,14 +462,14 @@ fn solver_linear_factor_coeff(term : Expr, target : Expr) -> Expr? {
       }
       if seen {
         Some(solver_mul_all(factors))
-      } else if @symcore.has(term, target) {
+      } else if solver_expr_has_target(term, target) {
         None
       } else {
         Some(@symcore.int(0))
       }
     }
     _ =>
-      if @symcore.has(term, target) {
+      if solver_expr_has_target(term, target) {
         None
       } else {
         Some(@symcore.int(0))
@@ -474,6 +514,96 @@ fn solver_extract_linear_targets(
     }
   }
   Some((coeffs, constant))
+}
+
+///|
+fn solver_quadratic_factor_coeff(term : Expr, target : Expr) -> Expr? {
+  match term {
+    Expr::Pow(base, exp) =>
+      match @symcore.exact_numeric_expr_num_den(exp) {
+        Some((num, den)) if num.compare(2N) == 0 && den.compare(1N) == 0 &&
+          solver_is_same_target(base, target) => Some(@symcore.int(1))
+        _ =>
+          if solver_expr_has_target(term, target) {
+            None
+          } else {
+            Some(@symcore.int(0))
+          }
+      }
+    Expr::Mul(args) => {
+      let factors : Array[Expr] = []
+      let mut seen = false
+      for arg in args {
+        match arg {
+          Expr::Pow(base, exp) =>
+            match @symcore.exact_numeric_expr_num_den(exp) {
+              Some((num, den)) if num.compare(2N) == 0 && den.compare(1N) == 0 &&
+                solver_is_same_target(base, target) =>
+                if seen {
+                  return None
+                } else {
+                  seen = true
+                }
+              _ =>
+                if solver_expr_has_target(arg, target) {
+                  return None
+                } else {
+                  factors.push(arg)
+                }
+            }
+          _ =>
+            if solver_expr_has_target(arg, target) {
+              return None
+            } else {
+              factors.push(arg)
+            }
+        }
+      }
+      if seen {
+        Some(solver_mul_all(factors))
+      } else if solver_expr_has_target(term, target) {
+        None
+      } else {
+        Some(@symcore.int(0))
+      }
+    }
+    _ =>
+      if solver_expr_has_target(term, target) {
+        None
+      } else {
+        Some(@symcore.int(0))
+      }
+  }
+}
+
+///|
+fn solver_extract_quadratic_target(
+  expr : Expr,
+  target : Expr,
+) -> (Expr, Expr, Expr)? {
+  let terms = match solver_normalize_equation(expr) {
+    Expr::Add(args) => args
+    other => [other]
+  }
+  let mut coeff_sq = @symcore.int(0)
+  let mut coeff_lin = @symcore.int(0)
+  let mut constant = @symcore.int(0)
+  for term in terms {
+    match solver_quadratic_factor_coeff(term, target) {
+      Some(q) if !@symcore.is_zero(q) => {
+        coeff_sq = canonical_expr(@symcore.add([coeff_sq, q]))
+      }
+      Some(_) =>
+        match solver_linear_factor_coeff(term, target) {
+          Some(l) if !@symcore.is_zero(l) =>
+            coeff_lin = canonical_expr(@symcore.add([coeff_lin, l]))
+          Some(_) => constant = canonical_expr(@symcore.add([constant, term]))
+          None => return None
+        }
+      None => return None
+    }
+  }
+  Some((coeff_sq, coeff_lin, constant))
 }
 
 ///|
@@ -921,53 +1051,569 @@ fn solver_infer_ode_function(eq : Expr, func : Expr?) -> Expr raise SolverError 
 }
 
 ///|
-fn solver_first_order_canonical_system(
-  eqs : Array[Expr],
-  funcs : Array[Expr],
-  t : Expr,
-) -> Array[Expr] raise SolverError {
-  guard !eqs.is_empty() else {
-    raise SolverError::ValueError("canonical_odes expects at least one equation")
+fn solver_ode_target(
+  func : Expr,
+  wrt : Expr,
+  order : Int,
+) -> Expr {
+  if order <= 0 {
+    return func
   }
-  guard eqs.length() == funcs.length() else {
-    raise SolverError::ValueError("equation and function counts must match")
+  let vars : Array[Expr] = []
+  for _ in 0..<order {
+    vars.push(wrt)
   }
-  let derivative_targets = funcs.map(func => @symcalculus.diff(func, t))
-  let coeff_rows : Array[Array[Expr]] = []
-  let rhs_rows : Array[Array[Expr]] = []
-  for eq in eqs {
-    match solver_extract_linear_targets(solver_normalize_equation(eq), derivative_targets) {
-      Some((coeffs, constant)) => {
-        coeff_rows.push(coeffs)
-        rhs_rows.push([canonical_expr(@symcore.mul([@symcore.int(-1), constant]))])
+  @symcore.raw_derivative(func, vars[:])
+}
+
+///|
+fn solver_used_symbol_names(exprs : Array[Expr]) -> Array[String] {
+  let names : Array[String] = []
+  for expr in exprs {
+    for symbol in @symcore.free_symbols(expr) {
+      match symbol {
+        Expr::Symbol(name) =>
+          if !names.contains(name) {
+            names.push(name)
+          }
+        _ => ()
       }
-      None =>
-        raise SolverError::ValueError(
-          "canonical_odes currently expects a first-order linear system",
-        )
     }
   }
-  let coeff_matrix = @symmatrices.matrix(coeff_rows) catch {
-    err => raise wrap_matrix_error("canonical_odes", err)
-  }
-  let rhs_matrix = @symmatrices.matrix(rhs_rows) catch {
-    err => raise wrap_matrix_error("canonical_odes", err)
-  }
-  let solved = coeff_matrix.solve(rhs_matrix) catch {
-    err => raise wrap_matrix_error("canonical_odes", err)
-  }
-  let rows = solved.to_list()
+  names
+}
+
+///|
+fn solver_temp_symbols(
+  exprs : Array[Expr],
+  count : Int,
+  prefix : String,
+) -> Array[Expr] {
+  let used = solver_used_symbol_names(exprs)
   let out : Array[Expr] = []
-  for i in 0..<funcs.length() {
-    out.push(
-      Expr::Relational(
-        @symcore.RelOp::Eq,
-        derivative_targets[i],
-        rows[i][0],
-      ),
-    )
+  let mut i = 0
+  while out.length() < count {
+    let name = prefix + i.to_string()
+    if !used.contains(name) {
+      out.push(Expr::Symbol(name))
+    }
+    i += 1
   }
   out
+}
+
+///|
+fn solver_symbolize_targets(
+  eqs : Array[Expr],
+  targets : Array[Expr],
+  prefix : String,
+) -> (Array[Expr], Array[Expr], Array[(Expr, Expr)]) {
+  let symbols = solver_temp_symbols(eqs, targets.length(), prefix)
+  let forward : Array[(Expr, Expr)] = []
+  let backward : Array[(Expr, Expr)] = []
+  for i in 0..<targets.length() {
+    forward.push((targets[i], symbols[i]))
+    backward.push((symbols[i], targets[i]))
+  }
+  (
+    eqs.map(eq => solver_replace_targets(eq, forward)),
+    symbols,
+    backward,
+  )
+}
+
+///|
+fn solver_maps_from_result(
+  result : SolveResult,
+  symbols : Array[Expr],
+) -> Array[Map[String, Expr]] raise SolverError {
+  let names = solver_symbol_names(symbols)
+  match result {
+    SolveResult::List(items) => {
+      guard names.length() == 1 else {
+        raise SolverError::ValueError("expected a single symbolic target")
+      }
+      let out : Array[Map[String, Expr]] = []
+      for item in items {
+        let mapping : Map[String, Expr] = {}
+        mapping[names[0]] = item
+        out.push(mapping)
+      }
+      out
+    }
+    SolveResult::Dict(values) => [values]
+    SolveResult::Dicts(items) => items
+  }
+}
+
+///|
+fn solver_func_orders(
+  eqs : Array[Expr],
+  funcs : Array[Expr],
+) -> Array[Int] {
+  let out : Array[Int] = []
+  for func in funcs {
+    let mut best = 0
+    for eq in eqs {
+      let current = ode_order(eq, func)
+      if current > best {
+        best = current
+      }
+    }
+    out.push(best)
+  }
+  out
+}
+
+///|
+fn solver_separate_mul_parts(
+  expr : Expr,
+  x : Expr,
+  y : Expr,
+) -> SolverLieSeparated? {
+  let factors = match canonical_expr(expr) {
+    Expr::Mul(args) => args
+    other => [other]
+  }
+  let coeffs : Array[Expr] = []
+  let xs : Array[Expr] = []
+  let ys : Array[Expr] = []
+  for factor in factors {
+    let has_x = solver_lie_depends_on(factor, x)
+    let has_y = solver_lie_depends_on(factor, y)
+    if has_x && has_y {
+      return None
+    }
+    if has_x {
+      xs.push(factor)
+    } else if has_y {
+      ys.push(factor)
+    } else {
+      coeffs.push(factor)
+    }
+  }
+  Some(SolverLieSeparated::{
+    coeff: solver_mul_all(coeffs),
+    x_part: solver_mul_all(xs),
+    y_part: solver_mul_all(ys),
+  })
+}
+
+///|
+fn solver_single_target_solutions(
+  eq : Expr,
+  target : Expr,
+) -> Array[Expr] raise SolverError {
+  let normalized = solver_normalize_equation(eq)
+  match solver_extract_linear_targets(normalized, [target]) {
+    Some((coeffs, constant)) if !@symcore.is_zero(coeffs[0]) =>
+      return [
+        canonical_expr(
+          @symcore.mul([
+            @symcore.int(-1),
+            constant,
+            @symcore.pow(coeffs[0], @symcore.int(-1)),
+          ]),
+        ),
+      ]
+    _ => ()
+  }
+  let (rewritten, symbols, backward) = solver_symbolize_targets(
+    [normalized],
+    [target],
+    "__ode_sep_",
+  )
+  let symbol = symbols[0]
+  let poly_name = solver_symbol_name(symbol)
+  let poly_try : Result[Array[Expr], @sympolys.PolyError] = try? {
+    let poly = @sympolys.Poly::from_expr_defaults(
+      rewritten[0],
+      gens=[poly_name],
+      domain=@sympolys.Domain::EX,
+    )
+    let degree = poly.degree(0)
+    if degree == 1 {
+      @sympolys.roots_linear(poly)
+    } else if degree == 2 {
+      @sympolys.roots_quadratic(poly)
+    } else {
+      @sympolys.roots(poly)
+    }
+  }
+  match poly_try {
+    Ok(roots) if !roots.is_empty() => {
+      let out : Array[Expr] = []
+      for root in roots {
+        out.push(solver_finalize_solution_expr(solver_replace_targets(root, backward)))
+      }
+      return out
+    }
+    _ => ()
+  }
+  match solver_extract_quadratic_target(normalized, target) {
+    Some((a, b, constant)) if !@symcore.is_zero(a) => {
+      let disc = canonical_expr(
+        @symcore.add([
+          b ^ @symcore.int(2),
+          @symcore.mul([
+            @symcore.int(-4),
+            a,
+            constant,
+          ]),
+        ]),
+      )
+      let sqrt_disc = solver_exact_root_simplify(
+        canonical_expr(
+          @symcore.pow(
+            disc,
+            @symcore.rational_from_ints(1, 2) catch {
+              _ => @symcore.function("Rational", [@symcore.int(1), @symcore.int(2)])
+            },
+          ),
+        ),
+      )
+      let denom = canonical_expr(@symcore.mul([@symcore.int(2), a]))
+      let neg_b = canonical_expr(@symcore.mul([@symcore.int(-1), b]))
+      return [
+        solver_finalize_solution_expr(
+          @symcore.mul([
+            canonical_expr(
+              @symcore.add([
+                neg_b,
+                @symcore.mul([@symcore.int(-1), sqrt_disc]),
+              ]),
+            ),
+            denom ^ @symcore.int(-1),
+          ]),
+        ),
+        solver_finalize_solution_expr(
+          @symcore.mul([
+            canonical_expr(@symcore.add([neg_b, sqrt_disc])),
+            denom ^ @symcore.int(-1),
+          ]),
+        ),
+      ]
+    }
+    _ => ()
+  }
+  let mappings = solver_maps_from_result(
+    solve(solve_expr_input(rewritten[0]), symbols=symbols),
+    symbols,
+  )
+  let out : Array[Expr] = []
+  for mapping in mappings {
+    let rhs = mapping.get(solver_symbol_name(symbol)).unwrap_or(symbol)
+    out.push(solver_finalize_solution_expr(solver_replace_targets(rhs, backward)))
+  }
+  out
+}
+
+///|
+fn solver_split_integer_coeff(term : Expr) -> (@bigint.BigInt, Expr)? {
+  match term {
+    Expr::Number(value) =>
+      if value.is_integral() {
+        Some((value.numerator(), @symcore.int(1)))
+      } else {
+        None
+      }
+    Expr::Mul(args) => {
+      let mut coeff = 1N
+      let factors : Array[Expr] = []
+      for arg in args {
+        match @symcore.exact_numeric_expr_num_den(arg) {
+          Some((num, den)) if den.compare(1N) == 0 => coeff *= num
+          Some(_) => return None
+          None => factors.push(arg)
+        }
+      }
+      Some((coeff, solver_mul_all(factors)))
+    }
+    _ => Some((1N, term))
+  }
+}
+
+///|
+fn solver_exact_sqrt_bigint(n : @bigint.BigInt) -> @bigint.BigInt? {
+  let expr = Expr::Number(@symnum.BigRational::new(n, 1N) catch {
+    _ => return None
+  })
+  let root_try : Result[Expr?, @sympolys.PolyError] = try?
+    @sympolys.domain_exsqrt_expr(@sympolys.Domain::ZZ, expr)
+  match root_try {
+    Ok(Some(Expr::Number(value))) if value.is_integral() => Some(value.numerator())
+    _ => None
+  }
+}
+
+///|
+fn solver_bigint_gcd(lhs : @bigint.BigInt, rhs : @bigint.BigInt) -> @bigint.BigInt {
+  let mut a = if lhs.compare(0N) < 0 { -lhs } else { lhs }
+  let mut b = if rhs.compare(0N) < 0 { -rhs } else { rhs }
+  while b != 0N {
+    let r = a % b
+    a = b
+    b = r
+  }
+  a
+}
+
+///|
+fn solver_extract_add_square_factor(base : Expr) -> (Expr, Expr)? {
+  let terms = match base {
+    Expr::Add(args) if !args.is_empty() => args
+    _ => return None
+  }
+  let pieces : Array[(@bigint.BigInt, Expr)] = []
+  let mut gcd : @bigint.BigInt? = None
+  for term in terms {
+    match solver_split_integer_coeff(term) {
+      Some((coeff, rest)) => {
+        let abs_coeff = if coeff.compare(0N) < 0 { -coeff } else { coeff }
+        if abs_coeff == 0N {
+          continue
+        }
+        gcd = Some(
+          match gcd {
+            Some(current) => solver_bigint_gcd(current, abs_coeff)
+            None => abs_coeff
+          },
+        )
+        pieces.push((coeff, rest))
+      }
+      None => return None
+    }
+  }
+  let common = gcd.unwrap_or(0N)
+  guard common.compare(1N) > 0 else {
+    return None
+  }
+  let sqrt_common = match solver_exact_sqrt_bigint(common) {
+    Some(value) => value
+    None => return None
+  }
+  let reduced_terms : Array[Expr] = []
+  for piece in pieces {
+    let coeff = piece.0 / common
+    let rest = piece.1
+    reduced_terms.push(
+      if coeff == 1N {
+        rest
+      } else if coeff == -1N {
+        canonical_expr(@symcore.mul([@symcore.int(-1), rest]))
+      } else {
+        canonical_expr(
+          @symcore.mul([
+            Expr::Number(@symnum.BigRational::new(coeff, 1N) catch {
+              _ => @symnum.BigRational::zero()
+            }),
+            rest,
+          ]),
+        )
+      },
+    )
+  }
+  Some((
+    Expr::Number(@symnum.BigRational::new(sqrt_common, 1N) catch {
+      _ => @symnum.BigRational::zero()
+    }),
+    canonical_expr(@symcore.add(reduced_terms)),
+  ))
+}
+
+///|
+fn solver_exact_root_simplify(expr : Expr) -> Expr {
+  let rewritten = @symcore.map_children(expr, child => solver_exact_root_simplify(child))
+  match rewritten {
+    Expr::Pow(base, exp) =>
+      match @symcore.exact_numeric_expr_num_den(exp) {
+        Some((num, den)) if num.compare(1N) == 0 && den.compare(2N) == 0 => {
+          let sqrt_try : Result[Expr?, @sympolys.PolyError] = try?
+            @sympolys.domain_exsqrt_expr(@sympolys.Domain::QQ, base)
+          match sqrt_try {
+            Ok(Some(root)) => canonical_expr(root)
+            _ =>
+              match solver_extract_add_square_factor(base) {
+                Some((factor, reduced)) =>
+                  canonical_expr(
+                    @symcore.mul([
+                      factor,
+                      solver_exact_root_simplify(
+                        @symcore.pow(
+                          reduced,
+                          @symcore.rational_from_ints(1, 2) catch {
+                            _ => @symcore.function("Rational", [@symcore.int(1), @symcore.int(2)])
+                          },
+                        ),
+                      ),
+                    ]),
+                  )
+                None => @symcore.function("sqrt", [base])
+              }
+          }
+        }
+        _ => rewritten
+      }
+    _ => rewritten
+  }
+}
+
+///|
+fn solver_add_term_key(term : Expr) -> (@symnum.BigRational, Expr) {
+  match term {
+    Expr::Number(value) => (value, @symcore.int(1))
+    Expr::Mul(args) => {
+      let mut coeff = @symnum.BigRational::one()
+      let rest : Array[Expr] = []
+      for arg in args {
+        match @symcore.exact_numeric_expr_num_den(arg) {
+          Some((num, den)) => {
+            let value_res : Result[@symnum.BigRational, @symnum.RationalError] = try?
+              @symnum.BigRational::new(num, den)
+            match value_res {
+              Ok(value) => coeff = coeff.mul_r(value)
+              Err(_) => rest.push(arg)
+            }
+          }
+          None => rest.push(arg)
+        }
+      }
+      (coeff, solver_mul_all(rest))
+    }
+    _ => (@symnum.BigRational::one(), term)
+  }
+}
+
+///|
+fn solver_sort_add_terms(expr : Expr) -> Expr {
+  let rewritten = @symcore.map_children(expr, child => solver_sort_add_terms(child))
+  match rewritten {
+    Expr::Add(args) => {
+      let sorted = args.copy()
+      sorted.sort_by((lhs, rhs) => {
+        let (lcoeff, lbase) = solver_add_term_key(lhs)
+        let (rcoeff, rbase) = solver_add_term_key(rhs)
+        let base_cmp = @symcore.compare_expr(lbase, rbase)
+        if base_cmp != 0 {
+          base_cmp
+        } else {
+          let coeff_cmp = rcoeff.compare(lcoeff)
+          if coeff_cmp != 0 {
+            coeff_cmp
+          } else {
+            @symcore.compare_expr(lhs, rhs)
+          }
+        }
+      })
+      @symcore.raw_add(sorted)
+    }
+    _ => rewritten
+  }
+}
+
+///|
+fn solver_finalize_solution_expr(expr : Expr) -> Expr {
+  let exact = solver_exact_root_simplify(canonical_expr(expr))
+  let simplified = @symsimplify.simplify(exact, max_passes=2)
+  solver_sort_add_terms(canonical_expr(solver_exact_root_simplify(simplified)))
+}
+
+///|
+fn solver_separable_canonical_systems(
+  eqs : Array[Expr],
+  targets : Array[Expr],
+) -> Array[Array[Expr]] raise SolverError {
+  if eqs.is_empty() || targets.is_empty() {
+    return []
+  }
+  let mut states : Array[(Array[(Expr, Expr)], Array[Expr])] = [([], eqs)]
+  for _ in 0..<targets.length() {
+    let next_states : Array[(Array[(Expr, Expr)], Array[Expr])] = []
+    for state in states {
+      let replacements = state.0
+      let current_eqs = state.1.map(eq => canonical_expr(solver_replace_targets(eq, replacements)))
+      let unresolved : Array[Expr] = []
+      for target in targets {
+        if !replacements.any(pair => @symcore.compare_expr(pair.0, target) == 0) {
+          unresolved.push(target)
+        }
+      }
+      if unresolved.is_empty() {
+        next_states.push((replacements, current_eqs))
+        continue
+      }
+      let mut expanded = false
+      for i in 0..<current_eqs.length() {
+        let hits : Array[Expr] = []
+        for target in unresolved {
+          if solver_expr_has_target(current_eqs[i], target) {
+            hits.push(target)
+          }
+        }
+        if hits.length() != 1 {
+          continue
+        }
+        let target = hits[0]
+        let sols = solver_single_target_solutions(current_eqs[i], target)
+        if sols.is_empty() {
+          continue
+        }
+        expanded = true
+        for sol in sols {
+          let next_replacements = replacements.copy()
+          next_replacements.push((target, sol))
+          let next_eqs : Array[Expr] = []
+          for j in 0..<current_eqs.length() {
+            if j != i {
+              next_eqs.push(current_eqs[j])
+            }
+          }
+          next_states.push((next_replacements, next_eqs))
+        }
+        break
+      }
+      if !expanded {
+        return []
+      }
+    }
+    if next_states.is_empty() {
+      return []
+    }
+    states = next_states
+  }
+  let systems : Array[Array[Expr]] = []
+  for state in states {
+    let replacements = state.0
+    let system : Array[Expr] = []
+    let mut complete = true
+    for target in targets {
+      let mut rhs : Expr? = None
+      for pair in replacements {
+        if @symcore.compare_expr(pair.0, target) == 0 {
+          rhs = Some(pair.1)
+          break
+        }
+      }
+      match rhs {
+        Some(value) =>
+          system.push(
+            Expr::Relational(
+              @symcore.RelOp::Eq,
+              target,
+              solver_finalize_solution_expr(value),
+            ),
+          )
+        None => {
+          complete = false
+          break
+        }
+      }
+    }
+    if complete {
+      systems.push(system)
+    }
+  }
+  systems
 }
 
 ///|
@@ -976,7 +1622,103 @@ pub fn canonical_odes(
   funcs : Array[Expr],
   t : Expr,
 ) -> Array[Array[Expr]] raise SolverError {
-  [solver_first_order_canonical_system(eqs, funcs, t)]
+  guard !eqs.is_empty() else {
+    raise SolverError::ValueError("canonical_odes expects at least one equation")
+  }
+  let orders = solver_func_orders(eqs, funcs)
+  let targets : Array[Expr] = []
+  for i in 0..<funcs.length() {
+    targets.push(solver_ode_target(funcs[i], t, orders[i]))
+  }
+  let normalized_eqs = eqs.map(solver_normalize_equation)
+  let (rewritten, symbols, backward) = solver_symbolize_targets(
+    normalized_eqs,
+    targets,
+    "__ode_canonical_",
+  )
+  let solved_res : Result[SolveResult, SolverError] = try?
+    solve(solve_exprs_input(rewritten), symbols=symbols)
+  match solved_res {
+    Ok(solved) => {
+      let mappings = solver_maps_from_result(solved, symbols)
+      let systems : Array[Array[Expr]] = []
+      for mapping in mappings {
+        let system : Array[Expr] = []
+        for i in 0..<targets.length() {
+          let rhs = mapping.get(solver_symbol_name(symbols[i])).unwrap_or(symbols[i])
+          system.push(
+            Expr::Relational(
+              @symcore.RelOp::Eq,
+              targets[i],
+              solver_finalize_solution_expr(solver_replace_targets(rhs, backward)),
+            ),
+          )
+        }
+        systems.push(system)
+      }
+      if !systems.is_empty() {
+        return systems
+      }
+    }
+    Err(_) => ()
+  }
+  let coeff_rows : Array[Array[Expr]] = []
+  let rhs_rows : Array[Array[Expr]] = []
+  let mut linear_possible = true
+  for eq in normalized_eqs {
+    match solver_extract_linear_targets(eq, targets) {
+      Some((coeffs, constant)) => {
+        coeff_rows.push(coeffs)
+        rhs_rows.push([canonical_expr(@symcore.mul([@symcore.int(-1), constant]))])
+      }
+      None => {
+        linear_possible = false
+        break
+      }
+    }
+  }
+  let direct_system = if linear_possible {
+    match solver_solve_linear_expr_system(coeff_rows, rhs_rows) {
+      Some(values) => {
+        let system : Array[Expr] = []
+        for i in 0..<targets.length() {
+          system.push(
+            Expr::Relational(
+              @symcore.RelOp::Eq,
+              targets[i],
+              solver_finalize_solution_expr(values[i]),
+            ),
+          )
+        }
+        Some(system)
+      }
+      None => None
+    }
+  } else {
+    None
+  }
+  match direct_system {
+    Some(system) => return [system]
+    None => ()
+  }
+  let separable = solver_separable_canonical_systems(normalized_eqs, targets)
+  if !separable.is_empty() {
+    return separable
+  }
+  []
+}
+
+///|
+fn solver_matrix_negate(
+  matrix : @symmatrices.Matrix,
+  context : String,
+) -> @symmatrices.Matrix raise SolverError {
+  let negated = matrix.applyfunc(value =>
+    canonical_expr(@symcore.mul([@symcore.int(-1), value]))
+  ) catch {
+    err => raise wrap_matrix_error(context, err)
+  }
+  solver_matrix_normalize_entries(negated, context)
 }
 
 ///|
@@ -986,54 +1728,55 @@ pub fn linear_ode_to_matrix(
   t : Expr,
   order : Int,
 ) -> (Array[@symmatrices.Matrix], @symmatrices.Matrix) raise SolverError {
-  guard order == 1 else {
-    raise SolverError::ValueError("linear_ode_to_matrix currently supports only first-order systems")
+  guard order >= 0 else {
+    raise SolverError::ValueError("linear_ode_to_matrix expects a nonnegative order")
   }
-  let systems = canonical_odes(eqs, funcs, t)
-  let system = systems[0]
-  let derivative_targets = funcs.map(func => @symcalculus.diff(func, t))
-  let targets : Array[Expr] = []
-  for item in derivative_targets {
-    targets.push(item)
-  }
-  for item in funcs {
-    targets.push(item)
-  }
-  let a1_rows : Array[Array[Expr]] = []
-  let a0_rows : Array[Array[Expr]] = []
-  let b_rows : Array[Array[Expr]] = []
-  for eq in system {
-    match solver_extract_linear_targets(solver_normalize_equation(eq), targets) {
-      Some((coeffs, constant)) => {
-        let row1 : Array[Expr] = []
-        let row0 : Array[Expr] = []
-        for i in 0..<funcs.length() {
-          row1.push(coeffs[i])
-          row0.push(canonical_expr(@symcore.mul([@symcore.int(-1), coeffs[funcs.length() + i]])))
-        }
-        a1_rows.push(row1)
-        a0_rows.push(row0)
-        b_rows.push([canonical_expr(@symcore.mul([@symcore.int(-1), constant]))])
-      }
-      None =>
+  for eq in eqs {
+    for func in funcs {
+      if ode_order(eq, func) > order {
         raise SolverError::ValueError(
-          "linear_ode_to_matrix currently expects a first-order linear system",
+          "Cannot represent system in " + order.to_string() + "-order form",
         )
+      }
     }
   }
-  (
-    [
-      @symmatrices.matrix(a1_rows) catch {
-        err => raise wrap_matrix_error("linear_ode_to_matrix", err)
+  let matrices : Array[@symmatrices.Matrix] = []
+  let mut current_eqs = eqs.map(solver_normalize_equation)
+  let mut rhs : @symmatrices.Matrix? = None
+  let mut current_order = order
+  while current_order >= 0 {
+    let targets = funcs.map(func => solver_ode_target(func, t, current_order))
+    let (rewritten, symbols, _) = solver_symbolize_targets(
+      current_eqs,
+      targets,
+      "__ode_matrix_",
+    )
+    let (a_i_raw, b_i_raw) = match
+      (try? linear_eq_to_matrix(rewritten, symbols) :
+      Result[(@symmatrices.Matrix, @symmatrices.Matrix), SolverError]) {
+      Ok(value) => value
+      Err(_) => raise SolverError::ValueError("The system of ODEs is nonlinear.")
+    }
+    let a_i = solver_matrix_normalize_entries(a_i_raw, "linear_ode_to_matrix")
+    matrices.push(
+      if current_order == order {
+        a_i
+      } else {
+        solver_matrix_negate(a_i, "linear_ode_to_matrix")
       },
-      @symmatrices.matrix(a0_rows) catch {
-        err => raise wrap_matrix_error("linear_ode_to_matrix", err)
-      },
-    ],
-    @symmatrices.matrix(b_rows) catch {
-      err => raise wrap_matrix_error("linear_ode_to_matrix", err)
-    },
-  )
+    )
+    if current_order > 0 {
+      let next_eqs : Array[Expr] = []
+      for row in b_i_raw.to_list() {
+        next_eqs.push(canonical_expr(@symcore.mul([@symcore.int(-1), row[0]])))
+      }
+      current_eqs = next_eqs
+    } else {
+      rhs = Some(solver_matrix_normalize_entries(b_i_raw, "linear_ode_to_matrix"))
+    }
+    current_order -= 1
+  }
+  (matrices, rhs.unwrap())
 }
 
 ///|
@@ -1075,6 +1818,108 @@ fn solver_matrix_normalize_entries(
     normalized.push(next)
   }
   solver_build_matrix(normalized, context)
+}
+
+///|
+fn solver_swap_expr_rows(
+  rows : Array[Array[Expr]],
+  i : Int,
+  j : Int,
+) -> Unit {
+  if i == j {
+    return
+  }
+  let tmp = rows[i]
+  rows[i] = rows[j]
+  rows[j] = tmp
+}
+
+///|
+fn solver_expr_divide(lhs : Expr, rhs : Expr) -> Expr {
+  canonical_expr(@symcore.mul([lhs, @symcore.pow(rhs, @symcore.int(-1))]))
+}
+
+///|
+fn solver_solve_linear_expr_system(
+  coeff_rows : Array[Array[Expr]],
+  rhs_rows : Array[Array[Expr]],
+) -> Array[Expr]? {
+  let n = coeff_rows.length()
+  if n == 0 || rhs_rows.length() != n {
+    return None
+  }
+  let left : Array[Array[Expr]] = []
+  let right : Array[Array[Expr]] = []
+  for i in 0..<n {
+    if coeff_rows[i].length() != n || rhs_rows[i].length() != 1 {
+      return None
+    }
+    left.push(coeff_rows[i].copy())
+    right.push(rhs_rows[i].copy())
+  }
+  let mut pivot_row = 0
+  for col in 0..<n {
+    let mut found = -1
+    for candidate in pivot_row..<n {
+      if expr_is_zeroish(left[candidate][col]) != Some(true) {
+        found = candidate
+        break
+      }
+    }
+    if found < 0 {
+      return None
+    }
+    solver_swap_expr_rows(left, pivot_row, found)
+    solver_swap_expr_rows(right, pivot_row, found)
+    let pivot = left[pivot_row][col]
+    for j in col..<n {
+      left[pivot_row][j] = solver_expr_divide(left[pivot_row][j], pivot)
+    }
+    right[pivot_row][0] = solver_expr_divide(right[pivot_row][0], pivot)
+    for i in 0..<n {
+      if i == pivot_row {
+        continue
+      }
+      let factor = left[i][col]
+      if expr_is_zeroish(factor) == Some(true) {
+        continue
+      }
+      for j in col..<n {
+        left[i][j] = canonical_expr(
+          @symcore.add([
+            left[i][j],
+            @symcore.mul([@symcore.int(-1), factor, left[pivot_row][j]]),
+          ]),
+        )
+      }
+      right[i][0] = canonical_expr(
+        @symcore.add([
+          right[i][0],
+          @symcore.mul([@symcore.int(-1), factor, right[pivot_row][0]]),
+        ]),
+      )
+    }
+    pivot_row += 1
+  }
+  for i in 0..<n {
+    for j in 0..<n {
+      let expected = if i == j { @symcore.int(1) } else { @symcore.int(0) }
+      let difference = canonical_expr(
+        @symcore.add([
+          left[i][j],
+          @symcore.mul([@symcore.int(-1), expected]),
+        ]),
+      )
+      if expr_is_zeroish(difference) != Some(true) {
+        return None
+      }
+    }
+  }
+  let out : Array[Expr] = []
+  for row in right {
+    out.push(canonical_expr(row[0]))
+  }
+  Some(out)
 }
 
 ///|
@@ -1271,6 +2116,1682 @@ pub fn linodesolve(
 }
 
 ///|
+priv struct SolverLieContext {
+  x : Expr
+  y : Expr
+  func : Expr
+  h_raw : Expr
+  h : Expr
+  hx_raw : Expr
+  hy_raw : Expr
+  hx : Expr
+  hy : Expr
+  hinv : Expr
+  hinvx : Expr
+  hinvy : Expr
+}
+
+///|
+priv struct SolverLieSeparated {
+  coeff : Expr
+  x_part : Expr
+  y_part : Expr
+}
+
+///|
+let solver_lie_heuristics : Array[String] = [
+  "abaco1_simple",
+  "abaco1_product",
+  "abaco2_similar",
+  "abaco2_unique_unknown",
+  "abaco2_unique_general",
+  "linear",
+  "function_sum",
+  "bivariate",
+  "chi",
+]
+
+///|
+fn solver_lie_restore_func(expr : Expr, ctx : SolverLieContext) -> Expr {
+  @symcore.xreplace(expr, [(ctx.y, ctx.func)])
+}
+
+///|
+fn solver_lie_collect_monomial_factor(
+  expr : Expr,
+  sign : Int,
+  counts : Map[String, Int],
+  factors : Map[String, Expr],
+) -> Unit {
+  match expr {
+    Expr::Mul(args) =>
+      for arg in args {
+        solver_lie_collect_monomial_factor(arg, sign, counts, factors)
+      }
+    Expr::Pow(base, Expr::Number(exp)) if exp.is_integral() => {
+      let coeff = exp.numerator().to_int() * sign
+      if coeff != 0 {
+        let key = @symprint.debug_repr(base)
+        factors[key] = base
+        counts[key] = counts.get(key).unwrap_or(0) + coeff
+      }
+    }
+    _ => {
+      let key = @symprint.debug_repr(expr)
+      factors[key] = expr
+      counts[key] = counts.get(key).unwrap_or(0) + sign
+    }
+  }
+}
+
+///|
+fn solver_lie_monomial_power(base : Expr, exp : Int) -> Expr {
+  if exp == 1 {
+    base
+  } else {
+    @symcore.pow(base, @symcore.int(exp))
+  }
+}
+
+///|
+fn solver_lie_cancel_monomial_ratio(expr : Expr) -> Expr {
+  let (num, den) = @symsimplify.fraction(expr)
+  if @symcore.compare_expr(den, @symcore.int(1)) == 0 {
+    return expr
+  }
+  let counts : Map[String, Int] = {}
+  let factors : Map[String, Expr] = {}
+  solver_lie_collect_monomial_factor(num, 1, counts, factors)
+  solver_lie_collect_monomial_factor(den, -1, counts, factors)
+  let num_out : Array[Expr] = []
+  let den_out : Array[Expr] = []
+  for key, coeff in counts {
+    if coeff > 0 {
+      num_out.push(solver_lie_monomial_power(factors[key], coeff))
+    } else if coeff < 0 {
+      den_out.push(solver_lie_monomial_power(factors[key], -coeff))
+    }
+  }
+  let rebuilt_num = solver_mul_all(num_out)
+  let rebuilt_den = solver_mul_all(den_out)
+  if @symcore.compare_expr(rebuilt_den, @symcore.int(1)) == 0 {
+    rebuilt_num
+  } else {
+    solver_expr_divide(rebuilt_num, rebuilt_den)
+  }
+}
+
+///|
+fn solver_lie_cancel_products(expr : Expr) -> Expr {
+  let rewritten = @symcore.map_children(expr, child => solver_lie_cancel_products(child))
+  solver_lie_cancel_monomial_ratio(rewritten)
+}
+
+///|
+fn solver_lie_mul_factors(expr : Expr) -> Array[Expr] {
+  match canonical_expr(expr) {
+    Expr::Mul(args) => args
+    other => [other]
+  }
+}
+
+///|
+fn solver_lie_remove_factor_once(factors : Array[Expr], target : Expr) -> Unit {
+  for i in 0..<factors.length() {
+    if @symcore.compare_expr(factors[i], target) == 0 {
+      ignore(factors.remove(i))
+      return
+    }
+  }
+}
+
+///|
+fn solver_lie_factor_common_add(expr : Expr) -> Expr {
+  match canonical_expr(expr) {
+    Expr::Add(args) if args.length() >= 2 => {
+      let common : Array[Expr] = []
+      let first = solver_lie_mul_factors(args[0])
+      for factor in first {
+        if args[1:].all(term => solver_expr_in_list(solver_lie_mul_factors(term), factor)) &&
+          !solver_expr_in_list(common, factor) {
+          common.push(factor)
+        }
+      }
+      if common.is_empty() {
+        return expr
+      }
+      let remainders : Array[Expr] = []
+      for term in args {
+        let factors = solver_lie_mul_factors(term)
+        for factor in common {
+          solver_lie_remove_factor_once(factors, factor)
+        }
+        remainders.push(solver_mul_all(factors))
+      }
+      canonical_expr(@symcore.mul([solver_mul_all(common), @symcore.add(remainders)]))
+    }
+    _ => expr
+  }
+}
+
+///|
+fn solver_lie_simplify(expr : Expr) -> Expr {
+  let canceled = solver_lie_cancel_products(expr)
+  canonical_expr(
+    @symsimplify.simplify(
+      @symsimplify.ratsimp(@symsimplify.powsimp(@symsimplify.numer_expand(canceled))),
+    ),
+  )
+}
+
+///|
+fn solver_lie_polynomial_zero(expr : Expr) -> Bool {
+  let symbol_names : Array[String] = []
+  for symbol in @symcore.free_symbols(expr) {
+    match symbol {
+      Expr::Symbol(name) =>
+        if !symbol_names.contains(name) {
+          symbol_names.push(name)
+        }
+      _ => ()
+    }
+  }
+  if symbol_names.is_empty() {
+    return false
+  }
+  let (numer, denom) = @symsimplify.fraction(expr)
+  let numer_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
+    @sympolys.Poly::from_expr(
+      canonical_expr(numer),
+      symbol_names,
+      @sympolys.Domain::EX,
+    )
+  let denom_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
+    @sympolys.Poly::from_expr(
+      canonical_expr(denom),
+      symbol_names,
+      @sympolys.Domain::EX,
+    )
+  match (numer_poly_res, denom_poly_res) {
+    (Ok(numer_poly), Ok(denom_poly)) => !denom_poly.is_zero() && numer_poly.is_zero()
+    _ => false
+  }
+}
+
+///|
+fn solver_lie_is_zero(expr : Expr) -> Bool {
+  let expanded = canonical_expr(@symsimplify.numer_expand(expr))
+  let factored = solver_lie_factor_common_add(expr)
+  let factored_expanded = solver_lie_factor_common_add(expanded)
+  for candidate in [expr, expanded, factored, factored_expanded] {
+    if expr_is_zeroish(candidate) == Some(true) {
+      return true
+    }
+    if expr_is_zeroish(solver_lie_simplify(candidate)) == Some(true) {
+      return true
+    }
+  }
+  solver_lie_polynomial_zero(expr) || solver_lie_polynomial_zero(expanded)
+}
+
+///|
+fn solver_lie_depends_on(expr : Expr, sym : Expr) -> Bool {
+  solver_expr_in_list(@symcore.free_symbols(expr), sym)
+}
+
+///|
+fn solver_lie_swap_xy(expr : Expr, x : Expr, y : Expr) -> Expr {
+  let temp = @symcore.dummy(name="lie_swap")
+  let step1 = @symcore.xreplace(expr, [(x, temp)])
+  let step2 = @symcore.xreplace(step1, [(y, x)])
+  canonical_expr(@symcore.xreplace(step2, [(temp, y)]))
+}
+
+///|
+fn solver_lie_strip_xy_constants(expr : Expr, x : Expr, y : Expr) -> Expr {
+  match canonical_expr(expr) {
+    Expr::Mul(args) => {
+      let kept : Array[Expr] = []
+      for arg in args {
+        if solver_lie_depends_on(arg, x) || solver_lie_depends_on(arg, y) {
+          kept.push(arg)
+        }
+      }
+      solver_mul_all(kept)
+    }
+    other => other
+  }
+}
+
+///|
+fn solver_lie_poly_divmod_exprs(
+  dividend : Expr,
+  divisor : Expr,
+  gens : Array[String],
+) -> (Expr, Expr)? {
+  let dividend_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
+    @sympolys.Poly::from_expr(
+      canonical_expr(dividend),
+      gens,
+      @sympolys.Domain::EX,
+    )
+  let divisor_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
+    @sympolys.Poly::from_expr(
+      canonical_expr(divisor),
+      gens,
+      @sympolys.Domain::EX,
+    )
+  match (dividend_poly_res, divisor_poly_res) {
+    (Ok(dividend_poly), Ok(divisor_poly)) => {
+      if divisor_poly.is_zero() {
+        return None
+      }
+      let div_res : Result[
+        (Array[@sympolys.Poly], @sympolys.Poly),
+        @sympolys.PolyError,
+      ] = try? dividend_poly.divmod_multivar([divisor_poly])
+      match div_res {
+        Ok((quotients, remainder)) =>
+          Some(
+            (
+              canonical_expr(quotients[0].to_expr()),
+              canonical_expr(remainder.to_expr()),
+            ),
+          )
+        Err(_) => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn solver_lie_restore_xi_eta_from_chi(
+  ctx : SolverLieContext,
+  chi_val : Expr,
+) -> (Expr, Expr) {
+  let y_sym = Expr::Symbol("__lie_y")
+  let x_name = match ctx.x {
+    Expr::Symbol(name) => name
+    _ => "x"
+  }
+  let chi_sym = @symcore.xreplace(chi_val, [(ctx.func, y_sym)])
+  match solver_lie_poly_divmod_exprs(chi_sym, ctx.h, [x_name, "__lie_y"]) {
+    Some((xi_quot, eta_rem)) =>
+      (
+        canonical_expr(
+          @symcore.mul([
+            @symcore.int(-1),
+            @symcore.xreplace(xi_quot, [(y_sym, ctx.func)]),
+          ]),
+        ),
+        canonical_expr(@symcore.xreplace(eta_rem, [(y_sym, ctx.func)])),
+      )
+    None => (@symcore.int(0), canonical_expr(chi_val))
+  }
+}
+
+///|
+fn solver_lie_separate_xy(
+  expr : Expr,
+  x : Expr,
+  y : Expr,
+) -> SolverLieSeparated? {
+  let attempts = [
+    canonical_expr(expr),
+    canonical_expr(@symsimplify.separatevars(canonical_expr(expr))),
+    solver_lie_simplify(expr),
+    solver_lie_simplify(@symsimplify.separatevars(solver_lie_simplify(expr))),
+  ]
+  for candidate in attempts {
+    match solver_separate_mul_parts(candidate, x, y) {
+      Some(parts) => return Some(parts)
+      None => ()
+    }
+    let (num, den) = @symsimplify.fraction(candidate)
+    if @symcore.compare_expr(den, @symcore.int(1)) != 0 {
+      match (solver_separate_mul_parts(num, x, y), solver_separate_mul_parts(den, x, y)) {
+        (Some(num_parts), Some(den_parts)) =>
+          return Some(SolverLieSeparated::{
+            coeff: canonical_expr(
+              @symcore.mul([
+                num_parts.coeff,
+                @symcore.pow(den_parts.coeff, @symcore.int(-1)),
+              ]),
+            ),
+            x_part: canonical_expr(
+              @symcore.mul([
+                num_parts.x_part,
+                @symcore.pow(den_parts.x_part, @symcore.int(-1)),
+              ]),
+            ),
+            y_part: canonical_expr(
+              @symcore.mul([
+                num_parts.y_part,
+                @symcore.pow(den_parts.y_part, @symcore.int(-1)),
+              ]),
+            ),
+          })
+        _ => ()
+      }
+    }
+  }
+  let sample_pairs = [
+    (@symcore.int(1), @symcore.int(2)),
+    (@symcore.int(2), @symcore.int(3)),
+    (@symcore.int(-1), @symcore.int(2)),
+  ]
+  for pair in sample_pairs {
+    let x0 = pair.0
+    let y0 = pair.1
+    let exy = solver_lie_simplify(@symcore.xreplace(@symcore.xreplace(expr, [(x, x0)]), [(y, y0)]))
+    if solver_lie_is_zero(exy) {
+      continue
+    }
+    let ex = solver_lie_simplify(@symcore.xreplace(expr, [(y, y0)]))
+    let ey = solver_lie_simplify(@symcore.xreplace(expr, [(x, x0)]))
+    let x_part = solver_lie_simplify(solver_expr_divide(ex, exy))
+    let y_part = solver_lie_simplify(solver_expr_divide(ey, exy))
+    if solver_lie_depends_on(x_part, y) || solver_lie_depends_on(y_part, x) {
+      continue
+    }
+    return Some(SolverLieSeparated::{ coeff: exy, x_part, y_part })
+  }
+  None
+}
+
+///|
+fn solver_lie_residual_y(
+  ctx : SolverLieContext,
+  xi_y : Expr,
+  eta_y : Expr,
+) -> Expr {
+  @symcore.add([
+    @symcalculus.diff(eta_y, ctx.x),
+    @symcore.mul([
+      canonical_expr(
+        @symcore.add([
+          @symcalculus.diff(eta_y, ctx.y),
+          @symcore.mul([@symcore.int(-1), @symcalculus.diff(xi_y, ctx.x)]),
+        ]),
+      ),
+      ctx.h,
+    ]),
+    @symcore.mul([
+      @symcore.int(-1),
+      @symcalculus.diff(xi_y, ctx.y),
+      ctx.h ^ @symcore.int(2),
+    ]),
+    @symcore.mul([@symcore.int(-1), xi_y, ctx.hx]),
+    @symcore.mul([@symcore.int(-1), eta_y, ctx.hy]),
+  ])
+}
+
+///|
+fn solver_lie_zero_on_samples(expr : Expr, x : Expr, y : Expr) -> Bool {
+  let samples = [
+    (@symcore.int(1), @symcore.int(2)),
+    (@symcore.int(2), @symcore.int(3)),
+    (@symcore.int(3), @symcore.int(2)),
+    (@symcore.int(-1), @symcore.int(2)),
+    (@symcore.int(2), @symcore.int(-1)),
+  ]
+  let mut checked = 0
+  for pair in samples {
+    let substituted = canonical_expr(
+      @symcore.xreplace(
+        @symcore.xreplace(expr, [(x, pair.0)]),
+        [(y, pair.1)],
+      ),
+    )
+    if @symcore.is_nan(substituted) || @symcore.is_infinite(substituted) {
+      continue
+    }
+    let verdict = match expr_is_zeroish(substituted) {
+      Some(value) => Some(value)
+      None => expr_is_zeroish(@symcore.evalf(substituted, prec=80))
+    }
+    match verdict {
+      Some(true) => checked += 1
+      Some(false) => return false
+      None => ()
+    }
+  }
+  checked >= 3
+}
+
+///|
+fn solver_lie_candidate_valid(
+  ctx : SolverLieContext,
+  xi : Expr,
+  eta : Expr,
+) -> Bool {
+  let xi_y = @symcore.xreplace(xi, [(ctx.func, ctx.y)])
+  let eta_y = @symcore.xreplace(eta, [(ctx.func, ctx.y)])
+  let residual = solver_lie_residual_y(ctx, xi_y, eta_y)
+  solver_lie_is_zero(residual) || solver_lie_zero_on_samples(residual, ctx.x, ctx.y)
+}
+
+///|
+fn solver_lie_push_valid(
+  out : Array[Map[String, Expr]],
+  ctx : SolverLieContext,
+  xi : Expr,
+  eta : Expr,
+) -> Bool {
+  let xi0 = solver_finalize_solution_expr(xi)
+  let eta0 = solver_finalize_solution_expr(eta)
+  if solver_lie_is_zero(xi0) && solver_lie_is_zero(eta0) {
+    return false
+  }
+  if !solver_lie_candidate_valid(ctx, xi0, eta0) {
+    return false
+  }
+  solver_lie_push_unique(out, xi0, eta0)
+  true
+}
+
+///|
+fn solver_lie_exact_integer(expr : Expr) -> Bool {
+  match @symcore.exact_numeric_expr_num_den(expr) {
+    Some((_, den)) => den.compare(1N) == 0
+    None => false
+  }
+}
+
+///|
+fn solver_lie_h_from_equation(
+  eq : Expr,
+  func : Expr,
+) -> Expr raise SolverError {
+  let (_, args) = match @symcore.undefined_application_parts(func) {
+    Some(parts) => parts
+    None => raise SolverError::ValueError("expected applied undefined function")
+  }
+  guard args.length() == 1 else {
+    raise SolverError::ValueError("ODE's have only one independent variable")
+  }
+  let x = args[0]
+  let df = @symcalculus.diff(func, x)
+  match solver_extract_linear_targets(solver_normalize_equation(eq), [df]) {
+    Some((coeffs, constant)) if !@symcore.is_zero(coeffs[0]) =>
+      canonical_expr(
+        @symcore.mul([
+          @symcore.int(-1),
+          constant,
+          @symcore.pow(coeffs[0], @symcore.int(-1)),
+        ]),
+      )
+    _ => {
+      let (rewritten, symbols, backward) = solver_symbolize_targets(
+        [eq],
+        [df],
+        "__ode_rhs_",
+      )
+      let solved = solve(solve_expr_input(rewritten[0]), symbols=symbols)
+      let mappings = solver_maps_from_result(solved, symbols)
+      guard !mappings.is_empty() else {
+        raise SolverError::ValueError(
+          "Infinitesimals could not be found for the given ODE",
+        )
+      }
+      let rhs = mappings[0].get(solver_symbol_name(symbols[0])).unwrap_or(symbols[0])
+      canonical_expr(solver_replace_targets(rhs, backward))
+    }
+  }
+}
+
+///|
+fn solver_lie_context(
+  eq : Expr,
+  func : Expr,
+  match_env : Map[String, Expr]?,
+) -> SolverLieContext raise SolverError {
+  let (_, args) = match @symcore.undefined_application_parts(func) {
+    Some(parts) => parts
+    None => raise SolverError::ValueError("expected applied undefined function")
+  }
+  guard args.length() == 1 else {
+    raise SolverError::ValueError("ODE's have only one independent variable")
+  }
+  let x = args[0]
+  let env : Map[String, Expr] = match match_env {
+    Some(values) => values
+    None => {}
+  }
+  let y = env.get("y").unwrap_or(@symcore.dummy(name="y"))
+  let raw_h = match env.get("h") {
+    Some(value) => value
+    None => solver_lie_h_from_equation(eq, func)
+  }
+  let h_raw = @symcore.xreplace(raw_h, [(func, y)])
+  let h = solver_lie_simplify(h_raw)
+  let h_for_diff = canonical_expr(@symsimplify.numer_expand(h_raw))
+  let hx_raw = @symcalculus.diff(h_for_diff, x)
+  let hy_raw = @symcalculus.diff(h_for_diff, y)
+  let hx = solver_lie_simplify(hx_raw)
+  let hy = solver_lie_simplify(hy_raw)
+  let u = @symcore.dummy(name="u")
+  let h_swapped = @symcore.xreplace(
+    @symcore.xreplace(
+      @symcore.xreplace(h, [(x, u)]),
+      [(y, x)],
+    ),
+    [(u, y)],
+  )
+  let (h_num, h_den) = @symsimplify.fraction(h_swapped)
+  let hinv = @symcore.mul([h_den, @symcore.pow(h_num, @symcore.int(-1))])
+  ignore(h_swapped)
+  let hinvx = solver_lie_simplify(@symcalculus.diff(hinv, x))
+  let hinvy = solver_lie_simplify(@symcalculus.diff(hinv, y))
+  SolverLieContext::{ x, y, func, h_raw, h, hx_raw, hy_raw, hx, hy, hinv, hinvx, hinvy }
+}
+
+///|
+fn solver_lie_inf_equal(
+  lhs : Map[String, Expr],
+  rhs : Map[String, Expr],
+) -> Bool {
+  @symcore.compare_expr(
+    lhs.get("xi").unwrap_or(@symcore.int(0)),
+    rhs.get("xi").unwrap_or(@symcore.int(0)),
+  ) == 0 &&
+  @symcore.compare_expr(
+    lhs.get("eta").unwrap_or(@symcore.int(0)),
+    rhs.get("eta").unwrap_or(@symcore.int(0)),
+  ) == 0
+}
+
+///|
+fn solver_lie_push_unique(
+  out : Array[Map[String, Expr]],
+  xi : Expr,
+  eta : Expr,
+) -> Unit {
+  let value : Map[String, Expr] = {}
+  value["xi"] = canonical_expr(xi)
+  value["eta"] = canonical_expr(eta)
+  for existing in out {
+    if solver_lie_inf_equal(existing, value) {
+      return
+    }
+  }
+  out.push(value)
+}
+
+///|
+fn solver_lie_integral_exp(
+  integrand : Expr,
+  wrt : Expr,
+) -> Expr {
+  let normalized = canonical_expr(integrand)
+  if !solver_lie_depends_on(normalized, wrt) {
+    return canonical_expr(
+      @symcore.function(
+        "exp",
+        [canonical_expr(@symcore.mul([normalized, wrt]))],
+      ),
+    )
+  }
+  let inv = canonical_expr(@symcore.pow(wrt, @symcore.int(-1)))
+  if @symcore.compare_expr(normalized, inv) == 0 {
+    return wrt
+  }
+  let neg_inv = canonical_expr(@symcore.mul([@symcore.int(-1), inv]))
+  if @symcore.compare_expr(normalized, neg_inv) == 0 {
+    return canonical_expr(@symcore.pow(wrt, @symcore.int(-1)))
+  }
+  @symcore.function(
+    "exp",
+    [canonical_expr(@symintegrals.integrate(normalized, limits=[wrt]))],
+  )
+}
+
+///|
+fn solver_lie_cross_log_derivative_raw(expr : Expr, x : Expr, y : Expr) -> Expr {
+  let normalized = canonical_expr(expr)
+  let (num, den) = @symsimplify.fraction(normalized)
+  if @symcore.compare_expr(den, @symcore.int(1)) != 0 {
+    return @symcore.add([
+      solver_lie_cross_log_derivative_raw(num, x, y),
+      @symcore.mul([
+        @symcore.int(-1),
+        solver_lie_cross_log_derivative_raw(den, x, y),
+      ]),
+    ])
+  }
+  match normalized {
+    Expr::Mul(args) =>
+      @symcore.add(args.map(arg => solver_lie_cross_log_derivative_raw(arg, x, y)))
+    Expr::Pow(base, exp) =>
+      match @symcore.exact_numeric_expr_num_den(exp) {
+        Some(_) => @symcore.mul([exp, solver_lie_cross_log_derivative_raw(base, x, y)])
+        None => {
+          let dx = @symcalculus.diff(normalized, x)
+          let dy = @symcalculus.diff(normalized, y)
+          let dxy = @symcalculus.diff(dx, y)
+          solver_expr_divide(
+            @symcore.add([
+              @symcore.mul([normalized, dxy]),
+              @symcore.mul([@symcore.int(-1), dx, dy]),
+            ]),
+            normalized ^ @symcore.int(2),
+          )
+        }
+      }
+    _ => {
+      let dx = @symcalculus.diff(normalized, x)
+      let dy = @symcalculus.diff(normalized, y)
+      let dxy = @symcalculus.diff(dx, y)
+      solver_expr_divide(
+        @symcore.add([
+          @symcore.mul([normalized, dxy]),
+          @symcore.mul([@symcore.int(-1), dx, dy]),
+        ]),
+        normalized ^ @symcore.int(2),
+      )
+    }
+  }
+}
+
+///|
+fn solver_lie_cross_log_derivative(expr : Expr, x : Expr, y : Expr) -> Expr {
+  solver_lie_simplify(solver_lie_cross_log_derivative_raw(expr, x, y))
+}
+
+///|
+fn solver_lie_heuristic_abaco1_simple(
+  ctx : SolverLieContext,
+  comp : Bool,
+) -> Array[Map[String, Expr]] {
+  let out : Array[Map[String, Expr]] = []
+  if !solver_lie_depends_on(ctx.hy, ctx.y) {
+    if solver_lie_push_valid(out, ctx, @symcore.int(0), solver_lie_integral_exp(ctx.hy, ctx.x)) &&
+      !comp {
+      return out
+    }
+  }
+  let hy_over_h = canonical_expr(
+    @symcore.mul([ctx.hy, @symcore.pow(ctx.h, @symcore.int(-1))]),
+  )
+  if !solver_lie_depends_on(hy_over_h, ctx.x) {
+    if solver_lie_push_valid(
+      out,
+      ctx,
+      @symcore.int(0),
+      solver_lie_restore_func(solver_lie_integral_exp(hy_over_h, ctx.y), ctx),
+    ) && !comp {
+      return out
+    }
+  }
+  let neg_hx_over_h = canonical_expr(
+    @symcore.mul([
+      @symcore.int(-1),
+      ctx.hx,
+      @symcore.pow(ctx.h, @symcore.int(-1)),
+    ]),
+  )
+  if !solver_lie_depends_on(neg_hx_over_h, ctx.y) {
+    if solver_lie_push_valid(out, ctx, solver_lie_integral_exp(neg_hx_over_h, ctx.x), @symcore.int(0)) &&
+      !comp {
+      return out
+    }
+  }
+  let neg_hx_over_h2 = canonical_expr(
+    @symcore.mul([
+      @symcore.int(-1),
+      ctx.hx,
+      @symcore.pow(ctx.h, @symcore.int(-2)),
+    ]),
+  )
+  if !solver_lie_depends_on(neg_hx_over_h2, ctx.x) {
+    ignore(
+      solver_lie_push_valid(
+        out,
+        ctx,
+        solver_lie_restore_func(solver_lie_integral_exp(neg_hx_over_h2, ctx.y), ctx),
+        @symcore.int(0),
+      ),
+    )
+  }
+  out
+}
+
+///|
+fn solver_lie_scale_with_ones(
+  expr : Expr,
+  symbols : Array[Expr],
+) -> Expr raise SolverError {
+  let scale : Map[String, Expr] = {}
+  for symbol in symbols {
+    scale[solver_symbol_name(symbol)] = @symcore.int(1)
+  }
+  canonical_expr(@symcore.subst(expr, scale))
+}
+
+///|
+fn solver_lie_match_exp_form(
+  expr : Expr,
+  x : Expr,
+  y : Expr,
+) -> (Expr, Expr, Expr)? {
+  let a = Expr::Wild("__lie_A", [y], [])
+  let b = Expr::Wild("__lie_B", [y], [])
+  let c = Expr::Wild("__lie_C", [x, y], [])
+  let pattern = canonical_expr(
+    @symcore.add([
+      a,
+      @symcore.mul([
+        b,
+        @symcore.function(
+          "exp",
+          [canonical_expr(@symcore.mul([y, @symcore.pow(c, @symcore.int(-1))]))],
+        ),
+      ]),
+    ]),
+  )
+  match @symcore.expr_match(pattern, expr) {
+    Some(mapping) =>
+      match (mapping.get(a), mapping.get(b), mapping.get(c)) {
+        (Some(av), Some(bv), Some(cv)) => Some((av, bv, cv))
+        _ => None
+      }
+    None => None
+  }
+}
+
+///|
+fn solver_lie_unknown_atoms(ctx : SolverLieContext) -> Array[Expr] {
+  let out : Array[Expr] = []
+  for node in @symcore.preorder(ctx.h) {
+    match node {
+      Expr::Pow(base, exp) =>
+        if solver_lie_depends_on(base, ctx.x) &&
+          solver_lie_depends_on(base, ctx.y) &&
+          !solver_lie_exact_integer(exp) &&
+          !solver_expr_in_list(out, node) {
+          out.push(node)
+        }
+      _ =>
+        match @symcore.undefined_application_parts(node) {
+          Some(_) =>
+            if solver_lie_depends_on(node, ctx.x) &&
+              solver_lie_depends_on(node, ctx.y) &&
+              !solver_expr_in_list(out, node) {
+              out.push(node)
+            }
+          None => ()
+        }
+    }
+  }
+  out
+}
+
+///|
+fn solver_lie_heuristic_abaco1_product(
+  ctx : SolverLieContext,
+  comp : Bool,
+) -> Array[Map[String, Expr]] {
+  let out : Array[Map[String, Expr]] = []
+  let probe_raw = solver_expr_divide(
+    solver_lie_cross_log_derivative(ctx.h, ctx.x, ctx.y),
+    ctx.h ^ @symcore.int(2),
+  )
+  match solver_lie_separate_xy(probe_raw, ctx.x, ctx.y) {
+    Some(sep) if !solver_lie_is_zero(sep.coeff) => {
+      let fx = sep.x_part
+      let gy_int = solver_lie_simplify(
+        @symcore.mul([
+          fx,
+          @symcalculus.diff(
+            solver_expr_divide(
+              @symcore.int(1),
+              canonical_expr(@symcore.mul([fx, ctx.h])),
+            ),
+            ctx.x,
+          ),
+        ]),
+      )
+      if !solver_lie_depends_on(gy_int, ctx.x) {
+        let xi = solver_lie_restore_func(
+          canonical_expr(@symcore.mul([fx, solver_lie_integral_exp(gy_int, ctx.y)])),
+          ctx,
+        )
+        if solver_lie_push_valid(out, ctx, xi, @symcore.int(0)) && !comp {
+          return out
+        }
+      }
+    }
+    _ => ()
+  }
+  let inverse_probe_raw = solver_expr_divide(
+    solver_lie_cross_log_derivative(ctx.hinv, ctx.x, ctx.y),
+    ctx.hinv ^ @symcore.int(2),
+  )
+  let inverse_sep = match solver_lie_separate_xy(inverse_probe_raw, ctx.x, ctx.y) {
+    Some(sep) if !solver_lie_is_zero(sep.coeff) => Some((inverse_probe_raw, sep))
+    _ => {
+      let h_swapped = solver_expr_divide(@symcore.int(1), ctx.hinv)
+      let alternative = @symcore.mul([
+        @symcore.int(-1),
+        h_swapped ^ @symcore.int(2),
+        solver_lie_cross_log_derivative(h_swapped, ctx.x, ctx.y),
+      ])
+      match solver_lie_separate_xy(alternative, ctx.x, ctx.y) {
+        Some(sep) if !solver_lie_is_zero(sep.coeff) => Some((alternative, sep))
+        _ => None
+      }
+    }
+  }
+  match inverse_sep {
+    Some((inverse_probe_used, sep)) => {
+      ignore(inverse_probe_used)
+      let fx = sep.x_part
+      let gy_int = solver_lie_simplify(
+        @symcore.mul([
+          fx,
+          @symcalculus.diff(
+            solver_expr_divide(
+              @symcore.int(1),
+              canonical_expr(@symcore.mul([fx, ctx.hinv])),
+            ),
+            ctx.x,
+          ),
+        ]),
+      )
+      if !solver_lie_depends_on(gy_int, ctx.x) {
+        let swapped = solver_lie_swap_xy(
+          canonical_expr(@symcore.mul([fx, solver_lie_integral_exp(gy_int, ctx.y)])),
+          ctx.x,
+          ctx.y,
+        )
+        let eta_try = solver_lie_restore_func(swapped, ctx)
+        if solver_lie_push_valid(
+          out,
+          ctx,
+          @symcore.int(0),
+          eta_try,
+        ) && !comp {
+          return out
+        }
+      }
+    }
+    None => ()
+  }
+  out
+}
+
+///|
+fn solver_lie_heuristic_function_sum(
+  ctx : SolverLieContext,
+  comp : Bool,
+) -> Array[Map[String, Expr]] raise SolverError {
+  let out : Array[Map[String, Expr]] = []
+  for inverse in [false, true] {
+    let odefac = if inverse { ctx.hinv } else { ctx.h }
+    let factor = solver_lie_simplify(
+      @symcore.mul([
+        odefac,
+        @symcalculus.diff(
+          @symcalculus.diff(solver_expr_divide(@symcore.int(1), odefac), ctx.x),
+          ctx.x,
+        ),
+      ]),
+    )
+    let sep_probe = solver_lie_simplify(@symcalculus.diff(solver_expr_divide(@symcore.int(1), factor), ctx.y))
+    match solver_lie_separate_xy(sep_probe, ctx.x, ctx.y) {
+      Some(sep) if !solver_lie_is_zero(sep.coeff) &&
+        solver_lie_depends_on(sep.x_part, ctx.x) &&
+        solver_lie_depends_on(sep.y_part, ctx.y) => {
+        let k = Expr::Symbol("__lie_k")
+        let gy = canonical_expr(@symcore.mul([k, @symintegrals.integrate(sep.y_part, limits=[ctx.y])]))
+        let fdd = solver_lie_simplify(
+          solver_expr_divide(
+            @symcore.int(1),
+            canonical_expr(@symcore.mul([k, sep.x_part, sep.coeff])),
+          ),
+        )
+        let fx = solver_lie_simplify(
+          @symcore.add([
+            solver_expr_divide(fdd, factor),
+            @symcore.mul([@symcore.int(-1), gy]),
+          ]),
+        )
+        if !solver_lie_is_zero(fx) {
+          let check = solver_lie_simplify(
+            @symcore.add([
+              @symcalculus.diff(@symcalculus.diff(fx, ctx.x), ctx.x),
+              @symcore.mul([@symcore.int(-1), fdd]),
+            ]),
+          )
+          let (fx0, gy0) = if solver_lie_is_zero(check) {
+            (
+              canonical_expr(@symcore.subst(fx, {"__lie_k": @symcore.int(1)})),
+              solver_lie_simplify(solver_expr_divide(gy, k)),
+            )
+          } else {
+            let solve_try : Result[SolveResult, SolverError] = try?
+              solve(solve_expr_input(check), symbols=[k])
+            let mappings = match solve_try {
+              Ok(value) => solver_maps_from_result(value, [k])
+              _ => []
+            }
+            guard !mappings.is_empty() else { continue }
+            let kval = mappings[0].get("__lie_k").unwrap_or(@symcore.int(1))
+            (
+              canonical_expr(@symcore.subst(fx, {"__lie_k": kval})),
+              canonical_expr(
+                @symcore.mul([
+                  solver_lie_simplify(solver_expr_divide(gy, k)),
+                  kval,
+                ]),
+              ),
+            )
+          }
+          let combined = solver_lie_strip_xy_constants(
+            solver_lie_simplify(@symcore.add([fx0, gy0])),
+            ctx.x,
+            ctx.y,
+          )
+          let pushed = if inverse {
+            solver_lie_push_valid(
+              out,
+              ctx,
+              @symcore.int(0),
+              solver_lie_restore_func(solver_lie_swap_xy(combined, ctx.x, ctx.y), ctx),
+            )
+          } else {
+            solver_lie_push_valid(
+              out,
+              ctx,
+              solver_lie_restore_func(combined, ctx),
+              @symcore.int(0),
+            )
+          }
+          if pushed && !comp {
+            return out
+          }
+        }
+      }
+      _ => ()
+    }
+  }
+  out
+}
+
+///|
+fn solver_lie_heuristic_abaco2_similar(
+  ctx : SolverLieContext,
+  comp : Bool,
+) -> Array[Map[String, Expr]] {
+  let out : Array[Map[String, Expr]] = []
+  for inverse in [false, true] {
+    let h0 = if inverse { ctx.hinv } else { ctx.h }
+    let hx0 = if inverse { ctx.hinvx } else { ctx.hx }
+    let hy0 = if inverse { ctx.hinvy } else { ctx.hy }
+    let hyy0 = canonical_expr(@symcalculus.diff(hy0, ctx.y))
+    let factor = solver_lie_simplify(solver_expr_divide(hy0, hyy0))
+    let pushed = if !solver_lie_depends_on(factor, ctx.x) && !solver_lie_depends_on(factor, ctx.y) {
+      match solver_lie_match_exp_form(h0, ctx.x, ctx.y) {
+        Some((aval, bval, cval)) => {
+          let tau = solver_lie_simplify(
+            @symcore.mul([
+              solver_lie_integral_exp(
+                canonical_expr(
+                  @symcore.mul([
+                    @symcore.int(-1),
+                    aval,
+                    @symcore.pow(cval, @symcore.int(-1)),
+                  ]),
+                ),
+                ctx.x,
+              ),
+              @symcore.pow(bval, @symcore.int(-1)),
+            ]),
+          )
+          let gx = solver_lie_simplify(@symcore.mul([aval, tau]))
+          if inverse {
+            solver_lie_push_valid(
+              out,
+              ctx,
+              solver_lie_restore_func(solver_lie_swap_xy(gx, ctx.x, ctx.y), ctx),
+              solver_lie_restore_func(solver_lie_swap_xy(tau, ctx.x, ctx.y), ctx),
+            )
+          } else {
+            solver_lie_push_valid(
+              out,
+              ctx,
+              solver_lie_restore_func(tau, ctx),
+              solver_lie_restore_func(gx, ctx),
+            )
+          }
+        }
+        None => false
+      }
+    } else {
+      let gamma = solver_lie_simplify(
+        solver_expr_divide(@symcalculus.diff(factor, ctx.x), @symcalculus.diff(factor, ctx.y)),
+      )
+      if solver_lie_depends_on(gamma, ctx.y) {
+        false
+      } else {
+        let tauint = solver_lie_simplify(
+          solver_expr_divide(
+            @symcore.add([
+              @symcore.mul([gamma, hy0]),
+              @symcore.mul([@symcore.int(-1), @symcalculus.diff(gamma, ctx.x)]),
+              @symcore.mul([@symcore.int(-1), hx0]),
+            ]),
+            @symcore.add([h0, gamma]),
+          ),
+        )
+        if solver_lie_depends_on(tauint, ctx.y) {
+          false
+        } else {
+          let tau = solver_lie_integral_exp(tauint, ctx.x)
+          let gx = solver_lie_simplify(@symcore.mul([@symcore.int(-1), tau, gamma]))
+          if inverse {
+            solver_lie_push_valid(
+              out,
+              ctx,
+              solver_lie_restore_func(solver_lie_swap_xy(gx, ctx.x, ctx.y), ctx),
+              solver_lie_restore_func(solver_lie_swap_xy(tau, ctx.x, ctx.y), ctx),
+            )
+          } else {
+            solver_lie_push_valid(
+              out,
+              ctx,
+              solver_lie_restore_func(tau, ctx),
+              solver_lie_restore_func(gx, ctx),
+            )
+          }
+        }
+      }
+    }
+    if pushed && !comp {
+      return out
+    }
+  }
+  out
+}
+
+///|
+fn solver_lie_heuristic_abaco2_unique_unknown(
+  ctx : SolverLieContext,
+  comp : Bool,
+) -> Array[Map[String, Expr]] {
+  ignore(comp)
+  let out : Array[Map[String, Expr]] = []
+  for atom in solver_lie_unknown_atoms(ctx) {
+    let frac = solver_lie_simplify(
+      solver_expr_divide(@symcalculus.diff(atom, ctx.y), @symcalculus.diff(atom, ctx.x)),
+    )
+    match solver_lie_separate_xy(frac, ctx.x, ctx.y) {
+      Some(sep) if !solver_lie_is_zero(sep.coeff) => {
+        let xitry1 = sep.x_part
+        let etatry1 = solver_lie_simplify(
+          @symcore.mul([
+            @symcore.int(-1),
+            @symcore.pow(
+              canonical_expr(@symcore.mul([sep.y_part, sep.coeff])),
+              @symcore.int(-1),
+            ),
+          ]),
+        )
+        if solver_lie_push_valid(out, ctx, xitry1, solver_lie_restore_func(etatry1, ctx)) {
+          return out
+        }
+        let xitry2 = solver_lie_simplify(@symcore.pow(etatry1, @symcore.int(-1)))
+        let etatry2 = solver_lie_simplify(@symcore.pow(xitry1, @symcore.int(-1)))
+        if solver_lie_push_valid(out, ctx, solver_lie_restore_func(xitry2, ctx), etatry2) {
+          return out
+        }
+      }
+      _ => {
+        let etatry = solver_lie_simplify(@symcore.mul([@symcore.int(-1), @symcore.pow(frac, @symcore.int(-1))]))
+        if solver_lie_push_valid(out, ctx, @symcore.int(1), solver_lie_restore_func(etatry, ctx)) {
+          return out
+        }
+        let xitry = solver_lie_simplify(@symcore.mul([@symcore.int(-1), frac]))
+        if solver_lie_push_valid(out, ctx, solver_lie_restore_func(xitry, ctx), @symcore.int(1)) {
+          return out
+        }
+      }
+    }
+  }
+  out
+}
+
+///|
+fn solver_lie_heuristic_abaco2_unique_general(
+  ctx : SolverLieContext,
+  comp : Bool,
+) -> Array[Map[String, Expr]] {
+  ignore(comp)
+  let out : Array[Map[String, Expr]] = []
+  let a_expr = solver_lie_simplify(@symcalculus.diff(ctx.hx, ctx.y))
+  let b_expr = solver_lie_simplify(@symcore.add([@symcalculus.diff(ctx.hy, ctx.y), ctx.hy ^ @symcore.int(2)]))
+  let c_expr = solver_lie_simplify(@symcore.add([@symcalculus.diff(ctx.hx, ctx.x), @symcore.mul([@symcore.int(-1), ctx.hx ^ @symcore.int(2)])]))
+  if solver_lie_is_zero(a_expr) || solver_lie_is_zero(b_expr) || solver_lie_is_zero(c_expr) {
+    return []
+  }
+  let ax = solver_lie_simplify(@symcalculus.diff(a_expr, ctx.x))
+  let ay = solver_lie_simplify(@symcalculus.diff(a_expr, ctx.y))
+  let axy = solver_lie_simplify(@symcalculus.diff(ax, ctx.y))
+  let axx = solver_lie_simplify(@symcalculus.diff(ax, ctx.x))
+  let ayy = solver_lie_simplify(@symcalculus.diff(ay, ctx.y))
+  let d_expr = solver_lie_simplify(
+    @symcore.add([
+      @symcore.mul([
+        @symcore.add([
+          @symcore.mul([@symcore.int(2), axy]),
+          @symcore.mul([ctx.hx, ay]),
+          @symcore.mul([@symcore.int(-1), ax, ctx.hy]),
+          @symcore.mul([@symcore.add([@symcore.mul([ctx.hx, ctx.hy]), @symcore.mul([@symcore.int(2), a_expr])]), a_expr]),
+        ]),
+        a_expr,
+      ]),
+      @symcore.mul([@symcore.int(-3), ax, ay]),
+    ]),
+  )
+  if solver_lie_is_zero(d_expr) {
+    let e1 = solver_lie_simplify(
+      @symcore.add([
+        @symcore.mul([@symcore.int(3), ax ^ @symcore.int(2)]),
+        @symcore.mul([
+          @symcore.add([
+            @symcore.mul([ctx.hx ^ @symcore.int(2), a_expr]),
+            @symcore.mul([@symcore.int(2), c_expr, a_expr]),
+            @symcore.mul([@symcore.int(-2), axx]),
+          ]),
+          a_expr,
+        ]),
+      ]),
+    )
+    if solver_lie_is_zero(e1) {
+      return []
+    }
+    let e2 = solver_lie_simplify(
+      @symcore.add([
+        @symcore.mul([
+          @symcore.add([
+            @symcore.mul([@symcore.int(2), ayy]),
+            @symcore.mul([
+              @symcore.add([
+                @symcore.mul([@symcore.int(2), b_expr]),
+                @symcore.mul([@symcore.int(-1), ctx.hy ^ @symcore.int(2)]),
+              ]),
+              a_expr,
+            ]),
+          ]),
+          a_expr,
+        ]),
+        @symcore.mul([@symcore.int(-3), ay ^ @symcore.int(2)]),
+      ]),
+    )
+    if !solver_lie_is_zero(e2) {
+      return []
+    }
+    let e3 = solver_lie_simplify(
+      @symcore.add([
+        @symcore.mul([
+          e1,
+          @symcore.add([
+            @symcore.mul([@symcore.add([@symcore.mul([@symcore.int(28), ax]), @symcore.mul([@symcore.int(4), ctx.hx, a_expr])]), a_expr ^ @symcore.int(3)]),
+            @symcore.mul([@symcore.int(-1), e1, @symcore.add([@symcore.mul([ctx.hy, a_expr]), ay])]),
+          ]),
+        ]),
+        @symcore.mul([@symcore.int(-1), @symcalculus.diff(e1, ctx.x), @symcore.int(8), a_expr ^ @symcore.int(4)]),
+      ]),
+    )
+    if !solver_lie_is_zero(e3) {
+      return []
+    }
+    let etaint = solver_lie_simplify(
+      solver_expr_divide(
+        @symcore.add([
+          @symcore.mul([@symcore.int(4), a_expr ^ @symcore.int(3), @symcore.add([ax, @symcore.mul([@symcore.int(-1), ctx.hx, a_expr])])]),
+          @symcore.mul([e1, @symcore.add([@symcore.mul([ctx.hy, a_expr]), @symcore.mul([@symcore.int(-1), ay])])]),
+        ]),
+        @symcore.mul([@symcore.int(2), a_expr, e1]),
+      ),
+    )
+    if solver_lie_depends_on(etaint, ctx.x) {
+      return []
+    }
+    let eta = solver_lie_integral_exp(etaint, ctx.y)
+    let xi = solver_lie_simplify(
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.int(4),
+        a_expr ^ @symcore.int(3),
+        eta,
+        @symcore.pow(e1, @symcore.int(-1)),
+      ]),
+    )
+    if solver_lie_depends_on(xi, ctx.y) {
+      return []
+    }
+    if solver_lie_push_valid(out, ctx, xi, solver_lie_restore_func(eta, ctx)) {
+      return out
+    }
+    return []
+  }
+  let e1 = solver_lie_simplify(
+    @symcore.add([
+      @symcore.mul([
+        @symcore.add([
+          @symcore.mul([@symcore.int(2), ayy]),
+          @symcore.mul([
+            @symcore.add([
+              @symcore.mul([@symcore.int(2), b_expr]),
+              @symcore.mul([@symcore.int(-1), ctx.hy ^ @symcore.int(2)]),
+            ]),
+            a_expr,
+          ]),
+        ]),
+        a_expr,
+      ]),
+      @symcore.mul([@symcore.int(-3), ay ^ @symcore.int(2)]),
+    ]),
+  )
+  if solver_lie_is_zero(e1) {
+    return []
+  }
+  let e2 = solver_lie_simplify(
+    @symcore.add([
+      @symcore.mul([@symcore.int(4), a_expr ^ @symcore.int(3), d_expr]),
+      @symcore.mul([@symcore.int(-1), d_expr ^ @symcore.int(2)]),
+      @symcore.mul([
+        e1,
+        @symcore.add([
+          @symcore.mul([@symcore.add([@symcore.mul([@symcore.int(2), axx]), @symcore.mul([@symcore.int(-1), ctx.hx ^ @symcore.int(2), a_expr]), @symcore.mul([@symcore.int(-2), c_expr, a_expr])]), a_expr]),
+          @symcore.mul([@symcore.int(-3), ax ^ @symcore.int(2)]),
+        ]),
+      ]),
+    ]),
+  )
+  if !solver_lie_is_zero(e2) {
+    return []
+  }
+  let e3 = solver_lie_simplify(
+    @symcore.add([
+      @symcore.mul([@symcore.int(-1), a_expr, d_expr, @symcalculus.diff(e1, ctx.y)]),
+      @symcore.mul([
+        @symcore.add([
+          @symcore.mul([@symcalculus.diff(e1, ctx.x), a_expr]),
+          @symcore.mul([@symcore.int(-1), ctx.hy, d_expr, a_expr]),
+          @symcore.mul([@symcore.int(3), ay, d_expr]),
+          @symcore.mul([@symcore.add([@symcore.mul([a_expr, ctx.hx]), @symcore.mul([@symcore.int(-3), ax])]), e1]),
+        ]),
+        e1,
+      ]),
+    ]),
+  )
+  if !solver_lie_is_zero(e3) {
+    return []
+  }
+  let etaint = solver_lie_simplify(
+    solver_expr_divide(
+      @symcore.add([
+        @symcore.mul([@symcore.add([@symcore.mul([a_expr, ctx.hx]), @symcore.mul([@symcore.int(-1), ax])]), e1]),
+        @symcore.mul([@symcore.int(-1), @symcore.add([ay, @symcore.mul([a_expr, ctx.hy])]), d_expr]),
+      ]),
+      @symcore.mul([@symcore.int(2), a_expr, d_expr]),
+    ),
+  )
+  if solver_lie_depends_on(etaint, ctx.x) {
+    return []
+  }
+  let eta = solver_lie_integral_exp(etaint, ctx.y)
+  let xi = solver_lie_simplify(
+    @symcore.mul([
+      @symcore.int(-1),
+      e1,
+      eta,
+      @symcore.pow(d_expr, @symcore.int(-1)),
+    ]),
+  )
+  if solver_lie_depends_on(xi, ctx.y) {
+    return []
+  }
+  if solver_lie_push_valid(out, ctx, xi, solver_lie_restore_func(eta, ctx)) {
+    return out
+  }
+  []
+}
+
+///|
+fn solver_lie_heuristic_linear(
+  ctx : SolverLieContext,
+  comp : Bool,
+) -> Array[Map[String, Expr]] raise SolverError {
+  ignore(comp)
+  let c0 = Expr::Symbol("__lie_c0")
+  let c1 = Expr::Symbol("__lie_c1")
+  let c2 = Expr::Symbol("__lie_c2")
+  let c3 = Expr::Symbol("__lie_c3")
+  let c4 = Expr::Symbol("__lie_c4")
+  let c5 = Expr::Symbol("__lie_c5")
+  let coeffs = [c0, c1, c2, c3, c4, c5]
+  let pde = solver_lie_simplify(
+    @symcore.add([
+      c3,
+      @symcore.mul([@symcore.add([c4, @symcore.mul([@symcore.int(-1), c0])]), ctx.h]),
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.add([
+          @symcore.mul([c0, ctx.x]),
+          @symcore.mul([c1, ctx.y]),
+          c2,
+        ]),
+        ctx.hx,
+      ]),
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.add([
+          @symcore.mul([c3, ctx.x]),
+          @symcore.mul([c4, ctx.y]),
+          c5,
+        ]),
+        ctx.hy,
+      ]),
+      @symcore.mul([@symcore.int(-1), c1, ctx.h ^ @symcore.int(2)]),
+    ]),
+  )
+  let y_sym = Expr::Symbol("__lie_y")
+  let pde_sym = @symcore.xreplace(pde, [(ctx.y, y_sym)])
+  let (num, _) = @symsimplify.fraction(pde_sym)
+  let pairs : Array[(Expr, Expr)] = []
+  let terms = match solver_lie_simplify(num) {
+    Expr::Add(args) => args
+    other => [other]
+  }
+  for term in terms {
+    let (coeff, basis) = solver_split_coeff_basis(term, [ctx.x, y_sym])
+    if solver_depends_on_any(basis, coeffs) {
+      return []
+    }
+    solver_collect_term_pair(pairs, basis, coeff)
+  }
+  let coeff_equations : Array[Expr] = []
+  for pair in pairs {
+    if !solver_lie_is_zero(pair.1) {
+      coeff_equations.push(solver_normalize_equation(pair.1))
+    }
+  }
+  if coeff_equations.is_empty() {
+    return []
+  }
+  let solve_try : Result[SolveResult, SolverError] = try?
+    solve(solve_exprs_input(coeff_equations), symbols=coeffs)
+  let candidates = match solve_try {
+    Ok(value) => solver_maps_from_result(value, coeffs)
+    _ => []
+  }
+  for candidate in candidates {
+    let xival = solver_lie_scale_with_ones(
+      canonical_expr(
+        @symcore.subst(
+          @symcore.add([
+            @symcore.mul([c0, ctx.x]),
+            @symcore.mul([c1, ctx.func]),
+            c2,
+          ]),
+          candidate,
+        ),
+      ),
+      coeffs,
+    )
+    let etaval = solver_lie_scale_with_ones(
+      canonical_expr(
+        @symcore.subst(
+          @symcore.add([
+            @symcore.mul([c3, ctx.x]),
+            @symcore.mul([c4, ctx.func]),
+            c5,
+          ]),
+          candidate,
+        ),
+      ),
+      coeffs,
+    )
+    let out : Array[Map[String, Expr]] = []
+    if solver_lie_push_valid(out, ctx, xival, etaval) {
+      return out
+    }
+  }
+  []
+}
+
+///|
+fn solver_lie_heuristic_bivariate(
+  ctx : SolverLieContext,
+  comp : Bool,
+) -> Array[Map[String, Expr]] raise SolverError {
+  ignore(comp)
+  let y_sym = Expr::Symbol("__lie_y")
+  let h_sym = @symcore.xreplace(ctx.h, [(ctx.y, y_sym)])
+  let hx_sym = @symcore.xreplace(ctx.hx, [(ctx.y, y_sym)])
+  let hy_sym = @symcore.xreplace(ctx.hy, [(ctx.y, y_sym)])
+  let etax = Expr::Symbol("__etax")
+  let etay = Expr::Symbol("__etay")
+  let etad = Expr::Symbol("__etad")
+  let xix = Expr::Symbol("__xix")
+  let xiy = Expr::Symbol("__xiy")
+  let xid = Expr::Symbol("__xid")
+  let degree_probe = canonical_expr(
+    @symcore.add([
+      etax,
+      @symcore.mul([@symcore.add([etay, @symcore.mul([@symcore.int(-1), xix])]), h_sym]),
+      @symcore.mul([@symcore.int(-1), xiy, h_sym ^ @symcore.int(2)]),
+      @symcore.mul([@symcore.int(-1), xid, hx_sym]),
+      @symcore.mul([@symcore.int(-1), etad, hy_sym]),
+    ]),
+  )
+  let (probe_num, _) = @symsimplify.fraction(@symsimplify.numer_expand(degree_probe))
+  let degree_poly = @sympolys.Poly::from_expr_defaults(
+    probe_num,
+    gens=["x", "__lie_y"],
+  ) catch {
+    _ => return []
+  }
+  let mut xieq = Expr::Symbol("xi0")
+  let mut etaeq = Expr::Symbol("eta0")
+  let max_degree = degree_poly.total_degree()
+  for degree in 0..=max_degree {
+    if degree > 0 {
+      let xi_terms : Array[Expr] = []
+      let eta_terms : Array[Expr] = []
+      for power_x in 0..=degree {
+        let power_y = degree - power_x
+        let monomial = canonical_expr(
+          @symcore.mul([
+            ctx.x ^ @symcore.int(power_x),
+            y_sym ^ @symcore.int(power_y),
+          ]),
+        )
+        xi_terms.push(Expr::Symbol("xi_\{power_x}_\{power_y}") * monomial)
+        eta_terms.push(Expr::Symbol("eta_\{power_x}_\{power_y}") * monomial)
+      }
+      xieq = canonical_expr(@symcore.add([xieq, @symcore.add(xi_terms)]))
+      etaeq = canonical_expr(@symcore.add([etaeq, @symcore.add(eta_terms)]))
+    }
+    let coeff_symbols : Array[Expr] = []
+    for symbol in filtered_symbols(@symcore.free_symbols(@symcore.add([xieq, etaeq])), [], []) {
+      if @symcore.compare_expr(symbol, ctx.x) != 0 &&
+        @symcore.compare_expr(symbol, y_sym) != 0 {
+        coeff_symbols.push(symbol)
+      }
+    }
+    let pde = canonical_expr(
+      @symcore.add([
+        @symcalculus.diff(etaeq, ctx.x),
+        @symcore.mul([
+          canonical_expr(
+            @symcore.add([
+              @symcalculus.diff(etaeq, y_sym),
+              @symcore.mul([@symcore.int(-1), @symcalculus.diff(xieq, ctx.x)]),
+            ]),
+          ),
+          h_sym,
+        ]),
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcalculus.diff(xieq, y_sym),
+          h_sym ^ @symcore.int(2),
+        ]),
+        @symcore.mul([@symcore.int(-1), xieq, hx_sym]),
+        @symcore.mul([@symcore.int(-1), etaeq, hy_sym]),
+      ]),
+    )
+    let (pde_num, _) = @symsimplify.fraction(@symsimplify.numer_expand(pde))
+    let solved = solve_undetermined_coeffs(
+      pde_num,
+      coeff_symbols,
+      syms=[ctx.x, y_sym],
+      dict=true,
+    )
+    let candidates : Array[Map[String, Expr]] = match solved {
+      Some(SolveResult::Dict(values)) => [values]
+      Some(SolveResult::Dicts(items)) => items
+      _ => []
+    }
+    for candidate in candidates {
+      let xival = solver_lie_scale_with_ones(
+        canonical_expr(
+          @symcore.xreplace(@symcore.subst(xieq, candidate), [(y_sym, ctx.func)]),
+        ),
+        coeff_symbols,
+      )
+      let etaval = solver_lie_scale_with_ones(
+        canonical_expr(
+          @symcore.xreplace(@symcore.subst(etaeq, candidate), [(y_sym, ctx.func)]),
+        ),
+        coeff_symbols,
+      )
+      let out : Array[Map[String, Expr]] = []
+      if solver_lie_push_valid(out, ctx, xival, etaval) {
+        return out
+      }
+    }
+  }
+  []
+}
+
+///|
+fn solver_lie_heuristic_chi(
+  ctx : SolverLieContext,
+  comp : Bool,
+) -> Array[Map[String, Expr]] raise SolverError {
+  ignore(comp)
+  let y_sym = Expr::Symbol("__lie_y")
+  let h_sym = @symcore.xreplace(ctx.h, [(ctx.y, y_sym)])
+  let hy_sym = @symcore.xreplace(ctx.hy, [(ctx.y, y_sym)])
+  let schi = Expr::Symbol("__schi")
+  let schix = Expr::Symbol("__schix")
+  let schiy = Expr::Symbol("__schiy")
+  let probe = solver_lie_simplify(
+    @symcore.add([
+      schix,
+      @symcore.mul([h_sym, schiy]),
+      @symcore.mul([@symcore.int(-1), hy_sym, schi]),
+    ]),
+  )
+  let (probe_num, _) = @symsimplify.fraction(probe)
+  let degree_probe_num = canonical_expr(
+    @symcore.subst(
+      probe_num,
+      {
+        "__schi": @symcore.int(1),
+        "__schix": @symcore.int(1),
+        "__schiy": @symcore.int(1),
+      },
+    ),
+  )
+  let degree_poly = @sympolys.Poly::from_expr_defaults(
+    degree_probe_num,
+    gens=["x", "__lie_y"],
+  ) catch {
+    _ => return []
+  }
+  let mut chieq = Expr::Symbol("chi")
+  let max_degree = degree_poly.total_degree()
+  for degree in 1..=max_degree {
+    let chi_terms : Array[Expr] = []
+    for power_x in 0..=degree {
+      let power_y = degree - power_x
+      let monomial = canonical_expr(
+        @symcore.mul([
+          ctx.x ^ @symcore.int(power_x),
+          y_sym ^ @symcore.int(power_y),
+        ]),
+      )
+      chi_terms.push(Expr::Symbol("chi_\{power_x}_\{power_y}") * monomial)
+    }
+    chieq = canonical_expr(@symcore.add([chieq, @symcore.add(chi_terms)]))
+    let coeff_symbols : Array[Expr] = []
+    for symbol in filtered_symbols(@symcore.free_symbols(chieq), [], []) {
+      if @symcore.compare_expr(symbol, ctx.x) != 0 &&
+        @symcore.compare_expr(symbol, y_sym) != 0 {
+        coeff_symbols.push(symbol)
+      }
+    }
+    let cpde = solver_lie_simplify(
+      @symcore.add([
+        @symcalculus.diff(chieq, ctx.x),
+        @symcore.mul([h_sym, @symcalculus.diff(chieq, y_sym)]),
+        @symcore.mul([@symcore.int(-1), hy_sym, chieq]),
+      ]),
+    )
+    let (cpde_num, _) = @symsimplify.fraction(cpde)
+    let solved = solve_undetermined_coeffs(
+      cpde_num,
+      coeff_symbols,
+      syms=[ctx.x, y_sym],
+      dict=true,
+    )
+    let candidates : Array[Map[String, Expr]] = match solved {
+      Some(SolveResult::Dict(values)) => [values]
+      Some(SolveResult::Dicts(items)) => items
+      _ => []
+    }
+    for candidate in candidates {
+      let chi_val = solver_lie_scale_with_ones(
+        canonical_expr(@symcore.xreplace(@symcore.subst(chieq, candidate), [(y_sym, ctx.func)])),
+        coeff_symbols,
+      )
+      let (xival, etaval) = solver_lie_restore_xi_eta_from_chi(ctx, chi_val)
+      let out : Array[Map[String, Expr]] = []
+      if solver_lie_push_valid(out, ctx, xival, etaval) {
+        return out
+      }
+    }
+  }
+  []
+}
+
+///|
+fn solver_lie_apply_heuristic(
+  name : String,
+  ctx : SolverLieContext,
+  comp : Bool,
+) -> Array[Map[String, Expr]] raise SolverError {
+  match name {
+    "abaco1_simple" => solver_lie_heuristic_abaco1_simple(ctx, comp)
+    "abaco1_product" => solver_lie_heuristic_abaco1_product(ctx, comp)
+    "abaco2_similar" => solver_lie_heuristic_abaco2_similar(ctx, comp)
+    "abaco2_unique_unknown" => solver_lie_heuristic_abaco2_unique_unknown(ctx, comp)
+    "abaco2_unique_general" => solver_lie_heuristic_abaco2_unique_general(ctx, comp)
+    "linear" => solver_lie_heuristic_linear(ctx, comp)
+    "function_sum" => solver_lie_heuristic_function_sum(ctx, comp)
+    "bivariate" => solver_lie_heuristic_bivariate(ctx, comp)
+    "chi" => solver_lie_heuristic_chi(ctx, comp)
+    _ => []
+  }
+}
+
+///|
 pub fn infinitesimals(
   eq : Expr,
   func? : Expr? = None,
@@ -1278,40 +3799,45 @@ pub fn infinitesimals(
   hint? : String = "default",
   match_env? : Map[String, Expr]? = None,
 ) -> Array[Map[String, Expr]] raise SolverError {
-  ignore(hint)
-  ignore(match_env)
   let f = solver_infer_ode_function(eq, func)
   let ode_ord = order.unwrap_or(ode_order(eq, f))
   guard ode_ord == 1 else {
-    raise SolverError::ValueError("infinitesimals currently supports only first-order ODEs")
+    raise SolverError::ValueError("Infinitesimals for only first order ODE's have been implemented")
   }
-  let (wrt, coeff_d, coeff_f, constant) = match solver_extract_ode_linear(eq, f) {
-    Some(value) => value
-    None =>
-      raise SolverError::ValueError(
-        "infinitesimals currently supports first-order linear ODEs",
-      )
+  let ctx = solver_lie_context(eq, f, match_env)
+  if hint == "all" {
+    let out : Array[Map[String, Expr]] = []
+    for heuristic in solver_lie_heuristics {
+      for item in solver_lie_apply_heuristic(heuristic, ctx, true) {
+        if !out.any(existing => solver_lie_inf_equal(existing, item)) {
+          out.push(item)
+        }
+      }
+    }
+    guard !out.is_empty() else {
+      raise SolverError::ValueError("Infinitesimals could not be found for the given ODE")
+    }
+    return out
   }
-  guard @symcore.is_zero(constant) else {
+  if hint == "default" {
+    for heuristic in solver_lie_heuristics {
+      let out = solver_lie_apply_heuristic(heuristic, ctx, false)
+      if !out.is_empty() {
+        return out
+      }
+    }
+    raise SolverError::ValueError("Infinitesimals could not be found for the given ODE")
+  }
+  guard solver_lie_heuristics.contains(hint) else {
+    raise SolverError::ValueError("Heuristic not recognized: " + hint)
+  }
+  let out = solver_lie_apply_heuristic(hint, ctx, true)
+  guard !out.is_empty() else {
     raise SolverError::ValueError(
-      "infinitesimals currently supports homogeneous first-order linear ODEs",
+      "Infinitesimals could not be found using the given heuristic",
     )
   }
-  let p = canonical_expr(
-    @symcore.mul([
-      @symcore.int(-1),
-      coeff_f,
-      @symcore.pow(coeff_d, @symcore.int(-1)),
-    ]),
-  )
-  let eta = @symcore.function(
-    "exp",
-    [canonical_expr(@symintegrals.integrate(p, limits=[wrt]))],
-  )
-  let sol : Map[String, Expr] = {}
-  sol["xi"] = @symcore.int(0)
-  sol["eta"] = eta
-  [sol]
+  out
 }
 
 ///|
@@ -1324,65 +3850,57 @@ pub fn checkinfsol(
   let f = solver_infer_ode_function(eq, func)
   let ode_ord = order.unwrap_or(ode_order(eq, f))
   guard ode_ord == 1 else {
-    raise SolverError::ValueError("checkinfsol currently supports only first-order ODEs")
+    raise SolverError::ValueError(
+      "Lie groups solver has been implemented only for first order differential equations",
+    )
   }
-  let (wrt, coeff_d, coeff_f, constant) = match solver_extract_ode_linear(eq, f) {
-    Some(value) => value
-    None =>
-      raise SolverError::ValueError(
-        "checkinfsol currently supports first-order linear ODEs",
-      )
-  }
-  let y = Expr::Symbol("_y")
-  let h = canonical_expr(
-    @symcore.add([
-      @symcore.mul([
-        @symcore.int(-1),
-        coeff_f,
-        @symcore.pow(coeff_d, @symcore.int(-1)),
-        y,
-      ]),
-      @symcore.mul([
-        @symcore.int(-1),
-        constant,
-        @symcore.pow(coeff_d, @symcore.int(-1)),
-      ]),
-    ]),
-  )
+  let ctx = solver_lie_context(eq, f, None)
   let out : Array[(Bool, Expr)] = []
   for infinitesimal in infinitesimal_solutions {
-    let xi = infinitesimal.get("xi").unwrap_or(@symcore.int(0))
-    let eta = infinitesimal.get("eta").unwrap_or(@symcore.int(0))
-    let residual = canonical_expr(
-      @symcore.add([
-        @symcalculus.diff(eta, wrt),
-        @symcore.mul([
-          canonical_expr(
-            @symcore.add([
-              @symcalculus.diff(eta, y),
-              @symcore.mul([@symcore.int(-1), @symcalculus.diff(xi, wrt)]),
-            ]),
-          ),
-          h,
-        ]),
-        @symcore.mul([
-          @symcore.int(-1),
-          @symcalculus.diff(xi, y),
-          h ^ @symcore.int(2),
-        ]),
-        @symcore.mul([
-          @symcore.int(-1),
-          xi,
-          @symcalculus.diff(h, wrt),
-        ]),
-        @symcore.mul([
-          @symcore.int(-1),
-          eta,
-          @symcalculus.diff(h, y),
-        ]),
-      ]),
+    let xi = @symcore.xreplace(
+      infinitesimal.get("xi").unwrap_or(@symcore.int(0)),
+      [(ctx.func, ctx.y)],
     )
-    out.push((expr_is_zeroish(residual) == Some(true), residual))
+    let eta = @symcore.xreplace(
+      infinitesimal.get("eta").unwrap_or(@symcore.int(0)),
+      [(ctx.func, ctx.y)],
+    )
+    let residual_y = @symcore.add([
+      @symcalculus.diff(eta, ctx.x),
+      @symcore.mul([
+        canonical_expr(
+          @symcore.add([
+            @symcalculus.diff(eta, ctx.y),
+            @symcore.mul([@symcore.int(-1), @symcalculus.diff(xi, ctx.x)]),
+          ]),
+        ),
+        ctx.h,
+      ]),
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcalculus.diff(xi, ctx.y),
+        ctx.h ^ @symcore.int(2),
+      ]),
+      @symcore.mul([
+        @symcore.int(-1),
+        xi,
+        ctx.hx,
+      ]),
+      @symcore.mul([
+        @symcore.int(-1),
+        eta,
+        ctx.hy,
+      ]),
+    ])
+    let residual = canonical_expr(solver_lie_restore_func(residual_y, ctx))
+    out.push(
+      if solver_lie_is_zero(residual_y) ||
+        solver_lie_zero_on_samples(residual_y, ctx.x, ctx.y) {
+        (true, @symcore.int(0))
+      } else {
+        (false, residual)
+      },
+    )
   }
   out
 }
