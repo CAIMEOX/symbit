@@ -246,7 +246,8 @@ pub fn probability_expr(event : Event) -> @symcore.Expr {
 ///|
 pub fn expectation_expr(expr : @symcore.Expr, rv : RandomVar?) -> @symcore.Expr {
   match rv {
-    Some(v) => @symcore.function("Expectation", [expr, @symcore.Expr::Symbol(v.name)])
+    Some(v) =>
+      @symcore.function("Expectation", [expr, @symcore.Expr::Symbol(v.name)])
     None => @symcore.function("Expectation", [expr])
   }
 }
@@ -350,12 +351,42 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
       @symcore.mod_expr(eval_arith(lhs), eval_arith(rhs))
     @symcore.Expr::Relational(op, lhs, rhs) =>
       match op {
-        @symcore.RelOp::Eq => @symcore.Expr::Relational(@symcore.RelOp::Eq, eval_arith(lhs), eval_arith(rhs))
-        @symcore.RelOp::Ne => @symcore.Expr::Relational(@symcore.RelOp::Ne, eval_arith(lhs), eval_arith(rhs))
-        @symcore.RelOp::Lt => @symcore.Expr::Relational(@symcore.RelOp::Lt, eval_arith(lhs), eval_arith(rhs))
-        @symcore.RelOp::Le => @symcore.Expr::Relational(@symcore.RelOp::Le, eval_arith(lhs), eval_arith(rhs))
-        @symcore.RelOp::Gt => @symcore.Expr::Relational(@symcore.RelOp::Gt, eval_arith(lhs), eval_arith(rhs))
-        @symcore.RelOp::Ge => @symcore.Expr::Relational(@symcore.RelOp::Ge, eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Eq =>
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            eval_arith(lhs),
+            eval_arith(rhs),
+          )
+        @symcore.RelOp::Ne =>
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Ne,
+            eval_arith(lhs),
+            eval_arith(rhs),
+          )
+        @symcore.RelOp::Lt =>
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Lt,
+            eval_arith(lhs),
+            eval_arith(rhs),
+          )
+        @symcore.RelOp::Le =>
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            eval_arith(lhs),
+            eval_arith(rhs),
+          )
+        @symcore.RelOp::Gt =>
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Gt,
+            eval_arith(lhs),
+            eval_arith(rhs),
+          )
+        @symcore.RelOp::Ge =>
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Ge,
+            eval_arith(lhs),
+            eval_arith(rhs),
+          )
       }
     @symcore.Expr::Derivative(inner, deriv_args) => {
       let out : Array[@symcore.Expr] = []

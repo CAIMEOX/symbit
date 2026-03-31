@@ -309,7 +309,10 @@ pub fn process_cdf_at(
               p,
               @symcore.function("Lt", [success, failure]),
             ]),
-            @symcore.function("Tuple", [one_minus_p, @symcore.Expr::Boolean(true)]),
+            @symcore.function("Tuple", [
+              one_minus_p,
+              @symcore.Expr::Boolean(true),
+            ]),
           ])
           Some(
             @symcore.function("Piecewise", [
@@ -378,7 +381,10 @@ pub fn process_transition_probability(
           @symcore.int(1),
           @symcore.function("Eq", [to, from]),
         ]),
-        @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+        @symcore.function("Tuple", [
+          @symcore.int(0),
+          @symcore.Expr::Boolean(true),
+        ]),
       ]),
     )
   }

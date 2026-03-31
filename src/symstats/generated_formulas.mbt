@@ -13,7 +13,12 @@ fn generated_density(
       Some(
         eval_arith(
           @symcore.mul([
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(-1))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(-1),
+              ),
+            ),
             eval_arith(
               @symcore.pow(
                 eval_arith(
@@ -228,7 +233,12 @@ fn generated_density(
         eval_arith(
           @symcore.mul([
             params[1],
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(-1))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(-1),
+              ),
+            ),
             eval_arith(
               @symcore.pow(
                 eval_arith(
@@ -844,7 +854,10 @@ fn generated_density(
               @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), stats_exact_rational(-1, 2)),
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                stats_exact_rational(-1, 2),
+              ),
             ),
             eval_arith(
               @symcore.pow(
@@ -1044,7 +1057,10 @@ fn generated_density(
               @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), stats_exact_rational(-1, 2)),
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                stats_exact_rational(-1, 2),
+              ),
             ),
             eval_arith(@symcore.pow(params[1], stats_exact_rational(1, 2))),
             eval_arith(
@@ -1085,7 +1101,12 @@ fn generated_density(
         eval_arith(
           @symcore.mul([
             params[1],
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(-1))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(-1),
+              ),
+            ),
             eval_arith(@symcore.pow(x, @symcore.int(-1))),
             eval_arith(
               @symcore.pow(
@@ -1168,7 +1189,10 @@ fn generated_density(
               @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), stats_exact_rational(-1, 2)),
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                stats_exact_rational(-1, 2),
+              ),
             ),
             eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
             eval_arith(@symcore.pow(x, @symcore.int(-1))),
@@ -1259,7 +1283,10 @@ fn generated_density(
               @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), stats_exact_rational(-1, 2)),
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                stats_exact_rational(-1, 2),
+              ),
             ),
             eval_arith(@symcore.pow(x, @symcore.int(-1))),
             eval_arith(
@@ -1349,7 +1376,10 @@ fn generated_density(
               @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), stats_exact_rational(-1, 2)),
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                stats_exact_rational(-1, 2),
+              ),
             ),
             eval_arith(@symcore.pow(params[0], @symcore.int(-3))),
             eval_arith(@symcore.pow(x, @symcore.int(2))),
@@ -1374,7 +1404,10 @@ fn generated_density(
               @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), stats_exact_rational(-1, 2)),
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                stats_exact_rational(-1, 2),
+              ),
             ),
             eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
             @symcore.function("exp", [
@@ -1546,7 +1579,10 @@ fn generated_density(
               @symcore.function("Le", [params[0], x]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("RaisedCosine", 2) =>
@@ -1563,7 +1599,9 @@ fn generated_density(
                     @symcore.function("cos", [
                       eval_arith(
                         @symcore.mul([
-                          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::Pi,
+                          ),
                           eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
                           eval_arith(
                             @symcore.add([
@@ -1594,7 +1632,10 @@ fn generated_density(
               ]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Rayleigh", 1) =>
@@ -1873,7 +1914,10 @@ fn generated_density(
               @symcore.function("Le", [params[2], x]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Triangular", 3) =>
@@ -1976,7 +2020,10 @@ fn generated_density(
               @symcore.function("Lt", [params[2], x]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Uniform", 2) =>
@@ -2004,7 +2051,10 @@ fn generated_density(
               @symcore.function("Le", [params[0], x]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("VonMises", 2) =>
@@ -2012,7 +2062,12 @@ fn generated_density(
         eval_arith(
           @symcore.mul([
             stats_exact_rational(1, 2),
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(-1))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(-1),
+              ),
+            ),
             eval_arith(
               @symcore.pow(
                 @symcore.function("besseli", [@symcore.int(0), params[1]]),
@@ -2046,7 +2101,10 @@ fn generated_density(
               @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), stats_exact_rational(-1, 2)),
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                stats_exact_rational(-1, 2),
+              ),
             ),
             eval_arith(
               @symcore.pow(
@@ -2126,7 +2184,12 @@ fn generated_density(
         eval_arith(
           @symcore.mul([
             @symcore.int(2),
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(-1))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(-1),
+              ),
+            ),
             eval_arith(@symcore.pow(params[0], @symcore.int(-2))),
             eval_arith(
               @symcore.pow(
@@ -2201,7 +2264,10 @@ fn generated_cdf(
               @symcore.mul([
                 @symcore.int(2),
                 eval_arith(
-                  @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(-1)),
+                  @symcore.pow(
+                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                    @symcore.int(-1),
+                  ),
                 ),
                 @symcore.function("asin", [
                   eval_arith(@symcore.pow(x, stats_exact_rational(1, 2))),
@@ -2210,7 +2276,10 @@ fn generated_cdf(
             ),
             @symcore.function("Le", [x, @symcore.int(1)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(1), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(1),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Benini", 3) =>
@@ -2275,7 +2344,10 @@ fn generated_cdf(
             ),
             @symcore.function("Le", [params[2], x]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Beta", 2) =>
@@ -2330,8 +2402,12 @@ fn generated_cdf(
                                 eval_arith(
                                   @symcore.mul([
                                     @symcore.int(2),
-                                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                                    @symcore.Expr::NumberSymbol(
+                                      @symcore.NumberSymbolKind::Pi,
+                                    ),
+                                    @symcore.Expr::NumberSymbol(
+                                      @symcore.NumberSymbolKind::ImaginaryUnit,
+                                    ),
                                   ]),
                                 ),
                               ]),
@@ -2349,7 +2425,10 @@ fn generated_cdf(
             ),
             @symcore.function("Ge", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("BetaPrime", 2) =>
@@ -2396,8 +2475,12 @@ fn generated_cdf(
                               @symcore.function("exp_polar", [
                                 eval_arith(
                                   @symcore.mul([
-                                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                                    @symcore.Expr::NumberSymbol(
+                                      @symcore.NumberSymbolKind::Pi,
+                                    ),
+                                    @symcore.Expr::NumberSymbol(
+                                      @symcore.NumberSymbolKind::ImaginaryUnit,
+                                    ),
                                   ]),
                                 ),
                               ]),
@@ -2415,7 +2498,10 @@ fn generated_cdf(
             ),
             @symcore.function("Ge", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("BoundedPareto", 3) =>
@@ -2472,16 +2558,31 @@ fn generated_cdf(
                   @symcore.function("Or", [
                     @symcore.function("Gt", [
                       params[0],
-                      @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::Infinity,
+                        ),
+                      ]),
                     ]),
                     @symcore.function("Gt", [params[0], @symcore.int(0)]),
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Gt", [
                       params[0],
-                      @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::Infinity,
+                        ),
+                      ]),
                     ]),
-                    @symcore.function("Lt", [params[0], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                    @symcore.function("Lt", [
+                      params[0],
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::Infinity,
+                      ),
+                    ]),
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Gt", [params[0], @symcore.int(0)]),
@@ -2489,7 +2590,12 @@ fn generated_cdf(
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Lt", [params[0], @symcore.int(0)]),
-                    @symcore.function("Lt", [params[0], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                    @symcore.function("Lt", [
+                      params[0],
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::Infinity,
+                      ),
+                    ]),
                   ]),
                 ]),
               ]),
@@ -2539,14 +2645,22 @@ fn generated_cdf(
             ]),
             @symcore.function("Le", [params[1], x]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Cauchy", 2) =>
       Some(
         eval_arith(
           @symcore.mul([
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(-1))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(-1),
+              ),
+            ),
             eval_arith(
               @symcore.add([
                 eval_arith(
@@ -2604,7 +2718,10 @@ fn generated_cdf(
             ),
             @symcore.function("Ge", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Dagum", 3) =>
@@ -2636,7 +2753,10 @@ fn generated_cdf(
             ),
             @symcore.function("Ge", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Erlang", 2) =>
@@ -2659,7 +2779,10 @@ fn generated_cdf(
             ),
             @symcore.function("Gt", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("ExGaussian", 3) =>
@@ -2993,7 +3116,10 @@ fn generated_cdf(
             ),
             @symcore.function("Ge", [x, @symcore.int(1)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Frechet", 1) =>
@@ -3015,7 +3141,10 @@ fn generated_cdf(
             ]),
             @symcore.function("Ge", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("GammaInverse", 2) =>
@@ -3043,7 +3172,10 @@ fn generated_cdf(
             ),
             @symcore.function("Gt", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("GaussianInverse", 2) =>
@@ -3232,7 +3364,10 @@ fn generated_cdf(
             ),
             @symcore.function("Le", [x, @symcore.int(1)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(1), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(1),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Laplace", 2) =>
@@ -3328,7 +3463,12 @@ fn generated_cdf(
       Some(
         eval_arith(
           @symcore.mul([
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(-1))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(-1),
+              ),
+            ),
             eval_arith(
               @symcore.add([
                 eval_arith(
@@ -3447,7 +3587,10 @@ fn generated_cdf(
             ),
             @symcore.function("Gt", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Logistic", 2) =>
@@ -3574,16 +3717,31 @@ fn generated_cdf(
                   @symcore.function("Or", [
                     @symcore.function("Gt", [
                       params[0],
-                      @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::Infinity,
+                        ),
+                      ]),
                     ]),
                     @symcore.function("Gt", [params[0], @symcore.int(0)]),
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Gt", [
                       params[0],
-                      @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::Infinity,
+                        ),
+                      ]),
                     ]),
-                    @symcore.function("Lt", [params[0], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                    @symcore.function("Lt", [
+                      params[0],
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::Infinity,
+                      ),
+                    ]),
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Gt", [params[0], @symcore.int(0)]),
@@ -3591,7 +3749,12 @@ fn generated_cdf(
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Lt", [params[0], @symcore.int(0)]),
-                    @symcore.function("Lt", [params[0], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                    @symcore.function("Lt", [
+                      params[0],
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::Infinity,
+                      ),
+                    ]),
                   ]),
                 ]),
               ]),
@@ -3614,7 +3777,10 @@ fn generated_cdf(
             ]),
             @symcore.function("Ge", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Maxwell", 1) =>
@@ -3687,7 +3853,10 @@ fn generated_cdf(
             ),
             @symcore.function("Gt", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Pareto", 2) =>
@@ -3713,7 +3882,10 @@ fn generated_cdf(
             ),
             @symcore.function("Le", [params[0], x]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("PowerFunction", 3) =>
@@ -3766,16 +3938,31 @@ fn generated_cdf(
                   @symcore.function("Or", [
                     @symcore.function("Gt", [
                       params[0],
-                      @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::Infinity,
+                        ),
+                      ]),
                     ]),
                     @symcore.function("Gt", [params[0], @symcore.int(0)]),
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Gt", [
                       params[0],
-                      @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::Infinity,
+                        ),
+                      ]),
                     ]),
-                    @symcore.function("Lt", [params[0], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                    @symcore.function("Lt", [
+                      params[0],
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::Infinity,
+                      ),
+                    ]),
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Gt", [params[0], @symcore.int(0)]),
@@ -3783,7 +3970,12 @@ fn generated_cdf(
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Lt", [params[0], @symcore.int(0)]),
-                    @symcore.function("Lt", [params[0], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                    @symcore.function("Lt", [
+                      params[0],
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::Infinity,
+                      ),
+                    ]),
                   ]),
                 ]),
               ]),
@@ -3808,7 +4000,9 @@ fn generated_cdf(
                       @symcore.add([
                         eval_arith(
                           @symcore.mul([
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::Infinity,
+                            ),
                             @symcore.function("Abs", [
                               eval_arith(
                                 @symcore.mul([
@@ -3860,7 +4054,10 @@ fn generated_cdf(
             ]),
             @symcore.function("Le", [params[1], x]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("QuadraticU", 2) =>
@@ -4019,7 +4216,10 @@ fn generated_cdf(
             ]),
             @symcore.function("Le", [params[0], x]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("RaisedCosine", 2) =>
@@ -4032,14 +4232,21 @@ fn generated_cdf(
                   @symcore.mul([
                     stats_exact_rational(1, 2),
                     eval_arith(
-                      @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(-1)),
+                      @symcore.pow(
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::Pi,
+                        ),
+                        @symcore.int(-1),
+                      ),
                     ),
                     eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
                     eval_arith(
                       @symcore.add([
                         eval_arith(
                           @symcore.mul([
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::Pi,
+                            ),
                             eval_arith(
                               @symcore.add([
                                 params[1],
@@ -4052,7 +4259,9 @@ fn generated_cdf(
                         ),
                         eval_arith(
                           @symcore.mul([
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::Pi,
+                            ),
                             @symcore.function("Min", [
                               x,
                               @symcore.function("Max", [
@@ -4076,7 +4285,9 @@ fn generated_cdf(
                             @symcore.function("sin", [
                               eval_arith(
                                 @symcore.mul([
-                                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                                  @symcore.Expr::NumberSymbol(
+                                    @symcore.NumberSymbolKind::Pi,
+                                  ),
                                   eval_arith(
                                     @symcore.pow(params[1], @symcore.int(-1)),
                                   ),
@@ -4136,7 +4347,10 @@ fn generated_cdf(
               eval_arith(@symcore.add([params[1], x])),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Rayleigh", 1) =>
@@ -4198,7 +4412,10 @@ fn generated_cdf(
             ),
             @symcore.function("Le", [params[0], x]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("ShiftedGompertz", 2) =>
@@ -4237,7 +4454,10 @@ fn generated_cdf(
             ),
             @symcore.function("Ge", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("StudentT", 1) =>
@@ -4301,8 +4521,12 @@ fn generated_cdf(
                       @symcore.function("exp_polar", [
                         eval_arith(
                           @symcore.mul([
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::Pi,
+                            ),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::ImaginaryUnit,
+                            ),
                           ]),
                         ),
                       ]),
@@ -4612,7 +4836,10 @@ fn generated_cdf(
             ]),
             @symcore.function("Le", [params[0], x]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Uniform", 2) =>
@@ -4646,7 +4873,10 @@ fn generated_cdf(
             ),
             @symcore.function("Ge", [params[1], x]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(1), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(1),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Wald", 2) =>
@@ -4797,16 +5027,31 @@ fn generated_cdf(
                   @symcore.function("Or", [
                     @symcore.function("Gt", [
                       params[1],
-                      @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::Infinity,
+                        ),
+                      ]),
                     ]),
                     @symcore.function("Gt", [params[1], @symcore.int(0)]),
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Gt", [
                       params[1],
-                      @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::Infinity,
+                        ),
+                      ]),
                     ]),
-                    @symcore.function("Lt", [params[1], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                    @symcore.function("Lt", [
+                      params[1],
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::Infinity,
+                      ),
+                    ]),
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Gt", [params[1], @symcore.int(0)]),
@@ -4814,7 +5059,12 @@ fn generated_cdf(
                   ]),
                   @symcore.function("Or", [
                     @symcore.function("Lt", [params[1], @symcore.int(0)]),
-                    @symcore.function("Lt", [params[1], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                    @symcore.function("Lt", [
+                      params[1],
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::Infinity,
+                      ),
+                    ]),
                   ]),
                 ]),
               ]),
@@ -4826,7 +5076,9 @@ fn generated_cdf(
                       @symcore.add([
                         eval_arith(
                           @symcore.mul([
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::Infinity,
+                            ),
                             eval_arith(
                               @symcore.pow(
                                 @symcore.function("Abs", [params[1]]),
@@ -4850,7 +5102,10 @@ fn generated_cdf(
             ]),
             @symcore.function("Ge", [x, @symcore.int(0)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("YuleSimon", 1) =>
@@ -4874,7 +5129,10 @@ fn generated_cdf(
             ),
             @symcore.function("Ge", [x, @symcore.int(1)]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     _ => None
@@ -5484,7 +5742,10 @@ fn generated_pmf(
               @symcore.function("Le", [params[0], k]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("RaisedCosine", 2) =>
@@ -5501,7 +5762,9 @@ fn generated_pmf(
                     @symcore.function("cos", [
                       eval_arith(
                         @symcore.mul([
-                          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::Pi,
+                          ),
                           eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
                           eval_arith(
                             @symcore.add([
@@ -5532,7 +5795,10 @@ fn generated_pmf(
               ]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("StudentT", 1) =>
@@ -5686,7 +5952,10 @@ fn generated_pmf(
               @symcore.function("Le", [params[2], k]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Triangular", 3) =>
@@ -5789,7 +6058,10 @@ fn generated_pmf(
               @symcore.function("Lt", [params[2], k]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Uniform", 2) =>
@@ -5817,7 +6089,10 @@ fn generated_pmf(
               @symcore.function("Le", [params[0], k]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("YuleSimon", 1) =>
@@ -5941,16 +6216,31 @@ fn generated_mean(
               @symcore.function("Or", [
                 @symcore.function("Gt", [
                   params[0],
-                  @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                  @symcore.mul([
+                    @symcore.int(-1),
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::Infinity,
+                    ),
+                  ]),
                 ]),
                 @symcore.function("Gt", [params[0], @symcore.int(1)]),
               ]),
               @symcore.function("Or", [
                 @symcore.function("Gt", [
                   params[0],
-                  @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                  @symcore.mul([
+                    @symcore.int(-1),
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::Infinity,
+                    ),
+                  ]),
                 ]),
-                @symcore.function("Lt", [params[0], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                @symcore.function("Lt", [
+                  params[0],
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::Infinity,
+                  ),
+                ]),
               ]),
               @symcore.function("Or", [
                 @symcore.function("Gt", [params[0], @symcore.int(1)]),
@@ -5958,7 +6248,12 @@ fn generated_mean(
               ]),
               @symcore.function("Or", [
                 @symcore.function("Lt", [params[0], @symcore.int(1)]),
-                @symcore.function("Lt", [params[0], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                @symcore.function("Lt", [
+                  params[0],
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::Infinity,
+                  ),
+                ]),
               ]),
             ]),
           ]),
@@ -6135,7 +6430,9 @@ fn generated_mean(
                     @symcore.function("sin", [
                       eval_arith(
                         @symcore.mul([
-                          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::Pi,
+                          ),
                           eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
                         ]),
                       ),
@@ -6232,7 +6529,9 @@ fn generated_mean(
                       @symcore.add([
                         eval_arith(
                           @symcore.mul([
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::Infinity,
+                            ),
                             params[1],
                             eval_arith(
                               @symcore.pow(
@@ -6369,7 +6668,10 @@ fn generated_mean(
             ),
             @symcore.function("Lt", [params[0], params[1]]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(0),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("RaisedCosine", 2) => Some(params[0])
@@ -6383,7 +6685,10 @@ fn generated_mean(
               @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), stats_exact_rational(1, 2)),
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                stats_exact_rational(1, 2),
+              ),
             ),
           ]),
         ),
@@ -6707,7 +7012,12 @@ fn generated_variance(
         eval_arith(
           @symcore.mul([
             stats_exact_rational(1, 6),
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(2))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(2),
+              ),
+            ),
             eval_arith(@symcore.pow(params[0], @symcore.int(2))),
           ]),
         ),
@@ -6748,7 +7058,9 @@ fn generated_variance(
                     @symcore.function("sin", [
                       eval_arith(
                         @symcore.mul([
-                          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::Pi,
+                          ),
                           eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
                         ]),
                       ),
@@ -6820,7 +7132,12 @@ fn generated_variance(
         eval_arith(
           @symcore.mul([
             stats_exact_rational(1, 3),
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(2))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(2),
+              ),
+            ),
             eval_arith(@symcore.pow(params[1], @symcore.int(2))),
           ]),
         ),
@@ -6830,7 +7147,12 @@ fn generated_variance(
         eval_arith(
           @symcore.mul([
             stats_exact_rational(1, 2),
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(2))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(2),
+              ),
+            ),
             eval_arith(@symcore.pow(params[1], @symcore.int(2))),
           ]),
         ),
@@ -6840,12 +7162,22 @@ fn generated_variance(
         eval_arith(
           @symcore.mul([
             stats_exact_rational(1, 3),
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(-2))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(-2),
+              ),
+            ),
             eval_arith(@symcore.pow(params[1], @symcore.int(2))),
             eval_arith(
               @symcore.add([
                 @symcore.int(-6),
-                eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(2))),
+                eval_arith(
+                  @symcore.pow(
+                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                    @symcore.int(2),
+                  ),
+                ),
               ]),
             ),
           ]),
@@ -6861,7 +7193,10 @@ fn generated_variance(
               @symcore.add([
                 @symcore.int(4),
                 eval_arith(
-                  @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)]),
+                  @symcore.mul([
+                    @symcore.int(-1),
+                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                  ]),
                 ),
               ]),
             ),
@@ -7129,8 +7464,12 @@ fn generated_mgf(
                           @symcore.function("exp_polar", [
                             eval_arith(
                               @symcore.mul([
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::Pi,
+                                ),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                                ),
                               ]),
                             ),
                           ]),
@@ -7143,8 +7482,12 @@ fn generated_mgf(
                           @symcore.function("exp_polar", [
                             eval_arith(
                               @symcore.mul([
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::Pi,
+                                ),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                                ),
                               ]),
                             ),
                           ]),
@@ -7160,8 +7503,12 @@ fn generated_mgf(
                       @symcore.function("exp_polar", [
                         eval_arith(
                           @symcore.mul([
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::Pi,
+                            ),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::ImaginaryUnit,
+                            ),
                           ]),
                         ),
                       ]),
@@ -7174,8 +7521,12 @@ fn generated_mgf(
                       @symcore.function("exp_polar", [
                         eval_arith(
                           @symcore.mul([
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::Pi,
+                            ),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::ImaginaryUnit,
+                            ),
                           ]),
                         ),
                       ]),
@@ -7188,7 +7539,9 @@ fn generated_mgf(
               eval_arith(
                 @symcore.mul([
                   @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
                   params[0],
                 ]),
               ),
@@ -7572,7 +7925,10 @@ fn generated_mgf(
               ),
             ),
             eval_arith(
-              @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), stats_exact_rational(-1, 2)),
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                stats_exact_rational(-1, 2),
+              ),
             ),
             @symcore.function("exp", [eval_arith(@symcore.mul([params[0], t]))]),
             @symcore.function("gamma", [
@@ -7707,7 +8063,12 @@ fn generated_mgf(
       Some(
         eval_arith(
           @symcore.mul([
-            eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(2))),
+            eval_arith(
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                @symcore.int(2),
+              ),
+            ),
             eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
             eval_arith(@symcore.pow(t, @symcore.int(-1))),
             eval_arith(
@@ -7715,7 +8076,12 @@ fn generated_mgf(
                 eval_arith(
                   @symcore.add([
                     eval_arith(
-                      @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(2)),
+                      @symcore.pow(
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::Pi,
+                        ),
+                        @symcore.int(2),
+                      ),
                     ),
                     eval_arith(
                       @symcore.mul([
@@ -7987,7 +8353,10 @@ fn generated_mgf(
               @symcore.function("Lt", [t, @symcore.int(0)]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(1), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(1),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("UniformSum", 1) =>
@@ -8076,7 +8445,10 @@ fn generated_mgf(
               @symcore.function("Lt", [t, @symcore.int(0)]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(1), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(1),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("YuleSimon", 1) =>
@@ -8136,7 +8508,14 @@ fn generated_cf(
           @symcore.function("Tuple", [
             eval_arith(@symcore.add([params[0], params[1]])),
           ]),
-          eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t])),
+          eval_arith(
+            @symcore.mul([
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ImaginaryUnit,
+              ),
+              t,
+            ]),
+          ),
         ]),
       )
     ("BoundedPareto", 3) =>
@@ -8181,8 +8560,12 @@ fn generated_cf(
                           @symcore.function("exp_polar", [
                             eval_arith(
                               @symcore.mul([
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::Pi,
+                                ),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                                ),
                               ]),
                             ),
                           ]),
@@ -8196,8 +8579,12 @@ fn generated_cf(
                             eval_arith(
                               @symcore.mul([
                                 stats_exact_rational(-1, 2),
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::Pi,
+                                ),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                                ),
                               ]),
                             ),
                           ]),
@@ -8213,8 +8600,12 @@ fn generated_cf(
                       @symcore.function("exp_polar", [
                         eval_arith(
                           @symcore.mul([
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::Pi,
+                            ),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::ImaginaryUnit,
+                            ),
                           ]),
                         ),
                       ]),
@@ -8228,8 +8619,12 @@ fn generated_cf(
                         eval_arith(
                           @symcore.mul([
                             stats_exact_rational(-1, 2),
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::Pi,
+                            ),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::ImaginaryUnit,
+                            ),
                           ]),
                         ),
                       ]),
@@ -8243,7 +8638,9 @@ fn generated_cf(
                 @symcore.mul([
                   stats_exact_rational(-1, 2),
                   @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
                   params[0],
                 ]),
               ),
@@ -8263,7 +8660,15 @@ fn generated_cf(
                   @symcore.function("Abs", [t]),
                 ]),
               ),
-              eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[0], t])),
+              eval_arith(
+                @symcore.mul([
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
+                  params[0],
+                  t,
+                ]),
+              ),
             ]),
           ),
         ]),
@@ -8274,7 +8679,9 @@ fn generated_cf(
           @symcore.add([
             eval_arith(
               @symcore.mul([
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                @symcore.Expr::NumberSymbol(
+                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                ),
                 t,
                 eval_arith(
                   @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
@@ -8345,7 +8752,13 @@ fn generated_cf(
               @symcore.add([
                 @symcore.int(1),
                 eval_arith(
-                  @symcore.mul([@symcore.int(-2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t]),
+                  @symcore.mul([
+                    @symcore.int(-2),
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::ImaginaryUnit,
+                    ),
+                    t,
+                  ]),
                 ),
               ]),
             ),
@@ -8364,7 +8777,13 @@ fn generated_cf(
                   @symcore.add([
                     params[1],
                     eval_arith(
-                      @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t]),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::ImaginaryUnit,
+                        ),
+                        t,
+                      ]),
                     ),
                   ]),
                 ),
@@ -8385,7 +8804,13 @@ fn generated_cf(
                   @symcore.add([
                     params[2],
                     eval_arith(
-                      @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t]),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::ImaginaryUnit,
+                        ),
+                        t,
+                      ]),
                     ),
                   ]),
                 ),
@@ -8399,7 +8824,12 @@ fn generated_cf(
                   eval_arith(
                     @symcore.add([
                       eval_arith(
-                        @symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[0]]),
+                        @symcore.mul([
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::ImaginaryUnit,
+                          ),
+                          params[0],
+                        ]),
                       ),
                       eval_arith(
                         @symcore.mul([
@@ -8430,7 +8860,14 @@ fn generated_cf(
                       @symcore.mul([
                         eval_arith(@symcore.add([@symcore.int(-1), params[0]])),
                         @symcore.function("exp", [
-                          eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t])),
+                          eval_arith(
+                            @symcore.mul([
+                              @symcore.Expr::NumberSymbol(
+                                @symcore.NumberSymbolKind::ImaginaryUnit,
+                              ),
+                              t,
+                            ]),
+                          ),
                         ]),
                       ]),
                     ),
@@ -8440,7 +8877,14 @@ fn generated_cf(
               ),
             ),
             @symcore.function("exp", [
-              eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t])),
+              eval_arith(
+                @symcore.mul([
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
+                  t,
+                ]),
+              ),
             ]),
           ]),
         ),
@@ -8455,7 +8899,9 @@ fn generated_cf(
                 eval_arith(
                   @symcore.mul([
                     @symcore.int(-1),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::ImaginaryUnit,
+                    ),
                     params[1],
                     t,
                   ]),
@@ -8481,7 +8927,9 @@ fn generated_cf(
                       eval_arith(
                         @symcore.mul([
                           @symcore.int(-1),
-                          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::ImaginaryUnit,
+                          ),
                           params[1],
                           t,
                         ]),
@@ -8517,7 +8965,9 @@ fn generated_cf(
                               eval_arith(
                                 @symcore.mul([
                                   @symcore.int(-2),
-                                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                                  @symcore.Expr::NumberSymbol(
+                                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                                  ),
                                   t,
                                   eval_arith(
                                     @symcore.pow(params[0], @symcore.int(2)),
@@ -8542,7 +8992,15 @@ fn generated_cf(
         eval_arith(
           @symcore.mul([
             @symcore.function("exp", [
-              eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[1], t])),
+              eval_arith(
+                @symcore.mul([
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
+                  params[1],
+                  t,
+                ]),
+              ),
             ]),
             @symcore.function("gamma", [
               eval_arith(
@@ -8551,7 +9009,9 @@ fn generated_cf(
                   eval_arith(
                     @symcore.mul([
                       @symcore.int(-1),
-                      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::ImaginaryUnit,
+                      ),
                       params[0],
                       t,
                     ]),
@@ -8578,7 +9038,14 @@ fn generated_cf(
                         @symcore.mul([
                           @symcore.int(-1),
                           @symcore.function("exp", [
-                            eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t])),
+                            eval_arith(
+                              @symcore.mul([
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                                ),
+                                t,
+                              ]),
+                            ),
                           ]),
                         ]),
                       ),
@@ -8600,7 +9067,9 @@ fn generated_cf(
                             eval_arith(
                               @symcore.mul([
                                 @symcore.int(2),
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                                ),
                                 t,
                               ]),
                             ),
@@ -8636,7 +9105,15 @@ fn generated_cf(
               ),
             ),
             @symcore.function("exp", [
-              eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[0], t])),
+              eval_arith(
+                @symcore.mul([
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
+                  params[0],
+                  t,
+                ]),
+              ),
             ]),
           ]),
         ),
@@ -8657,7 +9134,9 @@ fn generated_cf(
                       eval_arith(
                         @symcore.mul([
                           @symcore.int(-1),
-                          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::ImaginaryUnit,
+                          ),
                           params[1],
                           t,
                         ]),
@@ -8667,7 +9146,15 @@ fn generated_cf(
                   ),
                 ]),
               ),
-              eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[0], t])),
+              eval_arith(
+                @symcore.mul([
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
+                  params[0],
+                  t,
+                ]),
+              ),
             ]),
           ),
         ]),
@@ -8698,7 +9185,14 @@ fn generated_cf(
                       @symcore.int(-1),
                       params[0],
                       @symcore.function("exp", [
-                        eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t])),
+                        eval_arith(
+                          @symcore.mul([
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::ImaginaryUnit,
+                            ),
+                            t,
+                          ]),
+                        ),
                       ]),
                     ]),
                   ),
@@ -8721,14 +9215,28 @@ fn generated_cf(
                   @symcore.pow(
                     @symcore.function("sinh", [
                       eval_arith(
-                        @symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), params[1], t]),
+                        @symcore.mul([
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::Pi,
+                          ),
+                          params[1],
+                          t,
+                        ]),
                       ),
                     ]),
                     @symcore.int(-1),
                   ),
                 ),
                 @symcore.function("exp", [
-                  eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[0], t])),
+                  eval_arith(
+                    @symcore.mul([
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::ImaginaryUnit,
+                      ),
+                      params[0],
+                      t,
+                    ]),
+                  ),
                 ]),
               ]),
             ),
@@ -8737,7 +9245,10 @@ fn generated_cf(
               @symcore.function("Lt", [t, @symcore.int(0)]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(1), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(1),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("Moyal", 2) =>
@@ -8750,7 +9261,9 @@ fn generated_cf(
                 eval_arith(
                   @symcore.mul([
                     @symcore.int(-1),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::ImaginaryUnit,
+                    ),
                     params[1],
                     t,
                   ]),
@@ -8758,10 +9271,21 @@ fn generated_cf(
               ),
             ),
             eval_arith(
-              @symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), stats_exact_rational(-1, 2)),
+              @symcore.pow(
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                stats_exact_rational(-1, 2),
+              ),
             ),
             @symcore.function("exp", [
-              eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[0], t])),
+              eval_arith(
+                @symcore.mul([
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
+                  params[0],
+                  t,
+                ]),
+              ),
             ]),
             @symcore.function("gamma", [
               eval_arith(
@@ -8770,7 +9294,9 @@ fn generated_cf(
                   eval_arith(
                     @symcore.mul([
                       @symcore.int(-1),
-                      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::ImaginaryUnit,
+                      ),
                       params[1],
                       t,
                     ]),
@@ -8791,7 +9317,9 @@ fn generated_cf(
                 eval_arith(
                   @symcore.mul([
                     @symcore.int(-1),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::ImaginaryUnit,
+                    ),
                     params[0],
                     t,
                   ]),
@@ -8804,7 +9332,9 @@ fn generated_cf(
               eval_arith(
                 @symcore.mul([
                   @symcore.int(-1),
-                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
                   params[0],
                   t,
                 ]),
@@ -8818,7 +9348,9 @@ fn generated_cf(
         eval_arith(
           @symcore.mul([
             @symcore.int(3),
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+            @symcore.Expr::NumberSymbol(
+              @symcore.NumberSymbolKind::ImaginaryUnit,
+            ),
             eval_arith(@symcore.pow(t, @symcore.int(-2))),
             eval_arith(
               @symcore.pow(
@@ -8834,7 +9366,12 @@ fn generated_cf(
             eval_arith(
               @symcore.add([
                 eval_arith(
-                  @symcore.mul([@symcore.int(-4), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)]),
+                  @symcore.mul([
+                    @symcore.int(-4),
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::ImaginaryUnit,
+                    ),
+                  ]),
                 ),
                 eval_arith(
                   @symcore.mul([
@@ -8863,12 +9400,20 @@ fn generated_cf(
             @symcore.function("exp", [
               eval_arith(
                 @symcore.mul([
-                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
                   params[0],
                   t,
                   @symcore.function("exp", [
                     eval_arith(
-                      @symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[1], t]),
+                      @symcore.mul([
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::ImaginaryUnit,
+                        ),
+                        params[1],
+                        t,
+                      ]),
                     ),
                   ]),
                 ]),
@@ -8889,7 +9434,9 @@ fn generated_cf(
                     @symcore.mul([
                       @symcore.int(-1),
                       @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::ImaginaryUnit,
+                      ),
                       params[0],
                       eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
                     ]),
@@ -8916,7 +9463,9 @@ fn generated_cf(
                   eval_arith(
                     @symcore.mul([
                       @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::ImaginaryUnit,
+                      ),
                       params[0],
                       eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
                     ]),
@@ -8938,7 +9487,12 @@ fn generated_cf(
             eval_arith(
               @symcore.mul([
                 @symcore.int(-1),
-                eval_arith(@symcore.pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(2))),
+                eval_arith(
+                  @symcore.pow(
+                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                    @symcore.int(2),
+                  ),
+                ),
                 eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
                 eval_arith(@symcore.pow(t, @symcore.int(-1))),
                 eval_arith(
@@ -8950,7 +9504,9 @@ fn generated_cf(
                             @symcore.int(-1),
                             eval_arith(
                               @symcore.pow(
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::Pi,
+                                ),
                                 @symcore.int(2),
                               ),
                             ),
@@ -8968,7 +9524,15 @@ fn generated_cf(
                   ),
                 ),
                 @symcore.function("exp", [
-                  eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[0], t])),
+                  eval_arith(
+                    @symcore.mul([
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::ImaginaryUnit,
+                      ),
+                      params[0],
+                      t,
+                    ]),
+                  ),
                 ]),
                 @symcore.function("sin", [
                   eval_arith(@symcore.mul([params[1], t])),
@@ -8995,14 +9559,21 @@ fn generated_cf(
                     ),
                     eval_arith(
                       @symcore.pow(
-                        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                        @symcore.Expr::NumberSymbol(
+                          @symcore.NumberSymbolKind::Pi,
+                        ),
                         stats_exact_rational(1, 2),
                       ),
                     ),
                     eval_arith(
                       @symcore.add([
                         eval_arith(
-                          @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)]),
+                          @symcore.mul([
+                            @symcore.int(-1),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::ImaginaryUnit,
+                            ),
+                          ]),
                         ),
                         @symcore.function("erfi", [
                           eval_arith(
@@ -9080,8 +9651,12 @@ fn generated_cf(
                             eval_arith(
                               @symcore.mul([
                                 stats_exact_rational(1, 2),
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::Pi,
+                                ),
+                                @symcore.Expr::NumberSymbol(
+                                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                                ),
                               ]),
                             ),
                           ]),
@@ -9099,8 +9674,12 @@ fn generated_cf(
                         eval_arith(
                           @symcore.mul([
                             stats_exact_rational(1, 2),
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::Pi,
+                            ),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::ImaginaryUnit,
+                            ),
                           ]),
                         ),
                       ]),
@@ -9135,7 +9714,12 @@ fn generated_cf(
                               params[0],
                               @symcore.function("exp", [
                                 eval_arith(
-                                  @symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t]),
+                                  @symcore.mul([
+                                    @symcore.Expr::NumberSymbol(
+                                      @symcore.NumberSymbolKind::ImaginaryUnit,
+                                    ),
+                                    t,
+                                  ]),
                                 ),
                               ]),
                             ]),
@@ -9143,7 +9727,14 @@ fn generated_cf(
                         ]),
                       ),
                       @symcore.function("exp", [
-                        eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t])),
+                        eval_arith(
+                          @symcore.mul([
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::ImaginaryUnit,
+                            ),
+                            t,
+                          ]),
+                        ),
                       ]),
                     ]),
                   ),
@@ -9151,7 +9742,13 @@ fn generated_cf(
               ),
               @symcore.function("exp", [
                 eval_arith(
-                  @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t]),
+                  @symcore.mul([
+                    @symcore.int(-1),
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::ImaginaryUnit,
+                    ),
+                    t,
+                  ]),
                 ),
               ]),
             ]),
@@ -9209,7 +9806,13 @@ fn generated_cf(
                     ),
                     @symcore.function("exp", [
                       eval_arith(
-                        @symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[1], t]),
+                        @symcore.mul([
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::ImaginaryUnit,
+                          ),
+                          params[1],
+                          t,
+                        ]),
                       ),
                     ]),
                   ]),
@@ -9224,7 +9827,13 @@ fn generated_cf(
                     ),
                     @symcore.function("exp", [
                       eval_arith(
-                        @symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[2], t]),
+                        @symcore.mul([
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::ImaginaryUnit,
+                          ),
+                          params[2],
+                          t,
+                        ]),
                       ),
                     ]),
                   ]),
@@ -9239,7 +9848,13 @@ fn generated_cf(
                     ),
                     @symcore.function("exp", [
                       eval_arith(
-                        @symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[0], t]),
+                        @symcore.mul([
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::ImaginaryUnit,
+                          ),
+                          params[0],
+                          t,
+                        ]),
                       ),
                     ]),
                   ]),
@@ -9255,7 +9870,9 @@ fn generated_cf(
           @symcore.function("Tuple", [
             eval_arith(
               @symcore.mul([
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                @symcore.Expr::NumberSymbol(
+                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                ),
                 eval_arith(@symcore.pow(t, @symcore.int(-1))),
                 eval_arith(
                   @symcore.pow(
@@ -9275,14 +9892,26 @@ fn generated_cf(
                         @symcore.int(-1),
                         @symcore.function("exp", [
                           eval_arith(
-                            @symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[0], t]),
+                            @symcore.mul([
+                              @symcore.Expr::NumberSymbol(
+                                @symcore.NumberSymbolKind::ImaginaryUnit,
+                              ),
+                              params[0],
+                              t,
+                            ]),
                           ),
                         ]),
                       ]),
                     ),
                     @symcore.function("exp", [
                       eval_arith(
-                        @symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), params[1], t]),
+                        @symcore.mul([
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::ImaginaryUnit,
+                          ),
+                          params[1],
+                          t,
+                        ]),
                       ),
                     ]),
                   ]),
@@ -9294,7 +9923,10 @@ fn generated_cf(
               @symcore.function("Lt", [t, @symcore.int(0)]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(1), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(1),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("UniformSum", 1) =>
@@ -9303,7 +9935,9 @@ fn generated_cf(
           @symcore.pow(
             eval_arith(
               @symcore.mul([
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                @symcore.Expr::NumberSymbol(
+                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                ),
                 eval_arith(@symcore.pow(t, @symcore.int(-1))),
                 eval_arith(
                   @symcore.add([
@@ -9312,7 +9946,14 @@ fn generated_cf(
                       @symcore.mul([
                         @symcore.int(-1),
                         @symcore.function("exp", [
-                          eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t])),
+                          eval_arith(
+                            @symcore.mul([
+                              @symcore.Expr::NumberSymbol(
+                                @symcore.NumberSymbolKind::ImaginaryUnit,
+                              ),
+                              t,
+                            ]),
+                          ),
                         ]),
                       ]),
                     ),
@@ -9346,7 +9987,9 @@ fn generated_cf(
                               eval_arith(
                                 @symcore.mul([
                                   @symcore.int(-2),
-                                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+                                  @symcore.Expr::NumberSymbol(
+                                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                                  ),
                                   t,
                                   eval_arith(
                                     @symcore.pow(params[0], @symcore.int(2)),
@@ -9386,7 +10029,10 @@ fn generated_cf(
               @symcore.function("Lt", [t, @symcore.int(0)]),
             ]),
           ]),
-          @symcore.function("Tuple", [@symcore.int(1), @symcore.Expr::Boolean(true)]),
+          @symcore.function("Tuple", [
+            @symcore.int(1),
+            @symcore.Expr::Boolean(true),
+          ]),
         ]),
       )
     ("YuleSimon", 1) =>
@@ -9401,7 +10047,14 @@ fn generated_cf(
               ),
             ),
             @symcore.function("exp", [
-              eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t])),
+              eval_arith(
+                @symcore.mul([
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
+                  t,
+                ]),
+              ),
             ]),
             @symcore.function("hyper", [
               @symcore.function("Tuple", [@symcore.int(1), @symcore.int(1)]),
@@ -9409,7 +10062,14 @@ fn generated_cf(
                 eval_arith(@symcore.add([@symcore.int(2), params[0]])),
               ]),
               @symcore.function("exp", [
-                eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t])),
+                eval_arith(
+                  @symcore.mul([
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::ImaginaryUnit,
+                    ),
+                    t,
+                  ]),
+                ),
               ]),
             ]),
           ]),
@@ -9428,7 +10088,14 @@ fn generated_cf(
             @symcore.function("polylog", [
               params[0],
               @symcore.function("exp", [
-                eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), t])),
+                eval_arith(
+                  @symcore.mul([
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::ImaginaryUnit,
+                    ),
+                    t,
+                  ]),
+                ),
               ]),
             ]),
           ]),
@@ -9455,7 +10122,12 @@ fn generated_quantile(
                 @symcore.int(-1),
                 params[1],
                 @symcore.function("cot", [
-                  eval_arith(@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), q])),
+                  eval_arith(
+                    @symcore.mul([
+                      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                      q,
+                    ]),
+                  ),
                 ]),
               ]),
             ),
@@ -9713,16 +10385,31 @@ fn generated_entropy(
               @symcore.function("Or", [
                 @symcore.function("Gt", [
                   params[0],
-                  @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                  @symcore.mul([
+                    @symcore.int(-1),
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::Infinity,
+                    ),
+                  ]),
                 ]),
                 @symcore.function("Gt", [params[0], @symcore.int(0)]),
               ]),
               @symcore.function("Or", [
                 @symcore.function("Gt", [
                   params[0],
-                  @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                  @symcore.mul([
+                    @symcore.int(-1),
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::Infinity,
+                    ),
+                  ]),
                 ]),
-                @symcore.function("Lt", [params[0], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                @symcore.function("Lt", [
+                  params[0],
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::Infinity,
+                  ),
+                ]),
               ]),
               @symcore.function("Or", [
                 @symcore.function("Gt", [params[0], @symcore.int(0)]),
@@ -9730,7 +10417,12 @@ fn generated_entropy(
               ]),
               @symcore.function("Or", [
                 @symcore.function("Lt", [params[0], @symcore.int(0)]),
-                @symcore.function("Lt", [params[0], @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
+                @symcore.function("Lt", [
+                  params[0],
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::Infinity,
+                  ),
+                ]),
               ]),
             ]),
           ]),
@@ -9758,7 +10450,9 @@ fn generated_entropy(
                     @symcore.function("sin", [
                       eval_arith(
                         @symcore.mul([
-                          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                          @symcore.Expr::NumberSymbol(
+                            @symcore.NumberSymbolKind::Pi,
+                          ),
                           eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
                         ]),
                       ),
