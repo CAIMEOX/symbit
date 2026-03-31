@@ -4,6 +4,7 @@ pub type Expr = @symcore.Expr
 ///|
 pub type LimitSpec = (String, Expr?, Expr?)
 
+///|
 fn expr_from_num(value : @symnum.BigRational) -> Expr {
   @symcore.Expr::Number(value)
 }
@@ -15,7 +16,8 @@ fn expr_rat(num : Int, den : Int) -> Expr {
       try? @symcore.rational_from_ints(num, den) :
       Result[Expr, @symnum.RationalError]) {
     Ok(value) => value
-    Err(_) => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
+    Err(_) =>
+      @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
   }
 }
 
@@ -267,6 +269,7 @@ fn expr_sqrt_positive(expr : Expr) -> Expr {
 }
 
 ///|
+
 ///|
 fn piecewise_expr(
   cases : Array[(Expr, Expr)],

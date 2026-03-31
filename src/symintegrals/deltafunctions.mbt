@@ -5,7 +5,11 @@
 ///|
 fn extract_dirac_factor(expr : Expr, var_name : String) -> (Expr, Expr)? {
   match expr_simplify(expr) {
-    simplified if @symcore.application_has_name(simplified, "DiracDelta", arity=1) => {
+    simplified if @symcore.application_has_name(
+        simplified,
+        "DiracDelta",
+        arity=1,
+      ) => {
       let arg = @symcore.application_args(simplified).unwrap()[0]
       if expr_depends_on(arg, var_name) {
         Some((arg, @symcore.int(1)))

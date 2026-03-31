@@ -279,7 +279,10 @@ fn intpoly_primitive_x(
           expr_simplify(
             expr_mul(
               coeff,
-              expr_div(expr_pow(x, @symcore.int(power + 1)), @symcore.int(power + 1)),
+              expr_div(
+                expr_pow(x, @symcore.int(power + 1)),
+                @symcore.int(power + 1),
+              ),
             ),
           ),
         )
@@ -321,8 +324,16 @@ fn intpoly_primitive_x(
 
 ///|
 fn intpoly_monomial(x : Expr, y : Expr, dx : Int, dy : Int) -> Expr {
-  let lhs = if dx == 0 { @symcore.int(1) } else { expr_pow(x, @symcore.int(dx)) }
-  let rhs = if dy == 0 { @symcore.int(1) } else { expr_pow(y, @symcore.int(dy)) }
+  let lhs = if dx == 0 {
+    @symcore.int(1)
+  } else {
+    expr_pow(x, @symcore.int(dx))
+  }
+  let rhs = if dy == 0 {
+    @symcore.int(1)
+  } else {
+    expr_pow(y, @symcore.int(dy))
+  }
   expr_mul(lhs, rhs)
 }
 
@@ -341,7 +352,9 @@ pub fn segment_integrate(
   let t = @symcore.Expr::Symbol(t_name)
   let transformed = intpoly_segment_integrand(expr, seg, x_name, y_name, t_name)
   let weighted = expr_mul(transformed, intpoly_segment_length(seg))
-  integrate(weighted, limits=[integral_limit([t, @symcore.int(0), @symcore.int(1)])])
+  integrate(weighted, limits=[
+    integral_limit([t, @symcore.int(0), @symcore.int(1)]),
+  ])
 }
 
 ///|

@@ -9,7 +9,8 @@
 pub fn meijerg_integrate(expr : Expr, var_name : String) -> Expr? {
   let target = expr_simplify(expr)
   if @symcore.application_has_name(target, "exp", arity=1) {
-    match extract_erf_scale(@symcore.application_args(target).unwrap()[0], var_name) {
+    match
+      extract_erf_scale(@symcore.application_args(target).unwrap()[0], var_name) {
       Some(scale) =>
         Some(
           expr_mul(
@@ -39,14 +40,19 @@ fn sincos_division(expr : Expr, var_name : String) -> Expr? {
         None
       } else {
         match
-          (@symcore.application_name(numerator[0]), @symcore.application_args(numerator[0])) {
+          (
+            @symcore.application_name(numerator[0]),
+            @symcore.application_args(numerator[0]),
+          ) {
           (Some("sin"), Some([arg])) =>
             match linear_coeffs(arg, var_name) {
               Some(pair) => {
                 let a = pair.0
                 let b = pair.1
                 if expr_is_zero(b) && !expr_is_zero(a) {
-                  Some(@symspec.si(expr_mul(a, @symcore.Expr::Symbol(var_name))))
+                  Some(
+                    @symspec.si(expr_mul(a, @symcore.Expr::Symbol(var_name))),
+                  )
                 } else {
                   None
                 }
@@ -59,7 +65,9 @@ fn sincos_division(expr : Expr, var_name : String) -> Expr? {
                 let a = pair.0
                 let b = pair.1
                 if expr_is_zero(b) && !expr_is_zero(a) {
-                  Some(@symspec.ci(expr_mul(a, @symcore.Expr::Symbol(var_name))))
+                  Some(
+                    @symspec.ci(expr_mul(a, @symcore.Expr::Symbol(var_name))),
+                  )
                 } else {
                   None
                 }

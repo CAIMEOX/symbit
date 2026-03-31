@@ -206,7 +206,9 @@ pub fn integrate(expr : Expr, limits? : Array[Expr] = []) -> Expr {
             match meijerg_integrate(expr, name) {
               Some(res) => expr_simplify(res)
               None =>
-                integral(expr, limits=[Expr::Tuple([@symcore.Expr::Symbol(name)])])
+                integral(expr, limits=[
+                  Expr::Tuple([@symcore.Expr::Symbol(name)]),
+                ])
             }
         }
       None => integral(expr)
