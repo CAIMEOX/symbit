@@ -2262,10 +2262,9 @@ test "symcore parity subst respects derivative binding and capture" {
   )
   inspect(
     core_expr_sstr(
-      @symcore.subst(
-        @symcore.derivative(@symcore.function("f", [x, y]), y),
-        { "y": @symcore.applied_undefined_function("g", [y]) },
-      ),
+      @symcore.subst(@symcore.derivative(@symcore.function("f", [x, y]), y), {
+        "y": @symcore.applied_undefined_function("g", [y]),
+      }),
     ),
     content="Derivative(f(x, g(y)), g(y))",
   )
@@ -2744,7 +2743,10 @@ test "symcore parity callable substitution in derivative variables follows sourc
     ),
   )
   let invalid = @symcore.subst(expr, { "g": @symcore.Expr::FunctionHead("cos") })
-  inspect(@symcore.has(invalid, @symcore.Expr::FunctionHead("Subs")).to_string(), content="true")
+  inspect(
+    @symcore.has(invalid, @symcore.Expr::FunctionHead("Subs")).to_string(),
+    content="true",
+  )
   inspect(
     @symcore.has(invalid, @symcore.function("cos", [x])).to_string(),
     content="true",

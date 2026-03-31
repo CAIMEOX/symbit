@@ -2,8 +2,15 @@
 test "symseries fourier truncate parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.function("sin", [x])
-  let minus_pi = @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])
-  let limits = [x, minus_pi, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)]
+  let minus_pi = @symcore.mul([
+    @symcore.int(-1),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ])
+  let limits = [
+    x,
+    minus_pi,
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ]
   let res = fourier_series(expr, limits~)
   match res {
     FourierSeriesResult::Series(fs) => {
@@ -25,8 +32,15 @@ test "symseries fourier truncate parity" {
 test "symseries fourier term parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.function("sin", [x])
-  let minus_pi = @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])
-  let limits = [x, minus_pi, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)]
+  let minus_pi = @symcore.mul([
+    @symcore.int(-1),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ])
+  let limits = [
+    x,
+    minus_pi,
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ]
   let res = fourier_series(expr, limits~)
   match res {
     FourierSeriesResult::Series(fs) => {
@@ -48,8 +62,15 @@ test "symseries fourier term parity" {
 test "symseries fourier sigma parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.function("sin", [x])
-  let minus_pi = @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])
-  let limits = [x, minus_pi, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)]
+  let minus_pi = @symcore.mul([
+    @symcore.int(-1),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ])
+  let limits = [
+    x,
+    minus_pi,
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ]
   let res = fourier_series(expr, limits~)
   match res {
     FourierSeriesResult::Series(fs) => {
@@ -82,8 +103,15 @@ test "symseries fourier constant expr" {
 test "symseries fourier generic polynomial term parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = x
-  let minus_pi = @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])
-  let limits = [x, minus_pi, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)]
+  let minus_pi = @symcore.mul([
+    @symcore.int(-1),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ])
+  let limits = [
+    x,
+    minus_pi,
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ]
   let res = fourier_series(expr, limits~)
   match res {
     FourierSeriesResult::Series(fs) => {
@@ -141,8 +169,15 @@ test "symseries fourier shifted trig parity" {
   let expr = @symcore.function("sin", [
     @symcore.add([@symcore.mul([@symcore.int(2), x]), @symcore.int(1)]),
   ])
-  let minus_pi = @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])
-  let limits = [x, minus_pi, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)]
+  let minus_pi = @symcore.mul([
+    @symcore.int(-1),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ])
+  let limits = [
+    x,
+    minus_pi,
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ]
   let res = fourier_series(expr, limits~)
   match res {
     FourierSeriesResult::Series(fs) => {
@@ -169,8 +204,15 @@ test "symseries fourier poly shifted trig parity" {
       @symcore.add([@symcore.mul([@symcore.int(2), x]), @symcore.int(1)]),
     ]),
   ])
-  let minus_pi = @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])
-  let limits = [x, minus_pi, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)]
+  let minus_pi = @symcore.mul([
+    @symcore.int(-1),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ])
+  let limits = [
+    x,
+    minus_pi,
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ]
   let res = fourier_series(expr, limits~)
   match res {
     FourierSeriesResult::Series(fs) => {
@@ -192,8 +234,15 @@ test "symseries fourier poly shifted trig parity" {
 test "symseries fourier exp closed form parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.function("exp", [x])
-  let minus_pi = @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])
-  let limits = [x, minus_pi, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)]
+  let minus_pi = @symcore.mul([
+    @symcore.int(-1),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ])
+  let limits = [
+    x,
+    minus_pi,
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ]
   let res = fourier_series(expr, limits~)
   match res {
     FourierSeriesResult::Series(fs) => {
@@ -215,8 +264,15 @@ test "symseries fourier exp closed form parity" {
 test "symseries fourier hyperbolic closed form parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.function("sinh", [x])
-  let minus_pi = @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])
-  let limits = [x, minus_pi, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)]
+  let minus_pi = @symcore.mul([
+    @symcore.int(-1),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ])
+  let limits = [
+    x,
+    minus_pi,
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  ]
   let res = fourier_series(expr, limits~)
   match res {
     FourierSeriesResult::Series(fs) => {

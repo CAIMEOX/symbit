@@ -142,9 +142,18 @@ test "symsimplify advanced rewrites basics" {
   inspect(@symprint.debug_repr(pd), content="(^ sym:x 6)")
   let ee = exptrigsimp(
     @symcore.add([
-      @symcore.function("exp", [@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), x])]),
       @symcore.function("exp", [
-        @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), x]),
+        @symcore.mul([
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+          x,
+        ]),
+      ]),
+      @symcore.function("exp", [
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+          x,
+        ]),
       ]),
     ]),
   )
@@ -319,7 +328,9 @@ test "symsimplify compat api advanced cases" {
   )
   assert_true(trig_ns == @symcore.int(3))
 
-  let golden = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::GoldenRatio)
+  let golden = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::GoldenRatio,
+  )
   let golden_ns = nsimplify(
     @symcore.add([
       @symcore.function("sqrt", [@symcore.int(5)]),

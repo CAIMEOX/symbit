@@ -7,6 +7,7 @@ pub type BigRational = @symnum.BigRational
 ///|
 pub type BigInt = @bigint.BigInt
 
+///|
 fn expr_rational(num : Int, den : Int) -> Expr {
   if den == 1 {
     return @symcore.int(num)
@@ -17,7 +18,10 @@ fn expr_rational(num : Int, den : Int) -> Expr {
       Result[Expr, @symnum.RationalError]) {
     Ok(value) => value
     Err(_) =>
-      @symcore.mul([@symcore.int(num), @symcore.pow(@symcore.int(den), @symcore.int(-1))])
+      @symcore.mul([
+        @symcore.int(num),
+        @symcore.pow(@symcore.int(den), @symcore.int(-1)),
+      ])
   }
 }
 

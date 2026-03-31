@@ -56,7 +56,8 @@ test "geometry.curve parity repr arbitrary point and rotation" {
     ),
   )
   let rotated = c.rotate(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * (@symcore.int(2) ^ @symcore.int(-1)),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+    (@symcore.int(2) ^ @symcore.int(-1)),
   )
   let rot_pt = rotated.arbitrary_point(parameter=@symcore.Expr::Symbol("z"))
   assert_true(

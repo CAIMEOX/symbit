@@ -19,8 +19,14 @@ pub fn meijerg(
   z : Expr,
 ) -> Expr {
   let args : Array[Expr] = Array::new()
-  let a = @symcore.Expr::Tuple([@symcore.Expr::Tuple(a1), @symcore.Expr::Tuple(a2)])
-  let b = @symcore.Expr::Tuple([@symcore.Expr::Tuple(b1), @symcore.Expr::Tuple(b2)])
+  let a = @symcore.Expr::Tuple([
+    @symcore.Expr::Tuple(a1),
+    @symcore.Expr::Tuple(a2),
+  ])
+  let b = @symcore.Expr::Tuple([
+    @symcore.Expr::Tuple(b1),
+    @symcore.Expr::Tuple(b2),
+  ])
   args.push(a)
   args.push(b)
   args.push(z)

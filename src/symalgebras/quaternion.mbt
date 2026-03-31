@@ -30,13 +30,15 @@ pub impl Show for QuaternionError with output(self, logger : &Logger) -> Unit {
   }
 }
 
+///|
 fn expr_rational(num : Int, den : Int) -> Expr {
   match
     (
       try? @symcore.rational_from_ints(num, den) :
       Result[Expr, @symnum.RationalError]) {
     Ok(value) => value
-    Err(_) => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
+    Err(_) =>
+      @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
   }
 }
 
@@ -467,7 +469,9 @@ pub fn Quaternion::inverse(
     Some(true) => raise QuaternionError::ZeroNorm
     _ => ()
   }
-  self.conjugate().mul_scalar(expr_div(@symcore.int(1), expr_pow(self.norm(), 2)))
+  self
+  .conjugate()
+  .mul_scalar(expr_div(@symcore.int(1), expr_pow(self.norm(), 2)))
 }
 
 ///|
@@ -878,7 +882,8 @@ pub fn Quaternion::to_axis_angle(
   let angle = @symcore.int(2) * expr_acos(q.a)
   let s = expr_sqrt(@symcore.int(1) - q.a * q.a)
   match vector_is_zero_numeric(q.b, q.c, q.d) {
-    Some(true) => ((@symcore.int(0), @symcore.int(0), @symcore.int(0)), @symcore.int(0))
+    Some(true) =>
+      ((@symcore.int(0), @symcore.int(0), @symcore.int(0)), @symcore.int(0))
     _ => ((expr_div(q.b, s), expr_div(q.c, s), expr_div(q.d, s)), angle)
   }
 }
@@ -916,9 +921,12 @@ pub fn Quaternion::to_rotation_matrix(
     )
   } else {
     (
-      @symcore.int(1) - @symcore.int(2) * s * (self.c * self.c + self.d * self.d),
-      @symcore.int(1) - @symcore.int(2) * s * (self.b * self.b + self.d * self.d),
-      @symcore.int(1) - @symcore.int(2) * s * (self.b * self.b + self.c * self.c),
+      @symcore.int(1) -
+      @symcore.int(2) * s * (self.c * self.c + self.d * self.d),
+      @symcore.int(1) -
+      @symcore.int(2) * s * (self.b * self.b + self.d * self.d),
+      @symcore.int(1) -
+      @symcore.int(2) * s * (self.b * self.b + self.c * self.c),
     )
   }
   let m01 = @symcore.int(2) * s * (self.b * self.c - self.d * self.a)
@@ -959,10 +967,22 @@ pub fn Quaternion::from_rotation_matrix(
   }
   let det = matrix_det3(m)
   let absq = det ^ expr_rational(1, 3)
-  let a = expr_div(expr_sqrt(absq + m[0][0] + m[1][1] + m[2][2]), @symcore.int(2))
-  let b = expr_div(expr_sqrt(absq + m[0][0] - m[1][1] - m[2][2]), @symcore.int(2))
-  let c = expr_div(expr_sqrt(absq - m[0][0] + m[1][1] - m[2][2]), @symcore.int(2))
-  let d = expr_div(expr_sqrt(absq - m[0][0] - m[1][1] + m[2][2]), @symcore.int(2))
+  let a = expr_div(
+    expr_sqrt(absq + m[0][0] + m[1][1] + m[2][2]),
+    @symcore.int(2),
+  )
+  let b = expr_div(
+    expr_sqrt(absq + m[0][0] - m[1][1] - m[2][2]),
+    @symcore.int(2),
+  )
+  let c = expr_div(
+    expr_sqrt(absq - m[0][0] + m[1][1] - m[2][2]),
+    @symcore.int(2),
+  )
+  let d = expr_div(
+    expr_sqrt(absq - m[0][0] - m[1][1] + m[2][2]),
+    @symcore.int(2),
+  )
   let b1 = b * expr_sign(m[2][1] - m[1][2])
   let c1 = c * expr_sign(m[0][2] - m[2][0])
   let d1 = d * expr_sign(m[1][0] - m[0][1])

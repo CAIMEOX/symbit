@@ -94,7 +94,9 @@ fn free_symbols(expr : Expr) -> Array[String] {
     @symcore.ExprForm::Wild(name, _, _) => [@symcore.wild_display_name(name)]
     @symcore.ExprForm::FunctionHead(_) => []
     @symcore.ExprForm::UndefinedFunction(_) => []
-    @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) | @symcore.ExprForm::Tuple(args) => {
+    @symcore.ExprForm::Add(args)
+    | @symcore.ExprForm::Mul(args)
+    | @symcore.ExprForm::Tuple(args) => {
       let out : Array[String] = []
       for arg in args {
         for name in free_symbols(arg) {
@@ -219,9 +221,9 @@ fn print_expr_prec(
         }
         None =>
           return print_expr_prec(head, language, 5) +
-          "(" +
-          call_args.map(arg => print_expr_prec(arg, language, 0)).join(", ") +
-          ")"
+            "(" +
+            call_args.map(arg => print_expr_prec(arg, language, 0)).join(", ") +
+            ")"
       }
     None => ()
   }
@@ -321,6 +323,7 @@ fn expr_number_to_code(n : @symnum.BigRational) -> String {
   }
 }
 
+///|
 fn parenthesize_if_needed(
   text : String,
   child_prec : Int,

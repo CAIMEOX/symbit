@@ -249,14 +249,26 @@ test "symsimplify exptrigsimp parity" {
   let x = @symcore.Expr::Symbol("x")
   let exprs = [
     @symcore.add([
-      @symcore.function("exp", [@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), x])]),
       @symcore.function("exp", [
-        @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), x]),
+        @symcore.mul([
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+          x,
+        ]),
+      ]),
+      @symcore.function("exp", [
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+          x,
+        ]),
       ]),
     ]),
     @symcore.add([
       @symcore.function("cos", [x]),
-      @symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), @symcore.function("sin", [x])]),
+      @symcore.mul([
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+        @symcore.function("sin", [x]),
+      ]),
     ]),
   ]
   for expr in exprs {
@@ -347,7 +359,9 @@ test "symsimplify compat simplify parity" {
 ///|
 test "symsimplify compat simplify advanced parity" {
   let a = @symcore.Expr::Symbol("a")
-  let golden = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::GoldenRatio)
+  let golden = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::GoldenRatio,
+  )
   let i = @symcore.Expr::Symbol("i")
   let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
   let x = @symcore.Expr::Symbol("x")

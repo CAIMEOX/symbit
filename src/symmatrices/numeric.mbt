@@ -51,8 +51,7 @@ fn expr_numeric_prec(expr : Expr) -> Int {
 fn expr_has_floating_leaf(expr : Expr) -> Bool {
   match expr {
     Expr::Float(_) | Expr::ComplexFloat(_) => true
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(expr_has_floating_leaf)
+    Expr::Add(args) | Expr::Mul(args) => args.any(expr_has_floating_leaf)
     Expr::Pow(base, exp) =>
       expr_has_floating_leaf(base) || expr_has_floating_leaf(exp)
     _ => @symcore.args(expr).any(expr_has_floating_leaf)

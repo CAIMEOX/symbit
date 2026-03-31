@@ -12,7 +12,13 @@ pub fn sqrt_int(n : Int) -> Expr {
 
 ///|
 pub fn complex(re : Expr, im : Expr) -> Expr {
-  @symcore.add([re, @symcore.mul([im, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)])])
+  @symcore.add([
+    re,
+    @symcore.mul([
+      im,
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+    ]),
+  ])
 }
 
 ///|

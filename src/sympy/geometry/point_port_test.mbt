@@ -18,7 +18,9 @@ test "geometry.point parity translate rotate scale" {
     p.translate([@symcore.int(-1), @symcore.int(3)]).repr(),
     geometry_eval_repr("Point2D(2, 1).translate(-1, 3)"),
   )
-  let rotated = p.rotate(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi))
+  let rotated = p.rotate(
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  )
   assert_true(
     geometry_expr_equal(
       @symprint.to_string(rotated.x()),

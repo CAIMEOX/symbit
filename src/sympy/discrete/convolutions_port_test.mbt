@@ -105,7 +105,10 @@ test "discrete convolution functions parity" {
     "convolution_fwht",
     try? convolution_fwht_equiv([u, v], [x, y], ours_fwht),
   )
-  let ours_subset = convolution_subset([u, v, x], [y, @symcore.Expr::Symbol("z")])
+  let ours_subset = convolution_subset([u, v, x], [
+    y,
+    @symcore.Expr::Symbol("z"),
+  ])
   assert_oracle_named(
     "convolution_subset",
     try? convolution_subset_equiv(
@@ -123,7 +126,10 @@ test "discrete convolution functions parity" {
       ours_cover,
     ),
   )
-  let ours_inter = intersecting_product([u, v, x], [y, @symcore.Expr::Symbol("z")])
+  let ours_inter = intersecting_product([u, v, x], [
+    y,
+    @symcore.Expr::Symbol("z"),
+  ])
   assert_oracle_named(
     "intersecting_product",
     try? intersecting_product_equiv(

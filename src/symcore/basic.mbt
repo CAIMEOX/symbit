@@ -272,7 +272,8 @@ fn expr_can_diff_wrt(expr : Expr) -> Bool {
           }
           for pair in derivative_constructor_pairs(deriv_args[:]) {
             let (wrt, order) = pair
-            if !expr_can_diff_wrt(wrt) || !derivative_order_is_positive_integer(order) {
+            if !expr_can_diff_wrt(wrt) ||
+              !derivative_order_is_positive_integer(order) {
               return false
             }
           }

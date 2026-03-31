@@ -1169,7 +1169,9 @@ test "subst respects derivative binding and capture rules" {
   )
   let gy = applied_undefined_function("g", [y])
   inspect(
-    @symprint.to_string(subst(derivative(function("f", [x, y]), y), { "y": gy })),
+    @symprint.to_string(
+      subst(derivative(function("f", [x, y]), y), { "y": gy }),
+    ),
     content="Derivative(f(x, g(y)), g(y))",
   )
 }
@@ -1228,14 +1230,15 @@ test "derivative constructors and callable substitution follow SymPy source" {
   }
   inspect(
     @symprint.to_string(
-      subst(Expr::Derivative(gx, [gx, int(1)]), { "g": Expr::UndefinedFunction("f") }),
+      subst(Expr::Derivative(gx, [gx, int(1)]), {
+        "g": Expr::UndefinedFunction("f"),
+      }),
     ),
     content="Derivative(f(x), f(x))",
   )
-  let invalid = subst(
-    Expr::Derivative(gx, [gx, int(1)]),
-    { "g": Expr::FunctionHead("cos") },
-  )
+  let invalid = subst(Expr::Derivative(gx, [gx, int(1)]), {
+    "g": Expr::FunctionHead("cos"),
+  })
   match invalid {
     Expr::Subs(Expr::Derivative(inner, [wrt, order]), variable, value) => {
       inspect((inner == wrt).to_string(), content="true")

@@ -21,7 +21,10 @@ fn exact_complex_rate_expr(
 test "symcalculus diff handles named apply heads structurally" {
   let x = @symcore.Expr::Symbol("x")
   let deriv = diff(@symcore.function("sin", [x]), x)
-  inspect(@symcore.compare_expr(deriv, @symcore.function("cos", [x])), content="0")
+  inspect(
+    @symcore.compare_expr(deriv, @symcore.function("cos", [x])),
+    content="0",
+  )
 }
 
 ///|

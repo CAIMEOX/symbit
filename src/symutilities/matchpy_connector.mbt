@@ -128,67 +128,71 @@ pub fn get_srepr(expr : Expr) -> String {
             None =>
               "Apply(" +
               get_srepr(head) +
-              (if args.is_empty() { "" } else { ", " + args.map(get_srepr).join(", ") }) +
+              (if args.is_empty() {
+                ""
+              } else {
+                ", " + args.map(get_srepr).join(", ")
+              }) +
               ")"
           }
         None =>
           match @symcore.expr_form(expr) {
-        @symcore.ExprForm::Number(_)
-        | @symcore.ExprForm::Float(_)
-        | @symcore.ExprForm::ComplexFloat(_)
-        | @symcore.ExprForm::NumberSymbol(_)
-        | @symcore.ExprForm::Symbol(_)
-        | @symcore.ExprForm::Dummy(_, _)
-        | @symcore.ExprForm::Wild(_, _, _)
-        | @symcore.ExprForm::FunctionHead(_)
-        | @symcore.ExprForm::UndefinedFunction(_)
-        | @symcore.ExprForm::Boolean(_) => @symprint.to_string(expr)
-        @symcore.ExprForm::Add(args) =>
-          "Add(" + args.map(get_srepr).join(", ") + ")"
-        @symcore.ExprForm::Mul(args) =>
-          "Mul(" + args.map(get_srepr).join(", ") + ")"
-        @symcore.ExprForm::Pow(base, exp) =>
-          "Pow(" + get_srepr(base) + ", " + get_srepr(exp) + ")"
-        @symcore.ExprForm::Mod(lhs, rhs) =>
-          "Mod(" + get_srepr(lhs) + ", " + get_srepr(rhs) + ")"
-        @symcore.ExprForm::Tuple(args) =>
-          "Tuple(" + args.map(get_srepr).join(", ") + ")"
-        @symcore.ExprForm::Dict(items) => {
-          let rendered : Array[String] = []
-          for item in items {
-            let (key, value) = item
-            rendered.push(
-              "Tuple(" + get_srepr(key) + ", " + get_srepr(value) + ")",
-            )
+            @symcore.ExprForm::Number(_)
+            | @symcore.ExprForm::Float(_)
+            | @symcore.ExprForm::ComplexFloat(_)
+            | @symcore.ExprForm::NumberSymbol(_)
+            | @symcore.ExprForm::Symbol(_)
+            | @symcore.ExprForm::Dummy(_, _)
+            | @symcore.ExprForm::Wild(_, _, _)
+            | @symcore.ExprForm::FunctionHead(_)
+            | @symcore.ExprForm::UndefinedFunction(_)
+            | @symcore.ExprForm::Boolean(_) => @symprint.to_string(expr)
+            @symcore.ExprForm::Add(args) =>
+              "Add(" + args.map(get_srepr).join(", ") + ")"
+            @symcore.ExprForm::Mul(args) =>
+              "Mul(" + args.map(get_srepr).join(", ") + ")"
+            @symcore.ExprForm::Pow(base, exp) =>
+              "Pow(" + get_srepr(base) + ", " + get_srepr(exp) + ")"
+            @symcore.ExprForm::Mod(lhs, rhs) =>
+              "Mod(" + get_srepr(lhs) + ", " + get_srepr(rhs) + ")"
+            @symcore.ExprForm::Tuple(args) =>
+              "Tuple(" + args.map(get_srepr).join(", ") + ")"
+            @symcore.ExprForm::Dict(items) => {
+              let rendered : Array[String] = []
+              for item in items {
+                let (key, value) = item
+                rendered.push(
+                  "Tuple(" + get_srepr(key) + ", " + get_srepr(value) + ")",
+                )
+              }
+              "Dict(" + rendered.join(", ") + ")"
+            }
+            @symcore.ExprForm::Relational(_, lhs, rhs) =>
+              @symcore.head_name(expr) +
+              "(" +
+              get_srepr(lhs) +
+              ", " +
+              get_srepr(rhs) +
+              ")"
+            @symcore.ExprForm::Derivative(inner, deriv_args) => {
+              let rendered : Array[String] = [get_srepr(inner)]
+              for arg in deriv_args {
+                rendered.push(get_srepr(arg))
+              }
+              "Derivative(" + rendered.join(", ") + ")"
+            }
+            @symcore.ExprForm::Subs(inner, variable, value) =>
+              "Subs(" +
+              get_srepr(inner) +
+              ", " +
+              get_srepr(variable) +
+              ", " +
+              get_srepr(value) +
+              ")"
+            @symcore.ExprForm::Lambda(vars, body) =>
+              "Lambda(" + get_srepr(vars) + ", " + get_srepr(body) + ")"
+            _ => "<invalid>"
           }
-          "Dict(" + rendered.join(", ") + ")"
-        }
-        @symcore.ExprForm::Relational(_, lhs, rhs) =>
-          @symcore.head_name(expr) +
-          "(" +
-          get_srepr(lhs) +
-          ", " +
-          get_srepr(rhs) +
-          ")"
-        @symcore.ExprForm::Derivative(inner, deriv_args) => {
-          let rendered : Array[String] = [get_srepr(inner)]
-          for arg in deriv_args {
-            rendered.push(get_srepr(arg))
-          }
-          "Derivative(" + rendered.join(", ") + ")"
-        }
-        @symcore.ExprForm::Subs(inner, variable, value) =>
-          "Subs(" +
-          get_srepr(inner) +
-          ", " +
-          get_srepr(variable) +
-          ", " +
-          get_srepr(value) +
-          ")"
-        @symcore.ExprForm::Lambda(vars, body) =>
-          "Lambda(" + get_srepr(vars) + ", " + get_srepr(body) + ")"
-        _ => "<invalid>"
-      }
       }
   }
 }
@@ -302,7 +306,10 @@ fn match_expr(
           }
         _ =>
           match
-            (@symcore.application_parts(pattern), @symcore.application_parts(expr)) {
+            (
+              @symcore.application_parts(pattern),
+              @symcore.application_parts(expr),
+            ) {
             (Some((phead, pargs)), Some((ehead, eargs))) =>
               if phead == ehead {
                 match_expr_list(pargs, eargs, 0, 0, bindings)
@@ -440,7 +447,8 @@ fn substitute_expr(expr : Expr, bindings : Map[String, WildBinding]) -> Expr {
         _ =>
           match @symcore.application_parts(expr) {
             Some((head, args)) =>
-              match @symcore.raw_apply(head, substitute_expr_list(args, bindings)) {
+              match
+                @symcore.raw_apply(head, substitute_expr_list(args, bindings)) {
                 Some(applied) => applied
                 None => expr
               }

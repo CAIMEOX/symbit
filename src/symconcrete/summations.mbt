@@ -535,7 +535,9 @@ fn sum_zeta(
   let s = -p
   if lower == @symcore.int(1) {
     if s == 1 {
-      return Some(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
+      return Some(
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+      )
     }
     return Some(@symspec.zeta(@symcore.int(s)))
   }

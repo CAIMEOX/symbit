@@ -144,12 +144,11 @@ fn lambdastr_prec(expr : Expr, parent_prec : Int) -> String {
   match (@symcore.application_name(expr), @symcore.application_args(expr)) {
     (Some(name), Some(call_args)) => {
       let current_prec = 3
-      let text = name + "(" + call_args.map(arg => lambdastr_prec(arg, 0)).join(", ") + ")"
-      return if current_prec < parent_prec {
-        "(" + text + ")"
-      } else {
-        text
-      }
+      let text = name +
+        "(" +
+        call_args.map(arg => lambdastr_prec(arg, 0)).join(", ") +
+        ")"
+      return if current_prec < parent_prec { "(" + text + ")" } else { text }
     }
     _ => ()
   }

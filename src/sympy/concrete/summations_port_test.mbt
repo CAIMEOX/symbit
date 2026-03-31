@@ -138,7 +138,13 @@ test "symconcrete summation harmonic finite" {
 test "symconcrete summation zeta infinite" {
   let k = @symcore.Expr::Symbol("k")
   let expr = @symcore.pow(k, @symcore.int(-2))
-  let limits = [limit_range(k, @symcore.int(1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))]
+  let limits = [
+    limit_range(
+      k,
+      @symcore.int(1),
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+    ),
+  ]
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "zeta(2)"
@@ -150,7 +156,13 @@ test "symconcrete summation geometric infinite piecewise" {
   let k = @symcore.Expr::Symbol("k")
   let r = @symcore.Expr::Symbol("r")
   let expr = @symcore.pow(r, k)
-  let limits = [limit_range(k, @symcore.int(0), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))]
+  let limits = [
+    limit_range(
+      k,
+      @symcore.int(0),
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+    ),
+  ]
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "Piecewise(Tuple(1/(1 - r), Lt(Abs(r), 1)), Tuple(Sum(r**k, (k, 0, oo)), True))"
