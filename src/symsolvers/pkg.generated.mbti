@@ -18,7 +18,7 @@ pub fn check_assumptions(@symcore.Expr, against? : @symcore.Expr?, assumptions? 
 
 pub fn checkinfsol(@symcore.Expr, Array[Map[String, @symcore.Expr]], func? : @symcore.Expr?, order? : Int?) -> Array[(Bool, @symcore.Expr)] raise SolverError
 
-pub fn checkodesol(@symcore.Expr, @symcore.Expr, func? : @symcore.Expr?) -> (Bool, @symcore.Expr) raise SolverError
+pub fn checkodesol(@symcore.Expr, @symcore.Expr, func? : @symcore.Expr?, order? : Int?, solve_for_func? : Bool) -> (Bool, @symcore.Expr) raise SolverError
 
 pub fn checkpdesol(@symcore.Expr, @symcore.Expr, func? : @symcore.Expr?) -> (Bool, @symcore.Expr) raise SolverError
 

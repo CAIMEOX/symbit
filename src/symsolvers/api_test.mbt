@@ -284,7 +284,7 @@ test "linsolve keeps parametric solutions in tuple form" {
     ]),
     [x(), y(), z()],
   )
-  inspect(@symsets.to_string(result), content="{(-1*z/2 + 2, -1*z/2 + 1, z)}")
+  inspect(@symsets.to_string(result), content="{(2 - z/2, 1 - z/2, z)}")
 }
 
 ///|
@@ -947,7 +947,7 @@ test "lie heuristic chi follows SymPy reference case" {
 }
 
 ///|
-test "lie heuristic function_sum and abaco2_similar follow SymPy reference cases" {
+test "lie heuristic function_sum follows SymPy reference case" {
   let function_sum_eq = @symcalculus.diff(f(x()), x()) -
     @symcore.add([
       @symcore.mul([
@@ -987,7 +987,10 @@ test "lie heuristic function_sum and abaco2_similar follow SymPy reference cases
     checkinfsol(function_sum_eq, function_sum_inf, func=Some(f(x())))[0].0.to_string(),
     content="true",
   )
+}
 
+///|
+test "lie heuristic abaco2_similar eq1 follows SymPy reference case" {
   let a = @symcore.Expr::Symbol("a")
   let b = @symcore.Expr::Symbol("b")
   let big_f = @symcore.applied_undefined_function("F", [
@@ -1001,13 +1004,16 @@ test "lie heuristic function_sum and abaco2_similar follow SymPy reference cases
   )
   inspect(
     normalize_text(local_infinitesimals_text(similar_inf_1)),
-    content="[{xi: 1, eta: -a*b**-1}]",
+    content="[{xi: 1, eta: -a/b}]",
   )
   inspect(
     checkinfsol(similar_eq_1, similar_inf_1, func=Some(f(x())))[0].0.to_string(),
     content="true",
   )
+}
 
+///|
+test "lie heuristic abaco2_similar eq2 follows SymPy reference case" {
   let similar_eq_2 = @symcalculus.diff(f(x()), x()) -
     @symcore.mul([
       f(x()) ^ @symcore.int(2),
@@ -1033,15 +1039,12 @@ test "lie heuristic function_sum and abaco2_similar follow SymPy reference cases
     checkinfsol(similar_eq_2, similar_inf_2, func=Some(f(x())))[0].0.to_string(),
     content="true",
   )
-
 }
 
 ///|
-test "lie heuristic abaco2_unique_unknown and linear follow SymPy reference cases" {
+test "lie heuristic abaco2_unique_unknown eq1 follows SymPy reference case" {
   let a = @symcore.Expr::Symbol("a")
   let b = @symcore.Expr::Symbol("b")
-  let m = @symcore.Expr::Symbol("m")
-  let n = @symcore.Expr::Symbol("n")
   let unknown_f = @symcore.applied_undefined_function("F", [
     @symcore.add([
       @symcore.mul([x() ^ a, a ^ @symcore.int(-1)]),
@@ -1061,13 +1064,15 @@ test "lie heuristic abaco2_unique_unknown and linear follow SymPy reference case
   )
   inspect(
     normalize_text(local_infinitesimals_text(unique_unknown_inf_1)),
-    content="[{xi: x*x**-a, eta: -f(x)*f(x)**-b}]",
+    content="[{xi: x**(1 - a), eta: -f(x)**(1 - b)}]",
   )
   inspect(
     checkinfsol(unique_unknown_eq_1, unique_unknown_inf_1, func=Some(f(x())))[0].0.to_string(),
     content="true",
   )
+}
 
+test "lie heuristic abaco2_unique_unknown eq2 follows SymPy reference case" {
   let unique_unknown_eq_2 = @symcalculus.diff(f(x()), x()) +
     @symcore.function(
       "tan",
@@ -1096,11 +1101,14 @@ test "lie heuristic abaco2_unique_unknown and linear follow SymPy reference case
     checkinfsol(unique_unknown_eq_2, unique_unknown_inf_2, func=Some(f(x())))[0].0.to_string(),
     content="true",
   )
+}
 
+test "lie heuristic abaco2_unique_unknown eq3 follows SymPy reference case" {
+  let a = @symcore.Expr::Symbol("a")
   let unique_unknown_eq_3 =
-    (
+    ((
       x() * @symcalculus.diff(f(x()), x()) + f(x()) + @symcore.int(2) * x()
-    ) ^ @symcore.int(2) -
+    ) ^ @symcore.int(2)) -
     @symcore.int(4) * x() * f(x()) -
     @symcore.int(4) * (x() ^ @symcore.int(2)) -
     @symcore.int(4) * a
@@ -1113,12 +1121,22 @@ test "lie heuristic abaco2_unique_unknown and linear follow SymPy reference case
     checkinfsol(unique_unknown_eq_3, unique_unknown_inf_3, func=Some(f(x())))[0].0.to_string(),
     content="true",
   )
+}
 
+test "lie heuristic linear follows SymPy reference cases" {
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let m = @symcore.Expr::Symbol("m")
+  let n = @symcore.Expr::Symbol("n")
+  let leading_power = x() ^
+    (@symcore.add([n * (@symcore.add([m, @symcore.int(1)])), @symcore.mul([@symcore.int(-1), m])]))
+  let forcing_power = x() ^ (@symcore.mul([n, @symcore.add([m, @symcore.int(1)])]))
   let linear_eq =
-    x() ^ (@symcore.add([n * (@symcore.add([m, @symcore.int(1)])), @symcore.mul([@symcore.int(-1), m])])) *
-    @symcalculus.diff(f(x()), x()) -
-    a * (f(x()) ^ n) -
-    b * (x() ^ (@symcore.mul([n, @symcore.add([m, @symcore.int(1)])])))
+    (
+      leading_power * @symcalculus.diff(f(x()), x()) -
+      a * (f(x()) ^ n) -
+      b * forcing_power
+    )
   let linear_inf = infinitesimals(linear_eq, func=Some(f(x())), hint="linear")
   inspect(checkinfsol(linear_eq, linear_inf, func=Some(f(x())))[0].0.to_string(), content="true")
 }
@@ -1205,6 +1223,60 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
     ),
     content="(true, 0)",
   )
+}
+
+///|
+test "checkodesol follows SymPy subscheck-style implicit and exact cases" {
+  let c1 = @symcore.Expr::Symbol("C1")
+  let exact_sol = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    (f(x()) ^ @symcore.int(5)) + @symcore.int(9) * f(x()) + x(),
+    @symcore.int(0),
+  )
+  let exact_ode = @symcalculus.diff(
+    (f(x()) ^ @symcore.int(5)) + @symcore.int(9) * f(x()) + x(),
+    x(),
+  )
+  let exact_check = checkodesol(exact_ode, exact_sol, func=Some(f(x())))
+  inspect(exact_check.0.to_string(), content="true")
+  inspect(@symprint.to_string(exact_check.1), content="0")
+
+  let implicit_sol = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.function("exp", [f(x())]) + x(),
+    @symcore.int(0),
+  )
+  let implicit_ode = x() *
+    @symcalculus.diff(@symcore.function("exp", [f(x())]) + x(), x())
+  let implicit_check = checkodesol(
+    implicit_ode,
+    implicit_sol,
+    func=Some(f(x())),
+    solve_for_func=false,
+  )
+  inspect(implicit_check.0.to_string(), content="true")
+  inspect(@symprint.to_string(implicit_check.1), content="0")
+
+  let reversed_sol = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    c1 * @symcore.function("exp", [x()]),
+    f(x()),
+  )
+  let reversed_check = checkodesol(
+    @symcalculus.diff(f(x()), x()) - f(x()),
+    reversed_sol,
+    func=Some(f(x())),
+  )
+  inspect(reversed_check.0.to_string(), content="true")
+  inspect(@symprint.to_string(reversed_check.1), content="0")
+
+  let bad_check = checkodesol(
+    @symcalculus.diff(f(x()), x()),
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, f(x()), x()),
+    func=Some(f(x())),
+  )
+  inspect(bad_check.0.to_string(), content="false")
+  inspect(@symprint.to_string(bad_check.1), content="1")
 }
 
 ///|

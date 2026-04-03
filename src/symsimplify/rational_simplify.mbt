@@ -219,11 +219,17 @@ fn rewrite_ratsimp(expr : Expr) -> Expr {
         num_terms.push(@symcore.mul([nums[i], quotient]))
       }
       let num_sum = @symcore.add(num_terms)
-      cancel_common_factors(
-        @symcore.mul([num_sum, @symcore.pow(common_den, int(-1))]),
-      )
+      let rebuilt = @symcore.mul([num_sum, @symcore.pow(common_den, int(-1))])
+      match poly_cancel_expr(rebuilt) {
+        Some(canceled) => canceled
+        None => cancel_common_factors(rebuilt)
+      }
     }
-    _ => cancel_common_factors(expr)
+    _ =>
+      match poly_cancel_expr(expr) {
+        Some(canceled) => canceled
+        None => cancel_common_factors(expr)
+      }
   }
 }
 
@@ -264,9 +270,140 @@ fn denominator_quotient(common_den : Expr, den : Expr) -> Expr {
 }
 
 ///|
+fn expr_symbol_names_for_poly(expr : Expr) -> Array[String] {
+  let names : Array[String] = []
+  for sym in @symcore.free_symbols(expr) {
+    match sym {
+      Expr::Symbol(name) =>
+        if !names.contains(name) {
+          names.push(name)
+        }
+      Expr::Dummy(name, _) =>
+        if !names.contains(name) {
+          names.push(name)
+        }
+      _ => ()
+    }
+  }
+  names.sort()
+  names
+}
+
+///|
+fn poly_cancel_expr(expr : Expr) -> Expr? {
+  let (num, den) = split_fraction(expr)
+  let gens = expr_symbol_names_for_poly(@symcore.mul([num, den]))
+  if gens.is_empty() {
+    return None
+  }
+  let num_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
+    @sympolys.Poly::from_expr(num, gens, @sympolys.Domain::EX)
+  let den_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
+    @sympolys.Poly::from_expr(den, gens, @sympolys.Domain::EX)
+  match (num_poly_res, den_poly_res) {
+    (Ok(num_poly), Ok(den_poly)) => {
+      if den_poly.is_zero() {
+        return None
+      }
+      let cancel_res : Result[(@sympolys.Poly, @sympolys.Poly), @sympolys.PolyError] = try?
+        @sympolys.cancel(num_poly, den_poly)
+      match cancel_res {
+        Ok((num_s, den_s)) => {
+          let num_expr = num_s.to_expr()
+          let den_expr = den_s.to_expr()
+          Some(
+            if den_expr == int(1) {
+              num_expr
+            } else {
+              @symcore.mul([num_expr, @symcore.pow(den_expr, int(-1))])
+            },
+          )
+        }
+        Err(_) => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn factor_integral_number_rational(expr : Expr) -> Array[Expr]? {
+  match expr {
+    Expr::Number(n) if n.is_integral() => {
+      let value = n.numerator().to_int()
+      if value == 0 {
+        return Some([expr])
+      }
+      let sign = if value < 0 { -1 } else { 1 }
+      let mut rest = if value < 0 { -value } else { value }
+      if rest <= 1 {
+        return Some([expr])
+      }
+      let out : Array[Expr] = []
+      if sign < 0 {
+        out.push(int(-1))
+      }
+      let mut factor = 2
+      while factor * factor <= rest {
+        while rest % factor == 0 {
+          out.push(int(factor))
+          rest = rest / factor
+        }
+        factor += if factor == 2 { 1 } else { 2 }
+      }
+      if rest > 1 {
+        out.push(int(rest))
+      }
+      Some(out)
+    }
+    _ => None
+  }
+}
+
+///|
+fn flatten_mul_nonunit_rational(expr : Expr) -> Array[Expr] {
+  match expr {
+    Expr::Mul(args) => {
+      let out : Array[Expr] = []
+      for arg in args {
+        for factor in flatten_mul_nonunit_rational(arg) {
+          if factor != int(1) {
+            out.push(factor)
+          }
+        }
+      }
+      out
+    }
+    Expr::Pow(base, Expr::Number(exp)) if exp.is_integral() => {
+      let power = exp.numerator().to_int()
+      if power > 1 && power <= 32 {
+        let base_factors = flatten_mul_nonunit_rational(base)
+        let out : Array[Expr] = []
+        for _ in 0..<power {
+          for factor in base_factors {
+            if factor != int(1) {
+              out.push(factor)
+            }
+          }
+        }
+        out
+      } else {
+        [expr]
+      }
+    }
+    Expr::Number(n) if n.is_one() => []
+    _ =>
+      match factor_integral_number_rational(expr) {
+        Some(factors) => factors.filter(f => f != int(1))
+        None => [expr]
+      }
+  }
+}
+
+///|
 fn factor_count_map(expr : Expr) -> Map[String, Int] {
   let counts : Map[String, Int] = {}
-  for factor in flatten_mul_nonunit(expr) {
+  for factor in flatten_mul_nonunit_rational(expr) {
     let key = @symprint.debug_repr(factor)
     match counts.get(key) {
       Some(prev) => counts[key] = prev + 1
@@ -279,7 +416,7 @@ fn factor_count_map(expr : Expr) -> Map[String, Int] {
 ///|
 fn factor_expr_map(expr : Expr) -> Map[String, Expr] {
   let factors : Map[String, Expr] = {}
-  for factor in flatten_mul_nonunit(expr) {
+  for factor in flatten_mul_nonunit_rational(expr) {
     let key = @symprint.debug_repr(factor)
     factors[key] = factor
   }
@@ -288,7 +425,7 @@ fn factor_expr_map(expr : Expr) -> Map[String, Expr] {
 
 ///|
 fn factor_expr_by_key(expr : Expr, key : String) -> Expr {
-  for factor in flatten_mul_nonunit(expr) {
+  for factor in flatten_mul_nonunit_rational(expr) {
     if @symprint.debug_repr(factor) == key {
       return factor
     }
@@ -417,34 +554,7 @@ fn radical_radicand_as_rational(expr : Expr) -> @symnum.BigRational? {
 
 ///|
 fn split_fraction(expr : Expr) -> (Expr, Expr) {
-  match expr {
-    Expr::Pow(base, Expr::Number(exp)) =>
-      if exp.is_integral() && exp.numerator().to_int() < 0 {
-        let den_exp = int(-exp.numerator().to_int())
-        (int(1), @symcore.pow(base, den_exp))
-      } else {
-        (expr, int(1))
-      }
-    Expr::Mul(args) => {
-      let num_factors : Array[Expr] = Array::new()
-      let den_factors : Array[Expr] = Array::new()
-      for factor in args {
-        match factor {
-          Expr::Pow(base, Expr::Number(exp)) =>
-            if exp.is_integral() && exp.numerator().to_int() < 0 {
-              den_factors.push(
-                @symcore.pow(base, int(-exp.numerator().to_int())),
-              )
-            } else {
-              num_factors.push(factor)
-            }
-          _ => num_factors.push(factor)
-        }
-      }
-      (@symcore.mul(num_factors), @symcore.mul(den_factors))
-    }
-    _ => (expr, int(1))
-  }
+  split_fraction_simple(expr)
 }
 
 ///|

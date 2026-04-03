@@ -158,16 +158,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
       if base_cmp != 0 {
         return base_cmp
       }
-      match base_b {
-        Expr::Dummy(name_b, id_b) => {
-          let name_cmp = name_a.compare(name_b)
-          if name_cmp != 0 {
-            return name_cmp
-          }
-          return cmp_int(id_a, id_b)
-        }
-        _ => return 1
-      }
+      return 1
     }
     (Expr::Wild(name_a, _, _), Expr::Pow(base_b, _)) => {
       let base_cmp = compare_symbol_base(wild_display_name(name_a), base_b)

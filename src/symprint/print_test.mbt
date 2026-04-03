@@ -13,6 +13,52 @@ test "pretty to_string respects precedence" {
 }
 
 ///|
+test "pretty to_string wraps multiplicative denominator" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let expr = @symcore.mul([
+    x + y,
+    @symcore.pow(@symcore.mul([x ^ @symcore.int(2), y ^ @symcore.int(2)]), @symcore.int(-1)),
+  ])
+  inspect(to_string(expr), content="(x + y)/(x**2*y**2)")
+}
+
+///|
+test "pretty to_string normalizes subtraction and unit coefficients" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  inspect(
+    to_string(
+      @symcore.add([
+        @symcore.mul([@symcore.int(6), x ^ @symcore.int(2)]),
+        @symcore.int(-5),
+      ]),
+    ),
+    content="6*x**2 - 5",
+  )
+  inspect(
+    to_string(
+      @symcore.add([
+        @symcore.mul([@symcore.int(-1), x]),
+        @symcore.mul([@symcore.int(-1), y]),
+      ]),
+    ),
+    content="-x - y",
+  )
+  inspect(
+    to_string(
+      @symcore.add([
+        @symcore.mul([@symcore.int(-1), x]),
+        @symcore.int(3),
+      ]),
+    ),
+    content="3 - x",
+  )
+  inspect(to_string(@symcore.add([y, @symcore.int(-1)])), content="y - 1")
+  inspect(to_string(@symcore.mul([@symcore.int(-1), x])), content="-x")
+}
+
+///|
 test "pretty to_string prints Float leaves" {
   let exact_res : Result[@symcore.Float, @symnum.MpfError] = try? @symcore.Float::from_str(
     "0.125",

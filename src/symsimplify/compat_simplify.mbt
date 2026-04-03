@@ -668,6 +668,10 @@ fn compat_has_named_constant(constants : Array[Expr], name : String) -> Bool {
   for constant in constants {
     match constant {
       Expr::Symbol(const_name) if const_name == name => return true
+      Expr::NumberSymbol(@symcore.NumberSymbolKind::GoldenRatio) =>
+        if name == "GoldenRatio" {
+          return true
+        }
       _ => ()
     }
   }

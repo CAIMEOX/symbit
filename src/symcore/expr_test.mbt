@@ -1126,6 +1126,17 @@ test "Subs equality and ordering use canonical variable semantics" {
 }
 
 ///|
+test "mul does not merge a dummy with its square" {
+  let y = dummy(name="y")
+  let y2 = pow(y, int(2))
+  inspect(compare_expr(y2, y), content="-1")
+  inspect(compare_expr(y, y2), content="1")
+  let product = mul([y2, y])
+  let sample = evalf(xreplace(product, [(y, int(2))]), prec=80)
+  inspect(@symprint.to_string(sample), content="8.0")
+}
+
+///|
 test "subst respects derivative binding and capture rules" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")

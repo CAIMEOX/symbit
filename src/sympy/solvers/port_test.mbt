@@ -299,6 +299,18 @@ fn checkinfsol_oracle_residual_text(
 }
 
 ///|
+fn checkodesol_oracle_text(oracle_code : String) -> String raise {
+  solvers_eval_str_symbols(
+    "'(' + str((" +
+    oracle_code +
+    ")[0]).lower() + ', ' + sympy.sstr((" +
+    oracle_code +
+    ")[1]) + ')'",
+    "x C1",
+  )
+}
+
+///|
 fn normalize_braced_items_text(text : String) -> String {
   let trimmed = text.trim().to_string()
   if !trimmed.has_prefix("{") || !trimmed.has_suffix("}") {
@@ -430,7 +442,7 @@ fn local_failing_assumptions_text(values : Map[String, Bool?]) -> String {
   let parts : Array[String] = []
   for key in keys {
     let value = match values.get(key) {
-      Some(Some(v)) => if v { "true" } else { "false" }
+      Some(Some(v)) => if v { "True" } else { "False" }
       _ => "None"
     }
     parts.push("'" + key + "': " + value)
@@ -835,7 +847,7 @@ test "solvers parity assumptions and undetermined coeffs" {
 }
 
 ///|
-test "solvers parity ode and pde utility front doors" {
+test "solvers parity ode system matrix front doors" {
   let c1 = @symcore.Expr::Symbol("C1")
   let c2 = @symcore.Expr::Symbol("C2")
   assert_eq(
@@ -993,6 +1005,10 @@ test "solvers parity ode and pde utility front doors" {
     ),
     "Matrix([[0], [0]])",
   )
+}
+
+///|
+test "solvers parity lie infinitesimals front doors" {
   let lie_eq = @symcalculus.diff(f(x()), x()) - (x() ^ @symcore.int(2)) * f(x())
   assert_eq(
     infinitesimals_oracle_residual_text(
@@ -1155,11 +1171,61 @@ test "solvers parity ode and pde utility front doors" {
     ),
     "(1, 1, [(0, 0)])",
   )
+  let unique_unknown_eq_2 = @symcalculus.diff(f(x()), x()) +
+    @symcore.function(
+      "tan",
+      [
+        @symcore.applied_undefined_function("F", [
+          @symcore.add([
+            x() ^ @symcore.int(2),
+            f(x()) ^ @symcore.int(2),
+          ]),
+        ]) + @symcore.function(
+          "atan",
+          [@symcore.mul([x(), f(x()) ^ @symcore.int(-1)])],
+        ),
+      ],
+    )
+  let unique_unknown_inf_2 = @symsolvers.infinitesimals(
+    unique_unknown_eq_2,
+    func=Some(f(x())),
+    hint="abaco2_unique_unknown",
+  )
+  assert_eq(
+    infinitesimals_oracle_residual_text(
+      unique_unknown_inf_2,
+      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) + sympy.tan(sympy.Function('F')(x**2 + sympy.Function('f')(x)**2) + sympy.atan(x/sympy.Function('f')(x))), hint='abaco2_unique_unknown')]",
+    ),
+    "(1, 1, [(0, 0)])",
+  )
+  let unique_unknown_eq_3 =
+    ((
+      x() * @symcalculus.diff(f(x()), x()) + f(x()) + @symcore.int(2) * x()
+    ) ^ @symcore.int(2)) -
+    @symcore.int(4) * x() * f(x()) -
+    @symcore.int(4) * (x() ^ @symcore.int(2)) -
+    @symcore.int(4) * a
+  let unique_unknown_inf_3 = @symsolvers.infinitesimals(
+    unique_unknown_eq_3,
+    func=Some(f(x())),
+    hint="abaco2_unique_unknown",
+  )
+  assert_eq(
+    checkinfsol_oracle_residual_text(
+      @symsolvers.checkinfsol(unique_unknown_eq_3, unique_unknown_inf_3, func=Some(f(x()))),
+      "__import__('sympy.solvers.ode', fromlist=['checkinfsol', 'infinitesimals']).checkinfsol((x*sympy.diff(sympy.Function('f')(x), x) + sympy.Function('f')(x) + 2*x)**2 - 4*x*sympy.Function('f')(x) - 4*x**2 - 4*a, __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals((x*sympy.diff(sympy.Function('f')(x), x) + sympy.Function('f')(x) + 2*x)**2 - 4*x*sympy.Function('f')(x) - 4*x**2 - 4*a, hint='abaco2_unique_unknown'))",
+    ),
+    "(1, 1, [True], [True], [0])",
+  )
+  let leading_power = x() ^
+    (@symcore.add([n * (@symcore.add([m, @symcore.int(1)])), @symcore.mul([@symcore.int(-1), m])]))
+  let forcing_power = x() ^ (@symcore.mul([n, @symcore.add([m, @symcore.int(1)])]))
   let linear_eq =
-    x() ^ (@symcore.add([n * (@symcore.add([m, @symcore.int(1)])), @symcore.int(-1) * m])) *
-    @symcalculus.diff(f(x()), x()) -
-    a * (f(x()) ^ n) -
-    b * (x() ^ (@symcore.mul([n, @symcore.add([m, @symcore.int(1)])])))
+    (
+      leading_power * @symcalculus.diff(f(x()), x()) -
+      a * (f(x()) ^ n) -
+      b * forcing_power
+    )
   let linear_inf = @symsolvers.infinitesimals(linear_eq, func=Some(f(x())), hint="linear")
   assert_eq(
     checkinfsol_oracle_residual_text(
@@ -1168,6 +1234,88 @@ test "solvers parity ode and pde utility front doors" {
     ),
     "(1, 1, [True], [True], [0])",
   )
+}
+
+///|
+test "solvers parity abaco2_unique_unknown reference cases" {
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let unique_unknown_eq_1 = @symcalculus.diff(f(x()), x()) -
+    @symcore.mul([
+      x() ^ (@symcore.add([a, @symcore.int(-1)])),
+      f(x()) ^ (@symcore.add([@symcore.int(1), @symcore.int(-1) * b])),
+      @symcore.applied_undefined_function(
+        "F",
+        [
+          @symcore.add([
+            @symcore.mul([x() ^ a, a ^ @symcore.int(-1)]),
+            @symcore.mul([f(x()) ^ b, b ^ @symcore.int(-1)]),
+          ]),
+        ],
+      ),
+    ])
+  let unique_unknown_inf_1 = @symsolvers.infinitesimals(
+    unique_unknown_eq_1,
+    func=Some(f(x())),
+    hint="abaco2_unique_unknown",
+  )
+  assert_eq(
+    infinitesimals_oracle_residual_text(
+      unique_unknown_inf_1,
+      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - x**(a - 1)*(sympy.Function('f')(x)**(1 - b))*sympy.Function('F')(x**a/a + sympy.Function('f')(x)**b/b), hint='abaco2_unique_unknown')]",
+    ),
+    "(1, 1, [(0, 0)])",
+  )
+  let unique_unknown_eq_2 = @symcalculus.diff(f(x()), x()) +
+    @symcore.function(
+      "tan",
+      [
+        @symcore.applied_undefined_function("F", [
+          @symcore.add([
+            x() ^ @symcore.int(2),
+            f(x()) ^ @symcore.int(2),
+          ]),
+        ]) + @symcore.function(
+          "atan",
+          [@symcore.mul([x(), f(x()) ^ @symcore.int(-1)])],
+        ),
+      ],
+    )
+  let unique_unknown_inf_2 = @symsolvers.infinitesimals(
+    unique_unknown_eq_2,
+    func=Some(f(x())),
+    hint="abaco2_unique_unknown",
+  )
+  assert_eq(
+    infinitesimals_oracle_residual_text(
+      unique_unknown_inf_2,
+      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) + sympy.tan(sympy.Function('F')(x**2 + sympy.Function('f')(x)**2) + sympy.atan(x/sympy.Function('f')(x))), hint='abaco2_unique_unknown')]",
+    ),
+    "(1, 1, [(0, 0)])",
+  )
+  let unique_unknown_eq_3 =
+    ((
+      x() * @symcalculus.diff(f(x()), x()) + f(x()) + @symcore.int(2) * x()
+    ) ^ @symcore.int(2)) -
+    @symcore.int(4) * x() * f(x()) -
+    @symcore.int(4) * (x() ^ @symcore.int(2)) -
+    @symcore.int(4) * a
+  let unique_unknown_inf_3 = @symsolvers.infinitesimals(
+    unique_unknown_eq_3,
+    func=Some(f(x())),
+    hint="abaco2_unique_unknown",
+  )
+  assert_eq(
+    checkinfsol_oracle_residual_text(
+      @symsolvers.checkinfsol(unique_unknown_eq_3, unique_unknown_inf_3, func=Some(f(x()))),
+      "__import__('sympy.solvers.ode', fromlist=['checkinfsol', 'infinitesimals']).checkinfsol((x*sympy.diff(sympy.Function('f')(x), x) + sympy.Function('f')(x) + 2*x)**2 - 4*x*sympy.Function('f')(x) - 4*x**2 - 4*a, __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals((x*sympy.diff(sympy.Function('f')(x), x) + sympy.Function('f')(x) + 2*x)**2 - 4*x*sympy.Function('f')(x) - 4*x**2 - 4*a, hint='abaco2_unique_unknown'))",
+    ),
+    "(1, 1, [True], [True], [0])",
+  )
+}
+
+///|
+test "solvers parity ode scalar front doors" {
   let ode = @symcore.Expr::Relational(
     @symcore.RelOp::Eq,
     @symcalculus.diff(f(x()), x()),
@@ -1213,11 +1361,15 @@ test "solvers parity ode and pde utility front doors" {
       ")",
     ),
     (
-      solvers_eval_str(
-        "repr(sympy.solvers.checkodesol(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)))))",
+      checkodesol_oracle_text(
+        "sympy.solvers.checkodesol(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x))))",
       ),
     ),
   )
+}
+
+///|
+test "solvers parity pde front doors" {
   let pde = @symcore.Expr::Relational(
     @symcore.RelOp::Eq,
     @symcalculus.diff(u(x(), y()), x()),
@@ -1265,6 +1417,127 @@ test "solvers parity ode and pde utility front doors" {
       solvers_eval_str(
         "sympy.sstr(sympy.solvers.pdsolve(sympy.Eq(sympy.Function('u')(x, y).diff(x), sympy.Function('u')(x, y).diff(y))))",
       ),
+    ),
+  )
+}
+
+///|
+test "solvers parity checkodesol subscheck cases" {
+  let exact_sol = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    (f(x()) ^ @symcore.int(5)) + @symcore.int(9) * f(x()) + x(),
+    @symcore.int(0),
+  )
+  assert_eq(
+    (
+      "(" +
+      @symsolvers.checkodesol(
+        @symcalculus.diff((f(x()) ^ @symcore.int(5)) + @symcore.int(9) * f(x()) + x(), x()),
+        exact_sol,
+        func=Some(f(x())),
+      ).0.to_string() +
+      ", " +
+      @symprint.to_string(
+        @symsolvers.checkodesol(
+          @symcalculus.diff((f(x()) ^ @symcore.int(5)) + @symcore.int(9) * f(x()) + x(), x()),
+          exact_sol,
+          func=Some(f(x())),
+        ).1,
+      ) +
+      ")"
+    ),
+    checkodesol_oracle_text(
+      "sympy.solvers.checkodesol(sympy.diff(sympy.Function('f')(x)**5 + 9*sympy.Function('f')(x) + x, x), sympy.Eq(sympy.Function('f')(x)**5 + 9*sympy.Function('f')(x) + x, 0))",
+    ),
+  )
+  let implicit_sol = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.function("exp", [f(x())]) + x(),
+    @symcore.int(0),
+  )
+  assert_eq(
+    (
+      "(" +
+      @symsolvers.checkodesol(
+        x() * @symcalculus.diff(@symcore.function("exp", [f(x())]) + x(), x()),
+        implicit_sol,
+        func=Some(f(x())),
+        solve_for_func=false,
+      ).0.to_string() +
+      ", " +
+      @symprint.to_string(
+        @symsolvers.checkodesol(
+          x() * @symcalculus.diff(@symcore.function("exp", [f(x())]) + x(), x()),
+          implicit_sol,
+          func=Some(f(x())),
+          solve_for_func=false,
+        ).1,
+      ) +
+      ")"
+    ),
+    checkodesol_oracle_text(
+      "sympy.solvers.checkodesol(x*sympy.diff(sympy.exp(sympy.Function('f')(x)) + x, x), sympy.Eq(sympy.exp(sympy.Function('f')(x)) + x, 0), solve_for_func=False)",
+    ),
+  )
+  let c1 = @symcore.Expr::Symbol("C1")
+  assert_eq(
+    (
+      "(" +
+      @symsolvers.checkodesol(
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcalculus.diff(f(x()), x()),
+          f(x()),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          c1 * @symcore.function("exp", [x()]),
+          f(x()),
+        ),
+        func=Some(f(x())),
+      ).0.to_string() +
+      ", " +
+      @symprint.to_string(
+        @symsolvers.checkodesol(
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            @symcalculus.diff(f(x()), x()),
+            f(x()),
+          ),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            c1 * @symcore.function("exp", [x()]),
+            f(x()),
+          ),
+          func=Some(f(x())),
+        ).1,
+      ) +
+      ")"
+    ),
+    checkodesol_oracle_text(
+      "sympy.solvers.checkodesol(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), sympy.Eq(sympy.Symbol('C1')*sympy.exp(x), sympy.Function('f')(x)))",
+    ),
+  )
+  assert_eq(
+    (
+      "(" +
+      @symsolvers.checkodesol(
+        @symcalculus.diff(f(x()), x()),
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, f(x()), x()),
+        func=Some(f(x())),
+      ).0.to_string() +
+      ", " +
+      @symprint.to_string(
+        @symsolvers.checkodesol(
+          @symcalculus.diff(f(x()), x()),
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, f(x()), x()),
+          func=Some(f(x())),
+        ).1,
+      ) +
+      ")"
+    ),
+    checkodesol_oracle_text(
+      "sympy.solvers.checkodesol(sympy.diff(sympy.Function('f')(x), x), sympy.Eq(sympy.Function('f')(x), x))",
     ),
   )
 }
@@ -1422,5 +1695,51 @@ test "solvers parity recurrence helpers" {
       "x",
     ),
     "0",
+  )
+}
+
+///|
+test "solvers parity lie heuristic function_sum" {
+  let function_sum_eq = @symcalculus.diff(f(x()), x()) -
+    @symcore.add([
+      @symcore.mul([
+        @symcore.int(3),
+        @symcore.add([
+          @symcore.int(1),
+          @symcore.mul([x() ^ @symcore.int(2), f(x()) ^ @symcore.int(-2)]),
+        ]),
+        @symcore.function(
+          "atan",
+          [@symcore.mul([f(x()), x() ^ @symcore.int(-1)])],
+        ),
+      ]),
+      @symcore.mul([
+        @symcore.add([@symcore.int(1), @symcore.int(-2) * f(x())]),
+        x() ^ @symcore.int(-1),
+      ]),
+      @symcore.mul([
+        @symcore.add([@symcore.int(1), @symcore.int(-3) * f(x())]),
+        x(),
+        f(x()) ^ @symcore.int(-2),
+      ]),
+    ])
+  let function_sum_inf = @symsolvers.infinitesimals(
+    function_sum_eq,
+    func=Some(f(x())),
+    hint="function_sum",
+  )
+  assert_eq(
+    infinitesimals_oracle_residual_text(
+      function_sum_inf,
+      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - (3*(1 + x**2/sympy.Function('f')(x)**2)*sympy.atan(sympy.Function('f')(x)/x) + (1 - 2*sympy.Function('f')(x))/x + (1 - 3*sympy.Function('f')(x))*(x/sympy.Function('f')(x)**2)), hint='function_sum')]",
+    ),
+    "(1, 1, [(0, 0)])",
+  )
+  assert_eq(
+    checkinfsol_oracle_residual_text(
+      @symsolvers.checkinfsol(function_sum_eq, function_sum_inf, func=Some(f(x()))),
+      "__import__('sympy.solvers.ode', fromlist=['checkinfsol', 'infinitesimals']).checkinfsol(sympy.diff(sympy.Function('f')(x), x) - (3*(1 + x**2/sympy.Function('f')(x)**2)*sympy.atan(sympy.Function('f')(x)/x) + (1 - 2*sympy.Function('f')(x))/x + (1 - 3*sympy.Function('f')(x))*(x/sympy.Function('f')(x)**2)), __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - (3*(1 + x**2/sympy.Function('f')(x)**2)*sympy.atan(sympy.Function('f')(x)/x) + (1 - 2*sympy.Function('f')(x))/x + (1 - 3*sympy.Function('f')(x))*(x/sympy.Function('f')(x)**2)), hint='function_sum'))",
+    ),
+    "(1, 1, [True], [True], [0])",
   )
 }

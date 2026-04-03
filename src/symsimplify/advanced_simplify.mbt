@@ -147,10 +147,10 @@ pub fn hypersimilar(f : Expr, g : Expr, k : Expr) -> Bool {
 
 ///|
 fn split_fraction_simple(expr : Expr) -> (Expr, Expr) {
-  match expr {
+  match @symcore.normalize_legacy_expr(expr) {
     Expr::Number(n) =>
       if n.is_integral() {
-        (expr, int(1))
+        (Expr::Number(n), int(1))
       } else {
         (
           @symcore.Expr::Number(@symnum.BigRational::from_bigint(n.numerator())),
@@ -159,13 +159,73 @@ fn split_fraction_simple(expr : Expr) -> (Expr, Expr) {
           ),
         )
       }
-    Expr::Pow(base, Expr::Number(exp)) =>
-      if exp.is_integral() && exp.numerator().to_int() < 0 {
-        let p = -exp.numerator().to_int()
-        (int(1), @symcore.pow(base, int(p)))
-      } else {
-        (expr, int(1))
+    Expr::Add(args) => {
+      if args.is_empty() {
+        return (int(0), int(1))
       }
+      let numerators : Array[Expr] = []
+      let denominators : Array[Expr] = []
+      for arg in args {
+        let (num, den) = split_fraction_simple(arg)
+        numerators.push(num)
+        denominators.push(den)
+      }
+      let same_denom = {
+        let first = denominators[0]
+        let mut all_same = true
+        for i in 1..<denominators.length() {
+          if @symcore.compare_expr(first, denominators[i]) != 0 {
+            all_same = false
+            break
+          }
+        }
+        all_same
+      }
+      if same_denom {
+        return (@symcore.normalize_legacy_expr(@symcore.add(numerators)), denominators[0])
+      }
+      let summed : Array[Expr] = []
+      for i in 0..<numerators.length() {
+        let factors : Array[Expr] = [numerators[i]]
+        for j in 0..<denominators.length() {
+          if i != j {
+            factors.push(denominators[j])
+          }
+        }
+        summed.push(@symcore.normalize_legacy_expr(@symcore.mul(factors)))
+      }
+      (
+        @symcore.normalize_legacy_expr(@symcore.add(summed)),
+        @symcore.normalize_legacy_expr(@symcore.mul(denominators)),
+      )
+    }
+    Expr::Pow(base, Expr::Number(exp)) => {
+      if exp.is_integral() {
+        let (num0, den0) = split_fraction_simple(base)
+        let power = exp.numerator().to_int()
+        if power == 0 {
+          return (int(1), int(1))
+        }
+        let (num, den, abs_power) = if power < 0 {
+          (den0, num0, -power)
+        } else {
+          (num0, den0, power)
+        }
+        let out_num = if @symcore.compare_expr(num, int(1)) == 0 {
+          int(1)
+        } else {
+          @symcore.normalize_legacy_expr(@symcore.pow(num, int(abs_power)))
+        }
+        let out_den = if @symcore.compare_expr(den, int(1)) == 0 {
+          int(1)
+        } else {
+          @symcore.normalize_legacy_expr(@symcore.pow(den, int(abs_power)))
+        }
+        (out_num, out_den)
+      } else {
+        (Expr::Pow(base, Expr::Number(exp)), int(1))
+      }
+    }
     Expr::Mul(args) => {
       let num_factors : Array[Expr] = Array::new()
       let den_factors : Array[Expr] = Array::new()
@@ -180,7 +240,7 @@ fn split_fraction_simple(expr : Expr) -> (Expr, Expr) {
       }
       (@symcore.mul(num_factors), @symcore.mul(den_factors))
     }
-    _ => (expr, int(1))
+    other => (other, int(1))
   }
 }
 

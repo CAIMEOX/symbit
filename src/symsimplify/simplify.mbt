@@ -536,7 +536,6 @@ fn flatten_mul_nonunit(expr : Expr) -> Array[Expr] {
   }
 }
 
-///|
 fn expand_factorable_term(expr : Expr) -> Array[Expr] {
   match expr {
     Expr::Pow(base, Expr::Number(exp)) if exp.is_integral() => {

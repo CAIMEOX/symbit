@@ -33,6 +33,73 @@ fn expr_is_symbol(expr : Expr) -> Bool {
 }
 
 ///|
+fn expr_is_symbol_like(expr : Expr) -> Bool {
+  match expr {
+    Expr::Symbol(_) | Expr::Dummy(_, _) => true
+    _ => false
+  }
+}
+
+///|
+fn subs_items_local(expr : Expr) -> Array[Expr] {
+  match expr {
+    Expr::Tuple(items) => items
+    other => [other]
+  }
+}
+
+///|
+fn append_derivative_wrt(inner : Expr, deriv_args : Array[Expr], wrt : Expr) -> Expr {
+  let out = @symcore.canonical_derivative_args(deriv_args[:])
+  if out.length() >= 2 &&
+    @symcore.compare_expr(out[out.length() - 2], wrt) == 0 {
+    match out[out.length() - 1] {
+      Expr::Number(n) if n.denominator() == 1N => {
+        out[out.length() - 1] = Expr::Number(n.add_r(@symnum.BigRational::one()))
+        return Expr::Derivative(inner, out)
+      }
+      _ => ()
+    }
+  }
+  out.push(wrt)
+  out.push(@symcore.int(1))
+  Expr::Derivative(inner, out)
+}
+
+///|
+fn diff_subs_chain(inner : Expr, variable : Expr, value : Expr, wrt : Expr) -> Expr? {
+  guard @symcore.subs_signature_error(variable, value) is None else {
+    return None
+  }
+  let variables = subs_items_local(variable)
+  let values = subs_items_local(value)
+  for item in variables {
+    guard expr_is_symbol_like(item) else {
+      return None
+    }
+  }
+  let out : Array[Expr] = Array::new()
+  if !variables.any(item => @symcore.compare_expr(item, wrt) == 0) {
+    let direct = diff(inner, wrt)
+    if !expr_is_zero(direct) {
+      out.push(@symcore.subs_expr(direct, variable, value))
+    }
+  }
+  for i in 0..<variables.length() {
+    let dvalue = diff(values[i], wrt)
+    if expr_is_zero(dvalue) {
+      continue
+    }
+    let partial = diff(inner, variables[i])
+    if expr_is_zero(partial) {
+      continue
+    }
+    out.push(@symcore.mul([@symcore.subs_expr(partial, variable, value), dvalue]))
+  }
+  Some(if out.is_empty() { @symcore.int(0) } else { @symcore.add(out) })
+}
+
+///|
 fn expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
   if @symcore.compare_expr(expr, wrt) == 0 {
     return true
@@ -130,22 +197,78 @@ fn diff_function(name : String, args : Array[Expr], wrt : Expr) -> Expr {
       @symcore.mul([@symcore.int(-1), @symcore.function("sin", [arg]), darg])
     "exp" => @symcore.mul([@symcore.function("exp", [arg]), darg])
     "log" => @symcore.mul([darg, @symcore.pow(arg, @symcore.int(-1))])
+    "sqrt" => {
+      let denom = @symcore.mul([@symcore.int(2), @symcore.function("sqrt", [arg])])
+      @symcore.mul([darg, @symcore.pow(denom, @symcore.int(-1))])
+    }
     "tan" => {
       let sec2 = @symcore.pow(@symcore.function("sec", [arg]), @symcore.int(2))
       @symcore.mul([sec2, darg])
+    }
+    "atan" => {
+      @symcore.mul([
+        darg,
+        @symcore.pow(
+          @symcore.add([
+            @symcore.int(1),
+            @symcore.pow(arg, @symcore.int(2)),
+          ]),
+          @symcore.int(-1),
+        ),
+      ])
     }
     "gamma" => {
       let g = @symcore.function("gamma", [arg])
       let dg = @symcore.function("digamma", [arg])
       @symcore.mul([g, dg, darg])
     }
-    _ =>
-      if expr_depends_on(@symcore.function(name, args), wrt) {
-        derivative_expr(@symcore.function(name, args), [wrt])
-      } else {
-        @symcore.int(0)
-      }
+    _ => diff_apply(@symcore.Expr::FunctionHead(name), args, wrt)
   }
+}
+
+///|
+fn diff_apply(head : Expr, args : Array[Expr], wrt : Expr) -> Expr {
+  if args.is_empty() {
+    return @symcore.int(0)
+  }
+  let out : Array[Expr] = Array::new()
+  for i in 0..<args.length() {
+    let darg = diff(args[i], wrt)
+    if expr_is_zero(darg) {
+      continue
+    }
+    let lifted = args.copy()
+    let dummy = @symcore.Expr::Symbol("_xi\{i}")
+    lifted[i] = dummy
+    let partial = @symcore.Expr::Subs(
+      derivative_expr(@symcore.Expr::Apply(head, lifted), [dummy]),
+      dummy,
+      args[i],
+    )
+    out.push(@symcore.mul([partial, darg]))
+  }
+  if out.is_empty() {
+    @symcore.int(0)
+  } else {
+    @symcore.add(out)
+  }
+}
+
+///|
+fn diff_undefined_function(
+  expr : Expr,
+  head : Expr,
+  args : Array[Expr],
+  wrt : Expr,
+) -> Expr {
+  if args.is_empty() {
+    return @symcore.int(0)
+  }
+  if args.all(arg => expr_is_symbol_like(arg)) &&
+    args.any(arg => @symcore.compare_expr(arg, wrt) == 0) {
+    return derivative_expr(expr, [wrt])
+  }
+  diff_apply(head, args, wrt)
 }
 
 ///|
@@ -165,13 +288,12 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) => @symcore.int(0)
     Expr::Apply(head, args) =>
-      match @symcore.function_head_name(head) {
-        Some(name) => diff_function(name, args, wrt)
+      match @symcore.undefined_application_parts(expr) {
+        Some((_, undefined_args)) => diff_undefined_function(expr, head, undefined_args, wrt)
         None =>
-          if args.any(arg => expr_depends_on(arg, wrt)) {
-            derivative_expr(expr, [wrt])
-          } else {
-            @symcore.int(0)
+          match @symcore.function_head_name(head) {
+            Some(name) => diff_function(name, args, wrt)
+            None => diff_apply(head, args, wrt)
           }
       }
     Expr::Add(args) => diff_add(args, wrt)
@@ -183,19 +305,28 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
       } else {
         @symcore.int(0)
       }
+    Expr::Subs(inner, variable, value) =>
+      match diff_subs_chain(inner, variable, value, wrt) {
+        Some(applied) => applied
+        None =>
+          if expr_depends_on(expr, wrt) {
+            derivative_expr(expr, [wrt])
+          } else {
+            @symcore.int(0)
+          }
+      }
     Expr::Tuple(_)
     | Expr::Dict(_)
     | Expr::Relational(_, _, _)
-    | Expr::Subs(_, _, _)
     | Expr::Lambda(_, _) =>
       if expr_depends_on(expr, wrt) {
         derivative_expr(expr, [wrt])
       } else {
         @symcore.int(0)
       }
-    Expr::Derivative(_, _) =>
-      if expr_is_symbol(wrt) {
-        derivative_expr(expr, [wrt])
+    Expr::Derivative(inner, deriv_args) =>
+      if expr_is_symbol(wrt) && expr_depends_on(expr, wrt) {
+        append_derivative_wrt(inner, deriv_args, wrt)
       } else {
         @symcore.int(0)
       }

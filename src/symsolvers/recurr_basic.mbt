@@ -49,6 +49,180 @@ fn solver_subst_single(expr : Expr, name : String, value : Expr) -> Expr {
 }
 
 ///|
+fn solver_recurrence_raw_add(args : Array[Expr]) -> Expr {
+  let flat : Array[Expr] = []
+  for arg in args {
+    match arg {
+      Expr::Add(inner) =>
+        for item in inner {
+          if expr_is_zeroish(item) != Some(true) {
+            flat.push(item)
+          }
+        }
+      _ =>
+        if expr_is_zeroish(arg) != Some(true) {
+          flat.push(arg)
+        }
+    }
+  }
+  if flat.is_empty() {
+    return @symcore.int(0)
+  }
+  if flat.length() == 1 {
+    flat[0]
+  } else {
+    @symcore.raw_add(flat)
+  }
+}
+
+///|
+fn solver_recurrence_depends_on(expr : Expr, n : Expr) -> Bool {
+  @symcore.free_symbols(expr).any(sym => @symcore.compare_expr(sym, n) == 0)
+}
+
+///|
+fn solver_recurrence_compare_terms(lhs : Expr, rhs : Expr, n : Expr) -> Int {
+  let lhs_dep = solver_recurrence_depends_on(lhs, n)
+  let rhs_dep = solver_recurrence_depends_on(rhs, n)
+  if lhs_dep != rhs_dep {
+    if lhs_dep { -1 } else { 1 }
+  } else if lhs_dep {
+    let lhs_deg = solver_recurrence_degree(lhs, n)
+    let rhs_deg = solver_recurrence_degree(rhs, n)
+    match (lhs_deg, rhs_deg) {
+      (Some(ld), Some(rd)) if ld != rd => ld - rd
+      _ => @symcore.compare_expr(lhs, rhs)
+    }
+  } else {
+    @symcore.compare_expr(lhs, rhs)
+  }
+}
+
+///|
+fn solver_recurrence_order_solution(expr : Expr, n : Expr) -> Expr {
+  match expr {
+    Expr::Add(args) => {
+      let ordered = args.copy()
+      ordered.sort_by((lhs, rhs) => solver_recurrence_compare_terms(lhs, rhs, n))
+      @symcore.raw_add(ordered)
+    }
+    _ => expr
+  }
+}
+
+///|
+fn solver_recurrence_rationalize_term(expr : Expr) -> Expr {
+  match expr {
+    Expr::Add(args) =>
+      solver_recurrence_raw_add(args.map(solver_recurrence_rationalize_term))
+    Expr::Mul(args) => {
+      let mut coeff = @symnum.BigRational::one()
+      let rest : Array[Expr] = []
+      for arg in args {
+        let normalized = solver_recurrence_rationalize_term(arg)
+        match @symcore.exact_numeric_expr_num_den(normalized) {
+          Some((num, den)) => {
+            let value : Result[@symnum.BigRational, @symnum.RationalError] = try?
+              @symnum.BigRational::new(num, den)
+            match value {
+              Ok(rat) => coeff = coeff.mul_r(rat)
+              Err(_) => rest.push(normalized)
+            }
+          }
+          None => rest.push(normalized)
+        }
+      }
+      if coeff.is_zero() {
+        @symcore.int(0)
+      } else {
+        let factors : Array[Expr] = []
+        if !coeff.is_one() || rest.is_empty() {
+          factors.push(Expr::Number(coeff))
+        }
+        for factor in rest {
+          factors.push(factor)
+        }
+        canonical_expr(@symcore.mul(factors))
+      }
+    }
+    _ => expr
+  }
+}
+
+///|
+fn solver_recurrence_normalize_output(expr : Expr) -> Expr {
+  match expr {
+    Expr::Add(args) =>
+      solver_recurrence_raw_add(args.map(solver_recurrence_normalize_output))
+    Expr::Mul(args) => {
+      let normalized_args = args.map(solver_recurrence_normalize_output)
+      for i in 0..<normalized_args.length() {
+        match normalized_args[i] {
+          Expr::Add(inner) => {
+            let distributed : Array[Expr] = []
+            for term in inner {
+              let factors : Array[Expr] = []
+              for j in 0..<normalized_args.length() {
+                factors.push(if i == j { term } else { normalized_args[j] })
+              }
+              distributed.push(
+                solver_recurrence_normalize_output(
+                  canonical_expr(@symcore.mul(factors)),
+                ),
+              )
+            }
+            return solver_recurrence_raw_add(distributed)
+          }
+          _ => ()
+        }
+      }
+      solver_recurrence_rationalize_term(canonical_expr(@symcore.mul(normalized_args)))
+    }
+    _ => solver_recurrence_rationalize_term(expr)
+  }
+}
+
+///|
+fn solver_recurrence_expand_basis_term(
+  coeff : Expr,
+  basis : Expr,
+) -> Expr {
+  let coeff = canonical_expr(coeff)
+  match coeff {
+    Expr::Add(args) =>
+      solver_recurrence_raw_add(
+        args.map(arg =>
+          solver_recurrence_normalize_output(
+            @symsimplify.fraction_expand(canonical_expr(@symcore.mul([arg, basis]))),
+          )
+        ),
+      )
+    _ =>
+      solver_recurrence_normalize_output(
+        @symsimplify.fraction_expand(canonical_expr(@symcore.mul([coeff, basis]))),
+      )
+  }
+}
+
+///|
+fn solver_recurrence_particular_solution(
+  values : Map[String, Expr],
+  n : Expr,
+  degree : Int,
+) -> Expr {
+  let terms : Array[Expr] = []
+  for i in 1..=(degree + 1) {
+    let value = values.get("A\{i}").unwrap_or(@symcore.int(0))
+    if expr_is_zeroish(value) != Some(true) {
+      terms.push(
+        solver_recurrence_expand_basis_term(value, n ^ @symcore.int(i)),
+      )
+    }
+  }
+  solver_recurrence_raw_add(terms)
+}
+
+///|
 fn solver_recurrence_constant_solution(
   coeffs : Array[Expr],
   f : Expr,
@@ -117,12 +291,13 @@ pub fn rsolve_poly(
     Some(map) => map
     None => return None
   }
-  let particular_solution = @symsimplify.numer_expand(
-    canonical_expr(@symcore.subst(particular, values)),
-  )
+  let particular_solution = solver_recurrence_particular_solution(values, n, degree)
   Some(
-    @symsimplify.numer_expand(
-      canonical_expr(@symcore.add([solver_recurrence_constant(shift), particular_solution])),
+    solver_recurrence_order_solution(
+      solver_recurrence_normalize_output(
+        solver_recurrence_raw_add([particular_solution, solver_recurrence_constant(shift)]),
+      ),
+      n,
     ),
   )
 }
@@ -236,7 +411,12 @@ fn solver_apply_recurrence_init(
   )
   let solution_env : Map[String, Expr] = {}
   solution_env["C0"] = c0_value
-  @symsimplify.numer_expand(canonical_expr(@symcore.subst(solution, solution_env)))
+  solver_recurrence_order_solution(
+    solver_recurrence_normalize_output(
+      @symsimplify.fraction_expand(canonical_expr(@symcore.subst(solution, solution_env))),
+    ),
+    n,
+  )
 }
 
 ///|
