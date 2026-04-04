@@ -21,6 +21,7 @@ test "pow normalizes trivial exponents" {
   inspect(@symprint.debug_repr(pow(Expr::Symbol("x"), int(1))), content="sym:x")
   inspect(@symprint.debug_repr(pow(Expr::Symbol("x"), int(0))), content="1")
   inspect(@symprint.debug_repr(pow(int(0), int(0))), content="1")
+  inspect(@symprint.to_string(pow(pow(Expr::Symbol("x"), int(2)), int(2))), content="x**4")
 }
 
 ///|

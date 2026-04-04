@@ -191,6 +191,266 @@ fn maybe_solve_result_text(result : SolveResult?) -> String {
 }
 
 ///|
+fn is_test_constant_symbol(expr : @symcore.Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Symbol(name) => name.has_prefix("C")
+    _ => false
+  }
+}
+
+///|
+fn test_constant_sort_expr(expr : @symcore.Expr) -> @symcore.Expr {
+  let env : Map[String, @symcore.Expr] = {}
+  for symbol in @symcore.free_symbols(expr) {
+    if is_test_constant_symbol(symbol) {
+      match symbol {
+        @symcore.Expr::Symbol(name) => env[name] = @symcore.int(1)
+        _ => ()
+      }
+    }
+  }
+  @symcore.subst(expr, env)
+}
+
+///|
+fn test_sympy_function_rank(name : String) -> Int {
+  match name {
+    "Derivative" | "derivative" => 0
+    "Integral" | "integral" => 1
+    "abs" | "Abs" => 2
+    "sign" | "Sign" => 3
+    "sqrt" | "Sqrt" => 4
+    "floor" | "Floor" => 5
+    "ceiling" | "Ceiling" => 6
+    "re" | "Re" => 7
+    "im" | "Im" => 8
+    "arg" | "Arg" => 9
+    "conjugate" | "Conjugate" => 10
+    "exp" | "Exp" => 11
+    "log" | "Log" => 12
+    "sin" | "Sin" => 13
+    "cos" | "Cos" => 14
+    "tan" | "Tan" => 15
+    "cot" | "Cot" => 16
+    "asin" | "ASin" => 17
+    "acos" | "ACos" => 18
+    "atan" | "ATan" => 19
+    "acot" | "ACot" => 20
+    "sinh" | "Sinh" => 21
+    "cosh" | "Cosh" => 22
+    "tanh" | "Tanh" => 23
+    "coth" | "Coth" => 24
+    "asinh" | "ASinh" => 25
+    "acosh" | "ACosh" => 26
+    "atanh" | "ATanh" => 27
+    "acoth" | "ACoth" => 28
+    "risingfactorial" | "RisingFactorial" => 29
+    "fallingfactorial" | "FallingFactorial" => 30
+    "factorial" => 31
+    "binomial" => 32
+    "gamma" | "Gamma" => 33
+    "lowergamma" | "LowerGamma" => 34
+    "uppergamma" | "UpperGamma" => 35
+    "polygamma" | "PolyGamma" => 36
+    "erf" | "Erf" => 37
+    _ => 10000
+  }
+}
+
+///|
+fn test_sort_exprs_cmp(
+  lhs : Array[@symcore.Expr],
+  rhs : Array[@symcore.Expr],
+) -> Int {
+  let lhs_len = lhs.length()
+  let rhs_len = rhs.length()
+  let min_len = if lhs_len < rhs_len { lhs_len } else { rhs_len }
+  for i in 0..<min_len {
+    let cmp = test_sort_expr_cmp(lhs[i], rhs[i])
+    if cmp != 0 {
+      return cmp
+    }
+  }
+  lhs_len.compare(rhs_len)
+}
+
+///|
+fn test_sort_apply_head_cmp(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Int {
+  match (lhs, rhs) {
+    (@symcore.Expr::UndefinedFunction(lhs_name), @symcore.Expr::UndefinedFunction(rhs_name)) =>
+      lhs_name.compare(rhs_name)
+    (@symcore.Expr::UndefinedFunction(_), @symcore.Expr::FunctionHead(_)) => -1
+    (@symcore.Expr::FunctionHead(_), @symcore.Expr::UndefinedFunction(_)) => 1
+    (@symcore.Expr::FunctionHead(lhs_name), @symcore.Expr::FunctionHead(rhs_name)) => {
+      let rank_cmp = test_sympy_function_rank(lhs_name).compare(test_sympy_function_rank(rhs_name))
+      if rank_cmp != 0 {
+        rank_cmp
+      } else {
+        lhs_name.compare(rhs_name)
+      }
+    }
+    _ => @symcore.compare_expr(lhs, rhs)
+  }
+}
+
+///|
+fn test_sort_relop_rank(op : @symcore.RelOp) -> Int {
+  match op {
+    @symcore.RelOp::Eq => 0
+    @symcore.RelOp::Ne => 1
+    @symcore.RelOp::Lt => 2
+    @symcore.RelOp::Le => 3
+    @symcore.RelOp::Gt => 4
+    @symcore.RelOp::Ge => 5
+  }
+}
+
+///|
+fn test_sort_node_count(expr : @symcore.Expr) -> Int {
+  match expr {
+    @symcore.Expr::Number(_)
+    | @symcore.Expr::Float(_)
+    | @symcore.Expr::ComplexFloat(_)
+    | @symcore.Expr::NumberSymbol(_)
+    | @symcore.Expr::Boolean(_)
+    | @symcore.Expr::IdentityFunction
+    | @symcore.Expr::Symbol(_)
+    | @symcore.Expr::Dummy(_, _)
+    | @symcore.Expr::Wild(_, _, _)
+    | @symcore.Expr::WildFunction(_, _)
+    | @symcore.Expr::FunctionHead(_)
+    | @symcore.Expr::UndefinedFunction(_) => 1
+    _ => 1 + @symcore.children(expr).fold(init=0, fn(acc, child) { acc + test_sort_node_count(child) })
+  }
+}
+
+///|
+fn test_sort_expr_cmp(lhs_raw : @symcore.Expr, rhs_raw : @symcore.Expr) -> Int {
+  let lhs = test_constant_sort_expr(lhs_raw)
+  let rhs = test_constant_sort_expr(rhs_raw)
+  match (lhs, rhs) {
+    (@symcore.Expr::Apply(lhs_head, lhs_args), @symcore.Expr::Apply(rhs_head, rhs_args)) => {
+      let head_cmp = test_sort_apply_head_cmp(lhs_head, rhs_head)
+      if head_cmp != 0 {
+        return head_cmp
+      }
+      return test_sort_exprs_cmp(lhs_args, rhs_args)
+    }
+    (@symcore.Expr::Add(lhs_args), @symcore.Expr::Add(rhs_args))
+    | (@symcore.Expr::Mul(lhs_args), @symcore.Expr::Mul(rhs_args)) =>
+      test_sort_exprs_cmp(lhs_args, rhs_args)
+    (@symcore.Expr::Pow(lhs_base, lhs_exp), @symcore.Expr::Pow(rhs_base, rhs_exp)) => {
+      let base_cmp = test_sort_expr_cmp(lhs_base, rhs_base)
+      if base_cmp != 0 {
+        return base_cmp
+      }
+      return test_sort_expr_cmp(lhs_exp, rhs_exp)
+    }
+    (@symcore.Expr::Relational(lhs_op, lhs_lhs, lhs_rhs), @symcore.Expr::Relational(rhs_op, rhs_lhs, rhs_rhs)) => {
+      let op_cmp = test_sort_relop_rank(lhs_op).compare(test_sort_relop_rank(rhs_op))
+      if op_cmp != 0 {
+        return op_cmp
+      }
+      let lhs_cmp = test_sort_expr_cmp(lhs_lhs, rhs_lhs)
+      if lhs_cmp != 0 {
+        return lhs_cmp
+      }
+      return test_sort_expr_cmp(lhs_rhs, rhs_rhs)
+    }
+    _ => {
+      let node_cmp = test_sort_node_count(lhs).compare(test_sort_node_count(rhs))
+      if node_cmp != 0 {
+        return node_cmp
+      }
+      let cmp = @symcore.compare_expr(lhs, rhs)
+      if cmp != 0 {
+        cmp
+      } else {
+        @symprint.to_string(lhs).compare(@symprint.to_string(rhs))
+      }
+    }
+  }
+}
+
+///|
+fn test_sort_constant_args(items : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
+  let out : Array[@symcore.Expr] = []
+  for item in items {
+    let mut inserted = false
+    for i in 0..<out.length() {
+      if test_sort_expr_cmp(item, out[i]) < 0 {
+        out.insert(i, item)
+        inserted = true
+        break
+      }
+    }
+    if !inserted {
+      out.push(item)
+    }
+  }
+  out
+}
+
+///|
+fn local_constant_renumber_inner(
+  expr : @symcore.Expr,
+  constants_found : Array[String],
+) -> @symcore.Expr {
+  if is_test_constant_symbol(expr) {
+    match expr {
+      @symcore.Expr::Symbol(name) =>
+        if !constants_found.contains(name) {
+          constants_found.push(name)
+        }
+      _ => ()
+    }
+    return expr
+  }
+  match expr {
+    @symcore.Expr::Add(args) =>
+      @symcore.Expr::Add(
+        test_sort_constant_args(args).map(arg => local_constant_renumber_inner(arg, constants_found)),
+      )
+    @symcore.Expr::Mul(args) =>
+      @symcore.Expr::Mul(
+        test_sort_constant_args(args).map(arg => local_constant_renumber_inner(arg, constants_found)),
+      )
+    @symcore.Expr::Pow(base, exp) =>
+      @symcore.pow(
+        local_constant_renumber_inner(base, constants_found),
+        local_constant_renumber_inner(exp, constants_found),
+      )
+    @symcore.Expr::Relational(op, lhs, rhs) =>
+      @symcore.Expr::Relational(
+        op,
+        local_constant_renumber_inner(lhs, constants_found),
+        local_constant_renumber_inner(rhs, constants_found),
+      )
+    _ => @symcore.map_children(
+      expr,
+      child => local_constant_renumber_inner(child, constants_found),
+    )
+  }
+}
+
+///|
+fn local_constant_renumber(expr : @symcore.Expr) -> @symcore.Expr {
+  let constants_found : Array[String] = []
+  let reordered = local_constant_renumber_inner(expr, constants_found)
+  let env : Map[String, @symcore.Expr] = {}
+  for i in 0..<constants_found.length() {
+    env[constants_found[i]] = @symcore.Expr::Symbol("C\{i + 1}")
+  }
+  @symcore.subst(reordered, env)
+}
+
+///|
+fn expr_semantically_equal(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
+  let diff = @symsimplify.simplify(lhs + @symcore.int(-1) * rhs)
+  @symcore.compare_expr(diff, @symcore.int(0)) == 0 || @symcore.is_zero(diff)
+}
+
+///|
 fn solution_dict_text(
   solution : Map[String, @symcore.Expr],
   names : Array[String],
@@ -464,6 +724,120 @@ test "lp solvers report infeasible and unbounded cases" {
 }
 
 ///|
+test "lp solvers handle Eq constraints and extra symbols like SymPy simplex front doors" {
+  let eq_max = lpmax(
+    x() - y(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(eq_max.0), content="2")
+  inspect(solution_dict_text(eq_max.1, ["x", "y"]), content="{x: 2, y: 0}")
+
+  let eq_min = lpmin(
+    y(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(0), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, @symcore.int(0), y() + @symcore.int(2)),
+    ],
+  )
+  inspect(@symprint.to_string(eq_min.0), content="-2")
+  inspect(solution_dict_text(eq_min.1, ["y"]), content="{y: -2}")
+
+  let single_eq = lpmax(
+    y(),
+    [@symcore.Expr::Relational(@symcore.RelOp::Eq, y(), @symcore.int(2))],
+  )
+  inspect(@symprint.to_string(single_eq.0), content="2")
+  inspect(solution_dict_text(single_eq.1, ["y"]), content="{y: 2}")
+
+  let extra_symbol = lpmin(
+    x(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + z()),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(extra_symbol.0), content="1")
+  inspect(solution_dict_text(extra_symbol.1, ["x", "y", "z"]), content="{x: 1, y: 1, z: 0}")
+}
+
+///|
+test "lp solvers match SymPy simplex four-variable reference example" {
+  let x1 = @symcore.Expr::Symbol("x1")
+  let x2 = @symcore.Expr::Symbol("x2")
+  let x3 = @symcore.Expr::Symbol("x3")
+  let x4 = @symcore.Expr::Symbol("x4")
+  let result = lpmax(
+    x1 - @symcore.int(2) * x2 - @symcore.int(3) * x3 - x4,
+    [
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        x1 - x2 - @symcore.int(2) * x3 - x4,
+        @symcore.int(4),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(2) * x1 + x3 - @symcore.int(4) * x4,
+        @symcore.int(2),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(-2) * x1 + x2 + x4,
+        @symcore.int(1),
+      ),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(result.0), content="4")
+  inspect(solution_dict_text(result.1, ["x1", "x2", "x3", "x4"]), content="{x1: 7, x2: 0, x3: 0, x4: 3}")
+}
+
+///|
+test "linprog matches first SymPy simplex reference example" {
+  let objective = x() + y() - @symcore.int(2) * z()
+  let ineq = [
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Le,
+      @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(),
+      @symcore.int(3),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Le,
+      @symcore.int(3) * x() - y() + @symcore.int(10) * z(),
+      @symcore.int(6),
+    ),
+    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+  ]
+  let min_result = lpmin(objective, ineq)
+  inspect(@symprint.to_string(min_result.0), content="-6/5")
+  inspect(solution_dict_text(min_result.1, ["x", "y", "z"]), content="{x: 0, y: 0, z: 3/5}")
+
+  let prog_result = linprog(
+    [@symcore.int(1), @symcore.int(1), @symcore.int(-2)],
+    a=Some(
+      @symmatrices.matrix([
+        [@symcore.int(7), @symcore.int(4), @symcore.int(-7)],
+        [@symcore.int(3), @symcore.int(-1), @symcore.int(10)],
+      ]),
+    ),
+    b=Some([@symcore.int(3), @symcore.int(6)]),
+  )
+  inspect(@symprint.to_string(prog_result.0), content="-6/5")
+  inspect(expr_list_text(prog_result.1), content="[0, 0, 3/5]")
+}
+
+///|
 test "decompogen factors functional composition and polynomial composition" {
   inspect(
     expr_list_text(decompogen(sin(cos(x())), x())),
@@ -490,6 +864,202 @@ test "decompogen factors functional composition and polynomial composition" {
       ),
     ),
     content="[sqrt(x), 6*x**2 - 5]",
+  )
+  inspect(
+    normalize_text(
+      expr_list_text(
+        decompogen(
+          sin(sqrt(cos((x() ^ @symcore.int(2)) + @symcore.int(1)))),
+          x(),
+        ),
+      ),
+    ),
+    content="[sin(x), sqrt(x), cos(x), x**2 + 1]",
+  )
+  inspect(
+    normalize_text(
+      expr_list_text(
+        decompogen(
+          @symcore.function(
+            "Abs",
+            [(cos(x()) ^ @symcore.int(2)) + @symcore.int(3) * cos(x()) + @symcore.int(-4)],
+          ),
+          x(),
+        ),
+      ),
+    ),
+    content="[Abs(x), x**2 + 3*x - 4, cos(x)]",
+  )
+  let trig_poly = decompogen(
+    (sin(x()) ^ @symcore.int(2)) + sin(x()) + @symcore.mul([@symcore.int(-1), sqrt(@symcore.int(3)), @symcore.pow(@symcore.int(2), @symcore.int(-1))]),
+    x(),
+  )
+  let trig_poly_expected = [
+    @symcore.add([
+      x() ^ @symcore.int(2),
+      x(),
+      @symcore.mul([@symcore.int(-1), sqrt(@symcore.int(3)), @symcore.pow(@symcore.int(2), @symcore.int(-1))]),
+    ]),
+    sin(x()),
+  ]
+  assert_eq(trig_poly.length(), trig_poly_expected.length())
+  for i in 0..<trig_poly.length() {
+    assert_true(expr_semantically_equal(trig_poly[i], trig_poly_expected[i]))
+  }
+  let mixed_abs = decompogen(
+    @symcore.function(
+      "Abs",
+      [(cos(y()) ^ @symcore.int(2)) + @symcore.int(3) * cos(x()) + @symcore.int(-4)],
+    ),
+    x(),
+  )
+  let mixed_abs_expected = [
+    @symcore.function("Abs", [x()]),
+    @symcore.int(3) * x() + (cos(y()) ^ @symcore.int(2)) + @symcore.int(-4),
+    cos(x()),
+  ]
+  assert_eq(mixed_abs.length(), mixed_abs_expected.length())
+  for i in 0..<mixed_abs.length() {
+    assert_true(expr_semantically_equal(mixed_abs[i], mixed_abs_expected[i]))
+  }
+  inspect(expr_list_text(decompogen(x(), y())), content="[x]")
+  inspect(expr_list_text(decompogen(@symcore.int(1), x())), content="[1]")
+  inspect(
+    expr_list_text(decompogen(@symcore.function("Max", [@symcore.int(3), x()]), x())),
+    content="[Max(3, x)]",
+  )
+  let u_linear = @symcore.int(2) * x() + @symcore.int(3)
+  inspect(
+    normalize_text(
+      expr_list_text(
+        decompogen(
+          @symcore.function("Max", [sqrt(u_linear), u_linear ^ @symcore.int(2)]),
+          x(),
+        ),
+      ),
+    ),
+    content="[Max(sqrt(x), x**2), 2*x + 3]",
+  )
+  inspect(
+    normalize_text(
+      expr_list_text(
+        decompogen(
+          @symcore.function("Max", [u_linear, u_linear ^ @symcore.int(2), y()]),
+          x(),
+        ),
+      ),
+    ),
+    content="[Max(x, x**2, y), 2*x + 3]",
+  )
+  inspect(
+    expr_list_text(
+      decompogen(
+        @symcore.function("Max", [sin(x()), u_linear]),
+        x(),
+      ),
+    ),
+    content="[Max(sin(x), 2*x + 3)]",
+  )
+  inspect(
+    normalize_text(expr_list_text(decompogen((x() ^ @symcore.int(4)) + @symcore.int(2) * (x() ^ @symcore.int(2)) + @symcore.int(1), x()))),
+    content="[x**2 + 2*x + 1, x**2]",
+  )
+  let quartic_poly = decompogen(
+    (x() ^ @symcore.int(4)) + @symcore.int(2) * (x() ^ @symcore.int(3)) - x() + @symcore.int(-1),
+    x(),
+  )
+  let quartic_poly_expected = [
+    (x() ^ @symcore.int(2)) - x() + @symcore.int(-1),
+    (x() ^ @symcore.int(2)) + x(),
+  ]
+  assert_eq(quartic_poly.length(), quartic_poly_expected.length())
+  for i in 0..<quartic_poly.length() {
+    assert_true(expr_semantically_equal(quartic_poly[i], quartic_poly_expected[i]))
+  }
+  let relational_try : Result[Array[@symcore.Expr], SolverError] = try? decompogen(
+    @symcore.Expr::Relational(@symcore.RelOp::Lt, x(), @symcore.int(5)),
+    x(),
+  )
+  assert_true(relational_try is Err(SolverError::ValueError(_)))
+}
+
+///|
+test "compogen composes source-compatible examples" {
+  inspect(@symprint.to_string(compogen([sin(x()), cos(x())], x())), content="sin(cos(x))")
+  inspect(
+    normalize_text(@symprint.to_string(compogen([(x() ^ @symcore.int(2)) + x() + @symcore.int(1), sin(x())], x()))),
+    content="sin(x)**2 + sin(x) + 1",
+  )
+  inspect(
+    normalize_text(@symprint.to_string(compogen([sqrt(x()), @symcore.int(6) * (x() ^ @symcore.int(2)) + @symcore.int(-5)], x()))),
+    content="sqrt(6*x**2 - 5)",
+  )
+  inspect(
+    normalize_text(
+      @symprint.to_string(
+        compogen(
+          [sin(x()), sqrt(x()), cos(x()), (x() ^ @symcore.int(2)) + @symcore.int(1)],
+          x(),
+        ),
+      ),
+    ),
+    content="sin(sqrt(cos(x**2 + 1)))",
+  )
+  inspect(
+    normalize_text(
+      @symprint.to_string(
+        compogen(
+          [@symcore.function("Abs", [x()]), (x() ^ @symcore.int(2)) + @symcore.int(3) * x() + @symcore.int(-4), cos(x())],
+          x(),
+        ),
+      ),
+    ),
+    content="Abs(cos(x)**2 + 3*cos(x) - 4)",
+  )
+  assert_true(
+    expr_semantically_equal(
+      compogen(
+        [
+          (x() ^ @symcore.int(2)) + x() + @symcore.mul([@symcore.int(-1), sqrt(@symcore.int(3)), @symcore.pow(@symcore.int(2), @symcore.int(-1))]),
+          sin(x()),
+        ],
+        x(),
+      ),
+      @symcore.add([
+        sin(x()) ^ @symcore.int(2),
+        sin(x()),
+        @symcore.mul([@symcore.int(-1), sqrt(@symcore.int(3)), @symcore.pow(@symcore.int(2), @symcore.int(-1))]),
+      ]),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      compogen(
+        [
+          (x() ^ @symcore.int(2)) + @symcore.int(3) * x() + (cos(y()) ^ @symcore.int(2)) + @symcore.int(-4),
+          cos(x()),
+        ],
+        x(),
+      ),
+      (cos(x()) ^ @symcore.int(2)) + @symcore.int(3) * cos(x()) + (cos(y()) ^ @symcore.int(2)) + @symcore.int(-4),
+    ),
+  )
+  inspect(
+    normalize_text(
+      @symprint.to_string(compogen([(x() ^ @symcore.int(2)) + @symcore.int(2) * x() + @symcore.int(1), x() ^ @symcore.int(2)], x())),
+    ),
+    content="x**4 + 2*x**2 + 1",
+  )
+  assert_true(
+    expr_semantically_equal(
+      compogen([(x() ^ @symcore.int(2)) - x() + @symcore.int(-1), (x() ^ @symcore.int(2)) + x()], x()),
+      @symcore.add([
+        @symcore.pow((x() ^ @symcore.int(2)) + x(), @symcore.int(2)),
+        @symcore.mul([@symcore.int(-1), x() ^ @symcore.int(2)]),
+        @symcore.mul([@symcore.int(-1), x()]),
+        @symcore.int(-1),
+      ]),
+    ),
   )
 }
 
@@ -601,6 +1171,439 @@ test "canonical_odes covers low-level source-compatible entry points" {
     normalize_text(expr_matrix_text(canonical)),
     content="[[Eq(Derivative(f(x), x), 7*f(x) + 12*g(x)), Eq(Derivative(g(x), x), 20*f(x) - g(x))]]",
   )
+}
+
+///|
+test "constantsimp matches initial SymPy constantsimp cases" {
+  let c1 = @symcore.Expr::Symbol("C1")
+  let c2 = @symcore.Expr::Symbol("C2")
+
+  assert_true(
+    expr_semantically_equal(local_constant_renumber(constantsimp(y() * c1, [c1])), c1 * y()),
+  )
+  assert_true(
+    expr_semantically_equal(local_constant_renumber(constantsimp(x() * c1, [c1])), x() * c1),
+  )
+  assert_true(
+    expr_semantically_equal(local_constant_renumber(constantsimp(@symcore.int(2) * c1, [c1])), c1),
+  )
+  assert_true(
+    expr_semantically_equal(local_constant_renumber(constantsimp(y() * c1 * x(), [c1, y()])), c1 * x()),
+  )
+  assert_true(
+    expr_semantically_equal(local_constant_renumber(constantsimp(c1 * x() * y() * x() * y() * @symcore.int(2), [c1, y()])), c1 * (x() ^ @symcore.int(2))),
+  )
+
+  assert_true(
+    expr_semantically_equal(local_constant_renumber(constantsimp(c1 + c1, [c1])), c1),
+  )
+  assert_true(
+    expr_semantically_equal(local_constant_renumber(constantsimp(c1 + @symcore.int(2), [c1])), c1),
+  )
+  assert_true(
+    expr_semantically_equal(local_constant_renumber(constantsimp(c1 + y(), [c1, y()])), c1),
+  )
+  assert_true(
+    expr_semantically_equal(local_constant_renumber(constantsimp(c1 + x(), [c1])), c1 + x()),
+  )
+  assert_true(
+    expr_semantically_equal(local_constant_renumber(constantsimp(c1 + c2 + c1, [c1, c2])), c1),
+  )
+
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(@symcore.function("exp", [c1 + x()]), [c1])),
+      c1 * @symcore.function("exp", [x()]),
+    ),
+  )
+}
+
+///|
+test "constantsimp matches SymPy power cases" {
+  let c1 = @symcore.Expr::Symbol("C1")
+  let c2 = @symcore.Expr::Symbol("C2")
+
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(c1 ^ c1, [c1])), c1))
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(c1 ^ c2, [c1, c2])), c1))
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(c2 ^ c1, [c1, c2])), c1))
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(c1 ^ y(), [c1, y()])), c1))
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(c1 ^ x(), [c1])), c1 ^ x()))
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(c1 ^ @symcore.int(2), [c1])), c1))
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(c1 ^ (x() * y()), [c1])),
+      c1 ^ (x() * y()),
+    ),
+  )
+
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(x() ^ c1, [c1])), x() ^ c1))
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(y() ^ c1, [c1, y()])), c1))
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(x() ^ (y() ^ c1), [c1, y()])), x() ^ c1))
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp((x() ^ y()) ^ c1, [c1])),
+      (x() ^ y()) ^ c1,
+    ),
+  )
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(x() ^ (c1 ^ y()), [c1, y()])), x() ^ c1))
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(@symcore.int(2) ^ c1, [c1])), c1))
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(@symcore.function("exp", [c1]), [c1])),
+      c1,
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(@symcore.function("exp", [c1 + x()]), [c1])),
+      c1 * @symcore.function("exp", [x()]),
+    ),
+  )
+}
+
+///|
+test "constantsimp matches SymPy function and mixed cases" {
+  let c1 = @symcore.Expr::Symbol("C1")
+  let c2 = @symcore.Expr::Symbol("C2")
+
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(@symcore.function("sin", [c1]), [c1])),
+      c1,
+    ),
+  )
+  assert_true(expr_semantically_equal(local_constant_renumber(constantsimp(f(c1), [c1])), c1))
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(@symcore.applied_undefined_function("f", [c1, c1]), [c1])),
+      c1,
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(@symcore.applied_undefined_function("f", [c1, c2]), [c1, c2])),
+      c1,
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(@symcore.applied_undefined_function("f", [c1, x()]), [c1])),
+      @symcore.applied_undefined_function("f", [c1, x()]),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(@symcore.applied_undefined_function("f", [c1, y()]), [c1, y()])),
+      c1,
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(@symcore.applied_undefined_function("f", [c1, y(), c2]), [c1, c2, y()])),
+      c1,
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(@symcore.applied_undefined_function("f", [c1, c1, x()]), [c1])),
+      @symcore.applied_undefined_function("f", [c1, c1, x()]),
+    ),
+  )
+
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(c1 * @symcore.int(2) + @symcore.int(2), [c1])),
+      c1,
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(x() * @symcore.int(2) * (c1 ^ @symcore.int(-1)), [c1])),
+      c1 * x(),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp((c1 ^ @symcore.int(2)) * @symcore.int(2) + @symcore.int(2), [c1])),
+      c1,
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(
+        constantsimp(
+          @symcore.function("sin", [@symcore.int(2) * c1]) + x() + @symcore.function("sqrt", [@symcore.int(2)]),
+          [c1],
+        ),
+      ),
+      c1 + x(),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(constantsimp(@symcore.int(2) * c1 + c2, [c1, c2])),
+      c1,
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(c1 + c1 * x()),
+      c1 + c1 * x(),
+    ),
+  )
+}
+
+///|
+test "constantsimp matches SymPy Eq normalization cases" {
+  let c1 = @symcore.Expr::Symbol("C1")
+  let eq_add = constantsimp(
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, c1, @symcore.int(3) + f(x()) * x()),
+    [c1],
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      local_constant_renumber(eq_add),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, x() * f(x()), c1),
+    ),
+    0,
+  )
+  let eq_mul = constantsimp(
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, c1, @symcore.int(3) * f(x()) * x()),
+    [c1],
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      local_constant_renumber(eq_mul),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, x() * f(x()), c1),
+    ),
+    0,
+  )
+}
+
+///|
+test "constantsimp matches initial SymPy ODE solution normalization cases" {
+  let c1 = @symcore.Expr::Symbol("C1")
+  let c2 = @symcore.Expr::Symbol("C2")
+  let c3 = @symcore.Expr::Symbol("C3")
+  let u2 = @symcore.Expr::Symbol("u2")
+  let a0 = @symcore.Expr::Symbol("_a")
+  let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("one_third") }
+  let imag = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+
+  assert_true(
+    expr_semantically_equal(
+      local_constant_renumber(
+        constantsimp(
+          c1 * @symcore.function("exp", [@symcore.int(2) * x()]) +
+          @symcore.function("exp", [x()]) * (c2 + c3),
+          [c1, c2, c3],
+        ),
+      ),
+      local_constant_renumber(
+        c1 * @symcore.function("exp", [x()]) +
+        c2 * @symcore.function("exp", [@symcore.int(2) * x()]),
+      ),
+    ),
+  )
+
+  let hyperbolic = local_constant_renumber(
+    constantsimp(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        f(x()),
+        imag * c1 * @symcore.function("sinh", [x() * one_third]) +
+        c2 * @symcore.function("cosh", [x() * one_third]),
+      ),
+      [c1, c2],
+    ),
+  )
+  let hyperbolic_expected = local_constant_renumber(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      f(x()),
+      c1 * @symcore.function("sinh", [x() * one_third]) +
+      c2 * @symcore.function("cosh", [x() * one_third]),
+    ),
+  )
+  assert_eq(@symcore.compare_expr(hyperbolic, hyperbolic_expected), 0)
+
+  let acos_case = local_constant_renumber(
+    constantsimp(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        f(x()),
+        @symcore.function(
+          "acos",
+          [@symcore.int(-1) * c1 * (cos(x()) ^ @symcore.int(-1))],
+        ),
+      ),
+      [c1],
+    ),
+  )
+  let acos_expected = local_constant_renumber(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      f(x()),
+      @symcore.function("acos", [c1 * (cos(x()) ^ @symcore.int(-1))]),
+    ),
+  )
+  assert_eq(@symcore.compare_expr(acos_case, acos_expected), 0)
+
+  let log_case = local_constant_renumber(
+    constantsimp(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        @symcore.function("log", [f(x()) * (c1 ^ @symcore.int(-1))]) +
+        @symcore.int(2) * @symcore.function("exp", [x() * (f(x()) ^ @symcore.int(-1))]),
+        @symcore.int(0),
+      ),
+      [c1],
+    ),
+  )
+  let log_expected = local_constant_renumber(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.function("log", [c1 * f(x())]) +
+      @symcore.int(2) * @symcore.function("exp", [x() * (f(x()) ^ @symcore.int(-1))]),
+      @symcore.int(0),
+    ),
+  )
+  assert_eq(@symcore.compare_expr(log_case, log_expected), 0)
+
+  let sqrt_log_case = local_constant_renumber(
+    constantsimp(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        (x() ^ @symcore.int(2)) * (@symcore.int(2) ^ @symcore.int(-1)) * (f(x()) ^ @symcore.int(-2)) +
+        @symcore.function(
+          "log",
+          [
+            sqrt(@symcore.int(2)) *
+            x() *
+            sqrt(x() ^ @symcore.int(-1)) *
+            sqrt(f(x())) *
+            (c1 ^ @symcore.int(-1)),
+          ],
+        ),
+        @symcore.int(0),
+      ),
+      [c1],
+    ),
+  )
+  let sqrt_log_expected = local_constant_renumber(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      (x() ^ @symcore.int(2)) * (@symcore.int(2) ^ @symcore.int(-1)) * (f(x()) ^ @symcore.int(-2)) +
+      @symcore.function("log", [c1 * sqrt(x()) * sqrt(f(x()))]),
+      @symcore.int(0),
+    ),
+  )
+  assert_eq(@symcore.compare_expr(sqrt_log_case, sqrt_log_expected), 0)
+
+  let ratio = f(x()) * (x() ^ @symcore.int(-1))
+  let exp_ratio = @symcore.function("exp", [@symcore.int(-1) * ratio])
+  let trig_log_case = local_constant_renumber(
+    constantsimp(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        @symcore.function("log", [x() * (c1 ^ @symcore.int(-1))]) -
+        exp_ratio * sin(ratio) * (@symcore.int(2) ^ @symcore.int(-1)) -
+        exp_ratio * cos(ratio) * (@symcore.int(2) ^ @symcore.int(-1)),
+        @symcore.int(0),
+      ),
+      [c1],
+    ),
+  )
+  let trig_log_expected = local_constant_renumber(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.function("log", [c1 * x()]) -
+      exp_ratio * sin(ratio) * (@symcore.int(2) ^ @symcore.int(-1)) -
+      exp_ratio * cos(ratio) * (@symcore.int(2) ^ @symcore.int(-1)),
+      @symcore.int(0),
+    ),
+  )
+  assert_eq(@symcore.compare_expr(trig_log_case, trig_log_expected), 0)
+
+  let sqrt_pair = [
+    constantsimp(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        f(x()),
+        sqrt(@symcore.int(-1) * c1 * x() + (x() ^ @symcore.int(2))),
+      ),
+      [c1],
+    ),
+    constantsimp(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        f(x()),
+        @symcore.int(-1) * sqrt(@symcore.int(-1) * c1 * x() + (x() ^ @symcore.int(2))),
+      ),
+      [c1],
+    ),
+  ]
+  let sqrt_pair_expected = [
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      f(x()),
+      sqrt(x() * (c1 + x())),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      f(x()),
+      @symcore.int(-1) * sqrt(x() * (c1 + x())),
+    ),
+  ]
+  assert_eq(expr_list_text(sqrt_pair), expr_list_text(sqrt_pair_expected))
+
+  let integral_case = local_constant_renumber(
+    constantsimp(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        @symcore.int(-1) *
+        @symcore.function(
+          "Integral",
+          [
+            @symcore.int(-1) *
+            ((u2 * sqrt(@symcore.int(1) - (u2 ^ @symcore.int(2)))) ^ @symcore.int(-1)),
+            @symcore.Expr::Tuple([u2, a0, x() * (f(x()) ^ @symcore.int(-1))]),
+          ],
+        ) +
+        @symcore.function("log", [f(x()) * (c1 ^ @symcore.int(-1))]),
+        @symcore.int(0),
+      ),
+      [c1],
+    ),
+  )
+  let integral_expected = local_constant_renumber(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.int(-1) *
+      @symcore.function(
+        "Integral",
+        [
+          @symcore.int(-1) *
+          ((u2 * sqrt(@symcore.int(1) - (u2 ^ @symcore.int(2)))) ^ @symcore.int(-1)),
+          @symcore.Expr::Tuple([u2, a0, x() * (f(x()) ^ @symcore.int(-1))]),
+        ],
+      ) +
+      @symcore.function("log", [c1 * f(x())]),
+      @symcore.int(0),
+    ),
+  )
+  assert_eq(@symcore.compare_expr(integral_case, integral_expected), 0)
+}
+
+///|
+test "constantsimp matches current upstream XFAIL nonlocal simplification behavior" {
+  // Upstream keeps this under @XFAIL. Pin current SymPy runtime behavior so
+  // our compat layer does not drift while the upstream bug remains open.
+  let c1 = @symcore.Expr::Symbol("C1")
+  let c2 = @symcore.Expr::Symbol("C2")
+  let nonlocal_case = constantsimp(c1 + c2 + x() * c2, [c1, c2])
+  let nonlocal_expected = c1 + c2 * x() + c2
+  assert_true(expr_semantically_equal(nonlocal_case, nonlocal_expected))
 }
 
 ///|

@@ -201,54 +201,367 @@ fn solver_constantsimp_inner(
   expr : Expr,
   constants : Array[Expr],
   replacement : Expr,
+  root : Expr,
 ) -> Expr {
+  let local_replacement = solver_constantsimp_replacement_for(expr, constants, replacement)
   if !solver_depends_on_any(expr, constants) {
     return expr
   }
-  if solver_depends_only_on(expr, constants) {
-    return replacement
+  if solver_depends_only_on(expr, constants) &&
+    solver_constantsimp_can_replace(expr, root, constants) {
+    return local_replacement
+  }
+  if @symcore.application_has_name(expr, "exp", arity=1) {
+    match @symcore.application_args(expr) {
+      Some([Expr::Add(args)]) => {
+        let absorbable : Array[Expr] = []
+        let kept : Array[Expr] = []
+        for arg in args {
+          if solver_constantsimp_absorbable(arg, constants) {
+            absorbable.push(arg)
+          } else {
+            kept.push(solver_constantsimp_inner(arg, constants, replacement, root))
+          }
+        }
+        if !absorbable.is_empty() && !kept.is_empty() &&
+          solver_constantsimp_can_replace(solver_add_all(absorbable), root, constants) {
+          let absorbed = solver_add_all(absorbable)
+          return solver_mul_all([
+            solver_constantsimp_replacement_for(absorbed, constants, replacement),
+            @symcore.function("exp", [solver_add_all(kept)]),
+          ])
+        }
+      }
+      _ => ()
+    }
   }
   match expr {
     Expr::Add(args) => {
       let rebuilt : Array[Expr] = []
+      let absorbed : Array[Expr] = []
       let mut collapsed = false
       for arg in args {
-        if solver_depends_only_on(arg, constants) {
+        if solver_constantsimp_absorbable(arg, constants) {
           collapsed = true
+          absorbed.push(arg)
         } else {
-          rebuilt.push(solver_constantsimp_inner(arg, constants, replacement))
+          rebuilt.push(solver_constantsimp_inner(arg, constants, replacement, root))
         }
       }
-      if collapsed {
-        rebuilt.push(replacement)
+      if collapsed &&
+        solver_constantsimp_can_replace(solver_add_all(absorbed), root, constants) {
+        rebuilt.push(
+          solver_constantsimp_replacement_for(
+            solver_add_all(absorbed),
+            constants,
+            replacement,
+          ),
+        )
+        solver_add_all(rebuilt)
+      } else {
+        solver_add_all(args.map(arg => solver_constantsimp_inner(arg, constants, replacement, root)))
       }
-      solver_add_all(rebuilt)
     }
     Expr::Mul(args) => {
       let rebuilt : Array[Expr] = []
+      let absorbed : Array[Expr] = []
       let mut collapsed = false
       for arg in args {
-        if solver_depends_only_on(arg, constants) {
+        if solver_constantsimp_absorbable(arg, constants) {
           collapsed = true
+          absorbed.push(arg)
         } else {
-          rebuilt.push(solver_constantsimp_inner(arg, constants, replacement))
+          rebuilt.push(solver_constantsimp_inner(arg, constants, replacement, root))
         }
       }
-      if collapsed {
-        rebuilt.push(replacement)
+      if collapsed &&
+        solver_constantsimp_can_replace(solver_mul_all(absorbed), root, constants) {
+        rebuilt.push(
+          solver_constantsimp_replacement_for(
+            solver_mul_all(absorbed),
+            constants,
+            replacement,
+          ),
+        )
+        solver_mul_all(rebuilt)
+      } else {
+        solver_mul_all(args.map(arg => solver_constantsimp_inner(arg, constants, replacement, root)))
       }
-      solver_mul_all(rebuilt)
     }
     Expr::Pow(base, exp) =>
-      if solver_depends_only_on(base, constants) && !solver_depends_on_any(exp, constants) {
+      if solver_constantsimp_absorbable(base, constants) &&
+        solver_constantsimp_absorbable(exp, constants) &&
+        solver_constantsimp_can_replace(expr, root, constants) {
         replacement
       } else {
         @symcore.pow(
-          solver_constantsimp_inner(base, constants, replacement),
-          solver_constantsimp_inner(exp, constants, replacement),
+          solver_constantsimp_inner(base, constants, replacement, root),
+          solver_constantsimp_inner(exp, constants, replacement, root),
         )
       }
+    _ => @symcore.map_children(
+      expr,
+      child => solver_constantsimp_inner(child, constants, replacement, root),
+    )
+  }
+}
+
+///|
+fn solver_constantsimp_absorbable(expr : Expr, constants : Array[Expr]) -> Bool {
+  let free = @symcore.free_symbols(expr)
+  if free.is_empty() {
+    return true
+  }
+  for symbol in free {
+    if !solver_expr_in_list(constants, symbol) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn solver_constantsimp_replacement_for(
+  expr : Expr,
+  constants : Array[Expr],
+  fallback : Expr,
+) -> Expr {
+  let free = @symcore.free_symbols(expr)
+  let mut best : Expr? = None
+  for symbol in constants {
+    if !solver_expr_in_list(free, symbol) {
+      continue
+    }
+    let name = match symbol {
+      Expr::Symbol(s) => s
+      _ => continue
+    }
+    let take = match best {
+      None => true
+      Some(current) => {
+        let current_name = match current {
+          Expr::Symbol(s) => s
+          _ => ""
+        }
+        if name.has_prefix("C") && !current_name.has_prefix("C") {
+          true
+        } else if name.has_prefix("C") == current_name.has_prefix("C") {
+          name.compare(current_name) < 0
+        } else {
+          false
+        }
+      }
+    }
+    if take {
+      best = Some(symbol)
+    }
+  }
+  match best {
+    Some(value) => value
+    None => expr
+  }
+}
+
+///|
+fn solver_constantsimp_occurs(root : Expr, needle : Expr) -> Int {
+  let mut total = 0
+  if @symcore.compare_expr(root, needle) == 0 {
+    total += 1
+  }
+  for child in @symcore.children(root) {
+    total += solver_constantsimp_occurs(child, needle)
+  }
+  total
+}
+
+///|
+fn solver_constantsimp_can_replace(
+  expr : Expr,
+  root : Expr,
+  constants : Array[Expr],
+) -> Bool {
+  let free = @symcore.free_symbols(expr)
+  if free.is_empty() {
+    return false
+  }
+  for symbol in free {
+    if !solver_expr_in_list(constants, symbol) {
+      return false
+    }
+    if solver_constantsimp_occurs(root, symbol) != solver_constantsimp_occurs(expr, symbol) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn solver_constantsimp_direct_constant_term(expr : Expr, constants : Array[Expr]) -> Bool {
+  @symcore.is_number_atom(expr) || solver_expr_in_list(constants, expr)
+}
+
+///|
+fn solver_constantsimp_add_terms(expr : Expr) -> Array[Expr] {
+  match expr {
+    Expr::Add(args) => args
+    _ => [expr]
+  }
+}
+
+///|
+fn solver_constantsimp_mul_terms(expr : Expr) -> Array[Expr] {
+  match expr {
+    Expr::Mul(args) => args
+    _ => [expr]
+  }
+}
+
+///|
+fn solver_constantsimp_eq_addlike(expr : Expr) -> Bool {
+  match expr {
+    Expr::Add(_) | Expr::Symbol(_) => true
+    _ => false
+  }
+}
+
+///|
+fn solver_constantsimp_eq_mullike(expr : Expr) -> Bool {
+  match expr {
+    Expr::Mul(_) | Expr::Symbol(_) => true
+    _ => false
+  }
+}
+
+///|
+fn solver_constantsimp_postprocess_eq(expr : Expr, constants : Array[Expr]) -> Expr {
+  match expr {
+    Expr::Relational(@symcore.RelOp::Eq, lhs0, rhs0) => {
+      let mut lhs = lhs0
+      let mut rhs = rhs0
+      if solver_expr_in_list(constants, lhs) {
+        let tmp = lhs
+        lhs = rhs
+        rhs = tmp
+      }
+      if solver_expr_in_list(constants, rhs) && solver_constantsimp_eq_addlike(lhs) {
+        let lhs_nonconst : Array[Expr] = []
+        for term in solver_constantsimp_add_terms(lhs) {
+          if !solver_constantsimp_direct_constant_term(term, constants) {
+            lhs_nonconst.push(term)
+          }
+        }
+        if !lhs_nonconst.is_empty() {
+          Expr::Relational(@symcore.RelOp::Eq, solver_add_all(lhs_nonconst), constants[0])
+        } else {
+          expr
+        }
+      } else if solver_expr_in_list(constants, rhs) && solver_constantsimp_eq_mullike(lhs) {
+        let lhs_nonconst : Array[Expr] = []
+        for term in solver_constantsimp_mul_terms(lhs) {
+          if !solver_constantsimp_direct_constant_term(term, constants) {
+            lhs_nonconst.push(term)
+          }
+        }
+        if !lhs_nonconst.is_empty() {
+          Expr::Relational(@symcore.RelOp::Eq, solver_mul_all(lhs_nonconst), constants[0])
+        } else {
+          expr
+        }
+      } else {
+        expr
+      }
+    }
     _ => expr
+  }
+}
+
+///|
+fn solver_constantsimp_negative_one_power_base(expr : Expr) -> Expr? {
+  match expr {
+    Expr::Pow(base, exp) =>
+      match @symcore.exact_numeric_expr_num_den(exp) {
+        Some((num, den)) if num.compare(-1N) == 0 && den.compare(1N) == 0 => Some(base)
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn solver_constantsimp_inverse_sqrt_base(expr : Expr) -> Expr? {
+  if @symcore.application_has_name(expr, "sqrt", arity=1) {
+    match @symcore.application_args(expr) {
+      Some([arg]) => solver_constantsimp_negative_one_power_base(arg)
+      _ => None
+    }
+  } else {
+    None
+  }
+}
+
+///|
+fn solver_constantsimp_radical_cleanup(expr : Expr) -> Expr {
+  match expr {
+    _ if @symcore.application_has_name(expr, "sqrt", arity=1) =>
+      match @symcore.application_args(expr) {
+        Some([arg]) =>
+          @symcore.function(
+            "sqrt",
+            [@symsimplify.simplify(solver_constantsimp_radical_cleanup(arg), max_passes=2)],
+          )
+        _ => expr
+      }
+    Expr::Mul(args) => {
+      let cleaned = args.map(arg => solver_constantsimp_radical_cleanup(arg))
+      let used : Array[Bool] = Array::make(cleaned.length(), false)
+      let rebuilt : Array[Expr] = []
+      for i in 0..<cleaned.length() {
+        if used[i] {
+          continue
+        }
+        let mut paired = false
+        for j in (i + 1)..<cleaned.length() {
+          if used[j] {
+            continue
+          }
+          match solver_constantsimp_inverse_sqrt_base(cleaned[j]) {
+            Some(base) if @symcore.compare_expr(cleaned[i], base) == 0 => {
+              used[i] = true
+              used[j] = true
+              rebuilt.push(@symcore.function("sqrt", [base]))
+              paired = true
+              break
+            }
+            _ => ()
+          }
+          match solver_constantsimp_inverse_sqrt_base(cleaned[i]) {
+            Some(base) if @symcore.compare_expr(cleaned[j], base) == 0 => {
+              used[i] = true
+              used[j] = true
+              rebuilt.push(@symcore.function("sqrt", [base]))
+              paired = true
+              break
+            }
+            _ => ()
+          }
+        }
+        if !paired {
+          used[i] = true
+          rebuilt.push(cleaned[i])
+        }
+      }
+      solver_mul_all(rebuilt)
+    }
+    Expr::Add(args) => solver_add_all(args.map(arg => solver_constantsimp_radical_cleanup(arg)))
+    Expr::Pow(base, exp) =>
+      @symcore.pow(
+        solver_constantsimp_radical_cleanup(base),
+        solver_constantsimp_radical_cleanup(exp),
+      )
+    _ => @symcore.map_children(
+      expr,
+      child => solver_constantsimp_radical_cleanup(child),
+    )
   }
 }
 
@@ -258,7 +571,28 @@ pub fn constantsimp(expr : Expr, constants : Array[Expr]) -> Expr raise SolverEr
   if normalized.is_empty() {
     return expr
   }
-  solver_constantsimp_inner(expr, normalized, normalized[0])
+  let mut replacement = normalized[0]
+  let mut replacement_name = symbol_name(replacement)
+  for item in normalized {
+    let name = symbol_name(item)
+    let prefer_item = if name.starts_with("C") && !replacement_name.starts_with("C") {
+      true
+    } else if name.starts_with("C") == replacement_name.starts_with("C") {
+      name.compare(replacement_name) < 0
+    } else {
+      false
+    }
+    if prefer_item {
+      replacement = item
+      replacement_name = name
+    }
+  }
+  solver_constantsimp_radical_cleanup(
+    solver_constantsimp_postprocess_eq(
+      solver_constantsimp_inner(expr, normalized, replacement, expr),
+      normalized,
+    ),
+  )
 }
 
 ///|

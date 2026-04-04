@@ -9,6 +9,11 @@ fn y() -> @symcore.Expr {
 }
 
 ///|
+fn z() -> @symcore.Expr {
+  @symcore.Expr::Symbol("z")
+}
+
+///|
 fn sin(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.function("sin", [expr])
 }
@@ -77,6 +82,16 @@ fn py_sympify_matrix_expr(m : @symmatrices.Matrix) -> String {
 }
 
 ///|
+fn normalize_text(text : String) -> String {
+  text
+  .replace_all(old="/1", new="")
+  .replace_all(old="-1*", new="-")
+  .replace_all(old=" + -", new=" - ")
+  .replace_all(old="-t_0 + 3", new="3 - t_0")
+  .replace_all(old="exp(1*x**3/3)", new="exp(x**3/3)")
+}
+
+///|
 fn py_matrix_list_text(code : String) -> String raise {
   solvers_eval_str(
     "'[' + ', '.join('[' + ', '.join(sympy.sstr(v) for v in row) + ']' for row in (" +
@@ -85,6 +100,14 @@ fn py_matrix_list_text(code : String) -> String raise {
   )
 }
 
+///|
+fn compogen_oracle_expr(args_code : String) -> String {
+  "(__import__('sympy.solvers.decompogen', fromlist=['compogen']).compogen(" +
+  args_code +
+  "))"
+}
+
+///|
 fn matrix_oracle_residual_text(
   local_matrix : @symmatrices.Matrix,
   oracle_code : String,
@@ -136,6 +159,88 @@ fn recurrence_expr_matches_oracle(
 ) -> String raise {
   solvers_eval_str_symbols(
     "str(sympy.simplify((" + py_expr(expr_local) + ") - (" + oracle_expr + ")))",
+    symbols,
+  )
+}
+
+///|
+fn constantsimp_oracle_text(
+  oracle_expr : String,
+  symbols : String,
+) -> String raise {
+  solvers_eval_str_symbols("str(" + oracle_expr + ")", symbols)
+}
+
+///|
+fn solver_py_locals_dict(symbols : String) -> String {
+  let parts = symbols.split(" ")
+  let entries : Array[String] = []
+  for part in parts {
+    let trimmed = part.trim().to_string()
+    if trimmed != "" {
+      entries.push("'" + trimmed + "': " + trimmed)
+    }
+  }
+  for fn_name in ["f", "g", "h", "u", "X", "Y"] {
+    entries.push("'" + fn_name + "': " + fn_name)
+  }
+  "{" + entries.join(", ") + "}"
+}
+
+///|
+fn relational_residual_matches_oracle(
+  expr_local : @symcore.Expr,
+  oracle_expr : String,
+  symbols : String,
+) -> String raise {
+  let local_env = solver_py_locals_dict(symbols)
+  let local_expr = "sympy.sympify('" +
+    py_expr(expr_local).replace_all(old="'", new="\\\\'") +
+    "', locals=" + local_env + ")"
+  solvers_eval_str_symbols(
+    "str(sympy.simplify(((" +
+    local_expr +
+    ").lhs - (" +
+    local_expr +
+    ").rhs) - ((" +
+    oracle_expr +
+    ").lhs - (" +
+    oracle_expr +
+    ").rhs)))",
+    symbols,
+  )
+}
+
+///|
+fn relational_list_residuals_match_oracle(
+  items_local : Array[@symcore.Expr],
+  oracle_expr : String,
+  symbols : String,
+) -> String raise {
+  let local_items = "[" + items_local.map(py_sympify_expr).join(", ") + "]"
+  solvers_eval_str_symbols(
+    "str([sympy.simplify((lhs.lhs - lhs.rhs) - (rhs.lhs - rhs.rhs)) for lhs, rhs in zip(" +
+    local_items +
+    ", (" +
+    oracle_expr +
+    "))])",
+    symbols,
+  )
+}
+
+///|
+fn expr_list_residuals_match_oracle(
+  items_local : Array[@symcore.Expr],
+  oracle_expr : String,
+  symbols : String,
+) -> String raise {
+  let local_items = "[" + items_local.map(py_sympify_expr).join(", ") + "]"
+  solvers_eval_str_symbols(
+    "str([sympy.simplify(lhs - rhs) for lhs, rhs in zip(" +
+    local_items +
+    ", (" +
+    oracle_expr +
+    "))])",
     symbols,
   )
 }
@@ -228,6 +333,260 @@ fn ode_systems_oracle_residual_text(
 ///|
 fn local_string_list_repr(items : Array[String]) -> String {
   "['" + items.join("', '") + "']"
+}
+
+///|
+fn local_is_test_constant_symbol(expr : @symcore.Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Symbol(name) => name.has_prefix("C")
+    _ => false
+  }
+}
+
+///|
+fn local_test_constant_sort_expr(expr : @symcore.Expr) -> @symcore.Expr {
+  let env : Map[String, @symcore.Expr] = {}
+  for symbol in @symcore.free_symbols(expr) {
+    if local_is_test_constant_symbol(symbol) {
+      match symbol {
+        @symcore.Expr::Symbol(name) => env[name] = @symcore.int(1)
+        _ => ()
+      }
+    }
+  }
+  @symcore.subst(expr, env)
+}
+
+///|
+fn local_sympy_function_rank(name : String) -> Int {
+  match name {
+    "Derivative" | "derivative" => 0
+    "Integral" | "integral" => 1
+    "abs" | "Abs" => 2
+    "sign" | "Sign" => 3
+    "sqrt" | "Sqrt" => 4
+    "floor" | "Floor" => 5
+    "ceiling" | "Ceiling" => 6
+    "re" | "Re" => 7
+    "im" | "Im" => 8
+    "arg" | "Arg" => 9
+    "conjugate" | "Conjugate" => 10
+    "exp" | "Exp" => 11
+    "log" | "Log" => 12
+    "sin" | "Sin" => 13
+    "cos" | "Cos" => 14
+    "tan" | "Tan" => 15
+    "cot" | "Cot" => 16
+    "asin" | "ASin" => 17
+    "acos" | "ACos" => 18
+    "atan" | "ATan" => 19
+    "acot" | "ACot" => 20
+    "sinh" | "Sinh" => 21
+    "cosh" | "Cosh" => 22
+    "tanh" | "Tanh" => 23
+    "coth" | "Coth" => 24
+    "asinh" | "ASinh" => 25
+    "acosh" | "ACosh" => 26
+    "atanh" | "ATanh" => 27
+    "acoth" | "ACoth" => 28
+    "risingfactorial" | "RisingFactorial" => 29
+    "fallingfactorial" | "FallingFactorial" => 30
+    "factorial" => 31
+    "binomial" => 32
+    "gamma" | "Gamma" => 33
+    "lowergamma" | "LowerGamma" => 34
+    "uppergamma" | "UpperGamma" => 35
+    "polygamma" | "PolyGamma" => 36
+    "erf" | "Erf" => 37
+    _ => 10000
+  }
+}
+
+///|
+fn local_sort_exprs_cmp(
+  lhs : Array[@symcore.Expr],
+  rhs : Array[@symcore.Expr],
+) -> Int {
+  let lhs_len = lhs.length()
+  let rhs_len = rhs.length()
+  let min_len = if lhs_len < rhs_len { lhs_len } else { rhs_len }
+  for i in 0..<min_len {
+    let cmp = local_sort_expr_cmp(lhs[i], rhs[i])
+    if cmp != 0 {
+      return cmp
+    }
+  }
+  lhs_len.compare(rhs_len)
+}
+
+///|
+fn local_sort_apply_head_cmp(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Int {
+  match (lhs, rhs) {
+    (@symcore.Expr::UndefinedFunction(lhs_name), @symcore.Expr::UndefinedFunction(rhs_name)) =>
+      lhs_name.compare(rhs_name)
+    (@symcore.Expr::UndefinedFunction(_), @symcore.Expr::FunctionHead(_)) => -1
+    (@symcore.Expr::FunctionHead(_), @symcore.Expr::UndefinedFunction(_)) => 1
+    (@symcore.Expr::FunctionHead(lhs_name), @symcore.Expr::FunctionHead(rhs_name)) => {
+      let rank_cmp = local_sympy_function_rank(lhs_name).compare(local_sympy_function_rank(rhs_name))
+      if rank_cmp != 0 {
+        rank_cmp
+      } else {
+        lhs_name.compare(rhs_name)
+      }
+    }
+    _ => @symcore.compare_expr(lhs, rhs)
+  }
+}
+
+///|
+fn local_sort_relop_rank(op : @symcore.RelOp) -> Int {
+  match op {
+    @symcore.RelOp::Eq => 0
+    @symcore.RelOp::Ne => 1
+    @symcore.RelOp::Lt => 2
+    @symcore.RelOp::Le => 3
+    @symcore.RelOp::Gt => 4
+    @symcore.RelOp::Ge => 5
+  }
+}
+
+///|
+fn local_sort_node_count(expr : @symcore.Expr) -> Int {
+  match expr {
+    @symcore.Expr::Number(_)
+    | @symcore.Expr::Float(_)
+    | @symcore.Expr::ComplexFloat(_)
+    | @symcore.Expr::NumberSymbol(_)
+    | @symcore.Expr::Boolean(_)
+    | @symcore.Expr::IdentityFunction
+    | @symcore.Expr::Symbol(_)
+    | @symcore.Expr::Dummy(_, _)
+    | @symcore.Expr::Wild(_, _, _)
+    | @symcore.Expr::WildFunction(_, _)
+    | @symcore.Expr::FunctionHead(_)
+    | @symcore.Expr::UndefinedFunction(_) => 1
+    _ => 1 + @symcore.children(expr).fold(init=0, fn(acc, child) { acc + local_sort_node_count(child) })
+  }
+}
+
+///|
+fn local_sort_expr_cmp(lhs_raw : @symcore.Expr, rhs_raw : @symcore.Expr) -> Int {
+  let lhs = local_test_constant_sort_expr(lhs_raw)
+  let rhs = local_test_constant_sort_expr(rhs_raw)
+  match (lhs, rhs) {
+    (@symcore.Expr::Apply(lhs_head, lhs_args), @symcore.Expr::Apply(rhs_head, rhs_args)) => {
+      let head_cmp = local_sort_apply_head_cmp(lhs_head, rhs_head)
+      if head_cmp != 0 {
+        return head_cmp
+      }
+      return local_sort_exprs_cmp(lhs_args, rhs_args)
+    }
+    (@symcore.Expr::Add(lhs_args), @symcore.Expr::Add(rhs_args))
+    | (@symcore.Expr::Mul(lhs_args), @symcore.Expr::Mul(rhs_args)) =>
+      local_sort_exprs_cmp(lhs_args, rhs_args)
+    (@symcore.Expr::Pow(lhs_base, lhs_exp), @symcore.Expr::Pow(rhs_base, rhs_exp)) => {
+      let base_cmp = local_sort_expr_cmp(lhs_base, rhs_base)
+      if base_cmp != 0 {
+        return base_cmp
+      }
+      return local_sort_expr_cmp(lhs_exp, rhs_exp)
+    }
+    (@symcore.Expr::Relational(lhs_op, lhs_lhs, lhs_rhs), @symcore.Expr::Relational(rhs_op, rhs_lhs, rhs_rhs)) => {
+      let op_cmp = local_sort_relop_rank(lhs_op).compare(local_sort_relop_rank(rhs_op))
+      if op_cmp != 0 {
+        return op_cmp
+      }
+      let lhs_cmp = local_sort_expr_cmp(lhs_lhs, rhs_lhs)
+      if lhs_cmp != 0 {
+        return lhs_cmp
+      }
+      return local_sort_expr_cmp(lhs_rhs, rhs_rhs)
+    }
+    _ => {
+      let node_cmp = local_sort_node_count(lhs).compare(local_sort_node_count(rhs))
+      if node_cmp != 0 {
+        return node_cmp
+      }
+      let cmp = @symcore.compare_expr(lhs, rhs)
+      if cmp != 0 {
+        cmp
+      } else {
+        @symprint.to_string(lhs).compare(@symprint.to_string(rhs))
+      }
+    }
+  }
+}
+
+///|
+fn local_sort_constant_args(items : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
+  let out : Array[@symcore.Expr] = []
+  for item in items {
+    let mut inserted = false
+    for i in 0..<out.length() {
+      if local_sort_expr_cmp(item, out[i]) < 0 {
+        out.insert(i, item)
+        inserted = true
+        break
+      }
+    }
+    if !inserted {
+      out.push(item)
+    }
+  }
+  out
+}
+
+///|
+fn local_constant_renumber_inner(
+  expr : @symcore.Expr,
+  constants_found : Array[String],
+) -> @symcore.Expr {
+  if local_is_test_constant_symbol(expr) {
+    match expr {
+      @symcore.Expr::Symbol(name) =>
+        if !constants_found.contains(name) {
+          constants_found.push(name)
+        }
+      _ => ()
+    }
+    return expr
+  }
+  match expr {
+    @symcore.Expr::Add(args) =>
+      @symcore.Expr::Add(
+        local_sort_constant_args(args).map(arg => local_constant_renumber_inner(arg, constants_found)),
+      )
+    @symcore.Expr::Mul(args) =>
+      @symcore.Expr::Mul(
+        local_sort_constant_args(args).map(arg => local_constant_renumber_inner(arg, constants_found)),
+      )
+    @symcore.Expr::Pow(base, exp) =>
+      @symcore.pow(
+        local_constant_renumber_inner(base, constants_found),
+        local_constant_renumber_inner(exp, constants_found),
+      )
+    @symcore.Expr::Relational(op, lhs, rhs) =>
+      @symcore.Expr::Relational(
+        op,
+        local_constant_renumber_inner(lhs, constants_found),
+        local_constant_renumber_inner(rhs, constants_found),
+      )
+    _ => @symcore.map_children(
+      expr,
+      child => local_constant_renumber_inner(child, constants_found),
+    )
+  }
+}
+
+///|
+fn local_constant_renumber(expr : @symcore.Expr) -> @symcore.Expr {
+  let constants_found : Array[String] = []
+  let reordered = local_constant_renumber_inner(expr, constants_found)
+  let env : Map[String, @symcore.Expr] = {}
+  for i in 0..<constants_found.length() {
+    env[constants_found[i]] = @symcore.Expr::Symbol("C\{i + 1}")
+  }
+  @symcore.subst(reordered, env)
 }
 
 fn py_infinitesimals(items : Array[Map[String, @symcore.Expr]]) -> String {
@@ -724,6 +1083,140 @@ test "solvers parity lpmin lpmax and linprog" {
 }
 
 ///|
+test "solvers parity simplex-style Eq constraints and extra symbols" {
+  assert_eq(
+    local_lp_dict_result_text(
+      @symsolvers.lpmax(
+        x() - y(),
+        [
+          @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y() + @symcore.int(2)),
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+        ],
+      ),
+    ),
+    solvers_eval_str("repr(sympy.solvers.lpmax(x - y, [x <= y + 2, sympy.Eq(x, y + 2), x >= 0, y >= 0]))"),
+  )
+  assert_eq(
+    local_lp_dict_result_text(
+      @symsolvers.lpmin(
+        y(),
+        [
+          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(0), y() + @symcore.int(2)),
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, @symcore.int(0), y() + @symcore.int(2)),
+        ],
+      ),
+    ),
+    solvers_eval_str("repr(sympy.solvers.lpmin(y, [0 <= y + 2, 0 >= y + 2]))"),
+  )
+  assert_eq(
+    local_lp_dict_result_text(
+      @symsolvers.lpmax(
+        y(),
+        [@symcore.Expr::Relational(@symcore.RelOp::Eq, y(), @symcore.int(2))],
+      ),
+    ),
+    solvers_eval_str("repr(sympy.solvers.lpmax(y, [sympy.Eq(y, 2)]))"),
+  )
+  assert_eq(
+    local_lp_dict_result_text(
+      @symsolvers.lpmin(
+        x(),
+        [
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + z()),
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+        ],
+      ),
+    ),
+    solvers_eval_str("repr(sympy.solvers.lpmin(x, [y >= 1, x >= y + z, x >= 0, z >= 0]))"),
+  )
+}
+
+///|
+test "solvers parity simplex four-variable reference example" {
+  let x1 = @symcore.Expr::Symbol("x1")
+  let x2 = @symcore.Expr::Symbol("x2")
+  let x3 = @symcore.Expr::Symbol("x3")
+  let x4 = @symcore.Expr::Symbol("x4")
+  let result = @symsolvers.lpmax(
+    x1 - @symcore.int(2) * x2 - @symcore.int(3) * x3 - x4,
+    [
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        x1 - x2 - @symcore.int(2) * x3 - x4,
+        @symcore.int(4),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(2) * x1 + x3 - @symcore.int(4) * x4,
+        @symcore.int(2),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(-2) * x1 + x2 + x4,
+        @symcore.int(1),
+      ),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
+    ],
+  )
+  assert_eq(
+    "(" + @symprint.to_string(result.0) + ", " + local_solution_dict_text(Some(result.1), ["x1", "x2", "x3", "x4"]) + ")",
+    solvers_eval_str_symbols(
+      "repr(sympy.solvers.lpmax(x1 - 2*x2 - 3*x3 - x4, [x1 - x2 - 2*x3 - x4 <= 4, 2*x1 + x3 - 4*x4 <= 2, -2*x1 + x2 + x4 <= 1, x1 >= 0, x2 >= 0, x3 >= 0, x4 >= 0]))",
+      "x1 x2 x3 x4",
+    ),
+  )
+}
+
+///|
+test "solvers parity simplex linprog first reference example" {
+  assert_eq(
+    local_lp_dict_result_text(
+      @symsolvers.lpmin(
+        x() + y() - @symcore.int(2) * z(),
+        [
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(),
+            @symcore.int(3),
+          ),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            @symcore.int(3) * x() - y() + @symcore.int(10) * z(),
+            @symcore.int(6),
+          ),
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+        ],
+      ),
+    ),
+    solvers_eval_str("repr(sympy.solvers.lpmin(x + y - 2*z, [7*x + 4*y - 7*z <= 3, 3*x - y + 10*z <= 6, x >= 0, y >= 0, z >= 0]))"),
+  )
+  assert_eq(
+    local_linprog_result_text(
+      @symsolvers.linprog(
+        [@symcore.int(1), @symcore.int(1), @symcore.int(-2)],
+        a=Some(
+          @symmatrices.matrix([
+            [@symcore.int(7), @symcore.int(4), @symcore.int(-7)],
+            [@symcore.int(3), @symcore.int(-1), @symcore.int(10)],
+          ]),
+        ),
+        b=Some([@symcore.int(3), @symcore.int(6)]),
+      ),
+    ),
+    solvers_eval_str("repr(sympy.solvers.linprog([1, 1, -2], [[7, 4, -7], [3, -1, 10]], [3, 6]))"),
+  )
+}
+
+///|
 test "solvers parity decompogen" {
   assert_eq(
     (
@@ -765,6 +1258,248 @@ test "solvers parity decompogen" {
     (
       solvers_eval_str("repr(sympy.solvers.decompogen(sympy.sqrt(6*x**2 - 5), x))"),
     ),
+  )
+  assert_eq(
+    (
+      local_expr_list_text(
+        @symsolvers.decompogen(
+          sin(sqrt(cos((x() ^ @symcore.int(2)) + @symcore.int(1)))),
+          x(),
+        ),
+      ),
+    ),
+    (
+      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.sin(sympy.sqrt(sympy.cos(x**2 + 1))), x))"),
+    ),
+  )
+  assert_eq(
+    (
+      local_expr_list_text(
+        @symsolvers.decompogen(
+          @symcore.function(
+            "Abs",
+            [(cos(x()) ^ @symcore.int(2)) + @symcore.int(3) * cos(x()) + @symcore.int(-4)],
+          ),
+          x(),
+        ),
+      ),
+    ),
+    (
+      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.Abs(sympy.cos(x)**2 + 3*sympy.cos(x) - 4), x))"),
+    ),
+  )
+  assert_eq(
+    expr_list_residuals_match_oracle(
+      @symsolvers.decompogen(
+        (sin(x()) ^ @symcore.int(2)) + sin(x()) + @symcore.mul([@symcore.int(-1), sqrt(@symcore.int(3)), @symcore.pow(@symcore.int(2), @symcore.int(-1))]),
+        x(),
+      ),
+      "sympy.solvers.decompogen(sympy.sin(x)**2 + sympy.sin(x) - sympy.sqrt(3)/2, x)",
+      "x",
+    ),
+    "[0, 0]",
+  )
+  assert_eq(
+    expr_list_residuals_match_oracle(
+      @symsolvers.decompogen(
+        @symcore.function(
+          "Abs",
+          [(cos(y()) ^ @symcore.int(2)) + @symcore.int(3) * cos(x()) + @symcore.int(-4)],
+        ),
+        x(),
+      ),
+      "sympy.solvers.decompogen(sympy.Abs(sympy.cos(y)**2 + 3*sympy.cos(x) - 4), x)",
+      "x y",
+    ),
+    "[0, 0, 0]",
+  )
+  assert_eq(
+    (
+      local_expr_list_text(@symsolvers.decompogen(x(), y())),
+    ),
+    (
+      solvers_eval_str("repr(sympy.solvers.decompogen(x, y))"),
+    ),
+  )
+  assert_eq(
+    (
+      local_expr_list_text(@symsolvers.decompogen(@symcore.int(1), x())),
+    ),
+    (
+      solvers_eval_str("repr(sympy.solvers.decompogen(1, x))"),
+    ),
+  )
+  assert_eq(
+    (
+      local_expr_list_text(@symsolvers.decompogen(@symcore.function("Max", [@symcore.int(3), x()]), x())),
+    ),
+    (
+      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.Max(3, x), x))"),
+    ),
+  )
+  let u_linear = @symcore.int(2) * x() + @symcore.int(3)
+  assert_eq(
+    (
+      local_expr_list_text(
+        @symsolvers.decompogen(
+          @symcore.function("Max", [sqrt(u_linear), u_linear ^ @symcore.int(2)]),
+          x(),
+        ),
+      ),
+    ),
+    (
+      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.Max(sympy.sqrt(2*x + 3), (2*x + 3)**2), x))"),
+    ),
+  )
+  assert_eq(
+    (
+      local_expr_list_text(
+        @symsolvers.decompogen(
+          @symcore.function("Max", [u_linear, u_linear ^ @symcore.int(2), y()]),
+          x(),
+        ),
+      ),
+    ),
+    (
+      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.Max(2*x + 3, (2*x + 3)**2, y), x))"),
+    ),
+  )
+  assert_eq(
+    expr_list_residuals_match_oracle(
+      @symsolvers.decompogen(
+        @symcore.function("Max", [sin(x()), u_linear]),
+        x(),
+      ),
+      "sympy.solvers.decompogen(sympy.Max(sympy.sin(x), 2*x + 3), x)",
+      "x",
+    ),
+    "[0]",
+  )
+  assert_eq(
+    (
+      local_expr_list_text(
+        @symsolvers.decompogen(
+          (x() ^ @symcore.int(4)) + @symcore.int(2) * (x() ^ @symcore.int(2)) + @symcore.int(1),
+          x(),
+        ),
+      ),
+    ),
+    (
+      solvers_eval_str("repr(sympy.solvers.decompogen(x**4 + 2*x**2 + 1, x))"),
+    ),
+  )
+  assert_eq(
+    expr_list_residuals_match_oracle(
+      @symsolvers.decompogen(
+        (x() ^ @symcore.int(4)) + @symcore.int(2) * (x() ^ @symcore.int(3)) - x() + @symcore.int(-1),
+        x(),
+      ),
+      "sympy.solvers.decompogen(x**4 + 2*x**3 - x - 1, x)",
+      "x",
+    ),
+    "[0, 0]",
+  )
+}
+
+///|
+test "solvers parity compogen" {
+  assert_eq(
+    @symprint.to_string(@symsolvers.compogen([sin(x()), cos(x())], x())),
+    solvers_eval_str("repr(" + compogen_oracle_expr("[sympy.sin(x), sympy.cos(x)], x") + ")"),
+  )
+  assert_eq(
+    normalize_text(
+      @symprint.to_string(
+        @symsolvers.compogen(
+          [(x() ^ @symcore.int(2)) + x() + @symcore.int(1), sin(x())],
+          x(),
+        ),
+      ),
+    ),
+    solvers_eval_str("repr(" + compogen_oracle_expr("[x**2 + x + 1, sympy.sin(x)], x") + ")"),
+  )
+  assert_eq(
+    normalize_text(
+      @symprint.to_string(
+        @symsolvers.compogen(
+          [sqrt(x()), @symcore.int(6) * (x() ^ @symcore.int(2)) + @symcore.int(-5)],
+          x(),
+        ),
+      ),
+    ),
+    solvers_eval_str("repr(" + compogen_oracle_expr("[sympy.sqrt(x), 6*x**2 - 5], x") + ")"),
+  )
+  assert_eq(
+    normalize_text(
+      @symprint.to_string(
+        @symsolvers.compogen(
+          [sin(x()), sqrt(x()), cos(x()), (x() ^ @symcore.int(2)) + @symcore.int(1)],
+          x(),
+        ),
+      ),
+    ),
+    solvers_eval_str("repr(" + compogen_oracle_expr("[sympy.sin(x), sympy.sqrt(x), sympy.cos(x), x**2 + 1], x") + ")"),
+  )
+  assert_eq(
+    normalize_text(
+      @symprint.to_string(
+        @symsolvers.compogen(
+          [@symcore.function("Abs", [x()]), (x() ^ @symcore.int(2)) + @symcore.int(3) * x() + @symcore.int(-4), cos(x())],
+          x(),
+        ),
+      ),
+    ),
+    solvers_eval_str("repr(" + compogen_oracle_expr("[sympy.Abs(x), x**2 + 3*x - 4, sympy.cos(x)], x") + ")"),
+  )
+  assert_eq(
+    recurrence_expr_matches_oracle(
+      @symsolvers.compogen(
+        [
+          (x() ^ @symcore.int(2)) + x() + @symcore.mul([@symcore.int(-1), sqrt(@symcore.int(3)), @symcore.pow(@symcore.int(2), @symcore.int(-1))]),
+          sin(x()),
+        ],
+        x(),
+      ),
+      compogen_oracle_expr("[x**2 + x - sympy.sqrt(3)/2, sympy.sin(x)], x"),
+      "x",
+    ),
+    "0",
+  )
+  assert_eq(
+    recurrence_expr_matches_oracle(
+      @symsolvers.compogen(
+        [
+          (x() ^ @symcore.int(2)) + @symcore.int(3) * x() + (cos(y()) ^ @symcore.int(2)) + @symcore.int(-4),
+          cos(x()),
+        ],
+        x(),
+      ),
+      compogen_oracle_expr("[x**2 + 3*x + sympy.cos(y)**2 - 4, sympy.cos(x)], x"),
+      "x y",
+    ),
+    "0",
+  )
+  assert_eq(
+    normalize_text(
+      @symprint.to_string(
+        @symsolvers.compogen(
+          [(x() ^ @symcore.int(2)) + @symcore.int(2) * x() + @symcore.int(1), x() ^ @symcore.int(2)],
+          x(),
+        ),
+      ),
+    ),
+    solvers_eval_str("repr(" + compogen_oracle_expr("[x**2 + 2*x + 1, x**2], x") + ")"),
+  )
+  assert_eq(
+    recurrence_expr_matches_oracle(
+      @symsolvers.compogen(
+        [(x() ^ @symcore.int(2)) - x() + @symcore.int(-1), (x() ^ @symcore.int(2)) + x()],
+        x(),
+      ),
+      compogen_oracle_expr("[x**2 - x - 1, x**2 + x], x"),
+      "x",
+    ),
+    "0",
   )
 }
 
@@ -1004,6 +1739,327 @@ test "solvers parity ode system matrix front doors" {
       "(sympy.exp(sympy.Matrix([[1, 2], [0, 3]])*x) * sympy.Matrix([sympy.Symbol('C1'), sympy.Symbol('C2')]))",
     ),
     "Matrix([[0], [0]])",
+  )
+}
+
+///|
+test "solvers parity constantsimp initial migrated cases" {
+  let c1 = @symcore.Expr::Symbol("C1")
+  assert_eq(
+    recurrence_expr_matches_oracle(
+      local_constant_renumber(@symsolvers.constantsimp(y() * c1 * x(), [c1, y()])),
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(y*C1*x, [C1, y]))",
+      "x y C1",
+    ),
+    "0",
+  )
+  assert_eq(
+    recurrence_expr_matches_oracle(
+      local_constant_renumber(@symsolvers.constantsimp(c1 * x() * y() * x() * y() * @symcore.int(2), [c1, y()])),
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(C1*x*y*x*y*2, [C1, y]))",
+      "x y C1",
+    ),
+    "0",
+  )
+  assert_eq(
+    recurrence_expr_matches_oracle(
+      local_constant_renumber(@symsolvers.constantsimp(@symcore.function("exp", [c1 + x()]), [c1])),
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.exp(sympy.Symbol('C1') + x), [sympy.Symbol('C1')]))",
+      "x C1",
+    ),
+    "0",
+  )
+}
+
+///|
+test "solvers parity constantsimp migrated power function and Eq cases" {
+  let c1 = @symcore.Expr::Symbol("C1")
+  let c2 = @symcore.Expr::Symbol("C2")
+
+  assert_eq(
+    @symprint.to_string(local_constant_renumber(@symsolvers.constantsimp(c1 ^ x(), [c1]))),
+    constantsimp_oracle_text(
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(C1**x, [C1]))",
+      "x C1",
+    ),
+  )
+  assert_eq(
+    @symprint.to_string(local_constant_renumber(@symsolvers.constantsimp(y() ^ c1, [c1, y()]))),
+    constantsimp_oracle_text(
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(y**C1, [C1, y]))",
+      "x y C1",
+    ),
+  )
+  assert_eq(
+    @symprint.to_string(local_constant_renumber(@symsolvers.constantsimp(@symcore.function("exp", [c1]), [c1]))),
+    constantsimp_oracle_text(
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.exp(C1), [C1]))",
+      "x C1",
+    ),
+  )
+  assert_eq(
+    @symprint.to_string(local_constant_renumber(@symsolvers.constantsimp(@symcore.applied_undefined_function("f", [c1, x()]), [c1]))),
+    constantsimp_oracle_text(
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Function('f')(C1, x), [C1]))",
+      "x C1",
+    ),
+  )
+  assert_eq(
+    recurrence_expr_matches_oracle(
+      local_constant_renumber(
+        @symsolvers.constantsimp(
+          @symcore.function("sin", [@symcore.int(2) * c1]) + x() + @symcore.function("sqrt", [@symcore.int(2)]),
+          [c1],
+        ),
+      ),
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.sin(2*C1) + x + sympy.sqrt(2), [C1]))",
+      "x C1",
+    ),
+    "0",
+  )
+  assert_eq(
+    @symprint.to_string(
+      local_constant_renumber(
+        @symsolvers.constantsimp(
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, c1, @symcore.int(3) + @symcore.applied_undefined_function("f", [x()]) * x()),
+          [c1],
+        ),
+      ),
+    ),
+    constantsimp_oracle_text(
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(C1, 3 + sympy.Function('f')(x)*x), [C1]))",
+      "x C1",
+    ),
+  )
+  assert_eq(
+    @symprint.to_string(
+      local_constant_renumber(
+        @symsolvers.constantsimp(
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, c1, @symcore.int(3) * @symcore.applied_undefined_function("f", [x()]) * x()),
+          [c1],
+        ),
+      ),
+    ),
+    constantsimp_oracle_text(
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(C1, 3*sympy.Function('f')(x)*x), [C1]))",
+      "x C1",
+    ),
+  )
+  assert_eq(
+    @symprint.to_string(local_constant_renumber(@symsolvers.constantsimp(@symcore.int(2) * c1 + c2, [c1, c2]))),
+    constantsimp_oracle_text(
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(2*C1 + C2, [C1, C2]))",
+      "x C1 C2",
+    ),
+  )
+}
+
+///|
+test "solvers parity constantsimp initial migrated ode solution cases" {
+  let c1 = @symcore.Expr::Symbol("C1")
+  let c2 = @symcore.Expr::Symbol("C2")
+  let c3 = @symcore.Expr::Symbol("C3")
+  let u2 = @symcore.Expr::Symbol("u2")
+  let a0 = @symcore.Expr::Symbol("_a")
+  let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("one_third") }
+  let imag = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+
+  assert_eq(
+    @symprint.to_string(
+      local_constant_renumber(
+        @symsolvers.constantsimp(
+          c1 * @symcore.function("exp", [@symcore.int(2) * x()]) +
+          @symcore.function("exp", [x()]) * (c2 + c3),
+          [c1, c2, c3],
+        ),
+      ),
+    ),
+    constantsimp_oracle_text(
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(C1*sympy.exp(2*x) + sympy.exp(x)*(C2 + C3), [C1, C2, C3]))",
+      "x C1 C2 C3",
+    ),
+  )
+
+  assert_eq(
+    @symprint.to_string(
+      local_constant_renumber(
+        @symsolvers.constantsimp(
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            @symcore.applied_undefined_function("f", [x()]),
+            imag * c1 * @symcore.function("sinh", [x() * one_third]) +
+            c2 * @symcore.function("cosh", [x() * one_third]),
+          ),
+          [c1, c2],
+        ),
+      ),
+    ),
+    constantsimp_oracle_text(
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(sympy.Function('f')(x), sympy.I*C1*sympy.sinh(x/3) + C2*sympy.cosh(x/3)), [C1, C2]))",
+      "x C1 C2",
+    ),
+  )
+
+  assert_eq(
+    @symprint.to_string(
+      local_constant_renumber(
+        @symsolvers.constantsimp(
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            @symcore.applied_undefined_function("f", [x()]),
+            @symcore.function(
+              "acos",
+              [@symcore.int(-1) * c1 * (@symcore.function("cos", [x()]) ^ @symcore.int(-1))],
+            ),
+          ),
+          [c1],
+        ),
+      ),
+    ),
+    constantsimp_oracle_text(
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(sympy.Function('f')(x), sympy.acos((-C1)/sympy.cos(x))), [C1]))",
+      "x C1",
+    ),
+  )
+
+  assert_eq(
+    @symprint.to_string(
+      local_constant_renumber(
+        @symsolvers.constantsimp(
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            @symcore.function("log", [@symcore.applied_undefined_function("f", [x()]) * (c1 ^ @symcore.int(-1))]) +
+            @symcore.int(2) * @symcore.function("exp", [x() * (@symcore.applied_undefined_function("f", [x()]) ^ @symcore.int(-1))]),
+            @symcore.int(0),
+          ),
+          [c1],
+        ),
+      ),
+    ),
+    constantsimp_oracle_text(
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(sympy.log(sympy.Function('f')(x)/C1) + 2*sympy.exp(x/sympy.Function('f')(x)), 0), [C1]))",
+      "x C1",
+    ),
+  )
+
+  let sqrt_log_local = local_constant_renumber(
+    @symsolvers.constantsimp(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        (x() ^ @symcore.int(2)) * (@symcore.int(2) ^ @symcore.int(-1)) * (@symcore.applied_undefined_function("f", [x()]) ^ @symcore.int(-2)) +
+        @symcore.function(
+          "log",
+          [
+            @symcore.function("sqrt", [@symcore.int(2)]) *
+            x() *
+            @symcore.function("sqrt", [x() ^ @symcore.int(-1)]) *
+            @symcore.function("sqrt", [@symcore.applied_undefined_function("f", [x()])]) *
+            (c1 ^ @symcore.int(-1)),
+          ],
+        ),
+        @symcore.int(0),
+      ),
+      [c1],
+    ),
+  )
+  assert_eq(
+    relational_residual_matches_oracle(
+      sqrt_log_local,
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(sympy.log(x*sympy.sqrt(2)*sympy.sqrt(1/x)*sympy.sqrt(sympy.Function('f')(x))/C1) + x**2/(2*sympy.Function('f')(x)**2), 0), [C1]))",
+      "x C1",
+    ),
+    "0",
+  )
+
+  let ratio = @symcore.applied_undefined_function("f", [x()]) * (x() ^ @symcore.int(-1))
+  let exp_ratio = @symcore.function("exp", [@symcore.int(-1) * ratio])
+  let trig_log_local = local_constant_renumber(
+    @symsolvers.constantsimp(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        @symcore.function("log", [x() * (c1 ^ @symcore.int(-1))]) -
+        exp_ratio * @symcore.function("sin", [ratio]) * (@symcore.int(2) ^ @symcore.int(-1)) -
+        exp_ratio * @symcore.function("cos", [ratio]) * (@symcore.int(2) ^ @symcore.int(-1)),
+        @symcore.int(0),
+      ),
+      [c1],
+    ),
+  )
+  assert_eq(
+    relational_residual_matches_oracle(
+      trig_log_local,
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(-sympy.exp(-sympy.Function('f')(x)/x)*sympy.sin(sympy.Function('f')(x)/x)/2 + sympy.log(x/C1) - sympy.cos(sympy.Function('f')(x)/x)*sympy.exp(-sympy.Function('f')(x)/x)/2, 0), [C1]))",
+      "x C1",
+    ),
+    "0",
+  )
+
+  assert_eq(
+    relational_list_residuals_match_oracle(
+      [
+        @symsolvers.constantsimp(
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            @symcore.applied_undefined_function("f", [x()]),
+            @symcore.function("sqrt", [@symcore.int(-1) * c1 * x() + (x() ^ @symcore.int(2))]),
+          ),
+          [c1],
+        ),
+        @symsolvers.constantsimp(
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            @symcore.applied_undefined_function("f", [x()]),
+            @symcore.int(-1) * @symcore.function("sqrt", [@symcore.int(-1) * c1 * x() + (x() ^ @symcore.int(2))]),
+          ),
+          [c1],
+        ),
+      ],
+      "[__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(i, [C1]) for i in [sympy.Eq(sympy.Function('f')(x), sympy.sqrt(-C1*x + x**2)), sympy.Eq(sympy.Function('f')(x), -sympy.sqrt(-C1*x + x**2))]]",
+      "x C1",
+    ),
+    "[0, 0]",
+  )
+
+  let integral_local = local_constant_renumber(
+    @symsolvers.constantsimp(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        @symcore.int(-1) *
+        @symcore.function(
+          "Integral",
+          [
+            @symcore.int(-1) *
+            ((u2 * @symcore.function("sqrt", [@symcore.int(1) - (u2 ^ @symcore.int(2))])) ^ @symcore.int(-1)),
+            @symcore.Expr::Tuple([u2, a0, x() * (@symcore.applied_undefined_function("f", [x()]) ^ @symcore.int(-1))]),
+          ],
+        ) +
+        @symcore.function("log", [@symcore.applied_undefined_function("f", [x()]) * (c1 ^ @symcore.int(-1))]),
+        @symcore.int(0),
+      ),
+      [c1],
+    ),
+  )
+  assert_eq(
+    relational_residual_matches_oracle(
+      integral_local,
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(-sympy.Integral(-1/(sympy.Symbol('u2')*sympy.sqrt(1 - sympy.Symbol('u2')**2)), (sympy.Symbol('u2'), sympy.Symbol('_a'), x/sympy.Function('f')(x))) + sympy.log(sympy.Function('f')(x)/C1), 0), [C1]))",
+      "x C1 u2 _a",
+    ),
+    "0",
+  )
+}
+
+///|
+test "solvers parity constantsimp upstream xfail nonlocal simplification behavior" {
+  let c1 = @symcore.Expr::Symbol("C1")
+  let c2 = @symcore.Expr::Symbol("C2")
+  assert_eq(
+    recurrence_expr_matches_oracle(
+      @symsolvers.constantsimp(c1 + c2 + x() * c2, [c1, c2]),
+      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(C1 + C2 + x*C2, [C1, C2])",
+      "x C1 C2",
+    ),
+    "0",
   )
 }
 

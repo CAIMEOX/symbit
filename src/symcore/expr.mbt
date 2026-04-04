@@ -1220,8 +1220,10 @@ fn is_zero_base_expr(expr : Expr) -> Bool {
 
 ///|
 pub fn pow(base : Expr, exp : Expr) -> Expr {
+  let base = normalize_legacy_expr(base)
+  let exp = normalize_legacy_expr(exp)
   if !current_evaluate() {
-    return raw_pow(normalize_legacy_expr(base), normalize_legacy_expr(exp))
+    return raw_pow(base, exp)
   }
   if expr_is_zero(exp) {
     Expr::Number(@symnum.BigRational::one())
@@ -1229,6 +1231,21 @@ pub fn pow(base : Expr, exp : Expr) -> Expr {
     base
   } else {
     match base {
+      Expr::Pow(inner_base, inner_exp) =>
+        match exact_numeric_expr_num_den(exp) {
+          Some((_, den)) if den.compare(1N) == 0 =>
+            pow(inner_base, mul([inner_exp, exp]))
+          _ =>
+            match base {
+              _ if is_zero_base_expr(base) =>
+                match base {
+                  Expr::ComplexFloat(z) => Expr::ComplexFloat(z)
+                  Expr::Float(f) => Expr::Float(f)
+                  _ => Expr::Number(@symnum.BigRational::zero())
+                }
+              _ => Expr::Pow(base, exp)
+            }
+        }
       _ if is_zero_base_expr(base) =>
         match base {
           Expr::ComplexFloat(z) => Expr::ComplexFloat(z)

@@ -161,48 +161,131 @@ pub fn compose(f : Poly, g : Poly) -> Poly raise PolyError {
   result
 }
 
+fn dup_right_decompose_local(
+  f : Array[FieldElem],
+  s : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let n = f.length() - 1
+  let lc = dup_LC(f)
+  let fd = dup_to_raw_dict(f, domain)
+  let g : Map[Int, FieldElem] = Map::new()
+  g.set(s, fe_from_int(1, domain))
+  let r = n / s
+  for i in 1..<s {
+    let mut coeff = fe_from_int(0, domain)
+    for j in 0..<i {
+      match (fd.get(n + j - i), g.get(s - j)) {
+        (Some(fc), Some(gc)) => {
+          let scale = fe_from_int(i - r * j, domain)
+          coeff = fe_add(coeff, fe_mul(fe_mul(scale, fc), gc))
+        }
+        _ => ()
+      }
+    }
+    let denom = fe_mul(fe_mul(fe_from_int(i, domain), fe_from_int(r, domain)), lc)
+    g.set(s - i, fe_mul(coeff, fe_inv(denom)))
+  }
+  dup_from_raw_dict(g, domain)
+}
+
 ///|
-/// Simple functional decomposition: if all exponents share a gcd>1,
-/// return h(x) and g(x)=x^k such that f(x)=h(g(x)); otherwise [f].
+fn dup_left_decompose_local(
+  f : Array[FieldElem],
+  h : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem]? raise PolyError {
+  let g : Map[Int, FieldElem] = Map::new()
+  let mut work = f
+  let mut i = 0
+  while !work.is_empty() {
+    let (q, r) = dup_div(work, h, domain)
+    if dup_degree(r) > 0 {
+      return None
+    }
+    g.set(i, dup_LC(r))
+    work = q
+    i += 1
+  }
+  Some(dup_from_raw_dict(g, domain))
+}
+
+///|
+fn dup_decompose_once_local(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem])? raise PolyError {
+  let degree = dup_degree(f)
+  for s in 2..<degree {
+    if degree % s != 0 {
+      continue
+    }
+    let h = dup_right_decompose_local(f, s, domain)
+    match dup_left_decompose_local(f, h, domain) {
+      Some(g) => return Some((g, h))
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+fn decompose_over_field(f : Poly) -> Array[Poly] raise PolyError {
+  let out_desc : Array[Array[FieldElem]] = []
+  let mut work = poly_to_dense_desc(f)
+  while true {
+    match dup_decompose_once_local(work, f.domain) {
+      Some((g, h)) => {
+        out_desc.push(h)
+        work = g
+      }
+      None => break
+    }
+  }
+  let out = [poly_from_dense_desc(work, f.gens[0], f.domain).with_order(f.order)]
+  let mut i = out_desc.length()
+  while i > 0 {
+    i -= 1
+    out.push(poly_from_dense_desc(out_desc[i], f.gens[0], f.domain).with_order(f.order))
+  }
+  out
+}
+
+///|
+fn decompose_restore_domain(parts : Array[Poly], original : Domain) -> Array[Poly] {
+  if original is Domain::ZZ {
+    let restored : Array[Poly] = []
+    for part in parts {
+      match (try? try_round_to_int(part) : Result[Poly, PolyError]) {
+        Ok(value) => restored.push(value.with_order(part.order))
+        Err(_) => return parts
+      }
+    }
+    return restored
+  }
+  parts
+}
+
+///|
+/// Functional decomposition following SymPy's dup_decompose main path over
+/// univariate characteristic-zero fields, with a ZZ->QQ lift/restore wrapper.
 pub fn decompose(f : Poly) -> Array[Poly] raise PolyError {
   if f.gens.length() != 1 {
     raise PolyError::NotUnivariate
   }
-  let mut exp_gcd = 0
-  for m, _ in f.coeffs {
-    let e = m.exps[0]
-    if e == 0 {
-      continue
-    }
-    exp_gcd = if exp_gcd == 0 { e } else { gcd_int(exp_gcd, e) }
-  }
-  if exp_gcd <= 1 {
+  let working = if domain_is_field_pred(f.domain) {
+    f
+  } else if f.domain is Domain::ZZ {
+    lift_to_qq(f)
+  } else {
     return [f]
   }
-  let p = smallest_prime_factor(exp_gcd)
-  if p <= 1 || f.degree(0) / p <= 1 {
-    return [f]
+  let parts = decompose_over_field(working)
+  if working.domain == f.domain {
+    parts
+  } else {
+    decompose_restore_domain(parts, f.domain)
   }
-  let g = Poly::zero(f.gens, f.domain)
-  let mono_g = monomial_one(1)
-  mono_g.exps.set(0, p)
-  add_term(g.coeffs, mono_g, fe_from_int(1, f.domain), f.domain)
-  let coeffs_h : Map[Monomial, FieldElem] = Map::new()
-  for m, c in f.coeffs {
-    let e = m.exps[0] / p
-    let mono_h = monomial_one(1)
-    mono_h.exps.set(0, e)
-    add_term(coeffs_h, mono_h, c, f.domain)
-  }
-  let h = Poly::{
-    coeffs: coeffs_h,
-    gens: f.gens,
-    domain: f.domain,
-    order: f.order,
-  }
-  let parts = decompose(h)
-  parts.push(g)
-  parts
 }
 
 ///|
