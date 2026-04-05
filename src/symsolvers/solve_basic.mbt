@@ -290,7 +290,7 @@ fn negative_power_denominator_base(expr : Expr) -> Expr? {
 }
 
 ///|
-fn collect_denominator_factors(expr : Expr) -> Array[Expr] {
+fn collect_expr_denominator_factors(expr : Expr) -> Array[Expr] {
   let out : Array[Expr] = []
   for node in @symcore.preorder(expr) {
     match negative_power_denominator_base(node) {
@@ -302,6 +302,22 @@ fn collect_denominator_factors(expr : Expr) -> Array[Expr] {
     }
   }
   out
+}
+
+///|
+fn collect_denominator_factors(expr : Expr) -> Array[Expr] {
+  match @symcore.relational_parts(expr) {
+    Some((_, lhs, rhs)) => {
+      let out = collect_expr_denominator_factors(lhs)
+      for item in collect_expr_denominator_factors(rhs) {
+        if !out.any(existing => @symcore.compare_expr(existing, item) == 0) {
+          out.push(item)
+        }
+      }
+      out
+    }
+    None => collect_expr_denominator_factors(expr)
+  }
 }
 
 ///|
@@ -331,8 +347,36 @@ fn linear_solution_from_matrix(num : Expr, symbol : Expr) -> (Expr, Expr)? {
 }
 
 ///|
+fn symbolic_condition_expr_text(expr : Expr) -> String {
+  match expr {
+    Expr::Add(args) => {
+      let positive_parts : Array[String] = []
+      let negative_parts : Array[String] = []
+      for arg in args {
+        let text = @symprint.to_string(arg)
+        if text.has_prefix("-") {
+          negative_parts.push(text.unsafe_substring(start=1, end=text.length()))
+        } else {
+          positive_parts.push(text)
+        }
+      }
+      if positive_parts.is_empty() || negative_parts.is_empty() {
+        @symprint.to_string(expr)
+      } else {
+        let mut out = positive_parts.join(" + ")
+        for part in negative_parts {
+          out = out + " - " + part
+        }
+        out
+      }
+    }
+    _ => @symprint.to_string(expr)
+  }
+}
+
+///|
 fn symbolic_condition_set(expr : Expr, symbol : Expr, base : Set) -> Set {
-  let text = @symprint.to_string(expr) + " = 0"
+  let text = "Eq(" + symbolic_condition_expr_text(expr) + ", 0)"
   @symsets.condition_set(symbol, @symlogic.bool_symbol(text), base~)
 }
 
@@ -763,6 +807,11 @@ fn expr_is_known_nonpositive(expr : Expr) -> Bool {
 ///|
 fn expr_is_known_nonnegative(expr : Expr) -> Bool {
   @symassume.tri_to_bool_option(@symassume.is_nonnegative(expr)).unwrap_or(false)
+}
+
+///|
+fn expr_is_known_negative(expr : Expr) -> Bool {
+  expr_is_known_positive(negate_expr(expr))
 }
 
 ///|
@@ -1216,6 +1265,33 @@ fn validate_solution_set(
 }
 
 ///|
+fn exclude_relational_singularities(
+  expr : Expr,
+  symbol : Expr,
+  domain : Set,
+  set : Set,
+) -> Set {
+  let dens = collect_denominator_factors(expr)
+  if dens.is_empty() {
+    return set
+  }
+  let invalid_parts : Array[Set] = []
+  for factor in dens {
+    let part_res : Result[Set, SolverError] =
+      try? solveset(factor, symbol=Some(symbol), domain=domain)
+    match part_res {
+      Ok(part) => invalid_parts.push(part)
+      Err(_) => ()
+    }
+  }
+  if invalid_parts.is_empty() {
+    return set
+  }
+  let invalid = @symsets.union(invalid_parts)
+  solver_set_difference(set, invalid)
+}
+
+///|
 fn add_expr_items(items : Array[Expr]) -> Expr {
   if items.is_empty() {
     @symcore.int(0)
@@ -1322,12 +1398,10 @@ fn invert_real_expr(
     Expr::Apply(Expr::FunctionHead("exp"), [arg]) => {
       let shifted : Array[Expr] = []
       for rhs in rhs_items {
-        if expr_is_known_positive(rhs) {
-          shifted.push(canonical_expr(@symcore.function("log", [rhs])))
-        } else if expr_is_known_nonpositive(rhs) {
+        if expr_is_known_nonpositive(rhs) {
           return (arg, [])
         } else {
-          return (normalized, rhs_items)
+          shifted.push(canonical_expr(@symcore.function("log", [rhs])))
         }
       }
       return invert_real_expr(arg, shifted, symbol)
@@ -1466,6 +1540,131 @@ fn invert_real_expr(
   }
 
   (normalized, rhs_items)
+}
+
+///|
+fn flip_relop(op : @symcore.RelOp) -> @symcore.RelOp {
+  match op {
+    @symcore.RelOp::Lt => @symcore.RelOp::Gt
+    @symcore.RelOp::Le => @symcore.RelOp::Ge
+    @symcore.RelOp::Gt => @symcore.RelOp::Lt
+    @symcore.RelOp::Ge => @symcore.RelOp::Le
+    other => other
+  }
+}
+
+///|
+fn invert_real_relational_monotonic(
+  expr : Expr,
+  rhs : Expr,
+  symbol : Expr,
+  op : @symcore.RelOp,
+) -> (Expr, Expr, @symcore.RelOp)? {
+  let normalized = canonical_expr(expr)
+  if @symcore.compare_expr(normalized, symbol) == 0 {
+    return Some((normalized, canonical_expr(rhs), op))
+  }
+
+  match add_independent_decompose(normalized, symbol) {
+    Some((g, h)) =>
+      return invert_real_relational_monotonic(
+        h,
+        canonical_expr(@symcore.add([rhs, negate_expr(g)])),
+        symbol,
+        op,
+      )
+    None => ()
+  }
+
+  match mul_independent_decompose(normalized, symbol) {
+    Some((g, h)) =>
+      if expr_is_known_positive(g) {
+        return invert_real_relational_monotonic(
+          h,
+          canonical_expr(@symcore.mul([rhs, @symcore.pow(g, @symcore.int(-1))])),
+          symbol,
+          op,
+        )
+      } else if expr_is_known_negative(g) {
+        return invert_real_relational_monotonic(
+          h,
+          canonical_expr(@symcore.mul([rhs, @symcore.pow(g, @symcore.int(-1))])),
+          symbol,
+          flip_relop(op),
+        )
+      }
+    None => ()
+  }
+
+  match normalized {
+    Expr::Apply(Expr::FunctionHead("log"), [arg]) =>
+      return invert_real_relational_monotonic(
+        arg,
+        canonical_expr(@symcore.function("exp", [rhs])),
+        symbol,
+        op,
+      )
+    Expr::Apply(Expr::FunctionHead("exp"), [arg]) =>
+      if expr_is_known_positive(rhs) {
+        return invert_real_relational_monotonic(
+          arg,
+          canonical_expr(@symcore.function("log", [rhs])),
+          symbol,
+          op,
+        )
+      }
+    _ => ()
+  }
+
+  None
+}
+
+///|
+fn relational_bound_set(op : @symcore.RelOp, bound : Expr) -> Set {
+  let inf = Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  let ninf = Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
+  match op {
+    @symcore.RelOp::Lt =>
+      @symsets.interval(ninf, bound, left_open=true, right_open=true)
+    @symcore.RelOp::Le =>
+      @symsets.interval(ninf, bound, left_open=true, right_open=false)
+    @symcore.RelOp::Gt =>
+      @symsets.interval(bound, inf, left_open=true, right_open=true)
+    @symcore.RelOp::Ge =>
+      @symsets.interval(bound, inf, left_open=false, right_open=true)
+    @symcore.RelOp::Eq => @symsets.finite_set([bound])
+    @symcore.RelOp::Ne =>
+      @symsets.complement(@symsets.reals(), @symsets.finite_set([bound]))
+  }
+}
+
+///|
+fn solve_monotonic_relational_set(
+  expr : Expr,
+  symbol : Expr,
+  domain : Set,
+) -> Set? {
+  match @symcore.relational_parts(expr) {
+    Some((op, lhs, rhs)) => {
+      let target = canonical_expr(@symcore.add([lhs, negate_expr(rhs)]))
+      match invert_real_relational_monotonic(
+        target,
+        @symcore.int(0),
+        symbol,
+        op,
+      ) {
+        Some((lhs, bound, solved_op)) if @symcore.compare_expr(lhs, symbol) == 0 =>
+          Some(
+            finalize_solveset_domain(
+              domain,
+              solver_set_intersection(relational_bound_set(solved_op, bound), domain),
+            ),
+          )
+        _ => None
+      }
+    }
+    None => None
+  }
 }
 
 ///|
@@ -1917,11 +2116,20 @@ pub fn solveset(
     | Some((@symcore.RelOp::Gt, _, _))
     | Some((@symcore.RelOp::Le, _, _))
     | Some((@symcore.RelOp::Lt, _, _))
-    | Some((@symcore.RelOp::Ne, _, _)) =>
-      match solve_univariate_inequality(expr, sym, relational=false, domain=domain) {
-        InequalityResult::Set(set) => return set
-        _ => return @symsets.empty_set()
+    | Some((@symcore.RelOp::Ne, _, _)) => {
+      let inequality_res : Result[InequalityResult, SolverError] =
+        try? solve_univariate_inequality(expr, sym, relational=false, domain=domain)
+      match inequality_res {
+        Ok(InequalityResult::Set(set)) =>
+          return exclude_relational_singularities(expr, sym, domain, set)
+        _ =>
+          match solve_monotonic_relational_set(expr, sym, domain) {
+            Some(set) =>
+              return exclude_relational_singularities(expr, sym, domain, set)
+            None => ()
+          }
       }
+    }
     _ => ()
   }
   let raw_normalized = normalize_equation(expr)

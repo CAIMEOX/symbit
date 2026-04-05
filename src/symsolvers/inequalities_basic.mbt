@@ -53,15 +53,26 @@ fn solver_numeric_compare(lhs : Expr, rhs : Expr) -> Int? {
     None => {
       let lhs_eval = @symcore.evalf(lhs, prec=80)
       let rhs_eval = @symcore.evalf(rhs, prec=80)
-      let lt = Expr::Relational(@symcore.RelOp::Lt, lhs_eval, rhs_eval)
-      if @symcore.is_true(lt) {
-        Some(-1)
-      } else if @symcore.is_true(Expr::Relational(@symcore.RelOp::Gt, lhs_eval, rhs_eval)) {
-        Some(1)
-      } else if @symcore.is_true(Expr::Relational(@symcore.RelOp::Eq, lhs_eval, rhs_eval)) {
-        Some(0)
-      } else {
-        None
+      match (lhs_eval, rhs_eval) {
+        (Expr::Number(_) | Expr::Float(_), Expr::Number(_) | Expr::Float(_)) =>
+          Some(@symcore.compare_expr(lhs_eval, rhs_eval))
+        _ =>
+          match @symcore.bool_value(Expr::Relational(@symcore.RelOp::Lt, lhs_eval, rhs_eval)) {
+            Some(true) => Some(-1)
+            Some(false) =>
+              match @symcore.bool_value(Expr::Relational(@symcore.RelOp::Gt, lhs_eval, rhs_eval)) {
+                Some(true) => Some(1)
+                Some(false) =>
+                  match @symcore.bool_value(
+                    Expr::Relational(@symcore.RelOp::Eq, lhs_eval, rhs_eval),
+                  ) {
+                    Some(true) => Some(0)
+                    _ => None
+                  }
+                None => None
+              }
+            None => None
+          }
       }
     }
   }
@@ -616,12 +627,8 @@ fn solver_univariate_inequality_set(
 ) -> Set raise SolverError {
   let (target, rel) = solver_relation_expr(expr)
   let name = symbol_name(gen)
-  let numer = @sympolys.domain_numer_expr(@sympolys.Domain::EX, target) catch {
-    _ => target
-  }
-  let denom = @sympolys.domain_denom_expr(@sympolys.Domain::EX, target) catch {
-    _ => @symcore.int(1)
-  }
+  let rational_target = canonical_expr(@symsimplify.ratsimp(target, max_passes=4))
+  let (numer, denom) = @symsimplify.fraction(rational_target)
   let numer_poly = @sympolys.Poly::from_expr_defaults(numer, gens=[name]) catch {
     err => raise wrap_poly_error("solve_univariate_inequality", err)
   }

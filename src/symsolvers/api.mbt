@@ -1,6 +1,7 @@
 ///|
 pub(all) suberror SolverError {
   ValueError(String)
+  NonlinearError(String)
   ShapeError(String)
   InfeasibleLPError(String)
   UnboundedLPError(String)
@@ -46,6 +47,15 @@ fn symbol_names(symbols : Array[Expr]) -> Array[String] raise SolverError {
 ///|
 fn wrap_poly_error(prefix : String, err : @sympolys.PolyError) -> SolverError {
   SolverError::ValueError(prefix + ": " + err.to_string())
+}
+
+///|
+fn wrap_linear_eq_poly_error(err : @sympolys.PolyError) -> SolverError {
+  match err {
+    @sympolys.PolyError::NonPolynomial =>
+      SolverError::NonlinearError("linear_eq_to_matrix: " + err.to_string())
+    _ => wrap_poly_error("linear_eq_to_matrix", err)
+  }
 }
 
 ///|
@@ -324,9 +334,15 @@ pub fn linear_eq_to_matrix(
   equations : Array[Expr],
   symbols : Array[Expr],
 ) -> (Matrix, Matrix) raise SolverError {
+  if symbols.is_empty() {
+    raise SolverError::ValueError("linear_eq_to_matrix expects at least one symbol")
+  }
+  if equations.any(expr => expr is Expr::Boolean(_)) {
+    raise SolverError::ValueError("linear_eq_to_matrix expects equations, not Boolean")
+  }
   let names = symbol_names(symbols)
   let (coeffs, const_terms) = @sympolys._linear_eq_to_dict(equations, names) catch {
-    err => raise wrap_poly_error("linear_eq_to_matrix", err)
+    err => raise wrap_linear_eq_poly_error(err)
   }
   let lhs_rows : Array[Array[Expr]] = []
   let rhs_rows : Array[Array[Expr]] = []
