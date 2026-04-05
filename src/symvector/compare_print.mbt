@@ -369,3 +369,216 @@ pub impl Show for Del with to_string(self) -> String {
 pub impl Show for Del with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
+
+///|
+pub impl Eq for VectorZero with equal(self, other : VectorZero) -> Bool {
+  self.value_ == other.value_
+}
+
+///|
+pub impl Show for VectorZero with to_string(self) -> String {
+  self.value_.to_string()
+}
+
+///|
+pub impl Show for VectorZero with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Eq for VectorMul with equal(self, other : VectorMul) -> Bool {
+  self.base_vector_ == other.base_vector_ &&
+  @symcore.compare_expr(self.measure_number_, other.measure_number_) == 0
+}
+
+///|
+pub impl Show for VectorMul with to_string(self) -> String {
+  self.value_.to_string()
+}
+
+///|
+pub impl Show for VectorMul with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Eq for VectorAdd with equal(self, other : VectorAdd) -> Bool {
+  self.value_ == other.value_
+}
+
+///|
+pub impl Show for VectorAdd with to_string(self) -> String {
+  self.value_.to_string()
+}
+
+///|
+pub impl Show for VectorAdd with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Eq for Cross with equal(self, other : Cross) -> Bool {
+  self.sign_ == other.sign_ &&
+  self.lhs_ == other.lhs_ &&
+  self.rhs_ == other.rhs_
+}
+
+///|
+pub impl Show for Cross with to_string(self) -> String {
+  let body = "Cross(" +
+    self.lhs_.to_string() +
+    ", " +
+    self.rhs_.to_string() +
+    ")"
+  if self.sign_ < 0 {
+    "-" + body
+  } else {
+    body
+  }
+}
+
+///|
+pub impl Show for Cross with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Eq for Dot with equal(self, other : Dot) -> Bool {
+  self.lhs_ == other.lhs_ && self.rhs_ == other.rhs_
+}
+
+///|
+pub impl Show for Dot with to_string(self) -> String {
+  "Dot(" + self.lhs_.to_string() + ", " + self.rhs_.to_string() + ")"
+}
+
+///|
+pub impl Show for Dot with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Eq for DyadicZero with equal(self, other : DyadicZero) -> Bool {
+  self.value_ == other.value_
+}
+
+///|
+pub impl Show for DyadicZero with to_string(self) -> String {
+  self.value_.to_string()
+}
+
+///|
+pub impl Show for DyadicZero with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Eq for DyadicMul with equal(self, other : DyadicMul) -> Bool {
+  self.base_dyadic_ == other.base_dyadic_ &&
+  @symcore.compare_expr(self.measure_number_, other.measure_number_) == 0
+}
+
+///|
+pub impl Show for DyadicMul with to_string(self) -> String {
+  self.value_.to_string()
+}
+
+///|
+pub impl Show for DyadicMul with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Eq for DyadicAdd with equal(self, other : DyadicAdd) -> Bool {
+  self.value_ == other.value_
+}
+
+///|
+pub impl Show for DyadicAdd with to_string(self) -> String {
+  self.value_.to_string()
+}
+
+///|
+pub impl Show for DyadicAdd with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Show for AxisOrienter with to_string(self) -> String {
+  "AxisOrienter(" +
+  @symprint.to_string(self.angle_) +
+  ", " +
+  self.axis_.to_string() +
+  ")"
+}
+
+///|
+pub impl Show for AxisOrienter with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Show for BodyOrienter with to_string(self) -> String {
+  "BodyOrienter(" +
+  @symprint.to_string(self.angle1_) +
+  ", " +
+  @symprint.to_string(self.angle2_) +
+  ", " +
+  @symprint.to_string(self.angle3_) +
+  ", " +
+  self.rotation_order_ +
+  ")"
+}
+
+///|
+pub impl Show for BodyOrienter with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Show for SpaceOrienter with to_string(self) -> String {
+  "SpaceOrienter(" +
+  @symprint.to_string(self.angle1_) +
+  ", " +
+  @symprint.to_string(self.angle2_) +
+  ", " +
+  @symprint.to_string(self.angle3_) +
+  ", " +
+  self.rotation_order_ +
+  ")"
+}
+
+///|
+pub impl Show for SpaceOrienter with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Show for QuaternionOrienter with to_string(self) -> String {
+  "QuaternionOrienter(" +
+  @symprint.to_string(self.q0_) +
+  ", " +
+  @symprint.to_string(self.q1_) +
+  ", " +
+  @symprint.to_string(self.q2_) +
+  ", " +
+  @symprint.to_string(self.q3_) +
+  ")"
+}
+
+///|
+pub impl Show for QuaternionOrienter with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Show for TransformFunction with to_string(self) -> String {
+  "TransformFunction(" +
+  self.equations_.map(@symprint.to_string).join(", ") +
+  ")"
+}
+
+///|
+pub impl Show for TransformFunction with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}

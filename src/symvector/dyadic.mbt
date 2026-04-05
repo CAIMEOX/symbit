@@ -96,6 +96,74 @@ pub fn Dyadic::cross(
 }
 
 ///|
+fn dyadic_matrix_in_systems(
+  dyadic : Dyadic,
+  system : CoordSys3D,
+  right_system : CoordSys3D,
+  variables : Bool,
+) -> @symphysics.ExplicitMatrix raise @rawvec.VectorError {
+  let accum = [
+    [@symcore.int(0), @symcore.int(0), @symcore.int(0)],
+    [@symcore.int(0), @symcore.int(0), @symcore.int(0)],
+    [@symcore.int(0), @symcore.int(0), @symcore.int(0)],
+  ]
+  let components = dyadic.components()
+  let basis = components.keys().to_array()
+  basis.sort()
+  for item in basis {
+    let left_rows = (vector_matrix_in_system(
+      item.left_.to_vector(),
+      system,
+      variables,
+    ) catch {
+      err => raise err
+    }).rows_copy()
+    let right_rows = (vector_matrix_in_system(
+      item.right_.to_vector(),
+      right_system,
+      variables,
+    ) catch {
+      err => raise err
+    }).rows_copy()
+    let coeff = components[item]
+    for i in 0..<3 {
+      for j in 0..<3 {
+        accum[i][j] = accum[i][j] + coeff * left_rows[i][0] * right_rows[j][0]
+      }
+    }
+  }
+  matrix_simplify_entries(
+    @symphysics.explicit_matrix_from_rows(accum) catch {
+      _ => abort("dyadic_matrix_in_systems")
+    },
+  )
+}
+
+///|
+fn dyadic_from_matrix_in_systems(
+  matrix : @symphysics.ExplicitMatrix,
+  system : CoordSys3D,
+  right_system : CoordSys3D,
+) -> Dyadic raise @rawvec.VectorError {
+  let rows = matrix.rows_copy()
+  let left_basis = system.base_vectors()
+  let right_basis = right_system.base_vectors()
+  let mut out = dyadic_zero()
+  for i in 0..<3 {
+    for j in 0..<3 {
+      let coeff = rows[i][j]
+      if !@symcore.is_zero(coeff) {
+        out = out +
+          (left_basis[i].outer(right_basis[j]) catch { err => raise err }).scale(
+            coeff,
+          )
+      }
+    }
+  }
+  out
+}
+
+///|
 pub fn Dyadic::express(
   self : Dyadic,
   system : CoordSys3D,
@@ -103,12 +171,14 @@ pub fn Dyadic::express(
   variables? : Bool = false,
 ) -> Dyadic raise @rawvec.VectorError {
   let right_system = system2.unwrap_or(system)
-  {
-    raw_: self.raw_.express(
-      system.frame_,
-      frame2=Some(right_system.frame_),
-      variables~,
-    ),
+  dyadic_from_matrix_in_systems(
+    dyadic_matrix_in_systems(self, system, right_system, variables) catch {
+      err => raise err
+    },
+    system,
+    right_system,
+  ) catch {
+    err => raise err
   }
 }
 
@@ -119,7 +189,9 @@ pub fn Dyadic::to_matrix(
   system2? : CoordSys3D? = None,
 ) -> @symphysics.ExplicitMatrix raise @rawvec.VectorError {
   let right_system = system2.unwrap_or(system)
-  self.raw_.to_matrix(system.frame_, frame2=Some(right_system.frame_))
+  dyadic_matrix_in_systems(self, system, right_system, false) catch {
+    err => raise err
+  }
 }
 
 ///|

@@ -695,3 +695,255 @@ test "dyadics support outer products and matrix conversion" {
     "cos(q)*sin(q),cos(q)**2,0|-sin(q)**2,-cos(q)*sin(q),0|0,0,0",
   )
 }
+
+///|
+test "basisdependent wrappers expose sympy-style vector surface" {
+  let c = coord_sys3d("C") catch { _ => fail("C") }
+  let zero = vector_zero_expr()
+  assert_eq(zero.to_string(), "0")
+  assert_eq(zero.doit(), vector_zero())
+
+  let mul = vector_mul_expr(c.x().expr(), c.i())
+  assert_eq(mul.to_string(), "C.x*C.i")
+  assert_eq(mul.base_vector(), c.i())
+  assert_eq(@symprint.to_string(mul.measure_number()), "C.x")
+  assert_eq(mul.doit(), vector_term(c.x().expr(), c.i()))
+
+  let add = vector_add_expr([c.i().to_vector(), c.j().to_vector()])
+  assert_eq(add.to_string(), "C.i + C.j")
+  assert_eq(add.doit(), c.i().to_vector() + c.j().to_vector())
+
+  let cross_op = cross_unevaluated(c.j().to_vector(), c.i().to_vector())
+  assert_eq(cross_op.to_string(), "-Cross(C.i, C.j)")
+  assert_eq(
+    cross_op.doit() catch {
+      _ => fail("cross-op")
+    },
+    c.k().to_vector().neg(),
+  )
+
+  let dot_op = dot_unevaluated(c.j().to_vector(), c.i().to_vector())
+  assert_eq(dot_op.to_string(), "Dot(C.i, C.j)")
+  assert_eq(
+    @symprint.to_string(dot_op.doit() catch { _ => fail("dot-op") }),
+    "0",
+  )
+}
+
+///|
+test "orienters and coordinate transformations follow sympy formulas" {
+  let q1 = @symcore.Expr::Symbol("q1")
+  let q2 = @symcore.Expr::Symbol("q2")
+  let q3 = @symcore.Expr::Symbol("q3")
+  let q4 = @symcore.Expr::Symbol("q4")
+  let n = coord_sys3d("N") catch { _ => fail("N") }
+
+  let axis = axis_orienter(q1, n.k().to_vector())
+  assert_eq(
+    matrix_text(axis.rotation_matrix(n) catch { _ => fail("axis-mat") }),
+    "cos(q1),sin(q1),0|-sin(q1),cos(q1),0|0,0,1",
+  )
+
+  let body = body_orienter(q1, q2, q3, "123") catch { _ => fail("body") }
+  assert_true(
+    matrix_expr_eq(body.rotation_matrix(), [
+      [
+        @symelem.cos(q2) * @symelem.cos(q3),
+        @symelem.sin(q1) * @symelem.sin(q2) * @symelem.cos(q3) +
+        @symelem.sin(q3) * @symelem.cos(q1),
+        @symelem.sin(q1) * @symelem.sin(q3) -
+        @symelem.sin(q2) * @symelem.cos(q1) * @symelem.cos(q3),
+      ],
+      [
+        @symcore.int(-1) * @symelem.sin(q3) * @symelem.cos(q2),
+        @symcore.int(-1) *
+        @symelem.sin(q1) *
+        @symelem.sin(q2) *
+        @symelem.sin(q3) +
+        @symelem.cos(q1) * @symelem.cos(q3),
+        @symelem.sin(q1) * @symelem.cos(q3) +
+        @symelem.sin(q2) * @symelem.sin(q3) * @symelem.cos(q1),
+      ],
+      [
+        @symelem.sin(q2),
+        @symcore.int(-1) * @symelem.sin(q1) * @symelem.cos(q2),
+        @symelem.cos(q1) * @symelem.cos(q2),
+      ],
+    ]),
+  )
+
+  let space = space_orienter(q1, q2, q3, "123") catch { _ => fail("space") }
+  assert_true(
+    matrix_expr_eq(space.rotation_matrix(), [
+      [
+        @symelem.cos(q2) * @symelem.cos(q3),
+        @symelem.sin(q3) * @symelem.cos(q2),
+        @symcore.int(-1) * @symelem.sin(q2),
+      ],
+      [
+        @symelem.sin(q1) * @symelem.sin(q2) * @symelem.cos(q3) -
+        @symelem.sin(q3) * @symelem.cos(q1),
+        @symelem.sin(q1) * @symelem.sin(q2) * @symelem.sin(q3) +
+        @symelem.cos(q1) * @symelem.cos(q3),
+        @symelem.sin(q1) * @symelem.cos(q2),
+      ],
+      [
+        @symelem.sin(q1) * @symelem.sin(q3) +
+        @symelem.sin(q2) * @symelem.cos(q1) * @symelem.cos(q3),
+        @symcore.int(-1) * @symelem.sin(q1) * @symelem.cos(q3) +
+        @symelem.sin(q2) * @symelem.sin(q3) * @symelem.cos(q1),
+        @symelem.cos(q1) * @symelem.cos(q2),
+      ],
+    ]),
+  )
+
+  let quat = quaternion_orienter(q1, q2, q3, q4)
+  assert_true(
+    matrix_expr_eq(quat.rotation_matrix(), [
+      [
+        (q1 ^ @symcore.int(2)) +
+        (q2 ^ @symcore.int(2)) -
+        (q3 ^ @symcore.int(2)) -
+        (q4 ^ @symcore.int(2)),
+        @symcore.int(2) * (q1 * q4 + q2 * q3),
+        @symcore.int(2) * (@symcore.int(-1) * q1 * q3 + q2 * q4),
+      ],
+      [
+        @symcore.int(2) * (@symcore.int(-1) * q1 * q4 + q2 * q3),
+        (q1 ^ @symcore.int(2)) -
+        (q2 ^ @symcore.int(2)) +
+        (q3 ^ @symcore.int(2)) -
+        (q4 ^ @symcore.int(2)),
+        @symcore.int(2) * (q1 * q2 + q3 * q4),
+      ],
+      [
+        @symcore.int(2) * (q1 * q3 + q2 * q4),
+        @symcore.int(2) * (@symcore.int(-1) * q1 * q2 + q3 * q4),
+        (q1 ^ @symcore.int(2)) -
+        (q2 ^ @symcore.int(2)) -
+        (q3 ^ @symcore.int(2)) +
+        (q4 ^ @symcore.int(2)),
+      ],
+    ]),
+  )
+
+  let body_sys = n.orient_new_body("B", q1, q2, q3, "123") catch {
+    _ => fail("body-sys")
+  }
+  let space_sys = n.orient_new_space("S", q1, q2, q3, "123") catch {
+    _ => fail("space-sys")
+  }
+  let quat_sys = n.orient_new_quaternion("Q", q1, q2, q3, q4) catch {
+    _ => fail("quat-sys")
+  }
+  assert_true(
+    matrix_expr_eq(
+      body_sys.rotation_matrix(n) catch {
+        _ => fail("body-rot")
+      },
+      body.rotation_matrix().rows_copy(),
+    ),
+  )
+  assert_true(
+    matrix_expr_eq(
+      space_sys.rotation_matrix(n) catch {
+        _ => fail("space-rot")
+      },
+      space.rotation_matrix().rows_copy(),
+    ),
+  )
+  assert_true(
+    matrix_expr_eq(
+      quat_sys.rotation_matrix(n) catch {
+        _ => fail("quat-rot")
+      },
+      quat.rotation_matrix().rows_copy(),
+    ),
+  )
+  assert_eq(
+    n.orient_new("A", [orienter_axis(axis_orienter(q1, n.k().to_vector()))]) catch {
+      _ => fail("orient-new")
+    },
+    n.orient_new_axis("A", q1, n.k().to_vector()) catch {
+      _ => fail("orient-axis")
+    },
+  )
+}
+
+///|
+test "create_new exposes transformations and change of basis" {
+  let a = coord_sys3d("A") catch { _ => fail("A") }
+  let s = a.create_new("S", "spherical") catch { _ => fail("S") }
+  let theta = s.y().expr()
+  let phi = s.z().expr()
+
+  let to_parent = s.transformation_to_parent()
+  assert_true(
+    expr_eq(
+      to_parent[0],
+      s.x().expr() * @symelem.sin(s.y().expr()) * @symelem.cos(s.z().expr()),
+    ),
+  )
+  assert_true(
+    expr_eq(
+      to_parent[1],
+      s.x().expr() * @symelem.sin(s.y().expr()) * @symelem.sin(s.z().expr()),
+    ),
+  )
+  assert_true(expr_eq(to_parent[2], s.x().expr() * @symelem.cos(s.y().expr())))
+  let from_parent = s.transformation_from_parent() catch {
+    _ => fail("from-parent")
+  }
+  let radius = @symelem.sqrt(
+    (a.x().expr() ^ @symcore.int(2)) +
+    (a.y().expr() ^ @symcore.int(2)) +
+    (a.z().expr() ^ @symcore.int(2)),
+  )
+  assert_true(expr_eq(from_parent[0], radius))
+  assert_true(
+    expr_eq(
+      from_parent[1],
+      @symelem.acos(a.z().expr() * (radius ^ @symcore.int(-1))),
+    ),
+  )
+  assert_true(
+    expr_eq(from_parent[2], @symelem.atan2(a.y().expr(), a.x().expr())),
+  )
+
+  let from_parent_fn = s.transformation_from_parent_function() catch {
+    _ => fail("from-parent-fn")
+  }
+  let from_parent_applied = from_parent_fn.call(
+    a.x().expr(),
+    a.y().expr(),
+    a.z().expr(),
+  )
+  assert_true(expr_eq(from_parent_applied[0], from_parent[0]))
+  assert_true(expr_eq(from_parent_applied[1], from_parent[1]))
+  assert_true(expr_eq(from_parent_applied[2], from_parent[2]))
+
+  assert_true(
+    matrix_expr_eq(
+      a.change_of_basis_matrix_from(s) catch {
+        _ => fail("cob")
+      },
+      [
+        [
+          @symelem.sin(theta) * @symelem.cos(phi),
+          @symelem.cos(theta) * @symelem.cos(phi),
+          @symcore.int(-1) * @symelem.sin(phi),
+        ],
+        [
+          @symelem.sin(theta) * @symelem.sin(phi),
+          @symelem.cos(theta) * @symelem.sin(phi),
+          @symelem.cos(phi),
+        ],
+        [
+          @symelem.cos(theta),
+          @symcore.int(-1) * @symelem.sin(theta),
+          @symcore.int(0),
+        ],
+      ],
+    ),
+  )
+}

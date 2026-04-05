@@ -91,6 +91,21 @@ fn vector_matches_sympy(
 }
 
 ///|
+fn matrix_matches_py_expr(
+  matrix : @symphysics.ExplicitMatrix,
+  py_expected : String,
+) -> Bool raise {
+  vector_eval_str(
+    "(lambda q1, q2, q3, q4: str(all(sympy.simplify(x) == 0 for row in ((" +
+    matrix_py_expr(matrix) +
+    ") - (" +
+    py_expected +
+    ")).tolist() for x in row)))(sympy.Symbol('q1'), sympy.Symbol('q2'), sympy.Symbol('q3'), sympy.Symbol('q4'))",
+  ) ==
+  "True"
+}
+
+///|
 test "vector root objects parity for names and basis" {
   let c = @symvector.coord_sys3d("C") catch { _ => fail("C") }
   assert_eq(
@@ -730,6 +745,208 @@ test "dyadic parity against repo sympy" {
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')," +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C').orient_new_axis('B', sympy.Symbol('q'), __import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C').k)," +
       "sympy.Symbol('q'))",
+    ),
+    "0|0|0|0|0|0|0|0|0",
+  )
+}
+
+///|
+test "basisdependent wrapper parity against repo sympy" {
+  let c = @symvector.coord_sys3d("C") catch { _ => fail("C") }
+  let c_py = "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')"
+
+  assert_eq(
+    @symvector.vector_zero_expr().to_string(),
+    vector_eval_str(
+      "(lambda C, VectorZero: str(VectorZero()))(" +
+      c_py +
+      ", __import__('sympy.vector.vector', fromlist=['VectorZero']).VectorZero)",
+    ),
+  )
+  assert_eq(
+    @symvector.vector_mul_expr(c.x().expr(), c.i()).to_string(),
+    vector_eval_str(
+      "(lambda C, VectorMul: str(VectorMul(C.x, C.i)))(" +
+      c_py +
+      ", __import__('sympy.vector.vector', fromlist=['VectorMul']).VectorMul)",
+    ),
+  )
+  assert_eq(
+    @symvector.vector_add_expr([c.i().to_vector(), c.j().to_vector()]).to_string(),
+    vector_eval_str(
+      "(lambda C, VectorAdd: str(VectorAdd(C.i, C.j)))(" +
+      c_py +
+      ", __import__('sympy.vector.vector', fromlist=['VectorAdd']).VectorAdd)",
+    ),
+  )
+  assert_eq(
+    @symvector.cross_unevaluated(c.j().to_vector(), c.i().to_vector()).to_string(),
+    vector_eval_str(
+      "(lambda C, Cross: str(Cross(C.j, C.i)))(" +
+      c_py +
+      ", __import__('sympy.vector.vector', fromlist=['Cross']).Cross)",
+    ),
+  )
+  assert_eq(
+    @symvector.dot_unevaluated(c.j().to_vector(), c.i().to_vector()).to_string(),
+    vector_eval_str(
+      "(lambda C, Dot: str(Dot(C.j, C.i)))(" +
+      c_py +
+      ", __import__('sympy.vector.vector', fromlist=['Dot']).Dot)",
+    ),
+  )
+}
+
+///|
+test "orienters and create_new parity against repo sympy" {
+  let q1 = @symcore.Expr::Symbol("q1")
+  let q2 = @symcore.Expr::Symbol("q2")
+  let q3 = @symcore.Expr::Symbol("q3")
+  let q4 = @symcore.Expr::Symbol("q4")
+  let n = @symvector.coord_sys3d("N") catch { _ => fail("N") }
+  let n_py = "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('N')"
+
+  assert_true(
+    matrix_matches_py_expr(
+      @symvector.axis_orienter(q1, n.k().to_vector()).rotation_matrix(n) catch {
+        _ => fail("axis-mat")
+      },
+      "__import__('sympy.vector', fromlist=['AxisOrienter']).AxisOrienter(sympy.Symbol('q1'), (" +
+      n_py +
+      ").k).rotation_matrix(" +
+      n_py +
+      ")",
+    ) catch {
+      _ => fail("axis-mat-parity")
+    },
+  )
+  assert_true(
+    matrix_matches_py_expr(
+      (@symvector.body_orienter(q1, q2, q3, "123") catch { _ => fail("body") }).rotation_matrix(),
+      "__import__('sympy.vector', fromlist=['BodyOrienter']).BodyOrienter(sympy.Symbol('q1'), sympy.Symbol('q2'), sympy.Symbol('q3'), '123').rotation_matrix()",
+    ) catch {
+      _ => fail("body-parity")
+    },
+  )
+  assert_true(
+    matrix_matches_py_expr(
+      (@symvector.space_orienter(q1, q2, q3, "123") catch {
+        _ => fail("space")
+      }).rotation_matrix(),
+      "__import__('sympy.vector', fromlist=['SpaceOrienter']).SpaceOrienter(sympy.Symbol('q1'), sympy.Symbol('q2'), sympy.Symbol('q3'), '123').rotation_matrix()",
+    ) catch {
+      _ => fail("space-parity")
+    },
+  )
+  assert_true(
+    matrix_matches_py_expr(
+      @symvector.quaternion_orienter(q1, q2, q3, q4).rotation_matrix(),
+      "__import__('sympy.vector', fromlist=['QuaternionOrienter']).QuaternionOrienter(sympy.Symbol('q1'), sympy.Symbol('q2'), sympy.Symbol('q3'), sympy.Symbol('q4')).rotation_matrix()",
+    ) catch {
+      _ => fail("quat-parity")
+    },
+  )
+
+  let body_sys = n.orient_new_body("B", q1, q2, q3, "123") catch {
+    _ => fail("body-sys")
+  }
+  let space_sys = n.orient_new_space("S", q1, q2, q3, "123") catch {
+    _ => fail("space-sys")
+  }
+  let quat_sys = n.orient_new_quaternion("Q", q1, q2, q3, q4) catch {
+    _ => fail("quat-sys")
+  }
+  assert_true(
+    matrix_matches_py_expr(
+      body_sys.rotation_matrix(n) catch {
+        _ => fail("body-rot")
+      },
+      "(" +
+      n_py +
+      ").orient_new_body('B', sympy.Symbol('q1'), sympy.Symbol('q2'), sympy.Symbol('q3'), '123').rotation_matrix(" +
+      n_py +
+      ")",
+    ) catch {
+      _ => fail("body-rot-parity")
+    },
+  )
+  assert_true(
+    matrix_matches_py_expr(
+      space_sys.rotation_matrix(n) catch {
+        _ => fail("space-rot")
+      },
+      "(" +
+      n_py +
+      ").orient_new_space('S', sympy.Symbol('q1'), sympy.Symbol('q2'), sympy.Symbol('q3'), '123').rotation_matrix(" +
+      n_py +
+      ")",
+    ) catch {
+      _ => fail("space-rot-parity")
+    },
+  )
+  assert_true(
+    matrix_matches_py_expr(
+      quat_sys.rotation_matrix(n) catch {
+        _ => fail("quat-rot")
+      },
+      "(" +
+      n_py +
+      ").orient_new_quaternion('Q', sympy.Symbol('q1'), sympy.Symbol('q2'), sympy.Symbol('q3'), sympy.Symbol('q4')).rotation_matrix(" +
+      n_py +
+      ")",
+    ) catch {
+      _ => fail("quat-rot-parity")
+    },
+  )
+
+  let a = @symvector.coord_sys3d("A") catch { _ => fail("A") }
+  let s = a.create_new("S", "spherical") catch { _ => fail("S") }
+  let a_py = "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('A')"
+  let s_py = "(lambda A: A.create_new('S', transformation='spherical'))(" +
+    a_py +
+    ")"
+  assert_true(
+    vector_eval_str(
+      "(lambda A, S, sin, cos: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
+      s.transformation_to_parent().map(@symprint.to_string).join(", ") +
+      "), S.transformation_to_parent())))(" +
+      a_py +
+      ", " +
+      s_py +
+      ", sympy.sin, sympy.cos" +
+      ")",
+    ) ==
+    "0|0|0",
+  )
+  assert_true(
+    vector_eval_str(
+      "(lambda A, S, atan2, acos, sqrt: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
+      (s.transformation_from_parent() catch { _ => fail("from-parent") })
+      .map(@symprint.to_string)
+      .join(", ") +
+      "), S.transformation_from_parent())))(" +
+      a_py +
+      ", " +
+      s_py +
+      ", sympy.atan2, sympy.acos, sympy.sqrt" +
+      ")",
+    ) ==
+    "0|0|0",
+  )
+  assert_eq(
+    vector_eval_str(
+      "(lambda A, S, sin, cos: '|'.join(str(sympy.simplify(x)) for row in ((" +
+      matrix_py_expr(
+        a.change_of_basis_matrix_from(s) catch {
+          _ => fail("cob")
+        },
+      ) +
+      ") - A.change_of_basis_matrix_from(S)).tolist() for x in row))(" +
+      a_py +
+      ", " +
+      s_py +
+      ", sympy.sin, sympy.cos" +
+      ")",
     ),
     "0|0|0|0|0|0|0|0|0",
   )

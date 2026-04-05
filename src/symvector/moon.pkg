@@ -1,6 +1,7 @@
 import {
   "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symfunctions/elementary" @symelem,
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symsimplify",
   "CAIMEOX/symbit/symphysics",

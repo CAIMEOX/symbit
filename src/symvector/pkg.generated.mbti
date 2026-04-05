@@ -8,11 +8,17 @@ import {
 }
 
 // Values
+pub fn axis_orienter(@symcore.Expr, Vector) -> AxisOrienter
+
 pub fn base_dyadic(BaseVector, BaseVector) -> BaseDyadic
+
+pub fn body_orienter(@symcore.Expr, @symcore.Expr, @symcore.Expr, String) -> BodyOrienter raise @vector.VectorError
 
 pub fn coord_sys3d(String, vector_names? : Array[String]?, variable_names? : Array[String]?, transformation? : String?) -> CoordSys3D raise @vector.VectorError
 
 pub fn cross(Vector, Vector) -> Vector raise @vector.VectorError
+
+pub fn cross_unevaluated(Vector, Vector) -> Cross
 
 pub fn curl(Vector, doit? : Bool) -> Vector raise @vector.VectorError
 
@@ -28,7 +34,15 @@ pub fn divergence_unevaluated(Vector) -> Divergence
 
 pub fn dot(Vector, Vector) -> @symcore.Expr raise @vector.VectorError
 
+pub fn dot_unevaluated(Vector, Vector) -> Dot
+
+pub fn dyadic_add_expr(Array[Dyadic]) -> DyadicAdd
+
+pub fn dyadic_mul_expr(@symcore.Expr, BaseDyadic) -> DyadicMul
+
 pub fn dyadic_zero() -> Dyadic
+
+pub fn dyadic_zero_expr() -> DyadicZero
 
 pub fn express(Vector, CoordSys3D, variables? : Bool) -> Vector raise @vector.VectorError
 
@@ -54,6 +68,14 @@ pub fn matrix_to_dyadic(@symphysics.ExplicitMatrix, CoordSys3D) -> Dyadic
 
 pub fn matrix_to_vector(@symphysics.ExplicitMatrix, CoordSys3D) -> Vector raise @vector.VectorError
 
+pub fn orienter_axis(AxisOrienter) -> Orienter
+
+pub fn orienter_body(BodyOrienter) -> Orienter
+
+pub fn orienter_quaternion(QuaternionOrienter) -> Orienter
+
+pub fn orienter_space(SpaceOrienter) -> Orienter
+
 pub fn orthogonalize(Array[Vector], orthonormal? : Bool) -> Array[Vector] raise @vector.VectorError
 
 pub fn outer(Vector, Vector) -> Dyadic raise @vector.VectorError
@@ -61,6 +83,8 @@ pub fn outer(Vector, Vector) -> Dyadic raise @vector.VectorError
 pub fn point_reference_coord_system(CoordSys3D) -> PointReference
 
 pub fn point_reference_point(Point) -> PointReference
+
+pub fn quaternion_orienter(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> QuaternionOrienter
 
 pub fn scalar_or_vector_scalar(@symcore.Expr) -> ScalarOrVector
 
@@ -70,17 +94,34 @@ pub fn scalar_potential(Vector, CoordSys3D) -> @symcore.Expr raise @vector.Vecto
 
 pub fn scalar_potential_difference(ScalarOrVector, CoordSys3D, Point, Point) -> @symcore.Expr raise @vector.VectorError
 
+pub fn space_orienter(@symcore.Expr, @symcore.Expr, @symcore.Expr, String) -> SpaceOrienter raise @vector.VectorError
+
+pub fn vector_add_expr(Array[Vector]) -> VectorAdd
+
 pub fn vector_from_terms(Array[(@symcore.Expr, BaseVector)]) -> Vector
 
 pub fn vector_kind(element_kind? : String) -> VectorKind
+
+pub fn vector_mul_expr(@symcore.Expr, BaseVector) -> VectorMul
 
 pub fn vector_term(@symcore.Expr, BaseVector) -> Vector
 
 pub fn vector_zero() -> Vector
 
+pub fn vector_zero_expr() -> VectorZero
+
 // Errors
 
 // Types and methods
+pub struct AxisOrienter {
+  angle_ : @symcore.Expr
+  axis_ : Vector
+}
+pub fn AxisOrienter::angle(Self) -> @symcore.Expr
+pub fn AxisOrienter::axis(Self) -> Vector
+pub fn AxisOrienter::rotation_matrix(Self, CoordSys3D) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+pub impl Show for AxisOrienter
+
 pub struct BaseDyadic {
   left_ : BaseVector
   right_ : BaseVector
@@ -121,29 +162,58 @@ pub impl Eq for BaseVector
 pub impl Hash for BaseVector
 pub impl Show for BaseVector
 
+pub struct BodyOrienter {
+  angle1_ : @symcore.Expr
+  angle2_ : @symcore.Expr
+  angle3_ : @symcore.Expr
+  rotation_order_ : String
+  parent_orient_ : @symphysics.ExplicitMatrix
+}
+pub fn BodyOrienter::rotation_matrix(Self) -> @symphysics.ExplicitMatrix
+pub impl Show for BodyOrienter
+
 pub struct CoordSys3D {
   name_ : String
   eq_key_ : String
+  root_key_ : String
   frame_ : @vector.ReferenceFrame
   origin_ : Point
   parent_ : CoordSys3D?
   vector_names_ : Array[String]
   variable_names_ : Array[String]
   transformation_ : CoordTransform
+  parent_rotation_matrix_ : @symphysics.ExplicitMatrix
+  location_ : Vector
+  transformation_to_parent_ : Array[@symcore.Expr]
+  transformation_from_parent_template_ : Array[@symcore.Expr]?
+  transformation_matrix_to_parent_ : @symphysics.ExplicitMatrix
+  is_cartesian_ : Bool
+  is_curvilinear_ : Bool
 }
 pub fn CoordSys3D::base_scalars(Self) -> Array[BaseScalar]
 pub fn CoordSys3D::base_vectors(Self) -> Array[BaseVector]
+pub fn CoordSys3D::change_of_basis_matrix_from(Self, Self) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+pub fn CoordSys3D::create_new(Self, String, String, variable_names? : Array[String]?, vector_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::i(Self) -> BaseVector
 pub fn CoordSys3D::j(Self) -> BaseVector
 pub fn CoordSys3D::k(Self) -> BaseVector
 pub fn CoordSys3D::lame_coefficients(Self) -> Array[@symcore.Expr]
+pub fn CoordSys3D::locate_new(Self, String, Vector, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::name(Self) -> String
+pub fn CoordSys3D::orient_new(Self, String, Array[Orienter], location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::orient_new_axis(Self, String, @symcore.Expr, Vector, location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
+pub fn CoordSys3D::orient_new_body(Self, String, @symcore.Expr, @symcore.Expr, @symcore.Expr, String, location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
+pub fn CoordSys3D::orient_new_quaternion(Self, String, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
+pub fn CoordSys3D::orient_new_space(Self, String, @symcore.Expr, @symcore.Expr, @symcore.Expr, String, location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::origin(Self) -> Point
 pub fn CoordSys3D::parent(Self) -> Self?
+pub fn CoordSys3D::position_wrt(Self, PointReference) -> Vector raise @vector.VectorError
 pub fn CoordSys3D::rotation_matrix(Self, Self) -> @symphysics.ExplicitMatrix raise @vector.VectorError
 pub fn CoordSys3D::scalar(Self, Int) -> BaseScalar raise @vector.VectorError
 pub fn CoordSys3D::scalar_map(Self, Self) -> Map[BaseScalar, @symcore.Expr] raise @vector.VectorError
+pub fn CoordSys3D::transformation_from_parent(Self) -> Array[@symcore.Expr] raise @vector.VectorError
+pub fn CoordSys3D::transformation_from_parent_function(Self) -> TransformFunction raise @vector.VectorError
+pub fn CoordSys3D::transformation_to_parent(Self) -> Array[@symcore.Expr]
 pub fn CoordSys3D::vector(Self, Int) -> BaseVector raise @vector.VectorError
 pub fn CoordSys3D::x(Self) -> BaseScalar
 pub fn CoordSys3D::y(Self) -> BaseScalar
@@ -158,6 +228,17 @@ pub enum CoordTransform {
   Cylindrical
   Spherical
 }
+pub impl Eq for CoordTransform
+pub impl Show for CoordTransform
+
+pub struct Cross {
+  lhs_ : Vector
+  rhs_ : Vector
+  sign_ : Int
+}
+pub fn Cross::doit(Self) -> Vector raise @vector.VectorError
+pub impl Eq for Cross
+pub impl Show for Cross
 
 pub struct Curl {
   field_ : Vector
@@ -179,6 +260,14 @@ pub struct Divergence {
 pub fn Divergence::doit(Self) -> @symcore.Expr raise @vector.VectorError
 pub impl Show for Divergence
 
+pub struct Dot {
+  lhs_ : Vector
+  rhs_ : Vector
+}
+pub fn Dot::doit(Self) -> @symcore.Expr raise @vector.VectorError
+pub impl Eq for Dot
+pub impl Show for Dot
+
 pub struct Dyadic {
   raw_ : @vector.Dyadic
 }
@@ -199,6 +288,32 @@ pub impl Eq for Dyadic
 pub impl Show for Dyadic
 pub impl Sub for Dyadic
 
+pub struct DyadicAdd {
+  terms_ : Array[Dyadic]
+  value_ : Dyadic
+}
+pub fn DyadicAdd::doit(Self) -> Dyadic
+pub impl Eq for DyadicAdd
+pub impl Show for DyadicAdd
+
+pub struct DyadicMul {
+  measure_number_ : @symcore.Expr
+  base_dyadic_ : BaseDyadic
+  value_ : Dyadic
+}
+pub fn DyadicMul::base_dyadic(Self) -> BaseDyadic
+pub fn DyadicMul::doit(Self) -> Dyadic
+pub fn DyadicMul::measure_number(Self) -> @symcore.Expr
+pub impl Eq for DyadicMul
+pub impl Show for DyadicMul
+
+pub struct DyadicZero {
+  value_ : Dyadic
+}
+pub fn DyadicZero::doit(Self) -> Dyadic
+pub impl Eq for DyadicZero
+pub impl Show for DyadicZero
+
 pub struct Gradient {
   field_ : ScalarOrVector
 }
@@ -215,6 +330,13 @@ pub struct Laplacian {
 }
 pub fn Laplacian::doit(Self) -> ScalarOrVector raise @vector.VectorError
 pub impl Show for Laplacian
+
+pub enum Orienter {
+  Axis(AxisOrienter)
+  Body(BodyOrienter)
+  Space(SpaceOrienter)
+  Quaternion(QuaternionOrienter)
+}
 
 pub struct Point {
   name_ : String
@@ -233,16 +355,44 @@ pub enum PointReference {
   CoordSystem(CoordSys3D)
 }
 
+pub struct QuaternionOrienter {
+  q0_ : @symcore.Expr
+  q1_ : @symcore.Expr
+  q2_ : @symcore.Expr
+  q3_ : @symcore.Expr
+  parent_orient_ : @symphysics.ExplicitMatrix
+}
+pub fn QuaternionOrienter::rotation_matrix(Self) -> @symphysics.ExplicitMatrix
+pub impl Show for QuaternionOrienter
+
 pub enum ScalarOrVector {
   ScalarExpr(@symcore.Expr)
   VectorExpr(Vector)
 }
+
+pub struct SpaceOrienter {
+  angle1_ : @symcore.Expr
+  angle2_ : @symcore.Expr
+  angle3_ : @symcore.Expr
+  rotation_order_ : String
+  parent_orient_ : @symphysics.ExplicitMatrix
+}
+pub fn SpaceOrienter::rotation_matrix(Self) -> @symphysics.ExplicitMatrix
+pub impl Show for SpaceOrienter
+
+pub struct TransformFunction {
+  equations_ : Array[@symcore.Expr]
+}
+pub fn TransformFunction::call(Self, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[@symcore.Expr]
+pub impl Show for TransformFunction
 
 pub struct Vector {
   raw_ : @vector.Vector
 }
 pub fn Vector::components(Self) -> Map[BaseVector, @symcore.Expr]
 pub fn Vector::cross(Self, Self) -> Self raise @vector.VectorError
+pub fn Vector::diff(Self, @symcore.Expr, CoordSys3D, var_in_dcm? : Bool) -> Self raise @vector.VectorError
+pub fn Vector::doit(Self) -> Self
 pub fn Vector::dot(Self, Self) -> @symcore.Expr raise @vector.VectorError
 pub fn Vector::equals(Self, Self) -> Bool? raise @vector.VectorError
 pub fn Vector::express(Self, CoordSys3D, variables? : Bool) -> Self raise @vector.VectorError
@@ -255,17 +405,45 @@ pub fn Vector::outer(Self, Self) -> Dyadic raise @vector.VectorError
 pub fn Vector::projection(Self, Self, scalar? : Bool) -> ScalarOrVector raise @vector.VectorError
 pub fn Vector::scale(Self, @symcore.Expr) -> Self
 pub fn Vector::separate(Self) -> Map[CoordSys3D, Self]
+pub fn Vector::simplify(Self) -> Self
+pub fn Vector::subs(Self, Map[String, @symcore.Expr]) -> Self
 pub fn Vector::to_matrix(Self, CoordSys3D) -> @symphysics.ExplicitMatrix raise @vector.VectorError
 pub impl Add for Vector
 pub impl Eq for Vector
 pub impl Show for Vector
 pub impl Sub for Vector
 
+pub struct VectorAdd {
+  terms_ : Array[Vector]
+  value_ : Vector
+}
+pub fn VectorAdd::doit(Self) -> Vector
+pub impl Eq for VectorAdd
+pub impl Show for VectorAdd
+
 pub struct VectorKind {
   element_kind_ : String
 }
 pub impl Eq for VectorKind
 pub impl Show for VectorKind
+
+pub struct VectorMul {
+  measure_number_ : @symcore.Expr
+  base_vector_ : BaseVector
+  value_ : Vector
+}
+pub fn VectorMul::base_vector(Self) -> BaseVector
+pub fn VectorMul::doit(Self) -> Vector
+pub fn VectorMul::measure_number(Self) -> @symcore.Expr
+pub impl Eq for VectorMul
+pub impl Show for VectorMul
+
+pub struct VectorZero {
+  value_ : Vector
+}
+pub fn VectorZero::doit(Self) -> Vector
+pub impl Eq for VectorZero
+pub impl Show for VectorZero
 
 // Type aliases
 

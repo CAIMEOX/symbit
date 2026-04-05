@@ -18,6 +18,70 @@ pub fn vector_from_terms(terms : Array[(@symcore.Expr, BaseVector)]) -> Vector {
 }
 
 ///|
+fn vector_components_for_system(
+  vector : Vector,
+  system : CoordSys3D,
+) -> Array[@symcore.Expr] {
+  let components = vector.components()
+  [
+    components.get(system.i()).unwrap_or(@symcore.int(0)),
+    components.get(system.j()).unwrap_or(@symcore.int(0)),
+    components.get(system.k()).unwrap_or(@symcore.int(0)),
+  ]
+}
+
+///|
+fn vector_matrix_in_system(
+  vector : Vector,
+  system : CoordSys3D,
+  variables : Bool,
+) -> @symphysics.ExplicitMatrix raise @rawvec.VectorError {
+  if vector.is_zero() {
+    return array_to_column([@symcore.int(0), @symcore.int(0), @symcore.int(0)])
+  }
+  let separated = vector.separate()
+  let accum = [@symcore.int(0), @symcore.int(0), @symcore.int(0)]
+  let sources = separated.keys().to_array()
+  sources.sort()
+  for source in sources {
+    let source_vector = separated[source]
+    let source_components = vector_components_for_system(source_vector, source)
+    let target_components = if source == system {
+      source_components
+    } else {
+      column_to_array(
+        (system.change_of_basis_matrix_from(source) catch { err => raise err }).mul(
+          array_to_column(source_components),
+        ) catch {
+          _ => abort("vector_matrix_in_system")
+        },
+      )
+    }
+    for axis in 0..<3 {
+      let value = if variables {
+        express_scalar(target_components[axis], system, variables=true)
+      } else {
+        target_components[axis]
+      }
+      accum[axis] = accum[axis] + value
+    }
+  }
+  array_to_column([
+    @symsimplify.ratsimp(@symsimplify.trigsimp(@symsimplify.simplify(accum[0]))),
+    @symsimplify.ratsimp(@symsimplify.trigsimp(@symsimplify.simplify(accum[1]))),
+    @symsimplify.ratsimp(@symsimplify.trigsimp(@symsimplify.simplify(accum[2]))),
+  ])
+}
+
+///|
+fn vector_anchor_system(lhs : Vector, rhs : Vector) -> CoordSys3D? {
+  match primary_coord_system_in_vector(lhs) {
+    Some(system) => Some(system)
+    None => primary_coord_system_in_vector(rhs)
+  }
+}
+
+///|
 fn vector_equals_zero(expr : @symcore.Expr) -> Bool? {
   let simplified = @symsimplify.ratsimp(
     @symsimplify.futrig(
@@ -43,6 +107,7 @@ fn vector_equals_zero(expr : @symcore.Expr) -> Bool? {
 
 ///|
 pub fn Vector::kind(self : Vector) -> VectorKind {
+  ignore(self)
   vector_kind()
 }
 
@@ -95,7 +160,21 @@ pub fn Vector::dot(
   self : Vector,
   other : Vector,
 ) -> @symcore.Expr raise @rawvec.VectorError {
-  self.raw_.dot(other.raw_)
+  match vector_anchor_system(self, other) {
+    None => @symcore.int(0)
+    Some(system) => {
+      let lhs_rows = (vector_matrix_in_system(self, system, true) catch {
+        err => raise err
+      }).rows_copy()
+      let rhs_rows = (vector_matrix_in_system(other, system, true) catch {
+        err => raise err
+      }).rows_copy()
+      let value = lhs_rows[0][0] * rhs_rows[0][0] +
+        lhs_rows[1][0] * rhs_rows[1][0] +
+        lhs_rows[2][0] * rhs_rows[2][0]
+      @symsimplify.ratsimp(@symsimplify.trigsimp(@symsimplify.simplify(value)))
+    }
+  }
 }
 
 ///|
@@ -103,7 +182,27 @@ pub fn Vector::cross(
   self : Vector,
   other : Vector,
 ) -> Vector raise @rawvec.VectorError {
-  { raw_: self.raw_.cross(other.raw_) }
+  match vector_anchor_system(self, other) {
+    None => vector_zero()
+    Some(system) => {
+      let lhs_rows = (vector_matrix_in_system(self, system, true) catch {
+        err => raise err
+      }).rows_copy()
+      let rhs_rows = (vector_matrix_in_system(other, system, true) catch {
+        err => raise err
+      }).rows_copy()
+      matrix_to_vector(
+        @symphysics.explicit_matrix_column([
+          lhs_rows[1][0] * rhs_rows[2][0] - lhs_rows[2][0] * rhs_rows[1][0],
+          lhs_rows[2][0] * rhs_rows[0][0] - lhs_rows[0][0] * rhs_rows[2][0],
+          lhs_rows[0][0] * rhs_rows[1][0] - lhs_rows[1][0] * rhs_rows[0][0],
+        ]),
+        system,
+      ) catch {
+        err => raise err
+      }
+    }
+  }
 }
 
 ///|
@@ -157,10 +256,10 @@ pub fn Vector::equals(
       }
       bases.sort()
       let anchor = bases[0].system_
-      let rows = diff
-        .express(anchor, variables=true)
-        .to_matrix(anchor)
-        .rows_copy()
+      let expressed = diff.express(anchor, variables=true) catch {
+        err => raise err
+      }
+      let rows = (expressed.to_matrix(anchor) catch { err => raise err }).rows_copy()
       let mut saw_unknown = false
       for row in rows {
         match vector_equals_zero(row[0]) {
@@ -185,10 +284,10 @@ pub fn Vector::equals(
       }
       bases.sort()
       let anchor = bases[0].system_
-      let rows = diff
-        .express(anchor, variables=true)
-        .to_matrix(anchor)
-        .rows_copy()
+      let expressed = diff.express(anchor, variables=true) catch {
+        err => raise err
+      }
+      let rows = (expressed.to_matrix(anchor) catch { err => raise err }).rows_copy()
       let mut saw_unknown = false
       for row in rows {
         match vector_equals_zero(row[0]) {
@@ -212,7 +311,14 @@ pub fn Vector::express(
   system : CoordSys3D,
   variables? : Bool = false,
 ) -> Vector raise @rawvec.VectorError {
-  { raw_: self.raw_.express(system.frame_, variables~) }
+  matrix_to_vector(
+    vector_matrix_in_system(self, system, variables) catch {
+      err => raise err
+    },
+    system,
+  ) catch {
+    err => raise err
+  }
 }
 
 ///|
@@ -220,7 +326,9 @@ pub fn Vector::to_matrix(
   self : Vector,
   system : CoordSys3D,
 ) -> @symphysics.ExplicitMatrix raise @rawvec.VectorError {
-  self.raw_.to_matrix(system.frame_)
+  vector_matrix_in_system(self, system, false) catch {
+    err => raise err
+  }
 }
 
 ///|
@@ -242,10 +350,45 @@ pub fn Vector::separate(self : Vector) -> Map[CoordSys3D, Vector] {
 pub fn Vector::magnitude(
   self : Vector,
 ) -> @symcore.Expr raise @rawvec.VectorError {
-  self.raw_.magnitude()
+  if self.is_zero() {
+    return @symcore.int(0)
+  }
+  @symelem.sqrt(self.dot(self) catch { err => raise err })
 }
 
 ///|
 pub fn Vector::normalize(self : Vector) -> Vector raise @rawvec.VectorError {
-  { raw_: self.raw_.normalize() }
+  if self.is_zero() {
+    return vector_zero()
+  }
+  self.scale((self.magnitude() catch { err => raise err }) ^ @symcore.int(-1))
+}
+
+///|
+pub fn Vector::subs(self : Vector, env : Map[String, @symcore.Expr]) -> Vector {
+  { raw_: self.raw_.subs(env) }
+}
+
+///|
+pub fn Vector::simplify(self : Vector) -> Vector {
+  { raw_: self.raw_.simplify() }
+}
+
+///|
+pub fn Vector::diff(
+  self : Vector,
+  wrt : @symcore.Expr,
+  system : CoordSys3D,
+  var_in_dcm? : Bool = true,
+) -> Vector raise @rawvec.VectorError {
+  {
+    raw_: self.raw_.diff(wrt, system.frame_, var_in_dcm~) catch {
+      err => raise err
+    },
+  }
+}
+
+///|
+pub fn Vector::doit(self : Vector) -> Vector {
+  { raw_: self.raw_.doit() }
 }

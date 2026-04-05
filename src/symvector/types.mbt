@@ -8,6 +8,11 @@ pub enum CoordTransform {
   Cartesian
   Cylindrical
   Spherical
+} derive(Eq, Show)
+
+///|
+pub struct TransformFunction {
+  equations_ : Array[@symcore.Expr]
 }
 
 ///|
@@ -81,12 +86,20 @@ pub struct Point {
 pub struct CoordSys3D {
   name_ : String
   eq_key_ : String
+  root_key_ : String
   frame_ : @rawvec.ReferenceFrame
   origin_ : Point
   parent_ : CoordSys3D?
   vector_names_ : Array[String]
   variable_names_ : Array[String]
   transformation_ : CoordTransform
+  parent_rotation_matrix_ : @symphysics.ExplicitMatrix
+  location_ : Vector
+  transformation_to_parent_ : Array[@symcore.Expr]
+  transformation_from_parent_template_ : Array[@symcore.Expr]?
+  transformation_matrix_to_parent_ : @symphysics.ExplicitMatrix
+  is_cartesian_ : Bool
+  is_curvilinear_ : Bool
 }
 
 ///|
@@ -117,4 +130,94 @@ pub struct Vector {
 ///|
 pub struct Dyadic {
   raw_ : @rawvec.Dyadic
+}
+
+///|
+pub struct VectorZero {
+  value_ : Vector
+}
+
+///|
+pub struct VectorMul {
+  measure_number_ : @symcore.Expr
+  base_vector_ : BaseVector
+  value_ : Vector
+}
+
+///|
+pub struct VectorAdd {
+  terms_ : Array[Vector]
+  value_ : Vector
+}
+
+///|
+pub struct Cross {
+  lhs_ : Vector
+  rhs_ : Vector
+  sign_ : Int
+}
+
+///|
+pub struct Dot {
+  lhs_ : Vector
+  rhs_ : Vector
+}
+
+///|
+pub struct DyadicZero {
+  value_ : Dyadic
+}
+
+///|
+pub struct DyadicMul {
+  measure_number_ : @symcore.Expr
+  base_dyadic_ : BaseDyadic
+  value_ : Dyadic
+}
+
+///|
+pub struct DyadicAdd {
+  terms_ : Array[Dyadic]
+  value_ : Dyadic
+}
+
+///|
+pub struct AxisOrienter {
+  angle_ : @symcore.Expr
+  axis_ : Vector
+}
+
+///|
+pub struct BodyOrienter {
+  angle1_ : @symcore.Expr
+  angle2_ : @symcore.Expr
+  angle3_ : @symcore.Expr
+  rotation_order_ : String
+  parent_orient_ : @symphysics.ExplicitMatrix
+}
+
+///|
+pub struct SpaceOrienter {
+  angle1_ : @symcore.Expr
+  angle2_ : @symcore.Expr
+  angle3_ : @symcore.Expr
+  rotation_order_ : String
+  parent_orient_ : @symphysics.ExplicitMatrix
+}
+
+///|
+pub struct QuaternionOrienter {
+  q0_ : @symcore.Expr
+  q1_ : @symcore.Expr
+  q2_ : @symcore.Expr
+  q3_ : @symcore.Expr
+  parent_orient_ : @symphysics.ExplicitMatrix
+}
+
+///|
+pub enum Orienter {
+  Axis(AxisOrienter)
+  Body(BodyOrienter)
+  Space(SpaceOrienter)
+  Quaternion(QuaternionOrienter)
 }

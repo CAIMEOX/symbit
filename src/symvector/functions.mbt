@@ -41,7 +41,25 @@ pub fn express_scalar(
   system : CoordSys3D,
   variables? : Bool = false,
 ) -> @symcore.Expr {
-  @rawvec.express_scalar(expr, system.frame_, variables~)
+  if !variables {
+    return expr
+  }
+  let env : Map[String, @symcore.Expr] = {}
+  for other in coord_systems_in_scalar_expr(expr) {
+    if other != system {
+      let mapping = other.scalar_map(system) catch { _ => continue }
+      for entry in mapping {
+        env[entry.0.name_] = entry.1
+      }
+    }
+  }
+  if env.is_empty() {
+    expr
+  } else {
+    @symsimplify.ratsimp(
+      @symsimplify.trigsimp(@symsimplify.simplify(@symcore.subst(expr, env))),
+    )
+  }
 }
 
 ///|
