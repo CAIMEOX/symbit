@@ -446,8 +446,71 @@ fn local_constant_renumber(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn expr_semantically_equal(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
-  let diff = @symsimplify.simplify(lhs + @symcore.int(-1) * rhs)
-  @symcore.compare_expr(diff, @symcore.int(0)) == 0 || @symcore.is_zero(diff)
+  if @symcore.compare_expr(lhs, rhs) == 0 {
+    return true
+  }
+  let raw_diff = lhs + @symcore.int(-1) * rhs
+  if @symcore.compare_expr(raw_diff, @symcore.int(0)) == 0 || @symcore.is_zero(raw_diff) {
+    return true
+  }
+  let simplified = @symsimplify.simplify(raw_diff)
+  if @symcore.compare_expr(simplified, @symcore.int(0)) == 0 || @symcore.is_zero(simplified) {
+    return true
+  }
+  let rational = @symsimplify.ratsimp(raw_diff, max_passes=4)
+  @symcore.compare_expr(rational, @symcore.int(0)) == 0 || @symcore.is_zero(rational)
+}
+
+///|
+fn tuple_expr_semantically_equal(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
+  match lhs {
+    @symcore.Expr::Tuple(lhs_items) =>
+      match rhs {
+        @symcore.Expr::Tuple(rhs_items) => {
+          if lhs_items.length() != rhs_items.length() {
+            return false
+          }
+          for i in 0..<lhs_items.length() {
+            if !expr_semantically_equal(lhs_items[i], rhs_items[i]) {
+              return false
+            }
+          }
+          true
+        }
+        _ => expr_semantically_equal(lhs, rhs)
+      }
+    _ => expr_semantically_equal(lhs, rhs)
+  }
+}
+
+///|
+fn finite_set_exprs_semantically_equal(
+  actual : @symsets.Set,
+  expected : Array[@symcore.Expr],
+) -> Bool {
+  match actual {
+    @symsets.Set::FiniteSet(items) => {
+      if items.length() != expected.length() {
+        return false
+      }
+      let used = Array::make(expected.length(), false)
+      for item in items {
+        let mut matched = false
+        for i in 0..<expected.length() {
+          if !used[i] && tuple_expr_semantically_equal(item, expected[i]) {
+            used[i] = true
+            matched = true
+            break
+          }
+        }
+        if !matched {
+          return false
+        }
+      }
+      true
+    }
+    _ => false
+  }
 }
 
 ///|
@@ -682,6 +745,59 @@ test "solve returns dicts for systems and nsolve refines numeric roots" {
 }
 
 ///|
+test "nsolve matches additional SymPy scalar numeric cases batch 2" {
+  let sin_root = nsolve(sin(x()), x(), @symcore.int(2))
+  assert_true(@symprint.to_string(sin_root).has_prefix("3.14159265358979"))
+
+  let eq_root = nsolve(
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) * x(), @symcore.int(2)),
+    x(),
+    @symcore.int(-10),
+  )
+  inspect(@symprint.to_string(eq_root), content="1.0")
+
+  let linear_root = nsolve(
+    @symcore.int(2) * x() + @symcore.int(-2),
+    x(),
+    @symcore.int(-10),
+  )
+  inspect(@symprint.to_string(linear_root), content="1.0")
+  assert_eq(@symprint.to_string(eq_root), @symprint.to_string(linear_root))
+
+  let pi_root_default = nsolve(
+    (x() ^ @symcore.int(2)) - @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+    x(),
+    @symcore.Expr::Float(@symcore.float_from_double(3.0)),
+  )
+  assert_true(@symprint.to_string(pi_root_default).has_prefix("1.77245385090551"))
+
+  let pi_root_precise = nsolve(
+    (x() ^ @symcore.int(2)) - @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+    x(),
+    @symcore.int(3),
+    prec=128,
+  )
+  assert_true(@symprint.to_string(pi_root_precise).has_prefix("1.77245385090551602729816748"))
+
+  let third_root = nsolve(
+    x() - @symcore.rational_from_ints(1, 3),
+    x(),
+    @symcore.int(0),
+    prec=100,
+  )
+  assert_true(@symprint.to_string(third_root).has_prefix("0.333333333333333333333333"))
+
+  let a = @symcore.Expr::Symbol("a")
+  let delicate_root = nsolve(
+    @symcore.pow(@symcore.add([@symcore.Expr::Float(@symcore.float_from_double(0.001)), a]), @symcore.int(-3)) -
+    @symcore.int(6) * @symcore.pow(@symcore.add([@symcore.Expr::Float(@symcore.float_from_double(0.9)), @symcore.int(-1) * a]), @symcore.int(-3)),
+    a,
+    @symcore.Expr::Float(@symcore.float_from_double(0.3)),
+  )
+  assert_true(@symprint.to_string(delicate_root).has_prefix("0.318830113873"))
+}
+
+///|
 test "lpmin lpmax and linprog solve basic linear programs" {
   let min_result = lpmin(
     x(),
@@ -835,6 +951,1664 @@ test "linprog matches first SymPy simplex reference example" {
   )
   inspect(@symprint.to_string(prog_result.0), content="-6/5")
   inspect(expr_list_text(prog_result.1), content="[0, 0, 3/5]")
+}
+
+///|
+test "lp simplex edge cases match SymPy issue regressions" {
+  let infeasible_const : Result[(@symcore.Expr, Map[String, @symcore.Expr]), SolverError] = try? lpmin(
+    @symcore.int(5),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, x() + z(), @symcore.int(1)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x() + @symcore.int(2) * z(), @symcore.int(0)),
+    ],
+  )
+  assert_true(infeasible_const is Err(SolverError::InfeasibleLPError(_)))
+
+  let zero_objective = lpmax(
+    @symcore.int(0),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(zero_objective.0), content="0")
+  inspect(solution_dict_text(zero_objective.1, ["x", "y"]), content="{x: 0, y: 0}")
+}
+
+///|
+test "lp and linprog match additional SymPy simplex public cases batch 1" {
+  let case1 = lpmax(
+    @symcore.int(-1) * x() - y() - @symcore.int(5) * z(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, y() + @symcore.int(2) * z(), @symcore.int(3)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(-1) * x() - @symcore.int(3) * z(), @symcore.int(-2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(2) * x() + y() + @symcore.int(7) * z(), @symcore.int(5)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(case1.0), content="-2")
+  inspect(solution_dict_text(case1.1, ["x", "y", "z"]), content="{x: 2, y: 0, z: 0}")
+
+  let case2 = lpmax(
+    @symcore.int(-1) * x() - y() - @symcore.int(5) * z(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x() - y() + @symcore.int(2) * z(), @symcore.int(3)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(), @symcore.int(-2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(2) * x() + y() - @symcore.int(7) * z(), @symcore.int(-5)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(case2.0), content="-25/7")
+  inspect(solution_dict_text(case2.1, ["x", "y", "z"]), content="{x: 0, y: 0, z: 5/7}")
+
+  let case3 = lpmax(
+    @symcore.int(-1) * x() - y() - @symcore.int(5) * z() + @symcore.int(2),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x() - y() + @symcore.int(2) * z(), @symcore.int(-4)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(), @symcore.int(8)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(2) * x() + y() - @symcore.int(7) * z(), @symcore.int(10)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(case3.0), content="-2")
+  inspect(solution_dict_text(case3.1, ["x", "y", "z"]), content="{x: 0, y: 4, z: 0}")
+
+  let case4 = lpmax(
+    x(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y()),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
+    ],
+  )
+  inspect(@symprint.to_string(case4.0), content="3")
+  inspect(solution_dict_text(case4.1, ["x", "y", "z"]), content="{x: 3, y: 3, z: 3}")
+
+  let case5 = lpmin(
+    y(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(case5.0), content="0")
+  inspect(solution_dict_text(case5.1, ["x", "y"]), content="{x: 2, y: 0}")
+
+  let bounds_scalar = Some([(Some(@symcore.int(2)), Some(@symcore.int(3)))])
+  let lin1 = linprog([@symcore.int(1)], bounds=bounds_scalar)
+  inspect(@symprint.to_string(lin1.0), content="2")
+  inspect(expr_list_text(lin1.1), content="[2]")
+
+  let lin2 = linprog(
+    [@symcore.int(1), @symcore.int(-1)],
+    a=Some(@symmatrices.matrix([[@symcore.int(1), @symcore.int(1)]])),
+    b=Some([@symcore.int(2)]),
+    bounds=Some([(Some(@symcore.int(0)), None), (None, None)]),
+  )
+  inspect(@symprint.to_string(lin2.0), content="-2")
+  inspect(expr_list_text(lin2.1), content="[0, 2]")
+
+  let lin3 = linprog(
+    [@symcore.int(1), @symcore.int(-1)],
+    a=Some(@symmatrices.matrix([[@symcore.int(1), @symcore.int(1)]])),
+    b=Some([@symcore.int(5)]),
+    bounds=Some([(Some(@symcore.int(0)), None), (Some(@symcore.int(3)), None)]),
+  )
+  inspect(@symprint.to_string(lin3.0), content="-5")
+  inspect(expr_list_text(lin3.1), content="[0, 5]")
+}
+
+///|
+test "lp and linprog match additional SymPy simplex public cases batch 2" {
+  let case1 = lpmax(
+    x() - y(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(case1.0), content="2")
+  inspect(solution_dict_text(case1.1, ["x", "y"]), content="{x: 2, y: 0}")
+
+  let case2 = lpmax(
+    x() - y(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), @symcore.int(2)),
+    ],
+  )
+  inspect(@symprint.to_string(case2.0), content="2")
+  inspect(solution_dict_text(case2.1, ["x", "y"]), content="{x: 2, y: 0}")
+
+  let case3 = lpmax(
+    y(),
+    [@symcore.Expr::Relational(@symcore.RelOp::Eq, y(), @symcore.int(2))],
+  )
+  inspect(@symprint.to_string(case3.0), content="2")
+  inspect(solution_dict_text(case3.1, ["y"]), content="{y: 2}")
+
+  let case4 = lpmax(
+    y(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(0), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, @symcore.int(0), y() + @symcore.int(2)),
+    ],
+  )
+  inspect(@symprint.to_string(case4.0), content="-2")
+  inspect(solution_dict_text(case4.1, ["y"]), content="{y: -2}")
+
+  let case5 = lpmax(
+    y(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(0), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, @symcore.int(0), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, y(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(case5.0), content="-2")
+  inspect(solution_dict_text(case5.1, ["y"]), content="{y: -2}")
+
+  let case6 = lpmin(
+    x(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y()),
+    ],
+  )
+  inspect(@symprint.to_string(case6.0), content="1")
+  inspect(solution_dict_text(case6.1, ["x", "y"]), content="{x: 1, y: 1}")
+
+  let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
+  let lin1 = linprog(
+    [@symcore.int(1), @symcore.int(1), @symcore.int(-2)],
+    a=Some(
+      @symmatrices.matrix([
+        [@symcore.int(7), @symcore.int(4), @symcore.int(-7)],
+        [@symcore.int(3), @symcore.int(-1), @symcore.int(10)],
+      ]),
+    ),
+    b=Some([@symcore.int(3), @symcore.int(6)]),
+    a_eq=Some(@symmatrices.matrix([[@symcore.int(-9), @symcore.int(1), @symcore.int(0)]])),
+    b_eq=Some([@symcore.int(1)]),
+  )
+  inspect(@symprint.to_string(lin1.0), content="-2/5")
+  inspect(expr_list_text(lin1.1), content="[0, 1, 7/10]")
+
+  let lin2 = linprog(
+    [@symcore.int(1), @symcore.int(1), @symcore.int(-2)],
+    a=Some(
+      @symmatrices.matrix([
+        [@symcore.int(7), @symcore.int(4), @symcore.int(-7)],
+        [@symcore.int(3), @symcore.int(-1), @symcore.int(10)],
+      ]),
+    ),
+    b=Some([@symcore.int(3), @symcore.int(6)]),
+    a_eq=Some(@symmatrices.matrix([[@symcore.int(0), @symcore.int(-1), @symcore.int(1)]])),
+    b_eq=Some([half]),
+  )
+  inspect(@symprint.to_string(lin2.0), content="-10/9")
+  inspect(expr_list_text(lin2.1), content="[0, 1/9, 11/18]")
+
+  let lin3 = linprog(
+    [@symcore.int(1), @symcore.int(1), @symcore.int(-2)],
+    a=Some(
+      @symmatrices.matrix([
+        [@symcore.int(7), @symcore.int(4), @symcore.int(-7)],
+        [@symcore.int(3), @symcore.int(-1), @symcore.int(10)],
+      ]),
+    ),
+    b=Some([@symcore.int(3), @symcore.int(6)]),
+    bounds=Some([
+      (Some(@symcore.int(0)), None),
+      (Some(@symcore.int(0)), None),
+      (None, Some(half)),
+    ]),
+  )
+  inspect(@symprint.to_string(lin3.0), content="-1")
+  inspect(expr_list_text(lin3.1), content="[0, 0, 1/2]")
+}
+
+///|
+test "simplex and solveset match additional SymPy public cases batch 3" {
+  let float_case = lpmax(
+    @symcore.int(-1) * x() - y() - @symcore.int(5) * z(),
+    [
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        x() - y() + @symcore.Expr::Float(@symcore.float_from_double(2.0)) * z(),
+        @symcore.int(-4),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.Expr::Float(@symcore.float_from_double(3.0)) * z(),
+        @symcore.int(8),
+      ),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(2) * x() + y() - @symcore.int(7) * z(), @symcore.int(10)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(float_case.0), content="-4")
+  inspect(solution_dict_text(float_case.1, ["x", "y", "z"]), content="{x: 0, y: 4, z: 0}")
+
+  let x1 = @symcore.Expr::Symbol("x1")
+  let x2 = @symcore.Expr::Symbol("x2")
+  let x3 = @symcore.Expr::Symbol("x3")
+  let x4 = @symcore.Expr::Symbol("x4")
+  let infeasible_four_var : Result[(@symcore.Expr, Map[String, @symcore.Expr]), SolverError] = try? lpmin(
+    @symcore.int(9) * x2 - @symcore.int(8) * x3 + @symcore.int(3) * x4 + @symcore.int(6),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(5) * x2 - @symcore.int(2) * x3, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(-1) * x1 - @symcore.int(8) * x2 + @symcore.int(9) * x3, @symcore.int(-3)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(10) * x1 - x2 + @symcore.int(9) * x4, @symcore.int(-4)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
+    ],
+  )
+  assert_true(infeasible_four_var is Err(SolverError::InfeasibleLPError(_)))
+
+  inspect(@symsets.to_string(solveset(@symcore.int(4), symbol=Some(x()), domain=@symsets.reals())), content="EmptySet")
+  inspect(@symsets.to_string(solveset((x() ^ @symcore.int(2)) + @symcore.int(1), symbol=Some(x()), domain=@symsets.reals())), content="EmptySet")
+  inspect(@symsets.to_string(solveset(@symcore.int(0), symbol=Some(x()), domain=@symsets.reals())), content="Reals")
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.int(0),
+        symbol=Some(x()),
+        domain=@symsets.interval(@symcore.int(1), @symcore.int(2)),
+      ),
+    ),
+    content="Interval(1, 2)",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.int(-1) * (x() ^ @symcore.int(2)) - @symcore.int(2) * x() + ((x() + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="Reals",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.int(3) * x() + @symcore.int(-2),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="{2/3}",
+  )
+  inspect(
+    normalize_text(
+      @symsets.to_string(
+        solveset(
+          (x() ^ @symcore.int(2)) + @symcore.int(-1),
+          symbol=Some(x()),
+          domain=@symsets.reals(),
+        ),
+      ),
+    ),
+    content="{-1, 1}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        sqrt(@symcore.int(1)) + @symcore.int(1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="EmptySet",
+  )
+}
+
+///|
+test "linear_eq_to_matrix and linsolve match additional SymPy linear cases batch 4" {
+  let (a0, b0) = linear_eq_to_matrix([@symcore.int(0)], [x()])
+  inspect(a0.to_string(), content="Matrix([[0]])")
+  inspect(b0.to_string(), content="Matrix([[0]])")
+
+  let (a1, b1) = linear_eq_to_matrix([@symcore.int(1)], [x()])
+  inspect(a1.to_string(), content="Matrix([[0]])")
+  inspect(b1.to_string(), content="Matrix([[-1]])")
+
+  let (a2, b2) = linear_eq_to_matrix(
+    [
+      @symcore.int(2) * x() + y() - @symcore.int(2) * z() + @symcore.int(-3),
+      x() - y() - z(),
+      x() + y() + @symcore.int(3) * z() + @symcore.int(-12),
+    ],
+    [x(), y(), z()],
+  )
+  inspect(a2.to_string(), content="Matrix([[2, 1, -2], [1, -1, -1], [1, 1, 3]])")
+  inspect(b2.to_string(), content="Matrix([[3], [0], [12]])")
+
+  let (a3, b3) = linear_eq_to_matrix(
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(3) * x() + @symcore.int(2) * y() - z(), @symcore.int(1)),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) * x() - @symcore.int(2) * y() + @symcore.int(4) * z(), @symcore.int(-2)),
+      @symcore.int(-2) * x() + y() - @symcore.int(2) * z(),
+    ],
+    [x(), y(), z()],
+  )
+  inspect(a3.to_string(), content="Matrix([[3, 2, -1], [2, -2, 4], [-2, 1, -2]])")
+  inspect(b3.to_string(), content="Matrix([[1], [-2], [0]])")
+
+  let a_sym = @symcore.Expr::Symbol("a")
+  let b_sym = @symcore.Expr::Symbol("b")
+  let c_sym = @symcore.Expr::Symbol("c")
+  let d_sym = @symcore.Expr::Symbol("d")
+  let e_sym = @symcore.Expr::Symbol("e")
+  let f_sym = @symcore.Expr::Symbol("f")
+  let g_sym = @symcore.Expr::Symbol("g")
+  let h_sym = @symcore.Expr::Symbol("h")
+  let i_sym = @symcore.Expr::Symbol("i")
+  let j_sym = @symcore.Expr::Symbol("j")
+  let k_sym = @symcore.Expr::Symbol("k")
+  let l_sym = @symcore.Expr::Symbol("l")
+  let (a4, b4) = linear_eq_to_matrix(
+    [
+      a_sym * b_sym * x() + b_sym * y() + c_sym * z() - d_sym,
+      e_sym * x() + d_sym * x() + f_sym * y() + g_sym * z() - h_sym,
+      i_sym * x() + j_sym * y() + k_sym * z() - l_sym,
+    ],
+    [x(), y(), z()],
+  )
+  inspect(a4.to_string(), content="Matrix([[a*b, b, c], [d + e, f, g], [i, j, k]])")
+  inspect(b4.to_string(), content="Matrix([[d], [h], [l]])")
+
+  let (a5, b5) = linear_eq_to_matrix(
+    [x() + y() * (z() * (@symcore.int(3) * x() + @symcore.int(2)) + @symcore.int(3))],
+    [x()],
+  )
+  inspect(a5.to_string(), content="Matrix([[3*y*z + 1]])")
+  inspect(b5.to_string(), content="Matrix([[-y*(2*z + 3)]])")
+
+  let (a6, b6) = linear_eq_to_matrix(
+    [@symcore.Expr::Relational(@symcore.RelOp::Eq, x() + @symcore.int(2), @symcore.int(1))],
+    [x()],
+  )
+  inspect(a6.to_string(), content="Matrix([[1]])")
+  inspect(b6.to_string(), content="Matrix([[-1]])")
+
+  let (a7, b7) = linear_eq_to_matrix(
+    [@symcore.Expr::Relational(@symcore.RelOp::Eq, a_sym * (@symcore.int(2) * x() + @symcore.int(3) * y()) + @symcore.int(4) * y(), @symcore.int(5))],
+    [x(), y()],
+  )
+  inspect(a7.to_string(), content="Matrix([[2*a, 3*a + 4]])")
+  inspect(b7.to_string(), content="Matrix([[5]])")
+
+  let a_free = @symcore.Expr::Symbol("a_free")
+  let b_free = @symcore.Expr::Symbol("b_free")
+  let c_free = @symcore.Expr::Symbol("c_free")
+  let d_free = @symcore.Expr::Symbol("d_free")
+  let e_free = @symcore.Expr::Symbol("e_free")
+  let linsolve_symbolic = linsolve(
+    linsolve_augmented_matrix_input(
+      @symmatrices.matrix([
+        [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(0)],
+        [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0)],
+      ]),
+    ),
+    [a_free, b_free, c_free, d_free, e_free],
+  )
+  inspect(
+    @symsets.to_string(linsolve_symbolic),
+    content="{(a_free, 0, c_free, 0, e_free)}",
+  )
+
+  let linsolve_no_solution = linsolve(
+    linsolve_equations_input([
+      x() + @symcore.int(2) * y() + @symcore.int(3) * z(),
+      @symcore.int(2) * x() + @symcore.int(4) * y() + @symcore.int(6) * z() + @symcore.int(-1),
+      @symcore.int(3) * x() + @symcore.int(6) * y() + @symcore.int(9) * z(),
+    ]),
+    [x(), y(), z()],
+  )
+  inspect(@symsets.to_string(linsolve_no_solution), content="EmptySet")
+}
+
+///|
+test "linsolve matches additional SymPy public cases batch 5" {
+  let x1 = @symcore.Expr::Symbol("x1")
+  let x2 = @symcore.Expr::Symbol("x2")
+  let x3 = @symcore.Expr::Symbol("x3")
+  let x4 = @symcore.Expr::Symbol("x4")
+  let eqns = [
+    x1 + @symcore.int(2) * x2 + x3 + x4 + @symcore.int(-7),
+    x1 + @symcore.int(2) * x2 + @symcore.int(2) * x3 - x4 + @symcore.int(-12),
+    @symcore.int(2) * x1 + @symcore.int(4) * x2 + @symcore.int(6) * x4 + @symcore.int(-4),
+  ]
+  let expected_parametric = @symcore.Expr::Tuple([
+    @symcore.int(-2) * x2 + @symcore.int(-3) * x4 + @symcore.int(2),
+    x2,
+    @symcore.int(2) * x4 + @symcore.int(5),
+    x4,
+  ])
+  let linsolve_eqns = linsolve(linsolve_equations_input(eqns), [x1, x2, x3, x4])
+  let linsolve_aug = linsolve(
+    linsolve_augmented_matrix_input(
+      @symmatrices.matrix([
+        [@symcore.int(1), @symcore.int(2), @symcore.int(1), @symcore.int(1), @symcore.int(7)],
+        [@symcore.int(1), @symcore.int(2), @symcore.int(2), @symcore.int(-1), @symcore.int(12)],
+        [@symcore.int(2), @symcore.int(4), @symcore.int(0), @symcore.int(6), @symcore.int(4)],
+      ]),
+    ),
+    [x1, x2, x3, x4],
+  )
+  match linsolve_eqns {
+    @symsets.Set::FiniteSet(items) => {
+      assert_eq(items.length(), 1)
+      assert_true(tuple_expr_semantically_equal(items[0], expected_parametric))
+    }
+    _ => fail("linsolve parametric equations should return FiniteSet")
+  }
+  match linsolve_aug {
+    @symsets.Set::FiniteSet(items) => {
+      assert_eq(items.length(), 1)
+      assert_true(tuple_expr_semantically_equal(items[0], expected_parametric))
+    }
+    _ => fail("linsolve parametric matrix should return FiniteSet")
+  }
+
+  inspect(@symsets.to_string(linsolve(linsolve_equations_input([]), [x()])), content="EmptySet")
+  inspect(@symsets.to_string(linsolve(linsolve_equations_input([@symcore.int(0)]), [x()])), content="{(x,)}")
+  inspect(@symsets.to_string(linsolve(linsolve_equations_input([x()]), [x(), y()])), content="{(0, y)}")
+  inspect(@symsets.to_string(linsolve(linsolve_equations_input([x(), @symcore.int(0)]), [x(), y()])), content="{(0, y)}")
+  inspect(
+    @symsets.to_string(
+      linsolve(
+        linsolve_equations_input([@symcore.Expr::Relational(@symcore.RelOp::Eq, x(), x() + y())]),
+        [x(), y()],
+      ),
+    ),
+    content="{(x, 0)}",
+  )
+  inspect(
+    @symsets.to_string(
+      linsolve(
+        linsolve_equations_input([@symcore.Expr::Relational(@symcore.RelOp::Eq, x() + x() * y(), @symcore.int(1) + y())]),
+        [x()],
+      ),
+    ),
+    content="{(1,)}",
+  )
+  inspect(
+    @symsets.to_string(
+      linsolve(
+        linsolve_equations_input([@symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(1) + y(), x() + x() * y())]),
+        [x()],
+      ),
+    ),
+    content="{(1,)}",
+  )
+  inspect(
+    @symsets.to_string(
+      linsolve(
+        linsolve_equations_input([
+          x() + z() + @symcore.int(-1),
+          (x() ^ @symcore.int(2)) + y() + @symcore.int(-3),
+        ]),
+        [z(), y()],
+      ),
+    ),
+    content="{(1 - x, 3 - x**2)}",
+  )
+}
+
+///|
+test "linsolve and solveset match additional SymPy public cases batch 6" {
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let c = @symcore.Expr::Symbol("c")
+  let d = @symcore.Expr::Symbol("d")
+  let e = @symcore.Expr::Symbol("e")
+  let gsym = @symcore.Expr::Symbol("g")
+  let linsolve_symbolic = linsolve(
+    linsolve_equations_input([a * x() + b * y() + @symcore.int(-1) * e, c * x() + d * y() + @symcore.int(-1) * gsym]),
+    [x(), y()],
+  )
+  let symbolic_den = a * d + @symcore.int(-1) * b * c
+  let symbolic_expected = @symcore.Expr::Tuple([
+    (@symcore.int(-1) * b * gsym + d * e) * (symbolic_den ^ @symcore.int(-1)),
+    (a * gsym + @symcore.int(-1) * c * e) * (symbolic_den ^ @symcore.int(-1)),
+  ])
+  assert_true(finite_set_exprs_semantically_equal(linsolve_symbolic, [symbolic_expected]))
+
+  let no_solution = linsolve(
+    linsolve_augmented_matrix_input(
+      @symmatrices.matrix([
+        [@symcore.int(1), @symcore.int(2), @symcore.int(3), @symcore.int(0)],
+        [@symcore.int(2), @symcore.int(4), @symcore.int(6), @symcore.int(0)],
+        [@symcore.int(3), @symcore.int(6), @symcore.int(9), @symcore.int(1)],
+      ]),
+    ),
+    [x(), y(), z()],
+  )
+  inspect(@symsets.to_string(no_solution), content="EmptySet")
+
+  let avar = @symcore.Expr::Symbol("A")
+  let bvar = @symcore.Expr::Symbol("B")
+  let j1 = @symcore.Expr::Symbol("J1")
+  let j2 = @symcore.Expr::Symbol("J2")
+  let imag = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let issue_10056 = linsolve(
+    linsolve_augmented_matrix_input(
+      @symmatrices.matrix([
+        [@symcore.int(2) * imag * j1, @symcore.int(2) * imag * j2, @symcore.int(-2) * (j1 ^ @symcore.int(-1))],
+        [@symcore.int(-2) * imag * j2, @symcore.int(-2) * imag * j1, @symcore.int(2) * (j2 ^ @symcore.int(-1))],
+        [@symcore.int(0), @symcore.int(2), @symcore.int(2) * imag * ((j1 * j2) ^ @symcore.int(-1))],
+        [@symcore.int(2), @symcore.int(0), @symcore.int(0)],
+      ]),
+    ),
+    [avar, bvar],
+  )
+  let issue_10056_expected = @symcore.Expr::Tuple([
+    @symcore.int(0),
+    imag * ((j1 * j2) ^ @symcore.int(-1)),
+  ])
+  assert_true(finite_set_exprs_semantically_equal(issue_10056, [issue_10056_expected]))
+
+  let disc = b * b + @symcore.int(-4) * a * c
+  let quadratic_roots = [
+    (@symcore.int(-1) * b + @symcore.int(-1) * sqrt(disc)) * ((@symcore.int(2) * a) ^ @symcore.int(-1)),
+    (@symcore.int(-1) * b + sqrt(disc)) * ((@symcore.int(2) * a) ^ @symcore.int(-1)),
+  ]
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(a * (x() ^ @symcore.int(2)) + b * x() + c, symbol=Some(x()), domain=complexes),
+      quadratic_roots,
+    ),
+  )
+  inspect(@symsets.to_string(solveset(@symcore.int(0), symbol=Some(x()), domain=complexes)), content="Complexes")
+  inspect(@symsets.to_string(solveset(@symcore.int(4), symbol=Some(x()), domain=complexes)), content="EmptySet")
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(@symcore.int(3) * x() + @symcore.int(-2), symbol=Some(x()), domain=complexes),
+      [@symcore.int(2) * (@symcore.int(3) ^ @symcore.int(-1))],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset((x() ^ @symcore.int(2)) + @symcore.int(1), symbol=Some(x()), domain=complexes),
+      [imag, @symcore.int(-1) * imag],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset((x() ^ @symcore.int(2)) + @symcore.int(-1), symbol=Some(x()), domain=complexes),
+      [@symcore.int(1), @symcore.int(-1)],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset((x() ^ @symcore.int(2)) + x(), symbol=Some(x()), domain=complexes),
+      [@symcore.int(0), @symcore.int(-1)],
+    ),
+  )
+}
+
+///|
+test "solveset matches additional SymPy public cases batch 7" {
+  let real_domain = @symsets.reals()
+  let log2 = @symcore.function("log", [@symcore.int(2)])
+  let log3 = @symcore.function("log", [@symcore.int(3)])
+  let log5 = @symcore.function("log", [@symcore.int(5)])
+  let exp3 = @symcore.function("exp", [@symcore.int(3)])
+  let quarter = @symcore.rational_from_ints(1, 4) catch { _ => fail("quarter") }
+
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(@symcore.function("exp", [x()]) + @symcore.int(-3), symbol=Some(x()), domain=real_domain),
+      [log3],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(@symcore.function("log", [x()]) + @symcore.int(-3), symbol=Some(x()), domain=real_domain),
+      [exp3],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset((@symcore.int(2) ^ x()) + @symcore.int(-10), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(1) + log5 * (log2 ^ @symcore.int(-1))],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset((x() ^ @symcore.int(-1)) + @symcore.int(1), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(-1)],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset((@symcore.function("exp", [x()]) ^ @symcore.int(-1)) + @symcore.int(-1), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(0)],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(x() * (@symcore.int(1) + @symcore.int(-5) * (x() ^ @symcore.int(-1))), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(5)],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(
+        @symcore.int(2) * x() * ((x() + @symcore.int(2)) ^ @symcore.int(-1)) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      [@symcore.int(2)],
+    ),
+  )
+  assert_eq(
+    @symsets.compare_set(
+      solveset(x() + @symcore.int(-1) * (y() ^ @symcore.int(3)), symbol=Some(x()), domain=real_domain),
+      @symsets.intersection([
+        @symsets.finite_set([y() ^ @symcore.int(3)]),
+        real_domain,
+      ]),
+    ),
+    0,
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(sqrt(x()) + @symcore.int(-2), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(4)],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset((x() ^ quarter) + @symcore.int(-2), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(16)],
+    ),
+  )
+}
+
+///|
+test "solveset matches additional SymPy public cases batch 8" {
+  let real_domain = @symsets.reals()
+  let two_thirds = @symcore.rational_from_ints(2, 3) catch { _ => fail("two_thirds") }
+  let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("one_third") }
+
+  inspect(
+    @symsets.to_string(
+      solveset(@symcore.raw_pow(@symcore.int(0), x()) + @symcore.int(-100), symbol=Some(x()), domain=real_domain),
+    ),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(@symcore.raw_pow(@symcore.int(0), x()) + @symcore.int(-1), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{0}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset((@symcore.int(2) * x() + @symcore.int(8)) * (@symcore.int(8) + @symcore.function("exp", [x()])), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{-4}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(x() * (@symcore.function("log", [x()]) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+    ),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(@symcore.int(3) * x() + @symcore.int(-2), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{" + @symprint.to_string(two_thirds) + "}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset((x() ^ @symcore.int(2)) + @symcore.int(-1), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{-1, 1}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset((x() ^ one_third) + @symcore.int(-3), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{27}",
+  )
+  inspect(
+    @symsets.to_string(solveset(@symcore.int(4), symbol=Some(x()), domain=real_domain)),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(solveset(@symcore.int(0), symbol=Some(x()), domain=real_domain)),
+    content="Reals",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.int(-1) * (x() ^ @symcore.int(2)) +
+        @symcore.int(-2) * x() +
+        ((x() + @symcore.int(1)) ^ @symcore.int(2)) +
+        @symcore.int(-1),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
+    content="Reals",
+  )
+}
+
+///|
+test "solveset matches additional SymPy public cases batch 9" {
+  let real_domain = @symsets.reals()
+  let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("one_third") }
+
+  inspect(@symsets.to_string(solveset((x() ^ @symcore.int(3)) + @symcore.int(-8), symbol=Some(x()), domain=real_domain)), content="{2}")
+  inspect(@symsets.to_string(solveset((x() ^ @symcore.int(3)) + @symcore.int(1), symbol=Some(x()), domain=real_domain)), content="{-1}")
+  inspect(
+    @symsets.to_string(
+      solveset((@symcore.int(2) ^ (x() + @symcore.int(1))) + @symcore.int(-8), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{2}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(@symcore.function("exp", [@symcore.int(2) * x()]) + @symcore.int(-1), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{0}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(sqrt(x() + @symcore.int(1)) + @symcore.int(-3), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{8}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(((x() + @symcore.int(1)) ^ one_third) + @symcore.int(-2), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{7}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(((x() + @symcore.int(-2)) ^ @symcore.int(-1)) + @symcore.int(1), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{1}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset((x() + @symcore.int(-1)) * ((x() + @symcore.int(2)) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{1}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(((x() ^ @symcore.int(2)) + @symcore.int(-4)) * ((x() + @symcore.int(-2)) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{-2}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset((x() + @symcore.int(-2)) * ((x() ^ @symcore.int(2)) + @symcore.int(1)), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{2}",
+  )
+}
+
+///|
+test "solveset matches additional SymPy public cases batch 10" {
+  let real_domain = @symsets.reals()
+  let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
+
+  inspect(
+    @symsets.to_string(
+      solveset(@symcalculus.diff((x() ^ @symcore.int(2)) * ((@symcore.int(7) + @symcore.int(-1) * x()) ^ @symcore.int(-1)), x()), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{0, 14}",
+  )
+  inspect(@symsets.to_string(solveset(@symcore.int(3) ^ (x() + @symcore.int(2)), symbol=Some(x()), domain=real_domain)), content="EmptySet")
+  inspect(@symsets.to_string(solveset(@symcore.int(3) ^ (@symcore.int(2) + @symcore.int(-1) * x()), symbol=Some(x()), domain=real_domain)), content="EmptySet")
+  inspect(@symsets.to_string(solveset(@symcore.function("exp", [x()]), symbol=Some(x()), domain=real_domain)), content="EmptySet")
+  inspect(@symsets.to_string(solveset((x() ^ @symcore.int(2)) + @symcore.int(1), symbol=Some(x()), domain=real_domain)), content="EmptySet")
+  inspect(@symsets.to_string(solveset(x() ^ @symcore.int(-1), symbol=Some(x()), domain=real_domain)), content="EmptySet")
+  inspect(
+    @symsets.to_string(
+      solveset(
+        (@symcore.int(-1) * ((@symcore.int(1) + x()) * ((@symcore.int(2) + x()) ^ @symcore.int(-2)))) +
+          ((@symcore.int(2) + x()) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(((x() * ((x() + @symcore.int(1)) ^ @symcore.int(-1))) + @symcore.int(3)) ^ @symcore.int(-2), symbol=Some(x()), domain=real_domain),
+    ),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset((x() + @symcore.int(-1)) * ((@symcore.int(1) + ((x() + @symcore.int(-1)) ^ @symcore.int(-1))) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+    ),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(sqrt((x() + @symcore.int(-3)) * (x() ^ @symcore.int(-1))) + (@symcore.int(-1) * half), symbol=Some(x()), domain=real_domain),
+    ),
+    content="{4}",
+  )
+}
+
+///|
+test "simplex and solveset match additional SymPy public cases batch 11" {
+  let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
+
+  let eq_case = lpmax(
+    x() - y(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(eq_case.0), content="2")
+  inspect(solution_dict_text(eq_case.1, ["x", "y"]), content="{x: 2, y: 0}")
+
+  let extra_symbol_case = lpmin(
+    x(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + z()),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(extra_symbol_case.0), content="1")
+  inspect(solution_dict_text(extra_symbol_case.1, ["x", "y", "z"]), content="{x: 1, y: 1, z: 0}")
+
+  let x1 = @symcore.Expr::Symbol("x1")
+  let x2 = @symcore.Expr::Symbol("x2")
+  let x3 = @symcore.Expr::Symbol("x3")
+  let x4 = @symcore.Expr::Symbol("x4")
+  let bounded_front = lpmin(
+    @symcore.int(5) * x2 + x3 + @symcore.int(4) * x4 - x1,
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(5) * x2 + @symcore.int(2) * x3 + @symcore.int(5) * x4 - x1, @symcore.int(5)),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(3) * x2 + x4, @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(-1) * x1 + x3 + @symcore.int(2) * x4, @symcore.int(1)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x1, @symcore.int(1)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x2, @symcore.int(1)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x3, @symcore.int(1)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x4, @symcore.int(1)),
+    ],
+  )
+  inspect(@symprint.to_string(bounded_front.0), content="9/2")
+  inspect(solution_dict_text(bounded_front.1, ["x1", "x2", "x3", "x4"]), content="{x1: 0, x2: 1/2, x3: 0, x4: 1/2}")
+
+  let bounded_lin = linprog(
+    [@symcore.int(-1), @symcore.int(5), @symcore.int(1), @symcore.int(4)],
+    a=Some(@symmatrices.matrix([[@symcore.int(-1), @symcore.int(5), @symcore.int(2), @symcore.int(5)]])),
+    b=Some([@symcore.int(5)]),
+    a_eq=Some(@symmatrices.matrix([
+      [@symcore.int(0), @symcore.int(3), @symcore.int(0), @symcore.int(1)],
+      [@symcore.int(-1), @symcore.int(0), @symcore.int(1), @symcore.int(2)],
+    ])),
+    b_eq=Some([@symcore.int(2), @symcore.int(1)]),
+    bounds=Some([
+      (Some(@symcore.int(0)), Some(@symcore.int(1))),
+      (Some(@symcore.int(0)), Some(@symcore.int(1))),
+      (Some(@symcore.int(0)), Some(@symcore.int(1))),
+      (Some(@symcore.int(0)), Some(@symcore.int(1))),
+    ]),
+  )
+  inspect(@symprint.to_string(bounded_lin.0), content="9/2")
+  inspect(expr_list_text(bounded_lin.1), content="[0, 1/2, 0, 1/2]")
+
+  let shifted_eq = lpmin(
+    x() + y() - @symcore.int(2) * z() + @symcore.int(1),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(), @symcore.int(3)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(3) * x() - y() + @symcore.int(10) * z(), @symcore.int(6)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, y() + @symcore.int(-9) * x(), @symcore.int(1)),
+    ],
+  )
+  inspect(@symprint.to_string(shifted_eq.0), content="3/5")
+  inspect(solution_dict_text(shifted_eq.1, ["x", "y", "z"]), content="{x: 0, y: 1, z: 7/10}")
+
+  let shifted_ineq = lpmin(
+    x() + y() - @symcore.int(2) * z() + @symcore.int(1),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(), @symcore.int(3)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(3) * x() - y() + @symcore.int(10) * z(), @symcore.int(6)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, z() - y(), half),
+    ],
+  )
+  inspect(@symprint.to_string(shifted_ineq.0), content="-1/9")
+  inspect(solution_dict_text(shifted_ineq.1, ["x", "y", "z"]), content="{x: 0, y: 1/9, z: 11/18}")
+
+  let shifted_bound = lpmin(
+    x() + y() - @symcore.int(2) * z() + @symcore.int(1),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(), @symcore.int(3)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(3) * x() - y() + @symcore.int(10) * z(), @symcore.int(6)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, z(), half),
+    ],
+  )
+  inspect(@symprint.to_string(shifted_bound.0), content="0")
+  inspect(solution_dict_text(shifted_bound.1, ["x", "y", "z"]), content="{x: 0, y: 0, z: 1/2}")
+
+  inspect(@symsets.to_string(solveset(sqrt(x()) + @symcore.int(-1), symbol=Some(x()), domain=@symsets.reals())), content="{1}")
+  inspect(@symsets.to_string(solveset(sqrt(x() + @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals())), content="{1}")
+  inspect(
+    @symsets.to_string(
+      solveset(sqrt((x() + @symcore.int(-3)) * (x() ^ @symcore.int(-1))), symbol=Some(x()), domain=@symsets.reals()),
+    ),
+    content="{3}",
+  )
+}
+
+///|
+test "solveset matches additional SymPy public cases batch 12" {
+  let positive_infinity = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  let nonnegative_reals = @symsets.interval(@symcore.int(0), positive_infinity)
+
+  inspect(
+    @symsets.to_string(
+      solveset((x() ^ @symcore.int(2)) + (@symcore.int(-1) * x()) + @symcore.int(-6), symbol=Some(x()), domain=nonnegative_reals),
+    ),
+    content="{3}",
+  )
+  inspect(
+    @symsets.to_string(solveset((x() ^ @symcore.int(2)) + @symcore.int(-1), symbol=Some(x()), domain=nonnegative_reals)),
+    content="{1}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset((x() ^ @symcore.int(4)) + @symcore.int(-16), symbol=Some(x()), domain=@symsets.interval(@symcore.int(0), @symcore.int(10))),
+    ),
+    content="{2}",
+  )
+
+  let issue9522_a = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    ((((x() ^ @symcore.int(2)) + @symcore.int(-4)) ^ @symcore.int(-1)) + x()),
+    ((((x() ^ @symcore.int(2)) + @symcore.int(-4)) ^ @symcore.int(-1)) + @symcore.int(2)),
+  )
+  inspect(@symsets.to_string(solveset(issue9522_a, symbol=Some(x()), domain=@symsets.reals())), content="EmptySet")
+
+  let issue9522_b = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    (x() ^ @symcore.int(-1)) + x(),
+    x() ^ @symcore.int(-1),
+  )
+  inspect(@symsets.to_string(solveset(issue9522_b, symbol=Some(x()), domain=@symsets.reals())), content="EmptySet")
+
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-2), x()), @symcore.int(4)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="{2}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(-1) * (@symcore.int(2) ^ x()), @symcore.int(4)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-3), x()), @symcore.int(27)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-5), x() + @symcore.int(1)), @symcore.int(625)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="{3}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) ^ (x() + @symcore.int(-3)), @symcore.int(-16)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="EmptySet",
+  )
+}
+
+///|
+test "simplex and solveset match additional SymPy public cases batch 13" {
+  let simplex_min = lpmin(
+    y(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + @symcore.int(2)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    ],
+  )
+  inspect(@symprint.to_string(simplex_min.0), content="0")
+  inspect(solution_dict_text(simplex_min.1, ["x", "y"]), content="{x: 2, y: 0}")
+
+  let simplex_chain = lpmax(
+    x(),
+    [
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y()),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
+      @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
+    ],
+  )
+  inspect(@symprint.to_string(simplex_chain.0), content="3")
+  inspect(solution_dict_text(simplex_chain.1, ["x", "y", "z"]), content="{x: 3, y: 3, z: 3}")
+
+  inspect(@symsets.to_string(solveset(@symcore.int(1), symbol=Some(x()), domain=@symsets.reals())), content="EmptySet")
+  inspect(@symsets.to_string(solveset(@symcore.Expr::Boolean(true), symbol=Some(x()), domain=@symsets.reals())), content="Reals")
+  inspect(@symsets.to_string(solveset(@symcore.Expr::Boolean(false), symbol=Some(x()), domain=@symsets.reals())), content="EmptySet")
+  inspect(
+    @symsets.to_string(solveset(@symcore.function("exp", [x()]) + @symcore.int(-1), symbol=Some(x()), domain=@symsets.reals())),
+    content="{0}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.function("exp", [x()]), @symcore.int(1)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="{0}",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x() + @symcore.int(-1), @symcore.int(0)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="Interval(1, oo)",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x() ^ @symcore.int(2), @symcore.int(0)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="Reals",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.raw_pow(@symcore.int(-3), x() + @symcore.int(-3)),
+          @symcore.int(-1) * (@symcore.int(3) ^ @symcore.int(39)),
+        ),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    content="{42}",
+  )
+}
+
+///|
+test "solve matches additional SymPy public cases batch 14" {
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let c = @symcore.Expr::Symbol("c")
+  inspect(solve_result_text(solve(solve_expr_input(@symcore.int(42)))), content="[]")
+  inspect(solve_result_text(solve(solve_expr_input(@symcore.int(42)), symbols=[x()])), content="[]")
+  inspect(solve_result_text(solve(solve_exprs_input([@symcore.int(1), @symcore.int(2)]))), content="[]")
+  inspect(solve_result_text(solve(solve_exprs_input([sqrt(@symcore.int(2))]), symbols=[x()])), content="[]")
+  inspect(solve_result_text(solve(solve_expr_input(y() + @symcore.int(-3)), symbols=[y()])), content="[3]")
+  inspect(
+    solve_result_text(solve(solve_expr_input(x() + y() + @symcore.int(-3)), symbols=[x(), y()])),
+    content="[(3 - y, y)]",
+  )
+  inspect(
+    solve_result_text(solve(solve_expr_input(x() + y() + @symcore.int(-3)))),
+    content="[{x: 3 - y}]",
+  )
+  inspect(
+    solve_result_text(solve(solve_expr_input(a + b * x() + @symcore.int(-2)), symbols=[a, b])),
+    content="{a: 2, b: 0}",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_expr_input((a + b) * x() + b + @symcore.int(-1) * c),
+        symbols=[a, b],
+      ),
+    ),
+    content="{a: -c, b: c}",
+  )
+  inspect(
+    solve_result_text(solve(solve_expr_input(x() + @symcore.int(-1) * (y() ^ @symcore.int(3))), symbols=[x()])),
+    content="[y**3]",
+  )
+}
+
+///|
+test "solve matches additional SymPy public cases batch 15" {
+  let a11 = @symcore.Expr::Symbol("a11")
+  let a12 = @symcore.Expr::Symbol("a12")
+  let a21 = @symcore.Expr::Symbol("a21")
+  let a22 = @symcore.Expr::Symbol("a22")
+  let b1 = @symcore.Expr::Symbol("b1")
+  let b2 = @symcore.Expr::Symbol("b2")
+  inspect(solve_result_text(solve(solve_expr_input(@symcore.int(3) * x() + @symcore.int(-2)), symbols=[x()])), content="[2/3]")
+  inspect(
+    solve_result_text(
+      solve(
+        solve_expr_input(@symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(3) * x(), @symcore.int(2))),
+        symbols=[x()],
+      ),
+    ),
+    content="[2/3]",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_expr_input((x() ^ @symcore.int(2)) + @symcore.int(-1)),
+        symbols=[x()],
+      ),
+    ),
+    content="[-1, 1]",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_expr_input(@symcore.Expr::Relational(@symcore.RelOp::Eq, x() ^ @symcore.int(2), @symcore.int(1))),
+        symbols=[x()],
+      ),
+    ),
+    content="[-1, 1]",
+  )
+  let symbolic_linear = solve(
+    solve_exprs_input([
+      a11 * x() + a12 * y() + @symcore.int(-1) * b1,
+      a21 * x() + a22 * y() + @symcore.int(-1) * b2,
+    ]),
+    symbols=[x(), y()],
+  )
+  match symbolic_linear {
+    SolveResult::Dict(values) => {
+      let expected_x = ((a22 * b1) + @symcore.int(-1) * (a12 * b2)) *
+        ((a11 * a22 + @symcore.int(-1) * (a12 * a21)) ^ @symcore.int(-1))
+      let expected_y = ((a11 * b2) + @symcore.int(-1) * (a21 * b1)) *
+        ((a11 * a22 + @symcore.int(-1) * (a12 * a21)) ^ @symcore.int(-1))
+      assert_eq(
+        @symcore.compare_expr(values.get("x").unwrap_or(@symcore.int(0)), expected_x),
+        0,
+      )
+      assert_eq(
+        @symcore.compare_expr(values.get("y").unwrap_or(@symcore.int(0)), expected_y),
+        0,
+      )
+    }
+    _ => fail("expected symbolic 2x2 solve to return Dict")
+  }
+  inspect(
+    solve_result_text(
+      solve(
+        solve_exprs_input([x() + @symcore.int(-1) * y(), x() + y()]),
+        symbols=[x(), y()],
+      ),
+    ),
+    content="{x: 0, y: 0}",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_exprs_input([(x() ^ @symcore.int(2)) + @symcore.int(-4), y() + @symcore.int(-2)]),
+        symbols=[x(), y()],
+      ),
+    ),
+    content="[(-2, 2), (2, 2)]",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_exprs_input([x() + y() + @symcore.int(-2), @symcore.int(2) * x() + @symcore.int(2) * y() + @symcore.int(-4)]),
+      ),
+    ),
+    content="{x: 2 - y}",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_expr_input(
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            x() ^ @symcore.int(2),
+            @symcore.Expr::Float(@symcore.float_from_double(0.0)),
+          ),
+        ),
+      ),
+    ),
+    content="[0.0]",
+  )
+  inspect(solve_result_text(solve(solve_exprs_input([]), symbols=[x()])), content="[]")
+}
+
+///|
+test "solve matches additional SymPy public cases batch 16" {
+  let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("one_third") }
+  let quarter = @symcore.rational_from_ints(1, 4) catch { _ => fail("quarter") }
+  inspect(
+    solve_result_text(
+      solve(
+        solve_exprs_input([x() + y() + @symcore.int(-3), x() + @symcore.int(-1) * y() + @symcore.int(-5)]),
+      ),
+    ),
+    content="{x: 4, y: -1}",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_exprs_input([(x() ^ @symcore.int(2)) + @symcore.int(-4), y() + @symcore.int(-2)]),
+        symbols=[y(), x()],
+      ),
+    ),
+    content="[(2, -2), (2, 2)]",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_exprs_input([
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), x()),
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), x() + @symcore.int(1)),
+        ]),
+        symbols=[x()],
+      ),
+    ),
+    content="[]",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_exprs_input([
+          @symcore.Expr::Boolean(true),
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), @symcore.int(0)),
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), x() + @symcore.int(1)),
+        ]),
+        symbols=[x()],
+      ),
+    ),
+    content="[]",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_expr_input(@symcore.Expr::Boolean(true)),
+        symbols=[x()],
+      ),
+    ),
+    content="[]",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_expr_input(sqrt(x()) + @symcore.int(-1)),
+        symbols=[x()],
+      ),
+    ),
+    content="[1]",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_expr_input(sqrt(x()) + @symcore.int(-2)),
+        symbols=[x()],
+      ),
+    ),
+    content="[4]",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_expr_input((x() ^ quarter) + @symcore.int(-2)),
+        symbols=[x()],
+      ),
+    ),
+    content="[16]",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_expr_input((x() ^ one_third) + @symcore.int(-3)),
+        symbols=[x()],
+      ),
+    ),
+    content="[27]",
+  )
+  inspect(
+    solve_result_text(
+      solve(
+        solve_expr_input(@symcore.int(4)),
+        symbols=[x()],
+      ),
+    ),
+    content="[]",
+  )
+}
+
+///|
+test "solveset matches additional SymPy complex public cases batch 17" {
+  let imag = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
+  let sqrt3 = sqrt(@symcore.int(3))
+
+  inspect(@symsets.to_string(solveset(@symcore.int(0), symbol=Some(x()), domain=complexes)), content="Complexes")
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(x() + (x() ^ @symcore.int(-1)) + @symcore.int(-1), symbol=Some(x()), domain=complexes),
+      [
+        half + half * imag * sqrt3,
+        half + @symcore.int(-1) * half * imag * sqrt3,
+      ],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(
+        (x() + @symcore.int(-1)) * (x() + @symcore.int(-1) * imag) * ((x() + @symcore.int(-3)) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=complexes,
+      ),
+      [@symcore.int(1), imag],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(
+        (x() + @symcore.int(-1) * (y() ^ @symcore.int(3))) * (((y() ^ @symcore.int(2)) * sqrt(@symcore.int(1) + @symcore.int(-1) * (y() ^ @symcore.int(2)))) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=complexes,
+      ),
+      [y() ^ @symcore.int(3)],
+    ),
+  )
+  inspect(
+    @symsets.to_string(solveset((@symcore.function("exp", [x()])) ^ @symcore.int(-1), symbol=Some(x()), domain=complexes)),
+    content="EmptySet",
+  )
+  assert_eq(
+    @symsets.compare_set(
+      solveset(
+        (x() + @symcore.int(-1) * (y() ^ @symcore.int(3))) * (((y() ^ @symcore.int(2)) * sqrt(@symcore.int(1) + @symcore.int(-1) * (y() ^ @symcore.int(2)))) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+      @symsets.intersection([
+        @symsets.finite_set([y() ^ @symcore.int(3)]),
+        @symsets.reals(),
+      ]),
+    ),
+    0,
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(sqrt(x() + @symcore.int(-2)) + @symcore.int(-5), symbol=Some(x()), domain=@symsets.reals()),
+      [@symcore.int(27)],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(sqrt(x()) + @symcore.int(-7), symbol=Some(x()), domain=@symsets.reals()),
+      [@symcore.int(49)],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(sqrt(x() ^ @symcore.int(3)), symbol=Some(x()), domain=@symsets.reals()),
+      [@symcore.int(0)],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(sqrt(x() + @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals()),
+      [@symcore.int(1)],
+    ),
+  )
+}
+
+///|
+test "solveset matches additional SymPy domain and no-solution cases batch 18" {
+  let a = @symcore.Expr::Symbol("a")
+  let real_domain = @symsets.reals()
+  let positive_infinity = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("one_third") }
+
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.int(-1) * (x() ^ @symcore.int(2)) +
+        @symcore.int(-2) * x() +
+        ((x() + @symcore.int(1)) ^ @symcore.int(2)) +
+        @symcore.int(-1),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
+    content="Reals",
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset((x() ^ @symcore.int(2)) + @symcore.int(-1) * x() + @symcore.int(-6), symbol=Some(x()), domain=@symsets.interval(@symcore.int(0), positive_infinity)),
+      [@symcore.int(3)],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset((x() ^ @symcore.int(2)) + @symcore.int(-1), symbol=Some(x()), domain=@symsets.interval(@symcore.int(0), positive_infinity)),
+      [@symcore.int(1)],
+    ),
+  )
+  inspect(
+    @symsets.to_string(solveset(sqrt(@symcore.int(1)) + @symcore.int(1), symbol=Some(x()), domain=real_domain)),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(solveset(@symcore.int(1) + @symcore.int(-1) * positive_infinity * x(), symbol=Some(x()))),
+    content="EmptySet",
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset((((@symcore.int(2) * x()) + @symcore.int(-5)) ^ one_third) + @symcore.int(-3), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(16)],
+    ),
+  )
+  inspect(
+    @symsets.to_string(solveset(positive_infinity * x() + @symcore.int(-1) * positive_infinity, symbol=Some(x()))),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(solveset(@symcore.int(-3) * a * (sqrt(x()) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain)),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        ((x() * ((x() + @symcore.int(1)) ^ @symcore.int(-1))) + @symcore.int(3)) ^ @symcore.int(-2),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        (x() + @symcore.int(-1)) * ((@symcore.int(1) + ((x() + @symcore.int(-1)) ^ @symcore.int(-1))) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
+    content="EmptySet",
+  )
+}
+
+///|
+test "solveset matches additional SymPy abs and radical cases batch 19" {
+  let real_domain = @symsets.reals()
+  let positive_infinity = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  let abs = fn(expr : @symcore.Expr) { @symcore.function("Abs", [expr]) }
+
+  inspect(
+    @symsets.to_string(solveset(positive_infinity * x(), symbol=Some(x()))),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.int(-1) * (x() + @symcore.int(1)) * ((x() + @symcore.int(2)) ^ @symcore.int(-2)) +
+        ((x() + @symcore.int(2)) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
+    content="EmptySet",
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(abs(x()) + @symcore.int(-2), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(-2), @symcore.int(2)],
+    ),
+  )
+  inspect(
+    @symsets.to_string(solveset(abs(x()) + @symcore.int(2), symbol=Some(x()), domain=real_domain)),
+    content="EmptySet",
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(abs(x() + @symcore.int(3)) + @symcore.int(-2) * abs(x() + @symcore.int(-3)), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(1), @symcore.int(9)],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(@symcore.int(2) * abs(x()) + @symcore.int(-1) * abs(x() + @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(-1), @symcore.rational_from_ints(1, 3) catch { _ => fail("third") }],
+    ),
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(x() * (sqrt((x() ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(0)],
+    ),
+  )
+}
+
+///|
+test "solveset matches additional SymPy public cases batch 20" {
+  let real_domain = @symsets.reals()
+  let complex_domain = @symsets.complexes()
+  let abs = fn(expr : @symcore.Expr) { @symcore.function("Abs", [expr]) }
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let three_halves = @symcore.rational_from_ints(3, 2) catch { _ => fail("3/2") }
+  let minus_three_halves = @symcore.rational_from_ints(-3, 2) catch { _ => fail("-3/2") }
+  let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("1/2") }
+
+  inspect(
+    @symsets.to_string(solveset(abs(x()) + @symcore.int(1), symbol=Some(x()), domain=real_domain)),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, a, a),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
+    content="Reals",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, a, a),
+        symbol=Some(y()),
+        domain=complex_domain,
+      ),
+    ),
+    content="Complexes",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset((x() ^ three_halves) + @symcore.int(4), symbol=Some(x()), domain=real_domain),
+    ),
+    content="EmptySet",
+  )
+  inspect(
+    @symsets.to_string(
+      solveset((x() ^ minus_three_halves) + @symcore.int(4), symbol=Some(x()), domain=real_domain),
+    ),
+    content="EmptySet",
+  )
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(
+        x() + ((a + @symcore.int(-1) * b) * ((@symcore.int(-2) * a + @symcore.int(2) * b) ^ @symcore.int(-1))),
+        symbol=Some(x()),
+      ),
+      [half],
+    ),
+  )
 }
 
 ///|
@@ -2331,7 +4105,7 @@ test "inequalities, factor_system and diophantine cover source-compatible public
   )
   inspect(
     normalize_text(@symprint.to_string(reduce_abs_inequality(@symcore.function("Abs", [x() - @symcore.int(5)]) - @symcore.int(3), "<", x()))),
-    content="And(x < 8, 2 < x)",
+    content="And(2 < x, x < 8)",
   )
   inspect(
     normalize_text(@symprint.to_string(reduce_abs_inequality(@symcore.function("Abs", [x() - @symcore.int(5)]) - @symcore.int(3), "==", x()))),
