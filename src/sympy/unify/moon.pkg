@@ -1,0 +1,19 @@
+import {
+  "CAIMEOX/symbit/sympy" @sympy,
+  "Kaida-Amethyst/python" @py,
+}
+
+import {
+  "CAIMEOX/symbit/symassume",
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symunify",
+  "CAIMEOX/symbit/symstrategies/util" @strategies_util,
+} for "test"
+
+supported_targets = "native"
+
+options(
+  targets: { "*.mbt": [ "native" ] },
+)

@@ -1,0 +1,11 @@
+import {
+  "CAIMEOX/symbit/symassume",
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symstrategies/util" @strategies_util,
+}
+
+import {
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symnum",
+} for "test"
