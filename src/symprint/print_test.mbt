@@ -18,7 +18,10 @@ test "pretty to_string wraps multiplicative denominator" {
   let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.mul([
     x + y,
-    @symcore.pow(@symcore.mul([x ^ @symcore.int(2), y ^ @symcore.int(2)]), @symcore.int(-1)),
+    @symcore.pow(
+      @symcore.mul([x ^ @symcore.int(2), y ^ @symcore.int(2)]),
+      @symcore.int(-1),
+    ),
   ])
   inspect(to_string(expr), content="(x + y)/(x**2*y**2)")
 }
@@ -47,10 +50,7 @@ test "pretty to_string normalizes subtraction and unit coefficients" {
   )
   inspect(
     to_string(
-      @symcore.add([
-        @symcore.mul([@symcore.int(-1), x]),
-        @symcore.int(3),
-      ]),
+      @symcore.add([@symcore.mul([@symcore.int(-1), x]), @symcore.int(3)]),
     ),
     content="3 - x",
   )

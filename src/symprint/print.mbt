@@ -178,11 +178,13 @@ fn split_negative_addend(expr : Expr) -> Expr? {
                 rebuilt.push(args[j])
               }
             }
-            return Some(match rebuilt.length() {
-              0 => @symcore.int(1)
-              1 => rebuilt[0]
-              _ => @symcore.mul(rebuilt)
-            })
+            return Some(
+              match rebuilt.length() {
+                0 => @symcore.int(1)
+                1 => rebuilt[0]
+                _ => @symcore.mul(rebuilt)
+              },
+            )
           }
           _ => ()
         }
@@ -270,7 +272,8 @@ fn format_mul(expr : Expr, args : Array[Expr], parent_prec : Int) -> String {
     let denom = denominators[0]
     let denom_text_raw = format_expr(denom, prec)
     let denom_text = match @symcore.expr_form(denom) {
-      @symcore.ExprForm::Mul(_) | @symcore.ExprForm::Add(_) => "(" + denom_text_raw + ")"
+      @symcore.ExprForm::Mul(_) | @symcore.ExprForm::Add(_) =>
+        "(" + denom_text_raw + ")"
       _ => denom_text_raw
     }
     sign + numerator_text + "/" + denom_text
@@ -318,7 +321,7 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
     @symcore.ExprForm::UndefinedFunction(name) => name
     @symcore.ExprForm::Boolean(true) => "True"
     @symcore.ExprForm::Boolean(false) => "False"
-    @symcore.ExprForm::Add(args) => {
+    @symcore.ExprForm::Add(args) =>
       if args.is_empty() {
         "0"
       } else if args.length() == 2 {
@@ -332,8 +335,7 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
               match split_negative_addend(args[i]) {
                 Some(positive) =>
                   rendered.push("- " + format_expr(positive, prec))
-                None =>
-                  rendered.push("+ " + format_expr(args[i], prec))
+                None => rendered.push("+ " + format_expr(args[i], prec))
               }
             }
             rendered.join(" ")
@@ -344,15 +346,12 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
         rendered.push(format_expr(args[0], prec))
         for i in 1..<args.length() {
           match split_negative_addend(args[i]) {
-            Some(positive) =>
-              rendered.push("- " + format_expr(positive, prec))
-            None =>
-              rendered.push("+ " + format_expr(args[i], prec))
+            Some(positive) => rendered.push("- " + format_expr(positive, prec))
+            None => rendered.push("+ " + format_expr(args[i], prec))
           }
         }
         rendered.join(" ")
       }
-    }
     @symcore.ExprForm::Mul(args) => return format_mul(expr, args, parent_prec)
     @symcore.ExprForm::Pow(base, exp) => {
       let base_str = format_expr(base, prec)

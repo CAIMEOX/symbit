@@ -8,11 +8,38 @@ import {
 // Values
 pub fn debug_repr(@symcore.Expr) -> String
 
+pub fn latex(@symcore.Expr, mode? : String, full_prec? : Bool, fold_frac_powers? : Bool, fold_func_brackets? : Bool, fold_short_frac? : Bool?, inv_trig_style? : String, itex? : Bool, ln_notation? : Bool, long_frac_ratio? : Int?, mul_symbol? : String?, root_notation? : Bool, imaginary_unit? : String, diff_operator? : String, parenthesize_super? : Bool, symbol_names? : Map[String, String]) -> String
+
+pub fn latex_settings(mode? : String, full_prec? : Bool, fold_frac_powers? : Bool, fold_func_brackets? : Bool, fold_short_frac? : Bool?, inv_trig_style? : String, itex? : Bool, ln_notation? : Bool, long_frac_ratio? : Int?, mul_symbol? : String?, root_notation? : Bool, imaginary_unit? : String, diff_operator? : String, parenthesize_super? : Bool, symbol_names? : Map[String, String]) -> LatexSettings
+
+pub fn latex_with_settings(@symcore.Expr, LatexSettings) -> String
+
 pub fn to_string(@symcore.Expr) -> String
 
 // Errors
 
 // Types and methods
+pub struct LatexSettings {
+  mode : String
+  full_prec : Bool
+  fold_frac_powers : Bool
+  fold_func_brackets : Bool
+  fold_short_frac : Bool
+  inv_trig_style : String
+  itex : Bool
+  ln_notation : Bool
+  long_frac_ratio : Int?
+  mul_symbol : String?
+  mul_symbol_latex : String
+  mul_symbol_latex_numbers : String
+  root_notation : Bool
+  imaginary_unit : String
+  imaginary_unit_latex : String
+  diff_operator : String
+  diff_operator_latex : String
+  parenthesize_super : Bool
+  symbol_names : Map[String, String]
+}
 
 // Type aliases
 
