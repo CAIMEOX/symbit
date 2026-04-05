@@ -64,6 +64,11 @@ pub struct Curl {
 }
 
 ///|
+pub struct Laplacian {
+  field_ : ScalarOrVector
+}
+
+///|
 pub struct Del {}
 
 ///|

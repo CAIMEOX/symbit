@@ -48,9 +48,13 @@ pub fn is_solenoidal(Vector) -> Bool raise @vector.VectorError
 
 pub fn laplacian(ScalarOrVector) -> ScalarOrVector raise @vector.VectorError
 
+pub fn laplacian_unevaluated(ScalarOrVector) -> Laplacian
+
 pub fn matrix_to_dyadic(@symphysics.ExplicitMatrix, CoordSys3D) -> Dyadic
 
 pub fn matrix_to_vector(@symphysics.ExplicitMatrix, CoordSys3D) -> Vector raise @vector.VectorError
+
+pub fn orthogonalize(Array[Vector], orthonormal? : Bool) -> Array[Vector] raise @vector.VectorError
 
 pub fn outer(Vector, Vector) -> Dyadic raise @vector.VectorError
 
@@ -206,6 +210,12 @@ pub enum GradientValue {
   DyadicValue(Dyadic)
 }
 
+pub struct Laplacian {
+  field_ : ScalarOrVector
+}
+pub fn Laplacian::doit(Self) -> ScalarOrVector raise @vector.VectorError
+pub impl Show for Laplacian
+
 pub struct Point {
   name_ : String
   raw_ : @vector.Point
@@ -234,6 +244,7 @@ pub struct Vector {
 pub fn Vector::components(Self) -> Map[BaseVector, @symcore.Expr]
 pub fn Vector::cross(Self, Self) -> Self raise @vector.VectorError
 pub fn Vector::dot(Self, Self) -> @symcore.Expr raise @vector.VectorError
+pub fn Vector::equals(Self, Self) -> Bool? raise @vector.VectorError
 pub fn Vector::express(Self, CoordSys3D, variables? : Bool) -> Self raise @vector.VectorError
 pub fn Vector::is_zero(Self) -> Bool
 pub fn Vector::kind(Self) -> VectorKind
@@ -241,7 +252,9 @@ pub fn Vector::magnitude(Self) -> @symcore.Expr raise @vector.VectorError
 pub fn Vector::neg(Self) -> Self
 pub fn Vector::normalize(Self) -> Self raise @vector.VectorError
 pub fn Vector::outer(Self, Self) -> Dyadic raise @vector.VectorError
+pub fn Vector::projection(Self, Self, scalar? : Bool) -> ScalarOrVector raise @vector.VectorError
 pub fn Vector::scale(Self, @symcore.Expr) -> Self
+pub fn Vector::separate(Self) -> Map[CoordSys3D, Self]
 pub fn Vector::to_matrix(Self, CoordSys3D) -> @symphysics.ExplicitMatrix raise @vector.VectorError
 pub impl Add for Vector
 pub impl Eq for Vector

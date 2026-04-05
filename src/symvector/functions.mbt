@@ -90,3 +90,37 @@ pub fn matrix_to_dyadic(
   }
   out
 }
+
+///|
+pub fn orthogonalize(
+  vlist : Array[Vector],
+  orthonormal? : Bool = false,
+) -> Array[Vector] raise @rawvec.VectorError {
+  let ortho_vlist : Array[Vector] = []
+  for vector in vlist {
+    let mut term = vector
+    for prev in ortho_vlist {
+      let projected = prev.projection(vector)
+      match projected {
+        ScalarOrVector::ScalarExpr(_) => abort("orthogonalize")
+        ScalarOrVector::VectorExpr(value) => term = term - value
+      }
+    }
+    let is_zero = term.equals(vector_zero())
+    match is_zero {
+      Some(true) =>
+        @rawvec.raise_value_error("Vector set not linearly independent")
+      Some(false) => ortho_vlist.push(term)
+      None => ortho_vlist.push(term)
+    }
+  }
+  if orthonormal {
+    let out : Array[Vector] = []
+    for vector in ortho_vlist {
+      out.push(vector.normalize() catch { err => raise err })
+    }
+    out
+  } else {
+    ortho_vlist
+  }
+}

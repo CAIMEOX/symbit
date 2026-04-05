@@ -140,6 +140,15 @@ fn matrix3_text(matrix : @symphysics.ExplicitMatrix) -> String {
 }
 
 ///|
+fn separate_text(parts : Map[CoordSys3D, Vector]) -> String {
+  let systems = parts.keys().to_array()
+  systems.sort()
+  systems
+  .map(fn(system) { system.to_string() + ":" + parts[system].to_string() })
+  .join("|")
+}
+
+///|
 test "points expose relative position and coordinates" {
   let c = coord_sys3d("C") catch { _ => fail("C") }
   let p1 = c
@@ -162,6 +171,110 @@ test "points expose relative position and coordinates" {
     coords_text(p2.express_coordinates(c) catch { _ => fail("coords") }),
     "2|3|1",
   )
+}
+
+///|
+test "vector surface includes equals projection separate orthogonalize and laplacian" {
+  let c = coord_sys3d("C") catch { _ => fail("C") }
+  let half_pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+    (@symcore.int(2) ^ @symcore.int(-1))
+  let d = c.orient_new_axis("D", half_pi, c.k().to_vector()) catch {
+    _ => fail("D")
+  }
+  let v1 = c.i().to_vector() + c.j().to_vector() + c.k().to_vector()
+  let v2 = vector_from_terms([
+    (@symcore.int(3), c.i()),
+    (@symcore.int(4), c.j()),
+  ])
+
+  assert_eq(
+    c.i().to_vector().equals(c.i().to_vector()) catch {
+      _ => fail("equals-1")
+    },
+    Some(true),
+  )
+  assert_eq(
+    c.i().to_vector().equals(c.j().to_vector()) catch {
+      _ => fail("equals-2")
+    },
+    Some(false),
+  )
+  assert_eq(
+    d.i().to_vector().equals(c.j().to_vector()) catch {
+      _ => fail("equals-3")
+    },
+    Some(true),
+  )
+
+  let projection_vector = v1.projection(v2) catch {
+    _ => fail("projection-vector")
+  }
+  match projection_vector {
+    ScalarOrVector::VectorExpr(value) =>
+      assert_eq(value.to_string(), "7/3*C.i + 7/3*C.j + 7/3*C.k")
+    ScalarOrVector::ScalarExpr(_) => fail("expected vector projection")
+  }
+  let projection_scalar = v1.projection(v2, scalar=true) catch {
+    _ => fail("projection-scalar")
+  }
+  match projection_scalar {
+    ScalarOrVector::ScalarExpr(value) =>
+      assert_eq(@symprint.to_string(value), "7/3")
+    ScalarOrVector::VectorExpr(_) => fail("expected scalar projection")
+  }
+
+  assert_eq(
+    separate_text(
+      (c.i().to_vector() + d.i().to_vector().scale(@symcore.int(2)).neg()).separate(),
+    ),
+    "C:C.i|D:-2*D.i",
+  )
+
+  let ortho = orthogonalize([
+    c.i().to_vector() + c.j().to_vector().scale(@symcore.int(2)),
+    c.i().to_vector().scale(@symcore.int(2)) +
+    c.j().to_vector().scale(@symcore.int(3)),
+  ]) catch {
+    _ => fail("orthogonalize")
+  }
+  assert_eq(ortho.length(), 2)
+  assert_eq(ortho[0].to_string(), "C.i + 2*C.j")
+  assert_eq(ortho[1].to_string(), "2/5*C.i - 1/5*C.j")
+
+  let lap_scalar = laplacian_unevaluated(
+    scalar_or_vector_scalar(
+      (c.x().expr() ^ @symcore.int(2)) +
+      (c.y().expr() ^ @symcore.int(2)) +
+      (c.z().expr() ^ @symcore.int(2)),
+    ),
+  )
+  assert_eq(lap_scalar.to_string(), "Laplacian(C.x**2 + C.y**2 + C.z**2)")
+  let lap_scalar_value = lap_scalar.doit() catch { _ => fail("lap-scalar") }
+  match lap_scalar_value {
+    ScalarOrVector::ScalarExpr(value) =>
+      assert_eq(@symprint.to_string(value), "6")
+    ScalarOrVector::VectorExpr(_) => fail("expected scalar laplacian result")
+  }
+
+  let lap_vector = laplacian_unevaluated(
+    scalar_or_vector_vector(
+      vector_from_terms([
+        (c.x().expr() ^ @symcore.int(2), c.i()),
+        (c.y().expr() ^ @symcore.int(2), c.j()),
+        (c.z().expr() ^ @symcore.int(2), c.k()),
+      ]),
+    ),
+  )
+  assert_eq(
+    lap_vector.to_string(),
+    "Laplacian(C.x**2*C.i + C.y**2*C.j + C.z**2*C.k)",
+  )
+  let lap_vector_value = lap_vector.doit() catch { _ => fail("lap-vector") }
+  match lap_vector_value {
+    ScalarOrVector::VectorExpr(value) =>
+      assert_eq(value.to_string(), "2*C.i + 2*C.j + 2*C.k")
+    ScalarOrVector::ScalarExpr(_) => fail("expected vector laplacian result")
+  }
 }
 
 ///|

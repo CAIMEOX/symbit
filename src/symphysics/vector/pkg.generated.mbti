@@ -61,6 +61,8 @@ pub fn partial_velocity(Array[Vector], Array[@symcore.Expr], ReferenceFrame) -> 
 
 pub fn point(String) -> Point raise VectorError
 
+pub fn raise_value_error(String) -> Unit raise VectorError
+
 pub fn reference_frame(String, indices? : Array[String]?, latexs? : Array[String]?, variables? : Array[String]?) -> ReferenceFrame raise VectorError
 
 pub fn scalar_potential(Vector, ReferenceFrame) -> @symcore.Expr raise VectorError

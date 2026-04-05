@@ -346,6 +346,20 @@ pub impl Show for Curl with output(self, logger : &Logger) -> Unit {
 }
 
 ///|
+pub impl Show for Laplacian with to_string(self) -> String {
+  match self.field_ {
+    ScalarOrVector::ScalarExpr(expr) =>
+      "Laplacian(" + @symprint.to_string(expr) + ")"
+    ScalarOrVector::VectorExpr(vect) => "Laplacian(" + vect.to_string() + ")"
+  }
+}
+
+///|
+pub impl Show for Laplacian with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
 pub impl Show for Del with to_string(self) -> String {
   ignore(self)
   "delop"

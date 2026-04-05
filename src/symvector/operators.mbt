@@ -14,6 +14,11 @@ pub fn curl_unevaluated(field : Vector) -> Curl {
 }
 
 ///|
+pub fn laplacian_unevaluated(field : ScalarOrVector) -> Laplacian {
+  { field_: field }
+}
+
+///|
 pub fn Gradient::doit(
   self : Gradient,
 ) -> GradientValue raise @rawvec.VectorError {
@@ -39,4 +44,11 @@ pub fn Divergence::doit(
 ///|
 pub fn Curl::doit(self : Curl) -> Vector raise @rawvec.VectorError {
   curl(self.field_)
+}
+
+///|
+pub fn Laplacian::doit(
+  self : Laplacian,
+) -> ScalarOrVector raise @rawvec.VectorError {
+  laplacian(self.field_)
 }

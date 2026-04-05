@@ -53,6 +53,44 @@ fn scalar_map_text(
 }
 
 ///|
+fn bool_option_text(value : Bool?) -> String {
+  match value {
+    Some(true) => "True"
+    Some(false) => "False"
+    None => "None"
+  }
+}
+
+///|
+fn separate_text(
+  parts : Map[@symvector.CoordSys3D, @symvector.Vector],
+) -> String {
+  let systems = parts.keys().to_array()
+  systems.sort()
+  systems
+  .map(fn(system) { system.to_string() + ":" + parts[system].to_string() })
+  .join("|")
+}
+
+///|
+fn vector_matches_sympy(
+  vector : @symvector.Vector,
+  system : @symvector.CoordSys3D,
+  system_name : String,
+  system_expr : String,
+  py_expected : String,
+) -> Bool raise {
+  matrix_matches_sympy(
+    vector.to_matrix(system) catch {
+      err => raise err
+    },
+    system_name,
+    system_expr,
+    "(" + py_expected + ").to_matrix(" + system_name + ")",
+  )
+}
+
+///|
 test "vector root objects parity for names and basis" {
   let c = @symvector.coord_sys3d("C") catch { _ => fail("C") }
   assert_eq(
@@ -208,6 +246,186 @@ test "point and field-function parity against repo sympy" {
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
     ),
   )
+}
+
+///|
+test "vector surface parity for equals projection separate orthogonalize and laplacian" {
+  let c = @symvector.coord_sys3d("C") catch { _ => fail("C") }
+  let c_py = "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')"
+  let half_pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+    (@symcore.int(2) ^ @symcore.int(-1))
+  let d = c.orient_new_axis("D", half_pi, c.k().to_vector()) catch {
+    _ => fail("D")
+  }
+  let v1 = c.i().to_vector() + c.j().to_vector() + c.k().to_vector()
+  let v2 = @symvector.vector_from_terms([
+    (@symcore.int(3), c.i()),
+    (@symcore.int(4), c.j()),
+  ])
+
+  assert_eq(
+    bool_option_text(
+      c.i().to_vector().equals(c.i().to_vector()) catch {
+        _ => fail("eq-1")
+      },
+    ),
+    vector_eval_str("(lambda C: repr(C.i.equals(C.i)))(" + c_py + ")"),
+  )
+  assert_eq(
+    bool_option_text(
+      c.i().to_vector().equals(c.j().to_vector()) catch {
+        _ => fail("eq-2")
+      },
+    ),
+    vector_eval_str("(lambda C: repr(C.i.equals(C.j)))(" + c_py + ")"),
+  )
+  assert_eq(
+    bool_option_text(
+      d.i().to_vector().equals(c.j().to_vector()) catch {
+        _ => fail("eq-3")
+      },
+    ),
+    vector_eval_str(
+      "(lambda C: repr(C.orient_new_axis('D', sympy.pi/2, C.k).i.equals(C.j)))(" +
+      c_py +
+      ")",
+    ),
+  )
+
+  let proj_vector = v1.projection(v2) catch { _ => fail("proj-vector") }
+  match proj_vector {
+    @symvector.ScalarOrVector::VectorExpr(value) =>
+      assert_true(
+        vector_matches_sympy(
+          value, c, "C", c_py, "(C.i + C.j + C.k).projection(3*C.i + 4*C.j)",
+        ) catch {
+          _ => fail("proj-vector-parity")
+        },
+      )
+    @symvector.ScalarOrVector::ScalarExpr(_) =>
+      fail("expected vector projection")
+  }
+  let proj_scalar = v1.projection(v2, scalar=true) catch {
+    _ => fail("proj-scalar")
+  }
+  match proj_scalar {
+    @symvector.ScalarOrVector::ScalarExpr(value) =>
+      assert_eq(
+        @symprint.to_string(value),
+        vector_eval_str(
+          "(lambda C: str((C.i + C.j + C.k).projection(3*C.i + 4*C.j, scalar=True)))(" +
+          c_py +
+          ")",
+        ),
+      )
+    @symvector.ScalarOrVector::VectorExpr(_) =>
+      fail("expected scalar projection")
+  }
+
+  assert_eq(
+    separate_text(
+      (c.i().to_vector() + d.i().to_vector().scale(@symcore.int(2)).neg()).separate(),
+    ),
+    strip_parens(
+      vector_eval_str(
+        "(lambda C: '|'.join(str(k) + ':' + str(v) for k, v in sorted((C.i - 2*C.orient_new_axis('D', sympy.pi/2, C.k).i).separate().items(), key=lambda kv: str(kv[0]))))(" +
+        c_py +
+        ")",
+      ),
+    ),
+  )
+
+  let ortho = @symvector.orthogonalize([
+    c.i().to_vector() + c.j().to_vector().scale(@symcore.int(2)),
+    c.i().to_vector().scale(@symcore.int(2)) +
+    c.j().to_vector().scale(@symcore.int(3)),
+  ]) catch {
+    _ => fail("orthogonalize")
+  }
+  assert_eq(ortho.length(), 2)
+  assert_true(
+    vector_matches_sympy(
+      ortho[0],
+      c,
+      "C",
+      c_py,
+      "__import__('sympy.vector.functions', fromlist=['orthogonalize']).orthogonalize(C.i + 2*C.j, 2*C.i + 3*C.j)[0]",
+    ) catch {
+      _ => fail("ortho-0")
+    },
+  )
+  assert_true(
+    vector_matches_sympy(
+      ortho[1],
+      c,
+      "C",
+      c_py,
+      "__import__('sympy.vector.functions', fromlist=['orthogonalize']).orthogonalize(C.i + 2*C.j, 2*C.i + 3*C.j)[1]",
+    ) catch {
+      _ => fail("ortho-1")
+    },
+  )
+
+  let lap_scalar = @symvector.laplacian_unevaluated(
+    @symvector.scalar_or_vector_scalar(
+      (c.x().expr() ^ @symcore.int(2)) +
+      (c.y().expr() ^ @symcore.int(2)) +
+      (c.z().expr() ^ @symcore.int(2)),
+    ),
+  )
+  assert_eq(
+    lap_scalar.to_string(),
+    vector_eval_str(
+      "(lambda C: str(__import__('sympy.vector.operators', fromlist=['Laplacian']).Laplacian(C.x**2 + C.y**2 + C.z**2)))(" +
+      c_py +
+      ")",
+    ),
+  )
+  let lap_scalar_value = lap_scalar.doit() catch { _ => fail("lap-scalar") }
+  match lap_scalar_value {
+    @symvector.ScalarOrVector::ScalarExpr(value) =>
+      assert_eq(
+        @symprint.to_string(value),
+        vector_eval_str(
+          "(lambda C: str(__import__('sympy.vector.operators', fromlist=['Laplacian']).Laplacian(C.x**2 + C.y**2 + C.z**2).doit()))(" +
+          c_py +
+          ")",
+        ),
+      )
+    @symvector.ScalarOrVector::VectorExpr(_) =>
+      fail("expected scalar laplacian result")
+  }
+
+  let lap_vector = @symvector.laplacian_unevaluated(
+    @symvector.scalar_or_vector_vector(
+      @symvector.vector_from_terms([
+        (c.x().expr() ^ @symcore.int(2), c.i()),
+        (c.y().expr() ^ @symcore.int(2), c.j()),
+        (c.z().expr() ^ @symcore.int(2), c.k()),
+      ]),
+    ),
+  )
+  assert_eq(
+    lap_vector.to_string(),
+    vector_eval_str(
+      "(lambda C: str(__import__('sympy.vector.operators', fromlist=['Laplacian']).Laplacian(C.x**2*C.i + C.y**2*C.j + C.z**2*C.k)))(" +
+      c_py +
+      ")",
+    ),
+  )
+  let lap_vector_value = lap_vector.doit() catch { _ => fail("lap-vector") }
+  match lap_vector_value {
+    @symvector.ScalarOrVector::VectorExpr(value) =>
+      assert_true(
+        vector_matches_sympy(
+          value, c, "C", c_py, "__import__('sympy.vector.operators', fromlist=['Laplacian']).Laplacian(C.x**2*C.i + C.y**2*C.j + C.z**2*C.k).doit()",
+        ) catch {
+          _ => fail("lap-vector-parity")
+        },
+      )
+    @symvector.ScalarOrVector::ScalarExpr(_) =>
+      fail("expected vector laplacian result")
+  }
 }
 
 ///|

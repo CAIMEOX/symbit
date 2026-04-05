@@ -27,6 +27,11 @@ pub suberror VectorError {
 } derive(Show, Eq)
 
 ///|
+pub fn raise_value_error(message : String) -> Unit raise VectorError {
+  raise VectorError::ValueError(message)
+}
+
+///|
 priv struct FrameState {
   dcm_dict : Map[Int, @symphysics.ExplicitMatrix]
   mut dcm_cache : Map[Int, @symphysics.ExplicitMatrix]
