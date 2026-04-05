@@ -253,12 +253,62 @@ fn dedup_sets(items : Array[Set]) -> Array[Set] {
 }
 
 ///|
+enum IntervalBound {
+  NegativeInfinity
+  Finite(@symnum.BigRational)
+  Infinity
+}
+
+///|
+fn interval_bound(expr : Expr) -> IntervalBound? {
+  match expr_number_value(expr) {
+    Some(value) => Some(IntervalBound::Finite(value))
+    None =>
+      match @symcore.number_symbol_kind(expr) {
+        Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
+          Some(IntervalBound::NegativeInfinity)
+        Some(@symcore.NumberSymbolKind::Infinity) =>
+          Some(IntervalBound::Infinity)
+        _ => None
+      }
+  }
+}
+
+///|
+fn compare_interval_bound(a : IntervalBound, b : IntervalBound) -> Int {
+  match (a, b) {
+    (IntervalBound::NegativeInfinity, IntervalBound::NegativeInfinity)
+    | (IntervalBound::Infinity, IntervalBound::Infinity) => 0
+    (IntervalBound::NegativeInfinity, _) => -1
+    (_, IntervalBound::NegativeInfinity) => 1
+    (IntervalBound::Infinity, _) => 1
+    (_, IntervalBound::Infinity) => -1
+    (IntervalBound::Finite(left), IntervalBound::Finite(right)) =>
+      left.compare(right)
+  }
+}
+
+///|
+fn interval_spans_reals(set : Set) -> Bool {
+  match set {
+    Set::Interval(left~, right~, left_open=_, right_open=_) =>
+      match (interval_bound(left), interval_bound(right)) {
+        (Some(IntervalBound::NegativeInfinity), Some(IntervalBound::Infinity)) =>
+          true
+        _ => false
+      }
+    Set::Reals => true
+    _ => false
+  }
+}
+
+///|
 fn interval_numeric(
   set : Set,
-) -> (@symnum.BigRational, @symnum.BigRational, Bool, Bool, Expr, Expr)? {
+) -> (IntervalBound, IntervalBound, Bool, Bool, Expr, Expr)? {
   match set {
     Set::Interval(left~, right~, left_open~, right_open~) =>
-      match (expr_number_value(left), expr_number_value(right)) {
+      match (interval_bound(left), interval_bound(right)) {
         (Some(lv), Some(rv)) =>
           Some((lv, rv, left_open, right_open, left, right))
         _ => None
@@ -269,12 +319,12 @@ fn interval_numeric(
 
 ///|
 fn interval_overlap_or_touch(
-  a : (@symnum.BigRational, @symnum.BigRational, Bool, Bool),
-  b : (@symnum.BigRational, @symnum.BigRational, Bool, Bool),
+  a : (IntervalBound, IntervalBound, Bool, Bool),
+  b : (IntervalBound, IntervalBound, Bool, Bool),
 ) -> Bool {
   let (_al, ar, _alo, aro) = a
   let (bl, _br, blo, _bro) = b
-  let cmp = bl.compare(ar)
+  let cmp = compare_interval_bound(bl, ar)
   if cmp < 0 {
     true
   } else if cmp > 0 {
@@ -286,13 +336,13 @@ fn interval_overlap_or_touch(
 
 ///|
 fn merge_interval_pair(
-  a : (@symnum.BigRational, @symnum.BigRational, Bool, Bool, Expr, Expr),
-  b : (@symnum.BigRational, @symnum.BigRational, Bool, Bool, Expr, Expr),
-) -> (@symnum.BigRational, @symnum.BigRational, Bool, Bool, Expr, Expr) {
+  a : (IntervalBound, IntervalBound, Bool, Bool, Expr, Expr),
+  b : (IntervalBound, IntervalBound, Bool, Bool, Expr, Expr),
+) -> (IntervalBound, IntervalBound, Bool, Bool, Expr, Expr) {
   let (al, ar, alo, aro, aleft, aright) = a
   let (bl, br, _blo, bro, _bleft, bright) = b
   let left_val = al
-  let left_open = if al.compare(bl) == 0 {
+  let left_open = if compare_interval_bound(al, bl) == 0 {
     if alo {
       true
     } else {
@@ -301,9 +351,10 @@ fn merge_interval_pair(
   } else {
     alo
   }
-  let (right_val, right_open, right_expr) = if ar.compare(br) > 0 {
+  let right_cmp = compare_interval_bound(ar, br)
+  let (right_val, right_open, right_expr) = if right_cmp > 0 {
     (ar, aro, aright)
-  } else if ar.compare(br) < 0 {
+  } else if right_cmp < 0 {
     (br, bro, bright)
   } else {
     (ar, aro && bro, aright)
@@ -314,7 +365,7 @@ fn merge_interval_pair(
 ///|
 fn merge_intervals(intervals : Array[Set]) -> Array[Set] {
   let numeric : Array[
-    (@symnum.BigRational, @symnum.BigRational, Bool, Bool, Expr, Expr),
+    (IntervalBound, IntervalBound, Bool, Bool, Expr, Expr),
   ] = Array::new()
   let others : Array[Set] = Array::new()
   for item in intervals {
@@ -329,7 +380,7 @@ fn merge_intervals(intervals : Array[Set]) -> Array[Set] {
   numeric.sort_by((a, b) => {
     let (al, _ar, alo, _aro, _ae, _ae2) = a
     let (bl, _br, blo, _bro, _be, _be2) = b
-    let cmp = al.compare(bl)
+    let cmp = compare_interval_bound(al, bl)
     if cmp != 0 {
       cmp
     } else if alo != blo {
@@ -415,6 +466,8 @@ pub fn union(args : Array[Set]) -> Set {
   let uniq = dedup_sets(flat)
   if uniq.is_empty() {
     Set::EmptySet
+  } else if uniq.length() == 1 && interval_spans_reals(uniq[0]) {
+    Set::Reals
   } else if uniq.length() == 1 {
     uniq[0]
   } else {
@@ -429,21 +482,23 @@ fn interval_intersection(a : Set, b : Set) -> Set? {
       Some((al, ar, alo, aro, aleft, aright)),
       Some((bl, br, blo, bro, bleft, bright)),
     ) => {
-      let (left_val, left_open, left_expr) = if al.compare(bl) > 0 {
+      let left_cmp = compare_interval_bound(al, bl)
+      let (left_val, left_open, left_expr) = if left_cmp > 0 {
         (al, alo, aleft)
-      } else if al.compare(bl) < 0 {
+      } else if left_cmp < 0 {
         (bl, blo, bleft)
       } else {
         (al, alo || blo, aleft)
       }
-      let (right_val, right_open, right_expr) = if ar.compare(br) < 0 {
+      let right_cmp = compare_interval_bound(ar, br)
+      let (right_val, right_open, right_expr) = if right_cmp < 0 {
         (ar, aro, aright)
-      } else if ar.compare(br) > 0 {
+      } else if right_cmp > 0 {
         (br, bro, bright)
       } else {
         (ar, aro || bro, aright)
       }
-      let cmp = left_val.compare(right_val)
+      let cmp = compare_interval_bound(left_val, right_val)
       if cmp > 0 {
         Some(Set::EmptySet)
       } else if cmp == 0 {
@@ -591,21 +646,22 @@ fn interval_difference(a : Set, b : Set) -> Set? {
       Some((bl, br, blo, bro, bleft, bright)),
     ) => {
       // Disjoint
-      if br.compare(al) < 0 || bl.compare(ar) > 0 {
+      if compare_interval_bound(br, al) < 0 ||
+        compare_interval_bound(bl, ar) > 0 {
         return Some(a)
       }
       // B covers A
-      if (bl.compare(al) < 0 || (bl.compare(al) == 0 && (!alo || !blo))) &&
-        (br.compare(ar) > 0 || (br.compare(ar) == 0 && (!aro || !bro))) {
+      let left_cmp = compare_interval_bound(bl, al)
+      let right_cmp = compare_interval_bound(br, ar)
+      if (left_cmp < 0 || (left_cmp == 0 && (!alo || !blo))) &&
+        (right_cmp > 0 || (right_cmp == 0 && (!aro || !bro))) {
         return Some(Set::EmptySet)
       }
       let parts : Array[Set] = Array::new()
-      let left_cmp = bl.compare(al)
       if left_cmp > 0 || (left_cmp == 0 && !alo && blo) {
         let right_open = if blo { false } else { true }
         parts.push(interval(aleft, bleft, left_open=alo, right_open~))
       }
-      let right_cmp = br.compare(ar)
       if right_cmp < 0 || (right_cmp == 0 && !aro && bro) {
         let left_open = if bro { false } else { true }
         parts.push(interval(bright, aright, left_open~, right_open=aro))
@@ -681,29 +737,48 @@ pub fn complement(a : Set, b : Set) -> Set {
 fn interval_contains(set : Set, elem : Expr) -> SetBool {
   match (set, expr_number_value(elem)) {
     (Set::Interval(left~, right~, left_open~, right_open~), Some(value)) =>
-      match (expr_number_value(left), expr_number_value(right)) {
-        (Some(lv), Some(rv)) => {
-          let cmp_l = value.compare(lv)
-          let cmp_r = value.compare(rv)
-          if cmp_l < 0 || cmp_r > 0 {
-            SetBool::False
-          } else if cmp_l == 0 {
-            if left_open {
-              SetBool::False
+      {
+        let left_kind = @symcore.number_symbol_kind(left)
+        let right_kind = @symcore.number_symbol_kind(right)
+        let lower_ok = match expr_number_value(left) {
+          Some(lv) => {
+            let cmp_l = value.compare(lv)
+            if cmp_l < 0 {
+              Some(false)
+            } else if cmp_l == 0 {
+              Some(!left_open)
             } else {
-              SetBool::True
+              Some(true)
             }
-          } else if cmp_r == 0 {
-            if right_open {
-              SetBool::False
-            } else {
-              SetBool::True
-            }
-          } else {
-            SetBool::True
           }
+          None =>
+            match left_kind {
+              Some(@symcore.NumberSymbolKind::NegativeInfinity) => Some(true)
+              _ => None
+            }
         }
-        _ => SetBool::Unknown
+        let upper_ok = match expr_number_value(right) {
+          Some(rv) => {
+            let cmp_r = value.compare(rv)
+            if cmp_r > 0 {
+              Some(false)
+            } else if cmp_r == 0 {
+              Some(!right_open)
+            } else {
+              Some(true)
+            }
+          }
+          None =>
+            match right_kind {
+              Some(@symcore.NumberSymbolKind::Infinity) => Some(true)
+              _ => None
+            }
+        }
+        match (lower_ok, upper_ok) {
+          (Some(true), Some(true)) => SetBool::True
+          (Some(false), _) | (_, Some(false)) => SetBool::False
+          _ => SetBool::Unknown
+        }
       }
     _ => SetBool::Unknown
   }
@@ -911,16 +986,18 @@ pub fn is_subset(a : Set, b : Set) -> SetBool {
           Some((al, ar, alo, aro, _alexpr, _arexpr)),
           Some((bl, br, blo, bro, _blexpr, _brexpr)),
         ) => {
-          let left_ok = if al.compare(bl) > 0 {
+          let left_cmp = compare_interval_bound(al, bl)
+          let right_cmp = compare_interval_bound(ar, br)
+          let left_ok = if left_cmp > 0 {
             true
-          } else if al.compare(bl) == 0 {
+          } else if left_cmp == 0 {
             !alo || blo
           } else {
             false
           }
-          let right_ok = if ar.compare(br) < 0 {
+          let right_ok = if right_cmp < 0 {
             true
-          } else if ar.compare(br) == 0 {
+          } else if right_cmp == 0 {
             !aro || bro
           } else {
             false

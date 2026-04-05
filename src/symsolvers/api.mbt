@@ -125,6 +125,129 @@ fn tuple_solution_set(
 }
 
 ///|
+fn expr_zeroish(expr : Expr) -> Bool {
+  if @symcore.is_zero(expr) {
+    return true
+  }
+  match check_zero_expr(expr) {
+    Some(true) => return true
+    Some(false) => ()
+    None => ()
+  }
+  let simplified = @symsimplify.simplify(expr)
+  @symcore.is_zero(simplified) ||
+  @symcore.compare_expr(simplified, @symcore.int(0)) == 0 ||
+  check_zero_expr(simplified) == Some(true)
+}
+
+///|
+fn expr_canonicalish(expr : Expr) -> Expr {
+  let normalized = @sympolys.domain_normal_expr(@sympolys.Domain::EX, expr) catch {
+    _ => expr
+  }
+  @symsimplify.simplify(normalized)
+}
+
+///|
+fn symbolic_linsolve_from_matrices(
+  lhs : Matrix,
+  rhs : Matrix,
+  symbols : Array[Expr],
+  names : Array[String],
+) -> Map[String, Expr]? raise SolverError {
+  if lhs.rows == 0 && lhs.cols == 0 && rhs.rows == 0 {
+    return None
+  }
+  if lhs.cols != symbols.length() || names.length() != symbols.length() {
+    raise SolverError::ShapeError(
+      "linsolve matrix dimensions must match the number of symbols",
+    )
+  }
+  if rhs.cols != 1 || lhs.rows != rhs.rows {
+    raise SolverError::ShapeError(
+      "linsolve fallback expects rhs as a single matching column",
+    )
+  }
+  let augmented = lhs.row_join(rhs) catch {
+    err => raise wrap_matrix_error("linsolve", err)
+  }
+  let (reduced, pivots) = augmented.rref()
+  for i in 0..<lhs.rows {
+    let mut all_zero = true
+    for j in 0..<lhs.cols {
+      let value = reduced.getitem(i, j) catch {
+        err => raise wrap_matrix_error("linsolve", err)
+      }
+      if !expr_zeroish(value) {
+        all_zero = false
+        break
+      }
+    }
+    if all_zero {
+      let rhs_value = reduced.getitem(i, lhs.cols) catch {
+        err => raise wrap_matrix_error("linsolve", err)
+      }
+      if !expr_zeroish(rhs_value) {
+        return None
+      }
+    }
+  }
+
+  let pivot_set : Map[Int, Bool] = {}
+  for pivot in pivots {
+    if pivot < lhs.cols {
+      pivot_set[pivot] = true
+    }
+  }
+  let free_cols : Array[Int] = []
+  for j in 0..<lhs.cols {
+    if !pivot_set.contains(j) {
+      free_cols.push(j)
+    }
+  }
+
+  let solution : Map[String, Expr] = {}
+  for free_col in free_cols {
+    solution[names[free_col]] = symbols[free_col]
+  }
+  for i in 0..<pivots.length() {
+    let pivot_col = pivots[i]
+    if pivot_col >= lhs.cols {
+      continue
+    }
+    let terms : Array[Expr] = []
+    let rhs_value = reduced.getitem(i, lhs.cols) catch {
+      err => raise wrap_matrix_error("linsolve", err)
+    }
+    if !expr_zeroish(rhs_value) {
+      terms.push(rhs_value)
+    }
+    for free_col in free_cols {
+      let coeff = reduced.getitem(i, free_col) catch {
+        err => raise wrap_matrix_error("linsolve", err)
+      }
+      if !expr_zeroish(coeff) {
+        terms.push(@symcore.mul([@symcore.int(-1), coeff, symbols[free_col]]))
+      }
+    }
+    let value = if terms.is_empty() {
+      @symcore.int(0)
+    } else if terms.length() == 1 {
+      terms[0]
+    } else {
+      @symsimplify.simplify(@symcore.add(terms))
+    }
+    solution[names[pivot_col]] = expr_canonicalish(value)
+  }
+  for i in 0..<names.length() {
+    if solution.get(names[i]) is None {
+      solution[names[i]] = @symcore.int(0)
+    }
+  }
+  Some(solution)
+}
+
+///|
 fn split_augmented_matrix(
   system : Matrix,
   symbols : Array[Expr],
@@ -235,8 +358,22 @@ pub fn linsolve(
     LinsolveInput::AugmentedMatrix(matrix) =>
       equations_from_augmented_matrix(matrix, symbols)
   }
-  let solution = @sympolys._linsolve(equations, names) catch {
-    err => raise wrap_poly_error("linsolve", err)
+  let linear_try : Result[Map[String, Expr]?, @sympolys.PolyError] = try? @sympolys._linsolve(
+    equations, names,
+  )
+  let solution = match linear_try {
+    Ok(solution) => solution
+    Err(@sympolys.PolyError::DomainMismatch) => {
+      let (lhs, rhs) = match system {
+        LinsolveInput::Equations(_) => linear_eq_to_matrix(equations, symbols)
+        LinsolveInput::AugmentedMatrix(matrix) => split_augmented_matrix(
+          matrix,
+          symbols,
+        )
+      }
+      symbolic_linsolve_from_matrices(lhs, rhs, symbols, names)
+    }
+    Err(err) => raise wrap_poly_error("linsolve", err)
   }
   tuple_solution_set(solution, symbols, names)
 }
@@ -248,8 +385,16 @@ pub fn solve_linear_system(
 ) -> Map[String, Expr]? raise SolverError {
   let names = symbol_names(symbols)
   let equations = equations_from_augmented_matrix(system, symbols)
-  @sympolys._linsolve(equations, names) catch {
-    err => raise wrap_poly_error("solve_linear_system", err)
+  let linear_try : Result[Map[String, Expr]?, @sympolys.PolyError] = try? @sympolys._linsolve(
+    equations, names,
+  )
+  match linear_try {
+    Ok(solution) => solution
+    Err(@sympolys.PolyError::DomainMismatch) => {
+      let (lhs, rhs) = split_augmented_matrix(system, symbols)
+      symbolic_linsolve_from_matrices(lhs, rhs, symbols, names)
+    }
+    Err(err) => raise wrap_poly_error("solve_linear_system", err)
   }
 }
 

@@ -1749,13 +1749,25 @@ fn solver_maps_from_result(
   let names = solver_symbol_names(symbols)
   match result {
     SolveResult::List(items) => {
-      guard names.length() == 1 else {
-        raise SolverError::ValueError("expected a single symbolic target")
+      if names.length() == 1 {
+        let out : Array[Map[String, Expr]] = []
+        for item in items {
+          let mapping : Map[String, Expr] = {}
+          mapping[names[0]] = item
+          out.push(mapping)
+        }
+        return out
       }
       let out : Array[Map[String, Expr]] = []
       for item in items {
+        let values = match @symcore.tuple_items(item) {
+          Some(value) if value.length() == names.length() => value
+          _ => raise SolverError::ValueError("expected tuple solution for symbolic targets")
+        }
         let mapping : Map[String, Expr] = {}
-        mapping[names[0]] = item
+        for i in 0..<names.length() {
+          mapping[names[i]] = values[i]
+        }
         out.push(mapping)
       }
       out
@@ -2296,7 +2308,15 @@ fn solver_exact_root_simplify(expr : Expr) -> Expr {
     Expr::Pow(base, exp) =>
       match @symcore.exact_numeric_expr_num_den(exp) {
         Some((num, den)) if num.compare(1N) == 0 && den.compare(2N) == 0 => {
-          let expanded_base = solver_expand_expr(base)
+          let expanded_base = canonical_expr(solver_expand_expr(base))
+          let half = @symcore.rational_from_ints(1, 2) catch {
+            _ => @symcore.function("Rational", [@symcore.int(1), @symcore.int(2)])
+          }
+          let direct = @symcore.pow(expanded_base, half)
+          match direct {
+            Expr::Pow(_, _) => ()
+            _ => return canonical_expr(direct)
+          }
           let sqrt_try : Result[Expr?, @sympolys.PolyError] = try?
             @sympolys.domain_exsqrt_expr(@sympolys.Domain::QQ, expanded_base)
           match sqrt_try {
@@ -2310,9 +2330,7 @@ fn solver_exact_root_simplify(expr : Expr) -> Expr {
                       solver_exact_root_simplify(
                         @symcore.pow(
                           reduced,
-                          @symcore.rational_from_ints(1, 2) catch {
-                            _ => @symcore.function("Rational", [@symcore.int(1), @symcore.int(2)])
-                          },
+                          half,
                         ),
                       ),
                     ]),
@@ -2326,9 +2344,7 @@ fn solver_exact_root_simplify(expr : Expr) -> Expr {
                       solver_exact_root_simplify(
                         @symcore.pow(
                           reduced,
-                          @symcore.rational_from_ints(1, 2) catch {
-                            _ => @symcore.function("Rational", [@symcore.int(1), @symcore.int(2)])
-                          },
+                          half,
                         ),
                       ),
                     ]),
@@ -2418,10 +2434,24 @@ fn solver_sort_add_terms(expr : Expr) -> Expr {
 }
 
 ///|
+fn solver_rebuild_expr(expr : Expr) -> Expr {
+  let rebuilt = @symcore.map_children(expr, child => solver_rebuild_expr(child))
+  match rebuilt {
+    Expr::Add(args) => @symcore.add(args)
+    Expr::Mul(args) => @symcore.mul(args)
+    Expr::Pow(base, exp) => @symcore.pow(base, exp)
+    Expr::Apply(Expr::FunctionHead(name), args) => @symcore.function(name, args)
+    _ => rebuilt
+  }
+}
+
+///|
 fn solver_finalize_solution_expr(expr : Expr) -> Expr {
-  let exact = solver_exact_root_simplify(canonical_expr(expr))
+  let exact = solver_exact_root_simplify(canonical_expr(solver_rebuild_expr(expr)))
   let simplified = @symsimplify.simplify(exact, max_passes=2)
-  solver_sort_add_terms(canonical_expr(solver_exact_root_simplify(simplified)))
+  solver_sort_add_terms(
+    canonical_expr(solver_rebuild_expr(solver_exact_root_simplify(simplified))),
+  )
 }
 
 ///|

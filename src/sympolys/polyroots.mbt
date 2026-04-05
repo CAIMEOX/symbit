@@ -18,6 +18,60 @@ fn coeff_expr(poly : Poly, exp : Int) -> Expr raise PolyError {
 }
 
 ///|
+fn sqrt_bigint_if_square(value : BigInt) -> BigInt? {
+  if value.op_lt(0N) {
+    return None
+  }
+  let root = @symnum.isqrt(value) catch {
+    _ => return None
+  }
+  if root.mul(root).compare(value) == 0 {
+    Some(root)
+  } else {
+    None
+  }
+}
+
+///|
+fn sqrt_rational_expr(value : @symnum.BigRational) -> Expr? {
+  if value.is_zero() {
+    return Some(int(0))
+  }
+  let negative = value.compare(@symnum.BigRational::zero()) < 0
+  let abs_value = if negative { value.neg_r() } else { value }
+  let num_root = match sqrt_bigint_if_square(abs_value.numerator()) {
+    Some(root) => root
+    None => return None
+  }
+  let den_root = match sqrt_bigint_if_square(abs_value.denominator()) {
+    Some(root) => root
+    None => return None
+  }
+  let rat = @symnum.BigRational::new(num_root, den_root) catch {
+    _ => return None
+  }
+  let base = Expr::Number(rat)
+  if negative {
+    let imag = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+    Some(@symcore.mul([base, imag]))
+  } else {
+    Some(base)
+  }
+}
+
+///|
+fn quadratic_sqrt(expr : Expr) -> Expr {
+  match expr {
+    Expr::Number(n) =>
+      match sqrt_rational_expr(n) {
+        Some(value) => value
+        None => @symcore.function("sqrt", [expr])
+      }
+    _ => @symcore.function("sqrt", [expr])
+  }
+}
+
+///|
 /// Return the unique root of a linear polynomial `a*x + b`.
 pub fn roots_linear(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
@@ -45,6 +99,22 @@ pub fn roots_quadratic(poly : Poly) -> Array[Expr] raise PolyError {
   let a = coeff_expr(poly, 2)
   let b = coeff_expr(poly, 1)
   let c = coeff_expr(poly, 0)
+  if @symcore.is_zero(c) {
+    let other = @symcore.mul([
+      @symcore.mul([int(-1), b]),
+      @symcore.pow(a, int(-1)),
+    ])
+    return [int(0), other]
+  }
+  if @symcore.is_zero(b) {
+    let r = @symcore.mul([
+      int(-1),
+      c,
+      @symcore.pow(a, int(-1)),
+    ])
+    let root = quadratic_sqrt(r)
+    return [@symcore.mul([int(-1), root]), root]
+  }
   let four = int(4)
   let two = int(2)
   let b2 = b ^ int(2)
@@ -52,17 +122,10 @@ pub fn roots_quadratic(poly : Poly) -> Array[Expr] raise PolyError {
   let disc = @symcore.add([b2, @symcore.mul([int(-1), ac4])])
   // SymPy reference: sympy/polys/polyroots.py::roots_quadratic.
   // Keep discriminant under symbolic square root (disc**(1/2)).
-  let half = @symcore.rational_from_ints(1, 2) catch {
-    _ => @symcore.function("Rational", [int(1), int(2)])
-  }
-  let sqrt_disc = @symcore.pow(disc, half)
+  let sqrt_disc = quadratic_sqrt(disc)
   let neg_b = @symcore.mul([int(-1), b])
-  let denom = @symcore.mul([two, a])
-  let inv = @symcore.pow(denom, int(-1))
-  let r1 = @symcore.mul([
-    @symcore.add([neg_b, @symcore.mul([int(-1), sqrt_disc])]),
-    inv,
-  ])
+  let inv = @symcore.pow(@symcore.mul([two, a]), int(-1))
+  let r1 = @symcore.mul([@symcore.add([neg_b, @symcore.mul([int(-1), sqrt_disc])]), inv])
   let r2 = @symcore.mul([@symcore.add([neg_b, sqrt_disc]), inv])
   [r1, r2]
 }

@@ -3,12 +3,21 @@ package "CAIMEOX/symbit/sympy/core"
 
 import {
   "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympy",
 }
 
 // Values
+pub fn core_args_sstr(@symcore.Expr) -> String raise
+
 pub fn core_atoms_sstr(@symcore.Expr) -> String raise
 
+pub fn core_attr_bool(@symcore.Expr, String) -> Bool raise
+
 pub fn core_evalf_sstr(@symcore.Expr) -> String raise
+
+pub fn core_expr_latex(@symcore.Expr, mode? : String) -> String raise
+
+pub fn core_expr_latex_kwargs(@symcore.Expr, kwargs? : Map[String, @sympy.OracleArg]) -> String raise
 
 pub fn core_expr_srepr(@symcore.Expr) -> String raise
 
@@ -16,7 +25,23 @@ pub fn core_expr_sstr(@symcore.Expr) -> String raise
 
 pub fn core_free_symbols_sstr(@symcore.Expr) -> String raise
 
+pub fn core_func_sstr(@symcore.Expr) -> String raise
+
+pub fn core_has_bool(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn core_match_sstr(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn core_parameters_sstr(String, evaluate? : Bool, distribute? : Bool, exp_is_pow? : Bool) -> String raise
+
+pub fn core_postorder_sstr(@symcore.Expr) -> String raise
+
+pub fn core_preorder_sstr(@symcore.Expr) -> String raise
+
+pub fn core_replace_sin_with_cos_sstr(@symcore.Expr) -> String raise
+
 pub fn core_sorted_sstr(Array[@symcore.Expr]) -> String raise
+
+pub fn core_subst_expr_sstr(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
 
 pub fn core_subst_symbol_sstr(@symcore.Expr, String, @symcore.Expr) -> String raise
 

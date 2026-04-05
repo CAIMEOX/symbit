@@ -6,6 +6,57 @@ fn swap_dense_rows(data : Array[Array[Expr]], i : Int, j : Int) -> Unit {
 }
 
 ///|
+fn symbolic_pivot_better(candidate : Expr, current : Expr) -> Bool {
+  let candidate_exact = @symcore.exact_number_num_den(candidate) is Some(_)
+  let current_exact = @symcore.exact_number_num_den(current) is Some(_)
+  if candidate_exact != current_exact {
+    return candidate_exact
+  }
+  let candidate_free = @symcore.free_symbols(candidate).length()
+  let current_free = @symcore.free_symbols(current).length()
+  if candidate_free != current_free {
+    return candidate_free < current_free
+  }
+  @symprint.to_string(candidate).length() <
+  @symprint.to_string(current).length()
+}
+
+///|
+fn symbolic_pivot_row(
+  data : Array[Array[Expr]],
+  row : Int,
+  rows : Int,
+  col : Int,
+) -> Int {
+  let mut pivot_row = -1
+  for candidate in row..<rows {
+    let value = data[candidate][col]
+    if expr_is_zero(value) {
+      continue
+    }
+    if pivot_row == -1 || symbolic_pivot_better(value, data[pivot_row][col]) {
+      pivot_row = candidate
+    }
+  }
+  pivot_row
+}
+
+///|
+fn raw_expr_sub(lhs : Expr, rhs : Expr) -> Expr {
+  @symcore.add([lhs, @symcore.mul([@symcore.int(-1), rhs])])
+}
+
+///|
+fn raw_expr_mul(lhs : Expr, rhs : Expr) -> Expr {
+  @symcore.mul([lhs, rhs])
+}
+
+///|
+fn raw_expr_div(lhs : Expr, rhs : Expr) -> Expr {
+  @symcore.mul([lhs, @symcore.pow(rhs, @symcore.int(-1))])
+}
+
+///|
 fn matrix_echelon_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) {
   let data = clone_expr_rows(matrix.data)
   let pivots : Array[Int] = []
@@ -13,11 +64,8 @@ fn matrix_echelon_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) 
   let mut col = 0
   let mut prev = @symcore.int(1)
   while row < matrix.rows && col < matrix.cols {
-    let mut pivot_row = row
-    while pivot_row < matrix.rows && expr_is_zero(data[pivot_row][col]) {
-      pivot_row += 1
-    }
-    if pivot_row == matrix.rows {
+    let pivot_row = symbolic_pivot_row(data, row, matrix.rows, col)
+    if pivot_row == -1 {
       col += 1
       continue
     }
@@ -32,11 +80,11 @@ fn matrix_echelon_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) 
       }
       data[i][col] = @symcore.int(0)
       for j in (col + 1)..<matrix.cols {
-        let numer = expr_sub(
-          expr_mul(pivot, data[i][j]),
-          expr_mul(factor, data[row][j]),
+        let numer = raw_expr_sub(
+          raw_expr_mul(pivot, data[i][j]),
+          raw_expr_mul(factor, data[row][j]),
         )
-        data[i][j] = expr_div(numer, prev)
+        data[i][j] = raw_expr_div(numer, prev)
       }
     }
     pivots.push(col)
@@ -54,11 +102,8 @@ fn matrix_rref_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) {
   let mut row = 0
   let mut col = 0
   while row < matrix.rows && col < matrix.cols {
-    let mut pivot_row = row
-    while pivot_row < matrix.rows && expr_is_zero(data[pivot_row][col]) {
-      pivot_row += 1
-    }
-    if pivot_row == matrix.rows {
+    let pivot_row = symbolic_pivot_row(data, row, matrix.rows, col)
+    if pivot_row == -1 {
       col += 1
       continue
     }
@@ -67,7 +112,7 @@ fn matrix_rref_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) {
     }
     let pivot = data[row][col]
     for j in col..<matrix.cols {
-      data[row][j] = expr_div(data[row][j], pivot)
+      data[row][j] = raw_expr_div(data[row][j], pivot)
     }
     for i in 0..<matrix.rows {
       if i == row {
@@ -78,7 +123,10 @@ fn matrix_rref_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) {
         continue
       }
       for j in col..<matrix.cols {
-        data[i][j] = expr_sub(data[i][j], expr_mul(factor, data[row][j]))
+        data[i][j] = raw_expr_sub(
+          data[i][j],
+          raw_expr_mul(factor, data[row][j]),
+        )
       }
     }
     pivots.push(col)

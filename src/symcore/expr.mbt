@@ -1219,6 +1219,105 @@ fn is_zero_base_expr(expr : Expr) -> Bool {
 }
 
 ///|
+fn imag_unit_pow(exp : Expr) -> Expr? {
+  match exact_numeric_expr_num_den(exp) {
+    Some((num, den)) if den == 1N && num.bit_length() <= 30 => {
+      let raw = num.to_int()
+      let rem = ((raw % 4) + 4) % 4
+      let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
+      Some(
+        match rem {
+          0 => Expr::Number(@symnum.BigRational::one())
+          1 => imag
+          2 => Expr::Number(@symnum.BigRational::from_int(-1))
+          _ => mul([Expr::Number(@symnum.BigRational::from_int(-1)), imag])
+        },
+      )
+    }
+    _ => None
+  }
+}
+
+///|
+fn sqrt_bigint_if_square(value : BigInt) -> BigInt? {
+  if value.op_lt(0N) {
+    return None
+  }
+  let root = @symnum.isqrt(value) catch {
+    _ => return None
+  }
+  if root.mul(root).compare(value) == 0 {
+    Some(root)
+  } else {
+    None
+  }
+}
+
+///|
+fn exact_sqrt_expr(arg : Expr) -> Expr? {
+  match arg {
+    Expr::Number(n) => {
+      let negative = n.compare(@symnum.BigRational::zero()) < 0
+      let abs_n = if negative { n.neg_r() } else { n }
+      let num_root = match sqrt_bigint_if_square(abs_n.numerator()) {
+        Some(root) => root
+        None =>
+          if negative {
+            let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
+            return Some(mul([imag, function("sqrt", [Expr::Number(abs_n)])]))
+          } else {
+            return None
+          }
+      }
+      let den_root = match sqrt_bigint_if_square(abs_n.denominator()) {
+        Some(root) => root
+        None =>
+          if negative {
+            let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
+            return Some(mul([imag, function("sqrt", [Expr::Number(abs_n)])]))
+          } else {
+            return None
+          }
+      }
+      let rat = @symnum.BigRational::new(num_root, den_root) catch {
+        _ => return None
+      }
+      let root_expr = Expr::Number(rat)
+      if negative {
+        let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
+        Some(mul([root_expr, imag]))
+      } else {
+        Some(root_expr)
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn exact_numeric_half_power(base : Expr, exp : Expr) -> Expr? {
+  match exact_numeric_expr_num_den(exp) {
+    Some((num, den)) if num == 1N && den == 2N => exact_sqrt_expr(base)
+    _ => None
+  }
+}
+
+///|
+fn zero_base_pow_value(base : Expr, exp : Expr) -> Expr? {
+  match exact_numeric_expr_num_den(exp) {
+    Some((num, den)) if den.compare(1N) == 0 && num.compare(0N) > 0 =>
+      Some(
+        match base {
+          Expr::ComplexFloat(z) => Expr::ComplexFloat(z)
+          Expr::Float(f) => Expr::Float(f)
+          _ => Expr::Number(@symnum.BigRational::zero())
+        },
+      )
+    _ => None
+  }
+}
+
+///|
 pub fn pow(base : Expr, exp : Expr) -> Expr {
   let base = normalize_legacy_expr(base)
   let exp = normalize_legacy_expr(exp)
@@ -1227,10 +1326,19 @@ pub fn pow(base : Expr, exp : Expr) -> Expr {
   }
   if expr_is_zero(exp) {
     Expr::Number(@symnum.BigRational::one())
+  } else if expr_is_one(base) {
+    base
   } else if expr_is_one(exp) {
     base
+  } else if exact_numeric_half_power(base, exp) is Some(value) {
+    value
   } else {
     match base {
+      Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit) =>
+        match imag_unit_pow(exp) {
+          Some(value) => value
+          None => Expr::Pow(base, exp)
+        }
       Expr::Pow(inner_base, inner_exp) =>
         match exact_numeric_expr_num_den(exp) {
           Some((_, den)) if den.compare(1N) == 0 =>
@@ -1238,19 +1346,17 @@ pub fn pow(base : Expr, exp : Expr) -> Expr {
           _ =>
             match base {
               _ if is_zero_base_expr(base) =>
-                match base {
-                  Expr::ComplexFloat(z) => Expr::ComplexFloat(z)
-                  Expr::Float(f) => Expr::Float(f)
-                  _ => Expr::Number(@symnum.BigRational::zero())
+                match zero_base_pow_value(base, exp) {
+                  Some(value) => value
+                  None => Expr::Pow(base, exp)
                 }
               _ => Expr::Pow(base, exp)
             }
         }
       _ if is_zero_base_expr(base) =>
-        match base {
-          Expr::ComplexFloat(z) => Expr::ComplexFloat(z)
-          Expr::Float(f) => Expr::Float(f)
-          _ => Expr::Number(@symnum.BigRational::zero())
+        match zero_base_pow_value(base, exp) {
+          Some(value) => value
+          None => Expr::Pow(base, exp)
         }
       _ => Expr::Pow(base, exp)
     }
@@ -1335,6 +1441,11 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
     ("Integer", _) => constructor_integer(args)
     ("Rational", _) => constructor_rational(args)
     ("Float", _) => constructor_float(args)
+    ("sqrt", [arg]) =>
+      match exact_sqrt_expr(arg) {
+        Some(value) => value
+        None => Expr::Apply(Expr::FunctionHead(name), args)
+      }
     ("Eq", [lhs, rhs]) => constructor_relational(RelOp::Eq, lhs, rhs)
     ("Ne", [lhs, rhs]) => constructor_relational(RelOp::Ne, lhs, rhs)
     ("Lt", [lhs, rhs]) => constructor_relational(RelOp::Lt, lhs, rhs)
