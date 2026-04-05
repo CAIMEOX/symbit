@@ -1,7 +1,16 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "CAIMEOX/symbit/sympy/matrices"
 
+import {
+  "CAIMEOX/symbit/symmatrices",
+}
+
 // Values
+pub fn matrix_expr_latex(@symmatrices.MatrixExpr) -> String raise
+
+pub fn matrix_latex(@symmatrices.Matrix) -> String raise
+
+pub fn sparse_matrix_latex(@symmatrices.SparseMatrix) -> String raise
 
 // Errors
 

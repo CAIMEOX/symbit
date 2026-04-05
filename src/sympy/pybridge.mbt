@@ -23,7 +23,7 @@ fn expr_to_sympy_cached(
     @symcore.Expr::Float(value) => sympy_float_obj(value)
     @symcore.Expr::ComplexFloat(value) => sympy_complex_float_obj(value)
     @symcore.Expr::NumberSymbol(kind) => sympy_number_symbol_obj(kind)
-    @symcore.Expr::Symbol(name) => sympy_symbol_obj(name)
+    @symcore.Expr::Symbol(name) => sympy_symbol_or_singleton_set_obj(name)
     @symcore.Expr::Dummy(name, id) => sympy_dummy_obj(name, id, dummy_cache)
     @symcore.Expr::Wild(name, exclude, properties) =>
       sympy_wild_obj(name, exclude, properties, dummy_cache, wild_cache)
@@ -262,6 +262,25 @@ fn sympy_symbol_or_const_obj(name : String) -> @py.PyObject raise {
 }
 
 ///|
+fn sympy_symbol_or_singleton_set_obj(name : String) -> @py.PyObject raise {
+  match name {
+    "EmptySet"
+    | "UniversalSet"
+    | "Naturals"
+    | "Naturals0"
+    | "Integers"
+    | "Rationals"
+    | "Reals"
+    | "Complexes" =>
+      match sympy_constant_obj(name) {
+        Some(obj) => obj
+        None => sympy_symbol_obj(name)
+      }
+    _ => sympy_symbol_obj(name)
+  }
+}
+
+///|
 fn sympy_symbol_obj(name : String) -> @py.PyObject raise {
   sympy_call_obj("sympy.symbols", [OracleArg::Str(name)])
 }
@@ -435,6 +454,47 @@ fn sympy_apply_obj(
   dummy_cache : Map[Int, @py.PyObject],
   wild_cache : Map[String, @py.PyObject],
 ) -> @py.PyObject raise {
+  match @symcore.function_head_name(head) {
+    Some("Piecewise") if args.length() % 2 == 0 => {
+      let pair_objs : Array[@py.PyObject] = Array::new()
+      let mut i = 0
+      while i + 1 < args.length() {
+        let expr_obj = expr_to_sympy_cached(args[i], dummy_cache, wild_cache)
+        let cond_obj = expr_to_sympy_cached(
+          args[i + 1],
+          dummy_cache,
+          wild_cache,
+        )
+        let pair = sympy_call_obj("sympy.Tuple", [
+          OracleArg::PyObj(expr_obj),
+          OracleArg::PyObj(cond_obj),
+        ])
+        pair_objs.push(pair)
+        i += 2
+      }
+      let head_obj = expr_to_sympy_cached(head, dummy_cache, wild_cache)
+      let callable = @py.PyCallable::create(head_obj) catch {
+        _ => fail("sympy-apply-callable")
+      }
+      return call_callable(callable, pair_objs)
+    }
+    Some("Union") | Some("Intersection") | Some("Complement") => {
+      let arg_objs : Array[OracleArg] = Array::new()
+      for arg in args {
+        arg_objs.push(
+          OracleArg::PyObj(expr_to_sympy_cached(arg, dummy_cache, wild_cache)),
+        )
+      }
+      let path = match @symcore.function_head_name(head) {
+        Some(name) => "sympy.\{name}"
+        None => fail("sympy-set-op-head")
+      }
+      return sympy_call_obj(path, arg_objs, kwargs={
+        "evaluate": OracleArg::Bool(false),
+      })
+    }
+    _ => ()
+  }
   let arg_objs : Array[@py.PyObject] = Array::new()
   for arg in args {
     arg_objs.push(expr_to_sympy_cached(arg, dummy_cache, wild_cache))

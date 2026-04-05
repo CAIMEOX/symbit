@@ -3,6 +3,7 @@ package "CAIMEOX/symbit/symmatrices"
 
 import {
   "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symprint",
 }
 
 // Values
@@ -140,6 +141,7 @@ pub fn Matrix::is_upper(Self) -> Bool
 pub fn Matrix::is_zero_matrix(Self) -> Bool
 pub fn Matrix::jordan_cells(Self) -> Array[Self] raise MatrixError
 pub fn Matrix::jordan_form(Self, calc_transform? : Bool) -> (Self, Self) raise MatrixError
+pub fn Matrix::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub fn Matrix::ldl(Self) -> (Self, Self) raise MatrixError
 pub fn Matrix::lower_triangular_solve(Self, Self) -> Self raise MatrixError
 pub fn Matrix::lu(Self) -> (Self, Self, Array[(Int, Int)]) raise MatrixError
@@ -193,6 +195,7 @@ pub fn MatrixExpr::as_explicit(Self, Map[String, Matrix]) -> Matrix raise Matrix
 pub fn MatrixExpr::block_collapse(Self) -> Self
 pub fn MatrixExpr::doit(Self, Map[String, Matrix]) -> Matrix raise MatrixError
 pub fn MatrixExpr::eval(Self, Map[String, Matrix]) -> Matrix raise MatrixError
+pub fn MatrixExpr::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub fn MatrixExpr::shape(Self) -> (Int, Int) raise MatrixError
 pub impl Show for MatrixExpr
 
@@ -228,6 +231,7 @@ pub fn SparseMatrix::is_symmetric(Self) -> Bool
 pub fn SparseMatrix::is_upper(Self) -> Bool
 pub fn SparseMatrix::is_zero_matrix(Self) -> Bool
 pub fn SparseMatrix::jordan_form(Self, calc_transform? : Bool) -> (Matrix, Matrix) raise MatrixError
+pub fn SparseMatrix::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub fn SparseMatrix::ldl(Self) -> (Matrix, Matrix) raise MatrixError
 pub fn SparseMatrix::lower_triangular_solve(Self, Matrix) -> Matrix raise MatrixError
 pub fn SparseMatrix::lu(Self) -> (Matrix, Matrix, Array[(Int, Int)]) raise MatrixError

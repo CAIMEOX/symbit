@@ -69,6 +69,27 @@ pub fn core_expr_srepr(expr : @symcore.Expr) -> String raise {
 }
 
 ///|
+pub fn core_expr_latex_kwargs(
+  expr : @symcore.Expr,
+  kwargs? : Map[String, @sympy.OracleArg] = {},
+) -> String raise {
+  let obj = @sympy.expr_to_sympy(expr)
+  py_str_obj(
+    objenum_to_obj(
+      sympy_call_must("sympy.latex", [@sympy.OracleArg::PyObj(obj)], kwargs~),
+    ),
+  )
+}
+
+///|
+pub fn core_expr_latex(
+  expr : @symcore.Expr,
+  mode? : String = "plain",
+) -> String raise {
+  core_expr_latex_kwargs(expr, kwargs={ "mode": @sympy.OracleArg::Str(mode) })
+}
+
+///|
 pub fn core_func_sstr(expr : @symcore.Expr) -> String raise {
   let globals = @py.PyDict::new()
   globals.set("expr", @sympy.expr_to_sympy(expr))

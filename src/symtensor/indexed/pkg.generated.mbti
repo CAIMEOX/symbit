@@ -3,6 +3,7 @@ package "CAIMEOX/symbit/symtensor/indexed"
 
 import {
   "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symprint",
 }
 
 // Values
@@ -40,6 +41,7 @@ pub(all) struct Idx {
   lower : @symcore.Expr
   upper : @symcore.Expr?
 }
+pub fn Idx::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub impl Show for Idx
 
 pub enum Index {
@@ -56,6 +58,7 @@ pub(all) struct Indexed {
   base : IndexedBase
   indices : Array[Index]
 }
+pub fn Indexed::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub impl Show for Indexed
 
 pub(all) struct IndexedBase {
@@ -63,6 +66,7 @@ pub(all) struct IndexedBase {
   shape : Array[@symcore.Expr]?
 }
 pub fn IndexedBase::at(Self, Array[Index]) -> Indexed raise
+pub fn IndexedBase::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub impl Show for IndexedBase
 
 pub enum IndexedExpr {
@@ -71,6 +75,7 @@ pub enum IndexedExpr {
   Add(Array[IndexedExpr])
   Mul(Array[IndexedExpr])
 }
+pub fn IndexedExpr::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub impl Show for IndexedExpr
 
 // Type aliases

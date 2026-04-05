@@ -159,6 +159,31 @@ pub fn indexed_str(item : @symtensor_indexed.Indexed) -> String raise {
 }
 
 ///|
+pub fn idx_latex(item : @symtensor_indexed.Idx) -> String raise {
+  py_str_enum(
+    sympy_call_must("sympy.latex", [OracleArg::PyObj(idx_to_sympy(item))]),
+  )
+}
+
+///|
+pub fn indexed_base_latex(
+  base : @symtensor_indexed.IndexedBase,
+) -> String raise {
+  py_str_enum(
+    sympy_call_must("sympy.latex", [
+      OracleArg::PyObj(indexed_base_to_sympy(base)),
+    ]),
+  )
+}
+
+///|
+pub fn indexed_latex(item : @symtensor_indexed.Indexed) -> String raise {
+  py_str_enum(
+    sympy_call_must("sympy.latex", [OracleArg::PyObj(indexed_to_sympy(item))]),
+  )
+}
+
+///|
 pub fn indexed_srepr(item : @symtensor_indexed.Indexed) -> String raise {
   let obj = indexed_to_sympy(item)
   let srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(obj)])
@@ -178,10 +203,113 @@ pub fn array_str(arr : @symtensor_array.NDimArray) -> String raise {
 }
 
 ///|
+pub fn array_latex(arr : @symtensor_array.NDimArray) -> String raise {
+  py_str_enum(
+    sympy_call_must("sympy.latex", [OracleArg::PyObj(array_to_sympy(arr))]),
+  )
+}
+
+///|
 pub fn array_srepr(arr : @symtensor_array.NDimArray) -> String raise {
   let obj = array_to_sympy(arr)
   let srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(obj)])
   py_str_enum(srepr)
+}
+
+///|
+fn array_expr_to_sympy(expr : @symtensor_array.ArrayExpr) -> @py.PyObject raise {
+  match expr {
+    @symtensor_array.ArrayExpr::Symbol(name, shape) =>
+      match shape {
+        None =>
+          objenum_to_obj(
+            sympy_call_must("sympy.Symbol", [OracleArg::Str(name)]),
+          )
+        Some(items) => {
+          let shape_args : Array[OracleArg] = []
+          for item in items {
+            shape_args.push(OracleArg::PyObj(expr_to_sympy(item)))
+          }
+          let shape_obj = objenum_to_obj(
+            sympy_call_must("sympy.Tuple", shape_args),
+          )
+          objenum_to_obj(
+            sympy_call_must(
+              "sympy.tensor.array.expressions.array_expressions.ArraySymbol",
+              [OracleArg::Str(name), OracleArg::PyObj(shape_obj)],
+            ),
+          )
+        }
+      }
+    @symtensor_array.ArrayExpr::Element(base, indices) => {
+      let index_args : Array[OracleArg] = []
+      for item in indices {
+        index_args.push(OracleArg::PyObj(expr_to_sympy(item)))
+      }
+      let index_obj = objenum_to_obj(sympy_call_must("sympy.Tuple", index_args))
+      objenum_to_obj(
+        sympy_call_must(
+          "sympy.tensor.array.expressions.array_expressions.ArrayElement",
+          [
+            OracleArg::PyObj(array_expr_to_sympy(base)),
+            OracleArg::PyObj(index_obj),
+          ],
+        ),
+      )
+    }
+    @symtensor_array.ArrayExpr::TensorProduct(items) => {
+      let args : Array[OracleArg] = []
+      for item in items {
+        args.push(OracleArg::PyObj(array_expr_to_sympy(item)))
+      }
+      objenum_to_obj(
+        sympy_call_must(
+          "sympy.tensor.array.expressions.array_expressions.ArrayTensorProduct",
+          args,
+        ),
+      )
+    }
+    @symtensor_array.ArrayExpr::Contraction(base, axes) => {
+      let args : Array[OracleArg] = [
+        OracleArg::PyObj(array_expr_to_sympy(base)),
+      ]
+      for pair in axes {
+        let pair_obj = objenum_to_obj(
+          sympy_call_must("sympy.Tuple", [
+            OracleArg::Int(pair.0),
+            OracleArg::Int(pair.1),
+          ]),
+        )
+        args.push(OracleArg::PyObj(pair_obj))
+      }
+      objenum_to_obj(
+        sympy_call_must(
+          "sympy.tensor.array.expressions.array_expressions.ArrayContraction", args,
+        ),
+      )
+    }
+    @symtensor_array.ArrayExpr::Add(items) => {
+      let args : Array[OracleArg] = []
+      for item in items {
+        args.push(OracleArg::PyObj(array_expr_to_sympy(item)))
+      }
+      objenum_to_obj(sympy_call_must("sympy.Add", args))
+    }
+    @symtensor_array.ArrayExpr::Mul(items) => {
+      let args : Array[OracleArg] = []
+      for item in items {
+        args.push(OracleArg::PyObj(array_expr_to_sympy(item)))
+      }
+      objenum_to_obj(sympy_call_must("sympy.Mul", args))
+    }
+  }
+}
+
+///|
+pub fn array_expr_latex(expr : @symtensor_array.ArrayExpr) -> String raise {
+  py_str_enum(
+    sympy_call_must("sympy.latex", [OracleArg::PyObj(array_expr_to_sympy(expr))]),
+  )
 }
 
 ///|
@@ -305,6 +433,17 @@ pub fn tensor_str(expr : @symtensor_tensor.TensorExpr) -> String raise {
 }
 
 ///|
+pub fn tensor_latex(expr : @symtensor_tensor.TensorExpr) -> String raise {
+  let type_cache : Map[String, @py.PyObject] = {}
+  let head_cache : Map[String, @py.PyObject] = {}
+  py_str_enum(
+    sympy_call_must("sympy.latex", [
+      OracleArg::PyObj(tensor_expr_to_sympy(expr, type_cache, head_cache)),
+    ]),
+  )
+}
+
+///|
 pub fn tensor_srepr(expr : @symtensor_tensor.TensorExpr) -> String raise {
   let type_cache : Map[String, @py.PyObject] = {}
   let head_cache : Map[String, @py.PyObject] = {}
@@ -336,4 +475,15 @@ pub fn partial_derivative_str(
   pd : @symtensor_tensor.PartialDerivative,
 ) -> String raise {
   py_str_obj(partial_derivative_to_sympy(pd))
+}
+
+///|
+pub fn partial_derivative_latex(
+  pd : @symtensor_tensor.PartialDerivative,
+) -> String raise {
+  py_str_enum(
+    sympy_call_must("sympy.latex", [
+      OracleArg::PyObj(partial_derivative_to_sympy(pd)),
+    ]),
+  )
 }

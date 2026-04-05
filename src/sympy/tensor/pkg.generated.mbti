@@ -8,21 +8,35 @@ import {
 }
 
 // Values
+pub fn array_expr_latex(@array.ArrayExpr) -> String raise
+
+pub fn array_latex(@array.NDimArray) -> String raise
+
 pub fn array_srepr(@array.NDimArray) -> String raise
 
 pub fn array_str(@array.NDimArray) -> String raise
 
 pub fn expr_str_eq(String, String) -> Bool raise
 
+pub fn idx_latex(@indexed.Idx) -> String raise
+
+pub fn indexed_base_latex(@indexed.IndexedBase) -> String raise
+
+pub fn indexed_latex(@indexed.Indexed) -> String raise
+
 pub fn indexed_srepr(@indexed.Indexed) -> String raise
 
 pub fn indexed_str(@indexed.Indexed) -> String raise
+
+pub fn partial_derivative_latex(@CAIMEOX/symbit/symtensor/tensor.PartialDerivative) -> String raise
 
 pub fn partial_derivative_str(@CAIMEOX/symbit/symtensor/tensor.PartialDerivative) -> String raise
 
 pub fn sympy_srepr(String) -> String raise
 
 pub fn sympy_str(String) -> String raise
+
+pub fn tensor_latex(@CAIMEOX/symbit/symtensor/tensor.TensorExpr) -> String raise
 
 pub fn tensor_srepr(@CAIMEOX/symbit/symtensor/tensor.TensorExpr) -> String raise
 
