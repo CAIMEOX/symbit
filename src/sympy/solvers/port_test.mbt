@@ -382,6 +382,26 @@ fn finite_set_exprs_match_oracle(
 }
 
 ///|
+fn local_set_matches_oracle(
+  local_set : @symsets.Set,
+  oracle_expr : String,
+  locals_expr : String,
+) -> String raise {
+  let local_text = @symsets.to_string(local_set)
+    .replace_all(old="\\", new="\\\\")
+    .replace_all(old="'", new="\\\\'")
+  @sympy_utilities.utilities_eval_str(
+    "(lambda: (lambda _locals: (lambda _raw: str((sympy.FiniteSet(*_raw) if isinstance(_raw, set) else _raw) == (" +
+    oracle_expr +
+    ")))(sympy.sympify('" +
+    local_text +
+    "', locals=_locals)))(" +
+    locals_expr +
+    "))()",
+  )
+}
+
+///|
 fn local_matrix_list_text(m : @symmatrices.Matrix) -> String {
   let rows : Array[String] = []
   for row in m.to_list() {
@@ -4185,6 +4205,448 @@ test "solvers parity solveset logarithmic and shifted exponential batch 26 addit
     solvers_eval_str_symbols(
       "str(sympy.solveset(sympy.log(x + 3) - y, x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.exp(y) - 3), sympy.S.Reals))",
       "x y",
+    ),
+    "True",
+  )
+}
+
+///|
+test "solvers parity solveset scaled logarithmic and exponential batch 27 additional public cases" {
+  let real_domain = @symsets.reals()
+
+  let scaled_exp_param = @symcore.function("exp", [@symcore.int(3) * x()]) + @symcore.int(-1) * y()
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(scaled_exp_param, symbol=Some(x()), domain=real_domain)),
+    "Intersection({log(y)/3}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.exp(3*x) - y, x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.log(y)/3), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+
+  let scaled_exp_coeff_param = @symcore.int(3) * @symcore.function("exp", [x()]) + @symcore.int(-1) * y()
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(scaled_exp_coeff_param, symbol=Some(x()), domain=real_domain)),
+    "Intersection({log(y/3)}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(3*sympy.exp(x) - y, x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.log(y/3)), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(@symcore.function("log", [@symcore.int(3) * x()]), symbol=Some(x()), domain=real_domain)),
+    "{1/3}",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.log(3*x), x, sympy.S.Reals) == sympy.FiniteSet(sympy.S(1)/3))",
+      "x",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(@symcore.function("log", [x() + @symcore.int(3)]), symbol=Some(x()), domain=real_domain)),
+    "{-2}",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.log(x + 3), x, sympy.S.Reals) == sympy.FiniteSet(-2))",
+      "x",
+    ),
+    "True",
+  )
+
+  let shifted_exp_coeff_param = @symcore.function("exp", [x()]) + @symcore.int(3) + @symcore.int(-1) * y()
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(shifted_exp_coeff_param, symbol=Some(x()), domain=real_domain)),
+    "Intersection({log(y - 3)}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.exp(x) + 3 - y, x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.log(y - 3)), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+
+  let scaled_log_param = @symcore.int(3) * @symcore.function("log", [x()]) + @symcore.int(-1) * y()
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(scaled_log_param, symbol=Some(x()), domain=real_domain)),
+    "Intersection({exp(y/3)}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(3*sympy.log(x) - y, x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.exp(y/3)), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(@symcore.function("exp", [x() + @symcore.int(3)]) + @symcore.int(-3), symbol=Some(x()), domain=real_domain)),
+    "{log(3) - 3}",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.exp(x + 3) - 3, x, sympy.S.Reals) == sympy.FiniteSet(sympy.log(3) - 3))",
+      "x",
+    ),
+    "True",
+  )
+
+  let log_ratio_param = @symcore.function("log", [@symcore.int(3) * x()]) + @symcore.int(-1) * @symcore.function("log", [y()])
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(log_ratio_param, symbol=Some(x()), domain=real_domain)),
+    "Intersection({y/3}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.log(3*x) - sympy.log(y), x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(y/3), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(@symcore.int(3) * @symcore.function("exp", [x()]) + @symcore.int(-1), symbol=Some(x()), domain=real_domain)),
+    "{log(1/3)}",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(3*sympy.exp(x) - 1, x, sympy.S.Reals) == sympy.FiniteSet(sympy.log(sympy.S(1)/3)))",
+      "x",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(@symcore.function("exp", [@symcore.int(3) * x()]) + @symcore.int(-1), symbol=Some(x()), domain=real_domain)),
+    "{0}",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.exp(3*x) - 1, x, sympy.S.Reals) == sympy.FiniteSet(0))",
+      "x",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(@symcore.int(3) * @symcore.function("log", [x()]) + @symcore.int(-3), symbol=Some(x()), domain=real_domain)),
+    "{exp(1)}",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(3*sympy.log(x) - 3, x, sympy.S.Reals) == sympy.FiniteSet(sympy.exp(1)))",
+      "x",
+    ),
+    "True",
+  )
+}
+
+///|
+test "solvers parity solveset real exponential equation batch 28 additional public cases" {
+  let real_domain = @symsets.reals()
+
+  assert_eq(
+    @symsets.compare_set(
+      @symsolvers.solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-2), x()), @symcore.int(4)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.finite_set([@symcore.int(2)]),
+    ),
+    0,
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.Eq((-2)**x, 4), x, sympy.S.Reals) == sympy.FiniteSet(2))",
+      "x",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      @symsolvers.solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(-1) * (@symcore.int(2) ^ x()), @symcore.int(4)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.empty_set(),
+    ),
+    0,
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.Eq(-(2**x), 4), x, sympy.S.Reals))",
+      "x",
+    ),
+    "EmptySet",
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      @symsolvers.solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-3), x()), @symcore.int(27)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.empty_set(),
+    ),
+    0,
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.Eq((-3)**x, 27), x, sympy.S.Reals))",
+      "x",
+    ),
+    "EmptySet",
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      @symsolvers.solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-5), x() + @symcore.int(1)), @symcore.int(625)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.finite_set([@symcore.int(3)]),
+    ),
+    0,
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.Eq((-5)**(x + 1), 625), x, sympy.S.Reals) == sympy.FiniteSet(3))",
+      "x",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      @symsolvers.solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) ^ (x() + @symcore.int(-3)), @symcore.int(-16)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.empty_set(),
+    ),
+    0,
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.Eq(2**(x - 3), -16), x, sympy.S.Reals))",
+      "x",
+    ),
+    "EmptySet",
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      @symsolvers.solveset(
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.raw_pow(@symcore.int(-3), x() + @symcore.int(-3)),
+          @symcore.int(-1) * (@symcore.int(3) ^ @symcore.int(39)),
+        ),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.finite_set([@symcore.int(42)]),
+    ),
+    0,
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.Eq((-3)**(x - 3), -(3**39)), x, sympy.S.Reals) == sympy.FiniteSet(42))",
+      "x",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset((@symcore.int(2) ^ x()) + @symcore.int(-1) * y(), symbol=Some(x()), domain=real_domain)),
+    "Intersection({log(y)/log(2)}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(2**x - y, x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.log(y)/sympy.log(2)), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) ^ x(), y()),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
+    "Intersection({log(y)/log(2)}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.Eq(2**x, y), x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.log(y)/sympy.log(2)), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset((z() ^ x()) + @symcore.int(-1) * y(), symbol=Some(x()), domain=real_domain)),
+    "ConditionSet(x, Eq(z**x - y, 0), Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(z**x - y, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(z**x - y, 0), sympy.S.Reals))",
+      "x y z",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset((x() ^ y()) + @symcore.int(-1), symbol=Some(y()), domain=real_domain)),
+    "ConditionSet(y, Eq(x**y - 1, 0), Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(x**y - 1, y, sympy.S.Reals) == sympy.ConditionSet(y, sympy.Eq(x**y - 1, 0), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+}
+
+///|
+test "solvers parity solveset real set batch 29 additional public cases" {
+  let real_domain = @symsets.reals()
+  let cm = @symcore.Expr::Symbol("cm")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let p = @symcore.Expr::Symbol("p")
+  let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("third") }
+  let rational_y_den = (y() ^ @symcore.int(2)) * sqrt(@symcore.int(1) + @symcore.int(-1) * (y() ^ @symcore.int(2)))
+  let rational_y = (
+    x() + @symcore.int(-1) * (y() ^ @symcore.int(3))
+  ) * (rational_y_den ^ @symcore.int(-1))
+
+  assert_eq(
+    local_set_matches_oracle(
+      @symsolvers.solveset(rational_y, symbol=Some(x()), domain=real_domain),
+      "(lambda x, y: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((x - y**3)/((y**2)*sympy.sqrt(1 - y**2)), x))(*sympy.symbols('x y', real=True))",
+      "{'x': sympy.symbols('x', real=True), 'y': sympy.symbols('y', real=True), 'sqrt': sympy.sqrt, 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    local_set_matches_oracle(
+      @symsolvers.solveset((@symcore.int(2) * x()) * ((x() + @symcore.int(2)) ^ @symcore.int(-1)) + @symcore.int(-1), symbol=Some(x()), domain=real_domain),
+      "(lambda x: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(2*x/(x + 2) - 1, x))(sympy.symbols('x', real=True))",
+      "{'x': sympy.symbols('x', real=True), 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    local_set_matches_oracle(
+      @symsolvers.solveset(sqrt((a ^ @symcore.int(2)) + @symcore.int(-1) * (b ^ @symcore.int(2))) + @symcore.int(-3), symbol=Some(a), domain=real_domain),
+      "(lambda a, b: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(a**2 - b**2) - 3, a))(*sympy.symbols('a b', real=True))",
+      "{'a': sympy.symbols('a', real=True), 'b': sympy.symbols('b', real=True), 'sqrt': sympy.sqrt, 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    local_set_matches_oracle(
+      @symsolvers.solveset(sqrt((a ^ @symcore.int(2)) + (b ^ @symcore.int(2))) + @symcore.int(-3), symbol=Some(a), domain=real_domain),
+      "(lambda a, b: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(a**2 + b**2) - 3, a))(*sympy.symbols('a b', real=True))",
+      "{'a': sympy.symbols('a', real=True), 'b': sympy.symbols('b', real=True), 'sqrt': sympy.sqrt, 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    local_set_matches_oracle(
+      @symsolvers.solveset((x() ^ @symcore.int(-1)) + @symcore.int(-1) * ((@symcore.int(2) * cm) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+      "(lambda x, cm: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(1/x - 1/(2*cm), x))(sympy.symbols('x', real=True), __import__('sympy.physics.units', fromlist=['cm']).cm)",
+      "{'x': sympy.symbols('x', real=True), 'cm': __import__('sympy.physics.units', fromlist=['cm']).cm, 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    local_set_matches_oracle(
+      @symsolvers.solveset(x() * ((x() ^ one_third) + @symcore.int(-3)), symbol=Some(x()), domain=real_domain),
+      "(lambda x: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x*(x**sympy.Rational(1, 3) - 3), x))(sympy.symbols('x', real=True))",
+      "{'x': sympy.symbols('x', real=True), 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    local_set_matches_oracle(
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(2)) + @symcore.int(-1) * (y() ^ @symcore.int(2)) * (@symcore.function("exp", [x()]) ^ @symcore.int(-1)),
+        symbol=Some(y()),
+        domain=real_domain,
+      ),
+      "(lambda x, y: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**2 - y**2/sympy.exp(x), y))(sympy.symbols('x', real=True), sympy.symbols('y', positive=True))",
+      "{'x': sympy.symbols('x', real=True), 'y': sympy.symbols('y', positive=True), 'exp': sympy.exp, 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    local_set_matches_oracle(
+      @symsolvers.solveset(((@symcore.int(1) * (p ^ @symcore.int(-1))) + @symcore.int(1)) ^ (p + @symcore.int(1)), symbol=Some(p), domain=real_domain),
+      "(lambda p: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((1/p + 1)**(p + 1), p))(sympy.symbols('p', real=True))",
+      "{'p': sympy.symbols('p', real=True), 'ConditionSet': sympy.ConditionSet, 'Eq': sympy.Eq, 'Reals': sympy.S.Reals}",
+    ),
+    "True",
+  )
+}
+
+///|
+test "solvers parity solveset set behavior batch 30 additional public cases" {
+  let a = @symcore.Expr::Symbol("a")
+  let real_domain = @symsets.reals()
+
+  assert_eq(
+    local_set_matches_oracle(
+      @symsolvers.solveset(x() * (@symcore.function("log", [x()]) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+      "(lambda x: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x/sympy.log(x), x))(sympy.symbols('x', real=True))",
+      "{'x': sympy.symbols('x', real=True), 'EmptySet': sympy.S.EmptySet}",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    local_set_matches_oracle(
+      @symsolvers.solveset((x() ^ @symcore.int(2)) + a, symbol=Some(x()), domain=real_domain),
+      "(lambda x, a: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**2 + a, x))(sympy.symbols('x', real=True), sympy.symbols('a', real=True))",
+      "{'x': sympy.symbols('x', real=True), 'a': sympy.symbols('a', real=True), 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
+    ),
+    "True",
+  )
+
+  assert_eq(
+    local_set_matches_oracle(
+      @symsolvers.solveset(@symcore.int(1) * (sqrt(x()) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+      "(lambda x: sympy.solveset(1/sympy.sqrt(x), x, sympy.S.Reals))(sympy.symbols('x', real=True))",
+      "{'x': sympy.symbols('x', real=True), 'EmptySet': sympy.S.EmptySet}",
     ),
     "True",
   )

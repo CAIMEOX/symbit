@@ -3210,6 +3210,197 @@ test "solveset matches additional SymPy logarithmic and shifted exponential case
 }
 
 ///|
+test "solveset matches additional SymPy scaled logarithmic and exponential cases batch 27" {
+  let real_domain = @symsets.reals()
+  let third = @symcore.rational_from_ints(1, 3) catch { _ => fail("third") }
+
+  let scaled_exp_param = @symcore.function("exp", [@symcore.int(3) * x()]) + @symcore.int(-1) * y()
+  inspect(
+    @symsets.to_string(solveset(scaled_exp_param, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({log(y)/3}, Reals)",
+  )
+
+  let scaled_exp_coeff_param = @symcore.int(3) * @symcore.function("exp", [x()]) + @symcore.int(-1) * y()
+  inspect(
+    @symsets.to_string(solveset(scaled_exp_coeff_param, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({log(y/3)}, Reals)",
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(@symcore.function("log", [@symcore.int(3) * x()]), symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([third]),
+    ),
+    0,
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(@symcore.function("log", [x() + @symcore.int(3)]), symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([@symcore.int(-2)]),
+    ),
+    0,
+  )
+
+  let shifted_exp_coeff_param = @symcore.function("exp", [x()]) + @symcore.int(3) + @symcore.int(-1) * y()
+  inspect(
+    @symsets.to_string(solveset(shifted_exp_coeff_param, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({log(y - 3)}, Reals)",
+  )
+
+  let scaled_log_param = @symcore.int(3) * @symcore.function("log", [x()]) + @symcore.int(-1) * y()
+  inspect(
+    @symsets.to_string(solveset(scaled_log_param, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({exp(y/3)}, Reals)",
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(@symcore.function("exp", [x() + @symcore.int(3)]) + @symcore.int(-3), symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([@symcore.function("log", [@symcore.int(3)]) + @symcore.int(-3)]),
+    ),
+    0,
+  )
+
+  let log_ratio_param = @symcore.function("log", [@symcore.int(3) * x()]) + @symcore.int(-1) * @symcore.function("log", [y()])
+  inspect(
+    @symsets.to_string(solveset(log_ratio_param, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({y/3}, Reals)",
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(@symcore.int(3) * @symcore.function("exp", [x()]) + @symcore.int(-1), symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([@symcore.function("log", [third])]),
+    ),
+    0,
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(@symcore.function("exp", [@symcore.int(3) * x()]) + @symcore.int(-1), symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([@symcore.int(0)]),
+    ),
+    0,
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(@symcore.int(3) * @symcore.function("log", [x()]) + @symcore.int(-3), symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([@symcore.function("exp", [@symcore.int(1)])]),
+    ),
+    0,
+  )
+}
+
+///|
+test "solveset matches additional SymPy real exponential equation cases batch 28" {
+  let real_domain = @symsets.reals()
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-2), x()), @symcore.int(4)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.finite_set([@symcore.int(2)]),
+    ),
+    0,
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(-1) * (@symcore.int(2) ^ x()), @symcore.int(4)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.empty_set(),
+    ),
+    0,
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-3), x()), @symcore.int(27)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.empty_set(),
+    ),
+    0,
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-5), x() + @symcore.int(1)), @symcore.int(625)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.finite_set([@symcore.int(3)]),
+    ),
+    0,
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) ^ (x() + @symcore.int(-3)), @symcore.int(-16)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.empty_set(),
+    ),
+    0,
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.raw_pow(@symcore.int(-3), x() + @symcore.int(-3)),
+          @symcore.int(-1) * (@symcore.int(3) ^ @symcore.int(39)),
+        ),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+      @symsets.finite_set([@symcore.int(42)]),
+    ),
+    0,
+  )
+
+  inspect(
+    @symsets.to_string(solveset((@symcore.int(2) ^ x()) + @symcore.int(-1) * y(), symbol=Some(x()), domain=real_domain)),
+    content="Intersection({log(y)/log(2)}, Reals)",
+  )
+
+  inspect(
+    @symsets.to_string(
+      solveset(
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) ^ x(), y()),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
+    content="Intersection({log(y)/log(2)}, Reals)",
+  )
+
+  inspect(
+    @symsets.to_string(solveset((z() ^ x()) + @symcore.int(-1) * y(), symbol=Some(x()), domain=real_domain)),
+    content="ConditionSet(x, Eq(z**x - y, 0), Reals)",
+  )
+
+  inspect(
+    @symsets.to_string(solveset((x() ^ y()) + @symcore.int(-1), symbol=Some(y()), domain=real_domain)),
+    content="ConditionSet(y, Eq(x**y - 1, 0), Reals)",
+  )
+}
+
+///|
 test "decompogen factors functional composition and polynomial composition" {
   inspect(
     expr_list_text(decompogen(sin(cos(x())), x())),
@@ -4833,5 +5024,98 @@ test "recurrence solvers cover first-order source-compatible entry points" {
       expected_init,
     ),
     content="0",
+  )
+}
+
+///|
+test "solveset matches additional SymPy real set cases batch 29" {
+  let cm = @symcore.Expr::Symbol("cm")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let p = @symcore.Expr::Symbol("p")
+  let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("third") }
+  let real_domain = @symsets.reals()
+  let rational_y_den = (y() ^ @symcore.int(2)) * sqrt(@symcore.int(1) + @symcore.int(-1) * (y() ^ @symcore.int(2)))
+  let rational_y = (
+    x() + @symcore.int(-1) * (y() ^ @symcore.int(3))
+  ) * (rational_y_den ^ @symcore.int(-1))
+
+  inspect(
+    @symsets.to_string(solveset(rational_y, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({y**3}, Reals)",
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset((@symcore.int(2) * x()) * ((x() + @symcore.int(2)) ^ @symcore.int(-1)) + @symcore.int(-1), symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([@symcore.int(2)]),
+    ),
+    0,
+  )
+
+  inspect(
+    @symsets.to_string(solveset(sqrt((a ^ @symcore.int(2)) + @symcore.int(-1) * (b ^ @symcore.int(2))) + @symcore.int(-3), symbol=Some(a), domain=real_domain)),
+    content="Intersection({(b**2 + 9)**(1/2), -(b**2 + 9)**(1/2)}, Reals)",
+  )
+
+  inspect(
+    @symsets.to_string(solveset(sqrt((a ^ @symcore.int(2)) + (b ^ @symcore.int(2))) + @symcore.int(-3), symbol=Some(a), domain=real_domain)),
+    content="Intersection({(9 - b**2)**(1/2), -(9 - b**2)**(1/2)}, Reals)",
+  )
+
+  inspect(
+    @symsets.to_string(solveset((x() ^ @symcore.int(-1)) + @symcore.int(-1) * ((@symcore.int(2) * cm) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain)),
+    content="Intersection({2*cm}, Reals)",
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(x() * ((x() ^ one_third) + @symcore.int(-3)), symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([@symcore.int(0), @symcore.int(27)]),
+    ),
+    0,
+  )
+
+  inspect(
+    @symsets.to_string(
+      solveset(
+        (x() ^ @symcore.int(2)) + @symcore.int(-1) * (y() ^ @symcore.int(2)) * (@symcore.function("exp", [x()]) ^ @symcore.int(-1)),
+        symbol=Some(y()),
+        domain=real_domain,
+      ),
+    ),
+    content="Intersection({(x**2*exp(x))**(1/2), -(x**2*exp(x))**(1/2)}, Reals)",
+  )
+
+  inspect(
+    @symsets.to_string(solveset(((@symcore.int(1) * (p ^ @symcore.int(-1))) + @symcore.int(1)) ^ (p + @symcore.int(1)), symbol=Some(p), domain=real_domain)),
+    content="ConditionSet(p, Eq((p**-1 + 1)**(p + 1), 0), Reals)",
+  )
+}
+
+///|
+test "solveset matches additional SymPy set behavior cases batch 30" {
+  let a = @symcore.Expr::Symbol("a")
+  let real_domain = @symsets.reals()
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(x() * (@symcore.function("log", [x()]) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+      @symsets.empty_set(),
+    ),
+    0,
+  )
+
+  inspect(
+    @symsets.to_string(solveset((x() ^ @symcore.int(2)) + a, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({(-a)**(1/2), -(-a)**(1/2)}, Reals)",
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(@symcore.int(1) * (sqrt(x()) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+      @symsets.empty_set(),
+    ),
+    0,
   )
 }

@@ -1491,7 +1491,7 @@ fn invert_real_expr(
           } else if expr_is_known_nonpositive(rhs) {
             return (exp, [])
           } else {
-            return (normalized, rhs_items)
+            shifted.push(real_log_inversion_expr(rhs, base))
           }
         }
         return invert_real_expr(exp, shifted, symbol)
