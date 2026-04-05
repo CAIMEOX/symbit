@@ -1,28 +1,4 @@
 ///|
-pub fn gradient_vector(field : Vector) -> Dyadic raise @rawvec.VectorError {
-  match primary_coord_system_in_vector(field) {
-    None => dyadic_zero()
-    Some(system) => {
-      let expressed = field.express(system, variables=true) catch {
-        err => raise err
-      }
-      let comps = expressed.raw_.components_in(system.frame_) catch {
-        err => raise err
-      }
-      let basis = system.base_vectors()
-      let mut out = dyadic_zero()
-      for axis in 0..<3 {
-        out = out +
-          (gradient(comps[axis]).outer(basis[axis].to_vector()) catch {
-            err => raise err
-          })
-      }
-      out
-    }
-  }
-}
-
-///|
 pub fn gradient_unevaluated(field : ScalarOrVector) -> Gradient {
   { field_: field }
 }

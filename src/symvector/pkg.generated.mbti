@@ -10,17 +10,19 @@ import {
 // Values
 pub fn base_dyadic(BaseVector, BaseVector) -> BaseDyadic
 
-pub fn coord_sys3d(String, vector_names? : Array[String]?, variable_names? : Array[String]?) -> CoordSys3D raise @vector.VectorError
+pub fn coord_sys3d(String, vector_names? : Array[String]?, variable_names? : Array[String]?, transformation? : String?) -> CoordSys3D raise @vector.VectorError
 
 pub fn cross(Vector, Vector) -> Vector raise @vector.VectorError
 
-pub fn curl(Vector) -> Vector raise @vector.VectorError
+pub fn curl(Vector, doit? : Bool) -> Vector raise @vector.VectorError
 
 pub fn curl_unevaluated(Vector) -> Curl
 
+pub let delop : Del
+
 pub fn directional_derivative(ScalarOrVector, Vector) -> ScalarOrVector raise @vector.VectorError
 
-pub fn divergence(Vector) -> @symcore.Expr raise @vector.VectorError
+pub fn divergence(Vector, doit? : Bool) -> @symcore.Expr raise @vector.VectorError
 
 pub fn divergence_unevaluated(Vector) -> Divergence
 
@@ -34,11 +36,11 @@ pub fn express_dyadic(Dyadic, CoordSys3D, system2? : CoordSys3D?, variables? : B
 
 pub fn express_scalar(@symcore.Expr, CoordSys3D, variables? : Bool) -> @symcore.Expr
 
-pub fn gradient(@symcore.Expr) -> Vector
+pub fn gradient(@symcore.Expr, doit? : Bool) -> Vector
 
 pub fn gradient_unevaluated(ScalarOrVector) -> Gradient
 
-pub fn gradient_vector(Vector) -> Dyadic raise @vector.VectorError
+pub fn gradient_vector(Vector, doit? : Bool) -> Dyadic raise @vector.VectorError
 
 pub fn is_conservative(Vector) -> Bool raise @vector.VectorError
 
@@ -123,12 +125,14 @@ pub struct CoordSys3D {
   parent_ : CoordSys3D?
   vector_names_ : Array[String]
   variable_names_ : Array[String]
+  transformation_ : CoordTransform
 }
 pub fn CoordSys3D::base_scalars(Self) -> Array[BaseScalar]
 pub fn CoordSys3D::base_vectors(Self) -> Array[BaseVector]
 pub fn CoordSys3D::i(Self) -> BaseVector
 pub fn CoordSys3D::j(Self) -> BaseVector
 pub fn CoordSys3D::k(Self) -> BaseVector
+pub fn CoordSys3D::lame_coefficients(Self) -> Array[@symcore.Expr]
 pub fn CoordSys3D::name(Self) -> String
 pub fn CoordSys3D::orient_new_axis(Self, String, @symcore.Expr, Vector, location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::origin(Self) -> Point
@@ -145,11 +149,25 @@ pub impl Eq for CoordSys3D
 pub impl Hash for CoordSys3D
 pub impl Show for CoordSys3D
 
+pub enum CoordTransform {
+  Cartesian
+  Cylindrical
+  Spherical
+}
+
 pub struct Curl {
   field_ : Vector
 }
 pub fn Curl::doit(Self) -> Vector raise @vector.VectorError
 pub impl Show for Curl
+
+pub struct Del {
+}
+pub fn Del::call(Self, @symcore.Expr, doit? : Bool) -> Vector
+pub fn Del::cross(Self, Vector, doit? : Bool) -> Vector raise @vector.VectorError
+pub fn Del::dot(Self, Vector, doit? : Bool) -> @symcore.Expr raise @vector.VectorError
+pub fn Del::gradient(Self, @symcore.Expr, doit? : Bool) -> Vector
+pub impl Show for Del
 
 pub struct Divergence {
   field_ : Vector

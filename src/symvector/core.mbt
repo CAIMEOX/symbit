@@ -8,13 +8,17 @@ pub fn coord_sys3d(
   name : String,
   vector_names? : Array[String]? = None,
   variable_names? : Array[String]? = None,
+  transformation? : String? = None,
 ) -> CoordSys3D raise @rawvec.VectorError {
-  let normalized_vector_names = normalize_names("vector_names", vector_names)
+  let normalized_transform = normalize_transformation(transformation)
+  let normalized_vector_names = normalize_names(
+    "vector_names", vector_names, normalized_transform,
+  )
   let normalized_variable_names = normalize_names(
-    "variable_names", variable_names,
+    "variable_names", variable_names, normalized_transform,
   )
   let cache_key = root_cache_key(
-    name, normalized_vector_names, normalized_variable_names,
+    name, normalized_vector_names, normalized_variable_names, normalized_transform,
   )
   match root_coord_system_cache.get(cache_key) {
     Some(existing) => existing
@@ -33,6 +37,7 @@ pub fn coord_sys3d(
         parent_: None,
         vector_names_: normalized_vector_names,
         variable_names_: normalized_variable_names,
+        transformation_: normalized_transform,
       }
       root_coord_system_cache[cache_key] = system
       register_coord_system(system)
@@ -137,6 +142,22 @@ pub fn CoordSys3D::base_vectors(self : CoordSys3D) -> Array[BaseVector] {
 }
 
 ///|
+pub fn CoordSys3D::lame_coefficients(self : CoordSys3D) -> Array[@symcore.Expr] {
+  match self.transformation_ {
+    CoordTransform::Cartesian =>
+      [@symcore.int(1), @symcore.int(1), @symcore.int(1)]
+    CoordTransform::Cylindrical =>
+      [@symcore.int(1), self.x().expr(), @symcore.int(1)]
+    CoordTransform::Spherical =>
+      [
+        @symcore.int(1),
+        self.x().expr(),
+        self.x().expr() * @symcore.function("sin", [self.y().expr()]),
+      ]
+  }
+}
+
+///|
 pub fn CoordSys3D::rotation_matrix(
   self : CoordSys3D,
   other : CoordSys3D,
@@ -173,6 +194,7 @@ pub fn CoordSys3D::orient_new_axis(
       Some(values) => Some(values)
       None => Some(self.vector_names_)
     },
+    self.transformation_,
   )
   let normalized_variable_names = normalize_names(
     "variable_names",
@@ -180,6 +202,7 @@ pub fn CoordSys3D::orient_new_axis(
       Some(values) => Some(values)
       None => Some(self.variable_names_)
     },
+    self.transformation_,
   )
   let raw_child = self.frame_.orientnew(
     name,
@@ -207,6 +230,7 @@ pub fn CoordSys3D::orient_new_axis(
     parent_: Some(self),
     vector_names_: normalized_vector_names,
     variable_names_: normalized_variable_names,
+    transformation_: self.transformation_,
   }
   register_coord_system(system)
   system

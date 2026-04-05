@@ -10,14 +10,32 @@ fn default_vector_names() -> Array[String] {
 }
 
 ///|
-fn default_variable_names() -> Array[String] {
-  ["x", "y", "z"]
+fn default_variable_names(transform : CoordTransform) -> Array[String] {
+  match transform {
+    CoordTransform::Cartesian => ["x", "y", "z"]
+    CoordTransform::Cylindrical => ["r", "theta", "z"]
+    CoordTransform::Spherical => ["r", "theta", "phi"]
+  }
+}
+
+///|
+fn normalize_transformation(
+  transformation : String?,
+) -> CoordTransform raise @rawvec.VectorError {
+  match transformation {
+    None => CoordTransform::Cartesian
+    Some("cartesian") => CoordTransform::Cartesian
+    Some("cylindrical") => CoordTransform::Cylindrical
+    Some("spherical") => CoordTransform::Spherical
+    Some(other) => abort("unsupported transformation: " + other)
+  }
 }
 
 ///|
 fn normalize_names(
   label : String,
   items : Array[String]?,
+  transform : CoordTransform,
 ) -> Array[String] raise @rawvec.VectorError {
   match items {
     Some(values) =>
@@ -30,7 +48,7 @@ fn normalize_names(
       if label == "vector_names" {
         default_vector_names()
       } else {
-        default_variable_names()
+        default_variable_names(transform)
       }
   }
 }
@@ -52,8 +70,21 @@ fn root_cache_key(
   name : String,
   vector_names : Array[String],
   variable_names : Array[String],
+  transform : CoordTransform,
 ) -> String {
-  "root|" + name + "|" + vector_names.join(",") + "|" + variable_names.join(",")
+  let transform_name = match transform {
+    CoordTransform::Cartesian => "cartesian"
+    CoordTransform::Cylindrical => "cylindrical"
+    CoordTransform::Spherical => "spherical"
+  }
+  "root|" +
+  name +
+  "|" +
+  vector_names.join(",") +
+  "|" +
+  variable_names.join(",") +
+  "|" +
+  transform_name
 }
 
 ///|

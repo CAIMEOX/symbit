@@ -100,6 +100,46 @@ fn coords_text(coords : Array[@symcore.Expr]) -> String {
 }
 
 ///|
+fn expr_eq(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
+  @symcore.is_zero(@symsimplify.simplify(lhs - rhs))
+}
+
+///|
+fn expr_div_test(num : @symcore.Expr, den : @symcore.Expr) -> @symcore.Expr {
+  num * (den ^ @symcore.int(-1))
+}
+
+///|
+fn matrix_expr_eq(
+  matrix : @symphysics.ExplicitMatrix,
+  expected : Array[Array[@symcore.Expr]],
+) -> Bool {
+  let rows = matrix.rows_copy()
+  if rows.length() != expected.length() {
+    return false
+  }
+  for i in 0..<rows.length() {
+    if rows[i].length() != expected[i].length() {
+      return false
+    }
+    for j in 0..<rows[i].length() {
+      if !expr_eq(rows[i][j], expected[i][j]) {
+        return false
+      }
+    }
+  }
+  true
+}
+
+///|
+fn matrix3_text(matrix : @symphysics.ExplicitMatrix) -> String {
+  matrix
+  .rows_copy()
+  .map(row => row.map(@symprint.to_string).join(","))
+  .join("|")
+}
+
+///|
 test "points expose relative position and coordinates" {
   let c = coord_sys3d("C") catch { _ => fail("C") }
   let p1 = c
@@ -121,6 +161,50 @@ test "points expose relative position and coordinates" {
   assert_eq(
     coords_text(p2.express_coordinates(c) catch { _ => fail("coords") }),
     "2|3|1",
+  )
+}
+
+///|
+test "del operator exposes cartesian differential surface" {
+  let c = coord_sys3d("C") catch { _ => fail("C") }
+  let x = c.x().expr()
+  let y = c.y().expr()
+  let z = c.z().expr()
+  let v = vector_from_terms([
+    (x * y * z, c.i()),
+    (x * y * z, c.j()),
+    (x * y * z, c.k()),
+  ])
+
+  assert_eq(delop.to_string(), "delop")
+  assert_eq(
+    matrix_text(delop.gradient(x).to_matrix(c) catch { _ => fail("del-grad") }),
+    "Derivative(C.x, C.x)|Derivative(C.x, C.y)|Derivative(C.x, C.z)",
+  )
+  assert_eq(delop.call(x * y * z), delop.gradient(x * y * z))
+  assert_eq(
+    delop.gradient(x * y * z, doit=true).to_string(),
+    "C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k",
+  )
+  assert_eq(
+    expr_eq(
+      delop.dot(v) catch {
+        _ => fail("del-dot")
+      },
+      @symcore.derivative(x * y * z, x) +
+      @symcore.derivative(x * y * z, y) +
+      @symcore.derivative(x * y * z, z),
+    ),
+    true,
+  )
+  assert_eq(
+    (delop.cross(
+      vector_term(@symcore.int(2) * (x ^ @symcore.int(2)), c.j()),
+      doit=true,
+    ) catch {
+      _ => fail("del-curl")
+    }).to_string(),
+    "4*C.x*C.k",
   )
 }
 
@@ -175,7 +259,7 @@ test "field functions align with top-level vector surface" {
       let expected = c.x().expr() * c.y().expr() +
         @symcore.int(4) * c.x().expr() * c.z().expr() +
         @symcore.int(3) * c.y().expr() * c.z().expr()
-      assert_eq(@symcore.compare_expr(value, expected), 0)
+      assert_eq(expr_eq(value, expected), true)
     }
     ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
   }
@@ -200,11 +284,121 @@ test "field functions align with top-level vector surface" {
 }
 
 ///|
-fn matrix3_text(matrix : @symphysics.ExplicitMatrix) -> String {
-  matrix
-  .rows_copy()
-  .map(row => row.map(@symprint.to_string).join(","))
-  .join("|")
+test "curvilinear field functions support cylindrical and spherical systems" {
+  let a = coord_sys3d(
+    "A",
+    variable_names=Some(["r", "theta", "phi"]),
+    transformation=Some("spherical"),
+  ) catch {
+    _ => fail("A")
+  }
+  let b = coord_sys3d(
+    "B",
+    variable_names=Some(["r", "theta", "z"]),
+    transformation=Some("cylindrical"),
+  ) catch {
+    _ => fail("B")
+  }
+
+  assert_eq(
+    matrix_text(
+      gradient(@symcore.int(3) * a.x().expr() + @symcore.int(4) * a.y().expr()).to_matrix(
+        a,
+      ) catch {
+        _ => fail("grad-sph")
+      },
+    ),
+    "3|4/A.r|0",
+  )
+  assert_eq(
+    matrix_text(
+      gradient(b.x().expr() * b.y().expr() * b.z().expr()).to_matrix(b) catch {
+        _ => fail("grad-cyl")
+      },
+    ),
+    "B.z*B.theta|B.z|B.r*B.theta",
+  )
+  assert_eq(
+    expr_eq(
+      divergence(
+        vector_from_terms([
+          (b.x().expr(), b.i()),
+          (b.y().expr(), b.j()),
+          (b.z().expr(), b.k()),
+        ]),
+      ) catch {
+        _ => fail("div-cyl")
+      },
+      @symcore.int(3) + (b.x().expr() ^ @symcore.int(-1)),
+    ),
+    true,
+  )
+  assert_eq(
+    (curl(vector_from_terms([(b.x().expr(), b.j()), (b.z().expr(), b.k())])) catch {
+      _ => fail("curl-cyl")
+    }).to_string(),
+    "2*B.k",
+  )
+  let scalar_dd = directional_derivative(
+    scalar_or_vector_scalar(
+      @symcore.int(5) * (a.x().expr() ^ @symcore.int(2)) * a.z().expr(),
+    ),
+    vector_from_terms([
+      (@symcore.int(3), a.i()),
+      (@symcore.int(4), a.j()),
+      (@symcore.int(1), a.k()),
+    ]),
+  ) catch {
+    _ => fail("dd-sph-scalar")
+  }
+  match scalar_dd {
+    ScalarOrVector::ScalarExpr(value) =>
+      assert_eq(
+        expr_eq(
+          value,
+          @symcore.int(5) *
+          a.x().expr() *
+          (@symcore.function("sin", [a.y().expr()]) ^ @symcore.int(-1)) +
+          @symcore.int(30) * a.x().expr() * a.z().expr(),
+        ),
+        true,
+      )
+    ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
+  }
+
+  let r = b.x().expr()
+  let theta = b.y().expr()
+  let zz = b.z().expr()
+  let u = @symcore.applied_undefined_function("u", [r, theta, zz])
+  let v = @symcore.applied_undefined_function("v", [r, theta, zz])
+  let w = @symcore.applied_undefined_function("w", [r, theta, zz])
+  let vec = vector_from_terms([(u, b.i()), (v, b.j()), (w, b.k())])
+  let grad_vec_cyl = gradient_vector(vec) catch { _ => fail("grad-vec-cyl") }
+  assert_eq(
+    matrix_expr_eq(
+      grad_vec_cyl.to_matrix(b) catch {
+        _ => fail("grad-vec-cyl-mat")
+      },
+      [
+        [
+          @symcore.derivative(u, r),
+          @symcore.derivative(v, r),
+          @symcore.derivative(w, r),
+        ],
+        [
+          expr_div_test(@symcore.derivative(u, theta) - v, r),
+          expr_div_test(u + @symcore.derivative(v, theta), r),
+          expr_div_test(@symcore.derivative(w, theta), r),
+        ],
+        [
+          @symcore.derivative(u, zz),
+          @symcore.derivative(v, zz),
+          @symcore.derivative(w, zz),
+        ],
+      ],
+    ),
+    true,
+  )
 }
 
 ///|
@@ -232,11 +426,11 @@ test "directional derivative covers more scalar and vector cases" {
   match dd_more_scalar {
     ScalarOrVector::ScalarExpr(value) =>
       assert_eq(
-        @symcore.compare_expr(
+        expr_eq(
           value,
           @symcore.int(5) * (x ^ @symcore.int(2)) + @symcore.int(30) * x * z,
         ),
-        0,
+        true,
       )
     ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
   }

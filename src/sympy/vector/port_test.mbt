@@ -20,6 +20,28 @@ fn matrix_py_expr(matrix : @symphysics.ExplicitMatrix) -> String {
 }
 
 ///|
+fn matrix_matches_sympy(
+  matrix : @symphysics.ExplicitMatrix,
+  system_name : String,
+  system_expr : String,
+  py_expected : String,
+) -> Bool raise {
+  vector_eval_str(
+    "(lambda " +
+    system_name +
+    ", Derivative, u, v, w: str(all(sympy.simplify(x) == 0 for row in ((" +
+    matrix_py_expr(matrix) +
+    ") - (" +
+    py_expected +
+    ")).tolist() for x in row)))(" +
+    system_expr +
+    ", sympy.Derivative, sympy.Function('u'), sympy.Function('v'), sympy.Function('w')" +
+    ")",
+  ) ==
+  "True"
+}
+
+///|
 fn scalar_map_text(
   mapping : Map[@symvector.BaseScalar, @symcore.Expr],
 ) -> String {
@@ -189,6 +211,172 @@ test "point and field-function parity against repo sympy" {
 }
 
 ///|
+test "del operator parity against repo sympy" {
+  let c = @symvector.coord_sys3d("C") catch { _ => fail("C") }
+  let x = c.x().expr()
+  let y = c.y().expr()
+  let z = c.z().expr()
+  let v = @symvector.vector_from_terms([
+    (x * y * z, c.i()),
+    (x * y * z, c.j()),
+    (x * y * z, c.k()),
+  ])
+
+  assert_eq(@symvector.delop.to_string(), "delop")
+  assert_eq(
+    matrix_text(
+      @symvector.delop.gradient(x).to_matrix(c) catch {
+        _ => fail("del-grad")
+      },
+    ),
+    vector_eval_str(
+      "(lambda C, D: '|'.join(str(x[0]) for x in D().gradient(C.x).to_matrix(C).tolist()))(" +
+      "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')," +
+      "__import__('sympy.vector.deloperator', fromlist=['Del']).Del)",
+    ),
+  )
+  assert_eq(
+    @symprint.to_string(@symvector.delop.dot(v) catch { _ => fail("del-dot") }),
+    vector_eval_str(
+      "(lambda C, D: str(D().dot(C.x*C.y*C.z*(C.i + C.j + C.k))))(" +
+      "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')," +
+      "__import__('sympy.vector.deloperator', fromlist=['Del']).Del)",
+    ),
+  )
+  assert_eq(
+    (@symvector.delop.cross(
+      @symvector.vector_term(@symcore.int(2) * (x ^ @symcore.int(2)), c.j()),
+      doit=true,
+    ) catch {
+      _ => fail("del-cross")
+    }).to_string(),
+    vector_eval_str(
+      "(lambda C, D: str(D().cross(2*C.x**2*C.j, doit=True)))(" +
+      "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')," +
+      "__import__('sympy.vector.deloperator', fromlist=['Del']).Del)",
+    ),
+  )
+}
+
+///|
+test "curvilinear field-function parity against repo sympy" {
+  let a = @symvector.coord_sys3d(
+    "A",
+    transformation=Some("spherical"),
+    variable_names=Some(["r", "theta", "phi"]),
+  ) catch {
+    _ => fail("A")
+  }
+  let b = @symvector.coord_sys3d(
+    "B",
+    transformation=Some("cylindrical"),
+    variable_names=Some(["r", "theta", "z"]),
+  ) catch {
+    _ => fail("B")
+  }
+  let r = b.x().expr()
+  let theta = b.y().expr()
+  let zz = b.z().expr()
+  let u = @symcore.applied_undefined_function("u", [r, theta, zz])
+  let v = @symcore.applied_undefined_function("v", [r, theta, zz])
+  let w = @symcore.applied_undefined_function("w", [r, theta, zz])
+  let vec = @symvector.vector_from_terms([(u, b.i()), (v, b.j()), (w, b.k())])
+  let a_py = "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('A', transformation='spherical', variable_names=['r', 'theta', 'phi'])"
+  let b_py = "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('B', transformation='cylindrical', variable_names=['r', 'theta', 'z'])"
+  let grad_sph = @symvector.gradient(
+    @symcore.int(3) * a.x().expr() + @symcore.int(4) * a.y().expr(),
+  ).to_matrix(a) catch {
+    _ => fail("grad-sph")
+  }
+  let div_cyl = @symvector.divergence(
+    @symvector.vector_from_terms([
+      (b.x().expr(), b.i()),
+      (b.y().expr(), b.j()),
+      (b.z().expr(), b.k()),
+    ]),
+  ) catch {
+    _ => fail("div-cyl")
+  }
+  let grad_vec_cyl = (@symvector.gradient_vector(vec) catch {
+    _ => fail("grad-vec-cyl")
+  }).to_matrix(b) catch {
+    _ => fail("grad-vec-cyl-mat")
+  }
+
+  assert_eq(
+    matrix_matches_sympy(
+      grad_sph, "A", a_py, "__import__('sympy.vector', fromlist=['gradient']).gradient(3*A.r + 4*A.theta).to_matrix(A)",
+    ) catch {
+      _ => fail("grad-sph-parity")
+    },
+    true,
+  )
+  assert_eq(
+    vector_eval_str(
+      "(lambda B: str(sympy.simplify((" +
+      @symprint.to_string(div_cyl) +
+      ") - (__import__('sympy.vector', fromlist=['divergence']).divergence(B.r*B.i + B.theta*B.j + B.z*B.k)))))(" +
+      b_py +
+      ")",
+    ),
+    "0",
+  )
+  assert_eq(
+    (@symvector.curl(
+      @symvector.vector_from_terms([
+        (b.x().expr(), b.j()),
+        (b.z().expr(), b.k()),
+      ]),
+    ) catch {
+      _ => fail("curl-cyl")
+    }).to_string(),
+    vector_eval_str(
+      "(lambda B: str(__import__('sympy.vector', fromlist=['curl']).curl(B.r*B.j + B.z*B.k)))(" +
+      b_py +
+      ")",
+    ),
+  )
+  let scalar_dd = @symvector.directional_derivative(
+    @symvector.scalar_or_vector_scalar(
+      @symcore.int(5) * (a.x().expr() ^ @symcore.int(2)) * a.z().expr(),
+    ),
+    @symvector.vector_from_terms([
+      (@symcore.int(3), a.i()),
+      (@symcore.int(4), a.j()),
+      (@symcore.int(1), a.k()),
+    ]),
+  ) catch {
+    _ => fail("dd-sph")
+  }
+  match scalar_dd {
+    @symvector.ScalarOrVector::ScalarExpr(value) =>
+      assert_eq(
+        vector_eval_str(
+          "(lambda A: str(sympy.simplify((" +
+          @symprint.to_string(value) +
+          ") - (__import__('sympy.vector', fromlist=['directional_derivative']).directional_derivative(5*A.r**2*A.phi, 3*A.i + 4*A.j + A.k)))))(" +
+          a_py +
+          ")",
+        ),
+        "0",
+      )
+    @symvector.ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
+  }
+  assert_eq(
+    matrix_matches_sympy(
+      grad_vec_cyl,
+      "B",
+      b_py,
+      "__import__('sympy.vector', fromlist=['gradient']).gradient(" +
+      "sympy.Function('u')(B.r, B.theta, B.z)*B.i + sympy.Function('v')(B.r, B.theta, B.z)*B.j + sympy.Function('w')(B.r, B.theta, B.z)*B.k).to_matrix(B)",
+    ) catch {
+      _ => fail("grad-vec-cyl-parity")
+    },
+    true,
+  )
+}
+
+///|
 test "operator wrappers and vector gradient parity against repo sympy" {
   let c = @symvector.coord_sys3d("C") catch { _ => fail("C") }
   let x = c.x().expr()
@@ -198,8 +386,12 @@ test "operator wrappers and vector gradient parity against repo sympy" {
   let v = @symcore.applied_undefined_function("v", [x, y, z])
   let w = @symcore.applied_undefined_function("w", [x, y, z])
   let vec = @symvector.vector_from_terms([(u, c.i()), (v, c.j()), (w, c.k())])
-  let scalar_grad = @symvector.gradient_unevaluated(@symvector.scalar_or_vector_scalar(x * y * z))
-  let vector_grad = @symvector.gradient_unevaluated(@symvector.scalar_or_vector_vector(vec))
+  let scalar_grad = @symvector.gradient_unevaluated(
+    @symvector.scalar_or_vector_scalar(x * y * z),
+  )
+  let vector_grad = @symvector.gradient_unevaluated(
+    @symvector.scalar_or_vector_vector(vec),
+  )
   let div = @symvector.divergence_unevaluated(
     @symvector.vector_from_terms([
       (y * z, c.i()),
@@ -254,14 +446,15 @@ test "operator wrappers and vector gradient parity against repo sympy" {
     _ => fail("vector-grad-doit")
   }
   match vector_grad_value {
-    @symvector.GradientValue::DyadicValue(value) => assert_eq(
-      matrix_text(value.to_matrix(c) catch { _ => fail("vector-grad-mat") }),
-      vector_eval_str(
-        "(lambda C: '|'.join(','.join(str(x) for x in row) for row in __import__('sympy.vector', fromlist=['gradient']).gradient(" +
-        "sympy.Function('u')(C.x, C.y, C.z)*C.i + sympy.Function('v')(C.x, C.y, C.z)*C.j + sympy.Function('w')(C.x, C.y, C.z)*C.k).to_matrix(C).tolist()))(" +
-        "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
-      ),
-    )
+    @symvector.GradientValue::DyadicValue(value) =>
+      assert_eq(
+        matrix_text(value.to_matrix(c) catch { _ => fail("vector-grad-mat") }),
+        vector_eval_str(
+          "(lambda C: '|'.join(','.join(str(x) for x in row) for row in __import__('sympy.vector', fromlist=['gradient']).gradient(" +
+          "sympy.Function('u')(C.x, C.y, C.z)*C.i + sympy.Function('v')(C.x, C.y, C.z)*C.j + sympy.Function('w')(C.x, C.y, C.z)*C.k).to_matrix(C).tolist()))(" +
+          "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
+        ),
+      )
     @symvector.GradientValue::VectorValue(_) => fail("expected dyadic result")
   }
 }

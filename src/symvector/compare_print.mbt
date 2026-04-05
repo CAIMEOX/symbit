@@ -344,3 +344,14 @@ pub impl Show for Curl with to_string(self) -> String {
 pub impl Show for Curl with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
+
+///|
+pub impl Show for Del with to_string(self) -> String {
+  ignore(self)
+  "delop"
+}
+
+///|
+pub impl Show for Del with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}

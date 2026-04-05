@@ -4,6 +4,13 @@ pub struct VectorKind {
 }
 
 ///|
+pub enum CoordTransform {
+  Cartesian
+  Cylindrical
+  Spherical
+}
+
+///|
 pub enum PointReference {
   PointObject(Point)
   CoordSystem(CoordSys3D)
@@ -57,6 +64,9 @@ pub struct Curl {
 }
 
 ///|
+pub struct Del {}
+
+///|
 pub struct Point {
   name_ : String
   raw_ : @rawvec.Point
@@ -71,6 +81,7 @@ pub struct CoordSys3D {
   parent_ : CoordSys3D?
   vector_names_ : Array[String]
   variable_names_ : Array[String]
+  transformation_ : CoordTransform
 }
 
 ///|
