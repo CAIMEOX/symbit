@@ -1,0 +1,36 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/categories"
+
+import {
+  "CAIMEOX/symbit/symcategories",
+}
+
+// Values
+pub fn category_summary_repr(@symcategories.Category) -> String raise
+
+pub fn category_summary_text(@symcategories.Category) -> String raise
+
+pub fn diagram_grid_summary_repr(@symcategories.Diagram, groups? : Array[@symcategories.GridGroup], hints? : @symcategories.GridHints) -> String raise
+
+pub fn diagram_grid_summary_text(@symcategories.Diagram, groups? : Array[@symcategories.GridGroup], hints? : @symcategories.GridHints) -> String raise
+
+pub fn diagram_hom_repr(@symcategories.Diagram, @symcategories.Object, @symcategories.Object) -> String raise
+
+pub fn diagram_summary_repr(@symcategories.Diagram) -> String raise
+
+pub fn diagram_summary_text(@symcategories.Diagram) -> String raise
+
+pub fn morphism_repr(@symcategories.Morphism) -> String raise
+
+pub fn object_repr(@symcategories.Object) -> String raise
+
+pub fn xypic_draw_str(@symcategories.Diagram, masked? : Array[@symcategories.Morphism], diagram_format? : String, groups? : Array[@symcategories.GridGroup], hints? : @symcategories.GridHints) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

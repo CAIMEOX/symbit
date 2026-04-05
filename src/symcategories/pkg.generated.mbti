@@ -1,0 +1,222 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symcategories"
+
+// Values
+pub fn arrow_string_description(String, String, Int?, String, String, String, String, String, String) -> ArrowStringDescription
+
+pub fn category(String, objects? : Array[Object], commutative_diagrams? : Array[Diagram]) -> Category raise CategoryError
+
+pub fn category_class(Array[Object]) -> Class
+
+pub fn compare_category(Category, Category) -> Int
+
+pub fn compare_diagram(Diagram, Diagram) -> Int
+
+pub fn compare_morphism(Morphism, Morphism) -> Int
+
+pub fn compare_object(Object, Object) -> Int
+
+pub fn compare_triangle(((Object, Object), (Object, Object), (Object, Object)), ((Object, Object), (Object, Object), (Object, Object))) -> Int
+
+pub fn composite_morphism(Array[Morphism]) -> Morphism raise CategoryError
+
+pub fn diagram(premises? : MorphismSpec, conclusions? : MorphismSpec) -> Diagram raise CategoryError
+
+pub fn diagram_grid(Diagram, groups? : Array[GridGroup], hints? : GridHints) -> DiagramGrid raise CategoryError
+
+pub fn generic_hints(transpose? : Bool) -> GridHints
+
+pub fn grid_group(GroupLayout) -> GridGroup
+
+pub fn grid_group_object(Object) -> GridGroup
+
+pub fn group_layout(Array[Object], GridHints?) -> GroupLayout
+
+pub fn[T] growable_grid(Int, Int) -> GrowableGrid[T]
+
+pub fn identity_morphism(Object) -> Morphism
+
+pub fn morphism_list(Array[Morphism]) -> MorphismSpec
+
+pub fn morphism_props(Map[Morphism, Array[String]]) -> MorphismSpec
+
+pub fn named_morphism(Object, Object, String) -> Morphism raise CategoryError
+
+pub fn object(String) -> Object
+
+pub fn preview_diagram(Diagram, _masked? : Array[Morphism], _diagram_format? : String, _groups? : Array[GridGroup], _output? : String, _viewer? : String?, _euler? : Bool, _hints? : GridHints) -> Unit raise CategoryError
+
+pub fn property(String) -> Array[String]
+
+pub fn property_set(Array[String]) -> Array[String]
+
+pub fn sequential_hints(transpose? : Bool) -> GridHints
+
+pub fn show_morphism_array(Array[Morphism]) -> String
+
+pub fn show_object_array(Array[Object]) -> String
+
+pub fn transpose_hints() -> GridHints
+
+pub fn xypic_diagram_drawer() -> XypicDiagramDrawer
+
+pub fn xypic_draw_diagram(Diagram, masked? : Array[Morphism], diagram_format? : String, groups? : Array[GridGroup], hints? : GridHints) -> String raise CategoryError
+
+// Errors
+pub(all) suberror CategoryError {
+  ValueError(String)
+  TypeError(String)
+  NotImplemented(String)
+  Unsupported(String)
+}
+pub impl Eq for CategoryError
+pub impl Show for CategoryError
+
+// Types and methods
+pub struct ArrowStringDescription {
+  unit : String
+  curving : String
+  curving_amount : Int?
+  looping_start : String
+  looping_end : String
+  horizontal_direction : String
+  vertical_direction : String
+  mut label_position : String
+  mut label : String
+  mut label_displacement : String
+  mut arrow_style : String
+  mut forced_label_position : Bool
+}
+pub fn ArrowStringDescription::set_arrow_style(Self, String) -> Unit
+pub fn ArrowStringDescription::set_forced_label_position(Self, Bool) -> Unit
+pub fn ArrowStringDescription::set_label(Self, String) -> Unit
+pub fn ArrowStringDescription::set_label_displacement(Self, String) -> Unit
+pub fn ArrowStringDescription::set_label_position(Self, String) -> Unit
+pub impl Show for ArrowStringDescription
+
+pub struct Category {
+  name : String
+  objects : Class
+  commutative_diagrams : Array[Diagram]
+}
+pub fn Category::all_morphisms(Self) -> Unit raise CategoryError
+pub fn Category::hom(Self, Object, Object) -> Unit raise CategoryError
+pub impl Compare for Category
+pub impl Eq for Category
+pub impl Hash for Category
+pub impl Show for Category
+
+pub struct Class {
+  objects : Array[Object]
+}
+pub impl Compare for Class
+pub impl Eq for Class
+pub impl Show for Class
+
+pub struct Diagram {
+  premises : Map[Morphism, Array[String]]
+  conclusions : Map[Morphism, Array[String]]
+  objects : Array[Object]
+}
+pub fn Diagram::hom(Self, Object, Object) -> (Array[Morphism], Array[Morphism])
+pub fn Diagram::is_subdiagram(Self, Self) -> Bool
+pub fn Diagram::subdiagram_from_objects(Self, Array[Object]) -> Self raise CategoryError
+pub impl Compare for Diagram
+pub impl Eq for Diagram
+pub impl Hash for Diagram
+pub impl Show for Diagram
+
+pub struct DiagramGrid {
+  grid_ : GrowableGrid[Object]
+  morphisms_ : Map[Morphism, Array[String]]
+}
+pub fn DiagramGrid::get(Self, Int, Int) -> Object?
+pub fn DiagramGrid::height(Self) -> Int
+pub fn DiagramGrid::morphisms(Self) -> Map[Morphism, Array[String]]
+pub fn DiagramGrid::width(Self) -> Int
+pub impl Show for DiagramGrid
+
+pub enum GridGroup {
+  Single(Object)
+  Group(GroupLayout)
+}
+
+pub struct GridHints {
+  layout : LayoutKind
+  transpose : Bool
+}
+
+pub struct GroupLayout {
+  objects : Array[Object]
+  hints : GridHints?
+}
+
+pub struct GrowableGrid[T] {
+  mut width_ : Int
+  mut height_ : Int
+  array_ : Array[Array[T?]]
+}
+pub fn[T] GrowableGrid::append_column(Self[T]) -> Unit
+pub fn[T] GrowableGrid::append_row(Self[T]) -> Unit
+pub fn[T] GrowableGrid::get(Self[T], Int, Int) -> T?
+pub fn[T] GrowableGrid::height(Self[T]) -> Int
+pub fn[T] GrowableGrid::prepend_column(Self[T]) -> Unit
+pub fn[T] GrowableGrid::prepend_row(Self[T]) -> Unit
+pub fn[T] GrowableGrid::rows(Self[T]) -> Array[Array[T?]]
+pub fn[T] GrowableGrid::set(Self[T], Int, Int, T?) -> Unit
+pub fn[T] GrowableGrid::width(Self[T]) -> Int
+
+pub enum LayoutKind {
+  Generic
+  Sequential
+}
+
+pub enum Morphism {
+  Identity(Object)
+  Named(Object, Object, String)
+  Composite(Array[Morphism])
+}
+pub fn Morphism::codomain(Self) -> Object
+pub fn Morphism::components(Self) -> Array[Self]
+pub fn Morphism::compose(Self, Self) -> Self raise CategoryError
+pub fn Morphism::domain(Self) -> Object
+pub fn Morphism::flatten(Self, String) -> Self raise CategoryError
+pub fn Morphism::name(Self) -> String?
+pub impl Compare for Morphism
+pub impl Eq for Morphism
+pub impl Hash for Morphism
+pub impl Mul for Morphism
+pub impl Show for Morphism
+
+pub enum MorphismSpec {
+  List(Array[Morphism])
+  Props(Map[Morphism, Array[String]])
+}
+
+pub struct Object {
+  name : String
+}
+pub impl Compare for Object
+pub impl Eq for Object
+pub impl Hash for Object
+pub impl Show for Object
+
+pub struct XypicDiagramDrawer {
+  mut unit : String
+  mut default_curving_amount : Int
+  mut default_curving_step : Int
+  arrow_formatters : Map[String, (ArrowStringDescription) -> Unit]
+  mut default_arrow_formatter : ((ArrowStringDescription) -> Unit)?
+}
+pub fn XypicDiagramDrawer::draw(Self, Diagram, DiagramGrid, masked? : Array[Morphism], diagram_format? : String) -> String
+pub fn XypicDiagramDrawer::set_arrow_formatter(Self, String, (ArrowStringDescription) -> Unit) -> Unit
+pub fn XypicDiagramDrawer::set_default_arrow_formatter(Self, ((ArrowStringDescription) -> Unit)?) -> Unit
+pub fn XypicDiagramDrawer::set_default_curving_amount(Self, Int) -> Unit
+pub fn XypicDiagramDrawer::set_default_curving_step(Self, Int) -> Unit
+pub fn XypicDiagramDrawer::set_unit(Self, String) -> Unit
+
+// Type aliases
+pub type ArrowFormatter = (ArrowStringDescription) -> Unit
+
+// Traits
+

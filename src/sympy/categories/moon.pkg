@@ -1,0 +1,10 @@
+import {
+  "CAIMEOX/symbit/symcategories",
+  "CAIMEOX/symbit/sympy/utilities" @sympy_utilities,
+}
+
+supported_targets = "native"
+
+options(
+  targets: { "*.mbt": [ "native" ] },
+)
