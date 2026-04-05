@@ -1,0 +1,167 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symvector"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symphysics",
+  "CAIMEOX/symbit/symphysics/vector",
+}
+
+// Values
+pub fn coord_sys3d(String, vector_names? : Array[String]?, variable_names? : Array[String]?) -> CoordSys3D raise @vector.VectorError
+
+pub fn cross(Vector, Vector) -> Vector raise @vector.VectorError
+
+pub fn curl(Vector) -> Vector raise @vector.VectorError
+
+pub fn directional_derivative(ScalarOrVector, Vector) -> ScalarOrVector raise @vector.VectorError
+
+pub fn divergence(Vector) -> @symcore.Expr raise @vector.VectorError
+
+pub fn dot(Vector, Vector) -> @symcore.Expr raise @vector.VectorError
+
+pub fn express(Vector, CoordSys3D, variables? : Bool) -> Vector raise @vector.VectorError
+
+pub fn express_scalar(@symcore.Expr, CoordSys3D, variables? : Bool) -> @symcore.Expr
+
+pub fn gradient(@symcore.Expr) -> Vector
+
+pub fn is_conservative(Vector) -> Bool raise @vector.VectorError
+
+pub fn is_solenoidal(Vector) -> Bool raise @vector.VectorError
+
+pub fn laplacian(ScalarOrVector) -> ScalarOrVector raise @vector.VectorError
+
+pub fn matrix_to_vector(@symphysics.ExplicitMatrix, CoordSys3D) -> Vector raise @vector.VectorError
+
+pub fn point_reference_coord_system(CoordSys3D) -> PointReference
+
+pub fn point_reference_point(Point) -> PointReference
+
+pub fn scalar_or_vector_scalar(@symcore.Expr) -> ScalarOrVector
+
+pub fn scalar_or_vector_vector(Vector) -> ScalarOrVector
+
+pub fn scalar_potential(Vector, CoordSys3D) -> @symcore.Expr raise @vector.VectorError
+
+pub fn scalar_potential_difference(ScalarOrVector, CoordSys3D, Point, Point) -> @symcore.Expr raise @vector.VectorError
+
+pub fn vector_from_terms(Array[(@symcore.Expr, BaseVector)]) -> Vector
+
+pub fn vector_kind(element_kind? : String) -> VectorKind
+
+pub fn vector_term(@symcore.Expr, BaseVector) -> Vector
+
+pub fn vector_zero() -> Vector
+
+// Errors
+
+// Types and methods
+pub struct BaseScalar {
+  axis_ : Int
+  system_ : CoordSys3D
+  name_ : String
+  expr_ : @symcore.Expr
+}
+pub fn BaseScalar::expr(Self) -> @symcore.Expr
+pub fn BaseScalar::kind(Self) -> String
+pub fn BaseScalar::system(Self) -> CoordSys3D
+pub impl Compare for BaseScalar
+pub impl Eq for BaseScalar
+pub impl Hash for BaseScalar
+pub impl Show for BaseScalar
+
+pub struct BaseVector {
+  axis_ : Int
+  system_ : CoordSys3D
+}
+pub fn BaseVector::kind(Self) -> VectorKind
+pub fn BaseVector::scale(Self, @symcore.Expr) -> Vector
+pub fn BaseVector::system(Self) -> CoordSys3D
+pub fn BaseVector::to_vector(Self) -> Vector
+pub impl Compare for BaseVector
+pub impl Eq for BaseVector
+pub impl Hash for BaseVector
+pub impl Show for BaseVector
+
+pub struct CoordSys3D {
+  name_ : String
+  eq_key_ : String
+  frame_ : @vector.ReferenceFrame
+  origin_ : Point
+  parent_ : CoordSys3D?
+  vector_names_ : Array[String]
+  variable_names_ : Array[String]
+}
+pub fn CoordSys3D::base_scalars(Self) -> Array[BaseScalar]
+pub fn CoordSys3D::base_vectors(Self) -> Array[BaseVector]
+pub fn CoordSys3D::i(Self) -> BaseVector
+pub fn CoordSys3D::j(Self) -> BaseVector
+pub fn CoordSys3D::k(Self) -> BaseVector
+pub fn CoordSys3D::name(Self) -> String
+pub fn CoordSys3D::orient_new_axis(Self, String, @symcore.Expr, Vector, location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
+pub fn CoordSys3D::origin(Self) -> Point
+pub fn CoordSys3D::parent(Self) -> Self?
+pub fn CoordSys3D::rotation_matrix(Self, Self) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+pub fn CoordSys3D::scalar(Self, Int) -> BaseScalar raise @vector.VectorError
+pub fn CoordSys3D::scalar_map(Self, Self) -> Map[BaseScalar, @symcore.Expr] raise @vector.VectorError
+pub fn CoordSys3D::vector(Self, Int) -> BaseVector raise @vector.VectorError
+pub fn CoordSys3D::x(Self) -> BaseScalar
+pub fn CoordSys3D::y(Self) -> BaseScalar
+pub fn CoordSys3D::z(Self) -> BaseScalar
+pub impl Compare for CoordSys3D
+pub impl Eq for CoordSys3D
+pub impl Hash for CoordSys3D
+pub impl Show for CoordSys3D
+
+pub struct Point {
+  name_ : String
+  raw_ : @vector.Point
+}
+pub fn Point::express_coordinates(Self, CoordSys3D) -> Array[@symcore.Expr] raise @vector.VectorError
+pub fn Point::locate_new(Self, String, Vector) -> Self raise @vector.VectorError
+pub fn Point::name(Self) -> String
+pub fn Point::position_wrt(Self, PointReference) -> Vector raise @vector.VectorError
+pub impl Eq for Point
+pub impl Hash for Point
+pub impl Show for Point
+
+pub enum PointReference {
+  PointObject(Point)
+  CoordSystem(CoordSys3D)
+}
+
+pub enum ScalarOrVector {
+  ScalarExpr(@symcore.Expr)
+  VectorExpr(Vector)
+}
+
+pub struct Vector {
+  raw_ : @vector.Vector
+}
+pub fn Vector::components(Self) -> Map[BaseVector, @symcore.Expr]
+pub fn Vector::cross(Self, Self) -> Self raise @vector.VectorError
+pub fn Vector::dot(Self, Self) -> @symcore.Expr raise @vector.VectorError
+pub fn Vector::express(Self, CoordSys3D, variables? : Bool) -> Self raise @vector.VectorError
+pub fn Vector::is_zero(Self) -> Bool
+pub fn Vector::kind(Self) -> VectorKind
+pub fn Vector::magnitude(Self) -> @symcore.Expr raise @vector.VectorError
+pub fn Vector::neg(Self) -> Self
+pub fn Vector::normalize(Self) -> Self raise @vector.VectorError
+pub fn Vector::scale(Self, @symcore.Expr) -> Self
+pub fn Vector::to_matrix(Self, CoordSys3D) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+pub impl Add for Vector
+pub impl Eq for Vector
+pub impl Show for Vector
+pub impl Sub for Vector
+
+pub struct VectorKind {
+  element_kind_ : String
+}
+pub impl Eq for VectorKind
+pub impl Show for VectorKind
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,6 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symphysics",
+  "CAIMEOX/symbit/symphysics/vector" @rawvec,
+}

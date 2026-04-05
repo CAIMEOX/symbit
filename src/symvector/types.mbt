@@ -1,0 +1,72 @@
+///|
+pub struct VectorKind {
+  element_kind_ : String
+}
+
+///|
+pub enum PointReference {
+  PointObject(Point)
+  CoordSystem(CoordSys3D)
+}
+
+///|
+pub enum ScalarOrVector {
+  ScalarExpr(@symcore.Expr)
+  VectorExpr(Vector)
+}
+
+///|
+pub fn point_reference_point(point : Point) -> PointReference {
+  PointReference::PointObject(point)
+}
+
+///|
+pub fn point_reference_coord_system(system : CoordSys3D) -> PointReference {
+  PointReference::CoordSystem(system)
+}
+
+///|
+pub fn scalar_or_vector_scalar(expr : @symcore.Expr) -> ScalarOrVector {
+  ScalarOrVector::ScalarExpr(expr)
+}
+
+///|
+pub fn scalar_or_vector_vector(vector : Vector) -> ScalarOrVector {
+  ScalarOrVector::VectorExpr(vector)
+}
+
+///|
+pub struct Point {
+  name_ : String
+  raw_ : @rawvec.Point
+}
+
+///|
+pub struct CoordSys3D {
+  name_ : String
+  eq_key_ : String
+  frame_ : @rawvec.ReferenceFrame
+  origin_ : Point
+  parent_ : CoordSys3D?
+  vector_names_ : Array[String]
+  variable_names_ : Array[String]
+}
+
+///|
+pub struct BaseScalar {
+  axis_ : Int
+  system_ : CoordSys3D
+  name_ : String
+  expr_ : @symcore.Expr
+}
+
+///|
+pub struct BaseVector {
+  axis_ : Int
+  system_ : CoordSys3D
+}
+
+///|
+pub struct Vector {
+  raw_ : @rawvec.Vector
+}

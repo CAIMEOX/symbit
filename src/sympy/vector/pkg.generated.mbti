@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/vector"
+
+import {
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn vector_eval_str(String) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+
