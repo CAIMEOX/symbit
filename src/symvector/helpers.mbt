@@ -176,6 +176,15 @@ fn compare_base_vector(lhs : BaseVector, rhs : BaseVector) -> Int {
 }
 
 ///|
+fn compare_base_dyadic(lhs : BaseDyadic, rhs : BaseDyadic) -> Int {
+  let left_cmp = compare_base_vector(lhs.left_, rhs.left_)
+  if left_cmp != 0 {
+    return left_cmp
+  }
+  compare_base_vector(lhs.right_, rhs.right_)
+}
+
+///|
 fn raw_basis(frame : @rawvec.ReferenceFrame, axis : Int) -> @rawvec.Vector {
   match axis {
     0 => frame.x()

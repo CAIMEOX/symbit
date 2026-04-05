@@ -243,6 +243,14 @@ pub fn BaseVector::scale(self : BaseVector, scalar : @symcore.Expr) -> Vector {
 }
 
 ///|
+pub fn BaseVector::outer(
+  self : BaseVector,
+  other : BaseVector,
+) -> Dyadic raise @rawvec.VectorError {
+  self.to_vector().outer(other.to_vector())
+}
+
+///|
 pub fn BaseVector::kind(self : BaseVector) -> VectorKind {
   vector_kind()
 }

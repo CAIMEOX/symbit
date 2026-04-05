@@ -168,6 +168,44 @@ pub impl Show for BaseVector with output(self, logger : &Logger) -> Unit {
 }
 
 ///|
+pub impl Eq for BaseDyadic with equal(self, other : BaseDyadic) -> Bool {
+  self.left_ == other.left_ && self.right_ == other.right_
+}
+
+///|
+pub impl Eq for BaseDyadic with not_equal(self, other : BaseDyadic) -> Bool {
+  self.left_ != other.left_ || self.right_ != other.right_
+}
+
+///|
+pub impl Hash for BaseDyadic with hash(self) -> Int {
+  let hasher = Hasher::new()
+  self.hash_combine(hasher)
+  hasher.finalize()
+}
+
+///|
+pub impl Hash for BaseDyadic with hash_combine(self, hasher : Hasher) -> Unit {
+  self.left_.hash_combine(hasher)
+  self.right_.hash_combine(hasher)
+}
+
+///|
+pub impl Compare for BaseDyadic with compare(self, other : BaseDyadic) -> Int {
+  compare_base_dyadic(self, other)
+}
+
+///|
+pub impl Show for BaseDyadic with to_string(self) -> String {
+  "(" + self.left_.to_string() + "|" + self.right_.to_string() + ")"
+}
+
+///|
+pub impl Show for BaseDyadic with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
 fn vector_components_equal(lhs : Vector, rhs : Vector) -> Bool {
   let lhs_components = lhs.components()
   let rhs_components = rhs.components()
@@ -178,7 +216,7 @@ fn vector_components_equal(lhs : Vector, rhs : Vector) -> Bool {
     if !rhs_components.contains(basis) {
       return false
     }
-    if lhs_components[basis] != rhs_components[basis] {
+    if @symcore.compare_expr(lhs_components[basis], rhs_components[basis]) != 0 {
       return false
     }
   }
@@ -217,5 +255,92 @@ pub impl Show for Vector with to_string(self) -> String {
 
 ///|
 pub impl Show for Vector with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+fn dyadic_components_equal(lhs : Dyadic, rhs : Dyadic) -> Bool {
+  let lhs_components = lhs.components()
+  let rhs_components = rhs.components()
+  if lhs_components.length() != rhs_components.length() {
+    return false
+  }
+  for basis in lhs_components.keys() {
+    if !rhs_components.contains(basis) {
+      return false
+    }
+    if @symcore.compare_expr(lhs_components[basis], rhs_components[basis]) != 0 {
+      return false
+    }
+  }
+  true
+}
+
+///|
+pub impl Eq for Dyadic with equal(self, other : Dyadic) -> Bool {
+  dyadic_components_equal(self, other)
+}
+
+///|
+pub impl Eq for Dyadic with not_equal(self, other : Dyadic) -> Bool {
+  !dyadic_components_equal(self, other)
+}
+
+///|
+fn dyadic_string(dyadic : Dyadic) -> String {
+  let components = dyadic.components()
+  if components.is_empty() {
+    return "0"
+  }
+  let basis = components.keys().to_array()
+  basis.sort_by(compare_base_dyadic)
+  let parts : Array[String] = []
+  for item in basis {
+    parts.push(scalar_with_basis(components[item], item.to_string()))
+  }
+  join_signed(parts)
+}
+
+///|
+pub impl Show for Dyadic with to_string(self) -> String {
+  dyadic_string(self)
+}
+
+///|
+pub impl Show for Dyadic with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Show for Gradient with to_string(self) -> String {
+  match self.field_ {
+    ScalarOrVector::ScalarExpr(expr) =>
+      "Gradient(" + @symprint.to_string(expr) + ")"
+    ScalarOrVector::VectorExpr(vect) => "Gradient(" + vect.to_string() + ")"
+  }
+}
+
+///|
+pub impl Show for Gradient with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Show for Divergence with to_string(self) -> String {
+  "Divergence(" + self.field_.to_string() + ")"
+}
+
+///|
+pub impl Show for Divergence with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Show for Curl with to_string(self) -> String {
+  "Curl(" + self.field_.to_string() + ")"
+}
+
+///|
+pub impl Show for Curl with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

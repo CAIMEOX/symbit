@@ -8,23 +8,37 @@ import {
 }
 
 // Values
+pub fn base_dyadic(BaseVector, BaseVector) -> BaseDyadic
+
 pub fn coord_sys3d(String, vector_names? : Array[String]?, variable_names? : Array[String]?) -> CoordSys3D raise @vector.VectorError
 
 pub fn cross(Vector, Vector) -> Vector raise @vector.VectorError
 
 pub fn curl(Vector) -> Vector raise @vector.VectorError
 
+pub fn curl_unevaluated(Vector) -> Curl
+
 pub fn directional_derivative(ScalarOrVector, Vector) -> ScalarOrVector raise @vector.VectorError
 
 pub fn divergence(Vector) -> @symcore.Expr raise @vector.VectorError
 
+pub fn divergence_unevaluated(Vector) -> Divergence
+
 pub fn dot(Vector, Vector) -> @symcore.Expr raise @vector.VectorError
 
+pub fn dyadic_zero() -> Dyadic
+
 pub fn express(Vector, CoordSys3D, variables? : Bool) -> Vector raise @vector.VectorError
+
+pub fn express_dyadic(Dyadic, CoordSys3D, system2? : CoordSys3D?, variables? : Bool) -> Dyadic raise @vector.VectorError
 
 pub fn express_scalar(@symcore.Expr, CoordSys3D, variables? : Bool) -> @symcore.Expr
 
 pub fn gradient(@symcore.Expr) -> Vector
+
+pub fn gradient_unevaluated(ScalarOrVector) -> Gradient
+
+pub fn gradient_vector(Vector) -> Dyadic raise @vector.VectorError
 
 pub fn is_conservative(Vector) -> Bool raise @vector.VectorError
 
@@ -32,7 +46,11 @@ pub fn is_solenoidal(Vector) -> Bool raise @vector.VectorError
 
 pub fn laplacian(ScalarOrVector) -> ScalarOrVector raise @vector.VectorError
 
+pub fn matrix_to_dyadic(@symphysics.ExplicitMatrix, CoordSys3D) -> Dyadic
+
 pub fn matrix_to_vector(@symphysics.ExplicitMatrix, CoordSys3D) -> Vector raise @vector.VectorError
+
+pub fn outer(Vector, Vector) -> Dyadic raise @vector.VectorError
 
 pub fn point_reference_coord_system(CoordSys3D) -> PointReference
 
@@ -57,6 +75,18 @@ pub fn vector_zero() -> Vector
 // Errors
 
 // Types and methods
+pub struct BaseDyadic {
+  left_ : BaseVector
+  right_ : BaseVector
+}
+pub fn BaseDyadic::left(Self) -> BaseVector
+pub fn BaseDyadic::right(Self) -> BaseVector
+pub fn BaseDyadic::to_dyadic(Self) -> Dyadic
+pub impl Compare for BaseDyadic
+pub impl Eq for BaseDyadic
+pub impl Hash for BaseDyadic
+pub impl Show for BaseDyadic
+
 pub struct BaseScalar {
   axis_ : Int
   system_ : CoordSys3D
@@ -76,6 +106,7 @@ pub struct BaseVector {
   system_ : CoordSys3D
 }
 pub fn BaseVector::kind(Self) -> VectorKind
+pub fn BaseVector::outer(Self, Self) -> Dyadic raise @vector.VectorError
 pub fn BaseVector::scale(Self, @symcore.Expr) -> Vector
 pub fn BaseVector::system(Self) -> CoordSys3D
 pub fn BaseVector::to_vector(Self) -> Vector
@@ -114,6 +145,49 @@ pub impl Eq for CoordSys3D
 pub impl Hash for CoordSys3D
 pub impl Show for CoordSys3D
 
+pub struct Curl {
+  field_ : Vector
+}
+pub fn Curl::doit(Self) -> Vector raise @vector.VectorError
+pub impl Show for Curl
+
+pub struct Divergence {
+  field_ : Vector
+}
+pub fn Divergence::doit(Self) -> @symcore.Expr raise @vector.VectorError
+pub impl Show for Divergence
+
+pub struct Dyadic {
+  raw_ : @vector.Dyadic
+}
+pub fn Dyadic::components(Self) -> Map[BaseDyadic, @symcore.Expr]
+pub fn Dyadic::cross(Self, Vector) -> Self raise @vector.VectorError
+pub fn Dyadic::doit(Self) -> Self
+pub fn Dyadic::dot_dyadic(Self, Self) -> Self raise @vector.VectorError
+pub fn Dyadic::dot_vector(Self, Vector) -> Vector raise @vector.VectorError
+pub fn Dyadic::express(Self, CoordSys3D, system2? : CoordSys3D?, variables? : Bool) -> Self raise @vector.VectorError
+pub fn Dyadic::is_zero(Self) -> Bool
+pub fn Dyadic::neg(Self) -> Self
+pub fn Dyadic::scale(Self, @symcore.Expr) -> Self
+pub fn Dyadic::simplify(Self) -> Self
+pub fn Dyadic::to_matrix(Self, CoordSys3D, system2? : CoordSys3D?) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+pub fn Dyadic::truediv(Self, @symcore.Expr) -> Self raise @vector.VectorError
+pub impl Add for Dyadic
+pub impl Eq for Dyadic
+pub impl Show for Dyadic
+pub impl Sub for Dyadic
+
+pub struct Gradient {
+  field_ : ScalarOrVector
+}
+pub fn Gradient::doit(Self) -> GradientValue raise @vector.VectorError
+pub impl Show for Gradient
+
+pub enum GradientValue {
+  VectorValue(Vector)
+  DyadicValue(Dyadic)
+}
+
 pub struct Point {
   name_ : String
   raw_ : @vector.Point
@@ -148,6 +222,7 @@ pub fn Vector::kind(Self) -> VectorKind
 pub fn Vector::magnitude(Self) -> @symcore.Expr raise @vector.VectorError
 pub fn Vector::neg(Self) -> Self
 pub fn Vector::normalize(Self) -> Self raise @vector.VectorError
+pub fn Vector::outer(Self, Self) -> Dyadic raise @vector.VectorError
 pub fn Vector::scale(Self, @symcore.Expr) -> Self
 pub fn Vector::to_matrix(Self, CoordSys3D) -> @symphysics.ExplicitMatrix raise @vector.VectorError
 pub impl Add for Vector

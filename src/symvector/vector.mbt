@@ -83,6 +83,14 @@ pub fn Vector::cross(
 }
 
 ///|
+pub fn Vector::outer(
+  self : Vector,
+  other : Vector,
+) -> Dyadic raise @rawvec.VectorError {
+  { raw_: self.raw_.outer(other.raw_) }
+}
+
+///|
 pub fn Vector::express(
   self : Vector,
   system : CoordSys3D,

@@ -198,3 +198,193 @@ test "field functions align with top-level vector surface" {
     "6",
   )
 }
+
+///|
+fn matrix3_text(matrix : @symphysics.ExplicitMatrix) -> String {
+  matrix
+  .rows_copy()
+  .map(row => row.map(@symprint.to_string).join(","))
+  .join("|")
+}
+
+///|
+test "directional derivative covers more scalar and vector cases" {
+  let c = coord_sys3d("C") catch { _ => fail("C") }
+  let x = c.x().expr()
+  let y = c.y().expr()
+  let z = c.z().expr()
+  let u = @symcore.applied_undefined_function("u", [x, y, z])
+  let v = @symcore.applied_undefined_function("v", [x, y, z])
+  let w = @symcore.applied_undefined_function("w", [x, y, z])
+  let vec = vector_from_terms([(u, c.i()), (v, c.j()), (w, c.k())])
+  let dir = c.i().to_vector() + c.j().to_vector() + c.k().to_vector()
+
+  let dd_more_scalar = directional_derivative(
+    scalar_or_vector_scalar(@symcore.int(5) * (x ^ @symcore.int(2)) * z),
+    vector_from_terms([
+      (@symcore.int(3), c.i()),
+      (@symcore.int(4), c.j()),
+      (@symcore.int(1), c.k()),
+    ]),
+  ) catch {
+    _ => fail("dd-more-scalar")
+  }
+  match dd_more_scalar {
+    ScalarOrVector::ScalarExpr(value) =>
+      assert_eq(
+        @symcore.compare_expr(
+          value,
+          @symcore.int(5) * (x ^ @symcore.int(2)) + @symcore.int(30) * x * z,
+        ),
+        0,
+      )
+    ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
+  }
+
+  let dd_zero = directional_derivative(
+    scalar_or_vector_scalar(@symcore.int(5) * (x ^ @symcore.int(2)) * z),
+    c.j().to_vector().scale(@symcore.int(4)),
+  ) catch {
+    _ => fail("dd-zero")
+  }
+  match dd_zero {
+    ScalarOrVector::ScalarExpr(value) =>
+      assert_eq(@symprint.to_string(value), "0")
+    ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
+  }
+
+  let dd_vector = directional_derivative(scalar_or_vector_vector(vec), dir) catch {
+    _ => fail("dd-vector")
+  }
+  match dd_vector {
+    ScalarOrVector::VectorExpr(value) =>
+      assert_eq(
+        matrix_text(value.to_matrix(c) catch { _ => fail("dd-vector-mat") }),
+        "Derivative(u(C.x, C.y, C.z), C.x) + Derivative(u(C.x, C.y, C.z), C.y) + Derivative(u(C.x, C.y, C.z), C.z)|Derivative(v(C.x, C.y, C.z), C.x) + Derivative(v(C.x, C.y, C.z), C.y) + Derivative(v(C.x, C.y, C.z), C.z)|Derivative(w(C.x, C.y, C.z), C.x) + Derivative(w(C.x, C.y, C.z), C.y) + Derivative(w(C.x, C.y, C.z), C.z)",
+      )
+    ScalarOrVector::ScalarExpr(_) => fail("expected vector result")
+  }
+}
+
+///|
+test "unevaluated operator wrappers support doit" {
+  let c = coord_sys3d("C") catch { _ => fail("C") }
+  let scalar = c.x().expr() * c.y().expr() * c.z().expr()
+  let vector_field = vector_from_terms([
+    (c.y().expr() * c.z().expr(), c.i()),
+    (c.x().expr() * c.z().expr(), c.j()),
+    (c.x().expr() * c.y().expr(), c.k()),
+  ])
+  let x = c.x().expr()
+  let y = c.y().expr()
+  let z = c.z().expr()
+  let u = @symcore.applied_undefined_function("u", [x, y, z])
+  let v = @symcore.applied_undefined_function("v", [x, y, z])
+  let w = @symcore.applied_undefined_function("w", [x, y, z])
+  let vec = vector_from_terms([(u, c.i()), (v, c.j()), (w, c.k())])
+
+  let grad_scalar = gradient_unevaluated(scalar_or_vector_scalar(scalar))
+  assert_eq(grad_scalar.to_string(), "Gradient(C.x*C.y*C.z)")
+  let grad_scalar_value = grad_scalar.doit() catch { _ => fail("grad-scalar") }
+  match grad_scalar_value {
+    GradientValue::VectorValue(value) =>
+      assert_eq(value.to_string(), "C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k")
+    GradientValue::DyadicValue(_) => fail("expected vector result")
+  }
+
+  let grad_vector = gradient_unevaluated(scalar_or_vector_vector(vec))
+  assert_eq(
+    grad_vector.to_string(),
+    "Gradient(u(C.x, C.y, C.z)*C.i + v(C.x, C.y, C.z)*C.j + w(C.x, C.y, C.z)*C.k)",
+  )
+  let grad_vector_value = grad_vector.doit() catch { _ => fail("grad-vector") }
+  match grad_vector_value {
+    GradientValue::DyadicValue(value) =>
+      assert_eq(
+        matrix3_text(value.to_matrix(c) catch { _ => fail("grad-mat") }),
+        "Derivative(u(C.x, C.y, C.z), C.x),Derivative(v(C.x, C.y, C.z), C.x),Derivative(w(C.x, C.y, C.z), C.x)|Derivative(u(C.x, C.y, C.z), C.y),Derivative(v(C.x, C.y, C.z), C.y),Derivative(w(C.x, C.y, C.z), C.y)|Derivative(u(C.x, C.y, C.z), C.z),Derivative(v(C.x, C.y, C.z), C.z),Derivative(w(C.x, C.y, C.z), C.z)",
+      )
+    GradientValue::VectorValue(_) => fail("expected dyadic result")
+  }
+
+  let div = divergence_unevaluated(vector_field)
+  assert_eq(
+    div.to_string(),
+    "Divergence(C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k)",
+  )
+  assert_eq(
+    @symprint.to_string(div.doit() catch { _ => fail("div-doit") }),
+    "0",
+  )
+
+  let curl_op = curl_unevaluated(vector_field)
+  assert_eq(
+    curl_op.to_string(),
+    "Curl(C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k)",
+  )
+  assert_eq((curl_op.doit() catch { _ => fail("curl-doit") }).to_string(), "0")
+}
+
+///|
+test "dyadics support outer products and matrix conversion" {
+  let q = @symcore.Expr::Symbol("q")
+  let c = coord_sys3d("C") catch { _ => fail("C") }
+  let b = c.orient_new_axis("B", q, c.k().to_vector()) catch { _ => fail("B") }
+  let d1 = c.i().outer(c.i()) catch { _ => fail("d1") }
+  let d2 = c.i().outer(c.j()) catch { _ => fail("d2") }
+  let v = vector_from_terms([
+    (@symcore.Expr::Symbol("a"), c.i()),
+    (@symcore.Expr::Symbol("b"), c.j()),
+    (@symcore.Expr::Symbol("c"), c.k()),
+  ])
+  let w = vector_from_terms([
+    (@symcore.Expr::Symbol("d"), c.i()),
+    (@symcore.Expr::Symbol("e"), c.j()),
+    (@symcore.Expr::Symbol("f"), c.k()),
+  ])
+
+  assert_eq(d1.to_string(), "(C.i|C.i)")
+  assert_eq(
+    d1.dot_vector(c.i().to_vector()) catch {
+      _ => fail("dotv")
+    },
+    c.i().to_vector(),
+  )
+  assert_eq(
+    (d1.cross(c.k().to_vector()) catch { _ => fail("cross") }).to_string(),
+    "-(C.i|C.j)",
+  )
+  assert_eq(
+    matrix3_text(d1.to_matrix(c) catch { _ => fail("mat") }),
+    "1,0,0|0,0,0|0,0,0",
+  )
+  assert_eq(
+    matrix3_text(d1.to_matrix(c, system2=Some(b)) catch { _ => fail("mat2") }),
+    "cos(q),-sin(q),0|0,0,0|0,0,0",
+  )
+  assert_eq(
+    matrix_to_dyadic(
+      @symphysics.explicit_matrix_from_rows([
+        [@symcore.int(1), @symcore.int(2), @symcore.int(3)],
+        [@symcore.int(4), @symcore.int(5), @symcore.int(6)],
+        [@symcore.int(7), @symcore.int(8), @symcore.int(9)],
+      ]) catch {
+        _ => fail("srcmat")
+      },
+      c,
+    ).to_string(),
+    "(C.i|C.i) + 2*(C.i|C.j) + 3*(C.i|C.k) + 4*(C.j|C.i) + 5*(C.j|C.j) + 6*(C.j|C.k) + 7*(C.k|C.i) + 8*(C.k|C.j) + 9*(C.k|C.k)",
+  )
+  assert_eq(
+    (v.outer(w) catch { _ => fail("outer") }).to_string(),
+    "a*d*(C.i|C.i) + a*e*(C.i|C.j) + a*f*(C.i|C.k) + b*d*(C.j|C.i) + b*e*(C.j|C.j) + b*f*(C.j|C.k) + c*d*(C.k|C.i) + c*e*(C.k|C.j) + c*f*(C.k|C.k)",
+  )
+  assert_eq(
+    matrix3_text(
+      (express_dyadic(d2, b) catch { _ => fail("express_d") }).to_matrix(b) catch {
+        _ => fail("express_d_mat")
+      },
+    ),
+    "cos(q)*sin(q),cos(q)**2,0|-sin(q)**2,-cos(q)*sin(q),0|0,0,0",
+  )
+}

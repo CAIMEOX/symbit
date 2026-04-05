@@ -16,6 +16,12 @@ pub enum ScalarOrVector {
 }
 
 ///|
+pub enum GradientValue {
+  VectorValue(Vector)
+  DyadicValue(Dyadic)
+}
+
+///|
 pub fn point_reference_point(point : Point) -> PointReference {
   PointReference::PointObject(point)
 }
@@ -33,6 +39,21 @@ pub fn scalar_or_vector_scalar(expr : @symcore.Expr) -> ScalarOrVector {
 ///|
 pub fn scalar_or_vector_vector(vector : Vector) -> ScalarOrVector {
   ScalarOrVector::VectorExpr(vector)
+}
+
+///|
+pub struct Gradient {
+  field_ : ScalarOrVector
+}
+
+///|
+pub struct Divergence {
+  field_ : Vector
+}
+
+///|
+pub struct Curl {
+  field_ : Vector
 }
 
 ///|
@@ -67,6 +88,17 @@ pub struct BaseVector {
 }
 
 ///|
+pub struct BaseDyadic {
+  left_ : BaseVector
+  right_ : BaseVector
+}
+
+///|
 pub struct Vector {
   raw_ : @rawvec.Vector
+}
+
+///|
+pub struct Dyadic {
+  raw_ : @rawvec.Dyadic
 }
