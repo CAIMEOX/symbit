@@ -9,19 +9,15 @@ fn coord_scalars_exprs(system : CoordSys3D) -> Array[@symcore.Expr] {
 }
 
 ///|
-fn coord_transform_lame_coeffs(system : CoordSys3D) -> Array[@symcore.Expr] {
-  match system.transformation_ {
-    CoordTransform::Cartesian =>
-      [@symcore.int(1), @symcore.int(1), @symcore.int(1)]
-    CoordTransform::Cylindrical =>
-      [@symcore.int(1), system.x().expr(), @symcore.int(1)]
-    CoordTransform::Spherical =>
-      [
-        @symcore.int(1),
-        system.x().expr(),
-        system.x().expr() * @symelem.sin(system.y().expr()),
-      ]
-  }
+priv struct CoordTransformData {
+  parent_rotation_matrix_ : @symphysics.ExplicitMatrix
+  location_ : Vector
+  lame_coefficients_ : Array[@symcore.Expr]
+  transformation_to_parent_ : Array[@symcore.Expr]
+  transformation_from_parent_template_ : Array[@symcore.Expr]?
+  transformation_matrix_to_parent_ : @symphysics.ExplicitMatrix
+  is_cartesian_ : Bool
+  is_curvilinear_ : Bool
 }
 
 ///|
@@ -96,7 +92,7 @@ fn coord_signature(
   is_cartesian : Bool,
   is_curvilinear : Bool,
 ) -> String {
-  coord_transform_name(transform) +
+  coord_transform_key(transform) +
   "|" +
   matrix_summary(parent_rotation_matrix) +
   "|" +
@@ -107,6 +103,131 @@ fn coord_signature(
   is_cartesian.to_string() +
   "|" +
   is_curvilinear.to_string()
+}
+
+///|
+fn is_identity_cartesian_parent(parent : CoordSys3D) -> Bool {
+  let lame = parent.lame_coefficients()
+  @symcore.compare_expr(lame[0], @symcore.int(1)) == 0 &&
+  @symcore.compare_expr(lame[1], @symcore.int(1)) == 0 &&
+  @symcore.compare_expr(lame[2], @symcore.int(1)) == 0
+}
+
+///|
+fn coord_transform_data(
+  transform : CoordTransform,
+  self_scalars : Array[@symcore.Expr],
+  parent? : CoordSys3D? = None,
+  parent_rotation_matrix? : @symphysics.ExplicitMatrix = @symphysics.explicit_matrix_eye(
+    3,
+  ),
+  location? : Vector = vector_zero(),
+) -> CoordTransformData raise @rawvec.VectorError {
+  match transform {
+    CoordTransform::Cartesian => {
+      let resolved_location = location
+      let resolved_rotation = parent_rotation_matrix
+      let transformation_to_parent = cartesian_transform_to_parent(
+        self_scalars, resolved_rotation, resolved_location, parent,
+      ) catch {
+        err => raise err
+      }
+      let inverse_template = cartesian_inverse_template(
+        resolved_rotation, resolved_location, parent,
+      ) catch {
+        err => raise err
+      }
+      {
+        parent_rotation_matrix_: resolved_rotation,
+        location_: resolved_location,
+        lame_coefficients_: [@symcore.int(1), @symcore.int(1), @symcore.int(1)],
+        transformation_to_parent_: transformation_to_parent,
+        transformation_from_parent_template_: Some(inverse_template),
+        transformation_matrix_to_parent_: resolved_rotation.transpose(),
+        is_cartesian_: true,
+        is_curvilinear_: false,
+      }
+    }
+    CoordTransform::Cylindrical | CoordTransform::Spherical => {
+      match parent {
+        Some(parent_system) =>
+          if !is_identity_cartesian_parent(parent_system) {
+            @rawvec.raise_value_error(
+              "Parent for pre-defined coordinate system should be Cartesian.",
+            )
+            abort("coord_transform_data-predefined-parent")
+          }
+        None => ()
+      }
+      let lame_coefficients = coord_transform_lame_coefficients(
+        transform, self_scalars,
+      )
+      {
+        parent_rotation_matrix_: @symphysics.explicit_matrix_eye(3),
+        location_: vector_zero(),
+        lame_coefficients_: lame_coefficients,
+        transformation_to_parent_: coord_transform_to_parent_exprs(
+          transform, self_scalars,
+        ),
+        transformation_from_parent_template_: Some(
+          coord_transform_inverse_template(transform),
+        ),
+        transformation_matrix_to_parent_: coord_transform_basis_matrix(
+          transform, self_scalars,
+        ),
+        is_cartesian_: coord_transform_is_cartesian(lame_coefficients),
+        is_curvilinear_: true,
+      }
+    }
+    CoordTransform::LambdaTransform(function) => {
+      if !coord_transform_check_orthogonality(function) {
+        @rawvec.raise_value_error(
+          "The transformation equation does not create orthogonal coordinate system",
+        )
+        abort("coord_transform_data-lambda-orthogonality")
+      }
+      let lame_coefficients = coord_transform_lame_coefficients(
+        transform, self_scalars,
+      )
+      let (basis_matrix, is_curvilinear) = coord_transform_basis_matrix_from_function(
+        function, lame_coefficients,
+      )
+      {
+        parent_rotation_matrix_: @symphysics.explicit_matrix_eye(3),
+        location_: vector_zero(),
+        lame_coefficients_: lame_coefficients,
+        transformation_to_parent_: coord_transform_to_parent_exprs(
+          transform, self_scalars,
+        ),
+        transformation_from_parent_template_: solve_inverse_template(function),
+        transformation_matrix_to_parent_: basis_matrix,
+        is_cartesian_: coord_transform_is_cartesian(lame_coefficients),
+        is_curvilinear_: is_curvilinear,
+      }
+    }
+    CoordTransform::TupleTransform(rotation_matrix, tuple_location) => {
+      let transformation_to_parent = cartesian_transform_to_parent(
+        self_scalars, rotation_matrix, tuple_location, parent,
+      ) catch {
+        err => raise err
+      }
+      let inverse_template = cartesian_inverse_template(
+        rotation_matrix, tuple_location, parent,
+      ) catch {
+        err => raise err
+      }
+      {
+        parent_rotation_matrix_: rotation_matrix,
+        location_: tuple_location,
+        lame_coefficients_: [@symcore.int(1), @symcore.int(1), @symcore.int(1)],
+        transformation_to_parent_: transformation_to_parent,
+        transformation_from_parent_template_: Some(inverse_template),
+        transformation_matrix_to_parent_: rotation_matrix.transpose(),
+        is_cartesian_: true,
+        is_curvilinear_: false,
+      }
+    }
+  }
 }
 
 ///|
@@ -132,6 +253,7 @@ fn build_root_coord_system(
     vector_names_: normalized_vector_names,
     variable_names_: normalized_variable_names,
     transformation_: normalized_transform,
+    lame_coefficients_: [],
     parent_rotation_matrix_: @symphysics.explicit_matrix_eye(3),
     location_: vector_zero(),
     transformation_to_parent_: [],
@@ -141,12 +263,11 @@ fn build_root_coord_system(
     is_curvilinear_: false,
   }
   let self_scalars = coord_scalars_exprs(skeleton)
-  let transformation_to_parent = coord_transform_to_parent_exprs(
-    normalized_transform, self_scalars,
-  )
-  let transformation_matrix_to_parent = coord_transform_basis_matrix(
-    normalized_transform, self_scalars,
-  )
+  let data = coord_transform_data(normalized_transform, self_scalars) catch {
+    err => raise err
+  }
+  let transformation_to_parent = data.transformation_to_parent_
+  let transformation_matrix_to_parent = data.transformation_matrix_to_parent_
   let eq_key = root_cache_key(
     name, normalized_vector_names, normalized_variable_names, normalized_transform,
   )
@@ -160,15 +281,14 @@ fn build_root_coord_system(
     vector_names_: normalized_vector_names,
     variable_names_: normalized_variable_names,
     transformation_: normalized_transform,
-    parent_rotation_matrix_: @symphysics.explicit_matrix_eye(3),
-    location_: vector_zero(),
+    lame_coefficients_: data.lame_coefficients_,
+    parent_rotation_matrix_: data.parent_rotation_matrix_,
+    location_: data.location_,
     transformation_to_parent_: transformation_to_parent,
-    transformation_from_parent_template_: Some(
-      coord_transform_inverse_template(normalized_transform),
-    ),
+    transformation_from_parent_template_: data.transformation_from_parent_template_,
     transformation_matrix_to_parent_: transformation_matrix_to_parent,
-    is_cartesian_: normalized_transform == CoordTransform::Cartesian,
-    is_curvilinear_: normalized_transform != CoordTransform::Cartesian,
+    is_cartesian_: data.is_cartesian_,
+    is_curvilinear_: data.is_curvilinear_,
   }
   register_coord_system(system)
   system
@@ -204,45 +324,29 @@ fn build_child_coord_system(
     vector_names_: normalized_vector_names,
     variable_names_: normalized_variable_names,
     transformation_: transform,
+    lame_coefficients_: [],
     parent_rotation_matrix_: parent_rotation_matrix,
     location_: location,
     transformation_to_parent_: [],
     transformation_from_parent_template_: None,
     transformation_matrix_to_parent_: @symphysics.explicit_matrix_eye(3),
-    is_cartesian_: transform == CoordTransform::Cartesian,
+    is_cartesian_: false,
     is_curvilinear_: false,
   }
   let self_scalars = coord_scalars_exprs(skeleton)
-  let transformation_to_parent = if transform == CoordTransform::Cartesian {
-    cartesian_transform_to_parent(
-      self_scalars,
-      parent_rotation_matrix,
-      location,
-      Some(parent),
-    ) catch {
-      err => raise err
-    }
-  } else {
-    coord_transform_to_parent_exprs(transform, self_scalars)
+  let data = coord_transform_data(
+    transform,
+    self_scalars,
+    parent=Some(parent),
+    parent_rotation_matrix~,
+    location~,
+  ) catch {
+    err => raise err
   }
-  let transformation_from_parent_template = if transform ==
-    CoordTransform::Cartesian {
-    Some(
-      cartesian_inverse_template(parent_rotation_matrix, location, Some(parent)) catch {
-        err => raise err
-      },
-    )
-  } else {
-    Some(coord_transform_inverse_template(transform))
-  }
-  let transformation_matrix_to_parent = if transform ==
-    CoordTransform::Cartesian {
-    parent_rotation_matrix.transpose()
-  } else {
-    coord_transform_basis_matrix(transform, self_scalars)
-  }
-  let is_cartesian = transform == CoordTransform::Cartesian
-  let is_curvilinear = transform != CoordTransform::Cartesian
+  let transformation_to_parent = data.transformation_to_parent_
+  let transformation_matrix_to_parent = data.transformation_matrix_to_parent_
+  let is_cartesian = data.is_cartesian_
+  let is_curvilinear = data.is_curvilinear_
   let eq_key = child_cache_key(
     parent.eq_key_,
     coord_signature(
@@ -263,10 +367,11 @@ fn build_child_coord_system(
     vector_names_: normalized_vector_names,
     variable_names_: normalized_variable_names,
     transformation_: transform,
-    parent_rotation_matrix_: parent_rotation_matrix,
-    location_: location,
+    lame_coefficients_: data.lame_coefficients_,
+    parent_rotation_matrix_: data.parent_rotation_matrix_,
+    location_: data.location_,
     transformation_to_parent_: transformation_to_parent,
-    transformation_from_parent_template_: transformation_from_parent_template,
+    transformation_from_parent_template_: data.transformation_from_parent_template_,
     transformation_matrix_to_parent_: transformation_matrix_to_parent,
     is_cartesian_: is_cartesian,
     is_curvilinear_: is_curvilinear,
@@ -282,7 +387,25 @@ pub fn coord_sys3d(
   variable_names? : Array[String]? = None,
   transformation? : String? = None,
 ) -> CoordSys3D raise @rawvec.VectorError {
-  let normalized_transform = normalize_transformation(transformation)
+  let normalized_transform = normalize_named_transformation(transformation)
+  coord_sys3d_with_transform(
+    name,
+    transformation=Some(normalized_transform),
+    vector_names~,
+    variable_names~,
+  ) catch {
+    err => raise err
+  }
+}
+
+///|
+pub fn coord_sys3d_with_transform(
+  name : String,
+  transformation? : CoordTransform? = None,
+  vector_names? : Array[String]? = None,
+  variable_names? : Array[String]? = None,
+) -> CoordSys3D raise @rawvec.VectorError {
+  let normalized_transform = transformation.unwrap_or(CoordTransform::Cartesian)
   let normalized_vector_names = normalize_names(
     "vector_names", vector_names, normalized_transform,
   )
@@ -403,11 +526,7 @@ pub fn CoordSys3D::base_vectors(self : CoordSys3D) -> Array[BaseVector] {
 
 ///|
 pub fn CoordSys3D::lame_coefficients(self : CoordSys3D) -> Array[@symcore.Expr] {
-  if self.is_cartesian_ {
-    [@symcore.int(1), @symcore.int(1), @symcore.int(1)]
-  } else {
-    coord_transform_lame_coeffs(self)
-  }
+  self.lame_coefficients_
 }
 
 ///|
@@ -463,11 +582,7 @@ pub fn TransformFunction::call(
   y : @symcore.Expr,
   z : @symcore.Expr,
 ) -> Array[@symcore.Expr] {
-  let env : Map[String, @symcore.Expr] = {}
-  env["x"] = x
-  env["y"] = y
-  env["z"] = z
-  subst_expr_array(self.equations_, env)
+  subst_expr_array(self.equations_, transform_template_env(x, y, z))
 }
 
 ///|
@@ -513,7 +628,14 @@ pub fn CoordSys3D::change_of_basis_matrix_from(
   let (root_index, path) = coord_path(self, other) catch { err => raise err }
   let mut result = @symphysics.explicit_matrix_eye(3)
   for i in 0..<root_index {
-    result = result.mul(path[i].transformation_matrix_to_parent_.transpose()) catch {
+    let step = if path[i].is_cartesian_ || path[i].is_curvilinear_ {
+      path[i].transformation_matrix_to_parent_.transpose()
+    } else {
+      matrix_inverse_3x3(path[i].transformation_matrix_to_parent_) catch {
+        err => raise err
+      }
+    }
+    result = result.mul(step) catch {
       _ => abort("CoordSys3D::change_of_basis_matrix_from-up")
     }
   }
@@ -550,12 +672,83 @@ pub fn CoordSys3D::scalar_map(
     current = scalar_env(parent.base_scalars(), next_values)
   }
   for system in systems[root_index + 1:] {
-    let next_values = subst_expr_array(
-      system.transformation_from_parent() catch {
-        err => raise err
-      },
-      current,
-    )
+    let next_values = match system.transformation_from_parent_template_ {
+      Some(_) =>
+        subst_expr_array(
+          system.transformation_from_parent() catch {
+            err => raise err
+          },
+          current,
+        )
+      None =>
+        match system.transformation_ {
+          CoordTransform::LambdaTransform(_) => {
+            let parent = match system.parent_ {
+              Some(value) => value
+              None => abort("CoordSys3D::scalar_map-parent-none")
+            }
+            let solved_try : Result[
+              @symsolvers.SolveResult,
+              @symsolvers.SolverError,
+            ] = try? @symsolvers.solve(
+              @symsolvers.solve_exprs_input([
+                parent.x().expr() - system.transformation_to_parent()[0],
+                parent.y().expr() - system.transformation_to_parent()[1],
+                parent.z().expr() - system.transformation_to_parent()[2],
+              ]),
+              symbols=coord_scalars_exprs(system),
+            )
+            let solved = match solved_try {
+              Err(_) => {
+                @rawvec.raise_value_error(
+                  "inverse transformation is not available",
+                )
+                abort("CoordSys3D::scalar_map-inverse-solve")
+              }
+              Ok(value) =>
+                match value {
+                  @symsolvers.SolveResult::Dict(values) =>
+                    [
+                      values.get(system.x().name_).unwrap_or(system.x().expr()),
+                      values.get(system.y().name_).unwrap_or(system.y().expr()),
+                      values.get(system.z().name_).unwrap_or(system.z().expr()),
+                    ]
+                  @symsolvers.SolveResult::Dicts(items) =>
+                    if items.is_empty() {
+                      @rawvec.raise_value_error(
+                        "inverse transformation is not available",
+                      )
+                      abort("CoordSys3D::scalar_map-inverse-empty")
+                    } else {
+                      let values = items[0]
+                      [
+                        values
+                        .get(system.x().name_)
+                        .unwrap_or(system.x().expr()),
+                        values
+                        .get(system.y().name_)
+                        .unwrap_or(system.y().expr()),
+                        values
+                        .get(system.z().name_)
+                        .unwrap_or(system.z().expr()),
+                      ]
+                    }
+                  @symsolvers.SolveResult::List(_) => {
+                    @rawvec.raise_value_error(
+                      "inverse transformation is not available",
+                    )
+                    abort("CoordSys3D::scalar_map-inverse-list")
+                  }
+                }
+            }
+            subst_expr_array(solved, current)
+          }
+          _ => {
+            @rawvec.raise_value_error("inverse transformation is not available")
+            abort("CoordSys3D::scalar_map-inverse")
+          }
+        }
+    }
     current = scalar_env(system.base_scalars(), next_values)
   }
   let out : Map[BaseScalar, @symcore.Expr] = {}
@@ -770,7 +963,28 @@ pub fn CoordSys3D::create_new(
   variable_names? : Array[String]? = None,
   vector_names? : Array[String]? = None,
 ) -> CoordSys3D raise @rawvec.VectorError {
-  let normalized_transform = normalize_transformation(Some(transformation))
+  let normalized_transform = normalize_named_transformation(
+    Some(transformation),
+  )
+  self.create_new_with_transform(
+    name,
+    normalized_transform,
+    variable_names~,
+    vector_names~,
+  ) catch {
+    err => raise err
+  }
+}
+
+///|
+pub fn CoordSys3D::create_new_with_transform(
+  self : CoordSys3D,
+  name : String,
+  transformation : CoordTransform,
+  variable_names? : Array[String]? = None,
+  vector_names? : Array[String]? = None,
+) -> CoordSys3D raise @rawvec.VectorError {
+  let normalized_transform = transformation
   let normalized_vector_names = normalize_names(
     "vector_names", vector_names, normalized_transform,
   )

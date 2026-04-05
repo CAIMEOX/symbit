@@ -62,6 +62,27 @@ pub fn Dyadic::components(self : Dyadic) -> Map[BaseDyadic, @symcore.Expr] {
 }
 
 ///|
+fn dyadic_map_components(
+  dyadic : Dyadic,
+  f : (@symcore.Expr) -> @symcore.Expr,
+) -> Dyadic {
+  let components = dyadic.components()
+  if components.is_empty() {
+    return dyadic_zero()
+  }
+  let basis = components.keys().to_array()
+  basis.sort_by(compare_base_dyadic)
+  let mut out = dyadic_zero()
+  for item in basis {
+    let coeff = f(components[item])
+    if !@symcore.is_zero(coeff) {
+      out = out + item.to_dyadic().scale(coeff)
+    }
+  }
+  out
+}
+
+///|
 pub fn Dyadic::scale(self : Dyadic, scalar : @symcore.Expr) -> Dyadic {
   { raw_: self.raw_.scale(scalar) }
 }
@@ -204,7 +225,24 @@ pub fn Dyadic::truediv(
 
 ///|
 pub fn Dyadic::simplify(self : Dyadic) -> Dyadic {
-  { raw_: self.raw_.simplify() }
+  dyadic_map_components(self, coeff => @symsimplify.simplify(coeff))
+}
+
+///|
+pub fn Dyadic::trigsimp(self : Dyadic) -> Dyadic {
+  dyadic_map_components(self, coeff => {
+    @symsimplify.factor_terms(@symsimplify.trigsimp(coeff))
+  })
+}
+
+///|
+pub fn Dyadic::factor(self : Dyadic) -> Dyadic {
+  dyadic_map_components(self, coeff => @symsimplify.factor_terms(coeff))
+}
+
+///|
+pub fn Dyadic::evalf(self : Dyadic, prec? : Int = 53) -> Dyadic {
+  dyadic_map_components(self, coeff => @symcore.evalf(coeff, prec~))
 }
 
 ///|

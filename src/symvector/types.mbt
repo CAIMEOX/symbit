@@ -8,12 +8,14 @@ pub enum CoordTransform {
   Cartesian
   Cylindrical
   Spherical
-} derive(Eq, Show)
+  LambdaTransform(TransformFunction)
+  TupleTransform(@symphysics.ExplicitMatrix, Vector)
+} derive(Eq)
 
 ///|
 pub struct TransformFunction {
   equations_ : Array[@symcore.Expr]
-}
+} derive(Eq)
 
 ///|
 pub enum PointReference {
@@ -93,6 +95,7 @@ pub struct CoordSys3D {
   vector_names_ : Array[String]
   variable_names_ : Array[String]
   transformation_ : CoordTransform
+  lame_coefficients_ : Array[@symcore.Expr]
   parent_rotation_matrix_ : @symphysics.ExplicitMatrix
   location_ : Vector
   transformation_to_parent_ : Array[@symcore.Expr]

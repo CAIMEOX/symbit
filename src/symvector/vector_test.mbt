@@ -947,3 +947,152 @@ test "create_new exposes transformations and change of basis" {
     ),
   )
 }
+
+///|
+test "generic lambda and tuple transformations follow coordsysrect semantics" {
+  let a = coord_sys3d("A") catch { _ => fail("A") }
+  let lambda_transform = coord_transform_lambda([
+    @symcore.int(2) * @symcore.Expr::Symbol("x"),
+    @symcore.Expr::Symbol("z"),
+    @symcore.Expr::Symbol("y"),
+  ]) catch {
+    _ => fail("lambda-transform")
+  }
+  let root_lambda = coord_sys3d_with_transform(
+    "L",
+    transformation=Some(lambda_transform),
+  ) catch {
+    _ => fail("root-lambda")
+  }
+  assert_eq(root_lambda.x().to_string(), "L.x1")
+  assert_eq(root_lambda.y().to_string(), "L.x2")
+  assert_eq(root_lambda.z().to_string(), "L.x3")
+
+  let b = a.create_new_with_transform("B", lambda_transform) catch {
+    _ => fail("B")
+  }
+  let b_to_parent = b.transformation_to_parent()
+  assert_true(expr_eq(b_to_parent[0], @symcore.int(2) * b.x().expr()))
+  assert_true(expr_eq(b_to_parent[1], b.z().expr()))
+  assert_true(expr_eq(b_to_parent[2], b.y().expr()))
+  let b_from_parent = b.transformation_from_parent() catch {
+    _ => fail("B-from-parent")
+  }
+  assert_true(
+    expr_eq(
+      b_from_parent[0],
+      a.x().expr() * (@symcore.int(2) ^ @symcore.int(-1)),
+    ),
+  )
+  assert_true(expr_eq(b_from_parent[1], a.z().expr()))
+  assert_true(expr_eq(b_from_parent[2], a.y().expr()))
+  assert_true(
+    matrix_expr_eq(
+      a.change_of_basis_matrix_from(b) catch {
+        _ => fail("A<-B")
+      },
+      [
+        [@symcore.int(2), @symcore.int(0), @symcore.int(0)],
+        [@symcore.int(0), @symcore.int(0), @symcore.int(1)],
+        [@symcore.int(0), @symcore.int(1), @symcore.int(0)],
+      ],
+    ),
+  )
+  assert_true(
+    matrix_expr_eq(
+      b.change_of_basis_matrix_from(a) catch {
+        _ => fail("B<-A")
+      },
+      [
+        [@symcore.int(2) ^ @symcore.int(-1), @symcore.int(0), @symcore.int(0)],
+        [@symcore.int(0), @symcore.int(0), @symcore.int(1)],
+        [@symcore.int(0), @symcore.int(1), @symcore.int(0)],
+      ],
+    ),
+  )
+  assert_eq(
+    scalar_map_text(b.scalar_map(a) catch { _ => fail("B-map") }),
+    "B.x1=A.x/2|B.x2=A.z|B.x3=A.y",
+  )
+
+  let tuple_transform = coord_transform_tuple(
+    @symphysics.explicit_matrix_from_rows([
+      [@symcore.int(1), @symcore.int(0), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(0), @symcore.int(1)],
+      [@symcore.int(0), @symcore.int(1), @symcore.int(0)],
+    ]) catch {
+      _ => fail("tuple-matrix")
+    },
+    vector_from_terms([(@symcore.int(2), a.i()), (@symcore.int(3), a.j())]),
+  ) catch {
+    _ => fail("tuple-transform")
+  }
+  let c = a.create_new_with_transform("C", tuple_transform) catch {
+    _ => fail("C")
+  }
+  let c_to_parent = c.transformation_to_parent()
+  assert_true(expr_eq(c_to_parent[0], c.x().expr() + @symcore.int(2)))
+  assert_true(expr_eq(c_to_parent[1], c.z().expr() + @symcore.int(3)))
+  assert_true(expr_eq(c_to_parent[2], c.y().expr()))
+  let c_from_parent = c.transformation_from_parent() catch {
+    _ => fail("C-from-parent")
+  }
+  assert_true(expr_eq(c_from_parent[0], a.x().expr() + @symcore.int(-2)))
+  assert_true(expr_eq(c_from_parent[1], a.z().expr()))
+  assert_true(expr_eq(c_from_parent[2], a.y().expr() + @symcore.int(-3)))
+  assert_true(
+    matrix_expr_eq(c.rotation_matrix(a) catch { _ => fail("C-rot") }, [
+      [@symcore.int(1), @symcore.int(0), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(0), @symcore.int(1)],
+      [@symcore.int(0), @symcore.int(1), @symcore.int(0)],
+    ]),
+  )
+  assert_true(
+    matrix_expr_eq(
+      a.change_of_basis_matrix_from(c) catch {
+        _ => fail("A<-C")
+      },
+      [
+        [@symcore.int(1), @symcore.int(0), @symcore.int(0)],
+        [@symcore.int(0), @symcore.int(0), @symcore.int(1)],
+        [@symcore.int(0), @symcore.int(1), @symcore.int(0)],
+      ],
+    ),
+  )
+}
+
+///|
+test "basisdependent component-wise expr propagation stays on scalar coefficients" {
+  let c = coord_sys3d("C") catch { _ => fail("C") }
+  let trig_coeff = (@symelem.sin(c.x().expr()) ^ @symcore.int(2)) +
+    (@symelem.cos(c.x().expr()) ^ @symcore.int(2))
+  let trig_vector = vector_from_terms([
+    (trig_coeff, c.i()),
+    (c.x().expr() * (c.x().expr() + @symcore.int(1)), c.j()),
+  ])
+  assert_eq(trig_vector.trigsimp().to_string(), "C.i + C.x*(C.x + 1)*C.j")
+  let factored_vector = vector_from_terms([
+    ((c.x().expr() ^ @symcore.int(2)) + c.x().expr(), c.j()),
+  ])
+  assert_eq(factored_vector.factor().to_string(), "C.x*(C.x + 1)*C.j")
+  assert_eq(
+    vector_from_terms([
+      (@symelem.sqrt(@symcore.int(2)), c.i()),
+      (@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), c.j()),
+    ])
+    .evalf(prec=80)
+    .components()
+    .length(),
+    2,
+  )
+
+  let trig_dyadic = (c.i().outer(c.j()) catch { _ => fail("outer") }).scale(
+    trig_coeff,
+  )
+  assert_eq(trig_dyadic.trigsimp().to_string(), "(C.i|C.j)")
+  let factored_dyadic = (c.i().outer(c.j()) catch { _ => fail("outer-2") }).scale(
+    (c.x().expr() ^ @symcore.int(2)) + c.x().expr(),
+  )
+  assert_eq(factored_dyadic.factor().to_string(), "C.x*(C.x + 1)*(C.i|C.j)")
+  assert_eq(trig_dyadic.evalf(prec=80).components().length(), 1)
+}

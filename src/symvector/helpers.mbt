@@ -15,11 +15,13 @@ fn default_variable_names(transform : CoordTransform) -> Array[String] {
     CoordTransform::Cartesian => ["x", "y", "z"]
     CoordTransform::Cylindrical => ["r", "theta", "z"]
     CoordTransform::Spherical => ["r", "theta", "phi"]
+    CoordTransform::LambdaTransform(_) => ["x1", "x2", "x3"]
+    CoordTransform::TupleTransform(_, _) => ["x", "y", "z"]
   }
 }
 
 ///|
-fn normalize_transformation(
+fn normalize_named_transformation(
   transformation : String?,
 ) -> CoordTransform raise @rawvec.VectorError {
   match transformation {
@@ -27,8 +29,50 @@ fn normalize_transformation(
     Some("cartesian") => CoordTransform::Cartesian
     Some("cylindrical") => CoordTransform::Cylindrical
     Some("spherical") => CoordTransform::Spherical
-    Some(other) => abort("unsupported transformation: " + other)
+    Some(other) => {
+      @rawvec.raise_value_error("unsupported transformation: " + other)
+      abort("unsupported transformation: " + other)
+    }
   }
+}
+
+///|
+pub fn coord_transform_named(
+  name : String,
+) -> CoordTransform raise @rawvec.VectorError {
+  normalize_named_transformation(Some(name))
+}
+
+///|
+pub fn coord_transform_lambda(
+  equations : Array[@symcore.Expr],
+) -> CoordTransform raise @rawvec.VectorError {
+  if equations.length() != 3 {
+    @rawvec.raise_value_error("lambda transformation must have length 3")
+    abort("coord_transform_lambda")
+  }
+  CoordTransform::LambdaTransform({ equations_: equations })
+}
+
+///|
+pub fn coord_transform_tuple(
+  rotation_matrix : @symphysics.ExplicitMatrix,
+  location : Vector,
+) -> CoordTransform raise @rawvec.VectorError {
+  let rows = rotation_matrix.rows_copy()
+  if rows.length() != 3 {
+    @rawvec.raise_value_error(
+      "tuple transformation rotation matrix must be 3x3",
+    )
+    abort("coord_transform_tuple")
+  }
+  if rows[0].length() != 3 || rows[1].length() != 3 || rows[2].length() != 3 {
+    @rawvec.raise_value_error(
+      "tuple transformation rotation matrix must be 3x3",
+    )
+    abort("coord_transform_tuple")
+  }
+  CoordTransform::TupleTransform(rotation_matrix, location)
 }
 
 ///|
@@ -72,11 +116,6 @@ fn root_cache_key(
   variable_names : Array[String],
   transform : CoordTransform,
 ) -> String {
-  let transform_name = match transform {
-    CoordTransform::Cartesian => "cartesian"
-    CoordTransform::Cylindrical => "cylindrical"
-    CoordTransform::Spherical => "spherical"
-  }
   "root|" +
   name +
   "|" +
@@ -84,7 +123,7 @@ fn root_cache_key(
   "|" +
   variable_names.join(",") +
   "|" +
-  transform_name
+  coord_transform_key(transform)
 }
 
 ///|
@@ -226,13 +265,21 @@ fn raw_basis(frame : @rawvec.ReferenceFrame, axis : Int) -> @rawvec.Vector {
 
 ///|
 fn scalar_with_basis(coeff : @symcore.Expr, basis : String) -> String {
-  let txt = @symprint.to_string(coeff)
+  let display_coeff = match coeff {
+    @symcore.Expr::Add(_) => @symsimplify.factor_terms(coeff)
+    _ => coeff
+  }
+  let txt = @symprint.to_string(display_coeff)
   if txt == "1" {
     basis
   } else if txt == "-1" {
     "-" + basis
   } else {
-    txt + "*" + basis
+    let wrapped = match display_coeff {
+      @symcore.Expr::Add(_) => "(" + txt + ")"
+      _ => txt
+    }
+    wrapped + "*" + basis
   }
 }
 

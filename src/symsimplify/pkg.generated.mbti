@@ -38,6 +38,8 @@ pub fn epath_apply(String, @symcore.Expr, (@symcore.Expr) -> @symcore.Expr) -> @
 
 pub fn exptrigsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
 
+pub fn factor_terms(@symcore.Expr) -> @symcore.Expr
+
 pub fn fraction(@symcore.Expr) -> (@symcore.Expr, @symcore.Expr)
 
 pub fn fraction_expand(@symcore.Expr) -> @symcore.Expr

@@ -136,6 +136,27 @@ pub fn Vector::components(self : Vector) -> Map[BaseVector, @symcore.Expr] {
 }
 
 ///|
+fn vector_map_components(
+  vector : Vector,
+  f : (@symcore.Expr) -> @symcore.Expr,
+) -> Vector {
+  let components = vector.components()
+  if components.is_empty() {
+    return vector_zero()
+  }
+  let basis = components.keys().to_array()
+  basis.sort_by(compare_base_vector)
+  let mut out = vector_zero()
+  for item in basis {
+    let coeff = f(components[item])
+    if !@symcore.is_zero(coeff) {
+      out = out + item.scale(coeff)
+    }
+  }
+  out
+}
+
+///|
 pub impl Add for Vector with add(self, other : Vector) -> Vector {
   { raw_: self.raw_ + other.raw_ }
 }
@@ -371,7 +392,24 @@ pub fn Vector::subs(self : Vector, env : Map[String, @symcore.Expr]) -> Vector {
 
 ///|
 pub fn Vector::simplify(self : Vector) -> Vector {
-  { raw_: self.raw_.simplify() }
+  vector_map_components(self, coeff => @symsimplify.simplify(coeff))
+}
+
+///|
+pub fn Vector::trigsimp(self : Vector) -> Vector {
+  vector_map_components(self, coeff => {
+    @symsimplify.factor_terms(@symsimplify.trigsimp(coeff))
+  })
+}
+
+///|
+pub fn Vector::factor(self : Vector) -> Vector {
+  vector_map_components(self, coeff => @symsimplify.factor_terms(coeff))
+}
+
+///|
+pub fn Vector::evalf(self : Vector, prec? : Int = 53) -> Vector {
+  vector_map_components(self, coeff => @symcore.evalf(coeff, prec~))
 }
 
 ///|

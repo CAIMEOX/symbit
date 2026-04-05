@@ -951,3 +951,209 @@ test "orienters and create_new parity against repo sympy" {
     "0|0|0|0|0|0|0|0|0",
   )
 }
+
+///|
+test "generic transformation and basisdependent propagation parity against repo sympy" {
+  let a = @symvector.coord_sys3d("A") catch { _ => fail("A") }
+  let a_py = "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('A')"
+  let lambda_transform = @symvector.coord_transform_lambda([
+    @symcore.int(2) * @symcore.Expr::Symbol("x"),
+    @symcore.Expr::Symbol("z"),
+    @symcore.Expr::Symbol("y"),
+  ]) catch {
+    _ => fail("lambda-transform")
+  }
+  let b = a.create_new_with_transform("B", lambda_transform) catch {
+    _ => fail("B")
+  }
+  let b_py = "(lambda A, x, y, z: A.create_new('B', transformation=sympy.Lambda((x, y, z), (2*x, z, y))))(" +
+    a_py +
+    ", sympy.Symbol('x'), sympy.Symbol('y'), sympy.Symbol('z'))"
+  assert_true(
+    vector_eval_str(
+      "(lambda A, B: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
+      b.transformation_to_parent().map(@symprint.to_string).join(", ") +
+      "), B.transformation_to_parent())))(" +
+      a_py +
+      ", " +
+      b_py +
+      ")",
+    ) ==
+    "0|0|0",
+  )
+  assert_true(
+    vector_eval_str(
+      "(lambda A, B: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
+      (b.transformation_from_parent() catch { _ => fail("b-from-parent") })
+      .map(@symprint.to_string)
+      .join(", ") +
+      "), (B.scalar_map(A)[B.x1], B.scalar_map(A)[B.x2], B.scalar_map(A)[B.x3]))))(" +
+      a_py +
+      ", " +
+      b_py +
+      ")",
+    ) ==
+    "0|0|0",
+  )
+  assert_eq(
+    vector_eval_str(
+      "(lambda A, B: '|'.join(str(sympy.simplify(x)) for row in ((" +
+      matrix_py_expr(
+        a.change_of_basis_matrix_from(b) catch {
+          _ => fail("A<-B")
+        },
+      ) +
+      ") - A.change_of_basis_matrix_from(B)).tolist() for x in row))(" +
+      a_py +
+      ", " +
+      b_py +
+      ")",
+    ),
+    "0|0|0|0|0|0|0|0|0",
+  )
+  assert_eq(
+    vector_eval_str(
+      "(lambda A, B: '|'.join(str(sympy.simplify(x)) for row in ((" +
+      matrix_py_expr(
+        b.change_of_basis_matrix_from(a) catch {
+          _ => fail("B<-A")
+        },
+      ) +
+      ") - B.change_of_basis_matrix_from(A)).tolist() for x in row))(" +
+      a_py +
+      ", " +
+      b_py +
+      ")",
+    ),
+    "0|0|0|0|0|0|0|0|0",
+  )
+
+  let tuple_transform = @symvector.coord_transform_tuple(
+    @symphysics.explicit_matrix_from_rows([
+      [@symcore.int(1), @symcore.int(0), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(0), @symcore.int(1)],
+      [@symcore.int(0), @symcore.int(1), @symcore.int(0)],
+    ]) catch {
+      _ => fail("tuple-matrix")
+    },
+    @symvector.vector_from_terms([
+      (@symcore.int(2), a.i()),
+      (@symcore.int(3), a.j()),
+    ]),
+  ) catch {
+    _ => fail("tuple-transform")
+  }
+  let c_sys = a.create_new_with_transform("C", tuple_transform) catch {
+    _ => fail("C")
+  }
+  let c_py = "(lambda A: sympy.vector.CoordSys3D('C', parent=A, rotation_matrix=sympy.Matrix([[1, 0, 0], [0, 0, 1], [0, 1, 0]]), location=2*A.i + 3*A.j))(" +
+    a_py +
+    ")"
+  assert_true(
+    vector_eval_str(
+      "(lambda A, C: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
+      c_sys.transformation_to_parent().map(@symprint.to_string).join(", ") +
+      "), C.transformation_to_parent())))(" +
+      a_py +
+      ", " +
+      c_py +
+      ")",
+    ) ==
+    "0|0|0",
+  )
+  assert_true(
+    vector_eval_str(
+      "(lambda A, C: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
+      (c_sys.transformation_from_parent() catch { _ => fail("c-from-parent") })
+      .map(@symprint.to_string)
+      .join(", ") +
+      "), (C.scalar_map(A)[C.x], C.scalar_map(A)[C.y], C.scalar_map(A)[C.z]))))(" +
+      a_py +
+      ", " +
+      c_py +
+      ")",
+    ) ==
+    "0|0|0",
+  )
+  assert_true(
+    matrix_matches_py_expr(
+      c_sys.rotation_matrix(a) catch {
+        _ => fail("c-rot")
+      },
+      c_py + ".rotation_matrix(" + a_py + ")",
+    ) catch {
+      _ => fail("c-rot-parity")
+    },
+  )
+
+  let coord = @symvector.coord_sys3d("C") catch { _ => fail("coord") }
+  let coord_py = "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')"
+  let trig_vector = @symvector.vector_from_terms([
+    (
+      (@symcore.function("sin", [coord.x().expr()]) ^ @symcore.int(2)) +
+      (@symcore.function("cos", [coord.x().expr()]) ^ @symcore.int(2)),
+      coord.i(),
+    ),
+    (coord.x().expr() * (coord.x().expr() + @symcore.int(1)), coord.j()),
+  ])
+  assert_true(
+    vector_matches_sympy(
+      trig_vector.trigsimp(),
+      coord,
+      "C",
+      coord_py,
+      "(((sympy.sin(C.x)**2 + sympy.cos(C.x)**2) * C.i) + (C.x*(C.x + 1))*C.j).trigsimp()",
+    ) catch {
+      _ => fail("trig-vector-parity")
+    },
+  )
+  let factored_vector = @symvector.vector_from_terms([
+    ((coord.x().expr() ^ @symcore.int(2)) + coord.x().expr(), coord.j()),
+  ])
+  assert_true(
+    vector_matches_sympy(
+      factored_vector.factor(),
+      coord,
+      "C",
+      coord_py,
+      "((C.x**2 + C.x)*C.j).factor()",
+    ) catch {
+      _ => fail("factor-vector-parity")
+    },
+  )
+  let trig_dyadic = (coord.i().outer(coord.j()) catch { _ => fail("outer") }).scale(
+    (@symcore.function("sin", [coord.x().expr()]) ^ @symcore.int(2)) +
+    (@symcore.function("cos", [coord.x().expr()]) ^ @symcore.int(2)),
+  )
+  assert_eq(
+    vector_eval_str(
+      "(lambda C: '|'.join(str(sympy.simplify(x)) for row in ((" +
+      matrix_py_expr(
+        trig_dyadic.trigsimp().to_matrix(coord) catch {
+          _ => fail("dyadic-trig-mat")
+        },
+      ) +
+      ") - ((sympy.sin(C.x)**2 + sympy.cos(C.x)**2) * C.i.outer(C.j)).trigsimp().to_matrix(C)).tolist() for x in row))(" +
+      coord_py +
+      ")",
+    ),
+    "0|0|0|0|0|0|0|0|0",
+  )
+  let factored_dyadic = (coord.i().outer(coord.j()) catch {
+    _ => fail("outer-2")
+  }).scale((coord.x().expr() ^ @symcore.int(2)) + coord.x().expr())
+  assert_eq(
+    vector_eval_str(
+      "(lambda C: '|'.join(str(sympy.simplify(x)) for row in ((" +
+      matrix_py_expr(
+        factored_dyadic.factor().to_matrix(coord) catch {
+          _ => fail("dyadic-factor-mat")
+        },
+      ) +
+      ") - (((C.x**2 + C.x) * C.i.outer(C.j)).factor().to_matrix(C))).tolist() for x in row))(" +
+      coord_py +
+      ")",
+    ),
+    "0|0|0|0|0|0|0|0|0",
+  )
+}

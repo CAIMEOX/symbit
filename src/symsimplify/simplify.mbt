@@ -202,6 +202,11 @@ fn factor_terms_simple(expr : Expr) -> Expr {
 }
 
 ///|
+pub fn factor_terms(expr : Expr) -> Expr {
+  factor_terms_simple(expr)
+}
+
+///|
 fn factor_add_terms(expr : Expr) -> Expr {
   let canonical = powsimp(expr, max_passes=1)
   match canonical {

@@ -16,6 +16,14 @@ pub fn body_orienter(@symcore.Expr, @symcore.Expr, @symcore.Expr, String) -> Bod
 
 pub fn coord_sys3d(String, vector_names? : Array[String]?, variable_names? : Array[String]?, transformation? : String?) -> CoordSys3D raise @vector.VectorError
 
+pub fn coord_sys3d_with_transform(String, transformation? : CoordTransform?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> CoordSys3D raise @vector.VectorError
+
+pub fn coord_transform_lambda(Array[@symcore.Expr]) -> CoordTransform raise @vector.VectorError
+
+pub fn coord_transform_named(String) -> CoordTransform raise @vector.VectorError
+
+pub fn coord_transform_tuple(@symphysics.ExplicitMatrix, Vector) -> CoordTransform raise @vector.VectorError
+
 pub fn cross(Vector, Vector) -> Vector raise @vector.VectorError
 
 pub fn cross_unevaluated(Vector, Vector) -> Cross
@@ -182,6 +190,7 @@ pub struct CoordSys3D {
   vector_names_ : Array[String]
   variable_names_ : Array[String]
   transformation_ : CoordTransform
+  lame_coefficients_ : Array[@symcore.Expr]
   parent_rotation_matrix_ : @symphysics.ExplicitMatrix
   location_ : Vector
   transformation_to_parent_ : Array[@symcore.Expr]
@@ -194,6 +203,7 @@ pub fn CoordSys3D::base_scalars(Self) -> Array[BaseScalar]
 pub fn CoordSys3D::base_vectors(Self) -> Array[BaseVector]
 pub fn CoordSys3D::change_of_basis_matrix_from(Self, Self) -> @symphysics.ExplicitMatrix raise @vector.VectorError
 pub fn CoordSys3D::create_new(Self, String, String, variable_names? : Array[String]?, vector_names? : Array[String]?) -> Self raise @vector.VectorError
+pub fn CoordSys3D::create_new_with_transform(Self, String, CoordTransform, variable_names? : Array[String]?, vector_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::i(Self) -> BaseVector
 pub fn CoordSys3D::j(Self) -> BaseVector
 pub fn CoordSys3D::k(Self) -> BaseVector
@@ -227,6 +237,8 @@ pub enum CoordTransform {
   Cartesian
   Cylindrical
   Spherical
+  LambdaTransform(TransformFunction)
+  TupleTransform(@symphysics.ExplicitMatrix, Vector)
 }
 pub impl Eq for CoordTransform
 pub impl Show for CoordTransform
@@ -276,12 +288,15 @@ pub fn Dyadic::cross(Self, Vector) -> Self raise @vector.VectorError
 pub fn Dyadic::doit(Self) -> Self
 pub fn Dyadic::dot_dyadic(Self, Self) -> Self raise @vector.VectorError
 pub fn Dyadic::dot_vector(Self, Vector) -> Vector raise @vector.VectorError
+pub fn Dyadic::evalf(Self, prec? : Int) -> Self
 pub fn Dyadic::express(Self, CoordSys3D, system2? : CoordSys3D?, variables? : Bool) -> Self raise @vector.VectorError
+pub fn Dyadic::factor(Self) -> Self
 pub fn Dyadic::is_zero(Self) -> Bool
 pub fn Dyadic::neg(Self) -> Self
 pub fn Dyadic::scale(Self, @symcore.Expr) -> Self
 pub fn Dyadic::simplify(Self) -> Self
 pub fn Dyadic::to_matrix(Self, CoordSys3D, system2? : CoordSys3D?) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+pub fn Dyadic::trigsimp(Self) -> Self
 pub fn Dyadic::truediv(Self, @symcore.Expr) -> Self raise @vector.VectorError
 pub impl Add for Dyadic
 pub impl Eq for Dyadic
@@ -384,6 +399,7 @@ pub struct TransformFunction {
   equations_ : Array[@symcore.Expr]
 }
 pub fn TransformFunction::call(Self, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[@symcore.Expr]
+pub impl Eq for TransformFunction
 pub impl Show for TransformFunction
 
 pub struct Vector {
@@ -395,7 +411,9 @@ pub fn Vector::diff(Self, @symcore.Expr, CoordSys3D, var_in_dcm? : Bool) -> Self
 pub fn Vector::doit(Self) -> Self
 pub fn Vector::dot(Self, Self) -> @symcore.Expr raise @vector.VectorError
 pub fn Vector::equals(Self, Self) -> Bool? raise @vector.VectorError
+pub fn Vector::evalf(Self, prec? : Int) -> Self
 pub fn Vector::express(Self, CoordSys3D, variables? : Bool) -> Self raise @vector.VectorError
+pub fn Vector::factor(Self) -> Self
 pub fn Vector::is_zero(Self) -> Bool
 pub fn Vector::kind(Self) -> VectorKind
 pub fn Vector::magnitude(Self) -> @symcore.Expr raise @vector.VectorError
@@ -408,6 +426,7 @@ pub fn Vector::separate(Self) -> Map[CoordSys3D, Self]
 pub fn Vector::simplify(Self) -> Self
 pub fn Vector::subs(Self, Map[String, @symcore.Expr]) -> Self
 pub fn Vector::to_matrix(Self, CoordSys3D) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+pub fn Vector::trigsimp(Self) -> Self
 pub impl Add for Vector
 pub impl Eq for Vector
 pub impl Show for Vector

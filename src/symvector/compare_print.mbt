@@ -19,6 +19,28 @@ pub impl Show for VectorKind with output(self, logger : &Logger) -> Unit {
 }
 
 ///|
+pub impl Show for CoordTransform with to_string(self) -> String {
+  match self {
+    CoordTransform::Cartesian => "Cartesian"
+    CoordTransform::Cylindrical => "Cylindrical"
+    CoordTransform::Spherical => "Spherical"
+    CoordTransform::LambdaTransform(function) =>
+      "LambdaTransform(" + function.to_string() + ")"
+    CoordTransform::TupleTransform(rotation_matrix, location) =>
+      "TupleTransform(" +
+      matrix_expr_key(rotation_matrix) +
+      ", " +
+      location.to_string() +
+      ")"
+  }
+}
+
+///|
+pub impl Show for CoordTransform with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
 pub impl Eq for Point with equal(self, other : Point) -> Bool {
   self.raw_ == other.raw_
 }

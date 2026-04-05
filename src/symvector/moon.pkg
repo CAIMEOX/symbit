@@ -3,6 +3,7 @@ import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,
   "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symsolvers",
   "CAIMEOX/symbit/symsimplify",
   "CAIMEOX/symbit/symphysics",
   "CAIMEOX/symbit/symphysics/vector" @rawvec,
