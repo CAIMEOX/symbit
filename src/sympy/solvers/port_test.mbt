@@ -3979,6 +3979,72 @@ test "solvers parity solveset and simplex invalid inputs batch 24 additional pub
 }
 
 ///|
+test "solvers parity solveset exponential conditionset batch 25 additional public cases" {
+  let real_domain = @symsets.reals()
+  let positive_infinity = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  let positive_open = @symsets.interval(@symcore.int(0), positive_infinity, left_open=true)
+
+  let f1 = ((@symcore.function("exp", [x()]) + @symcore.int(1)) ^ x()) + @symcore.int(-2)
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(f1, symbol=Some(x()), domain=real_domain)),
+    "ConditionSet(x, Eq((exp(x) + 1)**x - 2, 0), Reals)",
+  )
+  assert_eq(
+    solvers_eval_str("str(sympy.solveset((sympy.exp(x) + 1)**x - 2, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq((sympy.exp(x) + 1)**x - 2, 0), sympy.S.Reals))"),
+    "True",
+  )
+
+  let f2 = ((x() + @symcore.int(2)) ^ y()) * x() + @symcore.int(-3)
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(f2, symbol=Some(x()), domain=real_domain)),
+    "ConditionSet(x, Eq(x*(x + 2)**y - 3, 0), Reals)",
+  )
+  assert_eq(
+    solvers_eval_str("str(sympy.solveset(x*(x + 2)**y - 3, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(x*(x + 2)**y - 3, 0), sympy.S.Reals))"),
+    "True",
+  )
+
+  let f3 = (@symcore.int(2) ^ x()) + @symcore.int(-1) * @symcore.function("exp", [x()]) + @symcore.int(-3)
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(f3, symbol=Some(x()), domain=real_domain)),
+    "ConditionSet(x, Eq(2**x - exp(x) - 3, 0), Reals)",
+  )
+  assert_eq(
+    solvers_eval_str("str(sympy.solveset(2**x - sympy.exp(x) - 3, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(2**x - sympy.exp(x) - 3, 0), sympy.S.Reals))"),
+    "True",
+  )
+
+  let f4 = @symcore.function("log", [x()]) + @symcore.int(-1) * @symcore.function("exp", [x()])
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(f4, symbol=Some(x()), domain=real_domain)),
+    "ConditionSet(x, Eq(log(x) - exp(x), 0), Reals)",
+  )
+  assert_eq(
+    solvers_eval_str("str(sympy.solveset(sympy.log(x) - sympy.exp(x), x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(-sympy.exp(x) + sympy.log(x), 0), sympy.S.Reals))"),
+    "True",
+  )
+
+  let f5 = (@symcore.int(2) ^ x()) + (@symcore.int(3) ^ x()) + @symcore.int(-1) * (@symcore.int(5) ^ x())
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(f5, symbol=Some(x()), domain=real_domain)),
+    "ConditionSet(x, Eq(2**x + 3**x - 5**x, 0), Reals)",
+  )
+  assert_eq(
+    solvers_eval_str("str(sympy.solveset(2**x + 3**x - 5**x, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(2**x + 3**x - 5**x, 0), sympy.S.Reals))"),
+    "True",
+  )
+
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(x() ^ x(), symbol=Some(x()), domain=positive_open)),
+    "ConditionSet(x, Eq(x**x, 0), Interval.Lopen(0, oo))",
+  )
+  assert_eq(
+    solvers_eval_str("str(sympy.solveset(x**x, x, sympy.Interval.Lopen(0, sympy.oo)) == sympy.ConditionSet(x, sympy.Eq(x**x, 0), sympy.Interval.open(0, sympy.oo)))"),
+    "True",
+  )
+}
+
+///|
 test "solvers parity decompogen" {
   assert_eq(
     (

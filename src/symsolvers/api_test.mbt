@@ -3045,6 +3045,90 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
 }
 
 ///|
+test "solveset matches additional SymPy exponential conditionset cases batch 25" {
+  let real_domain = @symsets.reals()
+  let positive_infinity = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  let positive_open = @symsets.interval(@symcore.int(0), positive_infinity, left_open=true)
+
+  let f1 = ((@symcore.function("exp", [x()]) + @symcore.int(1)) ^ x()) + @symcore.int(-2)
+  assert_eq(
+    @symsets.compare_set(
+      solveset(f1, symbol=Some(x()), domain=real_domain),
+      @symsets.condition_set(
+        x(),
+        @symlogic.bool_symbol("Eq((exp(x) + 1)**x - 2, 0)"),
+        base=real_domain,
+      ),
+    ),
+    0,
+  )
+
+  let f2 = ((x() + @symcore.int(2)) ^ y()) * x() + @symcore.int(-3)
+  assert_eq(
+    @symsets.compare_set(
+      solveset(f2, symbol=Some(x()), domain=real_domain),
+      @symsets.condition_set(
+        x(),
+        @symlogic.bool_symbol("Eq(x*(x + 2)**y - 3, 0)"),
+        base=real_domain,
+      ),
+    ),
+    0,
+  )
+
+  let f3 = (@symcore.int(2) ^ x()) + @symcore.int(-1) * @symcore.function("exp", [x()]) + @symcore.int(-3)
+  assert_eq(
+    @symsets.compare_set(
+      solveset(f3, symbol=Some(x()), domain=real_domain),
+      @symsets.condition_set(
+        x(),
+        @symlogic.bool_symbol("Eq(2**x - exp(x) - 3, 0)"),
+        base=real_domain,
+      ),
+    ),
+    0,
+  )
+
+  let f4 = @symcore.function("log", [x()]) + @symcore.int(-1) * @symcore.function("exp", [x()])
+  assert_eq(
+    @symsets.compare_set(
+      solveset(f4, symbol=Some(x()), domain=real_domain),
+      @symsets.condition_set(
+        x(),
+        @symlogic.bool_symbol("Eq(log(x) - exp(x), 0)"),
+        base=real_domain,
+      ),
+    ),
+    0,
+  )
+
+  let f5 = (@symcore.int(2) ^ x()) + (@symcore.int(3) ^ x()) + @symcore.int(-1) * (@symcore.int(5) ^ x())
+  assert_eq(
+    @symsets.compare_set(
+      solveset(f5, symbol=Some(x()), domain=real_domain),
+      @symsets.condition_set(
+        x(),
+        @symlogic.bool_symbol("Eq(2**x + 3**x - 5**x, 0)"),
+        base=real_domain,
+      ),
+    ),
+    0,
+  )
+
+  assert_eq(
+    @symsets.compare_set(
+      solveset(x() ^ x(), symbol=Some(x()), domain=positive_open),
+      @symsets.condition_set(
+        x(),
+        @symlogic.bool_symbol("Eq(x**x, 0)"),
+        base=positive_open,
+      ),
+    ),
+    0,
+  )
+}
+
+///|
 test "decompogen factors functional composition and polynomial composition" {
   inspect(
     expr_list_text(decompogen(sin(cos(x())), x())),
