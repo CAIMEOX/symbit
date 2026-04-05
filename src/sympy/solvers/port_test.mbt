@@ -4045,6 +4045,152 @@ test "solvers parity solveset exponential conditionset batch 25 additional publi
 }
 
 ///|
+test "solvers parity solveset logarithmic and shifted exponential batch 26 additional public cases" {
+  let real_domain = @symsets.reals()
+  let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
+  let pow2_half = @symcore.int(2) ^ half
+  let pow10_half = @symcore.int(10) ^ half
+
+  assert_eq(
+    @symsets.compare_set(
+      @symsolvers.solveset(@symcore.function("log", [x()]), symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([@symcore.int(1)]),
+    ),
+    0,
+  )
+  assert_eq(
+    solvers_eval_str_symbols("str(sympy.solveset(sympy.log(x), x, sympy.S.Reals) == sympy.FiniteSet(1))", "x"),
+    "True",
+  )
+
+  let log_product = @symcore.function("log", [(x() + @symcore.int(-1)) * (x() + @symcore.int(1))])
+  assert_eq(
+    @symsets.compare_set(
+      @symsolvers.solveset(log_product, symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([pow2_half, @symcore.int(-1) * pow2_half]),
+    ),
+    0,
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.log((x - 1)*(x + 1)), x, sympy.S.Reals) == sympy.FiniteSet(-sympy.sqrt(2), sympy.sqrt(2)))",
+      "x",
+    ),
+    "True",
+  )
+
+  let log_pair = @symcore.function("log", [x() + @symcore.int(-3)]) + @symcore.function("log", [x() + @symcore.int(3)])
+  assert_eq(
+    @symsets.compare_set(
+      @symsolvers.solveset(log_pair, symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([pow10_half, @symcore.int(-1) * pow10_half]),
+    ),
+    0,
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.log(x - 3) + sympy.log(x + 3), x, sympy.S.Reals) == sympy.FiniteSet(-sympy.sqrt(10), sympy.sqrt(10)))",
+      "x",
+    ),
+    "True",
+  )
+
+  let scaled_log = @symcore.function("log", [@symcore.int(3) * x()]) + @symcore.int(-3)
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(scaled_log, symbol=Some(x()), domain=real_domain)),
+    "{exp(3)/3}",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.log(3*x) - 3, x, sympy.S.Reals) == sympy.FiniteSet(sympy.exp(3)/3))",
+      "x",
+    ),
+    "True",
+  )
+
+  let shifted_exp = @symcore.function("exp", [x() + @symcore.int(3)]) + @symcore.int(-1)
+  assert_eq(
+    @symsets.compare_set(
+      @symsolvers.solveset(shifted_exp, symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([@symcore.int(-3)]),
+    ),
+    0,
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.exp(x + 3) - 1, x, sympy.S.Reals) == sympy.FiniteSet(-3))",
+      "x",
+    ),
+    "True",
+  )
+
+  let exp_param = @symcore.function("exp", [x()]) + @symcore.int(-1) * y()
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(exp_param, symbol=Some(x()), domain=real_domain)),
+    "Intersection({log(y)}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.exp(x) - y, x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.log(y)), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+
+  let log_param = @symcore.function("log", [x()]) + @symcore.int(-1) * y()
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(log_param, symbol=Some(x()), domain=real_domain)),
+    "Intersection({exp(y)}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.log(x) - y, x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.exp(y)), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+
+  let shifted_exp_param = @symcore.function("exp", [x() + @symcore.int(3)]) + @symcore.int(-1) * y()
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(shifted_exp_param, symbol=Some(x()), domain=real_domain)),
+    "Intersection({log(y) - 3}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.exp(x + 3) - y, x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.log(y) - 3), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+
+  let scaled_log_param = @symcore.function("log", [@symcore.int(3) * x()]) + @symcore.int(-1) * y()
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(scaled_log_param, symbol=Some(x()), domain=real_domain)),
+    "Intersection({exp(y)/3}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.log(3*x) - y, x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.exp(y)/3), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+
+  let shifted_log_param = @symcore.function("log", [x() + @symcore.int(3)]) + @symcore.int(-1) * y()
+  assert_eq(
+    @symsets.to_string(@symsolvers.solveset(shifted_log_param, symbol=Some(x()), domain=real_domain)),
+    "Intersection({exp(y) - 3}, Reals)",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.log(x + 3) - y, x, sympy.S.Reals) == sympy.Intersection(sympy.FiniteSet(sympy.exp(y) - 3), sympy.S.Reals))",
+      "x y",
+    ),
+    "True",
+  )
+}
+
+///|
 test "solvers parity decompogen" {
   assert_eq(
     (

@@ -3129,6 +3129,87 @@ test "solveset matches additional SymPy exponential conditionset cases batch 25"
 }
 
 ///|
+test "solveset matches additional SymPy logarithmic and shifted exponential cases batch 26" {
+  let real_domain = @symsets.reals()
+  let exp3 = @symcore.function("exp", [@symcore.int(3)])
+  let inv3 = @symcore.int(3) ^ @symcore.int(-1)
+  let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
+  let pow2_half = @symcore.int(2) ^ half
+  let pow10_half = @symcore.int(10) ^ half
+
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(@symcore.function("log", [x()]), symbol=Some(x()), domain=real_domain),
+      [@symcore.int(1)],
+    ),
+  )
+
+  let log_product = @symcore.function("log", [(x() + @symcore.int(-1)) * (x() + @symcore.int(1))])
+  assert_eq(
+    @symsets.compare_set(
+      solveset(log_product, symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([pow2_half, @symcore.int(-1) * pow2_half]),
+    ),
+    0,
+  )
+
+  let log_pair = @symcore.function("log", [x() + @symcore.int(-3)]) + @symcore.function("log", [x() + @symcore.int(3)])
+  assert_eq(
+    @symsets.compare_set(
+      solveset(log_pair, symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([pow10_half, @symcore.int(-1) * pow10_half]),
+    ),
+    0,
+  )
+
+  let scaled_log = @symcore.function("log", [@symcore.int(3) * x()]) + @symcore.int(-3)
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(scaled_log, symbol=Some(x()), domain=real_domain),
+      [exp3 * inv3],
+    ),
+  )
+
+  let shifted_exp = @symcore.function("exp", [x() + @symcore.int(3)]) + @symcore.int(-1)
+  assert_true(
+    finite_set_exprs_semantically_equal(
+      solveset(shifted_exp, symbol=Some(x()), domain=real_domain),
+      [@symcore.int(-3)],
+    ),
+  )
+
+  let exp_param = @symcore.function("exp", [x()]) + @symcore.int(-1) * y()
+  inspect(
+    @symsets.to_string(solveset(exp_param, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({log(y)}, Reals)",
+  )
+
+  let log_param = @symcore.function("log", [x()]) + @symcore.int(-1) * y()
+  inspect(
+    @symsets.to_string(solveset(log_param, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({exp(y)}, Reals)",
+  )
+
+  let shifted_exp_param = @symcore.function("exp", [x() + @symcore.int(3)]) + @symcore.int(-1) * y()
+  inspect(
+    @symsets.to_string(solveset(shifted_exp_param, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({log(y) - 3}, Reals)",
+  )
+
+  let scaled_log_param = @symcore.function("log", [@symcore.int(3) * x()]) + @symcore.int(-1) * y()
+  inspect(
+    @symsets.to_string(solveset(scaled_log_param, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({exp(y)/3}, Reals)",
+  )
+
+  let shifted_log_param = @symcore.function("log", [x() + @symcore.int(3)]) + @symcore.int(-1) * y()
+  inspect(
+    @symsets.to_string(solveset(shifted_log_param, symbol=Some(x()), domain=real_domain)),
+    content="Intersection({exp(y) - 3}, Reals)",
+  )
+}
+
+///|
 test "decompogen factors functional composition and polynomial composition" {
   inspect(
     expr_list_text(decompogen(sin(cos(x())), x())),
