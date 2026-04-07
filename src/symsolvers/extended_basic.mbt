@@ -6942,12 +6942,40 @@ fn solver_pde_solution_rhs(sol : Expr, target : Expr) -> Expr raise SolverError 
 }
 
 ///|
+fn solver_make_solvefun_application(
+  solvefun : Expr?,
+  invariant : Expr,
+) -> Expr raise SolverError {
+  let normalized_invariant = solver_finalize_solution_expr(
+    solver_characteristic_invariant_cleanup(invariant),
+  )
+  match solvefun {
+    Some(Expr::UndefinedFunction(name))
+    | Some(Expr::FunctionHead(name))
+    | Some(Expr::Symbol(name)) => @symcore.applied_undefined_function(name, [normalized_invariant])
+    Some(other) =>
+      match @symcore.application_parts(other) {
+        Some((head, [])) =>
+          match head {
+            Expr::UndefinedFunction(name)
+            | Expr::FunctionHead(name)
+            | Expr::Symbol(name) => @symcore.applied_undefined_function(name, [normalized_invariant])
+            _ => raise SolverError::ValueError("solvefun must be a function head")
+          }
+        _ => raise SolverError::ValueError("solvefun must be a function head")
+      }
+    None => @symcore.applied_undefined_function("F", [normalized_invariant])
+  }
+}
+
+///|
 fn solver_replace_solution_constants_with_function(
   expr : Expr,
   invariant : Expr,
-) -> Expr {
+  solvefun : Expr?,
+) -> Expr raise SolverError {
   let env : Map[String, Expr] = {}
-  let replacement = @symcore.applied_undefined_function("F", [invariant])
+  let replacement = solver_make_solvefun_application(solvefun, invariant)
   for symbol in @symcore.free_symbols(expr) {
     match symbol {
       Expr::Symbol(name) if name.has_prefix("C") => env[name] = replacement
@@ -6965,8 +6993,9 @@ fn solver_replace_solution_constants_with_function(
 fn solver_pde_absorb_function_factor_into_exp(
   expr : Expr,
   invariant : Expr,
-) -> Expr {
-  let target = @symcore.applied_undefined_function("F", [invariant])
+  solvefun : Expr?,
+) -> Expr raise SolverError {
+  let target = solver_make_solvefun_application(solvefun, invariant)
   match expr {
     Expr::Mul(args) => {
       let mut exp_arg : Expr? = None
@@ -7377,9 +7406,16 @@ fn solver_pde_expand_exp_sums(expr : Expr) -> Expr {
 
 ///|
 fn solver_pde_prepare_separation_term(expr : Expr) -> Expr {
+  let expanded = canonical_expr(
+    @symsimplify.fraction_expand(
+      solver_pde_expand_exp_sums(
+        solver_expand_expr(canonical_expr(@symsimplify.fraction_expand(expr))),
+      ),
+    ),
+  )
   canonical_expr(
     @symsimplify.separatevars(
-      solver_pde_expand_exp_sums(solver_expand_expr(canonical_expr(expr))),
+      expanded,
       force=true,
     ),
   )
@@ -7470,7 +7506,19 @@ fn solver_simple_pde_separate(
     return None
   }
   let dep = dep_vars[0]
-  let initial = canonical_expr(expr)
+  let normalize_term = fn(term : Expr) -> Expr {
+    canonical_expr(
+      solver_expand_expr(
+        @symsimplify.numer_expand(
+          @symsimplify.fraction_expand(canonical_expr(term)),
+        ),
+      ),
+    )
+  }
+  let initial = match expr {
+    Expr::Add(args) => @symcore.raw_add(args.map(normalize_term))
+    other => normalize_term(other)
+  }
   let initial_terms = match initial {
     Expr::Add(args) => args
     other => [other]
@@ -7543,25 +7591,26 @@ fn solver_simple_pde_separate(
     return None
   }
   let fulldiv = solver_add_all(divisors)
-  let lhs = canonical_expr(
-    solver_pde_rewrite_exp_inverse(
-      solver_expand_expr(@symsimplify.numer_expand(
-        @symsimplify.simplify(
-          @symcore.mul([solver_add_all(lhs_terms), @symcore.pow(fulldiv, @symcore.int(-1))]),
-          max_passes=3,
+  let finalize_side = fn(side : Expr) -> Expr {
+    let rewritten = solver_pde_rewrite_exp_inverse(
+      solver_expand_expr(
+        @symsimplify.numer_expand(
+          @symsimplify.fraction_expand(
+            @symsimplify.simplify(side, max_passes=3),
+          ),
         ),
-      )),
-    ),
+      ),
+    )
+    match rewritten {
+      Expr::Add(args) => @symcore.raw_add(args.map(arg => canonical_expr(arg)))
+      other => canonical_expr(other)
+    }
+  }
+  let lhs = finalize_side(
+    @symcore.mul([solver_add_all(lhs_terms), @symcore.pow(fulldiv, @symcore.int(-1))]),
   )
-  let rhs = canonical_expr(
-    solver_pde_rewrite_exp_inverse(
-      solver_expand_expr(@symsimplify.numer_expand(
-        @symsimplify.simplify(
-          @symcore.mul([solver_add_all(rhs_terms), @symcore.pow(fulldiv, @symcore.int(-1))]),
-          max_passes=3,
-        ),
-      )),
-    ),
+  let rhs = finalize_side(
+    @symcore.mul([solver_add_all(rhs_terms), @symcore.pow(fulldiv, @symcore.int(-1))]),
   )
   if solver_depends_on_any(lhs, other_vars) || solver_depends_on_any(rhs, [dep]) {
     None
@@ -7579,6 +7628,30 @@ pub fn pde_separate(
 ) -> Array[Expr]? raise SolverError {
   guard strategy == "add" || strategy == "mul" else {
     raise SolverError::ValueError("Unknown strategy: " + strategy)
+  }
+  let normalized_eq = match eq {
+    Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) =>
+      if @symcore.is_zero(rhs) {
+        eq
+      } else {
+        return pde_separate(
+          Expr::Relational(
+            @symcore.RelOp::Eq,
+            @symcore.raw_add([lhs, @symcore.mul([@symcore.int(-1), rhs])]),
+            @symcore.int(0),
+          ),
+          fun,
+          sep,
+          strategy=strategy,
+        )
+      }
+    _ =>
+      return pde_separate(
+        Expr::Relational(@symcore.RelOp::Eq, eq, @symcore.int(0)),
+        fun,
+        sep,
+        strategy=strategy,
+      )
   }
   let (_, orig_args) = match @symcore.undefined_application_parts(fun) {
     Some(parts) => parts
@@ -7666,11 +7739,22 @@ pub fn pde_separate(
     }
   }
   let replacement = if strategy == "add" { solver_add_all(sep) } else { solver_mul_all(sep) }
-  let mut result = canonical_expr(
-    solver_rewrite_solution_nodes(solver_normalize_equation(eq), fun, replacement),
-  )
+  let base_eq = match normalized_eq {
+    Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) => {
+      guard @symcore.is_zero(rhs) else {
+        raise SolverError::ValueError("Value should be 0")
+      }
+      lhs
+    }
+    _ => raise SolverError::ValueError("Value should be 0")
+  }
+  let rewritten = solver_rewrite_solution_nodes(base_eq, fun, replacement)
+  let raw_result = match rewritten {
+    Expr::Add(args) => @symcore.raw_add(args.map(term => canonical_expr(term)))
+    other => canonical_expr(other)
+  }
   if strategy == "mul" {
-    let terms = match result {
+    let terms = match raw_result {
       Expr::Add(args) => args
       other => [other]
     }
@@ -7679,10 +7763,16 @@ pub fn pde_separate(
     for term in terms {
       divided.push(canonical_expr(@symcore.mul([term, inv])))
     }
-    result = canonical_expr(solver_add_all(divided))
+    let divided_result = @symcore.raw_add(divided)
+    let dep = solver_first_sep_vars(sep)
+    let others = solver_all_other_sep_vars(sep)
+    match solver_simple_pde_separate(divided_result, dep, others) {
+      Some(value) => return Some(value)
+      None => return solver_simple_pde_separate(raw_result, dep, others)
+    }
   }
   solver_simple_pde_separate(
-    result,
+    raw_result,
     solver_first_sep_vars(sep),
     solver_all_other_sep_vars(sep),
   )
@@ -7821,14 +7911,17 @@ fn solver_pde_reduced_ode_rhs(
   ode_func : Expr,
   invariant : Expr,
   absorb_exp : Bool,
+  solvefun : Expr?,
 ) -> Expr raise SolverError {
   let solved = dsolve(reduced_eq, func=Some(ode_func), hint="1st_linear")
   let rhs = solver_pde_solution_rhs(solved, ode_func)
-  let replaced = solver_replace_solution_constants_with_function(rhs, invariant)
+  let with_solvefun = solver_replace_solution_constants_with_function(rhs, invariant, solvefun) catch {
+    _ => rhs
+  }
   let normalized = if absorb_exp {
-    solver_pde_absorb_function_factor_into_exp(replaced, invariant)
+    solver_pde_absorb_function_factor_into_exp(with_solvefun, invariant, solvefun)
   } else {
-    replaced
+    with_solvefun
   }
   canonical_expr(@symsimplify.simplify(normalized, max_passes=3))
 }
@@ -7949,6 +8042,7 @@ fn solver_pdsolve_constant_coeff(
   coeff_f : Expr,
   source : Expr,
   integral_hint : Bool,
+  solvefun : Expr?,
 ) -> Expr raise SolverError {
   let denom = canonical_expr(
     @symcore.add([
@@ -7987,7 +8081,7 @@ fn solver_pdsolve_constant_coeff(
       func,
       canonical_expr(
         @symcore.mul([
-          @symcore.applied_undefined_function("F", [invariant]),
+          solver_make_solvefun_application(solvefun, invariant),
           @symcore.function(
             "exp",
             [@symcore.mul([
@@ -8056,7 +8150,7 @@ fn solver_pdsolve_constant_coeff(
           @symcore.mul([
             expterm,
             @symcore.add([
-              @symcore.applied_undefined_function("F", [eta]),
+              solver_make_solvefun_application(solvefun, eta),
               genterm,
             ]),
           ]),
@@ -8088,7 +8182,7 @@ fn solver_pdsolve_constant_coeff(
     @symcore.mul([
       expterm,
       @symcore.add([
-        @symcore.applied_undefined_function("F", [invariant]),
+        solver_make_solvefun_application(solvefun, invariant),
         integral_term,
       ]),
     ]),
@@ -8111,7 +8205,7 @@ fn solver_pdsolve_constant_coeff(
           @symcore.mul([
             expterm,
             @symcore.add([
-              @symcore.applied_undefined_function("F", [eta]),
+              solver_make_solvefun_application(solvefun, eta),
               genterm,
             ]),
           ]),
@@ -8138,6 +8232,7 @@ fn solver_pdsolve_variable_coeff(
   coeff_y : Expr,
   coeff_f : Expr,
   source : Expr,
+  solvefun : Expr?,
 ) -> Expr raise SolverError {
   if @symcore.is_zero(coeff_y) {
     let ode_func = solver_same_head_function(func, x)
@@ -8151,7 +8246,7 @@ fn solver_pdsolve_variable_coeff(
     return Expr::Relational(
       @symcore.RelOp::Eq,
       func,
-      solver_pde_reduced_ode_rhs(reduced_eq, ode_func, y, false),
+      solver_pde_reduced_ode_rhs(reduced_eq, ode_func, y, false, solvefun),
     )
   }
   if @symcore.is_zero(coeff_x) {
@@ -8166,7 +8261,7 @@ fn solver_pdsolve_variable_coeff(
     return Expr::Relational(
       @symcore.RelOp::Eq,
       func,
-      solver_pde_reduced_ode_rhs(reduced_eq, ode_func, x, true),
+      solver_pde_reduced_ode_rhs(reduced_eq, ode_func, x, true, solvefun),
     )
   }
   let invariant = match solver_pde_characteristic_invariant_linear(
@@ -8220,13 +8315,15 @@ fn solver_pdsolve_variable_coeff(
   )
   let solved = dsolve(reduced_eq, func=Some(ode_func), hint="1st_linear")
   let rhs = solver_pde_solution_rhs(solved, ode_func)
-  let replaced = solver_replace_solution_constants_with_function(rhs, eta)
+  let with_solvefun = solver_replace_solution_constants_with_function(rhs, eta, solvefun) catch {
+    _ => rhs
+  }
   Expr::Relational(
     @symcore.RelOp::Eq,
     func,
     canonical_expr(
       @symsimplify.simplify(
-        solver_symbol_subst(replaced, eta, invariant),
+        solver_symbol_subst(with_solvefun, eta, invariant),
         max_passes=3,
       ),
     ),
@@ -8255,6 +8352,7 @@ pub fn pdsolve(
   eq : Expr,
   func? : Expr? = None,
   hint? : String = "default",
+  solvefun? : Expr? = None,
 ) -> Expr raise SolverError {
   let f = match func {
     Some(value) => value
@@ -8307,6 +8405,7 @@ pub fn pdsolve(
             coeff_f,
             source,
             false,
+            solvefun,
           )
         "1st_linear_constant_coeff" =>
           solver_pdsolve_constant_coeff(
@@ -8318,6 +8417,7 @@ pub fn pdsolve(
             coeff_f,
             source,
             false,
+            solvefun,
           )
         "1st_linear_constant_coeff_Integral" =>
           solver_pdsolve_constant_coeff(
@@ -8329,9 +8429,10 @@ pub fn pdsolve(
             coeff_f,
             source,
             true,
+            solvefun,
           )
         "1st_linear_variable_coeff" =>
-          solver_pdsolve_variable_coeff(f, x, y, coeff_x, coeff_y, coeff_f, source)
+          solver_pdsolve_variable_coeff(f, x, y, coeff_x, coeff_y, coeff_f, source, solvefun)
         _ => raise SolverError::ValueError("Hint not recognized: " + name)
       }
       entries.push((name, value))
@@ -8385,6 +8486,7 @@ pub fn pdsolve(
         coeff_f,
         source,
         false,
+        solvefun,
       )
     "1st_linear_constant_coeff" =>
       solver_pdsolve_constant_coeff(
@@ -8396,6 +8498,7 @@ pub fn pdsolve(
         coeff_f,
         source,
         false,
+        solvefun,
       )
     "1st_linear_constant_coeff_Integral" =>
       solver_pdsolve_constant_coeff(
@@ -8407,9 +8510,10 @@ pub fn pdsolve(
         coeff_f,
         source,
         true,
+        solvefun,
       )
     "1st_linear_variable_coeff" =>
-      solver_pdsolve_variable_coeff(f, x, y, coeff_x, coeff_y, coeff_f, source)
+      solver_pdsolve_variable_coeff(f, x, y, coeff_x, coeff_y, coeff_f, source, solvefun)
     _ => raise SolverError::ValueError("Hint not recognized: " + selected)
   }
 }

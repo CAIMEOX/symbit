@@ -19,6 +19,16 @@ fn t() -> @symcore.Expr {
 }
 
 ///|
+fn r() -> @symcore.Expr {
+  @symcore.Expr::Symbol("r")
+}
+
+///|
+fn theta() -> @symcore.Expr {
+  @symcore.Expr::Symbol("theta")
+}
+
+///|
 fn sin(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.function("sin", [expr])
 }
@@ -54,6 +64,11 @@ fn u(xv : @symcore.Expr, yv : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+fn phi(rv : @symcore.Expr, tv : @symcore.Expr, zv : @symcore.Expr) -> @symcore.Expr {
+  @symcore.applied_undefined_function("Phi", [rv, tv, zv])
+}
+
+///|
 fn xfun(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.applied_undefined_function("X", [expr])
 }
@@ -71,6 +86,11 @@ fn tfun(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn zfun(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.applied_undefined_function("Z", [expr])
+}
+
+///|
+fn rfun(expr : @symcore.Expr) -> @symcore.Expr {
+  @symcore.applied_undefined_function("R", [expr])
 }
 
 ///|
@@ -5111,6 +5131,130 @@ test "pde separation matches additional SymPy source cases" {
     ),
   )
 
+  let laplace_eq = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.add([
+      @symcore.mul([
+        @symcore.pow(r(), @symcore.int(-1)),
+        @symcalculus.diff(phi(r(), theta(), z()), r()),
+      ]),
+      @symcalculus.diff(@symcalculus.diff(phi(r(), theta(), z()), r()), r()),
+      @symcore.mul([
+        @symcore.pow(r(), @symcore.int(-2)),
+        @symcalculus.diff(@symcalculus.diff(phi(r(), theta(), z()), theta()), theta()),
+      ]),
+      @symcalculus.diff(@symcalculus.diff(phi(r(), theta(), z()), z()), z()),
+    ]),
+    @symcore.int(0),
+  )
+  let laplace_sep_z = pde_separate_mul(
+    laplace_eq,
+    phi(r(), theta(), z()),
+    [zfun(z()), u(theta(), r())],
+  ).unwrap_or([])
+  inspect(laplace_sep_z.length().to_string(), content="2")
+  assert_true(
+    expr_semantically_equal(
+      laplace_sep_z[0],
+      @symcore.mul([
+        @symcalculus.diff(@symcalculus.diff(zfun(z()), z()), z()),
+        @symcore.pow(zfun(z()), @symcore.int(-1)),
+      ]),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      laplace_sep_z[1],
+      @symcore.add([
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcalculus.diff(@symcalculus.diff(u(theta(), r()), r()), r()),
+          @symcore.pow(u(theta(), r()), @symcore.int(-1)),
+        ]),
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcalculus.diff(u(theta(), r()), r()),
+          @symcore.pow(@symcore.mul([r(), u(theta(), r())]), @symcore.int(-1)),
+        ]),
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcalculus.diff(@symcalculus.diff(u(theta(), r()), theta()), theta()),
+          @symcore.pow(@symcore.mul([(r() ^ @symcore.int(2)), u(theta(), r())]), @symcore.int(-1)),
+        ]),
+      ]),
+    ),
+  )
+  let c_eq = @symcore.Expr::Relational(@symcore.RelOp::Eq, laplace_sep_z[1], c)
+  let laplace_sep_theta = pde_separate_mul(
+    c_eq,
+    u(theta(), r()),
+    [tfun(theta()), rfun(r())],
+  ).unwrap_or([])
+  inspect(laplace_sep_theta.length().to_string(), content="2")
+  assert_true(
+    expr_semantically_equal(
+      laplace_sep_theta[0],
+      @symcore.mul([
+        @symcalculus.diff(@symcalculus.diff(tfun(theta()), theta()), theta()),
+        @symcore.pow(tfun(theta()), @symcore.int(-1)),
+      ]),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      laplace_sep_theta[1],
+      @symcore.add([
+        @symcore.mul([
+          @symcore.int(-1),
+          r(),
+          @symcalculus.diff(rfun(r()), r()),
+          @symcore.pow(rfun(r()), @symcore.int(-1)),
+        ]),
+        @symcore.mul([
+          @symcore.int(-1),
+          (r() ^ @symcore.int(2)),
+          @symcalculus.diff(@symcalculus.diff(rfun(r()), r()), r()),
+          @symcore.pow(rfun(r()), @symcore.int(-1)),
+        ]),
+        @symcore.int(-1) * c * (r() ^ @symcore.int(2)),
+      ]),
+    ),
+  )
+  let laplace_sep_r = pde_separate_mul(
+    c_eq,
+    u(theta(), r()),
+    [rfun(r()), tfun(theta())],
+  ).unwrap_or([])
+  inspect(laplace_sep_r.length().to_string(), content="2")
+  assert_true(
+    expr_semantically_equal(
+      laplace_sep_r[0],
+      @symcore.add([
+        @symcore.mul([
+          r(),
+          @symcalculus.diff(rfun(r()), r()),
+          @symcore.pow(rfun(r()), @symcore.int(-1)),
+        ]),
+        @symcore.mul([
+          (r() ^ @symcore.int(2)),
+          @symcalculus.diff(@symcalculus.diff(rfun(r()), r()), r()),
+          @symcore.pow(rfun(r()), @symcore.int(-1)),
+        ]),
+        c * (r() ^ @symcore.int(2)),
+      ]),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      laplace_sep_r[1],
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcalculus.diff(@symcalculus.diff(tfun(theta()), theta()), theta()),
+        @symcore.pow(tfun(theta()), @symcore.int(-1)),
+      ]),
+    ),
+  )
+
   let issue_res = pde_separate(
     @symcalculus.diff(@symcalculus.diff(ut, x()), x()) +
       @symcore.mul([@symcore.int(-1), @symcalculus.diff(@symcalculus.diff(ut, t()), t())]),
@@ -5207,7 +5351,35 @@ test "pdsolve meta-hints cover SymPy-style front doors" {
   }
   inspect(
     @symprint.to_string(actual_rhs),
-    content="exp(-y + x/2)*(exp(x/2 + 4*y)/15 + F(2*y + 4*x))",
+    content="exp(x/2 - y)*(exp(x/2 + 4*y)/15 + F(2*y + 4*x))",
+  )
+}
+
+///|
+test "pdsolve solvefun follows SymPy front door" {
+  let eq1 = u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y())
+  let default_sol = pdsolve(eq1, func=Some(u(x(), y())))
+  let g_sol = pdsolve(
+    eq1,
+    func=Some(u(x(), y())),
+    solvefun=Some(@symcore.Expr::UndefinedFunction("G")),
+  )
+  let h_sol = pdsolve(
+    eq1,
+    func=Some(u(x(), y())),
+    solvefun=Some(@symcore.Expr::UndefinedFunction("H")),
+  )
+  inspect(
+    @symprint.to_string(default_sol),
+    content="Eq(u(x, y), F(x - y)*exp(-x/2 - y/2))",
+  )
+  inspect(
+    @symprint.to_string(g_sol),
+    content="Eq(u(x, y), G(x - y)*exp(-x/2 - y/2))",
+  )
+  inspect(
+    @symprint.to_string(h_sol),
+    content="Eq(u(x, y), H(x - y)*exp(-x/2 - y/2))",
   )
 }
 
@@ -5239,7 +5411,7 @@ test "pdsolve expanded constant coefficient hints follow SymPy source cases" {
   }
   inspect(
     @symprint.to_string(actual_rhs),
-    content="exp(-y + x/2)*(exp(x/2 + 4*y)/15 + F(2*y + 4*x))",
+    content="exp(x/2 - y)*(exp(x/2 + 4*y)/15 + F(2*y + 4*x))",
   )
 }
 

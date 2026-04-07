@@ -84,7 +84,7 @@ pub fn pde_separate_add(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr]) -> A
 
 pub fn pde_separate_mul(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr]) -> Array[@symcore.Expr]? raise SolverError
 
-pub fn pdsolve(@symcore.Expr, func? : @symcore.Expr?, hint? : String) -> @symcore.Expr raise SolverError
+pub fn pdsolve(@symcore.Expr, func? : @symcore.Expr?, hint? : String, solvefun? : @symcore.Expr?) -> @symcore.Expr raise SolverError
 
 pub fn reduce_abs_inequalities(Array[(@symcore.Expr, String)], @symcore.Expr) -> @symcore.Expr raise SolverError
 
@@ -181,4 +181,3 @@ pub enum SolveResult {
 pub type RationalInequality = ((@sympolys.Poly, @sympolys.Poly), String)
 
 // Traits
-

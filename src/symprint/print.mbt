@@ -326,7 +326,7 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
         "0"
       } else if args.length() == 2 {
         match split_negative_addend(args[0]) {
-          Some(positive0) if exact_positive_expr(args[1]) =>
+          Some(positive0) if split_negative_addend(args[1]) is None =>
             format_expr(args[1], prec) + " - " + format_expr(positive0, prec)
           _ => {
             let rendered : Array[String] = []

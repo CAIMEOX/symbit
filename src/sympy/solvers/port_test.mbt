@@ -19,6 +19,16 @@ fn t() -> @symcore.Expr {
 }
 
 ///|
+fn r() -> @symcore.Expr {
+  @symcore.Expr::Symbol("r")
+}
+
+///|
+fn theta() -> @symcore.Expr {
+  @symcore.Expr::Symbol("theta")
+}
+
+///|
 fn sin(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.function("sin", [expr])
 }
@@ -49,6 +59,11 @@ fn u(xv : @symcore.Expr, yv : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+fn phi(rv : @symcore.Expr, tv : @symcore.Expr, zv : @symcore.Expr) -> @symcore.Expr {
+  @symcore.applied_undefined_function("Phi", [rv, tv, zv])
+}
+
+///|
 fn xfun(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.applied_undefined_function("X", [expr])
 }
@@ -66,6 +81,11 @@ fn tfun(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn zfun(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.applied_undefined_function("Z", [expr])
+}
+
+///|
+fn rfun(expr : @symcore.Expr) -> @symcore.Expr {
+  @symcore.applied_undefined_function("R", [expr])
 }
 
 ///|
@@ -6128,6 +6148,116 @@ test "solvers parity additional pde separation cases" {
       "x t C",
     ),
   )
+  let laplace_eq = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.add([
+      @symcore.mul([
+        @symcore.pow(r(), @symcore.int(-1)),
+        @symcalculus.diff(phi(r(), theta(), z()), r()),
+      ]),
+      @symcalculus.diff(@symcalculus.diff(phi(r(), theta(), z()), r()), r()),
+      @symcore.mul([
+        @symcore.pow(r(), @symcore.int(-2)),
+        @symcalculus.diff(@symcalculus.diff(phi(r(), theta(), z()), theta()), theta()),
+      ]),
+      @symcalculus.diff(@symcalculus.diff(phi(r(), theta(), z()), z()), z()),
+    ]),
+    @symcore.int(0),
+  )
+  let laplace_sep_z = @symsolvers.pde_separate_mul(
+    laplace_eq,
+    phi(r(), theta(), z()),
+    [zfun(z()), u(theta(), r())],
+  ).unwrap_or([])
+  assert_eq(laplace_sep_z.length(), 2)
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(laplace_sep_z[0]) +
+      " - (sympy.diff(sympy.Function('Z')(z), z, 2)/sympy.Function('Z')(z))) == 0)",
+      "z",
+    ),
+    "True",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(laplace_sep_z[1]) +
+      " - (-sympy.diff(sympy.Function('u')(theta, r), r, 2)/sympy.Function('u')(theta, r) - sympy.diff(sympy.Function('u')(theta, r), r)/(r*sympy.Function('u')(theta, r)) - sympy.diff(sympy.Function('u')(theta, r), theta, 2)/(r**2*sympy.Function('u')(theta, r)))) == 0)",
+      "r theta",
+    ),
+    "True",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "repr(sympy.solvers.pde_separate_mul(sympy.Eq(sympy.diff(sympy.Function('Phi')(r, theta, z), r)/r + sympy.diff(sympy.Function('Phi')(r, theta, z), r, 2) + sympy.diff(sympy.Function('Phi')(r, theta, z), theta, 2)/r**2 + sympy.diff(sympy.Function('Phi')(r, theta, z), z, 2), 0), sympy.Function('Phi')(r, theta, z), [sympy.Function('Z')(z), sympy.Function('u')(theta, r)]))",
+      "r theta z",
+    ),
+    "[Derivative(Z(z), (z, 2))/Z(z), -Derivative(u(theta, r), (r, 2))/u(theta, r) - Derivative(u(theta, r), r)/(r*u(theta, r)) - Derivative(u(theta, r), (theta, 2))/(r**2*u(theta, r))]",
+  )
+  let c_eq = @symcore.Expr::Relational(@symcore.RelOp::Eq, laplace_sep_z[1], c)
+  let laplace_sep_theta = @symsolvers.pde_separate_mul(
+    c_eq,
+    u(theta(), r()),
+    [tfun(theta()), rfun(r())],
+  ).unwrap_or([])
+  assert_eq(laplace_sep_theta.length(), 2)
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(laplace_sep_theta[0]) +
+      " - (sympy.diff(sympy.Function('T')(theta), theta, 2)/sympy.Function('T')(theta))) == 0)",
+      "theta",
+    ),
+    "True",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(laplace_sep_theta[1]) +
+      " - (-r*sympy.diff(sympy.Function('R')(r), r)/sympy.Function('R')(r) - r**2*sympy.diff(sympy.Function('R')(r), r, 2)/sympy.Function('R')(r) - C*r**2)) == 0)",
+      "r C",
+    ),
+    "True",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "repr(sympy.solvers.pde_separate_mul(sympy.Eq(-sympy.diff(sympy.Function('u')(theta, r), (r, 2))/sympy.Function('u')(theta, r) - sympy.diff(sympy.Function('u')(theta, r), r)/(r*sympy.Function('u')(theta, r)) - sympy.diff(sympy.Function('u')(theta, r), (theta, 2))/(r**2*sympy.Function('u')(theta, r)), C), sympy.Function('u')(theta, r), [sympy.Function('T')(theta), sympy.Function('R')(r)]))",
+      "r theta C",
+    ),
+    "[Derivative(T(theta), (theta, 2))/T(theta), -C*r**2 - r**2*Derivative(R(r), (r, 2))/R(r) - r*Derivative(R(r), r)/R(r)]",
+  )
+  let laplace_sep_r = @symsolvers.pde_separate_mul(
+    c_eq,
+    u(theta(), r()),
+    [rfun(r()), tfun(theta())],
+  ).unwrap_or([])
+  assert_eq(laplace_sep_r.length(), 2)
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(laplace_sep_r[0]) +
+      " - (r*sympy.diff(sympy.Function('R')(r), r)/sympy.Function('R')(r) + r**2*sympy.diff(sympy.Function('R')(r), r, 2)/sympy.Function('R')(r) + C*r**2)) == 0)",
+      "r C",
+    ),
+    "True",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(laplace_sep_r[1]) +
+      " - (-sympy.diff(sympy.Function('T')(theta), theta, 2)/sympy.Function('T')(theta))) == 0)",
+      "theta",
+    ),
+    "True",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "repr(sympy.solvers.pde_separate_mul(sympy.Eq(-sympy.diff(sympy.Function('u')(theta, r), (r, 2))/sympy.Function('u')(theta, r) - sympy.diff(sympy.Function('u')(theta, r), r)/(r*sympy.Function('u')(theta, r)) - sympy.diff(sympy.Function('u')(theta, r), (theta, 2))/(r**2*sympy.Function('u')(theta, r)), C), sympy.Function('u')(theta, r), [sympy.Function('R')(r), sympy.Function('T')(theta)]))",
+      "r theta C",
+    ),
+    "[C*r**2 + r**2*Derivative(R(r), (r, 2))/R(r) + r*Derivative(R(r), r)/R(r), -Derivative(T(theta), (theta, 2))/T(theta)]",
+  )
   assert_eq(
     local_expr_list_text(
       @symsolvers.pde_separate(
@@ -6215,11 +6345,11 @@ test "solvers parity dsolve and pdsolve meta-hints" {
   )
   assert_eq(
     @symprint.to_string(local_expr_dict_get(pde_all, "1st_linear_constant_coeff").unwrap_or(@symcore.int(0))),
-    "Eq(u(x, y), Subs(exp(-xi/2)*(Integral((xi + eta)**2*exp(xi/2)*(-xi + eta)/8, (xi, x + y))/2 + F(eta)), (eta, xi), (-y + x, x + y)))",
+    "Eq(u(x, y), Subs(exp(-xi/2)*(Integral((xi + eta)**2*exp(xi/2)*(eta - xi)/8, (xi, x + y))/2 + F(eta)), (eta, xi), (x - y, x + y)))",
   )
   assert_eq(
     solvers_eval_str_symbols(
-      "str(sympy.simplify(sympy.Subs(sympy.exp(-xi/2)*(sympy.Integral((xi + eta)**2*sympy.exp(xi/2)*(-xi + eta)/8, (xi, x + y))/2 + sympy.Function('F')(eta)), (eta, xi), (-y + x, x + y)).doit() - sympy.solvers.pdsolve(sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y) + x**2*y, hint='all')['1st_linear_constant_coeff'].rhs) == 0)",
+      "str(sympy.simplify(sympy.Subs(sympy.exp(-xi/2)*(sympy.Integral((xi + eta)**2*sympy.exp(xi/2)*(eta - xi)/8, (xi, x + y))/2 + sympy.Function('F')(eta)), (eta, xi), (x - y, x + y)).doit() - sympy.solvers.pdsolve(sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y) + x**2*y, hint='all')['1st_linear_constant_coeff'].rhs) == 0)",
       "x y xi eta",
     ),
     "True",
@@ -6251,7 +6381,7 @@ test "solvers parity expanded pde coefficient hints" {
         hint="1st_linear_constant_coeff",
       ),
     ),
-    "Eq(u(x, y), exp(-y + x/2)*(exp(x/2 + 4*y)/15 + F(2*y + 4*x)))",
+    "Eq(u(x, y), exp(x/2 - y)*(exp(x/2 + 4*y)/15 + F(2*y + 4*x)))",
   )
   assert_eq(
     solvers_eval_str_symbols(
@@ -6259,6 +6389,33 @@ test "solvers parity expanded pde coefficient hints" {
       "x y",
     ),
     "True",
+  )
+  assert_eq(
+    @symprint.to_string(
+      @symsolvers.pdsolve(
+        u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y()),
+        func=Some(u(x(), y())),
+        solvefun=Some(@symcore.Expr::UndefinedFunction("G")),
+      ),
+    ),
+    "Eq(u(x, y), G(x - y)*exp(-x/2 - y/2))",
+  )
+  assert_eq(
+    @symprint.to_string(
+      @symsolvers.pdsolve(
+        u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y()),
+        func=Some(u(x(), y())),
+        solvefun=Some(@symcore.Expr::UndefinedFunction("H")),
+      ),
+    ),
+    "Eq(u(x, y), H(x - y)*exp(-x/2 - y/2))",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.pdsolve(sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y), solvefun=sympy.Function('G')))",
+      "x y",
+    ),
+    "Eq(u(x, y), G(x - y)*exp(-x/2 - y/2))",
   )
   let pde_source_integral = @symprint.to_string(
     @symsolvers.pdsolve(
