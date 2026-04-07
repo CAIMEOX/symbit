@@ -14,6 +14,11 @@ fn z() -> @symcore.Expr {
 }
 
 ///|
+fn t() -> @symcore.Expr {
+  @symcore.Expr::Symbol("t")
+}
+
+///|
 fn sin(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.function("sin", [expr])
 }
@@ -56,6 +61,16 @@ fn xfun(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn yfun(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.applied_undefined_function("Y", [expr])
+}
+
+///|
+fn tfun(expr : @symcore.Expr) -> @symcore.Expr {
+  @symcore.applied_undefined_function("T", [expr])
+}
+
+///|
+fn zfun(expr : @symcore.Expr) -> @symcore.Expr {
+  @symcore.applied_undefined_function("Z", [expr])
 }
 
 ///|
@@ -4910,6 +4925,222 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
       ")",
     ),
     content="(true, 0)",
+  )
+}
+
+///|
+test "pde separation matches additional SymPy source cases" {
+  let ut = @symcore.applied_undefined_function("u", [x(), t()])
+  let add_eq = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcalculus.diff(ut, x()),
+    @symcore.mul([
+      @symcalculus.diff(ut, t()),
+      @symcore.function("exp", [ut]),
+    ]),
+  )
+  let add_res = pde_separate_add(add_eq, ut, [xfun(x()), tfun(t())]).unwrap_or([])
+  inspect(add_res.length().to_string(), content="2")
+  assert_true(
+    expr_semantically_equal(
+      add_res[0],
+      @symcore.mul([
+        @symcalculus.diff(xfun(x()), x()),
+        @symcore.function("exp", [@symcore.mul([@symcore.int(-1), xfun(x())])]),
+      ]),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      add_res[1],
+      @symcore.mul([
+        @symcalculus.diff(tfun(t()), t()),
+        @symcore.function("exp", [tfun(t())]),
+      ]),
+    ),
+  )
+
+  let invalid_strategy : Result[Array[@symcore.Expr]?, SolverError] = try?
+    pde_separate(add_eq, ut, [xfun(x()), tfun(t())], strategy="div")
+  inspect(
+    match invalid_strategy {
+      Err(err) => err.to_string()
+      Ok(_) => "ok"
+    },
+    content="ValueError(\"Unknown strategy: div\")",
+  )
+
+  let fxyz = @symcore.applied_undefined_function("F", [x(), y(), z()])
+  let sum_eq = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.add([
+      @symcalculus.diff(fxyz, x()),
+      @symcalculus.diff(fxyz, y()),
+      @symcalculus.diff(fxyz, z()),
+    ]),
+    @symcore.int(0),
+  )
+  let duplicate_args : Result[Array[@symcore.Expr]?, SolverError] = try?
+    pde_separate_mul(
+      sum_eq,
+      fxyz,
+      [
+        xfun(x()),
+        @symcore.applied_undefined_function("u", [z(), z()]),
+      ],
+    )
+  inspect(
+    match duplicate_args {
+      Err(err) => err.to_string()
+      Ok(_) => "ok"
+    },
+    content="ValueError(\"Duplicate substitution arguments detected\")",
+  )
+  let wrong_count : Result[Array[@symcore.Expr]?, SolverError] = try?
+    pde_separate_mul(sum_eq, fxyz, [xfun(x()), yfun(y())])
+  inspect(
+    match wrong_count {
+      Err(err) => err.to_string()
+      Ok(_) => "ok"
+    },
+    content="ValueError(\"Variable counts do not match\")",
+  )
+  let wrong_args : Result[Array[@symcore.Expr]?, SolverError] = try?
+    pde_separate_mul(
+      sum_eq,
+      fxyz,
+      [
+        xfun(t()),
+        @symcore.applied_undefined_function("Y", [x(), y()]),
+      ],
+    )
+  inspect(
+    match wrong_args {
+      Err(err) => err.to_string()
+      Ok(_) => "ok"
+    },
+    content="ValueError(\"Arguments do not match\")",
+  )
+
+  let split_y = pde_separate_mul(sum_eq, fxyz, [yfun(y()), u(x(), z())]).unwrap_or([])
+  inspect(split_y.length().to_string(), content="2")
+  assert_true(
+    expr_semantically_equal(
+      split_y[0],
+      @symcore.mul([
+        @symcalculus.diff(yfun(y()), y()),
+        @symcore.pow(yfun(y()), @symcore.int(-1)),
+      ]),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      split_y[1],
+      @symcore.add([
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcalculus.diff(u(x(), z()), x()),
+          @symcore.pow(u(x(), z()), @symcore.int(-1)),
+        ]),
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcalculus.diff(u(x(), z()), z()),
+          @symcore.pow(u(x(), z()), @symcore.int(-1)),
+        ]),
+      ]),
+    ),
+  )
+
+  let split_xyz = pde_separate_mul(
+    sum_eq,
+    fxyz,
+    [xfun(x()), yfun(y()), zfun(z())],
+  ).unwrap_or([])
+  inspect(split_xyz.length().to_string(), content="2")
+  assert_true(
+    expr_semantically_equal(
+      split_xyz[0],
+      @symcore.mul([
+        @symcalculus.diff(xfun(x()), x()),
+        @symcore.pow(xfun(x()), @symcore.int(-1)),
+      ]),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      split_xyz[1],
+      @symcore.add([
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcalculus.diff(zfun(z()), z()),
+          @symcore.pow(zfun(z()), @symcore.int(-1)),
+        ]),
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcalculus.diff(yfun(y()), y()),
+          @symcore.pow(yfun(y()), @symcore.int(-1)),
+        ]),
+      ]),
+    ),
+  )
+
+  let c = @symcore.Expr::Symbol("C")
+  let wave_eq = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcalculus.diff(@symcalculus.diff(ut, t()), t()),
+    (c ^ @symcore.int(2)) * @symcalculus.diff(@symcalculus.diff(ut, x()), x()),
+  )
+  let wave_res = pde_separate_mul(wave_eq, ut, [xfun(x()), tfun(t())]).unwrap_or([])
+  inspect(wave_res.length().to_string(), content="2")
+  assert_true(
+    expr_semantically_equal(
+      wave_res[0],
+      @symcore.mul([
+        @symcalculus.diff(@symcalculus.diff(xfun(x()), x()), x()),
+        @symcore.pow(xfun(x()), @symcore.int(-1)),
+      ]),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      wave_res[1],
+      @symcore.mul([
+        @symcalculus.diff(@symcalculus.diff(tfun(t()), t()), t()),
+        @symcore.pow(@symcore.mul([c ^ @symcore.int(2), tfun(t())]), @symcore.int(-1)),
+      ]),
+    ),
+  )
+
+  let issue_res = pde_separate(
+    @symcalculus.diff(@symcalculus.diff(ut, x()), x()) +
+      @symcore.mul([@symcore.int(-1), @symcalculus.diff(@symcalculus.diff(ut, t()), t())]),
+    ut,
+    [@symcore.applied_undefined_function("T", [x()]), @symcore.applied_undefined_function("X", [t()])],
+  ).unwrap_or([])
+  inspect(issue_res.length().to_string(), content="2")
+  assert_true(
+    expr_semantically_equal(
+      issue_res[0],
+      @symcore.mul([
+        @symcalculus.diff(
+          @symcalculus.diff(@symcore.applied_undefined_function("T", [x()]), x()),
+          x(),
+        ),
+        @symcore.pow(@symcore.applied_undefined_function("T", [x()]), @symcore.int(-1)),
+      ]),
+    ),
+  )
+  assert_true(
+    expr_semantically_equal(
+      issue_res[1],
+      @symcore.mul([
+        @symcalculus.diff(
+          @symcalculus.diff(@symcore.applied_undefined_function("X", [t()]), t()),
+          t(),
+        ),
+        @symcore.pow(@symcore.applied_undefined_function("X", [t()]), @symcore.int(-1)),
+      ]),
+    ),
   )
 }
 

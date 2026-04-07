@@ -7355,36 +7355,219 @@ fn solver_all_other_sep_vars(sep : Array[Expr]) -> Array[Expr] raise SolverError
 }
 
 ///|
+fn solver_pde_expand_exp_sums(expr : Expr) -> Expr {
+  match expr {
+    Expr::Add(args) => @symcore.add(args.map(solver_pde_expand_exp_sums))
+    Expr::Mul(args) => @symcore.mul(args.map(solver_pde_expand_exp_sums))
+    Expr::Pow(base, exp) =>
+      @symcore.pow(solver_pde_expand_exp_sums(base), solver_pde_expand_exp_sums(exp))
+    Expr::Tuple(items) => Expr::Tuple(items.map(solver_pde_expand_exp_sums))
+    Expr::Apply(Expr::FunctionHead("exp"), [Expr::Add(args)]) =>
+      solver_expand_mul_sequence(
+        args.map(arg => @symcore.function("exp", [solver_pde_expand_exp_sums(arg)])),
+      )
+    Expr::Apply(head, args) =>
+      @symcore.raw_apply(
+        solver_pde_expand_exp_sums(head),
+        args.map(solver_pde_expand_exp_sums),
+      ).unwrap_or(Expr::Apply(solver_pde_expand_exp_sums(head), args.map(solver_pde_expand_exp_sums)))
+    _ => expr
+  }
+}
+
+///|
+fn solver_pde_prepare_separation_term(expr : Expr) -> Expr {
+  canonical_expr(
+    @symsimplify.separatevars(
+      solver_pde_expand_exp_sums(solver_expand_expr(canonical_expr(expr))),
+      force=true,
+    ),
+  )
+}
+
+///|
+fn solver_pde_rewrite_exp_inverse(expr : Expr) -> Expr {
+  match expr {
+    Expr::Add(args) => @symcore.add(args.map(solver_pde_rewrite_exp_inverse))
+    Expr::Mul(args) => @symcore.mul(args.map(solver_pde_rewrite_exp_inverse))
+    Expr::Pow(base, exp) =>
+      match base {
+        Expr::Apply(Expr::FunctionHead("exp"), [arg]) => {
+          if @symcore.compare_expr(exp, @symcore.int(-1)) == 0 {
+            @symcore.function(
+              "exp",
+              [canonical_expr(@symcore.mul([@symcore.int(-1), solver_pde_rewrite_exp_inverse(arg)]))],
+            )
+          } else {
+            @symcore.pow(
+              solver_pde_rewrite_exp_inverse(base),
+              solver_pde_rewrite_exp_inverse(exp),
+            )
+          }
+        }
+        _ =>
+          @symcore.pow(
+            solver_pde_rewrite_exp_inverse(base),
+            solver_pde_rewrite_exp_inverse(exp),
+          )
+      }
+    Expr::Tuple(items) => Expr::Tuple(items.map(solver_pde_rewrite_exp_inverse))
+    Expr::Apply(head, args) =>
+      @symcore.raw_apply(
+        solver_pde_rewrite_exp_inverse(head),
+        args.map(solver_pde_rewrite_exp_inverse),
+      ).unwrap_or(
+        Expr::Apply(
+          solver_pde_rewrite_exp_inverse(head),
+          args.map(solver_pde_rewrite_exp_inverse),
+        ),
+      )
+    _ => expr
+  }
+}
+
+///|
+fn solver_pde_as_independent_mul(expr : Expr, dep : Expr) -> (Expr, Expr) {
+  let prepared = solver_pde_prepare_separation_term(expr)
+  match mul_independent_decompose(prepared, dep) {
+    Some((indep, sep)) => (canonical_expr(indep), canonical_expr(sep))
+    None =>
+      if @symcore.has(prepared, dep) {
+        (@symcore.int(1), prepared)
+      } else {
+        (prepared, @symcore.int(1))
+      }
+  }
+}
+
+///|
+fn solver_pde_term_has_derivative_without_others(
+  term : Expr,
+  other_vars : Array[Expr],
+) -> Bool {
+  match term {
+    Expr::Mul(args) => {
+      for arg in args {
+        match arg {
+          Expr::Derivative(_, _) if !solver_depends_on_any(arg, other_vars) => return true
+          _ => ()
+        }
+      }
+      false
+    }
+    Expr::Derivative(_, _) => !solver_depends_on_any(term, other_vars)
+    _ => false
+  }
+}
+
+///|
 fn solver_simple_pde_separate(
   expr : Expr,
   dep_vars : Array[Expr],
   other_vars : Array[Expr],
 ) -> Array[Expr]? {
-  let terms = match canonical_expr(expr) {
+  guard !dep_vars.is_empty() else {
+    return None
+  }
+  let dep = dep_vars[0]
+  let initial = canonical_expr(expr)
+  let initial_terms = match initial {
     Expr::Add(args) => args
     other => [other]
   }
-  let lhs : Array[Expr] = []
-  let rhs : Array[Expr] = []
+
+  let derivative_terms : Array[Expr] = []
+  for term in initial_terms {
+    if solver_pde_term_has_derivative_without_others(term, other_vars) &&
+      !solver_expr_in_list(derivative_terms, term) {
+      derivative_terms.push(term)
+    }
+  }
+
+  let normalized = if derivative_terms.is_empty() {
+    initial
+  } else {
+    let divisors : Array[Expr] = []
+    for term in derivative_terms {
+      let (ext, sep) = solver_pde_as_independent_mul(term, dep)
+      if solver_depends_on_any(sep, other_vars) {
+        return None
+      }
+      if !solver_expr_in_list(divisors, ext) {
+        divisors.push(ext)
+      }
+    }
+    if divisors.is_empty() {
+      initial
+    } else {
+      let lifted : Array[Expr] = []
+      for term in initial_terms {
+        let pieces : Array[Expr] = []
+        for divisor in divisors {
+          pieces.push(
+            canonical_expr(@symcore.mul([term, @symcore.pow(divisor, @symcore.int(-1))])),
+          )
+        }
+        lifted.push(
+          canonical_expr(@symsimplify.simplify(solver_add_all(pieces), max_passes=3)),
+        )
+      }
+      canonical_expr(solver_add_all(lifted))
+    }
+  }
+
+  let terms = match normalized {
+    Expr::Add(args) => args
+    other => [other]
+  }
+  let divisors : Array[Expr] = []
+  let lhs_terms : Array[Expr] = []
+  let rhs_terms : Array[Expr] = []
   for term in terms {
-    let dep = solver_depends_on_any(term, dep_vars)
-    let other = solver_depends_on_any(term, other_vars)
-    if dep && other {
+    if !solver_depends_on_any(term, other_vars) {
+      lhs_terms.push(term)
+      continue
+    }
+    let (_, sep) = solver_pde_as_independent_mul(term, dep)
+    if solver_depends_on_any(sep, other_vars) {
       return None
     }
-    if other {
-      rhs.push(term)
-    } else {
-      lhs.push(term)
+    if !solver_expr_in_list(divisors, sep) {
+      divisors.push(sep)
     }
+    rhs_terms.push(
+      canonical_expr(@symcore.mul([@symcore.int(-1), solver_pde_prepare_separation_term(term)])),
+    )
   }
-  guard !lhs.is_empty() && !rhs.is_empty() else {
+  guard !lhs_terms.is_empty() && !rhs_terms.is_empty() && !divisors.is_empty() else {
     return None
   }
-  Some([
-    canonical_expr(solver_add_all(lhs)),
-    canonical_expr(@symcore.mul([@symcore.int(-1), solver_add_all(rhs)])),
-  ])
+  let fulldiv = solver_add_all(divisors)
+  let lhs = canonical_expr(
+    solver_pde_rewrite_exp_inverse(
+      solver_expand_expr(@symsimplify.numer_expand(
+        @symsimplify.simplify(
+          @symcore.mul([solver_add_all(lhs_terms), @symcore.pow(fulldiv, @symcore.int(-1))]),
+          max_passes=3,
+        ),
+      )),
+    ),
+  )
+  let rhs = canonical_expr(
+    solver_pde_rewrite_exp_inverse(
+      solver_expand_expr(@symsimplify.numer_expand(
+        @symsimplify.simplify(
+          @symcore.mul([solver_add_all(rhs_terms), @symcore.pow(fulldiv, @symcore.int(-1))]),
+          max_passes=3,
+        ),
+      )),
+    ),
+  )
+  if solver_depends_on_any(lhs, other_vars) || solver_depends_on_any(rhs, [dep]) {
+    None
+  } else {
+    Some([lhs, rhs])
+  }
 }
 
 ///|
@@ -7395,7 +7578,7 @@ pub fn pde_separate(
   strategy? : String = "mul",
 ) -> Array[Expr]? raise SolverError {
   guard strategy == "add" || strategy == "mul" else {
-    raise SolverError::ValueError("unknown separation strategy: " + strategy)
+    raise SolverError::ValueError("Unknown strategy: " + strategy)
   }
   let (_, orig_args) = match @symcore.undefined_application_parts(fun) {
     Some(parts) => parts
@@ -7412,14 +7595,14 @@ pub fn pde_separate(
     }
   }
   guard orig_args.length() == subs_args.length() else {
-    raise SolverError::ValueError("variable counts do not match")
+    raise SolverError::ValueError("Variable counts do not match")
   }
   let unique_subs = solver_sorted_unique_symbols(subs_args)
   guard unique_subs.length() == subs_args.length() else {
-    raise SolverError::ValueError("duplicate substitution arguments detected")
+    raise SolverError::ValueError("Duplicate substitution arguments detected")
   }
   guard solver_expr_arrays_equal(orig_args, subs_args) else {
-    raise SolverError::ValueError("arguments do not match")
+    raise SolverError::ValueError("Arguments do not match")
   }
   if sep.length() == 2 {
     match solver_match_equal_derivative_pde(eq, fun) {

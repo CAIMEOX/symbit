@@ -14,6 +14,11 @@ fn z() -> @symcore.Expr {
 }
 
 ///|
+fn t() -> @symcore.Expr {
+  @symcore.Expr::Symbol("t")
+}
+
+///|
 fn sin(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.function("sin", [expr])
 }
@@ -51,6 +56,16 @@ fn xfun(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn yfun(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.applied_undefined_function("Y", [expr])
+}
+
+///|
+fn tfun(expr : @symcore.Expr) -> @symcore.Expr {
+  @symcore.applied_undefined_function("T", [expr])
+}
+
+///|
+fn zfun(expr : @symcore.Expr) -> @symcore.Expr {
+  @symcore.applied_undefined_function("Z", [expr])
 }
 
 ///|
@@ -227,6 +242,20 @@ fn local_lp_result_type(
 ///|
 fn local_expr_result_type(
   result : Result[@symcore.Expr, @symsolvers.SolverError],
+) -> String {
+  match result {
+    Ok(_) => "OK"
+    Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
+    Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
+    Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
+    Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
+    Err(@symsolvers.SolverError::UnboundedLPError(_)) => "UnboundedLPError"
+  }
+}
+
+///|
+fn local_expr_option_result_type(
+  result : Result[Array[@symcore.Expr]?, @symsolvers.SolverError],
 ) -> String {
   match result {
     Ok(_) => "OK"
@@ -5947,6 +5976,175 @@ test "solvers parity pde front doors" {
       solvers_eval_str(
         "sympy.sstr(sympy.solvers.pdsolve(sympy.Eq(sympy.Function('u')(x, y).diff(x), sympy.Function('u')(x, y).diff(y))))",
       ),
+    ),
+  )
+}
+
+///|
+test "solvers parity additional pde separation cases" {
+  let ut = @symcore.applied_undefined_function("u", [x(), t()])
+  let add_eq = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcalculus.diff(ut, x()),
+    @symcore.mul([
+      @symcalculus.diff(ut, t()),
+      @symcore.function("exp", [ut]),
+    ]),
+  )
+  assert_eq(
+    local_expr_list_text(
+      @symsolvers.pde_separate_add(add_eq, ut, [xfun(x()), tfun(t())]).unwrap_or([]),
+    ),
+    solvers_eval_str_symbols(
+      "repr(sympy.solvers.pde_separate_add(sympy.Eq(sympy.Function('u')(x, t).diff(x), sympy.Function('u')(x, t).diff(t)*sympy.exp(sympy.Function('u')(x, t))), sympy.Function('u')(x, t), [sympy.Function('X')(x), sympy.Function('T')(t)]))",
+      "x t",
+    ),
+  )
+
+  let invalid_strategy : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try?
+    @symsolvers.pde_separate(add_eq, ut, [xfun(x()), tfun(t())], strategy="div")
+  assert_eq(
+    local_expr_option_result_type(invalid_strategy),
+    solvers_eval_stmt_result_symbols(
+      "sympy.solvers.pde_separate(sympy.Eq(sympy.Function('u')(x, t).diff(x), sympy.Function('u')(x, t).diff(t)*sympy.exp(sympy.Function('u')(x, t))), sympy.Function('u')(x, t), [sympy.Function('X')(x), sympy.Function('T')(t)], 'div')",
+      "x t",
+    ),
+  )
+
+  let fxyz = @symcore.applied_undefined_function("F", [x(), y(), z()])
+  let sum_eq = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.add([
+      @symcalculus.diff(fxyz, x()),
+      @symcalculus.diff(fxyz, y()),
+      @symcalculus.diff(fxyz, z()),
+    ]),
+    @symcore.int(0),
+  )
+  let duplicate_args : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try?
+    @symsolvers.pde_separate_mul(
+      sum_eq,
+      fxyz,
+      [
+        xfun(x()),
+        @symcore.applied_undefined_function("u", [z(), z()]),
+      ],
+    )
+  assert_eq(
+    local_expr_option_result_type(duplicate_args),
+    solvers_eval_stmt_result_symbols(
+      "sympy.solvers.pde_separate_mul(sympy.Eq(sympy.Function('F')(x, y, z).diff(x) + sympy.Function('F')(x, y, z).diff(y) + sympy.Function('F')(x, y, z).diff(z), 0), sympy.Function('F')(x, y, z), [sympy.Function('X')(x), sympy.Function('u')(z, z)])",
+      "x y z",
+    ),
+  )
+  let wrong_count : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try?
+    @symsolvers.pde_separate_mul(sum_eq, fxyz, [xfun(x()), yfun(y())])
+  assert_eq(
+    local_expr_option_result_type(wrong_count),
+    solvers_eval_stmt_result_symbols(
+      "sympy.solvers.pde_separate_mul(sympy.Eq(sympy.Function('F')(x, y, z).diff(x) + sympy.Function('F')(x, y, z).diff(y) + sympy.Function('F')(x, y, z).diff(z), 0), sympy.Function('F')(x, y, z), [sympy.Function('X')(x), sympy.Function('Y')(y)])",
+      "x y z",
+    ),
+  )
+  let wrong_args : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try?
+    @symsolvers.pde_separate_mul(
+      sum_eq,
+      fxyz,
+      [
+        xfun(t()),
+        @symcore.applied_undefined_function("Y", [x(), y()]),
+      ],
+    )
+  assert_eq(
+    local_expr_option_result_type(wrong_args),
+    solvers_eval_stmt_result_symbols(
+      "sympy.solvers.pde_separate_mul(sympy.Eq(sympy.Function('F')(x, y, z).diff(x) + sympy.Function('F')(x, y, z).diff(y) + sympy.Function('F')(x, y, z).diff(z), 0), sympy.Function('F')(x, y, z), [sympy.Function('X')(t), sympy.Function('Y')(x, y)])",
+      "x y z t",
+    ),
+  )
+
+  let yz_sep_local = @symsolvers.pde_separate_mul(sum_eq, fxyz, [yfun(y()), u(x(), z())]).unwrap_or([])
+  assert_eq(yz_sep_local.length(), 2)
+  let yz_sep_expected0 = @symcore.mul([
+    @symcalculus.diff(yfun(y()), y()),
+    @symcore.pow(yfun(y()), @symcore.int(-1)),
+  ])
+  assert_eq(local_sort_expr_cmp(yz_sep_local[0], yz_sep_expected0), 0)
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(yz_sep_local[1]) +
+      " - (-sympy.diff(sympy.Function('u')(x, z), x)/sympy.Function('u')(x, z) - sympy.diff(sympy.Function('u')(x, z), z)/sympy.Function('u')(x, z))) == 0)",
+      "x z",
+    ),
+    "True",
+  )
+  assert_eq(
+    solvers_eval_str(
+      "repr(sympy.solvers.pde_separate_mul(sympy.Eq(sympy.Function('F')(x, y, z).diff(x) + sympy.Function('F')(x, y, z).diff(y) + sympy.Function('F')(x, y, z).diff(z), 0), sympy.Function('F')(x, y, z), [sympy.Function('Y')(y), sympy.Function('u')(x, z)]))",
+    ),
+    "[Derivative(Y(y), y)/Y(y), -Derivative(u(x, z), x)/u(x, z) - Derivative(u(x, z), z)/u(x, z)]",
+  )
+  let xyz_sep_local = @symsolvers.pde_separate_mul(sum_eq, fxyz, [xfun(x()), yfun(y()), zfun(z())]).unwrap_or([])
+  assert_eq(xyz_sep_local.length(), 2)
+  assert_eq(
+    local_sort_expr_cmp(
+      xyz_sep_local[0],
+      @symcore.mul([
+        @symcalculus.diff(xfun(x()), x()),
+        @symcore.pow(xfun(x()), @symcore.int(-1)),
+      ]),
+    ),
+    0,
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(xyz_sep_local[1]) +
+      " - (-sympy.diff(sympy.Function('Z')(z), z)/sympy.Function('Z')(z) - sympy.diff(sympy.Function('Y')(y), y)/sympy.Function('Y')(y))) == 0)",
+      "y z",
+    ),
+    "True",
+  )
+  assert_eq(
+    solvers_eval_str(
+      "repr(sympy.solvers.pde_separate_mul(sympy.Eq(sympy.Function('F')(x, y, z).diff(x) + sympy.Function('F')(x, y, z).diff(y) + sympy.Function('F')(x, y, z).diff(z), 0), sympy.Function('F')(x, y, z), [sympy.Function('X')(x), sympy.Function('Y')(y), sympy.Function('Z')(z)]))",
+    ),
+    "[Derivative(X(x), x)/X(x), -Derivative(Z(z), z)/Z(z) - Derivative(Y(y), y)/Y(y)]",
+  )
+
+  let c = @symcore.Expr::Symbol("C")
+  let wave_eq = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcalculus.diff(@symcalculus.diff(ut, t()), t()),
+    (c ^ @symcore.int(2)) * @symcalculus.diff(@symcalculus.diff(ut, x()), x()),
+  )
+  assert_eq(
+    local_expr_list_text(
+      @symsolvers.pde_separate_mul(wave_eq, ut, [xfun(x()), tfun(t())]).unwrap_or([]),
+    ),
+    solvers_eval_str_symbols(
+      "repr(sympy.solvers.pde_separate_mul(sympy.Eq(sympy.Function('u')(x, t).diff(t, 2), C**2*sympy.Function('u')(x, t).diff(x, 2)), sympy.Function('u')(x, t), [sympy.Function('X')(x), sympy.Function('T')(t)]))",
+      "x t C",
+    ),
+  )
+  assert_eq(
+    local_expr_list_text(
+      @symsolvers.pde_separate(
+        @symcore.add([
+          @symcalculus.diff(@symcalculus.diff(ut, x()), x()),
+          @symcore.mul([
+            @symcore.int(-1),
+            @symcalculus.diff(@symcalculus.diff(ut, t()), t()),
+          ]),
+        ]),
+        ut,
+        [@symcore.applied_undefined_function("T", [x()]), @symcore.applied_undefined_function("X", [t()])],
+      ).unwrap_or([]),
+    ),
+    solvers_eval_str_symbols(
+      "repr(sympy.solvers.pde_separate(sympy.Function('u')(x, t).diff(x, 2) - sympy.Function('u')(x, t).diff(t, 2), sympy.Function('u')(x, t), [sympy.Function('T')(x), sympy.Function('X')(t)]))",
+      "x t",
     ),
   )
 }
