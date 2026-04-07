@@ -5645,6 +5645,67 @@ test "pdsolve matches additional SymPy homogeneous and variable source cases" {
 }
 
 ///|
+test "checkpdesol follows SymPy list input and solve_for_func behavior" {
+  let eq4 = x() * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq5 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq6 = u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let checked = checkpdesols(
+    eq4,
+    [pdsolve(eq5, func=Some(u(x(), y()))), pdsolve(eq6, func=Some(u(x(), y())))],
+    func=Some(u(x(), y())),
+  )
+  inspect(checked.length().to_string(), content="2")
+  inspect(checked[0].0.to_string(), content="false")
+  inspect(checked[1].0.to_string(), content="false")
+  let expected0 = (x() + @symcore.int(-2)) *
+    @symcore.applied_undefined_function("F", [@symcore.int(3) * x() + @symcore.int(-1) * y()]) *
+    @symcore.function(
+      "exp",
+      [
+        @symcore.mul([@symcore.rational_from_ints(-1, 5) catch { _ => fail("r4") }, x()]) +
+        @symcore.mul([@symcore.rational_from_ints(-3, 5) catch { _ => fail("r5") }, y()]),
+      ],
+    )
+  let expected1 = (x() + @symcore.int(-1)) *
+    @symcore.applied_undefined_function("F", [@symcore.int(3) * x() + @symcore.int(-1) * y()]) *
+    @symcore.function(
+      "exp",
+      [
+        @symcore.mul([@symcore.rational_from_ints(-1, 10) catch { _ => fail("r6") }, x()]) +
+        @symcore.mul([@symcore.rational_from_ints(-3, 10) catch { _ => fail("r7") }, y()]),
+      ],
+    )
+  assert_true(expr_semantically_equal(checked[0].1, expected0))
+  assert_true(expr_semantically_equal(checked[1].1, expected1))
+
+  let implicit_sol = pdsolve(eq4, func=Some(u(x(), y())))
+  let implicit_zero = match implicit_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) =>
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        @symcore.add([lhs, @symcore.int(-1) * rhs]),
+        @symcore.int(0),
+      )
+    _ => implicit_sol
+  }
+  inspect(
+    checkpdesol(
+      eq4,
+      implicit_zero,
+      func=Some(u(x(), y())),
+    ).0.to_string(),
+    content="true",
+  )
+  let no_solve = try? checkpdesol(
+    eq4,
+    implicit_zero,
+    func=Some(u(x(), y())),
+    solve_for_func=false,
+  )
+  assert_true(no_solve is Err(SolverError::NotImplementedError(_)))
+}
+
+///|
 test "checkodesol follows SymPy subscheck-style implicit and exact cases" {
   let c1 = @symcore.Expr::Symbol("C1")
   let exact_sol = @symcore.Expr::Relational(

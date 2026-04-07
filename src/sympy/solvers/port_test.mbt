@@ -238,6 +238,7 @@ fn local_linear_eq_result_type(
   match result {
     Ok(_) => "OK"
     Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
+    Err(@symsolvers.SolverError::NotImplementedError(_)) => "NotImplementedError"
     Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
     Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
     Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
@@ -252,6 +253,7 @@ fn local_lp_result_type(
   match result {
     Ok(_) => "OK"
     Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
+    Err(@symsolvers.SolverError::NotImplementedError(_)) => "NotImplementedError"
     Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
     Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
     Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
@@ -266,6 +268,7 @@ fn local_expr_result_type(
   match result {
     Ok(_) => "OK"
     Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
+    Err(@symsolvers.SolverError::NotImplementedError(_)) => "NotImplementedError"
     Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
     Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
     Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
@@ -280,6 +283,7 @@ fn local_expr_option_result_type(
   match result {
     Ok(_) => "OK"
     Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
+    Err(@symsolvers.SolverError::NotImplementedError(_)) => "NotImplementedError"
     Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
     Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
     Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
@@ -499,6 +503,20 @@ fn local_solution_dict_text(
 ///|
 fn local_expr_list_text(items : Array[@symcore.Expr]) -> String {
   "[" + items.map(@symprint.to_string).join(", ") + "]"
+}
+
+fn local_pde_check_result_type(
+  result : Result[(Bool, @symcore.Expr), @symsolvers.SolverError],
+) -> String {
+  match result {
+    Ok(_) => "OK"
+    Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
+    Err(@symsolvers.SolverError::NotImplementedError(_)) => "NotImplementedError"
+    Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
+    Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
+    Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
+    Err(@symsolvers.SolverError::UnboundedLPError(_)) => "UnboundedLPError"
+  }
 }
 
 ///|
@@ -6577,6 +6595,70 @@ test "solvers parity additional pde source cases" {
     @symprint.to_string(@symsolvers.pdsolve(eq_v4, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")),
     solvers_eval_str_symbols(
       "sympy.sstr(sympy.solvers.pdsolve(sympy.exp(x)**2*sympy.Function('u')(x, y).diff(x) + y, hint='1st_linear_variable_coeff'))",
+      "x y",
+    ),
+  )
+}
+
+///|
+test "solvers parity checkpdesol list and solve_for_func cases" {
+  let eq4 = x() * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq5 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq6 = u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq4_checked = @symsolvers.checkpdesols(
+    eq4,
+    [
+      @symsolvers.pdsolve(eq5, func=Some(u(x(), y()))),
+      @symsolvers.pdsolve(eq6, func=Some(u(x(), y()))),
+    ],
+    func=Some(u(x(), y())),
+  )
+  assert_eq(eq4_checked.length().to_string(), "2")
+  assert_eq(eq4_checked[0].0.to_string(), "false")
+  assert_eq(eq4_checked[1].0.to_string(), "false")
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify((" +
+      py_sympify_expr(eq4_checked[0].1) +
+      ") - ((x - 2)*sympy.Function('F')(3*x - y)*sympy.exp(-x/sympy.S(5) - 3*y/sympy.S(5)))) == 0)",
+      "x y",
+    ),
+    "True",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify((" +
+      py_sympify_expr(eq4_checked[1].1) +
+      ") - ((x - 1)*sympy.Function('F')(3*x - y)*sympy.exp(-x/sympy.S(10) - 3*y/sympy.S(10)))) == 0)",
+      "x y",
+    ),
+    "True",
+  )
+  let implicit_eq4 = @symsolvers.pdsolve(eq4, func=Some(u(x(), y())))
+  let implicit_zero = match implicit_eq4 {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) =>
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        @symcore.add([lhs, @symcore.int(-1) * rhs]),
+        @symcore.int(0),
+      )
+    _ => implicit_eq4
+  }
+  assert_eq(
+    @symsolvers.checkpdesol(eq4, implicit_zero, func=Some(u(x(), y()))).0.to_string(),
+    "true",
+  )
+  let no_solve_eq4 : Result[(Bool, @symcore.Expr), @symsolvers.SolverError] = try?
+    @symsolvers.checkpdesol(
+      eq4,
+      implicit_zero,
+      func=Some(u(x(), y())),
+      solve_for_func=false,
+    )
+  assert_eq(
+    local_pde_check_result_type(no_solve_eq4),
+    solvers_eval_stmt_result_symbols(
+      "sol = sympy.solvers.pdsolve(x*sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + 3*sympy.Function('u')(x, y).diff(y)); sol4 = sympy.Eq(sol.lhs - sol.rhs, 0); sympy.solvers.checkpdesol(x*sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + 3*sympy.Function('u')(x, y).diff(y), sol4, solve_for_func=False)",
       "x y",
     ),
   )

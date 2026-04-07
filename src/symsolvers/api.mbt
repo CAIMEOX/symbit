@@ -1,6 +1,7 @@
 ///|
 pub(all) suberror SolverError {
   ValueError(String)
+  NotImplementedError(String)
   NonlinearError(String)
   ShapeError(String)
   InfeasibleLPError(String)

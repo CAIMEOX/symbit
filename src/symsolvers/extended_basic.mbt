@@ -8553,44 +8553,123 @@ pub fn checkpdesol(
   pde : Expr,
   sol : Expr,
   func? : Expr? = None,
+  solve_for_func? : Bool = true,
 ) -> (Bool, Expr) raise SolverError {
-  let f = match func {
-    Some(value) => value
-    None =>
-      match sol {
-        Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) =>
-          match solver_infer_function(lhs, 2) {
-            Some(value) => value
-            None =>
-              match solver_infer_function(rhs, 2) {
-                Some(value) => value
-                None =>
-                  match solver_infer_function(solver_normalize_equation(pde), 2) {
-                    Some(value) => value
-                    None =>
-                      raise SolverError::ValueError(
-                        "unable to infer PDE function",
-                      )
-                  }
-              }
-          }
-        _ =>
-          match solver_infer_function(solver_normalize_equation(pde), 2) {
-            Some(value) => value
-            None => raise SolverError::ValueError("unable to infer PDE function")
-          }
-      }
+  let f = solver_checkpdesol_infer_function(pde, [sol], func)
+  solver_checkpdesol_single(pde, sol, f, solve_for_func)
+}
+
+///|
+pub fn checkpdesols(
+  pde : Expr,
+  sols : Array[Expr],
+  func? : Expr? = None,
+  solve_for_func? : Bool = true,
+) -> Array[(Bool, Expr)] raise SolverError {
+  let f = solver_checkpdesol_infer_function(pde, sols, func)
+  let out : Array[(Bool, Expr)] = []
+  for sol in sols {
+    out.push(solver_checkpdesol_single(pde, sol, f, solve_for_func))
   }
-  let rhs = match sol {
-    Expr::Relational(@symcore.RelOp::Eq, lhs, value) =>
-      if solver_is_same_undefined_application(lhs, f) {
-        value
-      } else if solver_is_same_undefined_application(value, f) {
-        lhs
-      } else {
-        raise SolverError::ValueError("solution must solve for the target function")
+  out
+}
+
+///|
+fn solver_equation_expr(expr : Expr) -> Expr {
+  match expr {
+    Expr::Relational(@symcore.RelOp::Eq, _, _) => expr
+    _ => Expr::Relational(@symcore.RelOp::Eq, expr, @symcore.int(0))
+  }
+}
+
+///|
+fn solver_checkpdesol_infer_function(
+  pde : Expr,
+  sols : Array[Expr],
+  func : Expr?,
+) -> Expr raise SolverError {
+  match func {
+    Some(value) => value
+    None => {
+      for sol in sols {
+        match sol {
+          Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) =>
+            match solver_infer_function(lhs, 2) {
+              Some(value) => return value
+              None =>
+                match solver_infer_function(rhs, 2) {
+                  Some(value) => return value
+                  None => ()
+                }
+            }
+          _ =>
+            match solver_infer_function(sol, 2) {
+              Some(value) => return value
+              None => ()
+            }
+        }
       }
-    _ => sol
+      match solver_infer_function(solver_normalize_equation(pde), 2) {
+        Some(value) => value
+        None => raise SolverError::ValueError("unable to infer PDE function")
+      }
+    }
+  }
+}
+
+///|
+fn solver_checkpdesol_single(
+  pde : Expr,
+  sol : Expr,
+  f : Expr,
+  solve_for_func : Bool,
+) -> (Bool, Expr) raise SolverError {
+  let sol_eq = match sol {
+    Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) =>
+      if solver_is_same_undefined_application(lhs, f) {
+        sol
+      } else if solver_is_same_undefined_application(rhs, f) {
+        Expr::Relational(@symcore.RelOp::Eq, f, lhs)
+      } else {
+        sol
+      }
+    _ => Expr::Relational(@symcore.RelOp::Eq, f, sol)
+  }
+  let rhs = match sol_eq {
+    Expr::Relational(@symcore.RelOp::Eq, lhs, value) =>
+      if solver_is_same_undefined_application(lhs, f) &&
+        !@symcore.has(value, f) {
+        value
+      } else {
+        if solve_for_func {
+          match solver_checkodesol_solve_target(sol_eq, f) {
+            items if items.length() == 1 =>
+              return solver_checkpdesol_single(
+                pde,
+                Expr::Relational(@symcore.RelOp::Eq, f, items[0]),
+                f,
+                false,
+              )
+            items if items.length() > 1 =>
+              raise SolverError::NotImplementedError(
+                "Unable to test if " +
+                @symprint.to_string(sol_eq) +
+                " is a solution to " +
+                @symprint.to_string(solver_equation_expr(pde)) +
+                ".",
+              )
+            _ => ()
+          }
+        }
+        raise SolverError::NotImplementedError(
+          "Unable to test if " +
+          @symprint.to_string(sol_eq) +
+          " is a solution to " +
+          @symprint.to_string(solver_equation_expr(pde)) +
+          ".",
+        )
+      }
+    _ => raise SolverError::NotImplementedError("invalid PDE solution form")
   }
   match solver_match_equal_derivative_pde(pde, f) {
     Some((x, y)) => {

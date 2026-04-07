@@ -20,7 +20,9 @@ pub fn checkinfsol(@symcore.Expr, Array[Map[String, @symcore.Expr]], func? : @sy
 
 pub fn checkodesol(@symcore.Expr, @symcore.Expr, func? : @symcore.Expr?, order? : Int?, solve_for_func? : Bool) -> (Bool, @symcore.Expr) raise SolverError
 
-pub fn checkpdesol(@symcore.Expr, @symcore.Expr, func? : @symcore.Expr?) -> (Bool, @symcore.Expr) raise SolverError
+pub fn checkpdesol(@symcore.Expr, @symcore.Expr, func? : @symcore.Expr?, solve_for_func? : Bool) -> (Bool, @symcore.Expr) raise SolverError
+
+pub fn checkpdesols(@symcore.Expr, Array[@symcore.Expr], func? : @symcore.Expr?, solve_for_func? : Bool) -> Array[(Bool, @symcore.Expr)] raise SolverError
 
 pub fn checksol(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> Bool? raise SolverError
 
@@ -137,6 +139,7 @@ pub fn substitution(Array[@symcore.Expr], Array[@symcore.Expr]) -> @symsets.Set 
 // Errors
 pub(all) suberror SolverError {
   ValueError(String)
+  NotImplementedError(String)
   ShapeError(String)
   InfeasibleLPError(String)
   UnboundedLPError(String)
