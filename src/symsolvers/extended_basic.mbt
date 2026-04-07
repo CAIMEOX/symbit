@@ -6734,6 +6734,67 @@ fn solver_clear_add_numeric_denominators(expr : Expr) -> Expr {
 }
 
 ///|
+fn solver_rewrite_exp_inverse(expr : Expr) -> Expr {
+  match expr {
+    Expr::Add(args) => @symcore.add(args.map(solver_rewrite_exp_inverse))
+    Expr::Mul(args) => @symcore.mul(args.map(solver_rewrite_exp_inverse))
+    Expr::Pow(base, exp) =>
+      if @symcore.compare_expr(exp, @symcore.int(-1)) == 0 {
+        match base {
+          Expr::Apply(Expr::FunctionHead("exp"), [arg]) =>
+            @symcore.function(
+              "exp",
+              [canonical_expr(@symcore.mul([@symcore.int(-1), solver_rewrite_exp_inverse(arg)]))],
+            )
+          Expr::Pow(Expr::Apply(Expr::FunctionHead("exp"), [arg]), inner_exp) =>
+            @symcore.function(
+              "exp",
+              [
+                canonical_expr(
+                  @symcore.mul([
+                    @symcore.int(-1),
+                    solver_rewrite_exp_inverse(inner_exp),
+                    solver_rewrite_exp_inverse(arg),
+                  ]),
+                ),
+              ],
+            )
+          Expr::Mul(args) =>
+            canonical_expr(
+              @symcore.mul(
+                args.map(arg =>
+                  solver_rewrite_exp_inverse(@symcore.pow(arg, @symcore.int(-1)))
+                ),
+              ),
+            )
+          _ =>
+            @symcore.pow(
+              solver_rewrite_exp_inverse(base),
+              solver_rewrite_exp_inverse(exp),
+            )
+        }
+      } else {
+        @symcore.pow(
+          solver_rewrite_exp_inverse(base),
+          solver_rewrite_exp_inverse(exp),
+        )
+      }
+    Expr::Tuple(items) => Expr::Tuple(items.map(solver_rewrite_exp_inverse))
+    Expr::Apply(head, args) =>
+      @symcore.raw_apply(
+        solver_rewrite_exp_inverse(head),
+        args.map(solver_rewrite_exp_inverse),
+      ).unwrap_or(
+        Expr::Apply(
+          solver_rewrite_exp_inverse(head),
+          args.map(solver_rewrite_exp_inverse),
+        ),
+      )
+    _ => expr
+  }
+}
+
+///|
 fn solver_characteristic_invariant_cleanup(expr : Expr) -> Expr {
   let simplified = canonical_expr(@symsimplify.simplify(expr, max_passes=2))
   let lifted =
@@ -6749,7 +6810,9 @@ fn solver_characteristic_invariant_cleanup(expr : Expr) -> Expr {
     }
   canonical_expr(
     @symsimplify.simplify(
-      solver_clear_add_numeric_denominators(lifted),
+      solver_rewrite_exp_inverse(
+        solver_clear_add_numeric_denominators(lifted),
+      ),
       max_passes=2,
     ),
   )
@@ -7423,43 +7486,7 @@ fn solver_pde_prepare_separation_term(expr : Expr) -> Expr {
 
 ///|
 fn solver_pde_rewrite_exp_inverse(expr : Expr) -> Expr {
-  match expr {
-    Expr::Add(args) => @symcore.add(args.map(solver_pde_rewrite_exp_inverse))
-    Expr::Mul(args) => @symcore.mul(args.map(solver_pde_rewrite_exp_inverse))
-    Expr::Pow(base, exp) =>
-      match base {
-        Expr::Apply(Expr::FunctionHead("exp"), [arg]) => {
-          if @symcore.compare_expr(exp, @symcore.int(-1)) == 0 {
-            @symcore.function(
-              "exp",
-              [canonical_expr(@symcore.mul([@symcore.int(-1), solver_pde_rewrite_exp_inverse(arg)]))],
-            )
-          } else {
-            @symcore.pow(
-              solver_pde_rewrite_exp_inverse(base),
-              solver_pde_rewrite_exp_inverse(exp),
-            )
-          }
-        }
-        _ =>
-          @symcore.pow(
-            solver_pde_rewrite_exp_inverse(base),
-            solver_pde_rewrite_exp_inverse(exp),
-          )
-      }
-    Expr::Tuple(items) => Expr::Tuple(items.map(solver_pde_rewrite_exp_inverse))
-    Expr::Apply(head, args) =>
-      @symcore.raw_apply(
-        solver_pde_rewrite_exp_inverse(head),
-        args.map(solver_pde_rewrite_exp_inverse),
-      ).unwrap_or(
-        Expr::Apply(
-          solver_pde_rewrite_exp_inverse(head),
-          args.map(solver_pde_rewrite_exp_inverse),
-        ),
-      )
-    _ => expr
-  }
+  solver_rewrite_exp_inverse(expr)
 }
 
 ///|
@@ -7924,6 +7951,9 @@ fn solver_pde_reduced_ode_rhs(
     with_solvefun
   }
   canonical_expr(@symsimplify.simplify(normalized, max_passes=3))
+  |> @symsimplify.fraction_expand
+  |> solver_rewrite_exp_inverse
+  |> canonical_expr
 }
 
 ///|

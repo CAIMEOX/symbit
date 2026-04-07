@@ -213,6 +213,31 @@ fn exact_positive_denominator_pow(base : Expr, exp : Expr) -> Expr? {
 }
 
 ///|
+fn exp_negative_power_numerator(base : Expr, exp : Expr) -> Expr? {
+  match @symcore.exact_number_num_den(exp) {
+    Some((num, den)) if num.compare(0N) < 0 => {
+      let positive = @symnum.BigRational::new(-num, den) catch {
+        _ => abort("exp_negative_power_numerator: invalid exponent")
+      }
+      let coeff = Expr::Number(-positive)
+      match base {
+        Expr::Apply(Expr::FunctionHead("exp"), [arg]) =>
+          Some(@symcore.function("exp", [@symcore.mul([coeff, arg])]))
+        Expr::Pow(Expr::Apply(Expr::FunctionHead("exp"), [arg]), inner_exp) =>
+          Some(
+            @symcore.function(
+              "exp",
+              [@symcore.mul([coeff, inner_exp, arg])],
+            ),
+          )
+        _ => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
 fn format_mul(expr : Expr, args : Array[Expr], parent_prec : Int) -> String {
   let prec = precedence(expr)
   let numerators : Array[Expr] = []
@@ -221,9 +246,13 @@ fn format_mul(expr : Expr, args : Array[Expr], parent_prec : Int) -> String {
   for arg in args {
     match @symcore.expr_form(arg) {
       @symcore.ExprForm::Pow(base, exp) =>
-        match exact_positive_denominator_pow(base, exp) {
-          Some(den) => denominators.push(den)
-          None => numerators.push(arg)
+        match exp_negative_power_numerator(base, exp) {
+          Some(num) => numerators.push(num)
+          None =>
+            match exact_positive_denominator_pow(base, exp) {
+              Some(den) => denominators.push(den)
+              None => numerators.push(arg)
+            }
         }
       _ =>
         match @symcore.exact_number_num_den(arg) {

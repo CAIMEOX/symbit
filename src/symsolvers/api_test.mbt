@@ -5518,6 +5518,133 @@ test "pdsolve mismatched hint raises ValueError instead of unsupported" {
 }
 
 ///|
+test "pde classify and checkpdesol match additional SymPy source cases" {
+  let a_sym = @symcore.Expr::Symbol("a")
+  let b_sym = @symcore.Expr::Symbol("b")
+  let c_sym = @symcore.Expr::Symbol("c")
+  let eq1 = a_sym * u(x(), y()) + b_sym * @symcalculus.diff(u(x(), y()), x()) + c_sym * @symcalculus.diff(u(x(), y()), y())
+  let eq2 = @symcore.int(3) * u(x(), y()) + @symcore.int(2) * @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y())
+  let eq3 = a_sym * u(x(), y()) + b_sym * @symcalculus.diff(u(x(), y()), x()) + @symcore.int(2) * @symcalculus.diff(u(x(), y()), y())
+  let eq4 = x() * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq5 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq6 = u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  inspect(
+    expr_list_text(classify_pde(eq1, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    content="[1st_linear_constant_coeff_homogeneous]",
+  )
+  inspect(
+    expr_list_text(classify_pde(eq2, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    content="[1st_linear_constant_coeff_homogeneous]",
+  )
+  inspect(
+    expr_list_text(classify_pde(eq3, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    content="[1st_linear_constant_coeff_homogeneous]",
+  )
+  inspect(
+    expr_list_text(classify_pde(eq4, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    content="[1st_linear_variable_coeff]",
+  )
+  inspect(
+    expr_list_text(
+      classify_pde(
+        eq5,
+        func=Some(u(x(), y())),
+      ).map(name => @symcore.Expr::Symbol(name)),
+    ),
+    content="[1st_linear_constant_coeff_homogeneous]",
+  )
+  inspect(
+    expr_list_text(
+      classify_pde(
+        eq6,
+        func=Some(u(x(), y())),
+      ).map(name => @symcore.Expr::Symbol(name)),
+    ),
+    content="[1st_linear_constant_coeff_homogeneous]",
+  )
+  inspect(
+    checkpdesol(eq4, pdsolve(eq5, func=Some(u(x(), y()))), func=Some(u(x(), y()))).0.to_string(),
+    content="false",
+  )
+  inspect(
+    checkpdesol(eq4, pdsolve(eq6, func=Some(u(x(), y()))), func=Some(u(x(), y()))).0.to_string(),
+    content="false",
+  )
+  for eq in [eq1, eq2, eq3, eq4, eq5, eq6] {
+    inspect(
+      checkpdesol(eq, pdsolve(eq, func=Some(u(x(), y()))), func=Some(u(x(), y()))).0.to_string(),
+      content="true",
+    )
+  }
+}
+
+///|
+test "pdsolve matches additional SymPy homogeneous and variable source cases" {
+  let eq_h1 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y())
+  let eq_h1_sol = pdsolve(eq_h1, func=Some(u(x(), y())))
+  let eq_h1_rhs = match eq_h1_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_true(
+    expr_semantically_equal(
+      eq_h1_rhs,
+      @symcore.applied_undefined_function("F", [x() - y()]) * @symcore.function("exp", [@symcore.int(-1) * x() + @symcore.int(-1) * y()]),
+    ),
+  )
+  inspect(checkpdesol(eq_h1, eq_h1_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
+
+  let eq_h3 = u(x(), y()) + @symcore.int(6) * @symcalculus.diff(u(x(), y()), x()) + @symcore.int(7) * @symcalculus.diff(u(x(), y()), y())
+  let eq_h3_sol = pdsolve(eq_h3, func=Some(u(x(), y())))
+  let eq_h3_rhs = match eq_h3_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_true(
+    expr_semantically_equal(
+      eq_h3_rhs,
+      @symcore.applied_undefined_function("F", [@symcore.int(7) * x() + @symcore.int(-6) * y()]) *
+      @symcore.function(
+        "exp",
+        [
+          @symcore.mul([@symcore.rational_from_ints(-6, 85) catch { _ => fail("r1") }, x()]) +
+          @symcore.mul([@symcore.rational_from_ints(-7, 85) catch { _ => fail("r2") }, y()]),
+        ],
+      ),
+    ),
+  )
+  inspect(checkpdesol(eq_h3, eq_h3_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
+
+  let eq_v2 = (x() ^ @symcore.int(2)) * u(x(), y()) + x() * @symcalculus.diff(u(x(), y()), x()) + x() * y() * @symcalculus.diff(u(x(), y()), y())
+  let eq_v2_sol = pdsolve(eq_v2, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  inspect(@symprint.to_string(eq_v2_sol), content="Eq(u(x, y), F(y*exp(-x))*exp(-x**2/2))")
+  inspect(checkpdesol(eq_v2, eq_v2_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
+
+  let eq_v3 = y() * (x() ^ @symcore.int(2)) * u(x(), y()) + y() * @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y())
+  let eq_v3_sol = pdsolve(eq_v3, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  let eq_v3_rhs = match eq_v3_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_true(
+    expr_semantically_equal(
+      eq_v3_rhs,
+      @symcore.applied_undefined_function("F", [@symcore.int(-2) * x() + (y() ^ @symcore.int(2))]) *
+      @symcore.function(
+        "exp",
+        [@symcore.mul([@symcore.rational_from_ints(-1, 3) catch { _ => fail("r3") }, x() ^ @symcore.int(3)])],
+      ),
+    ),
+  )
+  inspect(checkpdesol(eq_v3, eq_v3_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
+
+  let eq_v4 = (@symcore.function("exp", [x()]) ^ @symcore.int(2)) * @symcalculus.diff(u(x(), y()), x()) + y()
+  let eq_v4_sol = pdsolve(eq_v4, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  inspect(@symprint.to_string(eq_v4_sol), content="Eq(u(x, y), y*exp(-2*x)/2 + F(y))")
+  inspect(checkpdesol(eq_v4, eq_v4_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
+}
+
+///|
 test "checkodesol follows SymPy subscheck-style implicit and exact cases" {
   let c1 = @symcore.Expr::Symbol("C1")
   let exact_sol = @symcore.Expr::Relational(

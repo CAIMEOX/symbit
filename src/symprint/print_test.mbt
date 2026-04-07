@@ -27,6 +27,31 @@ test "pretty to_string wraps multiplicative denominator" {
 }
 
 ///|
+test "pretty to_string prints exp negative powers in numerator form" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  inspect(
+    to_string(
+      @symcore.mul([
+        y,
+        @symcore.pow(@symcore.function("exp", [x]), @symcore.int(-1)),
+      ]),
+    ),
+    content="y*exp(-x)",
+  )
+  inspect(
+    to_string(
+      @symcore.mul([
+        y,
+        @symcore.rational_from_ints(1, 2) catch { _ => fail("half") },
+        @symcore.pow(@symcore.function("exp", [x]), @symcore.int(-2)),
+      ]),
+    ),
+    content="y*exp(-2*x)/2",
+  )
+}
+
+///|
 test "pretty to_string normalizes subtraction and unit coefficients" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")

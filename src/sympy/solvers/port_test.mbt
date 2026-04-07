@@ -6478,6 +6478,111 @@ test "solvers parity expanded pde coefficient hints" {
 }
 
 ///|
+test "solvers parity additional pde source cases" {
+  let eq1 = @symcore.Expr::Symbol("a") * u(x(), y()) + @symcore.Expr::Symbol("b") * @symcalculus.diff(u(x(), y()), x()) + @symcore.Expr::Symbol("c") * @symcalculus.diff(u(x(), y()), y())
+  let eq2 = @symcore.int(3) * u(x(), y()) + @symcore.int(2) * @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y())
+  let eq3 = @symcore.Expr::Symbol("a") * u(x(), y()) + @symcore.Expr::Symbol("b") * @symcalculus.diff(u(x(), y()), x()) + @symcore.int(2) * @symcalculus.diff(u(x(), y()), y())
+  let eq4 = x() * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq5 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq6 = u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  assert_eq(
+    local_expr_list_text(@symsolvers.classify_pde(eq1, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    solvers_eval_str_symbols(
+      "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(a*sympy.Function('u')(x, y) + b*sympy.Function('u')(x, y).diff(x) + c*sympy.Function('u')(x, y).diff(y))])",
+      "a b c x y",
+    ),
+  )
+  assert_eq(
+    local_expr_list_text(@symsolvers.classify_pde(eq2, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    solvers_eval_str_symbols(
+      "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(3*sympy.Function('u')(x, y) + 2*sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y))])",
+      "x y",
+    ),
+  )
+  assert_eq(
+    local_expr_list_text(@symsolvers.classify_pde(eq3, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    solvers_eval_str_symbols(
+      "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(a*sympy.Function('u')(x, y) + b*sympy.Function('u')(x, y).diff(x) + 2*sympy.Function('u')(x, y).diff(y))])",
+      "a b x y",
+    ),
+  )
+  assert_eq(
+    local_expr_list_text(@symsolvers.classify_pde(eq4, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    solvers_eval_str_symbols(
+      "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(x*sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + 3*sympy.Function('u')(x, y).diff(y))])",
+      "x y",
+    ),
+  )
+  assert_eq(
+    @symsolvers.checkpdesol(eq4, @symsolvers.pdsolve(eq5, func=Some(u(x(), y()))), func=Some(u(x(), y()))).0.to_string(),
+    "false",
+  )
+  assert_eq(
+    @symsolvers.checkpdesol(eq4, @symsolvers.pdsolve(eq6, func=Some(u(x(), y()))), func=Some(u(x(), y()))).0.to_string(),
+    "false",
+  )
+
+  let eq_h1 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y())
+  assert_eq(
+    @symprint.to_string(@symsolvers.pdsolve(eq_h1, func=Some(u(x(), y())))),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.pdsolve(2*sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y)))",
+      "x y",
+    ),
+  )
+
+  let eq_h3 = u(x(), y()) + @symcore.int(6) * @symcalculus.diff(u(x(), y()), x()) + @symcore.int(7) * @symcalculus.diff(u(x(), y()), y())
+  let eq_h3_sol = @symsolvers.pdsolve(eq_h3, func=Some(u(x(), y())))
+  let eq_h3_rhs = match eq_h3_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(eq_h3_rhs) +
+      " - sympy.solvers.pdsolve(sympy.Function('u')(x, y) + 6*sympy.Function('u')(x, y).diff(x) + 7*sympy.Function('u')(x, y).diff(y)).rhs) == 0)",
+      "x y",
+    ),
+    "True",
+  )
+
+  let eq_v2 = (x() ^ @symcore.int(2)) * u(x(), y()) + x() * @symcalculus.diff(u(x(), y()), x()) + x() * y() * @symcalculus.diff(u(x(), y()), y())
+  assert_eq(
+    @symprint.to_string(@symsolvers.pdsolve(eq_v2, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.pdsolve(x**2*sympy.Function('u')(x, y) + x*sympy.Function('u')(x, y).diff(x) + x*y*sympy.Function('u')(x, y).diff(y), hint='1st_linear_variable_coeff'))",
+      "x y",
+    ),
+  )
+
+  let eq_v3 = y() * (x() ^ @symcore.int(2)) * u(x(), y()) + y() * @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y())
+  let eq_v3_sol = @symsolvers.pdsolve(eq_v3, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  let eq_v3_rhs = match eq_v3_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(eq_v3_rhs) +
+      " - sympy.solvers.pdsolve(y*x**2*sympy.Function('u')(x, y) + y*sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y), hint='1st_linear_variable_coeff').rhs) == 0)",
+      "x y",
+    ),
+    "True",
+  )
+
+  let eq_v4 = (@symcore.function("exp", [x()]) ^ @symcore.int(2)) * @symcalculus.diff(u(x(), y()), x()) + y()
+  assert_eq(
+    @symprint.to_string(@symsolvers.pdsolve(eq_v4, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.pdsolve(sympy.exp(x)**2*sympy.Function('u')(x, y).diff(x) + y, hint='1st_linear_variable_coeff'))",
+      "x y",
+    ),
+  )
+}
+
+///|
 test "solvers parity checkodesol subscheck cases" {
   let exact_sol = @symcore.Expr::Relational(
     @symcore.RelOp::Eq,
