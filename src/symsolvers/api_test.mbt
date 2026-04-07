@@ -446,10 +446,12 @@ fn local_constant_renumber(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn expr_semantically_equal(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
-  if @symcore.compare_expr(lhs, rhs) == 0 {
+  let lhs_norm = local_semantic_normalize(lhs)
+  let rhs_norm = local_semantic_normalize(rhs)
+  if @symcore.compare_expr(lhs_norm, rhs_norm) == 0 {
     return true
   }
-  let raw_diff = lhs + @symcore.int(-1) * rhs
+  let raw_diff = lhs_norm + @symcore.int(-1) * rhs_norm
   if @symcore.compare_expr(raw_diff, @symcore.int(0)) == 0 || @symcore.is_zero(raw_diff) {
     return true
   }
@@ -458,7 +460,102 @@ fn expr_semantically_equal(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
     return true
   }
   let rational = @symsimplify.ratsimp(raw_diff, max_passes=4)
-  @symcore.compare_expr(rational, @symcore.int(0)) == 0 || @symcore.is_zero(rational)
+  if @symcore.compare_expr(rational, @symcore.int(0)) == 0 || @symcore.is_zero(rational) {
+    return true
+  }
+  let expanded = local_semantic_normalize(@symsimplify.numer_expand(raw_diff))
+  if @symcore.compare_expr(expanded, @symcore.int(0)) == 0 || @symcore.is_zero(expanded) {
+    return true
+  }
+  let expanded_simplified = local_semantic_normalize(@symsimplify.simplify(expanded, max_passes=4))
+  if @symcore.compare_expr(expanded_simplified, @symcore.int(0)) == 0 ||
+    @symcore.is_zero(expanded_simplified) {
+    return true
+  }
+  let expanded_rational = local_semantic_normalize(@symsimplify.ratsimp(expanded, max_passes=4))
+  @symcore.compare_expr(expanded_rational, @symcore.int(0)) == 0 ||
+    @symcore.is_zero(expanded_rational)
+}
+
+///|
+fn local_canonical_expr(expr : @symcore.Expr) -> @symcore.Expr {
+  @symsimplify.simplify(
+    @sympolys.domain_normal_expr(@sympolys.Domain::EX, expr) catch {
+      _ => expr
+    },
+  )
+}
+
+///|
+fn local_expand_exp_sums(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Add(args) =>
+      @symcore.add(args.map(local_expand_exp_sums))
+    @symcore.Expr::Mul(args) =>
+      @symcore.mul(args.map(local_expand_exp_sums))
+    @symcore.Expr::Pow(base, exp) =>
+      @symcore.pow(local_expand_exp_sums(base), local_expand_exp_sums(exp))
+    @symcore.Expr::Tuple(items) =>
+      @symcore.Expr::Tuple(items.map(local_expand_exp_sums))
+    @symcore.Expr::Relational(op, lhs, rhs) =>
+      @symcore.Expr::Relational(op, local_expand_exp_sums(lhs), local_expand_exp_sums(rhs))
+    @symcore.Expr::Apply(head, args) => {
+      let head_norm = local_expand_exp_sums(head)
+      let args_norm = args.map(arg => local_canonical_expr(local_expand_exp_sums(arg)))
+      match (head_norm, args_norm) {
+        (@symcore.Expr::FunctionHead(name), [@symcore.Expr::Add(add_args)]) if name == "exp" =>
+          @symcore.mul(add_args.map(arg => @symcore.function("exp", [arg])))
+        _ => @symcore.Expr::Apply(head_norm, args_norm)
+      }
+    }
+    _ => expr
+  }
+}
+
+///|
+fn local_combine_exp_products(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Add(args) =>
+      @symcore.add(args.map(local_combine_exp_products))
+    @symcore.Expr::Mul(args) => {
+      let exp_args : Array[@symcore.Expr] = []
+      let other_args : Array[@symcore.Expr] = []
+      for arg in args.map(local_combine_exp_products) {
+        match arg {
+          @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), [inner]) if name == "exp" =>
+            exp_args.push(inner)
+          _ => other_args.push(arg)
+        }
+      }
+      if exp_args.is_empty() {
+        @symcore.mul(other_args)
+      } else {
+        other_args.push(@symcore.function("exp", [@symcore.add(exp_args)]))
+        @symcore.mul(other_args)
+      }
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      @symcore.pow(local_combine_exp_products(base), local_combine_exp_products(exp))
+    @symcore.Expr::Tuple(items) =>
+      @symcore.Expr::Tuple(items.map(local_combine_exp_products))
+    @symcore.Expr::Relational(op, lhs, rhs) =>
+      @symcore.Expr::Relational(op, local_combine_exp_products(lhs), local_combine_exp_products(rhs))
+    @symcore.Expr::Apply(head, args) =>
+      @symcore.Expr::Apply(
+        local_combine_exp_products(head),
+        args.map(arg => local_canonical_expr(local_combine_exp_products(arg))),
+      )
+    _ => expr
+  }
+}
+
+///|
+fn local_semantic_normalize(expr : @symcore.Expr) -> @symcore.Expr {
+  local_canonical_expr(
+    local_combine_exp_products(
+      local_expand_exp_sums(expr),
+    ),
+  )
 }
 
 ///|
@@ -541,6 +638,30 @@ fn maybe_expr_text(value : @symcore.Expr?) -> String {
   match value {
     Some(v) => @symprint.to_string(v)
     None => "None"
+  }
+}
+
+///|
+fn expr_dict_get(expr : @symcore.Expr, key : String) -> @symcore.Expr? {
+  match expr {
+    @symcore.Expr::Dict(items) => {
+      for item in items {
+        let (k, v) = item
+        if @symprint.to_string(k) == key {
+          return Some(v)
+        }
+      }
+      None
+    }
+    _ => None
+  }
+}
+
+///|
+fn expr_dict_len_text(expr : @symcore.Expr) -> String {
+  match expr {
+    @symcore.Expr::Dict(items) => items.length().to_string()
+    _ => "None"
   }
 }
 
@@ -3706,8 +3827,9 @@ test "solve_undetermined_coeffs matches coefficients into symbolic dicts" {
 test "canonical_odes covers low-level source-compatible entry points" {
   let c1 = @symcore.Expr::Symbol("C1")
   let c2 = @symcore.Expr::Symbol("C2")
-  inspect(allhints.length().to_string(), content="45")
+  inspect(allhints.length().to_string(), content="46")
   inspect(allhints[0], content="factorable")
+  inspect(allhints.contains("2nd_linear_bessel_transform").to_string(), content="true")
   inspect(
     allhints[allhints.length() - 1],
     content="2nd_nonlinear_autonomous_conserved_Integral",
@@ -4788,6 +4910,207 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
       ")",
     ),
     content="(true, 0)",
+  )
+}
+
+///|
+test "dsolve meta-hints cover SymPy-style front doors" {
+  let ode = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcalculus.diff(f(x()), x()),
+    f(x()),
+  )
+  let ode_all = dsolve(ode, func=Some(f(x())), hint="all")
+  inspect(expr_dict_len_text(ode_all), content="10")
+  inspect(maybe_expr_text(expr_dict_get(ode_all, "default")), content="separable")
+  inspect(maybe_expr_text(expr_dict_get(ode_all, "order")), content="1")
+  inspect(maybe_expr_text(expr_dict_get(ode_all, "all")), content="True")
+  inspect(
+    normalize_text(maybe_expr_text(expr_dict_get(ode_all, "1st_linear"))),
+    content="Eq(f(x), C1*exp(x))",
+  )
+  let ode_all_integral = dsolve(ode, func=Some(f(x())), hint="all_Integral")
+  inspect(
+    normalize_text(maybe_expr_text(expr_dict_get(ode_all_integral, "1st_linear_Integral"))),
+    content="Eq(f(x), C1*exp(-Integral(-1, (x,))))",
+  )
+  let mismatched_ode : Result[@symcore.Expr, SolverError] = try?
+    dsolve(ode, func=Some(f(x())), hint="factorable")
+  inspect(
+    match mismatched_ode {
+      Err(err) => err.to_string()
+      Ok(_) => "ok"
+    },
+    content="ValueError(\"ODE Eq(Derivative(f(x), x), f(x)) does not match hint factorable\")",
+  )
+}
+
+///|
+test "pdsolve meta-hints cover SymPy-style front doors" {
+  let pde_source = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.add([
+      @symcore.mul([@symcore.int(-2), @symcalculus.diff(u(x(), y()), x())]),
+      @symcore.mul([@symcore.int(4), @symcalculus.diff(u(x(), y()), y())]),
+      @symcore.mul([@symcore.int(5), u(x(), y())]),
+    ]),
+    @symcore.function("exp", [x() + @symcore.int(3) * y()]),
+  )
+  let pde_all = pdsolve(
+    pde_source,
+    func=Some(u(x(), y())),
+    hint="all",
+  )
+  inspect(expr_dict_len_text(pde_all), content="6")
+  inspect(
+    maybe_expr_text(expr_dict_get(pde_all, "default")),
+    content="1st_linear_constant_coeff",
+  )
+  inspect(
+    maybe_expr_text(expr_dict_get(pde_all, "order")),
+    content="1",
+  )
+  let actual_rhs = match expr_dict_get(pde_all, "1st_linear_constant_coeff").unwrap_or(@symcore.int(0)) {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  inspect(
+    @symprint.to_string(actual_rhs),
+    content="exp(-y + x/2)*(exp(x/2 + 4*y)/15 + F(2*y + 4*x))",
+  )
+}
+
+///|
+test "pdsolve expanded constant coefficient hints follow SymPy source cases" {
+  let pde_source = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.add([
+      @symcore.mul([@symcore.int(-2), @symcalculus.diff(u(x(), y()), x())]),
+      @symcore.mul([@symcore.int(4), @symcalculus.diff(u(x(), y()), y())]),
+      @symcore.mul([@symcore.int(5), u(x(), y())]),
+    ]),
+    @symcore.function("exp", [x() + @symcore.int(3) * y()]),
+  )
+  inspect(
+    expr_list_text(
+      classify_pde(pde_source, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name)),
+    ),
+    content="[1st_linear_constant_coeff, 1st_linear_constant_coeff_Integral]",
+  )
+  let pde_source_sol = pdsolve(
+    pde_source,
+    func=Some(u(x(), y())),
+    hint="1st_linear_constant_coeff",
+  )
+  let actual_rhs = match pde_source_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  inspect(
+    @symprint.to_string(actual_rhs),
+    content="exp(-y + x/2)*(exp(x/2 + 4*y)/15 + F(2*y + 4*x))",
+  )
+}
+
+///|
+test "pdsolve constant coefficient solution keeps explicit source term shape" {
+  let pde_source = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.add([
+      @symcore.mul([@symcore.int(-2), @symcalculus.diff(u(x(), y()), x())]),
+      @symcore.mul([@symcore.int(4), @symcalculus.diff(u(x(), y()), y())]),
+      @symcore.mul([@symcore.int(5), u(x(), y())]),
+    ]),
+    @symcore.function("exp", [x() + @symcore.int(3) * y()]),
+  )
+  let pde_source_sol = pdsolve(
+    pde_source,
+    func=Some(u(x(), y())),
+    hint="1st_linear_constant_coeff",
+  )
+  inspect(
+    @symprint.to_string(pde_source_sol).has_prefix("Eq(u(x, y), ").to_string(),
+    content="true",
+  )
+}
+
+///|
+test "pdsolve constant coefficient integral hint stays available" {
+  let pde_source = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.add([
+      @symcore.mul([@symcore.int(-2), @symcalculus.diff(u(x(), y()), x())]),
+      @symcore.mul([@symcore.int(4), @symcalculus.diff(u(x(), y()), y())]),
+      @symcore.mul([@symcore.int(5), u(x(), y())]),
+    ]),
+    @symcore.function("exp", [x() + @symcore.int(3) * y()]),
+  )
+  let pde_source_sol_integral = pdsolve(
+    pde_source,
+    func=Some(u(x(), y())),
+    hint="1st_linear_constant_coeff_Integral",
+  )
+  inspect(
+    @symprint.to_string(pde_source_sol_integral).has_prefix("Eq(u(x, y), Subs(").to_string(),
+    content="true",
+  )
+}
+
+///|
+test "pdsolve variable coefficient hint follows SymPy source case" {
+  let pde_variable = @symcore.add([
+    x() * @symcalculus.diff(u(x(), y()), x()),
+    @symcore.mul([@symcore.int(-1), y(), @symcalculus.diff(u(x(), y()), y())]),
+    (y() ^ @symcore.int(2)) * u(x(), y()),
+    @symcore.mul([@symcore.int(-1), y() ^ @symcore.int(2)]),
+  ])
+  inspect(
+    expr_list_text(
+      classify_pde(pde_variable, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name)),
+    ),
+    content="[1st_linear_variable_coeff]",
+  )
+  let pde_variable_sol = pdsolve(
+    pde_variable,
+    func=Some(u(x(), y())),
+    hint="1st_linear_variable_coeff",
+  )
+  let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
+  let expected_rhs = local_canonical_expr(
+    @symcore.add([
+      @symcore.mul([
+        @symcore.applied_undefined_function("F", [x() * y()]),
+        @symcore.function("exp", [half * (y() ^ @symcore.int(2))]),
+      ]),
+      @symcore.int(1),
+    ]),
+  )
+  let actual_rhs = match pde_variable_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_true(expr_semantically_equal(actual_rhs, expected_rhs))
+}
+
+///|
+test "pdsolve mismatched hint raises ValueError instead of unsupported" {
+  let pde_source = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.add([
+      @symcore.mul([@symcore.int(-2), @symcalculus.diff(u(x(), y()), x())]),
+      @symcore.mul([@symcore.int(4), @symcalculus.diff(u(x(), y()), y())]),
+      @symcore.mul([@symcore.int(5), u(x(), y())]),
+    ]),
+    @symcore.function("exp", [x() + @symcore.int(3) * y()]),
+  )
+  let mismatched_pde : Result[@symcore.Expr, SolverError] = try?
+    pdsolve(pde_source, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  inspect(
+    match mismatched_pde {
+      Err(err) => err.to_string()
+      Ok(_) => "ok"
+    },
+    content="ValueError(\"PDE Eq(-2*Derivative(u(x, y), x) + 4*Derivative(u(x, y), y) + 5*u(x, y), exp(3*y + x)) does not match hint 1st_linear_variable_coeff\")",
   )
 }
 

@@ -225,6 +225,20 @@ fn local_lp_result_type(
 }
 
 ///|
+fn local_expr_result_type(
+  result : Result[@symcore.Expr, @symsolvers.SolverError],
+) -> String {
+  match result {
+    Ok(_) => "OK"
+    Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
+    Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
+    Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
+    Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
+    Err(@symsolvers.SolverError::UnboundedLPError(_)) => "UnboundedLPError"
+  }
+}
+
+///|
 fn expr_text_has_oracle_prefix(
   local_expr : @symcore.Expr,
   oracle_expr : String,
@@ -887,6 +901,30 @@ fn normalize_union_text(text : String) -> String {
 ///|
 fn local_expr_pair_text(pair : (@symcore.Expr, @symcore.Expr)) -> String {
   "(" + @symprint.to_string(pair.0) + ", " + @symprint.to_string(pair.1) + ")"
+}
+
+///|
+fn local_expr_dict_get(expr : @symcore.Expr, key : String) -> @symcore.Expr? {
+  match expr {
+    @symcore.Expr::Dict(items) => {
+      for item in items {
+        let (k, v) = item
+        if @symprint.to_string(k) == key {
+          return Some(v)
+        }
+      }
+      None
+    }
+    _ => None
+  }
+}
+
+///|
+fn local_expr_dict_len_text(expr : @symcore.Expr) -> String {
+  match expr {
+    @symcore.Expr::Dict(items) => items.length().to_string()
+    _ => "None"
+  }
 }
 
 ///|
@@ -5909,6 +5947,177 @@ test "solvers parity pde front doors" {
       solvers_eval_str(
         "sympy.sstr(sympy.solvers.pdsolve(sympy.Eq(sympy.Function('u')(x, y).diff(x), sympy.Function('u')(x, y).diff(y))))",
       ),
+    ),
+  )
+}
+
+///|
+test "solvers parity dsolve and pdsolve meta-hints" {
+  let ode = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcalculus.diff(f(x()), x()),
+    f(x()),
+  )
+  let ode_all = @symsolvers.dsolve(ode, func=Some(f(x())), hint="all")
+  assert_eq(
+    local_expr_dict_len_text(ode_all),
+    "10",
+  )
+  assert_eq(
+    @symprint.to_string(local_expr_dict_get(ode_all, "default").unwrap_or(@symcore.int(0))),
+    solvers_eval_str(
+      "sympy.sstr(sympy.Symbol(sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), hint='all')['default']))",
+    ),
+  )
+  assert_eq(
+    @symprint.to_string(local_expr_dict_get(ode_all, "1st_linear").unwrap_or(@symcore.int(0))),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), hint='all')['1st_linear'])",
+    ),
+  )
+  let ode_all_integral = @symsolvers.dsolve(ode, func=Some(f(x())), hint="all_Integral")
+  assert_eq(
+    @symprint.to_string(local_expr_dict_get(ode_all_integral, "1st_linear_Integral").unwrap_or(@symcore.int(0))),
+    "Eq(f(x), C1*exp(-Integral(-1, (x,))))",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(sympy.Symbol('C1')*sympy.exp(-sympy.Integral(-1, (x,))) - ((sympy.Symbol('C1') + sympy.Integral(0, x))*sympy.exp(-sympy.Integral(-1, x)))) == 0)",
+      "x",
+    ),
+    "True",
+  )
+  let mismatched_ode : Result[@symcore.Expr, @symsolvers.SolverError] = try?
+    @symsolvers.dsolve(ode, func=Some(f(x())), hint="factorable")
+  assert_eq(
+    local_expr_result_type(mismatched_ode),
+    solvers_eval_stmt_result_symbols(
+      "sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), hint='factorable')",
+      "x",
+    ),
+  )
+
+  let pde_all = @symsolvers.pdsolve(
+    u(x(), y()) +
+    @symcalculus.diff(u(x(), y()), x()) +
+    @symcalculus.diff(u(x(), y()), y()) +
+    (x() ^ @symcore.int(2)) * y(),
+    func=Some(u(x(), y())),
+    hint="all",
+  )
+  assert_eq(
+    local_expr_dict_len_text(pde_all),
+    "6",
+  )
+  assert_eq(
+    @symprint.to_string(local_expr_dict_get(pde_all, "default").unwrap_or(@symcore.int(0))),
+    solvers_eval_str(
+      "sympy.sstr(sympy.Symbol(sympy.solvers.pdsolve(sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y) + x**2*y, hint='all')['default']))",
+    ),
+  )
+  assert_eq(
+    @symprint.to_string(local_expr_dict_get(pde_all, "1st_linear_constant_coeff").unwrap_or(@symcore.int(0))),
+    "Eq(u(x, y), Subs(exp(-xi/2)*(Integral((xi + eta)**2*exp(xi/2)*(-xi + eta)/8, (xi, x + y))/2 + F(eta)), (eta, xi), (-y + x, x + y)))",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(sympy.Subs(sympy.exp(-xi/2)*(sympy.Integral((xi + eta)**2*sympy.exp(xi/2)*(-xi + eta)/8, (xi, x + y))/2 + sympy.Function('F')(eta)), (eta, xi), (-y + x, x + y)).doit() - sympy.solvers.pdsolve(sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y) + x**2*y, hint='all')['1st_linear_constant_coeff'].rhs) == 0)",
+      "x y xi eta",
+    ),
+    "True",
+  )
+}
+
+///|
+test "solvers parity expanded pde coefficient hints" {
+  let pde_source = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.add([
+      @symcore.mul([@symcore.int(-2), @symcalculus.diff(u(x(), y()), x())]),
+      @symcore.mul([@symcore.int(4), @symcalculus.diff(u(x(), y()), y())]),
+      @symcore.mul([@symcore.int(5), u(x(), y())]),
+    ]),
+    @symcore.function("exp", [x() + @symcore.int(3) * y()]),
+  )
+  assert_eq(
+    local_expr_list_text(@symsolvers.classify_pde(pde_source, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    solvers_eval_str(
+      "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(sympy.Eq(-2*sympy.Function('u')(x, y).diff(x) + 4*sympy.Function('u')(x, y).diff(y) + 5*sympy.Function('u')(x, y), sympy.exp(x + 3*y)))])",
+    ),
+  )
+  assert_eq(
+    @symprint.to_string(
+      @symsolvers.pdsolve(
+        pde_source,
+        func=Some(u(x(), y())),
+        hint="1st_linear_constant_coeff",
+      ),
+    ),
+    "Eq(u(x, y), exp(-y + x/2)*(exp(x/2 + 4*y)/15 + F(2*y + 4*x)))",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(sympy.exp(-y + x/2)*(sympy.exp(x/2 + 4*y)/15 + sympy.Function('F')(2*y + 4*x)) - ((sympy.Function('F')(4*x + 2*y)*sympy.exp(x/2) + sympy.exp(x + 4*y)/15)*sympy.exp(-y))) == 0)",
+      "x y",
+    ),
+    "True",
+  )
+  let pde_source_integral = @symprint.to_string(
+    @symsolvers.pdsolve(
+      pde_source,
+      func=Some(u(x(), y())),
+      hint="1st_linear_constant_coeff_Integral",
+    ),
+  )
+  assert_true(pde_source_integral.has_prefix("Eq(u(x, y), Subs("))
+  assert_true(pde_source_integral.contains("Integral("))
+  assert_eq(
+    solvers_eval_str(
+      "str('Integral(' in sympy.sstr(sympy.solvers.pdsolve(sympy.Eq(-2*sympy.Function('u')(x, y).diff(x) + 4*sympy.Function('u')(x, y).diff(y) + 5*sympy.Function('u')(x, y), sympy.exp(x + 3*y)), hint='1st_linear_constant_coeff_Integral')))",
+    ),
+    "True",
+  )
+
+  let pde_variable = @symcore.add([
+    x() * @symcalculus.diff(u(x(), y()), x()),
+    @symcore.mul([@symcore.int(-1), y(), @symcalculus.diff(u(x(), y()), y())]),
+    (y() ^ @symcore.int(2)) * u(x(), y()),
+    @symcore.mul([@symcore.int(-1), y() ^ @symcore.int(2)]),
+  ])
+  assert_eq(
+    local_expr_list_text(@symsolvers.classify_pde(pde_variable, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    solvers_eval_str(
+      "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(x*sympy.Function('u')(x, y).diff(x) - y*sympy.Function('u')(x, y).diff(y) + y**2*sympy.Function('u')(x, y) - y**2)])",
+    ),
+  )
+  assert_eq(
+    @symprint.to_string(
+      @symsolvers.pdsolve(
+        pde_variable,
+        func=Some(u(x(), y())),
+        hint="1st_linear_variable_coeff",
+      ),
+    ),
+    "Eq(u(x, y), exp(y**2/2)*(F(x*y) + exp(-y**2/2)))",
+  )
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(sympy.exp(y**2/2)*(sympy.Function('F')(x*y) + sympy.exp(-y**2/2)) - (sympy.Function('F')(x*y)*sympy.exp(y**2/2) + 1)) == 0)",
+      "x y",
+    ),
+    "True",
+  )
+  let mismatched_pde : Result[@symcore.Expr, @symsolvers.SolverError] = try?
+    @symsolvers.pdsolve(
+      pde_source,
+      func=Some(u(x(), y())),
+      hint="1st_linear_variable_coeff",
+    )
+  assert_eq(
+    local_expr_result_type(mismatched_pde),
+    solvers_eval_stmt_result_symbols(
+      "sympy.solvers.pdsolve(sympy.Eq(-2*sympy.Function('u')(x, y).diff(x) + 4*sympy.Function('u')(x, y).diff(y) + 5*sympy.Function('u')(x, y), sympy.exp(x + 3*y)), hint='1st_linear_variable_coeff')",
+      "x y",
     ),
   )
 }

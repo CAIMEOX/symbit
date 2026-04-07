@@ -174,6 +174,7 @@ pub let allhints : Array[String] = [
   "Liouville",
   "2nd_linear_airy",
   "2nd_linear_bessel",
+  "2nd_linear_bessel_transform",
   "2nd_hypergeometric",
   "2nd_hypergeometric_Integral",
   "nth_order_reducible",
@@ -6681,6 +6682,425 @@ pub fn checkinfsol(
 }
 
 ///|
+fn solver_bigint_lcm(
+  lhs : @bigint.BigInt,
+  rhs : @bigint.BigInt,
+) -> @bigint.BigInt {
+  let a = if lhs.compare(0N) < 0 { -lhs } else { lhs }
+  let b = if rhs.compare(0N) < 0 { -rhs } else { rhs }
+  if a == 0N || b == 0N {
+    0N
+  } else {
+    (a / solver_bigint_gcd(a, b)) * b
+  }
+}
+
+///|
+fn solver_symbol_subst(expr : Expr, symbol : Expr, value : Expr) -> Expr raise SolverError {
+  let env : Map[String, Expr] = {}
+  env[solver_symbol_name(symbol)] = value
+  @symcore.subst(expr, env)
+}
+
+///|
+fn solver_expr_has_application_name(expr : Expr, name : String) -> Bool {
+  if @symcore.application_has_name(expr, name) {
+    return true
+  }
+  @symcore.children(expr).any(child => solver_expr_has_application_name(child, name))
+}
+
+///|
+fn solver_clear_add_numeric_denominators(expr : Expr) -> Expr {
+  let normalized = canonical_expr(expr)
+  let terms = match normalized {
+    Expr::Add(args) => args
+    _ => return normalized
+  }
+  let mut scale = 1N
+  for term in terms {
+    let (_, den) = @symsimplify.fraction(term)
+    match @symcore.exact_numeric_expr_num_den(den) {
+      Some((num, den_den)) if den_den.compare(1N) == 0 =>
+        scale = solver_bigint_lcm(scale, num)
+      _ => return normalized
+    }
+  }
+  if scale.compare(1N) <= 0 {
+    normalized
+  } else {
+    canonical_expr(@symcore.mul([@symcore.int(scale.to_int()), normalized]))
+  }
+}
+
+///|
+fn solver_characteristic_invariant_cleanup(expr : Expr) -> Expr {
+  let simplified = canonical_expr(@symsimplify.simplify(expr, max_passes=2))
+  let lifted =
+    if solver_expr_has_application_name(simplified, "log") {
+      canonical_expr(
+        @symsimplify.simplify(
+          @symcore.function("exp", [simplified]),
+          max_passes=2,
+        ),
+      )
+    } else {
+      simplified
+    }
+  canonical_expr(
+    @symsimplify.simplify(
+      solver_clear_add_numeric_denominators(lifted),
+      max_passes=2,
+    ),
+  )
+}
+
+///|
+fn solver_split_separable_product(
+  expr : Expr,
+  x : Expr,
+  y : Expr,
+) -> (Expr, Expr)? {
+  let normalized = canonical_expr(@symsimplify.fraction_expand(expr))
+  let x_factors : Array[Expr] = []
+  let y_factors : Array[Expr] = []
+  let factors = match normalized {
+    Expr::Mul(args) => args
+    _ => [normalized]
+  }
+  for factor in factors {
+    let has_x = solver_depends_on_any(factor, [x])
+    let has_y = solver_depends_on_any(factor, [y])
+    if has_x && has_y {
+      return None
+    }
+    if has_y {
+      y_factors.push(factor)
+    } else {
+      x_factors.push(factor)
+    }
+  }
+  Some((solver_mul_all(x_factors), solver_mul_all(y_factors)))
+}
+
+///|
+fn solver_pde_characteristic_invariant_linear(
+  coeff_x : Expr,
+  coeff_y : Expr,
+  x : Expr,
+  y : Expr,
+) -> Expr? raise SolverError {
+  let dummy = @symcore.applied_undefined_function("__pde_y", [x])
+  let ratio = canonical_expr(
+    @symcore.mul([coeff_y, @symcore.pow(coeff_x, @symcore.int(-1))]),
+  )
+  let ratio_sub = solver_symbol_subst(ratio, y, dummy)
+  let ode = canonical_expr(
+    @symcore.add([
+      @symcalculus.diff(dummy, x),
+      @symcore.mul([@symcore.int(-1), ratio_sub]),
+    ]),
+  )
+  let solved_try : Result[Expr, SolverError] = try? dsolve(ode, func=Some(dummy))
+  match solved_try {
+    Ok(sol) => {
+      let eta_try : Result[Array[Expr], SolverError] = try?
+        solver_single_target_solutions(sol, Expr::Symbol("C1"))
+      match eta_try {
+        Ok(items) if !items.is_empty() =>
+          Some(
+            solver_characteristic_invariant_cleanup(
+              canonical_expr(solver_rewrite_solution_nodes(items[0], dummy, y)),
+            ),
+          )
+        _ => None
+      }
+    }
+    Err(_) => None
+  }
+}
+
+///|
+fn solver_pde_characteristic_invariant_separable(
+  coeff_x : Expr,
+  coeff_y : Expr,
+  x : Expr,
+  y : Expr,
+) -> Expr? {
+  let ratio = canonical_expr(
+    @symcore.mul([coeff_y, @symcore.pow(coeff_x, @symcore.int(-1))]),
+  )
+  match solver_split_separable_product(ratio, x, y) {
+    Some((gx, gy)) => {
+      let int_y = canonical_expr(
+        @symintegrals.integrate(
+          @symcore.pow(gy, @symcore.int(-1)),
+          limits=[y],
+        ),
+      )
+      let int_x = canonical_expr(@symintegrals.integrate(gx, limits=[x]))
+      Some(
+        solver_characteristic_invariant_cleanup(
+          canonical_expr(
+            @symcore.add([
+              int_y,
+              @symcore.mul([@symcore.int(-1), int_x]),
+            ]),
+          ),
+        ),
+      )
+    }
+    None => None
+  }
+}
+
+///|
+fn solver_extract_pde_linear(
+  eq : Expr,
+  func : Expr,
+) -> (Expr, Expr, Expr, Expr, Expr, Expr)? {
+  let (_, args) = match @symcore.undefined_application_parts(func) {
+    Some(parts) => parts
+    None => return None
+  }
+  guard args.length() == 2 else {
+    return None
+  }
+  let x = args[0]
+  let y = args[1]
+  let dx = @symcalculus.diff(func, x)
+  let dy = @symcalculus.diff(func, y)
+  match solver_extract_linear_targets(solver_normalize_equation(eq), [dx, dy, func]) {
+    Some((coeffs, constant)) if !@symcore.is_zero(coeffs[0]) ||
+      !@symcore.is_zero(coeffs[1]) =>
+      Some((
+        x,
+        y,
+        coeffs[0],
+        coeffs[1],
+        coeffs[2],
+        canonical_expr(@symcore.mul([@symcore.int(-1), constant])),
+      ))
+    _ => None
+  }
+}
+
+///|
+fn solver_classify_pde_match(
+  eq : Expr,
+  func : Expr,
+) -> (Int, Array[String], (Expr, Expr, Expr, Expr, Expr, Expr)?) {
+  let order = ode_order(eq, func)
+  if order != 1 {
+    return (order, [], None)
+  }
+  match solver_extract_pde_linear(eq, func) {
+    Some((x, y, coeff_x, coeff_y, coeff_f, source)) => {
+      let vars = [x, y]
+      let const_coeffs = !solver_depends_on_any(coeff_x, vars) &&
+        !solver_depends_on_any(coeff_y, vars) &&
+        !solver_depends_on_any(coeff_f, vars)
+      if const_coeffs {
+        if @symcore.is_zero(source) {
+          (
+            order,
+            ["1st_linear_constant_coeff_homogeneous"],
+            Some((x, y, coeff_x, coeff_y, coeff_f, source)),
+          )
+        } else {
+          (
+            order,
+            ["1st_linear_constant_coeff", "1st_linear_constant_coeff_Integral"],
+            Some((x, y, coeff_x, coeff_y, coeff_f, source)),
+          )
+        }
+      } else {
+        (
+          order,
+          ["1st_linear_variable_coeff"],
+          Some((x, y, coeff_x, coeff_y, coeff_f, source)),
+        )
+      }
+    }
+    None => (order, [], None)
+  }
+}
+
+///|
+fn solver_pde_solution_rhs(sol : Expr, target : Expr) -> Expr raise SolverError {
+  match sol {
+    Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) =>
+      if solver_is_same_target(lhs, target) {
+        rhs
+      } else if solver_is_same_target(rhs, target) {
+        lhs
+      } else {
+        raise SolverError::ValueError("solution must solve for the target function")
+      }
+    _ => sol
+  }
+}
+
+///|
+fn solver_replace_solution_constants_with_function(
+  expr : Expr,
+  invariant : Expr,
+) -> Expr {
+  let env : Map[String, Expr] = {}
+  let replacement = @symcore.applied_undefined_function("F", [invariant])
+  for symbol in @symcore.free_symbols(expr) {
+    match symbol {
+      Expr::Symbol(name) if name.has_prefix("C") => env[name] = replacement
+      _ => ()
+    }
+  }
+  if env.is_empty() {
+    expr
+  } else {
+    @symcore.subst(expr, env)
+  }
+}
+
+///|
+fn solver_pde_absorb_function_factor_into_exp(
+  expr : Expr,
+  invariant : Expr,
+) -> Expr {
+  let target = @symcore.applied_undefined_function("F", [invariant])
+  match expr {
+    Expr::Mul(args) => {
+      let mut exp_arg : Expr? = None
+      let others : Array[Expr] = []
+      let mut has_target = false
+      for arg in args {
+        if @symcore.compare_expr(arg, target) == 0 {
+          has_target = true
+        } else if @symcore.application_has_name(arg, "exp", arity=1) &&
+          exp_arg is None {
+          match @symcore.application_args(arg) {
+            Some([body]) => exp_arg = Some(body)
+            _ => others.push(arg)
+          }
+        } else {
+          others.push(arg)
+        }
+      }
+      match (has_target, exp_arg) {
+        (true, Some(body)) if others.is_empty() =>
+          canonical_expr(@symcore.function("exp", [@symcore.add([body, target])]))
+        _ => expr
+      }
+    }
+    _ => expr
+  }
+}
+
+///|
+fn solver_dsolve_linear_solution(
+  func : Expr,
+  wrt : Expr,
+  coeff_d : Expr,
+  coeff_f : Expr,
+  constant : Expr,
+  integral_hint : Bool,
+) -> Expr {
+  let p = canonical_expr(
+    @symcore.mul([coeff_f, @symcore.pow(coeff_d, @symcore.int(-1))]),
+  )
+  let q = canonical_expr(
+    @symcore.mul([
+      @symcore.int(-1),
+      constant,
+      @symcore.pow(coeff_d, @symcore.int(-1)),
+    ]),
+  )
+  let integral_p = if integral_hint {
+    canonical_expr(
+      @symintegrals.integral(
+        p,
+        limits=[@symintegrals.integral_limit([wrt])],
+      ),
+    )
+  } else {
+    canonical_expr(@symintegrals.integrate(p, limits=[wrt]))
+  }
+  let mu = @symcore.function("exp", [integral_p])
+  let inv_mu = @symcore.function(
+    "exp",
+    [canonical_expr(@symcore.mul([@symcore.int(-1), integral_p]))],
+  )
+  let c1 = Expr::Symbol("C1")
+  let rhs = if @symcore.is_zero(q) {
+    canonical_expr(@symcore.mul([c1, inv_mu]))
+  } else {
+    let integrand = canonical_expr(@symcore.mul([mu, q]))
+    let integral_q = if integral_hint {
+      canonical_expr(
+        @symintegrals.integral(
+          integrand,
+          limits=[@symintegrals.integral_limit([wrt])],
+        ),
+      )
+    } else {
+      match solver_try_integrate_exp_derivative(integrand, wrt) {
+        Some(value) => value
+        None =>
+          match solver_try_integrate_linear_exp(integrand, wrt) {
+            Some(value) => value
+            None => canonical_expr(@symintegrals.integrate(integrand, limits=[wrt]))
+          }
+      }
+    }
+    canonical_expr(
+      @symcore.mul([
+        inv_mu,
+        @symcore.add([c1, integral_q]),
+      ]),
+    )
+  }
+  Expr::Relational(@symcore.RelOp::Eq, func, rhs)
+}
+
+///|
+fn solver_ode_available_hints(ordered : Array[String]) -> Array[String] {
+  let out : Array[String] = []
+  for hint in ordered {
+    out.push(hint)
+    match hint {
+      "separable" => out.push("separable_Integral")
+      "1st_linear" => out.push("1st_linear_Integral")
+      "Bernoulli" => out.push("Bernoulli_Integral")
+      _ => ()
+    }
+  }
+  out
+}
+
+///|
+fn solver_desolve_result_dict(
+  order : Int,
+  default_hint : String?,
+  eq : Expr,
+  entries : Array[(String, Expr)],
+) -> Expr {
+  let items : Array[(Expr, Expr)] = []
+  for entry in entries {
+    items.push((Expr::Symbol(entry.0), entry.1))
+  }
+  items.push((Expr::Symbol("all"), Expr::Boolean(true)))
+  items.push((Expr::Symbol("eq"), eq))
+  items.push((
+    Expr::Symbol("default"),
+    match default_hint {
+      Some(name) => Expr::Symbol(name)
+      None => Expr::Symbol("None")
+    },
+  ))
+  items.push((Expr::Symbol("order"), @symcore.int(order)))
+  Expr::Dict(items)
+}
+
+///|
 pub fn classify_ode(
   eq : Expr,
   func? : Expr? = None,
@@ -6726,45 +7146,97 @@ pub fn dsolve(
   guard args.length() == 1 else {
     raise SolverError::ValueError("expected an ordinary single-variable function")
   }
-  let recognized = classify_ode(eq, func=Some(f))
-  guard hint == "default" || hint == "1st_linear" || recognized.contains(hint) else {
-    raise SolverError::ValueError("unsupported ODE hint: " + hint)
+  let order = ode_order(eq, f)
+  let ordered = classify_ode(eq, func=Some(f))
+  let default_hint = if ordered.is_empty() { None } else { Some(ordered[0]) }
+  let available = solver_ode_available_hints(ordered)
+  let meta_hint = hint == "all" || hint == "all_Integral" || hint == "best"
+  if meta_hint {
+    guard default_hint is Some(_) else {
+      if order == 0 {
+        raise SolverError::ValueError(
+          @symprint.to_string(eq) +
+          " is not a solvable differential equation in " +
+          @symprint.to_string(f),
+        )
+      } else {
+        raise SolverError::ValueError("dsolve: Cannot solve " + @symprint.to_string(eq))
+      }
+    }
+    let entries : Array[(String, Expr)] = []
+    let candidates =
+      if hint == "all_Integral" {
+        let integral_candidates : Array[String] = []
+        for name in ordered {
+          match name {
+            "separable" => integral_candidates.push("separable_Integral")
+            "1st_linear" => integral_candidates.push("1st_linear_Integral")
+            "Bernoulli" => integral_candidates.push("Bernoulli_Integral")
+            _ => integral_candidates.push(name)
+          }
+        }
+        integral_candidates
+      } else {
+        available
+      }
+    for name in candidates {
+      match solver_extract_ode_linear(eq, f) {
+        Some((wrt, coeff_d, coeff_f, constant)) => {
+          let integral_version = name.has_suffix("_Integral")
+          entries.push((
+            name,
+            solver_dsolve_linear_solution(
+              f,
+              wrt,
+              coeff_d,
+              coeff_f,
+              constant,
+              integral_version,
+            ),
+          ))
+        }
+        None => ()
+      }
+    }
+    return solver_desolve_result_dict(order, default_hint, eq, entries)
+  }
+  if hint != "default" && !allhints.contains(hint) {
+    raise SolverError::ValueError("Hint not recognized: " + hint)
+  }
+  let selected = match hint {
+    "default" =>
+      match default_hint {
+        Some(name) => name
+        None =>
+          if order == 0 {
+            raise SolverError::ValueError(
+              @symprint.to_string(eq) +
+              " is not a solvable differential equation in " +
+              @symprint.to_string(f),
+            )
+          } else {
+            raise SolverError::ValueError("dsolve: Cannot solve " + @symprint.to_string(eq))
+          }
+      }
+    other => other
+  }
+  if !available.contains(selected) {
+    raise SolverError::ValueError(
+      "ODE " + @symprint.to_string(eq) + " does not match hint " + selected,
+    )
   }
   let (wrt, coeff_d, coeff_f, constant) = match solver_extract_ode_linear(eq, f) {
     Some(value) => value
-    None => raise SolverError::ValueError("ODE is not recognized by dsolve")
+    None => raise SolverError::ValueError("dsolve: Cannot solve " + @symprint.to_string(eq))
   }
-  let p = canonical_expr(
-    @symcore.mul([coeff_f, @symcore.pow(coeff_d, @symcore.int(-1))]),
+  solver_dsolve_linear_solution(
+    f,
+    wrt,
+    coeff_d,
+    coeff_f,
+    constant,
+    selected.has_suffix("_Integral"),
   )
-  let q = canonical_expr(
-    @symcore.mul([
-      @symcore.int(-1),
-      constant,
-      @symcore.pow(coeff_d, @symcore.int(-1)),
-    ]),
-  )
-  let integral_p = canonical_expr(@symintegrals.integrate(p, limits=[wrt]))
-  let mu = @symcore.function("exp", [integral_p])
-  let inv_mu = @symcore.function(
-    "exp",
-    [canonical_expr(@symcore.mul([@symcore.int(-1), integral_p]))],
-  )
-  let c1 = Expr::Symbol("C1")
-  let rhs = if @symcore.is_zero(q) {
-    canonical_expr(@symcore.mul([c1, inv_mu]))
-  } else {
-    let integral_q = canonical_expr(
-      @symintegrals.integrate(canonical_expr(@symcore.mul([mu, q])), limits=[wrt]),
-    )
-    canonical_expr(
-      @symcore.mul([
-        inv_mu,
-        @symcore.add([c1, integral_q]),
-      ]),
-    )
-  }
-  Expr::Relational(@symcore.RelOp::Eq, f, rhs)
 }
 
 ///|
@@ -7153,6 +7625,432 @@ fn solver_equal_derivative_rhs_residual(
 }
 
 ///|
+fn solver_same_head_function(func : Expr, arg : Expr) -> Expr raise SolverError {
+  match @symcore.undefined_application_parts(func) {
+    Some((name, _)) => @symcore.applied_undefined_function(name, [arg])
+    None => raise SolverError::ValueError("expected applied undefined function")
+  }
+}
+
+///|
+fn solver_pde_reduced_ode_rhs(
+  reduced_eq : Expr,
+  ode_func : Expr,
+  invariant : Expr,
+  absorb_exp : Bool,
+) -> Expr raise SolverError {
+  let solved = dsolve(reduced_eq, func=Some(ode_func), hint="1st_linear")
+  let rhs = solver_pde_solution_rhs(solved, ode_func)
+  let replaced = solver_replace_solution_constants_with_function(rhs, invariant)
+  let normalized = if absorb_exp {
+    solver_pde_absorb_function_factor_into_exp(replaced, invariant)
+  } else {
+    replaced
+  }
+  canonical_expr(@symsimplify.simplify(normalized, max_passes=3))
+}
+
+///|
+fn solver_combine_exp_product(expr : Expr) -> Expr {
+  match expr {
+    Expr::Mul(args) => {
+      let exp_args : Array[Expr] = []
+      let other_args : Array[Expr] = []
+      for arg in args {
+        match @symcore.application_parts(arg) {
+          Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
+            exp_args.push(inner)
+          _ => other_args.push(arg)
+        }
+      }
+      if exp_args.length() <= 1 {
+        expr
+      } else {
+        other_args.push(@symcore.function("exp", [canonical_expr(@symcore.add(exp_args))]))
+        canonical_expr(@symcore.mul(other_args))
+      }
+    }
+    _ => expr
+  }
+}
+
+///|
+fn solver_try_integrate_linear_exp(expr : Expr, wrt : Expr) -> Expr? {
+  let (factor, exponent) = match expr {
+    Expr::Mul(args) => {
+      let other_args : Array[Expr] = []
+      let exp_args : Array[Expr] = []
+      for arg in args {
+        match @symcore.application_parts(arg) {
+          Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
+            exp_args.push(inner)
+          _ => other_args.push(arg)
+        }
+      }
+      guard exp_args.length() == 1 else { return None }
+      let factor = canonical_expr(@symcore.mul(other_args))
+      guard !solver_expr_in_list(@symcore.free_symbols(factor), wrt) else { return None }
+      (factor, exp_args[0])
+    }
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
+          (@symcore.int(1), inner)
+        _ => return None
+      }
+  }
+  let deriv = canonical_expr(@symcalculus.diff(exponent, wrt))
+  guard expr_is_zeroish(deriv) != Some(true) else { return None }
+  guard !solver_expr_in_list(@symcore.free_symbols(deriv), wrt) else { return None }
+  guard expr_is_zeroish(canonical_expr(@symcalculus.diff(deriv, wrt))) == Some(true) else {
+    return None
+  }
+  Some(
+    canonical_expr(
+      @symcore.mul([
+        factor,
+        @symcore.function("exp", [exponent]),
+        @symcore.pow(deriv, @symcore.int(-1)),
+      ]),
+    ),
+  )
+}
+
+///|
+fn solver_try_integrate_exp_derivative(expr : Expr, wrt : Expr) -> Expr? {
+  let normalized = solver_combine_exp_product(canonical_expr(expr))
+  let (factor, exponent) = match normalized {
+    Expr::Mul(args) => {
+      let other_args : Array[Expr] = []
+      let exp_args : Array[Expr] = []
+      for arg in args {
+        match @symcore.application_parts(arg) {
+          Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
+            exp_args.push(inner)
+          _ => other_args.push(arg)
+        }
+      }
+      guard exp_args.length() == 1 else { return None }
+      (canonical_expr(@symcore.mul(other_args)), exp_args[0])
+    }
+    _ => return None
+  }
+  let deriv = canonical_expr(@symcalculus.diff(exponent, wrt))
+  guard expr_is_zeroish(deriv) != Some(true) else { return None }
+  let quotient = canonical_expr(
+    @symcore.mul([factor, @symcore.pow(deriv, @symcore.int(-1))]),
+  )
+  guard !solver_depends_on_any(quotient, [wrt]) else { return None }
+  let rebuilt = canonical_expr(@symcore.mul([quotient, deriv]))
+  let difference = canonical_expr(
+    @symcore.add([factor, @symcore.mul([@symcore.int(-1), rebuilt])]),
+  )
+  guard expr_is_zeroish(difference) == Some(true) else { return None }
+  Some(
+    canonical_expr(
+      @symcore.mul([
+        quotient,
+        @symcore.function("exp", [exponent]),
+      ]),
+    ),
+  )
+}
+
+///|
+fn solver_pdsolve_constant_coeff(
+  func : Expr,
+  x : Expr,
+  y : Expr,
+  coeff_x : Expr,
+  coeff_y : Expr,
+  coeff_f : Expr,
+  source : Expr,
+  integral_hint : Bool,
+) -> Expr raise SolverError {
+  let denom = canonical_expr(
+    @symcore.add([
+      coeff_x ^ @symcore.int(2),
+      coeff_y ^ @symcore.int(2),
+    ]),
+  )
+  let xi = Expr::Symbol("xi")
+  let eta = Expr::Symbol("eta")
+  let xi_value = canonical_expr(
+    @symcore.add([
+      @symcore.mul([coeff_x, x]),
+      @symcore.mul([coeff_y, y]),
+    ]),
+  )
+  let invariant = canonical_expr(
+    @symcore.add([
+      @symcore.mul([coeff_y, x]),
+      @symcore.mul([@symcore.int(-1), coeff_x, y]),
+    ]),
+  )
+  let expterm = canonical_expr(
+    @symcore.function(
+      "exp",
+      [@symcore.mul([
+        @symcore.int(-1),
+        coeff_f,
+        xi,
+        @symcore.pow(denom, @symcore.int(-1)),
+      ])],
+    ),
+  )
+  if @symcore.is_zero(source) {
+    return Expr::Relational(
+      @symcore.RelOp::Eq,
+      func,
+      canonical_expr(
+        @symcore.mul([
+          @symcore.applied_undefined_function("F", [invariant]),
+          @symcore.function(
+            "exp",
+            [@symcore.mul([
+              @symcore.int(-1),
+              coeff_f,
+              xi_value,
+              @symcore.pow(denom, @symcore.int(-1)),
+            ])],
+          ),
+        ]),
+      ),
+    )
+  }
+  let x_sub = canonical_expr(
+    @symcore.mul([
+      @symcore.add([
+        @symcore.mul([coeff_x, xi]),
+        @symcore.mul([coeff_y, eta]),
+      ]),
+      @symcore.pow(denom, @symcore.int(-1)),
+    ]),
+  )
+  let y_sub = canonical_expr(
+    @symcore.mul([
+      @symcore.add([
+        @symcore.mul([@symcore.int(-1), coeff_x, eta]),
+        @symcore.mul([coeff_y, xi]),
+      ]),
+      @symcore.pow(denom, @symcore.int(-1)),
+    ]),
+  )
+  let xy_env : Map[String, Expr] = {}
+  xy_env[solver_symbol_name(x)] = x_sub
+  xy_env[solver_symbol_name(y)] = y_sub
+  let transformed_source = canonical_expr(
+    @symcore.subst(
+      @symcore.mul([
+        source,
+        @symcore.function(
+          "exp",
+          [@symcore.mul([
+            coeff_f,
+            xi,
+            @symcore.pow(denom, @symcore.int(-1)),
+          ])],
+        ),
+      ]),
+      xy_env,
+    ),
+  )
+  if integral_hint {
+    let genterm = canonical_expr(
+      @symcore.mul([
+        @symcore.pow(denom, @symcore.int(-1)),
+        @symintegrals.integral(
+          transformed_source,
+          limits=[Expr::Tuple([xi, xi_value])],
+        ),
+      ]),
+    )
+    return Expr::Relational(
+      @symcore.RelOp::Eq,
+      func,
+      Expr::Subs(
+        canonical_expr(
+          @symcore.mul([
+            expterm,
+            @symcore.add([
+              @symcore.applied_undefined_function("F", [eta]),
+              genterm,
+            ]),
+          ]),
+        ),
+        Expr::Tuple([eta, xi]),
+        Expr::Tuple([invariant, xi_value]),
+      ),
+    )
+  }
+  let on_curve_source = solver_combine_exp_product(
+    canonical_expr(
+      @symsimplify.simplify(
+        solver_symbol_subst(transformed_source, eta, invariant),
+        max_passes=3,
+      ),
+    ),
+  )
+  let antiderivative = match solver_try_integrate_linear_exp(on_curve_source, xi) {
+    Some(value) => value
+    None => @symintegrals.integrate(on_curve_source, limits=[xi])
+  }
+  let integral_term = canonical_expr(
+    @symcore.mul([
+      @symcore.pow(denom, @symcore.int(-1)),
+      antiderivative,
+    ]),
+  )
+  let rhs_template = canonical_expr(
+    @symcore.mul([
+      expterm,
+      @symcore.add([
+        @symcore.applied_undefined_function("F", [invariant]),
+        integral_term,
+      ]),
+    ]),
+  )
+  if solver_expr_has_application_name(integral_term, "Integral") {
+    let genterm = canonical_expr(
+      @symcore.mul([
+        @symcore.pow(denom, @symcore.int(-1)),
+        @symintegrals.integral(
+          transformed_source,
+          limits=[Expr::Tuple([xi, xi_value])],
+        ),
+      ]),
+    )
+    return Expr::Relational(
+      @symcore.RelOp::Eq,
+      func,
+      Expr::Subs(
+        canonical_expr(
+          @symcore.mul([
+            expterm,
+            @symcore.add([
+              @symcore.applied_undefined_function("F", [eta]),
+              genterm,
+            ]),
+          ]),
+        ),
+        Expr::Tuple([eta, xi]),
+        Expr::Tuple([invariant, xi_value]),
+      ),
+    )
+  }
+  let rhs = solver_symbol_subst(rhs_template, xi, xi_value)
+  Expr::Relational(
+    @symcore.RelOp::Eq,
+    func,
+    canonical_expr(@symsimplify.simplify(rhs, max_passes=3)),
+  )
+}
+
+///|
+fn solver_pdsolve_variable_coeff(
+  func : Expr,
+  x : Expr,
+  y : Expr,
+  coeff_x : Expr,
+  coeff_y : Expr,
+  coeff_f : Expr,
+  source : Expr,
+) -> Expr raise SolverError {
+  if @symcore.is_zero(coeff_y) {
+    let ode_func = solver_same_head_function(func, x)
+    let reduced_eq = canonical_expr(
+      @symcore.add([
+        @symcore.mul([coeff_x, @symcalculus.diff(ode_func, x)]),
+        @symcore.mul([coeff_f, ode_func]),
+        @symcore.mul([@symcore.int(-1), source]),
+      ]),
+    )
+    return Expr::Relational(
+      @symcore.RelOp::Eq,
+      func,
+      solver_pde_reduced_ode_rhs(reduced_eq, ode_func, y, false),
+    )
+  }
+  if @symcore.is_zero(coeff_x) {
+    let ode_func = solver_same_head_function(func, y)
+    let reduced_eq = canonical_expr(
+      @symcore.add([
+        @symcore.mul([coeff_y, @symcalculus.diff(ode_func, y)]),
+        @symcore.mul([coeff_f, ode_func]),
+        @symcore.mul([@symcore.int(-1), source]),
+      ]),
+    )
+    return Expr::Relational(
+      @symcore.RelOp::Eq,
+      func,
+      solver_pde_reduced_ode_rhs(reduced_eq, ode_func, x, true),
+    )
+  }
+  let invariant = match solver_pde_characteristic_invariant_linear(
+    coeff_x,
+    coeff_y,
+    x,
+    y,
+  ) {
+    Some(value) => value
+    None =>
+      match solver_pde_characteristic_invariant_separable(
+        coeff_x,
+        coeff_y,
+        x,
+        y,
+      ) {
+        Some(value) => value
+        None =>
+          raise SolverError::ValueError(
+            "pdsolve: Cannot solve " + @symprint.to_string(func),
+          )
+      }
+  }
+  let eta = Expr::Symbol("eta")
+  let y_candidates = solver_single_target_solutions(
+    canonical_expr(
+      @symcore.add([eta, @symcore.mul([@symcore.int(-1), invariant])]),
+    ),
+    y,
+  )
+  guard !y_candidates.is_empty() else {
+    raise SolverError::ValueError("pdsolve: Cannot solve " + @symprint.to_string(func))
+  }
+  let y_sub = y_candidates[0]
+  let ode_func = solver_same_head_function(func, x)
+  let reduced_eq = canonical_expr(
+    @symcore.add([
+      @symcore.mul([
+        solver_symbol_subst(coeff_x, y, y_sub),
+        @symcalculus.diff(ode_func, x),
+      ]),
+      @symcore.mul([
+        solver_symbol_subst(coeff_f, y, y_sub),
+        ode_func,
+      ]),
+      @symcore.mul([
+        @symcore.int(-1),
+        solver_symbol_subst(source, y, y_sub),
+      ]),
+    ]),
+  )
+  let solved = dsolve(reduced_eq, func=Some(ode_func), hint="1st_linear")
+  let rhs = solver_pde_solution_rhs(solved, ode_func)
+  let replaced = solver_replace_solution_constants_with_function(rhs, eta)
+  Expr::Relational(
+    @symcore.RelOp::Eq,
+    func,
+    canonical_expr(
+      @symsimplify.simplify(
+        solver_symbol_subst(replaced, eta, invariant),
+        max_passes=3,
+      ),
+    ),
+  )
+}
+
+///|
 pub fn classify_pde(
   eq : Expr,
   func? : Expr? = None,
@@ -7165,14 +8063,8 @@ pub fn classify_pde(
         None => raise SolverError::ValueError("unable to infer PDE function")
       }
   }
-  match solver_extract_pde_linear_homogeneous(eq, f) {
-    Some(_) => ["1st_linear_constant_coeff_homogeneous"]
-    None =>
-      match solver_match_equal_derivative_pde(eq, f) {
-        Some(_) => ["1st_linear_constant_coeff_homogeneous"]
-        None => []
-      }
-  }
+  let (_, hints, _) = solver_classify_pde_match(eq, f)
+  hints
 }
 
 ///|
@@ -7189,41 +8081,154 @@ pub fn pdsolve(
         None => raise SolverError::ValueError("unable to infer PDE function")
       }
   }
-  guard hint == "default" || hint == "1st_linear_constant_coeff_homogeneous" else {
-    raise SolverError::ValueError("unsupported PDE hint: " + hint)
+  let (order, ordered, matched) = solver_classify_pde_match(eq, f)
+  let default_hint = if ordered.is_empty() { None } else { Some(ordered[0]) }
+  let meta_hint = hint == "all" || hint == "all_Integral" || hint == "best"
+  if meta_hint {
+    guard matched is Some(_) else {
+      if order == 0 {
+        raise SolverError::ValueError(
+          @symprint.to_string(eq) +
+          " is not a solvable differential equation in " +
+          @symprint.to_string(f),
+        )
+      } else {
+        raise SolverError::ValueError("pdsolve: Cannot solve " + @symprint.to_string(eq))
+      }
+    }
+    let entries : Array[(String, Expr)] = []
+    let candidates =
+      if hint == "all_Integral" {
+        let integral_candidates : Array[String] = []
+        for name in ordered {
+          if name == "1st_linear_constant_coeff" {
+            integral_candidates.push("1st_linear_constant_coeff_Integral")
+          } else if name != "1st_linear_constant_coeff_Integral" {
+            integral_candidates.push(name)
+          }
+        }
+        integral_candidates
+      } else {
+        ordered
+      }
+    let (x, y, coeff_x, coeff_y, coeff_f, source) = matched.unwrap()
+    for name in candidates {
+      let value = match name {
+        "1st_linear_constant_coeff_homogeneous" =>
+          solver_pdsolve_constant_coeff(
+            f,
+            x,
+            y,
+            coeff_x,
+            coeff_y,
+            coeff_f,
+            source,
+            false,
+          )
+        "1st_linear_constant_coeff" =>
+          solver_pdsolve_constant_coeff(
+            f,
+            x,
+            y,
+            coeff_x,
+            coeff_y,
+            coeff_f,
+            source,
+            false,
+          )
+        "1st_linear_constant_coeff_Integral" =>
+          solver_pdsolve_constant_coeff(
+            f,
+            x,
+            y,
+            coeff_x,
+            coeff_y,
+            coeff_f,
+            source,
+            true,
+          )
+        "1st_linear_variable_coeff" =>
+          solver_pdsolve_variable_coeff(f, x, y, coeff_x, coeff_y, coeff_f, source)
+        _ => raise SolverError::ValueError("Hint not recognized: " + name)
+      }
+      entries.push((name, value))
+    }
+    return solver_desolve_result_dict(order, default_hint, eq, entries)
   }
-  match solver_pdsolve_equal_derivative(eq, f) {
-    Some(value) => return value
-    None => ()
+  let recognized = [
+    "default",
+    "1st_linear_constant_coeff_homogeneous",
+    "1st_linear_constant_coeff",
+    "1st_linear_constant_coeff_Integral",
+    "1st_linear_variable_coeff",
+  ]
+  if !recognized.contains(hint) {
+    raise SolverError::ValueError("Hint not recognized: " + hint)
   }
-  let (x, y, a, b, c) = match solver_extract_pde_linear_homogeneous(eq, f) {
+  let selected = match hint {
+    "default" =>
+      match default_hint {
+        Some(name) => name
+        None =>
+          if order == 0 {
+            raise SolverError::ValueError(
+              @symprint.to_string(eq) +
+              " is not a solvable differential equation in " +
+              @symprint.to_string(f),
+            )
+          } else {
+            raise SolverError::ValueError("pdsolve: Cannot solve " + @symprint.to_string(eq))
+          }
+      }
+    other => other
+  }
+  if !ordered.contains(selected) {
+    raise SolverError::ValueError(
+      "PDE " + @symprint.to_string(canonical_expr(eq)) + " does not match hint " + selected,
+    )
+  }
+  let (x, y, coeff_x, coeff_y, coeff_f, source) = match matched {
     Some(value) => value
-    None => raise SolverError::ValueError("PDE is not recognized by pdsolve")
+    None => raise SolverError::ValueError("pdsolve: Cannot solve " + @symprint.to_string(eq))
   }
-  let invariant = canonical_expr(
-    @symcore.add([
-      @symcore.mul([b, x]),
-      @symcore.mul([@symcore.int(-1), a, y]),
-    ]),
-  )
-  let arbitrary = @symcore.applied_undefined_function("F", [invariant])
-  let rhs = if @symcore.is_zero(c) {
-    arbitrary
-  } else {
-    let denom = canonical_expr(
-      @symcore.add([a ^ @symcore.int(2), b ^ @symcore.int(2)]),
-    )
-    let exponent = canonical_expr(
-      @symcore.mul([
-        @symcore.int(-1),
-        c,
-        @symcore.add([@symcore.mul([a, x]), @symcore.mul([b, y])]),
-        @symcore.pow(denom, @symcore.int(-1)),
-      ]),
-    )
-    canonical_expr(@symcore.mul([arbitrary, @symcore.function("exp", [exponent])]))
+  match selected {
+    "1st_linear_constant_coeff_homogeneous" =>
+      solver_pdsolve_constant_coeff(
+        f,
+        x,
+        y,
+        coeff_x,
+        coeff_y,
+        coeff_f,
+        source,
+        false,
+      )
+    "1st_linear_constant_coeff" =>
+      solver_pdsolve_constant_coeff(
+        f,
+        x,
+        y,
+        coeff_x,
+        coeff_y,
+        coeff_f,
+        source,
+        false,
+      )
+    "1st_linear_constant_coeff_Integral" =>
+      solver_pdsolve_constant_coeff(
+        f,
+        x,
+        y,
+        coeff_x,
+        coeff_y,
+        coeff_f,
+        source,
+        true,
+      )
+    "1st_linear_variable_coeff" =>
+      solver_pdsolve_variable_coeff(f, x, y, coeff_x, coeff_y, coeff_f, source)
+    _ => raise SolverError::ValueError("Hint not recognized: " + selected)
   }
-  Expr::Relational(@symcore.RelOp::Eq, f, rhs)
 }
 
 ///|
