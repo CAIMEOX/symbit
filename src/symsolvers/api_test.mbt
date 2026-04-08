@@ -5696,6 +5696,35 @@ test "pdsolve matches additional SymPy homogeneous and variable source cases" {
 }
 
 ///|
+test "pdsolve matches additional SymPy constant coefficient source case eq_c1" {
+  let eq_c1 = @symcore.int(-2) * @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(4) * @symcalculus.diff(u(x(), y()), y()) +
+    @symcore.int(5) * u(x(), y()) +
+    @symcore.int(-1) * @symcore.function("exp", [x() + @symcore.int(3) * y()])
+  let eq_c1_sol = pdsolve(eq_c1, func=Some(u(x(), y())))
+  inspect(
+    expr_list_text(classify_pde(eq_c1, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    content="[1st_linear_constant_coeff, 1st_linear_constant_coeff_Integral]",
+  )
+  inspect(checkpdesol(eq_c1, eq_c1_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
+}
+
+///|
+test "pdsolve matches additional SymPy constant coefficient source case eq_c2" {
+  let uinv = u(x(), y()) ^ @symcore.int(-1)
+  let eq_c2 = @symcalculus.diff(u(x(), y()), x()) * uinv +
+    @symcalculus.diff(u(x(), y()), y()) * uinv +
+    @symcore.int(1) +
+    @symcore.int(-1) * @symcore.function("exp", [x() + y()]) * uinv
+  let eq_c2_sol = pdsolve(eq_c2, func=Some(u(x(), y())))
+  inspect(
+    expr_list_text(classify_pde(eq_c2, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    content="[1st_linear_constant_coeff, 1st_linear_constant_coeff_Integral]",
+  )
+  inspect(checkpdesol(eq_c2, eq_c2_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
+}
+
+///|
 test "checkpdesol follows SymPy list input and solve_for_func behavior" {
   let eq4 = x() * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
   let eq5 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())

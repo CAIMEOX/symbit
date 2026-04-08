@@ -6949,6 +6949,101 @@ fn solver_extract_pde_linear(
 }
 
 ///|
+fn solver_match_target_power_factor(
+  expr : Expr,
+  target : Expr,
+) -> (Expr, Int)? {
+  if solver_is_same_target(expr, target) {
+    return Some((@symcore.int(1), 1))
+  }
+  match expr {
+    Expr::Pow(base, exp) if solver_is_same_target(base, target) =>
+      match @symcore.exact_numeric_expr_num_den(exp) {
+        Some((num, den)) if den.compare(1N) == 0 => Some((@symcore.int(1), num.to_int()))
+        _ => None
+      }
+    Expr::Mul(args) => {
+      let factors : Array[Expr] = []
+      let mut power = 0
+      for arg in args {
+        if solver_is_same_target(arg, target) {
+          power += 1
+        } else {
+          match arg {
+            Expr::Pow(base, exp) if solver_is_same_target(base, target) =>
+              match @symcore.exact_numeric_expr_num_den(exp) {
+                Some((num, den)) if den.compare(1N) == 0 => power += num.to_int()
+                _ => return None
+              }
+            _ =>
+              if solver_expr_has_target(arg, target) {
+                return None
+              } else {
+                factors.push(arg)
+              }
+          }
+        }
+      }
+      Some((solver_mul_all(factors), power))
+    }
+    _ =>
+      if solver_expr_has_target(expr, target) {
+        None
+      } else {
+        Some((expr, 0))
+      }
+  }
+}
+
+///|
+fn solver_pde_reduce_highest_derivative_power(eq : Expr, func : Expr) -> Expr {
+  let normalized = solver_normalize_equation(eq)
+  let (_, args) = match @symcore.undefined_application_parts(func) {
+    Some(parts) => parts
+    None => return normalized
+  }
+  guard args.length() == 2 else {
+    return normalized
+  }
+  let x = args[0]
+  let y = args[1]
+  let dx = @symcalculus.diff(func, x)
+  let dy = @symcalculus.diff(func, y)
+  let min_power = match solver_extract_linear_targets(normalized, [dx, dy]) {
+    Some((coeffs, _)) => {
+      let mut out : Int? = None
+      for coeff in coeffs {
+        if @symcore.is_zero(coeff) || coeff == @symcore.int(1) {
+          continue
+        }
+        match solver_match_target_power_factor(coeff, func) {
+          Some((scale, power)) if !@symcore.is_zero(scale) && power != 0 =>
+            out = match out {
+              Some(current) => Some(if power < current { power } else { current })
+              None => Some(power)
+            }
+          _ => ()
+        }
+      }
+      out
+    }
+    None => None
+  }
+  match min_power {
+    Some(power) => {
+      let den = func ^ @symcore.int(power)
+      let inv_den = den ^ @symcore.int(-1)
+      match normalized {
+        Expr::Add(items) =>
+          canonical_expr(@symcore.add(items.map(item => canonical_expr(@symcore.mul([item, inv_den])))))
+        _ => canonical_expr(@symcore.mul([normalized, inv_den]))
+      }
+    }
+    None => normalized
+  }
+}
+
+///|
 fn solver_classify_pde_match(
   eq : Expr,
   func : Expr,
@@ -6957,7 +7052,8 @@ fn solver_classify_pde_match(
   if order != 1 {
     return (order, [], None)
   }
-  match solver_extract_pde_linear(eq, func) {
+  let reduced_eq = solver_pde_reduce_highest_derivative_power(eq, func)
+  match solver_extract_pde_linear(reduced_eq, func) {
     Some((x, y, coeff_x, coeff_y, coeff_f, source)) => {
       let vars = [x, y]
       let const_coeffs = !solver_depends_on_any(coeff_x, vars) &&
@@ -8084,9 +8180,25 @@ fn solver_cancel_inverse_exp_products(expr : Expr) -> Expr {
 }
 
 ///|
+fn solver_rewrite_exp_powers(expr : Expr) -> Expr {
+  let with_children = @symcore.map_children(expr, solver_rewrite_exp_powers)
+  match with_children {
+    Expr::Pow(base, exp) =>
+      match @symcore.application_parts(base) {
+        Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
+          @symcore.function("exp", [canonical_expr(@symcore.mul([inner, exp]))])
+        _ => with_children
+      }
+    _ => with_children
+  }
+}
+
+///|
 fn solver_checkpdesol_normalize(expr : Expr) -> Expr {
   let expanded = solver_pde_expand_exp_sums(
-    solver_rewrite_exp_inverse(canonical_expr(expr)),
+    solver_rewrite_exp_powers(
+      solver_rewrite_exp_inverse(canonical_expr(expr)),
+    ),
   )
   let combined = solver_combine_exp_products(expanded)
   let canceled = solver_cancel_inverse_exp_products(combined)
@@ -8101,7 +8213,9 @@ fn solver_checkpdesol_normalize(expr : Expr) -> Expr {
   let recombined = solver_cancel_inverse_exp_products(
     solver_combine_exp_products(
       solver_pde_expand_exp_sums(
-        solver_rewrite_exp_inverse(simplified),
+        solver_rewrite_exp_powers(
+          solver_rewrite_exp_inverse(simplified),
+        ),
       ),
     ),
   )

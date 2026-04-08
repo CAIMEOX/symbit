@@ -6636,6 +6636,62 @@ test "solvers parity additional pde source cases" {
 }
 
 ///|
+test "solvers parity additional constant coefficient pde source cases" {
+  let eq_c1 = @symcore.int(-2) * @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(4) * @symcalculus.diff(u(x(), y()), y()) +
+    @symcore.int(5) * u(x(), y()) +
+    @symcore.int(-1) * @symcore.function("exp", [x() + @symcore.int(3) * y()])
+  let eq_c1_sol = @symsolvers.pdsolve(eq_c1, func=Some(u(x(), y())))
+  let eq_c1_rhs = match eq_c1_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(eq_c1_rhs) +
+      " - sympy.solvers.pdsolve(-2*sympy.Function('u')(x, y).diff(x) + 4*sympy.Function('u')(x, y).diff(y) + 5*sympy.Function('u')(x, y) - sympy.exp(x + 3*y)).rhs) == 0)",
+      "x y",
+    ),
+    "True",
+  )
+  assert_eq(
+    local_expr_list_text(@symsolvers.classify_pde(eq_c1, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    solvers_eval_str_symbols(
+      "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(-2*sympy.Function('u')(x, y).diff(x) + 4*sympy.Function('u')(x, y).diff(y) + 5*sympy.Function('u')(x, y) - sympy.exp(x + 3*y))])",
+      "x y",
+    ),
+  )
+
+  let uinv = u(x(), y()) ^ @symcore.int(-1)
+  let eq_c2 = @symcalculus.diff(u(x(), y()), x()) * uinv +
+    @symcalculus.diff(u(x(), y()), y()) * uinv +
+    @symcore.int(1) +
+    @symcore.int(-1) * @symcore.function("exp", [x() + y()]) * uinv
+  let eq_c2_sol = @symsolvers.pdsolve(eq_c2, func=Some(u(x(), y())))
+  let eq_c2_rhs = match eq_c2_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(eq_c2_rhs) +
+      " - sympy.solvers.pdsolve(sympy.Function('u')(x, y).diff(x)/sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(y)/sympy.Function('u')(x, y) + 1 - sympy.exp(x + y)/sympy.Function('u')(x, y)).rhs) == 0)",
+      "x y",
+    ),
+    "True",
+  )
+  assert_eq(
+    local_expr_list_text(@symsolvers.classify_pde(eq_c2, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    solvers_eval_str_symbols(
+      "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(sympy.Function('u')(x, y).diff(x)/sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(y)/sympy.Function('u')(x, y) + 1 - sympy.exp(x + y)/sympy.Function('u')(x, y))])",
+      "x y",
+    ),
+  )
+}
+
+///|
 test "solvers parity checkpdesol list and solve_for_func cases" {
   let eq4 = x() * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
   let eq5 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
