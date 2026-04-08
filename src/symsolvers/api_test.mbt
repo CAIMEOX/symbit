@@ -5725,6 +5725,20 @@ test "pdsolve matches additional SymPy constant coefficient source case eq_c2" {
 }
 
 ///|
+test "pdsolve matches additional SymPy constant coefficient source case eq_c3" {
+  let eq_c3 = @symcore.int(2) * u(x(), y()) +
+    @symcore.int(-1) * @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(3) * @symcalculus.diff(u(x(), y()), y()) +
+    @symcore.function("sin", [x()])
+  let eq_c3_sol = pdsolve(eq_c3, func=Some(u(x(), y())))
+  inspect(
+    expr_list_text(classify_pde(eq_c3, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    content="[1st_linear_constant_coeff, 1st_linear_constant_coeff_Integral]",
+  )
+  inspect(checkpdesol(eq_c3, eq_c3_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
+}
+
+///|
 test "checkpdesol follows SymPy list input and solve_for_func behavior" {
   let eq4 = x() * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
   let eq5 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())

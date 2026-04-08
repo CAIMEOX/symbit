@@ -8270,6 +8270,83 @@ fn solver_try_integrate_linear_exp(expr : Expr, wrt : Expr) -> Expr? {
 }
 
 ///|
+fn solver_try_integrate_exp_trig_linear(expr : Expr, wrt : Expr) -> Expr? {
+  let normalized = solver_combine_exp_product(canonical_expr(expr))
+  let (factor, exponent, trig_name, trig_inner) = match normalized {
+    Expr::Mul(args) => {
+      let other_args : Array[Expr] = []
+      let exp_args : Array[Expr] = []
+      let trig_args : Array[(String, Expr)] = []
+      for arg in args {
+        match @symcore.application_parts(arg) {
+          Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
+            exp_args.push(inner)
+          Some((head, [inner])) =>
+            match @symcore.function_head_name(head) {
+              Some("sin") => trig_args.push(("sin", inner))
+              Some("cos") => trig_args.push(("cos", inner))
+              _ => other_args.push(arg)
+            }
+          _ => other_args.push(arg)
+        }
+      }
+      guard exp_args.length() == 1 && trig_args.length() == 1 else { return None }
+      let factor = canonical_expr(@symcore.mul(other_args))
+      guard !solver_expr_in_list(@symcore.free_symbols(factor), wrt) else { return None }
+      (factor, exp_args[0], trig_args[0].0, trig_args[0].1)
+    }
+    _ => return None
+  }
+  let exp_deriv = canonical_expr(@symcalculus.diff(exponent, wrt))
+  let trig_deriv = canonical_expr(@symcalculus.diff(trig_inner, wrt))
+  guard !solver_expr_in_list(@symcore.free_symbols(exp_deriv), wrt) else { return None }
+  guard !solver_expr_in_list(@symcore.free_symbols(trig_deriv), wrt) else { return None }
+  guard expr_is_zeroish(canonical_expr(@symcalculus.diff(exp_deriv, wrt))) == Some(true) else {
+    return None
+  }
+  guard expr_is_zeroish(canonical_expr(@symcalculus.diff(trig_deriv, wrt))) == Some(true) else {
+    return None
+  }
+  let trig_part = match trig_name {
+    "sin" =>
+      canonical_expr(
+        @symcore.add([
+          @symcore.mul([exp_deriv, @symcore.function("sin", [trig_inner])]),
+          @symcore.mul([
+            @symcore.int(-1),
+            trig_deriv,
+            @symcore.function("cos", [trig_inner]),
+          ]),
+        ]),
+      )
+    "cos" =>
+      canonical_expr(
+        @symcore.add([
+          @symcore.mul([exp_deriv, @symcore.function("cos", [trig_inner])]),
+          @symcore.mul([trig_deriv, @symcore.function("sin", [trig_inner])]),
+        ]),
+      )
+    _ => return None
+  }
+  let denom = canonical_expr(
+    @symcore.add([
+      exp_deriv ^ @symcore.int(2),
+      trig_deriv ^ @symcore.int(2),
+    ]),
+  )
+  Some(
+    canonical_expr(
+      @symcore.mul([
+        factor,
+        @symcore.function("exp", [exponent]),
+        trig_part,
+        denom ^ @symcore.int(-1),
+      ]),
+    ),
+  )
+}
+
+///|
 fn solver_try_integrate_exp_derivative(expr : Expr, wrt : Expr) -> Expr? {
   let normalized = solver_combine_exp_product(canonical_expr(expr))
   let (factor, exponent) = match normalized {
@@ -8447,7 +8524,11 @@ fn solver_pdsolve_constant_coeff(
   )
   let antiderivative = match solver_try_integrate_linear_exp(on_curve_source, xi) {
     Some(value) => value
-    None => @symintegrals.integrate(on_curve_source, limits=[xi])
+    None =>
+      match solver_try_integrate_exp_trig_linear(on_curve_source, xi) {
+        Some(value) => value
+        None => @symintegrals.integrate(on_curve_source, limits=[xi])
+      }
   }
   let integral_term = canonical_expr(
     @symcore.mul([

@@ -6689,6 +6689,32 @@ test "solvers parity additional constant coefficient pde source cases" {
       "x y",
     ),
   )
+
+  let eq_c3 = @symcore.int(2) * u(x(), y()) +
+    @symcore.int(-1) * @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(3) * @symcalculus.diff(u(x(), y()), y()) +
+    @symcore.function("sin", [x()])
+  let eq_c3_sol = @symsolvers.pdsolve(eq_c3, func=Some(u(x(), y())))
+  let eq_c3_rhs = match eq_c3_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(eq_c3_rhs) +
+      " - sympy.solvers.pdsolve(2*sympy.Function('u')(x, y) - sympy.Function('u')(x, y).diff(x) + 3*sympy.Function('u')(x, y).diff(y) + sympy.sin(x)).rhs) == 0)",
+      "x y",
+    ),
+    "True",
+  )
+  assert_eq(
+    local_expr_list_text(@symsolvers.classify_pde(eq_c3, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    solvers_eval_str_symbols(
+      "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(2*sympy.Function('u')(x, y) - sympy.Function('u')(x, y).diff(x) + 3*sympy.Function('u')(x, y).diff(y) + sympy.sin(x))])",
+      "x y",
+    ),
+  )
 }
 
 ///|
