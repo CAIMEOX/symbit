@@ -7056,6 +7056,7 @@ fn solver_replace_solution_constants_with_function(
 fn solver_pde_absorb_function_factor_into_exp(
   expr : Expr,
   invariant : Expr,
+  wrt : Expr,
   solvefun : Expr?,
 ) -> Expr raise SolverError {
   let target = solver_make_solvefun_application(solvefun, invariant)
@@ -7078,8 +7079,43 @@ fn solver_pde_absorb_function_factor_into_exp(
         }
       }
       match (has_target, exp_arg) {
-        (true, Some(body)) if others.is_empty() =>
-          canonical_expr(@symcore.function("exp", [@symcore.add([body, target])]))
+        (true, Some(body)) if others.is_empty() => {
+          let normalized_body = canonical_expr(
+            @symsimplify.fraction_expand(
+              solver_rewrite_exp_inverse(canonical_expr(body)),
+            ),
+          )
+          match mul_independent_decompose(normalized_body, wrt) {
+            Some((scale0, rest0)) =>
+              match mul_independent_decompose(scale0, invariant) {
+                Some((prefactor, scale)) =>
+                  canonical_expr(
+                    @symcore.function(
+                      "exp",
+                      [@symcore.mul([
+                        scale,
+                        @symcore.add([
+                          canonical_expr(@symcore.mul([prefactor, rest0])),
+                          target,
+                        ]),
+                      ])],
+                    ),
+                  )
+                None =>
+                  if @symcore.has(scale0, invariant) {
+                    canonical_expr(
+                      @symcore.function(
+                        "exp",
+                        [@symcore.mul([scale0, @symcore.add([rest0, target])])],
+                      ),
+                    )
+                  } else {
+                    canonical_expr(@symcore.function("exp", [@symcore.add([body, target])]))
+                  }
+              }
+            None => canonical_expr(@symcore.function("exp", [@symcore.add([body, target])]))
+          }
+        }
         _ => expr
       }
     }
@@ -7937,16 +7973,17 @@ fn solver_pde_reduced_ode_rhs(
   reduced_eq : Expr,
   ode_func : Expr,
   invariant : Expr,
+  wrt : Expr,
   absorb_exp : Bool,
   solvefun : Expr?,
 ) -> Expr raise SolverError {
-  let solved = dsolve(reduced_eq, func=Some(ode_func), hint="1st_linear")
+  let solved = dsolve(reduced_eq, func=Some(ode_func))
   let rhs = solver_pde_solution_rhs(solved, ode_func)
   let with_solvefun = solver_replace_solution_constants_with_function(rhs, invariant, solvefun) catch {
     _ => rhs
   }
   let normalized = if absorb_exp {
-    solver_pde_absorb_function_factor_into_exp(with_solvefun, invariant, solvefun)
+    solver_pde_absorb_function_factor_into_exp(with_solvefun, invariant, wrt, solvefun)
   } else {
     with_solvefun
   }
@@ -7978,6 +8015,102 @@ fn solver_combine_exp_product(expr : Expr) -> Expr {
     }
     _ => expr
   }
+}
+
+///|
+fn solver_combine_exp_products(expr : Expr) -> Expr {
+  let with_children = @symcore.map_children(expr, solver_combine_exp_products)
+  solver_combine_exp_product(with_children)
+}
+
+///|
+fn solver_cancel_inverse_exp_products(expr : Expr) -> Expr {
+  let with_children = @symcore.map_children(expr, solver_cancel_inverse_exp_products)
+  match with_children {
+    Expr::Mul(args) => {
+      let exp_args : Array[Expr] = []
+      let other_args : Array[Expr] = []
+      for arg in args {
+        match @symcore.application_parts(arg) {
+          Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
+            exp_args.push(inner)
+          _ => other_args.push(arg)
+        }
+      }
+      if exp_args.is_empty() {
+        return with_children
+      }
+      let used : Array[Bool] = []
+      for _ in 0..<exp_args.length() {
+        used.push(false)
+      }
+      let kept_exp : Array[Expr] = []
+      for i in 0..<exp_args.length() {
+        if used[i] {
+          continue
+        }
+        let mut paired = false
+        for j in (i + 1)..<exp_args.length() {
+          if used[j] {
+            continue
+          }
+          let sum = canonical_expr(@symcore.add([exp_args[i], exp_args[j]]))
+          if expr_is_zeroish(sum) == Some(true) {
+            used[i] = true
+            used[j] = true
+            paired = true
+            break
+          }
+        }
+        if !paired {
+          kept_exp.push(exp_args[i])
+        }
+      }
+      if !kept_exp.is_empty() {
+        if kept_exp.length() == 1 {
+          other_args.push(@symcore.function("exp", [kept_exp[0]]))
+        } else {
+          other_args.push(@symcore.function("exp", [canonical_expr(@symcore.add(kept_exp))]))
+        }
+      }
+      if other_args.is_empty() {
+        @symcore.int(1)
+      } else {
+        canonical_expr(@symcore.mul(other_args))
+      }
+    }
+    _ => with_children
+  }
+}
+
+///|
+fn solver_checkpdesol_normalize(expr : Expr) -> Expr {
+  let expanded = solver_pde_expand_exp_sums(
+    solver_rewrite_exp_inverse(canonical_expr(expr)),
+  )
+  let combined = solver_combine_exp_products(expanded)
+  let canceled = solver_cancel_inverse_exp_products(combined)
+  let rational = @symsimplify.ratsimp(
+    @symsimplify.powsimp(canonical_expr(canceled)),
+    max_passes=3,
+  )
+  let domain_normal = @sympolys.domain_normal_expr(@sympolys.Domain::EX, rational) catch {
+    _ => rational
+  }
+  let simplified = @symsimplify.simplify(domain_normal, max_passes=4)
+  let recombined = solver_cancel_inverse_exp_products(
+    solver_combine_exp_products(
+      solver_pde_expand_exp_sums(
+        solver_rewrite_exp_inverse(simplified),
+      ),
+    ),
+  )
+  canonical_expr(
+    @symsimplify.simplify(
+      @symsimplify.ratsimp(recombined, max_passes=2),
+      max_passes=4,
+    ),
+  )
 }
 
 ///|
@@ -8276,7 +8409,7 @@ fn solver_pdsolve_variable_coeff(
     return Expr::Relational(
       @symcore.RelOp::Eq,
       func,
-      solver_pde_reduced_ode_rhs(reduced_eq, ode_func, y, false, solvefun),
+      solver_pde_reduced_ode_rhs(reduced_eq, ode_func, y, x, true, solvefun),
     )
   }
   if @symcore.is_zero(coeff_x) {
@@ -8291,7 +8424,7 @@ fn solver_pdsolve_variable_coeff(
     return Expr::Relational(
       @symcore.RelOp::Eq,
       func,
-      solver_pde_reduced_ode_rhs(reduced_eq, ode_func, x, true, solvefun),
+      solver_pde_reduced_ode_rhs(reduced_eq, ode_func, x, y, true, solvefun),
     )
   }
   let invariant = match solver_pde_characteristic_invariant_linear(
@@ -8701,7 +8834,9 @@ fn solver_checkpdesol_single(
     None => ()
   }
   let residual = canonical_expr(
-    solver_rewrite_solution_nodes(solver_normalize_equation(pde), f, rhs),
+    solver_checkpdesol_normalize(
+      solver_rewrite_solution_nodes(solver_normalize_equation(pde), f, rhs),
+    ),
   )
   (expr_is_zeroish(residual) == Some(true), residual)
 }

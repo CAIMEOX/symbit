@@ -5615,6 +5615,30 @@ test "pdsolve matches additional SymPy homogeneous and variable source cases" {
   )
   inspect(checkpdesol(eq_h3, eq_h3_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
 
+  let eq_v1 = x() * @symcalculus.diff(u(x(), y()), x()) + @symcore.int(-1) * y() * @symcalculus.diff(u(x(), y()), y()) + (y() ^ @symcore.int(2)) * u(x(), y()) + @symcore.int(-1) * (y() ^ @symcore.int(2))
+  let eq_v1_sol = pdsolve(eq_v1, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  let eq_v1_rhs = match eq_v1_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_true(
+    expr_semantically_equal(
+      eq_v1_rhs,
+      @symcore.applied_undefined_function("F", [x() * y()]) *
+      @symcore.function(
+        "exp",
+        [
+          @symcore.mul([
+            @symcore.rational_from_ints(1, 2) catch { _ => fail("r8") },
+            y() ^ @symcore.int(2),
+          ]),
+        ],
+      ) +
+      @symcore.int(1),
+    ),
+  )
+  inspect(checkpdesol(eq_v1, eq_v1_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
+
   let eq_v2 = (x() ^ @symcore.int(2)) * u(x(), y()) + x() * @symcalculus.diff(u(x(), y()), x()) + x() * y() * @symcalculus.diff(u(x(), y()), y())
   let eq_v2_sol = pdsolve(eq_v2, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
   inspect(@symprint.to_string(eq_v2_sol), content="Eq(u(x, y), F(y*exp(-x))*exp(-x**2/2))")
@@ -5642,6 +5666,33 @@ test "pdsolve matches additional SymPy homogeneous and variable source cases" {
   let eq_v4_sol = pdsolve(eq_v4, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
   inspect(@symprint.to_string(eq_v4_sol), content="Eq(u(x, y), y*exp(-2*x)/2 + F(y))")
   inspect(checkpdesol(eq_v4, eq_v4_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
+
+  let eq_v5 = @symcore.function("exp", [@symcore.int(2) * x()]) * @symcalculus.diff(u(x(), y()), y()) + y() * u(x(), y()) + @symcore.int(-1) * u(x(), y())
+  let eq_v5_sol = pdsolve(eq_v5, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  let eq_v5_rhs = match eq_v5_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_true(
+    expr_semantically_equal(
+      eq_v5_rhs,
+      @symcore.function(
+        "exp",
+        [
+          @symcore.mul([
+            @symcore.rational_from_ints(1, 2) catch { _ => fail("r9") },
+            @symcore.function("exp", [@symcore.int(-2) * x()]),
+            @symcore.add([
+              @symcore.int(-1) * (y() ^ @symcore.int(2)),
+              @symcore.int(2) * y(),
+              @symcore.int(2) * @symcore.applied_undefined_function("F", [x()]),
+            ]),
+          ]),
+        ],
+      ),
+    ),
+  )
+  inspect(checkpdesol(eq_v5, eq_v5_sol, func=Some(u(x(), y()))).0.to_string(), content="true")
 }
 
 ///|

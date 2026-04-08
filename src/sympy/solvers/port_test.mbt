@@ -6565,6 +6565,22 @@ test "solvers parity additional pde source cases" {
     "True",
   )
 
+  let eq_v1 = x() * @symcalculus.diff(u(x(), y()), x()) + @symcore.int(-1) * y() * @symcalculus.diff(u(x(), y()), y()) + (y() ^ @symcore.int(2)) * u(x(), y()) + @symcore.int(-1) * (y() ^ @symcore.int(2))
+  let eq_v1_sol = @symsolvers.pdsolve(eq_v1, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  let eq_v1_rhs = match eq_v1_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.simplify(" +
+      py_sympify_expr(eq_v1_rhs) +
+      " - sympy.solvers.pdsolve(x*sympy.Function('u')(x, y).diff(x) - y*sympy.Function('u')(x, y).diff(y) + y**2*sympy.Function('u')(x, y) - y**2, hint='1st_linear_variable_coeff').rhs) == 0)",
+      "x y",
+    ),
+    "True",
+  )
+
   let eq_v2 = (x() ^ @symcore.int(2)) * u(x(), y()) + x() * @symcalculus.diff(u(x(), y()), x()) + x() * y() * @symcalculus.diff(u(x(), y()), y())
   assert_eq(
     @symprint.to_string(@symsolvers.pdsolve(eq_v2, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")),
@@ -6595,6 +6611,25 @@ test "solvers parity additional pde source cases" {
     @symprint.to_string(@symsolvers.pdsolve(eq_v4, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")),
     solvers_eval_str_symbols(
       "sympy.sstr(sympy.solvers.pdsolve(sympy.exp(x)**2*sympy.Function('u')(x, y).diff(x) + y, hint='1st_linear_variable_coeff'))",
+      "x y",
+    ),
+  )
+
+  let eq_v5 = @symcore.function("exp", [@symcore.int(2) * x()]) * @symcalculus.diff(u(x(), y()), y()) + y() * u(x(), y()) + @symcore.int(-1) * u(x(), y())
+  let eq_v5_sol = @symsolvers.pdsolve(eq_v5, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  let eq_v5_rhs = match eq_v5_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_eq(
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.simplify(" +
+      py_sympify_expr(eq_v5_rhs) +
+      "))",
+      "x y",
+    ),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.simplify(sympy.solvers.pdsolve(sympy.exp(2*x)*sympy.Function('u')(x, y).diff(y) + y*sympy.Function('u')(x, y) - sympy.Function('u')(x, y), hint='1st_linear_variable_coeff').rhs))",
       "x y",
     ),
   )
