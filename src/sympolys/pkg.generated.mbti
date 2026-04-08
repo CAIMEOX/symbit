@@ -935,17 +935,23 @@ pub struct AlgExtSpec {
 
 pub struct ComplexField {
   precision : Int
-}
+} derive(Eq, Show)
+pub fn ComplexField::add(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn ComplexField::coerce_complex(Self, @symcore.Expr) -> @symcore.ComplexFloat raise PolyError
+pub fn ComplexField::conjugate(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn ComplexField::contains_expr(Self, @symcore.Expr) -> Bool
 pub fn ComplexField::domain(Self) -> Domain
 pub fn ComplexField::evalf_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn ComplexField::from_complex_float(Self, @symcore.ComplexFloat) -> @symcore.Expr
+pub fn ComplexField::from_exact_parts(Self, @symnum.BigRational, @symnum.BigRational) -> @symcore.Expr
 pub fn ComplexField::from_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn ComplexField::inv(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn ComplexField::mul(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn ComplexField::neg(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn ComplexField::new(precision? : Int) -> Self
 pub fn ComplexField::one(Self) -> @symcore.Expr
 pub fn ComplexField::precision(Self) -> Int
 pub fn ComplexField::zero(Self) -> @symcore.Expr
-pub impl Eq for ComplexField
-pub impl Show for ComplexField
 
 pub struct DDM {
   dm : DomainMatrix
@@ -1345,10 +1351,8 @@ pub enum LinearSolveResult {
 
 pub struct Monomial {
   exps : Array[Int]
-}
+} derive(Eq, Hash)
 pub fn Monomial::to_array(Self) -> Array[Int]
-pub impl Eq for Monomial
-pub impl Hash for Monomial
 
 pub struct Poly {
   coeffs : Map[Monomial, FieldElem]
@@ -1406,17 +1410,22 @@ pub fn PolyBuilder::order(Self, TermOrder) -> Self
 
 pub struct RealField {
   precision : Int
-}
+} derive(Eq, Show)
+pub fn RealField::add(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn RealField::coerce_float(Self, @symcore.Expr) -> @symcore.Float raise PolyError
 pub fn RealField::contains_expr(Self, @symcore.Expr) -> Bool
 pub fn RealField::domain(Self) -> Domain
 pub fn RealField::evalf_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn RealField::from_exact(Self, @symnum.BigRational) -> @symcore.Expr
 pub fn RealField::from_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn RealField::from_float(Self, @symcore.Float) -> @symcore.Expr
+pub fn RealField::inv(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn RealField::mul(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn RealField::neg(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn RealField::new(precision? : Int) -> Self
 pub fn RealField::one(Self) -> @symcore.Expr
 pub fn RealField::precision(Self) -> Int
 pub fn RealField::zero(Self) -> @symcore.Expr
-pub impl Eq for RealField
-pub impl Show for RealField
 
 pub struct RingHomomorphism {
   source_gens : Array[String]
@@ -1550,14 +1559,13 @@ pub struct SeriesRing {
   domain : Domain
   sym : String
   precision : Int
-}
+} derive(Eq)
 pub fn SeriesRing::from_coeffs(Self, Array[FieldElem]) -> SeriesElem
 pub fn SeriesRing::from_int_coeffs(Self, Array[Int]) -> SeriesElem raise PolyError
 pub fn SeriesRing::from_poly(Self, Poly) -> SeriesElem raise PolyError
 pub fn SeriesRing::gen(Self) -> SeriesElem raise PolyError
 pub fn SeriesRing::one(Self) -> SeriesElem raise PolyError
 pub fn SeriesRing::zero(Self) -> SeriesElem
-pub impl Eq for SeriesRing
 
 pub struct SymmetrizeListResult {
   items : Array[SymmetrizeResult]
@@ -1574,8 +1582,7 @@ pub(all) enum TermOrder {
   Lex
   Grlex
   Grevlex
-}
-pub impl Eq for TermOrder
+} derive(Eq)
 
 // Type aliases
 pub type DomainMatrixAlgebraicEigenvects = Array[(Domain, Poly, Int, DomainMatrix)]

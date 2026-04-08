@@ -52,6 +52,8 @@ pub fn universal_set() -> Set
 // Errors
 
 // Types and methods
+type IntervalBound
+
 pub(all) enum Set {
   EmptySet
   UniversalSet
@@ -79,8 +81,7 @@ pub enum SetBool {
   True
   False
   Unknown
-}
-pub impl Eq for SetBool
+} derive(Eq)
 pub impl Show for SetBool
 
 // Type aliases

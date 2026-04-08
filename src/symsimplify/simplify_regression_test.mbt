@@ -131,37 +131,46 @@ test "symsimplify ratsimp and simplify preserve abaco eq3 radical cancellation" 
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let a = @symcore.Expr::Symbol("a")
-  let sq = @symcore.function("sqrt", [@symcore.add([a, x * y, x ^ @symcore.int(2)])])
+  let sq = @symcore.function("sqrt", [
+    @symcore.add([a, x * y, x ^ @symcore.int(2)]),
+  ])
   let expr = @symcore.add([
     y * (x ^ @symcore.int(-2)),
-    @symcore.int(-2) * ((@symcore.int(2) * x) ^ @symcore.int(-2)) * x *
+    @symcore.int(-2) *
+    ((@symcore.int(2) * x) ^ @symcore.int(-2)) *
+    x *
+    @symcore.add([
+      @symcore.int(-4) * ((@symcore.int(2) * sq) ^ @symcore.int(-1)) * x,
+      @symcore.int(-2),
+    ]) *
+    @symcore.add([
+      @symcore.int(-1) * (x ^ @symcore.int(-1)) * y,
+      @symcore.int(-2),
+    ]),
+    @symcore.int(-1) *
+    ((@symcore.int(2) * x) ^ @symcore.int(-2)) *
+    @symcore.add([
+      @symcore.int(2) *
+      x *
       @symcore.add([
-        @symcore.int(-4) * ((@symcore.int(2) * sq) ^ @symcore.int(-1)) * x,
-        @symcore.int(-2),
-      ]) *
-      @symcore.add([
-        @symcore.int(-1) * (x ^ @symcore.int(-1)) * y,
-        @symcore.int(-2),
+        @symcore.int(-4) *
+        ((@symcore.int(2) * sq) ^ @symcore.int(-1)) *
+        (@symcore.int(2) * x + y),
+        @symcore.int(-4),
       ]),
-    @symcore.int(-1) * ((@symcore.int(2) * x) ^ @symcore.int(-2)) *
-      @symcore.add([
-        @symcore.int(2) * x *
-          @symcore.add([
-            @symcore.int(-4) * ((@symcore.int(2) * sq) ^ @symcore.int(-1)) *
-              (@symcore.int(2) * x + y),
-            @symcore.int(-4),
-          ]),
-        @symcore.int(4) * y,
-        @symcore.int(8) * x,
-        @symcore.int(8) * sq,
-      ]),
-    @symcore.int(-1) * ((@symcore.int(2) * x) ^ @symcore.int(-1)) *
-      (x ^ @symcore.int(-2)) * x *
-      @symcore.add([
-        @symcore.int(-4) * x,
-        @symcore.int(-4) * sq,
-        @symcore.int(-2) * y,
-      ]),
+      @symcore.int(4) * y,
+      @symcore.int(8) * x,
+      @symcore.int(8) * sq,
+    ]),
+    @symcore.int(-1) *
+    ((@symcore.int(2) * x) ^ @symcore.int(-1)) *
+    (x ^ @symcore.int(-2)) *
+    x *
+    @symcore.add([
+      @symcore.int(-4) * x,
+      @symcore.int(-4) * sq,
+      @symcore.int(-2) * y,
+    ]),
   ])
   inspect(@symprint.debug_repr(ratsimp(expr, max_passes=1)), content="0")
   inspect(@symprint.debug_repr(simplify(expr)), content="0")

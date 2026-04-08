@@ -32,13 +32,17 @@ fn rat_from_int(value : Int) -> @symnum.BigRational {
 }
 
 ///|
-fn rat_from_expr(expr : Expr, context : String) -> @symnum.BigRational raise SolverError {
+fn rat_from_expr(
+  expr : Expr,
+  context : String,
+) -> @symnum.BigRational raise SolverError {
   match @symcore.exact_numeric_expr_num_den(expr) {
     Some((num, den)) =>
       @symnum.BigRational::new(num, den) catch {
         _ => raise SolverError::ValueError(context + ": invalid rational")
       }
-    None => raise SolverError::ValueError(context + ": expected exact numeric value")
+    None =>
+      raise SolverError::ValueError(context + ": expected exact numeric value")
   }
 }
 
@@ -148,7 +152,9 @@ fn sparse_count(coeffs : Map[Int, @symnum.BigRational]) -> Int {
 }
 
 ///|
-fn sparse_first(coeffs : Map[Int, @symnum.BigRational]) -> (Int, @symnum.BigRational)? {
+fn sparse_first(
+  coeffs : Map[Int, @symnum.BigRational],
+) -> (Int, @symnum.BigRational)? {
   for idx, value in coeffs {
     if !value.is_zero() {
       return Some((idx, value))
@@ -169,7 +175,12 @@ fn dense_row_from_sparse(
   row
 }
 
-fn linear_form_from_expr(expr : Expr, names : Array[String], context : String) -> RatForm raise SolverError {
+///|
+fn linear_form_from_expr(
+  expr : Expr,
+  names : Array[String],
+  context : String,
+) -> RatForm raise SolverError {
   let (coeff_maps, const_terms) = @sympolys._linear_eq_to_dict([expr], names) catch {
     err => raise wrap_poly_error(context, err)
   }
@@ -205,13 +216,34 @@ fn constraint_forms(
   }
   match @symcore.relational_parts(constraint) {
     Some((@symcore.RelOp::Le, lhs, rhs)) =>
-      [linear_form_from_expr(@symcore.add([lhs, negate_expr(rhs)]), names, context)]
+      [
+        linear_form_from_expr(
+          @symcore.add([lhs, negate_expr(rhs)]),
+          names,
+          context,
+        ),
+      ]
     Some((@symcore.RelOp::Ge, lhs, rhs)) =>
-      [linear_form_from_expr(@symcore.add([rhs, negate_expr(lhs)]), names, context)]
-    Some((@symcore.RelOp::Eq, lhs, rhs)) => [
-      linear_form_from_expr(@symcore.add([lhs, negate_expr(rhs)]), names, context),
-      linear_form_from_expr(@symcore.add([rhs, negate_expr(lhs)]), names, context),
-    ]
+      [
+        linear_form_from_expr(
+          @symcore.add([rhs, negate_expr(lhs)]),
+          names,
+          context,
+        ),
+      ]
+    Some((@symcore.RelOp::Eq, lhs, rhs)) =>
+      [
+        linear_form_from_expr(
+          @symcore.add([lhs, negate_expr(rhs)]),
+          names,
+          context,
+        ),
+        linear_form_from_expr(
+          @symcore.add([rhs, negate_expr(lhs)]),
+          names,
+          context,
+        ),
+      ]
     Some(_) =>
       raise SolverError::ValueError(
         context + ": only Eq, <= and >= constraints are supported",
@@ -239,6 +271,7 @@ fn matrix_row_rationals(
   out
 }
 
+///|
 fn pivot_tableau(
   matrix : Array[Array[@symnum.BigRational]],
   i : Int,
@@ -259,11 +292,7 @@ fn pivot_tableau(
     for c in 0..<cols {
       out[r][c] = rat_sub(
         matrix[r][c],
-        rat_div(
-          matrix[r][j].mul_r(matrix[i][c]),
-          pivot,
-          "simplex pivot",
-        ),
+        rat_div(matrix[r][j].mul_r(matrix[i][c]), pivot, "simplex pivot"),
       )
     }
   }
@@ -392,7 +421,8 @@ fn simplex_nonnegative_min(
     }
     let candidate_rows : Array[Int] = []
     for i in 0..<m {
-      if rat_is_positive(tableau[i][c]) && tableau[i][n].compare(rat_zero()) >= 0 {
+      if rat_is_positive(tableau[i][c]) &&
+        tableau[i][n].compare(rat_zero()) >= 0 {
         candidate_rows.push(i)
       }
     }
@@ -476,7 +506,13 @@ fn normalize_bounds(
   let out : Array[(@symnum.BigRational?, @symnum.BigRational?)] = []
   if bounds is None {
     for _ in 0..<count {
-      out.push(if default_nonnegative { (Some(rat_zero()), None) } else { (None, None) })
+      out.push(
+        if default_nonnegative {
+          (Some(rat_zero()), None)
+        } else {
+          (None, None)
+        },
+      )
     }
     return out
   }
@@ -553,12 +589,10 @@ fn build_var_transforms(
         transforms.push(VarTransform::{ offset: lo, coeffs })
         let ub_coeffs : Map[Int, @symnum.BigRational] = {}
         ub_coeffs[next_var] = rat_one()
-        extra_constraints.push(
-          RatForm::{
-            offset: rat_sub(lo, hi),
-            coeffs: ub_coeffs,
-          },
-        )
+        extra_constraints.push(RatForm::{
+          offset: rat_sub(lo, hi),
+          coeffs: ub_coeffs,
+        })
         next_var += 1
       }
       (None, None) => {
@@ -574,10 +608,7 @@ fn build_var_transforms(
 }
 
 ///|
-fn substitute_form(
-  form : RatForm,
-  transforms : Array[VarTransform],
-) -> RatForm {
+fn substitute_form(form : RatForm, transforms : Array[VarTransform]) -> RatForm {
   let coeffs : Map[Int, @symnum.BigRational] = {}
   let mut offset = form.offset
   for idx, value in form.coeffs {
@@ -612,7 +643,12 @@ fn optimize_forms(
     b.push(rat_neg(row.offset))
   }
   let c = dense_row_from_sparse(objective_z.coeffs, z_count)
-  let (value, solution) = simplex_nonnegative_min(a, b, c, rat_neg(objective_z.offset))
+  let (value, solution) = simplex_nonnegative_min(
+    a,
+    b,
+    c,
+    rat_neg(objective_z.offset),
+  )
   (value, solution, transforms)
 }
 
@@ -660,12 +696,10 @@ fn forms_from_matrix_rows(
     for j in 0..<coeffs.length() {
       add_sparse_coeff(map, j, coeffs[j])
     }
-    out.push(
-      RatForm::{
-        offset: rat_neg(rat_from_expr(rhs[i], context)),
-        coeffs: map,
-      },
-    )
+    out.push(RatForm::{
+      offset: rat_neg(rat_from_expr(rhs[i], context)),
+      coeffs: map,
+    })
   }
   out
 }
@@ -715,10 +749,13 @@ pub fn linprog(
       }
     }
     (None, None) => ()
-    _ => raise SolverError::ShapeError("linprog: A_eq and b_eq must both be given")
+    _ =>
+      raise SolverError::ShapeError("linprog: A_eq and b_eq must both be given")
   }
   let normalized_bounds = normalize_bounds(bounds, var_count, true, "linprog")
-  let (value, solution, transforms) = optimize_forms(objective, constraints, normalized_bounds)
+  let (value, solution, transforms) = optimize_forms(
+    objective, constraints, normalized_bounds,
+  )
   let original = recover_original_values(solution, transforms)
   (rat_to_expr(value), original.map(rat_to_expr))
 }
@@ -801,7 +838,11 @@ fn lp_extreme(
       _ => ()
     }
   }
-  let target = if maximize { negate_form(objective_form) } else { objective_form }
+  let target = if maximize {
+    negate_form(objective_form)
+  } else {
+    objective_form
+  }
   let (value, solution, transforms) = optimize_forms(target, rows, bounds)
   let primal = recover_original_values(solution, transforms)
   let out : Map[String, Expr] = {}

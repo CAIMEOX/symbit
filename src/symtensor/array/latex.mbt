@@ -50,7 +50,12 @@ fn dense_array_latex_at(
     for i in 0..<shape[dim] {
       let row : Array[String] = []
       for j in 0..<shape[dim + 1] {
-        row.push(array_expr_part(data[offset + i * row_stride + j * col_stride], settings))
+        row.push(
+          array_expr_part(
+            data[offset + i * row_stride + j * col_stride],
+            settings,
+          ),
+        )
       }
       rows.push(row)
     }
@@ -59,7 +64,16 @@ fn dense_array_latex_at(
   let row : Array[String] = []
   let stride = strides[dim]
   for i in 0..<shape[dim] {
-    row.push(dense_array_latex_at(data, shape, strides, dim + 1, offset + i * stride, settings))
+    row.push(
+      dense_array_latex_at(
+        data,
+        shape,
+        strides,
+        dim + 1,
+        offset + i * stride,
+        settings,
+      ),
+    )
   }
   latex_wrap_matrix([row])
 }
@@ -71,14 +85,21 @@ pub fn NDimArray::latex(
 ) -> String {
   let dense = dense_data(self)
   if dense.shape.is_empty() {
-    return if dense.data.is_empty() { "" } else { array_expr_part(dense.data[0], settings) }
+    return if dense.data.is_empty() {
+      ""
+    } else {
+      array_expr_part(dense.data[0], settings)
+    }
   }
   let strides = compute_strides(dense.shape)
   dense_array_latex_at(dense.data, dense.shape, strides, 0, 0, settings)
 }
 
 ///|
-fn axis_pair_latex(pair : (Int, Int), settings : @symprint.LatexSettings) -> String {
+fn axis_pair_latex(
+  pair : (Int, Int),
+  settings : @symprint.LatexSettings,
+) -> String {
   @symprint.latex_with_settings(
     @symcore.Expr::Tuple([@symcore.int(pair.0), @symcore.int(pair.1)]),
     settings,
@@ -104,7 +125,9 @@ fn array_expr_atomish(
       @symprint.latex_with_settings(@symcore.Expr::Symbol(name), settings)
     ArrayExpr::Element(base, indices) => {
       let base_tex = array_expr_atomish(base, settings)
-      let indices_tex = indices.map(idx => array_expr_part(idx, settings)).join(", ")
+      let indices_tex = indices
+        .map(idx => array_expr_part(idx, settings))
+        .join(", ")
       "{{\{base_tex}}_{\{indices_tex}}}"
     }
     ArrayExpr::TensorProduct(items) => {

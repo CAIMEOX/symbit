@@ -532,8 +532,7 @@ pub(all) enum ContinuousTag {
   Wald
   Weibull
   WignerSemicircle
-}
-pub impl Eq for ContinuousTag
+} derive(Eq)
 
 pub(all) enum DiscreteTag {
   BetaBinomial
@@ -552,8 +551,7 @@ pub(all) enum DiscreteTag {
   YuleSimon
   Zeta
   Named(name~ : String)
-}
-pub impl Eq for DiscreteTag
+} derive(Eq)
 
 pub(all) enum Event {
   Bool(Bool)
@@ -575,8 +573,7 @@ pub(all) enum JointTag {
   MultivariateNormal
   MultivariateLaplace
   Named(name~ : String)
-}
-pub impl Eq for JointTag
+} derive(Eq)
 
 pub(all) enum MatrixKind {
   Wishart(df~ : @symcore.Expr, scale~ : @symcore.Expr)
@@ -599,8 +596,7 @@ pub(all) enum MatrixTag {
   GaussianOrthogonalEnsemble
   GaussianSymplecticEnsemble
   Named(name~ : String)
-}
-pub impl Eq for MatrixTag
+} derive(Eq)
 
 pub(all) enum ProcessKind {
   PoissonProcess(rate~ : @symcore.Expr, time_symbol~ : String)
@@ -615,8 +611,7 @@ pub(all) enum ProcessTag {
   BernoulliProcess
   GammaProcess
   Named(name~ : String)
-}
-pub impl Eq for ProcessTag
+} derive(Eq)
 
 pub(all) enum RVKind {
   Finite(Array[(@symcore.Expr, @symnum.BigRational)])
@@ -654,8 +649,7 @@ pub(all) enum SymbolicFamily {
   Joint
   Process
   Matrix
-}
-pub impl Eq for SymbolicFamily
+} derive(Eq)
 
 pub(all) enum SymbolicKind {
   Continuous(ContinuousTag)
@@ -663,8 +657,7 @@ pub(all) enum SymbolicKind {
   Joint(JointTag)
   Process(ProcessTag)
   Matrix(MatrixTag)
-}
-pub impl Eq for SymbolicKind
+} derive(Eq)
 
 pub enum TriBool {
   True

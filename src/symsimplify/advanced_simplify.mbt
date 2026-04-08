@@ -182,7 +182,10 @@ fn split_fraction_simple(expr : Expr) -> (Expr, Expr) {
         all_same
       }
       if same_denom {
-        return (@symcore.normalize_legacy_expr(@symcore.add(numerators)), denominators[0])
+        return (
+          @symcore.normalize_legacy_expr(@symcore.add(numerators)),
+          denominators[0],
+        )
       }
       let summed : Array[Expr] = []
       for i in 0..<numerators.length() {
@@ -199,7 +202,7 @@ fn split_fraction_simple(expr : Expr) -> (Expr, Expr) {
         @symcore.normalize_legacy_expr(@symcore.mul(denominators)),
       )
     }
-    Expr::Pow(base, Expr::Number(exp)) => {
+    Expr::Pow(base, Expr::Number(exp)) =>
       if exp.is_integral() {
         let (num0, den0) = split_fraction_simple(base)
         let power = exp.numerator().to_int()
@@ -225,7 +228,6 @@ fn split_fraction_simple(expr : Expr) -> (Expr, Expr) {
       } else {
         (Expr::Pow(base, Expr::Number(exp)), int(1))
       }
-    }
     Expr::Mul(args) => {
       let num_factors : Array[Expr] = Array::new()
       let den_factors : Array[Expr] = Array::new()

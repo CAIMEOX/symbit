@@ -9,7 +9,9 @@ fn render_expr_subst(subst : Map[@symcore.Expr, @symcore.Expr]) -> String {
 }
 
 ///|
-fn render_expr_substs(items : Array[Map[@symcore.Expr, @symcore.Expr]]) -> String {
+fn render_expr_substs(
+  items : Array[Map[@symcore.Expr, @symcore.Expr]],
+) -> String {
   let rendered = items.map(render_expr_subst)
   rendered.sort()
   "[" + rendered.join(", ") + "]"
@@ -37,9 +39,19 @@ fn n() -> @symcore.Expr {
 
 ///|
 test "symunify deconstruct and construct preserve core expressions" {
-  let expr = @symcore.raw_function("Basic", [@symcore.int(1), @symcore.int(2), @symcore.int(3)])
-  inspect(render_expr_term(deconstruct(expr)), content="Function(Basic)[1, 2, 3]")
-  inspect(@symprint.to_string(construct(deconstruct(expr))), content="Basic(1, 2, 3)")
+  let expr = @symcore.raw_function("Basic", [
+    @symcore.int(1),
+    @symcore.int(2),
+    @symcore.int(3),
+  ])
+  inspect(
+    render_expr_term(deconstruct(expr)),
+    content="Function(Basic)[1, 2, 3]",
+  )
+  inspect(
+    @symprint.to_string(construct(deconstruct(expr))),
+    content="Basic(1, 2, 3)",
+  )
 
   let nested = @symcore.raw_function("Basic", [
     @symcore.int(1),
@@ -56,27 +68,41 @@ test "symunify deconstruct and construct preserve core expressions" {
 fn render_expr_term(term : UnifyTerm[@symcore.Expr, ExprOp]) -> String {
   match term {
     UnifyTerm::Atom(expr) => @symprint.to_string(expr)
-    UnifyTerm::Variable(key) => "Variable(" + @symprint.to_string(key.arg()) + ")"
+    UnifyTerm::Variable(key) =>
+      "Variable(" + @symprint.to_string(key.arg()) + ")"
     UnifyTerm::CondVariable(key, _) =>
       "CondVariable(" + @symprint.to_string(key.arg()) + ")"
     UnifyTerm::Sequence(items) =>
       "(" + items.map(render_expr_term).join(", ") + ")"
     UnifyTerm::Compound(op, args) =>
       match op {
-        @strategies_util.ExprOp::Number => "Number[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Symbol => "Symbol[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Add => "Add[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Mul => "Mul[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Pow => "Pow[" + args.map(render_expr_term).join(", ") + "]"
+        @strategies_util.ExprOp::Number =>
+          "Number[" + args.map(render_expr_term).join(", ") + "]"
+        @strategies_util.ExprOp::Symbol =>
+          "Symbol[" + args.map(render_expr_term).join(", ") + "]"
+        @strategies_util.ExprOp::Add =>
+          "Add[" + args.map(render_expr_term).join(", ") + "]"
+        @strategies_util.ExprOp::Mul =>
+          "Mul[" + args.map(render_expr_term).join(", ") + "]"
+        @strategies_util.ExprOp::Pow =>
+          "Pow[" + args.map(render_expr_term).join(", ") + "]"
         @strategies_util.ExprOp::Function(name) =>
-          "Function(" + name + ")[" + args.map(render_expr_term).join(", ") + "]"
+          "Function(" +
+          name +
+          ")[" +
+          args.map(render_expr_term).join(", ") +
+          "]"
       }
   }
 }
 
 ///|
 test "symunify unify handles expression variables and associative commutative matches" {
-  let expr = @symcore.raw_function("Basic", [@symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  let expr = @symcore.raw_function("Basic", [
+    @symcore.int(1),
+    @symcore.int(2),
+    @symcore.int(3),
+  ])
   let a = @symcore.Expr::Symbol("a")
   let b = @symcore.Expr::Symbol("b")
   let c = @symcore.Expr::Symbol("c")
@@ -86,7 +112,11 @@ test "symunify unify handles expression variables and associative commutative ma
     content="[{a: 1, b: 2, c: 3}]",
   )
 
-  let add_expr = @symcore.raw_add([@symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  let add_expr = @symcore.raw_add([
+    @symcore.int(1),
+    @symcore.int(2),
+    @symcore.int(3),
+  ])
   let p = @symcore.Expr::Symbol("p")
   let q = @symcore.Expr::Symbol("q")
   inspect(
@@ -113,7 +143,8 @@ test "symunify handles matrix symbols sets and boolean ops" {
   let a = @symcore.Expr::Symbol("a")
   let b = @symcore.Expr::Symbol("b")
   inspect(
-    unify(finite, @symcore.function("FiniteSet", [a, b]), variables=[a, b]).length() > 0,
+    unify(finite, @symcore.function("FiniteSet", [a, b]), variables=[a, b]).length() >
+    0,
     content="true",
   )
 
@@ -124,7 +155,9 @@ test "symunify handles matrix symbols sets and boolean ops" {
   let p = @symcore.Expr::Symbol("p")
   let q = @symcore.Expr::Symbol("q")
   inspect(
-    render_expr_substs(unify(rel, @symcore.function("And", [p, q]), variables=[p, q])),
+    render_expr_substs(
+      unify(rel, @symcore.function("And", [p, q]), variables=[p, q]),
+    ),
     content="[{p: z > 0, q: n < 3}]",
   )
 }

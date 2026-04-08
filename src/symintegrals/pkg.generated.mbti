@@ -164,8 +164,7 @@ pub fn trigintegrate(@symcore.Expr, String) -> @symcore.Expr?
 pub suberror IntegralError {
   ValueError(String)
   IntegralTransformError(String)
-}
-pub impl Show for IntegralError
+} derive(Show)
 
 // Types and methods
 

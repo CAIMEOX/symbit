@@ -161,6 +161,7 @@ pub fn compose(f : Poly, g : Poly) -> Poly raise PolyError {
   result
 }
 
+///|
 fn dup_right_decompose_local(
   f : Array[FieldElem],
   s : Int,
@@ -183,7 +184,10 @@ fn dup_right_decompose_local(
         _ => ()
       }
     }
-    let denom = fe_mul(fe_mul(fe_from_int(i, domain), fe_from_int(r, domain)), lc)
+    let denom = fe_mul(
+      fe_mul(fe_from_int(i, domain), fe_from_int(r, domain)),
+      lc,
+    )
     g.set(s - i, fe_mul(coeff, fe_inv(denom)))
   }
   dup_from_raw_dict(g, domain)
@@ -242,17 +246,24 @@ fn decompose_over_field(f : Poly) -> Array[Poly] raise PolyError {
       None => break
     }
   }
-  let out = [poly_from_dense_desc(work, f.gens[0], f.domain).with_order(f.order)]
+  let out = [
+    poly_from_dense_desc(work, f.gens[0], f.domain).with_order(f.order),
+  ]
   let mut i = out_desc.length()
   while i > 0 {
     i -= 1
-    out.push(poly_from_dense_desc(out_desc[i], f.gens[0], f.domain).with_order(f.order))
+    out.push(
+      poly_from_dense_desc(out_desc[i], f.gens[0], f.domain).with_order(f.order),
+    )
   }
   out
 }
 
 ///|
-fn decompose_restore_domain(parts : Array[Poly], original : Domain) -> Array[Poly] {
+fn decompose_restore_domain(
+  parts : Array[Poly],
+  original : Domain,
+) -> Array[Poly] {
   if original is Domain::ZZ {
     let restored : Array[Poly] = []
     for part in parts {

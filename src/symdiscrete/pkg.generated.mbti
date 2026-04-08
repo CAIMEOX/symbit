@@ -58,9 +58,7 @@ pub fn sqrt_int(Int) -> @symcore.Expr
 pub(all) suberror DiscreteError {
   TypeError(String)
   ValueError(String)
-}
-pub impl Eq for DiscreteError
-pub impl Show for DiscreteError
+} derive(Eq, Show)
 
 // Types and methods
 

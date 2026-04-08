@@ -30,7 +30,9 @@ fn solver_is_negative_infinity(expr : Expr) -> Bool {
 ///|
 fn solver_exact_number_expr(num : @bigint.BigInt, den : @bigint.BigInt) -> Expr {
   Expr::Number(
-    @symnum.BigRational::new(num, den) catch { _ => @symnum.BigRational::zero() },
+    @symnum.BigRational::new(num, den) catch {
+      _ => @symnum.BigRational::zero()
+    },
   )
 }
 
@@ -57,15 +59,22 @@ fn solver_numeric_compare(lhs : Expr, rhs : Expr) -> Int? {
         (Expr::Number(_) | Expr::Float(_), Expr::Number(_) | Expr::Float(_)) =>
           Some(@symcore.compare_expr(lhs_eval, rhs_eval))
         _ =>
-          match @symcore.bool_value(Expr::Relational(@symcore.RelOp::Lt, lhs_eval, rhs_eval)) {
+          match
+            @symcore.bool_value(
+              Expr::Relational(@symcore.RelOp::Lt, lhs_eval, rhs_eval),
+            ) {
             Some(true) => Some(-1)
             Some(false) =>
-              match @symcore.bool_value(Expr::Relational(@symcore.RelOp::Gt, lhs_eval, rhs_eval)) {
+              match
+                @symcore.bool_value(
+                  Expr::Relational(@symcore.RelOp::Gt, lhs_eval, rhs_eval),
+                ) {
                 Some(true) => Some(1)
                 Some(false) =>
-                  match @symcore.bool_value(
-                    Expr::Relational(@symcore.RelOp::Eq, lhs_eval, rhs_eval),
-                  ) {
+                  match
+                    @symcore.bool_value(
+                      Expr::Relational(@symcore.RelOp::Eq, lhs_eval, rhs_eval),
+                    ) {
                     Some(true) => Some(0)
                     _ => None
                   }
@@ -106,10 +115,14 @@ fn solver_sort_numeric_exprs(items : Array[Expr]) -> Array[Expr] {
 
 ///|
 fn solver_midpoint(lhs : Expr, rhs : Expr) -> Expr? {
-  match (@symcore.exact_numeric_expr_num_den(lhs), @symcore.exact_numeric_expr_num_den(rhs)) {
+  match
+    (
+      @symcore.exact_numeric_expr_num_den(lhs),
+      @symcore.exact_numeric_expr_num_den(rhs),
+    ) {
     (Some((ln, ld)), Some((rn, rd))) => {
       let num = ln * rd + rn * ld
-      let den = (ld * rd) * 2N
+      let den = ld * rd * 2N
       Some(solver_exact_number_expr(num, den))
     }
     _ => None
@@ -139,8 +152,12 @@ fn solver_interval_sample(left : Expr, right : Expr) -> Expr? {
 ///|
 fn solver_interval_contains_expr(interval_set : Set, elem : Expr) -> Bool {
   match interval_set {
-    @symsets.Set::Interval(left=left, right=right, left_open=left_open, right_open=right_open) =>
-      match (solver_numeric_compare(left, elem), solver_numeric_compare(elem, right)) {
+    @symsets.Set::Interval(left~, right~, left_open~, right_open~) =>
+      match
+        (
+          solver_numeric_compare(left, elem),
+          solver_numeric_compare(elem, right),
+        ) {
         (Some(lcmp), Some(rcmp)) =>
           (if left_open { lcmp < 0 } else { lcmp <= 0 }) &&
           (if right_open { rcmp < 0 } else { rcmp <= 0 })
@@ -160,18 +177,28 @@ fn solver_interval_set(
   @symsets.interval(
     left,
     right,
-    left_open=if solver_is_negative_infinity(left) { right_open } else { left_open },
-    right_open=if solver_is_positive_infinity(right) { left_open } else { right_open },
+    left_open=if solver_is_negative_infinity(left) {
+      right_open
+    } else {
+      left_open
+    },
+    right_open=if solver_is_positive_infinity(right) {
+      left_open
+    } else {
+      right_open
+    },
   )
 }
 
 ///|
-fn solver_sign_at(expr : Expr, symbol : Expr, point : Expr) -> Int? raise SolverError {
+fn solver_sign_at(
+  expr : Expr,
+  symbol : Expr,
+  point : Expr,
+) -> Int? raise SolverError {
   let env : Map[String, Expr] = {}
   env[symbol_name(symbol)] = point
-  let value = canonical_expr(
-    @symcore.subst(normalize_equation(expr), env),
-  )
+  let value = canonical_expr(@symcore.subst(normalize_equation(expr), env))
   if expr_is_zeroish(value) == Some(true) {
     return Some(0)
   }
@@ -185,12 +212,24 @@ fn solver_sign_at(expr : Expr, symbol : Expr, point : Expr) -> Int? raise Solver
         Some(0)
       }
     None =>
-      match @symcore.bool_value(Expr::Relational(@symcore.RelOp::Gt, @symcore.evalf(value, prec=80), @symcore.int(0))) {
+      match
+        @symcore.bool_value(
+          Expr::Relational(
+            @symcore.RelOp::Gt,
+            @symcore.evalf(value, prec=80),
+            @symcore.int(0),
+          ),
+        ) {
         Some(true) => Some(1)
         Some(false) =>
-          match @symcore.bool_value(
-            Expr::Relational(@symcore.RelOp::Lt, @symcore.evalf(value, prec=80), @symcore.int(0)),
-          ) {
+          match
+            @symcore.bool_value(
+              Expr::Relational(
+                @symcore.RelOp::Lt,
+                @symcore.evalf(value, prec=80),
+                @symcore.int(0),
+              ),
+            ) {
             Some(true) => Some(-1)
             Some(false) => Some(0)
             None => None
@@ -280,7 +319,11 @@ fn solver_set_to_relational_expr(set : Set, symbol : Expr) -> Expr {
       if !solver_is_negative_infinity(left) {
         pieces.push(
           Expr::Relational(
-            if left_open { @symcore.RelOp::Lt } else { @symcore.RelOp::Le },
+            if left_open {
+              @symcore.RelOp::Lt
+            } else {
+              @symcore.RelOp::Le
+            },
             left,
             symbol,
           ),
@@ -289,7 +332,11 @@ fn solver_set_to_relational_expr(set : Set, symbol : Expr) -> Expr {
       if !solver_is_positive_infinity(right) {
         pieces.push(
           Expr::Relational(
-            if right_open { @symcore.RelOp::Lt } else { @symcore.RelOp::Le },
+            if right_open {
+              @symcore.RelOp::Lt
+            } else {
+              @symcore.RelOp::Le
+            },
             symbol,
             right,
           ),
@@ -298,10 +345,18 @@ fn solver_set_to_relational_expr(set : Set, symbol : Expr) -> Expr {
       solver_expr_and(pieces)
     }
     @symsets.Set::Union(items) =>
-      solver_expr_or(items.map(item => solver_set_to_relational_expr(item, symbol)))
+      solver_expr_or(
+        items.map(item => solver_set_to_relational_expr(item, symbol)),
+      )
     @symsets.Set::Intersection(items) =>
-      solver_expr_and(items.map(item => solver_set_to_relational_expr(item, symbol)))
-    _ => @symcore.function("Contains", [symbol, Expr::Symbol(@symsets.to_string(set))])
+      solver_expr_and(
+        items.map(item => solver_set_to_relational_expr(item, symbol)),
+      )
+    _ =>
+      @symcore.function("Contains", [
+        symbol,
+        Expr::Symbol(@symsets.to_string(set)),
+      ])
   }
 }
 
@@ -343,7 +398,7 @@ fn solver_normalize_union(parts : Array[Set]) -> Set {
   let merged : Array[Set] = []
   for interval_set in intervals {
     match interval_set {
-      @symsets.Set::Interval(left=left, right=right, left_open=left_open, right_open=right_open) => {
+      @symsets.Set::Interval(left~, right~, left_open~, right_open~) => {
         let mut new_left_open = left_open
         let mut new_right_open = right_open
         for i in 0..<points.length() {
@@ -391,13 +446,15 @@ fn solver_normalize_union(parts : Array[Set]) -> Set {
   if !leftovers.is_empty() {
     merged.push(@symsets.finite_set(leftovers))
   }
-  @symsets.union(merged.map(fn(set) {
-    match set {
-      @symsets.Set::Interval(left=left, right=right, left_open=left_open, right_open=right_open) =>
-        solver_interval_set(left, right, left_open, right_open)
-      _ => set
-    }
-  }))
+  @symsets.union(
+    merged.map(fn(set) {
+      match set {
+        @symsets.Set::Interval(left~, right~, left_open~, right_open~) =>
+          solver_interval_set(left, right, left_open, right_open)
+        _ => set
+      }
+    }),
+  )
 }
 
 ///|
@@ -406,15 +463,26 @@ fn solver_set_intersection(lhs : Set, rhs : Set) -> Set {
   for a in solver_union_pieces(lhs) {
     for b in solver_union_pieces(rhs) {
       let piece = match (a, b) {
-        (@symsets.Set::UniversalSet, other)
-        | (@symsets.Set::Reals, other) => other
-        (other, @symsets.Set::UniversalSet)
-        | (other, @symsets.Set::Reals) => other
+        (@symsets.Set::UniversalSet, other) | (@symsets.Set::Reals, other) =>
+          other
+        (other, @symsets.Set::UniversalSet) | (other, @symsets.Set::Reals) =>
+          other
         (
-          @symsets.Set::Interval(left=al, right=ar, left_open=alo, right_open=aro),
-          @symsets.Set::Interval(left=bl, right=br, left_open=blo, right_open=bro),
+          @symsets.Set::Interval(
+            left=al,
+            right=ar,
+            left_open=alo,
+            right_open=aro
+          ),
+          @symsets.Set::Interval(
+            left=bl,
+            right=br,
+            left_open=blo,
+            right_open=bro
+          ),
         ) =>
-          match (solver_numeric_compare(al, bl), solver_numeric_compare(ar, br)) {
+          match
+            (solver_numeric_compare(al, bl), solver_numeric_compare(ar, br)) {
             (Some(left_cmp), Some(right_cmp)) => {
               let (left, left_open) = if left_cmp > 0 {
                 (al, alo)
@@ -463,9 +531,12 @@ fn solver_set_intersection(lhs : Set, rhs : Set) -> Set {
 }
 
 ///|
-fn solver_interval_minus_points(interval_set : Set, points : Array[Expr]) -> Set {
+fn solver_interval_minus_points(
+  interval_set : Set,
+  points : Array[Expr],
+) -> Set {
   match interval_set {
-    @symsets.Set::Interval(left=left, right=right, left_open=left_open, right_open=right_open) => {
+    @symsets.Set::Interval(left~, right~, left_open~, right_open~) => {
       let kept_points : Array[Expr] = []
       for point in solver_sort_numeric_exprs(points) {
         if solver_interval_contains_expr(interval_set, point) {
@@ -481,7 +552,11 @@ fn solver_interval_minus_points(interval_set : Set, points : Array[Expr]) -> Set
         let a = boundaries[i]
         let b = boundaries[i + 1]
         let open_left = if i == 0 { left_open } else { true }
-        let open_right = if i == boundaries.length() - 2 { right_open } else { true }
+        let open_right = if i == boundaries.length() - 2 {
+          right_open
+        } else {
+          true
+        }
         let piece = solver_interval_set(a, b, open_left, open_right)
         if piece != @symsets.empty_set() {
           parts.push(piece)
@@ -520,10 +595,16 @@ pub fn solve_poly_inequality(
 ) -> Array[Set] raise SolverError {
   let expr = poly.to_expr()
   if poly.is_zero() {
-    return if solver_relation_holds(rel, 0) { [@symsets.reals()] } else { [@symsets.empty_set()] }
+    return if solver_relation_holds(rel, 0) {
+      [@symsets.reals()]
+    } else {
+      [@symsets.empty_set()]
+    }
   }
   if poly.gens.length() != 1 {
-    raise SolverError::ValueError("solve_poly_inequality expects a univariate Poly")
+    raise SolverError::ValueError(
+      "solve_poly_inequality expects a univariate Poly",
+    )
   }
   let symbol = Expr::Symbol(poly.gens[0])
   let roots = solver_sort_numeric_exprs(
@@ -590,7 +671,9 @@ fn solver_relation_expr(expr : Expr) -> (Expr, String) {
   match @symcore.relational_parts(expr) {
     Some((op, lhs, rhs)) =>
       (
-        canonical_expr(@symcore.add([lhs, @symcore.mul([@symcore.int(-1), rhs])])),
+        canonical_expr(
+          @symcore.add([lhs, @symcore.mul([@symcore.int(-1), rhs])]),
+        ),
         match op {
           @symcore.RelOp::Eq => "=="
           @symcore.RelOp::Ne => "!="
@@ -627,7 +710,9 @@ fn solver_univariate_inequality_set(
 ) -> Set raise SolverError {
   let (target, rel) = solver_relation_expr(expr)
   let name = symbol_name(gen)
-  let rational_target = canonical_expr(@symsimplify.ratsimp(target, max_passes=4))
+  let rational_target = canonical_expr(
+    @symsimplify.ratsimp(target, max_passes=4),
+  )
   let (numer, denom) = @symsimplify.fraction(rational_target)
   let numer_poly = @sympolys.Poly::from_expr_defaults(numer, gens=[name]) catch {
     err => raise wrap_poly_error("solve_univariate_inequality", err)
@@ -685,19 +770,25 @@ fn solver_abs_equality_set(
   match solver_exact_sign(bound) {
     Some(sign) if sign < 0 => @symsets.empty_set()
     _ => {
-      let left = match solve_univariate_inequality(
-        Expr::Relational(@symcore.RelOp::Eq, arg, @symcore.mul([@symcore.int(-1), bound])),
-        gen,
-        relational=false,
-      ) {
+      let left = match
+        solve_univariate_inequality(
+          Expr::Relational(
+            @symcore.RelOp::Eq,
+            arg,
+            @symcore.mul([@symcore.int(-1), bound]),
+          ),
+          gen,
+          relational=false,
+        ) {
         InequalityResult::Set(set) => set
         _ => @symsets.empty_set()
       }
-      let right = match solve_univariate_inequality(
-        Expr::Relational(@symcore.RelOp::Eq, arg, bound),
-        gen,
-        relational=false,
-      ) {
+      let right = match
+        solve_univariate_inequality(
+          Expr::Relational(@symcore.RelOp::Eq, arg, bound),
+          gen,
+          relational=false,
+        ) {
         InequalityResult::Set(set) => set
         _ => @symsets.empty_set()
       }
@@ -729,51 +820,97 @@ pub fn reduce_abs_inequality(
     }
   }
   guard abs_coeff is Some(coeff) && inner is Some(arg) else {
-    raise SolverError::ValueError("reduce_abs_inequality expects a single Abs term")
+    raise SolverError::ValueError(
+      "reduce_abs_inequality expects a single Abs term",
+    )
   }
   let bound = canonical_expr(
-    @symcore.mul([@symcore.int(-1), solver_add_all(rest), coeff ^ @symcore.int(-1)]),
+    @symcore.mul([
+      @symcore.int(-1),
+      solver_add_all(rest),
+      coeff ^ @symcore.int(-1),
+    ]),
   )
   let solution = match rel {
     "==" => solver_abs_equality_set(arg, bound, gen)
     "!=" =>
       match solver_exact_sign(bound) {
         Some(sign) if sign < 0 => @symsets.reals()
-        _ => solver_set_difference(@symsets.reals(), solver_abs_equality_set(arg, bound, gen))
+        _ =>
+          solver_set_difference(
+            @symsets.reals(),
+            solver_abs_equality_set(arg, bound, gen),
+          )
       }
     "<" | "<=" => {
-      let left = match solve_univariate_inequality(
-        Expr::Relational(if rel == "<" { @symcore.RelOp::Gt } else { @symcore.RelOp::Ge }, arg, @symcore.mul([@symcore.int(-1), bound])),
-        gen,
-        relational=false,
-      ) {
+      let left = match
+        solve_univariate_inequality(
+          Expr::Relational(
+            if rel == "<" {
+              @symcore.RelOp::Gt
+            } else {
+              @symcore.RelOp::Ge
+            },
+            arg,
+            @symcore.mul([@symcore.int(-1), bound]),
+          ),
+          gen,
+          relational=false,
+        ) {
         InequalityResult::Set(set) => set
         _ => @symsets.empty_set()
       }
-      let right = match solve_univariate_inequality(
-        Expr::Relational(if rel == "<" { @symcore.RelOp::Lt } else { @symcore.RelOp::Le }, arg, bound),
-        gen,
-        relational=false,
-      ) {
+      let right = match
+        solve_univariate_inequality(
+          Expr::Relational(
+            if rel == "<" {
+              @symcore.RelOp::Lt
+            } else {
+              @symcore.RelOp::Le
+            },
+            arg,
+            bound,
+          ),
+          gen,
+          relational=false,
+        ) {
         InequalityResult::Set(set) => set
         _ => @symsets.empty_set()
       }
       @symsets.intersection([left, right])
     }
     ">" | ">=" => {
-      let left = match solve_univariate_inequality(
-        Expr::Relational(if rel == ">" { @symcore.RelOp::Lt } else { @symcore.RelOp::Le }, arg, @symcore.mul([@symcore.int(-1), bound])),
-        gen,
-        relational=false,
-      ) {
+      let left = match
+        solve_univariate_inequality(
+          Expr::Relational(
+            if rel == ">" {
+              @symcore.RelOp::Lt
+            } else {
+              @symcore.RelOp::Le
+            },
+            arg,
+            @symcore.mul([@symcore.int(-1), bound]),
+          ),
+          gen,
+          relational=false,
+        ) {
         InequalityResult::Set(set) => set
         _ => @symsets.empty_set()
       }
-      let right = match solve_univariate_inequality(
-        Expr::Relational(if rel == ">" { @symcore.RelOp::Gt } else { @symcore.RelOp::Ge }, arg, bound),
-        gen,
-        relational=false,
-      ) {
+      let right = match
+        solve_univariate_inequality(
+          Expr::Relational(
+            if rel == ">" {
+              @symcore.RelOp::Gt
+            } else {
+              @symcore.RelOp::Ge
+            },
+            arg,
+            bound,
+          ),
+          gen,
+          relational=false,
+        ) {
         InequalityResult::Set(set) => set
         _ => @symsets.empty_set()
       }
@@ -789,7 +926,9 @@ pub fn reduce_abs_inequalities(
   exprs : Array[(Expr, String)],
   gen : Expr,
 ) -> Expr raise SolverError {
-  solver_expr_and(exprs.map(entry => reduce_abs_inequality(entry.0, entry.1, gen)))
+  solver_expr_and(
+    exprs.map(entry => reduce_abs_inequality(entry.0, entry.1, gen)),
+  )
 }
 
 ///|
@@ -801,21 +940,26 @@ fn solver_reduce_inequalities_single(
   for inequality in inequalities {
     let next = match @symcore.relational_parts(inequality) {
       Some((_, lhs, rhs)) =>
-        if @symcore.has(lhs, @symcore.function("Abs", [])) || @symcore.has(rhs, @symcore.function("Abs", [])) {
+        if @symcore.has(lhs, @symcore.function("Abs", [])) ||
+          @symcore.has(rhs, @symcore.function("Abs", [])) {
           let (_, rel) = solver_relation_expr(inequality)
-          let expr = canonical_expr(@symcore.add([lhs, @symcore.mul([@symcore.int(-1), rhs])]))
-          match solve_univariate_inequality(
-            reduce_abs_inequality(expr, rel, symbol),
-            symbol,
-            relational=false,
-          ) {
+          let expr = canonical_expr(
+            @symcore.add([lhs, @symcore.mul([@symcore.int(-1), rhs])]),
+          )
+          match
+            solve_univariate_inequality(
+              reduce_abs_inequality(expr, rel, symbol),
+              symbol,
+              relational=false,
+            ) {
             InequalityResult::Set(set) => set
             _ => @symsets.empty_set()
           }
         } else {
           solver_univariate_inequality_set(inequality, symbol, @symsets.reals())
         }
-      None => solver_univariate_inequality_set(inequality, symbol, @symsets.reals())
+      None =>
+        solver_univariate_inequality_set(inequality, symbol, @symsets.reals())
     }
     current = @symsets.intersection([current, next])
   }
@@ -823,10 +967,7 @@ fn solver_reduce_inequalities_single(
 }
 
 ///|
-fn solver_relevant_symbols(
-  expr : Expr,
-  symbols : Array[Expr],
-) -> Array[Expr] {
+fn solver_relevant_symbols(expr : Expr, symbols : Array[Expr]) -> Array[Expr] {
   let free = @symcore.free_symbols(expr)
   let out : Array[Expr] = []
   for symbol in symbols {
@@ -843,10 +984,10 @@ pub fn reduce_inequalities(
   symbols? : Array[Expr] = [],
 ) -> Expr raise SolverError {
   let tracked = if symbols.is_empty() {
-      sorted_unique_symbols(solver_collect_free_symbols(inequalities))
-    } else {
-      sorted_unique_symbols(symbols)
-    }
+    sorted_unique_symbols(solver_collect_free_symbols(inequalities))
+  } else {
+    sorted_unique_symbols(symbols)
+  }
   if tracked.is_empty() {
     return solver_expr_and(inequalities)
   }
@@ -882,7 +1023,10 @@ pub fn reduce_inequalities(
 }
 
 ///|
-fn solver_factor_options(eq : Expr, gens : Array[Expr]) -> Array[Array[Expr]] raise SolverError {
+fn solver_factor_options(
+  eq : Expr,
+  gens : Array[Expr],
+) -> Array[Array[Expr]] raise SolverError {
   let normalized = normalize_equation(eq)
   if expr_is_zeroish(normalized) == Some(true) {
     return [[]]
@@ -891,7 +1035,8 @@ fn solver_factor_options(eq : Expr, gens : Array[Expr]) -> Array[Array[Expr]] ra
     Expr::Mul(args) if args.length() > 1 => {
       let pieces : Array[Array[Expr]] = []
       for arg in args {
-        if !@symcore.is_zero(arg) && @symcore.compare_expr(arg, @symcore.int(1)) != 0 &&
+        if !@symcore.is_zero(arg) &&
+          @symcore.compare_expr(arg, @symcore.int(1)) != 0 &&
           @symcore.compare_expr(arg, @symcore.int(-1)) != 0 {
           pieces.push([canonical_expr(arg)])
         }

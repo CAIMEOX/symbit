@@ -46,7 +46,9 @@ fn sorted_unique_symbols(items : Array[Expr]) -> Array[Expr] raise SolverError {
 }
 
 ///|
-fn unique_symbols_in_input_order(items : Array[Expr]) -> Array[Expr] raise SolverError {
+fn unique_symbols_in_input_order(
+  items : Array[Expr],
+) -> Array[Expr] raise SolverError {
   let out : Array[Expr] = []
   for item in items {
     guard item is Expr::Symbol(_) else {
@@ -148,16 +150,15 @@ fn solve_result_to_multi_symbol_tuple_exprs(
 }
 
 ///|
-fn equation_has_exact_factor(
-  equation : Expr,
-  factor : Expr,
-) -> Bool {
+fn equation_has_exact_factor(equation : Expr, factor : Expr) -> Bool {
   if expr_is_zeroish(factor) == Some(true) {
     return false
   }
   let quotient_try : Result[Expr, _] = try? canonical_expr(
     @symsimplify.ratsimp(
-      canonical_expr(@symcore.mul([equation, @symcore.pow(factor, @symcore.int(-1))])),
+      canonical_expr(
+        @symcore.mul([equation, @symcore.pow(factor, @symcore.int(-1))]),
+      ),
       max_passes=2,
     ),
   )
@@ -473,10 +474,7 @@ fn polynomial_term_map_mul(
 }
 
 ///|
-fn polynomial_term_map_pow(
-  terms : Map[Int, Expr],
-  exp : Int,
-) -> Map[Int, Expr] {
+fn polynomial_term_map_pow(terms : Map[Int, Expr], exp : Int) -> Map[Int, Expr] {
   if exp == 0 {
     return polynomial_term_map_one(@symcore.int(1))
   }
@@ -603,10 +601,7 @@ fn solve_univariate_composite_polynomial(
     }
     roots.push(
       canonical_expr(
-        @symcore.mul([
-          negate_expr(b),
-          @symcore.pow(a, @symcore.int(-1)),
-        ]),
+        @symcore.mul([negate_expr(b), @symcore.pow(a, @symcore.int(-1))]),
       ),
     )
   } else if degree == 2 {
@@ -632,7 +627,10 @@ fn solve_univariate_composite_polynomial(
       ]),
     )
     let sqrt_disc = @symcore.function("sqrt", [disc])
-    let denom_inv = @symcore.pow(@symcore.mul([@symcore.int(2), a]), @symcore.int(-1))
+    let denom_inv = @symcore.pow(
+      @symcore.mul([@symcore.int(2), a]),
+      @symcore.int(-1),
+    )
     roots.push(
       canonical_expr(
         @symcore.mul([
@@ -643,10 +641,7 @@ fn solve_univariate_composite_polynomial(
     )
     roots.push(
       canonical_expr(
-        @symcore.mul([
-          @symcore.add([negate_expr(b), sqrt_disc]),
-          denom_inv,
-        ]),
+        @symcore.mul([@symcore.add([negate_expr(b), sqrt_disc]), denom_inv]),
       ),
     )
   } else {
@@ -671,34 +666,32 @@ fn expr_in_domain(domain : Set, expr : Expr) -> Bool {
         @symsets.SetBool::True => true
         @symsets.SetBool::False => false
         @symsets.SetBool::Unknown =>
-          {
-            match domain {
-              @symsets.Set::Reals =>
-                match @symassume.is_real(expr) {
-                  @symassume.Tri::True => true
-                  @symassume.Tri::False => false
-                  @symassume.Tri::Unknown =>
-                    if !@symcore.free_symbols(expr).is_empty() {
-                      true
-                    } else {
-                      match @symcore.evalf(expr, prec=80) {
-                        Expr::Number(_) | Expr::Float(_) => true
-                        Expr::ComplexFloat(value) =>
-                          @symnum.is_zero(value.to_mpc().imag)
-                        _ => false
-                      }
+          match domain {
+            @symsets.Set::Reals =>
+              match @symassume.is_real(expr) {
+                @symassume.Tri::True => true
+                @symassume.Tri::False => false
+                @symassume.Tri::Unknown =>
+                  if !@symcore.free_symbols(expr).is_empty() {
+                    true
+                  } else {
+                    match @symcore.evalf(expr, prec=80) {
+                      Expr::Number(_) | Expr::Float(_) => true
+                      Expr::ComplexFloat(value) =>
+                        @symnum.is_zero(value.to_mpc().imag)
+                      _ => false
                     }
-                }
-              @symsets.Set::Rationals =>
-                @symassume.tri_to_bool_option(@symassume.is_rational(expr)).unwrap_or(
-                  false,
-                )
-              @symsets.Set::Integers =>
-                @symassume.tri_to_bool_option(@symassume.is_integer(expr)).unwrap_or(
-                  false,
-                )
-              _ => false
-            }
+                  }
+              }
+            @symsets.Set::Rationals =>
+              @symassume.tri_to_bool_option(@symassume.is_rational(expr)).unwrap_or(
+                false,
+              )
+            @symsets.Set::Integers =>
+              @symassume.tri_to_bool_option(@symassume.is_integer(expr)).unwrap_or(
+                false,
+              )
+            _ => false
           }
       }
   }
@@ -742,7 +735,8 @@ fn domain_membership_status(domain : Set, expr : Expr) -> DomainMembership {
                   }
               }
             @symsets.Set::Rationals =>
-              match @symassume.tri_to_bool_option(@symassume.is_rational(expr)) {
+              match
+                @symassume.tri_to_bool_option(@symassume.is_rational(expr)) {
                 Some(true) => DomainMembership::In
                 Some(false) => DomainMembership::Out
                 None => DomainMembership::Unknown
@@ -799,14 +793,16 @@ fn expr_is_known_positive(expr : Expr) -> Bool {
 
 ///|
 fn expr_is_known_nonpositive(expr : Expr) -> Bool {
-  @symassume.tri_to_bool_option(
-    @symassume.is_nonnegative(negate_expr(expr)),
-  ).unwrap_or(false)
+  @symassume.tri_to_bool_option(@symassume.is_nonnegative(negate_expr(expr))).unwrap_or(
+    false,
+  )
 }
 
 ///|
 fn expr_is_known_nonnegative(expr : Expr) -> Bool {
-  @symassume.tri_to_bool_option(@symassume.is_nonnegative(expr)).unwrap_or(false)
+  @symassume.tri_to_bool_option(@symassume.is_nonnegative(expr)).unwrap_or(
+    false,
+  )
 }
 
 ///|
@@ -896,13 +892,9 @@ fn exact_real_numeric_pow(
   let abs_p = if p < 0 { -p } else { p }
   let pow_num = bigint_pow_int(rat.numerator(), abs_p)
   let pow_den = bigint_pow_int(rat.denominator(), abs_p)
-  rat = @symnum.BigRational::new(pow_num, pow_den) catch {
-    _ => return None
-  }
+  rat = @symnum.BigRational::new(pow_num, pow_den) catch { _ => return None }
   if p < 0 {
-    rat = rat.reciprocal() catch {
-      _ => return None
-    }
+    rat = rat.reciprocal() catch { _ => return None }
   }
   if negative && p % 2 != 0 {
     rat = rat.neg_r()
@@ -979,9 +971,17 @@ fn integer_log_exact(value : BigInt, base : BigInt) -> BigInt? {
   }
   let is_even = exponent.mod(2N).compare(0N) == 0
   if value.compare(0N) > 0 {
-    if is_even { Some(exponent) } else { None }
+    if is_even {
+      Some(exponent)
+    } else {
+      None
+    }
   } else if value.compare(0N) < 0 {
-    if is_even { None } else { Some(exponent) }
+    if is_even {
+      None
+    } else {
+      Some(exponent)
+    }
   } else {
     None
   }
@@ -1002,13 +1002,11 @@ fn real_log_inversion_expr(rhs : Expr, base : Expr) -> Expr {
         @symcore.int(-1),
       )
       let fallback = canonical_expr(
-        @symcore.mul([
-          @symcore.function("log", [rhs]),
-          base_log_inv,
-        ]),
+        @symcore.mul([@symcore.function("log", [rhs]), base_log_inv]),
       )
-      let exponent_rat_res : Result[@symnum.BigRational, @symnum.RationalError] = try?
-        @symnum.BigRational::new(exponent, 1N)
+      let exponent_rat_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
+        exponent, 1N,
+      )
       let exponent_expr = match exponent_rat_res {
         Ok(value) => Expr::Number(value)
         Err(_) => return fallback
@@ -1018,8 +1016,9 @@ fn real_log_inversion_expr(rhs : Expr, base : Expr) -> Expr {
       } else if reduced.compare(1N) == 0 {
         exponent_expr
       } else {
-        let reduced_rat_res : Result[@symnum.BigRational, @symnum.RationalError] = try?
-          @symnum.BigRational::new(reduced, 1N)
+        let reduced_rat_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
+          reduced, 1N,
+        )
         let reduced_expr = match reduced_rat_res {
           Ok(value) => Expr::Number(value)
           Err(_) => return fallback
@@ -1028,10 +1027,7 @@ fn real_log_inversion_expr(rhs : Expr, base : Expr) -> Expr {
           @symcore.add([
             exponent_expr,
             @symcore.mul([
-              @symcore.function(
-                "log",
-                [reduced_expr],
-              ),
+              @symcore.function("log", [reduced_expr]),
               base_log_inv,
             ]),
           ]),
@@ -1093,23 +1089,25 @@ fn expr_has_obvious_nonfinite_value(expr : Expr) -> Bool {
       }
     }
     Expr::Apply(Expr::FunctionHead("log"), [arg])
-    | Expr::Apply(Expr::UndefinedFunction("log"), [arg]) => {
+    | Expr::Apply(Expr::UndefinedFunction("log"), [arg]) =>
       if @symcore.compare_expr(arg, @symcore.int(0)) == 0 {
         true
       } else {
         expr_has_obvious_nonfinite_value(arg)
       }
-    }
-    Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) =>
       if @symcore.is_zero(base) {
         match @symcore.exact_numeric_expr_num_den(exp) {
-          Some((num, den)) if den.compare(1N) == 0 && num.compare(0N) < 0 => true
-          _ => expr_has_obvious_nonfinite_value(base) || expr_has_obvious_nonfinite_value(exp)
+          Some((num, den)) if den.compare(1N) == 0 && num.compare(0N) < 0 =>
+            true
+          _ =>
+            expr_has_obvious_nonfinite_value(base) ||
+            expr_has_obvious_nonfinite_value(exp)
         }
       } else {
-        expr_has_obvious_nonfinite_value(base) || expr_has_obvious_nonfinite_value(exp)
+        expr_has_obvious_nonfinite_value(base) ||
+        expr_has_obvious_nonfinite_value(exp)
       }
-    }
     _ => {
       for child in @symcore.children(expr) {
         if expr_has_obvious_nonfinite_value(child) {
@@ -1133,7 +1131,9 @@ fn expr_has_obvious_nonfinite_under_subst(
   match expr {
     Expr::Mul(args) => {
       let substituted_args = args.map(arg => @symcore.subst(arg, env))
-      let has_infinite_factor = substituted_args.any(arg => @symcore.is_infinite(arg) || @symcore.is_nan(arg))
+      let has_infinite_factor = substituted_args.any(arg => {
+        @symcore.is_infinite(arg) || @symcore.is_nan(arg)
+      })
       let has_zero_factor = substituted_args.any(@symcore.is_zero)
       if has_infinite_factor && has_zero_factor {
         return true
@@ -1153,7 +1153,8 @@ fn expr_has_obvious_nonfinite_under_subst(
       let substituted_base = @symcore.subst(base, env)
       if @symcore.is_zero(substituted_base) {
         match @symcore.exact_numeric_expr_num_den(@symcore.subst(exp, env)) {
-          Some((num, den)) if den.compare(1N) == 0 && num.compare(0N) < 0 => true
+          Some((num, den)) if den.compare(1N) == 0 && num.compare(0N) < 0 =>
+            true
           _ =>
             expr_has_obvious_nonfinite_under_subst(base, env) ||
             expr_has_obvious_nonfinite_under_subst(exp, env)
@@ -1163,7 +1164,10 @@ fn expr_has_obvious_nonfinite_under_subst(
         expr_has_obvious_nonfinite_under_subst(exp, env)
       }
     }
-    _ => @symcore.children(expr).any(child => expr_has_obvious_nonfinite_under_subst(child, env))
+    _ =>
+      @symcore.children(expr).any(child => {
+        expr_has_obvious_nonfinite_under_subst(child, env)
+      })
   }
 }
 
@@ -1227,12 +1231,16 @@ fn valid_solution_for_expr(
     None => {
       let env : Map[String, Expr] = {}
       env[symbol_name(symbol)] = normalized
-      let residual = canonical_expr(@symcore.subst(normalize_equation(expr), env))
-      if @symcore.compare_expr(residual, @symcore.int(0)) == 0 || @symcore.is_zero(residual) {
+      let residual = canonical_expr(
+        @symcore.subst(normalize_equation(expr), env),
+      )
+      if @symcore.compare_expr(residual, @symcore.int(0)) == 0 ||
+        @symcore.is_zero(residual) {
         true
       } else {
         let simplified = @symsimplify.simplify(residual)
-        if @symcore.compare_expr(simplified, @symcore.int(0)) == 0 || @symcore.is_zero(simplified) {
+        if @symcore.compare_expr(simplified, @symcore.int(0)) == 0 ||
+          @symcore.is_zero(simplified) {
           true
         } else {
           !@symcore.free_symbols(normalized).is_empty()
@@ -1277,8 +1285,11 @@ fn exclude_relational_singularities(
   }
   let invalid_parts : Array[Set] = []
   for factor in dens {
-    let part_res : Result[Set, SolverError] =
-      try? solveset(factor, symbol=Some(symbol), domain=domain)
+    let part_res : Result[Set, SolverError] = try? solveset(
+      factor,
+      symbol=Some(symbol),
+      domain~,
+    )
     match part_res {
       Ok(part) => invalid_parts.push(part)
       Err(_) => ()
@@ -1505,8 +1516,10 @@ fn invert_real_expr(
                 Some(rhs_int) =>
                   match integer_log_exact(rhs_int, base_int) {
                     Some(power) => {
-                      let power_rat_res : Result[@symnum.BigRational, @symnum.RationalError] =
-                        try? @symnum.BigRational::new(power, 1N)
+                      let power_rat_res : Result[
+                        @symnum.BigRational,
+                        @symnum.RationalError,
+                      ] = try? @symnum.BigRational::new(power, 1N)
                       let power_expr = match power_rat_res {
                         Ok(value) => Expr::Number(value)
                         Err(_) => return (normalized, rhs_items)
@@ -1523,7 +1536,8 @@ fn invert_real_expr(
           _ => ()
         }
       }
-      if !base_has_symbol && exp_has_symbol &&
+      if !base_has_symbol &&
+        exp_has_symbol &&
         @symcore.compare_expr(base, @symcore.int(0)) == 0 {
         let shifted : Array[Expr] = []
         for rhs in rhs_items {
@@ -1647,17 +1661,16 @@ fn solve_monotonic_relational_set(
   match @symcore.relational_parts(expr) {
     Some((op, lhs, rhs)) => {
       let target = canonical_expr(@symcore.add([lhs, negate_expr(rhs)]))
-      match invert_real_relational_monotonic(
-        target,
-        @symcore.int(0),
-        symbol,
-        op,
-      ) {
+      match
+        invert_real_relational_monotonic(target, @symcore.int(0), symbol, op) {
         Some((lhs, bound, solved_op)) if @symcore.compare_expr(lhs, symbol) == 0 =>
           Some(
             finalize_solveset_domain(
               domain,
-              solver_set_intersection(relational_bound_set(solved_op, bound), domain),
+              solver_set_intersection(
+                relational_bound_set(solved_op, bound),
+                domain,
+              ),
             ),
           )
         _ => None
@@ -1680,12 +1693,12 @@ fn solve_via_rational_expr(
     !@symcore.has(den, symbol) {
     return None
   }
-  let valid_set = solveset(num, symbol=Some(symbol), domain=domain)
+  let valid_set = solveset(num, symbol=Some(symbol), domain~)
   let valid_roots = match finite_set_items(valid_set) {
     Some(items) => items
     None => return None
   }
-  let invalid_set = solveset(den, symbol=Some(symbol), domain=domain)
+  let invalid_set = solveset(den, symbol=Some(symbol), domain~)
   let invalid_roots = match finite_set_items(invalid_set) {
     Some(items) => items
     None => []
@@ -1693,10 +1706,11 @@ fn solve_via_rational_expr(
   let filtered : Array[Expr] = []
   for root in valid_roots {
     let candidate = canonical_expr(root)
-    let is_invalid = invalid_roots.any(bad =>
+    let is_invalid = invalid_roots.any(bad => {
       @symcore.compare_expr(candidate, canonical_expr(bad)) == 0
-    )
-    if !is_invalid && valid_solution_for_expr(normalized, symbol, candidate, domain) {
+    })
+    if !is_invalid &&
+      valid_solution_for_expr(normalized, symbol, candidate, domain) {
       expr_push_unique(filtered, candidate)
     }
   }
@@ -1723,7 +1737,7 @@ fn solve_via_product_expr(
       }
       let collected : Array[Expr] = []
       for factor in dependent {
-        let factor_set = solveset(factor, symbol=Some(symbol), domain=domain)
+        let factor_set = solveset(factor, symbol=Some(symbol), domain~)
         let factor_items = match finite_set_items(factor_set) {
           Some(items) => items
           None => return None
@@ -1747,7 +1761,11 @@ fn solve_via_invert_real(
   symbol : Expr,
   domain : Set,
 ) -> Set? raise SolverError {
-  let (lhs, rhs_items) = invert_real_expr(normalize_equation(expr), [@symcore.int(0)], symbol)
+  let (lhs, rhs_items) = invert_real_expr(
+    normalize_equation(expr),
+    [@symcore.int(0)],
+    symbol,
+  )
   if rhs_items.is_empty() {
     return Some(@symsets.empty_set())
   }
@@ -1757,7 +1775,12 @@ fn solve_via_invert_real(
   let filtered : Array[Expr] = []
   for rhs in rhs_items {
     let candidate = canonical_expr(rhs)
-    if valid_solution_for_expr(normalize_equation(expr), symbol, candidate, domain) {
+    if valid_solution_for_expr(
+        normalize_equation(expr),
+        symbol,
+        candidate,
+        domain,
+      ) {
       expr_push_unique(filtered, candidate)
     }
   }
@@ -1790,39 +1813,52 @@ fn solve_via_abs_expr(
       _ => rest.push(term)
     }
   }
-  guard abs_coeff is Some(coeff) && abs_arg is Some(arg) else {
-    return None
-  }
+  guard abs_coeff is Some(coeff) && abs_arg is Some(arg) else { return None }
   if @symcore.compare_expr(coeff, @symcore.int(0)) == 0 ||
     @symcore.compare_expr(arg, @symcore.int(0)) == 0 {
     return None
   }
-  let q_pos_cond = match (try? solve_univariate_inequality(
-    Expr::Relational(@symcore.RelOp::Ge, arg, @symcore.int(0)),
-    symbol,
-    relational=false,
-    domain=domain,
-  ) : Result[InequalityResult, SolverError]) {
+  let q_pos_cond = match
+    (
+      try? solve_univariate_inequality(
+        Expr::Relational(@symcore.RelOp::Ge, arg, @symcore.int(0)),
+        symbol,
+        relational=false,
+        domain~,
+      ) : Result[InequalityResult, SolverError]) {
     Ok(InequalityResult::Set(set)) => set
     Ok(_) => domain
     Err(_) => return None
   }
-  let q_neg_cond = match (try? solve_univariate_inequality(
-    Expr::Relational(@symcore.RelOp::Lt, arg, @symcore.int(0)),
-    symbol,
-    relational=false,
-    domain=domain,
-  ) : Result[InequalityResult, SolverError]) {
+  let q_neg_cond = match
+    (
+      try? solve_univariate_inequality(
+        Expr::Relational(@symcore.RelOp::Lt, arg, @symcore.int(0)),
+        symbol,
+        relational=false,
+        domain~,
+      ) : Result[InequalityResult, SolverError]) {
     Ok(InequalityResult::Set(set)) => set
     Ok(_) => @symsets.empty_set()
     Err(_) => return None
   }
-  let pos_expr = canonical_expr(solver_add_all([@symcore.mul([coeff, arg]), solver_add_all(rest)]))
-  let neg_expr = canonical_expr(
-    solver_add_all([@symcore.mul([coeff, negate_expr(arg)]), solver_add_all(rest)]),
+  let pos_expr = canonical_expr(
+    solver_add_all([@symcore.mul([coeff, arg]), solver_add_all(rest)]),
   )
-  let sols_q_pos = @symsets.intersection([solveset(pos_expr, symbol=Some(symbol), domain=domain), q_pos_cond])
-  let sols_q_neg = @symsets.intersection([solveset(neg_expr, symbol=Some(symbol), domain=domain), q_neg_cond])
+  let neg_expr = canonical_expr(
+    solver_add_all([
+      @symcore.mul([coeff, negate_expr(arg)]),
+      solver_add_all(rest),
+    ]),
+  )
+  let sols_q_pos = @symsets.intersection([
+    solveset(pos_expr, symbol=Some(symbol), domain~),
+    q_pos_cond,
+  ])
+  let sols_q_neg = @symsets.intersection([
+    solveset(neg_expr, symbol=Some(symbol), domain~),
+    q_neg_cond,
+  ])
   Some(@symsets.union([sols_q_pos, sols_q_neg]))
 }
 
@@ -1838,11 +1874,15 @@ fn solve_univariate_polynomial(
     None => ()
   }
   let name = symbol_name(symbol)
-  let poly_result : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr_defaults(normalized, gens=[name])
+  let poly_result : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr_defaults(
+    normalized,
+    gens=[name],
+  )
   let roots = match poly_result {
     Ok(poly) =>
-      @sympolys.roots(poly) catch { err => raise wrap_poly_error("solveset", err) }
+      @sympolys.roots(poly) catch {
+        err => raise wrap_poly_error("solveset", err)
+      }
     Err(err) =>
       match solve_univariate_composite_polynomial(normalized, symbol, domain) {
         Some(set) => return set
@@ -1979,8 +2019,7 @@ fn recursive_polynomial_solutions(
     Err(_) => ()
   }
   let linear_matrix_try : Result[(Matrix, Matrix), SolverError] = try? linear_eq_to_matrix(
-    live_eqs,
-    symbols,
+    live_eqs, symbols,
   )
   match linear_matrix_try {
     Ok((lhs, rhs)) => {
@@ -2117,8 +2156,12 @@ pub fn solveset(
     | Some((@symcore.RelOp::Le, _, _))
     | Some((@symcore.RelOp::Lt, _, _))
     | Some((@symcore.RelOp::Ne, _, _)) => {
-      let inequality_res : Result[InequalityResult, SolverError] =
-        try? solve_univariate_inequality(expr, sym, relational=false, domain=domain)
+      let inequality_res : Result[InequalityResult, SolverError] = try? solve_univariate_inequality(
+        expr,
+        sym,
+        relational=false,
+        domain~,
+      )
       match inequality_res {
         Ok(InequalityResult::Set(set)) =>
           return exclude_relational_singularities(expr, sym, domain, set)
@@ -2172,7 +2215,11 @@ pub fn solveset(
     normalized, sym, domain,
   )
   match poly_try {
-    Ok(set) => finalize_solveset_domain(domain, validate_solution_set(expr, sym, domain, set))
+    Ok(set) =>
+      finalize_solveset_domain(
+        domain,
+        validate_solution_set(expr, sym, domain, set),
+      )
     Err(_) => symbolic_condition_set(normalized, sym, domain)
   }
 }
@@ -2193,8 +2240,7 @@ pub fn nonlinsolve(
     Err(_) => ()
   }
   let linear_matrix_try : Result[(Matrix, Matrix), SolverError] = try? linear_eq_to_matrix(
-    normalized,
-    syms,
+    normalized, syms,
   )
   match linear_matrix_try {
     Ok((lhs, rhs)) => {
@@ -2399,7 +2445,10 @@ fn solve_factored_system_fallback(
     match solved {
       Ok(result) =>
         match solve_result_to_multi_symbol_tuple_exprs(result, requested) {
-          Some(items) => for item in items { tuples.push(item) }
+          Some(items) =>
+            for item in items {
+              tuples.push(item)
+            }
           None => ()
         }
       Err(_) => ()
@@ -2450,7 +2499,11 @@ pub fn solve(
       Ok(value) => value
       Err(_) if solve_expr_has_noninteger_rational_power(normalized[0]) =>
         solve_finite_set_items(
-          solveset(normalized[0], symbol=Some(requested[0]), domain=@symsets.reals()),
+          solveset(
+            normalized[0],
+            symbol=Some(requested[0]),
+            domain=@symsets.reals(),
+          ),
         )
       Err(err) => raise err
     }
@@ -2479,13 +2532,15 @@ pub fn solve(
       }
     }
     return SolveResult::List(
-      solve_finite_set_items(acc.unwrap_or(@symsets.empty_set()))
-      .map(expr => solve_floatify_expr(expr, preserve_float_context)),
+      solve_finite_set_items(acc.unwrap_or(@symsets.empty_set())).map(expr => {
+        solve_floatify_expr(expr, preserve_float_context)
+      }),
     )
   }
   let solving_equations = reduce_redundant_equations(
-    solve_coefficient_match_equations(normalized, requested)
-    .unwrap_or(normalized),
+    solve_coefficient_match_equations(normalized, requested).unwrap_or(
+      normalized,
+    ),
   )
   let linear_solutions_try : Result[Set, SolverError] = try? linsolve(
     linsolve_equations_input(solving_equations),

@@ -43,7 +43,9 @@ test "pretty to_string prints exp negative powers in numerator form" {
     to_string(
       @symcore.mul([
         y,
-        @symcore.rational_from_ints(1, 2) catch { _ => fail("half") },
+        @symcore.rational_from_ints(1, 2) catch {
+          _ => fail("half")
+        },
         @symcore.pow(@symcore.function("exp", [x]), @symcore.int(-2)),
       ]),
     ),

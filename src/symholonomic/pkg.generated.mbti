@@ -50,24 +50,22 @@ pub impl Show for HolonomicError
 pub struct DifferentialOperator {
   coeffs : Array[@symcore.Expr]
   parent : DifferentialOperatorAlgebra
-}
+} derive(Eq)
 pub fn DifferentialOperator::algebra(Self) -> DifferentialOperatorAlgebra
 pub fn DifferentialOperator::coefficients(Self) -> Array[@symcore.Expr]
 pub fn DifferentialOperator::order(Self) -> Int
 pub fn DifferentialOperator::pow(Self, Int) -> Self
 pub fn DifferentialOperator::to_sympy_str(Self) -> String
 pub impl Add for DifferentialOperator
-pub impl Eq for DifferentialOperator
 pub impl Mul for DifferentialOperator
 pub impl Show for DifferentialOperator
 
 pub struct DifferentialOperatorAlgebra {
   symbol_var : @symcore.Expr
   generator : String
-}
+} derive(Eq)
 pub fn DifferentialOperatorAlgebra::generator(Self) -> String
 pub fn DifferentialOperatorAlgebra::variable(Self) -> @symcore.Expr
-pub impl Eq for DifferentialOperatorAlgebra
 pub impl Show for DifferentialOperatorAlgebra
 
 pub struct HolonomicFunction {
@@ -98,34 +96,31 @@ pub impl Show for HolonomicFunction
 pub struct HolonomicSequence {
   recurrence : RecurrenceOperator
   u0 : Array[@symcore.Expr]
-}
+} derive(Eq)
 pub fn HolonomicSequence::initial_values(Self) -> Array[@symcore.Expr]
 pub fn HolonomicSequence::recurrence(Self) -> RecurrenceOperator
 pub fn HolonomicSequence::to_sympy_str(Self) -> String
-pub impl Eq for HolonomicSequence
 pub impl Show for HolonomicSequence
 
 pub struct RecurrenceOperator {
   coeffs : Array[@symcore.Expr]
   parent : RecurrenceOperatorAlgebra
-}
+} derive(Eq)
 pub fn RecurrenceOperator::algebra(Self) -> RecurrenceOperatorAlgebra
 pub fn RecurrenceOperator::coefficients(Self) -> Array[@symcore.Expr]
 pub fn RecurrenceOperator::order(Self) -> Int
 pub fn RecurrenceOperator::pow(Self, Int) -> Self
 pub fn RecurrenceOperator::to_sympy_str(Self) -> String
 pub impl Add for RecurrenceOperator
-pub impl Eq for RecurrenceOperator
 pub impl Mul for RecurrenceOperator
 pub impl Show for RecurrenceOperator
 
 pub struct RecurrenceOperatorAlgebra {
   symbol_var : @symcore.Expr
   generator : String
-}
+} derive(Eq)
 pub fn RecurrenceOperatorAlgebra::generator(Self) -> String
 pub fn RecurrenceOperatorAlgebra::variable(Self) -> @symcore.Expr
-pub impl Eq for RecurrenceOperatorAlgebra
 pub impl Show for RecurrenceOperatorAlgebra
 
 // Type aliases

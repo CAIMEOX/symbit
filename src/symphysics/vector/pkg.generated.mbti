@@ -89,18 +89,14 @@ pub fn vsprint_dyadic(Dyadic) -> String
 pub suberror VectorError {
   ValueError(String)
   TypeError(String)
-}
-pub impl Eq for VectorError
-pub impl Show for VectorError
+} derive(Eq, Show)
 
 // Types and methods
 pub(all) enum AxisName {
   X
   Y
   Z
-}
-pub impl Eq for AxisName
-pub impl Show for AxisName
+} derive(Eq, Show)
 
 pub struct Dyadic {
   args : Array[(@symcore.Expr, Int, Int, Int, Int)]

@@ -274,14 +274,8 @@ fn expr_symbol_names_for_poly(expr : Expr) -> Array[String] {
   let names : Array[String] = []
   for sym in @symcore.free_symbols(expr) {
     match sym {
-      Expr::Symbol(name) =>
-        if !names.contains(name) {
-          names.push(name)
-        }
-      Expr::Dummy(name, _) =>
-        if !names.contains(name) {
-          names.push(name)
-        }
+      Expr::Symbol(name) => if !names.contains(name) { names.push(name) }
+      Expr::Dummy(name, _) => if !names.contains(name) { names.push(name) }
       _ => ()
     }
   }
@@ -296,17 +290,25 @@ fn poly_cancel_expr(expr : Expr) -> Expr? {
   if gens.is_empty() {
     return None
   }
-  let num_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(num, gens, @sympolys.Domain::EX)
-  let den_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(den, gens, @sympolys.Domain::EX)
+  let num_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    num,
+    gens,
+    @sympolys.Domain::EX,
+  )
+  let den_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    den,
+    gens,
+    @sympolys.Domain::EX,
+  )
   match (num_poly_res, den_poly_res) {
     (Ok(num_poly), Ok(den_poly)) => {
       if den_poly.is_zero() {
         return None
       }
-      let cancel_res : Result[(@sympolys.Poly, @sympolys.Poly), @sympolys.PolyError] = try?
-        @sympolys.cancel(num_poly, den_poly)
+      let cancel_res : Result[
+        (@sympolys.Poly, @sympolys.Poly),
+        @sympolys.PolyError,
+      ] = try? @sympolys.cancel(num_poly, den_poly)
       match cancel_res {
         Ok((num_s, den_s)) => {
           let num_expr = num_s.to_expr()

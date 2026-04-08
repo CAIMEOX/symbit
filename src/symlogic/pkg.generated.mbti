@@ -180,8 +180,7 @@ pub impl Hash for BoolExpr
 pub struct BoolMapResult {
   simplified : BoolExpr
   mapping : Map[String, BoolExpr]
-}
-pub impl Show for BoolMapResult
+} derive(Show)
 
 pub struct LinearConstraint {
   coeffs : Map[String, @symnum.BigRational]
@@ -199,9 +198,7 @@ pub(all) struct LraAssumption {
 pub struct LraConflictLit {
   key : String
   negated : Bool
-}
-pub impl Eq for LraConflictLit
-pub impl Show for LraConflictLit
+} derive(Eq, Show)
 
 pub struct PropKB {
   clauses : Map[BoolExpr, Bool]
@@ -218,8 +215,7 @@ pub(all) enum RelOp {
   Lt
   Gt
   Eq
-}
-pub impl Eq for RelOp
+} derive(Eq)
 
 pub enum SatResult {
   Single(Map[String, Bool]?)
@@ -236,9 +232,7 @@ pub(all) enum TermInput {
 pub(all) enum TruthTableRow {
   WithInput(Array[Int], Bool)
   Value(Bool)
-}
-pub impl Eq for TruthTableRow
-pub impl Show for TruthTableRow
+} derive(Eq, Show)
 
 // Type aliases
 

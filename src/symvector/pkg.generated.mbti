@@ -239,8 +239,7 @@ pub enum CoordTransform {
   Spherical
   LambdaTransform(TransformFunction)
   TupleTransform(@symphysics.ExplicitMatrix, Vector)
-}
-pub impl Eq for CoordTransform
+} derive(Eq)
 pub impl Show for CoordTransform
 
 pub struct Cross {
@@ -397,9 +396,8 @@ pub impl Show for SpaceOrienter
 
 pub struct TransformFunction {
   equations_ : Array[@symcore.Expr]
-}
+} derive(Eq)
 pub fn TransformFunction::call(Self, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[@symcore.Expr]
-pub impl Eq for TransformFunction
 pub impl Show for TransformFunction
 
 pub struct Vector {

@@ -22,9 +22,7 @@ fn sqrt_bigint_if_square(value : BigInt) -> BigInt? {
   if value.op_lt(0N) {
     return None
   }
-  let root = @symnum.isqrt(value) catch {
-    _ => return None
-  }
+  let root = @symnum.isqrt(value) catch { _ => return None }
   if root.mul(root).compare(value) == 0 {
     Some(root)
   } else {
@@ -52,7 +50,9 @@ fn sqrt_rational_expr(value : @symnum.BigRational) -> Expr? {
   }
   let base = Expr::Number(rat)
   if negative {
-    let imag = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+    let imag = @symcore.Expr::NumberSymbol(
+      @symcore.NumberSymbolKind::ImaginaryUnit,
+    )
     Some(@symcore.mul([base, imag]))
   } else {
     Some(base)
@@ -107,11 +107,7 @@ pub fn roots_quadratic(poly : Poly) -> Array[Expr] raise PolyError {
     return [int(0), other]
   }
   if @symcore.is_zero(b) {
-    let r = @symcore.mul([
-      int(-1),
-      c,
-      @symcore.pow(a, int(-1)),
-    ])
+    let r = @symcore.mul([int(-1), c, @symcore.pow(a, int(-1))])
     let root = quadratic_sqrt(r)
     return [@symcore.mul([int(-1), root]), root]
   }
@@ -125,7 +121,10 @@ pub fn roots_quadratic(poly : Poly) -> Array[Expr] raise PolyError {
   let sqrt_disc = quadratic_sqrt(disc)
   let neg_b = @symcore.mul([int(-1), b])
   let inv = @symcore.pow(@symcore.mul([two, a]), int(-1))
-  let r1 = @symcore.mul([@symcore.add([neg_b, @symcore.mul([int(-1), sqrt_disc])]), inv])
+  let r1 = @symcore.mul([
+    @symcore.add([neg_b, @symcore.mul([int(-1), sqrt_disc])]),
+    inv,
+  ])
   let r2 = @symcore.mul([@symcore.add([neg_b, sqrt_disc]), inv])
   [r1, r2]
 }

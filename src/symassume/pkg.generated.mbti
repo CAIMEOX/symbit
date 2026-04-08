@@ -214,9 +214,7 @@ pub(all) enum Predicate {
   IsReal
   IsPositive
   IsNonnegative
-}
-pub impl Eq for Predicate
-pub impl Show for Predicate
+} derive(Eq, Show)
 
 pub(all) enum PredicateKey {
   Hermitian
@@ -275,9 +273,7 @@ pub(all) enum PredicateKey {
   Ge
   Lt
   Le
-}
-pub impl Eq for PredicateKey
-pub impl Show for PredicateKey
+} derive(Eq, Show)
 
 pub(all) enum Query {
   Bool(Bool)
@@ -287,8 +283,7 @@ pub(all) enum Query {
   Or(Array[Query])
   Implies(Query, Query)
   Equivalent(Array[Query])
-}
-pub impl Eq for Query
+} derive(Eq)
 
 pub struct SymbolFacts {
   is_zero : Tri
@@ -298,17 +293,13 @@ pub struct SymbolFacts {
   is_real : Tri
   is_positive : Tri
   is_nonnegative : Tri
-}
-pub impl Eq for SymbolFacts
-pub impl Show for SymbolFacts
+} derive(Eq, Show)
 
 pub(all) enum Tri {
   True
   False
   Unknown
-}
-pub impl Eq for Tri
-pub impl Show for Tri
+} derive(Eq, Show)
 
 // Type aliases
 pub type AssumeEnv = Map[String, SymbolFacts]

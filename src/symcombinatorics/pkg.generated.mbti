@@ -388,7 +388,7 @@ pub impl Show for FpSubgroup
 pub struct FreeGroup {
   symbols : Array[String]
   rank : Int
-}
+} derive(Eq, Hash)
 pub fn FreeGroup::center(Self) -> Array[FreeGroupElement]
 pub fn FreeGroup::contains(Self, FreeGroupElement) -> Bool
 pub fn FreeGroup::elements(Self) -> Array[FreeGroupElement] raise CombinatoricsError
@@ -399,15 +399,13 @@ pub fn FreeGroup::is_abelian(Self) -> Bool
 pub fn FreeGroup::new(Array[String]) -> Self
 pub fn FreeGroup::order(Self) -> GroupOrder
 pub fn FreeGroup::symbols(Self) -> Array[String]
-pub impl Eq for FreeGroup
-pub impl Hash for FreeGroup
 pub impl Show for FreeGroup
 
 #alias(FpGroupElement)
 pub struct FreeGroupElement {
   group : FreeGroup
   array_form : Array[(Int, Int)]
-}
+} derive(Eq, Hash)
 pub fn FreeGroupElement::array_form(Self) -> Array[(Int, Int)]
 pub fn FreeGroupElement::commutator(Self, Self) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::contains(Self, Self) -> Bool
@@ -448,8 +446,6 @@ pub fn FreeGroupElement::substituted_word(Self, Int, Int, Self) -> Self raise Co
 pub fn FreeGroupElement::subword(Self, Int, Int, strict? : Bool) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::subword_index(Self, Self, start? : Int) -> Int raise CombinatoricsError
 pub impl Compare for FreeGroupElement
-pub impl Eq for FreeGroupElement
-pub impl Hash for FreeGroupElement
 pub impl Show for FreeGroupElement
 
 pub struct GrayCode {
@@ -493,16 +489,13 @@ pub fn GroupHomomorphism::restrict_to(Self, PermutationGroup) -> Self raise Comb
 pub enum GroupOrder {
   Finite(Int)
   Infinite
-}
-pub impl Eq for GroupOrder
+} derive(Eq)
 pub impl Show for GroupOrder
 
 pub(all) enum HomElement {
   Perm(Permutation)
   Word(FreeGroupElement)
-}
-pub impl Eq for HomElement
-pub impl Hash for HomElement
+} derive(Eq, Hash)
 
 pub(all) enum HomGroup {
   PermGroup(PermutationGroup)
@@ -532,8 +525,7 @@ pub fn IntegerPartition::next_lex(Self) -> Self raise CombinatoricsError
 pub fn IntegerPartition::prev_lex(Self) -> Self raise CombinatoricsError
 pub impl Show for IntegerPartition
 
-type MinWord
-pub impl Eq for MinWord
+type MinWord derive(Eq)
 
 pub struct OrbitsTransversals {
   basic_orbits : Array[Array[Int]]
@@ -749,22 +741,19 @@ pub fn RewritingSystem::set_max(Self, Int) -> Unit
 
 pub(all) enum S1TransitiveSubgroups {
   S1
-}
+} derive(Eq)
 pub fn S1TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
-pub impl Eq for S1TransitiveSubgroups
 
 pub(all) enum S2TransitiveSubgroups {
   S2
-}
+} derive(Eq)
 pub fn S2TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
-pub impl Eq for S2TransitiveSubgroups
 
 pub(all) enum S3TransitiveSubgroups {
   A3
   S3
-}
+} derive(Eq)
 pub fn S3TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
-pub impl Eq for S3TransitiveSubgroups
 
 pub(all) enum S4TransitiveSubgroups {
   C4
@@ -772,9 +761,8 @@ pub(all) enum S4TransitiveSubgroups {
   D4
   A4
   S4
-}
+} derive(Eq)
 pub fn S4TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
-pub impl Eq for S4TransitiveSubgroups
 
 pub(all) enum S5TransitiveSubgroups {
   C5
@@ -782,9 +770,8 @@ pub(all) enum S5TransitiveSubgroups {
   M20
   A5
   S5
-}
+} derive(Eq)
 pub fn S5TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
-pub impl Eq for S5TransitiveSubgroups
 
 pub(all) enum S6TransitiveSubgroups {
   C6
@@ -803,9 +790,8 @@ pub(all) enum S6TransitiveSubgroups {
   PGL2F5
   A6
   S6
-}
+} derive(Eq)
 pub fn S6TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
-pub impl Eq for S6TransitiveSubgroups
 
 pub struct State {
   name : StateName
@@ -834,16 +820,13 @@ pub fn StateMachine::update_state(Self, State) -> Unit
 pub enum StateName {
   Start
   Word(FreeGroupElement)
-}
-pub impl Eq for StateName
-pub impl Hash for StateName
+} derive(Eq, Hash)
 
 pub enum StateType {
   Start
   Accept
   Dead
-}
-pub impl Eq for StateType
+} derive(Eq)
 
 pub enum SubgroupParent {
   Free(FreeGroup)

@@ -48,7 +48,9 @@ pub fn Indexed::latex(
   settings? : @symprint.LatexSettings = @symprint.latex_settings(),
 ) -> String {
   let base_tex = self.base.latex(settings~)
-  let indices_tex = self.indices.map(index => index_latex(index, settings)).join(",")
+  let indices_tex = self.indices
+    .map(index => index_latex(index, settings))
+    .join(",")
   "{\{base_tex}}_{\{indices_tex}}"
 }
 

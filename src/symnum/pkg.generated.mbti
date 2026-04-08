@@ -100,23 +100,45 @@ pub fn mpc(@mpf.RawMpf, imag? : @mpf.RawMpf) -> @mpc.RawMpc
 
 pub fn mpc_abs(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpf.RawMpf
 
+pub fn mpc_acos(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_acosh(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
 pub fn mpc_add(@mpc.RawMpc, @mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
 pub fn mpc_arg(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpc_asin(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_asinh(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_atan(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_atanh(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_ci(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
 pub fn mpc_conjugate(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
 pub fn mpc_cos(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
+pub fn mpc_cosh(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
 pub fn mpc_div(@mpc.RawMpc, @mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
+pub fn mpc_e1(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
 pub fn mpc_exp(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_gamma(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
 pub fn mpc_is_inf(@mpc.RawMpc) -> Bool
 
 pub fn mpc_is_infnan(@mpc.RawMpc) -> Bool
 
 pub fn mpc_log(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc raise @mpc.MpcError
+
+pub fn mpc_loggamma(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
 pub fn mpc_mul(@mpc.RawMpc, @mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
@@ -130,7 +152,11 @@ pub fn mpc_pow_int(@mpc.RawMpc, Int, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
 pub fn mpc_pow_mpf(@mpc.RawMpc, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
+pub fn mpc_si(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
 pub fn mpc_sin(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_sinh(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
 pub fn mpc_sqrt(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
@@ -138,7 +164,11 @@ pub fn mpc_sub(@mpc.RawMpc, @mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
 pub fn mpc_tan(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
+pub fn mpc_tanh(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
 pub fn mpc_to_str(@mpc.RawMpc, dps? : Int) -> String
+
+pub fn mpc_zeta(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
 pub fn mpf(String, prec? : Int, rnd? : @mpf.RoundMode) -> @mpf.RawMpf raise @mpf.MpfError
 
@@ -307,14 +337,13 @@ pub fn workprec(Int, rounding? : @mpf.RoundMode) -> @mp.MPContext
 // Errors
 pub(all) suberror RationalError {
   ZeroDenominator
-}
-pub impl Show for RationalError
+} derive(Show)
 
 // Types and methods
 pub struct BigRational {
   num : @bigint.BigInt
   den : @bigint.BigInt
-}
+} derive(Eq, Hash)
 pub fn BigRational::add_r(Self, Self) -> Self
 pub fn BigRational::compare(Self, Self) -> Int
 pub fn BigRational::denominator(Self) -> @bigint.BigInt
@@ -333,15 +362,13 @@ pub fn BigRational::one() -> Self
 pub fn BigRational::reciprocal(Self) -> Self raise RationalError
 pub fn BigRational::zero() -> Self
 pub impl Add for BigRational
-pub impl Eq for BigRational
-pub impl Hash for BigRational
 pub impl Mul for BigRational
 pub impl Neg for BigRational
 pub impl Show for BigRational
 
 pub struct MPIntervalContext {
   prec : Int
-}
+} derive(Eq, Show)
 pub fn MPIntervalContext::abs(Self, @libmpi.RawMpi) -> @libmpi.RawMpi
 pub fn MPIntervalContext::add(Self, @libmpi.RawMpi, @libmpi.RawMpi) -> @libmpi.RawMpi
 pub fn MPIntervalContext::cos(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
@@ -359,8 +386,6 @@ pub fn MPIntervalContext::sqrt(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @li
 pub fn MPIntervalContext::sub(Self, @libmpi.RawMpi, @libmpi.RawMpi) -> @libmpi.RawMpi
 pub fn MPIntervalContext::tan(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
 pub fn MPIntervalContext::to_string(Self, @libmpi.RawMpi, dps? : Int) -> String raise @libmpi.MpiError
-pub impl Eq for MPIntervalContext
-pub impl Show for MPIntervalContext
 
 // Type aliases
 pub using @intmath {type IntMathError}

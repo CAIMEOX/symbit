@@ -43,12 +43,16 @@ fn contiguous_index_partitions(
   }
   let out : Array[Array[Array[Int]]] = []
   let max_first = total - bins + 1
-  for first_len in 1..=max_first {
+  for first_len in 1..<=max_first {
     let first : Array[Int] = []
     for i in start..<(start + first_len) {
       first.push(i)
     }
-    let rest = contiguous_index_partitions(start + first_len, total - first_len, bins - 1)
+    let rest = contiguous_index_partitions(
+      start + first_len,
+      total - first_len,
+      bins - 1,
+    )
     for tail in rest {
       let piece : Array[Array[Int]] = [first]
       for item in tail {
@@ -168,8 +172,8 @@ fn[T : Eq + Hash, Op : Eq] unify_many_into(
     lhs[0],
     rhs[0],
     s=subst,
-    is_associative=is_associative,
-    is_commutative=is_commutative,
+    is_associative~,
+    is_commutative~,
   )
   let lhs_tail : Array[UnifyTerm[T, Op]] = []
   let rhs_tail : Array[UnifyTerm[T, Op]] = []
@@ -179,12 +183,7 @@ fn[T : Eq + Hash, Op : Eq] unify_many_into(
   }
   for head_subst in head_matches {
     unify_many_into(
-      out,
-      lhs_tail,
-      rhs_tail,
-      head_subst,
-      is_associative,
-      is_commutative,
+      out, lhs_tail, rhs_tail, head_subst, is_associative, is_commutative,
     )
   }
 }
@@ -204,13 +203,14 @@ fn[T : Eq + Hash, Op : Eq] unify_variable_into(
   }
   match subst.get(key) {
     Some(bound) =>
-      for next_subst in core_unify(
-        bound,
-        expr,
-        s=subst,
-        is_associative=is_associative,
-        is_commutative=is_commutative,
-      ) {
+      for
+        next_subst in core_unify(
+          bound,
+          expr,
+          s=subst,
+          is_associative~,
+          is_commutative~,
+        ) {
         out.push(next_subst)
       }
     None =>
@@ -257,9 +257,15 @@ pub fn[T : Eq + Hash, Op : Eq] core_unify(
       let lhs_assoc = is_associative(lhs)
       let rhs_assoc = is_associative(rhs)
       if lhs_assoc && rhs_assoc {
-        let small = if args_lhs.length() <= args_rhs.length() { lhs } else { rhs }
+        let small = if args_lhs.length() <= args_rhs.length() {
+          lhs
+        } else {
+          rhs
+        }
         let big = if args_lhs.length() <= args_rhs.length() { rhs } else { lhs }
-        let (small_op, small_args) = compound_parts(small).unwrap_or((op_lhs, []))
+        let (small_op, small_args) = compound_parts(small).unwrap_or(
+          (op_lhs, []),
+        )
         let (_, big_args) = compound_parts(big).unwrap_or((op_rhs, []))
         let mode = if is_commutative(lhs) && is_commutative(rhs) {
           CombineMode::Commutative
@@ -277,23 +283,13 @@ pub fn[T : Eq + Hash, Op : Eq] core_unify(
             rhs_terms.push(unpack_compound(small_op, group))
           }
           unify_many_into(
-            out,
-            lhs_terms,
-            rhs_terms,
-            s,
-            is_associative,
-            is_commutative,
+            out, lhs_terms, rhs_terms, s, is_associative, is_commutative,
           )
         }
         return out
       }
       unify_many_into(
-        out,
-        args_lhs,
-        args_rhs,
-        s,
-        is_associative,
-        is_commutative,
+        out, args_lhs, args_rhs, s, is_associative, is_commutative,
       )
       return out
     }
@@ -302,12 +298,7 @@ pub fn[T : Eq + Hash, Op : Eq] core_unify(
   match (sequence_items(lhs), sequence_items(rhs)) {
     (Some(lhs_items), Some(rhs_items)) =>
       unify_many_into(
-        out,
-        lhs_items,
-        rhs_items,
-        s,
-        is_associative,
-        is_commutative,
+        out, lhs_items, rhs_items, s, is_associative, is_commutative,
       )
     _ => ()
   }

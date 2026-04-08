@@ -100,7 +100,7 @@ pub fn wicks(@symcore.Expr, simplify_kronecker_deltas? : Bool, expand? : Bool, s
 // Types and methods
 pub struct BosonState {
   occupations : Array[@symcore.Expr]
-}
+} derive(Eq)
 pub fn BosonState::as_bra_expr(Self) -> @symcore.Expr
 pub fn BosonState::as_expr(Self) -> @symcore.Expr
 pub fn BosonState::as_ket_expr(Self) -> @symcore.Expr
@@ -109,36 +109,33 @@ pub fn BosonState::get(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsErro
 pub fn BosonState::len(Self) -> Int
 pub fn BosonState::repr(Self) -> String
 pub fn BosonState::up(Self, Int) -> Self raise @symphysics.PhysicsError
-pub impl Eq for BosonState
 pub impl Show for BosonState
 
 pub enum BosonicBasisSet {
   Var(VarBosonicBasis)
   Fixed(FixedBosonicBasis)
-}
+} derive(Eq)
 pub fn BosonicBasisSet::index(Self, @symcore.Expr) -> Int raise @symphysics.PhysicsError
 pub fn BosonicBasisSet::len(Self) -> Int
 pub fn BosonicBasisSet::state(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
-pub impl Eq for BosonicBasisSet
 pub impl Show for BosonicBasisSet
 
 pub struct BosonicOperatorExpr {
   index : @symcore.Expr
   is_annihilation : Bool
-}
+} derive(Eq)
 pub fn BosonicOperatorExpr::apply_operator(Self, @symcore.Expr) -> @symcore.Expr
 pub fn BosonicOperatorExpr::as_expr(Self) -> @symcore.Expr
 pub fn BosonicOperatorExpr::dagger(Self) -> Self
 pub fn BosonicOperatorExpr::is_symbolic(Self) -> Bool
 pub fn BosonicOperatorExpr::repr(Self) -> String
 pub fn BosonicOperatorExpr::state(Self) -> @symcore.Expr
-pub impl Eq for BosonicOperatorExpr
 pub impl Show for BosonicOperatorExpr
 
 pub struct FermionState {
   orbitals : Array[@symcore.Expr]
   fermi_level : Int
-}
+} derive(Eq)
 pub fn FermionState::as_bra_expr(Self) -> @symcore.Expr
 pub fn FermionState::as_expr(Self) -> @symcore.Expr
 pub fn FermionState::as_ket_expr(Self) -> @symcore.Expr
@@ -146,43 +143,39 @@ pub fn FermionState::down(Self, @symcore.Expr) -> @symcore.Expr
 pub fn FermionState::len(Self) -> Int
 pub fn FermionState::repr(Self) -> String
 pub fn FermionState::up(Self, @symcore.Expr) -> @symcore.Expr
-pub impl Eq for FermionState
 pub impl Show for FermionState
 
 pub struct FermionicOperatorExpr {
   index : @symcore.Expr
   is_annihilation : Bool
-}
+} derive(Eq)
 pub fn FermionicOperatorExpr::apply_operator(Self, @symcore.Expr) -> @symcore.Expr
 pub fn FermionicOperatorExpr::as_expr(Self) -> @symcore.Expr
 pub fn FermionicOperatorExpr::dagger(Self) -> Self
 pub fn FermionicOperatorExpr::repr(Self) -> String
-pub impl Eq for FermionicOperatorExpr
 pub impl Show for FermionicOperatorExpr
 
 pub struct FixedBosonicBasis {
   n_particles : Int
   n_levels : Int
   basis : Array[@symcore.Expr]
-}
+} derive(Eq)
 pub fn FixedBosonicBasis::as_basis(Self) -> BosonicBasisSet
 pub fn FixedBosonicBasis::index(Self, @symcore.Expr) -> Int raise @symphysics.PhysicsError
 pub fn FixedBosonicBasis::len(Self) -> Int
 pub fn FixedBosonicBasis::repr(Self) -> String
 pub fn FixedBosonicBasis::state(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
-pub impl Eq for FixedBosonicBasis
 pub impl Show for FixedBosonicBasis
 
 pub struct VarBosonicBasis {
   n_max : Int
   basis : Array[@symcore.Expr]
-}
+} derive(Eq)
 pub fn VarBosonicBasis::as_basis(Self) -> BosonicBasisSet
 pub fn VarBosonicBasis::index(Self, @symcore.Expr) -> Int raise @symphysics.PhysicsError
 pub fn VarBosonicBasis::len(Self) -> Int
 pub fn VarBosonicBasis::repr(Self) -> String
 pub fn VarBosonicBasis::state(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
-pub impl Eq for VarBosonicBasis
 pub impl Show for VarBosonicBasis
 
 // Type aliases

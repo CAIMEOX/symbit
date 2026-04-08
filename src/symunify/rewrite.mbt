@@ -15,24 +15,30 @@ fn query_xreplace(
   match query {
     @symassume.Query::Bool(value) => @symassume.Query::Bool(value)
     @symassume.Query::Atom(key, args) =>
-      @symassume.Query::Atom(key, args.map(arg => @symcore.xreplace(arg, rules)))
-    @symassume.Query::Not(inner) => @symassume.not_q(query_xreplace(inner, rules))
+      @symassume.Query::Atom(
+        key,
+        args.map(arg => @symcore.xreplace(arg, rules)),
+      )
+    @symassume.Query::Not(inner) =>
+      @symassume.not_q(query_xreplace(inner, rules))
     @symassume.Query::And(items) =>
       @symassume.and_q(items.map(item => query_xreplace(item, rules)))
     @symassume.Query::Or(items) =>
       @symassume.or_q(items.map(item => query_xreplace(item, rules)))
     @symassume.Query::Implies(lhs, rhs) =>
-      @symassume.implies_q(query_xreplace(lhs, rules), query_xreplace(rhs, rules))
+      @symassume.implies_q(
+        query_xreplace(lhs, rules),
+        query_xreplace(rhs, rules),
+      )
     @symassume.Query::Equivalent(items) =>
       @symassume.equivalent_q(items.map(item => query_xreplace(item, rules)))
   }
 }
 
 ///|
-fn match_rules(match_ : Map[@symcore.Expr, @symcore.Expr]) -> Array[(
-  @symcore.Expr,
-  @symcore.Expr,
-)] {
+fn match_rules(
+  match_ : Map[@symcore.Expr, @symcore.Expr],
+) -> Array[(@symcore.Expr, @symcore.Expr)] {
   let out : Array[(@symcore.Expr, @symcore.Expr)] = []
   for key, value in match_ {
     out.push((key, value))
@@ -68,9 +74,7 @@ fn rewrite_expand_commutative_pow(expr : @symcore.Expr) -> @symcore.Expr {
       match @symcore.expr_form(base1) {
         @symcore.ExprForm::Mul(args) =>
           if positive_integer_exp(exp1) && args.all(rewrite_expr_is_commutative) {
-            @symcore.Expr::Mul(
-              args.map(arg => @symcore.Expr::Pow(arg, exp1)),
-            )
+            @symcore.Expr::Mul(args.map(arg => @symcore.Expr::Pow(arg, exp1)))
           } else {
             @symcore.Expr::Pow(base1, exp1)
           }
@@ -87,10 +91,12 @@ fn rewrite_expand_commutative_pow(expr : @symcore.Expr) -> @symcore.Expr {
     @symcore.Expr::Dict(items) => {
       let out : Array[(@symcore.Expr, @symcore.Expr)] = []
       for item in items {
-        out.push((
-          rewrite_expand_commutative_pow(item.0),
-          rewrite_expand_commutative_pow(item.1),
-        ))
+        out.push(
+          (
+            rewrite_expand_commutative_pow(item.0),
+            rewrite_expand_commutative_pow(item.1),
+          ),
+        )
       }
       @symcore.Expr::Dict(out)
     }
@@ -135,12 +141,11 @@ fn rewrite_subs_raw(
     Some(replaced) => @symcore.normalize_legacy_expr(replaced)
     None =>
       match expr {
-        @symcore.Expr::Add(args) =>
-          {
-            let items = args.map(arg => rewrite_subs_raw(arg, match_))
-            items.sort_by((lhs, rhs) => @symcore.compare_expr(lhs, rhs))
-            @symcore.Expr::Add(items)
-          }
+        @symcore.Expr::Add(args) => {
+          let items = args.map(arg => rewrite_subs_raw(arg, match_))
+          items.sort_by((lhs, rhs) => @symcore.compare_expr(lhs, rhs))
+          @symcore.Expr::Add(items)
+        }
         @symcore.Expr::Mul(args) =>
           @symcore.Expr::Mul(args.map(arg => rewrite_subs_raw(arg, match_)))
         @symcore.Expr::Pow(base, exp) =>
@@ -154,14 +159,18 @@ fn rewrite_subs_raw(
             rewrite_subs_raw(rhs, match_),
           )
         @symcore.Expr::Tuple(items) =>
-          @symcore.Expr::Tuple(items.map(item => rewrite_subs_raw(item, match_)))
+          @symcore.Expr::Tuple(
+            items.map(item => rewrite_subs_raw(item, match_)),
+          )
         @symcore.Expr::Dict(items) => {
           let out : Array[(@symcore.Expr, @symcore.Expr)] = []
           for item in items {
-            out.push((
-              rewrite_subs_raw(item.0, match_),
-              rewrite_subs_raw(item.1, match_),
-            ))
+            out.push(
+              (
+                rewrite_subs_raw(item.0, match_),
+                rewrite_subs_raw(item.1, match_),
+              ),
+            )
           }
           @symcore.Expr::Dict(out)
         }
@@ -216,22 +225,27 @@ pub fn RewriteRule::apply(
 ) -> Array[@symcore.Expr] raise @symassume.AskError {
   let out : Array[@symcore.Expr] = []
   for match_ in unify(self.source, expr, variables=self.variables) {
-    let values = self.variables.map(symbol => match_.get(symbol).unwrap_or(symbol))
+    let values = self.variables.map(symbol => {
+      match_.get(symbol).unwrap_or(symbol)
+    })
     if !(self.condition)(values) {
       continue
     }
     match self.assumption_query {
       Some(query) =>
-        match @symassume.ask(
-          query_xreplace(query, match_rules(match_)),
-          assumptions~,
-        ) {
+        match
+          @symassume.ask(
+            query_xreplace(query, match_rules(match_)),
+            assumptions~,
+          ) {
           @symassume.Tri::True => ()
           _ => continue
         }
       None => ()
     }
-    let rewritten = rewrite_expand_commutative_pow(rewrite_subs_raw(self.target, match_))
+    let rewritten = rewrite_expand_commutative_pow(
+      rewrite_subs_raw(self.target, match_),
+    )
     out.push(rewritten)
   }
   out

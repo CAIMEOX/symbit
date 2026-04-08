@@ -230,9 +230,7 @@ pub(all) suberror UtilitiesError {
   InvalidArgument(String)
   Unsupported(String)
   MissingValue(String)
-}
-pub impl Eq for UtilitiesError
-pub impl Show for UtilitiesError
+} derive(Eq, Show)
 
 // Types and methods
 pub struct AssocRecurrenceMemo[T] {
@@ -250,47 +248,40 @@ pub fn BinaryFunction::files(Self) -> Array[(String, String)]
 
 pub struct CodeGenerator {
   language : TargetLanguage
-}
+} derive(Eq)
 pub fn CodeGenerator::dump_header(Self, Array[Routine], String, header? : Bool) -> String
 pub fn CodeGenerator::dump_source(Self, Array[Routine], String, header? : Bool, empty? : Bool) -> String raise UtilitiesError
 pub fn CodeGenerator::write(Self, Array[Routine], String, header? : Bool, empty? : Bool) -> Array[(String, String)] raise UtilitiesError
-pub impl Eq for CodeGenerator
 
 pub enum GroupResult[T] {
   Multiple(Array[Array[T]])
   Counts(Array[(T, Int)])
-}
-pub impl[T : Eq] Eq for GroupResult[T]
+} derive(Eq)
 
 pub struct ImplementedFunction {
   name : String
-}
+} derive(Eq)
 pub fn ImplementedFunction::apply(Self, Array[@symcore.Expr]) -> @symcore.Expr
-pub impl Eq for ImplementedFunction
 
 pub enum IntLike {
   Int(Int)
   Double(Double)
   Bool(Bool)
   Expr(@symcore.Expr)
-}
-pub impl Eq for IntLike
+} derive(Eq)
 
 pub struct LambdaFn {
   args : Array[String]
   expr : @symcore.Expr
-}
+} derive(Eq)
 pub fn LambdaFn::call(Self, Array[Double]) -> Double raise UtilitiesError
 pub fn LambdaFn::call_map(Self, Map[String, Double]) -> Double raise UtilitiesError
-pub impl Eq for LambdaFn
 
 pub struct MultisetPartitionState {
   f : Array[Int]
   lpart : Int
   pstack : Array[PartComponent]
-}
-pub impl Eq for MultisetPartitionState
-pub impl Show for MultisetPartitionState
+} derive(Eq, Show)
 
 pub struct MultisetPartitionTraverser {
   debug : Bool
@@ -321,8 +312,7 @@ pub fn MultisetPartitionTraverser::stats(Self) -> (Int, Int, Int)
 pub enum Nested[T] {
   Atom(T)
   Items(Array[Nested[T]])
-}
-pub impl[T : Eq] Eq for Nested[T]
+} derive(Eq)
 
 pub struct NumberedSymbols {
   prefix : String
@@ -335,15 +325,12 @@ pub struct PartComponent {
   mut c : Int
   mut u : Int
   mut v : Int
-}
-pub impl Eq for PartComponent
-pub impl Show for PartComponent
+} derive(Eq, Show)
 
 pub enum PartitionResult {
   Parts(Map[Int, Int])
   Sized(Int, Map[Int, Int])
-}
-pub impl Eq for PartitionResult
+} derive(Eq)
 
 pub struct RecurrenceMemo[T] {
   cache : @ref.Ref[Array[T]]
@@ -355,11 +342,9 @@ pub fn[T] RecurrenceMemo::fetch_item(Self[T], Int) -> T raise UtilitiesError
 pub struct ReplacementInfo[T] {
   replacement : T
   info : String
-}
-pub impl[T : Eq] Eq for ReplacementInfo[T]
+} derive(Eq)
 
-type ReplacementRule
-pub impl Eq for ReplacementRule
+type ReplacementRule derive(Eq)
 
 pub struct Replacer {
   rules : @ref.Ref[Array[ReplacementRule]]
@@ -373,28 +358,24 @@ pub struct Routine {
   name : String
   arguments : Array[String]
   results : Array[RoutineResult]
-}
-pub impl Eq for Routine
+} derive(Eq)
 
 pub struct RoutineResult {
   name : String
   expr : @symcore.Expr
-}
-pub impl Eq for RoutineResult
+} derive(Eq)
 
 pub enum ShapeSpec {
   Take(Int)
   Group(Array[ShapeSpec])
-}
-pub impl Eq for ShapeSpec
+} derive(Eq)
 
 pub struct SymPyDeprecationWarning {
   message : String
   deprecated_since_version : String
   active_deprecations_target : String
-}
+} derive(Eq)
 pub fn SymPyDeprecationWarning::full_message(Self) -> String
-pub impl Eq for SymPyDeprecationWarning
 pub impl Show for SymPyDeprecationWarning
 
 pub enum TargetLanguage {
@@ -403,49 +384,39 @@ pub enum TargetLanguage {
   Julia
   Octave
   Rust
-}
-pub impl Eq for TargetLanguage
-pub impl Show for TargetLanguage
+} derive(Eq, Show)
 
 pub enum Threadable[T] {
   Scalar(T)
   Array(Array[Threadable[T]])
-}
-pub impl[T : Eq] Eq for Threadable[T]
+} derive(Eq)
 
 pub struct TimedResult {
   number : Int
   seconds_per_call : Double
   scaled : Double
   unit : String
-}
-pub impl Eq for TimedResult
+} derive(Eq)
 
 pub struct TimethisReport {
   name : String
   elapsed_seconds : Double
-}
-pub impl Eq for TimethisReport
+} derive(Eq)
 
-type WildBinding
-pub impl Eq for WildBinding
+type WildBinding derive(Eq)
 
 pub enum WildcardKind {
   Dot
   Plus
   Star
-}
-pub impl Eq for WildcardKind
-pub impl Show for WildcardKind
+} derive(Eq, Show)
 
 pub enum WrapBackend {
   Dummy
   F2Py
   Cython
   Ufunc
-}
-pub impl Eq for WrapBackend
-pub impl Show for WrapBackend
+} derive(Eq, Show)
 
 pub struct WrappedBinary {
   name : String

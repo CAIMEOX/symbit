@@ -59,10 +59,7 @@ fn solver_recurrence_raw_add(args : Array[Expr]) -> Expr {
             flat.push(item)
           }
         }
-      _ =>
-        if expr_is_zeroish(arg) != Some(true) {
-          flat.push(arg)
-        }
+      _ => if expr_is_zeroish(arg) != Some(true) { flat.push(arg) }
     }
   }
   if flat.is_empty() {
@@ -85,7 +82,11 @@ fn solver_recurrence_compare_terms(lhs : Expr, rhs : Expr, n : Expr) -> Int {
   let lhs_dep = solver_recurrence_depends_on(lhs, n)
   let rhs_dep = solver_recurrence_depends_on(rhs, n)
   if lhs_dep != rhs_dep {
-    if lhs_dep { -1 } else { 1 }
+    if lhs_dep {
+      -1
+    } else {
+      1
+    }
   } else if lhs_dep {
     let lhs_deg = solver_recurrence_degree(lhs, n)
     let rhs_deg = solver_recurrence_degree(rhs, n)
@@ -122,8 +123,9 @@ fn solver_recurrence_rationalize_term(expr : Expr) -> Expr {
         let normalized = solver_recurrence_rationalize_term(arg)
         match @symcore.exact_numeric_expr_num_den(normalized) {
           Some((num, den)) => {
-            let value : Result[@symnum.BigRational, @symnum.RationalError] = try?
-              @symnum.BigRational::new(num, den)
+            let value : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
+              num, den,
+            )
             match value {
               Ok(rat) => coeff = coeff.mul_r(rat)
               Err(_) => rest.push(normalized)
@@ -176,30 +178,33 @@ fn solver_recurrence_normalize_output(expr : Expr) -> Expr {
           _ => ()
         }
       }
-      solver_recurrence_rationalize_term(canonical_expr(@symcore.mul(normalized_args)))
+      solver_recurrence_rationalize_term(
+        canonical_expr(@symcore.mul(normalized_args)),
+      )
     }
     _ => solver_recurrence_rationalize_term(expr)
   }
 }
 
 ///|
-fn solver_recurrence_expand_basis_term(
-  coeff : Expr,
-  basis : Expr,
-) -> Expr {
+fn solver_recurrence_expand_basis_term(coeff : Expr, basis : Expr) -> Expr {
   let coeff = canonical_expr(coeff)
   match coeff {
     Expr::Add(args) =>
       solver_recurrence_raw_add(
-        args.map(arg =>
+        args.map(arg => {
           solver_recurrence_normalize_output(
-            @symsimplify.fraction_expand(canonical_expr(@symcore.mul([arg, basis]))),
+            @symsimplify.fraction_expand(
+              canonical_expr(@symcore.mul([arg, basis])),
+            ),
           )
-        ),
+        }),
       )
     _ =>
       solver_recurrence_normalize_output(
-        @symsimplify.fraction_expand(canonical_expr(@symcore.mul([coeff, basis]))),
+        @symsimplify.fraction_expand(
+          canonical_expr(@symcore.mul([coeff, basis])),
+        ),
       )
   }
 }
@@ -211,7 +216,7 @@ fn solver_recurrence_particular_solution(
   degree : Int,
 ) -> Expr {
   let terms : Array[Expr] = []
-  for i in 1..=(degree + 1) {
+  for i in 1..<=(degree + 1) {
     let value = values.get("A\{i}").unwrap_or(@symcore.int(0))
     if expr_is_zeroish(value) != Some(true) {
       terms.push(
@@ -234,7 +239,9 @@ fn solver_recurrence_constant_solution(
   let ratio = canonical_expr(
     @symcore.mul([@symcore.int(-1), coeffs[0], coeffs[1] ^ @symcore.int(-1)]),
   )
-  Some(canonical_expr(@symcore.mul([solver_recurrence_constant(shift), ratio ^ n])))
+  Some(
+    canonical_expr(@symcore.mul([solver_recurrence_constant(shift), ratio ^ n])),
+  )
 }
 
 ///|
@@ -258,20 +265,21 @@ pub fn rsolve_poly(
   }
   let coeff_symbols : Array[Expr] = []
   let mut particular = @symcore.int(0)
-  for i in 1..=(degree + 1) {
+  for i in 1..<=(degree + 1) {
     let coeff = Expr::Symbol("A\{i}")
     coeff_symbols.push(coeff)
     particular = canonical_expr(
-      @symcore.add([
-        particular,
-        @symcore.mul([coeff, n ^ @symcore.int(i)]),
-      ]),
+      @symcore.add([particular, @symcore.mul([coeff, n ^ @symcore.int(i)])]),
     )
   }
   let equations : Array[Expr] = []
-  for sample in 0..=degree {
+  for sample in 0..<=degree {
     let current = solver_subst_single(particular, name, @symcore.int(sample))
-    let shifted = solver_subst_single(particular, name, @symcore.int(sample + 1))
+    let shifted = solver_subst_single(
+      particular,
+      name,
+      @symcore.int(sample + 1),
+    )
     let rhs = solver_subst_single(f, name, @symcore.int(sample))
     equations.push(
       canonical_expr(
@@ -291,11 +299,16 @@ pub fn rsolve_poly(
     Some(map) => map
     None => return None
   }
-  let particular_solution = solver_recurrence_particular_solution(values, n, degree)
+  let particular_solution = solver_recurrence_particular_solution(
+    values, n, degree,
+  )
   Some(
     solver_recurrence_order_solution(
       solver_recurrence_normalize_output(
-        solver_recurrence_raw_add([particular_solution, solver_recurrence_constant(shift)]),
+        solver_recurrence_raw_add([
+          particular_solution,
+          solver_recurrence_constant(shift),
+        ]),
       ),
       n,
     ),
@@ -340,16 +353,16 @@ fn solver_recurrence_coeffs_from_expr(
   let yn = @symcore.applied_undefined_function(name, [n])
   let yn1 = @symcore.applied_undefined_function(name, [solver_shift_expr(n, 1)])
   match solver_extract_linear_targets(expr, [yn, yn1]) {
-    Some((coeffs, constant)) => Some((coeffs, canonical_expr(@symcore.mul([@symcore.int(-1), constant])), n))
+    Some((coeffs, constant)) =>
+      Some(
+        (coeffs, canonical_expr(@symcore.mul([@symcore.int(-1), constant])), n),
+      )
     None => None
   }
 }
 
 ///|
-fn solver_initial_value(
-  init : RsolveInit,
-  y : Expr,
-) -> (Expr, Expr)? {
+fn solver_initial_value(init : RsolveInit, y : Expr) -> (Expr, Expr)? {
   match init {
     RsolveInit::List(values) =>
       if values.is_empty() {
@@ -389,9 +402,7 @@ fn solver_apply_recurrence_init(
   let base = solver_subst_single(solution, nname, at)
   let zero_env : Map[String, Expr] = {}
   zero_env["C0"] = @symcore.int(0)
-  let constant_part = canonical_expr(
-    @symcore.subst(base, zero_env),
-  )
+  let constant_part = canonical_expr(@symcore.subst(base, zero_env))
   let one_env : Map[String, Expr] = {}
   one_env["C0"] = @symcore.int(1)
   let coeff_part = canonical_expr(
@@ -405,7 +416,9 @@ fn solver_apply_recurrence_init(
   }
   let c0_value = canonical_expr(
     @symcore.mul([
-      canonical_expr(@symcore.add([value, @symcore.mul([@symcore.int(-1), constant_part])])),
+      canonical_expr(
+        @symcore.add([value, @symcore.mul([@symcore.int(-1), constant_part])]),
+      ),
       coeff_part ^ @symcore.int(-1),
     ]),
   )
@@ -413,7 +426,9 @@ fn solver_apply_recurrence_init(
   solution_env["C0"] = c0_value
   solver_recurrence_order_solution(
     solver_recurrence_normalize_output(
-      @symsimplify.fraction_expand(canonical_expr(@symcore.subst(solution, solution_env))),
+      @symsimplify.fraction_expand(
+        canonical_expr(@symcore.subst(solution, solution_env)),
+      ),
     ),
     n,
   )
@@ -425,7 +440,8 @@ pub fn rsolve(
   y : Expr,
   init? : RsolveInit? = None,
 ) -> Expr? raise SolverError {
-  let (coeffs, rhs, n) = match solver_recurrence_coeffs_from_expr(solver_normalize_equation(f), y) {
+  let (coeffs, rhs, n) = match
+    solver_recurrence_coeffs_from_expr(solver_normalize_equation(f), y) {
     Some(value) => value
     None => return None
   }

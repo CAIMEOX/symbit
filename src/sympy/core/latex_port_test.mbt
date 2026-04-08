@@ -161,13 +161,22 @@ test "symprint latex parity integrals piecewise and transforms" {
     @symcore.function("Integral", [x, @symcore.Expr::Tuple([x])]),
   )
   assert_latex_parity(
-    @symcore.function("Integral", [x, @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(1)])]),
+    @symcore.function("Integral", [
+      x,
+      @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(1)]),
+    ]),
   )
   assert_latex_parity(
-    @symcore.function("Sum", [x, @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(3)])]),
+    @symcore.function("Sum", [
+      x,
+      @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(3)]),
+    ]),
   )
   assert_latex_parity(
-    @symcore.function("Product", [x, @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(3)])]),
+    @symcore.function("Product", [
+      x,
+      @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(3)]),
+    ]),
   )
   assert_latex_parity(
     @symcore.function("Piecewise", [
@@ -182,7 +191,9 @@ test "symprint latex parity integrals piecewise and transforms" {
   assert_latex_parity(@symcore.function("floor", [x]))
   assert_latex_parity(@symcore.function("ceiling", [x]))
   assert_latex_parity(
-    @symcore.function("re", [@symcore.raw_mul([x, @symcore.function("sin", [x])])]),
+    @symcore.function("re", [
+      @symcore.raw_mul([x, @symcore.function("sin", [x])]),
+    ]),
   )
   assert_latex_parity(@symcore.function("LaplaceTransform", [ft, t, k]))
   assert_latex_parity(
@@ -217,9 +228,7 @@ test "symprint latex parity logic sets and delta-style specials" {
   assert_latex_parity(@symcore.function("DiracDelta", [x, @symcore.int(1)]))
   assert_latex_parity(@symcore.function("Heaviside", [x, @symcore.int(0)]))
   assert_latex_parity(@symcore.function("KroneckerDelta", [x, y]))
-  assert_latex_parity(
-    @symcore.function("LeviCivita", [x, y, @symcore.int(1)]),
-  )
+  assert_latex_parity(@symcore.function("LeviCivita", [x, y, @symcore.int(1)]))
   assert_latex_parity(reals)
   assert_latex_parity(@symcore.Expr::Symbol("UniversalSet"))
   assert_latex_parity(@symcore.function("FiniteSet", [x, @symcore.int(1), y]))
@@ -232,7 +241,11 @@ test "symprint latex parity logic sets and delta-style specials" {
     ]),
   )
   assert_latex_parity(
-    @symcore.function("Range", [@symcore.int(1), @symcore.int(10), @symcore.int(2)]),
+    @symcore.function("Range", [
+      @symcore.int(1),
+      @symcore.int(10),
+      @symcore.int(2),
+    ]),
   )
   assert_latex_parity(@symcore.function("Union", [reals, integers]))
   assert_latex_parity(@symcore.function("Intersection", [reals, integers]))

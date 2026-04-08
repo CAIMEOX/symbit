@@ -364,9 +364,7 @@ fn merge_interval_pair(
 
 ///|
 fn merge_intervals(intervals : Array[Set]) -> Array[Set] {
-  let numeric : Array[
-    (IntervalBound, IntervalBound, Bool, Bool, Expr, Expr),
-  ] = Array::new()
+  let numeric : Array[(IntervalBound, IntervalBound, Bool, Bool, Expr, Expr)] = Array::new()
   let others : Array[Set] = Array::new()
   for item in intervals {
     match interval_numeric(item) {
@@ -736,50 +734,49 @@ pub fn complement(a : Set, b : Set) -> Set {
 ///|
 fn interval_contains(set : Set, elem : Expr) -> SetBool {
   match (set, expr_number_value(elem)) {
-    (Set::Interval(left~, right~, left_open~, right_open~), Some(value)) =>
-      {
-        let left_kind = @symcore.number_symbol_kind(left)
-        let right_kind = @symcore.number_symbol_kind(right)
-        let lower_ok = match expr_number_value(left) {
-          Some(lv) => {
-            let cmp_l = value.compare(lv)
-            if cmp_l < 0 {
-              Some(false)
-            } else if cmp_l == 0 {
-              Some(!left_open)
-            } else {
-              Some(true)
-            }
+    (Set::Interval(left~, right~, left_open~, right_open~), Some(value)) => {
+      let left_kind = @symcore.number_symbol_kind(left)
+      let right_kind = @symcore.number_symbol_kind(right)
+      let lower_ok = match expr_number_value(left) {
+        Some(lv) => {
+          let cmp_l = value.compare(lv)
+          if cmp_l < 0 {
+            Some(false)
+          } else if cmp_l == 0 {
+            Some(!left_open)
+          } else {
+            Some(true)
           }
-          None =>
-            match left_kind {
-              Some(@symcore.NumberSymbolKind::NegativeInfinity) => Some(true)
-              _ => None
-            }
         }
-        let upper_ok = match expr_number_value(right) {
-          Some(rv) => {
-            let cmp_r = value.compare(rv)
-            if cmp_r > 0 {
-              Some(false)
-            } else if cmp_r == 0 {
-              Some(!right_open)
-            } else {
-              Some(true)
-            }
+        None =>
+          match left_kind {
+            Some(@symcore.NumberSymbolKind::NegativeInfinity) => Some(true)
+            _ => None
           }
-          None =>
-            match right_kind {
-              Some(@symcore.NumberSymbolKind::Infinity) => Some(true)
-              _ => None
-            }
-        }
-        match (lower_ok, upper_ok) {
-          (Some(true), Some(true)) => SetBool::True
-          (Some(false), _) | (_, Some(false)) => SetBool::False
-          _ => SetBool::Unknown
-        }
       }
+      let upper_ok = match expr_number_value(right) {
+        Some(rv) => {
+          let cmp_r = value.compare(rv)
+          if cmp_r > 0 {
+            Some(false)
+          } else if cmp_r == 0 {
+            Some(!right_open)
+          } else {
+            Some(true)
+          }
+        }
+        None =>
+          match right_kind {
+            Some(@symcore.NumberSymbolKind::Infinity) => Some(true)
+            _ => None
+          }
+      }
+      match (lower_ok, upper_ok) {
+        (Some(true), Some(true)) => SetBool::True
+        (Some(false), _) | (_, Some(false)) => SetBool::False
+        _ => SetBool::Unknown
+      }
+    }
     _ => SetBool::Unknown
   }
 }

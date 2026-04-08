@@ -177,8 +177,7 @@ pub enum CartanSeries {
   E
   F
   G
-}
-pub impl Eq for CartanSeries
+} derive(Eq)
 pub impl Show for CartanSeries
 
 pub struct CartanType {
@@ -200,13 +199,12 @@ pub fn CartanType::simple_root(Self, Int) -> Array[@symnum.BigRational] raise
 
 pub struct Matrix {
   rows : Array[Array[@symnum.BigRational]]
-}
+} derive(Eq)
 pub fn Matrix::get(Self, Int, Int) -> @symnum.BigRational
 pub fn Matrix::height(Self) -> Int
 pub fn Matrix::mul(Self, Self) -> Self
 pub fn Matrix::set(Self, Int, Int, @symnum.BigRational) -> Unit
 pub fn Matrix::width(Self) -> Int
-pub impl Eq for Matrix
 
 pub struct RootSystem {
   cartan_type : CartanType

@@ -66,37 +66,27 @@ pub suberror ArchError {
   ValueError(String)
   TypeError(String)
   SolveError(String)
-}
-pub impl Eq for ArchError
-pub impl Show for ArchError
+} derive(Eq, Show)
 
 pub suberror BeamError {
   ValueError(String)
   TypeError(String)
   SolveError(String)
-}
-pub impl Eq for BeamError
-pub impl Show for BeamError
+} derive(Eq, Show)
 
 pub suberror CableError {
   ValueError(String)
-}
-pub impl Eq for CableError
-pub impl Show for CableError
+} derive(Eq, Show)
 
 pub suberror ColumnError {
   ValueError(String)
   TypeError(String)
   SolveError(String)
-}
-pub impl Eq for ColumnError
-pub impl Show for ColumnError
+} derive(Eq, Show)
 
 pub suberror TrussError {
   ValueError(String)
-}
-pub impl Eq for TrussError
-pub impl Show for TrussError
+} derive(Eq, Show)
 
 // Types and methods
 pub struct Arch {

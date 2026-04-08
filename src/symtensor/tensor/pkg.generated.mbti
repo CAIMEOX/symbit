@@ -4,6 +4,7 @@ package "CAIMEOX/symbit/symtensor/tensor"
 import {
   "CAIMEOX/symbit/symcombinatorics",
   "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symprint",
 }
 
 // Values
@@ -44,6 +45,7 @@ pub struct PartialDerivative {
   expr : TensorExpr
   variables : Array[TensorExpr]
 }
+pub fn PartialDerivative::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub impl Show for PartialDerivative
 
 pub enum TensorExpr {
@@ -52,6 +54,7 @@ pub enum TensorExpr {
   Add(Array[TensorExpr])
   Mul(Array[TensorExpr])
 }
+pub fn TensorExpr::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub impl Show for TensorExpr
 
 pub(all) struct TensorHead {
@@ -60,6 +63,7 @@ pub(all) struct TensorHead {
   symmetry : TensorSymmetry?
 }
 pub fn TensorHead::call(Self, Array[TensorIndex]) -> TensorExpr raise
+pub fn TensorHead::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub impl Show for TensorHead
 
 pub(all) struct TensorIndex {
@@ -79,6 +83,7 @@ pub(all) struct TensorIndexType {
   dim : @symcore.Expr?
   metric_symmetry : Int
 }
+pub fn TensorIndexType::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub impl Show for TensorIndexType
 
 pub(all) struct TensorSymmetry {

@@ -71,8 +71,7 @@ fn exec_result_str(script : String) -> String raise {
 
 ///|
 pub fn core_parity_summary() -> String raise {
-  let script =
-    "from sympy.unify.core import Compound, Variable, CondVariable, allcombinations\n" +
+  let script = "from sympy.unify.core import Compound, Variable, CondVariable, allcombinations\n" +
     "from sympy.unify import core\n" +
     "a, b, c = 'a', 'b', 'c'\n" +
     "w, x, y, z = map(Variable, 'wxyz')\n" +
@@ -114,8 +113,7 @@ pub fn core_parity_summary() -> String raise {
 
 ///|
 pub fn usympy_parity_summary() -> String raise {
-  let script =
-    "from sympy.core.add import Add\n" +
+  let script = "from sympy.core.add import Add\n" +
     "from sympy.core.basic import Basic\n" +
     "from sympy.core.singleton import S\n" +
     "from sympy.core.symbol import Symbol, Str\n" +
@@ -160,8 +158,7 @@ pub fn usympy_parity_summary() -> String raise {
 
 ///|
 pub fn rewrite_parity_summary() -> String raise {
-  let script =
-    "from sympy.assumptions import Q\n" +
+  let script = "from sympy.assumptions import Q\n" +
     "from sympy.core.basic import Basic\n" +
     "from sympy.core.singleton import S\n" +
     "from sympy.core.symbol import Symbol\n" +

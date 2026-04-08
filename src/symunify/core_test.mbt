@@ -16,7 +16,8 @@ fn render_atom(atom_ : CoreAtom) -> String {
 fn render_key(key : MatchVar[CoreAtom]) -> String {
   match key {
     MatchVar::Variable(key0) => "Variable(" + render_atom(key0.arg()) + ")"
-    MatchVar::CondVariable(key0) => "CondVariable(" + render_atom(key0.arg()) + ")"
+    MatchVar::CondVariable(key0) =>
+      "CondVariable(" + render_atom(key0.arg()) + ")"
   }
 }
 
@@ -36,9 +37,9 @@ fn render_core_term(term : UnifyTerm[CoreAtom, String]) -> String {
 
 ///|
 fn render_subst(subst : Substitution[CoreAtom, String]) -> String {
-  let rendered = substitution_pairs(subst).map(entry =>
+  let rendered = substitution_pairs(subst).map(entry => {
     render_key(entry.0) + ": " + render_core_term(entry.1)
-  )
+  })
   rendered.sort()
   "{" + rendered.join(", ") + "}"
 }
@@ -61,12 +62,16 @@ fn i(value : Int) -> UnifyTerm[CoreAtom, String] {
 }
 
 ///|
-fn add(args : Array[UnifyTerm[CoreAtom, String]]) -> UnifyTerm[CoreAtom, String] {
+fn add(
+  args : Array[UnifyTerm[CoreAtom, String]],
+) -> UnifyTerm[CoreAtom, String] {
   compound("Add", args)
 }
 
 ///|
-fn mul(args : Array[UnifyTerm[CoreAtom, String]]) -> UnifyTerm[CoreAtom, String] {
+fn mul(
+  args : Array[UnifyTerm[CoreAtom, String]],
+) -> UnifyTerm[CoreAtom, String] {
   compound("Mul", args)
 }
 
@@ -77,13 +82,28 @@ fn cadd(
   compound("CAdd", args)
 }
 
+///|
 let w_key : VariableKey[CoreAtom] = variable(CoreAtom::Text("w"))
+
+///|
 let x_key : VariableKey[CoreAtom] = variable(CoreAtom::Text("x"))
+
+///|
 let y_key : VariableKey[CoreAtom] = variable(CoreAtom::Text("y"))
+
+///|
 let z_key : VariableKey[CoreAtom] = variable(CoreAtom::Text("z"))
+
+///|
 let w_var : UnifyTerm[CoreAtom, String] = variable_term(w_key)
+
+///|
 let x_var : UnifyTerm[CoreAtom, String] = variable_term(x_key)
+
+///|
 let y_var : UnifyTerm[CoreAtom, String] = variable_term(y_key)
+
+///|
 let z_var : UnifyTerm[CoreAtom, String] = variable_term(z_key)
 
 ///|
@@ -116,18 +136,15 @@ fn core_match(
   rhs : UnifyTerm[CoreAtom, String],
   subst? : Substitution[CoreAtom, String] = {},
 ) -> Array[Substitution[CoreAtom, String]] {
-  core_unify(
-    lhs,
-    rhs,
-    s=subst,
-    is_associative=is_associative,
-    is_commutative=is_commutative,
-  )
+  core_unify(lhs, rhs, s=subst, is_associative~, is_commutative~)
 }
 
 ///|
 test "unify core handles basic substitutions" {
-  inspect(render_substs(core_match(t("a"), x_var)), content="[{Variable(x): a}]")
+  inspect(
+    render_substs(core_match(t("a"), x_var)),
+    content="[{Variable(x): a}]",
+  )
   inspect(
     render_substs(core_match(t("a"), x_var, subst=bind_x(i(10)))),
     content="[]",
@@ -149,17 +166,25 @@ test "unify core handles basic substitutions" {
 ///|
 test "unify core handles compound matching and associative regrouping" {
   inspect(
-    render_substs(core_match(add([t("a"), t("b"), t("c")]), add([t("a"), x_var, y_var]))),
+    render_substs(
+      core_match(add([t("a"), t("b"), t("c")]), add([t("a"), x_var, y_var])),
+    ),
     content="[{Variable(x): b, Variable(y): c}]",
   )
   let mul_match = render_substs(
-    core_match(add([mul([i(1), i(2)]), t("b"), t("c")]), add([x_var, y_var, t("c")])),
+    core_match(
+      add([mul([i(1), i(2)]), t("b"), t("c")]),
+      add([x_var, y_var, t("c")]),
+    ),
   )
   inspect(
-    mul_match.contains("Variable(x): Mul[1, 2]") && mul_match.contains("Variable(y): b"),
+    mul_match.contains("Variable(x): Mul[1, 2]") &&
+    mul_match.contains("Variable(y): b"),
     content="true",
   )
-  let assoc_match = render_substs(core_match(add([i(1), i(2), i(3)]), add([x_var, y_var])))
+  let assoc_match = render_substs(
+    core_match(add([i(1), i(2), i(3)]), add([x_var, y_var])),
+  )
   inspect(
     assoc_match.contains("{Variable(x): 1, Variable(y): Add[2, 3]}") &&
     assoc_match.contains("Variable(x): Add[1, 2]") &&
@@ -172,22 +197,18 @@ test "unify core handles compound matching and associative regrouping" {
 test "unify core handles commutative regrouping and conditional variables" {
   let even_key = cond_variable(CoreAtom::Text("y"))
   let large_key = cond_variable(CoreAtom::Text("z"))
-  let even_var : UnifyTerm[CoreAtom, String] = cond_variable_term(
-    even_key,
-    term =>
-      match term {
-        UnifyTerm::Atom(CoreAtom::Int(value)) => value % 2 == 0
-        _ => false
-      },
-  )
-  let large_var : UnifyTerm[CoreAtom, String] = cond_variable_term(
-    large_key,
-    term =>
-      match term {
-        UnifyTerm::Atom(CoreAtom::Int(value)) => value > 3
-        _ => false
-      },
-  )
+  let even_var : UnifyTerm[CoreAtom, String] = cond_variable_term(even_key, term => {
+    match term {
+      UnifyTerm::Atom(CoreAtom::Int(value)) => value % 2 == 0
+      _ => false
+    }
+  })
+  let large_var : UnifyTerm[CoreAtom, String] = cond_variable_term(large_key, term => {
+    match term {
+      UnifyTerm::Atom(CoreAtom::Int(value)) => value > 3
+      _ => false
+    }
+  })
 
   let comm_results = core_match(cadd([i(1), i(2), i(3)]), cadd([x_var, y_var]))
   inspect(comm_results.length(), content="12")

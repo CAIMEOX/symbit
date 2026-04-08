@@ -1,6 +1,8 @@
 ///|
 fn expr_mentions_symbol(expr : Expr, symbol : Expr) -> Bool {
-  @symcore.free_symbols(expr).any(item => @symcore.compare_expr(item, symbol) == 0)
+  @symcore.free_symbols(expr).any(item => {
+    @symcore.compare_expr(item, symbol) == 0
+  })
 }
 
 ///|
@@ -57,7 +59,10 @@ fn first_decompose_arg(expr : Expr) -> Expr? {
 }
 
 ///|
-fn decompogen_minmax(expr : Expr, symbol : Expr) -> Array[Expr] raise SolverError {
+fn decompogen_minmax(
+  expr : Expr,
+  symbol : Expr,
+) -> Array[Expr] raise SolverError {
   let name = if @symcore.application_has_name(expr, "Max") {
     "Max"
   } else if @symcore.application_has_name(expr, "Min") {
@@ -83,10 +88,7 @@ fn decompogen_minmax(expr : Expr, symbol : Expr) -> Array[Expr] raise SolverErro
     let tail = expr_array_tail(d, 1)
     match shared_tail {
       None => shared_tail = Some(tail)
-      Some(prev) =>
-        if !expr_lists_equal(prev, tail) {
-          return [expr]
-        }
+      Some(prev) => if !expr_lists_equal(prev, tail) { return [expr] }
     }
     args[i] = d[0]
     last_head = d[0]
@@ -147,8 +149,11 @@ fn decompogen_via_generator_subexpr(
         None => best = Some(candidate)
         Some(current) =>
           if candidate.length() < current.length() ||
-            (candidate.length() == current.length() &&
-              @symprint.to_string(node).length() < @symprint.to_string(current[1]).length()) {
+            (
+              candidate.length() == current.length() &&
+              @symprint.to_string(node).length() <
+              @symprint.to_string(current[1]).length()
+            ) {
             best = Some(candidate)
           }
       }
@@ -164,7 +169,8 @@ fn expr_is_polynomial_in_symbol(expr : Expr, symbol : Expr) -> Bool {
   }
   match expr {
     Expr::Symbol(_) => @symcore.compare_expr(expr, symbol) == 0
-    Expr::Add(args) | Expr::Mul(args) => args.all(arg => expr_is_polynomial_in_symbol(arg, symbol))
+    Expr::Add(args) | Expr::Mul(args) =>
+      args.all(arg => expr_is_polynomial_in_symbol(arg, symbol))
     Expr::Pow(base, exp) =>
       if !expr_is_polynomial_in_symbol(base, symbol) {
         false
@@ -179,7 +185,10 @@ fn expr_is_polynomial_in_symbol(expr : Expr, symbol : Expr) -> Bool {
 }
 
 ///|
-fn decompogen_from_poly(expr : Expr, symbol : Expr) -> Array[Expr]? raise SolverError {
+fn decompogen_from_poly(
+  expr : Expr,
+  symbol : Expr,
+) -> Array[Expr]? raise SolverError {
   let poly : @sympolys.Poly = @sympolys.Poly::from_expr_defaults(expr) catch {
     _ => return None
   }
@@ -197,9 +206,7 @@ fn decompogen_from_poly(expr : Expr, symbol : Expr) -> Array[Expr]? raise Solver
       None => return Some([expr])
     }
   }
-  let pieces = @sympolys.decompose(poly) catch {
-    _ => return Some([expr])
-  }
+  let pieces = @sympolys.decompose(poly) catch { _ => return Some([expr]) }
   if pieces.is_empty() {
     return Some([expr])
   }
@@ -215,7 +222,8 @@ pub fn decompogen(expr : Expr, symbol : Expr) -> Array[Expr] raise SolverError {
   if !expr_mentions_symbol(expr, symbol) {
     return [expr]
   }
-  if @symcore.application_has_name(expr, "Max") || @symcore.application_has_name(expr, "Min") {
+  if @symcore.application_has_name(expr, "Max") ||
+    @symcore.application_has_name(expr, "Min") {
     return decompogen_minmax(expr, symbol)
   }
   match first_decompose_arg(expr) {
@@ -230,8 +238,8 @@ pub fn decompogen(expr : Expr, symbol : Expr) -> Array[Expr] raise SolverError {
         Some(parts) => parts
         None =>
           match decompogen_via_generator_subexpr(expr, symbol) {
-        Some(parts) => parts
-        None => [expr]
+            Some(parts) => parts
+            None => [expr]
           }
       }
   }

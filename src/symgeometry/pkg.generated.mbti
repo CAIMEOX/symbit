@@ -95,15 +95,13 @@ pub suberror GeometryError {
   ValueError(String)
   TypeError(String)
   Undecidable(String)
-}
-pub impl Eq for GeometryError
-pub impl Show for GeometryError
+} derive(Eq, Show)
 
 // Types and methods
 pub struct Circle {
   center_ : Point
   radius_ : @symcore.Expr
-}
+} derive(Eq)
 pub fn Circle::ambient_dimension(Self) -> Int
 pub fn Circle::arbitrary_point(Self, parameter? : @symcore.Expr) -> Point raise GeometryError
 pub fn Circle::area(Self) -> @symcore.Expr
@@ -134,14 +132,13 @@ pub fn Circle::section_modulus(Self, point? : Point?) -> (@symcore.Expr, @symcor
 pub fn Circle::tangent_lines(Self, Point) -> Array[Line] raise GeometryError
 pub fn Circle::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
 pub fn Circle::vradius(Self) -> @symcore.Expr
-pub impl Eq for Circle
 
 pub struct Curve {
   functions_ : Array[@symcore.Expr]
   parameter_ : @symcore.Expr
   start_ : @symcore.Expr
   end_ : @symcore.Expr
-}
+} derive(Eq)
 pub fn Curve::ambient_dimension(Self) -> Int
 pub fn Curve::arbitrary_point(Self, parameter? : @symcore.Expr) -> Point raise GeometryError
 pub fn Curve::free_symbols(Self) -> Array[@symcore.Expr]
@@ -155,13 +152,12 @@ pub fn Curve::repr(Self) -> String
 pub fn Curve::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise GeometryError
 pub fn Curve::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
 pub fn Curve::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
-pub impl Eq for Curve
 
 pub struct Ellipse {
   center_ : Point
   hradius_ : @symcore.Expr
   vradius_ : @symcore.Expr
-}
+} derive(Eq)
 pub fn Ellipse::ambient_dimension(Self) -> Int
 pub fn Ellipse::apoapsis(Self) -> @symcore.Expr
 pub fn Ellipse::arbitrary_point(Self, parameter? : @symcore.Expr) -> Point raise GeometryError
@@ -200,7 +196,6 @@ pub fn Ellipse::semilatus_rectum(Self) -> @symcore.Expr
 pub fn Ellipse::tangent_lines(Self, Point) -> Array[Line] raise GeometryError
 pub fn Ellipse::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
 pub fn Ellipse::vradius(Self) -> @symcore.Expr
-pub impl Eq for Ellipse
 
 pub enum GeometryEntity {
   Point(Point)
@@ -215,7 +210,7 @@ pub enum GeometryEntity {
   Triangle(Triangle)
   Parabola(Parabola)
   Curve(Curve)
-}
+} derive(Eq)
 pub fn GeometryEntity::ambient_dimension(Self) -> Int
 pub fn GeometryEntity::encloses(Self, Self) -> Bool raise GeometryError
 pub fn GeometryEntity::is_similar(Self, Self) -> Bool raise GeometryError
@@ -224,12 +219,11 @@ pub fn GeometryEntity::repr(Self) -> String raise GeometryError
 pub fn GeometryEntity::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise GeometryError
 pub fn GeometryEntity::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
 pub fn GeometryEntity::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
-pub impl Eq for GeometryEntity
 
 pub struct Line {
   p1_ : Point
   p2_ : Point
-}
+} derive(Eq, Hash)
 pub fn Line::ambient_dimension(Self) -> Int
 pub fn Line::angle_between(Self, GeometryEntity) -> @symcore.Expr raise GeometryError
 pub fn Line::arbitrary_point(Self, parameter? : @symcore.Expr) -> Point raise GeometryError
@@ -250,13 +244,11 @@ pub fn Line::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise GeometryErr
 pub fn Line::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
 pub fn Line::smallest_angle_between(Self, GeometryEntity) -> @symcore.Expr raise GeometryError
 pub fn Line::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
-pub impl Eq for Line
-pub impl Hash for Line
 
 pub struct Parabola {
   focus_ : Point
   directrix_ : Line
-}
+} derive(Eq)
 pub fn Parabola::ambient_dimension(Self) -> Int
 pub fn Parabola::axis_of_symmetry(Self) -> Line raise GeometryError
 pub fn Parabola::directrix(Self) -> Line
@@ -271,12 +263,11 @@ pub fn Parabola::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise Geometr
 pub fn Parabola::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
 pub fn Parabola::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
 pub fn Parabola::vertex(Self) -> Point raise GeometryError
-pub impl Eq for Parabola
 
 pub struct Plane {
   point_ : Point
   normal_ : Array[@symcore.Expr]
-}
+} derive(Eq)
 pub fn Plane::ambient_dimension(Self) -> Int
 pub fn Plane::angle_between(Self, GeometryEntity) -> @symcore.Expr raise GeometryError
 pub fn Plane::arbitrary_point(Self, u? : @symcore.Expr?, v? : @symcore.Expr?) -> Point raise GeometryError
@@ -302,11 +293,10 @@ pub fn Plane::random_point(Self, seed? : Int?) -> Point raise GeometryError
 pub fn Plane::repr(Self) -> String
 pub fn Plane::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
 pub fn Plane::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
-pub impl Eq for Plane
 
 pub struct Point {
   coords_ : Array[@symcore.Expr]
-}
+} derive(Eq, Hash)
 pub fn Point::abs(Self) -> @symcore.Expr raise GeometryError
 pub fn Point::ambient_dimension(Self) -> Int
 pub fn Point::canberra_distance(Self, Self) -> @symcore.Expr raise GeometryError
@@ -341,13 +331,11 @@ pub fn Point::x(Self) -> @symcore.Expr raise GeometryError
 pub fn Point::y(Self) -> @symcore.Expr raise GeometryError
 pub fn Point::z(Self) -> @symcore.Expr raise GeometryError
 pub impl Add for Point
-pub impl Eq for Point
-pub impl Hash for Point
 pub impl Sub for Point
 
 pub struct Polygon {
   vertices_ : Array[Point]
-}
+} derive(Eq)
 pub fn Polygon::ambient_dimension(Self) -> Int
 pub fn Polygon::angles(Self) -> Map[Point, @symcore.Expr] raise GeometryError
 pub fn Polygon::arbitrary_point(Self, parameter? : @symcore.Expr) -> Point raise GeometryError
@@ -370,12 +358,11 @@ pub fn Polygon::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise Ge
 pub fn Polygon::sides(Self) -> Array[Segment] raise GeometryError
 pub fn Polygon::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
 pub fn Polygon::vertices(Self) -> Array[Point]
-pub impl Eq for Polygon
 
 pub struct Ray {
   p1_ : Point
   p2_ : Point
-}
+} derive(Eq, Hash)
 pub fn Ray::ambient_dimension(Self) -> Int
 pub fn Ray::contains(Self, Point) -> Bool raise GeometryError
 pub fn Ray::direction(Self) -> Point
@@ -391,15 +378,13 @@ pub fn Ray::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise GeometryErro
 pub fn Ray::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
 pub fn Ray::source(Self) -> Point
 pub fn Ray::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
-pub impl Eq for Ray
-pub impl Hash for Ray
 
 pub struct RegularPolygon {
   center_ : Point
   radius_ : @symcore.Expr
   n_ : Int
   rotation_ : @symcore.Expr
-}
+} derive(Eq)
 pub fn RegularPolygon::ambient_dimension(Self) -> Int
 pub fn RegularPolygon::angles(Self) -> Map[Point, @symcore.Expr] raise GeometryError
 pub fn RegularPolygon::apothem(Self) -> @symcore.Expr
@@ -427,12 +412,11 @@ pub fn RegularPolygon::scale(Self, @symcore.Expr, y? : @symcore.Expr, pt? : Poin
 pub fn RegularPolygon::spin(Self, @symcore.Expr) -> Self
 pub fn RegularPolygon::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
 pub fn RegularPolygon::vertices(Self) -> Array[Point] raise GeometryError
-pub impl Eq for RegularPolygon
 
 pub struct Segment {
   p1_ : Point
   p2_ : Point
-}
+} derive(Eq, Hash)
 pub fn Segment::ambient_dimension(Self) -> Int
 pub fn Segment::contains(Self, Point) -> Bool raise GeometryError
 pub fn Segment::direction(Self) -> Point
@@ -450,12 +434,10 @@ pub fn Segment::repr(Self) -> String raise GeometryError
 pub fn Segment::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise GeometryError
 pub fn Segment::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
 pub fn Segment::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
-pub impl Eq for Segment
-pub impl Hash for Segment
 
 pub struct Triangle {
   vertices_ : Array[Point]
-}
+} derive(Eq)
 pub fn Triangle::altitudes(Self) -> Map[Point, Segment] raise GeometryError
 pub fn Triangle::ambient_dimension(Self) -> Int
 pub fn Triangle::angles(Self) -> Map[Point, @symcore.Expr] raise GeometryError
@@ -490,7 +472,6 @@ pub fn Triangle::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise G
 pub fn Triangle::sides(Self) -> Array[Segment] raise GeometryError
 pub fn Triangle::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
 pub fn Triangle::vertices(Self) -> Array[Point]
-pub impl Eq for Triangle
 
 // Type aliases
 

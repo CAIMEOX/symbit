@@ -75,14 +75,8 @@ test "symcalculus diff applies chain rule to undefined functions" {
       inner,
     ),
   ])
-  inspect(
-    @symcore.compare_expr(diff(expr, x), expected_x),
-    content="0",
-  )
-  inspect(
-    @symcore.compare_expr(diff(expr, y), expected_y),
-    content="0",
-  )
+  inspect(@symcore.compare_expr(diff(expr, x), expected_x), content="0")
+  inspect(@symcore.compare_expr(diff(expr, y), expected_y), content="0")
 }
 
 ///|
@@ -101,7 +95,10 @@ test "symcalculus diff evaluates Subs of derivative placeholders by chain rule" 
   let expected_dx = @symcore.mul([
     a,
     @symcore.Expr::Subs(
-      derivative_expr(@symcore.applied_undefined_function("F", [xi]), [xi, @symcore.int(2)]),
+      derivative_expr(@symcore.applied_undefined_function("F", [xi]), [
+        xi,
+        @symcore.int(2),
+      ]),
       xi,
       inner,
     ),
@@ -109,7 +106,10 @@ test "symcalculus diff evaluates Subs of derivative placeholders by chain rule" 
   let expected_dy = @symcore.mul([
     b,
     @symcore.Expr::Subs(
-      derivative_expr(@symcore.applied_undefined_function("F", [xi]), [xi, @symcore.int(2)]),
+      derivative_expr(@symcore.applied_undefined_function("F", [xi]), [
+        xi,
+        @symcore.int(2),
+      ]),
       xi,
       inner,
     ),
@@ -121,36 +121,21 @@ test "symcalculus diff evaluates Subs of derivative placeholders by chain rule" 
 ///|
 test "symcalculus diff applies explicit sqrt derivative" {
   let x = @symcore.Expr::Symbol("x")
-  let expr = @symcore.function(
-    "sqrt",
-    [
-      @symcore.add([
-        @symcore.pow(x, @symcore.int(2)),
-        @symcore.int(1),
-      ]),
-    ],
-  )
+  let expr = @symcore.function("sqrt", [
+    @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)]),
+  ])
   let expected = @symcore.mul([
     @symcore.int(2),
     x,
     @symcore.pow(
       @symcore.mul([
         @symcore.int(2),
-        @symcore.function(
-          "sqrt",
-          [
-            @symcore.add([
-              @symcore.pow(x, @symcore.int(2)),
-              @symcore.int(1),
-            ]),
-          ],
-        ),
+        @symcore.function("sqrt", [
+          @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)]),
+        ]),
       ]),
       @symcore.int(-1),
     ),
   ])
-  inspect(
-    @symcore.compare_expr(diff(expr, x), expected),
-    content="0",
-  )
+  inspect(@symcore.compare_expr(diff(expr, x), expected), content="0")
 }

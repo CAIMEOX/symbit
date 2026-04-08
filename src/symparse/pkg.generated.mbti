@@ -65,9 +65,7 @@ pub(all) suberror ParseError {
   UnexpectedEof(span~ : Span, String)
   InvalidNumber(span~ : Span, String)
   UnsupportedConstruct(span~ : Span, String)
-}
-pub impl Eq for ParseError
-pub impl Show for ParseError
+} derive(Eq, Show)
 
 // Types and methods
 pub enum Ast {
@@ -87,9 +85,7 @@ pub enum BinaryOp {
   Mul
   Div
   Pow
-}
-pub impl Eq for BinaryOp
-pub impl Show for BinaryOp
+} derive(Eq, Show)
 
 pub enum CompareOp {
   Eq
@@ -99,17 +95,14 @@ pub enum CompareOp {
   Le
   Gt
   Ge
-}
-pub impl Eq for CompareOp
-pub impl Show for CompareOp
+} derive(Eq, Show)
 
 pub struct ParseContext {
   callable_names : Array[String]
   bindings : Map[String, @symcore.Expr]
   global_callable_names : Array[String]
   global_bindings : Map[String, @symcore.Expr]
-}
-pub impl Eq for ParseContext
+} derive(Eq)
 
 pub struct ParseOptions {
   evaluate : Bool
@@ -119,16 +112,12 @@ pub struct ParseOptions {
 pub struct Span {
   start : Int
   stop : Int
-}
-pub impl Eq for Span
-pub impl Show for Span
+} derive(Eq, Show)
 
 pub struct Token {
   kind : TokenKind
   span : Span
-}
-pub impl Eq for Token
-pub impl Show for Token
+} derive(Eq, Show)
 
 pub enum TokenKind {
   IntLit(String)
@@ -154,9 +143,7 @@ pub enum TokenKind {
   Gt
   Ge
   Eof
-}
-pub impl Eq for TokenKind
-pub impl Show for TokenKind
+} derive(Eq, Show)
 
 pub(all) enum Transformation {
   LambdaNotation
@@ -178,9 +165,7 @@ pub(all) enum Transformation {
 pub enum UnaryOp {
   Plus
   Minus
-}
-pub impl Eq for UnaryOp
-pub impl Show for UnaryOp
+} derive(Eq, Show)
 
 // Type aliases
 

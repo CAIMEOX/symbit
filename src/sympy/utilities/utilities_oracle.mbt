@@ -116,23 +116,11 @@ pub fn utilities_eval(expr : String) -> @py.PyObjectEnum raise {
     }
     globals.set("sympy", sympy_mod.obj())
     globals.set("json", json_mod)
-    for name in [
-      "Eq",
-      "Function",
-      "I",
-      "Integral",
-      "Pow",
-      "S",
-      "Symbol",
-      "acos",
-      "cos",
-      "cosh",
-      "exp",
-      "log",
-      "sin",
-      "sinh",
-      "sqrt",
-    ] {
+    for
+      name in [
+        "Eq", "Function", "I", "Integral", "Pow", "S", "Symbol", "acos", "cos", "cosh",
+        "exp", "log", "sin", "sinh", "sqrt",
+      ] {
       match sympy_mod.get_attr(name, print_err=true) {
         Some(obj) => globals.set(name, objenum_to_obj(obj))
         None => fail("py-sympy-attr-missing: " + name)

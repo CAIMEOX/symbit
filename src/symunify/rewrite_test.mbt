@@ -26,9 +26,9 @@ test "symunify rewrite handles simple and moderate cases" {
     variables=[rp()],
   )
   inspect(
-    rl.apply(@symcore.raw_function("Basic", [@symcore.int(3), @symcore.int(1)])).map(
-      @symprint.to_string,
-    ),
+    rl
+    .apply(@symcore.raw_function("Basic", [@symcore.int(3), @symcore.int(1)]))
+    .map(@symprint.to_string),
     content="[\"Basic(3, 2)\"]",
   )
 
@@ -38,7 +38,9 @@ test "symunify rewrite handles simple and moderate cases" {
     variables=[rp()],
   )
   inspect(
-    pow_rule.apply(@symcore.raw_pow(rx(), @symcore.int(2))).map(@symprint.to_string),
+    pow_rule
+    .apply(@symcore.raw_pow(rx(), @symcore.int(2)))
+    .map(@symprint.to_string),
     content="[\"x**3\"]",
   )
 
@@ -51,12 +53,14 @@ test "symunify rewrite handles simple and moderate cases" {
     variables=[rp(), rq()],
   )
   inspect(
-    moderate.apply(
+    moderate
+    .apply(
       @symcore.raw_add([
         @symcore.raw_pow(rx(), @symcore.int(2)),
         @symcore.raw_pow(ry(), @symcore.int(3)),
       ]),
-    ).map(@symprint.to_string),
+    )
+    .map(@symprint.to_string),
     content="[\"x**4*y**4\"]",
   )
 }
@@ -67,14 +71,19 @@ test "symunify rewrite handles conditions and assumptions" {
     rx(),
     @symcore.add([rx(), @symcore.int(1)]),
     variables=[rx()],
-    condition=args =>
+    condition=args => {
       match args {
-        [@symcore.Expr::Number(value)] => value.compare(@symnum.BigRational::from_int(10)) < 0
+        [@symcore.Expr::Number(value)] =>
+          value.compare(@symnum.BigRational::from_int(10)) < 0
         _ => false
-      },
+      }
+    },
   )
   inspect(simple.apply(@symcore.int(15)).length(), content="0")
-  inspect(simple.apply(@symcore.int(5)).map(@symprint.to_string), content="[\"1 + 5\"]")
+  inspect(
+    simple.apply(@symcore.int(5)).map(@symprint.to_string),
+    content="[\"1 + 5\"]",
+  )
 
   let assume_rule = rewriterule(
     @symcore.raw_add([rx(), ry()]),
@@ -85,10 +94,9 @@ test "symunify rewrite handles conditions and assumptions" {
   let a = @symcore.Expr::Symbol("a")
   let b = @symcore.Expr::Symbol("b")
   inspect(
-    assume_rule.apply(
-      @symcore.raw_add([a, b]),
-      assumptions=@symassume.q_integer(b),
-    ).map(@symprint.to_string),
+    assume_rule
+    .apply(@symcore.raw_add([a, b]), assumptions=@symassume.q_integer(b))
+    .map(@symprint.to_string),
     content="[\"b**a\"]",
   )
 }

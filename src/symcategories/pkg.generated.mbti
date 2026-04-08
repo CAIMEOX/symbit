@@ -68,9 +68,7 @@ pub(all) suberror CategoryError {
   TypeError(String)
   NotImplemented(String)
   Unsupported(String)
-}
-pub impl Eq for CategoryError
-pub impl Show for CategoryError
+} derive(Eq, Show)
 
 // Types and methods
 pub struct ArrowStringDescription {

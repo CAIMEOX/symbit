@@ -90,9 +90,7 @@ pub(all) suberror MatrixError {
   NonSquareMatrixError(String)
   SingularMatrixError(String)
   IndexError(String)
-}
-pub impl Eq for MatrixError
-pub impl Show for MatrixError
+} derive(Eq, Show)
 
 // Types and methods
 #alias(ImmutableDenseMatrix)

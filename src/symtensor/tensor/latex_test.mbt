@@ -6,14 +6,9 @@ test "tensor latex renders indexed heads products and partial derivatives" {
   let i = tensor_index("i", l)
   let j = tensor_index("j", l, is_up=false)
   let a = tensor_head("A", [l, l])
-  let expr = a.call([i, j]) catch {
-    _ => fail("tensor")
-  }
+  let expr = a.call([i, j]) catch { _ => fail("tensor") }
   inspect(expr.latex(), content="A{}^{i}{}_{j}")
-  inspect(
-    mul([scalar_expr(x), expr]).latex(),
-    content="xA{}^{i}{}_{j}",
-  )
+  inspect(mul([scalar_expr(x), expr]).latex(), content="xA{}^{i}{}_{j}")
   inspect(
     partial_derivative(expr, [scalar_expr(x)]).latex(),
     content="\\frac{\\partial}{\\partial {x}}{A{}^{i}{}_{j}}",

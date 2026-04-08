@@ -34,6 +34,8 @@ pub fn classify_pde(@symcore.Expr, func? : @symcore.Expr?) -> Array[String] rais
 
 pub let complexes : @symsets.Set
 
+pub fn compogen(Array[@symcore.Expr], @symcore.Expr) -> @symcore.Expr
+
 pub fn constantsimp(@symcore.Expr, Array[@symcore.Expr]) -> @symcore.Expr raise SolverError
 
 pub fn decompogen(@symcore.Expr, @symcore.Expr) -> Array[@symcore.Expr] raise SolverError
@@ -140,18 +142,19 @@ pub fn substitution(Array[@symcore.Expr], Array[@symcore.Expr]) -> @symsets.Set 
 pub(all) suberror SolverError {
   ValueError(String)
   NotImplementedError(String)
+  NonlinearError(String)
   ShapeError(String)
   InfeasibleLPError(String)
   UnboundedLPError(String)
-}
-pub impl Eq for SolverError
-pub impl Show for SolverError
+} derive(Eq, Show)
 
 // Types and methods
 pub enum DiopSolveResult {
   Tuple(Array[@symcore.Expr])
   Set(@symsets.Set)
 }
+
+type DomainMembership
 
 pub enum InequalityResult {
   Set(@symsets.Set)
@@ -184,3 +187,4 @@ pub enum SolveResult {
 pub type RationalInequality = ((@sympolys.Poly, @sympolys.Poly), String)
 
 // Traits
+

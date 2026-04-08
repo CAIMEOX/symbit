@@ -124,7 +124,9 @@ fn[T, Op] sequence_items(term : UnifyTerm[T, Op]) -> Array[UnifyTerm[T, Op]]? {
 }
 
 ///|
-fn[T, Op] compound_parts(term : UnifyTerm[T, Op]) -> (Op, Array[UnifyTerm[T, Op]])? {
+fn[T, Op] compound_parts(
+  term : UnifyTerm[T, Op],
+) -> (Op, Array[UnifyTerm[T, Op]])? {
   match term {
     UnifyTerm::Compound(op, args) => Some((op, args))
     _ => None
@@ -140,8 +142,7 @@ fn[T : Eq, Op : Eq] term_equal(
     (UnifyTerm::Atom(a), UnifyTerm::Atom(b)) => a == b
     (UnifyTerm::Variable(a), UnifyTerm::Variable(b)) => a == b
     (UnifyTerm::CondVariable(a, _), UnifyTerm::CondVariable(b, _)) => a == b
-    (UnifyTerm::Sequence(xs), UnifyTerm::Sequence(ys)) =>
-      terms_equal(xs, ys)
+    (UnifyTerm::Sequence(xs), UnifyTerm::Sequence(ys)) => terms_equal(xs, ys)
     (UnifyTerm::Compound(op_a, args_a), UnifyTerm::Compound(op_b, args_b)) =>
       op_a == op_b && terms_equal(args_a, args_b)
     _ => false

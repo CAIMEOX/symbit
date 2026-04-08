@@ -1223,7 +1223,7 @@ fn imag_unit_pow(exp : Expr) -> Expr? {
   match exact_numeric_expr_num_den(exp) {
     Some((num, den)) if den == 1N && num.bit_length() <= 30 => {
       let raw = num.to_int()
-      let rem = ((raw % 4) + 4) % 4
+      let rem = (raw % 4 + 4) % 4
       let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
       Some(
         match rem {
@@ -1243,9 +1243,7 @@ fn sqrt_bigint_if_square(value : BigInt) -> BigInt? {
   if value.op_lt(0N) {
     return None
   }
-  let root = @symnum.isqrt(value) catch {
-    _ => return None
-  }
+  let root = @symnum.isqrt(value) catch { _ => return None }
   if root.mul(root).compare(value) == 0 {
     Some(root)
   } else {

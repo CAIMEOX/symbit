@@ -225,10 +225,7 @@ fn exp_negative_power_numerator(base : Expr, exp : Expr) -> Expr? {
           Some(@symcore.function("exp", [@symcore.mul([coeff, arg])]))
         Expr::Pow(Expr::Apply(Expr::FunctionHead("exp"), [arg]), inner_exp) =>
           Some(
-            @symcore.function(
-              "exp",
-              [@symcore.mul([coeff, inner_exp, arg])],
-            ),
+            @symcore.function("exp", [@symcore.mul([coeff, inner_exp, arg])]),
           )
         _ => None
       }

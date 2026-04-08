@@ -34,9 +34,7 @@ pub(all) enum ExprOp {
   Mul
   Pow
   Function(String)
-}
-pub impl Eq for ExprOp
-pub impl Hash for ExprOp
+} derive(Eq, Hash)
 
 pub struct Fns[T, Op] {
   op : (T) -> Op

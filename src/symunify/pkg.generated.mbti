@@ -1,0 +1,100 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symunify"
+
+import {
+  "CAIMEOX/symbit/symassume",
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symstrategies/util",
+}
+
+// Values
+pub fn[T] allcombinations(Array[T], Array[T], CombineMode) -> Array[(Array[Array[T]], Array[Array[T]])]
+
+pub fn[T, Op] atom(T) -> UnifyTerm[T, Op]
+
+pub fn[T, Op] compound(Op, Array[UnifyTerm[T, Op]]) -> UnifyTerm[T, Op]
+
+pub fn[T] cond_variable(T) -> CondVariableKey[T]
+
+pub fn[T, Op] cond_variable_term(CondVariableKey[T], (UnifyTerm[T, Op]) -> Bool) -> UnifyTerm[T, Op]
+
+pub fn construct(UnifyTerm[@symcore.Expr, @util.ExprOp]) -> @symcore.Expr
+
+pub fn[T : Eq + Hash, Op : Eq] core_unify(UnifyTerm[T, Op], UnifyTerm[T, Op], s? : Map[MatchVar[T], UnifyTerm[T, Op]], is_associative? : (UnifyTerm[T, Op]) -> Bool, is_commutative? : (UnifyTerm[T, Op]) -> Bool) -> Array[Map[MatchVar[T], UnifyTerm[T, Op]]]
+
+pub fn deconstruct(@symcore.Expr, variables? : Array[@symcore.Expr]) -> UnifyTerm[@symcore.Expr, @util.ExprOp]
+
+pub fn[T] index(Array[T], Array[Int]) -> Array[T]
+
+pub fn is_associative(UnifyTerm[@symcore.Expr, @util.ExprOp]) -> Bool
+
+pub fn is_commutative(UnifyTerm[@symcore.Expr, @util.ExprOp]) -> Bool
+
+pub fn[T] match_var_arg(MatchVar[T]) -> T
+
+pub fn[T : Eq, Op] occur_check(MatchVar[T], UnifyTerm[T, Op]) -> Bool
+
+pub fn[T] partition(Array[T], Array[Array[Int]]) -> Array[Array[T]]
+
+pub fn rebuild(@symcore.Expr) -> @symcore.Expr
+
+pub fn rewriterule(@symcore.Expr, @symcore.Expr, variables? : Array[@symcore.Expr], condition? : (Array[@symcore.Expr]) -> Bool, assumption_query? : @symassume.Query?) -> RewriteRule
+
+pub fn[T, Op] sequence(Array[UnifyTerm[T, Op]]) -> UnifyTerm[T, Op]
+
+pub fn[T, Op] substitution_pairs(Map[MatchVar[T], UnifyTerm[T, Op]]) -> Array[(MatchVar[T], UnifyTerm[T, Op])]
+
+pub fn unify(@symcore.Expr, @symcore.Expr, s? : Map[@symcore.Expr, @symcore.Expr], variables? : Array[@symcore.Expr]) -> Array[Map[@symcore.Expr, @symcore.Expr]]
+
+pub fn[T] variable(T) -> VariableKey[T]
+
+pub fn[T, Op] variable_term(VariableKey[T]) -> UnifyTerm[T, Op]
+
+// Errors
+
+// Types and methods
+pub(all) enum CombineMode {
+  Associative
+  Commutative
+} derive(Eq)
+
+pub struct CondVariableKey[T] {
+  arg : T
+  id : Int
+} derive(Eq, Hash)
+pub fn[T] CondVariableKey::arg(Self[T]) -> T
+
+pub(all) enum MatchVar[T] {
+  Variable(VariableKey[T])
+  CondVariable(CondVariableKey[T])
+} derive(Eq, Hash)
+
+pub struct RewriteRule {
+  source : @symcore.Expr
+  target : @symcore.Expr
+  variables : Array[@symcore.Expr]
+  condition : (Array[@symcore.Expr]) -> Bool
+  assumption_query : @symassume.Query?
+}
+pub fn RewriteRule::apply(Self, @symcore.Expr, assumptions? : @symassume.Query) -> Array[@symcore.Expr] raise @symassume.AskError
+
+pub(all) enum UnifyTerm[T, Op] {
+  Atom(T)
+  Compound(Op, Array[UnifyTerm[T, Op]])
+  Sequence(Array[UnifyTerm[T, Op]])
+  Variable(VariableKey[T])
+  CondVariable(CondVariableKey[T], (UnifyTerm[T, Op]) -> Bool)
+}
+
+pub struct VariableKey[T] {
+  arg : T
+} derive(Eq, Hash)
+pub fn[T] VariableKey::arg(Self[T]) -> T
+
+// Type aliases
+pub using @util {type ExprOp}
+
+pub type Substitution[T, Op] = Map[MatchVar[T], UnifyTerm[T, Op]]
+
+// Traits
+

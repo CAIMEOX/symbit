@@ -583,10 +583,9 @@ pub fn zy_basis_transform() -> @symphysics.ExplicitMatrix raise @symphysics.Phys
 pub struct BosonOpExpr {
   name : @symcore.Expr
   is_annihilation : Bool
-}
+} derive(Eq)
 pub fn BosonOpExpr::as_expr(Self) -> @symcore.Expr
 pub fn BosonOpExpr::dagger(Self) -> Self
-pub impl Eq for BosonOpExpr
 pub impl Show for BosonOpExpr
 
 pub struct CG {
@@ -596,19 +595,17 @@ pub struct CG {
   m2 : @symcore.Expr
   j3 : @symcore.Expr
   m3 : @symcore.Expr
-}
+} derive(Eq)
 pub fn CG::as_expr(Self) -> @symcore.Expr
 pub fn CG::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
 pub fn CG::is_symbolic(Self) -> Bool
-pub impl Eq for CG
 
 pub struct CModExpr {
   t : Int
   a : Int
   modulus : Int
-}
+} derive(Eq)
 pub fn CModExpr::as_expr(Self) -> @symcore.Expr
-pub impl Eq for CModExpr
 
 pub struct CircuitPlot {
   circuit : @symcore.Expr
@@ -632,7 +629,7 @@ pub fn CircuitPlot::new(@symcore.Expr, Int, labels? : Array[String], inits? : Ma
 
 pub struct DensityExpr {
   terms : Array[DensityTerm]
-}
+} derive(Eq)
 pub fn DensityExpr::apply_op(Self, @symcore.Expr) -> Self
 pub fn DensityExpr::as_expr(Self) -> @symcore.Expr
 pub fn DensityExpr::doit(Self) -> @symcore.Expr
@@ -644,49 +641,43 @@ pub fn DensityExpr::probs(Self) -> @symcore.Expr
 pub fn DensityExpr::represent(Self, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> MatrixScalarValue raise @symphysics.PhysicsError
 pub fn DensityExpr::states(Self) -> @symcore.Expr
 pub fn DensityExpr::trace(Self, indices? : Array[Int]) -> @symcore.Expr
-pub impl Eq for DensityExpr
 
 pub struct DensityTerm {
   state : @symcore.Expr
   prob : @symcore.Expr
-}
-pub impl Eq for DensityTerm
+} derive(Eq)
 
 pub struct DifferentialOperatorExpr {
   expr : @symcore.Expr
   function_expr : @symcore.Expr
-}
+} derive(Eq)
 pub fn DifferentialOperatorExpr::as_expr(Self) -> @symcore.Expr
 pub fn DifferentialOperatorExpr::variables(Self) -> Array[@symcore.Expr]
-pub impl Eq for DifferentialOperatorExpr
 
 pub struct FermionOpExpr {
   name : @symcore.Expr
   is_annihilation : Bool
-}
+} derive(Eq)
 pub fn FermionOpExpr::as_expr(Self) -> @symcore.Expr
 pub fn FermionOpExpr::dagger(Self) -> Self
-pub impl Eq for FermionOpExpr
 pub impl Show for FermionOpExpr
 
 pub struct FourierExpr {
   inverse : Bool
   start : Int
   finish : Int
-}
+} derive(Eq)
 pub fn FourierExpr::as_expr(Self) -> @symcore.Expr
 pub fn FourierExpr::inverse(Self) -> Self
-pub impl Eq for FourierExpr
 
 pub struct GateExpr {
   kind : GateKind
   args : Array[Int]
-}
+} derive(Eq)
 pub fn GateExpr::as_expr(Self) -> @symcore.Expr
 pub fn GateExpr::repr(Self) -> String
 pub fn GateExpr::represent_zbasis(Self, Int) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn GateExpr::target_matrix(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
-pub impl Eq for GateExpr
 pub impl Show for GateExpr
 
 pub struct GateIdentity {
@@ -710,16 +701,14 @@ pub enum GateKind {
   T
   Swap
   CNot
-}
-pub impl Eq for GateKind
+} derive(Eq)
 
 pub struct GateRule {
   left : Array[@symcore.Expr]
   right : Array[@symcore.Expr]
-}
+} derive(Eq)
 pub fn GateRule::left_expr(Self) -> @symcore.Expr
 pub fn GateRule::right_expr(Self) -> @symcore.Expr
-pub impl Eq for GateRule
 pub impl Show for GateRule
 
 pub enum HilbertSpace {
@@ -730,14 +719,13 @@ pub enum HilbertSpace {
   TensorProduct(Array[HilbertSpace])
   DirectSum(Array[HilbertSpace])
   TensorPower(HilbertSpace, @symcore.Expr)
-}
+} derive(Eq)
 pub fn HilbertSpace::base(Self) -> Self raise @symphysics.PhysicsError
 pub fn HilbertSpace::dimension(Self) -> @symcore.Expr raise @symphysics.PhysicsError
 pub fn HilbertSpace::exp(Self) -> @symcore.Expr raise @symphysics.PhysicsError
 pub fn HilbertSpace::repr(Self) -> String
 pub fn HilbertSpace::spaces(Self) -> Array[Self] raise @symphysics.PhysicsError
 pub impl Add for HilbertSpace
-pub impl Eq for HilbertSpace
 pub impl Mul for HilbertSpace
 pub impl Show for HilbertSpace
 
@@ -748,12 +736,11 @@ pub struct JzState {
   basis_name : String
   jn : Array[@symcore.Expr]
   coupling : Array[SpinCoupling]
-}
+} derive(Eq)
 pub fn JzState::as_expr(Self) -> @symcore.Expr
 pub fn JzState::dual(Self) -> Self
 pub fn JzState::is_coupled(Self) -> Bool
 pub fn JzState::rewrite(Self, @symcore.Expr) -> @symcore.Expr
-pub impl Eq for JzState
 pub impl Show for JzState
 
 pub struct MatrixCache {
@@ -766,19 +753,17 @@ pub fn MatrixCache::get_matrix(Self, String, format? : String) -> @symphysics.Ex
 pub enum MatrixScalarValue {
   Matrix(@symphysics.ExplicitMatrix)
   Scalar(@symcore.Expr)
-}
-pub impl Eq for MatrixScalarValue
+} derive(Eq)
 pub impl Show for MatrixScalarValue
 
 pub struct OperatorExpr {
   flavor : OperatorFlavor
   label : Array[@symcore.Expr]
   hilbert_space : HilbertSpace
-}
+} derive(Eq)
 pub fn OperatorExpr::as_expr(Self) -> @symcore.Expr
 pub fn OperatorExpr::inverse(Self) -> @symcore.Expr
 pub fn OperatorExpr::repr(Self) -> String
-pub impl Eq for OperatorExpr
 pub impl Show for OperatorExpr
 
 pub enum OperatorFlavor {
@@ -786,23 +771,20 @@ pub enum OperatorFlavor {
   Hermitian
   Unitary
   Identity
-}
-pub impl Eq for OperatorFlavor
+} derive(Eq)
 
 pub struct OracleGateExpr {
   nqubits : Int
   marked : Array[Int]
-}
+} derive(Eq)
 pub fn OracleGateExpr::as_expr(Self) -> @symcore.Expr
-pub impl Eq for OracleGateExpr
 
 pub struct PauliExpr {
   kind : PauliKind
   name : @symcore.Expr?
-}
+} derive(Eq)
 pub fn PauliExpr::as_expr(Self) -> @symcore.Expr
 pub fn PauliExpr::repr(Self) -> String
-pub impl Eq for PauliExpr
 pub impl Show for PauliExpr
 
 pub enum PauliKind {
@@ -811,18 +793,16 @@ pub enum PauliKind {
   Z
   Plus
   Minus
-}
-pub impl Eq for PauliKind
+} derive(Eq)
 
 pub struct QExpr {
   class_name : String
   args : Array[@symcore.Expr]
   hilbert_space : HilbertSpace
-}
+} derive(Eq)
 pub fn QExpr::as_expr(Self) -> @symcore.Expr
 pub fn QExpr::label(Self) -> Array[@symcore.Expr]
 pub fn QExpr::repr(Self) -> String
-pub impl Eq for QExpr
 pub impl Show for QExpr
 
 pub struct Qasm {
@@ -830,20 +810,18 @@ pub struct Qasm {
   circuit : Array[@symcore.Expr]
   labels : Array[String]
   inits : Map[String, String]
-}
+} derive(Eq)
 pub fn Qasm::add(Self, Array[String]) -> Unit raise @symphysics.PhysicsError
 pub fn Qasm::get_circuit(Self) -> @symcore.Expr
 pub fn Qasm::get_labels(Self) -> Array[String]
 pub fn Qasm::index(Self, String) -> Int raise @symphysics.PhysicsError
 pub fn Qasm::indices(Self, Array[String]) -> Array[Int] raise @symphysics.PhysicsError
 pub fn Qasm::qubit(Self, String, init? : String?) -> Unit
-pub impl Eq for Qasm
 
 pub struct QasmDefinition {
   ncontrols : Int
   symbol : String
-}
-pub impl Eq for QasmDefinition
+} derive(Eq)
 
 pub(all) enum QuantumKind {
   QNumber
@@ -851,15 +829,14 @@ pub(all) enum QuantumKind {
   QBra
   QOperator
   QUndefined
-}
-pub impl Eq for QuantumKind
+} derive(Eq)
 pub impl Show for QuantumKind
 
 pub struct QubitExpr {
   bits : Array[Int]
   is_bra : Bool
   int_form : Bool
-}
+} derive(Eq)
 pub fn QubitExpr::as_expr(Self) -> @symcore.Expr
 pub fn QubitExpr::bit(Self, Int) -> Int raise @symphysics.PhysicsError
 pub fn QubitExpr::dimension(Self) -> Int
@@ -867,63 +844,54 @@ pub fn QubitExpr::dual(Self) -> Self
 pub fn QubitExpr::flip(Self, Int) -> Self raise @symphysics.PhysicsError
 pub fn QubitExpr::nqubits(Self) -> Int
 pub fn QubitExpr::repr(Self) -> String
-pub impl Eq for QubitExpr
 pub impl Show for QubitExpr
 
 pub struct RkExpr {
   target : Int
   k : Int
-}
-pub impl Eq for RkExpr
+} derive(Eq)
 
 pub struct RotationExpr {
   alpha : @symcore.Expr
   beta : @symcore.Expr
   gamma : @symcore.Expr
-}
+} derive(Eq)
 pub fn RotationExpr::as_expr(Self) -> @symcore.Expr
 pub fn RotationExpr::inverse(Self) -> Self
-pub impl Eq for RotationExpr
 pub impl Show for RotationExpr
 
 pub struct SigmaZState {
   n : Int
   is_bra : Bool
-}
+} derive(Eq)
 pub fn SigmaZState::as_expr(Self) -> @symcore.Expr
 pub fn SigmaZState::dual(Self) -> Self
-pub impl Eq for SigmaZState
 pub impl Show for SigmaZState
 
 pub struct SpinCoupleOrder {
   left_index : Int
   right_index : Int
-}
-pub impl Eq for SpinCoupleOrder
+} derive(Eq)
 
 pub struct SpinCoupling {
   left_index : Int
   right_index : Int
   j : @symcore.Expr
-}
-pub impl Eq for SpinCoupling
+} derive(Eq)
 
-type SpinResolvedCoupling
-pub impl Eq for SpinResolvedCoupling
+type SpinResolvedCoupling derive(Eq)
 
-type SpinResolvedPair
-pub impl Eq for SpinResolvedPair
+type SpinResolvedPair derive(Eq)
 
 pub struct StateExpr {
   flavor : StateFlavor
   label : Array[@symcore.Expr]
   time : @symcore.Expr?
   hilbert_space : HilbertSpace
-}
+} derive(Eq)
 pub fn StateExpr::as_expr(Self) -> @symcore.Expr
 pub fn StateExpr::dual(Self) -> Self
 pub fn StateExpr::repr(Self) -> String
-pub impl Eq for StateExpr
 pub impl Show for StateExpr
 
 pub enum StateFlavor {
@@ -933,8 +901,7 @@ pub enum StateFlavor {
   TimeDepBra
   OrthogonalKet
   OrthogonalBra
-}
-pub impl Eq for StateFlavor
+} derive(Eq)
 
 pub struct SymbolicCircuit {
   circuit : Array[@symcore.Expr]
@@ -944,22 +911,20 @@ pub struct SymbolicCircuit {
 
 pub struct TensorProductExpr {
   args : Array[@symcore.Expr]
-}
+} derive(Eq)
 pub fn TensorProductExpr::as_expr(Self) -> @symcore.Expr
 pub fn TensorProductExpr::dagger(Self) -> Self
-pub impl Eq for TensorProductExpr
 pub impl Show for TensorProductExpr
 
 pub struct WGateExpr {
   nqubits : Int
-}
+} derive(Eq)
 pub fn WGateExpr::as_expr(Self) -> @symcore.Expr
-pub impl Eq for WGateExpr
 
 pub struct WavefunctionExpr {
   expr : @symcore.Expr
   coords : Array[@symcore.Expr]
-}
+} derive(Eq)
 pub fn WavefunctionExpr::as_expr(Self) -> @symcore.Expr
 pub fn WavefunctionExpr::call(Self, Array[@symcore.Expr], env? : Map[String, @symcore.Expr]) -> @symcore.Expr raise @symphysics.PhysicsError
 pub fn WavefunctionExpr::is_normalized(Self) -> Bool
@@ -970,7 +935,6 @@ pub fn WavefunctionExpr::normalize(Self) -> Self
 pub fn WavefunctionExpr::prob(Self) -> Self
 pub fn WavefunctionExpr::repr(Self) -> String
 pub fn WavefunctionExpr::variables(Self) -> Array[@symcore.Expr]
-pub impl Eq for WavefunctionExpr
 
 pub struct Wigner3j {
   j1 : @symcore.Expr
@@ -979,11 +943,10 @@ pub struct Wigner3j {
   m2 : @symcore.Expr
   j3 : @symcore.Expr
   m3 : @symcore.Expr
-}
+} derive(Eq)
 pub fn Wigner3j::as_expr(Self) -> @symcore.Expr
 pub fn Wigner3j::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
 pub fn Wigner3j::is_symbolic(Self) -> Bool
-pub impl Eq for Wigner3j
 
 pub struct Wigner6j {
   j1 : @symcore.Expr
@@ -992,11 +955,10 @@ pub struct Wigner6j {
   j3 : @symcore.Expr
   j : @symcore.Expr
   j23 : @symcore.Expr
-}
+} derive(Eq)
 pub fn Wigner6j::as_expr(Self) -> @symcore.Expr
 pub fn Wigner6j::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
 pub fn Wigner6j::is_symbolic(Self) -> Bool
-pub impl Eq for Wigner6j
 
 pub struct Wigner9j {
   j1 : @symcore.Expr
@@ -1008,11 +970,10 @@ pub struct Wigner9j {
   j13 : @symcore.Expr
   j24 : @symcore.Expr
   j : @symcore.Expr
-}
+} derive(Eq)
 pub fn Wigner9j::as_expr(Self) -> @symcore.Expr
 pub fn Wigner9j::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
 pub fn Wigner9j::is_symbolic(Self) -> Bool
-pub impl Eq for Wigner9j
 
 pub struct WignerDExpr {
   j : @symcore.Expr
@@ -1021,10 +982,9 @@ pub struct WignerDExpr {
   alpha : @symcore.Expr
   beta : @symcore.Expr
   gamma : @symcore.Expr
-}
+} derive(Eq)
 pub fn WignerDExpr::as_expr(Self) -> @symcore.Expr
 pub fn WignerDExpr::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
-pub impl Eq for WignerDExpr
 pub impl Show for WignerDExpr
 
 // Type aliases

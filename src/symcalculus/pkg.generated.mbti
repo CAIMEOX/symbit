@@ -50,13 +50,9 @@ pub fn periodicity(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 pub fn singularities(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 // Errors
-type AccumBoundsError
-pub impl Eq for AccumBoundsError
-pub impl Show for AccumBoundsError
+type AccumBoundsError derive(Eq, Show)
 
-type FiniteDiffError
-pub impl Eq for FiniteDiffError
-pub impl Show for FiniteDiffError
+type FiniteDiffError derive(Eq, Show)
 
 // Types and methods
 

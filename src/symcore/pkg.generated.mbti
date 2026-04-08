@@ -280,7 +280,7 @@ pub fn xreplace(Expr, Array[(Expr, Expr)]) -> Expr
 pub struct ComplexFloat {
   value : @mpc.RawMpc
   prec : Int
-}
+} derive(Eq)
 pub fn ComplexFloat::format(Self, dps? : Int) -> String
 pub fn ComplexFloat::from_exact_parts(@symnum.BigRational, @symnum.BigRational, prec? : Int) -> Self
 pub fn ComplexFloat::from_mpc(@mpc.RawMpc, prec? : Int) -> Self
@@ -294,7 +294,6 @@ pub fn ComplexFloat::reciprocal(Self) -> Self
 pub fn ComplexFloat::to_mpc(Self) -> @mpc.RawMpc
 pub fn ComplexFloat::to_rational_parts(Self) -> ((@bigint.BigInt, @bigint.BigInt), (@bigint.BigInt, @bigint.BigInt)) raise @mpf.MpfError
 pub impl Add for ComplexFloat
-pub impl Eq for ComplexFloat
 pub impl Mul for ComplexFloat
 pub impl Neg for ComplexFloat
 pub impl Show for ComplexFloat
@@ -371,7 +370,7 @@ pub enum ExprForm {
 pub struct Float {
   value : @mpf.RawMpf
   prec : Int
-}
+} derive(Eq)
 pub fn Float::format(Self, dps? : Int) -> String
 pub fn Float::from_double(Double, prec? : Int, rnd? : @mpf.RoundMode) -> Self
 pub fn Float::from_exact(@symnum.BigRational, prec? : Int, rnd? : @mpf.RoundMode) -> Self raise @mpf.MpfError
@@ -386,7 +385,6 @@ pub fn Float::to_double(Self, strict? : Bool, rnd? : @mpf.RoundMode) -> Double r
 pub fn Float::to_mpf(Self) -> @mpf.RawMpf
 pub fn Float::to_rational(Self) -> (@bigint.BigInt, @bigint.BigInt) raise @mpf.MpfError
 pub impl Add for Float
-pub impl Eq for Float
 pub impl Mul for Float
 pub impl Neg for Float
 pub impl Show for Float

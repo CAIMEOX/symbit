@@ -281,9 +281,7 @@ pub(all) suberror PhysicsError {
   ValueError(String)
   IndexError(String)
   ShapeError(String)
-}
-pub impl Eq for PhysicsError
-pub impl Show for PhysicsError
+} derive(Eq, Show)
 
 // Types and methods
 pub struct BeamParameter {
@@ -291,7 +289,7 @@ pub struct BeamParameter {
   z_ : @symcore.Expr
   z_r_ : @symcore.Expr
   n_ : @symcore.Expr
-}
+} derive(Eq)
 pub fn BeamParameter::divergence(Self) -> @symcore.Expr
 pub fn BeamParameter::gouy(Self) -> @symcore.Expr
 pub fn BeamParameter::n(Self) -> @symcore.Expr
@@ -303,22 +301,20 @@ pub fn BeamParameter::waist_approximation_limit(Self) -> @symcore.Expr
 pub fn BeamParameter::wavelen(Self) -> @symcore.Expr
 pub fn BeamParameter::z(Self) -> @symcore.Expr
 pub fn BeamParameter::z_r(Self) -> @symcore.Expr
-pub impl Eq for BeamParameter
 pub impl Show for BeamParameter
 
 pub struct Dimension {
   name : @symcore.Expr
   symbol : String?
-}
+} derive(Eq)
 pub fn Dimension::add(Self, Self) -> Self raise PhysicsError
 pub fn Dimension::div(Self, Self) -> Self
 pub fn Dimension::mul(Self, Self) -> Self
 pub fn Dimension::pow(Self, Int) -> Self
-pub impl Eq for Dimension
 
 pub struct ExplicitMatrix {
   rows : Array[Array[@symcore.Expr]]
-}
+} derive(Eq)
 pub fn ExplicitMatrix::add(Self, Self) -> Self raise PhysicsError
 pub fn ExplicitMatrix::get(Self, Int, Int) -> @symcore.Expr raise PhysicsError
 pub fn ExplicitMatrix::height(Self) -> Int
@@ -330,21 +326,19 @@ pub fn ExplicitMatrix::scale(Self, @symcore.Expr) -> Self
 pub fn ExplicitMatrix::sub(Self, Self) -> Self raise PhysicsError
 pub fn ExplicitMatrix::transpose(Self) -> Self
 pub fn ExplicitMatrix::width(Self) -> Int
-pub impl Eq for ExplicitMatrix
 
 pub struct GeometricRay {
   matrix_ : ExplicitMatrix
-}
+} derive(Eq)
 pub fn GeometricRay::angle(Self) -> @symcore.Expr
 pub fn GeometricRay::height(Self) -> @symcore.Expr
 pub fn GeometricRay::matrix(Self) -> ExplicitMatrix
-pub impl Eq for GeometricRay
 pub impl Show for GeometricRay
 
 pub enum Medium {
   MediumN(String, @symcore.Expr)
   MediumPP(String, @symcore.Expr, @symcore.Expr)
-}
+} derive(Eq)
 pub fn Medium::intrinsic_impedance(Self) -> @symcore.Expr raise PhysicsError
 pub fn Medium::n(Self) -> @symcore.Expr
 pub fn Medium::name(Self) -> String
@@ -352,13 +346,11 @@ pub fn Medium::permeability(Self) -> @symcore.Expr raise PhysicsError
 pub fn Medium::permittivity(Self) -> @symcore.Expr raise PhysicsError
 pub fn Medium::refractive_index(Self) -> @symcore.Expr
 pub fn Medium::speed(Self) -> @symcore.Expr
-pub impl Eq for Medium
 
 pub enum OpticsMediumArg {
   Medium(Medium)
   Index(@symcore.Expr)
-}
-pub impl Eq for OpticsMediumArg
+} derive(Eq)
 
 pub struct Prefix {
   name : String
@@ -366,20 +358,18 @@ pub struct Prefix {
   exponent : Int
   base : Int
   latex_repr : String?
-}
+} derive(Eq)
 pub fn Prefix::div_prefix(Self, Self) -> PrefixValue
 pub fn Prefix::div_quantity(Self, Quantity) -> @symcore.Expr
 pub fn Prefix::mul_prefix(Self, Self) -> PrefixValue
 pub fn Prefix::mul_quantity(Self, Quantity) -> @symcore.Expr
 pub fn Prefix::rdiv_one(Self) -> PrefixValue
 pub fn Prefix::scale_factor(Self) -> @symcore.Expr
-pub impl Eq for Prefix
 
 pub enum PrefixValue {
   Prefix(Prefix)
   Expr(@symcore.Expr)
-}
-pub impl Eq for PrefixValue
+} derive(Eq)
 pub impl Show for PrefixValue
 
 pub struct Quantity {
@@ -388,14 +378,13 @@ pub struct Quantity {
   dimension : Dimension
   scale_factor : @symcore.Expr
   is_prefixed : Bool
-}
+} derive(Eq)
 pub fn Quantity::symbol_expr(Self) -> @symcore.Expr
 pub fn Quantity::with_scale(Self, @symcore.Expr) -> Self
-pub impl Eq for Quantity
 
 pub struct RayTransferMatrix {
   matrix_ : ExplicitMatrix
-}
+} derive(Eq)
 pub fn RayTransferMatrix::a(Self) -> @symcore.Expr
 pub fn RayTransferMatrix::apply_beam(Self, BeamParameter) -> BeamParameter raise PhysicsError
 pub fn RayTransferMatrix::apply_geometric_ray(Self, GeometricRay) -> GeometricRay raise PhysicsError
@@ -404,7 +393,6 @@ pub fn RayTransferMatrix::b(Self) -> @symcore.Expr
 pub fn RayTransferMatrix::c(Self) -> @symcore.Expr
 pub fn RayTransferMatrix::d(Self) -> @symcore.Expr
 pub fn RayTransferMatrix::matrix(Self) -> ExplicitMatrix
-pub impl Eq for RayTransferMatrix
 pub impl Show for RayTransferMatrix
 
 pub struct TWave {
@@ -413,7 +401,7 @@ pub struct TWave {
   phase : @symcore.Expr
   time_period : @symcore.Expr
   n : @symcore.Expr
-}
+} derive(Eq)
 pub fn TWave::amplitude_expr(Self) -> @symcore.Expr
 pub fn TWave::angular_velocity(Self) -> @symcore.Expr
 pub fn TWave::as_expr(Self) -> @symcore.Expr
@@ -432,7 +420,6 @@ pub fn TWave::superpose(Self, Self) -> Self raise PhysicsError
 pub fn TWave::time_period_expr(Self) -> @symcore.Expr
 pub fn TWave::wavelength(Self) -> @symcore.Expr
 pub fn TWave::wavenumber(Self) -> @symcore.Expr
-pub impl Eq for TWave
 pub impl Show for TWave
 
 // Type aliases

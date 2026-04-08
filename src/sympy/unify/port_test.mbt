@@ -39,7 +39,8 @@ fn render_core_atom(atom_ : CoreAtom) -> String {
 fn render_core_key(key : MatchVar[CoreAtom]) -> String {
   match key {
     MatchVar::Variable(key0) => "Variable(" + render_core_atom(key0.arg()) + ")"
-    MatchVar::CondVariable(key0) => "CondVariable(" + render_core_atom(key0.arg()) + ")"
+    MatchVar::CondVariable(key0) =>
+      "CondVariable(" + render_core_atom(key0.arg()) + ")"
   }
 }
 
@@ -67,7 +68,10 @@ fn compare_core_atom(lhs : CoreAtom, rhs : CoreAtom) -> Int {
 }
 
 ///|
-fn compare_core_key_struct(lhs : MatchVar[CoreAtom], rhs : MatchVar[CoreAtom]) -> Int {
+fn compare_core_key_struct(
+  lhs : MatchVar[CoreAtom],
+  rhs : MatchVar[CoreAtom],
+) -> Int {
   match lhs {
     MatchVar::CondVariable(lhs0) =>
       match rhs {
@@ -78,8 +82,7 @@ fn compare_core_key_struct(lhs : MatchVar[CoreAtom], rhs : MatchVar[CoreAtom]) -
     MatchVar::Variable(lhs0) =>
       match rhs {
         MatchVar::CondVariable(_) => 1
-        MatchVar::Variable(rhs0) =>
-          compare_core_atom(lhs0.arg(), rhs0.arg())
+        MatchVar::Variable(rhs0) => compare_core_atom(lhs0.arg(), rhs0.arg())
       }
   }
 }
@@ -88,7 +91,8 @@ fn compare_core_key_struct(lhs : MatchVar[CoreAtom], rhs : MatchVar[CoreAtom]) -
 fn render_core_term(term : UnifyTerm[CoreAtom, String]) -> String {
   match term {
     UnifyTerm::Atom(atom_) => render_core_atom(atom_)
-    UnifyTerm::Variable(key0) => "Variable(" + render_core_atom(key0.arg()) + ")"
+    UnifyTerm::Variable(key0) =>
+      "Variable(" + render_core_atom(key0.arg()) + ")"
     UnifyTerm::CondVariable(key0, _) =>
       "CondVariable(" + render_core_atom(key0.arg()) + ")"
     UnifyTerm::Sequence(items) =>
@@ -128,9 +132,9 @@ fn render_core_subst(subst : Substitution[CoreAtom, String]) -> String {
     }
     ordered[j] = current
   }
-  let rendered = ordered.map(entry =>
+  let rendered = ordered.map(entry => {
     render_core_key(entry.0) + ": " + render_core_term(entry.1)
-  )
+  })
   "{" + rendered.join(", ") + "}"
 }
 
@@ -150,7 +154,9 @@ fn render_expr_subst(subst : Map[@symcore.Expr, @symcore.Expr]) -> String {
 }
 
 ///|
-fn render_expr_substs(items : Array[Map[@symcore.Expr, @symcore.Expr]]) -> String {
+fn render_expr_substs(
+  items : Array[Map[@symcore.Expr, @symcore.Expr]],
+) -> String {
   let rendered = items.map(render_expr_subst)
   "[" + sorted_strings(rendered).join(", ") + "]"
 }
@@ -159,7 +165,8 @@ fn render_expr_substs(items : Array[Map[@symcore.Expr, @symcore.Expr]]) -> Strin
 fn render_expr_term(term : UnifyTerm[@symcore.Expr, ExprOp]) -> String {
   match term {
     UnifyTerm::Atom(expr) => @symprint.to_string(expr)
-    UnifyTerm::Variable(key) => "Variable(" + @symprint.to_string(key.arg()) + ")"
+    UnifyTerm::Variable(key) =>
+      "Variable(" + @symprint.to_string(key.arg()) + ")"
     UnifyTerm::CondVariable(key, _) =>
       "CondVariable(" + @symprint.to_string(key.arg()) + ")"
     UnifyTerm::Sequence(items) =>
@@ -177,7 +184,11 @@ fn render_expr_term(term : UnifyTerm[@symcore.Expr, ExprOp]) -> String {
         @strategies_util.ExprOp::Pow =>
           "Pow[" + args.map(render_expr_term).join(", ") + "]"
         @strategies_util.ExprOp::Function(name) =>
-          "Function(" + name + ")[" + args.map(render_expr_term).join(", ") + "]"
+          "Function(" +
+          name +
+          ")[" +
+          args.map(render_expr_term).join(", ") +
+          "]"
       }
   }
 }
@@ -225,12 +236,16 @@ fn ci(value : Int) -> UnifyTerm[CoreAtom, String] {
 }
 
 ///|
-fn cadd(args : Array[UnifyTerm[CoreAtom, String]]) -> UnifyTerm[CoreAtom, String] {
+fn cadd(
+  args : Array[UnifyTerm[CoreAtom, String]],
+) -> UnifyTerm[CoreAtom, String] {
   compound("Add", args)
 }
 
 ///|
-fn ccadd(args : Array[UnifyTerm[CoreAtom, String]]) -> UnifyTerm[CoreAtom, String] {
+fn ccadd(
+  args : Array[UnifyTerm[CoreAtom, String]],
+) -> UnifyTerm[CoreAtom, String] {
   compound("CAdd", args)
 }
 
@@ -243,28 +258,43 @@ fn core_summary() -> String {
   let subst_x : Substitution[CoreAtom, String] = {}
   subst_x[MatchVar::Variable(x_key)] = ci(10)
   let even_key = cond_variable(CoreAtom::Text("y"))
-  let even_var : UnifyTerm[CoreAtom, String] = cond_variable_term(
-    even_key,
-    term =>
-      match term {
-        UnifyTerm::Atom(CoreAtom::Int(value)) => value % 2 == 0
-        _ => false
-      },
-  )
+  let even_var : UnifyTerm[CoreAtom, String] = cond_variable_term(even_key, term => {
+    match term {
+      UnifyTerm::Atom(CoreAtom::Int(value)) => value % 2 == 0
+      _ => false
+    }
+  })
   [
     render_core_substs(core_match(ct("a"), x_var)),
     render_core_substs(core_match(ct("a"), x_var, subst=subst_x)),
-    render_core_substs(core_match(cadd([ct("a"), ct("b"), ct("c")]), cadd([ct("a"), x_var, y_var]))),
-    render_core_substs(core_match(cadd([ci(1), ci(2), ci(3)]), cadd([x_var, y_var]))),
-    core_match(ccadd([ci(1), ci(2), ci(3)]), ccadd([x_var, y_var])).length().to_string(),
-    render_core_substs(core_match(ccadd([ci(1), ci(2)]), ccadd([x_var, even_var]))),
-    allcombinations([1, 2], [1, 2], CombineMode::Commutative).length().to_string(),
+    render_core_substs(
+      core_match(
+        cadd([ct("a"), ct("b"), ct("c")]),
+        cadd([ct("a"), x_var, y_var]),
+      ),
+    ),
+    render_core_substs(
+      core_match(cadd([ci(1), ci(2), ci(3)]), cadd([x_var, y_var])),
+    ),
+    core_match(ccadd([ci(1), ci(2), ci(3)]), ccadd([x_var, y_var]))
+    .length()
+    .to_string(),
+    render_core_substs(
+      core_match(ccadd([ci(1), ci(2)]), ccadd([x_var, even_var])),
+    ),
+    allcombinations([1, 2], [1, 2], CombineMode::Commutative)
+    .length()
+    .to_string(),
   ].join("\n")
 }
 
 ///|
 fn usympy_summary() -> String {
-  let expr = @symcore.raw_function("Basic", [@symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  let expr = @symcore.raw_function("Basic", [
+    @symcore.int(1),
+    @symcore.int(2),
+    @symcore.int(3),
+  ])
   let nested = @symcore.raw_function("Basic", [
     @symcore.int(1),
     @symcore.raw_function("Basic", [@symcore.int(2)]),
@@ -298,19 +328,30 @@ fn usympy_summary() -> String {
   [
     render_expr_term(deconstruct(expr)),
     @symprint.to_string(construct(deconstruct(nested))),
-    render_expr_substs(unify(expr, @symcore.raw_function("Basic", [a, b, c]), variables=[a, b, c])),
+    render_expr_substs(
+      unify(expr, @symcore.raw_function("Basic", [a, b, c]), variables=[a, b, c]),
+    ),
     unify(
       @symcore.raw_add([@symcore.int(1), @symcore.int(2), @symcore.int(3)]),
       @symcore.raw_add([p, q]),
       variables=[p, q],
-    ).length().to_string(),
+    )
+    .length()
+    .to_string(),
     render_expr_substs(unify(xmat, ymat, variables=[n_sym, x_name])),
-    if unify(finite, @symcore.function("FiniteSet", [set_x, set_y]), variables=[set_x, set_y]).length() > 0 {
+    if unify(finite, @symcore.function("FiniteSet", [set_x, set_y]), variables=[
+        set_x, set_y,
+      ]).length() >
+      0 {
       "True"
     } else {
       "False"
     },
-    render_expr_substs(unify(rel, @symcore.function("And", [bool_x, bool_y]), variables=[bool_x, bool_y])),
+    render_expr_substs(
+      unify(rel, @symcore.function("And", [bool_x, bool_y]), variables=[
+        bool_x, bool_y,
+      ]),
+    ),
   ].join("\n")
 }
 
@@ -342,11 +383,13 @@ fn rewrite_summary() -> String raise {
     rx,
     @symcore.add([rx, @symcore.int(1)]),
     variables=[rx],
-    condition=args =>
+    condition=args => {
       match args {
-        [@symcore.Expr::Number(value)] => value.compare(@symnum.BigRational::from_int(10)) < 0
+        [@symcore.Expr::Number(value)] =>
+          value.compare(@symnum.BigRational::from_int(10)) < 0
         _ => false
-      },
+      }
+    },
   )
   let assume_rule = rewriterule(
     @symcore.raw_add([rx, ry]),
@@ -357,19 +400,38 @@ fn rewrite_summary() -> String raise {
   let a = @symcore.Expr::Symbol("a")
   let b = @symcore.Expr::Symbol("b")
   [
-    "[" + simple_rule.apply(@symcore.raw_function("Basic", [@symcore.int(3), @symcore.int(1)])).map(@symprint.to_string).join(", ") + "]",
-    "[" + pow_rule.apply(@symcore.raw_pow(rx, @symcore.int(2))).map(@symprint.to_string).join(", ") + "]",
-    "[" + moderate_rule.apply(
+    "[" +
+    simple_rule
+    .apply(@symcore.raw_function("Basic", [@symcore.int(3), @symcore.int(1)]))
+    .map(@symprint.to_string)
+    .join(", ") +
+    "]",
+    "[" +
+    pow_rule
+    .apply(@symcore.raw_pow(rx, @symcore.int(2)))
+    .map(@symprint.to_string)
+    .join(", ") +
+    "]",
+    "[" +
+    moderate_rule
+    .apply(
       @symcore.raw_add([
         @symcore.raw_pow(rx, @symcore.int(2)),
         @symcore.raw_pow(ry, @symcore.int(3)),
       ]),
-    ).map(@symprint.to_string).join(", ") + "]",
-    "[" + cond_rule.apply(@symcore.int(5)).map(@symprint.to_string).join(", ") + "]",
-    "[" + assume_rule.apply(
-      @symcore.raw_add([a, b]),
-      assumptions=@symassume.q_integer(b),
-    ).map(@symprint.to_string).join(", ") + "]",
+    )
+    .map(@symprint.to_string)
+    .join(", ") +
+    "]",
+    "[" +
+    cond_rule.apply(@symcore.int(5)).map(@symprint.to_string).join(", ") +
+    "]",
+    "[" +
+    assume_rule
+    .apply(@symcore.raw_add([a, b]), assumptions=@symassume.q_integer(b))
+    .map(@symprint.to_string)
+    .join(", ") +
+    "]",
   ].join("\n")
 }
 

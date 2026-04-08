@@ -336,10 +336,14 @@ pub fn linear_eq_to_matrix(
   symbols : Array[Expr],
 ) -> (Matrix, Matrix) raise SolverError {
   if symbols.is_empty() {
-    raise SolverError::ValueError("linear_eq_to_matrix expects at least one symbol")
+    raise SolverError::ValueError(
+      "linear_eq_to_matrix expects at least one symbol",
+    )
   }
   if equations.any(expr => expr is Expr::Boolean(_)) {
-    raise SolverError::ValueError("linear_eq_to_matrix expects equations, not Boolean")
+    raise SolverError::ValueError(
+      "linear_eq_to_matrix expects equations, not Boolean",
+    )
   }
   let names = symbol_names(symbols)
   let (coeffs, const_terms) = @sympolys._linear_eq_to_dict(equations, names) catch {
@@ -383,10 +387,8 @@ pub fn linsolve(
     Err(@sympolys.PolyError::DomainMismatch) => {
       let (lhs, rhs) = match system {
         LinsolveInput::Equations(_) => linear_eq_to_matrix(equations, symbols)
-        LinsolveInput::AugmentedMatrix(matrix) => split_augmented_matrix(
-          matrix,
-          symbols,
-        )
+        LinsolveInput::AugmentedMatrix(matrix) =>
+          split_augmented_matrix(matrix, symbols)
       }
       symbolic_linsolve_from_matrices(lhs, rhs, symbols, names)
     }

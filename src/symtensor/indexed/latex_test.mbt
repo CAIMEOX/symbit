@@ -5,10 +5,7 @@ test "indexed latex renders base indices and composite expressions" {
   let i = idx("i")
   let ranged = idx("j", upper=n)
   inspect(i.latex(), content="i")
-  inspect(
-    ranged.latex(),
-    content="{j}_{0\\mathrel{..}\\nobreak n - 1}",
-  )
+  inspect(ranged.latex(), content="{j}_{0\\mathrel{..}\\nobreak n - 1}")
   let base = indexed_base("A")
   inspect(base.latex(), content="A")
   let item = base.at([index_idx(i), index_expr(@symcore.Expr::Symbol("k"))]) catch {

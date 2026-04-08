@@ -72,9 +72,7 @@ pub suberror ControlError {
   ValueError(String)
   TypeError(String)
   NotImplemented(String)
-}
-pub impl Eq for ControlError
-pub impl Show for ControlError
+} derive(Eq, Show)
 
 // Types and methods
 pub struct BodePlot {
@@ -87,7 +85,7 @@ pub struct DiscreteTransferFunction {
   den_ : @symcore.Expr
   var_ : @symcore.Expr
   sampling_time_ : @symcore.Expr
-}
+} derive(Eq)
 pub fn DiscreteTransferFunction::args(Self) -> Array[@symcore.Expr]
 pub fn DiscreteTransferFunction::as_system(Self) -> SISOLinearTimeInvariant
 pub fn DiscreteTransferFunction::dc_gain(Self) -> @symcore.Expr raise ControlError
@@ -115,14 +113,13 @@ pub fn DiscreteTransferFunction::simplify(Self) -> Self raise ControlError
 pub fn DiscreteTransferFunction::to_expr(Self) -> @symcore.Expr
 pub fn DiscreteTransferFunction::variable(Self) -> @symcore.Expr
 pub fn DiscreteTransferFunction::zeros(Self) -> Array[@symcore.Expr] raise ControlError
-pub impl Eq for DiscreteTransferFunction
 pub impl Neg for DiscreteTransferFunction
 
 pub struct Feedback {
   sys1_ : SISOLinearTimeInvariant
   sys2_ : SISOLinearTimeInvariant
   sign_ : Int
-}
+} derive(Eq)
 pub fn Feedback::as_system(Self) -> SISOLinearTimeInvariant
 pub fn Feedback::den(Self) -> SISOLinearTimeInvariant raise ControlError
 pub fn Feedback::doit(Self) -> SISOLinearTimeInvariant raise ControlError
@@ -133,7 +130,6 @@ pub fn Feedback::sys1(Self) -> SISOLinearTimeInvariant
 pub fn Feedback::sys2(Self) -> SISOLinearTimeInvariant
 pub fn Feedback::to_expr(Self) -> @symcore.Expr raise ControlError
 pub fn Feedback::variable(Self) -> @symcore.Expr raise ControlError
-pub impl Eq for Feedback
 
 pub struct PIDController {
   kp_ : @symcore.Expr
@@ -141,7 +137,7 @@ pub struct PIDController {
   kd_ : @symcore.Expr
   tf_ : @symcore.Expr
   var_ : @symcore.Expr
-}
+} derive(Eq)
 pub fn PIDController::as_system(Self) -> SISOLinearTimeInvariant
 pub fn PIDController::doit(Self) -> TransferFunction raise ControlError
 pub fn PIDController::kd(Self) -> @symcore.Expr
@@ -150,11 +146,10 @@ pub fn PIDController::kp(Self) -> @symcore.Expr
 pub fn PIDController::tf(Self) -> @symcore.Expr
 pub fn PIDController::to_expr(Self) -> @symcore.Expr raise ControlError
 pub fn PIDController::variable(Self) -> @symcore.Expr
-pub impl Eq for PIDController
 
 pub struct Parallel {
   args_ : Array[SISOLinearTimeInvariant]
-}
+} derive(Eq)
 pub fn Parallel::args(Self) -> Array[SISOLinearTimeInvariant]
 pub fn Parallel::as_system(Self) -> SISOLinearTimeInvariant
 pub fn Parallel::doit(Self) -> SISOLinearTimeInvariant raise ControlError
@@ -164,7 +159,6 @@ pub fn Parallel::is_strictly_proper(Self) -> Bool raise ControlError
 pub fn Parallel::sampling_time(Self) -> @symcore.Expr? raise ControlError
 pub fn Parallel::to_expr(Self) -> @symcore.Expr raise ControlError
 pub fn Parallel::variable(Self) -> @symcore.Expr raise ControlError
-pub impl Eq for Parallel
 
 pub struct ParametricPlot {
   x : Array[Double]
@@ -197,7 +191,7 @@ pub struct RouthHurwitz {
   zero_row_case : Bool
   zero_col_infos : Array[(Int, Int)]
   auxiliary_polynomials : Array[@symcore.Expr]
-}
+} derive(Eq)
 pub fn RouthHurwitz::auxiliary_polynomials(Self) -> Array[@symcore.Expr]
 pub fn RouthHurwitz::cols(Self) -> Int
 pub fn RouthHurwitz::first_column(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
@@ -206,7 +200,6 @@ pub fn RouthHurwitz::matrix(Self) -> @symphysics.ExplicitMatrix
 pub fn RouthHurwitz::rows(Self) -> Int
 pub fn RouthHurwitz::zero_col_infos(Self) -> Array[(Int, Int)]
 pub fn RouthHurwitz::zero_row_case(Self) -> Bool
-pub impl Eq for RouthHurwitz
 
 pub enum SISOLinearTimeInvariant {
   TF(TransferFunction)
@@ -215,7 +208,7 @@ pub enum SISOLinearTimeInvariant {
   SeriesLTI(Series)
   ParallelLTI(Parallel)
   FeedbackLTI(Feedback)
-}
+} derive(Eq)
 pub fn SISOLinearTimeInvariant::doit(Self) -> Self raise ControlError
 pub fn SISOLinearTimeInvariant::is_biproper(Self) -> Bool raise ControlError
 pub fn SISOLinearTimeInvariant::is_discrete(Self) -> Bool
@@ -225,7 +218,6 @@ pub fn SISOLinearTimeInvariant::neg_system(Self) -> Self raise ControlError
 pub fn SISOLinearTimeInvariant::sampling_time(Self) -> @symcore.Expr? raise ControlError
 pub fn SISOLinearTimeInvariant::to_expr(Self) -> @symcore.Expr raise ControlError
 pub fn SISOLinearTimeInvariant::variable(Self) -> @symcore.Expr raise ControlError
-pub impl Eq for SISOLinearTimeInvariant
 
 pub struct SampledLinePlot {
   x : Array[Double]
@@ -241,7 +233,7 @@ pub struct SampledLinePlot {
 
 pub struct Series {
   args_ : Array[SISOLinearTimeInvariant]
-}
+} derive(Eq)
 pub fn Series::args(Self) -> Array[SISOLinearTimeInvariant]
 pub fn Series::as_system(Self) -> SISOLinearTimeInvariant
 pub fn Series::doit(Self) -> SISOLinearTimeInvariant raise ControlError
@@ -251,13 +243,12 @@ pub fn Series::is_strictly_proper(Self) -> Bool raise ControlError
 pub fn Series::sampling_time(Self) -> @symcore.Expr? raise ControlError
 pub fn Series::to_expr(Self) -> @symcore.Expr raise ControlError
 pub fn Series::variable(Self) -> @symcore.Expr raise ControlError
-pub impl Eq for Series
 
 pub struct TransferFunction {
   num_ : @symcore.Expr
   den_ : @symcore.Expr
   var_ : @symcore.Expr
-}
+} derive(Eq)
 pub fn TransferFunction::args(Self) -> Array[@symcore.Expr]
 pub fn TransferFunction::as_system(Self) -> SISOLinearTimeInvariant
 pub fn TransferFunction::dc_gain(Self) -> @symcore.Expr raise ControlError
@@ -280,7 +271,6 @@ pub fn TransferFunction::to_expr(Self) -> @symcore.Expr
 pub fn TransferFunction::variable(Self) -> @symcore.Expr
 pub fn TransferFunction::xreplace(Self, Map[String, @symcore.Expr]) -> Self raise ControlError
 pub fn TransferFunction::zeros(Self) -> Array[@symcore.Expr] raise ControlError
-pub impl Eq for TransferFunction
 pub impl Neg for TransferFunction
 
 // Type aliases

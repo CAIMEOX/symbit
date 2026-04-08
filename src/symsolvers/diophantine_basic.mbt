@@ -51,7 +51,7 @@ fn solver_integer_divisors(value : @bigint.BigInt) -> Array[@bigint.BigInt] {
   }
   let limit = abs_value.to_int()
   let out : Array[@bigint.BigInt] = []
-  for i in 1..=limit {
+  for i in 1..<=limit {
     let candidate = @bigint.BigInt::from_int(i)
     if (abs_value % candidate).compare(0N) == 0 {
       out.push(candidate)
@@ -69,10 +69,14 @@ fn solver_integer_divisors(value : @bigint.BigInt) -> Array[@bigint.BigInt] {
 }
 
 ///|
-fn solver_integer_expr(expr : Expr, context : String) -> @bigint.BigInt raise SolverError {
+fn solver_integer_expr(
+  expr : Expr,
+  context : String,
+) -> @bigint.BigInt raise SolverError {
   match @symcore.exact_numeric_expr_num_den(expr) {
     Some((num, den)) if den.compare(1N) == 0 => num
-    _ => raise SolverError::ValueError(context + " expects integer coefficients")
+    _ =>
+      raise SolverError::ValueError(context + " expects integer coefficients")
   }
 }
 
@@ -83,12 +87,16 @@ fn solver_field_elem_expr(
 ) -> Expr raise SolverError {
   match elem {
     @sympolys.FieldElem::QQ(value) => Expr::Number(value)
-    _ => raise SolverError::ValueError(context + " expects rational coefficients")
+    _ =>
+      raise SolverError::ValueError(context + " expects rational coefficients")
   }
 }
 
 ///|
-fn solver_diophantine_symbols(eq : Expr, syms : Array[Expr]) -> Array[Expr] raise SolverError {
+fn solver_diophantine_symbols(
+  eq : Expr,
+  syms : Array[Expr],
+) -> Array[Expr] raise SolverError {
   if syms.is_empty() {
     let inferred = sorted_unique_symbols(@symcore.free_symbols(eq))
     guard !inferred.is_empty() else {
@@ -119,7 +127,9 @@ fn solver_linear_diophantine_tuple(
   param : Expr,
 ) -> Array[Expr] raise SolverError {
   guard !coeff_values.is_empty() else {
-    raise SolverError::ValueError("diophantine expects at least one coefficient")
+    raise SolverError::ValueError(
+      "diophantine expects at least one coefficient",
+    )
   }
   let coeff_row : Array[Expr] = []
   let mut any_nonzero = false
@@ -167,9 +177,7 @@ fn solver_linear_diophantine_tuple(
     err => raise wrap_poly_error("diophantine", err)
   }
   let d = solver_integer_expr(smf_rows[0][0], "diophantine")
-  guard d.compare(0N) != 0 else {
-    return []
-  }
+  guard d.compare(0N) != 0 else { return [] }
   if (sb % d).compare(0N) != 0 {
     return []
   }
@@ -200,10 +208,9 @@ fn solver_univariate_diophantine(
   symbol : Expr,
 ) -> Set raise SolverError {
   let name = symbol_name(symbol)
-  let poly = @sympolys.Poly::from_expr_defaults(
-    normalize_equation(eq),
-    gens=[name],
-  ) catch {
+  let poly = @sympolys.Poly::from_expr_defaults(normalize_equation(eq), gens=[
+    name,
+  ]) catch {
     err => raise wrap_poly_error("diophantine", err)
   }
   let degree = poly.degree(0)
@@ -220,7 +227,11 @@ fn solver_univariate_diophantine(
   let constant_int = solver_integer_expr(constant, "diophantine")
   let roots : Array[Expr] = []
   for candidate in solver_integer_divisors(constant_int) {
-    let value = solver_subst_single(normalize_equation(eq), name, solver_exact_number_expr(candidate, 1N))
+    let value = solver_subst_single(
+      normalize_equation(eq),
+      name,
+      solver_exact_number_expr(candidate, 1N),
+    )
     if expr_is_zeroish(value) == Some(true) {
       roots.push(Expr::Tuple([solver_exact_number_expr(candidate, 1N)]))
     }
@@ -235,7 +246,10 @@ pub fn classify_diop(
 ) -> (Array[Expr], Map[String, Expr], String) raise SolverError {
   let symbols = solver_diophantine_symbols(eq, syms)
   let names = symbol_names(symbols)
-  let linear = try? @sympolys._linear_eq_to_dict([normalize_equation(eq)], names)
+  let linear = try? @sympolys._linear_eq_to_dict(
+    [normalize_equation(eq)],
+    names,
+  )
   match linear {
     Ok((coeffs, constants)) => {
       let coeff_map = coeffs[0]
@@ -252,10 +266,9 @@ pub fn classify_diop(
     Err(_) =>
       if symbols.length() == 1 {
         let name = names[0]
-        let poly = @sympolys.Poly::from_expr_defaults(
-          normalize_equation(eq),
-          gens=[name],
-        ) catch {
+        let poly = @sympolys.Poly::from_expr_defaults(normalize_equation(eq), gens=[
+          name,
+        ]) catch {
           err => raise wrap_poly_error("classify_diop", err)
         }
         let out : Map[String, Expr] = {}
@@ -290,13 +303,19 @@ pub fn diophantine(
   let symbols = solver_diophantine_symbols(eq, syms)
   let names = symbol_names(symbols)
   if symbols.length() == 1 {
-    let linear = try? @sympolys._linear_eq_to_dict([normalize_equation(eq)], names)
+    let linear = try? @sympolys._linear_eq_to_dict(
+      [normalize_equation(eq)],
+      names,
+    )
     match linear {
       Ok(_) => ()
       Err(_) => return solver_univariate_diophantine(eq, symbols[0])
     }
   }
-  let (coeffs, constants) = @sympolys._linear_eq_to_dict([normalize_equation(eq)], names) catch {
+  let (coeffs, constants) = @sympolys._linear_eq_to_dict(
+    [normalize_equation(eq)],
+    names,
+  ) catch {
     err => raise wrap_poly_error("diophantine", err)
   }
   let coeff_map = coeffs[0]
@@ -387,9 +406,9 @@ pub fn diop_solve(
   param? : Expr = Expr::Symbol("t_0"),
   syms? : Array[Expr] = [],
 ) -> DiopSolveResult raise SolverError {
-  let (symbols, _, kind) = classify_diop(eq, syms=syms)
+  let (symbols, _, kind) = classify_diop(eq, syms~)
   if kind == "linear" {
-    let solved = diophantine(eq, param=param, syms=symbols)
+    let solved = diophantine(eq, param~, syms=symbols)
     match solved {
       @symsets.Set::FiniteSet(items) if items.length() == 1 =>
         match items[0] {
@@ -399,6 +418,6 @@ pub fn diop_solve(
       _ => DiopSolveResult::Set(solved)
     }
   } else {
-    DiopSolveResult::Set(diophantine(eq, param=param, syms=symbols))
+    DiopSolveResult::Set(diophantine(eq, param~, syms=symbols))
   }
 }

@@ -33,7 +33,9 @@ fn expr_is_commutative(expr : @symcore.Expr) -> Bool {
       expr_is_commutative(base) && expr_is_commutative(exp)
     @symcore.ExprForm::Tuple(items) => items.all(expr_is_commutative)
     @symcore.ExprForm::Dict(items) =>
-      items.all(item => expr_is_commutative(item.0) && expr_is_commutative(item.1))
+      items.all(item => {
+        expr_is_commutative(item.0) && expr_is_commutative(item.1)
+      })
     @symcore.ExprForm::Relational(_, lhs, rhs) =>
       expr_is_commutative(lhs) && expr_is_commutative(rhs)
     @symcore.ExprForm::Derivative(inner, args) =>
@@ -122,7 +124,10 @@ pub fn deconstruct(
   if @symcore.is_atomic(expr) {
     return atom(expr)
   }
-  compound(expr_op(expr), @symcore.args(expr).map(arg => deconstruct(arg, variables~)))
+  compound(
+    expr_op(expr),
+    @symcore.args(expr).map(arg => deconstruct(arg, variables~)),
+  )
 }
 
 ///|
@@ -177,8 +182,8 @@ pub fn unify(
     deconstruct(lhs, variables~),
     deconstruct(rhs, variables~),
     s=internal_substitution(s, variables),
-    is_associative=is_associative,
-    is_commutative=is_commutative,
+    is_associative~,
+    is_commutative~,
   )
   matches.map(match_ => external_substitution(match_))
 }

@@ -49,13 +49,18 @@ fn subs_items_local(expr : Expr) -> Array[Expr] {
 }
 
 ///|
-fn append_derivative_wrt(inner : Expr, deriv_args : Array[Expr], wrt : Expr) -> Expr {
+fn append_derivative_wrt(
+  inner : Expr,
+  deriv_args : Array[Expr],
+  wrt : Expr,
+) -> Expr {
   let out = @symcore.canonical_derivative_args(deriv_args[:])
-  if out.length() >= 2 &&
-    @symcore.compare_expr(out[out.length() - 2], wrt) == 0 {
+  if out.length() >= 2 && @symcore.compare_expr(out[out.length() - 2], wrt) == 0 {
     match out[out.length() - 1] {
       Expr::Number(n) if n.denominator() == 1N => {
-        out[out.length() - 1] = Expr::Number(n.add_r(@symnum.BigRational::one()))
+        out[out.length() - 1] = Expr::Number(
+          n.add_r(@symnum.BigRational::one()),
+        )
         return Expr::Derivative(inner, out)
       }
       _ => ()
@@ -67,16 +72,19 @@ fn append_derivative_wrt(inner : Expr, deriv_args : Array[Expr], wrt : Expr) -> 
 }
 
 ///|
-fn diff_subs_chain(inner : Expr, variable : Expr, value : Expr, wrt : Expr) -> Expr? {
+fn diff_subs_chain(
+  inner : Expr,
+  variable : Expr,
+  value : Expr,
+  wrt : Expr,
+) -> Expr? {
   guard @symcore.subs_signature_error(variable, value) is None else {
     return None
   }
   let variables = subs_items_local(variable)
   let values = subs_items_local(value)
   for item in variables {
-    guard expr_is_symbol_like(item) else {
-      return None
-    }
+    guard expr_is_symbol_like(item) else { return None }
   }
   let out : Array[Expr] = Array::new()
   if !variables.any(item => @symcore.compare_expr(item, wrt) == 0) {
@@ -94,7 +102,9 @@ fn diff_subs_chain(inner : Expr, variable : Expr, value : Expr, wrt : Expr) -> E
     if expr_is_zero(partial) {
       continue
     }
-    out.push(@symcore.mul([@symcore.subs_expr(partial, variable, value), dvalue]))
+    out.push(
+      @symcore.mul([@symcore.subs_expr(partial, variable, value), dvalue]),
+    )
   }
   Some(if out.is_empty() { @symcore.int(0) } else { @symcore.add(out) })
 }
@@ -198,25 +208,24 @@ fn diff_function(name : String, args : Array[Expr], wrt : Expr) -> Expr {
     "exp" => @symcore.mul([@symcore.function("exp", [arg]), darg])
     "log" => @symcore.mul([darg, @symcore.pow(arg, @symcore.int(-1))])
     "sqrt" => {
-      let denom = @symcore.mul([@symcore.int(2), @symcore.function("sqrt", [arg])])
+      let denom = @symcore.mul([
+        @symcore.int(2),
+        @symcore.function("sqrt", [arg]),
+      ])
       @symcore.mul([darg, @symcore.pow(denom, @symcore.int(-1))])
     }
     "tan" => {
       let sec2 = @symcore.pow(@symcore.function("sec", [arg]), @symcore.int(2))
       @symcore.mul([sec2, darg])
     }
-    "atan" => {
+    "atan" =>
       @symcore.mul([
         darg,
         @symcore.pow(
-          @symcore.add([
-            @symcore.int(1),
-            @symcore.pow(arg, @symcore.int(2)),
-          ]),
+          @symcore.add([@symcore.int(1), @symcore.pow(arg, @symcore.int(2))]),
           @symcore.int(-1),
         ),
       ])
-    }
     "gamma" => {
       let g = @symcore.function("gamma", [arg])
       let dg = @symcore.function("digamma", [arg])
@@ -289,7 +298,8 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
     | Expr::UndefinedFunction(_) => @symcore.int(0)
     Expr::Apply(head, args) =>
       match @symcore.undefined_application_parts(expr) {
-        Some((_, undefined_args)) => diff_undefined_function(expr, head, undefined_args, wrt)
+        Some((_, undefined_args)) =>
+          diff_undefined_function(expr, head, undefined_args, wrt)
         None =>
           match @symcore.function_head_name(head) {
             Some(name) => diff_function(name, args, wrt)

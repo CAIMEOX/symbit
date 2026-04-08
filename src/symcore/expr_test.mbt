@@ -22,7 +22,10 @@ test "pow normalizes trivial exponents" {
   inspect(@symprint.debug_repr(pow(Expr::Symbol("x"), int(0))), content="1")
   inspect(@symprint.debug_repr(pow(int(0), int(0))), content="1")
   inspect(@symprint.to_string(pow(int(0), Expr::Symbol("x"))), content="0**x")
-  inspect(@symprint.to_string(pow(pow(Expr::Symbol("x"), int(2)), int(2))), content="x**4")
+  inspect(
+    @symprint.to_string(pow(pow(Expr::Symbol("x"), int(2)), int(2))),
+    content="x**4",
+  )
 }
 
 ///|
@@ -187,10 +190,7 @@ test "number symbols are structured constants" {
   inspect(@symprint.to_string(pow(int(1), int(-1))), content="1")
   inspect(
     @symprint.to_string(
-      pow(
-        int(16),
-        rational_from_ints(1, 2) catch { _ => fail("half power") },
-      ),
+      pow(int(16), rational_from_ints(1, 2) catch { _ => fail("half power") }),
     ),
     content="4",
   )

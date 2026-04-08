@@ -179,9 +179,7 @@ pub(all) enum ESpan {
   All
   Index(Int)
   Slice(Int?, Int?, Int?)
-}
-pub impl Eq for ESpan
-pub impl Show for ESpan
+} derive(Eq, Show)
 
 pub(all) enum SimplifyPattern {
   FoldConstants
@@ -190,17 +188,13 @@ pub(all) enum SimplifyPattern {
   PowDenest
   TrigPythagorean
   FunctionIdentities
-}
-pub impl Eq for SimplifyPattern
-pub impl Show for SimplifyPattern
+} derive(Eq, Show)
 
 pub(all) enum SimplifyPlan {
   Default
   Aggressive
   Custom(Array[SimplifyPattern])
-}
-pub impl Eq for SimplifyPlan
-pub impl Show for SimplifyPlan
+} derive(Eq, Show)
 
 // Type aliases
 
