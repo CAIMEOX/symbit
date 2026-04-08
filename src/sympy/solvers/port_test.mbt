@@ -59,7 +59,11 @@ fn u(xv : @symcore.Expr, yv : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn phi(rv : @symcore.Expr, tv : @symcore.Expr, zv : @symcore.Expr) -> @symcore.Expr {
+fn phi(
+  rv : @symcore.Expr,
+  tv : @symcore.Expr,
+  zv : @symcore.Expr,
+) -> @symcore.Expr {
   @symcore.applied_undefined_function("Phi", [rv, tv, zv])
 }
 
@@ -187,17 +191,32 @@ fn solvers_eval_str_symbols(expr : String, symbols : String) -> String raise {
   let symbol_expr = names.join(" ")
   if names.length() == 1 {
     @sympy_utilities.utilities_eval_str(
-      "(lambda " + params + ": " + expr + ")(sympy.symbols('" + symbol_expr + "'))",
+      "(lambda " +
+      params +
+      ": " +
+      expr +
+      ")(sympy.symbols('" +
+      symbol_expr +
+      "'))",
     )
   } else {
     @sympy_utilities.utilities_eval_str(
-      "(lambda " + params + ": " + expr + ")(*sympy.symbols('" + symbol_expr + "'))",
+      "(lambda " +
+      params +
+      ": " +
+      expr +
+      ")(*sympy.symbols('" +
+      symbol_expr +
+      "'))",
     )
   }
 }
 
 ///|
-fn solvers_eval_stmt_result_symbols(stmt : String, symbols : String) -> String raise {
+fn solvers_eval_stmt_result_symbols(
+  stmt : String,
+  symbols : String,
+) -> String raise {
   let parts = symbols.split(" ")
   let names : Array[String] = []
   for part in parts {
@@ -213,32 +232,51 @@ fn solvers_eval_stmt_result_symbols(stmt : String, symbols : String) -> String r
     globals_entries.push("'" + name + "': " + name)
   }
   let globals_dict = "{" + globals_entries.join(", ") + ", 'box': ns}"
-  let code = (
-    "try:\n  " + stmt +
+  let code = "try:\n  " +
+    stmt +
     "\n  box['out'] = 'OK'\nexcept Exception as e:\n  box['out'] = type(e).__name__"
-  )
   let escaped = code
-  .replace_all(old="\\", new="\\\\")
-  .replace_all(old="\"\"\"", new="\\\"\\\"\\\"")
+    .replace_all(old="\\", new="\\\\")
+    .replace_all(old="\"\"\"", new="\\\"\\\"\\\"")
   if names.length() == 1 {
     @sympy_utilities.utilities_eval_str(
-      "(lambda " + params + ": (lambda ns: (__import__('builtins').exec(\"\"\"" + escaped + "\"\"\", " + globals_dict + ", ns), str(ns['out']))[1])({}))(sympy.symbols('" + symbol_expr + "'))",
+      "(lambda " +
+      params +
+      ": (lambda ns: (__import__('builtins').exec(\"\"\"" +
+      escaped +
+      "\"\"\", " +
+      globals_dict +
+      ", ns), str(ns['out']))[1])({}))(sympy.symbols('" +
+      symbol_expr +
+      "'))",
     )
   } else {
     @sympy_utilities.utilities_eval_str(
-      "(lambda " + params + ": (lambda ns: (__import__('builtins').exec(\"\"\"" + escaped + "\"\"\", " + globals_dict + ", ns), str(ns['out']))[1])({}))(*sympy.symbols('" + symbol_expr + "'))",
+      "(lambda " +
+      params +
+      ": (lambda ns: (__import__('builtins').exec(\"\"\"" +
+      escaped +
+      "\"\"\", " +
+      globals_dict +
+      ", ns), str(ns['out']))[1])({}))(*sympy.symbols('" +
+      symbol_expr +
+      "'))",
     )
   }
 }
 
 ///|
 fn local_linear_eq_result_type(
-  result : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError],
+  result : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ],
 ) -> String {
   match result {
     Ok(_) => "OK"
     Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
-    Err(@symsolvers.SolverError::NotImplementedError(_)) => "NotImplementedError"
+    Err(@symsolvers.SolverError::NotImplementedError(_)) =>
+      "NotImplementedError"
     Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
     Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
     Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
@@ -248,12 +286,16 @@ fn local_linear_eq_result_type(
 
 ///|
 fn local_lp_result_type(
-  result : Result[(@symcore.Expr, Map[String, @symcore.Expr]), @symsolvers.SolverError],
+  result : Result[
+    (@symcore.Expr, Map[String, @symcore.Expr]),
+    @symsolvers.SolverError,
+  ],
 ) -> String {
   match result {
     Ok(_) => "OK"
     Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
-    Err(@symsolvers.SolverError::NotImplementedError(_)) => "NotImplementedError"
+    Err(@symsolvers.SolverError::NotImplementedError(_)) =>
+      "NotImplementedError"
     Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
     Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
     Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
@@ -268,7 +310,8 @@ fn local_expr_result_type(
   match result {
     Ok(_) => "OK"
     Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
-    Err(@symsolvers.SolverError::NotImplementedError(_)) => "NotImplementedError"
+    Err(@symsolvers.SolverError::NotImplementedError(_)) =>
+      "NotImplementedError"
     Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
     Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
     Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
@@ -283,7 +326,8 @@ fn local_expr_option_result_type(
   match result {
     Ok(_) => "OK"
     Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
-    Err(@symsolvers.SolverError::NotImplementedError(_)) => "NotImplementedError"
+    Err(@symsolvers.SolverError::NotImplementedError(_)) =>
+      "NotImplementedError"
     Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
     Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
     Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
@@ -300,8 +344,12 @@ fn expr_text_has_oracle_prefix(
 ) -> Bool raise {
   let local_text = @symprint.to_string(local_expr)
   let oracle_text = solvers_eval_str_symbols(oracle_expr, symbols)
-  let end = if prefix_len < oracle_text.length() { prefix_len } else { oracle_text.length() }
-  local_text.has_prefix(oracle_text.unsafe_substring(start=0, end=end))
+  let end = if prefix_len < oracle_text.length() {
+    prefix_len
+  } else {
+    oracle_text.length()
+  }
+  local_text.has_prefix(oracle_text.unsafe_substring(start=0, end~))
 }
 
 ///|
@@ -349,7 +397,9 @@ fn relational_residual_matches_oracle(
   let local_env = solver_py_locals_dict(symbols)
   let local_expr = "sympy.sympify('" +
     py_expr(expr_local).replace_all(old="'", new="\\\\'") +
-    "', locals=" + local_env + ")"
+    "', locals=" +
+    local_env +
+    ")"
   solvers_eval_str_symbols(
     "str(sympy.simplify(((" +
     local_expr +
@@ -505,13 +555,15 @@ fn local_expr_list_text(items : Array[@symcore.Expr]) -> String {
   "[" + items.map(@symprint.to_string).join(", ") + "]"
 }
 
+///|
 fn local_pde_check_result_type(
   result : Result[(Bool, @symcore.Expr), @symsolvers.SolverError],
 ) -> String {
   match result {
     Ok(_) => "OK"
     Err(@symsolvers.SolverError::ValueError(_)) => "ValueError"
-    Err(@symsolvers.SolverError::NotImplementedError(_)) => "NotImplementedError"
+    Err(@symsolvers.SolverError::NotImplementedError(_)) =>
+      "NotImplementedError"
     Err(@symsolvers.SolverError::NonlinearError(_)) => "NonlinearError"
     Err(@symsolvers.SolverError::ShapeError(_)) => "ShapeError"
     Err(@symsolvers.SolverError::InfeasibleLPError(_)) => "InfeasibleLPError"
@@ -525,10 +577,14 @@ fn local_set_list_text(items : Array[@symsets.Set]) -> String {
 }
 
 ///|
-fn local_inequality_result_text(result : @symsolvers.InequalityResult) -> String {
+fn local_inequality_result_text(
+  result : @symsolvers.InequalityResult,
+) -> String {
   match result {
-    @symsolvers.InequalityResult::Set(set) => "Set(" + @symsets.to_string(set) + ")"
-    @symsolvers.InequalityResult::Relational(expr) => "Relational(" + @symprint.to_string(expr) + ")"
+    @symsolvers.InequalityResult::Set(set) =>
+      "Set(" + @symsets.to_string(set) + ")"
+    @symsolvers.InequalityResult::Relational(expr) =>
+      "Relational(" + @symprint.to_string(expr) + ")"
   }
 }
 
@@ -537,6 +593,7 @@ fn local_expr_matrix_text(items : Array[Array[@symcore.Expr]]) -> String {
   "[" + items.map(local_expr_list_text).join(", ") + "]"
 }
 
+///|
 fn py_expr_systems(items : Array[Array[@symcore.Expr]]) -> String {
   let systems : Array[String] = []
   for system in items {
@@ -659,12 +716,19 @@ fn local_sort_exprs_cmp(
 ///|
 fn local_sort_apply_head_cmp(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Int {
   match (lhs, rhs) {
-    (@symcore.Expr::UndefinedFunction(lhs_name), @symcore.Expr::UndefinedFunction(rhs_name)) =>
-      lhs_name.compare(rhs_name)
+    (
+      @symcore.Expr::UndefinedFunction(lhs_name),
+      @symcore.Expr::UndefinedFunction(rhs_name),
+    ) => lhs_name.compare(rhs_name)
     (@symcore.Expr::UndefinedFunction(_), @symcore.Expr::FunctionHead(_)) => -1
     (@symcore.Expr::FunctionHead(_), @symcore.Expr::UndefinedFunction(_)) => 1
-    (@symcore.Expr::FunctionHead(lhs_name), @symcore.Expr::FunctionHead(rhs_name)) => {
-      let rank_cmp = local_sympy_function_rank(lhs_name).compare(local_sympy_function_rank(rhs_name))
+    (
+      @symcore.Expr::FunctionHead(lhs_name),
+      @symcore.Expr::FunctionHead(rhs_name),
+    ) => {
+      let rank_cmp = local_sympy_function_rank(lhs_name).compare(
+        local_sympy_function_rank(rhs_name),
+      )
       if rank_cmp != 0 {
         rank_cmp
       } else {
@@ -702,7 +766,11 @@ fn local_sort_node_count(expr : @symcore.Expr) -> Int {
     | @symcore.Expr::WildFunction(_, _)
     | @symcore.Expr::FunctionHead(_)
     | @symcore.Expr::UndefinedFunction(_) => 1
-    _ => 1 + @symcore.children(expr).fold(init=0, fn(acc, child) { acc + local_sort_node_count(child) })
+    _ =>
+      1 +
+      @symcore.children(expr).fold(init=0, fn(acc, child) {
+        acc + local_sort_node_count(child)
+      })
   }
 }
 
@@ -711,7 +779,10 @@ fn local_sort_expr_cmp(lhs_raw : @symcore.Expr, rhs_raw : @symcore.Expr) -> Int 
   let lhs = local_test_constant_sort_expr(lhs_raw)
   let rhs = local_test_constant_sort_expr(rhs_raw)
   match (lhs, rhs) {
-    (@symcore.Expr::Apply(lhs_head, lhs_args), @symcore.Expr::Apply(rhs_head, rhs_args)) => {
+    (
+      @symcore.Expr::Apply(lhs_head, lhs_args),
+      @symcore.Expr::Apply(rhs_head, rhs_args),
+    ) => {
       let head_cmp = local_sort_apply_head_cmp(lhs_head, rhs_head)
       if head_cmp != 0 {
         return head_cmp
@@ -721,15 +792,23 @@ fn local_sort_expr_cmp(lhs_raw : @symcore.Expr, rhs_raw : @symcore.Expr) -> Int 
     (@symcore.Expr::Add(lhs_args), @symcore.Expr::Add(rhs_args))
     | (@symcore.Expr::Mul(lhs_args), @symcore.Expr::Mul(rhs_args)) =>
       local_sort_exprs_cmp(lhs_args, rhs_args)
-    (@symcore.Expr::Pow(lhs_base, lhs_exp), @symcore.Expr::Pow(rhs_base, rhs_exp)) => {
+    (
+      @symcore.Expr::Pow(lhs_base, lhs_exp),
+      @symcore.Expr::Pow(rhs_base, rhs_exp),
+    ) => {
       let base_cmp = local_sort_expr_cmp(lhs_base, rhs_base)
       if base_cmp != 0 {
         return base_cmp
       }
       return local_sort_expr_cmp(lhs_exp, rhs_exp)
     }
-    (@symcore.Expr::Relational(lhs_op, lhs_lhs, lhs_rhs), @symcore.Expr::Relational(rhs_op, rhs_lhs, rhs_rhs)) => {
-      let op_cmp = local_sort_relop_rank(lhs_op).compare(local_sort_relop_rank(rhs_op))
+    (
+      @symcore.Expr::Relational(lhs_op, lhs_lhs, lhs_rhs),
+      @symcore.Expr::Relational(rhs_op, rhs_lhs, rhs_rhs),
+    ) => {
+      let op_cmp = local_sort_relop_rank(lhs_op).compare(
+        local_sort_relop_rank(rhs_op),
+      )
       if op_cmp != 0 {
         return op_cmp
       }
@@ -740,7 +819,9 @@ fn local_sort_expr_cmp(lhs_raw : @symcore.Expr, rhs_raw : @symcore.Expr) -> Int 
       return local_sort_expr_cmp(lhs_rhs, rhs_rhs)
     }
     _ => {
-      let node_cmp = local_sort_node_count(lhs).compare(local_sort_node_count(rhs))
+      let node_cmp = local_sort_node_count(lhs).compare(
+        local_sort_node_count(rhs),
+      )
       if node_cmp != 0 {
         return node_cmp
       }
@@ -755,7 +836,9 @@ fn local_sort_expr_cmp(lhs_raw : @symcore.Expr, rhs_raw : @symcore.Expr) -> Int 
 }
 
 ///|
-fn local_sort_constant_args(items : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
+fn local_sort_constant_args(
+  items : Array[@symcore.Expr],
+) -> Array[@symcore.Expr] {
   let out : Array[@symcore.Expr] = []
   for item in items {
     let mut inserted = false
@@ -791,11 +874,15 @@ fn local_constant_renumber_inner(
   match expr {
     @symcore.Expr::Add(args) =>
       @symcore.Expr::Add(
-        local_sort_constant_args(args).map(arg => local_constant_renumber_inner(arg, constants_found)),
+        local_sort_constant_args(args).map(arg => {
+          local_constant_renumber_inner(arg, constants_found)
+        }),
       )
     @symcore.Expr::Mul(args) =>
       @symcore.Expr::Mul(
-        local_sort_constant_args(args).map(arg => local_constant_renumber_inner(arg, constants_found)),
+        local_sort_constant_args(args).map(arg => {
+          local_constant_renumber_inner(arg, constants_found)
+        }),
       )
     @symcore.Expr::Pow(base, exp) =>
       @symcore.pow(
@@ -808,10 +895,10 @@ fn local_constant_renumber_inner(
         local_constant_renumber_inner(lhs, constants_found),
         local_constant_renumber_inner(rhs, constants_found),
       )
-    _ => @symcore.map_children(
-      expr,
-      child => local_constant_renumber_inner(child, constants_found),
-    )
+    _ =>
+      @symcore.map_children(expr, child => {
+        local_constant_renumber_inner(child, constants_found)
+      })
   }
 }
 
@@ -826,6 +913,7 @@ fn local_constant_renumber(expr : @symcore.Expr) -> @symcore.Expr {
   @symcore.subst(reordered, env)
 }
 
+///|
 fn py_infinitesimals(items : Array[Map[String, @symcore.Expr]]) -> String {
   let rendered : Array[String] = []
   for item in items {
@@ -858,6 +946,7 @@ fn infinitesimals_oracle_residual_text(
   )
 }
 
+///|
 fn py_checkinfsol(items : Array[(Bool, @symcore.Expr)]) -> String {
   let rendered : Array[String] = []
   for item in items {
@@ -940,9 +1029,7 @@ fn split_top_level_items_text(text : String) -> Array[String] {
       Some('{') => depth_brace += 1
       Some('}') => depth_brace -= 1
       Some(',') =>
-        if depth_paren == 0 &&
-          depth_bracket == 0 &&
-          depth_brace == 0 {
+        if depth_paren == 0 && depth_bracket == 0 && depth_brace == 0 {
           parts.push(text[start:i].trim().to_string())
           start = i + 1
         }
@@ -1052,7 +1139,8 @@ fn solve_dict_residuals_match_oracle(
 ///|
 fn local_diop_solve_result_text(result : @symsolvers.DiopSolveResult) -> String {
   match result {
-    @symsolvers.DiopSolveResult::Tuple(items) => "(" + items.map(@symprint.to_string).join(", ") + ")"
+    @symsolvers.DiopSolveResult::Tuple(items) =>
+      "(" + items.map(@symprint.to_string).join(", ") + ")"
     @symsolvers.DiopSolveResult::Set(set) => @symsets.to_string(set)
   }
 }
@@ -1092,21 +1180,25 @@ fn local_classify_diop_text(
 }
 
 ///|
-fn local_lp_dict_result_text(result : (@symcore.Expr, Map[String, @symcore.Expr])) -> String {
-  (
-    "(" +
-    @symprint.to_string(result.0) +
-    ", " +
-    local_solution_dict_text(Some(result.1), sorted_map_keys(result.1)) +
-    ")",
-  )
+fn local_lp_dict_result_text(
+  result : (@symcore.Expr, Map[String, @symcore.Expr]),
+) -> String {
+  "(" +
+  @symprint.to_string(result.0) +
+  ", " +
+  local_solution_dict_text(Some(result.1), sorted_map_keys(result.1)) +
+  ")"
 }
 
 ///|
-fn local_linprog_result_text(result : (@symcore.Expr, Array[@symcore.Expr])) -> String {
-  (
-    "(" + @symprint.to_string(result.0) + ", " + local_expr_list_text(result.1) + ")",
-  )
+fn local_linprog_result_text(
+  result : (@symcore.Expr, Array[@symcore.Expr]),
+) -> String {
+  "(" +
+  @symprint.to_string(result.0) +
+  ", " +
+  local_expr_list_text(result.1) +
+  ")"
 }
 
 ///|
@@ -1276,33 +1368,25 @@ test "solvers parity solve_linear solve solveset complexes and nsolve" {
     solvers_eval_str("repr(sympy.solvers.solve_linear(x + 2, symbols=[x]))"),
   )
   assert_eq(
-    (
-      @symsets.to_string(
-        @symsolvers.solveset(
-          @symcore.add([x() ^ @symcore.int(2), @symcore.int(-4)]),
-          symbol=Some(x()),
-          domain=@symsolvers.complexes,
-        ),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.add([x() ^ @symcore.int(2), @symcore.int(-4)]),
+        symbol=Some(x()),
+        domain=@symsolvers.complexes,
       ),
     ),
-    (
-      solvers_eval_str("sympy.sstr(sympy.solvers.solveset(x**2 - 4, x))"),
-    ),
+    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(x**2 - 4, x))"),
   )
   assert_eq(
-    (
-      local_solve_result_text(
-        @symsolvers.solve(
-          @symsolvers.solve_expr_input(
-            @symcore.add([x() ^ @symcore.int(2), @symcore.int(-4)]),
-          ),
-          symbols=[x()],
+    local_solve_result_text(
+      @symsolvers.solve(
+        @symsolvers.solve_expr_input(
+          @symcore.add([x() ^ @symcore.int(2), @symcore.int(-4)]),
         ),
+        symbols=[x()],
       ),
     ),
-    (
-      solvers_eval_str("repr(sympy.solvers.solve(x**2 - 4, x))"),
-    ),
+    solvers_eval_str("repr(sympy.solvers.solve(x**2 - 4, x))"),
   )
   let root_text = @symprint.to_string(
     @symsolvers.nsolve(
@@ -1330,7 +1414,11 @@ test "solvers parity nsolve scalar batch 2" {
     ),
   )
   let eq_root = @symsolvers.nsolve(
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) * x(), @symcore.int(2)),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.int(2) * x(),
+      @symcore.int(2),
+    ),
     x(),
     @symcore.int(-10),
   )
@@ -1341,25 +1429,21 @@ test "solvers parity nsolve scalar batch 2" {
   )
   assert_true(
     expr_text_has_oracle_prefix(
-      eq_root,
-      "sympy.sstr(sympy.solvers.nsolve(sympy.Eq(2*x, 2), x, -10))",
-      "x",
+      eq_root, "sympy.sstr(sympy.solvers.nsolve(sympy.Eq(2*x, 2), x, -10))", "x",
       3,
     ),
   )
   assert_true(
     expr_text_has_oracle_prefix(
-      linear_root,
-      "sympy.sstr(sympy.solvers.nsolve(2*x - 2, x, -10))",
-      "x",
-      3,
+      linear_root, "sympy.sstr(sympy.solvers.nsolve(2*x - 2, x, -10))", "x", 3,
     ),
   )
   assert_eq(@symprint.to_string(eq_root), @symprint.to_string(linear_root))
   assert_true(
     expr_text_has_oracle_prefix(
       @symsolvers.nsolve(
-        (x() ^ @symcore.int(2)) - @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        (x() ^ @symcore.int(2)) -
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
         x(),
         @symcore.Expr::Float(@symcore.float_from_double(3.0)),
       ),
@@ -1371,7 +1455,8 @@ test "solvers parity nsolve scalar batch 2" {
   assert_true(
     expr_text_has_oracle_prefix(
       @symsolvers.nsolve(
-        (x() ^ @symcore.int(2)) - @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        (x() ^ @symcore.int(2)) -
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
         x(),
         @symcore.int(3),
         prec=128,
@@ -1398,8 +1483,21 @@ test "solvers parity nsolve scalar batch 2" {
   assert_true(
     expr_text_has_oracle_prefix(
       @symsolvers.nsolve(
-        @symcore.pow(@symcore.add([@symcore.Expr::Float(@symcore.float_from_double(0.001)), a]), @symcore.int(-3)) -
-        @symcore.int(6) * @symcore.pow(@symcore.add([@symcore.Expr::Float(@symcore.float_from_double(0.9)), @symcore.int(-1) * a]), @symcore.int(-3)),
+        @symcore.pow(
+          @symcore.add([
+            @symcore.Expr::Float(@symcore.float_from_double(0.001)),
+            a,
+          ]),
+          @symcore.int(-3),
+        ) -
+        @symcore.int(6) *
+        @symcore.pow(
+          @symcore.add([
+            @symcore.Expr::Float(@symcore.float_from_double(0.9)),
+            @symcore.int(-1) * a,
+          ]),
+          @symcore.int(-3),
+        ),
         a,
         @symcore.Expr::Float(@symcore.float_from_double(0.3)),
       ),
@@ -1465,19 +1563,17 @@ test "solvers parity nonlinsolve solve_poly_system and system solve wrapper" {
 test "solvers parity lpmin lpmax and linprog" {
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        x(),
-        [@symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(1))],
-      ),
+      @symsolvers.lpmin(x(), [
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(1)),
+      ]),
     ),
     solvers_eval_str("repr(sympy.solvers.lpmin(x, [x >= 1]))"),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        x(),
-        [@symcore.Expr::Relational(@symcore.RelOp::Le, x(), @symcore.int(-1))],
-      ),
+      @symsolvers.lpmax(x(), [
+        @symcore.Expr::Relational(@symcore.RelOp::Le, x(), @symcore.int(-1)),
+      ]),
     ),
     solvers_eval_str("repr(sympy.solvers.lpmax(x, [x <= -1]))"),
   )
@@ -1506,52 +1602,62 @@ test "solvers parity lpmin lpmax and linprog" {
 test "solvers parity simplex-style Eq constraints and extra symbols" {
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        x() - y(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmax(x() - y(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          x(),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          x(),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(x - y, [x <= y + 2, sympy.Eq(x, y + 2), x >= 0, y >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(x - y, [x <= y + 2, sympy.Eq(x, y + 2), x >= 0, y >= 0]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        y(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(0), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, @symcore.int(0), y() + @symcore.int(2)),
-        ],
-      ),
+      @symsolvers.lpmin(y(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(0),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Ge,
+          @symcore.int(0),
+          y() + @symcore.int(2),
+        ),
+      ]),
     ),
     solvers_eval_str("repr(sympy.solvers.lpmin(y, [0 <= y + 2, 0 >= y + 2]))"),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        y(),
-        [@symcore.Expr::Relational(@symcore.RelOp::Eq, y(), @symcore.int(2))],
-      ),
+      @symsolvers.lpmax(y(), [
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), @symcore.int(2)),
+      ]),
     ),
     solvers_eval_str("repr(sympy.solvers.lpmax(y, [sympy.Eq(y, 2)]))"),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        x(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + z()),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmin(x(), [
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + z()),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmin(x, [y >= 1, x >= y + z, x >= 0, z >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmin(x, [y >= 1, x >= y + z, x >= 0, z >= 0]))",
+    ),
   )
 }
 
@@ -1586,7 +1692,11 @@ test "solvers parity simplex four-variable reference example" {
     ],
   )
   assert_eq(
-    "(" + @symprint.to_string(result.0) + ", " + local_solution_dict_text(Some(result.1), ["x1", "x2", "x3", "x4"]) + ")",
+    "(" +
+    @symprint.to_string(result.0) +
+    ", " +
+    local_solution_dict_text(Some(result.1), ["x1", "x2", "x3", "x4"]) +
+    ")",
     solvers_eval_str_symbols(
       "repr(sympy.solvers.lpmax(x1 - 2*x2 - 3*x3 - x4, [x1 - x2 - 2*x3 - x4 <= 4, 2*x1 + x3 - 4*x4 <= 2, -2*x1 + x2 + x4 <= 1, x1 >= 0, x2 >= 0, x3 >= 0, x4 >= 0]))",
       "x1 x2 x3 x4",
@@ -1598,26 +1708,25 @@ test "solvers parity simplex four-variable reference example" {
 test "solvers parity simplex linprog first reference example" {
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        x() + y() - @symcore.int(2) * z(),
-        [
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Le,
-            @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(),
-            @symcore.int(3),
-          ),
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Le,
-            @symcore.int(3) * x() - y() + @symcore.int(10) * z(),
-            @symcore.int(6),
-          ),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmin(x() + y() - @symcore.int(2) * z(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(),
+          @symcore.int(3),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(3) * x() - y() + @symcore.int(10) * z(),
+          @symcore.int(6),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmin(x + y - 2*z, [7*x + 4*y - 7*z <= 3, 3*x - y + 10*z <= 6, x >= 0, y >= 0, z >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmin(x + y - 2*z, [7*x + 4*y - 7*z <= 3, 3*x - y + 10*z <= 6, x >= 0, y >= 0, z >= 0]))",
+    ),
   )
   assert_eq(
     local_linprog_result_text(
@@ -1632,31 +1741,36 @@ test "solvers parity simplex linprog first reference example" {
         b=Some([@symcore.int(3), @symcore.int(6)]),
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.linprog([1, 1, -2], [[7, 4, -7], [3, -1, 10]], [3, 6]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.linprog([1, 1, -2], [[7, 4, -7], [3, -1, 10]], [3, 6]))",
+    ),
   )
 }
 
 ///|
 test "solvers parity simplex edge regressions" {
-  let infeasible_const : Result[(@symcore.Expr, Map[String, @symcore.Expr]), @symsolvers.SolverError] = try? @symsolvers.lpmin(
-    @symcore.int(5),
-    [
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Eq, x() + z(), @symcore.int(1)),
-      @symcore.Expr::Relational(@symcore.RelOp::Le, x() + @symcore.int(2) * z(), @symcore.int(0)),
-    ],
+  let infeasible_const : Result[
+    (@symcore.Expr, Map[String, @symcore.Expr]),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.lpmin(@symcore.int(5), [
+    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, x() + z(), @symcore.int(1)),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Le,
+      x() + @symcore.int(2) * z(),
+      @symcore.int(0),
+    ),
+  ])
+  assert_true(
+    infeasible_const is Err(@symsolvers.SolverError::InfeasibleLPError(_)),
   )
-  assert_true(infeasible_const is Err(@symsolvers.SolverError::InfeasibleLPError(_)))
 
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        @symcore.int(0),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmax(@symcore.int(0), [
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      ]),
     ),
     solvers_eval_str("repr(sympy.solvers.lpmax(0, [x >= 0, y >= 0]))"),
   )
@@ -1666,83 +1780,140 @@ test "solvers parity simplex edge regressions" {
 test "solvers parity simplex batch 1 additional public cases" {
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        @symcore.int(-1) * x() - y() - @symcore.int(5) * z(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, y() + @symcore.int(2) * z(), @symcore.int(3)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(-1) * x() - @symcore.int(3) * z(), @symcore.int(-2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(2) * x() + y() + @symcore.int(7) * z(), @symcore.int(5)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmax(@symcore.int(-1) * x() - y() - @symcore.int(5) * z(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          y() + @symcore.int(2) * z(),
+          @symcore.int(3),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(-1) * x() - @symcore.int(3) * z(),
+          @symcore.int(-2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(2) * x() + y() + @symcore.int(7) * z(),
+          @symcore.int(5),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(-x - y - 5*z, [y + 2*z <= 3, -x - 3*z <= -2, 2*x + y + 7*z <= 5, x >= 0, y >= 0, z >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(-x - y - 5*z, [y + 2*z <= 3, -x - 3*z <= -2, 2*x + y + 7*z <= 5, x >= 0, y >= 0, z >= 0]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        @symcore.int(-1) * x() - y() - @symcore.int(5) * z(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x() - y() + @symcore.int(2) * z(), @symcore.int(3)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(), @symcore.int(-2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(2) * x() + y() - @symcore.int(7) * z(), @symcore.int(-5)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmax(@symcore.int(-1) * x() - y() - @symcore.int(5) * z(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          x() - y() + @symcore.int(2) * z(),
+          @symcore.int(3),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(),
+          @symcore.int(-2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(2) * x() + y() - @symcore.int(7) * z(),
+          @symcore.int(-5),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(-x - y - 5*z, [x - y + 2*z <= 3, -x + 2*y - 3*z <= -2, 2*x + y - 7*z <= -5, x >= 0, y >= 0, z >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(-x - y - 5*z, [x - y + 2*z <= 3, -x + 2*y - 3*z <= -2, 2*x + y - 7*z <= -5, x >= 0, y >= 0, z >= 0]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
       @symsolvers.lpmax(
         @symcore.int(-1) * x() - y() - @symcore.int(5) * z() + @symcore.int(2),
         [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x() - y() + @symcore.int(2) * z(), @symcore.int(-4)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(), @symcore.int(8)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(2) * x() + y() - @symcore.int(7) * z(), @symcore.int(10)),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            x() - y() + @symcore.int(2) * z(),
+            @symcore.int(-4),
+          ),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            @symcore.int(-1) * x() +
+            @symcore.int(2) * y() -
+            @symcore.int(3) * z(),
+            @symcore.int(8),
+          ),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            @symcore.int(2) * x() + y() - @symcore.int(7) * z(),
+            @symcore.int(10),
+          ),
           @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
           @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
           @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
         ],
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(-x - y - 5*z + 2, [x - y + 2*z <= -4, -x + 2*y - 3*z <= 8, 2*x + y - 7*z <= 10, x >= 0, y >= 0, z >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(-x - y - 5*z + 2, [x - y + 2*z <= -4, -x + 2*y - 3*z <= 8, 2*x + y - 7*z <= 10, x >= 0, y >= 0, z >= 0]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        x(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y()),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
-        ],
-      ),
+      @symsolvers.lpmax(x(), [
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y()),
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
+        @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(x, [sympy.Eq(x, y), sympy.Eq(y, z), z <= 3]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(x, [sympy.Eq(x, y), sympy.Eq(y, z), z <= 3]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        y(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmin(y(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          x(),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Ge,
+          x(),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmin(y, [x <= y + 2, x >= y + 2, y >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmin(y, [x <= y + 2, x >= y + 2, y >= 0]))",
+    ),
   )
   let bounds_scalar = Some([(Some(@symcore.int(2)), Some(@symcore.int(3)))])
-  let local_bounds = local_linprog_result_text(@symsolvers.linprog([@symcore.int(1)], bounds=bounds_scalar))
-  assert_eq(local_bounds, solvers_eval_str("repr(sympy.solvers.linprog([[1]], [], [], bounds=(2, 3)))"))
-  assert_eq(local_bounds, solvers_eval_str("repr(sympy.solvers.linprog([1], [], [], bounds=(2, 3)))"))
-  assert_eq(local_bounds, solvers_eval_str("repr(sympy.solvers.linprog([1], bounds=(2, 3)))"))
+  let local_bounds = local_linprog_result_text(
+    @symsolvers.linprog([@symcore.int(1)], bounds=bounds_scalar),
+  )
+  assert_eq(
+    local_bounds,
+    solvers_eval_str(
+      "repr(sympy.solvers.linprog([[1]], [], [], bounds=(2, 3)))",
+    ),
+  )
+  assert_eq(
+    local_bounds,
+    solvers_eval_str("repr(sympy.solvers.linprog([1], [], [], bounds=(2, 3)))"),
+  )
+  assert_eq(
+    local_bounds,
+    solvers_eval_str("repr(sympy.solvers.linprog([1], bounds=(2, 3)))"),
+  )
   assert_eq(
     local_linprog_result_text(
       @symsolvers.linprog(
@@ -1752,7 +1923,9 @@ test "solvers parity simplex batch 1 additional public cases" {
         bounds=Some([(Some(@symcore.int(0)), None), (None, None)]),
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.linprog([1, -1], [[1, 1]], [2], bounds={1:(None, None)}))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.linprog([1, -1], [[1, 1]], [2], bounds={1:(None, None)}))",
+    ),
   )
   assert_eq(
     local_linprog_result_text(
@@ -1760,10 +1933,15 @@ test "solvers parity simplex batch 1 additional public cases" {
         [@symcore.int(1), @symcore.int(-1)],
         a=Some(@symmatrices.matrix([[@symcore.int(1), @symcore.int(1)]])),
         b=Some([@symcore.int(5)]),
-        bounds=Some([(Some(@symcore.int(0)), None), (Some(@symcore.int(3)), None)]),
+        bounds=Some([
+          (Some(@symcore.int(0)), None),
+          (Some(@symcore.int(3)), None),
+        ]),
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.linprog([1, -1], [[1, 1]], [5], bounds={1:(3, None)}))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.linprog([1, -1], [[1, 1]], [5], bounds={1:(3, None)}))",
+    ),
   )
 }
 
@@ -1771,73 +1949,91 @@ test "solvers parity simplex batch 1 additional public cases" {
 test "solvers parity simplex batch 2 additional public cases" {
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        x() - y(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmax(x() - y(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          x(),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Ge,
+          x(),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(x - y, [x <= y + 2, x >= y + 2, x >= 0, y >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(x - y, [x <= y + 2, x >= y + 2, x >= 0, y >= 0]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        x() - y(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), @symcore.int(2)),
-        ],
-      ),
+      @symsolvers.lpmax(x() - y(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          x(),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), @symcore.int(2)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(x - y, [x <= y + 2, sympy.Eq(x, 2)]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(x - y, [x <= y + 2, sympy.Eq(x, 2)]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        y(),
-        [@symcore.Expr::Relational(@symcore.RelOp::Eq, y(), @symcore.int(2))],
-      ),
+      @symsolvers.lpmax(y(), [
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), @symcore.int(2)),
+      ]),
     ),
     solvers_eval_str("repr(sympy.solvers.lpmax(y, [sympy.Eq(y, 2)]))"),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        y(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(0), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, @symcore.int(0), y() + @symcore.int(2)),
-        ],
-      ),
+      @symsolvers.lpmax(y(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(0),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Ge,
+          @symcore.int(0),
+          y() + @symcore.int(2),
+        ),
+      ]),
     ),
     solvers_eval_str("repr(sympy.solvers.lpmax(y, [0 <= y + 2, 0 >= y + 2]))"),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        y(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(0), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, @symcore.int(0), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, y(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmax(y(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(0),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Ge,
+          @symcore.int(0),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Le, y(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(y, [0 <= y + 2, 0 >= y + 2, y <= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(y, [0 <= y + 2, 0 >= y + 2, y <= 0]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        x(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y()),
-        ],
-      ),
+      @symsolvers.lpmin(x(), [
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y()),
+      ]),
     ),
     solvers_eval_str("repr(sympy.solvers.lpmin(x, [y >= 1, x >= y]))"),
   )
@@ -1853,11 +2049,17 @@ test "solvers parity simplex batch 2 additional public cases" {
           ]),
         ),
         b=Some([@symcore.int(3), @symcore.int(6)]),
-        a_eq=Some(@symmatrices.matrix([[@symcore.int(-9), @symcore.int(1), @symcore.int(0)]])),
+        a_eq=Some(
+          @symmatrices.matrix([
+            [@symcore.int(-9), @symcore.int(1), @symcore.int(0)],
+          ]),
+        ),
         b_eq=Some([@symcore.int(1)]),
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.linprog([1, 1, -2], [[7, 4, -7], [3, -1, 10]], [3, 6], [[-9, 1, 0]], [1]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.linprog([1, 1, -2], [[7, 4, -7], [3, -1, 10]], [3, 6], [[-9, 1, 0]], [1]))",
+    ),
   )
   assert_eq(
     local_linprog_result_text(
@@ -1870,11 +2072,17 @@ test "solvers parity simplex batch 2 additional public cases" {
           ]),
         ),
         b=Some([@symcore.int(3), @symcore.int(6)]),
-        a_eq=Some(@symmatrices.matrix([[@symcore.int(0), @symcore.int(-1), @symcore.int(1)]])),
+        a_eq=Some(
+          @symmatrices.matrix([
+            [@symcore.int(0), @symcore.int(-1), @symcore.int(1)],
+          ]),
+        ),
         b_eq=Some([half]),
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.linprog([1, 1, -2], [[7, 4, -7], [3, -1, 10]], [3, 6], [[0, -1, 1]], [sympy.S.Half]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.linprog([1, 1, -2], [[7, 4, -7], [3, -1, 10]], [3, 6], [[0, -1, 1]], [sympy.S.Half]))",
+    ),
   )
   assert_eq(
     local_linprog_result_text(
@@ -1894,7 +2102,9 @@ test "solvers parity simplex batch 2 additional public cases" {
         ]),
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.linprog([1, 1, -2], [[7, 4, -7], [3, -1, 10]], [3, 6], bounds=[(0, None), (0, None), (None, sympy.S.Half)]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.linprog([1, 1, -2], [[7, 4, -7], [3, -1, 10]], [3, 6], bounds=[(0, None), (0, None), (None, sympy.S.Half)]))",
+    ),
   )
 }
 
@@ -1902,55 +2112,102 @@ test "solvers parity simplex batch 2 additional public cases" {
 test "solvers parity simplex and solveset batch 3 additional public cases" {
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        @symcore.int(-1) * x() - y() - @symcore.int(5) * z(),
-        [
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Le,
-            x() - y() + @symcore.Expr::Float(@symcore.float_from_double(2.0)) * z(),
-            @symcore.int(-4),
-          ),
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Le,
-            @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.Expr::Float(@symcore.float_from_double(3.0)) * z(),
-            @symcore.int(8),
-          ),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(2) * x() + y() - @symcore.int(7) * z(), @symcore.int(10)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmax(@symcore.int(-1) * x() - y() - @symcore.int(5) * z(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          x() -
+          y() +
+          @symcore.Expr::Float(@symcore.float_from_double(2.0)) * z(),
+          @symcore.int(-4),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(-1) * x() +
+          @symcore.int(2) * y() -
+          @symcore.Expr::Float(@symcore.float_from_double(3.0)) * z(),
+          @symcore.int(8),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(2) * x() + y() - @symcore.int(7) * z(),
+          @symcore.int(10),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(-x - y - 5*z, [x - y + 2.0*z <= -4, -x + 2*y - 3.0*z <= 8, 2*x + y - 7*z <= 10, x >= 0, y >= 0, z >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(-x - y - 5*z, [x - y + 2.0*z <= -4, -x + 2*y - 3.0*z <= 8, 2*x + y - 7*z <= 10, x >= 0, y >= 0, z >= 0]))",
+    ),
   )
   let x1 = @symcore.Expr::Symbol("x1")
   let x2 = @symcore.Expr::Symbol("x2")
   let x3 = @symcore.Expr::Symbol("x3")
   let x4 = @symcore.Expr::Symbol("x4")
-  let infeasible_four_var : Result[(@symcore.Expr, Map[String, @symcore.Expr]), @symsolvers.SolverError] = try? @symsolvers.lpmin(
-    @symcore.int(9) * x2 - @symcore.int(8) * x3 + @symcore.int(3) * x4 + @symcore.int(6),
+  let infeasible_four_var : Result[
+    (@symcore.Expr, Map[String, @symcore.Expr]),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.lpmin(
+    @symcore.int(9) * x2 -
+    @symcore.int(8) * x3 +
+    @symcore.int(3) * x4 +
+    @symcore.int(6),
     [
-      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(5) * x2 - @symcore.int(2) * x3, @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(-1) * x1 - @symcore.int(8) * x2 + @symcore.int(9) * x3, @symcore.int(-3)),
-      @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(10) * x1 - x2 + @symcore.int(9) * x4, @symcore.int(-4)),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(5) * x2 - @symcore.int(2) * x3,
+        @symcore.int(0),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(-1) * x1 - @symcore.int(8) * x2 + @symcore.int(9) * x3,
+        @symcore.int(-3),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(10) * x1 - x2 + @symcore.int(9) * x4,
+        @symcore.int(-4),
+      ),
       @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
       @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
       @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
       @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
     ],
   )
-  assert_true(infeasible_four_var is Err(@symsolvers.SolverError::InfeasibleLPError(_)))
+  assert_true(
+    infeasible_four_var is Err(@symsolvers.SolverError::InfeasibleLPError(_)),
+  )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(4), symbol=Some(x()), domain=@symsets.reals())),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(4),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
     solvers_eval_str("sympy.sstr(sympy.solvers.solveset(4, x, sympy.S.Reals))"),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset((x() ^ @symcore.int(2)) + @symcore.int(1), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(x**2 + 1, x, sympy.S.Reals))"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(2)) + @symcore.int(1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(x**2 + 1, x, sympy.S.Reals))",
+    ),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(0), symbol=Some(x()), domain=@symsets.reals())),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(0),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
     solvers_eval_str("sympy.sstr(sympy.solvers.solveset(0, x, sympy.S.Reals))"),
   )
   assert_eq(
@@ -1961,17 +2218,24 @@ test "solvers parity simplex and solveset batch 3 additional public cases" {
         domain=@symsets.interval(@symcore.int(1), @symcore.int(2)),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(0, x, sympy.Interval(1, 2)))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(0, x, sympy.Interval(1, 2)))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.int(-1) * (x() ^ @symcore.int(2)) - @symcore.int(2) * x() + ((x() + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(-1),
+        @symcore.int(-1) * (x() ^ @symcore.int(2)) -
+        @symcore.int(2) * x() +
+        ((x() + @symcore.int(1)) ^ @symcore.int(2)) +
+        @symcore.int(-1),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(-x**2 - 2*x + (x + 1)**2 - 1, x, sympy.S.Reals))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(-x**2 - 2*x + (x + 1)**2 - 1, x, sympy.S.Reals))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
@@ -1981,7 +2245,9 @@ test "solvers parity simplex and solveset batch 3 additional public cases" {
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(3*x - 2, x, sympy.S.Reals))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(3*x - 2, x, sympy.S.Reals))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
@@ -1991,7 +2257,9 @@ test "solvers parity simplex and solveset batch 3 additional public cases" {
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(x**2 - 1, x, sympy.S.Reals))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(x**2 - 1, x, sympy.S.Reals))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
@@ -2001,19 +2269,33 @@ test "solvers parity simplex and solveset batch 3 additional public cases" {
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(sympy.sqrt(1) + 1, x, sympy.S.Reals))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(sympy.sqrt(1) + 1, x, sympy.S.Reals))",
+    ),
   )
 }
 
 ///|
 test "solvers parity linear_eq_to_matrix and linsolve batch 4 additional public cases" {
   let (a0, b0) = @symsolvers.linear_eq_to_matrix([@symcore.int(0)], [x()])
-  assert_eq(local_matrix_list_text(a0), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(0, x)[0]"))
-  assert_eq(local_matrix_list_text(b0), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(0, x)[1]"))
+  assert_eq(
+    local_matrix_list_text(a0),
+    py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(0, x)[0]"),
+  )
+  assert_eq(
+    local_matrix_list_text(b0),
+    py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(0, x)[1]"),
+  )
 
   let (a1, b1) = @symsolvers.linear_eq_to_matrix([@symcore.int(1)], [x()])
-  assert_eq(local_matrix_list_text(a1), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(1, x)[0]"))
-  assert_eq(local_matrix_list_text(b1), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(1, x)[1]"))
+  assert_eq(
+    local_matrix_list_text(a1),
+    py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(1, x)[0]"),
+  )
+  assert_eq(
+    local_matrix_list_text(b1),
+    py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(1, x)[1]"),
+  )
 
   let eqns1 = [
     @symcore.int(2) * x() + y() - @symcore.int(2) * z() + @symcore.int(-3),
@@ -2021,17 +2303,45 @@ test "solvers parity linear_eq_to_matrix and linsolve batch 4 additional public 
     x() + y() + @symcore.int(3) * z() + @symcore.int(-12),
   ]
   let (a2, b2) = @symsolvers.linear_eq_to_matrix(eqns1, [x(), y(), z()])
-  assert_eq(local_matrix_list_text(a2), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix([2*x + y - 2*z - 3, x - y - z, x + y + 3*z - 12], (x, y, z))[0]"))
-  assert_eq(local_matrix_list_text(b2), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix([2*x + y - 2*z - 3, x - y - z, x + y + 3*z - 12], (x, y, z))[1]"))
+  assert_eq(
+    local_matrix_list_text(a2),
+    py_matrix_list_text(
+      "sympy.solvers.linear_eq_to_matrix([2*x + y - 2*z - 3, x - y - z, x + y + 3*z - 12], (x, y, z))[0]",
+    ),
+  )
+  assert_eq(
+    local_matrix_list_text(b2),
+    py_matrix_list_text(
+      "sympy.solvers.linear_eq_to_matrix([2*x + y - 2*z - 3, x - y - z, x + y + 3*z - 12], (x, y, z))[1]",
+    ),
+  )
 
   let eqns2 = [
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(3) * x() + @symcore.int(2) * y() - z(), @symcore.int(1)),
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) * x() - @symcore.int(2) * y() + @symcore.int(4) * z(), @symcore.int(-2)),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.int(3) * x() + @symcore.int(2) * y() - z(),
+      @symcore.int(1),
+    ),
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.int(2) * x() - @symcore.int(2) * y() + @symcore.int(4) * z(),
+      @symcore.int(-2),
+    ),
     @symcore.int(-2) * x() + y() - @symcore.int(2) * z(),
   ]
   let (a3, b3) = @symsolvers.linear_eq_to_matrix(eqns2, [x(), y(), z()])
-  assert_eq(local_matrix_list_text(a3), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix([sympy.Eq(3*x + 2*y - z, 1), sympy.Eq(2*x - 2*y + 4*z, -2), -2*x + y - 2*z], (x, y, z))[0]"))
-  assert_eq(local_matrix_list_text(b3), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix([sympy.Eq(3*x + 2*y - z, 1), sympy.Eq(2*x - 2*y + 4*z, -2), -2*x + y - 2*z], (x, y, z))[1]"))
+  assert_eq(
+    local_matrix_list_text(a3),
+    py_matrix_list_text(
+      "sympy.solvers.linear_eq_to_matrix([sympy.Eq(3*x + 2*y - z, 1), sympy.Eq(2*x - 2*y + 4*z, -2), -2*x + y - 2*z], (x, y, z))[0]",
+    ),
+  )
+  assert_eq(
+    local_matrix_list_text(b3),
+    py_matrix_list_text(
+      "sympy.solvers.linear_eq_to_matrix([sympy.Eq(3*x + 2*y - z, 1), sympy.Eq(2*x - 2*y + 4*z, -2), -2*x + y - 2*z], (x, y, z))[1]",
+    ),
+  )
 
   let a_sym = @symcore.Expr::Symbol("a")
   let b_sym = @symcore.Expr::Symbol("b")
@@ -2051,29 +2361,89 @@ test "solvers parity linear_eq_to_matrix and linsolve batch 4 additional public 
     i_sym * x() + j_sym * y() + k_sym * z() - l_sym,
   ]
   let (a4, b4) = @symsolvers.linear_eq_to_matrix(eqns3, [x(), y(), z()])
-  assert_eq(local_matrix_list_text(a4), py_matrix_list_text_symbols("sympy.solvers.linear_eq_to_matrix([a*b*x + b*y + c*z - d, e*x + d*x + f*y + g*z - h, i*x + j*y + k*z - l], (x, y, z))[0]", "x y z a b c d e f g h i j k l"))
-  assert_eq(local_matrix_list_text(b4), py_matrix_list_text_symbols("sympy.solvers.linear_eq_to_matrix([a*b*x + b*y + c*z - d, e*x + d*x + f*y + g*z - h, i*x + j*y + k*z - l], (x, y, z))[1]", "x y z a b c d e f g h i j k l"))
+  assert_eq(
+    local_matrix_list_text(a4),
+    py_matrix_list_text_symbols(
+      "sympy.solvers.linear_eq_to_matrix([a*b*x + b*y + c*z - d, e*x + d*x + f*y + g*z - h, i*x + j*y + k*z - l], (x, y, z))[0]",
+      "x y z a b c d e f g h i j k l",
+    ),
+  )
+  assert_eq(
+    local_matrix_list_text(b4),
+    py_matrix_list_text_symbols(
+      "sympy.solvers.linear_eq_to_matrix([a*b*x + b*y + c*z - d, e*x + d*x + f*y + g*z - h, i*x + j*y + k*z - l], (x, y, z))[1]",
+      "x y z a b c d e f g h i j k l",
+    ),
+  )
 
   let (a5, b5) = @symsolvers.linear_eq_to_matrix(
-    [x() + y() * (z() * (@symcore.int(3) * x() + @symcore.int(2)) + @symcore.int(3))],
+    [
+      x() +
+      y() * (z() * (@symcore.int(3) * x() + @symcore.int(2)) + @symcore.int(3)),
+    ],
     [x()],
   )
-  assert_eq(local_matrix_list_text(a5), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(x + y*(z*(3*x + 2) + 3), x)[0]"))
-  assert_eq(local_matrix_list_text(b5), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(x + y*(z*(3*x + 2) + 3), x)[1]"))
+  assert_eq(
+    local_matrix_list_text(a5),
+    py_matrix_list_text(
+      "sympy.solvers.linear_eq_to_matrix(x + y*(z*(3*x + 2) + 3), x)[0]",
+    ),
+  )
+  assert_eq(
+    local_matrix_list_text(b5),
+    py_matrix_list_text(
+      "sympy.solvers.linear_eq_to_matrix(x + y*(z*(3*x + 2) + 3), x)[1]",
+    ),
+  )
 
   let (a6, b6) = @symsolvers.linear_eq_to_matrix(
-    [@symcore.Expr::Relational(@symcore.RelOp::Eq, x() + @symcore.int(2), @symcore.int(1))],
+    [
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        x() + @symcore.int(2),
+        @symcore.int(1),
+      ),
+    ],
     [x()],
   )
-  assert_eq(local_matrix_list_text(a6), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(sympy.Eq(x + 2, 1), x)[0]"))
-  assert_eq(local_matrix_list_text(b6), py_matrix_list_text("sympy.solvers.linear_eq_to_matrix(sympy.Eq(x + 2, 1), x)[1]"))
+  assert_eq(
+    local_matrix_list_text(a6),
+    py_matrix_list_text(
+      "sympy.solvers.linear_eq_to_matrix(sympy.Eq(x + 2, 1), x)[0]",
+    ),
+  )
+  assert_eq(
+    local_matrix_list_text(b6),
+    py_matrix_list_text(
+      "sympy.solvers.linear_eq_to_matrix(sympy.Eq(x + 2, 1), x)[1]",
+    ),
+  )
 
   let (a7, b7) = @symsolvers.linear_eq_to_matrix(
-    [@symcore.Expr::Relational(@symcore.RelOp::Eq, a_sym * (@symcore.int(2) * x() + @symcore.int(3) * y()) + @symcore.int(4) * y(), @symcore.int(5))],
+    [
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        a_sym * (@symcore.int(2) * x() + @symcore.int(3) * y()) +
+        @symcore.int(4) * y(),
+        @symcore.int(5),
+      ),
+    ],
     [x(), y()],
   )
-  assert_eq(local_matrix_list_text(a7), py_matrix_list_text_symbols("sympy.solvers.linear_eq_to_matrix(sympy.Eq(a*(2*x + 3*y) + 4*y, 5), x, y)[0]", "x y a"))
-  assert_eq(local_matrix_list_text(b7), py_matrix_list_text_symbols("sympy.solvers.linear_eq_to_matrix(sympy.Eq(a*(2*x + 3*y) + 4*y, 5), x, y)[1]", "x y a"))
+  assert_eq(
+    local_matrix_list_text(a7),
+    py_matrix_list_text_symbols(
+      "sympy.solvers.linear_eq_to_matrix(sympy.Eq(a*(2*x + 3*y) + 4*y, 5), x, y)[0]",
+      "x y a",
+    ),
+  )
+  assert_eq(
+    local_matrix_list_text(b7),
+    py_matrix_list_text_symbols(
+      "sympy.solvers.linear_eq_to_matrix(sympy.Eq(a*(2*x + 3*y) + 4*y, 5), x, y)[1]",
+      "x y a",
+    ),
+  )
 
   let a_free = @symcore.Expr::Symbol("a_free")
   let b_free = @symcore.Expr::Symbol("b_free")
@@ -2085,14 +2455,31 @@ test "solvers parity linear_eq_to_matrix and linsolve batch 4 additional public 
       @symsolvers.linsolve(
         @symsolvers.linsolve_augmented_matrix_input(
           @symmatrices.matrix([
-            [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(0)],
-            [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0)],
+            [
+              @symcore.int(0),
+              @symcore.int(1),
+              @symcore.int(0),
+              @symcore.int(0),
+              @symcore.int(0),
+              @symcore.int(0),
+            ],
+            [
+              @symcore.int(0),
+              @symcore.int(0),
+              @symcore.int(0),
+              @symcore.int(1),
+              @symcore.int(0),
+              @symcore.int(0),
+            ],
           ]),
         ),
         [a_free, b_free, c_free, d_free, e_free],
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.linsolve(sympy.Matrix([[0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0]]), (a_free, b_free, c_free, d_free, e_free)))", "a_free b_free c_free d_free e_free"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.linsolve(sympy.Matrix([[0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0]]), (a_free, b_free, c_free, d_free, e_free)))",
+      "a_free b_free c_free d_free e_free",
+    ),
   )
 
   assert_eq(
@@ -2100,13 +2487,18 @@ test "solvers parity linear_eq_to_matrix and linsolve batch 4 additional public 
       @symsolvers.linsolve(
         @symsolvers.linsolve_equations_input([
           x() + @symcore.int(2) * y() + @symcore.int(3) * z(),
-          @symcore.int(2) * x() + @symcore.int(4) * y() + @symcore.int(6) * z() + @symcore.int(-1),
+          @symcore.int(2) * x() +
+          @symcore.int(4) * y() +
+          @symcore.int(6) * z() +
+          @symcore.int(-1),
           @symcore.int(3) * x() + @symcore.int(6) * y() + @symcore.int(9) * z(),
         ]),
         [x(), y(), z()],
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.linsolve([x + 2*y + 3*z, 2*x + 4*y + 6*z - 1, 3*x + 6*y + 9*z], (x, y, z)))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.linsolve([x + 2*y + 3*z, 2*x + 4*y + 6*z - 1, 3*x + 6*y + 9*z], (x, y, z)))",
+    ),
   )
 }
 
@@ -2119,11 +2511,16 @@ test "solvers parity linsolve batch 5 additional public cases" {
   let eqns = [
     x1 + @symcore.int(2) * x2 + x3 + x4 + @symcore.int(-7),
     x1 + @symcore.int(2) * x2 + @symcore.int(2) * x3 - x4 + @symcore.int(-12),
-    @symcore.int(2) * x1 + @symcore.int(4) * x2 + @symcore.int(6) * x4 + @symcore.int(-4),
+    @symcore.int(2) * x1 +
+    @symcore.int(4) * x2 +
+    @symcore.int(6) * x4 +
+    @symcore.int(-4),
   ]
   assert_eq(
     finite_set_single_tuple_residuals_match_oracle(
-      @symsolvers.linsolve(@symsolvers.linsolve_equations_input(eqns), [x1, x2, x3, x4]),
+      @symsolvers.linsolve(@symsolvers.linsolve_equations_input(eqns), [
+        x1, x2, x3, x4,
+      ]),
       "sympy.solvers.linsolve([x1 + 2*x2 + x3 + x4 - 7, x1 + 2*x2 + 2*x3 - x4 - 12, 2*x1 + 4*x2 + 6*x4 - 4], (x1, x2, x3, x4))",
       "x1 x2 x3 x4",
     ),
@@ -2134,9 +2531,27 @@ test "solvers parity linsolve batch 5 additional public cases" {
       @symsolvers.linsolve(
         @symsolvers.linsolve_augmented_matrix_input(
           @symmatrices.matrix([
-            [@symcore.int(1), @symcore.int(2), @symcore.int(1), @symcore.int(1), @symcore.int(7)],
-            [@symcore.int(1), @symcore.int(2), @symcore.int(2), @symcore.int(-1), @symcore.int(12)],
-            [@symcore.int(2), @symcore.int(4), @symcore.int(0), @symcore.int(6), @symcore.int(4)],
+            [
+              @symcore.int(1),
+              @symcore.int(2),
+              @symcore.int(1),
+              @symcore.int(1),
+              @symcore.int(7),
+            ],
+            [
+              @symcore.int(1),
+              @symcore.int(2),
+              @symcore.int(2),
+              @symcore.int(-1),
+              @symcore.int(12),
+            ],
+            [
+              @symcore.int(2),
+              @symcore.int(4),
+              @symcore.int(0),
+              @symcore.int(6),
+              @symcore.int(4),
+            ],
           ]),
         ),
         [x1, x2, x3, x4],
@@ -2147,47 +2562,84 @@ test "solvers parity linsolve batch 5 additional public cases" {
     "[0, 0, 0, 0]",
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.linsolve(@symsolvers.linsolve_equations_input([]), [x()])),
+    @symsets.to_string(
+      @symsolvers.linsolve(@symsolvers.linsolve_equations_input([]), [x()]),
+    ),
     solvers_eval_str("sympy.sstr(sympy.solvers.linsolve([], [x]))"),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.linsolve(@symsolvers.linsolve_equations_input([@symcore.int(0)]), [x()])),
+    @symsets.to_string(
+      @symsolvers.linsolve(
+        @symsolvers.linsolve_equations_input([@symcore.int(0)]),
+        [x()],
+      ),
+    ),
     solvers_eval_str("sympy.sstr(sympy.solvers.linsolve([0], [x]))"),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.linsolve(@symsolvers.linsolve_equations_input([x()]), [x(), y()])),
+    @symsets.to_string(
+      @symsolvers.linsolve(@symsolvers.linsolve_equations_input([x()]), [
+        x(),
+        y(),
+      ]),
+    ),
     solvers_eval_str("sympy.sstr(sympy.solvers.linsolve([x], [x, y]))"),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.linsolve(@symsolvers.linsolve_equations_input([x(), @symcore.int(0)]), [x(), y()])),
+    @symsets.to_string(
+      @symsolvers.linsolve(
+        @symsolvers.linsolve_equations_input([x(), @symcore.int(0)]),
+        [x(), y()],
+      ),
+    ),
     solvers_eval_str("sympy.sstr(sympy.solvers.linsolve([x, 0], [x, y]))"),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.linsolve(
-        @symsolvers.linsolve_equations_input([@symcore.Expr::Relational(@symcore.RelOp::Eq, x(), x() + y())]),
+        @symsolvers.linsolve_equations_input([
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), x() + y()),
+        ]),
         [x(), y()],
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.linsolve([sympy.Eq(x, x + y)], [x, y]))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.linsolve([sympy.Eq(x, x + y)], [x, y]))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.linsolve(
-        @symsolvers.linsolve_equations_input([@symcore.Expr::Relational(@symcore.RelOp::Eq, x() + x() * y(), @symcore.int(1) + y())]),
+        @symsolvers.linsolve_equations_input([
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            x() + x() * y(),
+            @symcore.int(1) + y(),
+          ),
+        ]),
         [x()],
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.linsolve([sympy.Eq(x + x*y, 1 + y)], [x]))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.linsolve([sympy.Eq(x + x*y, 1 + y)], [x]))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.linsolve(
-        @symsolvers.linsolve_equations_input([@symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(1) + y(), x() + x() * y())]),
+        @symsolvers.linsolve_equations_input([
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            @symcore.int(1) + y(),
+            x() + x() * y(),
+          ),
+        ]),
         [x()],
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.linsolve([sympy.Eq(1 + y, x + x*y)], [x]))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.linsolve([sympy.Eq(1 + y, x + x*y)], [x]))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
@@ -2199,7 +2651,9 @@ test "solvers parity linsolve batch 5 additional public cases" {
         [z(), y()],
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.linsolve([x + z - 1, x**2 + y - 3], [z, y]))", "x y z"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.linsolve([x + z - 1, x**2 + y - 3], [z, y]))", "x y z",
+    ),
   )
 }
 
@@ -2214,7 +2668,10 @@ test "solvers parity linsolve and solveset batch 6 additional public cases" {
   assert_eq(
     finite_set_single_tuple_residuals_match_oracle(
       @symsolvers.linsolve(
-        @symsolvers.linsolve_equations_input([a * x() + b * y() + @symcore.int(-1) * e, c * x() + d * y() + @symcore.int(-1) * gsym]),
+        @symsolvers.linsolve_equations_input([
+          a * x() + b * y() + @symcore.int(-1) * e,
+          c * x() + d * y() + @symcore.int(-1) * gsym,
+        ]),
         [x(), y()],
       ),
       "sympy.solvers.linsolve([a*x + b*y - e, c*x + d*y - g], (x, y))",
@@ -2235,21 +2692,37 @@ test "solvers parity linsolve and solveset batch 6 additional public cases" {
         [x(), y(), z()],
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.linsolve(sympy.Matrix([[1, 2, 3, 0], [2, 4, 6, 0], [3, 6, 9, 1]]), (x, y, z)))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.linsolve(sympy.Matrix([[1, 2, 3, 0], [2, 4, 6, 0], [3, 6, 9, 1]]), (x, y, z)))",
+    ),
   )
   let avar = @symcore.Expr::Symbol("A")
   let bvar = @symcore.Expr::Symbol("B")
   let j1 = @symcore.Expr::Symbol("J1")
   let j2 = @symcore.Expr::Symbol("J2")
-  let imag = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let imag = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::ImaginaryUnit,
+  )
   assert_eq(
     finite_set_single_tuple_residuals_match_oracle(
       @symsolvers.linsolve(
         @symsolvers.linsolve_augmented_matrix_input(
           @symmatrices.matrix([
-            [@symcore.int(2) * imag * j1, @symcore.int(2) * imag * j2, @symcore.int(-2) * (j1 ^ @symcore.int(-1))],
-            [@symcore.int(-2) * imag * j2, @symcore.int(-2) * imag * j1, @symcore.int(2) * (j2 ^ @symcore.int(-1))],
-            [@symcore.int(0), @symcore.int(2), @symcore.int(2) * imag * ((j1 * j2) ^ @symcore.int(-1))],
+            [
+              @symcore.int(2) * imag * j1,
+              @symcore.int(2) * imag * j2,
+              @symcore.int(-2) * (j1 ^ @symcore.int(-1)),
+            ],
+            [
+              @symcore.int(-2) * imag * j2,
+              @symcore.int(-2) * imag * j1,
+              @symcore.int(2) * (j2 ^ @symcore.int(-1)),
+            ],
+            [
+              @symcore.int(0),
+              @symcore.int(2),
+              @symcore.int(2) * imag * ((j1 * j2) ^ @symcore.int(-1)),
+            ],
             [@symcore.int(2), @symcore.int(0), @symcore.int(0)],
           ]),
         ),
@@ -2262,23 +2735,47 @@ test "solvers parity linsolve and solveset batch 6 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(a * (x() ^ @symcore.int(2)) + b * x() + c, symbol=Some(x()), domain=@symsolvers.complexes),
+      @symsolvers.solveset(
+        a * (x() ^ @symcore.int(2)) + b * x() + c,
+        symbol=Some(x()),
+        domain=@symsolvers.complexes,
+      ),
       "sympy.solvers.solveset(a*x**2 + b*x + c, x, sympy.solvers.Complexes)",
       "x a b c",
     ),
     "True",
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(0), symbol=Some(x()), domain=@symsolvers.complexes)),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(0, x, sympy.solvers.Complexes))"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(0),
+        symbol=Some(x()),
+        domain=@symsolvers.complexes,
+      ),
+    ),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(0, x, sympy.solvers.Complexes))",
+    ),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(4), symbol=Some(x()), domain=@symsolvers.complexes)),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(4, x, sympy.solvers.Complexes))"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(4),
+        symbol=Some(x()),
+        domain=@symsolvers.complexes,
+      ),
+    ),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(4, x, sympy.solvers.Complexes))",
+    ),
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(@symcore.int(3) * x() + @symcore.int(-2), symbol=Some(x()), domain=@symsolvers.complexes),
+      @symsolvers.solveset(
+        @symcore.int(3) * x() + @symcore.int(-2),
+        symbol=Some(x()),
+        domain=@symsolvers.complexes,
+      ),
       "sympy.solvers.solveset(3*x - 2, x, sympy.solvers.Complexes)",
       "x",
     ),
@@ -2286,7 +2783,11 @@ test "solvers parity linsolve and solveset batch 6 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset((x() ^ @symcore.int(2)) + @symcore.int(1), symbol=Some(x()), domain=@symsolvers.complexes),
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(2)) + @symcore.int(1),
+        symbol=Some(x()),
+        domain=@symsolvers.complexes,
+      ),
       "sympy.solvers.solveset(x**2 + 1, x, sympy.solvers.Complexes)",
       "x",
     ),
@@ -2294,7 +2795,11 @@ test "solvers parity linsolve and solveset batch 6 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset((x() ^ @symcore.int(2)) + @symcore.int(-1), symbol=Some(x()), domain=@symsolvers.complexes),
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(2)) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsolvers.complexes,
+      ),
       "sympy.solvers.solveset(x**2 - 1, x, sympy.solvers.Complexes)",
       "x",
     ),
@@ -2302,7 +2807,11 @@ test "solvers parity linsolve and solveset batch 6 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset((x() ^ @symcore.int(2)) + x(), symbol=Some(x()), domain=@symsolvers.complexes),
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(2)) + x(),
+        symbol=Some(x()),
+        domain=@symsolvers.complexes,
+      ),
       "sympy.solvers.solveset(x**2 + x, x, sympy.solvers.Complexes)",
       "x",
     ),
@@ -2314,7 +2823,11 @@ test "solvers parity linsolve and solveset batch 6 additional public cases" {
 test "solvers parity solveset batch 7 additional public cases" {
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(@symcore.function("exp", [x()]) + @symcore.int(-3), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        @symcore.function("exp", [x()]) + @symcore.int(-3),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.exp(x) - 3, x)",
       "x",
     ),
@@ -2322,7 +2835,11 @@ test "solvers parity solveset batch 7 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(@symcore.function("log", [x()]) + @symcore.int(-3), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        @symcore.function("log", [x()]) + @symcore.int(-3),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.log(x) - 3, x)",
       "x",
     ),
@@ -2330,7 +2847,11 @@ test "solvers parity solveset batch 7 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset((@symcore.int(2) ^ x()) + @symcore.int(-10), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (@symcore.int(2) ^ x()) + @symcore.int(-10),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(2**x - 10, x)",
       "x",
     ),
@@ -2338,7 +2859,11 @@ test "solvers parity solveset batch 7 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset((x() ^ @symcore.int(-1)) + @symcore.int(1), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(-1)) + @symcore.int(1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(1/x + 1, x)",
       "x",
     ),
@@ -2346,7 +2871,11 @@ test "solvers parity solveset batch 7 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset((@symcore.function("exp", [x()]) ^ @symcore.int(-1)) + @symcore.int(-1), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (@symcore.function("exp", [x()]) ^ @symcore.int(-1)) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(1/sympy.exp(x) - 1, x)",
       "x",
     ),
@@ -2354,7 +2883,11 @@ test "solvers parity solveset batch 7 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(x() * (@symcore.int(1) + @symcore.int(-5) * (x() ^ @symcore.int(-1))), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        x() * (@symcore.int(1) + @symcore.int(-5) * (x() ^ @symcore.int(-1))),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x*(1 - 5/x), x)",
       "x",
     ),
@@ -2363,7 +2896,8 @@ test "solvers parity solveset batch 7 additional public cases" {
   assert_eq(
     finite_set_exprs_match_oracle(
       @symsolvers.solveset(
-        @symcore.int(2) * x() * ((x() + @symcore.int(2)) ^ @symcore.int(-1)) + @symcore.int(-1),
+        @symcore.int(2) * x() * ((x() + @symcore.int(2)) ^ @symcore.int(-1)) +
+        @symcore.int(-1),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
@@ -2374,7 +2908,11 @@ test "solvers parity solveset batch 7 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(x() + @symcore.int(-1) * (y() ^ @symcore.int(3)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        x() + @symcore.int(-1) * (y() ^ @symcore.int(3)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x - y**3, x))",
@@ -2383,7 +2921,11 @@ test "solvers parity solveset batch 7 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(sqrt(x()) + @symcore.int(-2), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        sqrt(x()) + @symcore.int(-2),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(x) - 2, x)",
       "x",
     ),
@@ -2392,7 +2934,11 @@ test "solvers parity solveset batch 7 additional public cases" {
   assert_eq(
     finite_set_exprs_match_oracle(
       @symsolvers.solveset(
-        (x() ^ (@symcore.rational_from_ints(1, 4) catch { _ => fail("quarter") })) + @symcore.int(-2),
+        (
+          x() ^
+          (@symcore.rational_from_ints(1, 4) catch { _ => fail("quarter") })
+        ) +
+        @symcore.int(-2),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
@@ -2407,7 +2953,11 @@ test "solvers parity solveset batch 7 additional public cases" {
 test "solvers parity solveset batch 8 additional public cases" {
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(@symcore.raw_pow(@symcore.int(0), x()) + @symcore.int(-100), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        @symcore.raw_pow(@symcore.int(0), x()) + @symcore.int(-100),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(0**x - 100, x))",
@@ -2416,7 +2966,11 @@ test "solvers parity solveset batch 8 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(@symcore.raw_pow(@symcore.int(0), x()) + @symcore.int(-1), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        @symcore.raw_pow(@symcore.int(0), x()) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(0**x - 1, x))",
@@ -2425,7 +2979,12 @@ test "solvers parity solveset batch 8 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset((@symcore.int(2) * x() + @symcore.int(8)) * (@symcore.int(8) + @symcore.function("exp", [x()])), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (@symcore.int(2) * x() + @symcore.int(8)) *
+        (@symcore.int(8) + @symcore.function("exp", [x()])),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((2*x + 8)*(8 + sympy.exp(x)), x))",
@@ -2434,7 +2993,11 @@ test "solvers parity solveset batch 8 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(x() * (@symcore.function("log", [x()]) ^ @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        x() * (@symcore.function("log", [x()]) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x/sympy.log(x), x))",
@@ -2443,7 +3006,11 @@ test "solvers parity solveset batch 8 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(@symcore.int(3) * x() + @symcore.int(-2), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        @symcore.int(3) * x() + @symcore.int(-2),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(3*x - 2, x))",
@@ -2452,7 +3019,11 @@ test "solvers parity solveset batch 8 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset((x() ^ @symcore.int(2)) + @symcore.int(-1), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(2)) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**2 - 1, x))",
@@ -2462,7 +3033,8 @@ test "solvers parity solveset batch 8 additional public cases" {
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        (x() ^ (@symcore.rational_from_ints(1, 3) catch { _ => fail("third") })) + @symcore.int(-3),
+        (x() ^ (@symcore.rational_from_ints(1, 3) catch { _ => fail("third") })) +
+        @symcore.int(-3),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
@@ -2473,14 +3045,26 @@ test "solvers parity solveset batch 8 additional public cases" {
     ),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(4), symbol=Some(x()), domain=@symsets.reals())),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(4),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(4, x))",
       "x",
     ),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(0), symbol=Some(x()), domain=@symsets.reals())),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(0),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(0, x))",
       "x",
@@ -2508,7 +3092,11 @@ test "solvers parity solveset batch 8 additional public cases" {
 test "solvers parity solveset batch 9 additional public cases" {
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset((x() ^ @symcore.int(3)) + @symcore.int(-8), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(3)) + @symcore.int(-8),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**3 - 8, x))",
@@ -2517,7 +3105,11 @@ test "solvers parity solveset batch 9 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset((x() ^ @symcore.int(3)) + @symcore.int(1), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(3)) + @symcore.int(1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**3 + 1, x))",
@@ -2526,7 +3118,11 @@ test "solvers parity solveset batch 9 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset((@symcore.int(2) ^ (x() + @symcore.int(1))) + @symcore.int(-8), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (@symcore.int(2) ^ (x() + @symcore.int(1))) + @symcore.int(-8),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(2**(x + 1) - 8, x))",
@@ -2535,7 +3131,11 @@ test "solvers parity solveset batch 9 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(@symcore.function("exp", [@symcore.int(2) * x()]) + @symcore.int(-1), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        @symcore.function("exp", [@symcore.int(2) * x()]) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.exp(2*x) - 1, x))",
@@ -2544,7 +3144,11 @@ test "solvers parity solveset batch 9 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(sqrt(x() + @symcore.int(1)) + @symcore.int(-3), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        sqrt(x() + @symcore.int(1)) + @symcore.int(-3),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(x + 1) - 3, x))",
@@ -2554,7 +3158,11 @@ test "solvers parity solveset batch 9 additional public cases" {
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        ((x() + @symcore.int(1)) ^ (@symcore.rational_from_ints(1, 3) catch { _ => fail("third") })) + @symcore.int(-2),
+        (
+          (x() + @symcore.int(1)) ^
+          (@symcore.rational_from_ints(1, 3) catch { _ => fail("third") })
+        ) +
+        @symcore.int(-2),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
@@ -2566,7 +3174,11 @@ test "solvers parity solveset batch 9 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(((x() + @symcore.int(-2)) ^ @symcore.int(-1)) + @symcore.int(1), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        ((x() + @symcore.int(-2)) ^ @symcore.int(-1)) + @symcore.int(1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(1/(x - 2) + 1, x))",
@@ -2575,7 +3187,11 @@ test "solvers parity solveset batch 9 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset((x() + @symcore.int(-1)) * ((x() + @symcore.int(2)) ^ @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (x() + @symcore.int(-1)) * ((x() + @symcore.int(2)) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((x - 1)/(x + 2), x))",
@@ -2584,7 +3200,12 @@ test "solvers parity solveset batch 9 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(((x() ^ @symcore.int(2)) + @symcore.int(-4)) * ((x() + @symcore.int(-2)) ^ @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        ((x() ^ @symcore.int(2)) + @symcore.int(-4)) *
+        ((x() + @symcore.int(-2)) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((x**2 - 4)/(x - 2), x))",
@@ -2593,7 +3214,11 @@ test "solvers parity solveset batch 9 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset((x() + @symcore.int(-2)) * ((x() ^ @symcore.int(2)) + @symcore.int(1)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (x() + @symcore.int(-2)) * ((x() ^ @symcore.int(2)) + @symcore.int(1)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((x - 2)*(x**2 + 1), x))",
@@ -2607,22 +3232,92 @@ test "solvers parity solveset batch 10 additional public cases" {
   let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(@symcalculus.diff((x() ^ @symcore.int(2)) * ((@symcore.int(7) + @symcore.int(-1) * x()) ^ @symcore.int(-1)), x()), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        @symcalculus.diff(
+          (x() ^ @symcore.int(2)) *
+          ((@symcore.int(7) + @symcore.int(-1) * x()) ^ @symcore.int(-1)),
+          x(),
+        ),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.diff(x**2/(7 - x), x), x))",
       "x",
     ),
   )
-  assert_eq(@symsets.to_string(@symsolvers.solveset(@symcore.int(3) ^ (x() + @symcore.int(2)), symbol=Some(x()), domain=@symsets.reals())), solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(3**(x + 2), x))", "x"))
-  assert_eq(@symsets.to_string(@symsolvers.solveset(@symcore.int(3) ^ (@symcore.int(2) + @symcore.int(-1) * x()), symbol=Some(x()), domain=@symsets.reals())), solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(3**(2 - x), x))", "x"))
-  assert_eq(@symsets.to_string(@symsolvers.solveset(@symcore.function("exp", [x()]), symbol=Some(x()), domain=@symsets.reals())), solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.exp(x), x))", "x"))
-  assert_eq(@symsets.to_string(@symsolvers.solveset((x() ^ @symcore.int(2)) + @symcore.int(1), symbol=Some(x()), domain=@symsets.reals())), solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**2 + 1, x))", "x"))
-  assert_eq(@symsets.to_string(@symsolvers.solveset(x() ^ @symcore.int(-1), symbol=Some(x()), domain=@symsets.reals())), solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(1/x, x))", "x"))
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        (@symcore.int(-1) * ((@symcore.int(1) + x()) * ((@symcore.int(2) + x()) ^ @symcore.int(-2)))) + ((@symcore.int(2) + x()) ^ @symcore.int(-1)),
+        @symcore.int(3) ^ (x() + @symcore.int(2)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(3**(x + 2), x))",
+      "x",
+    ),
+  )
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(3) ^ (@symcore.int(2) + @symcore.int(-1) * x()),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(3**(2 - x), x))",
+      "x",
+    ),
+  )
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.function("exp", [x()]),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.exp(x), x))",
+      "x",
+    ),
+  )
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(2)) + @symcore.int(1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**2 + 1, x))",
+      "x",
+    ),
+  )
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        x() ^ @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(1/x, x))",
+      "x",
+    ),
+  )
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(-1) *
+        ((@symcore.int(1) + x()) * ((@symcore.int(2) + x()) ^ @symcore.int(-2))) +
+        ((@symcore.int(2) + x()) ^ @symcore.int(-1)),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
@@ -2634,7 +3329,12 @@ test "solvers parity solveset batch 10 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(((x() * ((x() + @symcore.int(1)) ^ @symcore.int(-1))) + @symcore.int(3)) ^ @symcore.int(-2), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (x() * ((x() + @symcore.int(1)) ^ @symcore.int(-1)) + @symcore.int(3)) ^
+        @symcore.int(-2),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((x/(x + 1) + 3)**(-2), x))",
@@ -2643,7 +3343,15 @@ test "solvers parity solveset batch 10 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset((x() + @symcore.int(-1)) * ((@symcore.int(1) + ((x() + @symcore.int(-1)) ^ @symcore.int(-1))) ^ @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        (x() + @symcore.int(-1)) *
+        (
+          (@symcore.int(1) + ((x() + @symcore.int(-1)) ^ @symcore.int(-1))) ^
+          @symcore.int(-1)
+        ),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((x - 1)/(1 + 1/(x - 1)), x))",
@@ -2652,7 +3360,12 @@ test "solvers parity solveset batch 10 additional public cases" {
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(sqrt((x() + @symcore.int(-3)) * (x() ^ @symcore.int(-1))) + (@symcore.int(-1) * half), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        sqrt((x() + @symcore.int(-3)) * (x() ^ @symcore.int(-1))) +
+        @symcore.int(-1) * half,
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str_symbols(
       "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt((x - 3)/x) - sympy.Rational(1, 2), x))",
@@ -2671,63 +3384,100 @@ test "solvers parity simplex and solveset batch 11 additional public cases" {
 
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        x() - y(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmax(x() - y(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          x(),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          x(),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(x - y, [x <= y + 2, sympy.Eq(x, y + 2), x >= 0, y >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(x - y, [x <= y + 2, sympy.Eq(x, y + 2), x >= 0, y >= 0]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        x(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + z()),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmin(x(), [
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + z()),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmin(x, [y >= 1, x >= y + z, x >= 0, z >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmin(x, [y >= 1, x >= y + z, x >= 0, z >= 0]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        @symcore.int(5) * x2 + x3 + @symcore.int(4) * x4 - x1,
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(5) * x2 + @symcore.int(2) * x3 + @symcore.int(5) * x4 - x1, @symcore.int(5)),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(3) * x2 + x4, @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(-1) * x1 + x3 + @symcore.int(2) * x4, @symcore.int(1)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x1, @symcore.int(1)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x2, @symcore.int(1)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x3, @symcore.int(1)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x4, @symcore.int(1)),
-        ],
-      ),
+      @symsolvers.lpmin(@symcore.int(5) * x2 + x3 + @symcore.int(4) * x4 - x1, [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(5) * x2 +
+          @symcore.int(2) * x3 +
+          @symcore.int(5) * x4 -
+          x1,
+          @symcore.int(5),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.int(3) * x2 + x4,
+          @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.int(-1) * x1 + x3 + @symcore.int(2) * x4,
+          @symcore.int(1),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Le, x1, @symcore.int(1)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Le, x2, @symcore.int(1)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Le, x3, @symcore.int(1)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Le, x4, @symcore.int(1)),
+      ]),
     ),
-    solvers_eval_str_symbols("repr(sympy.solvers.lpmin(5*x2 + x3 + 4*x4 - x1, [5*x2 + 2*x3 + 5*x4 - (x1 + 5) <= 0, sympy.Eq(3*x2 + x4, 2), sympy.Eq(-x1 + x3 + 2*x4, 1), x1 >= 0, x1 <= 1, x2 >= 0, x2 <= 1, x3 >= 0, x3 <= 1, x4 >= 0, x4 <= 1]))", "x1 x2 x3 x4"),
+    solvers_eval_str_symbols(
+      "repr(sympy.solvers.lpmin(5*x2 + x3 + 4*x4 - x1, [5*x2 + 2*x3 + 5*x4 - (x1 + 5) <= 0, sympy.Eq(3*x2 + x4, 2), sympy.Eq(-x1 + x3 + 2*x4, 1), x1 >= 0, x1 <= 1, x2 >= 0, x2 <= 1, x3 >= 0, x3 <= 1, x4 >= 0, x4 <= 1]))",
+      "x1 x2 x3 x4",
+    ),
   )
   assert_eq(
     local_linprog_result_text(
       @symsolvers.linprog(
         [@symcore.int(-1), @symcore.int(5), @symcore.int(1), @symcore.int(4)],
-        a=Some(@symmatrices.matrix([[@symcore.int(-1), @symcore.int(5), @symcore.int(2), @symcore.int(5)]])),
+        a=Some(
+          @symmatrices.matrix([
+            [
+              @symcore.int(-1),
+              @symcore.int(5),
+              @symcore.int(2),
+              @symcore.int(5),
+            ],
+          ]),
+        ),
         b=Some([@symcore.int(5)]),
-        a_eq=Some(@symmatrices.matrix([
-          [@symcore.int(0), @symcore.int(3), @symcore.int(0), @symcore.int(1)],
-          [@symcore.int(-1), @symcore.int(0), @symcore.int(1), @symcore.int(2)],
-        ])),
+        a_eq=Some(
+          @symmatrices.matrix([
+            [@symcore.int(0), @symcore.int(3), @symcore.int(0), @symcore.int(1)],
+            [
+              @symcore.int(-1),
+              @symcore.int(0),
+              @symcore.int(1),
+              @symcore.int(2),
+            ],
+          ]),
+        ),
         b_eq=Some([@symcore.int(2), @symcore.int(1)]),
         bounds=Some([
           (Some(@symcore.int(0)), Some(@symcore.int(1))),
@@ -2737,82 +3487,140 @@ test "solvers parity simplex and solveset batch 11 additional public cases" {
         ]),
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.linprog([-1, 5, 1, 4], [[-1, 5, 2, 5]], [5], [[0, 3, 0, 1], [-1, 0, 1, 2]], [2, 1], bounds=(0, 1)))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.linprog([-1, 5, 1, 4], [[-1, 5, 2, 5]], [5], [[0, 3, 0, 1], [-1, 0, 1, 2]], [2, 1], bounds=(0, 1)))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        x() + y() - @symcore.int(2) * z() + @symcore.int(1),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(), @symcore.int(3)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(3) * x() - y() + @symcore.int(10) * z(), @symcore.int(6)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, y() + @symcore.int(-9) * x(), @symcore.int(1)),
-        ],
-      ),
+      @symsolvers.lpmin(x() + y() - @symcore.int(2) * z() + @symcore.int(1), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(),
+          @symcore.int(3),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(3) * x() - y() + @symcore.int(10) * z(),
+          @symcore.int(6),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          y() + @symcore.int(-9) * x(),
+          @symcore.int(1),
+        ),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmin(x + y - 2*z + 1, [7*x + 4*y - 7*z <= 3, 3*x - y + 10*z <= 6, x >= 0, y >= 0, z >= 0, sympy.Eq(y - 9*x, 1)]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmin(x + y - 2*z + 1, [7*x + 4*y - 7*z <= 3, 3*x - y + 10*z <= 6, x >= 0, y >= 0, z >= 0, sympy.Eq(y - 9*x, 1)]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        x() + y() - @symcore.int(2) * z() + @symcore.int(1),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(), @symcore.int(3)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(3) * x() - y() + @symcore.int(10) * z(), @symcore.int(6)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, z() - y(), half),
-        ],
-      ),
+      @symsolvers.lpmin(x() + y() - @symcore.int(2) * z() + @symcore.int(1), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(),
+          @symcore.int(3),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(3) * x() - y() + @symcore.int(10) * z(),
+          @symcore.int(6),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Le, z() - y(), half),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmin(x + y - 2*z + 1, [7*x + 4*y - 7*z <= 3, 3*x - y + 10*z <= 6, x >= 0, y >= 0, z >= 0, z - y <= S.Half]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmin(x + y - 2*z + 1, [7*x + 4*y - 7*z <= 3, 3*x - y + 10*z <= 6, x >= 0, y >= 0, z >= 0, z - y <= S.Half]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        x() + y() - @symcore.int(2) * z() + @symcore.int(1),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(), @symcore.int(3)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(3) * x() - y() + @symcore.int(10) * z(), @symcore.int(6)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, z(), half),
-        ],
+      @symsolvers.lpmin(x() + y() - @symcore.int(2) * z() + @symcore.int(1), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(),
+          @symcore.int(3),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(3) * x() - y() + @symcore.int(10) * z(),
+          @symcore.int(6),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Le, z(), half),
+      ]),
+    ),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmin(x + y - 2*z + 1, [7*x + 4*y - 7*z <= 3, 3*x - y + 10*z <= 6, x >= 0, y >= 0, z >= 0, z <= S.Half]))",
+    ),
+  )
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        sqrt(x()) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmin(x + y - 2*z + 1, [7*x + 4*y - 7*z <= 3, 3*x - y + 10*z <= 6, x >= 0, y >= 0, z >= 0, z <= S.Half]))"),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(x) - 1, x))",
+      "x",
+    ),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(sqrt(x()) + @symcore.int(-1), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(x) - 1, x))", "x"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        sqrt(x() + @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(x - 1), x))",
+      "x",
+    ),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(sqrt(x() + @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(x - 1), x))", "x"),
-  )
-  assert_eq(
-    @symsets.to_string(@symsolvers.solveset(sqrt((x() + @symcore.int(-3)) * (x() ^ @symcore.int(-1))), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt((x - 3)/x), x))", "x"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        sqrt((x() + @symcore.int(-3)) * (x() ^ @symcore.int(-1))),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt((x - 3)/x), x))",
+      "x",
+    ),
   )
 }
 
 ///|
 test "solvers parity solveset batch 12 additional public cases" {
-  let positive_infinity = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  let positive_infinity = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::Infinity,
+  )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        (x() ^ @symcore.int(2)) + (@symcore.int(-1) * x()) + @symcore.int(-6),
+        (x() ^ @symcore.int(2)) + @symcore.int(-1) * x() + @symcore.int(-6),
         symbol=Some(x()),
         domain=@symsets.interval(@symcore.int(0), positive_infinity),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(x**2 - x - 6, x, sympy.Interval(0, sympy.oo)))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(x**2 - x - 6, x, sympy.Interval(0, sympy.oo)))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
@@ -2822,7 +3630,9 @@ test "solvers parity solveset batch 12 additional public cases" {
         domain=@symsets.interval(@symcore.int(0), positive_infinity),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(x**2 - 1, x, sympy.Interval(0, sympy.oo)))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(x**2 - 1, x, sympy.Interval(0, sympy.oo)))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
@@ -2832,21 +3642,28 @@ test "solvers parity solveset batch 12 additional public cases" {
         domain=@symsets.interval(@symcore.int(0), @symcore.int(10)),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(x**4 - 16, x, sympy.Interval(0, 10)))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(x**4 - 16, x, sympy.Interval(0, 10)))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
         @symcore.Expr::Relational(
           @symcore.RelOp::Eq,
-          ((((x() ^ @symcore.int(2)) + @symcore.int(-4)) ^ @symcore.int(-1)) + x()),
-          ((((x() ^ @symcore.int(2)) + @symcore.int(-4)) ^ @symcore.int(-1)) + @symcore.int(2)),
+          (((x() ^ @symcore.int(2)) + @symcore.int(-4)) ^ @symcore.int(-1)) +
+          x(),
+          (((x() ^ @symcore.int(2)) + @symcore.int(-4)) ^ @symcore.int(-1)) +
+          @symcore.int(2),
         ),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(sympy.Eq(1/(x**2 - 4) + x, 1/(x**2 - 4) + 2), x, sympy.S.Reals))", "x"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(sympy.Eq(1/(x**2 - 4) + x, 1/(x**2 - 4) + 2), x, sympy.S.Reals))",
+      "x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
@@ -2860,57 +3677,95 @@ test "solvers parity solveset batch 12 additional public cases" {
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(sympy.Eq(1/x + x, 1/x), x, sympy.S.Reals))", "x"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(sympy.Eq(1/x + x, 1/x), x, sympy.S.Reals))",
+      "x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-2), x()), @symcore.int(4)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.raw_pow(@symcore.int(-2), x()),
+          @symcore.int(4),
+        ),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(sympy.Eq((-2)**x, 4), x, sympy.S.Reals))", "x"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(sympy.Eq((-2)**x, 4), x, sympy.S.Reals))",
+      "x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(-1) * (@symcore.int(2) ^ x()), @symcore.int(4)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.int(-1) * (@symcore.int(2) ^ x()),
+          @symcore.int(4),
+        ),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(sympy.Eq(-2**x, 4), x, sympy.S.Reals))", "x"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(sympy.Eq(-2**x, 4), x, sympy.S.Reals))",
+      "x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-3), x()), @symcore.int(27)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.raw_pow(@symcore.int(-3), x()),
+          @symcore.int(27),
+        ),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(sympy.Eq((-3)**x, 27), x, sympy.S.Reals))", "x"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(sympy.Eq((-3)**x, 27), x, sympy.S.Reals))",
+      "x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-5), x() + @symcore.int(1)), @symcore.int(625)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.raw_pow(@symcore.int(-5), x() + @symcore.int(1)),
+          @symcore.int(625),
+        ),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(sympy.Eq((-5)**(x + 1), 625), x, sympy.S.Reals))", "x"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(sympy.Eq((-5)**(x + 1), 625), x, sympy.S.Reals))",
+      "x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) ^ (x() + @symcore.int(-3)), @symcore.int(-16)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.int(2) ^ (x() + @symcore.int(-3)),
+          @symcore.int(-16),
+        ),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(sympy.Eq(2**(x - 3), -16), x, sympy.S.Reals))", "x"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(sympy.Eq(2**(x - 3), -16), x, sympy.S.Reals))",
+      "x",
+    ),
   )
 }
 
@@ -2918,75 +3773,132 @@ test "solvers parity solveset batch 12 additional public cases" {
 test "solvers parity simplex and solveset batch 13 additional public cases" {
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmin(
-        y(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + @symcore.int(2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-        ],
-      ),
+      @symsolvers.lpmin(y(), [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          x(),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Ge,
+          x(),
+          y() + @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmin(y, [x <= y + 2, x >= y + 2, y >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmin(y, [x <= y + 2, x >= y + 2, y >= 0]))",
+    ),
   )
   assert_eq(
     local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        x(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y()),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
-        ],
-      ),
+      @symsolvers.lpmax(x(), [
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y()),
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
+        @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
+      ]),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(x, [sympy.Eq(x, y), sympy.Eq(y, z), z <= 3]))"),
-  )
-  assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(1), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(1, x, sympy.S.Reals))", "x"),
-  )
-  assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.Expr::Boolean(true), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(True, x, sympy.S.Reals))", "x"),
-  )
-  assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.Expr::Boolean(false), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(False, x, sympy.S.Reals))", "x"),
-  )
-  assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.function("exp", [x()]) + @symcore.int(-1), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(sympy.exp(x) - 1, x, sympy.S.Reals))", "x"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(x, [sympy.Eq(x, y), sympy.Eq(y, z), z <= 3]))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.function("exp", [x()]), @symcore.int(1)),
+        @symcore.int(1),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(sympy.Eq(sympy.exp(x), 1), x, sympy.S.Reals))", "x"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(1, x, sympy.S.Reals))", "x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Ge, x() + @symcore.int(-1), @symcore.int(0)),
+        @symcore.Expr::Boolean(true),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(x - 1 >= 0, x, sympy.S.Reals))", "x"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(True, x, sympy.S.Reals))", "x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Ge, x() ^ @symcore.int(2), @symcore.int(0)),
+        @symcore.Expr::Boolean(false),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(x**2 >= 0, x, sympy.S.Reals))", "x"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(False, x, sympy.S.Reals))", "x",
+    ),
+  )
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.function("exp", [x()]) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(sympy.exp(x) - 1, x, sympy.S.Reals))", "x",
+    ),
+  )
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.function("exp", [x()]),
+          @symcore.int(1),
+        ),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(sympy.Eq(sympy.exp(x), 1), x, sympy.S.Reals))",
+      "x",
+    ),
+  )
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Ge,
+          x() + @symcore.int(-1),
+          @symcore.int(0),
+        ),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(x - 1 >= 0, x, sympy.S.Reals))", "x",
+    ),
+  )
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Ge,
+          x() ^ @symcore.int(2),
+          @symcore.int(0),
+        ),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(x**2 >= 0, x, sympy.S.Reals))", "x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
@@ -3000,57 +3912,100 @@ test "solvers parity simplex and solveset batch 13 additional public cases" {
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("sympy.sstr(sympy.solvers.solveset(sympy.Eq((-3)**(x - 3), -3**39), x, sympy.S.Reals))", "x"),
+    solvers_eval_str_symbols(
+      "sympy.sstr(sympy.solvers.solveset(sympy.Eq((-3)**(x - 3), -3**39), x, sympy.S.Reals))",
+      "x",
+    ),
   )
 }
 
 ///|
 test "solvers parity solve batch 14 additional public cases" {
   assert_eq(
-    local_solve_result_text(@symsolvers.solve(@symsolvers.solve_expr_input(@symcore.int(42)))),
+    local_solve_result_text(
+      @symsolvers.solve(@symsolvers.solve_expr_input(@symcore.int(42))),
+    ),
     solvers_eval_str("repr(sympy.solvers.solve(42))"),
   )
   assert_eq(
-    local_solve_result_text(@symsolvers.solve(@symsolvers.solve_expr_input(@symcore.int(42)), symbols=[x()])),
+    local_solve_result_text(
+      @symsolvers.solve(@symsolvers.solve_expr_input(@symcore.int(42)), symbols=[
+        x(),
+      ]),
+    ),
     solvers_eval_str("repr(sympy.solvers.solve(42, x))"),
   )
   assert_eq(
-    local_solve_result_text(@symsolvers.solve(@symsolvers.solve_exprs_input([@symcore.int(1), @symcore.int(2)]))),
+    local_solve_result_text(
+      @symsolvers.solve(
+        @symsolvers.solve_exprs_input([@symcore.int(1), @symcore.int(2)]),
+      ),
+    ),
     solvers_eval_str("repr(sympy.solvers.solve([1, 2]))"),
   )
   assert_eq(
-    local_solve_result_text(@symsolvers.solve(@symsolvers.solve_exprs_input([sqrt(@symcore.int(2))]), symbols=[x()])),
+    local_solve_result_text(
+      @symsolvers.solve(
+        @symsolvers.solve_exprs_input([sqrt(@symcore.int(2))]),
+        symbols=[x()],
+      ),
+    ),
     solvers_eval_str("repr(sympy.solvers.solve([sympy.sqrt(2)], [x]))"),
   )
   assert_eq(
-    local_solve_result_text(@symsolvers.solve(@symsolvers.solve_expr_input(y() + @symcore.int(-3)), symbols=[y()])),
+    local_solve_result_text(
+      @symsolvers.solve(@symsolvers.solve_expr_input(y() + @symcore.int(-3)), symbols=[
+        y(),
+      ]),
+    ),
     solvers_eval_str("repr(sympy.solvers.solve(y - 3, y))"),
   )
   assert_eq(
-    local_solve_result_text(@symsolvers.solve(@symsolvers.solve_expr_input(x() + y() + @symcore.int(-3)), symbols=[x(), y()])),
+    local_solve_result_text(
+      @symsolvers.solve(
+        @symsolvers.solve_expr_input(x() + y() + @symcore.int(-3)),
+        symbols=[x(), y()],
+      ),
+    ),
     solvers_eval_str("repr(sympy.solvers.solve(x + y - 3, [x, y]))"),
   )
   assert_eq(
-    local_solve_result_text(@symsolvers.solve(@symsolvers.solve_expr_input(x() + y() + @symcore.int(-3)))),
+    local_solve_result_text(
+      @symsolvers.solve(
+        @symsolvers.solve_expr_input(x() + y() + @symcore.int(-3)),
+      ),
+    ),
     solvers_eval_str("repr(sympy.solvers.solve(x + y - 3))"),
   )
   assert_eq(
     local_solve_result_text(
       @symsolvers.solve(
-        @symsolvers.solve_expr_input(@symcore.Expr::Symbol("a") + @symcore.Expr::Symbol("b") * x() + @symcore.int(-2)),
+        @symsolvers.solve_expr_input(
+          @symcore.Expr::Symbol("a") +
+          @symcore.Expr::Symbol("b") * x() +
+          @symcore.int(-2),
+        ),
         symbols=[@symcore.Expr::Symbol("a"), @symcore.Expr::Symbol("b")],
       ),
     ),
-    solvers_eval_str_symbols("repr(sympy.solvers.solve(a + b*x - 2, [a, b]))", "x a b"),
+    solvers_eval_str_symbols(
+      "repr(sympy.solvers.solve(a + b*x - 2, [a, b]))", "x a b",
+    ),
   )
   assert_eq(
     local_solve_result_text(
       @symsolvers.solve(
-        @symsolvers.solve_expr_input((@symcore.Expr::Symbol("a") + @symcore.Expr::Symbol("b")) * x() + @symcore.Expr::Symbol("b") - @symcore.Expr::Symbol("c")),
+        @symsolvers.solve_expr_input(
+          (@symcore.Expr::Symbol("a") + @symcore.Expr::Symbol("b")) * x() +
+          @symcore.Expr::Symbol("b") -
+          @symcore.Expr::Symbol("c"),
+        ),
         symbols=[@symcore.Expr::Symbol("a"), @symcore.Expr::Symbol("b")],
       ),
     ),
-    solvers_eval_str_symbols("repr(sympy.solvers.solve((a + b)*x + b - c, [a, b]))", "x a b c"),
+    solvers_eval_str_symbols(
+      "repr(sympy.solvers.solve((a + b)*x + b - c, [a, b]))", "x a b c",
+    ),
   )
   assert_eq(
     local_solve_result_text(
@@ -3072,13 +4027,24 @@ test "solvers parity solve batch 15 additional public cases" {
   let b1 = @symcore.Expr::Symbol("b1")
   let b2 = @symcore.Expr::Symbol("b2")
   assert_eq(
-    local_solve_result_text(@symsolvers.solve(@symsolvers.solve_expr_input(@symcore.int(3) * x() + @symcore.int(-2)), symbols=[x()])),
+    local_solve_result_text(
+      @symsolvers.solve(
+        @symsolvers.solve_expr_input(@symcore.int(3) * x() + @symcore.int(-2)),
+        symbols=[x()],
+      ),
+    ),
     solvers_eval_str("repr(sympy.solvers.solve(3*x - 2, x))"),
   )
   assert_eq(
     local_solve_result_text(
       @symsolvers.solve(
-        @symsolvers.solve_expr_input(@symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(3) * x(), @symcore.int(2))),
+        @symsolvers.solve_expr_input(
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            @symcore.int(3) * x(),
+            @symcore.int(2),
+          ),
+        ),
         symbols=[x()],
       ),
     ),
@@ -3096,7 +4062,13 @@ test "solvers parity solve batch 15 additional public cases" {
   assert_eq(
     local_solve_result_text(
       @symsolvers.solve(
-        @symsolvers.solve_expr_input(@symcore.Expr::Relational(@symcore.RelOp::Eq, x() ^ @symcore.int(2), @symcore.int(1))),
+        @symsolvers.solve_expr_input(
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            x() ^ @symcore.int(2),
+            @symcore.int(1),
+          ),
+        ),
         symbols=[x()],
       ),
     ),
@@ -3128,7 +4100,10 @@ test "solvers parity solve batch 15 additional public cases" {
   assert_eq(
     local_solve_result_text(
       @symsolvers.solve(
-        @symsolvers.solve_exprs_input([(x() ^ @symcore.int(2)) + @symcore.int(-4), y() + @symcore.int(-2)]),
+        @symsolvers.solve_exprs_input([
+          (x() ^ @symcore.int(2)) + @symcore.int(-4),
+          y() + @symcore.int(-2),
+        ]),
         symbols=[x(), y()],
       ),
     ),
@@ -3137,7 +4112,10 @@ test "solvers parity solve batch 15 additional public cases" {
   assert_eq(
     local_solve_result_text(
       @symsolvers.solve(
-        @symsolvers.solve_exprs_input([x() + y() + @symcore.int(-2), @symcore.int(2) * x() + @symcore.int(2) * y() + @symcore.int(-4)]),
+        @symsolvers.solve_exprs_input([
+          x() + y() + @symcore.int(-2),
+          @symcore.int(2) * x() + @symcore.int(2) * y() + @symcore.int(-4),
+        ]),
       ),
     ),
     solvers_eval_str("repr(sympy.solvers.solve((x + y - 2, 2*x + 2*y - 4)))"),
@@ -3157,19 +4135,26 @@ test "solvers parity solve batch 15 additional public cases" {
     solvers_eval_str("repr(sympy.solvers.solve(sympy.Eq(x**2, 0.0)))"),
   )
   assert_eq(
-    local_solve_result_text(@symsolvers.solve(@symsolvers.solve_exprs_input([]), symbols=[x()])),
+    local_solve_result_text(
+      @symsolvers.solve(@symsolvers.solve_exprs_input([]), symbols=[x()]),
+    ),
     solvers_eval_str("repr(sympy.solvers.solve([], [x]))"),
   )
 }
 
 ///|
 test "solvers parity solve batch 16 additional public cases" {
-  let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("one_third") }
+  let one_third = @symcore.rational_from_ints(1, 3) catch {
+    _ => fail("one_third")
+  }
   let quarter = @symcore.rational_from_ints(1, 4) catch { _ => fail("quarter") }
   assert_eq(
     local_solve_result_text(
       @symsolvers.solve(
-        @symsolvers.solve_exprs_input([x() + y() + @symcore.int(-3), x() + @symcore.int(-1) * y() + @symcore.int(-5)]),
+        @symsolvers.solve_exprs_input([
+          x() + y() + @symcore.int(-3),
+          x() + @symcore.int(-1) * y() + @symcore.int(-5),
+        ]),
       ),
     ),
     solvers_eval_str("repr(sympy.solvers.solve([x + y - 3, x - y - 5]))"),
@@ -3177,7 +4162,10 @@ test "solvers parity solve batch 16 additional public cases" {
   assert_eq(
     local_solve_result_text(
       @symsolvers.solve(
-        @symsolvers.solve_exprs_input([(x() ^ @symcore.int(2)) + @symcore.int(-4), y() + @symcore.int(-2)]),
+        @symsolvers.solve_exprs_input([
+          (x() ^ @symcore.int(2)) + @symcore.int(-4),
+          y() + @symcore.int(-2),
+        ]),
         symbols=[y(), x()],
       ),
     ),
@@ -3188,12 +4176,18 @@ test "solvers parity solve batch 16 additional public cases" {
       @symsolvers.solve(
         @symsolvers.solve_exprs_input([
           @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), x()),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), x() + @symcore.int(1)),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            x(),
+            x() + @symcore.int(1),
+          ),
         ]),
         symbols=[x()],
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.solve([sympy.Eq(x, x), sympy.Eq(x, x + 1)], x))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.solve([sympy.Eq(x, x), sympy.Eq(x, x + 1)], x))",
+    ),
   )
   assert_eq(
     local_solve_result_text(
@@ -3201,12 +4195,18 @@ test "solvers parity solve batch 16 additional public cases" {
         @symsolvers.solve_exprs_input([
           @symcore.Expr::Boolean(true),
           @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), x() + @symcore.int(1)),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            x(),
+            x() + @symcore.int(1),
+          ),
         ]),
         symbols=[x()],
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.solve([True, sympy.Eq(x, 0), sympy.Eq(x, x + 1)], x))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.solve([True, sympy.Eq(x, 0), sympy.Eq(x, x + 1)], x))",
+    ),
   )
   assert_eq(
     local_solve_result_text(
@@ -3242,7 +4242,9 @@ test "solvers parity solve batch 16 additional public cases" {
         symbols=[x()],
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.solve(x**sympy.Rational(1, 4) - 2, x))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.solve(x**sympy.Rational(1, 4) - 2, x))",
+    ),
   )
   assert_eq(
     local_solve_result_text(
@@ -3251,14 +4253,15 @@ test "solvers parity solve batch 16 additional public cases" {
         symbols=[x()],
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.solve(x**sympy.Rational(1, 3) - 3, x))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.solve(x**sympy.Rational(1, 3) - 3, x))",
+    ),
   )
   assert_eq(
     local_solve_result_text(
-      @symsolvers.solve(
-        @symsolvers.solve_expr_input(@symcore.int(4)),
-        symbols=[x()],
-      ),
+      @symsolvers.solve(@symsolvers.solve_expr_input(@symcore.int(4)), symbols=[
+        x(),
+      ]),
     ),
     solvers_eval_str("repr(sympy.solvers.solve(4, x))"),
   )
@@ -3267,12 +4270,24 @@ test "solvers parity solve batch 16 additional public cases" {
 ///|
 test "solvers parity solveset complex batch 17 additional public cases" {
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(0), symbol=Some(x()), domain=@symsolvers.complexes)),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(0, x, sympy.solvers.Complexes))"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(0),
+        symbol=Some(x()),
+        domain=@symsolvers.complexes,
+      ),
+    ),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(0, x, sympy.solvers.Complexes))",
+    ),
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(x() + (x() ^ @symcore.int(-1)) + @symcore.int(-1), symbol=Some(x()), domain=@symsolvers.complexes),
+      @symsolvers.solveset(
+        x() + (x() ^ @symcore.int(-1)) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsolvers.complexes,
+      ),
       "sympy.solvers.solveset(x + 1/x - 1, x, sympy.solvers.Complexes)",
       "x",
     ),
@@ -3282,7 +4297,11 @@ test "solvers parity solveset complex batch 17 additional public cases" {
     finite_set_exprs_match_oracle(
       @symsolvers.solveset(
         (x() + @symcore.int(-1)) *
-        (x() + @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * @symcore.int(-1)) *
+        (
+          x() +
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+          @symcore.int(-1)
+        ) *
         ((x() + @symcore.int(-3)) ^ @symcore.int(-1)),
         symbol=Some(x()),
         domain=@symsolvers.complexes,
@@ -3295,7 +4314,14 @@ test "solvers parity solveset complex batch 17 additional public cases" {
   assert_eq(
     finite_set_exprs_match_oracle(
       @symsolvers.solveset(
-        (x() + @symcore.int(-1) * (y() ^ @symcore.int(3))) * (((y() ^ @symcore.int(2)) * sqrt(@symcore.int(1) + @symcore.int(-1) * (y() ^ @symcore.int(2)))) ^ @symcore.int(-1)),
+        (x() + @symcore.int(-1) * (y() ^ @symcore.int(3))) *
+        (
+          (
+            (y() ^ @symcore.int(2)) *
+            sqrt(@symcore.int(1) + @symcore.int(-1) * (y() ^ @symcore.int(2)))
+          ) ^
+          @symcore.int(-1)
+        ),
         symbol=Some(x()),
         domain=@symsolvers.complexes,
       ),
@@ -3305,13 +4331,28 @@ test "solvers parity solveset complex batch 17 additional public cases" {
     "True",
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset((@symcore.function("exp", [x()])) ^ @symcore.int(-1), symbol=Some(x()), domain=@symsolvers.complexes)),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(1/sympy.exp(x), x, sympy.solvers.Complexes))"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.function("exp", [x()]) ^ @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsolvers.complexes,
+      ),
+    ),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(1/sympy.exp(x), x, sympy.solvers.Complexes))",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        (x() + @symcore.int(-1) * (y() ^ @symcore.int(3))) * (((y() ^ @symcore.int(2)) * sqrt(@symcore.int(1) + @symcore.int(-1) * (y() ^ @symcore.int(2)))) ^ @symcore.int(-1)),
+        (x() + @symcore.int(-1) * (y() ^ @symcore.int(3))) *
+        (
+          (
+            (y() ^ @symcore.int(2)) *
+            sqrt(@symcore.int(1) + @symcore.int(-1) * (y() ^ @symcore.int(2)))
+          ) ^
+          @symcore.int(-1)
+        ),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
@@ -3323,7 +4364,11 @@ test "solvers parity solveset complex batch 17 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(sqrt(x() + @symcore.int(-2)) + @symcore.int(-5), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        sqrt(x() + @symcore.int(-2)) + @symcore.int(-5),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(x - 2) - 5, x)",
       "x",
     ),
@@ -3331,7 +4376,11 @@ test "solvers parity solveset complex batch 17 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(sqrt(x()) + @symcore.int(-7), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        sqrt(x()) + @symcore.int(-7),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(x) - 2 - 5, x)",
       "x",
     ),
@@ -3339,7 +4388,11 @@ test "solvers parity solveset complex batch 17 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(sqrt(x() ^ @symcore.int(3)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        sqrt(x() ^ @symcore.int(3)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(x**3), x)",
       "x",
     ),
@@ -3347,7 +4400,11 @@ test "solvers parity solveset complex batch 17 additional public cases" {
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(sqrt(x() + @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        sqrt(x() + @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(x - 1), x)",
       "x",
     ),
@@ -3358,8 +4415,12 @@ test "solvers parity solveset complex batch 17 additional public cases" {
 ///|
 test "solvers parity solveset domain and no-solution batch 18 additional public cases" {
   let a = @symcore.Expr::Symbol("a")
-  let positive_infinity = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-  let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("one_third") }
+  let positive_infinity = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::Infinity,
+  )
+  let one_third = @symcore.rational_from_ints(1, 3) catch {
+    _ => fail("one_third")
+  }
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
@@ -3378,7 +4439,11 @@ test "solvers parity solveset domain and no-solution batch 18 additional public 
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset((x() ^ @symcore.int(2)) + @symcore.int(-1) * x() + @symcore.int(-6), symbol=Some(x()), domain=@symsets.interval(@symcore.int(0), positive_infinity)),
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(2)) + @symcore.int(-1) * x() + @symcore.int(-6),
+        symbol=Some(x()),
+        domain=@symsets.interval(@symcore.int(0), positive_infinity),
+      ),
       "sympy.solvers.solveset(x**2 - x - 6, x, sympy.Interval(0, sympy.oo))",
       "x",
     ),
@@ -3386,93 +4451,172 @@ test "solvers parity solveset domain and no-solution batch 18 additional public 
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset((x() ^ @symcore.int(2)) + @symcore.int(-1), symbol=Some(x()), domain=@symsets.interval(@symcore.int(0), positive_infinity)),
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(2)) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=@symsets.interval(@symcore.int(0), positive_infinity),
+      ),
       "sympy.solvers.solveset(x**2 - 1, x, sympy.Interval(0, sympy.oo))",
       "x",
     ),
     "True",
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(sqrt(@symcore.int(1)) + @symcore.int(1), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(1) + 1, x))", "x"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        sqrt(@symcore.int(1)) + @symcore.int(1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(1) + 1, x))",
+      "x",
+    ),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(1) + @symcore.int(-1) * positive_infinity * x(), symbol=Some(x()))),
-    solvers_eval_str_symbols("str(sympy.solvers.solveset(1 - sympy.oo*x, x))", "x"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(1) + @symcore.int(-1) * positive_infinity * x(),
+        symbol=Some(x()),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(sympy.solvers.solveset(1 - sympy.oo*x, x))", "x",
+    ),
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset((((@symcore.int(2) * x()) + @symcore.int(-5)) ^ one_third) + @symcore.int(-3), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        ((@symcore.int(2) * x() + @symcore.int(-5)) ^ one_third) +
+        @symcore.int(-3),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((2*x - 5)**sympy.Rational(1, 3) - 3, x)",
       "x",
     ),
     "True",
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(positive_infinity * x() + @symcore.int(-1) * positive_infinity, symbol=Some(x()))),
-    solvers_eval_str_symbols("str(sympy.solvers.solveset(sympy.oo*x - sympy.oo, x))", "x"),
-  )
-  assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(-3) * a * (sqrt(x()) ^ @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(-3*a/sympy.sqrt(x), x))", "x a"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        positive_infinity * x() + @symcore.int(-1) * positive_infinity,
+        symbol=Some(x()),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(sympy.solvers.solveset(sympy.oo*x - sympy.oo, x))", "x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        ((x() * ((x() + @symcore.int(1)) ^ @symcore.int(-1))) + @symcore.int(3)) ^ @symcore.int(-2),
+        @symcore.int(-3) * a * (sqrt(x()) ^ @symcore.int(-1)),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((x/(x + 1) + 3)**(-2), x))", "x"),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(-3*a/sympy.sqrt(x), x))",
+      "x a",
+    ),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        (x() + @symcore.int(-1)) * ((@symcore.int(1) + ((x() + @symcore.int(-1)) ^ @symcore.int(-1))) ^ @symcore.int(-1)),
+        (x() * ((x() + @symcore.int(1)) ^ @symcore.int(-1)) + @symcore.int(3)) ^
+        @symcore.int(-2),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((x - 1)/(1 + 1/(x - 1)), x))", "x"),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((x/(x + 1) + 3)**(-2), x))",
+      "x",
+    ),
+  )
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        (x() + @symcore.int(-1)) *
+        (
+          (@symcore.int(1) + ((x() + @symcore.int(-1)) ^ @symcore.int(-1))) ^
+          @symcore.int(-1)
+        ),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((x - 1)/(1 + 1/(x - 1)), x))",
+      "x",
+    ),
   )
 }
 
 ///|
 test "solvers parity solveset abs and radical batch 19 additional public cases" {
-  let positive_infinity = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  let positive_infinity = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::Infinity,
+  )
   let abs = fn(expr : @symcore.Expr) { @symcore.function("Abs", [expr]) }
 
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(positive_infinity * x(), symbol=Some(x()))),
+    @symsets.to_string(
+      @symsolvers.solveset(positive_infinity * x(), symbol=Some(x())),
+    ),
     solvers_eval_str_symbols("str(sympy.solvers.solveset(sympy.oo*x, x))", "x"),
   )
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.int(-1) * (x() + @symcore.int(1)) * ((x() + @symcore.int(2)) ^ @symcore.int(-2)) +
+        @symcore.int(-1) *
+        (x() + @symcore.int(1)) *
+        ((x() + @symcore.int(2)) ^ @symcore.int(-2)) +
         ((x() + @symcore.int(2)) ^ @symcore.int(-1)),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(-(1 + x)/(2 + x)**2 + 1/(2 + x), x))", "x"),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(-(1 + x)/(2 + x)**2 + 1/(2 + x), x))",
+      "x",
+    ),
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(abs(x()) + @symcore.int(-2), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        abs(x()) + @symcore.int(-2),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.Abs(x) - 2, x)",
       "x",
     ),
     "True",
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(abs(x()) + @symcore.int(2), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.Abs(x) + 2, x))", "x"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        abs(x()) + @symcore.int(2),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.Abs(x) + 2, x))",
+      "x",
+    ),
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(abs(x() + @symcore.int(3)) + @symcore.int(-2) * abs(x() + @symcore.int(-3)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        abs(x() + @symcore.int(3)) +
+        @symcore.int(-2) * abs(x() + @symcore.int(-3)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.Abs(x + 3) - 2*sympy.Abs(x - 3), x)",
       "x",
     ),
@@ -3480,7 +4624,12 @@ test "solvers parity solveset abs and radical batch 19 additional public cases" 
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(@symcore.int(2) * abs(x()) + @symcore.int(-1) * abs(x() + @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        @symcore.int(2) * abs(x()) +
+        @symcore.int(-1) * abs(x() + @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(2*sympy.Abs(x) - sympy.Abs(x - 1), x)",
       "x",
     ),
@@ -3488,7 +4637,12 @@ test "solvers parity solveset abs and radical batch 19 additional public cases" 
   )
   assert_eq(
     finite_set_exprs_match_oracle(
-      @symsolvers.solveset(x() * (sqrt((x() ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        x() *
+        (sqrt((x() ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       "__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x/sympy.sqrt(x**2 + 1), x)",
       "x",
     ),
@@ -3501,11 +4655,24 @@ test "solvers parity solveset batch 20 additional public cases" {
   let abs = fn(expr : @symcore.Expr) { @symcore.function("Abs", [expr]) }
   let a = @symcore.Expr::Symbol("a")
   let b = @symcore.Expr::Symbol("b")
-  let three_halves = @symcore.rational_from_ints(3, 2) catch { _ => fail("3/2") }
-  let minus_three_halves = @symcore.rational_from_ints(-3, 2) catch { _ => fail("-3/2") }
+  let three_halves = @symcore.rational_from_ints(3, 2) catch {
+    _ => fail("3/2")
+  }
+  let minus_three_halves = @symcore.rational_from_ints(-3, 2) catch {
+    _ => fail("-3/2")
+  }
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(abs(x()) + @symcore.int(1), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.Abs(x) + 1, x))", "x"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        abs(x()) + @symcore.int(1),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.Abs(x) + 1, x))",
+      "x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
@@ -3515,7 +4682,9 @@ test "solvers parity solveset batch 20 additional public cases" {
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str_symbols("str(sympy.solvers.solveset(sympy.Eq(a, a), x, sympy.S.Reals))", "a x"),
+    solvers_eval_str_symbols(
+      "str(sympy.solvers.solveset(sympy.Eq(a, a), x, sympy.S.Reals))", "a x",
+    ),
   )
   assert_eq(
     @symsets.to_string(
@@ -3525,20 +4694,42 @@ test "solvers parity solveset batch 20 additional public cases" {
         domain=@symsets.complexes(),
       ),
     ),
-    solvers_eval_str_symbols("str(sympy.solvers.solveset(sympy.Eq(a, a), y, sympy.S.Complexes))", "a y"),
+    solvers_eval_str_symbols(
+      "str(sympy.solvers.solveset(sympy.Eq(a, a), y, sympy.S.Complexes))", "a y",
+    ),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset((x() ^ three_halves) + @symcore.int(4), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**sympy.Rational(3, 2) + 4, x))", "x"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        (x() ^ three_halves) + @symcore.int(4),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**sympy.Rational(3, 2) + 4, x))",
+      "x",
+    ),
   )
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset((x() ^ minus_three_halves) + @symcore.int(4), symbol=Some(x()), domain=@symsets.reals())),
-    solvers_eval_str_symbols("str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**sympy.Rational(-3, 2) + 4, x))", "x"),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        (x() ^ minus_three_halves) + @symcore.int(4),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str_symbols(
+      "str(__import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**sympy.Rational(-3, 2) + 4, x))",
+      "x",
+    ),
   )
   assert_eq(
     finite_set_exprs_match_oracle(
       @symsolvers.solveset(
-        x() + ((a + @symcore.int(-1) * b) * ((@symcore.int(-2) * a + @symcore.int(2) * b) ^ @symcore.int(-1))),
+        x() +
+        (a + @symcore.int(-1) * b) *
+        ((@symcore.int(-2) * a + @symcore.int(2) * b) ^ @symcore.int(-1)),
         symbol=Some(x()),
       ),
       "sympy.solvers.solveset(x + (a - b)/(-2*a + 2*b), x)",
@@ -3567,8 +4758,10 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
     e * x() + d * x() + f_sym * y() + g_sym * z() - h,
     i * x() + j * y() + k * z() - l,
   ]
-  let no_symbols : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix(eqns3, [])
+  let no_symbols : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix(eqns3, [])
   assert_eq(
     local_linear_eq_result_type(no_symbols),
     solvers_eval_stmt_result_symbols(
@@ -3577,8 +4770,10 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
     ),
   )
 
-  let duplicate_symbols : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix(eqns3, [x(), x(), y()])
+  let duplicate_symbols : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix(eqns3, [x(), x(), y()])
   assert_eq(
     local_linear_eq_result_type(duplicate_symbols),
     solvers_eval_stmt_result_symbols(
@@ -3588,77 +4783,94 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
   )
 
   let inv_x = x() ^ @symcore.int(-1)
-  let nonlinear_recip : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix(
-      [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x + x(), inv_x)],
-      [x()],
-    )
+  let nonlinear_recip : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix(
+    [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x + x(), inv_x)],
+    [x()],
+  )
   assert_eq(
     local_linear_eq_result_type(nonlinear_recip),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix(sympy.Eq(1/x + x, 1/x), [x])",
-      "x",
+      "sympy.solvers.linear_eq_to_matrix(sympy.Eq(1/x + x, 1/x), [x])", "x",
     ),
   )
 
-  let nonlinear_square : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix([x() ^ @symcore.int(2)], [x()])
+  let nonlinear_square : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix([x() ^ @symcore.int(2)], [x()])
   assert_eq(
     local_linear_eq_result_type(nonlinear_square),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix([x**2], [x])",
-      "x",
+      "sympy.solvers.linear_eq_to_matrix([x**2], [x])", "x",
     ),
   )
 
-  let nonlinear_xy : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix([x() * y()], [x(), y()])
+  let nonlinear_xy : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix([x() * y()], [x(), y()])
   assert_eq(
     local_linear_eq_result_type(nonlinear_xy),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix([x*y], [x, y])",
-      "x y",
+      "sympy.solvers.linear_eq_to_matrix([x*y], [x, y])", "x y",
     ),
   )
 
-  let nonlinear_issue_14987 : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix(
-      [x() * ((@symcore.int(-3) * inv_x) + @symcore.int(1)) + @symcore.int(2) * y() - a],
-      [x(), y()],
-    )
+  let nonlinear_issue_14987 : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix(
+    [
+      x() * (@symcore.int(-3) * inv_x + @symcore.int(1)) +
+      @symcore.int(2) * y() -
+      a,
+    ],
+    [x(), y()],
+  )
   assert_eq(
     local_linear_eq_result_type(nonlinear_issue_14987),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix([x*(-3/x + 1) + 2*y - a], [x, y])",
-      "x y a",
+      "sympy.solvers.linear_eq_to_matrix([x*(-3/x + 1) + 2*y - a], [x, y])", "x y a",
     ),
   )
 
-  let auto_true : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix([@symcore.Expr::Boolean(true)], [x()])
+  let auto_true : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix([@symcore.Expr::Boolean(true)], [x()])
   assert_eq(
     local_linear_eq_result_type(auto_true),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix(sympy.Eq(x, x), x)",
-      "x",
+      "sympy.solvers.linear_eq_to_matrix(sympy.Eq(x, x), x)", "x",
     ),
   )
 
-  let auto_false : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix([@symcore.Expr::Boolean(false)], [x()])
+  let auto_false : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix([@symcore.Expr::Boolean(false)], [
+    x(),
+  ])
   assert_eq(
     local_linear_eq_result_type(auto_false),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix(sympy.Eq(x, x + 1), x)",
-      "x",
+      "sympy.solvers.linear_eq_to_matrix(sympy.Eq(x, x + 1), x)", "x",
     ),
   )
 
   let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
-  let pi_over_two = half * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi_over_two = half *
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(f(x()) - pi_over_two, symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        f(x()) - pi_over_two,
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str(
       "str((lambda f: sympy.solvers.solveset(f(x) - sympy.pi/2, x, sympy.S.Reals))(sympy.Function('f')))",
@@ -3666,7 +4878,11 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
   )
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(f(g(x())) - pi_over_two, symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        f(g(x())) - pi_over_two,
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str(
       "str((lambda f, g: sympy.solvers.solveset(f(g(x)) - sympy.pi/2, x, sympy.S.Reals))(sympy.Function('f'), sympy.Function('g')))",
@@ -3678,77 +4894,118 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
 test "solvers parity linear_eq_to_matrix and solveset batch 22 additional public cases" {
   let inv_x = x() ^ @symcore.int(-1)
 
-  let nonlinear_cancelled_rational : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix([((x() ^ @symcore.int(2)) - @symcore.int(3) * x()) * ((x() + @symcore.int(-3)) ^ @symcore.int(-1)) + @symcore.int(-3)], [x()])
+  let nonlinear_cancelled_rational : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix(
+    [
+      ((x() ^ @symcore.int(2)) - @symcore.int(3) * x()) *
+      ((x() + @symcore.int(-3)) ^ @symcore.int(-1)) +
+      @symcore.int(-3),
+    ],
+    [x()],
+  )
   assert_eq(
     local_linear_eq_result_type(nonlinear_cancelled_rational),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix([(x**2 - 3*x)/(x - 3) - 3], x)",
-      "x",
+      "sympy.solvers.linear_eq_to_matrix([(x**2 - 3*x)/(x - 3) - 3], x)", "x",
     ),
   )
 
-  let nonlinear_binomial_expand : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix([((x() + @symcore.int(1)) ^ @symcore.int(3)) + @symcore.int(-1) * (x() ^ @symcore.int(3)) + @symcore.int(-3) * (x() ^ @symcore.int(2)) + @symcore.int(7)], [x()])
+  let nonlinear_binomial_expand : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix(
+    [
+      ((x() + @symcore.int(1)) ^ @symcore.int(3)) +
+      @symcore.int(-1) * (x() ^ @symcore.int(3)) +
+      @symcore.int(-3) * (x() ^ @symcore.int(2)) +
+      @symcore.int(7),
+    ],
+    [x()],
+  )
   assert_eq(
     local_linear_eq_result_type(nonlinear_binomial_expand),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix([(x + 1)**3 - x**3 - 3*x**2 + 7], x)",
-      "x",
+      "sympy.solvers.linear_eq_to_matrix([(x + 1)**3 - x**3 - 3*x**2 + 7], x)", "x",
     ),
   )
 
-  let nonlinear_cancelled_linear : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix([x() * (inv_x + @symcore.int(1)) + y()], [x(), y()])
+  let nonlinear_cancelled_linear : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix(
+    [x() * (inv_x + @symcore.int(1)) + y()],
+    [x(), y()],
+  )
   assert_eq(
     local_linear_eq_result_type(nonlinear_cancelled_linear),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix([x*(1/x + 1) + y], [x, y])",
-      "x y",
+      "sympy.solvers.linear_eq_to_matrix([x*(1/x + 1) + y], [x, y])", "x y",
     ),
   )
 
-  let nonlinear_mixed_mul : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix([(x() + @symcore.int(1)) * y()], [x(), y()])
+  let nonlinear_mixed_mul : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix([(x() + @symcore.int(1)) * y()], [
+    x(),
+    y(),
+  ])
   assert_eq(
     local_linear_eq_result_type(nonlinear_mixed_mul),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix([(x + 1)*y], [x, y])",
-      "x y",
+      "sympy.solvers.linear_eq_to_matrix([(x + 1)*y], [x, y])", "x y",
     ),
   )
 
-  let nonlinear_eq_recip : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix(
-      [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x, inv_x + y())],
-      [x(), y()],
-    )
+  let nonlinear_eq_recip : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix(
+    [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x, inv_x + y())],
+    [x(), y()],
+  )
   assert_eq(
     local_linear_eq_result_type(nonlinear_eq_recip),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix([sympy.Eq(1/x, 1/x + y)], [x, y])",
-      "x y",
+      "sympy.solvers.linear_eq_to_matrix([sympy.Eq(1/x, 1/x + y)], [x, y])", "x y",
     ),
   )
 
-  let nonlinear_eq_y_over_x : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix(
-      [@symcore.Expr::Relational(@symcore.RelOp::Eq, y() * inv_x, y() * inv_x + y())],
-      [x(), y()],
-    )
+  let nonlinear_eq_y_over_x : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix(
+    [
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        y() * inv_x,
+        y() * inv_x + y(),
+      ),
+    ],
+    [x(), y()],
+  )
   assert_eq(
     local_linear_eq_result_type(nonlinear_eq_y_over_x),
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.linear_eq_to_matrix([sympy.Eq(y/x, y/x + y)], [x, y])",
-      "x y",
+      "sympy.solvers.linear_eq_to_matrix([sympy.Eq(y/x, y/x + y)], [x, y])", "x y",
     ),
   )
 
-  let nonlinear_eq_quadratic : Result[(@symmatrices.Matrix, @symmatrices.Matrix), @symsolvers.SolverError] = try?
-    @symsolvers.linear_eq_to_matrix(
-      [@symcore.Expr::Relational(@symcore.RelOp::Eq, x() * (x() + @symcore.int(1)), (x() ^ @symcore.int(2)) + y())],
-      [x(), y()],
-    )
+  let nonlinear_eq_quadratic : Result[
+    (@symmatrices.Matrix, @symmatrices.Matrix),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.linear_eq_to_matrix(
+    [
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        x() * (x() + @symcore.int(1)),
+        (x() ^ @symcore.int(2)) + y(),
+      ),
+    ],
+    [x(), y()],
+  )
   assert_eq(
     local_linear_eq_result_type(nonlinear_eq_quadratic),
     solvers_eval_stmt_result_symbols(
@@ -3763,11 +5020,19 @@ test "solvers parity linear_eq_to_matrix and solveset batch 22 additional public
     @symcore.int(-2) + inv_x,
   )
   assert_eq(
-    normalize_union_text(@symsets.to_string(
-      @symsolvers.solveset(issue_8715, symbol=Some(x()), domain=@symsets.reals()),
-    )),
     normalize_union_text(
-      solvers_eval_str("sympy.sstr(sympy.solvers.solveset(x + 1/x > -2 + 1/x, x, sympy.S.Reals))"),
+      @symsets.to_string(
+        @symsolvers.solveset(
+          issue_8715,
+          symbol=Some(x()),
+          domain=@symsets.reals(),
+        ),
+      ),
+    ),
+    normalize_union_text(
+      solvers_eval_str(
+        "sympy.sstr(sympy.solvers.solveset(x + 1/x > -2 + 1/x, x, sympy.S.Reals))",
+      ),
     ),
   )
 
@@ -3778,20 +5043,36 @@ test "solvers parity linear_eq_to_matrix and solveset batch 22 additional public
     @symcore.int(-2) + (log_x ^ @symcore.int(-1)),
   )
   assert_eq(
-    normalize_union_text(@symsets.to_string(
-      @symsolvers.solveset(issue_8715_log, symbol=Some(x()), domain=@symsets.reals()),
-    )),
     normalize_union_text(
-      solvers_eval_str("sympy.sstr(sympy.solvers.solveset(sympy.log(x) + 1/sympy.log(x) > -2 + 1/sympy.log(x), x, sympy.S.Reals))"),
+      @symsets.to_string(
+        @symsolvers.solveset(
+          issue_8715_log,
+          symbol=Some(x()),
+          domain=@symsets.reals(),
+        ),
+      ),
+    ),
+    normalize_union_text(
+      solvers_eval_str(
+        "sympy.sstr(sympy.solvers.solveset(sympy.log(x) + 1/sympy.log(x) > -2 + 1/sympy.log(x), x, sympy.S.Reals))",
+      ),
     ),
   )
 
-  let issue_11174 = (z() ^ @symcore.int(2)) + @symcore.function("exp", [@symcore.int(2) * x()]) - sin(y())
+  let issue_11174 = (z() ^ @symcore.int(2)) +
+    @symcore.function("exp", [@symcore.int(2) * x()]) -
+    sin(y())
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(issue_11174, symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        issue_11174,
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(z**2 + sympy.exp(2*x) - sympy.sin(y), x, sympy.S.Reals))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(z**2 + sympy.exp(2*x) - sympy.sin(y), x, sympy.S.Reals))",
+    ),
   )
 }
 
@@ -3806,7 +5087,10 @@ test "solvers parity solveset and simplex batch 23 additional public cases" {
     @symcore.mul([
       sqrt(r),
       abs(tan_t),
-      @symcore.pow(sqrt((tan_t ^ @symcore.int(2)) + @symcore.int(1)), @symcore.int(-1)),
+      @symcore.pow(
+        sqrt((tan_t ^ @symcore.int(2)) + @symcore.int(1)),
+        @symcore.int(-1),
+      ),
     ]),
     @symcore.mul([x(), tan_t]),
   ])
@@ -3818,7 +5102,10 @@ test "solvers parity solveset and simplex batch 23 additional public cases" {
         sqrt(r),
         abs(tan_t),
         @symcore.pow(
-          @symcore.mul([sqrt((tan_t ^ @symcore.int(2)) + @symcore.int(1)), tan_t]),
+          @symcore.mul([
+            sqrt((tan_t ^ @symcore.int(2)) + @symcore.int(1)),
+            tan_t,
+          ]),
           @symcore.int(-1),
         ),
       ]),
@@ -3826,7 +5113,11 @@ test "solvers parity solveset and simplex batch 23 additional public cases" {
   ])
   assert_eq(
     @symsets.compare_set(
-      @symsolvers.solveset(issue_11174_b, symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        issue_11174_b,
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
       issue_11174_b_expected,
     ),
     0,
@@ -3848,11 +5139,19 @@ test "solvers parity solveset and simplex batch 23 additional public cases" {
     @symcore.int(2),
   )
   assert_eq(
-    normalize_union_text(@symsets.to_string(
-      @symsolvers.solveset(issue_10477, symbol=Some(x()), domain=@symsets.reals()),
-    )),
     normalize_union_text(
-      solvers_eval_str("sympy.sstr(sympy.solvers.solveset((x**2 + 4*x - 3)/x < 2, x, sympy.S.Reals))"),
+      @symsets.to_string(
+        @symsolvers.solveset(
+          issue_10477,
+          symbol=Some(x()),
+          domain=@symsets.reals(),
+        ),
+      ),
+    ),
+    normalize_union_text(
+      solvers_eval_str(
+        "sympy.sstr(sympy.solvers.solveset((x**2 + 4*x - 3)/x < 2, x, sympy.S.Reals))",
+      ),
     ),
   )
 
@@ -3869,26 +5168,43 @@ test "solvers parity solveset and simplex batch 23 additional public cases" {
         domain=@symsets.interval(@symcore.int(1), @symcore.int(10)),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(sympy.diff(1/x, x) < 0, x, sympy.Interval(1, 10)))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(sympy.diff(1/x, x) < 0, x, sympy.Interval(1, 10)))",
+    ),
   )
 
   let issue_12478 = sqrt(x() + @symcore.int(-2)) + @symcore.int(2)
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(issue_12478, symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        issue_12478,
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solveset(sympy.sqrt(x - 2) + 2, x, sympy.S.Reals))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solveset(sympy.sqrt(x - 2) + 2, x, sympy.S.Reals))",
+    ),
   )
   let issue_14300 = @symcore.add([
     @symcore.int(1),
-    @symcore.mul([@symcore.int(-1), @symcore.function("exp", [@symcore.int(-18000000) * x()])]),
+    @symcore.mul([
+      @symcore.int(-1),
+      @symcore.function("exp", [@symcore.int(-18000000) * x()]),
+    ]),
     @symcore.mul([@symcore.int(-1), y()]),
   ])
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(issue_14300, symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        issue_14300,
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(1 - sympy.exp(-18000000*x) - y, x, sympy.S.Reals))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(1 - sympy.exp(-18000000*x) - y, x, sympy.S.Reals))",
+    ),
   )
 
   assert_eq(
@@ -3897,62 +5213,102 @@ test "solvers parity solveset and simplex batch 23 additional public cases" {
         (x() ^ @symcore.int(2)) + @symcore.int(-2) * x() + @symcore.int(-15),
         symbol=Some(x()),
         domain=@symsets.interval(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity),
+          @symcore.Expr::NumberSymbol(
+            @symcore.NumberSymbolKind::NegativeInfinity,
+          ),
           @symcore.int(0),
           left_open=true,
           right_open=false,
         ),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(x**2 - 2*x - 15, x, sympy.Interval(-sympy.oo, 0)))"),
-  )
-
-  assert_eq(
-    local_lp_dict_result_text(
-      @symsolvers.lpmax(
-        x(),
-        [
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y()),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
-        ],
-      ),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(x**2 - 2*x - 15, x, sympy.Interval(-sympy.oo, 0)))",
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(x, [sympy.Eq(x, y), sympy.Eq(y, z), z <= 3]))"),
+  )
+
+  assert_eq(
+    local_lp_dict_result_text(
+      @symsolvers.lpmax(x(), [
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y()),
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
+        @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
+      ]),
+    ),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(x, [sympy.Eq(x, y), sympy.Eq(y, z), z <= 3]))",
+    ),
   )
 
   assert_eq(
     local_lp_dict_result_text(
       @symsolvers.lpmax(
-        @symcore.int(2) + @symcore.mul([@symcore.int(-1), x()]) + @symcore.mul([@symcore.int(-1), y()]) + @symcore.mul([@symcore.int(-5), z()]),
+        @symcore.int(2) +
+        @symcore.mul([@symcore.int(-1), x()]) +
+        @symcore.mul([@symcore.int(-1), y()]) +
+        @symcore.mul([@symcore.int(-5), z()]),
         [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x() - y() + @symcore.int(2) * z(), @symcore.int(-4)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.mul([@symcore.int(-1), x()]) + @symcore.int(2) * y() + @symcore.mul([@symcore.int(-3), z()]), @symcore.int(8)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(2) * x() + y() + @symcore.mul([@symcore.int(-7), z()]), @symcore.int(10)),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            x() - y() + @symcore.int(2) * z(),
+            @symcore.int(-4),
+          ),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            @symcore.mul([@symcore.int(-1), x()]) +
+            @symcore.int(2) * y() +
+            @symcore.mul([@symcore.int(-3), z()]),
+            @symcore.int(8),
+          ),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            @symcore.int(2) * x() + y() + @symcore.mul([@symcore.int(-7), z()]),
+            @symcore.int(10),
+          ),
           @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
           @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
           @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
         ],
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(-x - y - 5*z + 2, [x - y + 2*z <= -4, -x + 2*y - 3*z <= 8, 2*x + y - 7*z <= 10, x >= 0, y >= 0, z >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(-x - y - 5*z + 2, [x - y + 2*z <= -4, -x + 2*y - 3*z <= 8, 2*x + y - 7*z <= 10, x >= 0, y >= 0, z >= 0]))",
+    ),
   )
 
   assert_eq(
     local_lp_dict_result_text(
       @symsolvers.lpmax(
-        @symcore.mul([@symcore.int(-1), x()]) + @symcore.mul([@symcore.int(-1), y()]) + @symcore.mul([@symcore.int(-5), z()]),
+        @symcore.mul([@symcore.int(-1), x()]) +
+        @symcore.mul([@symcore.int(-1), y()]) +
+        @symcore.mul([@symcore.int(-5), z()]),
         [
-          @symcore.Expr::Relational(@symcore.RelOp::Le, x() - y() + @symcore.int(2) * z(), @symcore.int(3)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.mul([@symcore.int(-1), x()]) + @symcore.int(2) * y() + @symcore.mul([@symcore.int(-3), z()]), @symcore.int(-2)),
-          @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(2) * x() + y() + @symcore.mul([@symcore.int(-7), z()]), @symcore.int(-5)),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            x() - y() + @symcore.int(2) * z(),
+            @symcore.int(3),
+          ),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            @symcore.mul([@symcore.int(-1), x()]) +
+            @symcore.int(2) * y() +
+            @symcore.mul([@symcore.int(-3), z()]),
+            @symcore.int(-2),
+          ),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            @symcore.int(2) * x() + y() + @symcore.mul([@symcore.int(-7), z()]),
+            @symcore.int(-5),
+          ),
           @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
           @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
           @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
         ],
       ),
     ),
-    solvers_eval_str("repr(sympy.solvers.lpmax(-x - y - 5*z, [x - y + 2*z <= 3, -x + 2*y - 3*z <= -2, 2*x + y - 7*z <= -5, x >= 0, y >= 0, z >= 0]))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.lpmax(-x - y - 5*z, [x - y + 2*z <= 3, -x + 2*y - 3*z <= -2, 2*x + y - 7*z <= -5, x >= 0, y >= 0, z >= 0]))",
+    ),
   )
 }
 
@@ -3963,27 +5319,44 @@ test "solvers parity solveset and simplex invalid inputs batch 24 additional pub
 
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(@symcore.pow(sqrt(x()), @symcore.int(-1)), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        @symcore.pow(sqrt(x()), @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(1/sympy.sqrt(x), x, sympy.S.Reals))"),
-  )
-
-  assert_eq(
-    @symsets.to_string(
-      @symsolvers.solveset(@symcalculus.diff(sqrt(x() + (x() ^ @symcore.int(-1))), x()), symbol=Some(x()), domain=@symsets.reals()),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(1/sympy.sqrt(x), x, sympy.S.Reals))",
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.solveset(sympy.diff(sympy.sqrt(1/x + x)), x, sympy.S.Reals))"),
   )
 
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.pow(@symcore.int(1) + @symcore.int(-1) * (x() ^ @symcore.int(3)), @symcore.int(-2)),
+        @symcalculus.diff(sqrt(x() + (x() ^ @symcore.int(-1))), x()),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solveset(1/(1 - x**3)**2, x, sympy.S.Reals))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.solveset(sympy.diff(sympy.sqrt(1/x + x)), x, sympy.S.Reals))",
+    ),
+  )
+
+  assert_eq(
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.pow(
+          @symcore.int(1) + @symcore.int(-1) * (x() ^ @symcore.int(3)),
+          @symcore.int(-2),
+        ),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
+    ),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solveset(1/(1 - x**3)**2, x, sympy.S.Reals))",
+    ),
   )
 
   assert_eq(
@@ -3991,27 +5364,45 @@ test "solvers parity solveset and simplex invalid inputs batch 24 additional pub
       @symsolvers.solveset(
         @symcore.mul([
           x() + @symcore.int(5),
-          @symcore.pow(sqrt(@symcore.int(-1) * (x() ^ @symcore.int(2)) + @symcore.int(-10) * x()), @symcore.int(-1)),
+          @symcore.pow(
+            sqrt(
+              @symcore.int(-1) * (x() ^ @symcore.int(2)) +
+              @symcore.int(-10) * x(),
+            ),
+            @symcore.int(-1),
+          ),
         ]),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solveset((x + 5)/sympy.sqrt(-x**2 - 10*x), x, sympy.S.Reals))"),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solveset((x + 5)/sympy.sqrt(-x**2 - 10*x), x, sympy.S.Reals))",
+    ),
   )
 
   let issue_17276_expected = @symsets.finite_set([
     @symcore.Expr::Tuple([
       @symcore.int(5) ^ one_fifth,
-      @symcore.int(25) * sqrt(@symcore.int(5)) * (@symcore.int(5) ^ (@symcore.int(-1) * one_fifth)),
+      @symcore.int(25) *
+      sqrt(@symcore.int(5)) *
+      (@symcore.int(5) ^ (@symcore.int(-1) * one_fifth)),
     ]),
   ])
   assert_eq(
     @symsets.compare_set(
       @symsolvers.nonlinsolve(
         [
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), @symcore.int(5) ^ one_fifth),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x() * y(), @symcore.int(25) * sqrt(@symcore.int(5))),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            x(),
+            @symcore.int(5) ^ one_fifth,
+          ),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            x() * y(),
+            @symcore.int(25) * sqrt(@symcore.int(5)),
+          ),
         ],
         [x(), y()],
       ),
@@ -4032,7 +5423,8 @@ test "solvers parity solveset and simplex invalid inputs batch 24 additional pub
         [
           @symcore.Expr::Relational(
             @symcore.RelOp::Eq,
-            @symcore.mul([t, sqrt(@symcore.int(5)) + sqrt(@symcore.int(2))]) + @symcore.int(-1) * sqrt(@symcore.int(2)),
+            @symcore.mul([t, sqrt(@symcore.int(5)) + sqrt(@symcore.int(2))]) +
+            @symcore.int(-1) * sqrt(@symcore.int(2)),
             @symcore.int(0),
           ),
           @symcore.Expr::Relational(@symcore.RelOp::Eq, t, @symcore.int(0)),
@@ -4048,23 +5440,41 @@ test "solvers parity solveset and simplex invalid inputs batch 24 additional pub
 
   assert_eq(
     @symsets.to_string(
-      @symsolvers.solveset(@symcore.int(3) ^ x(), symbol=Some(x()), domain=@symsets.reals()),
+      @symsolvers.solveset(
+        @symcore.int(3) ^ x(),
+        symbol=Some(x()),
+        domain=@symsets.reals(),
+      ),
     ),
     solvers_eval_str("sympy.sstr(sympy.solveset(3**x, x, sympy.S.Reals))"),
   )
 
-  let irrational_lp : Result[(@symcore.Expr, Map[String, @symcore.Expr]), @symsolvers.SolverError] = try?
-    @symsolvers.lpmax(
-      @symcore.int(-1) * x() - y() - @symcore.int(5) * z(),
-      [
-        @symcore.Expr::Relational(@symcore.RelOp::Le, x() - y() + sqrt(@symcore.int(2)) * z(), @symcore.int(-4)),
-        @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(), @symcore.int(8)),
-        @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.int(2) * x() + y() - @symcore.int(7) * z(), @symcore.int(10)),
-        @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-        @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-        @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-      ],
-    )
+  let irrational_lp : Result[
+    (@symcore.Expr, Map[String, @symcore.Expr]),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.lpmax(
+    @symcore.int(-1) * x() - y() - @symcore.int(5) * z(),
+    [
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        x() - y() + sqrt(@symcore.int(2)) * z(),
+        @symcore.int(-4),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(),
+        @symcore.int(8),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(2) * x() + y() - @symcore.int(7) * z(),
+        @symcore.int(10),
+      ),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    ],
+  )
   assert_eq(local_lp_result_type(irrational_lp), "ValueError")
   assert_eq(
     solvers_eval_stmt_result_symbols(
@@ -4074,30 +5484,28 @@ test "solvers parity solveset and simplex invalid inputs batch 24 additional pub
     "TypeError",
   )
 
-  let strict_lp : Result[(@symcore.Expr, Map[String, @symcore.Expr]), @symsolvers.SolverError] = try?
-    @symsolvers.lpmax(
-      x(),
-      [@symcore.Expr::Relational(@symcore.RelOp::Gt, x(), @symcore.int(0))],
-    )
+  let strict_lp : Result[
+    (@symcore.Expr, Map[String, @symcore.Expr]),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.lpmax(x(), [
+    @symcore.Expr::Relational(@symcore.RelOp::Gt, x(), @symcore.int(0)),
+  ])
   assert_eq(local_lp_result_type(strict_lp), "ValueError")
   assert_eq(
-    solvers_eval_stmt_result_symbols(
-      "sympy.solvers.lpmax(x, [x > 0])",
-      "x",
-    ),
+    solvers_eval_stmt_result_symbols("sympy.solvers.lpmax(x, [x > 0])", "x"),
     "TypeError",
   )
 
-  let ne_lp : Result[(@symcore.Expr, Map[String, @symcore.Expr]), @symsolvers.SolverError] = try?
-    @symsolvers.lpmax(
-      x(),
-      [@symcore.Expr::Relational(@symcore.RelOp::Ne, x(), @symcore.int(0))],
-    )
+  let ne_lp : Result[
+    (@symcore.Expr, Map[String, @symcore.Expr]),
+    @symsolvers.SolverError,
+  ] = try? @symsolvers.lpmax(x(), [
+    @symcore.Expr::Relational(@symcore.RelOp::Ne, x(), @symcore.int(0)),
+  ])
   assert_eq(local_lp_result_type(ne_lp), "ValueError")
   assert_eq(
     solvers_eval_stmt_result_symbols(
-      "sympy.solvers.lpmax(x, [sympy.Ne(x, 0)])",
-      "x",
+      "sympy.solvers.lpmax(x, [sympy.Ne(x, 0)])", "x",
     ),
     "TypeError",
   )
@@ -4106,65 +5514,101 @@ test "solvers parity solveset and simplex invalid inputs batch 24 additional pub
 ///|
 test "solvers parity solveset exponential conditionset batch 25 additional public cases" {
   let real_domain = @symsets.reals()
-  let positive_infinity = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-  let positive_open = @symsets.interval(@symcore.int(0), positive_infinity, left_open=true)
+  let positive_infinity = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::Infinity,
+  )
+  let positive_open = @symsets.interval(
+    @symcore.int(0),
+    positive_infinity,
+    left_open=true,
+  )
 
-  let f1 = ((@symcore.function("exp", [x()]) + @symcore.int(1)) ^ x()) + @symcore.int(-2)
+  let f1 = ((@symcore.function("exp", [x()]) + @symcore.int(1)) ^ x()) +
+    @symcore.int(-2)
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(f1, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(f1, symbol=Some(x()), domain=real_domain),
+    ),
     "ConditionSet(x, Eq((exp(x) + 1)**x - 2, 0), Reals)",
   )
   assert_eq(
-    solvers_eval_str("str(sympy.solveset((sympy.exp(x) + 1)**x - 2, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq((sympy.exp(x) + 1)**x - 2, 0), sympy.S.Reals))"),
+    solvers_eval_str(
+      "str(sympy.solveset((sympy.exp(x) + 1)**x - 2, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq((sympy.exp(x) + 1)**x - 2, 0), sympy.S.Reals))",
+    ),
     "True",
   )
 
   let f2 = ((x() + @symcore.int(2)) ^ y()) * x() + @symcore.int(-3)
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(f2, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(f2, symbol=Some(x()), domain=real_domain),
+    ),
     "ConditionSet(x, Eq(x*(x + 2)**y - 3, 0), Reals)",
   )
   assert_eq(
-    solvers_eval_str("str(sympy.solveset(x*(x + 2)**y - 3, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(x*(x + 2)**y - 3, 0), sympy.S.Reals))"),
+    solvers_eval_str(
+      "str(sympy.solveset(x*(x + 2)**y - 3, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(x*(x + 2)**y - 3, 0), sympy.S.Reals))",
+    ),
     "True",
   )
 
-  let f3 = (@symcore.int(2) ^ x()) + @symcore.int(-1) * @symcore.function("exp", [x()]) + @symcore.int(-3)
+  let f3 = (@symcore.int(2) ^ x()) +
+    @symcore.int(-1) * @symcore.function("exp", [x()]) +
+    @symcore.int(-3)
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(f3, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(f3, symbol=Some(x()), domain=real_domain),
+    ),
     "ConditionSet(x, Eq(2**x - exp(x) - 3, 0), Reals)",
   )
   assert_eq(
-    solvers_eval_str("str(sympy.solveset(2**x - sympy.exp(x) - 3, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(2**x - sympy.exp(x) - 3, 0), sympy.S.Reals))"),
+    solvers_eval_str(
+      "str(sympy.solveset(2**x - sympy.exp(x) - 3, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(2**x - sympy.exp(x) - 3, 0), sympy.S.Reals))",
+    ),
     "True",
   )
 
-  let f4 = @symcore.function("log", [x()]) + @symcore.int(-1) * @symcore.function("exp", [x()])
+  let f4 = @symcore.function("log", [x()]) +
+    @symcore.int(-1) * @symcore.function("exp", [x()])
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(f4, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(f4, symbol=Some(x()), domain=real_domain),
+    ),
     "ConditionSet(x, Eq(log(x) - exp(x), 0), Reals)",
   )
   assert_eq(
-    solvers_eval_str("str(sympy.solveset(sympy.log(x) - sympy.exp(x), x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(-sympy.exp(x) + sympy.log(x), 0), sympy.S.Reals))"),
+    solvers_eval_str(
+      "str(sympy.solveset(sympy.log(x) - sympy.exp(x), x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(-sympy.exp(x) + sympy.log(x), 0), sympy.S.Reals))",
+    ),
     "True",
   )
 
-  let f5 = (@symcore.int(2) ^ x()) + (@symcore.int(3) ^ x()) + @symcore.int(-1) * (@symcore.int(5) ^ x())
+  let f5 = (@symcore.int(2) ^ x()) +
+    (@symcore.int(3) ^ x()) +
+    @symcore.int(-1) * (@symcore.int(5) ^ x())
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(f5, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(f5, symbol=Some(x()), domain=real_domain),
+    ),
     "ConditionSet(x, Eq(2**x + 3**x - 5**x, 0), Reals)",
   )
   assert_eq(
-    solvers_eval_str("str(sympy.solveset(2**x + 3**x - 5**x, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(2**x + 3**x - 5**x, 0), sympy.S.Reals))"),
+    solvers_eval_str(
+      "str(sympy.solveset(2**x + 3**x - 5**x, x, sympy.S.Reals) == sympy.ConditionSet(x, sympy.Eq(2**x + 3**x - 5**x, 0), sympy.S.Reals))",
+    ),
     "True",
   )
 
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(x() ^ x(), symbol=Some(x()), domain=positive_open)),
+    @symsets.to_string(
+      @symsolvers.solveset(x() ^ x(), symbol=Some(x()), domain=positive_open),
+    ),
     "ConditionSet(x, Eq(x**x, 0), Interval.Lopen(0, oo))",
   )
   assert_eq(
-    solvers_eval_str("str(sympy.solveset(x**x, x, sympy.Interval.Lopen(0, sympy.oo)) == sympy.ConditionSet(x, sympy.Eq(x**x, 0), sympy.Interval.open(0, sympy.oo)))"),
+    solvers_eval_str(
+      "str(sympy.solveset(x**x, x, sympy.Interval.Lopen(0, sympy.oo)) == sympy.ConditionSet(x, sympy.Eq(x**x, 0), sympy.Interval.open(0, sympy.oo)))",
+    ),
     "True",
   )
 }
@@ -4178,17 +5622,26 @@ test "solvers parity solveset logarithmic and shifted exponential batch 26 addit
 
   assert_eq(
     @symsets.compare_set(
-      @symsolvers.solveset(@symcore.function("log", [x()]), symbol=Some(x()), domain=real_domain),
+      @symsolvers.solveset(
+        @symcore.function("log", [x()]),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
       @symsets.finite_set([@symcore.int(1)]),
     ),
     0,
   )
   assert_eq(
-    solvers_eval_str_symbols("str(sympy.solveset(sympy.log(x), x, sympy.S.Reals) == sympy.FiniteSet(1))", "x"),
+    solvers_eval_str_symbols(
+      "str(sympy.solveset(sympy.log(x), x, sympy.S.Reals) == sympy.FiniteSet(1))",
+      "x",
+    ),
     "True",
   )
 
-  let log_product = @symcore.function("log", [(x() + @symcore.int(-1)) * (x() + @symcore.int(1))])
+  let log_product = @symcore.function("log", [
+    (x() + @symcore.int(-1)) * (x() + @symcore.int(1)),
+  ])
   assert_eq(
     @symsets.compare_set(
       @symsolvers.solveset(log_product, symbol=Some(x()), domain=real_domain),
@@ -4204,7 +5657,8 @@ test "solvers parity solveset logarithmic and shifted exponential batch 26 addit
     "True",
   )
 
-  let log_pair = @symcore.function("log", [x() + @symcore.int(-3)]) + @symcore.function("log", [x() + @symcore.int(3)])
+  let log_pair = @symcore.function("log", [x() + @symcore.int(-3)]) +
+    @symcore.function("log", [x() + @symcore.int(3)])
   assert_eq(
     @symsets.compare_set(
       @symsolvers.solveset(log_pair, symbol=Some(x()), domain=real_domain),
@@ -4220,9 +5674,12 @@ test "solvers parity solveset logarithmic and shifted exponential batch 26 addit
     "True",
   )
 
-  let scaled_log = @symcore.function("log", [@symcore.int(3) * x()]) + @symcore.int(-3)
+  let scaled_log = @symcore.function("log", [@symcore.int(3) * x()]) +
+    @symcore.int(-3)
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(scaled_log, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(scaled_log, symbol=Some(x()), domain=real_domain),
+    ),
     "{exp(3)/3}",
   )
   assert_eq(
@@ -4233,7 +5690,8 @@ test "solvers parity solveset logarithmic and shifted exponential batch 26 addit
     "True",
   )
 
-  let shifted_exp = @symcore.function("exp", [x() + @symcore.int(3)]) + @symcore.int(-1)
+  let shifted_exp = @symcore.function("exp", [x() + @symcore.int(3)]) +
+    @symcore.int(-1)
   assert_eq(
     @symsets.compare_set(
       @symsolvers.solveset(shifted_exp, symbol=Some(x()), domain=real_domain),
@@ -4251,7 +5709,9 @@ test "solvers parity solveset logarithmic and shifted exponential batch 26 addit
 
   let exp_param = @symcore.function("exp", [x()]) + @symcore.int(-1) * y()
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(exp_param, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(exp_param, symbol=Some(x()), domain=real_domain),
+    ),
     "Intersection({log(y)}, Reals)",
   )
   assert_eq(
@@ -4264,7 +5724,9 @@ test "solvers parity solveset logarithmic and shifted exponential batch 26 addit
 
   let log_param = @symcore.function("log", [x()]) + @symcore.int(-1) * y()
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(log_param, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(log_param, symbol=Some(x()), domain=real_domain),
+    ),
     "Intersection({exp(y)}, Reals)",
   )
   assert_eq(
@@ -4275,9 +5737,16 @@ test "solvers parity solveset logarithmic and shifted exponential batch 26 addit
     "True",
   )
 
-  let shifted_exp_param = @symcore.function("exp", [x() + @symcore.int(3)]) + @symcore.int(-1) * y()
+  let shifted_exp_param = @symcore.function("exp", [x() + @symcore.int(3)]) +
+    @symcore.int(-1) * y()
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(shifted_exp_param, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        shifted_exp_param,
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "Intersection({log(y) - 3}, Reals)",
   )
   assert_eq(
@@ -4288,9 +5757,16 @@ test "solvers parity solveset logarithmic and shifted exponential batch 26 addit
     "True",
   )
 
-  let scaled_log_param = @symcore.function("log", [@symcore.int(3) * x()]) + @symcore.int(-1) * y()
+  let scaled_log_param = @symcore.function("log", [@symcore.int(3) * x()]) +
+    @symcore.int(-1) * y()
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(scaled_log_param, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        scaled_log_param,
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "Intersection({exp(y)/3}, Reals)",
   )
   assert_eq(
@@ -4301,9 +5777,16 @@ test "solvers parity solveset logarithmic and shifted exponential batch 26 addit
     "True",
   )
 
-  let shifted_log_param = @symcore.function("log", [x() + @symcore.int(3)]) + @symcore.int(-1) * y()
+  let shifted_log_param = @symcore.function("log", [x() + @symcore.int(3)]) +
+    @symcore.int(-1) * y()
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(shifted_log_param, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        shifted_log_param,
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "Intersection({exp(y) - 3}, Reals)",
   )
   assert_eq(
@@ -4319,9 +5802,16 @@ test "solvers parity solveset logarithmic and shifted exponential batch 26 addit
 test "solvers parity solveset scaled logarithmic and exponential batch 27 additional public cases" {
   let real_domain = @symsets.reals()
 
-  let scaled_exp_param = @symcore.function("exp", [@symcore.int(3) * x()]) + @symcore.int(-1) * y()
+  let scaled_exp_param = @symcore.function("exp", [@symcore.int(3) * x()]) +
+    @symcore.int(-1) * y()
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(scaled_exp_param, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        scaled_exp_param,
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "Intersection({log(y)/3}, Reals)",
   )
   assert_eq(
@@ -4332,9 +5822,16 @@ test "solvers parity solveset scaled logarithmic and exponential batch 27 additi
     "True",
   )
 
-  let scaled_exp_coeff_param = @symcore.int(3) * @symcore.function("exp", [x()]) + @symcore.int(-1) * y()
+  let scaled_exp_coeff_param = @symcore.int(3) * @symcore.function("exp", [x()]) +
+    @symcore.int(-1) * y()
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(scaled_exp_coeff_param, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        scaled_exp_coeff_param,
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "Intersection({log(y/3)}, Reals)",
   )
   assert_eq(
@@ -4346,7 +5843,13 @@ test "solvers parity solveset scaled logarithmic and exponential batch 27 additi
   )
 
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.function("log", [@symcore.int(3) * x()]), symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.function("log", [@symcore.int(3) * x()]),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "{1/3}",
   )
   assert_eq(
@@ -4358,7 +5861,13 @@ test "solvers parity solveset scaled logarithmic and exponential batch 27 additi
   )
 
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.function("log", [x() + @symcore.int(3)]), symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.function("log", [x() + @symcore.int(3)]),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "{-2}",
   )
   assert_eq(
@@ -4369,9 +5878,17 @@ test "solvers parity solveset scaled logarithmic and exponential batch 27 additi
     "True",
   )
 
-  let shifted_exp_coeff_param = @symcore.function("exp", [x()]) + @symcore.int(3) + @symcore.int(-1) * y()
+  let shifted_exp_coeff_param = @symcore.function("exp", [x()]) +
+    @symcore.int(3) +
+    @symcore.int(-1) * y()
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(shifted_exp_coeff_param, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        shifted_exp_coeff_param,
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "Intersection({log(y - 3)}, Reals)",
   )
   assert_eq(
@@ -4382,9 +5899,16 @@ test "solvers parity solveset scaled logarithmic and exponential batch 27 additi
     "True",
   )
 
-  let scaled_log_param = @symcore.int(3) * @symcore.function("log", [x()]) + @symcore.int(-1) * y()
+  let scaled_log_param = @symcore.int(3) * @symcore.function("log", [x()]) +
+    @symcore.int(-1) * y()
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(scaled_log_param, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        scaled_log_param,
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "Intersection({exp(y/3)}, Reals)",
   )
   assert_eq(
@@ -4396,7 +5920,13 @@ test "solvers parity solveset scaled logarithmic and exponential batch 27 additi
   )
 
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.function("exp", [x() + @symcore.int(3)]) + @symcore.int(-3), symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.function("exp", [x() + @symcore.int(3)]) + @symcore.int(-3),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "{log(3) - 3}",
   )
   assert_eq(
@@ -4407,9 +5937,16 @@ test "solvers parity solveset scaled logarithmic and exponential batch 27 additi
     "True",
   )
 
-  let log_ratio_param = @symcore.function("log", [@symcore.int(3) * x()]) + @symcore.int(-1) * @symcore.function("log", [y()])
+  let log_ratio_param = @symcore.function("log", [@symcore.int(3) * x()]) +
+    @symcore.int(-1) * @symcore.function("log", [y()])
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(log_ratio_param, symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        log_ratio_param,
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "Intersection({y/3}, Reals)",
   )
   assert_eq(
@@ -4421,7 +5958,13 @@ test "solvers parity solveset scaled logarithmic and exponential batch 27 additi
   )
 
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(3) * @symcore.function("exp", [x()]) + @symcore.int(-1), symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(3) * @symcore.function("exp", [x()]) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "{log(1/3)}",
   )
   assert_eq(
@@ -4433,7 +5976,13 @@ test "solvers parity solveset scaled logarithmic and exponential batch 27 additi
   )
 
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.function("exp", [@symcore.int(3) * x()]) + @symcore.int(-1), symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.function("exp", [@symcore.int(3) * x()]) + @symcore.int(-1),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "{0}",
   )
   assert_eq(
@@ -4445,7 +5994,13 @@ test "solvers parity solveset scaled logarithmic and exponential batch 27 additi
   )
 
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset(@symcore.int(3) * @symcore.function("log", [x()]) + @symcore.int(-3), symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        @symcore.int(3) * @symcore.function("log", [x()]) + @symcore.int(-3),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "{exp(1)}",
   )
   assert_eq(
@@ -4464,7 +6019,11 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   assert_eq(
     @symsets.compare_set(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-2), x()), @symcore.int(4)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.raw_pow(@symcore.int(-2), x()),
+          @symcore.int(4),
+        ),
         symbol=Some(x()),
         domain=real_domain,
       ),
@@ -4483,7 +6042,11 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   assert_eq(
     @symsets.compare_set(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(-1) * (@symcore.int(2) ^ x()), @symcore.int(4)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.int(-1) * (@symcore.int(2) ^ x()),
+          @symcore.int(4),
+        ),
         symbol=Some(x()),
         domain=real_domain,
       ),
@@ -4493,8 +6056,7 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   )
   assert_eq(
     solvers_eval_str_symbols(
-      "str(sympy.solveset(sympy.Eq(-(2**x), 4), x, sympy.S.Reals))",
-      "x",
+      "str(sympy.solveset(sympy.Eq(-(2**x), 4), x, sympy.S.Reals))", "x",
     ),
     "EmptySet",
   )
@@ -4502,7 +6064,11 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   assert_eq(
     @symsets.compare_set(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-3), x()), @symcore.int(27)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.raw_pow(@symcore.int(-3), x()),
+          @symcore.int(27),
+        ),
         symbol=Some(x()),
         domain=real_domain,
       ),
@@ -4512,8 +6078,7 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   )
   assert_eq(
     solvers_eval_str_symbols(
-      "str(sympy.solveset(sympy.Eq((-3)**x, 27), x, sympy.S.Reals))",
-      "x",
+      "str(sympy.solveset(sympy.Eq((-3)**x, 27), x, sympy.S.Reals))", "x",
     ),
     "EmptySet",
   )
@@ -4521,7 +6086,11 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   assert_eq(
     @symsets.compare_set(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.raw_pow(@symcore.int(-5), x() + @symcore.int(1)), @symcore.int(625)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.raw_pow(@symcore.int(-5), x() + @symcore.int(1)),
+          @symcore.int(625),
+        ),
         symbol=Some(x()),
         domain=real_domain,
       ),
@@ -4540,7 +6109,11 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   assert_eq(
     @symsets.compare_set(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) ^ (x() + @symcore.int(-3)), @symcore.int(-16)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.int(2) ^ (x() + @symcore.int(-3)),
+          @symcore.int(-16),
+        ),
         symbol=Some(x()),
         domain=real_domain,
       ),
@@ -4550,8 +6123,7 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   )
   assert_eq(
     solvers_eval_str_symbols(
-      "str(sympy.solveset(sympy.Eq(2**(x - 3), -16), x, sympy.S.Reals))",
-      "x",
+      "str(sympy.solveset(sympy.Eq(2**(x - 3), -16), x, sympy.S.Reals))", "x",
     ),
     "EmptySet",
   )
@@ -4580,7 +6152,13 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   )
 
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset((@symcore.int(2) ^ x()) + @symcore.int(-1) * y(), symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        (@symcore.int(2) ^ x()) + @symcore.int(-1) * y(),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "Intersection({log(y)/log(2)}, Reals)",
   )
   assert_eq(
@@ -4594,7 +6172,11 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   assert_eq(
     @symsets.to_string(
       @symsolvers.solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.int(2) ^ x(), y()),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.int(2) ^ x(),
+          y(),
+        ),
         symbol=Some(x()),
         domain=real_domain,
       ),
@@ -4610,7 +6192,13 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   )
 
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset((z() ^ x()) + @symcore.int(-1) * y(), symbol=Some(x()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        (z() ^ x()) + @symcore.int(-1) * y(),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
+    ),
     "ConditionSet(x, Eq(z**x - y, 0), Reals)",
   )
   assert_eq(
@@ -4622,7 +6210,13 @@ test "solvers parity solveset real exponential equation batch 28 additional publ
   )
 
   assert_eq(
-    @symsets.to_string(@symsolvers.solveset((x() ^ y()) + @symcore.int(-1), symbol=Some(y()), domain=real_domain)),
+    @symsets.to_string(
+      @symsolvers.solveset(
+        (x() ^ y()) + @symcore.int(-1),
+        symbol=Some(y()),
+        domain=real_domain,
+      ),
+    ),
     "ConditionSet(y, Eq(x**y - 1, 0), Reals)",
   )
   assert_eq(
@@ -4642,10 +6236,10 @@ test "solvers parity solveset real set batch 29 additional public cases" {
   let b = @symcore.Expr::Symbol("b")
   let p = @symcore.Expr::Symbol("p")
   let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("third") }
-  let rational_y_den = (y() ^ @symcore.int(2)) * sqrt(@symcore.int(1) + @symcore.int(-1) * (y() ^ @symcore.int(2)))
-  let rational_y = (
-    x() + @symcore.int(-1) * (y() ^ @symcore.int(3))
-  ) * (rational_y_den ^ @symcore.int(-1))
+  let rational_y_den = (y() ^ @symcore.int(2)) *
+    sqrt(@symcore.int(1) + @symcore.int(-1) * (y() ^ @symcore.int(2)))
+  let rational_y = (x() + @symcore.int(-1) * (y() ^ @symcore.int(3))) *
+    (rational_y_den ^ @symcore.int(-1))
 
   assert_eq(
     local_set_matches_oracle(
@@ -4658,7 +6252,12 @@ test "solvers parity solveset real set batch 29 additional public cases" {
 
   assert_eq(
     local_set_matches_oracle(
-      @symsolvers.solveset((@symcore.int(2) * x()) * ((x() + @symcore.int(2)) ^ @symcore.int(-1)) + @symcore.int(-1), symbol=Some(x()), domain=real_domain),
+      @symsolvers.solveset(
+        @symcore.int(2) * x() * ((x() + @symcore.int(2)) ^ @symcore.int(-1)) +
+        @symcore.int(-1),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
       "(lambda x: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(2*x/(x + 2) - 1, x))(sympy.symbols('x', real=True))",
       "{'x': sympy.symbols('x', real=True), 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
     ),
@@ -4667,7 +6266,12 @@ test "solvers parity solveset real set batch 29 additional public cases" {
 
   assert_eq(
     local_set_matches_oracle(
-      @symsolvers.solveset(sqrt((a ^ @symcore.int(2)) + @symcore.int(-1) * (b ^ @symcore.int(2))) + @symcore.int(-3), symbol=Some(a), domain=real_domain),
+      @symsolvers.solveset(
+        sqrt((a ^ @symcore.int(2)) + @symcore.int(-1) * (b ^ @symcore.int(2))) +
+        @symcore.int(-3),
+        symbol=Some(a),
+        domain=real_domain,
+      ),
       "(lambda a, b: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(a**2 - b**2) - 3, a))(*sympy.symbols('a b', real=True))",
       "{'a': sympy.symbols('a', real=True), 'b': sympy.symbols('b', real=True), 'sqrt': sympy.sqrt, 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
     ),
@@ -4676,7 +6280,11 @@ test "solvers parity solveset real set batch 29 additional public cases" {
 
   assert_eq(
     local_set_matches_oracle(
-      @symsolvers.solveset(sqrt((a ^ @symcore.int(2)) + (b ^ @symcore.int(2))) + @symcore.int(-3), symbol=Some(a), domain=real_domain),
+      @symsolvers.solveset(
+        sqrt((a ^ @symcore.int(2)) + (b ^ @symcore.int(2))) + @symcore.int(-3),
+        symbol=Some(a),
+        domain=real_domain,
+      ),
       "(lambda a, b: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(sympy.sqrt(a**2 + b**2) - 3, a))(*sympy.symbols('a b', real=True))",
       "{'a': sympy.symbols('a', real=True), 'b': sympy.symbols('b', real=True), 'sqrt': sympy.sqrt, 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
     ),
@@ -4685,7 +6293,12 @@ test "solvers parity solveset real set batch 29 additional public cases" {
 
   assert_eq(
     local_set_matches_oracle(
-      @symsolvers.solveset((x() ^ @symcore.int(-1)) + @symcore.int(-1) * ((@symcore.int(2) * cm) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(-1)) +
+        @symcore.int(-1) * ((@symcore.int(2) * cm) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
       "(lambda x, cm: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(1/x - 1/(2*cm), x))(sympy.symbols('x', real=True), __import__('sympy.physics.units', fromlist=['cm']).cm)",
       "{'x': sympy.symbols('x', real=True), 'cm': __import__('sympy.physics.units', fromlist=['cm']).cm, 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
     ),
@@ -4694,7 +6307,11 @@ test "solvers parity solveset real set batch 29 additional public cases" {
 
   assert_eq(
     local_set_matches_oracle(
-      @symsolvers.solveset(x() * ((x() ^ one_third) + @symcore.int(-3)), symbol=Some(x()), domain=real_domain),
+      @symsolvers.solveset(
+        x() * ((x() ^ one_third) + @symcore.int(-3)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
       "(lambda x: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x*(x**sympy.Rational(1, 3) - 3), x))(sympy.symbols('x', real=True))",
       "{'x': sympy.symbols('x', real=True), 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
     ),
@@ -4704,7 +6321,10 @@ test "solvers parity solveset real set batch 29 additional public cases" {
   assert_eq(
     local_set_matches_oracle(
       @symsolvers.solveset(
-        (x() ^ @symcore.int(2)) + @symcore.int(-1) * (y() ^ @symcore.int(2)) * (@symcore.function("exp", [x()]) ^ @symcore.int(-1)),
+        (x() ^ @symcore.int(2)) +
+        @symcore.int(-1) *
+        (y() ^ @symcore.int(2)) *
+        (@symcore.function("exp", [x()]) ^ @symcore.int(-1)),
         symbol=Some(y()),
         domain=real_domain,
       ),
@@ -4716,7 +6336,12 @@ test "solvers parity solveset real set batch 29 additional public cases" {
 
   assert_eq(
     local_set_matches_oracle(
-      @symsolvers.solveset(((@symcore.int(1) * (p ^ @symcore.int(-1))) + @symcore.int(1)) ^ (p + @symcore.int(1)), symbol=Some(p), domain=real_domain),
+      @symsolvers.solveset(
+        (@symcore.int(1) * (p ^ @symcore.int(-1)) + @symcore.int(1)) ^
+        (p + @symcore.int(1)),
+        symbol=Some(p),
+        domain=real_domain,
+      ),
       "(lambda p: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real((1/p + 1)**(p + 1), p))(sympy.symbols('p', real=True))",
       "{'p': sympy.symbols('p', real=True), 'ConditionSet': sympy.ConditionSet, 'Eq': sympy.Eq, 'Reals': sympy.S.Reals}",
     ),
@@ -4731,7 +6356,11 @@ test "solvers parity solveset set behavior batch 30 additional public cases" {
 
   assert_eq(
     local_set_matches_oracle(
-      @symsolvers.solveset(x() * (@symcore.function("log", [x()]) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+      @symsolvers.solveset(
+        x() * (@symcore.function("log", [x()]) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
       "(lambda x: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x/sympy.log(x), x))(sympy.symbols('x', real=True))",
       "{'x': sympy.symbols('x', real=True), 'EmptySet': sympy.S.EmptySet}",
     ),
@@ -4740,7 +6369,11 @@ test "solvers parity solveset set behavior batch 30 additional public cases" {
 
   assert_eq(
     local_set_matches_oracle(
-      @symsolvers.solveset((x() ^ @symcore.int(2)) + a, symbol=Some(x()), domain=real_domain),
+      @symsolvers.solveset(
+        (x() ^ @symcore.int(2)) + a,
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
       "(lambda x, a: __import__('sympy.solvers.solveset', fromlist=['solveset_real']).solveset_real(x**2 + a, x))(sympy.symbols('x', real=True), sympy.symbols('a', real=True))",
       "{'x': sympy.symbols('x', real=True), 'a': sympy.symbols('a', real=True), 'Intersection': sympy.Intersection, 'Reals': sympy.S.Reals}",
     ),
@@ -4749,7 +6382,11 @@ test "solvers parity solveset set behavior batch 30 additional public cases" {
 
   assert_eq(
     local_set_matches_oracle(
-      @symsolvers.solveset(@symcore.int(1) * (sqrt(x()) ^ @symcore.int(-1)), symbol=Some(x()), domain=real_domain),
+      @symsolvers.solveset(
+        @symcore.int(1) * (sqrt(x()) ^ @symcore.int(-1)),
+        symbol=Some(x()),
+        domain=real_domain,
+      ),
       "(lambda x: sympy.solveset(1/sympy.sqrt(x), x, sympy.S.Reals))(sympy.symbols('x', real=True))",
       "{'x': sympy.symbols('x', real=True), 'EmptySet': sympy.S.EmptySet}",
     ),
@@ -4760,79 +6397,74 @@ test "solvers parity solveset set behavior batch 30 additional public cases" {
 ///|
 test "solvers parity decompogen" {
   assert_eq(
-    (
-      local_expr_list_text(@symsolvers.decompogen(sin(cos(x())), x())),
-    ),
-    (
-      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.sin(sympy.cos(x)), x))"),
+    local_expr_list_text(@symsolvers.decompogen(sin(cos(x())), x())),
+    solvers_eval_str(
+      "repr(sympy.solvers.decompogen(sympy.sin(sympy.cos(x)), x))",
     ),
   )
   assert_eq(
-    (
-      local_expr_list_text(
-        @symsolvers.decompogen(
-          @symcore.add([sin(x()) ^ @symcore.int(2), sin(x()), @symcore.int(1)]),
-          x(),
-        ),
+    local_expr_list_text(
+      @symsolvers.decompogen(
+        @symcore.add([sin(x()) ^ @symcore.int(2), sin(x()), @symcore.int(1)]),
+        x(),
       ),
     ),
-    (
-      solvers_eval_str(
-        "repr(sympy.solvers.decompogen(sympy.sin(x)**2 + sympy.sin(x) + 1, x))",
-      ),
+    solvers_eval_str(
+      "repr(sympy.solvers.decompogen(sympy.sin(x)**2 + sympy.sin(x) + 1, x))",
     ),
   )
   assert_eq(
-    (
-      local_expr_list_text(
-        @symsolvers.decompogen(
-          sqrt(
-            @symcore.add([
-              @symcore.mul([@symcore.int(6), x() ^ @symcore.int(2)]),
-              @symcore.int(-5),
-            ]),
-          ),
-          x(),
+    local_expr_list_text(
+      @symsolvers.decompogen(
+        sqrt(
+          @symcore.add([
+            @symcore.mul([@symcore.int(6), x() ^ @symcore.int(2)]),
+            @symcore.int(-5),
+          ]),
         ),
+        x(),
       ),
     ),
-    (
-      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.sqrt(6*x**2 - 5), x))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.decompogen(sympy.sqrt(6*x**2 - 5), x))",
     ),
   )
   assert_eq(
-    (
-      local_expr_list_text(
-        @symsolvers.decompogen(
-          sin(sqrt(cos((x() ^ @symcore.int(2)) + @symcore.int(1)))),
-          x(),
-        ),
+    local_expr_list_text(
+      @symsolvers.decompogen(
+        sin(sqrt(cos((x() ^ @symcore.int(2)) + @symcore.int(1)))),
+        x(),
       ),
     ),
-    (
-      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.sin(sympy.sqrt(sympy.cos(x**2 + 1))), x))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.decompogen(sympy.sin(sympy.sqrt(sympy.cos(x**2 + 1))), x))",
     ),
   )
   assert_eq(
-    (
-      local_expr_list_text(
-        @symsolvers.decompogen(
-          @symcore.function(
-            "Abs",
-            [(cos(x()) ^ @symcore.int(2)) + @symcore.int(3) * cos(x()) + @symcore.int(-4)],
-          ),
-          x(),
-        ),
+    local_expr_list_text(
+      @symsolvers.decompogen(
+        @symcore.function("Abs", [
+          (cos(x()) ^ @symcore.int(2)) +
+          @symcore.int(3) * cos(x()) +
+          @symcore.int(-4),
+        ]),
+        x(),
       ),
     ),
-    (
-      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.Abs(sympy.cos(x)**2 + 3*sympy.cos(x) - 4), x))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.decompogen(sympy.Abs(sympy.cos(x)**2 + 3*sympy.cos(x) - 4), x))",
     ),
   )
   assert_eq(
     expr_list_residuals_match_oracle(
       @symsolvers.decompogen(
-        (sin(x()) ^ @symcore.int(2)) + sin(x()) + @symcore.mul([@symcore.int(-1), sqrt(@symcore.int(3)), @symcore.pow(@symcore.int(2), @symcore.int(-1))]),
+        (sin(x()) ^ @symcore.int(2)) +
+        sin(x()) +
+        @symcore.mul([
+          @symcore.int(-1),
+          sqrt(@symcore.int(3)),
+          @symcore.pow(@symcore.int(2), @symcore.int(-1)),
+        ]),
         x(),
       ),
       "sympy.solvers.decompogen(sympy.sin(x)**2 + sympy.sin(x) - sympy.sqrt(3)/2, x)",
@@ -4843,10 +6475,11 @@ test "solvers parity decompogen" {
   assert_eq(
     expr_list_residuals_match_oracle(
       @symsolvers.decompogen(
-        @symcore.function(
-          "Abs",
-          [(cos(y()) ^ @symcore.int(2)) + @symcore.int(3) * cos(x()) + @symcore.int(-4)],
-        ),
+        @symcore.function("Abs", [
+          (cos(y()) ^ @symcore.int(2)) +
+          @symcore.int(3) * cos(x()) +
+          @symcore.int(-4),
+        ]),
         x(),
       ),
       "sympy.solvers.decompogen(sympy.Abs(sympy.cos(y)**2 + 3*sympy.cos(x) - 4), x)",
@@ -4855,54 +6488,43 @@ test "solvers parity decompogen" {
     "[0, 0, 0]",
   )
   assert_eq(
-    (
-      local_expr_list_text(@symsolvers.decompogen(x(), y())),
-    ),
-    (
-      solvers_eval_str("repr(sympy.solvers.decompogen(x, y))"),
-    ),
+    local_expr_list_text(@symsolvers.decompogen(x(), y())),
+    solvers_eval_str("repr(sympy.solvers.decompogen(x, y))"),
   )
   assert_eq(
-    (
-      local_expr_list_text(@symsolvers.decompogen(@symcore.int(1), x())),
-    ),
-    (
-      solvers_eval_str("repr(sympy.solvers.decompogen(1, x))"),
-    ),
+    local_expr_list_text(@symsolvers.decompogen(@symcore.int(1), x())),
+    solvers_eval_str("repr(sympy.solvers.decompogen(1, x))"),
   )
   assert_eq(
-    (
-      local_expr_list_text(@symsolvers.decompogen(@symcore.function("Max", [@symcore.int(3), x()]), x())),
+    local_expr_list_text(
+      @symsolvers.decompogen(
+        @symcore.function("Max", [@symcore.int(3), x()]),
+        x(),
+      ),
     ),
-    (
-      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.Max(3, x), x))"),
-    ),
+    solvers_eval_str("repr(sympy.solvers.decompogen(sympy.Max(3, x), x))"),
   )
   let u_linear = @symcore.int(2) * x() + @symcore.int(3)
   assert_eq(
-    (
-      local_expr_list_text(
-        @symsolvers.decompogen(
-          @symcore.function("Max", [sqrt(u_linear), u_linear ^ @symcore.int(2)]),
-          x(),
-        ),
+    local_expr_list_text(
+      @symsolvers.decompogen(
+        @symcore.function("Max", [sqrt(u_linear), u_linear ^ @symcore.int(2)]),
+        x(),
       ),
     ),
-    (
-      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.Max(sympy.sqrt(2*x + 3), (2*x + 3)**2), x))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.decompogen(sympy.Max(sympy.sqrt(2*x + 3), (2*x + 3)**2), x))",
     ),
   )
   assert_eq(
-    (
-      local_expr_list_text(
-        @symsolvers.decompogen(
-          @symcore.function("Max", [u_linear, u_linear ^ @symcore.int(2), y()]),
-          x(),
-        ),
+    local_expr_list_text(
+      @symsolvers.decompogen(
+        @symcore.function("Max", [u_linear, u_linear ^ @symcore.int(2), y()]),
+        x(),
       ),
     ),
-    (
-      solvers_eval_str("repr(sympy.solvers.decompogen(sympy.Max(2*x + 3, (2*x + 3)**2, y), x))"),
+    solvers_eval_str(
+      "repr(sympy.solvers.decompogen(sympy.Max(2*x + 3, (2*x + 3)**2, y), x))",
     ),
   )
   assert_eq(
@@ -4917,22 +6539,23 @@ test "solvers parity decompogen" {
     "[0]",
   )
   assert_eq(
-    (
-      local_expr_list_text(
-        @symsolvers.decompogen(
-          (x() ^ @symcore.int(4)) + @symcore.int(2) * (x() ^ @symcore.int(2)) + @symcore.int(1),
-          x(),
-        ),
+    local_expr_list_text(
+      @symsolvers.decompogen(
+        (x() ^ @symcore.int(4)) +
+        @symcore.int(2) * (x() ^ @symcore.int(2)) +
+        @symcore.int(1),
+        x(),
       ),
     ),
-    (
-      solvers_eval_str("repr(sympy.solvers.decompogen(x**4 + 2*x**2 + 1, x))"),
-    ),
+    solvers_eval_str("repr(sympy.solvers.decompogen(x**4 + 2*x**2 + 1, x))"),
   )
   assert_eq(
     expr_list_residuals_match_oracle(
       @symsolvers.decompogen(
-        (x() ^ @symcore.int(4)) + @symcore.int(2) * (x() ^ @symcore.int(3)) - x() + @symcore.int(-1),
+        (x() ^ @symcore.int(4)) +
+        @symcore.int(2) * (x() ^ @symcore.int(3)) -
+        x() +
+        @symcore.int(-1),
         x(),
       ),
       "sympy.solvers.decompogen(x**4 + 2*x**3 - x - 1, x)",
@@ -4946,7 +6569,9 @@ test "solvers parity decompogen" {
 test "solvers parity compogen" {
   assert_eq(
     @symprint.to_string(@symsolvers.compogen([sin(x()), cos(x())], x())),
-    solvers_eval_str("repr(" + compogen_oracle_expr("[sympy.sin(x), sympy.cos(x)], x") + ")"),
+    solvers_eval_str(
+      "repr(" + compogen_oracle_expr("[sympy.sin(x), sympy.cos(x)], x") + ")",
+    ),
   )
   assert_eq(
     normalize_text(
@@ -4957,46 +6582,78 @@ test "solvers parity compogen" {
         ),
       ),
     ),
-    solvers_eval_str("repr(" + compogen_oracle_expr("[x**2 + x + 1, sympy.sin(x)], x") + ")"),
+    solvers_eval_str(
+      "repr(" + compogen_oracle_expr("[x**2 + x + 1, sympy.sin(x)], x") + ")",
+    ),
   )
   assert_eq(
     normalize_text(
       @symprint.to_string(
         @symsolvers.compogen(
-          [sqrt(x()), @symcore.int(6) * (x() ^ @symcore.int(2)) + @symcore.int(-5)],
+          [
+            sqrt(x()),
+            @symcore.int(6) * (x() ^ @symcore.int(2)) + @symcore.int(-5),
+          ],
           x(),
         ),
       ),
     ),
-    solvers_eval_str("repr(" + compogen_oracle_expr("[sympy.sqrt(x), 6*x**2 - 5], x") + ")"),
+    solvers_eval_str(
+      "repr(" + compogen_oracle_expr("[sympy.sqrt(x), 6*x**2 - 5], x") + ")",
+    ),
   )
   assert_eq(
     normalize_text(
       @symprint.to_string(
         @symsolvers.compogen(
-          [sin(x()), sqrt(x()), cos(x()), (x() ^ @symcore.int(2)) + @symcore.int(1)],
+          [
+            sin(x()),
+            sqrt(x()),
+            cos(x()),
+            (x() ^ @symcore.int(2)) + @symcore.int(1),
+          ],
           x(),
         ),
       ),
     ),
-    solvers_eval_str("repr(" + compogen_oracle_expr("[sympy.sin(x), sympy.sqrt(x), sympy.cos(x), x**2 + 1], x") + ")"),
+    solvers_eval_str(
+      "repr(" +
+      compogen_oracle_expr(
+        "[sympy.sin(x), sympy.sqrt(x), sympy.cos(x), x**2 + 1], x",
+      ) +
+      ")",
+    ),
   )
   assert_eq(
     normalize_text(
       @symprint.to_string(
         @symsolvers.compogen(
-          [@symcore.function("Abs", [x()]), (x() ^ @symcore.int(2)) + @symcore.int(3) * x() + @symcore.int(-4), cos(x())],
+          [
+            @symcore.function("Abs", [x()]),
+            (x() ^ @symcore.int(2)) + @symcore.int(3) * x() + @symcore.int(-4),
+            cos(x()),
+          ],
           x(),
         ),
       ),
     ),
-    solvers_eval_str("repr(" + compogen_oracle_expr("[sympy.Abs(x), x**2 + 3*x - 4, sympy.cos(x)], x") + ")"),
+    solvers_eval_str(
+      "repr(" +
+      compogen_oracle_expr("[sympy.Abs(x), x**2 + 3*x - 4, sympy.cos(x)], x") +
+      ")",
+    ),
   )
   assert_eq(
     recurrence_expr_matches_oracle(
       @symsolvers.compogen(
         [
-          (x() ^ @symcore.int(2)) + x() + @symcore.mul([@symcore.int(-1), sqrt(@symcore.int(3)), @symcore.pow(@symcore.int(2), @symcore.int(-1))]),
+          (x() ^ @symcore.int(2)) +
+          x() +
+          @symcore.mul([
+            @symcore.int(-1),
+            sqrt(@symcore.int(3)),
+            @symcore.pow(@symcore.int(2), @symcore.int(-1)),
+          ]),
           sin(x()),
         ],
         x(),
@@ -5010,12 +6667,17 @@ test "solvers parity compogen" {
     recurrence_expr_matches_oracle(
       @symsolvers.compogen(
         [
-          (x() ^ @symcore.int(2)) + @symcore.int(3) * x() + (cos(y()) ^ @symcore.int(2)) + @symcore.int(-4),
+          (x() ^ @symcore.int(2)) +
+          @symcore.int(3) * x() +
+          (cos(y()) ^ @symcore.int(2)) +
+          @symcore.int(-4),
           cos(x()),
         ],
         x(),
       ),
-      compogen_oracle_expr("[x**2 + 3*x + sympy.cos(y)**2 - 4, sympy.cos(x)], x"),
+      compogen_oracle_expr(
+        "[x**2 + 3*x + sympy.cos(y)**2 - 4, sympy.cos(x)], x",
+      ),
       "x y",
     ),
     "0",
@@ -5024,17 +6686,25 @@ test "solvers parity compogen" {
     normalize_text(
       @symprint.to_string(
         @symsolvers.compogen(
-          [(x() ^ @symcore.int(2)) + @symcore.int(2) * x() + @symcore.int(1), x() ^ @symcore.int(2)],
+          [
+            (x() ^ @symcore.int(2)) + @symcore.int(2) * x() + @symcore.int(1),
+            x() ^ @symcore.int(2),
+          ],
           x(),
         ),
       ),
     ),
-    solvers_eval_str("repr(" + compogen_oracle_expr("[x**2 + 2*x + 1, x**2], x") + ")"),
+    solvers_eval_str(
+      "repr(" + compogen_oracle_expr("[x**2 + 2*x + 1, x**2], x") + ")",
+    ),
   )
   assert_eq(
     recurrence_expr_matches_oracle(
       @symsolvers.compogen(
-        [(x() ^ @symcore.int(2)) - x() + @symcore.int(-1), (x() ^ @symcore.int(2)) + x()],
+        [
+          (x() ^ @symcore.int(2)) - x() + @symcore.int(-1),
+          (x() ^ @symcore.int(2)) + x(),
+        ],
         x(),
       ),
       compogen_oracle_expr("[x**2 - x - 1, x**2 + x], x"),
@@ -5050,7 +6720,10 @@ test "solvers parity assumptions and undetermined coeffs" {
     local_maybe_bool_text(
       @symsolvers.check_assumptions(
         @symcore.int(3),
-        assumptions=assumption_map([("integer", Some(true)), ("real", Some(true))]),
+        assumptions=assumption_map([
+          ("integer", Some(true)),
+          ("real", Some(true)),
+        ]),
       ),
     ),
     solvers_eval_str(
@@ -5067,57 +6740,49 @@ test "solvers parity assumptions and undetermined coeffs" {
     solvers_eval_str("str(sympy.check_assumptions(x, integer=True)).lower()"),
   )
   assert_eq(
-    (
-      local_failing_assumptions_text(
-        @symsolvers.failing_assumptions(
-          @symcore.int(-2),
-          assumption_map([("positive", Some(true)), ("real", Some(true))]),
-        ),
+    local_failing_assumptions_text(
+      @symsolvers.failing_assumptions(
+        @symcore.int(-2),
+        assumption_map([("positive", Some(true)), ("real", Some(true))]),
       ),
     ),
-    (
-      solvers_eval_str(
-        "repr(__import__('sympy.core.assumptions', fromlist=['failing_assumptions']).failing_assumptions(-2, positive=True, real=True))",
-      ),
+    solvers_eval_str(
+      "repr(__import__('sympy.core.assumptions', fromlist=['failing_assumptions']).failing_assumptions(-2, positive=True, real=True))",
     ),
   )
   let a = @symcore.Expr::Symbol("a")
   let b = @symcore.Expr::Symbol("b")
   assert_eq(
-    (
-      local_maybe_solve_result_text(
-        @symsolvers.solve_undetermined_coeffs(
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            @symcore.add([@symcore.mul([a, x()]), b]),
-            @symcore.add([x(), @symcore.int(2)]),
-          ),
-          [a, b],
-          syms=[x()],
+    local_maybe_solve_result_text(
+      @symsolvers.solve_undetermined_coeffs(
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcore.add([@symcore.mul([a, x()]), b]),
+          @symcore.add([x(), @symcore.int(2)]),
         ),
+        [a, b],
+        syms=[x()],
       ),
     ),
-    (
-      solvers_eval_str(
-        "(lambda a, b: repr(sympy.solvers.solve_undetermined_coeffs(sympy.Eq(a*x + b, x + 2), [a, b], x)))(*sympy.symbols('a b'))",
-      ),
+    solvers_eval_str(
+      "(lambda a, b: repr(sympy.solvers.solve_undetermined_coeffs(sympy.Eq(a*x + b, x + 2), [a, b], x)))(*sympy.symbols('a b'))",
     ),
   )
   assert_eq(
-    (
-      local_maybe_solve_result_text(
-        @symsolvers.solve_undetermined_coeffs(
-          @symcore.add([@symcore.mul([a ^ @symcore.int(2), x()]), b, @symcore.mul([@symcore.int(-1), x()])]),
-          [a, b],
-          syms=[x()],
-          dict=true,
-        ),
+    local_maybe_solve_result_text(
+      @symsolvers.solve_undetermined_coeffs(
+        @symcore.add([
+          @symcore.mul([a ^ @symcore.int(2), x()]),
+          b,
+          @symcore.mul([@symcore.int(-1), x()]),
+        ]),
+        [a, b],
+        syms=[x()],
+        dict=true,
       ),
     ),
-    (
-      solvers_eval_str(
-        "(lambda a, b: repr(sympy.solvers.solve_undetermined_coeffs(a**2*x + b - x, [a, b], x, dict=True)))(*sympy.symbols('a b'))",
-      ),
+    solvers_eval_str(
+      "(lambda a, b: repr(sympy.solvers.solve_undetermined_coeffs(a**2*x + b - x, [a, b], x, dict=True)))(*sympy.symbols('a b'))",
     ),
   )
 }
@@ -5133,12 +6798,10 @@ test "solvers parity ode system matrix front doors" {
     ),
   )
   assert_eq(
-    (@symprint.to_string(@symsolvers.constantsimp(c1 + c2, [c1, c2]))),
-    (
-      solvers_eval_str_symbols(
-        "sympy.sstr(__import__('sympy.solvers.ode', fromlist=['constantsimp']).constantsimp(C1 + C2, [C1, C2]))",
-        "C1 C2",
-      ),
+    @symprint.to_string(@symsolvers.constantsimp(c1 + c2, [c1, c2])),
+    solvers_eval_str_symbols(
+      "sympy.sstr(__import__('sympy.solvers.ode', fromlist=['constantsimp']).constantsimp(C1 + C2, [C1, C2]))",
+      "C1 C2",
     ),
   )
   let system = [
@@ -5184,7 +6847,12 @@ test "solvers parity ode system matrix front doors" {
     ),
     "([2, 2], [2, 2], [[0, 0], [0, 0]])",
   )
-  let (a_mats, b_mat) = @symsolvers.linear_ode_to_matrix(system, [f(x()), g(x())], x(), 1)
+  let (a_mats, b_mat) = @symsolvers.linear_ode_to_matrix(
+    system,
+    [f(x()), g(x())],
+    x(),
+    1,
+  )
   assert_eq(
     local_matrix_list_text(a_mats[0]),
     py_matrix_list_text(
@@ -5223,7 +6891,12 @@ test "solvers parity ode system matrix front doors" {
       ]),
     ),
   ]
-  let (higher_a, higher_b) = @symsolvers.linear_ode_to_matrix(higher_order, [f(x()), g(x())], x(), 2)
+  let (higher_a, higher_b) = @symsolvers.linear_ode_to_matrix(
+    higher_order,
+    [f(x()), g(x())],
+    x(),
+    2,
+  )
   assert_eq(
     local_matrix_list_text(higher_a[0]),
     py_matrix_list_text(
@@ -5288,7 +6961,9 @@ test "solvers parity constantsimp initial migrated cases" {
   let c1 = @symcore.Expr::Symbol("C1")
   assert_eq(
     recurrence_expr_matches_oracle(
-      local_constant_renumber(@symsolvers.constantsimp(y() * c1 * x(), [c1, y()])),
+      local_constant_renumber(
+        @symsolvers.constantsimp(y() * c1 * x(), [c1, y()]),
+      ),
       "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(y*C1*x, [C1, y]))",
       "x y C1",
     ),
@@ -5296,7 +6971,12 @@ test "solvers parity constantsimp initial migrated cases" {
   )
   assert_eq(
     recurrence_expr_matches_oracle(
-      local_constant_renumber(@symsolvers.constantsimp(c1 * x() * y() * x() * y() * @symcore.int(2), [c1, y()])),
+      local_constant_renumber(
+        @symsolvers.constantsimp(c1 * x() * y() * x() * y() * @symcore.int(2), [
+          c1,
+          y(),
+        ]),
+      ),
       "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(C1*x*y*x*y*2, [C1, y]))",
       "x y C1",
     ),
@@ -5304,7 +6984,9 @@ test "solvers parity constantsimp initial migrated cases" {
   )
   assert_eq(
     recurrence_expr_matches_oracle(
-      local_constant_renumber(@symsolvers.constantsimp(@symcore.function("exp", [c1 + x()]), [c1])),
+      local_constant_renumber(
+        @symsolvers.constantsimp(@symcore.function("exp", [c1 + x()]), [c1]),
+      ),
       "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.exp(sympy.Symbol('C1') + x), [sympy.Symbol('C1')]))",
       "x C1",
     ),
@@ -5318,28 +7000,43 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
   let c2 = @symcore.Expr::Symbol("C2")
 
   assert_eq(
-    @symprint.to_string(local_constant_renumber(@symsolvers.constantsimp(c1 ^ x(), [c1]))),
+    @symprint.to_string(
+      local_constant_renumber(@symsolvers.constantsimp(c1 ^ x(), [c1])),
+    ),
     constantsimp_oracle_text(
       "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(C1**x, [C1]))",
       "x C1",
     ),
   )
   assert_eq(
-    @symprint.to_string(local_constant_renumber(@symsolvers.constantsimp(y() ^ c1, [c1, y()]))),
+    @symprint.to_string(
+      local_constant_renumber(@symsolvers.constantsimp(y() ^ c1, [c1, y()])),
+    ),
     constantsimp_oracle_text(
       "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(y**C1, [C1, y]))",
       "x y C1",
     ),
   )
   assert_eq(
-    @symprint.to_string(local_constant_renumber(@symsolvers.constantsimp(@symcore.function("exp", [c1]), [c1]))),
+    @symprint.to_string(
+      local_constant_renumber(
+        @symsolvers.constantsimp(@symcore.function("exp", [c1]), [c1]),
+      ),
+    ),
     constantsimp_oracle_text(
       "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.exp(C1), [C1]))",
       "x C1",
     ),
   )
   assert_eq(
-    @symprint.to_string(local_constant_renumber(@symsolvers.constantsimp(@symcore.applied_undefined_function("f", [c1, x()]), [c1]))),
+    @symprint.to_string(
+      local_constant_renumber(
+        @symsolvers.constantsimp(
+          @symcore.applied_undefined_function("f", [c1, x()]),
+          [c1],
+        ),
+      ),
+    ),
     constantsimp_oracle_text(
       "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Function('f')(C1, x), [C1]))",
       "x C1",
@@ -5349,7 +7046,9 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
     recurrence_expr_matches_oracle(
       local_constant_renumber(
         @symsolvers.constantsimp(
-          @symcore.function("sin", [@symcore.int(2) * c1]) + x() + @symcore.function("sqrt", [@symcore.int(2)]),
+          @symcore.function("sin", [@symcore.int(2) * c1]) +
+          x() +
+          @symcore.function("sqrt", [@symcore.int(2)]),
           [c1],
         ),
       ),
@@ -5362,7 +7061,12 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
     @symprint.to_string(
       local_constant_renumber(
         @symsolvers.constantsimp(
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, c1, @symcore.int(3) + @symcore.applied_undefined_function("f", [x()]) * x()),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            c1,
+            @symcore.int(3) +
+            @symcore.applied_undefined_function("f", [x()]) * x(),
+          ),
           [c1],
         ),
       ),
@@ -5376,7 +7080,13 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
     @symprint.to_string(
       local_constant_renumber(
         @symsolvers.constantsimp(
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, c1, @symcore.int(3) * @symcore.applied_undefined_function("f", [x()]) * x()),
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            c1,
+            @symcore.int(3) *
+            @symcore.applied_undefined_function("f", [x()]) *
+            x(),
+          ),
           [c1],
         ),
       ),
@@ -5387,7 +7097,11 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
     ),
   )
   assert_eq(
-    @symprint.to_string(local_constant_renumber(@symsolvers.constantsimp(@symcore.int(2) * c1 + c2, [c1, c2]))),
+    @symprint.to_string(
+      local_constant_renumber(
+        @symsolvers.constantsimp(@symcore.int(2) * c1 + c2, [c1, c2]),
+      ),
+    ),
     constantsimp_oracle_text(
       "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(2*C1 + C2, [C1, C2]))",
       "x C1 C2",
@@ -5402,8 +7116,12 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
   let c3 = @symcore.Expr::Symbol("C3")
   let u2 = @symcore.Expr::Symbol("u2")
   let a0 = @symcore.Expr::Symbol("_a")
-  let one_third = @symcore.rational_from_ints(1, 3) catch { _ => fail("one_third") }
-  let imag = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let one_third = @symcore.rational_from_ints(1, 3) catch {
+    _ => fail("one_third")
+  }
+  let imag = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::ImaginaryUnit,
+  )
 
   assert_eq(
     @symprint.to_string(
@@ -5448,10 +7166,11 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
           @symcore.Expr::Relational(
             @symcore.RelOp::Eq,
             @symcore.applied_undefined_function("f", [x()]),
-            @symcore.function(
-              "acos",
-              [@symcore.int(-1) * c1 * (@symcore.function("cos", [x()]) ^ @symcore.int(-1))],
-            ),
+            @symcore.function("acos", [
+              @symcore.int(-1) *
+              c1 *
+              (@symcore.function("cos", [x()]) ^ @symcore.int(-1)),
+            ]),
           ),
           [c1],
         ),
@@ -5469,8 +7188,18 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
         @symsolvers.constantsimp(
           @symcore.Expr::Relational(
             @symcore.RelOp::Eq,
-            @symcore.function("log", [@symcore.applied_undefined_function("f", [x()]) * (c1 ^ @symcore.int(-1))]) +
-            @symcore.int(2) * @symcore.function("exp", [x() * (@symcore.applied_undefined_function("f", [x()]) ^ @symcore.int(-1))]),
+            @symcore.function("log", [
+              @symcore.applied_undefined_function("f", [x()]) *
+              (c1 ^ @symcore.int(-1)),
+            ]) +
+            @symcore.int(2) *
+            @symcore.function("exp", [
+              x() *
+              (
+                @symcore.applied_undefined_function("f", [x()]) ^
+                @symcore.int(-1)
+              ),
+            ]),
             @symcore.int(0),
           ),
           [c1],
@@ -5487,17 +7216,18 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
     @symsolvers.constantsimp(
       @symcore.Expr::Relational(
         @symcore.RelOp::Eq,
-        (x() ^ @symcore.int(2)) * (@symcore.int(2) ^ @symcore.int(-1)) * (@symcore.applied_undefined_function("f", [x()]) ^ @symcore.int(-2)) +
-        @symcore.function(
-          "log",
-          [
-            @symcore.function("sqrt", [@symcore.int(2)]) *
-            x() *
-            @symcore.function("sqrt", [x() ^ @symcore.int(-1)]) *
-            @symcore.function("sqrt", [@symcore.applied_undefined_function("f", [x()])]) *
-            (c1 ^ @symcore.int(-1)),
-          ],
-        ),
+        (x() ^ @symcore.int(2)) *
+        (@symcore.int(2) ^ @symcore.int(-1)) *
+        (@symcore.applied_undefined_function("f", [x()]) ^ @symcore.int(-2)) +
+        @symcore.function("log", [
+          @symcore.function("sqrt", [@symcore.int(2)]) *
+          x() *
+          @symcore.function("sqrt", [x() ^ @symcore.int(-1)]) *
+          @symcore.function("sqrt", [
+            @symcore.applied_undefined_function("f", [x()]),
+          ]) *
+          (c1 ^ @symcore.int(-1)),
+        ]),
         @symcore.int(0),
       ),
       [c1],
@@ -5505,22 +7235,26 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
   )
   assert_eq(
     relational_residual_matches_oracle(
-      sqrt_log_local,
-      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(sympy.log(x*sympy.sqrt(2)*sympy.sqrt(1/x)*sympy.sqrt(sympy.Function('f')(x))/C1) + x**2/(2*sympy.Function('f')(x)**2), 0), [C1]))",
+      sqrt_log_local, "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(sympy.log(x*sympy.sqrt(2)*sympy.sqrt(1/x)*sympy.sqrt(sympy.Function('f')(x))/C1) + x**2/(2*sympy.Function('f')(x)**2), 0), [C1]))",
       "x C1",
     ),
     "0",
   )
 
-  let ratio = @symcore.applied_undefined_function("f", [x()]) * (x() ^ @symcore.int(-1))
+  let ratio = @symcore.applied_undefined_function("f", [x()]) *
+    (x() ^ @symcore.int(-1))
   let exp_ratio = @symcore.function("exp", [@symcore.int(-1) * ratio])
   let trig_log_local = local_constant_renumber(
     @symsolvers.constantsimp(
       @symcore.Expr::Relational(
         @symcore.RelOp::Eq,
         @symcore.function("log", [x() * (c1 ^ @symcore.int(-1))]) -
-        exp_ratio * @symcore.function("sin", [ratio]) * (@symcore.int(2) ^ @symcore.int(-1)) -
-        exp_ratio * @symcore.function("cos", [ratio]) * (@symcore.int(2) ^ @symcore.int(-1)),
+        exp_ratio *
+        @symcore.function("sin", [ratio]) *
+        (@symcore.int(2) ^ @symcore.int(-1)) -
+        exp_ratio *
+        @symcore.function("cos", [ratio]) *
+        (@symcore.int(2) ^ @symcore.int(-1)),
         @symcore.int(0),
       ),
       [c1],
@@ -5528,8 +7262,7 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
   )
   assert_eq(
     relational_residual_matches_oracle(
-      trig_log_local,
-      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(-sympy.exp(-sympy.Function('f')(x)/x)*sympy.sin(sympy.Function('f')(x)/x)/2 + sympy.log(x/C1) - sympy.cos(sympy.Function('f')(x)/x)*sympy.exp(-sympy.Function('f')(x)/x)/2, 0), [C1]))",
+      trig_log_local, "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(-sympy.exp(-sympy.Function('f')(x)/x)*sympy.sin(sympy.Function('f')(x)/x)/2 + sympy.log(x/C1) - sympy.cos(sympy.Function('f')(x)/x)*sympy.exp(-sympy.Function('f')(x)/x)/2, 0), [C1]))",
       "x C1",
     ),
     "0",
@@ -5542,7 +7275,9 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
           @symcore.Expr::Relational(
             @symcore.RelOp::Eq,
             @symcore.applied_undefined_function("f", [x()]),
-            @symcore.function("sqrt", [@symcore.int(-1) * c1 * x() + (x() ^ @symcore.int(2))]),
+            @symcore.function("sqrt", [
+              @symcore.int(-1) * c1 * x() + (x() ^ @symcore.int(2)),
+            ]),
           ),
           [c1],
         ),
@@ -5550,7 +7285,10 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
           @symcore.Expr::Relational(
             @symcore.RelOp::Eq,
             @symcore.applied_undefined_function("f", [x()]),
-            @symcore.int(-1) * @symcore.function("sqrt", [@symcore.int(-1) * c1 * x() + (x() ^ @symcore.int(2))]),
+            @symcore.int(-1) *
+            @symcore.function("sqrt", [
+              @symcore.int(-1) * c1 * x() + (x() ^ @symcore.int(2)),
+            ]),
           ),
           [c1],
         ),
@@ -5566,15 +7304,28 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
       @symcore.Expr::Relational(
         @symcore.RelOp::Eq,
         @symcore.int(-1) *
-        @symcore.function(
-          "Integral",
-          [
-            @symcore.int(-1) *
-            ((u2 * @symcore.function("sqrt", [@symcore.int(1) - (u2 ^ @symcore.int(2))])) ^ @symcore.int(-1)),
-            @symcore.Expr::Tuple([u2, a0, x() * (@symcore.applied_undefined_function("f", [x()]) ^ @symcore.int(-1))]),
-          ],
-        ) +
-        @symcore.function("log", [@symcore.applied_undefined_function("f", [x()]) * (c1 ^ @symcore.int(-1))]),
+        @symcore.function("Integral", [
+          @symcore.int(-1) *
+          (
+            (
+              u2 *
+              @symcore.function("sqrt", [
+                @symcore.int(1) - (u2 ^ @symcore.int(2)),
+              ])
+            ) ^
+            @symcore.int(-1)
+          ),
+          @symcore.Expr::Tuple([
+            u2,
+            a0,
+            x() *
+            (@symcore.applied_undefined_function("f", [x()]) ^ @symcore.int(-1)),
+          ]),
+        ]) +
+        @symcore.function("log", [
+          @symcore.applied_undefined_function("f", [x()]) *
+          (c1 ^ @symcore.int(-1)),
+        ]),
         @symcore.int(0),
       ),
       [c1],
@@ -5582,8 +7333,7 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
   )
   assert_eq(
     relational_residual_matches_oracle(
-      integral_local,
-      "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(-sympy.Integral(-1/(sympy.Symbol('u2')*sympy.sqrt(1 - sympy.Symbol('u2')**2)), (sympy.Symbol('u2'), sympy.Symbol('_a'), x/sympy.Function('f')(x))) + sympy.log(sympy.Function('f')(x)/C1), 0), [C1]))",
+      integral_local, "__import__('sympy.solvers.ode.ode', fromlist=['constantsimp', 'constant_renumber']).constant_renumber(__import__('sympy.solvers.ode.ode', fromlist=['constantsimp']).constantsimp(sympy.Eq(-sympy.Integral(-1/(sympy.Symbol('u2')*sympy.sqrt(1 - sympy.Symbol('u2')**2)), (sympy.Symbol('u2'), sympy.Symbol('_a'), x/sympy.Function('f')(x))) + sympy.log(sympy.Function('f')(x)/C1), 0), [C1]))",
       "x C1 u2 _a",
     ),
     "0",
@@ -5625,11 +7375,14 @@ test "solvers parity lie infinitesimals front doors" {
     ),
     "(1, 1, [True], [True], [0])",
   )
-  let lie_abaco = @symsolvers.infinitesimals(lie_eq, func=Some(f(x())), hint="abaco1_simple")
+  let lie_abaco = @symsolvers.infinitesimals(
+    lie_eq,
+    func=Some(f(x())),
+    hint="abaco1_simple",
+  )
   assert_eq(
     infinitesimals_oracle_residual_text(
-      lie_abaco,
-      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - x**2*sympy.Function('f')(x), hint='abaco1_simple')]",
+      lie_abaco, "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - x**2*sympy.Function('f')(x), hint='abaco1_simple')]",
     ),
     "(3, 3, [(0, 0), (0, 0), (0, 0)])",
   )
@@ -5644,15 +7397,10 @@ test "solvers parity lie infinitesimals front doors" {
     @symcore.mul([
       f(x()),
       @symcore.add([
-        x() * @symcore.function(
-          "log",
-          [
-            @symcore.mul([
-              x() ^ @symcore.int(2),
-              f(x()) ^ @symcore.int(-1),
-            ]),
-          ],
-        ),
+        x() *
+        @symcore.function("log", [
+          @symcore.mul([x() ^ @symcore.int(2), f(x()) ^ @symcore.int(-1)]),
+        ]),
         @symcore.int(2),
       ]),
       x() ^ @symcore.int(-1),
@@ -5664,19 +7412,24 @@ test "solvers parity lie infinitesimals front doors" {
   )
   assert_eq(
     infinitesimals_oracle_residual_text(
-      abaco1_product_inf,
-      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - (sympy.Function('f')(x)/x)*(x*sympy.log(x**2/sympy.Function('f')(x)) + 2), hint='abaco1_product')]",
+      abaco1_product_inf, "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - (sympy.Function('f')(x)/x)*(x*sympy.log(x**2/sympy.Function('f')(x)) + 2), hint='abaco1_product')]",
     ),
     "(1, 1, [(0, 0)])",
   )
   assert_eq(
     checkinfsol_oracle_residual_text(
-      @symsolvers.checkinfsol(abaco1_product_eq, abaco1_product_inf, func=Some(f(x()))),
+      @symsolvers.checkinfsol(
+        abaco1_product_eq,
+        abaco1_product_inf,
+        func=Some(f(x())),
+      ),
       "__import__('sympy.solvers.ode', fromlist=['checkinfsol', 'infinitesimals']).checkinfsol(sympy.diff(sympy.Function('f')(x), x) - (sympy.Function('f')(x)/x)*(x*sympy.log(x**2/sympy.Function('f')(x)) + 2), __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - (sympy.Function('f')(x)/x)*(x*sympy.log(x**2/sympy.Function('f')(x)) + 2), hint='abaco1_product'))",
     ),
     "(1, 1, [True], [True], [0])",
   )
-  let chi_eq = x() * @symcalculus.diff(f(x()), x()) + @symcore.int(1) - (f(x()) ^ @symcore.int(2))
+  let chi_eq = x() * @symcalculus.diff(f(x()), x()) +
+    @symcore.int(1) -
+    (f(x()) ^ @symcore.int(2))
   let chi_inf = @symsolvers.infinitesimals(
     chi_eq,
     func=Some(f(x())),
@@ -5697,10 +7450,9 @@ test "solvers parity lie infinitesimals front doors" {
           @symcore.int(1),
           @symcore.mul([x() ^ @symcore.int(2), f(x()) ^ @symcore.int(-2)]),
         ]),
-        @symcore.function(
-          "atan",
-          [@symcore.mul([f(x()), x() ^ @symcore.int(-1)])],
-        ),
+        @symcore.function("atan", [
+          @symcore.mul([f(x()), x() ^ @symcore.int(-1)]),
+        ]),
       ]),
       @symcore.mul([
         @symcore.add([@symcore.int(1), @symcore.int(-2) * f(x())]),
@@ -5719,8 +7471,7 @@ test "solvers parity lie infinitesimals front doors" {
   )
   assert_eq(
     infinitesimals_oracle_residual_text(
-      function_sum_inf,
-      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - (3*(1 + x**2/sympy.Function('f')(x)**2)*sympy.atan(sympy.Function('f')(x)/x) + (1 - 2*sympy.Function('f')(x))/x + (1 - 3*sympy.Function('f')(x))*(x/sympy.Function('f')(x)**2)), hint='function_sum')]",
+      function_sum_inf, "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - (3*(1 + x**2/sympy.Function('f')(x)**2)*sympy.atan(sympy.Function('f')(x)/x) + (1 - 2*sympy.Function('f')(x))/x + (1 - 3*sympy.Function('f')(x))*(x/sympy.Function('f')(x)**2)), hint='function_sum')]",
     ),
     "(1, 1, [(0, 0)])",
   )
@@ -5737,24 +7488,20 @@ test "solvers parity lie infinitesimals front doors" {
   )
   assert_eq(
     infinitesimals_oracle_residual_text(
-      similar_inf_1,
-      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - sympy.Function('F')(a*x + b*sympy.Function('f')(x)), hint='abaco2_similar')]",
+      similar_inf_1, "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - sympy.Function('F')(a*x + b*sympy.Function('f')(x)), hint='abaco2_similar')]",
     ),
     "(1, 1, [(0, 0)])",
   )
   let unique_unknown_eq_1 = @symcalculus.diff(f(x()), x()) -
     @symcore.mul([
-      x() ^ (@symcore.add([a, @symcore.int(-1)])),
-      f(x()) ^ (@symcore.add([@symcore.int(1), @symcore.int(-1) * b])),
-      @symcore.applied_undefined_function(
-        "F",
-        [
-          @symcore.add([
-            @symcore.mul([x() ^ a, a ^ @symcore.int(-1)]),
-            @symcore.mul([f(x()) ^ b, b ^ @symcore.int(-1)]),
-          ]),
-        ],
-      ),
+      x() ^ @symcore.add([a, @symcore.int(-1)]),
+      f(x()) ^ @symcore.add([@symcore.int(1), @symcore.int(-1) * b]),
+      @symcore.applied_undefined_function("F", [
+        @symcore.add([
+          @symcore.mul([x() ^ a, a ^ @symcore.int(-1)]),
+          @symcore.mul([f(x()) ^ b, b ^ @symcore.int(-1)]),
+        ]),
+      ]),
     ])
   let unique_unknown_inf_1 = @symsolvers.infinitesimals(
     unique_unknown_eq_1,
@@ -5763,26 +7510,17 @@ test "solvers parity lie infinitesimals front doors" {
   )
   assert_eq(
     infinitesimals_oracle_residual_text(
-      unique_unknown_inf_1,
-      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - x**(a - 1)*(sympy.Function('f')(x)**(1 - b))*sympy.Function('F')(x**a/a + sympy.Function('f')(x)**b/b), hint='abaco2_unique_unknown')]",
+      unique_unknown_inf_1, "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - x**(a - 1)*(sympy.Function('f')(x)**(1 - b))*sympy.Function('F')(x**a/a + sympy.Function('f')(x)**b/b), hint='abaco2_unique_unknown')]",
     ),
     "(1, 1, [(0, 0)])",
   )
   let unique_unknown_eq_2 = @symcalculus.diff(f(x()), x()) +
-    @symcore.function(
-      "tan",
-      [
-        @symcore.applied_undefined_function("F", [
-          @symcore.add([
-            x() ^ @symcore.int(2),
-            f(x()) ^ @symcore.int(2),
-          ]),
-        ]) + @symcore.function(
-          "atan",
-          [@symcore.mul([x(), f(x()) ^ @symcore.int(-1)])],
-        ),
-      ],
-    )
+    @symcore.function("tan", [
+      @symcore.applied_undefined_function("F", [
+        @symcore.add([x() ^ @symcore.int(2), f(x()) ^ @symcore.int(2)]),
+      ]) +
+      @symcore.function("atan", [@symcore.mul([x(), f(x()) ^ @symcore.int(-1)])]),
+    ])
   let unique_unknown_inf_2 = @symsolvers.infinitesimals(
     unique_unknown_eq_2,
     func=Some(f(x())),
@@ -5790,15 +7528,14 @@ test "solvers parity lie infinitesimals front doors" {
   )
   assert_eq(
     infinitesimals_oracle_residual_text(
-      unique_unknown_inf_2,
-      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) + sympy.tan(sympy.Function('F')(x**2 + sympy.Function('f')(x)**2) + sympy.atan(x/sympy.Function('f')(x))), hint='abaco2_unique_unknown')]",
+      unique_unknown_inf_2, "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) + sympy.tan(sympy.Function('F')(x**2 + sympy.Function('f')(x)**2) + sympy.atan(x/sympy.Function('f')(x))), hint='abaco2_unique_unknown')]",
     ),
     "(1, 1, [(0, 0)])",
   )
-  let unique_unknown_eq_3 =
-    ((
-      x() * @symcalculus.diff(f(x()), x()) + f(x()) + @symcore.int(2) * x()
-    ) ^ @symcore.int(2)) -
+  let unique_unknown_eq_3 = (
+      (x() * @symcalculus.diff(f(x()), x()) + f(x()) + @symcore.int(2) * x()) ^
+      @symcore.int(2)
+    ) -
     @symcore.int(4) * x() * f(x()) -
     @symcore.int(4) * (x() ^ @symcore.int(2)) -
     @symcore.int(4) * a
@@ -5809,21 +7546,30 @@ test "solvers parity lie infinitesimals front doors" {
   )
   assert_eq(
     checkinfsol_oracle_residual_text(
-      @symsolvers.checkinfsol(unique_unknown_eq_3, unique_unknown_inf_3, func=Some(f(x()))),
+      @symsolvers.checkinfsol(
+        unique_unknown_eq_3,
+        unique_unknown_inf_3,
+        func=Some(f(x())),
+      ),
       "__import__('sympy.solvers.ode', fromlist=['checkinfsol', 'infinitesimals']).checkinfsol((x*sympy.diff(sympy.Function('f')(x), x) + sympy.Function('f')(x) + 2*x)**2 - 4*x*sympy.Function('f')(x) - 4*x**2 - 4*a, __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals((x*sympy.diff(sympy.Function('f')(x), x) + sympy.Function('f')(x) + 2*x)**2 - 4*x*sympy.Function('f')(x) - 4*x**2 - 4*a, hint='abaco2_unique_unknown'))",
     ),
     "(1, 1, [True], [True], [0])",
   )
   let leading_power = x() ^
-    (@symcore.add([n * (@symcore.add([m, @symcore.int(1)])), @symcore.mul([@symcore.int(-1), m])]))
-  let forcing_power = x() ^ (@symcore.mul([n, @symcore.add([m, @symcore.int(1)])]))
-  let linear_eq =
-    (
-      leading_power * @symcalculus.diff(f(x()), x()) -
-      a * (f(x()) ^ n) -
-      b * forcing_power
-    )
-  let linear_inf = @symsolvers.infinitesimals(linear_eq, func=Some(f(x())), hint="linear")
+    @symcore.add([
+      n * @symcore.add([m, @symcore.int(1)]),
+      @symcore.mul([@symcore.int(-1), m]),
+    ])
+  let forcing_power = x() ^
+    @symcore.mul([n, @symcore.add([m, @symcore.int(1)])])
+  let linear_eq = leading_power * @symcalculus.diff(f(x()), x()) -
+    a * (f(x()) ^ n) -
+    b * forcing_power
+  let linear_inf = @symsolvers.infinitesimals(
+    linear_eq,
+    func=Some(f(x())),
+    hint="linear",
+  )
   assert_eq(
     checkinfsol_oracle_residual_text(
       @symsolvers.checkinfsol(linear_eq, linear_inf, func=Some(f(x()))),
@@ -5839,17 +7585,14 @@ test "solvers parity abaco2_unique_unknown reference cases" {
   let b = @symcore.Expr::Symbol("b")
   let unique_unknown_eq_1 = @symcalculus.diff(f(x()), x()) -
     @symcore.mul([
-      x() ^ (@symcore.add([a, @symcore.int(-1)])),
-      f(x()) ^ (@symcore.add([@symcore.int(1), @symcore.int(-1) * b])),
-      @symcore.applied_undefined_function(
-        "F",
-        [
-          @symcore.add([
-            @symcore.mul([x() ^ a, a ^ @symcore.int(-1)]),
-            @symcore.mul([f(x()) ^ b, b ^ @symcore.int(-1)]),
-          ]),
-        ],
-      ),
+      x() ^ @symcore.add([a, @symcore.int(-1)]),
+      f(x()) ^ @symcore.add([@symcore.int(1), @symcore.int(-1) * b]),
+      @symcore.applied_undefined_function("F", [
+        @symcore.add([
+          @symcore.mul([x() ^ a, a ^ @symcore.int(-1)]),
+          @symcore.mul([f(x()) ^ b, b ^ @symcore.int(-1)]),
+        ]),
+      ]),
     ])
   let unique_unknown_inf_1 = @symsolvers.infinitesimals(
     unique_unknown_eq_1,
@@ -5858,26 +7601,17 @@ test "solvers parity abaco2_unique_unknown reference cases" {
   )
   assert_eq(
     infinitesimals_oracle_residual_text(
-      unique_unknown_inf_1,
-      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - x**(a - 1)*(sympy.Function('f')(x)**(1 - b))*sympy.Function('F')(x**a/a + sympy.Function('f')(x)**b/b), hint='abaco2_unique_unknown')]",
+      unique_unknown_inf_1, "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - x**(a - 1)*(sympy.Function('f')(x)**(1 - b))*sympy.Function('F')(x**a/a + sympy.Function('f')(x)**b/b), hint='abaco2_unique_unknown')]",
     ),
     "(1, 1, [(0, 0)])",
   )
   let unique_unknown_eq_2 = @symcalculus.diff(f(x()), x()) +
-    @symcore.function(
-      "tan",
-      [
-        @symcore.applied_undefined_function("F", [
-          @symcore.add([
-            x() ^ @symcore.int(2),
-            f(x()) ^ @symcore.int(2),
-          ]),
-        ]) + @symcore.function(
-          "atan",
-          [@symcore.mul([x(), f(x()) ^ @symcore.int(-1)])],
-        ),
-      ],
-    )
+    @symcore.function("tan", [
+      @symcore.applied_undefined_function("F", [
+        @symcore.add([x() ^ @symcore.int(2), f(x()) ^ @symcore.int(2)]),
+      ]) +
+      @symcore.function("atan", [@symcore.mul([x(), f(x()) ^ @symcore.int(-1)])]),
+    ])
   let unique_unknown_inf_2 = @symsolvers.infinitesimals(
     unique_unknown_eq_2,
     func=Some(f(x())),
@@ -5885,15 +7619,14 @@ test "solvers parity abaco2_unique_unknown reference cases" {
   )
   assert_eq(
     infinitesimals_oracle_residual_text(
-      unique_unknown_inf_2,
-      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) + sympy.tan(sympy.Function('F')(x**2 + sympy.Function('f')(x)**2) + sympy.atan(x/sympy.Function('f')(x))), hint='abaco2_unique_unknown')]",
+      unique_unknown_inf_2, "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) + sympy.tan(sympy.Function('F')(x**2 + sympy.Function('f')(x)**2) + sympy.atan(x/sympy.Function('f')(x))), hint='abaco2_unique_unknown')]",
     ),
     "(1, 1, [(0, 0)])",
   )
-  let unique_unknown_eq_3 =
-    ((
-      x() * @symcalculus.diff(f(x()), x()) + f(x()) + @symcore.int(2) * x()
-    ) ^ @symcore.int(2)) -
+  let unique_unknown_eq_3 = (
+      (x() * @symcalculus.diff(f(x()), x()) + f(x()) + @symcore.int(2) * x()) ^
+      @symcore.int(2)
+    ) -
     @symcore.int(4) * x() * f(x()) -
     @symcore.int(4) * (x() ^ @symcore.int(2)) -
     @symcore.int(4) * a
@@ -5904,7 +7637,11 @@ test "solvers parity abaco2_unique_unknown reference cases" {
   )
   assert_eq(
     checkinfsol_oracle_residual_text(
-      @symsolvers.checkinfsol(unique_unknown_eq_3, unique_unknown_inf_3, func=Some(f(x()))),
+      @symsolvers.checkinfsol(
+        unique_unknown_eq_3,
+        unique_unknown_inf_3,
+        func=Some(f(x())),
+      ),
       "__import__('sympy.solvers.ode', fromlist=['checkinfsol', 'infinitesimals']).checkinfsol((x*sympy.diff(sympy.Function('f')(x), x) + sympy.Function('f')(x) + 2*x)**2 - 4*x*sympy.Function('f')(x) - 4*x**2 - 4*a, __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals((x*sympy.diff(sympy.Function('f')(x), x) + sympy.Function('f')(x) + 2*x)**2 - 4*x*sympy.Function('f')(x) - 4*x**2 - 4*a, hint='abaco2_unique_unknown'))",
     ),
     "(1, 1, [True], [True], [0])",
@@ -5920,7 +7657,9 @@ test "solvers parity ode scalar front doors" {
   )
   assert_eq(
     @symsolvers.ode_order(ode, f(x())).to_string(),
-    solvers_eval_str("str(sympy.solvers.ode_order(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), sympy.Function('f')(x)))"),
+    solvers_eval_str(
+      "str(sympy.solvers.ode_order(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), sympy.Function('f')(x)))",
+    ),
   )
   assert_eq(
     @symprint.to_string(
@@ -5929,38 +7668,46 @@ test "solvers parity ode scalar front doors" {
         [x(), y()],
       ).unwrap_or(@symcore.int(-1)),
     ),
-    solvers_eval_str("sympy.sstr(sympy.solvers.homogeneous_order(x**2 + y**2, x, y))"),
-  )
-  assert_eq(
-    local_expr_list_text(@symsolvers.classify_ode(ode, func=Some(f(x()))).map(name => @symcore.Expr::Symbol(name))),
-    local_expr_list_text([@symcore.Expr::Symbol("separable"), @symcore.Expr::Symbol("1st_linear"), @symcore.Expr::Symbol("Bernoulli")]),
-  )
-  assert_eq(
-    (@symprint.to_string(@symsolvers.dsolve(ode, func=Some(f(x()))))),
-    (
-      solvers_eval_str(
-        "sympy.sstr(sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x))))",
-      ),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.homogeneous_order(x**2 + y**2, x, y))",
     ),
   )
   assert_eq(
-    (
-      "(" +
-      @symsolvers.checkodesol(ode, @symsolvers.dsolve(ode, func=Some(f(x()))), func=Some(f(x()))).0.to_string() +
-      ", " +
-      @symprint.to_string(
-        @symsolvers.checkodesol(
-          ode,
-          @symsolvers.dsolve(ode, func=Some(f(x()))),
-          func=Some(f(x())),
-        ).1,
-      ) +
-      ")",
+    local_expr_list_text(
+      @symsolvers.classify_ode(ode, func=Some(f(x()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
     ),
-    (
-      checkodesol_oracle_text(
-        "sympy.solvers.checkodesol(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x))))",
-      ),
+    local_expr_list_text([
+      @symcore.Expr::Symbol("separable"),
+      @symcore.Expr::Symbol("1st_linear"),
+      @symcore.Expr::Symbol("Bernoulli"),
+    ]),
+  )
+  assert_eq(
+    @symprint.to_string(@symsolvers.dsolve(ode, func=Some(f(x())))),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x))))",
+    ),
+  )
+  assert_eq(
+    "(" +
+    @symsolvers.checkodesol(
+      ode,
+      @symsolvers.dsolve(ode, func=Some(f(x()))),
+      func=Some(f(x())),
+    ).0.to_string() +
+    ", " +
+    @symprint.to_string(
+      @symsolvers.checkodesol(
+        ode,
+        @symsolvers.dsolve(ode, func=Some(f(x()))),
+        func=Some(f(x())),
+      ).1,
+    ) +
+    ")",
+    checkodesol_oracle_text(
+      "sympy.solvers.checkodesol(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x))))",
     ),
   )
 }
@@ -5973,47 +7720,37 @@ test "solvers parity pde front doors" {
     @symcalculus.diff(u(x(), y()), y()),
   )
   assert_eq(
-    (
-      local_expr_list_text(
-        @symsolvers.pde_separate_add(
-          pde,
-          u(x(), y()),
-          [xfun(x()), yfun(y())],
-        ).unwrap_or([]),
+    local_expr_list_text(
+      @symsolvers.pde_separate_add(pde, u(x(), y()), [xfun(x()), yfun(y())]).unwrap_or([],
       ),
     ),
-    (
-      solvers_eval_str(
-        "repr(sympy.solvers.pde_separate_add(sympy.Eq(sympy.Function('u')(x, y).diff(x), sympy.Function('u')(x, y).diff(y)), sympy.Function('u')(x, y), [sympy.Function('X')(x), sympy.Function('Y')(y)]))",
-      ),
+    solvers_eval_str(
+      "repr(sympy.solvers.pde_separate_add(sympy.Eq(sympy.Function('u')(x, y).diff(x), sympy.Function('u')(x, y).diff(y)), sympy.Function('u')(x, y), [sympy.Function('X')(x), sympy.Function('Y')(y)]))",
     ),
   )
   assert_eq(
-    (
-      local_expr_list_text(
-        @symsolvers.pde_separate_mul(
-          pde,
-          u(x(), y()),
-          [xfun(x()), yfun(y())],
-        ).unwrap_or([]),
+    local_expr_list_text(
+      @symsolvers.pde_separate_mul(pde, u(x(), y()), [xfun(x()), yfun(y())]).unwrap_or([],
       ),
     ),
-    (
-      solvers_eval_str(
-        "repr(sympy.solvers.pde_separate_mul(sympy.Eq(sympy.Function('u')(x, y).diff(x), sympy.Function('u')(x, y).diff(y)), sympy.Function('u')(x, y), [sympy.Function('X')(x), sympy.Function('Y')(y)]))",
-      ),
+    solvers_eval_str(
+      "repr(sympy.solvers.pde_separate_mul(sympy.Eq(sympy.Function('u')(x, y).diff(x), sympy.Function('u')(x, y).diff(y)), sympy.Function('u')(x, y), [sympy.Function('X')(x), sympy.Function('Y')(y)]))",
     ),
   )
   assert_eq(
-    local_expr_list_text(@symsolvers.classify_pde(pde, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
-    local_expr_list_text([@symcore.Expr::Symbol("1st_linear_constant_coeff_homogeneous")]),
+    local_expr_list_text(
+      @symsolvers.classify_pde(pde, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
+    local_expr_list_text([
+      @symcore.Expr::Symbol("1st_linear_constant_coeff_homogeneous"),
+    ]),
   )
   assert_eq(
-    (@symprint.to_string(@symsolvers.pdsolve(pde, func=Some(u(x(), y()))))),
-    (
-      solvers_eval_str(
-        "sympy.sstr(sympy.solvers.pdsolve(sympy.Eq(sympy.Function('u')(x, y).diff(x), sympy.Function('u')(x, y).diff(y))))",
-      ),
+    @symprint.to_string(@symsolvers.pdsolve(pde, func=Some(u(x(), y())))),
+    solvers_eval_str(
+      "sympy.sstr(sympy.solvers.pdsolve(sympy.Eq(sympy.Function('u')(x, y).diff(x), sympy.Function('u')(x, y).diff(y))))",
     ),
   )
 }
@@ -6024,14 +7761,12 @@ test "solvers parity additional pde separation cases" {
   let add_eq = @symcore.Expr::Relational(
     @symcore.RelOp::Eq,
     @symcalculus.diff(ut, x()),
-    @symcore.mul([
-      @symcalculus.diff(ut, t()),
-      @symcore.function("exp", [ut]),
-    ]),
+    @symcore.mul([@symcalculus.diff(ut, t()), @symcore.function("exp", [ut])]),
   )
   assert_eq(
     local_expr_list_text(
-      @symsolvers.pde_separate_add(add_eq, ut, [xfun(x()), tfun(t())]).unwrap_or([]),
+      @symsolvers.pde_separate_add(add_eq, ut, [xfun(x()), tfun(t())]).unwrap_or([],
+      ),
     ),
     solvers_eval_str_symbols(
       "repr(sympy.solvers.pde_separate_add(sympy.Eq(sympy.Function('u')(x, t).diff(x), sympy.Function('u')(x, t).diff(t)*sympy.exp(sympy.Function('u')(x, t))), sympy.Function('u')(x, t), [sympy.Function('X')(x), sympy.Function('T')(t)]))",
@@ -6039,8 +7774,12 @@ test "solvers parity additional pde separation cases" {
     ),
   )
 
-  let invalid_strategy : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try?
-    @symsolvers.pde_separate(add_eq, ut, [xfun(x()), tfun(t())], strategy="div")
+  let invalid_strategy : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try? @symsolvers.pde_separate(
+    add_eq,
+    ut,
+    [xfun(x()), tfun(t())],
+    strategy="div",
+  )
   assert_eq(
     local_expr_option_result_type(invalid_strategy),
     solvers_eval_stmt_result_symbols(
@@ -6059,15 +7798,11 @@ test "solvers parity additional pde separation cases" {
     ]),
     @symcore.int(0),
   )
-  let duplicate_args : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try?
-    @symsolvers.pde_separate_mul(
-      sum_eq,
-      fxyz,
-      [
-        xfun(x()),
-        @symcore.applied_undefined_function("u", [z(), z()]),
-      ],
-    )
+  let duplicate_args : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try? @symsolvers.pde_separate_mul(
+    sum_eq,
+    fxyz,
+    [xfun(x()), @symcore.applied_undefined_function("u", [z(), z()])],
+  )
   assert_eq(
     local_expr_option_result_type(duplicate_args),
     solvers_eval_stmt_result_symbols(
@@ -6075,8 +7810,11 @@ test "solvers parity additional pde separation cases" {
       "x y z",
     ),
   )
-  let wrong_count : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try?
-    @symsolvers.pde_separate_mul(sum_eq, fxyz, [xfun(x()), yfun(y())])
+  let wrong_count : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try? @symsolvers.pde_separate_mul(
+    sum_eq,
+    fxyz,
+    [xfun(x()), yfun(y())],
+  )
   assert_eq(
     local_expr_option_result_type(wrong_count),
     solvers_eval_stmt_result_symbols(
@@ -6084,15 +7822,11 @@ test "solvers parity additional pde separation cases" {
       "x y z",
     ),
   )
-  let wrong_args : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try?
-    @symsolvers.pde_separate_mul(
-      sum_eq,
-      fxyz,
-      [
-        xfun(t()),
-        @symcore.applied_undefined_function("Y", [x(), y()]),
-      ],
-    )
+  let wrong_args : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try? @symsolvers.pde_separate_mul(
+    sum_eq,
+    fxyz,
+    [xfun(t()), @symcore.applied_undefined_function("Y", [x(), y()])],
+  )
   assert_eq(
     local_expr_option_result_type(wrong_args),
     solvers_eval_stmt_result_symbols(
@@ -6101,7 +7835,10 @@ test "solvers parity additional pde separation cases" {
     ),
   )
 
-  let yz_sep_local = @symsolvers.pde_separate_mul(sum_eq, fxyz, [yfun(y()), u(x(), z())]).unwrap_or([])
+  let yz_sep_local = @symsolvers.pde_separate_mul(sum_eq, fxyz, [
+    yfun(y()),
+    u(x(), z()),
+  ]).unwrap_or([])
   assert_eq(yz_sep_local.length(), 2)
   let yz_sep_expected0 = @symcore.mul([
     @symcalculus.diff(yfun(y()), y()),
@@ -6123,7 +7860,11 @@ test "solvers parity additional pde separation cases" {
     ),
     "[Derivative(Y(y), y)/Y(y), -Derivative(u(x, z), x)/u(x, z) - Derivative(u(x, z), z)/u(x, z)]",
   )
-  let xyz_sep_local = @symsolvers.pde_separate_mul(sum_eq, fxyz, [xfun(x()), yfun(y()), zfun(z())]).unwrap_or([])
+  let xyz_sep_local = @symsolvers.pde_separate_mul(sum_eq, fxyz, [
+    xfun(x()),
+    yfun(y()),
+    zfun(z()),
+  ]).unwrap_or([])
   assert_eq(xyz_sep_local.length(), 2)
   assert_eq(
     local_sort_expr_cmp(
@@ -6159,7 +7900,8 @@ test "solvers parity additional pde separation cases" {
   )
   assert_eq(
     local_expr_list_text(
-      @symsolvers.pde_separate_mul(wave_eq, ut, [xfun(x()), tfun(t())]).unwrap_or([]),
+      @symsolvers.pde_separate_mul(wave_eq, ut, [xfun(x()), tfun(t())]).unwrap_or([],
+      ),
     ),
     solvers_eval_str_symbols(
       "repr(sympy.solvers.pde_separate_mul(sympy.Eq(sympy.Function('u')(x, t).diff(t, 2), C**2*sympy.Function('u')(x, t).diff(x, 2)), sympy.Function('u')(x, t), [sympy.Function('X')(x), sympy.Function('T')(t)]))",
@@ -6176,7 +7918,10 @@ test "solvers parity additional pde separation cases" {
       @symcalculus.diff(@symcalculus.diff(phi(r(), theta(), z()), r()), r()),
       @symcore.mul([
         @symcore.pow(r(), @symcore.int(-2)),
-        @symcalculus.diff(@symcalculus.diff(phi(r(), theta(), z()), theta()), theta()),
+        @symcalculus.diff(
+          @symcalculus.diff(phi(r(), theta(), z()), theta()),
+          theta(),
+        ),
       ]),
       @symcalculus.diff(@symcalculus.diff(phi(r(), theta(), z()), z()), z()),
     ]),
@@ -6214,11 +7959,10 @@ test "solvers parity additional pde separation cases" {
     "[Derivative(Z(z), (z, 2))/Z(z), -Derivative(u(theta, r), (r, 2))/u(theta, r) - Derivative(u(theta, r), r)/(r*u(theta, r)) - Derivative(u(theta, r), (theta, 2))/(r**2*u(theta, r))]",
   )
   let c_eq = @symcore.Expr::Relational(@symcore.RelOp::Eq, laplace_sep_z[1], c)
-  let laplace_sep_theta = @symsolvers.pde_separate_mul(
-    c_eq,
-    u(theta(), r()),
-    [tfun(theta()), rfun(r())],
-  ).unwrap_or([])
+  let laplace_sep_theta = @symsolvers.pde_separate_mul(c_eq, u(theta(), r()), [
+    tfun(theta()),
+    rfun(r()),
+  ]).unwrap_or([])
   assert_eq(laplace_sep_theta.length(), 2)
   assert_eq(
     solvers_eval_str_symbols(
@@ -6245,11 +7989,10 @@ test "solvers parity additional pde separation cases" {
     ),
     "[Derivative(T(theta), (theta, 2))/T(theta), -C*r**2 - r**2*Derivative(R(r), (r, 2))/R(r) - r*Derivative(R(r), r)/R(r)]",
   )
-  let laplace_sep_r = @symsolvers.pde_separate_mul(
-    c_eq,
-    u(theta(), r()),
-    [rfun(r()), tfun(theta())],
-  ).unwrap_or([])
+  let laplace_sep_r = @symsolvers.pde_separate_mul(c_eq, u(theta(), r()), [
+    rfun(r()),
+    tfun(theta()),
+  ]).unwrap_or([])
   assert_eq(laplace_sep_r.length(), 2)
   assert_eq(
     solvers_eval_str_symbols(
@@ -6287,7 +8030,10 @@ test "solvers parity additional pde separation cases" {
           ]),
         ]),
         ut,
-        [@symcore.applied_undefined_function("T", [x()]), @symcore.applied_undefined_function("X", [t()])],
+        [
+          @symcore.applied_undefined_function("T", [x()]),
+          @symcore.applied_undefined_function("X", [t()]),
+        ],
       ).unwrap_or([]),
     ),
     solvers_eval_str_symbols(
@@ -6305,25 +8051,34 @@ test "solvers parity dsolve and pdsolve meta-hints" {
     f(x()),
   )
   let ode_all = @symsolvers.dsolve(ode, func=Some(f(x())), hint="all")
+  assert_eq(local_expr_dict_len_text(ode_all), "10")
   assert_eq(
-    local_expr_dict_len_text(ode_all),
-    "10",
-  )
-  assert_eq(
-    @symprint.to_string(local_expr_dict_get(ode_all, "default").unwrap_or(@symcore.int(0))),
+    @symprint.to_string(
+      local_expr_dict_get(ode_all, "default").unwrap_or(@symcore.int(0)),
+    ),
     solvers_eval_str(
       "sympy.sstr(sympy.Symbol(sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), hint='all')['default']))",
     ),
   )
   assert_eq(
-    @symprint.to_string(local_expr_dict_get(ode_all, "1st_linear").unwrap_or(@symcore.int(0))),
+    @symprint.to_string(
+      local_expr_dict_get(ode_all, "1st_linear").unwrap_or(@symcore.int(0)),
+    ),
     solvers_eval_str(
       "sympy.sstr(sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), hint='all')['1st_linear'])",
     ),
   )
-  let ode_all_integral = @symsolvers.dsolve(ode, func=Some(f(x())), hint="all_Integral")
+  let ode_all_integral = @symsolvers.dsolve(
+    ode,
+    func=Some(f(x())),
+    hint="all_Integral",
+  )
   assert_eq(
-    @symprint.to_string(local_expr_dict_get(ode_all_integral, "1st_linear_Integral").unwrap_or(@symcore.int(0))),
+    @symprint.to_string(
+      local_expr_dict_get(ode_all_integral, "1st_linear_Integral").unwrap_or(
+        @symcore.int(0),
+      ),
+    ),
     "Eq(f(x), C1*exp(-Integral(-1, (x,))))",
   )
   assert_eq(
@@ -6333,8 +8088,11 @@ test "solvers parity dsolve and pdsolve meta-hints" {
     ),
     "True",
   )
-  let mismatched_ode : Result[@symcore.Expr, @symsolvers.SolverError] = try?
-    @symsolvers.dsolve(ode, func=Some(f(x())), hint="factorable")
+  let mismatched_ode : Result[@symcore.Expr, @symsolvers.SolverError] = try? @symsolvers.dsolve(
+    ode,
+    func=Some(f(x())),
+    hint="factorable",
+  )
   assert_eq(
     local_expr_result_type(mismatched_ode),
     solvers_eval_stmt_result_symbols(
@@ -6351,18 +8109,21 @@ test "solvers parity dsolve and pdsolve meta-hints" {
     func=Some(u(x(), y())),
     hint="all",
   )
+  assert_eq(local_expr_dict_len_text(pde_all), "6")
   assert_eq(
-    local_expr_dict_len_text(pde_all),
-    "6",
-  )
-  assert_eq(
-    @symprint.to_string(local_expr_dict_get(pde_all, "default").unwrap_or(@symcore.int(0))),
+    @symprint.to_string(
+      local_expr_dict_get(pde_all, "default").unwrap_or(@symcore.int(0)),
+    ),
     solvers_eval_str(
       "sympy.sstr(sympy.Symbol(sympy.solvers.pdsolve(sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y) + x**2*y, hint='all')['default']))",
     ),
   )
   assert_eq(
-    @symprint.to_string(local_expr_dict_get(pde_all, "1st_linear_constant_coeff").unwrap_or(@symcore.int(0))),
+    @symprint.to_string(
+      local_expr_dict_get(pde_all, "1st_linear_constant_coeff").unwrap_or(
+        @symcore.int(0),
+      ),
+    ),
     "Eq(u(x, y), Subs(exp(-xi/2)*(Integral((xi + eta)**2*exp(xi/2)*(eta - xi)/8, (xi, x + y))/2 + F(eta)), (eta, xi), (x - y, x + y)))",
   )
   assert_eq(
@@ -6386,7 +8147,11 @@ test "solvers parity expanded pde coefficient hints" {
     @symcore.function("exp", [x() + @symcore.int(3) * y()]),
   )
   assert_eq(
-    local_expr_list_text(@symsolvers.classify_pde(pde_source, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    local_expr_list_text(
+      @symsolvers.classify_pde(pde_source, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
     solvers_eval_str(
       "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(sympy.Eq(-2*sympy.Function('u')(x, y).diff(x) + 4*sympy.Function('u')(x, y).diff(y) + 5*sympy.Function('u')(x, y), sympy.exp(x + 3*y)))])",
     ),
@@ -6411,7 +8176,9 @@ test "solvers parity expanded pde coefficient hints" {
   assert_eq(
     @symprint.to_string(
       @symsolvers.pdsolve(
-        u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y()),
+        u(x(), y()) +
+        @symcalculus.diff(u(x(), y()), x()) +
+        @symcalculus.diff(u(x(), y()), y()),
         func=Some(u(x(), y())),
         solvefun=Some(@symcore.Expr::UndefinedFunction("G")),
       ),
@@ -6421,7 +8188,9 @@ test "solvers parity expanded pde coefficient hints" {
   assert_eq(
     @symprint.to_string(
       @symsolvers.pdsolve(
-        u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y()),
+        u(x(), y()) +
+        @symcalculus.diff(u(x(), y()), x()) +
+        @symcalculus.diff(u(x(), y()), y()),
         func=Some(u(x(), y())),
         solvefun=Some(@symcore.Expr::UndefinedFunction("H")),
       ),
@@ -6458,7 +8227,11 @@ test "solvers parity expanded pde coefficient hints" {
     @symcore.mul([@symcore.int(-1), y() ^ @symcore.int(2)]),
   ])
   assert_eq(
-    local_expr_list_text(@symsolvers.classify_pde(pde_variable, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    local_expr_list_text(
+      @symsolvers.classify_pde(pde_variable, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
     solvers_eval_str(
       "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(x*sympy.Function('u')(x, y).diff(x) - y*sympy.Function('u')(x, y).diff(y) + y**2*sympy.Function('u')(x, y) - y**2)])",
     ),
@@ -6480,12 +8253,11 @@ test "solvers parity expanded pde coefficient hints" {
     ),
     "True",
   )
-  let mismatched_pde : Result[@symcore.Expr, @symsolvers.SolverError] = try?
-    @symsolvers.pdsolve(
-      pde_source,
-      func=Some(u(x(), y())),
-      hint="1st_linear_variable_coeff",
-    )
+  let mismatched_pde : Result[@symcore.Expr, @symsolvers.SolverError] = try? @symsolvers.pdsolve(
+    pde_source,
+    func=Some(u(x(), y())),
+    hint="1st_linear_variable_coeff",
+  )
   assert_eq(
     local_expr_result_type(mismatched_pde),
     solvers_eval_stmt_result_symbols(
@@ -6497,50 +8269,88 @@ test "solvers parity expanded pde coefficient hints" {
 
 ///|
 test "solvers parity additional pde source cases" {
-  let eq1 = @symcore.Expr::Symbol("a") * u(x(), y()) + @symcore.Expr::Symbol("b") * @symcalculus.diff(u(x(), y()), x()) + @symcore.Expr::Symbol("c") * @symcalculus.diff(u(x(), y()), y())
-  let eq2 = @symcore.int(3) * u(x(), y()) + @symcore.int(2) * @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y())
-  let eq3 = @symcore.Expr::Symbol("a") * u(x(), y()) + @symcore.Expr::Symbol("b") * @symcalculus.diff(u(x(), y()), x()) + @symcore.int(2) * @symcalculus.diff(u(x(), y()), y())
-  let eq4 = x() * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
-  let eq5 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
-  let eq6 = u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq1 = @symcore.Expr::Symbol("a") * u(x(), y()) +
+    @symcore.Expr::Symbol("b") * @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.Expr::Symbol("c") * @symcalculus.diff(u(x(), y()), y())
+  let eq2 = @symcore.int(3) * u(x(), y()) +
+    @symcore.int(2) * @symcalculus.diff(u(x(), y()), x()) +
+    @symcalculus.diff(u(x(), y()), y())
+  let eq3 = @symcore.Expr::Symbol("a") * u(x(), y()) +
+    @symcore.Expr::Symbol("b") * @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(2) * @symcalculus.diff(u(x(), y()), y())
+  let eq4 = x() * u(x(), y()) +
+    @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq5 = @symcore.int(2) * u(x(), y()) +
+    @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq6 = u(x(), y()) +
+    @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
   assert_eq(
-    local_expr_list_text(@symsolvers.classify_pde(eq1, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    local_expr_list_text(
+      @symsolvers.classify_pde(eq1, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
     solvers_eval_str_symbols(
       "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(a*sympy.Function('u')(x, y) + b*sympy.Function('u')(x, y).diff(x) + c*sympy.Function('u')(x, y).diff(y))])",
       "a b c x y",
     ),
   )
   assert_eq(
-    local_expr_list_text(@symsolvers.classify_pde(eq2, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    local_expr_list_text(
+      @symsolvers.classify_pde(eq2, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
     solvers_eval_str_symbols(
       "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(3*sympy.Function('u')(x, y) + 2*sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y))])",
       "x y",
     ),
   )
   assert_eq(
-    local_expr_list_text(@symsolvers.classify_pde(eq3, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    local_expr_list_text(
+      @symsolvers.classify_pde(eq3, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
     solvers_eval_str_symbols(
       "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(a*sympy.Function('u')(x, y) + b*sympy.Function('u')(x, y).diff(x) + 2*sympy.Function('u')(x, y).diff(y))])",
       "a b x y",
     ),
   )
   assert_eq(
-    local_expr_list_text(@symsolvers.classify_pde(eq4, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    local_expr_list_text(
+      @symsolvers.classify_pde(eq4, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
     solvers_eval_str_symbols(
       "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(x*sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + 3*sympy.Function('u')(x, y).diff(y))])",
       "x y",
     ),
   )
   assert_eq(
-    @symsolvers.checkpdesol(eq4, @symsolvers.pdsolve(eq5, func=Some(u(x(), y()))), func=Some(u(x(), y()))).0.to_string(),
+    @symsolvers.checkpdesol(
+      eq4,
+      @symsolvers.pdsolve(eq5, func=Some(u(x(), y()))),
+      func=Some(u(x(), y())),
+    ).0.to_string(),
     "false",
   )
   assert_eq(
-    @symsolvers.checkpdesol(eq4, @symsolvers.pdsolve(eq6, func=Some(u(x(), y()))), func=Some(u(x(), y()))).0.to_string(),
+    @symsolvers.checkpdesol(
+      eq4,
+      @symsolvers.pdsolve(eq6, func=Some(u(x(), y()))),
+      func=Some(u(x(), y())),
+    ).0.to_string(),
     "false",
   )
 
-  let eq_h1 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y())
+  let eq_h1 = @symcore.int(2) * u(x(), y()) +
+    @symcalculus.diff(u(x(), y()), x()) +
+    @symcalculus.diff(u(x(), y()), y())
   assert_eq(
     @symprint.to_string(@symsolvers.pdsolve(eq_h1, func=Some(u(x(), y())))),
     solvers_eval_str_symbols(
@@ -6549,7 +8359,9 @@ test "solvers parity additional pde source cases" {
     ),
   )
 
-  let eq_h3 = u(x(), y()) + @symcore.int(6) * @symcalculus.diff(u(x(), y()), x()) + @symcore.int(7) * @symcalculus.diff(u(x(), y()), y())
+  let eq_h3 = u(x(), y()) +
+    @symcore.int(6) * @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(7) * @symcalculus.diff(u(x(), y()), y())
   let eq_h3_sol = @symsolvers.pdsolve(eq_h3, func=Some(u(x(), y())))
   let eq_h3_rhs = match eq_h3_sol {
     @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
@@ -6565,8 +8377,15 @@ test "solvers parity additional pde source cases" {
     "True",
   )
 
-  let eq_v1 = x() * @symcalculus.diff(u(x(), y()), x()) + @symcore.int(-1) * y() * @symcalculus.diff(u(x(), y()), y()) + (y() ^ @symcore.int(2)) * u(x(), y()) + @symcore.int(-1) * (y() ^ @symcore.int(2))
-  let eq_v1_sol = @symsolvers.pdsolve(eq_v1, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  let eq_v1 = x() * @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(-1) * y() * @symcalculus.diff(u(x(), y()), y()) +
+    (y() ^ @symcore.int(2)) * u(x(), y()) +
+    @symcore.int(-1) * (y() ^ @symcore.int(2))
+  let eq_v1_sol = @symsolvers.pdsolve(
+    eq_v1,
+    func=Some(u(x(), y())),
+    hint="1st_linear_variable_coeff",
+  )
   let eq_v1_rhs = match eq_v1_sol {
     @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
     _ => @symcore.int(0)
@@ -6581,17 +8400,31 @@ test "solvers parity additional pde source cases" {
     "True",
   )
 
-  let eq_v2 = (x() ^ @symcore.int(2)) * u(x(), y()) + x() * @symcalculus.diff(u(x(), y()), x()) + x() * y() * @symcalculus.diff(u(x(), y()), y())
+  let eq_v2 = (x() ^ @symcore.int(2)) * u(x(), y()) +
+    x() * @symcalculus.diff(u(x(), y()), x()) +
+    x() * y() * @symcalculus.diff(u(x(), y()), y())
   assert_eq(
-    @symprint.to_string(@symsolvers.pdsolve(eq_v2, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")),
+    @symprint.to_string(
+      @symsolvers.pdsolve(
+        eq_v2,
+        func=Some(u(x(), y())),
+        hint="1st_linear_variable_coeff",
+      ),
+    ),
     solvers_eval_str_symbols(
       "sympy.sstr(sympy.solvers.pdsolve(x**2*sympy.Function('u')(x, y) + x*sympy.Function('u')(x, y).diff(x) + x*y*sympy.Function('u')(x, y).diff(y), hint='1st_linear_variable_coeff'))",
       "x y",
     ),
   )
 
-  let eq_v3 = y() * (x() ^ @symcore.int(2)) * u(x(), y()) + y() * @symcalculus.diff(u(x(), y()), x()) + @symcalculus.diff(u(x(), y()), y())
-  let eq_v3_sol = @symsolvers.pdsolve(eq_v3, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  let eq_v3 = y() * (x() ^ @symcore.int(2)) * u(x(), y()) +
+    y() * @symcalculus.diff(u(x(), y()), x()) +
+    @symcalculus.diff(u(x(), y()), y())
+  let eq_v3_sol = @symsolvers.pdsolve(
+    eq_v3,
+    func=Some(u(x(), y())),
+    hint="1st_linear_variable_coeff",
+  )
   let eq_v3_rhs = match eq_v3_sol {
     @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
     _ => @symcore.int(0)
@@ -6606,26 +8439,39 @@ test "solvers parity additional pde source cases" {
     "True",
   )
 
-  let eq_v4 = (@symcore.function("exp", [x()]) ^ @symcore.int(2)) * @symcalculus.diff(u(x(), y()), x()) + y()
+  let eq_v4 = (@symcore.function("exp", [x()]) ^ @symcore.int(2)) *
+    @symcalculus.diff(u(x(), y()), x()) +
+    y()
   assert_eq(
-    @symprint.to_string(@symsolvers.pdsolve(eq_v4, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")),
+    @symprint.to_string(
+      @symsolvers.pdsolve(
+        eq_v4,
+        func=Some(u(x(), y())),
+        hint="1st_linear_variable_coeff",
+      ),
+    ),
     solvers_eval_str_symbols(
       "sympy.sstr(sympy.solvers.pdsolve(sympy.exp(x)**2*sympy.Function('u')(x, y).diff(x) + y, hint='1st_linear_variable_coeff'))",
       "x y",
     ),
   )
 
-  let eq_v5 = @symcore.function("exp", [@symcore.int(2) * x()]) * @symcalculus.diff(u(x(), y()), y()) + y() * u(x(), y()) + @symcore.int(-1) * u(x(), y())
-  let eq_v5_sol = @symsolvers.pdsolve(eq_v5, func=Some(u(x(), y())), hint="1st_linear_variable_coeff")
+  let eq_v5 = @symcore.function("exp", [@symcore.int(2) * x()]) *
+    @symcalculus.diff(u(x(), y()), y()) +
+    y() * u(x(), y()) +
+    @symcore.int(-1) * u(x(), y())
+  let eq_v5_sol = @symsolvers.pdsolve(
+    eq_v5,
+    func=Some(u(x(), y())),
+    hint="1st_linear_variable_coeff",
+  )
   let eq_v5_rhs = match eq_v5_sol {
     @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
     _ => @symcore.int(0)
   }
   assert_eq(
     solvers_eval_str_symbols(
-      "sympy.sstr(sympy.simplify(" +
-      py_sympify_expr(eq_v5_rhs) +
-      "))",
+      "sympy.sstr(sympy.simplify(" + py_sympify_expr(eq_v5_rhs) + "))",
       "x y",
     ),
     solvers_eval_str_symbols(
@@ -6656,7 +8502,11 @@ test "solvers parity additional constant coefficient pde source cases" {
     "True",
   )
   assert_eq(
-    local_expr_list_text(@symsolvers.classify_pde(eq_c1, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    local_expr_list_text(
+      @symsolvers.classify_pde(eq_c1, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
     solvers_eval_str_symbols(
       "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(-2*sympy.Function('u')(x, y).diff(x) + 4*sympy.Function('u')(x, y).diff(y) + 5*sympy.Function('u')(x, y) - sympy.exp(x + 3*y))])",
       "x y",
@@ -6683,7 +8533,11 @@ test "solvers parity additional constant coefficient pde source cases" {
     "True",
   )
   assert_eq(
-    local_expr_list_text(@symsolvers.classify_pde(eq_c2, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    local_expr_list_text(
+      @symsolvers.classify_pde(eq_c2, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
     solvers_eval_str_symbols(
       "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(sympy.Function('u')(x, y).diff(x)/sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(y)/sympy.Function('u')(x, y) + 1 - sympy.exp(x + y)/sympy.Function('u')(x, y))])",
       "x y",
@@ -6709,9 +8563,59 @@ test "solvers parity additional constant coefficient pde source cases" {
     "True",
   )
   assert_eq(
-    local_expr_list_text(@symsolvers.classify_pde(eq_c3, func=Some(u(x(), y()))).map(name => @symcore.Expr::Symbol(name))),
+    local_expr_list_text(
+      @symsolvers.classify_pde(eq_c3, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
     solvers_eval_str_symbols(
       "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(2*sympy.Function('u')(x, y) - sympy.Function('u')(x, y).diff(x) + 3*sympy.Function('u')(x, y).diff(y) + sympy.sin(x))])",
+      "x y",
+    ),
+  )
+
+  let eq_c4 = u(x(), y()) +
+    @symcalculus.diff(u(x(), y()), x()) +
+    @symcalculus.diff(u(x(), y()), y()) +
+    x() * y()
+  let eq_c4_sol = @symsolvers.pdsolve(eq_c4, func=Some(u(x(), y())))
+  let eq_c4_rhs = match eq_c4_sol {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    _ => @symcore.int(0)
+  }
+  assert_eq(
+    solvers_eval_str_symbols(
+      "str(sympy.expand(" +
+      py_sympify_expr(eq_c4_rhs) +
+      " - sympy.solvers.pdsolve(sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y) + x*y).rhs) == 0)",
+      "x y",
+    ),
+    "True",
+  )
+  assert_eq(
+    local_expr_list_text(
+      @symsolvers.classify_pde(eq_c4, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
+    solvers_eval_str_symbols(
+      "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y) + x*y)])",
+      "x y",
+    ),
+  )
+
+  let eq_c5 = u(x(), y()) +
+    @symcalculus.diff(u(x(), y()), x()) +
+    @symcalculus.diff(u(x(), y()), y()) +
+    @symcore.function("log", [x()])
+  assert_eq(
+    local_expr_list_text(
+      @symsolvers.classify_pde(eq_c5, func=Some(u(x(), y()))).map(name => {
+        @symcore.Expr::Symbol(name)
+      }),
+    ),
+    solvers_eval_str_symbols(
+      "str([sympy.Symbol(name) for name in sympy.solvers.classify_pde(sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y) + sympy.log(x))])",
       "x y",
     ),
   )
@@ -6719,9 +8623,15 @@ test "solvers parity additional constant coefficient pde source cases" {
 
 ///|
 test "solvers parity checkpdesol list and solve_for_func cases" {
-  let eq4 = x() * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
-  let eq5 = @symcore.int(2) * u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
-  let eq6 = u(x(), y()) + @symcalculus.diff(u(x(), y()), x()) + @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq4 = x() * u(x(), y()) +
+    @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq5 = @symcore.int(2) * u(x(), y()) +
+    @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
+  let eq6 = u(x(), y()) +
+    @symcalculus.diff(u(x(), y()), x()) +
+    @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
   let eq4_checked = @symsolvers.checkpdesols(
     eq4,
     [
@@ -6765,13 +8675,12 @@ test "solvers parity checkpdesol list and solve_for_func cases" {
     @symsolvers.checkpdesol(eq4, implicit_zero, func=Some(u(x(), y()))).0.to_string(),
     "true",
   )
-  let no_solve_eq4 : Result[(Bool, @symcore.Expr), @symsolvers.SolverError] = try?
-    @symsolvers.checkpdesol(
-      eq4,
-      implicit_zero,
-      func=Some(u(x(), y())),
-      solve_for_func=false,
-    )
+  let no_solve_eq4 : Result[(Bool, @symcore.Expr), @symsolvers.SolverError] = try? @symsolvers.checkpdesol(
+    eq4,
+    implicit_zero,
+    func=Some(u(x(), y())),
+    solve_for_func=false,
+  )
   assert_eq(
     local_pde_check_result_type(no_solve_eq4),
     solvers_eval_stmt_result_symbols(
@@ -6789,23 +8698,27 @@ test "solvers parity checkodesol subscheck cases" {
     @symcore.int(0),
   )
   assert_eq(
-    (
-      "(" +
+    "(" +
+    @symsolvers.checkodesol(
+      @symcalculus.diff(
+        (f(x()) ^ @symcore.int(5)) + @symcore.int(9) * f(x()) + x(),
+        x(),
+      ),
+      exact_sol,
+      func=Some(f(x())),
+    ).0.to_string() +
+    ", " +
+    @symprint.to_string(
       @symsolvers.checkodesol(
-        @symcalculus.diff((f(x()) ^ @symcore.int(5)) + @symcore.int(9) * f(x()) + x(), x()),
+        @symcalculus.diff(
+          (f(x()) ^ @symcore.int(5)) + @symcore.int(9) * f(x()) + x(),
+          x(),
+        ),
         exact_sol,
         func=Some(f(x())),
-      ).0.to_string() +
-      ", " +
-      @symprint.to_string(
-        @symsolvers.checkodesol(
-          @symcalculus.diff((f(x()) ^ @symcore.int(5)) + @symcore.int(9) * f(x()) + x(), x()),
-          exact_sol,
-          func=Some(f(x())),
-        ).1,
-      ) +
-      ")"
-    ),
+      ).1,
+    ) +
+    ")",
     checkodesol_oracle_text(
       "sympy.solvers.checkodesol(sympy.diff(sympy.Function('f')(x)**5 + 9*sympy.Function('f')(x) + x, x), sympy.Eq(sympy.Function('f')(x)**5 + 9*sympy.Function('f')(x) + x, 0))",
     ),
@@ -6816,33 +8729,45 @@ test "solvers parity checkodesol subscheck cases" {
     @symcore.int(0),
   )
   assert_eq(
-    (
-      "(" +
+    "(" +
+    @symsolvers.checkodesol(
+      x() * @symcalculus.diff(@symcore.function("exp", [f(x())]) + x(), x()),
+      implicit_sol,
+      func=Some(f(x())),
+      solve_for_func=false,
+    ).0.to_string() +
+    ", " +
+    @symprint.to_string(
       @symsolvers.checkodesol(
         x() * @symcalculus.diff(@symcore.function("exp", [f(x())]) + x(), x()),
         implicit_sol,
         func=Some(f(x())),
         solve_for_func=false,
-      ).0.to_string() +
-      ", " +
-      @symprint.to_string(
-        @symsolvers.checkodesol(
-          x() * @symcalculus.diff(@symcore.function("exp", [f(x())]) + x(), x()),
-          implicit_sol,
-          func=Some(f(x())),
-          solve_for_func=false,
-        ).1,
-      ) +
-      ")"
-    ),
+      ).1,
+    ) +
+    ")",
     checkodesol_oracle_text(
       "sympy.solvers.checkodesol(x*sympy.diff(sympy.exp(sympy.Function('f')(x)) + x, x), sympy.Eq(sympy.exp(sympy.Function('f')(x)) + x, 0), solve_for_func=False)",
     ),
   )
   let c1 = @symcore.Expr::Symbol("C1")
   assert_eq(
-    (
-      "(" +
+    "(" +
+    @symsolvers.checkodesol(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        @symcalculus.diff(f(x()), x()),
+        f(x()),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        c1 * @symcore.function("exp", [x()]),
+        f(x()),
+      ),
+      func=Some(f(x())),
+    ).0.to_string() +
+    ", " +
+    @symprint.to_string(
       @symsolvers.checkodesol(
         @symcore.Expr::Relational(
           @symcore.RelOp::Eq,
@@ -6855,47 +8780,29 @@ test "solvers parity checkodesol subscheck cases" {
           f(x()),
         ),
         func=Some(f(x())),
-      ).0.to_string() +
-      ", " +
-      @symprint.to_string(
-        @symsolvers.checkodesol(
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            @symcalculus.diff(f(x()), x()),
-            f(x()),
-          ),
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            c1 * @symcore.function("exp", [x()]),
-            f(x()),
-          ),
-          func=Some(f(x())),
-        ).1,
-      ) +
-      ")"
-    ),
+      ).1,
+    ) +
+    ")",
     checkodesol_oracle_text(
       "sympy.solvers.checkodesol(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x)), sympy.Eq(sympy.Symbol('C1')*sympy.exp(x), sympy.Function('f')(x)))",
     ),
   )
   assert_eq(
-    (
-      "(" +
+    "(" +
+    @symsolvers.checkodesol(
+      @symcalculus.diff(f(x()), x()),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, f(x()), x()),
+      func=Some(f(x())),
+    ).0.to_string() +
+    ", " +
+    @symprint.to_string(
       @symsolvers.checkodesol(
         @symcalculus.diff(f(x()), x()),
         @symcore.Expr::Relational(@symcore.RelOp::Eq, f(x()), x()),
         func=Some(f(x())),
-      ).0.to_string() +
-      ", " +
-      @symprint.to_string(
-        @symsolvers.checkodesol(
-          @symcalculus.diff(f(x()), x()),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, f(x()), x()),
-          func=Some(f(x())),
-        ).1,
-      ) +
-      ")"
-    ),
+      ).1,
+    ) +
+    ")",
     checkodesol_oracle_text(
       "sympy.solvers.checkodesol(sympy.diff(sympy.Function('f')(x), x), sympy.Eq(sympy.Function('f')(x), x))",
     ),
@@ -6926,7 +8833,15 @@ test "solvers parity inequalities factor_system and diophantine" {
       @symsolvers.solve_rational_inequalities([
         [
           ((@sympolys.Poly::from_expr_defaults(x(), gens=["x"]), one), "!="),
-          ((@sympolys.Poly::from_expr_defaults(@symcore.int(1) - x(), gens=["x"]), one), ">="),
+          (
+            (
+              @sympolys.Poly::from_expr_defaults(@symcore.int(1) - x(), gens=[
+                "x",
+              ]),
+              one,
+            ),
+            ">=",
+          ),
         ],
       ]),
     ),
@@ -6937,7 +8852,11 @@ test "solvers parity inequalities factor_system and diophantine" {
   assert_eq(
     local_inequality_result_text(
       @symsolvers.solve_univariate_inequality(
-        @symcore.Expr::Relational(@symcore.RelOp::Ge, x() ^ @symcore.int(2), @symcore.int(4)),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Ge,
+          x() ^ @symcore.int(2),
+          @symcore.int(4),
+        ),
         x(),
         relational=false,
       ),
@@ -6949,46 +8868,32 @@ test "solvers parity inequalities factor_system and diophantine" {
     ")",
   )
   assert_eq(
-    (
-      local_expr_matrix_text(
-        @symsolvers.factor_system(
-          [x() * (x() + @symcore.int(1)), y() * (y() - @symcore.int(1))],
-          gens=[x(), y()],
-        ),
+    local_expr_matrix_text(
+      @symsolvers.factor_system(
+        [x() * (x() + @symcore.int(1)), y() * (y() - @symcore.int(1))],
+        gens=[x(), y()],
       ),
     ),
     "[[x, y], [x, y - 1], [x + 1, y], [x + 1, y - 1]]",
   )
   assert_eq(
-    (
-      @symsets.to_string(@symsolvers.diophantine(x() + y() - @symcore.int(3))),
+    @symsets.to_string(@symsolvers.diophantine(x() + y() - @symcore.int(3))),
+    solvers_eval_str("repr(sympy.solvers.diophantine(x + y - 3))"),
+  )
+  assert_eq(
+    local_classify_diop_text(
+      @symsolvers.classify_diop(x() + y() - @symcore.int(3)),
     ),
-    (
-      solvers_eval_str("repr(sympy.solvers.diophantine(x + y - 3))"),
+    solvers_eval_str(
+      "repr(__import__('sympy.solvers.diophantine', fromlist=['classify_diop']).classify_diop(x + y - 3))",
     ),
   )
   assert_eq(
-    (
-      local_classify_diop_text(
-        @symsolvers.classify_diop(x() + y() - @symcore.int(3)),
-      ),
+    local_diop_solve_result_text(
+      @symsolvers.diop_solve(x() + y() - @symcore.int(3)),
     ),
-    (
-      solvers_eval_str(
-        "repr(__import__('sympy.solvers.diophantine', fromlist=['classify_diop']).classify_diop(x + y - 3))",
-      ),
-    ),
-  )
-  assert_eq(
-    (
-      local_diop_solve_result_text(
-        @symsolvers.diop_solve(x() + y() - @symcore.int(3)),
-      ),
-    ),
-    (
-      solvers_eval_str(
-        "repr(__import__('sympy.solvers.diophantine', fromlist=['diop_solve']).diop_solve(x + y - 3))",
-      ),
+    solvers_eval_str(
+      "repr(__import__('sympy.solvers.diophantine', fromlist=['diop_solve']).diop_solve(x + y - 3))",
     ),
   )
   assert_eq(
@@ -7006,13 +8911,14 @@ test "solvers parity inequalities factor_system and diophantine" {
 ///|
 test "solvers parity recurrence helpers" {
   let a = @symcore.Expr::Symbol("a")
-  let poly_solution = @symsolvers.rsolve_poly([@symcore.int(-1), @symcore.int(1)], x(), x())
-    .unwrap_or(@symcore.int(0))
+  let poly_solution = @symsolvers.rsolve_poly(
+    [@symcore.int(-1), @symcore.int(1)],
+    x(),
+    x(),
+  ).unwrap_or(@symcore.int(0))
   assert_eq(
     recurrence_expr_matches_oracle(
-      poly_solution,
-      "sympy.solvers.rsolve_poly([-1, 1], x, x)",
-      "x C0",
+      poly_solution, "sympy.solvers.rsolve_poly([-1, 1], x, x)", "x C0",
     ),
     "0",
   )
@@ -7023,9 +8929,7 @@ test "solvers parity recurrence helpers" {
   ).unwrap_or(@symcore.int(0))
   assert_eq(
     recurrence_expr_matches_oracle(
-      hyper_solution,
-      "sympy.solvers.rsolve_hyper([-a, 1], 0, x)",
-      "x a C0",
+      hyper_solution, "sympy.solvers.rsolve_hyper([-a, 1], 0, x)", "x a C0",
     ),
     "0",
   )
@@ -7034,11 +8938,12 @@ test "solvers parity recurrence helpers" {
     f(x() + @symcore.int(1)),
     @symcore.add([f(x()), x()]),
   )
-  let general = @symsolvers.rsolve(recurrence, f(x())).unwrap_or(@symcore.int(0))
+  let general = @symsolvers.rsolve(recurrence, f(x())).unwrap_or(
+    @symcore.int(0),
+  )
   assert_eq(
     recurrence_expr_matches_oracle(
-      general,
-      "sympy.solvers.rsolve(sympy.Eq(sympy.Function('f')(x + 1), sympy.Function('f')(x) + x), sympy.Function('f')(x))",
+      general, "sympy.solvers.rsolve(sympy.Eq(sympy.Function('f')(x + 1), sympy.Function('f')(x) + x), sympy.Function('f')(x))",
       "x C0",
     ),
     "0",
@@ -7050,8 +8955,7 @@ test "solvers parity recurrence helpers" {
   ).unwrap_or(@symcore.int(0))
   assert_eq(
     recurrence_expr_matches_oracle(
-      with_init,
-      "sympy.solvers.rsolve(sympy.Eq(sympy.Function('f')(x + 1), sympy.Function('f')(x) + x), sympy.Function('f')(x), init=[0])",
+      with_init, "sympy.solvers.rsolve(sympy.Eq(sympy.Function('f')(x + 1), sympy.Function('f')(x) + x), sympy.Function('f')(x), init=[0])",
       "x",
     ),
     "0",
@@ -7068,10 +8972,9 @@ test "solvers parity lie heuristic function_sum" {
           @symcore.int(1),
           @symcore.mul([x() ^ @symcore.int(2), f(x()) ^ @symcore.int(-2)]),
         ]),
-        @symcore.function(
-          "atan",
-          [@symcore.mul([f(x()), x() ^ @symcore.int(-1)])],
-        ),
+        @symcore.function("atan", [
+          @symcore.mul([f(x()), x() ^ @symcore.int(-1)]),
+        ]),
       ]),
       @symcore.mul([
         @symcore.add([@symcore.int(1), @symcore.int(-2) * f(x())]),
@@ -7090,14 +8993,17 @@ test "solvers parity lie heuristic function_sum" {
   )
   assert_eq(
     infinitesimals_oracle_residual_text(
-      function_sum_inf,
-      "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - (3*(1 + x**2/sympy.Function('f')(x)**2)*sympy.atan(sympy.Function('f')(x)/x) + (1 - 2*sympy.Function('f')(x))/x + (1 - 3*sympy.Function('f')(x))*(x/sympy.Function('f')(x)**2)), hint='function_sum')]",
+      function_sum_inf, "[{'xi': item[sympy.Function('xi')(x, sympy.Function('f')(x))], 'eta': item[sympy.Function('eta')(x, sympy.Function('f')(x))]} for item in __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - (3*(1 + x**2/sympy.Function('f')(x)**2)*sympy.atan(sympy.Function('f')(x)/x) + (1 - 2*sympy.Function('f')(x))/x + (1 - 3*sympy.Function('f')(x))*(x/sympy.Function('f')(x)**2)), hint='function_sum')]",
     ),
     "(1, 1, [(0, 0)])",
   )
   assert_eq(
     checkinfsol_oracle_residual_text(
-      @symsolvers.checkinfsol(function_sum_eq, function_sum_inf, func=Some(f(x()))),
+      @symsolvers.checkinfsol(
+        function_sum_eq,
+        function_sum_inf,
+        func=Some(f(x())),
+      ),
       "__import__('sympy.solvers.ode', fromlist=['checkinfsol', 'infinitesimals']).checkinfsol(sympy.diff(sympy.Function('f')(x), x) - (3*(1 + x**2/sympy.Function('f')(x)**2)*sympy.atan(sympy.Function('f')(x)/x) + (1 - 2*sympy.Function('f')(x))/x + (1 - 3*sympy.Function('f')(x))*(x/sympy.Function('f')(x)**2)), __import__('sympy.solvers.ode', fromlist=['infinitesimals']).infinitesimals(sympy.diff(sympy.Function('f')(x), x) - (3*(1 + x**2/sympy.Function('f')(x)**2)*sympy.atan(sympy.Function('f')(x)/x) + (1 - 2*sympy.Function('f')(x))/x + (1 - 3*sympy.Function('f')(x))*(x/sympy.Function('f')(x)**2)), hint='function_sum'))",
     ),
     "(1, 1, [True], [True], [0])",

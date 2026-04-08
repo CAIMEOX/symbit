@@ -7,7 +7,9 @@ fn solver_symbol_name(symbol : Expr) -> String raise SolverError {
 }
 
 ///|
-fn solver_symbol_names(symbols : Array[Expr]) -> Array[String] raise SolverError {
+fn solver_symbol_names(
+  symbols : Array[Expr],
+) -> Array[String] raise SolverError {
   let out : Array[String] = []
   for symbol in symbols {
     let name = solver_symbol_name(symbol)
@@ -25,7 +27,9 @@ fn solver_expr_in_list(items : Array[Expr], target : Expr) -> Bool {
 }
 
 ///|
-fn solver_sorted_unique_symbols(items : Array[Expr]) -> Array[Expr] raise SolverError {
+fn solver_sorted_unique_symbols(
+  items : Array[Expr],
+) -> Array[Expr] raise SolverError {
   let out : Array[Expr] = []
   for item in items {
     guard item is Expr::Symbol(_) else {
@@ -121,13 +125,17 @@ fn solver_expand_mul_sequence(factors : Array[Expr]) -> Expr {
 ///|
 fn solver_expand_expr(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => canonical_expr(@symcore.add(args.map(arg => solver_expand_expr(arg))))
-    Expr::Mul(args) => solver_expand_mul_sequence(args.map(arg => solver_expand_expr(arg)))
+    Expr::Add(args) =>
+      canonical_expr(@symcore.add(args.map(arg => solver_expand_expr(arg))))
+    Expr::Mul(args) =>
+      solver_expand_mul_sequence(args.map(arg => solver_expand_expr(arg)))
     Expr::Pow(base, exp) => {
       let expanded_base = solver_expand_expr(base)
       let expanded_exp = solver_expand_expr(exp)
       match @symcore.exact_numeric_expr_num_den(expanded_exp) {
-        Some((num, den)) if den.compare(1N) == 0 && num.compare(0N) >= 0 && num.compare(8N) <= 0 => {
+        Some((num, den)) if den.compare(1N) == 0 &&
+          num.compare(0N) >= 0 &&
+          num.compare(8N) <= 0 => {
           let power = num.to_int()
           if power == 0 {
             @symcore.int(1)
@@ -149,52 +157,21 @@ fn solver_expand_expr(expr : Expr) -> Expr {
 
 ///|
 pub let allhints : Array[String] = [
-  "factorable",
-  "nth_algebraic",
-  "separable",
-  "1st_exact",
-  "1st_linear",
-  "Bernoulli",
-  "1st_rational_riccati",
-  "Riccati_special_minus2",
-  "1st_homogeneous_coeff_best",
-  "1st_homogeneous_coeff_subs_indep_div_dep",
-  "1st_homogeneous_coeff_subs_dep_div_indep",
-  "almost_linear",
-  "linear_coefficients",
-  "separable_reduced",
-  "1st_power_series",
-  "lie_group",
-  "nth_linear_constant_coeff_homogeneous",
-  "nth_linear_euler_eq_homogeneous",
-  "nth_linear_constant_coeff_undetermined_coefficients",
-  "nth_linear_euler_eq_nonhomogeneous_undetermined_coefficients",
-  "nth_linear_constant_coeff_variation_of_parameters",
-  "nth_linear_euler_eq_nonhomogeneous_variation_of_parameters",
-  "Liouville",
-  "2nd_linear_airy",
-  "2nd_linear_bessel",
-  "2nd_linear_bessel_transform",
-  "2nd_hypergeometric",
-  "2nd_hypergeometric_Integral",
-  "nth_order_reducible",
-  "2nd_power_series_ordinary",
-  "2nd_power_series_regular",
-  "nth_algebraic_Integral",
-  "separable_Integral",
-  "1st_exact_Integral",
-  "1st_linear_Integral",
-  "Bernoulli_Integral",
-  "1st_homogeneous_coeff_subs_indep_div_dep_Integral",
-  "1st_homogeneous_coeff_subs_dep_div_indep_Integral",
-  "almost_linear_Integral",
-  "linear_coefficients_Integral",
-  "separable_reduced_Integral",
-  "nth_linear_constant_coeff_variation_of_parameters_Integral",
-  "nth_linear_euler_eq_nonhomogeneous_variation_of_parameters_Integral",
-  "Liouville_Integral",
-  "2nd_nonlinear_autonomous_conserved",
-  "2nd_nonlinear_autonomous_conserved_Integral",
+  "factorable", "nth_algebraic", "separable", "1st_exact", "1st_linear", "Bernoulli",
+  "1st_rational_riccati", "Riccati_special_minus2", "1st_homogeneous_coeff_best",
+  "1st_homogeneous_coeff_subs_indep_div_dep", "1st_homogeneous_coeff_subs_dep_div_indep",
+  "almost_linear", "linear_coefficients", "separable_reduced", "1st_power_series",
+  "lie_group", "nth_linear_constant_coeff_homogeneous", "nth_linear_euler_eq_homogeneous",
+  "nth_linear_constant_coeff_undetermined_coefficients", "nth_linear_euler_eq_nonhomogeneous_undetermined_coefficients",
+  "nth_linear_constant_coeff_variation_of_parameters", "nth_linear_euler_eq_nonhomogeneous_variation_of_parameters",
+  "Liouville", "2nd_linear_airy", "2nd_linear_bessel", "2nd_linear_bessel_transform",
+  "2nd_hypergeometric", "2nd_hypergeometric_Integral", "nth_order_reducible", "2nd_power_series_ordinary",
+  "2nd_power_series_regular", "nth_algebraic_Integral", "separable_Integral", "1st_exact_Integral",
+  "1st_linear_Integral", "Bernoulli_Integral", "1st_homogeneous_coeff_subs_indep_div_dep_Integral",
+  "1st_homogeneous_coeff_subs_dep_div_indep_Integral", "almost_linear_Integral",
+  "linear_coefficients_Integral", "separable_reduced_Integral", "nth_linear_constant_coeff_variation_of_parameters_Integral",
+  "nth_linear_euler_eq_nonhomogeneous_variation_of_parameters_Integral", "Liouville_Integral",
+  "2nd_nonlinear_autonomous_conserved", "2nd_nonlinear_autonomous_conserved_Integral",
 ]
 
 ///|
@@ -204,7 +181,9 @@ fn solver_constantsimp_inner(
   replacement : Expr,
   root : Expr,
 ) -> Expr {
-  let local_replacement = solver_constantsimp_replacement_for(expr, constants, replacement)
+  let local_replacement = solver_constantsimp_replacement_for(
+    expr, constants, replacement,
+  )
   if !solver_depends_on_any(expr, constants) {
     return expr
   }
@@ -221,14 +200,23 @@ fn solver_constantsimp_inner(
           if solver_constantsimp_absorbable(arg, constants) {
             absorbable.push(arg)
           } else {
-            kept.push(solver_constantsimp_inner(arg, constants, replacement, root))
+            kept.push(
+              solver_constantsimp_inner(arg, constants, replacement, root),
+            )
           }
         }
-        if !absorbable.is_empty() && !kept.is_empty() &&
-          solver_constantsimp_can_replace(solver_add_all(absorbable), root, constants) {
+        if !absorbable.is_empty() &&
+          !kept.is_empty() &&
+          solver_constantsimp_can_replace(
+            solver_add_all(absorbable),
+            root,
+            constants,
+          ) {
           let absorbed = solver_add_all(absorbable)
           return solver_mul_all([
-            solver_constantsimp_replacement_for(absorbed, constants, replacement),
+            solver_constantsimp_replacement_for(
+              absorbed, constants, replacement,
+            ),
             @symcore.function("exp", [solver_add_all(kept)]),
           ])
         }
@@ -246,11 +234,17 @@ fn solver_constantsimp_inner(
           collapsed = true
           absorbed.push(arg)
         } else {
-          rebuilt.push(solver_constantsimp_inner(arg, constants, replacement, root))
+          rebuilt.push(
+            solver_constantsimp_inner(arg, constants, replacement, root),
+          )
         }
       }
       if collapsed &&
-        solver_constantsimp_can_replace(solver_add_all(absorbed), root, constants) {
+        solver_constantsimp_can_replace(
+          solver_add_all(absorbed),
+          root,
+          constants,
+        ) {
         rebuilt.push(
           solver_constantsimp_replacement_for(
             solver_add_all(absorbed),
@@ -260,7 +254,11 @@ fn solver_constantsimp_inner(
         )
         solver_add_all(rebuilt)
       } else {
-        solver_add_all(args.map(arg => solver_constantsimp_inner(arg, constants, replacement, root)))
+        solver_add_all(
+          args.map(arg => {
+            solver_constantsimp_inner(arg, constants, replacement, root)
+          }),
+        )
       }
     }
     Expr::Mul(args) => {
@@ -272,11 +270,17 @@ fn solver_constantsimp_inner(
           collapsed = true
           absorbed.push(arg)
         } else {
-          rebuilt.push(solver_constantsimp_inner(arg, constants, replacement, root))
+          rebuilt.push(
+            solver_constantsimp_inner(arg, constants, replacement, root),
+          )
         }
       }
       if collapsed &&
-        solver_constantsimp_can_replace(solver_mul_all(absorbed), root, constants) {
+        solver_constantsimp_can_replace(
+          solver_mul_all(absorbed),
+          root,
+          constants,
+        ) {
         rebuilt.push(
           solver_constantsimp_replacement_for(
             solver_mul_all(absorbed),
@@ -286,7 +290,11 @@ fn solver_constantsimp_inner(
         )
         solver_mul_all(rebuilt)
       } else {
-        solver_mul_all(args.map(arg => solver_constantsimp_inner(arg, constants, replacement, root)))
+        solver_mul_all(
+          args.map(arg => {
+            solver_constantsimp_inner(arg, constants, replacement, root)
+          }),
+        )
       }
     }
     Expr::Pow(base, exp) =>
@@ -300,10 +308,10 @@ fn solver_constantsimp_inner(
           solver_constantsimp_inner(exp, constants, replacement, root),
         )
       }
-    _ => @symcore.map_children(
-      expr,
-      child => solver_constantsimp_inner(child, constants, replacement, root),
-    )
+    _ =>
+      @symcore.map_children(expr, child => {
+        solver_constantsimp_inner(child, constants, replacement, root)
+      })
   }
 }
 
@@ -389,7 +397,8 @@ fn solver_constantsimp_can_replace(
     if !solver_expr_in_list(constants, symbol) {
       return false
     }
-    if solver_constantsimp_occurs(root, symbol) != solver_constantsimp_occurs(expr, symbol) {
+    if solver_constantsimp_occurs(root, symbol) !=
+      solver_constantsimp_occurs(expr, symbol) {
       return false
     }
   }
@@ -397,7 +406,10 @@ fn solver_constantsimp_can_replace(
 }
 
 ///|
-fn solver_constantsimp_direct_constant_term(expr : Expr, constants : Array[Expr]) -> Bool {
+fn solver_constantsimp_direct_constant_term(
+  expr : Expr,
+  constants : Array[Expr],
+) -> Bool {
   @symcore.is_number_atom(expr) || solver_expr_in_list(constants, expr)
 }
 
@@ -434,7 +446,10 @@ fn solver_constantsimp_eq_mullike(expr : Expr) -> Bool {
 }
 
 ///|
-fn solver_constantsimp_postprocess_eq(expr : Expr, constants : Array[Expr]) -> Expr {
+fn solver_constantsimp_postprocess_eq(
+  expr : Expr,
+  constants : Array[Expr],
+) -> Expr {
   match expr {
     Expr::Relational(@symcore.RelOp::Eq, lhs0, rhs0) => {
       let mut lhs = lhs0
@@ -444,7 +459,8 @@ fn solver_constantsimp_postprocess_eq(expr : Expr, constants : Array[Expr]) -> E
         lhs = rhs
         rhs = tmp
       }
-      if solver_expr_in_list(constants, rhs) && solver_constantsimp_eq_addlike(lhs) {
+      if solver_expr_in_list(constants, rhs) &&
+        solver_constantsimp_eq_addlike(lhs) {
         let lhs_nonconst : Array[Expr] = []
         for term in solver_constantsimp_add_terms(lhs) {
           if !solver_constantsimp_direct_constant_term(term, constants) {
@@ -452,11 +468,16 @@ fn solver_constantsimp_postprocess_eq(expr : Expr, constants : Array[Expr]) -> E
           }
         }
         if !lhs_nonconst.is_empty() {
-          Expr::Relational(@symcore.RelOp::Eq, solver_add_all(lhs_nonconst), constants[0])
+          Expr::Relational(
+            @symcore.RelOp::Eq,
+            solver_add_all(lhs_nonconst),
+            constants[0],
+          )
         } else {
           expr
         }
-      } else if solver_expr_in_list(constants, rhs) && solver_constantsimp_eq_mullike(lhs) {
+      } else if solver_expr_in_list(constants, rhs) &&
+        solver_constantsimp_eq_mullike(lhs) {
         let lhs_nonconst : Array[Expr] = []
         for term in solver_constantsimp_mul_terms(lhs) {
           if !solver_constantsimp_direct_constant_term(term, constants) {
@@ -464,7 +485,11 @@ fn solver_constantsimp_postprocess_eq(expr : Expr, constants : Array[Expr]) -> E
           }
         }
         if !lhs_nonconst.is_empty() {
-          Expr::Relational(@symcore.RelOp::Eq, solver_mul_all(lhs_nonconst), constants[0])
+          Expr::Relational(
+            @symcore.RelOp::Eq,
+            solver_mul_all(lhs_nonconst),
+            constants[0],
+          )
         } else {
           expr
         }
@@ -481,7 +506,8 @@ fn solver_constantsimp_negative_one_power_base(expr : Expr) -> Expr? {
   match expr {
     Expr::Pow(base, exp) =>
       match @symcore.exact_numeric_expr_num_den(exp) {
-        Some((num, den)) if num.compare(-1N) == 0 && den.compare(1N) == 0 => Some(base)
+        Some((num, den)) if num.compare(-1N) == 0 && den.compare(1N) == 0 =>
+          Some(base)
         _ => None
       }
     _ => None
@@ -506,10 +532,12 @@ fn solver_constantsimp_radical_cleanup(expr : Expr) -> Expr {
     _ if @symcore.application_has_name(expr, "sqrt", arity=1) =>
       match @symcore.application_args(expr) {
         Some([arg]) =>
-          @symcore.function(
-            "sqrt",
-            [@symsimplify.simplify(solver_constantsimp_radical_cleanup(arg), max_passes=2)],
-          )
+          @symcore.function("sqrt", [
+            @symsimplify.simplify(
+              solver_constantsimp_radical_cleanup(arg),
+              max_passes=2,
+            ),
+          ])
         _ => expr
       }
     Expr::Mul(args) => {
@@ -553,21 +581,25 @@ fn solver_constantsimp_radical_cleanup(expr : Expr) -> Expr {
       }
       solver_mul_all(rebuilt)
     }
-    Expr::Add(args) => solver_add_all(args.map(arg => solver_constantsimp_radical_cleanup(arg)))
+    Expr::Add(args) =>
+      solver_add_all(args.map(arg => solver_constantsimp_radical_cleanup(arg)))
     Expr::Pow(base, exp) =>
       @symcore.pow(
         solver_constantsimp_radical_cleanup(base),
         solver_constantsimp_radical_cleanup(exp),
       )
-    _ => @symcore.map_children(
-      expr,
-      child => solver_constantsimp_radical_cleanup(child),
-    )
+    _ =>
+      @symcore.map_children(expr, child => {
+        solver_constantsimp_radical_cleanup(child)
+      })
   }
 }
 
 ///|
-pub fn constantsimp(expr : Expr, constants : Array[Expr]) -> Expr raise SolverError {
+pub fn constantsimp(
+  expr : Expr,
+  constants : Array[Expr],
+) -> Expr raise SolverError {
   let normalized = solver_sorted_unique_symbols(constants)
   if normalized.is_empty() {
     return expr
@@ -576,7 +608,8 @@ pub fn constantsimp(expr : Expr, constants : Array[Expr]) -> Expr raise SolverEr
   let mut replacement_name = symbol_name(replacement)
   for item in normalized {
     let name = symbol_name(item)
-    let prefer_item = if name.starts_with("C") && !replacement_name.starts_with("C") {
+    let prefer_item = if name.starts_with("C") &&
+      !replacement_name.starts_with("C") {
       true
     } else if name.starts_with("C") == replacement_name.starts_with("C") {
       name.compare(replacement_name) < 0
@@ -723,16 +756,18 @@ fn solver_replace_targets(
       return pair.1
     }
   }
-  @symcore.map_children(expr, child => solver_replace_targets(child, replacements))
+  @symcore.map_children(expr, child => {
+    solver_replace_targets(child, replacements)
+  })
 }
 
 ///|
-fn solver_order_to_expr(
-  order : (@bigint.BigInt, @bigint.BigInt),
-) -> Expr {
-  Expr::Number(@symnum.BigRational::new(order.0, order.1) catch {
-    _ => @symnum.BigRational::zero()
-  })
+fn solver_order_to_expr(order : (@bigint.BigInt, @bigint.BigInt)) -> Expr {
+  Expr::Number(
+    @symnum.BigRational::new(order.0, order.1) catch {
+      _ => @symnum.BigRational::zero()
+    },
+  )
 }
 
 ///|
@@ -742,9 +777,7 @@ fn solver_order_add(
 ) -> (@bigint.BigInt, @bigint.BigInt) {
   let num = lhs.0 * rhs.1 + rhs.0 * lhs.1
   let den = lhs.1 * rhs.1
-  let value = @symnum.BigRational::new(num, den) catch {
-    _ => return (0N, 1N)
-  }
+  let value = @symnum.BigRational::new(num, den) catch { _ => return (0N, 1N) }
   (value.numerator(), value.denominator())
 }
 
@@ -779,7 +812,10 @@ fn solver_homogeneous_order_inner(
     return Some((1N, 1N))
   }
   match expr {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) | Expr::Boolean(_)
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::Boolean(_)
     | Expr::NumberSymbol(_) => Some((0N, 1N))
     Expr::Add(args) => {
       if args.is_empty() {
@@ -808,7 +844,11 @@ fn solver_homogeneous_order_inner(
       Some(acc)
     }
     Expr::Pow(base, exp) =>
-      match (solver_homogeneous_order_inner(base, symbols), @symcore.exact_numeric_expr_num_den(exp)) {
+      match
+        (
+          solver_homogeneous_order_inner(base, symbols),
+          @symcore.exact_numeric_expr_num_den(exp),
+        ) {
         (Some(value), Some(ratio)) => Some(solver_order_mul(value, ratio))
         _ => None
       }
@@ -817,7 +857,10 @@ fn solver_homogeneous_order_inner(
 }
 
 ///|
-pub fn homogeneous_order(eq : Expr, symbols : Array[Expr]) -> Expr? raise SolverError {
+pub fn homogeneous_order(
+  eq : Expr,
+  symbols : Array[Expr],
+) -> Expr? raise SolverError {
   let syms = solver_sorted_unique_symbols(symbols)
   solver_homogeneous_order_inner(solver_normalize_equation(eq), syms).map(
     solver_order_to_expr,
@@ -979,12 +1022,10 @@ fn solver_extract_linear_targets(
   expr : Expr,
   targets : Array[Expr],
 ) -> (Array[Expr], Expr)? {
-  match solver_linear_decompose_targets(solver_normalize_equation(expr), targets) {
+  match
+    solver_linear_decompose_targets(solver_normalize_equation(expr), targets) {
     Some((coeffs, constant)) =>
-      Some((
-        coeffs.map(canonical_expr),
-        canonical_expr(constant),
-      ))
+      Some((coeffs.map(canonical_expr), canonical_expr(constant)))
     None => None
   }
 }
@@ -994,7 +1035,8 @@ fn solver_quadratic_factor_coeff(term : Expr, target : Expr) -> Expr? {
   match term {
     Expr::Pow(base, exp) =>
       match @symcore.exact_numeric_expr_num_den(exp) {
-        Some((num, den)) if num.compare(2N) == 0 && den.compare(1N) == 0 &&
+        Some((num, den)) if num.compare(2N) == 0 &&
+          den.compare(1N) == 0 &&
           solver_is_same_target(base, target) => Some(@symcore.int(1))
         _ =>
           if solver_expr_has_target(term, target) {
@@ -1010,7 +1052,8 @@ fn solver_quadratic_factor_coeff(term : Expr, target : Expr) -> Expr? {
         match arg {
           Expr::Pow(base, exp) =>
             match @symcore.exact_numeric_expr_num_den(exp) {
-              Some((num, den)) if num.compare(2N) == 0 && den.compare(1N) == 0 &&
+              Some((num, den)) if num.compare(2N) == 0 &&
+                den.compare(1N) == 0 &&
                 solver_is_same_target(base, target) =>
                 if seen {
                   return None
@@ -1063,9 +1106,8 @@ fn solver_extract_quadratic_target(
   let mut constant = @symcore.int(0)
   for term in terms {
     match solver_quadratic_factor_coeff(term, target) {
-      Some(q) if !@symcore.is_zero(q) => {
+      Some(q) if !@symcore.is_zero(q) =>
         coeff_sq = canonical_expr(@symcore.add([coeff_sq, q]))
-      }
       Some(_) | None =>
         match solver_linear_factor_coeff(term, target) {
           Some(l) if !@symcore.is_zero(l) =>
@@ -1092,13 +1134,11 @@ fn solver_assumption_value(
     "real" => Some(@symassume.is_real(expr, env~))
     "positive" => Some(@symassume.is_positive(expr, env~))
     "nonnegative" => Some(@symassume.is_nonnegative(expr, env~))
-    "negative" => Some(@symassume.is_positive(@symcore.mul([@symcore.int(-1), expr]), env~))
+    "negative" =>
+      Some(@symassume.is_positive(@symcore.mul([@symcore.int(-1), expr]), env~))
     "nonpositive" =>
       Some(
-        @symassume.is_nonnegative(
-          @symcore.mul([@symcore.int(-1), expr]),
-          env~,
-        ),
+        @symassume.is_nonnegative(@symcore.mul([@symcore.int(-1), expr]), env~),
       )
     _ => None
   }
@@ -1125,7 +1165,8 @@ fn solver_assumption_value(
                   },
                 )
               _ =>
-                match @symassume.tri_to_bool_option(@symassume.is_real(expr, env~)) {
+                match
+                  @symassume.tri_to_bool_option(@symassume.is_real(expr, env~)) {
                   Some(true) => Some(true)
                   _ => None
                 }
@@ -1173,18 +1214,8 @@ fn solver_assumption_value(
 ///|
 fn solver_supported_assumptions() -> Array[String] {
   [
-    "zero",
-    "nonzero",
-    "integer",
-    "rational",
-    "real",
-    "positive",
-    "nonnegative",
-    "negative",
-    "nonpositive",
-    "complex",
-    "finite",
-    "infinite",
+    "zero", "nonzero", "integer", "rational", "real", "positive", "nonnegative",
+    "negative", "nonpositive", "complex", "finite", "infinite",
   ]
 }
 
@@ -1246,10 +1277,7 @@ pub fn check_assumptions(
       None => ()
       Some(value) =>
         match solver_assumption_value(expr, key, env) {
-          Some(actual) =>
-            if actual != value {
-              return Some(false)
-            }
+          Some(actual) => if actual != value { return Some(false) }
           None => unknown = true
         }
     }
@@ -1270,7 +1298,10 @@ fn solver_collect_term_pair(
   for i in 0..<acc.length() {
     let (existing_basis, existing_coeff) = acc[i]
     if @symcore.compare_expr(existing_basis, basis) == 0 {
-      acc[i] = (existing_basis, canonical_expr(@symcore.add([existing_coeff, coeff])))
+      acc[i] = (
+        existing_basis,
+        canonical_expr(@symcore.add([existing_coeff, coeff])),
+      )
       return
     }
   }
@@ -1278,7 +1309,10 @@ fn solver_collect_term_pair(
 }
 
 ///|
-fn solver_split_coeff_basis(term : Expr, basis_symbols : Array[Expr]) -> (Expr, Expr) {
+fn solver_split_coeff_basis(
+  term : Expr,
+  basis_symbols : Array[Expr],
+) -> (Expr, Expr) {
   if !solver_depends_on_any(term, basis_symbols) {
     return (term, @symcore.int(1))
   }
@@ -1351,7 +1385,8 @@ pub fn solve_undetermined_coeffs(
   }
   let basis_symbols = if syms.is_empty() {
     let out : Array[Expr] = []
-    for symbol in solver_sorted_unique_symbols(@symcore.free_symbols(normalized)) {
+    for
+      symbol in solver_sorted_unique_symbols(@symcore.free_symbols(normalized)) {
       if !solver_expr_in_list(live_coeffs, symbol) {
         out.push(symbol)
       }
@@ -1382,7 +1417,10 @@ pub fn solve_undetermined_coeffs(
   if coeff_equations.is_empty() {
     return Some(SolveResult::Dicts([]))
   }
-  let mappings = solver_maps_from_tuple_set(nonlinsolve(coeff_equations, live_coeffs), live_coeffs)
+  let mappings = solver_maps_from_tuple_set(
+    nonlinsolve(coeff_equations, live_coeffs),
+    live_coeffs,
+  )
   if mappings.is_empty() {
     return Some(SolveResult::Dicts([]))
   }
@@ -1408,27 +1446,32 @@ fn solver_infer_function(expr : Expr, arity : Int) -> Expr? {
 }
 
 ///|
-fn solver_rewrite_solution_nodes(
-  expr : Expr,
-  func : Expr,
-  rhs : Expr,
-) -> Expr {
+fn solver_rewrite_solution_nodes(expr : Expr, func : Expr, rhs : Expr) -> Expr {
   if solver_is_same_target(expr, func) {
     return rhs
   }
   match expr {
     Expr::Derivative(inner, deriv_args) => {
       let rewritten_inner = solver_rewrite_solution_nodes(inner, func, rhs)
-      let rewritten_args = deriv_args.map(arg => solver_rewrite_solution_nodes(arg, func, rhs))
-      solver_diff_by_vars(rewritten_inner, solver_derivative_vars(rewritten_args))
+      let rewritten_args = deriv_args.map(arg => {
+        solver_rewrite_solution_nodes(arg, func, rhs)
+      })
+      solver_diff_by_vars(
+        rewritten_inner,
+        solver_derivative_vars(rewritten_args),
+      )
     }
     Expr::Apply(head, args) =>
       match @symcore.function_head_name(head) {
         Some("Derivative") if args.length() >= 2 => {
-          let rewritten_args = args.map(arg => solver_rewrite_solution_nodes(arg, func, rhs))
+          let rewritten_args = args.map(arg => {
+            solver_rewrite_solution_nodes(arg, func, rhs)
+          })
           solver_diff_by_vars(
             rewritten_args[0],
-            solver_derivative_vars(@symcore.canonical_derivative_args(rewritten_args[1:])),
+            solver_derivative_vars(
+              @symcore.canonical_derivative_args(rewritten_args[1:]),
+            ),
           )
         }
         _ =>
@@ -1443,9 +1486,13 @@ fn solver_rewrite_solution_nodes(
           )
       }
     Expr::Add(args) =>
-      @symcore.add(args.map(arg => solver_rewrite_solution_nodes(arg, func, rhs)))
+      @symcore.add(
+        args.map(arg => solver_rewrite_solution_nodes(arg, func, rhs)),
+      )
     Expr::Mul(args) =>
-      @symcore.mul(args.map(arg => solver_rewrite_solution_nodes(arg, func, rhs)))
+      @symcore.mul(
+        args.map(arg => solver_rewrite_solution_nodes(arg, func, rhs)),
+      )
     Expr::Pow(base, exp) =>
       @symcore.pow(
         solver_rewrite_solution_nodes(base, func, rhs),
@@ -1457,13 +1504,17 @@ fn solver_rewrite_solution_nodes(
         solver_rewrite_solution_nodes(rhs0, func, rhs),
       )
     Expr::Tuple(items) =>
-      Expr::Tuple(items.map(item => solver_rewrite_solution_nodes(item, func, rhs)))
+      Expr::Tuple(
+        items.map(item => solver_rewrite_solution_nodes(item, func, rhs)),
+      )
     Expr::Dict(items) =>
       Expr::Dict(
-        items.map(entry => (
-          solver_rewrite_solution_nodes(entry.0, func, rhs),
-          solver_rewrite_solution_nodes(entry.1, func, rhs),
-        )),
+        items.map(entry => {
+          (
+            solver_rewrite_solution_nodes(entry.0, func, rhs),
+            solver_rewrite_solution_nodes(entry.1, func, rhs),
+          )
+        }),
       )
     Expr::Relational(op, lhs, rhs0) =>
       Expr::Relational(
@@ -1495,12 +1546,11 @@ fn solver_extract_ode_linear(
     Some(parts) => parts
     None => return None
   }
-  guard args.length() == 1 else {
-    return None
-  }
+  guard args.length() == 1 else { return None }
   let wrt = args[0]
   let dfunc = @symcalculus.diff(func, wrt)
-  match solver_extract_linear_targets(solver_normalize_equation(expr), [dfunc, func]) {
+  match
+    solver_extract_linear_targets(solver_normalize_equation(expr), [dfunc, func]) {
     Some((coeffs, constant)) if !@symcore.is_zero(coeffs[0]) =>
       Some((wrt, coeffs[0], coeffs[1], constant))
     _ => None
@@ -1562,19 +1612,22 @@ fn solver_checkodesol_rewrite_solution(sol : Expr, f : Expr) -> Expr {
 }
 
 ///|
-fn solver_checkodesol_solve_target(sol : Expr, target : Expr) -> Array[Expr] raise SolverError {
+fn solver_checkodesol_solve_target(
+  sol : Expr,
+  target : Expr,
+) -> Array[Expr] raise SolverError {
   solver_single_target_solutions(sol, target)
 }
 
 ///|
-fn solver_checkodesol_pass1(
-  ode : Expr,
-  sol : Expr,
-  f : Expr,
-) -> (Bool, Expr)? {
+fn solver_checkodesol_pass1(ode : Expr, sol : Expr, f : Expr) -> (Bool, Expr)? {
   match solver_checkodesol_solved_rhs(sol, f) {
     Some(rhs) => {
-      let residual = solver_rewrite_solution_nodes(solver_normalize_equation(ode), f, rhs)
+      let residual = solver_rewrite_solution_nodes(
+        solver_normalize_equation(ode),
+        f,
+        rhs,
+      )
       Some(solver_checkodesol_residual(residual))
     }
     None => None
@@ -1627,18 +1680,18 @@ fn solver_checkodesol_pass3(
     None => ()
   }
   let sol_expr = solver_normalize_equation(sol)
-  for i in 1..=order {
+  for i in 1..<=order {
     if i == 1 {
       let ds = solver_diff_n(sol_expr, x, 1)
-      let solved_try : Result[Array[Expr], SolverError] = try?
-        solver_checkodesol_solve_target(ds, solver_ode_target(f, x, i))
+      let solved_try : Result[Array[Expr], SolverError] = try? solver_checkodesol_solve_target(
+        ds,
+        solver_ode_target(f, x, i),
+      )
       let solved = match solved_try {
         Ok(items) => items
         Err(_) => return None
       }
-      guard !solved.is_empty() else {
-        return None
-      }
+      guard !solved.is_empty() else { return None }
       diffsols.push((i, solved[0]))
     } else {
       let prev = diffsols[i - 1].1
@@ -1662,20 +1715,13 @@ fn solver_checkodesol_pass3(
   }
   Some(
     solver_checkodesol_residual(
-      @symcore.add([
-        ode_lhs,
-        @symcore.mul([@symcore.int(-1), ode_rhs]),
-      ]),
+      @symcore.add([ode_lhs, @symcore.mul([@symcore.int(-1), ode_rhs])]),
     ),
   )
 }
 
 ///|
-fn solver_ode_target(
-  func : Expr,
-  wrt : Expr,
-  order : Int,
-) -> Expr {
+fn solver_ode_target(func : Expr, wrt : Expr, order : Int) -> Expr {
   if order <= 0 {
     return func
   }
@@ -1692,10 +1738,7 @@ fn solver_used_symbol_names(exprs : Array[Expr]) -> Array[String] {
   for expr in exprs {
     for symbol in @symcore.free_symbols(expr) {
       match symbol {
-        Expr::Symbol(name) =>
-          if !names.contains(name) {
-            names.push(name)
-          }
+        Expr::Symbol(name) => if !names.contains(name) { names.push(name) }
         _ => ()
       }
     }
@@ -1735,11 +1778,7 @@ fn solver_symbolize_targets(
     forward.push((targets[i], symbols[i]))
     backward.push((symbols[i], targets[i]))
   }
-  (
-    eqs.map(eq => solver_replace_targets(eq, forward)),
-    symbols,
-    backward,
-  )
+  (eqs.map(eq => solver_replace_targets(eq, forward)), symbols, backward)
 }
 
 ///|
@@ -1763,7 +1802,10 @@ fn solver_maps_from_result(
       for item in items {
         let values = match @symcore.tuple_items(item) {
           Some(value) if value.length() == names.length() => value
-          _ => raise SolverError::ValueError("expected tuple solution for symbolic targets")
+          _ =>
+            raise SolverError::ValueError(
+              "expected tuple solution for symbolic targets",
+            )
         }
         let mapping : Map[String, Expr] = {}
         for i in 0..<names.length() {
@@ -1779,10 +1821,7 @@ fn solver_maps_from_result(
 }
 
 ///|
-fn solver_func_orders(
-  eqs : Array[Expr],
-  funcs : Array[Expr],
-) -> Array[Int] {
+fn solver_func_orders(eqs : Array[Expr], funcs : Array[Expr]) -> Array[Int] {
   let out : Array[Int] = []
   for func in funcs {
     let mut best = 0
@@ -1871,7 +1910,9 @@ fn solver_single_target_solutions(
   target : Expr,
 ) -> Array[Expr] raise SolverError {
   let normalized = solver_normalize_equation(eq)
-  let expanded = canonical_expr(@symsimplify.fraction_expand(solver_expand_expr(normalized)))
+  let expanded = canonical_expr(
+    @symsimplify.fraction_expand(solver_expand_expr(normalized)),
+  )
   match solver_extract_linear_targets(normalized, [target]) {
     Some((coeffs, constant)) if !@symcore.is_zero(coeffs[0]) =>
       return [
@@ -1905,7 +1946,7 @@ fn solver_single_target_solutions(
   )
   let symbol = symbols[0]
   let poly_name = solver_symbol_name(symbol)
-  let poly_try : Result[Array[Expr], @sympolys.PolyError] = try? {
+  let poly_try : Result[Array[Expr], @sympolys.PolyError] = try? ({
     let poly = @sympolys.Poly::from_expr_defaults(
       rewritten[0],
       gens=[poly_name],
@@ -1919,12 +1960,14 @@ fn solver_single_target_solutions(
     } else {
       @sympolys.roots(poly)
     }
-  }
+  })
   match poly_try {
     Ok(roots) if !roots.is_empty() => {
       let out : Array[Expr] = []
       for root in roots {
-        out.push(solver_finalize_solution_expr(solver_replace_targets(root, backward)))
+        out.push(
+          solver_finalize_solution_expr(solver_replace_targets(root, backward)),
+        )
       }
       return out
     }
@@ -1935,11 +1978,7 @@ fn solver_single_target_solutions(
       let disc = canonical_expr(
         @symcore.add([
           b ^ @symcore.int(2),
-          @symcore.mul([
-            @symcore.int(-4),
-            a,
-            constant,
-          ]),
+          @symcore.mul([@symcore.int(-4), a, constant]),
         ]),
       )
       let sqrt_disc = solver_exact_root_simplify(
@@ -1947,7 +1986,8 @@ fn solver_single_target_solutions(
           @symcore.pow(
             disc,
             @symcore.rational_from_ints(1, 2) catch {
-              _ => @symcore.function("Rational", [@symcore.int(1), @symcore.int(2)])
+              _ =>
+                @symcore.function("Rational", [@symcore.int(1), @symcore.int(2)])
             },
           ),
         ),
@@ -1958,10 +1998,7 @@ fn solver_single_target_solutions(
         solver_finalize_solution_expr(
           @symcore.mul([
             canonical_expr(
-              @symcore.add([
-                neg_b,
-                @symcore.mul([@symcore.int(-1), sqrt_disc]),
-              ]),
+              @symcore.add([neg_b, @symcore.mul([@symcore.int(-1), sqrt_disc])]),
             ),
             denom ^ @symcore.int(-1),
           ]),
@@ -1977,13 +2014,15 @@ fn solver_single_target_solutions(
     _ => ()
   }
   let mappings = solver_maps_from_result(
-    solve(solve_expr_input(rewritten[0]), symbols=symbols),
+    solve(solve_expr_input(rewritten[0]), symbols~),
     symbols,
   )
   let out : Array[Expr] = []
   for mapping in mappings {
     let rhs = mapping.get(solver_symbol_name(symbol)).unwrap_or(symbol)
-    out.push(solver_finalize_solution_expr(solver_replace_targets(rhs, backward)))
+    out.push(
+      solver_finalize_solution_expr(solver_replace_targets(rhs, backward)),
+    )
   }
   out
 }
@@ -2015,19 +2054,27 @@ fn solver_split_integer_coeff(term : Expr) -> (@bigint.BigInt, Expr)? {
 
 ///|
 fn solver_exact_sqrt_bigint(n : @bigint.BigInt) -> @bigint.BigInt? {
-  let expr = Expr::Number(@symnum.BigRational::new(n, 1N) catch {
-    _ => return None
-  })
-  let root_try : Result[Expr?, @sympolys.PolyError] = try?
-    @sympolys.domain_exsqrt_expr(@sympolys.Domain::ZZ, expr)
+  let expr = Expr::Number(
+    @symnum.BigRational::new(n, 1N) catch {
+      _ => return None
+    },
+  )
+  let root_try : Result[Expr?, @sympolys.PolyError] = try? @sympolys.domain_exsqrt_expr(
+    @sympolys.Domain::ZZ,
+    expr,
+  )
   match root_try {
-    Ok(Some(Expr::Number(value))) if value.is_integral() => Some(value.numerator())
+    Ok(Some(Expr::Number(value))) if value.is_integral() =>
+      Some(value.numerator())
     _ => None
   }
 }
 
 ///|
-fn solver_bigint_gcd(lhs : @bigint.BigInt, rhs : @bigint.BigInt) -> @bigint.BigInt {
+fn solver_bigint_gcd(
+  lhs : @bigint.BigInt,
+  rhs : @bigint.BigInt,
+) -> @bigint.BigInt {
   let mut a = if lhs.compare(0N) < 0 { -lhs } else { lhs }
   let mut b = if rhs.compare(0N) < 0 { -rhs } else { rhs }
   while b != 0N {
@@ -2055,7 +2102,9 @@ fn solver_collect_square_term_factors(
           let power = num.to_int()
           match base {
             Expr::Mul(_) => {
-              let (inner_counts, inner_factors) = solver_collect_square_term_map(base)
+              let (inner_counts, inner_factors) = solver_collect_square_term_map(
+                base,
+              )
               for key, factor in inner_factors {
                 factors[key] = factor
               }
@@ -2086,7 +2135,9 @@ fn solver_collect_square_term_factors(
 }
 
 ///|
-fn solver_collect_square_term_map(expr : Expr) -> (Map[String, Int], Map[String, Expr]) {
+fn solver_collect_square_term_map(
+  expr : Expr,
+) -> (Map[String, Int], Map[String, Expr]) {
   let counts : Map[String, Int] = {}
   let factors : Map[String, Expr] = {}
   solver_collect_square_term_factors(expr, counts, factors)
@@ -2107,9 +2158,11 @@ fn solver_remove_square_factor_once(
       Expr::Pow(base, exp) if @symcore.compare_expr(base, target) == 0 =>
         match @symcore.exact_numeric_expr_num_den(exp) {
           Some((num, den)) if den.compare(1N) == 0 && num.compare(1N) > 0 => {
-            let next_exp = Expr::Number(@symnum.BigRational::new(num - 1N, 1N) catch {
-              _ => @symnum.BigRational::one()
-            })
+            let next_exp = Expr::Number(
+              @symnum.BigRational::new(num - 1N, 1N) catch {
+                _ => @symnum.BigRational::one()
+              },
+            )
             factors[i] = canonical_expr(@symcore.pow(base, next_exp))
             return true
           }
@@ -2171,7 +2224,11 @@ fn solver_extract_add_square_factor(base : Expr) -> (Expr, Expr)? {
               let next : Map[String, Int] = {}
               for key, value in current {
                 let min_count = counts.get(key).unwrap_or(0)
-                if min_count < value { next[key] = min_count } else { next[key] = value }
+                if min_count < value {
+                  next[key] = min_count
+                } else {
+                  next[key] = value
+                }
               }
               next
             }
@@ -2198,17 +2255,17 @@ fn solver_extract_add_square_factor(base : Expr) -> (Expr, Expr)? {
     }
   }
   let numeric_square = common.compare(1N) > 0 &&
-    (solver_exact_sqrt_bigint(common) is Some(_))
-  guard numeric_square || !square_counts.is_empty() else {
-    return None
-  }
+    solver_exact_sqrt_bigint(common) is Some(_)
+  guard numeric_square || !square_counts.is_empty() else { return None }
   let sqrt_common = solver_exact_sqrt_bigint(common).unwrap_or(1N)
   let sqrt_factors : Array[Expr] = []
   if sqrt_common != 1N {
     sqrt_factors.push(
-      Expr::Number(@symnum.BigRational::new(sqrt_common, 1N) catch {
-        _ => @symnum.BigRational::one()
-      }),
+      Expr::Number(
+        @symnum.BigRational::new(sqrt_common, 1N) catch {
+          _ => @symnum.BigRational::one()
+        },
+      ),
     )
   }
   let remove_counts : Map[String, Int] = {}
@@ -2219,13 +2276,19 @@ fn solver_extract_add_square_factor(base : Expr) -> (Expr, Expr)? {
     if out_exp == 1 {
       sqrt_factors.push(factor)
     } else {
-      sqrt_factors.push(canonical_expr(@symcore.pow(factor, @symcore.int(out_exp))))
+      sqrt_factors.push(
+        canonical_expr(@symcore.pow(factor, @symcore.int(out_exp))),
+      )
     }
   }
   let reduced_terms : Array[Expr] = []
   for piece in pieces {
     let coeff = piece.0 / common
-    let rest = solver_remove_square_term_factors(piece.1, remove_counts, factor_exprs)
+    let rest = solver_remove_square_term_factors(
+      piece.1,
+      remove_counts,
+      factor_exprs,
+    )
     reduced_terms.push(
       if coeff == 1N {
         rest
@@ -2234,19 +2297,20 @@ fn solver_extract_add_square_factor(base : Expr) -> (Expr, Expr)? {
       } else {
         canonical_expr(
           @symcore.mul([
-            Expr::Number(@symnum.BigRational::new(coeff, 1N) catch {
-              _ => @symnum.BigRational::zero()
-            }),
+            Expr::Number(
+              @symnum.BigRational::new(coeff, 1N) catch {
+                _ => @symnum.BigRational::zero()
+              },
+            ),
             rest,
           ]),
         )
       },
     )
   }
-  Some((
-    solver_mul_all(sqrt_factors),
-    canonical_expr(@symcore.add(reduced_terms)),
-  ))
+  Some(
+    (solver_mul_all(sqrt_factors), canonical_expr(@symcore.add(reduced_terms))),
+  )
 }
 
 ///|
@@ -2260,19 +2324,21 @@ fn solver_extract_mul_square_factor(base : Expr) -> (Expr, Expr)? {
   let mut changed = false
   for factor in factors {
     match factor {
-      Expr::Number(value) if value.is_integral() && value.numerator().compare(0N) > 0 => {
+      Expr::Number(value) if value.is_integral() &&
+        value.numerator().compare(0N) > 0 =>
         match solver_exact_sqrt_bigint(value.numerator()) {
           Some(root) => {
             outside.push(
-              Expr::Number(@symnum.BigRational::new(root, 1N) catch {
-                _ => @symnum.BigRational::one()
-              }),
+              Expr::Number(
+                @symnum.BigRational::new(root, 1N) catch {
+                  _ => @symnum.BigRational::one()
+                },
+              ),
             )
             changed = true
           }
           None => inside.push(factor)
         }
-      }
       Expr::Pow(inner, exp) =>
         match @symcore.exact_numeric_expr_num_den(exp) {
           Some((num, den)) if den.compare(1N) == 0 && num.compare(0N) > 0 => {
@@ -2284,7 +2350,11 @@ fn solver_extract_mul_square_factor(base : Expr) -> (Expr, Expr)? {
               if outside_power == 1 {
                 outside.push(inner)
               } else {
-                outside.push(canonical_expr(@symcore.pow(inner, @symcore.int(outside_power))))
+                outside.push(
+                  canonical_expr(
+                    @symcore.pow(inner, @symcore.int(outside_power)),
+                  ),
+                )
               }
             }
             if inside_power == 1 {
@@ -2296,30 +2366,33 @@ fn solver_extract_mul_square_factor(base : Expr) -> (Expr, Expr)? {
       _ => inside.push(factor)
     }
   }
-  guard changed else {
-    return None
-  }
+  guard changed else { return None }
   Some((solver_mul_all(outside), solver_mul_all(inside)))
 }
 
 ///|
 fn solver_exact_root_simplify(expr : Expr) -> Expr {
-  let rewritten = @symcore.map_children(expr, child => solver_exact_root_simplify(child))
+  let rewritten = @symcore.map_children(expr, child => {
+    solver_exact_root_simplify(child)
+  })
   match rewritten {
     Expr::Pow(base, exp) =>
       match @symcore.exact_numeric_expr_num_den(exp) {
         Some((num, den)) if num.compare(1N) == 0 && den.compare(2N) == 0 => {
           let expanded_base = canonical_expr(solver_expand_expr(base))
           let half = @symcore.rational_from_ints(1, 2) catch {
-            _ => @symcore.function("Rational", [@symcore.int(1), @symcore.int(2)])
+            _ =>
+              @symcore.function("Rational", [@symcore.int(1), @symcore.int(2)])
           }
           let direct = @symcore.pow(expanded_base, half)
           match direct {
             Expr::Pow(_, _) => ()
             _ => return canonical_expr(direct)
           }
-          let sqrt_try : Result[Expr?, @sympolys.PolyError] = try?
-            @sympolys.domain_exsqrt_expr(@sympolys.Domain::QQ, expanded_base)
+          let sqrt_try : Result[Expr?, @sympolys.PolyError] = try? @sympolys.domain_exsqrt_expr(
+            @sympolys.Domain::QQ,
+            expanded_base,
+          )
           match sqrt_try {
             Ok(Some(root)) => canonical_expr(root)
             _ =>
@@ -2328,28 +2401,20 @@ fn solver_exact_root_simplify(expr : Expr) -> Expr {
                   canonical_expr(
                     @symcore.mul([
                       factor,
-                      solver_exact_root_simplify(
-                        @symcore.pow(
-                          reduced,
-                          half,
-                        ),
-                      ),
+                      solver_exact_root_simplify(@symcore.pow(reduced, half)),
                     ]),
                   )
                 None =>
                   match solver_extract_add_square_factor(expanded_base) {
-                Some((factor, reduced)) =>
-                  canonical_expr(
-                    @symcore.mul([
-                      factor,
-                      solver_exact_root_simplify(
-                        @symcore.pow(
-                          reduced,
-                          half,
-                        ),
-                      ),
-                    ]),
-                  )
+                    Some((factor, reduced)) =>
+                      canonical_expr(
+                        @symcore.mul([
+                          factor,
+                          solver_exact_root_simplify(
+                            @symcore.pow(reduced, half),
+                          ),
+                        ]),
+                      )
                     None => @symcore.function("sqrt", [expanded_base])
                   }
               }
@@ -2371,8 +2436,9 @@ fn solver_add_term_key(term : Expr) -> (@symnum.BigRational, Expr) {
       for arg in args {
         match @symcore.exact_numeric_expr_num_den(arg) {
           Some((num, den)) => {
-            let value_res : Result[@symnum.BigRational, @symnum.RationalError] = try?
-              @symnum.BigRational::new(num, den)
+            let value_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
+              num, den,
+            )
             match value_res {
               Ok(value) => coeff = coeff.mul_r(value)
               Err(_) => rest.push(arg)
@@ -2403,7 +2469,9 @@ fn solver_add_term_priority(term : Expr) -> Int {
 
 ///|
 fn solver_sort_add_terms(expr : Expr) -> Expr {
-  let rewritten = @symcore.map_children(expr, child => solver_sort_add_terms(child))
+  let rewritten = @symcore.map_children(expr, child => {
+    solver_sort_add_terms(child)
+  })
   match rewritten {
     Expr::Add(args) => {
       let sorted = args.copy()
@@ -2413,19 +2481,19 @@ fn solver_sort_add_terms(expr : Expr) -> Expr {
         if lpriority != rpriority {
           lpriority - rpriority
         } else {
-        let (lcoeff, lbase) = solver_add_term_key(lhs)
-        let (rcoeff, rbase) = solver_add_term_key(rhs)
-        let base_cmp = @symcore.compare_expr(lbase, rbase)
-        if base_cmp != 0 {
-          base_cmp
-        } else {
-          let coeff_cmp = rcoeff.compare(lcoeff)
-          if coeff_cmp != 0 {
-            coeff_cmp
+          let (lcoeff, lbase) = solver_add_term_key(lhs)
+          let (rcoeff, rbase) = solver_add_term_key(rhs)
+          let base_cmp = @symcore.compare_expr(lbase, rbase)
+          if base_cmp != 0 {
+            base_cmp
           } else {
-            @symcore.compare_expr(lhs, rhs)
+            let coeff_cmp = rcoeff.compare(lcoeff)
+            if coeff_cmp != 0 {
+              coeff_cmp
+            } else {
+              @symcore.compare_expr(lhs, rhs)
+            }
           }
-        }
         }
       })
       @symcore.raw_add(sorted)
@@ -2448,7 +2516,9 @@ fn solver_rebuild_expr(expr : Expr) -> Expr {
 
 ///|
 fn solver_finalize_solution_expr(expr : Expr) -> Expr {
-  let exact = solver_exact_root_simplify(canonical_expr(solver_rebuild_expr(expr)))
+  let exact = solver_exact_root_simplify(
+    canonical_expr(solver_rebuild_expr(expr)),
+  )
   let simplified = @symsimplify.simplify(exact, max_passes=2)
   solver_sort_add_terms(
     canonical_expr(solver_rebuild_expr(solver_exact_root_simplify(simplified))),
@@ -2468,7 +2538,9 @@ fn solver_separable_canonical_systems(
     let next_states : Array[(Array[(Expr, Expr)], Array[Expr])] = []
     for state in states {
       let replacements = state.0
-      let current_eqs = state.1.map(eq => canonical_expr(solver_replace_targets(eq, replacements)))
+      let current_eqs = state.1.map(eq => {
+        canonical_expr(solver_replace_targets(eq, replacements))
+      })
       let unresolved : Array[Expr] = []
       for target in targets {
         if !replacements.any(pair => @symcore.compare_expr(pair.0, target) == 0) {
@@ -2560,7 +2632,9 @@ pub fn canonical_odes(
   t : Expr,
 ) -> Array[Array[Expr]] raise SolverError {
   guard !eqs.is_empty() else {
-    raise SolverError::ValueError("canonical_odes expects at least one equation")
+    raise SolverError::ValueError(
+      "canonical_odes expects at least one equation",
+    )
   }
   let orders = solver_func_orders(eqs, funcs)
   let targets : Array[Expr] = []
@@ -2569,12 +2643,12 @@ pub fn canonical_odes(
   }
   let normalized_eqs = eqs.map(solver_normalize_equation)
   let (rewritten, symbols, backward) = solver_symbolize_targets(
-    normalized_eqs,
-    targets,
-    "__ode_canonical_",
+    normalized_eqs, targets, "__ode_canonical_",
   )
-  let solved_res : Result[SolveResult, SolverError] = try?
-    solve(solve_exprs_input(rewritten), symbols=symbols)
+  let solved_res : Result[SolveResult, SolverError] = try? solve(
+    solve_exprs_input(rewritten),
+    symbols~,
+  )
   match solved_res {
     Ok(solved) => {
       let mappings = solver_maps_from_result(solved, symbols)
@@ -2582,12 +2656,16 @@ pub fn canonical_odes(
       for mapping in mappings {
         let system : Array[Expr] = []
         for i in 0..<targets.length() {
-          let rhs = mapping.get(solver_symbol_name(symbols[i])).unwrap_or(symbols[i])
+          let rhs = mapping
+            .get(solver_symbol_name(symbols[i]))
+            .unwrap_or(symbols[i])
           system.push(
             Expr::Relational(
               @symcore.RelOp::Eq,
               targets[i],
-              solver_finalize_solution_expr(solver_replace_targets(rhs, backward)),
+              solver_finalize_solution_expr(
+                solver_replace_targets(rhs, backward),
+              ),
             ),
           )
         }
@@ -2606,7 +2684,9 @@ pub fn canonical_odes(
     match solver_extract_linear_targets(eq, targets) {
       Some((coeffs, constant)) => {
         coeff_rows.push(coeffs)
-        rhs_rows.push([canonical_expr(@symcore.mul([@symcore.int(-1), constant]))])
+        rhs_rows.push([
+          canonical_expr(@symcore.mul([@symcore.int(-1), constant])),
+        ])
       }
       None => {
         linear_possible = false
@@ -2650,9 +2730,9 @@ fn solver_matrix_negate(
   matrix : @symmatrices.Matrix,
   context : String,
 ) -> @symmatrices.Matrix raise SolverError {
-  let negated = matrix.applyfunc(value =>
+  let negated = matrix.applyfunc(value => {
     canonical_expr(@symcore.mul([@symcore.int(-1), value]))
-  ) catch {
+  }) catch {
     err => raise wrap_matrix_error(context, err)
   }
   solver_matrix_normalize_entries(negated, context)
@@ -2666,7 +2746,9 @@ pub fn linear_ode_to_matrix(
   order : Int,
 ) -> (Array[@symmatrices.Matrix], @symmatrices.Matrix) raise SolverError {
   guard order >= 0 else {
-    raise SolverError::ValueError("linear_ode_to_matrix expects a nonnegative order")
+    raise SolverError::ValueError(
+      "linear_ode_to_matrix expects a nonnegative order",
+    )
   }
   for eq in eqs {
     for func in funcs {
@@ -2684,15 +2766,15 @@ pub fn linear_ode_to_matrix(
   while current_order >= 0 {
     let targets = funcs.map(func => solver_ode_target(func, t, current_order))
     let (rewritten, symbols, _) = solver_symbolize_targets(
-      current_eqs,
-      targets,
-      "__ode_matrix_",
+      current_eqs, targets, "__ode_matrix_",
     )
     let (a_i_raw, b_i_raw) = match
-      (try? linear_eq_to_matrix(rewritten, symbols) :
-      Result[(@symmatrices.Matrix, @symmatrices.Matrix), SolverError]) {
+      (
+        try? linear_eq_to_matrix(rewritten, symbols) :
+        Result[(@symmatrices.Matrix, @symmatrices.Matrix), SolverError]) {
       Ok(value) => value
-      Err(_) => raise SolverError::ValueError("The system of ODEs is nonlinear.")
+      Err(_) =>
+        raise SolverError::ValueError("The system of ODEs is nonlinear.")
     }
     let a_i = solver_matrix_normalize_entries(a_i_raw, "linear_ode_to_matrix")
     matrices.push(
@@ -2709,7 +2791,9 @@ pub fn linear_ode_to_matrix(
       }
       current_eqs = next_eqs
     } else {
-      rhs = Some(solver_matrix_normalize_entries(b_i_raw, "linear_ode_to_matrix"))
+      rhs = Some(
+        solver_matrix_normalize_entries(b_i_raw, "linear_ode_to_matrix"),
+      )
     }
     current_order -= 1
   }
@@ -2719,7 +2803,7 @@ pub fn linear_ode_to_matrix(
 ///|
 fn solver_factorial_int(n : Int) -> Int {
   let mut acc = 1
-  for i in 2..=n {
+  for i in 2..<=n {
     acc *= i
   }
   acc
@@ -2758,11 +2842,7 @@ fn solver_matrix_normalize_entries(
 }
 
 ///|
-fn solver_swap_expr_rows(
-  rows : Array[Array[Expr]],
-  i : Int,
-  j : Int,
-) -> Unit {
+fn solver_swap_expr_rows(rows : Array[Array[Expr]], i : Int, j : Int) -> Unit {
   if i == j {
     return
   }
@@ -2842,10 +2922,7 @@ fn solver_solve_linear_expr_system(
     for j in 0..<n {
       let expected = if i == j { @symcore.int(1) } else { @symcore.int(0) }
       let difference = canonical_expr(
-        @symcore.add([
-          left[i][j],
-          @symcore.mul([@symcore.int(-1), expected]),
-        ]),
+        @symcore.add([left[i][j], @symcore.mul([@symcore.int(-1), expected])]),
       )
       if expr_is_zeroish(difference) != Some(true) {
         return None
@@ -2881,9 +2958,7 @@ fn solver_matrix_subst_symbol(
 }
 
 ///|
-fn solver_jordan_blocks(
-  jordan : @symmatrices.Matrix,
-) -> Array[(Expr, Int)] {
+fn solver_jordan_blocks(jordan : @symmatrices.Matrix) -> Array[(Expr, Int)] {
   let rows = jordan.to_list()
   let out : Array[(Expr, Int)] = []
   let mut i = 0
@@ -2891,8 +2966,8 @@ fn solver_jordan_blocks(
     let lambda = rows[i][i]
     let mut size = 1
     while i + size < jordan.rows &&
-      solver_expr_equal(rows[i + size - 1][i + size], @symcore.int(1)) &&
-      solver_expr_equal(rows[i + size][i + size], lambda) {
+          solver_expr_equal(rows[i + size - 1][i + size], @symcore.int(1)) &&
+          solver_expr_equal(rows[i + size][i + size], lambda) {
       size += 1
     }
     out.push((lambda, size))
@@ -2910,10 +2985,9 @@ fn solver_jordan_block_exponential(
   context : String,
 ) -> @symmatrices.Matrix raise SolverError {
   let sign = if negative { @symcore.int(-1) } else { @symcore.int(1) }
-  let exp_term = @symcore.function(
-    "exp",
-    [canonical_expr(@symcore.mul([sign, eigenvalue, variable]))],
-  )
+  let exp_term = @symcore.function("exp", [
+    canonical_expr(@symcore.mul([sign, eigenvalue, variable])),
+  ])
   let rows : Array[Array[Expr]] = []
   for i in 0..<size {
     let row : Array[Expr] = []
@@ -2931,7 +3005,11 @@ fn solver_jordan_block_exponential(
           }
           canonical_expr(@symcore.mul([coeff, variable ^ @symcore.int(shift)]))
         }
-        row.push(@symsimplify.numer_expand(canonical_expr(@symcore.mul([exp_term, nilpotent_term]))))
+        row.push(
+          @symsimplify.numer_expand(
+            canonical_expr(@symcore.mul([exp_term, nilpotent_term])),
+          ),
+        )
       }
     }
     rows.push(row)
@@ -2952,7 +3030,13 @@ fn solver_matrix_exponential(
   let blocks : Array[@symmatrices.Matrix] = []
   for block in solver_jordan_blocks(j) {
     blocks.push(
-      solver_jordan_block_exponential(block.0, block.1, variable, negative, context),
+      solver_jordan_block_exponential(
+        block.0,
+        block.1,
+        variable,
+        negative,
+        context,
+      ),
     )
   }
   let exp_j = if blocks.length() == 1 {
@@ -2962,10 +3046,8 @@ fn solver_matrix_exponential(
       err => raise wrap_matrix_error(context, err)
     }
   }
-  let p_inv = p.inv() catch {
-    err => raise wrap_matrix_error(context, err)
-  }
-  solver_matrix_normalize_entries((p * exp_j) * p_inv, context)
+  let p_inv = p.inv() catch { err => raise wrap_matrix_error(context, err) }
+  solver_matrix_normalize_entries(p * exp_j * p_inv, context)
 }
 
 ///|
@@ -2989,7 +3071,9 @@ fn solver_integrate_column_matrix(
   let rows = matrix.to_list()
   let integrated : Array[Array[Expr]] = []
   for row in rows {
-    integrated.push([canonical_expr(@symintegrals.integrate(row[0], limits=[variable]))])
+    integrated.push([
+      canonical_expr(@symintegrals.integrate(row[0], limits=[variable])),
+    ])
   }
   solver_build_matrix(integrated, context)
 }
@@ -3008,12 +3092,16 @@ pub fn linodesolve(
   ignore(type_hint)
   ignore(doit)
   guard a.rows == a.cols else {
-    raise SolverError::ShapeError("linodesolve expects a square coefficient matrix")
+    raise SolverError::ShapeError(
+      "linodesolve expects a square coefficient matrix",
+    )
   }
   let b_rows = match rhs {
     Some(value) => {
       guard value.rows == a.rows && value.cols == 1 else {
-        raise SolverError::ShapeError("linodesolve expects a column rhs matrix with matching rows")
+        raise SolverError::ShapeError(
+          "linodesolve expects a column rhs matrix with matching rows",
+        )
       }
       value.to_list()
     }
@@ -3021,7 +3109,10 @@ pub fn linodesolve(
   }
   let t_name = match t {
     Expr::Symbol(name) => name
-    _ => raise SolverError::ValueError("linodesolve expects Symbol as the independent variable")
+    _ =>
+      raise SolverError::ValueError(
+        "linodesolve expects Symbol as the independent variable",
+      )
   }
   let tau_var = match tau {
     Some(value) =>
@@ -3046,10 +3137,22 @@ pub fn linodesolve(
     } else {
       solver_matrix_subst_symbol(forcing, t_name, tau_var, "linodesolve")
     }
-    let exp_neg_tau = solver_matrix_exponential(a, tau_var, "linodesolve", negative=true)
-    solver_integrate_column_matrix(exp_neg_tau * forcing_tau, tau_var, "linodesolve")
+    let exp_neg_tau = solver_matrix_exponential(
+      a,
+      tau_var,
+      "linodesolve",
+      negative=true,
+    )
+    solver_integrate_column_matrix(
+      exp_neg_tau * forcing_tau,
+      tau_var,
+      "linodesolve",
+    )
   }
-  solver_matrix_normalize_entries(exp_pos * (constants + particular), "linodesolve")
+  solver_matrix_normalize_entries(
+    exp_pos * (constants + particular),
+    "linodesolve",
+  )
 }
 
 ///|
@@ -3078,15 +3181,8 @@ priv struct SolverLieSeparated {
 
 ///|
 let solver_lie_heuristics : Array[String] = [
-  "abaco1_simple",
-  "abaco1_product",
-  "abaco2_similar",
-  "abaco2_unique_unknown",
-  "abaco2_unique_general",
-  "linear",
-  "function_sum",
-  "bivariate",
-  "chi",
+  "abaco1_simple", "abaco1_product", "abaco2_similar", "abaco2_unique_unknown", "abaco2_unique_general",
+  "linear", "function_sum", "bivariate", "chi",
 ]
 
 ///|
@@ -3161,7 +3257,9 @@ fn solver_lie_cancel_monomial_ratio(expr : Expr) -> Expr {
 
 ///|
 fn solver_lie_cancel_products(expr : Expr) -> Expr {
-  let rewritten = @symcore.map_children(expr, child => solver_lie_cancel_products(child))
+  let rewritten = @symcore.map_children(expr, child => {
+    solver_lie_cancel_products(child)
+  })
   solver_lie_cancel_monomial_ratio(rewritten)
 }
 
@@ -3173,6 +3271,7 @@ fn solver_lie_mul_factors(expr : Expr) -> Array[Expr] {
   }
 }
 
+///|
 fn solver_lie_remove_factor_once(factors : Array[Expr], target : Expr) -> Unit {
   for i in 0..<factors.length() {
     if @symcore.compare_expr(factors[i], target) == 0 {
@@ -3189,7 +3288,9 @@ fn solver_lie_factor_common_add(expr : Expr) -> Expr {
       let common : Array[Expr] = []
       let first = solver_lie_mul_factors(args[0])
       for factor in first {
-        if args[1:].all(term => solver_expr_in_list(solver_lie_mul_factors(term), factor)) &&
+        if args[1:].all(term => {
+            solver_expr_in_list(solver_lie_mul_factors(term), factor)
+          }) &&
           !solver_expr_in_list(common, factor) {
           common.push(factor)
         }
@@ -3205,7 +3306,9 @@ fn solver_lie_factor_common_add(expr : Expr) -> Expr {
         }
         remainders.push(solver_mul_all(factors))
       }
-      canonical_expr(@symcore.mul([solver_mul_all(common), @symcore.add(remainders)]))
+      canonical_expr(
+        @symcore.mul([solver_mul_all(common), @symcore.add(remainders)]),
+      )
     }
     _ => expr
   }
@@ -3217,7 +3320,10 @@ fn solver_lie_power_base_exp(expr : Expr) -> (Expr, Expr) {
     Expr::Pow(base, exp) =>
       match canonical_expr(base) {
         Expr::Pow(inner_base, inner_exp) if solver_lie_exact_integer(exp) =>
-          (inner_base, solver_lie_light_normalize(@symcore.mul([inner_exp, exp])))
+          (
+            inner_base,
+            solver_lie_light_normalize(@symcore.mul([inner_exp, exp])),
+          )
         _ => (base, exp)
       }
     other => (other, @symcore.int(1))
@@ -3270,7 +3376,9 @@ fn solver_lie_merge_mul_powers(expr : Expr) -> Expr {
       canonical_expr(@symcore.mul(rebuilt))
     }
     Expr::Add(args) =>
-      canonical_expr(@symcore.add(args.map(arg => solver_lie_merge_mul_powers(arg))))
+      canonical_expr(
+        @symcore.add(args.map(arg => solver_lie_merge_mul_powers(arg))),
+      )
     other => other
   }
 }
@@ -3389,10 +3497,7 @@ fn solver_lie_atomize_poly_exprs(
 }
 
 ///|
-fn solver_lie_try_exact_div_expr(
-  dividend : Expr,
-  divisor : Expr,
-) -> Expr? {
+fn solver_lie_try_exact_div_expr(dividend : Expr, divisor : Expr) -> Expr? {
   let dividend_norm = solver_lie_light_normalize(dividend)
   let divisor_norm = solver_lie_light_normalize(divisor)
   let (dividend_num, dividend_den) = @symsimplify.fraction(dividend_norm)
@@ -3409,16 +3514,16 @@ fn solver_lie_try_exact_div_expr(
   )
   let dividend_ready = poly_ready[0]
   let divisor_ready = poly_ready[1]
-  let symbols_res : Result[Array[Expr], SolverError] = try?
-    solver_sorted_unique_symbols(
-      @symcore.free_symbols(@symcore.mul([dividend_ready, divisor_ready])),
-    )
+  let symbols_res : Result[Array[Expr], SolverError] = try? solver_sorted_unique_symbols(
+    @symcore.free_symbols(@symcore.mul([dividend_ready, divisor_ready])),
+  )
   let symbols = match symbols_res {
     Ok(value) => value
     Err(_) => return None
   }
-  let gens_res : Result[Array[String], SolverError] = try?
-    solver_symbol_names(symbols)
+  let gens_res : Result[Array[String], SolverError] = try? solver_symbol_names(
+    symbols,
+  )
   let gens = match gens_res {
     Ok(value) => value
     Err(_) => return None
@@ -3426,10 +3531,16 @@ fn solver_lie_try_exact_div_expr(
   if gens.is_empty() {
     return None
   }
-  let dividend_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(dividend_ready, gens, @sympolys.Domain::EX)
-  let divisor_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(divisor_ready, gens, @sympolys.Domain::EX)
+  let dividend_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    dividend_ready,
+    gens,
+    @sympolys.Domain::EX,
+  )
+  let divisor_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    divisor_ready,
+    gens,
+    @sympolys.Domain::EX,
+  )
   match (dividend_poly_res, divisor_poly_res) {
     (Ok(dividend_poly), Ok(divisor_poly)) => {
       if divisor_poly.is_zero() {
@@ -3444,12 +3555,16 @@ fn solver_lie_try_exact_div_expr(
           if !remainder.is_zero() {
             None
           } else {
-            let quotient_expr = solver_lie_light_normalize(quotients[0].to_expr())
+            let quotient_expr = solver_lie_light_normalize(
+              quotients[0].to_expr(),
+            )
             Some(
               if restore_all.is_empty() {
                 quotient_expr
               } else {
-                solver_lie_light_normalize(@symcore.xreplace(quotient_expr, restore_all))
+                solver_lie_light_normalize(
+                  @symcore.xreplace(quotient_expr, restore_all),
+                )
               },
             )
           }
@@ -3462,7 +3577,9 @@ fn solver_lie_try_exact_div_expr(
 
 ///|
 fn solver_lie_cancel_explicit_den_factors(expr : Expr) -> Expr {
-  let normalized = canonical_expr(@symsimplify.fraction_expand(canonical_expr(expr)))
+  let normalized = canonical_expr(
+    @symsimplify.fraction_expand(canonical_expr(expr)),
+  )
   let (num0, den0) = @symsimplify.fraction(normalized)
   let mut num = canonical_expr(num0)
   let den_factors = solver_lie_mul_factors(den0).copy()
@@ -3497,17 +3614,18 @@ fn solver_lie_cancel_explicit_den_factors(expr : Expr) -> Expr {
 fn solver_lie_try_poly_factor_expr(expr : Expr) -> Expr? {
   let normalized = canonical_expr(expr)
   let (poly_ready, restore_all) = solver_lie_atomize_poly_expr(
-    normalized,
-    "__lie_factor",
+    normalized, "__lie_factor",
   )
-  let symbols_res : Result[Array[Expr], SolverError] = try?
-    solver_sorted_unique_symbols(@symcore.free_symbols(poly_ready))
+  let symbols_res : Result[Array[Expr], SolverError] = try? solver_sorted_unique_symbols(
+    @symcore.free_symbols(poly_ready),
+  )
   let symbols = match symbols_res {
     Ok(value) => value
     Err(_) => return None
   }
-  let gens_res : Result[Array[String], SolverError] = try?
-    solver_symbol_names(symbols)
+  let gens_res : Result[Array[String], SolverError] = try? solver_symbol_names(
+    symbols,
+  )
   let gens = match gens_res {
     Ok(value) => value
     Err(_) => return None
@@ -3515,14 +3633,19 @@ fn solver_lie_try_poly_factor_expr(expr : Expr) -> Expr? {
   if gens.is_empty() {
     return Some(normalized)
   }
-  let poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(poly_ready, gens, @sympolys.Domain::EX)
+  let poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    poly_ready,
+    gens,
+    @sympolys.Domain::EX,
+  )
   let poly = match poly_res {
     Ok(value) => value
     Err(_) => return None
   }
-  let factor_list_res : Result[(@symnum.BigRational, Array[(@sympolys.Poly, Int)]), @sympolys.PolyError] = try?
-    poly.factor_list()
+  let factor_list_res : Result[
+    (@symnum.BigRational, Array[(@sympolys.Poly, Int)]),
+    @sympolys.PolyError,
+  ] = try? poly.factor_list()
   let (content, factors) = match factor_list_res {
     Ok(value) => value
     Err(_) => return None
@@ -3548,7 +3671,9 @@ fn solver_lie_try_poly_factor_expr(expr : Expr) -> Expr? {
 }
 
 ///|
-fn solver_lie_restore_pairs_from_posify(restore : Map[String, Expr]) -> Array[(Expr, Expr)] {
+fn solver_lie_restore_pairs_from_posify(
+  restore : Map[String, Expr],
+) -> Array[(Expr, Expr)] {
   let out : Array[(Expr, Expr)] = []
   for name, value in restore {
     out.push((Expr::Symbol(name), value))
@@ -3621,9 +3746,7 @@ fn solver_lie_simplify_univariate_factor(expr : Expr) -> Expr {
   if @symcore.compare_expr(den, @symcore.int(1)) == 0 {
     return normalized
   }
-  solver_lie_cancel_expr(
-    solver_lie_cancel_explicit_den_factors(normalized),
-  )
+  solver_lie_cancel_expr(solver_lie_cancel_explicit_den_factors(normalized))
 }
 
 ///|
@@ -3631,7 +3754,9 @@ fn solver_lie_univariate_reciprocal(expr : Expr) -> Expr {
   let normalized = canonical_expr(expr)
   match normalized {
     Expr::Mul(args) =>
-      canonical_expr(@symcore.mul(args.map(arg => solver_lie_univariate_reciprocal(arg))))
+      canonical_expr(
+        @symcore.mul(args.map(arg => solver_lie_univariate_reciprocal(arg))),
+      )
     Expr::Pow(base, exp) =>
       canonical_expr(
         @symcore.pow(
@@ -3696,9 +3821,7 @@ fn solver_lie_split_fraction_add(expr : Expr) -> Expr {
         )
         terms.push(
           solver_lie_cancel_explicit_den_factors(
-            solver_lie_cancel_expr(
-              solver_lie_light_normalize(term_fraction),
-            ),
+            solver_lie_cancel_expr(solver_lie_light_normalize(term_fraction)),
           ),
         )
       }
@@ -3740,20 +3863,19 @@ fn solver_lie_polynomial_zero(expr : Expr) -> Bool {
     return false
   }
   let (numer, denom) = @symsimplify.fraction(expr)
-  let numer_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(
-      canonical_expr(numer),
-      symbol_names,
-      @sympolys.Domain::EX,
-    )
-  let denom_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(
-      canonical_expr(denom),
-      symbol_names,
-      @sympolys.Domain::EX,
-    )
+  let numer_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    canonical_expr(numer),
+    symbol_names,
+    @sympolys.Domain::EX,
+  )
+  let denom_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    canonical_expr(denom),
+    symbol_names,
+    @sympolys.Domain::EX,
+  )
   match (numer_poly_res, denom_poly_res) {
-    (Ok(numer_poly), Ok(denom_poly)) => !denom_poly.is_zero() && numer_poly.is_zero()
+    (Ok(numer_poly), Ok(denom_poly)) =>
+      !denom_poly.is_zero() && numer_poly.is_zero()
     _ => false
   }
 }
@@ -3765,14 +3887,16 @@ fn solver_lie_polynomial_zero_atomized(expr : Expr) -> Bool {
     "__lie_zero",
   )
   let atomized = atomized_res.0
-  let symbols_res : Result[Array[Expr], SolverError] = try?
-    solver_sorted_unique_symbols(@symcore.free_symbols(atomized))
+  let symbols_res : Result[Array[Expr], SolverError] = try? solver_sorted_unique_symbols(
+    @symcore.free_symbols(atomized),
+  )
   let symbols = match symbols_res {
     Ok(value) => value
     Err(_) => return false
   }
-  let gens_res : Result[Array[String], SolverError] = try?
-    solver_symbol_names(symbols)
+  let gens_res : Result[Array[String], SolverError] = try? solver_symbol_names(
+    symbols,
+  )
   let gens = match gens_res {
     Ok(value) => value
     Err(_) => return false
@@ -3781,29 +3905,30 @@ fn solver_lie_polynomial_zero_atomized(expr : Expr) -> Bool {
     return false
   }
   let (numer, denom) = @symsimplify.fraction(atomized)
-  let numer_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(
-      canonical_expr(numer),
-      gens,
-      @sympolys.Domain::EX,
-    )
-  let denom_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(
-      canonical_expr(denom),
-      gens,
-      @sympolys.Domain::EX,
-    )
+  let numer_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    canonical_expr(numer),
+    gens,
+    @sympolys.Domain::EX,
+  )
+  let denom_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    canonical_expr(denom),
+    gens,
+    @sympolys.Domain::EX,
+  )
   match (numer_poly_res, denom_poly_res) {
-    (Ok(numer_poly), Ok(denom_poly)) => !denom_poly.is_zero() && numer_poly.is_zero()
+    (Ok(numer_poly), Ok(denom_poly)) =>
+      !denom_poly.is_zero() && numer_poly.is_zero()
     _ => false
   }
 }
 
 ///|
 fn solver_expr_from_bigint(value : @bigint.BigInt) -> Expr {
-  Expr::Number(@symnum.BigRational::new(value, 1N) catch {
-    _ => @symnum.BigRational::zero()
-  })
+  Expr::Number(
+    @symnum.BigRational::new(value, 1N) catch {
+      _ => @symnum.BigRational::zero()
+    },
+  )
 }
 
 ///|
@@ -3838,7 +3963,9 @@ fn solver_lie_reduce_single_sqrt_powers(
   atom : Expr,
   radicand : Expr,
 ) -> Expr {
-  let rewrite_child = fn(child : Expr) { solver_lie_reduce_single_sqrt_powers(child, atom, radicand) }
+  let rewrite_child = fn(child : Expr) {
+    solver_lie_reduce_single_sqrt_powers(child, atom, radicand)
+  }
   match canonical_expr(expr) {
     Expr::Add(args) => canonical_expr(@symcore.add(args.map(rewrite_child)))
     Expr::Mul(args) => canonical_expr(@symcore.mul(args.map(rewrite_child)))
@@ -3855,7 +3982,11 @@ fn solver_lie_reduce_single_sqrt_powers(
               let r = num % 2N
               let outer : Array[Expr] = []
               if q.compare(0N) > 0 {
-                outer.push(canonical_expr(@symcore.pow(radicand, solver_expr_from_bigint(q))))
+                outer.push(
+                  canonical_expr(
+                    @symcore.pow(radicand, solver_expr_from_bigint(q)),
+                  ),
+                )
               }
               if r.compare(1N) == 0 {
                 outer.push(atom)
@@ -3868,9 +3999,17 @@ fn solver_lie_reduce_single_sqrt_powers(
             let outer : Array[Expr] = []
             if r.compare(1N) == 0 {
               outer.push(atom)
-              outer.push(canonical_expr(@symcore.pow(radicand, solver_expr_from_bigint(-(q + 1N)))))
+              outer.push(
+                canonical_expr(
+                  @symcore.pow(radicand, solver_expr_from_bigint(-(q + 1N))),
+                ),
+              )
             } else if q.compare(0N) > 0 {
-              outer.push(canonical_expr(@symcore.pow(radicand, solver_expr_from_bigint(-q))))
+              outer.push(
+                canonical_expr(
+                  @symcore.pow(radicand, solver_expr_from_bigint(-q)),
+                ),
+              )
             } else {
               outer.push(@symcore.int(1))
             }
@@ -3880,14 +4019,17 @@ fn solver_lie_reduce_single_sqrt_powers(
             Expr::Mul(args) => {
               let factors : Array[Expr] = []
               for arg in args {
-                factors.push(rewrite_child(canonical_expr(@symcore.pow(arg, exp))))
+                factors.push(
+                  rewrite_child(canonical_expr(@symcore.pow(arg, exp))),
+                )
               }
               solver_mul_all(factors)
             }
             _ => canonical_expr(@symcore.pow(reduced_base, exp))
           }
         }
-        _ => canonical_expr(@symcore.pow(rewrite_child(base), rewrite_child(exp)))
+        _ =>
+          canonical_expr(@symcore.pow(rewrite_child(base), rewrite_child(exp)))
       }
     Expr::Apply(head, args) =>
       @symcore.raw_apply(head, args.map(rewrite_child)).unwrap_or(
@@ -3929,7 +4071,8 @@ fn solver_lie_linear_in_single_sqrt(
       let mut const_part = @symcore.int(1)
       let mut coeff_part = @symcore.int(0)
       for arg in args {
-        let (next_const, next_coeff) = match solver_lie_linear_in_single_sqrt(arg, atom, radicand) {
+        let (next_const, next_coeff) = match
+          solver_lie_linear_in_single_sqrt(arg, atom, radicand) {
           Some(value) => value
           None => return None
         }
@@ -3987,10 +4130,13 @@ fn solver_lie_single_sqrt_zero(expr : Expr) -> Bool {
   for candidate in candidates {
     match solver_lie_single_sqrt_atom(candidate) {
       Some((atom, radicand)) => {
-        let reduced = solver_lie_reduce_single_sqrt_powers(candidate, atom, radicand)
+        let reduced = solver_lie_reduce_single_sqrt_powers(
+          candidate, atom, radicand,
+        )
         match solver_lie_linear_in_single_sqrt(reduced, atom, radicand) {
           Some((const_part, coeff_part)) =>
-            if solver_lie_is_zero_core(const_part) && solver_lie_is_zero_core(coeff_part) {
+            if solver_lie_is_zero_core(const_part) &&
+              solver_lie_is_zero_core(coeff_part) {
               return true
             }
           None => ()
@@ -4013,12 +4159,14 @@ fn solver_lie_quick_zero(expr : Expr) -> Bool {
     return true
   }
   let (numer, denom) = @symsimplify.fraction(expr)
-  if expr_is_zeroish(numer) == Some(true) && expr_is_zeroish(denom) != Some(true) {
+  if expr_is_zeroish(numer) == Some(true) &&
+    expr_is_zeroish(denom) != Some(true) {
     return true
   }
   let expanded = @symsimplify.numer_expand(expr)
   let (expanded_num, expanded_den) = @symsimplify.fraction(expanded)
-  if expr_is_zeroish(expanded_num) == Some(true) && expr_is_zeroish(expanded_den) != Some(true) {
+  if expr_is_zeroish(expanded_num) == Some(true) &&
+    expr_is_zeroish(expanded_den) != Some(true) {
     return true
   }
   solver_lie_polynomial_zero(expr) || solver_lie_polynomial_zero(expanded)
@@ -4027,9 +4175,9 @@ fn solver_lie_quick_zero(expr : Expr) -> Bool {
 ///|
 fn solver_lie_zero_on_atomized_samples(expr : Expr) -> Bool {
   let atomized = solver_lie_atomize_poly_expr(
-    solver_lie_merge_mul_powers(expr),
-    "__lie_sample",
-  ).0
+      solver_lie_merge_mul_powers(expr),
+      "__lie_sample",
+    ).0
   let free = @symcore.free_symbols(atomized)
   if free.is_empty() {
     return expr_is_zeroish(atomized) == Some(true)
@@ -4039,20 +4187,24 @@ fn solver_lie_zero_on_atomized_samples(expr : Expr) -> Bool {
   for shift in 0..<sample_values.length() {
     let pairs : Array[(Expr, Expr)] = []
     for i in 0..<free.length() {
-      pairs.push((free[i], @symcore.int(sample_values[(i + shift) % sample_values.length()])))
+      pairs.push(
+        (
+          free[i],
+          @symcore.int(sample_values[(i + shift) % sample_values.length()]),
+        ),
+      )
     }
     let substituted = canonical_expr(@symcore.xreplace(atomized, pairs))
     if @symcore.is_nan(substituted) || @symcore.is_infinite(substituted) {
       continue
     }
     match @symcore.exact_numeric_expr_num_den(substituted) {
-      Some((num, den)) if den.compare(0N) != 0 => {
+      Some((num, den)) if den.compare(0N) != 0 =>
         if num.compare(0N) == 0 {
           checked += 1
         } else {
           return false
         }
-      }
       _ => ()
     }
   }
@@ -4062,9 +4214,9 @@ fn solver_lie_zero_on_atomized_samples(expr : Expr) -> Bool {
 ///|
 fn solver_lie_nonzero_on_atomized_samples(expr : Expr) -> Bool {
   let atomized = solver_lie_atomize_poly_expr(
-    solver_lie_merge_mul_powers(expr),
-    "__lie_sample",
-  ).0
+      solver_lie_merge_mul_powers(expr),
+      "__lie_sample",
+    ).0
   let free = @symcore.free_symbols(atomized)
   if free.is_empty() {
     return expr_is_zeroish(atomized) == Some(false)
@@ -4073,7 +4225,12 @@ fn solver_lie_nonzero_on_atomized_samples(expr : Expr) -> Bool {
   for shift in 0..<sample_values.length() {
     let pairs : Array[(Expr, Expr)] = []
     for i in 0..<free.length() {
-      pairs.push((free[i], @symcore.int(sample_values[(i + shift) % sample_values.length()])))
+      pairs.push(
+        (
+          free[i],
+          @symcore.int(sample_values[(i + shift) % sample_values.length()]),
+        ),
+      )
     }
     let substituted = canonical_expr(@symcore.xreplace(atomized, pairs))
     if @symcore.is_nan(substituted) || @symcore.is_infinite(substituted) {
@@ -4093,8 +4250,14 @@ fn solver_lie_nonzero_on_atomized_samples(expr : Expr) -> Bool {
 ///|
 fn solver_lie_rewrite_sec_pow2(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => canonical_expr(@symcore.add(args.map(arg => solver_lie_rewrite_sec_pow2(arg))))
-    Expr::Mul(args) => canonical_expr(@symcore.mul(args.map(arg => solver_lie_rewrite_sec_pow2(arg))))
+    Expr::Add(args) =>
+      canonical_expr(
+        @symcore.add(args.map(arg => solver_lie_rewrite_sec_pow2(arg))),
+      )
+    Expr::Mul(args) =>
+      canonical_expr(
+        @symcore.mul(args.map(arg => solver_lie_rewrite_sec_pow2(arg))),
+      )
     Expr::Pow(Expr::Apply(Expr::FunctionHead("sec"), [arg]), exp) =>
       match @symcore.exact_numeric_expr_num_den(exp) {
         Some((num, den)) if num.compare(2N) == 0 && den.compare(1N) == 0 =>
@@ -4102,7 +4265,9 @@ fn solver_lie_rewrite_sec_pow2(expr : Expr) -> Expr {
             @symcore.add([
               @symcore.int(1),
               @symcore.pow(
-                canonical_expr(@symcore.function("tan", [solver_lie_rewrite_sec_pow2(arg)])),
+                canonical_expr(
+                  @symcore.function("tan", [solver_lie_rewrite_sec_pow2(arg)]),
+                ),
                 @symcore.int(2),
               ),
             ]),
@@ -4116,9 +4281,17 @@ fn solver_lie_rewrite_sec_pow2(expr : Expr) -> Expr {
           )
       }
     Expr::Pow(base, exp) =>
-      canonical_expr(@symcore.pow(solver_lie_rewrite_sec_pow2(base), solver_lie_rewrite_sec_pow2(exp)))
+      canonical_expr(
+        @symcore.pow(
+          solver_lie_rewrite_sec_pow2(base),
+          solver_lie_rewrite_sec_pow2(exp),
+        ),
+      )
     Expr::Apply(head, args) =>
-      @symcore.raw_apply(head, args.map(arg => solver_lie_rewrite_sec_pow2(arg))).unwrap_or(
+      @symcore.raw_apply(
+        head,
+        args.map(arg => solver_lie_rewrite_sec_pow2(arg)),
+      ).unwrap_or(
         Expr::Apply(head, args.map(arg => solver_lie_rewrite_sec_pow2(arg))),
       )
     _ => expr
@@ -4130,9 +4303,16 @@ fn solver_lie_abaco_zero(expr : Expr) -> Bool {
   let expanded = canonical_expr(@symsimplify.fraction_expand(expr))
   let simplified = solver_lie_simplify(expr)
   let expanded_simplified = solver_lie_simplify(expanded)
-  let trig_expanded = solver_lie_simplify(@symsimplify.trigsimp(expanded_simplified))
-  let sec_expanded = solver_lie_simplify(solver_lie_rewrite_sec_pow2(trig_expanded))
-  for candidate in [sec_expanded, trig_expanded, expanded_simplified, simplified, expanded] {
+  let trig_expanded = solver_lie_simplify(
+    @symsimplify.trigsimp(expanded_simplified),
+  )
+  let sec_expanded = solver_lie_simplify(
+    solver_lie_rewrite_sec_pow2(trig_expanded),
+  )
+  for
+    candidate in [
+      sec_expanded, trig_expanded, expanded_simplified, simplified, expanded,
+    ] {
     if solver_lie_is_zero(candidate) || solver_lie_quick_zero(candidate) {
       return true
     }
@@ -4219,6 +4399,7 @@ fn solver_lie_cancel_atom(expr : Expr) -> Bool {
   }
 }
 
+///|
 fn solver_lie_cancel_expr(expr : Expr) -> Expr {
   let normalized = canonical_expr(expr)
   let atoms : Array[Expr] = []
@@ -4268,28 +4449,44 @@ fn solver_lie_cancel_expr(expr : Expr) -> Expr {
     restore_all.push(pair)
   }
   let (numer, denom) = @symsimplify.fraction(rational_ready)
-  let symbols = solver_sorted_unique_symbols(@symcore.free_symbols(@symcore.mul([numer, denom]))) catch {
+  let symbols = solver_sorted_unique_symbols(
+    @symcore.free_symbols(@symcore.mul([numer, denom])),
+  ) catch {
     _ => []
   }
   let gens = solver_symbol_names(symbols) catch { _ => [] }
   if gens.is_empty() {
-    return if restore_all.is_empty() { rational_ready } else { canonical_expr(@symcore.xreplace(rational_ready, restore_all)) }
+    return if restore_all.is_empty() {
+      rational_ready
+    } else {
+      canonical_expr(@symcore.xreplace(rational_ready, restore_all))
+    }
   }
-  let num_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(canonical_expr(numer), gens, @sympolys.Domain::EX)
-  let den_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(canonical_expr(denom), gens, @sympolys.Domain::EX)
+  let num_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    canonical_expr(numer),
+    gens,
+    @sympolys.Domain::EX,
+  )
+  let den_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    canonical_expr(denom),
+    gens,
+    @sympolys.Domain::EX,
+  )
   let canceled = match (num_poly_res, den_poly_res) {
     (Ok(num_poly), Ok(den_poly)) => {
-      let cancel_res : Result[(@sympolys.Poly, @sympolys.Poly), @sympolys.PolyError] = try?
-        @sympolys.cancel(num_poly, den_poly)
+      let cancel_res : Result[
+        (@sympolys.Poly, @sympolys.Poly),
+        @sympolys.PolyError,
+      ] = try? @sympolys.cancel(num_poly, den_poly)
       match cancel_res {
         Ok((num_s, den_s)) => {
           let den_expr = den_s.to_expr()
           if @symcore.compare_expr(den_expr, @symcore.int(1)) == 0 {
             num_s.to_expr()
           } else {
-            canonical_expr(@symcore.mul([num_s.to_expr(), den_expr ^ @symcore.int(-1)]))
+            canonical_expr(
+              @symcore.mul([num_s.to_expr(), den_expr ^ @symcore.int(-1)]),
+            )
           }
         }
         Err(_) => rational_ready
@@ -4323,8 +4520,14 @@ fn solver_lie_gamma_from_factor(factor : Expr, x : Expr, y : Expr) -> Expr {
   let numer_y = solver_lie_logdiff(numer, y)
   let denom_x = solver_lie_logdiff(denom, x)
   let denom_y = solver_lie_logdiff(denom, y)
-  let factorx = solver_add_all([numer_x, @symcore.mul([@symcore.int(-1), denom_x])])
-  let factory = solver_add_all([numer_y, @symcore.mul([@symcore.int(-1), denom_y])])
+  let factorx = solver_add_all([
+    numer_x,
+    @symcore.mul([@symcore.int(-1), denom_x]),
+  ])
+  let factory = solver_add_all([
+    numer_y,
+    @symcore.mul([@symcore.int(-1), denom_y]),
+  ])
   solver_lie_cancel_expr(solver_expr_divide(factorx, factory))
 }
 
@@ -4344,8 +4547,8 @@ fn solver_lie_abs_arg(expr : Expr) -> Expr? {
   match @symcore.application_parts(expr) {
     Some((Expr::FunctionHead(name), [arg])) if name == "Abs" || name == "abs" =>
       Some(arg)
-    Some((Expr::UndefinedFunction(name), [arg])) if name == "Abs" || name == "abs" =>
-      Some(arg)
+    Some((Expr::UndefinedFunction(name), [arg])) if name == "Abs" ||
+      name == "abs" => Some(arg)
     _ => None
   }
 }
@@ -4355,7 +4558,8 @@ fn solver_lie_is_e_constant(expr : Expr) -> Bool {
   @symcore.compare_expr(
     expr,
     Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1),
-  ) == 0
+  ) ==
+  0
 }
 
 ///|
@@ -4368,17 +4572,17 @@ fn solver_lie_term_nonconstant_factors(expr : Expr) -> Array[Expr] {
   for factor in factors {
     match factor {
       Expr::Number(_) => ()
-      _ =>
-        if !solver_expr_in_list(out, factor) {
-          out.push(factor)
-        }
+      _ => if !solver_expr_in_list(out, factor) { out.push(factor) }
     }
   }
   out
 }
 
 ///|
-fn solver_lie_term_remove_factors_once(expr : Expr, factors_to_remove : Array[Expr]) -> Expr {
+fn solver_lie_term_remove_factors_once(
+  expr : Expr,
+  factors_to_remove : Array[Expr],
+) -> Expr {
   let factors = match canonical_expr(expr) {
     Expr::Mul(args) => args
     other => [other]
@@ -4538,7 +4742,9 @@ fn solver_lie_sympy_separatevars_dict_xy(
   let (x_coeff, x_part) = solver_lie_split_numeric_factor(x_part0)
   let (y_coeff, y_part) = solver_lie_split_numeric_factor(y_part0)
   Some(SolverLieSeparated::{
-    coeff: canonical_expr(@symcore.mul([solver_mul_all(coeffs), x_coeff, y_coeff])),
+    coeff: canonical_expr(
+      @symcore.mul([solver_mul_all(coeffs), x_coeff, y_coeff]),
+    ),
     x_part,
     y_part,
   })
@@ -4556,12 +4762,11 @@ fn solver_lie_separatevars_xy(
   }
   match solver_separate_mul_parts_raw(expr, x, y) {
     Some(parts) => Some(parts)
-    None => {
+    None =>
       match solver_lie_symbolic_separatevars_xy(expr, x, y) {
         Some(parts) => Some(parts)
         None => None
       }
-    }
   }
 }
 
@@ -4576,11 +4781,7 @@ fn solver_lie_sample_separate_xy(
     (@symcore.int(2), @symcore.int(3)),
     (@symcore.int(-1), @symcore.int(2)),
   ]
-  let validate_coeff = fn(
-    x_part : Expr,
-    y_part : Expr,
-    coeff : Expr,
-  ) -> Bool {
+  let validate_coeff = fn(x_part : Expr, y_part : Expr, coeff : Expr) -> Bool {
     for pair in sample_pairs {
       let x1 = pair.0
       let y1 = pair.1
@@ -4658,11 +4859,7 @@ fn solver_lie_sample_separate_xy(
         exy
       }
     }
-    return Some(SolverLieSeparated::{
-      coeff,
-      x_part,
-      y_part,
-    })
+    return Some(SolverLieSeparated::{ coeff, x_part, y_part })
   }
   None
 }
@@ -4682,18 +4879,16 @@ fn solver_lie_poly_divmod_exprs(
   divisor : Expr,
   gens : Array[String],
 ) -> (Expr, Expr)? {
-  let dividend_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(
-      canonical_expr(dividend),
-      gens,
-      @sympolys.Domain::EX,
-    )
-  let divisor_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try?
-    @sympolys.Poly::from_expr(
-      canonical_expr(divisor),
-      gens,
-      @sympolys.Domain::EX,
-    )
+  let dividend_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    canonical_expr(dividend),
+    gens,
+    @sympolys.Domain::EX,
+  )
+  let divisor_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+    canonical_expr(divisor),
+    gens,
+    @sympolys.Domain::EX,
+  )
   match (dividend_poly_res, divisor_poly_res) {
     (Ok(dividend_poly), Ok(divisor_poly)) => {
       if divisor_poly.is_zero() {
@@ -4763,7 +4958,11 @@ fn solver_lie_separate_xy(
     }
     let (num, den) = @symsimplify.fraction(candidate)
     if @symcore.compare_expr(den, @symcore.int(1)) != 0 {
-      match (solver_separate_mul_parts(num, x, y), solver_separate_mul_parts(den, x, y)) {
+      match
+        (
+          solver_separate_mul_parts(num, x, y),
+          solver_separate_mul_parts(den, x, y),
+        ) {
         (Some(num_parts), Some(den_parts)) =>
           return Some(SolverLieSeparated::{
             coeff: canonical_expr(
@@ -4797,7 +4996,9 @@ fn solver_lie_separate_xy(
   for pair in sample_pairs {
     let x0 = pair.0
     let y0 = pair.1
-    let exy = solver_lie_simplify(@symcore.xreplace(@symcore.xreplace(expr, [(x, x0)]), [(y, y0)]))
+    let exy = solver_lie_simplify(
+      @symcore.xreplace(@symcore.xreplace(expr, [(x, x0)]), [(y, y0)]),
+    )
     if solver_lie_is_zero(exy) {
       continue
     }
@@ -4827,7 +5028,9 @@ fn solver_lie_sample_separate_xy_fast(
   for pair in sample_pairs {
     let x0 = pair.0
     let y0 = pair.1
-    let exy = @symsimplify.simplify(@symcore.xreplace(@symcore.xreplace(expr, [(x, x0)]), [(y, y0)]))
+    let exy = @symsimplify.simplify(
+      @symcore.xreplace(@symcore.xreplace(expr, [(x, x0)]), [(y, y0)]),
+    )
     if expr_is_zeroish(exy) == Some(true) {
       continue
     }
@@ -4848,11 +5051,7 @@ fn solver_lie_sample_separate_xy_fast(
     if solver_lie_depends_on(x_part, y) || solver_lie_depends_on(y_part, x) {
       continue
     }
-    return Some(SolverLieSeparated::{
-      coeff: exy,
-      x_part,
-      y_part,
-    })
+    return Some(SolverLieSeparated::{ coeff: exy, x_part, y_part })
   }
   None
 }
@@ -4877,11 +5076,7 @@ fn solver_lie_residual_y(
   }
   if eta_zero {
     return @symcore.add([
-      @symcore.mul([
-        @symcore.int(-1),
-        @symcalculus.diff(xi_y, ctx.x),
-        ctx.h,
-      ]),
+      @symcore.mul([@symcore.int(-1), @symcalculus.diff(xi_y, ctx.x), ctx.h]),
       @symcore.mul([
         @symcore.int(-1),
         @symcalculus.diff(xi_y, ctx.y),
@@ -4918,7 +5113,12 @@ fn solver_lie_zero_on_samples(expr : Expr, x : Expr, y : Expr) -> Bool {
     (@symcore.int(-1), @symcore.int(2)),
     (@symcore.int(2), @symcore.int(-1)),
   ]
-  let extra_values = [@symcore.int(1), @symcore.int(2), @symcore.int(-1), @symcore.int(3)]
+  let extra_values = [
+    @symcore.int(1),
+    @symcore.int(2),
+    @symcore.int(-1),
+    @symcore.int(3),
+  ]
   let mut checked = 0
   for i in 0..<samples.length() {
     let pair = samples[i]
@@ -4929,7 +5129,9 @@ fn solver_lie_zero_on_samples(expr : Expr, x : Expr, y : Expr) -> Bool {
     let extra_pairs : Array[(Expr, Expr)] = []
     let remaining = @symcore.free_symbols(partially_substituted)
     for j in 0..<remaining.length() {
-      extra_pairs.push((remaining[j], extra_values[(i + j) % extra_values.length()]))
+      extra_pairs.push(
+        (remaining[j], extra_values[(i + j) % extra_values.length()]),
+      )
     }
     let substituted = if extra_pairs.is_empty() {
       partially_substituted
@@ -4958,7 +5160,12 @@ fn solver_lie_nonzero_on_samples(expr : Expr, x : Expr, y : Expr) -> Bool {
     (@symcore.int(-1), @symcore.int(2)),
     (@symcore.int(2), @symcore.int(-1)),
   ]
-  let extra_values = [@symcore.int(1), @symcore.int(2), @symcore.int(-1), @symcore.int(3)]
+  let extra_values = [
+    @symcore.int(1),
+    @symcore.int(2),
+    @symcore.int(-1),
+    @symcore.int(3),
+  ]
   for i in 0..<samples.length() {
     let pair = samples[i]
     let partially_substituted = @symcore.xreplace(
@@ -4968,7 +5175,9 @@ fn solver_lie_nonzero_on_samples(expr : Expr, x : Expr, y : Expr) -> Bool {
     let extra_pairs : Array[(Expr, Expr)] = []
     let remaining = @symcore.free_symbols(partially_substituted)
     for j in 0..<remaining.length() {
-      extra_pairs.push((remaining[j], extra_values[(i + j) % extra_values.length()]))
+      extra_pairs.push(
+        (remaining[j], extra_values[(i + j) % extra_values.length()]),
+      )
     }
     let substituted = if extra_pairs.is_empty() {
       partially_substituted
@@ -5001,13 +5210,10 @@ fn solver_lie_candidate_valid(
   let residual_trig = solver_lie_simplify(
     solver_lie_rewrite_sec_pow2(@symsimplify.trigsimp(residual_cancel_merge)),
   )
-  for candidate in [
-    residual_trig,
-    residual_cancel_merge,
-    residual_cancel,
-    residual_light,
-    residual,
-  ] {
+  for
+    candidate in [
+      residual_trig, residual_cancel_merge, residual_cancel, residual_light, residual,
+    ] {
     if solver_lie_is_zero(candidate) || solver_lie_quick_zero(candidate) {
       return true
     }
@@ -5098,7 +5304,9 @@ fn solver_lie_normalize_add_term(expr : Expr) -> Expr {
 fn solver_lie_normalize_add_terms(expr : Expr) -> Expr {
   match canonical_expr(expr) {
     Expr::Add(args) =>
-      canonical_expr(@symcore.add(args.map(arg => solver_lie_normalize_add_term(arg))))
+      canonical_expr(
+        @symcore.add(args.map(arg => solver_lie_normalize_add_term(arg))),
+      )
     other => solver_lie_normalize_add_term(other)
   }
 }
@@ -5122,23 +5330,24 @@ fn solver_lie_split_numeric_factor(term : Expr) -> (Expr, Expr) {
       if numeric.is_empty() {
         (@symcore.int(1), canonical_expr(term))
       } else {
-        (canonical_expr(@symcore.mul(numeric)), canonical_expr(@symcore.mul(nonnumeric)))
+        (
+          canonical_expr(@symcore.mul(numeric)),
+          canonical_expr(@symcore.mul(nonnumeric)),
+        )
       }
     }
     Expr::Pow(base, exp) if solver_lie_exact_integer(exp) => {
       let (base_coeff, base_rest) = solver_lie_split_numeric_factor(base)
-      let coeff =
-        if @symcore.compare_expr(base_coeff, @symcore.int(1)) == 0 {
-          @symcore.int(1)
-        } else {
-          canonical_expr(@symcore.pow(base_coeff, exp))
-        }
-      let rest =
-        if @symcore.compare_expr(base_rest, @symcore.int(1)) == 0 {
-          @symcore.int(1)
-        } else {
-          canonical_expr(@symcore.pow(base_rest, exp))
-        }
+      let coeff = if @symcore.compare_expr(base_coeff, @symcore.int(1)) == 0 {
+        @symcore.int(1)
+      } else {
+        canonical_expr(@symcore.pow(base_coeff, exp))
+      }
+      let rest = if @symcore.compare_expr(base_rest, @symcore.int(1)) == 0 {
+        @symcore.int(1)
+      } else {
+        canonical_expr(@symcore.pow(base_rest, exp))
+      }
       (coeff, rest)
     }
     _ => (@symcore.int(1), canonical_expr(term))
@@ -5176,10 +5385,7 @@ fn solver_lie_exact_integer(expr : Expr) -> Bool {
 }
 
 ///|
-fn solver_lie_h_from_equation(
-  eq : Expr,
-  func : Expr,
-) -> Expr raise SolverError {
+fn solver_lie_h_from_equation(eq : Expr, func : Expr) -> Expr raise SolverError {
   let (_, args) = match @symcore.undefined_application_parts(func) {
     Some(parts) => parts
     None => raise SolverError::ValueError("expected applied undefined function")
@@ -5191,13 +5397,15 @@ fn solver_lie_h_from_equation(
   let df = @symcalculus.diff(func, x)
   match solver_extract_linear_targets(solver_normalize_equation(eq), [df]) {
     Some((coeffs, constant)) if !@symcore.is_zero(coeffs[0]) =>
-      canonical_expr(@symsimplify.simplify(
-        @symcore.mul([
-          @symcore.int(-1),
-          constant,
-          @symcore.pow(coeffs[0], @symcore.int(-1)),
-        ]),
-      ))
+      canonical_expr(
+        @symsimplify.simplify(
+          @symcore.mul([
+            @symcore.int(-1),
+            constant,
+            @symcore.pow(coeffs[0], @symcore.int(-1)),
+          ]),
+        ),
+      )
     _ => {
       let solved = solver_single_target_solutions(eq, df)
       guard !solved.is_empty() else {
@@ -5250,9 +5458,27 @@ fn solver_lie_context(
     ),
   )
   let hinv = hinv_raw
-  let hinvx = solver_lie_cancel_expr(solver_lie_light_normalize(@symcalculus.diff(hinv, x)))
-  let hinvy = solver_lie_cancel_expr(solver_lie_light_normalize(@symcalculus.diff(hinv, y)))
-  SolverLieContext::{ x, y, func, h_raw, h, hx_raw, hy_raw, hx, hy, hinv_raw, hinv, hinvx, hinvy }
+  let hinvx = solver_lie_cancel_expr(
+    solver_lie_light_normalize(@symcalculus.diff(hinv, x)),
+  )
+  let hinvy = solver_lie_cancel_expr(
+    solver_lie_light_normalize(@symcalculus.diff(hinv, y)),
+  )
+  SolverLieContext::{
+    x,
+    y,
+    func,
+    h_raw,
+    h,
+    hx_raw,
+    hy_raw,
+    hx,
+    hy,
+    hinv_raw,
+    hinv,
+    hinvx,
+    hinvy,
+  }
 }
 
 ///|
@@ -5263,11 +5489,13 @@ fn solver_lie_inf_equal(
   @symcore.compare_expr(
     lhs.get("xi").unwrap_or(@symcore.int(0)),
     rhs.get("xi").unwrap_or(@symcore.int(0)),
-  ) == 0 &&
+  ) ==
+  0 &&
   @symcore.compare_expr(
     lhs.get("eta").unwrap_or(@symcore.int(0)),
     rhs.get("eta").unwrap_or(@symcore.int(0)),
-  ) == 0
+  ) ==
+  0
 }
 
 ///|
@@ -5288,17 +5516,11 @@ fn solver_lie_push_unique(
 }
 
 ///|
-fn solver_lie_integral_exp(
-  integrand : Expr,
-  wrt : Expr,
-) -> Expr {
+fn solver_lie_integral_exp(integrand : Expr, wrt : Expr) -> Expr {
   let normalized = canonical_expr(integrand)
   if !solver_lie_depends_on(normalized, wrt) {
     return canonical_expr(
-      @symcore.function(
-        "exp",
-        [canonical_expr(@symcore.mul([normalized, wrt]))],
-      ),
+      @symcore.function("exp", [canonical_expr(@symcore.mul([normalized, wrt]))]),
     )
   }
   let inv = canonical_expr(@symcore.pow(wrt, @symcore.int(-1)))
@@ -5309,24 +5531,21 @@ fn solver_lie_integral_exp(
   if @symcore.compare_expr(normalized, neg_inv) == 0 {
     return canonical_expr(@symcore.pow(wrt, @symcore.int(-1)))
   }
-  @symcore.function(
-    "exp",
-    [solver_lie_integrate_wrt(normalized, wrt)],
-  )
+  @symcore.function("exp", [solver_lie_integrate_wrt(normalized, wrt)])
 }
 
 ///|
 fn solver_lie_integrate_wrt(expr : Expr, wrt : Expr) -> Expr {
   match wrt {
-    Expr::Symbol(_) => canonical_expr(@symintegrals.integrate(expr, limits=[wrt]))
+    Expr::Symbol(_) =>
+      canonical_expr(@symintegrals.integrate(expr, limits=[wrt]))
     Expr::Dummy(name, _) => {
       let lifted = Expr::Symbol(name)
       canonical_expr(
         @symcore.xreplace(
-          @symintegrals.integrate(
-            @symcore.xreplace(expr, [(wrt, lifted)]),
-            limits=[lifted],
-          ),
+          @symintegrals.integrate(@symcore.xreplace(expr, [(wrt, lifted)]), limits=[
+            lifted,
+          ]),
           [(lifted, wrt)],
         ),
       )
@@ -5350,10 +5569,13 @@ fn solver_lie_cross_log_derivative_raw(expr : Expr, x : Expr, y : Expr) -> Expr 
   }
   match normalized {
     Expr::Mul(args) =>
-      @symcore.add(args.map(arg => solver_lie_cross_log_derivative_raw(arg, x, y)))
+      @symcore.add(
+        args.map(arg => solver_lie_cross_log_derivative_raw(arg, x, y)),
+      )
     Expr::Pow(base, exp) =>
       match @symcore.exact_numeric_expr_num_den(exp) {
-        Some(_) => @symcore.mul([exp, solver_lie_cross_log_derivative_raw(base, x, y)])
+        Some(_) =>
+          @symcore.mul([exp, solver_lie_cross_log_derivative_raw(base, x, y)])
         None => {
           let dx = @symcalculus.diff(normalized, x)
           let dy = @symcalculus.diff(normalized, y)
@@ -5394,7 +5616,12 @@ fn solver_lie_heuristic_abaco1_simple(
 ) -> Array[Map[String, Expr]] {
   let out : Array[Map[String, Expr]] = []
   if !solver_lie_depends_on(ctx.hy, ctx.y) {
-    if solver_lie_push_valid(out, ctx, @symcore.int(0), solver_lie_integral_exp(ctx.hy, ctx.x)) &&
+    if solver_lie_push_valid(
+        out,
+        ctx,
+        @symcore.int(0),
+        solver_lie_integral_exp(ctx.hy, ctx.x),
+      ) &&
       !comp {
       return out
     }
@@ -5404,11 +5631,12 @@ fn solver_lie_heuristic_abaco1_simple(
   )
   if !solver_lie_depends_on(hy_over_h, ctx.x) {
     if solver_lie_push_valid(
-      out,
-      ctx,
-      @symcore.int(0),
-      solver_lie_restore_func(solver_lie_integral_exp(hy_over_h, ctx.y), ctx),
-    ) && !comp {
+        out,
+        ctx,
+        @symcore.int(0),
+        solver_lie_restore_func(solver_lie_integral_exp(hy_over_h, ctx.y), ctx),
+      ) &&
+      !comp {
       return out
     }
   }
@@ -5420,7 +5648,12 @@ fn solver_lie_heuristic_abaco1_simple(
     ]),
   )
   if !solver_lie_depends_on(neg_hx_over_h, ctx.y) {
-    if solver_lie_push_valid(out, ctx, solver_lie_integral_exp(neg_hx_over_h, ctx.x), @symcore.int(0)) &&
+    if solver_lie_push_valid(
+        out,
+        ctx,
+        solver_lie_integral_exp(neg_hx_over_h, ctx.x),
+        @symcore.int(0),
+      ) &&
       !comp {
       return out
     }
@@ -5437,7 +5670,10 @@ fn solver_lie_heuristic_abaco1_simple(
       solver_lie_push_valid(
         out,
         ctx,
-        solver_lie_restore_func(solver_lie_integral_exp(neg_hx_over_h2, ctx.y), ctx),
+        solver_lie_restore_func(
+          solver_lie_integral_exp(neg_hx_over_h2, ctx.y),
+          ctx,
+        ),
         @symcore.int(0),
       ),
     )
@@ -5471,10 +5707,9 @@ fn solver_lie_match_exp_form(
       a,
       @symcore.mul([
         b,
-        @symcore.function(
-          "exp",
-          [canonical_expr(@symcore.mul([y, @symcore.pow(c, @symcore.int(-1))]))],
-        ),
+        @symcore.function("exp", [
+          canonical_expr(@symcore.mul([y, @symcore.pow(c, @symcore.int(-1))])),
+        ]),
       ]),
     ]),
   )
@@ -5549,7 +5784,9 @@ fn solver_lie_heuristic_abaco1_product(
       )
       if !solver_lie_depends_on(gy_int, ctx.x) {
         let xi = solver_lie_restore_func(
-          canonical_expr(@symcore.mul([fx, solver_lie_integral_exp(gy_int, ctx.y)])),
+          canonical_expr(
+            @symcore.mul([fx, solver_lie_integral_exp(gy_int, ctx.y)]),
+          ),
           ctx,
         )
         if solver_lie_push_valid(out, ctx, xi, @symcore.int(0)) && !comp {
@@ -5563,8 +5800,10 @@ fn solver_lie_heuristic_abaco1_product(
     solver_lie_cross_log_derivative(ctx.hinv, ctx.x, ctx.y),
     ctx.hinv ^ @symcore.int(2),
   )
-  let inverse_sep = match solver_lie_separate_xy(inverse_probe_raw, ctx.x, ctx.y) {
-    Some(sep) if !solver_lie_is_zero(sep.coeff) => Some((inverse_probe_raw, sep))
+  let inverse_sep = match
+    solver_lie_separate_xy(inverse_probe_raw, ctx.x, ctx.y) {
+    Some(sep) if !solver_lie_is_zero(sep.coeff) =>
+      Some((inverse_probe_raw, sep))
     _ => {
       let h_swapped = solver_expr_divide(@symcore.int(1), ctx.hinv)
       let alternative = @symcore.mul([
@@ -5596,17 +5835,14 @@ fn solver_lie_heuristic_abaco1_product(
       )
       if !solver_lie_depends_on(gy_int, ctx.x) {
         let swapped = solver_lie_swap_xy(
-          canonical_expr(@symcore.mul([fx, solver_lie_integral_exp(gy_int, ctx.y)])),
+          canonical_expr(
+            @symcore.mul([fx, solver_lie_integral_exp(gy_int, ctx.y)]),
+          ),
           ctx.x,
           ctx.y,
         )
         let eta_try = solver_lie_restore_func(swapped, ctx)
-        if solver_lie_push_valid(
-          out,
-          ctx,
-          @symcore.int(0),
-          eta_try,
-        ) && !comp {
+        if solver_lie_push_valid(out, ctx, @symcore.int(0), eta_try) && !comp {
           return out
         }
       }
@@ -5626,7 +5862,9 @@ fn solver_lie_heuristic_function_sum(
   for inverse in order {
     let odefac = if inverse { ctx.hinv } else { ctx.h }
     let q = canonical_expr(solver_expr_divide(@symcore.int(1), odefac))
-    let qxx = canonical_expr(@symcalculus.diff(@symcalculus.diff(q, ctx.x), ctx.x))
+    let qxx = canonical_expr(
+      @symcalculus.diff(@symcalculus.diff(q, ctx.x), ctx.x),
+    )
     let inv_factor = solver_lie_cancel_expr(
       solver_lie_cancel_explicit_den_factors(
         solver_lie_light_normalize(solver_expr_divide(q, qxx)),
@@ -5663,12 +5901,14 @@ fn solver_lie_heuristic_function_sum(
           )
           let (fx0, gy0) = if solver_lie_sympy_zero_check(check) {
             (
-              canonical_expr(@symcore.subst(fx, {"__lie_k": @symcore.int(1)})),
+              canonical_expr(@symcore.subst(fx, { "__lie_k": @symcore.int(1) })),
               solver_lie_simplify(solver_expr_divide(gy, k)),
             )
           } else {
-            let solve_try : Result[SolveResult, SolverError] = try?
-              solve(solve_expr_input(check), symbols=[k])
+            let solve_try : Result[SolveResult, SolverError] = try? solve(
+              solve_expr_input(check),
+              symbols=[k],
+            )
             let mappings = match solve_try {
               Ok(value) => solver_maps_from_result(value, [k])
               _ => []
@@ -5676,7 +5916,7 @@ fn solver_lie_heuristic_function_sum(
             guard !mappings.is_empty() else { continue }
             let kval = mappings[0].get("__lie_k").unwrap_or(@symcore.int(1))
             (
-              canonical_expr(@symcore.subst(fx, {"__lie_k": kval})),
+              canonical_expr(@symcore.subst(fx, { "__lie_k": kval })),
               canonical_expr(
                 @symcore.mul([
                   solver_lie_simplify(solver_expr_divide(gy, k)),
@@ -5685,8 +5925,16 @@ fn solver_lie_heuristic_function_sum(
               ),
             )
           }
-          let fx1 = if inverse { solver_lie_swap_xy(fx0, ctx.x, ctx.y) } else { fx0 }
-          let gy1 = if inverse { solver_lie_swap_xy(gy0, ctx.x, ctx.y) } else { gy0 }
+          let fx1 = if inverse {
+            solver_lie_swap_xy(fx0, ctx.x, ctx.y)
+          } else {
+            fx0
+          }
+          let gy1 = if inverse {
+            solver_lie_swap_xy(gy0, ctx.x, ctx.y)
+          } else {
+            gy0
+          }
           let etaval = solver_lie_factor_terms_xy(
             solver_lie_simplify(@symcore.add([fx1, gy1])),
             ctx.x,
@@ -5733,22 +5981,34 @@ fn solver_lie_heuristic_abaco2_similar(
     let inverse_factor_probe = solver_lie_cancel_expr(
       solver_expr_divide(ctx.hinvy, @symcalculus.diff(ctx.hinvy, ctx.y)),
     )
-    solver_lie_expr_size(inverse_factor_probe) < solver_lie_expr_size(direct_factor)
+    solver_lie_expr_size(inverse_factor_probe) <
+    solver_lie_expr_size(direct_factor)
   } else {
     false
   }
-  let branch_order = if use_inverse_first { [true, false] } else { [false, true] }
+  let branch_order = if use_inverse_first {
+    [true, false]
+  } else {
+    [false, true]
+  }
   for inverse in branch_order {
     let h0 = if inverse { ctx.hinv } else { ctx.h }
     let hx0 = if inverse { ctx.hinvx } else { ctx.hx }
     let hy0 = if inverse { ctx.hinvy } else { ctx.hy }
     let factor = if inverse {
-      solver_lie_cancel_expr(solver_expr_divide(hy0, @symcalculus.diff(hy0, ctx.y)))
+      solver_lie_cancel_expr(
+        solver_expr_divide(hy0, @symcalculus.diff(hy0, ctx.y)),
+      )
     } else {
       direct_factor
     }
-    let pushed = if !solver_lie_depends_on(factor, ctx.x) && !solver_lie_depends_on(factor, ctx.y) {
-      let matched = if inverse { solver_lie_match_exp_form(ctx.h, ctx.x, ctx.y) } else { solver_lie_match_exp_form(h0, ctx.x, ctx.y) }
+    let pushed = if !solver_lie_depends_on(factor, ctx.x) &&
+      !solver_lie_depends_on(factor, ctx.y) {
+      let matched = if inverse {
+        solver_lie_match_exp_form(ctx.h, ctx.x, ctx.y)
+      } else {
+        solver_lie_match_exp_form(h0, ctx.x, ctx.y)
+      }
       match matched {
         Some((aval, bval, cval)) => {
           let tau = solver_lie_light_normalize(
@@ -5770,7 +6030,10 @@ fn solver_lie_heuristic_abaco2_similar(
               out,
               ctx,
               solver_lie_restore_func(solver_lie_swap_xy(gx, ctx.x, ctx.y), ctx),
-              solver_lie_restore_func(solver_lie_swap_xy(tau, ctx.x, ctx.y), ctx),
+              solver_lie_restore_func(
+                solver_lie_swap_xy(tau, ctx.x, ctx.y),
+                ctx,
+              ),
             )
           } else {
             solver_lie_push_valid(
@@ -5802,13 +6065,18 @@ fn solver_lie_heuristic_abaco2_similar(
           false
         } else {
           let tau = solver_lie_integral_exp(tauint, ctx.x)
-          let gx = solver_lie_light_normalize(@symcore.mul([@symcore.int(-1), tau, gamma]))
+          let gx = solver_lie_light_normalize(
+            @symcore.mul([@symcore.int(-1), tau, gamma]),
+          )
           if inverse {
             solver_lie_push_valid(
               out,
               ctx,
               solver_lie_restore_func(solver_lie_swap_xy(gx, ctx.x, ctx.y), ctx),
-              solver_lie_restore_func(solver_lie_swap_xy(tau, ctx.x, ctx.y), ctx),
+              solver_lie_restore_func(
+                solver_lie_swap_xy(tau, ctx.x, ctx.y),
+                ctx,
+              ),
             )
           } else {
             solver_lie_push_valid(
@@ -5837,7 +6105,10 @@ fn solver_lie_heuristic_abaco2_unique_unknown(
   let out : Array[Map[String, Expr]] = []
   for atom in solver_lie_unknown_atoms(ctx) {
     let frac = solver_lie_cancel_expr(
-      solver_expr_divide(@symcalculus.diff(atom, ctx.y), @symcalculus.diff(atom, ctx.x)),
+      solver_expr_divide(
+        @symcalculus.diff(atom, ctx.y),
+        @symcalculus.diff(atom, ctx.x),
+      ),
     )
     match solver_lie_sympy_separatevars_dict_xy(frac, ctx.x, ctx.y) {
       Some(sep) if !solver_lie_is_zero(sep.coeff) => {
@@ -5853,13 +6124,18 @@ fn solver_lie_heuristic_abaco2_unique_unknown(
         )
         let pde1 = @symcore.add([
           @symcore.mul([@symcalculus.diff(etatry1, ctx.y), ctx.h]),
-          @symcore.mul([@symcore.int(-1), @symcalculus.diff(xitry1, ctx.x), ctx.h]),
+          @symcore.mul([
+            @symcore.int(-1),
+            @symcalculus.diff(xitry1, ctx.x),
+            ctx.h,
+          ]),
           @symcore.mul([@symcore.int(-1), xitry1, ctx.hx]),
           @symcore.mul([@symcore.int(-1), etatry1, ctx.hy]),
         ])
         let etatry1_out = solver_lie_restore_func(etatry1, ctx)
         let pde1_simplified = solver_lie_simplify(pde1)
-        if solver_lie_quick_zero(pde1_simplified) || solver_lie_is_zero(pde1_simplified) {
+        if solver_lie_quick_zero(pde1_simplified) ||
+          solver_lie_is_zero(pde1_simplified) {
           solver_lie_push_unique(
             out,
             solver_output_lie_expr(xitry1),
@@ -5871,7 +6147,11 @@ fn solver_lie_heuristic_abaco2_unique_unknown(
         let etatry2 = canonical_expr(@symcore.pow(xitry1, @symcore.int(-1)))
         let pde2 = @symcore.add([
           @symcalculus.diff(etatry2, ctx.x),
-          @symcore.mul([@symcore.int(-1), @symcalculus.diff(xitry2, ctx.y), ctx.h ^ @symcore.int(2)]),
+          @symcore.mul([
+            @symcore.int(-1),
+            @symcalculus.diff(xitry2, ctx.y),
+            ctx.h ^ @symcore.int(2),
+          ]),
           @symcore.mul([@symcore.int(-1), xitry2, ctx.hx]),
           @symcore.mul([@symcore.int(-1), etatry2, ctx.hy]),
         ])
@@ -5880,8 +6160,10 @@ fn solver_lie_heuristic_abaco2_unique_unknown(
         let pde2_trig = solver_lie_simplify(
           solver_lie_rewrite_sec_pow2(@symsimplify.trigsimp(pde2_simplified)),
         )
-        if solver_lie_quick_zero(pde2_simplified) || solver_lie_is_zero(pde2_simplified) ||
-          solver_lie_quick_zero(pde2_trig) || solver_lie_is_zero(pde2_trig) {
+        if solver_lie_quick_zero(pde2_simplified) ||
+          solver_lie_is_zero(pde2_simplified) ||
+          solver_lie_quick_zero(pde2_trig) ||
+          solver_lie_is_zero(pde2_trig) {
           solver_lie_push_unique(
             out,
             solver_output_lie_expr(xitry2_out),
@@ -5891,7 +6173,9 @@ fn solver_lie_heuristic_abaco2_unique_unknown(
         }
       }
       _ => {
-        let etatry = canonical_expr(@symcore.mul([@symcore.int(-1), @symcore.pow(frac, @symcore.int(-1))]))
+        let etatry = canonical_expr(
+          @symcore.mul([@symcore.int(-1), @symcore.pow(frac, @symcore.int(-1))]),
+        )
         let pde = @symcore.add([
           @symcalculus.diff(etatry, ctx.x),
           @symcore.mul([@symcalculus.diff(etatry, ctx.y), ctx.h]),
@@ -5900,7 +6184,8 @@ fn solver_lie_heuristic_abaco2_unique_unknown(
         ])
         let etatry_out = solver_lie_restore_func(etatry, ctx)
         let pde_simplified = solver_lie_simplify(pde)
-        if solver_lie_quick_zero(pde_simplified) || solver_lie_is_zero(pde_simplified) {
+        if solver_lie_quick_zero(pde_simplified) ||
+          solver_lie_is_zero(pde_simplified) {
           solver_lie_push_unique(
             out,
             @symcore.int(1),
@@ -5910,14 +6195,23 @@ fn solver_lie_heuristic_abaco2_unique_unknown(
         }
         let xitry = canonical_expr(@symcore.mul([@symcore.int(-1), frac]))
         let pde = @symcore.add([
-          @symcore.mul([@symcore.int(-1), @symcalculus.diff(xitry, ctx.x), ctx.h]),
-          @symcore.mul([@symcore.int(-1), @symcalculus.diff(xitry, ctx.y), ctx.h ^ @symcore.int(2)]),
+          @symcore.mul([
+            @symcore.int(-1),
+            @symcalculus.diff(xitry, ctx.x),
+            ctx.h,
+          ]),
+          @symcore.mul([
+            @symcore.int(-1),
+            @symcalculus.diff(xitry, ctx.y),
+            ctx.h ^ @symcore.int(2),
+          ]),
           @symcore.mul([@symcore.int(-1), xitry, ctx.hx]),
           @symcore.mul([@symcore.int(-1), ctx.hy]),
         ])
         let xitry_out = solver_lie_restore_func(xitry, ctx)
         let pde_simplified = solver_lie_simplify(solver_expand_expr(pde))
-        if solver_lie_quick_zero(pde_simplified) || solver_lie_is_zero(pde_simplified) {
+        if solver_lie_quick_zero(pde_simplified) ||
+          solver_lie_is_zero(pde_simplified) {
           solver_lie_push_unique(
             out,
             solver_output_lie_expr(xitry_out),
@@ -5939,9 +6233,18 @@ fn solver_lie_heuristic_abaco2_unique_general(
   ignore(comp)
   let out : Array[Map[String, Expr]] = []
   let a_expr = solver_lie_simplify(@symcalculus.diff(ctx.hx, ctx.y))
-  let b_expr = solver_lie_simplify(@symcore.add([@symcalculus.diff(ctx.hy, ctx.y), ctx.hy ^ @symcore.int(2)]))
-  let c_expr = solver_lie_simplify(@symcore.add([@symcalculus.diff(ctx.hx, ctx.x), @symcore.mul([@symcore.int(-1), ctx.hx ^ @symcore.int(2)])]))
-  if solver_lie_is_zero(a_expr) || solver_lie_is_zero(b_expr) || solver_lie_is_zero(c_expr) {
+  let b_expr = solver_lie_simplify(
+    @symcore.add([@symcalculus.diff(ctx.hy, ctx.y), ctx.hy ^ @symcore.int(2)]),
+  )
+  let c_expr = solver_lie_simplify(
+    @symcore.add([
+      @symcalculus.diff(ctx.hx, ctx.x),
+      @symcore.mul([@symcore.int(-1), ctx.hx ^ @symcore.int(2)]),
+    ]),
+  )
+  if solver_lie_is_zero(a_expr) ||
+    solver_lie_is_zero(b_expr) ||
+    solver_lie_is_zero(c_expr) {
     return []
   }
   let ax = solver_lie_simplify(@symcalculus.diff(a_expr, ctx.x))
@@ -5956,7 +6259,13 @@ fn solver_lie_heuristic_abaco2_unique_general(
           @symcore.mul([@symcore.int(2), axy]),
           @symcore.mul([ctx.hx, ay]),
           @symcore.mul([@symcore.int(-1), ax, ctx.hy]),
-          @symcore.mul([@symcore.add([@symcore.mul([ctx.hx, ctx.hy]), @symcore.mul([@symcore.int(2), a_expr])]), a_expr]),
+          @symcore.mul([
+            @symcore.add([
+              @symcore.mul([ctx.hx, ctx.hy]),
+              @symcore.mul([@symcore.int(2), a_expr]),
+            ]),
+            a_expr,
+          ]),
         ]),
         a_expr,
       ]),
@@ -6006,11 +6315,26 @@ fn solver_lie_heuristic_abaco2_unique_general(
         @symcore.mul([
           e1,
           @symcore.add([
-            @symcore.mul([@symcore.add([@symcore.mul([@symcore.int(28), ax]), @symcore.mul([@symcore.int(4), ctx.hx, a_expr])]), a_expr ^ @symcore.int(3)]),
-            @symcore.mul([@symcore.int(-1), e1, @symcore.add([@symcore.mul([ctx.hy, a_expr]), ay])]),
+            @symcore.mul([
+              @symcore.add([
+                @symcore.mul([@symcore.int(28), ax]),
+                @symcore.mul([@symcore.int(4), ctx.hx, a_expr]),
+              ]),
+              a_expr ^ @symcore.int(3),
+            ]),
+            @symcore.mul([
+              @symcore.int(-1),
+              e1,
+              @symcore.add([@symcore.mul([ctx.hy, a_expr]), ay]),
+            ]),
           ]),
         ]),
-        @symcore.mul([@symcore.int(-1), @symcalculus.diff(e1, ctx.x), @symcore.int(8), a_expr ^ @symcore.int(4)]),
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcalculus.diff(e1, ctx.x),
+          @symcore.int(8),
+          a_expr ^ @symcore.int(4),
+        ]),
       ]),
     )
     if !solver_lie_is_zero(e3) {
@@ -6019,8 +6343,18 @@ fn solver_lie_heuristic_abaco2_unique_general(
     let etaint = solver_lie_simplify(
       solver_expr_divide(
         @symcore.add([
-          @symcore.mul([@symcore.int(4), a_expr ^ @symcore.int(3), @symcore.add([ax, @symcore.mul([@symcore.int(-1), ctx.hx, a_expr])])]),
-          @symcore.mul([e1, @symcore.add([@symcore.mul([ctx.hy, a_expr]), @symcore.mul([@symcore.int(-1), ay])])]),
+          @symcore.mul([
+            @symcore.int(4),
+            a_expr ^ @symcore.int(3),
+            @symcore.add([ax, @symcore.mul([@symcore.int(-1), ctx.hx, a_expr])]),
+          ]),
+          @symcore.mul([
+            e1,
+            @symcore.add([
+              @symcore.mul([ctx.hy, a_expr]),
+              @symcore.mul([@symcore.int(-1), ay]),
+            ]),
+          ]),
         ]),
         @symcore.mul([@symcore.int(2), a_expr, e1]),
       ),
@@ -6074,7 +6408,14 @@ fn solver_lie_heuristic_abaco2_unique_general(
       @symcore.mul([
         e1,
         @symcore.add([
-          @symcore.mul([@symcore.add([@symcore.mul([@symcore.int(2), axx]), @symcore.mul([@symcore.int(-1), ctx.hx ^ @symcore.int(2), a_expr]), @symcore.mul([@symcore.int(-2), c_expr, a_expr])]), a_expr]),
+          @symcore.mul([
+            @symcore.add([
+              @symcore.mul([@symcore.int(2), axx]),
+              @symcore.mul([@symcore.int(-1), ctx.hx ^ @symcore.int(2), a_expr]),
+              @symcore.mul([@symcore.int(-2), c_expr, a_expr]),
+            ]),
+            a_expr,
+          ]),
           @symcore.mul([@symcore.int(-3), ax ^ @symcore.int(2)]),
         ]),
       ]),
@@ -6085,13 +6426,24 @@ fn solver_lie_heuristic_abaco2_unique_general(
   }
   let e3 = solver_lie_simplify(
     @symcore.add([
-      @symcore.mul([@symcore.int(-1), a_expr, d_expr, @symcalculus.diff(e1, ctx.y)]),
+      @symcore.mul([
+        @symcore.int(-1),
+        a_expr,
+        d_expr,
+        @symcalculus.diff(e1, ctx.y),
+      ]),
       @symcore.mul([
         @symcore.add([
           @symcore.mul([@symcalculus.diff(e1, ctx.x), a_expr]),
           @symcore.mul([@symcore.int(-1), ctx.hy, d_expr, a_expr]),
           @symcore.mul([@symcore.int(3), ay, d_expr]),
-          @symcore.mul([@symcore.add([@symcore.mul([a_expr, ctx.hx]), @symcore.mul([@symcore.int(-3), ax])]), e1]),
+          @symcore.mul([
+            @symcore.add([
+              @symcore.mul([a_expr, ctx.hx]),
+              @symcore.mul([@symcore.int(-3), ax]),
+            ]),
+            e1,
+          ]),
         ]),
         e1,
       ]),
@@ -6103,8 +6455,18 @@ fn solver_lie_heuristic_abaco2_unique_general(
   let etaint = solver_lie_simplify(
     solver_expr_divide(
       @symcore.add([
-        @symcore.mul([@symcore.add([@symcore.mul([a_expr, ctx.hx]), @symcore.mul([@symcore.int(-1), ax])]), e1]),
-        @symcore.mul([@symcore.int(-1), @symcore.add([ay, @symcore.mul([a_expr, ctx.hy])]), d_expr]),
+        @symcore.mul([
+          @symcore.add([
+            @symcore.mul([a_expr, ctx.hx]),
+            @symcore.mul([@symcore.int(-1), ax]),
+          ]),
+          e1,
+        ]),
+        @symcore.mul([
+          @symcore.int(-1),
+          @symcore.add([ay, @symcore.mul([a_expr, ctx.hy])]),
+          d_expr,
+        ]),
       ]),
       @symcore.mul([@symcore.int(2), a_expr, d_expr]),
     ),
@@ -6174,7 +6536,8 @@ fn solver_lie_linear_candidate(
             if solver_expr_has_target(solved, coeff) {
               continue
             }
-            let score = solver_lie_expr_size(solved) + solver_lie_expr_size(coefs[0])
+            let score = solver_lie_expr_size(solved) +
+              solver_lie_expr_size(coefs[0])
             match best_value {
               Some(_) if score >= best_score => ()
               _ => {
@@ -6200,7 +6563,11 @@ fn solver_lie_linear_candidate(
     }
     if !progress {
       for eq in remaining_eqs {
-        let live = filtered_symbols(@symcore.free_symbols(eq), remaining_coeffs, [])
+        let live = filtered_symbols(
+          @symcore.free_symbols(eq),
+          remaining_coeffs,
+          [],
+        )
         if live.is_empty() && expr_is_zeroish(eq) != Some(true) {
           return None
         }
@@ -6221,11 +6588,7 @@ fn solver_lie_linear_candidate(
 fn solver_lie_linear_eq_normalize(expr : Expr) -> Expr {
   let canceled = solver_lie_merge_mul_powers(solver_lie_cancel_products(expr))
   solver_lie_merge_mul_powers(
-    canonical_expr(
-      @symsimplify.powsimp(
-        @symsimplify.numer_expand(canceled),
-      ),
-    ),
+    canonical_expr(@symsimplify.powsimp(@symsimplify.numer_expand(canceled))),
   )
 }
 
@@ -6245,23 +6608,18 @@ fn solver_lie_heuristic_linear(
   let pde = solver_lie_simplify(
     @symcore.add([
       c3,
-      @symcore.mul([@symcore.add([c4, @symcore.mul([@symcore.int(-1), c0])]), ctx.h]),
+      @symcore.mul([
+        @symcore.add([c4, @symcore.mul([@symcore.int(-1), c0])]),
+        ctx.h,
+      ]),
       @symcore.mul([
         @symcore.int(-1),
-        @symcore.add([
-          @symcore.mul([c0, ctx.x]),
-          @symcore.mul([c1, ctx.y]),
-          c2,
-        ]),
+        @symcore.add([@symcore.mul([c0, ctx.x]), @symcore.mul([c1, ctx.y]), c2]),
         ctx.hx,
       ]),
       @symcore.mul([
         @symcore.int(-1),
-        @symcore.add([
-          @symcore.mul([c3, ctx.x]),
-          @symcore.mul([c4, ctx.y]),
-          c5,
-        ]),
+        @symcore.add([@symcore.mul([c3, ctx.x]), @symcore.mul([c4, ctx.y]), c5]),
         ctx.hy,
       ]),
       @symcore.mul([@symcore.int(-1), c1, ctx.h ^ @symcore.int(2)]),
@@ -6354,27 +6712,31 @@ fn solver_lie_heuristic_bivariate(
   let degree_probe = canonical_expr(
     @symcore.add([
       etax,
-      @symcore.mul([@symcore.add([etay, @symcore.mul([@symcore.int(-1), xix])]), h_sym]),
+      @symcore.mul([
+        @symcore.add([etay, @symcore.mul([@symcore.int(-1), xix])]),
+        h_sym,
+      ]),
       @symcore.mul([@symcore.int(-1), xiy, h_sym ^ @symcore.int(2)]),
       @symcore.mul([@symcore.int(-1), xid, hx_sym]),
       @symcore.mul([@symcore.int(-1), etad, hy_sym]),
     ]),
   )
-  let (probe_num, _) = @symsimplify.fraction(@symsimplify.numer_expand(degree_probe))
-  let degree_poly = @sympolys.Poly::from_expr_defaults(
-    probe_num,
-    gens=["x", "__lie_y"],
-  ) catch {
+  let (probe_num, _) = @symsimplify.fraction(
+    @symsimplify.numer_expand(degree_probe),
+  )
+  let degree_poly = @sympolys.Poly::from_expr_defaults(probe_num, gens=[
+    "x", "__lie_y",
+  ]) catch {
     _ => return []
   }
   let mut xieq = Expr::Symbol("xi0")
   let mut etaeq = Expr::Symbol("eta0")
   let max_degree = degree_poly.total_degree()
-  for degree in 0..=max_degree {
+  for degree in 0..<=max_degree {
     if degree > 0 {
       let xi_terms : Array[Expr] = []
       let eta_terms : Array[Expr] = []
-      for power_x in 0..=degree {
+      for power_x in 0..<=degree {
         let power_y = degree - power_x
         let monomial = canonical_expr(
           @symcore.mul([
@@ -6389,7 +6751,12 @@ fn solver_lie_heuristic_bivariate(
       etaeq = canonical_expr(@symcore.add([etaeq, @symcore.add(eta_terms)]))
     }
     let coeff_symbols : Array[Expr] = []
-    for symbol in filtered_symbols(@symcore.free_symbols(@symcore.add([xieq, etaeq])), [], []) {
+    for
+      symbol in filtered_symbols(
+        @symcore.free_symbols(@symcore.add([xieq, etaeq])),
+        [],
+        [],
+      ) {
       if @symcore.compare_expr(symbol, ctx.x) != 0 &&
         @symcore.compare_expr(symbol, y_sym) != 0 {
         coeff_symbols.push(symbol)
@@ -6437,7 +6804,9 @@ fn solver_lie_heuristic_bivariate(
       )
       let etaval = solver_lie_scale_with_ones(
         canonical_expr(
-          @symcore.xreplace(@symcore.subst(etaeq, candidate), [(y_sym, ctx.func)]),
+          @symcore.xreplace(@symcore.subst(etaeq, candidate), [
+            (y_sym, ctx.func),
+          ]),
         ),
         coeff_symbols,
       )
@@ -6471,26 +6840,22 @@ fn solver_lie_heuristic_chi(
   )
   let (probe_num, _) = @symsimplify.fraction(probe)
   let degree_probe_num = canonical_expr(
-    @symcore.subst(
-      probe_num,
-      {
-        "__schi": @symcore.int(1),
-        "__schix": @symcore.int(1),
-        "__schiy": @symcore.int(1),
-      },
-    ),
+    @symcore.subst(probe_num, {
+      "__schi": @symcore.int(1),
+      "__schix": @symcore.int(1),
+      "__schiy": @symcore.int(1),
+    }),
   )
-  let degree_poly = @sympolys.Poly::from_expr_defaults(
-    degree_probe_num,
-    gens=["x", "__lie_y"],
-  ) catch {
+  let degree_poly = @sympolys.Poly::from_expr_defaults(degree_probe_num, gens=[
+    "x", "__lie_y",
+  ]) catch {
     _ => return []
   }
   let mut chieq = Expr::Symbol("chi")
   let max_degree = degree_poly.total_degree()
-  for degree in 1..=max_degree {
+  for degree in 1..<=max_degree {
     let chi_terms : Array[Expr] = []
-    for power_x in 0..=degree {
+    for power_x in 0..<=degree {
       let power_y = degree - power_x
       let monomial = canonical_expr(
         @symcore.mul([
@@ -6529,7 +6894,11 @@ fn solver_lie_heuristic_chi(
     }
     for candidate in candidates {
       let chi_val = solver_lie_scale_with_ones(
-        canonical_expr(@symcore.xreplace(@symcore.subst(chieq, candidate), [(y_sym, ctx.func)])),
+        canonical_expr(
+          @symcore.xreplace(@symcore.subst(chieq, candidate), [
+            (y_sym, ctx.func),
+          ]),
+        ),
         coeff_symbols,
       )
       let (xival, etaval) = solver_lie_restore_xi_eta_from_chi(ctx, chi_val)
@@ -6552,8 +6921,10 @@ fn solver_lie_apply_heuristic(
     "abaco1_simple" => solver_lie_heuristic_abaco1_simple(ctx, comp)
     "abaco1_product" => solver_lie_heuristic_abaco1_product(ctx, comp)
     "abaco2_similar" => solver_lie_heuristic_abaco2_similar(ctx, comp)
-    "abaco2_unique_unknown" => solver_lie_heuristic_abaco2_unique_unknown(ctx, comp)
-    "abaco2_unique_general" => solver_lie_heuristic_abaco2_unique_general(ctx, comp)
+    "abaco2_unique_unknown" =>
+      solver_lie_heuristic_abaco2_unique_unknown(ctx, comp)
+    "abaco2_unique_general" =>
+      solver_lie_heuristic_abaco2_unique_general(ctx, comp)
     "linear" => solver_lie_heuristic_linear(ctx, comp)
     "function_sum" => solver_lie_heuristic_function_sum(ctx, comp)
     "bivariate" => solver_lie_heuristic_bivariate(ctx, comp)
@@ -6573,7 +6944,9 @@ pub fn infinitesimals(
   let f = solver_infer_ode_function(eq, func)
   let ode_ord = order.unwrap_or(ode_order(eq, f))
   guard ode_ord == 1 else {
-    raise SolverError::ValueError("Infinitesimals for only first order ODE's have been implemented")
+    raise SolverError::ValueError(
+      "Infinitesimals for only first order ODE's have been implemented",
+    )
   }
   let ctx = solver_lie_context(eq, f, match_env)
   if hint == "all" {
@@ -6586,7 +6959,9 @@ pub fn infinitesimals(
       }
     }
     guard !out.is_empty() else {
-      raise SolverError::ValueError("Infinitesimals could not be found for the given ODE")
+      raise SolverError::ValueError(
+        "Infinitesimals could not be found for the given ODE",
+      )
     }
     return out
   }
@@ -6597,7 +6972,9 @@ pub fn infinitesimals(
         return out
       }
     }
-    raise SolverError::ValueError("Infinitesimals could not be found for the given ODE")
+    raise SolverError::ValueError(
+      "Infinitesimals could not be found for the given ODE",
+    )
   }
   guard solver_lie_heuristics.contains(hint) else {
     raise SolverError::ValueError("Heuristic not recognized: " + hint)
@@ -6630,18 +7007,16 @@ pub fn checkinfsol(
   for infinitesimal in infinitesimal_solutions {
     let xi = solver_lie_cancel_expr(
       solver_lie_light_normalize(
-        @symcore.xreplace(
-          infinitesimal.get("xi").unwrap_or(@symcore.int(0)),
-          [(ctx.func, ctx.y)],
-        ),
+        @symcore.xreplace(infinitesimal.get("xi").unwrap_or(@symcore.int(0)), [
+          (ctx.func, ctx.y),
+        ]),
       ),
     )
     let eta = solver_lie_cancel_expr(
       solver_lie_light_normalize(
-        @symcore.xreplace(
-          infinitesimal.get("eta").unwrap_or(@symcore.int(0)),
-          [(ctx.func, ctx.y)],
-        ),
+        @symcore.xreplace(infinitesimal.get("eta").unwrap_or(@symcore.int(0)), [
+          (ctx.func, ctx.y),
+        ]),
       ),
     )
     let residual_y = solver_lie_residual_y(ctx, xi, eta)
@@ -6653,11 +7028,7 @@ pub fn checkinfsol(
     )
     let residual_merge = solver_lie_merge_mul_powers(residual_y)
     let residual_candidates = [
-      residual_trig,
-      residual_cancel_merge,
-      residual_cancel,
-      residual_light,
-      residual_merge,
+      residual_trig, residual_cancel_merge, residual_cancel, residual_light, residual_merge,
       residual_y,
     ]
     let mut residual_zero = false
@@ -6671,7 +7042,8 @@ pub fn checkinfsol(
     }
     let residual = canonical_expr(solver_lie_restore_func(residual_best, ctx))
     out.push(
-      if residual_zero || solver_lie_zero_on_samples(residual_best, ctx.x, ctx.y) {
+      if residual_zero ||
+        solver_lie_zero_on_samples(residual_best, ctx.x, ctx.y) {
         (true, @symcore.int(0))
       } else {
         (false, residual)
@@ -6691,12 +7063,16 @@ fn solver_bigint_lcm(
   if a == 0N || b == 0N {
     0N
   } else {
-    (a / solver_bigint_gcd(a, b)) * b
+    a / solver_bigint_gcd(a, b) * b
   }
 }
 
 ///|
-fn solver_symbol_subst(expr : Expr, symbol : Expr, value : Expr) -> Expr raise SolverError {
+fn solver_symbol_subst(
+  expr : Expr,
+  symbol : Expr,
+  value : Expr,
+) -> Expr raise SolverError {
   let env : Map[String, Expr] = {}
   env[solver_symbol_name(symbol)] = value
   @symcore.subst(expr, env)
@@ -6707,7 +7083,9 @@ fn solver_expr_has_application_name(expr : Expr, name : String) -> Bool {
   if @symcore.application_has_name(expr, name) {
     return true
   }
-  @symcore.children(expr).any(child => solver_expr_has_application_name(child, name))
+  @symcore.children(expr).any(child => {
+    solver_expr_has_application_name(child, name)
+  })
 }
 
 ///|
@@ -6742,29 +7120,29 @@ fn solver_rewrite_exp_inverse(expr : Expr) -> Expr {
       if @symcore.compare_expr(exp, @symcore.int(-1)) == 0 {
         match base {
           Expr::Apply(Expr::FunctionHead("exp"), [arg]) =>
-            @symcore.function(
-              "exp",
-              [canonical_expr(@symcore.mul([@symcore.int(-1), solver_rewrite_exp_inverse(arg)]))],
-            )
+            @symcore.function("exp", [
+              canonical_expr(
+                @symcore.mul([@symcore.int(-1), solver_rewrite_exp_inverse(arg)]),
+              ),
+            ])
           Expr::Pow(Expr::Apply(Expr::FunctionHead("exp"), [arg]), inner_exp) =>
-            @symcore.function(
-              "exp",
-              [
-                canonical_expr(
-                  @symcore.mul([
-                    @symcore.int(-1),
-                    solver_rewrite_exp_inverse(inner_exp),
-                    solver_rewrite_exp_inverse(arg),
-                  ]),
-                ),
-              ],
-            )
+            @symcore.function("exp", [
+              canonical_expr(
+                @symcore.mul([
+                  @symcore.int(-1),
+                  solver_rewrite_exp_inverse(inner_exp),
+                  solver_rewrite_exp_inverse(arg),
+                ]),
+              ),
+            ])
           Expr::Mul(args) =>
             canonical_expr(
               @symcore.mul(
-                args.map(arg =>
-                  solver_rewrite_exp_inverse(@symcore.pow(arg, @symcore.int(-1)))
-                ),
+                args.map(arg => {
+                  solver_rewrite_exp_inverse(
+                    @symcore.pow(arg, @symcore.int(-1)),
+                  )
+                }),
               ),
             )
           _ =>
@@ -6797,22 +7175,19 @@ fn solver_rewrite_exp_inverse(expr : Expr) -> Expr {
 ///|
 fn solver_characteristic_invariant_cleanup(expr : Expr) -> Expr {
   let simplified = canonical_expr(@symsimplify.simplify(expr, max_passes=2))
-  let lifted =
-    if solver_expr_has_application_name(simplified, "log") {
-      canonical_expr(
-        @symsimplify.simplify(
-          @symcore.function("exp", [simplified]),
-          max_passes=2,
-        ),
-      )
-    } else {
-      simplified
-    }
+  let lifted = if solver_expr_has_application_name(simplified, "log") {
+    canonical_expr(
+      @symsimplify.simplify(
+        @symcore.function("exp", [simplified]),
+        max_passes=2,
+      ),
+    )
+  } else {
+    simplified
+  }
   canonical_expr(
     @symsimplify.simplify(
-      solver_rewrite_exp_inverse(
-        solver_clear_add_numeric_denominators(lifted),
-      ),
+      solver_rewrite_exp_inverse(solver_clear_add_numeric_denominators(lifted)),
       max_passes=2,
     ),
   )
@@ -6864,11 +7239,16 @@ fn solver_pde_characteristic_invariant_linear(
       @symcore.mul([@symcore.int(-1), ratio_sub]),
     ]),
   )
-  let solved_try : Result[Expr, SolverError] = try? dsolve(ode, func=Some(dummy))
+  let solved_try : Result[Expr, SolverError] = try? dsolve(
+    ode,
+    func=Some(dummy),
+  )
   match solved_try {
     Ok(sol) => {
-      let eta_try : Result[Array[Expr], SolverError] = try?
-        solver_single_target_solutions(sol, Expr::Symbol("C1"))
+      let eta_try : Result[Array[Expr], SolverError] = try? solver_single_target_solutions(
+        sol,
+        Expr::Symbol("C1"),
+      )
       match eta_try {
         Ok(items) if !items.is_empty() =>
           Some(
@@ -6896,19 +7276,13 @@ fn solver_pde_characteristic_invariant_separable(
   match solver_split_separable_product(ratio, x, y) {
     Some((gx, gy)) => {
       let int_y = canonical_expr(
-        @symintegrals.integrate(
-          @symcore.pow(gy, @symcore.int(-1)),
-          limits=[y],
-        ),
+        @symintegrals.integrate(@symcore.pow(gy, @symcore.int(-1)), limits=[y]),
       )
       let int_x = canonical_expr(@symintegrals.integrate(gx, limits=[x]))
       Some(
         solver_characteristic_invariant_cleanup(
           canonical_expr(
-            @symcore.add([
-              int_y,
-              @symcore.mul([@symcore.int(-1), int_x]),
-            ]),
+            @symcore.add([int_y, @symcore.mul([@symcore.int(-1), int_x])]),
           ),
         ),
       )
@@ -6926,40 +7300,39 @@ fn solver_extract_pde_linear(
     Some(parts) => parts
     None => return None
   }
-  guard args.length() == 2 else {
-    return None
-  }
+  guard args.length() == 2 else { return None }
   let x = args[0]
   let y = args[1]
   let dx = @symcalculus.diff(func, x)
   let dy = @symcalculus.diff(func, y)
-  match solver_extract_linear_targets(solver_normalize_equation(eq), [dx, dy, func]) {
+  match
+    solver_extract_linear_targets(solver_normalize_equation(eq), [dx, dy, func]) {
     Some((coeffs, constant)) if !@symcore.is_zero(coeffs[0]) ||
       !@symcore.is_zero(coeffs[1]) =>
-      Some((
-        x,
-        y,
-        coeffs[0],
-        coeffs[1],
-        coeffs[2],
-        canonical_expr(@symcore.mul([@symcore.int(-1), constant])),
-      ))
+      Some(
+        (
+          x,
+          y,
+          coeffs[0],
+          coeffs[1],
+          coeffs[2],
+          canonical_expr(@symcore.mul([@symcore.int(-1), constant])),
+        ),
+      )
     _ => None
   }
 }
 
 ///|
-fn solver_match_target_power_factor(
-  expr : Expr,
-  target : Expr,
-) -> (Expr, Int)? {
+fn solver_match_target_power_factor(expr : Expr, target : Expr) -> (Expr, Int)? {
   if solver_is_same_target(expr, target) {
     return Some((@symcore.int(1), 1))
   }
   match expr {
     Expr::Pow(base, exp) if solver_is_same_target(base, target) =>
       match @symcore.exact_numeric_expr_num_den(exp) {
-        Some((num, den)) if den.compare(1N) == 0 => Some((@symcore.int(1), num.to_int()))
+        Some((num, den)) if den.compare(1N) == 0 =>
+          Some((@symcore.int(1), num.to_int()))
         _ => None
       }
     Expr::Mul(args) => {
@@ -6972,7 +7345,8 @@ fn solver_match_target_power_factor(
           match arg {
             Expr::Pow(base, exp) if solver_is_same_target(base, target) =>
               match @symcore.exact_numeric_expr_num_den(exp) {
-                Some((num, den)) if den.compare(1N) == 0 => power += num.to_int()
+                Some((num, den)) if den.compare(1N) == 0 =>
+                  power += num.to_int()
                 _ => return None
               }
             _ =>
@@ -7002,9 +7376,7 @@ fn solver_pde_reduce_highest_derivative_power(eq : Expr, func : Expr) -> Expr {
     Some(parts) => parts
     None => return normalized
   }
-  guard args.length() == 2 else {
-    return normalized
-  }
+  guard args.length() == 2 else { return normalized }
   let x = args[0]
   let y = args[1]
   let dx = @symcalculus.diff(func, x)
@@ -7019,7 +7391,8 @@ fn solver_pde_reduce_highest_derivative_power(eq : Expr, func : Expr) -> Expr {
         match solver_match_target_power_factor(coeff, func) {
           Some((scale, power)) if !@symcore.is_zero(scale) && power != 0 =>
             out = match out {
-              Some(current) => Some(if power < current { power } else { current })
+              Some(current) =>
+                Some(if power < current { power } else { current })
               None => Some(power)
             }
           _ => ()
@@ -7035,7 +7408,11 @@ fn solver_pde_reduce_highest_derivative_power(eq : Expr, func : Expr) -> Expr {
       let inv_den = den ^ @symcore.int(-1)
       match normalized {
         Expr::Add(items) =>
-          canonical_expr(@symcore.add(items.map(item => canonical_expr(@symcore.mul([item, inv_den])))))
+          canonical_expr(
+            @symcore.add(
+              items.map(item => canonical_expr(@symcore.mul([item, inv_den]))),
+            ),
+          )
         _ => canonical_expr(@symcore.mul([normalized, inv_den]))
       }
     }
@@ -7094,7 +7471,9 @@ fn solver_pde_solution_rhs(sol : Expr, target : Expr) -> Expr raise SolverError 
       } else if solver_is_same_target(rhs, target) {
         lhs
       } else {
-        raise SolverError::ValueError("solution must solve for the target function")
+        raise SolverError::ValueError(
+          "solution must solve for the target function",
+        )
       }
     _ => sol
   }
@@ -7111,15 +7490,18 @@ fn solver_make_solvefun_application(
   match solvefun {
     Some(Expr::UndefinedFunction(name))
     | Some(Expr::FunctionHead(name))
-    | Some(Expr::Symbol(name)) => @symcore.applied_undefined_function(name, [normalized_invariant])
+    | Some(Expr::Symbol(name)) =>
+      @symcore.applied_undefined_function(name, [normalized_invariant])
     Some(other) =>
       match @symcore.application_parts(other) {
         Some((head, [])) =>
           match head {
             Expr::UndefinedFunction(name)
             | Expr::FunctionHead(name)
-            | Expr::Symbol(name) => @symcore.applied_undefined_function(name, [normalized_invariant])
-            _ => raise SolverError::ValueError("solvefun must be a function head")
+            | Expr::Symbol(name) =>
+              @symcore.applied_undefined_function(name, [normalized_invariant])
+            _ =>
+              raise SolverError::ValueError("solvefun must be a function head")
           }
         _ => raise SolverError::ValueError("solvefun must be a function head")
       }
@@ -7186,30 +7568,33 @@ fn solver_pde_absorb_function_factor_into_exp(
               match mul_independent_decompose(scale0, invariant) {
                 Some((prefactor, scale)) =>
                   canonical_expr(
-                    @symcore.function(
-                      "exp",
-                      [@symcore.mul([
+                    @symcore.function("exp", [
+                      @symcore.mul([
                         scale,
                         @symcore.add([
                           canonical_expr(@symcore.mul([prefactor, rest0])),
                           target,
                         ]),
-                      ])],
-                    ),
+                      ]),
+                    ]),
                   )
                 None =>
                   if @symcore.has(scale0, invariant) {
                     canonical_expr(
-                      @symcore.function(
-                        "exp",
-                        [@symcore.mul([scale0, @symcore.add([rest0, target])])],
-                      ),
+                      @symcore.function("exp", [
+                        @symcore.mul([scale0, @symcore.add([rest0, target])]),
+                      ]),
                     )
                   } else {
-                    canonical_expr(@symcore.function("exp", [@symcore.add([body, target])]))
+                    canonical_expr(
+                      @symcore.function("exp", [@symcore.add([body, target])]),
+                    )
                   }
               }
-            None => canonical_expr(@symcore.function("exp", [@symcore.add([body, target])]))
+            None =>
+              canonical_expr(
+                @symcore.function("exp", [@symcore.add([body, target])]),
+              )
           }
         }
         _ => expr
@@ -7240,19 +7625,15 @@ fn solver_dsolve_linear_solution(
   )
   let integral_p = if integral_hint {
     canonical_expr(
-      @symintegrals.integral(
-        p,
-        limits=[@symintegrals.integral_limit([wrt])],
-      ),
+      @symintegrals.integral(p, limits=[@symintegrals.integral_limit([wrt])]),
     )
   } else {
     canonical_expr(@symintegrals.integrate(p, limits=[wrt]))
   }
   let mu = @symcore.function("exp", [integral_p])
-  let inv_mu = @symcore.function(
-    "exp",
-    [canonical_expr(@symcore.mul([@symcore.int(-1), integral_p]))],
-  )
+  let inv_mu = @symcore.function("exp", [
+    canonical_expr(@symcore.mul([@symcore.int(-1), integral_p])),
+  ])
   let c1 = Expr::Symbol("C1")
   let rhs = if @symcore.is_zero(q) {
     canonical_expr(@symcore.mul([c1, inv_mu]))
@@ -7260,10 +7641,9 @@ fn solver_dsolve_linear_solution(
     let integrand = canonical_expr(@symcore.mul([mu, q]))
     let integral_q = if integral_hint {
       canonical_expr(
-        @symintegrals.integral(
-          integrand,
-          limits=[@symintegrals.integral_limit([wrt])],
-        ),
+        @symintegrals.integral(integrand, limits=[
+          @symintegrals.integral_limit([wrt]),
+        ]),
       )
     } else {
       match solver_try_integrate_exp_derivative(integrand, wrt) {
@@ -7271,16 +7651,12 @@ fn solver_dsolve_linear_solution(
         None =>
           match solver_try_integrate_linear_exp(integrand, wrt) {
             Some(value) => value
-            None => canonical_expr(@symintegrals.integrate(integrand, limits=[wrt]))
+            None =>
+              canonical_expr(@symintegrals.integrate(integrand, limits=[wrt]))
           }
       }
     }
-    canonical_expr(
-      @symcore.mul([
-        inv_mu,
-        @symcore.add([c1, integral_q]),
-      ]),
-    )
+    canonical_expr(@symcore.mul([inv_mu, @symcore.add([c1, integral_q])]))
   }
   Expr::Relational(@symcore.RelOp::Eq, func, rhs)
 }
@@ -7313,13 +7689,15 @@ fn solver_desolve_result_dict(
   }
   items.push((Expr::Symbol("all"), Expr::Boolean(true)))
   items.push((Expr::Symbol("eq"), eq))
-  items.push((
-    Expr::Symbol("default"),
-    match default_hint {
-      Some(name) => Expr::Symbol(name)
-      None => Expr::Symbol("None")
-    },
-  ))
+  items.push(
+    (
+      Expr::Symbol("default"),
+      match default_hint {
+        Some(name) => Expr::Symbol(name)
+        None => Expr::Symbol("None")
+      },
+    ),
+  )
   items.push((Expr::Symbol("order"), @symcore.int(order)))
   Expr::Dict(items)
 }
@@ -7368,7 +7746,9 @@ pub fn dsolve(
     None => raise SolverError::ValueError("expected applied undefined function")
   }
   guard args.length() == 1 else {
-    raise SolverError::ValueError("expected an ordinary single-variable function")
+    raise SolverError::ValueError(
+      "expected an ordinary single-variable function",
+    )
   }
   let order = ode_order(eq, f)
   let ordered = classify_ode(eq, func=Some(f))
@@ -7384,40 +7764,38 @@ pub fn dsolve(
           @symprint.to_string(f),
         )
       } else {
-        raise SolverError::ValueError("dsolve: Cannot solve " + @symprint.to_string(eq))
+        raise SolverError::ValueError(
+          "dsolve: Cannot solve " + @symprint.to_string(eq),
+        )
       }
     }
     let entries : Array[(String, Expr)] = []
-    let candidates =
-      if hint == "all_Integral" {
-        let integral_candidates : Array[String] = []
-        for name in ordered {
-          match name {
-            "separable" => integral_candidates.push("separable_Integral")
-            "1st_linear" => integral_candidates.push("1st_linear_Integral")
-            "Bernoulli" => integral_candidates.push("Bernoulli_Integral")
-            _ => integral_candidates.push(name)
-          }
+    let candidates = if hint == "all_Integral" {
+      let integral_candidates : Array[String] = []
+      for name in ordered {
+        match name {
+          "separable" => integral_candidates.push("separable_Integral")
+          "1st_linear" => integral_candidates.push("1st_linear_Integral")
+          "Bernoulli" => integral_candidates.push("Bernoulli_Integral")
+          _ => integral_candidates.push(name)
         }
-        integral_candidates
-      } else {
-        available
       }
+      integral_candidates
+    } else {
+      available
+    }
     for name in candidates {
       match solver_extract_ode_linear(eq, f) {
         Some((wrt, coeff_d, coeff_f, constant)) => {
           let integral_version = name.has_suffix("_Integral")
-          entries.push((
-            name,
-            solver_dsolve_linear_solution(
-              f,
-              wrt,
-              coeff_d,
-              coeff_f,
-              constant,
-              integral_version,
+          entries.push(
+            (
+              name,
+              solver_dsolve_linear_solution(
+                f, wrt, coeff_d, coeff_f, constant, integral_version,
+              ),
             ),
-          ))
+          )
         }
         None => ()
       }
@@ -7439,7 +7817,9 @@ pub fn dsolve(
               @symprint.to_string(f),
             )
           } else {
-            raise SolverError::ValueError("dsolve: Cannot solve " + @symprint.to_string(eq))
+            raise SolverError::ValueError(
+              "dsolve: Cannot solve " + @symprint.to_string(eq),
+            )
           }
       }
     other => other
@@ -7449,9 +7829,13 @@ pub fn dsolve(
       "ODE " + @symprint.to_string(eq) + " does not match hint " + selected,
     )
   }
-  let (wrt, coeff_d, coeff_f, constant) = match solver_extract_ode_linear(eq, f) {
+  let (wrt, coeff_d, coeff_f, constant) = match
+    solver_extract_ode_linear(eq, f) {
     Some(value) => value
-    None => raise SolverError::ValueError("dsolve: Cannot solve " + @symprint.to_string(eq))
+    None =>
+      raise SolverError::ValueError(
+        "dsolve: Cannot solve " + @symprint.to_string(eq),
+      )
   }
   solver_dsolve_linear_solution(
     f,
@@ -7482,7 +7866,8 @@ pub fn checkodesol(
               match solver_infer_function(rhs, 1) {
                 Some(value) => value
                 None =>
-                  match solver_infer_function(solver_normalize_equation(ode), 1) {
+                  match
+                    solver_infer_function(solver_normalize_equation(ode), 1) {
                     Some(value) => value
                     None =>
                       raise SolverError::ValueError(
@@ -7494,7 +7879,8 @@ pub fn checkodesol(
         _ =>
           match solver_infer_function(solver_normalize_equation(ode), 1) {
             Some(value) => value
-            None => raise SolverError::ValueError("unable to infer ODE function")
+            None =>
+              raise SolverError::ValueError("unable to infer ODE function")
           }
       }
   }
@@ -7508,10 +7894,10 @@ pub fn checkodesol(
     raise SolverError::ValueError("func must be a function of one variable")
   }
   let x = args[0]
-  if solve_for_func &&
-    solver_checkodesol_solved_rhs(sol_eq, f) is None {
-    let solved_try : Result[Array[Expr], SolverError] = try?
-      solver_checkodesol_solve_target(sol_eq, f)
+  if solve_for_func && solver_checkodesol_solved_rhs(sol_eq, f) is None {
+    let solved_try : Result[Array[Expr], SolverError] = try? solver_checkodesol_solve_target(
+      sol_eq, f,
+    )
     match solved_try {
       Ok(solved) if solved.length() == 1 =>
         return checkodesol(
@@ -7559,12 +7945,15 @@ fn solver_first_sep_vars(sep : Array[Expr]) -> Array[Expr] raise SolverError {
   }
   match @symcore.application_parts(sep[0]) {
     Some((_, args)) => args
-    None => raise SolverError::ValueError("separated terms must be applications")
+    None =>
+      raise SolverError::ValueError("separated terms must be applications")
   }
 }
 
 ///|
-fn solver_all_other_sep_vars(sep : Array[Expr]) -> Array[Expr] raise SolverError {
+fn solver_all_other_sep_vars(
+  sep : Array[Expr],
+) -> Array[Expr] raise SolverError {
   let out : Array[Expr] = []
   for i in 1..<sep.length() {
     match @symcore.application_parts(sep[i]) {
@@ -7572,7 +7961,8 @@ fn solver_all_other_sep_vars(sep : Array[Expr]) -> Array[Expr] raise SolverError
         for arg in args {
           out.push(arg)
         }
-      None => raise SolverError::ValueError("separated terms must be applications")
+      None =>
+        raise SolverError::ValueError("separated terms must be applications")
     }
   }
   out
@@ -7584,17 +7974,27 @@ fn solver_pde_expand_exp_sums(expr : Expr) -> Expr {
     Expr::Add(args) => @symcore.add(args.map(solver_pde_expand_exp_sums))
     Expr::Mul(args) => @symcore.mul(args.map(solver_pde_expand_exp_sums))
     Expr::Pow(base, exp) =>
-      @symcore.pow(solver_pde_expand_exp_sums(base), solver_pde_expand_exp_sums(exp))
+      @symcore.pow(
+        solver_pde_expand_exp_sums(base),
+        solver_pde_expand_exp_sums(exp),
+      )
     Expr::Tuple(items) => Expr::Tuple(items.map(solver_pde_expand_exp_sums))
     Expr::Apply(Expr::FunctionHead("exp"), [Expr::Add(args)]) =>
       solver_expand_mul_sequence(
-        args.map(arg => @symcore.function("exp", [solver_pde_expand_exp_sums(arg)])),
+        args.map(arg => {
+          @symcore.function("exp", [solver_pde_expand_exp_sums(arg)])
+        }),
       )
     Expr::Apply(head, args) =>
       @symcore.raw_apply(
         solver_pde_expand_exp_sums(head),
         args.map(solver_pde_expand_exp_sums),
-      ).unwrap_or(Expr::Apply(solver_pde_expand_exp_sums(head), args.map(solver_pde_expand_exp_sums)))
+      ).unwrap_or(
+        Expr::Apply(
+          solver_pde_expand_exp_sums(head),
+          args.map(solver_pde_expand_exp_sums),
+        ),
+      )
     _ => expr
   }
 }
@@ -7608,12 +8008,7 @@ fn solver_pde_prepare_separation_term(expr : Expr) -> Expr {
       ),
     ),
   )
-  canonical_expr(
-    @symsimplify.separatevars(
-      expanded,
-      force=true,
-    ),
-  )
+  canonical_expr(@symsimplify.separatevars(expanded, force=true))
 }
 
 ///|
@@ -7644,7 +8039,8 @@ fn solver_pde_term_has_derivative_without_others(
     Expr::Mul(args) => {
       for arg in args {
         match arg {
-          Expr::Derivative(_, _) if !solver_depends_on_any(arg, other_vars) => return true
+          Expr::Derivative(_, _) if !solver_depends_on_any(arg, other_vars) =>
+            return true
           _ => ()
         }
       }
@@ -7661,9 +8057,7 @@ fn solver_simple_pde_separate(
   dep_vars : Array[Expr],
   other_vars : Array[Expr],
 ) -> Array[Expr]? {
-  guard !dep_vars.is_empty() else {
-    return None
-  }
+  guard !dep_vars.is_empty() else { return None }
   let dep = dep_vars[0]
   let normalize_term = fn(term : Expr) -> Expr {
     canonical_expr(
@@ -7712,11 +8106,15 @@ fn solver_simple_pde_separate(
         let pieces : Array[Expr] = []
         for divisor in divisors {
           pieces.push(
-            canonical_expr(@symcore.mul([term, @symcore.pow(divisor, @symcore.int(-1))])),
+            canonical_expr(
+              @symcore.mul([term, @symcore.pow(divisor, @symcore.int(-1))]),
+            ),
           )
         }
         lifted.push(
-          canonical_expr(@symsimplify.simplify(solver_add_all(pieces), max_passes=3)),
+          canonical_expr(
+            @symsimplify.simplify(solver_add_all(pieces), max_passes=3),
+          ),
         )
       }
       canonical_expr(solver_add_all(lifted))
@@ -7743,7 +8141,12 @@ fn solver_simple_pde_separate(
       divisors.push(sep)
     }
     rhs_terms.push(
-      canonical_expr(@symcore.mul([@symcore.int(-1), solver_pde_prepare_separation_term(term)])),
+      canonical_expr(
+        @symcore.mul([
+          @symcore.int(-1),
+          solver_pde_prepare_separation_term(term),
+        ]),
+      ),
     )
   }
   guard !lhs_terms.is_empty() && !rhs_terms.is_empty() && !divisors.is_empty() else {
@@ -7766,10 +8169,16 @@ fn solver_simple_pde_separate(
     }
   }
   let lhs = finalize_side(
-    @symcore.mul([solver_add_all(lhs_terms), @symcore.pow(fulldiv, @symcore.int(-1))]),
+    @symcore.mul([
+      solver_add_all(lhs_terms),
+      @symcore.pow(fulldiv, @symcore.int(-1)),
+    ]),
   )
   let rhs = finalize_side(
-    @symcore.mul([solver_add_all(rhs_terms), @symcore.pow(fulldiv, @symcore.int(-1))]),
+    @symcore.mul([
+      solver_add_all(rhs_terms),
+      @symcore.pow(fulldiv, @symcore.int(-1)),
+    ]),
   )
   if solver_depends_on_any(lhs, other_vars) || solver_depends_on_any(rhs, [dep]) {
     None
@@ -7801,7 +8210,7 @@ pub fn pde_separate(
           ),
           fun,
           sep,
-          strategy=strategy,
+          strategy~,
         )
       }
     _ =>
@@ -7809,7 +8218,7 @@ pub fn pde_separate(
         Expr::Relational(@symcore.RelOp::Eq, eq, @symcore.int(0)),
         fun,
         sep,
-        strategy=strategy,
+        strategy~,
       )
   }
   let (_, orig_args) = match @symcore.undefined_application_parts(fun) {
@@ -7823,7 +8232,8 @@ pub fn pde_separate(
         for arg in args {
           subs_args.push(arg)
         }
-      None => raise SolverError::ValueError("separated terms must be applications")
+      None =>
+        raise SolverError::ValueError("separated terms must be applications")
     }
   }
   guard orig_args.length() == subs_args.length() else {
@@ -7881,7 +8291,9 @@ pub fn pde_separate(
           )
         }
         let right_part = if strategy == "add" {
-          canonical_expr(@symcore.mul([@symcore.int(-1), b, @symcalculus.diff(right, y)]))
+          canonical_expr(
+            @symcore.mul([@symcore.int(-1), b, @symcalculus.diff(right, y)]),
+          )
         } else {
           canonical_expr(
             @symcore.mul([
@@ -7897,7 +8309,11 @@ pub fn pde_separate(
       _ => ()
     }
   }
-  let replacement = if strategy == "add" { solver_add_all(sep) } else { solver_mul_all(sep) }
+  let replacement = if strategy == "add" {
+    solver_add_all(sep)
+  } else {
+    solver_mul_all(sep)
+  }
   let base_eq = match normalized_eq {
     Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) => {
       guard @symcore.is_zero(rhs) else {
@@ -7964,14 +8380,13 @@ fn solver_extract_pde_linear_homogeneous(
     Some(parts) => parts
     None => return None
   }
-  guard args.length() == 2 else {
-    return None
-  }
+  guard args.length() == 2 else { return None }
   let x = args[0]
   let y = args[1]
   let dx = @symcalculus.diff(func, x)
   let dy = @symcalculus.diff(func, y)
-  match solver_extract_linear_targets(solver_normalize_equation(eq), [dx, dy, func]) {
+  match
+    solver_extract_linear_targets(solver_normalize_equation(eq), [dx, dy, func]) {
     Some((coeffs, constant)) =>
       if @symcore.is_zero(coeffs[0]) && @symcore.is_zero(coeffs[1]) {
         None
@@ -7993,9 +8408,7 @@ fn solver_match_equal_derivative_pde(eq : Expr, func : Expr) -> (Expr, Expr)? {
     Some(parts) => parts
     None => return None
   }
-  guard args.length() == 2 else {
-    return None
-  }
+  guard args.length() == 2 else { return None }
   let x = args[0]
   let y = args[1]
   let dx = @symcalculus.diff(func, x)
@@ -8004,8 +8417,7 @@ fn solver_match_equal_derivative_pde(eq : Expr, func : Expr) -> (Expr, Expr)? {
     Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) =>
       if solver_is_same_target(lhs, dx) && solver_is_same_target(rhs, dy) {
         Some((x, y))
-      } else if solver_is_same_target(lhs, dy) &&
-        solver_is_same_target(rhs, dx) {
+      } else if solver_is_same_target(lhs, dy) && solver_is_same_target(rhs, dx) {
         Some((y, x))
       } else {
         None
@@ -8022,10 +8434,11 @@ fn solver_pdsolve_equal_derivative(eq : Expr, func : Expr) -> Expr? {
         Expr::Relational(
           @symcore.RelOp::Eq,
           func,
-          @symcore.applied_undefined_function(
-            "F",
-            [canonical_expr(@symcore.mul([@symcore.int(-1), @symcore.add([x, y])]))],
-          ),
+          @symcore.applied_undefined_function("F", [
+            canonical_expr(
+              @symcore.mul([@symcore.int(-1), @symcore.add([x, y])]),
+            ),
+          ]),
         ),
       )
     None => None
@@ -8075,11 +8488,15 @@ fn solver_pde_reduced_ode_rhs(
 ) -> Expr raise SolverError {
   let solved = dsolve(reduced_eq, func=Some(ode_func))
   let rhs = solver_pde_solution_rhs(solved, ode_func)
-  let with_solvefun = solver_replace_solution_constants_with_function(rhs, invariant, solvefun) catch {
+  let with_solvefun = solver_replace_solution_constants_with_function(
+    rhs, invariant, solvefun,
+  ) catch {
     _ => rhs
   }
   let normalized = if absorb_exp {
-    solver_pde_absorb_function_factor_into_exp(with_solvefun, invariant, wrt, solvefun)
+    solver_pde_absorb_function_factor_into_exp(
+      with_solvefun, invariant, wrt, solvefun,
+    )
   } else {
     with_solvefun
   }
@@ -8097,15 +8514,17 @@ fn solver_combine_exp_product(expr : Expr) -> Expr {
       let other_args : Array[Expr] = []
       for arg in args {
         match @symcore.application_parts(arg) {
-          Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
-            exp_args.push(inner)
+          Some((head, [inner])) if @symcore.function_head_name(head) ==
+            Some("exp") => exp_args.push(inner)
           _ => other_args.push(arg)
         }
       }
       if exp_args.length() <= 1 {
         expr
       } else {
-        other_args.push(@symcore.function("exp", [canonical_expr(@symcore.add(exp_args))]))
+        other_args.push(
+          @symcore.function("exp", [canonical_expr(@symcore.add(exp_args))]),
+        )
         canonical_expr(@symcore.mul(other_args))
       }
     }
@@ -8121,15 +8540,17 @@ fn solver_combine_exp_products(expr : Expr) -> Expr {
 
 ///|
 fn solver_cancel_inverse_exp_products(expr : Expr) -> Expr {
-  let with_children = @symcore.map_children(expr, solver_cancel_inverse_exp_products)
+  let with_children = @symcore.map_children(
+    expr, solver_cancel_inverse_exp_products,
+  )
   match with_children {
     Expr::Mul(args) => {
       let exp_args : Array[Expr] = []
       let other_args : Array[Expr] = []
       for arg in args {
         match @symcore.application_parts(arg) {
-          Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
-            exp_args.push(inner)
+          Some((head, [inner])) if @symcore.function_head_name(head) ==
+            Some("exp") => exp_args.push(inner)
           _ => other_args.push(arg)
         }
       }
@@ -8166,7 +8587,9 @@ fn solver_cancel_inverse_exp_products(expr : Expr) -> Expr {
         if kept_exp.length() == 1 {
           other_args.push(@symcore.function("exp", [kept_exp[0]]))
         } else {
-          other_args.push(@symcore.function("exp", [canonical_expr(@symcore.add(kept_exp))]))
+          other_args.push(
+            @symcore.function("exp", [canonical_expr(@symcore.add(kept_exp))]),
+          )
         }
       }
       if other_args.is_empty() {
@@ -8185,7 +8608,8 @@ fn solver_rewrite_exp_powers(expr : Expr) -> Expr {
   match with_children {
     Expr::Pow(base, exp) =>
       match @symcore.application_parts(base) {
-        Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
+        Some((head, [inner])) if @symcore.function_head_name(head) ==
+          Some("exp") =>
           @symcore.function("exp", [canonical_expr(@symcore.mul([inner, exp]))])
         _ => with_children
       }
@@ -8196,9 +8620,7 @@ fn solver_rewrite_exp_powers(expr : Expr) -> Expr {
 ///|
 fn solver_checkpdesol_normalize(expr : Expr) -> Expr {
   let expanded = solver_pde_expand_exp_sums(
-    solver_rewrite_exp_powers(
-      solver_rewrite_exp_inverse(canonical_expr(expr)),
-    ),
+    solver_rewrite_exp_powers(solver_rewrite_exp_inverse(canonical_expr(expr))),
   )
   let combined = solver_combine_exp_products(expanded)
   let canceled = solver_cancel_inverse_exp_products(combined)
@@ -8206,16 +8628,17 @@ fn solver_checkpdesol_normalize(expr : Expr) -> Expr {
     @symsimplify.powsimp(canonical_expr(canceled)),
     max_passes=3,
   )
-  let domain_normal = @sympolys.domain_normal_expr(@sympolys.Domain::EX, rational) catch {
+  let domain_normal = @sympolys.domain_normal_expr(
+    @sympolys.Domain::EX,
+    rational,
+  ) catch {
     _ => rational
   }
   let simplified = @symsimplify.simplify(domain_normal, max_passes=4)
   let recombined = solver_cancel_inverse_exp_products(
     solver_combine_exp_products(
       solver_pde_expand_exp_sums(
-        solver_rewrite_exp_powers(
-          solver_rewrite_exp_inverse(simplified),
-        ),
+        solver_rewrite_exp_powers(solver_rewrite_exp_inverse(simplified)),
       ),
     ),
   )
@@ -8235,27 +8658,32 @@ fn solver_try_integrate_linear_exp(expr : Expr, wrt : Expr) -> Expr? {
       let exp_args : Array[Expr] = []
       for arg in args {
         match @symcore.application_parts(arg) {
-          Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
-            exp_args.push(inner)
+          Some((head, [inner])) if @symcore.function_head_name(head) ==
+            Some("exp") => exp_args.push(inner)
           _ => other_args.push(arg)
         }
       }
       guard exp_args.length() == 1 else { return None }
       let factor = canonical_expr(@symcore.mul(other_args))
-      guard !solver_expr_in_list(@symcore.free_symbols(factor), wrt) else { return None }
+      guard !solver_expr_in_list(@symcore.free_symbols(factor), wrt) else {
+        return None
+      }
       (factor, exp_args[0])
     }
     _ =>
       match @symcore.application_parts(expr) {
-        Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
-          (@symcore.int(1), inner)
+        Some((head, [inner])) if @symcore.function_head_name(head) ==
+          Some("exp") => (@symcore.int(1), inner)
         _ => return None
       }
   }
   let deriv = canonical_expr(@symcalculus.diff(exponent, wrt))
   guard expr_is_zeroish(deriv) != Some(true) else { return None }
-  guard !solver_expr_in_list(@symcore.free_symbols(deriv), wrt) else { return None }
-  guard expr_is_zeroish(canonical_expr(@symcalculus.diff(deriv, wrt))) == Some(true) else {
+  guard !solver_expr_in_list(@symcore.free_symbols(deriv), wrt) else {
+    return None
+  }
+  guard expr_is_zeroish(canonical_expr(@symcalculus.diff(deriv, wrt))) ==
+    Some(true) else {
     return None
   }
   Some(
@@ -8270,6 +8698,64 @@ fn solver_try_integrate_linear_exp(expr : Expr, wrt : Expr) -> Expr? {
 }
 
 ///|
+fn solver_extract_exp_factor(expr : Expr) -> (Expr, Expr)? {
+  match expr {
+    Expr::Mul(args) => {
+      let other_args : Array[Expr] = []
+      let exp_args : Array[Expr] = []
+      for arg in args {
+        match @symcore.application_parts(arg) {
+          Some((head, [inner])) if @symcore.function_head_name(head) ==
+            Some("exp") => exp_args.push(inner)
+          _ => other_args.push(arg)
+        }
+      }
+      guard exp_args.length() == 1 else { return None }
+      Some((canonical_expr(@symcore.mul(other_args)), exp_args[0]))
+    }
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, [inner])) if @symcore.function_head_name(head) ==
+          Some("exp") => Some((@symcore.int(1), inner))
+        _ => None
+      }
+  }
+}
+
+///|
+fn solver_extract_shared_linear_exp(expr : Expr) -> (Expr, Expr)? {
+  let normalized = solver_combine_exp_product(canonical_expr(expr))
+  match normalized {
+    Expr::Add(args) => {
+      let factors : Array[Expr] = []
+      let mut shared_exp : Expr? = None
+      for arg in args {
+        let (factor, exponent) = match solver_extract_exp_factor(arg) {
+          Some(value) => value
+          None => return None
+        }
+        match shared_exp {
+          Some(current) => {
+            let delta = canonical_expr(
+              @symcore.add([current, @symcore.mul([@symcore.int(-1), exponent])]),
+            )
+            guard expr_is_zeroish(delta) == Some(true) else { return None }
+          }
+          None => shared_exp = Some(exponent)
+        }
+        factors.push(factor)
+      }
+      match shared_exp {
+        Some(exponent) =>
+          Some((canonical_expr(@symcore.add(factors)), exponent))
+        None => None
+      }
+    }
+    _ => solver_extract_exp_factor(normalized)
+  }
+}
+
+///|
 fn solver_try_integrate_exp_trig_linear(expr : Expr, wrt : Expr) -> Expr? {
   let normalized = solver_combine_exp_product(canonical_expr(expr))
   let (factor, exponent, trig_name, trig_inner) = match normalized {
@@ -8279,8 +8765,8 @@ fn solver_try_integrate_exp_trig_linear(expr : Expr, wrt : Expr) -> Expr? {
       let trig_args : Array[(String, Expr)] = []
       for arg in args {
         match @symcore.application_parts(arg) {
-          Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
-            exp_args.push(inner)
+          Some((head, [inner])) if @symcore.function_head_name(head) ==
+            Some("exp") => exp_args.push(inner)
           Some((head, [inner])) =>
             match @symcore.function_head_name(head) {
               Some("sin") => trig_args.push(("sin", inner))
@@ -8290,21 +8776,31 @@ fn solver_try_integrate_exp_trig_linear(expr : Expr, wrt : Expr) -> Expr? {
           _ => other_args.push(arg)
         }
       }
-      guard exp_args.length() == 1 && trig_args.length() == 1 else { return None }
+      guard exp_args.length() == 1 && trig_args.length() == 1 else {
+        return None
+      }
       let factor = canonical_expr(@symcore.mul(other_args))
-      guard !solver_expr_in_list(@symcore.free_symbols(factor), wrt) else { return None }
+      guard !solver_expr_in_list(@symcore.free_symbols(factor), wrt) else {
+        return None
+      }
       (factor, exp_args[0], trig_args[0].0, trig_args[0].1)
     }
     _ => return None
   }
   let exp_deriv = canonical_expr(@symcalculus.diff(exponent, wrt))
   let trig_deriv = canonical_expr(@symcalculus.diff(trig_inner, wrt))
-  guard !solver_expr_in_list(@symcore.free_symbols(exp_deriv), wrt) else { return None }
-  guard !solver_expr_in_list(@symcore.free_symbols(trig_deriv), wrt) else { return None }
-  guard expr_is_zeroish(canonical_expr(@symcalculus.diff(exp_deriv, wrt))) == Some(true) else {
+  guard !solver_expr_in_list(@symcore.free_symbols(exp_deriv), wrt) else {
     return None
   }
-  guard expr_is_zeroish(canonical_expr(@symcalculus.diff(trig_deriv, wrt))) == Some(true) else {
+  guard !solver_expr_in_list(@symcore.free_symbols(trig_deriv), wrt) else {
+    return None
+  }
+  guard expr_is_zeroish(canonical_expr(@symcalculus.diff(exp_deriv, wrt))) ==
+    Some(true) else {
+    return None
+  }
+  guard expr_is_zeroish(canonical_expr(@symcalculus.diff(trig_deriv, wrt))) ==
+    Some(true) else {
     return None
   }
   let trig_part = match trig_name {
@@ -8329,10 +8825,7 @@ fn solver_try_integrate_exp_trig_linear(expr : Expr, wrt : Expr) -> Expr? {
     _ => return None
   }
   let denom = canonical_expr(
-    @symcore.add([
-      exp_deriv ^ @symcore.int(2),
-      trig_deriv ^ @symcore.int(2),
-    ]),
+    @symcore.add([exp_deriv ^ @symcore.int(2), trig_deriv ^ @symcore.int(2)]),
   )
   Some(
     canonical_expr(
@@ -8347,6 +8840,71 @@ fn solver_try_integrate_exp_trig_linear(expr : Expr, wrt : Expr) -> Expr? {
 }
 
 ///|
+fn solver_try_integrate_poly_linear_exp(expr : Expr, wrt : Expr) -> Expr? {
+  let (factor, exponent) = match solver_extract_shared_linear_exp(expr) {
+    Some(value) => value
+    None => return None
+  }
+  let deriv = canonical_expr(@symcalculus.diff(exponent, wrt))
+  guard expr_is_zeroish(deriv) != Some(true) else { return None }
+  guard !solver_expr_in_list(@symcore.free_symbols(deriv), wrt) else {
+    return None
+  }
+  guard expr_is_zeroish(canonical_expr(@symcalculus.diff(deriv, wrt))) ==
+    Some(true) else {
+    return None
+  }
+  let expanded_factor = solver_expand_expr(
+    @symsimplify.numer_expand(solver_expand_expr(factor)),
+  )
+  let factor_terms = match expanded_factor {
+    Expr::Add(args) => args
+    _ => [expanded_factor]
+  }
+  let mut degree = 0
+  for term in factor_terms {
+    match solver_match_target_power_factor(term, wrt) {
+      Some((coeff, power)) if power >= 0 &&
+        !solver_expr_in_list(@symcore.free_symbols(coeff), wrt) =>
+        if power > degree {
+          degree = power
+        }
+      _ => return None
+    }
+  }
+  let terms : Array[Expr] = []
+  let mut current = canonical_expr(expanded_factor)
+  let mut power = 1
+  let mut negate = false
+  while power <= degree + 1 {
+    if expr_is_zeroish(current) == Some(true) {
+      break
+    }
+    let signed = if negate {
+      canonical_expr(@symcore.mul([@symcore.int(-1), current]))
+    } else {
+      current
+    }
+    terms.push(
+      canonical_expr(
+        @symcore.mul([signed, @symcore.pow(deriv, @symcore.int(-power))]),
+      ),
+    )
+    current = canonical_expr(
+      @symsimplify.simplify(@symcalculus.diff(current, wrt), max_passes=3),
+    )
+    power += 1
+    negate = !negate
+  }
+  guard !terms.is_empty() else { return None }
+  Some(
+    canonical_expr(
+      @symcore.mul([@symcore.function("exp", [exponent]), @symcore.add(terms)]),
+    ),
+  )
+}
+
+///|
 fn solver_try_integrate_exp_derivative(expr : Expr, wrt : Expr) -> Expr? {
   let normalized = solver_combine_exp_product(canonical_expr(expr))
   let (factor, exponent) = match normalized {
@@ -8355,8 +8913,8 @@ fn solver_try_integrate_exp_derivative(expr : Expr, wrt : Expr) -> Expr? {
       let exp_args : Array[Expr] = []
       for arg in args {
         match @symcore.application_parts(arg) {
-          Some((head, [inner])) if @symcore.function_head_name(head) == Some("exp") =>
-            exp_args.push(inner)
+          Some((head, [inner])) if @symcore.function_head_name(head) ==
+            Some("exp") => exp_args.push(inner)
           _ => other_args.push(arg)
         }
       }
@@ -8378,10 +8936,7 @@ fn solver_try_integrate_exp_derivative(expr : Expr, wrt : Expr) -> Expr? {
   guard expr_is_zeroish(difference) == Some(true) else { return None }
   Some(
     canonical_expr(
-      @symcore.mul([
-        quotient,
-        @symcore.function("exp", [exponent]),
-      ]),
+      @symcore.mul([quotient, @symcore.function("exp", [exponent])]),
     ),
   )
 }
@@ -8399,18 +8954,12 @@ fn solver_pdsolve_constant_coeff(
   solvefun : Expr?,
 ) -> Expr raise SolverError {
   let denom = canonical_expr(
-    @symcore.add([
-      coeff_x ^ @symcore.int(2),
-      coeff_y ^ @symcore.int(2),
-    ]),
+    @symcore.add([coeff_x ^ @symcore.int(2), coeff_y ^ @symcore.int(2)]),
   )
   let xi = Expr::Symbol("xi")
   let eta = Expr::Symbol("eta")
   let xi_value = canonical_expr(
-    @symcore.add([
-      @symcore.mul([coeff_x, x]),
-      @symcore.mul([coeff_y, y]),
-    ]),
+    @symcore.add([@symcore.mul([coeff_x, x]), @symcore.mul([coeff_y, y])]),
   )
   let invariant = canonical_expr(
     @symcore.add([
@@ -8419,15 +8968,14 @@ fn solver_pdsolve_constant_coeff(
     ]),
   )
   let expterm = canonical_expr(
-    @symcore.function(
-      "exp",
-      [@symcore.mul([
+    @symcore.function("exp", [
+      @symcore.mul([
         @symcore.int(-1),
         coeff_f,
         xi,
         @symcore.pow(denom, @symcore.int(-1)),
-      ])],
-    ),
+      ]),
+    ]),
   )
   if @symcore.is_zero(source) {
     return Expr::Relational(
@@ -8436,25 +8984,21 @@ fn solver_pdsolve_constant_coeff(
       canonical_expr(
         @symcore.mul([
           solver_make_solvefun_application(solvefun, invariant),
-          @symcore.function(
-            "exp",
-            [@symcore.mul([
+          @symcore.function("exp", [
+            @symcore.mul([
               @symcore.int(-1),
               coeff_f,
               xi_value,
               @symcore.pow(denom, @symcore.int(-1)),
-            ])],
-          ),
+            ]),
+          ]),
         ]),
       ),
     )
   }
   let x_sub = canonical_expr(
     @symcore.mul([
-      @symcore.add([
-        @symcore.mul([coeff_x, xi]),
-        @symcore.mul([coeff_y, eta]),
-      ]),
+      @symcore.add([@symcore.mul([coeff_x, xi]), @symcore.mul([coeff_y, eta])]),
       @symcore.pow(denom, @symcore.int(-1)),
     ]),
   )
@@ -8474,14 +9018,9 @@ fn solver_pdsolve_constant_coeff(
     @symcore.subst(
       @symcore.mul([
         source,
-        @symcore.function(
-          "exp",
-          [@symcore.mul([
-            coeff_f,
-            xi,
-            @symcore.pow(denom, @symcore.int(-1)),
-          ])],
-        ),
+        @symcore.function("exp", [
+          @symcore.mul([coeff_f, xi, @symcore.pow(denom, @symcore.int(-1))]),
+        ]),
       ]),
       xy_env,
     ),
@@ -8490,10 +9029,9 @@ fn solver_pdsolve_constant_coeff(
     let genterm = canonical_expr(
       @symcore.mul([
         @symcore.pow(denom, @symcore.int(-1)),
-        @symintegrals.integral(
-          transformed_source,
-          limits=[Expr::Tuple([xi, xi_value])],
-        ),
+        @symintegrals.integral(transformed_source, limits=[
+          Expr::Tuple([xi, xi_value]),
+        ]),
       ]),
     )
     return Expr::Relational(
@@ -8522,19 +9060,21 @@ fn solver_pdsolve_constant_coeff(
       ),
     ),
   )
-  let antiderivative = match solver_try_integrate_linear_exp(on_curve_source, xi) {
+  let antiderivative = match
+    solver_try_integrate_linear_exp(on_curve_source, xi) {
     Some(value) => value
     None =>
-      match solver_try_integrate_exp_trig_linear(on_curve_source, xi) {
+      match solver_try_integrate_poly_linear_exp(on_curve_source, xi) {
         Some(value) => value
-        None => @symintegrals.integrate(on_curve_source, limits=[xi])
+        None =>
+          match solver_try_integrate_exp_trig_linear(on_curve_source, xi) {
+            Some(value) => value
+            None => @symintegrals.integrate(on_curve_source, limits=[xi])
+          }
       }
   }
   let integral_term = canonical_expr(
-    @symcore.mul([
-      @symcore.pow(denom, @symcore.int(-1)),
-      antiderivative,
-    ]),
+    @symcore.mul([@symcore.pow(denom, @symcore.int(-1)), antiderivative]),
   )
   let rhs_template = canonical_expr(
     @symcore.mul([
@@ -8549,10 +9089,9 @@ fn solver_pdsolve_constant_coeff(
     let genterm = canonical_expr(
       @symcore.mul([
         @symcore.pow(denom, @symcore.int(-1)),
-        @symintegrals.integral(
-          transformed_source,
-          limits=[Expr::Tuple([xi, xi_value])],
-        ),
+        @symintegrals.integral(transformed_source, limits=[
+          Expr::Tuple([xi, xi_value]),
+        ]),
       ]),
     )
     return Expr::Relational(
@@ -8622,20 +9161,12 @@ fn solver_pdsolve_variable_coeff(
       solver_pde_reduced_ode_rhs(reduced_eq, ode_func, x, y, true, solvefun),
     )
   }
-  let invariant = match solver_pde_characteristic_invariant_linear(
-    coeff_x,
-    coeff_y,
-    x,
-    y,
-  ) {
+  let invariant = match
+    solver_pde_characteristic_invariant_linear(coeff_x, coeff_y, x, y) {
     Some(value) => value
     None =>
-      match solver_pde_characteristic_invariant_separable(
-        coeff_x,
-        coeff_y,
-        x,
-        y,
-      ) {
+      match
+        solver_pde_characteristic_invariant_separable(coeff_x, coeff_y, x, y) {
         Some(value) => value
         None =>
           raise SolverError::ValueError(
@@ -8651,7 +9182,9 @@ fn solver_pdsolve_variable_coeff(
     y,
   )
   guard !y_candidates.is_empty() else {
-    raise SolverError::ValueError("pdsolve: Cannot solve " + @symprint.to_string(func))
+    raise SolverError::ValueError(
+      "pdsolve: Cannot solve " + @symprint.to_string(func),
+    )
   }
   let y_sub = y_candidates[0]
   let ode_func = solver_same_head_function(func, x)
@@ -8661,19 +9194,15 @@ fn solver_pdsolve_variable_coeff(
         solver_symbol_subst(coeff_x, y, y_sub),
         @symcalculus.diff(ode_func, x),
       ]),
-      @symcore.mul([
-        solver_symbol_subst(coeff_f, y, y_sub),
-        ode_func,
-      ]),
-      @symcore.mul([
-        @symcore.int(-1),
-        solver_symbol_subst(source, y, y_sub),
-      ]),
+      @symcore.mul([solver_symbol_subst(coeff_f, y, y_sub), ode_func]),
+      @symcore.mul([@symcore.int(-1), solver_symbol_subst(source, y, y_sub)]),
     ]),
   )
   let solved = dsolve(reduced_eq, func=Some(ode_func), hint="1st_linear")
   let rhs = solver_pde_solution_rhs(solved, ode_func)
-  let with_solvefun = solver_replace_solution_constants_with_function(rhs, eta, solvefun) catch {
+  let with_solvefun = solver_replace_solution_constants_with_function(
+    rhs, eta, solvefun,
+  ) catch {
     _ => rhs
   }
   Expr::Relational(
@@ -8732,65 +9261,44 @@ pub fn pdsolve(
           @symprint.to_string(f),
         )
       } else {
-        raise SolverError::ValueError("pdsolve: Cannot solve " + @symprint.to_string(eq))
+        raise SolverError::ValueError(
+          "pdsolve: Cannot solve " + @symprint.to_string(eq),
+        )
       }
     }
     let entries : Array[(String, Expr)] = []
-    let candidates =
-      if hint == "all_Integral" {
-        let integral_candidates : Array[String] = []
-        for name in ordered {
-          if name == "1st_linear_constant_coeff" {
-            integral_candidates.push("1st_linear_constant_coeff_Integral")
-          } else if name != "1st_linear_constant_coeff_Integral" {
-            integral_candidates.push(name)
-          }
+    let candidates = if hint == "all_Integral" {
+      let integral_candidates : Array[String] = []
+      for name in ordered {
+        if name == "1st_linear_constant_coeff" {
+          integral_candidates.push("1st_linear_constant_coeff_Integral")
+        } else if name != "1st_linear_constant_coeff_Integral" {
+          integral_candidates.push(name)
         }
-        integral_candidates
-      } else {
-        ordered
       }
+      integral_candidates
+    } else {
+      ordered
+    }
     let (x, y, coeff_x, coeff_y, coeff_f, source) = matched.unwrap()
     for name in candidates {
       let value = match name {
         "1st_linear_constant_coeff_homogeneous" =>
           solver_pdsolve_constant_coeff(
-            f,
-            x,
-            y,
-            coeff_x,
-            coeff_y,
-            coeff_f,
-            source,
-            false,
-            solvefun,
+            f, x, y, coeff_x, coeff_y, coeff_f, source, false, solvefun,
           )
         "1st_linear_constant_coeff" =>
           solver_pdsolve_constant_coeff(
-            f,
-            x,
-            y,
-            coeff_x,
-            coeff_y,
-            coeff_f,
-            source,
-            false,
-            solvefun,
+            f, x, y, coeff_x, coeff_y, coeff_f, source, false, solvefun,
           )
         "1st_linear_constant_coeff_Integral" =>
           solver_pdsolve_constant_coeff(
-            f,
-            x,
-            y,
-            coeff_x,
-            coeff_y,
-            coeff_f,
-            source,
-            true,
-            solvefun,
+            f, x, y, coeff_x, coeff_y, coeff_f, source, true, solvefun,
           )
         "1st_linear_variable_coeff" =>
-          solver_pdsolve_variable_coeff(f, x, y, coeff_x, coeff_y, coeff_f, source, solvefun)
+          solver_pdsolve_variable_coeff(
+            f, x, y, coeff_x, coeff_y, coeff_f, source, solvefun,
+          )
         _ => raise SolverError::ValueError("Hint not recognized: " + name)
       }
       entries.push((name, value))
@@ -8798,11 +9306,8 @@ pub fn pdsolve(
     return solver_desolve_result_dict(order, default_hint, eq, entries)
   }
   let recognized = [
-    "default",
-    "1st_linear_constant_coeff_homogeneous",
-    "1st_linear_constant_coeff",
-    "1st_linear_constant_coeff_Integral",
-    "1st_linear_variable_coeff",
+    "default", "1st_linear_constant_coeff_homogeneous", "1st_linear_constant_coeff",
+    "1st_linear_constant_coeff_Integral", "1st_linear_variable_coeff",
   ]
   if !recognized.contains(hint) {
     raise SolverError::ValueError("Hint not recognized: " + hint)
@@ -8819,59 +9324,45 @@ pub fn pdsolve(
               @symprint.to_string(f),
             )
           } else {
-            raise SolverError::ValueError("pdsolve: Cannot solve " + @symprint.to_string(eq))
+            raise SolverError::ValueError(
+              "pdsolve: Cannot solve " + @symprint.to_string(eq),
+            )
           }
       }
     other => other
   }
   if !ordered.contains(selected) {
     raise SolverError::ValueError(
-      "PDE " + @symprint.to_string(canonical_expr(eq)) + " does not match hint " + selected,
+      "PDE " +
+      @symprint.to_string(canonical_expr(eq)) +
+      " does not match hint " +
+      selected,
     )
   }
   let (x, y, coeff_x, coeff_y, coeff_f, source) = match matched {
     Some(value) => value
-    None => raise SolverError::ValueError("pdsolve: Cannot solve " + @symprint.to_string(eq))
+    None =>
+      raise SolverError::ValueError(
+        "pdsolve: Cannot solve " + @symprint.to_string(eq),
+      )
   }
   match selected {
     "1st_linear_constant_coeff_homogeneous" =>
       solver_pdsolve_constant_coeff(
-        f,
-        x,
-        y,
-        coeff_x,
-        coeff_y,
-        coeff_f,
-        source,
-        false,
-        solvefun,
+        f, x, y, coeff_x, coeff_y, coeff_f, source, false, solvefun,
       )
     "1st_linear_constant_coeff" =>
       solver_pdsolve_constant_coeff(
-        f,
-        x,
-        y,
-        coeff_x,
-        coeff_y,
-        coeff_f,
-        source,
-        false,
-        solvefun,
+        f, x, y, coeff_x, coeff_y, coeff_f, source, false, solvefun,
       )
     "1st_linear_constant_coeff_Integral" =>
       solver_pdsolve_constant_coeff(
-        f,
-        x,
-        y,
-        coeff_x,
-        coeff_y,
-        coeff_f,
-        source,
-        true,
-        solvefun,
+        f, x, y, coeff_x, coeff_y, coeff_f, source, true, solvefun,
       )
     "1st_linear_variable_coeff" =>
-      solver_pdsolve_variable_coeff(f, x, y, coeff_x, coeff_y, coeff_f, source, solvefun)
+      solver_pdsolve_variable_coeff(
+        f, x, y, coeff_x, coeff_y, coeff_f, source, solvefun,
+      )
     _ => raise SolverError::ValueError("Hint not recognized: " + selected)
   }
 }
@@ -8965,8 +9456,7 @@ fn solver_checkpdesol_single(
   }
   let rhs = match sol_eq {
     Expr::Relational(@symcore.RelOp::Eq, lhs, value) =>
-      if solver_is_same_undefined_application(lhs, f) &&
-        !@symcore.has(value, f) {
+      if solver_is_same_undefined_application(lhs, f) && !@symcore.has(value, f) {
         value
       } else {
         if solve_for_func {
@@ -9015,14 +9505,18 @@ fn solver_checkpdesol_single(
     }
     None => ()
   }
-  match solver_extract_pde_linear_homogeneous(pde, f) {
-    Some((x, y, a, b, c)) => {
-      let residual = canonical_expr(
-        @symcore.add([
-          @symcore.mul([a, @symcalculus.diff(rhs, x)]),
-          @symcore.mul([b, @symcalculus.diff(rhs, y)]),
-          @symcore.mul([c, rhs]),
-        ]),
+  let reduced_pde = solver_pde_reduce_highest_derivative_power(pde, f)
+  match solver_extract_pde_linear(reduced_pde, f) {
+    Some((x, y, a, b, c, source)) => {
+      let residual = solver_checkpdesol_normalize(
+        canonical_expr(
+          @symcore.add([
+            @symcore.mul([a, @symcalculus.diff(rhs, x)]),
+            @symcore.mul([b, @symcalculus.diff(rhs, y)]),
+            @symcore.mul([c, rhs]),
+            @symcore.mul([@symcore.int(-1), source]),
+          ]),
+        ),
       )
       return (expr_is_zeroish(residual) == Some(true), residual)
     }
