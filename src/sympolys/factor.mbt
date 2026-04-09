@@ -446,9 +446,11 @@ fn bigint_divisors(n0 : BigInt) -> Array[BigInt] {
 ///|
 fn push_unique_rational(
   out : Array[@symnum.BigRational],
+  seen : Map[@symnum.BigRational, Bool],
   value : @symnum.BigRational,
 ) -> Unit {
-  if !out.contains(value) {
+  if !seen.contains(value) {
+    seen.set(value, true)
     out.push(value)
   }
 }
@@ -461,6 +463,7 @@ fn rational_root_candidates(
     raise PolyError::NotUnivariate
   }
   let candidates : Array[@symnum.BigRational] = Array::new()
+  let seen : Map[@symnum.BigRational, Bool] = Map::new()
   let mut has_zero = false
   let mut constant_abs = BigInt::from_int(0)
   let mut leading_abs = BigInt::from_int(1)
@@ -480,21 +483,31 @@ fn rational_root_candidates(
     None => ()
   }
   if has_zero {
-    push_unique_rational(candidates, @symnum.BigRational::zero())
+    push_unique_rational(candidates, seen, @symnum.BigRational::zero())
   }
   if constant_abs.is_zero() {
     return candidates
   }
   let p_divs = bigint_divisors(constant_abs)
+  if leading_abs.equal_int(1) {
+    for p in p_divs {
+      let pos = @symnum.BigRational::from_bigint(p)
+      push_unique_rational(candidates, seen, pos)
+      if !p.is_zero() {
+        push_unique_rational(candidates, seen, pos.neg_r())
+      }
+    }
+    return candidates
+  }
   let q_divs = bigint_divisors(leading_abs)
   for p in p_divs {
     for q in q_divs {
       let pos = @symnum.BigRational::new(p, q) catch {
         _ => continue
       }
-      push_unique_rational(candidates, pos)
+      push_unique_rational(candidates, seen, pos)
       if !p.is_zero() {
-        push_unique_rational(candidates, pos.neg_r())
+        push_unique_rational(candidates, seen, pos.neg_r())
       }
     }
   }

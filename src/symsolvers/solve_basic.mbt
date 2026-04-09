@@ -390,6 +390,28 @@ fn canonical_expr(expr : Expr) -> Expr {
 }
 
 ///|
+fn lightly_normalize_expr(expr : Expr) -> Expr {
+  @sympolys.domain_normal_expr(@sympolys.Domain::EX, expr) catch {
+    _ => expr
+  }
+}
+
+///|
+fn expr_contains_abs(expr : Expr) -> Bool {
+  match expr {
+    Expr::Apply(Expr::FunctionHead("Abs"), [_]) => true
+    _ => {
+      for child in @symcore.children(expr) {
+        if expr_contains_abs(child) {
+          return true
+        }
+      }
+      false
+    }
+  }
+}
+
+///|
 fn polynomial_term_map_one(coeff : Expr) -> Map[Int, Expr] {
   let out : Map[Int, Expr] = {}
   if expr_is_zeroish(coeff) != Some(true) {
@@ -1701,36 +1723,40 @@ fn solve_via_product_expr(
   symbol : Expr,
   domain : Set,
 ) -> Set? raise SolverError {
-  let normalized = canonical_expr(normalize_equation(expr))
-  match normalized {
-    Expr::Mul(args) => {
-      let dependent : Array[Expr] = []
-      for arg in args {
-        if @symcore.has(arg, symbol) {
-          dependent.push(arg)
-        }
-      }
-      if dependent.length() <= 1 {
-        return None
-      }
-      let collected : Array[Expr] = []
-      for factor in dependent {
-        let factor_set = solveset(factor, symbol=Some(symbol), domain~)
-        let factor_items = match finite_set_items(factor_set) {
-          Some(items) => items
-          None => return None
-        }
-        for item in factor_items {
-          let candidate = canonical_expr(item)
-          if valid_solution_for_expr(normalized, symbol, candidate, domain) {
-            expr_push_unique(collected, candidate)
-          }
-        }
-      }
-      Some(@symsets.finite_set(collected))
+  let raw = normalize_equation(expr)
+  guard raw is Expr::Mul(raw_args) else { return None }
+  let dependent : Array[Expr] = []
+  for arg in raw_args {
+    if @symcore.has(arg, symbol) {
+      dependent.push(arg)
     }
-    _ => None
   }
+  if dependent.length() <= 1 {
+    return None
+  }
+  let normalized = canonical_expr(raw)
+  let factors = match normalized {
+    Expr::Mul(args) => args
+    _ => dependent
+  }
+  let collected : Array[Expr] = []
+  for factor in factors {
+    if !@symcore.has(factor, symbol) {
+      continue
+    }
+    let factor_set = solveset(factor, symbol=Some(symbol), domain~)
+    let factor_items = match finite_set_items(factor_set) {
+      Some(items) => items
+      None => return None
+    }
+    for item in factor_items {
+      let candidate = canonical_expr(item)
+      if valid_solution_for_expr(raw, symbol, candidate, domain) {
+        expr_push_unique(collected, candidate)
+      }
+    }
+  }
+  Some(@symsets.finite_set(collected))
 }
 
 ///|
@@ -1774,6 +1800,9 @@ fn solve_via_abs_expr(
   match @symsets.is_subset(domain, @symsets.reals()) {
     @symsets.SetBool::True => ()
     _ => return None
+  }
+  if !expr_contains_abs(expr) {
+    return None
   }
   let terms = match canonical_expr(normalize_equation(expr)) {
     Expr::Add(args) => args
@@ -2172,10 +2201,11 @@ pub fn solveset(
     _ => ()
   }
   let raw_normalized = normalize_equation(expr)
-  let normalized = canonical_expr(raw_normalized)
+  let normalized = lightly_normalize_expr(raw_normalized)
   let free = filtered_symbols(@symcore.free_symbols(normalized), [], [])
   if !expr_in_list(free, sym) {
-    return match expr_is_zeroish(normalized) {
+    let simplified = canonical_expr(normalized)
+    return match expr_is_zeroish(simplified) {
       Some(true) => domain
       _ => @symsets.empty_set()
     }
