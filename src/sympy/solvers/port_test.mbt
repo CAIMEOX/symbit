@@ -9009,3 +9009,19 @@ test "solvers parity lie heuristic function_sum" {
     "(1, 1, [True], [True], [0])",
   )
 }
+
+///|
+test "solvers parity rational linear roots avoid dense integer scans" {
+  let actual = @symsets.to_string(
+    @symsolvers.solveset(
+      (@symcore.int(2) * x() + @symcore.int(-1)) *
+      (@symcore.int(3) * x() + @symcore.int(1)),
+      symbol=Some(x()),
+      domain=@symsets.reals(),
+    ),
+  )
+  let expected = solvers_eval_str(
+    "repr(sympy.solveset((2*x - 1)*(3*x + 1), x, sympy.S.Reals))",
+  )
+  assert_eq(normalize_braced_items_text(actual), normalize_braced_items_text(expected))
+}

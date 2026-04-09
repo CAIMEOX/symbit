@@ -1251,28 +1251,6 @@ fn valid_solution_for_expr(
 }
 
 ///|
-fn validate_solution_set(
-  original_expr : Expr,
-  symbol : Expr,
-  domain : Set,
-  set : Set,
-) -> Set raise SolverError {
-  match set {
-    @symsets.Set::FiniteSet(items) => {
-      let filtered : Array[Expr] = []
-      for item in items {
-        if valid_solution_for_expr(original_expr, symbol, item, domain) &&
-          !filtered.any(existing => @symcore.compare_expr(existing, item) == 0) {
-          filtered.push(item)
-        }
-      }
-      @symsets.finite_set(filtered)
-    }
-    _ => set
-  }
-}
-
-///|
 fn exclude_relational_singularities(
   expr : Expr,
   symbol : Expr,
@@ -1900,6 +1878,24 @@ fn solve_univariate_polynomial(
 }
 
 ///|
+fn solve_univariate_polynomial_from_poly(
+  poly : @sympolys.Poly,
+  domain : Set,
+) -> Set raise SolverError {
+  let roots = @sympolys.roots(poly) catch {
+    err => raise wrap_poly_error("solveset", err)
+  }
+  let filtered : Array[Expr] = []
+  for root in roots {
+    let normalized = canonical_expr(root)
+    if expr_in_domain(domain, normalized) {
+      filtered.push(normalized)
+    }
+  }
+  @symsets.finite_set(filtered)
+}
+
+///|
 fn merge_assignments(
   base : Map[String, Expr],
   extra : Map[String, Expr],
@@ -2192,6 +2188,18 @@ pub fn solveset(
     Some(set) => return finalize_solveset_domain(domain, set)
     None => ()
   }
+  let poly_name = symbol_name(sym)
+  let poly_fast : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr_defaults(
+    normalized,
+    gens=[poly_name],
+  )
+  match poly_fast {
+    Ok(poly) if poly.degree(0) > 2 => {
+      let set = solve_univariate_polynomial_from_poly(poly, domain)
+      return finalize_solveset_domain(domain, set)
+    }
+    _ => ()
+  }
   let linear = solve_linear(normalized, symbols=[sym], exclude=[])
   if @symcore.compare_expr(linear.0, sym) == 0 {
     let value = linear.1
@@ -2215,11 +2223,7 @@ pub fn solveset(
     normalized, sym, domain,
   )
   match poly_try {
-    Ok(set) =>
-      finalize_solveset_domain(
-        domain,
-        validate_solution_set(expr, sym, domain, set),
-      )
+    Ok(set) => finalize_solveset_domain(domain, set)
     Err(_) => symbolic_condition_set(normalized, sym, domain)
   }
 }

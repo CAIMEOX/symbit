@@ -7957,3 +7957,19 @@ test "solveset matches additional SymPy set behavior cases batch 30" {
     0,
   )
 }
+
+///|
+test "solveset finds rational linear roots via SymPy-style polynomial root enumeration" {
+  let real_domain = @symsets.reals()
+  let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("1/2") }
+  let third = @symcore.rational_from_ints(1, 3) catch { _ => fail("1/3") }
+  let expr = (@symcore.int(2) * x() + @symcore.int(-1)) *
+    (@symcore.int(3) * x() + @symcore.int(1))
+  assert_eq(
+    @symsets.compare_set(
+      solveset(expr, symbol=Some(x()), domain=real_domain),
+      @symsets.finite_set([half, @symcore.int(-1) * third]),
+    ),
+    0,
+  )
+}

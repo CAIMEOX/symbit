@@ -445,3 +445,20 @@ test "factor wb: residual reachable branch sweep" {
   let edf_parts = equal_degree_factor(edf_poly, 2, 5, 5, 1, 17, None)
   assert_true(!edf_parts.is_empty())
 }
+
+///|
+test "factor wb: rational linear roots use divisor candidates" {
+  let x = @symcore.Expr::Symbol("x")
+  let parts = factor_linear_rationals(
+    PolyBuilder::new(["x"], Domain::QQ).from_expr(
+      (@symcore.int(2) * x + @symcore.int(-1)) *
+      (@symcore.int(3) * x + @symcore.int(1)),
+    ),
+  )
+  let texts = parts
+    .filter(p => p.degree(0) == 1)
+    .map(p => @symprint.to_string(p.to_expr()))
+  assert_eq(texts.length(), 2)
+  assert_true(texts.contains("x - 1/2"))
+  assert_true(texts.contains("x + 1/3"))
+}

@@ -372,30 +372,220 @@ fn pow_coeff(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational {
   res
 }
 
+fn bigint_abs_local(value : BigInt) -> BigInt {
+  if value.op_lt(BigInt::from_int(0)) {
+    value.neg()
+  } else {
+    value
+  }
+}
+
 ///|
-fn eval_univar(
+fn bigint_factor_pairs(n0 : BigInt) -> Array[(BigInt, Int)] {
+  let factors : Array[(BigInt, Int)] = Array::new()
+  let mut n = bigint_abs_local(n0)
+  if n.is_zero() {
+    return factors
+  }
+  let one = BigInt::from_int(1)
+  let mut d = BigInt::from_int(2)
+  while d.mul(d).compare(n) <= 0 {
+    let mut exp = 0
+    while n.mod(d).is_zero() {
+      n = n.div(d)
+      exp = exp + 1
+    }
+    if exp > 0 {
+      factors.push((d, exp))
+    }
+    d = d.add(one)
+  }
+  if n.compare(one) > 0 {
+    factors.push((n, 1))
+  }
+  factors
+}
+
+///|
+fn bigint_divisors_from_factors(
+  factors : Array[(BigInt, Int)],
+  idx : Int,
+  acc : BigInt,
+  out : Array[BigInt],
+) -> Unit {
+  if idx >= factors.length() {
+    out.push(acc)
+    return
+  }
+  let (p, exp) = factors[idx]
+  let one = BigInt::from_int(1)
+  let mut value = one
+  for _ in 0..<=exp {
+    bigint_divisors_from_factors(factors, idx + 1, acc.mul(value), out)
+    value = value.mul(p)
+  }
+}
+
+///|
+fn bigint_divisors(n0 : BigInt) -> Array[BigInt] {
+  let n = bigint_abs_local(n0)
+  if n.is_zero() {
+    return []
+  }
+  let out : Array[BigInt] = Array::new()
+  bigint_divisors_from_factors(
+    bigint_factor_pairs(n),
+    0,
+    BigInt::from_int(1),
+    out,
+  )
+  out.sort()
+  out
+}
+
+///|
+fn push_unique_rational(
+  out : Array[@symnum.BigRational],
+  value : @symnum.BigRational,
+) -> Unit {
+  if !out.contains(value) {
+    out.push(value)
+  }
+}
+
+///|
+fn rational_root_candidates(
   poly : Poly,
-  val : @symnum.BigRational,
-) -> @symnum.BigRational raise PolyError {
-  let mut acc = @symnum.BigRational::zero()
+) -> Array[@symnum.BigRational] raise PolyError {
+  if poly.gens.length() != 1 {
+    raise PolyError::NotUnivariate
+  }
+  let candidates : Array[@symnum.BigRational] = Array::new()
+  let mut has_zero = false
+  let mut constant_abs = BigInt::from_int(0)
+  let mut leading_abs = BigInt::from_int(1)
   for m, c in poly.coeffs {
     let coeff = fe_expect_rational(c)
-    let exp = m.exps[0]
-    let mut pow = @symnum.BigRational::one()
-    let mut k = exp
-    let mut base = val
-    while k > 0 {
-      if k % 2 == 1 {
-        pow = pow.mul_r(base)
+    if m.exps[0] == 0 {
+      has_zero = true
+      let num = coeff.numerator()
+      constant_abs = bigint_abs_local(num)
+    }
+  }
+  match poly.leading_term() {
+    Some((_, lc)) => {
+      let num = fe_expect_rational(lc).numerator()
+      leading_abs = bigint_abs_local(num)
+    }
+    None => ()
+  }
+  if has_zero {
+    push_unique_rational(candidates, @symnum.BigRational::zero())
+  }
+  if constant_abs.is_zero() {
+    return candidates
+  }
+  let p_divs = bigint_divisors(constant_abs)
+  let q_divs = bigint_divisors(leading_abs)
+  for p in p_divs {
+    for q in q_divs {
+      let pos = @symnum.BigRational::new(p, q) catch {
+        _ => continue
       }
-      k = k / 2
-      if k > 0 {
-        base = base.mul_r(base)
+      push_unique_rational(candidates, pos)
+      if !p.is_zero() {
+        push_unique_rational(candidates, pos.neg_r())
       }
     }
-    acc = acc.add_r(coeff.mul_r(pow))
   }
-  acc
+  candidates
+}
+
+///|
+fn linear_factor_from_root(
+  poly : Poly,
+  root : @symnum.BigRational,
+) -> Poly raise PolyError {
+  from_dense(
+    [
+      fe_from_rational(root.neg_r(), poly.domain),
+      fe_from_int(1, poly.domain),
+    ],
+    poly.gens,
+    poly.domain,
+  )
+  .with_order(poly.order)
+}
+
+///|
+fn divide_by_linear_root(
+  poly : Poly,
+  root : @symnum.BigRational,
+) -> Poly? raise PolyError {
+  if poly.gens.length() != 1 {
+    raise PolyError::NotUnivariate
+  }
+  let degree = poly.degree(0)
+  if degree <= 0 {
+    return None
+  }
+  let dense = to_dense(poly, degree=degree)
+  let quotient_dense : Array[FieldElem] = Array::make(
+    degree,
+    fe_from_int(0, poly.domain),
+  )
+  let mut acc = fe_expect_rational(dense[degree])
+  quotient_dense.set(
+    degree - 1,
+    fe_from_rational(acc, poly.domain) catch { _ => return None },
+  )
+  let mut k = degree - 1
+  while k > 0 {
+    let coeff = fe_expect_rational(dense[k]).add_r(root.mul_r(acc))
+    quotient_dense.set(
+      k - 1,
+      fe_from_rational(coeff, poly.domain) catch { _ => return None },
+    )
+    acc = coeff
+    k = k - 1
+  }
+  let remainder = fe_expect_rational(dense[0]).add_r(root.mul_r(acc))
+  if !remainder.is_zero() {
+    return None
+  }
+  Some(from_dense(quotient_dense, poly.gens, poly.domain).with_order(poly.order))
+}
+
+///|
+fn factor_linear_rational_split(
+  poly : Poly,
+) -> (Array[Poly], Poly) raise PolyError {
+  if poly.gens.length() != 1 {
+    raise PolyError::NotUnivariate
+  }
+  let candidates = rational_root_candidates(poly)
+  let factors : Array[Poly] = Array::new()
+  let mut remaining = poly
+  for root in candidates {
+    let factor_poly = linear_factor_from_root(poly, root) catch { _ => continue }
+    let mut keep_dividing = true
+    while keep_dividing {
+      if remaining.degree(0) == 0 {
+        break
+      }
+      match divide_by_linear_root(remaining, root) {
+        Some(quotient) => {
+          factors.push(factor_poly)
+          remaining = quotient
+        }
+        None => keep_dividing = false
+      }
+    }
+    if remaining.degree(0) == 0 {
+      break
+    }
+  }
+  (factors, remaining)
 }
 
 ///|
@@ -432,51 +622,7 @@ fn eval_univar_mod(
 
 ///|
 fn factor_linear_rationals(poly : Poly) -> Array[Poly] raise PolyError {
-  if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
-  }
-  let mut remaining = poly
-  let factors : Array[Poly] = Array::new()
-  let const_candidates : Array[Int] = Array::new()
-  let mut ct = BigInt::from_int(0)
-  for _, c in remaining.coeffs {
-    if ct.is_zero() {
-      ct = fe_expect_rational(c).numerator()
-    }
-  }
-  let abs_ct = if ct.op_lt(BigInt::from_int(0)) { ct.neg() } else { ct }
-  let abs_ct_int = abs_ct.to_int()
-  const_candidates.push(0)
-  for d in 1..<=abs_ct_int {
-    if abs_ct_int % d == 0 {
-      const_candidates.push(d)
-      const_candidates.push(-d)
-    }
-  }
-  let mut changed = true
-  while changed {
-    changed = false
-    if remaining.degree(0) == 0 {
-      break
-    }
-    for cand in const_candidates {
-      if remaining.degree(0) == 0 {
-        break
-      }
-      let r = @symnum.BigRational::from_int(cand)
-      if eval_univar(remaining, r).is_zero() {
-        let factor_poly = Poly::from_expr(
-          Expr::Symbol(remaining.gens[0]) - int(cand),
-          remaining.gens,
-          remaining.domain,
-        )
-        factors.push(factor_poly)
-        remaining = remaining.div_exact_univar(factor_poly)
-        changed = true
-        break
-      }
-    }
-  }
+  let (factors, remaining) = factor_linear_rational_split(poly)
   if !is_one(remaining) && !remaining.is_zero() {
     factors.push(remaining)
   }

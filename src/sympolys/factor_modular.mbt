@@ -437,17 +437,12 @@ fn recombine_lifted(
 /// Public integer factoring entry.
 fn factor_integer(poly : Poly) -> Array[Poly] raise PolyError {
   let factors : Array[Poly] = Array::new()
-  let lin_parts = factor_linear_rationals(poly)
+  let (linear_factors, remainder0) = factor_linear_rational_split(poly)
   let lin_only : Array[Poly] = Array::new()
-  let mut remainder = poly
-  for f in lin_parts {
-    if f.degree(0) == 1 {
-      factors.push(f)
-      lin_only.push(f)
-      remainder = remainder.div_exact_univar(f)
-    } else {
-      remainder = f
-    }
+  let remainder = remainder0
+  for f in linear_factors {
+    factors.push(f)
+    lin_only.push(f)
   }
   if factors.is_empty() {
     let bi_parts = biquadratic_factor(remainder)
