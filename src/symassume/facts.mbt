@@ -1,4 +1,8 @@
 ///|
+/// Collected unary facts known about one symbol.
+///
+/// Each field stores a three-valued answer, so callers can record definite
+/// knowledge and partial uncertainty in the same record.
 pub struct SymbolFacts {
   is_zero : Tri
   is_nonzero : Tri
@@ -10,9 +14,11 @@ pub struct SymbolFacts {
 } derive(Eq, Show)
 
 ///|
+/// Mutable environment mapping symbol names to known facts.
 pub type AssumeEnv = Map[String, SymbolFacts]
 
 ///|
+/// Return a fact record where every field is unknown.
 pub fn unknown_facts() -> SymbolFacts {
   SymbolFacts::{
     is_zero: Tri::Unknown,
@@ -26,6 +32,11 @@ pub fn unknown_facts() -> SymbolFacts {
 }
 
 ///|
+/// Build and normalize a fact record.
+///
+/// Omitted fields default to `Unknown`. The result is passed through
+/// [`normalize_facts`](#normalize_facts) so obvious implications such as
+/// “zero implies real and nonnegative” are filled in immediately.
 pub fn symbol_facts(
   is_zero? : Tri = Tri::Unknown,
   is_nonzero? : Tri = Tri::Unknown,
@@ -47,11 +58,16 @@ pub fn symbol_facts(
 }
 
 ///|
+/// Return an empty assumptions environment.
 pub fn empty_env() -> AssumeEnv {
   {}
 }
 
 ///|
+/// Build an assumptions environment from explicit `(name, facts)` pairs.
+///
+/// Each record is normalized before insertion so the stored environment stays
+/// internally consistent.
 pub fn assume_env(entries : Array[(String, SymbolFacts)]) -> AssumeEnv {
   let env : AssumeEnv = {}
   for entry in entries {
@@ -62,11 +78,15 @@ pub fn assume_env(entries : Array[(String, SymbolFacts)]) -> AssumeEnv {
 }
 
 ///|
+/// Set or replace the facts stored for one symbol name.
 pub fn env_set(env : AssumeEnv, name : String, facts : SymbolFacts) -> Unit {
   env[name] = normalize_facts(facts)
 }
 
 ///|
+/// Look up the facts stored for one symbol name.
+///
+/// Missing entries are treated as fully unknown rather than raising an error.
 pub fn env_get(env : AssumeEnv, name : String) -> SymbolFacts {
   match env.get(name) {
     Some(facts) => normalize_facts(facts)
@@ -75,6 +95,11 @@ pub fn env_get(env : AssumeEnv, name : String) -> SymbolFacts {
 }
 
 ///|
+/// Propagate simple implications inside a fact record.
+///
+/// This routine fills in consequences such as:
+/// zero -> nonzero is false, integer -> rational, rational -> real, and
+/// positive -> nonnegative. It does not try to prove arbitrary facts.
 pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
   let mut is_zero = facts.is_zero
   let mut is_nonzero = facts.is_nonzero

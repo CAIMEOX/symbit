@@ -1,4 +1,5 @@
 ///|
+/// Series labels used in Cartan-type classification.
 pub enum CartanSeries {
   A
   B
@@ -114,6 +115,7 @@ pub fn CartanType::series(self : CartanType) -> String {
 }
 
 ///|
+/// Return the series label as an enum value instead of a string.
 pub fn CartanType::series_kind(self : CartanType) -> CartanSeries {
   self.series
 }

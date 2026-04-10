@@ -5,6 +5,7 @@ pub(all) enum CombineMode {
 } derive(Eq)
 
 ///|
+/// Pick elements from `values` by index.
 pub fn[T] index(values : Array[T], indices : Array[Int]) -> Array[T] {
   let out : Array[T] = []
   for idx in indices {
@@ -14,6 +15,9 @@ pub fn[T] index(values : Array[T], indices : Array[Int]) -> Array[T] {
 }
 
 ///|
+/// Partition `values` according to groups of indices.
+///
+/// Each inner array in `parts` describes one output group.
 pub fn[T] partition(
   values : Array[T],
   parts : Array[Array[Int]],
@@ -90,6 +94,10 @@ fn[T] permutations(values : Array[T]) -> Array[Array[T]] {
 }
 
 ///|
+/// Enumerate all grouped pairings used by associative or commutative matching.
+///
+/// The result pairs a grouped view of `lhs` with a grouped view of `rhs`. In
+/// commutative mode, permutations of the larger side are considered as well.
 pub fn[T] allcombinations(
   lhs : Array[T],
   rhs : Array[T],
@@ -134,6 +142,7 @@ fn[T, Op] unpack_compound(
 }
 
 ///|
+/// Test whether binding `key` to `term` would create a recursive substitution.
 pub fn[T : Eq, Op] occur_check(
   key : MatchVar[T],
   term : UnifyTerm[T, Op],
@@ -229,6 +238,11 @@ fn[T : Eq + Hash, Op : Eq] unify_variable_into(
 }
 
 ///|
+/// Unify two generic terms and return every consistent substitution.
+///
+/// The optional callbacks describe which compound terms should be treated as
+/// associative or commutative during matching. The result array is empty when no
+/// unifier exists.
 pub fn[T : Eq + Hash, Op : Eq] core_unify(
   lhs : UnifyTerm[T, Op],
   rhs : UnifyTerm[T, Op],

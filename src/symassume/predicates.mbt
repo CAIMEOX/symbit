@@ -1,4 +1,9 @@
 ///|
+/// Evaluate one primitive predicate directly on an expression.
+///
+/// This entry point bypasses the richer query language and only handles the
+/// unary predicates listed by [`Predicate`](#predicate). It is useful for fast
+/// local checks such as “is this expression real?” or “is this expression zero?”
 pub fn ask_predicate(
   expr : Expr,
   predicate : Predicate,
@@ -28,6 +33,7 @@ fn ordinary_application_name_args(expr : Expr) -> (String, Array[Expr])? {
 }
 
 ///|
+/// Decide whether an expression is exactly zero.
 pub fn is_zero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => return function_is_zero(name, args, env)
@@ -64,6 +70,7 @@ pub fn is_zero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
 }
 
 ///|
+/// Decide whether an expression is definitely not zero.
 pub fn is_nonzero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => return function_is_nonzero(name, args, env)
@@ -101,6 +108,7 @@ pub fn is_nonzero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
 }
 
 ///|
+/// Decide whether an expression is an integer.
 pub fn is_integer(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => return function_is_integer(name, args, env)
@@ -135,6 +143,7 @@ pub fn is_integer(expr : Expr, env? : AssumeEnv = {}) -> Tri {
 }
 
 ///|
+/// Decide whether an expression is a rational number.
 pub fn is_rational(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => return function_is_rational(name, args, env)
@@ -169,6 +178,7 @@ pub fn is_rational(expr : Expr, env? : AssumeEnv = {}) -> Tri {
 }
 
 ///|
+/// Decide whether an expression is real-valued.
 pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => return function_is_real(name, args, env)
@@ -202,6 +212,7 @@ pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
 }
 
 ///|
+/// Decide whether an expression is strictly positive.
 pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => return function_is_positive(name, args, env)
@@ -242,6 +253,7 @@ pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
 }
 
 ///|
+/// Decide whether an expression is greater than or equal to zero.
 pub fn is_nonnegative(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => return function_is_nonnegative(name, args, env)

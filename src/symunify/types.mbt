@@ -1,21 +1,32 @@
 ///|
+/// Key identifying an unconstrained match variable.
 pub struct VariableKey[T] {
   arg : T
 } derive(Eq, Hash)
 
 ///|
+/// Key identifying a match variable with an attached validation rule.
+///
+/// The internal `id` keeps two conditional variables with the same printable
+/// payload distinct.
 pub struct CondVariableKey[T] {
   arg : T
   id : Int
 } derive(Eq, Hash)
 
 ///|
+/// Variable kinds that may appear in a unification substitution.
 pub(all) enum MatchVar[T] {
   Variable(VariableKey[T])
   CondVariable(CondVariableKey[T])
 } derive(Eq, Hash)
 
 ///|
+/// Term language used by the generic unification engine.
+///
+/// `Atom` stores indivisible values, `Compound` stores an operator plus child
+/// terms, `Sequence` stores a positional collection, and the variable cases mark
+/// holes that may be substituted during matching.
 pub(all) enum UnifyTerm[T, Op] {
   Atom(T)
   Compound(Op, Array[UnifyTerm[T, Op]])
@@ -25,6 +36,7 @@ pub(all) enum UnifyTerm[T, Op] {
 }
 
 ///|
+/// Mapping from match variables to the terms they were bound to.
 pub type Substitution[T, Op] = Map[MatchVar[T], UnifyTerm[T, Op]]
 
 ///|
@@ -38,31 +50,37 @@ fn next_cond_variable_id() -> Int {
 }
 
 ///|
+/// Build an unconstrained variable key.
 pub fn[T] variable(arg : T) -> VariableKey[T] {
   { arg, }
 }
 
 ///|
+/// Build a fresh conditional variable key.
 pub fn[T] cond_variable(arg : T) -> CondVariableKey[T] {
   { arg, id: next_cond_variable_id() }
 }
 
 ///|
+/// Recover the payload stored inside a variable key.
 pub fn[T] VariableKey::arg(self : VariableKey[T]) -> T {
   self.arg
 }
 
 ///|
+/// Recover the payload stored inside a conditional variable key.
 pub fn[T] CondVariableKey::arg(self : CondVariableKey[T]) -> T {
   self.arg
 }
 
 ///|
+/// Wrap a plain value as an atomic unification term.
 pub fn[T, Op] atom(value : T) -> UnifyTerm[T, Op] {
   UnifyTerm::Atom(value)
 }
 
 ///|
+/// Build a compound unification term.
 pub fn[T, Op] compound(
   op : Op,
   args : Array[UnifyTerm[T, Op]],
@@ -71,16 +89,21 @@ pub fn[T, Op] compound(
 }
 
 ///|
+/// Build a sequence term.
 pub fn[T, Op] sequence(items : Array[UnifyTerm[T, Op]]) -> UnifyTerm[T, Op] {
   UnifyTerm::Sequence(items.map(item => item))
 }
 
 ///|
+/// Wrap a variable key as a variable term.
 pub fn[T, Op] variable_term(key : VariableKey[T]) -> UnifyTerm[T, Op] {
   UnifyTerm::Variable(key)
 }
 
 ///|
+/// Wrap a conditional variable key as a guarded variable term.
+///
+/// `valid` is called before binding the variable to a candidate term.
 pub fn[T, Op] cond_variable_term(
   key : CondVariableKey[T],
   valid : (UnifyTerm[T, Op]) -> Bool,
@@ -89,6 +112,7 @@ pub fn[T, Op] cond_variable_term(
 }
 
 ///|
+/// Recover the payload stored inside any match-variable variant.
 pub fn[T] match_var_arg(key : MatchVar[T]) -> T {
   match key {
     MatchVar::Variable(key0) => key0.arg()
@@ -177,6 +201,10 @@ fn[T : Eq + Hash, Op] substitution_assoc(
 }
 
 ///|
+/// Convert a substitution map into a plain array of pairs.
+///
+/// This is convenient when callers want a stable iterable snapshot instead of
+/// traversing the map directly.
 pub fn[T, Op] substitution_pairs(
   subst : Substitution[T, Op],
 ) -> Array[(MatchVar[T], UnifyTerm[T, Op])] {

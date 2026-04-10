@@ -4,10 +4,14 @@
 # Use relative package paths from `src/`.
 
 .
+symassume
 symfunctions
 symintegrals
+symliealgebras
 symprint
 symsimplify
 symsolvers
 symparse
 symsets
+symtensor
+symunify

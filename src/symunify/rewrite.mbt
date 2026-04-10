@@ -1,4 +1,9 @@
 ///|
+/// Pattern-based rewrite rule.
+///
+/// `source` is the pattern to match, `target` is the replacement template,
+/// `variables` marks the expression holes, `condition` can reject candidate
+/// matches, and `assumption_query` can require extra facts before rewriting.
 pub struct RewriteRule {
   source : @symcore.Expr
   target : @symcore.Expr
@@ -207,6 +212,7 @@ fn rewrite_subs_raw(
 }
 
 ///|
+/// Build a rewrite rule from a source pattern and replacement template.
 pub fn rewriterule(
   source : @symcore.Expr,
   target : @symcore.Expr,
@@ -218,6 +224,11 @@ pub fn rewriterule(
 }
 
 ///|
+/// Apply a rewrite rule to one expression and return every valid rewrite.
+///
+/// Matching may produce more than one result when the pattern is associative or
+/// commutative. `assumptions` supplies additional facts used to validate guarded
+/// rewrites.
 pub fn RewriteRule::apply(
   self : RewriteRule,
   expr : @symcore.Expr,

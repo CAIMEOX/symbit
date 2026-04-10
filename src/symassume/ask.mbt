@@ -1,4 +1,8 @@
 ///|
+/// Errors raised by the query solver.
+///
+/// `InconsistentAssumptions` means the supplied assumptions contradict one
+/// another, so no truth value can be derived safely.
 pub(all) suberror AskError {
   InconsistentAssumptions
 }
@@ -7,16 +11,21 @@ pub(all) suberror AskError {
 let global_assumptions_ref : Ref[Array[Query]] = { val: [] }
 
 ///|
+/// Return a copy of the current global assumptions list.
 pub fn get_global_assumptions() -> Array[Query] {
   global_assumptions_ref.val.map(v => v)
 }
 
 ///|
+/// Remove all globally registered assumptions.
 pub fn clear_global_assumptions() -> Unit {
   global_assumptions_ref.val = []
 }
 
 ///|
+/// Add one query to the global assumptions list.
+///
+/// Duplicate entries are ignored.
 pub fn add_global_assumption(query : Query) -> Unit {
   for item in global_assumptions_ref.val {
     if item == query {
@@ -27,6 +36,7 @@ pub fn add_global_assumption(query : Query) -> Unit {
 }
 
 ///|
+/// Remove one query from the global assumptions list.
 pub fn remove_global_assumption(query : Query) -> Unit {
   let kept : Array[Query] = Array::new()
   for item in global_assumptions_ref.val {
@@ -38,6 +48,10 @@ pub fn remove_global_assumption(query : Query) -> Unit {
 }
 
 ///|
+/// Evaluate a proposition against explicit inputs plus the global context.
+///
+/// This is a convenience wrapper around [`ask`](#ask) that automatically adds
+/// assumptions registered through [`add_global_assumption`](#add_global_assumption).
 pub fn ask_global(
   proposition : Query,
   assumptions? : Query = query_true(),
@@ -47,6 +61,12 @@ pub fn ask_global(
 }
 
 ///|
+/// Evaluate a symbolic proposition under assumptions and known symbol facts.
+///
+/// `assumptions` is an explicit logical guard, `env` supplies per-symbol unary
+/// facts, and `context` adds extra propositions that should be treated as true
+/// while answering the query. The result is three-valued: true, false, or
+/// unknown. Contradictory assumptions raise [`AskError`](#askerror).
 pub fn ask(
   proposition : Query,
   assumptions? : Query = query_true(),
@@ -400,6 +420,10 @@ fn SatBuilder::apply_direct_atom_truth(
 }
 
 ///|
+/// Convert an assumptions environment into a conjunction of atomic queries.
+///
+/// This is useful when a caller wants to inspect or reuse the logical meaning of
+/// a stored environment instead of asking against it directly.
 pub fn env_to_query(env : AssumeEnv) -> Query {
   let facts : Array[Query] = Array::new()
   for name, sf in env {

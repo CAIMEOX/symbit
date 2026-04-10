@@ -1,4 +1,5 @@
 ///|
+/// Operator tag type used when turning expressions into unification terms.
 pub type ExprOp = @strategies_util.ExprOp
 
 ///|
@@ -88,6 +89,7 @@ fn op_is_commutative(op : ExprOp) -> Bool {
 }
 
 ///|
+/// Report whether a term should be matched associatively.
 pub fn is_associative(term : UnifyTerm[@symcore.Expr, ExprOp]) -> Bool {
   match term {
     UnifyTerm::Compound(op, _) => op_is_associative(op)
@@ -96,6 +98,7 @@ pub fn is_associative(term : UnifyTerm[@symcore.Expr, ExprOp]) -> Bool {
 }
 
 ///|
+/// Report whether a term should be matched commutatively.
 pub fn is_commutative(term : UnifyTerm[@symcore.Expr, ExprOp]) -> Bool {
   match term {
     UnifyTerm::Compound(op, args) =>
@@ -113,6 +116,10 @@ pub fn is_commutative(term : UnifyTerm[@symcore.Expr, ExprOp]) -> Bool {
 }
 
 ///|
+/// Convert an expression into a generic unification term.
+///
+/// Any expression listed in `variables` is turned into a match variable instead
+/// of a literal atom.
 pub fn deconstruct(
   expr : @symcore.Expr,
   variables? : Array[@symcore.Expr] = [],
@@ -131,6 +138,7 @@ pub fn deconstruct(
 }
 
 ///|
+/// Convert a unification term back into an expression.
 pub fn construct(term : UnifyTerm[@symcore.Expr, ExprOp]) -> @symcore.Expr {
   match term {
     UnifyTerm::Atom(expr) => expr
@@ -144,6 +152,10 @@ pub fn construct(term : UnifyTerm[@symcore.Expr, ExprOp]) -> @symcore.Expr {
 }
 
 ///|
+/// Round-trip an expression through the unification term representation.
+///
+/// This is useful when callers want the normalized constructor behavior used by
+/// the unification layer.
 pub fn rebuild(expr : @symcore.Expr) -> @symcore.Expr {
   construct(deconstruct(expr))
 }
@@ -172,6 +184,10 @@ fn external_substitution(
 }
 
 ///|
+/// Unify two expressions and return all matching substitutions.
+///
+/// Keys in the returned maps are the variable expressions supplied through
+/// `variables`, and values are the corresponding matched expressions.
 pub fn unify(
   lhs : @symcore.Expr,
   rhs : @symcore.Expr,
