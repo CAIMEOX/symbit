@@ -1,4 +1,7 @@
 ///|
+let bigint_divisors_cache : Map[String, Array[BigInt]] = {}
+
+///|
 /// Helpers and Berlekamp-style factorization for univariate polynomials.
 fn is_one(poly : Poly) -> Bool {
   if poly.coeffs.length() != 1 {
@@ -432,6 +435,11 @@ fn bigint_divisors(n0 : BigInt) -> Array[BigInt] {
   if n.is_zero() {
     return []
   }
+  let key = n.to_string()
+  match bigint_divisors_cache.get(key) {
+    Some(cached) => return cached
+    None => ()
+  }
   let out : Array[BigInt] = Array::new()
   bigint_divisors_from_factors(
     bigint_factor_pairs(n),
@@ -440,6 +448,7 @@ fn bigint_divisors(n0 : BigInt) -> Array[BigInt] {
     out,
   )
   out.sort()
+  bigint_divisors_cache[key] = out
   out
 }
 
@@ -463,7 +472,6 @@ fn rational_root_candidates(
     raise PolyError::NotUnivariate
   }
   let candidates : Array[@symnum.BigRational] = Array::new()
-  let seen : Map[@symnum.BigRational, Bool] = Map::new()
   let mut has_zero = false
   let mut constant_abs = BigInt::from_int(0)
   let mut leading_abs = BigInt::from_int(1)
@@ -483,7 +491,7 @@ fn rational_root_candidates(
     None => ()
   }
   if has_zero {
-    push_unique_rational(candidates, seen, @symnum.BigRational::zero())
+    candidates.push(@symnum.BigRational::zero())
   }
   if constant_abs.is_zero() {
     return candidates
@@ -492,12 +500,14 @@ fn rational_root_candidates(
   if leading_abs.equal_int(1) {
     for p in p_divs {
       let pos = @symnum.BigRational::from_bigint(p)
-      push_unique_rational(candidates, seen, pos)
-      if !p.is_zero() {
-        push_unique_rational(candidates, seen, pos.neg_r())
-      }
+      candidates.push(pos)
+      candidates.push(pos.neg_r())
     }
     return candidates
+  }
+  let seen : Map[@symnum.BigRational, Bool] = Map::new()
+  if has_zero {
+    push_unique_rational(candidates, seen, @symnum.BigRational::zero())
   }
   let q_divs = bigint_divisors(leading_abs)
   for p in p_divs {

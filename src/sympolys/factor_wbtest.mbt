@@ -462,3 +462,27 @@ test "factor wb: rational linear roots use divisor candidates" {
   assert_true(texts.contains("x - 1/2"))
   assert_true(texts.contains("x + 1/3"))
 }
+
+///|
+test "factor wb: monic integer linear roots split repeated divisor family" {
+  let x = @symcore.Expr::Symbol("x")
+  let expr = @symcore.add([
+    @symcore.pow(x, @symcore.int(6)),
+    @symcore.mul([@symcore.int(-21), @symcore.pow(x, @symcore.int(5))]),
+    @symcore.mul([@symcore.int(175), @symcore.pow(x, @symcore.int(4))]),
+    @symcore.mul([@symcore.int(-735), @symcore.pow(x, @symcore.int(3))]),
+    @symcore.mul([@symcore.int(1624), @symcore.pow(x, @symcore.int(2))]),
+    @symcore.mul([@symcore.int(-1764), x]),
+    @symcore.int(720),
+  ])
+  let parts = factor_linear_rationals(
+    PolyBuilder::new(["x"], Domain::QQ).from_expr(expr),
+  )
+  let texts = parts
+    .filter(p => p.degree(0) == 1)
+    .map(p => @symprint.to_string(p.to_expr()))
+  assert_eq(texts.length(), 6)
+  for i in 1..<=6 {
+    assert_true(texts.contains("x - \{i}"))
+  }
+}
