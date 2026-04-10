@@ -705,29 +705,69 @@ fn expand_mul_expr(expr : Expr) -> Expr {
 }
 
 ///|
-fn expand_mul_sequence(factors : Array[Expr]) -> Expr {
-  let mut terms : Array[Expr] = [int(1)]
-  for factor in factors {
-    match factor {
-      Expr::Add(args) => {
-        let next_terms : Array[Expr] = Array::new()
-        for t in terms {
-          for arg in args {
-            next_terms.push(@symcore.mul([t, arg]))
-          }
-        }
-        terms = next_terms
-      }
-      _ =>
-        for i in 0..<terms.length() {
-          terms[i] = @symcore.mul([terms[i], factor])
-        }
+fn additive_terms(expr : Expr) -> Array[Expr] {
+  match expr {
+    Expr::Add(args) => args
+    _ => [expr]
+  }
+}
+
+///|
+fn expand_mul_sums_range(
+  sums : Array[Expr],
+  start : Int,
+  end_ : Int,
+) -> Array[Expr] {
+  let len = end_ - start
+  if len <= 0 {
+    return [int(1)]
+  }
+  if len == 1 {
+    return additive_terms(sums[start])
+  }
+  let mid = start + len / 2
+  let left = expand_mul_sums_range(sums, start, mid)
+  let right = expand_mul_sums_range(sums, mid, end_)
+  let products : Array[Expr] = Array::new()
+  for a in left {
+    for b in right {
+      products.push(mul_like_bases(@symcore.mul([a, b])))
     }
   }
-  if terms.length() == 1 {
-    terms[0]
+  additive_terms(@symcore.add(products))
+}
+
+///|
+fn expand_mul_sequence(factors : Array[Expr]) -> Expr {
+  let plain : Array[Expr] = Array::new()
+  let sums : Array[Expr] = Array::new()
+  for factor in factors {
+    match factor {
+      Expr::Add(_) => sums.push(factor)
+      _ => plain.push(factor)
+    }
+  }
+  if sums.is_empty() {
+    return mul_like_bases(@symcore.mul(factors))
+  }
+  let plain_term = if plain.is_empty() {
+    int(1)
   } else {
-    @symcore.add(terms)
+    mul_like_bases(@symcore.mul(plain))
+  }
+  let terms = expand_mul_sums_range(sums, 0, sums.length())
+  let scaled : Array[Expr] = Array::new()
+  for term in terms {
+    if plain.is_empty() {
+      scaled.push(term)
+    } else {
+      scaled.push(mul_like_bases(@symcore.mul([plain_term, term])))
+    }
+  }
+  if scaled.length() == 1 {
+    scaled[0]
+  } else {
+    @symcore.add(scaled)
   }
 }
 

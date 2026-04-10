@@ -196,6 +196,26 @@ test "symsimplify fraction matches SymPy as_numer_denom on additive rational pow
 }
 
 ///|
+test "symsimplify numer_expand balances linear-factor products like SymPy expand_mul" {
+  let x = @symcore.Expr::Symbol("x")
+  let mut expr = @symcore.int(1)
+  for i in 1..<=6 {
+    expr = expr * (x - @symcore.int(i))
+  }
+  let expanded = numer_expand(expr)
+  let expected = @symcore.add([
+    @symcore.pow(x, @symcore.int(6)),
+    @symcore.mul([@symcore.int(-21), @symcore.pow(x, @symcore.int(5))]),
+    @symcore.mul([@symcore.int(175), @symcore.pow(x, @symcore.int(4))]),
+    @symcore.mul([@symcore.int(-735), @symcore.pow(x, @symcore.int(3))]),
+    @symcore.mul([@symcore.int(1624), @symcore.pow(x, @symcore.int(2))]),
+    @symcore.mul([@symcore.int(-1764), x]),
+    @symcore.int(720),
+  ])
+  assert_eq(@symcore.compare_expr(expanded, expected), 0)
+}
+
+///|
 test "symsimplify simplifies nested gamma and rational sums regression" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
