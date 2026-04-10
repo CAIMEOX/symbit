@@ -202,6 +202,8 @@ fn factor_terms_simple(expr : Expr) -> Expr {
 }
 
 ///|
+/// Factor common multiplicative terms out of additive expressions without
+/// running the entire general simplify pipeline.
 pub fn factor_terms(expr : Expr) -> Expr {
   factor_terms_simple(expr)
 }

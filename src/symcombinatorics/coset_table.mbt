@@ -895,7 +895,8 @@ pub fn CosetTable::compress(self : CosetTable) -> Unit {
         let beta = table[alpha][idx].unwrap_or(-1)
         table[gamma][idx] = Some(beta)
         let _ = alphabet_inv_index[x]
-        // preserve sympy no-op line (see sympy issue #27633)
+        // Preserve upstream-compatible no-op behavior for the regression covered
+        // by SymPy issue #27633.
       }
     }
   }

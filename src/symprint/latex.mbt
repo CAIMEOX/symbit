@@ -1,4 +1,6 @@
 ///|
+/// Configurable LaTeX printer settings shared by `latex` and
+/// `latex_with_settings`.
 pub struct LatexSettings {
   mode : String
   full_prec : Bool
@@ -67,6 +69,8 @@ fn diff_operator_latex(value : String) -> String {
 }
 
 ///|
+/// Build a `LatexSettings` record from the public LaTeX-printer knobs exposed by
+/// Symbit.
 pub fn latex_settings(
   mode? : String = "plain",
   full_prec? : Bool = false,
@@ -112,6 +116,7 @@ pub fn latex_settings(
 }
 
 ///|
+/// Render an expression as LaTeX using an explicit `LatexSettings` record.
 pub fn latex_with_settings(expr : Expr, settings : LatexSettings) -> String {
   let body = latex_format_expr(expr, 0, settings)
   match settings.mode {
@@ -125,6 +130,8 @@ pub fn latex_with_settings(expr : Expr, settings : LatexSettings) -> String {
 }
 
 ///|
+/// Render an expression as LaTeX with convenience keyword arguments for the most
+/// common printer options.
 pub fn latex(
   expr : Expr,
   mode? : String = "plain",

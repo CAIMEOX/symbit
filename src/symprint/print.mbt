@@ -28,6 +28,8 @@ fn derivative_call_args(inner : Expr, deriv_args : Array[Expr]) -> Array[Expr] {
 }
 
 ///|
+/// Render an expression into a structural debug form that exposes the tree shape
+/// and canonical head names.
 pub fn debug_repr(expr : Expr) -> String {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => return wrap_call(name, args)
@@ -122,6 +124,8 @@ fn wrap_apply(head : Expr, args : Array[Expr]) -> String {
 }
 
 ///|
+/// Render an expression into the default human-readable printer used across
+/// Symbit tests, examples, and user-facing output.
 pub fn to_string(expr : Expr) -> String {
   format_expr(expr, 0)
 }

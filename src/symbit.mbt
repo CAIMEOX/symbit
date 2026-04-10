@@ -1,37 +1,49 @@
 ///|
+/// Root alias for Symbit's symbolic expression tree.
 pub type Expr = @symcore.Expr
 
 ///|
+/// Root alias for the dense symbolic matrix type.
 pub type Matrix = @symmatrices.Matrix
 
 ///|
+/// Root alias for the sparse symbolic matrix type.
 pub type SparseMatrix = @symmatrices.SparseMatrix
 
 ///|
+/// Root alias for matrix-construction and linear-algebra errors.
 pub type MatrixError = @symmatrices.MatrixError
 
 ///|
+/// Root alias for machine floating-point values carried by symbolic expressions.
 pub type Float = @symcore.Float
 
 ///|
+/// Root alias for complex floating-point leaves used in evaluated expressions.
 pub type ComplexFloat = @symcore.ComplexFloat
 
 ///|
+/// Root alias for exact rational arithmetic used throughout Symbit.
 pub type BigRational = @symnum.BigRational
 
 ///|
+/// Root alias for values accepted by the high-level `sympify` facade.
 pub type SympifyInput = @symcore.SympifyInput
 
 ///|
+/// Root alias for one targeted simplify rewrite pattern.
 pub type SimplifyPattern = @symsimplify.SimplifyPattern
 
 ///|
+/// Root alias for named simplify pipelines used by `simplify`.
 pub type SimplifyPlan = @symsimplify.SimplifyPlan
 
 ///|
+/// Root alias for the result returned by common-subexpression elimination.
 pub type CseResult = @symsimplify.CseResult
 
 ///|
+/// Root alias for expression-path selectors used by traversal helpers.
 pub type EPath = @symsimplify.EPath
 
 ///|

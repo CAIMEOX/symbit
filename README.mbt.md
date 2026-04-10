@@ -119,9 +119,23 @@ The project is organized as a set of focused packages rather than a single monol
 
 The project also ships `src/sympy/*` oracle packages. Those are test-only parity adapters that call Python/SymPy in order to compare behavior, normalize output, or validate ported algorithms. They are intentionally isolated from runtime implementation code. If you are extending Symbit itself, that separation is not optional: new functionality belongs in `src/sym*`, and oracle calls belong only in `src/sympy/*` and tests.
 
+## Package Manuals
+
+The root package is intentionally small. The deeper runtime manuals now live with the packages themselves as `README.mbt.md`, so you do not need to reverse-engineer behavior from the source tree or from SymPy upstream. The most important entry points are:
+
+- [`src/symcore/README.mbt.md`](src/symcore/README.mbt.md) for expression construction and low-level symbolic structure
+- [`src/symsimplify/README.mbt.md`](src/symsimplify/README.mbt.md) for simplification workflows and targeted rewrites
+- [`src/symsolvers/README.mbt.md`](src/symsolvers/README.mbt.md) for equation solving, `solveset`, ODE/PDE front doors, and LP helpers
+- [`src/sympolys/README.mbt.md`](src/sympolys/README.mbt.md) for domains, polynomial representations, and polynomial algorithms
+- [`src/symmatrices/README.mbt.md`](src/symmatrices/README.mbt.md) for dense/sparse matrices and symbolic linear algebra
+- [`src/symsets/README.mbt.md`](src/symsets/README.mbt.md) for symbolic sets and set operations
+- [`src/symprint/README.mbt.md`](src/symprint/README.mbt.md) for plain-text and LaTeX output
+- [`src/symvector/README.mbt.md`](src/symvector/README.mbt.md) and [`src/symphysics/README.mbt.md`](src/symphysics/README.mbt.md) for geometry-adjacent and physics-heavy workflows
+
+For contributors, package manuals are synchronized and checked by `tools/package_docs.py`. That tool enforces package-guide presence, checks for banned placeholder phrasing, and can be used to keep generated package READMEs aligned with the current public package layout.
+
 ## Choosing the Right Entry Point
 
 Use the root package when you need a stable, compact API for building expressions and applying simplification passes. Import a specialized package directly when your code depends on deeper semantics such as polynomial domains, statistics, geometry, or physics subsystems. This split is deliberate. It keeps the default API small enough to be teachable while still allowing the module as a whole to grow into a broad symbolic mathematics toolkit.
 
 That distinction matters for maintenance as well. The root package should stay easy to read and hard to misuse. Specialized packages can be larger, more domain-specific, and closer to the original SymPy surface. The README is therefore written around the root package first, then points outward to the rest of the module. If you are evaluating the project as a library consumer, start here. If you are evaluating port completeness or looking for a specific mathematical subsystem, read the corresponding package directly under `src/`.
-

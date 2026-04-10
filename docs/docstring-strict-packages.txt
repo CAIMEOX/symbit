@@ -1,0 +1,8 @@
+# Packages in this file must have nontrivial docstrings for every public source
+# export that appears in pkg.generated.mbti and is not a re-export.
+#
+# Use relative package paths from `src/`.
+
+.
+symprint
+symsimplify
