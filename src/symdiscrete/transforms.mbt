@@ -157,11 +157,13 @@ fn fourier_transform(
 }
 
 ///|
+/// Compute the discrete Fourier transform of a numeric sequence.
 pub fn fft(seq : Array[Expr], dps? : Int) -> Array[Expr] raise DiscreteError {
   fourier_transform(seq, false, dps)
 }
 
 ///|
+/// Compute the inverse discrete Fourier transform.
 pub fn ifft(seq : Array[Expr], dps? : Int) -> Array[Expr] raise DiscreteError {
   fourier_transform(seq, true, dps)
 }
@@ -305,11 +307,13 @@ fn number_theoretic_transform(
 }
 
 ///|
+/// Compute the number-theoretic transform modulo `prime`.
 pub fn ntt(seq : Array[Expr], prime : Int) -> Array[Expr] raise DiscreteError {
   number_theoretic_transform(seq, prime, false)
 }
 
 ///|
+/// Compute the inverse number-theoretic transform modulo `prime`.
 pub fn intt(seq : Array[Expr], prime : Int) -> Array[Expr] raise DiscreteError {
   number_theoretic_transform(seq, prime, true)
 }
@@ -355,11 +359,13 @@ fn walsh_hadamard_transform(seq : Array[Expr], inverse : Bool) -> Array[Expr] {
 }
 
 ///|
+/// Compute the fast Walsh-Hadamard transform.
 pub fn fwht(seq : Array[Expr]) -> Array[Expr] {
   walsh_hadamard_transform(seq, false)
 }
 
 ///|
+/// Compute the inverse Walsh-Hadamard transform.
 pub fn ifwht(seq : Array[Expr]) -> Array[Expr] {
   walsh_hadamard_transform(seq, true)
 }
@@ -398,6 +404,7 @@ fn mobius_transform_core(
 }
 
 ///|
+/// Compute the subset or superset Mobius transform on a bitmask-indexed array.
 pub fn mobius_transform(
   seq : Array[Expr],
   subset? : Bool = true,
@@ -406,6 +413,7 @@ pub fn mobius_transform(
 }
 
 ///|
+/// Invert the subset or superset Mobius transform.
 pub fn inverse_mobius_transform(
   seq : Array[Expr],
   subset? : Bool = true,

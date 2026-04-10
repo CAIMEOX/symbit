@@ -2,6 +2,10 @@
 /// Linear recurrences.
 
 ///|
+/// Evaluate the `n`-th term of a linear recurrence.
+///
+/// `coeffs` stores the recurrence coefficients and `init` stores the starting
+/// terms. Missing initial terms are treated as zero.
 pub fn linrec(
   coeffs : Array[Expr],
   init : Array[Expr],
@@ -36,6 +40,8 @@ pub fn linrec(
 }
 
 ///|
+/// Return the coefficient vector expressing the `n`-th recurrence term in terms
+/// of the initial values.
 pub fn linrec_coeffs(c : Array[Expr], n : Int) -> Array[Expr] {
   let k = c.length()
   fn square_and_reduce(

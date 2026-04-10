@@ -11,6 +11,10 @@ fn abs_int(n : Int) -> Int {
 }
 
 ///|
+/// Convolve two integer coefficient lists exactly.
+///
+/// The implementation packs coefficients into big integers, multiplies the packed
+/// values, and unpacks the result back into coefficient form.
 pub fn convolution_int(
   a : Array[Int],
   b : Array[Int],

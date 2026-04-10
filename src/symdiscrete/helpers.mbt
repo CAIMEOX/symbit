@@ -1,10 +1,13 @@
 ///|
+/// Expression alias used by the discrete-algorithm package.
 pub type Expr = @symcore.Expr
 
 ///|
+/// Rational-number alias used by transform helpers.
 pub type BigRational = @symnum.BigRational
 
 ///|
+/// Big integer alias used by exact modular arithmetic helpers.
 pub type BigInt = @bigint.BigInt
 
 ///|

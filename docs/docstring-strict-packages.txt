@@ -6,6 +6,7 @@
 .
 symassume
 symcalculus
+symdiscrete
 symfunctions
 symintegrals
 symliealgebras

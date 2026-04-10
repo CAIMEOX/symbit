@@ -29,6 +29,9 @@ fn sum_stride_int(
 }
 
 ///|
+/// Convolve two coefficient lists using the complex Fourier transform path.
+///
+/// Inputs must be numeric expressions rather than symbolic coefficients.
 pub fn convolution_fft(
   a : Array[Expr],
   b : Array[Expr],
@@ -60,6 +63,7 @@ pub fn convolution_fft(
 }
 
 ///|
+/// Convolve two sequences using the Walsh-Hadamard transform.
 pub fn convolution_fwht(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
   if a.is_empty() || b.is_empty() {
     return []
@@ -90,6 +94,7 @@ pub fn convolution_fwht(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
 }
 
 ///|
+/// Compute subset convolution on bitmask-indexed sequences.
 pub fn convolution_subset(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
   if a.is_empty() || b.is_empty() {
     return []
@@ -129,6 +134,7 @@ pub fn convolution_subset(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
 }
 
 ///|
+/// Compute the covering product of two bitmask-indexed sequences.
 pub fn covering_product(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
   if a.is_empty() || b.is_empty() {
     return []
@@ -159,6 +165,7 @@ pub fn covering_product(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
 }
 
 ///|
+/// Compute the intersecting product of two bitmask-indexed sequences.
 pub fn intersecting_product(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
   if a.is_empty() || b.is_empty() {
     return []
@@ -189,6 +196,7 @@ pub fn intersecting_product(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
 }
 
 ///|
+/// Convolve two integer-valued sequences modulo a prime using the NTT path.
 pub fn convolution_ntt(
   a : Array[Expr],
   b : Array[Expr],
@@ -228,6 +236,11 @@ pub fn convolution_ntt(
 }
 
 ///|
+/// High-level convolution front-end.
+///
+/// Optional hints choose the algorithm family: `prime` selects modular NTT,
+/// `dps` selects the complex Fourier path, `dyadic` selects Walsh-Hadamard, and
+/// `subset` selects subset convolution. At most one hint family may be active.
 pub fn convolution(
   a : Array[Expr],
   b : Array[Expr],
