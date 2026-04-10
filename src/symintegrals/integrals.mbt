@@ -225,7 +225,11 @@ pub fn integrate(expr : Expr, limits? : Array[Expr] = []) -> Expr {
 ///|
 fn integrate_one(expr : Expr, limit : Expr) -> Expr {
   match parse_limit(limit) {
-    Some((name, None, None)) =>
+    Some((name, None, None)) => {
+      match poly_coeffs_general_int(expr, name) {
+        Some(coeffs) => return polynomial_antiderivative(coeffs, name)
+        None => ()
+      }
       match risch_integrate(expr, name) {
         Some(res) => expr_simplify(res)
         None =>
@@ -234,6 +238,7 @@ fn integrate_one(expr : Expr, limit : Expr) -> Expr {
             None => integral(expr, limits=[limit])
           }
       }
+    }
     Some((name, Some(lower), Some(upper))) => {
       match deltaintegrate(expr, name, Some(lower), Some(upper)) {
         Some(res) => return expr_simplify(res)

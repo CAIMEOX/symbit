@@ -59,6 +59,25 @@ fn exact_complex_float_expr(
 }
 
 ///|
+fn diag_dominant_matrix(size : Int) -> Matrix {
+  let rows : Array[Array[Expr]] = []
+  for i in 0..<size {
+    let row : Array[Expr] = []
+    for j in 0..<size {
+      if i == j {
+        row.push(@symcore.int(3 * size + i + 5))
+      } else {
+        row.push(@symcore.int((i + j) % 2 + 1))
+      }
+    }
+    rows.push(row)
+  }
+  matrix(rows) catch {
+    _ => abort("diag_dominant_matrix failed")
+  }
+}
+
+///|
 test "matrices determinant inverse and solve" {
   let a = matrix([
     [@symcore.int(1), @symcore.int(2)],
@@ -221,4 +240,25 @@ test "matrices numeric backend keeps float and complex-float results" {
     @symcore.Expr::Float(f) => assert_true(f.format(dps=8).has_prefix("2.0"))
     _ => fail("expected float cholesky diagonal")
   }
+}
+
+///|
+test "matrices exact rational fast path preserves benchmark family results" {
+  let a = diag_dominant_matrix(4)
+  inspect(@symprint.to_string(a.det()), content="110702")
+  let inv = a.inv()
+  inspect(
+    inv.to_string(),
+    content="Matrix([[6677/110702, -342/55351, -215/110702, -306/55351], [-342/55351, 3152/55351, -304/55351, -93/55351], [-215/110702, -304/55351, 5959/110702, -272/55351], [-306/55351, -93/55351, -272/55351, 2830/55351]])",
+  )
+  let rhs = matrix([
+    [@symcore.int(1)],
+    [@symcore.int(2)],
+    [@symcore.int(3)],
+    [@symcore.int(4)],
+  ])
+  inspect(
+    a.solve(rhs).to_string(),
+    content="Matrix([[1108/55351], [4678/55351], [7135/55351], [10012/55351]])",
+  )
 }

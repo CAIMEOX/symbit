@@ -91,8 +91,12 @@ pub fn laplace_transform_result(
   noconds? : Bool = false,
 ) -> Expr {
   match symbol_name(t) {
-    Some(t_name) =>
-      match laplace_info_doit(expr_simplify(expr), t_name, s) {
+    Some(t_name) => {
+      let info = match laplace_info_doit(expr, t_name, s) {
+        Some(found) => Some(found)
+        None => laplace_info_doit(expr_simplify(expr), t_name, s)
+      }
+      match info {
         Some((value, plane, cond)) =>
           if noconds {
             value
@@ -101,6 +105,7 @@ pub fn laplace_transform_result(
           }
         None => @symcore.raw_function("LaplaceTransform", [expr, t, s])
       }
+    }
     None => @symcore.raw_function("LaplaceTransform", [expr, t, s])
   }
 }
@@ -769,7 +774,13 @@ fn laplace_add_info(
   }
   Some(
     (
-      expr_simplify(@symcore.add(values)),
+      if values.length() == 0 {
+        @symcore.int(0)
+      } else if values.length() == 1 {
+        values[0]
+      } else {
+        @symcore.add(values)
+      },
       plane.unwrap_or(@symcore.int(0)),
       cond,
     ),
@@ -790,10 +801,6 @@ fn laplace_mul_term(
     None => ()
   }
   match laplace_heaviside_shift_term(factors, t_name, s) {
-    Some(info) => return Some(info)
-    None => ()
-  }
-  match laplace_distribute_add_term(factors, t_name, s) {
     Some(info) => return Some(info)
     None => ()
   }
@@ -840,16 +847,20 @@ fn laplace_mul_term(
         None => Some((value, plane, cond))
       }
     None =>
-      if expr_depends_on(expr_simplify(factors_expr(factors)), t_name) {
-        Some(
-          generic_laplace_object(
-            expr_simplify(factors_expr(factors)),
-            t_name,
-            s,
-          ),
-        )
-      } else {
-        None
+      match laplace_distribute_add_term(factors, t_name, s) {
+        Some(info) => Some(info)
+        None =>
+          if expr_depends_on(factors_expr(factors), t_name) {
+            Some(
+              generic_laplace_object(
+                expr_simplify(factors_expr(factors)),
+                t_name,
+                s,
+              ),
+            )
+          } else {
+            None
+          }
       }
   }
 }
@@ -899,7 +910,14 @@ fn laplace_rest_term(
     return laplace_base_term(@symcore.int(1), t_name, shifted_s)
   }
   if factors.length() == 1 {
-    return laplace_base_term(factors[0], t_name, shifted_s)
+    match laplace_polynomial_term(factors[0], t_name, shifted_s) {
+      Some(info) => return Some(info)
+      None => return laplace_base_term(factors[0], t_name, shifted_s)
+    }
+  }
+  match laplace_polynomial_term(factors_expr(factors), t_name, shifted_s) {
+    Some(info) => return Some(info)
+    None => ()
   }
   match laplace_inverse_power_trig_term(factors, t_name, shifted_s) {
     Some(info) => return Some(info)
@@ -1190,6 +1208,55 @@ fn laplace_delta_roots(arg : Expr, t_name : String) -> Array[(Expr, Expr)]? {
         _ => None
       }
   }
+}
+
+///|
+fn laplace_polynomial_term(
+  expr : Expr,
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  match poly_coeffs_general(expr, t_name) {
+    Some(coeffs) => {
+      let mut numerator = @symcore.int(0)
+      for i in 0..<coeffs.length() {
+        let weighted = if expr_is_zero(coeffs[i]) {
+          @symcore.int(0)
+        } else {
+          @symcore.mul([coeffs[i], factorial_int_expr(i)])
+        }
+        numerator = @symcore.add([@symcore.mul([numerator, s]), weighted])
+      }
+      let value = if expr_is_zero(numerator) {
+        @symcore.int(0)
+      } else {
+        @symcore.mul([
+          numerator,
+          @symcore.pow(s, @symcore.int(-coeffs.length())),
+        ])
+      }
+      Some((
+        value,
+        @symcore.int(0),
+        true_expr(),
+      ))
+    }
+    None => None
+  }
+}
+
+///|
+fn factorial_int_expr(n : Int) -> Expr {
+  if n <= 1 {
+    return @symcore.int(1)
+  }
+  let mut out = @symcore.int(1)
+  let mut i = 2
+  while i <= n {
+    out = @symcore.mul([out, @symcore.int(i)])
+    i += 1
+  }
+  out
 }
 
 ///|

@@ -477,6 +477,10 @@ pub fn Matrix::charpoly_expr(
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError("charpoly requires a square matrix")
   }
+  match matrix_exact_rational_data(self.data) {
+    Some(data) => return exact_rational_charpoly_expr(data, x)
+    None => ()
+  }
   let shifted = matrix_add_diag_scalar(
     self.scalar_mul(expr_neg(@symcore.int(1))),
     x,

@@ -252,6 +252,10 @@ pub fn Matrix::det(self : Matrix) -> Expr raise MatrixError {
   if self.rows == 0 {
     return @symcore.int(1)
   }
+  match matrix_exact_rational_data(self.data) {
+    Some(data) => return exact_expr_from_rational(exact_rational_det(data))
+    None => ()
+  }
   let numeric_prec = expr_numeric_precision(self.data)
   if matrix_has_floating_leaf(self.data) &&
     matrix_all_numeric(self.data, numeric_prec) {
@@ -395,6 +399,13 @@ pub fn Matrix::inv(self : Matrix) -> Matrix raise MatrixError {
     raise MatrixError::NonSquareMatrixError("inverse requires a square matrix")
   }
   let n = self.rows
+  match matrix_exact_rational_data(self.data) {
+    Some(lhs) => {
+      let solved = exact_rational_gauss_jordan(lhs, exact_eye_rows(n))
+      return { rows: n, cols: n, data: exact_expr_rows(solved) }
+    }
+    None => ()
+  }
   let numeric_prec = expr_numeric_precision(self.data)
   if matrix_has_floating_leaf(self.data) &&
     matrix_all_numeric(self.data, numeric_prec) {
@@ -496,7 +507,29 @@ pub fn Matrix::solve(self : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
       "solve expects rhs with the same number of rows",
     )
   }
-  self.inv() * rhs
+  if !self.is_square() {
+    raise MatrixError::NonSquareMatrixError("solve requires a square lhs")
+  }
+  match (matrix_exact_rational_data(self.data), matrix_exact_rational_data(rhs.data)) {
+    (Some(lhs), Some(rhs_data)) =>
+      return {
+        rows: rhs.rows,
+        cols: rhs.cols,
+        data: exact_expr_rows(exact_rational_gauss_jordan(lhs, rhs_data)),
+      }
+    _ => ()
+  }
+  let (l, u, swaps) = self.lu()
+  let permuted_rhs = clone_expr_rows(rhs.data)
+  for swap in swaps {
+    swap_dense_rows(permuted_rhs, swap.0, swap.1)
+  }
+  let y = l.lower_triangular_solve({
+    rows: rhs.rows,
+    cols: rhs.cols,
+    data: permuted_rhs,
+  })
+  u.upper_triangular_solve(y)
 }
 
 ///|

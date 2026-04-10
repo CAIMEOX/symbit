@@ -84,6 +84,15 @@ test "matrices charpoly and eigenvals" {
 }
 
 ///|
+test "matrices charpoly preserves dense diagonally dominant benchmark family" {
+  let a = diag_dominant_matrix(4)
+  inspect(
+    @symprint.to_string(a.charpoly(x=@symcore.Expr::Symbol("x"))),
+    content="x*(x*(x*(x - 74) + 2033) - 24600) + 110702",
+  )
+}
+
+///|
 test "matrices eigenvects diagonalizable and diagonalize" {
   let a = matrix([
     [@symcore.int(2), @symcore.int(0)],

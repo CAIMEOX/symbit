@@ -151,6 +151,10 @@ fn fallback_pow_integrate(base : Expr, exp : Expr, var_name : String) -> Expr? {
 /// It returns `None` when no elementary/manual rule applies instead of
 /// constructing an unevaluated `Integral`.
 pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
+  match poly_coeffs_general_int(expr, var_name) {
+    Some(coeffs) => return Some(polynomial_antiderivative(coeffs, var_name))
+    None => ()
+  }
   let simplified = expr_simplify(expr)
   if !expr_depends_on(simplified, var_name) {
     return Some(simplified * @symcore.Expr::Symbol(var_name))

@@ -35,6 +35,43 @@ fn expr_simplify(expr : Expr) -> Expr {
 }
 
 ///|
+fn expr_exact_int(expr : Expr) -> Int? {
+  match @symcore.exact_number_num_den(expr) {
+    Some((num, den)) =>
+      if den.to_int() == 1 {
+        Some(num.to_int())
+      } else {
+        None
+      }
+    None => None
+  }
+}
+
+///|
+fn expr_trivial_zero(expr : Expr) -> Bool {
+  match expr_exact_int(expr) {
+    Some(0) => true
+    _ => false
+  }
+}
+
+///|
+fn expr_trivial_one(expr : Expr) -> Bool {
+  match expr_exact_int(expr) {
+    Some(1) => true
+    _ => false
+  }
+}
+
+///|
+fn expr_trivial_minus_one(expr : Expr) -> Bool {
+  match expr_exact_int(expr) {
+    Some(-1) => true
+    _ => false
+  }
+}
+
+///|
 fn expr_eval_special(expr : Expr) -> Expr {
   match expr {
     @symcore.Expr::Add(args) =>
@@ -103,38 +140,137 @@ fn expr_eval_special(expr : Expr) -> Expr {
 
 ///|
 fn expr_add(lhs : Expr, rhs : Expr) -> Expr {
-  expr_simplify(lhs + rhs)
+  if expr_trivial_zero(lhs) {
+    rhs
+  } else if expr_trivial_zero(rhs) {
+    lhs
+  } else {
+    @symcore.add([lhs, rhs])
+  }
 }
 
 ///|
 fn expr_sub(lhs : Expr, rhs : Expr) -> Expr {
-  expr_simplify(lhs - rhs)
+  if expr_trivial_zero(rhs) {
+    lhs
+  } else if expr_trivial_zero(lhs) {
+    @symcore.mul([@symcore.int(-1), rhs])
+  } else {
+    @symcore.add([lhs, @symcore.mul([@symcore.int(-1), rhs])])
+  }
 }
 
 ///|
 fn expr_mul(lhs : Expr, rhs : Expr) -> Expr {
-  expr_simplify(lhs * rhs)
+  if expr_trivial_zero(lhs) || expr_trivial_zero(rhs) {
+    @symcore.int(0)
+  } else if expr_trivial_one(lhs) {
+    rhs
+  } else if expr_trivial_one(rhs) {
+    lhs
+  } else if expr_trivial_minus_one(lhs) {
+    @symcore.mul([@symcore.int(-1), rhs])
+  } else if expr_trivial_minus_one(rhs) {
+    @symcore.mul([@symcore.int(-1), lhs])
+  } else {
+    @symcore.mul([lhs, rhs])
+  }
 }
 
 ///|
 fn expr_div(lhs : Expr, rhs : Expr) -> Expr {
-  expr_simplify(lhs * (rhs ^ @symcore.int(-1)))
+  if expr_trivial_zero(lhs) {
+    @symcore.int(0)
+  } else if expr_trivial_one(rhs) {
+    lhs
+  } else if expr_trivial_minus_one(rhs) {
+    @symcore.mul([@symcore.int(-1), lhs])
+  } else {
+    @symcore.mul([lhs, @symcore.pow(rhs, @symcore.int(-1))])
+  }
 }
 
 ///|
 fn expr_pow(base : Expr, exp : Expr) -> Expr {
-  expr_simplify(base ^ exp)
+  if expr_trivial_zero(exp) {
+    @symcore.int(1)
+  } else if expr_trivial_one(exp) {
+    base
+  } else if expr_trivial_zero(base) {
+    @symcore.int(0)
+  } else if expr_trivial_one(base) {
+    @symcore.int(1)
+  } else {
+    @symcore.pow(base, exp)
+  }
 }
 
 ///|
 fn expr_eq(lhs : Expr, rhs : Expr) -> Bool {
+  @symcore.compare_expr(lhs, rhs) == 0 ||
   expr_simplify(lhs - rhs) == @symcore.int(0)
 }
 
 ///|
 fn expr_num_value(expr : Expr) -> @symnum.BigRational? {
-  match expr_simplify(expr) {
+  match expr {
     @symcore.Expr::Number(n) => Some(n)
+    @symcore.Expr::Add(args) => {
+      let mut acc = @symnum.BigRational::zero()
+      for arg in args {
+        match expr_num_value(arg) {
+          Some(value) => acc = acc + value
+          None => return None
+        }
+      }
+      Some(acc)
+    }
+    @symcore.Expr::Mul(args) => {
+      let mut acc = @symnum.BigRational::one()
+      for arg in args {
+        match expr_num_value(arg) {
+          Some(value) => acc = acc * value
+          None => return None
+        }
+      }
+      Some(acc)
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      match (expr_num_value(base), expr_exact_int(exp)) {
+        (Some(base), Some(power)) => {
+          let zero = @symnum.BigRational::zero()
+          if power == 0 {
+            Some(@symnum.BigRational::one())
+          } else if power < 0 && base.compare(zero) == 0 {
+            None
+          } else {
+            let mut out = @symnum.BigRational::one()
+            let factor = if power < 0 {
+                try? base.reciprocal()
+              } else {
+                Ok(base)
+              }
+            match factor {
+              Err(_) => return None
+              Ok(factor0) => {
+                let mut factor = factor0
+                let mut n = if power < 0 { -power } else { power }
+                while n > 0 {
+                  if (n & 1) == 1 {
+                    out = out * factor
+                  }
+                  n = n / 2
+                  if n > 0 {
+                    factor = factor * factor
+                  }
+                }
+                Some(out)
+              }
+            }
+          }
+        }
+        _ => None
+      }
     @symcore.Expr::Float(f) =>
       if !f.is_finite() {
         None
@@ -171,7 +307,11 @@ fn expr_num_value(expr : Expr) -> @symnum.BigRational? {
           Err(_) => None
         }
       }
-    _ => None
+    _ =>
+      match expr_simplify(expr) {
+        simplified if @symcore.compare_expr(simplified, expr) == 0 => None
+        simplified => expr_num_value(simplified)
+      }
   }
 }
 
@@ -436,6 +576,179 @@ fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
         Some([expr, @symcore.int(0), @symcore.int(0)])
       }
   }
+}
+
+///|
+fn poly_coeffs_general_int(expr : Expr, var_name : String) -> Array[Expr]? {
+  match expr {
+    @symcore.Expr::Number(_)
+    | @symcore.Expr::Float(_)
+    | @symcore.Expr::NumberSymbol(_)
+    | @symcore.Expr::ComplexFloat(_) => Some([expr])
+    @symcore.Expr::Symbol(name) =>
+      if name == var_name {
+        Some([@symcore.int(0), @symcore.int(1)])
+      } else {
+        Some([expr])
+      }
+    @symcore.Expr::Dummy(_, _)
+    | @symcore.Expr::Wild(_, _, _)
+    | @symcore.Expr::FunctionHead(_)
+    | @symcore.Expr::UndefinedFunction(_) => Some([expr])
+    @symcore.Expr::Apply(_, _) =>
+      if expr_depends_on(expr, var_name) {
+        None
+      } else {
+        Some([expr])
+      }
+    @symcore.Expr::Add(args) => {
+      let acc : Array[Expr] = [@symcore.int(0)]
+      for arg in args {
+        match poly_coeffs_general_int(arg, var_name) {
+          Some(coeffs) => poly_accum_general_int(acc, coeffs)
+          None => return None
+        }
+      }
+      Some(poly_trim_general_int(acc))
+    }
+    @symcore.Expr::Mul(args) => {
+      let mut acc : Array[Expr] = [@symcore.int(1)]
+      for arg in args {
+        match poly_coeffs_general_int(arg, var_name) {
+          Some(coeffs) => acc = poly_mul_general_int(acc, coeffs)
+          None => return None
+        }
+      }
+      Some(poly_trim_general_int(acc))
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      match expr_is_int_value(exp) {
+        Some(power) if power >= 0 =>
+          match poly_coeffs_general_int(base, var_name) {
+            Some(coeffs) => Some(poly_pow_general_int(coeffs, power))
+            None => None
+          }
+        _ => if expr_depends_on(expr, var_name) { None } else { Some([expr]) }
+      }
+    @symcore.Expr::Mod(_, _) =>
+      if expr_depends_on(expr, var_name) {
+        None
+      } else {
+        Some([expr])
+      }
+    @symcore.Expr::Derivative(_, _) | @symcore.Expr::Subs(_, _, _) =>
+      if expr_depends_on(expr, var_name) {
+        None
+      } else {
+        Some([expr])
+      }
+    _ if @symcore.application_parts(expr) is Some(_) =>
+      if expr_depends_on(expr, var_name) {
+        None
+      } else {
+        Some([expr])
+      }
+    @symcore.Expr::Boolean(_)
+    | @symcore.Expr::Tuple(_)
+    | @symcore.Expr::Dict(_)
+    | @symcore.Expr::Relational(_, _, _)
+    | @symcore.Expr::Lambda(_, _) => None
+    _ => if expr_depends_on(expr, var_name) { None } else { Some([expr]) }
+  }
+}
+
+///|
+fn poly_accum_general_int(acc : Array[Expr], coeffs : Array[Expr]) -> Unit {
+  if coeffs.length() > acc.length() {
+    let mut idx = acc.length()
+    while idx < coeffs.length() {
+      acc.push(@symcore.int(0))
+      idx += 1
+    }
+  }
+  for i in 0..<coeffs.length() {
+    acc[i] = expr_add(acc[i], coeffs[i])
+  }
+}
+
+///|
+fn poly_mul_general_int(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
+  if lhs.is_empty() || rhs.is_empty() {
+    return []
+  }
+  let out : Array[Expr] = []
+  for _ in 0..<(lhs.length() + rhs.length() - 1) {
+    out.push(@symcore.int(0))
+  }
+  for i in 0..<lhs.length() {
+    for j in 0..<rhs.length() {
+      out[i + j] = expr_add(out[i + j], expr_mul(lhs[i], rhs[j]))
+    }
+  }
+  poly_trim_general_int(out)
+}
+
+///|
+fn poly_pow_general_int(base : Array[Expr], exp : Int) -> Array[Expr] {
+  if exp == 0 {
+    return [@symcore.int(1)]
+  }
+  let mut result : Array[Expr] = [@symcore.int(1)]
+  let mut factor = base
+  let mut n = exp
+  while n > 0 {
+    if n % 2 == 1 {
+      result = poly_mul_general_int(result, factor)
+    }
+    n = n / 2
+    if n > 0 {
+      factor = poly_mul_general_int(factor, factor)
+    }
+  }
+  poly_trim_general_int(result)
+}
+
+///|
+fn poly_trim_general_int(poly : Array[Expr]) -> Array[Expr] {
+  let mut end = poly.length()
+  while end > 0 && expr_is_zero(poly[end - 1]) {
+    end -= 1
+  }
+  let out : Array[Expr] = []
+  for i in 0..<end {
+    out.push(poly[i])
+  }
+  out
+}
+
+///|
+fn polynomial_horner_light_from_coeffs(
+  coeffs : Array[Expr],
+  var_name : String,
+) -> Expr {
+  if coeffs.is_empty() {
+    return @symcore.int(0)
+  }
+  let x = @symcore.Expr::Symbol(var_name)
+  let mut out = coeffs[coeffs.length() - 1]
+  let mut idx = coeffs.length() - 1
+  while idx > 0 {
+    idx -= 1
+    out = @symcore.add([@symcore.mul([out, x]), coeffs[idx]])
+  }
+  out
+}
+
+///|
+fn polynomial_antiderivative(coeffs : Array[Expr], var_name : String) -> Expr {
+  if coeffs.is_empty() {
+    return @symcore.int(0)
+  }
+  let anti : Array[Expr] = [@symcore.int(0)]
+  for i in 0..<coeffs.length() {
+    anti.push(@symcore.mul([coeffs[i], expr_rat(1, i + 1)]))
+  }
+  polynomial_horner_light_from_coeffs(anti, var_name)
 }
 
 ///|
