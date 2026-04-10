@@ -214,6 +214,10 @@ fn decompogen_from_poly(
 }
 
 ///|
+/// Decompose `expr` into a composition chain in `symbol`.
+///
+/// The result is ordered from outermost function to innermost function, and
+/// irreducible expressions are returned as a singleton array.
 pub fn decompogen(expr : Expr, symbol : Expr) -> Array[Expr] raise SolverError {
   ignore(symbol_name(symbol))
   if expr_is_relational(expr) {
@@ -246,6 +250,10 @@ pub fn decompogen(expr : Expr, symbol : Expr) -> Array[Expr] raise SolverError {
 }
 
 ///|
+/// Compose a decomposition chain produced by [`decompogen`](#decompogen).
+///
+/// `g_s[0]` is treated as the outermost function and each subsequent element is
+/// substituted into the previous one using `symbol` as the composition hole.
 pub fn compogen(g_s : Array[Expr], symbol : Expr) -> Expr {
   if g_s.length() <= 1 {
     return g_s[0]

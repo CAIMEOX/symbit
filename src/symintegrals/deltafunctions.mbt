@@ -1,6 +1,6 @@
 ///|
-/// Delta and singularity integration helpers aligned with the practical core of
-/// `sympy.integrals.deltafunctions` and `sympy.integrals.singularityfunctions`.
+/// Delta and singularity integration helpers for Dirac-delta and singularity
+/// function antiderivatives.
 
 ///|
 fn extract_dirac_factor(expr : Expr, var_name : String) -> (Expr, Expr)? {

@@ -1,4 +1,8 @@
 ///|
+/// Result wrapper returned by [`diop_solve`](#diop_solve).
+///
+/// Linear cases that naturally collapse to one tuple use `Tuple`; everything
+/// else is returned as a set-valued result.
 pub enum DiopSolveResult {
   Tuple(Array[Expr])
   Set(Set)
@@ -240,6 +244,12 @@ fn solver_univariate_diophantine(
 }
 
 ///|
+/// Classify a Diophantine equation into the currently supported families.
+///
+/// The return value is `(symbols, coefficient_map, kind)`, where `kind` is
+/// currently `"linear"` or `"univariate"`. The coefficient map uses string
+/// keys such as `"1"`, `"x"`, or `"x**2"` for the constant term and powers of
+/// the solved symbol.
 pub fn classify_diop(
   eq : Expr,
   syms? : Array[Expr] = [],
@@ -295,6 +305,11 @@ pub fn classify_diop(
 }
 
 ///|
+/// Solve a supported Diophantine equation over the integers.
+///
+/// The current implementation covers linear systems and univariate polynomial
+/// equations. Solutions are returned as tuples inside a set, using `param` as
+/// the free integer parameter when infinitely many solutions exist.
 pub fn diophantine(
   eq : Expr,
   param? : Expr = Expr::Symbol("t_0"),
@@ -401,6 +416,10 @@ pub fn diophantine(
 }
 
 ///|
+/// Convenience wrapper around [`diophantine`](#diophantine).
+///
+/// This returns a bare tuple for the common single-solution linear case and a
+/// full set otherwise.
 pub fn diop_solve(
   eq : Expr,
   param? : Expr = Expr::Symbol("t_0"),

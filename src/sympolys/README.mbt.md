@@ -29,7 +29,7 @@ Polynomial domains, polynomial arithmetic, factorization, root finding, Groebner
 ///|
 test "sympolys parses domain specifications" {
   let domain = domain_from_string("ZZ")
-  inspect(domain_to_sympy_string(domain), content="ZZ")
+  inspect(domain_is_zz_pred(domain), content="true")
 }
 ```
 

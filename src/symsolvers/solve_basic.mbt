@@ -1,4 +1,8 @@
 ///|
+/// Input accepted by [`solve`](#solve).
+///
+/// `Expr` is a single equation, `Exprs` is a system, and `Matrix` is reserved
+/// for matrix-shaped solve inputs.
 pub enum SolveInput {
   Expr(Expr)
   Exprs(Array[Expr])
@@ -6,6 +10,10 @@ pub enum SolveInput {
 }
 
 ///|
+/// Result variants returned by [`solve`](#solve).
+///
+/// Single-symbol solves usually return `List`; multi-symbol solves may return a
+/// single dictionary or an array of dictionaries depending on arity.
 pub enum SolveResult {
   List(Array[Expr])
   Dict(Map[String, Expr])
@@ -13,19 +21,24 @@ pub enum SolveResult {
 }
 
 ///|
+/// Public alias for the complex domain used by [`solve`](#solve) and
+/// [`solveset`](#solveset).
 pub let complexes : Set = @symsets.complexes()
 
 ///|
+/// Wrap one equation for [`solve`](#solve).
 pub fn solve_expr_input(expr : Expr) -> SolveInput {
   SolveInput::Expr(expr)
 }
 
 ///|
+/// Wrap a system of equations for [`solve`](#solve).
 pub fn solve_exprs_input(exprs : Array[Expr]) -> SolveInput {
   SolveInput::Exprs(exprs)
 }
 
 ///|
+/// Wrap a matrix input for [`solve`](#solve).
 pub fn solve_matrix_input(matrix : Matrix) -> SolveInput {
   SolveInput::Matrix(matrix)
 }
@@ -2116,6 +2129,12 @@ fn tuple_array_from_set(set : Set) -> Array[Expr] {
 }
 
 ///|
+/// Solve one equation linearly for a preferred symbol.
+///
+/// The return value is `(symbol, value)` when a safe linear solve is available,
+/// `(0, 1)` for identities, `(0, 0)` for unsafe removable-singularity solves,
+/// and `(numerator, denominator)` when the expression is not linear in any
+/// allowed symbol.
 pub fn solve_linear(
   lhs : Expr,
   rhs? : Expr = @symcore.int(0),
@@ -2169,6 +2188,11 @@ pub fn solve_linear(
 }
 
 ///|
+/// Solve one symbolic equation as a set over `domain`.
+///
+/// This is the main set-valued front door. It handles relational inequalities,
+/// polynomial equations, selected rational and absolute-value forms, and falls
+/// back to a symbolic `ConditionSet` when no explicit solve path is available.
 pub fn solveset(
   expr : Expr,
   symbol? : Expr? = None,
@@ -2259,6 +2283,10 @@ pub fn solveset(
 }
 
 ///|
+/// Solve a nonlinear system and return a set of solution tuples.
+///
+/// The solver first tries linear machinery, then polynomial elimination and
+/// recursive substitution on the supported subset.
 pub fn nonlinsolve(
   equations : Array[Expr],
   symbols : Array[Expr],
@@ -2288,6 +2316,9 @@ pub fn nonlinsolve(
 }
 
 ///|
+/// Solve a polynomial system and return tuple expressions.
+///
+/// This is a thin array-oriented wrapper around [`nonlinsolve`](#nonlinsolve).
 pub fn solve_poly_system(
   equations : Array[Expr],
   symbols : Array[Expr],
@@ -2296,6 +2327,9 @@ pub fn solve_poly_system(
 }
 
 ///|
+/// Compatibility alias for triangular polynomial solving.
+///
+/// The current implementation delegates to [`solve_poly_system`](#solve_poly_system).
 pub fn solve_triangulated(
   equations : Array[Expr],
   symbols : Array[Expr],
@@ -2304,6 +2338,10 @@ pub fn solve_triangulated(
 }
 
 ///|
+/// Solve a nonlinear system by substitution-oriented front-door semantics.
+///
+/// Empty input returns `EmptySet`; otherwise this currently delegates to
+/// [`nonlinsolve`](#nonlinsolve).
 pub fn substitution(
   system : Array[Expr],
   symbols : Array[Expr],
@@ -2492,6 +2530,11 @@ fn solve_factored_system_fallback(
 }
 
 ///|
+/// General-purpose solve front door.
+///
+/// The return shape depends on arity: lists for single-symbol solves,
+/// dictionaries for named multivariate solves, and dictionary arrays for
+/// multi-solution systems.
 pub fn solve(
   input : SolveInput,
   symbols? : Array[Expr] = [],
@@ -2652,6 +2695,10 @@ fn expr_to_mpf(expr : Expr, prec : Int) -> @symnum.Mpf {
 }
 
 ///|
+/// Numerically solve one equation near an initial guess.
+///
+/// `x0` is the primary starting value and `x1` optionally enables a two-point
+/// root finder. The result is always returned as a floating expression.
 pub fn nsolve(
   expr : Expr,
   symbol : Expr,

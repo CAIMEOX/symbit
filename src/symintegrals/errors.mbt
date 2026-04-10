@@ -7,6 +7,10 @@ pub suberror IntegralError {
 } derive(Show)
 
 ///|
+/// Build the transform-specific `IntegralError` variant.
+///
+/// This helper keeps call sites readable when wrapping failures from Laplace,
+/// Mellin, Fourier, and related transform front-ends.
 pub fn integral_transform_error(message : String) -> IntegralError {
   IntegralError::IntegralTransformError(message)
 }

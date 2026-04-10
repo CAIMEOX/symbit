@@ -8,6 +8,11 @@ fn ast_parser_transformations() -> Array[Transformation] {
 }
 
 ///|
+/// Parse a source string using the lightweight AST-parser configuration.
+///
+/// This helper is intended for places that want convenient expression parsing
+/// without the full relaxed syntax pipeline. Only a small transformation set is
+/// enabled: lambda syntax, automatic symbols, and automatic numeric literals.
 pub fn ast_parse_expr(
   src : String,
   local_bindings? : Map[String, Expr] = {},

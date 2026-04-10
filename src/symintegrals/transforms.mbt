@@ -80,8 +80,7 @@ pub fn do_laplace_doit(expr : Expr, t : Expr, s : Expr) -> Expr? {
 ///|
 /// Evaluate a forward Laplace transform with optional ROC/condition metadata.
 ///
-/// When the rule engine succeeds, the result matches SymPy's
-/// `laplace_transform(..., noconds=...)` convention:
+/// When the rule engine succeeds, the result uses the following convention:
 /// - `noconds=true` returns only the transformed expression
 /// - `noconds=false` returns `(value, plane, condition)`
 /// If no rule applies, the unevaluated `LaplaceTransform` object is returned.
@@ -109,9 +108,8 @@ pub fn laplace_transform_result(
 ///|
 /// Collect polynomial structure recursively before Laplace processing.
 ///
-/// This mirrors SymPy's helper that rewrites nested arithmetic into a form
-/// where polynomial coefficients in the transform variable are easier to
-/// recognize.
+/// This rewrites nested arithmetic into a form where polynomial coefficients in
+/// the transform variable are easier to recognize.
 pub fn _laplace_deep_collect(expr : Expr, t : Expr) -> Expr {
   match symbol_name(t) {
     Some(t_name) => laplace_deep_collect(expr, t_name)
@@ -122,8 +120,8 @@ pub fn _laplace_deep_collect(expr : Expr, t : Expr) -> Expr {
 ///|
 /// Rewrite transform heads according to a function-name correspondence map.
 ///
-/// This is the MoonBit equivalent of SymPy's `laplace_correspondence`, used
-/// when moving between named functions and their transform-domain aliases.
+/// This is used when moving between named functions and their transform-domain
+/// aliases.
 pub fn laplace_correspondence(expr : Expr, fdict : Map[String, String]) -> Expr {
   if fdict.is_empty() {
     expr
@@ -136,7 +134,7 @@ pub fn laplace_correspondence(expr : Expr, fdict : Map[String, String]) -> Expr 
 /// Substitute initial conditions into Laplace-domain derivatives.
 ///
 /// `fdict` maps function names to the values of successive derivatives at the
-/// origin, following the same role as SymPy's `laplace_initial_conds`.
+/// origin.
 pub fn laplace_initial_conds(
   expr : Expr,
   t : Expr,
@@ -8073,8 +8071,7 @@ pub fn do_inverse_mellin_doit(_expr : Expr, s : Expr, x : Expr) -> Expr? {
 ///|
 /// Evaluate a Mellin transform with optional strip/condition metadata.
 ///
-/// When `noconds=false`, this returns `(value, (left, right), condition)` in
-/// the same style as SymPy's `mellin_transform`.
+/// When `noconds=false`, this returns `(value, (left, right), condition)`.
 pub fn mellin_transform_result(
   expr : Expr,
   x : Expr,

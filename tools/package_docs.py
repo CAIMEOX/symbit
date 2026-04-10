@@ -20,12 +20,16 @@ GENERATED_MARKER = (
     "Edit this tool metadata or replace the file and remove this marker. -->"
 )
 
-FORBIDDEN_DOC_PATTERNS = [
+FORBIDDEN_PLACEHOLDER_PATTERNS = [
     "refer to sympy",
     "same as sympy",
     "参考sympy",
     "参考 sympy",
     "see sympy",
+]
+
+FORBIDDEN_USER_DOC_TERMS = [
+    "sympy",
 ]
 
 EXACT_SUMMARIES: dict[str, str] = {
@@ -329,7 +333,7 @@ test "symsolvers solves a linear equation" {
 ///|
 test "sympolys parses domain specifications" {
   let domain = domain_from_string("ZZ")
-  inspect(domain_to_sympy_string(domain), content="ZZ")
+  inspect(domain_is_zz_pred(domain), content="true")
 }
 ```""",
     "symunify": """\
@@ -380,6 +384,7 @@ class SourceExport:
     name: str
     path: pathlib.Path
     line_no: int
+    doc_text: str
     doc_has_text: bool
     doc_present: bool
 
@@ -491,6 +496,7 @@ def parse_source_exports(package: PackageInfo) -> list[SourceExport]:
                         name=export.name,
                         path=path,
                         line_no=index,
+                        doc_text=doc_block_text(doc_lines),
                         doc_has_text=doc_block_has_text(doc_lines),
                         doc_present=bool(doc_lines),
                     )
@@ -514,6 +520,16 @@ def doc_block_has_text(lines: list[str]) -> bool:
         if content and content != "|":
             return True
     return False
+
+
+def doc_block_text(lines: list[str]) -> str:
+    rendered: list[str] = []
+    for line in lines:
+        content = line[3:]
+        if content.startswith("|"):
+            content = content[1:]
+        rendered.append(content.lstrip())
+    return "\n".join(rendered).strip()
 
 
 def strict_packages() -> set[str]:
@@ -734,7 +750,8 @@ def check_docs() -> int:
             failures.append(f"README missing top-level heading: {readme.relative_to(REPO_ROOT)}")
         if "```mbt check" not in readme_text and "```mbt nocheck" not in readme_text:
             failures.append(f"README missing example block: {readme.relative_to(REPO_ROOT)}")
-        failures.extend(forbidden_doc_hits(readme, readme_text))
+        failures.extend(placeholder_doc_hits(readme, readme_text))
+        failures.extend(user_doc_term_hits(readme, readme_text))
 
         if package.rel_path not in strict:
             continue
@@ -754,6 +771,7 @@ def check_docs() -> int:
             if not matched.doc_has_text:
                 location = matched.path.relative_to(REPO_ROOT)
                 missing.append(f"{export.kind} {export.name} ({location}:{matched.line_no})")
+            failures.extend(user_doc_term_hits(matched.path, matched.doc_text, line_no=matched.line_no))
         if missing:
             failures.append(
                 "missing nontrivial docstrings in strict package "
@@ -764,7 +782,15 @@ def check_docs() -> int:
     for path in iter_runtime_doc_files():
         if path.name == "README.mbt.md" and path.parent == SRC_ROOT:
             continue
-        failures.extend(forbidden_doc_hits(path, path.read_text()))
+        failures.extend(placeholder_doc_hits(path, path.read_text()))
+
+    for path in [
+        REPO_ROOT / "README.mbt.md",
+        REPO_ROOT / "src" / "README.mbt.md",
+        REPO_ROOT / "docs" / "documentation-style.md",
+    ]:
+        if path.exists():
+            failures.extend(user_doc_term_hits(path, path.read_text()))
 
     if failures:
         for failure in failures:
@@ -774,13 +800,27 @@ def check_docs() -> int:
     return 0
 
 
-def forbidden_doc_hits(path: pathlib.Path, text: str) -> list[str]:
+def placeholder_doc_hits(path: pathlib.Path, text: str) -> list[str]:
     lowered = text.lower()
     hits: list[str] = []
-    for pattern in FORBIDDEN_DOC_PATTERNS:
+    for pattern in FORBIDDEN_PLACEHOLDER_PATTERNS:
         if pattern in lowered:
             hits.append(
                 f"forbidden placeholder phrase {pattern!r} in {path.relative_to(REPO_ROOT)}"
+            )
+    return hits
+
+
+def user_doc_term_hits(path: pathlib.Path, text: str, line_no: int | None = None) -> list[str]:
+    lowered = text.lower()
+    hits: list[str] = []
+    for term in FORBIDDEN_USER_DOC_TERMS:
+        if term in lowered:
+            location = path.relative_to(REPO_ROOT)
+            if line_no is not None:
+                location = f"{location}:{line_no}"
+            hits.append(
+                f"forbidden upstream reference {term!r} in {location}"
             )
     return hits
 

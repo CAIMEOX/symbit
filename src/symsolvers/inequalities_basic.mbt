@@ -1,7 +1,15 @@
 ///|
+/// Internalized rational inequality item used by
+/// [`solve_rational_inequalities`](#solve_rational_inequalities).
+///
+/// The tuple stores `((numerator_poly, denominator_poly), relation_string)`.
 pub type RationalInequality = ((@sympolys.Poly, @sympolys.Poly), String)
 
 ///|
+/// Result of an inequality solve request.
+///
+/// Some entrypoints can either return a set directly or rebuild a relational
+/// expression that is logically equivalent to that set.
 pub enum InequalityResult {
   Set(Set)
   Relational(Expr)
@@ -589,6 +597,10 @@ fn solver_set_difference(lhs : Set, rhs : Set) -> Set {
 }
 
 ///|
+/// Solve a univariate polynomial inequality and return its solution pieces.
+///
+/// The result is an array of sets rather than a pre-unioned set so callers can
+/// preserve interval structure when they need it.
 pub fn solve_poly_inequality(
   poly : @sympolys.Poly,
   rel : String,
@@ -642,6 +654,9 @@ pub fn solve_poly_inequality(
 }
 
 ///|
+/// Solve a disjunction of conjunctions of rational inequalities.
+///
+/// Each inner array is treated as a conjunction and the outer array as a union.
 pub fn solve_rational_inequalities(
   eqs : Array[Array[RationalInequality]],
 ) -> Set raise SolverError {
@@ -729,6 +744,10 @@ fn solver_univariate_inequality_set(
 }
 
 ///|
+/// Solve a single-variable inequality over a set domain.
+///
+/// Set `relational=false` to receive a `Set` result directly; otherwise the
+/// solver rebuilds a logically equivalent relational expression in `gen`.
 pub fn solve_univariate_inequality(
   expr : Expr,
   gen : Expr,
@@ -798,6 +817,10 @@ fn solver_abs_equality_set(
 }
 
 ///|
+/// Reduce an inequality with one absolute-value term to a relational condition.
+///
+/// This is the symbolic front-end used by the higher-level absolute inequality
+/// reducers.
 pub fn reduce_abs_inequality(
   expr : Expr,
   rel : String,
@@ -922,6 +945,7 @@ pub fn reduce_abs_inequality(
 }
 
 ///|
+/// Conjoin multiple absolute-value inequalities after reducing each one.
 pub fn reduce_abs_inequalities(
   exprs : Array[(Expr, String)],
   gen : Expr,
@@ -979,6 +1003,10 @@ fn solver_relevant_symbols(expr : Expr, symbols : Array[Expr]) -> Array[Expr] {
 }
 
 ///|
+/// Reduce a collection of independent inequalities.
+///
+/// When more than one symbol is tracked, each inequality must depend on at most
+/// one tracked symbol; otherwise the solver raises `ValueError`.
 pub fn reduce_inequalities(
   inequalities : Array[Expr],
   symbols? : Array[Expr] = [],
@@ -1064,6 +1092,10 @@ fn solver_factor_options(
 }
 
 ///|
+/// Factor a system of equations into alternative subsystem branches.
+///
+/// Each returned inner array is one branch that can be solved independently.
+/// This is primarily useful as a preprocessing step before nonlinear solving.
 pub fn factor_system(
   eqs : Array[Expr],
   gens? : Array[Expr] = [],

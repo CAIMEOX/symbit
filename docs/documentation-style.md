@@ -6,7 +6,7 @@ This repository treats documentation as part of the public API, not as a trailin
 
 - Public API docstrings are the canonical source of truth for behavior.
 - `README.mbt.md` files are package guides and navigation hubs.
-- `src/sympy/*` oracle packages are excluded from user-facing documentation. They exist for parity and regression testing only.
+- The test-only oracle layer under `src/` is excluded from user-facing documentation. It exists for regression checking only.
 
 ## Public API Docstrings
 
@@ -40,7 +40,8 @@ Each public runtime package should have a `README.mbt.md` with:
 - At least one example block
 - Links to adjacent packages or deeper specs when they exist
 
-For package-level guides, prefer concrete Symbit terms and MoonBit calling style. Mention SymPy only to explain compatibility or deliberate divergence.
+For package-level guides, prefer concrete Symbit terms and MoonBit calling
+style. Explain behavior directly in terms of inputs, outputs, and effects.
 
 ## Executable Docs
 

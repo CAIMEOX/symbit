@@ -1,5 +1,5 @@
 ///|
-/// Core set operations and membership.
+/// Core set operations and membership tests.
 
 ///|
 fn setbool_or(a : SetBool, b : SetBool) -> SetBool {
@@ -423,6 +423,11 @@ fn combine_finite_sets(items : Array[Expr]) -> Set {
 }
 
 ///|
+/// Build the union of several sets.
+///
+/// This constructor flattens nested unions, drops empty members, merges finite
+/// sets, and coalesces overlapping numeric intervals. If any member is the
+/// universal set, the result is the universal set.
 pub fn union(args : Array[Set]) -> Set {
   if args.is_empty() {
     return Set::EmptySet
@@ -548,6 +553,11 @@ fn filter_finite_by_interval(
 }
 
 ///|
+/// Build the intersection of several sets.
+///
+/// This constructor flattens nested intersections, drops universal members, and
+/// simplifies the common special cases of finite sets and numeric intervals. If
+/// any member is empty, the result is empty immediately.
 pub fn intersection(args : Array[Set]) -> Set {
   if args.is_empty() {
     return Set::UniversalSet
@@ -677,6 +687,11 @@ fn interval_difference(a : Set, b : Set) -> Set? {
 }
 
 ///|
+/// Remove the elements of `b` from `a`.
+///
+/// The function simplifies common concrete cases such as finite-set subtraction
+/// and interval difference. When the package cannot reduce the expression
+/// further, it returns a symbolic `Complement(a, b)` node.
 pub fn complement(a : Set, b : Set) -> Set {
   match (a, b) {
     (Set::EmptySet, _) => Set::EmptySet
@@ -856,6 +871,12 @@ fn contains_numerical_set(kind : Set, elem : Expr) -> SetBool {
 }
 
 ///|
+/// Test whether `elem` belongs to `set`.
+///
+/// The result uses [`SetBool`](#setbool): `True` and `False` mean the answer is
+/// known, while `Unknown` means the current implementation cannot decide the
+/// membership question exactly. `Unknown` commonly appears for symbolic
+/// endpoints, symbolic conditions, or image sets over non-finite bases.
 pub fn contains(set : Set, elem : Expr) -> SetBool {
   match set {
     Set::EmptySet => SetBool::False
@@ -962,6 +983,12 @@ pub fn contains(set : Set, elem : Expr) -> SetBool {
 }
 
 ///|
+/// Test whether every element of `a` is also in `b`.
+///
+/// This is a structural decision procedure with useful special cases for finite
+/// sets, numeric intervals, and Cartesian products. It returns `Unknown` when a
+/// full proof or refutation would require reasoning the package does not yet
+/// implement.
 pub fn is_subset(a : Set, b : Set) -> SetBool {
   match (a, b) {
     (Set::EmptySet, _) => SetBool::True

@@ -94,6 +94,11 @@ fn greek_name(name : String) -> Bool {
 }
 
 ///|
+/// Decide whether a multi-character name should be split into implicit symbols.
+///
+/// The default rule keeps short names, names containing underscores, and common
+/// Greek-letter names intact. Other mixed alphanumeric names such as `xyz` can
+/// be split when symbol-splitting transformations are enabled.
 pub fn default_split_symbol_predicate(name : String) -> Bool {
   if name.length() <= 1 || name.contains("_") || greek_name(name) {
     return false
@@ -196,6 +201,11 @@ fn is_builtin_core_head_name(name : String) -> Bool {
 }
 
 ///|
+/// Report whether a name is reserved as a built-in callable or core head.
+///
+/// This helps callers decide whether a token should be treated as a plain symbol
+/// or as a constructor-like name such as `Tuple`, `Lambda`, or a built-in
+/// mathematical function.
 pub fn is_builtin_head_name(name : String) -> Bool {
   is_builtin_callable_name(name) || is_builtin_core_head_name(name)
 }
@@ -708,6 +718,7 @@ fn Parser::parse_compare(self : Parser) -> Ast raise ParseError {
 }
 
 ///|
+/// Parse source text into an AST with explicit parser options.
 pub fn parse_ast_with(
   src : String,
   options : ParseOptions,
@@ -716,6 +727,11 @@ pub fn parse_ast_with(
 }
 
 ///|
+/// Parse source text into an AST with explicit options and bindings.
+///
+/// Unlike the higher-level `parse_expr_*` helpers, this function stops before
+/// lowering so callers can inspect or transform syntax while spans and operator
+/// structure are still intact.
 pub fn parse_ast_in(
   src : String,
   options : ParseOptions,

@@ -15,6 +15,11 @@ pub fn parse_expr_with(
 }
 
 ///|
+/// Parse a source string with explicit options and name bindings.
+///
+/// Use this entry point when symbol lookup depends on a caller-supplied
+/// environment. `context` can pre-bind names to expressions and mark names as
+/// callable so that parsing can distinguish `f(x)` from `f * (x)`.
 pub fn parse_expr_in(
   src : String,
   options : ParseOptions,
@@ -24,6 +29,12 @@ pub fn parse_expr_in(
 }
 
 ///|
+/// Parse a source string with a custom transformation pipeline.
+///
+/// `transformations` controls syntax conveniences such as automatic symbol
+/// creation, implicit multiplication, or caret-to-power rewriting. Set
+/// `evaluate=false` to keep raw tree shape where possible instead of folding
+/// arithmetic during lowering.
 pub fn parse_expr_with_transformations(
   src : String,
   transformations : Array[Transformation],
@@ -33,6 +44,10 @@ pub fn parse_expr_with_transformations(
 }
 
 ///|
+/// Parse a source string with both custom transformations and a custom context.
+///
+/// This is the most configurable front-end in the package. Use it when parsing
+/// user input that needs special syntax rules and predeclared local names.
 pub fn parse_expr_in_with_transformations(
   src : String,
   transformations : Array[Transformation],

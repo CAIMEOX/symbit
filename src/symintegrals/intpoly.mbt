@@ -1,8 +1,8 @@
 ///|
 /// Exact polynomial integration over 2D polygonal regions and segments.
 ///
-/// The public surface mirrors the high-value `sympy.integrals.intpoly` paths
-/// that are already supported by the current Symbit geometry layer:
+/// The public surface focuses on the polygon and segment integration paths that
+/// are already supported by the current geometry layer:
 /// exact integration of polynomial expressions over planar polygons, exact
 /// line integration over segments, and bulk moment generation up to a total
 /// degree bound.
@@ -341,7 +341,8 @@ fn intpoly_monomial(x : Expr, y : Expr, dx : Int, dy : Int) -> Expr {
 /// Integrate a polynomial exactly along a line segment in the plane.
 ///
 /// The segment is parameterized affinely and the Jacobian factor is included,
-/// so this is the line-integral analogue of SymPy's `intpoly` helpers.
+/// so this is the line-integral analogue of the package's polygon integration
+/// helpers.
 pub fn segment_integrate(
   seg : @symgeometry.Segment,
   expr : Expr,

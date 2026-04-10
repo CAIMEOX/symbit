@@ -1,10 +1,12 @@
 ///|
+/// Unary operators that can appear in parsed syntax.
 pub enum UnaryOp {
   Plus
   Minus
 } derive(Eq, Show)
 
 ///|
+/// Binary arithmetic operators that can appear in parsed syntax.
 pub enum BinaryOp {
   Add
   Sub
@@ -14,6 +16,7 @@ pub enum BinaryOp {
 } derive(Eq, Show)
 
 ///|
+/// Comparison operators recorded in parsed comparison chains.
 pub enum CompareOp {
   Eq
   EqEq
@@ -25,6 +28,11 @@ pub enum CompareOp {
 } derive(Eq, Show)
 
 ///|
+/// A parser transformation switch.
+///
+/// Transformations enable or disable syntax conveniences before lowering. For
+/// example, implicit multiplication lets `2x` parse as `2*x`, while
+/// `ConvertXor` treats `^` as exponentiation.
 pub(all) enum Transformation {
   LambdaNotation
   AutoSymbol
@@ -43,6 +51,11 @@ pub(all) enum Transformation {
 }
 
 ///|
+/// Typed syntax tree produced by the parser before lowering to `Expr`.
+///
+/// The AST preserves source spans and syntactic distinctions such as unary
+/// minus, chained comparisons, and lambda syntax. Lowering can then decide how
+/// much evaluation to perform.
 pub enum Ast {
   Number(span~ : Span, String)
   Symbol(span~ : Span, String)
@@ -55,6 +68,7 @@ pub enum Ast {
 }
 
 ///|
+/// Return the source span that covers an AST node.
 pub fn ast_span(ast : Ast) -> Span {
   match ast {
     Ast::Number(span~, _) => span
@@ -69,12 +83,22 @@ pub fn ast_span(ast : Ast) -> Span {
 }
 
 ///|
+/// Parser configuration controlling evaluation and syntax rewrites.
+///
+/// `evaluate` decides whether lowering should immediately fold simple arithmetic
+/// and normalize constructor calls. `transformations` enables optional syntax
+/// features such as automatic symbol creation or implicit multiplication.
 pub struct ParseOptions {
   evaluate : Bool
   transformations : Array[Transformation]
 }
 
 ///|
+/// Name-resolution environment used while parsing and lowering.
+///
+/// Local bindings shadow global ones. The callable-name fields let the parser
+/// treat certain names as function heads even before lowering them to runtime
+/// expressions.
 pub struct ParseContext {
   callable_names : Array[String]
   bindings : Map[String, Expr]
@@ -83,11 +107,16 @@ pub struct ParseContext {
 } derive(Eq)
 
 ///|
+/// Return the default parser options.
+///
+/// The default configuration enables the standard transformation set and
+/// performs normal evaluation while lowering.
 pub fn default_parse_options() -> ParseOptions {
   ParseOptions::{ evaluate: true, transformations: standard_transformations() }
 }
 
 ///|
+/// Return an empty parse context with no predefined names.
 pub fn default_parse_context() -> ParseContext {
   ParseContext::{
     callable_names: [],
@@ -98,6 +127,10 @@ pub fn default_parse_context() -> ParseContext {
 }
 
 ///|
+/// Build a parse context from explicit local and global bindings.
+///
+/// Use `callable_names` when a name should parse as a function head, and use
+/// `bindings` when a name should resolve to a concrete expression value.
 pub fn parse_context(
   callable_names? : Array[String] = [],
   bindings? : Map[String, Expr] = {},
@@ -113,6 +146,7 @@ pub fn parse_context(
 }
 
 ///|
+/// Build parser options from a transformation list and evaluation flag.
 pub fn parse_options(
   transformations? : Array[Transformation] = standard_transformations(),
   evaluate? : Bool = true,
@@ -121,6 +155,10 @@ pub fn parse_options(
 }
 
 ///|
+/// Return the conservative transformation set used by default parsing.
+///
+/// These transformations cover common numeric and symbol syntax without turning
+/// on more opinionated rewrites such as implicit multiplication.
 pub fn standard_transformations() -> Array[Transformation] {
   [
     Transformation::LambdaNotation,
@@ -132,6 +170,11 @@ pub fn standard_transformations() -> Array[Transformation] {
 }
 
 ///|
+/// Return a more permissive transformation set for user-facing input.
+///
+/// This extends [`standard_transformations`](#standard_transformations) with
+/// conveniences such as caret exponentiation, implicit multiplication plus
+/// application, and single equals signs in comparisons.
 pub fn relaxed_transformations() -> Array[Transformation] {
   [
     ..standard_transformations(),

@@ -4,9 +4,8 @@
 ///|
 /// Construct an unevaluated `Integral` object.
 ///
-/// This mirrors `sympy.integrals.integrals.Integral`: `expr` is the
-/// integrand and each limit is either a bare variable tuple `(x)` or a bounded
-/// tuple `(x, a, b)`.
+/// `expr` is the integrand and each limit is either a bare variable tuple
+/// `(x)` or a bounded tuple `(x, a, b)`.
 pub fn integral(expr : Expr, limits? : Array[Expr] = []) -> Expr {
   let args : Array[Expr] = [expr]
   for limit in limits {
@@ -117,8 +116,7 @@ pub fn inverse_hankel_transform(
 /// Integrate a scalar field along a parametric curve.
 ///
 /// The field is pulled back along the curve, multiplied by the speed, and then
-/// integrated in the curve parameter. This corresponds to SymPy's
-/// `line_integrate`.
+/// integrated in the curve parameter.
 pub fn line_integrate(
   field : Expr,
   curve : @symgeometry.Curve,
@@ -191,7 +189,7 @@ pub fn manualintegrate(expr : Expr, limit_expr : Expr) -> Expr {
 }
 
 ///|
-/// Main integration entrypoint aligned with `sympy.integrate`.
+/// Main symbolic integration entrypoint.
 ///
 /// The dispatcher first tries the exact symbolic integrators currently present
 /// in Symbit (Risch/meijerg/delta/manual helpers depending on the limit kind)
@@ -268,7 +266,7 @@ fn integrate_one(expr : Expr, limit : Expr) -> Expr {
 
 ///|
 /// Evaluate a Laplace transform and return either the transformed expression or
-/// a SymPy-style tuple `(value, plane, condition)`.
+/// a tuple `(value, plane, condition)`.
 ///
 /// With `noconds=true`, only the transformed expression is returned.
 pub fn laplace_transform_eval(
@@ -283,8 +281,8 @@ pub fn laplace_transform_eval(
 ///|
 /// Evaluate an inverse Laplace transform.
 ///
-/// With `noconds=false`, this preserves SymPy-style tuple/object behavior for
-/// cases that remain unevaluated.
+/// With `noconds=false`, the result keeps the transform value together with a
+/// trailing condition flag for cases that remain unevaluated.
 pub fn inverse_laplace_transform_eval(
   expr : Expr,
   s : Expr,

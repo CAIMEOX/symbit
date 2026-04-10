@@ -1,7 +1,8 @@
 ///|
-/// Matrix-valued transform helpers. SymPy accepts matrices directly in a
-/// handful of transform entrypoints; in MoonBit we surface the same
-/// elementwise semantics with explicit matrix helpers.
+/// Matrix-valued transform helpers.
+///
+/// These helpers apply scalar transform rules entry-by-entry and rebuild the
+/// matrix result explicitly.
 
 ///|
 /// Apply the Laplace transform elementwise to a matrix and immediately
@@ -19,8 +20,7 @@ pub fn laplace_transform_matrix(
 /// convergence and condition.
 ///
 /// The matrix entries are transformed independently and their individual ROC /
-/// condition metadata are aggregated with `Max` / logical `And`, matching the
-/// modern SymPy matrix-transform convention.
+/// condition metadata are aggregated with `Max` / logical `And`.
 pub fn laplace_transform_matrix_result(
   mat : @symmatrices.Matrix,
   t : Expr,

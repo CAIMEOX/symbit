@@ -1,5 +1,5 @@
 ///|
-/// Numerical Gaussian quadrature families aligned with `sympy.integrals.quadrature`.
+/// Numerical Gaussian quadrature families.
 
 ///|
 fn quad_expr_real_float(expr : Expr, prec? : Int = 160) -> @symcore.Float? {
@@ -305,8 +305,7 @@ fn quad_legendre_eval(n : Int, x : Double) -> Double {
 /// Gauss-Legendre nodes and weights on `[-1, 1]`.
 ///
 /// The result is numeric, rounded to `n_digits` significant digits, and uses
-/// the symmetric Jacobi-matrix construction just as SymPy's quadrature helpers
-/// do.
+/// the symmetric Jacobi-matrix construction.
 pub fn gauss_legendre(
   n : Int,
   n_digits? : Int = 15,

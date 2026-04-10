@@ -1,5 +1,5 @@
 ///|
-/// Printing helpers for sets.
+/// Printing helpers for symbolic sets.
 
 ///|
 fn expr_str(expr : Expr) -> String {
@@ -27,6 +27,11 @@ fn setbool_str(val : SetBool) -> String {
 }
 
 ///|
+/// Render a set using a stable, constructor-oriented textual form.
+///
+/// The output favors readability and deterministic regression testing over
+/// mathematical pretty-printing. For example, intervals are rendered with
+/// explicit constructor names such as `Interval.open(...)`.
 pub fn to_string(set : Set) -> String {
   match set {
     Set::EmptySet => "EmptySet"

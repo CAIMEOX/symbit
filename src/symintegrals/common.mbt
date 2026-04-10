@@ -1,7 +1,15 @@
 ///|
+/// Shared expression type alias used by the public integration API.
+///
+/// Re-exporting the alias keeps signatures in `symintegrals` concise while
+/// still referring to the canonical symbolic expression representation.
 pub type Expr = @symcore.Expr
 
 ///|
+/// Integration limit specification used by integral and transform front doors.
+///
+/// The tuple shape is `(name, lower?, upper?)`, where omitted bounds represent
+/// indefinite or partially specified limits.
 pub type LimitSpec = (String, Expr?, Expr?)
 
 ///|

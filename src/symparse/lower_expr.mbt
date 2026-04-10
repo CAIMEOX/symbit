@@ -1202,6 +1202,11 @@ fn number_from_literal(
 }
 
 ///|
+/// Lower an AST into a runtime expression using explicit options and bindings.
+///
+/// Lowering resolves names, applies parser transformations, and optionally
+/// evaluates simple arithmetic depending on `options.evaluate`. Use this entry
+/// point when another stage has already produced an [`Ast`](#ast).
 pub fn lower_ast_in(
   ast : Ast,
   options : ParseOptions,
@@ -1341,6 +1346,7 @@ pub fn lower_ast_in(
 }
 
 ///|
+/// Lower an AST with explicit options and an empty name-resolution context.
 pub fn lower_ast_with(
   ast : Ast,
   options : ParseOptions,
@@ -1349,6 +1355,7 @@ pub fn lower_ast_with(
 }
 
 ///|
+/// Lower an AST using the default parser options and an empty context.
 pub fn lower_ast(ast : Ast) -> Expr raise ParseError {
   lower_ast_in(ast, default_parse_options(), default_parse_context())
 }

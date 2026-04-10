@@ -1,4 +1,8 @@
 ///|
+/// Token categories produced by the lexer.
+///
+/// Literal and identifier variants retain their source spelling so later stages
+/// can preserve numeric details such as decimal or repeated-decimal syntax.
 pub enum TokenKind {
   IntLit(String)
   DecimalLit(String)
@@ -26,17 +30,23 @@ pub enum TokenKind {
 } derive(Eq, Show)
 
 ///|
+/// A single token with its source span.
 pub struct Token {
   kind : TokenKind
   span : Span
 } derive(Eq, Show)
 
 ///|
+/// Build a token from a kind and source span.
 pub fn token(kind : TokenKind, span : Span) -> Token {
   Token::{ kind, span }
 }
 
 ///|
+/// Return a human-readable name for a token kind.
+///
+/// This text is used in parse errors, so the names are written for diagnostics
+/// rather than for serialization.
 pub fn token_kind_name(kind : TokenKind) -> String {
   match kind {
     TokenKind::IntLit(_) => "integer"

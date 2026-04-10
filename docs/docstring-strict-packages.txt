@@ -4,5 +4,10 @@
 # Use relative package paths from `src/`.
 
 .
+symfunctions
+symintegrals
 symprint
 symsimplify
+symsolvers
+symparse
+symsets

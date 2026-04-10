@@ -2,7 +2,7 @@
 /// Stage-4 Meijer-style heuristics.
 ///
 /// The goal here is to cover high-value non-elementary closed forms that are
-/// commonly returned from SymPy through the Meijer G machinery.
+/// naturally expressed through Meijer G machinery.
 
 ///|
 /// Meijer-G based fallback integrator for special-function antiderivatives.

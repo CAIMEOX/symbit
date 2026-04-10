@@ -1,7 +1,19 @@
 ///|
-/// Core set types and constructors.
+/// Core symbolic set types and constructors.
+///
+/// This package models exact sets such as intervals, finite sets, Cartesian
+/// products, and symbolic predicates. The values are meant to be carried by
+/// solver, logic, and simplification code rather than expanded into concrete
+/// element lists.
 
 ///|
+/// A symbolic set expression.
+///
+/// `Set` values can describe both concrete collections such as `{1, 2}` and
+/// deferred descriptions such as “all real `x` satisfying a condition”.
+/// Constructors like [`union`](#union), [`intersection`](#intersection), and
+/// [`complement`](#complement) try to simplify obvious cases while preserving a
+/// lossless symbolic representation for the rest.
 pub(all) enum Set {
   EmptySet
   UniversalSet
@@ -22,6 +34,10 @@ pub(all) enum Set {
 }
 
 ///|
+/// Three-valued result used by membership and subset queries.
+///
+/// `Unknown` means the library cannot currently decide the question from the
+/// available structure, not that the statement is false.
 pub enum SetBool {
   True
   False
@@ -29,41 +45,52 @@ pub enum SetBool {
 } derive(Eq)
 
 ///|
+/// Return the empty set.
 pub fn empty_set() -> Set {
   Set::EmptySet
 }
 
 ///|
+/// Return the universal set.
+///
+/// This is the top element for symbolic set expressions: every element is
+/// considered to belong to it.
 pub fn universal_set() -> Set {
   Set::UniversalSet
 }
 
 ///|
+/// Return the set of positive integers `{1, 2, 3, ...}`.
 pub fn naturals() -> Set {
   Set::Naturals
 }
 
 ///|
+/// Return the set of non-negative integers `{0, 1, 2, ...}`.
 pub fn naturals0() -> Set {
   Set::Naturals0
 }
 
 ///|
+/// Return the set of all integers.
 pub fn integers() -> Set {
   Set::Integers
 }
 
 ///|
+/// Return the set of rational numbers.
 pub fn rationals() -> Set {
   Set::Rationals
 }
 
 ///|
+/// Return the set of real numbers.
 pub fn reals() -> Set {
   Set::Reals
 }
 
 ///|
+/// Return the set of complex numbers.
 pub fn complexes() -> Set {
   Set::Complexes
 }
@@ -93,6 +120,10 @@ fn dedup_exprs(items : Array[Expr]) -> Array[Expr] {
 }
 
 ///|
+/// Build a finite set from explicit elements.
+///
+/// The input is sorted into a stable canonical order and duplicate expressions
+/// are removed. An empty input collapses to [`empty_set`](#empty_set).
 pub fn finite_set(items : Array[Expr]) -> Set {
   let uniq = dedup_exprs(items)
   if uniq.is_empty() {
@@ -103,6 +134,12 @@ pub fn finite_set(items : Array[Expr]) -> Set {
 }
 
 ///|
+/// Build a set defined by a boolean condition over a symbol.
+///
+/// `symbol` names the bound variable, `condition` is the predicate to satisfy,
+/// and `base` restricts the search space. Trivial predicates are simplified:
+/// `True` returns `base`, `False` returns [`empty_set`](#empty_set), and an
+/// empty base remains empty regardless of the predicate.
 pub fn condition_set(
   symbol : Expr,
   condition : @symlogic.BoolExpr,
@@ -120,6 +157,11 @@ pub fn condition_set(
 }
 
 ///|
+/// Build the image of `base` under the mapping `symbol -> expr`.
+///
+/// This represents all values obtained by substituting members of `base` into
+/// `expr`. Constant mappings are simplified eagerly: mapping a non-empty base to
+/// a constant expression produces a singleton finite set.
 pub fn image_set(
   symbol : Expr,
   expr : Expr,
@@ -146,6 +188,10 @@ pub fn image_set(
 }
 
 ///|
+/// Build a Cartesian product of several sets.
+///
+/// Nested product sets are flattened. If any factor is empty, the whole product
+/// is empty. An empty input represents the singleton containing the empty tuple.
 pub fn product_set(sets : Array[Set]) -> Set {
   if sets.is_empty() {
     return finite_set([@symcore.function("Tuple", [])])
@@ -183,6 +229,11 @@ fn expr_equal(a : Expr, b : Expr) -> Bool {
 }
 
 ///|
+/// Build a closed, open, or half-open interval.
+///
+/// When both endpoints are numeric the constructor normalizes obvious degenerate
+/// cases: reversed endpoints become empty, and equal endpoints become either a
+/// singleton or empty depending on the openness flags.
 pub fn interval(
   left : Expr,
   right : Expr,
@@ -282,6 +333,11 @@ fn compare_set_arrays(xs : Array[Set], ys : Array[Set]) -> Int {
 }
 
 ///|
+/// Compare two sets using the package's canonical structural ordering.
+///
+/// This ordering is intended for deduplication, sorting, and hash stability. It
+/// is not a mathematical ordering such as subset or lexicographic comparison of
+/// elements.
 pub fn compare_set(a : Set, b : Set) -> Int {
   let ra = variant_rank(a)
   let rb = variant_rank(b)
@@ -360,6 +416,10 @@ pub fn compare_set(a : Set, b : Set) -> Int {
 }
 
 ///|
+/// Sort a mutable array of sets in canonical structural order.
+///
+/// This is mainly useful before deduplication or when producing stable printed
+/// output from a collection of sets.
 pub fn sort_sets_in_place(args : Array[Set]) -> Unit {
   args.sort_by(compare_set)
 }

@@ -1,15 +1,21 @@
 ///|
+/// Initial-condition container accepted by [`rsolve`](#rsolve).
+///
+/// `List` uses the conventional `n = 0, 1, ...` ordering while `Dict` lets you
+/// pass named values such as `"0"` or the printed recurrence target.
 pub enum RsolveInit {
   List(Array[Expr])
   Dict(Map[String, Expr])
 }
 
 ///|
+/// Build list-based initial data for [`rsolve`](#rsolve).
 pub fn rsolve_init_list(values : Array[Expr]) -> RsolveInit {
   RsolveInit::List(values)
 }
 
 ///|
+/// Build dictionary-based initial data for [`rsolve`](#rsolve).
 pub fn rsolve_init_dict(values : Map[String, Expr]) -> RsolveInit {
   RsolveInit::Dict(values)
 }
@@ -245,6 +251,11 @@ fn solver_recurrence_constant_solution(
 }
 
 ///|
+/// Solve a first-order polynomial-difference recurrence when a polynomial
+/// particular solution is available.
+///
+/// The function returns `None` when the current heuristic cannot build the
+/// solution family.
 pub fn rsolve_poly(
   coeffs : Array[Expr],
   f : Expr,
@@ -316,6 +327,10 @@ pub fn rsolve_poly(
 }
 
 ///|
+/// Solve a recurrence through the rational-solution heuristic layer.
+///
+/// This currently delegates to [`rsolve_poly`](#rsolve_poly) first and falls
+/// back to constant-ratio solutions for simple first-order recurrences.
 pub fn rsolve_ratio(
   coeffs : Array[Expr],
   f : Expr,
@@ -328,6 +343,9 @@ pub fn rsolve_ratio(
 }
 
 ///|
+/// Solve a recurrence through the hypergeometric-solution heuristic layer.
+///
+/// The current implementation is a thin wrapper over the rational solver.
 pub fn rsolve_hyper(
   coeffs : Array[Expr],
   f : Expr,
@@ -435,6 +453,11 @@ fn solver_apply_recurrence_init(
 }
 
 ///|
+/// Solve a supported linear recurrence for an undefined sequence.
+///
+/// `f` is the recurrence equation, `y` is the applied undefined sequence such
+/// as `y(n)`, and `init` optionally pins the free constant using one initial
+/// value.
 pub fn rsolve(
   f : Expr,
   y : Expr,

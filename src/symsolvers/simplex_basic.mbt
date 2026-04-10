@@ -714,6 +714,11 @@ fn negate_form(form : RatForm) -> RatForm {
 }
 
 ///|
+/// Solve a linear program in matrix form.
+///
+/// `c` is the objective vector, `a/b` encode inequality rows, `a_eq/b_eq`
+/// encode equality rows, and `bounds` stores per-variable lower/upper bounds.
+/// The result is `(optimal_value, primal_solution_vector)`.
 pub fn linprog(
   c : Array[Expr],
   a? : Matrix? = None,
@@ -854,6 +859,11 @@ fn lp_extreme(
 }
 
 ///|
+/// Minimize a linear objective given symbolic inequality constraints.
+///
+/// Constraints are given in the public `lpmin/lpmax` front-door style, such as
+/// `x >= 0` or `x + y <= 2`. The result is the optimal value together with a
+/// map from symbol names to primal values.
 pub fn lpmin(
   objective : Expr,
   constraints : Array[Expr],
@@ -862,6 +872,9 @@ pub fn lpmin(
 }
 
 ///|
+/// Maximize a linear objective given symbolic inequality constraints.
+///
+/// This is the maximization counterpart of [`lpmin`](#lpmin).
 pub fn lpmax(
   objective : Expr,
   constraints : Array[Expr],

@@ -156,6 +156,11 @@ fn solver_expand_expr(expr : Expr) -> Expr {
 }
 
 ///|
+/// Names of ODE hints recognized by [`dsolve`](#dsolve).
+///
+/// This list is intentionally broader than the currently implemented hint
+/// subset so callers can validate user input against the public compatibility
+/// surface.
 pub let allhints : Array[String] = [
   "factorable", "nth_algebraic", "separable", "1st_exact", "1st_linear", "Bernoulli",
   "1st_rational_riccati", "Riccati_special_minus2", "1st_homogeneous_coeff_best",
@@ -596,6 +601,10 @@ fn solver_constantsimp_radical_cleanup(expr : Expr) -> Expr {
 }
 
 ///|
+/// Merge arbitrary integration constants into a canonical representative.
+///
+/// Expressions that differ only by renaming or combining free constants are
+/// rewritten into a simpler, more stable form.
 pub fn constantsimp(
   expr : Expr,
   constants : Array[Expr],
@@ -857,6 +866,10 @@ fn solver_homogeneous_order_inner(
 }
 
 ///|
+/// Compute the homogeneity order of `eq` in the given symbols.
+///
+/// The result is `None` when the expression is not homogeneous. Otherwise the
+/// returned expression is an exact rational order.
 pub fn homogeneous_order(
   eq : Expr,
   symbols : Array[Expr],
@@ -868,6 +881,7 @@ pub fn homogeneous_order(
 }
 
 ///|
+/// Return the highest derivative order of `func` present in `expr`.
 pub fn ode_order(expr : Expr, func : Expr) -> Int {
   let normalized = solver_normalize_equation(expr)
   let mut best = 0
@@ -1235,6 +1249,10 @@ fn solver_assumptions_from_expr(
 }
 
 ///|
+/// Report which requested assumptions are not satisfied by `expr`.
+///
+/// Keys with matching values are omitted. A value of `None` means the current
+/// assumption engine cannot decide the property from the provided environment.
 pub fn failing_assumptions(
   expr : Expr,
   assumptions : Map[String, Bool?],
@@ -1256,6 +1274,11 @@ pub fn failing_assumptions(
 }
 
 ///|
+/// Check whether `expr` satisfies a set of assumptions.
+///
+/// Pass either `against` to reuse the assumptions attached to another
+/// expression, or an explicit `assumptions` map. The result is tri-valued:
+/// `Some(true)`, `Some(false)`, or `None` when the answer is unknown.
 pub fn check_assumptions(
   expr : Expr,
   against? : Expr? = None,
@@ -1362,6 +1385,11 @@ fn solver_maps_from_tuple_set(
 }
 
 ///|
+/// Solve for symbolic coefficients by matching basis terms.
+///
+/// This is the public front door for undetermined-coefficient problems such as
+/// polynomial, trigonometric, or exponential ansatz matching. The optional
+/// `dict` flag keeps the result in dictionary form instead of collapsing it.
 pub fn solve_undetermined_coeffs(
   equ : Expr,
   coeffs : Array[Expr],
@@ -2626,6 +2654,11 @@ fn solver_separable_canonical_systems(
 }
 
 ///|
+/// Rewrite an ODE system into explicit highest-derivative form.
+///
+/// Each returned inner array is one canonical system of equations
+/// `f_i^{(order_i)} = rhs_i`, suitable for downstream linear-system or
+/// separability analysis.
 pub fn canonical_odes(
   eqs : Array[Expr],
   funcs : Array[Expr],
@@ -2739,6 +2772,11 @@ fn solver_matrix_negate(
 }
 
 ///|
+/// Convert a linear ODE system into matrix coefficient form.
+///
+/// The result is `(A_n, ..., A_0), b` where the matrices satisfy the
+/// `n`-th-order system representation expected by [`linodesolve`](#linodesolve).
+/// Nonlinear or too-high-order systems raise `ValueError`.
 pub fn linear_ode_to_matrix(
   eqs : Array[Expr],
   funcs : Array[Expr],
@@ -3079,6 +3117,11 @@ fn solver_integrate_column_matrix(
 }
 
 ///|
+/// Solve a first-order linear matrix ODE system.
+///
+/// `a` is the coefficient matrix in `X' = A*X + rhs`. The solver builds the
+/// matrix exponential solution and uses symbolic constants `C1`, `C2`, ... for
+/// the homogeneous part.
 pub fn linodesolve(
   a : @symmatrices.Matrix,
   t : Expr,
@@ -6934,6 +6977,10 @@ fn solver_lie_apply_heuristic(
 }
 
 ///|
+/// Compute Lie infinitesimals for a first-order ODE.
+///
+/// `hint="default"` returns the first successful heuristic, while `hint="all"`
+/// collects all distinct heuristic matches currently implemented by the package.
 pub fn infinitesimals(
   eq : Expr,
   func? : Expr? = None,
@@ -6989,6 +7036,10 @@ pub fn infinitesimals(
 }
 
 ///|
+/// Verify candidate Lie infinitesimals against a first-order ODE.
+///
+/// Each result entry is `(ok, residual)`. Successful checks return residual
+/// zero; failures keep a simplified residual expression for debugging.
 pub fn checkinfsol(
   eq : Expr,
   infinitesimal_solutions : Array[Map[String, Expr]],
@@ -7703,6 +7754,10 @@ fn solver_desolve_result_dict(
 }
 
 ///|
+/// Classify a first-order ODE into the currently supported hint family names.
+///
+/// The current implementation returns a small supported subset centered on
+/// separable and first-order linear equations.
 pub fn classify_ode(
   eq : Expr,
   func? : Expr? = None,
@@ -7728,6 +7783,10 @@ pub fn classify_ode(
 }
 
 ///|
+/// Solve a supported ordinary differential equation.
+///
+/// `default` picks the preferred hint, `all` and `all_Integral` return a
+/// metadata dictionary, and explicit hints select one solve strategy.
 pub fn dsolve(
   eq : Expr,
   func? : Expr? = None,
@@ -7848,6 +7907,11 @@ pub fn dsolve(
 }
 
 ///|
+/// Check whether `sol` satisfies an ODE.
+///
+/// The return value is `(ok, residual)`. When `solve_for_func` is true the
+/// checker first rewrites implicit equalities into explicit solution form when
+/// possible.
 pub fn checkodesol(
   ode : Expr,
   sol : Expr,
@@ -8188,6 +8252,11 @@ fn solver_simple_pde_separate(
 }
 
 ///|
+/// Attempt additive or multiplicative separation of variables for a PDE.
+///
+/// `fun` is the original dependent function and `sep` contains the separated
+/// trial factors or summands. The result is `Some([lhs, rhs])` when the PDE can
+/// be split into independent pieces, or `None` otherwise.
 pub fn pde_separate(
   eq : Expr,
   fun : Expr,
@@ -8354,6 +8423,8 @@ pub fn pde_separate(
 }
 
 ///|
+/// Convenience wrapper for [`pde_separate`](#pde_separate) with additive
+/// separation.
 pub fn pde_separate_add(
   eq : Expr,
   fun : Expr,
@@ -8363,6 +8434,8 @@ pub fn pde_separate_add(
 }
 
 ///|
+/// Convenience wrapper for [`pde_separate`](#pde_separate) with multiplicative
+/// separation.
 pub fn pde_separate_mul(
   eq : Expr,
   fun : Expr,
@@ -9218,6 +9291,10 @@ fn solver_pdsolve_variable_coeff(
 }
 
 ///|
+/// Classify a first-order PDE into the currently supported hint family names.
+///
+/// The current solver covers a supported subset of first-order linear
+/// constant-coefficient and variable-coefficient equations.
 pub fn classify_pde(
   eq : Expr,
   func? : Expr? = None,
@@ -9235,6 +9312,11 @@ pub fn classify_pde(
 }
 
 ///|
+/// Solve a supported first-order PDE.
+///
+/// Like [`dsolve`](#dsolve), this entrypoint supports `default`, explicit hint
+/// names, and the meta hints `all`, `all_Integral`, and `best`. `solvefun`
+/// controls the arbitrary function used in the homogeneous part.
 pub fn pdsolve(
   eq : Expr,
   func? : Expr? = None,
@@ -9368,6 +9450,10 @@ pub fn pdsolve(
 }
 
 ///|
+/// Check whether one PDE solution satisfies `pde`.
+///
+/// The result is `(ok, residual)`. When `solve_for_func` is true, implicit
+/// equalities are normalized into explicit solution form before substitution.
 pub fn checkpdesol(
   pde : Expr,
   sol : Expr,
@@ -9379,6 +9465,9 @@ pub fn checkpdesol(
 }
 
 ///|
+/// Check a list of PDE solutions with shared function inference.
+///
+/// This is the typed list-valued companion to [`checkpdesol`](#checkpdesol).
 pub fn checkpdesols(
   pde : Expr,
   sols : Array[Expr],
