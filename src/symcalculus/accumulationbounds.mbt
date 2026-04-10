@@ -1,7 +1,9 @@
 ///|
+/// Expression alias used by the calculus package.
 pub type Expr = @symcore.Expr
 
 ///|
+/// Rational-number alias used by finite-difference and interval helpers.
 pub type BigRational = @symnum.BigRational
 
 ///|
@@ -175,11 +177,16 @@ fn accum_unpack(expr : Expr) -> (Expr, Expr)? {
 }
 
 ///|
+/// Test whether an expression is an `AccumBounds(min, max)` wrapper.
 pub fn accum_is_bounds(expr : Expr) -> Bool {
   accum_unpack(expr) is Some(_)
 }
 
 ///|
+/// Build an accumulation-bounds object from lower and upper expressions.
+///
+/// When both endpoints are numeric, the constructor rejects reversed bounds and
+/// collapses equal endpoints to the endpoint expression itself.
 pub fn accum_bounds(min : Expr, max : Expr) -> Expr raise AccumBoundsError {
   if @symcore.compare_expr(min, max) == 0 {
     return min
@@ -207,6 +214,9 @@ fn accum_bounds_ordered(min : Expr, max : Expr) -> Expr {
 }
 
 ///|
+/// Return the lower endpoint of an accumulation-bounds object.
+///
+/// Returns `None` when `expr` is not an accumulation-bounds wrapper.
 pub fn accum_min(expr : Expr) -> Expr? {
   match accum_unpack(expr) {
     Some((min, _)) => Some(min)
@@ -215,6 +225,7 @@ pub fn accum_min(expr : Expr) -> Expr? {
 }
 
 ///|
+/// Return the upper endpoint of an accumulation-bounds object.
 pub fn accum_max(expr : Expr) -> Expr? {
   match accum_unpack(expr) {
     Some((_, max)) => Some(max)
@@ -223,6 +234,7 @@ pub fn accum_max(expr : Expr) -> Expr? {
 }
 
 ///|
+/// Return the width `max - min` of an accumulation-bounds object.
 pub fn accum_delta(expr : Expr) -> Expr? {
   match accum_unpack(expr) {
     Some((min, max)) =>
@@ -232,6 +244,7 @@ pub fn accum_delta(expr : Expr) -> Expr? {
 }
 
 ///|
+/// Return the midpoint `(min + max) / 2` of an accumulation-bounds object.
 pub fn accum_mid(expr : Expr) -> Expr? {
   match accum_unpack(expr) {
     Some((min, max)) => {
@@ -249,6 +262,9 @@ pub fn accum_mid(expr : Expr) -> Expr? {
 }
 
 ///|
+/// Negate an accumulation-bounds object or plain expression.
+///
+/// Bounds are flipped and re-ordered so the lower endpoint stays on the left.
 pub fn accum_neg(expr : Expr) -> Expr {
   match accum_unpack(expr) {
     Some((min, max)) =>
@@ -261,6 +277,10 @@ pub fn accum_neg(expr : Expr) -> Expr {
 }
 
 ///|
+/// Add two accumulation-bounds expressions or plain expressions.
+///
+/// When both operands have finite numeric endpoints, the result is another
+/// accumulation-bounds object with combined endpoints.
 pub fn accum_add(lhs : Expr, rhs : Expr) -> Expr {
   match (accum_unpack(lhs), accum_unpack(rhs)) {
     (Some((a1, a2)), Some((b1, b2))) => {
@@ -306,11 +326,13 @@ pub fn accum_add(lhs : Expr, rhs : Expr) -> Expr {
 }
 
 ///|
+/// Subtract `rhs` from `lhs` in accumulation-bounds form.
 pub fn accum_sub(lhs : Expr, rhs : Expr) -> Expr {
   accum_add(lhs, accum_neg(rhs))
 }
 
 ///|
+/// Multiply two accumulation-bounds expressions or a bounds object by a scalar.
 pub fn accum_mul(lhs : Expr, rhs : Expr) -> Expr {
   match (accum_unpack(lhs), accum_unpack(rhs)) {
     (Some((a1, a2)), Some((b1, b2))) => {
@@ -369,6 +391,10 @@ fn interval_contains_zero(min : BigRational, max : BigRational) -> Bool {
 }
 
 ///|
+/// Divide one accumulation-bounds expression by another expression.
+///
+/// Finite numeric denominator intervals that cross zero widen to an unbounded
+/// result.
 pub fn accum_div(lhs : Expr, rhs : Expr) -> Expr {
   match (accum_unpack(lhs), accum_unpack(rhs)) {
     (Some((a1, a2)), Some((b1, b2))) => {
@@ -464,6 +490,9 @@ fn pow_rational(base : BigRational, exp : Int) -> BigRational? {
 }
 
 ///|
+/// Raise an accumulation-bounds expression to an integer power.
+///
+/// Non-integer exponents fall back to a symbolic power expression.
 pub fn accum_pow(base : Expr, exp : Expr) -> Expr {
   match (accum_unpack(base), exp) {
     (Some((a1, a2)), Expr::Number(n)) => {
@@ -553,6 +582,7 @@ pub fn accum_pow(base : Expr, exp : Expr) -> Expr {
 }
 
 ///|
+/// Apply absolute value to an accumulation-bounds expression.
 pub fn accum_abs(expr : Expr) -> Expr {
   match accum_unpack(expr) {
     Some((min, max)) => {
@@ -583,6 +613,7 @@ pub fn accum_abs(expr : Expr) -> Expr {
 }
 
 ///|
+/// Build the smallest interval covering both accumulation-bounds operands.
 pub fn accum_union(lhs : Expr, rhs : Expr) -> Expr {
   match (accum_unpack(lhs), accum_unpack(rhs)) {
     (Some((a1, a2)), Some((b1, b2))) => {

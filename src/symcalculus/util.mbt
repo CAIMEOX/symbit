@@ -129,6 +129,10 @@ fn util_mul_scalar(expr : Expr, k : BigRational) -> Expr {
 }
 
 ///|
+/// Return the smallest positive period of an elementary periodic expression.
+///
+/// The current implementation recognizes linear arguments of `sin`, `cos`, and
+/// `tan`. Expressions independent of `sym` have period `0`.
 pub fn periodicity(expr : Expr, sym : Expr) -> Expr? {
   if !util_depends_on(expr, sym) {
     return Some(@symcore.int(0))

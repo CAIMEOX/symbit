@@ -180,6 +180,10 @@ fn sing_collect(expr : Expr, sym : Expr, out : Array[Expr]) -> Unit {
 }
 
 ///|
+/// Return isolated singular points of `expr` with respect to `sym`.
+///
+/// The current implementation focuses on poles from negative powers and
+/// logarithmic singularities with linearly solvable arguments.
 pub fn singularities(expr : Expr, sym : Expr) -> Expr {
   let out : Array[Expr] = Array::new()
   sing_collect(expr, sym, out)

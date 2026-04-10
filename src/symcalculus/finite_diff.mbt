@@ -39,6 +39,10 @@ fn fd_rat_div(
 }
 
 ///|
+/// Compute finite-difference weights up to the requested derivative order.
+///
+/// The return value is a three-level table indexed by derivative order, stencil
+/// size, and grid position.
 pub fn finite_diff_weights(
   order : Int,
   x_list : Array[BigRational],
@@ -91,6 +95,10 @@ pub fn finite_diff_weights(
 }
 
 ///|
+/// Apply finite-difference weights to sampled values.
+///
+/// `x_list` and `y_list` must have the same length. The result is a symbolic
+/// linear combination of the sampled expressions.
 pub fn apply_finite_diff(
   order : Int,
   x_list : Array[BigRational],

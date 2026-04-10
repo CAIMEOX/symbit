@@ -1,4 +1,7 @@
 ///|
+/// Build a derivative expression with explicit differentiation variables.
+///
+/// This constructs the symbolic derivative node directly without evaluating it.
 pub fn derivative_expr(expr : Expr, vars : Array[Expr]) -> Expr {
   let args : Array[Expr] = Array::new()
   args.push(expr)
@@ -281,6 +284,10 @@ fn diff_undefined_function(
 }
 
 ///|
+/// Differentiate an expression with respect to one variable.
+///
+/// The implementation handles common arithmetic, several standard elementary
+/// functions, symbolic applications, and simple substitution-chain cases.
 pub fn diff(expr : Expr, wrt : Expr) -> Expr {
   if @symcore.compare_expr(expr, wrt) == 0 {
     return @symcore.int(1)
@@ -440,6 +447,10 @@ fn diff_with_vars(expr : Expr, vars : Array[Expr]) -> Expr {
 }
 
 ///|
+/// Compute Euler-Lagrange equations for a Lagrangian density.
+///
+/// `funcs` lists the dependent functions and `vars` lists the independent
+/// variables. The result is an array of equations of the form `... = 0`.
 pub fn euler_equations(
   lagrangian : Expr,
   funcs : Array[Expr],

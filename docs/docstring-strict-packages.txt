@@ -5,6 +5,7 @@
 
 .
 symassume
+symcalculus
 symfunctions
 symintegrals
 symliealgebras
@@ -12,6 +13,7 @@ symprint
 symsimplify
 symsolvers
 symparse
+symstrategies
 symsets
 symtensor
 symunify
