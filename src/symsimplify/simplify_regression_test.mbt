@@ -216,6 +216,31 @@ test "symsimplify numer_expand balances linear-factor products like SymPy expand
 }
 
 ///|
+test "symsimplify numer_expand expands affine bivariate products via polynomial path" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let mut expr = @symcore.int(1)
+  for i in 1..<=3 {
+    let coeff = @symcore.int(i)
+    expr = expr * (x + coeff * y + coeff)
+  }
+  let expanded = numer_expand(expr)
+  let expected = @symcore.add([
+    @symcore.pow(x, @symcore.int(3)),
+    @symcore.mul([@symcore.int(6), @symcore.pow(x, @symcore.int(2)), y]),
+    @symcore.mul([@symcore.int(6), @symcore.pow(x, @symcore.int(2))]),
+    @symcore.mul([@symcore.int(11), x, @symcore.pow(y, @symcore.int(2))]),
+    @symcore.mul([@symcore.int(22), x, y]),
+    @symcore.mul([@symcore.int(11), x]),
+    @symcore.mul([@symcore.int(6), @symcore.pow(y, @symcore.int(3))]),
+    @symcore.mul([@symcore.int(18), @symcore.pow(y, @symcore.int(2))]),
+    @symcore.mul([@symcore.int(18), y]),
+    @symcore.int(6),
+  ])
+  assert_eq(@symcore.compare_expr(expanded, expected), 0)
+}
+
+///|
 test "symsimplify simplifies nested gamma and rational sums regression" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")

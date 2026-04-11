@@ -66,7 +66,10 @@ pub fn fraction_expand(expr : Expr) -> Expr {
 /// Expand only the numerator.
 pub fn numer_expand(expr : Expr) -> Expr {
   let (num, den) = split_fraction(expr)
-  let n = expand_mul_expr(num)
+  let n = match expand_mul_polynomial_expr(num) {
+    Some(expanded) => expanded
+    None => expand_mul_expr(num)
+  }
   if den == int(1) {
     n
   } else {
@@ -700,6 +703,255 @@ fn expand_mul_expr(expr : Expr) -> Expr {
             expr,
           )
         None => expr
+      }
+  }
+}
+
+///|
+fn expand_mul_polynomial_expr(expr : Expr) -> Expr? {
+  let vars = polynomial_symbol_names(expr)
+  if vars.is_empty() {
+    return None
+  }
+  let var_index : Map[String, Int] = Map::new()
+  for i in 0..<vars.length() {
+    var_index.set(vars[i], i)
+  }
+  match try_sparse_poly_expr(expr, vars.length(), var_index) {
+    Some(poly) => sparse_poly_to_expr(poly, vars)
+    None => None
+  }
+}
+
+///|
+priv struct SparsePolyTerm {
+  exps : Array[Int]
+  coeff : @symnum.BigRational
+}
+
+///|
+priv struct SparsePoly {
+  terms : Array[SparsePolyTerm]
+  index : Map[String, Int]
+}
+
+///|
+fn sparse_poly_zero() -> SparsePoly {
+  SparsePoly::{ terms: [], index: Map::new() }
+}
+
+///|
+fn sparse_poly_constant(
+  coeff : @symnum.BigRational,
+  var_count : Int,
+) -> SparsePoly {
+  if coeff.is_zero() {
+    return sparse_poly_zero()
+  }
+  let exps : Array[Int] = Array::new()
+  for _ in 0..<var_count {
+    exps.push(0)
+  }
+  let poly = sparse_poly_zero()
+  sparse_poly_add_term(poly, exps, coeff)
+  poly
+}
+
+///|
+fn sparse_poly_monomial(
+  coeff : @symnum.BigRational,
+  var_count : Int,
+  index : Int,
+) -> SparsePoly {
+  let exps : Array[Int] = Array::new()
+  for i in 0..<var_count {
+    exps.push(if i == index { 1 } else { 0 })
+  }
+  let poly = sparse_poly_zero()
+  sparse_poly_add_term(poly, exps, coeff)
+  poly
+}
+
+///|
+fn sparse_poly_key(exps : Array[Int]) -> String {
+  exps.map(exp => exp.to_string()).join(",")
+}
+
+///|
+fn sparse_poly_add_term(
+  poly : SparsePoly,
+  exps : Array[Int],
+  coeff : @symnum.BigRational,
+) -> Unit {
+  if coeff.is_zero() {
+    return
+  }
+  let key = sparse_poly_key(exps)
+  match poly.index.get(key) {
+    Some(idx) => {
+      let next = poly.terms[idx].coeff.add_r(coeff)
+      poly.terms[idx] = SparsePolyTerm::{ exps, coeff: next }
+    }
+    None => {
+      poly.index.set(key, poly.terms.length())
+      poly.terms.push(SparsePolyTerm::{ exps, coeff })
+    }
+  }
+}
+
+///|
+fn sparse_poly_add(lhs : SparsePoly, rhs : SparsePoly) -> SparsePoly {
+  let out = sparse_poly_zero()
+  for term in lhs.terms {
+    sparse_poly_add_term(out, term.exps, term.coeff)
+  }
+  for term in rhs.terms {
+    sparse_poly_add_term(out, term.exps, term.coeff)
+  }
+  out
+}
+
+///|
+fn sparse_poly_mul(lhs : SparsePoly, rhs : SparsePoly) -> SparsePoly {
+  let out = sparse_poly_zero()
+  for lhs_term in lhs.terms {
+    if lhs_term.coeff.is_zero() {
+      continue
+    }
+    for rhs_term in rhs.terms {
+      if rhs_term.coeff.is_zero() {
+        continue
+      }
+      let exps : Array[Int] = Array::new()
+      for i in 0..<lhs_term.exps.length() {
+        exps.push(lhs_term.exps[i] + rhs_term.exps[i])
+      }
+      sparse_poly_add_term(out, exps, lhs_term.coeff.mul_r(rhs_term.coeff))
+    }
+  }
+  out
+}
+
+///|
+fn sparse_poly_pow(base : SparsePoly, exp : Int) -> SparsePoly {
+  let var_count = if base.terms.is_empty() { 0 } else { base.terms[0].exps.length() }
+  let mut power = exp
+  let mut factor = base
+  let mut acc = sparse_poly_constant(@symnum.BigRational::one(), var_count)
+  while power > 0 {
+    if power % 2 == 1 {
+      acc = sparse_poly_mul(acc, factor)
+    }
+    power = power / 2
+    if power > 0 {
+      factor = sparse_poly_mul(factor, factor)
+    }
+  }
+  acc
+}
+
+///|
+fn sparse_poly_to_expr(poly : SparsePoly, vars : Array[String]) -> Expr? {
+  let terms : Array[Expr] = Array::new()
+  for term in poly.terms {
+    if term.coeff.is_zero() {
+      continue
+    }
+    let factors : Array[Expr] = Array::new()
+    if !term.coeff.is_one() || term.exps.all(exp => exp == 0) {
+      factors.push(Expr::Number(term.coeff))
+    }
+    for i in 0..<vars.length() {
+      let exp = term.exps[i]
+      if exp == 0 {
+        continue
+      }
+      let sym = Expr::Symbol(vars[i])
+      factors.push(if exp == 1 { sym } else { @symcore.pow(sym, int(exp)) })
+    }
+    terms.push(match factors.length() {
+      0 => int(1)
+      1 => factors[0]
+      _ => @symcore.mul(factors)
+    })
+  }
+  Some(match terms.length() {
+    0 => int(0)
+    1 => terms[0]
+    _ => @symcore.add(terms)
+  })
+}
+
+///|
+fn try_sparse_poly_expr(
+  expr : Expr,
+  var_count : Int,
+  var_index : Map[String, Int],
+) -> SparsePoly? {
+  match expr {
+    Expr::Number(n) => Some(sparse_poly_constant(n, var_count))
+    Expr::Symbol(name) =>
+      match var_index.get(name) {
+        Some(index) =>
+          Some(sparse_poly_monomial(@symnum.BigRational::one(), var_count, index))
+        None => None
+      }
+    Expr::Add(args) => {
+      let mut acc = sparse_poly_zero()
+      for arg in args {
+        match try_sparse_poly_expr(arg, var_count, var_index) {
+          Some(poly) => acc = sparse_poly_add(acc, poly)
+          None => return None
+        }
+      }
+      Some(acc)
+    }
+    Expr::Mul(args) => {
+      let mut acc = sparse_poly_constant(@symnum.BigRational::one(), var_count)
+      for arg in args {
+        match try_sparse_poly_expr(arg, var_count, var_index) {
+          Some(poly) => acc = sparse_poly_mul(acc, poly)
+          None => return None
+        }
+      }
+      Some(acc)
+    }
+    Expr::Pow(base, Expr::Number(exp)) if exp.is_integral() && exp.numerator().to_int() >= 0 =>
+      match try_sparse_poly_expr(base, var_count, var_index) {
+        Some(poly) => Some(sparse_poly_pow(poly, exp.numerator().to_int()))
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn polynomial_symbol_names(expr : Expr) -> Array[String] {
+  let seen : Map[String, Bool] = Map::new()
+  collect_polynomial_symbol_names(expr, seen)
+  let names : Array[String] = Array::new()
+  for name, _ in seen {
+    names.push(name)
+  }
+  names.sort()
+  names
+}
+
+///|
+fn collect_polynomial_symbol_names(expr : Expr, seen : Map[String, Bool]) -> Unit {
+  match expr {
+    Expr::Symbol(name) => seen.set(name, true)
+    Expr::Add(args) | Expr::Mul(args) =>
+      for child in args {
+        collect_polynomial_symbol_names(child, seen)
+      }
+    Expr::Pow(base, exp) => {
+      collect_polynomial_symbol_names(base, seen)
+      collect_polynomial_symbol_names(exp, seen)
+    }
+    _ =>
+      for child in @symcore.args(expr) {
+        collect_polynomial_symbol_names(child, seen)
       }
   }
 }
