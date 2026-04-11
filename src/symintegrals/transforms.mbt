@@ -5610,13 +5610,21 @@ fn inverse_laplace_reciprocal_sqrt_shifted_linear_over_s_term(
 
 ///|
 fn matches_log_one_plus_linear(expr : Expr, s_name : String) -> Bool {
-  match unary_application_arg(expr_simplify(expr), "log") {
+  match unary_application_arg(expr, "log") {
     Some(inner) =>
       match linear_coeffs(inner, s_name) {
         Some((coeff, offset)) => expr_is_one(coeff) && expr_is_one(offset)
         None => false
       }
-    None => false
+    None =>
+      match retry_with_simplified(expr, expr => unary_application_arg(expr, "log")) {
+        Some(inner) =>
+          match linear_coeffs(inner, s_name) {
+            Some((coeff, offset)) => expr_is_one(coeff) && expr_is_one(offset)
+            None => false
+          }
+        None => false
+      }
   }
 }
 
@@ -5640,23 +5648,25 @@ fn parse_scaled_inverse_symbol(expr : Expr, var_name : String) -> Expr? {
 
 ///|
 fn parse_symbol_negative_power(expr : Expr, var_name : String) -> Expr? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Pow(@symcore.Expr::Symbol(name), power) if name == var_name =>
-      extract_explicit_negative_factor(power)
-    _ => None
-  }
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Pow(@symcore.Expr::Symbol(name), power) if name == var_name =>
+        extract_explicit_negative_factor(power)
+      _ => None
+    })
 }
 
 ///|
 fn parse_general_negative_power_base(expr : Expr) -> (Expr, Expr)? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Pow(base, power) =>
-      match extract_explicit_negative_factor(power) {
-        Some(v) => Some((base, v))
-        None => None
-      }
-    _ => None
-  }
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Pow(base, power) =>
+        match extract_explicit_negative_factor(power) {
+          Some(v) => Some((base, v))
+          None => None
+        }
+      _ => None
+    })
 }
 
 ///|
@@ -5684,20 +5694,21 @@ fn parse_pure_symbol_positive_int_power(expr : Expr, var_name : String) -> Int? 
 }
 
 ///|
-fn parse_coeff_power_with_order(coeff : Expr, order : Expr) -> Expr? {
-  match expr_simplify(coeff) {
-    @symcore.Expr::Pow(base, exp) if expr_same_simplified(exp, order) =>
-      Some(base)
-    _ => None
-  }
+fn parse_coeff_power_with_order(expr : Expr, order : Expr) -> Expr? {
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Pow(base, exp) if expr_same_simplified(exp, order) =>
+        Some(base)
+      _ => None
+    })
 }
 
 ///|
-fn parse_symbol_plus_sqrt_quadratic(
+fn parse_symbol_plus_sqrt_quadratic_raw(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Bool)? {
-  match expr_simplify(expr) {
+  match expr {
     @symcore.Expr::Add(args) if args.length() == 2 => {
       let mut saw_symbol = false
       let mut kernel_sq : Expr? = None
@@ -5748,6 +5759,17 @@ fn parse_symbol_plus_sqrt_quadratic(
 }
 
 ///|
+fn parse_symbol_plus_sqrt_quadratic(
+  expr : Expr,
+  var_name : String,
+) -> (Expr, Bool)? {
+  retry_with_simplified(
+    expr,
+    expr => parse_symbol_plus_sqrt_quadratic_raw(expr, var_name),
+  )
+}
+
+///|
 fn make_expr_derivative(expr : Expr, wrt : Expr, order : Int) -> Expr {
   if order <= 0 {
     expr
@@ -5760,7 +5782,7 @@ fn make_expr_derivative(expr : Expr, wrt : Expr, order : Int) -> Expr {
 
 ///|
 fn parse_linear_scale_only(expr : Expr, var_name : String) -> Expr? {
-  let (coeff, factors) = split_mul(expr_simplify(expr), var_name)
+  let (coeff, factors) = split_mul(expr, var_name)
   if factors.length() != 1 {
     return None
   }
@@ -5771,8 +5793,8 @@ fn parse_linear_scale_only(expr : Expr, var_name : String) -> Expr? {
 }
 
 ///|
-fn parse_sqrt_affine(expr : Expr, var_name : String) -> (Expr, Expr)? {
-  match unary_application_arg(expr_simplify(expr), "sqrt") {
+fn parse_sqrt_affine_raw(expr : Expr, var_name : String) -> (Expr, Expr)? {
+  match unary_application_arg(expr, "sqrt") {
     Some(inner) =>
       match split_linear_coeff(inner, var_name) {
         Some((coeff, offset)) =>
@@ -5790,11 +5812,16 @@ fn parse_sqrt_affine(expr : Expr, var_name : String) -> (Expr, Expr)? {
 }
 
 ///|
-fn parse_sqrt_affine_plus_const(
+fn parse_sqrt_affine(expr : Expr, var_name : String) -> (Expr, Expr)? {
+  retry_with_simplified(expr, expr => parse_sqrt_affine_raw(expr, var_name))
+}
+
+///|
+fn parse_sqrt_affine_plus_const_raw(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Expr, Expr)? {
-  match expr_simplify(expr) {
+  match expr {
     @symcore.Expr::Add(args) if args.length() == 2 => {
       let mut sqrt_scale : Expr? = None
       let mut sqrt_offset : Expr? = None
@@ -5826,11 +5853,22 @@ fn parse_sqrt_affine_plus_const(
 }
 
 ///|
-fn parse_scaled_sqrt_linear_plus_const(
+fn parse_sqrt_affine_plus_const(
+  expr : Expr,
+  var_name : String,
+) -> (Expr, Expr, Expr)? {
+  retry_with_simplified(
+    expr,
+    expr => parse_sqrt_affine_plus_const_raw(expr, var_name),
+  )
+}
+
+///|
+fn parse_scaled_sqrt_linear_plus_const_raw(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Expr)? {
-  match expr_simplify(expr) {
+  match expr {
     @symcore.Expr::Add(args) if args.length() == 2 => {
       let mut scale : Expr? = None
       let mut constant : Expr? = None
@@ -5856,22 +5894,34 @@ fn parse_scaled_sqrt_linear_plus_const(
 }
 
 ///|
+fn parse_scaled_sqrt_linear_plus_const(
+  expr : Expr,
+  var_name : String,
+) -> (Expr, Expr)? {
+  retry_with_simplified(
+    expr,
+    expr => parse_scaled_sqrt_linear_plus_const_raw(expr, var_name),
+  )
+}
+
+///|
 fn parse_scaled_sqrt_linear_plus_const_power(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Expr, Int)? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Pow(base, exp) =>
-      match expr_is_int_value(exp) {
-        Some(power) if power > 0 =>
-          match parse_scaled_sqrt_linear_plus_const(base, var_name) {
-            Some((scale, constant)) => Some((scale, constant, power))
-            None => None
-          }
-        _ => None
-      }
-    _ => None
-  }
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Pow(base, exp) =>
+        match expr_is_int_value(exp) {
+          Some(power) if power > 0 =>
+            match parse_scaled_sqrt_linear_plus_const(base, var_name) {
+              Some((scale, constant)) => Some((scale, constant, power))
+              None => None
+            }
+          _ => None
+        }
+      _ => None
+    })
 }
 
 ///|
