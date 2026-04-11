@@ -12423,8 +12423,8 @@ fn parse_linear_offset_expr(expr : Expr, var_name : String) -> (Expr, Expr)? {
 }
 
 ///|
-fn parse_linear_var_coeff(expr : Expr, var_name : String) -> Expr? {
-  match expr_simplify(expr) {
+fn parse_linear_var_coeff_raw(expr : Expr, var_name : String) -> Expr? {
+  match expr {
     @symcore.Expr::Symbol(name) =>
       if name == var_name {
         Some(@symcore.int(1))
@@ -12463,6 +12463,11 @@ fn parse_linear_var_coeff(expr : Expr, var_name : String) -> Expr? {
     }
     _ => None
   }
+}
+
+///|
+fn parse_linear_var_coeff(expr : Expr, var_name : String) -> Expr? {
+  retry_with_simplified(expr, expr => parse_linear_var_coeff_raw(expr, var_name))
 }
 
 ///|
@@ -12641,8 +12646,8 @@ fn parse_pi_linear_trig_factor(
 }
 
 ///|
-fn parse_unit_linear_var_term(expr : Expr, var_name : String) -> Int? {
-  match expr_simplify(expr) {
+fn parse_unit_linear_var_term_raw(expr : Expr, var_name : String) -> Int? {
+  match expr {
     @symcore.Expr::Symbol(name) => if name == var_name { Some(1) } else { None }
     @symcore.Expr::Mul(args) => {
       let mut saw_var = false
@@ -12688,6 +12693,14 @@ fn parse_unit_linear_var_term(expr : Expr, var_name : String) -> Int? {
 }
 
 ///|
+fn parse_unit_linear_var_term(expr : Expr, var_name : String) -> Int? {
+  retry_with_simplified(
+    expr,
+    expr => parse_unit_linear_var_term_raw(expr, var_name),
+  )
+}
+
+///|
 fn has_linear_offset(
   args : Array[(Expr, Expr)],
   target_coeff : Expr,
@@ -12707,15 +12720,14 @@ fn expr_same_simplified(left : Expr, right : Expr) -> Bool {
 }
 
 ///|
-fn parse_power_of_two(expr : Expr, var_name : String) -> Expr? {
-  let simplified = expr_simplify(expr)
-  if expr_depends_on(simplified, var_name) {
+fn parse_power_of_two_raw(expr : Expr, var_name : String) -> Expr? {
+  if expr_depends_on(expr, var_name) {
     return None
   }
-  if expr_eq(simplified, @symcore.int(1)) {
+  if expr_eq(expr, @symcore.int(1)) {
     return Some(@symcore.int(0))
   }
-  match simplified {
+  match expr {
     @symcore.Expr::Pow(base, exp) =>
       if expr_eq(base, @symcore.int(2)) && !expr_depends_on(exp, var_name) {
         Some(exp)
@@ -12724,6 +12736,11 @@ fn parse_power_of_two(expr : Expr, var_name : String) -> Expr? {
       }
     _ => None
   }
+}
+
+///|
+fn parse_power_of_two(expr : Expr, var_name : String) -> Expr? {
+  retry_with_simplified(expr, expr => parse_power_of_two_raw(expr, var_name))
 }
 
 ///|
@@ -12738,9 +12755,13 @@ fn inverse_mellin_term(pow : Expr, is_le : Bool, x : Expr) -> Expr {
 
 ///|
 fn expr_factors(expr : Expr) -> Array[Expr] {
-  match expr_simplify(expr) {
+  match expr {
     @symcore.Expr::Mul(args) => args
-    simplified => [simplified]
+    _ =>
+      match expr_simplify(expr) {
+        @symcore.Expr::Mul(args) => args
+        simplified => [simplified]
+      }
   }
 }
 
@@ -12761,9 +12782,8 @@ fn transform_add(
 }
 
 ///|
-fn split_mul(expr : Expr, var_name : String) -> (Expr, Array[Expr]) {
-  let simplified = expr_simplify(expr)
-  match simplified {
+fn split_mul_raw(expr : Expr, var_name : String) -> (Expr, Array[Expr]) {
+  match expr {
     @symcore.Expr::Mul(args) => {
       let mut coeff = @symcore.int(1)
       let vars : Array[Expr] = []
@@ -12777,18 +12797,33 @@ fn split_mul(expr : Expr, var_name : String) -> (Expr, Array[Expr]) {
       (coeff, vars)
     }
     _ =>
-      if expr_depends_on(simplified, var_name) {
-        (@symcore.int(1), [simplified])
+      if expr_depends_on(expr, var_name) {
+        (@symcore.int(1), [expr])
       } else {
-        (simplified, [])
+        (expr, [])
       }
   }
 }
 
 ///|
-fn split_division(expr : Expr) -> (Array[Expr], Expr?) {
-  let simplified = expr_simplify(expr)
-  match simplified {
+fn split_mul(expr : Expr, var_name : String) -> (Expr, Array[Expr]) {
+  let direct = split_mul_raw(expr, var_name)
+  if @symcore.compare_expr(direct.0, expr) != 0 || direct.1.length() > 0 ||
+    !expr_depends_on(expr, var_name) {
+    direct
+  } else {
+    let simplified = expr_simplify(expr)
+    if @symcore.compare_expr(simplified, expr) == 0 {
+      direct
+    } else {
+      split_mul_raw(simplified, var_name)
+    }
+  }
+}
+
+///|
+fn split_division_raw(expr : Expr) -> (Array[Expr], Expr?) {
+  match expr {
     @symcore.Expr::Pow(base, exp) if expr_is_int_value(exp) is Some(exp_int) &&
       exp_int < 0 => {
       let n = -exp_int
@@ -12827,7 +12862,22 @@ fn split_division(expr : Expr) -> (Array[Expr], Expr?) {
         (num, Some(den_expr))
       }
     }
-    _ => ([simplified], None)
+    _ => ([expr], None)
+  }
+}
+
+///|
+fn split_division(expr : Expr) -> (Array[Expr], Expr?) {
+  let direct = split_division_raw(expr)
+  if direct.1 is Some(_) {
+    direct
+  } else {
+    let simplified = expr_simplify(expr)
+    if @symcore.compare_expr(simplified, expr) == 0 {
+      direct
+    } else {
+      split_division_raw(simplified)
+    }
   }
 }
 
@@ -13071,12 +13121,11 @@ fn parse_sqrt_shifted_power_expr(
 }
 
 ///|
-fn parse_log_x_power(expr : Expr, var_name : String) -> Int? {
-  let simplified = expr_simplify(expr)
-  match unary_application_arg(simplified, "log") {
+fn parse_log_x_power_raw(expr : Expr, var_name : String) -> Int? {
+  match unary_application_arg(expr, "log") {
     Some(Expr::Symbol(name)) => if name == var_name { Some(1) } else { None }
     _ =>
-      match pow_named_unary_application(simplified) {
+      match pow_named_unary_application(expr) {
         Some(("log", Expr::Symbol(name), exp)) =>
           if name == var_name {
             match expr_is_int_value(exp) {
@@ -13092,8 +13141,13 @@ fn parse_log_x_power(expr : Expr, var_name : String) -> Int? {
 }
 
 ///|
+fn parse_log_x_power(expr : Expr, var_name : String) -> Int? {
+  retry_with_simplified(expr, expr => parse_log_x_power_raw(expr, var_name))
+}
+
+///|
 fn parse_one_plus_linear(expr : Expr, var_name : String) -> Bool {
-  match linear_coeffs(expr_simplify(expr), var_name) {
+  match linear_coeffs(expr, var_name) {
     Some((coeff, offset)) => expr_is_one(coeff) && expr_is_one(offset)
     _ => false
   }
@@ -13101,7 +13155,7 @@ fn parse_one_plus_linear(expr : Expr, var_name : String) -> Bool {
 
 ///|
 fn parse_one_minus_linear(expr : Expr, var_name : String) -> Bool {
-  match linear_coeffs(expr_simplify(expr), var_name) {
+  match linear_coeffs(expr, var_name) {
     Some((coeff, offset)) =>
       (expr_is_one(coeff) || expr_is_minus_one(coeff)) && expr_is_one(offset)
     _ => false
@@ -13109,8 +13163,8 @@ fn parse_one_minus_linear(expr : Expr, var_name : String) -> Bool {
 }
 
 ///|
-fn parse_one_plus_inverse(expr : Expr, var_name : String) -> Bool {
-  match expr_simplify(expr) {
+fn parse_one_plus_inverse_raw(expr : Expr, var_name : String) -> Bool {
+  match expr {
     @symcore.Expr::Add(args) if args.length() == 2 => {
       let mut saw_one = false
       let mut saw_inv = false
@@ -13131,38 +13185,60 @@ fn parse_one_plus_inverse(expr : Expr, var_name : String) -> Bool {
 }
 
 ///|
+fn parse_one_plus_inverse(expr : Expr, var_name : String) -> Bool {
+  retry_with_simplified(expr, expr => {
+    if parse_one_plus_inverse_raw(expr, var_name) {
+      Some(true)
+    } else {
+      None
+    }
+  }) is Some(_)
+}
+
+///|
+fn parse_one_minus_inverse_inner_raw(expr : Expr, var_name : String) -> Bool {
+  match expr {
+    @symcore.Expr::Add(args) if args.length() == 2 => {
+      let mut saw_one = false
+      let mut saw_neg_inv = false
+      for arg in args {
+        if expr_is_one(arg) {
+          saw_one = true
+        } else {
+          match parse_negative_power(expr_mul(@symcore.int(-1), arg), var_name) {
+            Some(power) if expr_eq(power, @symcore.int(1)) =>
+              saw_neg_inv = true
+            _ => return false
+          }
+        }
+      }
+      saw_one && saw_neg_inv
+    }
+    _ => false
+  }
+}
+
+///|
 fn parse_abs_one_minus_linear(expr : Expr, var_name : String) -> Bool {
-  match unary_application_arg(expr_simplify(expr), "Abs") {
+  match unary_application_arg(expr, "Abs") {
     Some(inner) => parse_one_minus_linear(inner, var_name)
-    None => false
+    None =>
+      match retry_with_simplified(expr, expr => unary_application_arg(expr, "Abs")) {
+        Some(inner) => parse_one_minus_linear(inner, var_name)
+        None => false
+      }
   }
 }
 
 ///|
 fn parse_abs_one_minus_inverse(expr : Expr, var_name : String) -> Bool {
-  match unary_application_arg(expr_simplify(expr), "Abs") {
-    Some(inner) =>
-      match expr_simplify(inner) {
-        @symcore.Expr::Add(args) if args.length() == 2 => {
-          let mut saw_one = false
-          let mut saw_neg_inv = false
-          for arg in args {
-            if expr_is_one(arg) {
-              saw_one = true
-            } else {
-              match
-                parse_negative_power(expr_mul(@symcore.int(-1), arg), var_name) {
-                Some(power) if expr_eq(power, @symcore.int(1)) =>
-                  saw_neg_inv = true
-                _ => return false
-              }
-            }
-          }
-          saw_one && saw_neg_inv
-        }
-        _ => false
+  match unary_application_arg(expr, "Abs") {
+    Some(inner) => parse_one_minus_inverse_inner_raw(inner, var_name)
+    None =>
+      match retry_with_simplified(expr, expr => unary_application_arg(expr, "Abs")) {
+        Some(inner) => parse_one_minus_inverse_inner_raw(inner, var_name)
+        None => false
       }
-    None => false
   }
 }
 

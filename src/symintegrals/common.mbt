@@ -35,6 +35,21 @@ fn expr_simplify(expr : Expr) -> Expr {
 }
 
 ///|
+fn[T] retry_with_simplified(expr : Expr, parse : (Expr) -> T?) -> T? {
+  match parse(expr) {
+    Some(value) => Some(value)
+    None => {
+      let simplified = expr_simplify(expr)
+      if @symcore.compare_expr(simplified, expr) == 0 {
+        None
+      } else {
+        parse(simplified)
+      }
+    }
+  }
+}
+
+///|
 fn expr_exact_int(expr : Expr) -> Int? {
   match @symcore.exact_number_num_den(expr) {
     Some((num, den)) =>
@@ -489,12 +504,12 @@ fn parse_limit(limit : Expr) -> LimitSpec? {
 }
 
 ///|
-fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
-  match expr_simplify(expr) {
+fn poly_coeffs_upto2_raw(expr : Expr, var_name : String) -> Array[Expr]? {
+  match expr {
     @symcore.Expr::Number(_)
     | @symcore.Expr::Float(_)
     | @symcore.Expr::ComplexFloat(_) =>
-      Some([expr_simplify(expr), @symcore.int(0), @symcore.int(0)])
+      Some([expr, @symcore.int(0), @symcore.int(0)])
     @symcore.Expr::Symbol(name) =>
       if name == var_name {
         Some([@symcore.int(0), @symcore.int(1), @symcore.int(0)])
@@ -576,6 +591,11 @@ fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
         Some([expr, @symcore.int(0), @symcore.int(0)])
       }
   }
+}
+
+///|
+fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
+  retry_with_simplified(expr, expr => poly_coeffs_upto2_raw(expr, var_name))
 }
 
 ///|
