@@ -1158,7 +1158,7 @@ fn abs_rational_expr(value : @symnum.BigRational) -> Expr {
 fn laplace_delta_roots(arg : Expr, t_name : String) -> Array[(Expr, Expr)]? {
   match linear_coeffs(arg, t_name) {
     Some((coeff, offset)) if !expr_is_zero(coeff) => {
-      let scale = match expr_num_value(expr_simplify(coeff)) {
+      let scale = match expr_num_value(coeff) {
         Some(value) => abs_rational_expr(value)
         None =>
           if expr_is_one(coeff) || expr_is_minus_one(coeff) {
@@ -1170,7 +1170,7 @@ fn laplace_delta_roots(arg : Expr, t_name : String) -> Array[(Expr, Expr)]? {
       Some([(expr_div(expr_mul(@symcore.int(-1), offset), coeff), scale)])
     }
     _ =>
-      match poly_coeffs_upto2(expr_simplify(arg), t_name) {
+      match poly_coeffs_upto2(arg, t_name) {
         Some(coeffs) if !expr_is_zero(coeffs[2]) => {
           let disc = expr_simplify(
             expr_sub(
@@ -4131,7 +4131,7 @@ fn inverse_laplace_square_over_quadratic_term(
     Some(2) => ()
     _ => return None
   }
-  let coeffs = match poly_coeffs_upto2(expr_simplify(den), s_name) {
+  let coeffs = match poly_coeffs_upto2(den, s_name) {
     Some(v) => v
     None => return None
   }
@@ -8699,7 +8699,7 @@ fn mellin_abs_one_minus_power_info(
   x_name : String,
   s : Expr,
 ) -> MellinInfo? {
-  match pow_named_unary_application(expr_simplify(expr)) {
+  match retry_with_simplified(expr, expr => pow_named_unary_application(expr)) {
     Some(("Abs", arg, exp)) =>
       match
         (
@@ -11131,10 +11131,9 @@ fn inverse_mellin_trig_besselj_term(
     Some(name) => name
     None => return None
   }
-  let simplified = expr_simplify(expr)
-  let factors = match simplified {
-    @symcore.Expr::Mul(args) => args
-    _ => return None
+  let factors = match expr_factors(expr) {
+    [single] if @symcore.compare_expr(single, expr) == 0 => return None
+    args => args
   }
   let mut coeff = @symcore.int(1)
   let gamma_num_args : Array[Expr] = []
@@ -11222,7 +11221,7 @@ fn inverse_mellin_trig_besselj_term(
       ),
     ),
   )
-  if expr_eq(simplified, sin_formula) {
+  if expr_same_simplified(expr, sin_formula) {
     return Some(
       expr_simplify(
         expr_mul(
@@ -11260,7 +11259,7 @@ fn inverse_mellin_trig_besselj_term(
       ),
     ),
   )
-  if expr_eq(simplified, cos_formula) {
+  if expr_same_simplified(expr, cos_formula) {
     return Some(
       expr_simplify(
         expr_mul(
@@ -11348,9 +11347,9 @@ fn inverse_mellin_trig_bessely_term(
     Some(name) => name
     None => return None
   }
-  let factors = match expr_simplify(expr) {
-    @symcore.Expr::Mul(args) => args
-    _ => return None
+  let factors = match expr_factors(expr) {
+    [single] if @symcore.compare_expr(single, expr) == 0 => return None
+    args => args
   }
   let mut coeff = @symcore.int(1)
   let mut s_scale = @symcore.int(1)
@@ -11510,7 +11509,7 @@ fn inverse_mellin_trig_bessely_term(
       ),
     ),
   )
-  if expr_eq(expr_simplify(expr), sin_formula) {
+  if expr_same_simplified(expr, sin_formula) {
     return Some(
       expr_simplify(
         expr_mul(
@@ -11567,7 +11566,7 @@ fn inverse_mellin_trig_bessely_term(
       ),
     ),
   )
-  if expr_eq(expr_simplify(expr), cos_formula) {
+  if expr_same_simplified(expr, cos_formula) {
     return Some(
       expr_simplify(
         expr_mul(
@@ -11666,10 +11665,9 @@ fn inverse_mellin_besselj_product_term(
     Some(name) => name
     None => return None
   }
-  let simplified = expr_simplify(expr)
-  let factors = match simplified {
-    @symcore.Expr::Mul(args) => args
-    _ => return None
+  let factors = match expr_factors(expr) {
+    [single] if @symcore.compare_expr(single, expr) == 0 => return None
+    args => args
   }
   let mut coeff = @symcore.int(1)
   let mut s_scale = @symcore.int(1)
@@ -12251,9 +12249,8 @@ fn inverse_mellin_besselj_single_term(
     Some(name) => name
     None => return None
   }
-  let simplified = expr_simplify(expr)
-  let factors = match simplified {
-    @symcore.Expr::Mul(args) if args.length() == 2 => args
+  let factors = match expr_factors(expr) {
+    [a, b] => [a, b]
     _ => return None
   }
   let mut gamma_num : Expr? = None
@@ -12311,10 +12308,9 @@ fn inverse_mellin_besselk_single_term(
   s_sym : Expr,
   x : Expr,
 ) -> Expr? {
-  let simplified = expr_simplify(expr)
-  let factors = match simplified {
-    @symcore.Expr::Mul(args) if args.length() == 3 => args
-    @symcore.Expr::Mul(args) if args.length() == 2 => args
+  let factors = match expr_factors(expr) {
+    [a, b] => [a, b]
+    [a, b, c] => [a, b, c]
     _ => return None
   }
   let mut coeff = @symcore.int(1)
