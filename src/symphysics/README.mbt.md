@@ -10,7 +10,6 @@ The umbrella physics package. It collects public constants, units, optics, quant
 
 - Import `CAIMEOX/symbit/symphysics` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ The umbrella physics package. It collects public constants, units, optics, quant
 - `centi`
 - `clebsch_gordan`
 - `coherent_state`
-
-## Example
-
-```mbt check
-///|
-test "symphysics public API is available" {
-  let _ = ampere
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

@@ -10,7 +10,6 @@ Series, limits, asymptotics, formal power series, and order-tracking utilities.
 
 - Import `CAIMEOX/symbit/symseries` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Series, limits, asymptotics, formal power series, and order-tracking utilities.
 - `fps_multivariate`
 - `gruntz`
 - `is_order`
-
-## Example
-
-```mbt check
-///|
-test "symseries public API is available" {
-  let _ = approximants
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

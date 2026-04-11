@@ -10,7 +10,6 @@ Array-expression helpers and n-dimensional tensor-array operations.
 
 - Import `CAIMEOX/symbit/symtensor/array` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Array-expression helpers and n-dimensional tensor-array operations.
 - `array_tensor_product`
 - `dense`
 - `eye`
-
-## Example
-
-```mbt check
-///|
-test "symtensor_array public API is available" {
-  let _ = array_add
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

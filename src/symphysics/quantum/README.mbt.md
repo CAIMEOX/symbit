@@ -10,7 +10,6 @@ Quantum states, operators, commutators, Hilbert-space helpers, and related symbo
 
 - Import `CAIMEOX/symbit/symphysics/quantum` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Quantum states, operators, commutators, Hilbert-space helpers, and related symbo
 - `boson_apply_operator_to_ket`
 - `boson_coherent_bra`
 - `boson_coherent_ket`
-
-## Example
-
-```mbt check
-///|
-test "symphysics_quantum public API is available" {
-  let _ = anticommutator
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

@@ -10,7 +10,6 @@ Term unification, Symbit-expression deconstruction/reconstruction, and rewrite-r
 
 - Import `CAIMEOX/symbit/symunify` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -23,6 +22,7 @@ Term unification, Symbit-expression deconstruction/reconstruction, and rewrite-r
 - `core_unify`
 - `deconstruct`
 
+
 ## Example
 
 ```mbt check
@@ -33,7 +33,6 @@ test "symunify can deconstruct and rebuild expressions" {
   inspect(@symprint.to_string(construct(term)), content="x + 1")
 }
 ```
-
 ## Related Packages
 
 - `CAIMEOX/symbit/symcore`

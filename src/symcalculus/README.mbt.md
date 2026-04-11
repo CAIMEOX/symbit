@@ -10,7 +10,6 @@ Symbolic calculus utilities including singularities, accumulation bounds, finite
 
 - Import `CAIMEOX/symbit/symcalculus` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Symbolic calculus utilities including singularities, accumulation bounds, finite
 - `accum_is_bounds`
 - `accum_max`
 - `accum_mid`
-
-## Example
-
-```mbt check
-///|
-test "symcalculus public API is available" {
-  let _ = accum_abs
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

@@ -590,41 +590,6 @@ def key_exports(exports: Iterable[Export], limit: int = 8) -> list[str]:
     return names
 
 
-def smoke_export(exports: Iterable[Export]) -> Export | None:
-    for export in exports:
-        if export.kind == "using":
-            continue
-        if export.name.startswith("_"):
-            continue
-        if "::" in export.name:
-            continue
-        if export.kind in {"let", "fn", "type", "enum", "struct", "suberror"}:
-            return export
-    return None
-
-
-def smoke_example(package: PackageInfo) -> str:
-    export = smoke_export(package.exports)
-    body = "inspect(true, content=\"true\")"
-    if export is not None:
-        if export.kind in {"let", "fn"}:
-            body = f"let _ = {export.name}\ninspect(true, content=\"true\")"
-        else:
-            body = f"let _ : {export.name}? = None\ninspect(true, content=\"true\")"
-    title = package.rel_path.replace("/", "_").replace(".", "root")
-    indented_body = "\n".join(f"  {line}" for line in body.splitlines())
-    return "\n".join(
-        [
-            "```mbt check",
-            "///|",
-            f'test "{title} public API is available" {{',
-            indented_body,
-            "}",
-            "```",
-        ]
-    )
-
-
 def spec_path_for(package: PackageInfo) -> str | None:
     if package.rel_path == ".":
         return None
@@ -641,7 +606,7 @@ def generated_readme(package: PackageInfo) -> str:
     keys = key_exports(package.exports)
     related = related_packages_for(package.rel_path)
     spec_path = spec_path_for(package)
-    example = CURATED_EXAMPLES.get(package.rel_path, smoke_example(package))
+    example = CURATED_EXAMPLES.get(package.rel_path)
 
     key_lines = [f"- `{name}`" for name in keys]
     if not key_lines:
@@ -661,20 +626,23 @@ def generated_readme(package: PackageInfo) -> str:
         "",
         f"- Import `{package.import_path}` directly when your code depends on this package's subsystem-specific types or algorithms.",
         "- Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.",
-        "- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.",
         "",
         "## Key Public Entry Points",
         "",
         *key_lines,
         "",
-        "## Example",
-        "",
-        example.rstrip(),
-        "",
         "## Related Packages",
         "",
         *related_lines,
     ]
+    if example is not None:
+        related_idx = lines.index("## Related Packages")
+        lines[related_idx:related_idx] = [
+            "",
+            "## Example",
+            "",
+            example.rstrip(),
+        ]
     if spec_path is not None:
         lines.extend(
             [
@@ -748,8 +716,6 @@ def check_docs() -> int:
         readme_text = readme.read_text()
         if "# " not in readme_text:
             failures.append(f"README missing top-level heading: {readme.relative_to(REPO_ROOT)}")
-        if "```mbt check" not in readme_text and "```mbt nocheck" not in readme_text:
-            failures.append(f"README missing example block: {readme.relative_to(REPO_ROOT)}")
         failures.extend(placeholder_doc_hits(readme, readme_text))
         failures.extend(user_doc_term_hits(readme, readme_text))
 

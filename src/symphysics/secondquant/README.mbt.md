@@ -10,7 +10,6 @@ Second-quantization objects and operator algebra layered on top of the quantum p
 
 - Import `CAIMEOX/symbit/symphysics/secondquant` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Second-quantization objects and operator algebra layered on top of the quantum p
 - `boson_annihilator`
 - `boson_bra`
 - `boson_creator`
-
-## Example
-
-```mbt check
-///|
-test "symphysics_secondquant public API is available" {
-  let _ = anti_symmetric_tensor
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

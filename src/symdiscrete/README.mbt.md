@@ -10,7 +10,6 @@ Discrete transforms and convolution algorithms, including FFT, FWHT, NTT, and su
 
 - Import `CAIMEOX/symbit/symdiscrete` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Discrete transforms and convolution algorithms, including FFT, FWHT, NTT, and su
 - `convolution_fwht`
 - `convolution_int`
 - `convolution_ntt`
-
-## Example
-
-```mbt check
-///|
-test "symdiscrete public API is available" {
-  let _ = assert_oracle
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

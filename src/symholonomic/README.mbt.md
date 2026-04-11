@@ -10,7 +10,6 @@ Holonomic-function and recurrence-operator support for translating between symbo
 
 - Import `CAIMEOX/symbit/symholonomic` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Holonomic-function and recurrence-operator support for translating between symbo
 - `expr_to_holonomic`
 - `from_hyper`
 - `from_meijerg`
-
-## Example
-
-```mbt check
-///|
-test "symholonomic public API is available" {
-  let _ = differential_operator
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

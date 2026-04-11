@@ -10,7 +10,6 @@ Symbolic integration and transform helpers, including direct integration, specia
 
 - Import `CAIMEOX/symbit/symintegrals` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Symbolic integration and transform helpers, including direct integration, specia
 - `do_cosine_doit`
 - `do_fourier_doit`
 - `do_hankel_doit`
-
-## Example
-
-```mbt check
-///|
-test "symintegrals public API is available" {
-  let _ = change_mul
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

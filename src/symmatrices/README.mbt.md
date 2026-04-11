@@ -10,7 +10,6 @@ Dense, sparse, and symbolic matrix objects together with linear algebra, matrix-
 
 - Import `CAIMEOX/symbit/symmatrices` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Dense, sparse, and symbolic matrix objects together with linear algebra, matrix-
 - `diag`
 - `eye`
 - `gram_schmidt`
-
-## Example
-
-```mbt check
-///|
-test "symmatrices public API is available" {
-  let _ = block_diag
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

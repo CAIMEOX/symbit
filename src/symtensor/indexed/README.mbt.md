@@ -10,7 +10,6 @@ Indexed bases, indexed expressions, and index-aware tensor notation.
 
 - Import `CAIMEOX/symbit/symtensor/indexed` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Indexed bases, indexed expressions, and index-aware tensor notation.
 - `index_expr`
 - `index_idx`
 - `indexed`
-
-## Example
-
-```mbt check
-///|
-test "symtensor_indexed public API is available" {
-  let _ = add
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

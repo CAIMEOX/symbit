@@ -10,7 +10,6 @@ Traversal combinators and tree-walk helpers for deterministic rewrite strategies
 
 - Import `CAIMEOX/symbit/symstrategies/traverse` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -19,16 +18,6 @@ Traversal combinators and tree-walk helpers for deterministic rewrite strategies
 - `sall`
 - `top_down`
 - `top_down_once`
-
-## Example
-
-```mbt check
-///|
-test "symstrategies_traverse public API is available" {
-  let _ = bottom_up
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

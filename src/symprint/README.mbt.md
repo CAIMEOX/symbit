@@ -10,7 +10,6 @@ String and LaTeX printers for symbolic expressions. Use this package when you ne
 
 - Import `CAIMEOX/symbit/symprint` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -20,6 +19,7 @@ String and LaTeX printers for symbolic expressions. Use this package when you ne
 - `latex_with_settings`
 - `to_string`
 - `LatexSettings`
+
 
 ## Example
 
@@ -32,7 +32,6 @@ test "symprint renders plain text and latex" {
   inspect(latex(expr), content="x + 1")
 }
 ```
-
 ## Related Packages
 
 - `CAIMEOX/symbit`

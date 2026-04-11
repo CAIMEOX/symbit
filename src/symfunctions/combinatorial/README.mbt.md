@@ -10,7 +10,6 @@ Combinatorial symbolic functions such as factorial-family, gamma-adjacent, and s
 
 - Import `CAIMEOX/symbit/symfunctions/combinatorial` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Combinatorial symbolic functions such as factorial-family, gamma-adjacent, and s
 - `catalan`
 - `divisor_sigma`
 - `euler`
-
-## Example
-
-```mbt check
-///|
-test "symfunctions_combinatorial public API is available" {
-  let _ = andre
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

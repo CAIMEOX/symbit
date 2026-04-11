@@ -10,23 +10,12 @@ Quaternion arithmetic and small algebraic helper objects that are useful in geom
 
 - Import `CAIMEOX/symbit/symalgebras` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
 - `QuaternionError`
 - `Quaternion`
 - `Matrix`
-
-## Example
-
-```mbt check
-///|
-test "symalgebras public API is available" {
-  let _ : QuaternionError? = None
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

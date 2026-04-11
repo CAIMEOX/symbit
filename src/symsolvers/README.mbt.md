@@ -10,7 +10,6 @@ Equation solving, `solveset`, linear and nonlinear systems, ODE/PDE entry points
 
 - Import `CAIMEOX/symbit/symsolvers` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,6 +21,7 @@ Equation solving, `solveset`, linear and nonlinear systems, ODE/PDE entry points
 - `checkpdesol`
 - `checkpdesols`
 - `checksol`
+
 
 ## Example
 
@@ -37,7 +37,6 @@ test "symsolvers solves a linear equation" {
   inspect(solution, content="{1}")
 }
 ```
-
 ## Related Packages
 
 - `CAIMEOX/symbit/symcore`

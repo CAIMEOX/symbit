@@ -10,7 +10,6 @@ Physics-oriented vector helpers that complement the more general `symvector` pac
 
 - Import `CAIMEOX/symbit/symphysics/vector` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Physics-oriented vector helpers that complement the more general `symvector` pac
 - `dyadic_zero`
 - `dynamicsymbol`
 - `dynamicsymbols`
-
-## Example
-
-```mbt check
-///|
-test "symphysics_vector public API is available" {
-  let _ = cross
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

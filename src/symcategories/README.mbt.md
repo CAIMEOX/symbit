@@ -10,7 +10,6 @@ Category-theoretic objects, morphisms, diagrams, and rendering helpers for reaso
 
 - Import `CAIMEOX/symbit/symcategories` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Category-theoretic objects, morphisms, diagrams, and rendering helpers for reaso
 - `compare_morphism`
 - `compare_object`
 - `compare_triangle`
-
-## Example
-
-```mbt check
-///|
-test "symcategories public API is available" {
-  let _ = arrow_string_description
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

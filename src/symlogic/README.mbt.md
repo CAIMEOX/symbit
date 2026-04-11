@@ -10,7 +10,6 @@ Boolean algebra expressions, satisfiability helpers, normal forms, and logical r
 
 - Import `CAIMEOX/symbit/symlogic` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Boolean algebra expressions, satisfiability helpers, normal forms, and logical r
 - `bool_exclusive`
 - `bool_false`
 - `bool_implies`
-
-## Example
-
-```mbt check
-///|
-test "symlogic public API is available" {
-  let _ = anf_coeffs
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

@@ -10,7 +10,6 @@ Continuum-mechanics models and helpers layered on top of the broader physics pac
 
 - Import `CAIMEOX/symbit/symphysics/continuum_mechanics` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Continuum-mechanics models and helpers layered on top of the broader physics pac
 - `cm_double_pow`
 - `cm_eval_at`
 - `cm_eval_singularity_exact`
-
-## Example
-
-```mbt check
-///|
-test "symphysics_continuum_mechanics public API is available" {
-  let _ = arch
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

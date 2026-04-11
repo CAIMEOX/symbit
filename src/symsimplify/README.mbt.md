@@ -10,7 +10,6 @@ General-purpose and targeted simplification passes, rational rewrites, radical a
 
 - Import `CAIMEOX/symbit/symsimplify` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -23,6 +22,7 @@ General-purpose and targeted simplification passes, rational rewrites, radical a
 - `collect_const`
 - `collect_sqrt`
 
+
 ## Example
 
 ```mbt check
@@ -33,7 +33,6 @@ test "symsimplify runs targeted simplifiers" {
   inspect(@symprint.to_string(simplify(expr)), content="1")
 }
 ```
-
 ## Related Packages
 
 - `CAIMEOX/symbit`

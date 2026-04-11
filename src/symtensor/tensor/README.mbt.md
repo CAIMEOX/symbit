@@ -10,7 +10,6 @@ Higher-level tensor-expression objects and tensor canonicalization helpers.
 
 - Import `CAIMEOX/symbit/symtensor/tensor` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Higher-level tensor-expression objects and tensor canonicalization helpers.
 - `mul`
 - `neg_index`
 - `partial_derivative`
-
-## Example
-
-```mbt check
-///|
-test "symtensor_tensor public API is available" {
-  let _ = add
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

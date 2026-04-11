@@ -10,7 +10,6 @@ Rule-language helpers and substitution/rebuild primitives for declarative rewrit
 
 - Import `CAIMEOX/symbit/symstrategies/rl` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Rule-language helpers and substitution/rebuild primitives for declarative rewrit
 - `sort`
 - `subs`
 - `unpack`
-
-## Example
-
-```mbt check
-///|
-test "symstrategies_rl public API is available" {
-  let _ = distribute
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

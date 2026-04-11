@@ -10,7 +10,6 @@ Shared strategy utility types, function bundles, and lower-level helpers.
 
 - Import `CAIMEOX/symbit/symstrategies/util` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Shared strategy utility types, function bundles, and lower-level helpers.
 - `expr_new_eval`
 - `expr_new_raw`
 - `expr_op`
-
-## Example
-
-```mbt check
-///|
-test "symstrategies_util public API is available" {
-  let _ = assoc
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

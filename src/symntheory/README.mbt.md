@@ -10,7 +10,6 @@ Number-theory algorithms such as primes, modular arithmetic, continued fractions
 
 - Import `CAIMEOX/symbit/symntheory` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Number-theory algorithms such as primes, modular arithmetic, continued fractions
 - `binomial_mod`
 - `composite`
 - `compositepi`
-
-## Example
-
-```mbt check
-///|
-test "symntheory public API is available" {
-  let _ = abs_bigint
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

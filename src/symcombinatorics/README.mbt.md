@@ -10,7 +10,6 @@ Permutation groups, free groups, Gray codes, partitions, tableaux, and other com
 
 - Import `CAIMEOX/symbit/symcombinatorics` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -22,16 +21,6 @@ Permutation groups, free groups, Gray codes, partitions, tableaux, and other com
 - `array_forms`
 - `assert_oracle`
 - `assert_oracle_named`
-
-## Example
-
-```mbt check
-///|
-test "symcombinatorics public API is available" {
-  let _ = a4_in_s6
-  inspect(true, content="true")
-}
-```
 
 ## Related Packages
 

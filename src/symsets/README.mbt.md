@@ -10,7 +10,6 @@ Symbolic sets, intervals, finite sets, images, products, and set-theoretic opera
 
 - Import `CAIMEOX/symbit/symsets` directly when your code depends on this package's subsystem-specific types or algorithms.
 - Prefer this package over the root facade when you want the focused API surface listed below rather than a convenience wrapper.
-- Treat the example in this README as a regression test: if the public calling style changes, `moon test` should catch the drift.
 
 ## Key Public Entry Points
 
@@ -23,6 +22,7 @@ Symbolic sets, intervals, finite sets, images, products, and set-theoretic opera
 - `finite_set`
 - `image_set`
 
+
 ## Example
 
 ```mbt check
@@ -34,7 +34,6 @@ test "symsets builds intervals and finite sets" {
   inspect(compare_set(finite, finite), content="0")
 }
 ```
-
 ## Related Packages
 
 - `CAIMEOX/symbit/symcore`
