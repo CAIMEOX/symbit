@@ -10,7 +10,7 @@ pub suberror ControlError {
   ValueError(String)
   TypeError(String)
   NotImplemented(String)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub struct TransferFunction {

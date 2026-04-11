@@ -13,7 +13,7 @@ pub struct PartComponent {
   mut c : Int
   mut u : Int
   mut v : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// A snapshot of one multiset-partition traversal state.
@@ -24,7 +24,7 @@ pub struct MultisetPartitionState {
   f : Array[Int]
   lpart : Int
   pstack : Array[PartComponent]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Convert a traversal `state` into an explicit list-of-lists partition.

@@ -37,7 +37,7 @@ pub struct LinearConstraint {
 pub struct LraConflictLit {
   key : String
   negated : Bool
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct LraAssumption {

@@ -23,7 +23,7 @@ pub type NodeLoads = Array[Array[@symcore.Expr]]
 ///|
 pub suberror TrussError {
   ValueError(String)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub struct Truss {

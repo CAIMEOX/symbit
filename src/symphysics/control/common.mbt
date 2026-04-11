@@ -16,7 +16,7 @@ fn control_expr_number(expr : @symcore.Expr) -> @symnum.BigRational? {
 fn control_number_text_to_double(text : String) -> Double? {
   let parts = Array::from_iter(text.split("/"))
   if parts.length() == 1 {
-    try @strconv.parse_double(parts[0]) catch {
+    try @string.parse_double(parts[0]) catch {
       _ => None
     } noraise {
       value => Some(value)
@@ -24,8 +24,8 @@ fn control_number_text_to_double(text : String) -> Double? {
   } else if parts.length() == 2 {
     match
       (
-        try? @strconv.parse_double(parts[0]),
-        try? @strconv.parse_double(parts[1]),
+        try? @string.parse_double(parts[0]),
+        try? @string.parse_double(parts[1]),
       ) {
       (Ok(num), Ok(den)) => Some(num / den)
       _ => None

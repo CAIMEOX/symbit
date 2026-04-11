@@ -300,7 +300,7 @@ pub fn decompose(f : Poly) -> Array[Poly] raise PolyError {
 }
 
 ///|
-fn smallest_prime_factor(n : Int) -> Int {
+fn _smallest_prime_factor(n : Int) -> Int {
   if n <= 1 {
     return 1
   }
@@ -315,7 +315,7 @@ fn smallest_prime_factor(n : Int) -> Int {
 }
 
 ///|
-fn gcd_int(a : Int, b : Int) -> Int {
+fn _gcd_int(a : Int, b : Int) -> Int {
   let mut x = if a < 0 { -a } else { a }
   let mut y = if b < 0 { -b } else { b }
   while y != 0 {

@@ -1170,7 +1170,7 @@ fn number_from_literal(
   }
   let value = match split_exponent_literal(text) {
     Some((mantissa_text, exponent_text)) => {
-      let exponent = @strconv.parse_int(exponent_text, base=10) catch {
+      let exponent = @string.parse_int(exponent_text, base=10) catch {
         _ => raise ParseError::InvalidNumber(span=source_span, text)
       }
       let mantissa = if mantissa_text.contains(".") {

@@ -185,7 +185,7 @@ pub fn prufer_edges(
   runs : Array[Array[Int]],
 ) -> (Array[Array[Int]], Int) raise CombinatoricsError {
   fn parse_key(view : StringView) -> Int raise CombinatoricsError {
-    @strconv.parse_int(view) catch {
+    @string.parse_int(view) catch {
       _ => raise CombinatoricsError::ValueError("Invalid edge label")
     }
   }

@@ -7,7 +7,7 @@ pub(all) enum Tri {
   True
   False
   Unknown
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Convert a concrete boolean into a three-valued result.
@@ -88,4 +88,4 @@ pub(all) enum Predicate {
   IsReal
   IsPositive
   IsNonnegative
-} derive(Eq, Show)
+} derive(Eq, Debug)

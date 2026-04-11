@@ -22,11 +22,11 @@ let implemented_registry : Ref[
 fn expr_number_to_double(
   n : @symnum.BigRational,
 ) -> Double raise UtilitiesError {
-  let num = @strconv.parse_double(n.numerator().to_string()) catch {
+  let num = @string.parse_double(n.numerator().to_string()) catch {
     _ =>
       raise UtilitiesError::InvalidArgument("cannot parse rational numerator")
   }
-  let den = @strconv.parse_double(n.denominator().to_string()) catch {
+  let den = @string.parse_double(n.denominator().to_string()) catch {
     _ =>
       raise UtilitiesError::InvalidArgument("cannot parse rational denominator")
   }

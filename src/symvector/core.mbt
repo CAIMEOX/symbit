@@ -448,7 +448,7 @@ pub fn CoordSys3D::parent(self : CoordSys3D) -> CoordSys3D? {
 pub fn CoordSys3D::scalar(
   self : CoordSys3D,
   axis : Int,
-) -> BaseScalar raise @rawvec.VectorError {
+) -> BaseScalar {
   if axis < 0 || axis > 2 {
     abort("coordinate axis must be 0, 1, or 2")
   }
@@ -465,7 +465,7 @@ pub fn CoordSys3D::scalar(
 pub fn CoordSys3D::vector(
   self : CoordSys3D,
   axis : Int,
-) -> BaseVector raise @rawvec.VectorError {
+) -> BaseVector {
   if axis < 0 || axis > 2 {
     abort("basis axis must be 0, 1, or 2")
   }
@@ -474,44 +474,32 @@ pub fn CoordSys3D::vector(
 
 ///|
 pub fn CoordSys3D::x(self : CoordSys3D) -> BaseScalar {
-  self.scalar(0) catch {
-    _ => abort("CoordSys3D::x")
-  }
+  self.scalar(0)
 }
 
 ///|
 pub fn CoordSys3D::y(self : CoordSys3D) -> BaseScalar {
-  self.scalar(1) catch {
-    _ => abort("CoordSys3D::y")
-  }
+  self.scalar(1)
 }
 
 ///|
 pub fn CoordSys3D::z(self : CoordSys3D) -> BaseScalar {
-  self.scalar(2) catch {
-    _ => abort("CoordSys3D::z")
-  }
+  self.scalar(2)
 }
 
 ///|
 pub fn CoordSys3D::i(self : CoordSys3D) -> BaseVector {
-  self.vector(0) catch {
-    _ => abort("CoordSys3D::i")
-  }
+  self.vector(0)
 }
 
 ///|
 pub fn CoordSys3D::j(self : CoordSys3D) -> BaseVector {
-  self.vector(1) catch {
-    _ => abort("CoordSys3D::j")
-  }
+  self.vector(1)
 }
 
 ///|
 pub fn CoordSys3D::k(self : CoordSys3D) -> BaseVector {
-  self.vector(2) catch {
-    _ => abort("CoordSys3D::k")
-  }
+  self.vector(2)
 }
 
 ///|

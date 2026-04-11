@@ -80,7 +80,7 @@ fn normalize_names(
   label : String,
   items : Array[String]?,
   transform : CoordTransform,
-) -> Array[String] raise @rawvec.VectorError {
+) -> Array[String] {
   match items {
     Some(values) =>
       if values.length() != 3 {

@@ -40,12 +40,12 @@ fn complex_float_expr_from_gaussian(
 ///|
 pub struct RealField {
   precision : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub struct ComplexField {
   precision : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn RealField::new(precision? : Int = 53) -> RealField {

@@ -27,14 +27,14 @@ pub enum TokenKind {
   Gt
   Ge
   Eof
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// A single token with its source span.
 pub struct Token {
   kind : TokenKind
   span : Span
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Build a token from a kind and source span.

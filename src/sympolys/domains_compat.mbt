@@ -116,10 +116,10 @@ fn split_gf_descriptor(
     if parts.length() != 2 {
       raise PolyError::BadGenerator(spec)
     }
-    let p = @strconv.parse_int(parts[0]) catch {
+    let p = @string.parse_int(parts[0]) catch {
       _ => raise PolyError::BadGenerator(spec)
     }
-    let k = @strconv.parse_int(parts[1]) catch {
+    let k = @string.parse_int(parts[1]) catch {
       _ => raise PolyError::BadGenerator(spec)
     }
     return (p, Some(k))
@@ -132,15 +132,15 @@ fn split_gf_descriptor(
     if parts.length() != 2 {
       raise PolyError::BadGenerator(spec)
     }
-    let p = @strconv.parse_int(parts[0]) catch {
+    let p = @string.parse_int(parts[0]) catch {
       _ => raise PolyError::BadGenerator(spec)
     }
-    let k = @strconv.parse_int(parts[1]) catch {
+    let k = @string.parse_int(parts[1]) catch {
       _ => raise PolyError::BadGenerator(spec)
     }
     return (p, Some(k))
   }
-  let p = @strconv.parse_int(body) catch {
+  let p = @string.parse_int(body) catch {
     _ => raise PolyError::BadGenerator(spec)
   }
   (p, None)
@@ -195,7 +195,7 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       right + 8 <= s.length() - 1 &&
       s[right + 2:right + 8].to_string() == "(prec=" {
       let prec_text = s[right + 8:s.length() - 1].to_string()
-      let precision = @strconv.parse_int(prec_text.trim().to_string()) catch {
+      let precision = @string.parse_int(prec_text.trim().to_string()) catch {
         _ => raise PolyError::BadGenerator(s)
       }
       return Domain::PowerSeries(base, gens, precision)

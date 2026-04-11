@@ -2,7 +2,7 @@ import {
   "moonbitlang/core/bench",
   "moonbitlang/core/math",
   "moonbitlang/core/ref",
-  "moonbitlang/core/strconv",
+  "moonbitlang/core/string" @string,
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symprint",

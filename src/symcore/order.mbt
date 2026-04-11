@@ -153,7 +153,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
       }
       return 1
     }
-    (Expr::Dummy(name_a, id_a), Expr::Pow(base_b, _)) => {
+    (Expr::Dummy(name_a, _id_a), Expr::Pow(base_b, _)) => {
       let base_cmp = compare_symbol_base(dummy_display_name(name_a), base_b)
       if base_cmp != 0 {
         return base_cmp

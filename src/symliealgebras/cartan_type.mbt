@@ -98,7 +98,7 @@ pub fn cartan_type_from_string(ct : String) -> CartanType raise {
     fail("Argument must be a string like 'A3'")
   }
   let num_str = ct[1:len].to_string()
-  let n = @strconv.parse_int(num_str, base=10)
+  let n = @string.parse_int(num_str, base=10)
   cartan_type_from_series(cartan_series_from_string(series), n)
 }
 

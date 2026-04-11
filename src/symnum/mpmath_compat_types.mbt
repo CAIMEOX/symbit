@@ -58,7 +58,7 @@ pub type SeriesTermFn = (Int) -> Mpf
 /// Interval context that carries precision for parse/format and interval ops.
 pub struct MPIntervalContext {
   prec : Int
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 /// Default round-to-nearest mode.

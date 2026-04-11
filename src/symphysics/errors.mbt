@@ -6,4 +6,4 @@ pub(all) suberror PhysicsError {
   ValueError(String)
   IndexError(String)
   ShapeError(String)
-} derive(Show, Eq)
+} derive(Debug, Eq)

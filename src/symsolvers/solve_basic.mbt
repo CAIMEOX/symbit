@@ -167,7 +167,7 @@ fn equation_has_exact_factor(equation : Expr, factor : Expr) -> Bool {
   if expr_is_zeroish(factor) == Some(true) {
     return false
   }
-  let quotient_try : Result[Expr, _] = try? canonical_expr(
+  let quotient = canonical_expr(
     @symsimplify.ratsimp(
       canonical_expr(
         @symcore.mul([equation, @symcore.pow(factor, @symcore.int(-1))]),
@@ -175,10 +175,6 @@ fn equation_has_exact_factor(equation : Expr, factor : Expr) -> Bool {
       max_passes=2,
     ),
   )
-  let quotient = match quotient_try {
-    Ok(value) => value
-    Err(_) => return false
-  }
   let (_, den) = @symsimplify.fraction(quotient)
   if @symcore.compare_expr(den, @symcore.int(1)) != 0 {
     return false
@@ -733,7 +729,7 @@ fn expr_in_domain(domain : Set, expr : Expr) -> Bool {
 }
 
 ///|
-enum DomainMembership {
+priv enum DomainMembership {
   In
   Out
   Unknown
@@ -1087,7 +1083,7 @@ fn expr_push_unique(items : Array[Expr], expr : Expr) -> Unit {
 }
 
 ///|
-fn solveset_symbol_core(expr : Expr, symbol : Expr) -> Expr {
+fn _solveset_symbol_core(expr : Expr, symbol : Expr) -> Expr {
   let mut current = expr
   match add_independent_decompose(current, symbol) {
     Some((_, dep)) => current = dep

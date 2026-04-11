@@ -12,7 +12,7 @@ pub enum WildcardKind {
   Dot
   Plus
   Star
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub struct ReplacementInfo[T] {

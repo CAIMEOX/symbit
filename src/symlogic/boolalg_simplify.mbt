@@ -85,7 +85,7 @@ fn pos_form_bits(
 pub struct BoolMapResult {
   simplified : BoolExpr
   mapping : Map[String, BoolExpr]
-} derive(Show)
+}
 
 ///|
 fn truth_table_equal(

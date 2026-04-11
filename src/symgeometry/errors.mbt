@@ -5,4 +5,4 @@ pub suberror GeometryError {
   ValueError(String)
   TypeError(String)
   Undecidable(String)
-} derive(Eq, Show)
+} derive(Eq, Debug)

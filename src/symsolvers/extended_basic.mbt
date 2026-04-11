@@ -338,7 +338,7 @@ fn solver_constantsimp_absorbable(expr : Expr, constants : Array[Expr]) -> Bool 
 fn solver_constantsimp_replacement_for(
   expr : Expr,
   constants : Array[Expr],
-  fallback : Expr,
+  _fallback : Expr,
 ) -> Expr {
   let free = @symcore.free_symbols(expr)
   let mut best : Expr? = None
@@ -617,10 +617,10 @@ pub fn constantsimp(
   let mut replacement_name = symbol_name(replacement)
   for item in normalized {
     let name = symbol_name(item)
-    let prefer_item = if name.starts_with("C") &&
-      !replacement_name.starts_with("C") {
+    let prefer_item = if name.has_prefix("C") &&
+      !replacement_name.has_prefix("C") {
       true
-    } else if name.starts_with("C") == replacement_name.starts_with("C") {
+    } else if name.has_prefix("C") == replacement_name.has_prefix("C") {
       name.compare(replacement_name) < 0
     } else {
       false
@@ -3203,13 +3203,13 @@ priv struct SolverLieContext {
   x : Expr
   y : Expr
   func : Expr
-  h_raw : Expr
+  _h_raw : Expr
   h : Expr
-  hx_raw : Expr
-  hy_raw : Expr
+  _hx_raw : Expr
+  _hy_raw : Expr
   hx : Expr
   hy : Expr
-  hinv_raw : Expr
+  _hinv_raw : Expr
   hinv : Expr
   hinvx : Expr
   hinvy : Expr
@@ -3793,12 +3793,12 @@ fn solver_lie_simplify_univariate_factor(expr : Expr) -> Expr {
 }
 
 ///|
-fn solver_lie_univariate_reciprocal(expr : Expr) -> Expr {
+fn _solver_lie_univariate_reciprocal(expr : Expr) -> Expr {
   let normalized = canonical_expr(expr)
   match normalized {
     Expr::Mul(args) =>
       canonical_expr(
-        @symcore.mul(args.map(arg => solver_lie_univariate_reciprocal(arg))),
+        @symcore.mul(args.map(arg => _solver_lie_univariate_reciprocal(arg))),
       )
     Expr::Pow(base, exp) =>
       canonical_expr(
@@ -4216,7 +4216,7 @@ fn solver_lie_quick_zero(expr : Expr) -> Bool {
 }
 
 ///|
-fn solver_lie_zero_on_atomized_samples(expr : Expr) -> Bool {
+fn _solver_lie_zero_on_atomized_samples(expr : Expr) -> Bool {
   let atomized = solver_lie_atomize_poly_expr(
       solver_lie_merge_mul_powers(expr),
       "__lie_sample",
@@ -4255,7 +4255,7 @@ fn solver_lie_zero_on_atomized_samples(expr : Expr) -> Bool {
 }
 
 ///|
-fn solver_lie_nonzero_on_atomized_samples(expr : Expr) -> Bool {
+fn _solver_lie_nonzero_on_atomized_samples(expr : Expr) -> Bool {
   let atomized = solver_lie_atomize_poly_expr(
       solver_lie_merge_mul_powers(expr),
       "__lie_sample",
@@ -4342,7 +4342,7 @@ fn solver_lie_rewrite_sec_pow2(expr : Expr) -> Expr {
 }
 
 ///|
-fn solver_lie_abaco_zero(expr : Expr) -> Bool {
+fn _solver_lie_abaco_zero(expr : Expr) -> Bool {
   let expanded = canonical_expr(@symsimplify.fraction_expand(expr))
   let simplified = solver_lie_simplify(expr)
   let expanded_simplified = solver_lie_simplify(expanded)
@@ -4388,7 +4388,7 @@ fn solver_lie_contains_expr(expr : Expr, target : Expr) -> Bool {
 }
 
 ///|
-fn solver_lie_has_mixed_application(expr : Expr, x : Expr, y : Expr) -> Bool {
+fn _solver_lie_has_mixed_application(expr : Expr, x : Expr, y : Expr) -> Bool {
   for node in @symcore.preorder(expr) {
     match @symcore.application_parts(node) {
       Some(_) =>
@@ -4575,7 +4575,7 @@ fn solver_lie_gamma_from_factor(factor : Expr, x : Expr, y : Expr) -> Expr {
 }
 
 ///|
-fn solver_lie_distribute_mul(lhs : Expr, rhs : Expr) -> Expr {
+fn _solver_lie_distribute_mul(lhs : Expr, rhs : Expr) -> Expr {
   match (lhs, rhs) {
     (Expr::Add(args), other) =>
       Expr::Add(args.map(arg => Expr::Mul([arg, other])))
@@ -4794,7 +4794,7 @@ fn solver_lie_sympy_separatevars_dict_xy(
 }
 
 ///|
-fn solver_lie_separatevars_xy(
+fn _solver_lie_separatevars_xy(
   expr : Expr,
   x : Expr,
   y : Expr,
@@ -5058,7 +5058,7 @@ fn solver_lie_separate_xy(
 }
 
 ///|
-fn solver_lie_sample_separate_xy_fast(
+fn _solver_lie_sample_separate_xy_fast(
   expr : Expr,
   x : Expr,
   y : Expr,
@@ -5195,7 +5195,7 @@ fn solver_lie_zero_on_samples(expr : Expr, x : Expr, y : Expr) -> Bool {
 }
 
 ///|
-fn solver_lie_nonzero_on_samples(expr : Expr, x : Expr, y : Expr) -> Bool {
+fn _solver_lie_nonzero_on_samples(expr : Expr, x : Expr, y : Expr) -> Bool {
   let samples = [
     (@symcore.int(1), @symcore.int(2)),
     (@symcore.int(2), @symcore.int(3)),
@@ -5290,7 +5290,7 @@ fn solver_lie_push_valid(
 }
 
 ///|
-fn solver_lie_substitute_symbol(
+fn _solver_lie_substitute_symbol(
   expr : Expr,
   symbol : Expr,
   value : Expr,
@@ -5306,7 +5306,7 @@ fn solver_lie_substitute_symbol(
 }
 
 ///|
-fn solver_lie_first_solve_value(
+fn _solver_lie_first_solve_value(
   expr : Expr,
   symbol : Expr,
 ) -> Expr? raise SolverError {
@@ -5344,7 +5344,7 @@ fn solver_lie_normalize_add_term(expr : Expr) -> Expr {
 }
 
 ///|
-fn solver_lie_normalize_add_terms(expr : Expr) -> Expr {
+fn _solver_lie_normalize_add_terms(expr : Expr) -> Expr {
   match canonical_expr(expr) {
     Expr::Add(args) =>
       canonical_expr(
@@ -5511,13 +5511,13 @@ fn solver_lie_context(
     x,
     y,
     func,
-    h_raw,
+    _h_raw: h_raw,
     h,
-    hx_raw,
-    hy_raw,
+    _hx_raw: hx_raw,
+    _hy_raw: hy_raw,
     hx,
     hy,
-    hinv_raw,
+    _hinv_raw: hinv_raw,
     hinv,
     hinvx,
     hinvy,
@@ -8500,7 +8500,7 @@ fn solver_match_equal_derivative_pde(eq : Expr, func : Expr) -> (Expr, Expr)? {
 }
 
 ///|
-fn solver_pdsolve_equal_derivative(eq : Expr, func : Expr) -> Expr? {
+fn _solver_pdsolve_equal_derivative(eq : Expr, func : Expr) -> Expr? {
   match solver_match_equal_derivative_pde(eq, func) {
     Some((x, y)) =>
       Some(

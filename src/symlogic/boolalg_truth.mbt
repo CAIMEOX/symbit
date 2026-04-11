@@ -5,7 +5,7 @@
 pub(all) enum TruthTableRow {
   WithInput(Array[Int], Bool)
   Value(Bool)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 fn env_from_bits(names : Array[String], bits : Array[Int]) -> Map[String, Bool] {

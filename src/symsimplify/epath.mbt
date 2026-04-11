@@ -3,7 +3,7 @@ pub(all) enum ESpan {
   All
   Index(Int)
   Slice(Int?, Int?, Int?)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct ESelector {
@@ -132,9 +132,7 @@ fn parse_selector_span(tail : String) -> ESpan {
 
 ///|
 fn parse_int_opt(text : String) -> Int? {
-  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
-    text,
-  )
+  let parsed = try? @string.parse_int(text)
   match parsed {
     Ok(value) => Some(value)
     Err(_) => None

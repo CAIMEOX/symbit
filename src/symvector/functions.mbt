@@ -66,7 +66,7 @@ pub fn express_scalar(
 pub fn matrix_to_vector(
   matrix : @symphysics.ExplicitMatrix,
   system : CoordSys3D,
-) -> Vector raise @rawvec.VectorError {
+) -> Vector {
   let rows = matrix.rows_copy()
   if rows.length() != 3 ||
     rows[0].length() != 1 ||

@@ -11,7 +11,22 @@ pub(all) suberror SolverError {
   ShapeError(String)
   InfeasibleLPError(String)
   UnboundedLPError(String)
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+pub impl Show for SolverError with output(self, logger : &Logger) -> Unit {
+  match self {
+    SolverError::ValueError(msg) => logger.write_string("ValueError(\{msg})")
+    SolverError::NotImplementedError(msg) =>
+      logger.write_string("NotImplementedError(\{msg})")
+    SolverError::NonlinearError(msg) =>
+      logger.write_string("NonlinearError(\{msg})")
+    SolverError::ShapeError(msg) => logger.write_string("ShapeError(\{msg})")
+    SolverError::InfeasibleLPError(msg) =>
+      logger.write_string("InfeasibleLPError(\{msg})")
+    SolverError::UnboundedLPError(msg) =>
+      logger.write_string("UnboundedLPError(\{msg})")
+  }
+}
 
 ///|
 /// Tagged input accepted by [`linsolve`](#linsolve).

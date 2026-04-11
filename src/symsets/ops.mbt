@@ -253,7 +253,7 @@ fn dedup_sets(items : Array[Set]) -> Array[Set] {
 }
 
 ///|
-enum IntervalBound {
+priv enum IntervalBound {
   NegativeInfinity
   Finite(@symnum.BigRational)
   Infinity

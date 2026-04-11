@@ -5,5 +5,5 @@ import {
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symsimplify",
   "CAIMEOX/symbit/symphysics" @symphysics,
-  "moonbitlang/core/strconv",
+  "moonbitlang/core/string" @string,
 }

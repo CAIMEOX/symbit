@@ -4,7 +4,7 @@
 pub suberror IntegralError {
   ValueError(String)
   IntegralTransformError(String)
-} derive(Show)
+} derive(Debug)
 
 ///|
 /// Build the transform-specific `IntegralError` variant.

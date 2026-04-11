@@ -13,7 +13,7 @@ pub suberror BeamError {
   ValueError(String)
   TypeError(String)
   SolveError(String)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub struct Beam {

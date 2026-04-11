@@ -9,7 +9,7 @@ pub type BigRational = @symnum.BigRational
 ///|
 suberror AccumBoundsError {
   InvalidBounds(String)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 priv enum SimpleEndpoint {

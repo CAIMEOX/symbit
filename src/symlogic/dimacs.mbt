@@ -23,7 +23,7 @@ pub fn dimacs_load(s : String) -> BoolExpr raise {
       if part.is_empty() {
         continue
       }
-      let value = @strconv.parse_int(part, base=10)
+      let value = @string.parse_int(part, base=10)
       if value == 0 {
         continue
       }

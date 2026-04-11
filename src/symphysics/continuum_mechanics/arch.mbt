@@ -7,7 +7,7 @@ pub suberror ArchError {
   ValueError(String)
   TypeError(String)
   SolveError(String)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub struct Arch {

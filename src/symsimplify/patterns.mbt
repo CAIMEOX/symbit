@@ -6,14 +6,14 @@ pub(all) enum SimplifyPattern {
   PowDenest
   TrigPythagorean
   FunctionIdentities
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum SimplifyPlan {
   Default
   Aggressive
   Custom(Array[SimplifyPattern])
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Compose reusable simplify patterns into an execution plan.

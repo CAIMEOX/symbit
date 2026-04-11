@@ -1,7 +1,6 @@
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
-  "CAIMEOX/symbit/symsimplify",
 }
 
 import {

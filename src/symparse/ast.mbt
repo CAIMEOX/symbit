@@ -3,7 +3,7 @@
 pub enum UnaryOp {
   Plus
   Minus
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Binary arithmetic operators that can appear in parsed syntax.
@@ -13,7 +13,7 @@ pub enum BinaryOp {
   Mul
   Div
   Pow
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Comparison operators recorded in parsed comparison chains.
@@ -25,7 +25,7 @@ pub enum CompareOp {
   Le
   Gt
   Ge
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// A parser transformation switch.

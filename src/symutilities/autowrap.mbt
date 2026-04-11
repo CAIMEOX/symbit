@@ -13,7 +13,7 @@ pub enum WrapBackend {
   F2Py
   Cython
   Ufunc
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub struct WrappedBinary {

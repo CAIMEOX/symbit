@@ -1,6 +1,6 @@
 import {
   "moonbitlang/core/math",
-  "moonbitlang/core/strconv" @strconv,
+  "moonbitlang/core/string" @string,
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,
   "CAIMEOX/symbit/symnum",

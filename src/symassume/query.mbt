@@ -60,7 +60,7 @@ pub(all) enum PredicateKey {
   Ge
   Lt
   Le
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Logical query tree consumed by [`ask`](#ask).

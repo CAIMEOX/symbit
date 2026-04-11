@@ -10,7 +10,7 @@ pub suberror ColumnError {
   ValueError(String)
   TypeError(String)
   SolveError(String)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub struct Column {

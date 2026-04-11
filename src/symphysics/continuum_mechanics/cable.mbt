@@ -17,7 +17,7 @@ pub type CablePointLoadSpec = (
 ///|
 pub suberror CableError {
   ValueError(String)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub struct Cable {

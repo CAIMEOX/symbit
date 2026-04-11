@@ -266,7 +266,7 @@ fn qasm_apply_builtin(
           "qdef expects name, ncontrols, symbol",
         )
       }
-      let ncontrols = @strconv.parse_int(rest[1], base=10) catch {
+      let ncontrols = @string.parse_int(rest[1], base=10) catch {
         _ =>
           raise @symphysics.PhysicsError::ValueError(
             "qdef control count must be an integer",

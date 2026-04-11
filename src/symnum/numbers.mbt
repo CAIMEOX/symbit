@@ -2,7 +2,13 @@
 /// Error raised when constructing or inverting a rational with zero denominator.
 pub(all) suberror RationalError {
   ZeroDenominator
-} derive(Show)
+} derive(Debug)
+
+pub impl Show for RationalError with output(self, logger : &Logger) -> Unit {
+  match self {
+    RationalError::ZeroDenominator => logger.write_string("ZeroDenominator")
+  }
+}
 
 ///|
 /// Canonical exact rational number `num/den` with gcd normalization.
@@ -14,11 +20,14 @@ pub struct BigRational {
 ///|
 /// Greatest common divisor for arbitrary-precision integers.
 pub fn gcd_bigint(a : BigInt, b : BigInt) -> BigInt {
-  loop (abs_bigint(a), abs_bigint(b)) {
-    (x, y) if x.is_zero() => y
-    (x, y) if y.is_zero() => x
-    (x, y) => continue (y, x.mod(y))
+  let mut x = abs_bigint(a)
+  let mut y = abs_bigint(b)
+  while !x.is_zero() && !y.is_zero() {
+    let next = x.mod(y)
+    x = y
+    y = next
   }
+  if x.is_zero() { y } else { x }
 }
 
 ///|

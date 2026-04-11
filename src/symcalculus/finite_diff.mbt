@@ -1,7 +1,7 @@
 ///|
 suberror FiniteDiffError {
   DuplicateGridPoint
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 fn fd_rat_zero() -> BigRational {

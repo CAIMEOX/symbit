@@ -13,7 +13,7 @@ pub enum TargetLanguage {
   Julia
   Octave
   Rust
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub struct RoutineResult {

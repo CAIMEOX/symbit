@@ -11,7 +11,7 @@ pub struct SymbolFacts {
   is_real : Tri
   is_positive : Tri
   is_nonnegative : Tri
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Mutable environment mapping symbol names to known facts.

@@ -3,7 +3,7 @@
 pub struct Span {
   start : Int
   stop : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Build a half-open source span `[start, stop)`.
@@ -31,4 +31,4 @@ pub(all) suberror ParseError {
   UnexpectedEof(span~ : Span, String)
   InvalidNumber(span~ : Span, String)
   UnsupportedConstruct(span~ : Span, String)
-} derive(Eq, Show)
+} derive(Eq, Debug)

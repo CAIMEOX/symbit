@@ -9,7 +9,7 @@ pub(all) enum AxisName {
   X
   Y
   Z
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub enum OrientationSpec {
@@ -24,7 +24,7 @@ pub enum OrientationSpec {
 pub suberror VectorError {
   ValueError(String)
   TypeError(String)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub fn raise_value_error(message : String) -> Unit raise VectorError {
@@ -335,10 +335,10 @@ fn expand_dynamicsymbol_token(token : String) -> Array[String] {
     return [token]
   }
   let prefix = start_s[:digit_start].to_string()
-  let start_num = @strconv.parse_int(start_s[digit_start:].to_string(), base=10) catch {
+  let start_num = @string.parse_int(start_s[digit_start:].to_string(), base=10) catch {
     _ => return [token]
   }
-  let end_num = @strconv.parse_int(end_s, base=10) catch { _ => return [token] }
+  let end_num = @string.parse_int(end_s, base=10) catch { _ => return [token] }
   let out : Array[String] = []
   for value in start_num..<end_num {
     out.push(prefix + value.to_string())
