@@ -12530,9 +12530,9 @@ fn inverse_mellin_bessely_single_term(
     Some(name) => name
     None => return None
   }
-  let factors = match expr_simplify(expr) {
-    @symcore.Expr::Mul(args) => args
-    _ => return None
+  let factors = match expr_factors(expr) {
+    [single] if @symcore.compare_expr(single, expr) == 0 => return None
+    args => args
   }
   let mut coeff = @symcore.int(1)
   let mut trig_info : (Int, Expr)? = None
@@ -12613,59 +12613,61 @@ fn inverse_mellin_bessely_single_term(
 
 ///|
 fn parse_gamma_like_linear_arg(expr : Expr, var_name : String) -> (Expr, Expr)? {
-  match named_unary_application(expr_simplify(expr)) {
-    Some(("gamma", arg)) => parse_linear_offset_expr(arg, var_name)
-    Some(("factorial", arg)) =>
-      match parse_linear_offset_expr(arg, var_name) {
-        Some((coeff, offset)) =>
-          Some((coeff, expr_simplify(expr_add(offset, @symcore.int(1)))))
-        None => None
-      }
-    _ => None
-  }
+  retry_with_simplified(expr, expr =>
+    match named_unary_application(expr) {
+      Some(("gamma", arg)) => parse_linear_offset_expr(arg, var_name)
+      Some(("factorial", arg)) =>
+        match parse_linear_offset_expr(arg, var_name) {
+          Some((coeff, offset)) =>
+            Some((coeff, expr_simplify(expr_add(offset, @symcore.int(1)))))
+          None => None
+        }
+      _ => None
+    })
 }
 
 ///|
 fn divide_by_pi_if_common(expr : Expr) -> Expr? {
   let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
-  match expr_simplify(expr) {
-    expr if expr_same_simplified(expr, pi) => Some(@symcore.int(1))
-    @symcore.Expr::Mul(args) => {
-      let rest : Array[Expr] = []
-      let mut removed = false
-      for arg in args {
-        if !removed && expr_same_simplified(arg, pi) {
-          removed = true
+  retry_with_simplified(expr, expr =>
+    match expr {
+      expr if expr_same_simplified(expr, pi) => Some(@symcore.int(1))
+      @symcore.Expr::Mul(args) => {
+        let rest : Array[Expr] = []
+        let mut removed = false
+        for arg in args {
+          if !removed && expr_same_simplified(arg, pi) {
+            removed = true
+          } else {
+            rest.push(arg)
+          }
+        }
+        if !removed {
+          None
+        } else if rest.is_empty() {
+          Some(@symcore.int(1))
+        } else if rest.length() == 1 {
+          Some(rest[0])
         } else {
-          rest.push(arg)
+          Some(expr_simplify(@symcore.mul(rest)))
         }
       }
-      if !removed {
-        None
-      } else if rest.is_empty() {
-        Some(@symcore.int(1))
-      } else if rest.length() == 1 {
-        Some(rest[0])
-      } else {
-        Some(expr_simplify(@symcore.mul(rest)))
-      }
-    }
-    @symcore.Expr::Add(args) => {
-      let reduced : Array[Expr] = []
-      for arg in args {
-        match divide_by_pi_if_common(arg) {
-          Some(v) => reduced.push(v)
-          None => return None
+      @symcore.Expr::Add(args) => {
+        let reduced : Array[Expr] = []
+        for arg in args {
+          match divide_by_pi_if_common(arg) {
+            Some(v) => reduced.push(v)
+            None => return None
+          }
+        }
+        if reduced.length() == 1 {
+          Some(reduced[0])
+        } else {
+          Some(expr_simplify(@symcore.add(reduced)))
         }
       }
-      if reduced.length() == 1 {
-        Some(reduced[0])
-      } else {
-        Some(expr_simplify(@symcore.add(reduced)))
-      }
-    }
-    _ => None
-  }
+      _ => None
+    })
 }
 
 ///|
@@ -12674,25 +12676,26 @@ fn parse_pi_linear_trig_factor(
   var_name : String,
   trig_name : String,
 ) -> (Int, Expr)? {
-  match named_unary_application(expr_simplify(expr)) {
-    Some((name, arg)) if name == trig_name =>
-      match divide_by_pi_if_common(arg) {
-        Some(linear_arg) =>
-          match parse_linear_offset_expr(linear_arg, var_name) {
-            Some((coeff, offset)) if expr_same_simplified(
-                coeff,
-                @symcore.int(1),
-              ) => Some((1, expr_simplify(offset)))
-            Some((coeff, offset)) if expr_same_simplified(
-                coeff,
-                @symcore.int(-1),
-              ) => Some((-1, expr_simplify(offset)))
-            _ => None
-          }
-        None => None
-      }
-    _ => None
-  }
+  retry_with_simplified(expr, expr =>
+    match named_unary_application(expr) {
+      Some((name, arg)) if name == trig_name =>
+        match divide_by_pi_if_common(arg) {
+          Some(linear_arg) =>
+            match parse_linear_offset_expr(linear_arg, var_name) {
+              Some((coeff, offset)) if expr_same_simplified(
+                  coeff,
+                  @symcore.int(1),
+                ) => Some((1, expr_simplify(offset)))
+              Some((coeff, offset)) if expr_same_simplified(
+                  coeff,
+                  @symcore.int(-1),
+                ) => Some((-1, expr_simplify(offset)))
+              _ => None
+            }
+          None => None
+        }
+      _ => None
+    })
 }
 
 ///|
