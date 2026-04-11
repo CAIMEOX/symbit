@@ -6932,7 +6932,7 @@ fn fourier_linear_shift_coeff() -> Expr {
 
 ///|
 fn parse_fourier_linear_shift(expr : Expr, k_name : String) -> Expr? {
-  match linear_coeffs(expr_simplify(expr), k_name) {
+  match linear_coeffs(expr, k_name) {
     Some((coeff, offset)) =>
       if expr_eq(coeff, fourier_linear_shift_coeff()) &&
         !expr_depends_on(offset, k_name) {
@@ -6946,22 +6946,23 @@ fn parse_fourier_linear_shift(expr : Expr, k_name : String) -> Expr? {
 
 ///|
 fn parse_fourier_shift_power(expr : Expr, k_name : String) -> (Expr, Int)? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Pow(base, exp) =>
-      match expr_is_int_value(exp) {
-        Some(power) =>
-          match parse_fourier_linear_shift(base, k_name) {
-            Some(a) if power > 0 => Some((a, power))
-            _ => None
-          }
-        _ => None
-      }
-    _ =>
-      match parse_fourier_linear_shift(expr, k_name) {
-        Some(a) => Some((a, 1))
-        None => None
-      }
-  }
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Pow(base, exp) =>
+        match expr_is_int_value(exp) {
+          Some(power) =>
+            match parse_fourier_linear_shift(base, k_name) {
+              Some(a) if power > 0 => Some((a, power))
+              _ => None
+            }
+          _ => None
+        }
+      _ =>
+        match parse_fourier_linear_shift(expr, k_name) {
+          Some(a) => Some((a, 1))
+          None => None
+        }
+    })
 }
 
 ///|
@@ -6969,35 +6970,36 @@ fn parse_fourier_shifted_sine_denominator(
   expr : Expr,
   k_name : String,
 ) -> (Expr, Expr)? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Add(args) if args.length() == 2 => {
-      let mut shift : Expr? = None
-      let mut other : Expr? = None
-      for arg in args {
-        match parse_fourier_shift_power(arg, k_name) {
-          Some((a, 2)) =>
-            if shift is None {
-              shift = Some(a)
-            } else {
-              return None
-            }
-          _ =>
-            if expr_depends_on(arg, k_name) {
-              return None
-            } else if other is None {
-              other = Some(arg)
-            } else {
-              return None
-            }
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Add(args) if args.length() == 2 => {
+        let mut shift : Expr? = None
+        let mut other : Expr? = None
+        for arg in args {
+          match parse_fourier_shift_power(arg, k_name) {
+            Some((a, 2)) =>
+              if shift is None {
+                shift = Some(a)
+              } else {
+                return None
+              }
+            _ =>
+              if expr_depends_on(arg, k_name) {
+                return None
+              } else if other is None {
+                other = Some(arg)
+              } else {
+                return None
+              }
+          }
+        }
+        match (shift, other) {
+          (Some(a), Some(b_sq)) => Some((a, preferred_positive_sqrt(b_sq)))
+          _ => None
         }
       }
-      match (shift, other) {
-        (Some(a), Some(b_sq)) => Some((a, preferred_positive_sqrt(b_sq)))
-        _ => None
-      }
-    }
-    _ => None
-  }
+      _ => None
+    })
 }
 
 ///|
@@ -7006,7 +7008,7 @@ fn parse_inverse_fourier_abs_decay_rate(
   den : Expr,
   k_name : String,
 ) -> Expr? {
-  match poly_coeffs_upto2(expr_simplify(den), k_name) {
+  match poly_coeffs_upto2(den, k_name) {
     Some(coeffs) =>
       if expr_is_zero(coeffs[1]) &&
         !expr_depends_on(coeffs[0], k_name) &&
@@ -7032,7 +7034,7 @@ fn parse_inverse_fourier_abs_decay_rate(
             let expected_num = expr_simplify(
               expr_mul(scale, expr_mul(@symcore.int(2), rate)),
             )
-            if expr_same_simplified(expr_simplify(numerator), expected_num) {
+            if expr_same_simplified(numerator, expected_num) {
               Some(rate)
             } else {
               None
@@ -7204,43 +7206,44 @@ fn inverse_fourier_sinc_scale(coeff : Expr, freq : Expr, width : Int) -> Expr? {
 
 ///|
 fn parse_scaled_symbol(expr : Expr, var_name : String) -> Expr? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Symbol(name) =>
-      if name == var_name {
-        Some(@symcore.int(1))
-      } else {
-        None
-      }
-    @symcore.Expr::Mul(args) => {
-      let mut coeff = @symcore.int(1)
-      let mut seen_var = false
-      for arg in args {
-        match arg {
-          @symcore.Expr::Symbol(name) =>
-            if name == var_name {
-              if seen_var {
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Symbol(name) =>
+        if name == var_name {
+          Some(@symcore.int(1))
+        } else {
+          None
+        }
+      @symcore.Expr::Mul(args) => {
+        let mut coeff = @symcore.int(1)
+        let mut seen_var = false
+        for arg in args {
+          match arg {
+            @symcore.Expr::Symbol(name) =>
+              if name == var_name {
+                if seen_var {
+                  return None
+                }
+                seen_var = true
+              } else {
                 return None
               }
-              seen_var = true
-            } else {
-              return None
-            }
-          _ =>
-            if expr_depends_on(arg, var_name) {
-              return None
-            } else {
-              coeff = expr_mul(coeff, arg)
-            }
+            _ =>
+              if expr_depends_on(arg, var_name) {
+                return None
+              } else {
+                coeff = expr_mul(coeff, arg)
+              }
+          }
+        }
+        if seen_var {
+          Some(coeff)
+        } else {
+          None
         }
       }
-      if seen_var {
-        Some(coeff)
-      } else {
-        None
-      }
-    }
-    _ => None
-  }
+      _ => None
+    })
 }
 
 ///|
@@ -7732,42 +7735,39 @@ fn cosine_base_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
 
 ///|
 fn parse_sqrt_linear(expr : Expr, var_name : String) -> Expr? {
-  let simplified = expr_simplify(expr)
-  match simplified {
-    _ =>
-      match unary_application_arg(simplified, "sqrt") {
-        Some(Expr::Symbol(name)) if name == var_name => Some(@symcore.int(1))
-        _ =>
-          match simplified {
-            @symcore.Expr::Mul(args) => {
-              let mut coeff = @symcore.int(1)
-              let mut saw_sqrt = false
-              for arg in args {
-                match unary_application_arg(arg, "sqrt") {
-                  Some(Expr::Symbol(name)) =>
-                    if name == var_name {
-                      saw_sqrt = true
-                    } else {
-                      return None
-                    }
-                  _ =>
-                    if expr_depends_on(arg, var_name) {
-                      return None
-                    } else {
-                      coeff = expr_mul(coeff, arg)
-                    }
-                }
-              }
-              if saw_sqrt {
-                Some(coeff)
-              } else {
-                None
+  retry_with_simplified(expr, expr =>
+    match unary_application_arg(expr, "sqrt") {
+      Some(Expr::Symbol(name)) if name == var_name => Some(@symcore.int(1))
+      _ =>
+        match expr {
+          @symcore.Expr::Mul(args) => {
+            let mut coeff = @symcore.int(1)
+            let mut saw_sqrt = false
+            for arg in args {
+              match unary_application_arg(arg, "sqrt") {
+                Some(Expr::Symbol(name)) =>
+                  if name == var_name {
+                    saw_sqrt = true
+                  } else {
+                    return None
+                  }
+                _ =>
+                  if expr_depends_on(arg, var_name) {
+                    return None
+                  } else {
+                    coeff = expr_mul(coeff, arg)
+                  }
               }
             }
-            _ => None
+            if saw_sqrt {
+              Some(coeff)
+            } else {
+              None
+            }
           }
-      }
-  }
+          _ => None
+        }
+    })
 }
 
 ///|
@@ -12963,7 +12963,7 @@ fn factors_expr(factors : Array[Expr]) -> Expr {
 
 ///|
 fn split_linear_coeff(expr : Expr, var_name : String) -> (Expr, Expr)? {
-  match poly_coeffs_upto2(expr_simplify(expr), var_name) {
+  match poly_coeffs_upto2(expr, var_name) {
     Some(coeffs) =>
       if expr_is_zero(coeffs[2]) {
         Some((coeffs[1], coeffs[0]))
@@ -12979,20 +12979,21 @@ fn parse_shifted_linear_power(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Expr, Expr)? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Pow(base, exp) =>
-      match split_linear_coeff(base, var_name) {
-        Some((coeff, offset)) =>
-          if !expr_depends_on(coeff, var_name) &&
-            !expr_depends_on(offset, var_name) {
-            Some((coeff, offset, exp))
-          } else {
-            None
-          }
-        None => None
-      }
-    _ => None
-  }
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Pow(base, exp) =>
+        match split_linear_coeff(base, var_name) {
+          Some((coeff, offset)) =>
+            if !expr_depends_on(coeff, var_name) &&
+              !expr_depends_on(offset, var_name) {
+              Some((coeff, offset, exp))
+            } else {
+              None
+            }
+          None => None
+        }
+      _ => None
+    })
 }
 
 ///|
@@ -13011,99 +13012,105 @@ fn parse_difference_quotient(expr : Expr, x_name : String) -> (Expr, Expr)? {
   }
   let scale = expr_mul(@symcore.int(-1), den_offset)
   let num = factors_expr(num_factors)
-  match expr_simplify(num) {
-    @symcore.Expr::Add(args) if args.length() == 2 => {
-      let mut power : Expr? = None
-      let mut saw_const = false
-      for arg in args {
-        match parse_power_factor(arg, x_name) {
-          Some(p) => power = Some(p)
-          None =>
-            match power {
-              Some(p) =>
-                if expr_same_simplified(
-                    arg,
-                    expr_mul(@symcore.int(-1), expr_pow(scale, p)),
-                  ) {
-                  saw_const = true
-                } else {
-                  return None
-                }
-              None => return None
-            }
+  retry_with_simplified(num, num =>
+    match num {
+      @symcore.Expr::Add(args) if args.length() == 2 => {
+        let mut power : Expr? = None
+        let mut saw_const = false
+        for arg in args {
+          match parse_power_factor(arg, x_name) {
+            Some(p) => power = Some(p)
+            None =>
+              match power {
+                Some(p) =>
+                  if expr_same_simplified(
+                      arg,
+                      expr_mul(@symcore.int(-1), expr_pow(scale, p)),
+                    ) {
+                    saw_const = true
+                  } else {
+                    return None
+                  }
+                None => return None
+              }
+          }
+        }
+        match power {
+          Some(p) if saw_const => Some((p, scale))
+          _ => None
         }
       }
-      match power {
-        Some(p) if saw_const => Some((p, scale))
-        _ => None
-      }
-    }
-    _ => None
-  }
+      _ => None
+    })
 }
 
 ///|
 fn parse_sqrt_shifted_base(expr : Expr, x_name : String) -> (Expr, Expr)? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Add(args) if args.length() == 2 => {
-      let mut scale : Expr? = None
-      let mut shift_sq : Expr? = None
-      for arg in args {
-        match unary_application_arg(arg, "sqrt") {
-          Some(inner) =>
-            match split_linear_coeff(inner, x_name) {
-              Some((coeff, offset)) if expr_same_simplified(
-                  coeff,
-                  @symcore.int(1),
-                ) &&
-                !expr_depends_on(offset, x_name) =>
-                if shift_sq is None {
-                  shift_sq = Some(offset)
-                } else {
-                  return None
-                }
-              _ => return None
-            }
-          None =>
-            if expr_depends_on(arg, x_name) {
-              return None
-            } else if scale is None {
-              scale = Some(arg)
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Add(args) if args.length() == 2 => {
+        let mut scale : Expr? = None
+        let mut shift_sq : Expr? = None
+        for arg in args {
+          match unary_application_arg(arg, "sqrt") {
+            Some(inner) =>
+              match split_linear_coeff(inner, x_name) {
+                Some((coeff, offset)) if expr_same_simplified(
+                    coeff,
+                    @symcore.int(1),
+                  ) &&
+                  !expr_depends_on(offset, x_name) =>
+                  if shift_sq is None {
+                    shift_sq = Some(offset)
+                  } else {
+                    return None
+                  }
+                _ => return None
+              }
+            None =>
+              if expr_depends_on(arg, x_name) {
+                return None
+              } else if scale is None {
+                scale = Some(arg)
+              } else {
+                return None
+              }
+          }
+        }
+        match (scale, shift_sq) {
+          (Some(v), Some(shift)) =>
+            if expr_same_simplified(expr_pow(v, @symcore.int(2)), shift) ||
+              expr_same_simplified(v, preferred_positive_sqrt(shift)) {
+              Some((v, shift))
             } else {
-              return None
+              None
             }
+          _ => None
         }
       }
-      match (scale, shift_sq) {
-        (Some(v), Some(shift)) =>
-          if expr_same_simplified(expr_pow(v, @symcore.int(2)), shift) ||
-            expr_same_simplified(v, preferred_positive_sqrt(shift)) {
-            Some((v, shift))
-          } else {
-            None
-          }
-        _ => None
-      }
-    }
-    _ => None
-  }
+      _ => None
+    })
 }
 
 ///|
 fn parse_reciprocal_sqrt_shift(expr : Expr, x_name : String) -> Expr? {
-  match pow_named_unary_application(expr_simplify(expr)) {
-    Some(("sqrt", inner, exp)) =>
-      if expr_same_simplified(exp, @symcore.int(-1)) {
-        match split_linear_coeff(inner, x_name) {
-          Some((coeff, offset)) if expr_same_simplified(coeff, @symcore.int(1)) &&
-            !expr_depends_on(offset, x_name) => Some(offset)
-          _ => None
+  retry_with_simplified(expr, expr =>
+    match pow_named_unary_application(expr) {
+      Some(("sqrt", inner, exp)) =>
+        if expr_same_simplified(exp, @symcore.int(-1)) {
+          match split_linear_coeff(inner, x_name) {
+            Some((coeff, offset)) if expr_same_simplified(
+                coeff,
+                @symcore.int(1),
+              ) &&
+              !expr_depends_on(offset, x_name) => Some(offset)
+            _ => None
+          }
+        } else {
+          None
         }
-      } else {
-        None
-      }
-    _ => None
-  }
+      _ => None
+    })
 }
 
 ///|
@@ -13111,63 +13118,64 @@ fn parse_sqrt_shifted_power_expr(
   expr : Expr,
   x_name : String,
 ) -> (Expr, Expr, Expr, Bool)? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Pow(base, power) =>
-      match parse_sqrt_shifted_base(base, x_name) {
-        Some((scale, shift_sq)) => Some((scale, shift_sq, power, false))
-        None => None
-      }
-    @symcore.Expr::Mul(args) if args.length() == 2 => {
-      let mut scale : Expr? = None
-      let mut shift_sq : Expr? = None
-      let mut power : Expr? = None
-      let mut saw_recip = false
-      for arg in args {
-        match arg {
-          @symcore.Expr::Pow(base, exp) =>
-            match parse_sqrt_shifted_base(base, x_name) {
-              Some((parsed_scale, parsed_shift)) =>
-                if scale is None {
-                  scale = Some(parsed_scale)
-                  shift_sq = Some(parsed_shift)
-                  power = Some(exp)
-                } else {
-                  return None
-                }
-              None =>
-                match parse_reciprocal_sqrt_shift(arg, x_name) {
-                  Some(parsed_shift) =>
-                    if saw_recip {
-                      return None
-                    } else {
-                      shift_sq = Some(parsed_shift)
-                      saw_recip = true
-                    }
-                  None => return None
-                }
-            }
-          _ =>
-            match parse_reciprocal_sqrt_shift(arg, x_name) {
-              Some(parsed_shift) =>
-                if saw_recip {
-                  return None
-                } else {
-                  shift_sq = Some(parsed_shift)
-                  saw_recip = true
-                }
-              None => return None
-            }
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Pow(base, power) =>
+        match parse_sqrt_shifted_base(base, x_name) {
+          Some((scale, shift_sq)) => Some((scale, shift_sq, power, false))
+          None => None
+        }
+      @symcore.Expr::Mul(args) if args.length() == 2 => {
+        let mut scale : Expr? = None
+        let mut shift_sq : Expr? = None
+        let mut power : Expr? = None
+        let mut saw_recip = false
+        for arg in args {
+          match arg {
+            @symcore.Expr::Pow(base, exp) =>
+              match parse_sqrt_shifted_base(base, x_name) {
+                Some((parsed_scale, parsed_shift)) =>
+                  if scale is None {
+                    scale = Some(parsed_scale)
+                    shift_sq = Some(parsed_shift)
+                    power = Some(exp)
+                  } else {
+                    return None
+                  }
+                None =>
+                  match parse_reciprocal_sqrt_shift(arg, x_name) {
+                    Some(parsed_shift) =>
+                      if saw_recip {
+                        return None
+                      } else {
+                        shift_sq = Some(parsed_shift)
+                        saw_recip = true
+                      }
+                    None => return None
+                  }
+              }
+            _ =>
+              match parse_reciprocal_sqrt_shift(arg, x_name) {
+                Some(parsed_shift) =>
+                  if saw_recip {
+                    return None
+                  } else {
+                    shift_sq = Some(parsed_shift)
+                    saw_recip = true
+                  }
+                None => return None
+              }
+          }
+        }
+        match (scale, shift_sq, power) {
+          (Some(v), Some(shift), Some(exp)) if saw_recip &&
+            expr_same_simplified(expr_pow(v, @symcore.int(2)), shift) =>
+            Some((v, shift, exp, true))
+          _ => None
         }
       }
-      match (scale, shift_sq, power) {
-        (Some(v), Some(shift), Some(exp)) if saw_recip &&
-          expr_same_simplified(expr_pow(v, @symcore.int(2)), shift) =>
-          Some((v, shift, exp, true))
-        _ => None
-      }
-    }
-    _ => None
-  }
+      _ => None
+    })
 }
 
 ///|
@@ -13297,22 +13305,23 @@ fn split_linear_power_denom(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Expr, Int)? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Pow(base, exp) =>
-      match expr_is_int_value(exp) {
-        Some(power) if power > 0 =>
-          match split_linear_coeff(base, var_name) {
-            Some((a, b)) => Some((a, b, power))
-            None => None
-          }
-        _ => None
-      }
-    _ =>
-      match split_linear_coeff(expr, var_name) {
-        Some((a, b)) => Some((a, b, 1))
-        None => None
-      }
-  }
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Pow(base, exp) =>
+        match expr_is_int_value(exp) {
+          Some(power) if power > 0 =>
+            match split_linear_coeff(base, var_name) {
+              Some((a, b)) => Some((a, b, power))
+              None => None
+            }
+          _ => None
+        }
+      _ =>
+        match split_linear_coeff(expr, var_name) {
+          Some((a, b)) => Some((a, b, 1))
+          None => None
+        }
+    })
 }
 
 ///|
@@ -13320,7 +13329,7 @@ fn split_shifted_square_denom(
   den : Expr,
   s_name : String,
 ) -> (Expr, Expr, Expr)? {
-  match poly_coeffs_upto2(expr_simplify(den), s_name) {
+  match poly_coeffs_upto2(den, s_name) {
     Some(coeffs) =>
       if expr_is_zero(coeffs[2]) ||
         expr_depends_on(coeffs[0], s_name) ||
@@ -13349,7 +13358,7 @@ fn split_shifted_diff_square_denom(
   den : Expr,
   s_name : String,
 ) -> (Expr, Expr, Expr)? {
-  match poly_coeffs_upto2(expr_simplify(den), s_name) {
+  match poly_coeffs_upto2(den, s_name) {
     Some(coeffs) =>
       if expr_is_zero(coeffs[2]) ||
         expr_depends_on(coeffs[0], s_name) ||
@@ -13384,18 +13393,19 @@ fn split_shifted_square_power_denom(
   den : Expr,
   s_name : String,
 ) -> (Expr, Expr, Expr, Int)? {
-  match expr_simplify(den) {
-    @symcore.Expr::Pow(base, exp) =>
-      match expr_is_int_value(exp) {
-        Some(power) if power > 1 =>
-          match split_shifted_square_denom(base, s_name) {
-            Some((lead, shift, freq)) => Some((lead, shift, freq, power))
-            None => None
-          }
-        _ => None
-      }
-    _ => None
-  }
+  retry_with_simplified(den, den =>
+    match den {
+      @symcore.Expr::Pow(base, exp) =>
+        match expr_is_int_value(exp) {
+          Some(power) if power > 1 =>
+            match split_shifted_square_denom(base, s_name) {
+              Some((lead, shift, freq)) => Some((lead, shift, freq, power))
+              None => None
+            }
+          _ => None
+        }
+      _ => None
+    })
 }
 
 ///|
@@ -13403,18 +13413,19 @@ fn split_shifted_diff_square_power_denom(
   den : Expr,
   s_name : String,
 ) -> (Expr, Expr, Expr, Int)? {
-  match expr_simplify(den) {
-    @symcore.Expr::Pow(base, exp) =>
-      match expr_is_int_value(exp) {
-        Some(power) if power > 1 =>
-          match split_shifted_diff_square_denom(base, s_name) {
-            Some((lead, shift, freq)) => Some((lead, shift, freq, power))
-            None => None
-          }
-        _ => None
-      }
-    _ => None
-  }
+  retry_with_simplified(den, den =>
+    match den {
+      @symcore.Expr::Pow(base, exp) =>
+        match expr_is_int_value(exp) {
+          Some(power) if power > 1 =>
+            match split_shifted_diff_square_denom(base, s_name) {
+              Some((lead, shift, freq)) => Some((lead, shift, freq, power))
+              None => None
+            }
+          _ => None
+        }
+      _ => None
+    })
 }
 
 ///|
@@ -13422,18 +13433,19 @@ fn split_two_linear_factors(
   den : Expr,
   s_name : String,
 ) -> ((Expr, Expr), (Expr, Expr))? {
-  match expr_simplify(den) {
-    @symcore.Expr::Mul(args) if args.length() == 2 =>
-      match
-        (
-          split_linear_power_denom(args[0], s_name),
-          split_linear_power_denom(args[1], s_name),
-        ) {
-        (Some((a1, b1, 1)), Some((a2, b2, 1))) => Some(((a1, b1), (a2, b2)))
-        _ => None
-      }
-    _ => None
-  }
+  retry_with_simplified(den, den =>
+    match den {
+      @symcore.Expr::Mul(args) if args.length() == 2 =>
+        match
+          (
+            split_linear_power_denom(args[0], s_name),
+            split_linear_power_denom(args[1], s_name),
+          ) {
+          (Some((a1, b1, 1)), Some((a2, b2, 1))) => Some(((a1, b1), (a2, b2)))
+          _ => None
+        }
+      _ => None
+    })
 }
 
 ///|
@@ -13441,23 +13453,24 @@ fn split_quadratic_power_denom(
   den : Expr,
   s_name : String,
 ) -> (Expr, Expr, Bool, Int)? {
-  match expr_simplify(den) {
-    @symcore.Expr::Pow(base, exp) =>
-      match expr_is_int_value(exp) {
-        Some(power) if power > 1 =>
-          match split_quadratic_base(base, s_name) {
-            Some(info) => Some((info.0, info.1, info.2, power))
-            None => None
-          }
-        _ => None
-      }
-    _ => None
-  }
+  retry_with_simplified(den, den =>
+    match den {
+      @symcore.Expr::Pow(base, exp) =>
+        match expr_is_int_value(exp) {
+          Some(power) if power > 1 =>
+            match split_quadratic_base(base, s_name) {
+              Some(info) => Some((info.0, info.1, info.2, power))
+              None => None
+            }
+          _ => None
+        }
+      _ => None
+    })
 }
 
 ///|
 fn split_quadratic_base(base : Expr, s_name : String) -> (Expr, Expr, Bool)? {
-  match poly_coeffs_upto2(expr_simplify(base), s_name) {
+  match poly_coeffs_upto2(base, s_name) {
     Some(c) =>
       if expr_is_zero(c[1]) &&
         !expr_depends_on(c[0], s_name) &&
@@ -13480,7 +13493,7 @@ fn split_quadratic_base(base : Expr, s_name : String) -> (Expr, Expr, Bool)? {
 
 ///|
 fn denom_to_diff_square_freq(den : Expr, s_name : String) -> Expr? {
-  let coeffs = poly_coeffs_upto2(expr_simplify(den), s_name)
+  let coeffs = poly_coeffs_upto2(den, s_name)
   match coeffs {
     Some(c) =>
       if expr_is_zero(c[1]) &&
@@ -13505,7 +13518,7 @@ fn denom_to_diff_square_freq(den : Expr, s_name : String) -> Expr? {
 
 ///|
 fn denom_to_square_freq(den : Expr, s_name : String) -> Expr? {
-  let coeffs = poly_coeffs_upto2(expr_simplify(den), s_name)
+  let coeffs = poly_coeffs_upto2(den, s_name)
   match coeffs {
     Some(c) =>
       if expr_is_zero(c[1]) &&
@@ -13533,7 +13546,7 @@ fn extract_negative_quadratic_poly(
   inner : Expr,
   var_name : String,
 ) -> (Expr, Expr, Expr)? {
-  let coeffs = poly_coeffs_upto2(expr_simplify(inner), var_name)
+  let coeffs = poly_coeffs_upto2(inner, var_name)
   match coeffs {
     Some(c) =>
       if !expr_depends_on(c[0], var_name) &&
@@ -14011,7 +14024,7 @@ fn parse_reciprocal_sqrt_quadratic(expr : Expr, var_name : String) -> Expr? {
 
 ///|
 fn parse_square_scaled_var(expr : Expr, var_name : String) -> Expr? {
-  match poly_coeffs_upto2(expr_simplify(expr), var_name) {
+  match poly_coeffs_upto2(expr, var_name) {
     Some(coeffs) =>
       if expr_is_zero(coeffs[0]) &&
         expr_is_zero(coeffs[1]) &&
@@ -14108,28 +14121,29 @@ fn parse_cosine_sqrt_meijerg(expr : Expr, k_name : String) -> Expr? {
 
 ///|
 fn parse_one_minus_abs_linear(expr : Expr, var_name : String) -> Expr? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Add(args) if args.length() == 2 => {
-      let mut saw_one = false
-      let mut scale : Expr? = None
-      for arg in args {
-        if expr_is_one(arg) {
-          saw_one = true
-        } else {
-          match parse_negative_abs_term(arg, var_name) {
-            Some(found) => scale = Some(found)
-            None => return None
+  retry_with_simplified(expr, expr =>
+    match expr {
+      @symcore.Expr::Add(args) if args.length() == 2 => {
+        let mut saw_one = false
+        let mut scale : Expr? = None
+        for arg in args {
+          if expr_is_one(arg) {
+            saw_one = true
+          } else {
+            match parse_negative_abs_term(arg, var_name) {
+              Some(found) => scale = Some(found)
+              None => return None
+            }
           }
         }
+        if saw_one {
+          scale
+        } else {
+          None
+        }
       }
-      if saw_one {
-        scale
-      } else {
-        None
-      }
-    }
-    _ => None
-  }
+      _ => None
+    })
 }
 
 ///|
@@ -14427,7 +14441,7 @@ fn expr_has_function_name(expr : Expr, name : String) -> Bool {
 
 ///|
 fn expr_is_negative(expr : Expr) -> Bool {
-  match expr_num_value(expr_simplify(expr)) {
+  match expr_num_value(expr) {
     Some(value) => value.compare(@symnum.BigRational::zero()) < 0
     None => false
   }
@@ -14435,7 +14449,7 @@ fn expr_is_negative(expr : Expr) -> Bool {
 
 ///|
 fn expr_is_positive(expr : Expr) -> Bool {
-  match expr_num_value(expr_simplify(expr)) {
+  match expr_num_value(expr) {
     Some(value) => value.compare(@symnum.BigRational::zero()) > 0
     None => false
   }
