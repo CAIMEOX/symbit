@@ -23,6 +23,7 @@ pub fn show_is_enabled() -> Bool {
 
 ///|
 pub struct Plot {
+  backend_name_ : String
   title : String?
   xlabel : String?
   ylabel : String?
@@ -41,6 +42,7 @@ pub struct Plot {
 ///|
 pub fn plot_object(
   series : Array[LineOver1DRangeSeries],
+  backend_name? : String = "default",
   title? : String? = None,
   xlabel? : String? = None,
   ylabel? : String? = None,
@@ -55,6 +57,7 @@ pub fn plot_object(
   margin? : Int = 0,
 ) -> Plot {
   Plot::{
+    backend_name_: backend_name,
     title,
     xlabel,
     ylabel,
@@ -78,8 +81,7 @@ pub fn Plot::_backend(self : Plot) -> Plot {
 
 ///|
 pub fn Plot::backend(self : Plot) -> String {
-  ignore(self)
-  "Plot"
+  self.backend_name_
 }
 
 ///|
@@ -106,6 +108,7 @@ pub fn Plot::append(
   let series = self.series_.copy()
   series.push(arg)
   Plot::{
+    backend_name_: self.backend_name_,
     title: self.title,
     xlabel: self.xlabel,
     ylabel: self.ylabel,
@@ -132,6 +135,7 @@ pub fn Plot::extend(
     series.push(item)
   }
   Plot::{
+    backend_name_: self.backend_name_,
     title: self.title,
     xlabel: self.xlabel,
     ylabel: self.ylabel,
@@ -146,6 +150,44 @@ pub fn Plot::extend(
     margin: self.margin,
     series_: series,
   }
+}
+
+///|
+pub fn Plot::render_lines(self : Plot) -> Array[String] raise PlottingError {
+  if self.backend_name_ != "text" {
+    raise PlottingError::TypeError("render_lines is only available on the text backend")
+  }
+  text_backend(self).render_lines()
+}
+
+///|
+pub fn Plot::get_points(
+  self : Plot,
+  index : Int,
+) -> (Array[Double], Array[Double?]) raise PlottingError {
+  self.getitem(index).get_points()
+}
+
+///|
+pub fn Plot::get_data(
+  self : Plot,
+  index : Int,
+) -> (Array[Double], Array[Double?]) raise PlottingError {
+  self.getitem(index).get_data()
+}
+
+///|
+pub fn Plot::show(self : Plot) -> Unit raise PlottingError {
+  if self.backend_name_ == "text" {
+    text_backend(self).show()
+  } else {
+    ignore(self)
+  }
+}
+
+///|
+pub fn Plot::close(self : Plot) -> Unit {
+  ignore(self)
 }
 
 ///|

@@ -17,6 +17,11 @@ fn plot_default_range(symbol : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+fn plot_default_symbol() -> @symcore.Expr {
+  @symcore.Expr::Symbol("x")
+}
+
+///|
 fn plot_range_symbol(range : @symcore.Expr) -> @symcore.Expr raise PlottingError {
   match range {
     @symcore.Expr::Tuple([symbol, _, _]) if is_plot_range(range) => symbol
@@ -74,7 +79,7 @@ fn plot_create_ranges(
     }
   }
   while out.length() < npar {
-    out.push(plot_default_range(@symcore.dummy()))
+    out.push(plot_default_range(plot_default_symbol()))
   }
 
   if free_symbols.length() == npar {
@@ -162,14 +167,20 @@ pub fn plot_factory(
   xlabel? : String? = None,
   ylabel? : String? = None,
   zlabel? : String? = None,
-) -> TextBackend raise PlottingError {
-  if backend != "default" && backend != "text" {
+) -> Plot raise PlottingError {
+  if backend != "default" && backend != "text" && backend != "matplotlib" {
     raise PlottingError::TypeError(
-      "backend must be either 'default' or 'text'",
+      "backend must be either 'default', 'text' or 'matplotlib'",
     )
   }
-  text_backend(
-    plot_object(series, title=title, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel),
+  let resolved_backend = if backend == "default" { "matplotlib" } else { backend }
+  plot_object(
+    series,
+    backend_name=resolved_backend,
+    title=title,
+    xlabel=xlabel,
+    ylabel=ylabel,
+    zlabel=zlabel,
   )
 }
 
@@ -178,11 +189,16 @@ pub fn plot(
   args : Array[PlotInput],
   show? : Bool = true,
   backend? : String = "default",
+  adaptive? : Bool = false,
+  only_integers? : Bool = false,
+  n? : Int = 1000,
+  return_mode? : String? = None,
   title? : String? = None,
   xlabel? : String? = None,
   ylabel? : String? = None,
   zlabel? : String? = None,
-) -> TextBackend raise PlottingError {
+  xscale? : String = "linear",
+) -> Plot raise PlottingError {
   let specs = plot_build_line_specs(args)
   let series : Array[LineOver1DRangeSeries] = []
   for spec in specs {
@@ -193,16 +209,38 @@ pub fn plot(
         range,
         label=label,
         rendering_kw=rendering_kw,
+        adaptive=adaptive,
+        only_integers=only_integers,
+        n=n,
+        return_mode=return_mode,
+        xscale=xscale,
       ),
     )
+  }
+
+  let free = plot_free_symbols(specs.map(spec => {
+    let (expr, _, _, _) = spec
+    expr
+  }))
+  let plot_var = match free {
+    [symbol, ..] => symbol
+    _ => plot_default_symbol()
+  }
+  let resolved_xlabel = match xlabel {
+    Some(value) => Some(value)
+    None => Some(@symprint.to_string(plot_var))
+  }
+  let resolved_ylabel = match ylabel {
+    Some(value) => Some(value)
+    None => Some(@symprint.to_string(@symcore.function("f", [plot_var])))
   }
 
   let backend_obj = plot_factory(
     series,
     backend=backend,
     title=title,
-    xlabel=xlabel,
-    ylabel=ylabel,
+    xlabel=resolved_xlabel,
+    ylabel=resolved_ylabel,
     zlabel=zlabel,
   )
   if show {

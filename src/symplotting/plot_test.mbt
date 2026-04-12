@@ -29,9 +29,12 @@ test "symplotting plot creates default range like SymPy" {
   let backend = plot([plot_expr(@symcore.add([x, @symcore.int(1)]))], show=false)
   let series = backend.series()
   assert_eq(series.length(), 1)
+  assert_eq(backend.backend(), "matplotlib")
   assert_true(series[0].variable == x)
   assert_true(series[0].start == @symcore.int(-10))
   assert_true(series[0].end == @symcore.int(10))
+  assert_eq(backend.xlabel, Some("x"))
+  assert_eq(backend.ylabel, Some("f(x)"))
 }
 
 ///|
@@ -107,4 +110,36 @@ test "symplotting plot rejects incompatible free symbols" {
       _ => fail("unexpected error")
     },
   )
+}
+
+///|
+test "symplotting plot accepts matplotlib frontend and exposes uniform data" {
+  let x = @symcore.Expr::Symbol("x")
+  let backend = plot(
+    [plot_expr(@symcore.function("sin", [x]))],
+    show=false,
+    backend="matplotlib",
+    adaptive=false,
+    n=30,
+  )
+  assert_eq(backend.backend(), "matplotlib")
+  let (xs, ys) = backend.get_data(0)
+  assert_eq(xs.length(), 30)
+  assert_eq(ys.length(), 30)
+}
+
+///|
+test "symplotting plot accepts text frontend and exposes uniform data" {
+  let x = @symcore.Expr::Symbol("x")
+  let backend = plot(
+    [plot_expr(@symcore.function("sin", [x]))],
+    show=false,
+    backend="text",
+    adaptive=false,
+    n=30,
+  )
+  assert_eq(backend.backend(), "text")
+  let (xs, ys) = backend.get_points(0)
+  assert_eq(xs.length(), 30)
+  assert_eq(ys.length(), 30)
 }

@@ -9,21 +9,21 @@ import {
 // Values
 pub fn is_plot_range(@symcore.Expr) -> Bool
 
-pub fn line_over_1d_range_series(@symcore.Expr, @symcore.Expr, label? : String?, rendering_kw? : Map[String, String]?) -> LineOver1DRangeSeries raise PlottingError
+pub fn line_over_1d_range_series(@symcore.Expr, @symcore.Expr, label? : String?, rendering_kw? : Map[String, String]?, adaptive? : Bool, only_integers? : Bool, n? : Int, return_mode? : String?, xscale? : String) -> LineOver1DRangeSeries raise PlottingError
 
 pub fn linspace(Double, Double, Int) -> Array[Double]
 
-pub fn plot(Array[PlotInput], show? : Bool, backend? : String, title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?) -> TextBackend raise PlottingError
+pub fn plot(Array[PlotInput], show? : Bool, backend? : String, adaptive? : Bool, only_integers? : Bool, n? : Int, return_mode? : String?, title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?, xscale? : String) -> Plot raise PlottingError
 
 pub fn plot_expr(@symcore.Expr) -> PlotInput
 
-pub fn plot_factory(Array[LineOver1DRangeSeries], backend? : String, title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?) -> TextBackend raise PlottingError
+pub fn plot_factory(Array[LineOver1DRangeSeries], backend? : String, title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?) -> Plot raise PlottingError
 
 pub fn plot_group(Array[PlotInput]) -> PlotInput
 
 pub fn plot_label(String) -> PlotInput
 
-pub fn plot_object(Array[LineOver1DRangeSeries], title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?, aspect_ratio? : String, axis_center? : String, axis? : Bool, xscale? : String, yscale? : String, legend? : Bool, autoscale? : Bool, margin? : Int) -> Plot
+pub fn plot_object(Array[LineOver1DRangeSeries], backend_name? : String, title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?, aspect_ratio? : String, axis_center? : String, axis? : Bool, xscale? : String, yscale? : String, legend? : Bool, autoscale? : Bool, margin? : Int) -> Plot
 
 pub fn plot_range(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> PlotInput
 
@@ -57,10 +57,20 @@ pub struct LineOver1DRangeSeries {
   end : @symcore.Expr
   label : String?
   rendering_kw : Map[String, String]?
+  adaptive : Bool
+  only_integers : Bool
+  n : Int
+  return_mode : String?
+  xscale : String
 }
+pub fn LineOver1DRangeSeries::get_data(Self) -> (Array[Double], Array[Double?]) raise PlottingError
+pub fn LineOver1DRangeSeries::get_points(Self) -> (Array[Double], Array[Double?]) raise PlottingError
+pub fn LineOver1DRangeSeries::nb_of_points(Self) -> Int
+pub fn LineOver1DRangeSeries::plot_var(Self) -> @symcore.Expr
 pub fn LineOver1DRangeSeries::to_string(Self) -> String
 
 pub struct Plot {
+  backend_name_ : String
   title : String?
   xlabel : String?
   ylabel : String?
@@ -78,9 +88,14 @@ pub struct Plot {
 pub fn Plot::_backend(Self) -> Self
 pub fn Plot::append(Self, LineOver1DRangeSeries) -> Self
 pub fn Plot::backend(Self) -> String
+pub fn Plot::close(Self) -> Unit
 pub fn Plot::extend(Self, Self) -> Self
+pub fn Plot::get_data(Self, Int) -> (Array[Double], Array[Double?]) raise PlottingError
+pub fn Plot::get_points(Self, Int) -> (Array[Double], Array[Double?]) raise PlottingError
 pub fn Plot::getitem(Self, Int) -> LineOver1DRangeSeries raise PlottingError
+pub fn Plot::render_lines(Self) -> Array[String] raise PlottingError
 pub fn Plot::series(Self) -> Array[LineOver1DRangeSeries]
+pub fn Plot::show(Self) -> Unit raise PlottingError
 pub fn Plot::to_string(Self) -> String
 
 pub enum PlotInput {
