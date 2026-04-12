@@ -1,0 +1,109 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symplotting"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn is_plot_range(@symcore.Expr) -> Bool
+
+pub fn line_over_1d_range_series(@symcore.Expr, @symcore.Expr, label? : String?, rendering_kw? : Map[String, String]?) -> LineOver1DRangeSeries raise PlottingError
+
+pub fn linspace(Double, Double, Int) -> Array[Double]
+
+pub fn plot(Array[PlotInput], show? : Bool, backend? : String, title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?) -> TextBackend raise PlottingError
+
+pub fn plot_expr(@symcore.Expr) -> PlotInput
+
+pub fn plot_factory(Array[LineOver1DRangeSeries], backend? : String, title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?) -> TextBackend raise PlottingError
+
+pub fn plot_group(Array[PlotInput]) -> PlotInput
+
+pub fn plot_label(String) -> PlotInput
+
+pub fn plot_object(Array[LineOver1DRangeSeries], title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?, aspect_ratio? : String, axis_center? : String, axis? : Bool, xscale? : String, yscale? : String, legend? : Bool, autoscale? : Bool, margin? : Int) -> Plot
+
+pub fn plot_range(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> PlotInput
+
+pub fn plot_rendering_kw(Map[String, String]) -> PlotInput
+
+pub fn rescale(Array[Double?], Int, Int, Double, Double) -> Array[Int?]
+
+pub fn set_show() -> Unit
+
+pub fn show_is_enabled() -> Bool
+
+pub fn text_backend(Plot) -> TextBackend
+
+pub fn textplot(@symcore.Expr, @symcore.Expr, @symcore.Expr, width? : Int, height? : Int) -> Unit raise PlottingError
+
+pub fn textplot_str(@symcore.Expr, @symcore.Expr, @symcore.Expr, width? : Int, height? : Int) -> Array[String] raise PlottingError
+
+pub fn unset_show() -> Unit
+
+// Errors
+pub suberror PlottingError {
+  ValueError(String)
+  TypeError(String)
+} derive(Eq, @debug.Debug)
+
+// Types and methods
+pub struct LineOver1DRangeSeries {
+  expr : @symcore.Expr
+  variable : @symcore.Expr
+  start : @symcore.Expr
+  end : @symcore.Expr
+  label : String?
+  rendering_kw : Map[String, String]?
+}
+pub fn LineOver1DRangeSeries::to_string(Self) -> String
+
+pub struct Plot {
+  title : String?
+  xlabel : String?
+  ylabel : String?
+  zlabel : String?
+  aspect_ratio : String
+  axis_center : String
+  axis : Bool
+  xscale : String
+  yscale : String
+  legend : Bool
+  autoscale : Bool
+  margin : Int
+  series_ : Array[LineOver1DRangeSeries]
+}
+pub fn Plot::_backend(Self) -> Self
+pub fn Plot::append(Self, LineOver1DRangeSeries) -> Self
+pub fn Plot::backend(Self) -> String
+pub fn Plot::extend(Self, Self) -> Self
+pub fn Plot::getitem(Self, Int) -> LineOver1DRangeSeries raise PlottingError
+pub fn Plot::series(Self) -> Array[LineOver1DRangeSeries]
+pub fn Plot::to_string(Self) -> String
+
+pub enum PlotInput {
+  Expr(@symcore.Expr)
+  Range(@symcore.Expr)
+  Label(String)
+  RenderingKw(Map[String, String])
+  Group(Array[PlotInput])
+}
+
+pub struct TextBackend {
+  plot_ : Plot
+}
+pub fn TextBackend::_backend(Self) -> Self
+pub fn TextBackend::backend(Self) -> String
+pub fn TextBackend::close(Self) -> Unit
+pub fn TextBackend::getitem(Self, Int) -> LineOver1DRangeSeries raise PlottingError
+pub fn TextBackend::plot(Self) -> Plot
+pub fn TextBackend::render_lines(Self) -> Array[String] raise PlottingError
+pub fn TextBackend::series(Self) -> Array[LineOver1DRangeSeries]
+pub fn TextBackend::show(Self) -> Unit raise PlottingError
+
+// Type aliases
+
+// Traits
+
