@@ -20,6 +20,15 @@ pub fn Sieve::extend(self : Sieve, n0 : BigInt) -> Unit {
   if last >= n {
     return
   }
+  if n.bit_length() <= 30 {
+    let end = n.to_int()
+    let root = isqrt_int(end)
+    if last < bi(root) {
+      self.extend(bi(root))
+    }
+    self.extend_segmented_int(end)
+    return
+  }
   let mut candidate = last + bi(1)
   while candidate <= n {
     if isprime(candidate) {
@@ -64,15 +73,11 @@ pub fn Sieve::primerange(
     return []
   }
   self.extend(b - bi(1))
+  let lo = prime_lower_bound(self.primes, a)
+  let hi = prime_lower_bound(self.primes, b)
   let out : Array[BigInt] = Array::new()
-  for p in self.primes {
-    if p < a {
-      continue
-    }
-    if p >= b {
-      break
-    }
-    out.push(p)
+  for i in lo..<hi {
+    out.push(self.primes[i])
   }
   out
 }
@@ -95,10 +100,21 @@ pub fn primerange(a : BigInt, b? : BigInt = bi(0)) -> Array[BigInt] {
 
 ///|
 pub fn nextprime(n0 : BigInt) -> BigInt {
-  let mut n = n0
-  if n < bi(2) {
+  if n0 < bi(2) {
     return bi(2)
   }
+  if abs_bigint(n0).bit_length() <= 30 {
+    let mut bound = n0 + bi(64)
+    while true {
+      sieve.extend(bound)
+      let idx = prime_upper_bound(sieve.primes, n0)
+      if idx < sieve.primes.length() {
+        return sieve.primes[idx]
+      }
+      bound = bound * bi(2)
+    }
+  }
+  let mut n = n0
   n = n + bi(1)
   if is_even(n) {
     n = n + bi(1)
@@ -136,8 +152,81 @@ pub fn primepi(n0 : BigInt) -> BigInt {
   if n < bi(2) {
     return bi(0)
   }
-  let ps = sieve.primerange(bi(2), n + bi(1))
-  bi(ps.length())
+  sieve.extend(n)
+  bi(prime_upper_bound(sieve.primes, n))
+}
+
+///|
+fn Sieve::extend_segmented_int(self : Sieve, end : Int) -> Unit {
+  let last = self.primes[self.primes.length() - 1].to_int()
+  if end <= last {
+    return
+  }
+  let start = last + 1
+  let marks : Array[Bool] = Array::new()
+  for _ in start..=end {
+    marks.push(true)
+  }
+  for prime_big in self.primes {
+    let prime = prime_big.to_int()
+    if prime * prime > end {
+      break
+    }
+    let mut first = prime * prime
+    if first < start {
+      let rem = start % prime
+      first = if rem == 0 { start } else { start + (prime - rem) }
+    }
+    let mut composite = first
+    while composite <= end {
+      marks[composite - start] = false
+      composite += prime
+    }
+  }
+  for value in start..=end {
+    if value >= 2 && marks[value - start] {
+      self.primes.push(bi(value))
+    }
+  }
+}
+
+///|
+fn isqrt_int(n : Int) -> Int {
+  let mut root = 0
+  while (root + 1) * (root + 1) <= n {
+    root += 1
+  }
+  root
+}
+
+///|
+fn prime_lower_bound(primes : Array[BigInt], target : BigInt) -> Int {
+  let mut lo = 0
+  let mut hi = primes.length()
+  while lo < hi {
+    let mid = lo + (hi - lo) / 2
+    if primes[mid] < target {
+      lo = mid + 1
+    } else {
+      hi = mid
+    }
+  }
+  lo
+}
+
+///|
+fn prime_upper_bound(primes : Array[BigInt], target : BigInt) -> Int {
+  let mut lo = 0
+  let mut hi = primes.length()
+  while lo < hi {
+    let mid = lo + (hi - lo) / 2
+    if primes[mid] <= target {
+      lo = mid + 1
+    } else {
+      hi = mid
+    }
+  }
+  lo
 }
 
 ///|

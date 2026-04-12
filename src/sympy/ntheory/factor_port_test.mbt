@@ -69,6 +69,8 @@ test "ntheory factorint totient/sigma parity" {
   assert_eq(ds1.to_string(), divisor_sigma_str(12))
   let ds0 = divisor_sigma(bi_f(12), k=0)
   assert_eq(ds0.to_string(), divisor_sigma_str(12, k=0))
+  let ds2 = divisor_sigma(bi_f(360), k=2)
+  assert_eq(ds2.to_string(), divisor_sigma_str(360, k=2))
 }
 
 ///|

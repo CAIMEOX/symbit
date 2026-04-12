@@ -123,6 +123,8 @@ test "ntheory partitions parity" {
   assert_eq(p5.to_string(), npartitions_str(5))
   let p10 = npartitions(10)
   assert_eq(p10.to_string(), npartitions_str(10))
+  let p50 = npartitions(50)
+  assert_eq(p50.to_string(), npartitions_str(50))
 }
 
 ///|

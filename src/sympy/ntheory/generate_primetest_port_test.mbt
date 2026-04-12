@@ -62,7 +62,7 @@ test "ntheory generate prime/next/prev parity" {
     let res = prime(n)
     assert_eq(res.to_string(), prime_str(n))
   }
-  let next_cases = [0, 2, 3, 10]
+  let next_cases = [0, 2, 3, 10, 1000]
   for n in next_cases {
     let res = nextprime(bi_g(n))
     assert_eq(res.to_string(), nextprime_str(n))
@@ -80,7 +80,7 @@ test "ntheory generate ranges and counts parity" {
   assert_eq(array_bigint_to_pylist(range1), primerange_str(10))
   let range2 = primerange(bi_g(10), b=bi_g(30))
   assert_eq(array_bigint_to_pylist(range2), primerange_str(10, b=30))
-  let pi_cases = [0, 1, 2, 10, 20]
+  let pi_cases = [0, 1, 2, 10, 20, 1000]
   for n in pi_cases {
     let res = primepi(bi_g(n))
     assert_eq(res.to_string(), primepi_str(n))

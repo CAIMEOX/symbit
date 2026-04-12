@@ -197,10 +197,20 @@ pub fn divisor_sigma(n0 : BigInt, k? : Int = 1) -> BigInt {
   if k == 0 {
     return divisor_count(n)
   }
-  let divs = divisors(n)
-  let mut acc = bi(0)
-  for d in divs {
-    acc = acc + d.pow(bi(k))
+  let factors = factorint(n)
+  let mut acc = bi(1)
+  for p, e in factors {
+    if p == bi(-1) || e <= 0 {
+      continue
+    }
+    let pk = p.pow(bi(k))
+    let mut term = bi(1)
+    let mut current = bi(1)
+    for _ in 0..<e {
+      current = current * pk
+      term = term + current
+    }
+    acc = acc * term
   }
   acc
 }
