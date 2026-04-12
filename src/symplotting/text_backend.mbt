@@ -26,7 +26,18 @@ pub fn TextBackend::plot(self : TextBackend) -> Plot {
 
 ///|
 pub fn TextBackend::series(self : TextBackend) -> Array[LineOver1DRangeSeries] {
-  self.plot_.series()
+  let out : Array[LineOver1DRangeSeries] = []
+  for item in self.plot_.series() {
+    match item {
+      PlotSeries::Line(series) => out.push(series)
+      PlotSeries::Parametric2D(_)
+      | PlotSeries::Parametric3D(_)
+      | PlotSeries::Surface(_)
+      | PlotSeries::ParametricSurface(_)
+      | PlotSeries::Contour(_) => ()
+    }
+  }
+  out
 }
 
 ///|
@@ -34,7 +45,17 @@ pub fn TextBackend::getitem(
   self : TextBackend,
   index : Int,
 ) -> LineOver1DRangeSeries raise PlottingError {
-  self.plot_.getitem(index)
+  match self.plot_.getitem(index) {
+    PlotSeries::Line(series) => series
+    PlotSeries::Parametric2D(_)
+    | PlotSeries::Parametric3D(_)
+    | PlotSeries::Surface(_)
+    | PlotSeries::ParametricSurface(_)
+    | PlotSeries::Contour(_) =>
+      raise PlottingError::TypeError(
+        "The TextBackend only supports 1D line series.",
+      )
+  }
 }
 
 ///|
@@ -46,7 +67,7 @@ pub fn TextBackend::render_lines(
       "The TextBackend supports only one graph per Plot.",
     )
   }
-  let ser = self.plot_.series()[0]
+  let ser = self.getitem(0)
   textplot_str(ser.expr, ser.start, ser.end)
 }
 

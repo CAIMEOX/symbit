@@ -1,4 +1,14 @@
 ///|
+fn plot_complex_float(real : Double, imag : Double) -> @symcore.Expr {
+  @symcore.Expr::ComplexFloat(
+    @symcore.ComplexFloat::from_real(
+      @symcore.Float::from_double(real, prec=80),
+      imag=@symcore.Float::from_double(imag, prec=80),
+    ),
+  )
+}
+
+///|
 test "symplotting line series samples uniformly on a linear range" {
   let x = @symcore.Expr::Symbol("x")
   let series = line_over_1d_range_series(
@@ -59,4 +69,246 @@ test "symplotting line series supports complex return modes on uniform data" {
   )
   let (_, ys) = series.get_data()
   assert_eq(ys, [Some(0.0), Some(1.0), Some(2.0)])
+}
+
+///|
+test "symplotting line series supports complex ranges with constant imaginary part" {
+  let x = @symcore.Expr::Symbol("x")
+  let series = line_over_1d_range_series(
+    x,
+    @symcore.Expr::Tuple([
+      x,
+      plot_complex_float(-1.0, -2.0),
+      plot_complex_float(1.0, -2.0),
+    ]),
+    n=3,
+    return_mode=Some("imag"),
+  )
+  let (xs, ys) = series.get_data()
+  assert_eq(xs, [-1.0, 0.0, 1.0])
+  assert_eq(ys, [Some(-2.0), Some(-2.0), Some(-2.0)])
+}
+
+///|
+test "symplotting line series rejects complex ranges with mismatched imaginary part" {
+  let x = @symcore.Expr::Symbol("x")
+  ignore(
+    try {
+      ignore(
+        line_over_1d_range_series(
+          x,
+          @symcore.Expr::Tuple([
+            x,
+            plot_complex_float(-1.0, -2.0),
+            plot_complex_float(1.0, 2.0),
+          ]),
+          n=3,
+        ).get_data(),
+      )
+      fail("expected complex range mismatch error")
+    } catch {
+      PlottingError::ValueError(message) =>
+        assert_true(
+          message.contains("imaginary part of the start and end values"),
+        )
+      _ => fail("unexpected error")
+    },
+  )
+}
+
+///|
+test "symplotting line series adaptive sampling generates dense public data" {
+  let x = @symcore.Expr::Symbol("x")
+  let series = line_over_1d_range_series(
+    @symcore.function("sin", [x]),
+    @symcore.Expr::Tuple([x, @symcore.int(-10), @symcore.int(10)]),
+    adaptive=true,
+    n=30,
+  )
+  let (xs, ys) = series.get_data()
+  assert_true(xs.length() >= 30)
+  assert_eq(xs.length(), ys.length())
+}
+
+///|
+test "symplotting parametric series samples uniformly on a linear range" {
+  let x = @symcore.Expr::Symbol("x")
+  let series = parametric_2d_line_series(
+    x,
+    @symcore.pow(x, @symcore.int(2)),
+    @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(4)]),
+    adaptive=false,
+    n=5,
+  )
+  let (xs, ys, params) = series.get_data()
+  assert_eq(params.length(), 5)
+  assert_eq(params[0], 0.0)
+  assert_eq(params[2], 2.0)
+  assert_eq(params[4], 4.0)
+  assert_eq(xs[2], Some(2.0))
+  assert_eq(ys[2], Some(4.0))
+}
+
+///|
+test "symplotting parametric series supports logarithmic parameter spacing" {
+  let x = @symcore.Expr::Symbol("x")
+  let series = parametric_2d_line_series(
+    @symcore.function("cos", [x]),
+    @symcore.function("sin", [x]),
+    @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)]),
+    adaptive=false,
+    n=3,
+    xscale="log",
+  )
+  let (_, _, params) = series.get_data()
+  assert_true((params[0] - 1.0).abs() <= 1.0e-12)
+  assert_true((params[1] - 10.0).abs() <= 1.0e-10)
+  assert_true((params[2] - 100.0).abs() <= 1.0e-8)
+}
+
+///|
+test "symplotting parametric series adaptive sampling generates dense public data" {
+  let x = @symcore.Expr::Symbol("x")
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let series = parametric_2d_line_series(
+    @symcore.function("cos", [x]),
+    @symcore.function("sin", [x]),
+    @symcore.Expr::Tuple([
+      x,
+      @symcore.int(0),
+      @symcore.mul([@symcore.int(2), pi]),
+    ]),
+    adaptive=true,
+    n=30,
+  )
+  let (xs, ys, params) = series.get_data()
+  assert_true(xs.length() >= 30)
+  assert_eq(xs.length(), ys.length())
+  assert_eq(xs.length(), params.length())
+}
+
+///|
+test "symplotting 3d parametric series samples uniformly on a linear range" {
+  let x = @symcore.Expr::Symbol("x")
+  let series = parametric_3d_line_series(
+    x,
+    @symcore.pow(x, @symcore.int(2)),
+    @symcore.pow(x, @symcore.int(3)),
+    @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(4)]),
+    n=5,
+  )
+  let (xs, ys, zs, params) = series.get_data()
+  assert_eq(params.length(), 5)
+  assert_eq(params[2], 2.0)
+  assert_eq(xs[2], Some(2.0))
+  assert_eq(ys[2], Some(4.0))
+  assert_eq(zs[2], Some(8.0))
+  assert_false(series.adaptive)
+}
+
+///|
+test "symplotting 3d parametric series supports logarithmic parameter spacing" {
+  let x = @symcore.Expr::Symbol("x")
+  let series = parametric_3d_line_series(
+    @symcore.function("cos", [x]),
+    @symcore.function("sin", [x]),
+    x,
+    @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)]),
+    n=3,
+    xscale="log",
+  )
+  let (_, _, _, params) = series.get_data()
+  assert_true((params[0] - 1.0).abs() <= 1.0e-12)
+  assert_true((params[1] - 10.0).abs() <= 1.0e-10)
+  assert_true((params[2] - 100.0).abs() <= 1.0e-8)
+}
+
+///|
+test "symplotting surface series samples uniformly on linear ranges" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let series = surface_over_2d_range_series(
+    @symcore.add([x, y]),
+    @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(2)]),
+    @symcore.Expr::Tuple([y, @symcore.int(0), @symcore.int(4)]),
+    n1=3,
+    n2=5,
+  )
+  let (mesh_x, mesh_y, mesh_z) = series.get_data()
+  assert_eq(mesh_x.length(), 5)
+  assert_eq(mesh_y.length(), 5)
+  assert_eq(mesh_z.length(), 5)
+  assert_eq(mesh_x[0].length(), 3)
+  assert_eq(mesh_x[0][1], 1.0)
+  assert_eq(mesh_y[2][0], 2.0)
+  assert_eq(mesh_z[2][1], Some(3.0))
+}
+
+///|
+test "symplotting surface series supports logarithmic discretization on both axes" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let series = surface_over_2d_range_series(
+    @symcore.mul([x, y]),
+    @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)]),
+    @symcore.Expr::Tuple([y, @symcore.int(1), @symcore.int(100)]),
+    n1=3,
+    n2=3,
+    xscale="log",
+    yscale="log",
+  )
+  let (mesh_x, mesh_y, _) = series.get_data()
+  assert_true((mesh_x[0][0] - 1.0).abs() <= 1.0e-12)
+  assert_true((mesh_x[0][1] - 10.0).abs() <= 1.0e-10)
+  assert_true((mesh_x[0][2] - 100.0).abs() <= 1.0e-8)
+  assert_true((mesh_y[0][0] - 1.0).abs() <= 1.0e-12)
+  assert_true((mesh_y[1][0] - 10.0).abs() <= 1.0e-10)
+  assert_true((mesh_y[2][0] - 100.0).abs() <= 1.0e-8)
+}
+
+///|
+test "symplotting parametric surface series samples uniformly on linear ranges" {
+  let u = @symcore.Expr::Symbol("u")
+  let v = @symcore.Expr::Symbol("v")
+  let series = parametric_surface_series(
+    u,
+    v,
+    @symcore.add([u, v]),
+    @symcore.Expr::Tuple([u, @symcore.int(0), @symcore.int(2)]),
+    @symcore.Expr::Tuple([v, @symcore.int(0), @symcore.int(4)]),
+    n1=3,
+    n2=5,
+  )
+  let (mesh_x, mesh_y, mesh_z, mesh_u, mesh_v) = series.get_data()
+  assert_eq(mesh_x.length(), 5)
+  assert_eq(mesh_x[0].length(), 3)
+  assert_eq(mesh_u[0][1], 1.0)
+  assert_eq(mesh_v[2][0], 2.0)
+  assert_eq(mesh_x[2][1], Some(1.0))
+  assert_eq(mesh_y[2][1], Some(2.0))
+  assert_eq(mesh_z[2][1], Some(3.0))
+}
+
+///|
+test "symplotting parametric surface series supports logarithmic parameter spacing" {
+  let u = @symcore.Expr::Symbol("u")
+  let v = @symcore.Expr::Symbol("v")
+  let series = parametric_surface_series(
+    @symcore.function("cos", [u]),
+    @symcore.function("sin", [v]),
+    @symcore.add([u, v]),
+    @symcore.Expr::Tuple([u, @symcore.int(1), @symcore.int(100)]),
+    @symcore.Expr::Tuple([v, @symcore.int(1), @symcore.int(100)]),
+    n1=3,
+    n2=3,
+    xscale="log",
+    yscale="log",
+  )
+  let (_, _, _, mesh_u, mesh_v) = series.get_data()
+  assert_true((mesh_u[0][0] - 1.0).abs() <= 1.0e-12)
+  assert_true((mesh_u[0][1] - 10.0).abs() <= 1.0e-10)
+  assert_true((mesh_u[0][2] - 100.0).abs() <= 1.0e-8)
+  assert_true((mesh_v[0][0] - 1.0).abs() <= 1.0e-12)
+  assert_true((mesh_v[1][0] - 10.0).abs() <= 1.0e-10)
+  assert_true((mesh_v[2][0] - 100.0).abs() <= 1.0e-8)
 }
