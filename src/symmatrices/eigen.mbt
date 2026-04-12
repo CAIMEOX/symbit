@@ -402,6 +402,72 @@ fn expr_rows_clone(rows : Array[Array[Expr]]) -> Array[Array[Expr]] {
 }
 
 ///|
+fn matrix_exact_charpoly_expr(
+  matrix : Matrix,
+  x : Expr,
+) -> Expr raise MatrixError {
+  let ddm = (@sympolys.DomainMatrix::from_Matrix(
+    matrix.to_list(),
+    fmt="dense",
+  ) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "matrix entries are not supported by the exact DomainMatrix charpoly path",
+      )
+  }).to_ddm() catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix charpoly conversion failed for this matrix",
+      )
+  }
+  let coeffs = ddm.charpoly() catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix charpoly is not available for this matrix",
+      )
+  }
+  let domain = ddm.domain()
+  let degree = coeffs.length() - 1
+  let terms : Array[Expr] = Array::new()
+  for i in 0..<coeffs.length() {
+    let coeff = coeffs[i]
+    let coeff_expr = (@sympolys.DomainScalar::new(coeff, domain) catch {
+      _ =>
+        raise MatrixError::ValueError(
+          "exact DomainMatrix charpoly coefficient could not be converted back to an expression",
+        )
+    }).to_sympy()
+    if coeff_expr == @symcore.int(0) {
+      continue
+    }
+    let exp = degree - i
+    let term = match exp {
+      0 => coeff_expr
+      1 =>
+        if coeff_expr == @symcore.int(1) {
+          x
+        } else {
+          expr_mul(coeff_expr, x)
+        }
+      _ => {
+        let x_pow = @symcore.pow(x, @symcore.int(exp))
+        if coeff_expr == @symcore.int(1) {
+          x_pow
+        } else {
+          expr_mul(coeff_expr, x_pow)
+        }
+      }
+    }
+    terms.push(term)
+  }
+  if terms.is_empty() {
+    @symcore.int(0)
+  } else {
+    @symcore.add(terms)
+  }
+}
+
+///|
 fn matrix_exact_eigenvects(
   matrix : Matrix,
 ) -> Array[EigenVectData] raise MatrixError {
@@ -478,7 +544,7 @@ pub fn Matrix::charpoly_expr(
     raise MatrixError::NonSquareMatrixError("charpoly requires a square matrix")
   }
   match matrix_exact_rational_data(self.data) {
-    Some(data) => return exact_rational_charpoly_expr(data, x)
+    Some(_) => return matrix_exact_charpoly_expr(self, x)
     None => ()
   }
   let shifted = matrix_add_diag_scalar(

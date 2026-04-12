@@ -57,6 +57,79 @@ fn raw_expr_div(lhs : Expr, rhs : Expr) -> Expr {
 }
 
 ///|
+fn matrix_exact_dm(
+  rows : Array[Array[Expr]],
+) -> @sympolys.DomainMatrix raise MatrixError {
+  @sympolys.DomainMatrix::from_Matrix(rows, fmt="dense") catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "matrix entries are not supported by the exact DomainMatrix linear algebra path",
+      )
+  }
+}
+
+///|
+fn matrix_from_domain_matrix(
+  dm : @sympolys.DomainMatrix,
+) -> Matrix raise MatrixError {
+  let rows = dm.to_Matrix() catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix result could not be converted back to a symbolic matrix",
+      )
+  }
+  matrix(rows) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix result could not be rewrapped as a dense matrix",
+      )
+  }
+}
+
+///|
+fn matrix_exact_inverse(matrix : Matrix) -> Matrix raise MatrixError {
+  let dm = matrix_exact_dm(matrix.to_list())
+  let (num, den) = dm.inv_den() catch {
+    _ => raise MatrixError::SingularMatrixError("matrix is singular")
+  }
+  let den_scalar = (@sympolys.DomainScalar::new(den, num.domain) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix inverse denominator could not be converted back to an expression",
+      )
+  })
+  let inverse = num.truediv(den_scalar) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix inverse could not be normalized in its field domain",
+      )
+  }
+  matrix_from_domain_matrix(inverse)
+}
+
+///|
+fn matrix_exact_solve(lhs : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
+  let lhs_dm = matrix_exact_dm(lhs.to_list())
+  let rhs_dm = matrix_exact_dm(rhs.to_list())
+  let (num, den) = lhs_dm.solve_den(rhs_dm) catch {
+    _ => raise MatrixError::SingularMatrixError("matrix is singular")
+  }
+  let den_scalar = (@sympolys.DomainScalar::new(den, num.domain) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix solve denominator could not be converted back to an expression",
+      )
+  })
+  let solution = num.truediv(den_scalar) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix solve result could not be normalized in its field domain",
+      )
+  }
+  matrix_from_domain_matrix(solution)
+}
+
+///|
 fn matrix_echelon_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) {
   let data = clone_expr_rows(matrix.data)
   let pivots : Array[Int] = []
@@ -400,10 +473,7 @@ pub fn Matrix::inv(self : Matrix) -> Matrix raise MatrixError {
   }
   let n = self.rows
   match matrix_exact_rational_data(self.data) {
-    Some(lhs) => {
-      let solved = exact_rational_gauss_jordan(lhs, exact_eye_rows(n))
-      return { rows: n, cols: n, data: exact_expr_rows(solved) }
-    }
+    Some(_) => return matrix_exact_inverse(self)
     None => ()
   }
   let numeric_prec = expr_numeric_precision(self.data)
@@ -510,13 +580,12 @@ pub fn Matrix::solve(self : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError("solve requires a square lhs")
   }
-  match (matrix_exact_rational_data(self.data), matrix_exact_rational_data(rhs.data)) {
-    (Some(lhs), Some(rhs_data)) =>
-      return {
-        rows: rhs.rows,
-        cols: rhs.cols,
-        data: exact_expr_rows(exact_rational_gauss_jordan(lhs, rhs_data)),
-      }
+  match
+    (
+      matrix_exact_rational_data(self.data),
+      matrix_exact_rational_data(rhs.data),
+    ) {
+    (Some(_), Some(_)) => return matrix_exact_solve(self, rhs)
     _ => ()
   }
   let (l, u, swaps) = self.lu()

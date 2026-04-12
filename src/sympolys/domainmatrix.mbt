@@ -621,8 +621,7 @@ pub fn DomainMatrix::from_rep(
   match rep {
     DomainMatrixRep::Dense(values) =>
       domain_matrix_from_dense(clone_dense_rows(values), domain)
-    DomainMatrixRep::Sparse(dod) =>
-      DomainMatrix::from_dod(clone_dod(dod), (rows, cols), domain)
+    DomainMatrixRep::Sparse(dod) => DomainMatrix::from_dod(dod, (rows, cols), domain)
   }
 }
 
@@ -685,13 +684,25 @@ pub fn DomainMatrix::from_dod(
   domain : Domain,
 ) -> DomainMatrix raise PolyError {
   let (rows, cols) = shape
-  let entries : Array[(Int, Int, FieldElem)] = Array::new()
   for r, row in dod {
+    if r < 0 || r >= rows {
+      raise PolyError::DomainMismatch
+    }
     for c, value in row {
-      entries.push((r, c, value))
+      if c < 0 || c >= cols {
+        raise PolyError::DomainMismatch
+      }
+      if fe_is_zero(value) {
+        raise PolyError::DomainMismatch
+      }
     }
   }
-  domain_matrix_from_sparse(rows, cols, entries, domain)
+  DomainMatrix::{
+    rep: DomainMatrixRep::Sparse(clone_dod(dod)),
+    rows,
+    cols,
+    domain,
+  }
 }
 
 ///|
@@ -915,17 +926,25 @@ pub fn DomainMatrix::to_dense(
 pub fn DomainMatrix::to_sparse(
   self : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
-  let dense = self.to_dense()
-  let entries : Array[(Int, Int, FieldElem)] = Array::new()
-  for i in 0..<self.rows {
-    for j in 0..<self.cols {
-      let v = dense[i][j]
-      if !fe_is_zero(v) {
-        entries.push((i, j, v))
+  match self.rep {
+    DomainMatrixRep::Sparse(_) => self.copy()
+    DomainMatrixRep::Dense(rows) => {
+      let dod : DomainMatrixDOD = Map::new()
+      for i in 0..<self.rows {
+        let row_map : Map[Int, FieldElem] = Map::new()
+        for j in 0..<self.cols {
+          let v = rows[i][j]
+          if !fe_is_zero(v) {
+            row_map[j] = v
+          }
+        }
+        if !row_map.is_empty() {
+          dod[i] = row_map
+        }
       }
+      DomainMatrix::{ rep: DomainMatrixRep::Sparse(dod), rows: self.rows, cols: self.cols, domain: self.domain }
     }
   }
-  domain_matrix_from_sparse(self.rows, self.cols, entries, self.domain)
 }
 
 ///|
@@ -2142,6 +2161,37 @@ fn tail_slice(row : Array[FieldElem], start : Int) -> Array[FieldElem] {
 }
 
 ///|
+fn dense_imatmul(
+  acc : Array[Array[FieldElem]],
+  left : Array[Array[FieldElem]],
+  right : Array[Array[FieldElem]],
+  domain : Domain,
+) -> Unit raise PolyError {
+  if left.is_empty() || right.is_empty() {
+    return
+  }
+  let right_cols = if right[0].is_empty() { 0 } else { right[0].length() }
+  let right_t = make_dense(right_cols, right.length(), fe_from_int(0, domain))
+  for i in 0..<right.length() {
+    for j in 0..<right_cols {
+      right_t[j][i] = right[i][j]
+    }
+  }
+  for i in 0..<left.length() {
+    let left_row = left[i]
+    let acc_row = acc[i]
+    for j in 0..<right_t.length() {
+      let mut total = acc_row[j]
+      let right_col = right_t[j]
+      for k in 0..<left_row.length() {
+        total = fe_add(total, fe_mul(left_row[k], right_col[k]))
+      }
+      acc_row[j] = total
+    }
+  }
+}
+
+///|
 fn dense_berk(
   rows : Array[Array[FieldElem]],
   domain : Domain,
@@ -2175,31 +2225,26 @@ fn dense_berk(
     t[i + 1].set(i, fe_neg(a))
   }
 
-  let mut cur_c = c
+  let mut an_c = c
   for i in 2..<=n {
-    let an_c = if i == 2 {
-      cur_c
-    } else {
-      domain_matrix_from_dense(a_minor, domain)
-      .matmul(domain_matrix_from_dense(cur_c, domain))
-      .to_dense()
+    if i > 2 {
+      let prev = an_c
+      an_c = make_dense(prev.length(), 1, zero)
+      dense_imatmul(an_c, a_minor, prev, domain)
     }
-    let ran_c = domain_matrix_from_dense(r, domain)
-      .matmul(domain_matrix_from_dense(an_c, domain))
-      .to_dense()
+    let ran_c = [[zero]]
+    dense_imatmul(ran_c, r, an_c, domain)
     for j in 0..<(n + 1 - i) {
       t[i + j].set(j, fe_neg(ran_c[0][0]))
     }
-    cur_c = an_c
   }
 
   let q_col : Array[Array[FieldElem]] = Array::new()
   for coeff in q {
     q_col.push([coeff])
   }
-  let out = domain_matrix_from_dense(t, domain)
-    .matmul(domain_matrix_from_dense(q_col, domain))
-    .to_dense()
+  let out = make_dense(n + 1, 1, zero)
+  dense_imatmul(out, t, q_col, domain)
   let coeffs : Array[FieldElem] = Array::new()
   for row in out {
     coeffs.push(row[0])
@@ -2406,33 +2451,35 @@ fn dense_rref_den(
 }
 
 ///|
-fn normalize_rref_method(rref_method : String) -> String raise PolyError {
+fn normalize_rref_method_and_format(
+  rref_method : String,
+) -> (String, String) raise PolyError {
   match rref_method {
-    "" | "auto" => "auto"
-    "FF" | "GJ" | "CD" => rref_method
-    "FF_dense" => "FF"
-    "GJ_dense" => "GJ"
-    "CD_dense" => "CD"
+    "" | "auto" => ("auto", "auto")
+    "FF" | "GJ" | "CD" => (rref_method, "sparse")
+    "FF_dense" => ("FF", "dense")
+    "GJ_dense" => ("GJ", "dense")
+    "CD_dense" => ("CD", "dense")
     _ => raise PolyError::DomainMismatch
   }
 }
 
 ///|
-fn choose_rref_method(
+fn choose_rref_den_method_and_format(
   dm : DomainMatrix,
   rref_method : String,
-) -> String raise PolyError {
-  let normalized = normalize_rref_method(rref_method)
+) -> (String, String) raise PolyError {
+  let (normalized, requested_fmt) = normalize_rref_method_and_format(rref_method)
   if normalized != "auto" {
-    return normalized
+    return (normalized, requested_fmt)
+  }
+  if dm.domain is Domain::RR || dm.domain is Domain::CC {
+    return ("GJ", "dense")
   }
   if !domain_is_exact_pred(dm.domain) {
-    return "GJ"
+    return ("GJ", "dense")
   }
-  if domain_is_field_pred(dm.domain) {
-    return "GJ"
-  }
-  "FF"
+  ("FF", "sparse")
 }
 
 ///|
@@ -2534,18 +2581,34 @@ pub fn DomainMatrix::rref_den(
   rref_method? : String = "auto",
   keep_domain? : Bool = true,
 ) -> (DomainMatrix, FieldElem, Array[Int]) raise PolyError {
-  let chosen = choose_rref_method(self, rref_method)
+  let (chosen, use_fmt) = choose_rref_den_method_and_format(self, rref_method)
+  let work = match use_fmt {
+    "dense" => self.copy()
+    "sparse" => self.to_sparse()
+    _ => self.copy()
+  }
   match chosen {
     "FF" => {
-      let (rows, den, pivots) = dense_rref_den(self.to_dense(), self.domain)
-      let dm = domain_matrix_from_dense(rows, self.domain)
+      let (dm, den, pivots) = match use_fmt {
+        "sparse" => {
+          let (rref_s, sparse_den, sparse_pivots) = sdm_rref_den(work.to_sdm())
+          (rref_s.to_domain_matrix(), sparse_den, sparse_pivots)
+        }
+        _ => {
+          let (rows, dense_den, dense_pivots) = dense_rref_den(
+            work.to_dense(),
+            work.domain,
+          )
+          (domain_matrix_from_dense(rows, work.domain), dense_den, dense_pivots)
+        }
+      }
       (restore_rep_like(dm, self), den, pivots)
     }
     "GJ" => {
-      let field_dm = if domain_is_field_pred(self.domain) {
-        self.copy()
+      let field_dm = if domain_is_field_pred(work.domain) {
+        work.copy()
       } else {
-        self.to_field()
+        work.to_field()
       }
       let (rref_f, pivots) = field_dm.rref()
       if keep_domain && field_dm.domain != self.domain {
@@ -2562,7 +2625,7 @@ pub fn DomainMatrix::rref_den(
       }
     }
     "CD" => {
-      let (_, cleared) = self.clear_denoms_rowwise(convert=true)
+      let (_, cleared) = work.clear_denoms_rowwise(convert=true)
       let (rref_r, den, pivots) = cleared.rref_den(
         rref_method="FF",
         keep_domain=false,
@@ -2964,7 +3027,14 @@ pub fn DomainMatrix::fflu(
 pub fn DomainMatrix::charpoly(
   self : DomainMatrix,
 ) -> Array[FieldElem] raise PolyError {
-  dense_berk(self.to_dense(), self.domain)
+  let mut cp : Array[FieldElem] = [fe_from_int(1, self.domain)]
+  for factor_mult in self.charpoly_factor_blocks() {
+    let (factor, mult) = factor_mult
+    for _ in 0..<mult {
+      cp = dup_mul(cp, factor, self.domain)
+    }
+  }
+  cp
 }
 
 ///|
@@ -2988,7 +3058,10 @@ pub fn DomainMatrix::charpoly_factor_list(
 pub fn DomainMatrix::charpoly_berk(
   self : DomainMatrix,
 ) -> Array[FieldElem] raise PolyError {
-  self.charpoly()
+  match self.rep {
+    DomainMatrixRep::Dense(rows) => dense_berk(rows, self.domain)
+    DomainMatrixRep::Sparse(entries) => sparse_berk(entries, self.rows, self.domain)
+  }
 }
 
 ///|
@@ -3001,7 +3074,7 @@ pub fn DomainMatrix::charpoly_base(
   let dm = if self.nnz() * 2 < self.rows * self.cols {
     self.to_sparse()
   } else {
-    self.copy()
+    domain_matrix_from_dense(self.to_dense(), self.domain)
   }
   if domain_is_field_pred(dm.domain) && domain_has_assoc_ring_pred(dm.domain) {
     let (den, cleared) = dm.clear_denoms(convert=true)

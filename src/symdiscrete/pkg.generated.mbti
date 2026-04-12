@@ -5,6 +5,7 @@ import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
   "moonbitlang/core/bigint",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -58,7 +59,8 @@ pub fn sqrt_int(Int) -> @symcore.Expr
 pub(all) suberror DiscreteError {
   TypeError(String)
   ValueError(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for DiscreteError
 
 // Types and methods
 

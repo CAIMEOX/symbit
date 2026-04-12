@@ -164,7 +164,7 @@ fn Sieve::extend_segmented_int(self : Sieve, end : Int) -> Unit {
   }
   let start = last + 1
   let marks : Array[Bool] = Array::new()
-  for _ in start..=end {
+  for _ in start..<=end {
     marks.push(true)
   }
   for prime_big in self.primes {
@@ -183,7 +183,7 @@ fn Sieve::extend_segmented_int(self : Sieve, end : Int) -> Unit {
       composite += prime
     }
   }
-  for value in start..=end {
+  for value in start..<=end {
     if value >= 2 && marks[value - start] {
       self.primes.push(bi(value))
     }

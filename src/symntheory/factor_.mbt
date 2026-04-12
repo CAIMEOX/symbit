@@ -1,5 +1,5 @@
 ///|
-/// Integer factorization utilities (naive).
+/// Integer factorization utilities.
 
 ///|
 fn inc_factor(map : Map[BigInt, Int], p : BigInt, delta : Int) -> Unit {
@@ -7,6 +7,267 @@ fn inc_factor(map : Map[BigInt, Int], p : BigInt, delta : Int) -> Unit {
     Some(v) => map[p] = v + delta
     None => map[p] = delta
   }
+}
+
+///|
+fn factorint_small_done(n : Int, d : Int) -> (Int, Int) {
+  if d * d <= n {
+    (n, d)
+  } else {
+    (n, 0)
+  }
+}
+
+///|
+fn factorint_small_trial(
+  factors : Map[BigInt, Int],
+  n0 : Int,
+  limit : Int,
+  fail_max : Int,
+  next_p? : Int = 2,
+) -> (Int, Int) {
+  let limit2 = limit * limit
+  let mut n = n0
+  let mut threshold2 = if n < limit2 { n } else { limit2 }
+  let mut next_p = next_p
+
+  if next_p < 3 {
+    if n % 2 == 0 {
+      let mut m = 0
+      while n % 2 == 0 {
+        n /= 2
+        m += 1
+      }
+      factors[bi(2)] = m
+      threshold2 = if n < limit2 { n } else { limit2 }
+    }
+    next_p = 3
+    if threshold2 < 9 {
+      return factorint_small_done(n, next_p)
+    }
+  }
+
+  if next_p < 5 {
+    if n % 3 == 0 {
+      n /= 3
+      let mut m = 1
+      while n % 3 == 0 {
+        n /= 3
+        m += 1
+      }
+      factors[bi(3)] = m
+      threshold2 = if n < limit2 { n } else { limit2 }
+    }
+    next_p = 5
+    if threshold2 < 25 {
+      return factorint_small_done(n, next_p)
+    }
+  }
+
+  let p6 = next_p % 6
+  next_p += (if p6 < 2 { -1 } else { 5 }) - p6
+
+  let mut fails = 0
+  while fails < fail_max {
+    if n % next_p != 0 {
+      fails += 1
+    } else {
+      n /= next_p
+      let mut m = 1
+      while n % next_p == 0 {
+        n /= next_p
+        m += 1
+      }
+      factors[bi(next_p)] = m
+      fails = 0
+      threshold2 = if n < limit2 { n } else { limit2 }
+    }
+    next_p += 2
+    if threshold2 < next_p * next_p {
+      return factorint_small_done(n, next_p)
+    }
+
+    if n % next_p != 0 {
+      fails += 1
+    } else {
+      n /= next_p
+      let mut m = 1
+      while n % next_p == 0 {
+        n /= next_p
+        m += 1
+      }
+      factors[bi(next_p)] = m
+      fails = 0
+      threshold2 = if n < limit2 { n } else { limit2 }
+    }
+    next_p += 4
+    if threshold2 < next_p * next_p {
+      return factorint_small_done(n, next_p)
+    }
+  }
+  factorint_small_done(n, next_p)
+}
+
+///|
+fn factorint_small_abs(n0 : BigInt) -> Map[BigInt, Int] {
+  let factors : Map[BigInt, Int] = {}
+  let n = n0.to_int()
+  if n < 2 {
+    return factors
+  }
+  let small = if n < 1 << 15 { n } else { 1 << 15 }
+  let fail_max = 600
+  let (rest, next_p) = factorint_small_trial(factors, n, small, fail_max)
+  if next_p == 0 || rest < next_p * next_p {
+    if rest > 1 {
+      factors[bi(rest)] = factors.get_or_default(bi(rest), 0) + 1
+    }
+    return factors
+  }
+  let mut remaining = bi(rest)
+  let mut d = bi(next_p)
+  while d * d <= remaining {
+    let mut count = 0
+    while (remaining % d).is_zero() {
+      remaining = remaining / d
+      count += 1
+    }
+    if count > 0 {
+      factors[d] = factors.get_or_default(d, 0) + count
+    }
+    d = d + bi(2)
+  }
+  if remaining > bi(1) {
+    factors[remaining] = factors.get_or_default(remaining, 0) + 1
+  }
+  factors
+}
+
+///|
+fn factorint_small_int_pairs(n : Int) -> Array[(Int, Int)] {
+  let factors : Map[Int, Int] = {}
+  if n < 2 {
+    return []
+  }
+  let small = if n < 1 << 15 { n } else { 1 << 15 }
+  let fail_max = 600
+  let limit2 = small * small
+  let mut remaining = n
+  let mut threshold2 = if remaining < limit2 { remaining } else { limit2 }
+
+  if remaining % 2 == 0 {
+    let mut m = 0
+    while remaining % 2 == 0 {
+      remaining /= 2
+      m += 1
+    }
+    factors[2] = m
+    threshold2 = if remaining < limit2 { remaining } else { limit2 }
+  }
+  let mut next_p = 3
+  if threshold2 >= 9 {
+    if remaining % 3 == 0 {
+      remaining /= 3
+      let mut m = 1
+      while remaining % 3 == 0 {
+        remaining /= 3
+        m += 1
+      }
+      factors[3] = m
+      threshold2 = if remaining < limit2 { remaining } else { limit2 }
+    }
+    next_p = 5
+  }
+
+  if threshold2 >= 25 {
+    let mut fails = 0
+    while fails < fail_max {
+      if remaining % next_p != 0 {
+        fails += 1
+      } else {
+        remaining /= next_p
+        let mut m = 1
+        while remaining % next_p == 0 {
+          remaining /= next_p
+          m += 1
+        }
+        factors[next_p] = m
+        fails = 0
+        threshold2 = if remaining < limit2 { remaining } else { limit2 }
+      }
+      next_p += 2
+      if threshold2 < next_p * next_p {
+        break
+      }
+
+      if remaining % next_p != 0 {
+        fails += 1
+      } else {
+        remaining /= next_p
+        let mut m = 1
+        while remaining % next_p == 0 {
+          remaining /= next_p
+          m += 1
+        }
+        factors[next_p] = m
+        fails = 0
+        threshold2 = if remaining < limit2 { remaining } else { limit2 }
+      }
+      next_p += 4
+      if threshold2 < next_p * next_p {
+        break
+      }
+    }
+  }
+
+  if remaining > 1 {
+    let mut d = if next_p < 5 { 5 } else { next_p }
+    let p6 = d % 6
+    d += (if p6 < 2 { -1 } else { 5 }) - p6
+    while d * d <= remaining {
+      if remaining % d == 0 {
+        let mut m = 0
+        while remaining % d == 0 {
+          remaining /= d
+          m += 1
+        }
+        factors[d] = factors.get_or_default(d, 0) + m
+      }
+      d += 2
+      if d * d > remaining {
+        break
+      }
+      if remaining % d == 0 {
+        let mut m = 0
+        while remaining % d == 0 {
+          remaining /= d
+          m += 1
+        }
+        factors[d] = factors.get_or_default(d, 0) + m
+      }
+      d += 4
+    }
+  }
+
+  if remaining > 1 {
+    factors[remaining] = factors.get_or_default(remaining, 0) + 1
+  }
+
+  let pairs : Array[(Int, Int)] = Array::new()
+  for p, e in factors {
+    pairs.push((p, e))
+  }
+  pairs.sort_by(fn(a, b) { a.0.compare(b.0) })
+  pairs
+}
+
+///|
+fn pow_int(base : Int, exp : Int) -> Int {
+  let mut acc = 1
+  for _ in 0..<exp {
+    acc *= base
+  }
+  acc
 }
 
 ///|
@@ -27,6 +288,13 @@ pub fn factorint(
     factors[bi(-1)] = 1
   }
   if n < bi(2) {
+    return factors
+  }
+  if n.bit_length() <= 30 {
+    let small_factors = factorint_small_abs(n)
+    for p, e in small_factors {
+      factors[p] = e
+    }
     return factors
   }
   let mut count = 0
@@ -154,6 +422,19 @@ pub fn primefactors(n : BigInt) -> Array[BigInt] {
 
 ///|
 pub fn totient(n : BigInt) -> BigInt {
+  let n_abs = abs_bigint(n)
+  if n_abs.bit_length() <= 30 {
+    let mut result = 1
+    for pair in factorint_small_int_pairs(n_abs.to_int()) {
+      let (p, e) = pair
+      let mut term = p - 1
+      for _ in 1..<e {
+        term *= p
+      }
+      result *= term
+    }
+    return bi(result)
+  }
   let f = factorint(n)
   let mut result = abs_bigint(n)
   for p, e in f {
@@ -167,6 +448,15 @@ pub fn totient(n : BigInt) -> BigInt {
 
 ///|
 pub fn divisor_count(n : BigInt) -> BigInt {
+  let n_abs = abs_bigint(n)
+  if n_abs.bit_length() <= 30 {
+    let mut count = 1
+    for pair in factorint_small_int_pairs(n_abs.to_int()) {
+      let (_, e) = pair
+      count *= e + 1
+    }
+    return bi(count)
+  }
   let f = factorint(n)
   let mut count = bi(1)
   for p, e in f {
@@ -193,6 +483,30 @@ pub fn divisor_sigma(n0 : BigInt, k? : Int = 1) -> BigInt {
   let n = abs_bigint(n0)
   if n.is_zero() {
     return bi(0)
+  }
+  if n.bit_length() <= 30 {
+    if k == 0 {
+      return divisor_count(n)
+    }
+    if k > 0 && k * n.bit_length() < 60 {
+      let mut acc = 1
+      for pair in factorint_small_int_pairs(n.to_int()) {
+        let (p, e) = pair
+        let numerator = pow_int(p, k * (e + 1)) - 1
+        let denominator = pow_int(p, k) - 1
+        acc *= numerator / denominator
+      }
+      return bi(acc)
+    }
+    let mut acc = bi(1)
+    for pair in factorint_small_int_pairs(n.to_int()) {
+      let (p, e) = pair
+      let prime = bi(p)
+      let numerator = prime.pow(bi(k * (e + 1))) - bi(1)
+      let denominator = prime.pow(bi(k)) - bi(1)
+      acc = acc * (numerator / denominator)
+    }
+    return acc
   }
   if k == 0 {
     return divisor_count(n)

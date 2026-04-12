@@ -13,6 +13,7 @@ pub(all) suberror SolverError {
   UnboundedLPError(String)
 } derive(Debug, Eq)
 
+///|
 pub impl Show for SolverError with output(self, logger : &Logger) -> Unit {
   match self {
     SolverError::ValueError(msg) => logger.write_string("ValueError(\{msg})")

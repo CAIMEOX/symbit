@@ -49,18 +49,15 @@ fn vector_matrix_in_system(
     let target_components = if source == system {
       source_components
     } else {
-      let basis_result : Result[
-        @symphysics.ExplicitMatrix,
-        @rawvec.VectorError,
-      ] = try? system.change_of_basis_matrix_from(source)
+      let basis_result : Result[@symphysics.ExplicitMatrix, @rawvec.VectorError] = try? system.change_of_basis_matrix_from(
+        source,
+      )
       let basis_matrix = match basis_result {
         Ok(value) => value
         Err(err) => raise err
       }
       column_to_array(
-        basis_matrix.mul(
-          array_to_column(source_components),
-        ) catch {
+        basis_matrix.mul(array_to_column(source_components)) catch {
           _ => abort("vector_matrix_in_system")
         },
       )
@@ -338,9 +335,12 @@ pub fn Vector::express(
   system : CoordSys3D,
   variables? : Bool = false,
 ) -> Vector raise @rawvec.VectorError {
-  matrix_to_vector(vector_matrix_in_system(self, system, variables) catch {
-    err => raise err
-  }, system)
+  matrix_to_vector(
+    vector_matrix_in_system(self, system, variables) catch {
+      err => raise err
+    },
+    system,
+  )
 }
 
 ///|

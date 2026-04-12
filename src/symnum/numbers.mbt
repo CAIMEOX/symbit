@@ -4,6 +4,7 @@ pub(all) suberror RationalError {
   ZeroDenominator
 } derive(Debug)
 
+///|
 pub impl Show for RationalError with output(self, logger : &Logger) -> Unit {
   match self {
     RationalError::ZeroDenominator => logger.write_string("ZeroDenominator")
@@ -27,7 +28,11 @@ pub fn gcd_bigint(a : BigInt, b : BigInt) -> BigInt {
     x = y
     y = next
   }
-  if x.is_zero() { y } else { x }
+  if x.is_zero() {
+    y
+  } else {
+    x
+  }
 }
 
 ///|

@@ -375,6 +375,7 @@ fn pow_coeff(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational {
   res
 }
 
+///|
 fn bigint_abs_local(value : BigInt) -> BigInt {
   if value.op_lt(BigInt::from_int(0)) {
     value.neg()
@@ -512,9 +513,7 @@ fn rational_root_candidates(
   let q_divs = bigint_divisors(leading_abs)
   for p in p_divs {
     for q in q_divs {
-      let pos = @symnum.BigRational::new(p, q) catch {
-        _ => continue
-      }
+      let pos = @symnum.BigRational::new(p, q) catch { _ => continue }
       push_unique_rational(candidates, seen, pos)
       if !p.is_zero() {
         push_unique_rational(candidates, seen, pos.neg_r())
@@ -530,14 +529,10 @@ fn linear_factor_from_root(
   root : @symnum.BigRational,
 ) -> Poly raise PolyError {
   from_dense(
-    [
-      fe_from_rational(root.neg_r(), poly.domain),
-      fe_from_int(1, poly.domain),
-    ],
+    [fe_from_rational(root.neg_r(), poly.domain), fe_from_int(1, poly.domain)],
     poly.gens,
     poly.domain,
-  )
-  .with_order(poly.order)
+  ).with_order(poly.order)
 }
 
 ///|
@@ -552,7 +547,7 @@ fn divide_by_linear_root(
   if degree <= 0 {
     return None
   }
-  let dense = to_dense(poly, degree=degree)
+  let dense = to_dense(poly, degree~)
   let quotient_dense : Array[FieldElem] = Array::make(
     degree,
     fe_from_int(0, poly.domain),
@@ -560,14 +555,18 @@ fn divide_by_linear_root(
   let mut acc = fe_expect_rational(dense[degree])
   quotient_dense.set(
     degree - 1,
-    fe_from_rational(acc, poly.domain) catch { _ => return None },
+    fe_from_rational(acc, poly.domain) catch {
+      _ => return None
+    },
   )
   let mut k = degree - 1
   while k > 0 {
     let coeff = fe_expect_rational(dense[k]).add_r(root.mul_r(acc))
     quotient_dense.set(
       k - 1,
-      fe_from_rational(coeff, poly.domain) catch { _ => return None },
+      fe_from_rational(coeff, poly.domain) catch {
+        _ => return None
+      },
     )
     acc = coeff
     k = k - 1
@@ -576,7 +575,9 @@ fn divide_by_linear_root(
   if !remainder.is_zero() {
     return None
   }
-  Some(from_dense(quotient_dense, poly.gens, poly.domain).with_order(poly.order))
+  Some(
+    from_dense(quotient_dense, poly.gens, poly.domain).with_order(poly.order),
+  )
 }
 
 ///|
@@ -590,7 +591,9 @@ fn factor_linear_rational_split(
   let factors : Array[Poly] = Array::new()
   let mut remaining = poly
   for root in candidates {
-    let factor_poly = linear_factor_from_root(poly, root) catch { _ => continue }
+    let factor_poly = linear_factor_from_root(poly, root) catch {
+      _ => continue
+    }
     let mut keep_dividing = true
     while keep_dividing {
       if remaining.degree(0) == 0 {

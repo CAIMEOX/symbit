@@ -84,6 +84,26 @@ test "matrices parity determinant inverse rref" {
 }
 
 ///|
+test "matrices parity dense exact solve on diagonally dominant family" {
+  let a = matrix([
+    [@symcore.int(17), @symcore.int(2), @symcore.int(1), @symcore.int(2)],
+    [@symcore.int(2), @symcore.int(18), @symcore.int(2), @symcore.int(1)],
+    [@symcore.int(1), @symcore.int(2), @symcore.int(19), @symcore.int(2)],
+    [@symcore.int(2), @symcore.int(1), @symcore.int(2), @symcore.int(20)],
+  ])
+  let rhs = matrix([
+    [@symcore.int(1)],
+    [@symcore.int(2)],
+    [@symcore.int(3)],
+    [@symcore.int(4)],
+  ])
+  assert_eq(
+    local_matrix_list_text(a.solve(rhs)),
+    py_matrix_list_text(py_matrix_expr(a) + ".solve(" + py_matrix_expr(rhs) + ")"),
+  )
+}
+
+///|
 test "matrices parity structural helpers" {
   let a = matrix([
     [@symcore.int(1), @symcore.int(2)],

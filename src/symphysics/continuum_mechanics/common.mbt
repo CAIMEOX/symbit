@@ -122,10 +122,7 @@ fn cm_number_text_to_double(text : String) -> Double? {
     }
   } else if parts.length() == 2 {
     match
-      (
-        try? @string.parse_double(parts[0]),
-        try? @string.parse_double(parts[1]),
-      ) {
+      (try? @string.parse_double(parts[0]), try? @string.parse_double(parts[1])) {
       (Ok(num), Ok(den)) => Some(num / den)
       _ => None
     }

@@ -445,10 +445,7 @@ pub fn CoordSys3D::parent(self : CoordSys3D) -> CoordSys3D? {
 }
 
 ///|
-pub fn CoordSys3D::scalar(
-  self : CoordSys3D,
-  axis : Int,
-) -> BaseScalar {
+pub fn CoordSys3D::scalar(self : CoordSys3D, axis : Int) -> BaseScalar {
   if axis < 0 || axis > 2 {
     abort("coordinate axis must be 0, 1, or 2")
   }
@@ -462,10 +459,7 @@ pub fn CoordSys3D::scalar(
 }
 
 ///|
-pub fn CoordSys3D::vector(
-  self : CoordSys3D,
-  axis : Int,
-) -> BaseVector {
+pub fn CoordSys3D::vector(self : CoordSys3D, axis : Int) -> BaseVector {
   if axis < 0 || axis > 2 {
     abort("basis axis must be 0, 1, or 2")
   }

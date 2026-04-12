@@ -8,6 +8,7 @@ pub(all) suberror MatrixError {
   IndexError(String)
 } derive(Debug, Eq)
 
+///|
 pub impl Show for MatrixError with output(self, logger : &Logger) -> Unit {
   match self {
     MatrixError::ShapeError(msg) => logger.write_string("ShapeError(\{msg})")

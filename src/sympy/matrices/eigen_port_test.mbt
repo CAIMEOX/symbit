@@ -56,6 +56,27 @@ test "matrices parity charpoly eigenvals and diagonalize" {
 }
 
 ///|
+test "matrices parity charpoly on dense diagonally dominant exact matrix" {
+  let a = matrix([
+    [@symcore.int(17), @symcore.int(2), @symcore.int(1), @symcore.int(2)],
+    [@symcore.int(2), @symcore.int(18), @symcore.int(2), @symcore.int(1)],
+    [@symcore.int(1), @symcore.int(2), @symcore.int(19), @symcore.int(2)],
+    [@symcore.int(2), @symcore.int(1), @symcore.int(2), @symcore.int(20)],
+  ])
+  let lam = @symcore.Expr::Symbol("lam")
+  assert_eq(
+    "0",
+    py_list_text(
+      "(lambda lam: sympy.sstr(sympy.expand((" +
+      @symprint.to_string(a.charpoly(x=lam)) +
+      ") - (" +
+      py_matrix_expr(a) +
+      ".charpoly(lam).as_expr()))))(sympy.Symbol('lam'))",
+    ),
+  )
+}
+
+///|
 test "matrices parity jordan form on defective 2x2" {
   let a = matrix([
     [@symcore.int(4), @symcore.int(1)],

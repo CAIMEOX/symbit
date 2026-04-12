@@ -1235,11 +1235,7 @@ fn laplace_polynomial_term(
           @symcore.pow(s, @symcore.int(-coeffs.length())),
         ])
       }
-      Some((
-        value,
-        @symcore.int(0),
-        true_expr(),
-      ))
+      Some((value, @symcore.int(0), true_expr()))
     }
     None => None
   }
@@ -5617,7 +5613,8 @@ fn matches_log_one_plus_linear(expr : Expr, s_name : String) -> Bool {
         None => false
       }
     None =>
-      match retry_with_simplified(expr, expr => unary_application_arg(expr, "log")) {
+      match
+        retry_with_simplified(expr, expr => unary_application_arg(expr, "log")) {
         Some(inner) =>
           match linear_coeffs(inner, s_name) {
             Some((coeff, offset)) => expr_is_one(coeff) && expr_is_one(offset)
@@ -5648,17 +5645,18 @@ fn parse_scaled_inverse_symbol(expr : Expr, var_name : String) -> Expr? {
 
 ///|
 fn parse_symbol_negative_power(expr : Expr, var_name : String) -> Expr? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Pow(@symcore.Expr::Symbol(name), power) if name == var_name =>
         extract_explicit_negative_factor(power)
       _ => None
-    })
+    }
+  })
 }
 
 ///|
 fn parse_general_negative_power_base(expr : Expr) -> (Expr, Expr)? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Pow(base, power) =>
         match extract_explicit_negative_factor(power) {
@@ -5666,7 +5664,8 @@ fn parse_general_negative_power_base(expr : Expr) -> (Expr, Expr)? {
           None => None
         }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -5695,12 +5694,13 @@ fn parse_pure_symbol_positive_int_power(expr : Expr, var_name : String) -> Int? 
 
 ///|
 fn parse_coeff_power_with_order(expr : Expr, order : Expr) -> Expr? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Pow(base, exp) if expr_same_simplified(exp, order) =>
         Some(base)
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -5763,10 +5763,9 @@ fn parse_symbol_plus_sqrt_quadratic(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Bool)? {
-  retry_with_simplified(
-    expr,
-    expr => parse_symbol_plus_sqrt_quadratic_raw(expr, var_name),
-  )
+  retry_with_simplified(expr, expr => {
+    parse_symbol_plus_sqrt_quadratic_raw(expr, var_name)
+  })
 }
 
 ///|
@@ -5857,10 +5856,9 @@ fn parse_sqrt_affine_plus_const(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Expr, Expr)? {
-  retry_with_simplified(
-    expr,
-    expr => parse_sqrt_affine_plus_const_raw(expr, var_name),
-  )
+  retry_with_simplified(expr, expr => {
+    parse_sqrt_affine_plus_const_raw(expr, var_name)
+  })
 }
 
 ///|
@@ -5898,10 +5896,9 @@ fn parse_scaled_sqrt_linear_plus_const(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Expr)? {
-  retry_with_simplified(
-    expr,
-    expr => parse_scaled_sqrt_linear_plus_const_raw(expr, var_name),
-  )
+  retry_with_simplified(expr, expr => {
+    parse_scaled_sqrt_linear_plus_const_raw(expr, var_name)
+  })
 }
 
 ///|
@@ -5909,7 +5906,7 @@ fn parse_scaled_sqrt_linear_plus_const_power(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Expr, Int)? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Pow(base, exp) =>
         match expr_is_int_value(exp) {
@@ -5921,7 +5918,8 @@ fn parse_scaled_sqrt_linear_plus_const_power(
           _ => None
         }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -6946,7 +6944,7 @@ fn parse_fourier_linear_shift(expr : Expr, k_name : String) -> Expr? {
 
 ///|
 fn parse_fourier_shift_power(expr : Expr, k_name : String) -> (Expr, Int)? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Pow(base, exp) =>
         match expr_is_int_value(exp) {
@@ -6962,7 +6960,8 @@ fn parse_fourier_shift_power(expr : Expr, k_name : String) -> (Expr, Int)? {
           Some(a) => Some((a, 1))
           None => None
         }
-    })
+    }
+  })
 }
 
 ///|
@@ -6970,7 +6969,7 @@ fn parse_fourier_shifted_sine_denominator(
   expr : Expr,
   k_name : String,
 ) -> (Expr, Expr)? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Add(args) if args.length() == 2 => {
         let mut shift : Expr? = None
@@ -6999,7 +6998,8 @@ fn parse_fourier_shifted_sine_denominator(
         }
       }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -7206,7 +7206,7 @@ fn inverse_fourier_sinc_scale(coeff : Expr, freq : Expr, width : Int) -> Expr? {
 
 ///|
 fn parse_scaled_symbol(expr : Expr, var_name : String) -> Expr? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Symbol(name) =>
         if name == var_name {
@@ -7243,7 +7243,8 @@ fn parse_scaled_symbol(expr : Expr, var_name : String) -> Expr? {
         }
       }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -7735,7 +7736,7 @@ fn cosine_base_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
 
 ///|
 fn parse_sqrt_linear(expr : Expr, var_name : String) -> Expr? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match unary_application_arg(expr, "sqrt") {
       Some(Expr::Symbol(name)) if name == var_name => Some(@symcore.int(1))
       _ =>
@@ -7767,7 +7768,8 @@ fn parse_sqrt_linear(expr : Expr, var_name : String) -> Expr? {
           }
           _ => None
         }
-    })
+    }
+  })
 }
 
 ///|
@@ -12609,7 +12611,7 @@ fn inverse_mellin_bessely_single_term(
 
 ///|
 fn parse_gamma_like_linear_arg(expr : Expr, var_name : String) -> (Expr, Expr)? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match named_unary_application(expr) {
       Some(("gamma", arg)) => parse_linear_offset_expr(arg, var_name)
       Some(("factorial", arg)) =>
@@ -12619,13 +12621,14 @@ fn parse_gamma_like_linear_arg(expr : Expr, var_name : String) -> (Expr, Expr)? 
           None => None
         }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
 fn divide_by_pi_if_common(expr : Expr) -> Expr? {
   let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       expr if expr_same_simplified(expr, pi) => Some(@symcore.int(1))
       @symcore.Expr::Mul(args) => {
@@ -12663,7 +12666,8 @@ fn divide_by_pi_if_common(expr : Expr) -> Expr? {
         }
       }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -12672,7 +12676,7 @@ fn parse_pi_linear_trig_factor(
   var_name : String,
   trig_name : String,
 ) -> (Int, Expr)? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match named_unary_application(expr) {
       Some((name, arg)) if name == trig_name =>
         match divide_by_pi_if_common(arg) {
@@ -12691,7 +12695,8 @@ fn parse_pi_linear_trig_factor(
           None => None
         }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -12743,10 +12748,9 @@ fn parse_unit_linear_var_term_raw(expr : Expr, var_name : String) -> Int? {
 
 ///|
 fn parse_unit_linear_var_term(expr : Expr, var_name : String) -> Int? {
-  retry_with_simplified(
-    expr,
-    expr => parse_unit_linear_var_term_raw(expr, var_name),
-  )
+  retry_with_simplified(expr, expr => {
+    parse_unit_linear_var_term_raw(expr, var_name)
+  })
 }
 
 ///|
@@ -12857,7 +12861,8 @@ fn split_mul_raw(expr : Expr, var_name : String) -> (Expr, Array[Expr]) {
 ///|
 fn split_mul(expr : Expr, var_name : String) -> (Expr, Array[Expr]) {
   let direct = split_mul_raw(expr, var_name)
-  if @symcore.compare_expr(direct.0, expr) != 0 || direct.1.length() > 0 ||
+  if @symcore.compare_expr(direct.0, expr) != 0 ||
+    direct.1.length() > 0 ||
     !expr_depends_on(expr, var_name) {
     direct
   } else {
@@ -12978,7 +12983,7 @@ fn parse_shifted_linear_power(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Expr, Expr)? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Pow(base, exp) =>
         match split_linear_coeff(base, var_name) {
@@ -12992,7 +12997,8 @@ fn parse_shifted_linear_power(
           None => None
         }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -13011,7 +13017,7 @@ fn parse_difference_quotient(expr : Expr, x_name : String) -> (Expr, Expr)? {
   }
   let scale = expr_mul(@symcore.int(-1), den_offset)
   let num = factors_expr(num_factors)
-  retry_with_simplified(num, num =>
+  retry_with_simplified(num, num => {
     match num {
       @symcore.Expr::Add(args) if args.length() == 2 => {
         let mut power : Expr? = None
@@ -13040,12 +13046,13 @@ fn parse_difference_quotient(expr : Expr, x_name : String) -> (Expr, Expr)? {
         }
       }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
 fn parse_sqrt_shifted_base(expr : Expr, x_name : String) -> (Expr, Expr)? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Add(args) if args.length() == 2 => {
         let mut scale : Expr? = None
@@ -13088,12 +13095,13 @@ fn parse_sqrt_shifted_base(expr : Expr, x_name : String) -> (Expr, Expr)? {
         }
       }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
 fn parse_reciprocal_sqrt_shift(expr : Expr, x_name : String) -> Expr? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match pow_named_unary_application(expr) {
       Some(("sqrt", inner, exp)) =>
         if expr_same_simplified(exp, @symcore.int(-1)) {
@@ -13109,7 +13117,8 @@ fn parse_reciprocal_sqrt_shift(expr : Expr, x_name : String) -> Expr? {
           None
         }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -13117,7 +13126,7 @@ fn parse_sqrt_shifted_power_expr(
   expr : Expr,
   x_name : String,
 ) -> (Expr, Expr, Expr, Bool)? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Pow(base, power) =>
         match parse_sqrt_shifted_base(base, x_name) {
@@ -13174,7 +13183,8 @@ fn parse_sqrt_shifted_power_expr(
         }
       }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -13249,7 +13259,8 @@ fn parse_one_plus_inverse(expr : Expr, var_name : String) -> Bool {
     } else {
       None
     }
-  }) is Some(_)
+  })
+  is Some(_)
 }
 
 ///|
@@ -13262,9 +13273,9 @@ fn parse_one_minus_inverse_inner_raw(expr : Expr, var_name : String) -> Bool {
         if expr_is_one(arg) {
           saw_one = true
         } else {
-          match parse_negative_power(expr_mul(@symcore.int(-1), arg), var_name) {
-            Some(power) if expr_eq(power, @symcore.int(1)) =>
-              saw_neg_inv = true
+          match
+            parse_negative_power(expr_mul(@symcore.int(-1), arg), var_name) {
+            Some(power) if expr_eq(power, @symcore.int(1)) => saw_neg_inv = true
             _ => return false
           }
         }
@@ -13280,7 +13291,8 @@ fn parse_abs_one_minus_linear(expr : Expr, var_name : String) -> Bool {
   match unary_application_arg(expr, "Abs") {
     Some(inner) => parse_one_minus_linear(inner, var_name)
     None =>
-      match retry_with_simplified(expr, expr => unary_application_arg(expr, "Abs")) {
+      match
+        retry_with_simplified(expr, expr => unary_application_arg(expr, "Abs")) {
         Some(inner) => parse_one_minus_linear(inner, var_name)
         None => false
       }
@@ -13292,7 +13304,8 @@ fn parse_abs_one_minus_inverse(expr : Expr, var_name : String) -> Bool {
   match unary_application_arg(expr, "Abs") {
     Some(inner) => parse_one_minus_inverse_inner_raw(inner, var_name)
     None =>
-      match retry_with_simplified(expr, expr => unary_application_arg(expr, "Abs")) {
+      match
+        retry_with_simplified(expr, expr => unary_application_arg(expr, "Abs")) {
         Some(inner) => parse_one_minus_inverse_inner_raw(inner, var_name)
         None => false
       }
@@ -13304,7 +13317,7 @@ fn split_linear_power_denom(
   expr : Expr,
   var_name : String,
 ) -> (Expr, Expr, Int)? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Pow(base, exp) =>
         match expr_is_int_value(exp) {
@@ -13320,7 +13333,8 @@ fn split_linear_power_denom(
           Some((a, b)) => Some((a, b, 1))
           None => None
         }
-    })
+    }
+  })
 }
 
 ///|
@@ -13392,7 +13406,7 @@ fn split_shifted_square_power_denom(
   den : Expr,
   s_name : String,
 ) -> (Expr, Expr, Expr, Int)? {
-  retry_with_simplified(den, den =>
+  retry_with_simplified(den, den => {
     match den {
       @symcore.Expr::Pow(base, exp) =>
         match expr_is_int_value(exp) {
@@ -13404,7 +13418,8 @@ fn split_shifted_square_power_denom(
           _ => None
         }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -13412,7 +13427,7 @@ fn split_shifted_diff_square_power_denom(
   den : Expr,
   s_name : String,
 ) -> (Expr, Expr, Expr, Int)? {
-  retry_with_simplified(den, den =>
+  retry_with_simplified(den, den => {
     match den {
       @symcore.Expr::Pow(base, exp) =>
         match expr_is_int_value(exp) {
@@ -13424,7 +13439,8 @@ fn split_shifted_diff_square_power_denom(
           _ => None
         }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -13432,7 +13448,7 @@ fn split_two_linear_factors(
   den : Expr,
   s_name : String,
 ) -> ((Expr, Expr), (Expr, Expr))? {
-  retry_with_simplified(den, den =>
+  retry_with_simplified(den, den => {
     match den {
       @symcore.Expr::Mul(args) if args.length() == 2 =>
         match
@@ -13444,7 +13460,8 @@ fn split_two_linear_factors(
           _ => None
         }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -13452,7 +13469,7 @@ fn split_quadratic_power_denom(
   den : Expr,
   s_name : String,
 ) -> (Expr, Expr, Bool, Int)? {
-  retry_with_simplified(den, den =>
+  retry_with_simplified(den, den => {
     match den {
       @symcore.Expr::Pow(base, exp) =>
         match expr_is_int_value(exp) {
@@ -13464,7 +13481,8 @@ fn split_quadratic_power_denom(
           _ => None
         }
       _ => None
-    })
+    }
+  })
 }
 
 ///|
@@ -14120,7 +14138,7 @@ fn parse_cosine_sqrt_meijerg(expr : Expr, k_name : String) -> Expr? {
 
 ///|
 fn parse_one_minus_abs_linear(expr : Expr, var_name : String) -> Expr? {
-  retry_with_simplified(expr, expr =>
+  retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Add(args) if args.length() == 2 => {
         let mut saw_one = false
@@ -14142,7 +14160,8 @@ fn parse_one_minus_abs_linear(expr : Expr, var_name : String) -> Expr? {
         }
       }
       _ => None
-    })
+    }
+  })
 }
 
 ///|

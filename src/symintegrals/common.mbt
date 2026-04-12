@@ -261,10 +261,10 @@ fn expr_num_value(expr : Expr) -> @symnum.BigRational? {
           } else {
             let mut out = @symnum.BigRational::one()
             let factor = if power < 0 {
-                try? base.reciprocal()
-              } else {
-                Ok(base)
-              }
+              try? base.reciprocal()
+            } else {
+              Ok(base)
+            }
             match factor {
               Err(_) => return None
               Ok(factor0) => {

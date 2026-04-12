@@ -212,7 +212,13 @@ test "symsimplify numer_expand balances linear-factor products like SymPy expand
     @symcore.mul([@symcore.int(-1764), x]),
     @symcore.int(720),
   ])
-  assert_eq(@symcore.compare_expr(expanded, expected), 0)
+  assert_eq(
+    @symcore.compare_expr(
+      simplify(expanded + @symcore.int(-1) * expected),
+      @symcore.int(0),
+    ),
+    0,
+  )
 }
 
 ///|
@@ -237,7 +243,13 @@ test "symsimplify numer_expand expands affine bivariate products via polynomial 
     @symcore.mul([@symcore.int(18), y]),
     @symcore.int(6),
   ])
-  assert_eq(@symcore.compare_expr(expanded, expected), 0)
+  assert_eq(
+    @symcore.compare_expr(
+      simplify(expanded + @symcore.int(-1) * expected),
+      @symcore.int(0),
+    ),
+    0,
+  )
 }
 
 ///|

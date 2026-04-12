@@ -49,10 +49,7 @@ test "laplace shifted exponential polynomial benchmark family" {
   let expr = @symelem.exp(@symcore.int(-2) * t()) *
     ((t() ^ @symcore.int(6)) + @symcore.int(3) * t() + @symcore.int(1))
   let shifted = s() + @symcore.int(2)
-  let expected = perf_div(
-    @symcore.int(720),
-    shifted ^ @symcore.int(7),
-  ) +
+  let expected = perf_div(@symcore.int(720), shifted ^ @symcore.int(7)) +
     perf_div(@symcore.int(3), shifted ^ @symcore.int(2)) +
     perf_div(@symcore.int(1), shifted)
   assert_true(
