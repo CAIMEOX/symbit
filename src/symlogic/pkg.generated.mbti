@@ -3,6 +3,7 @@ package "CAIMEOX/symbit/symlogic"
 
 import {
   "CAIMEOX/symbit/symnum",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -180,7 +181,7 @@ pub impl Hash for BoolExpr
 pub struct BoolMapResult {
   simplified : BoolExpr
   mapping : Map[String, BoolExpr]
-} derive(Show)
+}
 
 pub struct LinearConstraint {
   coeffs : Map[String, @symnum.BigRational]
@@ -198,7 +199,7 @@ pub(all) struct LraAssumption {
 pub struct LraConflictLit {
   key : String
   negated : Bool
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub struct PropKB {
   clauses : Map[BoolExpr, Bool]
@@ -232,7 +233,7 @@ pub(all) enum TermInput {
 pub(all) enum TruthTableRow {
   WithInput(Array[Int], Bool)
   Value(Bool)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 

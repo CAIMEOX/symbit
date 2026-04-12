@@ -552,14 +552,28 @@ pub fn ifib(n : Int) -> BigInt raise IntMathError {
   if n < 0 {
     raise @intmath.IntMathError::ValueError("ifib: n must be non-negative")
   }
-  let mut a = 0N
-  let mut b = 1N
-  for _ in 0..<n {
-    let next = a + b
-    a = b
-    b = next
+  // Dijkstra's logarithmic algorithm, matching mpmath.ifib used by SymPy.
+  let mut m = n
+  let mut a = 1N
+  let mut b = 0N
+  let mut p = 0N
+  let mut q = 1N
+  while m > 0 {
+    if (m & 1) == 1 {
+      let aq = a * q
+      a = b * q + aq + a * p
+      b = b * p + aq
+      m -= 1
+    } else {
+      let qq = q * q
+      let old_p = p
+      let old_q = q
+      p = old_p * old_p + qq
+      q = qq + 2N * old_p * old_q
+      m = m >> 1
+    }
   }
-  a
+  b
 }
 
 ///|

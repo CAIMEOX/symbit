@@ -410,15 +410,12 @@ fn matrix_exact_charpoly_expr(
     Some(data) => return exact_integer_charpoly_expr(data, x)
     None => ()
   }
-  let dm = (@sympolys.DomainMatrix::from_Matrix(
-    matrix.to_list(),
-    fmt="dense",
-  ) catch {
+  let dm = @sympolys.DomainMatrix::from_Matrix(matrix.to_list(), fmt="dense") catch {
     _ =>
       raise MatrixError::ValueError(
         "matrix entries are not supported by the exact DomainMatrix charpoly path",
       )
-  })
+  }
   let coeffs = dm.charpoly_base() catch {
     _ =>
       raise MatrixError::ValueError(
@@ -472,8 +469,7 @@ fn matrix_try_exact_charpoly_expr(
   x : Expr,
 ) -> Expr? raise MatrixError {
   let exact : Result[Expr, MatrixError] = try? matrix_exact_charpoly_expr(
-    matrix,
-    x,
+    matrix, x,
   )
   match exact {
     Ok(value) => Some(value)

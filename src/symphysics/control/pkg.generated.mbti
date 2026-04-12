@@ -4,6 +4,7 @@ package "CAIMEOX/symbit/symphysics/control"
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symphysics",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -72,7 +73,7 @@ pub suberror ControlError {
   ValueError(String)
   TypeError(String)
   NotImplemented(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
 pub struct BodePlot {

@@ -11,6 +11,7 @@ import {
   "CAIMEOX/moon_floating/libmp/mpc",
   "CAIMEOX/moon_floating/libmp/mpf",
   "moonbitlang/core/bigint",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -337,7 +338,8 @@ pub fn workprec(Int, rounding? : @mpf.RoundMode) -> @mp.MPContext
 // Errors
 pub(all) suberror RationalError {
   ZeroDenominator
-} derive(Show)
+} derive(@debug.Debug)
+pub impl Show for RationalError
 
 // Types and methods
 pub struct BigRational {
@@ -360,15 +362,17 @@ pub fn BigRational::new(@bigint.BigInt, @bigint.BigInt) -> Self raise RationalEr
 pub fn BigRational::numerator(Self) -> @bigint.BigInt
 pub fn BigRational::one() -> Self
 pub fn BigRational::reciprocal(Self) -> Self raise RationalError
+pub fn BigRational::sub_r(Self, Self) -> Self
 pub fn BigRational::zero() -> Self
 pub impl Add for BigRational
 pub impl Mul for BigRational
 pub impl Neg for BigRational
 pub impl Show for BigRational
+pub impl Sub for BigRational
 
 pub struct MPIntervalContext {
   prec : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn MPIntervalContext::abs(Self, @libmpi.RawMpi) -> @libmpi.RawMpi
 pub fn MPIntervalContext::add(Self, @libmpi.RawMpi, @libmpi.RawMpi) -> @libmpi.RawMpi
 pub fn MPIntervalContext::cos(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError

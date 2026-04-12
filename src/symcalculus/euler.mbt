@@ -143,25 +143,113 @@ fn diff_add(args : Array[Expr], wrt : Expr) -> Expr {
 }
 
 ///|
-fn diff_mul(args : Array[Expr], wrt : Expr) -> Expr {
-  let out : Array[Expr] = Array::new()
-  for i in 0..<args.length() {
-    let d = diff(args[i], wrt)
-    if expr_is_zero(d) {
-      continue
+fn can_build_diff_mul_term_fast(
+  args : Array[Expr],
+  replace_index : Int,
+  d : Expr,
+) -> Bool {
+  match d {
+    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) | Expr::Mul(_) =>
+      return false
+    _ => ()
+  }
+  for j in 0..<args.length() {
+    if j != replace_index && @symcore.compare_expr_normalized(args[j], d) == 0 {
+      return false
     }
+  }
+  true
+}
+
+///|
+fn build_diff_mul_term(
+  args : Array[Expr],
+  replace_index : Int,
+  d : Expr,
+) -> Expr {
+  if !can_build_diff_mul_term_fast(args, replace_index, d) {
     let factors : Array[Expr] = Array::new()
     for j in 0..<args.length() {
-      if i == j {
+      if replace_index == j {
         factors.push(d)
       } else {
         factors.push(args[j])
       }
     }
-    out.push(@symcore.mul(factors))
+    return @symcore.mul(factors)
+  }
+  let factors : Array[Expr] = Array::new()
+  let mut inserted = false
+  for j in 0..<args.length() {
+    if j == replace_index {
+      continue
+    }
+    let factor = args[j]
+    if !inserted && @symcore.compare_expr_normalized(d, factor) < 0 {
+      factors.push(d)
+      inserted = true
+    }
+    factors.push(factor)
+  }
+  if !inserted {
+    factors.push(d)
+  }
+  match factors.length() {
+    0 => @symcore.int(1)
+    1 => factors[0]
+    _ => Expr::Mul(factors)
+  }
+}
+
+///|
+fn diff_mul(args : Array[Expr], wrt : Expr) -> Expr {
+  let out : Array[Expr] = Array::new()
+  let mut can_return_direct_add = true
+  for i in 0..<args.length() {
+    let d = diff(args[i], wrt)
+    if expr_is_zero(d) {
+      continue
+    }
+    let term = build_diff_mul_term(args, i, d)
+    if can_return_direct_add {
+      match term {
+        Expr::Number(_)
+        | Expr::Float(_)
+        | Expr::ComplexFloat(_)
+        | Expr::Add(_) => can_return_direct_add = false
+        _ => ()
+      }
+    }
+    if !can_return_direct_add {
+      out.push(term)
+      continue
+    }
+    let mut insert_at = out.length()
+    let mut duplicate = false
+    while insert_at > 0 {
+      let cmp = @symcore.compare_expr_normalized(out[insert_at - 1], term)
+      if cmp == 0 {
+        duplicate = true
+        break
+      }
+      if cmp < 0 {
+        break
+      }
+      insert_at -= 1
+    }
+    if duplicate {
+      can_return_direct_add = false
+      out.push(term)
+    } else {
+      out.insert(insert_at, term)
+    }
   }
   if out.is_empty() {
     @symcore.int(0)
+  } else if out.length() == 1 {
+    out[0]
+  } else if can_return_direct_add {
+    Expr::Add(out)
   } else {
     @symcore.add(out)
   }

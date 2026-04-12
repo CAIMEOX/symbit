@@ -4,6 +4,7 @@ package "CAIMEOX/symbit/symphysics/continuum_mechanics"
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/sympolys",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -66,27 +67,27 @@ pub suberror ArchError {
   ValueError(String)
   TypeError(String)
   SolveError(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub suberror BeamError {
   ValueError(String)
   TypeError(String)
   SolveError(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub suberror CableError {
   ValueError(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub suberror ColumnError {
   ValueError(String)
   TypeError(String)
   SolveError(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub suberror TrussError {
   ValueError(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
 pub struct Arch {

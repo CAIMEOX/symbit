@@ -66,10 +66,7 @@ fn sparse_row_addmul(
         acc[col] = next
       }
     }
-    None =>
-      if !fe_is_zero(value) {
-        acc[col] = value
-      }
+    None => if !fe_is_zero(value) { acc[col] = value }
   }
 }
 
@@ -144,11 +141,7 @@ fn sdm_rref_den(a : SDM) -> (SDM, FieldElem, Array[Int]) raise PolyError {
     let pivot = row[pivot_col]
     let dod : DomainMatrixDOD = Map::new()
     dod[0] = row
-    return (
-      SDM::new(dod, shape, domain),
-      pivot,
-      [pivot_col],
-    )
+    return (SDM::new(dod, shape, domain), pivot, [pivot_col])
   }
 
   let col_to_row_reduced : Map[Int, Int] = Map::new()
@@ -158,7 +151,9 @@ fn sdm_rref_den(a : SDM) -> (SDM, FieldElem, Array[Int]) raise PolyError {
   let mut divisor : FieldElem? = None
 
   let work_rows = sparse_rref_row_order(rows)
-  work_rows.sort_by(fn(lhs, rhs) { sparse_row_lead(lhs).compare(sparse_row_lead(rhs)) })
+  work_rows.sort_by(fn(lhs, rhs) {
+    sparse_row_lead(lhs).compare(sparse_row_lead(rhs))
+  })
 
   for input_row in work_rows {
     let ai : Map[Int, FieldElem] = Map::new()

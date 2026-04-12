@@ -697,7 +697,11 @@ fn expand_mul_expr(expr : Expr) -> Expr {
         changed = changed || next != arg
         expanded.push(next)
       }
-      if changed { @symcore.add(expanded) } else { expr }
+      if changed {
+        @symcore.add(expanded)
+      } else {
+        expr
+      }
     }
     Expr::Mul(args) => {
       let expanded : Array[Expr] = Array::new()
@@ -796,11 +800,7 @@ fn expand_mul_sequence(factors : Array[Expr]) -> Expr {
   if sums.is_empty() {
     return @symcore.mul(factors)
   }
-  let plain_term = if plain.is_empty() {
-    int(1)
-  } else {
-    @symcore.mul(plain)
-  }
+  let plain_term = if plain.is_empty() { int(1) } else { @symcore.mul(plain) }
   let terms = expand_mul_sums_range(sums, 0, sums.length())
   let scaled : Array[Expr] = Array::new()
   for term in terms {

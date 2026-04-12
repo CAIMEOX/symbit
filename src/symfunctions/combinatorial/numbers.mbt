@@ -2,23 +2,33 @@
 /// Combinatorial number sequences.
 
 ///|
-fn fib_bigint(n : Int) -> BigInt {
+fn fib_small_uint64(n : Int) -> UInt64 {
   if n <= 0 {
-    return BigInt::from_int(0)
+    return UInt64::default()
   }
   if n == 1 {
-    return BigInt::from_int(1)
+    return UInt64::extend_uint(1)
   }
-  let mut a = BigInt::from_int(0)
-  let mut b = BigInt::from_int(1)
-  let mut i = 2
-  while i <= n {
+  let mut a = UInt64::default()
+  let mut b = UInt64::extend_uint(1)
+  let mut i = 1
+  while i < n {
     let c = a + b
     a = b
     b = c
     i = i + 1
   }
   b
+}
+
+///|
+fn fib_bigint(n : Int) -> BigInt {
+  if n >= 0 && n <= 92 {
+    return BigInt::from_uint64(fib_small_uint64(n))
+  }
+  @symnum.ifib(n) catch {
+    _ => BigInt::from_int(0)
+  }
 }
 
 ///|
@@ -76,6 +86,13 @@ fn combinatorial_rational(num : Int, den : Int) -> @symnum.BigRational? {
 }
 
 ///|
+fn exact_combinatorial_rational(num : Int, den : Int) -> @symnum.BigRational {
+  @symnum.BigRational::from_ints(num, den) catch {
+    _ => @symnum.BigRational::zero()
+  }
+}
+
+///|
 fn harmonic_rational(n : Int) -> @symnum.BigRational? {
   let mut acc = @symnum.BigRational::zero()
   let mut k = 1
@@ -91,21 +108,26 @@ fn harmonic_rational(n : Int) -> @symnum.BigRational? {
 }
 
 ///|
+let small_bernoulli_values : Array[@symnum.BigRational] = [
+  @symnum.BigRational::from_int(1),
+  exact_combinatorial_rational(1, 2),
+  exact_combinatorial_rational(1, 6),
+  @symnum.BigRational::zero(),
+  exact_combinatorial_rational(-1, 30),
+  @symnum.BigRational::zero(),
+  exact_combinatorial_rational(1, 42),
+  @symnum.BigRational::zero(),
+  exact_combinatorial_rational(-1, 30),
+  @symnum.BigRational::zero(),
+  exact_combinatorial_rational(5, 66),
+]
+
+///|
 fn bernoulli_small(n : Int) -> @symnum.BigRational? {
-  // B0..B10
-  match n {
-    0 => Some(@symnum.BigRational::from_int(1))
-    1 => combinatorial_rational(-1, 2)
-    2 => combinatorial_rational(1, 6)
-    3 => Some(@symnum.BigRational::from_int(0))
-    4 => combinatorial_rational(-1, 30)
-    5 => Some(@symnum.BigRational::from_int(0))
-    6 => combinatorial_rational(1, 42)
-    7 => Some(@symnum.BigRational::from_int(0))
-    8 => combinatorial_rational(-1, 30)
-    9 => Some(@symnum.BigRational::from_int(0))
-    10 => combinatorial_rational(5, 66)
-    _ => None
+  if n >= 0 && n < small_bernoulli_values.length() {
+    Some(small_bernoulli_values[n])
+  } else {
+    None
   }
 }
 
@@ -177,9 +199,13 @@ pub fn bernoulli(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
       let ni = bi.to_int()
-      match bernoulli_small(ni) {
-        Some(v) => @symcore.Expr::Number(v)
-        None => @symcore.function("bernoulli", [n])
+      if ni > 1 && ni % 2 != 0 {
+        @symcore.int(0)
+      } else {
+        match bernoulli_small(ni) {
+          Some(v) => @symcore.Expr::Number(v)
+          None => @symcore.function("bernoulli", [n])
+        }
       }
     }
     None => @symcore.function("bernoulli", [n])

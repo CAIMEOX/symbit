@@ -3,6 +3,7 @@ package "CAIMEOX/symbit/symparse"
 
 import {
   "CAIMEOX/symbit/symcore",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -65,7 +66,7 @@ pub(all) suberror ParseError {
   UnexpectedEof(span~ : Span, String)
   InvalidNumber(span~ : Span, String)
   UnsupportedConstruct(span~ : Span, String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
 pub enum Ast {
@@ -85,7 +86,7 @@ pub enum BinaryOp {
   Mul
   Div
   Pow
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub enum CompareOp {
   Eq
@@ -95,7 +96,7 @@ pub enum CompareOp {
   Le
   Gt
   Ge
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub struct ParseContext {
   callable_names : Array[String]
@@ -112,12 +113,12 @@ pub struct ParseOptions {
 pub struct Span {
   start : Int
   stop : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub struct Token {
   kind : TokenKind
   span : Span
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub enum TokenKind {
   IntLit(String)
@@ -143,7 +144,7 @@ pub enum TokenKind {
   Gt
   Ge
   Eof
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum Transformation {
   LambdaNotation
@@ -165,7 +166,7 @@ pub(all) enum Transformation {
 pub enum UnaryOp {
   Plus
   Minus
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 

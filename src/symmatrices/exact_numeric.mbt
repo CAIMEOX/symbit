@@ -78,6 +78,7 @@ fn swap_exact_int_rows(data : ExactIntRows, i : Int, j : Int) -> Unit {
   data[j] = tmp
 }
 
+///|
 fn matrix_exact_rational_data(rows : Array[Array[Expr]]) -> ExactRatRows? {
   let out : ExactRatRows = []
   for row in rows {
@@ -109,6 +110,7 @@ fn matrix_exact_integer_data(rows : Array[Array[Expr]]) -> ExactIntRows? {
   Some(out)
 }
 
+///|
 fn exact_div_unchecked(
   lhs : @symnum.BigRational,
   rhs : @symnum.BigRational,
@@ -312,11 +314,7 @@ fn exact_integer_rref_den(
     d = if aij.equal_int(1) { None } else { Some(aij) }
   }
 
-  let denom = if pivots.is_empty() {
-    1N
-  } else {
-    data[0][pivots[0]]
-  }
+  let denom = if pivots.is_empty() { 1N } else { data[0][pivots[0]] }
   (data, denom, pivots)
 }
 
@@ -338,7 +336,10 @@ fn exact_integer_fraction_rows_to_expr_rows(
         rendered.push(exact_expr_from_integer(item))
       } else {
         let value = @symnum.BigRational::new(item, den) catch {
-          _ => abort("exact_integer_fraction_rows_to_expr_rows: invalid denominator")
+          _ =>
+            abort(
+              "exact_integer_fraction_rows_to_expr_rows: invalid denominator",
+            )
         }
         rendered.push(Expr::Number(value))
       }
@@ -349,9 +350,7 @@ fn exact_integer_fraction_rows_to_expr_rows(
 }
 
 ///|
-fn exact_integer_inverse(
-  data0 : ExactIntRows,
-) -> (ExactIntRows, BigInt)? {
+fn exact_integer_inverse(data0 : ExactIntRows) -> (ExactIntRows, BigInt)? {
   if data0.is_empty() {
     return Some(([], 1N))
   }
@@ -493,12 +492,7 @@ fn exact_integer_charpoly_expr(rows : ExactIntRows, x : Expr) -> Expr {
     let exp = degree - i
     let term = match exp {
       0 => coeff_expr
-      1 =>
-        if coeff.equal_int(1) {
-          x
-        } else {
-          @symcore.mul([coeff_expr, x])
-        }
+      1 => if coeff.equal_int(1) { x } else { @symcore.mul([coeff_expr, x]) }
       _ => {
         let x_pow = @symcore.pow(x, @symcore.int(exp))
         if coeff.equal_int(1) {

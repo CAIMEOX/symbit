@@ -3,6 +3,7 @@ package "CAIMEOX/symbit/symutilities"
 
 import {
   "CAIMEOX/symbit/symcore",
+  "moonbitlang/core/debug",
   "moonbitlang/core/ref",
 }
 
@@ -230,7 +231,7 @@ pub(all) suberror UtilitiesError {
   InvalidArgument(String)
   Unsupported(String)
   MissingValue(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
 pub struct AssocRecurrenceMemo[T] {
@@ -281,7 +282,7 @@ pub struct MultisetPartitionState {
   f : Array[Int]
   lpart : Int
   pstack : Array[PartComponent]
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub struct MultisetPartitionTraverser {
   debug : Bool
@@ -325,7 +326,7 @@ pub struct PartComponent {
   mut c : Int
   mut u : Int
   mut v : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub enum PartitionResult {
   Parts(Map[Int, Int])
@@ -384,7 +385,7 @@ pub enum TargetLanguage {
   Julia
   Octave
   Rust
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub enum Threadable[T] {
   Scalar(T)
@@ -409,14 +410,14 @@ pub enum WildcardKind {
   Dot
   Plus
   Star
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub enum WrapBackend {
   Dummy
   F2Py
   Cython
   Ufunc
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub struct WrappedBinary {
   name : String

@@ -48,6 +48,8 @@ pub fn common_kind(Array[Kind]) -> Kind
 
 pub fn compare_expr(Expr, Expr) -> Int
 
+pub fn compare_expr_normalized(Expr, Expr) -> Int
+
 pub fn complex_float_from_exact_parts(@symnum.BigRational, @symnum.BigRational, prec? : Int) -> ComplexFloat
 
 pub fn current_distribute() -> Bool
@@ -119,6 +121,8 @@ pub fn fuzzy_or(Array[Bool?]) -> Bool?
 pub fn fuzzy_xor(Array[Bool?]) -> Bool?
 
 pub fn has(Expr, Expr) -> Bool
+
+pub fn hash_expr_normalized(Expr) -> Int
 
 pub fn head_name(Expr) -> String
 

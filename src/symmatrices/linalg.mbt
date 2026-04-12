@@ -145,20 +145,20 @@ fn matrix_exact_inverse(matrix : Matrix) -> Matrix raise MatrixError {
       _ =>
         raise MatrixError::ValueError(
           "exact DomainMatrix inverse could not be converted into its field domain",
-      )
+        )
     }
   }
   let den = (@sympolys.DomainScalar::new(den0, num0.domain) catch {
-    _ =>
-      raise MatrixError::ValueError(
-        "exact DomainMatrix inverse denominator could not be reconstructed",
-      )
-  }).convert_to(num.domain).element catch {
-    _ =>
-      raise MatrixError::ValueError(
-        "exact DomainMatrix inverse denominator could not be converted into the field domain",
-      )
-  }
+      _ =>
+        raise MatrixError::ValueError(
+          "exact DomainMatrix inverse denominator could not be reconstructed",
+        )
+    }).convert_to(num.domain).element catch {
+      _ =>
+        raise MatrixError::ValueError(
+          "exact DomainMatrix inverse denominator could not be converted into the field domain",
+        )
+    }
   let inverse = num.mul(@sympolys.fe_inv(den)) catch {
     _ =>
       raise MatrixError::ValueError(
@@ -170,7 +170,11 @@ fn matrix_exact_inverse(matrix : Matrix) -> Matrix raise MatrixError {
 
 ///|
 fn matrix_exact_solve(lhs : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
-  match (matrix_exact_integer_data(lhs.to_list()), matrix_exact_integer_data(rhs.to_list())) {
+  match
+    (
+      matrix_exact_integer_data(lhs.to_list()),
+      matrix_exact_integer_data(rhs.to_list()),
+    ) {
     (Some(lhs_data), Some(rhs_data)) =>
       match exact_integer_solve(lhs_data, rhs_data) {
         Some((num, den)) =>
@@ -216,20 +220,20 @@ fn matrix_exact_solve(lhs : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
       _ =>
         raise MatrixError::ValueError(
           "exact DomainMatrix solve result could not be converted into its field domain",
-      )
+        )
     }
   }
   let den = (@sympolys.DomainScalar::new(den0, num0.domain) catch {
-    _ =>
-      raise MatrixError::ValueError(
-        "exact DomainMatrix solve denominator could not be reconstructed",
-      )
-  }).convert_to(num.domain).element catch {
-    _ =>
-      raise MatrixError::ValueError(
-        "exact DomainMatrix solve denominator could not be converted into the field domain",
-      )
-  }
+      _ =>
+        raise MatrixError::ValueError(
+          "exact DomainMatrix solve denominator could not be reconstructed",
+        )
+    }).convert_to(num.domain).element catch {
+      _ =>
+        raise MatrixError::ValueError(
+          "exact DomainMatrix solve denominator could not be converted into the field domain",
+        )
+    }
   let solution = num.mul(@sympolys.fe_inv(den)) catch {
     _ =>
       raise MatrixError::ValueError(
@@ -250,7 +254,10 @@ fn matrix_try_exact_inverse(matrix : Matrix) -> Matrix? raise MatrixError {
 }
 
 ///|
-fn matrix_try_exact_solve(lhs : Matrix, rhs : Matrix) -> Matrix? raise MatrixError {
+fn matrix_try_exact_solve(
+  lhs : Matrix,
+  rhs : Matrix,
+) -> Matrix? raise MatrixError {
   let exact : Result[Matrix, MatrixError] = try? matrix_exact_solve(lhs, rhs)
   match exact {
     Ok(value) => Some(value)

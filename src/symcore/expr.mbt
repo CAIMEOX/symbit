@@ -488,7 +488,7 @@ pub fn dummy(name? : String = "Dummy") -> Expr {
 
 ///|
 pub fn applied_undefined_function(name : String, args : Array[Expr]) -> Expr {
-  Expr::Apply(Expr::UndefinedFunction(name), args.map(normalize_legacy_expr))
+  applied_undefined_function_canonical(name, args.map(normalize_legacy_expr))
 }
 
 ///|
@@ -497,9 +497,15 @@ fn wild_function_accepts_arity(nargs : Array[Int], arity : Int) -> Bool {
 }
 
 ///|
-pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
-  let head = normalize_legacy_expr(head)
-  let args = args.map(normalize_legacy_expr)
+fn applied_undefined_function_canonical(
+  name : String,
+  args : Array[Expr],
+) -> Expr {
+  Expr::Apply(Expr::UndefinedFunction(name), args)
+}
+
+///|
+fn raw_apply_canonical(head : Expr, args : Array[Expr]) -> Expr? {
   match head {
     Expr::IdentityFunction =>
       if args.length() == 1 {
@@ -509,22 +515,27 @@ pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
       }
     Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
     Expr::UndefinedFunction(name) =>
-      Some(Expr::Apply(Expr::UndefinedFunction(name), args))
+      Some(applied_undefined_function_canonical(name, args))
     Expr::WildFunction(name, nargs) =>
       if wild_function_accepts_arity(nargs, args.length()) {
         Some(Expr::Apply(Expr::WildFunction(name, nargs), args))
       } else {
         None
       }
-    Expr::FunctionHead(name) => Some(raw_function(name, args))
+    Expr::FunctionHead(name) => Some(raw_function_canonical(name, args))
     _ => None
   }
 }
 
 ///|
-pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
+pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
   let head = normalize_legacy_expr(head)
   let args = args.map(normalize_legacy_expr)
+  raw_apply_canonical(head, args)
+}
+
+///|
+fn apply_canonical(head : Expr, args : Array[Expr]) -> Expr? {
   match head {
     Expr::IdentityFunction =>
       if args.length() == 1 {
@@ -534,7 +545,7 @@ pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
       }
     Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
     Expr::UndefinedFunction(name) =>
-      Some(applied_undefined_function(name, args))
+      Some(applied_undefined_function_canonical(name, args))
     Expr::WildFunction(name, nargs) =>
       if wild_function_accepts_arity(nargs, args.length()) {
         Some(Expr::Apply(Expr::WildFunction(name, nargs), args))
@@ -544,13 +555,20 @@ pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
     Expr::FunctionHead(name) =>
       Some(
         if current_evaluate() {
-          function(name, args)
+          function_canonical(name, args)
         } else {
-          raw_function(name, args)
+          raw_function_canonical(name, args)
         },
       )
     _ => None
   }
+}
+
+///|
+pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
+  let head = normalize_legacy_expr(head)
+  let args = args.map(normalize_legacy_expr)
+  apply_canonical(head, args)
 }
 
 ///|
@@ -636,6 +654,57 @@ fn split_add_term_coeff(term : Expr) -> (@symnum.BigRational, Expr)? {
     }
     Expr::Float(_) | Expr::ComplexFloat(_) => None
     _ => Some((@symnum.BigRational::one(), term))
+  }
+}
+
+///|
+fn canonical_base_index_get(
+  base_index : Map[Int, Array[Int]],
+  bases : Array[Expr],
+  base : Expr,
+) -> Int? {
+  let hash = hash_expr_normalized(base)
+  match base_index.get(hash) {
+    Some(bucket) => {
+      for index in bucket {
+        if compare_expr_normalized(bases[index], base) == 0 {
+          return Some(index)
+        }
+      }
+      None
+    }
+    None => None
+  }
+}
+
+///|
+fn canonical_base_index_put(
+  base_index : Map[Int, Array[Int]],
+  base : Expr,
+  index : Int,
+) -> Unit {
+  let hash = hash_expr_normalized(base)
+  match base_index.get(hash) {
+    Some(bucket) => {
+      bucket.push(index)
+      base_index[hash] = bucket
+    }
+    None => base_index[hash] = [index]
+  }
+}
+
+///|
+fn add_term_has_implicit_unit_coeff(term : Expr) -> Bool {
+  match term {
+    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => false
+    Expr::Mul(items) =>
+      !items.any(item => {
+        match item {
+          Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => true
+          _ => false
+        }
+      })
+    _ => true
   }
 }
 
@@ -833,43 +902,70 @@ pub fn add(args : Array[Expr]) -> Expr {
       _ => flat.push(arg)
     }
   }
-  let bases : Array[Expr] = []
-  let coeffs : Array[@symnum.BigRational] = []
-  let base_index : Map[Expr, Int] = {}
-  let passthrough : Array[Expr] = []
-  for term in flat {
-    match split_add_term_coeff(term) {
-      Some((coeff, base)) => {
-        match base_index.get(base) {
-          Some(index) => coeffs[index] = coeffs[index].add_r(coeff)
-          None => {
-            let index = bases.length()
-            bases.push(base)
-            coeffs.push(coeff)
-            base_index[base] = index
+  if flat.all(add_term_has_implicit_unit_coeff) {
+    sort_exprs_in_place(flat)
+    let merged : Array[Expr] = []
+    let mut i = 0
+    while i < flat.length() {
+      let term = flat[i]
+      let mut multiplicity = 1
+      while i + multiplicity < flat.length() &&
+            compare_expr_normalized(flat[i + multiplicity], term) == 0 {
+        multiplicity += 1
+      }
+      if multiplicity == 1 {
+        merged.push(term)
+      } else {
+        merged.push(
+          mul([Expr::Number(@symnum.BigRational::from_int(multiplicity)), term]),
+        )
+      }
+      i += multiplicity
+    }
+    flat.clear()
+    for term in merged {
+      flat.push(term)
+    }
+  } else {
+    let bases : Array[Expr] = []
+    let coeffs : Array[@symnum.BigRational] = []
+    let base_index : Map[Int, Array[Int]] = {}
+    let passthrough : Array[Expr] = []
+    for term in flat {
+      match split_add_term_coeff(term) {
+        Some((coeff, base)) => {
+          let base = normalize_legacy_expr(base)
+          match canonical_base_index_get(base_index, bases, base) {
+            Some(index) => coeffs[index] = coeffs[index].add_r(coeff)
+            None => {
+              let index = bases.length()
+              bases.push(base)
+              coeffs.push(coeff)
+              canonical_base_index_put(base_index, base, index)
+            }
           }
         }
+        None => passthrough.push(term)
       }
-      None => passthrough.push(term)
     }
-  }
-  flat.clear()
-  for i in 0..<bases.length() {
-    let coeff = coeffs[i]
-    if coeff.is_zero() {
-      continue
+    flat.clear()
+    for i in 0..<bases.length() {
+      let coeff = coeffs[i]
+      if coeff.is_zero() {
+        continue
+      }
+      let base = bases[i]
+      if expr_is_one(base) {
+        flat.push(Expr::Number(coeff))
+      } else if coeff.is_one() {
+        flat.push(base)
+      } else {
+        flat.push(mul([Expr::Number(coeff), base]))
+      }
     }
-    let base = bases[i]
-    if expr_is_one(base) {
-      flat.push(Expr::Number(coeff))
-    } else if coeff.is_one() {
-      flat.push(base)
-    } else {
-      flat.push(mul([Expr::Number(coeff), base]))
+    for term in passthrough {
+      flat.push(term)
     }
-  }
-  for term in passthrough {
-    flat.push(term)
   }
   match complex_sum {
     Some(value) =>
@@ -1429,6 +1525,11 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
     return raw_function(name, args)
   }
   let args = args.map(normalize_legacy_expr)
+  function_canonical(name, args)
+}
+
+///|
+fn function_canonical(name : String, args : Array[Expr]) -> Expr {
   match (name, args) {
     ("True", []) => Expr::Boolean(true)
     ("False", []) => Expr::Boolean(false)
@@ -1497,6 +1598,11 @@ pub fn raw_dict_expr(items : Array[(Expr, Expr)]) -> Expr {
 ///|
 pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
   let args = args.map(normalize_legacy_expr)
+  raw_function_canonical(name, args)
+}
+
+///|
+fn raw_function_canonical(name : String, args : Array[Expr]) -> Expr {
   match (name, args) {
     ("True", []) => Expr::Boolean(true)
     ("False", []) => Expr::Boolean(false)

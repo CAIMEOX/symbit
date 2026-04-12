@@ -20,7 +20,7 @@ fn fd_rat_from_int(n : Int) -> BigRational {
 
 ///|
 fn fd_rat_sub(a : BigRational, b : BigRational) -> BigRational {
-  a.add_r(b.neg_r())
+  a.sub_r(b)
 }
 
 ///|

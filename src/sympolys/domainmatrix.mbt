@@ -621,7 +621,8 @@ pub fn DomainMatrix::from_rep(
   match rep {
     DomainMatrixRep::Dense(values) =>
       domain_matrix_from_dense(clone_dense_rows(values), domain)
-    DomainMatrixRep::Sparse(dod) => DomainMatrix::from_dod(dod, (rows, cols), domain)
+    DomainMatrixRep::Sparse(dod) =>
+      DomainMatrix::from_dod(dod, (rows, cols), domain)
   }
 }
 
@@ -969,7 +970,12 @@ pub fn DomainMatrix::to_sparse(
           dod[i] = row_map
         }
       }
-      DomainMatrix::{ rep: DomainMatrixRep::Sparse(dod), rows: self.rows, cols: self.cols, domain: self.domain }
+      DomainMatrix::{
+        rep: DomainMatrixRep::Sparse(dod),
+        rows: self.rows,
+        cols: self.cols,
+        domain: self.domain,
+      }
     }
   }
 }
@@ -2515,7 +2521,9 @@ fn choose_rref_den_method_and_format(
   dm : DomainMatrix,
   rref_method : String,
 ) -> (String, String) raise PolyError {
-  let (normalized, requested_fmt) = normalize_rref_method_and_format(rref_method)
+  let (normalized, requested_fmt) = normalize_rref_method_and_format(
+    rref_method,
+  )
   if normalized != "auto" {
     return (normalized, requested_fmt)
   }
@@ -3106,7 +3114,8 @@ pub fn DomainMatrix::charpoly_berk(
 ) -> Array[FieldElem] raise PolyError {
   match self.rep {
     DomainMatrixRep::Dense(rows) => dense_berk(rows, self.domain)
-    DomainMatrixRep::Sparse(entries) => sparse_berk(entries, self.rows, self.domain)
+    DomainMatrixRep::Sparse(entries) =>
+      sparse_berk(entries, self.rows, self.domain)
   }
 }
 

@@ -1,6 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "CAIMEOX/symbit/symcategories"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 pub fn arrow_string_description(String, String, Int?, String, String, String, String, String, String) -> ArrowStringDescription
 
@@ -68,7 +72,8 @@ pub(all) suberror CategoryError {
   TypeError(String)
   NotImplemented(String)
   Unsupported(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for CategoryError
 
 // Types and methods
 pub struct ArrowStringDescription {

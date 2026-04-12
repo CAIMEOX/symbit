@@ -99,7 +99,9 @@ test "matrices parity dense exact solve on diagonally dominant family" {
   ])
   assert_eq(
     local_matrix_list_text(a.solve(rhs)),
-    py_matrix_list_text(py_matrix_expr(a) + ".solve(" + py_matrix_expr(rhs) + ")"),
+    py_matrix_list_text(
+      py_matrix_expr(a) + ".solve(" + py_matrix_expr(rhs) + ")",
+    ),
   )
 }
 

@@ -4,6 +4,7 @@ package "CAIMEOX/symbit/symcalculus"
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -50,9 +51,9 @@ pub fn periodicity(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 pub fn singularities(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 // Errors
-type AccumBoundsError derive(Eq, Show)
+type AccumBoundsError derive(Eq, @debug.Debug)
 
-type FiniteDiffError derive(Eq, Show)
+type FiniteDiffError derive(Eq, @debug.Debug)
 
 // Types and methods
 

@@ -3,6 +3,7 @@ package "CAIMEOX/symbit/symassume"
 
 import {
   "CAIMEOX/symbit/symcore",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -214,7 +215,7 @@ pub(all) enum Predicate {
   IsReal
   IsPositive
   IsNonnegative
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum PredicateKey {
   Hermitian
@@ -273,7 +274,7 @@ pub(all) enum PredicateKey {
   Ge
   Lt
   Le
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum Query {
   Bool(Bool)
@@ -293,13 +294,13 @@ pub struct SymbolFacts {
   is_real : Tri
   is_positive : Tri
   is_nonnegative : Tri
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum Tri {
   True
   False
   Unknown
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 pub type AssumeEnv = Map[String, SymbolFacts]

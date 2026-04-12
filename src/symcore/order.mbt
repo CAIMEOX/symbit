@@ -94,7 +94,7 @@ fn compare_apply_heads(head_a : Expr, head_b : Expr) -> Int {
   match (head_a, head_b) {
     (Expr::UndefinedFunction(_), Expr::FunctionHead(_)) => -1
     (Expr::FunctionHead(_), Expr::UndefinedFunction(_)) => 1
-    _ => compare_expr(head_a, head_b)
+    _ => compare_expr_canonical(head_a, head_b)
   }
 }
 
@@ -118,26 +118,27 @@ fn compare_wild_properties(
 }
 
 ///|
-pub fn compare_expr(a : Expr, b : Expr) -> Int {
-  let a = normalize_legacy_expr(a)
-  let b = normalize_legacy_expr(b)
+fn compare_expr_canonical(a : Expr, b : Expr) -> Int {
+  if physical_equal(a, b) {
+    return 0
+  }
   match (a, b) {
     (Expr::Pow(base_a, _), Expr::Symbol(sb)) => {
-      let base_cmp = compare_expr(base_a, Expr::Symbol(sb))
+      let base_cmp = compare_expr_canonical(base_a, Expr::Symbol(sb))
       if base_cmp != 0 {
         return base_cmp
       }
       return -1
     }
     (Expr::Pow(base_a, _), Expr::Dummy(name_b, id_b)) => {
-      let base_cmp = compare_expr(base_a, Expr::Dummy(name_b, id_b))
+      let base_cmp = compare_expr_canonical(base_a, Expr::Dummy(name_b, id_b))
       if base_cmp != 0 {
         return base_cmp
       }
       return -1
     }
     (Expr::Pow(base_a, _), Expr::Wild(name_b, exclude_b, properties_b)) => {
-      let base_cmp = compare_expr(
+      let base_cmp = compare_expr_canonical(
         base_a,
         Expr::Wild(name_b, exclude_b, properties_b),
       )
@@ -168,7 +169,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
       return 1
     }
     (Expr::Pow(base_a, _), Expr::NumberSymbol(nb)) => {
-      let base_cmp = compare_expr(base_a, Expr::NumberSymbol(nb))
+      let base_cmp = compare_expr_canonical(base_a, Expr::NumberSymbol(nb))
       if base_cmp != 0 {
         return base_cmp
       }
@@ -342,11 +343,11 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
     Expr::Pow(base_a, exp_a) =>
       match b {
         Expr::Pow(base_b, exp_b) => {
-          let base_cmp = compare_expr(base_a, base_b)
+          let base_cmp = compare_expr_canonical(base_a, base_b)
           if base_cmp != 0 {
             base_cmp
           } else {
-            compare_expr(exp_a, exp_b)
+            compare_expr_canonical(exp_a, exp_b)
           }
         }
         _ => 0
@@ -354,11 +355,11 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
     Expr::Mod(lhs_a, rhs_a) =>
       match b {
         Expr::Mod(lhs_b, rhs_b) => {
-          let lhs_cmp = compare_expr(lhs_a, lhs_b)
+          let lhs_cmp = compare_expr_canonical(lhs_a, lhs_b)
           if lhs_cmp != 0 {
             lhs_cmp
           } else {
-            compare_expr(rhs_a, rhs_b)
+            compare_expr_canonical(rhs_a, rhs_b)
           }
         }
         _ => 0
@@ -390,11 +391,11 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
           if op_cmp != 0 {
             op_cmp
           } else {
-            let lhs_cmp = compare_expr(lhs_a, lhs_b)
+            let lhs_cmp = compare_expr_canonical(lhs_a, lhs_b)
             if lhs_cmp != 0 {
               lhs_cmp
             } else {
-              compare_expr(rhs_a, rhs_b)
+              compare_expr_canonical(rhs_a, rhs_b)
             }
           }
         }
@@ -403,7 +404,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
     Expr::Derivative(inner_a, deriv_args_a) =>
       match b {
         Expr::Derivative(inner_b, deriv_args_b) => {
-          let inner_cmp = compare_expr(inner_a, inner_b)
+          let inner_cmp = compare_expr_canonical(inner_a, inner_b)
           if inner_cmp != 0 {
             inner_cmp
           } else {
@@ -415,7 +416,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
     Expr::Subs(inner_a, variable_a, value_a) =>
       match b {
         Expr::Subs(inner_b, variable_b, value_b) => {
-          let inner_cmp = compare_expr(
+          let inner_cmp = compare_expr_canonical(
             subs_canonical_inner(inner_a, variable_a, value_a),
             subs_canonical_inner(inner_b, variable_b, value_b),
           )
@@ -433,11 +434,11 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
     Expr::Lambda(vars_a, body_a) =>
       match b {
         Expr::Lambda(vars_b, body_b) => {
-          let vars_cmp = compare_expr(vars_a, vars_b)
+          let vars_cmp = compare_expr_canonical(vars_a, vars_b)
           if vars_cmp != 0 {
             vars_cmp
           } else {
-            compare_expr(body_a, body_b)
+            compare_expr_canonical(body_a, body_b)
           }
         }
         _ => 0
@@ -447,14 +448,24 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
 }
 
 ///|
+pub fn compare_expr(a : Expr, b : Expr) -> Int {
+  compare_expr_canonical(normalize_legacy_expr(a), normalize_legacy_expr(b))
+}
+
+///|
+pub fn compare_expr_normalized(a : Expr, b : Expr) -> Int {
+  compare_expr_canonical(a, b)
+}
+
+///|
 fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
   match expr {
     Expr::NumberSymbol(kind) => sym_name.compare(number_symbol_name(kind))
     Expr::Boolean(value) =>
       if value {
-        compare_expr(Expr::Boolean(true), expr)
+        compare_expr_canonical(Expr::Boolean(true), expr)
       } else {
-        compare_expr(Expr::Boolean(false), expr)
+        compare_expr_canonical(Expr::Boolean(false), expr)
       }
     Expr::Symbol(sb) => sym_name.compare(sb)
     Expr::Dummy(name, _) => sym_name.compare(dummy_display_name(name))
@@ -471,10 +482,10 @@ fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
             Int::compare(0, args.length())
           }
         }
-        _ => compare_expr(Expr::Symbol(sym_name), expr)
+        _ => compare_expr_canonical(Expr::Symbol(sym_name), expr)
       }
     Expr::Pow(base, _) => compare_symbol_base(sym_name, base)
-    _ => compare_expr(Expr::Symbol(sym_name), expr)
+    _ => compare_expr_canonical(Expr::Symbol(sym_name), expr)
   }
 }
 
@@ -489,7 +500,7 @@ fn compare_arrays(xs : Array[Expr], ys : Array[Expr]) -> Int {
   let len_y = ys.length()
   let min_len = if len_x < len_y { len_x } else { len_y }
   for i in 0..<min_len {
-    let cmp = compare_expr(xs[i], ys[i])
+    let cmp = compare_expr_canonical(xs[i], ys[i])
     if cmp != 0 {
       return cmp
     }
@@ -515,11 +526,11 @@ fn canonical_subs_point_placeholders(
   point : Array[Expr],
 ) -> Array[(Expr, Expr)] {
   let unique = point.copy()
-  unique.sort_by(compare_expr)
+  unique.sort_by(compare_expr_canonical)
   let deduped : Array[Expr] = []
   for item in unique {
     if deduped.is_empty() ||
-      compare_expr(deduped[deduped.length() - 1], item) != 0 {
+      compare_expr_canonical(deduped[deduped.length() - 1], item) != 0 {
       deduped.push(item)
     }
   }
@@ -537,7 +548,7 @@ fn canonical_subs_placeholder_for(
 ) -> Expr {
   for item in mapping {
     let (current, placeholder) = item
-    if compare_expr(current, point) == 0 {
+    if compare_expr_canonical(current, point) == 0 {
       return placeholder
     }
   }
@@ -601,11 +612,11 @@ fn compare_dict_items(
   for i in 0..<min_len {
     let (xk, xv) = xs[i]
     let (yk, yv) = ys[i]
-    let key_cmp = compare_expr(xk, yk)
+    let key_cmp = compare_expr_canonical(xk, yk)
     if key_cmp != 0 {
       return key_cmp
     }
-    let value_cmp = compare_expr(xv, yv)
+    let value_cmp = compare_expr_canonical(xv, yv)
     if value_cmp != 0 {
       return value_cmp
     }
@@ -626,7 +637,31 @@ fn cmp_int(a : Int, b : Int) -> Int {
 
 ///|
 pub fn sort_exprs_in_place(args : Array[Expr]) -> Unit {
-  args.sort_by(compare_expr)
+  for i in 0..<args.length() {
+    args[i] = normalize_legacy_expr(args[i])
+  }
+  let mut already_sorted = true
+  for i in 1..<args.length() {
+    if compare_expr_canonical(args[i - 1], args[i]) > 0 {
+      already_sorted = false
+      break
+    }
+  }
+  if !already_sorted {
+    if args.length() <= 16 {
+      for i in 1..<args.length() {
+        let current = args[i]
+        let mut j = i
+        while j > 0 && compare_expr_canonical(args[j - 1], current) > 0 {
+          args[j] = args[j - 1]
+          j -= 1
+        }
+        args[j] = current
+      }
+    } else {
+      args.sort_by(compare_expr_canonical)
+    }
+  }
 }
 
 ///|
@@ -647,13 +682,17 @@ pub impl Eq for Expr with not_equal(self, other : Expr) -> Bool {
 ///|
 pub impl Hash for Expr with hash(self) -> Int {
   let hasher = Hasher::new()
-  self.hash_combine(hasher)
+  hash_expr_canonical(normalize_legacy_expr(self), hasher)
   hasher.finalize()
 }
 
 ///|
 pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
-  let expr = normalize_legacy_expr(self)
+  hash_expr_canonical(normalize_legacy_expr(self), hasher)
+}
+
+///|
+fn hash_expr_canonical(expr : Expr, hasher : Hasher) -> Unit {
   hasher.combine_int(variant_rank(expr))
   match expr {
     Expr::Number(n) => n.hash_combine(hasher)
@@ -676,7 +715,7 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
     Expr::Wild(name, exclude, properties) => {
       hasher.combine_string(name)
       for item in exclude {
-        item.hash_combine(hasher)
+        hash_expr_canonical(item, hasher)
       }
       for property in properties {
         hasher.combine_string(wild_property_name(property))
@@ -691,50 +730,57 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
     Expr::FunctionHead(name) => hasher.combine_string(name)
     Expr::UndefinedFunction(name) => hasher.combine_string(name)
     Expr::Apply(head, args) => {
-      head.hash_combine(hasher)
+      hash_expr_canonical(head, hasher)
       for child in args {
-        child.hash_combine(hasher)
+        hash_expr_canonical(child, hasher)
       }
     }
     Expr::Pow(base, exp) => {
-      base.hash_combine(hasher)
-      exp.hash_combine(hasher)
+      hash_expr_canonical(base, hasher)
+      hash_expr_canonical(exp, hasher)
     }
     Expr::Mod(lhs, rhs) => {
-      lhs.hash_combine(hasher)
-      rhs.hash_combine(hasher)
+      hash_expr_canonical(lhs, hasher)
+      hash_expr_canonical(rhs, hasher)
     }
     Expr::Mul(args) | Expr::Add(args) | Expr::Tuple(args) =>
       for child in args {
-        child.hash_combine(hasher)
+        hash_expr_canonical(child, hasher)
       }
     Expr::Dict(items) =>
       for item in items {
         let (key, value) = item
-        key.hash_combine(hasher)
-        value.hash_combine(hasher)
+        hash_expr_canonical(key, hasher)
+        hash_expr_canonical(value, hasher)
       }
     Expr::Relational(op, lhs, rhs) => {
       hasher.combine_int(compare_relop(op, RelOp::Eq))
-      lhs.hash_combine(hasher)
-      rhs.hash_combine(hasher)
+      hash_expr_canonical(lhs, hasher)
+      hash_expr_canonical(rhs, hasher)
     }
     Expr::Derivative(inner, deriv_args) => {
-      inner.hash_combine(hasher)
+      hash_expr_canonical(inner, hasher)
       for arg in deriv_args {
-        arg.hash_combine(hasher)
+        hash_expr_canonical(arg, hasher)
       }
     }
     Expr::Subs(inner, variable, value) => {
-      subs_canonical_inner(inner, variable, value).hash_combine(hasher)
+      hash_expr_canonical(subs_canonical_inner(inner, variable, value), hasher)
       for pair in subs_hashable_pairs(inner, variable, value) {
-        pair.hash_combine(hasher)
+        hash_expr_canonical(pair, hasher)
       }
     }
     Expr::Lambda(vars, body) => {
-      vars.hash_combine(hasher)
-      body.hash_combine(hasher)
+      hash_expr_canonical(vars, hasher)
+      hash_expr_canonical(body, hasher)
     }
     Expr::Function(_, _) => abort("legacy function should be normalized")
   }
+}
+
+///|
+pub fn hash_expr_normalized(expr : Expr) -> Int {
+  let hasher = Hasher::new()
+  hash_expr_canonical(expr, hasher)
+  hasher.finalize()
 }

@@ -7,6 +7,7 @@ import {
   "CAIMEOX/symbit/symmatrices",
   "CAIMEOX/symbit/sympolys",
   "CAIMEOX/symbit/symsets",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -146,15 +147,14 @@ pub(all) suberror SolverError {
   ShapeError(String)
   InfeasibleLPError(String)
   UnboundedLPError(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for SolverError
 
 // Types and methods
 pub enum DiopSolveResult {
   Tuple(Array[@symcore.Expr])
   Set(@symsets.Set)
 }
-
-type DomainMembership
 
 pub enum InequalityResult {
   Set(@symsets.Set)

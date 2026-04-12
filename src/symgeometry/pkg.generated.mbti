@@ -3,6 +3,7 @@ package "CAIMEOX/symbit/symgeometry"
 
 import {
   "CAIMEOX/symbit/symcore",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -95,7 +96,7 @@ pub suberror GeometryError {
   ValueError(String)
   TypeError(String)
   Undecidable(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
 pub struct Circle {

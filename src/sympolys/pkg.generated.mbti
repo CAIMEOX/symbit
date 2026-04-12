@@ -5,6 +5,7 @@ import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
   "moonbitlang/core/bigint",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -935,7 +936,7 @@ pub struct AlgExtSpec {
 
 pub struct ComplexField {
   precision : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ComplexField::add(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn ComplexField::coerce_complex(Self, @symcore.Expr) -> @symcore.ComplexFloat raise PolyError
 pub fn ComplexField::conjugate(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
@@ -1410,7 +1411,7 @@ pub fn PolyBuilder::order(Self, TermOrder) -> Self
 
 pub struct RealField {
   precision : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn RealField::add(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn RealField::coerce_float(Self, @symcore.Expr) -> @symcore.Float raise PolyError
 pub fn RealField::contains_expr(Self, @symcore.Expr) -> Bool

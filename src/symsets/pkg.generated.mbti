@@ -52,8 +52,6 @@ pub fn universal_set() -> Set
 // Errors
 
 // Types and methods
-type IntervalBound
-
 pub(all) enum Set {
   EmptySet
   UniversalSet
