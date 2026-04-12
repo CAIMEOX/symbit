@@ -230,3 +230,35 @@ test "symplotting textplot matches SymPy for sqrt branch over reals" {
     joined_lines(expected),
   )
 }
+
+///|
+test "symplotting textplot rejects expressions with more than one free symbol" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  ignore(
+    try {
+      ignore(textplot_str(@symcore.add([x, y]), @symcore.int(-1), @symcore.int(1)))
+      fail("expected multi-variable error")
+    } catch {
+      PlottingError::ValueError(message) =>
+        assert_true(message.contains("The expression must have a single variable."))
+      _ => fail("unexpected error")
+    },
+  )
+}
+
+///|
+test "symplotting textplot rejects non-real numeric bounds" {
+  let x = @symcore.Expr::Symbol("x")
+  let imag = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  ignore(
+    try {
+      ignore(textplot_str(x, imag, @symcore.int(1)))
+      fail("expected bounds error")
+    } catch {
+      PlottingError::ValueError(message) =>
+        inspect(message, content="textplot bounds must be real numeric expressions")
+      _ => fail("unexpected error")
+    },
+  )
+}

@@ -109,3 +109,34 @@ pub fn oracle_textplot_lines(
   .map(StringView::to_string)
 }
 
+///|
+pub fn oracle_plot_text_lines(
+  expr_text : String,
+  var_text : String,
+  a_text : String,
+  b_text : String,
+) -> Array[String] raise {
+  let script = "import io\n" +
+    "import warnings\n" +
+    "from contextlib import redirect_stdout\n" +
+    "from sympy import sympify\n" +
+    "from sympy.plotting import plot\n" +
+    "__buffer__ = io.StringIO()\n" +
+    "with warnings.catch_warnings():\n" +
+    "    warnings.simplefilter('ignore')\n" +
+    "    with redirect_stdout(__buffer__):\n" +
+    "        plot(sympify(" +
+    plotting_python_string_literal(expr_text) +
+    "), (sympify(" +
+    plotting_python_string_literal(var_text) +
+    "), sympify(" +
+    plotting_python_string_literal(a_text) +
+    "), sympify(" +
+    plotting_python_string_literal(b_text) +
+    ")), backend='text')\n" +
+    "__result__ = chr(31).join(__buffer__.getvalue().rstrip('\\n').splitlines())\n"
+  plotting_exec_result_str(script)
+  .split("\u001f")
+  .to_array()
+  .map(StringView::to_string)
+}
