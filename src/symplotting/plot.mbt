@@ -22,7 +22,9 @@ fn plot_default_symbol() -> @symcore.Expr {
 }
 
 ///|
-fn plot_range_symbol(range : @symcore.Expr) -> @symcore.Expr raise PlottingError {
+fn plot_range_symbol(
+  range : @symcore.Expr,
+) -> @symcore.Expr raise PlottingError {
   match range {
     @symcore.Expr::Tuple([symbol, _, _]) if is_plot_range(range) => symbol
     _ =>
@@ -134,7 +136,9 @@ fn plot_unpack(
 fn plot_build_line_specs(
   args : Array[PlotInput],
 ) -> Array[(@symcore.Expr, @symcore.Expr, String?, Map[String, String]?)] raise PlottingError {
-  let specs : Array[(@symcore.Expr, @symcore.Expr, String?, Map[String, String]?)] = []
+  let specs : Array[
+    (@symcore.Expr, @symcore.Expr, String?, Map[String, String]?),
+  ] = []
   let (exprs, ranges, label, rendering_kw, groups) = plot_unpack(args)
 
   if !exprs.is_empty() {
@@ -145,10 +149,13 @@ fn plot_build_line_specs(
   }
 
   for group in groups {
-    let (group_exprs, group_ranges, group_label, group_rendering_kw, nested) =
-      plot_unpack(group)
+    let (group_exprs, group_ranges, group_label, group_rendering_kw, nested) = plot_unpack(
+      group,
+    )
     if !nested.is_empty() {
-      raise PlottingError::ValueError("Nested grouped plotting arguments are not supported")
+      raise PlottingError::ValueError(
+        "Nested grouped plotting arguments are not supported",
+      )
     }
     let resolved_ranges = plot_create_ranges(group_exprs, group_ranges, 1)
     for expr in group_exprs {
@@ -167,20 +174,40 @@ pub fn plot_factory(
   xlabel? : String? = None,
   ylabel? : String? = None,
   zlabel? : String? = None,
+  aspect_ratio? : String = "auto",
+  axis_center? : String = "auto",
+  axis? : Bool = true,
+  xscale? : String = "linear",
+  yscale? : String = "linear",
+  legend? : Bool = false,
+  autoscale? : Bool = true,
+  margin? : Int = 0,
 ) -> Plot raise PlottingError {
   if backend != "default" && backend != "text" && backend != "matplotlib" {
     raise PlottingError::TypeError(
       "backend must be either 'default', 'text' or 'matplotlib'",
     )
   }
-  let resolved_backend = if backend == "default" { "matplotlib" } else { backend }
+  let resolved_backend = if backend == "default" {
+    "matplotlib"
+  } else {
+    backend
+  }
   plot_object(
     series,
     backend_name=resolved_backend,
-    title=title,
-    xlabel=xlabel,
-    ylabel=ylabel,
-    zlabel=zlabel,
+    title~,
+    xlabel~,
+    ylabel~,
+    zlabel~,
+    aspect_ratio~,
+    axis_center~,
+    axis~,
+    xscale~,
+    yscale~,
+    legend~,
+    autoscale~,
+    margin~,
   )
 }
 
@@ -197,7 +224,14 @@ pub fn plot(
   xlabel? : String? = None,
   ylabel? : String? = None,
   zlabel? : String? = None,
+  aspect_ratio? : String = "auto",
+  axis_center? : String = "auto",
+  axis? : Bool = true,
   xscale? : String = "linear",
+  yscale? : String = "linear",
+  legend? : Bool = false,
+  autoscale? : Bool = true,
+  margin? : Int = 0,
 ) -> Plot raise PlottingError {
   let specs = plot_build_line_specs(args)
   let series : Array[LineOver1DRangeSeries] = []
@@ -207,21 +241,23 @@ pub fn plot(
       line_over_1d_range_series(
         expr,
         range,
-        label=label,
-        rendering_kw=rendering_kw,
-        adaptive=adaptive,
-        only_integers=only_integers,
-        n=n,
-        return_mode=return_mode,
-        xscale=xscale,
+        label~,
+        rendering_kw~,
+        adaptive~,
+        only_integers~,
+        n~,
+        return_mode~,
+        xscale~,
       ),
     )
   }
 
-  let free = plot_free_symbols(specs.map(spec => {
-    let (expr, _, _, _) = spec
-    expr
-  }))
+  let free = plot_free_symbols(
+    specs.map(spec => {
+      let (expr, _, _, _) = spec
+      expr
+    }),
+  )
   let plot_var = match free {
     [symbol, ..] => symbol
     _ => plot_default_symbol()
@@ -237,11 +273,19 @@ pub fn plot(
 
   let backend_obj = plot_factory(
     series,
-    backend=backend,
-    title=title,
+    backend~,
+    title~,
     xlabel=resolved_xlabel,
     ylabel=resolved_ylabel,
-    zlabel=zlabel,
+    zlabel~,
+    aspect_ratio~,
+    axis_center~,
+    axis~,
+    xscale~,
+    yscale~,
+    legend~,
+    autoscale~,
+    margin~,
   )
   if show {
     backend_obj.show()

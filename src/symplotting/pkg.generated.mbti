@@ -13,11 +13,11 @@ pub fn line_over_1d_range_series(@symcore.Expr, @symcore.Expr, label? : String?,
 
 pub fn linspace(Double, Double, Int) -> Array[Double]
 
-pub fn plot(Array[PlotInput], show? : Bool, backend? : String, adaptive? : Bool, only_integers? : Bool, n? : Int, return_mode? : String?, title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?, xscale? : String) -> Plot raise PlottingError
+pub fn plot(Array[PlotInput], show? : Bool, backend? : String, adaptive? : Bool, only_integers? : Bool, n? : Int, return_mode? : String?, title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?, aspect_ratio? : String, axis_center? : String, axis? : Bool, xscale? : String, yscale? : String, legend? : Bool, autoscale? : Bool, margin? : Int) -> Plot raise PlottingError
 
 pub fn plot_expr(@symcore.Expr) -> PlotInput
 
-pub fn plot_factory(Array[LineOver1DRangeSeries], backend? : String, title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?) -> Plot raise PlottingError
+pub fn plot_factory(Array[LineOver1DRangeSeries], backend? : String, title? : String?, xlabel? : String?, ylabel? : String?, zlabel? : String?, aspect_ratio? : String, axis_center? : String, axis? : Bool, xscale? : String, yscale? : String, legend? : Bool, autoscale? : Bool, margin? : Int) -> Plot raise PlottingError
 
 pub fn plot_group(Array[PlotInput]) -> PlotInput
 

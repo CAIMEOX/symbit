@@ -55,7 +55,7 @@ fn textplot_ljust(text : String, width : Int) -> String {
 
 ///|
 fn textplot_expr_to_double(expr : @symcore.Expr) -> Double raise PlottingError {
-  try @symutilities.lambdify([], expr).call([]) catch {
+  @symutilities.lambdify([], expr).call([]) catch {
     _ =>
       raise PlottingError::ValueError(
         "textplot bounds must be real numeric expressions",
@@ -64,17 +64,16 @@ fn textplot_expr_to_double(expr : @symcore.Expr) -> Double raise PlottingError {
 }
 
 ///|
-fn textplot_eval_value(
-  expr : @symcore.Expr,
-  sample : Double,
-) -> Double? {
-  try Some(@symutilities.lambdify(["__plot_var"], expr).call([sample])) catch {
+fn textplot_eval_value(expr : @symcore.Expr, sample : Double) -> Double? {
+  Some(@symutilities.lambdify(["__plot_var"], expr).call([sample])) catch {
     _ => None
   }
 }
 
 ///|
-fn textplot_single_variable(expr : @symcore.Expr) -> @symcore.Expr raise PlottingError {
+fn textplot_single_variable(
+  expr : @symcore.Expr,
+) -> @symcore.Expr raise PlottingError {
   let free = @symcore.free_symbols(expr)
   if free.length() > 1 {
     let rendered = free.map(@symprint.to_string).join(", ")
@@ -120,8 +119,9 @@ pub fn rescale(
         if !@symcore.Float::from_double(normalized).is_finite() {
           out.push(None)
         } else {
-          let scaled =
-            (normalized * height.to_double() + height.to_double() / 2.0) *
+          let scaled = (
+              normalized * height.to_double() + height.to_double() / 2.0
+            ) *
             (height - 1).to_double() /
             height.to_double()
           out.push(Some(@math.floor(scaled + 0.5).to_int()))
@@ -159,9 +159,8 @@ pub fn textplot_str(
   let valid : Array[Double] = []
   for item in y_values {
     match item {
-      Some(value) if @symcore.Float::from_double(value).is_finite() => valid.push(
-        value,
-      )
+      Some(value) if @symcore.Float::from_double(value).is_finite() =>
+        valid.push(value)
       _ => ()
     }
   }
@@ -213,10 +212,10 @@ pub fn textplot_str(
         let left = if i == 0 { None } else { scaled_y[i - 1] }
         let right = if i == width - 1 { None } else { scaled_y[i + 1] }
         let glyph = if (left == Some(h - 1) || i == 0) &&
-            (right == Some(h + 1) || i == width - 1) {
+          (right == Some(h + 1) || i == width - 1) {
           '/'
         } else if (left == Some(h + 1) || i == 0) &&
-            (right == Some(h - 1) || i == width - 1) {
+          (right == Some(h - 1) || i == width - 1) {
           '\\'
         } else {
           '.'
@@ -248,7 +247,10 @@ pub fn textplot_str(
   let mut bottom = textplot_repeat(' ', margin + 2)
   bottom += textplot_ljust(textplot_format_number(x_values[0]), width / 2)
   if width % 2 == 1 {
-    bottom += textplot_ljust(textplot_format_number(x_values[width / 2]), width / 2)
+    bottom += textplot_ljust(
+      textplot_format_number(x_values[width / 2]),
+      width / 2,
+    )
   } else {
     bottom += textplot_ljust(
       textplot_format_number(x_values[width / 2]),

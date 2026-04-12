@@ -101,10 +101,7 @@ pub fn Plot::getitem(
 }
 
 ///|
-pub fn Plot::append(
-  self : Plot,
-  arg : LineOver1DRangeSeries,
-) -> Plot {
+pub fn Plot::append(self : Plot, arg : LineOver1DRangeSeries) -> Plot {
   let series = self.series_.copy()
   series.push(arg)
   Plot::{
@@ -126,10 +123,7 @@ pub fn Plot::append(
 }
 
 ///|
-pub fn Plot::extend(
-  self : Plot,
-  other : Plot,
-) -> Plot {
+pub fn Plot::extend(self : Plot, other : Plot) -> Plot {
   let series = self.series_.copy()
   for item in other.series_ {
     series.push(item)
@@ -155,7 +149,9 @@ pub fn Plot::extend(
 ///|
 pub fn Plot::render_lines(self : Plot) -> Array[String] raise PlottingError {
   if self.backend_name_ != "text" {
-    raise PlottingError::TypeError("render_lines is only available on the text backend")
+    raise PlottingError::TypeError(
+      "render_lines is only available on the text backend",
+    )
   }
   text_backend(self).render_lines()
 }

@@ -38,7 +38,9 @@ pub fn TextBackend::getitem(
 }
 
 ///|
-pub fn TextBackend::render_lines(self : TextBackend) -> Array[String] raise PlottingError {
+pub fn TextBackend::render_lines(
+  self : TextBackend,
+) -> Array[String] raise PlottingError {
   if self.plot_.series().length() != 1 {
     raise PlottingError::ValueError(
       "The TextBackend supports only one graph per Plot.",

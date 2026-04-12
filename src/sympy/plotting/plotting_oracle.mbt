@@ -9,7 +9,9 @@ fn plotting_python_string_literal(value : String) -> String {
 }
 
 ///|
-fn plotting_py_callable_from_enum(obj : @py.PyObjectEnum) -> @py.PyCallable raise {
+fn plotting_py_callable_from_enum(
+  obj : @py.PyObjectEnum,
+) -> @py.PyCallable raise {
   match obj {
     PyCallable(callable) => callable
     PyClass(obj0) =>
@@ -59,13 +61,16 @@ fn plotting_exec_result_str(script : String) -> String raise {
       @sympy.OracleArg::PyObj(globals.obj()),
       @sympy.OracleArg::PyObj(globals.obj()),
     ])
-    ignore(@sympy.py_call_object(plotting_py_callable_from_enum(exec_obj), exec_args))
+    ignore(
+      @sympy.py_call_object(plotting_py_callable_from_enum(exec_obj), exec_args),
+    )
     let eval_args = @sympy.py_pack_args([
       @sympy.OracleArg::Str("__result__"),
       @sympy.OracleArg::PyObj(globals.obj()),
       @sympy.OracleArg::PyObj(globals.obj()),
     ])
-    match @sympy.py_call_object(plotting_py_callable_from_enum(eval_obj), eval_args) {
+    match
+      @sympy.py_call_object(plotting_py_callable_from_enum(eval_obj), eval_args) {
       Some(obj) => plotting_py_str_obj(@sympy.objenum_to_obj(obj))
       None => fail("py-eval-result-none")
     }

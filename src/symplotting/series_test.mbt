@@ -47,7 +47,9 @@ test "symplotting line series supports logarithmic discretization" {
 ///|
 test "symplotting line series supports complex return modes on uniform data" {
   let x = @symcore.Expr::Symbol("x")
-  let imag = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let imag = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::ImaginaryUnit,
+  )
   let expr = @symcore.mul([imag, x])
   let series = line_over_1d_range_series(
     expr,

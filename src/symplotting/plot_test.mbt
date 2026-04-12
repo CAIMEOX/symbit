@@ -26,7 +26,10 @@ test "symplotting plot creates text backend over explicit range" {
 ///|
 test "symplotting plot creates default range like SymPy" {
   let x = @symcore.Expr::Symbol("x")
-  let backend = plot([plot_expr(@symcore.add([x, @symcore.int(1)]))], show=false)
+  let backend = plot(
+    [plot_expr(@symcore.add([x, @symcore.int(1)]))],
+    show=false,
+  )
   let series = backend.series()
   assert_eq(series.length(), 1)
   assert_eq(backend.backend(), "matplotlib")
@@ -90,7 +93,10 @@ test "symplotting text backend rejects multiple series like SymPy" {
       fail("expected text backend error")
     } catch {
       PlottingError::ValueError(message) =>
-        inspect(message, content="The TextBackend supports only one graph per Plot.")
+        inspect(
+          message,
+          content="The TextBackend supports only one graph per Plot.",
+        )
       _ => fail("unexpected error")
     },
   )
@@ -142,4 +148,31 @@ test "symplotting plot accepts text frontend and exposes uniform data" {
   let (xs, ys) = backend.get_points(0)
   assert_eq(xs.length(), 30)
   assert_eq(ys.length(), 30)
+}
+
+///|
+test "symplotting plot stores frontend metadata like SymPy plot kwargs" {
+  let x = @symcore.Expr::Symbol("x")
+  let backend = plot(
+    [plot_expr(@symcore.function("sin", [x]))],
+    show=false,
+    backend="matplotlib",
+    legend=true,
+    aspect_ratio="1:1",
+    axis_center="center",
+    axis=false,
+    xscale="log",
+    yscale="log",
+    autoscale=false,
+    margin=3,
+  )
+  assert_eq(backend.backend(), "matplotlib")
+  assert_true(backend.legend)
+  assert_eq(backend.aspect_ratio, "1:1")
+  assert_eq(backend.axis_center, "center")
+  assert_false(backend.axis)
+  assert_eq(backend.xscale, "log")
+  assert_eq(backend.yscale, "log")
+  assert_false(backend.autoscale)
+  assert_eq(backend.margin, 3)
 }

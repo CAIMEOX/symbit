@@ -46,7 +46,9 @@ pub fn LineOver1DRangeSeries::to_string(self : LineOver1DRangeSeries) -> String 
 }
 
 ///|
-pub fn LineOver1DRangeSeries::plot_var(self : LineOver1DRangeSeries) -> @symcore.Expr {
+pub fn LineOver1DRangeSeries::plot_var(
+  self : LineOver1DRangeSeries,
+) -> @symcore.Expr {
   self.variable
 }
 
@@ -58,14 +60,11 @@ pub fn LineOver1DRangeSeries::nb_of_points(self : LineOver1DRangeSeries) -> Int 
 ///|
 fn plot_expr_to_double(expr : @symcore.Expr) -> Double? {
   match @symcore.evalf(expr, prec=80) {
-    @symcore.Expr::Float(value) =>
-      try Some(value.to_double()) catch {
-        _ => None
-      }
+    @symcore.Expr::Float(value) => Some(value.to_double()) catch { _ => None }
     @symcore.Expr::ComplexFloat(value) => {
       let imag = value.imag_part()
       if imag.format(dps=12).has_prefix("0") {
-        try Some(value.real_part().to_double()) catch {
+        Some(value.real_part().to_double()) catch {
           _ => None
         }
       } else {
@@ -82,16 +81,18 @@ fn plot_eval_numeric(
   variable : @symcore.Expr,
   sample : Double,
 ) -> (Double, Double)? {
-  let sample_expr = @symcore.Expr::Float(@symcore.Float::from_double(sample, prec=80))
+  let sample_expr = @symcore.Expr::Float(
+    @symcore.Float::from_double(sample, prec=80),
+  )
   let substituted = @symcore.xreplace(expr, [(variable, sample_expr)])
   let evaluated = @symcore.evalf(substituted, prec=80)
   match evaluated {
     @symcore.Expr::Float(value) =>
-      try Some((value.to_double(), 0.0)) catch {
+      Some((value.to_double(), 0.0)) catch {
         _ => None
       }
     @symcore.Expr::ComplexFloat(value) =>
-      try Some((value.real_part().to_double(), value.imag_part().to_double())) catch {
+      Some((value.real_part().to_double(), value.imag_part().to_double())) catch {
         _ => None
       }
     _ => None
@@ -99,7 +100,11 @@ fn plot_eval_numeric(
 }
 
 ///|
-fn plot_geomspace(start : Double, end : Double, count : Int) -> Array[Double] raise PlottingError {
+fn plot_geomspace(
+  start : Double,
+  end : Double,
+  count : Int,
+) -> Array[Double] raise PlottingError {
   if start == 0.0 || end == 0.0 {
     raise PlottingError::ValueError("log scale requires non-zero range bounds")
   }
@@ -136,7 +141,7 @@ fn plot_discretize(
     let lo = @math.ceil(start).to_int()
     let hi = @math.floor(end).to_int()
     let out : Array[Double] = []
-    for i in lo..=hi {
+    for i in lo..<=hi {
       out.push(i.to_double())
     }
     return out
@@ -174,12 +179,7 @@ pub fn LineOver1DRangeSeries::get_points(
     match plot_eval_numeric(self.expr, self.variable, value) {
       Some((real, imag)) => {
         let output = match self.return_mode {
-          None =>
-            if imag.abs() <= 1.0e-8 {
-              Some(real)
-            } else {
-              None
-            }
+          None => if imag.abs() <= 1.0e-8 { Some(real) } else { None }
           Some("real") => Some(real)
           Some("imag") => Some(imag)
           Some("abs") => Some((real * real + imag * imag).sqrt())

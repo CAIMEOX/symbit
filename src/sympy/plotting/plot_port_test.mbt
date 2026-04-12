@@ -36,7 +36,13 @@ fn assert_plot_text_oracle(
 ///|
 test "plotting parity text backend plot matches SymPy public cases" {
   let x = @symcore.Expr::Symbol("x")
-  assert_plot_text_oracle("identity_text_backend", x, x, @symcore.int(0), @symcore.int(3))
+  assert_plot_text_oracle(
+    "identity_text_backend",
+    x,
+    x,
+    @symcore.int(0),
+    @symcore.int(3),
+  )
   assert_plot_text_oracle(
     "quadratic_shift_text_backend",
     @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)]),
