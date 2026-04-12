@@ -60,6 +60,63 @@ fn factorint_naive(n0 : BigInt) -> Map[BigInt, Int] raise {
 }
 
 ///|
+fn mobius_small_int(n0 : Int) -> Int {
+  if n0 == 1 {
+    return 1
+  }
+  let mut n = n0
+  let mut count = 0
+
+  if n % 2 == 0 {
+    n /= 2
+    count += 1
+    if n % 2 == 0 {
+      return 0
+    }
+  }
+
+  if n % 3 == 0 {
+    n /= 3
+    count += 1
+    if n % 3 == 0 {
+      return 0
+    }
+  }
+
+  let mut d = 5
+  while d * d <= n {
+    if n % d == 0 {
+      n /= d
+      count += 1
+      if n % d == 0 {
+        return 0
+      }
+    }
+    d += 2
+    if d * d > n {
+      break
+    }
+    if n % d == 0 {
+      n /= d
+      count += 1
+      if n % d == 0 {
+        return 0
+      }
+    }
+    d += 4
+  }
+
+  if n > 1 {
+    count += 1
+  }
+  if count % 2 == 0 {
+    1
+  } else {
+    -1
+  }
+}
+
+///|
 fn totient_naive(n : BigInt) -> BigInt raise {
   if n == bi(0) {
     return bi(0)
@@ -301,7 +358,13 @@ pub fn mobius(n0 : BigInt) -> Int raise {
   if n == bi(1) {
     return 1
   }
-  let factors = factorint_naive(n)
+  if n.bit_length() <= 30 {
+    return mobius_small_int(n.to_int())
+  }
+  if isprime(n) {
+    return -1
+  }
+  let factors = factorint(n)
   let mut count = 0
   for _, exp in factors {
     if exp > 1 {

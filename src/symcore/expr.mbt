@@ -835,19 +835,18 @@ pub fn add(args : Array[Expr]) -> Expr {
   }
   let bases : Array[Expr] = []
   let coeffs : Array[@symnum.BigRational] = []
-  let base_index : Map[String, Int] = {}
+  let base_index : Map[Expr, Int] = {}
   let passthrough : Array[Expr] = []
   for term in flat {
     match split_add_term_coeff(term) {
       Some((coeff, base)) => {
-        let key = base.to_string()
-        match base_index.get(key) {
+        match base_index.get(base) {
           Some(index) => coeffs[index] = coeffs[index].add_r(coeff)
           None => {
             let index = bases.length()
             bases.push(base)
             coeffs.push(coeff)
-            base_index[key] = index
+            base_index[base] = index
           }
         }
       }
