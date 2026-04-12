@@ -823,17 +823,44 @@ pub fn DomainMatrix::from_Matrix(
 ) -> DomainMatrix raise PolyError {
   let nrows = rows.length()
   let ncols = if nrows == 0 { 0 } else { rows[0].length() }
-  let dm = DomainMatrix::from_list_sympy(
-    nrows,
-    ncols,
-    rows,
-    field~,
-    gaussian~,
-    modulus~,
-  )
   match fmt {
-    "dense" => dm
-    "sparse" => dm.to_sparse()
+    "dense" =>
+      DomainMatrix::from_list_sympy(
+        nrows,
+        ncols,
+        rows,
+        field~,
+        gaussian~,
+        modulus~,
+      )
+    "sparse" => {
+      let zero_expr = @symcore.int(0)
+      let dod : MatrixExprDOD = Map::new()
+      for i in 0..<nrows {
+        let row = rows[i]
+        if row.length() != ncols {
+          raise PolyError::DomainMismatch
+        }
+        let sparse_row : Map[Int, Expr] = Map::new()
+        for j in 0..<ncols {
+          let value = row[j]
+          if value != zero_expr {
+            sparse_row[j] = value
+          }
+        }
+        if !sparse_row.is_empty() {
+          dod[i] = sparse_row
+        }
+      }
+      DomainMatrix::from_dict_sympy(
+        nrows,
+        ncols,
+        dod,
+        field~,
+        gaussian~,
+        modulus~,
+      )
+    }
     _ => raise PolyError::DomainMismatch
   }
 }
@@ -1519,7 +1546,26 @@ pub fn DomainMatrix::diagonal(
 
 ///|
 pub fn DomainMatrix::nnz(self : DomainMatrix) -> Int raise PolyError {
-  dense_matrix_nonzero_entries(self.to_dense()).length()
+  match self.rep {
+    DomainMatrixRep::Dense(rows) => {
+      let mut total = 0
+      for row in rows {
+        for value in row {
+          if !fe_is_zero(value) {
+            total += 1
+          }
+        }
+      }
+      total
+    }
+    DomainMatrixRep::Sparse(entries) => {
+      let mut total = 0
+      for _, row in entries {
+        total += row.length()
+      }
+      total
+    }
+  }
 }
 
 ///|

@@ -406,7 +406,11 @@ fn matrix_exact_charpoly_expr(
   matrix : Matrix,
   x : Expr,
 ) -> Expr raise MatrixError {
-  let ddm = (@sympolys.DomainMatrix::from_Matrix(
+  match matrix_exact_integer_data(matrix.to_list()) {
+    Some(data) => return exact_integer_charpoly_expr(data, x)
+    None => ()
+  }
+  let dm = (@sympolys.DomainMatrix::from_Matrix(
     matrix.to_list(),
     fmt="dense",
   ) catch {
@@ -414,19 +418,14 @@ fn matrix_exact_charpoly_expr(
       raise MatrixError::ValueError(
         "matrix entries are not supported by the exact DomainMatrix charpoly path",
       )
-  }).to_ddm() catch {
-    _ =>
-      raise MatrixError::ValueError(
-        "exact DomainMatrix charpoly conversion failed for this matrix",
-      )
-  }
-  let coeffs = ddm.charpoly() catch {
+  })
+  let coeffs = dm.charpoly_base() catch {
     _ =>
       raise MatrixError::ValueError(
         "exact DomainMatrix charpoly is not available for this matrix",
       )
   }
-  let domain = ddm.domain()
+  let domain = dm.domain
   let degree = coeffs.length() - 1
   let terms : Array[Expr] = Array::new()
   for i in 0..<coeffs.length() {
@@ -464,6 +463,22 @@ fn matrix_exact_charpoly_expr(
     @symcore.int(0)
   } else {
     @symcore.add(terms)
+  }
+}
+
+///|
+fn matrix_try_exact_charpoly_expr(
+  matrix : Matrix,
+  x : Expr,
+) -> Expr? raise MatrixError {
+  let exact : Result[Expr, MatrixError] = try? matrix_exact_charpoly_expr(
+    matrix,
+    x,
+  )
+  match exact {
+    Ok(value) => Some(value)
+    Err(MatrixError::ValueError(_)) => None
+    Err(err) => raise err
   }
 }
 
@@ -543,9 +558,11 @@ pub fn Matrix::charpoly_expr(
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError("charpoly requires a square matrix")
   }
-  match matrix_exact_rational_data(self.data) {
-    Some(_) => return matrix_exact_charpoly_expr(self, x)
-    None => ()
+  if !matrix_has_floating_leaf(self.data) {
+    match matrix_try_exact_charpoly_expr(self, x) {
+      Some(charpoly) => return charpoly
+      None => ()
+    }
   }
   let shifted = matrix_add_diag_scalar(
     self.scalar_mul(expr_neg(@symcore.int(1))),

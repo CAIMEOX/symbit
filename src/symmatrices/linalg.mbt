@@ -78,27 +78,88 @@ fn matrix_from_domain_matrix(
         "exact DomainMatrix result could not be converted back to a symbolic matrix",
       )
   }
-  matrix(rows) catch {
-    _ =>
-      raise MatrixError::ValueError(
-        "exact DomainMatrix result could not be rewrapped as a dense matrix",
-      )
+  { rows: dm.rows, cols: dm.cols, data: rows }
+}
+
+///|
+fn matrix_index_range(start : Int, end_ : Int) -> Array[Int] {
+  let out : Array[Int] = Array::new()
+  for i in start..<end_ {
+    out.push(i)
   }
+  out
 }
 
 ///|
 fn matrix_exact_inverse(matrix : Matrix) -> Matrix raise MatrixError {
-  let dm = matrix_exact_dm(matrix.to_list())
-  let (num, den) = dm.inv_den() catch {
-    _ => raise MatrixError::SingularMatrixError("matrix is singular")
+  match matrix_exact_integer_data(matrix.to_list()) {
+    Some(data) =>
+      match exact_integer_inverse(data) {
+        Some((num, den)) =>
+          return {
+            rows: matrix.rows,
+            cols: matrix.cols,
+            data: exact_integer_fraction_rows_to_expr_rows(num, den),
+          }
+        None => raise MatrixError::SingularMatrixError("matrix is singular")
+      }
+    None => ()
   }
-  let den_scalar = (@sympolys.DomainScalar::new(den, num.domain) catch {
+  let dm = matrix_exact_dm(matrix.to_list())
+  let identity = @sympolys.DomainMatrix::eye(matrix.rows, dm.domain) catch {
     _ =>
       raise MatrixError::ValueError(
-        "exact DomainMatrix inverse denominator could not be converted back to an expression",
+        "exact DomainMatrix inverse identity construction failed",
       )
-  })
-  let inverse = num.truediv(den_scalar) catch {
+  }
+  let aug = dm.hstack(identity) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix inverse augmentation failed",
+      )
+  }
+  let (aug_rref, den0, pivots) = aug.rref_den(rref_method="FF_dense") catch {
+    _ => raise MatrixError::SingularMatrixError("matrix is singular")
+  }
+  if pivots.length() != matrix.rows {
+    raise MatrixError::SingularMatrixError("matrix is singular")
+  }
+  for i in 0..<matrix.rows {
+    if pivots[i] != i {
+      raise MatrixError::SingularMatrixError("matrix is singular")
+    }
+  }
+  let num0 = aug_rref.extract(
+    matrix_index_range(0, matrix.rows),
+    matrix_index_range(matrix.rows, aug.cols),
+  ) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix inverse extraction failed",
+      )
+  }
+  let num = if @sympolys.domain_is_field_pred(num0.domain) {
+    num0
+  } else {
+    num0.to_field() catch {
+      _ =>
+        raise MatrixError::ValueError(
+          "exact DomainMatrix inverse could not be converted into its field domain",
+      )
+    }
+  }
+  let den = (@sympolys.DomainScalar::new(den0, num0.domain) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix inverse denominator could not be reconstructed",
+      )
+  }).convert_to(num.domain).element catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix inverse denominator could not be converted into the field domain",
+      )
+  }
+  let inverse = num.mul(@sympolys.fe_inv(den)) catch {
     _ =>
       raise MatrixError::ValueError(
         "exact DomainMatrix inverse could not be normalized in its field domain",
@@ -109,24 +170,93 @@ fn matrix_exact_inverse(matrix : Matrix) -> Matrix raise MatrixError {
 
 ///|
 fn matrix_exact_solve(lhs : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
+  match (matrix_exact_integer_data(lhs.to_list()), matrix_exact_integer_data(rhs.to_list())) {
+    (Some(lhs_data), Some(rhs_data)) =>
+      match exact_integer_solve(lhs_data, rhs_data) {
+        Some((num, den)) =>
+          return {
+            rows: lhs.cols,
+            cols: rhs.cols,
+            data: exact_integer_fraction_rows_to_expr_rows(num, den),
+          }
+        None => raise MatrixError::SingularMatrixError("matrix is singular")
+      }
+    _ => ()
+  }
   let lhs_dm = matrix_exact_dm(lhs.to_list())
   let rhs_dm = matrix_exact_dm(rhs.to_list())
-  let (num, den) = lhs_dm.solve_den(rhs_dm) catch {
-    _ => raise MatrixError::SingularMatrixError("matrix is singular")
-  }
-  let den_scalar = (@sympolys.DomainScalar::new(den, num.domain) catch {
+  let aug = lhs_dm.hstack(rhs_dm) catch {
     _ =>
       raise MatrixError::ValueError(
-        "exact DomainMatrix solve denominator could not be converted back to an expression",
+        "exact DomainMatrix solve augmentation failed",
       )
-  })
-  let solution = num.truediv(den_scalar) catch {
+  }
+  let (aug_rref, den0, pivots) = aug.rref_den(rref_method="FF_dense") catch {
+    _ => raise MatrixError::SingularMatrixError("matrix is singular")
+  }
+  if pivots.length() != lhs.cols {
+    raise MatrixError::SingularMatrixError("matrix is singular")
+  }
+  if !pivots.is_empty() && pivots[pivots.length() - 1] >= lhs.cols {
+    raise MatrixError::SingularMatrixError("matrix is singular")
+  }
+  let num0 = aug_rref.extract(
+    matrix_index_range(0, lhs.cols),
+    matrix_index_range(lhs.cols, aug.cols),
+  ) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix solve extraction failed",
+      )
+  }
+  let num = if @sympolys.domain_is_field_pred(num0.domain) {
+    num0
+  } else {
+    num0.to_field() catch {
+      _ =>
+        raise MatrixError::ValueError(
+          "exact DomainMatrix solve result could not be converted into its field domain",
+      )
+    }
+  }
+  let den = (@sympolys.DomainScalar::new(den0, num0.domain) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix solve denominator could not be reconstructed",
+      )
+  }).convert_to(num.domain).element catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix solve denominator could not be converted into the field domain",
+      )
+  }
+  let solution = num.mul(@sympolys.fe_inv(den)) catch {
     _ =>
       raise MatrixError::ValueError(
         "exact DomainMatrix solve result could not be normalized in its field domain",
       )
   }
   matrix_from_domain_matrix(solution)
+}
+
+///|
+fn matrix_try_exact_inverse(matrix : Matrix) -> Matrix? raise MatrixError {
+  let exact : Result[Matrix, MatrixError] = try? matrix_exact_inverse(matrix)
+  match exact {
+    Ok(value) => Some(value)
+    Err(MatrixError::ValueError(_)) => None
+    Err(err) => raise err
+  }
+}
+
+///|
+fn matrix_try_exact_solve(lhs : Matrix, rhs : Matrix) -> Matrix? raise MatrixError {
+  let exact : Result[Matrix, MatrixError] = try? matrix_exact_solve(lhs, rhs)
+  match exact {
+    Ok(value) => Some(value)
+    Err(MatrixError::ValueError(_)) => None
+    Err(err) => raise err
+  }
 }
 
 ///|
@@ -472,9 +602,11 @@ pub fn Matrix::inv(self : Matrix) -> Matrix raise MatrixError {
     raise MatrixError::NonSquareMatrixError("inverse requires a square matrix")
   }
   let n = self.rows
-  match matrix_exact_rational_data(self.data) {
-    Some(_) => return matrix_exact_inverse(self)
-    None => ()
+  if !matrix_has_floating_leaf(self.data) {
+    match matrix_try_exact_inverse(self) {
+      Some(inverse) => return inverse
+      None => ()
+    }
   }
   let numeric_prec = expr_numeric_precision(self.data)
   if matrix_has_floating_leaf(self.data) &&
@@ -580,13 +712,11 @@ pub fn Matrix::solve(self : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError("solve requires a square lhs")
   }
-  match
-    (
-      matrix_exact_rational_data(self.data),
-      matrix_exact_rational_data(rhs.data),
-    ) {
-    (Some(_), Some(_)) => return matrix_exact_solve(self, rhs)
-    _ => ()
+  if !matrix_has_floating_leaf(self.data) && !matrix_has_floating_leaf(rhs.data) {
+    match matrix_try_exact_solve(self, rhs) {
+      Some(solution) => return solution
+      None => ()
+    }
   }
   let (l, u, swaps) = self.lu()
   let permuted_rhs = clone_expr_rows(rhs.data)

@@ -689,16 +689,62 @@ fn parse_coeff_times_named_unary(
 ///|
 fn expand_mul_expr(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => @symcore.add(args.map(term => expand_mul_expr(term)))
-    Expr::Mul(args) => expand_mul_sequence(args.map(f => expand_mul_expr(f)))
-    Expr::Pow(base, exp) =>
-      @symcore.pow(expand_mul_expr(base), expand_mul_expr(exp))
+    Expr::Add(args) => {
+      let expanded : Array[Expr] = Array::new()
+      let mut changed = false
+      for arg in args {
+        let next = expand_mul_expr(arg)
+        changed = changed || next != arg
+        expanded.push(next)
+      }
+      if changed { @symcore.add(expanded) } else { expr }
+    }
+    Expr::Mul(args) => {
+      let expanded : Array[Expr] = Array::new()
+      let mut changed = false
+      let mut has_sum = false
+      for arg in args {
+        let next = expand_mul_expr(arg)
+        changed = changed || next != arg
+        match next {
+          Expr::Add(_) => has_sum = true
+          _ => ()
+        }
+        expanded.push(next)
+      }
+      if has_sum {
+        expand_mul_sequence(expanded)
+      } else if changed {
+        @symcore.mul(expanded)
+      } else {
+        expr
+      }
+    }
+    Expr::Pow(base, exp) => {
+      let base_expanded = expand_mul_expr(base)
+      let exp_expanded = expand_mul_expr(exp)
+      if base_expanded == base && exp_expanded == exp {
+        expr
+      } else {
+        @symcore.pow(base_expanded, exp_expanded)
+      }
+    }
     _ =>
       match @symcore.application_parts(expr) {
-        Some((head, args)) =>
-          @symcore.raw_apply(head, args.map(a => expand_mul_expr(a))).unwrap_or(
-            expr,
-          )
+        Some((head, args)) => {
+          let expanded : Array[Expr] = Array::new()
+          let mut changed = false
+          for arg in args {
+            let next = expand_mul_expr(arg)
+            changed = changed || next != arg
+            expanded.push(next)
+          }
+          if changed {
+            @symcore.raw_apply(head, expanded).unwrap_or(expr)
+          } else {
+            expr
+          }
+        }
         None => expr
       }
   }
