@@ -1160,6 +1160,8 @@ pub fn plot_implicit(
   adaptive? : Bool = true,
   depth? : Int = 0,
   n? : Int = 300,
+  n1? : Int? = None,
+  n2? : Int? = None,
   line_color? : String = "blue",
   show? : Bool = true,
   backend? : String = "default",
@@ -1240,7 +1242,19 @@ pub fn plot_implicit(
   }
   let range_y = plot_implicit_range_tuple(resolved_xyvar[1])
   let series = PlotSeries::Implicit(
-    implicit_series(expr, range_x, range_y, adaptive~, depth~, n~, line_color~),
+    implicit_series(
+      expr,
+      range_x,
+      range_y,
+      adaptive~,
+      depth~,
+      n~,
+      n1~,
+      n2~,
+      line_color~,
+      xscale~,
+      yscale~,
+    ),
   )
 
   let resolved_xlabel = match xlabel {

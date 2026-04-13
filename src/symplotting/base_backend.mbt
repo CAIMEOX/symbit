@@ -337,7 +337,7 @@ pub fn Plot::get_contour_data(
 pub fn Plot::get_implicit_data(
   self : Plot,
   index : Int,
-) -> (Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]], String) raise PlottingError {
+) -> ImplicitPlotData raise PlottingError {
   match self.getitem(index) {
     PlotSeries::Implicit(series) => series.get_data()
     PlotSeries::Line(_)

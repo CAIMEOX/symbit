@@ -328,17 +328,22 @@ test "symplotting implicit series samples a cartesian mesh for equalities" {
     adaptive=false,
     n=3,
   )
-  let (mesh_x, mesh_y, mesh_z, plot_type) = series.get_data()
-  assert_eq(plot_type, "contour")
-  assert_eq(mesh_x.length(), 3)
-  assert_eq(mesh_x[0].length(), 3)
-  assert_eq(mesh_x[0][1], 0.0)
-  assert_eq(mesh_y[1][0], 0.0)
-  assert_eq(mesh_z[1][1], Some(0.0))
+  match series.get_data() {
+    ImplicitPlotData::Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
+      assert_eq(plot_type, "contour")
+      assert_eq(mesh_x.length(), 3)
+      assert_eq(mesh_x[0].length(), 3)
+      assert_eq(mesh_x[0][1], 0.0)
+      assert_eq(mesh_y[1][0], 0.0)
+      assert_eq(mesh_z[1][1], Some(0.0))
+    }
+    ImplicitPlotData::Fill(_) =>
+      fail("expected mesh data")
+  }
 }
 
 ///|
-test "symplotting implicit series samples boolean regions on a cartesian mesh" {
+test "symplotting implicit series adaptive path returns fill rectangles" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let series = implicit_series(
@@ -348,11 +353,72 @@ test "symplotting implicit series samples boolean regions on a cartesian mesh" {
     adaptive=true,
     n=3,
   )
-  let (_, _, mesh_z, plot_type) = series.get_data()
-  assert_eq(plot_type, "contourf")
-  assert_eq(mesh_z.length(), 3)
-  assert_eq(mesh_z[2][0], Some(1.0))
-  assert_eq(mesh_z[0][2], Some(0.0))
+  match series.get_data() {
+    ImplicitPlotData::Fill(rectangles) => {
+      assert_true(rectangles.length() > 0)
+      assert_true(rectangles.any(rect => rect.y_end > rect.x_start))
+    }
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
   assert_eq(series.depth, 4)
   assert_eq(series.line_color, "blue")
+}
+
+///|
+test "symplotting implicit series auto-switches boolean expressions to adaptive" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let series = implicit_series(
+    @symcore.Expr::Function("And", [
+      @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Gt,
+        y,
+        @symcore.mul([@symcore.int(-1), x]),
+      ),
+    ]),
+    @symcore.Expr::Tuple([x, @symcore.int(-2), @symcore.int(2)]),
+    @symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)]),
+    adaptive=false,
+  )
+  assert_eq(series.adaptive, true)
+}
+
+///|
+test "symplotting implicit series supports independent discretization and log scales" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let series = implicit_series(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Gt,
+      @symcore.function(
+        "cos",
+        [
+        @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.pow(y, @symcore.int(2))]),
+        ],
+      ),
+      @symcore.int(0),
+    ),
+    @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)]),
+    @symcore.Expr::Tuple([y, @symcore.int(1), @symcore.int(100)]),
+    adaptive=false,
+    n1=Some(3),
+    n2=Some(3),
+    xscale="log",
+    yscale="log",
+  )
+  match series.get_data() {
+    ImplicitPlotData::Mesh(mesh_x, mesh_y, _, plot_type) => {
+      assert_eq(plot_type, "contourf")
+      assert_true((mesh_x[0][0] - 1.0).abs() <= 1.0e-12)
+      assert_true((mesh_x[0][1] - 10.0).abs() <= 1.0e-10)
+      assert_true((mesh_x[0][2] - 100.0).abs() <= 1.0e-8)
+      assert_true((mesh_y[0][0] - 1.0).abs() <= 1.0e-12)
+      assert_true((mesh_y[1][0] - 10.0).abs() <= 1.0e-10)
+      assert_true((mesh_y[2][0] - 100.0).abs() <= 1.0e-8)
+    }
+    ImplicitPlotData::Fill(_) =>
+      fail("expected mesh data")
+  }
 }

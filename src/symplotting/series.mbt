@@ -780,6 +780,137 @@ fn plot_implicit_scalar_expr(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+fn plot_implicit_requires_adaptive(expr : @symcore.Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Relational(@symcore.RelOp::Ne, _, _) => true
+    @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), _)
+    | @symcore.Expr::Function(name, _) =>
+      name == "And" || name == "Or" || name == "Not" || name == "Xor"
+    _ => false
+  }
+}
+
+///|
+fn plot_implicit_subdivide_rect(
+  rect : ImplicitRectangle,
+) -> Array[ImplicitRectangle] {
+  let mid_x = (rect.x_start + rect.x_end) / 2.0
+  let mid_y = (rect.y_start + rect.y_end) / 2.0
+  [
+    ImplicitRectangle::{
+      x_start: rect.x_start,
+      x_end: mid_x,
+      y_start: rect.y_start,
+      y_end: mid_y,
+    },
+    ImplicitRectangle::{
+      x_start: rect.x_start,
+      x_end: mid_x,
+      y_start: mid_y,
+      y_end: rect.y_end,
+    },
+    ImplicitRectangle::{
+      x_start: mid_x,
+      x_end: rect.x_end,
+      y_start: rect.y_start,
+      y_end: mid_y,
+    },
+    ImplicitRectangle::{
+      x_start: mid_x,
+      x_end: rect.x_end,
+      y_start: mid_y,
+      y_end: rect.y_end,
+    },
+  ]
+}
+
+///|
+fn plot_implicit_sample_points(
+  rect : ImplicitRectangle,
+) -> Array[(Double, Double)] {
+  let mid_x = (rect.x_start + rect.x_end) / 2.0
+  let mid_y = (rect.y_start + rect.y_end) / 2.0
+  [
+    (rect.x_start, rect.y_start),
+    (rect.x_start, rect.y_end),
+    (rect.x_end, rect.y_start),
+    (rect.x_end, rect.y_end),
+    (mid_x, mid_y),
+  ]
+}
+
+///|
+fn plot_implicit_equality_candidate(
+  expr : @symcore.Expr,
+  variable_x : @symcore.Expr,
+  sample_x_imag : Double,
+  variable_y : @symcore.Expr,
+  sample_y_imag : Double,
+  rect : ImplicitRectangle,
+) -> Bool {
+  let scalar_expr = plot_implicit_scalar_expr(expr)
+  let mut saw_positive = false
+  let mut saw_negative = false
+  let mut saw_unknown = false
+  for sample in plot_implicit_sample_points(rect) {
+    let (x, y) = sample
+    match
+      plot_implicit_eval_real_2d(
+        scalar_expr,
+        variable_x,
+        x,
+        sample_x_imag,
+        variable_y,
+        y,
+        sample_y_imag,
+      ) {
+      Some(value) =>
+        if value.abs() <= 1.0e-8 {
+          return true
+        } else if value > 0.0 {
+          saw_positive = true
+        } else {
+          saw_negative = true
+        }
+      None => saw_unknown = true
+    }
+  }
+  saw_unknown || (saw_positive && saw_negative)
+}
+
+///|
+fn plot_implicit_boolean_candidate(
+  expr : @symcore.Expr,
+  variable_x : @symcore.Expr,
+  sample_x_imag : Double,
+  variable_y : @symcore.Expr,
+  sample_y_imag : Double,
+  rect : ImplicitRectangle,
+) -> (Bool, Bool, Bool) {
+  let mut saw_true = false
+  let mut saw_false = false
+  let mut saw_unknown = false
+  for sample in plot_implicit_sample_points(rect) {
+    let (x, y) = sample
+    match
+      plot_implicit_boolean_expr(
+        expr,
+        variable_x,
+        x,
+        sample_x_imag,
+        variable_y,
+        y,
+        sample_y_imag,
+      ) {
+      Some(true) => saw_true = true
+      Some(false) => saw_false = true
+      None => saw_unknown = true
+    }
+  }
+  (saw_true, saw_false, saw_unknown)
+}
+
+///|
 fn plot_meshgrid(
   xs : Array[Double],
   ys : Array[Double],
@@ -1831,7 +1962,11 @@ pub struct ImplicitSeries {
   adaptive : Bool
   depth : Int
   n : Int
+  n1 : Int
+  n2 : Int
   line_color : String
+  xscale : String
+  yscale : String
 }
 
 ///|
@@ -1864,7 +1999,7 @@ pub fn ImplicitSeries::get_label(self : ImplicitSeries) -> String {
 ///|
 pub fn ImplicitSeries::get_data(
   self : ImplicitSeries,
-) -> (Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]], String) raise PlottingError {
+) -> ImplicitPlotData raise PlottingError {
   let (start_x_real, start_x_imag) = match
     plot_expr_to_complex_parts(self.start_x) {
     Some(value) => value
@@ -1905,8 +2040,67 @@ pub fn ImplicitSeries::get_data(
       "ImplicitSeries requires the imaginary part of the start and end values of the y range to be the same.",
     )
   }
-  let xs = plot_discretize(start_x_real, end_x_real, self.n, "linear", false)
-  let ys = plot_discretize(start_y_real, end_y_real, self.n, "linear", false)
+  if self.adaptive {
+    let rectangles : Array[ImplicitRectangle] = []
+    let pending : Array[(ImplicitRectangle, Int)] = [
+      (
+        ImplicitRectangle::{
+          x_start: start_x_real,
+          x_end: end_x_real,
+          y_start: start_y_real,
+          y_end: end_y_real,
+        },
+        self.depth,
+      ),
+    ]
+    while !pending.is_empty() {
+      let (rect, remaining_depth) = pending.pop().unwrap()
+      if plot_implicit_plot_type(self.expr) == "contour" {
+        if !plot_implicit_equality_candidate(
+          self.expr,
+          self.variable_x,
+          start_x_imag,
+          self.variable_y,
+          start_y_imag,
+          rect,
+        ) {
+          continue
+        }
+        if remaining_depth <= 0 {
+          rectangles.push(rect)
+        } else {
+          for child in plot_implicit_subdivide_rect(rect) {
+            pending.push((child, remaining_depth - 1))
+          }
+        }
+      } else {
+        let (saw_true, saw_false, saw_unknown) = plot_implicit_boolean_candidate(
+          self.expr,
+          self.variable_x,
+          start_x_imag,
+          self.variable_y,
+          start_y_imag,
+          rect,
+        )
+        if saw_true && !saw_false && !saw_unknown {
+          rectangles.push(rect)
+        } else if !saw_true && saw_false && !saw_unknown {
+          continue
+        } else if remaining_depth <= 0 {
+          if saw_true || saw_unknown {
+            rectangles.push(rect)
+          }
+        } else {
+          for child in plot_implicit_subdivide_rect(rect) {
+            pending.push((child, remaining_depth - 1))
+          }
+        }
+      }
+    }
+    return ImplicitPlotData::Fill(rectangles)
+  }
+  let xs = plot_discretize(start_x_real, end_x_real, self.n1, self.xscale, false)
+  let ys = plot_discretize(start_y_real, end_y_real, self.n2, self.yscale, false)
   let (mesh_x, mesh_y) = plot_meshgrid(xs, ys)
   let mesh_z : Array[Array[Double?]] = []
   for y in ys {
@@ -1946,7 +2140,12 @@ pub fn ImplicitSeries::get_data(
     }
     mesh_z.push(row_z)
   }
-  (mesh_x, mesh_y, mesh_z, plot_implicit_plot_type(self.expr))
+  ImplicitPlotData::Mesh(
+    mesh_x,
+    mesh_y,
+    mesh_z,
+    plot_implicit_plot_type(self.expr),
+  )
 }
 
 ///|
@@ -1957,11 +2156,24 @@ pub fn implicit_series(
   adaptive? : Bool = true,
   depth? : Int = 0,
   n? : Int = 300,
+  n1? : Int? = None,
+  n2? : Int? = None,
   line_color? : String = "blue",
   label? : String? = None,
+  xscale? : String = "linear",
+  yscale? : String = "linear",
 ) -> ImplicitSeries raise PlottingError {
   let clamped_depth = if depth < 0 { 0 } else if depth > 4 { 4 } else { depth }
   let resolved_label = plot_surface_label(expr, label)
+  let resolved_adaptive = adaptive || plot_implicit_requires_adaptive(expr)
+  let resolved_n1 = match n1 {
+    Some(value) => value
+    None => n
+  }
+  let resolved_n2 = match n2 {
+    Some(value) => value
+    None => n
+  }
   match (range_x, range_y) {
     (
       @symcore.Expr::Tuple([variable_x, start_x, end_x]),
@@ -1976,10 +2188,14 @@ pub fn implicit_series(
         start_y,
         end_y,
         label: resolved_label,
-        adaptive,
+        adaptive: resolved_adaptive,
         depth: 4 + clamped_depth,
         n,
+        n1: resolved_n1,
+        n2: resolved_n2,
         line_color,
+        xscale,
+        yscale,
       }
     _ =>
       raise PlottingError::ValueError(

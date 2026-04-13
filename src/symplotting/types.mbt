@@ -7,6 +7,20 @@ pub suberror PlottingError {
 } derive(Eq, Debug)
 
 ///|
+pub struct ImplicitRectangle {
+  x_start : Double
+  x_end : Double
+  y_start : Double
+  y_end : Double
+}
+
+///|
+pub enum ImplicitPlotData {
+  Mesh(Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]], String)
+  Fill(Array[ImplicitRectangle])
+}
+
+///|
 pub enum PlotInput {
   Expr(@symcore.Expr)
   Range(@symcore.Expr)

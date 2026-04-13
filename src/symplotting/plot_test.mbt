@@ -984,11 +984,16 @@ test "symplotting plot_implicit supports explicit ranges and mesh data" {
   let series = unwrap_implicit_series(backend.series()[0])
   assert_eq(series.line_color, "green")
   assert_eq(series.depth, 8)
-  let (mesh_x, mesh_y, mesh_z, plot_type) = backend.get_implicit_data(0)
-  assert_eq(plot_type, "contourf")
-  assert_eq(mesh_x.length(), 5)
-  assert_eq(mesh_y.length(), 5)
-  assert_eq(mesh_z.length(), 5)
+  match backend.get_implicit_data(0) {
+    ImplicitPlotData::Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
+      assert_eq(plot_type, "contourf")
+      assert_eq(mesh_x.length(), 5)
+      assert_eq(mesh_y.length(), 5)
+      assert_eq(mesh_z.length(), 5)
+    }
+    ImplicitPlotData::Fill(_) =>
+      fail("expected mesh data")
+  }
 }
 
 ///|
@@ -1001,11 +1006,85 @@ test "symplotting plot_implicit handles one-variable expressions like SymPy" {
   )
   let series = unwrap_implicit_series(backend.series()[0])
   assert_true(series.variable_x == x || series.variable_y == x)
-  let (mesh_x, mesh_y, mesh_z, plot_type) = backend.get_implicit_data(0)
-  assert_eq(plot_type, "contour")
-  assert_eq(mesh_x.length(), 300)
-  assert_eq(mesh_y.length(), 300)
-  assert_eq(mesh_z.length(), 300)
+  match backend.get_implicit_data(0) {
+    ImplicitPlotData::Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
+      assert_eq(plot_type, "contour")
+      assert_eq(mesh_x.length(), 300)
+      assert_eq(mesh_y.length(), 300)
+      assert_eq(mesh_z.length(), 300)
+    }
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+  }
+}
+
+///|
+test "symplotting plot_implicit auto-switches boolean combinations to adaptive fill" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let backend = plot_implicit(
+    @symcore.Expr::Function("Or", [
+      @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Gt,
+        y,
+        @symcore.mul([@symcore.int(-1), x]),
+      ),
+    ]),
+    adaptive=false,
+    show=false,
+  )
+  let series = unwrap_implicit_series(backend.series()[0])
+  assert_eq(series.adaptive, true)
+  match backend.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+}
+
+///|
+test "symplotting plot_implicit supports n1 n2 and log scales like SymPy series" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let backend = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Gt,
+      @symcore.function(
+        "cos",
+        [
+          @symcore.add([
+            @symcore.pow(x, @symcore.int(2)),
+            @symcore.pow(y, @symcore.int(2)),
+          ]),
+        ],
+      ),
+      @symcore.int(0),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)])),
+    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(1), @symcore.int(100)])),
+    adaptive=false,
+    n1=Some(3),
+    n2=Some(3),
+    xscale="log",
+    yscale="log",
+    show=false,
+  )
+  let series = unwrap_implicit_series(backend.series()[0])
+  assert_eq(series.n1, 3)
+  assert_eq(series.n2, 3)
+  match backend.get_implicit_data(0) {
+    ImplicitPlotData::Mesh(mesh_x, mesh_y, _, plot_type) => {
+      assert_eq(plot_type, "contourf")
+      assert_true((mesh_x[0][0] - 1.0).abs() <= 1.0e-12)
+      assert_true((mesh_x[0][1] - 10.0).abs() <= 1.0e-10)
+      assert_true((mesh_y[0][0] - 1.0).abs() <= 1.0e-12)
+      assert_true((mesh_y[1][0] - 10.0).abs() <= 1.0e-10)
+    }
+    ImplicitPlotData::Fill(_) =>
+      fail("expected mesh data")
+  }
 }
 
 ///|
