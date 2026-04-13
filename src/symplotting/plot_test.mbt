@@ -1088,6 +1088,110 @@ test "symplotting plot_implicit supports n1 n2 and log scales like SymPy series"
 }
 
 ///|
+test "symplotting plot_implicit matches additional SymPy source families" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+
+  let equality = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      y,
+      @symcore.function("cos", [x]),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)])),
+    show=false,
+  )
+  match equality.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let and_region = plot_implicit(
+    @symcore.Expr::Function("And", [
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Gt,
+        y,
+        @symcore.function("exp", [x]),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Gt,
+        y,
+        @symcore.add([x, @symcore.int(2)]),
+      ),
+    ]),
+    show=false,
+  )
+  match and_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let nested = plot_implicit(
+    @symcore.Expr::Function("And", [
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Gt,
+        y,
+        @symcore.function("cos", [x]),
+      ),
+      @symcore.Expr::Function("Or", [
+        @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, y, x),
+      ]),
+    ]),
+    show=false,
+  )
+  match nested.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let oscillatory = plot_implicit(
+    @symcore.add([
+      y,
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.function("cos", [
+          @symcore.mul([pi, @symcore.pow(x, @symcore.int(-1))]),
+        ]),
+      ]),
+    ]),
+    show=false,
+  )
+  match oscillatory.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+}
+
+///|
+test "symplotting plot_implicit clamps depth like SymPy source cases" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let shallow = plot_implicit(
+    @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
+    depth=-5,
+    show=false,
+  )
+  let deep = plot_implicit(
+    @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
+    depth=5,
+    show=false,
+  )
+  assert_eq(unwrap_implicit_series(shallow.series()[0]).depth, 4)
+  assert_eq(unwrap_implicit_series(deep.series()[0]).depth, 8)
+}
+
+///|
 test "symplotting plot_implicit rejects the text backend like SymPy" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
