@@ -81,12 +81,42 @@ fn plot_interval_eval_scalar(
         ("log", [arg]) =>
           plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
           .map(plot_interval_log)
+        ("log10", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_log10)
         ("sqrt", [arg]) =>
           plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
           .map(plot_interval_sqrt)
         ("Abs", [arg]) =>
           plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
           .map(plot_interval_abs)
+        ("atan", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_atan)
+        ("asin", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_asin)
+        ("acos", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_acos)
+        ("sinh", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_sinh)
+        ("cosh", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_cosh)
+        ("tanh", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_tanh)
+        ("asinh", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_asinh)
+        ("acosh", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_acosh)
+        ("atanh", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_atanh)
         _ => None
       }
     _ => None

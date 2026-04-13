@@ -32,6 +32,21 @@ fn plot_interval_log(value : PlotInterval) -> PlotInterval {
 }
 
 ///|
+fn plot_interval_log10(value : PlotInterval) -> PlotInterval {
+  if value.is_valid == Some(false) || value.end <= 0.0 {
+    return plot_interval_invalid(Some(false))
+  }
+  if value.start <= 0.0 {
+    return plot_interval_invalid(None)
+  }
+  plot_interval(
+    @math.log10(value.start),
+    @math.log10(value.end),
+    is_valid=value.is_valid,
+  )
+}
+
+///|
 fn plot_interval_sqrt(value : PlotInterval) -> PlotInterval {
   if value.is_valid == Some(false) || value.end < 0.0 {
     return plot_interval_invalid(Some(false))
@@ -40,6 +55,15 @@ fn plot_interval_sqrt(value : PlotInterval) -> PlotInterval {
     return plot_interval_invalid(None)
   }
   plot_interval(value.start.sqrt(), value.end.sqrt(), is_valid=value.is_valid)
+}
+
+///|
+fn plot_interval_atan(value : PlotInterval) -> PlotInterval {
+  plot_interval(
+    @math.atan(value.start),
+    @math.atan(value.end),
+    is_valid=value.is_valid,
+  )
 }
 
 ///|
@@ -85,6 +109,109 @@ fn plot_interval_cos(value : PlotInterval) -> PlotInterval {
 }
 
 ///|
+fn plot_interval_asin(value : PlotInterval) -> PlotInterval {
+  if value.is_valid == Some(false) || value.start > 1.0 || value.end < -1.0 {
+    return plot_interval_invalid(Some(false))
+  }
+  if value.start < -1.0 || value.end > 1.0 {
+    return plot_interval_invalid(None)
+  }
+  plot_interval(
+    @math.asin(value.start),
+    @math.asin(value.end),
+    is_valid=value.is_valid,
+  )
+}
+
+///|
+fn plot_interval_acos(value : PlotInterval) -> PlotInterval {
+  if value.is_valid == Some(false) || value.start > 1.0 || value.end < -1.0 {
+    return plot_interval_invalid(Some(false))
+  }
+  if value.start < -1.0 || value.end > 1.0 {
+    return plot_interval_invalid(None)
+  }
+  plot_interval(
+    @math.acos(value.start),
+    @math.acos(value.end),
+    is_valid=value.is_valid,
+  )
+}
+
+///|
 fn plot_interval_tan(value : PlotInterval) -> PlotInterval {
   plot_interval_div(plot_interval_sin(value), plot_interval_cos(value))
+}
+
+///|
+fn plot_interval_sinh(value : PlotInterval) -> PlotInterval {
+  plot_interval(
+    @math.sinh(value.start),
+    @math.sinh(value.end),
+    is_valid=value.is_valid,
+  )
+}
+
+///|
+fn plot_interval_cosh(value : PlotInterval) -> PlotInterval {
+  if value.start < 0.0 && value.end > 0.0 {
+    return plot_interval(
+      1.0,
+      plot_max2(@math.cosh(value.start), @math.cosh(value.end)),
+      is_valid=value.is_valid,
+    )
+  }
+  plot_interval(
+    @math.cosh(value.start),
+    @math.cosh(value.end),
+    is_valid=value.is_valid,
+  )
+}
+
+///|
+fn plot_interval_tanh(value : PlotInterval) -> PlotInterval {
+  plot_interval(
+    @math.tanh(value.start),
+    @math.tanh(value.end),
+    is_valid=value.is_valid,
+  )
+}
+
+///|
+fn plot_interval_asinh(value : PlotInterval) -> PlotInterval {
+  plot_interval(
+    @math.asinh(value.start),
+    @math.asinh(value.end),
+    is_valid=value.is_valid,
+  )
+}
+
+///|
+fn plot_interval_acosh(value : PlotInterval) -> PlotInterval {
+  if value.end < 1.0 {
+    return plot_interval_invalid(Some(false))
+  }
+  if value.start < 1.0 {
+    return plot_interval_invalid(None)
+  }
+  plot_interval(
+    @math.acosh(value.start),
+    @math.acosh(value.end),
+    is_valid=value.is_valid,
+  )
+}
+
+///|
+fn plot_interval_atanh(value : PlotInterval) -> PlotInterval {
+  if value.is_valid == Some(false) || value.start >= 1.0 || value.end <= -1.0 {
+    return plot_interval_invalid(Some(false))
+  }
+  if value.start <= -1.0 || value.end >= 1.0 {
+    return plot_interval_invalid(None)
+  }
+  plot_interval(
+    @math.atanh(value.start),
+    @math.atanh(value.end),
+    is_valid=value.is_valid,
+  )
 }

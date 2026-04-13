@@ -1250,6 +1250,58 @@ test "symplotting plot_implicit clamps depth like SymPy source cases" {
 }
 
 ///|
+test "symplotting plot_implicit supports additional interval monotone functions" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+
+  let atan_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Gt,
+      y,
+      @symcore.function("atan", [x]),
+    ),
+    show=false,
+  )
+  match atan_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let tanh_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Lt,
+      y,
+      @symcore.function("tanh", [x]),
+    ),
+    show=false,
+  )
+  match tanh_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let acosh_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Gt,
+      y,
+      @symcore.function("acosh", [x]),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(5)])),
+    show=false,
+  )
+  match acosh_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+}
+
+///|
 test "symplotting plot_implicit rejects the text backend like SymPy" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
