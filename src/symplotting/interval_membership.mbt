@@ -81,7 +81,7 @@ fn interval_membership_or(
 ) -> IntervalMembership {
   interval_membership(
     plot_fuzzy_or([lhs.truth, rhs.truth]),
-    plot_fuzzy_or([lhs.validity, rhs.validity]),
+    plot_fuzzy_and([lhs.validity, rhs.validity]),
   )
 }
 

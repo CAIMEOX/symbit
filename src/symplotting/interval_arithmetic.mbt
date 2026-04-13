@@ -180,6 +180,55 @@ fn plot_interval_pow_float(value : PlotInterval, power : Double) -> PlotInterval
 }
 
 ///|
+fn plot_interval_pow_rational(
+  value : PlotInterval,
+  numerator : BigInt,
+  denominator : BigInt,
+) -> PlotInterval {
+  if value.is_valid != Some(true) {
+    return value
+  }
+  if numerator.compare(0N) < 0 {
+    return plot_interval_div(
+      plot_interval_point(1.0),
+      plot_interval_pow_rational(value, numerator.neg(), denominator),
+    )
+  }
+  if denominator.equal_int(1) {
+    return plot_interval_pow_int(value, numerator.to_int())
+  }
+  let power = numerator.to_int().to_double() / denominator.to_int().to_double()
+  if numerator.mod(2N).compare(0N) == 0 {
+    let start = @math.pow(value.start.abs(), power)
+    let end = @math.pow(value.end.abs(), power)
+    if start < 0.0 {
+      return plot_interval(0.0, plot_max2(start, end))
+    }
+    return plot_interval(start, end)
+  }
+  if denominator.mod(2N).compare(0N) == 0 {
+    if value.end < 0.0 {
+      return plot_interval_invalid(Some(false))
+    }
+    if value.start < 0.0 {
+      return plot_interval(0.0, @math.pow(value.end, power), is_valid=None)
+    }
+    return plot_interval(@math.pow(value.start, power), @math.pow(value.end, power))
+  }
+  let start = if value.start < 0.0 {
+    -@math.pow(value.start.abs(), power)
+  } else {
+    @math.pow(value.start, power)
+  }
+  let end = if value.end < 0.0 {
+    -@math.pow(value.end.abs(), power)
+  } else {
+    @math.pow(value.end, power)
+  }
+  plot_interval(start, end, is_valid=value.is_valid)
+}
+
+///|
 fn plot_interval_compare_lt(
   lhs : PlotInterval,
   rhs : PlotInterval,

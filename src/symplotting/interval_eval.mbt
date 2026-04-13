@@ -16,6 +16,16 @@ fn plot_interval_numeric_constant(expr : @symcore.Expr) -> PlotInterval? {
 }
 
 ///|
+fn plot_interval_exact_rational(expr : @symcore.Expr) -> (BigInt, BigInt)? {
+  match expr {
+    @symcore.Expr::Number(value) => Some((value.numerator(), value.denominator()))
+    @symcore.Expr::Boolean(true) => Some((1N, 1N))
+    @symcore.Expr::Boolean(false) => Some((0N, 1N))
+    _ => None
+  }
+}
+
+///|
 fn plot_interval_eval_scalar(
   expr : @symcore.Expr,
   variable_x : @symcore.Expr,
@@ -57,9 +67,12 @@ fn plot_interval_eval_scalar(
     @symcore.Expr::Pow(base, exponent) =>
       match (
         plot_interval_eval_scalar(base, variable_x, interval_x, variable_y, interval_y),
+        plot_interval_exact_rational(exponent),
         plot_interval_numeric_constant(exponent),
       ) {
-        (Some(base_interval), Some(power_interval)) if plot_interval_width(power_interval).abs() <= 1.0e-12 =>
+        (Some(base_interval), Some((num, den)), _) =>
+          Some(plot_interval_pow_rational(base_interval, num, den))
+        (Some(base_interval), None, Some(power_interval)) if plot_interval_width(power_interval).abs() <= 1.0e-12 =>
           Some(plot_interval_pow_float(base_interval, power_interval.start))
         _ => None
       }
@@ -199,10 +212,22 @@ fn plot_interval_eval_boolean(
           Some(current)
         }
         ("Or", _) => {
-          let mut current = interval_membership(Some(false), Some(false))
-          for arg in args {
+          if args.is_empty() {
+            return Some(interval_membership(Some(false), Some(true)))
+          }
+          let mut current = match plot_interval_eval_boolean(
+            args[0],
+            variable_x,
+            interval_x,
+            variable_y,
+            interval_y,
+          ) {
+            Some(value) => value
+            None => return None
+          }
+          for i in 1..<args.length() {
             match plot_interval_eval_boolean(
-              arg,
+              args[i],
               variable_x,
               interval_x,
               variable_y,

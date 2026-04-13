@@ -1374,6 +1374,52 @@ test "symplotting plot_implicit supports interval extrema and integer step funct
 }
 
 ///|
+test "symplotting plot_implicit supports rational power intervals like SymPy" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let one_third = @symcore.rational_from_ints(1, 3) catch {
+    _ => fail("rational")
+  }
+  let two_thirds = @symcore.rational_from_ints(2, 3) catch {
+    _ => fail("rational")
+  }
+
+  let odd_denominator = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Gt,
+      y,
+      @symcore.pow(x, one_third),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-3), @symcore.int(3)])),
+    show=false,
+  )
+  match odd_denominator.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let even_numerator = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Gt,
+      y,
+      @symcore.pow(x, two_thirds),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-1), @symcore.int(4)])),
+    show=false,
+  )
+  match even_numerator.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+}
+
+///|
 test "symplotting plot_implicit rejects the text backend like SymPy" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
