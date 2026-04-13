@@ -1171,6 +1171,64 @@ test "symplotting plot_implicit matches additional SymPy source families" {
     ImplicitPlotData::Mesh(_, _, _, _) =>
       fail("expected adaptive fill data")
   }
+
+  let tangent_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Lt,
+      y,
+      @symcore.pow(@symcore.function("tan", [x]), @symcore.int(-1)),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)])),
+    show=false,
+  )
+  match tangent_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let trig_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Ge,
+      y,
+      @symcore.mul([
+        @symcore.int(2),
+        @symcore.function("sin", [x]),
+        @symcore.function("cos", [x]),
+      ]),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)])),
+    show=false,
+  )
+  match trig_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let cusp = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      @symcore.pow(y, @symcore.int(2)),
+      @symcore.add([
+        @symcore.pow(x, @symcore.int(3)),
+        @symcore.mul([@symcore.int(-1), x]),
+      ]),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-4), @symcore.int(4)])),
+    show=false,
+  )
+  match cusp.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
 }
 
 ///|

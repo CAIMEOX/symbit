@@ -43,7 +43,7 @@ fn plot_interval_point(value : Double) -> PlotInterval {
 
 ///|
 fn plot_interval_invalid(validity : Bool?) -> PlotInterval {
-  PlotInterval::{ start: 0.0, end: 0.0, is_valid: validity }
+  PlotInterval::{ start: -1.0 / 0.0, end: 1.0 / 0.0, is_valid: validity }
 }
 
 ///|
@@ -67,6 +67,12 @@ fn plot_interval_add(lhs : PlotInterval, rhs : PlotInterval) -> PlotInterval {
 
 ///|
 fn plot_interval_mul(lhs : PlotInterval, rhs : PlotInterval) -> PlotInterval {
+  if lhs.is_valid == Some(false) || rhs.is_valid == Some(false) {
+    return plot_interval_invalid(Some(false))
+  }
+  if lhs.is_valid == None || rhs.is_valid == None {
+    return plot_interval_invalid(None)
+  }
   let products = [
     lhs.start * rhs.start,
     lhs.start * rhs.end,
@@ -88,9 +94,18 @@ fn plot_interval_mul(lhs : PlotInterval, rhs : PlotInterval) -> PlotInterval {
 
 ///|
 fn plot_interval_div(lhs : PlotInterval, rhs : PlotInterval) -> PlotInterval {
-  let validity = plot_fuzzy_and([lhs.is_valid, rhs.is_valid])
-  if rhs.is_valid == Some(false) || lhs.is_valid == Some(false) {
+  if lhs.is_valid == Some(false) {
     return plot_interval_invalid(Some(false))
+  }
+  if lhs.is_valid == None {
+    return plot_interval_invalid(None)
+  }
+  let validity = plot_fuzzy_and([lhs.is_valid, rhs.is_valid])
+  if rhs.is_valid == Some(false) {
+    return plot_interval_invalid(Some(false))
+  }
+  if rhs.is_valid == None {
+    return plot_interval_invalid(None)
   }
   if plot_interval_contains(rhs, 0.0) {
     return plot_interval_invalid(None)
@@ -116,6 +131,9 @@ fn plot_interval_div(lhs : PlotInterval, rhs : PlotInterval) -> PlotInterval {
 
 ///|
 fn plot_interval_pow_int(value : PlotInterval, power : Int) -> PlotInterval {
+  if value.is_valid != Some(true) {
+    return value
+  }
   if power < 0 {
     return plot_interval_div(plot_interval_point(1.0), plot_interval_pow_int(value, -power))
   }
@@ -141,6 +159,9 @@ fn plot_interval_pow_int(value : PlotInterval, power : Int) -> PlotInterval {
 
 ///|
 fn plot_interval_pow_float(value : PlotInterval, power : Double) -> PlotInterval {
+  if value.is_valid != Some(true) {
+    return value
+  }
   let rounded = @math.floor(power + 0.5)
   if (power - rounded).abs() <= 1.0e-10 {
     return plot_interval_pow_int(value, rounded.to_int())
