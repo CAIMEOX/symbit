@@ -780,6 +780,93 @@ fn plot_implicit_scalar_expr(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+fn plot_implicit_interval_fill(
+  expr : @symcore.Expr,
+  variable_x : @symcore.Expr,
+  start_x_real : Double,
+  start_x_imag : Double,
+  end_x_real : Double,
+  variable_y : @symcore.Expr,
+  start_y_real : Double,
+  start_y_imag : Double,
+  end_y_real : Double,
+  depth : Int,
+) -> Array[ImplicitRectangle]? {
+  let xs = linspace(start_x_real, end_x_real, 33)
+  let ys = linspace(start_y_real, end_y_real, 33)
+  let interval_list : Array[ImplicitRectangle] = []
+  for yi in 0..<(ys.length() - 1) {
+    for xi in 0..<(xs.length() - 1) {
+      interval_list.push(
+        ImplicitRectangle::{
+          x_start: xs[xi],
+          x_end: xs[xi + 1],
+          y_start: ys[yi],
+          y_end: ys[yi + 1],
+        },
+      )
+    }
+  }
+  let plot_list : Array[ImplicitRectangle] = []
+  let has_equality = plot_implicit_has_equality(expr)
+  let mut remaining_depth = depth
+  while remaining_depth >= 0 && !interval_list.is_empty() {
+    let next_intervals : Array[ImplicitRectangle] = []
+    for rect in interval_list {
+      let interval_x = plot_interval(rect.x_start, rect.x_end)
+      let interval_y = plot_interval(rect.y_start, rect.y_end)
+      match
+        plot_implicit_interval_membership(
+          expr,
+          variable_x,
+          interval_x,
+          variable_y,
+          interval_y,
+        ) {
+        Some(result) =>
+          if result.validity == Some(false) || result.truth == Some(false) {
+            ()
+          } else if result.truth == Some(true) && result.validity == Some(true) {
+            plot_list.push(rect)
+          } else if result.truth == None || result.validity == None {
+            for child in plot_implicit_subdivide_rect(rect) {
+              next_intervals.push(child)
+            }
+          }
+        None => return None
+      }
+    }
+    interval_list.clear()
+    for rect in next_intervals {
+      interval_list.push(rect)
+    }
+    remaining_depth -= 1
+  }
+  if has_equality {
+    for rect in interval_list {
+      let interval_x = plot_interval(rect.x_start, rect.x_end)
+      let interval_y = plot_interval(rect.y_start, rect.y_end)
+      match
+        plot_implicit_interval_membership(
+          expr,
+          variable_x,
+          interval_x,
+          variable_y,
+          interval_y,
+        ) {
+        Some(result) if result.validity == Some(true) && result.truth != Some(false) =>
+          plot_list.push(rect)
+        Some(_) => ()
+        None => return None
+      }
+    }
+  }
+  ignore(start_x_imag)
+  ignore(start_y_imag)
+  Some(plot_list)
+}
+
+///|
 fn plot_implicit_requires_adaptive(expr : @symcore.Expr) -> Bool {
   match expr {
     @symcore.Expr::Relational(@symcore.RelOp::Ne, _, _) => true
@@ -2041,6 +2128,22 @@ pub fn ImplicitSeries::get_data(
     )
   }
   if self.adaptive {
+    match
+      plot_implicit_interval_fill(
+        self.expr,
+        self.variable_x,
+        start_x_real,
+        start_x_imag,
+        end_x_real,
+        self.variable_y,
+        start_y_real,
+        start_y_imag,
+        end_y_real,
+        self.depth,
+      ) {
+      Some(rectangles) => return ImplicitPlotData::Fill(rectangles)
+      None => ()
+    }
     let rectangles : Array[ImplicitRectangle] = []
     let pending : Array[(ImplicitRectangle, Int)] = [
       (

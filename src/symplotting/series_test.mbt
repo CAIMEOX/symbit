@@ -422,3 +422,91 @@ test "symplotting implicit series supports independent discretization and log sc
       fail("expected mesh data")
   }
 }
+
+///|
+test "symplotting implicit series adaptive path handles SymPy pi over x family and Ne" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let oscillatory = implicit_series(
+    @symcore.add([
+      y,
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.function("cos", [
+          @symcore.mul([pi, @symcore.pow(x, @symcore.int(-1))]),
+        ]),
+      ]),
+    ]),
+    @symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)]),
+    @symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)]),
+    adaptive=true,
+  )
+  match oscillatory.get_data() {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let not_equal = implicit_series(
+    @symcore.Expr::Relational(@symcore.RelOp::Ne, y, x),
+    @symcore.Expr::Tuple([x, @symcore.int(-1), @symcore.int(1)]),
+    @symcore.Expr::Tuple([y, @symcore.int(-1), @symcore.int(1)]),
+    adaptive=false,
+  )
+  assert_eq(not_equal.adaptive, true)
+  match not_equal.get_data() {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+}
+
+///|
+test "symplotting implicit series adaptive path handles SymPy Not and Xor regions" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let base = @symcore.Expr::Relational(
+    @symcore.RelOp::Lt,
+    @symcore.add([
+      @symcore.pow(@symcore.add([x, @symcore.int(-1)]), @symcore.int(2)),
+      @symcore.pow(y, @symcore.int(2)),
+    ]),
+    @symcore.int(2),
+  )
+  let other = @symcore.Expr::Relational(
+    @symcore.RelOp::Lt,
+    @symcore.add([
+      @symcore.pow(@symcore.add([x, @symcore.int(1)]), @symcore.int(2)),
+      @symcore.pow(y, @symcore.int(2)),
+    ]),
+    @symcore.int(2),
+  )
+  let inverted = implicit_series(
+    @symcore.Expr::Function("Not", [base]),
+    @symcore.Expr::Tuple([x, @symcore.int(-3), @symcore.int(3)]),
+    @symcore.Expr::Tuple([y, @symcore.int(-3), @symcore.int(3)]),
+    adaptive=true,
+  )
+  match inverted.get_data() {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let exclusive = implicit_series(
+    @symcore.Expr::Function("Xor", [base, other]),
+    @symcore.Expr::Tuple([x, @symcore.int(-3), @symcore.int(3)]),
+    @symcore.Expr::Tuple([y, @symcore.int(-3), @symcore.int(3)]),
+    adaptive=true,
+  )
+  match exclusive.get_data() {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+}
