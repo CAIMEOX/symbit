@@ -1302,6 +1302,78 @@ test "symplotting plot_implicit supports additional interval monotone functions"
 }
 
 ///|
+test "symplotting plot_implicit supports interval extrema and integer step functions" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+
+  let floor_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Gt,
+      y,
+      @symcore.function("floor", [x]),
+    ),
+    show=false,
+  )
+  match floor_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let ceiling_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Lt,
+      y,
+      @symcore.function("ceiling", [x]),
+    ),
+    show=false,
+  )
+  match ceiling_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let max_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Gt,
+      y,
+      @symcore.function("Max", [
+        x,
+        @symcore.mul([@symcore.int(-1), x]),
+      ]),
+    ),
+    show=false,
+  )
+  match max_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let min_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Lt,
+      y,
+      @symcore.function("Min", [
+        @symcore.function("sin", [x]),
+        @symcore.function("cos", [x]),
+      ]),
+    ),
+    show=false,
+  )
+  match min_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+}
+
+///|
 test "symplotting plot_implicit rejects the text backend like SymPy" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")

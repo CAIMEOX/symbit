@@ -139,6 +139,34 @@ fn plot_interval_acos(value : PlotInterval) -> PlotInterval {
 }
 
 ///|
+fn plot_interval_ceiling(value : PlotInterval) -> PlotInterval {
+  if value.is_valid == Some(false) {
+    return plot_interval_invalid(Some(false))
+  }
+  let start = @math.ceil(value.start)
+  let end = @math.ceil(value.end)
+  if start == end {
+    plot_interval(start, end, is_valid=value.is_valid)
+  } else {
+    plot_interval(start, end, is_valid=None)
+  }
+}
+
+///|
+fn plot_interval_floor(value : PlotInterval) -> PlotInterval {
+  if value.is_valid == Some(false) {
+    return plot_interval_invalid(Some(false))
+  }
+  let start = @math.floor(value.start)
+  let end = @math.floor(value.end)
+  if start == end {
+    plot_interval(start, end, is_valid=value.is_valid)
+  } else {
+    plot_interval(start, end, is_valid=None)
+  }
+}
+
+///|
 fn plot_interval_tan(value : PlotInterval) -> PlotInterval {
   plot_interval_div(plot_interval_sin(value), plot_interval_cos(value))
 }
@@ -214,4 +242,50 @@ fn plot_interval_atanh(value : PlotInterval) -> PlotInterval {
     @math.atanh(value.end),
     is_valid=value.is_valid,
   )
+}
+
+///|
+fn plot_interval_min(values : Array[PlotInterval]) -> PlotInterval {
+  let valid_values = values.filter(v => v.is_valid != Some(false))
+  if valid_values.is_empty() {
+    if values.all(v => v.is_valid == Some(false)) {
+      return plot_interval_invalid(Some(false))
+    } else {
+      return plot_interval_invalid(None)
+    }
+  }
+  let mut start = valid_values[0].start
+  let mut end = valid_values[0].end
+  for value in valid_values {
+    if value.start < start {
+      start = value.start
+    }
+    if value.end < end {
+      end = value.end
+    }
+  }
+  plot_interval(start, end)
+}
+
+///|
+fn plot_interval_max(values : Array[PlotInterval]) -> PlotInterval {
+  let valid_values = values.filter(v => v.is_valid != Some(false))
+  if valid_values.is_empty() {
+    if values.all(v => v.is_valid == Some(false)) {
+      return plot_interval_invalid(Some(false))
+    } else {
+      return plot_interval_invalid(None)
+    }
+  }
+  let mut start = valid_values[0].start
+  let mut end = valid_values[0].end
+  for value in valid_values {
+    if value.start > start {
+      start = value.start
+    }
+    if value.end > end {
+      end = value.end
+    }
+  }
+  plot_interval(start, end)
 }

@@ -66,6 +66,26 @@ fn plot_interval_eval_scalar(
     @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), args)
     | @symcore.Expr::Function(name, args) =>
       match (name, args) {
+        ("Min", _) => {
+          let values : Array[PlotInterval] = []
+          for arg in args {
+            match plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y) {
+              Some(value) => values.push(value)
+              None => return None
+            }
+          }
+          Some(plot_interval_min(values))
+        }
+        ("Max", _) => {
+          let values : Array[PlotInterval] = []
+          for arg in args {
+            match plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y) {
+              Some(value) => values.push(value)
+              None => return None
+            }
+          }
+          Some(plot_interval_max(values))
+        }
         ("sin", [arg]) =>
           plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
           .map(plot_interval_sin)
@@ -99,6 +119,12 @@ fn plot_interval_eval_scalar(
         ("acos", [arg]) =>
           plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
           .map(plot_interval_acos)
+        ("floor", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_floor)
+        ("ceiling", [arg]) | ("ceil", [arg]) =>
+          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
+          .map(plot_interval_ceiling)
         ("sinh", [arg]) =>
           plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
           .map(plot_interval_sinh)
