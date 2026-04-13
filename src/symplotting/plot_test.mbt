@@ -1420,6 +1420,98 @@ test "symplotting plot_implicit supports rational power intervals like SymPy" {
 }
 
 ///|
+test "symplotting plot_implicit supports additional interval inverse families" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let nine_tenths = @symcore.rational_from_ints(9, 10) catch {
+    _ => fail("rational")
+  }
+  let minus_nine_tenths = @symcore.mul([@symcore.int(-1), nine_tenths])
+
+  let log10_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Gt,
+      y,
+      @symcore.function("log10", [x]),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)])),
+    show=false,
+  )
+  match log10_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let asin_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Lt,
+      y,
+      @symcore.function("asin", [x]),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-1), @symcore.int(1)])),
+    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)])),
+    show=false,
+  )
+  match asin_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let acos_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Gt,
+      y,
+      @symcore.function("acos", [x]),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-1), @symcore.int(1)])),
+    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(4)])),
+    show=false,
+  )
+  match acos_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let asinh_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Gt,
+      y,
+      @symcore.function("asinh", [x]),
+    ),
+    show=false,
+  )
+  match asinh_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+
+  let atanh_region = plot_implicit(
+    @symcore.Expr::Relational(
+      @symcore.RelOp::Lt,
+      y,
+      @symcore.function("atanh", [x]),
+    ),
+    x_var=Some(@symcore.Expr::Tuple([x, minus_nine_tenths, nine_tenths])),
+    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)])),
+    show=false,
+  )
+  match atanh_region.get_implicit_data(0) {
+    ImplicitPlotData::Fill(rectangles) =>
+      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) =>
+      fail("expected adaptive fill data")
+  }
+}
+
+///|
 test "symplotting plot_implicit rejects the text backend like SymPy" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
