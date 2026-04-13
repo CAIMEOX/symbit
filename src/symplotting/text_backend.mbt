@@ -34,7 +34,8 @@ pub fn TextBackend::series(self : TextBackend) -> Array[LineOver1DRangeSeries] {
       | PlotSeries::Parametric3D(_)
       | PlotSeries::Surface(_)
       | PlotSeries::ParametricSurface(_)
-      | PlotSeries::Contour(_) => ()
+      | PlotSeries::Contour(_)
+      | PlotSeries::Implicit(_) => ()
     }
   }
   out
@@ -51,7 +52,8 @@ pub fn TextBackend::getitem(
     | PlotSeries::Parametric3D(_)
     | PlotSeries::Surface(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) =>
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) =>
       raise PlottingError::TypeError(
         "The TextBackend only supports 1D line series.",
       )

@@ -312,3 +312,47 @@ test "symplotting parametric surface series supports logarithmic parameter spaci
   assert_true((mesh_v[1][0] - 10.0).abs() <= 1.0e-10)
   assert_true((mesh_v[2][0] - 100.0).abs() <= 1.0e-8)
 }
+
+///|
+test "symplotting implicit series samples a cartesian mesh for equalities" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let series = implicit_series(
+    @symcore.Relational(
+      @symcore.RelOp::Eq,
+      @symcore.add([x, y]),
+      @symcore.int(0),
+    ),
+    @symcore.Expr::Tuple([x, @symcore.int(-1), @symcore.int(1)]),
+    @symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)]),
+    adaptive=false,
+    n=3,
+  )
+  let (mesh_x, mesh_y, mesh_z, plot_type) = series.get_data()
+  assert_eq(plot_type, "contour")
+  assert_eq(mesh_x.length(), 3)
+  assert_eq(mesh_x[0].length(), 3)
+  assert_eq(mesh_x[0][1], 0.0)
+  assert_eq(mesh_y[1][0], 0.0)
+  assert_eq(mesh_z[1][1], Some(0.0))
+}
+
+///|
+test "symplotting implicit series samples boolean regions on a cartesian mesh" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let series = implicit_series(
+    @symcore.Relational(@symcore.RelOp::Gt, y, x),
+    @symcore.Expr::Tuple([x, @symcore.int(-1), @symcore.int(1)]),
+    @symcore.Expr::Tuple([y, @symcore.int(-1), @symcore.int(1)]),
+    adaptive=true,
+    n=3,
+  )
+  let (_, _, mesh_z, plot_type) = series.get_data()
+  assert_eq(plot_type, "contourf")
+  assert_eq(mesh_z.length(), 3)
+  assert_eq(mesh_z[2][0], Some(1.0))
+  assert_eq(mesh_z[0][2], Some(0.0))
+  assert_eq(series.depth, 4)
+  assert_eq(series.line_color, "blue")
+}

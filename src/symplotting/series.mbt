@@ -598,6 +598,188 @@ fn plot_eval_real_value_2d(
 }
 
 ///|
+fn plot_implicit_eval_real_2d(
+  expr : @symcore.Expr,
+  variable_x : @symcore.Expr,
+  sample_x_real : Double,
+  sample_x_imag : Double,
+  variable_y : @symcore.Expr,
+  sample_y_real : Double,
+  sample_y_imag : Double,
+) -> Double? {
+  plot_eval_real_value_2d(
+    expr, variable_x, sample_x_real, sample_x_imag, variable_y, sample_y_real, sample_y_imag,
+  )
+}
+
+///|
+fn plot_implicit_compare(
+  op : @symcore.RelOp,
+  lhs : Double,
+  rhs : Double,
+) -> Bool {
+  match op {
+    @symcore.RelOp::Eq => (lhs - rhs).abs() <= 1.0e-8
+    @symcore.RelOp::Ne => (lhs - rhs).abs() > 1.0e-8
+    @symcore.RelOp::Lt => lhs < rhs
+    @symcore.RelOp::Le => lhs <= rhs
+    @symcore.RelOp::Gt => lhs > rhs
+    @symcore.RelOp::Ge => lhs >= rhs
+  }
+}
+
+///|
+fn plot_implicit_boolean_expr(
+  expr : @symcore.Expr,
+  variable_x : @symcore.Expr,
+  sample_x_real : Double,
+  sample_x_imag : Double,
+  variable_y : @symcore.Expr,
+  sample_y_real : Double,
+  sample_y_imag : Double,
+) -> Bool? {
+  match expr {
+    @symcore.Expr::Boolean(value) => Some(value)
+    @symcore.Expr::Relational(op, lhs, rhs) =>
+      match
+        (
+          plot_implicit_eval_real_2d(
+            lhs, variable_x, sample_x_real, sample_x_imag, variable_y, sample_y_real,
+            sample_y_imag,
+          ),
+          plot_implicit_eval_real_2d(
+            rhs, variable_x, sample_x_real, sample_x_imag, variable_y, sample_y_real,
+            sample_y_imag,
+          ),
+        ) {
+        (Some(lhs_value), Some(rhs_value)) =>
+          Some(plot_implicit_compare(op, lhs_value, rhs_value))
+        _ => None
+      }
+    @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), args)
+    | @symcore.Expr::Function(name, args) =>
+      match name {
+        "And" => {
+          let mut saw_unknown = false
+          for arg in args {
+            match
+              plot_implicit_boolean_expr(
+                arg, variable_x, sample_x_real, sample_x_imag, variable_y, sample_y_real,
+                sample_y_imag,
+              ) {
+              Some(false) => return Some(false)
+              Some(true) => ()
+              None => saw_unknown = true
+            }
+          }
+          if saw_unknown {
+            None
+          } else {
+            Some(true)
+          }
+        }
+        "Or" => {
+          let mut saw_unknown = false
+          for arg in args {
+            match
+              plot_implicit_boolean_expr(
+                arg, variable_x, sample_x_real, sample_x_imag, variable_y, sample_y_real,
+                sample_y_imag,
+              ) {
+              Some(true) => return Some(true)
+              Some(false) => ()
+              None => saw_unknown = true
+            }
+          }
+          if saw_unknown {
+            None
+          } else {
+            Some(false)
+          }
+        }
+        "Not" =>
+          match args {
+            [inner] =>
+              match
+                plot_implicit_boolean_expr(
+                  inner, variable_x, sample_x_real, sample_x_imag, variable_y, sample_y_real,
+                  sample_y_imag,
+                ) {
+                Some(value) => Some(!value)
+                None => None
+              }
+            _ => None
+          }
+        "Xor" => {
+          let mut saw_unknown = false
+          let mut parity = false
+          for arg in args {
+            match
+              plot_implicit_boolean_expr(
+                arg, variable_x, sample_x_real, sample_x_imag, variable_y, sample_y_real,
+                sample_y_imag,
+              ) {
+              Some(value) => parity = parity != value
+              None => saw_unknown = true
+            }
+          }
+          if saw_unknown {
+            None
+          } else {
+            Some(parity)
+          }
+        }
+        _ =>
+          match
+            plot_implicit_eval_real_2d(
+              expr, variable_x, sample_x_real, sample_x_imag, variable_y, sample_y_real,
+              sample_y_imag,
+            ) {
+            Some(value) => Some(value.abs() <= 1.0e-8)
+            None => None
+          }
+      }
+    _ =>
+      match
+        plot_implicit_eval_real_2d(
+          expr, variable_x, sample_x_real, sample_x_imag, variable_y, sample_y_real,
+          sample_y_imag,
+        ) {
+        Some(value) => Some(value.abs() <= 1.0e-8)
+        None => None
+      }
+  }
+}
+
+///|
+fn plot_implicit_plot_type(expr : @symcore.Expr) -> String {
+  match expr {
+    @symcore.Expr::Boolean(_) => "contourf"
+    @symcore.Expr::Relational(op, _, _) =>
+      match op {
+        @symcore.RelOp::Eq => "contour"
+        _ => "contourf"
+      }
+    @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), _)
+    | @symcore.Expr::Function(name, _) =>
+      match name {
+        "And" | "Or" | "Not" | "Xor" => "contourf"
+        _ => "contour"
+      }
+    _ => "contour"
+  }
+}
+
+///|
+fn plot_implicit_scalar_expr(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) =>
+      @symcore.add([lhs, @symcore.mul([@symcore.int(-1), rhs])])
+    _ => expr
+  }
+}
+
+///|
 fn plot_meshgrid(
   xs : Array[Double],
   ys : Array[Double],
@@ -1637,6 +1819,176 @@ pub fn contour_series(
 }
 
 ///|
+pub struct ImplicitSeries {
+  expr : @symcore.Expr
+  variable_x : @symcore.Expr
+  start_x : @symcore.Expr
+  end_x : @symcore.Expr
+  variable_y : @symcore.Expr
+  start_y : @symcore.Expr
+  end_y : @symcore.Expr
+  label : String?
+  adaptive : Bool
+  depth : Int
+  n : Int
+  line_color : String
+}
+
+///|
+pub fn ImplicitSeries::to_string(self : ImplicitSeries) -> String {
+  "Implicit expression: " +
+  @symprint.to_string(self.expr) +
+  " for " +
+  @symprint.to_string(self.variable_x) +
+  " over (" +
+  @symprint.to_string(self.start_x) +
+  ", " +
+  @symprint.to_string(self.end_x) +
+  ") and " +
+  @symprint.to_string(self.variable_y) +
+  " over (" +
+  @symprint.to_string(self.start_y) +
+  ", " +
+  @symprint.to_string(self.end_y) +
+  ")"
+}
+
+///|
+pub fn ImplicitSeries::get_label(self : ImplicitSeries) -> String {
+  match self.label {
+    Some(label) => label
+    None => @symprint.to_string(self.expr)
+  }
+}
+
+///|
+pub fn ImplicitSeries::get_data(
+  self : ImplicitSeries,
+) -> (Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]], String) raise PlottingError {
+  let (start_x_real, start_x_imag) = match
+    plot_expr_to_complex_parts(self.start_x) {
+    Some(value) => value
+    None =>
+      raise PlottingError::ValueError(
+        "ImplicitSeries requires numeric x range bounds",
+      )
+  }
+  let (end_x_real, end_x_imag) = match plot_expr_to_complex_parts(self.end_x) {
+    Some(value) => value
+    None =>
+      raise PlottingError::ValueError(
+        "ImplicitSeries requires numeric x range bounds",
+      )
+  }
+  let (start_y_real, start_y_imag) = match
+    plot_expr_to_complex_parts(self.start_y) {
+    Some(value) => value
+    None =>
+      raise PlottingError::ValueError(
+        "ImplicitSeries requires numeric y range bounds",
+      )
+  }
+  let (end_y_real, end_y_imag) = match plot_expr_to_complex_parts(self.end_y) {
+    Some(value) => value
+    None =>
+      raise PlottingError::ValueError(
+        "ImplicitSeries requires numeric y range bounds",
+      )
+  }
+  if (start_x_imag - end_x_imag).abs() > 1.0e-8 {
+    raise PlottingError::ValueError(
+      "ImplicitSeries requires the imaginary part of the start and end values of the x range to be the same.",
+    )
+  }
+  if (start_y_imag - end_y_imag).abs() > 1.0e-8 {
+    raise PlottingError::ValueError(
+      "ImplicitSeries requires the imaginary part of the start and end values of the y range to be the same.",
+    )
+  }
+  let xs = plot_discretize(start_x_real, end_x_real, self.n, "linear", false)
+  let ys = plot_discretize(start_y_real, end_y_real, self.n, "linear", false)
+  let (mesh_x, mesh_y) = plot_meshgrid(xs, ys)
+  let mesh_z : Array[Array[Double?]] = []
+  for y in ys {
+    let row_z : Array[Double?] = []
+    for x in xs {
+      match plot_implicit_plot_type(self.expr) {
+        "contour" =>
+          row_z.push(
+            plot_implicit_eval_real_2d(
+              plot_implicit_scalar_expr(self.expr),
+              self.variable_x,
+              x,
+              start_x_imag,
+              self.variable_y,
+              y,
+              start_y_imag,
+            ),
+          )
+        _ =>
+          row_z.push(
+            match
+              plot_implicit_boolean_expr(
+                self.expr,
+                self.variable_x,
+                x,
+                start_x_imag,
+                self.variable_y,
+                y,
+                start_y_imag,
+              ) {
+              Some(true) => Some(1.0)
+              Some(false) => Some(0.0)
+              None => None
+            },
+          )
+      }
+    }
+    mesh_z.push(row_z)
+  }
+  (mesh_x, mesh_y, mesh_z, plot_implicit_plot_type(self.expr))
+}
+
+///|
+pub fn implicit_series(
+  expr : @symcore.Expr,
+  range_x : @symcore.Expr,
+  range_y : @symcore.Expr,
+  adaptive? : Bool = true,
+  depth? : Int = 0,
+  n? : Int = 300,
+  line_color? : String = "blue",
+  label? : String? = None,
+) -> ImplicitSeries raise PlottingError {
+  let clamped_depth = if depth < 0 { 0 } else if depth > 4 { 4 } else { depth }
+  let resolved_label = plot_surface_label(expr, label)
+  match (range_x, range_y) {
+    (
+      @symcore.Expr::Tuple([variable_x, start_x, end_x]),
+      @symcore.Expr::Tuple([variable_y, start_y, end_y]),
+    ) if is_plot_range(range_x) && is_plot_range(range_y) =>
+      ImplicitSeries::{
+        expr,
+        variable_x,
+        start_x,
+        end_x,
+        variable_y,
+        start_y,
+        end_y,
+        label: resolved_label,
+        adaptive,
+        depth: 4 + clamped_depth,
+        n,
+        line_color,
+      }
+    _ =>
+      raise PlottingError::ValueError(
+        "A plotting range must be a tuple of the form (symbol, start, end)",
+      )
+  }
+}
+
+///|
 pub enum PlotSeries {
   Line(LineOver1DRangeSeries)
   Parametric2D(Parametric2DLineSeries)
@@ -1644,6 +1996,7 @@ pub enum PlotSeries {
   Surface(SurfaceOver2DRangeSeries)
   ParametricSurface(ParametricSurfaceSeries)
   Contour(ContourSeries)
+  Implicit(ImplicitSeries)
 }
 
 ///|
@@ -1655,5 +2008,6 @@ pub fn PlotSeries::to_string(self : PlotSeries) -> String {
     PlotSeries::Surface(series) => series.to_string()
     PlotSeries::ParametricSurface(series) => series.to_string()
     PlotSeries::Contour(series) => series.to_string()
+    PlotSeries::Implicit(series) => series.to_string()
   }
 }

@@ -22,6 +22,15 @@ fn plot_default_symbol() -> @symcore.Expr {
 }
 
 ///|
+fn plot_secondary_default_symbol(primary : @symcore.Expr) -> @symcore.Expr {
+  match primary {
+    @symcore.Expr::Symbol("x") => @symcore.Expr::Symbol("y")
+    @symcore.Expr::Symbol("y") => @symcore.Expr::Symbol("x")
+    _ => @symcore.Expr::Symbol("y")
+  }
+}
+
+///|
 fn plot_range_symbol(
   range : @symcore.Expr,
 ) -> @symcore.Expr raise PlottingError {
@@ -1110,6 +1119,145 @@ pub fn plot3d_parametric_surface(
     xlabel=resolved_xlabel,
     ylabel=resolved_ylabel,
     zlabel=resolved_zlabel,
+    aspect_ratio~,
+    axis_center~,
+    axis~,
+    xscale~,
+    yscale~,
+    legend~,
+    autoscale~,
+    margin~,
+  )
+  if show {
+    backend_obj.show()
+  }
+  backend_obj
+}
+
+///|
+fn plot_implicit_range_tuple(
+  value : @symcore.Expr,
+) -> @symcore.Expr raise PlottingError {
+  if is_plot_range(value) {
+    return value
+  }
+  match value {
+    @symcore.Expr::Symbol(_) | @symcore.Expr::Dummy(_, _) =>
+      @symcore.Expr::Tuple([value, @symcore.int(-5), @symcore.int(5)])
+    _ =>
+      raise PlottingError::ValueError(
+        "symbol or `(symbol, min, max)` expected but got " +
+        @symprint.to_string(value),
+      )
+  }
+}
+
+///|
+pub fn plot_implicit(
+  expr : @symcore.Expr,
+  x_var? : @symcore.Expr? = None,
+  y_var? : @symcore.Expr? = None,
+  adaptive? : Bool = true,
+  depth? : Int = 0,
+  n? : Int = 300,
+  line_color? : String = "blue",
+  show? : Bool = true,
+  backend? : String = "default",
+  title? : String? = None,
+  xlabel? : String? = None,
+  ylabel? : String? = None,
+  zlabel? : String? = None,
+  aspect_ratio? : String = "auto",
+  axis_center? : String = "auto",
+  axis? : Bool = true,
+  xscale? : String = "linear",
+  yscale? : String = "linear",
+  legend? : Bool = false,
+  autoscale? : Bool = true,
+  margin? : Int = 0,
+) -> Plot raise PlottingError {
+  if backend == "text" {
+    raise PlottingError::TypeError(
+      "plot_implicit only supports the default or matplotlib backend",
+    )
+  }
+  let xyvar : Array[@symcore.Expr] = []
+  match x_var {
+    Some(value) => xyvar.push(value)
+    None => ()
+  }
+  match y_var {
+    Some(value) => xyvar.push(value)
+    None => ()
+  }
+  let free_symbols = plot_free_symbols([expr])
+  let range_symbols : Array[@symcore.Expr] = []
+  for item in xyvar {
+    if is_plot_range(item) {
+      range_symbols.push(plot_range_symbol(item))
+    } else {
+      range_symbols.push(item)
+    }
+  }
+  let overlap_count = free_symbols
+    .filter(symbol => range_symbols.contains(symbol))
+    .length()
+  if overlap_count > 2 {
+    raise PlottingError::ValueError(
+      "Implicit plotting is not implemented for more than 2 variables",
+    )
+  }
+
+  let resolved_xyvar : Array[@symcore.Expr] = []
+  if xyvar.is_empty() {
+    for symbol in free_symbols {
+      resolved_xyvar.push(symbol)
+    }
+  } else {
+    for item in xyvar {
+      resolved_xyvar.push(item)
+    }
+  }
+  if resolved_xyvar.is_empty() {
+    resolved_xyvar.push(plot_default_symbol())
+  }
+
+  let range_x = plot_implicit_range_tuple(resolved_xyvar[0])
+  let symbol_x = plot_range_symbol(range_x)
+  let undeclared = free_symbols.filter(symbol => !range_symbols.contains(symbol))
+  if resolved_xyvar.length() != 2 {
+    let mut extra_symbol : @symcore.Expr? = None
+    for symbol in undeclared {
+      if symbol != symbol_x {
+        extra_symbol = Some(symbol)
+        break
+      }
+    }
+    match extra_symbol {
+      Some(value) => resolved_xyvar.push(value)
+      None => resolved_xyvar.push(plot_secondary_default_symbol(symbol_x))
+    }
+  }
+  let range_y = plot_implicit_range_tuple(resolved_xyvar[1])
+  let series = PlotSeries::Implicit(
+    implicit_series(expr, range_x, range_y, adaptive~, depth~, n~, line_color~),
+  )
+
+  let resolved_xlabel = match xlabel {
+    Some(value) => Some(value)
+    None => Some(@symprint.to_string(plot_range_symbol(range_x)))
+  }
+  let resolved_ylabel = match ylabel {
+    Some(value) => Some(value)
+    None => Some(@symprint.to_string(plot_range_symbol(range_y)))
+  }
+  let backend_obj = plot_factory(
+    [series],
+    backend~,
+    title~,
+    xlabel=resolved_xlabel,
+    ylabel=resolved_ylabel,
+    zlabel~,
     aspect_ratio~,
     axis_center~,
     axis~,

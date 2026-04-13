@@ -11,7 +11,8 @@ fn unwrap_line_series(series : PlotSeries) -> LineOver1DRangeSeries {
     | PlotSeries::Parametric3D(_)
     | PlotSeries::Surface(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) => abort("expected line series")
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) => abort("expected line series")
   }
 }
 
@@ -23,7 +24,8 @@ fn unwrap_parametric_series(series : PlotSeries) -> Parametric2DLineSeries {
     | PlotSeries::Parametric3D(_)
     | PlotSeries::Surface(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) => abort("expected parametric series")
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) => abort("expected parametric series")
   }
 }
 
@@ -35,7 +37,8 @@ fn unwrap_parametric3d_series(series : PlotSeries) -> Parametric3DLineSeries {
     | PlotSeries::Parametric2D(_)
     | PlotSeries::Surface(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) => abort("expected 3d parametric series")
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) => abort("expected 3d parametric series")
   }
 }
 
@@ -47,7 +50,8 @@ fn unwrap_surface_series(series : PlotSeries) -> SurfaceOver2DRangeSeries {
     | PlotSeries::Parametric2D(_)
     | PlotSeries::Parametric3D(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) => abort("expected surface series")
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) => abort("expected surface series")
   }
 }
 
@@ -61,7 +65,8 @@ fn unwrap_parametric_surface_series(
     | PlotSeries::Parametric2D(_)
     | PlotSeries::Parametric3D(_)
     | PlotSeries::Surface(_)
-    | PlotSeries::Contour(_) => abort("expected parametric surface series")
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) => abort("expected parametric surface series")
   }
 }
 
@@ -73,7 +78,21 @@ fn unwrap_contour_series(series : PlotSeries) -> ContourSeries {
     | PlotSeries::Parametric2D(_)
     | PlotSeries::Parametric3D(_)
     | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_) => abort("expected contour series")
+    | PlotSeries::ParametricSurface(_)
+    | PlotSeries::Implicit(_) => abort("expected contour series")
+  }
+}
+
+///|
+fn unwrap_implicit_series(series : PlotSeries) -> ImplicitSeries {
+  match series {
+    PlotSeries::Implicit(implicit) => implicit
+    PlotSeries::Line(_)
+    | PlotSeries::Parametric2D(_)
+    | PlotSeries::Parametric3D(_)
+    | PlotSeries::Surface(_)
+    | PlotSeries::ParametricSurface(_)
+    | PlotSeries::Contour(_) => abort("expected implicit series")
   }
 }
 
@@ -920,6 +939,92 @@ test "symplotting plot_contour rejects the text backend like SymPy" {
     } catch {
       PlottingError::TypeError(message) =>
         assert_true(message.contains("plot_contour only supports"))
+      _ => fail("unexpected error")
+    },
+  )
+}
+
+///|
+test "symplotting plot_implicit creates default ranges like SymPy" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let expr = @symcore.Expr::Relational(
+    @symcore.RelOp::Eq,
+    @symcore.add([
+      @symcore.pow(x, @symcore.int(2)),
+      @symcore.pow(y, @symcore.int(2)),
+    ]),
+    @symcore.int(1),
+  )
+  let backend = plot_implicit(expr, show=false)
+  assert_eq(backend.backend(), "matplotlib")
+  let series = unwrap_implicit_series(backend.series()[0])
+  let range_symbols = [series.variable_x, series.variable_y]
+  assert_true(range_symbols.contains(x))
+  assert_true(range_symbols.contains(y))
+  assert_eq(series.get_label(), "Eq(x**2 + y**2, 1)")
+  assert_eq(backend.xlabel, Some(@symprint.to_string(series.variable_x)))
+  assert_eq(backend.ylabel, Some(@symprint.to_string(series.variable_y)))
+}
+
+///|
+test "symplotting plot_implicit supports explicit ranges and mesh data" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let backend = plot_implicit(
+    @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-2), @symcore.int(2)])),
+    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-4), @symcore.int(4)])),
+    adaptive=false,
+    depth=5,
+    n=5,
+    line_color="green",
+    show=false,
+  )
+  let series = unwrap_implicit_series(backend.series()[0])
+  assert_eq(series.line_color, "green")
+  assert_eq(series.depth, 8)
+  let (mesh_x, mesh_y, mesh_z, plot_type) = backend.get_implicit_data(0)
+  assert_eq(plot_type, "contourf")
+  assert_eq(mesh_x.length(), 5)
+  assert_eq(mesh_y.length(), 5)
+  assert_eq(mesh_z.length(), 5)
+}
+
+///|
+test "symplotting plot_implicit handles one-variable expressions like SymPy" {
+  let x = @symcore.Expr::Symbol("x")
+  let backend = plot_implicit(
+    @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(-1)]),
+    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    show=false,
+  )
+  let series = unwrap_implicit_series(backend.series()[0])
+  assert_true(series.variable_x == x || series.variable_y == x)
+  let (mesh_x, mesh_y, mesh_z, plot_type) = backend.get_implicit_data(0)
+  assert_eq(plot_type, "contour")
+  assert_eq(mesh_x.length(), 300)
+  assert_eq(mesh_y.length(), 300)
+  assert_eq(mesh_z.length(), 300)
+}
+
+///|
+test "symplotting plot_implicit rejects the text backend like SymPy" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  ignore(
+    try {
+      ignore(
+        plot_implicit(
+          @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
+          show=false,
+          backend="text",
+        ),
+      )
+      fail("expected backend error")
+    } catch {
+      PlottingError::TypeError(message) =>
+        assert_true(message.contains("plot_implicit only supports"))
       _ => fail("unexpected error")
     },
   )

@@ -167,7 +167,8 @@ pub fn Plot::get_points(
     | PlotSeries::Parametric3D(_)
     | PlotSeries::Surface(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) =>
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) =>
       raise PlottingError::TypeError(
         "get_points is only available for 1D line series on Plot",
       )
@@ -185,7 +186,8 @@ pub fn Plot::get_data(
     | PlotSeries::Parametric3D(_)
     | PlotSeries::Surface(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) =>
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) =>
       raise PlottingError::TypeError(
         "get_data is only available for 1D line series on Plot",
       )
@@ -203,7 +205,8 @@ pub fn Plot::get_parametric_points(
     | PlotSeries::Parametric3D(_)
     | PlotSeries::Surface(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) =>
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) =>
       raise PlottingError::TypeError(
         "get_parametric_points is only available for parametric series on Plot",
       )
@@ -221,7 +224,8 @@ pub fn Plot::get_parametric_data(
     | PlotSeries::Parametric3D(_)
     | PlotSeries::Surface(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) =>
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) =>
       raise PlottingError::TypeError(
         "get_parametric_data is only available for parametric series on Plot",
       )
@@ -239,7 +243,8 @@ pub fn Plot::get_parametric3d_points(
     | PlotSeries::Parametric2D(_)
     | PlotSeries::Surface(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) =>
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) =>
       raise PlottingError::TypeError(
         "get_parametric3d_points is only available for 3D parametric series on Plot",
       )
@@ -257,7 +262,8 @@ pub fn Plot::get_parametric3d_data(
     | PlotSeries::Parametric2D(_)
     | PlotSeries::Surface(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) =>
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) =>
       raise PlottingError::TypeError(
         "get_parametric3d_data is only available for 3D parametric series on Plot",
       )
@@ -275,7 +281,8 @@ pub fn Plot::get_surface_data(
     | PlotSeries::Parametric2D(_)
     | PlotSeries::Parametric3D(_)
     | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) =>
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) =>
       raise PlottingError::TypeError(
         "get_surface_data is only available for cartesian surface series on Plot",
       )
@@ -299,7 +306,8 @@ pub fn Plot::get_parametric_surface_data(
     | PlotSeries::Parametric2D(_)
     | PlotSeries::Parametric3D(_)
     | PlotSeries::Surface(_)
-    | PlotSeries::Contour(_) =>
+    | PlotSeries::Contour(_)
+    | PlotSeries::Implicit(_) =>
       raise PlottingError::TypeError(
         "get_parametric_surface_data is only available for parametric surface series on Plot",
       )
@@ -317,9 +325,29 @@ pub fn Plot::get_contour_data(
     | PlotSeries::Parametric2D(_)
     | PlotSeries::Parametric3D(_)
     | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_) =>
+    | PlotSeries::ParametricSurface(_)
+    | PlotSeries::Implicit(_) =>
       raise PlottingError::TypeError(
         "get_contour_data is only available for contour series on Plot",
+      )
+  }
+}
+
+///|
+pub fn Plot::get_implicit_data(
+  self : Plot,
+  index : Int,
+) -> (Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]], String) raise PlottingError {
+  match self.getitem(index) {
+    PlotSeries::Implicit(series) => series.get_data()
+    PlotSeries::Line(_)
+    | PlotSeries::Parametric2D(_)
+    | PlotSeries::Parametric3D(_)
+    | PlotSeries::Surface(_)
+    | PlotSeries::ParametricSurface(_)
+    | PlotSeries::Contour(_) =>
+      raise PlottingError::TypeError(
+        "get_implicit_data is only available for implicit series on Plot",
       )
   }
 }
