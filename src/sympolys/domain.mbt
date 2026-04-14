@@ -1,4 +1,22 @@
 ///|
+/// Public domain and error descriptors shared by the polynomial package.
+///
+/// Current Limits:
+/// - these descriptors capture the package-level compatibility model, not every
+///   property of a full computer algebra domain hierarchy.
+/// - composite-domain behavior is defined by the public helpers in
+///   `domains_compat.mbt`.
+
+///|
+/// Coefficient domain descriptor used throughout `sympolys`.
+///
+/// - Does: Names the coefficient family attached to a polynomial, matrix, or
+///   series object.
+/// - Input: Constructed from one of the tagged variants such as `ZZ`, `QQ`,
+///   `GF(p)`, or composite domains.
+/// - Returns: A `Domain` value.
+/// - Limits: This is a structural descriptor. Operations such as coercion or
+///   field/ring conversion live in the domain helper front doors.
 pub(all) enum Domain {
   ZZ
   QQ
@@ -19,6 +37,14 @@ pub(all) enum Domain {
 }
 
 ///|
+/// Monomial order descriptor for polynomial front doors.
+///
+/// - Does: Selects how exponent tuples are compared in order-sensitive
+///   algorithms.
+/// - Input: One of the supported order tags.
+/// - Returns: A `TermOrder`.
+/// - Limits: Only the orders listed here are available through the stable
+///   public API.
 pub(all) enum TermOrder {
   Lex
   Grlex
@@ -26,6 +52,14 @@ pub(all) enum TermOrder {
 } derive(Eq)
 
 ///|
+/// Public error family raised by `sympolys`.
+///
+/// - Does: Classifies front-door failures such as malformed generators,
+///   incompatible domains, or unsupported exact-division requests.
+/// - Input: Constructed by the package when a public polynomial operation
+///   cannot proceed.
+/// - Returns: A `PolyError`.
+/// - Limits: Error values describe the failure class, not every internal cause.
 pub(all) suberror PolyError {
   NonPolynomial
   BadGenerator(String)
@@ -81,6 +115,14 @@ impl Eq for Domain with not_equal(self, other : Domain) -> Bool {
 }
 
 ///|
+/// Render a `PolyError` into its stable textual form.
+///
+/// - Does: Writes the public error spelling used by tests and user-facing
+///   diagnostics.
+/// - Input: A `PolyError`.
+/// - Returns: `Unit`.
+/// - Limits: The output is intended for diagnostics, not for structured
+///   recovery.
 pub impl Show for PolyError with output(self, logger : &Logger) -> Unit {
   match self {
     PolyError::NonPolynomial => logger.write_string("NonPolynomial")

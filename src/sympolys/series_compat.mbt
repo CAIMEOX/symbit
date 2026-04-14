@@ -1,5 +1,20 @@
 ///|
+/// Truncated univariate power-series compatibility layer.
+///
+/// Current Limits:
+/// - this file models truncated one-variable series only.
+/// - transcendental and inverse operations follow the current exact domain
+///   model and stay conservative outside characteristic-zero field inputs.
+
+///|
 /// Truncated power-series ring `K[[x]]/(x^prec)`.
+///
+/// - Does: Describes the coefficient domain, generator name, and truncation
+///   precision for a univariate series ring.
+/// - Input: Constructed from a `Domain`, generator `String`, and positive
+///   precision.
+/// - Returns: A `SeriesRing`.
+/// - Limits: Precision must be positive and the ring is always univariate.
 pub struct SeriesRing {
   domain : Domain
   sym : String
@@ -8,13 +23,25 @@ pub struct SeriesRing {
 
 ///|
 /// Element in a truncated univariate power-series ring.
-/// Coefficients are stored in ascending degree order.
+///
+/// - Does: Stores a truncated series together with its parent ring.
+/// - Input: A `SeriesRing` and coefficients in ascending degree order.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Coefficients beyond the ring precision are discarded by the public
+///   constructors.
 pub struct SeriesElem {
   ring : SeriesRing
   coeffs : Array[FieldElem]
 }
 
 ///|
+/// Build a truncated univariate power-series ring.
+///
+/// - Does: Creates the public ring descriptor used by the series compatibility
+///   API.
+/// - Input: A coefficient `Domain`, generator `String`, and positive precision.
+/// - Returns: A `SeriesRing`.
+/// - Limits: Raises `PolyError::BadExponent` when `precision <= 0`.
 pub fn power_series_ring(
   domain : Domain,
   sym : String,
@@ -214,17 +241,36 @@ fn series_rational_square_root(
 }
 
 ///|
+/// Return the zero element of the ring.
+///
+/// - Does: Builds the additive identity in this series ring.
+/// - Input: A `SeriesRing`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: The result uses the ring precision and domain unchanged.
 pub fn SeriesRing::zero(self : SeriesRing) -> SeriesElem {
   SeriesElem::{ ring: self, coeffs: [] }
 }
 
 ///|
+/// Return the multiplicative identity of the ring.
+///
+/// - Does: Builds the constant series `1`.
+/// - Input: A `SeriesRing`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` only if the ground `1` cannot be represented in
+///   the ring domain.
 pub fn SeriesRing::one(self : SeriesRing) -> SeriesElem raise PolyError {
   SeriesElem::{ ring: self, coeffs: [fe_from_int(1, self.domain)] }
 }
 
 ///|
-/// The distinguished generator `x` of this truncated series ring.
+/// Return the distinguished generator of the ring.
+///
+/// - Does: Builds the series `x` for this truncated ring.
+/// - Input: A `SeriesRing`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` only if the ground coefficients cannot be
+///   created in the ring domain.
 pub fn SeriesRing::gen(self : SeriesRing) -> SeriesElem raise PolyError {
   let zero = fe_from_int(0, self.domain)
   let one = fe_from_int(1, self.domain)
@@ -232,6 +278,13 @@ pub fn SeriesRing::gen(self : SeriesRing) -> SeriesElem raise PolyError {
 }
 
 ///|
+/// Build a series from coefficient data.
+///
+/// - Does: Normalizes and truncates an explicit coefficient array.
+/// - Input: A `SeriesRing` and `Array[FieldElem]` in ascending degree order.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Coefficients past the ring precision are dropped and trailing zeros
+///   are removed.
 pub fn SeriesRing::from_coeffs(
   self : SeriesRing,
   coeffs : Array[FieldElem],
@@ -240,6 +293,14 @@ pub fn SeriesRing::from_coeffs(
 }
 
 ///|
+/// Build a series from integer coefficients.
+///
+/// - Does: Lifts integer literals into the ring domain and normalizes the
+///   resulting series.
+/// - Input: A `SeriesRing` and `Array[Int]`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` when the ring domain cannot represent the input
+///   integers.
 pub fn SeriesRing::from_int_coeffs(
   self : SeriesRing,
   coeffs : Array[Int],
@@ -252,6 +313,14 @@ pub fn SeriesRing::from_int_coeffs(
 }
 
 ///|
+/// Convert a compatible univariate polynomial into a truncated series.
+///
+/// - Does: Reinterprets polynomial coefficients as series coefficients in the
+///   same generator and domain.
+/// - Input: A `SeriesRing` and a univariate `Poly`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the polynomial generator or
+///   domain does not match the ring.
 pub fn SeriesRing::from_poly(
   self : SeriesRing,
   poly : Poly,
@@ -267,6 +336,14 @@ pub fn SeriesRing::from_poly(
 }
 
 ///|
+/// Read a coefficient by degree.
+///
+/// - Does: Returns the coefficient of `x^n`, supplying zero when the stored
+///   representation is shorter.
+/// - Input: A `SeriesElem` and non-negative degree `Int`.
+/// - Returns: A `FieldElem`.
+/// - Limits: Raises `PolyError::BadExponent` when `n` is outside the ring
+///   precision.
 pub fn SeriesElem::coeff(
   self : SeriesElem,
   n : Int,
@@ -282,13 +359,25 @@ pub fn SeriesElem::coeff(
 }
 
 ///|
-/// Return the stored coefficient list in ascending degree order.
+/// Return the stored coefficient list.
+///
+/// - Does: Exposes the normalized truncated coefficients in ascending degree
+///   order.
+/// - Input: A `SeriesElem`.
+/// - Returns: `Array[FieldElem]`.
+/// - Limits: The array reflects the stored truncation, not an infinite series.
 pub fn SeriesElem::to_list(self : SeriesElem) -> Array[FieldElem] {
   self.coeffs.copy()
 }
 
 ///|
-/// Return `true` when two series have the same ring and truncated coefficients.
+/// Compare two series by ring and stored coefficients.
+///
+/// - Does: Checks whether two series have the same parent ring and equal
+///   normalized truncated coefficients.
+/// - Input: Two `SeriesElem` values.
+/// - Returns: A `Bool`.
+/// - Limits: This compares the stored truncated representation only.
 pub fn SeriesElem::equal_repr(self : SeriesElem, other : SeriesElem) -> Bool {
   self.ring == other.ring &&
   series_coeffs_equal(
@@ -298,7 +387,12 @@ pub fn SeriesElem::equal_repr(self : SeriesElem, other : SeriesElem) -> Bool {
 }
 
 ///|
-/// Unary plus keeps the same truncated coefficients.
+/// Apply unary plus.
+///
+/// - Does: Returns the same series after coefficient normalization.
+/// - Input: A `SeriesElem`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: This never changes the parent ring.
 pub fn SeriesElem::positive(self : SeriesElem) -> SeriesElem {
   SeriesElem::{
     ring: self.ring,
@@ -307,6 +401,12 @@ pub fn SeriesElem::positive(self : SeriesElem) -> SeriesElem {
 }
 
 ///|
+/// Add two truncated series.
+///
+/// - Does: Computes coefficientwise addition inside a shared ring.
+/// - Input: Two `SeriesElem` values from the same `SeriesRing`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the rings differ.
 pub fn SeriesElem::add(
   self : SeriesElem,
   other : SeriesElem,
@@ -340,11 +440,23 @@ pub fn SeriesElem::add(
 }
 
 ///|
+/// Negate a truncated series.
+///
+/// - Does: Negates every stored coefficient.
+/// - Input: A `SeriesElem`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: This keeps the same parent ring and truncation.
 pub fn SeriesElem::neg(self : SeriesElem) -> SeriesElem {
   SeriesElem::{ ring: self.ring, coeffs: self.coeffs.map(c => fe_neg(c)) }
 }
 
 ///|
+/// Subtract one truncated series from another.
+///
+/// - Does: Computes `self - other` inside a shared ring.
+/// - Input: Two `SeriesElem` values from the same `SeriesRing`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the rings differ.
 pub fn SeriesElem::sub(
   self : SeriesElem,
   other : SeriesElem,
@@ -353,7 +465,12 @@ pub fn SeriesElem::sub(
 }
 
 ///|
-/// Add a ground-domain scalar to the constant coefficient.
+/// Add a scalar to the constant coefficient.
+///
+/// - Does: Updates the degree-zero term by adding a ground-domain scalar.
+/// - Input: A `SeriesElem` and `FieldElem`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: The scalar must already belong to the ring domain.
 pub fn SeriesElem::add_ground(
   self : SeriesElem,
   scalar : FieldElem,
@@ -371,7 +488,12 @@ pub fn SeriesElem::add_ground(
 }
 
 ///|
-/// Subtract a ground-domain scalar from the constant coefficient.
+/// Subtract a scalar from the constant coefficient.
+///
+/// - Does: Updates the degree-zero term by subtracting a ground-domain scalar.
+/// - Input: A `SeriesElem` and `FieldElem`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: The scalar must already belong to the ring domain.
 pub fn SeriesElem::sub_ground(
   self : SeriesElem,
   scalar : FieldElem,
@@ -380,7 +502,12 @@ pub fn SeriesElem::sub_ground(
 }
 
 ///|
-/// Compute `scalar - self`.
+/// Subtract a series from a scalar.
+///
+/// - Does: Computes `scalar - self`.
+/// - Input: A `SeriesElem` and `FieldElem`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: The scalar must already belong to the ring domain.
 pub fn SeriesElem::rsub_ground(
   self : SeriesElem,
   scalar : FieldElem,
@@ -389,7 +516,12 @@ pub fn SeriesElem::rsub_ground(
 }
 
 ///|
-/// Multiply every coefficient by a ground-domain scalar.
+/// Multiply a series by a scalar.
+///
+/// - Does: Multiplies every stored coefficient by a ground-domain scalar.
+/// - Input: A `SeriesElem` and `FieldElem`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: The scalar must already belong to the ring domain.
 pub fn SeriesElem::mul_ground(
   self : SeriesElem,
   scalar : FieldElem,
@@ -408,6 +540,12 @@ pub fn SeriesElem::mul_ground(
 }
 
 ///|
+/// Multiply two truncated series.
+///
+/// - Does: Computes the truncated Cauchy product in a shared ring.
+/// - Input: Two `SeriesElem` values from the same `SeriesRing`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the rings differ.
 pub fn SeriesElem::mul(
   self : SeriesElem,
   other : SeriesElem,
@@ -435,13 +573,23 @@ pub fn SeriesElem::mul(
 }
 
 ///|
-/// Square a series, truncated to the ring precision.
+/// Square a truncated series.
+///
+/// - Does: Computes `self * self`.
+/// - Input: A `SeriesElem`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: The result is truncated to the ring precision.
 pub fn SeriesElem::square(self : SeriesElem) -> SeriesElem raise PolyError {
   self.mul(self)
 }
 
 ///|
 /// Raise a series to a non-negative integer power.
+///
+/// - Does: Computes `self^exp` by repeated squaring in the truncated ring.
+/// - Input: A `SeriesElem` and non-negative `Int`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError::BadExponent` for negative exponents.
 pub fn SeriesElem::pow_int(
   self : SeriesElem,
   exp : Int,
@@ -468,6 +616,12 @@ pub fn SeriesElem::pow_int(
 }
 
 ///|
+/// Truncate a series to a lower precision bound.
+///
+/// - Does: Keeps coefficients below `n` and drops the rest.
+/// - Input: A `SeriesElem` and cutoff `Int`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Negative cutoffs yield the zero series.
 pub fn SeriesElem::truncate(self : SeriesElem, n : Int) -> SeriesElem {
   let limit = if n < 0 {
     0
@@ -492,6 +646,12 @@ pub fn SeriesElem::truncate(self : SeriesElem, n : Int) -> SeriesElem {
 }
 
 ///|
+/// Differentiate a truncated series.
+///
+/// - Does: Computes the formal derivative term by term.
+/// - Input: A `SeriesElem`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Terms past the ring precision remain truncated.
 pub fn SeriesElem::diff(self : SeriesElem) -> SeriesElem raise PolyError {
   if self.coeffs.length() <= 1 {
     return self.ring.zero()
@@ -507,6 +667,13 @@ pub fn SeriesElem::diff(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
+/// Integrate a truncated series term by term.
+///
+/// - Does: Computes a formal antiderivative with zero constant term.
+/// - Input: A `SeriesElem`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError::DomainNotField` when exact division by
+///   positive integers is unavailable in the ring domain.
 pub fn SeriesElem::integrate(self : SeriesElem) -> SeriesElem raise PolyError {
   if !domain_is_field_pred(self.ring.domain) {
     raise PolyError::DomainNotField
@@ -523,7 +690,12 @@ pub fn SeriesElem::integrate(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// Return the order of vanishing, or `None` for the zero series.
+/// Return the order of vanishing.
+///
+/// - Does: Finds the smallest exponent with non-zero coefficient.
+/// - Input: A `SeriesElem`.
+/// - Returns: `Some(Int)` for a non-zero series, or `None` for the zero series.
+/// - Limits: This reflects the stored truncated representation.
 pub fn SeriesElem::valuation(self : SeriesElem) -> Int? {
   for i in 0..<self.coeffs.length() {
     if !fe_is_zero(self.coeffs[i]) {
@@ -534,7 +706,13 @@ pub fn SeriesElem::valuation(self : SeriesElem) -> Int? {
 }
 
 ///|
-/// Multiplicative inverse in the truncated series ring.
+/// Invert a truncated series.
+///
+/// - Does: Computes the multiplicative inverse in the truncated series ring.
+/// - Input: A `SeriesElem` with non-zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` for zero series, non-units, or domains without
+///   the needed exact division semantics.
 pub fn SeriesElem::inverse(self : SeriesElem) -> SeriesElem raise PolyError {
   if self.coeffs.is_empty() {
     raise PolyError::DivisionByZero
@@ -569,7 +747,14 @@ pub fn SeriesElem::inverse(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// Divide one truncated series by another when the quotient stays inside the ring.
+/// Divide one truncated series by another.
+///
+/// - Does: Computes the quotient when the division stays inside the truncated
+///   ring.
+/// - Input: Two `SeriesElem` values from the same ring.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` for mismatched rings, zero divisors, or
+///   quotients that would require unsupported negative valuation.
 pub fn SeriesElem::divide(
   self : SeriesElem,
   other : SeriesElem,
@@ -627,7 +812,12 @@ pub fn SeriesElem::divide(
 }
 
 ///|
-/// Compose `self(other)`, requiring `other(0) = 0`.
+/// Compose two truncated series.
+///
+/// - Does: Computes `self(other)` by Horner-style evaluation.
+/// - Input: Two `SeriesElem` values from the same ring.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError::BadExponent` unless `other(0) = 0`.
 pub fn SeriesElem::compose(
   self : SeriesElem,
   other : SeriesElem,
@@ -648,7 +838,12 @@ pub fn SeriesElem::compose(
 }
 
 ///|
-/// Exponential series for inputs with zero constant term.
+/// Compute the exponential of a series.
+///
+/// - Does: Expands `exp(self)` in the truncated ring.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` when the constant term is not zero.
 pub fn SeriesElem::exp(self : SeriesElem) -> SeriesElem raise PolyError {
   series_require_zero_constant(self, "exp")
   let mut out = self.ring.one()
@@ -661,13 +856,23 @@ pub fn SeriesElem::exp(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// `exp(self) - 1`.
+/// Compute `exp(self) - 1`.
+///
+/// - Does: Reuses the exponential front door and subtracts the constant `1`.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Shares the same preconditions as `SeriesElem::exp`.
 pub fn SeriesElem::expm1(self : SeriesElem) -> SeriesElem raise PolyError {
   self.exp().sub_ground(fe_from_int(1, self.ring.domain))
 }
 
 ///|
-/// Logarithm for series with constant term `1`.
+/// Compute the logarithm of a unit series.
+///
+/// - Does: Expands `log(self)` for a series whose constant term is `1`.
+/// - Input: A `SeriesElem`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError::BadExponent` unless the constant term is `1`.
 pub fn SeriesElem::log(self : SeriesElem) -> SeriesElem raise PolyError {
   let one = fe_from_int(1, self.ring.domain)
   if self.coeffs.is_empty() || !fe_is_zero(fe_sub(self.coeffs[0], one)) {
@@ -677,7 +882,12 @@ pub fn SeriesElem::log(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// `log(1 + self)` for series with zero constant term.
+/// Compute `log(1 + self)`.
+///
+/// - Does: Expands the logarithm around zero using the truncated series model.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` when the constant term is not zero.
 pub fn SeriesElem::log1p(self : SeriesElem) -> SeriesElem raise PolyError {
   series_require_zero_constant(self, "log1p")
   let mut out = self.ring.zero()
@@ -696,7 +906,13 @@ pub fn SeriesElem::log1p(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// Square root of a truncated series over a characteristic-zero field.
+/// Compute a truncated square root.
+///
+/// - Does: Expands a square root in the current truncated ring.
+/// - Input: A `SeriesElem`.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` for odd valuation, unsupported constant terms,
+///   or domains without the required exact field semantics.
 pub fn SeriesElem::sqrt(self : SeriesElem) -> SeriesElem raise PolyError {
   if !domain_is_field_pred(self.ring.domain) {
     raise PolyError::DomainNotField
@@ -753,7 +969,12 @@ pub fn SeriesElem::sqrt(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// Sine of a series with zero constant term.
+/// Compute the sine of a series.
+///
+/// - Does: Expands `sin(self)` in the truncated ring.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` when the constant term is not zero.
 pub fn SeriesElem::sin(self : SeriesElem) -> SeriesElem raise PolyError {
   series_require_zero_constant(self, "sin")
   let mut out = self.ring.zero()
@@ -772,7 +993,12 @@ pub fn SeriesElem::sin(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// Hyperbolic sine of a series with zero constant term.
+/// Compute the hyperbolic sine of a series.
+///
+/// - Does: Expands `sinh(self)` in the truncated ring.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` when the constant term is not zero.
 pub fn SeriesElem::sinh(self : SeriesElem) -> SeriesElem raise PolyError {
   series_require_zero_constant(self, "sinh")
   let mut out = self.ring.zero()
@@ -789,7 +1015,12 @@ pub fn SeriesElem::sinh(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// Cosine of a series with zero constant term.
+/// Compute the cosine of a series.
+///
+/// - Does: Expands `cos(self)` in the truncated ring.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` when the constant term is not zero.
 pub fn SeriesElem::cos(self : SeriesElem) -> SeriesElem raise PolyError {
   series_require_zero_constant(self, "cos")
   let mut out = self.ring.one()
@@ -808,7 +1039,12 @@ pub fn SeriesElem::cos(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// Hyperbolic cosine of a series with zero constant term.
+/// Compute the hyperbolic cosine of a series.
+///
+/// - Does: Expands `cosh(self)` in the truncated ring.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` when the constant term is not zero.
 pub fn SeriesElem::cosh(self : SeriesElem) -> SeriesElem raise PolyError {
   series_require_zero_constant(self, "cosh")
   let mut out = self.ring.one()
@@ -825,19 +1061,36 @@ pub fn SeriesElem::cosh(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// Tangent of a series with zero constant term.
+/// Compute the tangent of a series.
+///
+/// - Does: Expands `tan(self)` through `sin/cos` in the truncated ring.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Shares the same domain and constant-term requirements as
+///   `SeriesElem::sin` and `SeriesElem::cos`.
 pub fn SeriesElem::tan(self : SeriesElem) -> SeriesElem raise PolyError {
   self.sin().divide(self.cos())
 }
 
 ///|
-/// Hyperbolic tangent of a series with zero constant term.
+/// Compute the hyperbolic tangent of a series.
+///
+/// - Does: Expands `tanh(self)` through `sinh/cosh` in the truncated ring.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Shares the same domain and constant-term requirements as
+///   `SeriesElem::sinh` and `SeriesElem::cosh`.
 pub fn SeriesElem::tanh(self : SeriesElem) -> SeriesElem raise PolyError {
   self.sinh().divide(self.cosh())
 }
 
 ///|
-/// Arctangent of a series with zero constant term.
+/// Compute the arctangent of a series.
+///
+/// - Does: Expands `atan(self)` through the differential equation front door.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` when the constant term is not zero.
 pub fn SeriesElem::atan(self : SeriesElem) -> SeriesElem raise PolyError {
   series_require_zero_constant(self, "atan")
   let one = fe_from_int(1, self.ring.domain)
@@ -845,7 +1098,12 @@ pub fn SeriesElem::atan(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// Hyperbolic arctangent of a series with zero constant term.
+/// Compute the hyperbolic arctangent of a series.
+///
+/// - Does: Expands `atanh(self)` through the differential equation front door.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` when the constant term is not zero.
 pub fn SeriesElem::atanh(self : SeriesElem) -> SeriesElem raise PolyError {
   series_require_zero_constant(self, "atanh")
   let one = fe_from_int(1, self.ring.domain)
@@ -853,7 +1111,12 @@ pub fn SeriesElem::atanh(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// Arcsine of a series with zero constant term.
+/// Compute the arcsine of a series.
+///
+/// - Does: Expands `asin(self)` through the differential equation front door.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` when the constant term is not zero.
 pub fn SeriesElem::asin(self : SeriesElem) -> SeriesElem raise PolyError {
   series_require_zero_constant(self, "asin")
   let one = fe_from_int(1, self.ring.domain)
@@ -861,7 +1124,12 @@ pub fn SeriesElem::asin(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-/// Hyperbolic arcsine of a series with zero constant term.
+/// Compute the hyperbolic arcsine of a series.
+///
+/// - Does: Expands `asinh(self)` through the differential equation front door.
+/// - Input: A `SeriesElem` with zero constant term.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Raises `PolyError` when the constant term is not zero.
 pub fn SeriesElem::asinh(self : SeriesElem) -> SeriesElem raise PolyError {
   series_require_zero_constant(self, "asinh")
   let one = fe_from_int(1, self.ring.domain)
@@ -869,6 +1137,13 @@ pub fn SeriesElem::asinh(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
+/// Convert a truncated series back to an expression.
+///
+/// - Does: Rebuilds the finite truncated polynomial expression represented by
+///   the stored coefficients.
+/// - Input: A `SeriesElem`.
+/// - Returns: An `Expr`.
+/// - Limits: Terms past the ring precision are not represented.
 pub fn SeriesElem::to_expr(self : SeriesElem) -> Expr {
   let x = Expr::Symbol(self.ring.sym)
   let terms : Array[Expr] = Array::new()

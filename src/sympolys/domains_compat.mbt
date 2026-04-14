@@ -348,17 +348,36 @@ pub fn domain_to_sympy_string(domain : Domain) -> String {
 }
 
 ///|
+/// Tree form used by domain expression mappers.
+///
+/// - Does: Represents either a single coefficient expression or a nested list
+///   of them for domain conversion helpers.
+/// - Input: Built from the `Elem` and `List` variants.
+/// - Returns: A `DomainExprTree`.
+/// - Limits: This is a compatibility container, not a general expression AST.
 pub enum DomainExprTree {
   Elem(Expr)
   List(Array[DomainExprTree])
 }
 
 ///|
+/// Wrap one expression as a tree leaf.
+///
+/// - Does: Builds the leaf variant used by domain tree mappers.
+/// - Input: An `Expr`.
+/// - Returns: A `DomainExprTree`.
+/// - Limits: No normalization is applied here.
 pub fn domain_expr_tree_elem(expr : Expr) -> DomainExprTree {
   DomainExprTree::Elem(expr)
 }
 
 ///|
+/// Wrap a list of tree nodes.
+///
+/// - Does: Builds the list variant used by domain tree mappers.
+/// - Input: `Array[DomainExprTree]`.
+/// - Returns: A `DomainExprTree`.
+/// - Limits: No normalization is applied here.
 pub fn domain_expr_tree_list(items : Array[DomainExprTree]) -> DomainExprTree {
   DomainExprTree::List(items)
 }
@@ -517,7 +536,12 @@ pub fn rational_function_field_domain(
 }
 
 ///|
-/// Build a quotient-ring descriptor `(K[x])/I`.
+/// Build a quotient-ring domain.
+///
+/// - Does: Constructs the descriptor for `(K[x1, ..., xn]) / I`.
+/// - Input: A base `Domain`, generator names, and defining relations.
+/// - Returns: `Domain::QuotientRing`.
+/// - Limits: Raises `PolyError::NonPolynomial` when the relation list is empty.
 pub fn quotient_ring_domain(
   base : Domain,
   gens : Array[String],
@@ -531,7 +555,13 @@ pub fn quotient_ring_domain(
 }
 
 ///|
-/// Build a formal power-series ring descriptor.
+/// Build a formal power-series ring domain.
+///
+/// - Does: Constructs the descriptor for a power-series ring over `base`.
+/// - Input: A base `Domain`, generator names, and optional precision hint.
+/// - Returns: `Domain::PowerSeries`.
+/// - Limits: The precision is stored as metadata only at this constructor
+///   layer.
 pub fn power_series_domain(
   base : Domain,
   gens : Array[String],
@@ -1174,7 +1204,13 @@ fn unify_composite_domains(a : Domain, b : Domain) -> Domain raise PolyError {
 }
 
 ///|
-/// Construct a polynomial ring over `domain`. Empty generators return `domain`.
+/// Construct a polynomial ring over a ground domain.
+///
+/// - Does: Returns `domain` when no generators are requested, otherwise builds
+///   `K[x1, ..., xn]`.
+/// - Input: A ground `Domain` and generator names.
+/// - Returns: A `Domain`.
+/// - Limits: Raises `PolyError::DomainMismatch` for quotient-ring inputs.
 pub fn domain_poly_ring(
   domain : Domain,
   gens : Array[String],
@@ -1189,7 +1225,13 @@ pub fn domain_poly_ring(
 }
 
 ///|
-/// Construct a fraction field over `domain`. Empty generators return `domain`.
+/// Construct a rational-function field over a ground domain.
+///
+/// - Does: Returns `domain` when no generators are requested, otherwise builds
+///   `K(x1, ..., xn)`.
+/// - Input: A ground `Domain` and generator names.
+/// - Returns: A `Domain`.
+/// - Limits: Raises `PolyError::DomainMismatch` for quotient-ring inputs.
 pub fn domain_frac_field(
   domain : Domain,
   gens : Array[String],
@@ -1204,7 +1246,12 @@ pub fn domain_frac_field(
 }
 
 ///|
-/// Old polynomial ring compatibility alias.
+/// Compatibility alias for `domain_poly_ring`.
+///
+/// - Does: Preserves the old constructor spelling.
+/// - Input: A ground `Domain` and generator names.
+/// - Returns: A `Domain`.
+/// - Limits: Shares the same validation rules as `domain_poly_ring`.
 pub fn domain_old_poly_ring(
   domain : Domain,
   gens : Array[String],
@@ -1213,7 +1260,12 @@ pub fn domain_old_poly_ring(
 }
 
 ///|
-/// Old fraction field compatibility alias.
+/// Compatibility alias for `domain_frac_field`.
+///
+/// - Does: Preserves the old constructor spelling.
+/// - Input: A ground `Domain` and generator names.
+/// - Returns: A `Domain`.
+/// - Limits: Shares the same validation rules as `domain_frac_field`.
 pub fn domain_old_frac_field(
   domain : Domain,
   gens : Array[String],
@@ -1222,7 +1274,13 @@ pub fn domain_old_frac_field(
 }
 
 ///|
-/// Rebase a composite domain onto `ground`.
+/// Rebase a composite domain onto a new ground domain.
+///
+/// - Does: Reuses the structural shape of a composite domain while replacing
+///   its ground domain.
+/// - Input: A `Domain` and replacement ground `Domain`.
+/// - Returns: A `Domain`.
+/// - Limits: Non-composite inputs collapse directly to `ground`.
 pub fn domain_set_domain(domain : Domain, ground : Domain) -> Domain {
   match domain {
     Domain::PolyRing(_, gens) => Domain::PolyRing(ground, gens)
@@ -1239,7 +1297,14 @@ pub fn domain_set_domain(domain : Domain, ground : Domain) -> Domain {
 }
 
 ///|
-/// Unify two domains while reserving `symbols` as external generators.
+/// Unify two domains while reserving external symbols.
+///
+/// - Does: Computes a shared domain while preventing the reserved `symbols`
+///   from being captured by composite-domain generators.
+/// - Input: Two `Domain` values and `Array[String]`.
+/// - Returns: A unified `Domain`.
+/// - Limits: Raises `PolyError::BadGenerator` when a reserved symbol would be
+///   captured.
 pub fn domain_unify_with_symbols(
   lhs : Domain,
   rhs : Domain,
@@ -1257,7 +1322,12 @@ pub fn domain_unify_with_symbols(
 }
 
 ///|
-/// Unify two domains where at least one side is composite.
+/// Unify two potentially composite domains.
+///
+/// - Does: Forwards to the main pairwise unifier for composite-domain callers.
+/// - Input: Two `Domain` values.
+/// - Returns: A unified `Domain`.
+/// - Limits: Raises `PolyError::DomainMismatch` when no common domain is known.
 pub fn domain_unify_composite(
   lhs : Domain,
   rhs : Domain,
@@ -1289,7 +1359,14 @@ fn append_unique_exprs(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
 }
 
 ///|
-/// Construct an algebraic extension over `QQ` or extend an existing one.
+/// Construct an algebraic field domain.
+///
+/// - Does: Builds an algebraic extension over `QQ`, or enlarges an existing
+///   algebraic extension with additional generators.
+/// - Input: A base `Domain` and extension generators as `Array[Expr]`.
+/// - Returns: `Domain::AlgExt`.
+/// - Limits: Raises `PolyError` for empty extensions or unsupported base
+///   domains.
 pub fn domain_algebraic_field(
   domain : Domain,
   extension : Array[Expr],
