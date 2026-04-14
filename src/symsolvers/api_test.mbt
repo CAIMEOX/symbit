@@ -6088,7 +6088,7 @@ test "linear_ode_to_matrix matches additional SymPy matrix forms and errors" {
       Err(err) => err.to_string()
       Ok(_) => "ok"
     },
-    content="ValueError(\"Cannot represent system in 1-order form\")",
+    content="ValueError(Cannot represent system in 1-order form)",
   )
 
   let nonlinear : Result[
@@ -6116,7 +6116,7 @@ test "linear_ode_to_matrix matches additional SymPy matrix forms and errors" {
       Err(err) => err.to_string()
       Ok(_) => "ok"
     },
-    content="ValueError(\"The system of ODEs is nonlinear.\")",
+    content="ValueError(The system of ODEs is nonlinear.)",
   )
 }
 
@@ -6477,7 +6477,7 @@ test "pde separation matches additional SymPy source cases" {
       Err(err) => err.to_string()
       Ok(_) => "ok"
     },
-    content="ValueError(\"Unknown strategy: div\")",
+    content="ValueError(Unknown strategy: div)",
   )
 
   let fxyz = @symcore.applied_undefined_function("F", [x(), y(), z()])
@@ -6500,7 +6500,7 @@ test "pde separation matches additional SymPy source cases" {
       Err(err) => err.to_string()
       Ok(_) => "ok"
     },
-    content="ValueError(\"Duplicate substitution arguments detected\")",
+    content="ValueError(Duplicate substitution arguments detected)",
   )
   let wrong_count : Result[Array[@symcore.Expr]?, SolverError] = try? pde_separate_mul(
     sum_eq,
@@ -6512,7 +6512,7 @@ test "pde separation matches additional SymPy source cases" {
       Err(err) => err.to_string()
       Ok(_) => "ok"
     },
-    content="ValueError(\"Variable counts do not match\")",
+    content="ValueError(Variable counts do not match)",
   )
   let wrong_args : Result[Array[@symcore.Expr]?, SolverError] = try? pde_separate_mul(
     sum_eq,
@@ -6524,7 +6524,7 @@ test "pde separation matches additional SymPy source cases" {
       Err(err) => err.to_string()
       Ok(_) => "ok"
     },
-    content="ValueError(\"Arguments do not match\")",
+    content="ValueError(Arguments do not match)",
   )
 
   let split_y = pde_separate_mul(sum_eq, fxyz, [yfun(y()), u(x(), z())]).unwrap_or([],
@@ -6838,7 +6838,7 @@ test "dsolve meta-hints cover SymPy-style front doors" {
       Err(err) => err.to_string()
       Ok(_) => "ok"
     },
-    content="ValueError(\"ODE Eq(Derivative(f(x), x), f(x)) does not match hint factorable\")",
+    content="ValueError(ODE Eq(Derivative(f(x), x), f(x)) does not match hint factorable)",
   )
 }
 
@@ -7042,7 +7042,7 @@ test "pdsolve mismatched hint raises ValueError instead of unsupported" {
       Err(err) => err.to_string()
       Ok(_) => "ok"
     },
-    content="ValueError(\"PDE Eq(-2*Derivative(u(x, y), x) + 4*Derivative(u(x, y), y) + 5*u(x, y), exp(3*y + x)) does not match hint 1st_linear_variable_coeff\")",
+    content="ValueError(PDE Eq(-2*Derivative(u(x, y), x) + 4*Derivative(u(x, y), y) + 5*u(x, y), exp(3*y + x)) does not match hint 1st_linear_variable_coeff)",
   )
 }
 

@@ -1,15 +1,22 @@
 ///|
-/// Internalized rational inequality item used by
-/// [`solve_rational_inequalities`](#solve_rational_inequalities).
+/// Public rational-inequality tuple used by inequality solvers.
 ///
-/// The tuple stores `((numerator_poly, denominator_poly), relation_string)`.
+/// - Does: Encodes one rational inequality as polynomial numerator,
+///   polynomial denominator, and a relation string.
+/// - Input: `((Poly, Poly), String)`.
+/// - Returns: A type alias used by `solve_rational_inequalities`.
+/// - Limits: The relation string must still be one of the supported operator
+///   spellings at the public front door.
 pub type RationalInequality = ((@sympolys.Poly, @sympolys.Poly), String)
 
 ///|
 /// Result of an inequality solve request.
 ///
-/// Some entrypoints can either return a set directly or rebuild a relational
-/// expression that is logically equivalent to that set.
+/// - Does: Encodes either a set-valued answer or a rebuilt relational answer.
+/// - Input: Produced by public inequality front doors.
+/// - Returns: `Set(Set)` or `Relational(Expr)`.
+/// - Limits: Callers must branch on the variant because not every inequality
+///   API returns a `Set` directly.
 pub enum InequalityResult {
   Set(Set)
   Relational(Expr)
@@ -599,8 +606,13 @@ fn solver_set_difference(lhs : Set, rhs : Set) -> Set {
 ///|
 /// Solve a univariate polynomial inequality and return its solution pieces.
 ///
-/// The result is an array of sets rather than a pre-unioned set so callers can
-/// preserve interval structure when they need it.
+/// - Does: Solves one univariate polynomial relation by sign analysis and root
+///   splitting.
+/// - Input: A univariate `Poly` and a relation string such as `==`, `!=`, `<`,
+///   `<=`, `>`, or `>=`.
+/// - Returns: `Array[Set]`.
+/// - Limits: The polynomial must be univariate; multivariate input raises
+///   `SolverError::ValueError`.
 pub fn solve_poly_inequality(
   poly : @sympolys.Poly,
   rel : String,
@@ -656,7 +668,12 @@ pub fn solve_poly_inequality(
 ///|
 /// Solve a disjunction of conjunctions of rational inequalities.
 ///
-/// Each inner array is treated as a conjunction and the outer array as a union.
+/// - Does: Treats each inner array as a conjunction and unions the resulting
+///   solution sets across the outer array.
+/// - Input: `Array[Array[RationalInequality]]`.
+/// - Returns: A `@symsets.Set`.
+/// - Limits: This front door assumes polynomial numerators and denominators
+///   have already been built.
 pub fn solve_rational_inequalities(
   eqs : Array[Array[RationalInequality]],
 ) -> Set raise SolverError {
@@ -746,8 +763,28 @@ fn solver_univariate_inequality_set(
 ///|
 /// Solve a single-variable inequality over a set domain.
 ///
-/// Set `relational=false` to receive a `Set` result directly; otherwise the
-/// solver rebuilds a logically equivalent relational expression in `gen`.
+/// - Does: Solves one inequality over a domain and optionally rebuilds the
+///   answer as a relational expression.
+/// - Input: One inequality expression, one symbol, and optional result/domain
+///   flags.
+/// - Returns: An `InequalityResult`.
+/// - Limits: The current front door is univariate and treats `continuous` as a
+///   compatibility flag rather than a full continuity analysis switch.
+///
+/// ```mbt check
+/// test "symsolvers solve_univariate_inequality returns a set when requested" {
+///   let x = @symcore.Expr::Symbol("x")
+///   match solve_univariate_inequality(
+///     @symcore.Expr::Relational(@symcore.RelOp::Gt, x, @symcore.int(0)),
+///     x,
+///     relational=false,
+///   ) {
+///     InequalityResult::Set(set) =>
+///       inspect(@symsets.to_string(set), content="Interval.open(0, oo)")
+///     _ => fail("expected a set-valued inequality result")
+///   }
+/// }
+/// ```
 pub fn solve_univariate_inequality(
   expr : Expr,
   gen : Expr,
@@ -819,8 +856,12 @@ fn solver_abs_equality_set(
 ///|
 /// Reduce an inequality with one absolute-value term to a relational condition.
 ///
-/// This is the symbolic front-end used by the higher-level absolute inequality
-/// reducers.
+/// - Does: Converts one `Abs`-based inequality into an equivalent relational
+///   expression over one symbol.
+/// - Input: One expression, one relation string, and one symbol.
+/// - Returns: An `Expr`.
+/// - Limits: The input must contain exactly one supported `Abs` term or the
+///   solver raises `SolverError::ValueError`.
 pub fn reduce_abs_inequality(
   expr : Expr,
   rel : String,
@@ -946,6 +987,13 @@ pub fn reduce_abs_inequality(
 
 ///|
 /// Conjoin multiple absolute-value inequalities after reducing each one.
+///
+/// - Does: Applies `reduce_abs_inequality` to each item and combines the
+///   results with logical `And`.
+/// - Input: `Array[(Expr, String)]` plus one symbol.
+/// - Returns: An `Expr`.
+/// - Limits: Each item must satisfy the single-`Abs` assumptions enforced by
+///   `reduce_abs_inequality`.
 pub fn reduce_abs_inequalities(
   exprs : Array[(Expr, String)],
   gen : Expr,
@@ -1005,8 +1053,25 @@ fn solver_relevant_symbols(expr : Expr, symbols : Array[Expr]) -> Array[Expr] {
 ///|
 /// Reduce a collection of independent inequalities.
 ///
-/// When more than one symbol is tracked, each inequality must depend on at most
-/// one tracked symbol; otherwise the solver raises `ValueError`.
+/// - Does: Solves a list of inequalities and combines the result into one
+///   relational expression.
+/// - Input: `Array[Expr]` and an optional tracked symbol list.
+/// - Returns: An `Expr`.
+/// - Limits: With more than one tracked symbol, each inequality must depend on
+///   at most one tracked symbol or the solver raises `SolverError::ValueError`.
+///
+/// ```mbt check
+/// test "symsolvers reduce_inequalities combines simple one-symbol constraints" {
+///   let x = @symcore.Expr::Symbol("x")
+///   inspect(
+///     @symprint.to_string(reduce_inequalities([
+///       @symcore.Expr::Relational(@symcore.RelOp::Gt, x, @symcore.int(0)),
+///       @symcore.Expr::Relational(@symcore.RelOp::Lt, x, @symcore.int(2)),
+///     ], symbols=[x])),
+///     content="And(0 < x, x < 2)",
+///   )
+/// }
+/// ```
 pub fn reduce_inequalities(
   inequalities : Array[Expr],
   symbols? : Array[Expr] = [],

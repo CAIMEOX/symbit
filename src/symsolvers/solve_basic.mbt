@@ -1,8 +1,12 @@
 ///|
-/// Input accepted by [`solve`](#solve).
+/// Public tagged input accepted by `solve`.
 ///
-/// `Expr` is a single equation, `Exprs` is a system, and `Matrix` is reserved
-/// for matrix-shaped solve inputs.
+/// - Does: Distinguishes single-equation, system, and matrix-shaped solve
+///   requests.
+/// - Input: `Expr(Expr)`, `Exprs(Array[Expr])`, or `Matrix(Matrix)`.
+/// - Returns: A `SolveInput` tag consumed by `solve`.
+/// - Limits: `Matrix` input remains a compatibility front door and is not as
+///   feature-complete as expression-based solving.
 pub enum SolveInput {
   Expr(Expr)
   Exprs(Array[Expr])
@@ -10,10 +14,14 @@ pub enum SolveInput {
 }
 
 ///|
-/// Result variants returned by [`solve`](#solve).
+/// Public result variants returned by `solve`.
 ///
-/// Single-symbol solves usually return `List`; multi-symbol solves may return a
-/// single dictionary or an array of dictionaries depending on arity.
+/// - Does: Encodes the shape of explicit solve results.
+/// - Input: Produced by `solve` after dispatching on equation count and symbol
+///   arity.
+/// - Returns: `List`, `Dict`, or `Dicts`.
+/// - Limits: The result shape depends on the solve front door, so callers
+///   should branch on the variant instead of assuming one fixed shape.
 pub enum SolveResult {
   List(Array[Expr])
   Dict(Map[String, Expr])
@@ -21,24 +29,47 @@ pub enum SolveResult {
 }
 
 ///|
-/// Public alias for the complex domain used by [`solve`](#solve) and
-/// [`solveset`](#solveset).
+/// Public alias for the default complex solve domain.
+///
+/// - Does: Exposes the complex domain used by `solve` and `solveset` when no
+///   narrower domain is supplied.
+/// - Input: Read as a value, not called.
+/// - Returns: A `@symsets.Set`.
+/// - Limits: This is the package default domain choice; callers still need to
+///   pass `Reals` explicitly when they want real-domain semantics.
 pub let complexes : Set = @symsets.complexes()
 
 ///|
-/// Wrap one equation for [`solve`](#solve).
+/// Wrap one expression for `solve`.
+///
+/// - Does: Marks a single equation-like expression as `solve` input.
+/// - Input: One `Expr`.
+/// - Returns: `SolveInput::Expr`.
+/// - Limits: This helper does not validate that the expression is actually
+///   solvable.
 pub fn solve_expr_input(expr : Expr) -> SolveInput {
   SolveInput::Expr(expr)
 }
 
 ///|
-/// Wrap a system of equations for [`solve`](#solve).
+/// Wrap a system of expressions for `solve`.
+///
+/// - Does: Marks an array of equations as system input.
+/// - Input: `Array[Expr]`.
+/// - Returns: `SolveInput::Exprs`.
+/// - Limits: This helper does not check consistency, linearity, or symbol
+///   shape.
 pub fn solve_exprs_input(exprs : Array[Expr]) -> SolveInput {
   SolveInput::Exprs(exprs)
 }
 
 ///|
-/// Wrap a matrix input for [`solve`](#solve).
+/// Wrap a matrix for `solve`.
+///
+/// - Does: Marks a matrix-shaped solve request.
+/// - Input: A `Matrix`.
+/// - Returns: `SolveInput::Matrix`.
+/// - Limits: Matrix solve coverage is narrower than the expression front door.
 pub fn solve_matrix_input(matrix : Matrix) -> SolveInput {
   SolveInput::Matrix(matrix)
 }
@@ -2127,10 +2158,15 @@ fn tuple_array_from_set(set : Set) -> Array[Expr] {
 ///|
 /// Solve one equation linearly for a preferred symbol.
 ///
-/// The return value is `(symbol, value)` when a safe linear solve is available,
-/// `(0, 1)` for identities, `(0, 0)` for unsafe removable-singularity solves,
-/// and `(numerator, denominator)` when the expression is not linear in any
-/// allowed symbol.
+/// - Does: Attempts a safe linear solve before falling back to structural
+///   information about the input.
+/// - Input: A left-hand expression plus optional `rhs`, candidate `symbols`,
+///   and excluded symbols.
+/// - Returns: `(symbol, value)` for a safe linear solve, `(0, 1)` for
+///   identities, `(0, 0)` for unsafe removable-singularity cases, or
+///   `(numerator, denominator)` when no linear solve is accepted.
+/// - Limits: Matching is conservative and only accepts solves that stay safe
+///   against collected denominator factors.
 pub fn solve_linear(
   lhs : Expr,
   rhs? : Expr = @symcore.int(0),
@@ -2184,11 +2220,28 @@ pub fn solve_linear(
 }
 
 ///|
-/// Solve one symbolic equation as a set over `domain`.
+/// Solve one symbolic equation as a set over a domain.
 ///
-/// This is the main set-valued front door. It handles relational inequalities,
-/// polynomial equations, selected rational and absolute-value forms, and falls
-/// back to a symbolic `ConditionSet` when no explicit solve path is available.
+/// - Does: Computes a set-valued solution for one equation or relational
+///   condition.
+/// - Input: One `Expr`, an optional solve symbol, and an optional domain set.
+/// - Returns: A `@symsets.Set`.
+/// - Limits: Unsupported branches fall back to a symbolic `ConditionSet`, and
+///   deep ODE/PDE behavior is outside this front door.
+///
+/// ```mbt check
+/// test "symsolvers solveset returns finite roots for a quadratic" {
+///   let x = @symcore.Expr::Symbol("x")
+///   let expr = @symcore.add([
+///     @symcore.pow(x, @symcore.int(2)),
+///     @symcore.mul([@symcore.int(-1), @symcore.int(1)]),
+///   ])
+///   inspect(
+///     @symsets.to_string(solveset(expr, symbol=Some(x), domain=@symsets.reals())),
+///     content="{-1, 1}",
+///   )
+/// }
+/// ```
 pub fn solveset(
   expr : Expr,
   symbol? : Expr? = None,
@@ -2279,10 +2332,14 @@ pub fn solveset(
 }
 
 ///|
-/// Solve a nonlinear system and return a set of solution tuples.
+/// Solve a nonlinear system and return a set of tuples.
 ///
-/// The solver first tries linear machinery, then polynomial elimination and
-/// recursive substitution on the supported subset.
+/// - Does: Tries linear, polynomial, and substitution-oriented machinery on a
+///   supported nonlinear system.
+/// - Input: An array of equations and an array of symbols.
+/// - Returns: A tuple-valued `@symsets.Set`.
+/// - Limits: Coverage is limited to the nonlinear families implemented in the
+///   package; unsupported systems may still fail with `SolverError`.
 pub fn nonlinsolve(
   equations : Array[Expr],
   symbols : Array[Expr],
@@ -2314,7 +2371,12 @@ pub fn nonlinsolve(
 ///|
 /// Solve a polynomial system and return tuple expressions.
 ///
-/// This is a thin array-oriented wrapper around [`nonlinsolve`](#nonlinsolve).
+/// - Does: Runs the package polynomial-system front door and unwraps tuple
+///   items into an array.
+/// - Input: An array of equations and an array of symbols.
+/// - Returns: `Array[Expr]`, typically tuple expressions.
+/// - Limits: This is only a thin wrapper over `nonlinsolve`, so unsupported
+///   nonlinear systems still fail there.
 pub fn solve_poly_system(
   equations : Array[Expr],
   symbols : Array[Expr],
@@ -2325,7 +2387,11 @@ pub fn solve_poly_system(
 ///|
 /// Compatibility alias for triangular polynomial solving.
 ///
-/// The current implementation delegates to [`solve_poly_system`](#solve_poly_system).
+/// - Does: Preserves the triangular-solve front door for supported systems.
+/// - Input: An array of equations and an array of symbols.
+/// - Returns: `Array[Expr]`.
+/// - Limits: The current implementation delegates directly to
+///   `solve_poly_system`.
 pub fn solve_triangulated(
   equations : Array[Expr],
   symbols : Array[Expr],
@@ -2334,10 +2400,13 @@ pub fn solve_triangulated(
 }
 
 ///|
-/// Solve a nonlinear system by substitution-oriented front-door semantics.
+/// Solve a nonlinear system through the substitution front door.
 ///
-/// Empty input returns `EmptySet`; otherwise this currently delegates to
-/// [`nonlinsolve`](#nonlinsolve).
+/// - Does: Exposes substitution-style solve semantics for nonlinear systems.
+/// - Input: An array of equations and an array of symbols.
+/// - Returns: A `@symsets.Set`.
+/// - Limits: Empty input returns `EmptySet`, and non-empty input currently
+///   delegates to `nonlinsolve`.
 pub fn substitution(
   system : Array[Expr],
   symbols : Array[Expr],
@@ -2528,9 +2597,30 @@ fn solve_factored_system_fallback(
 ///|
 /// General-purpose solve front door.
 ///
-/// The return shape depends on arity: lists for single-symbol solves,
-/// dictionaries for named multivariate solves, and dictionary arrays for
-/// multi-solution systems.
+/// - Does: Dispatches single equations, systems, and selected matrix inputs to
+///   explicit solve routines.
+/// - Input: A `SolveInput` plus optional symbol order.
+/// - Returns: A `SolveResult`.
+/// - Limits: The return shape depends on arity and explicit symbols, so callers
+///   must branch on the returned variant.
+///
+/// ```mbt check
+/// test "symsolvers solve returns explicit roots for one symbol" {
+///   let x = @symcore.Expr::Symbol("x")
+///   let expr = @symcore.add([
+///     @symcore.pow(x, @symcore.int(2)),
+///     @symcore.mul([@symcore.int(-1), @symcore.int(1)]),
+///   ])
+///   match solve(solve_expr_input(expr), symbols=[x]) {
+///     SolveResult::List(items) =>
+///       inspect(
+///         items.map(@symprint.to_string).join(", "),
+///         content="-1, 1",
+///       )
+///     _ => fail("expected solve to return a root list")
+///   }
+/// }
+/// ```
 pub fn solve(
   input : SolveInput,
   symbols? : Array[Expr] = [],
@@ -2693,8 +2783,12 @@ fn expr_to_mpf(expr : Expr, prec : Int) -> @symnum.Mpf {
 ///|
 /// Numerically solve one equation near an initial guess.
 ///
-/// `x0` is the primary starting value and `x1` optionally enables a two-point
-/// root finder. The result is always returned as a floating expression.
+/// - Does: Runs the numeric root finder around one or two starting guesses.
+/// - Input: An equation, the target symbol, `x0`, optional `x1`, and optional
+///   numeric settings.
+/// - Returns: An `Expr::Float`.
+/// - Limits: Errors are surfaced as `SolverError::ValueError`, and the front
+///   door is numeric only.
 pub fn nsolve(
   expr : Expr,
   symbol : Expr,
