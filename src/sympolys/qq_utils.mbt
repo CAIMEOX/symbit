@@ -1,5 +1,15 @@
 ///|
-/// Clear denominators of a QQ polynomial to lift into ZZ.
+/// Rational-domain helpers.
+
+///|
+/// Clear rational denominators and lift into `ZZ`.
+///
+/// - Does: Multiplies a `QQ` polynomial by the least common multiple of all
+///   coefficient denominators and then rounds the result into `ZZ`.
+/// - Input: One `Poly`.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError` if coefficient extraction or integer rounding
+///   fails.
 pub fn clear_denominators(poly : Poly) -> Poly raise PolyError {
   let mut lcm_den = BigInt::from_int(1)
   for _, c in poly.coeffs {

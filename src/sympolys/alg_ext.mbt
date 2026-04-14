@@ -1,8 +1,19 @@
 ///|
-/// Algebraic extension scaffolding: normalize minimal polynomials and
-/// produce Domain::AlgExt descriptors. Arithmetic is not wired yet; this
-/// stage only checks shape/monicity so later content/primitive logic can
-/// rely on a stable spec.
+/// Algebraic-extension specification front doors.
+///
+/// Current Limits:
+/// - This layer only validates and normalizes extension specifications.
+/// - Full algebraic extension arithmetic lives elsewhere in the package.
+
+///|
+/// Specification for one simple algebraic extension.
+///
+/// - Does: Stores the ground domain, generator name, and defining minimal
+///   polynomial for a monogenic extension.
+/// - Input: Structured fields managed through the public helpers below.
+/// - Returns: An `AlgExtSpec`.
+/// - Limits: The raw struct does not validate monicity or generator shape on
+///   construction.
 pub struct AlgExtSpec {
   base : Domain
   gen : String
@@ -11,18 +22,37 @@ pub struct AlgExtSpec {
 
 ///|
 /// Construct an algebraic-extension specification tuple.
+///
+/// - Does: Packages extension metadata into `AlgExtSpec`.
+/// - Input: One base `Domain`, one generator name, and one defining `Poly`.
+/// - Returns: An `AlgExtSpec`.
+/// - Limits: Validation is deferred to `normalize_alg_ext_spec`.
 pub fn alg_ext_spec(base : Domain, gen : String, minpoly : Poly) -> AlgExtSpec {
   AlgExtSpec::{ base, gen, minpoly }
 }
 
 ///|
-/// Validate and normalize an algebraic-extension specification.
+/// Validate and normalize an extension specification.
+///
+/// - Does: Checks generator/domain compatibility and normalizes the defining
+///   polynomial to a monic representative when the domain supports it.
+/// - Input: One `AlgExtSpec`.
+/// - Returns: An `AlgExtSpec`.
+/// - Limits: Raises `PolyError` when the polynomial is malformed for the given
+///   base domain or cannot be normalized.
 pub fn normalize_alg_ext_spec(spec : AlgExtSpec) -> AlgExtSpec raise PolyError {
   validate_minpoly(spec)
 }
 
 ///|
-/// Build `Domain::AlgExt` from a validated extension specification.
+/// Build a domain-level algebraic extension.
+///
+/// - Does: Converts a normalized extension specification into
+///   `Domain::AlgExt`.
+/// - Input: One `AlgExtSpec`.
+/// - Returns: A `Domain`.
+/// - Limits: This front door validates again through
+///   `normalize_alg_ext_spec` before constructing the result.
 pub fn build_alg_extension(spec : AlgExtSpec) -> Domain raise PolyError {
   let normalized = normalize_alg_ext_spec(spec)
   Domain::AlgExt(normalized.base, [normalized.gen], [

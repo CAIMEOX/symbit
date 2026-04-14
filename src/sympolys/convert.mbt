@@ -84,7 +84,12 @@ pub fn Poly::to_string(self : Poly, order? : TermOrder) -> String {
 }
 
 ///|
-/// Return the leading coefficient of `self`.
+/// Return the leading coefficient under a chosen order.
+///
+/// - Does: Looks up the coefficient of the leading term of `self`.
+/// - Input: One `Poly` and an optional `TermOrder`.
+/// - Returns: A `FieldElem`.
+/// - Limits: Zero input returns the additive zero of the coefficient domain.
 pub fn Poly::lc(self : Poly, order? : TermOrder) -> FieldElem raise PolyError {
   match
     self.leading_term_with_order(
@@ -99,7 +104,12 @@ pub fn Poly::lc(self : Poly, order? : TermOrder) -> FieldElem raise PolyError {
 }
 
 ///|
-/// Return the leading monomial of `self`.
+/// Return the leading monomial under a chosen order.
+///
+/// - Does: Looks up the monomial part of the leading term of `self`.
+/// - Input: One `Poly` and an optional `TermOrder`.
+/// - Returns: `Monomial?`.
+/// - Limits: Zero input returns `None`.
 pub fn Poly::lm(self : Poly, order? : TermOrder) -> Monomial? {
   match
     self.leading_term_with_order(
@@ -114,7 +124,12 @@ pub fn Poly::lm(self : Poly, order? : TermOrder) -> Monomial? {
 }
 
 ///|
-/// Return the leading term `(monomial, coefficient)` of `self`.
+/// Return the leading term under a chosen order.
+///
+/// - Does: Returns the leading monomial together with its coefficient.
+/// - Input: One `Poly` and an optional `TermOrder`.
+/// - Returns: `(Monomial, FieldElem)?`.
+/// - Limits: Zero input returns `None`.
 pub fn Poly::lt(self : Poly, order? : TermOrder) -> (Monomial, FieldElem)? {
   let ord = match order {
     Some(o) => o
@@ -283,7 +298,13 @@ fn is_monomial_zero(m : Monomial) -> Bool {
 }
 
 ///|
-/// Return the degree of `self` in generator `gen_index`.
+/// Return the degree in one generator.
+///
+/// - Does: Computes the largest exponent of `gen_index` appearing in `self`.
+/// - Input: One `Poly` and a generator index.
+/// - Returns: An `Int`.
+/// - Limits: This front door does not bounds-check `gen_index`; out-of-range
+///   indices behave like degree `0`.
 pub fn Poly::degree(self : Poly, gen_index : Int) -> Int {
   let mut max_deg = 0
   for m, _ in self.coeffs {
@@ -295,7 +316,12 @@ pub fn Poly::degree(self : Poly, gen_index : Int) -> Int {
 }
 
 ///|
-/// Return the total degree of `self`.
+/// Return the total degree.
+///
+/// - Does: Computes the largest sum of exponents among all terms of `self`.
+/// - Input: One `Poly`.
+/// - Returns: An `Int`.
+/// - Limits: Zero input returns `0`.
 pub fn Poly::total_degree(self : Poly) -> Int {
   let mut max_deg = 0
   for m, _ in self.coeffs {
@@ -308,13 +334,23 @@ pub fn Poly::total_degree(self : Poly) -> Int {
 }
 
 ///|
-/// Return the leading term under `self.order`.
+/// Return the leading term under the stored order.
+///
+/// - Does: Applies `leading_term_with_order` using `self.order`.
+/// - Input: One `Poly`.
+/// - Returns: `(Monomial, FieldElem)?`.
+/// - Limits: Zero input returns `None`.
 pub fn Poly::leading_term(self : Poly) -> (Monomial, FieldElem)? {
   self.leading_term_with_order(self.order)
 }
 
 ///|
-/// Return the leading term under the specified monomial order.
+/// Return the leading term under an explicit order.
+///
+/// - Does: Selects the maximal term according to the supplied monomial order.
+/// - Input: One `Poly` and one `TermOrder`.
+/// - Returns: `(Monomial, FieldElem)?`.
+/// - Limits: Zero input returns `None`.
 pub fn Poly::leading_term_with_order(
   self : Poly,
   order : TermOrder,

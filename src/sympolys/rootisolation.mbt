@@ -1,6 +1,11 @@
 ///|
-/// Root isolation helpers for univariate dense polynomials over QQ/ZZ-like
-/// rational coefficient domains.
+/// Real-root isolation helpers for dense univariate polynomials.
+///
+/// Current Limits:
+/// - These front doors are restricted to dense coefficient arrays over
+///   rational-like domains.
+/// - The API is intentionally low-level and works on dense coefficient
+///   sequences rather than `Poly` output objects.
 fn abs_rational(r : @symnum.BigRational) -> @symnum.BigRational {
   if r.compare(@symnum.BigRational::zero()) < 0 {
     r.neg()
@@ -58,7 +63,13 @@ fn poly_to_dup(poly : Poly) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
-/// Compute the Cauchy upper bound on the absolute value of all roots of `f`.
+/// Compute a Cauchy upper bound for root magnitudes.
+///
+/// - Does: Returns an upper bound on the absolute value of every root of the
+///   dense polynomial.
+/// - Input: Dense coefficient array and one coefficient `Domain`.
+/// - Returns: A `FieldElem`.
+/// - Limits: Raises `PolyError::BadExponent` for constant input.
 pub fn dup_cauchy_upper_bound(
   coeffs : Array[FieldElem],
   _domain : Domain,
@@ -84,7 +95,12 @@ pub fn dup_cauchy_upper_bound(
 }
 
 ///|
-/// Compute the Cauchy lower bound on the absolute value of all non-zero roots of `f`.
+/// Compute a Cauchy lower bound for non-zero root magnitudes.
+///
+/// - Does: Returns a lower bound on the absolute value of every non-zero root.
+/// - Input: Dense coefficient array and one coefficient `Domain`.
+/// - Returns: A `FieldElem`.
+/// - Limits: Raises `PolyError::BadExponent` for constant input.
 pub fn dup_cauchy_lower_bound(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -102,7 +118,13 @@ pub fn dup_cauchy_lower_bound(
 }
 
 ///|
-/// Return the square of the Mignotte lower bound on separation between distinct roots.
+/// Return a squared Mignotte separation bound.
+///
+/// - Does: Computes a lower bound on the squared distance between distinct
+///   roots.
+/// - Input: Dense coefficient array and one coefficient `Domain`.
+/// - Returns: A `FieldElem`.
+/// - Limits: Raises `PolyError::BadExponent` for degree `< 2`.
 pub fn dup_mignotte_sep_bound_squared(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -134,7 +156,13 @@ pub fn dup_mignotte_sep_bound_squared(
 }
 
 ///|
-/// Computes the Sturm sequence of ``f`` in ``F[x]``.
+/// Build the dense Sturm sequence.
+///
+/// - Does: Converts the dense polynomial into `Poly`, builds its Sturm
+///   sequence, and converts every step back to dense form.
+/// - Input: Dense coefficient array and one coefficient `Domain`.
+/// - Returns: `Array[Array[FieldElem]]`.
+/// - Limits: Raises `PolyError::NonPolynomial` for empty input.
 pub fn dup_sturm(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -302,7 +330,15 @@ fn ceil_pos_rational(r : @symnum.BigRational) -> Int {
 }
 
 ///|
-/// Refine real root's approximating interval to the given precision.
+/// Refine a real-root isolating interval.
+///
+/// - Does: Narrows one isolating interval with mediants until a stopping
+///   condition is reached.
+/// - Input: Dense coefficient array, interval endpoints, coefficient `Domain`,
+///   and optional refinement controls.
+/// - Returns: `(@symnum.BigRational, @symnum.BigRational)`.
+/// - Limits: Empty input raises `PolyError::NonPolynomial`; non-isolating input
+///   may be returned unchanged.
 pub fn dup_refine_real_root(
   coeffs : Array[FieldElem],
   s : @symnum.BigRational,
@@ -410,7 +446,13 @@ pub fn dup_refine_real_root(
 }
 
 ///|
-/// Isolate real roots of a square-free polynomial using the Vincent-Akritas-Strzebonski (VAS) CF approach.
+/// Isolate real roots of a square-free dense polynomial.
+///
+/// - Does: Uses Sturm subdivision inside a global Cauchy bound to produce
+///   isolating intervals.
+/// - Input: Dense coefficient array and one coefficient `Domain`.
+/// - Returns: `Array[(@symnum.BigRational, @symnum.BigRational)]`.
+/// - Limits: Constant input returns `[]`.
 pub fn dup_isolate_real_roots_sqf(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -444,7 +486,13 @@ pub fn dup_isolate_real_roots_sqf(
 }
 
 ///|
-/// Compute the LMQ upper bound for positive roots of `f`.
+/// Compute the positive-root upper bound.
+///
+/// - Does: Exposes the root upper-bound helper under the compatibility name
+///   used by callers.
+/// - Input: Dense coefficient array and one coefficient `Domain`.
+/// - Returns: A `FieldElem`.
+/// - Limits: Inherits the same front-door errors as `dup_cauchy_upper_bound`.
 pub fn dup_root_upper_bound(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -453,7 +501,13 @@ pub fn dup_root_upper_bound(
 }
 
 ///|
-/// Compute the LMQ lower bound for positive roots of `f`.
+/// Compute the positive-root lower bound.
+///
+/// - Does: Exposes the root lower-bound helper under the compatibility name
+///   used by callers.
+/// - Input: Dense coefficient array and one coefficient `Domain`.
+/// - Returns: A `FieldElem`.
+/// - Limits: Inherits the same front-door errors as `dup_cauchy_lower_bound`.
 pub fn dup_root_lower_bound(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -462,7 +516,13 @@ pub fn dup_root_lower_bound(
 }
 
 ///|
-/// Isolate real roots using Vincent-Akritas-Strzebonski (VAS) continued fractions approach.
+/// Isolate real roots together with multiplicities.
+///
+/// - Does: Splits the dense polynomial into square-free factors, isolates each
+///   factor’s real roots, and attaches multiplicities.
+/// - Input: Dense coefficient array and one coefficient `Domain`.
+/// - Returns: `Array[((@symnum.BigRational, @symnum.BigRational), Int)]`.
+/// - Limits: Constant input returns `[]`.
 pub fn dup_isolate_real_roots(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -496,7 +556,14 @@ pub fn dup_isolate_real_roots(
 }
 
 ///|
-/// Returns the number of distinct real roots of ``f`` in ``[inf, sup]``.
+/// Count distinct real roots in an interval.
+///
+/// - Does: Counts isolated real roots whose intervals intersect the supplied
+///   bounds.
+/// - Input: Dense coefficient array, coefficient `Domain`, and optional lower
+///   and upper bounds.
+/// - Returns: An `Int`.
+/// - Limits: Multiplicities are ignored; this counts distinct real roots only.
 pub fn dup_count_real_roots(
   coeffs : Array[FieldElem],
   domain : Domain,
