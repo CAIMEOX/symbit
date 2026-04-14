@@ -610,13 +610,35 @@ fn hnf_bigint(rows : Array[Array[BigInt]]) -> Array[Array[BigInt]] {
 }
 
 ///|
-/// Compute a row-style Hermite normal form for integer matrices.
+/// Integer normal-form compatibility front doors.
+///
+/// Current Limits:
+/// - these front doors currently target `ZZ`-backed dense matrices.
+/// - they expose the stable compatibility surface, not every internal helper in
+///   the Smith/Hermite implementation.
+
+///|
+/// Compute the Hermite normal form of an integer matrix.
+///
+/// - Does: Returns the row-style Hermite normal form through the dense
+///   compatibility layer.
+/// - Input: A `DDM` over `ZZ`.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the matrix is not over
+///   `ZZ`.
 pub fn DDM::hermite_normal_form(self : DDM) -> DDM raise PolyError {
   let rows = zz_ddm_to_bigint_rows(self)
   bigint_rows_to_zz_ddm(hnf_bigint(rows))
 }
 
 ///|
+/// Return invariant factors of an integer matrix.
+///
+/// - Does: Computes the invariant factors used by Smith normal form.
+/// - Input: A `DDM` over `ZZ`.
+/// - Returns: `Array[FieldElem]`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the matrix is not over
+///   `ZZ`.
 pub fn DDM::invariant_factors(self : DDM) -> Array[FieldElem] raise PolyError {
   let rows = zz_ddm_to_bigint_rows(self)
   let (invs, _, _) = smith_bigint_decomp(rows, false)
@@ -626,6 +648,13 @@ pub fn DDM::invariant_factors(self : DDM) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
+/// Compute the Smith normal form of an integer matrix.
+///
+/// - Does: Returns the diagonal Smith normal form matrix.
+/// - Input: A `DDM` over `ZZ`.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the matrix is not over
+///   `ZZ`.
 pub fn DDM::smith_normal_form(self : DDM) -> DDM raise PolyError {
   let rows = zz_ddm_to_bigint_rows(self)
   let (invs, _, _) = smith_bigint_decomp(rows, false)
@@ -638,6 +667,13 @@ pub fn DDM::smith_normal_form(self : DDM) -> DDM raise PolyError {
 }
 
 ///|
+/// Check whether a matrix is already in Smith normal form.
+///
+/// - Does: Verifies diagonal shape and divisibility conditions.
+/// - Input: A `DDM` over `ZZ`.
+/// - Returns: A `Bool`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the matrix is not over
+///   `ZZ`.
 pub fn DDM::is_smith_normal_form(self : DDM) -> Bool raise PolyError {
   let rows = zz_ddm_to_bigint_rows(self)
   if rows.is_empty() {
@@ -669,6 +705,13 @@ pub fn DDM::is_smith_normal_form(self : DDM) -> Bool raise PolyError {
 }
 
 ///|
+/// Compute Smith normal form together with transforms.
+///
+/// - Does: Returns `(S, U, V)` such that `U * A * V = S`.
+/// - Input: A `DDM` over `ZZ`.
+/// - Returns: `(DDM, DDM, DDM)`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the matrix is not over
+///   `ZZ`.
 pub fn DDM::smith_normal_decomp(self : DDM) -> (DDM, DDM, DDM) raise PolyError {
   let rows = zz_ddm_to_bigint_rows(self)
   let (invs, s, t) = smith_bigint_decomp(rows, true)
@@ -683,6 +726,13 @@ pub fn DDM::smith_normal_decomp(self : DDM) -> (DDM, DDM, DDM) raise PolyError {
 }
 
 ///|
+/// Return invariant factors through the `DomainMatrix` front door.
+///
+/// - Does: Computes invariant factors after converting through `DDM`.
+/// - Input: A `DomainMatrix`.
+/// - Returns: `Array[FieldElem]`.
+/// - Limits: Shares the same integer-domain restrictions as
+///   `DDM::invariant_factors`.
 pub fn DomainMatrix::invariant_factors(
   self : DomainMatrix,
 ) -> Array[FieldElem] raise PolyError {
@@ -690,6 +740,14 @@ pub fn DomainMatrix::invariant_factors(
 }
 
 ///|
+/// Compute Smith normal form through the `DomainMatrix` front door.
+///
+/// - Does: Returns the Smith normal form while preserving the outer matrix
+///   representation.
+/// - Input: A `DomainMatrix`.
+/// - Returns: A `DomainMatrix`.
+/// - Limits: Shares the same integer-domain restrictions as
+///   `DDM::smith_normal_form`.
 pub fn DomainMatrix::smith_normal_form(
   self : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
@@ -697,6 +755,14 @@ pub fn DomainMatrix::smith_normal_form(
 }
 
 ///|
+/// Check Smith normal form through the `DomainMatrix` front door.
+///
+/// - Does: Tests whether the matrix already satisfies Smith normal-form
+///   conditions.
+/// - Input: A `DomainMatrix`.
+/// - Returns: A `Bool`.
+/// - Limits: Shares the same integer-domain restrictions as
+///   `DDM::is_smith_normal_form`.
 pub fn DomainMatrix::is_smith_normal_form(
   self : DomainMatrix,
 ) -> Bool raise PolyError {
@@ -704,6 +770,14 @@ pub fn DomainMatrix::is_smith_normal_form(
 }
 
 ///|
+/// Compute Smith normal form and transforms through `DomainMatrix`.
+///
+/// - Does: Returns `(S, U, V)` while preserving the outer representation of
+///   each matrix.
+/// - Input: A `DomainMatrix`.
+/// - Returns: `(DomainMatrix, DomainMatrix, DomainMatrix)`.
+/// - Limits: Shares the same integer-domain restrictions as
+///   `DDM::smith_normal_decomp`.
 pub fn DomainMatrix::smith_normal_decomp(
   self : DomainMatrix,
 ) -> (DomainMatrix, DomainMatrix, DomainMatrix) raise PolyError {

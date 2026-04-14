@@ -1,10 +1,32 @@
 ///|
-/// Dense Domain Matrix (`DDM`) compatibility layer.
+/// Dense domain-matrix compatibility front doors.
+///
+/// Current Limits:
+/// - this file is a wrapper layer around `DomainMatrix`, not a separate matrix
+///   engine.
+/// - some format-conversion entry points preserve only the public compatibility
+///   behavior and may normalize back to dense storage.
+
+///|
+/// Dense domain-matrix wrapper used by matrix-related polynomial APIs.
+///
+/// - Does: Exposes a dense matrix view over `FieldElem` entries with
+///   compatibility-oriented constructors and methods.
+/// - Input: Built from `DomainMatrix`-backed constructors in this file.
+/// - Returns: A `DDM`.
+/// - Limits: Semantics follow the dense compatibility layer rather than a full
+///   standalone matrix type hierarchy.
 pub struct DDM {
   dm : DomainMatrix
 }
 
 ///|
+/// Build a dense domain matrix from explicit rows.
+///
+/// - Does: Creates a `DDM` from `FieldElem` rows in the given domain.
+/// - Input: `Array[Array[FieldElem]]` and a `Domain`.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the rows cannot form a valid dense matrix.
 pub fn ddm_from_dense(
   rows : Array[Array[FieldElem]],
   domain : Domain,
@@ -13,6 +35,13 @@ pub fn ddm_from_dense(
 }
 
 ///|
+/// Build a dense domain matrix from integer rows.
+///
+/// - Does: Lifts integer entries into the target domain and creates a `DDM`.
+/// - Input: `Array[Array[Int]]` and a `Domain`.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the target domain cannot represent the
+///   lifted entries.
 pub fn ddm_from_ints(
   rows : Array[Array[Int]],
   domain : Domain,
@@ -21,6 +50,13 @@ pub fn ddm_from_ints(
 }
 
 ///|
+/// Build a dense matrix from row data and an explicit shape.
+///
+/// - Does: Validates the shape and constructs a `DDM`.
+/// - Input: Dense rows, expected shape, and domain.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError::DomainMismatch` when row sizes do not match the
+///   requested shape.
 pub fn DDM::from_list(
   rows : Array[Array[FieldElem]],
   shape : (Int, Int),
@@ -39,21 +75,47 @@ pub fn DDM::from_list(
 }
 
 ///|
+/// Copy a dense domain matrix.
+///
+/// - Does: Returns a dense copy of another `DDM`.
+/// - Input: A `DDM`.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` only if the underlying copy operation fails.
 pub fn DDM::from_ddm(other : DDM) -> DDM raise PolyError {
   other.copy()
 }
 
 ///|
+/// Compatibility alias returning a dense copy.
+///
+/// - Does: Preserves the `to_dfm` front door while returning a dense copy.
+/// - Input: A `DDM`.
+/// - Returns: A `DDM`.
+/// - Limits: This compatibility layer does not distinguish DFM and DDM.
 pub fn DDM::to_dfm(self : DDM) -> DDM raise PolyError {
   self.copy()
 }
 
 ///|
+/// Compatibility alias returning a dense copy.
+///
+/// - Does: Preserves the `to_dfm_or_ddm` front door while returning a dense
+///   copy.
+/// - Input: A `DDM`.
+/// - Returns: A `DDM`.
+/// - Limits: This compatibility layer does not distinguish DFM and DDM.
 pub fn DDM::to_dfm_or_ddm(self : DDM) -> DDM raise PolyError {
   self.copy()
 }
 
 ///|
+/// Build a dense matrix from flat row-major storage.
+///
+/// - Does: Reconstructs a dense matrix with the requested shape.
+/// - Input: Flat entries, shape, and domain.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the flat data length does not match the
+///   shape.
 pub fn DDM::from_list_flat(
   elements : Array[FieldElem],
   shape : (Int, Int),
@@ -63,6 +125,12 @@ pub fn DDM::from_list_flat(
 }
 
 ///|
+/// Build a dense matrix from a dictionary-of-dictionaries sparse form.
+///
+/// - Does: Converts sparse keyed rows into a dense `DDM`.
+/// - Input: `DomainMatrixDOD`, shape, and domain.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the sparse data is invalid for the shape.
 pub fn DDM::from_dod(
   dod : DomainMatrixDOD,
   shape : (Int, Int),
@@ -73,6 +141,12 @@ pub fn DDM::from_dod(
 }
 
 ///|
+/// Build a dense matrix from a dictionary-of-keys sparse form.
+///
+/// - Does: Converts sparse keyed entries into a dense `DDM`.
+/// - Input: `DomainMatrixDOK`, shape, and domain.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the sparse data is invalid for the shape.
 pub fn DDM::from_dok(
   dok : DomainMatrixDOK,
   shape : (Int, Int),
@@ -83,6 +157,12 @@ pub fn DDM::from_dok(
 }
 
 ///|
+/// Build a zero matrix.
+///
+/// - Does: Creates a dense zero matrix of the requested shape.
+/// - Input: Row count, column count, and domain.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the requested matrix cannot be created.
 pub fn DDM::zeros(
   rows : Int,
   cols : Int,
@@ -92,6 +172,12 @@ pub fn DDM::zeros(
 }
 
 ///|
+/// Build an all-ones matrix.
+///
+/// - Does: Creates a dense matrix filled with the domain element `1`.
+/// - Input: Row count, column count, and domain.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the requested matrix cannot be created.
 pub fn DDM::ones(
   rows : Int,
   cols : Int,
@@ -101,11 +187,23 @@ pub fn DDM::ones(
 }
 
 ///|
+/// Build an identity matrix.
+///
+/// - Does: Creates the square identity matrix over the given domain.
+/// - Input: Matrix size and domain.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the requested matrix cannot be created.
 pub fn DDM::eye(n : Int, domain : Domain) -> DDM raise PolyError {
   DDM::{ dm: DomainMatrix::eye(n, domain) }
 }
 
 ///|
+/// Build a diagonal matrix.
+///
+/// - Does: Places the given values on the diagonal of a dense matrix.
+/// - Input: Diagonal values, domain, and optional row/column counts.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the requested shape is incompatible.
 pub fn DDM::diag(
   values : Array[FieldElem],
   domain : Domain,
@@ -116,11 +214,23 @@ pub fn DDM::diag(
 }
 
 ///|
+/// Return the matrix shape.
+///
+/// - Does: Exposes the dense matrix dimensions.
+/// - Input: A `DDM`.
+/// - Returns: `(rows, cols)`.
+/// - Limits: This reports the stored shape only.
 pub fn DDM::shape(self : DDM) -> (Int, Int) {
   self.dm.shape()
 }
 
 ///|
+/// Copy a dense domain matrix.
+///
+/// - Does: Returns a structural copy of the matrix.
+/// - Input: A `DDM`.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` only if the underlying copy operation fails.
 pub fn DDM::copy(self : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.copy() }
 }
@@ -137,21 +247,45 @@ pub fn DDM::_check(
 }
 
 ///|
+/// Return the coefficient domain.
+///
+/// - Does: Exposes the ground domain attached to the matrix entries.
+/// - Input: A `DDM`.
+/// - Returns: A `Domain`.
+/// - Limits: This does not inspect or normalize the entries.
 pub fn DDM::domain(self : DDM) -> Domain {
   self.dm.domain
 }
 
 ///|
+/// Convert entries into another coefficient domain.
+///
+/// - Does: Coerces every entry into the requested target domain.
+/// - Input: A `DDM` and target `Domain`.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when an entry cannot be converted.
 pub fn DDM::convert_to(self : DDM, domain : Domain) -> DDM raise PolyError {
   DDM::{ dm: self.dm.convert_to(domain) }
 }
 
 ///|
+/// Return the dense row representation.
+///
+/// - Does: Exposes the stored matrix as dense rows.
+/// - Input: A `DDM`.
+/// - Returns: `Array[Array[FieldElem]]`.
+/// - Limits: The returned data reflects the current dense normalization.
 pub fn DDM::to_list(self : DDM) -> Array[Array[FieldElem]] raise PolyError {
   self.dm.to_dense()
 }
 
 ///|
+/// Return flat row-major storage.
+///
+/// - Does: Flattens the dense matrix entries row by row.
+/// - Input: A `DDM`.
+/// - Returns: `Array[FieldElem]`.
+/// - Limits: Order is row-major and matches the stored shape.
 pub fn DDM::to_list_flat(self : DDM) -> Array[FieldElem] raise PolyError {
   self.dm.to_list_flat()
 }
@@ -217,6 +351,12 @@ pub fn DDM::applyfunc(
 }
 
 ///|
+/// Convert to the package `DomainMatrix` wrapper.
+///
+/// - Does: Exposes the underlying `DomainMatrix`.
+/// - Input: A `DDM`.
+/// - Returns: A `DomainMatrix`.
+/// - Limits: This is a structural view change only.
 pub fn DDM::to_domain_matrix(self : DDM) -> DomainMatrix {
   self.dm
 }
@@ -273,31 +413,68 @@ pub fn DDM::to_sdm(self : DDM) -> SDM raise PolyError {
 }
 
 ///|
+/// Return a transposed dense matrix.
+///
+/// - Does: Swaps rows and columns.
+/// - Input: A `DDM`.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` only if the underlying transpose fails.
 pub fn DDM::transpose(self : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.transpose() }
 }
 
 ///|
+/// Add two dense matrices.
+///
+/// - Does: Computes matrix addition entrywise.
+/// - Input: Two `DDM` values with compatible shape and domain.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the shapes or domains are incompatible.
 pub fn DDM::add(self : DDM, other : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.add(other.dm) }
 }
 
 ///|
+/// Subtract one dense matrix from another.
+///
+/// - Does: Computes `self - other` entrywise.
+/// - Input: Two `DDM` values with compatible shape and domain.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the shapes or domains are incompatible.
 pub fn DDM::sub(self : DDM, other : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.sub(other.dm) }
 }
 
 ///|
+/// Negate a dense matrix.
+///
+/// - Does: Negates every entry.
+/// - Input: A `DDM`.
+/// - Returns: A `DDM`.
+/// - Limits: This keeps the same shape and domain.
 pub fn DDM::neg(self : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.neg() }
 }
 
 ///|
+/// Multiply a dense matrix by a scalar.
+///
+/// - Does: Scales every entry by `scalar`.
+/// - Input: A `DDM` and `FieldElem`.
+/// - Returns: A `DDM`.
+/// - Limits: The scalar must already belong to the matrix domain.
 pub fn DDM::mul(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
   DDM::{ dm: self.dm.mul(scalar) }
 }
 
 ///|
+/// Multiply two dense matrices.
+///
+/// - Does: Computes matrix multiplication.
+/// - Input: Two `DDM` values with compatible inner dimension and domain.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the dimensions or domains are
+///   incompatible.
 pub fn DDM::matmul(self : DDM, other : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.matmul(other.dm) }
 }
@@ -318,11 +495,23 @@ pub fn DDM::rmul(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
 }
 
 ///|
+/// Return the main diagonal.
+///
+/// - Does: Extracts the entries `a[i, i]`.
+/// - Input: A `DDM`.
+/// - Returns: `Array[FieldElem]`.
+/// - Limits: The length is limited by the smaller matrix dimension.
 pub fn DDM::diagonal(self : DDM) -> Array[FieldElem] raise PolyError {
   self.dm.diagonal()
 }
 
 ///|
+/// Extract a submatrix by explicit row and column ids.
+///
+/// - Does: Builds the matrix slice selected by the provided index arrays.
+/// - Input: A `DDM`, row ids, and column ids.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when an index is invalid.
 pub fn DDM::extract(
   self : DDM,
   row_ids : Array[Int],
@@ -367,17 +556,35 @@ pub fn DDM::is_zero_matrix(self : DDM) -> Bool raise PolyError {
 }
 
 ///|
+/// Compute the determinant.
+///
+/// - Does: Returns the determinant in the matrix domain.
+/// - Input: A square `DDM`.
+/// - Returns: A `FieldElem`.
+/// - Limits: Raises `PolyError` when the determinant path cannot proceed.
 pub fn DDM::det(self : DDM) -> FieldElem raise PolyError {
   self.dm.det()
 }
 
 ///|
+/// Compute reduced row echelon form.
+///
+/// - Does: Returns the RREF matrix together with pivot columns.
+/// - Input: A `DDM`.
+/// - Returns: `(DDM, Array[Int])`.
+/// - Limits: Raises `PolyError` when the underlying elimination fails.
 pub fn DDM::rref(self : DDM) -> (DDM, Array[Int]) raise PolyError {
   let (r, pivots) = self.dm.rref()
   (DDM::{ dm: r }, pivots)
 }
 
 ///|
+/// Compute denominator-cleared reduced row echelon form.
+///
+/// - Does: Returns the numerator matrix, common denominator, and pivot columns.
+/// - Input: A `DDM` plus optional method flags.
+/// - Returns: `(DDM, FieldElem, Array[Int])`.
+/// - Limits: Raises `PolyError` when the elimination path fails.
 pub fn DDM::rref_den(
   self : DDM,
   rref_method? : String = "auto",
@@ -388,11 +595,23 @@ pub fn DDM::rref_den(
 }
 
 ///|
+/// Compute the rank.
+///
+/// - Does: Returns the rank of the matrix.
+/// - Input: A `DDM`.
+/// - Returns: An `Int`.
+/// - Limits: Raises `PolyError` when the rank path fails.
 pub fn DDM::rank(self : DDM) -> Int raise PolyError {
   self.dm.rank()
 }
 
 ///|
+/// Clear common denominators from all entries.
+///
+/// - Does: Returns a common denominator together with the numerator matrix.
+/// - Input: A `DDM` and optional `convert` flag.
+/// - Returns: `(DomainScalar, DDM)`.
+/// - Limits: Raises `PolyError` when denominator clearing fails.
 pub fn DDM::clear_denoms(
   self : DDM,
   convert? : Bool = false,
@@ -411,17 +630,36 @@ pub fn DDM::clear_denoms_rowwise(
 }
 
 ///|
+/// Compute the adjugate and determinant together.
+///
+/// - Does: Returns `(adj(A), det(A))`.
+/// - Input: A square `DDM`.
+/// - Returns: `(DDM, FieldElem)`.
+/// - Limits: Raises `PolyError` when the underlying exact path fails.
 pub fn DDM::adj_det(self : DDM) -> (DDM, FieldElem) raise PolyError {
   let (adj, det) = self.dm.adj_det()
   (DDM::{ dm: adj }, det)
 }
 
 ///|
+/// Compute the adjugate matrix.
+///
+/// - Does: Returns `adj(A)`.
+/// - Input: A square `DDM`.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the underlying exact path fails.
 pub fn DDM::adjugate(self : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.adjugate() }
 }
 
 ///|
+/// Compute a denominator-cleared inverse.
+///
+/// - Does: Returns `(num, den)` such that `A^-1 = num / den`.
+/// - Input: A square `DDM` and optional solve-method tag.
+/// - Returns: `(DDM, FieldElem)`.
+/// - Limits: Raises `PolyError` when the inverse does not exist or the exact
+///   solve path fails.
 pub fn DDM::inv_den(
   self : DDM,
   solve_method? : String = "",
@@ -431,6 +669,14 @@ pub fn DDM::inv_den(
 }
 
 ///|
+/// Solve a linear system with denominator clearing.
+///
+/// - Does: Solves `self * X = rhs` and returns `(num, den)` such that
+///   `X = num / den`.
+/// - Input: Coefficient `DDM`, right-hand-side `DDM`, and optional solve-method
+///   tag.
+/// - Returns: `(DDM, FieldElem)`.
+/// - Limits: Raises `PolyError` when the exact solve path fails.
 pub fn DDM::solve_den(
   self : DDM,
   rhs : DDM,
@@ -484,6 +730,12 @@ pub fn DDM::charpoly(self : DDM) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
+/// Compute a dense inverse.
+///
+/// - Does: Returns the exact inverse matrix when it exists.
+/// - Input: A square `DDM`.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` for non-square or singular inputs.
 pub fn DDM::inv(self : DDM) -> DDM raise PolyError {
   let (m, n) = self.shape()
   if m != n {
@@ -527,6 +779,12 @@ pub fn DDM::inv(self : DDM) -> DDM raise PolyError {
 }
 
 ///|
+/// Compute a basis of the nullspace.
+///
+/// - Does: Returns nullspace vectors as dense rows.
+/// - Input: A `DDM` and optional `divide_last` flag.
+/// - Returns: `Array[Array[FieldElem]]`.
+/// - Limits: Raises `PolyError` when the underlying RREF-based path fails.
 pub fn DDM::nullspace(
   self : DDM,
   divide_last? : Bool = false,
@@ -557,6 +815,13 @@ pub fn DDM::scc(self : DDM) -> Array[Array[Int]] raise PolyError {
 }
 
 ///|
+/// Return a stable string form for diagnostics.
+///
+/// - Does: Formats the dense rows as nested bracketed lists.
+/// - Input: A `DDM`.
+/// - Returns: A `String`.
+/// - Limits: The output is intended for diagnostics and tests, not general
+///   serialization.
 pub fn DDM::to_string(self : DDM) -> String raise PolyError {
   let rows = self.to_list()
   let row_parts : Array[String] = Array::new()
