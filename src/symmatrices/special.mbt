@@ -1,4 +1,9 @@
 ///|
+/// Special dense matrix constructors and calculus-derived helpers.
+///
+/// Current Limits:
+/// - These front doors return dense matrices or symbolic expressions directly.
+/// - More specialized structured-matrix families are not modeled separately in this package.
 fn normalize_vector_matrix(vec : Matrix) -> Matrix raise MatrixError {
   if vec.cols == 1 {
     return vec
@@ -48,6 +53,12 @@ fn trig_function(name : String, theta : Expr) -> Expr {
 }
 
 ///|
+/// Build a Jordan block.
+///
+/// - Does: Creates an `n x n` dense matrix with `eigenval` on the diagonal and ones on the superdiagonal.
+/// - Input: One eigenvalue expression and a non-negative block size.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Raises `MatrixError::ShapeError` when `n` is negative.
 pub fn jordan_cell(eigenval : Expr, n : Int) -> Matrix raise MatrixError {
   if n < 0 {
     raise MatrixError::ShapeError("jordan_cell size must be non-negative")
@@ -64,6 +75,12 @@ pub fn jordan_cell(eigenval : Expr, n : Int) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Build the right-handed rotation matrix around the first axis.
+///
+/// - Does: Returns the symbolic `3 x 3` rotation matrix using `sin(theta)` and `cos(theta)`.
+/// - Input: One angle expression `theta`.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Propagates any matrix-construction error from the underlying dense front door.
 pub fn rot_axis1(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
@@ -75,6 +92,12 @@ pub fn rot_axis1(theta : Expr) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Build the right-handed rotation matrix around the second axis.
+///
+/// - Does: Returns the symbolic `3 x 3` rotation matrix using `sin(theta)` and `cos(theta)`.
+/// - Input: One angle expression `theta`.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Propagates any matrix-construction error from the underlying dense front door.
 pub fn rot_axis2(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
@@ -86,6 +109,12 @@ pub fn rot_axis2(theta : Expr) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Build the right-handed rotation matrix around the third axis.
+///
+/// - Does: Returns the symbolic `3 x 3` rotation matrix using `sin(theta)` and `cos(theta)`.
+/// - Input: One angle expression `theta`.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Propagates any matrix-construction error from the underlying dense front door.
 pub fn rot_axis3(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
@@ -97,6 +126,12 @@ pub fn rot_axis3(theta : Expr) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Build the counter-clockwise rotation matrix around the first axis.
+///
+/// - Does: Returns the symbolic `3 x 3` matrix with the opposite sign convention from `rot_axis1`.
+/// - Input: One angle expression `theta`.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Propagates any matrix-construction error from the underlying dense front door.
 pub fn rot_ccw_axis1(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
@@ -108,6 +143,12 @@ pub fn rot_ccw_axis1(theta : Expr) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Build the counter-clockwise rotation matrix around the second axis.
+///
+/// - Does: Returns the symbolic `3 x 3` matrix with the opposite sign convention from `rot_axis2`.
+/// - Input: One angle expression `theta`.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Propagates any matrix-construction error from the underlying dense front door.
 pub fn rot_ccw_axis2(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
@@ -119,6 +160,12 @@ pub fn rot_ccw_axis2(theta : Expr) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Build the counter-clockwise rotation matrix around the third axis.
+///
+/// - Does: Returns the symbolic `3 x 3` matrix with the opposite sign convention from `rot_axis3`.
+/// - Input: One angle expression `theta`.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Propagates any matrix-construction error from the underlying dense front door.
 pub fn rot_ccw_axis3(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
@@ -130,6 +177,12 @@ pub fn rot_ccw_axis3(theta : Expr) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Orthogonalize or orthonormalize a list of vectors.
+///
+/// - Does: Runs Gram-Schmidt on row or column vectors and optionally normalizes the resulting basis.
+/// - Input: `Array[Matrix]` where each matrix must be a row or column vector, plus optional `orthonormal`.
+/// - Returns: `Array[Matrix]` in column-vector form.
+/// - Limits: Raises `MatrixError::ShapeError` when an input is not a vector and `MatrixError::SingularMatrixError` when the vectors are linearly dependent.
 pub fn gram_schmidt(
   vectors : Array[Matrix],
   orthonormal? : Bool = false,
@@ -158,6 +211,12 @@ pub fn gram_schmidt(
 }
 
 ///|
+/// Build a Hessian matrix, optionally augmented with constraint gradients.
+///
+/// - Does: Places first derivatives of constraints around the border and second derivatives of `f` in the lower-right block.
+/// - Input: One scalar expression `f`, a variable list, and an optional constraint list.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Constraint handling follows the bordered-Hessian layout only; it does not solve optimization problems by itself.
 pub fn hessian(
   f : Expr,
   varlist : Array[Expr],
@@ -185,6 +244,12 @@ pub fn hessian(
 }
 
 ///|
+/// Compute the Wronskian determinant.
+///
+/// - Does: Builds the derivative tower of the given functions and returns the determinant of the resulting matrix.
+/// - Input: An array of expressions and a differentiation variable.
+/// - Returns: One symbolic `Expr`.
+/// - Limits: Raises any matrix or differentiation errors from the underlying dense and calculus front doors.
 pub fn wronskian(functions : Array[Expr], wrt : Expr) -> Expr raise MatrixError {
   let rows = functions.length()
   let mut current = functions.map(fn(item) { item })
@@ -205,6 +270,12 @@ pub fn wronskian(functions : Array[Expr], wrt : Expr) -> Expr raise MatrixError 
 }
 
 ///|
+/// Compute the Casoratian determinant of sequences.
+///
+/// - Does: Substitutes consecutive values into the sequences, builds the resulting matrix, and returns its determinant.
+/// - Input: An array of sequence expressions, a symbolic index `n`, and optional `zero` to choose between zero-based and shifted evaluation.
+/// - Returns: One symbolic `Expr`.
+/// - Limits: Raises `MatrixError::ValueError` when `n` is not a symbol.
 pub fn casoratian(
   seqs : Array[Expr],
   n : Expr,

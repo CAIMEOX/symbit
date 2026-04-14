@@ -1,4 +1,9 @@
 ///|
+/// Numeric evaluation helpers for dense and sparse matrices.
+///
+/// Current Limits:
+/// - This layer focuses on numeric coercion and helper arithmetic, not matrix decompositions.
+/// - Sparse numeric evaluation currently materializes a dense matrix result.
 fn expr_numeric_prec(expr : Expr) -> Int {
   match @symcore.number_symbol_kind(expr) {
     Some(
@@ -210,6 +215,12 @@ fn matrix_all_numeric(rows : Array[Array[Expr]], prec : Int) -> Bool {
 }
 
 ///|
+/// Numerically evaluate every entry of a dense matrix.
+///
+/// - Does: Calls `@symcore.evalf` on each entry with the requested precision.
+/// - Input: A dense `Matrix` and optional binary precision `prec`.
+/// - Returns: A dense `Matrix` whose entries are numeric expressions when evaluation succeeds.
+/// - Limits: Non-numeric subexpressions can remain symbolic if `evalf` cannot reduce them further.
 pub fn Matrix::evalf(self : Matrix, prec? : Int = 53) -> Matrix {
   let out : Array[Array[Expr]] = []
   for row in self.data {
@@ -223,6 +234,12 @@ pub fn Matrix::evalf(self : Matrix, prec? : Int = 53) -> Matrix {
 }
 
 ///|
+/// Numerically evaluate every entry of a sparse matrix.
+///
+/// - Does: Converts the sparse matrix to dense form and then applies dense `evalf`.
+/// - Input: A `SparseMatrix` and optional binary precision `prec`.
+/// - Returns: A dense `Matrix`.
+/// - Limits: The return type is dense, so sparsity is not preserved.
 pub fn SparseMatrix::evalf(self : SparseMatrix, prec? : Int = 53) -> Matrix {
   self.to_dense().evalf(prec~)
 }
