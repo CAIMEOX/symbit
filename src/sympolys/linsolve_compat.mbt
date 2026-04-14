@@ -1,4 +1,19 @@
 ///|
+/// Linear-system compatibility front doors built on top of domain matrices.
+///
+/// Current Limits:
+/// - this file targets the matrix-based public linear solve surface only.
+/// - nonlinear parsing is intentionally conservative and rejects terms outside
+///   the supported affine model.
+
+///|
+/// Public result type for linear-system front doors.
+///
+/// - Does: Distinguishes inconsistent, unique, and parametric solve outcomes.
+/// - Input: Built by the linear-solve front doors in this file.
+/// - Returns: A `LinearSolveResult`.
+/// - Limits: Parametric solutions return symbolic expressions and parameter
+///   names rather than a richer solver object.
 pub enum LinearSolveResult {
   NoSolution
   Unique(Array[FieldElem])
@@ -6,7 +21,14 @@ pub enum LinearSolveResult {
 }
 
 ///|
-/// Build the sparse augmented matrix used by SymPy's matrix-based linsolve path.
+/// Build the sparse augmented matrix used by the matrix-based linsolve path.
+///
+/// - Does: Converts coefficient maps and right-hand sides into one sparse
+///   augmented matrix.
+/// - Input: Equation coefficient maps, right-hand sides, and symbol order.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError::DomainMismatch` when row counts or symbol names
+///   are inconsistent.
 pub fn sympy_dict_to_dm(
   eqs_coeffs : Array[Map[String, Expr]],
   eqs_rhs : Array[Expr],
@@ -479,7 +501,14 @@ fn _lin_eq2dict(
 }
 
 ///|
-/// Convert Expr/Eq equations into coefficient dicts plus symbol-free terms.
+/// Convert affine equations into coefficient dictionaries.
+///
+/// - Does: Parses linear equations into sparse coefficient maps and
+///   symbol-independent terms.
+/// - Input: Equations as `Array[Expr]` and symbol order `Array[String]`.
+/// - Returns: `(Array[Map[String, Expr]], Array[Expr])`.
+/// - Limits: Raises `PolyError` when an equation is nonlinear or uses symbols
+///   outside the requested order.
 pub fn _linear_eq_to_dict(
   eqs : Array[Expr],
   syms : Array[String],
@@ -514,7 +543,14 @@ pub fn _linear_eq_to_dict(
 }
 
 ///|
-/// Solve Expr/Eq systems using the same sparse-domain path as SymPy `_linsolve`.
+/// Solve affine equations through the sparse-domain path.
+///
+/// - Does: Solves the parsed linear system and returns a symbol-to-expression
+///   solution map when one exists.
+/// - Input: Equations as `Array[Expr]` and symbol order `Array[String]`.
+/// - Returns: `Map[String, Expr]?`.
+/// - Limits: Raises `PolyError` for unsupported nonlinear or coefficient
+///   patterns, and returns `None` for inconsistent systems.
 pub fn _linsolve(
   eqs : Array[Expr],
   syms : Array[String],
@@ -618,9 +654,15 @@ fn lift_vector_to_field(
 }
 
 ///|
-
-///|
-/// Solve linear system `A * x = b` using RREF.
+/// Solve a matrix linear system `A * x = b`.
+///
+/// - Does: Solves the system using the package RREF path and classifies the
+///   result as no solution, unique, or parametric.
+/// - Input: Coefficient matrix `DDM` and right-hand side
+///   `Array[FieldElem]`.
+/// - Returns: A `LinearSolveResult`.
+/// - Limits: Raises `PolyError` for incompatible dimensions or unsupported
+///   coefficient domains.
 pub fn linear_solve(
   a : DDM,
   b : Array[FieldElem],

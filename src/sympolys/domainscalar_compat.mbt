@@ -1,5 +1,19 @@
 ///|
+/// Domain-tagged scalar compatibility front doors.
+///
+/// Current Limits:
+/// - this layer models scalar coercion and arithmetic for matrix/polynomial
+///   compatibility code, not every scalar operation in the package.
+/// - division-like operations stay conservative outside the exact domains
+///   supported here.
+
+///|
 /// Domain-tagged scalar used by matrix compatibility APIs.
+///
+/// - Does: Pairs one scalar element with the domain that should interpret it.
+/// - Input: Built from a `FieldElem` and `Domain`.
+/// - Returns: A `DomainScalar`.
+/// - Limits: The element must already be valid for the attached domain.
 pub struct DomainScalar {
   element : FieldElem
   domain : Domain
@@ -55,6 +69,14 @@ fn scalar_rem(
 }
 
 ///|
+/// Build a domain-tagged scalar.
+///
+/// - Does: Validates that `element` can participate in arithmetic over
+///   `domain`.
+/// - Input: A `FieldElem` and `Domain`.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Raises `PolyError` when the element is incompatible with the
+///   domain.
 pub fn domain_scalar_new(
   element : FieldElem,
   domain : Domain,
@@ -65,6 +87,12 @@ pub fn domain_scalar_new(
 }
 
 ///|
+/// Build a domain-tagged scalar.
+///
+/// - Does: Method alias for the public scalar constructor.
+/// - Input: A `FieldElem` and `Domain`.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Shares the same validation rules as `domain_scalar_new`.
 pub fn DomainScalar::new(
   element : FieldElem,
   domain : Domain,
@@ -73,6 +101,12 @@ pub fn DomainScalar::new(
 }
 
 ///|
+/// Build a domain-tagged scalar from an integer literal.
+///
+/// - Does: Lifts `n` into `domain` and tags it with that domain.
+/// - Input: An `Int` and `Domain`.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Raises `PolyError` when the domain cannot represent the integer.
 pub fn domain_scalar_from_int(
   n : Int,
   domain : Domain,
@@ -81,6 +115,14 @@ pub fn domain_scalar_from_int(
 }
 
 ///|
+/// Convert an expression into a domain-tagged scalar.
+///
+/// - Does: Infers a domain from the expression and converts the expression into
+///   one scalar element of that domain.
+/// - Input: An `Expr`.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Raises `PolyError` when the expression cannot be represented as
+///   one scalar coefficient.
 pub fn DomainScalar::from_sympy(expr : Expr) -> DomainScalar raise PolyError {
   let domain = infer_expr_items_domain([expr])
   let element = field_elem_from_scalar_expr(expr, domain)
@@ -88,6 +130,12 @@ pub fn DomainScalar::from_sympy(expr : Expr) -> DomainScalar raise PolyError {
 }
 
 ///|
+/// Convert a scalar into another domain.
+///
+/// - Does: Coerces the stored element into `domain`.
+/// - Input: A `DomainScalar` and target `Domain`.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Raises `PolyError` when the scalar cannot be converted.
 pub fn DomainScalar::to_domain(
   self : DomainScalar,
   domain : Domain,
@@ -96,6 +144,12 @@ pub fn DomainScalar::to_domain(
 }
 
 ///|
+/// Alias for `to_domain`.
+///
+/// - Does: Preserves the compatibility spelling for scalar conversion.
+/// - Input: A `DomainScalar` and target `Domain`.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Shares the same conversion restrictions as `to_domain`.
 pub fn DomainScalar::convert_to(
   self : DomainScalar,
   domain : Domain,
@@ -104,6 +158,12 @@ pub fn DomainScalar::convert_to(
 }
 
 ///|
+/// Unify two domain-tagged scalars to a common domain.
+///
+/// - Does: Converts both scalars into a shared super-domain.
+/// - Input: Two `DomainScalar` values.
+/// - Returns: `(DomainScalar, DomainScalar)`.
+/// - Limits: Raises `PolyError` when no common domain is available.
 pub fn DomainScalar::unify(
   self : DomainScalar,
   other : DomainScalar,
@@ -113,6 +173,12 @@ pub fn DomainScalar::unify(
 }
 
 ///|
+/// Add two domain-tagged scalars.
+///
+/// - Does: Unifies domains first, then adds the scalar elements.
+/// - Input: Two `DomainScalar` values.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Raises `PolyError` when the domains cannot be unified.
 pub fn DomainScalar::add(
   self : DomainScalar,
   other : DomainScalar,
@@ -122,6 +188,12 @@ pub fn DomainScalar::add(
 }
 
 ///|
+/// Subtract two domain-tagged scalars.
+///
+/// - Does: Unifies domains first, then computes `self - other`.
+/// - Input: Two `DomainScalar` values.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Raises `PolyError` when the domains cannot be unified.
 pub fn DomainScalar::sub(
   self : DomainScalar,
   other : DomainScalar,
@@ -131,6 +203,12 @@ pub fn DomainScalar::sub(
 }
 
 ///|
+/// Multiply two domain-tagged scalars.
+///
+/// - Does: Unifies domains first, then multiplies the scalar elements.
+/// - Input: Two `DomainScalar` values.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Raises `PolyError` when the domains cannot be unified.
 pub fn DomainScalar::mul(
   self : DomainScalar,
   other : DomainScalar,
@@ -140,6 +218,12 @@ pub fn DomainScalar::mul(
 }
 
 ///|
+/// Raise a domain-tagged scalar to a non-negative integer power.
+///
+/// - Does: Computes repeated multiplication in the scalar domain.
+/// - Input: A `DomainScalar` and non-negative exponent `Int`.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Raises `PolyError::BadExponent` for negative exponents.
 pub fn DomainScalar::pow(
   self : DomainScalar,
   n : Int,
@@ -163,6 +247,14 @@ pub fn DomainScalar::pow(
 }
 
 ///|
+/// Compute floor-style scalar quotient.
+///
+/// - Does: Divides `self` by `other` using the current domain's quotient
+///   semantics.
+/// - Input: Two `DomainScalar` values.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Raises `PolyError` for zero divisors or unsupported quotient
+///   semantics.
 pub fn DomainScalar::floordiv(
   self : DomainScalar,
   other : DomainScalar,
@@ -172,6 +264,14 @@ pub fn DomainScalar::floordiv(
 }
 
 ///|
+/// Compute scalar remainder.
+///
+/// - Does: Returns the remainder of `self` modulo `other` using the current
+///   domain semantics.
+/// - Input: Two `DomainScalar` values.
+/// - Returns: A `DomainScalar`.
+/// - Limits: Raises `PolyError` for zero divisors or unsupported remainder
+///   semantics.
 pub fn DomainScalar::mod(
   self : DomainScalar,
   other : DomainScalar,
@@ -181,6 +281,13 @@ pub fn DomainScalar::mod(
 }
 
 ///|
+/// Compute scalar quotient and remainder together.
+///
+/// - Does: Returns `(self // other, self % other)` after domain unification.
+/// - Input: Two `DomainScalar` values.
+/// - Returns: `(DomainScalar, DomainScalar)`.
+/// - Limits: Raises `PolyError` for zero divisors or unsupported quotient
+///   semantics.
 pub fn DomainScalar::divmod(
   self : DomainScalar,
   other : DomainScalar,
@@ -193,21 +300,47 @@ pub fn DomainScalar::divmod(
 }
 
 ///|
+/// Apply unary plus.
+///
+/// - Does: Returns the same scalar with validated domain tagging.
+/// - Input: A `DomainScalar`.
+/// - Returns: A `DomainScalar`.
+/// - Limits: This does not change the scalar domain.
 pub fn DomainScalar::pos(self : DomainScalar) -> DomainScalar raise PolyError {
   domain_scalar_new(self.element, self.domain)
 }
 
 ///|
+/// Apply unary minus.
+///
+/// - Does: Negates the scalar element.
+/// - Input: A `DomainScalar`.
+/// - Returns: A `DomainScalar`.
+/// - Limits: This does not change the scalar domain.
 pub fn DomainScalar::neg(self : DomainScalar) -> DomainScalar raise PolyError {
   domain_scalar_new(fe_neg(self.element), self.domain)
 }
 
 ///|
+/// Test whether the scalar is zero.
+///
+/// - Does: Checks the stored element against zero.
+/// - Input: A `DomainScalar`.
+/// - Returns: A `Bool`.
+/// - Limits: This does not inspect alternative representations of the same
+///   value.
 pub fn DomainScalar::is_zero(self : DomainScalar) -> Bool {
   fe_is_zero(self.element)
 }
 
 ///|
+/// Test whether the scalar is one.
+///
+/// - Does: Checks the stored element against one.
+/// - Input: A `DomainScalar`.
+/// - Returns: A `Bool`.
+/// - Limits: This does not inspect alternative representations of the same
+///   value.
 pub fn DomainScalar::is_one(self : DomainScalar) -> Bool {
   fe_is_one(self.element)
 }
@@ -223,6 +356,13 @@ pub impl Show for DomainScalar with output(self, logger : &Logger) -> Unit {
 }
 
 ///|
+/// Convert the scalar back into an expression.
+///
+/// - Does: Rebuilds an `Expr` from the stored scalar element and domain tag.
+/// - Input: A `DomainScalar`.
+/// - Returns: An `Expr`.
+/// - Limits: The result follows the package's current domain-to-expression
+///   conventions.
 pub fn DomainScalar::to_sympy(self : DomainScalar) -> Expr {
   fe_to_expr_const(self.element)
 }

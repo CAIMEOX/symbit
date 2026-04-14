@@ -1,10 +1,31 @@
 ///|
-/// Sparse Domain Matrix (`SDM`) compatibility layer.
+/// Sparse domain-matrix compatibility front doors.
+///
+/// Current Limits:
+/// - this file is a wrapper layer around sparse `DomainMatrix` storage, not a
+///   separate sparse engine.
+/// - some conversions normalize through `DomainMatrix` before returning sparse
+///   output.
+
+///|
+/// Sparse domain-matrix wrapper used by matrix-related polynomial APIs.
+///
+/// - Does: Exposes sparse matrix entry points over `FieldElem` values.
+/// - Input: Built from the constructors in this file.
+/// - Returns: An `SDM`.
+/// - Limits: Semantics follow the sparse compatibility layer rather than a full
+///   standalone sparse-matrix hierarchy.
 pub struct SDM {
   dm : DomainMatrix
 }
 
 ///|
+/// Build a sparse matrix from `(row, col, value)` entries.
+///
+/// - Does: Creates a sparse matrix of the requested shape and domain.
+/// - Input: Row count, column count, sparse entries, and domain.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError` when the sparse data is invalid for the shape.
 pub fn sdm_from_entries(
   rows : Int,
   cols : Int,
@@ -15,6 +36,12 @@ pub fn sdm_from_entries(
 }
 
 ///|
+/// Build a sparse matrix from dense rows.
+///
+/// - Does: Converts dense row data into sparse storage.
+/// - Input: `Array[Array[FieldElem]]` and a `Domain`.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError` when the rows cannot form a valid dense matrix.
 pub fn sdm_from_dense(
   rows : Array[Array[FieldElem]],
   domain : Domain,
@@ -23,6 +50,12 @@ pub fn sdm_from_dense(
 }
 
 ///|
+/// Build a sparse matrix from dictionary-of-dictionaries storage.
+///
+/// - Does: Creates an `SDM` from sparse keyed rows and an explicit shape.
+/// - Input: `DomainMatrixDOD`, shape, and domain.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError` when the sparse data is invalid for the shape.
 pub fn SDM::new(
   dod : DomainMatrixDOD,
   shape : (Int, Int),
@@ -32,6 +65,13 @@ pub fn SDM::new(
 }
 
 ///|
+/// Build a sparse matrix from dense rows and an explicit shape.
+///
+/// - Does: Validates the shape and converts the rows into sparse storage.
+/// - Input: Dense rows, shape, and domain.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError::DomainMismatch` when row sizes do not match the
+///   requested shape.
 pub fn SDM::from_list(
   rows : Array[Array[FieldElem]],
   shape : (Int, Int),
@@ -50,6 +90,12 @@ pub fn SDM::from_list(
 }
 
 ///|
+/// Build a sparse matrix from a dense-domain matrix.
+///
+/// - Does: Converts a `DDM` into sparse storage.
+/// - Input: A `DDM`.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError` only if the dense view cannot be converted.
 pub fn SDM::from_ddm(other : DDM) -> SDM raise PolyError {
   SDM::{ dm: other.to_domain_matrix().to_sparse() }
 }
@@ -82,6 +128,12 @@ pub fn SDM::from_dok(
 }
 
 ///|
+/// Build a zero sparse matrix.
+///
+/// - Does: Creates a sparse zero matrix of the requested shape.
+/// - Input: Row count, column count, and domain.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError` when the matrix cannot be created.
 pub fn SDM::zeros(
   rows : Int,
   cols : Int,
@@ -100,6 +152,12 @@ pub fn SDM::ones(
 }
 
 ///|
+/// Build a sparse identity matrix.
+///
+/// - Does: Creates the square identity matrix in sparse storage.
+/// - Input: Matrix size and domain.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError` when the matrix cannot be created.
 pub fn SDM::eye(n : Int, domain : Domain) -> SDM raise PolyError {
   SDM::{ dm: DomainMatrix::eye(n, domain).to_sparse() }
 }
@@ -120,21 +178,45 @@ pub fn SDM::copy(self : SDM) -> SDM raise PolyError {
 }
 
 ///|
+/// Return the sparse matrix shape.
+///
+/// - Does: Exposes the stored matrix dimensions.
+/// - Input: An `SDM`.
+/// - Returns: `(rows, cols)`.
+/// - Limits: This reports the stored shape only.
 pub fn SDM::shape(self : SDM) -> (Int, Int) {
   self.dm.shape()
 }
 
 ///|
+/// Return the coefficient domain.
+///
+/// - Does: Exposes the ground domain attached to the matrix entries.
+/// - Input: An `SDM`.
+/// - Returns: A `Domain`.
+/// - Limits: This does not inspect or normalize the entries.
 pub fn SDM::domain(self : SDM) -> Domain {
   self.dm.domain
 }
 
 ///|
+/// Convert entries into another coefficient domain.
+///
+/// - Does: Coerces every stored entry into the requested target domain.
+/// - Input: An `SDM` and target `Domain`.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError` when an entry cannot be converted.
 pub fn SDM::convert_to(self : SDM, domain : Domain) -> SDM raise PolyError {
   SDM::{ dm: self.dm.convert_to(domain).to_sparse() }
 }
 
 ///|
+/// Convert sparse storage to a dense matrix.
+///
+/// - Does: Expands the sparse entries into a `DDM`.
+/// - Input: An `SDM`.
+/// - Returns: A `DDM`.
+/// - Limits: Raises `PolyError` when the sparse storage cannot be expanded.
 pub fn SDM::to_dense(self : SDM) -> DDM raise PolyError {
   let rows = self.dm.to_dense()
   DDM::{ dm: domain_matrix_from_dense(rows, self.dm.domain) }
@@ -161,6 +243,12 @@ pub fn SDM::to_sdm(self : SDM) -> SDM raise PolyError {
 }
 
 ///|
+/// Return the underlying `DomainMatrix`.
+///
+/// - Does: Exposes the sparse `DomainMatrix` wrapper.
+/// - Input: An `SDM`.
+/// - Returns: A `DomainMatrix`.
+/// - Limits: This is a structural view change only.
 pub fn SDM::to_domain_matrix(self : SDM) -> DomainMatrix {
   self.dm
 }
@@ -383,12 +471,24 @@ pub fn SDM::det(self : SDM) -> FieldElem raise PolyError {
 }
 
 ///|
+/// Compute reduced row echelon form.
+///
+/// - Does: Returns the sparse RREF matrix together with pivot columns.
+/// - Input: An `SDM`.
+/// - Returns: `(SDM, Array[Int])`.
+/// - Limits: Raises `PolyError` when the underlying elimination fails.
 pub fn SDM::rref(self : SDM) -> (SDM, Array[Int]) raise PolyError {
   let (r, pivots) = self.dm.rref()
   (SDM::{ dm: r.to_sparse() }, pivots)
 }
 
 ///|
+/// Compute denominator-cleared reduced row echelon form.
+///
+/// - Does: Returns the numerator matrix, common denominator, and pivot columns.
+/// - Input: An `SDM` plus optional method flags.
+/// - Returns: `(SDM, FieldElem, Array[Int])`.
+/// - Limits: Raises `PolyError` when the elimination path fails.
 pub fn SDM::rref_den(
   self : SDM,
   rref_method? : String = "auto",
@@ -408,6 +508,12 @@ pub fn SDM::nullspace_from_rref(
 }
 
 ///|
+/// Compute a basis of the nullspace.
+///
+/// - Does: Returns nullspace vectors as sparse rows.
+/// - Input: An `SDM` and optional `divide_last` flag.
+/// - Returns: `Array[Array[FieldElem]]`.
+/// - Limits: Raises `PolyError` when the underlying RREF-based path fails.
 pub fn SDM::nullspace(
   self : SDM,
   divide_last? : Bool = false,
@@ -416,6 +522,12 @@ pub fn SDM::nullspace(
 }
 
 ///|
+/// Compute an LU factorization.
+///
+/// - Does: Returns sparse `L`, `U`, and row-swap data.
+/// - Input: An `SDM`.
+/// - Returns: `(SDM, SDM, Array[(Int, Int)])`.
+/// - Limits: Raises `PolyError` when the factorization fails.
 pub fn SDM::lu(self : SDM) -> (SDM, SDM, Array[(Int, Int)]) raise PolyError {
   let (l, u, swaps) = self.dm.lu()
   (SDM::{ dm: l.to_sparse() }, SDM::{ dm: u.to_sparse() }, swaps)
@@ -428,6 +540,12 @@ pub fn SDM::qr(self : SDM) -> (SDM, SDM) raise PolyError {
 }
 
 ///|
+/// Solve a linear system via LU factorization.
+///
+/// - Does: Solves `self * X = rhs`.
+/// - Input: Coefficient `SDM` and right-hand-side `SDM`.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError` when the exact solve path fails.
 pub fn SDM::lu_solve(self : SDM, rhs : SDM) -> SDM raise PolyError {
   SDM::{ dm: self.dm.lu_solve(rhs.dm).to_sparse() }
 }
@@ -444,11 +562,23 @@ pub fn SDM::fflu(self : SDM) -> (SDM, SDM, SDM, SDM) raise PolyError {
 }
 
 ///|
+/// Compute the characteristic polynomial coefficients.
+///
+/// - Does: Returns the characteristic polynomial in dense coefficient form.
+/// - Input: A square `SDM`.
+/// - Returns: `Array[FieldElem]`.
+/// - Limits: Raises `PolyError` when the characteristic-polynomial path fails.
 pub fn SDM::charpoly(self : SDM) -> Array[FieldElem] raise PolyError {
   self.dm.charpoly()
 }
 
 ///|
+/// Compute a sparse inverse.
+///
+/// - Does: Returns the exact inverse matrix when it exists.
+/// - Input: A square `SDM`.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError` for non-square or singular inputs.
 pub fn SDM::inv(self : SDM) -> SDM raise PolyError {
   SDM::{ dm: self.dm.inv().to_sparse() }
 }
@@ -467,6 +597,13 @@ pub fn SDM::scc(self : SDM) -> Array[Array[Int]] raise PolyError {
 }
 
 ///|
+/// Run LLL reduction on sparse rows.
+///
+/// - Does: Computes an LLL-reduced basis through the sparse compatibility
+///   layer.
+/// - Input: An `SDM` and optional Lovasz parameter `delta`.
+/// - Returns: An `SDM`.
+/// - Limits: Raises `PolyError` when the input domain is unsupported.
 pub fn SDM::lll(
   self : SDM,
   delta? : @symnum.BigRational,
@@ -494,6 +631,14 @@ pub fn SDM::lll_transform(
 }
 
 ///|
+/// Return a stable string form for diagnostics.
+///
+/// - Does: Formats the sparse matrix through its dense view for tests and
+///   debugging.
+/// - Input: An `SDM`.
+/// - Returns: A `String`.
+/// - Limits: The output is intended for diagnostics, not general
+///   serialization.
 pub fn SDM::to_string(self : SDM) -> String raise PolyError {
   let entries = self.to_sparse_entries()
   let by_row : Map[Int, Array[(Int, FieldElem)]] = Map::new()
