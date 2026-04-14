@@ -1,4 +1,14 @@
 ///|
+/// Sparse polynomial value type.
+///
+/// - Does: Stores a polynomial as a sparse monomial-to-coefficient map together
+///   with generators, coefficient domain, and term order.
+/// - Input: Internal polynomial data produced by the public constructors in this
+///   package.
+/// - Returns: A `Poly` value that can be used with arithmetic, factorization,
+///   conversion, and elimination front doors.
+/// - Limits: This type does not validate raw fields on construction; callers
+///   should prefer `PolyBuilder` or `Poly::from_expr*` front doors.
 pub struct Poly {
   coeffs : Map[Monomial, FieldElem]
   gens : Array[String]
@@ -7,13 +17,23 @@ pub struct Poly {
 }
 
 ///|
-/// Return the zero polynomial over `gens` and `domain`.
+/// Build the zero polynomial over a generator list and coefficient domain.
+///
+/// - Does: Creates the additive identity polynomial.
+/// - Input: An ordered generator array and a coefficient `Domain`.
+/// - Returns: A `Poly` with no non-zero terms.
+/// - Limits: The returned polynomial always starts with `Lex` term order.
 pub fn Poly::zero(gens : Array[String], domain : Domain) -> Poly {
   Poly::{ coeffs: Map::new(), gens, domain, order: TermOrder::Lex }
 }
 
 ///|
-/// Return the unit polynomial `1` over `gens` and `domain`.
+/// Build the unit polynomial over a generator list and coefficient domain.
+///
+/// - Does: Creates the multiplicative identity polynomial.
+/// - Input: An ordered generator array and a coefficient `Domain`.
+/// - Returns: A constant `Poly` equal to `1`.
+/// - Limits: Raises `PolyError` when the target domain cannot represent `1`.
 pub fn Poly::one(gens : Array[String], domain : Domain) -> Poly raise PolyError {
   let mono = monomial_one(gens.length())
   let coeffs : Map[Monomial, FieldElem] = Map::new()
@@ -22,13 +42,26 @@ pub fn Poly::one(gens : Array[String], domain : Domain) -> Poly raise PolyError 
 }
 
 ///|
-/// Return `true` iff the polynomial has no non-zero terms.
+/// Check whether a polynomial is identically zero.
+///
+/// - Does: Tests whether sparse storage contains any non-zero term.
+/// - Input: One `Poly`.
+/// - Returns: A `Bool`.
+/// - Limits: This only checks normalized storage; raw malformed values are out
+///   of scope for this front door.
 pub fn Poly::is_zero(self : Poly) -> Bool {
   self.coeffs.is_empty()
 }
 
 ///|
-/// Return the same polynomial data with a different term order.
+/// Rebind a polynomial to a different monomial order.
+///
+/// - Does: Keeps coefficients, generators, and domain unchanged while swapping
+///   the stored term order.
+/// - Input: One `Poly` and one `TermOrder`.
+/// - Returns: A `Poly`.
+/// - Limits: This does not reorder or recompute coefficients; it only changes
+///   how later ordered operations view the same data.
 pub fn Poly::with_order(self : Poly, order : TermOrder) -> Poly {
   Poly::{ coeffs: self.coeffs, gens: self.gens, domain: self.domain, order }
 }
@@ -123,7 +156,13 @@ fn poly_rational_div(
 }
 
 ///|
-/// Multiply all coefficients by `factor`.
+/// Scale every coefficient by one field element.
+///
+/// - Does: Multiplies all stored coefficients by `factor`.
+/// - Input: One `Poly` and one `FieldElem`.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError` when coefficient arithmetic fails in the target
+///   domain.
 pub fn Poly::scale_coeff(
   self : Poly,
   factor : FieldElem,
@@ -149,7 +188,13 @@ fn same_gens(a : Array[String], b : Array[String]) -> Bool {
 }
 
 ///|
-/// Add two polynomials with matching generators and domain.
+/// Add two compatible polynomials.
+///
+/// - Does: Computes polynomial addition term by term.
+/// - Input: Two `Poly` values over the same generators and domain.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError::DomainMismatch` when generators or domains do
+///   not match.
 pub fn Poly::add(self : Poly, other : Poly) -> Poly raise PolyError {
   if self.domain.not_equal(other.domain) || !same_gens(self.gens, other.gens) {
     raise PolyError::DomainMismatch
@@ -162,7 +207,13 @@ pub fn Poly::add(self : Poly, other : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// Negate all coefficients.
+/// Negate a polynomial.
+///
+/// - Does: Multiplies every coefficient by `-1`.
+/// - Input: One `Poly`.
+/// - Returns: A `Poly`.
+/// - Limits: This front door assumes coefficients are already normalized in the
+///   polynomial domain.
 pub fn Poly::neg(self : Poly) -> Poly {
   let coeffs = Map::new()
   for m, c in self.coeffs {
@@ -172,13 +223,24 @@ pub fn Poly::neg(self : Poly) -> Poly {
 }
 
 ///|
-/// Subtract `other` from `self`.
+/// Subtract one compatible polynomial from another.
+///
+/// - Does: Computes `self - other`.
+/// - Input: Two `Poly` values over the same generators and domain.
+/// - Returns: A `Poly`.
+/// - Limits: Raises the same front-door errors as `Poly::add`.
 pub fn Poly::sub(self : Poly, other : Poly) -> Poly raise PolyError {
   self.add(other.neg())
 }
 
 ///|
-/// Multiply two polynomials by distributive term expansion.
+/// Multiply two compatible polynomials.
+///
+/// - Does: Expands the distributive product term by term.
+/// - Input: Two `Poly` values over the same generators and domain.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError::DomainMismatch` when generators or domains do
+///   not match.
 pub fn Poly::mul(self : Poly, other : Poly) -> Poly raise PolyError {
   if self.domain.not_equal(other.domain) || !same_gens(self.gens, other.gens) {
     raise PolyError::DomainMismatch
@@ -194,7 +256,12 @@ pub fn Poly::mul(self : Poly, other : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// Raise `self` to a non-negative integer power.
+/// Raise a polynomial to a non-negative integer power.
+///
+/// - Does: Computes repeated squaring over polynomial multiplication.
+/// - Input: One `Poly` and one non-negative `Int`.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError::BadExponent` for negative exponents.
 pub fn Poly::pow(self : Poly, k : Int) -> Poly raise PolyError {
   if k < 0 {
     raise PolyError::BadExponent

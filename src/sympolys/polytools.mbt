@@ -1,5 +1,19 @@
 ///|
-/// Greatest common divisor over a list of univariate polys.
+/// High-frequency polynomial tool front doors built on `Poly`.
+///
+/// Current Limits:
+/// - Several tools are intentionally centered on univariate inputs.
+/// - Multivariate paths are conservative and may stop at minimal exact
+///   simplifications rather than deep canonical decompositions.
+
+///|
+/// Compute the gcd of a non-empty polynomial list.
+///
+/// - Does: Folds `gcd_univar` across the input list.
+/// - Input: A non-empty `Array[Poly]`.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError::NonPolynomial` on an empty list and inherits
+///   the univariate/domain limits of `gcd_univar`.
 pub fn gcd_list(polys : Array[Poly]) -> Poly raise PolyError {
   if polys.is_empty() {
     raise PolyError::NonPolynomial
@@ -12,7 +26,14 @@ pub fn gcd_list(polys : Array[Poly]) -> Poly raise PolyError {
 }
 
 ///|
-/// Least common multiple over a list of univariate polys.
+/// Compute the lcm of a non-empty polynomial list.
+///
+/// - Does: Folds pairwise lcm over the input list and normalizes the result
+///   toward a monic leading term when possible.
+/// - Input: A non-empty `Array[Poly]`.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError::NonPolynomial` on an empty list and inherits
+///   the same compatibility limits as `gcd_list`.
 pub fn lcm_list(polys : Array[Poly]) -> Poly raise PolyError {
   if polys.is_empty() {
     raise PolyError::NonPolynomial
@@ -42,8 +63,13 @@ pub fn lcm_list(polys : Array[Poly]) -> Poly raise PolyError {
 }
 
 ///|
-/// Monomial+content gcd of all terms: coefficient content times
-/// min exponent vector.
+/// Extract the gcd shared by all terms of one polynomial.
+///
+/// - Does: Computes coefficient content times the minimum monomial exponent
+///   vector.
+/// - Input: One `Poly`.
+/// - Returns: A `Poly`.
+/// - Limits: Zero input is returned unchanged.
 pub fn terms_gcd(poly : Poly) -> Poly raise PolyError {
   if poly.is_zero() {
     return poly
@@ -80,7 +106,14 @@ pub fn terms_gcd(poly : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// Cancel common univariate factors between numerator and denominator.
+/// Cancel shared factors between a numerator and denominator polynomial.
+///
+/// - Does: Removes common exact factors from a rational function numerator and
+///   denominator.
+/// - Input: Two `Poly` values.
+/// - Returns: `(Poly, Poly)`.
+/// - Limits: The deep path is univariate; multivariate input currently uses a
+///   conservative exact-divisibility fallback.
 pub fn cancel(num : Poly, den : Poly) -> (Poly, Poly) raise PolyError {
   if num.gens.length() != 1 || den.gens.length() != 1 {
     let g = gcd_multivar_simple(num, den)
@@ -124,7 +157,12 @@ fn gcd_multivar_simple(a : Poly, b : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// Reduce a polynomial by a list via multivariate division.
+/// Reduce a polynomial by a list of divisors.
+///
+/// - Does: Performs multivariate division and returns quotients plus remainder.
+/// - Input: One dividend `Poly` and an `Array[Poly]` of divisors.
+/// - Returns: `(Array[Poly], Poly)`.
+/// - Limits: `ZZ` input is internally lifted to `QQ` for division semantics.
 pub fn reduced(
   poly : Poly,
   divisors : Array[Poly],
@@ -140,7 +178,12 @@ pub fn reduced(
 }
 
 ///|
-/// Univariate composition f(g(x)).
+/// Compose two univariate polynomials.
+///
+/// - Does: Computes `f(g(x))`.
+/// - Input: Two univariate `Poly` values over the same generator and domain.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError::NotUnivariate` outside the one-generator case.
 pub fn compose(f : Poly, g : Poly) -> Poly raise PolyError {
   if f.gens.not_equal(g.gens) || f.gens.length() != 1 {
     raise PolyError::NotUnivariate
@@ -278,8 +321,14 @@ fn decompose_restore_domain(
 }
 
 ///|
-/// Functional decomposition following SymPy's dup_decompose main path over
-/// univariate characteristic-zero fields, with a ZZ->QQ lift/restore wrapper.
+/// Decompose a univariate polynomial into functional factors.
+///
+/// - Does: Returns a composition chain whose outer-to-inner product rebuilds
+///   the input polynomial.
+/// - Input: One univariate `Poly`.
+/// - Returns: An `Array[Poly]`.
+/// - Limits: Non-field domains beyond `ZZ` are returned unchanged, and
+///   unsupported cases may stop at `[f]`.
 pub fn decompose(f : Poly) -> Array[Poly] raise PolyError {
   if f.gens.length() != 1 {
     raise PolyError::NotUnivariate
@@ -347,7 +396,12 @@ fn deriv_univar_polytools(poly : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// Sturm sequence for real-root counting (univariate).
+/// Build a Sturm sequence for one univariate polynomial.
+///
+/// - Does: Produces the signed remainder sequence used for real-root counting.
+/// - Input: One univariate `Poly`.
+/// - Returns: An `Array[Poly]`.
+/// - Limits: Raises `PolyError::NotUnivariate` outside the one-generator case.
 pub fn sturm_sequence(poly : Poly) -> Array[Poly] raise PolyError {
   let seq : Array[Poly] = Array::new()
   let use_rat = poly.domain is Domain::ZZ
@@ -379,7 +433,13 @@ pub fn sturm_sequence(poly : Poly) -> Array[Poly] raise PolyError {
 }
 
 ///|
-/// Compute polynomial discriminant.
+/// Compute the discriminant of one univariate polynomial.
+///
+/// - Does: Evaluates the discriminant through the derivative and resultant.
+/// - Input: One univariate `Poly`.
+/// - Returns: A `FieldElem`.
+/// - Limits: Raises `PolyError::NotUnivariate` outside the one-generator case;
+///   degree `0` and `1` inputs return `0`.
 pub fn discriminant(poly : Poly) -> FieldElem raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate

@@ -94,7 +94,7 @@ test "eigen_compat: algebraic eigenvectors over QQ extension" {
     fail("expected one irreducible algebraic factor")
   }
   let item = algebraic[0]
-  guard item.1.to_string() == "_lambda**2 + -2" else {
+  guard item.1.to_string() == "_lambda**2 - 2" else {
     fail("unexpected minimal polynomial: \{item.1}")
   }
   guard item.3.to_matrix_string() == "Matrix([[_lambda, 1]])" else {

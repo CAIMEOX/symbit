@@ -149,7 +149,16 @@ fn apply_extension_request(
 }
 
 ///|
-/// Return irreducible factors of `self` as `(factor, multiplicity)` pairs.
+/// Factor a polynomial into irreducible parts.
+///
+/// - Does: Computes irreducible factors together with multiplicities, with
+///   optional finite-field and extension overrides.
+/// - Input: One `Poly` plus optional `modulus`, `extension`, `seed`, and
+///   `gens`.
+/// - Returns: An `Array[(Poly, Int)]`.
+/// - Limits: This front door is centered on univariate factorization and
+///   conservative multivariate fallbacks; unsupported deep cases may stay only
+///   partially split.
 pub fn Poly::factor(
   self : Poly,
   modulus? : Int,
@@ -271,7 +280,28 @@ pub fn Poly::factor(
 }
 
 ///|
-/// Return (content, [(factor, exp)]) with monic primitive factors.
+/// Return content and primitive monic factors.
+///
+/// - Does: Separates the scalar content from a polynomial and returns monic
+///   primitive factors with multiplicities.
+/// - Input: One `Poly`.
+/// - Returns: `(@symnum.BigRational, Array[(Poly, Int)])`.
+/// - Limits: Zero input returns `(0, [])`, and factor quality follows the same
+///   front-door limits as `Poly::factor`.
+///
+/// ```mbt check
+/// test "sympolys factor_list separates content and factors" {
+///   let x = @symcore.Expr::Symbol("x")
+///   let poly = PolyBuilder::new(["x"], Domain::ZZ).from_expr(
+///     @symcore.int(2) * ((x + @symcore.int(1)) ^ @symcore.int(2)),
+///   )
+///   let (content, factors) = poly.factor_list()
+///   inspect(content.to_string(), content="2")
+///   inspect(factors.length(), content="1")
+///   inspect(factors[0].0, content="x + 1")
+///   inspect(factors[0].1, content="2")
+/// }
+/// ```
 pub fn Poly::factor_list(
   self : Poly,
 ) -> (@symnum.BigRational, Array[(Poly, Int)]) raise PolyError {
@@ -295,7 +325,14 @@ pub fn Poly::factor_list(
 }
 
 ///|
-/// Square-free part and multiplicities (content separated).
+/// Return content and square-free factors.
+///
+/// - Does: Splits a polynomial into content and square-free factors with
+///   multiplicities.
+/// - Input: One `Poly`.
+/// - Returns: `(@symnum.BigRational, Array[(Poly, Int)])`.
+/// - Limits: This front door is univariate-only in the deep decomposition step
+///   and raises `PolyError` outside that scope.
 pub fn Poly::sqf_list(
   self : Poly,
 ) -> (@symnum.BigRational, Array[(Poly, Int)]) raise PolyError {
@@ -320,7 +357,13 @@ pub fn Poly::sqf_list(
 }
 
 ///|
-/// Square-free part (product of distinct factors with content).
+/// Return the square-free part of a polynomial.
+///
+/// - Does: Multiplies the distinct square-free factors of `self`.
+/// - Input: One `Poly`.
+/// - Returns: A `Poly`.
+/// - Limits: This follows the same square-free decomposition limits as
+///   `Poly::sqf_list`.
 pub fn Poly::sqf_part(self : Poly) -> Poly raise PolyError {
   if self.is_zero() {
     return self

@@ -1,4 +1,21 @@
 ///|
+/// Polynomial front doors for generator/domain inference and builder-style
+/// construction.
+///
+/// Current Limits:
+/// - Generator inference only sees free symbol names in the input expression.
+/// - Domain inference is intentionally conservative and may require explicit
+///   overrides for mixed or extension-heavy inputs.
+
+///|
+/// Configurable builder for repeated polynomial construction.
+///
+/// - Does: Stores generators, coefficient domain, and term order for later
+///   `Expr -> Poly` conversions.
+/// - Input: Builder configuration fields managed through public constructors.
+/// - Returns: A `PolyBuilder`.
+/// - Limits: The builder does not infer settings on its own; use
+///   `Poly::from_expr_defaults` when inference is desired.
 pub struct PolyBuilder {
   gens : Array[String]
   domain : Domain
@@ -7,18 +24,36 @@ pub struct PolyBuilder {
 
 ///|
 /// Create a polynomial builder with default `Lex` order.
+///
+/// - Does: Builds a reusable `PolyBuilder`.
+/// - Input: An ordered generator array and a coefficient `Domain`.
+/// - Returns: A `PolyBuilder`.
+/// - Limits: The initial term order is always `TermOrder::Lex`.
 pub fn PolyBuilder::new(gens : Array[String], domain : Domain) -> PolyBuilder {
   PolyBuilder::{ gens, domain, order: TermOrder::Lex }
 }
 
 ///|
-/// Return a builder with the same generators/domain and a new term order.
+/// Rebind a builder to a different term order.
+///
+/// - Does: Keeps generators and domain unchanged while swapping the stored
+///   monomial order.
+/// - Input: One `PolyBuilder` and one `TermOrder`.
+/// - Returns: A `PolyBuilder`.
+/// - Limits: This only changes how future conversions order terms.
 pub fn PolyBuilder::order(self : PolyBuilder, order : TermOrder) -> PolyBuilder {
   PolyBuilder::{ gens: self.gens, domain: self.domain, order }
 }
 
 ///|
-/// Parse an expression into a polynomial using this builder configuration.
+/// Parse one expression with the builder configuration.
+///
+/// - Does: Converts an `Expr` into a `Poly` using stored generators, domain,
+///   and term order.
+/// - Input: One `Expr`.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError` when the expression is not polynomial over the
+///   configured generators or cannot be represented in the configured domain.
 pub fn PolyBuilder::from_expr(
   self : PolyBuilder,
   expr : Expr,
@@ -27,7 +62,31 @@ pub fn PolyBuilder::from_expr(
 }
 
 ///|
-/// SymPy-style convenience wrapper that infers generators and domain.
+/// Build a polynomial with inferred generators/domain and optional overrides.
+///
+/// - Does: Converts one expression into a polynomial while inferring generators
+///   and coefficient domain unless explicit options override them.
+/// - Input: One `Expr` plus optional `gens`, `domain`, `modulus`, `gaussian`,
+///   `extension`, and `order`.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError` when the resolved options are inconsistent or
+///   the expression is not polynomial in the resolved generators.
+///
+/// ```mbt check
+/// test "sympolys from_expr_defaults infers gens and QQ domain" {
+///   let x = @symcore.Expr::Symbol("x")
+///   let y = @symcore.Expr::Symbol("y")
+///   let poly = Poly::from_expr_defaults(
+///     x * y + @symcore.rational_from_ints(1, 2),
+///   )
+///   inspect(poly.gens, content="[\"x\", \"y\"]")
+///   match poly.domain {
+///     Domain::QQ => ()
+///     _ => fail("expected QQ domain")
+///   }
+///   inspect(poly, content="x*y + 1/2")
+/// }
+/// ```
 pub fn Poly::from_expr_defaults(
   expr : Expr,
   gens? : Array[String],

@@ -1,6 +1,12 @@
 ///|
-/// Full resultant over one eliminated generator. The result is a polynomial in
-/// the remaining generators (or a constant when no generators remain).
+/// Eliminate one generator and keep the full polynomial resultant.
+///
+/// - Does: Computes the resultant of two polynomials with respect to one
+///   generator, keeping any remaining generators symbolic.
+/// - Input: Two compatible `Poly` values and one generator index.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError::DomainMismatch` for incompatible inputs and
+///   `PolyError::BadGenerator` for an invalid elimination index.
 pub fn Poly::resultant_poly(
   self : Poly,
   other : Poly,
@@ -17,8 +23,24 @@ pub fn Poly::resultant_poly(
 }
 
 ///|
-/// Scalar resultant compatibility helper. This matches the old behavior and
-/// raises DomainMismatch when elimination yields a non-constant polynomial.
+/// Return a scalar resultant when elimination leaves no generators.
+///
+/// - Does: Computes the resultant and requires the eliminated result to be
+///   constant.
+/// - Input: Two compatible `Poly` values and one generator index.
+/// - Returns: An exact `@symnum.BigRational`.
+/// - Limits: Raises `PolyError` when elimination produces a non-constant
+///   polynomial or when the input pair is incompatible.
+///
+/// ```mbt check
+/// test "sympolys resultant computes the eliminated scalar" {
+///   let x = @symcore.Expr::Symbol("x")
+///   let builder = PolyBuilder::new(["x"], Domain::ZZ)
+///   let f = builder.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
+///   let g = builder.from_expr(x - @symcore.int(1))
+///   inspect(f.resultant(g, 0).to_string(), content="0")
+/// }
+/// ```
 pub fn Poly::resultant(
   self : Poly,
   other : Poly,

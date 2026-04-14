@@ -1,5 +1,12 @@
 ///|
-/// Convert a polynomial to an expression, sorting terms by `order`.
+/// Convert a polynomial to an expression under a chosen term order.
+///
+/// - Does: Rebuilds a symbolic expression from sparse polynomial storage while
+///   ordering terms by the supplied monomial order.
+/// - Input: One `Poly` and one `TermOrder`.
+/// - Returns: An `@symcore.Expr`.
+/// - Limits: The output is an expression view of the polynomial; it does not
+///   preserve domain metadata beyond what can be encoded in coefficients.
 pub fn Poly::to_expr_with_order(self : Poly, order : TermOrder) -> Expr {
   let terms = self.coeffs.to_array()
   terms.sort_by((lhs, rhs) => compare_monomial_order(lhs.0, rhs.0, order))
@@ -40,12 +47,34 @@ pub fn Poly::to_expr_with_order(self : Poly, order : TermOrder) -> Expr {
 
 ///|
 /// Convert a polynomial to an expression using its stored term order.
+///
+/// - Does: Rebuilds a symbolic expression using `self.order`.
+/// - Input: One `Poly`.
+/// - Returns: An `@symcore.Expr`.
+/// - Limits: Term order effects are limited to output ordering; algebraic value
+///   stays unchanged.
+///
+/// ```mbt check
+/// test "sympolys to_expr rebuilds an equivalent symbolic expression" {
+///   let x = @symcore.Expr::Symbol("x")
+///   let poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(
+///     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
+///   )
+///   inspect(@symprint.to_string(poly.to_expr()), content="x**2 + 2*x + 1")
+/// }
+/// ```
 pub fn Poly::to_expr(self : Poly) -> Expr {
   Poly::to_expr_with_order(self, self.order)
 }
 
 ///|
-/// Return the string form of the polynomial expression.
+/// Render a polynomial through the plain-text printer.
+///
+/// - Does: Converts a polynomial to text via its expression form.
+/// - Input: One `Poly` and an optional override `TermOrder`.
+/// - Returns: A `String`.
+/// - Limits: This front door uses plain-text formatting only; pretty or latex
+///   output belongs to `symprint`.
 pub fn Poly::to_string(self : Poly, order? : TermOrder) -> String {
   let ord = match order {
     Some(o) => o
@@ -307,7 +336,15 @@ pub fn Poly::leading_term_with_order(
 }
 
 ///|
-/// Build a polynomial from an expression over `gens` and `domain`.
+/// Build a polynomial from an expression over an explicit generator list.
+///
+/// - Does: Parses one symbolic expression as a polynomial in the provided
+///   generators and domain.
+/// - Input: One `Expr`, one ordered generator array, and one coefficient
+///   `Domain`.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError` when the expression is not polynomial in the
+///   supplied generators or when coefficients do not fit the supplied domain.
 pub fn Poly::from_expr(
   expr : Expr,
   gens : Array[String],
