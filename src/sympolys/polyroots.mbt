@@ -1,6 +1,17 @@
 ///|
-/// Symbolic roots for univariate polynomials with explicit low-degree formulas
-/// and `CRootOf` fallback for higher-degree irreducibles.
+/// Symbolic root extraction for univariate polynomials.
+///
+/// Current Limits:
+/// - Closed-form radicals are only exposed through degree `4`.
+/// - Higher-degree irreducible factors fall back to symbolic `CRootOf`.
+
+///|
+/// Solve a linear univariate polynomial.
+///
+/// - Does: Returns the unique root of `a*x + b`.
+/// - Input: One univariate degree-`1` `Poly`.
+/// - Returns: `Array[Expr]` with one entry.
+/// - Limits: Raises `PolyError::BadExponent` when the input degree is not `1`.
 fn ensure_univar(poly : Poly) -> Unit raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate
@@ -72,7 +83,12 @@ fn quadratic_sqrt(expr : Expr) -> Expr {
 }
 
 ///|
-/// Return the unique root of a linear polynomial `a*x + b`.
+/// Solve a linear univariate polynomial.
+///
+/// - Does: Returns the unique root of `a*x + b`.
+/// - Input: One univariate degree-`1` `Poly`.
+/// - Returns: `Array[Expr]` with one entry.
+/// - Limits: Raises `PolyError::BadExponent` when the input degree is not `1`.
 pub fn roots_linear(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
@@ -89,7 +105,13 @@ pub fn roots_linear(poly : Poly) -> Array[Expr] raise PolyError {
 }
 
 ///|
-/// Return roots of a quadratic polynomial via the quadratic formula.
+/// Solve a quadratic univariate polynomial.
+///
+/// - Does: Applies the quadratic formula with exact symbolic square-root nodes.
+/// - Input: One univariate degree-`2` `Poly`.
+/// - Returns: `Array[Expr]` with two roots, including multiplicities implied by
+///   the formula branch.
+/// - Limits: Raises `PolyError::BadExponent` when the input degree is not `2`.
 pub fn roots_quadratic(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
@@ -144,7 +166,13 @@ fn rootof_expr(poly : Poly, index : Int) -> Expr {
 }
 
 ///|
-/// Return roots of a cubic polynomial, using `CRootOf` for irreducible factors.
+/// Solve a cubic univariate polynomial.
+///
+/// - Does: Factors the polynomial and combines low-degree formulas with
+///   `CRootOf` fallback for irreducible cubic factors.
+/// - Input: One univariate degree-`3` `Poly`.
+/// - Returns: `Array[Expr]`.
+/// - Limits: Raises `PolyError::BadExponent` when the input degree is not `3`.
 pub fn roots_cubic(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
@@ -172,7 +200,13 @@ pub fn roots_cubic(poly : Poly) -> Array[Expr] raise PolyError {
 }
 
 ///|
-/// Return roots of a quartic polynomial, using `CRootOf` for irreducible factors.
+/// Solve a quartic univariate polynomial.
+///
+/// - Does: Factors the polynomial and combines low-degree formulas with
+///   `CRootOf` fallback for irreducible quartic factors.
+/// - Input: One univariate degree-`4` `Poly`.
+/// - Returns: `Array[Expr]`.
+/// - Limits: Raises `PolyError::BadExponent` when the input degree is not `4`.
 pub fn roots_quartic(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
@@ -228,9 +262,25 @@ fn roots_for_factor(
 }
 
 ///|
-/// Root extraction over all degrees:
-/// - uses factorization and closed forms for degrees <= 4 when enabled,
-/// - otherwise falls back to symbolic `CRootOf`.
+/// Extract symbolic roots from a univariate polynomial.
+///
+/// - Does: Factors the polynomial, expands multiplicities, uses closed-form
+///   formulas through degree `4` when enabled, and falls back to `CRootOf`
+///   otherwise.
+/// - Input: One univariate `Poly` and optional `radicals` toggle.
+/// - Returns: `Array[Expr]`.
+/// - Limits: Zero input returns `[]`, and higher-degree irreducible factors are
+///   represented symbolically rather than numerically.
+///
+/// ```mbt check
+/// test "sympolys roots returns the unique linear root" {
+///   let x = @symcore.Expr::Symbol("x")
+///   let poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(x - @symcore.int(1))
+///   let rs = roots(poly)
+///   inspect(rs.length(), content="1")
+///   inspect(@symprint.to_string(rs[0]), content="1")
+/// }
+/// ```
 pub fn roots(
   poly : Poly,
   radicals? : Bool = true,

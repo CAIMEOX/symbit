@@ -1,4 +1,20 @@
 ///|
+/// High-level polynomial function front doors built from interpolation,
+/// symmetry, and coefficient identities.
+///
+/// Current Limits:
+/// - Interpolation helpers are centered on exact rational sample data.
+/// - Symmetrization and Viete relations currently target polynomial inputs and
+///   reject non-polynomial or non-univariate cases early.
+
+///|
+/// Result of symmetrizing one expression.
+///
+/// - Does: Stores the symmetric part, residual part, and substitution mapping
+///   produced by `symmetrize`.
+/// - Input: Structured output fields from the symmetrization front door.
+/// - Returns: A `SymmetrizeResult`.
+/// - Limits: The mapping only covers the generated elementary symmetric basis.
 pub struct SymmetrizeResult {
   sym : Expr
   rem : Expr
@@ -6,6 +22,13 @@ pub struct SymmetrizeResult {
 }
 
 ///|
+/// Result of symmetrizing a batch of expressions.
+///
+/// - Does: Stores per-expression results together with a shared formal mapping
+///   when requested.
+/// - Input: Structured output fields from `symmetrize_list`.
+/// - Returns: A `SymmetrizeListResult`.
+/// - Limits: Shared `mapping` is only populated for formal batch mode.
 pub struct SymmetrizeListResult {
   items : Array[SymmetrizeResult]
   mapping : Array[(Expr, Expr)]
@@ -13,6 +36,13 @@ pub struct SymmetrizeListResult {
 
 ///|
 /// Interpolate a polynomial through sampled points.
+///
+/// - Does: Builds the unique polynomial through exact `(x, y)` samples.
+/// - Input: `Array[(@symnum.BigRational, @symnum.BigRational)]`, one generator
+///   name, and one coefficient `Domain`.
+/// - Returns: A `Poly`.
+/// - Limits: Duplicate `x` values are not supported and lead to division
+///   failures during basis construction.
 pub fn interpolate(
   points : Array[(@symnum.BigRational, @symnum.BigRational)],
   gen : String,
@@ -45,7 +75,25 @@ pub fn interpolate(
 }
 
 ///|
-/// Interpolate from ordered `(x, y)` value pairs.
+/// Interpolate from ordered sample values.
+///
+/// - Does: Treats the input as values at `x = 1, 2, ..., n` and interpolates a
+///   polynomial through those points.
+/// - Input: `Array[@symnum.BigRational]`, one generator name, and one
+///   coefficient `Domain`.
+/// - Returns: A `Poly`.
+/// - Limits: Sample positions are fixed to consecutive positive integers.
+///
+/// ```mbt check
+/// test "sympolys interpolate_values reconstructs a linear polynomial" {
+///   let poly = interpolate_values(
+///     [@symnum.BigRational::from_int(2), @symnum.BigRational::from_int(3)],
+///     "x",
+///     Domain::QQ,
+///   )
+///   inspect(poly, content="x + 1")
+/// }
+/// ```
 pub fn interpolate_values(
   values : Array[@symnum.BigRational],
   gen : String,
@@ -61,6 +109,13 @@ pub fn interpolate_values(
 
 ///|
 /// Interpolate from dictionary-style point data.
+///
+/// - Does: Converts a point map into the ordered interpolation front door.
+/// - Input: `Map[@symnum.BigRational, @symnum.BigRational]`, one generator
+///   name, and one coefficient `Domain`.
+/// - Returns: A `Poly`.
+/// - Limits: Map iteration order is not semantically relevant, but duplicate
+///   keys are impossible by construction.
 pub fn interpolate_dict(
   points : Map[@symnum.BigRational, @symnum.BigRational],
   gen : String,
@@ -74,7 +129,15 @@ pub fn interpolate_dict(
 }
 
 ///|
-/// Construct a rational function matching sampled values.
+/// Construct a rational function that matches sampled values.
+///
+/// - Does: Solves for numerator and denominator polynomials matching the sample
+///   data under a chosen numerator degree bound.
+/// - Input: Sample points, numerator degree, generator name, and coefficient
+///   `Domain`.
+/// - Returns: `(Poly, Poly)` for numerator and denominator.
+/// - Limits: Raises `PolyError::BadExponent` when the requested numerator
+///   degree is too large for the sample count.
 pub fn rational_interpolate(
   points : Array[(@symnum.BigRational, @symnum.BigRational)],
   deg_num : Int,
@@ -128,7 +191,14 @@ pub fn rational_interpolate(
 }
 
 ///|
-/// Rewrite an expression in elementary symmetric-polynomial basis.
+/// Rewrite one expression in an elementary symmetric basis.
+///
+/// - Does: Separates the symmetric part from the residual and optionally keeps
+///   the result formal.
+/// - Input: One `Expr` plus optional generator and symbol overrides.
+/// - Returns: A `SymmetrizeResult`.
+/// - Limits: Non-polynomial input is rejected by the underlying polynomial
+///   parser.
 pub fn symmetrize(
   expr : Expr,
   gens? : Array[String] = [],
@@ -181,6 +251,11 @@ pub fn symmetrize(
 
 ///|
 /// Symmetrize a batch of expressions.
+///
+/// - Does: Applies `symmetrize` to each item with a shared generator basis.
+/// - Input: `Array[Expr]` plus optional generator and symbol overrides.
+/// - Returns: A `SymmetrizeListResult`.
+/// - Limits: Shared mapping is only surfaced in formal mode.
 pub fn symmetrize_list(
   exprs : Array[Expr],
   gens? : Array[String] = [],
@@ -210,7 +285,12 @@ pub fn symmetrize_list(
 }
 
 ///|
-/// Rewrite a polynomial in Horner form.
+/// Rewrite an expression in Horner form.
+///
+/// - Does: Converts a polynomial expression into nested Horner form.
+/// - Input: One `Expr` plus optional generator order and `wrt` override.
+/// - Returns: An `Expr`.
+/// - Limits: Input must be polynomial in the resolved generators.
 pub fn horner(
   expr : Expr,
   gens? : Array[String] = [],
@@ -241,6 +321,12 @@ pub fn horner(
 
 ///|
 /// Compute Viete relations between roots and coefficients.
+///
+/// - Does: Returns the elementary symmetric identities linking roots to
+///   coefficients of a univariate polynomial.
+/// - Input: One polynomial `Expr` plus optional root names and generator name.
+/// - Returns: `Array[(Expr, Expr)]`.
+/// - Limits: Raises `PolyError::NotUnivariate` outside the one-generator case.
 pub fn viete(
   expr : Expr,
   roots? : Array[String] = [],

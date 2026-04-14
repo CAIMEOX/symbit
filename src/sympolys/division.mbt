@@ -9,6 +9,13 @@ fn check_univar_compat(a : Poly, b : Poly) -> Unit raise PolyError {
 }
 
 ///|
+/// Polynomial division, gcd, and content front doors.
+///
+/// Current Limits:
+/// - The deep exact division path is strongest for univariate polynomials.
+/// - Integer domains may be lifted to `QQ` internally and then restored.
+
+///|
 /// Helper to build a monomial polynomial for division steps.
 fn poly_from_term(
   mono : Monomial,
@@ -201,7 +208,27 @@ fn try_round_to_int(poly : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// Divide two univariate polynomials and return `(quotient, remainder)`.
+/// Divide two univariate polynomials.
+///
+/// - Does: Computes polynomial quotient and remainder.
+/// - Input: Two compatible univariate `Poly` values.
+/// - Returns: `(Poly, Poly)`.
+/// - Limits: Raises `PolyError::DivisionByZero` on zero divisor and
+///   `PolyError::DomainMismatch` for incompatible inputs.
+///
+/// ```mbt check
+/// test "sympolys divmod_univar returns quotient and remainder" {
+///   let x = @symcore.Expr::Symbol("x")
+///   let builder = PolyBuilder::new(["x"], Domain::ZZ)
+///   let p = builder.from_expr(
+///     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
+///   )
+///   let d = builder.from_expr(x + @symcore.int(1))
+///   let (q, r) = p.divmod_univar(d)
+///   inspect(q, content="x + 1")
+///   inspect(r, content="0")
+/// }
+/// ```
 pub fn Poly::divmod_univar(
   self : Poly,
   other : Poly,
@@ -270,7 +297,13 @@ fn make_monic(poly : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// Return the polynomial GCD of two univariate polynomials.
+/// Compute the gcd of two univariate polynomials.
+///
+/// - Does: Returns a normalized gcd over the shared coefficient domain.
+/// - Input: Two compatible univariate `Poly` values.
+/// - Returns: A `Poly`.
+/// - Limits: Raises `PolyError::DomainMismatch` for incompatible inputs and
+///   `PolyError::NotUnivariate` outside the one-generator case.
 pub fn Poly::gcd_univar(self : Poly, other : Poly) -> Poly raise PolyError {
   check_univar_compat(self, other)
   match self.domain {
@@ -293,7 +326,14 @@ pub fn Poly::gcd_univar(self : Poly, other : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// Return the polynomial GCD of two multivariate polynomials.
+/// Compute the gcd of two multivariate polynomials.
+///
+/// - Does: Returns a normalized multivariate gcd with domain-specific lifting
+///   when necessary.
+/// - Input: Two compatible `Poly` values.
+/// - Returns: A `Poly`.
+/// - Limits: Integer-like domains may be lifted to `QQ` internally and then
+///   rounded back.
 pub fn Poly::gcd_multivar(self : Poly, other : Poly) -> Poly raise PolyError {
   if self.gens.length() == 1 {
     return self.gcd_univar(other)
@@ -698,19 +738,37 @@ fn gcd_multivar_field(a : Poly, b : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// Public helpers for content/primitive parts.
+/// Return coefficient content.
+///
+/// - Does: Computes the gcd of coefficients as an exact rational scalar.
+/// - Input: One `Poly`.
+/// - Returns: An `@symnum.BigRational`.
+/// - Limits: Some non-rational coefficient domains conservatively return `1`.
 pub fn Poly::content(self : Poly) -> @symnum.BigRational raise PolyError {
   coeff_content(self)
 }
 
 ///|
-/// Remove coefficient content and return the primitive part.
+/// Remove coefficient content and keep the primitive part.
+///
+/// - Does: Divides out the scalar coefficient content when that operation is
+///   supported by the domain.
+/// - Input: One `Poly`.
+/// - Returns: A `Poly`.
+/// - Limits: Domains without a clear rational content notion may return the
+///   input unchanged.
 pub fn Poly::primitive_part(self : Poly) -> Poly raise PolyError {
   primitive_part(self)
 }
 
 ///|
-/// Exact univariate division (requires zero remainder).
+/// Perform exact univariate division.
+///
+/// - Does: Divides `self` by `other` and requires zero remainder.
+/// - Input: Two compatible univariate `Poly` values.
+/// - Returns: A `Poly` quotient.
+/// - Limits: Raises `PolyError::ExactQuotientFailed` when the division is not
+///   exact.
 pub fn Poly::div_exact_univar(
   self : Poly,
   other : Poly,
@@ -723,7 +781,13 @@ pub fn Poly::div_exact_univar(
 }
 
 ///|
-/// Pseudo-division for ZZ: lc(other)^k * self = q*other + r where deg r < deg other.
+/// Perform univariate pseudo-division over non-field domains.
+///
+/// - Does: Computes pseudo-quotient, pseudo-remainder, and the exponent `k`
+///   such that `lc(other)^k * self = q*other + r`.
+/// - Input: Two compatible univariate `Poly` values.
+/// - Returns: `(Poly, Poly, Int)`.
+/// - Limits: Raises `PolyError::DomainNotField` when called on `QQ`.
 pub fn Poly::pseudo_div_univar_int(
   self : Poly,
   other : Poly,
