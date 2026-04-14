@@ -38,42 +38,99 @@ fn complex_float_expr_from_gaussian(
 }
 
 ///|
+/// Floating-field compatibility front doors.
+///
+/// Current Limits:
+/// - these wrappers model approximate real and complex coefficient domains only.
+/// - arithmetic stays within the current `Expr::Float` and `Expr::ComplexFloat`
+///   compatibility surface.
+
+///|
+/// Approximate real coefficient field descriptor.
+///
+/// - Does: Stores the target working precision for approximate real arithmetic.
+/// - Input: Constructed from a positive precision or the default precision.
+/// - Returns: A `RealField`.
+/// - Limits: This is a field descriptor, not a container of coefficients.
 pub struct RealField {
   precision : Int
 } derive(Eq, Debug)
 
 ///|
+/// Approximate complex coefficient field descriptor.
+///
+/// - Does: Stores the target working precision for approximate complex
+///   arithmetic.
+/// - Input: Constructed from a positive precision or the default precision.
+/// - Returns: A `ComplexField`.
+/// - Limits: This is a field descriptor, not a container of coefficients.
 pub struct ComplexField {
   precision : Int
 } derive(Eq, Debug)
 
 ///|
+/// Build an approximate real field descriptor.
+///
+/// - Does: Creates a `RealField` with normalized precision.
+/// - Input: Optional precision `Int`.
+/// - Returns: A `RealField`.
+/// - Limits: Non-positive precision falls back to the default precision.
 pub fn RealField::new(precision? : Int = 53) -> RealField {
   { precision: field_default_precision(precision) }
 }
 
 ///|
+/// Build an approximate complex field descriptor.
+///
+/// - Does: Creates a `ComplexField` with normalized precision.
+/// - Input: Optional precision `Int`.
+/// - Returns: A `ComplexField`.
+/// - Limits: Non-positive precision falls back to the default precision.
 pub fn ComplexField::new(precision? : Int = 53) -> ComplexField {
   { precision: field_default_precision(precision) }
 }
 
 ///|
+/// Return the working precision.
+///
+/// - Does: Exposes the precision stored in the field descriptor.
+/// - Input: A `RealField`.
+/// - Returns: An `Int`.
+/// - Limits: This is metadata only.
 pub fn RealField::precision(self : RealField) -> Int {
   self.precision
 }
 
 ///|
+/// Return the working precision.
+///
+/// - Does: Exposes the precision stored in the field descriptor.
+/// - Input: A `ComplexField`.
+/// - Returns: An `Int`.
+/// - Limits: This is metadata only.
 pub fn ComplexField::precision(self : ComplexField) -> Int {
   self.precision
 }
 
 ///|
+/// Return the corresponding domain descriptor.
+///
+/// - Does: Maps the field wrapper to `Domain::RR`.
+/// - Input: A `RealField`.
+/// - Returns: A `Domain`.
+/// - Limits: This is a structural descriptor only.
 pub fn RealField::domain(self : RealField) -> Domain {
   ignore(self)
   Domain::RR
 }
 
 ///|
+/// Return the corresponding domain descriptor.
+///
+/// - Does: Maps the field wrapper to `Domain::CC`.
+/// - Input: A `ComplexField`.
+/// - Returns: A `Domain`.
+/// - Limits: This is a structural descriptor only.
 pub fn ComplexField::domain(self : ComplexField) -> Domain {
   ignore(self)
   Domain::CC
@@ -92,6 +149,13 @@ pub fn ComplexField::contains_expr(self : ComplexField, expr : Expr) -> Bool {
 }
 
 ///|
+/// Evaluate an expression into the approximate real field.
+///
+/// - Does: Runs the package evalf path at the field precision.
+/// - Input: A `RealField` and `Expr`.
+/// - Returns: An approximate `Expr`.
+/// - Limits: Raises `PolyError` when the expression cannot be evaluated in the
+///   real field.
 pub fn RealField::evalf_expr(
   self : RealField,
   expr : Expr,
@@ -100,6 +164,13 @@ pub fn RealField::evalf_expr(
 }
 
 ///|
+/// Evaluate an expression into the approximate complex field.
+///
+/// - Does: Runs the package evalf path at the field precision.
+/// - Input: A `ComplexField` and `Expr`.
+/// - Returns: An approximate `Expr`.
+/// - Limits: Raises `PolyError` when the expression cannot be evaluated in the
+///   complex field.
 pub fn ComplexField::evalf_expr(
   self : ComplexField,
   expr : Expr,
@@ -108,6 +179,12 @@ pub fn ComplexField::evalf_expr(
 }
 
 ///|
+/// Lift an exact rational into the real field.
+///
+/// - Does: Converts one exact rational into an `Expr::Float`.
+/// - Input: A `RealField` and exact rational value.
+/// - Returns: An `Expr`.
+/// - Limits: The result is rounded to the field precision.
 pub fn RealField::from_exact(
   self : RealField,
   value : @symnum.BigRational,
@@ -116,6 +193,12 @@ pub fn RealField::from_exact(
 }
 
 ///|
+/// Lift exact real and imaginary parts into the complex field.
+///
+/// - Does: Converts exact real/imaginary parts into an `Expr::ComplexFloat`.
+/// - Input: A `ComplexField` and two exact rationals.
+/// - Returns: An `Expr`.
+/// - Limits: The result is rounded to the field precision.
 pub fn ComplexField::from_exact_parts(
   self : ComplexField,
   real : @symnum.BigRational,
@@ -160,6 +243,14 @@ pub fn ComplexField::from_complex_float(
 }
 
 ///|
+/// Coerce an expression to a real floating value.
+///
+/// - Does: Evaluates the expression and extracts a real float at the field
+///   precision.
+/// - Input: A `RealField` and `Expr`.
+/// - Returns: A `Float`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the expression is not real
+///   at this layer.
 pub fn RealField::coerce_float(
   self : RealField,
   expr : Expr,
@@ -177,6 +268,14 @@ pub fn RealField::coerce_float(
 }
 
 ///|
+/// Coerce an expression to a complex floating value.
+///
+/// - Does: Evaluates the expression and extracts a complex float at the field
+///   precision.
+/// - Input: A `ComplexField` and `Expr`.
+/// - Returns: A `ComplexFloat`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the expression cannot be
+///   represented in the complex field.
 pub fn ComplexField::coerce_complex(
   self : ComplexField,
   expr : Expr,
@@ -217,6 +316,12 @@ pub fn ComplexField::from_expr(
 }
 
 ///|
+/// Add two approximate real expressions.
+///
+/// - Does: Coerces both arguments to the real field and adds them.
+/// - Input: A `RealField` and two `Expr` values.
+/// - Returns: An approximate `Expr`.
+/// - Limits: Raises `PolyError` when coercion to the real field fails.
 pub fn RealField::add(
   self : RealField,
   left : Expr,
@@ -226,6 +331,12 @@ pub fn RealField::add(
 }
 
 ///|
+/// Multiply two approximate real expressions.
+///
+/// - Does: Coerces both arguments to the real field and multiplies them.
+/// - Input: A `RealField` and two `Expr` values.
+/// - Returns: An approximate `Expr`.
+/// - Limits: Raises `PolyError` when coercion to the real field fails.
 pub fn RealField::mul(
   self : RealField,
   left : Expr,
@@ -249,6 +360,12 @@ pub fn RealField::inv(self : RealField, expr : Expr) -> Expr raise PolyError {
 }
 
 ///|
+/// Add two approximate complex expressions.
+///
+/// - Does: Coerces both arguments to the complex field and adds them.
+/// - Input: A `ComplexField` and two `Expr` values.
+/// - Returns: An approximate `Expr`.
+/// - Limits: Raises `PolyError` when coercion to the complex field fails.
 pub fn ComplexField::add(
   self : ComplexField,
   left : Expr,
@@ -260,6 +377,12 @@ pub fn ComplexField::add(
 }
 
 ///|
+/// Multiply two approximate complex expressions.
+///
+/// - Does: Coerces both arguments to the complex field and multiplies them.
+/// - Input: A `ComplexField` and two `Expr` values.
+/// - Returns: An approximate `Expr`.
+/// - Limits: Raises `PolyError` when coercion to the complex field fails.
 pub fn ComplexField::mul(
   self : ComplexField,
   left : Expr,

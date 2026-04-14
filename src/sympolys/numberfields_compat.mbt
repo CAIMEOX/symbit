@@ -12,12 +12,24 @@ priv struct AffineRadical {
 }
 
 ///|
-/// Minimal polynomial for a supported algebraic expression over `QQ`.
+/// Number-field compatibility front doors.
 ///
-/// This stage supports:
-/// - rational constants `q`
-/// - radicals `q**(1/n)` with integer `n > 1`
-/// - affine transforms `a + b*q**(1/n)` with rational `a, b`.
+/// Current Limits:
+/// - the public minimal-polynomial and field-isomorphism surface currently
+///   targets rational constants, radicals, affine radical forms, and the
+///   supported multiquadratic families implemented here.
+/// - unsupported algebraic expressions still raise conservative front-door
+///   errors instead of fabricating approximate answers.
+
+///|
+/// Compute a minimal polynomial over `QQ`.
+///
+/// - Does: Returns the minimal polynomial for one supported algebraic
+///   expression.
+/// - Input: An `Expr` and optional generator name.
+/// - Returns: A univariate `Poly` over `QQ`.
+/// - Limits: Raises `PolyError::NonPolynomial` when the expression is outside
+///   the currently supported algebraic families.
 pub fn minimal_polynomial(
   expr : Expr,
   gen? : String = "x",
@@ -349,14 +361,26 @@ fn normalize_minpoly_qq(poly : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// Alias of `minimal_polynomial` for SymPy-compatible naming.
+/// Compatibility alias for `minimal_polynomial`.
+///
+/// - Does: Preserves the short public spelling.
+/// - Input: An `Expr` and optional generator name.
+/// - Returns: A `Poly`.
+/// - Limits: Shares the same supported-expression limits as
+///   `minimal_polynomial`.
 pub fn minpoly(expr : Expr, gen? : String = "x") -> Poly raise PolyError {
   minimal_polynomial(expr, gen~)
 }
 
 ///|
-/// Construct a one-generator algebraic field extension `QQ(a)`, where `a`
-/// satisfies the computed minimal polynomial.
+/// Construct a one-generator algebraic field extension.
+///
+/// - Does: Builds the algebraic field `QQ(a)` from the minimal polynomial of
+///   `expr`.
+/// - Input: An `Expr` and optional generator name.
+/// - Returns: A `Domain::AlgExt`.
+/// - Limits: Raises `PolyError` when the minimal polynomial cannot be computed
+///   by the current compatibility layer.
 pub fn to_number_field(
   expr : Expr,
   gen? : String = "a",
@@ -366,10 +390,14 @@ pub fn to_number_field(
 }
 
 ///|
-/// SymPy-style membership helper for `to_number_field(expr, theta)`.
+/// Express one algebraic element in the basis of another.
 ///
-/// Returns coefficients in falling powers of `theta` when `expr` is in
-/// `Q(theta)`, matching `AlgebraicNumber(...).coeffs()` ordering.
+/// - Does: Returns coefficients in falling powers of `theta` when `expr` lies
+///   in `Q(theta)`.
+/// - Input: Two algebraic `Expr` values.
+/// - Returns: `Array[BigRational]`.
+/// - Limits: Raises `PolyError::DomainMismatch` when no embedding is found by
+///   the current compatibility layer.
 pub fn to_number_field_coeffs(
   expr : Expr,
   theta : Expr,
@@ -381,10 +409,14 @@ pub fn to_number_field_coeffs(
 }
 
 ///|
-/// Return a primitive-element candidate from a list of algebraic generators.
+/// Return a primitive-element candidate.
 ///
-/// We currently use the linear combination `sum(generators)` with all-ones
-/// integer coefficients, matching SymPy's common choice on many radical inputs.
+/// - Does: Chooses one primitive-element candidate together with the integer
+///   coefficients used to build it.
+/// - Input: `Array[Expr]`.
+/// - Returns: `(Expr, Array[Int])`.
+/// - Limits: Raises `PolyError::NonPolynomial` for empty input and currently
+///   uses the package's simple linear-combination strategy.
 pub fn primitive_element(
   generators : Array[Expr],
 ) -> (Expr, Array[Int]) raise PolyError {
@@ -400,9 +432,14 @@ pub fn primitive_element(
 }
 
 ///|
-/// `primitive_element(..., ex=True)` core capability: also return reps.
+/// Return a primitive-element candidate together with representations.
 ///
-/// Each rep is in falling powers of the returned primitive element.
+/// - Does: Extends `primitive_element` by also returning each generator written
+///   in the primitive-element basis.
+/// - Input: `Array[Expr]`.
+/// - Returns: `(Expr, Array[Int], Array[Array[BigRational]])`.
+/// - Limits: Raises `PolyError` when one generator cannot be represented in the
+///   chosen primitive-element basis.
 pub fn primitive_element_ex(
   generators : Array[Expr],
 ) -> (Expr, Array[Int], Array[Array[@symnum.BigRational]]) raise PolyError {
@@ -1081,7 +1118,13 @@ fn mq_degree(expr : Expr) -> Int? {
 }
 
 ///|
-/// Necessary degree-based filter mirroring SymPy's subfield pre-check shape.
+/// Conservative degree-based isomorphism pre-check.
+///
+/// - Does: Rejects field embeddings that are impossible by degree alone.
+/// - Input: Two algebraic `Expr` values.
+/// - Returns: A `Bool`.
+/// - Limits: This is only a necessary filter; `true` does not prove an
+///   embedding exists.
 pub fn is_isomorphism_possible(a : Expr, b : Expr) -> Bool {
   let ma_res : Result[Poly, PolyError] = try? minimal_polynomial(a)
   let mb_res : Result[Poly, PolyError] = try? minimal_polynomial(b)
@@ -1114,12 +1157,14 @@ pub fn is_isomorphism_possible(a : Expr, b : Expr) -> Bool {
 }
 
 ///|
-/// Return coefficients of a polynomial in `b` representing `a` in `Q(b)`.
+/// Express one algebraic element inside another number field.
 ///
-/// This subfield stage currently handles:
-/// - rational constants (`[a]`)
-/// - affine radical embeddings between `a + b*q**(1/n)` forms (`[k, c]`)
-/// - low-degree multiquadratic embeddings (up to 3 independent square roots).
+/// - Does: Returns coefficients of a polynomial in `b` representing `a` in
+///   `Q(b)` when the embedding is found.
+/// - Input: Two algebraic `Expr` values.
+/// - Returns: `Array[BigRational]?`.
+/// - Limits: Returns `None` when the current compatibility layer cannot prove
+///   the embedding.
 pub fn field_isomorphism(a : Expr, b : Expr) -> Array[@symnum.BigRational]? {
   match as_rational_constant(a) {
     Some(q) => return Some([q])
@@ -1230,10 +1275,14 @@ fn poly_to_dense_qq(poly : Poly) -> Array[@symnum.BigRational]? {
 }
 
 ///|
-/// A conservative field-isomorphism predicate for migrated algebraic domains.
+/// Conservative field-isomorphism predicate for migrated algebraic domains.
 ///
-/// For `QQ` one-generator algebraic extensions this compares defining
-/// relations up to generator renaming (coefficient vectors).
+/// - Does: Checks whether two migrated algebraic-domain descriptors should be
+///   treated as the same number field.
+/// - Input: Two `Domain` values.
+/// - Returns: A `Bool`.
+/// - Limits: This currently handles `QQ` one-generator algebraic extensions by
+///   comparing normalized defining relations.
 pub fn field_isomorphic(a : Domain, b : Domain) -> Bool {
   if a.equal(b) {
     return true
