@@ -1,6 +1,9 @@
 ///|
-/// Dense symbolic matrix aligned with the high-value surface of
-/// `sympy.matrices.dense` and `matrixbase`.
+/// Dense symbolic matrix values and structural operations.
+///
+/// Current Limits:
+/// - This file covers dense construction and reshaping front doors only.
+/// - Decompositions and exact linear algebra live in other `symmatrices` files.
 pub struct Matrix {
   rows : Int
   cols : Int
@@ -20,16 +23,45 @@ pub type MutableMatrix = Matrix
 pub type ImmutableMatrix = Matrix
 
 ///|
+/// Return a mutable-style copy of a dense matrix.
+///
+/// - Does: Clones the matrix so callers can keep editing the returned value.
+/// - Input: A dense `Matrix`.
+/// - Returns: Another `Matrix` with the same shape and entries.
+/// - Limits: This package uses value semantics, so the original matrix is never mutated in place.
 pub fn Matrix::as_mutable(self : Matrix) -> MutableDenseMatrix {
   self.copy()
 }
 
 ///|
+/// Return an immutable-style copy of a dense matrix.
+///
+/// - Does: Clones the matrix while preserving its current entries.
+/// - Input: A dense `Matrix`.
+/// - Returns: Another `Matrix` with the same shape and entries.
+/// - Limits: This is a compatibility front door; it does not freeze or alias the original value.
 pub fn Matrix::as_immutable(self : Matrix) -> ImmutableDenseMatrix {
   self.copy()
 }
 
 ///|
+/// Build a dense matrix from nested rows.
+///
+/// - Does: Validates row widths and stores a cloned rectangular grid of expressions.
+/// - Input: An array of rows where each row is an `Array[Expr]`.
+/// - Returns: A `Matrix` whose shape matches the input grid, or an empty `0 x 0` matrix for `[]`.
+/// - Limits: Raises `MatrixError::ShapeError` when rows have inconsistent lengths.
+///
+/// ```mbt check
+/// test "matrix builds a rectangular dense value" {
+///   let m = @symmatrices.matrix([
+///     [@symcore.int(1), @symcore.int(2)],
+///     [@symcore.int(3), @symcore.int(4)],
+///   ])
+///   guard m.shape() == (2, 2) else { fail("unexpected dense matrix shape") }
+///   inspect(m.to_string(), content="Matrix([[1, 2], [3, 4]])")
+/// }
+/// ```
 pub fn matrix(rows : Array[Array[Expr]]) -> Matrix raise MatrixError {
   if rows.is_empty() {
     return { rows: 0, cols: 0, data: [] }
@@ -44,6 +76,12 @@ pub fn matrix(rows : Array[Array[Expr]]) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Build a dense matrix from a flat row-major array.
+///
+/// - Does: Splits a flat value buffer into `rows * cols` entries and delegates to `matrix`.
+/// - Input: Non-negative `rows`, non-negative `cols`, and a flat `Array[Expr]`.
+/// - Returns: A `Matrix` with the requested shape.
+/// - Limits: Raises `MatrixError::ShapeError` when dimensions are negative or the flat buffer length does not match `rows * cols`.
 pub fn matrix_from_flat(
   rows : Int,
   cols : Int,
@@ -66,6 +104,12 @@ pub fn matrix_from_flat(
 }
 
 ///|
+/// Build a zero-filled dense matrix.
+///
+/// - Does: Creates a dense matrix whose entries are all exact symbolic zero.
+/// - Input: A required row count and an optional column count. When `cols` is omitted, it builds a square matrix.
+/// - Returns: A `Matrix` of shape `(rows, cols)` or `(rows, rows)`.
+/// - Limits: Raises `MatrixError::ShapeError` when either dimension is negative.
 pub fn zeros(rows : Int, cols? : Int? = None) -> Matrix raise MatrixError {
   let cols = match cols {
     Some(value) => value
@@ -82,6 +126,12 @@ pub fn zeros(rows : Int, cols? : Int? = None) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Build a one-filled dense matrix.
+///
+/// - Does: Creates a dense matrix whose entries are all exact symbolic one.
+/// - Input: A required row count and an optional column count. When `cols` is omitted, it builds a square matrix.
+/// - Returns: A `Matrix` of shape `(rows, cols)` or `(rows, rows)`.
+/// - Limits: Raises `MatrixError::ShapeError` when either dimension is negative.
 pub fn ones(rows : Int, cols? : Int? = None) -> Matrix raise MatrixError {
   let cols = match cols {
     Some(value) => value
@@ -98,6 +148,22 @@ pub fn ones(rows : Int, cols? : Int? = None) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Build an identity matrix.
+///
+/// - Does: Creates a square matrix with ones on the diagonal and zeros elsewhere.
+/// - Input: A non-negative matrix size `n`.
+/// - Returns: An `n x n` dense `Matrix`.
+/// - Limits: Raises `MatrixError::ShapeError` when `n` is negative.
+///
+/// ```mbt check
+/// test "eye builds an identity matrix" {
+///   let ident = @symmatrices.eye(3)
+///   inspect(
+///     ident.to_string(),
+///     content="Matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])",
+///   )
+/// }
+/// ```
 pub fn eye(n : Int) -> Matrix raise MatrixError {
   let out = zeros(n, cols=Some(n))
   let data = clone_expr_rows(out.data)
@@ -108,6 +174,12 @@ pub fn eye(n : Int) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Build a diagonal matrix from a list of entries.
+///
+/// - Does: Places the given values on the main diagonal and fills all other entries with zero.
+/// - Input: A diagonal value array plus optional row and column counts.
+/// - Returns: A dense `Matrix` whose diagonal is populated up to the shortest of `values.length()`, `rows`, and `cols`.
+/// - Limits: Raises `MatrixError::ShapeError` when the delegated zero matrix construction rejects the requested dimensions.
 pub fn diag(
   values : Array[Expr],
   rows? : Int? = None,
@@ -152,11 +224,23 @@ fn normalize_insert_pos(index : Int, size : Int) -> Int raise MatrixError {
 }
 
 ///|
+/// Return the matrix shape.
+///
+/// - Does: Reports the number of rows and columns stored in the dense matrix.
+/// - Input: A `Matrix`.
+/// - Returns: A pair `(rows, cols)`.
+/// - Limits: This is metadata only; it never validates contents.
 pub fn Matrix::shape(self : Matrix) -> (Int, Int) {
   (self.rows, self.cols)
 }
 
 ///|
+/// Convert a dense matrix into nested row arrays.
+///
+/// - Does: Clones the internal grid so callers can inspect or reuse row-major data safely.
+/// - Input: A `Matrix`.
+/// - Returns: `Array[Array[Expr]]` in row-major order.
+/// - Limits: The returned arrays are copies, so later edits do not mutate the original matrix.
 pub fn Matrix::to_list(self : Matrix) -> Array[Array[Expr]] {
   clone_expr_rows(self.data)
 }
@@ -197,6 +281,12 @@ pub fn Matrix::equals(self : Matrix, other : Matrix) -> Bool {
 }
 
 ///|
+/// Read a single matrix entry.
+///
+/// - Does: Returns the expression stored at `(row, col)`.
+/// - Input: A `Matrix` plus row and column indices. Negative indices count from the end.
+/// - Returns: The selected `Expr`.
+/// - Limits: Raises `MatrixError::IndexError` when either index falls outside the matrix bounds.
 pub fn Matrix::getitem(
   self : Matrix,
   row : Int,
@@ -208,6 +298,12 @@ pub fn Matrix::getitem(
 }
 
 ///|
+/// Return a copy of the matrix with one entry replaced.
+///
+/// - Does: Clones the matrix, writes `value` into `(row, col)`, and returns the new matrix.
+/// - Input: A `Matrix`, row index, column index, and replacement `Expr`. Negative indices count from the end.
+/// - Returns: A new `Matrix` with the same shape.
+/// - Limits: Raises `MatrixError::IndexError` when either index falls outside the matrix bounds.
 pub fn Matrix::setitem(
   self : Matrix,
   row : Int,
@@ -222,6 +318,12 @@ pub fn Matrix::setitem(
 }
 
 ///|
+/// Extract a full row as expressions.
+///
+/// - Does: Clones one row from the dense matrix.
+/// - Input: A `Matrix` and a row index. Negative indices count from the end.
+/// - Returns: `Array[Expr]` for that row.
+/// - Limits: Raises `MatrixError::IndexError` when the row index is out of range.
 pub fn Matrix::row(self : Matrix, row : Int) -> Array[Expr] raise MatrixError {
   let r = normalize_index(row, self.rows)
   let out : Array[Expr] = []
@@ -232,6 +334,12 @@ pub fn Matrix::row(self : Matrix, row : Int) -> Array[Expr] raise MatrixError {
 }
 
 ///|
+/// Extract a full column as expressions.
+///
+/// - Does: Clones one column from the dense matrix.
+/// - Input: A `Matrix` and a column index. Negative indices count from the end.
+/// - Returns: `Array[Expr]` for that column.
+/// - Limits: Raises `MatrixError::IndexError` when the column index is out of range.
 pub fn Matrix::col(self : Matrix, col : Int) -> Array[Expr] raise MatrixError {
   let c = normalize_index(col, self.cols)
   let out : Array[Expr] = []
@@ -242,6 +350,12 @@ pub fn Matrix::col(self : Matrix, col : Int) -> Array[Expr] raise MatrixError {
 }
 
 ///|
+/// Transpose a dense matrix.
+///
+/// - Does: Swaps rows and columns and returns the transposed matrix.
+/// - Input: A `Matrix`.
+/// - Returns: A new `Matrix` of shape `(cols, rows)`.
+/// - Limits: Raises `MatrixError` only if zero-matrix allocation for the output shape fails.
 pub fn Matrix::transpose(self : Matrix) -> Matrix raise MatrixError {
   let out = zeros(self.cols, cols=Some(self.rows))
   let data = clone_expr_rows(out.data)
@@ -254,6 +368,12 @@ pub fn Matrix::transpose(self : Matrix) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Reshape a dense matrix without changing entry order.
+///
+/// - Does: Reinterprets the current row-major entry sequence with a new shape.
+/// - Input: A `Matrix` and target `rows` and `cols`.
+/// - Returns: A new `Matrix` with the requested shape.
+/// - Limits: Raises `MatrixError::ShapeError` when the new shape is negative or changes the total number of entries.
 pub fn Matrix::reshape(
   self : Matrix,
   rows : Int,
@@ -274,6 +394,12 @@ pub fn Matrix::reshape(
 }
 
 ///|
+/// Select a submatrix by row and column index lists.
+///
+/// - Does: Builds a new matrix from the requested row and column positions, preserving order and duplicates.
+/// - Input: A `Matrix`, `row_indices`, and `col_indices`. Indices may be negative.
+/// - Returns: A new dense `Matrix`.
+/// - Limits: Raises `MatrixError::IndexError` when any requested index is out of range.
 pub fn Matrix::extract(
   self : Matrix,
   row_indices : Array[Int],
@@ -403,6 +529,23 @@ pub fn Matrix::applyfunc(
 }
 
 ///|
+/// Concatenate dense matrices horizontally.
+///
+/// - Does: Joins matrices side-by-side in their existing row order.
+/// - Input: A non-empty `Array[Matrix]` whose members all have the same row count.
+/// - Returns: A new dense `Matrix` with summed column count.
+/// - Limits: Raises `MatrixError::ShapeError` when row counts differ. Returns `0 x 0` for an empty input list.
+///
+/// ```mbt check
+/// test "hstack joins matrices side by side" {
+///   let left = @symmatrices.eye(2)
+///   let right = @symmatrices.ones(2, cols=Some(1))
+///   inspect(
+///     @symmatrices.hstack([left, right]).to_string(),
+///     content="Matrix([[1, 0, 1], [0, 1, 1]])",
+///   )
+/// }
+/// ```
 pub fn hstack(parts : Array[Matrix]) -> Matrix raise MatrixError {
   if parts.is_empty() {
     return zeros(0, cols=Some(0))
@@ -429,6 +572,12 @@ pub fn hstack(parts : Array[Matrix]) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Concatenate dense matrices vertically.
+///
+/// - Does: Stacks matrices top-to-bottom in their existing row order.
+/// - Input: A non-empty `Array[Matrix]` whose members all have the same column count.
+/// - Returns: A new dense `Matrix` with summed row count.
+/// - Limits: Raises `MatrixError::ShapeError` when column counts differ. Returns `0 x 0` for an empty input list.
 pub fn vstack(parts : Array[Matrix]) -> Matrix raise MatrixError {
   if parts.is_empty() {
     return zeros(0, cols=Some(0))
@@ -525,6 +674,12 @@ pub fn Matrix::scalar_mul(
 }
 
 ///|
+/// Compute the trace of a dense matrix.
+///
+/// - Does: Adds the main-diagonal entries.
+/// - Input: A square `Matrix`.
+/// - Returns: One symbolic `Expr`.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` when the matrix is not square.
 pub fn Matrix::trace(self : Matrix) -> Expr raise MatrixError {
   if self.rows != self.cols {
     raise MatrixError::NonSquareMatrixError("trace requires a square matrix")

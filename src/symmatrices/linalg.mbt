@@ -347,6 +347,23 @@ fn matrix_rref_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) {
 }
 
 ///|
+/// Compute the reduced row echelon form of a matrix.
+///
+/// - Does: Returns the row-reduced form together with the pivot column indices.
+/// - Input: Any dense `Matrix`.
+/// - Returns: `(reduced_matrix, pivots)` where `pivots` lists pivot columns in ascending order.
+/// - Limits: Numeric matrices use a floating elimination path; symbolic matrices use exact expression elimination and may return unsimplified expressions.
+///
+/// ```mbt check
+/// test "rref reports pivot columns" {
+///   let m = @symmatrices.matrix([
+///     [@symcore.int(1), @symcore.int(2)],
+///     [@symcore.int(2), @symcore.int(4)],
+///   ])
+///   let (_, pivots) = m.rref()
+///   inspect(pivots, content="[0]")
+/// }
+/// ```
 pub fn Matrix::rref(self : Matrix) -> (Matrix, Array[Int]) {
   let numeric_prec = expr_numeric_precision(self.data)
   if matrix_has_floating_leaf(self.data) &&
@@ -412,11 +429,23 @@ pub fn Matrix::rref(self : Matrix) -> (Matrix, Array[Int]) {
 }
 
 ///|
+/// Compute the rank of a matrix.
+///
+/// - Does: Counts pivot columns in the reduced row echelon form.
+/// - Input: Any dense `Matrix`.
+/// - Returns: An `Int` rank.
+/// - Limits: Uses `rref()` internally, so symbolic expressions follow the same pivot heuristics as that front door.
 pub fn Matrix::rank(self : Matrix) -> Int {
   self.rref().1.length()
 }
 
 ///|
+/// Compute an echelon form of a matrix.
+///
+/// - Does: Performs elimination without normalizing pivots to one.
+/// - Input: Any dense `Matrix`.
+/// - Returns: A dense `Matrix` in echelon form.
+/// - Limits: This front door does not report pivot columns; use `echelon_form_with_pivots` when callers need them.
 pub fn Matrix::echelon_form(self : Matrix) -> Matrix {
   let (data, _) = matrix_echelon_internal(self)
   { rows: self.rows, cols: self.cols, data }
@@ -453,6 +482,22 @@ pub fn Matrix::is_echelon(self : Matrix) -> Bool {
 }
 
 ///|
+/// Compute the determinant of a square matrix.
+///
+/// - Does: Uses exact rational, numeric, or symbolic elimination to compute the determinant.
+/// - Input: A square dense `Matrix`.
+/// - Returns: One symbolic `Expr`.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs. Symbolic paths may keep expressions unevaluated instead of fully simplifying them.
+///
+/// ```mbt check
+/// test "det computes the determinant of a dense matrix" {
+///   let m = @symmatrices.matrix([
+///     [@symcore.int(1), @symcore.int(2)],
+///     [@symcore.int(3), @symcore.int(4)],
+///   ])
+///   inspect(@symprint.to_string(m.det()), content="-2")
+/// }
+/// ```
 pub fn Matrix::det(self : Matrix) -> Expr raise MatrixError {
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError(
@@ -549,6 +594,12 @@ pub fn Matrix::det(self : Matrix) -> Expr raise MatrixError {
 }
 
 ///|
+/// Build the minor submatrix for one position.
+///
+/// - Does: Deletes the requested row and column from the matrix.
+/// - Input: A `Matrix`, a row index, and a column index.
+/// - Returns: A smaller dense `Matrix`.
+/// - Limits: Raises `MatrixError::IndexError` when either index is out of range.
 pub fn Matrix::minor_submatrix(
   self : Matrix,
   row : Int,
@@ -558,6 +609,12 @@ pub fn Matrix::minor_submatrix(
 }
 
 ///|
+/// Compute one matrix minor.
+///
+/// - Does: Takes the determinant of the submatrix formed by removing one row and one column.
+/// - Input: A `Matrix`, a row index, and a column index.
+/// - Returns: One symbolic `Expr`.
+/// - Limits: Propagates index and determinant errors from `minor_submatrix()` and `det()`.
 pub fn Matrix::minor(
   self : Matrix,
   row : Int,
@@ -567,6 +624,12 @@ pub fn Matrix::minor(
 }
 
 ///|
+/// Compute one cofactor.
+///
+/// - Does: Multiplies the selected minor by the alternating sign `(-1)^(row + col)`.
+/// - Input: A `Matrix`, a row index, and a column index.
+/// - Returns: One symbolic `Expr`.
+/// - Limits: Propagates index and determinant errors from `minor()`.
 pub fn Matrix::cofactor(
   self : Matrix,
   row : Int,
@@ -581,6 +644,12 @@ pub fn Matrix::cofactor(
 }
 
 ///|
+/// Compute the cofactor matrix.
+///
+/// - Does: Replaces each entry with its cofactor.
+/// - Input: A square dense `Matrix`.
+/// - Returns: A dense `Matrix` of the same shape.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` when the matrix is not square.
 pub fn Matrix::cofactor_matrix(self : Matrix) -> Matrix raise MatrixError {
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError(
@@ -599,11 +668,33 @@ pub fn Matrix::cofactor_matrix(self : Matrix) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Compute the adjugate matrix.
+///
+/// - Does: Transposes the cofactor matrix.
+/// - Input: A square dense `Matrix`.
+/// - Returns: A dense `Matrix` of the same shape.
+/// - Limits: Propagates the same square-matrix requirement as `cofactor_matrix()`.
 pub fn Matrix::adjugate(self : Matrix) -> Matrix raise MatrixError {
   self.cofactor_matrix().transpose()
 }
 
 ///|
+/// Compute the inverse of a square matrix.
+///
+/// - Does: Chooses an exact or numeric elimination path and returns the matrix inverse.
+/// - Input: A square dense `Matrix`.
+/// - Returns: A dense `Matrix` whose product with the input is the identity when the input is invertible.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs and `MatrixError::SingularMatrixError` for singular matrices.
+///
+/// ```mbt check
+/// test "inv computes a dense matrix inverse" {
+///   let m = @symmatrices.matrix([
+///     [@symcore.int(1), @symcore.int(2)],
+///     [@symcore.int(3), @symcore.int(4)],
+///   ])
+///   inspect(m.inv().to_string(), content="Matrix([[-2, 1], [3/2, -1/2]])")
+/// }
+/// ```
 pub fn Matrix::inv(self : Matrix) -> Matrix raise MatrixError {
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError("inverse requires a square matrix")
@@ -710,6 +801,23 @@ pub fn Matrix::inv(self : Matrix) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Solve a square linear system `A * X = rhs`.
+///
+/// - Does: Solves the system with an exact or LU-based path depending on the matrix data.
+/// - Input: A square left-hand-side `Matrix` and a right-hand-side `Matrix` with the same row count.
+/// - Returns: A dense `Matrix` solution with `self.cols` rows and `rhs.cols` columns.
+/// - Limits: Raises `MatrixError::ShapeError` when the row counts do not match, `MatrixError::NonSquareMatrixError` when the left-hand side is not square, and `MatrixError::SingularMatrixError` for singular systems.
+///
+/// ```mbt check
+/// test "solve returns the dense solution matrix" {
+///   let lhs = @symmatrices.matrix([
+///     [@symcore.int(2), @symcore.int(1)],
+///     [@symcore.int(1), @symcore.int(3)],
+///   ])
+///   let rhs = @symmatrices.matrix([[@symcore.int(1)], [@symcore.int(2)]])
+///   inspect(lhs.solve(rhs).to_string(), content="Matrix([[1/5], [3/5]])")
+/// }
+/// ```
 pub fn Matrix::solve(self : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
   if self.rows != rhs.rows {
     raise MatrixError::ShapeError(
@@ -765,6 +873,12 @@ pub fn Matrix::rref_rhs(
 }
 
 ///|
+/// Return a basis for the row space.
+///
+/// - Does: Extracts the nonzero rows of the reduced row echelon form.
+/// - Input: Any dense `Matrix`.
+/// - Returns: `Array[Array[Expr]]`, one basis vector per row.
+/// - Limits: Basis vectors are returned in echelon order, not normalized to any additional canonical form.
 pub fn Matrix::rowspace(self : Matrix) -> Array[Array[Expr]] {
   let (rref, _) = self.rref()
   let out : Array[Array[Expr]] = []
@@ -781,6 +895,12 @@ pub fn Matrix::rowspace(self : Matrix) -> Array[Array[Expr]] {
 }
 
 ///|
+/// Return a basis for the column space.
+///
+/// - Does: Selects the pivot columns from the original matrix.
+/// - Input: Any dense `Matrix`.
+/// - Returns: `Array[Array[Expr]]`, one basis vector per column.
+/// - Limits: Uses pivot detection from `rref()`, so symbolic pivot choices follow the same heuristics.
 pub fn Matrix::columnspace(self : Matrix) -> Array[Array[Expr]] {
   let (_, pivots) = self.rref()
   let out : Array[Array[Expr]] = []
@@ -795,6 +915,12 @@ pub fn Matrix::columnspace(self : Matrix) -> Array[Array[Expr]] {
 }
 
 ///|
+/// Return a basis for the nullspace.
+///
+/// - Does: Solves the homogeneous system `self * x = 0` from the reduced row echelon form.
+/// - Input: Any dense `Matrix`.
+/// - Returns: `Array[Array[Expr]]`, one basis vector per free variable.
+/// - Limits: Returns an empty array when the nullspace is trivial.
 pub fn Matrix::nullspace(self : Matrix) -> Array[Array[Expr]] {
   let (rref, pivots) = self.rref()
   let pivot_set : Map[Int, Bool] = {}
@@ -821,6 +947,12 @@ pub fn Matrix::nullspace(self : Matrix) -> Array[Array[Expr]] {
 }
 
 ///|
+/// Compute an LU decomposition with recorded row swaps.
+///
+/// - Does: Factors the matrix into `L`, `U`, and the sequence of row swaps applied during elimination.
+/// - Input: A square dense `Matrix`.
+/// - Returns: `(L, U, swaps)` where `L` has unit diagonal and `swaps` records permutation steps.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs. Zero pivots are skipped rather than forcing a full pivoting strategy.
 pub fn Matrix::lu(
   self : Matrix,
 ) -> (Matrix, Matrix, Array[(Int, Int)]) raise MatrixError {
@@ -866,6 +998,12 @@ pub fn Matrix::lu(
 }
 
 ///|
+/// Solve a lower-triangular linear system.
+///
+/// - Does: Performs forward substitution on `self * X = rhs`.
+/// - Input: A square lower-triangular left-hand-side `Matrix` and a right-hand-side `Matrix` with the same row count.
+/// - Returns: A dense `Matrix` solution.
+/// - Limits: Raises `MatrixError::ShapeError` when the left-hand side is not square or the row counts do not match. Callers must ensure the diagonal is invertible.
 pub fn Matrix::lower_triangular_solve(
   self : Matrix,
   rhs : Matrix,
@@ -916,6 +1054,12 @@ pub fn Matrix::lower_triangular_solve(
 }
 
 ///|
+/// Solve an upper-triangular linear system.
+///
+/// - Does: Performs backward substitution on `self * X = rhs`.
+/// - Input: A square upper-triangular left-hand-side `Matrix` and a right-hand-side `Matrix` with the same row count.
+/// - Returns: A dense `Matrix` solution.
+/// - Limits: Raises `MatrixError::ShapeError` when the left-hand side is not square or the row counts do not match. Callers must ensure the diagonal is invertible.
 pub fn Matrix::upper_triangular_solve(
   self : Matrix,
   rhs : Matrix,
@@ -971,6 +1115,12 @@ pub fn Matrix::upper_triangular_solve(
 }
 
 ///|
+/// Compute a Cholesky factorization.
+///
+/// - Does: Returns a lower-triangular matrix `L` such that `L * L.T` matches the input on supported inputs.
+/// - Input: A square dense `Matrix`.
+/// - Returns: A lower-triangular dense `Matrix`.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs. This front door does not prove positive definiteness before taking square roots.
 pub fn Matrix::cholesky(self : Matrix) -> Matrix raise MatrixError {
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError(
@@ -1016,6 +1166,12 @@ pub fn Matrix::cholesky(self : Matrix) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Compute an LDL decomposition.
+///
+/// - Does: Returns matrices `L` and `D` such that `self = L * D * L.T` on supported inputs.
+/// - Input: A square dense `Matrix`.
+/// - Returns: `(L, D)` where `L` has unit diagonal and `D` is diagonal.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs. This front door does not validate definiteness or symmetry up front.
 pub fn Matrix::ldl(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError(
@@ -1079,6 +1235,12 @@ pub fn Matrix::ldl(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
 }
 
 ///|
+/// Compute a QR decomposition.
+///
+/// - Does: Runs a Gram-Schmidt style factorization and returns `Q` and `R`.
+/// - Input: Any dense `Matrix`.
+/// - Returns: `(Q, R)` with `Q` shaped like the input columns and `R` upper triangular.
+/// - Limits: Zero columns can leave unevaluated square roots or divisions in symbolic mode; empty matrices return zero-shaped factors.
 pub fn Matrix::qr(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
   if self.rows == 0 || self.cols == 0 {
     return (
