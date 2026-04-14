@@ -1,4 +1,13 @@
 ///|
+/// Core symbolic expression tree used across Symbit.
+///
+/// Current Limits:
+/// - `symcore` defines structure and canonical construction, not the full
+///   mathematical behavior of every subsystem.
+/// - textual mathematics should go through `symparse` rather than raw head
+///   construction.
+/// - several higher-level object families are easier to use through their own
+///   package front doors.
 pub(all) enum Expr {
   Number(@symnum.BigRational)
   Float(Float)
@@ -132,11 +141,29 @@ pub impl BitXOr for Expr with lxor(self, other) {
 }
 
 ///|
+/// Build an exact integer atom.
+///
+/// - Does: Creates a number expression representing an exact integer.
+/// - Input: A MoonBit `Int`.
+/// - Returns: `Expr::Number`.
+/// - Limits: This front door accepts machine-sized `Int` input only.
+///
+/// ```mbt check
+/// test "symcore int builds an exact integer expression" {
+///   inspect(@symprint.to_string(int(3)), content="3")
+/// }
+/// ```
 pub fn int(value : Int) -> Expr {
   Expr::Number(@symnum.BigRational::from_int(value))
 }
 
 ///|
+/// Build an exact rational atom from a numerator and denominator.
+///
+/// - Does: Creates a rational expression with exact arithmetic.
+/// - Input: Two MoonBit `Int` values.
+/// - Returns: `Expr::Number`.
+/// - Limits: Raises `@symnum.RationalError` when the denominator is zero.
 pub fn rational_from_ints(
   num : Int,
   den : Int,
@@ -792,6 +819,19 @@ fn mul_float_to_complex(lhs : ComplexFloat, rhs : Float) -> ComplexFloat {
 }
 
 ///|
+/// Build a symbolic sum and apply standard constructor canonicalization.
+///
+/// - Does: Constructs an additive expression from child expressions.
+/// - Input: `Array[Expr]`.
+/// - Returns: A single canonicalized `Expr`.
+/// - Limits: This is expression construction, not a full simplification pass.
+///
+/// ```mbt check
+/// test "symcore add constructs readable sums" {
+///   let x = Expr::Symbol("x")
+///   inspect(@symprint.to_string(add([x, int(1)])), content="x + 1")
+/// }
+/// ```
 pub fn add(args : Array[Expr]) -> Expr {
   if !current_evaluate() {
     return raw_add(args.map(normalize_legacy_expr))
@@ -1022,6 +1062,13 @@ fn expr_is_one(expr : Expr) -> Bool {
 }
 
 ///|
+/// Build a symbolic product and apply standard constructor canonicalization.
+///
+/// - Does: Constructs a multiplicative expression from child expressions.
+/// - Input: `Array[Expr]`.
+/// - Returns: A single canonicalized `Expr`.
+/// - Limits: It does not replace targeted simplifiers such as rational or
+///   trigonometric normalization.
 pub fn mul(args : Array[Expr]) -> Expr {
   if !current_evaluate() {
     return raw_mul(args.map(normalize_legacy_expr))
@@ -1410,6 +1457,12 @@ fn zero_base_pow_value(base : Expr, exp : Expr) -> Expr? {
 }
 
 ///|
+/// Build a symbolic power expression.
+///
+/// - Does: Constructs `base**exp` using the core power front door.
+/// - Input: A base `Expr` and an exponent `Expr`.
+/// - Returns: A single `Expr`.
+/// - Limits: Advanced algebraic normalization lives in higher-level packages.
 pub fn pow(base : Expr, exp : Expr) -> Expr {
   let base = normalize_legacy_expr(base)
   let exp = normalize_legacy_expr(exp)
@@ -1520,6 +1573,20 @@ fn constructor_singleton_registry(name : String, args : Array[Expr]) -> Expr {
 }
 
 ///|
+/// Build a named symbolic function application.
+///
+/// - Does: Constructs expressions such as `sin(x)`, `log(x)`, or `f(x)`.
+/// - Input: A function name `String` and `Array[Expr]` arguments.
+/// - Returns: A single application `Expr`.
+/// - Limits: The head name is taken literally; this front door does not parse
+///   textual mathematics.
+///
+/// ```mbt check
+/// test "symcore function builds named applications" {
+///   let x = Expr::Symbol("x")
+///   inspect(@symprint.to_string(function("sin", [x])), content="sin(x)")
+/// }
+/// ```
 pub fn function(name : String, args : Array[Expr]) -> Expr {
   if !current_evaluate() {
     return raw_function(name, args)

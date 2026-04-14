@@ -28,7 +28,11 @@ fn plot_interval_log(value : PlotInterval) -> PlotInterval {
   if value.start <= 0.0 {
     return plot_interval_invalid(None)
   }
-  plot_interval(@math.ln(value.start), @math.ln(value.end), is_valid=value.is_valid)
+  plot_interval(
+    @math.ln(value.start),
+    @math.ln(value.end),
+    is_valid=value.is_valid,
+  )
 }
 
 ///|

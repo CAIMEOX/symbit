@@ -202,8 +202,12 @@ pub fn to_float(
   } else {
     x
   }
-  let man = compat_signed_man(y).to_int().to_double()
-  let value = man * @math.pow(2.0, y.exp.to_double())
+  let value = @string.parse_double(@mpf.to_str_opts(y, dps=17)) catch {
+    _ =>
+      raise @mpf.MpfError::ValueError(
+        "to_float: failed to parse decimal rendering",
+      )
+  }
   if strict && value == 0.0 {
     raise @mpf.MpfError::ValueError("to_float: underflow")
   }

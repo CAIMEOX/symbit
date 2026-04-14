@@ -1,5 +1,20 @@
 ///|
-/// Parse a SymPy-like domain token (e.g. `ZZ`, `QQ`, `GF(7)`).
+/// Public domain parsing and compatibility helpers for polynomial code.
+///
+/// Current Limits:
+/// - this file focuses on the public compatibility layer around domains, not
+///   every low-level domain operation in the package.
+/// - some composite-domain coercion paths remain conservative compared with the
+///   full package surface.
+
+///|
+/// Parse a high-level domain token into a `Domain`.
+///
+/// - Does: Converts strings such as `ZZ`, `QQ`, `GF(7)`, or composite forms
+///   into the package domain descriptor.
+/// - Input: A `String`.
+/// - Returns: A `Domain`.
+/// - Limits: Raises `PolyError` when the token is malformed or unsupported.
 pub fn domain_from_string(spec : String) -> Domain raise PolyError {
   let s = spec.trim().to_string()
   match s {
@@ -283,7 +298,14 @@ fn merge_gens(lhs : Array[String], rhs : Array[String]) -> Array[String] {
 }
 
 ///|
-/// Render a domain with a SymPy-compatible high-level string form.
+/// Render a domain into its public compatibility string form.
+///
+/// - Does: Converts a `Domain` into the high-level string spelling used by this
+///   compatibility layer.
+/// - Input: A `Domain`.
+/// - Returns: A `String`.
+/// - Limits: The output is intended for user-facing domain spelling, not as a
+///   general serialization format.
 pub fn domain_to_sympy_string(domain : Domain) -> String {
   match domain {
     Domain::ZZ => "ZZ"
@@ -342,7 +364,12 @@ pub fn domain_expr_tree_list(items : Array[DomainExprTree]) -> DomainExprTree {
 }
 
 ///|
-/// Alias of SymPy `GF` constructor for prime finite fields.
+/// Build a prime finite-field domain.
+///
+/// - Does: Constructs `GF(p)` for a prime-field style modulus.
+/// - Input: A positive modulus `Int`.
+/// - Returns: A `Domain::GF`.
+/// - Limits: Raises `PolyError::BadModulus` when `p <= 1`.
 pub fn gf_domain(p : Int) -> Domain raise PolyError {
   if p <= 1 {
     raise PolyError::BadModulus
@@ -351,67 +378,123 @@ pub fn gf_domain(p : Int) -> Domain raise PolyError {
 }
 
 ///|
-/// Integer ring constructor alias.
+/// Build the integer-ring domain.
+///
+/// - Does: Returns the integer coefficient domain.
+/// - Input: No arguments.
+/// - Returns: `Domain::ZZ`.
+/// - Limits: This is a constructor alias only.
 pub fn integer_ring_domain() -> Domain {
   Domain::ZZ
 }
 
 ///|
-/// Rational field constructor alias.
+/// Build the rational-field domain.
+///
+/// - Does: Returns the exact rational coefficient domain.
+/// - Input: No arguments.
+/// - Returns: `Domain::QQ`.
+/// - Limits: This is a constructor alias only.
 pub fn rational_field_domain() -> Domain {
   Domain::QQ
 }
 
 ///|
-/// Real field constructor alias.
+/// Build the real-field domain.
+///
+/// - Does: Returns the approximate real coefficient domain.
+/// - Input: No arguments.
+/// - Returns: `Domain::RR`.
+/// - Limits: This domain carries approximate semantics rather than exact ones.
 pub fn real_field_domain() -> Domain {
   Domain::RR
 }
 
 ///|
-/// Complex field constructor alias.
+/// Build the complex-field domain.
+///
+/// - Does: Returns the approximate complex coefficient domain.
+/// - Input: No arguments.
+/// - Returns: `Domain::CC`.
+/// - Limits: This domain carries approximate semantics rather than exact ones.
 pub fn complex_field_domain() -> Domain {
   Domain::CC
 }
 
 ///|
-/// Gaussian integer ring constructor alias.
+/// Build the Gaussian-integer domain.
+///
+/// - Does: Returns the exact Gaussian integer coefficient domain.
+/// - Input: No arguments.
+/// - Returns: `Domain::ZZ_I`.
+/// - Limits: This is a constructor alias only.
 pub fn gaussian_integer_ring_domain() -> Domain {
   Domain::ZZ_I
 }
 
 ///|
-/// Gaussian rational field constructor alias.
+/// Build the Gaussian-rational domain.
+///
+/// - Does: Returns the exact Gaussian rational coefficient domain.
+/// - Input: No arguments.
+/// - Returns: `Domain::QQ_I`.
+/// - Limits: This is a constructor alias only.
 pub fn gaussian_rational_field_domain() -> Domain {
   Domain::QQ_I
 }
 
 ///|
-/// Expression domain constructor alias.
+/// Build the expression domain.
+///
+/// - Does: Returns the symbolic-expression coefficient domain.
+/// - Input: No arguments.
+/// - Returns: `Domain::EX`.
+/// - Limits: Coefficients remain symbolic rather than reduced to a smaller
+///   algebraic domain.
 pub fn expression_domain() -> Domain {
   Domain::EX
 }
 
 ///|
-/// Raw-expression domain constructor alias.
+/// Build the raw-expression domain.
+///
+/// - Does: Returns the less-normalized symbolic-expression coefficient domain.
+/// - Input: No arguments.
+/// - Returns: `Domain::EXRAW`.
+/// - Limits: Use this when normalization should stay minimal.
 pub fn expression_raw_domain() -> Domain {
   Domain::EXRAW
 }
 
 ///|
-/// Alias for finite field constructors.
+/// Build a finite-field domain through the generic finite-field alias.
+///
+/// - Does: Forwards to the prime finite-field constructor.
+/// - Input: A positive modulus `Int`.
+/// - Returns: A `Domain::GF`.
+/// - Limits: Shares the same modulus checks as `gf_domain`.
 pub fn finite_field_domain(p : Int) -> Domain raise PolyError {
   gf_domain(p)
 }
 
 ///|
-/// Alias for `GF` used in SymPy (`FF == GF`).
+/// Build a finite-field domain through the `FF` alias.
+///
+/// - Does: Provides the alternate alias for `GF`.
+/// - Input: A positive modulus `Int`.
+/// - Returns: A `Domain::GF`.
+/// - Limits: Shares the same modulus checks as `gf_domain`.
 pub fn ff_domain(p : Int) -> Domain raise PolyError {
   gf_domain(p)
 }
 
 ///|
-/// Build a polynomial ring descriptor `K[x1, ..., xn]`.
+/// Build a polynomial-ring domain.
+///
+/// - Does: Constructs the descriptor for `K[x1, ..., xn]`.
+/// - Input: A base `Domain` and generator names.
+/// - Returns: `Domain::PolyRing`.
+/// - Limits: Raises `PolyError` when the generator list is malformed.
 pub fn poly_ring_domain(
   base : Domain,
   gens : Array[String],
@@ -420,7 +503,12 @@ pub fn poly_ring_domain(
 }
 
 ///|
-/// Build a rational-function field descriptor `K(x1, ..., xn)`.
+/// Build a rational-function field domain.
+///
+/// - Does: Constructs the descriptor for `K(x1, ..., xn)`.
+/// - Input: A base `Domain` and generator names.
+/// - Returns: `Domain::RationalFunctionField`.
+/// - Limits: Raises `PolyError` when the generator list is malformed.
 pub fn rational_function_field_domain(
   base : Domain,
   gens : Array[String],
@@ -723,7 +811,13 @@ pub fn domain_has_characteristic_zero_pred(domain : Domain) -> Bool {
 }
 
 ///|
-/// Return the domain characteristic (`0` for characteristic-zero domains).
+/// Return the characteristic of a domain.
+///
+/// - Does: Computes the characteristic and follows nested composite domains
+///   recursively.
+/// - Input: A `Domain`.
+/// - Returns: An `Int`, with `0` for characteristic-zero domains.
+/// - Limits: This reports the compatibility-model characteristic only.
 pub fn domain_characteristic(domain : Domain) -> Int {
   match domain {
     Domain::GF(p) => p
@@ -739,7 +833,14 @@ pub fn domain_characteristic(domain : Domain) -> Int {
 }
 
 ///|
-/// Return an exact companion domain (`RR -> QQ`, `CC -> QQ_I`) recursively.
+/// Return an exact companion domain.
+///
+/// - Does: Rewrites approximate numeric domains into their exact companions and
+///   propagates through composite domains.
+/// - Input: A `Domain`.
+/// - Returns: A `Domain`.
+/// - Limits: The conversion is structural and does not inspect concrete
+///   coefficient values.
 pub fn domain_get_exact(domain : Domain) -> Domain {
   match domain {
     Domain::RR => Domain::QQ
@@ -760,7 +861,14 @@ pub fn domain_get_exact(domain : Domain) -> Domain {
 }
 
 ///|
-/// Return a field associated with `domain` (when the conversion is known).
+/// Return a field associated with a domain.
+///
+/// - Does: Upgrades rings or composite domains to a field when the conversion
+///   is known.
+/// - Input: A `Domain`.
+/// - Returns: A field-like `Domain`.
+/// - Limits: Raises `PolyError::DomainNotField` when no compatible field view is
+///   defined.
 pub fn domain_get_field(domain : Domain) -> Domain raise PolyError {
   match domain {
     Domain::ZZ => Domain::QQ
@@ -782,7 +890,14 @@ pub fn domain_get_field(domain : Domain) -> Domain raise PolyError {
 }
 
 ///|
-/// Return a ring associated with `domain` (when one is naturally defined).
+/// Return a ring associated with a domain.
+///
+/// - Does: Downgrades a field or composite domain to a natural ring when one is
+///   known.
+/// - Input: A `Domain`.
+/// - Returns: A ring-like `Domain`.
+/// - Limits: Raises `PolyError::DomainMismatch` when no compatible ring view is
+///   defined.
 pub fn domain_get_ring(domain : Domain) -> Domain raise PolyError {
   match domain {
     Domain::QQ => Domain::ZZ
@@ -800,7 +915,12 @@ pub fn domain_get_ring(domain : Domain) -> Domain raise PolyError {
 }
 
 ///|
-/// Unify two domains into a common super-domain for mixed arithmetic.
+/// Unify two domains into a common super-domain.
+///
+/// - Does: Computes a shared domain suitable for mixed-domain arithmetic.
+/// - Input: Two `Domain` values.
+/// - Returns: A unified `Domain`.
+/// - Limits: Raises `PolyError::DomainMismatch` when no common domain is known.
 pub fn domain_unify_pair(a : Domain, b : Domain) -> Domain raise PolyError {
   if a.equal(b) {
     return a
@@ -813,7 +933,8 @@ pub fn domain_unify_pair(a : Domain, b : Domain) -> Domain raise PolyError {
         rels2.is_empty() &&
         gens1.length() == 1 &&
         gens2.length() == 1 {
-        // SymPy often produces a primitive element for the combined extension.
+        // Use a synthetic merged generator when two trivial algebraic extensions
+        // need a common domain but no explicit shared presentation is available.
         let unified_base = domain_unify_pair(base1, base2)
         return Domain::AlgExt(unified_base, ["\{gens1[0]}+\{gens2[0]}"], [])
       } else {

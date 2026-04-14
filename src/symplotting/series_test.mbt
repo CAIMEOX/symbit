@@ -90,6 +90,50 @@ test "symplotting line series supports complex ranges with constant imaginary pa
 }
 
 ///|
+test "symplotting line series samples polynomial curves across interior points" {
+  let x = @symcore.Expr::Symbol("x")
+  let series = line_over_1d_range_series(
+    @symcore.add([
+      @symcore.pow(x, @symcore.int(3)),
+      @symcore.mul([@symcore.int(-3), x]),
+    ]),
+    @symcore.Expr::Tuple([x, @symcore.int(-4), @symcore.int(4)]),
+    n=5,
+  )
+  let (xs, ys) = series.get_data()
+  assert_eq(xs, [-4.0, -2.0, 0.0, 2.0, 4.0])
+  let expected = [-52.0, -2.0, 0.0, 2.0, 52.0]
+  for i in 0..<expected.length() {
+    match ys[i] {
+      Some(value) => assert_true((value - expected[i]).abs() <= 1.0e-9)
+      None => fail("expected numeric cubic sample")
+    }
+  }
+}
+
+///|
+test "symplotting line series samples non-integer polynomial points correctly" {
+  let x = @symcore.Expr::Symbol("x")
+  let series = line_over_1d_range_series(
+    @symcore.add([
+      @symcore.pow(x, @symcore.int(3)),
+      @symcore.mul([@symcore.int(-3), x]),
+    ]),
+    @symcore.Expr::Tuple([x, @symcore.int(-4), @symcore.int(4)]),
+    n=1000,
+  )
+  let (xs, ys) = series.get_data()
+  let sample_indices = [1, 127, 500, 872, 998]
+  for index in sample_indices {
+    let expected = xs[index] * xs[index] * xs[index] - 3.0 * xs[index]
+    match ys[index] {
+      Some(value) => assert_true((value - expected).abs() <= 1.0e-8)
+      None => fail("expected numeric non-integer cubic sample")
+    }
+  }
+}
+
+///|
 test "symplotting line series rejects complex ranges with mismatched imaginary part" {
   let x = @symcore.Expr::Symbol("x")
   ignore(
@@ -337,8 +381,7 @@ test "symplotting implicit series samples a cartesian mesh for equalities" {
       assert_eq(mesh_y[1][0], 0.0)
       assert_eq(mesh_z[1][1], Some(0.0))
     }
-    ImplicitPlotData::Fill(_) =>
-      fail("expected mesh data")
+    ImplicitPlotData::Fill(_) => fail("expected mesh data")
   }
 }
 
@@ -358,8 +401,7 @@ test "symplotting implicit series adaptive path returns fill rectangles" {
       assert_true(rectangles.length() > 0)
       assert_true(rectangles.any(rect => rect.y_end > rect.x_start))
     }
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
   assert_eq(series.depth, 4)
   assert_eq(series.line_color, "blue")
@@ -392,12 +434,12 @@ test "symplotting implicit series supports independent discretization and log sc
   let series = implicit_series(
     @symcore.Expr::Relational(
       @symcore.RelOp::Gt,
-      @symcore.function(
-        "cos",
-        [
-        @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.pow(y, @symcore.int(2))]),
-        ],
-      ),
+      @symcore.function("cos", [
+        @symcore.add([
+          @symcore.pow(x, @symcore.int(2)),
+          @symcore.pow(y, @symcore.int(2)),
+        ]),
+      ]),
       @symcore.int(0),
     ),
     @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)]),
@@ -418,8 +460,7 @@ test "symplotting implicit series supports independent discretization and log sc
       assert_true((mesh_y[1][0] - 10.0).abs() <= 1.0e-10)
       assert_true((mesh_y[2][0] - 100.0).abs() <= 1.0e-8)
     }
-    ImplicitPlotData::Fill(_) =>
-      fail("expected mesh data")
+    ImplicitPlotData::Fill(_) => fail("expected mesh data")
   }
 }
 
@@ -443,10 +484,8 @@ test "symplotting implicit series adaptive path handles SymPy pi over x family a
     adaptive=true,
   )
   match oscillatory.get_data() {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let not_equal = implicit_series(
@@ -457,10 +496,8 @@ test "symplotting implicit series adaptive path handles SymPy pi over x family a
   )
   assert_eq(not_equal.adaptive, true)
   match not_equal.get_data() {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -491,10 +528,8 @@ test "symplotting implicit series adaptive path handles SymPy Not and Xor region
     adaptive=true,
   )
   match inverted.get_data() {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let exclusive = implicit_series(
@@ -504,9 +539,7 @@ test "symplotting implicit series adaptive path handles SymPy Not and Xor region
     adaptive=true,
   )
   match exclusive.get_data() {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }

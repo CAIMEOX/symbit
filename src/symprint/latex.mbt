@@ -1,6 +1,17 @@
 ///|
-/// Configurable LaTeX printer settings shared by `latex` and
-/// `latex_with_settings`.
+/// Public configuration record for the LaTeX printer.
+///
+/// - Does: Stores printer options shared by `latex` and `latex_with_settings`.
+/// - Input: Usually built with `latex_settings(...)`.
+/// - Returns: A record carrying mode, fraction, trig, multiplication, root,
+///   imaginary-unit, differential-operator, and symbol-name options.
+/// - Limits: This config only affects the LaTeX printer; it does not change
+///   `to_string` or `debug_repr`.
+///
+/// Current Limits:
+/// - `symprint` currently exposes plain-text and LaTeX front doors only.
+/// - some advanced expression families still fall back to generic function-style
+///   notation.
 pub struct LatexSettings {
   mode : String
   full_prec : Bool
@@ -69,8 +80,14 @@ fn diff_operator_latex(value : String) -> String {
 }
 
 ///|
-/// Build a `LatexSettings` record from the public LaTeX-printer knobs exposed by
-/// Symbit.
+/// Build a reusable `LatexSettings` record.
+///
+/// - Does: Collects LaTeX printer keyword options into a single settings value.
+/// - Input: Optional keyword arguments such as `mode`, `mul_symbol`,
+///   `inv_trig_style`, `imaginary_unit`, and `symbol_names`.
+/// - Returns: A `LatexSettings` record.
+/// - Limits: String-valued knobs are permissive; unrecognized values are carried
+///   through or fall back to generic rendering instead of being rejected.
 pub fn latex_settings(
   mode? : String = "plain",
   full_prec? : Bool = false,
@@ -116,7 +133,13 @@ pub fn latex_settings(
 }
 
 ///|
-/// Render an expression as LaTeX using an explicit `LatexSettings` record.
+/// Render an expression as LaTeX using an explicit settings record.
+///
+/// - Does: Prints LaTeX from an expression and a prepared `LatexSettings`.
+/// - Input: A `@symcore.Expr` and a `LatexSettings`.
+/// - Returns: A `String`.
+/// - Limits: It shares the same rendering coverage and fallback behavior as
+///   `latex`.
 pub fn latex_with_settings(expr : Expr, settings : LatexSettings) -> String {
   let body = latex_format_expr(expr, 0, settings)
   match settings.mode {
@@ -130,8 +153,24 @@ pub fn latex_with_settings(expr : Expr, settings : LatexSettings) -> String {
 }
 
 ///|
-/// Render an expression as LaTeX with convenience keyword arguments for the most
-/// common printer options.
+/// Render an expression as LaTeX with convenience keyword arguments.
+///
+/// - Does: Prints LaTeX directly from an expression and printer options.
+/// - Input: A `@symcore.Expr` plus optional printer settings.
+/// - Returns: A `String`.
+/// - Limits: Unknown mode strings fall back to the bare LaTeX body rather than
+///   raising an error.
+///
+/// ```mbt check
+/// test "symprint latex renders with inline mode and custom multiplication" {
+///   let x = @symcore.Expr::Symbol("x")
+///   let expr = @symcore.mul([@symcore.int(2), @symcore.pow(x, @symcore.int(2))])
+///   inspect(
+///     latex(expr, mode="inline", mul_symbol=Some("times")),
+///     content="$2 \\times x^{2}$",
+///   )
+/// }
+/// ```
 pub fn latex(
   expr : Expr,
   mode? : String = "plain",

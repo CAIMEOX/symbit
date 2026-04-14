@@ -21,3 +21,19 @@ test "float double bridge uses symnum compat layer" {
   assert_eq(quarter.to_double(), 0.25)
   inspect(float_from_double(0.5, prec=90).format(), content="0.5")
 }
+
+///|
+test "float double bridge handles negative non-dyadic values" {
+  let sample = Float::from_str("-3.991991991991992", prec=80) catch {
+    _ => fail("parse")
+  }
+  assert_true((sample.to_double() - -3.991991991991992).abs() <= 1.0e-12)
+}
+
+///|
+test "float double bridge handles decimal fractions beyond 32-bit mantissas" {
+  let sample = Float::from_str("12345678.125", prec=80) catch {
+    _ => fail("parse")
+  }
+  assert_true((sample.to_double() - 12345678.125).abs() <= 1.0e-9)
+}

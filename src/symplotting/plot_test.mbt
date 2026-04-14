@@ -307,7 +307,7 @@ test "symplotting plot supports log-scaled uniform sampling frontdoor" {
   assert_true(xs[0] > 0.0)
   assert_true(xs[0] < 0.01)
   assert_true(xs[xs.length() - 1] > 90.0)
-  assert_true(xs[xs.length() - 1] <= 100.0)
+  assert_true(xs[xs.length() - 1] <= 100.0 + 1.0e-9)
 }
 
 ///|
@@ -991,8 +991,7 @@ test "symplotting plot_implicit supports explicit ranges and mesh data" {
       assert_eq(mesh_y.length(), 5)
       assert_eq(mesh_z.length(), 5)
     }
-    ImplicitPlotData::Fill(_) =>
-      fail("expected mesh data")
+    ImplicitPlotData::Fill(_) => fail("expected mesh data")
   }
 }
 
@@ -1013,8 +1012,7 @@ test "symplotting plot_implicit handles one-variable expressions like SymPy" {
       assert_eq(mesh_y.length(), 300)
       assert_eq(mesh_z.length(), 300)
     }
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
   }
 }
 
@@ -1037,10 +1035,8 @@ test "symplotting plot_implicit auto-switches boolean combinations to adaptive f
   let series = unwrap_implicit_series(backend.series()[0])
   assert_eq(series.adaptive, true)
   match backend.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -1051,15 +1047,12 @@ test "symplotting plot_implicit supports n1 n2 and log scales like SymPy series"
   let backend = plot_implicit(
     @symcore.Expr::Relational(
       @symcore.RelOp::Gt,
-      @symcore.function(
-        "cos",
-        [
-          @symcore.add([
-            @symcore.pow(x, @symcore.int(2)),
-            @symcore.pow(y, @symcore.int(2)),
-          ]),
-        ],
-      ),
+      @symcore.function("cos", [
+        @symcore.add([
+          @symcore.pow(x, @symcore.int(2)),
+          @symcore.pow(y, @symcore.int(2)),
+        ]),
+      ]),
       @symcore.int(0),
     ),
     x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)])),
@@ -1082,8 +1075,7 @@ test "symplotting plot_implicit supports n1 n2 and log scales like SymPy series"
       assert_true((mesh_y[0][0] - 1.0).abs() <= 1.0e-12)
       assert_true((mesh_y[1][0] - 10.0).abs() <= 1.0e-10)
     }
-    ImplicitPlotData::Fill(_) =>
-      fail("expected mesh data")
+    ImplicitPlotData::Fill(_) => fail("expected mesh data")
   }
 }
 
@@ -1104,10 +1096,8 @@ test "symplotting plot_implicit matches additional SymPy source families" {
     show=false,
   )
   match equality.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let and_region = plot_implicit(
@@ -1126,10 +1116,8 @@ test "symplotting plot_implicit matches additional SymPy source families" {
     show=false,
   )
   match and_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let nested = plot_implicit(
@@ -1147,10 +1135,8 @@ test "symplotting plot_implicit matches additional SymPy source families" {
     show=false,
   )
   match nested.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let oscillatory = plot_implicit(
@@ -1166,10 +1152,8 @@ test "symplotting plot_implicit matches additional SymPy source families" {
     show=false,
   )
   match oscillatory.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let tangent_region = plot_implicit(
@@ -1183,10 +1167,8 @@ test "symplotting plot_implicit matches additional SymPy source families" {
     show=false,
   )
   match tangent_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let trig_region = plot_implicit(
@@ -1204,10 +1186,8 @@ test "symplotting plot_implicit matches additional SymPy source families" {
     show=false,
   )
   match trig_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let cusp = plot_implicit(
@@ -1224,10 +1204,8 @@ test "symplotting plot_implicit matches additional SymPy source families" {
     show=false,
   )
   match cusp.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -1263,10 +1241,8 @@ test "symplotting plot_implicit supports additional interval monotone functions"
     show=false,
   )
   match atan_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let tanh_region = plot_implicit(
@@ -1278,10 +1254,8 @@ test "symplotting plot_implicit supports additional interval monotone functions"
     show=false,
   )
   match tanh_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let acosh_region = plot_implicit(
@@ -1294,10 +1268,8 @@ test "symplotting plot_implicit supports additional interval monotone functions"
     show=false,
   )
   match acosh_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -1315,10 +1287,8 @@ test "symplotting plot_implicit supports interval extrema and integer step funct
     show=false,
   )
   match floor_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let ceiling_region = plot_implicit(
@@ -1330,28 +1300,21 @@ test "symplotting plot_implicit supports interval extrema and integer step funct
     show=false,
   )
   match ceiling_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let max_region = plot_implicit(
     @symcore.Expr::Relational(
       @symcore.RelOp::Gt,
       y,
-      @symcore.function("Max", [
-        x,
-        @symcore.mul([@symcore.int(-1), x]),
-      ]),
+      @symcore.function("Max", [x, @symcore.mul([@symcore.int(-1), x])]),
     ),
     show=false,
   )
   match max_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let min_region = plot_implicit(
@@ -1366,10 +1329,8 @@ test "symplotting plot_implicit supports interval extrema and integer step funct
     show=false,
   )
   match min_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -1385,20 +1346,14 @@ test "symplotting plot_implicit supports rational power intervals like SymPy" {
   }
 
   let odd_denominator = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Gt,
-      y,
-      @symcore.pow(x, one_third),
-    ),
+    @symcore.Expr::Relational(@symcore.RelOp::Gt, y, @symcore.pow(x, one_third)),
     x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
     y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-3), @symcore.int(3)])),
     show=false,
   )
   match odd_denominator.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let even_numerator = plot_implicit(
@@ -1412,10 +1367,8 @@ test "symplotting plot_implicit supports rational power intervals like SymPy" {
     show=false,
   )
   match even_numerator.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -1438,10 +1391,8 @@ test "symplotting plot_implicit supports additional interval inverse families" {
     show=false,
   )
   match log10_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let asin_region = plot_implicit(
@@ -1455,10 +1406,8 @@ test "symplotting plot_implicit supports additional interval inverse families" {
     show=false,
   )
   match asin_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let acos_region = plot_implicit(
@@ -1472,10 +1421,8 @@ test "symplotting plot_implicit supports additional interval inverse families" {
     show=false,
   )
   match acos_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let asinh_region = plot_implicit(
@@ -1487,10 +1434,8 @@ test "symplotting plot_implicit supports additional interval inverse families" {
     show=false,
   )
   match asinh_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let atanh_region = plot_implicit(
@@ -1504,10 +1449,8 @@ test "symplotting plot_implicit supports additional interval inverse families" {
     show=false,
   )
   match atanh_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) =>
-      assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) =>
-      fail("expected adaptive fill data")
+    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 

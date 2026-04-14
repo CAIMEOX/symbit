@@ -29,7 +29,11 @@ test "symplotting can build line and implicit plots" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
 
-  let lines = textplot_str(@symcore.function("sin", [x]), @symcore.int(-3), @symcore.int(3))
+  let lines = textplot_str(
+    @symcore.function("sin", [x]),
+    @symcore.int(-3),
+    @symcore.int(3),
+  )
   assert_true(lines.length() > 0)
 
   let p = plot([plot_expr(@symcore.function("sin", [x]))], show=false, n=20)

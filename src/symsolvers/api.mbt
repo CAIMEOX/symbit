@@ -1,9 +1,20 @@
 ///|
+/// Public front-door types and helpers for solver APIs.
+///
+/// Current Limits:
+/// - this file documents the high-level entry points, not every algorithmic
+///   branch used underneath them.
+/// - ODE/PDE and deep `solveset` behavior still depends on package areas that
+///   are not fully feature-complete yet.
+
+///|
 /// Common error variants raised by the public solver front-ends.
 ///
-/// These errors mirror the high-level categories users need to handle at the
-/// API boundary: malformed input, unsupported algorithms, nonlinear systems in
-/// linear-only entrypoints, shape mismatches, and LP feasibility failures.
+/// - Does: Groups the main user-visible solver failure categories.
+/// - Input: Raised by public solver APIs when validation or solving fails.
+/// - Returns: A `SolverError` variant carrying a message string.
+/// - Limits: This is a high-level boundary error model; low-level algorithm
+///   details are intentionally collapsed into a smaller set of variants.
 pub(all) suberror SolverError {
   ValueError(String)
   NotImplementedError(String)
@@ -30,25 +41,37 @@ pub impl Show for SolverError with output(self, logger : &Logger) -> Unit {
 }
 
 ///|
-/// Tagged input accepted by [`linsolve`](#linsolve).
+/// Tagged input accepted by `linsolve`.
 ///
-/// Use `Equations` when you already have symbolic linear equations, or
-/// `AugmentedMatrix` when the system is stored in matrix form.
+/// - Does: Distinguishes symbolic-equation input from augmented-matrix input.
+/// - Input: `Equations(Array[Expr])` or `AugmentedMatrix(Matrix)`.
+/// - Returns: A `LinsolveInput` wrapper for the public front door.
+/// - Limits: `AugmentedMatrix` must still satisfy the shape constraints checked
+///   by `linsolve`.
 pub enum LinsolveInput {
   Equations(Array[Expr])
   AugmentedMatrix(Matrix)
 }
 
 ///|
-/// Wrap an array of equations for [`linsolve`](#linsolve).
+/// Wrap an array of equations for `linsolve`.
+///
+/// - Does: Marks a symbolic linear system as equation-based input.
+/// - Input: `Array[Expr]`.
+/// - Returns: `LinsolveInput::Equations`.
+/// - Limits: This helper performs no linearity or symbol validation by itself.
 pub fn linsolve_equations_input(equations : Array[Expr]) -> LinsolveInput {
   LinsolveInput::Equations(equations)
 }
 
 ///|
-/// Wrap an augmented matrix for [`linsolve`](#linsolve).
+/// Wrap an augmented matrix for `linsolve`.
 ///
-/// The matrix must have one more column than the number of solved symbols.
+/// - Does: Marks a matrix as augmented linear-system input.
+/// - Input: A `Matrix` interpreted later as `[A | b]`.
+/// - Returns: `LinsolveInput::AugmentedMatrix`.
+/// - Limits: The matrix must have one more column than the number of solved
+///   symbols when it reaches `linsolve`.
 pub fn linsolve_augmented_matrix_input(matrix : Matrix) -> LinsolveInput {
   LinsolveInput::AugmentedMatrix(matrix)
 }
@@ -360,11 +383,15 @@ fn check_zero_expr(expr : Expr) -> Bool? {
 }
 
 ///|
-/// Convert a linear equation system into `(A, b)` matrix form.
+/// Convert a symbolic linear system into matrix form.
 ///
-/// The returned pair represents `A * x = b`. Nonlinear terms raise
-/// `SolverError::NonlinearError`; malformed inputs such as an empty symbol list
-/// or Boolean relations raise `SolverError::ValueError`.
+/// - Does: Rewrites equations into the pair `(A, b)` for `A * x = b`.
+/// - Input: `Array[Expr]` equations and the solved `Array[Expr]` symbols.
+/// - Returns: `(Matrix, Matrix)` where the right-hand side is a single-column
+///   matrix.
+/// - Limits: Nonlinear terms raise `SolverError::NonlinearError`; malformed
+///   inputs such as an empty symbol list or Boolean equations raise
+///   `SolverError::ValueError`.
 pub fn linear_eq_to_matrix(
   equations : Array[Expr],
   symbols : Array[Expr],
@@ -403,11 +430,14 @@ pub fn linear_eq_to_matrix(
 }
 
 ///|
-/// Solve a linear system and return a finite set of tuple solutions.
+/// Solve a linear system and return set-shaped solutions.
 ///
-/// This solves a linear system into a set of tuple solutions. A unique solution
-/// is returned as `FiniteSet((...))`, free variables are left symbolic in the
-/// tuple, and an inconsistent system returns `EmptySet`.
+/// - Does: Solves a linear system presented as equations or an augmented matrix.
+/// - Input: A `LinsolveInput` and the solved symbol list.
+/// - Returns: A `Set`, typically `FiniteSet((...))` for solved tuples or
+///   `EmptySet` for inconsistency.
+/// - Limits: Free variables are left symbolic in the returned tuple; this front
+///   door is for linear systems only.
 pub fn linsolve(
   system : LinsolveInput,
   symbols : Array[Expr],
@@ -439,9 +469,11 @@ pub fn linsolve(
 ///|
 /// Solve an augmented matrix by linear elimination.
 ///
-/// The input matrix is interpreted as `[A | b]`. The result is `None` for an
-/// inconsistent system and `Some(map)` otherwise, with keys taken from the
-/// supplied symbols.
+/// - Does: Solves `[A | b]` into a symbol-to-expression map.
+/// - Input: An augmented `Matrix` and the solved symbol list.
+/// - Returns: `None` for inconsistency and `Some(Map[String, Expr])` otherwise.
+/// - Limits: This front door assumes linear input and reports shape or domain
+///   issues through `SolverError`.
 pub fn solve_linear_system(
   system : Matrix,
   symbols : Array[Expr],
@@ -462,10 +494,13 @@ pub fn solve_linear_system(
 }
 
 ///|
-/// Solve a square augmented matrix via the matrix package LU-based solver.
+/// Solve a square augmented matrix through LU decomposition.
 ///
-/// This entrypoint requires a square coefficient matrix. It is useful when you
-/// want a direct linear algebra solve rather than symbolic elimination.
+/// - Does: Uses the matrix backend LU solver for a direct linear solve.
+/// - Input: An augmented `Matrix` and the solved symbol list.
+/// - Returns: `Some(Map[String, Expr])` on success.
+/// - Limits: Requires a square coefficient matrix and raises
+///   `SolverError::ShapeError` otherwise.
 pub fn solve_linear_system_LU(
   system : Matrix,
   symbols : Array[Expr],
@@ -492,7 +527,11 @@ pub fn solve_linear_system_LU(
 ///|
 /// Compute a determinant through the matrix backend.
 ///
-/// `algorithm` is accepted for API compatibility and is currently ignored.
+/// - Does: Delegates determinant computation to `symmatrices`.
+/// - Input: A `Matrix` and an optional `algorithm` string.
+/// - Returns: An `Expr` determinant.
+/// - Limits: `algorithm` is accepted for front-door compatibility and is
+///   currently ignored.
 pub fn det_quick(
   matrix : Matrix,
   algorithm? : String? = None,
@@ -505,6 +544,11 @@ pub fn det_quick(
 
 ///|
 /// Compute the inverse of a matrix through the matrix backend.
+///
+/// - Does: Delegates matrix inversion to `symmatrices`.
+/// - Input: A `Matrix`.
+/// - Returns: A `Matrix`.
+/// - Limits: Singular or malformed matrices surface as `SolverError`.
 pub fn inv_quick(matrix : Matrix) -> Matrix raise SolverError {
   matrix.inv() catch {
     err => raise wrap_matrix_error("inv_quick", err)
@@ -512,11 +556,14 @@ pub fn inv_quick(matrix : Matrix) -> Matrix raise SolverError {
 }
 
 ///|
-/// Check whether substituting `sol` for `symbol` makes `f` vanish.
+/// Check whether a substitution makes an expression vanish.
 ///
-/// The result is `Some(true)` for a verified solution, `Some(false)` for a
-/// verified non-solution, and `None` when the residual cannot be decided
-/// exactly.
+/// - Does: Substitutes `sol` for `symbol` and tests whether the residual is
+///   zero.
+/// - Input: The target expression, the solved symbol, and the proposed value.
+/// - Returns: `Some(true)`, `Some(false)`, or `None` when exact decisiveness is
+///   not available.
+/// - Limits: This front door only checks one symbol replacement at a time.
 pub fn checksol(f : Expr, symbol : Expr, sol : Expr) -> Bool? raise SolverError {
   let name = symbol_name(symbol)
   let env : Map[String, Expr] = {}

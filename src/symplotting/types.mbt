@@ -16,7 +16,12 @@ pub struct ImplicitRectangle {
 
 ///|
 pub enum ImplicitPlotData {
-  Mesh(Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]], String)
+  Mesh(
+    Array[Array[Double]],
+    Array[Array[Double]],
+    Array[Array[Double?]],
+    String
+  )
   Fill(Array[ImplicitRectangle])
 }
 

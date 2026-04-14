@@ -135,7 +135,10 @@ fn plot_interval_pow_int(value : PlotInterval, power : Int) -> PlotInterval {
     return value
   }
   if power < 0 {
-    return plot_interval_div(plot_interval_point(1.0), plot_interval_pow_int(value, -power))
+    return plot_interval_div(
+      plot_interval_point(1.0),
+      plot_interval_pow_int(value, -power),
+    )
   }
   let p = power.to_double()
   if power % 2 == 1 {
@@ -158,7 +161,10 @@ fn plot_interval_pow_int(value : PlotInterval, power : Int) -> PlotInterval {
 }
 
 ///|
-fn plot_interval_pow_float(value : PlotInterval, power : Double) -> PlotInterval {
+fn plot_interval_pow_float(
+  value : PlotInterval,
+  power : Double,
+) -> PlotInterval {
   if value.is_valid != Some(true) {
     return value
   }
@@ -213,7 +219,10 @@ fn plot_interval_pow_rational(
     if value.start < 0.0 {
       return plot_interval(0.0, @math.pow(value.end, power), is_valid=None)
     }
-    return plot_interval(@math.pow(value.start, power), @math.pow(value.end, power))
+    return plot_interval(
+      @math.pow(value.start, power),
+      @math.pow(value.end, power),
+    )
   }
   let start = if value.start < 0.0 {
     -@math.pow(value.start.abs(), power)

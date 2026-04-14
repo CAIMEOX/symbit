@@ -245,6 +245,13 @@ pub fn standalone_function_head_display_name(name : String) -> String {
 }
 
 ///|
+/// Build a derivative expression over a variable and optional order.
+///
+/// - Does: Constructs a core derivative node.
+/// - Input: An expression, a differentiation variable, and an optional order.
+/// - Returns: `Expr::Derivative`.
+/// - Limits: This front door builds the expression object only; analytical
+///   calculus routines live in higher-level packages.
 pub fn derivative(expr : Expr, wrt : Expr, order? : Expr = int(1)) -> Expr {
   Expr::Derivative(expr, [wrt, order])
 }
@@ -480,6 +487,25 @@ pub fn subs_signature_error(variable : Expr, value : Expr) -> String? {
 }
 
 ///|
+/// Build or extend a structural substitution expression.
+///
+/// - Does: Replaces one exact subexpression with another exact subexpression.
+/// - Input: The target expression, the variable expression, and the replacement
+///   expression.
+/// - Returns: A rewritten `Expr`, often a `Subs` node.
+/// - Limits: Matching is structural; it does not perform algebraic equivalence
+///   matching.
+///
+/// ```mbt check
+/// test "symcore subs_expr performs structural replacement" {
+///   let x = Expr::Symbol("x")
+///   let expr = add([x, int(1)])
+///   inspect(
+///     @symprint.to_string(subs_expr(expr, x, int(3))),
+///     content="Subs(x + 1, x, 3)",
+///   )
+/// }
+/// ```
 pub fn subs_expr(expr : Expr, variable : Expr, value : Expr) -> Expr {
   let expr = normalize_legacy_expr(expr)
   let variable = normalize_legacy_expr(variable)
@@ -657,6 +683,13 @@ fn normalize_legacy_function(name : String, args : Array[Expr]) -> Expr {
 }
 
 ///|
+/// Expose the structural view of an expression.
+///
+/// - Does: Converts `Expr` into its public structural discriminator.
+/// - Input: Any `Expr`.
+/// - Returns: An `ExprForm`.
+/// - Limits: This is for branching and inspection, not a stable serialization
+///   format.
 pub fn expr_form(expr : Expr) -> ExprForm {
   match expr {
     Expr::Number(n) => ExprForm::Number(n)
@@ -1792,6 +1825,12 @@ fn has_matcher(expr : Expr, needle : Expr) -> Bool {
 }
 
 ///|
+/// Collect the free symbolic variables occurring in an expression.
+///
+/// - Does: Walks an expression and extracts its free symbols.
+/// - Input: Any `Expr`.
+/// - Returns: `Array[Expr]`, typically containing `Expr::Symbol` items.
+/// - Limits: The order is canonicalized rather than source-order oriented.
 pub fn free_symbols(expr : Expr) -> Array[Expr] {
   let out : Map[String, Expr] = {}
   free_symbol_map(expr, out)

@@ -4,12 +4,14 @@ fn plot_interval_numeric_constant(expr : @symcore.Expr) -> PlotInterval? {
     @symcore.Expr::NumberSymbol(kind) =>
       match kind {
         @symcore.NumberSymbolKind::Pi => Some(plot_interval_point(@math.PI))
-        @symcore.NumberSymbolKind::Exp1 => Some(plot_interval_point(@math.exp(1.0)))
+        @symcore.NumberSymbolKind::Exp1 =>
+          Some(plot_interval_point(@math.exp(1.0)))
         _ => None
       }
     _ =>
       match plot_expr_to_complex_parts(expr) {
-        Some((real, imag)) if imag.abs() <= 1.0e-8 => Some(plot_interval_point(real))
+        Some((real, imag)) if imag.abs() <= 1.0e-8 =>
+          Some(plot_interval_point(real))
         _ => None
       }
   }
@@ -18,7 +20,8 @@ fn plot_interval_numeric_constant(expr : @symcore.Expr) -> PlotInterval? {
 ///|
 fn plot_interval_exact_rational(expr : @symcore.Expr) -> (BigInt, BigInt)? {
   match expr {
-    @symcore.Expr::Number(value) => Some((value.numerator(), value.denominator()))
+    @symcore.Expr::Number(value) =>
+      Some((value.numerator(), value.denominator()))
     @symcore.Expr::Boolean(true) => Some((1N, 1N))
     @symcore.Expr::Boolean(false) => Some((0N, 1N))
     _ => None
@@ -47,7 +50,10 @@ fn plot_interval_eval_scalar(
     @symcore.Expr::Add(args) => {
       let mut current = plot_interval_point(0.0)
       for arg in args {
-        match plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y) {
+        match
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ) {
           Some(value) => current = plot_interval_add(current, value)
           None => return None
         }
@@ -57,7 +63,10 @@ fn plot_interval_eval_scalar(
     @symcore.Expr::Mul(args) => {
       let mut current = plot_interval_point(1.0)
       for arg in args {
-        match plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y) {
+        match
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ) {
           Some(value) => current = plot_interval_mul(current, value)
           None => return None
         }
@@ -65,14 +74,20 @@ fn plot_interval_eval_scalar(
       Some(current)
     }
     @symcore.Expr::Pow(base, exponent) =>
-      match (
-        plot_interval_eval_scalar(base, variable_x, interval_x, variable_y, interval_y),
-        plot_interval_exact_rational(exponent),
-        plot_interval_numeric_constant(exponent),
-      ) {
+      match
+        (
+          plot_interval_eval_scalar(
+            base, variable_x, interval_x, variable_y, interval_y,
+          ),
+          plot_interval_exact_rational(exponent),
+          plot_interval_numeric_constant(exponent),
+        ) {
         (Some(base_interval), Some((num, den)), _) =>
           Some(plot_interval_pow_rational(base_interval, num, den))
-        (Some(base_interval), None, Some(power_interval)) if plot_interval_width(power_interval).abs() <= 1.0e-12 =>
+        (Some(base_interval), None, Some(power_interval)) if plot_interval_width(
+            power_interval,
+          ).abs() <=
+          1.0e-12 =>
           Some(plot_interval_pow_float(base_interval, power_interval.start))
         _ => None
       }
@@ -82,7 +97,10 @@ fn plot_interval_eval_scalar(
         ("Min", _) => {
           let values : Array[PlotInterval] = []
           for arg in args {
-            match plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y) {
+            match
+              plot_interval_eval_scalar(
+                arg, variable_x, interval_x, variable_y, interval_y,
+              ) {
               Some(value) => values.push(value)
               None => return None
             }
@@ -92,7 +110,10 @@ fn plot_interval_eval_scalar(
         ("Max", _) => {
           let values : Array[PlotInterval] = []
           for arg in args {
-            match plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y) {
+            match
+              plot_interval_eval_scalar(
+                arg, variable_x, interval_x, variable_y, interval_y,
+              ) {
               Some(value) => values.push(value)
               None => return None
             }
@@ -100,62 +121,81 @@ fn plot_interval_eval_scalar(
           Some(plot_interval_max(values))
         }
         ("sin", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_sin)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_sin)
         ("cos", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_cos)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_cos)
         ("tan", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_tan)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_tan)
         ("exp", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_exp)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_exp)
         ("log", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_log)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_log)
         ("log10", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_log10)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_log10)
         ("sqrt", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_sqrt)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_sqrt)
         ("Abs", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_abs)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_abs)
         ("atan", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_atan)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_atan)
         ("asin", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_asin)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_asin)
         ("acos", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_acos)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_acos)
         ("floor", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_floor)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_floor)
         ("ceiling", [arg]) | ("ceil", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_ceiling)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_ceiling)
         ("sinh", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_sinh)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_sinh)
         ("cosh", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_cosh)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_cosh)
         ("tanh", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_tanh)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_tanh)
         ("asinh", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_asinh)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_asinh)
         ("acosh", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_acosh)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_acosh)
         ("atanh", [arg]) =>
-          plot_interval_eval_scalar(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(plot_interval_atanh)
+          plot_interval_eval_scalar(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(plot_interval_atanh)
         _ => None
       }
     _ => None
@@ -171,21 +211,33 @@ fn plot_interval_eval_boolean(
   interval_y : PlotInterval,
 ) -> IntervalMembership? {
   match expr {
-    @symcore.Expr::Boolean(value) => Some(interval_membership(Some(value), Some(true)))
+    @symcore.Expr::Boolean(value) =>
+      Some(interval_membership(Some(value), Some(true)))
     @symcore.Expr::Relational(op, lhs, rhs) =>
-      match (
-        plot_interval_eval_scalar(lhs, variable_x, interval_x, variable_y, interval_y),
-        plot_interval_eval_scalar(rhs, variable_x, interval_x, variable_y, interval_y),
-      ) {
+      match
+        (
+          plot_interval_eval_scalar(
+            lhs, variable_x, interval_x, variable_y, interval_y,
+          ),
+          plot_interval_eval_scalar(
+            rhs, variable_x, interval_x, variable_y, interval_y,
+          ),
+        ) {
         (Some(lhs_interval), Some(rhs_interval)) =>
           Some(
             match op {
-              @symcore.RelOp::Eq => plot_interval_compare_eq(lhs_interval, rhs_interval)
-              @symcore.RelOp::Ne => plot_interval_compare_ne(lhs_interval, rhs_interval)
-              @symcore.RelOp::Lt => plot_interval_compare_lt(lhs_interval, rhs_interval)
-              @symcore.RelOp::Le => plot_interval_compare_le(lhs_interval, rhs_interval)
-              @symcore.RelOp::Gt => plot_interval_compare_gt(lhs_interval, rhs_interval)
-              @symcore.RelOp::Ge => plot_interval_compare_ge(lhs_interval, rhs_interval)
+              @symcore.RelOp::Eq =>
+                plot_interval_compare_eq(lhs_interval, rhs_interval)
+              @symcore.RelOp::Ne =>
+                plot_interval_compare_ne(lhs_interval, rhs_interval)
+              @symcore.RelOp::Lt =>
+                plot_interval_compare_lt(lhs_interval, rhs_interval)
+              @symcore.RelOp::Le =>
+                plot_interval_compare_le(lhs_interval, rhs_interval)
+              @symcore.RelOp::Gt =>
+                plot_interval_compare_gt(lhs_interval, rhs_interval)
+              @symcore.RelOp::Ge =>
+                plot_interval_compare_ge(lhs_interval, rhs_interval)
             },
           )
         _ => None
@@ -196,16 +248,11 @@ fn plot_interval_eval_boolean(
         ("And", _) => {
           let mut current = interval_membership(Some(true), Some(true))
           for arg in args {
-            match plot_interval_eval_boolean(
-              arg,
-              variable_x,
-              interval_x,
-              variable_y,
-              interval_y,
-            ) {
-              Some(value) => {
-                current = interval_membership_and(current, value)
-              }
+            match
+              plot_interval_eval_boolean(
+                arg, variable_x, interval_x, variable_y, interval_y,
+              ) {
+              Some(value) => current = interval_membership_and(current, value)
               None => return None
             }
           }
@@ -215,72 +262,77 @@ fn plot_interval_eval_boolean(
           if args.is_empty() {
             return Some(interval_membership(Some(false), Some(true)))
           }
-          let mut current = match plot_interval_eval_boolean(
-            args[0],
-            variable_x,
-            interval_x,
-            variable_y,
-            interval_y,
-          ) {
-            Some(value) => value
-            None => return None
-          }
-          for i in 1..<args.length() {
-            match plot_interval_eval_boolean(
-              args[i],
+          let mut current = match
+            plot_interval_eval_boolean(
+              args[0],
               variable_x,
               interval_x,
               variable_y,
               interval_y,
             ) {
-              Some(value) => {
-                current = interval_membership_or(current, value)
-              }
+            Some(value) => value
+            None => return None
+          }
+          for i in 1..<args.length() {
+            match
+              plot_interval_eval_boolean(
+                args[i],
+                variable_x,
+                interval_x,
+                variable_y,
+                interval_y,
+              ) {
+              Some(value) => current = interval_membership_or(current, value)
               None => return None
             }
           }
           Some(current)
         }
         ("Not", [arg]) =>
-          plot_interval_eval_boolean(arg, variable_x, interval_x, variable_y, interval_y)
-          .map(interval_membership_not)
+          plot_interval_eval_boolean(
+            arg, variable_x, interval_x, variable_y, interval_y,
+          ).map(interval_membership_not)
         ("Xor", _) => {
           if args.is_empty() {
             return Some(interval_membership(Some(false), Some(true)))
           }
-          let mut current = match plot_interval_eval_boolean(
-            args[0],
-            variable_x,
-            interval_x,
-            variable_y,
-            interval_y,
-          ) {
-            Some(value) => value
-            None => return None
-          }
-          for i in 1..<args.length() {
-            match plot_interval_eval_boolean(
-              args[i],
+          let mut current = match
+            plot_interval_eval_boolean(
+              args[0],
               variable_x,
               interval_x,
               variable_y,
               interval_y,
             ) {
-              Some(value) => {
-                current = interval_membership_xor(current, value)
-              }
+            Some(value) => value
+            None => return None
+          }
+          for i in 1..<args.length() {
+            match
+              plot_interval_eval_boolean(
+                args[i],
+                variable_x,
+                interval_x,
+                variable_y,
+                interval_y,
+              ) {
+              Some(value) => current = interval_membership_xor(current, value)
               None => return None
             }
           }
           Some(current)
         }
         _ =>
-          plot_interval_eval_scalar(expr, variable_x, interval_x, variable_y, interval_y)
-          .map(value => plot_interval_compare_eq(value, plot_interval_point(0.0)))
+          plot_interval_eval_scalar(
+            expr, variable_x, interval_x, variable_y, interval_y,
+          ).map(value => {
+            plot_interval_compare_eq(value, plot_interval_point(0.0))
+          })
       }
     _ =>
-      plot_interval_eval_scalar(expr, variable_x, interval_x, variable_y, interval_y)
-      .map(value => plot_interval_compare_eq(value, plot_interval_point(0.0)))
+      plot_interval_eval_scalar(
+        expr, variable_x, interval_x, variable_y, interval_y,
+      ).map(value => plot_interval_compare_eq(value, plot_interval_point(0.0)))
   }
 }
 
@@ -316,5 +368,7 @@ fn plot_implicit_interval_membership(
   variable_y : @symcore.Expr,
   interval_y : PlotInterval,
 ) -> IntervalMembership? {
-  plot_interval_eval_boolean(expr, variable_x, interval_x, variable_y, interval_y)
+  plot_interval_eval_boolean(
+    expr, variable_x, interval_x, variable_y, interval_y,
+  )
 }

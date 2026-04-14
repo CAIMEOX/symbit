@@ -71,23 +71,129 @@ fn plot_expr_to_complex_parts(expr : @symcore.Expr) -> (Double, Double)? {
 }
 
 ///|
+fn plot_numeric_sample_expr(
+  sample_real : Double,
+  sample_imag : Double,
+) -> @symcore.Expr {
+  let to_plot_float = fn(value : Double) {
+    @symcore.Float::from_str(value.to_string(), prec=80) catch {
+      _ => @symcore.Float::from_double(value, prec=80)
+    }
+  }
+  if sample_imag.abs() <= 1.0e-8 {
+    @symcore.Expr::Float(to_plot_float(sample_real))
+  } else {
+    @symcore.Expr::ComplexFloat(
+      @symcore.ComplexFloat::from_real(
+        to_plot_float(sample_real),
+        imag=to_plot_float(sample_imag),
+      ),
+    )
+  }
+}
+
+///|
+fn plot_raw_xreplace_impl(
+  expr : @symcore.Expr,
+  rules : Array[(@symcore.Expr, @symcore.Expr)],
+) -> @symcore.Expr {
+  let expr = @symcore.normalize_legacy_expr(expr)
+  for rule in rules {
+    let (old_expr, new_expr) = rule
+    if expr == old_expr {
+      return new_expr
+    }
+  }
+  match expr {
+    @symcore.Expr::Add(args) =>
+      @symcore.raw_add(args.map(arg => plot_raw_xreplace_impl(arg, rules)))
+    @symcore.Expr::Mul(args) =>
+      @symcore.raw_mul(args.map(arg => plot_raw_xreplace_impl(arg, rules)))
+    @symcore.Expr::Pow(base, exp) =>
+      @symcore.raw_pow(
+        plot_raw_xreplace_impl(base, rules),
+        plot_raw_xreplace_impl(exp, rules),
+      )
+    @symcore.Expr::Mod(lhs, rhs) =>
+      @symcore.raw_mod_expr(
+        plot_raw_xreplace_impl(lhs, rules),
+        plot_raw_xreplace_impl(rhs, rules),
+      )
+    @symcore.Expr::Tuple(args) =>
+      @symcore.Expr::Tuple(args.map(arg => plot_raw_xreplace_impl(arg, rules)))
+    @symcore.Expr::Dict(items) => {
+      let out : Array[(@symcore.Expr, @symcore.Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push(
+          (
+            plot_raw_xreplace_impl(key, rules),
+            plot_raw_xreplace_impl(value, rules),
+          ),
+        )
+      }
+      @symcore.Expr::Dict(out)
+    }
+    @symcore.Expr::Relational(op, lhs, rhs) =>
+      @symcore.Expr::Relational(
+        op,
+        plot_raw_xreplace_impl(lhs, rules),
+        plot_raw_xreplace_impl(rhs, rules),
+      )
+    @symcore.Expr::Derivative(inner, deriv_args) => {
+      let out : Array[@symcore.Expr] = []
+      for arg in deriv_args {
+        out.push(plot_raw_xreplace_impl(arg, rules))
+      }
+      @symcore.Expr::Derivative(plot_raw_xreplace_impl(inner, rules), out)
+    }
+    @symcore.Expr::Subs(inner, variable, value) =>
+      @symcore.Expr::Subs(
+        plot_raw_xreplace_impl(inner, rules),
+        plot_raw_xreplace_impl(variable, rules),
+        plot_raw_xreplace_impl(value, rules),
+      )
+    @symcore.Expr::Lambda(vars, body) =>
+      @symcore.Expr::Lambda(
+        plot_raw_xreplace_impl(vars, rules),
+        plot_raw_xreplace_impl(body, rules),
+      )
+    @symcore.Expr::Apply(head, args) => {
+      let rewritten_head = plot_raw_xreplace_impl(head, rules)
+      let rewritten_args = args.map(arg => plot_raw_xreplace_impl(arg, rules))
+      match @symcore.raw_apply(rewritten_head, rewritten_args) {
+        Some(applied) => applied
+        None => @symcore.Expr::Apply(rewritten_head, rewritten_args)
+      }
+    }
+    _ => expr
+  }
+}
+
+///|
+fn plot_raw_xreplace(
+  expr : @symcore.Expr,
+  rules : Array[(@symcore.Expr, @symcore.Expr)],
+) -> @symcore.Expr {
+  let normalized_rules = rules.map(rule => {
+    let (old_expr, new_expr) = rule
+    (
+      @symcore.normalize_legacy_expr(old_expr),
+      @symcore.normalize_legacy_expr(new_expr),
+    )
+  })
+  plot_raw_xreplace_impl(expr, normalized_rules)
+}
+
+///|
 fn plot_eval_numeric(
   expr : @symcore.Expr,
   variable : @symcore.Expr,
   sample_real : Double,
   sample_imag : Double,
 ) -> (Double, Double)? {
-  let sample_expr = if sample_imag.abs() <= 1.0e-8 {
-    @symcore.Expr::Float(@symcore.Float::from_double(sample_real, prec=80))
-  } else {
-    @symcore.Expr::ComplexFloat(
-      @symcore.ComplexFloat::from_real(
-        @symcore.Float::from_double(sample_real, prec=80),
-        imag=@symcore.Float::from_double(sample_imag, prec=80),
-      ),
-    )
-  }
-  let substituted = @symcore.xreplace(expr, [(variable, sample_expr)])
+  let sample_expr = plot_numeric_sample_expr(sample_real, sample_imag)
+  let substituted = plot_raw_xreplace(expr, [(variable, sample_expr)])
   let evaluated = @symcore.evalf(substituted, prec=80)
   match evaluated {
     @symcore.Expr::Float(value) =>
@@ -539,27 +645,9 @@ fn plot_eval_numeric_2d(
   sample_y_real : Double,
   sample_y_imag : Double,
 ) -> (Double, Double)? {
-  let sample_x = if sample_x_imag.abs() <= 1.0e-8 {
-    @symcore.Expr::Float(@symcore.Float::from_double(sample_x_real, prec=80))
-  } else {
-    @symcore.Expr::ComplexFloat(
-      @symcore.ComplexFloat::from_real(
-        @symcore.Float::from_double(sample_x_real, prec=80),
-        imag=@symcore.Float::from_double(sample_x_imag, prec=80),
-      ),
-    )
-  }
-  let sample_y = if sample_y_imag.abs() <= 1.0e-8 {
-    @symcore.Expr::Float(@symcore.Float::from_double(sample_y_real, prec=80))
-  } else {
-    @symcore.Expr::ComplexFloat(
-      @symcore.ComplexFloat::from_real(
-        @symcore.Float::from_double(sample_y_real, prec=80),
-        imag=@symcore.Float::from_double(sample_y_imag, prec=80),
-      ),
-    )
-  }
-  let substituted = @symcore.xreplace(expr, [
+  let sample_x = plot_numeric_sample_expr(sample_x_real, sample_x_imag)
+  let sample_y = plot_numeric_sample_expr(sample_y_real, sample_y_imag)
+  let substituted = plot_raw_xreplace(expr, [
     (variable_x, sample_x),
     (variable_y, sample_y),
   ])
@@ -797,14 +885,12 @@ fn plot_implicit_interval_fill(
   let interval_list : Array[ImplicitRectangle] = []
   for yi in 0..<(ys.length() - 1) {
     for xi in 0..<(xs.length() - 1) {
-      interval_list.push(
-        ImplicitRectangle::{
-          x_start: xs[xi],
-          x_end: xs[xi + 1],
-          y_start: ys[yi],
-          y_end: ys[yi + 1],
-        },
-      )
+      interval_list.push(ImplicitRectangle::{
+        x_start: xs[xi],
+        x_end: xs[xi + 1],
+        y_start: ys[yi],
+        y_end: ys[yi + 1],
+      })
     }
   }
   let plot_list : Array[ImplicitRectangle] = []
@@ -817,11 +903,7 @@ fn plot_implicit_interval_fill(
       let interval_y = plot_interval(rect.y_start, rect.y_end)
       match
         plot_implicit_interval_membership(
-          expr,
-          variable_x,
-          interval_x,
-          variable_y,
-          interval_y,
+          expr, variable_x, interval_x, variable_y, interval_y,
         ) {
         Some(result) =>
           if result.validity == Some(false) || result.truth == Some(false) {
@@ -848,14 +930,10 @@ fn plot_implicit_interval_fill(
       let interval_y = plot_interval(rect.y_start, rect.y_end)
       match
         plot_implicit_interval_membership(
-          expr,
-          variable_x,
-          interval_x,
-          variable_y,
-          interval_y,
+          expr, variable_x, interval_x, variable_y, interval_y,
         ) {
-        Some(result) if result.validity == Some(true) && result.truth != Some(false) =>
-          plot_list.push(rect)
+        Some(result) if result.validity == Some(true) &&
+          result.truth != Some(false) => plot_list.push(rect)
         Some(_) => ()
         None => return None
       }
@@ -943,13 +1021,7 @@ fn plot_implicit_equality_candidate(
     let (x, y) = sample
     match
       plot_implicit_eval_real_2d(
-        scalar_expr,
-        variable_x,
-        x,
-        sample_x_imag,
-        variable_y,
-        y,
-        sample_y_imag,
+        scalar_expr, variable_x, x, sample_x_imag, variable_y, y, sample_y_imag,
       ) {
       Some(value) =>
         if value.abs() <= 1.0e-8 {
@@ -981,13 +1053,7 @@ fn plot_implicit_boolean_candidate(
     let (x, y) = sample
     match
       plot_implicit_boolean_expr(
-        expr,
-        variable_x,
-        x,
-        sample_x_imag,
-        variable_y,
-        y,
-        sample_y_imag,
+        expr, variable_x, x, sample_x_imag, variable_y, y, sample_y_imag,
       ) {
       Some(true) => saw_true = true
       Some(false) => saw_false = true
@@ -2160,13 +2226,13 @@ pub fn ImplicitSeries::get_data(
       let (rect, remaining_depth) = pending.pop().unwrap()
       if plot_implicit_plot_type(self.expr) == "contour" {
         if !plot_implicit_equality_candidate(
-          self.expr,
-          self.variable_x,
-          start_x_imag,
-          self.variable_y,
-          start_y_imag,
-          rect,
-        ) {
+            self.expr,
+            self.variable_x,
+            start_x_imag,
+            self.variable_y,
+            start_y_imag,
+            rect,
+          ) {
           continue
         }
         if remaining_depth <= 0 {
@@ -2202,8 +2268,20 @@ pub fn ImplicitSeries::get_data(
     }
     return ImplicitPlotData::Fill(rectangles)
   }
-  let xs = plot_discretize(start_x_real, end_x_real, self.n1, self.xscale, false)
-  let ys = plot_discretize(start_y_real, end_y_real, self.n2, self.yscale, false)
+  let xs = plot_discretize(
+    start_x_real,
+    end_x_real,
+    self.n1,
+    self.xscale,
+    false,
+  )
+  let ys = plot_discretize(
+    start_y_real,
+    end_y_real,
+    self.n2,
+    self.yscale,
+    false,
+  )
   let (mesh_x, mesh_y) = plot_meshgrid(xs, ys)
   let mesh_z : Array[Array[Double?]] = []
   for y in ys {

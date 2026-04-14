@@ -696,7 +696,7 @@ test "expr_match follows SymPy source positive power wildcard examples" {
     Some(env) =>
       inspect(
         @symprint.to_string(env.get(y).unwrap_or(int(0))),
-        content="x**(1*r/2)",
+        content="x**(r/2)",
       )
     None => fail("expected x**r to match y**2 from SymPy source")
   }
@@ -705,7 +705,7 @@ test "expr_match follows SymPy source positive power wildcard examples" {
     Some(env) =>
       inspect(
         @symprint.to_string(env.get(y).unwrap_or(int(0))),
-        content="x**(1*e/2)",
+        content="x**(e/2)",
       )
     None => fail("expected x**e to match y**2 from SymPy source")
   }

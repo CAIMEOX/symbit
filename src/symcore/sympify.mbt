@@ -21,6 +21,24 @@ pub(all) enum SympifyInput {
 
 ///|
 /// Convert a typed value into a core symbolic expression.
+///
+/// - Does: Lifts a supported host-side input into `Expr`.
+/// - Input: A `SympifyInput`.
+/// - Returns: A single `Expr`.
+/// - Limits: This is typed lifting, not full textual parsing; text parsing
+///   belongs in `symparse`.
+///
+/// ```mbt check
+/// test "symcore sympify lifts typed inputs into expr" {
+///   let expr = sympify(
+///     SympifyInput::Tuple([
+///       SympifyInput::FromInt(1),
+///       SympifyInput::SymbolName("x"),
+///     ]),
+///   )
+///   inspect(@symprint.to_string(expr), content="(1, x)")
+/// }
+/// ```
 pub fn sympify(input : SympifyInput) -> Expr {
   match input {
     SympifyInput::FromExpr(expr) => normalize_legacy_expr(expr)

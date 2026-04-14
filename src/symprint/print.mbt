@@ -28,8 +28,20 @@ fn derivative_call_args(inner : Expr, deriv_args : Array[Expr]) -> Array[Expr] {
 }
 
 ///|
-/// Render an expression into a structural debug form that exposes the tree shape
-/// and canonical head names.
+/// Render an expression into structural debug text.
+///
+/// - Does: Prints the tree shape together with canonical head names.
+/// - Input: A `@symcore.Expr`.
+/// - Returns: A `String`.
+/// - Limits: The output is intended for debugging and assertions, not for
+///   end-user presentation.
+///
+/// ```mbt check
+/// test "symprint debug_repr exposes tree structure" {
+///   let x = @symcore.Expr::Symbol("x")
+///   inspect(debug_repr(@symcore.add([x, @symcore.int(1)])), content="(+ sym:x 1)")
+/// }
+/// ```
 pub fn debug_repr(expr : Expr) -> String {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => return wrap_call(name, args)
@@ -124,8 +136,12 @@ fn wrap_apply(head : Expr, args : Array[Expr]) -> String {
 }
 
 ///|
-/// Render an expression into the default human-readable printer used across
-/// Symbit tests, examples, and user-facing output.
+/// Render an expression into the default human-readable text form.
+///
+/// - Does: Prints an expression using the standard readable textual printer.
+/// - Input: A `@symcore.Expr`.
+/// - Returns: A `String`.
+/// - Limits: The output is readable text, not a lossless serialization format.
 pub fn to_string(expr : Expr) -> String {
   format_expr(expr, 0)
 }
