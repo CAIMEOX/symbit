@@ -1,5 +1,9 @@
 ///|
-/// Sparse symbolic matrix stored in dictionary-of-keys form.
+/// Sparse symbolic matrices stored in dictionary-of-keys form.
+///
+/// Current Limits:
+/// - Most structural front doors stay sparse, but several decomposition paths return dense matrices.
+/// - This file focuses on DOK-style sparse values rather than a separate symbolic matrix-expression layer.
 pub struct SparseMatrix {
   rows : Int
   cols : Int
@@ -272,6 +276,12 @@ fn sparse_echelon_internal(
 }
 
 ///|
+/// Return a mutable-style copy of a sparse matrix.
+///
+/// - Does: Clones the sparse entry dictionary so callers can keep editing the returned value.
+/// - Input: A `SparseMatrix`.
+/// - Returns: Another `SparseMatrix` with the same shape and stored entries.
+/// - Limits: This package uses value semantics, so the original sparse matrix is never mutated in place.
 pub fn SparseMatrix::as_mutable(self : SparseMatrix) -> MutableSparseMatrix {
   SparseMatrix::{
     rows: self.rows,
@@ -281,11 +291,23 @@ pub fn SparseMatrix::as_mutable(self : SparseMatrix) -> MutableSparseMatrix {
 }
 
 ///|
+/// Return an immutable-style copy of a sparse matrix.
+///
+/// - Does: Clones the sparse entry dictionary while preserving the stored sparsity pattern.
+/// - Input: A `SparseMatrix`.
+/// - Returns: Another `SparseMatrix` with the same shape and stored entries.
+/// - Limits: This is a compatibility front door; it does not freeze or alias the original value.
 pub fn SparseMatrix::as_immutable(self : SparseMatrix) -> ImmutableSparseMatrix {
   self.as_mutable()
 }
 
 ///|
+/// Build a sparse matrix from explicit nonzero entries.
+///
+/// - Does: Validates the declared shape, drops explicit zero values, and stores the remaining entries in DOK form.
+/// - Input: Row count, column count, and a `Map[(Int, Int), Expr]` of entries.
+/// - Returns: A `SparseMatrix`.
+/// - Limits: Raises `MatrixError::ShapeError` for negative dimensions and `MatrixError::IndexError` when any stored coordinate lies outside the declared shape.
 pub fn sparse_matrix(
   rows : Int,
   cols : Int,
@@ -307,21 +329,45 @@ pub fn sparse_matrix(
 }
 
 ///|
+/// Return the sparse matrix shape.
+///
+/// - Does: Reports the number of rows and columns.
+/// - Input: A `SparseMatrix`.
+/// - Returns: A pair `(rows, cols)`.
+/// - Limits: This is metadata only.
 pub fn SparseMatrix::shape(self : SparseMatrix) -> (Int, Int) {
   (self.rows, self.cols)
 }
 
 ///|
+/// Clone a sparse matrix.
+///
+/// - Does: Returns a sparse matrix with copied metadata and entries.
+/// - Input: A `SparseMatrix`.
+/// - Returns: Another `SparseMatrix`.
+/// - Limits: Equivalent to `as_mutable()` for this value-semantic API.
 pub fn SparseMatrix::copy(self : SparseMatrix) -> SparseMatrix {
   self.as_mutable()
 }
 
 ///|
+/// Count stored nonzero entries.
+///
+/// - Does: Reports how many entries are currently present in the sparse dictionary.
+/// - Input: A `SparseMatrix`.
+/// - Returns: An `Int`.
+/// - Limits: This is structural sparsity only; mathematically equivalent but unsimplified zeros are excluded at construction time.
 pub fn SparseMatrix::nnz(self : SparseMatrix) -> Int {
   self.entries.length()
 }
 
 ///|
+/// Convert a sparse matrix to dictionary-of-keys form.
+///
+/// - Does: Clones the underlying `(row, col) -> Expr` map.
+/// - Input: A `SparseMatrix`.
+/// - Returns: `Map[(Int, Int), Expr]`.
+/// - Limits: The returned map contains only stored nonzero entries.
 pub fn SparseMatrix::todok(self : SparseMatrix) -> Map[(Int, Int), Expr] {
   clone_sparse_entries(self.entries)
 }
@@ -337,11 +383,23 @@ pub fn SparseMatrix::tolist(self : SparseMatrix) -> Array[Array[Expr]] {
 }
 
 ///|
+/// Compare two sparse matrices by value.
+///
+/// - Does: Checks whether both matrices have the same shape and the same explicit entries.
+/// - Input: Two `SparseMatrix` values.
+/// - Returns: `Bool`.
+/// - Limits: Comparison is delegated through dense equality, so semantically equal but differently simplified expressions may compare unequal.
 pub fn SparseMatrix::equals(self : SparseMatrix, other : SparseMatrix) -> Bool {
   self.to_dense().equals(other.to_dense())
 }
 
 ///|
+/// Read one sparse matrix entry.
+///
+/// - Does: Returns the stored expression at `(row, col)` or symbolic zero if the coordinate is absent.
+/// - Input: A `SparseMatrix`, row index, and column index. Negative indices count from the end.
+/// - Returns: An `Expr`.
+/// - Limits: Raises `MatrixError::IndexError` when either index falls outside the matrix bounds.
 pub fn SparseMatrix::getitem(
   self : SparseMatrix,
   row : Int,
@@ -356,6 +414,12 @@ pub fn SparseMatrix::getitem(
 }
 
 ///|
+/// Return a copy of the sparse matrix with one entry replaced.
+///
+/// - Does: Writes `value` into `(row, col)` and removes the key entirely when `value` is zero.
+/// - Input: A `SparseMatrix`, row index, column index, and replacement `Expr`. Negative indices count from the end.
+/// - Returns: A new `SparseMatrix`.
+/// - Limits: Raises `MatrixError::IndexError` when either index falls outside the matrix bounds.
 pub fn SparseMatrix::setitem(
   self : SparseMatrix,
   row : Int,
@@ -374,6 +438,12 @@ pub fn SparseMatrix::setitem(
 }
 
 ///|
+/// Convert a sparse matrix into a dense matrix.
+///
+/// - Does: Materializes all missing entries as symbolic zero and returns a dense grid.
+/// - Input: A `SparseMatrix`.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Large sparse matrices can allocate large dense outputs.
 pub fn SparseMatrix::to_dense(self : SparseMatrix) -> Matrix {
   let data : Array[Array[Expr]] = Array::new()
   for _ in 0..<self.rows {
@@ -386,6 +456,12 @@ pub fn SparseMatrix::to_dense(self : SparseMatrix) -> Matrix {
 }
 
 ///|
+/// Convert a dense matrix into sparse DOK form.
+///
+/// - Does: Drops zero entries and stores the remaining coordinates explicitly.
+/// - Input: A dense `Matrix`.
+/// - Returns: A `SparseMatrix`.
+/// - Limits: Zero detection depends on the current symbolic zero predicate.
 pub fn Matrix::to_sparse(self : Matrix) -> SparseMatrix {
   let entries : Map[(Int, Int), Expr] = {}
   for i in 0..<self.rows {
@@ -399,6 +475,12 @@ pub fn Matrix::to_sparse(self : Matrix) -> SparseMatrix {
 }
 
 ///|
+/// Transpose a sparse matrix.
+///
+/// - Does: Swaps row and column coordinates while preserving stored nonzero values.
+/// - Input: A `SparseMatrix`.
+/// - Returns: A transposed `SparseMatrix`.
+/// - Limits: The sparsity pattern is rewritten structurally; no additional simplification is performed.
 pub fn SparseMatrix::transpose(self : SparseMatrix) -> SparseMatrix {
   let entries : Map[(Int, Int), Expr] = {}
   for key, value in self.entries {
@@ -446,6 +528,12 @@ pub fn SparseMatrix::col_list(self : SparseMatrix) -> Array[(Int, Int, Expr)] {
 }
 
 ///|
+/// Multiply every stored sparse entry by a scalar.
+///
+/// - Does: Scales all explicit entries and drops any that simplify to zero.
+/// - Input: A `SparseMatrix` and one scalar `Expr`.
+/// - Returns: A `SparseMatrix`.
+/// - Limits: Raises any construction errors from `sparse_matrix()` if the rebuilt sparse value becomes invalid.
 pub fn SparseMatrix::scalar_multiply(
   self : SparseMatrix,
   scalar : Expr,
@@ -461,6 +549,12 @@ pub fn SparseMatrix::scalar_multiply(
 }
 
 ///|
+/// Apply a function to each stored sparse entry.
+///
+/// - Does: Maps `f` over explicitly stored entries and drops results that simplify to zero.
+/// - Input: A `SparseMatrix` and a function `(Expr) -> Expr`.
+/// - Returns: A `SparseMatrix`.
+/// - Limits: Implicit zero entries are not passed through `f`.
 pub fn SparseMatrix::applyfunc(
   self : SparseMatrix,
   f : (Expr) -> Expr,
@@ -476,6 +570,12 @@ pub fn SparseMatrix::applyfunc(
 }
 
 ///|
+/// Reshape a sparse matrix without densifying it.
+///
+/// - Does: Reinterprets each stored coordinate in row-major order under a new shape.
+/// - Input: A `SparseMatrix` and target `rows` and `cols`.
+/// - Returns: A new `SparseMatrix`.
+/// - Limits: Raises `MatrixError::ShapeError` when the new shape is negative or changes the total number of entries.
 pub fn SparseMatrix::reshape(
   self : SparseMatrix,
   rows : Int,
@@ -495,6 +595,12 @@ pub fn SparseMatrix::reshape(
 }
 
 ///|
+/// Extract a sparse submatrix by row and column index lists.
+///
+/// - Does: Reindexes the selected rows and columns into a new sparse matrix.
+/// - Input: A `SparseMatrix`, `row_ids`, and `col_ids`. Indices may be negative.
+/// - Returns: A new `SparseMatrix`.
+/// - Limits: Raises `MatrixError::IndexError` when any requested index is out of range.
 pub fn SparseMatrix::extract(
   self : SparseMatrix,
   row_ids : Array[Int],
@@ -629,6 +735,12 @@ pub fn SparseMatrix::col_del(
 }
 
 ///|
+/// Check whether the sparse matrix stores only zeros.
+///
+/// - Does: Tests whether there are no explicit nonzero entries.
+/// - Input: A `SparseMatrix`.
+/// - Returns: `Bool`.
+/// - Limits: This is structural and assumes explicit zeros were removed on construction.
 pub fn SparseMatrix::is_zero_matrix(self : SparseMatrix) -> Bool {
   self.nnz() == 0
 }
@@ -684,6 +796,12 @@ pub fn SparseMatrix::is_lower(self : SparseMatrix) -> Bool {
 }
 
 ///|
+/// Compute the trace of a sparse matrix.
+///
+/// - Does: Adds the explicitly stored diagonal entries and treats missing ones as zero.
+/// - Input: A square `SparseMatrix`.
+/// - Returns: One symbolic `Expr`.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` when the matrix is not square.
 pub fn SparseMatrix::trace(self : SparseMatrix) -> Expr raise MatrixError {
   if self.rows != self.cols {
     raise MatrixError::NonSquareMatrixError("trace requires a square matrix")
@@ -699,11 +817,23 @@ pub fn SparseMatrix::trace(self : SparseMatrix) -> Expr raise MatrixError {
 }
 
 ///|
+/// Compute the rank of a sparse matrix.
+///
+/// - Does: Counts pivot columns in the reduced row echelon form.
+/// - Input: Any `SparseMatrix`.
+/// - Returns: An `Int` rank.
+/// - Limits: This front door materializes dense row data during elimination.
 pub fn SparseMatrix::rank(self : SparseMatrix) -> Int {
   self.rref().1.length()
 }
 
 ///|
+/// Compute the determinant of a sparse square matrix.
+///
+/// - Does: Uses diagonal shortcuts when available and otherwise delegates to dense determinant computation.
+/// - Input: A square `SparseMatrix`.
+/// - Returns: One symbolic `Expr`.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs. General sparse determinants currently fall back to dense evaluation.
 pub fn SparseMatrix::det(self : SparseMatrix) -> Expr raise MatrixError {
   if self.rows != self.cols {
     raise MatrixError::NonSquareMatrixError(
@@ -730,6 +860,12 @@ pub fn SparseMatrix::det(self : SparseMatrix) -> Expr raise MatrixError {
 }
 
 ///|
+/// Compute the inverse of a sparse square matrix.
+///
+/// - Does: Delegates through the dense inverse path.
+/// - Input: A square `SparseMatrix`.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` or `MatrixError::SingularMatrixError` under the same conditions as dense inversion, and it does not preserve sparsity in the return type.
 pub fn SparseMatrix::inv(self : SparseMatrix) -> Matrix raise MatrixError {
   if self.rows != self.cols {
     raise MatrixError::NonSquareMatrixError("inverse requires a square matrix")
@@ -885,6 +1021,12 @@ pub fn SparseMatrix::jordan_form(
 }
 
 ///|
+/// Solve a sparse linear system `A * X = rhs`.
+///
+/// - Does: Solves the system using sparse LU where possible and falls back through dense-style triangular solves.
+/// - Input: A square left-hand-side `SparseMatrix` and a dense right-hand-side `Matrix` with matching row count.
+/// - Returns: A dense `Matrix` solution.
+/// - Limits: Raises shape and singularity errors under the same conditions as dense `solve`, and the result is returned as a dense matrix.
 pub fn SparseMatrix::solve(
   self : SparseMatrix,
   rhs : Matrix,
