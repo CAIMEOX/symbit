@@ -1,4 +1,9 @@
 ///|
+/// Symbolic matrix expression nodes and front doors.
+///
+/// Current Limits:
+/// - This layer models symbolic matrix syntax but only evaluates operations implemented in `symmatrices`.
+/// - Unsupported symbolic rewrites stay unevaluated instead of introducing a separate assumption system.
 pub enum MatrixExpr {
   Concrete(Matrix)
   Symbol(String, Int, Int)
@@ -349,26 +354,56 @@ fn block_identity_like(rows : Array[Array[MatrixExpr]]) -> MatrixExpr? {
 }
 
 ///|
+/// Create a symbolic matrix placeholder with a fixed shape.
+///
+/// - Does: Builds a `MatrixExpr::Symbol` node that can later be evaluated with an environment.
+/// - Input: A symbol name plus row and column counts.
+/// - Returns: A symbolic `MatrixExpr`.
+/// - Limits: Shape metadata is trusted as given; negative dimensions are not rejected here.
 pub fn matrix_symbol(name : String, rows : Int, cols : Int) -> MatrixExpr {
   MatrixExpr::Symbol(name, rows, cols)
 }
 
 ///|
+/// Lift a concrete dense matrix into the symbolic matrix expression layer.
+///
+/// - Does: Wraps a `Matrix` as `MatrixExpr::Concrete`.
+/// - Input: A dense `Matrix`.
+/// - Returns: A `MatrixExpr`.
+/// - Limits: This is a structural wrapper only; it does not copy or simplify entries beyond the underlying value semantics.
 pub fn matrix_expr(m : Matrix) -> MatrixExpr {
   MatrixExpr::Concrete(m)
 }
 
 ///|
+/// Create a symbolic identity matrix expression.
+///
+/// - Does: Builds an identity-node placeholder.
+/// - Input: A single size `n`.
+/// - Returns: `MatrixExpr::Identity(n)`.
+/// - Limits: This front door does not validate that `n` is non-negative.
 pub fn identity_expr(n : Int) -> MatrixExpr {
   MatrixExpr::Identity(n)
 }
 
 ///|
+/// Create a symbolic zero matrix expression.
+///
+/// - Does: Builds a zero-matrix placeholder with explicit shape.
+/// - Input: Row and column counts.
+/// - Returns: `MatrixExpr::Zero(rows, cols)`.
+/// - Limits: This front door does not validate that the provided dimensions are non-negative.
 pub fn zero_matrix_expr(rows : Int, cols : Int) -> MatrixExpr {
   MatrixExpr::Zero(rows, cols)
 }
 
 ///|
+/// Build a symbolic matrix sum.
+///
+/// - Does: Flattens nested adds, drops symbolic zero terms, and eagerly combines concrete and block-diagonal operands when possible.
+/// - Input: An `Array[MatrixExpr]`.
+/// - Returns: A simplified `MatrixExpr`.
+/// - Limits: If shapes are inconsistent, the expression may stay unevaluated until callers ask for `shape()` or `eval()`.
 pub fn matrix_expr_add(items : Array[MatrixExpr]) -> MatrixExpr {
   if items.is_empty() {
     return MatrixExpr::Zero(0, 0)
@@ -420,6 +455,12 @@ pub fn matrix_expr_add(items : Array[MatrixExpr]) -> MatrixExpr {
 }
 
 ///|
+/// Build a symbolic matrix product.
+///
+/// - Does: Flattens nested products, removes identities, folds adjacent concrete factors, and performs a small amount of inverse/power cancellation.
+/// - Input: An `Array[MatrixExpr]`.
+/// - Returns: A simplified `MatrixExpr`.
+/// - Limits: Incompatible dimensions are not rejected here unless they are needed for a zero or identity shortcut; callers should use `shape()` or `eval()` for strict checking.
 pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
   if items.is_empty() {
     return MatrixExpr::Identity(0)
@@ -518,6 +559,12 @@ pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
 }
 
 ///|
+/// Build a symbolic block-diagonal expression.
+///
+/// - Does: Flattens nested block-diagonal nodes and preserves the remaining pieces structurally.
+/// - Input: An `Array[MatrixExpr]`.
+/// - Returns: A simplified `MatrixExpr`.
+/// - Limits: Empty input returns a `0 x 0` zero expression.
 pub fn matrix_expr_block_diag(items : Array[MatrixExpr]) -> MatrixExpr {
   if items.is_empty() {
     return MatrixExpr::Zero(0, 0)
@@ -535,6 +582,12 @@ pub fn matrix_expr_block_diag(items : Array[MatrixExpr]) -> MatrixExpr {
 }
 
 ///|
+/// Build a symbolic block matrix expression.
+///
+/// - Does: Stores the block layout directly, or unwraps a `1 x 1` block grid back into its only entry.
+/// - Input: Rows of block expressions.
+/// - Returns: A `MatrixExpr`.
+/// - Limits: Rectangularity and block-shape compatibility are validated later by `shape()` or `eval()`.
 pub fn matrix_expr_block(rows : Array[Array[MatrixExpr]]) -> MatrixExpr {
   if rows.length() == 1 && rows[0].length() == 1 {
     return rows[0][0]
@@ -563,6 +616,12 @@ pub fn block_diag_matrix_expr(items : Array[MatrixExpr]) -> MatrixExpr {
 }
 
 ///|
+/// Transpose a symbolic matrix expression.
+///
+/// - Does: Pushes transpose through supported nodes and simplifies double-transpose cases.
+/// - Input: Any `MatrixExpr`.
+/// - Returns: A `MatrixExpr`.
+/// - Limits: Unsupported rewrites remain as explicit `Transpose(...)` nodes.
 pub fn matrix_expr_transpose(expr : MatrixExpr) -> MatrixExpr {
   match expr {
     MatrixExpr::Transpose(inner) => inner
@@ -584,6 +643,12 @@ pub fn matrix_expr_transpose(expr : MatrixExpr) -> MatrixExpr {
 }
 
 ///|
+/// Invert a symbolic matrix expression.
+///
+/// - Does: Simplifies inverse-on-inverse, inverse-of-transpose, inverse-of-products, and a small set of block patterns.
+/// - Input: Any `MatrixExpr`.
+/// - Returns: A `MatrixExpr`.
+/// - Limits: General block-matrix inversion is not expanded here; unsupported cases remain as `Inverse(...)`.
 pub fn matrix_expr_inverse(expr : MatrixExpr) -> MatrixExpr {
   match expr {
     MatrixExpr::Identity(n) => MatrixExpr::Identity(n)
@@ -608,6 +673,12 @@ pub fn matrix_expr_inverse(expr : MatrixExpr) -> MatrixExpr {
 }
 
 ///|
+/// Raise a symbolic matrix expression to an integer power.
+///
+/// - Does: Simplifies identity, zero, transpose, inverse, and nested-power cases for integer exponents.
+/// - Input: A `MatrixExpr` and an integer exponent.
+/// - Returns: A `MatrixExpr`.
+/// - Limits: Non-square inputs are only rejected when the zero-power shortcut needs the shape; other invalid powers can stay unevaluated until `eval()`.
 pub fn matrix_expr_pow(expr : MatrixExpr, exp : Int) -> MatrixExpr {
   if exp == 0 {
     let shape = try? expr.shape()
@@ -636,6 +707,12 @@ pub fn matrix_expr_pow(expr : MatrixExpr, exp : Int) -> MatrixExpr {
 }
 
 ///|
+/// Compute the shape of a symbolic matrix expression.
+///
+/// - Does: Checks the structural dimensions implied by the expression tree.
+/// - Input: Any `MatrixExpr`.
+/// - Returns: A pair `(rows, cols)`.
+/// - Limits: Raises `MatrixError::ShapeError` when add/mul/block layouts are inconsistent.
 pub fn MatrixExpr::shape(self : MatrixExpr) -> (Int, Int) raise MatrixError {
   match self {
     MatrixExpr::Concrete(m) => m.shape()
@@ -768,6 +845,12 @@ pub impl Show for MatrixExpr with output(self, logger : &Logger) -> Unit {
 }
 
 ///|
+/// Evaluate a symbolic matrix expression against a binding environment.
+///
+/// - Does: Replaces symbolic matrices from `env` and executes supported matrix operations to produce a concrete dense matrix.
+/// - Input: A `MatrixExpr` and `Map[String, Matrix]` environment for symbol bindings.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Raises `MatrixError::ValueError` for missing symbol bindings and shape-related matrix errors when an operation cannot be evaluated.
 pub fn MatrixExpr::eval(
   self : MatrixExpr,
   env : Map[String, Matrix],
@@ -864,6 +947,12 @@ pub fn MatrixExpr::eval(
 }
 
 ///|
+/// Evaluate a symbolic matrix expression eagerly.
+///
+/// - Does: Alias of `eval`.
+/// - Input: A `MatrixExpr` and symbol environment.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Propagates the same evaluation errors as `eval`.
 pub fn MatrixExpr::doit(
   self : MatrixExpr,
   env : Map[String, Matrix],
@@ -872,6 +961,12 @@ pub fn MatrixExpr::doit(
 }
 
 ///|
+/// Convert a symbolic matrix expression into an explicit dense matrix.
+///
+/// - Does: Alias of `eval`, intended for callers that want a fully explicit matrix result.
+/// - Input: A `MatrixExpr` and symbol environment.
+/// - Returns: A dense `Matrix`.
+/// - Limits: Propagates the same evaluation errors as `eval`.
 pub fn MatrixExpr::as_explicit(
   self : MatrixExpr,
   env : Map[String, Matrix],
@@ -880,6 +975,12 @@ pub fn MatrixExpr::as_explicit(
 }
 
 ///|
+/// Collapse block-oriented symbolic wrappers where local rewrites are available.
+///
+/// - Does: Recursively simplifies nested block, block-diagonal, identity, transpose, inverse, and product forms.
+/// - Input: Any `MatrixExpr`.
+/// - Returns: A simplified `MatrixExpr`.
+/// - Limits: This is not a full symbolic canonicalizer; many semantically equivalent expressions remain structurally different.
 pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
   match self {
     MatrixExpr::Add(items) => {

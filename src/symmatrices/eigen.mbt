@@ -547,6 +547,11 @@ fn matrix_exact_eigenvects(
 }
 
 ///|
+/// Characteristic-polynomial and eigen-structure front doors for dense matrices.
+///
+/// Current Limits:
+/// - Exact algebraic paths cover many common cases but not every dense symbolic matrix.
+/// - Hard cases can still return unevaluated radicals or raise `ValueError` when a basis cannot be assembled.
 pub fn Matrix::charpoly_expr(
   self : Matrix,
   x? : Expr = @symcore.Expr::Symbol("lambda"),
@@ -568,6 +573,12 @@ pub fn Matrix::charpoly_expr(
 }
 
 ///|
+/// Compute the characteristic polynomial as an expression.
+///
+/// - Does: Returns `det(x*I - A)` in a normalized symbolic form.
+/// - Input: A square dense `Matrix` and an optional polynomial variable `Expr`.
+/// - Returns: One symbolic `Expr`.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs. Some matrices fall back to determinant expansion instead of an exact polynomial-domain path.
 pub fn Matrix::charpoly(
   self : Matrix,
   x? : Expr = @symcore.Expr::Symbol("lambda"),
@@ -576,6 +587,12 @@ pub fn Matrix::charpoly(
 }
 
 ///|
+/// Compute eigenvalues and algebraic multiplicities.
+///
+/// - Does: Uses diagonal shortcuts, low-dimensional closed forms, exact eigen paths, or roots of the characteristic polynomial.
+/// - Input: A square dense `Matrix`.
+/// - Returns: `Array[(Expr, Int)]`, one pair per distinct eigenvalue.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs. Returned eigenvalues may stay symbolic or radical-based rather than being numerically approximated.
 pub fn Matrix::eigenvals(
   self : Matrix,
 ) -> Array[EigenValueMult] raise MatrixError {
@@ -624,6 +641,12 @@ pub fn Matrix::eigenvals(
 }
 
 ///|
+/// Compute eigenvalues, multiplicities, and eigenvector bases.
+///
+/// - Does: Computes eigenvalues first, then builds a nullspace basis for each eigenspace unless an exact higher-dimensional path is available.
+/// - Input: A square dense `Matrix`.
+/// - Returns: `Array[(Expr, Int, Array[Array[Expr]])]`.
+/// - Limits: Bases can be incomplete when the exact algebraic path fails on difficult matrices, in which case downstream front doors such as `diagonalize` may raise `ValueError`.
 pub fn Matrix::eigenvects(
   self : Matrix,
 ) -> Array[EigenVectData] raise MatrixError {
@@ -646,6 +669,12 @@ pub fn Matrix::eigenvects(
 }
 
 ///|
+/// Return Jordan blocks for the matrix.
+///
+/// - Does: Computes the Jordan-chain decomposition and materializes each Jordan block as a dense matrix.
+/// - Input: A square dense `Matrix`.
+/// - Returns: `Array[Matrix]`, one block per Jordan chain.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs and may raise `ValueError` when a full Jordan chain basis cannot be recovered.
 pub fn Matrix::jordan_cells(self : Matrix) -> Array[Matrix] raise MatrixError {
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError(
@@ -671,6 +700,12 @@ pub fn Matrix::jordan_cells(self : Matrix) -> Array[Matrix] raise MatrixError {
 }
 
 ///|
+/// Decide whether a matrix is diagonalizable over the currently computed eigenbasis.
+///
+/// - Does: Checks whether the total number of eigenvectors equals the matrix size.
+/// - Input: Any dense `Matrix`.
+/// - Returns: `Bool`.
+/// - Limits: Non-square matrices return `false`. A `false` result can also reflect current eigenbasis limitations, not only mathematical non-diagonalizability.
 pub fn Matrix::is_diagonalizable(self : Matrix) -> Bool {
   if !self.is_square() {
     return false
@@ -688,6 +723,12 @@ pub fn Matrix::is_diagonalizable(self : Matrix) -> Bool {
 }
 
 ///|
+/// Diagonalize a matrix when a full eigenbasis is available.
+///
+/// - Does: Returns the modal matrix `P` and diagonal matrix `D` such that `A = P * D * P^-1`.
+/// - Input: A square dense `Matrix` and an optional `reals_only` flag.
+/// - Returns: `(P, D)` as dense matrices.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs and `MatrixError::ValueError` when the matrix is not diagonalizable with the currently available eigenbasis. `reals_only` is accepted for API compatibility but is not enforced here.
 pub fn Matrix::diagonalize(
   self : Matrix,
   reals_only? : Bool = false,
@@ -724,6 +765,12 @@ pub fn Matrix::diagonalize(
 }
 
 ///|
+/// Compute the Jordan form and optionally the similarity transform.
+///
+/// - Does: Builds Jordan blocks from Jordan chains and, when requested, also returns the change-of-basis matrix.
+/// - Input: A square dense `Matrix` and an optional `calc_transform` flag.
+/// - Returns: `(P, J)` where `J` is the Jordan form and `P` is the similarity transform when requested.
+/// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs and `MatrixError::ValueError` when a full Jordan basis cannot be assembled. When `calc_transform=false`, the first result is `eye(self.rows)`.
 pub fn Matrix::jordan_form(
   self : Matrix,
   calc_transform? : Bool = true,
