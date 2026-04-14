@@ -1,5 +1,12 @@
 ///|
-/// Field elements for QQ, GF(p), and GF(p^k) using dense polynomial representation.
+/// Coefficient value type for polynomial domains.
+///
+/// - Does: Represents exact rational, Gaussian, finite-field, and algebraic
+///   extension coefficients used throughout `sympolys`.
+/// - Input: Structured variants managed through the public constructor helpers.
+/// - Returns: A `FieldElem`.
+/// - Limits: This type is a compatibility representation; some variants are
+///   intentionally conservative compared with a full domain tower.
 pub enum FieldElem {
   QQ(@symnum.BigRational)
   CC(@symnum.BigRational, @symnum.BigRational) // a + b*i
@@ -149,7 +156,13 @@ fn fe_pow(base : FieldElem, exp : Int) -> FieldElem raise PolyError {
 }
 
 ///|
-/// Return `true` iff `a` is the additive identity in its domain.
+/// Check whether a coefficient is zero.
+///
+/// - Does: Tests whether a coefficient is the additive identity in its domain.
+/// - Input: One `FieldElem`.
+/// - Returns: A `Bool`.
+/// - Limits: This is structural for extension variants and does not simplify
+///   non-canonical representations.
 pub fn fe_is_zero(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.is_zero()
@@ -161,7 +174,14 @@ pub fn fe_is_zero(a : FieldElem) -> Bool {
 }
 
 ///|
-/// Return `true` iff `a` is the multiplicative identity in its domain.
+/// Check whether a coefficient is one.
+///
+/// - Does: Tests whether a coefficient is the multiplicative identity in its
+///   domain.
+/// - Input: One `FieldElem`.
+/// - Returns: A `Bool`.
+/// - Limits: This is structural for extension variants and does not normalize
+///   equivalent non-canonical values.
 pub fn fe_is_one(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.is_one()
@@ -174,7 +194,12 @@ pub fn fe_is_one(a : FieldElem) -> Bool {
 }
 
 ///|
-/// Return `true` when `a` has negative sign in an ordered domain.
+/// Check whether a coefficient is negative.
+///
+/// - Does: Tests sign in ordered domains.
+/// - Input: One `FieldElem`.
+/// - Returns: A `Bool`.
+/// - Limits: Finite fields and algebraic extension values report `false`.
 pub fn fe_is_negative(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.compare(@symnum.BigRational::zero()) < 0
@@ -187,7 +212,12 @@ pub fn fe_is_negative(a : FieldElem) -> Bool {
 }
 
 ///|
-/// Return `true` when `a` has positive sign in an ordered domain.
+/// Check whether a coefficient is positive.
+///
+/// - Does: Tests sign in ordered domains.
+/// - Input: One `FieldElem`.
+/// - Returns: A `Bool`.
+/// - Limits: Finite fields and algebraic extension values report `false`.
 pub fn fe_is_positive(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.compare(@symnum.BigRational::zero()) > 0
@@ -200,7 +230,14 @@ pub fn fe_is_positive(a : FieldElem) -> Bool {
 }
 
 ///|
-/// Convert `a` to a rational constant when that projection is valid.
+/// Project a coefficient back to an exact rational constant.
+///
+/// - Does: Extracts a rational value when the coefficient is representable as a
+///   constant in `QQ`.
+/// - Input: One `FieldElem`.
+/// - Returns: An exact `@symnum.BigRational`.
+/// - Limits: Raises `PolyError::DomainMismatch` for non-constant extension
+///   values.
 pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError {
   match a {
     FieldElem::QQ(x) => x
@@ -239,7 +276,13 @@ pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError 
 }
 
 ///|
-/// Add two field elements from the same domain.
+/// Add two coefficients.
+///
+/// - Does: Computes coefficient addition in a shared domain.
+/// - Input: Two `FieldElem` values.
+/// - Returns: A `FieldElem`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the inputs do not share a
+///   compatible domain representation.
 pub fn fe_add(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
   match (a, b) {
     (FieldElem::QQ(x), FieldElem::QQ(y)) => FieldElem::QQ(x.add_r(y))

@@ -1,28 +1,58 @@
 ///|
+/// Sparse monomial representation and term-order helpers.
+
+///|
+/// Exponent-vector monomial.
+///
+/// - Does: Stores one monomial as an exponent array.
+/// - Input: Structured exponent data managed through the public helpers below.
+/// - Returns: A `Monomial`.
+/// - Limits: The raw struct does not validate exponent semantics on
+///   construction.
 pub struct Monomial {
   exps : Array[Int]
 } derive(Eq, Hash)
 
 ///|
-/// Return the multiplicative-identity monomial `(0, ..., 0)`.
+/// Build the multiplicative-identity monomial.
+///
+/// - Does: Returns `(0, ..., 0)` with the requested arity.
+/// - Input: A variable count `Int`.
+/// - Returns: A `Monomial`.
+/// - Limits: Negative lengths are not expected by this front door.
 pub fn monomial_one(len : Int) -> Monomial {
   Monomial::{ exps: Array::make(len, 0) }
 }
 
 ///|
 /// Build a monomial from an exponent vector.
+///
+/// - Does: Wraps one exponent array into a `Monomial`.
+/// - Input: `Array[Int]`.
+/// - Returns: A `Monomial`.
+/// - Limits: No validation is performed on exponent signs.
 pub fn monomial_from_array(exps : Array[Int]) -> Monomial {
   Monomial::{ exps, }
 }
 
 ///|
 /// Return the exponent vector.
+///
+/// - Does: Exposes the stored exponent array.
+/// - Input: One `Monomial`.
+/// - Returns: `Array[Int]`.
+/// - Limits: The returned array is the stored representation.
 pub fn Monomial::to_array(self : Monomial) -> Array[Int] {
   self.exps
 }
 
 ///|
-/// Multiply monomials by adding exponents component-wise.
+/// Multiply two monomials.
+///
+/// - Does: Adds exponents component-wise.
+/// - Input: Two `Monomial` values with the same arity.
+/// - Returns: A `Monomial`.
+/// - Limits: Raises `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_mul(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
     raise PolyError::DomainMismatch
@@ -33,7 +63,12 @@ pub fn monomial_mul(a : Monomial, b : Monomial) -> Monomial raise PolyError {
 }
 
 ///|
-/// Raise a monomial to the non-negative integer power `k`.
+/// Raise a monomial to a non-negative power.
+///
+/// - Does: Multiplies each exponent by `k`.
+/// - Input: One `Monomial` and one non-negative `Int`.
+/// - Returns: A `Monomial`.
+/// - Limits: Raises `PolyError::BadExponent` for negative powers.
 pub fn monomial_pow(m : Monomial, k : Int) -> Monomial raise PolyError {
   if k < 0 {
     raise PolyError::BadExponent
@@ -44,7 +79,12 @@ pub fn monomial_pow(m : Monomial, k : Int) -> Monomial raise PolyError {
 }
 
 ///|
-/// Check if a divides b (exponent-wise).
+/// Check monomial divisibility.
+///
+/// - Does: Tests exponent-wise divisibility.
+/// - Input: Two `Monomial` values with the same arity.
+/// - Returns: A `Bool`.
+/// - Limits: Raises `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_divides(a : Monomial, b : Monomial) -> Bool raise PolyError {
   if a.exps.length() != b.exps.length() {
     raise PolyError::DomainMismatch
@@ -59,7 +99,13 @@ pub fn monomial_divides(a : Monomial, b : Monomial) -> Bool raise PolyError {
 }
 
 ///|
-/// Divide monomials when possible; return `None` if exponents do not divide.
+/// Divide one monomial by another when possible.
+///
+/// - Does: Subtracts exponents when the divisor divides the numerator.
+/// - Input: Numerator and denominator `Monomial`.
+/// - Returns: `Monomial?`.
+/// - Limits: Returns `None` when divisibility fails and raises
+///   `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_div(
   numer : Monomial,
   denom : Monomial,
@@ -79,7 +125,12 @@ pub fn monomial_div(
 }
 
 ///|
-/// Return the least common multiple monomial of `a` and `b`.
+/// Return the monomial lcm.
+///
+/// - Does: Takes the component-wise maximum of two monomials.
+/// - Input: Two `Monomial` values with the same arity.
+/// - Returns: A `Monomial`.
+/// - Limits: Raises `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_lcm(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
     raise PolyError::DomainMismatch
@@ -96,7 +147,12 @@ pub fn monomial_lcm(a : Monomial, b : Monomial) -> Monomial raise PolyError {
 }
 
 ///|
-/// Element-wise minimum exponents across inputs.
+/// Return the monomial gcd.
+///
+/// - Does: Takes the component-wise minimum of two monomials.
+/// - Input: Two `Monomial` values with the same arity.
+/// - Returns: A `Monomial`.
+/// - Limits: Raises `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_gcd(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
     raise PolyError::DomainMismatch
@@ -113,7 +169,13 @@ pub fn monomial_gcd(a : Monomial, b : Monomial) -> Monomial raise PolyError {
 }
 
 ///|
-/// Element-wise maximum exponents across inputs.
+/// Return the component-wise maximum of a monomial list.
+///
+/// - Does: Folds `max` across exponent positions.
+/// - Input: A non-empty `Array[Monomial]`.
+/// - Returns: A `Monomial`.
+/// - Limits: Raises `PolyError::NonPolynomial` on empty input and
+///   `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_max(monoms : Array[Monomial]) -> Monomial raise PolyError {
   if monoms.is_empty() {
     raise PolyError::NonPolynomial
@@ -135,7 +197,13 @@ pub fn monomial_max(monoms : Array[Monomial]) -> Monomial raise PolyError {
 }
 
 ///|
-/// Element-wise minimum exponents across inputs.
+/// Return the component-wise minimum of a monomial list.
+///
+/// - Does: Folds `min` across exponent positions.
+/// - Input: A non-empty `Array[Monomial]`.
+/// - Returns: A `Monomial`.
+/// - Limits: Raises `PolyError::NonPolynomial` on empty input and
+///   `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_min(monoms : Array[Monomial]) -> Monomial raise PolyError {
   if monoms.is_empty() {
     raise PolyError::NonPolynomial
@@ -157,7 +225,12 @@ pub fn monomial_min(monoms : Array[Monomial]) -> Monomial raise PolyError {
 }
 
 ///|
-/// Return the number of monomials of total degree `degree` in `vars` variables.
+/// Count monomials of fixed total degree.
+///
+/// - Does: Computes the combinations-with-repetition count.
+/// - Input: Variable count and total degree as `Int`.
+/// - Returns: An `Int`.
+/// - Limits: Negative inputs return `0`.
 pub fn monomial_count(vars : Int, degree : Int) -> Int {
   if vars < 0 || degree < 0 {
     return 0
@@ -218,7 +291,12 @@ fn cmp_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-/// Compare exponent arrays with lexicographic order.
+/// Compare exponent arrays in lexicographic order.
+///
+/// - Does: Orders exponent vectors left to right.
+/// - Input: Two exponent arrays.
+/// - Returns: An ordering `Int`.
+/// - Limits: Raises `PolyError::DomainMismatch` for length mismatch.
 pub fn compare_exps_lex(a : Array[Int], b : Array[Int]) -> Int raise PolyError {
   if a.length() != b.length() {
     raise PolyError::DomainMismatch
@@ -236,7 +314,12 @@ pub fn compare_exps_lex(a : Array[Int], b : Array[Int]) -> Int raise PolyError {
 }
 
 ///|
-/// Graded lex (grlex) comparison on exponent arrays.
+/// Compare exponent arrays in graded lexicographic order.
+///
+/// - Does: Orders first by total degree, then by lexicographic order.
+/// - Input: Two exponent arrays.
+/// - Returns: An ordering `Int`.
+/// - Limits: Raises `PolyError::DomainMismatch` for length mismatch.
 pub fn compare_exps_grlex(
   a : Array[Int],
   b : Array[Int],
@@ -253,7 +336,12 @@ pub fn compare_exps_grlex(
 }
 
 ///|
-/// Graded reverse lex (grevlex) comparison on exponent arrays.
+/// Compare exponent arrays in graded reverse lexicographic order.
+///
+/// - Does: Orders first by total degree, then by reverse lexicographic order.
+/// - Input: Two exponent arrays.
+/// - Returns: An ordering `Int`.
+/// - Limits: Raises `PolyError::DomainMismatch` for length mismatch.
 pub fn compare_exps_grevlex(
   a : Array[Int],
   b : Array[Int],
@@ -280,14 +368,24 @@ pub fn compare_exps_grevlex(
 }
 
 ///|
-/// Inverse lex: flip the comparison sign of lex.
+/// Compare exponent arrays in inverse lexicographic order.
+///
+/// - Does: Flips the sign of the lexicographic comparator.
+/// - Input: Two exponent arrays.
+/// - Returns: An ordering `Int`.
+/// - Limits: Raises `PolyError::DomainMismatch` for length mismatch.
 pub fn compare_exps_ilex(a : Array[Int], b : Array[Int]) -> Int raise PolyError {
   let c = compare_exps_lex(a, b)
   -c
 }
 
 ///|
-/// Inverse grlex: flip comparison sign of grlex.
+/// Compare exponent arrays in inverse graded lexicographic order.
+///
+/// - Does: Flips the sign of the grlex comparator.
+/// - Input: Two exponent arrays.
+/// - Returns: An ordering `Int`.
+/// - Limits: Raises `PolyError::DomainMismatch` for length mismatch.
 pub fn compare_exps_igrlex(
   a : Array[Int],
   b : Array[Int],
@@ -297,7 +395,12 @@ pub fn compare_exps_igrlex(
 }
 
 ///|
-/// Compare monomials under the selected term order.
+/// Compare monomials under one term order.
+///
+/// - Does: Dispatches to the selected monomial-order comparator.
+/// - Input: Two `Monomial` values and one `TermOrder`.
+/// - Returns: An ordering `Int`.
+/// - Limits: This front door assumes the monomials already have matching arity.
 pub fn compare_monomial_order(
   a : Monomial,
   b : Monomial,
