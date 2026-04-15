@@ -1279,54 +1279,7 @@ pub fn SparseMatrix::qr(
       zeros(self.cols, cols=Some(self.cols)),
     )
   }
-  let dense = self.to_dense()
-  let numeric_prec = expr_numeric_precision(dense.data)
-  if matrix_has_floating_leaf(dense.data) &&
-    matrix_all_numeric(dense.data, numeric_prec) {
-    return dense.qr()
-  }
-  let qcols : Array[Array[Expr]] = []
-  let r = Array::make(self.cols, Array::make(self.cols, @symcore.int(0)))
-  for j in 0..<self.cols {
-    let v : Array[Expr] = []
-    for i in 0..<self.rows {
-      v.push(self.getitem(i, j))
-    }
-    for i in 0..<j {
-      let qi = qcols[i]
-      let mut dot = @symcore.int(0)
-      for k in 0..<self.rows {
-        dot = expr_add(dot, expr_mul(qi[k], v[k]))
-      }
-      r[i][j] = dot
-      for k in 0..<self.rows {
-        v[k] = expr_sub(v[k], expr_mul(dot, qi[k]))
-      }
-    }
-    let mut norm_sq = @symcore.int(0)
-    for k in 0..<self.rows {
-      norm_sq = expr_add(norm_sq, expr_mul(v[k], v[k]))
-    }
-    let norm = expr_simplify(@symcore.function("sqrt", [norm_sq]))
-    r[j][j] = norm
-    let qj : Array[Expr] = []
-    for k in 0..<self.rows {
-      qj.push(expr_div(v[k], norm))
-    }
-    qcols.push(qj)
-  }
-  let qrows : Array[Array[Expr]] = []
-  for i in 0..<self.rows {
-    let row : Array[Expr] = []
-    for j in 0..<self.cols {
-      row.push(qcols[j][i])
-    }
-    qrows.push(row)
-  }
-  (
-    { rows: self.rows, cols: self.cols, data: qrows },
-    { rows: self.cols, cols: self.cols, data: r },
-  )
+  self.to_dense().qr()
 }
 
 ///|

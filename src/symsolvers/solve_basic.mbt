@@ -2613,10 +2613,7 @@ fn solve_factored_system_fallback(
 ///   ])
 ///   match solve(solve_expr_input(expr), symbols=[x]) {
 ///     SolveResult::List(items) =>
-///       inspect(
-///         items.map(@symprint.to_string).join(", "),
-///         content="-1, 1",
-///       )
+///       inspect(items.map(@symprint.to_string).join(", "), content="-1, 1")
 ///     _ => fail("expected solve to return a root list")
 ///   }
 /// }

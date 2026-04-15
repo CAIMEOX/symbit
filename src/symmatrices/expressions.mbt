@@ -4,6 +4,11 @@
 /// Current Limits:
 /// - This layer models symbolic matrix syntax but only evaluates operations implemented in `symmatrices`.
 /// - Unsupported symbolic rewrites stay unevaluated instead of introducing a separate assumption system.
+///
+/// - Does: Represents symbolic matrix syntax such as symbols, products, sums, block layouts, transpose, inverse, and integer powers.
+/// - Input: Each variant stores matrix metadata or child `MatrixExpr` nodes.
+/// - Returns: One `MatrixExpr` tree.
+/// - Limits: This is a syntax layer, not a full theorem prover; semantically equivalent matrix expressions can remain structurally different until a caller evaluates or collapses them.
 pub enum MatrixExpr {
   Concrete(Matrix)
   Symbol(String, Int, Int)
@@ -596,21 +601,45 @@ pub fn matrix_expr_block(rows : Array[Array[MatrixExpr]]) -> MatrixExpr {
 }
 
 ///|
+/// Convenience alias for `matrix_expr_add`.
+///
+/// - Does: Delegates to `matrix_expr_add`.
+/// - Input: An `Array[MatrixExpr]`.
+/// - Returns: A simplified `MatrixExpr`.
+/// - Limits: Incompatible shapes are still detected later by `shape()` or `eval()`.
 pub fn mat_add(items : Array[MatrixExpr]) -> MatrixExpr {
   matrix_expr_add(items)
 }
 
 ///|
+/// Convenience alias for `matrix_expr_mul`.
+///
+/// - Does: Delegates to `matrix_expr_mul`.
+/// - Input: An `Array[MatrixExpr]`.
+/// - Returns: A simplified `MatrixExpr`.
+/// - Limits: Incompatible dimensions are still detected later by `shape()` or `eval()`.
 pub fn mat_mul(items : Array[MatrixExpr]) -> MatrixExpr {
   matrix_expr_mul(items)
 }
 
 ///|
+/// Convenience alias for `matrix_expr_block`.
+///
+/// - Does: Delegates to `matrix_expr_block`.
+/// - Input: Rows of block expressions.
+/// - Returns: A `MatrixExpr`.
+/// - Limits: Block-layout validation is still deferred to `shape()` or `eval()`.
 pub fn block_matrix_expr(rows : Array[Array[MatrixExpr]]) -> MatrixExpr {
   matrix_expr_block(rows)
 }
 
 ///|
+/// Convenience alias for `matrix_expr_block_diag`.
+///
+/// - Does: Delegates to `matrix_expr_block_diag`.
+/// - Input: An `Array[MatrixExpr]`.
+/// - Returns: A `MatrixExpr`.
+/// - Limits: Empty input still becomes a `0 x 0` zero expression.
 pub fn block_diag_matrix_expr(items : Array[MatrixExpr]) -> MatrixExpr {
   matrix_expr_block_diag(items)
 }
@@ -812,6 +841,12 @@ pub fn MatrixExpr::shape(self : MatrixExpr) -> (Int, Int) raise MatrixError {
 }
 
 ///|
+/// Render a symbolic matrix expression as text.
+///
+/// - Does: Produces a stable textual representation of the expression tree.
+/// - Input: One `MatrixExpr`.
+/// - Returns: A `String`.
+/// - Limits: The text reflects structural form rather than full algebraic equivalence.
 pub impl Show for MatrixExpr with to_string(self) {
   match self {
     MatrixExpr::Concrete(m) => m.to_string()
@@ -840,6 +875,12 @@ pub impl Show for MatrixExpr with to_string(self) {
 }
 
 ///|
+/// Write the textual form of a symbolic matrix expression into a logger.
+///
+/// - Does: Delegates to `to_string()` and writes the result.
+/// - Input: One `MatrixExpr` and a `Logger`.
+/// - Returns: `Unit`.
+/// - Limits: Output stability matters for tests and diagnostics.
 pub impl Show for MatrixExpr with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

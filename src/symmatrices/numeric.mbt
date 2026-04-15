@@ -144,15 +144,6 @@ fn expr_numeric_zero(expr : Expr, prec : Int) -> Bool {
 }
 
 ///|
-fn expr_numeric_add(lhs : Expr, rhs : Expr, prec : Int) -> Expr {
-  match
-    (expr_to_numeric_complex(lhs, prec), expr_to_numeric_complex(rhs, prec)) {
-    (Some(l), Some(r)) => expr_from_numeric_complex(l + r)
-    _ => @symcore.evalf(@symcore.add([lhs, rhs]), prec~)
-  }
-}
-
-///|
 fn expr_numeric_sub(lhs : Expr, rhs : Expr, prec : Int) -> Expr {
   match
     (expr_to_numeric_complex(lhs, prec), expr_to_numeric_complex(rhs, prec)) {

@@ -774,11 +774,12 @@ fn solver_univariate_inequality_set(
 /// ```mbt check
 /// test "symsolvers solve_univariate_inequality returns a set when requested" {
 ///   let x = @symcore.Expr::Symbol("x")
-///   match solve_univariate_inequality(
-///     @symcore.Expr::Relational(@symcore.RelOp::Gt, x, @symcore.int(0)),
-///     x,
-///     relational=false,
-///   ) {
+///   match
+///     solve_univariate_inequality(
+///       @symcore.Expr::Relational(@symcore.RelOp::Gt, x, @symcore.int(0)),
+///       x,
+///       relational=false,
+///     ) {
 ///     InequalityResult::Set(set) =>
 ///       inspect(@symsets.to_string(set), content="Interval.open(0, oo)")
 ///     _ => fail("expected a set-valued inequality result")
@@ -1064,10 +1065,15 @@ fn solver_relevant_symbols(expr : Expr, symbols : Array[Expr]) -> Array[Expr] {
 /// test "symsolvers reduce_inequalities combines simple one-symbol constraints" {
 ///   let x = @symcore.Expr::Symbol("x")
 ///   inspect(
-///     @symprint.to_string(reduce_inequalities([
-///       @symcore.Expr::Relational(@symcore.RelOp::Gt, x, @symcore.int(0)),
-///       @symcore.Expr::Relational(@symcore.RelOp::Lt, x, @symcore.int(2)),
-///     ], symbols=[x])),
+///     @symprint.to_string(
+///       reduce_inequalities(
+///         [
+///           @symcore.Expr::Relational(@symcore.RelOp::Gt, x, @symcore.int(0)),
+///           @symcore.Expr::Relational(@symcore.RelOp::Lt, x, @symcore.int(2)),
+///         ],
+///         symbols=[x],
+///       ),
+///     ),
 ///     content="And(0 < x, x < 2)",
 ///   )
 /// }

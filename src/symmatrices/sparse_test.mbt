@@ -218,10 +218,7 @@ test "matrices sparse native cholesky and ldl match reconstruction" {
   entries[(1, 1)] = @symcore.int(5)
   let s = sparse_matrix(2, 2, entries)
   let chol = s.cholesky()
-  inspect(
-    chol.to_string(),
-    content="Matrix([[sqrt(4), 0], [2*sqrt(4)**-1, sqrt((-4*sqrt(4)**-2 + 5))]])",
-  )
+  inspect(chol.to_string(), content="Matrix([[2, 0], [1, 2]])")
   let (l, d) = s.ldl()
   inspect(l.to_string(), content="Matrix([[1, 0], [1/2, 1]])")
   inspect(d.to_string(), content="Matrix([[4, 0], [0, 4]])")
@@ -235,12 +232,35 @@ test "matrices sparse native qr reconstructs the source matrix" {
   entries[(1, 1)] = @symcore.int(1)
   let s = sparse_matrix(2, 2, entries)
   let (q, r) = s.qr()
-  inspect(
-    q.to_string(),
-    content="Matrix([[sqrt(2)**-1, -1*sqrt((sqrt(2)**-4 + (-1*sqrt(2)**-2 + 1)**2))**-1*sqrt(2)**-2], [sqrt(2)**-1, sqrt((sqrt(2)**-4 + (-1*sqrt(2)**-2 + 1)**2))**-1*(-1*sqrt(2)**-2 + 1)]])",
-  )
-  inspect(
-    r.to_string(),
-    content="Matrix([[sqrt(2), sqrt((sqrt(2)**-4 + (-1*sqrt(2)**-2 + 1)**2))], [sqrt(2), sqrt((sqrt(2)**-4 + (-1*sqrt(2)**-2 + 1)**2))]])",
-  )
+  let expected_q = matrix([
+    [
+      @symcore.rational_from_ints(1, 2) *
+      @symcore.function("sqrt", [@symcore.int(2)]),
+      @symcore.int(-1) *
+      @symcore.rational_from_ints(1, 2) *
+      @symcore.function("sqrt", [@symcore.int(2)]),
+    ],
+    [
+      @symcore.rational_from_ints(1, 2) *
+      @symcore.function("sqrt", [@symcore.int(2)]),
+      @symcore.rational_from_ints(1, 2) *
+      @symcore.function("sqrt", [@symcore.int(2)]),
+    ],
+  ])
+  let expected_r = matrix([
+    [
+      @symcore.function("sqrt", [@symcore.int(2)]),
+      @symcore.rational_from_ints(1, 2) *
+      @symcore.function("sqrt", [@symcore.int(2)]),
+    ],
+    [
+      @symcore.int(0),
+      @symcore.rational_from_ints(1, 2) *
+      @symcore.function("sqrt", [@symcore.int(2)]),
+    ],
+  ])
+  assert_true(eigen_matrix_equal(q, expected_q))
+  assert_true(eigen_matrix_equal(r, expected_r))
+  assert_true(eigen_matrix_equal(q * r, s.to_dense()))
+  assert_true(eigen_matrix_equal(q.transpose() * q, eye(2)))
 }

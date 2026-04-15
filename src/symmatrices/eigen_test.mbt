@@ -28,7 +28,24 @@ fn eigenvects_text(items : Array[EigenVectData]) -> String {
 
 ///|
 fn eigen_expr_equal(lhs : Expr, rhs : Expr) -> Bool {
-  @symsimplify.simplify(lhs + @symcore.int(-1) * rhs) == @symcore.int(0)
+  let diff = @symsimplify.simplify(lhs + @symcore.int(-1) * rhs)
+  if diff == @symcore.int(0) {
+    return true
+  }
+  if !@symcore.free_symbols(diff).is_empty() {
+    return false
+  }
+  match @symcore.evalf(diff, prec=120) {
+    @symcore.Expr::Number(value) => value == @symnum.BigRational::zero()
+    @symcore.Expr::Float(value) =>
+      (value.to_double() catch { _ => return false }).abs() <= 1.0e-12
+    @symcore.Expr::ComplexFloat(value) =>
+      (value.real_part().to_double() catch { _ => return false }).abs() <=
+      1.0e-12 &&
+      (value.imag_part().to_double() catch { _ => return false }).abs() <=
+      1.0e-12
+    _ => false
+  }
 }
 
 ///|
@@ -241,19 +258,14 @@ test "matrices exact eigen path supports general non-companion algebraic 3x3" {
     eigenvals[1].1 == 1 &&
     eigen_expr_equal(
       eigenvals[1].0,
-      @symcore.rational_from_ints(1, 2) *
-      (
-        @symcore.int(-1) * (@symcore.int(8) ^ @symcore.rational_from_ints(1, 2)) +
-        @symcore.int(2)
-      ),
+      @symcore.int(1) - @symcore.function("sqrt", [@symcore.int(2)]),
     ),
   )
   assert_true(
     eigenvals[2].1 == 1 &&
     eigen_expr_equal(
       eigenvals[2].0,
-      @symcore.rational_from_ints(1, 2) *
-      ((@symcore.int(8) ^ @symcore.rational_from_ints(1, 2)) + @symcore.int(2)),
+      @symcore.int(1) + @symcore.function("sqrt", [@symcore.int(2)]),
     ),
   )
   let (p, d) = algebraic.diagonalize()

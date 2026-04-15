@@ -389,19 +389,6 @@ fn matrix_charpoly_roots(matrix : Matrix) -> Array[Expr] raise MatrixError {
 }
 
 ///|
-fn expr_rows_clone(rows : Array[Array[Expr]]) -> Array[Array[Expr]] {
-  let out : Array[Array[Expr]] = []
-  for row in rows {
-    let copied : Array[Expr] = []
-    for item in row {
-      copied.push(item)
-    }
-    out.push(copied)
-  }
-  out
-}
-
-///|
 fn matrix_exact_charpoly_expr(
   matrix : Matrix,
   x : Expr,
@@ -512,7 +499,15 @@ fn matrix_exact_eigenvects(
           "exact rational eigenbasis could not be converted back to expression rows",
         )
     }
-    out.push((expr_simplify(eigenvalue), item.2, expr_rows_clone(basis_rows)))
+    let normalized_basis : Array[Array[Expr]] = []
+    for row in basis_rows {
+      let copied : Array[Expr] = []
+      for value in row {
+        copied.push(@symsimplify.simplify(value))
+      }
+      normalized_basis.push(copied)
+    }
+    out.push((@symsimplify.simplify(eigenvalue), item.2, normalized_basis))
   }
   for item in algebraic {
     let gen = if item.1.gens.is_empty() { "_lambda" } else { item.1.gens[0] }
@@ -530,13 +525,13 @@ fn matrix_exact_eigenvects(
     }
     for root in roots {
       let env : Map[String, Expr] = {}
-      let eigenvalue = expr_simplify(root)
+      let eigenvalue = @symsimplify.simplify(root)
       env[gen] = eigenvalue
       let basis : Array[Array[Expr]] = []
       for row in basis_rows {
         let copied : Array[Expr] = []
         for item in row {
-          copied.push(expr_simplify(@symcore.subst(item, env)))
+          copied.push(@symsimplify.simplify(@symcore.subst(item, env)))
         }
         basis.push(copied)
       }

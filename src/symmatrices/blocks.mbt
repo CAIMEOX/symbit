@@ -1,4 +1,16 @@
 ///|
+/// Block assembly front doors for dense matrices.
+///
+/// Current Limits:
+/// - These helpers only materialize explicit dense block layouts.
+/// - They do not preserve symbolic block structure; use `MatrixExpr` for unevaluated block syntax.
+///
+/// Assemble a block-diagonal dense matrix.
+///
+/// - Does: Places each block on the main block diagonal and fills all off-diagonal regions with exact zero.
+/// - Input: An `Array[Matrix]` whose items can have different shapes.
+/// - Returns: One dense `Matrix` whose shape is the sum of all block heights and widths.
+/// - Limits: Raises any `MatrixError` emitted by the delegated dense zero-matrix construction.
 pub fn block_diag(blocks : Array[Matrix]) -> Matrix raise MatrixError {
   let mut total_rows = 0
   let mut total_cols = 0
@@ -23,6 +35,12 @@ pub fn block_diag(blocks : Array[Matrix]) -> Matrix raise MatrixError {
 }
 
 ///|
+/// Assemble a dense block matrix from a rectangular grid of blocks.
+///
+/// - Does: Concatenates the provided blocks into one dense matrix after checking row-wise heights and column-wise widths.
+/// - Input: `Array[Array[Matrix]]` describing a rectangular block grid.
+/// - Returns: One dense `Matrix`.
+/// - Limits: Raises `MatrixError::ShapeError` when the block grid is jagged or when blocks disagree on a shared row height or column width.
 pub fn block_matrix(rows : Array[Array[Matrix]]) -> Matrix raise MatrixError {
   if rows.is_empty() {
     return zeros(0, cols=Some(0))

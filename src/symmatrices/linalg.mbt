@@ -856,14 +856,15 @@ pub fn Matrix::rref_rhs(
       "rref_rhs expects rhs with the same number of rows",
     )
   }
-  let augmented = self.row_join(rhs)
-  let (reduced, _) = augmented.rref()
+  let augmented = hstack([self, eye(self.rows), rhs])
+  let (reduced0, _) = augmented.rref()
+  let reduced = reduced0.applyfunc(expr_simplify)
   let left_cols : Array[Int] = []
   let right_cols : Array[Int] = []
   for j in 0..<self.cols {
     left_cols.push(j)
   }
-  for j in self.cols..<reduced.cols {
+  for j in (reduced.cols - rhs.cols)..<reduced.cols {
     right_cols.push(j)
   }
   (
@@ -1248,80 +1249,74 @@ pub fn Matrix::qr(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
       zeros(self.cols, cols=Some(self.cols)),
     )
   }
-  let numeric_prec = expr_numeric_precision(self.data)
-  let numeric_mode = matrix_has_floating_leaf(self.data) &&
-    matrix_all_numeric(self.data, numeric_prec)
-  let qcols : Array[Array[Expr]] = []
-  let r = Array::make(self.cols, Array::make(self.cols, @symcore.int(0)))
+  let q = clone_expr_rows(self.data)
+  let r = Array::makei(self.cols, fn(_) {
+    Array::make(self.cols, @symcore.int(0))
+  })
+  let ranked : Array[Int] = []
   for j in 0..<self.cols {
-    let v = self.col(j)
     for i in 0..<j {
-      let qi = qcols[i]
-      let mut dot = @symcore.int(0)
+      let mut dot_ii = @symcore.int(0)
+      let mut dot_ij = @symcore.int(0)
       for k in 0..<self.rows {
-        dot = if numeric_mode {
-          expr_numeric_add(
-            dot,
-            expr_numeric_mul(qi[k], v[k], numeric_prec),
-            numeric_prec,
-          )
-        } else {
-          expr_add(dot, expr_mul(qi[k], v[k]))
-        }
+        dot_ii = expr_add(dot_ii, expr_mul(q[k][i], q[k][i]))
+        dot_ij = expr_add(dot_ij, expr_mul(q[k][i], q[k][j]))
       }
-      r[i][j] = dot
+      dot_ii = @symsimplify.simplify(dot_ii)
+      if expr_is_zero(dot_ii) {
+        continue
+      }
+      let rij = @symsimplify.simplify(expr_div(dot_ij, dot_ii))
+      r[i][j] = rij
       for k in 0..<self.rows {
-        v[k] = if numeric_mode {
-          expr_numeric_sub(
-            v[k],
-            expr_numeric_mul(dot, qi[k], numeric_prec),
-            numeric_prec,
-          )
-        } else {
-          expr_sub(v[k], expr_mul(dot, qi[k]))
-        }
-      }
-    }
-    let mut norm_sq = @symcore.int(0)
-    for k in 0..<self.rows {
-      norm_sq = if numeric_mode {
-        expr_numeric_add(
-          norm_sq,
-          expr_numeric_mul(v[k], v[k], numeric_prec),
-          numeric_prec,
+        q[k][j] = @symsimplify.simplify(
+          expr_sub(q[k][j], expr_mul(q[k][i], rij)),
         )
-      } else {
-        expr_add(norm_sq, expr_mul(v[k], v[k]))
       }
     }
-    let norm = if numeric_mode {
-      expr_numeric_sqrt(norm_sq, numeric_prec)
-    } else {
-      expr_simplify(@symcore.function("sqrt", [norm_sq]))
-    }
-    r[j][j] = norm
-    let qj : Array[Expr] = []
+    let mut zero_col = true
     for k in 0..<self.rows {
-      qj.push(
-        if numeric_mode {
-          expr_numeric_div(v[k], norm, numeric_prec)
-        } else {
-          expr_div(v[k], norm)
-        },
-      )
+      q[k][j] = @symsimplify.simplify(q[k][j])
+      if !expr_is_zero(q[k][j]) {
+        zero_col = false
+      }
     }
-    qcols.push(qj)
+    if !zero_col {
+      ranked.push(j)
+      r[j][j] = @symcore.int(1)
+    }
   }
   let qrows : Array[Array[Expr]] = []
   for i in 0..<self.rows {
     let row : Array[Expr] = []
-    for j in 0..<self.cols {
-      row.push(qcols[j][i])
+    for j in ranked {
+      row.push(q[i][j])
     }
     qrows.push(row)
   }
+  let rrows : Array[Array[Expr]] = []
+  for i in ranked {
+    let row : Array[Expr] = []
+    for j in 0..<self.cols {
+      row.push(r[i][j])
+    }
+    rrows.push(row)
+  }
+  for i in 0..<ranked.length() {
+    let mut norm_sq = @symcore.int(0)
+    for k in 0..<self.rows {
+      norm_sq = expr_add(norm_sq, expr_mul(qrows[k][i], qrows[k][i]))
+    }
+    let norm = @symsimplify.simplify(@symcore.function("sqrt", [norm_sq]))
+    for k in 0..<self.rows {
+      qrows[k][i] = @symsimplify.simplify(expr_div(qrows[k][i], norm))
+    }
+    for j in 0..<self.cols {
+      rrows[i][j] = @symsimplify.simplify(expr_mul(rrows[i][j], norm))
+    }
+  }
   (
-    { rows: self.rows, cols: self.cols, data: qrows },
-    { rows: self.cols, cols: self.cols, data: r },
+    { rows: self.rows, cols: ranked.length(), data: qrows },
+    { rows: ranked.length(), cols: self.cols, data: rrows },
   )
 }

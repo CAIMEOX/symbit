@@ -13,7 +13,7 @@ test "matrices special jordan and rotations" {
   let theta = @symcore.Expr::Symbol("theta")
   inspect(
     rot_axis3(theta).to_string(),
-    content="Matrix([[cos(theta), sin(theta), 0], [-1*sin(theta), cos(theta), 0], [0, 0, 1]])",
+    content="Matrix([[cos(theta), sin(theta), 0], [-sin(theta), cos(theta), 0], [0, 0, 1]])",
   )
 }
 

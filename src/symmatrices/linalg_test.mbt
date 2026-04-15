@@ -117,6 +117,8 @@ test "matrices lu and qr decomposition" {
   let (q, r) = a.qr()
   assert_eq(q.shape(), (2, 2))
   assert_eq(r.shape(), (2, 2))
+  assert_true(eigen_matrix_equal(q * r, a))
+  assert_true(eigen_matrix_equal(q.transpose() * q, eye(2)))
 }
 
 ///|

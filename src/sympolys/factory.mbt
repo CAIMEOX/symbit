@@ -76,9 +76,7 @@ pub fn PolyBuilder::from_expr(
 /// test "sympolys from_expr_defaults infers gens and QQ domain" {
 ///   let x = @symcore.Expr::Symbol("x")
 ///   let y = @symcore.Expr::Symbol("y")
-///   let poly = Poly::from_expr_defaults(
-///     x * y + @symcore.rational_from_ints(1, 2),
-///   )
+///   let poly = Poly::from_expr_defaults(x * y + @symcore.rational_from_ints(1, 2))
 ///   inspect(poly.gens, content="[\"x\", \"y\"]")
 ///   match poly.domain {
 ///     Domain::QQ => ()
