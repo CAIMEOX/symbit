@@ -1,4 +1,8 @@
 ///|
+/// - Does: Describes which children of one selector step are addressed.
+/// - Input: One of `All`, `Index(Int)`, or `Slice(Int?, Int?, Int?)`.
+/// - Returns: One `ESpan` value.
+/// - Limits: Slice semantics are limited to the path parser implemented in this package.
 pub(all) enum ESpan {
   All
   Index(Int)
@@ -6,6 +10,10 @@ pub(all) enum ESpan {
 } derive(Eq, Debug)
 
 ///|
+/// - Does: Stores one parsed selector in an expression path.
+/// - Input: Attribute filters, type filters, and one `ESpan`.
+/// - Returns: One `ESelector` value.
+/// - Limits: Constructed selectors follow the parser rules in this package and do not validate against external schemas.
 pub(all) struct ESelector {
   attrs : Array[String]
   types : Array[String]
@@ -13,19 +21,29 @@ pub(all) struct ESelector {
 }
 
 ///|
+/// - Does: Stores a parsed expression path and its selector sequence.
+/// - Input: The original raw path plus parsed selectors.
+/// - Returns: One `EPath` value.
+/// - Limits: The path grammar is limited to the selectors implemented here.
 pub(all) struct EPath {
   raw : String
   selectors : Array[ESelector]
 }
 
 ///|
-/// Parse a path string and build an `EPath` selector sequence.
+/// - Does: Parses one path string into an `EPath` selector sequence.
+/// - Input: One `String`.
+/// - Returns: One `EPath`.
+/// - Limits: Invalid or unsupported syntax falls back to the subset accepted by the local parser instead of raising.
 pub fn EPath::new(path : String) -> EPath {
   EPath::{ raw: path, selectors: parse_path(path) }
 }
 
 ///|
-/// Select all subexpressions matched by this path.
+/// - Does: Selects every subexpression matched by one path.
+/// - Input: One `EPath` and one root `Expr`.
+/// - Returns: `Array[Expr]`.
+/// - Limits: Unsupported selectors simply match nothing instead of raising.
 pub fn EPath::select(self : EPath, expr : Expr) -> Array[Expr] {
   let out : Array[Expr] = Array::new()
   select_at(self.selectors, 0, expr, out)
@@ -33,19 +51,28 @@ pub fn EPath::select(self : EPath, expr : Expr) -> Array[Expr] {
 }
 
 ///|
-/// Apply `f` to every subexpression matched by this path.
+/// - Does: Applies one callback to every subexpression matched by one path.
+/// - Input: One `EPath`, one root `Expr`, and one callback `(Expr) -> Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Unsupported selectors leave the expression unchanged instead of raising.
 pub fn EPath::apply(self : EPath, expr : Expr, f : (Expr) -> Expr) -> Expr {
   apply_at(self.selectors, 0, expr, f)
 }
 
 ///|
-/// Convenience wrapper for `EPath::select`.
+/// - Does: Convenience wrapper for parsing a path and selecting matches immediately.
+/// - Input: One path string and one root `Expr`.
+/// - Returns: `Array[Expr]`.
+/// - Limits: Follows the same parser and matching limitations as `EPath::new` and `EPath::select`.
 pub fn epath(path : String, expr : Expr) -> Array[Expr] {
   EPath::new(path).select(expr)
 }
 
 ///|
-/// Convenience wrapper for `EPath::apply`.
+/// - Does: Convenience wrapper for parsing a path and rewriting matches immediately.
+/// - Input: One path string, one root `Expr`, and one callback `(Expr) -> Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Follows the same parser and matching limitations as `EPath::new` and `EPath::apply`.
 pub fn epath_apply(path : String, expr : Expr, f : (Expr) -> Expr) -> Expr {
   EPath::new(path).apply(expr, f)
 }

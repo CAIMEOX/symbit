@@ -1,11 +1,17 @@
 ///|
-/// Simplify combinatorial expressions.
+/// - Does: Simplifies supported combinatorial and factorial-style identities.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the implemented factorial, gamma, and binomial identities are applied.
 pub fn combsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
   fixpoint_special(expr, rewrite_combsimp, max_passes~)
 }
 
 ///|
-/// Expand hypergeometric functions into equivalent closed forms when known.
+/// - Does: Expands supported hypergeometric calls into closed forms when known.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only a small supported family of hypergeometric signatures is expanded.
 pub fn hyperexpand(expr : Expr, max_passes? : Int = 6) -> Expr {
   fixpoint_special(expr, rewrite_hyperexpand, max_passes~)
 }

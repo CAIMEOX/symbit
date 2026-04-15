@@ -1,5 +1,8 @@
 ///|
-/// Simplifies the given expression.
+/// - Does: Runs the package-level simplify pipeline on one expression.
+/// - Input: One `Expr`, optional `SimplifyPlan`, and optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: The pipeline is heuristic and bounded by `max_passes`, so difficult expressions can remain only partially simplified.
 pub fn simplify(
   expr : Expr,
   plan? : SimplifyPlan = SimplifyPlan::Default,
@@ -202,8 +205,10 @@ fn factor_terms_simple(expr : Expr) -> Expr {
 }
 
 ///|
-/// Factor common multiplicative terms out of additive expressions without
-/// running the entire general simplify pipeline.
+/// - Does: Factors common multiplicative terms out of additive expressions.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the implemented additive factoring cases are handled; non-additive inputs are returned unchanged.
 pub fn factor_terms(expr : Expr) -> Expr {
   factor_terms_simple(expr)
 }
@@ -691,7 +696,10 @@ fn expr_contains_function(expr : Expr, predicate : (String) -> Bool) -> Bool {
 }
 
 ///|
-/// Reduce expression by combining powers with similar bases and exponents.
+/// - Does: Combines powers with compatible bases and exponents.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the pattern-driven power rules in this package are applied.
 pub fn powsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
   simplify_with_patterns(
     expr,
@@ -706,7 +714,10 @@ pub fn powsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
 }
 
 ///|
-/// Return a reduced expression by using known trig identities.
+/// - Does: Simplifies trigonometric expressions with the package's supported trig identities.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the implemented trig and hyperbolic identities are used.
 pub fn trigsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
   simplify_with_patterns(
     expr,
@@ -721,7 +732,10 @@ pub fn trigsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
 }
 
 ///|
-/// Normalize signs in sums/products by pulling minus factors to canonical form.
+/// - Does: Normalizes signs in additive and multiplicative expressions.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Uses the package's local canonical-sign rules and does not infer extra assumptions.
 pub fn signsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
   simplify_with_patterns(
     expr,
@@ -735,7 +749,10 @@ pub fn signsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
 }
 
 ///|
-/// Run pattern-driven simplify passes.
+/// - Does: Runs a custom ordered list of simplify patterns for a bounded number of passes.
+/// - Input: One `Expr`, one `Array[SimplifyPattern]`, and optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Runs exactly the provided pattern list and stops after the bounded pass count.
 pub fn simplify_with_patterns(
   expr : Expr,
   patterns : Array[SimplifyPattern],
@@ -754,7 +771,10 @@ pub fn simplify_with_patterns(
 }
 
 ///|
-/// Apply each simplify pattern once over the expression tree.
+/// - Does: Applies each simplify pattern once over the whole expression tree.
+/// - Input: One `Expr` and one `Array[SimplifyPattern]`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: This is a single-pass traversal and does not iterate to a fixpoint by itself.
 pub fn apply_patterns_once(
   expr : Expr,
   patterns : Array[SimplifyPattern],
@@ -775,7 +795,10 @@ fn rewrite_bottom_up(expr : Expr, pattern : SimplifyPattern) -> Expr {
 }
 
 ///|
-/// Apply one simplify pattern at the current node.
+/// - Does: Applies one simplify pattern to the current node only.
+/// - Input: One `SimplifyPattern` and one `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Child traversal is handled by higher-level callers, not by this front door.
 pub fn apply_pattern(pattern : SimplifyPattern, expr : Expr) -> Expr {
   match pattern {
     SimplifyPattern::FoldConstants => fold_constants(expr)

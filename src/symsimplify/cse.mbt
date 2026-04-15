@@ -1,29 +1,45 @@
 ///|
+/// - Does: Stores the replacements and reduced expressions produced by common-subexpression elimination.
+/// - Input: Constructed internally from `Array[(String, Expr)]` and `Array[Expr]`.
+/// - Returns: One `CseResult` value.
+/// - Limits: Replacement names are generated placeholders and are not stable across algorithm changes.
 pub(all) struct CseResult {
   replacements : Array[(String, Expr)]
   reduced_exprs : Array[Expr]
 }
 
 ///|
-/// Return the number of extracted substitutions.
+/// - Does: Reports how many substitutions were extracted by CSE.
+/// - Input: One `CseResult`.
+/// - Returns: `Int`.
+/// - Limits: Counts only stored replacements and does not inspect reduced expressions again.
 pub fn CseResult::replacement_count(self : CseResult) -> Int {
   self.replacements.length()
 }
 
 ///|
-/// Return a copy of the extracted substitution list.
+/// - Does: Returns a defensive copy of the extracted substitution list.
+/// - Input: One `CseResult`.
+/// - Returns: `Array[(String, Expr)]`.
+/// - Limits: Names stay in generated placeholder form and are not re-simplified.
 pub fn CseResult::replacements_copy(self : CseResult) -> Array[(String, Expr)] {
   self.replacements.map(item => item)
 }
 
 ///|
-/// Return a copy of reduced expressions after extraction.
+/// - Does: Returns a defensive copy of the reduced expressions after extraction.
+/// - Input: One `CseResult`.
+/// - Returns: `Array[Expr]`.
+/// - Limits: Returned expressions still reference the generated replacement names.
 pub fn CseResult::reduced_exprs_copy(self : CseResult) -> Array[Expr] {
   self.reduced_exprs.map(item => item)
 }
 
 ///|
-/// Perform common subexpression elimination on a list of expressions.
+/// - Does: Performs common-subexpression elimination on one list of expressions.
+/// - Input: `Array[Expr]` plus optional `min_nodes`.
+/// - Returns: One `CseResult`.
+/// - Limits: Uses exact-structure matching and generated placeholder names, so algebraically equivalent but structurally different subtrees are not merged.
 pub fn cse(exprs : Array[Expr], min_nodes? : Int = 2) -> CseResult {
   let counts : Map[String, Int] = {}
   let key_expr : Map[String, Expr] = {}
@@ -70,7 +86,10 @@ pub fn cse(exprs : Array[Expr], min_nodes? : Int = 2) -> CseResult {
 }
 
 ///|
-/// Reconstruct original expressions by substituting CSE replacements back.
+/// - Does: Reconstructs full expressions by substituting CSE replacements back into the reduced outputs.
+/// - Input: One `CseResult`.
+/// - Returns: `Array[Expr]`.
+/// - Limits: Assumes the replacement list came from `cse`; malformed external data can reconstruct to nonsensical expressions.
 pub fn cse_reconstruct(result : CseResult) -> Array[Expr] {
   let mut out = result.reduced_exprs.map(e => e)
   for i in 0..<result.replacements.length() {

@@ -1,23 +1,35 @@
 ///|
-/// Apply Fu trigonometric rewrite rule `TR0`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR0`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR0` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr0(expr : Expr) -> Expr {
   simplify(expr)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR1`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR1`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR1` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr1(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr1)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR2`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR2`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR2` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr2(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr2)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR2I`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR2I`.
+/// - Input: Any `Expr` plus optional `half`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR2I` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr2i(expr : Expr, half? : Bool = false) -> Expr {
   fixpoint_fu(
     expr,
@@ -27,19 +39,28 @@ pub fn tr2i(expr : Expr, half? : Bool = false) -> Expr {
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR3`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR3`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR3` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr3(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr3)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR4`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR4`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR4` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr4(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr4)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR5`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR5`.
+/// - Input: Any `Expr` plus optional `max` and `pow`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR5` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr5(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   rewrite_bottom_up_fu(expr, node => {
     rewrite_tr56(node, "sin", "cos", max~, pow~, plus=false)
@@ -47,7 +68,10 @@ pub fn tr5(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR6`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR6`.
+/// - Input: Any `Expr` plus optional `max` and `pow`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR6` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr6(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   rewrite_bottom_up_fu(expr, node => {
     rewrite_tr56(node, "cos", "sin", max~, pow~, plus=false)
@@ -55,13 +79,19 @@ pub fn tr6(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR7`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR7`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR7` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr7(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr7)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR8`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR8`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR8` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr8(expr : Expr) -> Expr {
   fixpoint_fu(
     expr,
@@ -71,7 +101,10 @@ pub fn tr8(expr : Expr) -> Expr {
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR9`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR9`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR9` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr9(expr : Expr) -> Expr {
   fixpoint_fu(
     expr,
@@ -81,13 +114,19 @@ pub fn tr9(expr : Expr) -> Expr {
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR10`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR10`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR10` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr10(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr10)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR10I`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR10I`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR10I` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr10i(expr : Expr) -> Expr {
   fixpoint_fu(
     expr,
@@ -97,7 +136,10 @@ pub fn tr10i(expr : Expr) -> Expr {
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR11`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR11`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR11` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr11(expr : Expr) -> Expr {
   fixpoint_fu(
     expr,
@@ -107,13 +149,19 @@ pub fn tr11(expr : Expr) -> Expr {
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR12`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR12`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR12` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr12(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr12)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR12I`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR12I`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR12I` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr12i(expr : Expr) -> Expr {
   fixpoint_fu(
     expr,
@@ -123,61 +171,91 @@ pub fn tr12i(expr : Expr) -> Expr {
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR13`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR13`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR13` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr13(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr13)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR14`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR14`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR14` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr14(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr14)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR15`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR15`.
+/// - Input: Any `Expr` plus optional `max` and `pow`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR15` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr15(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   rewrite_bottom_up_fu(expr, node => rewrite_tr15(node, max~, pow~))
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR16`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR16`.
+/// - Input: Any `Expr` plus optional `max` and `pow`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR16` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr16(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   rewrite_bottom_up_fu(expr, node => rewrite_tr16(node, max~, pow~))
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR111`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR111`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR111` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr111(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr111)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TR22`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TR22`.
+/// - Input: Any `Expr` plus optional `max` and `pow`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TR22` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn tr22(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   rewrite_bottom_up_fu(expr, node => rewrite_tr22(node, max~, pow~))
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TRPOWER`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TRPOWER`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TRPOWER` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn trpower(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_trpower)
 }
 
 ///|
-/// Apply Fu trigonometric rewrite rule `TRMORRIE`.
+/// - Does: Applies the Fu trigonometric rewrite rule `TRMORRIE`.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the local `TRMORRIE` rule family is applied, so unsupported shapes are returned unchanged.
 pub fn trmorrie(expr : Expr) -> Expr {
   rewrite_bottom_up_fu(expr, rewrite_trmorrie)
 }
 
 ///|
-/// Run Fu trigonometric simplification strategy.
+/// - Does: Runs the Fu trigonometric simplification strategy without the final general simplify pass.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Uses the bounded Fu rule schedule implemented in this package only.
 pub fn futrig(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_fu(expr, futrig_once, max_passes~)
 }
 
 ///|
-/// Run Fu trigonometric simplification strategy.
+/// - Does: Runs the Fu trigonometric simplification strategy and then a final general simplify pass.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Uses the bounded Fu rule schedule implemented in this package only.
 pub fn fu(expr : Expr, max_passes? : Int = 8) -> Expr {
   simplify(futrig(expr, max_passes~))
 }

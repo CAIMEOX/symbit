@@ -1,5 +1,8 @@
 ///|
-/// Apply `func` to nodes at a fixed depth in the expression tree.
+/// - Does: Applies one callback to nodes at a fixed depth in the expression tree.
+/// - Input: One `Expr`, one callback, and optional `level`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Negative levels are clamped to `0`, and atoms are left untouched below that point.
 pub fn apply_at_level(
   expr : Expr,
   func : (Expr) -> Expr,

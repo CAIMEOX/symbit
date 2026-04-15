@@ -1,11 +1,17 @@
 ///|
-/// Run the CSE pre-pass that prepares subtree structure.
+/// - Does: Runs the structural pre-pass used before common-subexpression elimination.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the implemented subtraction-shape normalizations are applied.
 pub fn sub_pre(expr : Expr) -> Expr {
   rewrite_bottom_up_cseopts(expr, rewrite_sub_pre)
 }
 
 ///|
-/// Run the CSE post-pass cleanup transformation.
+/// - Does: Runs the cleanup pass used after common-subexpression elimination.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the implemented sign-normalization cleanup is applied.
 pub fn sub_post(expr : Expr) -> Expr {
   rewrite_bottom_up_cseopts(expr, rewrite_sub_post)
 }

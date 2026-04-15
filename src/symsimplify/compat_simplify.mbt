@@ -1,17 +1,26 @@
 ///|
-/// Simplify Bessel-function expressions.
+/// - Does: Simplifies supported Bessel-function identities and recurrences.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the implemented Bessel families are rewritten; unsupported calls are returned unchanged.
 pub fn besselsimp(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_compat(expr, rewrite_besselsimp, max_passes~)
 }
 
 ///|
-/// Simplify Kronecker-delta expressions.
+/// - Does: Simplifies supported `KroneckerDelta` expressions.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the implemented delta identities are used; unsupported forms are returned unchanged.
 pub fn kroneckersimp(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_compat(expr, rewrite_kroneckersimp, max_passes~)
 }
 
 ///|
-/// Convert exact numeric expressions to simpler symbolic forms.
+/// - Does: Rewrites exact numeric expressions into simpler symbolic forms and named constants.
+/// - Input: Any `Expr`, optional constant aliases, optional `full`, optional `rational`, and optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: The search is heuristic, so unsupported constants or identities remain unchanged.
 pub fn nsimplify(
   expr : Expr,
   constants? : Array[Expr] = [],

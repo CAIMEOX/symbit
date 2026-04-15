@@ -1,25 +1,37 @@
 ///|
-/// Return `(num, den)` so `expr = num/den` in symbolic form.
+/// - Does: Decomposes one expression into a symbolic numerator and denominator pair.
+/// - Input: Any `Expr`.
+/// - Returns: `(Expr, Expr)` where the original expression is represented as `num * den**-1`.
+/// - Limits: Keeps symbolic factors unevaluated when no simpler exact split is available.
 pub fn fraction(expr : Expr) -> (Expr, Expr) {
   split_fraction_simple(expr)
 }
 
 ///|
-/// Return the numerator of `expr`.
+/// - Does: Extracts the symbolic numerator of one expression.
+/// - Input: Any `Expr`.
+/// - Returns: One `Expr`.
+/// - Limits: Uses the same structural split as `fraction`, so unevaluated factors can remain in the result.
 pub fn numer(expr : Expr) -> Expr {
   let (n, _) = fraction(expr)
   n
 }
 
 ///|
-/// Return the denominator of `expr`.
+/// - Does: Extracts the symbolic denominator of one expression.
+/// - Input: Any `Expr`.
+/// - Returns: One `Expr`.
+/// - Limits: Uses the same structural split as `fraction`, so unevaluated factors can remain in the result.
 pub fn denom(expr : Expr) -> Expr {
   let (_, d) = fraction(expr)
   d
 }
 
 ///|
-/// Collect additive terms by powers of `sym`.
+/// - Does: Groups additive terms by powers of one target symbol.
+/// - Input: One expression and one target `Expr`, typically a symbol.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Non-symbol targets are left unchanged instead of raising an error.
 pub fn collect(expr : Expr, sym : Expr) -> Expr {
   match sym {
     Expr::Symbol(_) => collect_one_symbol(expr, sym)
@@ -28,14 +40,20 @@ pub fn collect(expr : Expr, sym : Expr) -> Expr {
 }
 
 ///|
-/// Recursively apply `collect` to `expr` and its children.
+/// - Does: Applies `collect` recursively through the expression tree.
+/// - Input: One expression and one target `Expr`, typically a symbol.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Uses the same symbol-only front door as `collect`, so unsupported targets are propagated unchanged.
 pub fn rcollect(expr : Expr, sym : Expr) -> Expr {
   let rewritten = @symcore.map_children(expr, child => rcollect(child, sym))
   collect(rewritten, sym)
 }
 
 ///|
-/// Factor a shared rational constant out of additive terms.
+/// - Does: Factors a shared rational constant out of additive terms.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only exact rational additive coefficients are combined; non-additive inputs are returned unchanged.
 pub fn collect_const(expr : Expr) -> Expr {
   match expr {
     Expr::Add(args) => {
@@ -71,37 +89,55 @@ pub fn collect_const(expr : Expr) -> Expr {
 }
 
 ///|
-/// Denest nested powers when exponent rules allow.
+/// - Does: Collapses nested powers when algebraic exponent rules allow it.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Stops after a bounded number of passes and leaves unsupported power patterns unchanged.
 pub fn powdenest(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_advanced(expr, rewrite_powdenest, max_passes~)
 }
 
 ///|
-/// Switch between exp/trig forms to simplify expressions.
+/// - Does: Switches between exponential and trigonometric forms to shorten an expression.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only built-in rewrite families are tried, so expressions outside that surface are returned as-is.
 pub fn exptrigsimp(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_advanced(expr, rewrite_exptrigsimp, max_passes~)
 }
 
 ///|
-/// Simplify Gamma-function identities.
+/// - Does: Applies Gamma-function simplifications and related exact identities.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only supported Gamma/combinatorial identities are used; unsupported forms are left unchanged.
 pub fn gammasimp(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_advanced(expr, rewrite_gammasimp, max_passes~)
 }
 
 ///|
-/// Combine additive/multiplicative log terms into compact logarithmic form.
+/// - Does: Combines logarithmic sums and powers into more compact logarithmic forms.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Respects only the implemented algebraic identities and does not infer extra assumptions.
 pub fn logcombine(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_advanced(expr, rewrite_logcombine, max_passes~)
 }
 
 ///|
-/// Separate multiplicative factors by symbolic variable sets.
+/// - Does: Separates multiplicative factors by symbolic variable sets when possible.
+/// - Input: Any `Expr` plus optional `force`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Unsupported couplings remain unevaluated; `force` only widens rewrite attempts and does not guarantee separation.
 pub fn separatevars(expr : Expr, force? : Bool = false) -> Expr {
   rewrite_bottom_up_advanced(expr, child => rewrite_separatevars(child, force~))
 }
 
 ///|
-/// Replace symbols with positivity-assumed dummies and return a restoration map.
+/// - Does: Replaces symbols with positivity-assumed stand-ins and records how to restore the originals.
+/// - Input: Any `Expr`.
+/// - Returns: `(Expr, Map[String, Expr])` where the map restores the temporary symbols.
+/// - Limits: Uses simple name-based stand-ins and does not preserve richer assumption metadata.
 pub fn posify(expr : Expr) -> (Expr, Map[String, Expr]) {
   let symbols : Map[String, Bool] = {}
   collect_symbols(expr, symbols)
@@ -116,7 +152,10 @@ pub fn posify(expr : Expr) -> (Expr, Map[String, Expr]) {
 }
 
 ///|
-/// Return the hypergeometric term ratio `f(k+1)/f(k)` when it exists.
+/// - Does: Computes the hypergeometric term ratio `f(k + 1) / f(k)` when the index shift is supported.
+/// - Input: One expression `f` and one index expression `k`.
+/// - Returns: One `Expr`.
+/// - Limits: Non-symbol indices return `0` instead of raising, and unsupported terms can stay unsimplified.
 pub fn hypersimp(f : Expr, k : Expr) -> Expr {
   match k {
     Expr::Symbol(name) => {
@@ -130,7 +169,10 @@ pub fn hypersimp(f : Expr, k : Expr) -> Expr {
 }
 
 ///|
-/// Check whether two sequences are hyper-similar in index `k`.
+/// - Does: Checks whether two sequences are hyper-similar in one index.
+/// - Input: Two expressions plus one index expression `k`.
+/// - Returns: `Bool`.
+/// - Limits: Non-symbol indices return `false`, and the decision is limited to the implemented rational-form check.
 pub fn hypersimilar(f : Expr, g : Expr, k : Expr) -> Bool {
   match k {
     Expr::Symbol(name) => {

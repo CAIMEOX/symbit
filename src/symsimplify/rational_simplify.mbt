@@ -1,17 +1,26 @@
 ///|
-/// Rationalize the denominator by removing square roots.
+/// - Does: Rationalizes supported radical denominators inside one expression.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the implemented radical-denominator patterns are handled.
 pub fn radsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
   fixpoint_rewrite(expr, rewrite_radsimp, max_passes~)
 }
 
 ///|
-/// Put an expression over a common denominator, cancel and reduce.
+/// - Does: Rewrites additive rational expressions over a common denominator and reduces them.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Uses the local structural fraction splitter rather than a full polynomial-domain algorithm.
 pub fn ratsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
   fixpoint_rewrite(expr, rewrite_ratsimp, max_passes~)
 }
 
 ///|
-/// Simplify a rational expression modulo a prime ideal basis.
+/// - Does: Exposes the modular rational-simplification front door.
+/// - Input: One expression plus optional basis, generators, quick/polynomial flags, and `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: The current implementation ignores the modular arguments and falls back to `ratsimp`.
 pub fn ratsimpmodprime(
   expr : Expr,
   basis? : Array[Expr] = [],
@@ -28,20 +37,29 @@ pub fn ratsimpmodprime(
 }
 
 ///|
-/// Return `expr` with terms having common square roots collected together.
+/// - Does: Collects additive terms that share square-root factors.
+/// - Input: Any `Expr` plus optional `evaluate`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: The current front door ignores `evaluate` and uses the implemented structural collection only.
 pub fn collect_sqrt(expr : Expr, evaluate? : Bool = true) -> Expr {
   let _ = evaluate
   collect_function_terms(expr, "sqrt")
 }
 
 ///|
-/// Return `expr` with product arguments of multiple `Abs` factors collected.
+/// - Does: Collects repeated `Abs` factors inside multiplicative terms.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only explicit `Abs` factors are grouped.
 pub fn collect_abs(expr : Expr) -> Expr {
   collect_function_terms(expr, "Abs")
 }
 
 ///|
-/// Rationalize `num/den` by removing square roots in the denominator.
+/// - Does: Rationalizes one symbolic fraction `(num, den)` by removing supported radicals from the denominator.
+/// - Input: Two expressions `(num, den)`.
+/// - Returns: `(Expr, Expr)`.
+/// - Limits: Unsupported denominators are returned unchanged.
 pub fn rad_rationalize(num : Expr, den : Expr) -> (Expr, Expr) {
   match rationalized_denominator(den) {
     Some((mul_num, new_den)) => (@symcore.mul([num, mul_num]), new_den)
@@ -50,7 +68,10 @@ pub fn rad_rationalize(num : Expr, den : Expr) -> (Expr, Expr) {
 }
 
 ///|
-/// Expand numerator and denominator parts of a rational expression.
+/// - Does: Expands both numerator and denominator parts of a rational expression.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Uses structural numerator/denominator splitting and multiplication expansion only.
 pub fn fraction_expand(expr : Expr) -> Expr {
   let (num, den) = split_fraction(expr)
   let n = expand_mul_expr(num)
@@ -63,7 +84,10 @@ pub fn fraction_expand(expr : Expr) -> Expr {
 }
 
 ///|
-/// Expand only the numerator.
+/// - Does: Expands only the symbolic numerator of a rational expression.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Denominator structure is preserved exactly as split by the local fraction helper.
 pub fn numer_expand(expr : Expr) -> Expr {
   let (num, den) = split_fraction(expr)
   let n = expand_mul_expr(num)
@@ -75,7 +99,10 @@ pub fn numer_expand(expr : Expr) -> Expr {
 }
 
 ///|
-/// Expand only the denominator.
+/// - Does: Expands only the symbolic denominator of a rational expression.
+/// - Input: Any `Expr`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Numerator structure is preserved exactly as split by the local fraction helper.
 pub fn denom_expand(expr : Expr) -> Expr {
   let (num, den) = split_fraction(expr)
   let d = expand_mul_expr(den)
@@ -87,7 +114,10 @@ pub fn denom_expand(expr : Expr) -> Expr {
 }
 
 ///|
-/// Split surd terms by a shared square-free rational factor for denesting.
+/// - Does: Splits surd terms into a shared radical factor and two additive partitions.
+/// - Input: Any `Expr`, usually an additive radical expression.
+/// - Returns: `(Expr, Expr, Expr)`.
+/// - Limits: Only the supported square-root integer pattern is recognized.
 pub fn split_surds(expr : Expr) -> (Expr, Expr, Expr) {
   let terms = match expr {
     Expr::Add(args) => args
@@ -127,7 +157,10 @@ pub fn split_surds(expr : Expr) -> (Expr, Expr, Expr) {
 }
 
 ///|
-/// Denest nested square roots when algebraic identities permit.
+/// - Does: Denests supported nested square roots when algebraic identities apply.
+/// - Input: Any `Expr` plus optional `max_passes`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the implemented denesting identities are used, so many nested radicals remain unchanged.
 pub fn sqrtdenest(expr : Expr, max_passes? : Int = 6) -> Expr {
   fixpoint_rewrite(expr, rewrite_sqrtdenest, max_passes~)
 }
