@@ -1124,7 +1124,7 @@ fn make_morrie_factor(arg : Expr, exp : Int) -> MorrieFactor? {
   } else {
     @symcore.mul(factors)
   }
-  let core_key = @symprint.debug_repr(core)
+  let core_key = to_repr(core).to_string()
   Some(MorrieFactor::{ core_key, core, coeff, exp })
 }
 
@@ -1662,9 +1662,9 @@ fn parse_trig_pm_one(expr : Expr) -> (String, Expr, Int)? {
 fn parse_tr2i_factor(expr : Expr) -> Tr2iFactor? {
   match named_unary_application(expr) {
     Some((name, arg)) if name == "sin" =>
-      Some(Tr2iFactor::Sin(@symprint.debug_repr(arg), arg, 1))
+      Some(Tr2iFactor::Sin(to_repr(arg).to_string(), arg, 1))
     Some((name, arg)) if name == "cos" =>
-      Some(Tr2iFactor::Cos(@symprint.debug_repr(arg), arg, 1))
+      Some(Tr2iFactor::Cos(to_repr(arg).to_string(), arg, 1))
     _ =>
       match pow_named_unary_application(expr) {
         Some((name, arg, exp_expr)) =>
@@ -1672,9 +1672,9 @@ fn parse_tr2i_factor(expr : Expr) -> Tr2iFactor? {
             Some(e) =>
               match name {
                 "sin" =>
-                  Some(Tr2iFactor::Sin(@symprint.debug_repr(arg), arg, e))
+                  Some(Tr2iFactor::Sin(to_repr(arg).to_string(), arg, e))
                 "cos" =>
-                  Some(Tr2iFactor::Cos(@symprint.debug_repr(arg), arg, e))
+                  Some(Tr2iFactor::Cos(to_repr(arg).to_string(), arg, e))
                 _ =>
                   match
                     parse_one_plus_cos(
@@ -1683,7 +1683,7 @@ fn parse_tr2i_factor(expr : Expr) -> Tr2iFactor? {
                     Some(inner) =>
                       Some(
                         Tr2iFactor::OnePlusCos(
-                          @symprint.debug_repr(inner),
+                          to_repr(inner).to_string(),
                           inner,
                           e,
                         ),
@@ -1696,7 +1696,7 @@ fn parse_tr2i_factor(expr : Expr) -> Tr2iFactor? {
         _ =>
           match parse_one_plus_cos(expr) {
             Some(arg) =>
-              Some(Tr2iFactor::OnePlusCos(@symprint.debug_repr(arg), arg, 1))
+              Some(Tr2iFactor::OnePlusCos(to_repr(arg).to_string(), arg, 1))
             None => None
           }
       }

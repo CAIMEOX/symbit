@@ -30,7 +30,7 @@ General-purpose and targeted simplification passes, rational rewrites, radical a
 test "symsimplify runs targeted simplifiers" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.mul([x, @symcore.pow(x, @symcore.int(-1))])
-  inspect(@symprint.to_string(simplify(expr)), content="1")
+  debug_inspect(simplify(expr), content="1")
 }
 ```
 ## Related Packages

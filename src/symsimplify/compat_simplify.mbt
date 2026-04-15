@@ -370,7 +370,7 @@ fn compat_unique_delta_pairs(
   let seen : Map[String, Bool] = {}
   let out : Array[(Expr, Expr)] = Array::new()
   for pair in pairs {
-    let key = @symprint.debug_repr(pair.0) + "|" + @symprint.debug_repr(pair.1)
+    let key = to_repr(pair.0).to_string() + "|" + to_repr(pair.1).to_string()
     if seen.get(key) is Some(_) {
       continue
     }

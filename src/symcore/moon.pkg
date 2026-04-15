@@ -1,5 +1,6 @@
 import {
   "CAIMEOX/symbit/symnum",
+  "moonbitlang/core/debug" @debug,
   "moonbitlang/quickcheck" @qc,
 }
 

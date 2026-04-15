@@ -1,6 +1,6 @@
 ///|
 fn parse_repr(src : String) -> String raise {
-  @symprint.debug_repr(parse_expr(src))
+  to_repr(parse_expr(src)).to_string()
 }
 
 ///|
@@ -37,7 +37,7 @@ fn split_custom_options() -> ParseOptions {
 
 ///|
 fn parse_relaxed_repr(src : String) -> String raise {
-  @symprint.debug_repr(parse_expr_with(src, relaxed_options()))
+  to_repr(parse_expr_with(src, relaxed_options())).to_string()
 }
 
 ///|
@@ -46,7 +46,7 @@ fn parse_repr_with(
   options : ParseOptions,
   context : ParseContext,
 ) -> String raise {
-  @symprint.debug_repr(parse_expr_in(src, options, context))
+  to_repr(parse_expr_in(src, options, context)).to_string()
 }
 
 ///|
@@ -112,23 +112,23 @@ test "symparse comparisons lower to symbolic heads" {
 test "symparse evaluate false preserves raw operators" {
   let options = parse_options(evaluate=false)
   inspect(
-    @symprint.debug_repr(parse_expr_with("1 + 2 + x", options)),
+    to_repr(parse_expr_with("1 + 2 + x", options)).to_string(),
     content="(+ 1 2 sym:x)",
   )
   inspect(
-    @symprint.debug_repr(parse_expr_with("a*b*c", options)),
+    to_repr(parse_expr_with("a*b*c", options)).to_string(),
     content="(* sym:a sym:b sym:c)",
   )
   inspect(
-    @symprint.debug_repr(parse_expr_with("x/y/z", options)),
+    to_repr(parse_expr_with("x/y/z", options)).to_string(),
     content="(* sym:x (^ sym:y -1) (^ sym:z -1))",
   )
   inspect(
-    @symprint.debug_repr(parse_expr_with("x-y-z", options)),
+    to_repr(parse_expr_with("x-y-z", options)).to_string(),
     content="(+ sym:x (* -1 sym:y) (* -1 sym:z))",
   )
   inspect(
-    @symprint.debug_repr(parse_expr_with("x==x", options)),
+    to_repr(parse_expr_with("x==x", options)).to_string(),
     content="(call Eq sym:x sym:x)",
   )
 }
@@ -205,11 +205,11 @@ test "symparse relaxed parser handles transformed syntax" {
 ///|
 test "symparse split symbols and split_symbols_custom" {
   inspect(
-    @symprint.debug_repr(parse_expr_with("xy", split_options())),
+    to_repr(parse_expr_with("xy", split_options())).to_string(),
     content="(* sym:x sym:y)",
   )
   inspect(
-    @symprint.debug_repr(parse_expr_with("theta", split_options())),
+    to_repr(parse_expr_with("theta", split_options())).to_string(),
     content="sym:theta",
   )
   inspect(
@@ -221,13 +221,13 @@ test "symparse split symbols and split_symbols_custom" {
     content="(* sym:a (call f (+ sym:x 1)))",
   )
   inspect(
-    @symprint.debug_repr(
+    to_repr(
       parse_expr_with("unsplittable", split_custom_options()),
-    ),
+    ).to_string(),
     content="sym:unsplittable",
   )
   inspect(
-    @symprint.debug_repr(parse_expr_with("xy", split_custom_options())),
+    to_repr(parse_expr_with("xy", split_custom_options())).to_string(),
     content="(* sym:x sym:y)",
   )
 }

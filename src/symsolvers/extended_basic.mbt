@@ -2141,21 +2141,21 @@ fn solver_collect_square_term_factors(
               }
             }
             _ => {
-              let key = @symprint.debug_repr(base)
+              let key = to_repr(base).to_string()
               factors[key] = base
               counts[key] = counts.get(key).unwrap_or(0) + power
             }
           }
         }
         _ => {
-          let key = @symprint.debug_repr(expr)
+          let key = to_repr(expr).to_string()
           factors[key] = expr
           counts[key] = counts.get(key).unwrap_or(0) + 1
         }
       }
     Expr::Number(_) => ()
     _ => {
-      let key = @symprint.debug_repr(expr)
+      let key = to_repr(expr).to_string()
       factors[key] = expr
       counts[key] = counts.get(key).unwrap_or(0) + 1
     }
@@ -3248,13 +3248,13 @@ fn solver_lie_collect_monomial_factor(
     Expr::Pow(base, Expr::Number(exp)) if exp.is_integral() => {
       let coeff = exp.numerator().to_int() * sign
       if coeff != 0 {
-        let key = @symprint.debug_repr(base)
+        let key = to_repr(base).to_string()
         factors[key] = base
         counts[key] = counts.get(key).unwrap_or(0) + coeff
       }
     }
     _ => {
-      let key = @symprint.debug_repr(expr)
+      let key = to_repr(expr).to_string()
       factors[key] = expr
       counts[key] = counts.get(key).unwrap_or(0) + sign
     }

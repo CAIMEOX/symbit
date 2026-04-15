@@ -47,7 +47,7 @@ test "symsimplify trigsimp after factoring regression" {
     ]),
   ])
   inspect(
-    @symprint.debug_repr(trigsimp(factored, max_passes=1)),
+    to_repr(trigsimp(factored, max_passes=1)),
     content="sym:x",
   )
 }
@@ -56,7 +56,7 @@ test "symsimplify trigsimp after factoring regression" {
 test "symsimplify ratsimp rational trig regression" {
   let rational_trig = rational_trig_fixture()
   inspect(
-    @symprint.debug_repr(ratsimp(rational_trig, max_passes=1)),
+    to_repr(ratsimp(rational_trig, max_passes=1)),
     content="(* (^ (+ (^ (call cos sym:y) 2) (^ (call sin sym:y) 2)) -1) (+ sym:x 1))",
   )
 }
@@ -64,7 +64,7 @@ test "symsimplify ratsimp rational trig regression" {
 ///|
 test "symsimplify dispatcher rational trig regression" {
   let rational_trig = rational_trig_fixture()
-  inspect(@symprint.debug_repr(simplify(rational_trig)), content="(+ sym:x 1)")
+  inspect(to_repr(simplify(rational_trig)), content="(+ sym:x 1)")
 }
 
 ///|
@@ -76,7 +76,7 @@ test "symsimplify exptrigsimp exp trig regression" {
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
   ])
   inspect(
-    @symprint.debug_repr(exptrigsimp(exp_trig, max_passes=1)),
+    to_repr(exptrigsimp(exp_trig, max_passes=1)),
     content="(* 2 (call cos sym:x))",
   )
 }
@@ -90,7 +90,7 @@ test "symsimplify dispatcher exp trig regression" {
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
   ])
   inspect(
-    @symprint.debug_repr(simplify(exp_trig)),
+    to_repr(simplify(exp_trig)),
     content="(* 2 (call cos sym:x))",
   )
 }
@@ -108,7 +108,7 @@ test "symsimplify simplifies expanded rational cancellation regression" {
     ]),
     @symcore.pow(denom, @symcore.int(-1)),
   ])
-  inspect(@symprint.debug_repr(simplify(expr)), content="0")
+  inspect(to_repr(simplify(expr)), content="0")
 
   let square_den = @symcore.pow(@symcore.add([x, y]), @symcore.int(2))
   let square_num = @symcore.add([
@@ -117,7 +117,7 @@ test "symsimplify simplifies expanded rational cancellation regression" {
     @symcore.mul([@symcore.int(-2), @symcore.pow(x, @symcore.int(2)), y]),
   ])
   inspect(
-    @symprint.debug_repr(
+    to_repr(
       simplify(
         @symcore.mul([square_num, @symcore.pow(square_den, @symcore.int(-1))]),
       ),
@@ -172,8 +172,8 @@ test "symsimplify ratsimp and simplify preserve abaco eq3 radical cancellation" 
       @symcore.int(-2) * y,
     ]),
   ])
-  inspect(@symprint.debug_repr(ratsimp(expr, max_passes=1)), content="0")
-  inspect(@symprint.debug_repr(simplify(expr)), content="0")
+  inspect(to_repr(ratsimp(expr, max_passes=1)), content="0")
+  inspect(to_repr(simplify(expr)), content="0")
 }
 
 ///|
@@ -183,16 +183,16 @@ test "symsimplify fraction matches SymPy as_numer_denom on additive rational pow
 
   let additive = @symcore.add([x, y ^ @symcore.int(-1)])
   let (add_num, add_den) = fraction(additive)
-  inspect(@symprint.debug_repr(add_num), content="(+ (* sym:x sym:y) 1)")
-  inspect(@symprint.debug_repr(add_den), content="sym:y")
+  inspect(to_repr(add_num), content="(+ (* sym:x sym:y) 1)")
+  inspect(to_repr(add_den), content="sym:y")
 
   let powered = @symcore.pow(
     @symcore.add([@symcore.int(1), @symcore.mul([x, y ^ @symcore.int(-1)])]),
     @symcore.int(2),
   )
   let (pow_num, pow_den) = fraction(powered)
-  inspect(@symprint.debug_repr(pow_num), content="(^ (+ sym:x sym:y) 2)")
-  inspect(@symprint.debug_repr(pow_den), content="(^ sym:y 2)")
+  inspect(to_repr(pow_num), content="(^ (+ sym:x sym:y) 2)")
+  inspect(to_repr(pow_den), content="(^ sym:y 2)")
 }
 
 ///|
@@ -270,32 +270,32 @@ test "symsimplify simplifies nested gamma and rational sums regression" {
       @symcore.pow(x, @symcore.int(2)),
     ]),
   ])
-  inspect(@symprint.debug_repr(simplify(nested)), content="(* -2 sym:y)")
+  inspect(to_repr(simplify(nested)), content="(* -2 sym:y)")
 
   let gamma_ratio = @symcore.mul([
     @symcore.function("gamma", [@symcore.add([x, @symcore.int(1)])]),
     @symcore.pow(@symcore.function("gamma", [x]), @symcore.int(-1)),
   ])
-  inspect(@symprint.debug_repr(simplify(gamma_ratio)), content="sym:x")
+  inspect(to_repr(simplify(gamma_ratio)), content="sym:x")
 
   let gamma_ratio_swapped = @symcore.mul([
     @symcore.function("gamma", [@symcore.add([@symcore.int(1), x])]),
     @symcore.pow(@symcore.function("gamma", [x]), @symcore.int(-1)),
   ])
-  inspect(@symprint.debug_repr(simplify(gamma_ratio_swapped)), content="sym:x")
+  inspect(to_repr(simplify(gamma_ratio_swapped)), content="sym:x")
 
   let trig_gamma = @symcore.add([
     @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
     @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2)),
     gamma_ratio,
   ])
-  inspect(@symprint.debug_repr(simplify(trig_gamma)), content="(+ sym:x 1)")
+  inspect(to_repr(simplify(trig_gamma)), content="(+ sym:x 1)")
 
   let ratio = @symcore.mul([
     @symcore.add([x, @symcore.mul([x, y])]),
     @symcore.pow(x, @symcore.int(-1)),
   ])
-  inspect(@symprint.debug_repr(simplify(ratio)), content="(+ sym:y 1)")
+  inspect(to_repr(simplify(ratio)), content="(+ sym:y 1)")
 
   let f = @symcore.function("f", [x])
   let functional_ratio = @symcore.mul([
@@ -303,7 +303,7 @@ test "symsimplify simplifies nested gamma and rational sums regression" {
     @symcore.pow(f, @symcore.int(-1)),
   ])
   inspect(
-    @symprint.debug_repr(simplify(functional_ratio)),
+    to_repr(simplify(functional_ratio)),
     content="(+ sym:y 1)",
   )
 
@@ -311,7 +311,7 @@ test "symsimplify simplifies nested gamma and rational sums regression" {
     @symcore.function("log", [@symcore.mul([@symcore.int(2), x])]),
     @symcore.mul([@symcore.int(-1), @symcore.function("log", [@symcore.int(2)])]),
   ])
-  inspect(@symprint.debug_repr(simplify(log_ratio)), content="(call log sym:x)")
+  inspect(to_repr(simplify(log_ratio)), content="(call log sym:x)")
 }
 
 ///|
@@ -331,7 +331,7 @@ test "symsimplify handles order-insensitive tan products" {
     @symcore.pow(denom, @symcore.int(-1)),
   ])
   inspect(
-    @symprint.debug_repr(tr12i(expr)),
+    to_repr(tr12i(expr)),
     content="(call tan (+ sym:x sym:y))",
   )
 }

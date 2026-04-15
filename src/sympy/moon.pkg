@@ -1,7 +1,6 @@
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
-  "CAIMEOX/symbit/symprint",
   "Kaida-Amethyst/python" @py,
   "Kaida-Amethyst/python/cpython" @cpython,
 }

@@ -140,7 +140,7 @@ fn collect_counts(
   if is_atom(expr) {
     return
   }
-  let key = @symprint.debug_repr(expr)
+  let key = to_repr(expr).to_string()
   match counts.get(key) {
     Some(c) => counts[key] = c + 1
     None => {
@@ -181,7 +181,7 @@ fn total_occurrences(exprs : Array[Expr], key : String) -> Int {
 
 ///|
 fn count_occurrences(expr : Expr, key : String) -> Int {
-  let mut total = if @symprint.debug_repr(expr) == key { 1 } else { 0 }
+  let mut total = if to_repr(expr).to_string() == key { 1 } else { 0 }
   for child in @symcore.children(expr) {
     total = total + count_occurrences(child, key)
   }
@@ -190,7 +190,7 @@ fn count_occurrences(expr : Expr, key : String) -> Int {
 
 ///|
 fn replace_exact(expr : Expr, key : String, replacement : Expr) -> Expr {
-  if @symprint.debug_repr(expr) == key {
+  if to_repr(expr).to_string() == key {
     return replacement
   }
   @symcore.map_children(expr, child => replace_exact(child, key, replacement))

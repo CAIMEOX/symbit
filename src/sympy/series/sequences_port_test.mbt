@@ -4,7 +4,7 @@ test "symseries sequence formula coeff" {
   let expr = @symcore.pow(n, @symcore.int(2))
   let seq = sequence(expr, var_name="n", start=0, stop=5)
   let c = seq.coeff(3)
-  assert_eq(@symprint.debug_repr(c), "9")
+  assert_eq(to_repr(c).to_string(), "9")
 }
 
 ///|
@@ -15,7 +15,7 @@ test "symseries sequence periodic coeff" {
     stop=6,
   )
   let c = seq.coeff(4)
-  assert_eq(@symprint.debug_repr(c), "2")
+  assert_eq(to_repr(c).to_string(), "2")
 }
 
 ///|
@@ -27,6 +27,6 @@ test "symseries sequence add/mul coeff" {
   let seq_mul = seq_mul(seq1, seq2)
   let c_add = seq_add.coeff(2)
   let c_mul = seq_mul.coeff(2)
-  assert_eq(@symprint.debug_repr(c_add), "3")
-  assert_eq(@symprint.debug_repr(c_mul), "2")
+  assert_eq(to_repr(c_add).to_string(), "3")
+  assert_eq(to_repr(c_mul).to_string(), "2")
 }

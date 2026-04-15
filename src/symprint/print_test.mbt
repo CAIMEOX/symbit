@@ -2,7 +2,7 @@
 test "debug repr uses s-expression order" {
   let expr = @symcore.Expr::Symbol("b") *
     (@symcore.Expr::Symbol("a") + @symcore.int(1))
-  inspect(debug_repr(expr), content="(* sym:b (+ sym:a 1))")
+  debug_inspect(expr, content="(* sym:b (+ sym:a 1))")
 }
 
 ///|
@@ -124,7 +124,7 @@ test "pretty printers understand relational tuple and lambda wrappers" {
     tup,
     @symcore.add([@symcore.Expr::Symbol("x"), @symcore.int(1)]),
   )
-  inspect(debug_repr(rel), content="(call Le sym:x 2)")
+  debug_inspect(rel, content="(call Le sym:x 2)")
   inspect(to_string(rel), content="x <= 2")
   inspect(to_string(tup), content="(x, 2)")
   inspect(to_string(lam), content="Lambda((x, 2), x + 1)")
@@ -132,8 +132,8 @@ test "pretty printers understand relational tuple and lambda wrappers" {
 
 ///|
 test "pretty printers understand number symbols" {
-  inspect(
-    debug_repr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
+  debug_inspect(
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
     content="const:pi",
   )
   inspect(
@@ -153,9 +153,9 @@ test "pretty printers render dummy and wild names like SymPy" {
   let d = @symcore.dummy(name="x")
   let w = @symcore.Expr::Wild("x", [], [])
   inspect(to_string(d), content="_x")
-  assert_true(debug_repr(d).has_prefix("dummy:_x#"))
+  assert_true(to_repr(d).to_string().has_prefix("dummy:_x#"))
   inspect(to_string(w), content="x_")
-  inspect(debug_repr(w), content="wild:x_")
+  debug_inspect(w, content="wild:x_")
 }
 
 ///|
@@ -163,9 +163,9 @@ test "pretty printers distinguish undefined function heads" {
   let f = @symcore.Expr::UndefinedFunction("f")
   let sin_head = @symcore.Expr::FunctionHead("sin")
   inspect(to_string(f), content="f")
-  inspect(debug_repr(f), content="ufunc:f")
+  debug_inspect(f, content="ufunc:f")
   inspect(to_string(sin_head), content="sin")
-  inspect(debug_repr(sin_head), content="fhead:sin")
+  debug_inspect(sin_head, content="fhead:sin")
 }
 
 ///|
@@ -174,8 +174,8 @@ test "pretty printers render dict containers" {
     (@symcore.Expr::Symbol("x"), @symcore.Expr::Symbol("y")),
     (@symcore.int(1), @symcore.Expr::Symbol("z")),
   ])
-  inspect(
-    debug_repr(expr),
+  debug_inspect(
+    expr,
     content="(call Dict (call Tuple sym:x sym:y) (call Tuple 1 sym:z))",
   )
   inspect(to_string(expr), content="{1: z, x: y}")
@@ -188,7 +188,7 @@ test "pretty printers render Mod as a structured core node" {
     @symcore.int(3),
   )
   inspect(to_string(expr), content="Mod(x + 1, 3)")
-  inspect(debug_repr(expr), content="(call Mod (+ sym:x 1) 3)")
+  debug_inspect(expr, content="(call Mod (+ sym:x 1) 3)")
 }
 
 ///|

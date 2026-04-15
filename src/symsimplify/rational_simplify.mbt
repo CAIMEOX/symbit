@@ -439,7 +439,7 @@ fn flatten_mul_nonunit_rational(expr : Expr) -> Array[Expr] {
 fn factor_count_map(expr : Expr) -> Map[String, Int] {
   let counts : Map[String, Int] = {}
   for factor in flatten_mul_nonunit_rational(expr) {
-    let key = @symprint.debug_repr(factor)
+    let key = to_repr(factor).to_string()
     match counts.get(key) {
       Some(prev) => counts[key] = prev + 1
       None => counts[key] = 1
@@ -452,7 +452,7 @@ fn factor_count_map(expr : Expr) -> Map[String, Int] {
 fn factor_expr_map(expr : Expr) -> Map[String, Expr] {
   let factors : Map[String, Expr] = {}
   for factor in flatten_mul_nonunit_rational(expr) {
-    let key = @symprint.debug_repr(factor)
+    let key = to_repr(factor).to_string()
     factors[key] = factor
   }
   factors
@@ -461,7 +461,7 @@ fn factor_expr_map(expr : Expr) -> Map[String, Expr] {
 ///|
 fn factor_expr_by_key(expr : Expr, key : String) -> Expr {
   for factor in flatten_mul_nonunit_rational(expr) {
-    if @symprint.debug_repr(factor) == key {
+    if to_repr(factor).to_string() == key {
       return factor
     }
   }
@@ -606,7 +606,7 @@ fn cancel_common_factors(expr : Expr) -> Expr {
   let den_count : Map[String, Int] = {}
   let den_factor : Map[String, Expr] = {}
   for f in dfs {
-    let key = @symprint.debug_repr(f)
+    let key = to_repr(f).to_string()
     den_factor[key] = f
     match den_count.get(key) {
       Some(c) => den_count[key] = c + 1
@@ -615,7 +615,7 @@ fn cancel_common_factors(expr : Expr) -> Expr {
   }
   let kept_num : Array[Expr] = Array::new()
   for f in nfs {
-    let key = @symprint.debug_repr(f)
+    let key = to_repr(f).to_string()
     match den_count.get(key) {
       Some(c) if c > 0 => den_count[key] = c - 1
       _ => kept_num.push(f)
@@ -649,7 +649,7 @@ fn collect_function_terms(expr : Expr, target_name : String) -> Expr {
       for arg in args {
         match parse_coeff_times_named_unary(arg, target_name) {
           Some((coeff, inner)) => {
-            let key = @symprint.debug_repr(inner)
+            let key = to_repr(inner).to_string()
             match grouped.get(key) {
               Some(coeffs) => coeffs.push(coeff)
               None => {

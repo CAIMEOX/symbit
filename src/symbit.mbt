@@ -180,12 +180,6 @@ pub fn pow(base : Expr, exp : Expr) -> Expr {
 }
 
 ///|
-/// Return a structural debug representation of an expression tree.
-pub fn debug_repr(expr : Expr) -> String {
-  @symprint.debug_repr(expr)
-}
-
-///|
 /// Return the default pretty string form for an expression.
 pub fn to_string(expr : Expr) -> String {
   @symprint.to_string(expr)

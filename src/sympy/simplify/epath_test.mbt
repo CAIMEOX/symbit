@@ -11,7 +11,7 @@ test "symsimplify epath select/apply basics" {
   let path = EPath::new("/*/*/Symbol")
   let selected = path.select(expr)
   inspect(
-    selected.map(@symprint.debug_repr),
+    selected.map(expr => to_repr(expr).to_string()),
     content="[\"sym:x\", \"sym:y\", \"sym:z\", \"sym:x\"]",
   )
   let doubled = path.apply(expr, item => @symcore.mul([@symcore.int(2), item]))

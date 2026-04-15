@@ -1,7 +1,7 @@
 ///|
 test "add flattens and folds constants" {
   let expr = add([int(1), Expr::Symbol("x"), add([int(2), Expr::Symbol("y")])])
-  inspect(@symprint.debug_repr(expr), content="(+ sym:x sym:y 3)")
+  inspect(to_repr(expr), content="(+ sym:x sym:y 3)")
   inspect(
     @symprint.to_string(add([Expr::Symbol("x"), Expr::Symbol("x")])),
     content="2*x",
@@ -11,16 +11,16 @@ test "add flattens and folds constants" {
 ///|
 test "mul flattens and handles identities" {
   let expr = mul([Expr::Symbol("x"), int(1), mul([Expr::Symbol("y"), int(2)])])
-  inspect(@symprint.debug_repr(expr), content="(* 2 sym:x sym:y)")
+  inspect(to_repr(expr), content="(* 2 sym:x sym:y)")
   let zeroed = mul([Expr::Symbol("x"), int(0), Expr::Symbol("y")])
-  inspect(@symprint.debug_repr(zeroed), content="0")
+  inspect(to_repr(zeroed), content="0")
 }
 
 ///|
 test "pow normalizes trivial exponents" {
-  inspect(@symprint.debug_repr(pow(Expr::Symbol("x"), int(1))), content="sym:x")
-  inspect(@symprint.debug_repr(pow(Expr::Symbol("x"), int(0))), content="1")
-  inspect(@symprint.debug_repr(pow(int(0), int(0))), content="1")
+  inspect(to_repr(pow(Expr::Symbol("x"), int(1))), content="sym:x")
+  inspect(to_repr(pow(Expr::Symbol("x"), int(0))), content="1")
+  inspect(to_repr(pow(int(0), int(0))), content="1")
   inspect(@symprint.to_string(pow(int(0), Expr::Symbol("x"))), content="0**x")
   inspect(
     @symprint.to_string(pow(pow(Expr::Symbol("x"), int(2)), int(2))),
@@ -33,7 +33,7 @@ test "subst replaces symbols" {
   let env : Map[String, Expr] = { "x": int(2) }
   let expr = add([Expr::Symbol("x"), Expr::Symbol("y")])
   let replaced = subst(expr, env)
-  inspect(@symprint.debug_repr(replaced), content="(+ sym:y 2)")
+  inspect(to_repr(replaced), content="(+ sym:y 2)")
 }
 
 ///|
@@ -45,10 +45,10 @@ test "basic helpers expose structured heads" {
     Expr::Symbol("x"),
     order=int(2),
   )
-  inspect(@symprint.debug_repr(rel), content="(call Le sym:x 2)")
-  inspect(@symprint.debug_repr(tup), content="(call Tuple sym:x 2)")
+  inspect(to_repr(rel), content="(call Le sym:x 2)")
+  inspect(to_repr(tup), content="(call Tuple sym:x 2)")
   inspect(
-    @symprint.debug_repr(deriv),
+    to_repr(deriv),
     content="(call Derivative (call f sym:x) (call Tuple sym:x 2))",
   )
   inspect(is_true(Expr::Boolean(true)), content="true")
@@ -151,8 +151,8 @@ test "has follows SymPy class-head and additive subset semantics" {
 
 ///|
 test "plain symbol names no longer coerce to core singletons" {
-  inspect(@symprint.debug_repr(Expr::Symbol("pi")), content="sym:pi")
-  inspect(@symprint.debug_repr(Expr::Symbol("True")), content="sym:True")
+  inspect(to_repr(Expr::Symbol("pi")), content="sym:pi")
+  inspect(to_repr(Expr::Symbol("True")), content="sym:True")
   match number_symbol_kind(Expr::Symbol("pi")) {
     Some(_) => fail("plain symbol pi should not be a number symbol")
     None => ()
@@ -942,9 +942,9 @@ test "xreplace performs exact structural replacement" {
   let fx = function("f", [x])
   let expr = add([fx, x, y])
   let replaced = xreplace(expr, [(x, int(2)), (fx, Expr::Symbol("z"))])
-  inspect(@symprint.debug_repr(replaced), content="(+ sym:y sym:z 2)")
+  inspect(to_repr(replaced), content="(+ sym:y sym:z 2)")
   inspect(
-    @symprint.debug_repr(xreplace(function("f", [x]), [(x, int(2))])),
+    to_repr(xreplace(function("f", [x]), [(x, int(2))])),
     content="(call f 2)",
   )
   inspect(
@@ -1055,7 +1055,7 @@ test "mod is a first-class structured core node" {
   let expr = mod_expr(add([Expr::Symbol("x"), int(1)]), int(3))
   inspect(head_name(expr), content="Mod")
   json_inspect(args(expr).map(@symprint.to_string), content=["x + 1", "3"])
-  inspect(@symprint.debug_repr(expr), content="(call Mod (+ sym:x 1) 3)")
+  inspect(to_repr(expr), content="(call Mod (+ sym:x 1) 3)")
 }
 
 ///|

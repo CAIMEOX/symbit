@@ -4,14 +4,14 @@ test "prelude constructors round trip through printers" {
     integer(1),
     mul([Expr::Symbol("x"), pow(Expr::Symbol("y"), integer(2))]),
   ])
-  inspect(debug_repr(expr), content="(+ (* sym:x (^ sym:y 2)) 1)")
+  debug_inspect(expr, content="(+ (* sym:x (^ sym:y 2)) 1)")
   inspect(to_string(expr), content="x*y**2 + 1")
 }
 
 ///|
 test "rational helper" {
   let expr = rational(1, 3)
-  inspect(debug_repr(expr), content="1/3")
+  debug_inspect(expr, content="1/3")
 }
 
 ///|

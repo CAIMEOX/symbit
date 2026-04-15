@@ -13,12 +13,12 @@ test "with_evaluate controls core constructor evaluation" {
   let raw_integer_expr = with_evaluate(false, fn() {
     function("Integer", [half])
   })
-  inspect(@symprint.debug_repr(raw_add_expr), content="(+ sym:x sym:x)")
-  inspect(@symprint.debug_repr(raw_pow_expr), content="(^ sym:x 1)")
-  inspect(@symprint.debug_repr(raw_eq_expr), content="(call Eq sym:x sym:x)")
-  inspect(@symprint.debug_repr(raw_integer_expr), content="1")
-  inspect(@symprint.debug_repr(add([x, x])), content="(* 2 sym:x)")
-  inspect(@symprint.debug_repr(function("Eq", [x, x])), content="sym:True")
+  inspect(to_repr(raw_add_expr), content="(+ sym:x sym:x)")
+  inspect(to_repr(raw_pow_expr), content="(^ sym:x 1)")
+  inspect(to_repr(raw_eq_expr), content="(call Eq sym:x sym:x)")
+  inspect(to_repr(raw_integer_expr), content="1")
+  inspect(to_repr(add([x, x])), content="(* 2 sym:x)")
+  inspect(to_repr(function("Eq", [x, x])), content="sym:True")
 }
 
 ///|

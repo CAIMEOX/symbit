@@ -8,7 +8,7 @@ The examples in this README are executable `mbt check` blocks. They are kept int
 
 ## QuickStart
 
-The fastest way to start is to build expressions with `symbol`, `integer`, `rational`, `add`, `mul`, and `pow`, then render them with `to_string` or `debug_repr`. This keeps the entry path explicit and avoids hiding tree structure behind parser magic. In real use you usually construct a symbolic expression, inspect it in debug or readable form, then apply one of the simplifiers depending on whether you want a general rewrite, a rational-function normalization, or a more specialized transformation.
+The fastest way to start is to build expressions with `symbol`, `integer`, `rational`, `add`, `mul`, and `pow`, then render them with `to_string` or `debug_inspect`. This keeps the entry path explicit and avoids hiding tree structure behind parser magic. In real use you usually construct a symbolic expression, inspect it in debug or readable form, then apply one of the simplifiers depending on whether you want a general rewrite, a rational-function normalization, or a more specialized transformation.
 
 ```mbt check
 ///|
@@ -17,7 +17,7 @@ test "quickstart expression construction and simplification" {
   let y = Expr::Symbol("y")
 
   let expr = add([integer(1), mul([x, pow(y, integer(2))])])
-  inspect(debug_repr(expr), content="(+ (* sym:x (^ sym:y 2)) 1)")
+  debug_inspect(expr, content="(+ (* sym:x (^ sym:y 2)) 1)")
   inspect(to_string(expr), content="x*y**2 + 1")
 
   let cancelled = simplify(
@@ -101,7 +101,7 @@ test "fu-style helpers are available from the root package" {
   let tan_x = @symcore.function("tan", [x])
 
   inspect(
-    debug_repr(tr2(tan_x)),
+    to_repr(tr2(tan_x)).to_string(),
     content="(* (^ (call cos sym:x) -1) (call sin sym:x))",
   )
   inspect(

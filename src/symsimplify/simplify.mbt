@@ -125,7 +125,7 @@ fn shorter_expr(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn expr_complexity(expr : Expr) -> Int {
-  node_count(expr) * 32 + @symprint.debug_repr(expr).length()
+  node_count(expr) * 32 + to_repr(expr).to_string().length()
 }
 
 ///|
@@ -166,7 +166,7 @@ fn cancel_common_factors_simple(num : Expr, den : Expr) -> Expr {
   let den_count : Map[String, Int] = {}
   let den_factor : Map[String, Expr] = {}
   for factor in dfs {
-    let key = @symprint.debug_repr(factor)
+    let key = to_repr(factor).to_string()
     den_factor[key] = factor
     match den_count.get(key) {
       Some(count) => den_count[key] = count + 1
@@ -175,7 +175,7 @@ fn cancel_common_factors_simple(num : Expr, den : Expr) -> Expr {
   }
   let kept_num : Array[Expr] = Array::new()
   for factor in nfs {
-    let key = @symprint.debug_repr(factor)
+    let key = to_repr(factor).to_string()
     match den_count.get(key) {
       Some(count) if count > 0 => den_count[key] = count - 1
       _ => kept_num.push(factor)
@@ -248,7 +248,7 @@ fn factor_add_terms(expr : Expr) -> Expr {
         if is_numeric_factor(factor) {
           continue
         }
-        let key = @symprint.debug_repr(factor)
+        let key = to_repr(factor).to_string()
         common_exprs[key] = factor
         match common_counts.get(key) {
           Some(count) => common_counts[key] = count + 1
@@ -262,7 +262,7 @@ fn factor_add_terms(expr : Expr) -> Expr {
           if is_numeric_factor(factor) {
             continue
           }
-          let key = @symprint.debug_repr(factor)
+          let key = to_repr(factor).to_string()
           match counts.get(key) {
             Some(count) => counts[key] = count + 1
             None => counts[key] = 1
@@ -314,7 +314,7 @@ fn factor_add_terms(expr : Expr) -> Expr {
             remaining.push(factor)
             continue
           }
-          let key = @symprint.debug_repr(factor)
+          let key = to_repr(factor).to_string()
           match needed.get(key) {
             Some(count) if count > 0 => needed[key] = count - 1
             _ => remaining.push(factor)
@@ -838,7 +838,7 @@ fn add_like_terms(expr : Expr) -> Expr {
         match base_opt {
           None => const_term = const_term.add_r(coeff)
           Some(base_expr) => {
-            let key = @symprint.debug_repr(base_expr)
+            let key = to_repr(base_expr).to_string()
             match terms.get(key) {
               Some(acc) =>
                 terms[key] = AddTerm::{
@@ -913,7 +913,7 @@ fn mul_like_bases(expr : Expr) -> Expr {
         match arg {
           Expr::Number(n) => const_factor = const_factor.mul_r(n)
           Expr::Pow(base, Expr::Number(exp)) => {
-            let key = @symprint.debug_repr(base)
+            let key = to_repr(base).to_string()
             match powers.get(key) {
               Some(acc) =>
                 powers[key] = BasePow::{
@@ -924,7 +924,7 @@ fn mul_like_bases(expr : Expr) -> Expr {
             }
           }
           _ => {
-            let key = @symprint.debug_repr(arg)
+            let key = to_repr(arg).to_string()
             match powers.get(key) {
               Some(acc) =>
                 powers[key] = BasePow::{

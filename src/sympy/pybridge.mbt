@@ -373,7 +373,7 @@ fn sympy_wild_cache_key(
 ) -> String {
   let parts : Array[String] = [name]
   for item in exclude {
-    parts.push(@symprint.debug_repr(item))
+    parts.push(to_repr(item).to_string())
   }
   for property in properties {
     parts.push(@symcore.wild_property_name(property))
