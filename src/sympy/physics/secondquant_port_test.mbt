@@ -40,14 +40,14 @@ test "physics.secondquant: boson parity" {
 
   inspect(
     secondquant_eval_str(
-      @symprint.to_string(secondquant_dagger(boson_ket([n]))),
+      @symprint.pretty_string(secondquant_dagger(boson_ket([n]))),
     ),
     content=secondquant_eval_str("Dagger(BKet([n]))"),
   )
   sq_assert_string_equal(
     secondquant_apply_str("B(0)*BKet([n])"),
     secondquant_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         secondquant_apply_operators(
           @symcore.raw_mul([b0.as_expr(), boson_ket([n])]),
         ),
@@ -58,7 +58,7 @@ test "physics.secondquant: boson parity" {
   sq_assert_string_equal(
     secondquant_apply_str("Bd(0)*BKet([n])"),
     secondquant_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         secondquant_apply_operators(
           @symcore.raw_mul([bd0.as_expr(), boson_ket([n])]),
         ),
@@ -69,7 +69,7 @@ test "physics.secondquant: boson parity" {
   sq_assert_string_equal(
     secondquant_apply_str("Bd(0)*B(0)*Bd(1)*B(0)*BKet([n, m])"),
     secondquant_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         secondquant_apply_operators(
           @symcore.raw_mul([
             bd0.as_expr(),
@@ -86,7 +86,7 @@ test "physics.secondquant: boson parity" {
   sq_assert_string_equal(
     secondquant_eval_str("InnerProduct(BBra([i, j]), BKet([k, l]))"),
     secondquant_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         secondquant_inner_product(
           boson_bra([@symcore.Expr::Symbol("i"), @symcore.Expr::Symbol("j")]),
           boson_ket([@symcore.Expr::Symbol("k"), @symcore.Expr::Symbol("l")]),
@@ -98,7 +98,7 @@ test "physics.secondquant: boson parity" {
   sq_assert_string_equal(
     secondquant_eval_str("Commutator(B(0), Bd(0))"),
     secondquant_eval_str(
-      @symprint.to_string(secondquant_commutator(b0.as_expr(), bd0.as_expr())),
+      @symprint.pretty_string(secondquant_commutator(b0.as_expr(), bd0.as_expr())),
     ),
     "boson commutator parity",
   )

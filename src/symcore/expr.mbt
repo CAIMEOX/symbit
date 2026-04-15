@@ -150,7 +150,7 @@ pub impl BitXOr for Expr with lxor(self, other) {
 ///
 /// ```mbt check
 /// test "symcore int builds an exact integer expression" {
-///   inspect(@symprint.to_string(int(3)), content="3")
+///   inspect(@symprint.pretty_string(int(3)), content="3")
 /// }
 /// ```
 pub fn int(value : Int) -> Expr {
@@ -829,7 +829,7 @@ fn mul_float_to_complex(lhs : ComplexFloat, rhs : Float) -> ComplexFloat {
 /// ```mbt check
 /// test "symcore add constructs readable sums" {
 ///   let x = Expr::Symbol("x")
-///   inspect(@symprint.to_string(add([x, int(1)])), content="x + 1")
+///   inspect(@symprint.pretty_string(add([x, int(1)])), content="x + 1")
 /// }
 /// ```
 pub fn add(args : Array[Expr]) -> Expr {
@@ -1584,7 +1584,7 @@ fn constructor_singleton_registry(name : String, args : Array[Expr]) -> Expr {
 /// ```mbt check
 /// test "symcore function builds named applications" {
 ///   let x = Expr::Symbol("x")
-///   inspect(@symprint.to_string(function("sin", [x])), content="sin(x)")
+///   inspect(@symprint.pretty_string(function("sin", [x])), content="sin(x)")
 /// }
 /// ```
 pub fn function(name : String, args : Array[Expr]) -> Expr {

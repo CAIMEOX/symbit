@@ -10,7 +10,7 @@ test "geometry.polygon area convexity and bounds" {
     GeometryEntity::Polygon(value) => value
     _ => fail("expected polygon")
   }
-  assert_true(geometry_expr_equal(@symprint.to_string(poly.area()), "12"))
+  assert_true(geometry_expr_equal(@symprint.pretty_string(poly.area()), "12"))
   assert_true(poly.is_convex())
   let bounds = poly.bounds()
   assert_eq(bounds.0.repr(), "Point2D(0, 0)")
@@ -31,8 +31,8 @@ test "geometry.regular polygon and triangle centers" {
   assert_eq(args.2, 4)
   geometry_assert_expr_equal(args.3, "0", "regular polygon args rotation")
   assert_eq(rp.circumcenter().repr(), "Point2D(0, 0)")
-  assert_true(geometry_expr_equal(@symprint.to_string(vertices[0].x()), "1"))
-  assert_true(geometry_expr_equal(@symprint.to_string(vertices[1].y()), "1"))
+  assert_true(geometry_expr_equal(@symprint.pretty_string(vertices[0].x()), "1"))
+  assert_true(geometry_expr_equal(@symprint.pretty_string(vertices[1].y()), "1"))
   let tri = triangle(
     point2d(@symcore.int(0), @symcore.int(0)),
     point2d(@symcore.int(4), @symcore.int(0)),
@@ -40,13 +40,13 @@ test "geometry.regular polygon and triangle centers" {
   )
   assert_true(tri.is_right())
   let incenter = tri.incenter()
-  assert_true(geometry_expr_equal(@symprint.to_string(incenter.x()), "1"))
-  assert_true(geometry_expr_equal(@symprint.to_string(incenter.y()), "1"))
+  assert_true(geometry_expr_equal(@symprint.pretty_string(incenter.x()), "1"))
+  assert_true(geometry_expr_equal(@symprint.pretty_string(incenter.y()), "1"))
   let circumcenter = tri.circumcenter()
-  assert_true(geometry_expr_equal(@symprint.to_string(circumcenter.x()), "2"))
-  assert_true(geometry_expr_equal(@symprint.to_string(circumcenter.y()), "3/2"))
+  assert_true(geometry_expr_equal(@symprint.pretty_string(circumcenter.x()), "2"))
+  assert_true(geometry_expr_equal(@symprint.pretty_string(circumcenter.y()), "3/2"))
   assert_true(
-    geometry_expr_equal(@symprint.to_string(tri.incircle().radius()), "1"),
+    geometry_expr_equal(@symprint.pretty_string(tri.incircle().radius()), "1"),
   )
   assert_eq(
     expr_map_summary(

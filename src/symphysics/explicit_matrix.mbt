@@ -223,7 +223,7 @@ pub fn ExplicitMatrix::mul(
 
 ///|
 fn explicit_matrix_cell_string(value : Expr) -> String {
-  let txt = @symprint.to_string(value)
+  let txt = @symprint.pretty_string(value)
   if txt == "-1" {
     "-1"
   } else if txt.has_prefix("-1*") {

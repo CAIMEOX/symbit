@@ -63,7 +63,7 @@ fn normalize_expr_tuple2_text(text : String) -> String {
 ///|
 fn render_expr_result(result : Result[@symcore.Expr, PolyError]) -> String {
   match result {
-    Ok(expr) => normalize_expr_text(@symprint.to_string(expr))
+    Ok(expr) => normalize_expr_text(@symprint.pretty_string(expr))
     Err(_) => "ERROR"
   }
 }
@@ -75,7 +75,7 @@ fn render_expr_triple_result(
   match result {
     Ok(items) =>
       normalize_expr_tuple3_text(
-        "(\{@symprint.to_string(items.0)},\{@symprint.to_string(items.1)},\{@symprint.to_string(items.2)})",
+        "(\{@symprint.pretty_string(items.0)},\{@symprint.pretty_string(items.1)},\{@symprint.pretty_string(items.2)})",
       )
     Err(_) => "ERROR"
   }
@@ -88,7 +88,7 @@ fn render_expr_pair_result(
   match result {
     Ok(items) =>
       normalize_expr_tuple2_text(
-        "(\{@symprint.to_string(items.0)},\{@symprint.to_string(items.1)})",
+        "(\{@symprint.pretty_string(items.0)},\{@symprint.pretty_string(items.1)})",
       )
     Err(_) => "ERROR"
   }
@@ -99,7 +99,7 @@ fn render_optional_expr_result(
   result : Result[@symcore.Expr?, PolyError],
 ) -> String {
   match result {
-    Ok(Some(expr)) => normalize_expr_text(@symprint.to_string(expr))
+    Ok(Some(expr)) => normalize_expr_text(@symprint.pretty_string(expr))
     Ok(None) => "NONE"
     Err(_) => "ERROR"
   }
@@ -108,7 +108,7 @@ fn render_optional_expr_result(
 ///|
 fn render_expr_tree_item(item : DomainExprTree) -> String {
   match item {
-    DomainExprTree::Elem(expr) => normalize_expr_text(@symprint.to_string(expr))
+    DomainExprTree::Elem(expr) => normalize_expr_text(@symprint.pretty_string(expr))
     DomainExprTree::List(items) => render_expr_tree(items)
   }
 }
@@ -755,7 +755,7 @@ test "domains: algebraic_field parity and Domain methods" {
   match direct_alg_field {
     Domain::AlgExt(_, gens, rels) => {
       assert_true(gens.equal(["a"]))
-      assert_eq(normalize_expr_text(@symprint.to_string(rels[0])), "a**2-2")
+      assert_eq(normalize_expr_text(@symprint.pretty_string(rels[0])), "a**2-2")
     }
     _ => fail("expected AlgExt from alg_field_from_poly")
   }
@@ -798,7 +798,7 @@ test "domains: algebraic_field parity and Domain methods" {
     Domain::AlgExt(_, gens, rels) => {
       assert_true(gens.equal(["a"]))
       assert_eq(
-        normalize_expr_text(@symprint.to_string(rels[0])),
+        normalize_expr_text(@symprint.pretty_string(rels[0])),
         "a**4+a**3+a**2+a+1",
       )
     }
@@ -1699,7 +1699,7 @@ test "domains: canonical_unit parity on scalar and composite domains" {
   let zz_series = @sympolys.domain_from_string("ZZ[[x]](prec=5)")
   assert_eq(
     trim_ws(
-      @symprint.to_string(zz_series.canonical_unit_expr(@symcore.int(-1) + x)),
+      @symprint.pretty_string(zz_series.canonical_unit_expr(@symcore.int(-1) + x)),
     ),
     "-1",
   )

@@ -26,7 +26,7 @@ fn hilbert_expr_repr(expr : Expr) -> String {
       let args = @symcore.application_args(expr).unwrap()
       "Interval(\{hilbert_expr_repr(args[0])}, \{hilbert_expr_repr(args[1])})"
     }
-    _ => @symprint.to_string(expr)
+    _ => @symprint.pretty_string(expr)
   }
 }
 
@@ -285,7 +285,7 @@ pub fn HilbertSpace::repr(self : HilbertSpace) -> String {
       "DirectSumHilbertSpace(\{rendered})"
     }
     HilbertSpace::TensorPower(base, exp) =>
-      "TensorPowerHilbertSpace(\{base.to_string()},\{@symprint.to_string(exp)})"
+      "TensorPowerHilbertSpace(\{base.to_string()},\{@symprint.pretty_string(exp)})"
   }
 }
 
@@ -293,9 +293,9 @@ pub fn HilbertSpace::repr(self : HilbertSpace) -> String {
 pub impl Show for HilbertSpace with to_string(self) {
   match self {
     HilbertSpace::Abstract => "H"
-    HilbertSpace::Complex(dimension) => "C(\{@symprint.to_string(dimension)})"
+    HilbertSpace::Complex(dimension) => "C(\{@symprint.pretty_string(dimension)})"
     HilbertSpace::L2(interval_expr) =>
-      "L2(\{@symprint.to_string(interval_expr)})"
+      "L2(\{@symprint.pretty_string(interval_expr)})"
     HilbertSpace::Fock => "F"
     HilbertSpace::TensorProduct(args) =>
       args
@@ -309,7 +309,7 @@ pub impl Show for HilbertSpace with to_string(self) {
     HilbertSpace::DirectSum(args) =>
       args.map(item => item.to_string()).join("+")
     HilbertSpace::TensorPower(base, exp) =>
-      "\{base.to_string()}**\{@symprint.to_string(exp)}"
+      "\{base.to_string()}**\{@symprint.pretty_string(exp)}"
   }
 }
 

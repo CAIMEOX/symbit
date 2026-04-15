@@ -37,7 +37,7 @@ fn compogen_symbol_name(symbol : Expr) -> String {
   match @symcore.normalize_legacy_expr(symbol) {
     Expr::Symbol(name) => name
     Expr::Dummy(name, _) => name
-    other => @symprint.to_string(other)
+    other => @symprint.pretty_string(other)
   }
 }
 
@@ -111,7 +111,7 @@ fn replace_once(expr : Expr, old : Expr, fresh : Expr) -> Expr {
 ///|
 fn find_subexpr_by_text(expr : Expr, target : String) -> Expr? {
   for node in @symcore.preorder(expr) {
-    if @symprint.to_string(node) == target {
+    if @symprint.pretty_string(node) == target {
       return Some(node)
     }
   }
@@ -123,7 +123,7 @@ fn decompogen_via_generator_subexpr(
   expr : Expr,
   symbol : Expr,
 ) -> Array[Expr]? raise SolverError {
-  let symbol_text = @symprint.to_string(symbol)
+  let symbol_text = @symprint.pretty_string(symbol)
   let mut best : Array[Expr]? = None
   for node in @symcore.preorder(expr) {
     if @symcore.compare_expr(node, expr) == 0 ||
@@ -151,8 +151,8 @@ fn decompogen_via_generator_subexpr(
           if candidate.length() < current.length() ||
             (
               candidate.length() == current.length() &&
-              @symprint.to_string(node).length() <
-              @symprint.to_string(current[1]).length()
+              @symprint.pretty_string(node).length() <
+              @symprint.pretty_string(current[1]).length()
             ) {
             best = Some(candidate)
           }
@@ -195,7 +195,7 @@ fn decompogen_from_poly(
   if poly.gens.length() != 1 {
     return None
   }
-  let symbol_text = @symprint.to_string(symbol)
+  let symbol_text = @symprint.pretty_string(symbol)
   let gen_text = poly.gens[0]
   if gen_text != symbol_text {
     match find_subexpr_by_text(expr, gen_text) {

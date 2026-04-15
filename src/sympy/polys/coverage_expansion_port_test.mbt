@@ -125,7 +125,7 @@ test "coverage: core helpers and leading-term API" {
   assert_eq(cov_lt_repr(lt1), cov_lt_repr(lt2))
 
   let as_expr = p.to_expr_with_order(TermOrder::Lex)
-  let expr_norm = sympy_normalize(@symprint.to_string(as_expr))
+  let expr_norm = sympy_normalize(@symprint.pretty_string(as_expr))
     .trim()
     .to_string()
   let poly_norm = cov_poly_norm(p)
@@ -414,7 +414,7 @@ test "coverage: algebraic-extension public helpers" {
     Domain::AlgExt(base, gens, rels) => {
       assert_true(base is Domain::QQ)
       assert_eq(gens, ["x"])
-      let rel = sympy_normalize(@symprint.to_string(rels[0])).trim().to_string()
+      let rel = sympy_normalize(@symprint.pretty_string(rels[0])).trim().to_string()
       assert_eq(rel, expect_minpoly)
     }
     _ => fail("expected Domain::AlgExt")

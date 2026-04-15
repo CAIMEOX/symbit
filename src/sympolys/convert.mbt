@@ -60,7 +60,7 @@ pub fn Poly::to_expr_with_order(self : Poly, order : TermOrder) -> Expr {
 ///   let poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(
 ///     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
 ///   )
-///   inspect(@symprint.to_string(poly.to_expr()), content="x**2 + 2*x + 1")
+///   inspect(@symprint.pretty_string(poly.to_expr()), content="x**2 + 2*x + 1")
 /// }
 /// ```
 pub fn Poly::to_expr(self : Poly) -> Expr {
@@ -80,7 +80,7 @@ pub fn Poly::to_string(self : Poly, order? : TermOrder) -> String {
     Some(o) => o
     None => self.order
   }
-  @symprint.to_string(self.to_expr_with_order(ord))
+  @symprint.pretty_string(self.to_expr_with_order(ord))
 }
 
 ///|

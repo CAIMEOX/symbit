@@ -114,7 +114,7 @@ fn sympify_with_env(
   let kwargs : Map[String, OracleArg] = {
     "locals": OracleArg::Dict(locals_from_env(env)),
   }
-  let expr_str = @symprint.to_string(expr)
+  let expr_str = @symprint.pretty_string(expr)
   sympy_call_must("sympy.sympify", [OracleArg::Str(expr_str)], kwargs~)
 }
 

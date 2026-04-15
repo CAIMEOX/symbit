@@ -6,7 +6,7 @@ fn symbolic_system_entries_string(
   let items : Array[String] = []
   for i in 0..<matrix.height() {
     for j in 0..<matrix.width() {
-      items.push(@symprint.to_string(rows[i][j]))
+      items.push(@symprint.pretty_string(rows[i][j]))
     }
   }
   "[" + items.join(", ") + "]"
@@ -120,7 +120,7 @@ test "physics.mechanics parity symbolic system forms" {
       "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.compute_explicit_form(); symsystem.comb_explicit_rhs",
     ),
   )
-  let ours_dyn_items = symsystem3.dynamic_symbols().map(@symprint.to_string)
+  let ours_dyn_items = symsystem3.dynamic_symbols().map(@symprint.pretty_string)
   let oracle_dyn = mechanics_summary(
     prefix +
     "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); sorted(str(x) for x in symsystem.dynamic_symbols())",
@@ -130,7 +130,7 @@ test "physics.mechanics parity symbolic system forms" {
     ours_dyn_items.length() == oracle_dyn_items.length() &&
     ours_dyn_items.all(fn(item) { oracle_dyn_items.contains(item) }),
   )
-  let ours_const_items = symsystem3.constant_symbols().map(@symprint.to_string)
+  let ours_const_items = symsystem3.constant_symbols().map(@symprint.pretty_string)
   ours_const_items.sort_by((a, b) => a.compare(b))
   let ours_consts = "[" + ours_const_items.join(", ") + "]"
   let oracle_consts = mechanics_summary(

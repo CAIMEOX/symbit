@@ -4,7 +4,7 @@ test "symconcrete ExprWithLimits to_expr Sum" {
   let limits = [limit_range(x, @symcore.int(1), @symcore.int(3))]
   let ewl = ExprWithLimits::{ expr: x, limits }
   let expr = ewl.to_expr("Sum")
-  let ours = @symprint.to_string(expr)
+  let ours = @symprint.pretty_string(expr)
   let expected = "Sum(x, (x, 1, 3))"
   assert_eq(normalize_srepr(ours), normalize_srepr(expected))
 }

@@ -10,7 +10,7 @@ test "geometry.plane parity repr distance and line intersection" {
   )
   assert_true(
     geometry_expr_equal(
-      @symprint.to_string(
+      @symprint.pretty_string(
         pl.distance(point3d(@symcore.int(0), @symcore.int(0), @symcore.int(4))),
       ),
       "Plane(Point3D(0, 0, 1), normal_vector=(0, 0, 1)).distance(Point3D(0,0,4))",
@@ -104,7 +104,7 @@ test "geometry.plane parity high-value helpers" {
     "Plane(Point3D(1, 1, 1), normal_vector=(1, 1, 1)).parameter_value(Point3D(-2, 0, 5), u, v)[v]",
   )
   for item in uv_values {
-    let key = @symprint.to_string(item.0)
+    let key = @symprint.pretty_string(item.0)
     if key == "u" {
       geometry_assert_expr_equal(item.1, expected_u, "plane parameter_value u")
     } else if key == "v" {

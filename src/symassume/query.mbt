@@ -608,7 +608,7 @@ pub fn query_to_sympy(expr : Query) -> String {
   match expr {
     Query::Bool(v) => if v { "True" } else { "False" }
     Query::Atom(key, args) => {
-      let rendered = args.map(arg => @symprint.to_string(arg)).join(", ")
+      let rendered = args.map(arg => @symprint.pretty_string(arg)).join(", ")
       match key {
         PredicateKey::Eq => "Eq(\{rendered})"
         PredicateKey::Ne => "Ne(\{rendered})"
@@ -649,6 +649,6 @@ pub fn query_to_sympy(expr : Query) -> String {
 ///
 /// The key combines the predicate name with the printed argument list.
 pub fn query_atom_key(key : PredicateKey, args : Array[Expr]) -> String {
-  let rendered = args.map(arg => @symprint.to_string(arg)).join(",")
+  let rendered = args.map(arg => @symprint.pretty_string(arg)).join(",")
   "\{predicate_name(key)}:\{rendered}"
 }

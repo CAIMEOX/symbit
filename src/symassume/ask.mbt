@@ -391,7 +391,7 @@ fn SatBuilder::relevant_exprs(self : SatBuilder) -> Array[Expr] {
   for _, info in self.atom_infos {
     let (_, args) = info
     for arg in args {
-      let key = @symprint.to_string(arg)
+      let key = @symprint.pretty_string(arg)
       if !seen.contains(key) {
         seen[key] = arg
       }

@@ -4,7 +4,7 @@ fn sq_adv_assert_expr_oracle(
   oracle_expr : String,
   _context : String,
 ) -> Unit raise {
-  let ours = secondquant_eval_str(@symprint.to_string(expr))
+  let ours = secondquant_eval_str(@symprint.pretty_string(expr))
   let expected = secondquant_exec_str(oracle_expr)
   assert_eq(ours, expected)
 }
@@ -19,11 +19,11 @@ test "physics.secondquant: fermion constructors and operator application" {
   inspect(fermion_annihilator(p).to_string(), content="f(p)")
   inspect(fermion_creator(q).to_string(), content="f+(q)")
   inspect(
-    @symprint.to_string(secondquant_dagger(f(p))),
+    @symprint.pretty_string(secondquant_dagger(f(p))),
     content="CreateFermion(p)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       secondquant_dagger(fket([@symcore.int(1), @symcore.int(2)])),
     ),
     content="FockStateFermionBra(Tuple(1, 2))",
@@ -88,7 +88,7 @@ test "physics.secondquant: tensors and antisymmetry" {
   let i = @symcore.Expr::Symbol("i")
   let j = @symcore.Expr::Symbol("j")
   inspect(
-    @symprint.to_string(tensor_symbol(@symcore.Expr::Symbol("T"))),
+    @symprint.pretty_string(tensor_symbol(@symcore.Expr::Symbol("T"))),
     content="TensorSymbol(T)",
   )
   sq_adv_assert_expr_oracle(

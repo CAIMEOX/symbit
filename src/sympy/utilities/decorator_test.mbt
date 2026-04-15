@@ -7,7 +7,7 @@ test "decorator threaded and xthreaded behavior" {
     @symcore.add([@symcore.Expr::Symbol("x"), @symcore.Expr::Symbol("y")]),
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       match threaded_square(expr) {
         Threadable::Scalar(v) => v
         _ => @symcore.int(0)
@@ -16,7 +16,7 @@ test "decorator threaded and xthreaded behavior" {
     content="x**2 + y**2",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       match xthreaded_square(expr) {
         Threadable::Scalar(v) => v
         _ => @symcore.int(0)

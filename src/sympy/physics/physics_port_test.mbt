@@ -1,6 +1,6 @@
 ///|
 fn physics_expr_equal(lhs : @symcore.Expr, rhs : String) -> Bool {
-  expr_equal(@symprint.to_string(lhs), rhs) catch {
+  expr_equal(@symprint.pretty_string(lhs), rhs) catch {
     _ => false
   }
 }
@@ -11,7 +11,7 @@ fn physics_assert_expr_equal(
   rhs : String,
   context : String,
 ) -> Unit raise {
-  let ours = @symprint.to_string(lhs)
+  let ours = @symprint.pretty_string(lhs)
   if expr_equal(ours, rhs) {
     return
   }

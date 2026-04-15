@@ -6,7 +6,7 @@
 /// - Returns: A record carrying mode, fraction, trig, multiplication, root,
 ///   imaginary-unit, differential-operator, and symbol-name options.
 /// - Limits: This config only affects the LaTeX printer; it does not change
-///   `to_string` or structural `Debug` output.
+///   `pretty_string` or structural `Debug` output.
 ///
 /// Current Limits:
 /// - `symprint` currently exposes plain-text and LaTeX front doors only.

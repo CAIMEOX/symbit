@@ -3,7 +3,7 @@ test "add flattens and folds constants" {
   let expr = add([int(1), Expr::Symbol("x"), add([int(2), Expr::Symbol("y")])])
   inspect(to_repr(expr), content="(+ sym:x sym:y 3)")
   inspect(
-    @symprint.to_string(add([Expr::Symbol("x"), Expr::Symbol("x")])),
+    @symprint.pretty_string(add([Expr::Symbol("x"), Expr::Symbol("x")])),
     content="2*x",
   )
 }
@@ -21,9 +21,9 @@ test "pow normalizes trivial exponents" {
   inspect(to_repr(pow(Expr::Symbol("x"), int(1))), content="sym:x")
   inspect(to_repr(pow(Expr::Symbol("x"), int(0))), content="1")
   inspect(to_repr(pow(int(0), int(0))), content="1")
-  inspect(@symprint.to_string(pow(int(0), Expr::Symbol("x"))), content="0**x")
+  inspect(@symprint.pretty_string(pow(int(0), Expr::Symbol("x"))), content="0**x")
   inspect(
-    @symprint.to_string(pow(pow(Expr::Symbol("x"), int(2)), int(2))),
+    @symprint.pretty_string(pow(pow(Expr::Symbol("x"), int(2)), int(2))),
     content="x**4",
   )
 }
@@ -67,26 +67,26 @@ test "free_symbols respects bound variables" {
     Expr::Tuple([x, y]),
     Expr::Tuple([y, z]),
   )
-  json_inspect(free_symbols(lam).map(@symprint.to_string), content=["z"])
-  json_inspect(free_symbols(deriv).map(@symprint.to_string), content=["x", "y"])
-  json_inspect(free_symbols(subs_multi).map(@symprint.to_string), content=[
+  json_inspect(free_symbols(lam).map(@symprint.pretty_string), content=["z"])
+  json_inspect(free_symbols(deriv).map(@symprint.pretty_string), content=["x", "y"])
+  json_inspect(free_symbols(subs_multi).map(@symprint.pretty_string), content=[
     "y", "z",
   ])
   inspect(has(lam, z), content="true")
   inspect(has(lam, y), content="true")
   json_inspect(
-    free_symbols(lambda_expr(Expr::Tuple([]), int(42))).map(@symprint.to_string),
+    free_symbols(lambda_expr(Expr::Tuple([]), int(42))).map(@symprint.pretty_string),
     content=[],
   )
   json_inspect(
     free_symbols(lambda_expr(Expr::Tuple([]), mul([x, y]))).map(
-      @symprint.to_string,
+      @symprint.pretty_string,
     ),
     content=["x", "y"],
   )
   let subs_structural = subs_expr(x, x, int(0))
   inspect(has(subs_structural, x), content="true")
-  json_inspect(free_symbols(subs_structural).map(@symprint.to_string), content=[])
+  json_inspect(free_symbols(subs_structural).map(@symprint.pretty_string), content=[])
   let subs_env : Map[String, Expr] = {}
   subs_env.set("x", y)
   inspect(has(subst(subs_expr(x, x, int(1)), subs_env), y), content="true")
@@ -182,23 +182,23 @@ test "number symbols are structured constants" {
   }
   json_inspect(
     free_symbols(add([pi_expr, imag, Expr::Symbol("x")])).map(
-      @symprint.to_string,
+      @symprint.pretty_string,
     ),
     content=["x"],
   )
-  inspect(@symprint.to_string(mul([int(-1), inf])), content="-oo")
-  inspect(@symprint.to_string(pow(int(1), int(-1))), content="1")
+  inspect(@symprint.pretty_string(mul([int(-1), inf])), content="-oo")
+  inspect(@symprint.pretty_string(pow(int(1), int(-1))), content="1")
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       pow(int(16), rational_from_ints(1, 2) catch { _ => fail("half power") }),
     ),
     content="4",
   )
-  inspect(@symprint.to_string(pow(imag, int(2))), content="-1")
-  inspect(@symprint.to_string(pow(imag, int(3))), content="-I")
-  inspect(@symprint.to_string(pow(imag, int(4))), content="1")
-  inspect(@symprint.to_string(function("sqrt", [int(-1)])), content="I")
-  inspect(@symprint.to_string(function("sqrt", [int(-4)])), content="2*I")
+  inspect(@symprint.pretty_string(pow(imag, int(2))), content="-1")
+  inspect(@symprint.pretty_string(pow(imag, int(3))), content="-I")
+  inspect(@symprint.pretty_string(pow(imag, int(4))), content="1")
+  inspect(@symprint.pretty_string(function("sqrt", [int(-1)])), content="I")
+  inspect(@symprint.pretty_string(function("sqrt", [int(-4)])), content="2*I")
 }
 
 ///|
@@ -207,8 +207,8 @@ test "dummy and wild are distinct structured symbols" {
   let d2 = dummy(name="x")
   let w = Expr::Wild("x", [], [])
   assert_false(d1 == d2)
-  inspect(@symprint.to_string(d1), content="_x")
-  inspect(@symprint.to_string(w), content="x_")
+  inspect(@symprint.pretty_string(d1), content="_x")
+  inspect(@symprint.pretty_string(w), content="x_")
   match expr_form(d1) {
     ExprForm::Dummy(name, _) => inspect(name, content="x")
     _ => fail("expected dummy expr form")
@@ -272,14 +272,14 @@ test "args follow SymPy-style derivative and lambda shapes" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   json_inspect(
-    args(derivative(function("f", [x]), x)).map(@symprint.to_string),
+    args(derivative(function("f", [x]), x)).map(@symprint.pretty_string),
     content=["f(x)", "(x, 1)"],
   )
-  json_inspect(args(lambda_expr(x, add([x, y]))).map(@symprint.to_string), content=[
+  json_inspect(args(lambda_expr(x, add([x, y]))).map(@symprint.pretty_string), content=[
     "(x,)", "x + y",
   ])
   json_inspect(
-    args(lambda_expr(Expr::Tuple([x, y]), add([x, y]))).map(@symprint.to_string),
+    args(lambda_expr(Expr::Tuple([x, y]), add([x, y]))).map(@symprint.pretty_string),
     content=["(x, y)", "x + y"],
   )
 }
@@ -289,37 +289,37 @@ test "func and args expose canonical heads for containers and binders" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   inspect(
-    @symprint.to_string(func(Expr::Tuple([x, y])).unwrap_or(int(0))),
+    @symprint.pretty_string(func(Expr::Tuple([x, y])).unwrap_or(int(0))),
     content="<class 'sympy.core.containers.Tuple'>",
   )
   inspect(
-    @symprint.to_string(func(Expr::Dict([(x, y)])).unwrap_or(int(0))),
+    @symprint.pretty_string(func(Expr::Dict([(x, y)])).unwrap_or(int(0))),
     content="<class 'sympy.core.containers.Dict'>",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       func(Expr::Relational(RelOp::Eq, x, y)).unwrap_or(int(0)),
     ),
     content="<class 'sympy.core.relational.Equality'>",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       func(subs_expr(add([x, y]), x, int(1))).unwrap_or(int(0)),
     ),
     content="<class 'sympy.core.function.Subs'>",
   )
   let dict_args = args(Expr::Dict([(x, y), (int(1), x)])).map(
-    @symprint.to_string,
+    @symprint.pretty_string,
   )
   inspect(dict_args.length(), content="2")
   assert_true(dict_args.contains("(1, x)"))
   assert_true(dict_args.contains("(x, y)"))
   json_inspect(
-    args(Expr::Relational(RelOp::Eq, x, y)).map(@symprint.to_string),
+    args(Expr::Relational(RelOp::Eq, x, y)).map(@symprint.pretty_string),
     content=["x", "y"],
   )
   json_inspect(
-    args(subs_expr(add([x, y]), x, int(1))).map(@symprint.to_string),
+    args(subs_expr(add([x, y]), x, int(1))).map(@symprint.pretty_string),
     content=["x + y", "(x,)", "(1,)"],
   )
 }
@@ -327,37 +327,37 @@ test "func and args expose canonical heads for containers and binders" {
 ///|
 test "func exposes canonical heads for atomic core nodes" {
   inspect(
-    @symprint.to_string(func(int(2)).unwrap_or(int(0))),
+    @symprint.pretty_string(func(int(2)).unwrap_or(int(0))),
     content="<class 'sympy.core.numbers.Integer'>",
   )
   inspect(
-    @symprint.to_string(func(rational_from_ints(1, 2)).unwrap_or(int(0))),
+    @symprint.pretty_string(func(rational_from_ints(1, 2)).unwrap_or(int(0))),
     content="<class 'sympy.core.numbers.Half'>",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       func(Expr::NumberSymbol(NumberSymbolKind::Pi)).unwrap_or(int(0)),
     ),
     content="<class 'sympy.core.numbers.Pi'>",
   )
   inspect(
-    @symprint.to_string(func(Expr::Symbol("x")).unwrap_or(int(0))),
+    @symprint.pretty_string(func(Expr::Symbol("x")).unwrap_or(int(0))),
     content="<class 'sympy.core.symbol.Symbol'>",
   )
   inspect(
-    @symprint.to_string(func(dummy(name="x")).unwrap_or(int(0))),
+    @symprint.pretty_string(func(dummy(name="x")).unwrap_or(int(0))),
     content="<class 'sympy.core.symbol.Dummy'>",
   )
   inspect(
-    @symprint.to_string(func(Expr::Wild("x", [], [])).unwrap_or(int(0))),
+    @symprint.pretty_string(func(Expr::Wild("x", [], [])).unwrap_or(int(0))),
     content="<class 'sympy.core.symbol.Wild'>",
   )
   inspect(
-    @symprint.to_string(func(Expr::Boolean(true)).unwrap_or(int(0))),
+    @symprint.pretty_string(func(Expr::Boolean(true)).unwrap_or(int(0))),
     content="<class 'sympy.logic.boolalg.BooleanTrue'>",
   )
   inspect(
-    @symprint.to_string(func(Expr::Boolean(false)).unwrap_or(int(0))),
+    @symprint.pretty_string(func(Expr::Boolean(false)).unwrap_or(int(0))),
     content="<class 'sympy.logic.boolalg.BooleanFalse'>",
   )
 }
@@ -396,12 +396,12 @@ test "formal application helpers roundtrip named and undefined heads" {
       guard expr is Expr::Apply(Expr::FunctionHead("sin"), [Expr::Symbol("x")]) else {
         fail("expected first-class named application storage")
       }
-      inspect(@symprint.to_string(expr), content="sin(x)")
+      inspect(@symprint.pretty_string(expr), content="sin(x)")
       inspect(application_name(expr).unwrap_or(""), content="sin")
       inspect(application_args(expr).unwrap_or([]).length(), content="1")
       assert_true(application_has_name(expr, "sin", arity=1))
       match func(expr) {
-        Some(head) => inspect(@symprint.to_string(head), content="sin")
+        Some(head) => inspect(@symprint.pretty_string(head), content="sin")
         None => fail("expected application func")
       }
     }
@@ -411,8 +411,8 @@ test "formal application helpers roundtrip named and undefined heads" {
     Some(expr) =>
       match application_parts(expr) {
         Some((head, [arg])) => {
-          inspect(@symprint.to_string(head), content="f")
-          inspect(@symprint.to_string(arg), content="x")
+          inspect(@symprint.pretty_string(head), content="f")
+          inspect(@symprint.pretty_string(arg), content="x")
           inspect(application_name(expr).unwrap_or(""), content="f")
           assert_true(application_has_name(expr, "f", arity=1))
         }
@@ -481,7 +481,7 @@ test "formal application helpers roundtrip named and undefined heads" {
       )
   }
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Float", [Expr::Tuple([int(2), int(1), int(0)])]),
     ),
     content="Float((2, 1, 0))",
@@ -492,15 +492,15 @@ test "formal application helpers roundtrip named and undefined heads" {
     _ => fail("expected Tuple constructor semantics through apply")
   }
   match apply(Expr::FunctionHead("S"), [add([x, x])]) {
-    Some(expr) => inspect(@symprint.to_string(expr), content="2*x")
+    Some(expr) => inspect(@symprint.pretty_string(expr), content="2*x")
     _ => fail("expected S constructor semantics through apply")
   }
   match raw_apply(Expr::FunctionHead("S"), [function("sin", [x])]) {
-    Some(expr) => inspect(@symprint.to_string(expr), content="sin(x)")
+    Some(expr) => inspect(@symprint.pretty_string(expr), content="sin(x)")
     _ => fail("expected S raw constructor semantics through apply")
   }
   match apply(Expr::FunctionHead("S"), [x, Expr::Symbol("y")]) {
-    Some(expr) => inspect(@symprint.to_string(expr), content="x")
+    Some(expr) => inspect(@symprint.pretty_string(expr), content="x")
     _ => fail("expected multi-arg S to return first sympified argument")
   }
   match apply(Expr::FunctionHead("S"), []) {
@@ -511,7 +511,7 @@ test "formal application helpers roundtrip named and undefined heads" {
   assert_false(raw_apply(Expr::Symbol("g"), [x]) is Some(_))
   assert_false(apply(int(1), [x]) is Some(_))
   inspect(
-    @symprint.to_string(func(Expr::Tuple([x])).unwrap_or(int(0))),
+    @symprint.pretty_string(func(Expr::Tuple([x])).unwrap_or(int(0))),
     content="<class 'sympy.core.containers.Tuple'>",
   )
 }
@@ -521,28 +521,28 @@ test "legacy function storage normalizes to canonical core semantics" {
   let x = Expr::Symbol("x")
   let legacy_named = Expr::Function("sin", [x])
   let canonical_named = function("sin", [x])
-  inspect(@symprint.to_string(legacy_named), content="sin(x)")
+  inspect(@symprint.pretty_string(legacy_named), content="sin(x)")
   inspect(application_name(legacy_named).unwrap_or(""), content="sin")
-  json_inspect(children(legacy_named).map(@symprint.to_string), content=["x"])
+  json_inspect(children(legacy_named).map(@symprint.pretty_string), content=["x"])
   inspect(compare_expr(legacy_named, canonical_named), content="0")
   inspect(
     legacy_named.hash().to_string(),
     content=canonical_named.hash().to_string(),
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       evalf(Expr::Function("sin", [Expr::NumberSymbol(NumberSymbolKind::Pi)])),
     ),
-    content=@symprint.to_string(
+    content=@symprint.pretty_string(
       evalf(function("sin", [Expr::NumberSymbol(NumberSymbolKind::Pi)])),
     ),
   )
   let legacy_derivative = Expr::Function("Derivative", [function("f", [x]), x])
-  json_inspect(children(legacy_derivative).map(@symprint.to_string), content=[
+  json_inspect(children(legacy_derivative).map(@symprint.pretty_string), content=[
     "f(x)", "(x, 1)",
   ])
   inspect(
-    @symprint.to_string(xreplace(legacy_derivative, [(x, int(2))])),
+    @symprint.pretty_string(xreplace(legacy_derivative, [(x, int(2))])),
     content="Derivative(f(2), 2)",
   )
   let nested_legacy = Expr::Add([
@@ -554,13 +554,13 @@ test "legacy function storage normalizes to canonical core semantics" {
       match application_parts(lhs) {
         Some(
           (Expr::FunctionHead("sin"), [Expr::Tuple([Expr::Symbol("x"), one])])
-        ) => inspect(@symprint.to_string(one), content="1")
+        ) => inspect(@symprint.pretty_string(one), content="1")
         _ => fail("expected recursively normalized named application")
       }
       match derivative_parts(rhs) {
         Some((inner, [Expr::Symbol("x"), one])) => {
-          inspect(@symprint.to_string(inner), content="f(x)")
-          inspect(@symprint.to_string(one), content="1")
+          inspect(@symprint.pretty_string(inner), content="f(x)")
+          inspect(@symprint.pretty_string(one), content="1")
         }
         _ => fail("expected recursively normalized derivative")
       }
@@ -579,17 +579,17 @@ test "legacy function storage normalizes to canonical core semantics" {
       Expr::FunctionHead("Lambda"),
       [Expr::Tuple([Expr::Symbol("x"), two]), body]
     ) => {
-      inspect(@symprint.to_string(two), content="2")
-      inspect(@symprint.to_string(body), content="x + 1")
+      inspect(@symprint.pretty_string(two), content="2")
+      inspect(@symprint.pretty_string(body), content="x + 1")
     }
     _ => fail("expected invalid legacy Lambda to canonicalize as Apply")
   }
   inspect(
-    @symprint.to_string(normalize_legacy_expr(Expr::Lambda(x, x))),
+    @symprint.pretty_string(normalize_legacy_expr(Expr::Lambda(x, x))),
     content="Lambda(_x, _x)",
   )
   inspect(
-    @symprint.to_string(normalize_legacy_expr(Expr::Derivative(x, [x]))),
+    @symprint.pretty_string(normalize_legacy_expr(Expr::Derivative(x, [x]))),
     content="Derivative(x, x)",
   )
 }
@@ -600,18 +600,18 @@ test "application constructors canonicalize legacy children eagerly" {
   let legacy_derivative = Expr::Function("Derivative", [x, x])
   match function("sin", [legacy_derivative]) {
     Expr::Apply(Expr::FunctionHead("sin"), [Expr::Derivative(_, [_, one])]) =>
-      inspect(@symprint.to_string(one), content="1")
+      inspect(@symprint.pretty_string(one), content="1")
     _ => fail("expected canonical named application child")
   }
   match apply(Expr::FunctionHead("sin"), [legacy_derivative]) {
     Some(
       Expr::Apply(Expr::FunctionHead("sin"), [Expr::Derivative(_, [_, one])])
-    ) => inspect(@symprint.to_string(one), content="1")
+    ) => inspect(@symprint.pretty_string(one), content="1")
     _ => fail("expected apply() to canonicalize legacy child")
   }
   match applied_undefined_function("f", [legacy_derivative]) {
     Expr::Apply(Expr::UndefinedFunction("f"), [Expr::Derivative(_, [_, one])]) =>
-      inspect(@symprint.to_string(one), content="1")
+      inspect(@symprint.pretty_string(one), content="1")
     _ => fail("expected undefined application child normalization")
   }
 }
@@ -620,81 +620,81 @@ test "application constructors canonicalize legacy children eagerly" {
 test "function constructors follow SymPy core semantics" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
-  inspect(@symprint.to_string(function("Eq", [x, x])), content="True")
-  inspect(@symprint.to_string(function("Ne", [x, x])), content="False")
-  inspect(@symprint.to_string(function("Lt", [int(1), int(2)])), content="True")
+  inspect(@symprint.pretty_string(function("Eq", [x, x])), content="True")
+  inspect(@symprint.pretty_string(function("Ne", [x, x])), content="False")
+  inspect(@symprint.pretty_string(function("Lt", [int(1), int(2)])), content="True")
   inspect(
-    @symprint.to_string(function("Ge", [int(1), int(2)])),
+    @symprint.pretty_string(function("Ge", [int(1), int(2)])),
     content="False",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Derivative", [function("sin", [x]), x, int(2)]),
     ),
     content="Derivative(sin(x), (x, 2))",
   )
   inspect(
-    @symprint.to_string(function("Derivative", [function("sin", [x]), x, y])),
+    @symprint.pretty_string(function("Derivative", [function("sin", [x]), x, y])),
     content="Derivative(sin(x), x, y)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Derivative", [function("sin", [x]), Expr::Tuple([x, int(0)])]),
     ),
     content="sin(x)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Derivative", [function("sin", [x]), x, y, int(2)]),
     ),
     content="Derivative(sin(x), x, (y, 2))",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Subs", [add([x, y]), Expr::Tuple([x, y]), Expr::Symbol("z")]),
     ),
     content="Subs(x + y, (x, y), z)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Integer", [raw_mul([int(3), raw_pow(int(2), int(-1))])]),
     ),
     content="1",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Integer", [Expr::NumberSymbol(NumberSymbolKind::Pi)]),
     ),
     content="3",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Integer", [Expr::Float(Float::from_double(0.9))]),
     ),
     content="0",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Integer", [Expr::Float(Float::from_double(10.5))]),
     ),
     content="10",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Integer", [Expr::Float(Float::from_double(-3.8))]),
     ),
     content="-3",
   )
   inspect(
-    @symprint.to_string(function("Integer", [Expr::Boolean(true)])),
+    @symprint.pretty_string(function("Integer", [Expr::Boolean(true)])),
     content="1",
   )
   inspect(
-    @symprint.to_string(function("Integer", [Expr::Boolean(false)])),
+    @symprint.pretty_string(function("Integer", [Expr::Boolean(false)])),
     content="0",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Rational", [raw_mul([int(3), raw_pow(int(2), int(-1))])]),
     ),
     content="3/2",
@@ -706,62 +706,62 @@ test "function constructors follow SymPy core semantics" {
     Expr::Apply(Expr::FunctionHead("Rational"), [_]) => ()
     other =>
       fail(
-        "expected evaluate=false Rational raw expression to stay unevaluated, got \{@symprint.to_string(other)}",
+        "expected evaluate=false Rational raw expression to stay unevaluated, got \{@symprint.pretty_string(other)}",
       )
   }
   match function("Float", [Expr::NumberSymbol(NumberSymbolKind::Pi)]) {
     Expr::Float(_) => ()
     other =>
-      fail("expected Float(pi) to evaluate, got \{@symprint.to_string(other)}")
+      fail("expected Float(pi) to evaluate, got \{@symprint.pretty_string(other)}")
   }
   inspect(
-    @symprint.to_string(function("Rational", [Expr::Boolean(true)])),
+    @symprint.pretty_string(function("Rational", [Expr::Boolean(true)])),
     content="1",
   )
   inspect(
-    @symprint.to_string(function("Rational", [Expr::Boolean(false)])),
+    @symprint.pretty_string(function("Rational", [Expr::Boolean(false)])),
     content="0",
   )
   inspect(
-    @symprint.to_string(function("Rational", [int(1), Expr::Boolean(false)])),
+    @symprint.pretty_string(function("Rational", [int(1), Expr::Boolean(false)])),
     content="zoo",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Rational", [Expr::Boolean(false), Expr::Boolean(false)]),
     ),
     content="nan",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Rational", [Expr::Float(Float::from_double(1.0)), int(3)]),
     ),
     content="1/3",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Rational", [int(1), Expr::Float(Float::from_double(3.0))]),
     ),
     content="1/3",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Rational", [rational_from_ints(1, 2), rational_from_ints(1, 3)]),
     ),
     content="3/2",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       function("Rational", [int(1), rational_from_ints(1, 3)]),
     ),
     content="3",
   )
   inspect(
-    @symprint.to_string(function("S", [Expr::Boolean(true)])),
+    @symprint.pretty_string(function("S", [Expr::Boolean(true)])),
     content="True",
   )
   inspect(
-    @symprint.to_string(function("S", [Expr::Boolean(false)])),
+    @symprint.pretty_string(function("S", [Expr::Boolean(false)])),
     content="False",
   )
 }
@@ -772,11 +772,11 @@ test "invalid Subs signatures stay as canonical applications" {
   let y = Expr::Symbol("y")
   let z = Expr::Symbol("z")
   inspect(
-    @symprint.to_string(subs_expr(add([x, y]), Expr::Tuple([x, y]), z)),
+    @symprint.pretty_string(subs_expr(add([x, y]), Expr::Tuple([x, y]), z)),
     content="Subs(x + y, (x, y), z)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       normalize_legacy_expr(Expr::Subs(add([x, y]), Expr::Tuple([x, y]), z)),
     ),
     content="Subs(x + y, (x, y), z)",
@@ -786,13 +786,13 @@ test "invalid Subs signatures stay as canonical applications" {
     _ => fail("expected invalid Subs signature to remain an application")
   }
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       subs_expr(add([x, y]), Expr::Tuple([]), Expr::Tuple([])),
     ),
     content="x + y",
   )
   inspect(
-    @symprint.to_string(subs_expr(subs_expr(x, x, int(0)), y, int(1))),
+    @symprint.pretty_string(subs_expr(subs_expr(x, x, int(0)), y, int(1))),
     content="Subs(x, (x, y), (0, 1))",
   )
   inspect(
@@ -817,11 +817,11 @@ test "dict is a first-class container node" {
   match dict_items(d) {
     Some(items) => {
       let (_, value) = items[1]
-      inspect(@symprint.to_string(value), content="z")
+      inspect(@symprint.pretty_string(value), content="z")
     }
     None => fail("expected dict items")
   }
-  json_inspect(free_symbols(d).map(@symprint.to_string), content=["x", "y", "z"])
+  json_inspect(free_symbols(d).map(@symprint.pretty_string), content=["x", "y", "z"])
 }
 
 ///|
@@ -831,7 +831,7 @@ test "sympify lifts typed tuple and dict inputs" {
     SympifyInput::SymbolName("x"),
     SympifyInput::FromBool(true),
   ])
-  inspect(@symprint.to_string(expr), content="(1, x, True)")
+  inspect(@symprint.pretty_string(expr), content="(1, x, True)")
   let dict_value = sympify_dict([
     (SympifyInput::SymbolName("x"), SympifyInput::FromInt(2)),
     (
@@ -839,9 +839,9 @@ test "sympify lifts typed tuple and dict inputs" {
       SympifyInput::FromExpr(Expr::UndefinedFunction("f")),
     ),
   ])
-  inspect(@symprint.to_string(dict_value), content="{x: 2, y: f}")
+  inspect(@symprint.pretty_string(dict_value), content="{x: 2, y: f}")
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       sympify(
         SympifyInput::Application(SympifyInput::FunctionHeadName("sin"), [
           SympifyInput::SymbolName("x"),
@@ -851,7 +851,7 @@ test "sympify lifts typed tuple and dict inputs" {
     content="sin(x)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       sympify(
         SympifyInput::Application(SympifyInput::UndefinedFunctionName("f"), [
           SympifyInput::DummyName("x"),
@@ -873,7 +873,7 @@ test "sympify lifts typed tuple and dict inputs" {
       ),
     ) {
     Expr::Derivative(Expr::Symbol("x"), [Expr::Symbol("x"), one]) =>
-      inspect(@symprint.to_string(one), content="1")
+      inspect(@symprint.pretty_string(one), content="1")
     _ => fail("expected sympify FromExpr to canonicalize derivative")
   }
 }
@@ -885,7 +885,7 @@ test "atoms collects unique atomic leaves in canonical order" {
     mul([int(2), Expr::Symbol("x")]),
     Expr::Tuple([Expr::Symbol("y"), int(1)]),
   ])
-  json_inspect(atoms(expr).map(@symprint.to_string), content=[
+  json_inspect(atoms(expr).map(@symprint.pretty_string), content=[
     "x", "y", "1", "2",
   ])
 }
@@ -894,11 +894,11 @@ test "atoms collects unique atomic leaves in canonical order" {
 test "preorder and postorder traversal stay structural" {
   let x = Expr::Symbol("x")
   let expr = add([derivative(function("f", [x]), x), mod_expr(x, int(2))])
-  json_inspect(preorder(expr).map(@symprint.to_string), content=[
+  json_inspect(preorder(expr).map(@symprint.pretty_string), content=[
     "Derivative(f(x), x) + Mod(x, 2)", "Derivative(f(x), x)", "f(x)", "x", "(x, 1)",
     "x", "1", "Mod(x, 2)", "x", "2",
   ])
-  json_inspect(postorder(expr).map(@symprint.to_string), content=[
+  json_inspect(postorder(expr).map(@symprint.pretty_string), content=[
     "x", "f(x)", "x", "1", "(x, 1)", "Derivative(f(x), x)", "x", "2", "Mod(x, 2)",
     "Derivative(f(x), x) + Mod(x, 2)",
   ])
@@ -908,10 +908,10 @@ test "preorder and postorder traversal stay structural" {
 test "preorder and postorder canonicalize legacy roots before traversal" {
   let x = Expr::Symbol("x")
   let legacy = Expr::Function("sin", [x])
-  json_inspect(preorder(legacy).map(@symprint.to_string), content=[
+  json_inspect(preorder(legacy).map(@symprint.pretty_string), content=[
     "sin(x)", "x",
   ])
-  json_inspect(postorder(legacy).map(@symprint.to_string), content=[
+  json_inspect(postorder(legacy).map(@symprint.pretty_string), content=[
     "x", "sin(x)",
   ])
 }
@@ -921,16 +921,16 @@ test "children wrap Subs and Lambda binders like SymPy args" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   json_inspect(
-    children(subs_expr(add([x, y]), x, int(1))).map(@symprint.to_string),
+    children(subs_expr(add([x, y]), x, int(1))).map(@symprint.pretty_string),
     content=["x + y", "(x,)", "(1,)"],
   )
   json_inspect(
     args(subs_expr(add([x, y]), Expr::Tuple([x, y]), Expr::Tuple([y, int(1)]))).map(
-      @symprint.to_string,
+      @symprint.pretty_string,
     ),
     content=["x + y", "(x, y)", "(y, 1)"],
   )
-  json_inspect(children(lambda_expr(x, add([x, y]))).map(@symprint.to_string), content=[
+  json_inspect(children(lambda_expr(x, add([x, y]))).map(@symprint.pretty_string), content=[
     "(x,)", "x + y",
   ])
 }
@@ -948,7 +948,7 @@ test "xreplace performs exact structural replacement" {
     content="(call f 2)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       xreplace(derivative(add([function("sin", [x]), y]), x), [
         (y, Expr::Symbol("z")),
       ]),
@@ -956,7 +956,7 @@ test "xreplace performs exact structural replacement" {
     content="Derivative(z + sin(x), x)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       xreplace(derivative(add([function("sin", [x]), y]), x), [
         (x, Expr::Symbol("z")),
       ]),
@@ -965,7 +965,7 @@ test "xreplace performs exact structural replacement" {
   )
   let legacy_sinx = Expr::Function("sin", [x])
   inspect(
-    @symprint.to_string(xreplace(function("sin", [x]), [(legacy_sinx, y)])),
+    @symprint.pretty_string(xreplace(function("sin", [x]), [(legacy_sinx, y)])),
     content="y",
   )
   assert_true(has(function("sin", [x]), legacy_sinx))
@@ -986,9 +986,9 @@ test "replace performs preorder structural rewrites on canonical applications" {
       }
     },
   )
-  inspect(@symprint.to_string(rewritten), content="cos(x) + cos(y)")
+  inspect(@symprint.pretty_string(rewritten), content="cos(x) + cos(y)")
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       replace(
         add([x, function("sin", [x])]),
         fn(node : Expr) -> Bool { node == x },
@@ -998,7 +998,7 @@ test "replace performs preorder structural rewrites on canonical applications" {
     content="x + sin(x + 1) + 1",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       replace(
         Expr::Function("sin", [x]),
         fn(node : Expr) -> Bool { application_has_name(node, "sin", arity=1) },
@@ -1017,7 +1017,7 @@ test "replace performs preorder structural rewrites on canonical applications" {
 ///|
 test "evalf keeps undefined applications exact and evaluates Mod numerically" {
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       evalf(
         applied_undefined_function("f", [
           Expr::NumberSymbol(NumberSymbolKind::Pi),
@@ -1027,7 +1027,7 @@ test "evalf keeps undefined applications exact and evaluates Mod numerically" {
     content="f(pi)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       evalf(mod_expr(Expr::NumberSymbol(NumberSymbolKind::Pi), int(2))),
     ).has_prefix("1.14159265358979"),
     content="true",
@@ -1045,7 +1045,7 @@ test "compare_expr follows function symbol and mod ordering" {
     mod_expr(Expr::Symbol("x"), int(2)),
   ]
   sort_exprs_in_place(exprs)
-  json_inspect(exprs.map(@symprint.to_string), content=[
+  json_inspect(exprs.map(@symprint.pretty_string), content=[
     "f", "_x", "pi", "x", "f(x)", "Mod(x, 2)",
   ])
 }
@@ -1054,7 +1054,7 @@ test "compare_expr follows function symbol and mod ordering" {
 test "mod is a first-class structured core node" {
   let expr = mod_expr(add([Expr::Symbol("x"), int(1)]), int(3))
   inspect(head_name(expr), content="Mod")
-  json_inspect(args(expr).map(@symprint.to_string), content=["x + 1", "3"])
+  json_inspect(args(expr).map(@symprint.pretty_string), content=["x + 1", "3"])
   inspect(to_repr(expr), content="(call Mod (+ sym:x 1) 3)")
 }
 
@@ -1065,32 +1065,32 @@ test "subst respects lambda bound variables" {
   let z = Expr::Symbol("z")
   let expr = lambda_expr(x, add([x, y]))
   let env : Map[String, Expr] = { "x": int(2), "y": int(3) }
-  inspect(@symprint.to_string(subst(expr, env)), content="Lambda(x, x + 3)")
+  inspect(@symprint.pretty_string(subst(expr, env)), content="Lambda(x, x + 3)")
   let rename_env : Map[String, Expr] = { "x": z, "y": int(3) }
   inspect(
-    @symprint.to_string(subst(expr, rename_env)),
+    @symprint.pretty_string(subst(expr, rename_env)),
     content="Lambda(z, z + 3)",
   )
   let capture_env : Map[String, Expr] = { "x": y }
   inspect(
-    @symprint.to_string(subst(expr, capture_env)),
+    @symprint.pretty_string(subst(expr, capture_env)),
     content="Lambda(y, 2*y)",
   )
   let tuple_expr = lambda_expr(Expr::Tuple([x, y]), add([x, y]))
   inspect(
-    @symprint.to_string(subst(tuple_expr, { "y": z })),
+    @symprint.pretty_string(subst(tuple_expr, { "y": z })),
     content="Lambda((x, z), x + z)",
   )
   inspect(
-    @symprint.to_string(subst(tuple_expr, { "x": z })),
+    @symprint.pretty_string(subst(tuple_expr, { "x": z })),
     content="Lambda((z, y), y + z)",
   )
   inspect(
-    @symprint.to_string(subst(tuple_expr, { "y": x })),
+    @symprint.pretty_string(subst(tuple_expr, { "y": x })),
     content="Lambda((x, y), x + y)",
   )
   inspect(
-    @symprint.to_string(subst(tuple_expr, { "x": y })),
+    @symprint.pretty_string(subst(tuple_expr, { "x": y })),
     content="Lambda((x, y), x + y)",
   )
 }
@@ -1103,22 +1103,22 @@ test "subst respects Subs bound variables" {
   let w = Expr::Symbol("w")
   let expr = subs_expr(add([x, y]), x, z)
   let env : Map[String, Expr] = { "x": int(2), "y": int(3), "z": int(4) }
-  inspect(@symprint.to_string(subst(expr, env)), content="Subs(x + 3, x, 4)")
+  inspect(@symprint.pretty_string(subst(expr, env)), content="Subs(x + 3, x, 4)")
   let multi = subs_expr(add([x, y]), Expr::Tuple([x, y]), Expr::Tuple([y, z]))
   inspect(
-    @symprint.to_string(subst(multi, { "y": w })),
+    @symprint.pretty_string(subst(multi, { "y": w })),
     content="Subs(w + x, (x, w), (w, z))",
   )
   inspect(
-    @symprint.to_string(subst(multi, { "x": w })),
+    @symprint.pretty_string(subst(multi, { "x": w })),
     content="Subs(w + y, (w, y), (y, z))",
   )
   inspect(
-    @symprint.to_string(subst(multi, { "y": x })),
+    @symprint.pretty_string(subst(multi, { "y": x })),
     content="Subs(x + y, (x, y), (y, z))",
   )
   inspect(
-    @symprint.to_string(subst(multi, { "x": y })),
+    @symprint.pretty_string(subst(multi, { "x": y })),
     content="Subs(x + y, (x, y), (y, z))",
   )
 }
@@ -1150,7 +1150,7 @@ test "mul does not merge a dummy with its square" {
   inspect(compare_expr(y, y2), content="1")
   let product = mul([y2, y])
   let sample = evalf(xreplace(product, [(y, int(2))]), prec=80)
-  inspect(@symprint.to_string(sample), content="8.0")
+  inspect(@symprint.pretty_string(sample), content="8.0")
 }
 
 ///|
@@ -1163,22 +1163,22 @@ test "subst respects derivative binding and capture rules" {
   let with_free = derivative(add([fx, y]), x)
   let rename_env : Map[String, Expr] = { "x": z }
   inspect(
-    @symprint.to_string(subst(simple, rename_env)),
+    @symprint.pretty_string(subst(simple, rename_env)),
     content="Derivative(f(z), z)",
   )
   let invalid_env : Map[String, Expr] = { "x": int(2) }
   inspect(
-    @symprint.to_string(subst(with_free, invalid_env)),
+    @symprint.pretty_string(subst(with_free, invalid_env)),
     content="Subs(Derivative(y + f(x), x), x, 2)",
   )
   let safe_inner_env : Map[String, Expr] = { "y": int(3) }
   inspect(
-    @symprint.to_string(subst(with_free, safe_inner_env)),
+    @symprint.pretty_string(subst(with_free, safe_inner_env)),
     content="Derivative(f(x) + 3, x)",
   )
   let capture_env : Map[String, Expr] = { "y": x }
   inspect(
-    @symprint.to_string(subst(with_free, capture_env)),
+    @symprint.pretty_string(subst(with_free, capture_env)),
     content="Subs(Derivative(y + f(x), x), y, x)",
   )
   let mixed = Expr::Derivative(add([function("sin", [x]), y]), [
@@ -1188,16 +1188,16 @@ test "subst respects derivative binding and capture rules" {
     int(1),
   ])
   inspect(
-    @symprint.to_string(subst(mixed, { "y": z })),
+    @symprint.pretty_string(subst(mixed, { "y": z })),
     content="Derivative(z + sin(x), x, z)",
   )
   inspect(
-    @symprint.to_string(subst(mixed, { "x": z })),
+    @symprint.pretty_string(subst(mixed, { "x": z })),
     content="Derivative(y + sin(z), z, y)",
   )
   let gy = applied_undefined_function("g", [y])
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       subst(derivative(function("f", [x, y]), y), { "y": gy }),
     ),
     content="Derivative(f(x, g(y)), g(y))",
@@ -1210,11 +1210,11 @@ test "subst rewrites callable heads only when replacement stays callable" {
   let sinx = function("sin", [x])
   let fx = applied_undefined_function("f", [x])
   let sin_env : Map[String, Expr] = { "sin": Expr::FunctionHead("cos") }
-  inspect(@symprint.to_string(subst(sinx, sin_env)), content="cos(x)")
+  inspect(@symprint.pretty_string(subst(sinx, sin_env)), content="cos(x)")
   let f_env : Map[String, Expr] = { "f": Expr::UndefinedFunction("g") }
-  inspect(@symprint.to_string(subst(fx, f_env)), content="g(x)")
+  inspect(@symprint.pretty_string(subst(fx, f_env)), content="g(x)")
   let non_callable_env : Map[String, Expr] = { "f": Expr::Symbol("z") }
-  inspect(@symprint.to_string(subst(fx, non_callable_env)), content="f(x)")
+  inspect(@symprint.pretty_string(subst(fx, non_callable_env)), content="f(x)")
 }
 
 ///|
@@ -1222,13 +1222,13 @@ test "subst beta-reduces callable heads to lambda replacements" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       subst(function("sin", [x]), { "sin": lambda_expr(x, add([x, int(1)])) }),
     ),
     content="x + 1",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       subst(applied_undefined_function("f", [x, y]), {
         "f": lambda_expr(Expr::Tuple([x, y]), add([x, y])),
       }),
@@ -1236,7 +1236,7 @@ test "subst beta-reduces callable heads to lambda replacements" {
     content="x + y",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       subst(function("sin", [x]), {
         "sin": lambda_expr(Expr::Tuple([x, y]), add([x, y])),
       }),
@@ -1253,11 +1253,11 @@ test "derivative constructors and callable substitution follow SymPy source" {
     Expr::Apply(Expr::FunctionHead("Derivative"), _) => ()
     other =>
       fail(
-        "expected invalid derivative variable to stay canonical Apply, got \{@symprint.to_string(other)}",
+        "expected invalid derivative variable to stay canonical Apply, got \{@symprint.pretty_string(other)}",
       )
   }
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       subst(Expr::Derivative(gx, [gx, int(1)]), {
         "g": Expr::UndefinedFunction("f"),
       }),
@@ -1271,12 +1271,12 @@ test "derivative constructors and callable substitution follow SymPy source" {
     Expr::Subs(Expr::Derivative(inner, [wrt, order]), variable, value) => {
       inspect((inner == wrt).to_string(), content="true")
       inspect((variable == wrt).to_string(), content="true")
-      inspect(@symprint.to_string(order), content="1")
-      inspect(@symprint.to_string(value), content="cos(x)")
+      inspect(@symprint.pretty_string(order), content="1")
+      inspect(@symprint.pretty_string(value), content="cos(x)")
     }
     other =>
       fail(
-        "expected invalid callable substitution to wrap derivative in Subs, got \{@symprint.to_string(other)}",
+        "expected invalid callable substitution to wrap derivative in Subs, got \{@symprint.pretty_string(other)}",
       )
   }
 }
@@ -1287,22 +1287,22 @@ test "lambda canonicalizes identity forms and applies canonically" {
   let y = Expr::Symbol("y")
   let z = Expr::Symbol("z")
   let id = lambda_expr(x, x)
-  inspect(@symprint.to_string(id), content="Lambda(_x, _x)")
+  inspect(@symprint.pretty_string(id), content="Lambda(_x, _x)")
   inspect(
-    @symprint.to_string(lambda_expr(Expr::Tuple([x]), x)),
+    @symprint.pretty_string(lambda_expr(Expr::Tuple([x]), x)),
     content="Lambda(_x, _x)",
   )
   inspect(
-    @symprint.to_string(func(id).unwrap_or(int(0))),
+    @symprint.pretty_string(func(id).unwrap_or(int(0))),
     content="<class 'sympy.functions.elementary.miscellaneous.IdentityFunction'>",
   )
-  json_inspect(args(id).map(@symprint.to_string), content=[])
+  json_inspect(args(id).map(@symprint.pretty_string), content=[])
   inspect(has(id, x), content="false")
-  inspect(@symprint.to_string(xreplace(id, [(x, y)])), content="Lambda(_x, _x)")
-  inspect(@symprint.to_string(subst(id, { "x": y })), content="Lambda(_x, _x)")
-  inspect(@symprint.to_string(apply(id, [y]).unwrap_or(int(0))), content="y")
+  inspect(@symprint.pretty_string(xreplace(id, [(x, y)])), content="Lambda(_x, _x)")
+  inspect(@symprint.pretty_string(subst(id, { "x": y })), content="Lambda(_x, _x)")
+  inspect(@symprint.pretty_string(apply(id, [y]).unwrap_or(int(0))), content="y")
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       apply(lambda_expr(Expr::Tuple([x, y]), add([x, y])), [int(1), int(2)]).unwrap_or(
         int(0),
       ),
@@ -1310,7 +1310,7 @@ test "lambda canonicalizes identity forms and applies canonically" {
     content="3",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       apply(
         lambda_expr(Expr::Tuple([Expr::Tuple([x, y]), z]), add([x, y, z])),
         [Expr::Tuple([int(1), int(2)]), int(3)],
@@ -1319,7 +1319,7 @@ test "lambda canonicalizes identity forms and applies canonically" {
     content="6",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       lambda_expr(Expr::WildFunction("f", []), add([x, int(1)])),
     ),
     content="Lambda(f_, x + 1)",

@@ -1,11 +1,11 @@
 ///|
 test "physics.quantum.dagger: symbolic and matrix behaviors" {
   assert_eq(
-    @symprint.to_string(dagger(@symcore.Expr::Symbol("x"), evaluate=false)),
+    @symprint.pretty_string(dagger(@symcore.Expr::Symbol("x"), evaluate=false)),
     "Dagger(x)",
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       dagger(
         @symcore.raw_mul([
           @symcore.Expr::Symbol("a"),

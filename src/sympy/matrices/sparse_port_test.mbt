@@ -2,7 +2,7 @@
 fn py_sparse_matrix_expr(m : SparseMatrix) -> String {
   let items : Array[String] = []
   for key, value in m.todok() {
-    items.push("(\{key.0}, \{key.1}): " + @symprint.to_string(value))
+    items.push("(\{key.0}, \{key.1}): " + @symprint.pretty_string(value))
   }
   "sympy.SparseMatrix(\{m.rows}, \{m.cols}, {" + items.join(", ") + "})"
 }
@@ -15,7 +15,7 @@ fn py_exact_matrix_expr(m : Matrix) -> String {
     for value in row {
       items.push(
         "sympy.sympify('" +
-        @symprint.to_string(value) +
+        @symprint.pretty_string(value) +
         "', locals={'sqrt': sympy.sqrt})",
       )
     }
@@ -106,7 +106,7 @@ test "matrices parity sparse decomposition helpers" {
   entries[(1, 1)] = @symcore.int(3)
   let s = sparse_matrix(2, 2, entries)
   assert_eq(
-    @symprint.to_string(s.det()),
+    @symprint.pretty_string(s.det()),
     py_list_text("sympy.sstr(" + py_sparse_matrix_expr(s) + ".det())"),
   )
   assert_eq(

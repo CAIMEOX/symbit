@@ -5,7 +5,7 @@
 fn gaunt_require_integer(value : Expr) -> Unit raise PhysicsError {
   guard expr_integer_value(value) != None else {
     raise PhysicsError::ValueError(
-      "expecting integer, got \{@symprint.to_string(value)}",
+      "expecting integer, got \{@symprint.pretty_string(value)}",
     )
   }
 }

@@ -9,11 +9,11 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
   inspect(ok.to_string(), content="|n>")
   inspect(ob.dual().to_string(), content="|n>")
   inspect(
-    @symprint.to_string(inner_product(ob.as_expr(), ok.as_expr())),
+    @symprint.pretty_string(inner_product(ob.as_expr(), ok.as_expr())),
     content="1",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       inner_product(
         orthogonal_bra([n]).as_expr(),
         orthogonal_ket([n + @symcore.int(1)]).as_expr(),
@@ -23,9 +23,9 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
   )
 
   let wf = @symquant.wavefunction(x ^ @symcore.int(2), [x])
-  inspect(@symprint.to_string(wf.call([@symcore.int(2)])), content="4")
+  inspect(@symprint.pretty_string(wf.call([@symcore.int(2)])), content="4")
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symquant.wavefunction(x ^ @symcore.int(2), [
         @symcore.raw_function("Tuple", [x, @symcore.int(0), @symcore.int(1)]),
       ]).call([@symcore.int(2)]),
@@ -33,11 +33,11 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
     content="0",
   )
   inspect(
-    @symprint.to_string(wf.prob().as_expr()),
+    @symprint.pretty_string(wf.prob().as_expr()),
     content="Wavefunction((x**2*conjugate(x)**2), x)",
   )
   inspect(
-    @symprint.to_string(dagger(wf.as_expr())),
+    @symprint.pretty_string(dagger(wf.as_expr())),
     content="Wavefunction((conjugate(x)**2), x)",
   )
 
@@ -46,7 +46,7 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
     f_of_x,
   )
   inspect(
-    @symprint.to_string(qapply(@symcore.raw_mul([dop.as_expr(), wf.as_expr()]))),
+    @symprint.pretty_string(qapply(@symcore.raw_mul([dop.as_expr(), wf.as_expr()]))),
     content="Wavefunction((2*x), x)",
   )
   let dop2 = differential_operator(
@@ -57,7 +57,7 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
     f_of_x,
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       qapply(@symcore.raw_mul([dop2.as_expr(), wf.as_expr()])),
     ),
     content="Wavefunction(2, x)",
@@ -92,7 +92,7 @@ test "physics.quantum.wavefunction: norm and normalization helpers" {
   assert_true(normalized_wf.is_normalized())
   quantum_test_assert_expr_equal(
     normalized_wf.normalize().as_expr(),
-    @symprint.to_string(normalized_wf.as_expr()),
+    @symprint.pretty_string(normalized_wf.as_expr()),
     "wavefunction normalize leaves normalized state unchanged",
   )
 
@@ -118,6 +118,6 @@ test "physics.quantum.wavefunction: floating interval bounds are treated numeric
     },
   )
   let wf = @symquant.wavefunction(x, [@symcore.Expr::Tuple([x, lower, upper])])
-  inspect(@symprint.to_string(wf.call([@symcore.int(1)])), content="1")
-  inspect(@symprint.to_string(wf.call([@symcore.int(2)])), content="0")
+  inspect(@symprint.pretty_string(wf.call([@symcore.int(1)])), content="1")
+  inspect(@symprint.pretty_string(wf.call([@symcore.int(2)])), content="0")
 }

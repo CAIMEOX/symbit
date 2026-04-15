@@ -45,13 +45,13 @@ pub struct LineOver1DRangeSeries {
 /// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn LineOver1DRangeSeries::to_string(self : LineOver1DRangeSeries) -> String {
   "cartesian line: " +
-  @symprint.to_string(self.expr) +
+  @symprint.pretty_string(self.expr) +
   " for " +
-  @symprint.to_string(self.variable) +
+  @symprint.pretty_string(self.variable) +
   " over (" +
-  @symprint.to_string(self.start) +
+  @symprint.pretty_string(self.start) +
   ", " +
-  @symprint.to_string(self.end) +
+  @symprint.pretty_string(self.end) +
   ")"
 }
 
@@ -548,7 +548,7 @@ pub fn line_over_1d_range_series(
 ) -> LineOver1DRangeSeries raise PlottingError {
   let resolved_label = match label {
     Some(value) => Some(value)
-    None => Some(@symprint.to_string(expr))
+    None => Some(@symprint.pretty_string(expr))
   }
   match range {
     @symcore.Expr::Tuple([variable, start, end]) if is_plot_range(range) =>
@@ -601,9 +601,9 @@ fn plot_parametric_2d_label(
       } else {
         Some(
           "(" +
-          @symprint.to_string(expr_x) +
+          @symprint.pretty_string(expr_x) +
           ", " +
-          @symprint.to_string(expr_y) +
+          @symprint.pretty_string(expr_y) +
           ")",
         )
       }
@@ -626,11 +626,11 @@ fn plot_parametric_3d_label(
       } else {
         Some(
           "(" +
-          @symprint.to_string(expr_x) +
+          @symprint.pretty_string(expr_x) +
           ", " +
-          @symprint.to_string(expr_y) +
+          @symprint.pretty_string(expr_y) +
           ", " +
-          @symprint.to_string(expr_z) +
+          @symprint.pretty_string(expr_z) +
           ")",
         )
       }
@@ -641,7 +641,7 @@ fn plot_parametric_3d_label(
 fn plot_surface_label(expr : @symcore.Expr, label : String?) -> String? {
   match label {
     Some(value) => Some(value)
-    None => Some(@symprint.to_string(expr))
+    None => Some(@symprint.pretty_string(expr))
   }
 }
 
@@ -657,11 +657,11 @@ fn plot_parametric_surface_label(
     None =>
       Some(
         "(" +
-        @symprint.to_string(expr_x) +
+        @symprint.pretty_string(expr_x) +
         ", " +
-        @symprint.to_string(expr_y) +
+        @symprint.pretty_string(expr_y) +
         ", " +
-        @symprint.to_string(expr_z) +
+        @symprint.pretty_string(expr_z) +
         ")",
       )
   }
@@ -1145,15 +1145,15 @@ pub fn Parametric2DLineSeries::to_string(
   self : Parametric2DLineSeries,
 ) -> String {
   "parametric cartesian line: (" +
-  @symprint.to_string(self.expr_x) +
+  @symprint.pretty_string(self.expr_x) +
   ", " +
-  @symprint.to_string(self.expr_y) +
+  @symprint.pretty_string(self.expr_y) +
   ") for " +
-  @symprint.to_string(self.variable) +
+  @symprint.pretty_string(self.variable) +
   " over (" +
-  @symprint.to_string(self.start) +
+  @symprint.pretty_string(self.start) +
   ", " +
-  @symprint.to_string(self.end) +
+  @symprint.pretty_string(self.end) +
   ")"
 }
 
@@ -1189,7 +1189,7 @@ pub fn Parametric2DLineSeries::get_label(
 ) -> String {
   match self.label {
     Some(label) => label
-    None => @symprint.to_string(self.variable)
+    None => @symprint.pretty_string(self.variable)
   }
 }
 
@@ -1474,17 +1474,17 @@ pub fn Parametric3DLineSeries::to_string(
   self : Parametric3DLineSeries,
 ) -> String {
   "3D parametric cartesian line: (" +
-  @symprint.to_string(self.expr_x) +
+  @symprint.pretty_string(self.expr_x) +
   ", " +
-  @symprint.to_string(self.expr_y) +
+  @symprint.pretty_string(self.expr_y) +
   ", " +
-  @symprint.to_string(self.expr_z) +
+  @symprint.pretty_string(self.expr_z) +
   ") for " +
-  @symprint.to_string(self.variable) +
+  @symprint.pretty_string(self.variable) +
   " over (" +
-  @symprint.to_string(self.start) +
+  @symprint.pretty_string(self.start) +
   ", " +
-  @symprint.to_string(self.end) +
+  @symprint.pretty_string(self.end) +
   ")"
 }
 
@@ -1520,7 +1520,7 @@ pub fn Parametric3DLineSeries::get_label(
 ) -> String {
   match self.label {
     Some(label) => label
-    None => @symprint.to_string(self.variable)
+    None => @symprint.pretty_string(self.variable)
   }
 }
 
@@ -1673,19 +1673,19 @@ pub fn SurfaceOver2DRangeSeries::to_string(
   self : SurfaceOver2DRangeSeries,
 ) -> String {
   "cartesian surface: " +
-  @symprint.to_string(self.expr) +
+  @symprint.pretty_string(self.expr) +
   " for " +
-  @symprint.to_string(self.variable_x) +
+  @symprint.pretty_string(self.variable_x) +
   " over (" +
-  @symprint.to_string(self.start_x) +
+  @symprint.pretty_string(self.start_x) +
   ", " +
-  @symprint.to_string(self.end_x) +
+  @symprint.pretty_string(self.end_x) +
   ") and " +
-  @symprint.to_string(self.variable_y) +
+  @symprint.pretty_string(self.variable_y) +
   " over (" +
-  @symprint.to_string(self.start_y) +
+  @symprint.pretty_string(self.start_y) +
   ", " +
-  @symprint.to_string(self.end_y) +
+  @symprint.pretty_string(self.end_y) +
   ")"
 }
 
@@ -1721,7 +1721,7 @@ pub fn SurfaceOver2DRangeSeries::get_label(
 ) -> String {
   match self.label {
     Some(label) => label
-    None => @symprint.to_string(self.expr)
+    None => @symprint.pretty_string(self.expr)
   }
 }
 
@@ -1903,23 +1903,23 @@ pub fn ParametricSurfaceSeries::to_string(
   self : ParametricSurfaceSeries,
 ) -> String {
   "parametric cartesian surface: (" +
-  @symprint.to_string(self.expr_x) +
+  @symprint.pretty_string(self.expr_x) +
   ", " +
-  @symprint.to_string(self.expr_y) +
+  @symprint.pretty_string(self.expr_y) +
   ", " +
-  @symprint.to_string(self.expr_z) +
+  @symprint.pretty_string(self.expr_z) +
   ") for " +
-  @symprint.to_string(self.variable_u) +
+  @symprint.pretty_string(self.variable_u) +
   " over (" +
-  @symprint.to_string(self.start_u) +
+  @symprint.pretty_string(self.start_u) +
   ", " +
-  @symprint.to_string(self.end_u) +
+  @symprint.pretty_string(self.end_u) +
   ") and " +
-  @symprint.to_string(self.variable_v) +
+  @symprint.pretty_string(self.variable_v) +
   " over (" +
-  @symprint.to_string(self.start_v) +
+  @symprint.pretty_string(self.start_v) +
   ", " +
-  @symprint.to_string(self.end_v) +
+  @symprint.pretty_string(self.end_v) +
   ")"
 }
 
@@ -1957,11 +1957,11 @@ pub fn ParametricSurfaceSeries::get_label(
     Some(label) => label
     None =>
       "(" +
-      @symprint.to_string(self.expr_x) +
+      @symprint.pretty_string(self.expr_x) +
       ", " +
-      @symprint.to_string(self.expr_y) +
+      @symprint.pretty_string(self.expr_y) +
       ", " +
-      @symprint.to_string(self.expr_z) +
+      @symprint.pretty_string(self.expr_z) +
       ")"
   }
 }
@@ -2193,19 +2193,19 @@ pub struct ContourSeries {
 /// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn ContourSeries::to_string(self : ContourSeries) -> String {
   "contour: " +
-  @symprint.to_string(self.expr) +
+  @symprint.pretty_string(self.expr) +
   " for " +
-  @symprint.to_string(self.variable_x) +
+  @symprint.pretty_string(self.variable_x) +
   " over (" +
-  @symprint.to_string(self.start_x) +
+  @symprint.pretty_string(self.start_x) +
   ", " +
-  @symprint.to_string(self.end_x) +
+  @symprint.pretty_string(self.end_x) +
   ") and " +
-  @symprint.to_string(self.variable_y) +
+  @symprint.pretty_string(self.variable_y) +
   " over (" +
-  @symprint.to_string(self.start_y) +
+  @symprint.pretty_string(self.start_y) +
   ", " +
-  @symprint.to_string(self.end_y) +
+  @symprint.pretty_string(self.end_y) +
   ")"
 }
 
@@ -2217,7 +2217,7 @@ pub fn ContourSeries::to_string(self : ContourSeries) -> String {
 pub fn ContourSeries::get_label(self : ContourSeries) -> String {
   match self.label {
     Some(label) => label
-    None => @symprint.to_string(self.expr)
+    None => @symprint.pretty_string(self.expr)
   }
 }
 
@@ -2325,19 +2325,19 @@ pub struct ImplicitSeries {
 /// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn ImplicitSeries::to_string(self : ImplicitSeries) -> String {
   "Implicit expression: " +
-  @symprint.to_string(self.expr) +
+  @symprint.pretty_string(self.expr) +
   " for " +
-  @symprint.to_string(self.variable_x) +
+  @symprint.pretty_string(self.variable_x) +
   " over (" +
-  @symprint.to_string(self.start_x) +
+  @symprint.pretty_string(self.start_x) +
   ", " +
-  @symprint.to_string(self.end_x) +
+  @symprint.pretty_string(self.end_x) +
   ") and " +
-  @symprint.to_string(self.variable_y) +
+  @symprint.pretty_string(self.variable_y) +
   " over (" +
-  @symprint.to_string(self.start_y) +
+  @symprint.pretty_string(self.start_y) +
   ", " +
-  @symprint.to_string(self.end_y) +
+  @symprint.pretty_string(self.end_y) +
   ")"
 }
 
@@ -2349,7 +2349,7 @@ pub fn ImplicitSeries::to_string(self : ImplicitSeries) -> String {
 pub fn ImplicitSeries::get_label(self : ImplicitSeries) -> String {
   match self.label {
     Some(label) => label
-    None => @symprint.to_string(self.expr)
+    None => @symprint.pretty_string(self.expr)
   }
 }
 

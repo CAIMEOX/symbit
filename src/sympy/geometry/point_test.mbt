@@ -7,7 +7,7 @@ test "geometry.point arithmetic and metric helpers" {
   assert_eq(p.mul(@symcore.int(2)).repr(), "Point2D(2, 4)")
   assert_eq(p.midpoint(q).repr(), "Point2D(5/2, 1/2)")
   assert_true(
-    geometry_expr_equal(@symprint.to_string(p.distance(q)), "3*sqrt(2)"),
+    geometry_expr_equal(@symprint.pretty_string(p.distance(q)), "3*sqrt(2)"),
   )
 }
 

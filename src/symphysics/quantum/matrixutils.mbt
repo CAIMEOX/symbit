@@ -13,7 +13,7 @@ pub impl Show for MatrixScalarValue with to_string(self) {
   match self {
     MatrixScalarValue::Matrix(matrix) =>
       @symphysics.explicit_matrix_rows_string(matrix)
-    MatrixScalarValue::Scalar(expr) => @symprint.to_string(expr)
+    MatrixScalarValue::Scalar(expr) => @symprint.pretty_string(expr)
   }
 }
 
@@ -39,7 +39,7 @@ pub fn matrix_flat_strings(
   let out : Array[String] = Array::new()
   for i in 0..<matrix.height() {
     for j in 0..<matrix.width() {
-      out.push(@symprint.to_string(matrix.get(i, j)))
+      out.push(@symprint.pretty_string(matrix.get(i, j)))
     }
   }
   out

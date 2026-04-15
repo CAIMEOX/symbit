@@ -2,18 +2,18 @@
 test "physics.quantum.represent helpers: parity" {
   quantum_test_assert_string_equal(
     quantum_get_basis_str("XKet()"),
-    quantum_eval_str(@symprint.to_string(get_basis(x_ket()).unwrap())),
+    quantum_eval_str(@symprint.pretty_string(get_basis(x_ket()).unwrap())),
     "get_basis state parity",
   )
   quantum_test_assert_string_equal(
     quantum_get_basis_str("XOp()"),
-    quantum_eval_str(@symprint.to_string(get_basis(x_op()).unwrap())),
+    quantum_eval_str(@symprint.pretty_string(get_basis(x_op()).unwrap())),
     "get_basis operator parity",
   )
   quantum_test_assert_string_equal(
     quantum_get_basis_str("XKet()", basis=Some("PxOp()")),
     quantum_eval_str(
-      @symprint.to_string(get_basis(x_ket(), basis=Some(px_op())).unwrap()),
+      @symprint.pretty_string(get_basis(x_ket(), basis=Some(px_op())).unwrap()),
     ),
     "get_basis explicit basis parity",
   )
@@ -24,7 +24,7 @@ test "physics.quantum.represent helpers: parity" {
     count=3,
   )
   let enumerated_text = quantum_eval_str(
-    "[" + enumerated.map(@symprint.to_string).join(", ") + "]",
+    "[" + enumerated.map(@symprint.pretty_string).join(", ") + "]",
   )
   quantum_test_assert_string_equal(
     enumerated_text,

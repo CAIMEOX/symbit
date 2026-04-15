@@ -6,7 +6,7 @@ test "physics.quantum.spin: parity" {
   quantum_test_assert_string_equal(
     quantum_qapply_str("Jz*JzKet(1, 1)"),
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         qapply(@symcore.raw_mul([jz(), jz_ket(one, one).as_expr()])),
       ),
     ),
@@ -15,7 +15,7 @@ test "physics.quantum.spin: parity" {
   quantum_test_assert_string_equal(
     quantum_qapply_str("Jplus*JzKet(1, 0)"),
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         qapply(
           @symcore.raw_mul([jplus(), jz_ket(one, @symcore.int(0)).as_expr()]),
         ),
@@ -25,12 +25,12 @@ test "physics.quantum.spin: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("Dagger(Jplus)"),
-    quantum_eval_str(@symprint.to_string(dagger(jplus()))),
+    quantum_eval_str(@symprint.pretty_string(dagger(jplus()))),
     "spin dagger parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("Commutator(Jx, Jy).doit()"),
-    quantum_eval_str(@symprint.to_string(commutator(jx(), jy()))),
+    quantum_eval_str(@symprint.pretty_string(commutator(jx(), jy()))),
     "spin commutator parity",
   )
 
@@ -65,7 +65,7 @@ test "physics.quantum.spin: rotation parity" {
 
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(dagger(rotation(alpha, beta, gamma).as_expr())),
+      @symprint.pretty_string(dagger(rotation(alpha, beta, gamma).as_expr())),
     ),
     quantum_eval_str("Rotation(-gamma, -beta, -alpha)"),
     "rotation dagger parity",

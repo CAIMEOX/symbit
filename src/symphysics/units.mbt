@@ -88,7 +88,7 @@ pub enum PrefixValue {
 pub impl Show for PrefixValue with to_string(self) {
   match self {
     PrefixValue::Prefix(p) => p.abbrev
-    PrefixValue::Expr(expr) => @symprint.to_string(expr)
+    PrefixValue::Expr(expr) => @symprint.pretty_string(expr)
   }
 }
 

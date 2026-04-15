@@ -9,7 +9,7 @@ test "debug repr uses s-expression order" {
 test "pretty to_string respects precedence" {
   let expr = (@symcore.Expr::Symbol("x") + @symcore.int(1)) ^
     (@symcore.Expr::Symbol("y") * @symcore.int(2))
-  inspect(to_string(expr), content="(x + 1)**(2*y)")
+  inspect(pretty_string(expr), content="(x + 1)**(2*y)")
 }
 
 ///|
@@ -23,7 +23,7 @@ test "pretty to_string wraps multiplicative denominator" {
       @symcore.int(-1),
     ),
   ])
-  inspect(to_string(expr), content="(x + y)/(x**2*y**2)")
+  inspect(pretty_string(expr), content="(x + y)/(x**2*y**2)")
 }
 
 ///|
@@ -31,7 +31,7 @@ test "pretty to_string prints exp negative powers in numerator form" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   inspect(
-    to_string(
+    pretty_string(
       @symcore.mul([
         y,
         @symcore.pow(@symcore.function("exp", [x]), @symcore.int(-1)),
@@ -40,7 +40,7 @@ test "pretty to_string prints exp negative powers in numerator form" {
     content="y*exp(-x)",
   )
   inspect(
-    to_string(
+    pretty_string(
       @symcore.mul([
         y,
         @symcore.rational_from_ints(1, 2) catch {
@@ -58,7 +58,7 @@ test "pretty to_string normalizes subtraction and unit coefficients" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   inspect(
-    to_string(
+    pretty_string(
       @symcore.add([
         @symcore.mul([@symcore.int(6), x ^ @symcore.int(2)]),
         @symcore.int(-5),
@@ -67,7 +67,7 @@ test "pretty to_string normalizes subtraction and unit coefficients" {
     content="6*x**2 - 5",
   )
   inspect(
-    to_string(
+    pretty_string(
       @symcore.add([
         @symcore.mul([@symcore.int(-1), x]),
         @symcore.mul([@symcore.int(-1), y]),
@@ -76,13 +76,13 @@ test "pretty to_string normalizes subtraction and unit coefficients" {
     content="-x - y",
   )
   inspect(
-    to_string(
+    pretty_string(
       @symcore.add([@symcore.mul([@symcore.int(-1), x]), @symcore.int(3)]),
     ),
     content="3 - x",
   )
-  inspect(to_string(@symcore.add([y, @symcore.int(-1)])), content="y - 1")
-  inspect(to_string(@symcore.mul([@symcore.int(-1), x])), content="-x")
+  inspect(pretty_string(@symcore.add([y, @symcore.int(-1)])), content="y - 1")
+  inspect(pretty_string(@symcore.mul([@symcore.int(-1), x])), content="-x")
 }
 
 ///|
@@ -95,7 +95,7 @@ test "pretty to_string prints Float leaves" {
     Ok(value) => value
     Err(_) => fail("float")
   }
-  inspect(to_string(@symcore.Expr::Float(exact)), content="0.125")
+  inspect(pretty_string(@symcore.Expr::Float(exact)), content="0.125")
 }
 
 ///|
@@ -109,7 +109,7 @@ test "pretty to_string wraps complex float leaves inside products" {
     @symcore.Expr::ComplexFloat(value),
     @symcore.Expr::Symbol("x"),
   ])
-  inspect(to_string(expr), content="(1.0 + 2.0*I)*x")
+  inspect(pretty_string(expr), content="(1.0 + 2.0*I)*x")
 }
 
 ///|
@@ -125,9 +125,9 @@ test "pretty printers understand relational tuple and lambda wrappers" {
     @symcore.add([@symcore.Expr::Symbol("x"), @symcore.int(1)]),
   )
   debug_inspect(rel, content="(call Le sym:x 2)")
-  inspect(to_string(rel), content="x <= 2")
-  inspect(to_string(tup), content="(x, 2)")
-  inspect(to_string(lam), content="Lambda((x, 2), x + 1)")
+  inspect(pretty_string(rel), content="x <= 2")
+  inspect(pretty_string(tup), content="(x, 2)")
+  inspect(pretty_string(lam), content="Lambda((x, 2), x + 1)")
 }
 
 ///|
@@ -137,13 +137,13 @@ test "pretty printers understand number symbols" {
     content="const:pi",
   )
   inspect(
-    to_string(
+    pretty_string(
       @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
     ),
     content="I",
   )
   inspect(
-    to_string(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)),
+    pretty_string(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)),
     content="oo",
   )
 }
@@ -152,9 +152,9 @@ test "pretty printers understand number symbols" {
 test "pretty printers render dummy and wild names like SymPy" {
   let d = @symcore.dummy(name="x")
   let w = @symcore.Expr::Wild("x", [], [])
-  inspect(to_string(d), content="_x")
+  inspect(pretty_string(d), content="_x")
   assert_true(to_repr(d).to_string().has_prefix("dummy:_x#"))
-  inspect(to_string(w), content="x_")
+  inspect(pretty_string(w), content="x_")
   debug_inspect(w, content="wild:x_")
 }
 
@@ -162,9 +162,9 @@ test "pretty printers render dummy and wild names like SymPy" {
 test "pretty printers distinguish undefined function heads" {
   let f = @symcore.Expr::UndefinedFunction("f")
   let sin_head = @symcore.Expr::FunctionHead("sin")
-  inspect(to_string(f), content="f")
+  inspect(pretty_string(f), content="f")
   debug_inspect(f, content="ufunc:f")
-  inspect(to_string(sin_head), content="sin")
+  inspect(pretty_string(sin_head), content="sin")
   debug_inspect(sin_head, content="fhead:sin")
 }
 
@@ -178,7 +178,7 @@ test "pretty printers render dict containers" {
     expr,
     content="(call Dict (call Tuple sym:x sym:y) (call Tuple 1 sym:z))",
   )
-  inspect(to_string(expr), content="{1: z, x: y}")
+  inspect(pretty_string(expr), content="{1: z, x: y}")
 }
 
 ///|
@@ -187,7 +187,7 @@ test "pretty printers render Mod as a structured core node" {
     @symcore.add([@symcore.Expr::Symbol("x"), @symcore.int(1)]),
     @symcore.int(3),
   )
-  inspect(to_string(expr), content="Mod(x + 1, 3)")
+  inspect(pretty_string(expr), content="Mod(x + 1, 3)")
   debug_inspect(expr, content="(call Mod (+ sym:x 1) 3)")
 }
 
@@ -196,13 +196,13 @@ test "arbitarary polys" {
   let gen = @symcore.arbitrary_polys()
   let exprs = gen.samples(size=5, seed=42)
   inspect(
-    exprs.map(to_string),
+    exprs.map(pretty_string),
     content=(
       #|["y", "w", "b**8", "z", "(b) + w"]
     ),
   )
   inspect(
-    gen.samples(size=10, seed=99).map(to_string),
+    gen.samples(size=10, seed=99).map(pretty_string),
     content=(
       #|["89*z*z**50 + b**91 + c + z + c + 59 + 34 + 95 + z + a", "87", "y**78", "z", "y**80", "9", "a**56", "46", "x*94*87*w*a**90", "z**63"]
     ),

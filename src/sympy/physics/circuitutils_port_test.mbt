@@ -42,7 +42,7 @@ test "physics.quantum.circuitutils: search parity" {
   assert_eq(
     kmp_table(circuit_factors(pattern)),
     circuit_oracle_ints(
-      quantum_circuitutils_kmp_table(@symprint.to_string(pattern)),
+      quantum_circuitutils_kmp_table(@symprint.pretty_string(pattern)),
     ),
   )
 
@@ -59,8 +59,8 @@ test "physics.quantum.circuitutils: search parity" {
     find_subcircuit(circuit, subcircuit, start=2),
     @strconv.parse_int(
       quantum_circuitutils_find_subcircuit(
-        @symprint.to_string(circuit),
-        @symprint.to_string(subcircuit),
+        @symprint.pretty_string(circuit),
+        @symprint.pretty_string(subcircuit),
         start=2,
       ),
     ),
@@ -70,7 +70,7 @@ test "physics.quantum.circuitutils: search parity" {
     hadamard_gate(0).as_expr(),
     z_gate(0).as_expr(),
   ])
-  let local_replace = @symprint.to_string(
+  let local_replace = @symprint.pretty_string(
     @symcore.raw_mul(
       replace_subcircuit(circuit, subcircuit, replace=Some(replacement)),
     ),
@@ -78,9 +78,9 @@ test "physics.quantum.circuitutils: search parity" {
   assert_eq(
     physics_srepr(local_replace),
     quantum_circuitutils_replace_subcircuit(
-      @symprint.to_string(circuit),
-      @symprint.to_string(subcircuit),
-      replace=Some(@symprint.to_string(replacement)),
+      @symprint.pretty_string(circuit),
+      @symprint.pretty_string(subcircuit),
+      replace=Some(@symprint.pretty_string(replacement)),
     ),
   )
 }
@@ -95,11 +95,11 @@ test "physics.quantum.circuitutils: symbolic index parity" {
   ])
   let symbolic = convert_to_symbolic_indices(circuit)
   let oracle_summary = quantum_circuitutils_convert_to_symbolic(
-    @symprint.to_string(circuit),
+    @symprint.pretty_string(circuit),
   )
   assert_true(!oracle_summary.is_empty())
   assert_eq(
-    physics_srepr(@symprint.to_string(@symcore.raw_mul(symbolic.circuit))),
+    physics_srepr(@symprint.pretty_string(@symcore.raw_mul(symbolic.circuit))),
     oracle_summary[0],
   )
   circuit_assert_string_list_equal(
@@ -113,9 +113,9 @@ test "physics.quantum.circuitutils: symbolic index parity" {
     symbolic.qubit_map,
   )
   assert_eq(
-    physics_srepr(@symprint.to_string(@symcore.raw_mul(local_real))),
+    physics_srepr(@symprint.pretty_string(@symcore.raw_mul(local_real))),
     quantum_circuitutils_convert_to_real(
-      @symprint.to_string(@symcore.raw_mul(symbolic.circuit)),
+      @symprint.pretty_string(@symcore.raw_mul(symbolic.circuit)),
       "{i0: 2, i1: 5}",
     ),
   )

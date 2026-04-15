@@ -28,7 +28,7 @@ pub fn rootof(poly : Poly, index : Int) -> RootOf {
 ///|
 /// Render this symbolic root in `CRootOf(poly, index)` form.
 pub impl Show for RootOf with to_string(self) -> String {
-  let expr_str = @symprint.to_string(self.poly.to_expr())
+  let expr_str = @symprint.pretty_string(self.poly.to_expr())
   "CRootOf(\{expr_str}, \{self.index})"
 }
 

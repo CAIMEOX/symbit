@@ -24,7 +24,7 @@ test "physics.quantum.cg: symbolic forms and numeric evaluation" {
   )
 
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       wigner3j(
         @symcore.int(6),
         @symcore.int(0),
@@ -37,7 +37,7 @@ test "physics.quantum.cg: symbolic forms and numeric evaluation" {
     "Wigner3j(6, 0, 4, 0, 2, 0)",
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       cg(
         half,
         half,

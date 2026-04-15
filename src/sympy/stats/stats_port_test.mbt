@@ -1,6 +1,6 @@
 ///|
 fn expr_str(expr : @symcore.Expr) -> String {
-  @symprint.to_string(expr)
+  @symprint.pretty_string(expr)
 }
 
 ///|

@@ -302,13 +302,13 @@ pub fn BeamParameter::waist_approximation_limit(self : BeamParameter) -> Expr {
 pub impl Show for BeamParameter with to_string(self) {
   [
     "BeamParameter(",
-    @symprint.to_string(self.wavelen_),
+    @symprint.pretty_string(self.wavelen_),
     ", ",
-    @symprint.to_string(self.z_),
+    @symprint.pretty_string(self.z_),
     ", ",
-    @symprint.to_string(self.z_r_),
+    @symprint.pretty_string(self.z_r_),
     ", ",
-    @symprint.to_string(self.n_),
+    @symprint.pretty_string(self.n_),
     ")",
   ].join("")
 }

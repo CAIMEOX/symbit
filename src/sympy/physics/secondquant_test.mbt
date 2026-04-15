@@ -4,7 +4,7 @@ fn sq_assert_expr_equal(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  let ours = secondquant_eval_str(@symprint.to_string(lhs))
+  let ours = secondquant_eval_str(@symprint.pretty_string(lhs))
   let expected = secondquant_eval_str(rhs)
   assert_eq(ours, expected)
 }
@@ -47,7 +47,7 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
   ])
   inspect(state.len(), content="5")
   inspect(state.repr(), content="FockState((0, 1, 2, 3, 4))")
-  inspect(state.get(3) |> @symprint.to_string, content="3")
+  inspect(state.get(3) |> @symprint.pretty_string, content="3")
   inspect(state.up(0).repr(), content="FockState((1, 1, 2, 3, 4))")
   inspect(
     match state.down(4) {
@@ -65,7 +65,7 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
   )
 
   inspect(
-    @symprint.to_string(secondquant_dagger(boson_ket([n]))),
+    @symprint.pretty_string(secondquant_dagger(boson_ket([n]))),
     content="FockStateBosonBra(Tuple(n))",
   )
   sq_assert_expr_equal(
@@ -158,7 +158,7 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
     content="[FockState((2, 0)), FockState((1, 1)), FockState((0, 2))]",
   )
   inspect(
-    @symprint.to_string(fixed.state(1)),
+    @symprint.pretty_string(fixed.state(1)),
     content="FockStateBosonKet(Tuple(1, 1))",
   )
   inspect(

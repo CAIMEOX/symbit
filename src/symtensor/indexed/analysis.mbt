@@ -10,7 +10,7 @@ pub struct IndexInfo {
 ///|
 fn index_name(index : Index) -> String {
   match index {
-    Index::Expr(expr) => @symprint.to_string(expr)
+    Index::Expr(expr) => @symprint.pretty_string(expr)
     Index::Idx(item) => item.name
   }
 }

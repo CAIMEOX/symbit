@@ -38,7 +38,7 @@ fn format_expr(expr : TensorExpr, parent_prec : Int) -> String {
     _ => 3
   }
   let body = match expr {
-    TensorExpr::Scalar(e) => @symprint.to_string(e)
+    TensorExpr::Scalar(e) => @symprint.pretty_string(e)
     TensorExpr::Tensor(head, indices) => {
       let args = indices.map(index_to_string).join(", ")
       head.to_string() + "(" + args + ")"

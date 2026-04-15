@@ -74,7 +74,7 @@ fn sq_fermion_items_from_expr(expr : Expr) -> Array[Expr]? {
 
 ///|
 fn sq_expr_text(expr : Expr) -> String {
-  @symprint.to_string(expr)
+  @symprint.pretty_string(expr)
 }
 
 ///|
@@ -462,9 +462,9 @@ pub fn FermionicOperatorExpr::dagger(
 ///|
 pub impl Show for FermionicOperatorExpr with to_string(self) {
   if self.is_annihilation {
-    "f(\{@symprint.to_string(self.index)})"
+    "f(\{@symprint.pretty_string(self.index)})"
   } else {
-    "f+(\{@symprint.to_string(self.index)})"
+    "f+(\{@symprint.pretty_string(self.index)})"
   }
 }
 
@@ -480,7 +480,7 @@ pub fn FermionicOperatorExpr::repr(self : FermionicOperatorExpr) -> String {
   } else {
     "CreateFermion"
   }
-  "\{name}(\{@symprint.to_string(self.index)})"
+  "\{name}(\{@symprint.pretty_string(self.index)})"
 }
 
 ///|

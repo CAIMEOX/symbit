@@ -4,7 +4,7 @@ fn gaussopt_port_assert_expr_equal(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  let ours = @symprint.to_string(lhs)
+  let ours = @symprint.pretty_string(lhs)
   assert_true(expr_equal(ours, rhs))
 }
 
@@ -17,7 +17,7 @@ fn gaussopt_port_assert_matrix_equal(
   let mut idx = 0
   for i in 0..<lhs.height() {
     for j in 0..<lhs.width() {
-      let ours = @symprint.to_string(lhs.get(i, j))
+      let ours = @symprint.pretty_string(lhs.get(i, j))
       assert_true(expr_equal(ours, rhs[idx]))
       idx = idx + 1
     }

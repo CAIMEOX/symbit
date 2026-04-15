@@ -2,7 +2,7 @@
 test "physics.quantum.cg: symbolic constructor parity" {
   let half = quantum_test_frac(1, 2)
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       wigner3j(
         @symcore.int(6),
         @symcore.int(0),
@@ -23,7 +23,7 @@ test "physics.quantum.cg: symbolic constructor parity" {
     "Wigner3j expr",
   )
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       cg(
         half,
         half,
@@ -44,7 +44,7 @@ test "physics.quantum.cg: symbolic constructor parity" {
     "CG expr",
   )
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       wigner6j(
         @symcore.int(1),
         @symcore.int(2),
@@ -65,7 +65,7 @@ test "physics.quantum.cg: symbolic constructor parity" {
     "Wigner6j expr",
   )
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       wigner9j(
         @symcore.int(2),
         @symcore.int(1),

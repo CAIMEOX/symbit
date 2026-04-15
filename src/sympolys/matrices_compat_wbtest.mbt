@@ -10,14 +10,14 @@ test "matrices wb: _linear_eq_to_dict produces sparse linear rows" {
   let (coeffs, ind) = _linear_eq_to_dict(eqs, syms)
   assert_true(coeffs.length() == 2 && ind.length() == 2)
   assert_true(
-    coeffs[0].get("x").map(@symprint.to_string) == Some("1") &&
-    coeffs[0].get("y").map(@symprint.to_string) == Some("1") &&
-    @symprint.to_string(ind[0]) == "-1",
+    coeffs[0].get("x").map(@symprint.pretty_string) == Some("1") &&
+    coeffs[0].get("y").map(@symprint.pretty_string) == Some("1") &&
+    @symprint.pretty_string(ind[0]) == "-1",
   )
   assert_true(
-    coeffs[1].get("x").map(@symprint.to_string) == Some("2") &&
-    coeffs[1].get("y").map(@symprint.to_string) == Some("3") &&
-    @symprint.to_string(ind[1]) == "2",
+    coeffs[1].get("x").map(@symprint.pretty_string) == Some("2") &&
+    coeffs[1].get("y").map(@symprint.pretty_string) == Some("3") &&
+    @symprint.pretty_string(ind[1]) == "2",
   )
 }
 
@@ -50,8 +50,8 @@ test "matrices wb: _linsolve handles unique, under, and inconsistent systems" {
   let unique_sol = _linsolve(unique, syms)
   match unique_sol {
     Some(values) =>
-      if values.get("x").map(@symprint.to_string) == Some("3/2") &&
-        values.get("y").map(@symprint.to_string) == Some("-1/2") {
+      if values.get("x").map(@symprint.pretty_string) == Some("3/2") &&
+        values.get("y").map(@symprint.pretty_string) == Some("-1/2") {
         ()
       } else {
         fail("_linsolve should solve the 2x2 system exactly over QQ")
@@ -64,8 +64,8 @@ test "matrices wb: _linsolve handles unique, under, and inconsistent systems" {
     Some(values) =>
       match (values.get("x"), values.get("y")) {
         (Some(x_expr), Some(y_expr)) => {
-          let x_text = @symprint.to_string(x_expr)
-          let y_text = @symprint.to_string(y_expr)
+          let x_text = @symprint.pretty_string(x_expr)
+          let y_text = @symprint.pretty_string(y_expr)
           assert_true(
             y_text == "y" && x_text.contains("y") && x_text.contains("-"),
           )

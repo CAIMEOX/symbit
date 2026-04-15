@@ -1,7 +1,7 @@
 ///|
 test "physics.quantum.dagger and tensorproduct: parity" {
   assert_eq(
-    @symprint.to_string(dagger(@symcore.Expr::Symbol("x"), evaluate=false)),
+    @symprint.pretty_string(dagger(@symcore.Expr::Symbol("x"), evaluate=false)),
     "Dagger(x)",
   )
 

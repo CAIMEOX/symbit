@@ -5,7 +5,7 @@ test "geometry.point parity repr and distance" {
   assert_eq(p.repr(), geometry_eval_repr("Point2D(x, 2)"))
   assert_true(
     geometry_expr_equal(
-      @symprint.to_string(p.distance(q)),
+      @symprint.pretty_string(p.distance(q)),
       "Point2D(x, 2).distance(Point2D(1, 5))",
     ),
   )
@@ -23,13 +23,13 @@ test "geometry.point parity translate rotate scale" {
   )
   assert_true(
     geometry_expr_equal(
-      @symprint.to_string(rotated.x()),
+      @symprint.pretty_string(rotated.x()),
       "Point2D(2, 1).rotate(pi).x",
     ),
   )
   assert_true(
     geometry_expr_equal(
-      @symprint.to_string(rotated.y()),
+      @symprint.pretty_string(rotated.y()),
       "Point2D(2, 1).rotate(pi).y",
     ),
   )

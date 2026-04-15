@@ -135,7 +135,7 @@ fn mech_is_dynamicsymbol(expr : Expr) -> Bool {
 
 ///|
 fn mech_expr_key(expr : Expr) -> String {
-  @symprint.to_string(expr)
+  @symprint.pretty_string(expr)
 }
 
 ///|
@@ -481,7 +481,7 @@ pub fn mechanics_printing() -> Unit {
 
 ///|
 pub fn msprint_expr(expr : Expr) -> String {
-  @symprint.to_string(expr)
+  @symprint.pretty_string(expr)
 }
 
 ///|

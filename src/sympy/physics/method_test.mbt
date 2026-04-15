@@ -79,6 +79,6 @@ test "physics.mechanics lagrange solve_multipliers parity-friendly semantics" {
     ].join("; "),
   )
   assert_true(
-    mechanics_expr_equal(@symprint.to_string(lambdas.get(0, 0)), oracle_lambda),
+    mechanics_expr_equal(@symprint.pretty_string(lambdas.get(0, 0)), oracle_lambda),
   )
 }

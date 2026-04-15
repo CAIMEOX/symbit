@@ -394,7 +394,7 @@ fn symbolic_condition_expr_text(expr : Expr) -> String {
       let positive_parts : Array[String] = []
       let negative_parts : Array[String] = []
       for arg in args {
-        let text = @symprint.to_string(arg)
+        let text = @symprint.pretty_string(arg)
         if text.has_prefix("-") {
           negative_parts.push(text.unsafe_substring(start=1, end=text.length()))
         } else {
@@ -402,7 +402,7 @@ fn symbolic_condition_expr_text(expr : Expr) -> String {
         }
       }
       if positive_parts.is_empty() || negative_parts.is_empty() {
-        @symprint.to_string(expr)
+        @symprint.pretty_string(expr)
       } else {
         let mut out = positive_parts.join(" + ")
         for part in negative_parts {
@@ -411,7 +411,7 @@ fn symbolic_condition_expr_text(expr : Expr) -> String {
         out
       }
     }
-    _ => @symprint.to_string(expr)
+    _ => @symprint.pretty_string(expr)
   }
 }
 
@@ -2613,7 +2613,7 @@ fn solve_factored_system_fallback(
 ///   ])
 ///   match solve(solve_expr_input(expr), symbols=[x]) {
 ///     SolveResult::List(items) =>
-///       inspect(items.map(@symprint.to_string).join(", "), content="-1, 1")
+///       inspect(items.map(@symprint.pretty_string).join(", "), content="-1, 1")
 ///     _ => fail("expected solve to return a root list")
 ///   }
 /// }

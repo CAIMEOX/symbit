@@ -31,16 +31,16 @@ fn quantum_op_sort_key(expr : Expr) -> (Int, String) {
     Some(args) if @symcore.application_has_name(expr, "BosonOp", arity=2) ||
       @symcore.application_has_name(expr, "FermionOp", arity=2) => {
       let annihilation_rank = if args[1] == int(0) { 0 } else { 1 }
-      (annihilation_rank, @symprint.to_string(args[0]))
+      (annihilation_rank, @symprint.pretty_string(args[0]))
     }
     Some(args) if @symcore.application_has_name(expr, "CreateBoson", arity=1) =>
-      (0, @symprint.to_string(args[0]))
+      (0, @symprint.pretty_string(args[0]))
     Some(args) if @symcore.application_has_name(
         expr,
         "AnnihilateBoson",
         arity=1,
-      ) => (1, @symprint.to_string(args[0]))
-    _ => (2, @symprint.to_string(expr))
+      ) => (1, @symprint.pretty_string(args[0]))
+    _ => (2, @symprint.pretty_string(expr))
   }
 }
 

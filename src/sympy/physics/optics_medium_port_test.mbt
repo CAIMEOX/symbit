@@ -4,7 +4,7 @@ fn medium_port_assert_expr_equal(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  let ours = physics_eval_str(@symprint.to_string(lhs))
+  let ours = physics_eval_str(@symprint.pretty_string(lhs))
   assert_eq(ours, rhs)
 }
 

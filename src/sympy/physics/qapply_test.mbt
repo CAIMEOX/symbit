@@ -12,7 +12,7 @@ test "physics.quantum.qapply: tensor, density, power, dagger, and sum" {
     @symquant.tensor_product([zero, one]).as_expr(),
   ])
   inspect(
-    @symprint.to_string(qapply(tensor_mul)),
+    @symprint.pretty_string(qapply(tensor_mul)),
     content="TensorProduct(Qubit(1), Qubit(1))",
   )
 
@@ -21,32 +21,32 @@ test "physics.quantum.qapply: tensor, density, power, dagger, and sum" {
     @symcore.raw_mul([identity_gate(0).as_expr(), one]),
   ]).as_expr()
   inspect(
-    @symprint.to_string(qapply(tensor_raw)),
+    @symprint.pretty_string(qapply(tensor_raw)),
     content="TensorProduct(Qubit(1), Qubit(1))",
   )
 
   let rho = density([(@symcore.raw_mul([x_gate(0).as_expr(), zero]), half)]).as_expr()
   inspect(
-    @symprint.to_string(qapply(rho)),
+    @symprint.pretty_string(qapply(rho)),
     content="Density(Tuple(Qubit(1), 1/2))",
   )
 
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       qapply(@symcore.raw_mul([x_gate(0).as_expr() ^ @symcore.int(2), zero])),
     ),
     content="Qubit(0)",
   )
 
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       qapply(@symcore.raw_mul([zero_bra, x_gate(0).as_expr()]), dagger=true),
     ),
     content="QubitBra(1)",
   )
 
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       qapply(
         @symcore.raw_function("Sum", [
           @symcore.raw_mul([x_gate(0).as_expr(), zero]),
@@ -58,10 +58,10 @@ test "physics.quantum.qapply: tensor, density, power, dagger, and sum" {
   )
 
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       qapply(@symcore.raw_mul([zero_bra, x_gate(0).as_expr()]), dagger=true),
     ),
-    @symprint.to_string(one_bra),
+    @symprint.pretty_string(one_bra),
     "dagger bra application",
   )
 }

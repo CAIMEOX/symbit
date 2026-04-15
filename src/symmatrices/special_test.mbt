@@ -35,9 +35,9 @@ test "matrices special hessian wronskian and casoratian" {
   let f = (x ^ @symcore.int(2)) + x * y + (y ^ @symcore.int(2))
   inspect(hessian(f, [x, y]).to_string(), content="Matrix([[2, 1], [1, 2]])")
   inspect(
-    @symprint.to_string(wronskian([x, x ^ @symcore.int(2)], x)),
+    @symprint.pretty_string(wronskian([x, x ^ @symcore.int(2)], x)),
     content="x**2",
   )
   let n = @symcore.Expr::Symbol("n")
-  inspect(@symprint.to_string(casoratian([@symcore.int(1), n], n)), content="1")
+  inspect(@symprint.pretty_string(casoratian([@symcore.int(1), n], n)), content="1")
 }

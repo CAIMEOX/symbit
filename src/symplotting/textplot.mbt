@@ -76,7 +76,7 @@ fn textplot_single_variable(
 ) -> @symcore.Expr raise PlottingError {
   let free = @symcore.free_symbols(expr)
   if free.length() > 1 {
-    let rendered = free.map(@symprint.to_string).join(", ")
+    let rendered = free.map(@symprint.pretty_string).join(", ")
     raise PlottingError::ValueError(
       "The expression must have a single variable. (Got {" + rendered + "})",
     )

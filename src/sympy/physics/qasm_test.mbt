@@ -34,10 +34,10 @@ test "physics.quantum.qasm: builtin circuits and labels" {
 ///|
 test "physics.quantum.qasm: qdef custom gates" {
   let parser = qasm(["qubit q0", "qdef foo,0,'G'", "foo q0"])
-  let one_qubit = @symprint.to_string(parser.get_circuit())
+  let one_qubit = @symprint.pretty_string(parser.get_circuit())
   assert_eq(one_qubit, "G(0)")
 
   let controlled = qasm(["qubit q0", "qubit q1", "qdef foo,1,'G'", "foo q0,q1"])
-  let controlled_circuit = @symprint.to_string(controlled.get_circuit())
+  let controlled_circuit = @symprint.pretty_string(controlled.get_circuit())
   assert_eq(controlled_circuit, "CGate(Tuple(1), G(0))")
 }

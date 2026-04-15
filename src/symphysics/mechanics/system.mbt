@@ -552,7 +552,7 @@ pub fn System::validate_system(
   if !missing_q.is_empty() {
     let names : Array[String] = []
     for item in missing_q {
-      names.push(@symprint.to_string(item.1))
+      names.push(@symprint.pretty_string(item.1))
     }
     names.sort()
     msgs.push(
@@ -582,7 +582,7 @@ pub fn System::validate_system(
     if !not_qdots.is_empty() {
       let names : Array[String] = []
       for item in not_qdots {
-        names.push(@symprint.to_string(item.1))
+        names.push(@symprint.pretty_string(item.1))
       }
       names.sort()
       msgs.push(
@@ -594,7 +594,7 @@ pub fn System::validate_system(
     if !self.u_aux_.is_empty() {
       msgs.push(
         "This method does not support auxiliary speeds. The auxiliary speeds are {" +
-        self.u_aux_.map(@symprint.to_string).join(", ") +
+        self.u_aux_.map(@symprint.pretty_string).join(", ") +
         "}.",
       )
     }
@@ -623,7 +623,7 @@ pub fn System::validate_system(
     if !missing_u.is_empty() {
       let names : Array[String] = []
       for item in missing_u {
-        names.push(@symprint.to_string(item.1))
+        names.push(@symprint.pretty_string(item.1))
       }
       names.sort()
       msgs.push(
@@ -635,7 +635,7 @@ pub fn System::validate_system(
     if !missing_kdes.is_empty() {
       let names : Array[String] = []
       for item in missing_kdes {
-        names.push(@symprint.to_string(item.1))
+        names.push(@symprint.pretty_string(item.1))
       }
       names.sort()
       msgs.push(

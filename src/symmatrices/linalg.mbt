@@ -17,8 +17,8 @@ fn symbolic_pivot_better(candidate : Expr, current : Expr) -> Bool {
   if candidate_free != current_free {
     return candidate_free < current_free
   }
-  @symprint.to_string(candidate).length() <
-  @symprint.to_string(current).length()
+  @symprint.pretty_string(candidate).length() <
+  @symprint.pretty_string(current).length()
 }
 
 ///|
@@ -495,7 +495,7 @@ pub fn Matrix::is_echelon(self : Matrix) -> Bool {
 ///     [@symcore.int(1), @symcore.int(2)],
 ///     [@symcore.int(3), @symcore.int(4)],
 ///   ])
-///   inspect(@symprint.to_string(m.det()), content="-2")
+///   inspect(@symprint.pretty_string(m.det()), content="-2")
 /// }
 /// ```
 pub fn Matrix::det(self : Matrix) -> Expr raise MatrixError {

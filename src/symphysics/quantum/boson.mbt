@@ -28,9 +28,9 @@ pub fn BosonOpExpr::as_expr(self : BosonOpExpr) -> Expr {
 ///|
 pub impl Show for BosonOpExpr with to_string(self) {
   if self.is_annihilation {
-    @symprint.to_string(self.name)
+    @symprint.pretty_string(self.name)
   } else {
-    "Dagger(\{@symprint.to_string(self.name)})"
+    "Dagger(\{@symprint.pretty_string(self.name)})"
   }
 }
 

@@ -46,7 +46,7 @@ pub fn operators_to_state_many(operator_exprs : Array[Expr]) -> Expr? {
   if operator_exprs.length() == 1 {
     return operators_to_state(operator_exprs[0])
   }
-  let names = operator_exprs.map(expr => @symprint.to_string(expr))
+  let names = operator_exprs.map(expr => @symprint.pretty_string(expr))
   names.sort()
   if names == ["J2", "Jx"] {
     return Some(jx_ket(operatorset_half(), operatorset_half()).as_expr())

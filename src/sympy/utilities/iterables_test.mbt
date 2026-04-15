@@ -196,9 +196,9 @@ test "iterables partition helpers behavior" {
 ///|
 test "iterables numbered symbols and take behavior" {
   let gen = numbered_symbols(prefix="t", start=1, exclude=["t2"])
-  assert_eq(@symprint.to_string(gen.next()), "t1")
-  assert_eq(@symprint.to_string(gen.next()), "t3")
-  assert_eq(@symprint.to_string(gen.next()), "t4")
+  assert_eq(@symprint.pretty_string(gen.next()), "t1")
+  assert_eq(@symprint.pretty_string(gen.next()), "t3")
+  assert_eq(@symprint.pretty_string(gen.next()), "t4")
   assert_eq(take([1, 2, 3, 4].iter(), 3), [1, 2, 3])
 }
 

@@ -21,6 +21,6 @@ test "physics.mechanics jointsmethod: simple pendulum lagrange backend" {
   assert_eq(jm.bodies().length(), 2)
   let rhs = jm.rhs()
   assert_true(
-    mechanics_expr_equal(@symprint.to_string(rhs.get(1, 0)), "-g*sin(q(t))/l"),
+    mechanics_expr_equal(@symprint.pretty_string(rhs.get(1, 0)), "-g*sin(q(t))/l"),
   )
 }

@@ -6,7 +6,7 @@ fn expr_int(n : Int) -> Expr {
 ///|
 fn assert_expr_equal(ours : Expr, oracle_str : String) -> Unit raise {
   let ours_norm : Result[String, Error] = try? sympy_normalize(
-    @symprint.to_string(ours),
+    @symprint.pretty_string(ours),
   )
   let oracle_norm : Result[String, Error] = try? sympy_normalize(oracle_str)
   match (ours_norm, oracle_norm) {
@@ -23,7 +23,7 @@ fn assert_expr_equal(ours : Expr, oracle_str : String) -> Unit raise {
 
 ///|
 fn assert_expr_equal_str(ours : Expr, oracle : String) -> Unit raise {
-  let ours_str = @symprint.to_string(ours)
+  let ours_str = @symprint.pretty_string(ours)
   guard ours_str == oracle else {
     println("str mismatch: ours=\{ours_str} oracle=\{oracle}")
     fail("str mismatch")

@@ -8,7 +8,7 @@ The examples in this README are executable `mbt check` blocks. They are kept int
 
 ## QuickStart
 
-The fastest way to start is to build expressions with `symbol`, `integer`, `rational`, `add`, `mul`, and `pow`, then render them with `to_string` or `debug_inspect`. This keeps the entry path explicit and avoids hiding tree structure behind parser magic. In real use you usually construct a symbolic expression, inspect it in debug or readable form, then apply one of the simplifiers depending on whether you want a general rewrite, a rational-function normalization, or a more specialized transformation.
+The fastest way to start is to build expressions with `symbol`, `integer`, `rational`, `add`, `mul`, and `pow`, then render them with `pretty_string` or `debug_inspect`. This keeps the entry path explicit and avoids hiding tree structure behind parser magic. In real use you usually construct a symbolic expression, inspect it in debug or readable form, then apply one of the simplifiers depending on whether you want a general rewrite, a rational-function normalization, or a more specialized transformation.
 
 ```mbt check
 ///|
@@ -18,12 +18,12 @@ test "quickstart expression construction and simplification" {
 
   let expr = add([integer(1), mul([x, pow(y, integer(2))])])
   debug_inspect(expr, content="(+ (* sym:x (^ sym:y 2)) 1)")
-  inspect(to_string(expr), content="x*y**2 + 1")
+  inspect(pretty_string(expr), content="x*y**2 + 1")
 
   let cancelled = simplify(
     mul([add([x, integer(1)]), pow(add([x, integer(1)]), integer(-1))]),
   )
-  inspect(to_string(cancelled), content="1")
+  inspect(pretty_string(cancelled), content="1")
 }
 ```
 
@@ -34,7 +34,7 @@ Exact rationals are first-class. The root package deliberately exposes `rational
 test "quickstart exact rationals remain symbolic" {
   let third = try! rational(1, 3)
   let expr = add([third, third, third])
-  inspect(to_string(expr), content="1")
+  inspect(pretty_string(expr), content="1")
 }
 ```
 
@@ -49,15 +49,15 @@ test "targeted simplification keeps intent explicit" {
   let sin_x = @symcore.function("sin", [x])
   let cos_x = @symcore.function("cos", [x])
   let trig = add([pow(sin_x, integer(2)), pow(cos_x, integer(2))])
-  inspect(to_string(trigsimp(trig)), content="1")
+  inspect(pretty_string(trigsimp(trig)), content="1")
 
   let frac_expr = mul([
     add([x, integer(1)]),
     pow(Expr::Symbol("y"), integer(-1)),
   ])
   let (num, den) = fraction(frac_expr)
-  inspect(to_string(num), content="x + 1")
-  inspect(to_string(den), content="y")
+  inspect(pretty_string(num), content="x + 1")
+  inspect(pretty_string(den), content="y")
 }
 ```
 
@@ -80,11 +80,11 @@ test "cse extracts and reconstructs shared structure" {
   let replacements = result.replacements_copy()
   let (tmp, rhs) = replacements[0]
   inspect(tmp, content="x0")
-  inspect(to_string(rhs), content="sin(x)")
+  inspect(pretty_string(rhs), content="sin(x)")
 
   let rebuilt = cse_reconstruct(result)
-  assert_eq(to_string(rebuilt[0]), to_string(exprs[0]))
-  assert_eq(to_string(rebuilt[1]), to_string(exprs[1]))
+  assert_eq(pretty_string(rebuilt[0]), pretty_string(exprs[0]))
+  assert_eq(pretty_string(rebuilt[1]), pretty_string(exprs[1]))
 }
 ```
 
@@ -105,7 +105,7 @@ test "fu-style helpers are available from the root package" {
     content="(* (^ (call cos sym:x) -1) (call sin sym:x))",
   )
   inspect(
-    to_string(tr2i(mul([sin_x, pow(cos_x, integer(-1))]))),
+    pretty_string(tr2i(mul([sin_x, pow(cos_x, integer(-1))]))),
     content="tan(x)",
   )
 }

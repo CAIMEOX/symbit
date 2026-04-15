@@ -25,16 +25,16 @@ test "with_evaluate controls core constructor evaluation" {
 test "with_distribute and with_exp_is_pow control canonical constructors" {
   let x = Expr::Symbol("x")
   let distributed = mul([int(2), add([x, int(1)])])
-  inspect(@symprint.to_string(distributed), content="2*x + 2")
+  inspect(@symprint.pretty_string(distributed), content="2*x + 2")
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       with_distribute(false, fn() { mul([int(2), add([x, int(1)])]) }),
     ),
     content="2*(x + 1)",
   )
-  inspect(@symprint.to_string(function("exp", [x])), content="exp(x)")
+  inspect(@symprint.pretty_string(function("exp", [x])), content="exp(x)")
   inspect(
-    @symprint.to_string(with_exp_is_pow(true, fn() { function("exp", [x]) })),
+    @symprint.pretty_string(with_exp_is_pow(true, fn() { function("exp", [x]) })),
     content="E**x",
   )
 }
@@ -44,7 +44,7 @@ test "legacy normalization ignores temporary constructor parameters" {
   let x = Expr::Symbol("x")
   let half = rational_from_ints(3, 2)
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       with_evaluate(false, fn() {
         normalize_legacy_expr(Expr::Function("Eq", [x, x]))
       }),
@@ -52,7 +52,7 @@ test "legacy normalization ignores temporary constructor parameters" {
     content="True",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       with_evaluate(false, fn() {
         normalize_legacy_expr(Expr::Function("Integer", [half]))
       }),
@@ -60,7 +60,7 @@ test "legacy normalization ignores temporary constructor parameters" {
     content="1",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       with_exp_is_pow(true, fn() {
         normalize_legacy_expr(Expr::Function("exp", [x]))
       }),

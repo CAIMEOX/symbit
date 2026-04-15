@@ -135,5 +135,5 @@ fn shift_symbol(expr : Expr, sym : Expr, by : Int) -> Expr {
 
 ///|
 fn expr_to_sympy_string(expr : Expr) -> String {
-  @symprint.to_string(expr)
+  @symprint.pretty_string(expr)
 }

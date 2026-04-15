@@ -7,7 +7,7 @@ fn strip_parens(text : String) -> String {
 fn matrix_text(matrix : @symphysics.ExplicitMatrix) -> String {
   matrix
   .rows_copy()
-  .map(row => row.map(@symprint.to_string).join(","))
+  .map(row => row.map(@symprint.pretty_string).join(","))
   .join("|")
 }
 
@@ -15,7 +15,7 @@ fn matrix_text(matrix : @symphysics.ExplicitMatrix) -> String {
 fn matrix_py_expr(matrix : @symphysics.ExplicitMatrix) -> String {
   let rows = matrix.rows_copy()
   "sympy.Matrix([" +
-  rows.map(row => "[" + row.map(@symprint.to_string).join(",") + "]").join(",") +
+  rows.map(row => "[" + row.map(@symprint.pretty_string).join(",") + "]").join(",") +
   "])"
 }
 
@@ -48,7 +48,7 @@ fn scalar_map_text(
   let keys = mapping.keys().to_array()
   keys.sort()
   keys
-  .map(key => key.to_string() + "=" + @symprint.to_string(mapping[key]))
+  .map(key => key.to_string() + "=" + @symprint.pretty_string(mapping[key]))
   .join("|")
 }
 
@@ -202,7 +202,7 @@ test "point and field-function parity against repo sympy" {
   )
   assert_eq(
     (p2.express_coordinates(c) catch { _ => fail("coords") })
-    .map(@symprint.to_string)
+    .map(@symprint.pretty_string)
     .join("|"),
     vector_eval_str(
       "(lambda C: '|'.join(str(v) for v in C.origin.locate_new('p1', 2*C.i + 3*C.j).locate_new('p2', C.k).express_coordinates(C)))(" +
@@ -217,7 +217,7 @@ test "point and field-function parity against repo sympy" {
     ),
   )
   assert_eq(
-    @symprint.to_string(@symvector.divergence(field) catch { _ => fail("div") }),
+    @symprint.pretty_string(@symvector.divergence(field) catch { _ => fail("div") }),
     vector_eval_str(
       "(lambda C: str(__import__('sympy.vector', fromlist=['divergence']).divergence(C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k)))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
@@ -236,7 +236,7 @@ test "point and field-function parity against repo sympy" {
       assert_eq(
         vector_eval_str(
           "(lambda C: str(sympy.simplify((" +
-          @symprint.to_string(value) +
+          @symprint.pretty_string(value) +
           ") - (__import__('sympy.vector', fromlist=['directional_derivative']).directional_derivative(C.x*C.y*C.z, 3*C.i + 4*C.j + C.k)))))(" +
           "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
         ),
@@ -245,7 +245,7 @@ test "point and field-function parity against repo sympy" {
     @symvector.ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
   }
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symvector.scalar_potential_difference(
         @symvector.scalar_or_vector_vector(field),
         c,
@@ -326,7 +326,7 @@ test "vector surface parity for equals projection separate orthogonalize and lap
   match proj_scalar {
     @symvector.ScalarOrVector::ScalarExpr(value) =>
       assert_eq(
-        @symprint.to_string(value),
+        @symprint.pretty_string(value),
         vector_eval_str(
           "(lambda C: str((C.i + C.j + C.k).projection(3*C.i + 4*C.j, scalar=True)))(" +
           c_py +
@@ -400,7 +400,7 @@ test "vector surface parity for equals projection separate orthogonalize and lap
   match lap_scalar_value {
     @symvector.ScalarOrVector::ScalarExpr(value) =>
       assert_eq(
-        @symprint.to_string(value),
+        @symprint.pretty_string(value),
         vector_eval_str(
           "(lambda C: str(__import__('sympy.vector.operators', fromlist=['Laplacian']).Laplacian(C.x**2 + C.y**2 + C.z**2).doit()))(" +
           c_py +
@@ -469,7 +469,7 @@ test "del operator parity against repo sympy" {
     ),
   )
   assert_eq(
-    @symprint.to_string(@symvector.delop.dot(v) catch { _ => fail("del-dot") }),
+    @symprint.pretty_string(@symvector.delop.dot(v) catch { _ => fail("del-dot") }),
     vector_eval_str(
       "(lambda C, D: str(D().dot(C.x*C.y*C.z*(C.i + C.j + C.k))))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')," +
@@ -547,7 +547,7 @@ test "curvilinear field-function parity against repo sympy" {
   assert_eq(
     vector_eval_str(
       "(lambda B: str(sympy.simplify((" +
-      @symprint.to_string(div_cyl) +
+      @symprint.pretty_string(div_cyl) +
       ") - (__import__('sympy.vector', fromlist=['divergence']).divergence(B.r*B.i + B.theta*B.j + B.z*B.k)))))(" +
       b_py +
       ")",
@@ -586,7 +586,7 @@ test "curvilinear field-function parity against repo sympy" {
       assert_eq(
         vector_eval_str(
           "(lambda A: str(sympy.simplify((" +
-          @symprint.to_string(value) +
+          @symprint.pretty_string(value) +
           ") - (__import__('sympy.vector', fromlist=['directional_derivative']).directional_derivative(5*A.r**2*A.phi, 3*A.i + 4*A.j + A.k)))))(" +
           a_py +
           ")",
@@ -908,7 +908,7 @@ test "orienters and create_new parity against repo sympy" {
   assert_true(
     vector_eval_str(
       "(lambda A, S, sin, cos: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
-      s.transformation_to_parent().map(@symprint.to_string).join(", ") +
+      s.transformation_to_parent().map(@symprint.pretty_string).join(", ") +
       "), S.transformation_to_parent())))(" +
       a_py +
       ", " +
@@ -922,7 +922,7 @@ test "orienters and create_new parity against repo sympy" {
     vector_eval_str(
       "(lambda A, S, atan2, acos, sqrt: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
       (s.transformation_from_parent() catch { _ => fail("from-parent") })
-      .map(@symprint.to_string)
+      .map(@symprint.pretty_string)
       .join(", ") +
       "), S.transformation_from_parent())))(" +
       a_py +
@@ -972,7 +972,7 @@ test "generic transformation and basisdependent propagation parity against repo 
   assert_true(
     vector_eval_str(
       "(lambda A, B: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
-      b.transformation_to_parent().map(@symprint.to_string).join(", ") +
+      b.transformation_to_parent().map(@symprint.pretty_string).join(", ") +
       "), B.transformation_to_parent())))(" +
       a_py +
       ", " +
@@ -985,7 +985,7 @@ test "generic transformation and basisdependent propagation parity against repo 
     vector_eval_str(
       "(lambda A, B: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
       (b.transformation_from_parent() catch { _ => fail("b-from-parent") })
-      .map(@symprint.to_string)
+      .map(@symprint.pretty_string)
       .join(", ") +
       "), (B.scalar_map(A)[B.x1], B.scalar_map(A)[B.x2], B.scalar_map(A)[B.x3]))))(" +
       a_py +
@@ -1052,7 +1052,7 @@ test "generic transformation and basisdependent propagation parity against repo 
   assert_true(
     vector_eval_str(
       "(lambda A, C: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
-      c_sys.transformation_to_parent().map(@symprint.to_string).join(", ") +
+      c_sys.transformation_to_parent().map(@symprint.pretty_string).join(", ") +
       "), C.transformation_to_parent())))(" +
       a_py +
       ", " +
@@ -1065,7 +1065,7 @@ test "generic transformation and basisdependent propagation parity against repo 
     vector_eval_str(
       "(lambda A, C: '|'.join(str(sympy.simplify(a - b)) for a, b in zip((" +
       (c_sys.transformation_from_parent() catch { _ => fail("c-from-parent") })
-      .map(@symprint.to_string)
+      .map(@symprint.pretty_string)
       .join(", ") +
       "), (C.scalar_map(A)[C.x], C.scalar_map(A)[C.y], C.scalar_map(A)[C.z]))))(" +
       a_py +

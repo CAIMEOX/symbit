@@ -6,6 +6,7 @@ import {
   "CAIMEOX/moon_floating/libmp/mpf",
   "CAIMEOX/symbit/symnum",
   "moonbitlang/core/bigint",
+  "moonbitlang/core/debug",
   "moonbitlang/quickcheck",
 }
 
@@ -344,6 +345,7 @@ pub impl Eq for Expr
 pub impl Hash for Expr
 pub impl Mul for Expr
 pub impl Sub for Expr
+pub impl @debug.Debug for Expr
 
 pub enum ExprForm {
   Number(@symnum.BigRational)

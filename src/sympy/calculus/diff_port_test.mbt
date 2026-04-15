@@ -5,8 +5,8 @@ test "diff tan and gamma" {
   let gammax = @symcore.function("gamma", [x])
   let dt = diff(tanx, x)
   let dg = diff(gammax, x)
-  assert_eq(@symprint.to_string(dt), "sec(x)**2")
-  assert_eq(@symprint.to_string(dg), "gamma(x)*digamma(x)")
+  assert_eq(@symprint.pretty_string(dt), "sec(x)**2")
+  assert_eq(@symprint.pretty_string(dg), "gamma(x)*digamma(x)")
 }
 
 ///|

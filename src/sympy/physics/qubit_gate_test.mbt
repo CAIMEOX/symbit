@@ -14,7 +14,7 @@ test "physics.quantum.qubit: core state helpers" {
   let iq = int_qubit(5, 3)
   inspect(iq.to_string(), content="|5>")
   inspect(iq.repr(), content="IntQubit(Integer(5))")
-  inspect(@symprint.to_string(iq.as_expr()), content="IntQubit(5)")
+  inspect(@symprint.pretty_string(iq.as_expr()), content="IntQubit(5)")
 }
 
 ///|
@@ -100,20 +100,20 @@ test "physics.quantum.qubit/gate: controlled and simplification" {
     "H^2 simplification",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       gate_sort(@symcore.raw_mul([z_gate(1).as_expr(), x_gate(0).as_expr()])),
     ),
     content="XGate(0)*ZGate(1)",
   )
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       gate_sort(@symcore.raw_mul([z_gate(0).as_expr(), x_gate(0).as_expr()])),
     ),
     "-1*XGate(0)*ZGate(0)",
     "gate_sort ZX anticommute",
   )
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       gate_sort(
         @symcore.raw_mul([y_gate(0).as_expr(), hadamard_gate(0).as_expr()]),
       ),
@@ -122,7 +122,7 @@ test "physics.quantum.qubit/gate: controlled and simplification" {
     "gate_sort YH anticommute",
   )
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       gate_sort(
         @symcore.raw_mul([t_gate(0).as_expr(), phase_gate(0).as_expr()]),
       ),
@@ -131,7 +131,7 @@ test "physics.quantum.qubit/gate: controlled and simplification" {
     "gate_sort TS commute",
   )
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       gate_sort(
         @symcore.raw_mul([z_gate(0).as_expr(), cnot_gate(0, 1).as_expr()]),
       ),
@@ -140,7 +140,7 @@ test "physics.quantum.qubit/gate: controlled and simplification" {
     "gate_sort Z and CNOT",
   )
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       gate_simp(
         @symcore.raw_add([
           @symcore.raw_pow(x_gate(0).as_expr(), @symcore.int(2)),
@@ -152,14 +152,14 @@ test "physics.quantum.qubit/gate: controlled and simplification" {
     "gate_simp additive powers",
   )
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       gate_simp(@symcore.raw_pow(phase_gate(4).as_expr(), @symcore.int(3))),
     ),
     "PhaseGate(4)*ZGate(4)",
     "gate_simp S^3",
   )
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       gate_simp(@symcore.raw_pow(t_gate(0).as_expr(), @symcore.int(6))),
     ),
     "PhaseGate(0)*ZGate(0)",
@@ -282,11 +282,11 @@ test "physics.quantum.gate: ugate and controlled ugate" {
     ]),
   )
   inspect(
-    @symprint.to_string(qapply(@symcore.raw_mul([u2, qubit("00").as_expr()]))),
+    @symprint.pretty_string(qapply(@symcore.raw_mul([u2, qubit("00").as_expr()]))),
     content="Qubit(1, 0)",
   )
   inspect(
-    @symprint.to_string(qapply(@symcore.raw_mul([u2, qubit("11").as_expr()]))),
+    @symprint.pretty_string(qapply(@symcore.raw_mul([u2, qubit("11").as_expr()]))),
     content="Qubit(0, 1)",
   )
   quantum_test_assert_matrix_equal(
@@ -361,11 +361,11 @@ test "physics.quantum.qubit: measurement helpers" {
     @symcore.raw_mul([hadamard_gate(0).as_expr(), qubit("0").as_expr()]),
   )
   inspect(
-    @symprint.to_string(measure_all_oneshot(h_state, sample=0.1)),
+    @symprint.pretty_string(measure_all_oneshot(h_state, sample=0.1)),
     content="Qubit(0)",
   )
   inspect(
-    @symprint.to_string(measure_all_oneshot(h_state, sample=0.9)),
+    @symprint.pretty_string(measure_all_oneshot(h_state, sample=0.9)),
     content="Qubit(1)",
   )
 
@@ -388,7 +388,7 @@ test "physics.quantum.qubit: measurement helpers" {
 test "physics.quantum.gate: normalization and basis transforms" {
   normalized(false)
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       qapply(
         @symcore.raw_mul([hadamard_gate(0).as_expr(), qubit("0").as_expr()]),
       ),
@@ -418,7 +418,7 @@ test "physics.quantum.gate: normalization and basis transforms" {
   )
 
   inspect(
-    @symprint.to_string(random_circuit(4, 2, seed=7)),
+    @symprint.pretty_string(random_circuit(4, 2, seed=7)),
     content="PhaseGate(1)*ZGate(0)*HadamardGate(1)*TGate(1)",
   )
 }

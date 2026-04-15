@@ -390,7 +390,7 @@ pub fn RotationExpr::as_expr(self : RotationExpr) -> Expr {
 
 ///|
 pub impl Show for RotationExpr with to_string(self) {
-  "R(\{@symprint.to_string(self.alpha)},\{@symprint.to_string(self.beta)},\{@symprint.to_string(self.gamma)})"
+  "R(\{@symprint.pretty_string(self.alpha)},\{@symprint.pretty_string(self.beta)},\{@symprint.pretty_string(self.gamma)})"
 }
 
 ///|
@@ -418,9 +418,9 @@ pub fn WignerDExpr::as_expr(self : WignerDExpr) -> Expr {
 ///|
 pub impl Show for WignerDExpr with to_string(self) {
   if self.alpha == int(0) && self.gamma == int(0) {
-    "d(\{@symprint.to_string(self.j)},\{@symprint.to_string(self.m)},\{@symprint.to_string(self.mp)},\{@symprint.to_string(self.beta)})"
+    "d(\{@symprint.pretty_string(self.j)},\{@symprint.pretty_string(self.m)},\{@symprint.pretty_string(self.mp)},\{@symprint.pretty_string(self.beta)})"
   } else {
-    "D(\{@symprint.to_string(self.j)},\{@symprint.to_string(self.m)},\{@symprint.to_string(self.mp)},\{@symprint.to_string(self.alpha)},\{@symprint.to_string(self.beta)},\{@symprint.to_string(self.gamma)})"
+    "D(\{@symprint.pretty_string(self.j)},\{@symprint.pretty_string(self.m)},\{@symprint.pretty_string(self.mp)},\{@symprint.pretty_string(self.alpha)},\{@symprint.pretty_string(self.beta)},\{@symprint.pretty_string(self.gamma)})"
   }
 }
 
@@ -432,12 +432,12 @@ pub impl Show for WignerDExpr with output(self, logger : &Logger) -> Unit {
 ///|
 pub impl Show for JzState with to_string(self) {
   let parts : Array[String] = [
-    @symprint.to_string(self.j),
-    @symprint.to_string(self.m),
+    @symprint.pretty_string(self.j),
+    @symprint.pretty_string(self.m),
   ]
   if self.is_coupled() {
     for idx in 0..<self.jn.length() {
-      parts.push("j\{idx + 1}=\{@symprint.to_string(self.jn[idx])}")
+      parts.push("j\{idx + 1}=\{@symprint.pretty_string(self.jn[idx])}")
     }
     if self.coupling.length() >= 2 {
       for item in self.coupling[:self.coupling.length() - 1] {
@@ -446,7 +446,7 @@ pub impl Show for JzState with to_string(self) {
         } else {
           "\{item.right_index},\{item.left_index}"
         }
-        parts.push("j(\{label})=\{@symprint.to_string(item.j)}")
+        parts.push("j(\{label})=\{@symprint.pretty_string(item.j)}")
       }
     }
   }

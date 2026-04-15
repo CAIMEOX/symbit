@@ -1,6 +1,6 @@
 ///|
 fn circuit_factor_strings(items : Array[@symcore.Expr]) -> Array[String] {
-  items.map(@symprint.to_string)
+  items.map(@symprint.pretty_string)
 }
 
 ///|

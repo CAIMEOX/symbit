@@ -6,7 +6,7 @@ using @symmatrices {type Matrix, type SparseMatrix}
 
 ///|
 fn py_expr(expr : Expr) -> String {
-  @symprint.to_string(expr)
+  @symprint.pretty_string(expr)
 }
 
 ///|

@@ -131,7 +131,7 @@ fn make_function(
           Some(@symcore.NumberSymbolKind::Infinity)
           | Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
             "TypeError: Cannot convert " +
-            @symprint.to_string(evaluated) +
+            @symprint.pretty_string(evaluated) +
             " to int"
           Some(@symcore.NumberSymbolKind::NaN)
           | Some(@symcore.NumberSymbolKind::ImaginaryUnit)
@@ -139,7 +139,7 @@ fn make_function(
             "TypeError: Cannot convert non-comparable expression to int"
           _ =>
             "TypeError: Argument of Integer should be of numeric type, got " +
-            @symprint.to_string(arg) +
+            @symprint.pretty_string(arg) +
             "."
         }
     }
@@ -148,14 +148,14 @@ fn make_function(
   let rational_invalid_input = fn(arg : Expr) -> Expr raise ParseError {
     raise ParseError::UnsupportedConstruct(
       span=span(0, 0),
-      "TypeError: invalid input: " + @symprint.to_string(arg),
+      "TypeError: invalid input: " + @symprint.pretty_string(arg),
     )
   }
   let float_tuple_repr = fn(expr : Expr) -> String {
     match @symcore.tuple_items(expr) {
       Some(items) =>
-        "(" + items.map(item => @symprint.to_string(item)).join(", ") + ")"
-      None => @symprint.to_string(expr)
+        "(" + items.map(item => @symprint.pretty_string(item)).join(", ") + ")"
+      None => @symprint.pretty_string(expr)
     }
   }
   let float_malformed_mpf = fn(arg : Expr) -> Expr raise ParseError {
@@ -399,8 +399,8 @@ fn make_application(
   let float_tuple_repr = fn(expr : Expr) -> String {
     match @symcore.tuple_items(expr) {
       Some(items) =>
-        "(" + items.map(item => @symprint.to_string(item)).join(", ") + ")"
-      None => @symprint.to_string(expr)
+        "(" + items.map(item => @symprint.pretty_string(item)).join(", ") + ")"
+      None => @symprint.pretty_string(expr)
     }
   }
   let float_malformed_mpf = fn(arg : Expr) -> Expr raise ParseError {
@@ -432,7 +432,7 @@ fn make_application(
           Some(@symcore.NumberSymbolKind::Infinity)
           | Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
             "TypeError: Cannot convert " +
-            @symprint.to_string(evaluated) +
+            @symprint.pretty_string(evaluated) +
             " to int"
           Some(@symcore.NumberSymbolKind::NaN)
           | Some(@symcore.NumberSymbolKind::ImaginaryUnit)
@@ -440,7 +440,7 @@ fn make_application(
             "TypeError: Cannot convert non-comparable expression to int"
           _ =>
             "TypeError: Argument of Integer should be of numeric type, got " +
-            @symprint.to_string(arg) +
+            @symprint.pretty_string(arg) +
             "."
         }
     }
@@ -469,7 +469,7 @@ fn make_application(
             ) {
             raise ParseError::UnsupportedConstruct(
               span=span(0, 0),
-              "TypeError: invalid input: " + @symprint.to_string(arg),
+              "TypeError: invalid input: " + @symprint.pretty_string(arg),
             )
           }
         [lhs, rhs] => {
@@ -480,7 +480,7 @@ fn make_application(
             ) {
             raise ParseError::UnsupportedConstruct(
               span=span(0, 0),
-              "TypeError: invalid input: " + @symprint.to_string(lhs),
+              "TypeError: invalid input: " + @symprint.pretty_string(lhs),
             )
           }
           if apply_named(name, [rhs])
@@ -490,7 +490,7 @@ fn make_application(
             ) {
             raise ParseError::UnsupportedConstruct(
               span=span(0, 0),
-              "TypeError: invalid input: " + @symprint.to_string(rhs),
+              "TypeError: invalid input: " + @symprint.pretty_string(rhs),
             )
           }
         }
@@ -501,7 +501,7 @@ fn make_application(
         @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [arg]) =>
           raise ParseError::UnsupportedConstruct(
             span=span(0, 0),
-            "TypeError: invalid input: " + @symprint.to_string(arg),
+            "TypeError: invalid input: " + @symprint.pretty_string(arg),
           )
         @symcore.Expr::Apply(
           @symcore.Expr::FunctionHead("Rational"),
@@ -521,7 +521,7 @@ fn make_application(
           } else {
             raise ParseError::UnsupportedConstruct(
               span=span(0, 0),
-              "TypeError: invalid input: " + @symprint.to_string(rhs),
+              "TypeError: invalid input: " + @symprint.pretty_string(rhs),
             )
           }
         _ => lowered
@@ -724,7 +724,7 @@ fn make_application(
               raise ParseError::UnsupportedConstruct(
                 span=span(0, 0),
                 "BadArgumentsError: " +
-                @symprint.to_string(callee) +
+                @symprint.pretty_string(callee) +
                 " takes exactly " +
                 expected.to_string() +
                 " argument" +

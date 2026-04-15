@@ -18,10 +18,10 @@ fn assert_plot_text_oracle(
   )
   let ours = backend.render_lines()
   let oracle = oracle_plot_text_lines(
-    @symprint.to_string(expr),
-    @symprint.to_string(var0),
-    @symprint.to_string(a0),
-    @symprint.to_string(b0),
+    @symprint.pretty_string(expr),
+    @symprint.pretty_string(var0),
+    @symprint.pretty_string(a0),
+    @symprint.pretty_string(b0),
   )
   if plot_port_join(ours) != plot_port_join(oracle) {
     println("plot text mismatch [\{label}]")

@@ -49,7 +49,7 @@ pub fn array_mul(items : Array[ArrayExpr]) -> ArrayExpr {
 
 ///|
 fn expr_list_to_string(items : Array[@symcore.Expr]) -> String {
-  items.map(@symprint.to_string).join(", ")
+  items.map(@symprint.pretty_string).join(", ")
 }
 
 ///|

@@ -1065,7 +1065,7 @@ fn solver_relevant_symbols(expr : Expr, symbols : Array[Expr]) -> Array[Expr] {
 /// test "symsolvers reduce_inequalities combines simple one-symbol constraints" {
 ///   let x = @symcore.Expr::Symbol("x")
 ///   inspect(
-///     @symprint.to_string(
+///     @symprint.pretty_string(
 ///       reduce_inequalities(
 ///         [
 ///           @symcore.Expr::Relational(@symcore.RelOp::Gt, x, @symcore.int(0)),

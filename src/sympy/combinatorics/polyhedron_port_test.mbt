@@ -15,7 +15,7 @@ test "polyhedron standard parity" {
     let poly = polys[i]
     let corner_strs : Array[String] = Array::new()
     for c in poly.corners() {
-      corner_strs.push(@symprint.to_string(c))
+      corner_strs.push(@symprint.pretty_string(c))
     }
     assert_true(polyhedron_corners_equiv(name, corner_strs))
     assert_true(polyhedron_faces_equiv(name, poly.faces()))
@@ -56,13 +56,13 @@ test "polyhedron reset" {
   let c = cube.copy()
   let original : Array[String] = Array::new()
   for v in c.corners() {
-    original.push(@symprint.to_string(v))
+    original.push(@symprint.pretty_string(v))
   }
   c.rotate(PolyRotate::Index(0))
   c.reset()
   let after : Array[String] = Array::new()
   for v in c.corners() {
-    after.push(@symprint.to_string(v))
+    after.push(@symprint.pretty_string(v))
   }
   assert_eq(original, after)
 }

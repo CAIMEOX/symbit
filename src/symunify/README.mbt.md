@@ -30,7 +30,7 @@ Term unification, Symbit-expression deconstruction/reconstruction, and rewrite-r
 test "symunify can deconstruct and rebuild expressions" {
   let x = @symcore.Expr::Symbol("x")
   let term = deconstruct(@symcore.add([x, @symcore.int(1)]))
-  inspect(@symprint.to_string(construct(term)), content="x + 1")
+  inspect(@symprint.pretty_string(construct(term)), content="x + 1")
 }
 ```
 ## Related Packages

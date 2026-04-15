@@ -25,7 +25,7 @@ fn join_signed(parts : Array[String]) -> String {
 
 ///|
 fn scalar_with_basis(coeff : Expr, basis : String) -> String {
-  let txt = @symprint.to_string(simplify_expr(coeff))
+  let txt = @symprint.pretty_string(simplify_expr(coeff))
   if txt == "1" {
     basis
   } else if txt == "-1" {

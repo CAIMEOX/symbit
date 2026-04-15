@@ -4,7 +4,7 @@
 
 `CAIMEOX/symbit/symprint` is the public import path for this package.
 
-String and LaTeX printers for symbolic expressions. Use this package when you need stable textual output or configurable LaTeX rendering.
+String and LaTeX printers for symbolic expressions. Use this package when you need stable pretty-printed text or configurable LaTeX rendering.
 
 ## When To Use This Package
 
@@ -13,11 +13,10 @@ String and LaTeX printers for symbolic expressions. Use this package when you ne
 
 ## Key Public Entry Points
 
-- `debug_repr`
 - `latex`
 - `latex_settings`
 - `latex_with_settings`
-- `to_string`
+- `pretty_string`
 - `LatexSettings`
 
 
@@ -28,7 +27,7 @@ String and LaTeX printers for symbolic expressions. Use this package when you ne
 test "symprint renders plain text and latex" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.add([x, @symcore.int(1)])
-  inspect(to_string(expr), content="x + 1")
+  inspect(pretty_string(expr), content="x + 1")
   inspect(latex(expr), content="x + 1")
 }
 ```

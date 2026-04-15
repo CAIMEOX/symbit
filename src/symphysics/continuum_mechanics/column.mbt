@@ -71,12 +71,12 @@ fn column_var_name(column : Column) -> String {
 
 ///|
 fn column_support_symbol(loc : @symcore.Expr) -> @symcore.Expr {
-  @symcore.Expr::Symbol("R_" + @symprint.to_string(loc))
+  @symcore.Expr::Symbol("R_" + @symprint.pretty_string(loc))
 }
 
 ///|
 fn column_hinge_symbol(loc : @symcore.Expr) -> @symcore.Expr {
-  @symcore.Expr::Symbol("u_" + @symprint.to_string(loc))
+  @symcore.Expr::Symbol("u_" + @symprint.pretty_string(loc))
 }
 
 ///|

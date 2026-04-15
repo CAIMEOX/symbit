@@ -278,7 +278,7 @@ fn roots_for_factor(
 ///   let poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(x - @symcore.int(1))
 ///   let rs = roots(poly)
 ///   inspect(rs.length(), content="1")
-///   inspect(@symprint.to_string(rs[0]), content="1")
+///   inspect(@symprint.pretty_string(rs[0]), content="1")
 /// }
 /// ```
 pub fn roots(

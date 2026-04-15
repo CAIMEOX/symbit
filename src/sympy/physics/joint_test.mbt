@@ -8,8 +8,8 @@ test "physics.mechanics joints core" {
   let child = rigid_body("C")
   let pin = pin_joint("PC", parent.as_bodylike(), child.as_bodylike())
   inspect(pin.repr(), content="PinJoint: PC  parent: P  child: C")
-  inspect(@symprint.to_string(pin.coordinates()[0]), content="q_PC(t)")
-  inspect(@symprint.to_string(pin.speeds()[0]), content="u_PC(t)")
+  inspect(@symprint.pretty_string(pin.coordinates()[0]), content="q_PC(t)")
+  inspect(@symprint.pretty_string(pin.speeds()[0]), content="u_PC(t)")
   inspect(
     @symvector.vsprint(child.frame().ang_vel_in(parent.frame())),
     content="u_PC(t)*JN.x",
@@ -26,7 +26,7 @@ test "physics.mechanics joints core" {
     slider_child.as_bodylike(),
   )
   inspect(prism.repr(), content="PrismaticJoint: PS  parent: P  child: S")
-  inspect(@symprint.to_string(prism.coordinates()[0]), content="q_PS(t)")
+  inspect(@symprint.pretty_string(prism.coordinates()[0]), content="q_PS(t)")
   inspect(
     @symvector.vsprint(slider_child.frame().ang_vel_in(parent.frame())),
     content="0",

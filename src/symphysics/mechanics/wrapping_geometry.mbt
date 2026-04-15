@@ -307,7 +307,7 @@ pub fn WrappingSphere::geodesic_end_vectors(
 ///|
 pub fn WrappingSphere::repr(self : WrappingSphere) -> String {
   "WrappingSphere(radius=" +
-  @symprint.to_string(self.radius_) +
+  @symprint.pretty_string(self.radius_) +
   ", point=" +
   self.point_.name() +
   ")"
@@ -444,7 +444,7 @@ pub fn WrappingCylinder::geodesic_end_vectors(
 ///|
 pub fn WrappingCylinder::repr(self : WrappingCylinder) -> String {
   "WrappingCylinder(radius=" +
-  @symprint.to_string(self.radius_) +
+  @symprint.pretty_string(self.radius_) +
   ", point=" +
   self.point_.name() +
   ", axis=" +
@@ -586,7 +586,7 @@ pub fn WrappingCone::geodesic_end_vectors(
 ///|
 pub fn WrappingCone::repr(self : WrappingCone) -> String {
   "WrappingCone(alpha=" +
-  @symprint.to_string(self.alpha_) +
+  @symprint.pretty_string(self.alpha_) +
   ", apex=" +
   self.apex_.name() +
   ", axis=" +

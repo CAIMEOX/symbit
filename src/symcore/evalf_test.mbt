@@ -137,7 +137,7 @@ test "evalf evaluates Subs and preserves Lambda structure" {
     lambda_expr(x, add([x, Expr::NumberSymbol(NumberSymbolKind::Pi)])),
     prec=100,
   )
-  let rendered = @symprint.to_string(lambda_pi)
+  let rendered = @symprint.pretty_string(lambda_pi)
   assert_true(rendered.has_prefix("Lambda("))
   assert_true(rendered.contains("3.141592653"))
 }

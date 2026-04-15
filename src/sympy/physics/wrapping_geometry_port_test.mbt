@@ -8,9 +8,9 @@ fn wrapping_assert_vector(
   _context : String,
 ) -> Unit raise {
   let comps = lhs.to_matrix(frame)
-  let ours_x = @symprint.to_string(comps.get(0, 0))
-  let ours_y = @symprint.to_string(comps.get(1, 0))
-  let ours_z = @symprint.to_string(comps.get(2, 0))
+  let ours_x = @symprint.pretty_string(comps.get(0, 0))
+  let ours_y = @symprint.pretty_string(comps.get(1, 0))
+  let ours_z = @symprint.pretty_string(comps.get(2, 0))
   assert_true(mechanics_expr_equal(ours_x, rhs_x))
   assert_true(mechanics_expr_equal(ours_y, rhs_y))
   assert_true(mechanics_expr_equal(ours_z, rhs_z))
@@ -32,7 +32,7 @@ test "physics.mechanics parity wrapping geometry" {
   )
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(sphere.geodesic_length(p_1, p_2)),
+      @symprint.pretty_string(sphere.geodesic_length(p_1, p_2)),
       sphere_len_oracle,
     ),
   )
@@ -62,7 +62,7 @@ test "physics.mechanics parity wrapping geometry" {
   )
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(cylinder.geodesic_length(p_1, p_3)),
+      @symprint.pretty_string(cylinder.geodesic_length(p_1, p_3)),
       cylinder_len_oracle,
     ),
   )

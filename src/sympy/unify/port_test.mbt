@@ -148,7 +148,7 @@ fn render_core_substs(items : Array[Substitution[CoreAtom, String]]) -> String {
 fn render_expr_subst(subst : Map[@symcore.Expr, @symcore.Expr]) -> String {
   let rendered : Array[String] = []
   for key, value in subst {
-    rendered.push(@symprint.to_string(key) + ": " + @symprint.to_string(value))
+    rendered.push(@symprint.pretty_string(key) + ": " + @symprint.pretty_string(value))
   }
   "{" + sorted_strings(rendered).join(", ") + "}"
 }
@@ -164,11 +164,11 @@ fn render_expr_substs(
 ///|
 fn render_expr_term(term : UnifyTerm[@symcore.Expr, ExprOp]) -> String {
   match term {
-    UnifyTerm::Atom(expr) => @symprint.to_string(expr)
+    UnifyTerm::Atom(expr) => @symprint.pretty_string(expr)
     UnifyTerm::Variable(key) =>
-      "Variable(" + @symprint.to_string(key.arg()) + ")"
+      "Variable(" + @symprint.pretty_string(key.arg()) + ")"
     UnifyTerm::CondVariable(key, _) =>
-      "CondVariable(" + @symprint.to_string(key.arg()) + ")"
+      "CondVariable(" + @symprint.pretty_string(key.arg()) + ")"
     UnifyTerm::Sequence(items) =>
       "(" + items.map(render_expr_term).join(", ") + ")"
     UnifyTerm::Compound(op, args) =>
@@ -327,7 +327,7 @@ fn usympy_summary() -> String {
   ])
   [
     render_expr_term(deconstruct(expr)),
-    @symprint.to_string(construct(deconstruct(nested))),
+    @symprint.pretty_string(construct(deconstruct(nested))),
     render_expr_substs(
       unify(expr, @symcore.raw_function("Basic", [a, b, c]), variables=[a, b, c]),
     ),
@@ -403,13 +403,13 @@ fn rewrite_summary() -> String raise {
     "[" +
     simple_rule
     .apply(@symcore.raw_function("Basic", [@symcore.int(3), @symcore.int(1)]))
-    .map(@symprint.to_string)
+    .map(@symprint.pretty_string)
     .join(", ") +
     "]",
     "[" +
     pow_rule
     .apply(@symcore.raw_pow(rx, @symcore.int(2)))
-    .map(@symprint.to_string)
+    .map(@symprint.pretty_string)
     .join(", ") +
     "]",
     "[" +
@@ -420,16 +420,16 @@ fn rewrite_summary() -> String raise {
         @symcore.raw_pow(ry, @symcore.int(3)),
       ]),
     )
-    .map(@symprint.to_string)
+    .map(@symprint.pretty_string)
     .join(", ") +
     "]",
     "[" +
-    cond_rule.apply(@symcore.int(5)).map(@symprint.to_string).join(", ") +
+    cond_rule.apply(@symcore.int(5)).map(@symprint.pretty_string).join(", ") +
     "]",
     "[" +
     assume_rule
     .apply(@symcore.raw_add([a, b]), assumptions=@symassume.q_integer(b))
-    .map(@symprint.to_string)
+    .map(@symprint.pretty_string)
     .join(", ") +
     "]",
   ].join("\n")

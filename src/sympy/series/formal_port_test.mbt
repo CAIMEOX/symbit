@@ -1,6 +1,6 @@
 ///|
 fn normalize_fps_expr(expr : @symcore.Expr) -> String raise {
-  let s = @symprint.to_string(expr)
+  let s = @symprint.pretty_string(expr)
   sympy_normalize_str(s)
 }
 
@@ -72,8 +72,8 @@ test "symseries fps_multivariate coeff basic" {
   let expected11 = @symcore.mul([x, y])
   assert_true(
     sympy_equiv_str(
-      @symprint.to_string(term11),
-      @symprint.to_string(expected11),
+      @symprint.pretty_string(term11),
+      @symprint.pretty_string(expected11),
     ),
   )
   let term20 = fpsm.coeff([2, 0])
@@ -84,8 +84,8 @@ test "symseries fps_multivariate coeff basic" {
   ])
   assert_true(
     sympy_equiv_str(
-      @symprint.to_string(term20),
-      @symprint.to_string(expected_expr),
+      @symprint.pretty_string(term20),
+      @symprint.pretty_string(expected_expr),
     ),
   )
 }

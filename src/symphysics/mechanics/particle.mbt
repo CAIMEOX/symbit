@@ -54,7 +54,7 @@ pub fn Particle::repr(self : Particle) -> String {
   "', masscenter=" +
   self.point_.name() +
   ", mass=" +
-  @symprint.to_string(self.mass_) +
+  @symprint.pretty_string(self.mass_) +
   ")"
 }
 

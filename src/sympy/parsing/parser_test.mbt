@@ -307,7 +307,7 @@ test "symparse callable context and structured bindings" {
       )
   }
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_in(
         "pi x",
         parse_options(transformations=relaxed_transformations()),
@@ -317,7 +317,7 @@ test "symparse callable context and structured bindings" {
     content="f(x)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_in(
         "f x",
         parse_options(transformations=relaxed_transformations()),
@@ -327,7 +327,7 @@ test "symparse callable context and structured bindings" {
     content="cos(x)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_in(
         "g x",
         parse_options(transformations=relaxed_transformations()),
@@ -337,7 +337,7 @@ test "symparse callable context and structured bindings" {
     content="h*x",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_in(
         "f x",
         parse_options(transformations=relaxed_transformations()),
@@ -352,7 +352,7 @@ test "symparse callable context and structured bindings" {
     content="x + 1",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_in(
         "f x",
         parse_options(transformations=relaxed_transformations()),
@@ -366,11 +366,11 @@ test "symparse callable context and structured bindings" {
 ///|
 test "symparse parser parity-critical lambda and relaxed evaluate false paths" {
   inspect(
-    @symprint.to_string(parse_expr("lambda x: x + 1")),
+    @symprint.pretty_string(parse_expr("lambda x: x + 1")),
     content="Lambda(x, x + 1)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with(
         "sin x",
         parse_options(transformations=relaxed_transformations(), evaluate=false),
@@ -379,7 +379,7 @@ test "symparse parser parity-critical lambda and relaxed evaluate false paths" {
     content="sin(x)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with(
         "sin**2 x",
         parse_options(transformations=relaxed_transformations(), evaluate=false),
@@ -392,137 +392,137 @@ test "symparse parser parity-critical lambda and relaxed evaluate false paths" {
 ///|
 test "symparse builtin callable semantics follow SymPy parser behavior" {
   inspect(
-    @symprint.to_string(parse_expr("Integral")),
+    @symprint.pretty_string(parse_expr("Integral")),
     content="<class 'sympy.integrals.integrals.Integral'>",
   )
-  inspect(@symprint.to_string(parse_expr("DiracDelta")), content="DiracDelta")
-  inspect(@symprint.to_string(parse_expr("Piecewise")), content="Piecewise")
+  inspect(@symprint.pretty_string(parse_expr("DiracDelta")), content="DiracDelta")
+  inspect(@symprint.pretty_string(parse_expr("Piecewise")), content="Piecewise")
   inspect(
-    @symprint.to_string(parse_expr("Integer")),
+    @symprint.pretty_string(parse_expr("Integer")),
     content="<class 'sympy.core.numbers.Integer'>",
   )
   inspect(
-    @symprint.to_string(parse_expr("Symbol")),
+    @symprint.pretty_string(parse_expr("Symbol")),
     content="<class 'sympy.core.symbol.Symbol'>",
   )
   inspect(
-    parse_expr_equiv(@symprint.to_string(parse_expr("log(x, y)")), "log(x, y)"),
+    parse_expr_equiv(@symprint.pretty_string(parse_expr("log(x, y)")), "log(x, y)"),
     content="0",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("log(x, y)", parse_options(evaluate=false)),
     ),
     content="log(x, y)",
   )
-  inspect(@symprint.to_string(parse_expr("Max()")), content="-oo")
-  inspect(@symprint.to_string(parse_expr("Min()")), content="oo")
-  inspect(@symprint.to_string(parse_expr("Max(x)")), content="x")
-  inspect(@symprint.to_string(parse_expr("Min(x)")), content="x")
-  inspect(@symprint.to_string(parse_expr("sqrt(x, y)")), content="sqrt(x)")
-  inspect(@symprint.to_string(parse_expr("atan2(x, y)")), content="atan2(x, y)")
+  inspect(@symprint.pretty_string(parse_expr("Max()")), content="-oo")
+  inspect(@symprint.pretty_string(parse_expr("Min()")), content="oo")
+  inspect(@symprint.pretty_string(parse_expr("Max(x)")), content="x")
+  inspect(@symprint.pretty_string(parse_expr("Min(x)")), content="x")
+  inspect(@symprint.pretty_string(parse_expr("sqrt(x, y)")), content="sqrt(x)")
+  inspect(@symprint.pretty_string(parse_expr("atan2(x, y)")), content="atan2(x, y)")
   inspect(
-    @symprint.to_string(parse_expr("binomial(x, y)")),
+    @symprint.pretty_string(parse_expr("binomial(x, y)")),
     content="binomial(x, y)",
   )
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(parse_expr("Integer(2)")),
+      @symprint.pretty_string(parse_expr("Integer(2)")),
       "Integer(2)",
     ),
     content="0",
   )
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(parse_expr("Integer(2/3)")),
+      @symprint.pretty_string(parse_expr("Integer(2/3)")),
       "Integer(2/3)",
     ),
     content="0",
   )
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(parse_expr("Integer(-2/3)")),
+      @symprint.pretty_string(parse_expr("Integer(-2/3)")),
       "Integer(-2/3)",
     ),
     content="0",
   )
-  inspect(@symprint.to_string(parse_expr("Integer(0.9)")), content="0")
-  inspect(@symprint.to_string(parse_expr("Integer(10.5)")), content="10")
-  inspect(@symprint.to_string(parse_expr("Integer(-3.8)")), content="-3")
-  inspect(@symprint.to_string(parse_expr("Integer(True)")), content="1")
-  inspect(@symprint.to_string(parse_expr("Integer(False)")), content="0")
+  inspect(@symprint.pretty_string(parse_expr("Integer(0.9)")), content="0")
+  inspect(@symprint.pretty_string(parse_expr("Integer(10.5)")), content="10")
+  inspect(@symprint.pretty_string(parse_expr("Integer(-3.8)")), content="-3")
+  inspect(@symprint.pretty_string(parse_expr("Integer(True)")), content="1")
+  inspect(@symprint.pretty_string(parse_expr("Integer(False)")), content="0")
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(parse_expr("Rational(2)")),
+      @symprint.pretty_string(parse_expr("Rational(2)")),
       "Rational(2)",
     ),
     content="0",
   )
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(parse_expr("Rational(2, 3)")),
+      @symprint.pretty_string(parse_expr("Rational(2, 3)")),
       "Rational(2, 3)",
     ),
     content="0",
   )
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(parse_expr("Rational(0.2)")),
+      @symprint.pretty_string(parse_expr("Rational(0.2)")),
       "Rational(0.2)",
     ),
     content="0",
   )
-  inspect(@symprint.to_string(parse_expr("Rational(1.0, 3)")), content="1/3")
-  inspect(@symprint.to_string(parse_expr("Rational(1, 3.0)")), content="1/3")
-  inspect(@symprint.to_string(parse_expr("Rational(1/2, 1/3)")), content="3/2")
-  inspect(@symprint.to_string(parse_expr("Rational(1, 1/3)")), content="3")
+  inspect(@symprint.pretty_string(parse_expr("Rational(1.0, 3)")), content="1/3")
+  inspect(@symprint.pretty_string(parse_expr("Rational(1, 3.0)")), content="1/3")
+  inspect(@symprint.pretty_string(parse_expr("Rational(1/2, 1/3)")), content="3/2")
+  inspect(@symprint.pretty_string(parse_expr("Rational(1, 1/3)")), content="3")
   inspect(
-    parse_expr_equiv(@symprint.to_string(parse_expr("Float(2)")), "Float(2)"),
+    parse_expr_equiv(@symprint.pretty_string(parse_expr("Float(2)")), "Float(2)"),
     content="0",
   )
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(parse_expr("Float(2.5)")),
+      @symprint.pretty_string(parse_expr("Float(2.5)")),
       "Float(2.5)",
     ),
     content="0",
   )
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(parse_expr("Float(2, 20)")),
+      @symprint.pretty_string(parse_expr("Float(2, 20)")),
       "Float(2, 20)",
     ),
     content="0",
   )
   inspect(
     parse_expr_equiv_relaxed_near_zero(
-      @symprint.to_string(parse_expr("Float(2/3)")),
+      @symprint.pretty_string(parse_expr("Float(2/3)")),
       "Float(2/3)",
     ),
     content="True",
   )
-  inspect(@symprint.to_string(parse_expr("Float((0, 0, -123))")), content="0")
+  inspect(@symprint.pretty_string(parse_expr("Float((0, 0, -123))")), content="0")
   inspect(
-    @symprint.to_string(parse_expr("Float((0, 0, -123, -1))")),
+    @symprint.pretty_string(parse_expr("Float((0, 0, -123, -1))")),
     content="nan",
   )
   inspect(
-    @symprint.to_string(parse_expr("Float((0, 0, -456, -2))")),
+    @symprint.pretty_string(parse_expr("Float((0, 0, -456, -2))")),
     content="oo",
   )
   inspect(
-    @symprint.to_string(parse_expr("Float((1, 0, -789, -3))")),
+    @symprint.pretty_string(parse_expr("Float((1, 0, -789, -3))")),
     content="-oo",
   )
-  inspect(@symprint.to_string(parse_expr("beta(x)")), content="beta(x, x)")
-  inspect(@symprint.to_string(parse_expr("beta(x, y)")), content="beta(x, y)")
+  inspect(@symprint.pretty_string(parse_expr("beta(x)")), content="beta(x, x)")
+  inspect(@symprint.pretty_string(parse_expr("beta(x, y)")), content="beta(x, y)")
   guard (try? parse_expr("pi(x)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: 'Pi' object is not callable" else {
     fail("expected number symbol callable error")
   }
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_in(
         "pi",
         default_parse_options(),
@@ -558,8 +558,8 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
     fail("expected Integer(sin(x)) invalid input error")
   }
-  inspect(@symprint.to_string(parse_expr("Integer(pi)")), content="3")
-  inspect(@symprint.to_string(parse_expr("Integer(E)")), content="2")
+  inspect(@symprint.pretty_string(parse_expr("Integer(pi)")), content="3")
+  inspect(@symprint.pretty_string(parse_expr("Integer(E)")), content="2")
   guard (try? parse_expr("Integer(oo)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: Cannot convert oo to int" else {
@@ -636,128 +636,128 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
 
 ///|
 test "ast parser compatibility entrypoint" {
-  inspect(@symprint.to_string(ast_parse_expr("sin")), content="sin")
-  inspect(@symprint.to_string(ast_parse_expr("pi")), content="pi")
+  inspect(@symprint.pretty_string(ast_parse_expr("sin")), content="sin")
+  inspect(@symprint.pretty_string(ast_parse_expr("pi")), content="pi")
   inspect(
-    @symprint.to_string(ast_parse_expr("GoldenRatio")),
+    @symprint.pretty_string(ast_parse_expr("GoldenRatio")),
     content="GoldenRatio",
   )
-  inspect(@symprint.to_string(ast_parse_expr("NaN")), content="NaN")
+  inspect(@symprint.pretty_string(ast_parse_expr("NaN")), content="NaN")
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       ast_parse_expr("pi", local_bindings={ "pi": @symcore.Expr::Symbol("x") }),
     ),
     content="x",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("Integral")),
+    @symprint.pretty_string(ast_parse_expr("Integral")),
     content="<class 'sympy.integrals.integrals.Integral'>",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("DiracDelta")),
+    @symprint.pretty_string(ast_parse_expr("DiracDelta")),
     content="DiracDelta",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("Integer")),
+    @symprint.pretty_string(ast_parse_expr("Integer")),
     content="<class 'sympy.core.numbers.Integer'>",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("Symbol")),
+    @symprint.pretty_string(ast_parse_expr("Symbol")),
     content="<class 'sympy.core.symbol.Symbol'>",
   )
-  inspect(@symprint.to_string(ast_parse_expr("f")), content="f")
-  inspect(@symprint.to_string(ast_parse_expr("sin(x)")), content="sin(x)")
-  inspect(@symprint.to_string(ast_parse_expr("1/2")), content="1/2")
-  inspect(@symprint.to_string(ast_parse_expr("x + 1")), content="x + 1")
+  inspect(@symprint.pretty_string(ast_parse_expr("f")), content="f")
+  inspect(@symprint.pretty_string(ast_parse_expr("sin(x)")), content="sin(x)")
+  inspect(@symprint.pretty_string(ast_parse_expr("1/2")), content="1/2")
+  inspect(@symprint.pretty_string(ast_parse_expr("x + 1")), content="x + 1")
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       ast_parse_expr("x + y", local_bindings={ "x": @symcore.int(2) }),
     ),
     content="y + 2",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("lambda x: x + 1")),
+    @symprint.pretty_string(ast_parse_expr("lambda x: x + 1")),
     content="Lambda(x, x + 1)",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("lambda x, y: x + y")),
+    @symprint.pretty_string(ast_parse_expr("lambda x, y: x + y")),
     content="Lambda((x, y), x + y)",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("Derivative(x)")),
+    @symprint.pretty_string(ast_parse_expr("Derivative(x)")),
     content="Derivative(x, x)",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("Derivative(sin(x), (x, 0))")),
+    @symprint.pretty_string(ast_parse_expr("Derivative(sin(x), (x, 0))")),
     content="sin(x)",
   )
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(ast_parse_expr("Integer(2)")),
+      @symprint.pretty_string(ast_parse_expr("Integer(2)")),
       "Integer(2)",
     ),
     content="0",
   )
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(ast_parse_expr("Integer(2/3)")),
+      @symprint.pretty_string(ast_parse_expr("Integer(2/3)")),
       "Integer(2/3)",
     ),
     content="0",
   )
-  inspect(@symprint.to_string(ast_parse_expr("Integer(0.9)")), content="0")
-  inspect(@symprint.to_string(ast_parse_expr("Integer(10.5)")), content="10")
-  inspect(@symprint.to_string(ast_parse_expr("Integer(-3.8)")), content="-3")
-  inspect(@symprint.to_string(ast_parse_expr("Integer(True)")), content="1")
-  inspect(@symprint.to_string(ast_parse_expr("Integer(False)")), content="0")
+  inspect(@symprint.pretty_string(ast_parse_expr("Integer(0.9)")), content="0")
+  inspect(@symprint.pretty_string(ast_parse_expr("Integer(10.5)")), content="10")
+  inspect(@symprint.pretty_string(ast_parse_expr("Integer(-3.8)")), content="-3")
+  inspect(@symprint.pretty_string(ast_parse_expr("Integer(True)")), content="1")
+  inspect(@symprint.pretty_string(ast_parse_expr("Integer(False)")), content="0")
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(ast_parse_expr("Rational(2, 3)")),
+      @symprint.pretty_string(ast_parse_expr("Rational(2, 3)")),
       "Rational(2, 3)",
     ),
     content="0",
   )
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(ast_parse_expr("Rational(0.2)")),
+      @symprint.pretty_string(ast_parse_expr("Rational(0.2)")),
       "Rational(0.2)",
     ),
     content="0",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("Rational(1.0, 3)")),
+    @symprint.pretty_string(ast_parse_expr("Rational(1.0, 3)")),
     content="1/3",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("Rational(1, 3.0)")),
+    @symprint.pretty_string(ast_parse_expr("Rational(1, 3.0)")),
     content="1/3",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("Rational(1/2, 1/3)")),
+    @symprint.pretty_string(ast_parse_expr("Rational(1/2, 1/3)")),
     content="3/2",
   )
-  inspect(@symprint.to_string(ast_parse_expr("Rational(1, 1/3)")), content="3")
-  inspect(@symprint.to_string(ast_parse_expr("Rational(True)")), content="1")
-  inspect(@symprint.to_string(ast_parse_expr("Rational(False)")), content="0")
+  inspect(@symprint.pretty_string(ast_parse_expr("Rational(1, 1/3)")), content="3")
+  inspect(@symprint.pretty_string(ast_parse_expr("Rational(True)")), content="1")
+  inspect(@symprint.pretty_string(ast_parse_expr("Rational(False)")), content="0")
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(ast_parse_expr("Float(2.5)")),
+      @symprint.pretty_string(ast_parse_expr("Float(2.5)")),
       "Float(2.5)",
     ),
     content="0",
   )
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(ast_parse_expr("Float(2, 20)")),
+      @symprint.pretty_string(ast_parse_expr("Float(2, 20)")),
       "Float(2, 20)",
     ),
     content="0",
   )
-  inspect(@symprint.to_string(ast_parse_expr("S(True)")), content="True")
-  inspect(@symprint.to_string(ast_parse_expr("S(False)")), content="False")
-  inspect(@symprint.to_string(ast_parse_expr("S(1/2)")), content="1/2")
-  inspect(@symprint.to_string(ast_parse_expr("S(sin(x))")), content="sin(x)")
-  inspect(@symprint.to_string(ast_parse_expr("S(x, y)")), content="x")
+  inspect(@symprint.pretty_string(ast_parse_expr("S(True)")), content="True")
+  inspect(@symprint.pretty_string(ast_parse_expr("S(False)")), content="False")
+  inspect(@symprint.pretty_string(ast_parse_expr("S(1/2)")), content="1/2")
+  inspect(@symprint.pretty_string(ast_parse_expr("S(sin(x))")), content="sin(x)")
+  inspect(@symprint.pretty_string(ast_parse_expr("S(x, y)")), content="x")
   guard (try? ast_parse_expr("pi(x)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: 'Pi' object is not callable" else {
@@ -780,8 +780,8 @@ test "ast parser compatibility entrypoint" {
     "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
     fail("expected ast parser Integer(sin(x)) invalid input error")
   }
-  inspect(@symprint.to_string(ast_parse_expr("Integer(pi)")), content="3")
-  inspect(@symprint.to_string(ast_parse_expr("Integer(E)")), content="2")
+  inspect(@symprint.pretty_string(ast_parse_expr("Integer(pi)")), content="3")
+  inspect(@symprint.pretty_string(ast_parse_expr("Integer(E)")), content="2")
   guard (try? ast_parse_expr("Integer(oo)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: Cannot convert oo to int" else {
@@ -843,21 +843,21 @@ test "ast parser compatibility entrypoint" {
     detail == "ValueError: The following expressions appear more than once: x" else {
     fail("expected ast parser duplicate Subs variables error")
   }
-  inspect(@symprint.to_string(ast_parse_expr("Subs(x, (), ())")), content="x")
+  inspect(@symprint.pretty_string(ast_parse_expr("Subs(x, (), ())")), content="x")
   inspect(
-    @symprint.to_string(ast_parse_expr("Subs(Subs(x, x, 0), y, 1)")),
+    @symprint.pretty_string(ast_parse_expr("Subs(Subs(x, x, 0), y, 1)")),
     content="Subs(x, (x, y), (0, 1))",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("Rational(True, False)")),
+    @symprint.pretty_string(ast_parse_expr("Rational(True, False)")),
     content="zoo",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("Rational(False, False)")),
+    @symprint.pretty_string(ast_parse_expr("Rational(False, False)")),
     content="nan",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       ast_parse_expr("f", local_bindings={
         "f": @symcore.Expr::FunctionHead("cos"),
       }),
@@ -865,7 +865,7 @@ test "ast parser compatibility entrypoint" {
     content="cos",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       ast_parse_expr("f", local_bindings={
         "f": @symcore.Expr::UndefinedFunction("g"),
       }),
@@ -873,7 +873,7 @@ test "ast parser compatibility entrypoint" {
     content="g",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       ast_parse_expr("f(x)", local_bindings={
         "f": @symcore.Expr::FunctionHead("cos"),
       }),
@@ -881,7 +881,7 @@ test "ast parser compatibility entrypoint" {
     content="cos(x)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       ast_parse_expr("f(x)", local_bindings={
         "f": @symcore.Expr::UndefinedFunction("g"),
       }),
@@ -929,25 +929,25 @@ test "ast parser compatibility entrypoint" {
   }
   inspect(
     parse_expr_equiv(
-      @symprint.to_string(ast_parse_expr("log(x, y)")),
+      @symprint.pretty_string(ast_parse_expr("log(x, y)")),
       "log(x, y)",
     ),
     content="0",
   )
   inspect(
-    @symprint.to_string(ast_parse_expr("atan2(x, y)")),
+    @symprint.pretty_string(ast_parse_expr("atan2(x, y)")),
     content="atan2(x, y)",
   )
-  inspect(@symprint.to_string(ast_parse_expr("beta(x)")), content="beta(x, x)")
-  inspect(@symprint.to_string(ast_parse_expr("Max()")), content="-oo")
-  inspect(@symprint.to_string(ast_parse_expr("Min(x)")), content="x")
+  inspect(@symprint.pretty_string(ast_parse_expr("beta(x)")), content="beta(x, x)")
+  inspect(@symprint.pretty_string(ast_parse_expr("Max()")), content="-oo")
+  inspect(@symprint.pretty_string(ast_parse_expr("Min(x)")), content="x")
   inspect(
-    @symprint.to_string(ast_parse_expr("lambda x: x")),
+    @symprint.pretty_string(ast_parse_expr("lambda x: x")),
     content="Lambda(_x, _x)",
   )
   match ast_parse_expr("lambda x: x + 1") {
     @symcore.Expr::Lambda(@symcore.Expr::Symbol("x"), body) =>
-      inspect(@symprint.to_string(body), content="x + 1")
+      inspect(@symprint.pretty_string(body), content="x + 1")
     _ => fail("expected ast parser lambda to lower to first-class Lambda node")
   }
 }
@@ -955,7 +955,7 @@ test "ast parser compatibility entrypoint" {
 ///|
 test "symparse local bindings shadow builtin heads like SymPy" {
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_in(
         "pi(x)",
         default_parse_options(),
@@ -965,7 +965,7 @@ test "symparse local bindings shadow builtin heads like SymPy" {
     content="f(x)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_in(
         "Integral(x)",
         default_parse_options(),
@@ -986,7 +986,7 @@ test "symparse local bindings shadow builtin heads like SymPy" {
     fail("expected non-callable builtin binding shadow error")
   }
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       ast_parse_expr("DiracDelta(x)", local_bindings={
         "DiracDelta": @symcore.Expr::UndefinedFunction("f"),
       }),
@@ -998,131 +998,131 @@ test "symparse local bindings shadow builtin heads like SymPy" {
 ///|
 test "symparse explicit core constructor calls stay canonical" {
   inspect(
-    @symprint.to_string(parse_expr("Eq")),
+    @symprint.pretty_string(parse_expr("Eq")),
     content="<class 'sympy.core.relational.Equality'>",
   )
-  inspect(@symprint.to_string(parse_expr("Integer(3/2)")), content="1")
-  inspect(@symprint.to_string(parse_expr("Integer(pi)")), content="3")
-  inspect(@symprint.to_string(parse_expr("Rational(6, 4)")), content="3/2")
-  inspect(@symprint.to_string(parse_expr("Rational(1, 0)")), content="zoo")
-  inspect(@symprint.to_string(parse_expr("Rational(True)")), content="1")
-  inspect(@symprint.to_string(parse_expr("Rational(False)")), content="0")
-  inspect(@symprint.to_string(parse_expr("S(True)")), content="True")
-  inspect(@symprint.to_string(parse_expr("S(False)")), content="False")
-  inspect(@symprint.to_string(parse_expr("S(1/2)")), content="1/2")
-  inspect(@symprint.to_string(parse_expr("S(sin(x))")), content="sin(x)")
-  inspect(@symprint.to_string(parse_expr("S(x, y)")), content="x")
+  inspect(@symprint.pretty_string(parse_expr("Integer(3/2)")), content="1")
+  inspect(@symprint.pretty_string(parse_expr("Integer(pi)")), content="3")
+  inspect(@symprint.pretty_string(parse_expr("Rational(6, 4)")), content="3/2")
+  inspect(@symprint.pretty_string(parse_expr("Rational(1, 0)")), content="zoo")
+  inspect(@symprint.pretty_string(parse_expr("Rational(True)")), content="1")
+  inspect(@symprint.pretty_string(parse_expr("Rational(False)")), content="0")
+  inspect(@symprint.pretty_string(parse_expr("S(True)")), content="True")
+  inspect(@symprint.pretty_string(parse_expr("S(False)")), content="False")
+  inspect(@symprint.pretty_string(parse_expr("S(1/2)")), content="1/2")
+  inspect(@symprint.pretty_string(parse_expr("S(sin(x))")), content="sin(x)")
+  inspect(@symprint.pretty_string(parse_expr("S(x, y)")), content="x")
   guard (try? parse_expr("Rational(pi)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: invalid input: pi" else {
     fail("expected Rational(pi) invalid input error")
   }
-  inspect(@symprint.to_string(parse_expr("Float(1/2)")), content="0.5")
+  inspect(@symprint.pretty_string(parse_expr("Float(1/2)")), content="0.5")
   match parse_expr("Float(pi)") {
     @symcore.Expr::Float(_) => ()
     other =>
-      fail("expected Float(pi) to evaluate, got \{@symprint.to_string(other)}")
+      fail("expected Float(pi) to evaluate, got \{@symprint.pretty_string(other)}")
   }
-  inspect(@symprint.to_string(parse_expr("Tuple(x, 1)")), content="(x, 1)")
-  inspect(@symprint.to_string(parse_expr("Eq(x, y)")), content="Eq(x, y)")
-  inspect(@symprint.to_string(parse_expr("Eq(x, x)")), content="True")
-  inspect(@symprint.to_string(parse_expr("Ne(x, x)")), content="False")
-  inspect(@symprint.to_string(parse_expr("Lt(1 + 1, 3)")), content="True")
+  inspect(@symprint.pretty_string(parse_expr("Tuple(x, 1)")), content="(x, 1)")
+  inspect(@symprint.pretty_string(parse_expr("Eq(x, y)")), content="Eq(x, y)")
+  inspect(@symprint.pretty_string(parse_expr("Eq(x, x)")), content="True")
+  inspect(@symprint.pretty_string(parse_expr("Ne(x, x)")), content="False")
+  inspect(@symprint.pretty_string(parse_expr("Lt(1 + 1, 3)")), content="True")
   inspect(
-    @symprint.to_string(parse_expr("Derivative(x)")),
+    @symprint.pretty_string(parse_expr("Derivative(x)")),
     content="Derivative(x, x)",
   )
-  inspect(@symprint.to_string(parse_expr("Derivative(2)")), content="0")
+  inspect(@symprint.pretty_string(parse_expr("Derivative(2)")), content="0")
   inspect(
-    @symprint.to_string(parse_expr("Derivative(sin(x), x)")),
+    @symprint.pretty_string(parse_expr("Derivative(sin(x), x)")),
     content="Derivative(sin(x), x)",
   )
   inspect(
-    @symprint.to_string(parse_expr("Derivative(sin(x), x, 2)")),
+    @symprint.pretty_string(parse_expr("Derivative(sin(x), x, 2)")),
     content="Derivative(sin(x), (x, 2))",
   )
   inspect(
-    @symprint.to_string(parse_expr("Derivative(sin(x), (x, 0))")),
+    @symprint.pretty_string(parse_expr("Derivative(sin(x), (x, 0))")),
     content="sin(x)",
   )
   inspect(
-    @symprint.to_string(parse_expr("Derivative(sin(x), x, 0)")),
+    @symprint.pretty_string(parse_expr("Derivative(sin(x), x, 0)")),
     content="sin(x)",
   )
   inspect(
-    @symprint.to_string(parse_expr("Derivative(sin(x), x, y, 2)")),
+    @symprint.pretty_string(parse_expr("Derivative(sin(x), x, y, 2)")),
     content="Derivative(sin(x), x, (y, 2))",
   )
   inspect(
-    @symprint.to_string(parse_expr("Subs(x + y, x, z)")),
+    @symprint.pretty_string(parse_expr("Subs(x + y, x, z)")),
     content="Subs(x + y, x, z)",
   )
   inspect(
-    @symprint.to_string(parse_expr("Lambda(x, x + 1)")),
+    @symprint.pretty_string(parse_expr("Lambda(x, x + 1)")),
     content="Lambda(x, x + 1)",
   )
   inspect(
-    @symprint.to_string(parse_expr("Lambda((x, y), x + y)")),
+    @symprint.pretty_string(parse_expr("Lambda((x, y), x + y)")),
     content="Lambda((x, y), x + y)",
   )
   inspect(
-    @symprint.to_string(parse_expr("Lambda(x, x)")),
+    @symprint.pretty_string(parse_expr("Lambda(x, x)")),
     content="Lambda(_x, _x)",
   )
   inspect(
-    @symprint.to_string(parse_expr("Lambda((x,), x)")),
+    @symprint.pretty_string(parse_expr("Lambda((x,), x)")),
     content="Lambda(_x, _x)",
   )
   inspect(
-    @symprint.to_string(parse_expr("lambda x: x")),
+    @symprint.pretty_string(parse_expr("lambda x: x")),
     content="Lambda(_x, _x)",
   )
-  inspect(@symprint.to_string(parse_expr("Lambda(x, x)(y)")), content="y")
+  inspect(@symprint.pretty_string(parse_expr("Lambda(x, x)(y)")), content="y")
   inspect(
-    @symprint.to_string(parse_expr("Lambda((x, y), x + y)(1, 2)")),
+    @symprint.pretty_string(parse_expr("Lambda((x, y), x + y)(1, 2)")),
     content="3",
   )
   inspect(
-    @symprint.to_string(parse_expr("Lambda(((x, y), z), x + y + z)((1, 2), 3)")),
+    @symprint.pretty_string(parse_expr("Lambda(((x, y), z), x + y + z)((1, 2), 3)")),
     content="6",
   )
-  inspect(@symprint.to_string(parse_expr("Mod(x, 2)")), content="Mod(x, 2)")
+  inspect(@symprint.pretty_string(parse_expr("Mod(x, 2)")), content="Mod(x, 2)")
   inspect(
-    @symprint.to_string(parse_expr("Dict((x, y), (1, z))")),
+    @symprint.pretty_string(parse_expr("Dict((x, y), (1, z))")),
     content="{1: z, x: y}",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("Eq(x + x, 2*x)", parse_options(evaluate=false)),
     ),
     content="True",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("Rational(6, 4)", parse_options(evaluate=false)),
     ),
     content="3/2",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("Ne(x, x)", parse_options(evaluate=false)),
     ),
     content="False",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("Lt(1 + 1, 3)", parse_options(evaluate=false)),
     ),
     content="True",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("Derivative(x)", parse_options(evaluate=false)),
     ),
     content="Derivative(x, x)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("S(x + x)", parse_options(evaluate=false)),
     ),
     content="x + x",
@@ -1151,7 +1151,7 @@ test "symparse explicit core constructor calls stay canonical" {
     fail("expected S() constructor arity error")
   }
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("Integer(3/2)", parse_options(evaluate=false)),
     ),
     content="1",
@@ -1161,13 +1161,13 @@ test "symparse explicit core constructor calls stay canonical" {
     detail == "TypeError: invalid input: 3/2" else {
     fail("expected Rational(3/2) evaluate=false invalid input error")
   }
-  inspect(@symprint.to_string(parse_expr("Rational(0, 0)")), content="nan")
+  inspect(@symprint.pretty_string(parse_expr("Rational(0, 0)")), content="nan")
   inspect(
-    @symprint.to_string(parse_expr("Rational(True, False)")),
+    @symprint.pretty_string(parse_expr("Rational(True, False)")),
     content="zoo",
   )
   inspect(
-    @symprint.to_string(parse_expr("Rational(False, False)")),
+    @symprint.pretty_string(parse_expr("Rational(False, False)")),
     content="nan",
   )
   guard (try? parse_expr("Subs(x)"))
@@ -1187,9 +1187,9 @@ test "symparse explicit core constructor calls stay canonical" {
     detail == "ValueError: The following expressions appear more than once: x" else {
     fail("expected duplicate Subs variables error")
   }
-  inspect(@symprint.to_string(parse_expr("Subs(x, (), ())")), content="x")
+  inspect(@symprint.pretty_string(parse_expr("Subs(x, (), ())")), content="x")
   inspect(
-    @symprint.to_string(parse_expr("Subs(Subs(x, x, 0), y, 1)")),
+    @symprint.pretty_string(parse_expr("Subs(Subs(x, x, 0), y, 1)")),
     content="Subs(x, (x, y), (0, 1))",
   )
   guard (try? parse_expr("Dict(x)"))
@@ -1252,25 +1252,25 @@ test "symparse explicit core constructor calls stay canonical" {
     fail("expected lambda call arity error")
   }
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("Tuple(x + 1, y)", parse_options(evaluate=false)),
     ),
     content="(x + 1, y)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("Derivative(sin(x), x, 2)", parse_options(evaluate=false)),
     ),
     content="Derivative(sin(x), (x, 2))",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("Lambda(x, x + 1)", parse_options(evaluate=false)),
     ),
     content="Lambda(x, x + 1)",
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       parse_expr_with("Lambda(x, x)(y)", parse_options(evaluate=false)),
     ),
     content="y",

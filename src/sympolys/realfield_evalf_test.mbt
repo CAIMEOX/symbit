@@ -48,5 +48,5 @@ test "Poly::from_expr_defaults infers RR from float coefficients" {
     Domain::RR => ()
     _ => fail("expected RR domain")
   }
-  inspect(@symprint.to_string(poly.to_expr()), content="x + 1/2")
+  inspect(@symprint.pretty_string(poly.to_expr()), content="x + 1/2")
 }

@@ -192,7 +192,7 @@ fn print_relational_expr(
 fn print_derivative_expr(expr : Expr) -> String raise UtilitiesError {
   raise UtilitiesError::Unsupported(
     "codegen does not support derivative expressions yet: " +
-    @symprint.to_string(expr),
+    @symprint.pretty_string(expr),
   )
 }
 
@@ -200,7 +200,7 @@ fn print_derivative_expr(expr : Expr) -> String raise UtilitiesError {
 fn print_lambda_like_expr(expr : Expr) -> String raise UtilitiesError {
   raise UtilitiesError::Unsupported(
     "codegen does not support higher-order expressions yet: " +
-    @symprint.to_string(expr),
+    @symprint.pretty_string(expr),
   )
 }
 

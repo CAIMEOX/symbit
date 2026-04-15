@@ -275,9 +275,9 @@ test "iterables partition helpers parity" {
 test "iterables numbered symbols parity" {
   let gen = numbered_symbols(prefix="x", start=0, exclude=["x1"])
   let ours = [
-    @symprint.to_string(gen.next()),
-    @symprint.to_string(gen.next()),
-    @symprint.to_string(gen.next()),
+    @symprint.pretty_string(gen.next()),
+    @symprint.pretty_string(gen.next()),
+    @symprint.pretty_string(gen.next()),
   ]
   let oracle = utilities_eval_str(
     "json.dumps([str(next(g)) for _ in range(3)] if (g := sympy.utilities.iterables.numbered_symbols(prefix='x', start=0, exclude=[sympy.Symbol('x1')])) else [])",

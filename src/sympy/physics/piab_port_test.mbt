@@ -3,7 +3,7 @@ test "physics.quantum.piab: parity" {
   quantum_test_assert_string_equal(
     quantum_eval_str("n**2*pi**2*hbar**2/(2*m*L**2)*PIABKet(n)"),
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         qapply(
           @symcore.raw_mul([
             piab_hamiltonian(),

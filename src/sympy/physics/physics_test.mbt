@@ -13,7 +13,7 @@ fn physics_matrix_expr_equal(
     for j in 0..<lhs.width() {
       if !physics_expr_equal(
           lhs.rows[i][j],
-          @symprint.to_string(rhs.rows[i][j]),
+          @symprint.pretty_string(rhs.rows[i][j]),
         ) {
         return false
       }

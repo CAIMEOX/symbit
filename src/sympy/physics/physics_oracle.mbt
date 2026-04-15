@@ -2652,7 +2652,7 @@ pub fn optics_polarization_matrix(
   let rendered_args : Array[String] = Array::new()
   for arg in args {
     rendered_args.push(
-      "sympify(" + python_string_literal(@symprint.to_string(arg)) + ")",
+      "sympify(" + python_string_literal(@symprint.pretty_string(arg)) + ")",
     )
   }
   let txt = python_script_stdout(
@@ -2846,8 +2846,8 @@ fn control_routh_script(
   variable : @symcore.Expr,
   command : String,
 ) -> String {
-  let poly_txt = @symprint.to_string(polynomial)
-  let var_txt = @symprint.to_string(variable)
+  let poly_txt = @symprint.pretty_string(polynomial)
+  let var_txt = @symprint.pretty_string(variable)
   [
     "import sys\n",
     "from sympy import Symbol, sympify\n",
@@ -2919,7 +2919,7 @@ pub fn control_routh_auxiliary_expr(
 
 ///|
 pub fn control_expr_equivalent(lhs : @symcore.Expr, rhs : String) -> Bool raise {
-  let lhs_txt = @symprint.to_string(lhs)
+  let lhs_txt = @symprint.pretty_string(lhs)
   let txt = python_script_stdout(
     [
       "import sys\n",
@@ -2949,7 +2949,7 @@ pub fn control_expr_equivalent(lhs : @symcore.Expr, rhs : String) -> Bool raise 
 
 ///|
 pub fn physics_expr_equivalent(lhs : @symcore.Expr, rhs : String) -> Bool raise {
-  let lhs_txt = @symprint.to_string(lhs)
+  let lhs_txt = @symprint.pretty_string(lhs)
   let txt = python_script_stdout(
     [
       "import sys\n",
@@ -2998,15 +2998,15 @@ pub fn optics_medium_property(
 ) -> String raise {
   let args : Array[String] = ["'\{name}'"]
   match permittivity {
-    Some(value) => args.push("permittivity=\{@symprint.to_string(value)}")
+    Some(value) => args.push("permittivity=\{@symprint.pretty_string(value)}")
     None => ()
   }
   match permeability {
-    Some(value) => args.push("permeability=\{@symprint.to_string(value)}")
+    Some(value) => args.push("permeability=\{@symprint.pretty_string(value)}")
     None => ()
   }
   match n {
-    Some(value) => args.push("n=\{@symprint.to_string(value)}")
+    Some(value) => args.push("n=\{@symprint.pretty_string(value)}")
     None => ()
   }
   let rendered_args = args.join(", ")

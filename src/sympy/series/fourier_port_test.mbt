@@ -284,7 +284,7 @@ test "symseries fourier hyperbolic closed form parity" {
         @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
         2,
       )
-      let ours_s = sympy_simplify_str(@symprint.to_string(ours))
+      let ours_s = sympy_simplify_str(@symprint.pretty_string(ours))
       let sympy_s = sympy_simplify_str(sympy)
       assert_eq(normalize_series_str(ours_s), normalize_series_str(sympy_s))
     }

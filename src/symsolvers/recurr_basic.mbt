@@ -389,7 +389,7 @@ fn solver_initial_value(init : RsolveInit, y : Expr) -> (Expr, Expr)? {
         Some((@symcore.int(0), values[0]))
       }
     RsolveInit::Dict(values) => {
-      let y0 = @symprint.to_string(y)
+      let y0 = @symprint.pretty_string(y)
       match values.get("0") {
         Some(v) => Some((@symcore.int(0), v))
         None =>

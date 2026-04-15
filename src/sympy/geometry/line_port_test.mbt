@@ -29,7 +29,7 @@ test "geometry.line parity transforms and distance" {
   )
   assert_true(
     geometry_expr_equal(
-      @symprint.to_string(
+      @symprint.pretty_string(
         seg.distance(point2d(@symcore.int(1), @symcore.int(2))),
       ),
       "Segment(Point2D(0,0), Point2D(4,0)).distance(Point2D(1,2))",

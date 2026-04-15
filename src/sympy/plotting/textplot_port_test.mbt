@@ -14,9 +14,9 @@ fn assert_textplot_oracle(
 ) -> Unit raise {
   let ours = @symplotting.textplot_str(expr, a0, b0, width~, height~)
   let oracle = oracle_textplot_lines(
-    @symprint.to_string(expr),
-    @symprint.to_string(a0),
-    @symprint.to_string(b0),
+    @symprint.pretty_string(expr),
+    @symprint.pretty_string(a0),
+    @symprint.pretty_string(b0),
     width,
     height,
   )

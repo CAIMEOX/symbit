@@ -4,7 +4,7 @@ fn units_assert_expr_equal(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  let ours = @symprint.to_string(lhs)
+  let ours = @symprint.pretty_string(lhs)
   assert_true(expr_equal(ours, rhs))
 }
 
@@ -49,7 +49,7 @@ test "physics.units: constants and dimensions" {
   let doubled_length = length.add(length)
   assert_true(doubled_length == length)
   let velocity = length.div(time_dimension)
-  inspect(@symprint.to_string(velocity.name), content="time**-1*length")
+  inspect(@symprint.pretty_string(velocity.name), content="time**-1*length")
   units_assert_expr_equal(
     speed_of_light, "299792458*meter/second", "speed_of_light",
   )

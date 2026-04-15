@@ -24,8 +24,8 @@ test "physics.vector frame/vector core" {
     "[[cos(q(t)), -sin(q(t)), 0], [sin(q(t)), cos(q(t)), 0], [0, 0, 1]]",
   )
 
-  assert_eq(@symprint.to_string(dot(b.x(), b.x())), "1")
-  assert_eq(@symprint.to_string(dot(b.x(), b.y())), "0")
+  assert_eq(@symprint.pretty_string(dot(b.x(), b.x())), "1")
+  assert_eq(@symprint.pretty_string(dot(b.x(), b.y())), "0")
   assert_eq(vsprint(cross(n.x(), n.y())), "N.z")
   assert_eq(vsprint(b.x().dt(n)), "Derivative(q(t), t)*B.y")
 
@@ -38,10 +38,10 @@ test "physics.vector frame/vector core" {
 
   let mapping = b.variable_map(n)
   assert_eq(
-    @symprint.to_string(mapping["B_x"]),
+    @symprint.pretty_string(mapping["B_x"]),
     "N_x*cos(q(t)) + N_y*sin(q(t))",
   )
-  let by_txt = @symprint.to_string(mapping["B_y"])
+  let by_txt = @symprint.pretty_string(mapping["B_y"])
   assert_true(
     by_txt == "-N_x*sin(q(t)) + N_y*cos(q(t))" ||
     by_txt == "N_y*cos(q(t)) + -1*N_x*sin(q(t))",
@@ -89,15 +89,15 @@ test "physics.vector kinematics helpers" {
     rot_order="313",
   )
   let body_ok0 = vector_expr_equal(
-    @symprint.to_string(body_ke[0]),
+    @symprint.pretty_string(body_ke[0]),
     "u1,u2,u3=dynamicsymbols('u1 u2 u3'); q1,q2,q3=dynamicsymbols('q1 q2 q3'); kinematic_equations([u1,u2,u3], [q1,q2,q3], 'body', 313)[0]",
   )
   let body_ok1 = vector_expr_equal(
-    @symprint.to_string(body_ke[1]),
+    @symprint.pretty_string(body_ke[1]),
     "u1,u2,u3=dynamicsymbols('u1 u2 u3'); q1,q2,q3=dynamicsymbols('q1 q2 q3'); kinematic_equations([u1,u2,u3], [q1,q2,q3], 'body', 313)[1]",
   )
   let body_ok2 = vector_expr_equal(
-    @symprint.to_string(body_ke[2]),
+    @symprint.pretty_string(body_ke[2]),
     "u1,u2,u3=dynamicsymbols('u1 u2 u3'); q1,q2,q3=dynamicsymbols('q1 q2 q3'); kinematic_equations([u1,u2,u3], [q1,q2,q3], 'body', 313)[2]",
   )
   assert_true(body_ok0 && body_ok1 && body_ok2)
@@ -107,11 +107,11 @@ test "physics.vector kinematics helpers" {
     "quaternion",
   )
   let quat_ok0 = vector_expr_equal(
-    @symprint.to_string(quat_ke[0]),
+    @symprint.pretty_string(quat_ke[0]),
     "u1,u2,u3=dynamicsymbols('u1 u2 u3'); q0,q1,q2,q3=dynamicsymbols('q0 q1 q2 q3'); kinematic_equations([u1,u2,u3], [q0,q1,q2,q3], 'quaternion')[0]",
   )
   let quat_ok3 = vector_expr_equal(
-    @symprint.to_string(quat_ke[3]),
+    @symprint.pretty_string(quat_ke[3]),
     "u1,u2,u3=dynamicsymbols('u1 u2 u3'); q0,q1,q2,q3=dynamicsymbols('q0 q1 q2 q3'); kinematic_equations([u1,u2,u3], [q0,q1,q2,q3], 'quaternion')[3]",
   )
   assert_true(quat_ok0 && quat_ok3)
@@ -192,13 +192,13 @@ test "physics.vector fieldfunctions" {
   )
   let field = r.x().scale(rx * ry) + r.z().scale(rx * ry * rz)
   assert_eq(vsprint(curl(field, r)), "R_x*R_z*R.x - R_y*R_z*R.y - R_x*R.z")
-  let div_txt = @symprint.to_string(divergence(field, r))
+  let div_txt = @symprint.pretty_string(divergence(field, r))
   assert_true(div_txt == "R_y + R_x*R_y" || div_txt == "R_x*R_y + R_y")
   assert_true(is_conservative(gradient(scalar, r)))
   assert_true(is_solenoidal(curl(field, r)))
 
   let pot = scalar_potential(gradient(scalar, r), r)
-  assert_eq(@symprint.to_string(pot), "R_x*R_y*R_z")
+  assert_eq(@symprint.pretty_string(pot), "R_x*R_y*R_z")
 
   let origin = point("OR")
   let p1 = origin.locatenew(
@@ -214,15 +214,15 @@ test "physics.vector fieldfunctions" {
     r.z().scale(@symcore.int(6)),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       scalar_potential_difference_field(gradient(scalar, r), r, p1, p2, origin),
     ),
     "114",
   )
 
   let mag = (r.x() + r.y()).magnitude()
-  assert_eq(@symprint.to_string(mag), "sqrt(2)")
+  assert_eq(@symprint.pretty_string(mag), "sqrt(2)")
   let angle = r.x().angle_between(r.y())
-  let angle_txt = @symprint.to_string(angle)
+  let angle_txt = @symprint.pretty_string(angle)
   assert_true(angle_txt == "pi/2" || angle_txt == "1/2*pi")
 }

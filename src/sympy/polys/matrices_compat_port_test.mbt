@@ -8,7 +8,7 @@ fn mx_trim(s : String) -> String {
 
 ///|
 fn mx_expr_norm(e : @symcore.Expr) -> String raise {
-  sympy_normalize(@symprint.to_string(e))
+  sympy_normalize(@symprint.pretty_string(e))
   .trim()
   .to_string()
   .replace_all(old=" ", new="")
@@ -835,7 +835,7 @@ test "matrices: DFM fallback and scalar sympy helpers" {
   let oracle_scalar = domainscalar_from_expr("1/2")
   let ours_scalar = "\{scalar.to_string()}@\{@sympolys.domain_to_sympy_string(scalar.domain)}"
   assert_eq(mx_trim(ours_scalar), mx_trim(oracle_scalar))
-  assert_eq(@symprint.to_string(scalar.to_sympy()), "1/2")
+  assert_eq(@symprint.pretty_string(scalar.to_sympy()), "1/2")
   let scalar_new = DomainScalar::new(
     @sympolys.fe_from_int(3, Domain::ZZ),
     Domain::ZZ,

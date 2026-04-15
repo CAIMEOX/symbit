@@ -5,7 +5,7 @@ fn kane_matrix_entry_summary(matrix : @symphysics.ExplicitMatrix) -> String {
   for i in 0..<matrix.height() {
     let row : Array[String] = []
     for j in 0..<matrix.width() {
-      row.push(@symprint.to_string(entries[i][j]))
+      row.push(@symprint.pretty_string(entries[i][j]))
     }
     rows.push("[" + row.join(", ") + "]")
   }
@@ -40,13 +40,13 @@ test "physics.mechanics kane: spring mass damper" {
   let rhs = km.rhs()
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(rhs.get(1, 0)),
+      @symprint.pretty_string(rhs.get(1, 0)),
       "-(k*q(t) + c*u(t))/m",
     ),
   )
   let a = km.linearize(a_and_b=true).0
-  inspect(@symprint.to_string(a.get(0, 0)), content="0")
-  inspect(@symprint.to_string(a.get(0, 1)), content="1")
-  assert_true(mechanics_expr_equal(@symprint.to_string(a.get(1, 0)), "-k/m"))
-  assert_true(mechanics_expr_equal(@symprint.to_string(a.get(1, 1)), "-c/m"))
+  inspect(@symprint.pretty_string(a.get(0, 0)), content="0")
+  inspect(@symprint.pretty_string(a.get(0, 1)), content="1")
+  assert_true(mechanics_expr_equal(@symprint.pretty_string(a.get(1, 0)), "-k/m"))
+  assert_true(mechanics_expr_equal(@symprint.pretty_string(a.get(1, 1)), "-c/m"))
 }

@@ -2,7 +2,7 @@
 fn vecs_to_string(values : Array[Array[Expr]]) -> String {
   let rows : Array[String] = []
   for row in values {
-    rows.push("[" + row.map(@symprint.to_string).join(", ") + "]")
+    rows.push("[" + row.map(@symprint.pretty_string).join(", ") + "]")
   }
   "[" + rows.join(", ") + "]"
 }
@@ -83,7 +83,7 @@ test "matrices determinant inverse and solve" {
     [@symcore.int(1), @symcore.int(2)],
     [@symcore.int(3), @symcore.int(4)],
   ])
-  inspect(@symprint.to_string(a.det()), content="-2")
+  inspect(@symprint.pretty_string(a.det()), content="-2")
   inspect(a.inv().to_string(), content="Matrix([[-2, 1], [3/2, -1/2]])")
   let rhs = matrix([[@symcore.int(5)], [@symcore.int(11)]])
   inspect(a.solve(rhs).to_string(), content="Matrix([[1], [2]])")
@@ -132,8 +132,8 @@ test "matrices minors cofactors adjugate and echelon helpers" {
     a.minor_submatrix(0, 1).to_string(),
     content="Matrix([[0, 5], [1, 6]])",
   )
-  inspect(@symprint.to_string(a.minor(0, 1)), content="-5")
-  inspect(@symprint.to_string(a.cofactor(0, 1)), content="5")
+  inspect(@symprint.pretty_string(a.minor(0, 1)), content="-5")
+  inspect(@symprint.pretty_string(a.cofactor(0, 1)), content="5")
   inspect(
     a.adjugate().to_string(),
     content="Matrix([[24, -12, -2], [5, 3, -5], [-4, 2, 4]])",
@@ -247,7 +247,7 @@ test "matrices numeric backend keeps float and complex-float results" {
 ///|
 test "matrices exact rational fast path preserves benchmark family results" {
   let a = diag_dominant_matrix(4)
-  inspect(@symprint.to_string(a.det()), content="110702")
+  inspect(@symprint.pretty_string(a.det()), content="110702")
   let inv = a.inv()
   inspect(
     inv.to_string(),

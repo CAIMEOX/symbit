@@ -4,21 +4,21 @@ test "physics.quantum.boson/fermion: parity" {
   let c = fermion_op(@symcore.Expr::Symbol("c"))
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(commutator(a.as_expr(), a.dagger().as_expr())),
+      @symprint.pretty_string(commutator(a.as_expr(), a.dagger().as_expr())),
     ),
     quantum_doit_str("Commutator(BosonOp(a), Dagger(BosonOp(a)))"),
     "boson commutator parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(anticommutator(c.as_expr(), c.dagger().as_expr())),
+      @symprint.pretty_string(anticommutator(c.as_expr(), c.dagger().as_expr())),
     ),
     quantum_doit_str("AntiCommutator(FermionOp(c), Dagger(FermionOp(c)))"),
     "fermion anticommutator parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         qapply(@symcore.raw_mul([a.as_expr(), boson_fock_ket(@symcore.int(2))])),
       ),
     ),
@@ -27,7 +27,7 @@ test "physics.quantum.boson/fermion: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         qapply(
           @symcore.raw_mul([
             c.dagger().as_expr(),
@@ -47,7 +47,7 @@ test "physics.quantum.operatorordering: parity" {
   let c = fermion_op(@symcore.Expr::Symbol("c"))
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         normal_ordered_form(
           @symcore.raw_mul([a.as_expr(), a.dagger().as_expr()]),
         ),
@@ -58,7 +58,7 @@ test "physics.quantum.operatorordering: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         normal_ordered_form(
           @symcore.raw_mul([c.as_expr(), c.dagger().as_expr()]),
         ),

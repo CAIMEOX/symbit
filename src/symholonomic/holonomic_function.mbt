@@ -462,8 +462,8 @@ pub fn HolonomicFunction::composition(
 
 ///|
 pub fn HolonomicFunction::to_sympy_str(self : HolonomicFunction) -> String {
-  let x_str = @symprint.to_string(self.x)
-  let x0_str = @symprint.to_string(self.x0)
+  let x_str = @symprint.pretty_string(self.x)
+  let x0_str = @symprint.pretty_string(self.x0)
   match self.annihilator {
     Some(op) =>
       if self.y0.is_empty() {

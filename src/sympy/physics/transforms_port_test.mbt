@@ -9,21 +9,21 @@ test "physics.quantum.transforms: parity" {
 
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(quantum_canonical_mul(@symcore.raw_mul([b1, k1]))),
+      @symprint.pretty_string(quantum_canonical_mul(@symcore.raw_mul([b1, k1]))),
     ),
     quantum_eval_str("Bra(k1)*Ket(k1)"),
     "bra*ket parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(quantum_canonical_mul(@symcore.raw_mul([k1, b1]))),
+      @symprint.pretty_string(quantum_canonical_mul(@symcore.raw_mul([k1, b1]))),
     ),
     quantum_eval_str("Ket(k1)*Bra(k1)"),
     "ket*bra parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         quantum_canonical_mul(
           @symcore.raw_mul([
             @symcore.raw_function("TensorProduct", [a, b]),
@@ -39,7 +39,7 @@ test "physics.quantum.transforms: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         quantum_canonical_mul(@symcore.raw_mul([a, @symcore.raw_add([b, c])])),
       ),
     ),
@@ -48,7 +48,7 @@ test "physics.quantum.transforms: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         quantum_canonical_pow(@symcore.raw_add([a, b]), @symcore.int(2)),
       ),
     ),
@@ -57,7 +57,7 @@ test "physics.quantum.transforms: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         quantum_canonical_pow(x_gate(0).as_expr(), @symcore.int(2)),
       ),
     ),
@@ -66,7 +66,7 @@ test "physics.quantum.transforms: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         quantum_canonical_pow(phase_gate(0).as_expr(), @symcore.int(2)),
       ),
     ),
@@ -75,7 +75,7 @@ test "physics.quantum.transforms: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         quantum_canonical_pow(t_gate(0).as_expr(), @symcore.int(2)),
       ),
     ),
@@ -84,7 +84,7 @@ test "physics.quantum.transforms: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         quantum_canonical_pow(cgate([1], x_gate(0).as_expr()), @symcore.int(2)),
       ),
     ),
@@ -93,7 +93,7 @@ test "physics.quantum.transforms: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         quantum_canonical_pow(
           fermion_op(@symcore.Expr::Symbol("c")).as_expr(),
           @symcore.int(2),

@@ -1,6 +1,6 @@
 ///|
 fn dcoeff_strings(coeffs : Array[@symcore.Expr]) -> Array[String] {
-  coeffs.map(v => @symprint.to_string(v))
+  coeffs.map(v => @symprint.pretty_string(v))
 }
 
 ///|
@@ -8,7 +8,7 @@ fn differential_srepr_local(op : DifferentialOperator) -> String raise {
   let alg = op.algebra()
   differential_srepr(
     dcoeff_strings(op.coefficients()),
-    var_name=@symprint.to_string(alg.variable()),
+    var_name=@symprint.pretty_string(alg.variable()),
     generator=alg.generator(),
   )
 }

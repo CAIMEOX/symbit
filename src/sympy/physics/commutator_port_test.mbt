@@ -7,13 +7,13 @@ test "physics.quantum.commutator: parity" {
   let c_op = @symcore.Expr::Symbol("C")
 
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(commutator(b_op, a_op))),
+    quantum_eval_str(@symprint.pretty_string(commutator(b_op, a_op))),
     quantum_eval_str("Commutator(B, A)"),
     "commutator canonical parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         commutator(@symcore.raw_mul([a, a_op]), @symcore.raw_mul([b, b_op])),
       ),
     ),
@@ -22,7 +22,7 @@ test "physics.quantum.commutator: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         commutator_expand(
           commutator(@symcore.raw_mul([a_op, b_op]), c_op, evaluate=false),
         ),
@@ -32,7 +32,7 @@ test "physics.quantum.commutator: parity" {
     "commutator expand parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(anticommutator(b_op, a_op))),
+    quantum_eval_str(@symprint.pretty_string(anticommutator(b_op, a_op))),
     quantum_eval_str("AntiCommutator(B, A)"),
     "anticommutator parity",
   )
@@ -42,14 +42,14 @@ test "physics.quantum.commutator: parity" {
 test "physics.quantum.(anti)commutator: gate parity" {
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(commutator(x_gate(0).as_expr(), y_gate(1).as_expr())),
+      @symprint.pretty_string(commutator(x_gate(0).as_expr(), y_gate(1).as_expr())),
     ),
     quantum_doit_str("Commutator(XGate(0), YGate(1))"),
     "disjoint one-qubit commutator parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         commutator(cnot_gate(0, 1).as_expr(), z_gate(0).as_expr()),
       ),
     ),
@@ -58,7 +58,7 @@ test "physics.quantum.(anti)commutator: gate parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         commutator(cnot_gate(0, 1).as_expr(), x_gate(1).as_expr()),
       ),
     ),

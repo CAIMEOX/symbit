@@ -7,7 +7,7 @@ fn jointsmethod_matrix_entry_summary(
   for i in 0..<matrix.height() {
     let row : Array[String] = []
     for j in 0..<matrix.width() {
-      row.push(@symprint.to_string(entries[i][j]))
+      row.push(@symprint.pretty_string(entries[i][j]))
     }
     rows.push("[" + row.join(", ") + "]")
   }
@@ -41,12 +41,12 @@ test "physics.mechanics parity jointsmethod simple pendulum" {
   )
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(jm.mass_matrix().get(0, 0)),
+      @symprint.pretty_string(jm.mass_matrix().get(0, 0)),
       "l**2*m",
     ),
   )
   let rhs = jm.rhs()
   assert_true(
-    mechanics_expr_equal(@symprint.to_string(rhs.get(1, 0)), "-g*sin(q(t))/l"),
+    mechanics_expr_equal(@symprint.pretty_string(rhs.get(1, 0)), "-g*sin(q(t))/l"),
   )
 }

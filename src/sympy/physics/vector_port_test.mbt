@@ -81,19 +81,19 @@ test "physics.vector parity kinematics helpers" {
   )
   assert_true(
     vector_expr_equal(
-      @symprint.to_string(body_ke[0]),
+      @symprint.pretty_string(body_ke[0]),
       "u1,u2,u3=dynamicsymbols('pu1 pu2 pu3'); q1,q2,q3=dynamicsymbols('pq1 pq2 pq3'); kinematic_equations([u1,u2,u3], [q1,q2,q3], 'body', 313)[0]",
     ),
   )
   assert_true(
     vector_expr_equal(
-      @symprint.to_string(body_ke[1]),
+      @symprint.pretty_string(body_ke[1]),
       "u1,u2,u3=dynamicsymbols('pu1 pu2 pu3'); q1,q2,q3=dynamicsymbols('pq1 pq2 pq3'); kinematic_equations([u1,u2,u3], [q1,q2,q3], 'body', 313)[1]",
     ),
   )
   assert_true(
     vector_expr_equal(
-      @symprint.to_string(body_ke[2]),
+      @symprint.pretty_string(body_ke[2]),
       "u1,u2,u3=dynamicsymbols('pu1 pu2 pu3'); q1,q2,q3=dynamicsymbols('pq1 pq2 pq3'); kinematic_equations([u1,u2,u3], [q1,q2,q3], 'body', 313)[2]",
     ),
   )
@@ -104,13 +104,13 @@ test "physics.vector parity kinematics helpers" {
   )
   assert_true(
     vector_expr_equal(
-      @symprint.to_string(quat_ke[0]),
+      @symprint.pretty_string(quat_ke[0]),
       "u1,u2,u3=dynamicsymbols('pu1 pu2 pu3'); q0,q1,q2,q3=dynamicsymbols('pq0 pq1 pq2 pq3'); kinematic_equations([u1,u2,u3], [q0,q1,q2,q3], 'quaternion')[0]",
     ),
   )
   assert_true(
     vector_expr_equal(
-      @symprint.to_string(quat_ke[3]),
+      @symprint.pretty_string(quat_ke[3]),
       "u1,u2,u3=dynamicsymbols('pu1 pu2 pu3'); q0,q1,q2,q3=dynamicsymbols('pq0 pq1 pq2 pq3'); kinematic_equations([u1,u2,u3], [q0,q1,q2,q3], 'quaternion')[3]",
     ),
   )
@@ -202,7 +202,7 @@ test "physics.vector parity points and fieldfunctions" {
     vector_eval("R=ReferenceFrame('QR'); gradient(R[0]*R[1]*R[2], R)"),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       divergence(r.x().scale(rx * ry) + r.z().scale(rx * ry * rz), r),
     ),
     vector_eval(

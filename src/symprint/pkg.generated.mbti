@@ -6,15 +6,13 @@ import {
 }
 
 // Values
-pub fn debug_repr(@symcore.Expr) -> String
-
 pub fn latex(@symcore.Expr, mode? : String, full_prec? : Bool, fold_frac_powers? : Bool, fold_func_brackets? : Bool, fold_short_frac? : Bool?, inv_trig_style? : String, itex? : Bool, ln_notation? : Bool, long_frac_ratio? : Int?, mul_symbol? : String?, root_notation? : Bool, imaginary_unit? : String, diff_operator? : String, parenthesize_super? : Bool, symbol_names? : Map[String, String]) -> String
 
 pub fn latex_settings(mode? : String, full_prec? : Bool, fold_frac_powers? : Bool, fold_func_brackets? : Bool, fold_short_frac? : Bool?, inv_trig_style? : String, itex? : Bool, ln_notation? : Bool, long_frac_ratio? : Int?, mul_symbol? : String?, root_notation? : Bool, imaginary_unit? : String, diff_operator? : String, parenthesize_super? : Bool, symbol_names? : Map[String, String]) -> LatexSettings
 
 pub fn latex_with_settings(@symcore.Expr, LatexSettings) -> String
 
-pub fn to_string(@symcore.Expr) -> String
+pub fn pretty_string(@symcore.Expr) -> String
 
 // Errors
 

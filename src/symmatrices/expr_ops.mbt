@@ -58,7 +58,7 @@ fn clone_expr_rows(rows : Array[Array[Expr]]) -> Array[Array[Expr]] {
 fn matrix_string(rows : Array[Array[Expr]]) -> String {
   let rendered_rows : Array[String] = []
   for row in rows {
-    rendered_rows.push("[" + row.map(@symprint.to_string).join(", ") + "]")
+    rendered_rows.push("[" + row.map(@symprint.pretty_string).join(", ") + "]")
   }
   "Matrix([" + rendered_rows.join(", ") + "])"
 }

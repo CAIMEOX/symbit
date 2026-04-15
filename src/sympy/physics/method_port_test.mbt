@@ -1,6 +1,6 @@
 ///|
 fn method_expr_list_summary(exprs : Array[@symcore.Expr]) -> String {
-  "[" + exprs.map(@symprint.to_string).join(", ") + "]"
+  "[" + exprs.map(@symprint.pretty_string).join(", ") + "]"
 }
 
 ///|

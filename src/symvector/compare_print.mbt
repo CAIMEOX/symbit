@@ -337,7 +337,7 @@ pub impl Show for Dyadic with output(self, logger : &Logger) -> Unit {
 pub impl Show for Gradient with to_string(self) -> String {
   match self.field_ {
     ScalarOrVector::ScalarExpr(expr) =>
-      "Gradient(" + @symprint.to_string(expr) + ")"
+      "Gradient(" + @symprint.pretty_string(expr) + ")"
     ScalarOrVector::VectorExpr(vect) => "Gradient(" + vect.to_string() + ")"
   }
 }
@@ -371,7 +371,7 @@ pub impl Show for Curl with output(self, logger : &Logger) -> Unit {
 pub impl Show for Laplacian with to_string(self) -> String {
   match self.field_ {
     ScalarOrVector::ScalarExpr(expr) =>
-      "Laplacian(" + @symprint.to_string(expr) + ")"
+      "Laplacian(" + @symprint.pretty_string(expr) + ")"
     ScalarOrVector::VectorExpr(vect) => "Laplacian(" + vect.to_string() + ")"
   }
 }
@@ -528,7 +528,7 @@ pub impl Show for DyadicAdd with output(self, logger : &Logger) -> Unit {
 ///|
 pub impl Show for AxisOrienter with to_string(self) -> String {
   "AxisOrienter(" +
-  @symprint.to_string(self.angle_) +
+  @symprint.pretty_string(self.angle_) +
   ", " +
   self.axis_.to_string() +
   ")"
@@ -542,11 +542,11 @@ pub impl Show for AxisOrienter with output(self, logger : &Logger) -> Unit {
 ///|
 pub impl Show for BodyOrienter with to_string(self) -> String {
   "BodyOrienter(" +
-  @symprint.to_string(self.angle1_) +
+  @symprint.pretty_string(self.angle1_) +
   ", " +
-  @symprint.to_string(self.angle2_) +
+  @symprint.pretty_string(self.angle2_) +
   ", " +
-  @symprint.to_string(self.angle3_) +
+  @symprint.pretty_string(self.angle3_) +
   ", " +
   self.rotation_order_ +
   ")"
@@ -560,11 +560,11 @@ pub impl Show for BodyOrienter with output(self, logger : &Logger) -> Unit {
 ///|
 pub impl Show for SpaceOrienter with to_string(self) -> String {
   "SpaceOrienter(" +
-  @symprint.to_string(self.angle1_) +
+  @symprint.pretty_string(self.angle1_) +
   ", " +
-  @symprint.to_string(self.angle2_) +
+  @symprint.pretty_string(self.angle2_) +
   ", " +
-  @symprint.to_string(self.angle3_) +
+  @symprint.pretty_string(self.angle3_) +
   ", " +
   self.rotation_order_ +
   ")"
@@ -578,13 +578,13 @@ pub impl Show for SpaceOrienter with output(self, logger : &Logger) -> Unit {
 ///|
 pub impl Show for QuaternionOrienter with to_string(self) -> String {
   "QuaternionOrienter(" +
-  @symprint.to_string(self.q0_) +
+  @symprint.pretty_string(self.q0_) +
   ", " +
-  @symprint.to_string(self.q1_) +
+  @symprint.pretty_string(self.q1_) +
   ", " +
-  @symprint.to_string(self.q2_) +
+  @symprint.pretty_string(self.q2_) +
   ", " +
-  @symprint.to_string(self.q3_) +
+  @symprint.pretty_string(self.q3_) +
   ")"
 }
 
@@ -596,7 +596,7 @@ pub impl Show for QuaternionOrienter with output(self, logger : &Logger) -> Unit
 ///|
 pub impl Show for TransformFunction with to_string(self) -> String {
   "TransformFunction(" +
-  self.equations_.map(@symprint.to_string).join(", ") +
+  self.equations_.map(@symprint.pretty_string).join(", ") +
   ")"
 }
 

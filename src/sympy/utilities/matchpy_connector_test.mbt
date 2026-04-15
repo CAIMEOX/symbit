@@ -31,7 +31,7 @@ test "replacer handles sequence wildcards in associative nodes" {
     @symcore.Expr::Symbol("c"),
   ])
   let result = r.replace(expr, max_count=1)
-  inspect(@symprint.to_string(result), content="b + c + a")
+  inspect(@symprint.pretty_string(result), content="b + c + a")
 }
 
 ///|
@@ -40,7 +40,7 @@ test "replace_with_info records applied rules" {
   let r = replacer()
   r.add(x + @symcore.int(1), x, info=Some("drop-one"))
   let (result, infos) = r.replace_with_info(x + @symcore.int(1))
-  inspect(@symprint.to_string(result), content="x")
+  inspect(@symprint.pretty_string(result), content="x")
   inspect(infos, content="[\"drop-one\"]")
 }
 

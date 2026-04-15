@@ -32,8 +32,8 @@ test "physics.quantum.pauli: local operators, states, and simplification" {
     "1",
     "SigmaZ inner product",
   )
-  inspect(@symprint.to_string(dagger(sp.as_expr())), content="SigmaMinus()")
-  inspect(@symprint.to_string(dagger(sz.as_expr())), content="SigmaZ()")
+  inspect(@symprint.pretty_string(dagger(sp.as_expr())), content="SigmaMinus()")
+  inspect(@symprint.pretty_string(dagger(sz.as_expr())), content="SigmaZ()")
   quantum_test_assert_expr_equal(
     qsimplify_pauli(@symcore.raw_mul([sx.as_expr(), sy.as_expr()])),
     "I*SigmaZ()",

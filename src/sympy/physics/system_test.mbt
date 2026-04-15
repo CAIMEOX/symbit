@@ -1,6 +1,6 @@
 ///|
 fn system_exprs_summary(exprs : Array[@symcore.Expr]) -> String {
-  "[" + exprs.map(@symprint.to_string).join(", ") + "]"
+  "[" + exprs.map(@symprint.pretty_string).join(", ") + "]"
 }
 
 ///|
@@ -96,17 +96,17 @@ test "physics.mechanics system backend equations" {
   ])
 
   ignore(sys.form_eoms(use_lagrange=true))
-  inspect(@symprint.to_string(sys.mass_matrix().get(0, 0)), content="m")
+  inspect(@symprint.pretty_string(sys.mass_matrix().get(0, 0)), content="m")
   let forcing_expr = sys.forcing().get(0, 0)
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(forcing_expr),
+      @symprint.pretty_string(forcing_expr),
       "b*Derivative(q(t), t) - k*q(t)",
     ),
   )
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(sys.rhs().get(1, 0)),
+      @symprint.pretty_string(sys.rhs().get(1, 0)),
       "(b*Derivative(q(t), t) - k*q(t))/m",
     ),
   )

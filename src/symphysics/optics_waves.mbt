@@ -56,13 +56,13 @@ fn twave_render_arg(expr : Expr) -> String {
   match expr {
     Expr::Pow(base, Expr::Number(n)) if n.is_integral() &&
       n.numerator() == BigInt::from_int(-1) => {
-      let base_txt = @symprint.to_string(base)
+      let base_txt = @symprint.pretty_string(base)
       match base {
         Expr::Add(_) | Expr::Mul(_) => "1/(\{base_txt})"
         _ => "1/\{base_txt}"
       }
     }
-    _ => @symprint.to_string(expr)
+    _ => @symprint.pretty_string(expr)
   }
 }
 

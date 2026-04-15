@@ -9,7 +9,7 @@ test "physics.quantum.shor: local helper arithmetic" {
 ///|
 test "physics.quantum.shor: local period finding and factoring" {
   assert_eq(period_find(2, 15), 4)
-  assert_eq(@symprint.to_string(shor(15)), "Tuple(3, 5)")
+  assert_eq(@symprint.pretty_string(shor(15)), "Tuple(3, 5)")
 }
 
 ///|

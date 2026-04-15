@@ -99,7 +99,7 @@ test "rl unpack" {
 ///|
 test "rl sort" {
   let expr = basic([@symcore.int(3), @symcore.int(1), @symcore.int(2)])
-  let rl = @strategies_rl.sort(expr => @symprint.to_string(expr))
+  let rl = @strategies_rl.sort(expr => @symprint.pretty_string(expr))
   let result = rl(expr)
   assert_expr_str_eq(result, rl_sort(expr), "sort")
 }

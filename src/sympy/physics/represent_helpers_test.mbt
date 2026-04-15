@@ -47,7 +47,7 @@ test "physics.quantum.represent helpers: basis discovery and symbolic fallbacks"
     "rep_innerproduct cartesian",
   )
   quantum_test_assert_string_equal(
-    @symprint.to_string(
+    @symprint.pretty_string(
       match represent(ket([@symcore.Expr::Symbol("k")]).as_expr()) {
         MatrixScalarValue::Scalar(value) => value
         MatrixScalarValue::Matrix(_) =>

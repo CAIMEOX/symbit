@@ -963,8 +963,8 @@ test "symplotting plot_implicit creates default ranges like SymPy" {
   assert_true(range_symbols.contains(x))
   assert_true(range_symbols.contains(y))
   assert_eq(series.get_label(), "Eq(x**2 + y**2, 1)")
-  assert_eq(backend.xlabel, Some(@symprint.to_string(series.variable_x)))
-  assert_eq(backend.ylabel, Some(@symprint.to_string(series.variable_y)))
+  assert_eq(backend.xlabel, Some(@symprint.pretty_string(series.variable_x)))
+  assert_eq(backend.ylabel, Some(@symprint.pretty_string(series.variable_y)))
 }
 
 ///|

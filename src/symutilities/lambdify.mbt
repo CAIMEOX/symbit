@@ -129,7 +129,7 @@ fn eval_double(
       @math.pow(eval_double(base, env), eval_double(exp, env))
     _ =>
       raise UtilitiesError::Unsupported(
-        "lambdify does not yet support expression " + @symprint.to_string(expr),
+        "lambdify does not yet support expression " + @symprint.pretty_string(expr),
       )
   }
 }
@@ -200,7 +200,7 @@ fn lambdastr_prec(expr : Expr, parent_prec : Int) -> String {
       }
       lambdastr_prec(lhs, 0) + " " + symbol + " " + lambdastr_prec(rhs, 0)
     }
-    _ => @symprint.to_string(expr)
+    _ => @symprint.pretty_string(expr)
   }
   if current_prec < parent_prec {
     "(" + text + ")"

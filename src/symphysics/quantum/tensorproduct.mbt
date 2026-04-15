@@ -219,7 +219,7 @@ fn tensor_product_needs_parens(expr : Expr) -> Bool {
 pub impl Show for TensorProductExpr with to_string(self) {
   let out : Array[String] = Array::new()
   for arg in self.args {
-    let rendered = @symprint.to_string(arg)
+    let rendered = @symprint.pretty_string(arg)
     if tensor_product_needs_parens(arg) {
       out.push("(\{rendered})")
     } else {

@@ -33,8 +33,6 @@ pub fn cse(Array[@symcore.Expr]) -> @symsimplify.CseResult
 
 pub fn cse_reconstruct(@symsimplify.CseResult) -> Array[@symcore.Expr]
 
-pub fn debug_repr(@symcore.Expr) -> String
-
 pub fn denom(@symcore.Expr) -> @symcore.Expr
 
 pub fn denom_expand(@symcore.Expr) -> @symcore.Expr
@@ -95,6 +93,8 @@ pub fn powdenest(@symcore.Expr) -> @symcore.Expr
 
 pub fn powsimp(@symcore.Expr) -> @symcore.Expr
 
+pub fn pretty_string(@symcore.Expr) -> String
+
 pub fn rad_rationalize(@symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr)
 
 pub fn radsimp(@symcore.Expr) -> @symcore.Expr
@@ -132,8 +132,6 @@ pub fn sympify_dict(Array[(@symcore.SympifyInput, @symcore.SympifyInput)]) -> @s
 pub fn sympify_name(String) -> @symcore.Expr
 
 pub fn sympify_tuple(Array[@symcore.SympifyInput]) -> @symcore.Expr
-
-pub fn to_string(@symcore.Expr) -> String
 
 pub fn tr0(@symcore.Expr) -> @symcore.Expr
 

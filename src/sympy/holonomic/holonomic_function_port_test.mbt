@@ -14,13 +14,13 @@ test "holonomic function: closure ops and calculus on expr hints" {
   let x = @symcore.Expr::Symbol("x")
   let hf_exp = expr_to_holonomic(@symcore.function("exp", [x]), x~)
   let hf_sin = expr_to_holonomic(@symcore.function("sin", [x]), x~)
-  let add_expr = @symprint.to_string((hf_exp + hf_sin).to_expr())
-  let mul_expr = @symprint.to_string((hf_exp * hf_sin).to_expr())
-  let diff_expr = @symprint.to_string(hf_sin.diff().to_expr())
-  let int_expr = @symprint.to_string(
+  let add_expr = @symprint.pretty_string((hf_exp + hf_sin).to_expr())
+  let mul_expr = @symprint.pretty_string((hf_exp * hf_sin).to_expr())
+  let diff_expr = @symprint.pretty_string(hf_sin.diff().to_expr())
+  let int_expr = @symprint.pretty_string(
     expr_to_holonomic(@symcore.function("cos", [x]), x~).integrate().to_expr(),
   )
-  let comp_expr = @symprint.to_string(
+  let comp_expr = @symprint.pretty_string(
     hf_exp.composition(@symcore.pow(x, @symcore.int(2))).to_expr(),
   )
   assert_true(sympy_equiv_str(add_expr, "exp(x) + sin(x)"))
@@ -42,26 +42,26 @@ test "holonomic function: sequence conversion for constant-coefficient ode" {
   assert_eq(seq_sin.length(), 1)
   let sin_coeffs = seq_sin[0].recurrence().coefficients()
   assert_eq(sin_coeffs.length(), 3)
-  assert_true(sympy_equiv_str(@symprint.to_string(sin_coeffs[0]), "1"))
-  assert_true(sympy_equiv_str(@symprint.to_string(sin_coeffs[1]), "0"))
+  assert_true(sympy_equiv_str(@symprint.pretty_string(sin_coeffs[0]), "1"))
+  assert_true(sympy_equiv_str(@symprint.pretty_string(sin_coeffs[1]), "0"))
   assert_true(
-    sympy_equiv_str(@symprint.to_string(sin_coeffs[2]), "n**2 + 3*n + 2"),
+    sympy_equiv_str(@symprint.pretty_string(sin_coeffs[2]), "n**2 + 3*n + 2"),
   )
   let sin_u0 = seq_sin[0].initial_values()
   assert_eq(sin_u0.length(), 2)
-  assert_true(sympy_equiv_str(@symprint.to_string(sin_u0[0]), "0"))
-  assert_true(sympy_equiv_str(@symprint.to_string(sin_u0[1]), "1"))
+  assert_true(sympy_equiv_str(@symprint.pretty_string(sin_u0[0]), "0"))
+  assert_true(sympy_equiv_str(@symprint.pretty_string(sin_u0[1]), "1"))
 }
 
 ///|
 test "holonomic function: series and evalf pipeline" {
   let x = @symcore.Expr::Symbol("x")
   let hf_exp = expr_to_holonomic(@symcore.function("exp", [x]), x~)
-  let series_expr = @symprint.to_string(hf_exp.series(n=6))
+  let series_expr = @symprint.pretty_string(hf_exp.series(n=6))
   assert_true(
     sympy_equiv_str(series_expr, "1 + x + x**2/2 + x**3/6 + x**4/24 + x**5/120"),
   )
-  let eval = @symprint.to_string(
+  let eval = @symprint.pretty_string(
     hf_exp.evalf(@symnum.BigRational::from_int(1), terms=6),
   )
   assert_true(sympy_equiv_str(eval, "163/60"))

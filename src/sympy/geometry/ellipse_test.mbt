@@ -110,7 +110,7 @@ test "geometry.ellipse tangency bounds and parameter values" {
 ///|
 test "geometry.circle tangency bounds and parameter values" {
   let c = circle(point2d(@symcore.int(0), @symcore.int(0)), @symcore.int(1))
-  assert_eq(@symprint.to_string(c.vradius()), "1")
+  assert_eq(@symprint.pretty_string(c.vradius()), "1")
   let bounds = c.bounds()
   geometry_assert_point_equal(bounds.0, "-1", "-1", "circle bounds min")
   geometry_assert_point_equal(bounds.1, "1", "1", "circle bounds max")

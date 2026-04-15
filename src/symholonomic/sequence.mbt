@@ -36,7 +36,7 @@ pub fn HolonomicSequence::initial_values(
 
 ///|
 pub fn HolonomicSequence::to_sympy_str(self : HolonomicSequence) -> String {
-  let n = @symprint.to_string(self.recurrence.parent.variable())
+  let n = @symprint.pretty_string(self.recurrence.parent.variable())
   let base = "HolonomicSequence(\{self.recurrence.to_sympy_str()}, \{n})"
   if self.u0.is_empty() {
     base

@@ -140,7 +140,7 @@ fn dm_factor_list_text(factors : Array[(Array[FieldElem], Int)]) -> String {
 fn dm_expr_matrix_text(rows : MatrixExpr) -> String {
   let row_text : Array[String] = Array::new()
   for row in rows {
-    let cells = row.map(@symprint.to_string).join(", ")
+    let cells = row.map(@symprint.pretty_string).join(", ")
     row_text.push("[\{cells}]")
   }
   let joined = row_text.join(", ")
@@ -710,7 +710,7 @@ test "domainmatrix: sympy-style constructor and conversion parity" {
     dm_trim(dm_expr_matrix_text(ours_from_list.to_sympy())),
     dm_trim("Matrix([[1/2, 2], [3, 4]])"),
   )
-  assert_eq(@symprint.to_string(ours_from_list.getitem_sympy(0, 0)), "1/2")
+  assert_eq(@symprint.pretty_string(ours_from_list.getitem_sympy(0, 0)), "1/2")
 
   let ddm_dm = ours_from_list.to_ddm().to_domain_matrix()
   let ddm_rep = DomainMatrix::from_rep(

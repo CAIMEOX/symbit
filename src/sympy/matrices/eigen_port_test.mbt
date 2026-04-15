@@ -4,7 +4,7 @@ fn local_eigenvals_py(items : Array[EigenValueMult]) -> String {
   items
   .map(fn(item) {
     "(sympy.sympify('" +
-    @symprint.to_string(item.0) +
+    @symprint.pretty_string(item.0) +
     "', locals={'sqrt': sympy.sqrt}), " +
     item.1.to_string() +
     ")"
@@ -24,7 +24,7 @@ test "matrices parity charpoly eigenvals and diagonalize" {
     "0",
     py_list_text(
       "(lambda lam: sympy.sstr(sympy.expand((" +
-      @symprint.to_string(a.charpoly(x=lam)) +
+      @symprint.pretty_string(a.charpoly(x=lam)) +
       ") - (" +
       py_matrix_expr(a) +
       ".charpoly(lam).as_expr()))))(sympy.Symbol('lam'))",
@@ -68,7 +68,7 @@ test "matrices parity charpoly on dense diagonally dominant exact matrix" {
     "0",
     py_list_text(
       "(lambda lam: sympy.sstr(sympy.expand((" +
-      @symprint.to_string(a.charpoly(x=lam)) +
+      @symprint.pretty_string(a.charpoly(x=lam)) +
       ") - (" +
       py_matrix_expr(a) +
       ".charpoly(lam).as_expr()))))(sympy.Symbol('lam'))",

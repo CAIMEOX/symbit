@@ -42,7 +42,7 @@ pub enum BosonicBasisSet {
 
 ///|
 fn sq_tuple_string(items : Array[Expr]) -> String {
-  let rendered = items.map(@symprint.to_string).join(", ")
+  let rendered = items.map(@symprint.pretty_string).join(", ")
   if items.length() == 1 {
     "(\{rendered},)"
   } else {
@@ -85,7 +85,7 @@ fn sq_boson_basis_list_string(states : Array[Expr]) -> String {
     .map(expr => {
       match sq_boson_items_from_expr(expr) {
         Some(items) => sq_fock_state_repr(items)
-        None => @symprint.to_string(expr)
+        None => @symprint.pretty_string(expr)
       }
     })
     .join(", ")
@@ -250,9 +250,9 @@ pub fn BosonicOperatorExpr::as_expr(self : BosonicOperatorExpr) -> Expr {
 ///|
 pub impl Show for BosonicOperatorExpr with to_string(self) {
   if self.is_annihilation {
-    "b(\{@symprint.to_string(self.index)})"
+    "b(\{@symprint.pretty_string(self.index)})"
   } else {
-    "b+(\{@symprint.to_string(self.index)})"
+    "b+(\{@symprint.pretty_string(self.index)})"
   }
 }
 
@@ -268,7 +268,7 @@ pub fn BosonicOperatorExpr::repr(self : BosonicOperatorExpr) -> String {
   } else {
     "CreateBoson"
   }
-  "\{class_name}(\{@symprint.to_string(self.index)})"
+  "\{class_name}(\{@symprint.pretty_string(self.index)})"
 }
 
 ///|

@@ -3,7 +3,7 @@ fn eigenvals_text(items : Array[EigenValueMult]) -> String {
   "[" +
   items
   .map(fn(item) {
-    "(" + @symprint.to_string(item.0) + ", " + item.1.to_string() + ")"
+    "(" + @symprint.pretty_string(item.0) + ", " + item.1.to_string() + ")"
   })
   .join(", ") +
   "]"
@@ -15,7 +15,7 @@ fn eigenvects_text(items : Array[EigenVectData]) -> String {
   items
   .map(fn(item) {
     "(" +
-    @symprint.to_string(item.0) +
+    @symprint.pretty_string(item.0) +
     ", " +
     item.1.to_string() +
     ", " +

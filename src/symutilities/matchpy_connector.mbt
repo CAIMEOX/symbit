@@ -146,7 +146,7 @@ pub fn get_srepr(expr : Expr) -> String {
             | @symcore.ExprForm::Wild(_, _, _)
             | @symcore.ExprForm::FunctionHead(_)
             | @symcore.ExprForm::UndefinedFunction(_)
-            | @symcore.ExprForm::Boolean(_) => @symprint.to_string(expr)
+            | @symcore.ExprForm::Boolean(_) => @symprint.pretty_string(expr)
             @symcore.ExprForm::Add(args) =>
               "Add(" + args.map(get_srepr).join(", ") + ")"
             @symcore.ExprForm::Mul(args) =>

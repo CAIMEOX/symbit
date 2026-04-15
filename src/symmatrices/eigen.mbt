@@ -325,7 +325,7 @@ fn eigen_pack_diagonal(diagonal : Array[Expr]) -> Array[EigenValueMult] {
   let counts : Map[String, (Expr, Int)] = {}
   let order : Array[String] = []
   for value in diagonal {
-    let key = @symprint.to_string(value)
+    let key = @symprint.pretty_string(value)
     match counts.get(key) {
       Some((expr, mult)) => counts[key] = (expr, mult + 1)
       None => {
@@ -349,7 +349,7 @@ fn eigen_pack_values(values : Array[Expr]) -> Array[EigenValueMult] {
   let counts : Map[String, (Expr, Int)] = {}
   let order : Array[String] = []
   for value in values {
-    let key = @symprint.to_string(value)
+    let key = @symprint.pretty_string(value)
     match counts.get(key) {
       Some((expr, mult)) => counts[key] = (expr, mult + 1)
       None => {

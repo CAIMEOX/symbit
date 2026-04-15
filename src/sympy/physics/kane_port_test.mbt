@@ -7,7 +7,7 @@ fn kane_port_matrix_entry_summary(
   for i in 0..<matrix.height() {
     let row : Array[String] = []
     for j in 0..<matrix.width() {
-      row.push(@symprint.to_string(entries[i][j]))
+      row.push(@symprint.pretty_string(entries[i][j]))
     }
     rows.push("[" + row.join(", ") + "]")
   }
@@ -52,15 +52,15 @@ test "physics.mechanics parity kane spring mass damper" {
   )
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(km.forcing().get(0, 0)),
+      @symprint.pretty_string(km.forcing().get(0, 0)),
       "-c*u(t) - k*q(t)",
     ),
   )
   let rhs = km.rhs()
-  assert_true(mechanics_expr_equal(@symprint.to_string(rhs.get(0, 0)), "u(t)"))
+  assert_true(mechanics_expr_equal(@symprint.pretty_string(rhs.get(0, 0)), "u(t)"))
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(rhs.get(1, 0)),
+      @symprint.pretty_string(rhs.get(1, 0)),
       "-(k*q(t) + c*u(t))/m",
     ),
   )

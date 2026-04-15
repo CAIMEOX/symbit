@@ -7818,13 +7818,13 @@ pub fn dsolve(
     guard default_hint is Some(_) else {
       if order == 0 {
         raise SolverError::ValueError(
-          @symprint.to_string(eq) +
+          @symprint.pretty_string(eq) +
           " is not a solvable differential equation in " +
-          @symprint.to_string(f),
+          @symprint.pretty_string(f),
         )
       } else {
         raise SolverError::ValueError(
-          "dsolve: Cannot solve " + @symprint.to_string(eq),
+          "dsolve: Cannot solve " + @symprint.pretty_string(eq),
         )
       }
     }
@@ -7871,13 +7871,13 @@ pub fn dsolve(
         None =>
           if order == 0 {
             raise SolverError::ValueError(
-              @symprint.to_string(eq) +
+              @symprint.pretty_string(eq) +
               " is not a solvable differential equation in " +
-              @symprint.to_string(f),
+              @symprint.pretty_string(f),
             )
           } else {
             raise SolverError::ValueError(
-              "dsolve: Cannot solve " + @symprint.to_string(eq),
+              "dsolve: Cannot solve " + @symprint.pretty_string(eq),
             )
           }
       }
@@ -7885,7 +7885,7 @@ pub fn dsolve(
   }
   if !available.contains(selected) {
     raise SolverError::ValueError(
-      "ODE " + @symprint.to_string(eq) + " does not match hint " + selected,
+      "ODE " + @symprint.pretty_string(eq) + " does not match hint " + selected,
     )
   }
   let (wrt, coeff_d, coeff_f, constant) = match
@@ -7893,7 +7893,7 @@ pub fn dsolve(
     Some(value) => value
     None =>
       raise SolverError::ValueError(
-        "dsolve: Cannot solve " + @symprint.to_string(eq),
+        "dsolve: Cannot solve " + @symprint.pretty_string(eq),
       )
   }
   solver_dsolve_linear_solution(
@@ -9243,7 +9243,7 @@ fn solver_pdsolve_variable_coeff(
         Some(value) => value
         None =>
           raise SolverError::ValueError(
-            "pdsolve: Cannot solve " + @symprint.to_string(func),
+            "pdsolve: Cannot solve " + @symprint.pretty_string(func),
           )
       }
   }
@@ -9256,7 +9256,7 @@ fn solver_pdsolve_variable_coeff(
   )
   guard !y_candidates.is_empty() else {
     raise SolverError::ValueError(
-      "pdsolve: Cannot solve " + @symprint.to_string(func),
+      "pdsolve: Cannot solve " + @symprint.pretty_string(func),
     )
   }
   let y_sub = y_candidates[0]
@@ -9338,13 +9338,13 @@ pub fn pdsolve(
     guard matched is Some(_) else {
       if order == 0 {
         raise SolverError::ValueError(
-          @symprint.to_string(eq) +
+          @symprint.pretty_string(eq) +
           " is not a solvable differential equation in " +
-          @symprint.to_string(f),
+          @symprint.pretty_string(f),
         )
       } else {
         raise SolverError::ValueError(
-          "pdsolve: Cannot solve " + @symprint.to_string(eq),
+          "pdsolve: Cannot solve " + @symprint.pretty_string(eq),
         )
       }
     }
@@ -9401,13 +9401,13 @@ pub fn pdsolve(
         None =>
           if order == 0 {
             raise SolverError::ValueError(
-              @symprint.to_string(eq) +
+              @symprint.pretty_string(eq) +
               " is not a solvable differential equation in " +
-              @symprint.to_string(f),
+              @symprint.pretty_string(f),
             )
           } else {
             raise SolverError::ValueError(
-              "pdsolve: Cannot solve " + @symprint.to_string(eq),
+              "pdsolve: Cannot solve " + @symprint.pretty_string(eq),
             )
           }
       }
@@ -9416,7 +9416,7 @@ pub fn pdsolve(
   if !ordered.contains(selected) {
     raise SolverError::ValueError(
       "PDE " +
-      @symprint.to_string(canonical_expr(eq)) +
+      @symprint.pretty_string(canonical_expr(eq)) +
       " does not match hint " +
       selected,
     )
@@ -9425,7 +9425,7 @@ pub fn pdsolve(
     Some(value) => value
     None =>
       raise SolverError::ValueError(
-        "pdsolve: Cannot solve " + @symprint.to_string(eq),
+        "pdsolve: Cannot solve " + @symprint.pretty_string(eq),
       )
   }
   match selected {
@@ -9560,9 +9560,9 @@ fn solver_checkpdesol_single(
             items if items.length() > 1 =>
               raise SolverError::NotImplementedError(
                 "Unable to test if " +
-                @symprint.to_string(sol_eq) +
+                @symprint.pretty_string(sol_eq) +
                 " is a solution to " +
-                @symprint.to_string(solver_equation_expr(pde)) +
+                @symprint.pretty_string(solver_equation_expr(pde)) +
                 ".",
               )
             _ => ()
@@ -9570,9 +9570,9 @@ fn solver_checkpdesol_single(
         }
         raise SolverError::NotImplementedError(
           "Unable to test if " +
-          @symprint.to_string(sol_eq) +
+          @symprint.pretty_string(sol_eq) +
           " is a solution to " +
-          @symprint.to_string(solver_equation_expr(pde)) +
+          @symprint.pretty_string(solver_equation_expr(pde)) +
           ".",
         )
       }

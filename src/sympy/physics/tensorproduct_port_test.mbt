@@ -13,7 +13,7 @@ test "physics.quantum.tensorproduct: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         @symquant.tensor_product([
           @symcore.Expr::Symbol("x") *
           operator([@symcore.Expr::Symbol("A")]).as_expr(),
@@ -26,7 +26,7 @@ test "physics.quantum.tensorproduct: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         tensor_product_expand(
           @symquant.tensor_product([
             operator([@symcore.Expr::Symbol("A")]).as_expr() +
@@ -44,7 +44,7 @@ test "physics.quantum.tensorproduct: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         tensor_product_simp(
           @symcore.raw_mul([
             @symcore.Expr::Symbol("x"),
@@ -70,7 +70,7 @@ test "physics.quantum.tensorproduct: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         tensor_product_simp(
           @symquant.tensor_product([
             operator([@symcore.Expr::Symbol("A")]).as_expr(),

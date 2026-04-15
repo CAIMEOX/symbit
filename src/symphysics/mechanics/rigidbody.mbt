@@ -187,7 +187,7 @@ pub fn RigidBody::repr(self : RigidBody) -> String {
   ", frame=" +
   self.frame_.name() +
   ", mass=" +
-  @symprint.to_string(self.mass_) +
+  @symprint.pretty_string(self.mass_) +
   ", inertia=" +
   self.inertia_.repr() +
   ")"

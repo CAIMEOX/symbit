@@ -1,12 +1,12 @@
 ///|
 test "physics.quantum.circuitplot: utility parity" {
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(mz(0))),
+    quantum_eval_str(@symprint.pretty_string(mz(0))),
     quantum_eval_str("Mz(0)"),
     "Mz parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(mx(1))),
+    quantum_eval_str(@symprint.pretty_string(mx(1))),
     quantum_eval_str("Mx(1)"),
     "Mx parity",
   )

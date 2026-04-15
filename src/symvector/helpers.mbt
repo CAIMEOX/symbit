@@ -149,7 +149,7 @@ fn child_cache_key(
 ///|
 fn matrix_summary(matrix : @symphysics.ExplicitMatrix) -> String {
   let rows = matrix.rows_copy()
-  rows.map(row => row.map(@symprint.to_string).join(",")).join("|")
+  rows.map(row => row.map(@symprint.pretty_string).join(",")).join("|")
 }
 
 ///|
@@ -200,7 +200,7 @@ fn coord_systems_in_scalar_expr(expr : @symcore.Expr) -> Array[CoordSys3D] {
   }
   let symbol_names : Map[String, Bool] = {}
   for item in free {
-    symbol_names[@symprint.to_string(item)] = true
+    symbol_names[@symprint.pretty_string(item)] = true
   }
   let out : Array[CoordSys3D] = []
   for system in all_coord_systems() {
@@ -269,7 +269,7 @@ fn scalar_with_basis(coeff : @symcore.Expr, basis : String) -> String {
     @symcore.Expr::Add(_) => @symsimplify.factor_terms(coeff)
     _ => coeff
   }
-  let txt = @symprint.to_string(display_coeff)
+  let txt = @symprint.pretty_string(display_coeff)
   if txt == "1" {
     basis
   } else if txt == "-1" {

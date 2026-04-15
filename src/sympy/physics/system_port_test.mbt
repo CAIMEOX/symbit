@@ -37,11 +37,11 @@ test "physics.mechanics parity system assembly" {
   let oracle_joints = mechanics_summary(prefix + "[str(j) for j in sys.joints]")
   let oracle_loads = mechanics_summary(prefix + "sys.loads")
   assert_eq(
-    "[" + sys.q_ind().map(@symprint.to_string).join(", ") + "]",
+    "[" + sys.q_ind().map(@symprint.pretty_string).join(", ") + "]",
     oracle_q,
   )
   assert_eq(
-    "[" + sys.u_ind().map(@symprint.to_string).join(", ") + "]",
+    "[" + sys.u_ind().map(@symprint.pretty_string).join(", ") + "]",
     oracle_u,
   )
   let oracle_kdes = [
@@ -49,7 +49,7 @@ test "physics.mechanics parity system assembly" {
   ]
   for i in 0..<sys.kdes().length() {
     assert_true(
-      mechanics_expr_equal(@symprint.to_string(sys.kdes()[i]), oracle_kdes[i]),
+      mechanics_expr_equal(@symprint.pretty_string(sys.kdes()[i]), oracle_kdes[i]),
     )
   }
   assert_eq(
@@ -112,10 +112,10 @@ test "physics.mechanics parity system form_eoms lagrange" {
   let prefix = "q=dynamicsymbols('q'); qd=q.diff(t); m,k,b=symbols('m k b'); wall=RigidBody('wall'); bob=Particle('bob', mass=m); bob.potential_energy = k*q**2/2; sys=System.from_newtonian(wall); sys.add_joints(PrismaticJoint('slide', wall, bob, coordinates=q, speeds=qd)); sys.add_loads((bob.masscenter, b*qd*sys.x)); sys.form_eoms(LagrangesMethod); "
   let oracle_mass = mechanics_summary(prefix + "sys.mass_matrix[0, 0]")
   let oracle_forcing = mechanics_summary(prefix + "sys.forcing[0, 0]")
-  assert_eq(@symprint.to_string(sys.mass_matrix().get(0, 0)), oracle_mass)
+  assert_eq(@symprint.pretty_string(sys.mass_matrix().get(0, 0)), oracle_mass)
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(sys.forcing().get(0, 0)),
+      @symprint.pretty_string(sys.forcing().get(0, 0)),
       oracle_forcing,
     ),
   )

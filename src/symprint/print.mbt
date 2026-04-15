@@ -1,11 +1,11 @@
 ///|
-/// Render an expression into the default human-readable text form.
+/// Render an expression into the default human-readable pretty string form.
 ///
 /// - Does: Prints an expression using the standard readable textual printer.
 /// - Input: A `@symcore.Expr`.
 /// - Returns: A `String`.
 /// - Limits: The output is readable text, not a lossless serialization format.
-pub fn to_string(expr : Expr) -> String {
+pub fn pretty_string(expr : Expr) -> String {
   format_expr(expr, 0)
 }
 

@@ -83,7 +83,7 @@ pub fn ForceActuator::to_loads(self : ForceActuator) -> Array[Load] raise {
 ///|
 pub fn ForceActuator::repr(self : ForceActuator) -> String {
   "ForceActuator(" +
-  @symprint.to_string(self.force_) +
+  @symprint.pretty_string(self.force_) +
   ", " +
   self.pathway_.repr() +
   ")"
@@ -139,7 +139,7 @@ pub fn LinearSpring::to_loads(self : LinearSpring) -> Array[Load] raise {
 ///|
 pub fn LinearSpring::repr(self : LinearSpring) -> String {
   let base = "LinearSpring(" +
-    @symprint.to_string(self.stiffness_) +
+    @symprint.pretty_string(self.stiffness_) +
     ", " +
     self.pathway_.repr()
   if @symcore.compare_expr(self.equilibrium_length_, int(0)) == 0 {
@@ -147,7 +147,7 @@ pub fn LinearSpring::repr(self : LinearSpring) -> String {
   } else {
     base +
     ", equilibrium_length=" +
-    @symprint.to_string(self.equilibrium_length_) +
+    @symprint.pretty_string(self.equilibrium_length_) +
     ")"
   }
 }
@@ -187,7 +187,7 @@ pub fn LinearDamper::to_loads(self : LinearDamper) -> Array[Load] raise {
 ///|
 pub fn LinearDamper::repr(self : LinearDamper) -> String {
   "LinearDamper(" +
-  @symprint.to_string(self.damping_) +
+  @symprint.pretty_string(self.damping_) +
   ", " +
   self.pathway_.repr() +
   ")"
@@ -232,13 +232,13 @@ pub fn DuffingSpring::to_loads(self : DuffingSpring) -> Array[Load] raise {
 ///|
 pub fn DuffingSpring::repr(self : DuffingSpring) -> String {
   "DuffingSpring(" +
-  @symprint.to_string(self.linear_stiffness_) +
+  @symprint.pretty_string(self.linear_stiffness_) +
   ", " +
-  @symprint.to_string(self.nonlinear_stiffness_) +
+  @symprint.pretty_string(self.nonlinear_stiffness_) +
   ", " +
   self.pathway_.repr() +
   ", equilibrium_length=" +
-  @symprint.to_string(self.equilibrium_length_) +
+  @symprint.pretty_string(self.equilibrium_length_) +
   ")"
 }
 
@@ -293,17 +293,17 @@ pub fn CoulombKineticFriction::to_loads(
 ///|
 pub fn CoulombKineticFriction::repr(self : CoulombKineticFriction) -> String {
   "CoulombKineticFriction(" +
-  @symprint.to_string(self.mu_k_) +
+  @symprint.pretty_string(self.mu_k_) +
   ", " +
-  @symprint.to_string(self.mu_s_) +
+  @symprint.pretty_string(self.mu_s_) +
   ", " +
-  @symprint.to_string(self.f_n_) +
+  @symprint.pretty_string(self.f_n_) +
   ", " +
   self.pathway_.repr() +
   ", " +
-  @symprint.to_string(self.v_s_) +
+  @symprint.pretty_string(self.v_s_) +
   ", " +
-  @symprint.to_string(self.sigma_) +
+  @symprint.pretty_string(self.sigma_) +
   ")"
 }
 
@@ -372,7 +372,7 @@ pub fn TorqueActuator::to_loads(self : TorqueActuator) -> Array[Load] {
 ///|
 pub fn TorqueActuator::repr(self : TorqueActuator) -> String {
   let base = "TorqueActuator(" +
-    @symprint.to_string(self.torque_) +
+    @symprint.pretty_string(self.torque_) +
     ", axis=" +
     @symvector.vsprint(self.axis_) +
     ", target_frame=" +

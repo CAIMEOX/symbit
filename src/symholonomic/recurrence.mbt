@@ -191,6 +191,6 @@ pub impl Show for RecurrenceOperator with output(self, logger : &Logger) -> Unit
 ///|
 pub impl Show for RecurrenceOperatorAlgebra with output(self, logger : &Logger) -> Unit {
   logger.write_string(
-    "Univariate Recurrence Operator Algebra in intermediate \{self.generator} over variable \{@symprint.to_string(self.symbol_var)}",
+    "Univariate Recurrence Operator Algebra in intermediate \{self.generator} over variable \{@symprint.pretty_string(self.symbol_var)}",
   )
 }

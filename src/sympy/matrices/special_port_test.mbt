@@ -16,7 +16,7 @@ fn py_list_text2(code : String) -> String raise {
 fn local_matrix_list_text2(m : Matrix) -> String {
   let rows : Array[String] = []
   for row in m.to_list() {
-    rows.push("[" + row.map(@symprint.to_string).join(", ") + "]")
+    rows.push("[" + row.map(@symprint.pretty_string).join(", ") + "]")
   }
   "[" + rows.join(", ") + "]"
 }
@@ -56,7 +56,7 @@ test "matrices parity hessian and wronskian" {
     ),
   )
   assert_eq(
-    @symprint.to_string(wronskian([x, x ^ @symcore.int(2)], x)),
+    @symprint.pretty_string(wronskian([x, x ^ @symcore.int(2)], x)),
     py_list_text2(
       "(lambda x: sympy.sstr(sympy.wronskian([x, x**2], x)))(sympy.Symbol('x'))",
     ),

@@ -8,25 +8,25 @@ test "physics.quantum.trace: scalar, symbolic, and matrix trace" {
   let d_op = @symcore.Expr::Symbol("D")
 
   quantum_test_assert_string_equal(
-    @symprint.to_string(tr(a + b)),
+    @symprint.pretty_string(tr(a + b)),
     "a + b",
     "tr scalar add",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(tr(@symcore.raw_mul([a, a_op])))),
+    quantum_eval_str(@symprint.pretty_string(tr(@symcore.raw_mul([a, a_op])))),
     quantum_eval_str("a*Tr(A)"),
     "tr scalar factor",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(tr(@symcore.raw_mul([a_op, b_op]), indices=[2])),
+      @symprint.pretty_string(tr(@symcore.raw_mul([a_op, b_op]), indices=[2])),
     ),
     quantum_eval_str("Tr(A*B, (2,))"),
     "tr explicit tuple",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         tr_permute(tr(@symcore.raw_mul([a_op, b_op, c_op, d_op])), 2),
       ),
     ),
@@ -36,7 +36,7 @@ test "physics.quantum.trace: scalar, symbolic, and matrix trace" {
 
   let mat = @symphysics.explicit_matrix_from_ints([[1, 2], [3, 4]])
   quantum_test_assert_string_equal(
-    @symprint.to_string(matrix_trace(mat)),
+    @symprint.pretty_string(matrix_trace(mat)),
     "5",
     "trace matrix",
   )

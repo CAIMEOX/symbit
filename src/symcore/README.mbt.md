@@ -30,7 +30,7 @@ The foundational expression package for Symbit. It defines the symbolic expressi
 test "symcore builds structured expressions" {
   let x = Expr::Symbol("x")
   let expr = add([x, int(1)])
-  inspect(@symprint.to_string(expr), content="x + 1")
+  inspect(@symprint.pretty_string(expr), content="x + 1")
 }
 ```
 ## Related Packages

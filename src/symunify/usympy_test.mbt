@@ -2,7 +2,7 @@
 fn render_expr_subst(subst : Map[@symcore.Expr, @symcore.Expr]) -> String {
   let rendered : Array[String] = []
   for key, value in subst {
-    rendered.push(@symprint.to_string(key) + ": " + @symprint.to_string(value))
+    rendered.push(@symprint.pretty_string(key) + ": " + @symprint.pretty_string(value))
   }
   rendered.sort()
   "{" + rendered.join(", ") + "}"
@@ -49,7 +49,7 @@ test "symunify deconstruct and construct preserve core expressions" {
     content="Function(Basic)[1, 2, 3]",
   )
   inspect(
-    @symprint.to_string(construct(deconstruct(expr))),
+    @symprint.pretty_string(construct(deconstruct(expr))),
     content="Basic(1, 2, 3)",
   )
 
@@ -59,7 +59,7 @@ test "symunify deconstruct and construct preserve core expressions" {
     @symcore.int(3),
   ])
   inspect(
-    @symprint.to_string(construct(deconstruct(nested))),
+    @symprint.pretty_string(construct(deconstruct(nested))),
     content="Basic(1, Basic(2), 3)",
   )
 }
@@ -67,11 +67,11 @@ test "symunify deconstruct and construct preserve core expressions" {
 ///|
 fn render_expr_term(term : UnifyTerm[@symcore.Expr, ExprOp]) -> String {
   match term {
-    UnifyTerm::Atom(expr) => @symprint.to_string(expr)
+    UnifyTerm::Atom(expr) => @symprint.pretty_string(expr)
     UnifyTerm::Variable(key) =>
-      "Variable(" + @symprint.to_string(key.arg()) + ")"
+      "Variable(" + @symprint.pretty_string(key.arg()) + ")"
     UnifyTerm::CondVariable(key, _) =>
-      "CondVariable(" + @symprint.to_string(key.arg()) + ")"
+      "CondVariable(" + @symprint.pretty_string(key.arg()) + ")"
     UnifyTerm::Sequence(items) =>
       "(" + items.map(render_expr_term).join(", ") + ")"
     UnifyTerm::Compound(op, args) =>

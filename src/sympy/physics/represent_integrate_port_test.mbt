@@ -15,7 +15,7 @@ test "physics.quantum.represent: integrate_result parity" {
       unities=[1],
     ),
     quantum_eval_str(
-      @symprint.to_string(integrate_result(original, result, unities=[1])),
+      @symprint.pretty_string(integrate_result(original, result, unities=[1])),
     ),
     "integrate_result parity",
   )

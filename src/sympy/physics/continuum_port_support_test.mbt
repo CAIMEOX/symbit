@@ -22,7 +22,7 @@ fn continuum_oracle_lines(script : String) -> Array[String] raise {
 
 ///|
 fn continuum_expr_eq(ours : @symcore.Expr, oracle : String) -> Bool {
-  let ours_text = @symprint.to_string(cm_simplify(ours))
+  let ours_text = @symprint.pretty_string(cm_simplify(ours))
   expr_equal(ours_text, oracle) catch {
     _ => false
   }

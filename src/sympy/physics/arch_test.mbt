@@ -7,7 +7,7 @@ fn arch_is_close(expr : @symcore.Expr, value : Double) -> Bool {
       if actual.is_nan() {
         let script = "from sympy import N, sympify\n" +
           "expr = sympify(r'''" +
-          @symprint.to_string(expr) +
+          @symprint.pretty_string(expr) +
           "''')\n" +
           "print(float(N(expr, 30)))\n"
         try continuum_exec_stdout(script) catch {

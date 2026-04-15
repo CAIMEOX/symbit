@@ -73,7 +73,7 @@ fn beam_var_name(beam : Beam) -> String {
 
 ///|
 fn beam_support_symbol(loc : @symcore.Expr, prefix : String) -> @symcore.Expr {
-  @symcore.Expr::Symbol(prefix + @symprint.to_string(loc))
+  @symcore.Expr::Symbol(prefix + @symprint.pretty_string(loc))
 }
 
 ///|
@@ -81,7 +81,7 @@ fn beam_unique_exprs(values : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
   let seen : Map[String, Bool] = {}
   let out : Array[@symcore.Expr] = []
   for value in values {
-    let key = @symprint.to_string(value)
+    let key = @symprint.pretty_string(value)
     if seen.get(key) is None {
       seen[key] = true
       out.push(value)

@@ -65,7 +65,7 @@ test "physics.mechanics parity rigidbody wrappers and body loads" {
   )
   assert_true(
     expr_equal(
-      @symprint.to_string(rb.kinetic_energy(n)),
+      @symprint.pretty_string(rb.kinetic_energy(n)),
       mechanics_eval(
         "m,v,omega=symbols('m v omega'); N=ReferenceFrame('RN'); b=ReferenceFrame('Rb'); b.set_ang_vel(N, omega*b.x); P=Point('RP'); P.set_vel(N, v*N.x); RB=RigidBody('RB', P, b, m, (outer(b.x, b.x), P)); RB.kinetic_energy(N)",
       ),

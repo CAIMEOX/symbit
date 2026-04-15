@@ -15,14 +15,14 @@ fn expr_placeholder_z() -> @symcore.Expr {
 
 ///|
 fn expr_array_key(items : Array[@symcore.Expr]) -> String {
-  items.map(@symprint.to_string).join("|")
+  items.map(@symprint.pretty_string).join("|")
 }
 
 ///|
 fn matrix_expr_key(matrix : @symphysics.ExplicitMatrix) -> String {
   matrix
   .rows_copy()
-  .map(row => row.map(@symprint.to_string).join(","))
+  .map(row => row.map(@symprint.pretty_string).join(","))
   .join("|")
 }
 
@@ -103,7 +103,7 @@ fn transform_template_env(
 fn expr_depends_on_placeholders(expr : @symcore.Expr) -> Bool {
   let names : Map[String, Bool] = {}
   for item in @symcore.free_symbols(expr) {
-    names[@symprint.to_string(item)] = true
+    names[@symprint.pretty_string(item)] = true
   }
   names.contains("x") || names.contains("y") || names.contains("z")
 }

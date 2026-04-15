@@ -1,6 +1,6 @@
 ///|
 fn normalize_series_expr(expr : @symcore.Expr) -> String raise {
-  let s = @symprint.to_string(expr)
+  let s = @symprint.pretty_string(expr)
   sympy_normalize_str(s)
 }
 

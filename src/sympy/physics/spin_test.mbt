@@ -5,14 +5,14 @@ test "physics.quantum.spin: local uncoupled Jz basis" {
 
   inspect(jz_ket(one, @symcore.int(0)).to_string(), content="|1,0>")
   inspect(jz_bra(one, @symcore.int(-1)).to_string(), content="<1,-1|")
-  inspect(@symprint.to_string(dagger(jplus())), content="Dagger(Jplus)")
+  inspect(@symprint.pretty_string(dagger(jplus())), content="Dagger(Jplus)")
   inspect(
-    @symprint.to_string(dagger(jz_ket(one, @symcore.int(0)).as_expr())),
+    @symprint.pretty_string(dagger(jz_ket(one, @symcore.int(0)).as_expr())),
     content="JzBra(1, 0)",
   )
 
   let (_, half_vals) = m_values(half)
-  inspect(half_vals.map(@symprint.to_string).join(","), content="1/2,-1/2")
+  inspect(half_vals.map(@symprint.pretty_string).join(","), content="1/2,-1/2")
 
   quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([jz(), jz_ket(one, @symcore.int(1)).as_expr()])),
@@ -68,7 +68,7 @@ test "physics.quantum.spin: local rotations and Wigner D" {
     "Rotation(-gamma, -beta, -alpha)",
     "rotation dagger",
   )
-  let wigner_d_value = @symprint.to_string(
+  let wigner_d_value = @symprint.pretty_string(
     rotation_d(
       @symcore.int(1),
       @symcore.int(1),
@@ -149,12 +149,12 @@ test "physics.quantum.spin: local Jx/Jy bases" {
     "represent Jx in Jx basis",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(jx_ket(one, one).rewrite(jz()))),
+    quantum_eval_str(@symprint.pretty_string(jx_ket(one, one).rewrite(jz()))),
     quantum_eval_str("JzKet(1, 1)/2 + sqrt(2)*JzKet(1, 0)/2 + JzKet(1, -1)/2"),
     "rewrite JxKet to Jz",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(jy_ket(one, one).rewrite(jx()))),
+    quantum_eval_str(@symprint.pretty_string(jy_ket(one, one).rewrite(jx()))),
     quantum_eval_str("-I*JxKet(1, 1)"),
     "rewrite JyKet to Jx",
   )

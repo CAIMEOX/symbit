@@ -26,7 +26,7 @@ fn gate_sequence_expr(sequence : Array[Expr]) -> Expr {
 
 ///|
 fn gate_sequence_key(sequence : Array[Expr]) -> String {
-  @symprint.to_string(gate_sequence_expr(sequence))
+  @symprint.pretty_string(gate_sequence_expr(sequence))
 }
 
 ///|
@@ -401,7 +401,7 @@ pub fn GateIdentity::equivalent_id_exprs(self : GateIdentity) -> Array[Expr] {
 
 ///|
 pub impl Show for GateIdentity with to_string(self) {
-  @symprint.to_string(self.circuit())
+  @symprint.pretty_string(self.circuit())
 }
 
 ///|
@@ -417,7 +417,7 @@ pub fn is_degenerate(
   let key = gate_sequence_key(gate_seq)
   for identity in identity_set {
     for expr in identity.equivalent_id_exprs() {
-      if @symprint.to_string(expr) == key {
+      if @symprint.pretty_string(expr) == key {
         return true
       }
     }

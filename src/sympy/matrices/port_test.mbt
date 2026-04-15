@@ -1,6 +1,6 @@
 ///|
 fn py_expr(expr : Expr) -> String {
-  @symprint.to_string(expr)
+  @symprint.pretty_string(expr)
 }
 
 ///|
@@ -30,7 +30,7 @@ fn py_list_text(code : String) -> String raise {
 fn local_matrix_list_text(m : Matrix) -> String {
   let rows : Array[String] = []
   for row in m.to_list() {
-    rows.push("[" + row.map(@symprint.to_string).join(", ") + "]")
+    rows.push("[" + row.map(@symprint.pretty_string).join(", ") + "]")
   }
   "[" + rows.join(", ") + "]"
 }
@@ -66,7 +66,7 @@ test "matrices parity determinant inverse rref" {
     [@symcore.int(3), @symcore.int(4)],
   ])
   assert_eq(
-    @symprint.to_string(a.det()),
+    @symprint.pretty_string(a.det()),
     py_list_text("sympy.sstr(" + py_matrix_expr(a) + ".det())"),
   )
   assert_eq(

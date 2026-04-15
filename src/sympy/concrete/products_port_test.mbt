@@ -3,7 +3,7 @@ test "symconcrete product finite integer" {
   let k = @symcore.Expr::Symbol("k")
   let limits = [limit_range(k, @symcore.int(1), @symcore.int(3))]
   let ours = product(k, limits~)
-  let ours_str = @symprint.to_string(ours)
+  let ours_str = @symprint.pretty_string(ours)
   assert_eq(normalize_srepr(ours_str), normalize_srepr("6"))
 }
 
@@ -13,7 +13,7 @@ test "symconcrete product constant term" {
   let y = @symcore.Expr::Symbol("y")
   let limits = [limit_range(k, @symcore.int(1), @symcore.int(3))]
   let ours = product(y, limits~)
-  let ours_str = @symprint.to_string(ours)
+  let ours_str = @symprint.pretty_string(ours)
   assert_eq(normalize_srepr(ours_str), normalize_srepr("y**3"))
 }
 
@@ -25,7 +25,7 @@ test "symconcrete Product reverse_order parity" {
     limits: [limit_range(k, @symcore.int(1), @symcore.int(3))],
   }
   let ours = prod.reverse_order().as_expr()
-  let ours_str = @symprint.to_string(ours)
+  let ours_str = @symprint.pretty_string(ours)
   let expected = "Product(1/k, (k, 4, 0))"
   assert_eq(normalize_srepr(ours_str), normalize_srepr(expected))
 }
@@ -40,7 +40,7 @@ test "symconcrete product ratio telescoping" {
   ])
   let limits = [limit_range(k, @symcore.int(1), n)]
   let ours = product(expr, limits~)
-  let ours_str = @symprint.to_string(ours)
+  let ours_str = @symprint.pretty_string(ours)
   let expected = "n + 1"
   assert_true(sympy_equiv_str(ours_str, expected))
 }
@@ -53,7 +53,7 @@ test "symconcrete product geometric symbolic" {
   let expr = @symcore.pow(r, k)
   let limits = [limit_range(k, @symcore.int(0), n)]
   let ours = product(expr, limits~)
-  let ours_str = @symprint.to_string(ours)
+  let ours_str = @symprint.pretty_string(ours)
   let expected = "r**(n*(n + 1)/2)"
   assert_true(sympy_equiv_str(ours_str, expected))
 }
@@ -64,7 +64,7 @@ test "symconcrete product factorial" {
   let n = @symcore.Expr::Symbol("n")
   let limits = [limit_range(k, @symcore.int(1), n)]
   let ours = product(k, limits~)
-  let ours_str = @symprint.to_string(ours)
+  let ours_str = @symprint.pretty_string(ours)
   let expected = "factorial(n)"
   assert_true(sympy_equiv_str(ours_str, expected))
 }
@@ -77,7 +77,7 @@ test "symconcrete product rising_factorial" {
   let expr = @symcore.add([k, a])
   let limits = [limit_range(k, @symcore.int(0), n)]
   let ours = product(expr, limits~)
-  let ours_str = @symprint.to_string(ours)
+  let ours_str = @symprint.pretty_string(ours)
   let expected = "RisingFactorial(a, n + 1)"
   assert_true(sympy_equiv_str(ours_str, expected))
 }
@@ -94,7 +94,7 @@ test "symconcrete product linear ratio" {
   ])
   let limits = [limit_range(k, @symcore.int(0), n)]
   let ours = product(expr, limits~)
-  let ours_str = @symprint.to_string(ours)
+  let ours_str = @symprint.pretty_string(ours)
   let expected = "RisingFactorial(a, n + 1)/RisingFactorial(b, n + 1)"
   assert_true(sympy_equiv_str(ours_str, expected))
 }

@@ -7,7 +7,7 @@ fn mm_trim(s : String) -> String {
 fn mm_expr_matrix_text(rows : MatrixExpr) -> String {
   let row_text : Array[String] = Array::new()
   for row in rows {
-    let cells = row.map(@symprint.to_string).join(", ")
+    let cells = row.map(@symprint.pretty_string).join(", ")
     row_text.push("[\{cells}]")
   }
   let joined = row_text.join(", ")
@@ -19,7 +19,7 @@ fn mm_sympy_eigen_text(items : SympyEigenvects) -> String {
   let parts : Array[String] = Array::new()
   for item in items {
     parts.push(
-      "\{@symprint.to_string(item.0)}:\{item.1}:\{mm_expr_matrix_text(item.2)}",
+      "\{@symprint.pretty_string(item.0)}:\{item.1}:\{mm_expr_matrix_text(item.2)}",
     )
   }
   parts.sort()

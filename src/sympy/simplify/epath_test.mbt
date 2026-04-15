@@ -16,7 +16,7 @@ test "symsimplify epath select/apply basics" {
   )
   let doubled = path.apply(expr, item => @symcore.mul([@symcore.int(2), item]))
   inspect(
-    @symprint.to_string(doubled),
+    @symprint.pretty_string(doubled),
     content="x + cos(2*x + 2*y + 2*z) + sin(2*x + 1)",
   )
 }

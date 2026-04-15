@@ -10,9 +10,9 @@ fn pathway_assert_force(
 ) -> Unit raise {
   assert_eq(load.point.name(), point_name)
   let comps = load.force.to_matrix(frame)
-  let ours_x = @symprint.to_string(comps.get(0, 0))
-  let ours_y = @symprint.to_string(comps.get(1, 0))
-  let ours_z = @symprint.to_string(comps.get(2, 0))
+  let ours_x = @symprint.pretty_string(comps.get(0, 0))
+  let ours_y = @symprint.pretty_string(comps.get(1, 0))
+  let ours_z = @symprint.pretty_string(comps.get(2, 0))
   assert_true(mechanics_expr_equal(ours_x, rhs_x))
   assert_true(mechanics_expr_equal(ours_y, rhs_y))
   assert_true(mechanics_expr_equal(ours_z, rhs_z))
@@ -32,7 +32,7 @@ test "physics.mechanics parity pathways" {
   )
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(linear.length()),
+      @symprint.pretty_string(linear.length()),
       linear_length_oracle,
     ),
   )
@@ -64,7 +64,7 @@ test "physics.mechanics parity pathways" {
   )
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(obstacle.length()),
+      @symprint.pretty_string(obstacle.length()),
       obstacle_length_oracle,
     ),
   )

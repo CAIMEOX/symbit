@@ -12,7 +12,7 @@ test "geometry.line ray segment helpers" {
     _ => fail("expected point intersection")
   }
   let seg = segment(p0, p2)
-  assert_true(geometry_expr_equal(@symprint.to_string(seg.length()), "2"))
+  assert_true(geometry_expr_equal(@symprint.pretty_string(seg.length()), "2"))
   let ray_obj = ray(p0, p1)
   assert_true(ray_obj.contains(point2d(@symcore.int(4), @symcore.int(4))))
   assert_eq(

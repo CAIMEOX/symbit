@@ -13,7 +13,7 @@ fn expr_str(expr : Expr) -> String {
         let rendered = args.map(expr_str).join(", ")
         "(\{rendered})"
       }
-    None => @symprint.to_string(expr)
+    None => @symprint.pretty_string(expr)
   }
 }
 

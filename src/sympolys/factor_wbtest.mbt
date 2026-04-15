@@ -457,7 +457,7 @@ test "factor wb: rational linear roots use divisor candidates" {
   )
   let texts = parts
     .filter(p => p.degree(0) == 1)
-    .map(p => @symprint.to_string(p.to_expr()))
+    .map(p => @symprint.pretty_string(p.to_expr()))
   assert_eq(texts.length(), 2)
   assert_true(texts.contains("x - 1/2"))
   assert_true(texts.contains("x + 1/3"))
@@ -480,7 +480,7 @@ test "factor wb: monic integer linear roots split repeated divisor family" {
   )
   let texts = parts
     .filter(p => p.degree(0) == 1)
-    .map(p => @symprint.to_string(p.to_expr()))
+    .map(p => @symprint.pretty_string(p.to_expr()))
   assert_eq(texts.length(), 6)
   for i in 1..<=6 {
     assert_true(texts.contains("x - \{i}"))

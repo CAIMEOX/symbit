@@ -94,7 +94,7 @@ fn rfun(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn py_expr(expr : @symcore.Expr) -> String {
-  @symprint.to_string(expr)
+  @symprint.pretty_string(expr)
 }
 
 ///|
@@ -342,7 +342,7 @@ fn expr_text_has_oracle_prefix(
   symbols : String,
   prefix_len : Int,
 ) -> Bool raise {
-  let local_text = @symprint.to_string(local_expr)
+  let local_text = @symprint.pretty_string(local_expr)
   let oracle_text = solvers_eval_str_symbols(oracle_expr, symbols)
   let end = if prefix_len < oracle_text.length() {
     prefix_len
@@ -522,7 +522,7 @@ fn local_set_matches_oracle(
 fn local_matrix_list_text(m : @symmatrices.Matrix) -> String {
   let rows : Array[String] = []
   for row in m.to_list() {
-    rows.push("[" + row.map(@symprint.to_string).join(", ") + "]")
+    rows.push("[" + row.map(@symprint.pretty_string).join(", ") + "]")
   }
   "[" + rows.join(", ") + "]"
 }
@@ -541,7 +541,7 @@ fn local_solution_dict_text(
         let items : Array[String] = []
         for name in names {
           match values.get(name) {
-            Some(value) => items.push(name + ": " + @symprint.to_string(value))
+            Some(value) => items.push(name + ": " + @symprint.pretty_string(value))
             None => ()
           }
         }
@@ -552,7 +552,7 @@ fn local_solution_dict_text(
 
 ///|
 fn local_expr_list_text(items : Array[@symcore.Expr]) -> String {
-  "[" + items.map(@symprint.to_string).join(", ") + "]"
+  "[" + items.map(@symprint.pretty_string).join(", ") + "]"
 }
 
 ///|
@@ -584,7 +584,7 @@ fn local_inequality_result_text(
     @symsolvers.InequalityResult::Set(set) =>
       "Set(" + @symsets.to_string(set) + ")"
     @symsolvers.InequalityResult::Relational(expr) =>
-      "Relational(" + @symprint.to_string(expr) + ")"
+      "Relational(" + @symprint.pretty_string(expr) + ")"
   }
 }
 
@@ -829,7 +829,7 @@ fn local_sort_expr_cmp(lhs_raw : @symcore.Expr, rhs_raw : @symcore.Expr) -> Int 
       if cmp != 0 {
         cmp
       } else {
-        @symprint.to_string(lhs).compare(@symprint.to_string(rhs))
+        @symprint.pretty_string(lhs).compare(@symprint.pretty_string(rhs))
       }
     }
   }
@@ -1054,7 +1054,7 @@ fn normalize_union_text(text : String) -> String {
 
 ///|
 fn local_expr_pair_text(pair : (@symcore.Expr, @symcore.Expr)) -> String {
-  "(" + @symprint.to_string(pair.0) + ", " + @symprint.to_string(pair.1) + ")"
+  "(" + @symprint.pretty_string(pair.0) + ", " + @symprint.pretty_string(pair.1) + ")"
 }
 
 ///|
@@ -1063,7 +1063,7 @@ fn local_expr_dict_get(expr : @symcore.Expr, key : String) -> @symcore.Expr? {
     @symcore.Expr::Dict(items) => {
       for item in items {
         let (k, v) = item
-        if @symprint.to_string(k) == key {
+        if @symprint.pretty_string(k) == key {
           return Some(v)
         }
       }
@@ -1140,7 +1140,7 @@ fn solve_dict_residuals_match_oracle(
 fn local_diop_solve_result_text(result : @symsolvers.DiopSolveResult) -> String {
   match result {
     @symsolvers.DiopSolveResult::Tuple(items) =>
-      "(" + items.map(@symprint.to_string).join(", ") + ")"
+      "(" + items.map(@symprint.pretty_string).join(", ") + ")"
     @symsolvers.DiopSolveResult::Set(set) => @symsets.to_string(set)
   }
 }
@@ -1168,7 +1168,7 @@ fn local_classify_diop_text(
   }
   let coeff_parts : Array[String] = []
   for key in ordered {
-    coeff_parts.push(key + ": " + @symprint.to_string(coeffs[key]))
+    coeff_parts.push(key + ": " + @symprint.pretty_string(coeffs[key]))
   }
   "(" +
   local_expr_list_text(symbols) +
@@ -1184,7 +1184,7 @@ fn local_lp_dict_result_text(
   result : (@symcore.Expr, Map[String, @symcore.Expr]),
 ) -> String {
   "(" +
-  @symprint.to_string(result.0) +
+  @symprint.pretty_string(result.0) +
   ", " +
   local_solution_dict_text(Some(result.1), sorted_map_keys(result.1)) +
   ")"
@@ -1195,7 +1195,7 @@ fn local_linprog_result_text(
   result : (@symcore.Expr, Array[@symcore.Expr]),
 ) -> String {
   "(" +
-  @symprint.to_string(result.0) +
+  @symprint.pretty_string(result.0) +
   ", " +
   local_expr_list_text(result.1) +
   ")"
@@ -1316,7 +1316,7 @@ test "solvers parity linear system helpers and matrix quick helpers" {
     [@symcore.int(3), @symcore.int(4)],
   ])
   assert_eq(
-    @symprint.to_string(@symsolvers.det_quick(m)),
+    @symprint.pretty_string(@symsolvers.det_quick(m)),
     solvers_eval_str(
       "sympy.sstr(sympy.solvers.det_quick(" + py_matrix_expr(m) + "))",
     ),
@@ -1388,7 +1388,7 @@ test "solvers parity solve_linear solve solveset complexes and nsolve" {
     ),
     solvers_eval_str("repr(sympy.solvers.solve(x**2 - 4, x))"),
   )
-  let root_text = @symprint.to_string(
+  let root_text = @symprint.pretty_string(
     @symsolvers.nsolve(
       @symcore.add([x() ^ @symcore.int(2), @symcore.int(-2)]),
       x(),
@@ -1438,7 +1438,7 @@ test "solvers parity nsolve scalar batch 2" {
       linear_root, "sympy.sstr(sympy.solvers.nsolve(2*x - 2, x, -10))", "x", 3,
     ),
   )
-  assert_eq(@symprint.to_string(eq_root), @symprint.to_string(linear_root))
+  assert_eq(@symprint.pretty_string(eq_root), @symprint.pretty_string(linear_root))
   assert_true(
     expr_text_has_oracle_prefix(
       @symsolvers.nsolve(
@@ -1693,7 +1693,7 @@ test "solvers parity simplex four-variable reference example" {
   )
   assert_eq(
     "(" +
-    @symprint.to_string(result.0) +
+    @symprint.pretty_string(result.0) +
     ", " +
     local_solution_dict_text(Some(result.1), ["x1", "x2", "x3", "x4"]) +
     ")",
@@ -6568,14 +6568,14 @@ test "solvers parity decompogen" {
 ///|
 test "solvers parity compogen" {
   assert_eq(
-    @symprint.to_string(@symsolvers.compogen([sin(x()), cos(x())], x())),
+    @symprint.pretty_string(@symsolvers.compogen([sin(x()), cos(x())], x())),
     solvers_eval_str(
       "repr(" + compogen_oracle_expr("[sympy.sin(x), sympy.cos(x)], x") + ")",
     ),
   )
   assert_eq(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         @symsolvers.compogen(
           [(x() ^ @symcore.int(2)) + x() + @symcore.int(1), sin(x())],
           x(),
@@ -6588,7 +6588,7 @@ test "solvers parity compogen" {
   )
   assert_eq(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         @symsolvers.compogen(
           [
             sqrt(x()),
@@ -6604,7 +6604,7 @@ test "solvers parity compogen" {
   )
   assert_eq(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         @symsolvers.compogen(
           [
             sin(x()),
@@ -6626,7 +6626,7 @@ test "solvers parity compogen" {
   )
   assert_eq(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         @symsolvers.compogen(
           [
             @symcore.function("Abs", [x()]),
@@ -6684,7 +6684,7 @@ test "solvers parity compogen" {
   )
   assert_eq(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         @symsolvers.compogen(
           [
             (x() ^ @symcore.int(2)) + @symcore.int(2) * x() + @symcore.int(1),
@@ -6798,7 +6798,7 @@ test "solvers parity ode system matrix front doors" {
     ),
   )
   assert_eq(
-    @symprint.to_string(@symsolvers.constantsimp(c1 + c2, [c1, c2])),
+    @symprint.pretty_string(@symsolvers.constantsimp(c1 + c2, [c1, c2])),
     solvers_eval_str_symbols(
       "sympy.sstr(__import__('sympy.solvers.ode', fromlist=['constantsimp']).constantsimp(C1 + C2, [C1, C2]))",
       "C1 C2",
@@ -7000,7 +7000,7 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
   let c2 = @symcore.Expr::Symbol("C2")
 
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_constant_renumber(@symsolvers.constantsimp(c1 ^ x(), [c1])),
     ),
     constantsimp_oracle_text(
@@ -7009,7 +7009,7 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
     ),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_constant_renumber(@symsolvers.constantsimp(y() ^ c1, [c1, y()])),
     ),
     constantsimp_oracle_text(
@@ -7018,7 +7018,7 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
     ),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_constant_renumber(
         @symsolvers.constantsimp(@symcore.function("exp", [c1]), [c1]),
       ),
@@ -7029,7 +7029,7 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
     ),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_constant_renumber(
         @symsolvers.constantsimp(
           @symcore.applied_undefined_function("f", [c1, x()]),
@@ -7058,7 +7058,7 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
     "0",
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_constant_renumber(
         @symsolvers.constantsimp(
           @symcore.Expr::Relational(
@@ -7077,7 +7077,7 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
     ),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_constant_renumber(
         @symsolvers.constantsimp(
           @symcore.Expr::Relational(
@@ -7097,7 +7097,7 @@ test "solvers parity constantsimp migrated power function and Eq cases" {
     ),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_constant_renumber(
         @symsolvers.constantsimp(@symcore.int(2) * c1 + c2, [c1, c2]),
       ),
@@ -7124,7 +7124,7 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
   )
 
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_constant_renumber(
         @symsolvers.constantsimp(
           c1 * @symcore.function("exp", [@symcore.int(2) * x()]) +
@@ -7140,7 +7140,7 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
   )
 
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_constant_renumber(
         @symsolvers.constantsimp(
           @symcore.Expr::Relational(
@@ -7160,7 +7160,7 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
   )
 
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_constant_renumber(
         @symsolvers.constantsimp(
           @symcore.Expr::Relational(
@@ -7183,7 +7183,7 @@ test "solvers parity constantsimp initial migrated ode solution cases" {
   )
 
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_constant_renumber(
         @symsolvers.constantsimp(
           @symcore.Expr::Relational(
@@ -7662,7 +7662,7 @@ test "solvers parity ode scalar front doors" {
     ),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.homogeneous_order(
         @symcore.add([x() ^ @symcore.int(2), y() ^ @symcore.int(2)]),
         [x(), y()],
@@ -7685,7 +7685,7 @@ test "solvers parity ode scalar front doors" {
     ]),
   )
   assert_eq(
-    @symprint.to_string(@symsolvers.dsolve(ode, func=Some(f(x())))),
+    @symprint.pretty_string(@symsolvers.dsolve(ode, func=Some(f(x())))),
     solvers_eval_str(
       "sympy.sstr(sympy.solvers.dsolve(sympy.Eq(sympy.Function('f')(x).diff(x), sympy.Function('f')(x))))",
     ),
@@ -7698,7 +7698,7 @@ test "solvers parity ode scalar front doors" {
       func=Some(f(x())),
     ).0.to_string() +
     ", " +
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.checkodesol(
         ode,
         @symsolvers.dsolve(ode, func=Some(f(x()))),
@@ -7748,7 +7748,7 @@ test "solvers parity pde front doors" {
     ]),
   )
   assert_eq(
-    @symprint.to_string(@symsolvers.pdsolve(pde, func=Some(u(x(), y())))),
+    @symprint.pretty_string(@symsolvers.pdsolve(pde, func=Some(u(x(), y())))),
     solvers_eval_str(
       "sympy.sstr(sympy.solvers.pdsolve(sympy.Eq(sympy.Function('u')(x, y).diff(x), sympy.Function('u')(x, y).diff(y))))",
     ),
@@ -8053,7 +8053,7 @@ test "solvers parity dsolve and pdsolve meta-hints" {
   let ode_all = @symsolvers.dsolve(ode, func=Some(f(x())), hint="all")
   assert_eq(local_expr_dict_len_text(ode_all), "10")
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_expr_dict_get(ode_all, "default").unwrap_or(@symcore.int(0)),
     ),
     solvers_eval_str(
@@ -8061,7 +8061,7 @@ test "solvers parity dsolve and pdsolve meta-hints" {
     ),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_expr_dict_get(ode_all, "1st_linear").unwrap_or(@symcore.int(0)),
     ),
     solvers_eval_str(
@@ -8074,7 +8074,7 @@ test "solvers parity dsolve and pdsolve meta-hints" {
     hint="all_Integral",
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_expr_dict_get(ode_all_integral, "1st_linear_Integral").unwrap_or(
         @symcore.int(0),
       ),
@@ -8111,7 +8111,7 @@ test "solvers parity dsolve and pdsolve meta-hints" {
   )
   assert_eq(local_expr_dict_len_text(pde_all), "6")
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_expr_dict_get(pde_all, "default").unwrap_or(@symcore.int(0)),
     ),
     solvers_eval_str(
@@ -8119,7 +8119,7 @@ test "solvers parity dsolve and pdsolve meta-hints" {
     ),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       local_expr_dict_get(pde_all, "1st_linear_constant_coeff").unwrap_or(
         @symcore.int(0),
       ),
@@ -8157,7 +8157,7 @@ test "solvers parity expanded pde coefficient hints" {
     ),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.pdsolve(
         pde_source,
         func=Some(u(x(), y())),
@@ -8174,7 +8174,7 @@ test "solvers parity expanded pde coefficient hints" {
     "True",
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.pdsolve(
         u(x(), y()) +
         @symcalculus.diff(u(x(), y()), x()) +
@@ -8186,7 +8186,7 @@ test "solvers parity expanded pde coefficient hints" {
     "Eq(u(x, y), G(x - y)*exp(-x/2 - y/2))",
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.pdsolve(
         u(x(), y()) +
         @symcalculus.diff(u(x(), y()), x()) +
@@ -8204,7 +8204,7 @@ test "solvers parity expanded pde coefficient hints" {
     ),
     "Eq(u(x, y), G(x - y)*exp(-x/2 - y/2))",
   )
-  let pde_source_integral = @symprint.to_string(
+  let pde_source_integral = @symprint.pretty_string(
     @symsolvers.pdsolve(
       pde_source,
       func=Some(u(x(), y())),
@@ -8237,7 +8237,7 @@ test "solvers parity expanded pde coefficient hints" {
     ),
   )
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.pdsolve(
         pde_variable,
         func=Some(u(x(), y())),
@@ -8352,7 +8352,7 @@ test "solvers parity additional pde source cases" {
     @symcalculus.diff(u(x(), y()), x()) +
     @symcalculus.diff(u(x(), y()), y())
   assert_eq(
-    @symprint.to_string(@symsolvers.pdsolve(eq_h1, func=Some(u(x(), y())))),
+    @symprint.pretty_string(@symsolvers.pdsolve(eq_h1, func=Some(u(x(), y())))),
     solvers_eval_str_symbols(
       "sympy.sstr(sympy.solvers.pdsolve(2*sympy.Function('u')(x, y) + sympy.Function('u')(x, y).diff(x) + sympy.Function('u')(x, y).diff(y)))",
       "x y",
@@ -8404,7 +8404,7 @@ test "solvers parity additional pde source cases" {
     x() * @symcalculus.diff(u(x(), y()), x()) +
     x() * y() * @symcalculus.diff(u(x(), y()), y())
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.pdsolve(
         eq_v2,
         func=Some(u(x(), y())),
@@ -8443,7 +8443,7 @@ test "solvers parity additional pde source cases" {
     @symcalculus.diff(u(x(), y()), x()) +
     y()
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.pdsolve(
         eq_v4,
         func=Some(u(x(), y())),
@@ -8708,7 +8708,7 @@ test "solvers parity checkodesol subscheck cases" {
       func=Some(f(x())),
     ).0.to_string() +
     ", " +
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.checkodesol(
         @symcalculus.diff(
           (f(x()) ^ @symcore.int(5)) + @symcore.int(9) * f(x()) + x(),
@@ -8737,7 +8737,7 @@ test "solvers parity checkodesol subscheck cases" {
       solve_for_func=false,
     ).0.to_string() +
     ", " +
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.checkodesol(
         x() * @symcalculus.diff(@symcore.function("exp", [f(x())]) + x(), x()),
         implicit_sol,
@@ -8767,7 +8767,7 @@ test "solvers parity checkodesol subscheck cases" {
       func=Some(f(x())),
     ).0.to_string() +
     ", " +
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.checkodesol(
         @symcore.Expr::Relational(
           @symcore.RelOp::Eq,
@@ -8795,7 +8795,7 @@ test "solvers parity checkodesol subscheck cases" {
       func=Some(f(x())),
     ).0.to_string() +
     ", " +
-    @symprint.to_string(
+    @symprint.pretty_string(
       @symsolvers.checkodesol(
         @symcalculus.diff(f(x()), x()),
         @symcore.Expr::Relational(@symcore.RelOp::Eq, f(x()), x()),

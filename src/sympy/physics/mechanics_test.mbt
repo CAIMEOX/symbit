@@ -4,7 +4,7 @@ fn mechanics_assert_expr(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  assert_true(expr_equal(@symprint.to_string(lhs), rhs))
+  assert_true(expr_equal(@symprint.pretty_string(lhs), rhs))
 }
 
 ///|
@@ -119,7 +119,7 @@ test "physics.mechanics wrapper functions and substitutions" {
     "kinetic_energy",
   )
   inspect(
-    @symprint.to_string(potential_energy([pa.as_bodylike(), rb.as_bodylike()])),
+    @symprint.pretty_string(potential_energy([pa.as_bodylike(), rb.as_bodylike()])),
     content="M*g*h + g*h",
   )
   inspect(
@@ -145,14 +145,14 @@ test "physics.mechanics wrapper functions and substitutions" {
     ],
     smart=true,
   )
-  let txt = @symprint.to_string(replaced)
+  let txt = @symprint.pretty_string(replaced)
   assert_true(txt == "b + 1" || txt == "1 + b")
 
   let found = find_dynamicsymbols_expr(
     x * @symcalculus.diff(y, @symvector.dynamicsymbols_t) + y,
   )
   inspect(
-    found.map(@symprint.to_string).join(","),
+    found.map(@symprint.pretty_string).join(","),
     content="x(t),y(t),Derivative(y(t), t)",
   )
 }

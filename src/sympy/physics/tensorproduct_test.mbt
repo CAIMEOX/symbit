@@ -76,7 +76,7 @@ test "physics.quantum.tensorproduct: density and trace interplay" {
   let rho = density([(tp, @symcore.int(1))])
 
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(rho.doit())),
+    quantum_eval_str(@symprint.pretty_string(rho.doit())),
     quantum_eval_str(
       "Density((TensorProduct(Operator(A), Operator(B), Operator(C)), 1)).doit()",
     ),
@@ -84,7 +84,7 @@ test "physics.quantum.tensorproduct: density and trace interplay" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(tr_doit(tr(rho.as_expr(), indices=[1]))),
+      @symprint.pretty_string(tr_doit(tr(rho.as_expr(), indices=[1]))),
     ),
     quantum_eval_str(
       "Tr(Density((TensorProduct(Operator(A), Operator(B), Operator(C)), 1)), (1,)).doit()",

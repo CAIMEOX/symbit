@@ -11,7 +11,7 @@ fn sing_expr_symbol(name : String) -> Expr {
 ///|
 fn sing_expr_equal(ours : Expr, oracle_str : String) -> Unit raise {
   let ours_norm : Result[String, Error] = try? sympy_normalize(
-    @symprint.to_string(ours),
+    @symprint.pretty_string(ours),
   )
   let oracle_norm : Result[String, Error] = try? sympy_normalize(oracle_str)
   match (ours_norm, oracle_norm) {

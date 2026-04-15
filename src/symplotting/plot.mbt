@@ -57,7 +57,7 @@ fn plot_create_ranges(
       " free symbols.\nReceived " +
       free_symbols.length().to_string() +
       ": {" +
-      free_symbols.map(@symprint.to_string).join(", ") +
+      free_symbols.map(@symprint.pretty_string).join(", ") +
       "}",
     )
   }
@@ -100,10 +100,10 @@ fn plot_create_ranges(
       raise PlottingError::ValueError(
         "Incompatible free symbols of the expressions with the ranges.\n" +
         "Free symbols in the expressions: {" +
-        free_symbols.map(@symprint.to_string).join(", ") +
+        free_symbols.map(@symprint.pretty_string).join(", ") +
         "}\n" +
         "Free symbols in the ranges: {" +
-        range_symbols.map(@symprint.to_string).join(", ") +
+        range_symbols.map(@symprint.pretty_string).join(", ") +
         "}",
       )
     }
@@ -619,11 +619,11 @@ pub fn plot(
   }
   let resolved_xlabel = match xlabel {
     Some(value) => Some(value)
-    None => Some(@symprint.to_string(plot_var))
+    None => Some(@symprint.pretty_string(plot_var))
   }
   let resolved_ylabel = match ylabel {
     Some(value) => Some(value)
-    None => Some(@symprint.to_string(@symcore.function("f", [plot_var])))
+    None => Some(@symprint.pretty_string(@symcore.function("f", [plot_var])))
   }
 
   let backend_obj = plot_factory(
@@ -891,7 +891,7 @@ pub fn plot3d(
         Some("x")
       } else {
         let (_, range_x, _, _, _) = specs[0]
-        Some(@symprint.to_string(plot_range_symbol(range_x)))
+        Some(@symprint.pretty_string(plot_range_symbol(range_x)))
       }
   }
   let resolved_ylabel = match ylabel {
@@ -901,7 +901,7 @@ pub fn plot3d(
         Some("y")
       } else {
         let (_, _, range_y, _, _) = specs[0]
-        Some(@symprint.to_string(plot_range_symbol(range_y)))
+        Some(@symprint.pretty_string(plot_range_symbol(range_y)))
       }
   }
   let resolved_zlabel = match zlabel {
@@ -912,7 +912,7 @@ pub fn plot3d(
       } else {
         let (_, range_x, range_y, _, _) = specs[0]
         Some(
-          @symprint.to_string(
+          @symprint.pretty_string(
             @symcore.function("f", [
               plot_range_symbol(range_x),
               plot_range_symbol(range_y),
@@ -1012,7 +1012,7 @@ pub fn plot_contour(
         Some("x")
       } else {
         let (_, range_x, _, _, _) = specs[0]
-        Some(@symprint.to_string(plot_range_symbol(range_x)))
+        Some(@symprint.pretty_string(plot_range_symbol(range_x)))
       }
   }
   let resolved_ylabel = match ylabel {
@@ -1022,7 +1022,7 @@ pub fn plot_contour(
         Some("y")
       } else {
         let (_, _, range_y, _, _) = specs[0]
-        Some(@symprint.to_string(plot_range_symbol(range_y)))
+        Some(@symprint.pretty_string(plot_range_symbol(range_y)))
       }
   }
   let resolved_zlabel = match zlabel {
@@ -1033,7 +1033,7 @@ pub fn plot_contour(
       } else {
         let (_, range_x, range_y, _, _) = specs[0]
         Some(
-          @symprint.to_string(
+          @symprint.pretty_string(
             @symcore.function("f", [
               plot_range_symbol(range_x),
               plot_range_symbol(range_y),
@@ -1175,7 +1175,7 @@ fn plot_implicit_range_tuple(
     _ =>
       raise PlottingError::ValueError(
         "symbol or `(symbol, min, max)` expected but got " +
-        @symprint.to_string(value),
+        @symprint.pretty_string(value),
       )
   }
 }
@@ -1291,11 +1291,11 @@ pub fn plot_implicit(
 
   let resolved_xlabel = match xlabel {
     Some(value) => Some(value)
-    None => Some(@symprint.to_string(plot_range_symbol(range_x)))
+    None => Some(@symprint.pretty_string(plot_range_symbol(range_x)))
   }
   let resolved_ylabel = match ylabel {
     Some(value) => Some(value)
-    None => Some(@symprint.to_string(plot_range_symbol(range_y)))
+    None => Some(@symprint.pretty_string(plot_range_symbol(range_y)))
   }
   let backend_obj = plot_factory(
     [series],

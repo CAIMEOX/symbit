@@ -210,7 +210,7 @@ fn py_expr(expr : Expr) -> String {
                             Some(false) => "False"
                             None =>
                               "sympy.sympify('" +
-                              @symprint.to_string(expr) +
+                              @symprint.pretty_string(expr) +
                               "', locals=" +
                               py_locals() +
                               ")"
@@ -1924,7 +1924,7 @@ test "symintegrals parity Mellin forward and inverse" {
         )
         inspect(inv, content="0")
       }
-      None => inspect(@symprint.to_string(item.0), content="NONE")
+      None => inspect(@symprint.pretty_string(item.0), content="NONE")
     }
   }
 

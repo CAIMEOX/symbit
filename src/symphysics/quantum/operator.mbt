@@ -102,9 +102,9 @@ pub impl Show for OperatorExpr with to_string(self) {
   match self.flavor {
     OperatorFlavor::Identity => "I"
     _ => {
-      let rendered = self.label.map(@symprint.to_string).join(", ")
+      let rendered = self.label.map(@symprint.pretty_string).join(", ")
       if self.label.length() == 1 {
-        @symprint.to_string(self.label[0])
+        @symprint.pretty_string(self.label[0])
       } else {
         "\{operator_class_name(self.flavor)}(\{rendered})"
       }

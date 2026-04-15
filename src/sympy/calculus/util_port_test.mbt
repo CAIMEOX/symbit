@@ -16,7 +16,7 @@ fn util_expr_func(name : String, args : Array[Expr]) -> Expr {
 ///|
 fn util_assert_period(ours : Expr?, oracle_str : String) -> Unit raise {
   let ours_str = match ours {
-    Some(v) => @symprint.to_string(v)
+    Some(v) => @symprint.pretty_string(v)
     None => "None"
   }
   if ours_str == "None" || oracle_str == "None" {

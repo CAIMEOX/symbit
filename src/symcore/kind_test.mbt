@@ -31,11 +31,11 @@ test "exact-number helpers expose SymPy-like class views" {
     _ => fail("expected Rational kind")
   }
   inspect(
-    @symprint.to_string(singleton_head(zero).unwrap_or(int(99))),
+    @symprint.pretty_string(singleton_head(zero).unwrap_or(int(99))),
     content="<class 'sympy.core.numbers.Zero'>",
   )
   inspect(
-    @symprint.to_string(singleton_head(half).unwrap_or(int(99))),
+    @symprint.pretty_string(singleton_head(half).unwrap_or(int(99))),
     content="<class 'sympy.core.numbers.Half'>",
   )
   match exact_number_num_den(two_thirds) {

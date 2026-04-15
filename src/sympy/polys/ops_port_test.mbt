@@ -40,7 +40,7 @@ test "ops: resultant_expr parity with gens/domain (univariate)" {
   let f = (x ^ @symcore.int(3)) + @symcore.int(2) * x + @symcore.int(1)
   let g = (x ^ @symcore.int(2)) + @symcore.int(1)
   let res = @sympolys.resultant_expr(f, g, "x", gens=["x"], domain=Domain::ZZ)
-  let ours = sympy_normalize(@symprint.to_string(res)).trim().to_string()
+  let ours = sympy_normalize(@symprint.pretty_string(res)).trim().to_string()
   let oracle = resultant(f, g, x="x", gens=["x"], domain="ZZ")
     .trim()
     .to_string()
@@ -59,7 +59,7 @@ test "ops: resultant_expr parity for multivar with univariate support" {
     gens=["x", "y"],
     domain=Domain::ZZ,
   )
-  let ours = sympy_normalize(@symprint.to_string(res)).trim().to_string()
+  let ours = sympy_normalize(@symprint.pretty_string(res)).trim().to_string()
   let oracle = resultant(f, g, x="y", gens=["x", "y"], domain="ZZ")
     .trim()
     .to_string()
@@ -79,7 +79,7 @@ test "ops: resultant_expr parity for non-constant multivar elimination" {
     gens=["x", "y"],
     domain=Domain::ZZ,
   )
-  let ours = sympy_normalize(@symprint.to_string(res)).trim().to_string()
+  let ours = sympy_normalize(@symprint.pretty_string(res)).trim().to_string()
   let oracle = resultant(f, g, x="x", gens=["x", "y"], domain="ZZ")
     .trim()
     .to_string()

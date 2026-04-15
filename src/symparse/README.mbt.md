@@ -29,7 +29,7 @@ Parsing infrastructure for turning textual mathematics into Symbit expressions: 
 ///|
 test "symparse lowers text into expressions" {
   let expr = parse_expr("x + 1")
-  inspect(@symprint.to_string(expr), content="x + 1")
+  inspect(@symprint.pretty_string(expr), content="x + 1")
 }
 ```
 ## Related Packages

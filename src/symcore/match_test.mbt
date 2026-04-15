@@ -8,7 +8,7 @@ test "wild helpers expose exclude and property payloads" {
   match wild_parts(wild) {
     Some((name, exclude, properties)) => {
       inspect(name, content="a")
-      json_inspect(exclude.map(@symprint.to_string), content=["x"])
+      json_inspect(exclude.map(@symprint.pretty_string), content=["x"])
       json_inspect(properties.map(wild_property_name), content=[
         "integer", "positive",
       ])
@@ -28,7 +28,7 @@ test "wild_matches respects exclude and direct properties" {
   match wild_matches(a, function("sin", [x])) {
     Some(env) =>
       inspect(
-        @symprint.to_string(env.get(a).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(a).unwrap_or(int(0))),
         content="sin(x)",
       )
     None => fail("expected unconstrained wild to match")
@@ -52,7 +52,7 @@ test "wild_matches respects exclude and direct properties" {
   let overridden = wild_matches(a, x, repl_dict=seeded)
   match overridden {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="x")
     None => fail("expected direct wild match to override prior env entry")
   }
 }
@@ -67,7 +67,7 @@ test "expr_match uses full wild identity and structural recursion" {
   let match_expr = apply(Expr::FunctionHead("f"), [x, x]).unwrap_or(int(0))
   match expr_match(pattern, match_expr) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="x")
     None => fail("expected repeated wild match")
   }
   assert_false(
@@ -86,9 +86,9 @@ test "expr_match uses full wild identity and structural recursion" {
       apply(Expr::FunctionHead("f"), [y, y]).unwrap_or(int(0)),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="y")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="y")
       inspect(
-        @symprint.to_string(env.get(a_excluding_x).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(a_excluding_x).unwrap_or(int(0))),
         content="y",
       )
     }
@@ -111,9 +111,9 @@ test "expr_match uses full wild identity and structural recursion" {
       apply(Expr::FunctionHead("f"), [x, add([x, y])]).unwrap_or(int(0)),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="x")
       inspect(
-        @symprint.to_string(env.get(b_nested).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(b_nested).unwrap_or(int(0))),
         content="y",
       )
     }
@@ -133,7 +133,7 @@ test "expr_match handles source-style commutative wildcard matching" {
 
   match expr_match(mul([a, x]), mul([int(3), x])) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="3")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="3")
     None => fail("expected a*x to match 3*x")
   }
 
@@ -141,9 +141,9 @@ test "expr_match handles source-style commutative wildcard matching" {
   let match_expr = add([x, mul([function("sin", [y]), z])])
   match expr_match(pattern, match_expr) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="x")
-      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="y")
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(0))), content="z")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(b).unwrap_or(int(0))), content="y")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(0))), content="z")
     }
     None => fail("expected source-style commutative add match")
   }
@@ -152,9 +152,9 @@ test "expr_match handles source-style commutative wildcard matching" {
   let b0 = Expr::Wild("b", [], [])
   match expr_match(mul([a0, b0]), mul([int(2), pow(x, int(3)), y, z])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a0).unwrap_or(int(0))), content="2")
+      inspect(@symprint.pretty_string(env.get(a0).unwrap_or(int(0))), content="2")
       inspect(
-        @symprint.to_string(env.get(b0).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(b0).unwrap_or(int(0))),
         content="x**3*y*z",
       )
     }
@@ -171,8 +171,8 @@ test "expr_match follows SymPy source examples for add mul and powers" {
 
   match expr_match(add([mul([p, x]), q]), add([mul([int(4), x]), int(5)])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="4")
-      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="5")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="4")
+      inspect(@symprint.pretty_string(env.get(q).unwrap_or(int(0))), content="5")
     }
     None => fail("expected linear add match from SymPy source examples")
   }
@@ -184,7 +184,7 @@ test "expr_match follows SymPy source examples for add mul and powers" {
 
   match expr_match(pow(x, p), int(1)) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(99))), content="0")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(99))), content="0")
     None => fail("expected 1 to match x**p with p = 0")
   }
 
@@ -194,8 +194,8 @@ test "expr_match follows SymPy source examples for add mul and powers" {
       function("cos", [mul([int(5), x])]),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="5")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(q).unwrap_or(int(0))), content="5")
     }
     None => fail("expected cosine coefficient match from SymPy source examples")
   }
@@ -215,7 +215,7 @@ test "expr_match covers more SymPy source add and mul examples" {
   match expr_match(add([b, p]), add([a, b, c, x])) {
     Some(env) =>
       inspect(
-        @symprint.to_string(env.get(p).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(p).unwrap_or(int(0))),
         content="a + c + x",
       )
     None => fail("expected additive remainder match from SymPy source")
@@ -224,7 +224,7 @@ test "expr_match covers more SymPy source add and mul examples" {
   match expr_match(add([a, p, c]), add([a, b, c, x])) {
     Some(env) =>
       inspect(
-        @symprint.to_string(env.get(p).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(p).unwrap_or(int(0))),
         content="b + x",
       )
     None => fail("expected additive middle remainder match from SymPy source")
@@ -233,7 +233,7 @@ test "expr_match covers more SymPy source add and mul examples" {
   match expr_match(add([b, p, c]), add([a, b, c, x])) {
     Some(env) =>
       inspect(
-        @symprint.to_string(env.get(p).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(p).unwrap_or(int(0))),
         content="a + x",
       )
     None => fail("expected additive mixed remainder match from SymPy source")
@@ -242,7 +242,7 @@ test "expr_match covers more SymPy source add and mul examples" {
   match
     expr_match(add([mul([p, x]), int(5)]), add([mul([int(4), x]), int(5)])) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="4")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="4")
     None => fail("expected linear coefficient match from SymPy source")
   }
 
@@ -250,7 +250,7 @@ test "expr_match covers more SymPy source add and mul examples" {
     expr_match(add([mul([int(3), x]), p]), add([mul([int(4), x]), int(5)])) {
     Some(env) =>
       inspect(
-        @symprint.to_string(env.get(p).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(p).unwrap_or(int(0))),
         content="x + 5",
       )
     None => fail("expected additive fallback match from SymPy source")
@@ -258,13 +258,13 @@ test "expr_match covers more SymPy source add and mul examples" {
 
   match expr_match(add([mul([int(4), x]), mul([p, y])]), mul([int(4), x])) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="0")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="0")
     None => fail("expected additive embedding to expose zero coefficient")
   }
 
   match expr_match(mul([p, x]), x) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="1")
     None => fail("expected x to match p*x with p = 1")
   }
 
@@ -274,8 +274,8 @@ test "expr_match covers more SymPy source add and mul examples" {
       function("exp", [x]),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(99))), content="0")
-      inspect(@symprint.to_string(env.get(q).unwrap_or(int(99))), content="1")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(99))), content="0")
+      inspect(@symprint.pretty_string(env.get(q).unwrap_or(int(99))), content="1")
     }
     None => fail("expected exponential source match with implicit x**0")
   }
@@ -286,9 +286,9 @@ test "expr_match covers more SymPy source add and mul examples" {
       mul([int(3), pow(add([mul([int(4), x]), int(5)]), int(-1))]),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3")
-      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="4")
-      inspect(@symprint.to_string(env.get(r).unwrap_or(int(0))), content="5")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="3")
+      inspect(@symprint.pretty_string(env.get(q).unwrap_or(int(0))), content="4")
+      inspect(@symprint.pretty_string(env.get(r).unwrap_or(int(0))), content="5")
     }
     None => fail("expected reciprocal linear form match from SymPy source")
   }
@@ -311,18 +311,18 @@ test "expr_match covers source function-head and complex wildcard examples" {
       function("cos", [mul([int(5), x])]),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(g).unwrap_or(int(0))), content="cos")
-      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="5")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(g).unwrap_or(int(0))), content="cos")
+      inspect(@symprint.pretty_string(env.get(q).unwrap_or(int(0))), content="5")
     }
     None => fail("expected function-head wild match from SymPy source")
   }
 
   match expr_match(mul([p, g]), function("cos", [mul([int(5), x])])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="1")
       inspect(
-        @symprint.to_string(env.get(g).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(g).unwrap_or(int(0))),
         content="cos(5*x)",
       )
     }
@@ -331,19 +331,19 @@ test "expr_match covers source function-head and complex wildcard examples" {
 
   match expr_match(g, g) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(g).unwrap_or(int(0))), content="g_")
+      inspect(@symprint.pretty_string(env.get(g).unwrap_or(int(0))), content="g_")
     None => fail("expected WildFunction to match itself like SymPy source")
   }
 
   match expr_match(add([w, imag]), add([int(1), imag])) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(w).unwrap_or(int(0))), content="1")
     None => fail("expected additive complex match from SymPy source")
   }
 
   match expr_match(mul([w, imag]), mul([int(2), imag])) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="2")
+      inspect(@symprint.pretty_string(env.get(w).unwrap_or(int(0))), content="2")
     None => fail("expected multiplicative complex match from SymPy source")
   }
 
@@ -351,8 +351,8 @@ test "expr_match covers source function-head and complex wildcard examples" {
   let wi = Expr::Wild("wi", [], [])
   match expr_match(add([wr, mul([wi, imag])]), add([a, mul([b, imag])])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(wr).unwrap_or(int(0))), content="a")
-      inspect(@symprint.to_string(env.get(wi).unwrap_or(int(0))), content="b")
+      inspect(@symprint.pretty_string(env.get(wr).unwrap_or(int(0))), content="a")
+      inspect(@symprint.pretty_string(env.get(wi).unwrap_or(int(0))), content="b")
     }
     None => fail("expected cartesian complex decomposition match")
   }
@@ -376,7 +376,7 @@ test "expr_match covers more SymPy source factorization and derivative examples"
       add([mul([int(3), x]), int(3), mul([int(6), pow(x, int(-1))])]),
     ) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3/x")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="3/x")
     None => fail("expected common-factor wild match from SymPy source")
   }
 
@@ -391,14 +391,14 @@ test "expr_match covers more SymPy source factorization and derivative examples"
   match
     expr_match(mul([add([p, b]), add([p, c])]), mul([add([a, b]), add([a, c])])) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="a")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="a")
     None => fail("expected repeated additive factor match from SymPy source")
   }
 
   match expr_match(mul([p, q]), add([mul([x, Expr::Symbol("y")]), int(1)])) {
     Some(env) => {
-      let lhs = @symprint.to_string(env.get(p).unwrap_or(int(0)))
-      let rhs = @symprint.to_string(env.get(q).unwrap_or(int(0)))
+      let lhs = @symprint.pretty_string(env.get(p).unwrap_or(int(0)))
+      let rhs = @symprint.pretty_string(env.get(q).unwrap_or(int(0)))
       let allowed = [("1", "x*y + 1"), ("x*y + 1", "1")]
       assert_true(allowed.contains((lhs, rhs)))
     }
@@ -408,8 +408,8 @@ test "expr_match covers more SymPy source factorization and derivative examples"
   match
     expr_match(add([mul([p, dfx]), q]), add([mul([int(3), dfx]), int(-1)])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3")
-      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="-1")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="3")
+      inspect(@symprint.pretty_string(env.get(q).unwrap_or(int(0))), content="-1")
     }
     None => fail("expected derivative wildcard coefficient match")
   }
@@ -437,9 +437,9 @@ test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
       add([mul([int(3), pow(x, int(2))]), mul([y, x]), a]),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="3")
-      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="y")
-      inspect(@symprint.to_string(env.get(r).unwrap_or(int(0))), content="a")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="3")
+      inspect(@symprint.pretty_string(env.get(q).unwrap_or(int(0))), content="y")
+      inspect(@symprint.pretty_string(env.get(r).unwrap_or(int(0))), content="a")
     }
     None => fail("expected source-style exclude match on quadratic polynomial")
   }
@@ -452,14 +452,14 @@ test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
   }
   match expr_match(add([x, int(1), p]), add([x, int(1)])) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(1))), content="0")
     None => fail("expected x + 1 + p to bind p=0 from SymPy source")
   }
 
   match expr_match(add([q, r]), p) {
     Some(env) => {
-      let q_value = @symprint.to_string(env.get(q).unwrap_or(int(-1)))
-      let r_value = @symprint.to_string(env.get(r).unwrap_or(int(-1)))
+      let q_value = @symprint.pretty_string(env.get(q).unwrap_or(int(-1)))
+      let r_value = @symprint.pretty_string(env.get(r).unwrap_or(int(-1)))
       let options = ["q_=p_|r_=0", "q_=0|r_=p_"]
       inspect(options.contains("q_=\{q_value}|r_=\{r_value}"), content="true")
     }
@@ -471,11 +471,11 @@ test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
   match expr_match(add([q_excluding_p, r_plain]), p) {
     Some(env) => {
       inspect(
-        @symprint.to_string(env.get(q_excluding_p).unwrap_or(int(-1))),
+        @symprint.pretty_string(env.get(q_excluding_p).unwrap_or(int(-1))),
         content="0",
       )
       inspect(
-        @symprint.to_string(env.get(r_plain).unwrap_or(int(-1))),
+        @symprint.pretty_string(env.get(r_plain).unwrap_or(int(-1))),
         content="p_",
       )
     }
@@ -485,11 +485,11 @@ test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
   match expr_match(mul([q_excluding_p, r_plain]), p) {
     Some(env) => {
       inspect(
-        @symprint.to_string(env.get(q_excluding_p).unwrap_or(int(-1))),
+        @symprint.pretty_string(env.get(q_excluding_p).unwrap_or(int(-1))),
         content="1",
       )
       inspect(
-        @symprint.to_string(env.get(r_plain).unwrap_or(int(-1))),
+        @symprint.pretty_string(env.get(r_plain).unwrap_or(int(-1))),
         content="p_",
       )
     }
@@ -528,8 +528,8 @@ test "expr_match follows SymPy source derivative exclusion examples" {
 
   match expr_match(add([mul([a, d1]), b]), add([d1, pow(x, int(2))])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="x**2")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(b).unwrap_or(int(0))), content="x**2")
     }
     None => fail("expected first-derivative wildcard match from SymPy source")
   }
@@ -561,27 +561,27 @@ test "expr_match follows more SymPy source derivative and coefficient bugs" {
 
   match expr_match(add([mul([a, dfx]), b]), dfx) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(b).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(b).unwrap_or(int(1))), content="0")
     }
     None => fail("expected derivative remainder-zero match from SymPy source")
   }
 
   match expr_match(mul([int(-1), p, x]), x) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="-1")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="-1")
     None => fail("expected negative coefficient match bug4 from SymPy source")
   }
 
   match expr_match(mul([int(-1), p, x]), mul([int(-1), x])) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="1")
     None => fail("expected negative coefficient match bug5 from SymPy source")
   }
 
   match expr_match(mul([int(3), p, x]), x) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="1/3")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="1/3")
     None => fail("expected rational coefficient match bug6 from SymPy source")
   }
 }
@@ -594,22 +594,22 @@ test "expr_match follows SymPy source reciprocal wildcard examples" {
 
   match expr_match(pow(y, int(-1)), pow(x, int(-1))) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(y).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(y).unwrap_or(int(0))), content="x")
     None => fail("expected y**-1 to match x**-1 before reciprocal examples")
   }
 
   match expr_match(mul([w, pow(y, int(-1))]), mul([int(3), pow(x, int(-1))])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="3")
-      inspect(@symprint.to_string(env.get(y).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(w).unwrap_or(int(0))), content="3")
+      inspect(@symprint.pretty_string(env.get(y).unwrap_or(int(0))), content="x")
     }
     None => fail("expected 3/x to match w/y from SymPy source")
   }
 
   match expr_match(mul([w, y]), mul([int(3), x])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="3")
-      inspect(@symprint.to_string(env.get(y).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(w).unwrap_or(int(0))), content="3")
+      inspect(@symprint.pretty_string(env.get(y).unwrap_or(int(0))), content="x")
     }
     None => fail("expected 3*x to match w*y from SymPy source")
   }
@@ -617,16 +617,16 @@ test "expr_match follows SymPy source reciprocal wildcard examples" {
   match
     expr_match(mul([y, pow(w, int(-1))]), mul([x, rational_from_ints(1, 3)])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="3")
-      inspect(@symprint.to_string(env.get(y).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(w).unwrap_or(int(0))), content="3")
+      inspect(@symprint.pretty_string(env.get(y).unwrap_or(int(0))), content="x")
     }
     None => fail("expected x/3 to match y/w from SymPy source")
   }
 
   match expr_match(mul([y, pow(w, int(-1))]), mul([int(3), x])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="1/3")
-      inspect(@symprint.to_string(env.get(y).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(w).unwrap_or(int(0))), content="1/3")
+      inspect(@symprint.pretty_string(env.get(y).unwrap_or(int(0))), content="x")
     }
     None => fail("expected 3*x to match y/w from SymPy source")
   }
@@ -634,9 +634,9 @@ test "expr_match follows SymPy source reciprocal wildcard examples" {
   match
     expr_match(mul([w, pow(y, int(-1))]), mul([x, rational_from_ints(1, 3)])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="1/3")
+      inspect(@symprint.pretty_string(env.get(w).unwrap_or(int(0))), content="1/3")
       inspect(
-        @symprint.to_string(env.get(y).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(y).unwrap_or(int(0))),
         content="x**-1",
       )
     }
@@ -645,9 +645,9 @@ test "expr_match follows SymPy source reciprocal wildcard examples" {
 
   match expr_match(mul([w, pow(y, int(-1))]), mul([int(3), x])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="3")
+      inspect(@symprint.pretty_string(env.get(w).unwrap_or(int(0))), content="3")
       inspect(
-        @symprint.to_string(env.get(y).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(y).unwrap_or(int(0))),
         content="x**-1",
       )
     }
@@ -656,9 +656,9 @@ test "expr_match follows SymPy source reciprocal wildcard examples" {
 
   match expr_match(mul([w, y]), mul([int(3), pow(x, int(-1))])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(w).unwrap_or(int(0))), content="3")
+      inspect(@symprint.pretty_string(env.get(w).unwrap_or(int(0))), content="3")
       inspect(
-        @symprint.to_string(env.get(y).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(y).unwrap_or(int(0))),
         content="x**-1",
       )
     }
@@ -671,13 +671,13 @@ test "expr_match follows SymPy source reciprocal wildcard examples" {
   }
   match expr_match(pow(a, int(-1)), int(3)) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1/3")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="1/3")
     None => fail("expected 3 to match 1/a from SymPy source")
   }
   match expr_match(pow(a, int(-2)), int(3)) {
     Some(env) =>
       inspect(
-        @symprint.to_string(env.get(a).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(a).unwrap_or(int(0))),
         content="3**(-1/2)",
       )
     None => fail("expected 3 to match 1/a**2 from SymPy source")
@@ -695,7 +695,7 @@ test "expr_match follows SymPy source positive power wildcard examples" {
   match expr_match(pow(y, int(2)), pow(x, r)) {
     Some(env) =>
       inspect(
-        @symprint.to_string(env.get(y).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(y).unwrap_or(int(0))),
         content="x**(r/2)",
       )
     None => fail("expected x**r to match y**2 from SymPy source")
@@ -704,7 +704,7 @@ test "expr_match follows SymPy source positive power wildcard examples" {
   match expr_match(pow(y, int(2)), pow(x, e)) {
     Some(env) =>
       inspect(
-        @symprint.to_string(env.get(y).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(y).unwrap_or(int(0))),
         content="x**(e/2)",
       )
     None => fail("expected x**e to match y**2 from SymPy source")
@@ -717,7 +717,7 @@ test "expr_match follows SymPy source positive power wildcard examples" {
     ) {
     Some(env) =>
       inspect(
-        @symprint.to_string(env.get(a).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(a).unwrap_or(int(0))),
         content="I*pi**(1/2)",
       )
     None => fail("expected -pi to match a**2 from SymPy source")
@@ -735,25 +735,25 @@ test "expr_match follows SymPy source implicit zero-power wildcard examples" {
 
   match expr_match(mul([a, pow(fx, c)]), x) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="x")
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(1))), content="0")
     }
     None => fail("expected x to match a*f(x)**c from SymPy source")
   }
 
   match expr_match(mul([a, b]), x) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(b).unwrap_or(int(0))), content="x")
     }
     None => fail("expected x to match a*b from SymPy source")
   }
 
   match expr_match(mul([a, b, pow(fx, c)]), x) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="x")
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(b).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(1))), content="0")
     }
     None => fail("expected x to match a*b*f(x)**c from SymPy source")
   }
@@ -770,9 +770,9 @@ test "expr_match follows SymPy source exclude cases around additive coefficients
 
   match expr_match(pattern, function("sin", [x])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="0")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="0")
       inspect(
-        @symprint.to_string(env.get(b).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(b).unwrap_or(int(0))),
         content="sin(x)",
       )
     }
@@ -781,9 +781,9 @@ test "expr_match follows SymPy source exclude cases around additive coefficients
 
   match expr_match(pattern, add([fx, function("sin", [x])])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="1")
       inspect(
-        @symprint.to_string(env.get(b).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(b).unwrap_or(int(0))),
         content="sin(x)",
       )
     }
@@ -792,9 +792,9 @@ test "expr_match follows SymPy source exclude cases around additive coefficients
 
   match expr_match(pattern, add([fx, x, function("sin", [x])])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="1")
       inspect(
-        @symprint.to_string(env.get(b).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(b).unwrap_or(int(0))),
         content="x + sin(x)",
       )
     }
@@ -804,9 +804,9 @@ test "expr_match follows SymPy source exclude cases around additive coefficients
 
   match expr_match(pattern, add([x, function("sin", [x])])) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="0")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="0")
       inspect(
-        @symprint.to_string(env.get(b).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(b).unwrap_or(int(0))),
         content="x + sin(x)",
       )
     }
@@ -829,10 +829,10 @@ test "expr_match follows more SymPy source trig exclude and duplicate-function c
       add([function("cos", [x]), mul([int(5), function("sin", [y])])]),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="5")
-      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="y")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="5")
+      inspect(@symprint.pretty_string(env.get(q).unwrap_or(int(0))), content="y")
       inspect(
-        @symprint.to_string(env.get(r).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(r).unwrap_or(int(0))),
         content="cos(x)",
       )
     }
@@ -845,9 +845,9 @@ test "expr_match follows more SymPy source trig exclude and duplicate-function c
       pow(function("sin", [x]), int(2)),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="x")
-      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(q).unwrap_or(int(0))), content="x")
     }
     None => fail("expected repeated sine product match")
   }
@@ -858,9 +858,9 @@ test "expr_match follows more SymPy source trig exclude and duplicate-function c
       mul([int(2), function("sin", [x])]),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(0))), content="0")
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="x")
-      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(0))), content="0")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(q).unwrap_or(int(0))), content="x")
     }
     None => fail("expected repeated sine additive match")
   }
@@ -880,8 +880,8 @@ test "expr_match follows more SymPy source mixed additive term cases" {
       add([mul([int(5), y]), mul([int(-1), x])]),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(xw).unwrap_or(int(0))), content="y")
-      inspect(@symprint.to_string(env.get(yw).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(xw).unwrap_or(int(0))), content="y")
+      inspect(@symprint.pretty_string(env.get(yw).unwrap_or(int(0))), content="x")
     }
     None => fail("expected source-driven 5*X - Y term match")
   }
@@ -892,7 +892,7 @@ test "expr_match follows more SymPy source mixed additive term cases" {
       let matched = env.get(xw).unwrap_or(int(0))
       if compare_expr(matched, add([y, int(-1)])) != 0 {
         fail(
-          "expected source-driven x + X*z term match to bind X to y - 1, got \{@symprint.to_string(matched)}",
+          "expected source-driven x + X*z term match to bind X to y - 1, got \{@symprint.pretty_string(matched)}",
         )
       }
     }
@@ -925,7 +925,7 @@ test "expr_match follows more SymPy source mixed additive term cases" {
       ]),
     ) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(xw).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(xw).unwrap_or(int(0))), content="x")
     None => fail("expected source-driven logarithmic term match")
   }
 }
@@ -956,18 +956,18 @@ test "expr_match follows more SymPy source collected derivative coefficient case
       let matched_c = env.get(c3).unwrap_or(int(0))
       if compare_expr(matched_a, pow(add([x, int(-2)]), int(2))) != 0 {
         fail(
-          "expected a3 to match (x - 2)**2, got \{@symprint.to_string(matched_a)}",
+          "expected a3 to match (x - 2)**2, got \{@symprint.pretty_string(matched_a)}",
         )
       }
       if compare_expr(matched_b, add([x, int(-2)])) != 0 {
         fail(
-          "expected b3 to match x - 2, got \{@symprint.to_string(matched_b)}",
+          "expected b3 to match x - 2, got \{@symprint.pretty_string(matched_b)}",
         )
       }
       if compare_expr(matched_c, add([pow(add([x, int(-2)]), int(2)), int(-4)])) !=
         0 {
         fail(
-          "expected c3 to match (x - 2)**2 - 4, got \{@symprint.to_string(matched_c)}",
+          "expected c3 to match (x - 2)**2 - 4, got \{@symprint.pretty_string(matched_c)}",
         )
       }
     }
@@ -993,18 +993,18 @@ test "expr_match follows more SymPy source collected derivative coefficient case
         ) !=
         0 {
         fail(
-          "expected a3 to match x - 4 + 4/x, got \{@symprint.to_string(matched_a)}",
+          "expected a3 to match x - 4 + 4/x, got \{@symprint.pretty_string(matched_a)}",
         )
       }
       if compare_expr(matched_b, add([int(1), mul([int(-2), pow(x, int(-1))])])) !=
         0 {
         fail(
-          "expected b3 to match 1 - 2/x, got \{@symprint.to_string(matched_b)}",
+          "expected b3 to match 1 - 2/x, got \{@symprint.pretty_string(matched_b)}",
         )
       }
       if compare_expr(matched_c, add([x, int(-4)])) != 0 {
         fail(
-          "expected c3 to match x - 4, got \{@symprint.to_string(matched_c)}",
+          "expected c3 to match x - 4, got \{@symprint.pretty_string(matched_c)}",
         )
       }
     }
@@ -1024,11 +1024,11 @@ test "expr_match follows more SymPy source float and derivative remainder cases"
       pow(function("cos", [float_arg]), int(2)),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="1")
       let matched_b = env.get(b).unwrap_or(int(0))
       if compare_expr(matched_b, float_arg) != 0 {
         fail(
-          "expected source-driven float wildcard to bind exact float arg, got \{@symprint.to_string(matched_b)}",
+          "expected source-driven float wildcard to bind exact float arg, got \{@symprint.pretty_string(matched_b)}",
         )
       }
     }
@@ -1042,8 +1042,8 @@ test "expr_match follows more SymPy source float and derivative remainder cases"
   let bw = Expr::Wild("b", [fx], [])
   match expr_match(add([mul([aw, dfx]), bw]), dfx) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(aw).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(bw).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(aw).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(bw).unwrap_or(int(1))), content="0")
     }
     None => fail("expected source-driven derivative remainder match")
   }
@@ -1065,15 +1065,15 @@ test "expr_match follows more SymPy source product-derivative coefficient cases"
   let expr = add([mul([dgx, dfx]), mul([gx, d2fx])])
   match expr_match(add([mul([dgx, dfx]), mul([gx, d2fx]), c]), expr) {
     Some(env) =>
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(1))), content="0")
     None =>
       fail("expected source-driven zero remainder product-derivative match")
   }
   match expr_match(add([mul([a, dgx, dfx]), mul([b, gx, d2fx]), c]), expr) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(b).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(1))), content="0")
     }
     None => fail("expected source-driven coefficient product-derivative match")
   }
@@ -1099,24 +1099,24 @@ test "expr_match follows more SymPy source multiplicative wildcard power cases" 
   ])
   match expr_match(pattern, eq) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(0))), content="z")
-      inspect(@symprint.to_string(env.get(lw).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(nw).unwrap_or(int(0))), content="2")
-      inspect(@symprint.to_string(env.get(aw).unwrap_or(int(0))), content="7")
-      inspect(@symprint.to_string(env.get(bw).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(0))), content="z")
+      inspect(@symprint.pretty_string(env.get(lw).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(nw).unwrap_or(int(0))), content="2")
+      inspect(@symprint.pretty_string(env.get(aw).unwrap_or(int(0))), content="7")
+      inspect(@symprint.pretty_string(env.get(bw).unwrap_or(int(1))), content="0")
     }
     None => fail("expected source-driven multiplicative wildcard power match")
   }
   match expr_match(pattern, mul([mul([int(-7), x]), eq])) {
     Some(env) => {
       inspect(
-        @symprint.to_string(env.get(c).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(c).unwrap_or(int(0))),
         content="-7*x*z",
       )
-      inspect(@symprint.to_string(env.get(lw).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(nw).unwrap_or(int(0))), content="2")
-      inspect(@symprint.to_string(env.get(aw).unwrap_or(int(0))), content="7")
-      inspect(@symprint.to_string(env.get(bw).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(lw).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(nw).unwrap_or(int(0))), content="2")
+      inspect(@symprint.pretty_string(env.get(aw).unwrap_or(int(0))), content="7")
+      inspect(@symprint.pretty_string(env.get(bw).unwrap_or(int(1))), content="0")
     }
     None =>
       fail("expected source-driven scaled multiplicative wildcard power match")
@@ -1160,7 +1160,7 @@ test "expr_match follows more SymPy source trig and infinity wildcard cases" {
   let q = Expr::Wild("q", [], [])
   let c = Expr::Wild("c", [], [])
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       expr_match(
         mul([function("sin", [p]), function("sin", [q]), c]),
         pow(function("sin", [x]), int(2)),
@@ -1177,9 +1177,9 @@ test "expr_match follows more SymPy source trig and infinity wildcard cases" {
       mul([int(2), function("sin", [x])]),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(p).unwrap_or(int(0))), content="x")
-      inspect(@symprint.to_string(env.get(q).unwrap_or(int(0))), content="x")
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(p).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(q).unwrap_or(int(0))), content="x")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(1))), content="0")
     }
     None => fail("expected trig additive wildcard match from SymPy source")
   }
@@ -1218,7 +1218,7 @@ test "expr_match follows more SymPy source reciprocal edge cases" {
     expr_match(mul([a, x]), mul([int(6), pow(x, int(-1))])) is Some(_),
   )
   inspect(
-    @symprint.to_string(
+    @symprint.pretty_string(
       expr_match(mul([a, pow(x, int(-1))]), mul([int(6), pow(x, int(-2))]))
       .unwrap_or({})
       .get(a)
@@ -1249,10 +1249,10 @@ test "expr_match follows more SymPy source polynomial coefficient cases" {
   ])
   match expr_match(pattern, eq) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="4")
-      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="3")
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(0))), content="2")
-      inspect(@symprint.to_string(env.get(d).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="4")
+      inspect(@symprint.pretty_string(env.get(b).unwrap_or(int(0))), content="3")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(0))), content="2")
+      inspect(@symprint.pretty_string(env.get(d).unwrap_or(int(0))), content="1")
     }
     None => fail("expected source-driven polynomial coefficient match")
   }
@@ -1262,10 +1262,10 @@ test "expr_match follows more SymPy source polynomial coefficient cases" {
       add([mul([int(4), pow(x, int(3))]), mul([int(2), x]), int(1)]),
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="4")
-      inspect(@symprint.to_string(env.get(b).unwrap_or(int(1))), content="0")
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(0))), content="2")
-      inspect(@symprint.to_string(env.get(d).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="4")
+      inspect(@symprint.pretty_string(env.get(b).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(0))), content="2")
+      inspect(@symprint.pretty_string(env.get(d).unwrap_or(int(0))), content="1")
     }
     None => fail("expected source-driven polynomial coefficient zero fill")
   }
@@ -1279,11 +1279,11 @@ test "expr_match follows more SymPy source polynomial coefficient cases" {
       let a_value = env.get(a).unwrap_or(int(0))
       if compare_expr(a_value, add([sqrt2, int(3)])) != 0 {
         fail(
-          "expected constant coefficient to match sqrt(2) + 3, got \{@symprint.to_string(a_value)}",
+          "expected constant coefficient to match sqrt(2) + 3, got \{@symprint.pretty_string(a_value)}",
         )
       }
-      inspect(@symprint.to_string(env.get(b).unwrap_or(int(0))), content="1")
-      inspect(@symprint.to_string(env.get(c).unwrap_or(int(1))), content="0")
+      inspect(@symprint.pretty_string(env.get(b).unwrap_or(int(0))), content="1")
+      inspect(@symprint.pretty_string(env.get(c).unwrap_or(int(1))), content="0")
     }
     None => fail("expected source-driven sparse polynomial coefficient match")
   }
@@ -1308,7 +1308,7 @@ test "expr_match follows more SymPy source gamma collection cases" {
   let pattern = add([mul([a, function("log", [gamma])]), mul([b, gamma]), c])
   match expr_match(pattern, eq) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="-1/2")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="-1/2")
       let b_value = env.get(b).unwrap_or(int(0))
       if compare_expr(
           b_value,
@@ -1319,7 +1319,7 @@ test "expr_match follows more SymPy source gamma collection cases" {
         ) !=
         0 {
         fail(
-          "expected gamma coefficient match, got \{@symprint.to_string(b_value)}",
+          "expected gamma coefficient match, got \{@symprint.pretty_string(b_value)}",
         )
       }
       let c_value = env.get(c).unwrap_or(int(0))
@@ -1334,7 +1334,7 @@ test "expr_match follows more SymPy source gamma collection cases" {
         ) !=
         0 {
         fail(
-          "expected gamma remainder match, got \{@symprint.to_string(c_value)}",
+          "expected gamma remainder match, got \{@symprint.pretty_string(c_value)}",
         )
       }
     }
@@ -1389,17 +1389,17 @@ test "expr_match follows more SymPy source expanded gamma collection cases" {
       expanded,
     ) {
     Some(env) => {
-      inspect(@symprint.to_string(env.get(a).unwrap_or(int(0))), content="-1/2")
+      inspect(@symprint.pretty_string(env.get(a).unwrap_or(int(0))), content="-1/2")
       let b_value = env.get(b).unwrap_or(int(0))
       if compare_expr(b_value, expected_gamma_coeff) != 0 {
         fail(
-          "expected expanded gamma coefficient match, got \{@symprint.to_string(b_value)}",
+          "expected expanded gamma coefficient match, got \{@symprint.pretty_string(b_value)}",
         )
       }
       let c_value = env.get(c).unwrap_or(int(0))
       if compare_expr(c_value, expected_const) != 0 {
         fail(
-          "expected expanded gamma constant match, got \{@symprint.to_string(c_value)}",
+          "expected expanded gamma constant match, got \{@symprint.pretty_string(c_value)}",
         )
       }
     }
@@ -1413,19 +1413,19 @@ test "expr_match follows more SymPy source expanded gamma collection cases" {
     ) {
     Some(env) => {
       inspect(
-        @symprint.to_string(env.get(g1).unwrap_or(int(0))),
+        @symprint.pretty_string(env.get(g1).unwrap_or(int(0))),
         content="-1/2",
       )
       let g2_value = env.get(g2).unwrap_or(int(0))
       if compare_expr(g2_value, expected_gamma_coeff) != 0 {
         fail(
-          "expected expanded excluded gamma coefficient match, got \{@symprint.to_string(g2_value)}",
+          "expected expanded excluded gamma coefficient match, got \{@symprint.pretty_string(g2_value)}",
         )
       }
       let g3_value = env.get(g3).unwrap_or(int(0))
       if compare_expr(g3_value, expected_const) != 0 {
         fail(
-          "expected expanded excluded gamma constant match, got \{@symprint.to_string(g3_value)}",
+          "expected expanded excluded gamma constant match, got \{@symprint.pretty_string(g3_value)}",
         )
       }
     }

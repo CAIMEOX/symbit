@@ -150,11 +150,11 @@ test "physics.mechanics symbolic system forms" {
   assert_eq(symsystem3.kin_explicit_rhs().height(), 2)
   assert_eq(symsystem3.alg_con(), Some([4]))
   inspect(
-    symsystem1.dynamic_symbols().map(@symprint.to_string).join(","),
+    symsystem1.dynamic_symbols().map(@symprint.pretty_string).join(","),
     content="u(t),v(t),x(t),y(t),lambda(t)",
   )
   inspect(
-    symsystem3.constant_symbols().map(@symprint.to_string).join(","),
+    symsystem3.constant_symbols().map(@symprint.pretty_string).join(","),
     content="g,l,m",
   )
   assert_true(
@@ -162,7 +162,7 @@ test "physics.mechanics symbolic system forms" {
   )
   assert_eq(symsystem2.output_eqns().length(), 1)
   assert_eq(
-    @symprint.to_string(symsystem2.output_eqns()[0].1),
+    @symprint.pretty_string(symsystem2.output_eqns()[0].1),
     "g*m*(l + y(t))",
   )
 }

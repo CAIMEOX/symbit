@@ -155,7 +155,7 @@ pub fn Body::repr(self : Body) -> String {
     ", frame=" +
     self.frame_.name() +
     ", mass=" +
-    @symprint.to_string(self.mass_) +
+    @symprint.pretty_string(self.mass_) +
     ", inertia=" +
     self.inertia_.repr() +
     ")"
@@ -165,7 +165,7 @@ pub fn Body::repr(self : Body) -> String {
     "', masscenter=" +
     self.masscenter_.name() +
     ", mass=" +
-    @symprint.to_string(self.mass_) +
+    @symprint.pretty_string(self.mass_) +
     ")"
   }
 }

@@ -1,6 +1,6 @@
 ///|
 fn expr_norm(expr : @symcore.Expr) -> String raise {
-  sympy_normalize(@symprint.to_string(expr))
+  sympy_normalize(@symprint.pretty_string(expr))
 }
 
 ///|
@@ -294,7 +294,7 @@ test "polyfuncs: horner parity small cases" {
     (x ^ @symcore.int(2)) + x + @symcore.int(1),
   ]
   for expr in cases {
-    let ours = @symprint.to_string(@sympolys.horner(expr, gens=["x"]))
+    let ours = @symprint.pretty_string(@sympolys.horner(expr, gens=["x"]))
     let oracle = horner(expr, gens=["x"])
     assert_true(expr_equal(ours, oracle))
   }
@@ -440,7 +440,7 @@ test "polyfuncs: horner parity multivariate wrt=y" {
     @symcore.int(2) * (x ^ @symcore.int(2)) * y +
     @symcore.int(2) * x * (y ^ @symcore.int(2)) +
     x * y
-  let ours = @symprint.to_string(
+  let ours = @symprint.pretty_string(
     @sympolys.horner(expr, gens=["x", "y"], wrt="y"),
   )
   let oracle = horner(expr, gens=["x", "y"], wrt="y")
@@ -455,7 +455,7 @@ test "polyfuncs: horner parity multivariate wrt default" {
     @symcore.int(2) * (x ^ @symcore.int(2)) * y +
     @symcore.int(2) * x * (y ^ @symcore.int(2)) +
     x * y
-  let ours = @symprint.to_string(@sympolys.horner(expr, gens=["x", "y"]))
+  let ours = @symprint.pretty_string(@sympolys.horner(expr, gens=["x", "y"]))
   let oracle = horner(expr, gens=["x", "y"])
   assert_true(expr_equal(ours, oracle))
 }

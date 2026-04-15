@@ -329,7 +329,7 @@ pub fn domain_to_sympy_string(domain : Domain) -> String {
     }
     Domain::QuotientRing(base, gens, rels) => {
       let names = gens.join(",")
-      let rels_str = rels.map(r => @symprint.to_string(r)).join(",")
+      let rels_str = rels.map(r => @symprint.pretty_string(r)).join(",")
       "\{domain_to_sympy_string(base)}[\{names}]/<\{rels_str}>"
     }
     Domain::PowerSeries(base, gens, prec) => {
@@ -1339,7 +1339,7 @@ pub fn domain_unify_composite(
 fn extension_names(extension : Array[Expr]) -> Array[String] {
   let names : Array[String] = Array::new()
   for expr in extension {
-    let name = @symprint.to_string(expr)
+    let name = @symprint.pretty_string(expr)
     if !names.contains(name) {
       names.push(name)
     }
@@ -1578,10 +1578,10 @@ fn default_algext_gen(poly : Poly, root_index : Int) -> String raise PolyError {
     let lead = poly_univar_coeff(poly, 1)
     let const_term = poly_univar_coeff(poly, 0)
     let root = fe_to_expr_const(fe_mul(fe_neg(const_term), fe_inv(lead)))
-    return @symprint.to_string(root)
+    return @symprint.pretty_string(root)
   }
   let idx = normalize_root_index(poly, root_index)
-  let poly_text = @symprint.to_string(poly.to_expr()).replace_all(
+  let poly_text = @symprint.pretty_string(poly.to_expr()).replace_all(
     old="+ -",
     new="- ",
   )
@@ -1748,7 +1748,7 @@ pub fn domain_drop(
 
 ///|
 fn expr_key(expr : Expr) -> String {
-  @symprint.to_string(expr).replace_all(old=" ", new="")
+  @symprint.pretty_string(expr).replace_all(old=" ", new="")
 }
 
 ///|

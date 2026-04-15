@@ -21,14 +21,14 @@ fn expr_pi() -> Expr {
 ///|
 fn expr_equal_expr(expr : Expr, oracle_str : String) -> Bool raise {
   let res : Result[Bool, Error] = try? expr_equal(
-    @symprint.to_string(expr),
+    @symprint.pretty_string(expr),
     oracle_str,
   )
   match res {
     Ok(v) => v
     Err(e) =>
       fail(
-        "expr_equal error: ours=\{@symprint.to_string(expr)} oracle=\{oracle_str} err=\{e}",
+        "expr_equal error: ours=\{@symprint.pretty_string(expr)} oracle=\{oracle_str} err=\{e}",
       )
   }
 }
@@ -47,7 +47,7 @@ fn matrix_flat_str(m : Matrix) -> Array[String] {
   let out : Array[String] = Array::new()
   for row in m {
     for item in row {
-      out.push(@symprint.to_string(item))
+      out.push(@symprint.pretty_string(item))
     }
   }
   out

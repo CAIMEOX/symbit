@@ -4,7 +4,7 @@
 ///|
 fn index_to_string(index : Index) -> String {
   match index {
-    Index::Expr(expr) => @symprint.to_string(expr)
+    Index::Expr(expr) => @symprint.pretty_string(expr)
     Index::Idx(item) => item.name
   }
 }
@@ -49,7 +49,7 @@ fn format_expr(expr : IndexedExpr, parent_prec : Int) -> String {
     _ => 3
   }
   let body = match expr {
-    IndexedExpr::Scalar(e) => @symprint.to_string(e)
+    IndexedExpr::Scalar(e) => @symprint.pretty_string(e)
     IndexedExpr::Atom(i) => i.to_string()
     IndexedExpr::Add(items) =>
       items.map(item => format_expr(item, prec)).join(" + ")

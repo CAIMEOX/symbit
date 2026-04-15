@@ -1,6 +1,6 @@
 ///|
 fn parse_repr(src : String) -> String raise {
-  @symprint.to_string(
+  @symprint.pretty_string(
     parse_expr_with(
       src,
       parse_options(transformations=relaxed_transformations()),

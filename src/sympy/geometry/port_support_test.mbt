@@ -40,7 +40,7 @@ using @symgeometry {
 
 ///|
 fn geometry_py_expr_text(expr : @symcore.Expr) -> String {
-  @symprint.to_string(expr).replace(old="^", new="**")
+  @symprint.pretty_string(expr).replace(old="^", new="**")
 }
 
 ///|

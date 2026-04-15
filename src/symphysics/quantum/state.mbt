@@ -181,7 +181,7 @@ pub impl Show for StateExpr with to_string(self) {
   let (left, right, sep) = state_brackets(self.flavor)
   let contents = quantum_join_label(self.label, separator=", ")
   match self.time {
-    Some(time) => "\{left}\{contents}\{sep}\{@symprint.to_string(time)}\{right}"
+    Some(time) => "\{left}\{contents}\{sep}\{@symprint.pretty_string(time)}\{right}"
     None => "\{left}\{contents}\{right}"
   }
 }

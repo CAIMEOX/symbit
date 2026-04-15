@@ -20,9 +20,9 @@ test "physics.optics.waves: twave properties and rewrites" {
   assert_true(wave.phase == phi)
   assert_true(wave.time_period == (freq ^ @symcore.int(-1)))
   assert_true(wave.refractive_index_expr() == @symcore.Expr::Symbol("n"))
-  assert_true(@symprint.to_string(wave.rewrite_as_cos()).contains("cos("))
-  assert_true(@symprint.to_string(wave.rewrite_as_sin()).contains("sin("))
-  assert_true(@symprint.to_string(wave.rewrite_as_exp()).contains("exp("))
+  assert_true(@symprint.pretty_string(wave.rewrite_as_cos()).contains("cos("))
+  assert_true(@symprint.pretty_string(wave.rewrite_as_sin()).contains("sin("))
+  assert_true(@symprint.pretty_string(wave.rewrite_as_exp()).contains("exp("))
 }
 
 ///|

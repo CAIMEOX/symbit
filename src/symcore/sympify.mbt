@@ -36,7 +36,7 @@ pub(all) enum SympifyInput {
 ///       SympifyInput::SymbolName("x"),
 ///     ]),
 ///   )
-///   inspect(@symprint.to_string(expr), content="(1, x)")
+///   inspect(@symprint.pretty_string(expr), content="(1, x)")
 /// }
 /// ```
 pub fn sympify(input : SympifyInput) -> Expr {

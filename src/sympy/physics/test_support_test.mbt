@@ -13,7 +13,7 @@ fn quantum_test_assert_expr_equal(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  let ours = @symprint.to_string(lhs)
+  let ours = @symprint.pretty_string(lhs)
   assert_true(expr_equal(ours, rhs))
 }
 
@@ -63,7 +63,7 @@ fn quantum_measurements_to_expr_string(
   let items : Array[String] = []
   for item in results {
     items.push(
-      "(\{@symprint.to_string(item.0)}, \{@symprint.to_string(item.1)})",
+      "(\{@symprint.pretty_string(item.0)}, \{@symprint.pretty_string(item.1)})",
     )
   }
   let joined = items.join(", ")

@@ -205,6 +205,6 @@ pub impl Show for DifferentialOperatorAlgebra with output(
   logger : &Logger,
 ) -> Unit {
   logger.write_string(
-    "Univariate Differential Operator Algebra in intermediate \{self.generator} over variable \{@symprint.to_string(self.symbol_var)}",
+    "Univariate Differential Operator Algebra in intermediate \{self.generator} over variable \{@symprint.pretty_string(self.symbol_var)}",
   )
 }

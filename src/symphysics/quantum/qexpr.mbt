@@ -32,9 +32,9 @@ fn quantum_repr_expr(expr : Expr) -> String {
               let rendered = args.map(quantum_repr_expr).join(",")
               "\{name}(\{rendered})"
             }
-            None => @symprint.to_string(expr)
+            None => @symprint.pretty_string(expr)
           }
-        None => @symprint.to_string(expr)
+        None => @symprint.pretty_string(expr)
       }
   }
 }
@@ -44,7 +44,7 @@ pub fn quantum_join_label(
   args : Array[Expr],
   separator? : String = "",
 ) -> String {
-  args.map(@symprint.to_string).join(separator)
+  args.map(@symprint.pretty_string).join(separator)
 }
 
 ///|

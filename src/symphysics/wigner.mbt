@@ -94,12 +94,12 @@ fn wigner_doubled_int(value : Expr) -> Int raise PhysicsError {
         return num.to_int()
       }
       raise PhysicsError::ValueError(
-        "expecting integer or half-integer, got \{@symprint.to_string(value)}",
+        "expecting integer or half-integer, got \{@symprint.pretty_string(value)}",
       )
     }
     None =>
       raise PhysicsError::ValueError(
-        "expecting integer or half-integer, got \{@symprint.to_string(value)}",
+        "expecting integer or half-integer, got \{@symprint.pretty_string(value)}",
       )
   }
 }

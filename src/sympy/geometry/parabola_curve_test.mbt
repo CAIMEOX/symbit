@@ -8,7 +8,7 @@ test "geometry.parabola vertex axis and line intersection" {
     ),
   )
   assert_eq(pa.vertex().repr(), "Point2D(0, -1)")
-  assert_true(geometry_expr_equal(@symprint.to_string(pa.p_parameter()), "1"))
+  assert_true(geometry_expr_equal(@symprint.pretty_string(pa.p_parameter()), "1"))
   let hits = pa.intersection(
     geometry_line(
       line(
@@ -34,14 +34,14 @@ test "geometry.curve arbitrary point transforms and length shell" {
     @symcore.int(2),
   )
   let ap = c.arbitrary_point()
-  assert_eq(@symprint.to_string(ap.x()), "2*s")
-  assert_eq(@symprint.to_string(ap.y()), "s**2")
+  assert_eq(@symprint.pretty_string(ap.x()), "2*s")
+  assert_eq(@symprint.pretty_string(ap.y()), "s**2")
   assert_eq(
     c.translate([@symcore.int(1), @symcore.int(3)]).repr(),
     "Curve((2*s + 1, s**2 + 3), (s, 0, 2))",
   )
   assert_eq(
-    @symprint.to_string(c.length()),
+    @symprint.pretty_string(c.length()),
     "Integral(sqrt(((2*s)**2 + 4)), s, 0, 2)",
   )
 }

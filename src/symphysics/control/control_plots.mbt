@@ -94,7 +94,7 @@ fn control_plot_label(
   system : SISOLinearTimeInvariant,
 ) -> String raise ControlError {
   let expr = system.doit().to_expr()
-  @symprint.to_string(expr)
+  @symprint.pretty_string(expr)
 }
 
 ///|

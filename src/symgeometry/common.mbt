@@ -45,7 +45,7 @@ fn geo_clone_exprs(items : Array[Expr]) -> Array[Expr] {
 
 ///|
 fn geo_expr_text(expr : Expr) -> String {
-  @symprint.to_string(geo_simplify(expr))
+  @symprint.pretty_string(geo_simplify(expr))
 }
 
 ///|

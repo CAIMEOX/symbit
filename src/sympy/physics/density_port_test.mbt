@@ -6,37 +6,37 @@ test "physics.quantum.density: parity" {
   let k0 = ket([zero]).as_expr()
   let k1 = ket([one]).as_expr()
   let rho = density([(k0, half), (k1, half)])
-  let rho_txt = @symprint.to_string(rho.as_expr())
+  let rho_txt = @symprint.pretty_string(rho.as_expr())
 
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(rho.states())),
+    quantum_eval_str(@symprint.pretty_string(rho.states())),
     quantum_density_states_str(rho_txt),
     "density states parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(rho.probs())),
+    quantum_eval_str(@symprint.pretty_string(rho.probs())),
     quantum_density_probs_str(rho_txt),
     "density probs parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(rho.get_state(1))),
+    quantum_eval_str(@symprint.pretty_string(rho.get_state(1))),
     quantum_density_get_state_str(rho_txt, 1),
     "density get_state parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(rho.get_prob(0))),
+    quantum_eval_str(@symprint.pretty_string(rho.get_prob(0))),
     quantum_density_get_prob_str(rho_txt, 0),
     "density get_prob parity",
   )
 
   let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(rho.apply_op(a).as_expr())),
+    quantum_eval_str(@symprint.pretty_string(rho.apply_op(a).as_expr())),
     quantum_density_apply_op_str(rho_txt, "Operator(A)"),
     "density apply_op parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(rho.doit())),
+    quantum_eval_str(@symprint.pretty_string(rho.doit())),
     quantum_doit_str(rho_txt),
     "density doit parity",
   )
@@ -61,7 +61,7 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
     "density represent parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(entropy(mixed.as_expr(), spin_j=half))),
+    quantum_eval_str(@symprint.pretty_string(entropy(mixed.as_expr(), spin_j=half))),
     quantum_entropy_str(
       "Density((JzKet(Rational(1, 2), Rational(1, 2)), Rational(1, 2)), (JzKet(Rational(1, 2), Rational(-1, 2)), Rational(1, 2)))",
     ),
@@ -69,7 +69,7 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         fidelity(pure_up.as_expr(), pure_down.as_expr(), spin_j=half),
       ),
     ),
@@ -80,7 +80,7 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         fidelity(pure_up.as_expr(), mixed.as_expr(), spin_j=half),
       ),
     ),
@@ -119,20 +119,20 @@ test "physics.quantum.density: tensor-product trace parity" {
     jz_ket(half, @symcore.int(-1) * half).as_expr(),
   ]).as_expr()
   let rho = density([(tp, @symcore.int(1))])
-  let rho_txt = @symprint.to_string(rho.as_expr())
+  let rho_txt = @symprint.pretty_string(rho.as_expr())
 
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(rho.doit())),
+    quantum_eval_str(@symprint.pretty_string(rho.doit())),
     quantum_doit_str(rho_txt),
     "density tensor-product doit parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(rho.trace())),
+    quantum_eval_str(@symprint.pretty_string(rho.trace())),
     quantum_eval_str("Tr(\{rho_txt}).doit()"),
     "density tensor-product trace parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(rho.trace(indices=[1]))),
+    quantum_eval_str(@symprint.pretty_string(rho.trace(indices=[1]))),
     quantum_doit_str("Tr(\{rho_txt}, [1])"),
     "density tensor-product partial trace parity",
   )

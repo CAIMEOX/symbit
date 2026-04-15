@@ -12,9 +12,9 @@ fn actuator_assert_force_load(
     Load::ForceLoad(value) => {
       assert_eq(value.point.name(), point_name)
       let comps = value.force.to_matrix(frame)
-      let ours_x = @symprint.to_string(comps.get(0, 0))
-      let ours_y = @symprint.to_string(comps.get(1, 0))
-      let ours_z = @symprint.to_string(comps.get(2, 0))
+      let ours_x = @symprint.pretty_string(comps.get(0, 0))
+      let ours_y = @symprint.pretty_string(comps.get(1, 0))
+      let ours_z = @symprint.pretty_string(comps.get(2, 0))
       assert_true(mechanics_expr_equal(ours_x, rhs_x))
       assert_true(mechanics_expr_equal(ours_y, rhs_y))
       assert_true(mechanics_expr_equal(ours_z, rhs_z))
@@ -37,9 +37,9 @@ fn actuator_assert_torque_load(
     Load::TorqueLoad(value) => {
       assert_eq(value.frame.name(), frame_name)
       let comps = value.torque.to_matrix(basis_frame)
-      let ours_x = @symprint.to_string(comps.get(0, 0))
-      let ours_y = @symprint.to_string(comps.get(1, 0))
-      let ours_z = @symprint.to_string(comps.get(2, 0))
+      let ours_x = @symprint.pretty_string(comps.get(0, 0))
+      let ours_y = @symprint.pretty_string(comps.get(1, 0))
+      let ours_z = @symprint.pretty_string(comps.get(2, 0))
       assert_true(mechanics_expr_equal(ours_x, rhs_x))
       assert_true(mechanics_expr_equal(ours_y, rhs_y))
       assert_true(mechanics_expr_equal(ours_z, rhs_z))
@@ -88,7 +88,7 @@ test "physics.mechanics parity actuators" {
   )
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(spring.force()),
+      @symprint.pretty_string(spring.force()),
       spring_force_oracle,
     ),
   )
@@ -99,7 +99,7 @@ test "physics.mechanics parity actuators" {
   )
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(damper.force()),
+      @symprint.pretty_string(damper.force()),
       damper_force_oracle,
     ),
   )
@@ -114,7 +114,7 @@ test "physics.mechanics parity actuators" {
   )
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(duffing.force()),
+      @symprint.pretty_string(duffing.force()),
       duffing_force_oracle,
     ),
   )
@@ -130,7 +130,7 @@ test "physics.mechanics parity actuators" {
   )
   assert_true(
     mechanics_expr_equal(
-      @symprint.to_string(friction.force()),
+      @symprint.pretty_string(friction.force()),
       friction_force_oracle,
     ),
   )

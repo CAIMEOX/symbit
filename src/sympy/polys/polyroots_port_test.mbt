@@ -2,7 +2,7 @@
 fn roots_repr(roots : Array[@symcore.Expr]) -> String raise {
   let parts : Array[String] = Array::new()
   for r in roots {
-    parts.push(sympy_normalize(@symprint.to_string(r)))
+    parts.push(sympy_normalize(@symprint.pretty_string(r)))
   }
   let joined = parts.join(",")
   sympy_normalize("[\{joined}]")

@@ -18,7 +18,7 @@ test "physics.quantum.wavefunction: parity" {
 
   quantum_test_assert_string_equal(
     quantum_doit_str("InnerProduct(OrthogonalBra(n), OrthogonalKet(n))"),
-    @symprint.to_string(
+    @symprint.pretty_string(
       inner_product(
         orthogonal_bra([n]).as_expr(),
         orthogonal_ket([n]).as_expr(),
@@ -28,7 +28,7 @@ test "physics.quantum.wavefunction: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_doit_str("InnerProduct(OrthogonalBra(n), OrthogonalKet(n + 1))"),
-    @symprint.to_string(
+    @symprint.pretty_string(
       inner_product(
         orthogonal_bra([n]).as_expr(),
         orthogonal_ket([n + @symcore.int(1)]).as_expr(),
@@ -38,12 +38,12 @@ test "physics.quantum.wavefunction: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("Dagger(Wavefunction(x**2, x))"),
-    quantum_eval_str(@symprint.to_string(dagger(wf.as_expr()))),
+    quantum_eval_str(@symprint.pretty_string(dagger(wf.as_expr()))),
     "wavefunction dagger parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("Wavefunction(x**2, x).prob()"),
-    quantum_eval_str(@symprint.to_string(wf.prob().as_expr())),
+    quantum_eval_str(@symprint.pretty_string(wf.prob().as_expr())),
     "wavefunction prob parity",
   )
   quantum_test_assert_string_equal(
@@ -51,7 +51,7 @@ test "physics.quantum.wavefunction: parity" {
       "DifferentialOperator(Derivative(wf(x), x), wf(x))*Wavefunction(x**2, x)",
     ),
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         qapply(@symcore.raw_mul([dop.as_expr(), wf.as_expr()])),
       ),
     ),
@@ -62,7 +62,7 @@ test "physics.quantum.wavefunction: parity" {
       "DifferentialOperator(x**(-1)*Derivative(wf(x), x), wf(x))*Wavefunction(x**2, x)",
     ),
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         qapply(@symcore.raw_mul([dop2.as_expr(), wf.as_expr()])),
       ),
     ),
@@ -88,7 +88,7 @@ test "physics.quantum.wavefunction: norm parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("Wavefunction(x**2*y + y**2*x, (x, 0, 1), (y, 0, 2)).norm"),
-    quantum_eval_str(@symprint.to_string(finite.norm())),
+    quantum_eval_str(@symprint.pretty_string(finite.norm())),
     "wavefunction finite norm parity",
   )
 
@@ -98,7 +98,7 @@ test "physics.quantum.wavefunction: norm parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("Wavefunction(sqrt(5)*x**2, (x, 0, 1)).normalize()"),
-    quantum_eval_str(@symprint.to_string(normalized_wf.normalize().as_expr())),
+    quantum_eval_str(@symprint.pretty_string(normalized_wf.normalize().as_expr())),
     "wavefunction normalize parity",
   )
 }

@@ -3,14 +3,14 @@ test "physics.quantum.operatorset: parity subset" {
   quantum_test_assert_string_equal(
     quantum_eval_str("operators_to_state(XOp())"),
     quantum_eval_str(
-      @symprint.to_string(operators_to_state(x_op()).unwrap_or(@symcore.int(0))),
+      @symprint.pretty_string(operators_to_state(x_op()).unwrap_or(@symcore.int(0))),
     ),
     "operators_to_state(XOp()) parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("operators_to_state(PxOp())"),
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         operators_to_state(px_op()).unwrap_or(@symcore.int(0)),
       ),
     ),
@@ -19,7 +19,7 @@ test "physics.quantum.operatorset: parity subset" {
   quantum_test_assert_string_equal(
     quantum_eval_str("JxKet(Rational(1, 2), Rational(1, 2))"),
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         operators_to_state_many([j2(), jx()]).unwrap_or(@symcore.int(0)),
       ),
     ),

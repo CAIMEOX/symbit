@@ -4,7 +4,7 @@ fn check_expr(
   expr : @symcore.Expr,
   expected : String,
 ) -> Unit raise {
-  let ours = @symprint.to_string(expr)
+  let ours = @symprint.pretty_string(expr)
   guard ours == expected else {
     println("mismatch [\{label}]: ours=\{ours} expected=\{expected}")
     fail("expr mismatch")
@@ -57,7 +57,7 @@ test "elementary full parity (core)" {
   check_expr("transpose", transpose(x), "transpose(x)")
   check_expr("adjoint", adjoint(x), "adjoint(x)")
   let pol = polarify(x)
-  assert_eq(@symprint.to_string(pol), "polarify(x)")
+  assert_eq(@symprint.pretty_string(pol), "polarify(x)")
   check_expr("unpolarify", unpolarify(x), "unpolarify(x)")
   check_expr("sin", sin(x), "sin(x)")
   check_expr("cos", cos(x), "cos(x)")
@@ -96,5 +96,5 @@ test "elementary full parity (core)" {
 
   // Piecewise parity needs custom encoding; we only assert construction here.
   let pw = piecewise([{ expr: x, cond: @symlogic.bool_symbol("c") }])
-  assert_eq(@symprint.to_string(pw), "Piecewise(x, c, NaN(), True)")
+  assert_eq(@symprint.pretty_string(pw), "Piecewise(x, c, NaN(), True)")
 }

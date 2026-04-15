@@ -4,7 +4,7 @@ fn pauli_assert_expr_equal(
   rhs : String,
   context : String,
 ) -> Unit raise {
-  let ours = @symprint.to_string(lhs)
+  let ours = @symprint.pretty_string(lhs)
   let eq : Result[Bool, Error] = try? expr_equal(ours, rhs)
   let ok = match eq {
     Ok(value) => value

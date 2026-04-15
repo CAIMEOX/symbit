@@ -13,8 +13,8 @@ test "physics.mechanics parity joints" {
   let pin = pin_joint("QPC", parent.as_bodylike(), child.as_bodylike())
 
   assert_eq(pin.repr(), "PinJoint: QPC  parent: QP  child: QC")
-  assert_eq(@symprint.to_string(pin.coordinates()[0]), "q_QPC(t)")
-  assert_eq(@symprint.to_string(pin.speeds()[0]), "u_QPC(t)")
+  assert_eq(@symprint.pretty_string(pin.coordinates()[0]), "q_QPC(t)")
+  assert_eq(@symprint.pretty_string(pin.speeds()[0]), "u_QPC(t)")
   let pin_ang_oracle = mechanics_summary(
     "N=ReferenceFrame('QJN'); O=Point('QJO'); O.set_vel(N, 0); P=RigidBody('QP', O, N); C=RigidBody('QC'); J=PinJoint('QPC', P, C); [[str(x) for x in row] for row in C.frame.ang_vel_in(P.frame).to_matrix(P.frame).tolist()]",
   )
@@ -45,7 +45,7 @@ test "physics.mechanics parity joints" {
   let slider = rigid_body("QS")
   let prism = prismatic_joint("QPS", parent.as_bodylike(), slider.as_bodylike())
   assert_eq(prism.repr(), "PrismaticJoint: QPS  parent: QP  child: QS")
-  assert_eq(@symprint.to_string(prism.coordinates()[0]), "q_QPS(t)")
+  assert_eq(@symprint.pretty_string(prism.coordinates()[0]), "q_QPS(t)")
   let prism_ang_oracle = mechanics_summary(
     "N=ReferenceFrame('QJN'); O=Point('QJO'); O.set_vel(N, 0); P=RigidBody('QP', O, N); S=RigidBody('QS'); J=PrismaticJoint('QPS', P, S); [[str(x) for x in row] for row in S.frame.ang_vel_in(P.frame).to_matrix(P.frame).tolist()]",
   )
@@ -89,8 +89,8 @@ test "physics.mechanics parity advanced joints" {
     parent.as_bodylike(),
     cyl_child.as_bodylike(),
   )
-  assert_eq(@symprint.to_string(cyl.rotation_coordinate()), "q0_QCY(t)")
-  assert_eq(@symprint.to_string(cyl.translation_coordinate()), "q1_QCY(t)")
+  assert_eq(@symprint.pretty_string(cyl.rotation_coordinate()), "q0_QCY(t)")
+  assert_eq(@symprint.pretty_string(cyl.translation_coordinate()), "q1_QCY(t)")
   assert_true(
     mechanics_matrix_equal(
       @symphysics.explicit_matrix_rows_string(

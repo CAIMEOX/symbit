@@ -10,7 +10,7 @@ test "symconcrete find_simple_recurrence_vector" {
     @symcore.int(13),
   ]
   let coeffs = find_simple_recurrence_vector(seq)
-  let strs = coeffs.map(@symprint.to_string)
+  let strs = coeffs.map(@symprint.pretty_string)
   assert_eq(strs, ["1", "-1", "-1"])
 }
 
@@ -29,7 +29,7 @@ test "symconcrete find_simple_recurrence expr" {
     Some(r) => r
     None => fail("recurrence not found")
   }
-  let ours_str = @symprint.to_string(rec)
+  let ours_str = @symprint.pretty_string(rec)
   let expected = "-a(n) - a(n + 1) + a(n + 2)"
   assert_eq(normalize_srepr(ours_str), normalize_srepr(expected))
 }
@@ -42,7 +42,7 @@ test "symconcrete rinterp polynomial" {
     Some(v) => v
     None => fail("rinterp failed")
   }
-  let ours_str = @symprint.to_string(expr)
+  let ours_str = @symprint.pretty_string(expr)
   let expected = "2*x + 1"
   assert_true(sympy_equiv_str(ours_str, expected))
 }
@@ -60,7 +60,7 @@ test "symconcrete rinterp symbolic fallback" {
     Some(v) => v
     None => fail("rinterp symbolic fallback failed")
   }
-  let ours_str = @symprint.to_string(expr)
+  let ours_str = @symprint.pretty_string(expr)
   let expected = "a + x"
   assert_true(sympy_equiv_str(ours_str, expected))
 }
@@ -80,7 +80,7 @@ test "symconcrete guess_generating_function_rational geometric" {
     Some(v) => v
     None => fail("guess_generating_function_rational failed")
   }
-  let ours_str = @symprint.to_string(expr)
+  let ours_str = @symprint.pretty_string(expr)
   let expected = "1/(1 - 2*x)"
   assert_true(sympy_equiv_str(ours_str, expected))
 }
@@ -100,7 +100,7 @@ test "symconcrete guess returns recurrence" {
     Some(r) => r
     None => fail("guess failed")
   }
-  let ours_str = @symprint.to_string(rec)
+  let ours_str = @symprint.pretty_string(rec)
   let expected = "-a(n) - a(n + 1) + a(n + 2)"
   assert_eq(normalize_srepr(ours_str), normalize_srepr(expected))
 }

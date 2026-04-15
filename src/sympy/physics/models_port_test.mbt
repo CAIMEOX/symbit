@@ -10,8 +10,8 @@ test "physics.mechanics parity model coordinates and speeds" {
     apply_gravity=true,
     apply_external_forces=true,
   )
-  let chain_q = "[" + chain.q_ind().map(@symprint.to_string).join(", ") + "]"
-  let chain_u = "[" + chain.u_ind().map(@symprint.to_string).join(", ") + "]"
+  let chain_q = "[" + chain.q_ind().map(@symprint.pretty_string).join(", ") + "]"
+  let chain_u = "[" + chain.u_ind().map(@symprint.pretty_string).join(", ") + "]"
   let chain_summary = "[" + chain_q + ", " + chain_u + "]"
   let chain_oracle = mechanics_summary(
     "from sympy.physics.mechanics.models import multi_mass_spring_damper; km = multi_mass_spring_damper(2, apply_gravity=True, apply_external_forces=True); [[str(x) for x in km.q], [str(x) for x in km.u]]",
@@ -24,10 +24,10 @@ test "physics.mechanics parity model coordinates and speeds" {
     joint_torques=true,
   )
   let pendulum_q = "[" +
-    pendulum.q_ind().map(@symprint.to_string).join(", ") +
+    pendulum.q_ind().map(@symprint.pretty_string).join(", ") +
     "]"
   let pendulum_u = "[" +
-    pendulum.u_ind().map(@symprint.to_string).join(", ") +
+    pendulum.u_ind().map(@symprint.pretty_string).join(", ") +
     "]"
   let pendulum_summary = "[" + pendulum_q + ", " + pendulum_u + "]"
   let pendulum_oracle = mechanics_summary(

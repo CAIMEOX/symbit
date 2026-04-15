@@ -2,7 +2,7 @@
 fn matrix_text(matrix : @symphysics.ExplicitMatrix) -> String {
   matrix
   .rows_copy()
-  .map(row => row.map(@symprint.to_string).join(","))
+  .map(row => row.map(@symprint.pretty_string).join(","))
   .join("|")
 }
 
@@ -11,7 +11,7 @@ fn scalar_map_text(mapping : Map[BaseScalar, @symcore.Expr]) -> String {
   let keys = mapping.keys().to_array()
   keys.sort()
   keys
-  .map(key => key.to_string() + "=" + @symprint.to_string(mapping[key]))
+  .map(key => key.to_string() + "=" + @symprint.pretty_string(mapping[key]))
   .join("|")
 }
 
@@ -64,8 +64,8 @@ test "vectors support basic arithmetic and axis orientation" {
     "C.x|C.y|C.z",
   )
   assert_eq(
-    @symprint.to_string(dot(v, c.i().to_vector()) catch { _ => fail("dot") }),
-    @symprint.to_string(c.x().expr()),
+    @symprint.pretty_string(dot(v, c.i().to_vector()) catch { _ => fail("dot") }),
+    @symprint.pretty_string(c.x().expr()),
   )
   assert_eq(
     c.i().to_vector().cross(c.j().to_vector()) catch {
@@ -89,14 +89,14 @@ test "scalar expressions can be re-expressed through scalar maps" {
   let b = c.orient_new_axis("B", q, c.k().to_vector()) catch { _ => fail("B") }
   let expr = b.x().expr() * b.y().expr() * b.z().expr()
   assert_eq(
-    @symprint.to_string(express_scalar(expr, c, variables=true)),
+    @symprint.pretty_string(express_scalar(expr, c, variables=true)),
     "C.z*(C.x*C.y*cos(q)**2 + C.y**2*cos(q)*sin(q) - C.x**2*cos(q)*sin(q) - C.x*C.y*sin(q)**2)",
   )
 }
 
 ///|
 fn coords_text(coords : Array[@symcore.Expr]) -> String {
-  coords.map(@symprint.to_string).join("|")
+  coords.map(@symprint.pretty_string).join("|")
 }
 
 ///|
@@ -135,7 +135,7 @@ fn matrix_expr_eq(
 fn matrix3_text(matrix : @symphysics.ExplicitMatrix) -> String {
   matrix
   .rows_copy()
-  .map(row => row.map(@symprint.to_string).join(","))
+  .map(row => row.map(@symprint.pretty_string).join(","))
   .join("|")
 }
 
@@ -219,7 +219,7 @@ test "vector surface includes equals projection separate orthogonalize and lapla
   }
   match projection_scalar {
     ScalarOrVector::ScalarExpr(value) =>
-      assert_eq(@symprint.to_string(value), "7/3")
+      assert_eq(@symprint.pretty_string(value), "7/3")
     ScalarOrVector::VectorExpr(_) => fail("expected scalar projection")
   }
 
@@ -252,7 +252,7 @@ test "vector surface includes equals projection separate orthogonalize and lapla
   let lap_scalar_value = lap_scalar.doit() catch { _ => fail("lap-scalar") }
   match lap_scalar_value {
     ScalarOrVector::ScalarExpr(value) =>
-      assert_eq(@symprint.to_string(value), "6")
+      assert_eq(@symprint.pretty_string(value), "6")
     ScalarOrVector::VectorExpr(_) => fail("expected scalar laplacian result")
   }
 
@@ -347,14 +347,14 @@ test "field functions align with top-level vector surface" {
 
   assert_eq(gradient(scalar).to_string(), field.to_string())
   assert_eq(
-    @symprint.to_string(divergence(field) catch { _ => fail("div") }),
+    @symprint.pretty_string(divergence(field) catch { _ => fail("div") }),
     "0",
   )
   assert_eq((curl(field) catch { _ => fail("curl") }).to_string(), "0")
   assert_eq(is_conservative(field) catch { _ => fail("conservative") }, true)
   assert_eq(is_solenoidal(field) catch { _ => fail("solenoidal") }, true)
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       scalar_potential(field, c) catch {
         _ => fail("potential")
       },
@@ -383,11 +383,11 @@ test "field functions align with top-level vector surface" {
   }
   match lap_scalar {
     ScalarOrVector::ScalarExpr(value) =>
-      assert_eq(@symprint.to_string(value), "2")
+      assert_eq(@symprint.pretty_string(value), "2")
     ScalarOrVector::VectorExpr(_) => fail("expected scalar laplacian")
   }
   assert_eq(
-    @symprint.to_string(
+    @symprint.pretty_string(
       scalar_potential_difference(scalar_or_vector_vector(field), c, p1, p2) catch {
         _ => fail("potential-diff")
       },
@@ -556,7 +556,7 @@ test "directional derivative covers more scalar and vector cases" {
   }
   match dd_zero {
     ScalarOrVector::ScalarExpr(value) =>
-      assert_eq(@symprint.to_string(value), "0")
+      assert_eq(@symprint.pretty_string(value), "0")
     ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
   }
 
@@ -620,7 +620,7 @@ test "unevaluated operator wrappers support doit" {
     "Divergence(C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k)",
   )
   assert_eq(
-    @symprint.to_string(div.doit() catch { _ => fail("div-doit") }),
+    @symprint.pretty_string(div.doit() catch { _ => fail("div-doit") }),
     "0",
   )
 
@@ -706,7 +706,7 @@ test "basisdependent wrappers expose sympy-style vector surface" {
   let mul = vector_mul_expr(c.x().expr(), c.i())
   assert_eq(mul.to_string(), "C.x*C.i")
   assert_eq(mul.base_vector(), c.i())
-  assert_eq(@symprint.to_string(mul.measure_number()), "C.x")
+  assert_eq(@symprint.pretty_string(mul.measure_number()), "C.x")
   assert_eq(mul.doit(), vector_term(c.x().expr(), c.i()))
 
   let add = vector_add_expr([c.i().to_vector(), c.j().to_vector()])
@@ -725,7 +725,7 @@ test "basisdependent wrappers expose sympy-style vector surface" {
   let dot_op = dot_unevaluated(c.j().to_vector(), c.i().to_vector())
   assert_eq(dot_op.to_string(), "Dot(C.i, C.j)")
   assert_eq(
-    @symprint.to_string(dot_op.doit() catch { _ => fail("dot-op") }),
+    @symprint.pretty_string(dot_op.doit() catch { _ => fail("dot-op") }),
     "0",
   )
 }

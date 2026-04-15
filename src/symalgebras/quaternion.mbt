@@ -305,13 +305,13 @@ fn split_sign(expr : Expr) -> (Bool, Expr) {
 
 ///|
 pub impl Show for Quaternion with to_string(self) {
-  let a_str = @symprint.to_string(self.a)
+  let a_str = @symprint.pretty_string(self.a)
   let (b_neg, b_abs) = split_sign(self.b)
   let (c_neg, c_abs) = split_sign(self.c)
   let (d_neg, d_abs) = split_sign(self.d)
-  let b_str = "\{@symprint.to_string(b_abs)}*i"
-  let c_str = "\{@symprint.to_string(c_abs)}*j"
-  let d_str = "\{@symprint.to_string(d_abs)}*k"
+  let b_str = "\{@symprint.pretty_string(b_abs)}*i"
+  let c_str = "\{@symprint.pretty_string(c_abs)}*j"
+  let d_str = "\{@symprint.pretty_string(d_abs)}*k"
   let mut out = a_str
   out = out + (if b_neg { " - " } else { " + " }) + b_str
   out = out + (if c_neg { " - " } else { " + " }) + c_str

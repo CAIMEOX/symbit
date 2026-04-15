@@ -181,8 +181,8 @@ pub fn pow(base : Expr, exp : Expr) -> Expr {
 
 ///|
 /// Return the default pretty string form for an expression.
-pub fn to_string(expr : Expr) -> String {
-  @symprint.to_string(expr)
+pub fn pretty_string(expr : Expr) -> String {
+  @symprint.pretty_string(expr)
 }
 
 ///|

@@ -2,14 +2,14 @@
 test "physics.quantum.operatorset: local mappings" {
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(operators_to_state(x_op()).unwrap_or(@symcore.int(0))),
+      @symprint.pretty_string(operators_to_state(x_op()).unwrap_or(@symcore.int(0))),
     ),
     quantum_eval_str("XKet(x)"),
     "XOp to XKet",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         operators_to_state(px_op()).unwrap_or(@symcore.int(0)),
       ),
     ),
@@ -20,7 +20,7 @@ test "physics.quantum.operatorset: local mappings" {
   )
   assert_eq(ops.length(), 1)
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(ops[0])),
+    quantum_eval_str(@symprint.pretty_string(ops[0])),
     quantum_eval_str("XOp()"),
     "XBra to XOp",
   )
@@ -29,7 +29,7 @@ test "physics.quantum.operatorset: local mappings" {
     operator([@symcore.Expr::Symbol("A")]).as_expr(),
   ).unwrap_or(@symcore.int(0))
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(generic)),
+    quantum_eval_str(@symprint.pretty_string(generic)),
     quantum_eval_str("Ket(psi)"),
     "generic Operator to Ket",
   )

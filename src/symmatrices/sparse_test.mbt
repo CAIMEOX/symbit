@@ -122,8 +122,8 @@ test "matrices sparse decomposition and eigen helpers" {
   diag_entries[(0, 0)] = @symcore.int(2)
   diag_entries[(1, 1)] = @symcore.int(3)
   let diagm = sparse_matrix(2, 2, diag_entries)
-  inspect(@symprint.to_string(diagm.trace()), content="5")
-  inspect(@symprint.to_string(diagm.det()), content="6")
+  inspect(@symprint.pretty_string(diagm.trace()), content="5")
+  inspect(@symprint.pretty_string(diagm.det()), content="6")
   assert_true(diagm.is_upper())
   assert_true(diagm.is_lower())
   inspect(diagm.inv().to_string(), content="Matrix([[1/2, 0], [0, 1/3]])")
@@ -153,7 +153,7 @@ test "matrices sparse native multiply and triangular determinant" {
   tri_entries[(0, 1)] = @symcore.int(1)
   tri_entries[(1, 1)] = @symcore.int(5)
   let tri = sparse_matrix(2, 2, tri_entries)
-  inspect(@symprint.to_string(tri.det()), content="10")
+  inspect(@symprint.pretty_string(tri.det()), content="10")
 }
 
 ///|

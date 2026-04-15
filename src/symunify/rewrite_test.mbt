@@ -28,7 +28,7 @@ test "symunify rewrite handles simple and moderate cases" {
   inspect(
     rl
     .apply(@symcore.raw_function("Basic", [@symcore.int(3), @symcore.int(1)]))
-    .map(@symprint.to_string),
+    .map(@symprint.pretty_string),
     content="[\"Basic(3, 2)\"]",
   )
 
@@ -40,7 +40,7 @@ test "symunify rewrite handles simple and moderate cases" {
   inspect(
     pow_rule
     .apply(@symcore.raw_pow(rx(), @symcore.int(2)))
-    .map(@symprint.to_string),
+    .map(@symprint.pretty_string),
     content="[\"x**3\"]",
   )
 
@@ -60,7 +60,7 @@ test "symunify rewrite handles simple and moderate cases" {
         @symcore.raw_pow(ry(), @symcore.int(3)),
       ]),
     )
-    .map(@symprint.to_string),
+    .map(@symprint.pretty_string),
     content="[\"x**4*y**4\"]",
   )
 }
@@ -81,7 +81,7 @@ test "symunify rewrite handles conditions and assumptions" {
   )
   inspect(simple.apply(@symcore.int(15)).length(), content="0")
   inspect(
-    simple.apply(@symcore.int(5)).map(@symprint.to_string),
+    simple.apply(@symcore.int(5)).map(@symprint.pretty_string),
     content="[\"1 + 5\"]",
   )
 
@@ -96,7 +96,7 @@ test "symunify rewrite handles conditions and assumptions" {
   inspect(
     assume_rule
     .apply(@symcore.raw_add([a, b]), assumptions=@symassume.q_integer(b))
-    .map(@symprint.to_string),
+    .map(@symprint.pretty_string),
     content="[\"b**a\"]",
   )
 }

@@ -99,7 +99,7 @@ fn rfun(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn expr_list_text(items : Array[@symcore.Expr]) -> String {
-  "[" + items.map(@symprint.to_string).join(", ") + "]"
+  "[" + items.map(@symprint.pretty_string).join(", ") + "]"
 }
 
 ///|
@@ -112,7 +112,7 @@ fn inequality_result_text(result : InequalityResult) -> String {
   match result {
     InequalityResult::Set(set) => "Set(" + @symsets.to_string(set) + ")"
     InequalityResult::Relational(expr) =>
-      "Relational(" + @symprint.to_string(expr) + ")"
+      "Relational(" + @symprint.pretty_string(expr) + ")"
   }
 }
 
@@ -129,9 +129,9 @@ fn local_infinitesimals_text(
   for item in items {
     rendered.push(
       "{xi: " +
-      @symprint.to_string(item.get("xi").unwrap_or(@symcore.int(0))) +
+      @symprint.pretty_string(item.get("xi").unwrap_or(@symcore.int(0))) +
       ", eta: " +
-      @symprint.to_string(item.get("eta").unwrap_or(@symcore.int(0))) +
+      @symprint.pretty_string(item.get("eta").unwrap_or(@symcore.int(0))) +
       "}",
     )
   }
@@ -151,7 +151,7 @@ fn normalize_text(text : String) -> String {
 ///|
 fn expr_pair_text(pair : (@symcore.Expr, @symcore.Expr)) -> String {
   normalize_text(
-    "(" + @symprint.to_string(pair.0) + ", " + @symprint.to_string(pair.1) + ")",
+    "(" + @symprint.pretty_string(pair.0) + ", " + @symprint.pretty_string(pair.1) + ")",
   )
 }
 
@@ -165,7 +165,7 @@ fn solve_result_text(result : SolveResult) -> String {
     names.sort()
     let items : Array[String] = []
     for name in names {
-      items.push(name + ": " + @symprint.to_string(values[name]))
+      items.push(name + ": " + @symprint.pretty_string(values[name]))
     }
     "{" + items.join(", ") + "}"
   }
@@ -186,7 +186,7 @@ fn solve_result_text(result : SolveResult) -> String {
 fn diop_solve_result_text(result : DiopSolveResult) -> String {
   match result {
     DiopSolveResult::Tuple(items) =>
-      "(" + items.map(@symprint.to_string).join(", ") + ")"
+      "(" + items.map(@symprint.pretty_string).join(", ") + ")"
     DiopSolveResult::Set(set) => @symsets.to_string(set)
   }
 }
@@ -214,7 +214,7 @@ fn classify_diop_text(
   }
   let coeff_parts : Array[String] = []
   for key in ordered {
-    coeff_parts.push(key + ": " + @symprint.to_string(coeffs[key]))
+    coeff_parts.push(key + ": " + @symprint.pretty_string(coeffs[key]))
   }
   "(" +
   expr_list_text(symbols) +
@@ -433,7 +433,7 @@ fn test_sort_expr_cmp(lhs_raw : @symcore.Expr, rhs_raw : @symcore.Expr) -> Int {
       if cmp != 0 {
         cmp
       } else {
-        @symprint.to_string(lhs).compare(@symprint.to_string(rhs))
+        @symprint.pretty_string(lhs).compare(@symprint.pretty_string(rhs))
       }
     }
   }
@@ -710,7 +710,7 @@ fn solution_dict_text(
   let items : Array[String] = []
   for name in names {
     match solution.get(name) {
-      Some(value) => items.push(name + ": " + @symprint.to_string(value))
+      Some(value) => items.push(name + ": " + @symprint.pretty_string(value))
       None => ()
     }
   }
@@ -728,7 +728,7 @@ fn maybe_bool_text(value : Bool?) -> String {
 ///|
 fn maybe_expr_text(value : @symcore.Expr?) -> String {
   match value {
-    Some(v) => @symprint.to_string(v)
+    Some(v) => @symprint.pretty_string(v)
     None => "None"
   }
 }
@@ -739,7 +739,7 @@ fn expr_dict_get(expr : @symcore.Expr, key : String) -> @symcore.Expr? {
     @symcore.Expr::Dict(items) => {
       for item in items {
         let (k, v) = item
-        if @symprint.to_string(k) == key {
+        if @symprint.pretty_string(k) == key {
           return Some(v)
         }
       }
@@ -834,11 +834,11 @@ test "solve_linear_system handles augmented matrices" {
   ])
   let solved = solve_linear_system(system, [x(), y()]).unwrap_or({})
   inspect(
-    @symprint.to_string(solved.get("x").unwrap_or(@symcore.int(0))),
+    @symprint.pretty_string(solved.get("x").unwrap_or(@symcore.int(0))),
     content="2",
   )
   inspect(
-    @symprint.to_string(solved.get("y").unwrap_or(@symcore.int(0))),
+    @symprint.pretty_string(solved.get("y").unwrap_or(@symcore.int(0))),
     content="1",
   )
 }
@@ -851,11 +851,11 @@ test "solve_linear_system_LU uses dense matrix solve" {
   ])
   let solved = solve_linear_system_LU(system, [x(), y()]).unwrap_or({})
   inspect(
-    @symprint.to_string(solved.get("x").unwrap_or(@symcore.int(0))),
+    @symprint.pretty_string(solved.get("x").unwrap_or(@symcore.int(0))),
     content="2",
   )
   inspect(
-    @symprint.to_string(solved.get("y").unwrap_or(@symcore.int(0))),
+    @symprint.pretty_string(solved.get("y").unwrap_or(@symcore.int(0))),
     content="1",
   )
 }
@@ -866,7 +866,7 @@ test "det_quick and inv_quick delegate to matrix algorithms" {
     [@symcore.int(1), @symcore.int(2)],
     [@symcore.int(3), @symcore.int(4)],
   ])
-  inspect(@symprint.to_string(det_quick(m)), content="-2")
+  inspect(@symprint.pretty_string(det_quick(m)), content="-2")
   inspect(inv_quick(m).to_string(), content="Matrix([[-2, 1], [3/2, -1/2]])")
 }
 
@@ -957,13 +957,13 @@ test "solve returns dicts for systems and nsolve refines numeric roots" {
     x(),
     @symcore.rational_from_ints(3, 2),
   )
-  assert_true(@symprint.to_string(root).has_prefix("1.414213562"))
+  assert_true(@symprint.pretty_string(root).has_prefix("1.414213562"))
 }
 
 ///|
 test "nsolve matches additional SymPy scalar numeric cases batch 2" {
   let sin_root = nsolve(sin(x()), x(), @symcore.int(2))
-  assert_true(@symprint.to_string(sin_root).has_prefix("3.14159265358979"))
+  assert_true(@symprint.pretty_string(sin_root).has_prefix("3.14159265358979"))
 
   let eq_root = nsolve(
     @symcore.Expr::Relational(
@@ -974,15 +974,15 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
     x(),
     @symcore.int(-10),
   )
-  inspect(@symprint.to_string(eq_root), content="1.0")
+  inspect(@symprint.pretty_string(eq_root), content="1.0")
 
   let linear_root = nsolve(
     @symcore.int(2) * x() + @symcore.int(-2),
     x(),
     @symcore.int(-10),
   )
-  inspect(@symprint.to_string(linear_root), content="1.0")
-  assert_eq(@symprint.to_string(eq_root), @symprint.to_string(linear_root))
+  inspect(@symprint.pretty_string(linear_root), content="1.0")
+  assert_eq(@symprint.pretty_string(eq_root), @symprint.pretty_string(linear_root))
 
   let pi_root_default = nsolve(
     (x() ^ @symcore.int(2)) -
@@ -991,7 +991,7 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
     @symcore.Expr::Float(@symcore.float_from_double(3.0)),
   )
   assert_true(
-    @symprint.to_string(pi_root_default).has_prefix("1.77245385090551"),
+    @symprint.pretty_string(pi_root_default).has_prefix("1.77245385090551"),
   )
 
   let pi_root_precise = nsolve(
@@ -1002,7 +1002,7 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
     prec=128,
   )
   assert_true(
-    @symprint.to_string(pi_root_precise).has_prefix(
+    @symprint.pretty_string(pi_root_precise).has_prefix(
       "1.77245385090551602729816748",
     ),
   )
@@ -1014,7 +1014,7 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
     prec=100,
   )
   assert_true(
-    @symprint.to_string(third_root).has_prefix("0.333333333333333333333333"),
+    @symprint.pretty_string(third_root).has_prefix("0.333333333333333333333333"),
   )
 
   let a = @symcore.Expr::Symbol("a")
@@ -1034,7 +1034,7 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
     a,
     @symcore.Expr::Float(@symcore.float_from_double(0.3)),
   )
-  assert_true(@symprint.to_string(delicate_root).has_prefix("0.318830113873"))
+  assert_true(@symprint.pretty_string(delicate_root).has_prefix("0.318830113873"))
 }
 
 ///|
@@ -1042,20 +1042,20 @@ test "lpmin lpmax and linprog solve basic linear programs" {
   let min_result = lpmin(x(), [
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(1)),
   ])
-  inspect(@symprint.to_string(min_result.0), content="1")
+  inspect(@symprint.pretty_string(min_result.0), content="1")
   inspect(solution_dict_text(min_result.1, ["x"]), content="{x: 1}")
 
   let max_result = lpmax(x(), [
     @symcore.Expr::Relational(@symcore.RelOp::Le, x(), @symcore.int(-1)),
   ])
-  inspect(@symprint.to_string(max_result.0), content="-1")
+  inspect(@symprint.pretty_string(max_result.0), content="-1")
   inspect(solution_dict_text(max_result.1, ["x"]), content="{x: -1}")
 
   let prog_result = linprog(
     [@symcore.int(1)],
     bounds=Some([(Some(@symcore.int(1)), (None : @symcore.Expr?))]),
   )
-  inspect(@symprint.to_string(prog_result.0), content="1")
+  inspect(@symprint.pretty_string(prog_result.0), content="1")
   inspect(expr_list_text(prog_result.1), content="[1]")
 }
 
@@ -1087,7 +1087,7 @@ test "lp solvers handle Eq constraints and extra symbols like SymPy simplex fron
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(eq_max.0), content="2")
+  inspect(@symprint.pretty_string(eq_max.0), content="2")
   inspect(solution_dict_text(eq_max.1, ["x", "y"]), content="{x: 2, y: 0}")
 
   let eq_min = lpmin(y(), [
@@ -1102,13 +1102,13 @@ test "lp solvers handle Eq constraints and extra symbols like SymPy simplex fron
       y() + @symcore.int(2),
     ),
   ])
-  inspect(@symprint.to_string(eq_min.0), content="-2")
+  inspect(@symprint.pretty_string(eq_min.0), content="-2")
   inspect(solution_dict_text(eq_min.1, ["y"]), content="{y: -2}")
 
   let single_eq = lpmax(y(), [
     @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), @symcore.int(2)),
   ])
-  inspect(@symprint.to_string(single_eq.0), content="2")
+  inspect(@symprint.pretty_string(single_eq.0), content="2")
   inspect(solution_dict_text(single_eq.1, ["y"]), content="{y: 2}")
 
   let extra_symbol = lpmin(x(), [
@@ -1117,7 +1117,7 @@ test "lp solvers handle Eq constraints and extra symbols like SymPy simplex fron
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(extra_symbol.0), content="1")
+  inspect(@symprint.pretty_string(extra_symbol.0), content="1")
   inspect(
     solution_dict_text(extra_symbol.1, ["x", "y", "z"]),
     content="{x: 1, y: 1, z: 0}",
@@ -1151,7 +1151,7 @@ test "lp solvers match SymPy simplex four-variable reference example" {
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(result.0), content="4")
+  inspect(@symprint.pretty_string(result.0), content="4")
   inspect(
     solution_dict_text(result.1, ["x1", "x2", "x3", "x4"]),
     content="{x1: 7, x2: 0, x3: 0, x4: 3}",
@@ -1177,7 +1177,7 @@ test "linprog matches first SymPy simplex reference example" {
     @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
   ]
   let min_result = lpmin(objective, ineq)
-  inspect(@symprint.to_string(min_result.0), content="-6/5")
+  inspect(@symprint.pretty_string(min_result.0), content="-6/5")
   inspect(
     solution_dict_text(min_result.1, ["x", "y", "z"]),
     content="{x: 0, y: 0, z: 3/5}",
@@ -1193,7 +1193,7 @@ test "linprog matches first SymPy simplex reference example" {
     ),
     b=Some([@symcore.int(3), @symcore.int(6)]),
   )
-  inspect(@symprint.to_string(prog_result.0), content="-6/5")
+  inspect(@symprint.pretty_string(prog_result.0), content="-6/5")
   inspect(expr_list_text(prog_result.1), content="[0, 0, 3/5]")
 }
 
@@ -1217,7 +1217,7 @@ test "lp simplex edge cases match SymPy issue regressions" {
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(zero_objective.0), content="0")
+  inspect(@symprint.pretty_string(zero_objective.0), content="0")
   inspect(
     solution_dict_text(zero_objective.1, ["x", "y"]),
     content="{x: 0, y: 0}",
@@ -1246,7 +1246,7 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
     @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(case1.0), content="-2")
+  inspect(@symprint.pretty_string(case1.0), content="-2")
   inspect(
     solution_dict_text(case1.1, ["x", "y", "z"]),
     content="{x: 2, y: 0, z: 0}",
@@ -1272,7 +1272,7 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
     @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(case2.0), content="-25/7")
+  inspect(@symprint.pretty_string(case2.0), content="-25/7")
   inspect(
     solution_dict_text(case2.1, ["x", "y", "z"]),
     content="{x: 0, y: 0, z: 5/7}",
@@ -1301,7 +1301,7 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
       @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
     ],
   )
-  inspect(@symprint.to_string(case3.0), content="-2")
+  inspect(@symprint.pretty_string(case3.0), content="-2")
   inspect(
     solution_dict_text(case3.1, ["x", "y", "z"]),
     content="{x: 0, y: 4, z: 0}",
@@ -1312,7 +1312,7 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
     @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
     @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
   ])
-  inspect(@symprint.to_string(case4.0), content="3")
+  inspect(@symprint.pretty_string(case4.0), content="3")
   inspect(
     solution_dict_text(case4.1, ["x", "y", "z"]),
     content="{x: 3, y: 3, z: 3}",
@@ -1323,12 +1323,12 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + @symcore.int(2)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(case5.0), content="0")
+  inspect(@symprint.pretty_string(case5.0), content="0")
   inspect(solution_dict_text(case5.1, ["x", "y"]), content="{x: 2, y: 0}")
 
   let bounds_scalar = Some([(Some(@symcore.int(2)), Some(@symcore.int(3)))])
   let lin1 = linprog([@symcore.int(1)], bounds=bounds_scalar)
-  inspect(@symprint.to_string(lin1.0), content="2")
+  inspect(@symprint.pretty_string(lin1.0), content="2")
   inspect(expr_list_text(lin1.1), content="[2]")
 
   let lin2 = linprog(
@@ -1337,7 +1337,7 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
     b=Some([@symcore.int(2)]),
     bounds=Some([(Some(@symcore.int(0)), None), (None, None)]),
   )
-  inspect(@symprint.to_string(lin2.0), content="-2")
+  inspect(@symprint.pretty_string(lin2.0), content="-2")
   inspect(expr_list_text(lin2.1), content="[0, 2]")
 
   let lin3 = linprog(
@@ -1346,7 +1346,7 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
     b=Some([@symcore.int(5)]),
     bounds=Some([(Some(@symcore.int(0)), None), (Some(@symcore.int(3)), None)]),
   )
-  inspect(@symprint.to_string(lin3.0), content="-5")
+  inspect(@symprint.pretty_string(lin3.0), content="-5")
   inspect(expr_list_text(lin3.1), content="[0, 5]")
 }
 
@@ -1358,20 +1358,20 @@ test "lp and linprog match additional SymPy simplex public cases batch 2" {
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(case1.0), content="2")
+  inspect(@symprint.pretty_string(case1.0), content="2")
   inspect(solution_dict_text(case1.1, ["x", "y"]), content="{x: 2, y: 0}")
 
   let case2 = lpmax(x() - y(), [
     @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
     @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), @symcore.int(2)),
   ])
-  inspect(@symprint.to_string(case2.0), content="2")
+  inspect(@symprint.pretty_string(case2.0), content="2")
   inspect(solution_dict_text(case2.1, ["x", "y"]), content="{x: 2, y: 0}")
 
   let case3 = lpmax(y(), [
     @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), @symcore.int(2)),
   ])
-  inspect(@symprint.to_string(case3.0), content="2")
+  inspect(@symprint.pretty_string(case3.0), content="2")
   inspect(solution_dict_text(case3.1, ["y"]), content="{y: 2}")
 
   let case4 = lpmax(y(), [
@@ -1386,7 +1386,7 @@ test "lp and linprog match additional SymPy simplex public cases batch 2" {
       y() + @symcore.int(2),
     ),
   ])
-  inspect(@symprint.to_string(case4.0), content="-2")
+  inspect(@symprint.pretty_string(case4.0), content="-2")
   inspect(solution_dict_text(case4.1, ["y"]), content="{y: -2}")
 
   let case5 = lpmax(y(), [
@@ -1402,14 +1402,14 @@ test "lp and linprog match additional SymPy simplex public cases batch 2" {
     ),
     @symcore.Expr::Relational(@symcore.RelOp::Le, y(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(case5.0), content="-2")
+  inspect(@symprint.pretty_string(case5.0), content="-2")
   inspect(solution_dict_text(case5.1, ["y"]), content="{y: -2}")
 
   let case6 = lpmin(x(), [
     @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y()),
   ])
-  inspect(@symprint.to_string(case6.0), content="1")
+  inspect(@symprint.pretty_string(case6.0), content="1")
   inspect(solution_dict_text(case6.1, ["x", "y"]), content="{x: 1, y: 1}")
 
   let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
@@ -1427,7 +1427,7 @@ test "lp and linprog match additional SymPy simplex public cases batch 2" {
     ),
     b_eq=Some([@symcore.int(1)]),
   )
-  inspect(@symprint.to_string(lin1.0), content="-2/5")
+  inspect(@symprint.pretty_string(lin1.0), content="-2/5")
   inspect(expr_list_text(lin1.1), content="[0, 1, 7/10]")
 
   let lin2 = linprog(
@@ -1444,7 +1444,7 @@ test "lp and linprog match additional SymPy simplex public cases batch 2" {
     ),
     b_eq=Some([half]),
   )
-  inspect(@symprint.to_string(lin2.0), content="-10/9")
+  inspect(@symprint.pretty_string(lin2.0), content="-10/9")
   inspect(expr_list_text(lin2.1), content="[0, 1/9, 11/18]")
 
   let lin3 = linprog(
@@ -1462,7 +1462,7 @@ test "lp and linprog match additional SymPy simplex public cases batch 2" {
       (None, Some(half)),
     ]),
   )
-  inspect(@symprint.to_string(lin3.0), content="-1")
+  inspect(@symprint.pretty_string(lin3.0), content="-1")
   inspect(expr_list_text(lin3.1), content="[0, 0, 1/2]")
 }
 
@@ -1490,7 +1490,7 @@ test "simplex and solveset match additional SymPy public cases batch 3" {
     @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(float_case.0), content="-4")
+  inspect(@symprint.pretty_string(float_case.0), content="-4")
   inspect(
     solution_dict_text(float_case.1, ["x", "y", "z"]),
     content="{x: 0, y: 4, z: 0}",
@@ -2226,7 +2226,7 @@ test "solveset matches additional SymPy public cases batch 8" {
         domain=real_domain,
       ),
     ),
-    content="{" + @symprint.to_string(two_thirds) + "}",
+    content="{" + @symprint.pretty_string(two_thirds) + "}",
   )
   inspect(
     @symsets.to_string(
@@ -2510,7 +2510,7 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(eq_case.0), content="2")
+  inspect(@symprint.pretty_string(eq_case.0), content="2")
   inspect(solution_dict_text(eq_case.1, ["x", "y"]), content="{x: 2, y: 0}")
 
   let extra_symbol_case = lpmin(x(), [
@@ -2519,7 +2519,7 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(extra_symbol_case.0), content="1")
+  inspect(@symprint.pretty_string(extra_symbol_case.0), content="1")
   inspect(
     solution_dict_text(extra_symbol_case.1, ["x", "y", "z"]),
     content="{x: 1, y: 1, z: 0}",
@@ -2557,7 +2557,7 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
       @symcore.Expr::Relational(@symcore.RelOp::Le, x4, @symcore.int(1)),
     ],
   )
-  inspect(@symprint.to_string(bounded_front.0), content="9/2")
+  inspect(@symprint.pretty_string(bounded_front.0), content="9/2")
   inspect(
     solution_dict_text(bounded_front.1, ["x1", "x2", "x3", "x4"]),
     content="{x1: 0, x2: 1/2, x3: 0, x4: 1/2}",
@@ -2585,7 +2585,7 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
       (Some(@symcore.int(0)), Some(@symcore.int(1))),
     ]),
   )
-  inspect(@symprint.to_string(bounded_lin.0), content="9/2")
+  inspect(@symprint.pretty_string(bounded_lin.0), content="9/2")
   inspect(expr_list_text(bounded_lin.1), content="[0, 1/2, 0, 1/2]")
 
   let shifted_eq = lpmin(x() + y() - @symcore.int(2) * z() + @symcore.int(1), [
@@ -2608,7 +2608,7 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
       @symcore.int(1),
     ),
   ])
-  inspect(@symprint.to_string(shifted_eq.0), content="3/5")
+  inspect(@symprint.pretty_string(shifted_eq.0), content="3/5")
   inspect(
     solution_dict_text(shifted_eq.1, ["x", "y", "z"]),
     content="{x: 0, y: 1, z: 7/10}",
@@ -2633,7 +2633,7 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
       @symcore.Expr::Relational(@symcore.RelOp::Le, z() - y(), half),
     ],
   )
-  inspect(@symprint.to_string(shifted_ineq.0), content="-1/9")
+  inspect(@symprint.pretty_string(shifted_ineq.0), content="-1/9")
   inspect(
     solution_dict_text(shifted_ineq.1, ["x", "y", "z"]),
     content="{x: 0, y: 1/9, z: 11/18}",
@@ -2658,7 +2658,7 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
       @symcore.Expr::Relational(@symcore.RelOp::Le, z(), half),
     ],
   )
-  inspect(@symprint.to_string(shifted_bound.0), content="0")
+  inspect(@symprint.pretty_string(shifted_bound.0), content="0")
   inspect(
     solution_dict_text(shifted_bound.1, ["x", "y", "z"]),
     content="{x: 0, y: 0, z: 1/2}",
@@ -2838,7 +2838,7 @@ test "simplex and solveset match additional SymPy public cases batch 13" {
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + @symcore.int(2)),
     @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
   ])
-  inspect(@symprint.to_string(simplex_min.0), content="0")
+  inspect(@symprint.pretty_string(simplex_min.0), content="0")
   inspect(solution_dict_text(simplex_min.1, ["x", "y"]), content="{x: 2, y: 0}")
 
   let simplex_chain = lpmax(x(), [
@@ -2846,7 +2846,7 @@ test "simplex and solveset match additional SymPy public cases batch 13" {
     @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
     @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
   ])
-  inspect(@symprint.to_string(simplex_chain.0), content="3")
+  inspect(@symprint.pretty_string(simplex_chain.0), content="3")
   inspect(
     solution_dict_text(simplex_chain.1, ["x", "y", "z"]),
     content="{x: 3, y: 3, z: 3}",
@@ -4048,7 +4048,7 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
     @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
     @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
   ])
-  inspect(@symprint.to_string(eq_chain.0), content="3")
+  inspect(@symprint.pretty_string(eq_chain.0), content="3")
   inspect(
     solution_dict_text(eq_chain.1, ["x", "y", "z"]),
     content="{x: 3, y: 3, z: 3}",
@@ -4082,7 +4082,7 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
       @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
     ],
   )
-  inspect(@symprint.to_string(shifted_lp.0), content="-2")
+  inspect(@symprint.pretty_string(shifted_lp.0), content="-2")
   inspect(
     solution_dict_text(shifted_lp.1, ["x", "y", "z"]),
     content="{x: 0, y: 4, z: 0}",
@@ -4115,7 +4115,7 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
       @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
     ],
   )
-  inspect(@symprint.to_string(shifted_lp_alt.0), content="-25/7")
+  inspect(@symprint.pretty_string(shifted_lp_alt.0), content="-25/7")
   inspect(
     solution_dict_text(shifted_lp_alt.1, ["x", "y", "z"]),
     content="{x: 0, y: 0, z: 5/7}",
@@ -4936,12 +4936,12 @@ test "decompogen factors functional composition and polynomial composition" {
 ///|
 test "compogen composes source-compatible examples" {
   inspect(
-    @symprint.to_string(compogen([sin(x()), cos(x())], x())),
+    @symprint.pretty_string(compogen([sin(x()), cos(x())], x())),
     content="sin(cos(x))",
   )
   inspect(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         compogen(
           [(x() ^ @symcore.int(2)) + x() + @symcore.int(1), sin(x())],
           x(),
@@ -4952,7 +4952,7 @@ test "compogen composes source-compatible examples" {
   )
   inspect(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         compogen(
           [
             sqrt(x()),
@@ -4966,7 +4966,7 @@ test "compogen composes source-compatible examples" {
   )
   inspect(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         compogen(
           [
             sin(x()),
@@ -4982,7 +4982,7 @@ test "compogen composes source-compatible examples" {
   )
   inspect(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         compogen(
           [
             @symcore.function("Abs", [x()]),
@@ -5041,7 +5041,7 @@ test "compogen composes source-compatible examples" {
   )
   inspect(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         compogen(
           [
             (x() ^ @symcore.int(2)) + @symcore.int(2) * x() + @symcore.int(1),
@@ -5162,7 +5162,7 @@ test "canonical_odes covers low-level source-compatible entry points" {
     allhints[allhints.length() - 1],
     content="2nd_nonlinear_autonomous_conserved_Integral",
   )
-  inspect(@symprint.to_string(constantsimp(c1 + c2, [c1, c2])), content="C1")
+  inspect(@symprint.pretty_string(constantsimp(c1 + c2, [c1, c2])), content="C1")
   let system = [
     @symcore.Expr::Relational(
       @symcore.RelOp::Eq,
@@ -5889,18 +5889,18 @@ test "lie helpers cover source-compatible infinitesimal entry points" {
   let lie_eq = @symcalculus.diff(f(x()), x()) - (x() ^ @symcore.int(2)) * f(x())
   let infs = infinitesimals(lie_eq, func=Some(f(x())))
   inspect(
-    @symprint.to_string(infs[0].get("xi").unwrap_or(@symcore.int(1))),
+    @symprint.pretty_string(infs[0].get("xi").unwrap_or(@symcore.int(1))),
     content="0",
   )
   inspect(
     normalize_text(
-      @symprint.to_string(infs[0].get("eta").unwrap_or(@symcore.int(0))),
+      @symprint.pretty_string(infs[0].get("eta").unwrap_or(@symcore.int(0))),
     ),
     content="exp(x**3/3)",
   )
   let inf_check = checkinfsol(lie_eq, infs, func=Some(f(x())))
   inspect(inf_check[0].0.to_string(), content="true")
-  inspect(@symprint.to_string(inf_check[0].1), content="0")
+  inspect(@symprint.pretty_string(inf_check[0].1), content="0")
 }
 
 ///|
@@ -5910,13 +5910,13 @@ test "lie heuristics expose abaco1_simple explicitly" {
   inspect(abaco.length().to_string(), content="3")
   inspect(
     normalize_text(
-      @symprint.to_string(abaco[1].get("eta").unwrap_or(@symcore.int(0))),
+      @symprint.pretty_string(abaco[1].get("eta").unwrap_or(@symcore.int(0))),
     ),
     content="f(x)",
   )
   inspect(
     normalize_text(
-      @symprint.to_string(abaco[2].get("xi").unwrap_or(@symcore.int(0))),
+      @symprint.pretty_string(abaco[2].get("xi").unwrap_or(@symcore.int(0))),
     ),
     content="x**-2",
   )
@@ -6377,7 +6377,7 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
   )
   let ode_solution = dsolve(ode, func=Some(f(x())))
   inspect(
-    normalize_text(@symprint.to_string(ode_solution)),
+    normalize_text(@symprint.pretty_string(ode_solution)),
     content="Eq(f(x), C1*exp(x))",
   )
   inspect(
@@ -6385,7 +6385,7 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
       "(" +
       checkodesol(ode, ode_solution, func=Some(f(x()))).0.to_string() +
       ", " +
-      @symprint.to_string(checkodesol(ode, ode_solution, func=Some(f(x()))).1) +
+      @symprint.pretty_string(checkodesol(ode, ode_solution, func=Some(f(x()))).1) +
       ")",
     ),
     content="(true, 0)",
@@ -6420,7 +6420,7 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
   )
   let pde_solution = pdsolve(pde, func=Some(u(x(), y())))
   inspect(
-    normalize_text(@symprint.to_string(pde_solution)),
+    normalize_text(@symprint.pretty_string(pde_solution)),
     content="Eq(u(x, y), F(-x - y))",
   )
   inspect(
@@ -6428,7 +6428,7 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
       "(" +
       checkpdesol(pde, pde_solution, func=Some(u(x(), y()))).0.to_string() +
       ", " +
-      @symprint.to_string(
+      @symprint.pretty_string(
         checkpdesol(pde, pde_solution, func=Some(u(x(), y()))).1,
       ) +
       ")",
@@ -6868,7 +6868,7 @@ test "pdsolve meta-hints cover SymPy-style front doors" {
     _ => @symcore.int(0)
   }
   inspect(
-    @symprint.to_string(actual_rhs),
+    @symprint.pretty_string(actual_rhs),
     content="exp(x/2 - y)*(exp(x/2 + 4*y)/15 + F(2*y + 4*x))",
   )
 }
@@ -6890,15 +6890,15 @@ test "pdsolve solvefun follows SymPy front door" {
     solvefun=Some(@symcore.Expr::UndefinedFunction("H")),
   )
   inspect(
-    @symprint.to_string(default_sol),
+    @symprint.pretty_string(default_sol),
     content="Eq(u(x, y), F(x - y)*exp(-x/2 - y/2))",
   )
   inspect(
-    @symprint.to_string(g_sol),
+    @symprint.pretty_string(g_sol),
     content="Eq(u(x, y), G(x - y)*exp(-x/2 - y/2))",
   )
   inspect(
-    @symprint.to_string(h_sol),
+    @symprint.pretty_string(h_sol),
     content="Eq(u(x, y), H(x - y)*exp(-x/2 - y/2))",
   )
 }
@@ -6932,7 +6932,7 @@ test "pdsolve expanded constant coefficient hints follow SymPy source cases" {
     _ => @symcore.int(0)
   }
   inspect(
-    @symprint.to_string(actual_rhs),
+    @symprint.pretty_string(actual_rhs),
     content="exp(x/2 - y)*(exp(x/2 + 4*y)/15 + F(2*y + 4*x))",
   )
 }
@@ -6954,7 +6954,7 @@ test "pdsolve constant coefficient solution keeps explicit source term shape" {
     hint="1st_linear_constant_coeff",
   )
   inspect(
-    @symprint.to_string(pde_source_sol).has_prefix("Eq(u(x, y), ").to_string(),
+    @symprint.pretty_string(pde_source_sol).has_prefix("Eq(u(x, y), ").to_string(),
     content="true",
   )
 }
@@ -6976,7 +6976,7 @@ test "pdsolve constant coefficient integral hint stays available" {
     hint="1st_linear_constant_coeff_Integral",
   )
   inspect(
-    @symprint.to_string(pde_source_sol_integral)
+    @symprint.pretty_string(pde_source_sol_integral)
     .has_prefix("Eq(u(x, y), Subs(")
     .to_string(),
     content="true",
@@ -7244,7 +7244,7 @@ test "pdsolve matches additional SymPy homogeneous and variable source cases" {
     hint="1st_linear_variable_coeff",
   )
   inspect(
-    @symprint.to_string(eq_v2_sol),
+    @symprint.pretty_string(eq_v2_sol),
     content="Eq(u(x, y), F(y*exp(-x))*exp(-x**2/2))",
   )
   inspect(
@@ -7294,7 +7294,7 @@ test "pdsolve matches additional SymPy homogeneous and variable source cases" {
     hint="1st_linear_variable_coeff",
   )
   inspect(
-    @symprint.to_string(eq_v4_sol),
+    @symprint.pretty_string(eq_v4_sol),
     content="Eq(u(x, y), y*exp(-2*x)/2 + F(y))",
   )
   inspect(
@@ -7532,7 +7532,7 @@ test "checkodesol follows SymPy subscheck-style implicit and exact cases" {
   )
   let exact_check = checkodesol(exact_ode, exact_sol, func=Some(f(x())))
   inspect(exact_check.0.to_string(), content="true")
-  inspect(@symprint.to_string(exact_check.1), content="0")
+  inspect(@symprint.pretty_string(exact_check.1), content="0")
 
   let implicit_sol = @symcore.Expr::Relational(
     @symcore.RelOp::Eq,
@@ -7548,7 +7548,7 @@ test "checkodesol follows SymPy subscheck-style implicit and exact cases" {
     solve_for_func=false,
   )
   inspect(implicit_check.0.to_string(), content="true")
-  inspect(@symprint.to_string(implicit_check.1), content="0")
+  inspect(@symprint.pretty_string(implicit_check.1), content="0")
 
   let reversed_sol = @symcore.Expr::Relational(
     @symcore.RelOp::Eq,
@@ -7561,7 +7561,7 @@ test "checkodesol follows SymPy subscheck-style implicit and exact cases" {
     func=Some(f(x())),
   )
   inspect(reversed_check.0.to_string(), content="true")
-  inspect(@symprint.to_string(reversed_check.1), content="0")
+  inspect(@symprint.pretty_string(reversed_check.1), content="0")
 
   let bad_check = checkodesol(
     @symcalculus.diff(f(x()), x()),
@@ -7569,7 +7569,7 @@ test "checkodesol follows SymPy subscheck-style implicit and exact cases" {
     func=Some(f(x())),
   )
   inspect(bad_check.0.to_string(), content="false")
-  inspect(@symprint.to_string(bad_check.1), content="1")
+  inspect(@symprint.pretty_string(bad_check.1), content="1")
 }
 
 ///|
@@ -7637,7 +7637,7 @@ test "inequalities, factor_system and diophantine cover source-compatible public
   )
   inspect(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         reduce_abs_inequality(
           @symcore.function("Abs", [x() - @symcore.int(5)]) - @symcore.int(3),
           "<",
@@ -7649,7 +7649,7 @@ test "inequalities, factor_system and diophantine cover source-compatible public
   )
   inspect(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         reduce_abs_inequality(
           @symcore.function("Abs", [x() - @symcore.int(5)]) - @symcore.int(3),
           "==",
@@ -7663,7 +7663,7 @@ test "inequalities, factor_system and diophantine cover source-compatible public
   )
   inspect(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         reduce_abs_inequality(
           @symcore.function("Abs", [x() - @symcore.int(5)]) - @symcore.int(3),
           "!=",
@@ -7677,7 +7677,7 @@ test "inequalities, factor_system and diophantine cover source-compatible public
   )
   inspect(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         reduce_inequalities(
           [
             @symcore.Expr::Relational(
@@ -7694,7 +7694,7 @@ test "inequalities, factor_system and diophantine cover source-compatible public
   )
   inspect(
     normalize_text(
-      @symprint.to_string(
+      @symprint.pretty_string(
         reduce_inequalities(
           [
             @symcore.Expr::Relational(@symcore.RelOp::Gt, x(), @symcore.int(1)),

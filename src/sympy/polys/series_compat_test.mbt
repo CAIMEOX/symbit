@@ -1,6 +1,6 @@
 ///|
 fn sp_norm(expr : @symcore.Expr) -> String raise {
-  sympy_normalize(@symprint.to_string(expr))
+  sympy_normalize(@symprint.pretty_string(expr))
   .trim()
   .to_string()
   .replace_all(old=" ", new="")

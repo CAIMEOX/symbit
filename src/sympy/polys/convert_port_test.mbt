@@ -4,7 +4,7 @@ test "convert: to_expr roundtrip over ZZ" {
   let expr = (x ^ @symcore.int(3)) + @symcore.int(2) * x + @symcore.int(1)
   let poly = PolyBuilder::new(["x"], Domain::ZZ).from_expr(expr)
   let ours = poly.to_string()
-  assert_true(expr_equal(ours, @symprint.to_string(expr)))
+  assert_true(expr_equal(ours, @symprint.pretty_string(expr)))
 }
 
 ///|
@@ -18,7 +18,7 @@ test "convert: to_expr roundtrip over QQ with ordering" {
     .order(TermOrder::Lex)
     .from_expr(expr)
   let ours = poly.to_string()
-  assert_true(expr_equal(ours, @symprint.to_string(expr)))
+  assert_true(expr_equal(ours, @symprint.pretty_string(expr)))
 }
 
 ///|

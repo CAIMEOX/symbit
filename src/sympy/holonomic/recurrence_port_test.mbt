@@ -1,6 +1,6 @@
 ///|
 fn coeff_strings(coeffs : Array[@symcore.Expr]) -> Array[String] {
-  coeffs.map(v => @symprint.to_string(v))
+  coeffs.map(v => @symprint.pretty_string(v))
 }
 
 ///|
@@ -8,7 +8,7 @@ fn recurrence_srepr_local(op : RecurrenceOperator) -> String raise {
   let alg = op.algebra()
   recurrence_srepr(
     coeff_strings(op.coefficients()),
-    var_name=@symprint.to_string(alg.variable()),
+    var_name=@symprint.pretty_string(alg.variable()),
     generator=alg.generator(),
   )
 }

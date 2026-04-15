@@ -7,20 +7,20 @@ test "physics.quantum.trace: parity" {
   let d_op = @symcore.Expr::Symbol("D")
 
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.to_string(tr(@symcore.raw_mul([a, a_op])))),
+    quantum_eval_str(@symprint.pretty_string(tr(@symcore.raw_mul([a, a_op])))),
     quantum_eval_str("Tr(a*A)"),
     "trace scalar parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(tr(@symcore.raw_mul([a_op, b_op]), indices=[2])),
+      @symprint.pretty_string(tr(@symcore.raw_mul([a_op, b_op]), indices=[2])),
     ),
     quantum_eval_str("Tr(A*B, (2,))"),
     "trace tuple parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         tr_permute(tr(@symcore.raw_mul([a_op, b_op, c_op, d_op])), 2),
       ),
     ),
@@ -30,7 +30,7 @@ test "physics.quantum.trace: parity" {
 
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         tr_doit(
           tr(
             @symquant.tensor_product([
@@ -48,7 +48,7 @@ test "physics.quantum.trace: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         tr_doit(
           tr(
             @symquant.tensor_product([
@@ -68,7 +68,7 @@ test "physics.quantum.trace: parity" {
 
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         tr_doit(
           tr(
             density([
@@ -95,7 +95,7 @@ test "physics.quantum.trace: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.to_string(
+      @symprint.pretty_string(
         tr_doit(
           tr(
             density([

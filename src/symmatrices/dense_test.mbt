@@ -8,7 +8,7 @@ test "matrices dense constructors and indexing" {
   let x = @symcore.Expr::Symbol("x")
   let m = matrix([[x, @symcore.int(2)], [@symcore.int(3), @symcore.int(4)]])
   assert_eq(m.shape(), (2, 2))
-  inspect(@symprint.to_string(m.getitem(0, 0)), content="x")
+  inspect(@symprint.pretty_string(m.getitem(0, 0)), content="x")
   inspect(
     mtxt(m.setitem(0, 1, @symcore.int(9))),
     content="Matrix([[x, 9], [3, 4]])",
@@ -58,7 +58,7 @@ test "matrices dense zeros ones eye diag reshape extract trace" {
   inspect(mtxt(m.reshape(3, 2)), content="Matrix([[1, 2], [3, 4], [5, 6]])")
   inspect(mtxt(m.extract([0, 1], [1, 2])), content="Matrix([[2, 3], [5, 6]])")
   inspect(
-    @symprint.to_string(diag([@symcore.int(2), @symcore.int(5)]).trace()),
+    @symprint.pretty_string(diag([@symcore.int(2), @symcore.int(5)]).trace()),
     content="7",
   )
 }
@@ -78,7 +78,7 @@ test "matrices dense insertion deletion diagonal and vec" {
   inspect(mtxt(a.col_insert(1, col)), content="Matrix([[1, 7, 2], [3, 6, 4]])")
   inspect(mtxt(a.row_del(0)), content="Matrix([[3, 4]])")
   inspect(mtxt(a.col_del(1)), content="Matrix([[1], [3]])")
-  inspect(a.diagonal().map(@symprint.to_string).join(","), content="1,4")
+  inspect(a.diagonal().map(@symprint.pretty_string).join(","), content="1,4")
   inspect(a.vec().to_string(), content="Matrix([[1], [3], [2], [4]])")
 }
 

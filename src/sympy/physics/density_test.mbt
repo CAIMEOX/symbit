@@ -7,8 +7,8 @@ test "physics.quantum.density: local semantics" {
   let k1 = ket([one]).as_expr()
   let rho = density([(k0, half), (k1, half)])
 
-  assert_eq(@symprint.to_string(rho.states()), "Tuple(Ket(0), Ket(1))")
-  assert_eq(@symprint.to_string(rho.probs()), "Tuple(1/2, 1/2)")
+  assert_eq(@symprint.pretty_string(rho.states()), "Tuple(Ket(0), Ket(1))")
+  assert_eq(@symprint.pretty_string(rho.probs()), "Tuple(1/2, 1/2)")
   quantum_test_assert_expr_equal(
     rho.get_state(1),
     "Ket(1)",

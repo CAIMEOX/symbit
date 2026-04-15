@@ -9,7 +9,7 @@ test "physics.mechanics wrapping geometry core" {
   p_2.set_pos(p_o, n.y().scale(@symcore.Expr::Symbol("r")))
   inspect(sphere.repr(), content="WrappingSphere(radius=r, point=WpO)")
   inspect(
-    @symprint.to_string(sphere.geodesic_length(p_1, p_2)),
+    @symprint.pretty_string(sphere.geodesic_length(p_1, p_2)),
     content="r*acos(0)",
   )
 
@@ -20,5 +20,5 @@ test "physics.mechanics wrapping geometry core" {
     cylinder.repr(),
     content="WrappingCylinder(radius=r, point=WpO, axis=WN.z)",
   )
-  inspect(@symprint.to_string(cylinder.geodesic_length(p_1, p_3)), content="1")
+  inspect(@symprint.pretty_string(cylinder.geodesic_length(p_1, p_3)), content="1")
 }

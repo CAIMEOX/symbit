@@ -501,7 +501,7 @@ pub fn subs_signature_error(variable : Expr, value : Expr) -> String? {
 ///   let x = Expr::Symbol("x")
 ///   let expr = add([x, int(1)])
 ///   inspect(
-///     @symprint.to_string(subs_expr(expr, x, int(3))),
+///     @symprint.pretty_string(subs_expr(expr, x, int(3))),
 ///     content="Subs(x + 1, x, 3)",
 ///   )
 /// }
