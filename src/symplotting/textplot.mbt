@@ -89,6 +89,10 @@ fn textplot_single_variable(
 }
 
 ///|
+/// - Does: Builds a linearly spaced sample grid.
+/// - Input: `start`, `stop`, and sample count `num`.
+/// - Returns: `Array[Double]`.
+/// - Limits: When `num <= 1` it returns `[start]`.
 pub fn linspace(start : Double, stop : Double, num : Int) -> Array[Double] {
   if num <= 1 {
     return [start]
@@ -102,6 +106,10 @@ pub fn linspace(start : Double, stop : Double, num : Int) -> Array[Double] {
 }
 
 ///|
+/// - Does: Rescales sampled `y` values into text-plot row indices.
+/// - Input: Sample values plus plot `width`, `height`, `min_value`, and `max_value`.
+/// - Returns: `Array[Int?]`.
+/// - Limits: Non-finite samples map to `None`.
 pub fn rescale(
   y : Array[Double?],
   width : Int,
@@ -134,6 +142,10 @@ pub fn rescale(
 }
 
 ///|
+/// - Does: Renders one scalar expression into ASCII plot lines over a numeric range.
+/// - Input: One expression, start/end expressions, and optional `width` and `height`.
+/// - Returns: `Array[String]`.
+/// - Limits: Raises `PlottingError` when bounds are non-numeric or the expression has more than one free variable.
 pub fn textplot_str(
   expr : @symcore.Expr,
   a0 : @symcore.Expr,
@@ -263,6 +275,10 @@ pub fn textplot_str(
 }
 
 ///|
+/// - Does: Prints the ASCII plot returned by `textplot_str`.
+/// - Input: One expression, start/end expressions, and optional `width` and `height`.
+/// - Returns: `Unit`.
+/// - Limits: Raises the same `PlottingError` cases as `textplot_str`.
 pub fn textplot(
   expr : @symcore.Expr,
   a0 : @symcore.Expr,

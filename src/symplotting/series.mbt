@@ -7,6 +7,10 @@ fn plot_symbol_like(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
+/// - Does: Checks whether one expression has the structural shape of a plotting range tuple.
+/// - Input: One `Expr`.
+/// - Returns: `Bool`.
+/// - Limits: This is a structural check only; numeric validity is enforced later by series constructors.
 pub fn is_plot_range(expr : @symcore.Expr) -> Bool {
   match expr {
     @symcore.Expr::Tuple([symbol, _, _]) => plot_symbol_like(symbol)
@@ -15,6 +19,10 @@ pub fn is_plot_range(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
+/// - Does: Stores one Cartesian 1D line-series specification and its sampling options.
+/// - Input: Constructed from one expression, one variable range, and sampling metadata.
+/// - Returns: One `LineOver1DRangeSeries` value.
+/// - Limits: Numeric range validation happens when sampling methods are called or through the constructor front door.
 pub struct LineOver1DRangeSeries {
   expr : @symcore.Expr
   variable : @symcore.Expr
@@ -31,6 +39,10 @@ pub struct LineOver1DRangeSeries {
 }
 
 ///|
+/// - Does: Formats the 1D line series for diagnostics.
+/// - Input: One `LineOver1DRangeSeries`.
+/// - Returns: `String`.
+/// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn LineOver1DRangeSeries::to_string(self : LineOver1DRangeSeries) -> String {
   "cartesian line: " +
   @symprint.to_string(self.expr) +
@@ -44,6 +56,10 @@ pub fn LineOver1DRangeSeries::to_string(self : LineOver1DRangeSeries) -> String 
 }
 
 ///|
+/// - Does: Returns the plotted variable of one 1D line series.
+/// - Input: One `LineOver1DRangeSeries`.
+/// - Returns: `Expr`.
+/// - Limits: This is a shallow accessor.
 pub fn LineOver1DRangeSeries::plot_var(
   self : LineOver1DRangeSeries,
 ) -> @symcore.Expr {
@@ -51,6 +67,10 @@ pub fn LineOver1DRangeSeries::plot_var(
 }
 
 ///|
+/// - Does: Returns the configured point count of one 1D line series.
+/// - Input: One `LineOver1DRangeSeries`.
+/// - Returns: `Int`.
+/// - Limits: Adaptive sampling can produce a different effective number of samples.
 pub fn LineOver1DRangeSeries::nb_of_points(self : LineOver1DRangeSeries) -> Int {
   self.n
 }
@@ -419,6 +439,10 @@ fn plot_adaptive_sample(
 }
 
 ///|
+/// - Does: Samples x/y points for one 1D line series.
+/// - Input: One `LineOver1DRangeSeries`.
+/// - Returns: `(Array[Double], Array[Double?])`.
+/// - Limits: Raises `PlottingError::ValueError` when bounds are not numeric or when complex-range endpoints do not share the same imaginary part.
 pub fn LineOver1DRangeSeries::get_points(
   self : LineOver1DRangeSeries,
 ) -> (Array[Double], Array[Double?]) raise PlottingError {
@@ -495,6 +519,10 @@ pub fn LineOver1DRangeSeries::get_points(
 }
 
 ///|
+/// - Does: Returns the sampled data of one 1D line series.
+/// - Input: One `LineOver1DRangeSeries`.
+/// - Returns: `(Array[Double], Array[Double?])`.
+/// - Limits: This forwards to `get_points`, so it raises the same `PlottingError` cases.
 pub fn LineOver1DRangeSeries::get_data(
   self : LineOver1DRangeSeries,
 ) -> (Array[Double], Array[Double?]) raise PlottingError {
@@ -502,6 +530,10 @@ pub fn LineOver1DRangeSeries::get_data(
 }
 
 ///|
+/// - Does: Builds a Cartesian 1D line-series object from an expression and range tuple.
+/// - Input: One expression, one `(symbol, start, end)` range tuple, and optional sampling metadata.
+/// - Returns: `LineOver1DRangeSeries`.
+/// - Limits: Raises `PlottingError::ValueError` unless the range has the accepted tuple shape.
 pub fn line_over_1d_range_series(
   expr : @symcore.Expr,
   range : @symcore.Expr,
@@ -1084,6 +1116,10 @@ fn plot_meshgrid(
 }
 
 ///|
+/// - Does: Stores one 2D parametric line-series specification and its sampling options.
+/// - Input: Constructed from two expressions, one parameter range, and sampling metadata.
+/// - Returns: One `Parametric2DLineSeries` value.
+/// - Limits: Numeric range validation happens when sampling methods are called or through the constructor front door.
 pub struct Parametric2DLineSeries {
   expr_x : @symcore.Expr
   expr_y : @symcore.Expr
@@ -1101,6 +1137,10 @@ pub struct Parametric2DLineSeries {
 }
 
 ///|
+/// - Does: Formats the 2D parametric line series for diagnostics.
+/// - Input: One `Parametric2DLineSeries`.
+/// - Returns: `String`.
+/// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn Parametric2DLineSeries::to_string(
   self : Parametric2DLineSeries,
 ) -> String {
@@ -1118,6 +1158,10 @@ pub fn Parametric2DLineSeries::to_string(
 }
 
 ///|
+/// - Does: Returns the parameter variable of one 2D parametric series.
+/// - Input: One `Parametric2DLineSeries`.
+/// - Returns: `Expr`.
+/// - Limits: This is a shallow accessor.
 pub fn Parametric2DLineSeries::plot_var(
   self : Parametric2DLineSeries,
 ) -> @symcore.Expr {
@@ -1125,6 +1169,10 @@ pub fn Parametric2DLineSeries::plot_var(
 }
 
 ///|
+/// - Does: Returns the configured point count of one 2D parametric series.
+/// - Input: One `Parametric2DLineSeries`.
+/// - Returns: `Int`.
+/// - Limits: Adaptive sampling can produce a different effective number of samples.
 pub fn Parametric2DLineSeries::nb_of_points(
   self : Parametric2DLineSeries,
 ) -> Int {
@@ -1132,6 +1180,10 @@ pub fn Parametric2DLineSeries::nb_of_points(
 }
 
 ///|
+/// - Does: Returns the display label of one 2D parametric series.
+/// - Input: One `Parametric2DLineSeries`.
+/// - Returns: `String`.
+/// - Limits: Falls back to the parameter variable when no explicit label is stored.
 pub fn Parametric2DLineSeries::get_label(
   self : Parametric2DLineSeries,
 ) -> String {
@@ -1248,6 +1300,10 @@ fn plot_parametric_adaptive_sample(
 }
 
 ///|
+/// - Does: Returns the sampled parameter values of one 2D parametric series.
+/// - Input: One `Parametric2DLineSeries`.
+/// - Returns: `Array[Double]`.
+/// - Limits: Raises the same `PlottingError` cases as `get_data`.
 pub fn Parametric2DLineSeries::get_parameter_points(
   self : Parametric2DLineSeries,
 ) -> Array[Double] raise PlottingError {
@@ -1256,6 +1312,10 @@ pub fn Parametric2DLineSeries::get_parameter_points(
 }
 
 ///|
+/// - Does: Returns sampled planar points of one 2D parametric series.
+/// - Input: One `Parametric2DLineSeries`.
+/// - Returns: `(Array[Double?], Array[Double?])`.
+/// - Limits: Raises the same `PlottingError` cases as `get_data`.
 pub fn Parametric2DLineSeries::get_points(
   self : Parametric2DLineSeries,
 ) -> (Array[Double?], Array[Double?]) raise PlottingError {
@@ -1264,6 +1324,10 @@ pub fn Parametric2DLineSeries::get_points(
 }
 
 ///|
+/// - Does: Samples planar data and parameter values for one 2D parametric series.
+/// - Input: One `Parametric2DLineSeries`.
+/// - Returns: `(Array[Double?], Array[Double?], Array[Double])`.
+/// - Limits: Raises `PlottingError::ValueError` when bounds are not numeric or when complex-range endpoints do not share the same imaginary part.
 pub fn Parametric2DLineSeries::get_data(
   self : Parametric2DLineSeries,
 ) -> (Array[Double?], Array[Double?], Array[Double]) raise PlottingError {
@@ -1337,6 +1401,10 @@ pub fn Parametric2DLineSeries::get_data(
 }
 
 ///|
+/// - Does: Builds a 2D parametric line-series object from two expressions and a parameter range tuple.
+/// - Input: Two expressions, one `(symbol, start, end)` range tuple, and optional sampling metadata.
+/// - Returns: `Parametric2DLineSeries`.
+/// - Limits: Raises `PlottingError::ValueError` unless the range has the accepted tuple shape.
 pub fn parametric_2d_line_series(
   expr_x : @symcore.Expr,
   expr_y : @symcore.Expr,
@@ -1376,6 +1444,10 @@ pub fn parametric_2d_line_series(
 }
 
 ///|
+/// - Does: Stores one 3D parametric line-series specification and its sampling options.
+/// - Input: Constructed from three expressions, one parameter range, and sampling metadata.
+/// - Returns: One `Parametric3DLineSeries` value.
+/// - Limits: Numeric range validation happens when sampling methods are called or through the constructor front door.
 pub struct Parametric3DLineSeries {
   expr_x : @symcore.Expr
   expr_y : @symcore.Expr
@@ -1394,6 +1466,10 @@ pub struct Parametric3DLineSeries {
 }
 
 ///|
+/// - Does: Formats the 3D parametric line series for diagnostics.
+/// - Input: One `Parametric3DLineSeries`.
+/// - Returns: `String`.
+/// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn Parametric3DLineSeries::to_string(
   self : Parametric3DLineSeries,
 ) -> String {
@@ -1413,6 +1489,10 @@ pub fn Parametric3DLineSeries::to_string(
 }
 
 ///|
+/// - Does: Returns the parameter variable of one 3D parametric series.
+/// - Input: One `Parametric3DLineSeries`.
+/// - Returns: `Expr`.
+/// - Limits: This is a shallow accessor.
 pub fn Parametric3DLineSeries::plot_var(
   self : Parametric3DLineSeries,
 ) -> @symcore.Expr {
@@ -1420,6 +1500,10 @@ pub fn Parametric3DLineSeries::plot_var(
 }
 
 ///|
+/// - Does: Returns the configured point count of one 3D parametric series.
+/// - Input: One `Parametric3DLineSeries`.
+/// - Returns: `Int`.
+/// - Limits: Current 3D parametric sampling is non-adaptive in the constructor path.
 pub fn Parametric3DLineSeries::nb_of_points(
   self : Parametric3DLineSeries,
 ) -> Int {
@@ -1427,6 +1511,10 @@ pub fn Parametric3DLineSeries::nb_of_points(
 }
 
 ///|
+/// - Does: Returns the display label of one 3D parametric series.
+/// - Input: One `Parametric3DLineSeries`.
+/// - Returns: `String`.
+/// - Limits: Falls back to the parameter variable when no explicit label is stored.
 pub fn Parametric3DLineSeries::get_label(
   self : Parametric3DLineSeries,
 ) -> String {
@@ -1437,6 +1525,10 @@ pub fn Parametric3DLineSeries::get_label(
 }
 
 ///|
+/// - Does: Returns the sampled parameter values of one 3D parametric series.
+/// - Input: One `Parametric3DLineSeries`.
+/// - Returns: `Array[Double]`.
+/// - Limits: Raises the same `PlottingError` cases as `get_data`.
 pub fn Parametric3DLineSeries::get_parameter_points(
   self : Parametric3DLineSeries,
 ) -> Array[Double] raise PlottingError {
@@ -1445,6 +1537,10 @@ pub fn Parametric3DLineSeries::get_parameter_points(
 }
 
 ///|
+/// - Does: Returns sampled 3D points of one 3D parametric series.
+/// - Input: One `Parametric3DLineSeries`.
+/// - Returns: `(Array[Double?], Array[Double?], Array[Double?])`.
+/// - Limits: Raises the same `PlottingError` cases as `get_data`.
 pub fn Parametric3DLineSeries::get_points(
   self : Parametric3DLineSeries,
 ) -> (Array[Double?], Array[Double?], Array[Double?]) raise PlottingError {
@@ -1453,6 +1549,10 @@ pub fn Parametric3DLineSeries::get_points(
 }
 
 ///|
+/// - Does: Samples 3D data and parameter values for one 3D parametric series.
+/// - Input: One `Parametric3DLineSeries`.
+/// - Returns: `(Array[Double?], Array[Double?], Array[Double?], Array[Double])`.
+/// - Limits: Raises `PlottingError::ValueError` when bounds are not numeric or when complex-range endpoints do not share the same imaginary part.
 pub fn Parametric3DLineSeries::get_data(
   self : Parametric3DLineSeries,
 ) -> (Array[Double?], Array[Double?], Array[Double?], Array[Double]) raise PlottingError {
@@ -1494,6 +1594,10 @@ pub fn Parametric3DLineSeries::get_data(
 }
 
 ///|
+/// - Does: Builds a 3D parametric line-series object from three expressions and a parameter range tuple.
+/// - Input: Three expressions, one `(symbol, start, end)` range tuple, and optional sampling metadata.
+/// - Returns: `Parametric3DLineSeries`.
+/// - Limits: Raises `PlottingError::ValueError` unless the range has the accepted tuple shape.
 pub fn parametric_3d_line_series(
   expr_x : @symcore.Expr,
   expr_y : @symcore.Expr,
@@ -1538,6 +1642,10 @@ pub fn parametric_3d_line_series(
 }
 
 ///|
+/// - Does: Stores one Cartesian surface-series specification and its mesh settings.
+/// - Input: Constructed from one expression, two ranges, and mesh metadata.
+/// - Returns: One `SurfaceOver2DRangeSeries` value.
+/// - Limits: Numeric range validation happens when sampling methods are called or through the constructor front door.
 pub struct SurfaceOver2DRangeSeries {
   expr : @symcore.Expr
   variable_x : @symcore.Expr
@@ -1557,6 +1665,10 @@ pub struct SurfaceOver2DRangeSeries {
 }
 
 ///|
+/// - Does: Formats the Cartesian surface series for diagnostics.
+/// - Input: One `SurfaceOver2DRangeSeries`.
+/// - Returns: `String`.
+/// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn SurfaceOver2DRangeSeries::to_string(
   self : SurfaceOver2DRangeSeries,
 ) -> String {
@@ -1578,6 +1690,10 @@ pub fn SurfaceOver2DRangeSeries::to_string(
 }
 
 ///|
+/// - Does: Returns the configured x-direction mesh size of one surface series.
+/// - Input: One `SurfaceOver2DRangeSeries`.
+/// - Returns: `Int`.
+/// - Limits: This is a shallow accessor.
 pub fn SurfaceOver2DRangeSeries::nb_of_points_x(
   self : SurfaceOver2DRangeSeries,
 ) -> Int {
@@ -1585,6 +1701,10 @@ pub fn SurfaceOver2DRangeSeries::nb_of_points_x(
 }
 
 ///|
+/// - Does: Returns the configured y-direction mesh size of one surface series.
+/// - Input: One `SurfaceOver2DRangeSeries`.
+/// - Returns: `Int`.
+/// - Limits: This is a shallow accessor.
 pub fn SurfaceOver2DRangeSeries::nb_of_points_y(
   self : SurfaceOver2DRangeSeries,
 ) -> Int {
@@ -1592,6 +1712,10 @@ pub fn SurfaceOver2DRangeSeries::nb_of_points_y(
 }
 
 ///|
+/// - Does: Returns the display label of one surface series.
+/// - Input: One `SurfaceOver2DRangeSeries`.
+/// - Returns: `String`.
+/// - Limits: Falls back to the plotted expression when no explicit label is stored.
 pub fn SurfaceOver2DRangeSeries::get_label(
   self : SurfaceOver2DRangeSeries,
 ) -> String {
@@ -1602,6 +1726,10 @@ pub fn SurfaceOver2DRangeSeries::get_label(
 }
 
 ///|
+/// - Does: Returns sampled meshes for one Cartesian surface series.
+/// - Input: One `SurfaceOver2DRangeSeries`.
+/// - Returns: `(Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]])`.
+/// - Limits: Raises the same `PlottingError` cases as `get_data`.
 pub fn SurfaceOver2DRangeSeries::get_points(
   self : SurfaceOver2DRangeSeries,
 ) -> (Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]]) raise PlottingError {
@@ -1609,6 +1737,10 @@ pub fn SurfaceOver2DRangeSeries::get_points(
 }
 
 ///|
+/// - Does: Samples mesh data for one Cartesian surface series.
+/// - Input: One `SurfaceOver2DRangeSeries`.
+/// - Returns: `(Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]])`.
+/// - Limits: Raises `PlottingError::ValueError` when bounds are not numeric or when complex-range endpoints do not share the same imaginary part.
 pub fn SurfaceOver2DRangeSeries::get_data(
   self : SurfaceOver2DRangeSeries,
 ) -> (Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]]) raise PlottingError {
@@ -1689,6 +1821,10 @@ pub fn SurfaceOver2DRangeSeries::get_data(
 }
 
 ///|
+/// - Does: Builds a Cartesian surface-series object from one expression and two range tuples.
+/// - Input: One expression, two `(symbol, start, end)` range tuples, and optional mesh metadata.
+/// - Returns: `SurfaceOver2DRangeSeries`.
+/// - Limits: Raises `PlottingError::ValueError` unless both ranges have the accepted tuple shape.
 pub fn surface_over_2d_range_series(
   expr : @symcore.Expr,
   range_x : @symcore.Expr,
@@ -1734,6 +1870,10 @@ pub fn surface_over_2d_range_series(
 }
 
 ///|
+/// - Does: Stores one parametric surface-series specification and its mesh settings.
+/// - Input: Constructed from three expressions, two parameter ranges, and mesh metadata.
+/// - Returns: One `ParametricSurfaceSeries` value.
+/// - Limits: Numeric range validation happens when sampling methods are called or through the constructor front door.
 pub struct ParametricSurfaceSeries {
   expr_x : @symcore.Expr
   expr_y : @symcore.Expr
@@ -1755,6 +1895,10 @@ pub struct ParametricSurfaceSeries {
 }
 
 ///|
+/// - Does: Formats the parametric surface series for diagnostics.
+/// - Input: One `ParametricSurfaceSeries`.
+/// - Returns: `String`.
+/// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn ParametricSurfaceSeries::to_string(
   self : ParametricSurfaceSeries,
 ) -> String {
@@ -1780,6 +1924,10 @@ pub fn ParametricSurfaceSeries::to_string(
 }
 
 ///|
+/// - Does: Returns the configured u-direction mesh size of one parametric surface series.
+/// - Input: One `ParametricSurfaceSeries`.
+/// - Returns: `Int`.
+/// - Limits: This is a shallow accessor.
 pub fn ParametricSurfaceSeries::nb_of_points_u(
   self : ParametricSurfaceSeries,
 ) -> Int {
@@ -1787,6 +1935,10 @@ pub fn ParametricSurfaceSeries::nb_of_points_u(
 }
 
 ///|
+/// - Does: Returns the configured v-direction mesh size of one parametric surface series.
+/// - Input: One `ParametricSurfaceSeries`.
+/// - Returns: `Int`.
+/// - Limits: This is a shallow accessor.
 pub fn ParametricSurfaceSeries::nb_of_points_v(
   self : ParametricSurfaceSeries,
 ) -> Int {
@@ -1794,6 +1946,10 @@ pub fn ParametricSurfaceSeries::nb_of_points_v(
 }
 
 ///|
+/// - Does: Returns the display label of one parametric surface series.
+/// - Input: One `ParametricSurfaceSeries`.
+/// - Returns: `String`.
+/// - Limits: Falls back to the expression triple when no explicit label is stored.
 pub fn ParametricSurfaceSeries::get_label(
   self : ParametricSurfaceSeries,
 ) -> String {
@@ -1811,6 +1967,10 @@ pub fn ParametricSurfaceSeries::get_label(
 }
 
 ///|
+/// - Does: Returns sampled parameter meshes of one parametric surface series.
+/// - Input: One `ParametricSurfaceSeries`.
+/// - Returns: `(Array[Array[Double]], Array[Array[Double]])`.
+/// - Limits: Raises the same `PlottingError` cases as `get_data`.
 pub fn ParametricSurfaceSeries::get_parameter_meshes(
   self : ParametricSurfaceSeries,
 ) -> (Array[Array[Double]], Array[Array[Double]]) raise PlottingError {
@@ -1819,6 +1979,10 @@ pub fn ParametricSurfaceSeries::get_parameter_meshes(
 }
 
 ///|
+/// - Does: Returns sampled x/y/z meshes of one parametric surface series.
+/// - Input: One `ParametricSurfaceSeries`.
+/// - Returns: `(Array[Array[Double?]], Array[Array[Double?]], Array[Array[Double?]])`.
+/// - Limits: Raises the same `PlottingError` cases as `get_data`.
 pub fn ParametricSurfaceSeries::get_meshes(
   self : ParametricSurfaceSeries,
 ) -> (Array[Array[Double?]], Array[Array[Double?]], Array[Array[Double?]]) raise PlottingError {
@@ -1827,6 +1991,10 @@ pub fn ParametricSurfaceSeries::get_meshes(
 }
 
 ///|
+/// - Does: Samples x/y/z meshes and parameter meshes for one parametric surface series.
+/// - Input: One `ParametricSurfaceSeries`.
+/// - Returns: `(Array[Array[Double?]], Array[Array[Double?]], Array[Array[Double?]], Array[Array[Double]], Array[Array[Double]])`.
+/// - Limits: Raises `PlottingError::ValueError` when bounds are not numeric or when complex-range endpoints do not share the same imaginary part.
 pub fn ParametricSurfaceSeries::get_data(
   self : ParametricSurfaceSeries,
 ) -> (
@@ -1941,6 +2109,10 @@ pub fn ParametricSurfaceSeries::get_data(
 }
 
 ///|
+/// - Does: Builds a parametric surface-series object from three expressions and two range tuples.
+/// - Input: Three expressions, two `(symbol, start, end)` range tuples, and optional mesh metadata.
+/// - Returns: `ParametricSurfaceSeries`.
+/// - Limits: Raises `PlottingError::ValueError` unless both ranges have the accepted tuple shape.
 pub fn parametric_surface_series(
   expr_x : @symcore.Expr,
   expr_y : @symcore.Expr,
@@ -1992,6 +2164,10 @@ pub fn parametric_surface_series(
 }
 
 ///|
+/// - Does: Stores one contour-series specification and its mesh settings.
+/// - Input: Constructed from one expression, two ranges, and mesh metadata.
+/// - Returns: One `ContourSeries` value.
+/// - Limits: Numeric range validation happens when sampling methods are called or through the constructor front door.
 pub struct ContourSeries {
   expr : @symcore.Expr
   variable_x : @symcore.Expr
@@ -2011,6 +2187,10 @@ pub struct ContourSeries {
 }
 
 ///|
+/// - Does: Formats the contour series for diagnostics.
+/// - Input: One `ContourSeries`.
+/// - Returns: `String`.
+/// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn ContourSeries::to_string(self : ContourSeries) -> String {
   "contour: " +
   @symprint.to_string(self.expr) +
@@ -2030,6 +2210,10 @@ pub fn ContourSeries::to_string(self : ContourSeries) -> String {
 }
 
 ///|
+/// - Does: Returns the display label of one contour series.
+/// - Input: One `ContourSeries`.
+/// - Returns: `String`.
+/// - Limits: Falls back to the plotted expression when no explicit label is stored.
 pub fn ContourSeries::get_label(self : ContourSeries) -> String {
   match self.label {
     Some(label) => label
@@ -2038,6 +2222,10 @@ pub fn ContourSeries::get_label(self : ContourSeries) -> String {
 }
 
 ///|
+/// - Does: Samples mesh data for one contour series.
+/// - Input: One `ContourSeries`.
+/// - Returns: `(Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]])`.
+/// - Limits: Raises the same `PlottingError` cases as the underlying surface-series sampler.
 pub fn ContourSeries::get_data(
   self : ContourSeries,
 ) -> (Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]]) raise PlottingError {
@@ -2057,6 +2245,10 @@ pub fn ContourSeries::get_data(
 }
 
 ///|
+/// - Does: Builds a contour-series object from one expression and two range tuples.
+/// - Input: One expression, two `(symbol, start, end)` range tuples, and optional mesh metadata.
+/// - Returns: `ContourSeries`.
+/// - Limits: Raises the same `PlottingError` cases as `surface_over_2d_range_series`.
 pub fn contour_series(
   expr : @symcore.Expr,
   range_x : @symcore.Expr,
@@ -2103,6 +2295,10 @@ pub fn contour_series(
 }
 
 ///|
+/// - Does: Stores one implicit-series specification and its sampling settings.
+/// - Input: Constructed from one expression, two ranges, and adaptive/mesh metadata.
+/// - Returns: One `ImplicitSeries` value.
+/// - Limits: Numeric range validation happens when sampling methods are called or through the constructor front door.
 pub struct ImplicitSeries {
   expr : @symcore.Expr
   variable_x : @symcore.Expr
@@ -2123,6 +2319,10 @@ pub struct ImplicitSeries {
 }
 
 ///|
+/// - Does: Formats the implicit series for diagnostics.
+/// - Input: One `ImplicitSeries`.
+/// - Returns: `String`.
+/// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn ImplicitSeries::to_string(self : ImplicitSeries) -> String {
   "Implicit expression: " +
   @symprint.to_string(self.expr) +
@@ -2142,6 +2342,10 @@ pub fn ImplicitSeries::to_string(self : ImplicitSeries) -> String {
 }
 
 ///|
+/// - Does: Returns the display label of one implicit series.
+/// - Input: One `ImplicitSeries`.
+/// - Returns: `String`.
+/// - Limits: Falls back to the plotted expression when no explicit label is stored.
 pub fn ImplicitSeries::get_label(self : ImplicitSeries) -> String {
   match self.label {
     Some(label) => label
@@ -2150,6 +2354,10 @@ pub fn ImplicitSeries::get_label(self : ImplicitSeries) -> String {
 }
 
 ///|
+/// - Does: Samples implicit-plot output as either fill rectangles or mesh data.
+/// - Input: One `ImplicitSeries`.
+/// - Returns: `ImplicitPlotData`.
+/// - Limits: Raises `PlottingError::ValueError` when bounds are not numeric or when complex-range endpoints do not share the same imaginary part.
 pub fn ImplicitSeries::get_data(
   self : ImplicitSeries,
 ) -> ImplicitPlotData raise PlottingError {
@@ -2330,6 +2538,10 @@ pub fn ImplicitSeries::get_data(
 }
 
 ///|
+/// - Does: Builds an implicit-series object from one expression and two range tuples.
+/// - Input: One expression, two `(symbol, start, end)` range tuples, and optional adaptive/mesh metadata.
+/// - Returns: `ImplicitSeries`.
+/// - Limits: Raises `PlottingError::ValueError` unless both ranges have the accepted tuple shape.
 pub fn implicit_series(
   expr : @symcore.Expr,
   range_x : @symcore.Expr,
@@ -2386,6 +2598,10 @@ pub fn implicit_series(
 }
 
 ///|
+/// - Does: Enumerates every series kind that can be stored in a `Plot`.
+/// - Input: One concrete series value.
+/// - Returns: One `PlotSeries` value.
+/// - Limits: Only the listed series kinds are representable here.
 pub enum PlotSeries {
   Line(LineOver1DRangeSeries)
   Parametric2D(Parametric2DLineSeries)
@@ -2397,6 +2613,10 @@ pub enum PlotSeries {
 }
 
 ///|
+/// - Does: Formats one plot-series value for diagnostics.
+/// - Input: One `PlotSeries`.
+/// - Returns: `String`.
+/// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn PlotSeries::to_string(self : PlotSeries) -> String {
   match self {
     PlotSeries::Line(series) => series.to_string()

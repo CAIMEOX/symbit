@@ -510,6 +510,10 @@ fn plot_build_parametric_specs(
 }
 
 ///|
+/// - Does: Builds a `Plot` object from already constructed series and backend metadata.
+/// - Input: `Array[PlotSeries]` plus optional backend and plot-level settings.
+/// - Returns: `Plot`.
+/// - Limits: Raises `PlottingError::TypeError` when `backend` is not `default`, `text`, or `matplotlib`.
 pub fn plot_factory(
   series : Array[PlotSeries],
   backend? : String = "default",
@@ -555,6 +559,10 @@ pub fn plot_factory(
 }
 
 ///|
+/// - Does: Builds a Cartesian 1D plot from `PlotInput` arguments and optional plot settings.
+/// - Input: `Array[PlotInput]` plus optional backend, sampling, axis, and label settings.
+/// - Returns: `Plot`.
+/// - Limits: Raises `PlottingError` when inputs do not match the accepted line-plot surface or when rendering is requested on invalid data.
 pub fn plot(
   args : Array[PlotInput],
   show? : Bool = true,
@@ -641,6 +649,10 @@ pub fn plot(
 }
 
 ///|
+/// - Does: Builds a 2D parametric plot from `ParametricPlotInput` arguments.
+/// - Input: `Array[ParametricPlotInput]` plus optional backend, sampling, and plot-level settings.
+/// - Returns: `Plot`.
+/// - Limits: Raises `PlottingError::TypeError` for the text backend and `PlottingError` for malformed parametric inputs.
 pub fn plot_parametric(
   args : Array[ParametricPlotInput],
   show? : Bool = true,
@@ -722,6 +734,10 @@ pub fn plot_parametric(
 }
 
 ///|
+/// - Does: Builds a 3D parametric line plot from `Parametric3DPlotInput` arguments.
+/// - Input: `Array[Parametric3DPlotInput]` plus optional backend, sampling, and plot-level settings.
+/// - Returns: `Plot`.
+/// - Limits: Raises `PlottingError::TypeError` for the text backend and `PlottingError` for malformed parametric inputs.
 pub fn plot3d_parametric_line(
   args : Array[Parametric3DPlotInput],
   show? : Bool = true,
@@ -807,6 +823,10 @@ pub fn plot3d_parametric_line(
 }
 
 ///|
+/// - Does: Builds a Cartesian 3D surface plot from `PlotInput` arguments.
+/// - Input: `Array[PlotInput]` plus optional backend, mesh, and plot-level settings.
+/// - Returns: `Plot`.
+/// - Limits: Raises `PlottingError::TypeError` for the text backend and `PlottingError` for malformed surface inputs.
 pub fn plot3d(
   args : Array[PlotInput],
   show? : Bool = true,
@@ -924,6 +944,10 @@ pub fn plot3d(
 }
 
 ///|
+/// - Does: Builds a contour plot from `PlotInput` arguments.
+/// - Input: `Array[PlotInput]` plus optional backend, mesh, and plot-level settings.
+/// - Returns: `Plot`.
+/// - Limits: Raises `PlottingError::TypeError` for the text backend and `PlottingError` for malformed contour inputs.
 pub fn plot_contour(
   args : Array[PlotInput],
   show? : Bool = true,
@@ -1041,6 +1065,10 @@ pub fn plot_contour(
 }
 
 ///|
+/// - Does: Builds a 3D parametric surface plot from `Parametric3DPlotInput` arguments.
+/// - Input: `Array[Parametric3DPlotInput]` plus optional backend, mesh, and plot-level settings.
+/// - Returns: `Plot`.
+/// - Limits: Raises `PlottingError::TypeError` for the text backend and `PlottingError` for malformed parametric inputs.
 pub fn plot3d_parametric_surface(
   args : Array[Parametric3DPlotInput],
   show? : Bool = true,
@@ -1153,6 +1181,10 @@ fn plot_implicit_range_tuple(
 }
 
 ///|
+/// - Does: Builds an implicit plot from one expression and optional explicit range specifications.
+/// - Input: One expression plus optional `x_var`, `y_var`, sampling, backend, and plot-level settings.
+/// - Returns: `Plot`.
+/// - Limits: Raises `PlottingError::TypeError` for the text backend and `PlottingError::ValueError` when more than two variables are involved or ranges are malformed.
 pub fn plot_implicit(
   expr : @symcore.Expr,
   x_var? : @symcore.Expr? = None,
