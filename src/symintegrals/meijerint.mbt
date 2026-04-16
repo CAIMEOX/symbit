@@ -1,11 +1,17 @@
 ///|
-/// Stage-4 Meijer-style heuristics.
+/// Meijer-style integration front door.
 ///
-/// The goal here is to cover high-value non-elementary closed forms that are
-/// naturally expressed through Meijer G machinery.
+/// Current Limits:
+/// - Coverage is limited to the non-elementary families recognized by the current heuristics.
+/// - Unsupported cases return `None`.
 
 ///|
-/// Meijer-G based fallback integrator for special-function antiderivatives.
+/// Try the Meijer-style fallback integrator.
+///
+/// - Does: Searches for non-elementary antiderivatives recognized by the local Meijer-style rules.
+/// - Input: One integrand `Expr` and one variable name.
+/// - Returns: `Some(Expr)` for a found antiderivative or `None`.
+/// - Limits: Coverage is limited to the currently implemented special-function families.
 pub fn meijerg_integrate(expr : Expr, var_name : String) -> Expr? {
   let target = expr_simplify(expr)
   if @symcore.application_has_name(target, "exp", arity=1) {

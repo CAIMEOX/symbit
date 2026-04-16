@@ -302,10 +302,12 @@ fn quad_legendre_eval(n : Int, x : Double) -> Double {
 }
 
 ///|
-/// Gauss-Legendre nodes and weights on `[-1, 1]`.
+/// Compute Gauss-Legendre nodes and weights.
 ///
-/// The result is numeric, rounded to `n_digits` significant digits, and uses
-/// the symmetric Jacobi-matrix construction.
+/// - Does: Builds the `n`-point Gauss-Legendre rule on `[-1, 1]`.
+/// - Input: A positive order `n` and an optional digit count.
+/// - Returns: A pair `(nodes, weights)` of `Array[Double]`.
+/// - Limits: Raises `IntegralError` when `n` is invalid.
 pub fn gauss_legendre(
   n : Int,
   n_digits? : Int = 15,
@@ -316,9 +318,12 @@ pub fn gauss_legendre(
 }
 
 ///|
-/// Gauss-Jacobi nodes and weights on `[-1, 1]` with parameters `alpha`, `beta`.
+/// Compute Gauss-Jacobi nodes and weights.
 ///
-/// Both parameters must satisfy `alpha > -1` and `beta > -1`.
+/// - Does: Builds the `n`-point Gauss-Jacobi rule on `[-1, 1]` for the given parameters.
+/// - Input: A positive order `n`, parameters `alpha` and `beta`, and an optional digit count.
+/// - Returns: A pair `(nodes, weights)` of `Array[Double]`.
+/// - Limits: Raises `IntegralError` when `n` is invalid or when either parameter is not greater than `-1`.
 pub fn gauss_jacobi(
   n : Int,
   alpha : Expr,
@@ -336,7 +341,12 @@ pub fn gauss_jacobi(
 }
 
 ///|
-/// Gauss-Chebyshev quadrature of the first kind.
+/// Compute Gauss-Chebyshev quadrature of the first kind.
+///
+/// - Does: Builds the first-kind Chebyshev rule by specializing the Jacobi parameters.
+/// - Input: A positive order `n` and an optional digit count.
+/// - Returns: A pair `(nodes, weights)` of `Array[Double]`.
+/// - Limits: Raises `IntegralError` when `n` is invalid.
 pub fn gauss_chebyshev_t(
   n : Int,
   n_digits? : Int = 15,
@@ -346,7 +356,12 @@ pub fn gauss_chebyshev_t(
 }
 
 ///|
-/// Gauss-Chebyshev quadrature of the second kind.
+/// Compute Gauss-Chebyshev quadrature of the second kind.
+///
+/// - Does: Builds the second-kind Chebyshev rule by specializing the Jacobi parameters.
+/// - Input: A positive order `n` and an optional digit count.
+/// - Returns: A pair `(nodes, weights)` of `Array[Double]`.
+/// - Limits: Raises `IntegralError` when `n` is invalid.
 pub fn gauss_chebyshev_u(
   n : Int,
   n_digits? : Int = 15,
@@ -356,8 +371,12 @@ pub fn gauss_chebyshev_u(
 }
 
 ///|
-/// Gauss-Laguerre nodes and weights on `[0, +oo)` for the standard Laguerre
-/// weight.
+/// Compute Gauss-Laguerre nodes and weights.
+///
+/// - Does: Builds the standard `n`-point Gauss-Laguerre rule on `[0, +oo)`.
+/// - Input: A positive order `n` and an optional digit count.
+/// - Returns: A pair `(nodes, weights)` of `Array[Double]`.
+/// - Limits: Raises `IntegralError` when `n` is invalid.
 pub fn gauss_laguerre(
   n : Int,
   n_digits? : Int = 15,
@@ -368,7 +387,12 @@ pub fn gauss_laguerre(
 }
 
 ///|
-/// Generalized Gauss-Laguerre quadrature with parameter `alpha > -1`.
+/// Compute generalized Gauss-Laguerre nodes and weights.
+///
+/// - Does: Builds the generalized `n`-point Gauss-Laguerre rule for one `alpha`.
+/// - Input: A positive order `n`, one parameter `alpha`, and an optional digit count.
+/// - Returns: A pair `(nodes, weights)` of `Array[Double]`.
+/// - Limits: Raises `IntegralError` when `n` is invalid or `alpha <= -1`.
 pub fn gauss_gen_laguerre(
   n : Int,
   alpha : Expr,
@@ -384,7 +408,12 @@ pub fn gauss_gen_laguerre(
 }
 
 ///|
-/// Gauss-Hermite nodes and weights on `(-oo, +oo)`.
+/// Compute Gauss-Hermite nodes and weights.
+///
+/// - Does: Builds the `n`-point Gauss-Hermite rule on `(-oo, +oo)`.
+/// - Input: A positive order `n` and an optional digit count.
+/// - Returns: A pair `(nodes, weights)` of `Array[Double]`.
+/// - Limits: Raises `IntegralError` when `n` is invalid.
 pub fn gauss_hermite(
   n : Int,
   n_digits? : Int = 15,
@@ -395,9 +424,12 @@ pub fn gauss_hermite(
 }
 
 ///|
-/// Gauss-Lobatto nodes and weights including the endpoints `-1` and `1`.
+/// Compute Gauss-Lobatto nodes and weights.
 ///
-/// The order must be at least `2`.
+/// - Does: Builds the Gauss-Lobatto rule including the endpoints `-1` and `1`.
+/// - Input: An order `n >= 2` and an optional digit count.
+/// - Returns: A pair `(nodes, weights)` of `Array[Double]`.
+/// - Limits: Raises `IntegralError` when `n < 2`.
 pub fn gauss_lobatto(
   n : Int,
   n_digits? : Int = 15,

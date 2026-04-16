@@ -1,15 +1,18 @@
 ///|
-/// Shared expression type alias used by the public integration API.
+/// Shared public aliases for `symintegrals`.
 ///
-/// Re-exporting the alias keeps signatures in `symintegrals` concise while
-/// still referring to the canonical symbolic expression representation.
+/// Current Limits:
+/// - This file only exposes lightweight aliases used by the public integration front doors.
+/// - It does not define additional runtime objects.
 pub type Expr = @symcore.Expr
 
 ///|
-/// Integration limit specification used by integral and transform front doors.
+/// Describe one parsed integration limit.
 ///
-/// The tuple shape is `(name, lower?, upper?)`, where omitted bounds represent
-/// indefinite or partially specified limits.
+/// - Does: Names one integration variable together with optional lower and upper bounds.
+/// - Input: A tuple `(String, Expr?, Expr?)`.
+/// - Returns: A `LimitSpec` alias value.
+/// - Limits: Missing bounds represent indefinite or partially specified limits.
 pub type LimitSpec = (String, Expr?, Expr?)
 
 ///|

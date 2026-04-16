@@ -1,5 +1,9 @@
 ///|
-/// Stage-5 transform helpers.
+/// Public transform rule helpers.
+///
+/// Current Limits:
+/// - This file exposes the currently public transform rule workers and metadata helpers.
+/// - Most public functions here are low-level front doors used by `integrals.mbt`, not high-level user constructors.
 
 ///|
 type LaplaceInfo = (Expr, Expr, Expr)
@@ -61,11 +65,12 @@ fn pow_named_unary_application(expr : Expr) -> (String, Expr, Expr)? {
 }
 
 ///|
-/// Apply the forward Laplace rule table and return only the transformed value.
+/// Apply the forward Laplace rule table.
 ///
-/// This is the internal `.doit()` worker behind `LaplaceTransform`. It drops
-/// the convergence plane and condition metadata and returns `None` when the
-/// current rule set cannot evaluate the expression.
+/// - Does: Evaluates a forward Laplace transform and keeps only the transformed value.
+/// - Input: One source `Expr`, one time variable `t`, and one transform variable `s`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Convergence plane and condition metadata are discarded here.
 pub fn do_laplace_doit(expr : Expr, t : Expr, s : Expr) -> Expr? {
   match symbol_name(t) {
     Some(t_name) =>
@@ -78,12 +83,12 @@ pub fn do_laplace_doit(expr : Expr, t : Expr, s : Expr) -> Expr? {
 }
 
 ///|
-/// Evaluate a forward Laplace transform with optional ROC/condition metadata.
+/// Evaluate a forward Laplace transform with optional metadata.
 ///
-/// When the rule engine succeeds, the result uses the following convention:
-/// - `noconds=true` returns only the transformed expression
-/// - `noconds=false` returns `(value, plane, condition)`
-/// If no rule applies, the unevaluated `LaplaceTransform` object is returned.
+/// - Does: Runs the forward Laplace rule engine and optionally returns the convergence plane and condition.
+/// - Input: One source `Expr`, variables `t` and `s`, and an optional `noconds` flag.
+/// - Returns: Either the transformed `Expr` or a tuple `(value, plane, condition)`.
+/// - Limits: Returns an unevaluated `LaplaceTransform(...)` when no rule applies.
 pub fn laplace_transform_result(
   expr : Expr,
   t : Expr,
@@ -111,10 +116,12 @@ pub fn laplace_transform_result(
 }
 
 ///|
-/// Collect polynomial structure recursively before Laplace processing.
+/// Recursively collect polynomial structure before Laplace processing.
 ///
-/// This rewrites nested arithmetic into a form where polynomial coefficients in
-/// the transform variable are easier to recognize.
+/// - Does: Rewrites nested arithmetic into a form that is easier for the Laplace rule engine to inspect.
+/// - Input: One source `Expr` and one time variable `t`.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: This helper is heuristic and only targets the current Laplace preprocessing path.
 pub fn _laplace_deep_collect(expr : Expr, t : Expr) -> Expr {
   match symbol_name(t) {
     Some(t_name) => laplace_deep_collect(expr, t_name)
@@ -123,10 +130,12 @@ pub fn _laplace_deep_collect(expr : Expr, t : Expr) -> Expr {
 }
 
 ///|
-/// Rewrite transform heads according to a function-name correspondence map.
+/// Rewrite transform heads through a correspondence map.
 ///
-/// This is used when moving between named functions and their transform-domain
-/// aliases.
+/// - Does: Replaces mapped function names inside transform-domain expressions.
+/// - Input: One symbolic `Expr` and a map from source names to target names.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the transform head patterns recognized by this walker are rewritten.
 pub fn laplace_correspondence(expr : Expr, fdict : Map[String, String]) -> Expr {
   if fdict.is_empty() {
     expr
@@ -138,8 +147,10 @@ pub fn laplace_correspondence(expr : Expr, fdict : Map[String, String]) -> Expr 
 ///|
 /// Substitute initial conditions into Laplace-domain derivatives.
 ///
-/// `fdict` maps function names to the values of successive derivatives at the
-/// origin.
+/// - Does: Rewrites derivative terms using the provided initial-condition table.
+/// - Input: One symbolic `Expr`, one time variable `t`, and a map from function names to derivative values.
+/// - Returns: One rewritten `Expr`.
+/// - Limits: Only the derivative patterns recognized by this helper are substituted.
 pub fn laplace_initial_conds(
   expr : Expr,
   t : Expr,
@@ -3302,11 +3313,12 @@ fn laplace_hyperbolic_term(
 }
 
 ///|
-/// Apply the inverse Laplace rule table and return only the time-domain value.
+/// Apply the inverse Laplace rule table.
 ///
-/// This drives `.doit()` for `InverseLaplaceTransform`. Delay/object semantics
-/// and `Heaviside` factors are handled here; `None` means the expression stays
-/// unevaluated.
+/// - Does: Evaluates an inverse Laplace transform and returns only the recovered time-domain value.
+/// - Input: One source `Expr`, one transform variable `s`, and one time variable `t`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Delay and `Heaviside` semantics are handled here; unsupported cases return `None`.
 pub fn do_inverse_laplace_doit(expr : Expr, s : Expr, t : Expr) -> Expr? {
   match symbol_name(s) {
     Some(s_name) => inverse_laplace_doit(expr_simplify(expr), s_name, t)
@@ -6524,7 +6536,12 @@ fn inverse_laplace_two_linear_factors(
 }
 
 ///|
-/// Evaluate a forward Fourier transform if a closed form is available.
+/// Apply the forward Fourier rule table.
+///
+/// - Does: Evaluates a forward Fourier transform when a local closed form is available.
+/// - Input: One source `Expr`, one space variable `x`, and one frequency variable `k`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Unsupported cases return `None`.
 pub fn do_fourier_doit(expr : Expr, x : Expr, k : Expr) -> Expr? {
   match symbol_name(x) {
     Some(x_name) => fourier_doit(expr_simplify(expr), x_name, k)
@@ -6646,7 +6663,12 @@ fn fourier_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
 }
 
 ///|
-/// Evaluate an inverse Fourier transform if a closed form is available.
+/// Apply the inverse Fourier rule table.
+///
+/// - Does: Evaluates an inverse Fourier transform when a local closed form is available.
+/// - Input: One source `Expr`, one frequency variable `k`, and one space variable `x`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Unsupported cases return `None`.
 pub fn do_inverse_fourier_doit(expr : Expr, k : Expr, x : Expr) -> Expr? {
   match symbol_name(k) {
     Some(k_name) => inverse_fourier_doit(expr_simplify(expr), k_name, x)
@@ -7248,7 +7270,12 @@ fn parse_scaled_symbol(expr : Expr, var_name : String) -> Expr? {
 }
 
 ///|
-/// Evaluate a forward sine transform if a closed form is available.
+/// Apply the forward sine-transform rule table.
+///
+/// - Does: Evaluates a forward sine transform when a local closed form is available.
+/// - Input: One source `Expr`, one space variable `x`, and one frequency variable `k`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Unsupported cases return `None`.
 pub fn do_sine_doit(expr : Expr, x : Expr, k : Expr) -> Expr? {
   match symbol_name(x) {
     Some(x_name) => sine_doit(expr_simplify(expr), x_name, k)
@@ -7413,7 +7440,12 @@ fn sine_base_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
 }
 
 ///|
-/// Evaluate an inverse sine transform if a closed form is available.
+/// Apply the inverse sine-transform rule table.
+///
+/// - Does: Evaluates an inverse sine transform when a local closed form is available.
+/// - Input: One source `Expr`, one frequency variable `k`, and one space variable `x`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Unsupported cases return `None`.
 pub fn do_inverse_sine_doit(expr : Expr, k : Expr, x : Expr) -> Expr? {
   match symbol_name(k) {
     Some(k_name) => inverse_sine_doit(expr_simplify(expr), k_name, x)
@@ -7522,7 +7554,12 @@ fn inverse_sine_gaussian_term(expr : Expr, k_name : String, x : Expr) -> Expr? {
 }
 
 ///|
-/// Evaluate a forward cosine transform if a closed form is available.
+/// Apply the forward cosine-transform rule table.
+///
+/// - Does: Evaluates a forward cosine transform when a local closed form is available.
+/// - Input: One source `Expr`, one space variable `x`, and one frequency variable `k`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Unsupported cases return `None`.
 pub fn do_cosine_doit(expr : Expr, x : Expr, k : Expr) -> Expr? {
   match symbol_name(x) {
     Some(x_name) => cosine_doit(expr_simplify(expr), x_name, k)
@@ -7773,7 +7810,12 @@ fn parse_sqrt_linear(expr : Expr, var_name : String) -> Expr? {
 }
 
 ///|
-/// Evaluate an inverse cosine transform if a closed form is available.
+/// Apply the inverse cosine-transform rule table.
+///
+/// - Does: Evaluates an inverse cosine transform when a local closed form is available.
+/// - Input: One source `Expr`, one frequency variable `k`, and one space variable `x`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Unsupported cases return `None`.
 pub fn do_inverse_cosine_doit(expr : Expr, k : Expr, x : Expr) -> Expr? {
   match symbol_name(k) {
     Some(k_name) => inverse_cosine_doit(expr_simplify(expr), k_name, x)
@@ -7955,7 +7997,12 @@ fn inverse_cosine_gaussian_term(
 }
 
 ///|
-/// Evaluate a forward Hankel transform of order `nu`.
+/// Apply the forward Hankel-transform rule table.
+///
+/// - Does: Evaluates a forward Hankel transform of order `nu` when a local closed form is available.
+/// - Input: One source `Expr`, radial variable `r`, frequency variable `k`, and order `nu`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Unsupported cases return `None`.
 pub fn do_hankel_doit(expr : Expr, r : Expr, k : Expr, nu : Expr) -> Expr? {
   match symbol_name(r) {
     Some(r_name) => hankel_doit(expr_simplify(expr), r_name, k, nu)
@@ -8122,7 +8169,12 @@ fn hankel_base_term(expr : Expr, r_name : String, k : Expr, nu : Expr) -> Expr? 
 }
 
 ///|
-/// Evaluate an inverse Hankel transform of order `nu`.
+/// Apply the inverse Hankel-transform rule table.
+///
+/// - Does: Evaluates an inverse Hankel transform of order `nu` when a local closed form is available.
+/// - Input: One source `Expr`, frequency variable `k`, radial variable `r`, and order `nu`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Unsupported cases return `None`.
 pub fn do_inverse_hankel_doit(
   expr : Expr,
   k : Expr,
@@ -8152,10 +8204,12 @@ fn inverse_hankel_doit(
 }
 
 ///|
-/// Apply the forward Mellin rule table and return only the transformed value.
+/// Apply the forward Mellin rule table.
 ///
-/// Strip and condition metadata are available through
-/// `mellin_transform_result`.
+/// - Does: Evaluates a forward Mellin transform and keeps only the transformed value.
+/// - Input: One source `Expr`, one variable `x`, and one Mellin variable `s`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Strip and condition metadata are not returned here.
 pub fn do_mellin_doit(_expr : Expr, x : Expr, s : Expr) -> Expr? {
   match (symbol_name(x), symbol_name(s)) {
     (Some(x_name), Some(s_name)) =>
@@ -8178,7 +8232,12 @@ pub fn do_mellin_doit(_expr : Expr, x : Expr, s : Expr) -> Expr? {
 }
 
 ///|
-/// Apply the inverse Mellin rule table and return only the recovered value.
+/// Apply the inverse Mellin rule table.
+///
+/// - Does: Evaluates an inverse Mellin transform and returns only the recovered value.
+/// - Input: One source `Expr`, one Mellin variable `s`, and one target variable `x`.
+/// - Returns: `Some(Expr)` for a computed transform or `None`.
+/// - Limits: Unsupported cases return `None`.
 pub fn do_inverse_mellin_doit(_expr : Expr, s : Expr, x : Expr) -> Expr? {
   match (symbol_name(s), symbol_name(x)) {
     (Some(s_name), Some(_)) =>
@@ -8188,9 +8247,12 @@ pub fn do_inverse_mellin_doit(_expr : Expr, s : Expr, x : Expr) -> Expr? {
 }
 
 ///|
-/// Evaluate a Mellin transform with optional strip/condition metadata.
+/// Evaluate a Mellin transform with optional metadata.
 ///
-/// When `noconds=false`, this returns `(value, (left, right), condition)`.
+/// - Does: Runs the Mellin rule engine and optionally keeps strip and condition metadata.
+/// - Input: One source `Expr`, one variable `x`, one Mellin variable `s`, and an optional `noconds` flag.
+/// - Returns: Either the transformed `Expr` or a tuple `(value, (left, right), condition)`.
+/// - Limits: Returns an unevaluated `MellinTransform(...)` when no rule applies.
 pub fn mellin_transform_result(
   expr : Expr,
   x : Expr,

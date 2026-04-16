@@ -1,6 +1,9 @@
 ///|
-/// Trigonometric integration helpers for the common closed forms used by the
-/// main `integrate` dispatcher.
+/// Trigonometric integration front door.
+///
+/// Current Limits:
+/// - Coverage is limited to the trigonometric and hyperbolic patterns recognized by the local rules.
+/// - Unsupported cases return `None`.
 
 ///|
 fn trig_linear_arg(expr : Expr, var_name : String) -> (String, Expr, Expr)? {
@@ -20,7 +23,12 @@ fn trig_linear_arg(expr : Expr, var_name : String) -> (String, Expr, Expr)? {
 }
 
 ///|
-/// Trigonometric-pattern integrator for one variable.
+/// Try the trigonometric pattern integrator.
+///
+/// - Does: Applies local trigonometric and hyperbolic integration rules to `expr` in one variable.
+/// - Input: One integrand `Expr` and one variable name.
+/// - Returns: `Some(Expr)` for a found antiderivative or `None`.
+/// - Limits: Only the currently implemented pattern families are covered.
 pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
   match trig_linear_arg(expr, var_name) {
     Some(("sin", a, b)) =>

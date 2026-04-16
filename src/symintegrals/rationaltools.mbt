@@ -1,9 +1,17 @@
 ///|
-/// Rational antiderivative helpers for the practical closed forms used in the
-/// Stage 0-3 `integrate` implementation.
+/// Rational antiderivative front door.
+///
+/// Current Limits:
+/// - Coverage is focused on the rational families recognized by the current integration pipeline.
+/// - Unsupported rational shapes return `None` instead of an unevaluated object.
 
 ///|
-/// Rational-function integration in one variable.
+/// Integrate one rational function.
+///
+/// - Does: Tries the local rational antiderivative rules for `expr` in one variable.
+/// - Input: One integrand `Expr` and one variable name.
+/// - Returns: `Some(Expr)` for a found antiderivative or `None`.
+/// - Limits: Only the currently recognized rational families are covered.
 pub fn ratint(expr : Expr, var_name : String) -> Expr? {
   match is_univariate_rational(expr, var_name) {
     Some((num, den)) =>

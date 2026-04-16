@@ -1,9 +1,17 @@
 ///|
-/// Risch-style exact integration entrypoint for the practical algebraic,
-/// logarithmic, exponential, and trigonometric subfamilies supported locally.
+/// Risch-style integration front door.
+///
+/// Current Limits:
+/// - This front door delegates to the currently implemented elementary subsolvers.
+/// - It is not a full decision procedure for all elementary integrals.
 
 ///|
-/// Risch-style elementary integration entrypoint for one variable.
+/// Try the Risch-style elementary integration pipeline.
+///
+/// - Does: Runs the local elementary integration subsolvers for `expr` in one variable.
+/// - Input: One integrand `Expr` and one variable name.
+/// - Returns: `Some(Expr)` for a found antiderivative or `None`.
+/// - Limits: Coverage is limited to the practical subfamilies implemented by the local subsolvers.
 pub fn risch_integrate(expr : Expr, var_name : String) -> Expr? {
   match manual_integrate(expr, var_name) {
     Some(res) => Some(res)

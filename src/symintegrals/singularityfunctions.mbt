@@ -1,5 +1,14 @@
 ///|
-/// Symbolic integration rules for `SingularityFunction`.
+/// Singularity-function integration front door.
+///
+/// Current Limits:
+/// - Coverage is restricted to direct `SingularityFunction` antiderivative rules.
+/// - Unsupported cases return `None`.
+///
+/// - Does: Applies the local `SingularityFunction` antiderivative rules to `expr`.
+/// - Input: One integrand `Expr` and one variable name.
+/// - Returns: `Some(Expr)` for a found antiderivative or `None`.
+/// - Limits: Only direct singularity-function forms are recognized.
 pub fn singularityintegrate(expr : Expr, var_name : String) -> Expr? {
   let expr = expr_simplify(expr)
   match @symcore.application_args(expr) {

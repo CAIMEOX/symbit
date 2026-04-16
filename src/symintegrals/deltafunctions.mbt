@@ -1,6 +1,9 @@
 ///|
-/// Delta and singularity integration helpers for Dirac-delta and singularity
-/// function antiderivatives.
+/// Delta-function integration front doors.
+///
+/// Current Limits:
+/// - Coverage is restricted to the currently recognized `DiracDelta` products and linear roots.
+/// - Unsupported cases return `None`.
 
 ///|
 fn extract_dirac_factor(expr : Expr, var_name : String) -> (Expr, Expr)? {
@@ -48,8 +51,12 @@ fn extract_dirac_factor(expr : Expr, var_name : String) -> (Expr, Expr)? {
 }
 
 ///|
-/// Split a product into its `DiracDelta(...)` factor and the remaining
-/// multiplicative part, if such a factor exists.
+/// Split a product around one `DiracDelta` factor.
+///
+/// - Does: Extracts one `DiracDelta(...)` factor and the remaining multiplicative part when possible.
+/// - Input: One candidate product `Expr` and one variable name.
+/// - Returns: A pair `(delta?, rest?)`.
+/// - Limits: Returns `(None, None)` when no supported delta factor is found.
 pub fn change_mul(node : Expr, var_name : String) -> (Expr?, Expr?) {
   match extract_dirac_factor(node, var_name) {
     Some((arg, rest)) =>
@@ -71,10 +78,12 @@ fn delta_root_and_scale(arg : Expr, var_name : String) -> (Expr, Expr)? {
 }
 
 ///|
-/// Integrate products containing `DiracDelta` over a single variable.
+/// Integrate an expression containing `DiracDelta`.
 ///
-/// For bounded integrals this enforces the interval test; for unbounded use it
-/// returns the pulled-back value with the usual Heaviside gating.
+/// - Does: Pulls the integrand back to the delta root and applies the local scaling and interval gating rules.
+/// - Input: One integrand `Expr`, one variable name, and optional lower and upper bounds.
+/// - Returns: `Some(Expr)` for a computed result or `None`.
+/// - Limits: Only the currently recognized delta products and linear roots are supported.
 pub fn deltaintegrate(
   expr : Expr,
   var_name : String,

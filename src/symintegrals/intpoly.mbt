@@ -338,11 +338,12 @@ fn intpoly_monomial(x : Expr, y : Expr, dx : Int, dy : Int) -> Expr {
 }
 
 ///|
-/// Integrate a polynomial exactly along a line segment in the plane.
+/// Integrate a polynomial exactly along one planar segment.
 ///
-/// The segment is parameterized affinely and the Jacobian factor is included,
-/// so this is the line-integral analogue of the package's polygon integration
-/// helpers.
+/// - Does: Pulls the polynomial back to an affine segment parameterization, multiplies by the Jacobian factor, and integrates over the parameter.
+/// - Input: One `Segment`, one polynomial `Expr`, and an optional variable array.
+/// - Returns: One exact integral `Expr`.
+/// - Limits: Raises `IntegralError` when the polynomial or variables do not match the expected planar setup.
 pub fn segment_integrate(
   seg : @symgeometry.Segment,
   expr : Expr,
@@ -359,10 +360,12 @@ pub fn segment_integrate(
 }
 
 ///|
-/// Integrate a planar polynomial exactly over a polygonal region.
+/// Integrate a planar polynomial exactly over one polygon.
 ///
-/// This currently covers the 2D `Polygon` path using Green-style primitive
-/// accumulation and orientation normalization.
+/// - Does: Uses the local polygon integration pipeline to compute the exact area integral of a polynomial over a planar polygon.
+/// - Input: One `Polygon`, one polynomial `Expr`, and an optional variable array.
+/// - Returns: One exact integral `Expr`.
+/// - Limits: Raises `IntegralError` when the polygon or polynomial does not match the supported planar setup.
 pub fn polytope_integrate(
   poly : @symgeometry.Polygon,
   expr : Expr,
@@ -375,7 +378,12 @@ pub fn polytope_integrate(
 }
 
 ///|
-/// Exact polygon integral for several polynomials at once.
+/// Integrate several planar polynomials over one polygon.
+///
+/// - Does: Reuses `polytope_integrate` for each input polynomial and collects the results in a map.
+/// - Input: One `Polygon`, an `Array[Expr]` of polynomials, and an optional variable array.
+/// - Returns: A `Map[Expr, Expr]` from each polynomial to its exact integral.
+/// - Limits: Raises `IntegralError` under the same conditions as `polytope_integrate`.
 pub fn polytope_integrate_many(
   poly : @symgeometry.Polygon,
   exprs : Array[Expr],
@@ -389,9 +397,12 @@ pub fn polytope_integrate_many(
 }
 
 ///|
-/// Compute all planar monomial moments up to total degree `max_degree`.
+/// Compute planar monomial moments up to one total degree.
 ///
-/// The returned map is keyed by monomials in the requested variables.
+/// - Does: Integrates every monomial up to total degree `max_degree` over the polygon.
+/// - Input: One `Polygon`, one non-negative maximum degree, and an optional variable array.
+/// - Returns: A `Map[Expr, Expr]` keyed by monomials.
+/// - Limits: Raises `IntegralError` if `max_degree` is negative or if polygon integration fails.
 pub fn polytope_integrate_upto(
   poly : @symgeometry.Polygon,
   max_degree : Int,

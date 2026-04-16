@@ -1,11 +1,17 @@
 ///|
-/// Core `Integral` / transform objects and the main `integrate` entrypoint.
+/// Core `Integral` / transform objects and the main integration entrypoints.
+///
+/// Current Limits:
+/// - This file exposes the main symbolic front doors and unevaluated transform constructors.
+/// - Unsupported cases generally fall back to unevaluated objects instead of raising.
 
 ///|
 /// Construct an unevaluated `Integral` object.
 ///
-/// `expr` is the integrand and each limit is either a bare variable tuple
-/// `(x)` or a bounded tuple `(x, a, b)`.
+/// - Does: Wraps the integrand and integration limits without evaluating them.
+/// - Input: One integrand `Expr` and an optional array of limit tuples.
+/// - Returns: One symbolic `Integral` expression.
+/// - Limits: This front door only constructs the object; no integration is attempted here.
 pub fn integral(expr : Expr, limits? : Array[Expr] = []) -> Expr {
   let args : Array[Expr] = [expr]
   for limit in limits {
@@ -15,10 +21,12 @@ pub fn integral(expr : Expr, limits? : Array[Expr] = []) -> Expr {
 }
 
 ///|
-/// Build a limit tuple used by `Integral`-like entrypoints.
+/// Build a limit tuple for integral-like front doors.
 ///
-/// `integral_limit([x])` corresponds to an indefinite limit, while
-/// `integral_limit([x, a, b])` represents integration over `[a, b]`.
+/// - Does: Packages the integration variable and optional bounds into one tuple expression.
+/// - Input: An array such as `[x]` or `[x, a, b]`.
+/// - Returns: One tuple `Expr`.
+/// - Limits: The tuple is not validated here beyond being wrapped as-is.
 pub fn integral_limit(items : Array[Expr]) -> Expr {
   Expr::Tuple(items)
 }
@@ -26,13 +34,21 @@ pub fn integral_limit(items : Array[Expr]) -> Expr {
 ///|
 /// Construct an unevaluated Laplace transform object.
 ///
-/// Use `doit(...)` or `laplace_transform_eval(...)` to apply the rule engine.
+/// - Does: Wraps the source expression and transform variables as `LaplaceTransform(...)`.
+/// - Input: One source `Expr`, one time variable `t`, and one transform variable `s`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or `laplace_transform_eval` to evaluate it.
 pub fn laplace_transform(expr : Expr, t : Expr, s : Expr) -> Expr {
   @symcore.raw_function("LaplaceTransform", [expr, t, s])
 }
 
 ///|
 /// Construct an unevaluated inverse Laplace transform object.
+///
+/// - Does: Wraps the source expression and variables as `InverseLaplaceTransform(...)`.
+/// - Input: One source `Expr`, one transform variable `s`, and one time variable `t`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or `inverse_laplace_transform_eval` to evaluate it.
 pub fn inverse_laplace_transform(expr : Expr, s : Expr, t : Expr) -> Expr {
   @symcore.raw_function("InverseLaplaceTransform", [expr, s, t])
 }
@@ -49,60 +65,110 @@ fn inverse_laplace_transform_with_none(expr : Expr, s : Expr, t : Expr) -> Expr 
 
 ///|
 /// Construct an unevaluated Fourier transform object.
+///
+/// - Does: Wraps the source expression and variables as `FourierTransform(...)`.
+/// - Input: One source `Expr`, one space variable `x`, and one frequency variable `k`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or `fourier_transform_eval` to evaluate it.
 pub fn fourier_transform(expr : Expr, x : Expr, k : Expr) -> Expr {
   @symcore.raw_function("FourierTransform", [expr, x, k])
 }
 
 ///|
 /// Construct an unevaluated inverse Fourier transform object.
+///
+/// - Does: Wraps the source expression and variables as `InverseFourierTransform(...)`.
+/// - Input: One source `Expr`, one frequency variable `k`, and one space variable `x`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or `inverse_fourier_transform_eval` to evaluate it.
 pub fn inverse_fourier_transform(expr : Expr, k : Expr, x : Expr) -> Expr {
   @symcore.raw_function("InverseFourierTransform", [expr, k, x])
 }
 
 ///|
 /// Construct an unevaluated sine transform object.
+///
+/// - Does: Wraps the source expression and variables as `SineTransform(...)`.
+/// - Input: One source `Expr`, one space variable `x`, and one frequency variable `k`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or `sine_transform_eval` to evaluate it.
 pub fn sine_transform(expr : Expr, x : Expr, k : Expr) -> Expr {
   @symcore.raw_function("SineTransform", [expr, x, k])
 }
 
 ///|
 /// Construct an unevaluated inverse sine transform object.
+///
+/// - Does: Wraps the source expression and variables as `InverseSineTransform(...)`.
+/// - Input: One source `Expr`, one frequency variable `k`, and one space variable `x`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or `inverse_sine_transform_eval` to evaluate it.
 pub fn inverse_sine_transform(expr : Expr, k : Expr, x : Expr) -> Expr {
   @symcore.raw_function("InverseSineTransform", [expr, k, x])
 }
 
 ///|
 /// Construct an unevaluated cosine transform object.
+///
+/// - Does: Wraps the source expression and variables as `CosineTransform(...)`.
+/// - Input: One source `Expr`, one space variable `x`, and one frequency variable `k`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or `cosine_transform_eval` to evaluate it.
 pub fn cosine_transform(expr : Expr, x : Expr, k : Expr) -> Expr {
   @symcore.raw_function("CosineTransform", [expr, x, k])
 }
 
 ///|
 /// Construct an unevaluated inverse cosine transform object.
+///
+/// - Does: Wraps the source expression and variables as `InverseCosineTransform(...)`.
+/// - Input: One source `Expr`, one frequency variable `k`, and one space variable `x`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or `inverse_cosine_transform_eval` to evaluate it.
 pub fn inverse_cosine_transform(expr : Expr, k : Expr, x : Expr) -> Expr {
   @symcore.raw_function("InverseCosineTransform", [expr, k, x])
 }
 
 ///|
 /// Construct an unevaluated Mellin transform object.
+///
+/// - Does: Wraps the source expression and variables as `MellinTransform(...)`.
+/// - Input: One source `Expr`, one variable `x`, and one Mellin variable `s`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or `mellin_transform_eval` to evaluate it.
 pub fn mellin_transform(expr : Expr, x : Expr, s : Expr) -> Expr {
   @symcore.raw_function("MellinTransform", [expr, x, s])
 }
 
 ///|
 /// Construct an unevaluated inverse Mellin transform object.
+///
+/// - Does: Wraps the source expression and variables as `InverseMellinTransform(...)`.
+/// - Input: One source `Expr`, one Mellin variable `s`, and one target variable `x`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or the inverse Mellin evaluation helpers to evaluate it.
 pub fn inverse_mellin_transform(expr : Expr, s : Expr, x : Expr) -> Expr {
   @symcore.raw_function("InverseMellinTransform", [expr, s, x])
 }
 
 ///|
-/// Construct an unevaluated Hankel transform object of order `nu`.
+/// Construct an unevaluated Hankel transform object.
+///
+/// - Does: Wraps the source expression and variables as `HankelTransform(...)` with order `nu`.
+/// - Input: One source `Expr`, radial variable `r`, frequency variable `k`, and order `nu`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or `hankel_transform_eval` to evaluate it.
 pub fn hankel_transform(expr : Expr, r : Expr, k : Expr, nu : Expr) -> Expr {
   @symcore.raw_function("HankelTransform", [expr, r, k, nu])
 }
 
 ///|
-/// Construct an unevaluated inverse Hankel transform object of order `nu`.
+/// Construct an unevaluated inverse Hankel transform object.
+///
+/// - Does: Wraps the source expression and variables as `InverseHankelTransform(...)` with order `nu`.
+/// - Input: One source `Expr`, frequency variable `k`, radial variable `r`, and order `nu`.
+/// - Returns: One unevaluated transform `Expr`.
+/// - Limits: Use `doit` or `inverse_hankel_transform_eval` to evaluate it.
 pub fn inverse_hankel_transform(
   expr : Expr,
   k : Expr,
@@ -115,8 +181,10 @@ pub fn inverse_hankel_transform(
 ///|
 /// Integrate a scalar field along a parametric curve.
 ///
-/// The field is pulled back along the curve, multiplied by the speed, and then
-/// integrated in the curve parameter.
+/// - Does: Pulls the field back along the curve, multiplies by the speed, and integrates over the curve parameter.
+/// - Input: One scalar-field `Expr`, one `Curve`, and an ordered variable array.
+/// - Returns: One line-integral `Expr`.
+/// - Limits: Raises `IntegralError` when the variables or curve data are invalid.
 pub fn line_integrate(
   field : Expr,
   curve : @symgeometry.Curve,
@@ -161,10 +229,12 @@ pub fn line_integrate(
 }
 
 ///|
-/// Try the Heurisch-style antiderivative for a single-variable limit.
+/// Try the Heurisch-style antiderivative for one limit.
 ///
-/// If the limit is not a plain indefinite variable or the heuristic solver
-/// fails, this returns the unevaluated `Integral`.
+/// - Does: Applies the heuristic integrator when the limit is a plain indefinite variable and otherwise returns an unevaluated integral.
+/// - Input: One integrand `Expr` and one limit tuple expression.
+/// - Returns: One `Expr`, either an antiderivative or an unevaluated integral.
+/// - Limits: Non-plain limits and failed heuristic solves fall back to `Integral(...)`.
 pub fn heurisch_integrate(expr : Expr, limit_expr : Expr) -> Expr {
   match parse_limit(limit_expr) {
     Some((name, None, None)) =>
@@ -174,10 +244,12 @@ pub fn heurisch_integrate(expr : Expr, limit_expr : Expr) -> Expr {
 }
 
 ///|
-/// Try the rule-based `manualintegrate` path for a single-variable limit.
+/// Try the rule-based manual integration path for one limit.
 ///
-/// If the manual integrator does not recognize the integrand, the unevaluated
-/// `Integral` is returned.
+/// - Does: Applies the manual integrator when the limit is a plain indefinite variable and otherwise returns an unevaluated integral.
+/// - Input: One integrand `Expr` and one limit tuple expression.
+/// - Returns: One `Expr`, either an antiderivative or an unevaluated integral.
+/// - Limits: Non-plain limits and failed manual rules fall back to `Integral(...)`.
 pub fn manualintegrate(expr : Expr, limit_expr : Expr) -> Expr {
   match parse_limit(limit_expr) {
     Some((name, None, None)) =>
@@ -191,9 +263,10 @@ pub fn manualintegrate(expr : Expr, limit_expr : Expr) -> Expr {
 ///|
 /// Main symbolic integration entrypoint.
 ///
-/// The dispatcher first tries the exact symbolic integrators currently present
-/// in Symbit (Risch/meijerg/delta/manual helpers depending on the limit kind)
-/// and falls back to unevaluated `Integral` objects when no rule applies.
+/// - Does: Dispatches to the currently available symbolic integrators and falls back to unevaluated `Integral` objects when needed.
+/// - Input: One integrand `Expr` and an optional array of limit tuples.
+/// - Returns: One `Expr`, either evaluated or unevaluated.
+/// - Limits: Coverage depends on the currently implemented symbolic subsolvers.
 pub fn integrate(expr : Expr, limits? : Array[Expr] = []) -> Expr {
   if limits.is_empty() {
     match infer_single_symbol(expr) {
@@ -270,10 +343,12 @@ fn integrate_one(expr : Expr, limit : Expr) -> Expr {
 }
 
 ///|
-/// Evaluate a Laplace transform and return either the transformed expression or
-/// a tuple `(value, plane, condition)`.
+/// Evaluate a forward Laplace transform.
 ///
-/// With `noconds=true`, only the transformed expression is returned.
+/// - Does: Runs the Laplace rule engine and optionally keeps the convergence metadata.
+/// - Input: One source `Expr`, variables `t` and `s`, and an optional `noconds` flag.
+/// - Returns: Either the transformed `Expr` or a tuple `(value, plane, condition)`.
+/// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn laplace_transform_eval(
   expr : Expr,
   t : Expr,
@@ -286,8 +361,10 @@ pub fn laplace_transform_eval(
 ///|
 /// Evaluate an inverse Laplace transform.
 ///
-/// With `noconds=false`, the result keeps the transform value together with a
-/// trailing condition flag for cases that remain unevaluated.
+/// - Does: Runs the inverse Laplace rule engine and optionally keeps a trailing condition flag.
+/// - Input: One source `Expr`, variables `s` and `t`, and an optional `noconds` flag.
+/// - Returns: Either the transformed `Expr` or a tuple carrying the value and a condition flag.
+/// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn inverse_laplace_transform_eval(
   expr : Expr,
   s : Expr,
@@ -305,7 +382,12 @@ pub fn inverse_laplace_transform_eval(
 }
 
 ///|
-/// Evaluate a Mellin transform, optionally returning strip/condition metadata.
+/// Evaluate a Mellin transform.
+///
+/// - Does: Runs the Mellin rule engine and optionally keeps strip and condition metadata.
+/// - Input: One source `Expr`, variables `x` and `s`, and an optional `noconds` flag.
+/// - Returns: Either the transformed `Expr` or a tuple carrying the value, strip, and condition.
+/// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn mellin_transform_eval(
   expr : Expr,
   x : Expr,
@@ -317,12 +399,22 @@ pub fn mellin_transform_eval(
 
 ///|
 /// Evaluate a Fourier transform.
+///
+/// - Does: Runs the forward Fourier rule engine.
+/// - Input: One source `Expr`, variables `x` and `k`.
+/// - Returns: One transformed `Expr`.
+/// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn fourier_transform_eval(expr : Expr, x : Expr, k : Expr) -> Expr {
   do_fourier_doit(expr, x, k).unwrap_or(fourier_transform(expr, x, k))
 }
 
 ///|
 /// Evaluate an inverse Fourier transform.
+///
+/// - Does: Runs the inverse Fourier rule engine.
+/// - Input: One source `Expr`, variables `k` and `x`.
+/// - Returns: One transformed `Expr`.
+/// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn inverse_fourier_transform_eval(expr : Expr, k : Expr, x : Expr) -> Expr {
   do_inverse_fourier_doit(expr, k, x).unwrap_or(
     inverse_fourier_transform(expr, k, x),
@@ -331,24 +423,44 @@ pub fn inverse_fourier_transform_eval(expr : Expr, k : Expr, x : Expr) -> Expr {
 
 ///|
 /// Evaluate a sine transform.
+///
+/// - Does: Runs the forward sine-transform rule engine.
+/// - Input: One source `Expr`, variables `x` and `k`.
+/// - Returns: One transformed `Expr`.
+/// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn sine_transform_eval(expr : Expr, x : Expr, k : Expr) -> Expr {
   do_sine_doit(expr, x, k).unwrap_or(sine_transform(expr, x, k))
 }
 
 ///|
 /// Evaluate an inverse sine transform.
+///
+/// - Does: Runs the inverse sine-transform rule engine.
+/// - Input: One source `Expr`, variables `k` and `x`.
+/// - Returns: One transformed `Expr`.
+/// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn inverse_sine_transform_eval(expr : Expr, k : Expr, x : Expr) -> Expr {
   do_inverse_sine_doit(expr, k, x).unwrap_or(inverse_sine_transform(expr, k, x))
 }
 
 ///|
 /// Evaluate a cosine transform.
+///
+/// - Does: Runs the forward cosine-transform rule engine.
+/// - Input: One source `Expr`, variables `x` and `k`.
+/// - Returns: One transformed `Expr`.
+/// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn cosine_transform_eval(expr : Expr, x : Expr, k : Expr) -> Expr {
   do_cosine_doit(expr, x, k).unwrap_or(cosine_transform(expr, x, k))
 }
 
 ///|
 /// Evaluate an inverse cosine transform.
+///
+/// - Does: Runs the inverse cosine-transform rule engine.
+/// - Input: One source `Expr`, variables `k` and `x`.
+/// - Returns: One transformed `Expr`.
+/// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn inverse_cosine_transform_eval(expr : Expr, k : Expr, x : Expr) -> Expr {
   do_inverse_cosine_doit(expr, k, x).unwrap_or(
     inverse_cosine_transform(expr, k, x),
@@ -356,7 +468,12 @@ pub fn inverse_cosine_transform_eval(expr : Expr, k : Expr, x : Expr) -> Expr {
 }
 
 ///|
-/// Evaluate a Hankel transform of order `nu`.
+/// Evaluate a Hankel transform.
+///
+/// - Does: Runs the forward Hankel-transform rule engine for order `nu`.
+/// - Input: One source `Expr`, variables `r` and `k`, and order `nu`.
+/// - Returns: One transformed `Expr`.
+/// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn hankel_transform_eval(
   expr : Expr,
   r : Expr,
@@ -367,7 +484,12 @@ pub fn hankel_transform_eval(
 }
 
 ///|
-/// Evaluate an inverse Hankel transform of order `nu`.
+/// Evaluate an inverse Hankel transform.
+///
+/// - Does: Runs the inverse Hankel-transform rule engine for order `nu`.
+/// - Input: One source `Expr`, variables `k` and `r`, and order `nu`.
+/// - Returns: One transformed `Expr`.
+/// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn inverse_hankel_transform_eval(
   expr : Expr,
   k : Expr,
@@ -380,10 +502,12 @@ pub fn inverse_hankel_transform_eval(
 }
 
 ///|
-/// Evaluate a transform/integral object recursively.
+/// Evaluate one integral or transform object recursively.
 ///
-/// This is the common `.doit()`-style entrypoint used throughout
-/// `symintegrals`.
+/// - Does: Acts as the common `.doit()`-style front door for integral and transform objects.
+/// - Input: One symbolic `Expr`.
+/// - Returns: One evaluated or partially evaluated `Expr`.
+/// - Limits: Unsupported subexpressions remain unevaluated.
 pub fn doit(expr : Expr) -> Expr {
   match @symcore.application_parts(expr) {
     Some((head, args)) =>

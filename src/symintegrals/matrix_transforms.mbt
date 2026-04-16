@@ -1,12 +1,17 @@
 ///|
-/// Matrix-valued transform helpers.
+/// Matrix-valued transform front doors.
 ///
-/// These helpers apply scalar transform rules entry-by-entry and rebuild the
-/// matrix result explicitly.
+/// Current Limits:
+/// - The public API applies scalar transform rules entry by entry.
+/// - It does not expose matrix-specific transform theory beyond this lifting step.
 
 ///|
-/// Apply the Laplace transform elementwise to a matrix and immediately
-/// evaluate each entry.
+/// Apply the Laplace transform elementwise to a matrix.
+///
+/// - Does: Builds and evaluates the Laplace transform of each matrix entry independently.
+/// - Input: One `Matrix`, a time variable `t`, and a transform variable `s`.
+/// - Returns: One transformed `Matrix`.
+/// - Limits: Raises `MatrixError` if applying the transform across the matrix fails.
 pub fn laplace_transform_matrix(
   mat : @symmatrices.Matrix,
   t : Expr,
@@ -16,11 +21,12 @@ pub fn laplace_transform_matrix(
 }
 
 ///|
-/// Compute the matrix-valued Laplace transform together with a shared region of
-/// convergence and condition.
+/// Evaluate a matrix-valued Laplace transform with metadata.
 ///
-/// The matrix entries are transformed independently and their individual ROC /
-/// condition metadata are aggregated with `Max` / logical `And`.
+/// - Does: Transforms each matrix entry and aggregates the shared convergence plane and condition.
+/// - Input: One `Matrix`, a time variable `t`, and a transform variable `s`.
+/// - Returns: A triple `(matrix, plane, condition)`.
+/// - Limits: Raises `MatrixError` if applying the transform across the matrix fails.
 pub fn laplace_transform_matrix_result(
   mat : @symmatrices.Matrix,
   t : Expr,
@@ -47,8 +53,12 @@ pub fn laplace_transform_matrix_result(
 }
 
 ///|
-/// Apply the inverse Laplace transform elementwise to a matrix and evaluate
-/// each entry.
+/// Apply the inverse Laplace transform elementwise to a matrix.
+///
+/// - Does: Builds and evaluates the inverse Laplace transform of each matrix entry independently.
+/// - Input: One `Matrix`, a transform variable `s`, and a time variable `t`.
+/// - Returns: One transformed `Matrix`.
+/// - Limits: Raises `MatrixError` if applying the transform across the matrix fails.
 pub fn inverse_laplace_transform_matrix(
   mat : @symmatrices.Matrix,
   s : Expr,
