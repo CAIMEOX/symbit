@@ -2,7 +2,11 @@
 using @symcore {type Expr, int}
 
 ///|
-/// Series expansion entry point (limited to polynomial/rational, x0=0).
+/// Front door for truncated series expansion.
+///
+/// Current Limits:
+/// - Coverage is strongest for polynomial and rational expansions.
+/// - More complicated expressions fall back to the local Taylor-style expansion path.
 
 ///|
 fn poly_to_expr(poly : Array[Expr], x : Expr, n : Int) -> Expr {
@@ -88,6 +92,12 @@ fn series_rational(expr : Expr, x : Expr, n : Int) -> (Expr, Bool)? {
 }
 
 ///|
+/// Expand an expression into a truncated local series.
+///
+/// - Does: Computes the truncated series of `expr` around `x0` up to order `n`, including an order marker when appropriate.
+/// - Input: `expr` is the source expression, `x` is the expansion Symbol, `x0` is the center, `n` is the truncation order, and `dir` selects the side.
+/// - Returns: One `Expr` containing the truncated series.
+/// - Limits: Raises if `x` is not a Symbol or if `n` is not positive; complicated inputs may use a fallback expansion path.
 pub fn series(
   expr : Expr,
   x? : Expr = Expr::Symbol("x"),

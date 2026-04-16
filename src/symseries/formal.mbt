@@ -1,13 +1,29 @@
 ///|
-/// Formal power series utilities (pure MoonBit).
+/// Front doors for formal power series objects.
+///
+/// Current Limits:
+/// - The public API is centered on local truncation, coefficient access, and multivariate wrappers.
+/// - Unsupported expressions can still fall back to plain expression results.
 
 ///|
+/// Represent the result of requesting a formal power series.
+///
+/// - Does: Distinguishes between a successful formal series object and a plain expression fallback.
+/// - Input: Either a source `Expr` or a `FormalPowerSeries` value, depending on the variant.
+/// - Returns: One `FpsResult` value.
+/// - Limits: The `Expr` variant means the requested formal series object was not constructed.
 pub enum FpsResult {
   Expr(@symcore.Expr)
   Series(FormalPowerSeries)
 }
 
 ///|
+/// Store one univariate formal power series request.
+///
+/// - Does: Keeps the source expression, the expansion variable, and the expansion center together.
+/// - Input: Raw `Expr` fields for the source expression, variable, and center.
+/// - Returns: One `FormalPowerSeries` value.
+/// - Limits: The struct stores the request as-is; actual expansion checks happen in the front-door functions.
 pub struct FormalPowerSeries {
   expr : @symcore.Expr
   x : @symcore.Expr
@@ -15,6 +31,12 @@ pub struct FormalPowerSeries {
 }
 
 ///|
+/// Store one multivariate formal power series request.
+///
+/// - Does: Keeps the source expression together with the variable list and expansion centers.
+/// - Input: One source `Expr`, an array of variables, and an equally sized array of centers.
+/// - Returns: One `FormalPowerSeriesMulti` value.
+/// - Limits: Validation of variables and center rank happens in `fps_multivariate`.
 pub struct FormalPowerSeriesMulti {
   expr : @symcore.Expr
   vars : Array[@symcore.Expr]
@@ -171,6 +193,12 @@ fn fps_derivative_term(
 }
 
 ///|
+/// Request a univariate formal power series object.
+///
+/// - Does: Tries to build a formal power series wrapper for `expr` around `x0`.
+/// - Input: `expr` is the source expression, `x` is the expansion Symbol, and the remaining arguments configure the request.
+/// - Returns: `FpsResult::Series` on success or `FpsResult::Expr` when the expression is returned unchanged.
+/// - Limits: Raises if the variable is missing or not a Symbol; several optional flags are currently accepted for compatibility but not deeply interpreted.
 pub fn fps(
   expr : @symcore.Expr,
   x? : @symcore.Expr,
@@ -204,11 +232,23 @@ pub fn fps(
 }
 
 ///|
+/// Return the original expression stored in a formal series object.
+///
+/// - Does: Exposes the source expression wrapped by the formal series.
+/// - Input: One `FormalPowerSeries` value.
+/// - Returns: One `Expr`.
+/// - Limits: This accessor does not evaluate or truncate anything.
 pub fn FormalPowerSeries::function(self : FormalPowerSeries) -> @symcore.Expr {
   self.expr
 }
 
 ///|
+/// Truncate a formal power series and keep the order marker.
+///
+/// - Does: Expands the stored series up to order `n` and preserves the trailing order term when available.
+/// - Input: One `FormalPowerSeries` value and a non-negative truncation order.
+/// - Returns: One truncated series `Expr`.
+/// - Limits: Raises if `n` is negative; unsupported inputs fall back to the package-level `series` front door.
 pub fn FormalPowerSeries::truncate(
   self : FormalPowerSeries,
   n? : Int = 6,
@@ -223,6 +263,12 @@ pub fn FormalPowerSeries::truncate(
 }
 
 ///|
+/// Return only the polynomial part of a formal power series.
+///
+/// - Does: Truncates the stored series up to order `n` and removes any trailing order marker.
+/// - Input: One `FormalPowerSeries` value and a non-negative truncation order.
+/// - Returns: One polynomial `Expr`.
+/// - Limits: Raises if `n` is negative; unsupported inputs fall back to the package-level `series` front door and strip the order term afterward.
 pub fn FormalPowerSeries::polynomial(
   self : FormalPowerSeries,
   n? : Int = 6,
@@ -237,6 +283,12 @@ pub fn FormalPowerSeries::polynomial(
 }
 
 ///|
+/// Return one coefficient term from a formal power series.
+///
+/// - Does: Extracts the `n`-th coefficient term of the stored series.
+/// - Input: One `FormalPowerSeries` value and a non-negative coefficient index.
+/// - Returns: One `Expr` for the requested term.
+/// - Limits: Raises if `n` is negative; unsupported inputs fall back to repeated differentiation.
 pub fn FormalPowerSeries::coeff(
   self : FormalPowerSeries,
   n : Int,
@@ -265,6 +317,12 @@ pub fn FormalPowerSeries::coeff(
 }
 
 ///|
+/// Return a slice of coefficient terms from a formal power series.
+///
+/// - Does: Collects the terms with indices in `[start, stop)` using the given positive step.
+/// - Input: One `FormalPowerSeries` value, non-negative bounds, and a positive step.
+/// - Returns: An `Array[Expr]` containing the requested terms.
+/// - Limits: Raises if the bounds are negative or the step is not positive.
 pub fn FormalPowerSeries::slice(
   self : FormalPowerSeries,
   start : Int,
@@ -309,6 +367,12 @@ pub fn FormalPowerSeries::slice(
 }
 
 ///|
+/// Build a multivariate formal power series wrapper.
+///
+/// - Does: Stores a multivariate expansion request with one center for each variable.
+/// - Input: `expr` is the source expression, `vars` is a non-empty array of Symbols, and `x0s` is either empty or matched in length.
+/// - Returns: One `FormalPowerSeriesMulti` value.
+/// - Limits: Raises if the variable list is empty, if a variable is not a Symbol, or if the center list length does not match.
 pub fn fps_multivariate(
   expr : @symcore.Expr,
   vars : Array[@symcore.Expr],
@@ -338,6 +402,12 @@ pub fn fps_multivariate(
 }
 
 ///|
+/// Truncate a multivariate formal power series.
+///
+/// - Does: Applies repeated one-variable truncation across the stored variables.
+/// - Input: One `FormalPowerSeriesMulti` value and a non-negative truncation order.
+/// - Returns: One truncated multivariate `Expr`.
+/// - Limits: Raises if `order` is negative; truncation is performed variable by variable.
 pub fn FormalPowerSeriesMulti::truncate(
   self : FormalPowerSeriesMulti,
   order? : Int = 4,
@@ -354,6 +424,12 @@ pub fn FormalPowerSeriesMulti::truncate(
 }
 
 ///|
+/// Return one multivariate coefficient term.
+///
+/// - Does: Differentiates by the requested orders, evaluates at the stored centers, and rebuilds the corresponding monomial term.
+/// - Input: One `FormalPowerSeriesMulti` value and an integer order for each variable.
+/// - Returns: One `Expr` for the requested multivariate term.
+/// - Limits: Raises if the order rank does not match the variable count or if any order is negative.
 pub fn FormalPowerSeriesMulti::coeff(
   self : FormalPowerSeriesMulti,
   orders : Array[Int],
@@ -400,6 +476,12 @@ pub fn FormalPowerSeriesMulti::coeff(
 }
 
 ///|
+/// Return the leading term of a formal power series.
+///
+/// - Does: Extracts the first non-zero term of the stored series with respect to `x`.
+/// - Input: One `FormalPowerSeries` value and the variable to compare against.
+/// - Returns: One `Expr` for the leading term.
+/// - Limits: Raises if the requested variable does not match the stored one.
 pub fn FormalPowerSeries::as_leading_term(
   self : FormalPowerSeries,
   x : @symcore.Expr,

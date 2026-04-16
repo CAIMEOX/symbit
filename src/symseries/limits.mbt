@@ -1,7 +1,17 @@
 ///|
-/// Minimal limits for rational expressions.
+/// Front doors for one-variable limits.
+///
+/// Current Limits:
+/// - The public API is centered on one-variable symbolic limits.
+/// - Coverage is strongest for rational expressions and asymptotic fallback cases.
 
 ///|
+/// Store a deferred limit evaluation request.
+///
+/// - Does: Bundles the expression, variable, point, and direction into one limit object.
+/// - Input: Raw `Expr` fields for the expression, variable, limit point, and side.
+/// - Returns: A `Limit` record that can be evaluated later.
+/// - Limits: This struct does not validate the fields by itself; validation happens when evaluated.
 pub(all) struct Limit {
   expr : @symcore.Expr
   variable : @symcore.Expr
@@ -10,11 +20,23 @@ pub(all) struct Limit {
 }
 
 ///|
+/// Evaluate a deferred limit request.
+///
+/// - Does: Calls the package-level `limit` front door using the stored fields.
+/// - Input: One `Limit` value.
+/// - Returns: One `Expr` with the evaluated limit.
+/// - Limits: Raises under the same conditions as `limit`.
 pub fn Limit::doit(self : Limit) -> @symcore.Expr raise {
   limit(self.expr, self.variable, self.point, dir=self.dir)
 }
 
 ///|
+/// Evaluate a one-variable symbolic limit.
+///
+/// - Does: Computes the limit of `expr` as `x` approaches `x0`, using rational evaluation first and asymptotic fallback when needed.
+/// - Input: `expr` is the source expression, `x` is the variable Symbol, `x0` is the limit point, and `dir` chooses the side.
+/// - Returns: One `Expr` for the resulting limit.
+/// - Limits: Raises if `x` is not a Symbol; unsupported cases fall through to the asymptotic path and may stay coarse.
 pub fn limit(
   expr : @symcore.Expr,
   x : @symcore.Expr,

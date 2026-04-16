@@ -1,13 +1,29 @@
 ///|
-/// Fourier series with symbolic coefficient projection for polynomial/trig inputs.
+/// Front doors for Fourier series objects.
+///
+/// Current Limits:
+/// - Coverage is strongest for polynomial and elementary trigonometric inputs.
+/// - Coefficients fall back to unevaluated definite integrals when the local projector cannot integrate them directly.
 
 ///|
+/// Represent the result of requesting a Fourier series.
+///
+/// - Does: Distinguishes between a constructed Fourier series object and a plain expression fallback.
+/// - Input: Either a source `Expr` or a `FourierSeries` value, depending on the variant.
+/// - Returns: One `FourierSeriesResult` value.
+/// - Limits: The `Expr` variant means the request was not converted into a Fourier series object.
 pub enum FourierSeriesResult {
   Expr(@symcore.Expr)
   Series(FourierSeries)
 }
 
 ///|
+/// Store one Fourier series request.
+///
+/// - Does: Keeps the source expression together with its variable and interval endpoints.
+/// - Input: Raw `Expr` fields for the expression, variable, and bounds.
+/// - Returns: One `FourierSeries` value.
+/// - Limits: Validation of the variable and interval happens in the public front-door functions.
 pub struct FourierSeries {
   expr : @symcore.Expr
   x : @symcore.Expr
@@ -1222,6 +1238,12 @@ fn integrate_expr(
 }
 
 ///|
+/// Build a Fourier series object over one interval.
+///
+/// - Does: Wraps `expr` as a Fourier series request over `(x, a, b)` when the expression depends on the chosen variable.
+/// - Input: `expr` is the source expression and `limits` is either empty or the triple `(x, a, b)`.
+/// - Returns: `FourierSeriesResult::Series` on success or `FourierSeriesResult::Expr` when the expression is returned unchanged.
+/// - Limits: Raises if `limits` is present but does not contain exactly three entries, or if the variable is not a Symbol.
 pub fn fourier_series(
   expr : @symcore.Expr,
   limits? : Array[@symcore.Expr] = [],
@@ -1248,16 +1270,34 @@ pub fn fourier_series(
 }
 
 ///|
+/// Return the original function stored in a Fourier series object.
+///
+/// - Does: Exposes the source expression wrapped by the Fourier series.
+/// - Input: One `FourierSeries` value.
+/// - Returns: One `Expr`.
+/// - Limits: This accessor does not compute any coefficient.
 pub fn FourierSeries::function(self : FourierSeries) -> @symcore.Expr {
   self.expr
 }
 
 ///|
+/// Return the Fourier variable.
+///
+/// - Does: Exposes the variable used by the Fourier series.
+/// - Input: One `FourierSeries` value.
+/// - Returns: One `Expr`, typically a Symbol.
+/// - Limits: This accessor does not validate the variable.
 pub fn FourierSeries::x(self : FourierSeries) -> @symcore.Expr {
   self.x
 }
 
 ///|
+/// Return the period of the Fourier interval.
+///
+/// - Does: Computes `b - a` for the stored interval.
+/// - Input: One `FourierSeries` value.
+/// - Returns: One `Expr` for the interval length.
+/// - Limits: The result is symbolic and is not simplified beyond the local subtraction rules.
 pub fn FourierSeries::period(self : FourierSeries) -> @symcore.Expr {
   expr_sub(self.b, self.a)
 }
@@ -1281,6 +1321,12 @@ fn FourierSeries::omega(self : FourierSeries, n : Int) -> @symcore.Expr {
 }
 
 ///|
+/// Return the constant Fourier coefficient.
+///
+/// - Does: Computes the `a0` coefficient of the stored Fourier series.
+/// - Input: One `FourierSeries` value.
+/// - Returns: One `Expr` for the constant coefficient.
+/// - Limits: Raises if the stored variable is not a Symbol; unsupported integrals are left as definite integral expressions.
 pub fn FourierSeries::a0(self : FourierSeries) -> @symcore.Expr raise {
   let var_name = match self.x {
     @symcore.Expr::Symbol(name) => name
@@ -1297,6 +1343,12 @@ pub fn FourierSeries::a0(self : FourierSeries) -> @symcore.Expr raise {
 }
 
 ///|
+/// Return one cosine coefficient.
+///
+/// - Does: Computes the `a_n` coefficient for `n > 0`.
+/// - Input: One `FourierSeries` value and an integer index `n`.
+/// - Returns: One `Expr` for the cosine coefficient.
+/// - Limits: Non-positive `n` returns `0`; raises if the stored variable is not a Symbol.
 pub fn FourierSeries::an(self : FourierSeries, n : Int) -> @symcore.Expr raise {
   if n <= 0 {
     return @symcore.int(0)
@@ -1318,6 +1370,12 @@ pub fn FourierSeries::an(self : FourierSeries, n : Int) -> @symcore.Expr raise {
 }
 
 ///|
+/// Return one sine coefficient.
+///
+/// - Does: Computes the `b_n` coefficient for `n > 0`.
+/// - Input: One `FourierSeries` value and an integer index `n`.
+/// - Returns: One `Expr` for the sine coefficient.
+/// - Limits: Non-positive `n` returns `0`; raises if the stored variable is not a Symbol.
 pub fn FourierSeries::bn(self : FourierSeries, n : Int) -> @symcore.Expr raise {
   if n <= 0 {
     return @symcore.int(0)
@@ -1339,6 +1397,12 @@ pub fn FourierSeries::bn(self : FourierSeries, n : Int) -> @symcore.Expr raise {
 }
 
 ///|
+/// Return one Fourier term.
+///
+/// - Does: Builds the `n`-th term of the Fourier expansion from the stored coefficients.
+/// - Input: One `FourierSeries` value and a non-negative index.
+/// - Returns: One `Expr` for the requested Fourier term.
+/// - Limits: Raises if `n` is negative.
 pub fn FourierSeries::term(
   self : FourierSeries,
   n : Int,
@@ -1356,6 +1420,12 @@ pub fn FourierSeries::term(
 }
 
 ///|
+/// Return the leading Fourier term.
+///
+/// - Does: Uses the first non-constant Fourier term as the leading term with respect to `x`.
+/// - Input: One `FourierSeries` value and the variable to compare against.
+/// - Returns: One `Expr`.
+/// - Limits: Raises if the requested variable does not match the stored one.
 pub fn FourierSeries::as_leading_term(
   self : FourierSeries,
   x : @symcore.Expr,
@@ -1367,6 +1437,12 @@ pub fn FourierSeries::as_leading_term(
 }
 
 ///|
+/// Truncate a Fourier series to finitely many terms.
+///
+/// - Does: Sums the first `n` Fourier terms, starting from the constant term.
+/// - Input: One `FourierSeries` value and a non-negative truncation count.
+/// - Returns: One truncated `Expr`.
+/// - Limits: Raises if `n` is negative.
 pub fn FourierSeries::truncate(
   self : FourierSeries,
   n? : Int = 6,
@@ -1384,6 +1460,12 @@ pub fn FourierSeries::truncate(
 }
 
 ///|
+/// Build the sigma approximation of a Fourier series.
+///
+/// - Does: Applies the local sinc weights to the first `n` Fourier terms.
+/// - Input: One `FourierSeries` value and a positive truncation count.
+/// - Returns: One `Expr` for the weighted partial sum.
+/// - Limits: Non-positive `n` returns `0`.
 pub fn FourierSeries::sigma_approximation(
   self : FourierSeries,
   n : Int,
@@ -1410,6 +1492,12 @@ pub fn FourierSeries::sigma_approximation(
 }
 
 ///|
+/// Shift the Fourier function in the dependent expression.
+///
+/// - Does: Replaces `x` by `x + amount` inside the stored source expression.
+/// - Input: One `FourierSeries` value and a symbolic shift amount.
+/// - Returns: A new `FourierSeries` value.
+/// - Limits: If the stored variable is not a Symbol, the original series is returned unchanged.
 pub fn FourierSeries::shift(
   self : FourierSeries,
   amount : @symcore.Expr,
@@ -1428,6 +1516,12 @@ pub fn FourierSeries::shift(
 }
 
 ///|
+/// Alias for `shift`.
+///
+/// - Does: Applies the same symbolic translation as `shift`.
+/// - Input: One `FourierSeries` value and a symbolic shift amount.
+/// - Returns: A new `FourierSeries` value.
+/// - Limits: Has the same behavior and limits as `shift`.
 pub fn FourierSeries::shiftx(
   self : FourierSeries,
   amount : @symcore.Expr,
@@ -1436,6 +1530,12 @@ pub fn FourierSeries::shiftx(
 }
 
 ///|
+/// Scale the Fourier function by a factor.
+///
+/// - Does: Multiplies the stored source expression by `factor`.
+/// - Input: One `FourierSeries` value and a symbolic factor.
+/// - Returns: A new `FourierSeries` value.
+/// - Limits: The interval and variable are preserved unchanged.
 pub fn FourierSeries::scale(
   self : FourierSeries,
   factor : @symcore.Expr,
@@ -1445,6 +1545,12 @@ pub fn FourierSeries::scale(
 }
 
 ///|
+/// Scale the Fourier variable inside the source expression.
+///
+/// - Does: Replaces `x` by `factor * x` inside the stored source expression.
+/// - Input: One `FourierSeries` value and a symbolic factor.
+/// - Returns: A new `FourierSeries` value.
+/// - Limits: If the stored variable is not a Symbol, the original series is returned unchanged.
 pub fn FourierSeries::scalex(
   self : FourierSeries,
   factor : @symcore.Expr,

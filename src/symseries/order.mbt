@@ -1,5 +1,9 @@
 ///|
-/// Minimal Big-O representation for series.
+/// Front doors for Big-O markers in series expressions.
+///
+/// Current Limits:
+/// - This file exposes lightweight wrappers around the local `O(...)` representation.
+/// - It does not attempt full algebra over order terms.
 
 ///|
 fn normalize_order_arg(expr : @symcore.Expr) -> @symcore.Expr {
@@ -37,11 +41,23 @@ fn normalize_order_arg(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// Check whether an expression is an order marker.
+///
+/// - Does: Detects whether `expr` is stored as an `O(...)` application.
+/// - Input: Any `Expr`.
+/// - Returns: `true` when the expression is an order term and `false` otherwise.
+/// - Limits: Only the local `O(...)` representation is recognized.
 pub fn is_order(expr : @symcore.Expr) -> Bool {
   @symcore.application_has_name(expr, "O")
 }
 
 ///|
+/// Extract the argument of an order marker.
+///
+/// - Does: Returns the first argument of `O(...)` when `expr` is an order term.
+/// - Input: Any `Expr`.
+/// - Returns: `Some(arg)` for order terms and `None` otherwise.
+/// - Limits: Only `O(...)` with at least one argument is recognized.
 pub fn order_arg(expr : @symcore.Expr) -> @symcore.Expr? {
   match @symcore.application_args(expr) {
     Some(args) if @symcore.application_has_name(expr, "O") =>
@@ -55,6 +71,12 @@ pub fn order_arg(expr : @symcore.Expr) -> @symcore.Expr? {
 }
 
 ///|
+/// Wrap an expression into an order marker.
+///
+/// - Does: Normalizes the input and returns its `O(...)` representation.
+/// - Input: Any `Expr`.
+/// - Returns: One `Expr` that is either `0`, an existing order term, or a new `O(...)` wrapper.
+/// - Limits: The normalization is intentionally lightweight and only strips obvious scalar factors.
 pub fn big_o(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     _ if @symcore.application_has_name(expr, "O") => expr
@@ -69,6 +91,12 @@ pub fn big_o(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// Alias for `big_o`.
+///
+/// - Does: Builds the local order marker for `expr`.
+/// - Input: Any `Expr`.
+/// - Returns: One `Expr` in the same form as `big_o(expr)`.
+/// - Limits: Has the same behavior and limits as `big_o`.
 pub fn order(expr : @symcore.Expr) -> @symcore.Expr {
   big_o(expr)
 }

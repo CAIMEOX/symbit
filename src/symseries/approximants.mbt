@@ -1,5 +1,9 @@
 ///|
-/// Padé approximants (numeric coefficients, general center x0).
+/// Rational approximation front doors.
+///
+/// Current Limits:
+/// - Public entry points cover Padé approximation and continued-fraction style approximants.
+/// - Non-rational coefficient paths fall back to expression-level linear algebra.
 
 ///|
 fn strip_order_expr(expr : @symcore.Expr) -> @symcore.Expr {
@@ -622,6 +626,12 @@ fn coeffs_via_derivatives(
 }
 
 ///|
+/// Build one Padé approximant around a point.
+///
+/// - Does: Expands `expr` into a local series and solves for a rational approximant with numerator degree `m` and denominator degree `n`.
+/// - Input: `expr` is the source expression, `x` is the expansion Symbol, `x0` is the center, and `m` and `n` are non-negative degrees.
+/// - Returns: One `Expr` representing the approximating rational function.
+/// - Limits: Raises if `x` is not a Symbol or if either degree is negative.
 pub fn pade_approximant(
   expr : @symcore.Expr,
   x : @symcore.Expr,
@@ -708,6 +718,12 @@ pub fn pade_approximant(
 }
 
 ///|
+/// Generate successive rational approximants from a coefficient stream.
+///
+/// - Does: Consumes the coefficient list and returns the approximants produced by the internal recurrence.
+/// - Input: `coeffs` is an array of coefficients and `x` is the working Symbol for the resulting expressions.
+/// - Returns: An `Array[Expr]` of approximating expressions.
+/// - Limits: Raises if the recurrence hits a zero divisor; the `simplify` flag is accepted but currently not used.
 pub fn approximants(
   coeffs : Array[@symcore.Expr],
   x? : @symcore.Expr = @symcore.Expr::Symbol("x"),

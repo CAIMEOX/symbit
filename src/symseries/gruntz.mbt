@@ -1,8 +1,9 @@
 ///|
-/// Lightweight Gruntz-style asymptotic evaluator:
-/// - finite points via x = x0 + t
-/// - infinities via x = ±1/t
-/// - leading order from local Laurent data
+/// Lightweight asymptotic limit evaluation.
+///
+/// Current Limits:
+/// - This file exposes a compact Gruntz-style front door, not the full asymptotic machinery.
+/// - Coverage is strongest for rational and elementary expressions.
 
 ///|
 fn is_pos_oo(expr : @symcore.Expr) -> Bool {
@@ -453,6 +454,12 @@ fn infinity_to_t(
 }
 
 ///|
+/// Evaluate a limit with the asymptotic fallback path.
+///
+/// - Does: Rewrites the limit problem near a finite point or infinity and extracts a leading asymptotic value.
+/// - Input: `expr` is the source expression, `z` is the variable Symbol, `z0` is the target point, and `dir` selects the side.
+/// - Returns: One `Expr` giving the inferred limit value.
+/// - Limits: Raises if `z` is not a Symbol; unsupported asymptotic shapes can still return unevaluated or coarse infinity results.
 pub fn gruntz(
   expr : @symcore.Expr,
   x : @symcore.Expr,

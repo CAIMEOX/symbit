@@ -1,7 +1,17 @@
 ///|
-/// Minimal sequence types.
+/// Front doors for symbolic sequence objects.
+///
+/// Current Limits:
+/// - The public API covers formula, periodic, additive, and multiplicative sequences.
+/// - It does not expose the full sequence algebra found in larger computer algebra systems.
 
 ///|
+/// Store one symbolic sequence.
+///
+/// - Does: Represents a formula sequence, a periodic sequence, or a sequence built from addition or multiplication.
+/// - Input: Variant-specific fields such as a formula expression, periodic values, or child sequences.
+/// - Returns: A `Sequence` value.
+/// - Limits: Range bounds are stored but only enforced when coefficients are requested.
 pub enum Sequence {
   SeqFormula(@symcore.Expr, String, Int, Int)
   SeqPer(Array[@symcore.Expr], Int, Int)
@@ -73,6 +83,12 @@ fn eval_numeric(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// Build a formula-based sequence.
+///
+/// - Does: Wraps `expr` as a sequence in the index named by `var_name`.
+/// - Input: `expr` is the term formula, `var_name` names the index, and `start` and `stop` bound the valid index range.
+/// - Returns: One `Sequence::SeqFormula` value.
+/// - Limits: The formula is not validated until coefficients are requested.
 pub fn sequence(
   expr : @symcore.Expr,
   var_name? : String = "n",
@@ -83,6 +99,12 @@ pub fn sequence(
 }
 
 ///|
+/// Build a periodic sequence.
+///
+/// - Does: Wraps the provided values as one repeating sequence block.
+/// - Input: `values` is the repeating block and `start` and `stop` bound the valid index range.
+/// - Returns: One `Sequence::SeqPer` value.
+/// - Limits: An empty block is accepted here but will raise when coefficients are requested.
 pub fn seq_per(
   values : Array[@symcore.Expr],
   start? : Int = 0,
@@ -92,16 +114,34 @@ pub fn seq_per(
 }
 
 ///|
+/// Add two sequences symbolically.
+///
+/// - Does: Builds a sequence node representing pointwise addition.
+/// - Input: Two `Sequence` values.
+/// - Returns: One `Sequence::SeqAdd` value.
+/// - Limits: No simplification is attempted at construction time.
 pub fn seq_add(a : Sequence, b : Sequence) -> Sequence {
   Sequence::SeqAdd(a, b)
 }
 
 ///|
+/// Multiply two sequences symbolically.
+///
+/// - Does: Builds a sequence node representing pointwise multiplication.
+/// - Input: Two `Sequence` values.
+/// - Returns: One `Sequence::SeqMul` value.
+/// - Limits: No simplification is attempted at construction time.
 pub fn seq_mul(a : Sequence, b : Sequence) -> Sequence {
   Sequence::SeqMul(a, b)
 }
 
 ///|
+/// Evaluate one sequence coefficient.
+///
+/// - Does: Returns the term at index `n`, including recursive evaluation for additive and multiplicative sequence nodes.
+/// - Input: One `Sequence` value and an integer index.
+/// - Returns: One `Expr` for the requested term.
+/// - Limits: Raises when `n` is outside the stored range or when a periodic sequence has an empty block.
 pub fn Sequence::coeff(self : Sequence, n : Int) -> @symcore.Expr raise {
   match self {
     Sequence::SeqFormula(expr, var_name, start, stop) => {

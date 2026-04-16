@@ -1,6 +1,9 @@
 ///|
-/// Residue for rational functions, including higher-order poles, via
-/// local series expansion around x0.
+/// Front door for one-variable residues.
+///
+/// Current Limits:
+/// - Residues are extracted from local rational or series data around one point.
+/// - Coverage is strongest for rational functions and explicit poles.
 
 ///|
 fn local_series_poly(
@@ -101,6 +104,12 @@ fn residue_via_pole_order(
 }
 
 ///|
+/// Compute the residue of an expression at a point.
+///
+/// - Does: Expands the expression near `x0` and returns the coefficient of `(x - x0)^(-1)`.
+/// - Input: `expr` is the source expression, `x` is the variable Symbol, and `x0` is the expansion point.
+/// - Returns: One `Expr` for the residue.
+/// - Limits: Raises if `x` is not a Symbol; unsupported local shapes fall back to repeated limit and derivative logic.
 pub fn residue(
   expr : @symcore.Expr,
   x : @symcore.Expr,

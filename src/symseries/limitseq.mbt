@@ -1,5 +1,9 @@
 ///|
-/// Minimal limits of sequences.
+/// Front doors for sequence limits.
+///
+/// Current Limits:
+/// - The exposed API covers finite differences and simple sequence limits.
+/// - Coverage is strongest for expressions that reduce to polynomial or rational growth.
 
 ///|
 fn contains_symbol(expr : @symcore.Expr, name : String) -> Bool {
@@ -48,6 +52,12 @@ fn sign_of_expr(expr : @symcore.Expr) -> Int? {
 }
 
 ///|
+/// Compute one forward finite difference.
+///
+/// - Does: Replaces `n` by `n + step` and subtracts the original sequence term.
+/// - Input: `expr` is the sequence term, `n` is the index Symbol, and `step` is an integer offset.
+/// - Returns: One `Expr` representing the forward difference.
+/// - Limits: Raises if `n` is not a Symbol.
 pub fn difference_delta(
   expr : @symcore.Expr,
   n? : @symcore.Expr = @symcore.Expr::Symbol("n"),
@@ -65,6 +75,12 @@ pub fn difference_delta(
 }
 
 ///|
+/// Evaluate the limit of a symbolic sequence.
+///
+/// - Does: Computes the limit of `expr` as the index Symbol tends to positive infinity.
+/// - Input: `expr` is the sequence term and `n` is the index Symbol.
+/// - Returns: One `Expr` for the limiting value.
+/// - Limits: Raises if `n` is not a Symbol; unsupported shapes fall back to the general `limit` front door.
 pub fn limit_seq(
   expr : @symcore.Expr,
   n? : @symcore.Expr = @symcore.Expr::Symbol("n"),

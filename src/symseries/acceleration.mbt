@@ -1,5 +1,9 @@
 ///|
-/// Convergence acceleration (Richardson, Shanks) for basic symbolic sequences.
+/// Sequence acceleration front doors.
+///
+/// Current Limits:
+/// - Only Richardson and Shanks transforms are exposed here.
+/// - Inputs are expected to be expressions in one Symbol-like index variable.
 
 ///|
 fn symbol_name(expr : @symcore.Expr) -> String raise {
@@ -51,6 +55,12 @@ fn rational_coeff(sign : Int, num : BigInt, den : BigInt) -> @symcore.Expr {
 }
 
 ///|
+/// Apply Richardson extrapolation to a symbolic sequence.
+///
+/// - Does: Builds the finite Richardson transform of `expr` at index `n` and depth `m`.
+/// - Input: `expr` is an expression in the Symbol `k`; `n` and `m` are non-negative integers.
+/// - Returns: One `Expr` that approximates the accelerated value of the sequence.
+/// - Limits: Raises if `k` is not a Symbol or if `n` or `m` is negative.
 pub fn richardson(
   expr : @symcore.Expr,
   k : @symcore.Expr,
@@ -86,6 +96,12 @@ fn copy_expr_array(items : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
 }
 
 ///|
+/// Apply the Shanks transformation to a symbolic sequence.
+///
+/// - Does: Rewrites the sampled sequence into its `m`-step Shanks transform and returns the value at index `n`.
+/// - Input: `expr` is an expression in the Symbol `k`; `n` and `m` are non-negative integers.
+/// - Returns: One `Expr` for the transformed sequence value.
+/// - Limits: Raises if `k` is not a Symbol, if `n` or `m` is negative, or if the transform divides by zero.
 pub fn shanks(
   expr : @symcore.Expr,
   k : @symcore.Expr,
