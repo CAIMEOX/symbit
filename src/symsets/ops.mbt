@@ -1,5 +1,9 @@
 ///|
 /// Core set operations and membership tests.
+///
+/// Current Limits:
+/// - Coverage is strongest for finite sets, numeric intervals, standard numeric domains, and direct symbolic compositions.
+/// - Harder symbolic reasoning still returns unevaluated set expressions or `Unknown`.
 
 ///|
 fn setbool_or(a : SetBool, b : SetBool) -> SetBool {
@@ -425,9 +429,10 @@ fn combine_finite_sets(items : Array[Expr]) -> Set {
 ///|
 /// Build the union of several sets.
 ///
-/// This constructor flattens nested unions, drops empty members, merges finite
-/// sets, and coalesces overlapping numeric intervals. If any member is the
-/// universal set, the result is the universal set.
+/// - Does: Flattens nested unions, removes empty members, merges finite elements, and combines overlapping intervals when possible.
+/// - Input: An `Array[Set]` of set operands.
+/// - Returns: A simplified `Set`, often `EmptySet`, one member, `Reals`, or `Union`.
+/// - Limits: Interval coalescing is strongest for numeric interval data.
 pub fn union(args : Array[Set]) -> Set {
   if args.is_empty() {
     return Set::EmptySet
@@ -555,9 +560,10 @@ fn filter_finite_by_interval(
 ///|
 /// Build the intersection of several sets.
 ///
-/// This constructor flattens nested intersections, drops universal members, and
-/// simplifies the common special cases of finite sets and numeric intervals. If
-/// any member is empty, the result is empty immediately.
+/// - Does: Flattens nested intersections, removes universal members, and simplifies common finite-set and interval cases.
+/// - Input: An `Array[Set]` of set operands.
+/// - Returns: A simplified `Set`, often `EmptySet`, one member, `UniversalSet`, or `Intersection`.
+/// - Limits: Deep symbolic intersections outside the implemented special cases stay symbolic.
 pub fn intersection(args : Array[Set]) -> Set {
   if args.is_empty() {
     return Set::UniversalSet
@@ -687,11 +693,12 @@ fn interval_difference(a : Set, b : Set) -> Set? {
 }
 
 ///|
-/// Remove the elements of `b` from `a`.
+/// Remove the elements of one set from another.
 ///
-/// The function simplifies common concrete cases such as finite-set subtraction
-/// and interval difference. When the package cannot reduce the expression
-/// further, it returns a symbolic `Complement(a, b)` node.
+/// - Does: Computes `a \\ b` with simplifications for common finite-set, interval, and union cases.
+/// - Input: Two `Set` values.
+/// - Returns: A simplified `Set`, often `EmptySet`, a reduced concrete set, or `Complement(a, b)`.
+/// - Limits: Cases outside the implemented simplifiers remain symbolic.
 pub fn complement(a : Set, b : Set) -> Set {
   match (a, b) {
     (Set::EmptySet, _) => Set::EmptySet
@@ -871,12 +878,12 @@ fn contains_numerical_set(kind : Set, elem : Expr) -> SetBool {
 }
 
 ///|
-/// Test whether `elem` belongs to `set`.
+/// Test whether an element belongs to a set.
 ///
-/// The result uses [`SetBool`](#setbool): `True` and `False` mean the answer is
-/// known, while `Unknown` means the current implementation cannot decide the
-/// membership question exactly. `Unknown` commonly appears for symbolic
-/// endpoints, symbolic conditions, or image sets over non-finite bases.
+/// - Does: Evaluates membership with concrete special cases and symbolic fallbacks.
+/// - Input: One `Set` value and one candidate `Expr`.
+/// - Returns: A `SetBool` decision.
+/// - Limits: Returns `Unknown` when the current implementation cannot decide the membership query exactly.
 pub fn contains(set : Set, elem : Expr) -> SetBool {
   match set {
     Set::EmptySet => SetBool::False
@@ -983,12 +990,12 @@ pub fn contains(set : Set, elem : Expr) -> SetBool {
 }
 
 ///|
-/// Test whether every element of `a` is also in `b`.
+/// Test whether one set is a subset of another.
 ///
-/// This is a structural decision procedure with useful special cases for finite
-/// sets, numeric intervals, and Cartesian products. It returns `Unknown` when a
-/// full proof or refutation would require reasoning the package does not yet
-/// implement.
+/// - Does: Evaluates subset inclusion with concrete rules for finite sets, intervals, products, and a few symbolic shapes.
+/// - Input: Two `Set` values.
+/// - Returns: A `SetBool` decision.
+/// - Limits: Returns `Unknown` when the package does not implement enough reasoning to prove or refute inclusion.
 pub fn is_subset(a : Set, b : Set) -> SetBool {
   match (a, b) {
     (Set::EmptySet, _) => SetBool::True

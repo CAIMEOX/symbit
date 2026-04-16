@@ -1,19 +1,17 @@
 ///|
 /// Core symbolic set types and constructors.
 ///
-/// This package models exact sets such as intervals, finite sets, Cartesian
-/// products, and symbolic predicates. The values are meant to be carried by
-/// solver, logic, and simplification code rather than expanded into concrete
-/// element lists.
+/// Current Limits:
+/// - This package exposes symbolic set objects and canonical constructors.
+/// - More advanced reasoning lives in `ops.mbt`; the constructors here mostly preserve symbolic structure.
 
 ///|
-/// A symbolic set expression.
+/// Store one symbolic set expression.
 ///
-/// `Set` values can describe both concrete collections such as `{1, 2}` and
-/// deferred descriptions such as “all real `x` satisfying a condition”.
-/// Constructors like [`union`](#union), [`intersection`](#intersection), and
-/// [`complement`](#complement) try to simplify obvious cases while preserving a
-/// lossless symbolic representation for the rest.
+/// - Does: Represents exact sets such as intervals, finite sets, products, symbolic predicates, and set operations.
+/// - Input: Variant-specific fields such as explicit elements, interval endpoints, or child sets.
+/// - Returns: A `Set` value.
+/// - Limits: This type stores symbolic structure; deeper reasoning is handled by the set operations package.
 pub(all) enum Set {
   EmptySet
   UniversalSet
@@ -34,10 +32,12 @@ pub(all) enum Set {
 }
 
 ///|
-/// Three-valued result used by membership and subset queries.
+/// Store a three-valued decision result for set queries.
 ///
-/// `Unknown` means the library cannot currently decide the question from the
-/// available structure, not that the statement is false.
+/// - Does: Represents successful truth, successful falsity, or an undecided result.
+/// - Input: One of the variants `True`, `False`, or `Unknown`.
+/// - Returns: A `SetBool` value.
+/// - Limits: `Unknown` means the current implementation cannot decide the query from the available structure.
 pub enum SetBool {
   True
   False
@@ -46,6 +46,11 @@ pub enum SetBool {
 
 ///|
 /// Return the empty set.
+///
+/// - Does: Builds the canonical empty set value.
+/// - Input: No arguments.
+/// - Returns: `Set::EmptySet`.
+/// - Limits: None.
 pub fn empty_set() -> Set {
   Set::EmptySet
 }
@@ -53,44 +58,76 @@ pub fn empty_set() -> Set {
 ///|
 /// Return the universal set.
 ///
-/// This is the top element for symbolic set expressions: every element is
-/// considered to belong to it.
+/// - Does: Builds the top element of the symbolic set lattice.
+/// - Input: No arguments.
+/// - Returns: `Set::UniversalSet`.
+/// - Limits: None.
 pub fn universal_set() -> Set {
   Set::UniversalSet
 }
 
 ///|
-/// Return the set of positive integers `{1, 2, 3, ...}`.
+/// Return the set of positive integers.
+///
+/// - Does: Builds the canonical set `{1, 2, 3, ...}`.
+/// - Input: No arguments.
+/// - Returns: `Set::Naturals`.
+/// - Limits: None.
 pub fn naturals() -> Set {
   Set::Naturals
 }
 
 ///|
-/// Return the set of non-negative integers `{0, 1, 2, ...}`.
+/// Return the set of non-negative integers.
+///
+/// - Does: Builds the canonical set `{0, 1, 2, ...}`.
+/// - Input: No arguments.
+/// - Returns: `Set::Naturals0`.
+/// - Limits: None.
 pub fn naturals0() -> Set {
   Set::Naturals0
 }
 
 ///|
-/// Return the set of all integers.
+/// Return the set of integers.
+///
+/// - Does: Builds the canonical set of all integers.
+/// - Input: No arguments.
+/// - Returns: `Set::Integers`.
+/// - Limits: None.
 pub fn integers() -> Set {
   Set::Integers
 }
 
 ///|
 /// Return the set of rational numbers.
+///
+/// - Does: Builds the canonical rational-number set.
+/// - Input: No arguments.
+/// - Returns: `Set::Rationals`.
+/// - Limits: None.
 pub fn rationals() -> Set {
   Set::Rationals
 }
 
 ///|
 /// Return the set of real numbers.
+///
+/// - Does: Builds the canonical real-number set.
+/// - Input: No arguments.
+/// - Returns: `Set::Reals`.
+/// - Limits: None.
 pub fn reals() -> Set {
   Set::Reals
 }
 
 ///|
 /// Return the set of complex numbers.
+///
+/// - Does: Builds the canonical complex-number set.
+/// - Input: No arguments.
+/// - Returns: `Set::Complexes`.
+/// - Limits: None.
 pub fn complexes() -> Set {
   Set::Complexes
 }
@@ -122,8 +159,10 @@ fn dedup_exprs(items : Array[Expr]) -> Array[Expr] {
 ///|
 /// Build a finite set from explicit elements.
 ///
-/// The input is sorted into a stable canonical order and duplicate expressions
-/// are removed. An empty input collapses to [`empty_set`](#empty_set).
+/// - Does: Canonicalizes the input expressions, removes duplicates, and wraps them as a finite set.
+/// - Input: An `Array[Expr]` of explicit set elements.
+/// - Returns: A canonical `FiniteSet` or `EmptySet`.
+/// - Limits: Equality is structural, not semantic.
 pub fn finite_set(items : Array[Expr]) -> Set {
   let uniq = dedup_exprs(items)
   if uniq.is_empty() {
@@ -134,12 +173,12 @@ pub fn finite_set(items : Array[Expr]) -> Set {
 }
 
 ///|
-/// Build a set defined by a boolean condition over a symbol.
+/// Build a set defined by a boolean predicate over one symbol.
 ///
-/// `symbol` names the bound variable, `condition` is the predicate to satisfy,
-/// and `base` restricts the search space. Trivial predicates are simplified:
-/// `True` returns `base`, `False` returns [`empty_set`](#empty_set), and an
-/// empty base remains empty regardless of the predicate.
+/// - Does: Stores the values in `base` that satisfy `condition` for the bound `symbol`.
+/// - Input: One bound `Expr`, one `BoolExpr` predicate, and an optional base set.
+/// - Returns: A simplified `Set`, often `ConditionSet`, `base`, or `EmptySet`.
+/// - Limits: Only obvious `True` and `False` simplifications are applied here.
 pub fn condition_set(
   symbol : Expr,
   condition : @symlogic.BoolExpr,
@@ -157,11 +196,12 @@ pub fn condition_set(
 }
 
 ///|
-/// Build the image of `base` under the mapping `symbol -> expr`.
+/// Build the image of a set under a symbolic mapping.
 ///
-/// This represents all values obtained by substituting members of `base` into
-/// `expr`. Constant mappings are simplified eagerly: mapping a non-empty base to
-/// a constant expression produces a singleton finite set.
+/// - Does: Represents all values obtained by substituting members of `base` into `expr` through the bound `symbol`.
+/// - Input: One bound `Expr`, one target expression, and an optional base set.
+/// - Returns: A simplified `Set`, often `base`, `EmptySet`, a singleton `FiniteSet`, or `ImageSet`.
+/// - Limits: Constant-map simplification is eager; general image reasoning is deferred.
 pub fn image_set(
   symbol : Expr,
   expr : Expr,
@@ -188,10 +228,12 @@ pub fn image_set(
 }
 
 ///|
-/// Build a Cartesian product of several sets.
+/// Build a Cartesian product of sets.
 ///
-/// Nested product sets are flattened. If any factor is empty, the whole product
-/// is empty. An empty input represents the singleton containing the empty tuple.
+/// - Does: Flattens nested products and constructs one symbolic Cartesian product.
+/// - Input: An `Array[Set]` of factors.
+/// - Returns: A simplified `Set`, often `EmptySet`, a tuple singleton, or `ProductSet`.
+/// - Limits: If any factor is empty the result is empty; an empty input becomes the singleton empty tuple.
 pub fn product_set(sets : Array[Set]) -> Set {
   if sets.is_empty() {
     return finite_set([@symcore.function("Tuple", [])])
@@ -229,11 +271,12 @@ fn expr_equal(a : Expr, b : Expr) -> Bool {
 }
 
 ///|
-/// Build a closed, open, or half-open interval.
+/// Build a symbolic interval.
 ///
-/// When both endpoints are numeric the constructor normalizes obvious degenerate
-/// cases: reversed endpoints become empty, and equal endpoints become either a
-/// singleton or empty depending on the openness flags.
+/// - Does: Constructs a closed, open, or half-open interval and simplifies obvious numeric degeneracies.
+/// - Input: Two endpoint expressions plus optional openness flags.
+/// - Returns: A simplified `Set`, often `Interval`, `FiniteSet`, or `EmptySet`.
+/// - Limits: Endpoint normalization is strongest when both bounds are numeric.
 pub fn interval(
   left : Expr,
   right : Expr,
@@ -333,11 +376,12 @@ fn compare_set_arrays(xs : Array[Set], ys : Array[Set]) -> Int {
 }
 
 ///|
-/// Compare two sets using the package's canonical structural ordering.
+/// Compare two sets with the package's canonical structural order.
 ///
-/// This ordering is intended for deduplication, sorting, and hash stability. It
-/// is not a mathematical ordering such as subset or lexicographic comparison of
-/// elements.
+/// - Does: Produces a stable ordering for sorting, deduplication, and hashing support.
+/// - Input: Two `Set` values.
+/// - Returns: A negative, zero, or positive `Int`.
+/// - Limits: This is a structural order, not a mathematical order such as subset inclusion.
 pub fn compare_set(a : Set, b : Set) -> Int {
   let ra = variant_rank(a)
   let rb = variant_rank(b)
@@ -418,28 +462,54 @@ pub fn compare_set(a : Set, b : Set) -> Int {
 ///|
 /// Sort a mutable array of sets in canonical structural order.
 ///
-/// This is mainly useful before deduplication or when producing stable printed
-/// output from a collection of sets.
+/// - Does: Reorders the array in place using `compare_set`.
+/// - Input: A mutable `Array[Set]`.
+/// - Returns: `Unit`.
+/// - Limits: The ordering is structural and only intended for canonicalization tasks.
 pub fn sort_sets_in_place(args : Array[Set]) -> Unit {
   args.sort_by(compare_set)
 }
 
 ///|
+/// Compare two sets through the standard `Compare` interface.
+///
+/// - Does: Delegates to `compare_set`.
+/// - Input: Two `Set` values.
+/// - Returns: A negative, zero, or positive `Int`.
+/// - Limits: Has the same structural semantics as `compare_set`.
 pub impl Compare for Set with compare(self, other : Set) -> Int {
   compare_set(self, other)
 }
 
 ///|
+/// Test structural equality between two sets.
+///
+/// - Does: Compares two sets with the canonical structural order and reports equality.
+/// - Input: Two `Set` values.
+/// - Returns: `true` when the sets are structurally equal.
+/// - Limits: Equality is structural and does not perform deep semantic reasoning.
 pub impl Eq for Set with equal(self, other : Set) -> Bool {
   compare_set(self, other) == 0
 }
 
 ///|
+/// Test structural inequality between two sets.
+///
+/// - Does: Negates the result of the structural equality check.
+/// - Input: Two `Set` values.
+/// - Returns: `true` when the sets are not structurally equal.
+/// - Limits: Has the same structural semantics as `equal`.
 pub impl Eq for Set with not_equal(self, other : Set) -> Bool {
   !self.equal(other)
 }
 
 ///|
+/// Hash one set value.
+///
+/// - Does: Builds a fresh hasher, combines the set into it, and returns the final hash code.
+/// - Input: One `Set` value.
+/// - Returns: One `Int` hash value.
+/// - Limits: Hash stability follows the package's structural canonicalization rules.
 pub impl Hash for Set with hash(self) -> Int {
   let hasher = Hasher::new()
   self.hash_combine(hasher)
@@ -447,6 +517,12 @@ pub impl Hash for Set with hash(self) -> Int {
 }
 
 ///|
+/// Combine one set value into an existing hasher.
+///
+/// - Does: Mixes the set structure and payload into the provided hasher.
+/// - Input: One `Set` value and one mutable `Hasher`.
+/// - Returns: `Unit`.
+/// - Limits: Hashing is structural and follows the same semantics as `compare_set`.
 pub impl Hash for Set with hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_int(variant_rank(self))
   match self {

@@ -1,5 +1,9 @@
 ///|
 /// Printing helpers for symbolic sets.
+///
+/// Current Limits:
+/// - The exposed formatting is constructor-oriented and deterministic.
+/// - It favors stable regression output over mathematical pretty printing.
 
 ///|
 fn expr_str(expr : Expr) -> String {
@@ -27,11 +31,12 @@ fn setbool_str(val : SetBool) -> String {
 }
 
 ///|
-/// Render a set using a stable, constructor-oriented textual form.
+/// Render one set as a stable textual representation.
 ///
-/// The output favors readability and deterministic regression testing over
-/// mathematical pretty-printing. For example, intervals are rendered with
-/// explicit constructor names such as `Interval.open(...)`.
+/// - Does: Converts a `Set` value into a deterministic constructor-oriented string.
+/// - Input: One `Set` value.
+/// - Returns: A `String`.
+/// - Limits: The output favors stable testing and debugging over mathematical pretty printing.
 pub fn to_string(set : Set) -> String {
   match set {
     Set::EmptySet => "EmptySet"
@@ -94,21 +99,45 @@ pub fn to_string(set : Set) -> String {
 }
 
 ///|
+/// Render one set through the standard `Show` interface.
+///
+/// - Does: Delegates to `symsets.to_string`.
+/// - Input: One `Set` value.
+/// - Returns: A `String`.
+/// - Limits: Uses the same constructor-oriented formatting as `to_string`.
 pub impl Show for Set with to_string(self) {
   to_string(self)
 }
 
 ///|
+/// Write one rendered set to a logger.
+///
+/// - Does: Delegates to the `Show` string form and writes it into `logger`.
+/// - Input: One `Set` value and one logger.
+/// - Returns: `Unit`.
+/// - Limits: Uses the same formatting as `to_string`.
 pub impl Show for Set with output(self, logger) {
   logger.write_string(self.to_string())
 }
 
 ///|
+/// Render one `SetBool` value through the standard `Show` interface.
+///
+/// - Does: Converts `True`, `False`, or `Unknown` into its textual spelling.
+/// - Input: One `SetBool` value.
+/// - Returns: A `String`.
+/// - Limits: The output is fixed to the three constructor names.
 pub impl Show for SetBool with to_string(self) {
   setbool_str(self)
 }
 
 ///|
+/// Write one rendered `SetBool` value to a logger.
+///
+/// - Does: Delegates to the `SetBool` string form and writes it into `logger`.
+/// - Input: One `SetBool` value and one logger.
+/// - Returns: `Unit`.
+/// - Limits: Uses the same formatting as `SetBool.to_string`.
 pub impl Show for SetBool with output(self, logger) {
   logger.write_string(self.to_string())
 }
