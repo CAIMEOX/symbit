@@ -57,7 +57,9 @@ test "physics.mechanics parity kane spring mass damper" {
     ),
   )
   let rhs = km.rhs()
-  assert_true(mechanics_expr_equal(@symprint.pretty_string(rhs.get(0, 0)), "u(t)"))
+  assert_true(
+    mechanics_expr_equal(@symprint.pretty_string(rhs.get(0, 0)), "u(t)"),
+  )
   assert_true(
     mechanics_expr_equal(
       @symprint.pretty_string(rhs.get(1, 0)),

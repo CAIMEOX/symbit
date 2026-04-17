@@ -1,13 +1,17 @@
 ///|
 test "physics.quantum.qexpr/state/operator: parity" {
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.pretty_string(qexpr([@symcore.int(0)]).as_expr())),
+    quantum_eval_str(
+      @symprint.pretty_string(qexpr([@symcore.int(0)]).as_expr()),
+    ),
     "0",
     "QExpr str",
   )
   quantum_test_assert_string_equal(
     quantum_srepr_str(
-      @symprint.pretty_string(qexpr([@symcore.int(0), @symcore.int(1)]).as_expr()),
+      @symprint.pretty_string(
+        qexpr([@symcore.int(0), @symcore.int(1)]).as_expr(),
+      ),
     ),
     quantum_srepr_str("QExpr(0, 1)"),
     "QExpr srepr",
@@ -149,12 +153,16 @@ test "physics.quantum.operator/state: operator simplification parity" {
   )
   quantum_test_assert_string_equal(
     quantum_qapply_str("IdentityOperator(3)*Operator(A)"),
-    quantum_eval_str(@symprint.pretty_string(qapply(@symcore.raw_mul([id3, a])))),
+    quantum_eval_str(
+      @symprint.pretty_string(qapply(@symcore.raw_mul([id3, a]))),
+    ),
     "qapply left identity parity",
   )
   quantum_test_assert_string_equal(
     quantum_qapply_str("Operator(A)*IdentityOperator(3)"),
-    quantum_eval_str(@symprint.pretty_string(qapply(@symcore.raw_mul([a, id3])))),
+    quantum_eval_str(
+      @symprint.pretty_string(qapply(@symcore.raw_mul([a, id3]))),
+    ),
     "qapply right identity parity",
   )
   let represented_id = represent(id3)

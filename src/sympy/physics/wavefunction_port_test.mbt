@@ -98,7 +98,9 @@ test "physics.quantum.wavefunction: norm parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("Wavefunction(sqrt(5)*x**2, (x, 0, 1)).normalize()"),
-    quantum_eval_str(@symprint.pretty_string(normalized_wf.normalize().as_expr())),
+    quantum_eval_str(
+      @symprint.pretty_string(normalized_wf.normalize().as_expr()),
+    ),
     "wavefunction normalize parity",
   )
 }

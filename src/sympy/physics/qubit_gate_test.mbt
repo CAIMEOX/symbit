@@ -282,11 +282,15 @@ test "physics.quantum.gate: ugate and controlled ugate" {
     ]),
   )
   inspect(
-    @symprint.pretty_string(qapply(@symcore.raw_mul([u2, qubit("00").as_expr()]))),
+    @symprint.pretty_string(
+      qapply(@symcore.raw_mul([u2, qubit("00").as_expr()])),
+    ),
     content="Qubit(1, 0)",
   )
   inspect(
-    @symprint.pretty_string(qapply(@symcore.raw_mul([u2, qubit("11").as_expr()]))),
+    @symprint.pretty_string(
+      qapply(@symcore.raw_mul([u2, qubit("11").as_expr()])),
+    ),
     content="Qubit(0, 1)",
   )
   quantum_test_assert_matrix_equal(

@@ -22,5 +22,8 @@ test "physics.mechanics pathway core" {
   p_c.set_pos(p_b, n.y())
   let obstacle = obstacle_set_pathway([p_a, p_b, p_c])
   inspect(obstacle.repr(), content="ObstacleSetPathway(pA, pB, pC)")
-  inspect(@symprint.pretty_string(obstacle.length()), content="sqrt((q(t)**2)) + 1")
+  inspect(
+    @symprint.pretty_string(obstacle.length()),
+    content="sqrt((q(t)**2)) + 1",
+  )
 }

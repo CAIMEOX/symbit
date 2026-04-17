@@ -130,7 +130,9 @@ test "physics.mechanics parity symbolic system forms" {
     ours_dyn_items.length() == oracle_dyn_items.length() &&
     ours_dyn_items.all(fn(item) { oracle_dyn_items.contains(item) }),
   )
-  let ours_const_items = symsystem3.constant_symbols().map(@symprint.pretty_string)
+  let ours_const_items = symsystem3
+    .constant_symbols()
+    .map(@symprint.pretty_string)
   ours_const_items.sort_by((a, b) => a.compare(b))
   let ours_consts = "[" + ours_const_items.join(", ") + "]"
   let oracle_consts = mechanics_summary(

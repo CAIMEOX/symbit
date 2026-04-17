@@ -2,7 +2,10 @@
 test "physics.quantum.dagger: symbolic and matrix subset" {
   let a = @symcore.Expr::Symbol("A")
   let b = @symcore.Expr::Symbol("B")
-  inspect(@symprint.pretty_string(dagger(a, evaluate=false)), content="Dagger(A)")
+  inspect(
+    @symprint.pretty_string(dagger(a, evaluate=false)),
+    content="Dagger(A)",
+  )
   inspect(
     @symprint.pretty_string(dagger(@symcore.raw_mul([a, b]))),
     content="conjugate(B)*conjugate(A)",

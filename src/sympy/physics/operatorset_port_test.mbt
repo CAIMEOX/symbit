@@ -3,7 +3,9 @@ test "physics.quantum.operatorset: parity subset" {
   quantum_test_assert_string_equal(
     quantum_eval_str("operators_to_state(XOp())"),
     quantum_eval_str(
-      @symprint.pretty_string(operators_to_state(x_op()).unwrap_or(@symcore.int(0))),
+      @symprint.pretty_string(
+        operators_to_state(x_op()).unwrap_or(@symcore.int(0)),
+      ),
     ),
     "operators_to_state(XOp()) parity",
   )

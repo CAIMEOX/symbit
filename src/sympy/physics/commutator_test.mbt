@@ -77,7 +77,9 @@ test "physics.quantum.anticommutator: constructor and doit" {
 ///|
 test "physics.quantum.(anti)commutator: gate commuting subsets" {
   inspect(
-    @symprint.pretty_string(commutator(x_gate(0).as_expr(), y_gate(1).as_expr())),
+    @symprint.pretty_string(
+      commutator(x_gate(0).as_expr(), y_gate(1).as_expr()),
+    ),
     content="0",
   )
   inspect(

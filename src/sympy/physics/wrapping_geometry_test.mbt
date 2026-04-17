@@ -20,5 +20,8 @@ test "physics.mechanics wrapping geometry core" {
     cylinder.repr(),
     content="WrappingCylinder(radius=r, point=WpO, axis=WN.z)",
   )
-  inspect(@symprint.pretty_string(cylinder.geodesic_length(p_1, p_3)), content="1")
+  inspect(
+    @symprint.pretty_string(cylinder.geodesic_length(p_1, p_3)),
+    content="1",
+  )
 }

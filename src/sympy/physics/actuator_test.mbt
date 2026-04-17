@@ -22,7 +22,10 @@ test "physics.mechanics actuator core" {
   let pathway = linear_pathway(p_a, p_b).as_pathway()
 
   let spring = linear_spring(@symcore.Expr::Symbol("k"), pathway)
-  inspect(@symprint.pretty_string(spring.force()), content="-1*k*sqrt((q(t)**2))")
+  inspect(
+    @symprint.pretty_string(spring.force()),
+    content="-1*k*sqrt((q(t)**2))",
+  )
 
   let damper = linear_damper(@symcore.Expr::Symbol("c"), pathway)
   inspect(

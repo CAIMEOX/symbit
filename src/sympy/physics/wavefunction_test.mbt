@@ -46,7 +46,9 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
     f_of_x,
   )
   inspect(
-    @symprint.pretty_string(qapply(@symcore.raw_mul([dop.as_expr(), wf.as_expr()]))),
+    @symprint.pretty_string(
+      qapply(@symcore.raw_mul([dop.as_expr(), wf.as_expr()])),
+    ),
     content="Wavefunction((2*x), x)",
   )
   let dop2 = differential_operator(

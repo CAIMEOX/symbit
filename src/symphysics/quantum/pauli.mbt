@@ -76,7 +76,8 @@ pub fn PauliExpr::repr(self : PauliExpr) -> String {
 ///|
 pub impl Show for PauliExpr with to_string(self) {
   match self.name {
-    Some(name) => "\{pauli_class_name(self.kind)}(\{@symprint.pretty_string(name)})"
+    Some(name) =>
+      "\{pauli_class_name(self.kind)}(\{@symprint.pretty_string(name)})"
     None => "\{pauli_class_name(self.kind)}()"
   }
 }

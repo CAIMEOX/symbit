@@ -98,7 +98,9 @@ test "physics.secondquant: boson parity" {
   sq_assert_string_equal(
     secondquant_eval_str("Commutator(B(0), Bd(0))"),
     secondquant_eval_str(
-      @symprint.pretty_string(secondquant_commutator(b0.as_expr(), bd0.as_expr())),
+      @symprint.pretty_string(
+        secondquant_commutator(b0.as_expr(), bd0.as_expr()),
+      ),
     ),
     "boson commutator parity",
   )

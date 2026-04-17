@@ -20,7 +20,9 @@ test "physics.quantum.cartesian: parity" {
   quantum_test_assert_string_equal(
     quantum_qapply_str("XOp()*XKet(x)"),
     quantum_eval_str(
-      @symprint.pretty_string(qapply(@symcore.raw_mul([x_op(), x_ket(position=x)]))),
+      @symprint.pretty_string(
+        qapply(@symcore.raw_mul([x_op(), x_ket(position=x)])),
+      ),
     ),
     "XOp qapply parity",
   )

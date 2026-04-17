@@ -119,7 +119,9 @@ test "physics.mechanics wrapper functions and substitutions" {
     "kinetic_energy",
   )
   inspect(
-    @symprint.pretty_string(potential_energy([pa.as_bodylike(), rb.as_bodylike()])),
+    @symprint.pretty_string(
+      potential_energy([pa.as_bodylike(), rb.as_bodylike()]),
+    ),
     content="M*g*h + g*h",
   )
   inspect(

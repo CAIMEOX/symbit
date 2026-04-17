@@ -66,6 +66,9 @@ test "physics.mechanics parity lagrange simple pendulum" {
   )
   assert_true(
     oracle_rhs.contains("-g*sin(q(t))/l") &&
-    mechanics_expr_equal(@symprint.pretty_string(rhs.get(1, 0)), "-g*sin(q(t))/l"),
+    mechanics_expr_equal(
+      @symprint.pretty_string(rhs.get(1, 0)),
+      "-g*sin(q(t))/l",
+    ),
   )
 }

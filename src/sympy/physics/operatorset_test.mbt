@@ -2,7 +2,9 @@
 test "physics.quantum.operatorset: local mappings" {
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.pretty_string(operators_to_state(x_op()).unwrap_or(@symcore.int(0))),
+      @symprint.pretty_string(
+        operators_to_state(x_op()).unwrap_or(@symcore.int(0)),
+      ),
     ),
     quantum_eval_str("XKet(x)"),
     "XOp to XKet",

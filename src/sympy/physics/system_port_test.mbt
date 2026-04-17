@@ -49,7 +49,10 @@ test "physics.mechanics parity system assembly" {
   ]
   for i in 0..<sys.kdes().length() {
     assert_true(
-      mechanics_expr_equal(@symprint.pretty_string(sys.kdes()[i]), oracle_kdes[i]),
+      mechanics_expr_equal(
+        @symprint.pretty_string(sys.kdes()[i]),
+        oracle_kdes[i],
+      ),
     )
   }
   assert_eq(

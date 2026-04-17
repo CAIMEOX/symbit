@@ -24,7 +24,9 @@ test "physics.quantum.qubit/gate/represent: base parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.pretty_string(qapply(@symcore.raw_mul([h0, qubit("0").as_expr()]))),
+      @symprint.pretty_string(
+        qapply(@symcore.raw_mul([h0, qubit("0").as_expr()])),
+      ),
     ),
     quantum_qapply_str("HadamardGate(0)*Qubit(0)"),
     "H gate qapply parity",
@@ -192,7 +194,9 @@ test "physics.quantum.gate: ugate parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.pretty_string(qapply(@symcore.raw_mul([u0, qubit("0").as_expr()]))),
+      @symprint.pretty_string(
+        qapply(@symcore.raw_mul([u0, qubit("0").as_expr()])),
+      ),
     ),
     quantum_qapply_str("UGate((0,), Matrix([[a, b], [c, d]]))*Qubit(0)"),
     "UGate qapply |0> parity",
@@ -257,7 +261,9 @@ test "physics.quantum.gate: ugate parity" {
   let cu2 = cgate([2], u2)
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.pretty_string(qapply(@symcore.raw_mul([u2, qubit("00").as_expr()]))),
+      @symprint.pretty_string(
+        qapply(@symcore.raw_mul([u2, qubit("00").as_expr()])),
+      ),
     ),
     quantum_qapply_str(
       "UGate((1, 0), Matrix([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, -1, 0]]))*Qubit(0, 0)",
@@ -266,7 +272,9 @@ test "physics.quantum.gate: ugate parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.pretty_string(qapply(@symcore.raw_mul([u2, qubit("11").as_expr()]))),
+      @symprint.pretty_string(
+        qapply(@symcore.raw_mul([u2, qubit("11").as_expr()])),
+      ),
     ),
     quantum_qapply_str(
       "UGate((1, 0), Matrix([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, -1, 0]]))*Qubit(1, 1)",

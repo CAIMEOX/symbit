@@ -293,7 +293,8 @@ pub fn HilbertSpace::repr(self : HilbertSpace) -> String {
 pub impl Show for HilbertSpace with to_string(self) {
   match self {
     HilbertSpace::Abstract => "H"
-    HilbertSpace::Complex(dimension) => "C(\{@symprint.pretty_string(dimension)})"
+    HilbertSpace::Complex(dimension) =>
+      "C(\{@symprint.pretty_string(dimension)})"
     HilbertSpace::L2(interval_expr) =>
       "L2(\{@symprint.pretty_string(interval_expr)})"
     HilbertSpace::Fock => "F"

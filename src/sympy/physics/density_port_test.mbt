@@ -61,7 +61,9 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
     "density represent parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.pretty_string(entropy(mixed.as_expr(), spin_j=half))),
+    quantum_eval_str(
+      @symprint.pretty_string(entropy(mixed.as_expr(), spin_j=half)),
+    ),
     quantum_entropy_str(
       "Density((JzKet(Rational(1, 2), Rational(1, 2)), Rational(1, 2)), (JzKet(Rational(1, 2), Rational(-1, 2)), Rational(1, 2)))",
     ),

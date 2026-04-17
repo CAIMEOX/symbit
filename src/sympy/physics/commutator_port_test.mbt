@@ -42,7 +42,9 @@ test "physics.quantum.commutator: parity" {
 test "physics.quantum.(anti)commutator: gate parity" {
   quantum_test_assert_string_equal(
     quantum_eval_str(
-      @symprint.pretty_string(commutator(x_gate(0).as_expr(), y_gate(1).as_expr())),
+      @symprint.pretty_string(
+        commutator(x_gate(0).as_expr(), y_gate(1).as_expr()),
+      ),
     ),
     quantum_doit_str("Commutator(XGate(0), YGate(1))"),
     "disjoint one-qubit commutator parity",

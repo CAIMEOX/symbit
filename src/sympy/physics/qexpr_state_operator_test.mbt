@@ -22,7 +22,10 @@ test "physics.quantum.qexpr/state/operator: local core forms" {
   let ok = orthogonal_ket([@symcore.Expr::Symbol("n")])
   inspect(a.to_string(), content="A")
   inspect(h.repr(), content="HermitianOperator(Symbol('Hh'))")
-  inspect(@symprint.pretty_string(u.inverse()), content="UnitaryOperator(Uu)**-1")
+  inspect(
+    @symprint.pretty_string(u.inverse()),
+    content="UnitaryOperator(Uu)**-1",
+  )
   inspect(id.to_string(), content="I")
   inspect(ok.dual().to_string(), content="<n|")
   inspect(@symprint.pretty_string(dagger(a.as_expr())), content="Dagger(A)")
@@ -34,7 +37,10 @@ test "physics.quantum.innerproduct: local evaluation families" {
     bra([@symcore.Expr::Symbol("b")]).as_expr(),
     ket([@symcore.Expr::Symbol("k")]).as_expr(),
   )
-  inspect(@symprint.pretty_string(generic), content="InnerProduct(Bra(b), Ket(k))")
+  inspect(
+    @symprint.pretty_string(generic),
+    content="InnerProduct(Bra(b), Ket(k))",
+  )
 
   let bf = inner_product(
     boson_fock_bra(@symcore.int(1)),
@@ -113,12 +119,16 @@ test "physics.quantum.operator/state: operator simplification hooks" {
     "canonical unitary cancellation",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.pretty_string(qapply(@symcore.raw_mul([id3, a])))),
+    quantum_eval_str(
+      @symprint.pretty_string(qapply(@symcore.raw_mul([id3, a]))),
+    ),
     "A",
     "qapply removes left identity on operators",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(@symprint.pretty_string(qapply(@symcore.raw_mul([a, id3])))),
+    quantum_eval_str(
+      @symprint.pretty_string(qapply(@symcore.raw_mul([a, id3]))),
+    ),
     "A",
     "qapply removes right identity on operators",
   )

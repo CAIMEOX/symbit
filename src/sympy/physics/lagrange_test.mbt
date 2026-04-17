@@ -42,6 +42,9 @@ test "physics.mechanics lagrange: simple pendulum rhs" {
   let rhs = lm.rhs()
   inspect(lagrange_matrix_entry_summary(lm.mass_matrix()), content="[[l**2*m]]")
   assert_true(
-    mechanics_expr_equal(@symprint.pretty_string(rhs.get(1, 0)), "-g*sin(q(t))/l"),
+    mechanics_expr_equal(
+      @symprint.pretty_string(rhs.get(1, 0)),
+      "-g*sin(q(t))/l",
+    ),
   )
 }
