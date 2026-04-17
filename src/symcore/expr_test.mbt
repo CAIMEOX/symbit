@@ -21,7 +21,10 @@ test "pow normalizes trivial exponents" {
   inspect(to_repr(pow(Expr::Symbol("x"), int(1))), content="sym:x")
   inspect(to_repr(pow(Expr::Symbol("x"), int(0))), content="1")
   inspect(to_repr(pow(int(0), int(0))), content="1")
-  inspect(@symprint.pretty_string(pow(int(0), Expr::Symbol("x"))), content="0**x")
+  inspect(
+    @symprint.pretty_string(pow(int(0), Expr::Symbol("x"))),
+    content="0**x",
+  )
   inspect(
     @symprint.pretty_string(pow(pow(Expr::Symbol("x"), int(2)), int(2))),
     content="x**4",
@@ -68,14 +71,18 @@ test "free_symbols respects bound variables" {
     Expr::Tuple([y, z]),
   )
   json_inspect(free_symbols(lam).map(@symprint.pretty_string), content=["z"])
-  json_inspect(free_symbols(deriv).map(@symprint.pretty_string), content=["x", "y"])
+  json_inspect(free_symbols(deriv).map(@symprint.pretty_string), content=[
+    "x", "y",
+  ])
   json_inspect(free_symbols(subs_multi).map(@symprint.pretty_string), content=[
     "y", "z",
   ])
   inspect(has(lam, z), content="true")
   inspect(has(lam, y), content="true")
   json_inspect(
-    free_symbols(lambda_expr(Expr::Tuple([]), int(42))).map(@symprint.pretty_string),
+    free_symbols(lambda_expr(Expr::Tuple([]), int(42))).map(
+      @symprint.pretty_string,
+    ),
     content=[],
   )
   json_inspect(
@@ -279,7 +286,9 @@ test "args follow SymPy-style derivative and lambda shapes" {
     "(x,)", "x + y",
   ])
   json_inspect(
-    args(lambda_expr(Expr::Tuple([x, y]), add([x, y]))).map(@symprint.pretty_string),
+    args(lambda_expr(Expr::Tuple([x, y]), add([x, y]))).map(
+      @symprint.pretty_string,
+    ),
     content=["(x, y)", "x + y"],
   )
 }
@@ -523,7 +532,9 @@ test "legacy function storage normalizes to canonical core semantics" {
   let canonical_named = function("sin", [x])
   inspect(@symprint.pretty_string(legacy_named), content="sin(x)")
   inspect(application_name(legacy_named).unwrap_or(""), content="sin")
-  json_inspect(children(legacy_named).map(@symprint.pretty_string), content=["x"])
+  json_inspect(children(legacy_named).map(@symprint.pretty_string), content=[
+    "x",
+  ])
   inspect(compare_expr(legacy_named, canonical_named), content="0")
   inspect(
     legacy_named.hash().to_string(),
@@ -622,7 +633,10 @@ test "function constructors follow SymPy core semantics" {
   let y = Expr::Symbol("y")
   inspect(@symprint.pretty_string(function("Eq", [x, x])), content="True")
   inspect(@symprint.pretty_string(function("Ne", [x, x])), content="False")
-  inspect(@symprint.pretty_string(function("Lt", [int(1), int(2)])), content="True")
+  inspect(
+    @symprint.pretty_string(function("Lt", [int(1), int(2)])),
+    content="True",
+  )
   inspect(
     @symprint.pretty_string(function("Ge", [int(1), int(2)])),
     content="False",
@@ -634,7 +648,9 @@ test "function constructors follow SymPy core semantics" {
     content="Derivative(sin(x), (x, 2))",
   )
   inspect(
-    @symprint.pretty_string(function("Derivative", [function("sin", [x]), x, y])),
+    @symprint.pretty_string(
+      function("Derivative", [function("sin", [x]), x, y]),
+    ),
     content="Derivative(sin(x), x, y)",
   )
   inspect(
@@ -712,7 +728,9 @@ test "function constructors follow SymPy core semantics" {
   match function("Float", [Expr::NumberSymbol(NumberSymbolKind::Pi)]) {
     Expr::Float(_) => ()
     other =>
-      fail("expected Float(pi) to evaluate, got \{@symprint.pretty_string(other)}")
+      fail(
+        "expected Float(pi) to evaluate, got \{@symprint.pretty_string(other)}",
+      )
   }
   inspect(
     @symprint.pretty_string(function("Rational", [Expr::Boolean(true)])),
@@ -723,7 +741,9 @@ test "function constructors follow SymPy core semantics" {
     content="0",
   )
   inspect(
-    @symprint.pretty_string(function("Rational", [int(1), Expr::Boolean(false)])),
+    @symprint.pretty_string(
+      function("Rational", [int(1), Expr::Boolean(false)]),
+    ),
     content="zoo",
   )
   inspect(
@@ -821,7 +841,9 @@ test "dict is a first-class container node" {
     }
     None => fail("expected dict items")
   }
-  json_inspect(free_symbols(d).map(@symprint.pretty_string), content=["x", "y", "z"])
+  json_inspect(free_symbols(d).map(@symprint.pretty_string), content=[
+    "x", "y", "z",
+  ])
 }
 
 ///|
@@ -930,9 +952,10 @@ test "children wrap Subs and Lambda binders like SymPy args" {
     ),
     content=["x + y", "(x, y)", "(y, 1)"],
   )
-  json_inspect(children(lambda_expr(x, add([x, y]))).map(@symprint.pretty_string), content=[
-    "(x,)", "x + y",
-  ])
+  json_inspect(
+    children(lambda_expr(x, add([x, y]))).map(@symprint.pretty_string),
+    content=["(x,)", "x + y"],
+  )
 }
 
 ///|
@@ -1103,7 +1126,10 @@ test "subst respects Subs bound variables" {
   let w = Expr::Symbol("w")
   let expr = subs_expr(add([x, y]), x, z)
   let env : Map[String, Expr] = { "x": int(2), "y": int(3), "z": int(4) }
-  inspect(@symprint.pretty_string(subst(expr, env)), content="Subs(x + 3, x, 4)")
+  inspect(
+    @symprint.pretty_string(subst(expr, env)),
+    content="Subs(x + 3, x, 4)",
+  )
   let multi = subs_expr(add([x, y]), Expr::Tuple([x, y]), Expr::Tuple([y, z]))
   inspect(
     @symprint.pretty_string(subst(multi, { "y": w })),
@@ -1298,9 +1324,18 @@ test "lambda canonicalizes identity forms and applies canonically" {
   )
   json_inspect(args(id).map(@symprint.pretty_string), content=[])
   inspect(has(id, x), content="false")
-  inspect(@symprint.pretty_string(xreplace(id, [(x, y)])), content="Lambda(_x, _x)")
-  inspect(@symprint.pretty_string(subst(id, { "x": y })), content="Lambda(_x, _x)")
-  inspect(@symprint.pretty_string(apply(id, [y]).unwrap_or(int(0))), content="y")
+  inspect(
+    @symprint.pretty_string(xreplace(id, [(x, y)])),
+    content="Lambda(_x, _x)",
+  )
+  inspect(
+    @symprint.pretty_string(subst(id, { "x": y })),
+    content="Lambda(_x, _x)",
+  )
+  inspect(
+    @symprint.pretty_string(apply(id, [y]).unwrap_or(int(0))),
+    content="y",
+  )
   inspect(
     @symprint.pretty_string(
       apply(lambda_expr(Expr::Tuple([x, y]), add([x, y])), [int(1), int(2)]).unwrap_or(

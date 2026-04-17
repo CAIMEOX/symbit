@@ -34,7 +34,9 @@ test "with_distribute and with_exp_is_pow control canonical constructors" {
   )
   inspect(@symprint.pretty_string(function("exp", [x])), content="exp(x)")
   inspect(
-    @symprint.pretty_string(with_exp_is_pow(true, fn() { function("exp", [x]) })),
+    @symprint.pretty_string(
+      with_exp_is_pow(true, fn() { function("exp", [x]) }),
+    ),
     content="E**x",
   )
 }

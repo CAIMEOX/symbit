@@ -610,19 +610,31 @@ test "symparse parity builtin callable semantics" {
     @symprint.pretty_string(parse_expr("Symbol")),
     content=parse_expr_sstr("Symbol"),
   )
-  inspect(@symprint.pretty_string(parse_expr("pi")), content=parse_expr_sstr("pi"))
+  inspect(
+    @symprint.pretty_string(parse_expr("pi")),
+    content=parse_expr_sstr("pi"),
+  )
   inspect(
     @symprint.pretty_string(parse_expr("EulerGamma")),
     content=parse_expr_sstr("EulerGamma"),
   )
-  inspect(@symprint.pretty_string(parse_expr("oo")), content=parse_expr_sstr("oo"))
-  inspect(@symprint.pretty_string(parse_expr("Pi")), content=parse_expr_sstr("Pi"))
+  inspect(
+    @symprint.pretty_string(parse_expr("oo")),
+    content=parse_expr_sstr("oo"),
+  )
+  inspect(
+    @symprint.pretty_string(parse_expr("Pi")),
+    content=parse_expr_sstr("Pi"),
+  )
   inspect(
     @symprint.pretty_string(parse_expr("NaN")),
     content=parse_expr_sstr("NaN"),
   )
   inspect(
-    parse_expr_equiv(@symprint.pretty_string(parse_expr("log(x, y)")), "log(x, y)"),
+    parse_expr_equiv(
+      @symprint.pretty_string(parse_expr("log(x, y)")),
+      "log(x, y)",
+    ),
     content="0",
   )
   inspect(
@@ -749,7 +761,10 @@ test "symparse parity builtin callable semantics" {
     content=parse_expr_error_sstr_in("Rational(pi)", []),
   )
   inspect(
-    parse_expr_equiv(@symprint.pretty_string(parse_expr("Float(2)")), "Float(2)"),
+    parse_expr_equiv(
+      @symprint.pretty_string(parse_expr("Float(2)")),
+      "Float(2)",
+    ),
     content="0",
   )
   inspect(
@@ -773,7 +788,10 @@ test "symparse parity builtin callable semantics" {
     ),
     content="True",
   )
-  inspect(@symprint.pretty_string(parse_expr("Float((0, 0, -123))")), content="0")
+  inspect(
+    @symprint.pretty_string(parse_expr("Float((0, 0, -123))")),
+    content="0",
+  )
   inspect(
     @symprint.pretty_string(parse_expr("Float((0, 0, -123, -1))")),
     content="nan",
@@ -1089,8 +1107,14 @@ test "symparse parity builtin callable semantics" {
     @symprint.pretty_string(ast_parse_expr("Rational(1, 1/3)")),
     content=ast_parse_expr_sstr("Rational(1, 1/3)"),
   )
-  inspect(@symprint.pretty_string(ast_parse_expr("Rational(True)")), content="1")
-  inspect(@symprint.pretty_string(ast_parse_expr("Rational(False)")), content="0")
+  inspect(
+    @symprint.pretty_string(ast_parse_expr("Rational(True)")),
+    content="1",
+  )
+  inspect(
+    @symprint.pretty_string(ast_parse_expr("Rational(False)")),
+    content="0",
+  )
   inspect(@symprint.pretty_string(ast_parse_expr("S(True)")), content="True")
   inspect(@symprint.pretty_string(ast_parse_expr("S(False)")), content="False")
   inspect(
@@ -1243,7 +1267,10 @@ test "symparse parity builtin callable semantics" {
     },
     content="ValueError: The following expressions appear more than once: x",
   )
-  inspect(@symprint.pretty_string(ast_parse_expr("Subs(x, (), ())")), content="x")
+  inspect(
+    @symprint.pretty_string(ast_parse_expr("Subs(x, (), ())")),
+    content="x",
+  )
   inspect(
     @symprint.pretty_string(ast_parse_expr("Subs(Subs(x, x, 0), y, 1)")),
     content="Subs(x, (x, y), (0, 1))",
@@ -1306,7 +1333,10 @@ test "symparse parity relation truthiness string forms" {
 
 ///|
 test "symparse parity explicit core constructor calls stay canonical" {
-  inspect(@symprint.pretty_string(parse_expr("Eq")), content=parse_expr_sstr("Eq"))
+  inspect(
+    @symprint.pretty_string(parse_expr("Eq")),
+    content=parse_expr_sstr("Eq"),
+  )
   inspect(
     @symprint.pretty_string(
       parse_expr_with("Integer(3/2)", parse_options(evaluate=false)),
@@ -1441,7 +1471,9 @@ test "symparse parity explicit core constructor calls stay canonical" {
     content=parse_expr_sstr("Lambda((x, y), x + y)(1, 2)"),
   )
   inspect(
-    @symprint.pretty_string(parse_expr("Lambda(((x, y), z), x + y + z)((1, 2), 3)")),
+    @symprint.pretty_string(
+      parse_expr("Lambda(((x, y), z), x + y + z)((1, 2), 3)"),
+    ),
     content=parse_expr_sstr("Lambda(((x, y), z), x + y + z)((1, 2), 3)"),
   )
   inspect(

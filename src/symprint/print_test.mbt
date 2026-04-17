@@ -143,7 +143,9 @@ test "pretty printers understand number symbols" {
     content="I",
   )
   inspect(
-    pretty_string(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)),
+    pretty_string(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+    ),
     content="oo",
   )
 }
