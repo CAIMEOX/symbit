@@ -22,7 +22,9 @@ test "combinatorial factorials" {
   assert_eq(@symprint.pretty_string(rf34), "360")
   assert_eq(@symprint.pretty_string(ff63), "120")
   assert_oracle(try? expr_str_eq(@symprint.pretty_string(f5), "factorial(5)"))
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(b52), "binomial(5, 2)"))
+  assert_oracle(
+    try? expr_str_eq(@symprint.pretty_string(b52), "binomial(5, 2)"),
+  )
 }
 
 ///|
@@ -37,7 +39,9 @@ test "combinatorial numbers" {
   assert_eq(@symprint.pretty_string(tri6), "13")
   assert_eq(@symprint.pretty_string(h3), "11/6")
   assert_eq(@symprint.pretty_string(b4), "-1/30")
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(fib10), "fibonacci(10)"))
+  assert_oracle(
+    try? expr_str_eq(@symprint.pretty_string(fib10), "fibonacci(10)"),
+  )
   assert_oracle(try? expr_str_eq(@symprint.pretty_string(h3), "harmonic(3)"))
 }
 

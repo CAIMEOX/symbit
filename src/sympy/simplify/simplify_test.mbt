@@ -2,14 +2,9 @@
 test "symsimplify basic algebra rules" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
+  inspect(to_repr(simplify(@symcore.add([x, x]))), content="(* 2 sym:x)")
   inspect(
-    to_repr(simplify(@symcore.add([x, x]))),
-    content="(* 2 sym:x)",
-  )
-  inspect(
-    to_repr(
-      simplify(@symcore.add([x, @symcore.mul([@symcore.int(2), x])])),
-    ),
+    to_repr(simplify(@symcore.add([x, @symcore.mul([@symcore.int(2), x])]))),
     content="(* 3 sym:x)",
   )
   inspect(
@@ -63,10 +58,7 @@ test "symsimplify dispatcher handles composite heuristics" {
     @symcore.function("exp", [@symcore.mul([i, x])]),
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
   ])
-  inspect(
-    to_repr(simplify(exp_trig)),
-    content="(* 2 (call cos sym:x))",
-  )
+  inspect(to_repr(simplify(exp_trig)), content="(* 2 (call cos sym:x))")
 }
 
 ///|
@@ -77,10 +69,7 @@ test "symsimplify dispatcher handles special heuristics" {
     @symcore.function("log", [x]),
     @symcore.function("log", [@symcore.int(2)]),
   ])
-  inspect(
-    to_repr(simplify(logs)),
-    content="(call log (* 2 sym:x))",
-  )
+  inspect(to_repr(simplify(logs)), content="(call log (* 2 sym:x))")
 
   let gamma_expr = @symcore.function("gamma", [@symcore.int(6)])
   inspect(to_repr(simplify(gamma_expr)), content="120")
@@ -126,10 +115,7 @@ test "symsimplify fraction numer denom collect basics" {
     ]),
     x,
   )
-  inspect(
-    to_repr(collected),
-    content="(+ (* 2 sym:x) (* 3 (^ sym:x 2)) sym:y)",
-  )
+  inspect(to_repr(collected), content="(+ (* 2 sym:x) (* 3 (^ sym:x 2)) sym:y)")
 }
 
 ///|

@@ -105,7 +105,9 @@ test "convert wb: fe_algext_to_expr and AlgExt constant rendering" {
   // Nested AlgExt coefficient exercises `fe_cast_to_base` AlgExt arm.
   let nested = FieldElem::AlgExt(Domain::QQ, [conv_wb_qq(2, 1)], minpoly, "a")
   inspect(
-    @symprint.pretty_string(fe_algext_to_expr(Domain::QQ, [nested], minpoly, "a")),
+    @symprint.pretty_string(
+      fe_algext_to_expr(Domain::QQ, [nested], minpoly, "a"),
+    ),
     content="2",
   )
 }

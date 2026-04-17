@@ -432,7 +432,9 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
     ),
   )
   let symbolic_sinc_box_eval = @symprint.pretty_string(symbolic_sinc_box)
-  let symbolic_sinc_triangle_eval = @symprint.pretty_string(symbolic_sinc_triangle)
+  let symbolic_sinc_triangle_eval = @symprint.pretty_string(
+    symbolic_sinc_triangle,
+  )
   let symbolic_cosine_gaussian_eval = @symprint.pretty_string(
     doit(
       cosine_transform(
@@ -1508,7 +1510,10 @@ test "symintegrals Mellin special-function rules evaluate" {
     ),
     0,
   )
-  assert_eq(@symprint.pretty_string(inv_si), @symprint.pretty_string(@symspec.si(x)))
+  assert_eq(
+    @symprint.pretty_string(inv_si),
+    @symprint.pretty_string(@symspec.si(x)),
+  )
   assert_eq(
     @symprint.pretty_string(inv_ci_sqrt),
     @symprint.pretty_string(@symspec.ci(@symelem.sqrt(x))),
@@ -1652,7 +1657,9 @@ test "symintegrals Mellin special-function rules evaluate" {
     !@symprint.pretty_string(inv_besselj_ab).contains("InverseMellinTransform"),
   )
   assert_true(
-    !@symprint.pretty_string(inv_besselj_bessely).contains("InverseMellinTransform"),
+    !@symprint.pretty_string(inv_besselj_bessely).contains(
+      "InverseMellinTransform",
+    ),
   )
   assert_true(
     !@symprint.pretty_string(inv_besselj_bessely_same).contains(
@@ -1876,7 +1883,9 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     laplace_transform(triangle_piecewise, x, s),
   )
   assert_true(
-    !@symprint.pretty_string(triangle_piecewise_eval).contains("LaplaceTransform"),
+    !@symprint.pretty_string(triangle_piecewise_eval).contains(
+      "LaplaceTransform",
+    ),
   )
   let middle_piecewise = a *
     @symcore.raw_function("Piecewise", [
@@ -1935,17 +1944,19 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     ),
   )
   assert_true(
-    !@symprint.pretty_string(doit(laplace_transform(x * @symelem.sinh(x), x, s))).contains(
-      "LaplaceTransform",
-    ),
+    !@symprint.pretty_string(
+      doit(laplace_transform(x * @symelem.sinh(x), x, s)),
+    ).contains("LaplaceTransform"),
   )
   assert_true(
-    !@symprint.pretty_string(doit(laplace_transform(x * @symelem.cosh(x), x, s))).contains(
-      "LaplaceTransform",
-    ),
+    !@symprint.pretty_string(
+      doit(laplace_transform(x * @symelem.cosh(x), x, s)),
+    ).contains("LaplaceTransform"),
   )
 
-  let generic_eval = @symprint.pretty_string(laplace_transform_eval(f_of_x, x, s))
+  let generic_eval = @symprint.pretty_string(
+    laplace_transform_eval(f_of_x, x, s),
+  )
   assert_true(generic_eval.contains("LaplaceTransform(f(x), x, s)"))
   assert_true(generic_eval.contains("oo"))
 
@@ -2331,9 +2342,9 @@ test "symintegrals Laplace special-function rules evaluate" {
     ).contains("LaplaceTransform"),
   )
   assert_true(
-    !@symprint.pretty_string(doit(laplace_transform(@symspec.expint(a, x), x, s))).contains(
-      "LaplaceTransform",
-    ),
+    !@symprint.pretty_string(
+      doit(laplace_transform(@symspec.expint(a, x), x, s)),
+    ).contains("LaplaceTransform"),
   )
   let gaussian_laplace = doit(
     laplace_transform(
@@ -2426,7 +2437,9 @@ test "symintegrals Laplace special-function rules evaluate" {
   assert_true(
     !@symprint.pretty_string(sin_sq_phase_laplace).contains("LaplaceTransform"),
   )
-  assert_true(!@symprint.pretty_string(cos_sq_laplace).contains("LaplaceTransform"))
+  assert_true(
+    !@symprint.pretty_string(cos_sq_laplace).contains("LaplaceTransform"),
+  )
   assert_true(
     !@symprint.pretty_string(sinh_sq_laplace).contains("LaplaceTransform"),
   )
@@ -2440,7 +2453,9 @@ test "symintegrals Laplace special-function rules evaluate" {
     !@symprint.pretty_string(sinh_cosh_laplace).contains("LaplaceTransform"),
   )
   assert_true(
-    !@symprint.pretty_string(sin_cubic_cosh_laplace).contains("LaplaceTransform"),
+    !@symprint.pretty_string(sin_cubic_cosh_laplace).contains(
+      "LaplaceTransform",
+    ),
   )
   assert_true(
     !@symprint.pretty_string(abs_sin_laplace).contains("LaplaceTransform"),
@@ -2449,7 +2464,9 @@ test "symintegrals Laplace special-function rules evaluate" {
     !@symprint.pretty_string(sin_sq_over_x_laplace).contains("LaplaceTransform"),
   )
   assert_true(
-    !@symprint.pretty_string(sin_sq_over_x2_laplace).contains("LaplaceTransform"),
+    !@symprint.pretty_string(sin_sq_over_x2_laplace).contains(
+      "LaplaceTransform",
+    ),
   )
   let log_laplace = doit(laplace_transform(@symelem.log(x), x, s))
   let log_one_plus_laplace = doit(
@@ -2525,14 +2542,14 @@ test "symintegrals Laplace special-function rules evaluate" {
     ).contains("LaplaceTransform"),
   )
   assert_true(
-    !@symprint.pretty_string(doit(laplace_transform(@symspec.fresnels(x), x, s))).contains(
-      "LaplaceTransform",
-    ),
+    !@symprint.pretty_string(
+      doit(laplace_transform(@symspec.fresnels(x), x, s)),
+    ).contains("LaplaceTransform"),
   )
   assert_true(
-    !@symprint.pretty_string(doit(laplace_transform(@symspec.fresnelc(x), x, s))).contains(
-      "LaplaceTransform",
-    ),
+    !@symprint.pretty_string(
+      doit(laplace_transform(@symspec.fresnelc(x), x, s)),
+    ).contains("LaplaceTransform"),
   )
   assert_true(
     !@symprint.pretty_string(bessely0_laplace).contains("LaplaceTransform"),
@@ -2565,8 +2582,12 @@ test "symintegrals Laplace special-function rules evaluate" {
     ),
   )
 
-  assert_true(!@symprint.pretty_string(inv_ci).contains("InverseLaplaceTransform"))
-  assert_true(!@symprint.pretty_string(inv_e1).contains("InverseLaplaceTransform"))
+  assert_true(
+    !@symprint.pretty_string(inv_ci).contains("InverseLaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.pretty_string(inv_e1).contains("InverseLaplaceTransform"),
+  )
   assert_true(
     !@symprint.pretty_string(inv_expint2).contains("InverseLaplaceTransform"),
   )
@@ -2770,7 +2791,9 @@ test "symintegrals Laplace special-function rules evaluate" {
     0,
   )
   assert_true(
-    !@symprint.pretty_string(inv_log_one_plus).contains("InverseLaplaceTransform"),
+    !@symprint.pretty_string(inv_log_one_plus).contains(
+      "InverseLaplaceTransform",
+    ),
   )
   assert_true(@symprint.pretty_string(inv_log_one_plus).contains("Heaviside"))
   assert_true(@symprint.pretty_string(inv_log_one_plus).contains("log"))
@@ -2829,7 +2852,9 @@ test "symintegrals inverse Laplace transform objects roundtrip" {
   )
   assert_eq(
     @symprint.pretty_string(wrong_freq),
-    @symprint.pretty_string(laplace_transform(f_t, t, s) * @symspec.dirac_delta(t)),
+    @symprint.pretty_string(
+      laplace_transform(f_t, t, s) * @symspec.dirac_delta(t),
+    ),
   )
 }
 
@@ -2942,7 +2967,9 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
       x,
     ),
   )
-  let delayed_symbolic_power_str = @symprint.pretty_string(delayed_symbolic_power)
+  let delayed_symbolic_power_str = @symprint.pretty_string(
+    delayed_symbolic_power,
+  )
   assert_true(
     !delayed_symbolic_power_str.contains("InverseLaplaceTransform") &&
     delayed_symbolic_power_str.contains("gamma") &&
@@ -3254,7 +3281,9 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
       x,
     ),
   )
-  let sqrt_linear_plus_const_str = @symprint.pretty_string(sqrt_linear_plus_const)
+  let sqrt_linear_plus_const_str = @symprint.pretty_string(
+    sqrt_linear_plus_const,
+  )
   assert_true(
     !sqrt_linear_plus_const_str.contains("InverseLaplaceTransform") &&
     sqrt_linear_plus_const_str.contains("erfc") &&
@@ -3272,7 +3301,9 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
       x,
     ),
   )
-  let sqrt_times_sqrt_linear_str = @symprint.pretty_string(sqrt_times_sqrt_linear)
+  let sqrt_times_sqrt_linear_str = @symprint.pretty_string(
+    sqrt_times_sqrt_linear,
+  )
   assert_true(
     !sqrt_times_sqrt_linear_str.contains("InverseLaplaceTransform") &&
     sqrt_times_sqrt_linear_str.contains("erfc") &&
@@ -3613,7 +3644,9 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
       x,
     ),
   )
-  let scaled_sqrt_ratio_cubed_str = @symprint.pretty_string(scaled_sqrt_ratio_cubed)
+  let scaled_sqrt_ratio_cubed_str = @symprint.pretty_string(
+    scaled_sqrt_ratio_cubed,
+  )
   assert_true(
     !scaled_sqrt_ratio_cubed_str.contains("InverseLaplaceTransform") &&
     scaled_sqrt_ratio_cubed_str.contains("erfc") &&

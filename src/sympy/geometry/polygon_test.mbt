@@ -31,8 +31,12 @@ test "geometry.regular polygon and triangle centers" {
   assert_eq(args.2, 4)
   geometry_assert_expr_equal(args.3, "0", "regular polygon args rotation")
   assert_eq(rp.circumcenter().repr(), "Point2D(0, 0)")
-  assert_true(geometry_expr_equal(@symprint.pretty_string(vertices[0].x()), "1"))
-  assert_true(geometry_expr_equal(@symprint.pretty_string(vertices[1].y()), "1"))
+  assert_true(
+    geometry_expr_equal(@symprint.pretty_string(vertices[0].x()), "1"),
+  )
+  assert_true(
+    geometry_expr_equal(@symprint.pretty_string(vertices[1].y()), "1"),
+  )
   let tri = triangle(
     point2d(@symcore.int(0), @symcore.int(0)),
     point2d(@symcore.int(4), @symcore.int(0)),
@@ -43,8 +47,12 @@ test "geometry.regular polygon and triangle centers" {
   assert_true(geometry_expr_equal(@symprint.pretty_string(incenter.x()), "1"))
   assert_true(geometry_expr_equal(@symprint.pretty_string(incenter.y()), "1"))
   let circumcenter = tri.circumcenter()
-  assert_true(geometry_expr_equal(@symprint.pretty_string(circumcenter.x()), "2"))
-  assert_true(geometry_expr_equal(@symprint.pretty_string(circumcenter.y()), "3/2"))
+  assert_true(
+    geometry_expr_equal(@symprint.pretty_string(circumcenter.x()), "2"),
+  )
+  assert_true(
+    geometry_expr_equal(@symprint.pretty_string(circumcenter.y()), "3/2"),
+  )
   assert_true(
     geometry_expr_equal(@symprint.pretty_string(tri.incircle().radius()), "1"),
   )

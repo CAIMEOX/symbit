@@ -64,7 +64,11 @@ test "vectors support basic arithmetic and axis orientation" {
     "C.x|C.y|C.z",
   )
   assert_eq(
-    @symprint.pretty_string(dot(v, c.i().to_vector()) catch { _ => fail("dot") }),
+    @symprint.pretty_string(
+      dot(v, c.i().to_vector()) catch {
+        _ => fail("dot")
+      },
+    ),
     @symprint.pretty_string(c.x().expr()),
   )
   assert_eq(

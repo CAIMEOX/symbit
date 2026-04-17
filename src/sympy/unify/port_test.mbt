@@ -148,7 +148,9 @@ fn render_core_substs(items : Array[Substitution[CoreAtom, String]]) -> String {
 fn render_expr_subst(subst : Map[@symcore.Expr, @symcore.Expr]) -> String {
   let rendered : Array[String] = []
   for key, value in subst {
-    rendered.push(@symprint.pretty_string(key) + ": " + @symprint.pretty_string(value))
+    rendered.push(
+      @symprint.pretty_string(key) + ": " + @symprint.pretty_string(value),
+    )
   }
   "{" + sorted_strings(rendered).join(", ") + "}"
 }

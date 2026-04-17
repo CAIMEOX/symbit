@@ -81,7 +81,10 @@ pub fn Curve::free_symbols(self : Curve) -> Array[Expr] {
   let n = out.length()
   for i in 0..<n {
     for j in (i + 1)..<n {
-      if @symprint.pretty_string(out[i]).compare(@symprint.pretty_string(out[j])) > 0 {
+      if @symprint.pretty_string(out[i]).compare(
+          @symprint.pretty_string(out[j]),
+        ) >
+        0 {
         let tmp = out[i]
         out[i] = out[j]
         out[j] = tmp

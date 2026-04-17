@@ -8,7 +8,9 @@ test "geometry.parabola vertex axis and line intersection" {
     ),
   )
   assert_eq(pa.vertex().repr(), "Point2D(0, -1)")
-  assert_true(geometry_expr_equal(@symprint.pretty_string(pa.p_parameter()), "1"))
+  assert_true(
+    geometry_expr_equal(@symprint.pretty_string(pa.p_parameter()), "1"),
+  )
   let hits = pa.intersection(
     geometry_line(
       line(

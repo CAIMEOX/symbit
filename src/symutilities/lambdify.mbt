@@ -129,7 +129,8 @@ fn eval_double(
       @math.pow(eval_double(base, env), eval_double(exp, env))
     _ =>
       raise UtilitiesError::Unsupported(
-        "lambdify does not yet support expression " + @symprint.pretty_string(expr),
+        "lambdify does not yet support expression " +
+        @symprint.pretty_string(expr),
       )
   }
 }

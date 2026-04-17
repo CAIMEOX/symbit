@@ -46,10 +46,7 @@ test "symsimplify trigsimp after factoring regression" {
       @symcore.pow(@symcore.function("cos", [y]), @symcore.int(2)),
     ]),
   ])
-  inspect(
-    to_repr(trigsimp(factored, max_passes=1)),
-    content="sym:x",
-  )
+  inspect(to_repr(trigsimp(factored, max_passes=1)), content="sym:x")
 }
 
 ///|
@@ -89,10 +86,7 @@ test "symsimplify dispatcher exp trig regression" {
     @symcore.function("exp", [@symcore.mul([i, x])]),
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
   ])
-  inspect(
-    to_repr(simplify(exp_trig)),
-    content="(* 2 (call cos sym:x))",
-  )
+  inspect(to_repr(simplify(exp_trig)), content="(* 2 (call cos sym:x))")
 }
 
 ///|
@@ -302,10 +296,7 @@ test "symsimplify simplifies nested gamma and rational sums regression" {
     @symcore.add([f, @symcore.mul([y, f])]),
     @symcore.pow(f, @symcore.int(-1)),
   ])
-  inspect(
-    to_repr(simplify(functional_ratio)),
-    content="(+ sym:y 1)",
-  )
+  inspect(to_repr(simplify(functional_ratio)), content="(+ sym:y 1)")
 
   let log_ratio = @symcore.add([
     @symcore.function("log", [@symcore.mul([@symcore.int(2), x])]),
@@ -330,10 +321,7 @@ test "symsimplify handles order-insensitive tan products" {
     @symcore.add([@symcore.function("tan", [x]), @symcore.function("tan", [y])]),
     @symcore.pow(denom, @symcore.int(-1)),
   ])
-  inspect(
-    to_repr(tr12i(expr)),
-    content="(call tan (+ sym:x sym:y))",
-  )
+  inspect(to_repr(tr12i(expr)), content="(call tan (+ sym:x sym:y))")
 }
 
 ///|

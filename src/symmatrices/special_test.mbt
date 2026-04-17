@@ -39,5 +39,8 @@ test "matrices special hessian wronskian and casoratian" {
     content="x**2",
   )
   let n = @symcore.Expr::Symbol("n")
-  inspect(@symprint.pretty_string(casoratian([@symcore.int(1), n], n)), content="1")
+  inspect(
+    @symprint.pretty_string(casoratian([@symcore.int(1), n], n)),
+    content="1",
+  )
 }

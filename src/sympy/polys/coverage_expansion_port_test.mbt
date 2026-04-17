@@ -414,7 +414,9 @@ test "coverage: algebraic-extension public helpers" {
     Domain::AlgExt(base, gens, rels) => {
       assert_true(base is Domain::QQ)
       assert_eq(gens, ["x"])
-      let rel = sympy_normalize(@symprint.pretty_string(rels[0])).trim().to_string()
+      let rel = sympy_normalize(@symprint.pretty_string(rels[0]))
+        .trim()
+        .to_string()
       assert_eq(rel, expect_minpoly)
     }
     _ => fail("expected Domain::AlgExt")

@@ -151,7 +151,11 @@ fn normalize_text(text : String) -> String {
 ///|
 fn expr_pair_text(pair : (@symcore.Expr, @symcore.Expr)) -> String {
   normalize_text(
-    "(" + @symprint.pretty_string(pair.0) + ", " + @symprint.pretty_string(pair.1) + ")",
+    "(" +
+    @symprint.pretty_string(pair.0) +
+    ", " +
+    @symprint.pretty_string(pair.1) +
+    ")",
   )
 }
 
@@ -982,7 +986,10 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
     @symcore.int(-10),
   )
   inspect(@symprint.pretty_string(linear_root), content="1.0")
-  assert_eq(@symprint.pretty_string(eq_root), @symprint.pretty_string(linear_root))
+  assert_eq(
+    @symprint.pretty_string(eq_root),
+    @symprint.pretty_string(linear_root),
+  )
 
   let pi_root_default = nsolve(
     (x() ^ @symcore.int(2)) -
@@ -1034,7 +1041,9 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
     a,
     @symcore.Expr::Float(@symcore.float_from_double(0.3)),
   )
-  assert_true(@symprint.pretty_string(delicate_root).has_prefix("0.318830113873"))
+  assert_true(
+    @symprint.pretty_string(delicate_root).has_prefix("0.318830113873"),
+  )
 }
 
 ///|
@@ -5162,7 +5171,10 @@ test "canonical_odes covers low-level source-compatible entry points" {
     allhints[allhints.length() - 1],
     content="2nd_nonlinear_autonomous_conserved_Integral",
   )
-  inspect(@symprint.pretty_string(constantsimp(c1 + c2, [c1, c2])), content="C1")
+  inspect(
+    @symprint.pretty_string(constantsimp(c1 + c2, [c1, c2])),
+    content="C1",
+  )
   let system = [
     @symcore.Expr::Relational(
       @symcore.RelOp::Eq,
@@ -6385,7 +6397,9 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
       "(" +
       checkodesol(ode, ode_solution, func=Some(f(x()))).0.to_string() +
       ", " +
-      @symprint.pretty_string(checkodesol(ode, ode_solution, func=Some(f(x()))).1) +
+      @symprint.pretty_string(
+        checkodesol(ode, ode_solution, func=Some(f(x()))).1,
+      ) +
       ")",
     ),
     content="(true, 0)",
@@ -6954,7 +6968,9 @@ test "pdsolve constant coefficient solution keeps explicit source term shape" {
     hint="1st_linear_constant_coeff",
   )
   inspect(
-    @symprint.pretty_string(pde_source_sol).has_prefix("Eq(u(x, y), ").to_string(),
+    @symprint.pretty_string(pde_source_sol)
+    .has_prefix("Eq(u(x, y), ")
+    .to_string(),
     content="true",
   )
 }

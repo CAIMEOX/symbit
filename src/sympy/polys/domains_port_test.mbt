@@ -108,7 +108,8 @@ fn render_optional_expr_result(
 ///|
 fn render_expr_tree_item(item : DomainExprTree) -> String {
   match item {
-    DomainExprTree::Elem(expr) => normalize_expr_text(@symprint.pretty_string(expr))
+    DomainExprTree::Elem(expr) =>
+      normalize_expr_text(@symprint.pretty_string(expr))
     DomainExprTree::List(items) => render_expr_tree(items)
   }
 }
@@ -1699,7 +1700,9 @@ test "domains: canonical_unit parity on scalar and composite domains" {
   let zz_series = @sympolys.domain_from_string("ZZ[[x]](prec=5)")
   assert_eq(
     trim_ws(
-      @symprint.pretty_string(zz_series.canonical_unit_expr(@symcore.int(-1) + x)),
+      @symprint.pretty_string(
+        zz_series.canonical_unit_expr(@symcore.int(-1) + x),
+      ),
     ),
     "-1",
   )

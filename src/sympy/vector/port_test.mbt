@@ -15,7 +15,9 @@ fn matrix_text(matrix : @symphysics.ExplicitMatrix) -> String {
 fn matrix_py_expr(matrix : @symphysics.ExplicitMatrix) -> String {
   let rows = matrix.rows_copy()
   "sympy.Matrix([" +
-  rows.map(row => "[" + row.map(@symprint.pretty_string).join(",") + "]").join(",") +
+  rows
+  .map(row => "[" + row.map(@symprint.pretty_string).join(",") + "]")
+  .join(",") +
   "])"
 }
 
@@ -217,7 +219,11 @@ test "point and field-function parity against repo sympy" {
     ),
   )
   assert_eq(
-    @symprint.pretty_string(@symvector.divergence(field) catch { _ => fail("div") }),
+    @symprint.pretty_string(
+      @symvector.divergence(field) catch {
+        _ => fail("div")
+      },
+    ),
     vector_eval_str(
       "(lambda C: str(__import__('sympy.vector', fromlist=['divergence']).divergence(C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k)))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
@@ -469,7 +475,11 @@ test "del operator parity against repo sympy" {
     ),
   )
   assert_eq(
-    @symprint.pretty_string(@symvector.delop.dot(v) catch { _ => fail("del-dot") }),
+    @symprint.pretty_string(
+      @symvector.delop.dot(v) catch {
+        _ => fail("del-dot")
+      },
+    ),
     vector_eval_str(
       "(lambda C, D: str(D().dot(C.x*C.y*C.z*(C.i + C.j + C.k))))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')," +

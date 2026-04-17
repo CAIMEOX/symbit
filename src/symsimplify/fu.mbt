@@ -1671,10 +1671,8 @@ fn parse_tr2i_factor(expr : Expr) -> Tr2iFactor? {
           match parse_int(exp_expr) {
             Some(e) =>
               match name {
-                "sin" =>
-                  Some(Tr2iFactor::Sin(to_repr(arg).to_string(), arg, e))
-                "cos" =>
-                  Some(Tr2iFactor::Cos(to_repr(arg).to_string(), arg, e))
+                "sin" => Some(Tr2iFactor::Sin(to_repr(arg).to_string(), arg, e))
+                "cos" => Some(Tr2iFactor::Cos(to_repr(arg).to_string(), arg, e))
                 _ =>
                   match
                     parse_one_plus_cos(

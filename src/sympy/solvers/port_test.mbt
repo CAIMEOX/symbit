@@ -541,7 +541,8 @@ fn local_solution_dict_text(
         let items : Array[String] = []
         for name in names {
           match values.get(name) {
-            Some(value) => items.push(name + ": " + @symprint.pretty_string(value))
+            Some(value) =>
+              items.push(name + ": " + @symprint.pretty_string(value))
             None => ()
           }
         }
@@ -1054,7 +1055,11 @@ fn normalize_union_text(text : String) -> String {
 
 ///|
 fn local_expr_pair_text(pair : (@symcore.Expr, @symcore.Expr)) -> String {
-  "(" + @symprint.pretty_string(pair.0) + ", " + @symprint.pretty_string(pair.1) + ")"
+  "(" +
+  @symprint.pretty_string(pair.0) +
+  ", " +
+  @symprint.pretty_string(pair.1) +
+  ")"
 }
 
 ///|
@@ -1438,7 +1443,10 @@ test "solvers parity nsolve scalar batch 2" {
       linear_root, "sympy.sstr(sympy.solvers.nsolve(2*x - 2, x, -10))", "x", 3,
     ),
   )
-  assert_eq(@symprint.pretty_string(eq_root), @symprint.pretty_string(linear_root))
+  assert_eq(
+    @symprint.pretty_string(eq_root),
+    @symprint.pretty_string(linear_root),
+  )
   assert_true(
     expr_text_has_oracle_prefix(
       @symsolvers.nsolve(
