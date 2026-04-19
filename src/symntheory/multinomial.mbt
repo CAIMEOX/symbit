@@ -11,6 +11,12 @@ fn factorial(n : Int) -> BigInt {
 }
 
 ///|
+/// Public API `binomial_coefficients_list`.
+///
+/// - Does: Returns binomial coefficients for a fixed row n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn binomial_coefficients_list(n : Int) -> Array[BigInt] raise {
   if n < 0 {
     fail("n must be non-negative")
@@ -28,6 +34,12 @@ pub fn binomial_coefficients_list(n : Int) -> Array[BigInt] raise {
 }
 
 ///|
+/// Public API `binomial_coefficients`.
+///
+/// - Does: Returns exponent-vector/binomial-coefficient pairs for a fixed n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[(Array[Int], BigInt)]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn binomial_coefficients(n : Int) -> Array[(Array[Int], BigInt)] raise {
   let coeffs = binomial_coefficients_list(n)
   let out : Array[(Array[Int], BigInt)] = Array::new()
@@ -66,6 +78,12 @@ fn multinomial_rec(
 }
 
 ///|
+/// Public API `multinomial_coefficients`.
+///
+/// - Does: Returns multinomial coefficient data for m variables and total degree n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[(Array[Int], BigInt)]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn multinomial_coefficients(
   m : Int,
   n : Int,

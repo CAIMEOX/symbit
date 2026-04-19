@@ -2,6 +2,12 @@
 /// Egyptian fraction decomposition (greedy).
 
 ///|
+/// Public API `egyptian_fraction`.
+///
+/// - Does: Decomposes a rational number into denominators of unit fractions.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn egyptian_fraction(num0 : BigInt, den0 : BigInt) -> Array[BigInt] raise {
   if den0.is_zero() {
     fail("denominator cannot be zero")

@@ -43,6 +43,12 @@ fn series(j : Int, n : Int, prec : Int) -> BigInt {
 }
 
 ///|
+/// Public API `pi_hex_digits`.
+///
+/// - Does: Computes hexadecimal digits of pi starting at a 1-based position.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `String`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn pi_hex_digits(n0 : Int, prec? : Int = 14) -> String raise {
   let n = n0
   let prec0 = prec

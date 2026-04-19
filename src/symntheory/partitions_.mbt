@@ -5,6 +5,12 @@
 let partition_cache : Array[BigInt] = [bi(1)]
 
 ///|
+/// Public API `npartitions`.
+///
+/// - Does: Computes the number of integer partitions of n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn npartitions(n : Int) -> BigInt {
   if n < 0 {
     return bi(0)

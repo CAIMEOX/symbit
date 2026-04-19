@@ -2,6 +2,12 @@
 /// Modular arithmetic utilities.
 
 ///|
+/// Public type alias `BigInt`.
+///
+/// - Does: Aliases the core arbitrary-precision integer type used by ntheory.
+/// - Input: Construct or reference it through the declared public type shape.
+/// - Returns: `@bigint.BigInt`.
+/// - Limits: This declaration does not validate values by itself; validation is performed by the functions that consume it.
 pub type BigInt = @bigint.BigInt
 
 ///|
@@ -29,6 +35,12 @@ fn bi_abs(x : BigInt) -> BigInt {
 }
 
 ///|
+/// Public API `mod_positive`.
+///
+/// - Does: Normalizes a residue into the non-negative range modulo m.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn mod_positive(a : BigInt, m : BigInt) -> BigInt {
   let mut r = a % m
   if r < bi_zero() {
@@ -38,6 +50,12 @@ pub fn mod_positive(a : BigInt, m : BigInt) -> BigInt {
 }
 
 ///|
+/// Public API `gcd`.
+///
+/// - Does: Computes the greatest common divisor of two integers.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn gcd(a : BigInt, b : BigInt) -> BigInt {
   let mut x = bi_abs(a)
   let mut y = bi_abs(b)
@@ -50,11 +68,23 @@ pub fn gcd(a : BigInt, b : BigInt) -> BigInt {
 }
 
 ///|
+/// Public API `gcd3`.
+///
+/// - Does: Computes the greatest common divisor of three integers.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn gcd3(a : BigInt, b : BigInt, c : BigInt) -> BigInt {
   gcd(gcd(a, b), c)
 }
 
 ///|
+/// Public API `gcdext`.
+///
+/// - Does: Computes gcd and Bezout coefficients for two integers.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `(BigInt, BigInt, BigInt)`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn gcdext(a : BigInt, b : BigInt) -> (BigInt, BigInt, BigInt) {
   if b.is_zero() {
     return (a, bi_one(), bi_zero())
@@ -65,6 +95,12 @@ pub fn gcdext(a : BigInt, b : BigInt) -> (BigInt, BigInt, BigInt) {
 }
 
 ///|
+/// Public API `mod_inverse`.
+///
+/// - Does: Computes a modular inverse when one exists.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt?`.
+/// - Limits: Returns `None` when the requested value does not exist or the supported search fails.
 pub fn mod_inverse(a : BigInt, m : BigInt) -> BigInt? {
   let (g, x, _) = gcdext(a, m)
   if g != bi_one() {
@@ -74,6 +110,12 @@ pub fn mod_inverse(a : BigInt, m : BigInt) -> BigInt? {
 }
 
 ///|
+/// Public API `symmetric_residue`.
+///
+/// - Does: Returns the representative closest to zero modulo m.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn symmetric_residue(a : BigInt, m : BigInt) -> BigInt {
   let half = m / bi_two()
   if a <= half {
@@ -110,6 +152,12 @@ fn crt_coprime(v : Array[BigInt], m : Array[BigInt]) -> BigInt {
 }
 
 ///|
+/// Public API `crt1`.
+///
+/// - Does: Precomputes Chinese-remainder data for a fixed modulus list.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `(BigInt, Array[BigInt], Array[BigInt])`.
+/// - Limits: Returns an empty array when no values are found; generator-style flags are accepted only as compatibility inputs where implemented.
 pub fn crt1(m : Array[BigInt]) -> (BigInt, Array[BigInt], Array[BigInt]) {
   let p = prod(m)
   let e : Array[BigInt] = Array::new()
@@ -127,6 +175,12 @@ pub fn crt1(m : Array[BigInt]) -> (BigInt, Array[BigInt], Array[BigInt]) {
 }
 
 ///|
+/// Public API `crt2`.
+///
+/// - Does: Combines residues using data from crt1.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `(BigInt, BigInt)`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn crt2(
   m : Array[BigInt],
   v : Array[BigInt],
@@ -148,6 +202,12 @@ pub fn crt2(
 }
 
 ///|
+/// Public API `crt`.
+///
+/// - Does: Solves a Chinese-remainder system.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `(BigInt, BigInt)?`.
+/// - Limits: Returns `None` when the requested value does not exist or the supported search fails.
 pub fn crt(
   m : Array[BigInt],
   v : Array[BigInt],
@@ -211,6 +271,12 @@ fn combine(c1 : (BigInt, BigInt), c2 : (BigInt, BigInt)) -> (BigInt, BigInt)? {
 }
 
 ///|
+/// Public API `solve_congruence`.
+///
+/// - Does: Solves pairwise congruence data and returns a combined residue/modulus pair.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `(BigInt, BigInt)?`.
+/// - Limits: Returns `None` when the requested value does not exist or the supported search fails.
 pub fn solve_congruence(
   pairs : Array[(BigInt, BigInt)],
   symmetric? : Bool = false,

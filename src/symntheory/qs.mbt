@@ -2,6 +2,12 @@
 /// Quadratic sieve factoring (naive wrapper).
 
 ///|
+/// Public API `qs_factor`.
+///
+/// - Does: Attempts to find a factor using the quadratic-sieve front door.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Map[BigInt, Int]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn qs_factor(
   n0 : BigInt,
   prime_bound? : Int = 2000,
@@ -20,6 +26,12 @@ pub fn qs_factor(
 }
 
 ///|
+/// Public API `qs`.
+///
+/// - Does: Factors an integer through the quadratic-sieve compatibility front door.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn qs(
   n0 : BigInt,
   prime_bound? : Int = 2000,

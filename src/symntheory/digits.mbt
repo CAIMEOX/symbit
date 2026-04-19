@@ -2,6 +2,12 @@
 /// Digit utilities.
 
 ///|
+/// Public API `digits`.
+///
+/// - Does: Expands an integer into base-b digits, including the base as the first list element.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[Int]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn digits(
   n0 : BigInt,
   b? : BigInt = bi(10),
@@ -43,6 +49,12 @@ pub fn digits(
 }
 
 ///|
+/// Public API `count_digits`.
+///
+/// - Does: Counts how often each digit occurs in an integer base expansion.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Map[Int, Int]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn count_digits(n : BigInt, b? : BigInt = bi(10)) -> Map[Int, Int] raise {
   let ds = digits(n, b~)
   let counts : Map[Int, Int] = {}
@@ -57,6 +69,12 @@ pub fn count_digits(n : BigInt, b? : BigInt = bi(10)) -> Map[Int, Int] raise {
 }
 
 ///|
+/// Public API `is_palindromic`.
+///
+/// - Does: Tests whether an integer reads the same forward and backward in the selected base.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Bool`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn is_palindromic(n : BigInt, b? : BigInt = bi(10)) -> Bool raise {
   let ds = digits(n, b~)
   let mut i = 1

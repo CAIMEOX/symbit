@@ -2,6 +2,12 @@
 /// Elliptic curve method factoring (naive wrapper).
 
 ///|
+/// Public API `ecm`.
+///
+/// - Does: Attempts to find a non-trivial factor using the elliptic-curve factorization front door.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Returns an empty array when no values are found; generator-style flags are accepted only as compatibility inputs where implemented.
 pub fn ecm(
   n0 : BigInt,
   b1? : Int = 10000,

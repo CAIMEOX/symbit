@@ -130,6 +130,12 @@ fn totient_naive(n : BigInt) -> BigInt raise {
 }
 
 ///|
+/// Public API `n_order`.
+///
+/// - Does: Computes the multiplicative order of a modulo n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn n_order(a0 : BigInt, n0 : BigInt) -> BigInt raise {
   if n0 <= bi(1) {
     fail("n should be greater than 1")
@@ -155,6 +161,12 @@ pub fn n_order(a0 : BigInt, n0 : BigInt) -> BigInt raise {
 }
 
 ///|
+/// Public API `is_primitive_root`.
+///
+/// - Does: Tests whether a is a primitive root modulo n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Bool`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn is_primitive_root(a : BigInt, n : BigInt) -> Bool raise {
   if n <= bi(1) {
     fail("n should be greater than 1")
@@ -166,6 +178,12 @@ pub fn is_primitive_root(a : BigInt, n : BigInt) -> Bool raise {
 }
 
 ///|
+/// Public API `primitive_root`.
+///
+/// - Does: Finds a primitive root modulo n when supported.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt?`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn primitive_root(n : BigInt, smallest? : Bool = true) -> BigInt? raise {
   if n <= bi(1) {
     fail("n should be greater than 1")
@@ -187,6 +205,12 @@ pub fn primitive_root(n : BigInt, smallest? : Bool = true) -> BigInt? raise {
 }
 
 ///|
+/// Public API `legendre_symbol`.
+///
+/// - Does: Computes the Legendre symbol (a | p).
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Int`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn legendre_symbol(a0 : BigInt, p : BigInt) -> Int raise {
   if p <= bi(2) {
     fail("p should be an odd prime")
@@ -207,6 +231,12 @@ pub fn legendre_symbol(a0 : BigInt, p : BigInt) -> Int raise {
 }
 
 ///|
+/// Public API `jacobi_symbol`.
+///
+/// - Does: Computes the Jacobi symbol (a | n).
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Int`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn jacobi_symbol(a0 : BigInt, n0 : BigInt) -> Int raise {
   if n0 <= bi(0) || is_even(n0) {
     fail("n should be a positive odd integer")
@@ -238,6 +268,12 @@ pub fn jacobi_symbol(a0 : BigInt, n0 : BigInt) -> Int raise {
 }
 
 ///|
+/// Public API `is_quad_residue`.
+///
+/// - Does: Tests whether a is a quadratic residue modulo n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Bool`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn is_quad_residue(a0 : BigInt, n0 : BigInt) -> Bool raise {
   if n0 <= bi(0) {
     fail("n should be positive")
@@ -263,6 +299,12 @@ pub fn is_quad_residue(a0 : BigInt, n0 : BigInt) -> Bool raise {
 }
 
 ///|
+/// Public API `quadratic_residues`.
+///
+/// - Does: Lists quadratic residues modulo n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn quadratic_residues(n0 : BigInt) -> Array[BigInt] raise {
   if n0 <= bi(0) {
     fail("n should be positive")
@@ -283,6 +325,12 @@ pub fn quadratic_residues(n0 : BigInt) -> Array[BigInt] raise {
 }
 
 ///|
+/// Public API `sqrt_mod`.
+///
+/// - Does: Finds modular square roots.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn sqrt_mod(
   a0 : BigInt,
   n0 : BigInt,
@@ -312,17 +360,35 @@ pub fn sqrt_mod(
 }
 
 ///|
+/// Public API `sqrt_mod_iter`.
+///
+/// - Does: Returns modular square roots as an iterator.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Iter[BigInt]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn sqrt_mod_iter(a : BigInt, n : BigInt) -> Iter[BigInt] raise {
   sqrt_mod(a, n, all_roots=true).iter()
 }
 
 ///|
+/// Public API `is_nthpow_residue`.
+///
+/// - Does: Tests whether a is an n-th power residue modulo m.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Bool`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn is_nthpow_residue(a : BigInt, n : BigInt, m : BigInt) -> Bool raise {
   let roots = nthroot_mod(a, n, m, all_roots=true)
   !roots.is_empty()
 }
 
 ///|
+/// Public API `nthroot_mod`.
+///
+/// - Does: Finds modular n-th roots.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn nthroot_mod(
   a0 : BigInt,
   n0 : BigInt,
@@ -353,6 +419,12 @@ pub fn nthroot_mod(
 }
 
 ///|
+/// Public API `mobius`.
+///
+/// - Does: Computes the Mobius function.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Int`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn mobius(n0 : BigInt) -> Int {
   let n = if n0 < bi(0) { -n0 } else { n0 }
   if n == bi(1) {
@@ -380,6 +452,12 @@ pub fn mobius(n0 : BigInt) -> Int {
 }
 
 ///|
+/// Public API `discrete_log`.
+///
+/// - Does: Solves a discrete logarithm in the supported modular group cases.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt?`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn discrete_log(n0 : BigInt, a0 : BigInt, b0 : BigInt) -> BigInt? raise {
   if n0 <= bi(0) {
     fail("n should be positive")
@@ -399,6 +477,12 @@ pub fn discrete_log(n0 : BigInt, a0 : BigInt, b0 : BigInt) -> BigInt? raise {
 }
 
 ///|
+/// Public API `quadratic_congruence`.
+///
+/// - Does: Solves a quadratic congruence modulo n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn quadratic_congruence(
   a0 : BigInt,
   b0 : BigInt,
@@ -422,6 +506,12 @@ pub fn quadratic_congruence(
 }
 
 ///|
+/// Public API `polynomial_congruence`.
+///
+/// - Does: Solves a polynomial congruence modulo m.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn polynomial_congruence(
   coeffs : Array[BigInt],
   m0 : BigInt,
@@ -446,6 +536,12 @@ pub fn polynomial_congruence(
 }
 
 ///|
+/// Public API `binomial_mod`.
+///
+/// - Does: Computes a binomial coefficient modulo m.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn binomial_mod(n : BigInt, k : BigInt, m0 : BigInt) -> BigInt raise {
   if m0 <= bi(0) {
     fail("modulus should be positive")

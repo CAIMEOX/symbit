@@ -2,6 +2,12 @@
 /// Continued fractions (rational-only).
 
 ///|
+/// Public API `continued_fraction`.
+///
+/// - Does: Builds a finite continued-fraction expansion for a rational number.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[Int]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn continued_fraction(
   num0 : BigInt,
   den? : BigInt = bi(1),
@@ -24,6 +30,12 @@ pub fn continued_fraction(
 }
 
 ///|
+/// Public API `continued_fraction_periodic`.
+///
+/// - Does: Builds the periodic continued-fraction data for a quadratic irrational.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[Int]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn continued_fraction_periodic(
   p : BigInt,
   q : BigInt,
@@ -38,6 +50,12 @@ pub fn continued_fraction_periodic(
 }
 
 ///|
+/// Public API `continued_fraction_iterator`.
+///
+/// - Does: Returns the continued-fraction terms for a rational numerator and denominator.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[Int]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn continued_fraction_iterator(
   num : BigInt,
   den? : BigInt = bi(1),
@@ -46,6 +64,12 @@ pub fn continued_fraction_iterator(
 }
 
 ///|
+/// Public API `continued_fraction_reduce`.
+///
+/// - Does: Reduces continued-fraction terms back to an exact rational numerator and denominator.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `(BigInt, BigInt)`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn continued_fraction_reduce(cf : Array[Int]) -> (BigInt, BigInt) raise {
   if cf.is_empty() {
     fail("empty continued fraction")
@@ -67,6 +91,12 @@ pub fn continued_fraction_reduce(cf : Array[Int]) -> (BigInt, BigInt) raise {
 }
 
 ///|
+/// Public API `continued_fraction_convergents`.
+///
+/// - Does: Computes successive rational convergents from continued-fraction terms.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[(BigInt, BigInt)]`.
+/// - Limits: Returns an empty array when no values are found; generator-style flags are accepted only as compatibility inputs where implemented.
 pub fn continued_fraction_convergents(
   cf : Array[Int],
 ) -> Array[(BigInt, BigInt)] {

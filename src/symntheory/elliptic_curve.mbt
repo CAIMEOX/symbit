@@ -2,6 +2,12 @@
 /// Minimal elliptic curve support (finite fields).
 
 ///|
+/// Public struct `EllipticCurve`.
+///
+/// - Does: Stores the coefficients and modulus for a short elliptic-curve model over integers modulo p.
+/// - Input: Construct or reference it through the declared public type shape.
+/// - Returns: `a struct value when constructed`.
+/// - Limits: This declaration does not validate values by itself; validation is performed by the functions that consume it.
 pub struct EllipticCurve {
   a1 : BigInt
   a2 : BigInt
@@ -12,6 +18,12 @@ pub struct EllipticCurve {
 }
 
 ///|
+/// Public API `EllipticCurve::new`.
+///
+/// - Does: Constructs an elliptic curve from coefficients and an optional modulus.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `EllipticCurve`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn EllipticCurve::new(
   a4 : BigInt,
   a6 : BigInt,
@@ -24,11 +36,23 @@ pub fn EllipticCurve::new(
 }
 
 ///|
+/// Public API `EllipticCurve::characteristic`.
+///
+/// - Does: Returns the modulus/field characteristic stored on the curve.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn EllipticCurve::characteristic(self : EllipticCurve) -> BigInt {
   self.modulus
 }
 
 ///|
+/// Public API `EllipticCurve::discriminant`.
+///
+/// - Does: Computes the curve discriminant for the stored coefficients.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn EllipticCurve::discriminant(self : EllipticCurve) -> BigInt {
   let b2 = self.a1 * self.a1 + bi(4) * self.a2
   let b4 = bi(2) * self.a4 + self.a1 * self.a3
@@ -42,6 +66,12 @@ pub fn EllipticCurve::discriminant(self : EllipticCurve) -> BigInt {
 }
 
 ///|
+/// Public API `EllipticCurve::contains`.
+///
+/// - Does: Tests whether a point satisfies the curve equation modulo the characteristic.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Bool`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn EllipticCurve::contains(
   self : EllipticCurve,
   x : BigInt,
@@ -57,6 +87,12 @@ pub fn EllipticCurve::contains(
 }
 
 ///|
+/// Public API `EllipticCurve::points`.
+///
+/// - Does: Enumerates affine points on the curve over the finite modulus.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[(BigInt, BigInt)]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn EllipticCurve::points(
   self : EllipticCurve,
 ) -> Array[(BigInt, BigInt)] raise {
@@ -78,6 +114,12 @@ pub fn EllipticCurve::points(
 }
 
 ///|
+/// Public API `EllipticCurve::points_x`.
+///
+/// - Does: Enumerates x-coordinates that appear among finite-field points on the curve.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[(BigInt, BigInt)]`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn EllipticCurve::points_x(
   self : EllipticCurve,
   x0 : BigInt,

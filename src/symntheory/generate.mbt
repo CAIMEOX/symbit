@@ -2,17 +2,35 @@
 /// Prime generation utilities (naive, deterministic).
 
 ///|
+/// Public struct `Sieve`.
+///
+/// - Does: Stores cached prime numbers for prime generation utilities.
+/// - Input: Construct or reference it through the declared public type shape.
+/// - Returns: `a struct value when constructed`.
+/// - Limits: This declaration does not validate values by itself; validation is performed by the functions that consume it.
 pub struct Sieve {
   primes : Array[BigInt]
 }
 
 ///|
+/// Public API `Sieve::new`.
+///
+/// - Does: Constructs a prime sieve with a small initial cache.
+/// - Input: No runtime input beyond the receiver or declared parameters.
+/// - Returns: `Sieve`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn Sieve::new() -> Sieve {
   let p : Array[BigInt] = [bi(2), bi(3), bi(5), bi(7), bi(11), bi(13)]
   Sieve::{ primes: p }
 }
 
 ///|
+/// Public API `Sieve::extend`.
+///
+/// - Does: Extends the cached primes up to at least the requested bound.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Unit`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn Sieve::extend(self : Sieve, n0 : BigInt) -> Unit {
   let n = abs_bigint(n0)
   let len = self.primes.length()
@@ -39,6 +57,12 @@ pub fn Sieve::extend(self : Sieve, n0 : BigInt) -> Unit {
 }
 
 ///|
+/// Public API `Sieve::extend_to_no`.
+///
+/// - Does: Extends the cached primes until it contains at least count primes.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Unit`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn Sieve::extend_to_no(self : Sieve, count : Int) -> Unit {
   if count < 1 {
     return
@@ -53,6 +77,12 @@ pub fn Sieve::extend_to_no(self : Sieve, count : Int) -> Unit {
 }
 
 ///|
+/// Public API `Sieve::prime`.
+///
+/// - Does: Returns the n-th prime using 1-based indexing.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn Sieve::prime(self : Sieve, n : Int) -> BigInt raise {
   if n < 1 {
     fail("n should be >= 1")
@@ -62,6 +92,12 @@ pub fn Sieve::prime(self : Sieve, n : Int) -> BigInt raise {
 }
 
 ///|
+/// Public API `Sieve::primerange`.
+///
+/// - Does: Returns cached/generated primes in the half-open interval [a, b).
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Returns an empty array when no values are found; generator-style flags are accepted only as compatibility inputs where implemented.
 pub fn Sieve::primerange(
   self : Sieve,
   a0 : BigInt,
@@ -83,14 +119,32 @@ pub fn Sieve::primerange(
 }
 
 ///|
+/// Public value `sieve`.
+///
+/// - Does: Exposes the shared module-level sieve used by prime generation helpers.
+/// - Input: Read this value directly; callers do not pass runtime parameters.
+/// - Returns: `Sieve`.
+/// - Limits: This is static package data and does not perform validation by itself.
 pub let sieve : Sieve = Sieve::new()
 
 ///|
+/// Public API `prime`.
+///
+/// - Does: Returns the n-th prime using 1-based indexing.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn prime(n : Int) -> BigInt raise {
   sieve.prime(n)
 }
 
 ///|
+/// Public API `primerange`.
+///
+/// - Does: Lists primes below a bound or inside a half-open interval.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Returns an empty array when no values are found; generator-style flags are accepted only as compatibility inputs where implemented.
 pub fn primerange(a : BigInt, b? : BigInt = bi(0)) -> Array[BigInt] {
   if b == bi(0) {
     return sieve.primerange(bi(2), a)
@@ -99,6 +153,12 @@ pub fn primerange(a : BigInt, b? : BigInt = bi(0)) -> Array[BigInt] {
 }
 
 ///|
+/// Public API `nextprime`.
+///
+/// - Does: Returns the smallest prime strictly greater than n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn nextprime(n0 : BigInt) -> BigInt {
   if n0 < bi(2) {
     return bi(2)
@@ -126,6 +186,12 @@ pub fn nextprime(n0 : BigInt) -> BigInt {
 }
 
 ///|
+/// Public API `prevprime`.
+///
+/// - Does: Returns the largest prime strictly smaller than n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn prevprime(n0 : BigInt) -> BigInt raise {
   if n0 <= bi(2) {
     fail("n should be greater than 2")
@@ -147,6 +213,12 @@ pub fn prevprime(n0 : BigInt) -> BigInt raise {
 }
 
 ///|
+/// Public API `primepi`.
+///
+/// - Does: Counts primes less than or equal to n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn primepi(n0 : BigInt) -> BigInt {
   let n = abs_bigint(n0)
   if n < bi(2) {
@@ -230,6 +302,12 @@ fn prime_upper_bound(primes : Array[BigInt], target : BigInt) -> Int {
 }
 
 ///|
+/// Public API `randprime`.
+///
+/// - Does: Returns a prime from the half-open interval [a, b).
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn randprime(a0 : BigInt, b0 : BigInt) -> BigInt raise {
   let a = abs_bigint(a0)
   let b = abs_bigint(b0)
@@ -247,6 +325,12 @@ pub fn randprime(a0 : BigInt, b0 : BigInt) -> BigInt raise {
 }
 
 ///|
+/// Public API `primorial`.
+///
+/// - Does: Computes a product of primes, either by count or by value limit.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn primorial(n : Int, nth? : Bool = true) -> BigInt raise {
   if n < 1 {
     fail("primorial argument must be >= 1")
@@ -267,6 +351,12 @@ pub fn primorial(n : Int, nth? : Bool = true) -> BigInt raise {
 }
 
 ///|
+/// Public API `composite`.
+///
+/// - Does: Returns the n-th positive composite number.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn composite(n : Int) -> BigInt raise {
   if n < 1 {
     fail("n should be >= 1")
@@ -286,6 +376,12 @@ pub fn composite(n : Int) -> BigInt raise {
 }
 
 ///|
+/// Public API `compositepi`.
+///
+/// - Does: Counts composite numbers less than or equal to n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn compositepi(n0 : BigInt) -> BigInt {
   let n = abs_bigint(n0)
   if n < bi(4) {
@@ -303,12 +399,24 @@ pub fn compositepi(n0 : BigInt) -> BigInt {
 }
 
 ///|
+/// Public enum `CycleLengthResult`.
+///
+/// - Does: Represents either cycle parameters or visited values returned by cycle_length.
+/// - Input: Construct or reference it through the declared public type shape.
+/// - Returns: `one of the enum variants`.
+/// - Limits: This declaration does not validate values by itself; validation is performed by the functions that consume it.
 pub enum CycleLengthResult {
   Params(Int, Int?)
   Values(Array[Int])
 }
 
 ///|
+/// Public API `cycle_length`.
+///
+/// - Does: Detects the cycle length and preperiod of an iterated integer function.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Int, x0 : Int, nmax? : Int`.
+/// - Limits: Returns `None` when the requested value does not exist or the supported search fails.
 pub fn cycle_length(
   f : (Int) -> Int,
   x0 : Int,

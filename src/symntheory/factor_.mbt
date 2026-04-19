@@ -271,6 +271,12 @@ fn pow_int(base : Int, exp : Int) -> Int {
 }
 
 ///|
+/// Public API `factorint`.
+///
+/// - Does: Factors an integer into prime factors and integer exponents.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Map[BigInt, Int]`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn factorint(
   n0 : BigInt,
   limit? : BigInt = bi(0),
@@ -324,6 +330,12 @@ pub fn factorint(
 }
 
 ///|
+/// Public API `multiplicity`.
+///
+/// - Does: Counts the exponent of p in the factorization of n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Int`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn multiplicity(p0 : BigInt, n0 : BigInt) -> Int {
   let p = abs_bigint(p0)
   let mut n = abs_bigint(n0)
@@ -339,6 +351,12 @@ pub fn multiplicity(p0 : BigInt, n0 : BigInt) -> Int {
 }
 
 ///|
+/// Public API `multiplicity_in_factorial`.
+///
+/// - Does: Counts the exponent of p in n factorial.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn multiplicity_in_factorial(p0 : BigInt, n0 : BigInt) -> BigInt {
   let p = abs_bigint(p0)
   let mut n = abs_bigint(n0)
@@ -373,6 +391,12 @@ fn divisors_from_factors(
 }
 
 ///|
+/// Public API `divisors`.
+///
+/// - Does: Lists the positive divisors of an integer.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Returns an empty array when no values are found; generator-style flags are accepted only as compatibility inputs where implemented.
 pub fn divisors(n0 : BigInt, generator? : Bool = false) -> Array[BigInt] {
   let _ = generator
   let n = abs_bigint(n0)
@@ -394,6 +418,12 @@ pub fn divisors(n0 : BigInt, generator? : Bool = false) -> Array[BigInt] {
 }
 
 ///|
+/// Public API `proper_divisors`.
+///
+/// - Does: Lists all positive divisors except the integer itself.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Returns an empty array when no values are found; generator-style flags are accepted only as compatibility inputs where implemented.
 pub fn proper_divisors(n : BigInt, generator? : Bool = false) -> Array[BigInt] {
   let out = divisors(n, generator~)
   if out.is_empty() {
@@ -407,6 +437,12 @@ pub fn proper_divisors(n : BigInt, generator? : Bool = false) -> Array[BigInt] {
 }
 
 ///|
+/// Public API `primefactors`.
+///
+/// - Does: Lists the distinct positive prime factors of an integer.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Array[BigInt]`.
+/// - Limits: Returns an empty array when no values are found; generator-style flags are accepted only as compatibility inputs where implemented.
 pub fn primefactors(n : BigInt) -> Array[BigInt] {
   let f = factorint(n)
   let out : Array[BigInt] = Array::new()
@@ -421,6 +457,12 @@ pub fn primefactors(n : BigInt) -> Array[BigInt] {
 }
 
 ///|
+/// Public API `totient`.
+///
+/// - Does: Computes Euler phi for an integer.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn totient(n : BigInt) -> BigInt {
   let n_abs = abs_bigint(n)
   if n_abs.bit_length() <= 30 {
@@ -447,6 +489,12 @@ pub fn totient(n : BigInt) -> BigInt {
 }
 
 ///|
+/// Public API `divisor_count`.
+///
+/// - Does: Counts the positive divisors of an integer.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn divisor_count(n : BigInt) -> BigInt {
   let n_abs = abs_bigint(n)
   if n_abs.bit_length() <= 30 {
@@ -469,6 +517,12 @@ pub fn divisor_count(n : BigInt) -> BigInt {
 }
 
 ///|
+/// Public API `proper_divisor_count`.
+///
+/// - Does: Counts positive divisors excluding the integer itself.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn proper_divisor_count(n : BigInt) -> BigInt {
   let total = divisor_count(n)
   if total > bi(0) {
@@ -479,6 +533,12 @@ pub fn proper_divisor_count(n : BigInt) -> BigInt {
 }
 
 ///|
+/// Public API `divisor_sigma`.
+///
+/// - Does: Computes the sum of k-th powers of positive divisors.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn divisor_sigma(n0 : BigInt, k? : Int = 1) -> BigInt {
   let n = abs_bigint(n0)
   if n.is_zero() {
@@ -530,6 +590,12 @@ pub fn divisor_sigma(n0 : BigInt, k? : Int = 1) -> BigInt {
 }
 
 ///|
+/// Public API `factorrat`.
+///
+/// - Does: Factors a rational numerator/denominator pair into signed prime exponents.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Map[BigInt, Int]`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn factorrat(num0 : BigInt, den? : BigInt = bi(1)) -> Map[BigInt, Int] {
   let mut num = num0
   let mut den = den
@@ -560,6 +626,12 @@ pub fn factorrat(num0 : BigInt, den? : BigInt = bi(1)) -> Map[BigInt, Int] {
 }
 
 ///|
+/// Public API `reduced_totient`.
+///
+/// - Does: Computes the Carmichael reduced totient function.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn reduced_totient(n0 : BigInt) -> BigInt {
   let n = abs_bigint(n0)
   if n < bi(2) {
@@ -588,6 +660,12 @@ pub fn reduced_totient(n0 : BigInt) -> BigInt {
 }
 
 ///|
+/// Public API `primenu`.
+///
+/// - Does: Counts distinct prime factors.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Int`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn primenu(n : BigInt) -> Int {
   let f = factorint(n)
   let mut count = 0
@@ -601,6 +679,12 @@ pub fn primenu(n : BigInt) -> Int {
 }
 
 ///|
+/// Public API `primeomega`.
+///
+/// - Does: Counts prime factors with multiplicity.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Int`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn primeomega(n : BigInt) -> Int {
   let f = factorint(n)
   let mut count = 0
@@ -614,6 +698,12 @@ pub fn primeomega(n : BigInt) -> Int {
 }
 
 ///|
+/// Public API `mersenne_prime_exponent`.
+///
+/// - Does: Returns a known Mersenne-prime exponent by 1-based index.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Int`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn mersenne_prime_exponent(nth : Int) -> Int raise {
   if nth < 1 || nth > mersenne_prime_exponents.length() {
     fail("nth must be in range")
@@ -622,6 +712,12 @@ pub fn mersenne_prime_exponent(nth : Int) -> Int raise {
 }
 
 ///|
+/// Public API `is_perfect`.
+///
+/// - Does: Tests whether an integer is perfect.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Bool`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn is_perfect(n0 : BigInt) -> Bool {
   let n = abs_bigint(n0)
   if n < bi(1) {
@@ -631,22 +727,46 @@ pub fn is_perfect(n0 : BigInt) -> Bool {
 }
 
 ///|
+/// Public API `abundance`.
+///
+/// - Does: Computes divisor-sum abundance sigma(n) - 2*n.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn abundance(n0 : BigInt) -> BigInt {
   let n = abs_bigint(n0)
   divisor_sigma(n) - n * bi(2)
 }
 
 ///|
+/// Public API `is_abundant`.
+///
+/// - Does: Tests whether an integer is abundant.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Bool`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn is_abundant(n0 : BigInt) -> Bool {
   abundance(n0) > bi(0)
 }
 
 ///|
+/// Public API `is_deficient`.
+///
+/// - Does: Tests whether an integer is deficient.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Bool`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn is_deficient(n0 : BigInt) -> Bool {
   abundance(n0) < bi(0)
 }
 
 ///|
+/// Public API `is_amicable`.
+///
+/// - Does: Tests whether two integers form an amicable pair.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Bool`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn is_amicable(m0 : BigInt, n0 : BigInt) -> Bool {
   let m = abs_bigint(m0)
   let n = abs_bigint(n0)
@@ -657,6 +777,12 @@ pub fn is_amicable(m0 : BigInt, n0 : BigInt) -> Bool {
 }
 
 ///|
+/// Public API `is_carmichael`.
+///
+/// - Does: Tests Korselt-style Carmichael-number conditions.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `Bool`.
+/// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn is_carmichael(n0 : BigInt) -> Bool {
   let n = abs_bigint(n0)
   if n < bi(561) {
@@ -681,6 +807,12 @@ pub fn is_carmichael(n0 : BigInt) -> Bool {
 }
 
 ///|
+/// Public API `perfect_power`.
+///
+/// - Does: Detects whether an integer is an exact power b**e with e greater than 1.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `(BigInt, Int)?`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn perfect_power(n0 : BigInt) -> (BigInt, Int)? raise {
   let n = abs_bigint(n0)
   if n <= bi(1) {
@@ -710,6 +842,12 @@ pub fn perfect_power(n0 : BigInt) -> (BigInt, Int)? raise {
 }
 
 ///|
+/// Public API `pollard_rho`.
+///
+/// - Does: Attempts to find a non-trivial factor with Pollard rho.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt?`.
+/// - Limits: Returns `None` when the requested value does not exist or the supported search fails.
 pub fn pollard_rho(n0 : BigInt) -> BigInt? {
   let n = abs_bigint(n0)
   if n <= bi(1) {
@@ -737,6 +875,12 @@ pub fn pollard_rho(n0 : BigInt) -> BigInt? {
 }
 
 ///|
+/// Public API `pollard_pm1`.
+///
+/// - Does: Attempts to find a non-trivial factor with Pollard p-1.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt?`.
+/// - Limits: Returns `None` when the requested value does not exist or the supported search fails.
 pub fn pollard_pm1(n0 : BigInt, bound? : Int = 10) -> BigInt? {
   let n = abs_bigint(n0)
   if n <= bi(1) {
@@ -754,6 +898,12 @@ pub fn pollard_pm1(n0 : BigInt, bound? : Int = 10) -> BigInt? {
 }
 
 ///|
+/// Public API `dra`.
+///
+/// - Does: Computes the additive digital root in the selected base.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn dra(n0 : BigInt, b0 : BigInt) -> BigInt raise {
   let n = abs_bigint(n0)
   let b = abs_bigint(b0)
@@ -767,6 +917,12 @@ pub fn dra(n0 : BigInt, b0 : BigInt) -> BigInt raise {
 }
 
 ///|
+/// Public API `drm`.
+///
+/// - Does: Computes the multiplicative digital root in the selected base.
+/// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
+/// - Returns: `BigInt`.
+/// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn drm(n0 : BigInt, b0 : BigInt) -> BigInt raise {
   let mut n = abs_bigint(n0)
   let b = abs_bigint(b0)
