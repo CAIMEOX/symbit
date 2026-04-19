@@ -288,6 +288,16 @@ fn fe_cast_to_base(
 }
 
 ///|
+
+///|
+/// Display implementation for `Poly.output`.
+///
+/// - Does: Formats `Poly` values for display.
+/// - Input: the receiver value and MoonBit logger/display protocol arguments.
+/// - Returns: the formatted display output required by the `Show` implementation.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub impl Show for Poly with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

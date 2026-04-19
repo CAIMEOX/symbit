@@ -1,5 +1,16 @@
 ///|
 /// Computes the indefinite integral of ``f`` in ``K[x]``.
+
+///|
+/// Public API `dup_integrate`.
+///
+/// - Does: Provides the `dup_integrate` operation for dense polynomial calculus and evaluation.
+/// - Input: parameters `f : Array[FieldElem]`, `m : Int`, `domain : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_integrate(
   f : Array[FieldElem],
   m : Int,
@@ -28,6 +39,17 @@ pub fn dup_integrate(
 
 ///|
 /// Computes the indefinite integral of ``f`` in ``x_0`` in ``K[X]``.
+
+///|
+/// Public API `dmp_integrate`.
+///
+/// - Does: Provides the `dmp_integrate` operation for dense polynomial calculus and evaluation.
+/// - Input: parameters `f : DensePoly`, `m : Int`, `u : Int`, `domain : Domain`, using
+/// the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_integrate(
   f : DensePoly,
   m : Int,
@@ -82,6 +104,17 @@ fn rec_integrate_in(
 
 ///|
 /// Computes the indefinite integral of ``f`` in ``x_j`` in ``K[X]``.
+
+///|
+/// Public API `dmp_integrate_in`.
+///
+/// - Does: Provides the `dmp_integrate_in` operation for dense polynomial calculus and evaluation.
+/// - Input: parameters `f : DensePoly`, `m : Int`, `j : Int`, `u : Int`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_integrate_in(
   f : DensePoly,
   m : Int,
@@ -97,6 +130,17 @@ pub fn dmp_integrate_in(
 
 ///|
 /// ``m``-th order derivative of a polynomial in ``K[x]``.
+
+///|
+/// Public API `dup_diff`.
+///
+/// - Does: Provides the `dup_diff` operation for dense polynomial calculus and evaluation.
+/// - Input: parameters `f : Array[FieldElem]`, `m : Int`, `domain : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_diff(
   f : Array[FieldElem],
   m : Int,
@@ -138,6 +182,17 @@ pub fn dup_diff(
 
 ///|
 /// ``m``-th order derivative in ``x_0`` of a polynomial in ``K[X]``.
+
+///|
+/// Public API `dmp_diff`.
+///
+/// - Does: Provides the `dmp_diff` operation for dense polynomial calculus and evaluation.
+/// - Input: parameters `f : DensePoly`, `m : Int`, `u : Int`, `domain : Domain`, using
+/// the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_diff(
   f : DensePoly,
   m : Int,
@@ -216,6 +271,17 @@ fn rec_diff_in(
 
 ///|
 /// ``m``-th order derivative in ``x_j`` of a polynomial in ``K[X]``.
+
+///|
+/// Public API `dmp_diff_in`.
+///
+/// - Does: Provides the `dmp_diff_in` operation for dense polynomial calculus and evaluation.
+/// - Input: parameters `f : DensePoly`, `m : Int`, `j : Int`, `u : Int`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_diff_in(
   f : DensePoly,
   m : Int,
@@ -231,6 +297,17 @@ pub fn dmp_diff_in(
 
 ///|
 /// Evaluate a polynomial at ``x = a`` in ``K[x]`` using Horner scheme.
+
+///|
+/// Public API `dup_eval`.
+///
+/// - Does: Provides the `dup_eval` operation for dense polynomial calculus and evaluation.
+/// - Input: parameters `f : Array[FieldElem]`, `a : FieldElem`, `domain : Domain`,
+/// using the package representation expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_eval(
   f : Array[FieldElem],
   a : FieldElem,
@@ -248,6 +325,17 @@ pub fn dup_eval(
 
 ///|
 /// Evaluate a polynomial at ``x_0 = a`` in ``K[X]`` using the Horner scheme.
+
+///|
+/// Public API `dmp_eval`.
+///
+/// - Does: Provides the `dmp_eval` operation for dense polynomial calculus and evaluation.
+/// - Input: parameters `f : DensePoly`, `a : FieldElem`, `u : Int`, `domain : Domain`,
+/// using the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_eval(
   f : DensePoly,
   a : FieldElem,
@@ -294,6 +382,17 @@ fn rec_eval_in(
 
 ///|
 /// Evaluate a polynomial at ``x_j = a`` in ``K[X]`` using the Horner scheme.
+
+///|
+/// Public API `dmp_eval_in`.
+///
+/// - Does: Provides the `dmp_eval_in` operation for dense polynomial calculus and evaluation.
+/// - Input: parameters `f : DensePoly`, `a : FieldElem`, `j : Int`, `u : Int`, `domain
+/// : Domain`, using the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_eval_in(
   f : DensePoly,
   a : FieldElem,
@@ -309,6 +408,17 @@ pub fn dmp_eval_in(
 
 ///|
 /// Divide all coefficients by ``LC(f)`` in ``K[x]``.
+
+///|
+/// Public API `dup_monic`.
+///
+/// - Does: Provides the `dup_monic` operation for dense polynomial calculus and evaluation.
+/// - Input: parameters `f : Array[FieldElem]`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_monic(
   f : Array[FieldElem],
   domain : Domain,
@@ -326,6 +436,17 @@ pub fn dup_monic(
 
 ///|
 /// Divide all coefficients by ``LC(f)`` in ``K[X]``.
+
+///|
+/// Public API `dmp_ground_monic`.
+///
+/// - Does: Provides the `dmp_ground_monic` operation for dense polynomial calculus and evaluation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_ground_monic(
   f : DensePoly,
   u : Int,

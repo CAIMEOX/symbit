@@ -346,11 +346,31 @@ pub fn DomainScalar::is_one(self : DomainScalar) -> Bool {
 }
 
 ///|
+
+///|
+/// Display implementation for `DomainScalar.to_string`.
+///
+/// - Does: Formats `DomainScalar` values for display.
+/// - Input: the receiver value and MoonBit logger/display protocol arguments.
+/// - Returns: the formatted display output required by the `Show` implementation.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub impl Show for DomainScalar with to_string(self) -> String {
   self.element.to_string()
 }
 
 ///|
+
+///|
+/// Display implementation for `DomainScalar.output`.
+///
+/// - Does: Formats `DomainScalar` values for display.
+/// - Input: the receiver value and MoonBit logger/display protocol arguments.
+/// - Returns: the formatted display output required by the `Show` implementation.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub impl Show for DomainScalar with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

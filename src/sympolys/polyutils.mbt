@@ -395,6 +395,17 @@ fn dict_repr(entries : Array[(Array[Int], String)]) -> String {
 
 ///|
 /// Convert an expression into polynomial dict form under chosen generators.
+
+///|
+/// Public API `dict_from_expr`.
+///
+/// - Does: Provides the `dict_from_expr` operation for polynomial expression utilities.
+/// - Input: parameters `expr : Expr`, `gens : Array[String] = []`, using the package
+/// representation expected by the signature.
+/// - Returns: a `String` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dict_from_expr(
   expr : Expr,
   gens? : Array[String] = [],

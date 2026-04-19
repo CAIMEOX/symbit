@@ -1,5 +1,16 @@
 ///|
 /// Return the leading coefficient of ``f``.
+
+///|
+/// Public API `dup_LC`.
+///
+/// - Does: Provides the `dup_LC` operation for dense polynomial representation.
+/// - Input: parameters `coeffs : Array[FieldElem]`, using the package representation
+/// expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_LC(coeffs : Array[FieldElem]) -> FieldElem raise PolyError {
   if coeffs.is_empty() {
     fe_from_int(0, Domain::ZZ)
@@ -10,6 +21,17 @@ pub fn dup_LC(coeffs : Array[FieldElem]) -> FieldElem raise PolyError {
 
 ///|
 /// Return the trailing coefficient of ``f``.
+
+///|
+/// Public API `dup_TC`.
+///
+/// - Does: Provides the `dup_TC` operation for dense polynomial representation.
+/// - Input: parameters `coeffs : Array[FieldElem]`, using the package representation
+/// expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_TC(coeffs : Array[FieldElem]) -> FieldElem raise PolyError {
   if coeffs.is_empty() {
     fe_from_int(0, Domain::ZZ)
@@ -20,6 +42,17 @@ pub fn dup_TC(coeffs : Array[FieldElem]) -> FieldElem raise PolyError {
 
 ///|
 /// Return the leading degree of ``f`` in ``K[x]``.
+
+///|
+/// Public API `dup_degree`.
+///
+/// - Does: Provides the `dup_degree` operation for dense polynomial representation.
+/// - Input: parameters `coeffs : Array[FieldElem]`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Int` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dup_degree(coeffs : Array[FieldElem]) -> Int {
   if coeffs.is_empty() {
     -1
@@ -30,6 +63,17 @@ pub fn dup_degree(coeffs : Array[FieldElem]) -> Int {
 
 ///|
 /// Remove leading zeros from ``f`` in ``K[x]``.
+
+///|
+/// Public API `dup_strip`.
+///
+/// - Does: Provides the `dup_strip` operation for dense polynomial representation.
+/// - Input: parameters `coeffs : Array[FieldElem]`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_strip(coeffs : Array[FieldElem]) -> Array[FieldElem] raise PolyError {
   let mut start = 0
   let n = coeffs.length()
@@ -50,6 +94,17 @@ pub fn dup_strip(coeffs : Array[FieldElem]) -> Array[FieldElem] raise PolyError 
 
 ///|
 /// Compute ``x**n * f(1/x)``, i.e.: reverse ``f`` in ``K[x]``.
+
+///|
+/// Public API `dup_reverse`.
+///
+/// - Does: Provides the `dup_reverse` operation for dense polynomial representation.
+/// - Input: parameters `coeffs : Array[FieldElem]`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_reverse(
   coeffs : Array[FieldElem],
 ) -> Array[FieldElem] raise PolyError {
@@ -79,6 +134,16 @@ fn fe_zero_like(sample : FieldElem) -> FieldElem raise PolyError {
 
 ///|
 /// Recursive dense polynomial representation for helpers below.
+
+///|
+/// Public enum `DensePoly`.
+///
+/// - Does: Defines the `DensePoly` variants for dense polynomial representation.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: a `enum` declaration used by callers.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub enum DensePoly {
   Coef(FieldElem)
   Poly(Array[DensePoly])
@@ -86,6 +151,16 @@ pub enum DensePoly {
 
 ///|
 /// Dense polynomial with rational coefficients.
+
+///|
+/// Public enum `DenseRat`.
+///
+/// - Does: Defines the `DenseRat` variants for dense polynomial representation.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: a `enum` declaration used by callers.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub enum DenseRat {
   Coef(@symnum.BigRational)
   Poly(Array[DenseRat])
@@ -93,6 +168,16 @@ pub enum DenseRat {
 
 ///|
 /// Dense polynomial with polynomial coefficients (for inject/eject helpers).
+
+///|
+/// Public enum `DensePolyPoly`.
+///
+/// - Does: Defines the `DensePolyPoly` variants for dense polynomial representation.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: a `enum` declaration used by callers.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub enum DensePolyPoly {
   Coef(Poly)
   Poly(Array[DensePolyPoly])
@@ -100,36 +185,102 @@ pub enum DensePolyPoly {
 
 ///|
 /// Wrap a scalar rational as a `DenseRat` coefficient node.
+
+///|
+/// Public API `dense_rat_coef`.
+///
+/// - Does: Provides the `dense_rat_coef` operation for dense polynomial representation.
+/// - Input: parameters `c : @symnum.BigRational`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DenseRat` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dense_rat_coef(c : @symnum.BigRational) -> DenseRat {
   DenseRat::Coef(c)
 }
 
 ///|
 /// Wrap child nodes as a recursive `DenseRat` polynomial node.
+
+///|
+/// Public API `dense_rat_poly`.
+///
+/// - Does: Provides the `dense_rat_poly` operation for dense polynomial representation.
+/// - Input: parameters `items : Array[DenseRat]`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DenseRat` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dense_rat_poly(items : Array[DenseRat]) -> DenseRat {
   DenseRat::Poly(items)
 }
 
 ///|
 /// Wrap a `Poly` value as a coefficient node in `DensePolyPoly`.
+
+///|
+/// Public API `dense_poly_poly_coef`.
+///
+/// - Does: Provides the `dense_poly_poly_coef` operation for dense polynomial representation.
+/// - Input: parameters `p : Poly`, using the package representation expected by the
+/// signature.
+/// - Returns: a `DensePolyPoly` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dense_poly_poly_coef(p : Poly) -> DensePolyPoly {
   DensePolyPoly::Coef(p)
 }
 
 ///|
 /// Wrap child nodes as a recursive `DensePolyPoly` polynomial node.
+
+///|
+/// Public API `dense_poly_poly`.
+///
+/// - Does: Provides the `dense_poly_poly` operation for dense polynomial representation.
+/// - Input: parameters `items : Array[DensePolyPoly]`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DensePolyPoly` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dense_poly_poly(items : Array[DensePolyPoly]) -> DensePolyPoly {
   DensePolyPoly::Poly(items)
 }
 
 ///|
 /// Wrap a scalar `FieldElem` as a `DensePoly` coefficient node.
+
+///|
+/// Public API `dense_coef`.
+///
+/// - Does: Provides the `dense_coef` operation for dense polynomial representation.
+/// - Input: parameters `c : FieldElem`, using the package representation expected by
+/// the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dense_coef(c : FieldElem) -> DensePoly {
   DensePoly::Coef(c)
 }
 
 ///|
 /// Wrap child nodes as a recursive `DensePoly` polynomial node.
+
+///|
+/// Public API `dense_poly`.
+///
+/// - Does: Provides the `dense_poly` operation for dense polynomial representation.
+/// - Input: parameters `items : Array[DensePoly]`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dense_poly(items : Array[DensePoly]) -> DensePoly {
   DensePoly::Poly(items)
 }
@@ -223,6 +374,17 @@ fn dense_level_range(p : DensePoly, depth : Int) -> (Int, Int) {
 
 ///|
 /// Return the number of levels in ``f`` and recursively strip it.
+
+///|
+/// Public API `dmp_validate`.
+///
+/// - Does: Provides the `dmp_validate` operation for dense polynomial representation.
+/// - Input: parameters `p : DensePoly) -> (DensePoly`, `Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `(DensePoly, Int)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_validate(p : DensePoly) -> (DensePoly, Int) raise PolyError {
   let (min_level, max_level) = dense_level_range(p, 0)
   if min_level != max_level {
@@ -288,6 +450,17 @@ fn dense_strip_with_u(p : DensePoly, u : Int) -> DensePoly raise PolyError {
 
 ///|
 /// Return the leading coefficient of ``f``.
+
+///|
+/// Public API `dmp_LC`.
+///
+/// - Does: Provides the `dmp_LC` operation for dense polynomial representation.
+/// - Input: parameters `p : DensePoly`, using the package representation expected by
+/// the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dmp_LC(p : DensePoly) -> DensePoly {
   match p {
     DensePoly::Coef(_) => p
@@ -302,6 +475,17 @@ pub fn dmp_LC(p : DensePoly) -> DensePoly {
 
 ///|
 /// Return the trailing coefficient of ``f``.
+
+///|
+/// Public API `dmp_TC`.
+///
+/// - Does: Provides the `dmp_TC` operation for dense polynomial representation.
+/// - Input: parameters `p : DensePoly`, using the package representation expected by
+/// the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dmp_TC(p : DensePoly) -> DensePoly {
   match p {
     DensePoly::Coef(_) => p
@@ -316,6 +500,17 @@ pub fn dmp_TC(p : DensePoly) -> DensePoly {
 
 ///|
 /// Return the ground leading coefficient.
+
+///|
+/// Public API `dmp_ground_LC`.
+///
+/// - Does: Provides the `dmp_ground_LC` operation for dense polynomial representation.
+/// - Input: parameters `p : DensePoly`, `u : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_ground_LC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
   if u <= 0 {
     match p {
@@ -345,6 +540,17 @@ pub fn dmp_ground_LC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
 
 ///|
 /// Return the ground trailing coefficient.
+
+///|
+/// Public API `dmp_ground_TC`.
+///
+/// - Does: Provides the `dmp_ground_TC` operation for dense polynomial representation.
+/// - Input: parameters `p : DensePoly`, `u : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_ground_TC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
   if u <= 0 {
     match p {
@@ -374,6 +580,17 @@ pub fn dmp_ground_TC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
 
 ///|
 /// Return the leading term ``c * x_1**n_1 ... x_k**n_k``.
+
+///|
+/// Public API `dmp_true_LT`.
+///
+/// - Does: Provides the `dmp_true_LT` operation for dense polynomial representation.
+/// - Input: parameters `p : DensePoly`, `u : Int`, `) -> (Array[Int]`, `FieldElem`,
+/// using the package representation expected by the signature.
+/// - Returns: a `(Array[Int], FieldElem)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_true_LT(
   p : DensePoly,
   u : Int,
@@ -424,6 +641,17 @@ pub fn dmp_true_LT(
 
 ///|
 /// Return the leading degree of ``f`` in ``x_0`` in ``K[X]``.
+
+///|
+/// Public API `dmp_degree`.
+///
+/// - Does: Provides the `dmp_degree` operation for dense polynomial representation.
+/// - Input: parameters `p : DensePoly`, `u : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Int` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dmp_degree(p : DensePoly, u : Int) -> Int {
   if dmp_zero_p(p, u) {
     -1
@@ -437,6 +665,17 @@ pub fn dmp_degree(p : DensePoly, u : Int) -> Int {
 
 ///|
 /// Return the leading degree of ``f`` in ``x_j`` in ``K[X]``.
+
+///|
+/// Public API `dmp_degree_in`.
+///
+/// - Does: Provides the `dmp_degree_in` operation for dense polynomial representation.
+/// - Input: parameters `p : DensePoly`, `var_idx : Int`, `u : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Int` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_degree_in(
   p : DensePoly,
   var_idx : Int,
@@ -465,6 +704,17 @@ pub fn dmp_degree_in(
 
 ///|
 /// Return a list of degrees of ``f`` in ``K[X]``.
+
+///|
+/// Public API `dmp_degree_list`.
+///
+/// - Does: Provides the `dmp_degree_list` operation for dense polynomial representation.
+/// - Input: parameters `p : DensePoly`, `u : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Array[Int]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_degree_list(p : DensePoly, u : Int) -> Array[Int] raise PolyError {
   let exps : Array[Int] = Array::make(u + 1, -1)
   for i in 0..<=u {
@@ -475,6 +725,17 @@ pub fn dmp_degree_list(p : DensePoly, u : Int) -> Array[Int] raise PolyError {
 
 ///|
 /// Remove leading zeros from ``f`` in ``K[X]``.
+
+///|
+/// Public API `dmp_strip`.
+///
+/// - Does: Provides the `dmp_strip` operation for dense polynomial representation.
+/// - Input: parameters `p : DensePoly`, using the package representation expected by
+/// the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_strip(p : DensePoly) -> DensePoly raise PolyError {
   let u = dense_var_count(p)
   if u < 0 {
@@ -486,6 +747,17 @@ pub fn dmp_strip(p : DensePoly) -> DensePoly raise PolyError {
 
 ///|
 /// Reverse ``f`` in ``K[X]`` by reversing coefficients at each recursive level.
+
+///|
+/// Public API `dmp_reverse`.
+///
+/// - Does: Provides the `dmp_reverse` operation for dense polynomial representation.
+/// - Input: parameters `p : DensePoly`, using the package representation expected by
+/// the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_reverse(p : DensePoly) -> DensePoly raise PolyError {
   match p {
     DensePoly::Coef(_) => p
@@ -522,6 +794,17 @@ pub fn dmp_reverse(p : DensePoly) -> DensePoly raise PolyError {
 
 ///|
 /// Create a new copy of a polynomial ``f`` in ``K[x]``.
+
+///|
+/// Public API `dup_copy`.
+///
+/// - Does: Provides the `dup_copy` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_copy(f : Array[FieldElem]) -> Array[FieldElem] raise PolyError {
   if f.is_empty() {
     return Array::new()
@@ -535,6 +818,17 @@ pub fn dup_copy(f : Array[FieldElem]) -> Array[FieldElem] raise PolyError {
 
 ///|
 /// Create a new copy of a polynomial ``f`` in ``K[X]``.
+
+///|
+/// Public API `dmp_copy`.
+///
+/// - Does: Provides the `dmp_copy` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dmp_copy(f : DensePoly, u : Int) -> DensePoly {
   if u == 0 {
     match f {
@@ -569,24 +863,68 @@ pub fn dmp_copy(f : DensePoly, u : Int) -> DensePoly {
 
 ///|
 /// Convert `f` into a tuple.
+
+///|
+/// Public API `dup_to_tuple`.
+///
+/// - Does: Provides the `dup_to_tuple` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_to_tuple(f : Array[FieldElem]) -> Array[FieldElem] raise PolyError {
   dup_copy(f)
 }
 
 ///|
 /// Convert `f` into a nested tuple of tuples.
+
+///|
+/// Public API `dmp_to_tuple`.
+///
+/// - Does: Provides the `dmp_to_tuple` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dmp_to_tuple(f : DensePoly, u : Int) -> DensePoly {
   dmp_copy(f, u)
 }
 
 ///|
 /// Normalize univariate polynomial in the given domain.
+
+///|
+/// Public API `dup_normal`.
+///
+/// - Does: Provides the `dup_normal` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_normal(f : Array[FieldElem]) -> Array[FieldElem] raise PolyError {
   dup_strip(f)
 }
 
 ///|
 /// Normalize a multivariate polynomial in the given domain.
+
+///|
+/// Public API `dmp_normal`.
+///
+/// - Does: Provides the `dmp_normal` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_normal(f : DensePoly, u : Int) -> DensePoly raise PolyError {
   if u == 0 {
     match f {
@@ -642,6 +980,17 @@ fn fe_convert_domain(
 
 ///|
 /// Convert the ground domain of ``f`` from ``K0`` to ``K1``.
+
+///|
+/// Public API `dup_convert`.
+///
+/// - Does: Provides the `dup_convert` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, `_k0 : Domain`, `k1 : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_convert(
   f : Array[FieldElem],
   _k0 : Domain,
@@ -659,6 +1008,17 @@ pub fn dup_convert(
 
 ///|
 /// Convert the ground domain of ``f`` from ``K0`` to ``K1``.
+
+///|
+/// Public API `dmp_convert`.
+///
+/// - Does: Provides the `dmp_convert` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, `k0 : Domain`, `k1 : Domain`, using
+/// the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_convert(
   f : DensePoly,
   u : Int,
@@ -710,6 +1070,17 @@ pub fn dmp_convert(
 
 ///|
 /// Convert the ground domain of ``f`` from SymPy to ``K``.
+
+///|
+/// Public API `dup_from_sympy`.
+///
+/// - Does: Provides the `dup_from_sympy` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[@symnum.BigRational]`, `domain : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_from_sympy(
   f : Array[@symnum.BigRational],
   domain : Domain,
@@ -763,6 +1134,17 @@ fn dense_rat_to_dense(
 
 ///|
 /// Convert the ground domain of ``f`` from SymPy to ``K``.
+
+///|
+/// Public API `dmp_from_sympy`.
+///
+/// - Does: Provides the `dmp_from_sympy` operation for dense polynomial representation.
+/// - Input: parameters `f : DenseRat`, `u : Int`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_from_sympy(
   f : DenseRat,
   u : Int,
@@ -773,6 +1155,17 @@ pub fn dmp_from_sympy(
 
 ///|
 /// Return the ``n``-th coefficient of ``f`` in ``K[x]``.
+
+///|
+/// Public API `dup_nth`.
+///
+/// - Does: Provides the `dup_nth` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, `n : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_nth(f : Array[FieldElem], n : Int) -> FieldElem raise PolyError {
   if n < 0 {
     raise PolyError::BadExponent
@@ -790,6 +1183,17 @@ pub fn dup_nth(f : Array[FieldElem], n : Int) -> FieldElem raise PolyError {
 
 ///|
 /// Return the ``n``-th coefficient of ``f`` in ``K[x]``.
+
+///|
+/// Public API `dmp_nth`.
+///
+/// - Does: Provides the `dmp_nth` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `n : Int`, `u : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_nth(f : DensePoly, n : Int, u : Int) -> DensePoly raise PolyError {
   if n < 0 {
     raise PolyError::BadExponent
@@ -814,6 +1218,17 @@ pub fn dmp_nth(f : DensePoly, n : Int, u : Int) -> DensePoly raise PolyError {
 
 ///|
 /// Return a multivariate zero.
+
+///|
+/// Public API `dmp_zero`.
+///
+/// - Does: Provides the `dmp_zero` operation for dense polynomial representation.
+/// - Input: parameters `u : Int`, using the package representation expected by the
+/// signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dmp_zero(u : Int) -> DensePoly {
   let mut p : DensePoly = DensePoly::Poly(Array::new())
   if u < 0 {
@@ -830,6 +1245,17 @@ pub fn dmp_zero(u : Int) -> DensePoly {
 
 ///|
 /// Return ``True`` if ``f`` is zero in ``K[X]``.
+
+///|
+/// Public API `dmp_zero_p`.
+///
+/// - Does: Provides the `dmp_zero_p` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dmp_zero_p(f : DensePoly, u : Int) -> Bool {
   if u == 0 {
     match f {
@@ -851,6 +1277,17 @@ pub fn dmp_zero_p(f : DensePoly, u : Int) -> Bool {
 
 ///|
 /// Return a multivariate constant.
+
+///|
+/// Public API `dmp_ground`.
+///
+/// - Does: Provides the `dmp_ground` operation for dense polynomial representation.
+/// - Input: parameters `c : FieldElem`, `u : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dmp_ground(c : FieldElem, u : Int) -> DensePoly {
   if fe_is_zero(c) {
     return dmp_zero(u)
@@ -869,6 +1306,17 @@ pub fn dmp_ground(c : FieldElem, u : Int) -> DensePoly {
 
 ///|
 /// Return True if ``f`` is constant in ``K[X]``.
+
+///|
+/// Public API `dmp_ground_p`.
+///
+/// - Does: Provides the `dmp_ground_p` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `c : FieldElem`, `u : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_ground_p(
   f : DensePoly,
   c : FieldElem?,
@@ -915,6 +1363,17 @@ pub fn dmp_ground_p(
 
 ///|
 /// Return a multivariate one over ``K``.
+
+///|
+/// Public API `dmp_one`.
+///
+/// - Does: Provides the `dmp_one` operation for dense polynomial representation.
+/// - Input: parameters `u : Int`, `domain : Domain`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_one(u : Int, domain : Domain) -> DensePoly raise PolyError {
   let one = fe_from_int(1, domain)
   dmp_ground(one, u)
@@ -922,6 +1381,17 @@ pub fn dmp_one(u : Int, domain : Domain) -> DensePoly raise PolyError {
 
 ///|
 /// Return ``True`` if ``f`` is one in ``K[X]``.
+
+///|
+/// Public API `dmp_one_p`.
+///
+/// - Does: Provides the `dmp_one_p` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_one_p(
   f : DensePoly,
   u : Int,
@@ -933,6 +1403,17 @@ pub fn dmp_one_p(
 
 ///|
 /// Return the ground ``n``-th coefficient of ``f`` in ``K[x]``.
+
+///|
+/// Public API `dmp_ground_nth`.
+///
+/// - Does: Provides the `dmp_ground_nth` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `nlist : Array[Int]`, `u : Int`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_ground_nth(
   f : DensePoly,
   nlist : Array[Int],
@@ -985,6 +1466,17 @@ pub fn dmp_ground_nth(
 
 ///|
 /// Return a list of multivariate zeros.
+
+///|
+/// Public API `dmp_zeros`.
+///
+/// - Does: Provides the `dmp_zeros` operation for dense polynomial representation.
+/// - Input: parameters `n : Int`, `u : Int`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Array[DensePoly]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_zeros(
   n : Int,
   u : Int,
@@ -1007,6 +1499,17 @@ pub fn dmp_zeros(
 
 ///|
 /// Return a list of multivariate constants.
+
+///|
+/// Public API `dmp_grounds`.
+///
+/// - Does: Provides the `dmp_grounds` operation for dense polynomial representation.
+/// - Input: parameters `c : FieldElem`, `n : Int`, `u : Int`, `_domain : Domain`, using
+/// the package representation expected by the signature.
+/// - Returns: a `Array[DensePoly]` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dmp_grounds(
   c : FieldElem,
   n : Int,
@@ -1031,6 +1534,17 @@ pub fn dmp_grounds(
 
 ///|
 /// Return ``True`` if ``LC(f)`` is negative.
+
+///|
+/// Public API `dmp_negative_p`.
+///
+/// - Does: Provides the `dmp_negative_p` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_negative_p(f : DensePoly, u : Int) -> Bool raise PolyError {
   let lc = dmp_ground_LC(f, u)
   fe_is_negative(lc)
@@ -1038,6 +1552,17 @@ pub fn dmp_negative_p(f : DensePoly, u : Int) -> Bool raise PolyError {
 
 ///|
 /// Return ``True`` if ``LC(f)`` is positive.
+
+///|
+/// Public API `dmp_positive_p`.
+///
+/// - Does: Provides the `dmp_positive_p` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_positive_p(f : DensePoly, u : Int) -> Bool raise PolyError {
   let lc = dmp_ground_LC(f, u)
   fe_is_positive(lc)
@@ -1083,6 +1608,17 @@ fn monom_prepend(exp : Int, m : Monomial) -> Monomial {
 
 ///|
 /// Create a ``K[x]`` polynomial from a ``dict``.
+
+///|
+/// Public API `dup_from_dict`.
+///
+/// - Does: Provides the `dup_from_dict` operation for dense polynomial representation.
+/// - Input: parameters `f : Map[Monomial, FieldElem]`, `domain : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_from_dict(
   f : Map[Monomial, FieldElem],
   domain : Domain,
@@ -1114,6 +1650,17 @@ pub fn dup_from_dict(
 
 ///|
 /// Create a ``K[x]`` polynomial from a raw ``dict``.
+
+///|
+/// Public API `dup_from_raw_dict`.
+///
+/// - Does: Provides the `dup_from_raw_dict` operation for dense polynomial representation.
+/// - Input: parameters `f : Map[Int, FieldElem]`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_from_raw_dict(
   f : Map[Int, FieldElem],
   domain : Domain,
@@ -1140,6 +1687,17 @@ pub fn dup_from_raw_dict(
 
 ///|
 /// Create a ``K[X]`` polynomial from a ``dict``.
+
+///|
+/// Public API `dmp_from_dict`.
+///
+/// - Does: Provides the `dmp_from_dict` operation for dense polynomial representation.
+/// - Input: parameters `f : Map[Monomial, FieldElem]`, `u : Int`, `domain : Domain`,
+/// using the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_from_dict(
   f : Map[Monomial, FieldElem],
   u : Int,
@@ -1199,6 +1757,17 @@ pub fn dmp_from_dict(
 
 ///|
 /// Convert ``K[x]`` polynomial to a ``dict``.
+
+///|
+/// Public API `dup_to_dict`.
+///
+/// - Does: Provides the `dup_to_dict` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, `_domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Map[Monomial, FieldElem]` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dup_to_dict(
   f : Array[FieldElem],
   _domain : Domain,
@@ -1217,6 +1786,17 @@ pub fn dup_to_dict(
 
 ///|
 /// Convert a ``K[x]`` polynomial to a raw ``dict``.
+
+///|
+/// Public API `dup_to_raw_dict`.
+///
+/// - Does: Provides the `dup_to_raw_dict` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, `_domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Map[Int, FieldElem]` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dup_to_raw_dict(
   f : Array[FieldElem],
   _domain : Domain,
@@ -1235,6 +1815,17 @@ pub fn dup_to_raw_dict(
 
 ///|
 /// Convert a ``K[X]`` polynomial to a ``dict````.
+
+///|
+/// Public API `dmp_to_dict`.
+///
+/// - Does: Provides the `dmp_to_dict` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Map[Monomial, FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_to_dict(
   f : DensePoly,
   u : Int,
@@ -1272,6 +1863,17 @@ pub fn dmp_to_dict(
 
 ///|
 /// Convert a ``K[X]`` polynomial to a raw ``dict``.
+
+///|
+/// Public API `dmp_to_raw_dict`.
+///
+/// - Does: Provides the `dmp_to_raw_dict` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, `_domain : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Map[Int, DensePoly]` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dmp_to_raw_dict(
   f : DensePoly,
   u : Int,
@@ -1298,6 +1900,17 @@ pub fn dmp_to_raw_dict(
 
 ///|
 /// Transform ``K[..x_i..x_j..]`` to ``K[..x_j..x_i..]``.
+
+///|
+/// Public API `dmp_swap`.
+///
+/// - Does: Provides the `dmp_swap` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `i : Int`, `j : Int`, `u : Int`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_swap(
   f : DensePoly,
   i : Int,
@@ -1325,6 +1938,17 @@ pub fn dmp_swap(
 
 ///|
 /// Return a polynomial in ``K[x_{P(1)},..,x_{P(n)}]``.
+
+///|
+/// Public API `dmp_permute`.
+///
+/// - Does: Provides the `dmp_permute` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `p : Array[Int]`, `u : Int`, `domain : Domain`,
+/// using the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_permute(
   f : DensePoly,
   p : Array[Int],
@@ -1351,6 +1975,17 @@ pub fn dmp_permute(
 
 ///|
 /// Return a multivariate value nested ``l``-levels.
+
+///|
+/// Public API `dmp_nest`.
+///
+/// - Does: Provides the `dmp_nest` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `l : Int`, `_domain : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dmp_nest(f : DensePoly, l : Int, _domain : Domain) -> DensePoly {
   if l <= 0 {
     return f
@@ -1369,6 +2004,17 @@ pub fn dmp_nest(f : DensePoly, l : Int, _domain : Domain) -> DensePoly {
 
 ///|
 /// Return a multivariate polynomial raised ``l``-levels.
+
+///|
+/// Public API `dmp_raise`.
+///
+/// - Does: Provides the `dmp_raise` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `l : Int`, `u : Int`, `domain : Domain`, using
+/// the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_raise(
   f : DensePoly,
   l : Int,
@@ -1416,6 +2062,17 @@ pub fn dmp_raise(
 
 ///|
 /// Map ``x**m`` to ``y`` in a polynomial in ``K[x]``.
+
+///|
+/// Public API `dup_deflate`.
+///
+/// - Does: Provides the `dup_deflate` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, `_domain : Domain`, `) -> (Int`,
+/// `Array[FieldElem]`, using the package representation expected by the signature.
+/// - Returns: a `(Int, Array[FieldElem])` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dup_deflate(
   f : Array[FieldElem],
   _domain : Domain,
@@ -1449,6 +2106,18 @@ pub fn dup_deflate(
 
 ///|
 /// Map ``x_i**m_i`` to ``y_i`` in a polynomial in ``K[X]``.
+
+///|
+/// Public API `dmp_deflate`.
+///
+/// - Does: Provides the `dmp_deflate` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, `domain : Domain`, `) ->
+/// (Array[Int]`, `DensePoly`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(Array[Int], DensePoly)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_deflate(
   f : DensePoly,
   u : Int,
@@ -1494,6 +2163,18 @@ pub fn dmp_deflate(
 
 ///|
 /// Map ``x**m`` to ``y`` in a set of polynomials in ``K[x]``.
+
+///|
+/// Public API `dup_multi_deflate`.
+///
+/// - Does: Provides the `dup_multi_deflate` operation for dense polynomial representation.
+/// - Input: parameters `polys : Array[Array[FieldElem]]`, `_domain : Domain`, `) ->
+/// (Int`, `Array[Array[FieldElem]]`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(Int, Array[Array[FieldElem]])` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn dup_multi_deflate(
   polys : Array[Array[FieldElem]],
   _domain : Domain,
@@ -1541,6 +2222,18 @@ pub fn dup_multi_deflate(
 
 ///|
 /// Map ``x_i**m_i`` to ``y_i`` in a set of polynomials in ``K[X]``.
+
+///|
+/// Public API `dmp_multi_deflate`.
+///
+/// - Does: Provides the `dmp_multi_deflate` operation for dense polynomial representation.
+/// - Input: parameters `polys : Array[DensePoly]`, `u : Int`, `domain : Domain`, `) ->
+/// (Array[Int]`, `Array[DensePoly]`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(Array[Int], Array[DensePoly])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_multi_deflate(
   polys : Array[DensePoly],
   u : Int,
@@ -1608,6 +2301,17 @@ pub fn dmp_multi_deflate(
 
 ///|
 /// Map ``y`` to ``x**m`` in a polynomial in ``K[x]``.
+
+///|
+/// Public API `dup_inflate`.
+///
+/// - Does: Provides the `dup_inflate` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, `m : Int`, `domain : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_inflate(
   f : Array[FieldElem],
   m : Int,
@@ -1674,6 +2378,17 @@ fn rec_inflate(
 
 ///|
 /// Map ``y_i`` to ``x_i**k_i`` in a polynomial in ``K[X]``.
+
+///|
+/// Public API `dmp_inflate`.
+///
+/// - Does: Provides the `dmp_inflate` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `m : Array[Int]`, `u : Int`, `domain : Domain`,
+/// using the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_inflate(
   f : DensePoly,
   m : Array[Int],
@@ -1886,6 +2601,18 @@ fn dpp_to_dict(
 
 ///|
 /// Exclude useless levels from ``f``.
+
+///|
+/// Public API `dmp_exclude`.
+///
+/// - Does: Provides the `dmp_exclude` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, `domain : Domain`, `) ->
+/// (Array[Int]`, `DensePoly` and 1 more parameter(s), using the package representation
+/// expected by the signature.
+/// - Returns: a `(Array[Int], DensePoly, Int)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_exclude(
   f : DensePoly,
   u : Int,
@@ -1929,6 +2656,17 @@ pub fn dmp_exclude(
 
 ///|
 /// Include useless levels in ``f``.
+
+///|
+/// Public API `dmp_include`.
+///
+/// - Does: Provides the `dmp_include` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `jlist : Array[Int]`, `u : Int`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_include(
   f : DensePoly,
   jlist : Array[Int],
@@ -1953,6 +2691,18 @@ pub fn dmp_include(
 
 ///|
 /// Convert ``f`` from ``K[X][Y]`` to ``K[X,Y]``.
+
+///|
+/// Public API `dmp_inject`.
+///
+/// - Does: Provides the `dmp_inject` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePolyPoly`, `u : Int`, `gens : Array[String]`, `domain
+/// : Domain`, `front : Bool = false` and 2 more parameter(s), using the package
+/// representation expected by the signature.
+/// - Returns: a `(DensePoly, Int)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_inject(
   f : DensePolyPoly,
   u : Int,
@@ -1996,6 +2746,18 @@ pub fn dmp_inject(
 
 ///|
 /// Convert ``f`` from ``K[X,Y]`` to ``K[X][Y]``.
+
+///|
+/// Public API `dmp_eject`.
+///
+/// - Does: Provides the `dmp_eject` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, `gens : Array[String]`, `domain :
+/// Domain`, `front : Bool = false`, using the package representation expected by the
+/// signature.
+/// - Returns: a `DensePolyPoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_eject(
   f : DensePoly,
   u : Int,
@@ -2058,6 +2820,17 @@ pub fn dmp_eject(
 
 ///|
 /// Remove GCD of terms from ``f`` in ``K[x]``.
+
+///|
+/// Public API `dup_terms_gcd`.
+///
+/// - Does: Provides the `dup_terms_gcd` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, `_domain : Domain`, `) -> (Int`,
+/// `Array[FieldElem]`, using the package representation expected by the signature.
+/// - Returns: a `(Int, Array[FieldElem])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_terms_gcd(
   f : Array[FieldElem],
   _domain : Domain,
@@ -2087,6 +2860,18 @@ pub fn dup_terms_gcd(
 
 ///|
 /// Remove GCD of terms from ``f`` in ``K[X]``.
+
+///|
+/// Public API `dmp_terms_gcd`.
+///
+/// - Does: Provides the `dmp_terms_gcd` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, `domain : Domain`, `) ->
+/// (Array[Int]`, `DensePoly`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(Array[Int], DensePoly)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_terms_gcd(
   f : DensePoly,
   u : Int,
@@ -2126,6 +2911,18 @@ pub fn dmp_terms_gcd(
 
 ///|
 /// List all non-zero terms from ``f`` in the given order ``order``.
+
+///|
+/// Public API `dmp_list_terms`.
+///
+/// - Does: Provides the `dmp_list_terms` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `u : Int`, `domain : Domain`, `order :
+/// TermOrder`, `) -> Array[(Array[Int], FieldElem`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Array[(Array[Int], FieldElem)]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_list_terms(
   f : DensePoly,
   u : Int,
@@ -2155,6 +2952,19 @@ pub fn dmp_list_terms(
 
 ///|
 /// Apply ``h`` to pairs of coefficients of ``f`` and ``g``.
+
+///|
+/// Public API `dup_apply_pairs`.
+///
+/// - Does: Provides the `dup_apply_pairs` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, `g : Array[FieldElem]`, `h : (FieldElem,
+/// FieldElem, Array[FieldElem]) -> FieldElem`, `args : Array[FieldElem]`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `FieldElem, args : Array[FieldElem], domain : Domain, ) ->
+/// Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_apply_pairs(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -2199,6 +3009,19 @@ pub fn dup_apply_pairs(
 
 ///|
 /// Apply ``h`` to pairs of coefficients of ``f`` and ``g``.
+
+///|
+/// Public API `dmp_apply_pairs`.
+///
+/// - Does: Provides the `dmp_apply_pairs` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `g : DensePoly`, `h : (FieldElem, FieldElem,
+/// Array[FieldElem]) -> FieldElem`, `args : Array[FieldElem]`, `u : Int` and 1 more
+/// parameter(s), using the package representation expected by the signature.
+/// - Returns: a `FieldElem, args : Array[FieldElem], u : Int, domain : Domain, ) ->
+/// DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_apply_pairs(
   f : DensePoly,
   g : DensePoly,
@@ -2258,6 +3081,17 @@ pub fn dmp_apply_pairs(
 
 ///|
 /// Take a continuous subsequence of terms of ``f`` in ``K[x]``.
+
+///|
+/// Public API `dup_slice`.
+///
+/// - Does: Provides the `dup_slice` operation for dense polynomial representation.
+/// - Input: parameters `f : Array[FieldElem]`, `m : Int`, `n : Int`, `domain : Domain`,
+/// using the package representation expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_slice(
   f : Array[FieldElem],
   m : Int,
@@ -2291,6 +3125,17 @@ pub fn dup_slice(
 
 ///|
 /// Take a continuous subsequence of terms of ``f`` in ``K[X]``.
+
+///|
+/// Public API `dmp_slice`.
+///
+/// - Does: Provides the `dmp_slice` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `m : Int`, `n : Int`, `u : Int`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_slice(
   f : DensePoly,
   m : Int,
@@ -2303,6 +3148,17 @@ pub fn dmp_slice(
 
 ///|
 /// Take a continuous subsequence of terms of ``f`` in ``x_j`` in ``K[X]``.
+
+///|
+/// Public API `dmp_slice_in`.
+///
+/// - Does: Provides the `dmp_slice_in` operation for dense polynomial representation.
+/// - Input: parameters `f : DensePoly`, `m : Int`, `n : Int`, `j : Int`, `u : Int` and
+/// 1 more parameter(s), using the package representation expected by the signature.
+/// - Returns: a `DensePoly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dmp_slice_in(
   f : DensePoly,
   m : Int,
@@ -2334,6 +3190,17 @@ pub fn dmp_slice_in(
 
 ///|
 /// Return a polynomial of degree ``n`` with coefficients in ``[a, b]``.
+
+///|
+/// Public API `dup_random`.
+///
+/// - Does: Provides the `dup_random` operation for dense polynomial representation.
+/// - Input: parameters `n : Int`, `a : Int`, `b : Int`, `domain : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn dup_random(
   n : Int,
   a : Int,

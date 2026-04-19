@@ -42,6 +42,17 @@ fn require_zz(ddm : DDM) -> Unit raise PolyError {
 
 ///|
 /// SymPy-style LLL reduction on integer domain matrices.
+
+///|
+/// Public API `DDM.lll`.
+///
+/// - Does: Provides the `DDM.lll` operation for matrix LLL compatibility.
+/// - Input: parameters `self : DDM`, `delta : @symnum.BigRational`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::lll(
   self : DDM,
   delta? : @symnum.BigRational,
@@ -57,6 +68,17 @@ pub fn DDM::lll(
 
 ///|
 /// Return both the reduced basis and transform matrix (`B = T * A`) for LLL.
+
+///|
+/// Public API `DDM.lll_transform`.
+///
+/// - Does: Provides the `DDM.lll_transform` operation for matrix LLL compatibility.
+/// - Input: parameters `self : DDM`, `delta : @symnum.BigRational`, `) -> (DDM`, `DDM`,
+/// using the package representation expected by the signature.
+/// - Returns: a `(DDM, DDM)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::lll_transform(
   self : DDM,
   delta? : @symnum.BigRational,

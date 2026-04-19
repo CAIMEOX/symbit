@@ -1,9 +1,30 @@
 ///|
 /// Simple LLL lattice reduction over BigInt with default delta=3/4.
+
+///|
+/// Public type alias `Matrix`.
+///
+/// - Does: Aliases `Matrix` for integer lattice reduction.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: the aliased `Array[Array[BigInt]]` type.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub type Matrix = Array[Array[BigInt]]
 
 ///|
 /// Perform LLL basis reduction on integer lattices.
+
+///|
+/// Public API `lll_reduce`.
+///
+/// - Does: Provides the `lll_reduce` operation for integer lattice reduction.
+/// - Input: parameters `basis : Matrix`, `delta : @symnum.BigRational`, `) -> (Matrix`,
+/// `Matrix`, using the package representation expected by the signature.
+/// - Returns: a `(Matrix, Matrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn lll_reduce(
   basis : Matrix,
   delta? : @symnum.BigRational,

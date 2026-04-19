@@ -462,6 +462,17 @@ pub fn discriminant(poly : Poly) -> FieldElem raise PolyError {
 
 ///|
 /// Subresultant pseudo-remainder sequence (returns all remainders).
+
+///|
+/// Public API `subresultants`.
+///
+/// - Does: Provides the `subresultants` operation for polynomial tool front doors.
+/// - Input: parameters `poly : Poly`, `other : Poly`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Array[Poly]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn subresultants(poly : Poly, other : Poly) -> Array[Poly] raise PolyError {
   check_univar_compat(poly, other)
   let seq : Array[Poly] = Array::new()

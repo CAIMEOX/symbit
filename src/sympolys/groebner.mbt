@@ -90,6 +90,17 @@ fn divmod_multivar(
 
 ///|
 /// Multivariate division by a divisor list; returns `(quotients, remainder)`.
+
+///|
+/// Public API `Poly.divmod_multivar`.
+///
+/// - Does: Provides the `Poly.divmod_multivar` operation for Groebner-basis computation.
+/// - Input: parameters `self : Poly`, `divisors : Array[Poly]`, `) -> (Array[Poly]`,
+/// `Poly`, using the package representation expected by the signature.
+/// - Returns: a `(Array[Poly], Poly)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Poly::divmod_multivar(
   self : Poly,
   divisors : Array[Poly],
@@ -130,6 +141,17 @@ fn spoly(f : Poly, g : Poly) -> Poly raise PolyError {
 
 ///|
 /// Compute a reduced Groebner basis for `polys` in the chosen order.
+
+///|
+/// Public API `Poly.groebner`.
+///
+/// - Does: Provides the `Poly.groebner` operation for Groebner-basis computation.
+/// - Input: parameters `polys : Array[Poly]`, `order : TermOrder`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Array[Poly]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Poly::groebner(
   polys : Array[Poly],
   order? : TermOrder,
@@ -187,6 +209,18 @@ pub fn Poly::groebner(
 
 ///|
 /// Groebner wrapper that accepts expressions + optional domain/modulus/order/gens.
+
+///|
+/// Public API `groebner_expr`.
+///
+/// - Does: Provides the `groebner_expr` operation for Groebner-basis computation.
+/// - Input: parameters `exprs : Array[Expr]`, `gens : Array[String]`, `domain :
+/// Domain`, `modulus : Int`, `extension : Array[String]` and 2 more parameter(s), using
+/// the package representation expected by the signature.
+/// - Returns: a `Array[Poly]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn groebner_expr(
   exprs : Array[Expr],
   gens? : Array[String],

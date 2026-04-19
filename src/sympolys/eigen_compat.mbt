@@ -1,9 +1,29 @@
 ///|
+
+///|
+/// Public type alias `DomainMatrixRationalEigenvects`.
+///
+/// - Does: Aliases `DomainMatrixRationalEigenvects` for domain-matrix eigenvalue compatibility.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: the aliased `Array[` type.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub type DomainMatrixRationalEigenvects = Array[
   (Domain, FieldElem, Int, DomainMatrix),
 ]
 
 ///|
+
+///|
+/// Public type alias `DomainMatrixAlgebraicEigenvects`.
+///
+/// - Does: Aliases `DomainMatrixAlgebraicEigenvects` for domain-matrix eigenvalue compatibility.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: the aliased `Array[` type.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub type DomainMatrixAlgebraicEigenvects = Array[
   (Domain, Poly, Int, DomainMatrix),
 ]
@@ -32,6 +52,18 @@ fn diagonal_matrix_with_value(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.dom_eigenvects`.
+///
+/// - Does: Provides the `DomainMatrix.dom_eigenvects` operation for domain-matrix eigenvalue compatibility.
+/// - Input: parameters `self : DomainMatrix`, `gen : String = "_lambda"`, `) ->
+/// (DomainMatrixRationalEigenvects`, `DomainMatrixAlgebraicEigenvects`, using the
+/// package representation expected by the signature.
+/// - Returns: a `(DomainMatrixRationalEigenvects, DomainMatrixAlgebraicEigenvects)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::dom_eigenvects(
   self : DomainMatrix,
   gen? : String = "_lambda",
@@ -69,6 +101,19 @@ pub fn DomainMatrix::dom_eigenvects(
 }
 
 ///|
+
+///|
+/// Public API `DDM.dom_eigenvects`.
+///
+/// - Does: Provides the `DDM.dom_eigenvects` operation for domain-matrix eigenvalue compatibility.
+/// - Input: parameters `self : DDM`, `gen : String = "_lambda"`, `) -> (Array[(Domain,
+/// FieldElem, Int, DDM)]`, `Array[(Domain, Poly, Int, DDM)]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `(Array[(Domain, FieldElem, Int, DDM)], Array[(Domain, Poly, Int,
+/// DDM)])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::dom_eigenvects(
   self : DDM,
   gen? : String = "_lambda",

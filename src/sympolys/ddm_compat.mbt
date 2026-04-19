@@ -236,6 +236,18 @@ pub fn DDM::copy(self : DDM) -> DDM raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `DDM._check`.
+///
+/// - Does: Provides the `DDM._check` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `op : String`, `other : DDM`, `ashape : (Int,
+/// Int)`, `bshape : (Int, Int)`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Unit` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::_check(
   self : DDM,
   op : String,
@@ -291,16 +303,50 @@ pub fn DDM::to_list_flat(self : DDM) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `DDM.flat`.
+///
+/// - Does: Provides the `DDM.flat` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::flat(self : DDM) -> Array[FieldElem] raise PolyError {
   self.dm.flat()
 }
 
 ///|
+
+///|
+/// Public API `DDM.flatiter`.
+///
+/// - Does: Provides the `DDM.flatiter` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Iter[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::flatiter(self : DDM) -> Iter[FieldElem] raise PolyError {
   self.flat().iter()
 }
 
 ///|
+
+///|
+/// Public API `DDM.to_flat_nz`.
+///
+/// - Does: Provides the `DDM.to_flat_nz` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `) -> (Array[FieldElem]`,
+/// `DomainMatrixFlatNZData`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(Array[FieldElem], DomainMatrixFlatNZData)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::to_flat_nz(
   self : DDM,
 ) -> (Array[FieldElem], DomainMatrixFlatNZData) raise PolyError {
@@ -308,6 +354,18 @@ pub fn DDM::to_flat_nz(
 }
 
 ///|
+
+///|
+/// Public API `DDM.from_flat_nz`.
+///
+/// - Does: Provides the `DDM.from_flat_nz` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `elements : Array[FieldElem]`, `data :
+/// DomainMatrixFlatNZData`, `domain : Domain`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::from_flat_nz(
   self : DDM,
   elements : Array[FieldElem],
@@ -319,11 +377,33 @@ pub fn DDM::from_flat_nz(
 }
 
 ///|
+
+///|
+/// Public API `DDM.iter_values`.
+///
+/// - Does: Provides the `DDM.iter_values` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::iter_values(self : DDM) -> Array[FieldElem] raise PolyError {
   self.dm.iter_values()
 }
 
 ///|
+
+///|
+/// Public API `DDM.iter_items`.
+///
+/// - Does: Provides the `DDM.iter_items` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `) -> Array[(Int, Int, FieldElem`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Array[(Int, Int, FieldElem)]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::iter_items(
   self : DDM,
 ) -> Array[(Int, Int, FieldElem)] raise PolyError {
@@ -331,16 +411,49 @@ pub fn DDM::iter_items(
 }
 
 ///|
+
+///|
+/// Public API `DDM.to_dod`.
+///
+/// - Does: Provides the `DDM.to_dod` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `DomainMatrixDOD` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::to_dod(self : DDM) -> DomainMatrixDOD raise PolyError {
   self.dm.to_dod()
 }
 
 ///|
+
+///|
+/// Public API `DDM.to_dok`.
+///
+/// - Does: Provides the `DDM.to_dok` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `DomainMatrixDOK` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::to_dok(self : DDM) -> DomainMatrixDOK raise PolyError {
   self.dm.to_dok()
 }
 
 ///|
+
+///|
+/// Public API `DDM.applyfunc`.
+///
+/// - Does: Provides the `DDM.applyfunc` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `func : FieldElemMapper`, `domain : Domain =
+/// None`, using the package representation expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::applyfunc(
   self : DDM,
   func : FieldElemMapper,
@@ -362,6 +475,17 @@ pub fn DDM::to_domain_matrix(self : DDM) -> DomainMatrix {
 }
 
 ///|
+
+///|
+/// Public API `DDM.getitem`.
+///
+/// - Does: Provides the `DDM.getitem` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `row : Int`, `col : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::getitem(
   self : DDM,
   row : Int,
@@ -371,6 +495,17 @@ pub fn DDM::getitem(
 }
 
 ///|
+
+///|
+/// Public API `DDM.setitem`.
+///
+/// - Does: Provides the `DDM.setitem` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `row : Int`, `col : Int`, `value : FieldElem`,
+/// using the package representation expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::setitem(
   self : DDM,
   row : Int,
@@ -381,6 +516,18 @@ pub fn DDM::setitem(
 }
 
 ///|
+
+///|
+/// Public API `DDM.extract_slice`.
+///
+/// - Does: Provides the `DDM.extract_slice` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `row_start : Int = None`, `row_stop : Int = None`,
+/// `row_step : Int = 1`, `col_start : Int = None` and 2 more parameter(s), using the
+/// package representation expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::extract_slice(
   self : DDM,
   row_start? : Int? = None,
@@ -403,11 +550,33 @@ pub fn DDM::extract_slice(
 }
 
 ///|
+
+///|
+/// Public API `DDM.to_ddm`.
+///
+/// - Does: Provides the `DDM.to_ddm` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::to_ddm(self : DDM) -> DDM raise PolyError {
   self.copy()
 }
 
 ///|
+
+///|
+/// Public API `DDM.to_sdm`.
+///
+/// - Does: Provides the `DDM.to_sdm` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `SDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::to_sdm(self : DDM) -> SDM raise PolyError {
   SDM::{ dm: self.dm.to_sparse() }
 }
@@ -480,16 +649,49 @@ pub fn DDM::matmul(self : DDM, other : DDM) -> DDM raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `DDM.mul_elementwise`.
+///
+/// - Does: Provides the `DDM.mul_elementwise` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `other : DDM`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::mul_elementwise(self : DDM, other : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.mul_elementwise(other.dm) }
 }
 
 ///|
+
+///|
+/// Public API `DDM.mul_scalar`.
+///
+/// - Does: Provides the `DDM.mul_scalar` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `scalar : FieldElem`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::mul_scalar(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
   self.mul(scalar)
 }
 
 ///|
+
+///|
+/// Public API `DDM.rmul`.
+///
+/// - Does: Provides the `DDM.rmul` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `scalar : FieldElem`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::rmul(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
   DDM::{ dm: self.dm.rmul(scalar) }
 }
@@ -521,36 +723,113 @@ pub fn DDM::extract(
 }
 
 ///|
+
+///|
+/// Public API `DDM.hstack`.
+///
+/// - Does: Provides the `DDM.hstack` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `other : DDM`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::hstack(self : DDM, other : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.hstack(other.dm) }
 }
 
 ///|
+
+///|
+/// Public API `DDM.vstack`.
+///
+/// - Does: Provides the `DDM.vstack` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `other : DDM`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::vstack(self : DDM, other : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.vstack(other.dm) }
 }
 
 ///|
+
+///|
+/// Public API `DDM.nnz`.
+///
+/// - Does: Provides the `DDM.nnz` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Int` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::nnz(self : DDM) -> Int raise PolyError {
   self.dm.nnz()
 }
 
 ///|
+
+///|
+/// Public API `DDM.is_diagonal`.
+///
+/// - Does: Provides the `DDM.is_diagonal` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::is_diagonal(self : DDM) -> Bool raise PolyError {
   self.dm.is_diagonal()
 }
 
 ///|
+
+///|
+/// Public API `DDM.is_upper`.
+///
+/// - Does: Provides the `DDM.is_upper` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::is_upper(self : DDM) -> Bool raise PolyError {
   self.dm.is_upper()
 }
 
 ///|
+
+///|
+/// Public API `DDM.is_lower`.
+///
+/// - Does: Provides the `DDM.is_lower` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::is_lower(self : DDM) -> Bool raise PolyError {
   self.dm.is_lower()
 }
 
 ///|
+
+///|
+/// Public API `DDM.is_zero_matrix`.
+///
+/// - Does: Provides the `DDM.is_zero_matrix` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::is_zero_matrix(self : DDM) -> Bool raise PolyError {
   self.dm.is_zero_matrix()
 }
@@ -621,6 +900,17 @@ pub fn DDM::clear_denoms(
 }
 
 ///|
+
+///|
+/// Public API `DDM.clear_denoms_rowwise`.
+///
+/// - Does: Provides the `DDM.clear_denoms_rowwise` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `convert : Bool = false`, `) -> (DDM`, `DDM`,
+/// using the package representation expected by the signature.
+/// - Returns: a `(DDM, DDM)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::clear_denoms_rowwise(
   self : DDM,
   convert? : Bool = false,
@@ -687,6 +977,17 @@ pub fn DDM::solve_den(
 }
 
 ///|
+
+///|
+/// Public API `DDM.solve_den_rref`.
+///
+/// - Does: Provides the `DDM.solve_den_rref` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `rhs : DDM`, `) -> (DDM`, `FieldElem`, using the
+/// package representation expected by the signature.
+/// - Returns: a `(DDM, FieldElem)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::solve_den_rref(
   self : DDM,
   rhs : DDM,
@@ -696,35 +997,101 @@ pub fn DDM::solve_den_rref(
 }
 
 ///|
+
+///|
+/// Public API `DDM.lu`.
+///
+/// - Does: Provides the `DDM.lu` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM) -> (DDM`, `DDM`, `Array[(Int, Int)]`, using the
+/// package representation expected by the signature.
+/// - Returns: a `(DDM, DDM, Array[(Int, Int)])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::lu(self : DDM) -> (DDM, DDM, Array[(Int, Int)]) raise PolyError {
   let (l, u, swaps) = self.dm.lu()
   (DDM::{ dm: l }, DDM::{ dm: u }, swaps)
 }
 
 ///|
+
+///|
+/// Public API `DDM.qr`.
+///
+/// - Does: Provides the `DDM.qr` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM) -> (DDM`, `DDM`, using the package representation
+/// expected by the signature.
+/// - Returns: a `(DDM, DDM)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::qr(self : DDM) -> (DDM, DDM) raise PolyError {
   let (q, r) = self.dm.qr()
   (DDM::{ dm: q }, DDM::{ dm: r })
 }
 
 ///|
+
+///|
+/// Public API `DDM.lu_solve`.
+///
+/// - Does: Provides the `DDM.lu_solve` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `rhs : DDM`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::lu_solve(self : DDM, rhs : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.lu_solve(rhs.dm) }
 }
 
 ///|
+
+///|
+/// Public API `DDM.fflu`.
+///
+/// - Does: Provides the `DDM.fflu` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM) -> (DDM`, `DDM`, `DDM`, `DDM`, using the package
+/// representation expected by the signature.
+/// - Returns: a `(DDM, DDM, DDM, DDM)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::fflu(self : DDM) -> (DDM, DDM, DDM, DDM) raise PolyError {
   let (p, l, d, u) = self.dm.fflu()
   (DDM::{ dm: p }, DDM::{ dm: l }, DDM::{ dm: d }, DDM::{ dm: u })
 }
 
 ///|
+
+///|
+/// Public API `DDM._fflu`.
+///
+/// - Does: Provides the `DDM._fflu` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM) -> (DDM`, `Array[Int]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `(DDM, Array[Int])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::_fflu(self : DDM) -> (DDM, Array[Int]) raise PolyError {
   let (lu_rows, perm) = dense_fflu_phase1(self.dm.to_dense(), self.dm.domain)
   (ddm_from_dense(lu_rows, self.dm.domain), perm)
 }
 
 ///|
+
+///|
+/// Public API `DDM.charpoly`.
+///
+/// - Does: Provides the `DDM.charpoly` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::charpoly(self : DDM) -> Array[FieldElem] raise PolyError {
   self.dm.charpoly()
 }
@@ -793,6 +1160,17 @@ pub fn DDM::nullspace(
 }
 
 ///|
+
+///|
+/// Public API `DDM.nullspace_from_rref`.
+///
+/// - Does: Provides the `DDM.nullspace_from_rref` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `pivots : Array[Int] = []`, `) -> (DDM`,
+/// `Array[Int]`, using the package representation expected by the signature.
+/// - Returns: a `(DDM, Array[Int])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::nullspace_from_rref(
   self : DDM,
   pivots? : Array[Int] = [],
@@ -802,6 +1180,17 @@ pub fn DDM::nullspace_from_rref(
 }
 
 ///|
+
+///|
+/// Public API `DDM.particular`.
+///
+/// - Does: Provides the `DDM.particular` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, `pivots : Array[Int] = []`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::particular(
   self : DDM,
   pivots? : Array[Int] = [],
@@ -810,6 +1199,17 @@ pub fn DDM::particular(
 }
 
 ///|
+
+///|
+/// Public API `DDM.scc`.
+///
+/// - Does: Provides the `DDM.scc` operation for dense domain-matrix compatibility.
+/// - Input: parameters `self : DDM`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Array[Array[Int]]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DDM::scc(self : DDM) -> Array[Array[Int]] raise PolyError {
   self.dm.scc()
 }

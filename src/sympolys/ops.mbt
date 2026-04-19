@@ -53,6 +53,18 @@ pub fn Poly::resultant(
 ///|
 /// Compute `resultant(f, g, var_name)` from expressions with optional domain/options.
 /// Returns an expression so multivariate elimination results stay symbolic.
+
+///|
+/// Public API `resultant_expr`.
+///
+/// - Does: Provides the `resultant_expr` operation for polynomial operation front doors.
+/// - Input: parameters `f_expr : Expr`, `g_expr : Expr`, `var_name : String`, `gens :
+/// Array[String]`, `domain : Domain` and 4 more parameter(s), using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn resultant_expr(
   f_expr : Expr,
   g_expr : Expr,
@@ -83,6 +95,18 @@ pub fn resultant_expr(
 
 ///|
 /// Scalar compatibility wrapper for callers that require a rational resultant.
+
+///|
+/// Public API `resultant_expr_scalar`.
+///
+/// - Does: Provides the `resultant_expr_scalar` operation for polynomial operation front doors.
+/// - Input: parameters `f_expr : Expr`, `g_expr : Expr`, `var_name : String`, `gens :
+/// Array[String]`, `domain : Domain` and 4 more parameter(s), using the package
+/// representation expected by the signature.
+/// - Returns: a `@symnum.BigRational` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn resultant_expr_scalar(
   f_expr : Expr,
   g_expr : Expr,

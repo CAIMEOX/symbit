@@ -137,12 +137,34 @@ pub fn ComplexField::domain(self : ComplexField) -> Domain {
 }
 
 ///|
+
+///|
+/// Public API `RealField.contains_expr`.
+///
+/// - Does: Provides the `RealField.contains_expr` operation for approximate real and complex fields.
+/// - Input: parameters `self : RealField`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn RealField::contains_expr(self : RealField, expr : Expr) -> Bool {
   ignore(self)
   Domain::RR.contains_expr(expr)
 }
 
 ///|
+
+///|
+/// Public API `ComplexField.contains_expr`.
+///
+/// - Does: Provides the `ComplexField.contains_expr` operation for approximate real and complex fields.
+/// - Input: parameters `self : ComplexField`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn ComplexField::contains_expr(self : ComplexField, expr : Expr) -> Bool {
   ignore(self)
   Domain::CC.contains_expr(expr)
@@ -211,6 +233,17 @@ pub fn ComplexField::from_exact_parts(
 }
 
 ///|
+
+///|
+/// Public API `RealField.from_float`.
+///
+/// - Does: Provides the `RealField.from_float` operation for approximate real and complex fields.
+/// - Input: parameters `self : RealField`, `value : @symcore.Float`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn RealField::from_float(self : RealField, value : @symcore.Float) -> Expr {
   @symcore.Expr::Float(
     @symcore.Float::from_mpf(
@@ -221,6 +254,17 @@ pub fn RealField::from_float(self : RealField, value : @symcore.Float) -> Expr {
 }
 
 ///|
+
+///|
+/// Public API `ComplexField.from_complex_float`.
+///
+/// - Does: Provides the `ComplexField.from_complex_float` operation for approximate real and complex fields.
+/// - Input: parameters `self : ComplexField`, `value : @symcore.ComplexFloat`, using
+/// the package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn ComplexField::from_complex_float(
   self : ComplexField,
   value : @symcore.ComplexFloat,
@@ -300,6 +344,17 @@ pub fn ComplexField::coerce_complex(
 }
 
 ///|
+
+///|
+/// Public API `RealField.from_expr`.
+///
+/// - Does: Provides the `RealField.from_expr` operation for approximate real and complex fields.
+/// - Input: parameters `self : RealField`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn RealField::from_expr(
   self : RealField,
   expr : Expr,
@@ -308,6 +363,17 @@ pub fn RealField::from_expr(
 }
 
 ///|
+
+///|
+/// Public API `ComplexField.from_expr`.
+///
+/// - Does: Provides the `ComplexField.from_expr` operation for approximate real and complex fields.
+/// - Input: parameters `self : ComplexField`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn ComplexField::from_expr(
   self : ComplexField,
   expr : Expr,
@@ -346,11 +412,33 @@ pub fn RealField::mul(
 }
 
 ///|
+
+///|
+/// Public API `RealField.neg`.
+///
+/// - Does: Provides the `RealField.neg` operation for approximate real and complex fields.
+/// - Input: parameters `self : RealField`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn RealField::neg(self : RealField, expr : Expr) -> Expr raise PolyError {
   self.from_expr(@symcore.mul([@symcore.int(-1), expr]))
 }
 
 ///|
+
+///|
+/// Public API `RealField.inv`.
+///
+/// - Does: Provides the `RealField.inv` operation for approximate real and complex fields.
+/// - Input: parameters `self : RealField`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn RealField::inv(self : RealField, expr : Expr) -> Expr raise PolyError {
   self.from_float(
     self.coerce_float(expr).reciprocal() catch {
@@ -394,6 +482,17 @@ pub fn ComplexField::mul(
 }
 
 ///|
+
+///|
+/// Public API `ComplexField.neg`.
+///
+/// - Does: Provides the `ComplexField.neg` operation for approximate real and complex fields.
+/// - Input: parameters `self : ComplexField`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn ComplexField::neg(
   self : ComplexField,
   expr : Expr,
@@ -402,6 +501,17 @@ pub fn ComplexField::neg(
 }
 
 ///|
+
+///|
+/// Public API `ComplexField.inv`.
+///
+/// - Does: Provides the `ComplexField.inv` operation for approximate real and complex fields.
+/// - Input: parameters `self : ComplexField`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn ComplexField::inv(
   self : ComplexField,
   expr : Expr,
@@ -414,6 +524,17 @@ pub fn ComplexField::inv(
 }
 
 ///|
+
+///|
+/// Public API `ComplexField.conjugate`.
+///
+/// - Does: Provides the `ComplexField.conjugate` operation for approximate real and complex fields.
+/// - Input: parameters `self : ComplexField`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn ComplexField::conjugate(
   self : ComplexField,
   expr : Expr,
@@ -429,16 +550,49 @@ pub fn ComplexField::conjugate(
 }
 
 ///|
+
+///|
+/// Public API `RealField.zero`.
+///
+/// - Does: Provides the `RealField.zero` operation for approximate real and complex fields.
+/// - Input: parameters `self : RealField`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn RealField::zero(self : RealField) -> Expr {
   field_float_expr_from_exact(@symnum.BigRational::zero(), self.precision)
 }
 
 ///|
+
+///|
+/// Public API `RealField.one`.
+///
+/// - Does: Provides the `RealField.one` operation for approximate real and complex fields.
+/// - Input: parameters `self : RealField`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn RealField::one(self : RealField) -> Expr {
   field_float_expr_from_exact(@symnum.BigRational::one(), self.precision)
 }
 
 ///|
+
+///|
+/// Public API `ComplexField.zero`.
+///
+/// - Does: Provides the `ComplexField.zero` operation for approximate real and complex fields.
+/// - Input: parameters `self : ComplexField`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn ComplexField::zero(self : ComplexField) -> Expr {
   self.from_exact_parts(
     @symnum.BigRational::zero(),
@@ -447,6 +601,17 @@ pub fn ComplexField::zero(self : ComplexField) -> Expr {
 }
 
 ///|
+
+///|
+/// Public API `ComplexField.one`.
+///
+/// - Does: Provides the `ComplexField.one` operation for approximate real and complex fields.
+/// - Input: parameters `self : ComplexField`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn ComplexField::one(self : ComplexField) -> Expr {
   self.from_exact_parts(@symnum.BigRational::one(), @symnum.BigRational::zero())
 }

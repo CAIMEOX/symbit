@@ -1,5 +1,16 @@
 ///|
 /// Dense <-> sparse conversions for univariate polys.
+
+///|
+/// Public API `to_dense`.
+///
+/// - Does: Provides the `to_dense` operation for dense polynomial conversion.
+/// - Input: parameters `poly : Poly`, `degree : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn to_dense(poly : Poly, degree? : Int) -> Array[FieldElem] raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate
@@ -23,6 +34,17 @@ pub fn to_dense(poly : Poly, degree? : Int) -> Array[FieldElem] raise PolyError 
 
 ///|
 /// Build a sparse `Poly` from dense univariate coefficients.
+
+///|
+/// Public API `from_dense`.
+///
+/// - Does: Provides the `from_dense` operation for dense polynomial conversion.
+/// - Input: parameters `coeffs : Array[FieldElem]`, `gens : Array[String]`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `Poly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn from_dense(
   coeffs : Array[FieldElem],
   gens : Array[String],
@@ -47,6 +69,17 @@ pub fn from_dense(
 ///|
 /// Multivariate dense encoding: coeffs are in row-major order with strides
 /// given by degrees (length per generator minus 1).
+
+///|
+/// Public API `to_dense_multi`.
+///
+/// - Does: Provides the `to_dense_multi` operation for dense polynomial conversion.
+/// - Input: parameters `poly : Poly`, `degrees : Array[Int]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn to_dense_multi(
   poly : Poly,
   degrees : Array[Int],
@@ -79,6 +112,18 @@ pub fn to_dense_multi(
 
 ///|
 /// Build a sparse `Poly` from dense multivariate coefficients.
+
+///|
+/// Public API `from_dense_multi`.
+///
+/// - Does: Provides the `from_dense_multi` operation for dense polynomial conversion.
+/// - Input: parameters `coeffs : Array[FieldElem]`, `gens : Array[String]`, `domain :
+/// Domain`, `degrees : Array[Int]`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Poly` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn from_dense_multi(
   coeffs : Array[FieldElem],
   gens : Array[String],

@@ -573,6 +573,17 @@ pub fn power_series_domain(
 
 ///|
 /// True when the domain is a field in the current compatibility model.
+
+///|
+/// Public API `domain_is_field_pred`.
+///
+/// - Does: Provides the `domain_is_field_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_field_pred(domain : Domain) -> Bool {
   match domain {
     Domain::QQ
@@ -592,6 +603,17 @@ pub fn domain_is_field_pred(domain : Domain) -> Bool {
 
 ///|
 /// True when the domain is composite in SymPy's domain hierarchy.
+
+///|
+/// Public API `domain_is_composite_pred`.
+///
+/// - Does: Provides the `domain_is_composite_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_composite_pred(domain : Domain) -> Bool {
   match domain {
     Domain::PolyRing(_, _)
@@ -604,6 +626,17 @@ pub fn domain_is_composite_pred(domain : Domain) -> Bool {
 
 ///|
 /// True for non-composite domains except Gaussian pair domains.
+
+///|
+/// Public API `domain_is_simple_pred`.
+///
+/// - Does: Provides the `domain_is_simple_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_simple_pred(domain : Domain) -> Bool {
   if domain_is_composite_pred(domain) {
     return false
@@ -616,12 +649,34 @@ pub fn domain_is_simple_pred(domain : Domain) -> Bool {
 
 ///|
 /// True when the domain supports additive/multiplicative ring operations.
+
+///|
+/// Public API `domain_is_ring_pred`.
+///
+/// - Does: Provides the `domain_is_ring_pred` operation for domain compatibility.
+/// - Input: parameters `_domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_ring_pred(_domain : Domain) -> Bool {
   true
 }
 
 ///|
 /// True when coefficients are exact (no floating approximation semantics).
+
+///|
+/// Public API `domain_is_exact_pred`.
+///
+/// - Does: Provides the `domain_is_exact_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_exact_pred(domain : Domain) -> Bool {
   match domain {
     Domain::RR | Domain::CC => false
@@ -637,6 +692,17 @@ pub fn domain_is_exact_pred(domain : Domain) -> Bool {
 
 ///|
 /// True when the coefficient domain has finitely many elements.
+
+///|
+/// Public API `domain_is_finite_pred`.
+///
+/// - Does: Provides the `domain_is_finite_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_finite_pred(domain : Domain) -> Bool {
   match domain {
     Domain::GF(_) | Domain::GFExt(_, _, _) => true
@@ -647,6 +713,17 @@ pub fn domain_is_finite_pred(domain : Domain) -> Bool {
 
 ///|
 /// True when the domain elements are interpreted numerically.
+
+///|
+/// Public API `domain_is_numerical_pred`.
+///
+/// - Does: Provides the `domain_is_numerical_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_numerical_pred(domain : Domain) -> Bool {
   match domain {
     Domain::ZZ
@@ -664,6 +741,17 @@ pub fn domain_is_numerical_pred(domain : Domain) -> Bool {
 
 ///|
 /// True for algebraic domains.
+
+///|
+/// Public API `domain_is_algebraic_pred`.
+///
+/// - Does: Provides the `domain_is_algebraic_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_algebraic_pred(domain : Domain) -> Bool {
   match domain {
     Domain::AlgExt(_, _, _) => true
@@ -673,12 +761,34 @@ pub fn domain_is_algebraic_pred(domain : Domain) -> Bool {
 
 ///|
 /// True for algebraic field domains.
+
+///|
+/// Public API `domain_is_algebraic_field_pred`.
+///
+/// - Does: Provides the `domain_is_algebraic_field_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_algebraic_field_pred(domain : Domain) -> Bool {
   domain is Domain::AlgExt(_, _, _)
 }
 
 ///|
 /// True for domains that have an associated ring.
+
+///|
+/// Public API `domain_has_assoc_ring_pred`.
+///
+/// - Does: Provides the `domain_has_assoc_ring_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_has_assoc_ring_pred(domain : Domain) -> Bool {
   match domain {
     Domain::RR
@@ -694,6 +804,17 @@ pub fn domain_has_assoc_ring_pred(domain : Domain) -> Bool {
 
 ///|
 /// Principal-ideal-domain predicate for migrated domain families.
+
+///|
+/// Public API `domain_is_pid_pred`.
+///
+/// - Does: Provides the `domain_is_pid_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_pid_pred(domain : Domain) -> Bool {
   match domain {
     Domain::RR
@@ -706,86 +827,273 @@ pub fn domain_is_pid_pred(domain : Domain) -> Bool {
 }
 
 ///|
+
+///|
+/// Public API `domain_is_integer_ring_pred`.
+///
+/// - Does: Provides the `domain_is_integer_ring_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_integer_ring_pred(domain : Domain) -> Bool {
   domain is Domain::ZZ
 }
 
 ///|
+
+///|
+/// Public API `domain_is_rational_field_pred`.
+///
+/// - Does: Provides the `domain_is_rational_field_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_rational_field_pred(domain : Domain) -> Bool {
   domain is Domain::QQ
 }
 
 ///|
+
+///|
+/// Public API `domain_is_real_field_pred`.
+///
+/// - Does: Provides the `domain_is_real_field_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_real_field_pred(domain : Domain) -> Bool {
   domain is Domain::RR
 }
 
 ///|
+
+///|
+/// Public API `domain_is_complex_field_pred`.
+///
+/// - Does: Provides the `domain_is_complex_field_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_complex_field_pred(domain : Domain) -> Bool {
   domain is Domain::CC
 }
 
 ///|
+
+///|
+/// Public API `domain_is_gaussian_ring_pred`.
+///
+/// - Does: Provides the `domain_is_gaussian_ring_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_gaussian_ring_pred(domain : Domain) -> Bool {
   domain is Domain::ZZ_I
 }
 
 ///|
+
+///|
+/// Public API `domain_is_gaussian_field_pred`.
+///
+/// - Does: Provides the `domain_is_gaussian_field_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_gaussian_field_pred(domain : Domain) -> Bool {
   domain is Domain::QQ_I
 }
 
 ///|
+
+///|
+/// Public API `domain_is_expression_domain_pred`.
+///
+/// - Does: Provides the `domain_is_expression_domain_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_expression_domain_pred(domain : Domain) -> Bool {
   domain is Domain::EX
 }
 
 ///|
+
+///|
+/// Public API `domain_is_expression_raw_domain_pred`.
+///
+/// - Does: Provides the `domain_is_expression_raw_domain_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_expression_raw_domain_pred(domain : Domain) -> Bool {
   domain is Domain::EXRAW
 }
 
 ///|
+
+///|
+/// Public API `domain_is_cc_pred`.
+///
+/// - Does: Provides the `domain_is_cc_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_cc_pred(domain : Domain) -> Bool {
   domain is Domain::CC
 }
 
 ///|
+
+///|
+/// Public API `domain_is_rr_pred`.
+///
+/// - Does: Provides the `domain_is_rr_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_rr_pred(domain : Domain) -> Bool {
   domain is Domain::RR
 }
 
 ///|
+
+///|
+/// Public API `domain_is_zz_pred`.
+///
+/// - Does: Provides the `domain_is_zz_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_zz_pred(domain : Domain) -> Bool {
   domain is Domain::ZZ
 }
 
 ///|
+
+///|
+/// Public API `domain_is_qq_pred`.
+///
+/// - Does: Provides the `domain_is_qq_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_qq_pred(domain : Domain) -> Bool {
   domain is Domain::QQ
 }
 
 ///|
+
+///|
+/// Public API `domain_is_zz_i_pred`.
+///
+/// - Does: Provides the `domain_is_zz_i_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_zz_i_pred(domain : Domain) -> Bool {
   domain is Domain::ZZ_I
 }
 
 ///|
+
+///|
+/// Public API `domain_is_qq_i_pred`.
+///
+/// - Does: Provides the `domain_is_qq_i_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_qq_i_pred(domain : Domain) -> Bool {
   domain is Domain::QQ_I
 }
 
 ///|
+
+///|
+/// Public API `domain_is_symbolic_domain_pred`.
+///
+/// - Does: Provides the `domain_is_symbolic_domain_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_symbolic_domain_pred(domain : Domain) -> Bool {
   domain is Domain::EX
 }
 
 ///|
+
+///|
+/// Public API `domain_is_symbolic_raw_domain_pred`.
+///
+/// - Does: Provides the `domain_is_symbolic_raw_domain_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_symbolic_raw_domain_pred(domain : Domain) -> Bool {
   domain is Domain::EXRAW
 }
 
 ///|
+
+///|
+/// Public API `domain_is_ff_pred`.
+///
+/// - Does: Provides the `domain_is_ff_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_ff_pred(domain : Domain) -> Bool {
   match domain {
     Domain::GF(_) | Domain::GFExt(_, _, _) => true
@@ -794,6 +1102,17 @@ pub fn domain_is_ff_pred(domain : Domain) -> Bool {
 }
 
 ///|
+
+///|
+/// Public API `domain_is_frac_pred`.
+///
+/// - Does: Provides the `domain_is_frac_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_frac_pred(domain : Domain) -> Bool {
   match domain {
     Domain::Frac(_) | Domain::RationalFunctionField(_, _) => true
@@ -802,32 +1121,98 @@ pub fn domain_is_frac_pred(domain : Domain) -> Bool {
 }
 
 ///|
+
+///|
+/// Public API `domain_is_fraction_field_pred`.
+///
+/// - Does: Provides the `domain_is_fraction_field_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_fraction_field_pred(domain : Domain) -> Bool {
   domain_is_frac_pred(domain)
 }
 
 ///|
+
+///|
+/// Public API `domain_is_poly_pred`.
+///
+/// - Does: Provides the `domain_is_poly_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_poly_pred(domain : Domain) -> Bool {
   domain is Domain::PolyRing(_, _)
 }
 
 ///|
+
+///|
+/// Public API `domain_is_polynomial_ring_pred`.
+///
+/// - Does: Provides the `domain_is_polynomial_ring_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_polynomial_ring_pred(domain : Domain) -> Bool {
   domain_is_poly_pred(domain)
 }
 
 ///|
+
+///|
+/// Public API `domain_is_finite_extension_pred`.
+///
+/// - Does: Provides the `domain_is_finite_extension_pred` operation for domain compatibility.
+/// - Input: parameters `_domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_finite_extension_pred(_domain : Domain) -> Bool {
   // SymPy finite fields and algebraic fields are not flagged as "FiniteExtension".
   false
 }
 
 ///|
+
+///|
+/// Public API `domain_has_assoc_field_pred`.
+///
+/// - Does: Provides the `domain_has_assoc_field_pred` operation for domain compatibility.
+/// - Input: parameters `_domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_has_assoc_field_pred(_domain : Domain) -> Bool {
   true
 }
 
 ///|
+
+///|
+/// Public API `domain_has_default_precision_pred`.
+///
+/// - Does: Provides the `domain_has_default_precision_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_has_default_precision_pred(domain : Domain) -> Bool {
   match domain {
     Domain::RR | Domain::CC => true
@@ -836,6 +1221,17 @@ pub fn domain_has_default_precision_pred(domain : Domain) -> Bool {
 }
 
 ///|
+
+///|
+/// Public API `domain_has_characteristic_zero_pred`.
+///
+/// - Does: Provides the `domain_has_characteristic_zero_pred` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_has_characteristic_zero_pred(domain : Domain) -> Bool {
   domain_characteristic(domain) == 0
 }
@@ -1589,6 +1985,18 @@ fn default_algext_gen(poly : Poly, root_index : Int) -> String raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `domain_alg_field_from_poly`.
+///
+/// - Does: Provides the `domain_alg_field_from_poly` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `poly : Poly`, `extension_name : String =
+/// None`, `root_index : Int = -1`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_alg_field_from_poly(
   domain : Domain,
   poly : Poly,
@@ -1622,6 +2030,18 @@ fn cyclotomic_poly_domain(n : Int, gen : String) -> Poly raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `domain_cyclotomic_field`.
+///
+/// - Does: Provides the `domain_cyclotomic_field` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `n : Int`, `ss : Bool = false`,
+/// `extension_name : String = "zeta"`, `gen : String = None` and 1 more parameter(s),
+/// using the package representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_cyclotomic_field(
   domain : Domain,
   n : Int,
@@ -1646,6 +2066,17 @@ pub fn domain_cyclotomic_field(
 
 ///|
 /// Inject fresh generators into `domain`.
+
+///|
+/// Public API `domain_inject`.
+///
+/// - Does: Provides the `domain_inject` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `gens : Array[String]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_inject(
   domain : Domain,
   gens : Array[String],
@@ -1679,6 +2110,17 @@ pub fn domain_inject(
 
 ///|
 /// Drop generators from a domain, recursively through nested composites.
+
+///|
+/// Public API `domain_drop`.
+///
+/// - Does: Provides the `domain_drop` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `gens : Array[String]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_drop(
   domain : Domain,
   gens : Array[String],
@@ -2037,6 +2479,17 @@ fn expr_in_fraction_domain(
 
 ///|
 /// Check whether an expression belongs to the given domain.
+
+///|
+/// Public API `domain_contains_expr`.
+///
+/// - Does: Provides the `domain_contains_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_contains_expr(domain : Domain, expr : Expr) -> Bool {
   match domain {
     Domain::EX | Domain::EXRAW => true
@@ -2090,17 +2543,50 @@ pub fn domain_contains_expr(domain : Domain, expr : Expr) -> Bool {
 }
 
 ///|
+
+///|
+/// Public API `Domain.contains_expr`.
+///
+/// - Does: Provides the `Domain.contains_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::contains_expr(self : Domain, expr : Expr) -> Bool {
   domain_contains_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.of_type_expr`.
+///
+/// - Does: Provides the `Domain.of_type_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::of_type_expr(self : Domain, expr : Expr) -> Bool {
   domain_contains_expr(self, expr)
 }
 
 ///|
 /// Convert a SymPy-style expression into a canonical element of `domain`.
+
+///|
+/// Public API `domain_from_sympy_expr`.
+///
+/// - Does: Provides the `domain_from_sympy_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_from_sympy_expr(
   domain : Domain,
   expr : Expr,
@@ -2161,6 +2647,17 @@ pub fn domain_from_sympy_expr(
 
 ///|
 /// Convert an internal domain element back to a SymPy-style expression.
+
+///|
+/// Public API `domain_to_sympy_expr`.
+///
+/// - Does: Provides the `domain_to_sympy_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_to_sympy_expr(
   domain : Domain,
   expr : Expr,
@@ -2169,17 +2666,50 @@ pub fn domain_to_sympy_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_new_expr`.
+///
+/// - Does: Provides the `domain_new_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_new_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   domain_from_sympy_expr(domain, expr)
 }
 
 ///|
+
+///|
+/// Public API `domain_normal_expr`.
+///
+/// - Does: Provides the `domain_normal_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_normal_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   domain_new_expr(domain, expr)
 }
 
 ///|
 /// Convert an expression from `base` into `domain`, mirroring `convert_from`.
+
+///|
+/// Public API `domain_convert_from_expr`.
+///
+/// - Does: Provides the `domain_convert_from_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_convert_from_expr(
   domain : Domain,
   expr : Expr,
@@ -2240,6 +2770,17 @@ fn domain_try_convert_from_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_ff_expr`.
+///
+/// - Does: Provides the `domain_from_ff_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_ff_expr(
   domain : Domain,
   expr : Expr,
@@ -2253,6 +2794,17 @@ pub fn domain_from_ff_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_ff_python_expr`.
+///
+/// - Does: Provides the `domain_from_ff_python_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_ff_python_expr(
   domain : Domain,
   expr : Expr,
@@ -2262,6 +2814,17 @@ pub fn domain_from_ff_python_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_zz_expr`.
+///
+/// - Does: Provides the `domain_from_zz_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_zz_expr(
   domain : Domain,
   expr : Expr,
@@ -2274,6 +2837,17 @@ pub fn domain_from_zz_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_zz_python_expr`.
+///
+/// - Does: Provides the `domain_from_zz_python_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_zz_python_expr(
   domain : Domain,
   expr : Expr,
@@ -2283,6 +2857,17 @@ pub fn domain_from_zz_python_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_qq_expr`.
+///
+/// - Does: Provides the `domain_from_qq_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_qq_expr(
   domain : Domain,
   expr : Expr,
@@ -2295,6 +2880,17 @@ pub fn domain_from_qq_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_qq_python_expr`.
+///
+/// - Does: Provides the `domain_from_qq_python_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_qq_python_expr(
   domain : Domain,
   expr : Expr,
@@ -2304,6 +2900,17 @@ pub fn domain_from_qq_python_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_ff_gmpy_expr`.
+///
+/// - Does: Provides the `domain_from_ff_gmpy_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_ff_gmpy_expr(
   domain : Domain,
   expr : Expr,
@@ -2313,6 +2920,17 @@ pub fn domain_from_ff_gmpy_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_zz_gmpy_expr`.
+///
+/// - Does: Provides the `domain_from_zz_gmpy_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_zz_gmpy_expr(
   domain : Domain,
   expr : Expr,
@@ -2322,6 +2940,17 @@ pub fn domain_from_zz_gmpy_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_qq_gmpy_expr`.
+///
+/// - Does: Provides the `domain_from_qq_gmpy_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_qq_gmpy_expr(
   domain : Domain,
   expr : Expr,
@@ -2331,6 +2960,17 @@ pub fn domain_from_qq_gmpy_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_real_field_expr`.
+///
+/// - Does: Provides the `domain_from_real_field_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_real_field_expr(
   domain : Domain,
   expr : Expr,
@@ -2343,6 +2983,17 @@ pub fn domain_from_real_field_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_complex_field_expr`.
+///
+/// - Does: Provides the `domain_from_complex_field_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_complex_field_expr(
   domain : Domain,
   expr : Expr,
@@ -2355,6 +3006,17 @@ pub fn domain_from_complex_field_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_algebraic_field_expr`.
+///
+/// - Does: Provides the `domain_from_algebraic_field_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_algebraic_field_expr(
   domain : Domain,
   expr : Expr,
@@ -2367,6 +3029,17 @@ pub fn domain_from_algebraic_field_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_gaussian_integer_ring_expr`.
+///
+/// - Does: Provides the `domain_from_gaussian_integer_ring_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_gaussian_integer_ring_expr(
   domain : Domain,
   expr : Expr,
@@ -2379,6 +3052,17 @@ pub fn domain_from_gaussian_integer_ring_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_gaussian_rational_field_expr`.
+///
+/// - Does: Provides the `domain_from_gaussian_rational_field_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_gaussian_rational_field_expr(
   domain : Domain,
   expr : Expr,
@@ -2391,6 +3075,17 @@ pub fn domain_from_gaussian_rational_field_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_polynomial_ring_expr`.
+///
+/// - Does: Provides the `domain_from_polynomial_ring_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_polynomial_ring_expr(
   domain : Domain,
   expr : Expr,
@@ -2406,6 +3101,17 @@ pub fn domain_from_polynomial_ring_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_fraction_field_expr`.
+///
+/// - Does: Provides the `domain_from_fraction_field_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_fraction_field_expr(
   domain : Domain,
   expr : Expr,
@@ -2419,6 +3125,17 @@ pub fn domain_from_fraction_field_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_global_polynomial_ring_expr`.
+///
+/// - Does: Provides the `domain_from_global_polynomial_ring_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_global_polynomial_ring_expr(
   domain : Domain,
   expr : Expr,
@@ -2428,6 +3145,17 @@ pub fn domain_from_global_polynomial_ring_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_generalized_polynomial_ring_expr`.
+///
+/// - Does: Provides the `domain_from_generalized_polynomial_ring_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_generalized_polynomial_ring_expr(
   domain : Domain,
   expr : Expr,
@@ -2451,6 +3179,17 @@ pub fn domain_from_generalized_polynomial_ring_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_monogenic_finite_extension_expr`.
+///
+/// - Does: Provides the `domain_from_monogenic_finite_extension_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_monogenic_finite_extension_expr(
   domain : Domain,
   expr : Expr,
@@ -2460,6 +3199,17 @@ pub fn domain_from_monogenic_finite_extension_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_expression_domain_expr`.
+///
+/// - Does: Provides the `domain_from_expression_domain_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_expression_domain_expr(
   domain : Domain,
   expr : Expr,
@@ -2472,6 +3222,17 @@ pub fn domain_from_expression_domain_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_from_expression_raw_domain_expr`.
+///
+/// - Does: Provides the `domain_from_expression_raw_domain_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_from_expression_raw_domain_expr(
   domain : Domain,
   expr : Expr,
@@ -2485,6 +3246,17 @@ pub fn domain_from_expression_raw_domain_expr(
 
 ///|
 /// Convert an expression into `domain`, optionally using an explicit source domain.
+
+///|
+/// Public API `domain_convert_expr`.
+///
+/// - Does: Provides the `domain_convert_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `base : Domain = None`, using
+/// the package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_convert_expr(
   domain : Domain,
   expr : Expr,
@@ -2497,6 +3269,17 @@ pub fn domain_convert_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_sum_expr`.
+///
+/// - Does: Provides the `domain_sum_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `exprs : Array[Expr]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_sum_expr(
   domain : Domain,
   exprs : Array[Expr],
@@ -2509,6 +3292,17 @@ pub fn domain_sum_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_map_expr_tree`.
+///
+/// - Does: Provides the `domain_map_expr_tree` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `exprs : Array[DomainExprTree]`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Array[DomainExprTree]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_map_expr_tree(
   domain : Domain,
   exprs : Array[DomainExprTree],
@@ -3115,21 +3909,65 @@ fn domain_expr_sign(domain : Domain, expr : Expr) -> Int? {
 }
 
 ///|
+
+///|
+/// Public API `domain_is_zero_expr`.
+///
+/// - Does: Provides the `domain_is_zero_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_zero_expr(domain : Domain, expr : Expr) -> Bool {
   domain_contains_expr(domain, expr) && domain_expr_is_zero(expr)
 }
 
 ///|
+
+///|
+/// Public API `domain_is_one_expr`.
+///
+/// - Does: Provides the `domain_is_one_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_one_expr(domain : Domain, expr : Expr) -> Bool {
   domain_contains_expr(domain, expr) && domain_expr_is_one(expr)
 }
 
 ///|
+
+///|
+/// Public API `domain_is_negative_one_expr`.
+///
+/// - Does: Provides the `domain_is_negative_one_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_negative_one_expr(domain : Domain, expr : Expr) -> Bool {
   domain_contains_expr(domain, expr) && domain_expr_is_minus_one(expr)
 }
 
 ///|
+
+///|
+/// Public API `domain_is_unit_expr`.
+///
+/// - Does: Provides the `domain_is_unit_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_unit_expr(domain : Domain, expr : Expr) -> Bool {
   if !domain_contains_expr(domain, expr) {
     return false
@@ -3163,6 +4001,17 @@ pub fn domain_is_unit_expr(domain : Domain, expr : Expr) -> Bool {
 }
 
 ///|
+
+///|
+/// Public API `domain_is_positive_expr`.
+///
+/// - Does: Provides the `domain_is_positive_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_positive_expr(domain : Domain, expr : Expr) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(1) => true
@@ -3171,6 +4020,17 @@ pub fn domain_is_positive_expr(domain : Domain, expr : Expr) -> Bool {
 }
 
 ///|
+
+///|
+/// Public API `domain_is_negative_expr`.
+///
+/// - Does: Provides the `domain_is_negative_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_negative_expr(domain : Domain, expr : Expr) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(v) => v < 0
@@ -3179,6 +4039,17 @@ pub fn domain_is_negative_expr(domain : Domain, expr : Expr) -> Bool {
 }
 
 ///|
+
+///|
+/// Public API `domain_is_nonpositive_expr`.
+///
+/// - Does: Provides the `domain_is_nonpositive_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_nonpositive_expr(domain : Domain, expr : Expr) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(v) => v <= 0
@@ -3187,6 +4058,17 @@ pub fn domain_is_nonpositive_expr(domain : Domain, expr : Expr) -> Bool {
 }
 
 ///|
+
+///|
+/// Public API `domain_is_nonnegative_expr`.
+///
+/// - Does: Provides the `domain_is_nonnegative_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_is_nonnegative_expr(domain : Domain, expr : Expr) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(v) => v >= 0
@@ -4427,6 +5309,17 @@ fn domain_rational_function_lcm_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_canonical_unit_expr`.
+///
+/// - Does: Provides the `domain_canonical_unit_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_canonical_unit_expr(
   domain : Domain,
   expr : Expr,
@@ -4516,6 +5409,17 @@ pub fn domain_canonical_unit_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_abs_expr`.
+///
+/// - Does: Provides the `domain_abs_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_abs_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
@@ -4567,6 +5471,17 @@ pub fn domain_abs_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `domain_gcd_expr`.
+///
+/// - Does: Provides the `domain_gcd_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_gcd_expr(
   domain : Domain,
   left : Expr,
@@ -4589,6 +5504,17 @@ pub fn domain_gcd_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_lcm_expr`.
+///
+/// - Does: Provides the `domain_lcm_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_lcm_expr(
   domain : Domain,
   left : Expr,
@@ -4611,6 +5537,18 @@ pub fn domain_lcm_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_cofactors_expr`.
+///
+/// - Does: Provides the `domain_cofactors_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, `) -> (Expr`,
+/// `Expr` and 1 more parameter(s), using the package representation expected by the
+/// signature.
+/// - Returns: a `(Expr, Expr, Expr)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_cofactors_expr(
   domain : Domain,
   left : Expr,
@@ -4822,6 +5760,18 @@ fn domain_poly_gcdex_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_gcdex_expr`.
+///
+/// - Does: Provides the `domain_gcdex_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, `) -> (Expr`,
+/// `Expr` and 1 more parameter(s), using the package representation expected by the
+/// signature.
+/// - Returns: a `(Expr, Expr, Expr)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_gcdex_expr(
   domain : Domain,
   left : Expr,
@@ -4915,6 +5865,17 @@ pub fn domain_gcdex_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_half_gcdex_expr`.
+///
+/// - Does: Provides the `domain_half_gcdex_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, `) -> (Expr`,
+/// `Expr`, using the package representation expected by the signature.
+/// - Returns: a `(Expr, Expr)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_half_gcdex_expr(
   domain : Domain,
   left : Expr,
@@ -4925,6 +5886,17 @@ pub fn domain_half_gcdex_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_invert_expr`.
+///
+/// - Does: Provides the `domain_invert_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_invert_expr(
   domain : Domain,
   left : Expr,
@@ -4938,6 +5910,17 @@ pub fn domain_invert_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_revert_expr`.
+///
+/// - Does: Provides the `domain_revert_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_revert_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   if domain_is_field_pred(domain) {
     guard !domain_is_zero_expr(domain, expr) else {
@@ -4954,6 +5937,17 @@ pub fn domain_revert_expr(domain : Domain, expr : Expr) -> Expr raise PolyError 
 }
 
 ///|
+
+///|
+/// Public API `domain_factorial_expr`.
+///
+/// - Does: Provides the `domain_factorial_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_factorial_expr(
   domain : Domain,
   expr : Expr,
@@ -5000,6 +5994,17 @@ pub fn domain_factorial_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_log_expr`.
+///
+/// - Does: Provides the `domain_log_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `value : Expr`, `base : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_log_expr(
   domain : Domain,
   value : Expr,
@@ -5030,6 +6035,17 @@ pub fn domain_log_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_sqrt_expr`.
+///
+/// - Does: Provides the `domain_sqrt_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_sqrt_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
@@ -5053,6 +6069,17 @@ pub fn domain_sqrt_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `domain_exsqrt_expr`.
+///
+/// - Does: Provides the `domain_exsqrt_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_exsqrt_expr(
   domain : Domain,
   expr : Expr,
@@ -5128,6 +6155,17 @@ pub fn domain_exsqrt_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_is_square_expr`.
+///
+/// - Does: Provides the `domain_is_square_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_is_square_expr(
   domain : Domain,
   expr : Expr,
@@ -5160,6 +6198,17 @@ pub fn domain_is_square_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_real_expr`.
+///
+/// - Does: Provides the `domain_real_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_real_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
@@ -5168,6 +6217,17 @@ pub fn domain_real_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `domain_imag_expr`.
+///
+/// - Does: Provides the `domain_imag_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_imag_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
@@ -5186,6 +6246,18 @@ fn gaussian_rat_almosteq(
 }
 
 ///|
+
+///|
+/// Public API `domain_almosteq_expr`.
+///
+/// - Does: Provides the `domain_almosteq_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, `tolerance :
+/// @symnum.BigRational = None`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn domain_almosteq_expr(
   domain : Domain,
   left : Expr,
@@ -5240,6 +6312,17 @@ pub fn domain_almosteq_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_evalf_expr`.
+///
+/// - Does: Provides the `domain_evalf_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `prec : Int = None`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_evalf_expr(
   domain : Domain,
   expr : Expr,
@@ -5289,24 +6372,68 @@ fn domain_one_like_expr(domain : Domain) -> Expr raise PolyError {
 
 ///|
 /// Return the additive identity of `domain` as an expression.
+
+///|
+/// Public API `domain_zero_expr`.
+///
+/// - Does: Provides the `domain_zero_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_zero_expr(domain : Domain) -> Expr raise PolyError {
   domain_zero_like_expr(domain)
 }
 
 ///|
 /// Return the multiplicative identity of `domain` as an expression.
+
+///|
+/// Public API `domain_one_expr`.
+///
+/// - Does: Provides the `domain_one_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_one_expr(domain : Domain) -> Expr raise PolyError {
   domain_one_like_expr(domain)
 }
 
 ///|
 /// Unary plus over domain elements.
+
+///|
+/// Public API `domain_pos_expr`.
+///
+/// - Does: Provides the `domain_pos_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_pos_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   domain_from_sympy_expr(domain, expr)
 }
 
 ///|
 /// Unary minus over domain elements.
+
+///|
+/// Public API `domain_neg_expr`.
+///
+/// - Does: Provides the `domain_neg_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_neg_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
@@ -5316,6 +6443,17 @@ pub fn domain_neg_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
 
 ///|
 /// Addition over domain elements.
+
+///|
+/// Public API `domain_add_expr`.
+///
+/// - Does: Provides the `domain_add_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_add_expr(
   domain : Domain,
   left : Expr,
@@ -5330,6 +6468,17 @@ pub fn domain_add_expr(
 
 ///|
 /// Subtraction over domain elements.
+
+///|
+/// Public API `domain_sub_expr`.
+///
+/// - Does: Provides the `domain_sub_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_sub_expr(
   domain : Domain,
   left : Expr,
@@ -5344,6 +6493,17 @@ pub fn domain_sub_expr(
 
 ///|
 /// Multiplication over domain elements.
+
+///|
+/// Public API `domain_mul_expr`.
+///
+/// - Does: Provides the `domain_mul_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_mul_expr(
   domain : Domain,
   left : Expr,
@@ -5374,6 +6534,17 @@ pub fn domain_mul_expr(
 
 ///|
 /// Exponentiation over domain elements.
+
+///|
+/// Public API `domain_pow_expr`.
+///
+/// - Does: Provides the `domain_pow_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, `exp : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_pow_expr(
   domain : Domain,
   expr : Expr,
@@ -5464,6 +6635,17 @@ fn domain_poly_div_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_numer_expr`.
+///
+/// - Does: Provides the `domain_numer_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_numer_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
@@ -5505,6 +6687,17 @@ pub fn domain_numer_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `domain_denom_expr`.
+///
+/// - Does: Provides the `domain_denom_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `expr : Expr`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_denom_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
@@ -5534,6 +6727,17 @@ pub fn domain_denom_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `domain_quo_expr`.
+///
+/// - Does: Provides the `domain_quo_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_quo_expr(
   domain : Domain,
   left : Expr,
@@ -5600,6 +6804,17 @@ pub fn domain_quo_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_rem_expr`.
+///
+/// - Does: Provides the `domain_rem_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_rem_expr(
   domain : Domain,
   left : Expr,
@@ -5646,6 +6861,17 @@ pub fn domain_rem_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_div_expr`.
+///
+/// - Does: Provides the `domain_div_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, `) -> (Expr`,
+/// `Expr`, using the package representation expected by the signature.
+/// - Returns: a `(Expr, Expr)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_div_expr(
   domain : Domain,
   left : Expr,
@@ -5655,6 +6881,17 @@ pub fn domain_div_expr(
 }
 
 ///|
+
+///|
+/// Public API `domain_exquo_expr`.
+///
+/// - Does: Provides the `domain_exquo_expr` operation for domain compatibility.
+/// - Input: parameters `domain : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_exquo_expr(
   domain : Domain,
   left : Expr,
@@ -5692,21 +6929,65 @@ pub fn domain_exquo_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.is_zero_expr`.
+///
+/// - Does: Provides the `Domain.is_zero_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::is_zero_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_zero_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.zero_expr`.
+///
+/// - Does: Provides the `Domain.zero_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::zero_expr(self : Domain) -> Expr raise PolyError {
   domain_zero_expr(self)
 }
 
 ///|
+
+///|
+/// Public API `Domain.one_expr`.
+///
+/// - Does: Provides the `Domain.one_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::one_expr(self : Domain) -> Expr raise PolyError {
   domain_one_expr(self)
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_sympy_expr`.
+///
+/// - Does: Provides the `Domain.from_sympy_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::from_sympy_expr(
   self : Domain,
   expr : Expr,
@@ -5715,16 +6996,49 @@ pub fn Domain::from_sympy_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.new_expr`.
+///
+/// - Does: Provides the `Domain.new_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::new_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_new_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.normal_expr`.
+///
+/// - Does: Provides the `Domain.normal_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::normal_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_normal_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.to_sympy_expr`.
+///
+/// - Does: Provides the `Domain.to_sympy_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::to_sympy_expr(
   self : Domain,
   expr : Expr,
@@ -5733,6 +7047,17 @@ pub fn Domain::to_sympy_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.convert_from_expr`.
+///
+/// - Does: Provides the `Domain.convert_from_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::convert_from_expr(
   self : Domain,
   expr : Expr,
@@ -5742,6 +7067,17 @@ pub fn Domain::convert_from_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.convert_expr`.
+///
+/// - Does: Provides the `Domain.convert_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain = None`, using
+/// the package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::convert_expr(
   self : Domain,
   expr : Expr,
@@ -5751,6 +7087,17 @@ pub fn Domain::convert_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.sum_expr`.
+///
+/// - Does: Provides the `Domain.sum_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `exprs : Array[Expr]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::sum_expr(
   self : Domain,
   exprs : Array[Expr],
@@ -5759,6 +7106,17 @@ pub fn Domain::sum_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.map_expr_tree`.
+///
+/// - Does: Provides the `Domain.map_expr_tree` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `exprs : Array[DomainExprTree]`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Array[DomainExprTree]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::map_expr_tree(
   self : Domain,
   exprs : Array[DomainExprTree],
@@ -5767,11 +7125,33 @@ pub fn Domain::map_expr_tree(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_ff_expr`.
+///
+/// - Does: Provides the `Domain.from_ff_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_ff_expr(self : Domain, expr : Expr, base : Domain) -> Expr? {
   domain_from_ff_expr(self, expr, base)
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_ff_python_expr`.
+///
+/// - Does: Provides the `Domain.from_ff_python_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_ff_python_expr(
   self : Domain,
   expr : Expr,
@@ -5781,11 +7161,33 @@ pub fn Domain::from_ff_python_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_zz_expr`.
+///
+/// - Does: Provides the `Domain.from_zz_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_zz_expr(self : Domain, expr : Expr, base : Domain) -> Expr? {
   domain_from_zz_expr(self, expr, base)
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_zz_python_expr`.
+///
+/// - Does: Provides the `Domain.from_zz_python_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_zz_python_expr(
   self : Domain,
   expr : Expr,
@@ -5795,11 +7197,33 @@ pub fn Domain::from_zz_python_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_qq_expr`.
+///
+/// - Does: Provides the `Domain.from_qq_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_qq_expr(self : Domain, expr : Expr, base : Domain) -> Expr? {
   domain_from_qq_expr(self, expr, base)
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_qq_python_expr`.
+///
+/// - Does: Provides the `Domain.from_qq_python_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_qq_python_expr(
   self : Domain,
   expr : Expr,
@@ -5809,6 +7233,17 @@ pub fn Domain::from_qq_python_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_ff_gmpy_expr`.
+///
+/// - Does: Provides the `Domain.from_ff_gmpy_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_ff_gmpy_expr(
   self : Domain,
   expr : Expr,
@@ -5818,6 +7253,17 @@ pub fn Domain::from_ff_gmpy_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_zz_gmpy_expr`.
+///
+/// - Does: Provides the `Domain.from_zz_gmpy_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_zz_gmpy_expr(
   self : Domain,
   expr : Expr,
@@ -5827,6 +7273,17 @@ pub fn Domain::from_zz_gmpy_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_qq_gmpy_expr`.
+///
+/// - Does: Provides the `Domain.from_qq_gmpy_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_qq_gmpy_expr(
   self : Domain,
   expr : Expr,
@@ -5836,6 +7293,17 @@ pub fn Domain::from_qq_gmpy_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_real_field_expr`.
+///
+/// - Does: Provides the `Domain.from_real_field_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_real_field_expr(
   self : Domain,
   expr : Expr,
@@ -5845,6 +7313,17 @@ pub fn Domain::from_real_field_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_complex_field_expr`.
+///
+/// - Does: Provides the `Domain.from_complex_field_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_complex_field_expr(
   self : Domain,
   expr : Expr,
@@ -5854,6 +7333,17 @@ pub fn Domain::from_complex_field_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_algebraic_field_expr`.
+///
+/// - Does: Provides the `Domain.from_algebraic_field_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_algebraic_field_expr(
   self : Domain,
   expr : Expr,
@@ -5863,6 +7353,17 @@ pub fn Domain::from_algebraic_field_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_gaussian_integer_ring_expr`.
+///
+/// - Does: Provides the `Domain.from_gaussian_integer_ring_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_gaussian_integer_ring_expr(
   self : Domain,
   expr : Expr,
@@ -5872,6 +7373,17 @@ pub fn Domain::from_gaussian_integer_ring_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_gaussian_rational_field_expr`.
+///
+/// - Does: Provides the `Domain.from_gaussian_rational_field_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_gaussian_rational_field_expr(
   self : Domain,
   expr : Expr,
@@ -5881,6 +7393,17 @@ pub fn Domain::from_gaussian_rational_field_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_polynomial_ring_expr`.
+///
+/// - Does: Provides the `Domain.from_polynomial_ring_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_polynomial_ring_expr(
   self : Domain,
   expr : Expr,
@@ -5890,6 +7413,17 @@ pub fn Domain::from_polynomial_ring_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_fraction_field_expr`.
+///
+/// - Does: Provides the `Domain.from_fraction_field_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_fraction_field_expr(
   self : Domain,
   expr : Expr,
@@ -5899,6 +7433,17 @@ pub fn Domain::from_fraction_field_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_global_polynomial_ring_expr`.
+///
+/// - Does: Provides the `Domain.from_global_polynomial_ring_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_global_polynomial_ring_expr(
   self : Domain,
   expr : Expr,
@@ -5908,6 +7453,17 @@ pub fn Domain::from_global_polynomial_ring_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_generalized_polynomial_ring_expr`.
+///
+/// - Does: Provides the `Domain.from_generalized_polynomial_ring_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_generalized_polynomial_ring_expr(
   self : Domain,
   expr : Expr,
@@ -5917,6 +7473,17 @@ pub fn Domain::from_generalized_polynomial_ring_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_monogenic_finite_extension_expr`.
+///
+/// - Does: Provides the `Domain.from_monogenic_finite_extension_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_monogenic_finite_extension_expr(
   self : Domain,
   expr : Expr,
@@ -5926,6 +7493,17 @@ pub fn Domain::from_monogenic_finite_extension_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_expression_domain_expr`.
+///
+/// - Does: Provides the `Domain.from_expression_domain_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_expression_domain_expr(
   self : Domain,
   expr : Expr,
@@ -5935,6 +7513,17 @@ pub fn Domain::from_expression_domain_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.from_expression_raw_domain_expr`.
+///
+/// - Does: Provides the `Domain.from_expression_raw_domain_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `base : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::from_expression_raw_domain_expr(
   self : Domain,
   expr : Expr,
@@ -5944,6 +7533,17 @@ pub fn Domain::from_expression_raw_domain_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.unify_composite`.
+///
+/// - Does: Provides the `Domain.unify_composite` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `other : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::unify_composite(
   self : Domain,
   other : Domain,
@@ -5952,41 +7552,129 @@ pub fn Domain::unify_composite(
 }
 
 ///|
+
+///|
+/// Public API `Domain.is_one_expr`.
+///
+/// - Does: Provides the `Domain.is_one_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::is_one_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_one_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.is_negative_one_expr`.
+///
+/// - Does: Provides the `Domain.is_negative_one_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::is_negative_one_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_negative_one_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.is_unit_expr`.
+///
+/// - Does: Provides the `Domain.is_unit_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::is_unit_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_unit_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.is_positive_expr`.
+///
+/// - Does: Provides the `Domain.is_positive_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::is_positive_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_positive_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.is_negative_expr`.
+///
+/// - Does: Provides the `Domain.is_negative_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::is_negative_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_negative_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.is_nonpositive_expr`.
+///
+/// - Does: Provides the `Domain.is_nonpositive_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::is_nonpositive_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_nonpositive_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.is_nonnegative_expr`.
+///
+/// - Does: Provides the `Domain.is_nonnegative_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::is_nonnegative_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_nonnegative_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.canonical_unit_expr`.
+///
+/// - Does: Provides the `Domain.canonical_unit_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::canonical_unit_expr(
   self : Domain,
   expr : Expr,
@@ -5995,11 +7683,33 @@ pub fn Domain::canonical_unit_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.abs_expr`.
+///
+/// - Does: Provides the `Domain.abs_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::abs_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_abs_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.gcd_expr`.
+///
+/// - Does: Provides the `Domain.gcd_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::gcd_expr(
   self : Domain,
   left : Expr,
@@ -6009,6 +7719,17 @@ pub fn Domain::gcd_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.lcm_expr`.
+///
+/// - Does: Provides the `Domain.lcm_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::lcm_expr(
   self : Domain,
   left : Expr,
@@ -6018,6 +7739,18 @@ pub fn Domain::lcm_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.cofactors_expr`.
+///
+/// - Does: Provides the `Domain.cofactors_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, `) -> (Expr`,
+/// `Expr` and 1 more parameter(s), using the package representation expected by the
+/// signature.
+/// - Returns: a `(Expr, Expr, Expr)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::cofactors_expr(
   self : Domain,
   left : Expr,
@@ -6027,16 +7760,49 @@ pub fn Domain::cofactors_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.numer_expr`.
+///
+/// - Does: Provides the `Domain.numer_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::numer_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_numer_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.denom_expr`.
+///
+/// - Does: Provides the `Domain.denom_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::denom_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_denom_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.quo_expr`.
+///
+/// - Does: Provides the `Domain.quo_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::quo_expr(
   self : Domain,
   left : Expr,
@@ -6046,6 +7812,17 @@ pub fn Domain::quo_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.rem_expr`.
+///
+/// - Does: Provides the `Domain.rem_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::rem_expr(
   self : Domain,
   left : Expr,
@@ -6055,6 +7832,17 @@ pub fn Domain::rem_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.div_expr`.
+///
+/// - Does: Provides the `Domain.div_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, `) -> (Expr`,
+/// `Expr`, using the package representation expected by the signature.
+/// - Returns: a `(Expr, Expr)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::div_expr(
   self : Domain,
   left : Expr,
@@ -6064,6 +7852,17 @@ pub fn Domain::div_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.exquo_expr`.
+///
+/// - Does: Provides the `Domain.exquo_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::exquo_expr(
   self : Domain,
   left : Expr,
@@ -6073,6 +7872,17 @@ pub fn Domain::exquo_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.half_gcdex_expr`.
+///
+/// - Does: Provides the `Domain.half_gcdex_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, `) -> (Expr`,
+/// `Expr`, using the package representation expected by the signature.
+/// - Returns: a `(Expr, Expr)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::half_gcdex_expr(
   self : Domain,
   left : Expr,
@@ -6082,6 +7892,18 @@ pub fn Domain::half_gcdex_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.gcdex_expr`.
+///
+/// - Does: Provides the `Domain.gcdex_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, `) -> (Expr`,
+/// `Expr` and 1 more parameter(s), using the package representation expected by the
+/// signature.
+/// - Returns: a `(Expr, Expr, Expr)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::gcdex_expr(
   self : Domain,
   left : Expr,
@@ -6091,6 +7913,17 @@ pub fn Domain::gcdex_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.invert_expr`.
+///
+/// - Does: Provides the `Domain.invert_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::invert_expr(
   self : Domain,
   left : Expr,
@@ -6100,11 +7933,33 @@ pub fn Domain::invert_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.revert_expr`.
+///
+/// - Does: Provides the `Domain.revert_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::revert_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_revert_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.factorial_expr`.
+///
+/// - Does: Provides the `Domain.factorial_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::factorial_expr(
   self : Domain,
   expr : Expr,
@@ -6113,6 +7968,17 @@ pub fn Domain::factorial_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.log_expr`.
+///
+/// - Does: Provides the `Domain.log_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `value : Expr`, `base : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::log_expr(
   self : Domain,
   value : Expr,
@@ -6122,11 +7988,33 @@ pub fn Domain::log_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.sqrt_expr`.
+///
+/// - Does: Provides the `Domain.sqrt_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::sqrt_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_sqrt_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.is_square_expr`.
+///
+/// - Does: Provides the `Domain.is_square_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::is_square_expr(
   self : Domain,
   expr : Expr,
@@ -6135,21 +8023,66 @@ pub fn Domain::is_square_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.exsqrt_expr`.
+///
+/// - Does: Provides the `Domain.exsqrt_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr?` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::exsqrt_expr(self : Domain, expr : Expr) -> Expr? raise PolyError {
   domain_exsqrt_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.real_expr`.
+///
+/// - Does: Provides the `Domain.real_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::real_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_real_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.imag_expr`.
+///
+/// - Does: Provides the `Domain.imag_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::imag_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_imag_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.almosteq_expr`.
+///
+/// - Does: Provides the `Domain.almosteq_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, `tolerance :
+/// @symnum.BigRational = None`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::almosteq_expr(
   self : Domain,
   left : Expr,
@@ -6160,6 +8093,17 @@ pub fn Domain::almosteq_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.evalf_expr`.
+///
+/// - Does: Provides the `Domain.evalf_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `prec : Int = None`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::evalf_expr(
   self : Domain,
   expr : Expr,
@@ -6169,16 +8113,49 @@ pub fn Domain::evalf_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.pos_expr`.
+///
+/// - Does: Provides the `Domain.pos_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::pos_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_pos_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.neg_expr`.
+///
+/// - Does: Provides the `Domain.neg_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::neg_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_neg_expr(self, expr)
 }
 
 ///|
+
+///|
+/// Public API `Domain.add_expr`.
+///
+/// - Does: Provides the `Domain.add_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::add_expr(
   self : Domain,
   left : Expr,
@@ -6188,6 +8165,17 @@ pub fn Domain::add_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.sub_expr`.
+///
+/// - Does: Provides the `Domain.sub_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::sub_expr(
   self : Domain,
   left : Expr,
@@ -6197,6 +8185,17 @@ pub fn Domain::sub_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.mul_expr`.
+///
+/// - Does: Provides the `Domain.mul_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `left : Expr`, `right : Expr`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::mul_expr(
   self : Domain,
   left : Expr,
@@ -6206,6 +8205,17 @@ pub fn Domain::mul_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.pow_expr`.
+///
+/// - Does: Provides the `Domain.pow_expr` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `expr : Expr`, `exp : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::pow_expr(
   self : Domain,
   expr : Expr,
@@ -6215,31 +8225,97 @@ pub fn Domain::pow_expr(
 }
 
 ///|
+
+///|
+/// Public API `Domain.characteristic`.
+///
+/// - Does: Provides the `Domain.characteristic` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Int` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::characteristic(self : Domain) -> Int {
   domain_characteristic(self)
 }
 
 ///|
+
+///|
+/// Public API `Domain.get_exact`.
+///
+/// - Does: Provides the `Domain.get_exact` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::get_exact(self : Domain) -> Domain {
   domain_get_exact(self)
 }
 
 ///|
+
+///|
+/// Public API `Domain.get_field`.
+///
+/// - Does: Provides the `Domain.get_field` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::get_field(self : Domain) -> Domain raise PolyError {
   domain_get_field(self)
 }
 
 ///|
+
+///|
+/// Public API `Domain.get_ring`.
+///
+/// - Does: Provides the `Domain.get_ring` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::get_ring(self : Domain) -> Domain raise PolyError {
   domain_get_ring(self)
 }
 
 ///|
+
+///|
+/// Public API `Domain.unify`.
+///
+/// - Does: Provides the `Domain.unify` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `other : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::unify(self : Domain, other : Domain) -> Domain raise PolyError {
   domain_unify_pair(self, other)
 }
 
 ///|
+
+///|
+/// Public API `Domain.unify_with_symbols`.
+///
+/// - Does: Provides the `Domain.unify_with_symbols` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `other : Domain`, `symbols : Array[String]`,
+/// using the package representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::unify_with_symbols(
   self : Domain,
   other : Domain,
@@ -6249,6 +8325,17 @@ pub fn Domain::unify_with_symbols(
 }
 
 ///|
+
+///|
+/// Public API `Domain.poly_ring`.
+///
+/// - Does: Provides the `Domain.poly_ring` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `gens : Array[String]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::poly_ring(
   self : Domain,
   gens : Array[String],
@@ -6257,6 +8344,17 @@ pub fn Domain::poly_ring(
 }
 
 ///|
+
+///|
+/// Public API `Domain.frac_field`.
+///
+/// - Does: Provides the `Domain.frac_field` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `gens : Array[String]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::frac_field(
   self : Domain,
   gens : Array[String],
@@ -6265,6 +8363,17 @@ pub fn Domain::frac_field(
 }
 
 ///|
+
+///|
+/// Public API `Domain.old_poly_ring`.
+///
+/// - Does: Provides the `Domain.old_poly_ring` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `gens : Array[String]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::old_poly_ring(
   self : Domain,
   gens : Array[String],
@@ -6273,6 +8382,17 @@ pub fn Domain::old_poly_ring(
 }
 
 ///|
+
+///|
+/// Public API `Domain.old_frac_field`.
+///
+/// - Does: Provides the `Domain.old_frac_field` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `gens : Array[String]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::old_frac_field(
   self : Domain,
   gens : Array[String],
@@ -6281,11 +8401,33 @@ pub fn Domain::old_frac_field(
 }
 
 ///|
+
+///|
+/// Public API `Domain.set_domain`.
+///
+/// - Does: Provides the `Domain.set_domain` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `ground : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn Domain::set_domain(self : Domain, ground : Domain) -> Domain {
   domain_set_domain(self, ground)
 }
 
 ///|
+
+///|
+/// Public API `Domain.algebraic_field`.
+///
+/// - Does: Provides the `Domain.algebraic_field` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `extension : Array[Expr]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::algebraic_field(
   self : Domain,
   extension : Array[Expr],
@@ -6294,6 +8436,18 @@ pub fn Domain::algebraic_field(
 }
 
 ///|
+
+///|
+/// Public API `Domain.alg_field_from_poly`.
+///
+/// - Does: Provides the `Domain.alg_field_from_poly` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `poly : Poly`, `extension_name : String =
+/// None`, `root_index : Int = -1`, using the package representation expected by the
+/// signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::alg_field_from_poly(
   self : Domain,
   poly : Poly,
@@ -6304,6 +8458,18 @@ pub fn Domain::alg_field_from_poly(
 }
 
 ///|
+
+///|
+/// Public API `Domain.cyclotomic_field`.
+///
+/// - Does: Provides the `Domain.cyclotomic_field` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `n : Int`, `ss : Bool = false`, `extension_name
+/// : String = "zeta"`, `gen : String = None` and 1 more parameter(s), using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::cyclotomic_field(
   self : Domain,
   n : Int,
@@ -6316,6 +8482,17 @@ pub fn Domain::cyclotomic_field(
 }
 
 ///|
+
+///|
+/// Public API `Domain.inject`.
+///
+/// - Does: Provides the `Domain.inject` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `gens : Array[String]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::inject(
   self : Domain,
   gens : Array[String],
@@ -6324,6 +8501,17 @@ pub fn Domain::inject(
 }
 
 ///|
+
+///|
+/// Public API `Domain.drop`.
+///
+/// - Does: Provides the `Domain.drop` operation for domain compatibility.
+/// - Input: parameters `self : Domain`, `gens : Array[String]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Domain` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn Domain::drop(
   self : Domain,
   gens : Array[String],

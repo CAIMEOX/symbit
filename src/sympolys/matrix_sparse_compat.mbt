@@ -25,6 +25,17 @@ fn sdm_nonzero_columns(
 
 ///|
 /// Functional wrapper for SymPy `polys.matrices.sdm.sdm_irref`.
+
+///|
+/// Public API `sdm_irref`.
+///
+/// - Does: Provides the `sdm_irref` operation for sparse domain-matrix algorithms.
+/// - Input: parameters `a : SDM`, `) -> (SDM`, `Array[Int]`, `Map[Int, Array[Int]]`,
+/// using the package representation expected by the signature.
+/// - Returns: a `(SDM, Array[Int], Map[Int, Array[Int]])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn sdm_irref(
   a : SDM,
 ) -> (SDM, Array[Int], Map[Int, Array[Int]]) raise PolyError {
@@ -514,6 +525,18 @@ fn sparse_berk(
 
 ///|
 /// Build nullspace basis vectors from sparse RREF data.
+
+///|
+/// Public API `sdm_nullspace_from_rref`.
+///
+/// - Does: Provides the `sdm_nullspace_from_rref` operation for sparse domain-matrix algorithms.
+/// - Input: parameters `a : SDM`, `one : FieldElem`, `ncols : Int`, `pivots :
+/// Array[Int]`, `nonzero_cols : Map[Int, Array[Int]]` and 2 more parameter(s), using
+/// the package representation expected by the signature.
+/// - Returns: a `(SDM, Array[Int])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn sdm_nullspace_from_rref(
   a : SDM,
   one : FieldElem,
@@ -551,6 +574,17 @@ pub fn sdm_nullspace_from_rref(
 
 ///|
 /// Extract a particular solution vector from sparse RREF data.
+
+///|
+/// Public API `sdm_particular_from_rref`.
+///
+/// - Does: Provides the `sdm_particular_from_rref` operation for sparse domain-matrix algorithms.
+/// - Input: parameters `a : SDM`, `ncols : Int`, `pivots : Array[Int]`, using the
+/// package representation expected by the signature.
+/// - Returns: a `SDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn sdm_particular_from_rref(
   a : SDM,
   ncols : Int,

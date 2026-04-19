@@ -1,4 +1,14 @@
 ///|
+
+///|
+/// Public enum `DomainMatrixRep`.
+///
+/// - Does: Defines the `DomainMatrixRep` variants for domain matrices.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: a `enum` declaration used by callers.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub(all) enum DomainMatrixRep {
   Dense(Array[Array[FieldElem]])
   Sparse(Map[Int, Map[Int, FieldElem]])
@@ -6,29 +16,99 @@ pub(all) enum DomainMatrixRep {
 
 ///|
 /// DOD/DOK helpers exposed by the matrix compatibility layer.
+
+///|
+/// Public type alias `DomainMatrixDOD`.
+///
+/// - Does: Aliases `DomainMatrixDOD` for domain matrices.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: the aliased `Map[Int, Map[Int, FieldElem]]` type.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub type DomainMatrixDOD = Map[Int, Map[Int, FieldElem]]
 
 ///|
+
+///|
+/// Public type alias `DomainMatrixDOK`.
+///
+/// - Does: Aliases `DomainMatrixDOK` for domain matrices.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: the aliased `Map[(Int, Int), FieldElem]` type.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub type DomainMatrixDOK = Map[(Int, Int), FieldElem]
 
 ///|
+
+///|
+/// Public type alias `MatrixExpr`.
+///
+/// - Does: Aliases `MatrixExpr` for domain matrices.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: the aliased `Array[Array[Expr]]` type.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub type MatrixExpr = Array[Array[Expr]]
 
 ///|
+
+///|
+/// Public type alias `MatrixExprDOD`.
+///
+/// - Does: Aliases `MatrixExprDOD` for domain matrices.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: the aliased `Map[Int, Map[Int, Expr]]` type.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub type MatrixExprDOD = Map[Int, Map[Int, Expr]]
 
 ///|
 /// Layout token used by `to_flat_nz`/`from_flat_nz`.
+
+///|
+/// Public enum `DomainMatrixFlatNZData`.
+///
+/// - Does: Defines the `DomainMatrixFlatNZData` variants for domain matrices.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: a `enum` declaration used by callers.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub enum DomainMatrixFlatNZData {
   Dense(Int, Int)
   Sparse(Int, Int, Array[(Int, Int)])
 }
 
 ///|
+
+///|
+/// Public type alias `FieldElemMapper`.
+///
+/// - Does: Aliases `FieldElemMapper` for domain matrices.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: the aliased `(FieldElem) -> FieldElem raise PolyError` type.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub type FieldElemMapper = (FieldElem) -> FieldElem raise PolyError
 
 ///|
 /// Matrix over a polys domain, aligned with SymPy `DomainMatrix` core shape.
+
+///|
+/// Public struct `DomainMatrix`.
+///
+/// - Does: Stores `DomainMatrix` data for domain matrices.
+/// - Input: constructed or referenced by callers through the declared public type shape.
+/// - Returns: a `struct` declaration used by callers.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub struct DomainMatrix {
   rep : DomainMatrixRep
   rows : Int
@@ -567,6 +647,17 @@ fn poly_to_dense_desc(poly : Poly) -> Array[FieldElem] raise PolyError {
 
 ///|
 /// Build a dense domain matrix from explicit entries.
+
+///|
+/// Public API `domain_matrix_from_dense`.
+///
+/// - Does: Provides the `domain_matrix_from_dense` operation for domain matrices.
+/// - Input: parameters `rows : Array[Array[FieldElem]]`, `domain : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_matrix_from_dense(
   rows : Array[Array[FieldElem]],
   domain : Domain,
@@ -588,6 +679,17 @@ pub fn domain_matrix_from_dense(
 
 ///|
 /// Build a dense domain matrix from integer literals.
+
+///|
+/// Public API `domain_matrix_from_ints`.
+///
+/// - Does: Provides the `domain_matrix_from_ints` operation for domain matrices.
+/// - Input: parameters `rows : Array[Array[Int]]`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_matrix_from_ints(
   rows : Array[Array[Int]],
   domain : Domain,
@@ -604,6 +706,17 @@ pub fn domain_matrix_from_ints(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.from_list`.
+///
+/// - Does: Provides the `DomainMatrix.from_list` operation for domain matrices.
+/// - Input: parameters `rows : Array[Array[FieldElem]]`, `domain : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::from_list(
   rows : Array[Array[FieldElem]],
   domain : Domain,
@@ -612,6 +725,17 @@ pub fn DomainMatrix::from_list(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.from_rep`.
+///
+/// - Does: Provides the `DomainMatrix.from_rep` operation for domain matrices.
+/// - Input: parameters `rep : DomainMatrixRep`, `shape : (Int, Int)`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::from_rep(
   rep : DomainMatrixRep,
   shape : (Int, Int),
@@ -628,6 +752,17 @@ pub fn DomainMatrix::from_rep(
 
 ///|
 /// Build a dense domain matrix from a flat row-major list of entries.
+
+///|
+/// Public API `DomainMatrix.from_list_flat`.
+///
+/// - Does: Provides the `DomainMatrix.from_list_flat` operation for domain matrices.
+/// - Input: parameters `elements : Array[FieldElem]`, `shape : (Int, Int)`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::from_list_flat(
   elements : Array[FieldElem],
   shape : (Int, Int),
@@ -650,6 +785,18 @@ pub fn DomainMatrix::from_list_flat(
 
 ///|
 /// Build a sparse domain matrix from non-zero entries only.
+
+///|
+/// Public API `domain_matrix_from_sparse`.
+///
+/// - Does: Provides the `domain_matrix_from_sparse` operation for domain matrices.
+/// - Input: parameters `rows : Int`, `cols : Int`, `entries : Array[(Int, Int,
+/// FieldElem)]`, `domain : Domain`, using the package representation expected by the
+/// signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_matrix_from_sparse(
   rows : Int,
   cols : Int,
@@ -679,6 +826,17 @@ pub fn domain_matrix_from_sparse(
 
 ///|
 /// Build a sparse domain matrix from dictionary-of-dictionaries form.
+
+///|
+/// Public API `DomainMatrix.from_dod`.
+///
+/// - Does: Provides the `DomainMatrix.from_dod` operation for domain matrices.
+/// - Input: parameters `dod : DomainMatrixDOD`, `shape : (Int, Int)`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::from_dod(
   dod : DomainMatrixDOD,
   shape : (Int, Int),
@@ -708,6 +866,17 @@ pub fn DomainMatrix::from_dod(
 
 ///|
 /// Build a sparse domain matrix from dictionary-of-keys form.
+
+///|
+/// Public API `DomainMatrix.from_dok`.
+///
+/// - Does: Provides the `DomainMatrix.from_dok` operation for domain matrices.
+/// - Input: parameters `dok : DomainMatrixDOK`, `shape : (Int, Int)`, `domain :
+/// Domain`, using the package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::from_dok(
   dok : DomainMatrixDOK,
   shape : (Int, Int),
@@ -722,6 +891,18 @@ pub fn DomainMatrix::from_dok(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.get_domain`.
+///
+/// - Does: Provides the `DomainMatrix.get_domain` operation for domain matrices.
+/// - Input: parameters `items_sympy : Array[Expr]`, `field : Bool = false`, `gaussian :
+/// Bool = false`, `modulus : Int = None`, `) -> (Domain` and 1 more parameter(s), using
+/// the package representation expected by the signature.
+/// - Returns: a `(Domain, Array[FieldElem])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::get_domain(
   items_sympy : Array[Expr],
   field? : Bool = false,
@@ -737,6 +918,18 @@ pub fn DomainMatrix::get_domain(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.from_list_sympy`.
+///
+/// - Does: Provides the `DomainMatrix.from_list_sympy` operation for domain matrices.
+/// - Input: parameters `nrows : Int`, `ncols : Int`, `rows : MatrixExpr`, `field : Bool
+/// = false`, `gaussian : Bool = false` and 1 more parameter(s), using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::from_list_sympy(
   nrows : Int,
   ncols : Int,
@@ -767,6 +960,18 @@ pub fn DomainMatrix::from_list_sympy(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.from_dict_sympy`.
+///
+/// - Does: Provides the `DomainMatrix.from_dict_sympy` operation for domain matrices.
+/// - Input: parameters `nrows : Int`, `ncols : Int`, `elemsdict : MatrixExprDOD`,
+/// `field : Bool = false`, `gaussian : Bool = false` and 1 more parameter(s), using the
+/// package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::from_dict_sympy(
   nrows : Int,
   ncols : Int,
@@ -815,6 +1020,18 @@ pub fn DomainMatrix::from_dict_sympy(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.from_Matrix`.
+///
+/// - Does: Provides the `DomainMatrix.from_Matrix` operation for domain matrices.
+/// - Input: parameters `rows : MatrixExpr`, `fmt : String = "sparse"`, `field : Bool =
+/// false`, `gaussian : Bool = false`, `modulus : Int = None`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::from_Matrix(
   rows : MatrixExpr,
   fmt? : String = "sparse",
@@ -867,6 +1084,17 @@ pub fn DomainMatrix::from_Matrix(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.zeros`.
+///
+/// - Does: Provides the `DomainMatrix.zeros` operation for domain matrices.
+/// - Input: parameters `rows : Int`, `cols : Int`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::zeros(
   rows : Int,
   cols : Int,
@@ -876,6 +1104,17 @@ pub fn DomainMatrix::zeros(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.ones`.
+///
+/// - Does: Provides the `DomainMatrix.ones` operation for domain matrices.
+/// - Input: parameters `rows : Int`, `cols : Int`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::ones(
   rows : Int,
   cols : Int,
@@ -885,6 +1124,17 @@ pub fn DomainMatrix::ones(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.eye`.
+///
+/// - Does: Provides the `DomainMatrix.eye` operation for domain matrices.
+/// - Input: parameters `n : Int`, `domain : Domain`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::eye(
   n : Int,
   domain : Domain,
@@ -893,6 +1143,18 @@ pub fn DomainMatrix::eye(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.diag`.
+///
+/// - Does: Provides the `DomainMatrix.diag` operation for domain matrices.
+/// - Input: parameters `values : Array[FieldElem]`, `domain : Domain`, `rows : Int =
+/// None`, `cols : Int = None`, using the package representation expected by the
+/// signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::diag(
   values : Array[FieldElem],
   domain : Domain,
@@ -927,6 +1189,17 @@ pub fn DomainMatrix::diag(
 
 ///|
 /// Convert any representation to dense row-major storage.
+
+///|
+/// Public API `DomainMatrix.to_dense`.
+///
+/// - Does: Provides the `DomainMatrix.to_dense` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Array[Array[FieldElem]]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_dense(
   self : DomainMatrix,
 ) -> Array[Array[FieldElem]] raise PolyError {
@@ -951,6 +1224,17 @@ pub fn DomainMatrix::to_dense(
 
 ///|
 /// Convert to sparse representation by dropping explicit zeros.
+
+///|
+/// Public API `DomainMatrix.to_sparse`.
+///
+/// - Does: Provides the `DomainMatrix.to_sparse` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_sparse(
   self : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
@@ -981,16 +1265,50 @@ pub fn DomainMatrix::to_sparse(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.shape`.
+///
+/// - Does: Provides the `DomainMatrix.shape` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix) -> (Int`, `Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `(Int, Int)` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn DomainMatrix::shape(self : DomainMatrix) -> (Int, Int) {
   (self.rows, self.cols)
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.copy`.
+///
+/// - Does: Provides the `DomainMatrix.copy` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::copy(self : DomainMatrix) -> DomainMatrix raise PolyError {
   DomainMatrix::from_rep(self.rep, self.shape(), self.domain)
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.choose_domain`.
+///
+/// - Does: Provides the `DomainMatrix.choose_domain` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `field : Bool = false`, `gaussian : Bool
+/// = false`, `modulus : Int = None`, using the package representation expected by the
+/// signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::choose_domain(
   self : DomainMatrix,
   field? : Bool = false,
@@ -1011,6 +1329,17 @@ pub fn DomainMatrix::choose_domain(
 }
 
 ///|
+
+///|
+/// Public API `domain_matrix_zeros`.
+///
+/// - Does: Provides the `domain_matrix_zeros` operation for domain matrices.
+/// - Input: parameters `rows : Int`, `cols : Int`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_matrix_zeros(
   rows : Int,
   cols : Int,
@@ -1022,6 +1351,17 @@ pub fn domain_matrix_zeros(
 }
 
 ///|
+
+///|
+/// Public API `domain_matrix_eye`.
+///
+/// - Does: Provides the `domain_matrix_eye` operation for domain matrices.
+/// - Input: parameters `n : Int`, `domain : Domain`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_matrix_eye(
   n : Int,
   domain : Domain,
@@ -1034,6 +1374,17 @@ pub fn domain_matrix_eye(
 }
 
 ///|
+
+///|
+/// Public API `domain_matrix_ones`.
+///
+/// - Does: Provides the `domain_matrix_ones` operation for domain matrices.
+/// - Input: parameters `rows : Int`, `cols : Int`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn domain_matrix_ones(
   rows : Int,
   cols : Int,
@@ -1045,6 +1396,17 @@ pub fn domain_matrix_ones(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.convert_to`.
+///
+/// - Does: Provides the `DomainMatrix.convert_to` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `domain : Domain`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::convert_to(
   self : DomainMatrix,
   domain : Domain,
@@ -1065,6 +1427,17 @@ pub fn DomainMatrix::convert_to(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_field`.
+///
+/// - Does: Provides the `DomainMatrix.to_field` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_field(
   self : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
@@ -1072,6 +1445,18 @@ pub fn DomainMatrix::to_field(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix._unify_domain`.
+///
+/// - Does: Provides the `DomainMatrix._unify_domain` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `other : DomainMatrix`, `) ->
+/// (DomainMatrix`, `DomainMatrix`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(DomainMatrix, DomainMatrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::_unify_domain(
   self : DomainMatrix,
   other : DomainMatrix,
@@ -1081,6 +1466,18 @@ pub fn DomainMatrix::_unify_domain(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix._unify_fmt`.
+///
+/// - Does: Provides the `DomainMatrix._unify_fmt` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `other : DomainMatrix`, `fmt : String`,
+/// `) -> (DomainMatrix`, `DomainMatrix`, using the package representation expected by
+/// the signature.
+/// - Returns: a `(DomainMatrix, DomainMatrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::_unify_fmt(
   self : DomainMatrix,
   other : DomainMatrix,
@@ -1104,6 +1501,18 @@ pub fn DomainMatrix::_unify_fmt(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.unify`.
+///
+/// - Does: Provides the `DomainMatrix.unify` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `other : DomainMatrix`, `fmt : String =
+/// ""`, `) -> (DomainMatrix`, `DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `(DomainMatrix, DomainMatrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::unify(
   self : DomainMatrix,
   other : DomainMatrix,
@@ -1117,6 +1526,18 @@ pub fn DomainMatrix::unify(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix._check`.
+///
+/// - Does: Provides the `DomainMatrix._check` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `op : String`, `other : DomainMatrix`,
+/// `ashape : (Int, Int)`, `bshape : (Int, Int)` and 1 more parameter(s), using the
+/// package representation expected by the signature.
+/// - Returns: a `Unit` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::_check(
   self : DomainMatrix,
   op : String,
@@ -1138,6 +1559,17 @@ pub fn DomainMatrix::_check(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.unify_eq`.
+///
+/// - Does: Provides the `DomainMatrix.unify_eq` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `other : DomainMatrix`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::unify_eq(
   self : DomainMatrix,
   other : DomainMatrix,
@@ -1163,6 +1595,18 @@ pub fn DomainMatrix::unify_eq(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.clear_denoms`.
+///
+/// - Does: Provides the `DomainMatrix.clear_denoms` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `convert : Bool = false`, `) ->
+/// (DomainScalar`, `DomainMatrix`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(DomainScalar, DomainMatrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::clear_denoms(
   self : DomainMatrix,
   convert? : Bool = false,
@@ -1208,6 +1652,18 @@ pub fn DomainMatrix::clear_denoms(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.clear_denoms_rowwise`.
+///
+/// - Does: Provides the `DomainMatrix.clear_denoms_rowwise` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `convert : Bool = false`, `) ->
+/// (DomainMatrix`, `DomainMatrix`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(DomainMatrix, DomainMatrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::clear_denoms_rowwise(
   self : DomainMatrix,
   convert? : Bool = false,
@@ -1265,6 +1721,17 @@ fn ensure_mul_shape(a : DomainMatrix, b : DomainMatrix) -> Unit raise PolyError 
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.add`.
+///
+/// - Does: Provides the `DomainMatrix.add` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `other : DomainMatrix`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::add(
   self : DomainMatrix,
   other : DomainMatrix,
@@ -1284,6 +1751,17 @@ pub fn DomainMatrix::add(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.sub`.
+///
+/// - Does: Provides the `DomainMatrix.sub` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `other : DomainMatrix`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::sub(
   self : DomainMatrix,
   other : DomainMatrix,
@@ -1303,6 +1781,17 @@ pub fn DomainMatrix::sub(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.mul`.
+///
+/// - Does: Provides the `DomainMatrix.mul` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `scalar : FieldElem`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::mul(
   self : DomainMatrix,
   scalar : FieldElem,
@@ -1311,6 +1800,17 @@ pub fn DomainMatrix::mul(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.transpose`.
+///
+/// - Does: Provides the `DomainMatrix.transpose` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::transpose(
   self : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
@@ -1327,6 +1827,17 @@ pub fn DomainMatrix::transpose(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.extract`.
+///
+/// - Does: Provides the `DomainMatrix.extract` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `row_ids : Array[Int]`, `col_ids :
+/// Array[Int]`, using the package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::extract(
   self : DomainMatrix,
   row_ids : Array[Int],
@@ -1347,6 +1858,18 @@ pub fn DomainMatrix::extract(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.extract_slice`.
+///
+/// - Does: Provides the `DomainMatrix.extract_slice` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `row_start : Int = None`, `row_stop : Int
+/// = None`, `row_step : Int = 1`, `col_start : Int = None` and 2 more parameter(s),
+/// using the package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::extract_slice(
   self : DomainMatrix,
   row_start? : Int? = None,
@@ -1372,6 +1895,17 @@ pub fn DomainMatrix::extract_slice(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.getitem`.
+///
+/// - Does: Provides the `DomainMatrix.getitem` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `row : Int`, `col : Int`, using the
+/// package representation expected by the signature.
+/// - Returns: a `DomainScalar` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::getitem(
   self : DomainMatrix,
   row : Int,
@@ -1384,6 +1918,17 @@ pub fn DomainMatrix::getitem(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.setitem`.
+///
+/// - Does: Provides the `DomainMatrix.setitem` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `row : Int`, `col : Int`, `value :
+/// FieldElem`, using the package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::setitem(
   self : DomainMatrix,
   row : Int,
@@ -1399,6 +1944,17 @@ pub fn DomainMatrix::setitem(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.hstack`.
+///
+/// - Does: Provides the `DomainMatrix.hstack` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `other : DomainMatrix`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::hstack(
   self : DomainMatrix,
   other : DomainMatrix,
@@ -1428,6 +1984,17 @@ pub fn DomainMatrix::hstack(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.vstack`.
+///
+/// - Does: Provides the `DomainMatrix.vstack` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `other : DomainMatrix`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::vstack(
   self : DomainMatrix,
   other : DomainMatrix,
@@ -1444,6 +2011,17 @@ pub fn DomainMatrix::vstack(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.neg`.
+///
+/// - Does: Provides the `DomainMatrix.neg` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::neg(self : DomainMatrix) -> DomainMatrix raise PolyError {
   restore_rep_like(
     domain_matrix_scale(self, fe_from_int(-1, self.domain)),
@@ -1452,6 +2030,17 @@ pub fn DomainMatrix::neg(self : DomainMatrix) -> DomainMatrix raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.matmul`.
+///
+/// - Does: Provides the `DomainMatrix.matmul` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `other : DomainMatrix`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::matmul(
   self : DomainMatrix,
   other : DomainMatrix,
@@ -1460,6 +2049,17 @@ pub fn DomainMatrix::matmul(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.mul_elementwise`.
+///
+/// - Does: Provides the `DomainMatrix.mul_elementwise` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `other : DomainMatrix`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::mul_elementwise(
   self : DomainMatrix,
   other : DomainMatrix,
@@ -1479,6 +2079,17 @@ pub fn DomainMatrix::mul_elementwise(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.scalarmul`.
+///
+/// - Does: Provides the `DomainMatrix.scalarmul` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `scalar : FieldElem`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::scalarmul(
   self : DomainMatrix,
   scalar : FieldElem,
@@ -1487,6 +2098,17 @@ pub fn DomainMatrix::scalarmul(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix._scalarmul`.
+///
+/// - Does: Provides the `DomainMatrix._scalarmul` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `scalar : FieldElem`, `reverse : Bool =
+/// false`, using the package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::_scalarmul(
   self : DomainMatrix,
   scalar : FieldElem,
@@ -1506,6 +2128,17 @@ pub fn DomainMatrix::_scalarmul(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.rscalarmul`.
+///
+/// - Does: Provides the `DomainMatrix.rscalarmul` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `scalar : FieldElem`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::rscalarmul(
   self : DomainMatrix,
   scalar : FieldElem,
@@ -1514,6 +2147,17 @@ pub fn DomainMatrix::rscalarmul(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.rmul`.
+///
+/// - Does: Provides the `DomainMatrix.rmul` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `scalar : FieldElem`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::rmul(
   self : DomainMatrix,
   scalar : FieldElem,
@@ -1522,6 +2166,17 @@ pub fn DomainMatrix::rmul(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.truediv`.
+///
+/// - Does: Provides the `DomainMatrix.truediv` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `scalar : DomainScalar`, using the
+/// package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::truediv(
   self : DomainMatrix,
   scalar : DomainScalar,
@@ -1538,6 +2193,17 @@ pub fn DomainMatrix::truediv(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.diagonal`.
+///
+/// - Does: Provides the `DomainMatrix.diagonal` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::diagonal(
   self : DomainMatrix,
 ) -> Array[FieldElem] raise PolyError {
@@ -1551,6 +2217,17 @@ pub fn DomainMatrix::diagonal(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.nnz`.
+///
+/// - Does: Provides the `DomainMatrix.nnz` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Int` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::nnz(self : DomainMatrix) -> Int raise PolyError {
   match self.rep {
     DomainMatrixRep::Dense(rows) => {
@@ -1575,6 +2252,17 @@ pub fn DomainMatrix::nnz(self : DomainMatrix) -> Int raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.iter_values`.
+///
+/// - Does: Provides the `DomainMatrix.iter_values` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::iter_values(
   self : DomainMatrix,
 ) -> Array[FieldElem] raise PolyError {
@@ -1586,6 +2274,17 @@ pub fn DomainMatrix::iter_values(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.iter_items`.
+///
+/// - Does: Provides the `DomainMatrix.iter_items` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `) -> Array[(Int, Int, FieldElem`, using
+/// the package representation expected by the signature.
+/// - Returns: a `Array[(Int, Int, FieldElem)]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::iter_items(
   self : DomainMatrix,
 ) -> Array[(Int, Int, FieldElem)] raise PolyError {
@@ -1593,6 +2292,17 @@ pub fn DomainMatrix::iter_items(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_list`.
+///
+/// - Does: Provides the `DomainMatrix.to_list` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Array[Array[FieldElem]]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_list(
   self : DomainMatrix,
 ) -> Array[Array[FieldElem]] raise PolyError {
@@ -1600,6 +2310,17 @@ pub fn DomainMatrix::to_list(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_list_flat`.
+///
+/// - Does: Provides the `DomainMatrix.to_list_flat` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_list_flat(
   self : DomainMatrix,
 ) -> Array[FieldElem] raise PolyError {
@@ -1613,6 +2334,17 @@ pub fn DomainMatrix::to_list_flat(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.flat`.
+///
+/// - Does: Provides the `DomainMatrix.flat` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::flat(
   self : DomainMatrix,
 ) -> Array[FieldElem] raise PolyError {
@@ -1620,6 +2352,18 @@ pub fn DomainMatrix::flat(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_flat_nz`.
+///
+/// - Does: Provides the `DomainMatrix.to_flat_nz` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `) -> (Array[FieldElem]`,
+/// `DomainMatrixFlatNZData`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(Array[FieldElem], DomainMatrixFlatNZData)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_flat_nz(
   self : DomainMatrix,
 ) -> (Array[FieldElem], DomainMatrixFlatNZData) raise PolyError {
@@ -1642,6 +2386,18 @@ pub fn DomainMatrix::to_flat_nz(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.from_flat_nz`.
+///
+/// - Does: Provides the `DomainMatrix.from_flat_nz` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `elements : Array[FieldElem]`, `data :
+/// DomainMatrixFlatNZData`, `domain : Domain`, using the package representation
+/// expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::from_flat_nz(
   self : DomainMatrix,
   elements : Array[FieldElem],
@@ -1673,6 +2429,17 @@ pub fn DomainMatrix::from_flat_nz(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_dod`.
+///
+/// - Does: Provides the `DomainMatrix.to_dod` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DomainMatrixDOD` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_dod(
   self : DomainMatrix,
 ) -> DomainMatrixDOD raise PolyError {
@@ -1691,6 +2458,17 @@ pub fn DomainMatrix::to_dod(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.from_dod_like`.
+///
+/// - Does: Provides the `DomainMatrix.from_dod_like` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `dod : DomainMatrixDOD`, `domain : Domain
+/// = None`, using the package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::from_dod_like(
   self : DomainMatrix,
   dod : DomainMatrixDOD,
@@ -1707,6 +2485,17 @@ pub fn DomainMatrix::from_dod_like(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_dok`.
+///
+/// - Does: Provides the `DomainMatrix.to_dok` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DomainMatrixDOK` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_dok(
   self : DomainMatrix,
 ) -> DomainMatrixDOK raise PolyError {
@@ -1718,6 +2507,17 @@ pub fn DomainMatrix::to_dok(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_sympy`.
+///
+/// - Does: Provides the `DomainMatrix.to_sympy` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `MatrixExpr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_sympy(
   self : DomainMatrix,
 ) -> MatrixExpr raise PolyError {
@@ -1725,6 +2525,17 @@ pub fn DomainMatrix::to_sympy(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_Matrix`.
+///
+/// - Does: Provides the `DomainMatrix.to_Matrix` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `MatrixExpr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_Matrix(
   self : DomainMatrix,
 ) -> MatrixExpr raise PolyError {
@@ -1732,6 +2543,17 @@ pub fn DomainMatrix::to_Matrix(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.getitem_sympy`.
+///
+/// - Does: Provides the `DomainMatrix.getitem_sympy` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `row : Int`, `col : Int`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Expr` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::getitem_sympy(
   self : DomainMatrix,
   row : Int,
@@ -1741,31 +2563,97 @@ pub fn DomainMatrix::getitem_sympy(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_ddm`.
+///
+/// - Does: Provides the `DomainMatrix.to_ddm` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_ddm(self : DomainMatrix) -> DDM raise PolyError {
   DDM::{ dm: self.copy() }
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_sdm`.
+///
+/// - Does: Provides the `DomainMatrix.to_sdm` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `SDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_sdm(self : DomainMatrix) -> SDM raise PolyError {
   SDM::{ dm: self.to_sparse() }
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_dfm`.
+///
+/// - Does: Provides the `DomainMatrix.to_dfm` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_dfm(self : DomainMatrix) -> DDM raise PolyError {
   self.to_ddm()
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.to_dfm_or_ddm`.
+///
+/// - Does: Provides the `DomainMatrix.to_dfm_or_ddm` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DDM` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_dfm_or_ddm(self : DomainMatrix) -> DDM raise PolyError {
   self.to_ddm()
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.content`.
+///
+/// - Does: Provides the `DomainMatrix.content` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::content(self : DomainMatrix) -> FieldElem raise PolyError {
   field_elems_content(self.iter_values(), self.domain)
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.primitive`.
+///
+/// - Does: Provides the `DomainMatrix.primitive` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `) -> (FieldElem`, `DomainMatrix`, using
+/// the package representation expected by the signature.
+/// - Returns: a `(FieldElem, DomainMatrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::primitive(
   self : DomainMatrix,
 ) -> (FieldElem, DomainMatrix) raise PolyError {
@@ -1790,6 +2678,18 @@ pub fn DomainMatrix::primitive(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.cancel_denom`.
+///
+/// - Does: Provides the `DomainMatrix.cancel_denom` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `denom : FieldElem`, `) ->
+/// (DomainMatrix`, `FieldElem`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(DomainMatrix, FieldElem)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::cancel_denom(
   self : DomainMatrix,
   denom : FieldElem,
@@ -1828,6 +2728,18 @@ pub fn DomainMatrix::cancel_denom(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.cancel_denom_elementwise`.
+///
+/// - Does: Provides the `DomainMatrix.cancel_denom_elementwise` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `denom : FieldElem`, `) ->
+/// (DomainMatrix`, `DomainMatrix`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(DomainMatrix, DomainMatrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::cancel_denom_elementwise(
   self : DomainMatrix,
   denom : FieldElem,
@@ -1876,6 +2788,17 @@ pub fn DomainMatrix::cancel_denom_elementwise(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.pow`.
+///
+/// - Does: Provides the `DomainMatrix.pow` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `n : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::pow(
   self : DomainMatrix,
   n : Int,
@@ -1902,11 +2825,33 @@ pub fn DomainMatrix::pow(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.is_square`.
+///
+/// - Does: Provides the `DomainMatrix.is_square` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn DomainMatrix::is_square(self : DomainMatrix) -> Bool {
   self.rows == self.cols
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.applyfunc`.
+///
+/// - Does: Provides the `DomainMatrix.applyfunc` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `func : FieldElemMapper`, `domain :
+/// Domain = None`, using the package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::applyfunc(
   self : DomainMatrix,
   func : FieldElemMapper,
@@ -2306,6 +3251,17 @@ fn dense_berk(
 
 ///|
 /// Determinant with Bareiss elimination for exact rings/fields.
+
+///|
+/// Public API `DomainMatrix.det`.
+///
+/// - Does: Provides the `DomainMatrix.det` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::det(self : DomainMatrix) -> FieldElem raise PolyError {
   if self.rows != self.cols {
     raise PolyError::DomainMismatch
@@ -2354,6 +3310,17 @@ pub fn DomainMatrix::det(self : DomainMatrix) -> FieldElem raise PolyError {
 
 ///|
 /// Reduced row-echelon form over fields.
+
+///|
+/// Public API `DomainMatrix.rref`.
+///
+/// - Does: Provides the `DomainMatrix.rref` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `) -> (DomainMatrix`, `Array[Int]`, using
+/// the package representation expected by the signature.
+/// - Returns: a `(DomainMatrix, Array[Int])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::rref(
   self : DomainMatrix,
 ) -> (DomainMatrix, Array[Int]) raise PolyError {
@@ -2630,6 +3597,18 @@ fn particular_from_rref(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.rref_den`.
+///
+/// - Does: Provides the `DomainMatrix.rref_den` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `rref_method : String = "auto"`,
+/// `keep_domain : Bool = true`, `) -> (DomainMatrix`, `FieldElem` and 1 more
+/// parameter(s), using the package representation expected by the signature.
+/// - Returns: a `(DomainMatrix, FieldElem, Array[Int])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::rref_den(
   self : DomainMatrix,
   rref_method? : String = "auto",
@@ -2699,6 +3678,17 @@ pub fn DomainMatrix::rref_den(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.rank`.
+///
+/// - Does: Provides the `DomainMatrix.rank` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Int` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::rank(self : DomainMatrix) -> Int raise PolyError {
   if domain_is_field_pred(self.domain) {
     self.rref().1.length()
@@ -2708,6 +3698,17 @@ pub fn DomainMatrix::rank(self : DomainMatrix) -> Int raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.columnspace`.
+///
+/// - Does: Provides the `DomainMatrix.columnspace` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::columnspace(
   self : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
@@ -2723,6 +3724,17 @@ pub fn DomainMatrix::columnspace(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.rowspace`.
+///
+/// - Does: Provides the `DomainMatrix.rowspace` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::rowspace(
   self : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
@@ -2742,6 +3754,17 @@ pub fn DomainMatrix::rowspace(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.nullspace`.
+///
+/// - Does: Provides the `DomainMatrix.nullspace` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `divide_last : Bool = false`, using the
+/// package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::nullspace(
   self : DomainMatrix,
   divide_last? : Bool = false,
@@ -2764,6 +3787,17 @@ pub fn DomainMatrix::nullspace(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.nullspace_from_rref`.
+///
+/// - Does: Provides the `DomainMatrix.nullspace_from_rref` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `pivots : Array[Int] = []`, using the
+/// package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::nullspace_from_rref(
   self : DomainMatrix,
   pivots? : Array[Int] = [],
@@ -2772,6 +3806,17 @@ pub fn DomainMatrix::nullspace_from_rref(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.particular`.
+///
+/// - Does: Provides the `DomainMatrix.particular` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `pivots : Array[Int] = []`, using the
+/// package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::particular(
   self : DomainMatrix,
   pivots? : Array[Int] = [],
@@ -2780,6 +3825,18 @@ pub fn DomainMatrix::particular(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix._solve`.
+///
+/// - Does: Provides the `DomainMatrix._solve` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `rhs : DomainMatrix`, `) ->
+/// (DomainMatrix`, `DomainMatrix`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(DomainMatrix, DomainMatrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::_solve(
   self : DomainMatrix,
   rhs : DomainMatrix,
@@ -2808,6 +3865,17 @@ pub fn DomainMatrix::_solve(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.inv`.
+///
+/// - Does: Provides the `DomainMatrix.inv` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::inv(self : DomainMatrix) -> DomainMatrix raise PolyError {
   if !domain_is_field_pred(self.domain) {
     raise PolyError::DomainNotField
@@ -2854,6 +3922,17 @@ pub fn DomainMatrix::inv(self : DomainMatrix) -> DomainMatrix raise PolyError {
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.adj_det`.
+///
+/// - Does: Provides the `DomainMatrix.adj_det` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `) -> (DomainMatrix`, `FieldElem`, using
+/// the package representation expected by the signature.
+/// - Returns: a `(DomainMatrix, FieldElem)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::adj_det(
   self : DomainMatrix,
 ) -> (DomainMatrix, FieldElem) raise PolyError {
@@ -2885,6 +3964,17 @@ pub fn DomainMatrix::adj_det(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.adjugate`.
+///
+/// - Does: Provides the `DomainMatrix.adjugate` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::adjugate(
   self : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
@@ -2892,6 +3982,18 @@ pub fn DomainMatrix::adjugate(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.solve_den_rref`.
+///
+/// - Does: Provides the `DomainMatrix.solve_den_rref` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `rhs : DomainMatrix`, `) ->
+/// (DomainMatrix`, `FieldElem`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(DomainMatrix, FieldElem)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::solve_den_rref(
   self : DomainMatrix,
   rhs : DomainMatrix,
@@ -2919,6 +4021,18 @@ pub fn DomainMatrix::solve_den_rref(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.inv_den`.
+///
+/// - Does: Provides the `DomainMatrix.inv_den` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `solve_method : String = ""`, `) ->
+/// (DomainMatrix`, `FieldElem`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(DomainMatrix, FieldElem)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::inv_den(
   self : DomainMatrix,
   solve_method? : String = "",
@@ -2931,6 +4045,18 @@ pub fn DomainMatrix::inv_den(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.solve_den`.
+///
+/// - Does: Provides the `DomainMatrix.solve_den` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `rhs : DomainMatrix`, `solve_method :
+/// String = ""`, `) -> (DomainMatrix`, `FieldElem`, using the package representation
+/// expected by the signature.
+/// - Returns: a `(DomainMatrix, FieldElem)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::solve_den(
   self : DomainMatrix,
   rhs : DomainMatrix,
@@ -2945,6 +4071,17 @@ pub fn DomainMatrix::solve_den(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.lu`.
+///
+/// - Does: Provides the `DomainMatrix.lu` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `) -> (DomainMatrix`, `DomainMatrix`,
+/// `Array[(Int, Int)]`, using the package representation expected by the signature.
+/// - Returns: a `(DomainMatrix, DomainMatrix, Array[(Int, Int)])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::lu(
   self : DomainMatrix,
 ) -> (DomainMatrix, DomainMatrix, Array[(Int, Int)]) raise PolyError {
@@ -2958,6 +4095,17 @@ pub fn DomainMatrix::lu(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.qr`.
+///
+/// - Does: Provides the `DomainMatrix.qr` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `) -> (DomainMatrix`, `DomainMatrix`,
+/// using the package representation expected by the signature.
+/// - Returns: a `(DomainMatrix, DomainMatrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::qr(
   self : DomainMatrix,
 ) -> (DomainMatrix, DomainMatrix) raise PolyError {
@@ -3004,6 +4152,17 @@ pub fn DomainMatrix::qr(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.lu_solve`.
+///
+/// - Does: Provides the `DomainMatrix.lu_solve` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `rhs : DomainMatrix`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::lu_solve(
   self : DomainMatrix,
   rhs : DomainMatrix,
@@ -3027,6 +4186,18 @@ pub fn DomainMatrix::lu_solve(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.fflu`.
+///
+/// - Does: Provides the `DomainMatrix.fflu` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `) -> (DomainMatrix`, `DomainMatrix`,
+/// `DomainMatrix`, `DomainMatrix`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(DomainMatrix, DomainMatrix, DomainMatrix, DomainMatrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::fflu(
   self : DomainMatrix,
 ) -> (DomainMatrix, DomainMatrix, DomainMatrix, DomainMatrix) raise PolyError {
@@ -3078,6 +4249,17 @@ pub fn DomainMatrix::fflu(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.charpoly`.
+///
+/// - Does: Provides the `DomainMatrix.charpoly` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::charpoly(
   self : DomainMatrix,
 ) -> Array[FieldElem] raise PolyError {
@@ -3092,6 +4274,17 @@ pub fn DomainMatrix::charpoly(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.charpoly_factor_list`.
+///
+/// - Does: Provides the `DomainMatrix.charpoly_factor_list` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `) -> Array[(Array[FieldElem], Int`,
+/// using the package representation expected by the signature.
+/// - Returns: a `Array[(Array[FieldElem], Int)]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::charpoly_factor_list(
   self : DomainMatrix,
 ) -> Array[(Array[FieldElem], Int)] raise PolyError {
@@ -3109,6 +4302,17 @@ pub fn DomainMatrix::charpoly_factor_list(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.charpoly_berk`.
+///
+/// - Does: Provides the `DomainMatrix.charpoly_berk` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::charpoly_berk(
   self : DomainMatrix,
 ) -> Array[FieldElem] raise PolyError {
@@ -3120,6 +4324,17 @@ pub fn DomainMatrix::charpoly_berk(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.charpoly_base`.
+///
+/// - Does: Provides the `DomainMatrix.charpoly_base` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Array[FieldElem]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::charpoly_base(
   self : DomainMatrix,
 ) -> Array[FieldElem] raise PolyError {
@@ -3147,6 +4362,17 @@ pub fn DomainMatrix::charpoly_base(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.eval_poly`.
+///
+/// - Does: Provides the `DomainMatrix.eval_poly` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `p : Array[FieldElem]`, using the package
+/// representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::eval_poly(
   self : DomainMatrix,
   p : Array[FieldElem],
@@ -3169,6 +4395,17 @@ pub fn DomainMatrix::eval_poly(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.eval_poly_mul`.
+///
+/// - Does: Provides the `DomainMatrix.eval_poly_mul` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `p : Array[FieldElem]`, `rhs :
+/// DomainMatrix`, using the package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::eval_poly_mul(
   self : DomainMatrix,
   p : Array[FieldElem],
@@ -3189,6 +4426,18 @@ pub fn DomainMatrix::eval_poly_mul(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.adj_poly_det`.
+///
+/// - Does: Provides the `DomainMatrix.adj_poly_det` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `cp : Array[FieldElem] = []`, `) ->
+/// (Array[FieldElem]`, `FieldElem`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(Array[FieldElem], FieldElem)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::adj_poly_det(
   self : DomainMatrix,
   cp? : Array[FieldElem] = [],
@@ -3217,6 +4466,18 @@ pub fn DomainMatrix::adj_poly_det(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.solve_den_charpoly`.
+///
+/// - Does: Provides the `DomainMatrix.solve_den_charpoly` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `rhs : DomainMatrix`, `cp :
+/// Array[FieldElem] = []`, `check : Bool = true`, `) -> (DomainMatrix` and 1 more
+/// parameter(s), using the package representation expected by the signature.
+/// - Returns: a `(DomainMatrix, FieldElem)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::solve_den_charpoly(
   self : DomainMatrix,
   rhs : DomainMatrix,
@@ -3235,6 +4496,17 @@ pub fn DomainMatrix::solve_den_charpoly(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.scc`.
+///
+/// - Does: Provides the `DomainMatrix.scc` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Array[Array[Int]]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::scc(
   self : DomainMatrix,
 ) -> Array[Array[Int]] raise PolyError {
@@ -3272,6 +4544,17 @@ pub fn DomainMatrix::scc(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.charpoly_factor_blocks`.
+///
+/// - Does: Provides the `DomainMatrix.charpoly_factor_blocks` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `) -> Array[(Array[FieldElem], Int`,
+/// using the package representation expected by the signature.
+/// - Returns: a `Array[(Array[FieldElem], Int)]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::charpoly_factor_blocks(
   self : DomainMatrix,
 ) -> Array[(Array[FieldElem], Int)] raise PolyError {
@@ -3286,6 +4569,17 @@ pub fn DomainMatrix::charpoly_factor_blocks(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.lll`.
+///
+/// - Does: Provides the `DomainMatrix.lll` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `delta : @symnum.BigRational`, using the
+/// package representation expected by the signature.
+/// - Returns: a `DomainMatrix` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::lll(
   self : DomainMatrix,
   delta? : @symnum.BigRational,
@@ -3298,6 +4592,18 @@ pub fn DomainMatrix::lll(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.lll_transform`.
+///
+/// - Does: Provides the `DomainMatrix.lll_transform` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, `delta : @symnum.BigRational`, `) ->
+/// (DomainMatrix`, `DomainMatrix`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(DomainMatrix, DomainMatrix)` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::lll_transform(
   self : DomainMatrix,
   delta? : @symnum.BigRational,
@@ -3313,21 +4619,65 @@ pub fn DomainMatrix::lll_transform(
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.is_diagonal`.
+///
+/// - Does: Provides the `DomainMatrix.is_diagonal` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::is_diagonal(self : DomainMatrix) -> Bool raise PolyError {
   dense_matrix_is_diagonal(self.to_dense())
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.is_upper`.
+///
+/// - Does: Provides the `DomainMatrix.is_upper` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::is_upper(self : DomainMatrix) -> Bool raise PolyError {
   dense_matrix_is_upper(self.to_dense())
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.is_lower`.
+///
+/// - Does: Provides the `DomainMatrix.is_lower` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::is_lower(self : DomainMatrix) -> Bool raise PolyError {
   dense_matrix_is_lower(self.to_dense())
 }
 
 ///|
+
+///|
+/// Public API `DomainMatrix.is_zero_matrix`.
+///
+/// - Does: Provides the `DomainMatrix.is_zero_matrix` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `Bool` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::is_zero_matrix(
   self : DomainMatrix,
 ) -> Bool raise PolyError {
@@ -3336,6 +4686,17 @@ pub fn DomainMatrix::is_zero_matrix(
 
 ///|
 /// SymPy-like `Matrix([[...], ...])` textual form.
+
+///|
+/// Public API `DomainMatrix.to_matrix_string`.
+///
+/// - Does: Provides the `DomainMatrix.to_matrix_string` operation for domain matrices.
+/// - Input: parameters `self : DomainMatrix`, using the package representation expected
+/// by the signature.
+/// - Returns: a `String` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn DomainMatrix::to_matrix_string(
   self : DomainMatrix,
 ) -> String raise PolyError {

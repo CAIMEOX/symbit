@@ -34,12 +34,34 @@ fn inv_mod(a : Int, p : Int) -> Int raise PolyError {
 
 ///|
 /// Return the leading degree of ``f``.
+
+///|
+/// Public API `gf_degree`.
+///
+/// - Does: Provides the `gf_degree` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Int` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn gf_degree(f : Array[Int]) -> Int {
   f.length() - 1
 }
 
 ///|
 /// Return the leading coefficient of ``f``.
+
+///|
+/// Public API `gf_LC`.
+///
+/// - Does: Provides the `gf_LC` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Int` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn gf_LC(f : Array[Int]) -> Int {
   if f.is_empty() {
     0
@@ -50,6 +72,17 @@ pub fn gf_LC(f : Array[Int]) -> Int {
 
 ///|
 /// Return the trailing coefficient of ``f``.
+
+///|
+/// Public API `gf_TC`.
+///
+/// - Does: Provides the `gf_TC` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Int` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn gf_TC(f : Array[Int]) -> Int {
   if f.is_empty() {
     0
@@ -60,6 +93,17 @@ pub fn gf_TC(f : Array[Int]) -> Int {
 
 ///|
 /// Remove leading zeros from ``f``.
+
+///|
+/// Public API `gf_strip`.
+///
+/// - Does: Provides the `gf_strip` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, using the package representation expected by
+/// the signature.
+/// - Returns: a `Array[Int]` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn gf_strip(f : Array[Int]) -> Array[Int] {
   if f.is_empty() || f[0] != 0 {
     return f
@@ -83,6 +127,17 @@ pub fn gf_strip(f : Array[Int]) -> Array[Int] {
 
 ///|
 /// Reduce all coefficients modulo ``p``.
+
+///|
+/// Public API `gf_trunc`.
+///
+/// - Does: Provides the `gf_trunc` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, `p : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Array[Int]` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn gf_trunc(f : Array[Int], p : Int) -> Array[Int] {
   let out : Array[Int] = Array::new()
   for c in f {
@@ -93,6 +148,17 @@ pub fn gf_trunc(f : Array[Int], p : Int) -> Array[Int] {
 
 ///|
 /// Add polynomials in ``GF(p)[x]``.
+
+///|
+/// Public API `gf_add`.
+///
+/// - Does: Provides the `gf_add` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, `g : Array[Int]`, `p : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Array[Int]` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn gf_add(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
   if f.is_empty() {
     return gf_trunc(g, p)
@@ -114,6 +180,17 @@ pub fn gf_add(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
 
 ///|
 /// Subtract polynomials in ``GF(p)[x]``.
+
+///|
+/// Public API `gf_sub`.
+///
+/// - Does: Provides the `gf_sub` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, `g : Array[Int]`, `p : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Array[Int]` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn gf_sub(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
   if f.is_empty() {
     let out : Array[Int] = Array::new()
@@ -139,6 +216,17 @@ pub fn gf_sub(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
 
 ///|
 /// Multiply polynomials in ``GF(p)[x]``.
+
+///|
+/// Public API `gf_mul`.
+///
+/// - Does: Provides the `gf_mul` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, `g : Array[Int]`, `p : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Array[Int]` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn gf_mul(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
   if f.is_empty() || g.is_empty() {
     return Array::new()
@@ -156,6 +244,17 @@ pub fn gf_mul(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
 
 ///|
 /// Compute LC and a monic polynomial in ``GF(p)[x]``.
+
+///|
+/// Public API `gf_monic`.
+///
+/// - Does: Provides the `gf_monic` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, `p : Int`, using the package representation
+/// expected by the signature.
+/// - Returns: a `Array[Int]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn gf_monic(f : Array[Int], p : Int) -> Array[Int] raise PolyError {
   if f.is_empty() {
     return f
@@ -174,6 +273,18 @@ pub fn gf_monic(f : Array[Int], p : Int) -> Array[Int] raise PolyError {
 
 ///|
 /// Division with remainder in ``GF(p)[x]``.
+
+///|
+/// Public API `gf_div`.
+///
+/// - Does: Provides the `gf_div` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, `g : Array[Int]`, `p : Int`, `) ->
+/// (Array[Int]`, `Array[Int]`, using the package representation expected by the
+/// signature.
+/// - Returns: a `(Array[Int], Array[Int])` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn gf_div(
   f : Array[Int],
   g : Array[Int],
@@ -215,6 +326,17 @@ pub fn gf_div(
 
 ///|
 /// Compute exact quotient in ``GF(p)[x]``.
+
+///|
+/// Public API `gf_quo`.
+///
+/// - Does: Provides the `gf_quo` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, `g : Array[Int]`, `p : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Array[Int]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn gf_quo(
   f : Array[Int],
   g : Array[Int],
@@ -226,6 +348,17 @@ pub fn gf_quo(
 
 ///|
 /// Compute polynomial remainder in ``GF(p)[x]``.
+
+///|
+/// Public API `gf_rem`.
+///
+/// - Does: Provides the `gf_rem` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, `g : Array[Int]`, `p : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Array[Int]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn gf_rem(
   f : Array[Int],
   g : Array[Int],
@@ -237,6 +370,17 @@ pub fn gf_rem(
 
 ///|
 /// Euclidean Algorithm in ``GF(p)[x]``.
+
+///|
+/// Public API `gf_gcd`.
+///
+/// - Does: Provides the `gf_gcd` operation for finite-field polynomial arithmetic.
+/// - Input: parameters `f : Array[Int]`, `g : Array[Int]`, `p : Int`, using the package
+/// representation expected by the signature.
+/// - Returns: a `Array[Int]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn gf_gcd(
   f : Array[Int],
   g : Array[Int],

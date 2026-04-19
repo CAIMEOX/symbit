@@ -27,12 +27,32 @@ pub fn rootof(poly : Poly, index : Int) -> RootOf {
 
 ///|
 /// Render this symbolic root in `CRootOf(poly, index)` form.
+
+///|
+/// Display implementation for `RootOf.to_string`.
+///
+/// - Does: Formats `RootOf` values for display.
+/// - Input: the receiver value and MoonBit logger/display protocol arguments.
+/// - Returns: the formatted display output required by the `Show` implementation.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub impl Show for RootOf with to_string(self) -> String {
   let expr_str = @symprint.pretty_string(self.poly.to_expr())
   "CRootOf(\{expr_str}, \{self.index})"
 }
 
 ///|
+
+///|
+/// Display implementation for `RootOf.output`.
+///
+/// - Does: Formats `RootOf` values for display.
+/// - Input: the receiver value and MoonBit logger/display protocol arguments.
+/// - Returns: the formatted display output required by the `Show` implementation.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub impl Show for RootOf with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

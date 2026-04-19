@@ -314,6 +314,17 @@ pub fn fe_add(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
 
 ///|
 /// Return the additive inverse of `a`.
+
+///|
+/// Public API `fe_neg`.
+///
+/// - Does: Provides the `fe_neg` operation for domain field elements.
+/// - Input: parameters `a : FieldElem`, using the package representation expected by
+/// the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub fn fe_neg(a : FieldElem) -> FieldElem {
   match a {
     FieldElem::QQ(x) => FieldElem::QQ(x.neg_r())
@@ -328,12 +339,34 @@ pub fn fe_neg(a : FieldElem) -> FieldElem {
 
 ///|
 /// Subtract `b` from `a`.
+
+///|
+/// Public API `fe_sub`.
+///
+/// - Does: Provides the `fe_sub` operation for domain field elements.
+/// - Input: parameters `a : FieldElem`, `b : FieldElem`, using the package
+/// representation expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn fe_sub(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
   fe_add(a, fe_neg(b))
 }
 
 ///|
 /// Multiply two field elements from the same domain.
+
+///|
+/// Public API `fe_mul`.
+///
+/// - Does: Provides the `fe_mul` operation for domain field elements.
+/// - Input: parameters `a : FieldElem`, `b : FieldElem`, using the package
+/// representation expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn fe_mul(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
   match (a, b) {
     (FieldElem::QQ(x), FieldElem::QQ(y)) => FieldElem::QQ(x.mul_r(y))
@@ -372,6 +405,17 @@ pub fn fe_mul(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
 
 ///|
 /// Return the multiplicative inverse of a non-zero field element.
+
+///|
+/// Public API `fe_inv`.
+///
+/// - Does: Provides the `fe_inv` operation for domain field elements.
+/// - Input: parameters `a : FieldElem`, using the package representation expected by
+/// the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn fe_inv(a : FieldElem) -> FieldElem raise PolyError {
   match a {
     FieldElem::QQ(x) =>
@@ -415,6 +459,17 @@ pub fn fe_inv(a : FieldElem) -> FieldElem raise PolyError {
 
 ///|
 /// Embed an integer into the given polynomial coefficient domain.
+
+///|
+/// Public API `fe_from_int`.
+///
+/// - Does: Provides the `fe_from_int` operation for domain field elements.
+/// - Input: parameters `val : Int`, `domain : Domain`, using the package representation
+/// expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
   match domain {
     Domain::QQ | Domain::ZZ => FieldElem::QQ(@symnum.BigRational::from_int(val))
@@ -454,6 +509,17 @@ pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
 
 ///|
 /// Embed a rational into the given polynomial coefficient domain.
+
+///|
+/// Public API `fe_from_rational`.
+///
+/// - Does: Provides the `fe_from_rational` operation for domain field elements.
+/// - Input: parameters `val : @symnum.BigRational`, `domain : Domain`, using the
+/// package representation expected by the signature.
+/// - Returns: a `FieldElem` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn fe_from_rational(
   val : @symnum.BigRational,
   domain : Domain,
@@ -494,6 +560,16 @@ pub fn fe_from_rational(
 
 ///|
 /// Render a field element as a readable symbolic string.
+
+///|
+/// Display implementation for `FieldElem.to_string`.
+///
+/// - Does: Formats `FieldElem` values for display.
+/// - Input: the receiver value and MoonBit logger/display protocol arguments.
+/// - Returns: the formatted display output required by the `Show` implementation.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub impl Show for FieldElem with to_string(self) -> String {
   match self {
     FieldElem::QQ(x) => x.to_string()
@@ -801,6 +877,16 @@ fn load_algext_minpoly(
 }
 
 ///|
+
+///|
+/// Display implementation for `FieldElem.output`.
+///
+/// - Does: Formats `FieldElem` values for display.
+/// - Input: the receiver value and MoonBit logger/display protocol arguments.
+/// - Returns: the formatted display output required by the `Show` implementation.
+/// - Limits: Does not add a separate error channel beyond the called helpers; inputs
+/// must already satisfy the representation invariants expected by this compatibility
+/// layer.
 pub impl Show for FieldElem with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

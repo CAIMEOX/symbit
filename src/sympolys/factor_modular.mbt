@@ -516,6 +516,17 @@ fn factors_product(
 
 ///|
 /// Reconstruct integer coefficients from modular images using CRT + LLL fallback.
+
+///|
+/// Public API `reconstruct_coeffs`.
+///
+/// - Does: Provides the `reconstruct_coeffs` operation for modular factor reconstruction.
+/// - Input: parameters `images : Array[(Int, Array[Int])]`, `bound : Int`, using the
+/// package representation expected by the signature.
+/// - Returns: a `Array[Int]` value.
+/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
+/// operations; inputs must already satisfy the representation invariants expected by
+/// this compatibility layer.
 pub fn reconstruct_coeffs(
   images : Array[(Int, Array[Int])],
   bound : Int,
