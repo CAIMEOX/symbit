@@ -1,4 +1,12 @@
 ///|
+/// Singularity detection front door.
+///
+/// Current Limits:
+/// - Detection focuses on simple negative powers and logarithmic arguments.
+/// - Results are returned as symbolic set expressions.
+/// - Branch cuts and many transcendental singularities are not complete.
+
+///|
 fn sing_set_empty() -> Expr {
   @symcore.Expr::Symbol("EmptySet")
 }
@@ -184,6 +192,11 @@ fn sing_collect(expr : Expr, sym : Expr, out : Array[Expr]) -> Unit {
 ///
 /// The current implementation focuses on poles from negative powers and
 /// logarithmic singularities with linearly solvable arguments.
+///
+/// - Does: Collects isolated singular points of an expression in one symbol.
+/// - Input: An expression and the symbol to analyze.
+/// - Returns: A symbolic empty set or finite-set expression.
+/// - Limits: Only simple pole/logarithm patterns are recognized.
 pub fn singularities(expr : Expr, sym : Expr) -> Expr {
   let out : Array[Expr] = Array::new()
   sing_collect(expr, sym, out)

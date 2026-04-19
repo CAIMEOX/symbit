@@ -1,9 +1,29 @@
 ///|
+/// Accumulation-bounds helpers.
+///
+/// Current Limits:
+/// - Bounds are represented as `AccumBounds(min, max)` function applications.
+/// - Arithmetic is exact for simple finite rational endpoints and conservative
+///   for symbolic or infinite endpoints.
+/// - Advanced interval simplification and assumption-driven ordering are not
+///   complete.
+
+///|
 /// Expression alias used by the calculus package.
+///
+/// - Does: Re-exports the expression type used by calculus front doors.
+/// - Input: Any `@symcore.Expr` value.
+/// - Returns: The same underlying expression type.
+/// - Limits: This is an alias only and adds no calculus-specific behavior.
 pub type Expr = @symcore.Expr
 
 ///|
 /// Rational-number alias used by finite-difference and interval helpers.
+///
+/// - Does: Re-exports the rational type used for exact numeric endpoints.
+/// - Input: Any `@symnum.BigRational` value.
+/// - Returns: The same underlying rational type.
+/// - Limits: This is an alias only and adds no interval-specific behavior.
 pub type BigRational = @symnum.BigRational
 
 ///|
@@ -178,6 +198,11 @@ fn accum_unpack(expr : Expr) -> (Expr, Expr)? {
 
 ///|
 /// Test whether an expression is an `AccumBounds(min, max)` wrapper.
+///
+/// - Does: Checks the symbolic head and arity of an accumulation-bounds object.
+/// - Input: One expression.
+/// - Returns: `true` when the expression is `AccumBounds(min, max)`.
+/// - Limits: Does not validate endpoint ordering or endpoint types.
 pub fn accum_is_bounds(expr : Expr) -> Bool {
   accum_unpack(expr) is Some(_)
 }
@@ -187,6 +212,12 @@ pub fn accum_is_bounds(expr : Expr) -> Bool {
 ///
 /// When both endpoints are numeric, the constructor rejects reversed bounds and
 /// collapses equal endpoints to the endpoint expression itself.
+///
+/// - Does: Builds an accumulation-bounds object from lower and upper endpoints.
+/// - Input: Two endpoint expressions.
+/// - Returns: `AccumBounds(min, max)`, a collapsed endpoint, or raises
+///   `AccumBoundsError` for reversed numeric endpoints.
+/// - Limits: Symbolic endpoint ordering is not proved.
 pub fn accum_bounds(min : Expr, max : Expr) -> Expr raise AccumBoundsError {
   if @symcore.compare_expr(min, max) == 0 {
     return min
@@ -217,6 +248,11 @@ fn accum_bounds_ordered(min : Expr, max : Expr) -> Expr {
 /// Return the lower endpoint of an accumulation-bounds object.
 ///
 /// Returns `None` when `expr` is not an accumulation-bounds wrapper.
+///
+/// - Does: Extracts the lower endpoint from an accumulation-bounds object.
+/// - Input: One expression.
+/// - Returns: `Some(min)` for bounds input, otherwise `None`.
+/// - Limits: Does not simplify or validate the endpoint.
 pub fn accum_min(expr : Expr) -> Expr? {
   match accum_unpack(expr) {
     Some((min, _)) => Some(min)
@@ -226,6 +262,11 @@ pub fn accum_min(expr : Expr) -> Expr? {
 
 ///|
 /// Return the upper endpoint of an accumulation-bounds object.
+///
+/// - Does: Extracts the upper endpoint from an accumulation-bounds object.
+/// - Input: One expression.
+/// - Returns: `Some(max)` for bounds input, otherwise `None`.
+/// - Limits: Does not simplify or validate the endpoint.
 pub fn accum_max(expr : Expr) -> Expr? {
   match accum_unpack(expr) {
     Some((_, max)) => Some(max)
@@ -235,6 +276,11 @@ pub fn accum_max(expr : Expr) -> Expr? {
 
 ///|
 /// Return the width `max - min` of an accumulation-bounds object.
+///
+/// - Does: Computes the symbolic endpoint difference.
+/// - Input: One expression.
+/// - Returns: `Some(max - min)` for bounds input, otherwise `None`.
+/// - Limits: Does not simplify sign or non-negativity of the result.
 pub fn accum_delta(expr : Expr) -> Expr? {
   match accum_unpack(expr) {
     Some((min, max)) =>
@@ -245,6 +291,11 @@ pub fn accum_delta(expr : Expr) -> Expr? {
 
 ///|
 /// Return the midpoint `(min + max) / 2` of an accumulation-bounds object.
+///
+/// - Does: Computes the symbolic midpoint of the bounds endpoints.
+/// - Input: One expression.
+/// - Returns: `Some((min + max) / 2)` for bounds input, otherwise `None`.
+/// - Limits: Does not simplify infinities or symbolic midpoint forms.
 pub fn accum_mid(expr : Expr) -> Expr? {
   match accum_unpack(expr) {
     Some((min, max)) => {
@@ -265,6 +316,11 @@ pub fn accum_mid(expr : Expr) -> Expr? {
 /// Negate an accumulation-bounds object or plain expression.
 ///
 /// Bounds are flipped and re-ordered so the lower endpoint stays on the left.
+///
+/// - Does: Negates a bounds object endpoint-wise or negates a plain expression.
+/// - Input: One expression.
+/// - Returns: A bounds expression for bounds input, otherwise `-expr`.
+/// - Limits: Symbolic endpoint re-ordering is structural and conservative.
 pub fn accum_neg(expr : Expr) -> Expr {
   match accum_unpack(expr) {
     Some((min, max)) =>
@@ -281,6 +337,13 @@ pub fn accum_neg(expr : Expr) -> Expr {
 ///
 /// When both operands have finite numeric endpoints, the result is another
 /// accumulation-bounds object with combined endpoints.
+///
+/// - Does: Adds accumulation-bounds objects and finite scalar shifts when
+///   possible.
+/// - Input: Two expressions.
+/// - Returns: A bounds expression or symbolic `lhs + rhs`.
+/// - Limits: Symbolic and mixed infinite cases may fall back to plain symbolic
+///   addition.
 pub fn accum_add(lhs : Expr, rhs : Expr) -> Expr {
   match (accum_unpack(lhs), accum_unpack(rhs)) {
     (Some((a1, a2)), Some((b1, b2))) => {
@@ -327,12 +390,23 @@ pub fn accum_add(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 /// Subtract `rhs` from `lhs` in accumulation-bounds form.
+///
+/// - Does: Computes subtraction as `lhs + (-rhs)`.
+/// - Input: Two expressions.
+/// - Returns: A bounds expression or symbolic subtraction form.
+/// - Limits: Inherits the simplification limits of `accum_add` and `accum_neg`.
 pub fn accum_sub(lhs : Expr, rhs : Expr) -> Expr {
   accum_add(lhs, accum_neg(rhs))
 }
 
 ///|
 /// Multiply two accumulation-bounds expressions or a bounds object by a scalar.
+///
+/// - Does: Multiplies finite rational bounds endpoint-wise when possible.
+/// - Input: Two expressions.
+/// - Returns: A bounds expression or symbolic product.
+/// - Limits: Symbolic endpoint multiplication and many infinite cases remain
+///   conservative.
 pub fn accum_mul(lhs : Expr, rhs : Expr) -> Expr {
   match (accum_unpack(lhs), accum_unpack(rhs)) {
     (Some((a1, a2)), Some((b1, b2))) => {
@@ -395,6 +469,13 @@ fn interval_contains_zero(min : BigRational, max : BigRational) -> Bool {
 ///
 /// Finite numeric denominator intervals that cross zero widen to an unbounded
 /// result.
+///
+/// - Does: Divides bounds expressions by finite rational intervals or scalars
+///   when possible.
+/// - Input: Numerator expression and denominator expression.
+/// - Returns: A bounds expression or symbolic quotient form.
+/// - Limits: Denominator intervals crossing zero widen conservatively to an
+///   unbounded interval.
 pub fn accum_div(lhs : Expr, rhs : Expr) -> Expr {
   match (accum_unpack(lhs), accum_unpack(rhs)) {
     (Some((a1, a2)), Some((b1, b2))) => {
@@ -493,6 +574,12 @@ fn pow_rational(base : BigRational, exp : Int) -> BigRational? {
 /// Raise an accumulation-bounds expression to an integer power.
 ///
 /// Non-integer exponents fall back to a symbolic power expression.
+///
+/// - Does: Raises finite rational bounds to exact integer powers when possible.
+/// - Input: A base expression and exponent expression.
+/// - Returns: A bounds expression, scalar expression, or symbolic power.
+/// - Limits: Non-integer exponents and symbolic endpoint powers are not
+///   interval-evaluated.
 pub fn accum_pow(base : Expr, exp : Expr) -> Expr {
   match (accum_unpack(base), exp) {
     (Some((a1, a2)), Expr::Number(n)) => {
@@ -583,6 +670,12 @@ pub fn accum_pow(base : Expr, exp : Expr) -> Expr {
 
 ///|
 /// Apply absolute value to an accumulation-bounds expression.
+///
+/// - Does: Computes absolute-value bounds for finite rational endpoints.
+/// - Input: One expression.
+/// - Returns: A bounds expression, original non-negative bounds, or symbolic
+///   `Abs(expr)`.
+/// - Limits: Symbolic endpoints fall back to a symbolic absolute value.
 pub fn accum_abs(expr : Expr) -> Expr {
   match accum_unpack(expr) {
     Some((min, max)) => {
@@ -614,6 +707,11 @@ pub fn accum_abs(expr : Expr) -> Expr {
 
 ///|
 /// Build the smallest interval covering both accumulation-bounds operands.
+///
+/// - Does: Unions two finite rational accumulation-bounds objects.
+/// - Input: Two expressions.
+/// - Returns: A covering bounds expression or symbolic `Union(lhs, rhs)`.
+/// - Limits: Symbolic and infinite endpoint unions are not fully simplified.
 pub fn accum_union(lhs : Expr, rhs : Expr) -> Expr {
   match (accum_unpack(lhs), accum_unpack(rhs)) {
     (Some((a1, a2)), Some((b1, b2))) => {

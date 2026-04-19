@@ -1,4 +1,12 @@
 ///|
+/// Finite-difference weights and sampled derivative helpers.
+///
+/// Current Limits:
+/// - Weights are computed over exact rational grid points.
+/// - Duplicate grid points raise `FiniteDiffError`.
+/// - Higher-level symbolic stencil generation is not implemented here.
+
+///|
 suberror FiniteDiffError {
   DuplicateGridPoint
 } derive(Debug, Eq)
@@ -43,6 +51,11 @@ fn fd_rat_div(
 ///
 /// The return value is a three-level table indexed by derivative order, stencil
 /// size, and grid position.
+///
+/// - Does: Computes finite-difference weights for derivatives up to `order`.
+/// - Input: Derivative order, exact grid points, and optional evaluation point.
+/// - Returns: A three-dimensional exact-rational weight table.
+/// - Limits: Duplicate grid points raise `FiniteDiffError::DuplicateGridPoint`.
 pub fn finite_diff_weights(
   order : Int,
   x_list : Array[BigRational],
@@ -99,6 +112,13 @@ pub fn finite_diff_weights(
 ///
 /// `x_list` and `y_list` must have the same length. The result is a symbolic
 /// linear combination of the sampled expressions.
+///
+/// - Does: Applies finite-difference weights to sampled symbolic values.
+/// - Input: Derivative order, exact grid points, sample expressions, and
+///   optional evaluation point.
+/// - Returns: A symbolic linear combination approximating the derivative.
+/// - Limits: Mismatched sample/grid lengths fail; duplicate grid points raise
+///   through `finite_diff_weights`.
 pub fn apply_finite_diff(
   order : Int,
   x_list : Array[BigRational],

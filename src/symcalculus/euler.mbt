@@ -1,7 +1,23 @@
 ///|
+/// Differentiation and Euler-Lagrange helpers.
+///
+/// Current Limits:
+/// - Differentiation covers common arithmetic, selected elementary functions,
+///   and symbolic derivative fallback.
+/// - Full assumption-aware calculus and all special-function derivatives are
+///   not complete.
+
+///|
 /// Build a derivative expression with explicit differentiation variables.
 ///
 /// This constructs the symbolic derivative node directly without evaluating it.
+///
+/// - Does: Creates a symbolic derivative node.
+/// - Input: A source expression and an ordered array of differentiation
+///   variables.
+/// - Returns: A `Derivative` expression.
+/// - Limits: Does not evaluate the derivative or validate higher-order grouping
+///   beyond the shared core constructor.
 pub fn derivative_expr(expr : Expr, vars : Array[Expr]) -> Expr {
   let args : Array[Expr] = Array::new()
   args.push(expr)
@@ -376,6 +392,12 @@ fn diff_undefined_function(
 ///
 /// The implementation handles common arithmetic, several standard elementary
 /// functions, symbolic applications, and simple substitution-chain cases.
+///
+/// - Does: Differentiates an expression with respect to one variable.
+/// - Input: A source expression and one differentiation variable.
+/// - Returns: A symbolic derivative result.
+/// - Limits: Unsupported dependent constructs are preserved as symbolic
+///   derivative nodes or return conservative zero when independent.
 pub fn diff(expr : Expr, wrt : Expr) -> Expr {
   if @symcore.compare_expr(expr, wrt) == 0 {
     return @symcore.int(1)
@@ -539,6 +561,13 @@ fn diff_with_vars(expr : Expr, vars : Array[Expr]) -> Expr {
 ///
 /// `funcs` lists the dependent functions and `vars` lists the independent
 /// variables. The result is an array of equations of the form `... = 0`.
+///
+/// - Does: Builds Euler-Lagrange equations for a Lagrangian density.
+/// - Input: Lagrangian expression, dependent function expressions, and
+///   independent variable expressions.
+/// - Returns: An array of equality expressions with right-hand side zero.
+/// - Limits: Relies on the current derivative implementation and detects
+///   derivative order structurally.
 pub fn euler_equations(
   lagrangian : Expr,
   funcs : Array[Expr],

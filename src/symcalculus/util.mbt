@@ -1,4 +1,11 @@
 ///|
+/// Calculus utility front doors.
+///
+/// Current Limits:
+/// - Period detection is limited to elementary linear arguments.
+/// - Unknown periods return `None` instead of raising.
+
+///|
 fn util_rat_zero() -> BigRational {
   BigRational::zero()
 }
@@ -133,6 +140,13 @@ fn util_mul_scalar(expr : Expr, k : BigRational) -> Expr {
 ///
 /// The current implementation recognizes linear arguments of `sin`, `cos`, and
 /// `tan`. Expressions independent of `sym` have period `0`.
+///
+/// - Does: Attempts to find a smallest positive period for an expression.
+/// - Input: An expression and the symbol with respect to which periodicity is
+///   checked.
+/// - Returns: `Some(period)` for known cases, `Some(0)` for independent
+///   expressions, or `None` when unknown.
+/// - Limits: Only simple linear `sin`, `cos`, and `tan` cases are recognized.
 pub fn periodicity(expr : Expr, sym : Expr) -> Expr? {
   if !util_depends_on(expr, sym) {
     return Some(@symcore.int(0))
