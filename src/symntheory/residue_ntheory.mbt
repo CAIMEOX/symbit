@@ -353,7 +353,7 @@ pub fn nthroot_mod(
 }
 
 ///|
-pub fn mobius(n0 : BigInt) -> Int raise {
+pub fn mobius(n0 : BigInt) -> Int {
   let n = if n0 < bi(0) { -n0 } else { n0 }
   if n == bi(1) {
     return 1

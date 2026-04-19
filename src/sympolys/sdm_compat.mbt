@@ -849,10 +849,9 @@ pub fn SDM::vstack(self : SDM, other : SDM) -> SDM raise PolyError {
 /// - Input: parameters `self : SDM`, using the package representation expected by the
 /// signature.
 /// - Returns: a `Int` value.
-/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
-/// operations; inputs must already satisfy the representation invariants expected by
-/// this compatibility layer.
-pub fn SDM::nnz(self : SDM) -> Int raise PolyError {
+/// - Limits: Inputs must already satisfy the representation invariants expected by the
+/// compatibility wrapper; no separate error channel is added.
+pub fn SDM::nnz(self : SDM) -> Int {
   self.dm.nnz()
 }
 

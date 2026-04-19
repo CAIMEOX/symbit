@@ -763,10 +763,9 @@ pub fn DDM::vstack(self : DDM, other : DDM) -> DDM raise PolyError {
 /// - Input: parameters `self : DDM`, using the package representation expected by the
 /// signature.
 /// - Returns: a `Int` value.
-/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
-/// operations; inputs must already satisfy the representation invariants expected by
-/// this compatibility layer.
-pub fn DDM::nnz(self : DDM) -> Int raise PolyError {
+/// - Limits: Inputs must already satisfy the representation invariants expected by the
+/// compatibility wrapper; no separate error channel is added.
+pub fn DDM::nnz(self : DDM) -> Int {
   self.dm.nnz()
 }
 

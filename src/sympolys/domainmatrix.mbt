@@ -2225,10 +2225,9 @@ pub fn DomainMatrix::diagonal(
 /// - Input: parameters `self : DomainMatrix`, using the package representation expected
 /// by the signature.
 /// - Returns: a `Int` value.
-/// - Limits: Raises `PolyError` for invalid domains, shapes, or unsupported exact
-/// operations; inputs must already satisfy the representation invariants expected by
-/// this compatibility layer.
-pub fn DomainMatrix::nnz(self : DomainMatrix) -> Int raise PolyError {
+/// - Limits: Inputs must already satisfy the representation invariants expected by
+/// this compatibility layer; no separate error channel is added.
+pub fn DomainMatrix::nnz(self : DomainMatrix) -> Int {
   match self.rep {
     DomainMatrixRep::Dense(rows) => {
       let mut total = 0

@@ -410,15 +410,10 @@ pub fn kronecker_symbol(a : Expr, n : Expr) -> Expr {
 ///   backend when possible.
 /// - Input: One symbolic expression.
 /// - Returns: An exact integer expression or symbolic `mobius(n)`.
-/// - Limits: Backend domain errors fall back to a symbolic expression.
+/// - Limits: Non-integer symbolic inputs remain symbolic.
 pub fn mobius(n : Expr) -> Expr {
   match int_value(n) {
-    Some(ni) =>
-      expr_from_int(
-        @symntheory.mobius(ni) catch {
-          _ => return @symcore.function("mobius", [n])
-        },
-      )
+    Some(ni) => expr_from_int(@symntheory.mobius(ni))
     None => @symcore.function("mobius", [n])
   }
 }

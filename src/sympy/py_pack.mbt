@@ -1,17 +1,13 @@
 ///|
 fn py_none_obj() -> @py.PyObject {
-  @py.PyObject::create(coerce(py_none()))
+  guard @py.pyimport("builtins") is Some(builtins) else {
+    abort("python-builtins-unavailable")
+  }
+  guard builtins.get_attr("None") is Some(none_obj) else {
+    abort("python-none-unavailable")
+  }
+  objenum_to_obj(none_obj)
 }
-
-///|
-#external
-priv type PyObjectRef
-
-///|
-extern "C" fn py_none() -> PyObjectRef = "py_none"
-
-///|
-fn[T, U] coerce(x : T) -> U = "%identity"
 
 ///|
 pub fn py_pack(arg : OracleArg) -> @py.PyObject {

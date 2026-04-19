@@ -138,15 +138,6 @@ fn exact_pivot_row(data : ExactRatRows, start : Int, col : Int) -> Int {
 }
 
 ///|
-fn exact_int_pivot_row(data : ExactIntRows, start : Int, col : Int) -> Int {
-  let mut pivot = start
-  while pivot < data.length() && data[pivot][col].is_zero() {
-    pivot += 1
-  }
-  pivot
-}
-
-///|
 fn exact_rational_det(data0 : ExactRatRows) -> @symnum.BigRational {
   if data0.is_empty() {
     return @symnum.BigRational::one()

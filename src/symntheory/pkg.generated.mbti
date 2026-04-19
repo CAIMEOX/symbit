@@ -106,7 +106,7 @@ pub fn mersenne_prime_exponent(Int) -> Int raise
 
 pub let mersenne_prime_exponents : Array[Int]
 
-pub fn mobius(@bigint.BigInt) -> Int raise
+pub fn mobius(@bigint.BigInt) -> Int
 
 pub fn mod_inverse(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt?
 

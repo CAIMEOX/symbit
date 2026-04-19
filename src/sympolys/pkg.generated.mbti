@@ -1007,7 +1007,7 @@ pub fn DDM::mul(Self, FieldElem) -> Self raise PolyError
 pub fn DDM::mul_elementwise(Self, Self) -> Self raise PolyError
 pub fn DDM::mul_scalar(Self, FieldElem) -> Self raise PolyError
 pub fn DDM::neg(Self) -> Self raise PolyError
-pub fn DDM::nnz(Self) -> Int raise PolyError
+pub fn DDM::nnz(Self) -> Int
 pub fn DDM::nullspace(Self, divide_last? : Bool) -> Array[Array[FieldElem]] raise PolyError
 pub fn DDM::nullspace_from_rref(Self, pivots? : Array[Int]) -> (Self, Array[Int]) raise PolyError
 pub fn DDM::ones(Int, Int, Domain) -> Self raise PolyError
@@ -1241,7 +1241,7 @@ pub fn DomainMatrix::matmul(Self, Self) -> Self raise PolyError
 pub fn DomainMatrix::mul(Self, FieldElem) -> Self raise PolyError
 pub fn DomainMatrix::mul_elementwise(Self, Self) -> Self raise PolyError
 pub fn DomainMatrix::neg(Self) -> Self raise PolyError
-pub fn DomainMatrix::nnz(Self) -> Int raise PolyError
+pub fn DomainMatrix::nnz(Self) -> Int
 pub fn DomainMatrix::nullspace(Self, divide_last? : Bool) -> Self raise PolyError
 pub fn DomainMatrix::nullspace_from_rref(Self, pivots? : Array[Int]) -> Self raise PolyError
 pub fn DomainMatrix::ones(Int, Int, Domain) -> Self raise PolyError
@@ -1484,7 +1484,7 @@ pub fn SDM::mul(Self, FieldElem) -> Self raise PolyError
 pub fn SDM::mul_elementwise(Self, Self) -> Self raise PolyError
 pub fn SDM::neg(Self) -> Self raise PolyError
 pub fn SDM::new(Map[Int, Map[Int, FieldElem]], (Int, Int), Domain) -> Self raise PolyError
-pub fn SDM::nnz(Self) -> Int raise PolyError
+pub fn SDM::nnz(Self) -> Int
 pub fn SDM::nullspace(Self, divide_last? : Bool) -> Array[Array[FieldElem]] raise PolyError
 pub fn SDM::nullspace_from_rref(Self, pivots? : Array[Int]) -> (Self, Array[Int]) raise PolyError
 pub fn SDM::ones(Int, Int, Domain) -> Self raise PolyError
