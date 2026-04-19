@@ -1,4 +1,12 @@
 ///|
+/// Pratt-style expression parser from tokens to AST.
+///
+/// Current Limits:
+/// - The parser accepts the current `symparse` expression grammar.
+/// - Unsupported syntax raises `ParseError` with a source span.
+/// - External parser syntaxes are not handled here.
+
+///|
 priv struct Parser {
   tokens : Array[Token]
   options : ParseOptions
@@ -99,6 +107,12 @@ fn greek_name(name : String) -> Bool {
 /// The default rule keeps short names, names containing underscores, and common
 /// Greek-letter names intact. Other mixed alphanumeric names such as `xyz` can
 /// be split when symbol-splitting transformations are enabled.
+///
+/// - Does: Decides whether a name is eligible for splitting into implicit
+///   symbol multiplication.
+/// - Input: One identifier name.
+/// - Returns: `true` when the default splitter may split the name.
+/// - Limits: Greek-name and underscore heuristics are conservative.
 pub fn default_split_symbol_predicate(name : String) -> Bool {
   if name.length() <= 1 || name.contains("_") || greek_name(name) {
     return false
@@ -206,6 +220,12 @@ fn is_builtin_core_head_name(name : String) -> Bool {
 /// This helps callers decide whether a token should be treated as a plain symbol
 /// or as a constructor-like name such as `Tuple`, `Lambda`, or a built-in
 /// mathematical function.
+///
+/// - Does: Checks whether a name is reserved as a built-in callable head.
+/// - Input: One identifier name.
+/// - Returns: `true` for recognized built-in function or core constructor
+///   names.
+/// - Limits: The table only covers names registered in this package.
 pub fn is_builtin_head_name(name : String) -> Bool {
   is_builtin_callable_name(name) || is_builtin_core_head_name(name)
 }
@@ -719,6 +739,12 @@ fn Parser::parse_compare(self : Parser) -> Ast raise ParseError {
 
 ///|
 /// Parse source text into an AST with explicit parser options.
+///
+/// - Does: Lexes and parses source text with explicit parser options and an
+///   empty context.
+/// - Input: A source string and `ParseOptions`.
+/// - Returns: An `Ast`, or raises `ParseError`.
+/// - Limits: Name context is empty, so caller bindings are not visible.
 pub fn parse_ast_with(
   src : String,
   options : ParseOptions,
@@ -732,6 +758,11 @@ pub fn parse_ast_with(
 /// Unlike the higher-level `parse_expr_*` helpers, this function stops before
 /// lowering so callers can inspect or transform syntax while spans and operator
 /// structure are still intact.
+///
+/// - Does: Lexes and parses source text with explicit options and context.
+/// - Input: A source string, `ParseOptions`, and `ParseContext`.
+/// - Returns: An `Ast`, or raises `ParseError`.
+/// - Limits: This front door does not lower names to `symcore.Expr` values.
 pub fn parse_ast_in(
   src : String,
   options : ParseOptions,
@@ -747,6 +778,11 @@ pub fn parse_ast_in(
 
 ///|
 /// Parse a source string into the typed parser AST.
+///
+/// - Does: Lexes and parses source text with default parser options.
+/// - Input: One source string.
+/// - Returns: An `Ast`, or raises `ParseError`.
+/// - Limits: Uses the default options and an empty context.
 pub fn parse_ast(src : String) -> Ast raise ParseError {
   parse_ast_with(src, default_parse_options())
 }

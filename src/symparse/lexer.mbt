@@ -1,4 +1,12 @@
 ///|
+/// Lexer for the expression parser.
+///
+/// Current Limits:
+/// - The lexer recognizes the token set used by `symparse`.
+/// - Unsupported characters raise `ParseError::UnexpectedChar`.
+/// - Literal validation is split between lexing and later numeric lowering.
+
+///|
 fn char_at(src : String, index : Int) -> Char? {
   src.get_char(index)
 }
@@ -118,6 +126,11 @@ fn scan_ident(src : String, start : Int) -> (TokenKind, Int) {
 
 ///|
 /// Convert a source string into a typed token stream.
+///
+/// - Does: Scans source text into tokens and appends an EOF token.
+/// - Input: One source string.
+/// - Returns: An array of `Token` values, or raises `ParseError`.
+/// - Limits: Only the current expression grammar's tokens are recognized.
 pub fn lex(src : String) -> Array[Token] raise ParseError {
   let tokens : Array[Token] = []
   let mut index = 0

@@ -1,4 +1,13 @@
 ///|
+/// Lower parser AST nodes into `symcore.Expr` values.
+///
+/// Current Limits:
+/// - Lowering supports the AST variants and transformations currently
+///   implemented in `symparse`.
+/// - Unsupported constructs raise `ParseError` instead of returning partial
+///   expressions.
+
+///|
 fn make_add(args : Array[Expr], options : ParseOptions) -> Expr {
   @symcore.with_evaluate(options.evaluate, fn() { @symcore.add(args) })
 }
@@ -1207,6 +1216,13 @@ fn number_from_literal(
 /// Lowering resolves names, applies parser transformations, and optionally
 /// evaluates simple arithmetic depending on `options.evaluate`. Use this entry
 /// point when another stage has already produced an [`Ast`](#ast).
+///
+/// - Does: Converts an `Ast` to a runtime expression using explicit options and
+///   context.
+/// - Input: One AST, `ParseOptions`, and `ParseContext`.
+/// - Returns: A `symcore.Expr`, or raises `ParseError` for invalid lowering.
+/// - Limits: Only names and constructs supported by the current lowerer are
+///   accepted.
 pub fn lower_ast_in(
   ast : Ast,
   options : ParseOptions,
@@ -1347,6 +1363,12 @@ pub fn lower_ast_in(
 
 ///|
 /// Lower an AST with explicit options and an empty name-resolution context.
+///
+/// - Does: Converts an AST to `Expr` using explicit options and the default
+///   empty context.
+/// - Input: One AST and parser options.
+/// - Returns: A `symcore.Expr`, or raises `ParseError`.
+/// - Limits: Does not resolve caller-provided bindings.
 pub fn lower_ast_with(
   ast : Ast,
   options : ParseOptions,
@@ -1356,6 +1378,12 @@ pub fn lower_ast_with(
 
 ///|
 /// Lower an AST using the default parser options and an empty context.
+///
+/// - Does: Converts an AST to `Expr` using default parser options.
+/// - Input: One AST.
+/// - Returns: A `symcore.Expr`, or raises `ParseError`.
+/// - Limits: Does not resolve caller-provided bindings or custom
+///   transformations.
 pub fn lower_ast(ast : Ast) -> Expr raise ParseError {
   lower_ast_in(ast, default_parse_options(), default_parse_context())
 }
