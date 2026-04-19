@@ -1,5 +1,11 @@
 ///|
 /// Combinatorial factorial-related functions.
+///
+/// Current Limits:
+/// - Exact integer cases are evaluated for the implemented front doors.
+/// - Non-integer and unsupported signed cases remain symbolic.
+/// - Advanced gamma rewrites, assumptions, and negative-upper binomial
+///   semantics are not complete.
 
 ///|
 let small_factorials : Array[BigInt] = [
@@ -174,6 +180,13 @@ fn factorial2_eval_nonnegative_bigint(n : Int) -> BigInt {
 }
 
 ///|
+/// Build or evaluate a factorial expression.
+///
+/// - Does: Evaluates non-negative integer factorials and keeps other inputs as
+///   `factorial(n)`.
+/// - Input: One symbolic expression.
+/// - Returns: An exact integer expression or symbolic factorial expression.
+/// - Limits: Negative and non-integer inputs are not analytically continued.
 pub fn factorial(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
@@ -189,6 +202,13 @@ pub fn factorial(n : Expr) -> Expr {
 }
 
 ///|
+/// Build or evaluate a double-factorial expression.
+///
+/// - Does: Evaluates non-negative integer double factorials and supported
+///   negative odd integer cases.
+/// - Input: One symbolic expression.
+/// - Returns: An exact rational/integer expression or symbolic `factorial2(n)`.
+/// - Limits: Negative even integers and non-integer inputs remain symbolic.
 pub fn factorial2(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
@@ -215,6 +235,13 @@ pub fn factorial2(n : Expr) -> Expr {
 }
 
 ///|
+/// Build or evaluate a subfactorial expression.
+///
+/// - Does: Evaluates non-negative integer derangement counts and keeps other
+///   inputs symbolic.
+/// - Input: One symbolic expression.
+/// - Returns: An exact integer expression or symbolic `subfactorial(n)`.
+/// - Limits: Negative and non-integer inputs are not evaluated.
 pub fn subfactorial(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
@@ -230,6 +257,13 @@ pub fn subfactorial(n : Expr) -> Expr {
 }
 
 ///|
+/// Build or evaluate a rising factorial expression.
+///
+/// - Does: Evaluates `(x)_k` when both arguments are exact integers and `k >= 0`.
+/// - Input: A base expression and a length expression.
+/// - Returns: An exact integer expression or symbolic `rf(x, k)`.
+/// - Limits: Negative lengths, non-integers, and polynomial expansion are not
+///   evaluated.
 pub fn rf(x : Expr, k : Expr) -> Expr {
   match (int_value(x), int_value(k)) {
     (Some(xi), Some(ki)) => {
@@ -245,6 +279,14 @@ pub fn rf(x : Expr, k : Expr) -> Expr {
 }
 
 ///|
+/// Build or evaluate a falling factorial expression.
+///
+/// - Does: Evaluates falling factorials when both arguments are exact integers
+///   and `k >= 0`.
+/// - Input: A base expression and a length expression.
+/// - Returns: An exact integer expression or symbolic `ff(x, k)`.
+/// - Limits: Negative lengths, non-integers, and polynomial expansion are not
+///   evaluated.
 pub fn ff(x : Expr, k : Expr) -> Expr {
   match (int_value(x), int_value(k)) {
     (Some(xi), Some(ki)) => {
@@ -260,16 +302,38 @@ pub fn ff(x : Expr, k : Expr) -> Expr {
 }
 
 ///|
+/// Build a named rising-factorial expression.
+///
+/// - Does: Builds `RisingFactorial(x, k)`.
+/// - Input: A base expression and a length expression.
+/// - Returns: A symbolic rising-factorial expression.
+/// - Limits: This alias front door does not perform the exact integer
+///   evaluation used by `rf`.
 pub fn rising_factorial(x : Expr, k : Expr) -> Expr {
   @symcore.function("RisingFactorial", [x, k])
 }
 
 ///|
+/// Build a named falling-factorial expression.
+///
+/// - Does: Builds `FallingFactorial(x, k)`.
+/// - Input: A base expression and a length expression.
+/// - Returns: A symbolic falling-factorial expression.
+/// - Limits: This alias front door does not perform the exact integer
+///   evaluation used by `ff`.
 pub fn falling_factorial(x : Expr, k : Expr) -> Expr {
   @symcore.function("FallingFactorial", [x, k])
 }
 
 ///|
+/// Build or evaluate a binomial coefficient.
+///
+/// - Does: Evaluates exact integer `binomial(n, k)` cases and keeps other inputs
+///   symbolic.
+/// - Input: Two symbolic expressions for `n` and `k`.
+/// - Returns: An exact integer expression or symbolic `binomial(n, k)`.
+/// - Limits: Negative upper arguments follow the local integer path and are not
+///   fully expanded into generalized binomial semantics.
 pub fn binomial(n : Expr, k : Expr) -> Expr {
   match (int_value(n), int_value(k)) {
     (Some(ni), Some(ki)) => {
