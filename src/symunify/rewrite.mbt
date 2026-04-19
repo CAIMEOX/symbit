@@ -1,9 +1,22 @@
 ///|
+/// Pattern-based expression rewrite helpers.
+///
+/// Current Limits:
+/// - Rewrites are based on the current `symunify` matcher.
+/// - Guarded assumptions are checked through `symassume.ask`.
+/// - Results are returned as all valid rewrites without ranking.
+
+///|
 /// Pattern-based rewrite rule.
 ///
 /// `source` is the pattern to match, `target` is the replacement template,
 /// `variables` marks the expression holes, `condition` can reject candidate
 /// matches, and `assumption_query` can require extra facts before rewriting.
+///
+/// - Does: Stores one source pattern, replacement template, and optional guards.
+/// - Input: Built by `rewriterule`.
+/// - Returns: A `RewriteRule` value.
+/// - Limits: Matching semantics follow the current expression unifier.
 pub struct RewriteRule {
   source : @symcore.Expr
   target : @symcore.Expr
@@ -213,6 +226,12 @@ fn rewrite_subs_raw(
 
 ///|
 /// Build a rewrite rule from a source pattern and replacement template.
+///
+/// - Does: Constructs a pattern-based rewrite rule.
+/// - Input: Source pattern, target template, optional variables, optional
+///   condition, and optional assumption query.
+/// - Returns: A `RewriteRule`.
+/// - Limits: Does not validate that variables appear in the source or target.
 pub fn rewriterule(
   source : @symcore.Expr,
   target : @symcore.Expr,
@@ -229,6 +248,11 @@ pub fn rewriterule(
 /// Matching may produce more than one result when the pattern is associative or
 /// commutative. `assumptions` supplies additional facts used to validate guarded
 /// rewrites.
+///
+/// - Does: Applies a rewrite rule to one expression.
+/// - Input: A rule receiver, target expression, and optional assumptions.
+/// - Returns: An array of rewritten expressions.
+/// - Limits: Can raise `AskError` when an assumption guard cannot be evaluated.
 pub fn RewriteRule::apply(
   self : RewriteRule,
   expr : @symcore.Expr,

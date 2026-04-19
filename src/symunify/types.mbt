@@ -1,5 +1,19 @@
 ///|
+/// Generic term and substitution types for unification.
+///
+/// Current Limits:
+/// - The core term language is intentionally small: atoms, compounds,
+///   sequences, and match variables.
+/// - Conditional variables validate candidate terms but do not explain rejected
+///   matches.
+
+///|
 /// Key identifying an unconstrained match variable.
+///
+/// - Does: Stores the payload used to identify one unification variable.
+/// - Input: A payload value of type `T`.
+/// - Returns: A `VariableKey[T]`.
+/// - Limits: Equality and hashing follow the payload type.
 pub struct VariableKey[T] {
   arg : T
 } derive(Eq, Hash)
@@ -9,6 +23,11 @@ pub struct VariableKey[T] {
 ///
 /// The internal `id` keeps two conditional variables with the same printable
 /// payload distinct.
+///
+/// - Does: Stores a payload and unique identity for a conditional variable.
+/// - Input: A payload value of type `T`.
+/// - Returns: A `CondVariableKey[T]`.
+/// - Limits: The unique identity is process-local.
 pub struct CondVariableKey[T] {
   arg : T
   id : Int
@@ -16,6 +35,11 @@ pub struct CondVariableKey[T] {
 
 ///|
 /// Variable kinds that may appear in a unification substitution.
+///
+/// - Does: Tags a substitution key as unconstrained or conditional.
+/// - Input: A variable key or conditional variable key.
+/// - Returns: A `MatchVar[T]` key.
+/// - Limits: Does not store the conditional predicate itself.
 pub(all) enum MatchVar[T] {
   Variable(VariableKey[T])
   CondVariable(CondVariableKey[T])
@@ -27,6 +51,11 @@ pub(all) enum MatchVar[T] {
 /// `Atom` stores indivisible values, `Compound` stores an operator plus child
 /// terms, `Sequence` stores a positional collection, and the variable cases mark
 /// holes that may be substituted during matching.
+///
+/// - Does: Represents a value in the generic unification term language.
+/// - Input: Atoms, operator applications, sequences, or variable keys.
+/// - Returns: A `UnifyTerm[T, Op]`.
+/// - Limits: Semantic meaning of atoms and operators is supplied by callers.
 pub(all) enum UnifyTerm[T, Op] {
   Atom(T)
   Compound(Op, Array[UnifyTerm[T, Op]])
@@ -37,6 +66,11 @@ pub(all) enum UnifyTerm[T, Op] {
 
 ///|
 /// Mapping from match variables to the terms they were bound to.
+///
+/// - Does: Aliases the substitution map used by the unifier.
+/// - Input: `MatchVar` keys and `UnifyTerm` values.
+/// - Returns: A map from variables to matched terms.
+/// - Limits: The map itself does not enforce occurs checks.
 pub type Substitution[T, Op] = Map[MatchVar[T], UnifyTerm[T, Op]]
 
 ///|
@@ -51,36 +85,67 @@ fn next_cond_variable_id() -> Int {
 
 ///|
 /// Build an unconstrained variable key.
+///
+/// - Does: Wraps a payload as a plain variable key.
+/// - Input: One payload value.
+/// - Returns: A `VariableKey[T]`.
+/// - Limits: Does not create a term until passed to `variable_term`.
 pub fn[T] variable(arg : T) -> VariableKey[T] {
   { arg, }
 }
 
 ///|
 /// Build a fresh conditional variable key.
+///
+/// - Does: Wraps a payload with a fresh conditional-variable identity.
+/// - Input: One payload value.
+/// - Returns: A `CondVariableKey[T]`.
+/// - Limits: The validation predicate is attached later by
+///   `cond_variable_term`.
 pub fn[T] cond_variable(arg : T) -> CondVariableKey[T] {
   { arg, id: next_cond_variable_id() }
 }
 
 ///|
 /// Recover the payload stored inside a variable key.
+///
+/// - Does: Extracts the payload from a `VariableKey`.
+/// - Input: One variable key.
+/// - Returns: The stored payload.
+/// - Limits: Does not expose any additional identity.
 pub fn[T] VariableKey::arg(self : VariableKey[T]) -> T {
   self.arg
 }
 
 ///|
 /// Recover the payload stored inside a conditional variable key.
+///
+/// - Does: Extracts the payload from a `CondVariableKey`.
+/// - Input: One conditional variable key.
+/// - Returns: The stored payload.
+/// - Limits: Does not expose the internal unique id.
 pub fn[T] CondVariableKey::arg(self : CondVariableKey[T]) -> T {
   self.arg
 }
 
 ///|
 /// Wrap a plain value as an atomic unification term.
+///
+/// - Does: Builds an atom term.
+/// - Input: One payload value.
+/// - Returns: `UnifyTerm::Atom(value)`.
+/// - Limits: The atom is matched by caller-provided equality.
 pub fn[T, Op] atom(value : T) -> UnifyTerm[T, Op] {
   UnifyTerm::Atom(value)
 }
 
 ///|
 /// Build a compound unification term.
+///
+/// - Does: Builds an operator application term.
+/// - Input: An operator value and argument terms.
+/// - Returns: `UnifyTerm::Compound(op, args)`.
+/// - Limits: Associativity and commutativity are not encoded in the term itself.
 pub fn[T, Op] compound(
   op : Op,
   args : Array[UnifyTerm[T, Op]],
@@ -90,12 +155,22 @@ pub fn[T, Op] compound(
 
 ///|
 /// Build a sequence term.
+///
+/// - Does: Builds a positional sequence term.
+/// - Input: An array of terms.
+/// - Returns: `UnifyTerm::Sequence(items)`.
+/// - Limits: Sequence semantics are positional and not associative.
 pub fn[T, Op] sequence(items : Array[UnifyTerm[T, Op]]) -> UnifyTerm[T, Op] {
   UnifyTerm::Sequence(items.map(item => item))
 }
 
 ///|
 /// Wrap a variable key as a variable term.
+///
+/// - Does: Builds a plain variable term.
+/// - Input: One `VariableKey`.
+/// - Returns: `UnifyTerm::Variable(key)`.
+/// - Limits: The term accepts any candidate that passes the occurs check.
 pub fn[T, Op] variable_term(key : VariableKey[T]) -> UnifyTerm[T, Op] {
   UnifyTerm::Variable(key)
 }
@@ -104,6 +179,11 @@ pub fn[T, Op] variable_term(key : VariableKey[T]) -> UnifyTerm[T, Op] {
 /// Wrap a conditional variable key as a guarded variable term.
 ///
 /// `valid` is called before binding the variable to a candidate term.
+///
+/// - Does: Builds a variable term guarded by a predicate.
+/// - Input: A conditional variable key and candidate validator.
+/// - Returns: `UnifyTerm::CondVariable(key, valid)`.
+/// - Limits: Rejected matches are silently omitted.
 pub fn[T, Op] cond_variable_term(
   key : CondVariableKey[T],
   valid : (UnifyTerm[T, Op]) -> Bool,
@@ -113,6 +193,11 @@ pub fn[T, Op] cond_variable_term(
 
 ///|
 /// Recover the payload stored inside any match-variable variant.
+///
+/// - Does: Extracts the payload from a substitution key.
+/// - Input: One `MatchVar`.
+/// - Returns: The payload stored in the underlying key.
+/// - Limits: Conditional-variable identity is not returned.
 pub fn[T] match_var_arg(key : MatchVar[T]) -> T {
   match key {
     MatchVar::Variable(key0) => key0.arg()
@@ -205,6 +290,11 @@ fn[T : Eq + Hash, Op] substitution_assoc(
 ///
 /// This is convenient when callers want a stable iterable snapshot instead of
 /// traversing the map directly.
+///
+/// - Does: Converts a substitution map to an array of key/value pairs.
+/// - Input: One substitution map.
+/// - Returns: An array of `(MatchVar, UnifyTerm)` pairs.
+/// - Limits: Pair order follows map iteration order and is not sorted.
 pub fn[T, Op] substitution_pairs(
   subst : Substitution[T, Op],
 ) -> Array[(MatchVar[T], UnifyTerm[T, Op])] {

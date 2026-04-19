@@ -1,5 +1,18 @@
 ///|
+/// Adapters between `symcore.Expr` and the generic unification engine.
+///
+/// Current Limits:
+/// - Expression associativity and commutativity use the current `symcore`
+///   constructor model.
+/// - Returned substitutions map only caller-declared variable expressions.
+
+///|
 /// Operator tag type used when turning expressions into unification terms.
+///
+/// - Does: Aliases the expression operator tag used by the strategy utilities.
+/// - Input: Operator tags produced from `symcore.Expr`.
+/// - Returns: The shared `ExprOp` type.
+/// - Limits: This alias does not add unification behavior by itself.
 pub type ExprOp = @strategies_util.ExprOp
 
 ///|
@@ -90,6 +103,12 @@ fn op_is_commutative(op : ExprOp) -> Bool {
 
 ///|
 /// Report whether a term should be matched associatively.
+///
+/// - Does: Checks whether a deconstructed expression term has an associative
+///   operator.
+/// - Input: One expression-backed unification term.
+/// - Returns: `true` for supported associative compound terms.
+/// - Limits: Atoms, variables, and unsupported heads return `false`.
 pub fn is_associative(term : UnifyTerm[@symcore.Expr, ExprOp]) -> Bool {
   match term {
     UnifyTerm::Compound(op, _) => op_is_associative(op)
@@ -99,6 +118,13 @@ pub fn is_associative(term : UnifyTerm[@symcore.Expr, ExprOp]) -> Bool {
 
 ///|
 /// Report whether a term should be matched commutatively.
+///
+/// - Does: Checks whether a deconstructed expression term should match
+///   commutatively.
+/// - Input: One expression-backed unification term.
+/// - Returns: `true` for supported commutative compound terms.
+/// - Limits: Multiplication is commutative only when all factors are
+///   commutative under the current expression check.
 pub fn is_commutative(term : UnifyTerm[@symcore.Expr, ExprOp]) -> Bool {
   match term {
     UnifyTerm::Compound(op, args) =>
@@ -120,6 +146,12 @@ pub fn is_commutative(term : UnifyTerm[@symcore.Expr, ExprOp]) -> Bool {
 ///
 /// Any expression listed in `variables` is turned into a match variable instead
 /// of a literal atom.
+///
+/// - Does: Converts a `symcore.Expr` into the generic unification term language.
+/// - Input: An expression and optional expressions to treat as match variables.
+/// - Returns: A `UnifyTerm[Expr, ExprOp]`.
+/// - Limits: Variable recognition is exact structural equality against
+///   `variables`.
 pub fn deconstruct(
   expr : @symcore.Expr,
   variables? : Array[@symcore.Expr] = [],
@@ -139,6 +171,11 @@ pub fn deconstruct(
 
 ///|
 /// Convert a unification term back into an expression.
+///
+/// - Does: Rebuilds a `symcore.Expr` from an expression-backed unification term.
+/// - Input: One `UnifyTerm[Expr, ExprOp]`.
+/// - Returns: A `symcore.Expr`.
+/// - Limits: Variables reconstruct to their payload expressions.
 pub fn construct(term : UnifyTerm[@symcore.Expr, ExprOp]) -> @symcore.Expr {
   match term {
     UnifyTerm::Atom(expr) => expr
@@ -156,6 +193,11 @@ pub fn construct(term : UnifyTerm[@symcore.Expr, ExprOp]) -> @symcore.Expr {
 ///
 /// This is useful when callers want the normalized constructor behavior used by
 /// the unification layer.
+///
+/// - Does: Deconstructs and reconstructs an expression.
+/// - Input: One expression.
+/// - Returns: The rebuilt expression.
+/// - Limits: Only normalizes through the constructor behavior used here.
 pub fn rebuild(expr : @symcore.Expr) -> @symcore.Expr {
   construct(deconstruct(expr))
 }
@@ -188,6 +230,14 @@ fn external_substitution(
 ///
 /// Keys in the returned maps are the variable expressions supplied through
 /// `variables`, and values are the corresponding matched expressions.
+///
+/// - Does: Unifies two `symcore.Expr` values and exports expression
+///   substitutions.
+/// - Input: Left expression, right expression, optional seed substitution, and
+///   optional variable expressions.
+/// - Returns: An array of expression-to-expression substitution maps.
+/// - Limits: Only declared variables are treated as holes; other expressions
+///   match structurally.
 pub fn unify(
   lhs : @symcore.Expr,
   rhs : @symcore.Expr,

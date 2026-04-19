@@ -1,4 +1,18 @@
 ///|
+/// Generic unification engine.
+///
+/// Current Limits:
+/// - Associative and commutative behavior is supplied by caller callbacks.
+/// - The engine returns all found substitutions and does not rank or deduplicate
+///   semantically equivalent matches beyond structural equality.
+
+///|
+/// Matching mode for grouped argument combinations.
+///
+/// - Does: Selects associative-only or commutative grouping behavior.
+/// - Input: Passed to `allcombinations`.
+/// - Returns: A `CombineMode` variant.
+/// - Limits: Only the two modes needed by the current unifier are represented.
 pub(all) enum CombineMode {
   Associative
   Commutative
@@ -6,6 +20,11 @@ pub(all) enum CombineMode {
 
 ///|
 /// Pick elements from `values` by index.
+///
+/// - Does: Builds an array by selecting indexed elements from another array.
+/// - Input: A value array and an index array.
+/// - Returns: A new array containing `values[idx]` for each index.
+/// - Limits: Index bounds are not checked beyond normal array access behavior.
 pub fn[T] index(values : Array[T], indices : Array[Int]) -> Array[T] {
   let out : Array[T] = []
   for idx in indices {
@@ -18,6 +37,11 @@ pub fn[T] index(values : Array[T], indices : Array[Int]) -> Array[T] {
 /// Partition `values` according to groups of indices.
 ///
 /// Each inner array in `parts` describes one output group.
+///
+/// - Does: Groups values according to arrays of indices.
+/// - Input: A value array and grouped index arrays.
+/// - Returns: An array of grouped value arrays.
+/// - Limits: Index bounds are not checked beyond normal array access behavior.
 pub fn[T] partition(
   values : Array[T],
   parts : Array[Array[Int]],
@@ -98,6 +122,12 @@ fn[T] permutations(values : Array[T]) -> Array[Array[T]] {
 ///
 /// The result pairs a grouped view of `lhs` with a grouped view of `rhs`. In
 /// commutative mode, permutations of the larger side are considered as well.
+///
+/// - Does: Enumerates grouped argument pairings for associative/commutative
+///   matching.
+/// - Input: Left and right argument arrays plus a combine mode.
+/// - Returns: Candidate grouped pairings for both sides.
+/// - Limits: Can grow combinatorially for large commutative argument lists.
 pub fn[T] allcombinations(
   lhs : Array[T],
   rhs : Array[T],
@@ -143,6 +173,11 @@ fn[T, Op] unpack_compound(
 
 ///|
 /// Test whether binding `key` to `term` would create a recursive substitution.
+///
+/// - Does: Checks whether a variable occurs inside a candidate term.
+/// - Input: A match-variable key and candidate term.
+/// - Returns: `true` when binding would be recursive.
+/// - Limits: Uses structural traversal over the current `UnifyTerm` language.
 pub fn[T : Eq, Op] occur_check(
   key : MatchVar[T],
   term : UnifyTerm[T, Op],
@@ -243,6 +278,12 @@ fn[T : Eq + Hash, Op : Eq] unify_variable_into(
 /// The optional callbacks describe which compound terms should be treated as
 /// associative or commutative during matching. The result array is empty when no
 /// unifier exists.
+///
+/// - Does: Finds substitutions that make two generic terms match.
+/// - Input: Two terms, optional seed substitution, and optional associative or
+///   commutative predicates.
+/// - Returns: An array of consistent substitutions.
+/// - Limits: Search can grow quickly for associative/commutative compounds.
 pub fn[T : Eq + Hash, Op : Eq] core_unify(
   lhs : UnifyTerm[T, Op],
   rhs : UnifyTerm[T, Op],
