@@ -19,6 +19,11 @@ fn special_port_assert_tuple(
 }
 
 ///|
+fn special_port_poly_exprs(items : Array[Poly]) -> Array[String] {
+  items.map(item => @symprint.pretty_string(item.to_expr()))
+}
+
+///|
 fn special_port_dense_repr(p : DensePoly) -> String {
   match p {
     DensePoly::Coef(c) => c.to_string()
@@ -75,5 +80,17 @@ test "specialpolys: dense Fateman benchmark triples oracle parity" {
       @sympolys.dmp_fateman_poly_F_3(2, @sympolys.Domain::ZZ),
     ),
     dmp_fateman_poly_F_3(2),
+  )
+}
+
+///|
+test "specialpolys: Wang benchmark polynomial tuples oracle parity" {
+  special_port_assert_tuple(
+    special_port_poly_exprs(@sympolys.f_polys()),
+    f_polys(),
+  )
+  special_port_assert_tuple(
+    special_port_poly_exprs(@sympolys.w_polys()),
+    w_polys(),
   )
 }

@@ -8756,6 +8756,27 @@ pub fn dmp_fateman_poly_F_3(n : Int, domain? : String = "ZZ") -> String raise {
 }
 
 ///|
+fn special_poly_tuple(path : String) -> Array[String] raise {
+  let res = sympy_call_must(path, [])
+  let items = py_list_to_pyobjects(res)
+  let out : Array[String] = []
+  for item in items {
+    out.push(py_sympy_expr_str(item))
+  }
+  out
+}
+
+///|
+pub fn f_polys() -> Array[String] raise {
+  special_poly_tuple("sympy.polys.specialpolys.f_polys")
+}
+
+///|
+pub fn w_polys() -> Array[String] raise {
+  special_poly_tuple("sympy.polys.specialpolys.w_polys")
+}
+
+///|
 fn named_unary_poly(path : String, n : Int, x : String) -> String raise {
   let res = sympy_call_must(path, [
     OracleArg::Int(n),

@@ -118,3 +118,16 @@ test "sympolys special polynomial dense Fateman frontdoors" {
   let (f3, _, _) = dmp_fateman_poly_F_3(2, Domain::ZZ)
   inspect(dmp_degree(f3, 2), content="12")
 }
+
+///|
+test "sympolys special polynomial Wang benchmark tuples" {
+  let fs = f_polys()
+  inspect(fs.length(), content="7")
+  inspect(fs[0].gens.join(","), content="x,y,z")
+  inspect(fs[6].gens.join(","), content="x,y,z,t")
+  inspect(fs[5].degree(0), content="3")
+  let ws = w_polys()
+  inspect(ws.length(), content="2")
+  inspect(ws[0].gens.join(","), content="x,y,z")
+  inspect(ws[1].gens.join(","), content="x,y")
+}

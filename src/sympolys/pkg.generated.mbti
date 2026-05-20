@@ -787,6 +787,8 @@ pub fn exquo(Poly, Poly, auto? : Bool) -> Poly raise PolyError
 
 pub fn extract_fundamental_discriminant(Int) -> (Array[(Int, Int)], Array[(Int, Int)]) raise PolyError
 
+pub fn f_polys() -> Array[Poly] raise PolyError
+
 pub fn factor(Poly, modulus? : Int, extension? : Array[String], seed? : Int, gens? : Array[String]) -> Array[(Poly, Int)] raise PolyError
 
 pub fn factor_list(Poly) -> (@symnum.BigRational, Array[(Poly, Int)]) raise PolyError
@@ -1188,6 +1190,8 @@ pub fn vfield(Array[String], Domain, order? : TermOrder) -> RingFactoryResult
 pub fn viete(@symcore.Expr, roots? : Array[String], gen? : String) -> Array[(@symcore.Expr, @symcore.Expr)] raise PolyError
 
 pub fn vring(Array[String], Domain, order? : TermOrder) -> RingFactoryResult
+
+pub fn w_polys() -> Array[Poly] raise PolyError
 
 pub fn xfield(Array[String], Domain, order? : TermOrder) -> RingFactoryResult
 
