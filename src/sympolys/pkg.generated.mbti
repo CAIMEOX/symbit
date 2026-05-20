@@ -165,6 +165,8 @@ pub fn dmp_apply_pairs(DensePoly, DensePoly, (FieldElem, FieldElem, Array[FieldE
 
 pub fn dmp_cancel(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly) raise PolyError
 
+pub fn dmp_compose(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
+
 pub fn dmp_content(DensePoly, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_convert(DensePoly, Int, Domain, Domain) -> DensePoly raise PolyError
@@ -231,6 +233,8 @@ pub fn dmp_ground_TC(DensePoly, Int) -> FieldElem raise PolyError
 
 pub fn dmp_ground_content(DensePoly, Int, Domain) -> FieldElem raise PolyError
 
+pub fn dmp_ground_extract(DensePoly, DensePoly, Int, Domain) -> (FieldElem, DensePoly, DensePoly) raise PolyError
+
 pub fn dmp_ground_monic(DensePoly, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_ground_nth(DensePoly, Array[Int], Int, Domain) -> FieldElem raise PolyError
@@ -238,6 +242,8 @@ pub fn dmp_ground_nth(DensePoly, Array[Int], Int, Domain) -> FieldElem raise Pol
 pub fn dmp_ground_p(DensePoly, FieldElem?, Int) -> Bool raise PolyError
 
 pub fn dmp_ground_primitive(DensePoly, Int, Domain) -> (FieldElem, DensePoly) raise PolyError
+
+pub fn dmp_ground_trunc(DensePoly, FieldElem, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_grounds(FieldElem, Int, Int, Domain) -> Array[DensePoly]
 
@@ -329,6 +335,8 @@ pub fn dmp_rr_lcm(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyErro
 
 pub fn dmp_rr_prs_gcd(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
 
+pub fn dmp_shift(DensePoly, Array[FieldElem], Int, Domain) -> DensePoly raise PolyError
+
 pub fn dmp_slice(DensePoly, Int, Int, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_slice_in(DensePoly, Int, Int, Int, Int, Domain) -> DensePoly raise PolyError
@@ -358,6 +366,8 @@ pub fn dmp_to_raw_dict(DensePoly, Int, Domain) -> Map[Int, DensePoly]
 pub fn dmp_to_tuple(DensePoly, Int) -> DensePoly
 
 pub fn dmp_true_LT(DensePoly, Int) -> (Array[Int], FieldElem) raise PolyError
+
+pub fn dmp_trunc(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_validate(DensePoly) -> (DensePoly, Int) raise PolyError
 
@@ -673,6 +683,8 @@ pub fn dup_chebyshevt(Int, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_chebyshevu(Int, Domain) -> Array[FieldElem] raise PolyError
 
+pub fn dup_compose(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
+
 pub fn dup_content(Array[FieldElem], Domain) -> FieldElem raise PolyError
 
 pub fn dup_convert(Array[FieldElem], Domain, Domain) -> Array[FieldElem] raise PolyError
@@ -702,6 +714,8 @@ pub fn dup_expand(Array[Array[FieldElem]], Domain) -> Array[FieldElem] raise Pol
 pub fn dup_exquo(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_exquo_ground(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_extract(Array[FieldElem], Array[FieldElem], Domain) -> (FieldElem, Array[FieldElem], Array[FieldElem]) raise PolyError
 
 pub fn dup_factor_list(Array[FieldElem], Domain) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError
 
@@ -764,6 +778,8 @@ pub fn dup_lshift(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyE
 pub fn dup_max_norm(Array[FieldElem], Domain) -> FieldElem raise PolyError
 
 pub fn dup_mignotte_sep_bound_squared(Array[FieldElem], Domain) -> FieldElem raise PolyError
+
+pub fn dup_mirror(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_monic(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
@@ -829,6 +845,8 @@ pub fn dup_rr_prs_gcd(Array[FieldElem], Array[FieldElem], Domain) -> (Array[Fiel
 
 pub fn dup_rshift(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 
+pub fn dup_scale(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] raise PolyError
+
 pub fn dup_schur_conditions(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_series_mul(Array[FieldElem], Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
@@ -836,6 +854,8 @@ pub fn dup_series_mul(Array[FieldElem], Array[FieldElem], Int, Domain) -> Array[
 pub fn dup_series_pow(Array[FieldElem], Int, Int, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_series_sqr(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_shift(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_slice(Array[FieldElem], Int, Int, Domain) -> Array[FieldElem] raise PolyError
 
@@ -866,6 +886,10 @@ pub fn dup_to_dict(Array[FieldElem], Domain) -> Map[Monomial, FieldElem]
 pub fn dup_to_raw_dict(Array[FieldElem], Domain) -> Map[Int, FieldElem]
 
 pub fn dup_to_tuple(Array[FieldElem]) -> Array[FieldElem] raise PolyError
+
+pub fn dup_transform(Array[FieldElem], Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_trunc(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_truncate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 

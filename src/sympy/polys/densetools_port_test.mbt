@@ -1,4 +1,18 @@
 ///|
+fn dt_port_extract_repr(
+  value : (FieldElem, Array[FieldElem], Array[FieldElem]),
+) -> String {
+  "(\{value.0},\{dup_repr(value.1)},\{dup_repr(value.2)})"
+}
+
+///|
+fn dt_port_dmp_extract_repr(
+  value : (FieldElem, DensePoly, DensePoly),
+) -> String {
+  "(\{value.0},\{dmp_repr(value.1)},\{dmp_repr(value.2)})"
+}
+
+///|
 test "densetools dup integrate/diff/eval" {
   let f = [
     @sympolys.fe_from_int(3, Domain::QQ),
@@ -90,4 +104,98 @@ test "densetools content and primitive" {
     domain="ZZ",
   )
   assert_eq(ours_ground_primitive_str, oracle_ground_primitive)
+}
+
+///|
+test "densetools extract trunc oracle parity" {
+  let f = [fezz(6), fezz(12), fezz(18)]
+  let g = [fezz(4), fezz(8), fezz(12)]
+  assert_eq(
+    dt_port_extract_repr(@sympolys.dup_extract(f, g, Domain::ZZ)),
+    dup_extract(dup_to_rats(f), dup_to_rats(g), domain="ZZ"),
+  )
+
+  let xy1 = @sympolys.dense_poly([poly_int([6, 12]), poly_int([18])])
+  let xy2 = @sympolys.dense_poly([poly_int([4, 8]), poly_int([12])])
+  assert_eq(
+    dt_port_dmp_extract_repr(
+      @sympolys.dmp_ground_extract(xy1, xy2, 1, Domain::ZZ),
+    ),
+    dmp_ground_extract(dense_data_of(xy1), dense_data_of(xy2), 1, domain="ZZ"),
+  )
+
+  let h = [fezz(2), fezz(3), fezz(5), fezz(7)]
+  assert_eq(
+    dup_repr(@sympolys.dup_trunc(h, fezz(3), Domain::ZZ)),
+    dup_trunc(dup_to_rats(h), br_int(3), domain="ZZ"),
+  )
+  let xy = @sympolys.dense_poly([
+    poly_int([3, 8]),
+    poly_int([5, 6]),
+    poly_int([2, 3]),
+  ])
+  assert_eq(
+    dmp_repr(@sympolys.dmp_ground_trunc(xy, fezz(3), 1, Domain::ZZ)),
+    dmp_ground_trunc(dense_data_of(xy), br_int(3), 1, domain="ZZ"),
+  )
+  let modulus = poly_int([1, -1])
+  assert_eq(
+    dmp_repr(@sympolys.dmp_trunc(xy, modulus, 1, Domain::ZZ)),
+    dmp_trunc(dense_data_of(xy), dense_data_of(modulus), 1, domain="ZZ"),
+  )
+}
+
+///|
+test "densetools shift transform compose oracle parity" {
+  let mirrored = [fezz(1), fezz(2), fezz(-4), fezz(2)]
+  assert_eq(
+    dup_repr(@sympolys.dup_mirror(mirrored, Domain::ZZ)),
+    dup_mirror(dup_to_rats(mirrored), domain="ZZ"),
+  )
+  let quadratic = [fezz(1), fezz(-2), fezz(1)]
+  assert_eq(
+    dup_repr(@sympolys.dup_scale(quadratic, fezz(2), Domain::ZZ)),
+    dup_scale(dup_to_rats(quadratic), br_int(2), domain="ZZ"),
+  )
+  assert_eq(
+    dup_repr(@sympolys.dup_shift(quadratic, fezz(2), Domain::ZZ)),
+    dup_shift(dup_to_rats(quadratic), br_int(2), domain="ZZ"),
+  )
+  assert_eq(
+    dup_repr(
+      @sympolys.dup_transform(
+        quadratic,
+        [fezz(1), fezz(0), fezz(1)],
+        [fezz(1), fezz(-1)],
+        Domain::ZZ,
+      ),
+    ),
+    dup_transform(
+      dup_to_rats(quadratic),
+      [br_int(1), br_int(0), br_int(1)],
+      [br_int(1), br_int(-1)],
+      domain="ZZ",
+    ),
+  )
+  let composed = [fezz(1), fezz(1), fezz(0)]
+  assert_eq(
+    dup_repr(@sympolys.dup_compose(composed, [fezz(1), fezz(-1)], Domain::ZZ)),
+    dup_compose(dup_to_rats(composed), [br_int(1), br_int(-1)], domain="ZZ"),
+  )
+
+  let shifted = @sympolys.dense_poly([
+    poly_int([1, 0]),
+    poly_int([2, 3]),
+    poly_int([4, 5]),
+  ])
+  assert_eq(
+    dmp_repr(@sympolys.dmp_shift(shifted, [fezz(1), fezz(2)], 1, Domain::ZZ)),
+    dmp_shift(dense_data_of(shifted), [br_int(1), br_int(2)], 1, domain="ZZ"),
+  )
+  let f = @sympolys.dense_poly([poly_int([1, 2]), poly_int([1, 0])])
+  let y = @sympolys.dense_poly([poly_int([1, 0])])
+  assert_eq(
+    dmp_repr(@sympolys.dmp_compose(f, y, 1, Domain::ZZ)),
+    dmp_compose(dense_data_of(f), dense_data_of(y), 1, domain="ZZ"),
+  )
 }

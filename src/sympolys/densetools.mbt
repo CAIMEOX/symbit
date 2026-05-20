@@ -570,3 +570,376 @@ pub fn dmp_ground_primitive(
     (content, dmp_exquo_ground(f, content, u, domain))
   }
 }
+
+///|
+fn densetools_centered_mod(
+  c : FieldElem,
+  p : FieldElem,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  if fe_is_zero(p) {
+    raise PolyError::DivisionByZero
+  }
+  match domain {
+    Domain::ZZ => {
+      let cr = fe_expect_rational(c)
+      let pr = fe_expect_rational(p)
+      let modulus = pr.numerator().to_int()
+      if modulus == 0 {
+        raise PolyError::DivisionByZero
+      }
+      let m = if modulus < 0 { -modulus } else { modulus }
+      let mut r = cr.numerator().to_int() % m
+      if r < 0 {
+        r = r + m
+      }
+      if r > m / 2 {
+        r = r - m
+      }
+      fe_from_int(r, domain)
+    }
+    _ => raise PolyError::BadModulus
+  }
+}
+
+///|
+/// Reduce coefficients modulo a ground constant.
+///
+/// - Does: Reduces every coefficient of `f` modulo `p`, centered over `ZZ`.
+/// - Input: A dense coefficient array, a nonzero modulus coefficient, and a
+///   coefficient `domain`.
+/// - Returns: A normalized dense coefficient array.
+/// - Limits: Current implementation supports the exact integer domain path.
+pub fn dup_trunc(
+  f : Array[FieldElem],
+  p : FieldElem,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let out : Array[FieldElem] = Array::new()
+  for c in f {
+    out.push(densetools_centered_mod(c, p, domain))
+  }
+  dup_strip(out)
+}
+
+///|
+/// Reduce recursive polynomial coefficients modulo a polynomial.
+///
+/// - Does: Reduces every coefficient of `f` modulo `p` in the remaining
+///   variables.
+/// - Input: A dense recursive polynomial `f`, modulus polynomial `p`, level `u`,
+///   and coefficient `domain`.
+/// - Returns: A normalized dense recursive polynomial.
+/// - Limits: Inherits the current dense remainder implementation.
+pub fn dmp_trunc(
+  f : DensePoly,
+  p : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  let v = u - 1
+  let out : Array[DensePoly] = Array::new()
+  for c in dmp_items(f) {
+    out.push(dmp_rem(c, p, v, domain))
+  }
+  dmp_strip(DensePoly::Poly(out))
+}
+
+///|
+/// Reduce ground coefficients modulo a ground constant.
+///
+/// - Does: Applies `dup_trunc` recursively to all ground coefficients.
+/// - Input: A dense recursive polynomial, a nonzero modulus coefficient, a level,
+///   and a coefficient `domain`.
+/// - Returns: A normalized dense recursive polynomial.
+/// - Limits: Current implementation supports the exact integer domain path.
+pub fn dmp_ground_trunc(
+  f : DensePoly,
+  p : FieldElem,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if u == 0 {
+    return dmp_from_coeffs(dup_trunc(dmp_to_coeffs(f), p, domain))
+  }
+  let out : Array[DensePoly] = Array::new()
+  for c in dmp_items(f) {
+    out.push(dmp_ground_trunc(c, p, u - 1, domain))
+  }
+  dmp_strip(DensePoly::Poly(out))
+}
+
+///|
+/// Extract common ground content from two univariate polynomials.
+///
+/// - Does: Returns `(gcd_content, f/gcd_content, g/gcd_content)`.
+/// - Input: Two dense coefficient arrays and a coefficient `domain`.
+/// - Returns: A coefficient and two dense coefficient arrays.
+/// - Limits: Exact rational-like domains are supported by the current content
+///   helper.
+pub fn dup_extract(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> (FieldElem, Array[FieldElem], Array[FieldElem]) raise PolyError {
+  let fc = dup_content(f, domain)
+  let gc = dup_content(g, domain)
+  let common = field_elems_content([fc, gc], domain)
+  if fe_is_one(common) {
+    (common, dup_strip(f), dup_strip(g))
+  } else {
+    (
+      common,
+      dup_exquo_ground(f, common, domain),
+      dup_exquo_ground(g, common, domain),
+    )
+  }
+}
+
+///|
+/// Extract common ground content from two recursive polynomials.
+///
+/// - Does: Returns `(gcd_content, f/gcd_content, g/gcd_content)`.
+/// - Input: Two dense recursive polynomials, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: A coefficient and two dense recursive polynomials.
+/// - Limits: Exact rational-like domains are supported by the current content
+///   helper.
+pub fn dmp_ground_extract(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (FieldElem, DensePoly, DensePoly) raise PolyError {
+  let fc = dmp_ground_content(f, u, domain)
+  let gc = dmp_ground_content(g, u, domain)
+  let common = field_elems_content([fc, gc], domain)
+  if fe_is_one(common) {
+    (common, f, g)
+  } else {
+    (
+      common,
+      dmp_exquo_ground(f, common, u, domain),
+      dmp_exquo_ground(g, common, u, domain),
+    )
+  }
+}
+
+///|
+/// Evaluate `f(-x)`.
+///
+/// - Does: Negates the coefficients of odd powers.
+/// - Input: A dense univariate coefficient array and a coefficient `domain`.
+/// - Returns: A dense coefficient array.
+/// - Limits: Uses exact coefficient negation.
+pub fn dup_mirror(
+  f : Array[FieldElem],
+  _domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let out = f.copy()
+  let mut i = out.length() - 2
+  while i >= 0 {
+    out.set(i, fe_neg(out[i]))
+    i = i - 2
+  }
+  dup_normal(out)
+}
+
+///|
+/// Evaluate `f(a*x)`.
+///
+/// - Does: Scales coefficients by powers of `a`.
+/// - Input: A dense coefficient array, scale `a`, and a coefficient `domain`.
+/// - Returns: A dense coefficient array.
+/// - Limits: Uses exact coefficient multiplication.
+pub fn dup_scale(
+  f : Array[FieldElem],
+  a : FieldElem,
+  _domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if f.is_empty() {
+    return []
+  }
+  let out = f.copy()
+  let n = out.length() - 1
+  let mut b = a
+  let mut i = n - 1
+  while i >= 0 {
+    out.set(i, fe_mul(b, out[i]))
+    b = fe_mul(b, a)
+    i = i - 1
+  }
+  dup_normal(out)
+}
+
+///|
+/// Evaluate the Taylor shift `f(x + a)`.
+///
+/// - Does: Applies the in-place Taylor shift algorithm used by SymPy.
+/// - Input: A dense coefficient array, shift `a`, and a coefficient `domain`.
+/// - Returns: A dense coefficient array.
+/// - Limits: Uses exact coefficient arithmetic.
+pub fn dup_shift(
+  f : Array[FieldElem],
+  a : FieldElem,
+  _domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let out = f.copy()
+  let n = out.length() - 1
+  let mut i = n
+  while i > 0 {
+    for j in 0..<i {
+      out.set(j + 1, fe_add(out[j + 1], fe_mul(a, out[j])))
+    }
+    i = i - 1
+  }
+  dup_normal(out)
+}
+
+///|
+fn densetools_nonzero_shift(values : Array[FieldElem]) -> Bool {
+  for value in values {
+    if !fe_is_zero(value) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// Evaluate the multivariate Taylor shift `f(X + A)`.
+///
+/// - Does: Recursively shifts lower variables, then shifts the main variable.
+/// - Input: A dense recursive polynomial, shift vector `a`, level `u`, and a
+///   coefficient `domain`.
+/// - Returns: A dense recursive polynomial.
+/// - Limits: Requires at least `u + 1` shift values.
+pub fn dmp_shift(
+  f : DensePoly,
+  a : Array[FieldElem],
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if a.length() <= u {
+    raise PolyError::BadExponent
+  }
+  if u == 0 {
+    return dmp_from_coeffs(dup_shift(dmp_to_coeffs(f), a[0], domain))
+  }
+  if dmp_zero_p(f, u) {
+    return f
+  }
+  let a0 = a[0]
+  let a1 = a[1:].to_owned()
+  let items = dmp_items(f)
+  let shifted : Array[DensePoly] = Array::new()
+  if densetools_nonzero_shift(a1) {
+    for c in items {
+      shifted.push(dmp_shift(c, a1, u - 1, domain))
+    }
+  } else {
+    for c in items {
+      shifted.push(c)
+    }
+  }
+  if !fe_is_zero(a0) {
+    let mut i = shifted.length() - 1
+    while i > 0 {
+      for j in 0..<i {
+        let afj = dmp_mul_ground(shifted[j], a0, u - 1, domain)
+        shifted.set(j + 1, dmp_add(shifted[j + 1], afj, u - 1, domain))
+      }
+      i = i - 1
+    }
+  }
+  dmp_strip(DensePoly::Poly(shifted))
+}
+
+///|
+/// Evaluate `q**n * f(p/q)`.
+///
+/// - Does: Applies SymPy's dense functional transform algorithm.
+/// - Input: Dense coefficient arrays `f`, `p`, `q`, and a coefficient `domain`.
+/// - Returns: A dense coefficient array.
+/// - Limits: Uses exact dense arithmetic.
+pub fn dup_transform(
+  f : Array[FieldElem],
+  p : Array[FieldElem],
+  q : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let ff = dup_strip(f)
+  if ff.is_empty() {
+    return []
+  }
+  let n = ff.length() - 1
+  let powers : Array[Array[FieldElem]] = Array::new()
+  powers.push([fe_from_int(1, domain)])
+  for i in 0..<n {
+    powers.push(dup_mul(powers[i], q, domain))
+  }
+  let mut h = [ff[0]]
+  for i in 1..<ff.length() {
+    h = dup_mul(h, p, domain)
+    h = dup_add(h, dup_mul_ground(powers[i], ff[i], domain), domain)
+  }
+  h
+}
+
+///|
+/// Evaluate `f(g)`.
+///
+/// - Does: Applies Horner composition for dense univariate polynomials.
+/// - Input: Dense coefficient arrays `f`, `g`, and a coefficient `domain`.
+/// - Returns: A dense coefficient array.
+/// - Limits: Uses exact dense arithmetic.
+pub fn dup_compose(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let gg = dup_strip(g)
+  if gg.length() <= 1 {
+    let point = if gg.is_empty() { fe_from_int(0, domain) } else { gg[0] }
+    return dup_strip([dup_eval(f, point, domain)])
+  }
+  let ff = dup_strip(f)
+  if ff.is_empty() {
+    return []
+  }
+  let mut h = [ff[0]]
+  for i in 1..<ff.length() {
+    h = dup_add_term(dup_mul(h, gg, domain), ff[i], 0, domain)
+  }
+  h
+}
+
+///|
+/// Evaluate `f(g)` in `K[X]`.
+///
+/// - Does: Applies Horner composition for dense recursive polynomials.
+/// - Input: Dense recursive polynomials `f`, `g`, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: A dense recursive polynomial.
+/// - Limits: Uses exact dense arithmetic.
+pub fn dmp_compose(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if u == 0 {
+    return dmp_from_coeffs(
+      dup_compose(dmp_to_coeffs(f), dmp_to_coeffs(g), domain),
+    )
+  }
+  if dmp_zero_p(f, u) {
+    return f
+  }
+  let items = dmp_items(f)
+  let mut h = dmp_strip(DensePoly::Poly([items[0]]))
+  for i in 1..<items.length() {
+    h = dmp_add_term(dmp_mul(h, g, u, domain), items[i], 0, u, domain)
+  }
+  h
+}
