@@ -147,6 +147,218 @@ pub fn gf_trunc(f : Array[Int], p : Int) -> Array[Int] {
 }
 
 ///|
+/// Coerce a residue to SymPy's symmetric integer representative.
+///
+/// - Does: Maps `a` from `[0, p)` into `[-p/2, p/2]`.
+/// - Input: One integer residue and one positive modulus.
+/// - Returns: An `Int`.
+/// - Limits: Assumes `a` has already been reduced modulo `p`.
+pub fn gf_int(a : Int, p : Int) -> Int {
+  if a <= p / 2 {
+    a
+  } else {
+    a - p
+  }
+}
+
+///|
+/// Normalize coefficients modulo `p`.
+///
+/// - Does: Reduces every coefficient and strips leading zeros.
+/// - Input: Dense high-to-low coefficients and a prime modulus.
+/// - Returns: A normalized dense polynomial.
+/// - Limits: The explicit coefficient domain argument from SymPy is omitted.
+pub fn gf_normal(f : Array[Int], p : Int) -> Array[Int] {
+  gf_trunc(f, p)
+}
+
+///|
+/// Create a finite-field polynomial from exponent coefficients.
+///
+/// - Does: Converts a map `{degree: coeff}` into dense high-to-low
+///   coefficients modulo `p`.
+/// - Input: A degree-to-coefficient map and a prime modulus.
+/// - Returns: A normalized dense polynomial.
+/// - Limits: Empty maps return the zero polynomial instead of raising from
+///   Python's `max`.
+pub fn gf_from_dict(f : Map[Int, Int], p : Int) -> Array[Int] {
+  let mut max_degree = -1
+  for degree, _ in f {
+    if degree > max_degree {
+      max_degree = degree
+    }
+  }
+  if max_degree < 0 {
+    return []
+  }
+  let out : Array[Int] = []
+  for degree in 0..<=max_degree {
+    let k = max_degree - degree
+    let coeff = match f.get(k) {
+      Some(value) => value
+      None => 0
+    }
+    out.push(mod_pos(coeff, p))
+  }
+  gf_trunc(out, p)
+}
+
+///|
+/// Convert a finite-field polynomial to exponent coefficients.
+///
+/// - Does: Converts dense high-to-low coefficients into `{degree: coeff}`.
+/// - Input: Dense coefficients, a prime modulus, and optional symmetric output.
+/// - Returns: A map containing only nonzero coefficients.
+/// - Limits: The map is unordered; sort keys at presentation boundaries when
+///   stable display is required.
+pub fn gf_to_dict(
+  f : Array[Int],
+  p : Int,
+  symmetric? : Bool = true,
+) -> Map[Int, Int] {
+  let out : Map[Int, Int] = {}
+  let n = gf_degree(f)
+  for k in 0..<=n {
+    let raw = f[n - k]
+    let value = if symmetric { gf_int(mod_pos(raw, p), p) } else { raw }
+    if value != 0 {
+      out[k] = value
+    }
+  }
+  out
+}
+
+///|
+/// Create a finite-field polynomial from integer dense coefficients.
+///
+/// - Does: Reduces `ZZ[x]` dense coefficients modulo `p`.
+/// - Input: Dense high-to-low integer coefficients and a prime modulus.
+/// - Returns: A normalized dense polynomial over `GF(p)`.
+/// - Limits: Same as `gf_trunc`.
+pub fn gf_from_int_poly(f : Array[Int], p : Int) -> Array[Int] {
+  gf_trunc(f, p)
+}
+
+///|
+/// Convert finite-field coefficients back to integers.
+///
+/// - Does: Uses symmetric representatives by default.
+/// - Input: Dense high-to-low coefficients, a prime modulus, and optional
+///   symmetric output.
+/// - Returns: Dense integer coefficients.
+/// - Limits: Does not strip or otherwise normalize the input shape.
+pub fn gf_to_int_poly(
+  f : Array[Int],
+  p : Int,
+  symmetric? : Bool = true,
+) -> Array[Int] {
+  if !symmetric {
+    return f.copy()
+  }
+  f.map(c => gf_int(mod_pos(c, p), p))
+}
+
+///|
+/// Negate a polynomial over `GF(p)`.
+///
+/// - Does: Maps each coefficient to its additive inverse modulo `p`.
+/// - Input: Dense high-to-low coefficients and a prime modulus.
+/// - Returns: Dense coefficients with the same shape.
+/// - Limits: Mirrors SymPy's low-level helper and does not strip zeros.
+pub fn gf_neg(f : Array[Int], p : Int) -> Array[Int] {
+  f.map(c => mod_pos(-c, p))
+}
+
+///|
+/// Add a ground element to a finite-field polynomial.
+///
+/// - Does: Computes `f + a`.
+/// - Input: Dense coefficients, a ground coefficient, and a prime modulus.
+/// - Returns: Dense coefficients.
+/// - Limits: Mirrors SymPy's low-level shape behavior for constant and empty
+///   polynomials.
+pub fn gf_add_ground(f : Array[Int], a : Int, p : Int) -> Array[Int] {
+  let coeff = if f.is_empty() {
+    mod_pos(a, p)
+  } else {
+    mod_pos(f[f.length() - 1] + a, p)
+  }
+  if f.length() > 1 {
+    let out : Array[Int] = []
+    for i in 0..<(f.length() - 1) {
+      out.push(f[i])
+    }
+    out.push(coeff)
+    out
+  } else if coeff == 0 {
+    []
+  } else {
+    [coeff]
+  }
+}
+
+///|
+/// Subtract a ground element from a finite-field polynomial.
+///
+/// - Does: Computes `f - a`.
+/// - Input: Dense coefficients, a ground coefficient, and a prime modulus.
+/// - Returns: Dense coefficients.
+/// - Limits: Mirrors `gf_add_ground`.
+pub fn gf_sub_ground(f : Array[Int], a : Int, p : Int) -> Array[Int] {
+  let coeff = if f.is_empty() {
+    mod_pos(-a, p)
+  } else {
+    mod_pos(f[f.length() - 1] - a, p)
+  }
+  if f.length() > 1 {
+    let out : Array[Int] = []
+    for i in 0..<(f.length() - 1) {
+      out.push(f[i])
+    }
+    out.push(coeff)
+    out
+  } else if coeff == 0 {
+    []
+  } else {
+    [coeff]
+  }
+}
+
+///|
+/// Multiply a finite-field polynomial by a ground element.
+///
+/// - Does: Computes `f * a`.
+/// - Input: Dense coefficients, a ground coefficient, and a prime modulus.
+/// - Returns: Dense coefficients.
+/// - Limits: Returns zero for zero scalar without preserving input length, as
+///   SymPy does.
+pub fn gf_mul_ground(f : Array[Int], a : Int, p : Int) -> Array[Int] {
+  let coeff = mod_pos(a, p)
+  if coeff == 0 {
+    []
+  } else {
+    f.map(c => mod_pos(c * coeff, p))
+  }
+}
+
+///|
+/// Divide a finite-field polynomial by a ground element.
+///
+/// - Does: Computes `f / a` using the modular inverse of `a`.
+/// - Input: Dense coefficients, a nonzero invertible ground coefficient, and a
+///   prime modulus.
+/// - Returns: Dense coefficients.
+/// - Limits: Raises `PolyError::DivisionByZero` when `a` is not invertible
+///   modulo `p`.
+pub fn gf_quo_ground(
+  f : Array[Int],
+  a : Int,
+  p : Int,
+) -> Array[Int] raise PolyError {
+  gf_mul_ground(f, inv_mod(a, p), p)
+}
+
+///|
 /// Add polynomials in ``GF(p)[x]``.
 
 ///|
@@ -240,6 +452,49 @@ pub fn gf_mul(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
     }
   }
   gf_strip(out)
+}
+
+///|
+/// Square a polynomial over `GF(p)`.
+///
+/// - Does: Computes `f * f`.
+/// - Input: Dense high-to-low coefficients and a prime modulus.
+/// - Returns: A normalized dense polynomial.
+/// - Limits: Uses the same arithmetic path as `gf_mul`.
+pub fn gf_sqr(f : Array[Int], p : Int) -> Array[Int] {
+  gf_mul(f, f, p)
+}
+
+///|
+/// Add a product to a polynomial over `GF(p)`.
+///
+/// - Does: Computes `f + g*h`.
+/// - Input: Three dense polynomials and a prime modulus.
+/// - Returns: A normalized dense polynomial.
+/// - Limits: Same input representation as `gf_add` and `gf_mul`.
+pub fn gf_add_mul(
+  f : Array[Int],
+  g : Array[Int],
+  h : Array[Int],
+  p : Int,
+) -> Array[Int] {
+  gf_add(f, gf_mul(g, h, p), p)
+}
+
+///|
+/// Subtract a product from a polynomial over `GF(p)`.
+///
+/// - Does: Computes `f - g*h`.
+/// - Input: Three dense polynomials and a prime modulus.
+/// - Returns: A normalized dense polynomial.
+/// - Limits: Same input representation as `gf_sub` and `gf_mul`.
+pub fn gf_sub_mul(
+  f : Array[Int],
+  g : Array[Int],
+  h : Array[Int],
+  p : Int,
+) -> Array[Int] {
+  gf_sub(f, gf_mul(g, h, p), p)
 }
 
 ///|
@@ -344,6 +599,111 @@ pub fn gf_quo(
 ) -> Array[Int] raise PolyError {
   let (q, _) = gf_div(f, g, p)
   q
+}
+
+///|
+/// Compute an exact quotient in `GF(p)[x]`.
+///
+/// - Does: Divides `f` by `g` and requires zero remainder.
+/// - Input: Two dense polynomials and a prime modulus.
+/// - Returns: The quotient polynomial.
+/// - Limits: Raises `PolyError::ExactQuotientFailed` if `g` does not divide
+///   `f`.
+pub fn gf_exquo(
+  f : Array[Int],
+  g : Array[Int],
+  p : Int,
+) -> Array[Int] raise PolyError {
+  let (q, r) = gf_div(f, g, p)
+  if r.is_empty() {
+    q
+  } else {
+    raise PolyError::ExactQuotientFailed
+  }
+}
+
+///|
+/// Multiply a dense polynomial by `x**n`.
+///
+/// - Does: Appends `n` trailing zeros for nonzero input.
+/// - Input: Dense coefficients and a nonnegative shift.
+/// - Returns: Shifted dense coefficients.
+/// - Limits: Negative shifts raise `PolyError::BadExponent`.
+pub fn gf_lshift(f : Array[Int], n : Int) -> Array[Int] raise PolyError {
+  if n < 0 {
+    raise PolyError::BadExponent
+  }
+  if f.is_empty() {
+    return []
+  }
+  let out = f.copy()
+  for _ in 0..<n {
+    out.push(0)
+  }
+  out
+}
+
+///|
+/// Divide a dense polynomial by `x**n`.
+///
+/// - Does: Splits quotient and discarded trailing part.
+/// - Input: Dense coefficients and a nonnegative shift.
+/// - Returns: `(quotient, remainder_tail)`.
+/// - Limits: Negative shifts raise `PolyError::BadExponent`.
+pub fn gf_rshift(
+  f : Array[Int],
+  n : Int,
+) -> (Array[Int], Array[Int]) raise PolyError {
+  if n < 0 {
+    raise PolyError::BadExponent
+  }
+  if n == 0 {
+    return (f.copy(), [])
+  }
+  if n >= f.length() {
+    return ([], f.copy())
+  }
+  let q : Array[Int] = []
+  let r : Array[Int] = []
+  for i in 0..<(f.length() - n) {
+    q.push(f[i])
+  }
+  for i in (f.length() - n)..<f.length() {
+    r.push(f[i])
+  }
+  (q, r)
+}
+
+///|
+/// Raise a polynomial to a nonnegative power over `GF(p)`.
+///
+/// - Does: Uses repeated squaring in `GF(p)[x]`.
+/// - Input: Dense coefficients, exponent, and prime modulus.
+/// - Returns: A normalized dense polynomial.
+/// - Limits: Negative exponents raise `PolyError::BadExponent`.
+pub fn gf_pow(f : Array[Int], n : Int, p : Int) -> Array[Int] raise PolyError {
+  if n < 0 {
+    raise PolyError::BadExponent
+  }
+  if n == 0 {
+    return [1]
+  }
+  if n == 1 {
+    return gf_trunc(f, p)
+  }
+  let mut base = gf_trunc(f, p)
+  let mut exp = n
+  let mut acc = [1]
+  while exp > 0 {
+    if exp % 2 == 1 {
+      acc = gf_mul(acc, base, p)
+    }
+    exp = exp / 2
+    if exp > 0 {
+      base = gf_sqr(base, p)
+    }
+  }
+  acc
 }
 
 ///|

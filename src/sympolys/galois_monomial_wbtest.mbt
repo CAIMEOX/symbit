@@ -1,4 +1,29 @@
 ///|
+fn galois_wb_arr(values : Array[Int]) -> String {
+  if values.is_empty() {
+    "[]"
+  } else {
+    "[" + values.map(v => v.to_string()).join(", ") + "]"
+  }
+}
+
+///|
+fn galois_wb_pair(pair : (Array[Int], Array[Int])) -> String {
+  let (lhs, rhs) = pair
+  "(\{galois_wb_arr(lhs)}, \{galois_wb_arr(rhs)})"
+}
+
+///|
+fn galois_wb_map(values : Map[Int, Int]) -> String {
+  let items : Array[(Int, Int)] = []
+  for key, value in values {
+    items.push((key, value))
+  }
+  items.sort_by((lhs, rhs) => lhs.0 - rhs.0)
+  "{" + items.map(item => "\{item.0}: \{item.1}").join(", ") + "}"
+}
+
+///|
 test "galoistools wb: edge-case branches" {
   let bad_mod : Result[Int, PolyError] = try? inv_mod(1, 1)
   assert_true(bad_mod is Err(PolyError::BadModulus))
@@ -65,6 +90,52 @@ test "galoistools wb: edge-case branches" {
 
   let (q1, r1) = gf_div([1, 2], [1, 0, 1], 5)
   assert_true(q1.length() == 0 && r1.length() > 0)
+}
+
+///|
+test "galoistools wb: conversion scalar and power helpers" {
+  inspect(gf_int(5, 7), content="-2")
+  inspect(galois_wb_arr(gf_normal([5, 10, 21, -3], 5)), content="[1, 2]")
+  let sparse : Map[Int, Int] = { 10: 4, 4: 33, 0: -1 }
+  let dense = gf_from_dict(sparse, 5)
+  inspect(galois_wb_arr(dense), content="[4, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4]")
+  inspect(galois_wb_map(gf_to_dict(dense, 5)), content="{0: -1, 4: -2, 10: -1}")
+  inspect(
+    galois_wb_map(gf_to_dict(dense, 5, symmetric=false)),
+    content="{0: 4, 4: 3, 10: 4}",
+  )
+  inspect(galois_wb_arr(gf_from_int_poly([7, -2, 3], 5)), content="[2, 3, 3]")
+  inspect(galois_wb_arr(gf_to_int_poly([2, 3, 3], 5)), content="[2, -2, -2]")
+  inspect(galois_wb_arr(gf_neg([3, 2, 1, 0], 5)), content="[2, 3, 4, 0]")
+  inspect(galois_wb_arr(gf_add_ground([3, 2, 4], 2, 5)), content="[3, 2, 1]")
+  inspect(galois_wb_arr(gf_sub_ground([3, 2, 4], 2, 5)), content="[3, 2, 2]")
+  inspect(galois_wb_arr(gf_mul_ground([3, 2, 4], 2, 5)), content="[1, 4, 3]")
+  inspect(galois_wb_arr(gf_quo_ground([3, 2, 4], 2, 5)), content="[4, 1, 2]")
+  inspect(galois_wb_arr(gf_sqr([3, 2, 4], 5)), content="[4, 2, 3, 1, 1]")
+  inspect(
+    galois_wb_arr(gf_add_mul([3, 2, 4], [2, 2, 2], [1, 4], 5)),
+    content="[2, 3, 2, 2]",
+  )
+  inspect(
+    galois_wb_arr(gf_sub_mul([3, 2, 4], [2, 2, 2], [1, 4], 5)),
+    content="[3, 3, 2, 1]",
+  )
+  inspect(
+    galois_wb_arr(gf_exquo([1, 0, 3, 2, 3], [2, 2, 2], 5)),
+    content="[3, 2, 4]",
+  )
+  inspect(
+    galois_wb_arr(gf_lshift([3, 2, 4], 4)),
+    content="[3, 2, 4, 0, 0, 0, 0]",
+  )
+  inspect(
+    galois_wb_pair(gf_rshift([1, 2, 3, 4, 0], 3)),
+    content="([1, 2], [3, 4, 0])",
+  )
+  inspect(
+    galois_wb_arr(gf_pow([3, 2, 4], 3, 5)),
+    content="[2, 4, 4, 2, 2, 1, 4]",
+  )
 }
 
 ///|

@@ -875,25 +875,61 @@ pub fn gf_TC(Array[Int]) -> Int
 
 pub fn gf_add(Array[Int], Array[Int], Int) -> Array[Int]
 
+pub fn gf_add_ground(Array[Int], Int, Int) -> Array[Int]
+
+pub fn gf_add_mul(Array[Int], Array[Int], Array[Int], Int) -> Array[Int]
+
 pub fn gf_degree(Array[Int]) -> Int
 
 pub fn gf_div(Array[Int], Array[Int], Int) -> (Array[Int], Array[Int]) raise PolyError
 
 pub fn gf_domain(Int) -> Domain raise PolyError
 
+pub fn gf_exquo(Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
+
+pub fn gf_from_dict(Map[Int, Int], Int) -> Array[Int]
+
+pub fn gf_from_int_poly(Array[Int], Int) -> Array[Int]
+
 pub fn gf_gcd(Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
+
+pub fn gf_int(Int, Int) -> Int
+
+pub fn gf_lshift(Array[Int], Int) -> Array[Int] raise PolyError
 
 pub fn gf_monic(Array[Int], Int) -> Array[Int] raise PolyError
 
 pub fn gf_mul(Array[Int], Array[Int], Int) -> Array[Int]
 
+pub fn gf_mul_ground(Array[Int], Int, Int) -> Array[Int]
+
+pub fn gf_neg(Array[Int], Int) -> Array[Int]
+
+pub fn gf_normal(Array[Int], Int) -> Array[Int]
+
+pub fn gf_pow(Array[Int], Int, Int) -> Array[Int] raise PolyError
+
 pub fn gf_quo(Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
 
+pub fn gf_quo_ground(Array[Int], Int, Int) -> Array[Int] raise PolyError
+
 pub fn gf_rem(Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
+
+pub fn gf_rshift(Array[Int], Int) -> (Array[Int], Array[Int]) raise PolyError
+
+pub fn gf_sqr(Array[Int], Int) -> Array[Int]
 
 pub fn gf_strip(Array[Int]) -> Array[Int]
 
 pub fn gf_sub(Array[Int], Array[Int], Int) -> Array[Int]
+
+pub fn gf_sub_ground(Array[Int], Int, Int) -> Array[Int]
+
+pub fn gf_sub_mul(Array[Int], Array[Int], Array[Int], Int) -> Array[Int]
+
+pub fn gf_to_dict(Array[Int], Int, symmetric? : Bool) -> Map[Int, Int]
+
+pub fn gf_to_int_poly(Array[Int], Int, symmetric? : Bool) -> Array[Int]
 
 pub fn gf_trunc(Array[Int], Int) -> Array[Int]
 
