@@ -8890,6 +8890,56 @@ pub fn gf_berlekamp(f : Array[Int], p : Int) -> String raise {
 }
 
 ///|
+pub fn gf_ddf_zassenhaus(f : Array[Int], p : Int) -> String raise {
+  gf_zz_unary("gf_ddf_zassenhaus", f, p)
+}
+
+///|
+pub fn gf_edf_zassenhaus(f : Array[Int], n : Int, p : Int) -> String raise {
+  gf_zz_call("gf_edf_zassenhaus", [
+    OracleArg::IntList(f),
+    OracleArg::Int(n),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
+pub fn gf_ddf_shoup(f : Array[Int], p : Int) -> String raise {
+  gf_zz_unary("gf_ddf_shoup", f, p)
+}
+
+///|
+pub fn gf_edf_shoup(f : Array[Int], n : Int, p : Int) -> String raise {
+  gf_zz_call("gf_edf_shoup", [
+    OracleArg::IntList(f),
+    OracleArg::Int(n),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
+pub fn gf_zassenhaus(f : Array[Int], p : Int) -> String raise {
+  gf_zz_unary("gf_zassenhaus", f, p)
+}
+
+///|
+pub fn gf_shoup(f : Array[Int], p : Int) -> String raise {
+  gf_zz_unary("gf_shoup", f, p)
+}
+
+///|
+pub fn gf_factor_sqf(f : Array[Int], p : Int) -> String raise {
+  gf_zz_unary("gf_factor_sqf", f, p)
+}
+
+///|
+pub fn gf_factor(f : Array[Int], p : Int) -> String raise {
+  gf_zz_unary("gf_factor", f, p)
+}
+
+///|
 pub fn gf_crt(u : Array[Int], m : Array[Int]) -> Int raise {
   let res = sympy_call_must("sympy.polys.galoistools.gf_crt", [
     OracleArg::IntList(u),

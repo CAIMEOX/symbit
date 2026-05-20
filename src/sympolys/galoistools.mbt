@@ -115,6 +115,18 @@ fn int_prime_factors_unique(n0 : Int) -> Array[Int] {
   out
 }
 
+///|
+fn int_ceil_sqrt(n : Int) -> Int {
+  if n <= 0 {
+    return 0
+  }
+  let mut k = 0
+  while k * k < n {
+    k = k + 1
+  }
+  k
+}
+
 /// Return the leading degree of ``f``.
 
 ///|
@@ -1285,6 +1297,71 @@ pub fn gf_irreducible_p(f : Array[Int], p : Int) -> Bool raise PolyError {
 }
 
 ///|
+/// Generate a deterministic monic polynomial over `GF(p)`.
+///
+/// - Does: Produces a monic degree-`n` dense polynomial with pseudo-random
+///   coefficients in `[0, p)`.
+/// - Input: Degree, prime modulus, and optional deterministic seed.
+/// - Returns: A dense monic polynomial.
+/// - Limits: SymPy uses process-global randomness; this front door is
+///   deterministic so tests and builds are reproducible.
+pub fn gf_random(
+  n : Int,
+  p : Int,
+  seed? : Int = 1,
+) -> Array[Int] raise PolyError {
+  if p <= 1 {
+    raise PolyError::BadModulus
+  }
+  let out : Array[Int] = [1]
+  let mut state = seed
+  for _ in 0..<n {
+    state = lcg_next(state, 2147483647)
+    out.push(mod_pos(state, p))
+  }
+  out
+}
+
+///|
+/// Generate a monic irreducible polynomial over `GF(p)`.
+///
+/// - Does: Tests deterministic `gf_random` candidates, then falls back to
+///   exhaustive monic enumeration.
+/// - Input: Degree, prime modulus, and optional seed.
+/// - Returns: A monic irreducible dense polynomial.
+/// - Limits: Exhaustive fallback is intended for modest low-level test inputs.
+pub fn gf_irreducible(
+  n : Int,
+  p : Int,
+  seed? : Int = 1,
+) -> Array[Int] raise PolyError {
+  if n < 0 {
+    raise PolyError::BadExponent
+  }
+  let mut state = seed
+  for _ in 0..<64 {
+    let candidate = gf_random(n, p, seed=state)
+    if gf_irreducible_p(candidate, p) {
+      return candidate
+    }
+    state = state + 1
+  }
+  let total = int_pow(p, n)
+  for code in 0..<total {
+    let mut v = code
+    let candidate : Array[Int] = [1]
+    for _ in 0..<n {
+      candidate.push(v % p)
+      v = v / p
+    }
+    if gf_irreducible_p(candidate, p) {
+      return candidate
+    }
+  }
+  raise PolyError::BadModulus
+}
+
+///|
 /// Test whether a finite-field polynomial is square-free.
 ///
 /// - Does: Checks that the monic polynomial is coprime with its derivative.
@@ -1535,6 +1612,393 @@ pub fn gf_berlekamp(
     }
   }
   _sort_factors(factors)
+}
+
+///|
+fn gf_pow_pnm1d2(
+  f0 : Array[Int],
+  n : Int,
+  g : Array[Int],
+  b : Array[Array[Int]],
+  p : Int,
+) -> Array[Int] raise PolyError {
+  let f = gf_rem(f0, g, p)
+  let mut h = f
+  let mut r = f
+  for _ in 1..<n {
+    h = gf_frobenius_map(h, g, b, p)
+    r = gf_rem(gf_mul(r, h, p), g, p)
+  }
+  gf_pow_mod(r, (p - 1) / 2, g, p)
+}
+
+///|
+fn gf_trace_map_sum_iter(
+  f0 : Array[Int],
+  n : Int,
+  g : Array[Int],
+  b : Array[Array[Int]],
+  p : Int,
+) -> Array[Int] raise PolyError {
+  let f = gf_rem(f0, g, p)
+  let mut h = f
+  let mut r = f
+  for _ in 1..<n {
+    h = gf_frobenius_map(h, g, b, p)
+    r = gf_rem(gf_add(r, h, p), g, p)
+  }
+  r
+}
+
+///|
+fn gf_equal_degree_enumerate(
+  f : Array[Int],
+  n : Int,
+  p : Int,
+) -> Array[Array[Int]] raise PolyError {
+  if gf_degree(f) <= n {
+    return [f]
+  }
+  let mut remaining = f
+  let factors : Array[Array[Int]] = []
+  let total = int_pow(p, n)
+  for code in 0..<total {
+    if gf_degree(remaining) < n {
+      break
+    }
+    let mut v = code
+    let candidate : Array[Int] = [1]
+    for _ in 0..<n {
+      candidate.push(v % p)
+      v = v / p
+    }
+    while gf_degree(remaining) >= n {
+      let (q, r) = gf_div(remaining, candidate, p)
+      if r.is_empty() {
+        factors.push(candidate)
+        remaining = q
+      } else {
+        break
+      }
+    }
+  }
+  if !remaining.is_empty() && !int_array_equal(remaining, [1]) {
+    factors.push(remaining)
+  }
+  _sort_factors(factors)
+}
+
+///|
+/// Distinct-degree factorization by the Cantor-Zassenhaus path.
+///
+/// - Does: Splits a monic square-free polynomial into factors whose
+///   irreducible factors have distinct degrees.
+/// - Input: A monic square-free dense polynomial and prime modulus.
+/// - Returns: `(factor, degree)` pairs.
+/// - Limits: Assumes square-free input, as in SymPy's low-level helper.
+pub fn gf_ddf_zassenhaus(
+  f0 : Array[Int],
+  p : Int,
+) -> Array[(Array[Int], Int)] raise PolyError {
+  let mut i = 1
+  let mut g = [1, 0]
+  let mut f = f0
+  let factors : Array[(Array[Int], Int)] = []
+  let mut b = gf_frobenius_monomial_base(f, p)
+  while 2 * i <= gf_degree(f) {
+    g = gf_frobenius_map(g, f, b, p)
+    let h = gf_gcd(f, gf_sub(g, [1, 0], p), p)
+    if !int_array_equal(h, [1]) {
+      factors.push((h, i))
+      f = gf_quo(f, h, p)
+      g = gf_rem(g, f, p)
+      b = gf_frobenius_monomial_base(f, p)
+    }
+    i = i + 1
+  }
+  if !int_array_equal(f, [1]) {
+    factors.push((f, gf_degree(f)))
+  }
+  factors
+}
+
+///|
+/// Equal-degree factorization by the Cantor-Zassenhaus path.
+///
+/// - Does: Splits a monic square-free polynomial into irreducible factors of
+///   degree `n`.
+/// - Input: Dense polynomial, equal factor degree, and prime modulus.
+/// - Returns: Sorted monic factors.
+/// - Limits: Random choices are deterministic with exhaustive fallback.
+pub fn gf_edf_zassenhaus(
+  f : Array[Int],
+  n : Int,
+  p : Int,
+) -> Array[Array[Int]] raise PolyError {
+  let degree = gf_degree(f)
+  if degree <= n {
+    return [f]
+  }
+  let target = degree / n
+  let mut factors : Array[Array[Int]] = [f]
+  let frob_base = if p != 2 { gf_frobenius_monomial_base(f, p) } else { [] }
+  let mut t = [1, 0]
+  let mut seed = 1
+  let mut attempts = 0
+  while factors.length() < target && attempts < 64 {
+    let g = if p == 2 {
+      let mut h = t
+      let mut r = t
+      for _ in 0..<(n - 1) {
+        r = gf_pow_mod(r, 2, f, p)
+        h = gf_add(h, r, p)
+      }
+      t = gf_lshift(t, 2)
+      gf_gcd(f, h, p)
+    } else {
+      let r = gf_random(2 * n - 1, p, seed~)
+      seed = seed + 1
+      let h = gf_pow_pnm1d2(r, n, f, frob_base, p)
+      gf_gcd(f, gf_sub_ground(h, 1, p), p)
+    }
+    if !int_array_equal(g, [1]) && !int_array_equal(g, f) {
+      let left = gf_edf_zassenhaus(g, n, p)
+      let right = gf_edf_zassenhaus(gf_quo(f, g, p), n, p)
+      let merged : Array[Array[Int]] = []
+      for item in left {
+        merged.push(item)
+      }
+      for item in right {
+        merged.push(item)
+      }
+      factors = merged
+    }
+    attempts = attempts + 1
+  }
+  if factors.length() < target {
+    return gf_equal_degree_enumerate(f, n, p)
+  }
+  _sort_factors(factors)
+}
+
+///|
+/// Distinct-degree factorization by the Kaltofen-Shoup path.
+///
+/// - Does: Applies SymPy's Shoup DDF structure using Frobenius composition.
+/// - Input: A monic square-free dense polynomial and prime modulus.
+/// - Returns: `(factor, degree)` pairs.
+/// - Limits: Intended for the same low-level inputs as SymPy's helper.
+pub fn gf_ddf_shoup(
+  f0 : Array[Int],
+  p : Int,
+) -> Array[(Array[Int], Int)] raise PolyError {
+  let n = gf_degree(f0)
+  if n <= 1 {
+    return if n == 1 { [(f0, 1)] } else { [] }
+  }
+  let k = int_ceil_sqrt(n / 2)
+  let b = gf_frobenius_monomial_base(f0, p)
+  let h0 = gf_frobenius_map([1, 0], f0, b, p)
+  let powers : Array[Array[Int]] = [[1, 0], h0]
+  for _ in 0..<(k - 1) {
+    powers.push([0])
+  }
+  for i in 2..<=k {
+    powers.set(i, gf_frobenius_map(powers[i - 1], f0, b, p))
+  }
+  let h = powers[k]
+  let u_values : Array[Array[Int]] = []
+  for i in 0..<k {
+    u_values.push(powers[i])
+  }
+  let v_values : Array[Array[Int]] = [h]
+  for _ in 0..<(k - 1) {
+    v_values.push([0])
+  }
+  for i in 1..<k {
+    v_values.set(i, gf_compose_mod(v_values[i - 1], h, f0, p))
+  }
+  let factors : Array[(Array[Int], Int)] = []
+  let mut f = f0
+  for i in 0..<v_values.length() {
+    let v = v_values[i]
+    let mut block = [1]
+    let mut j = k - 1
+    for u in u_values {
+      let diff = gf_sub(v, u, p)
+      block = gf_rem(gf_mul(block, diff, p), f, p)
+    }
+    let mut g = gf_gcd(f, block, p)
+    f = gf_quo(f, g, p)
+    for idx in 0..<u_values.length() {
+      let u = u_values[u_values.length() - 1 - idx]
+      let diff = gf_sub(v, u, p)
+      let factor = gf_gcd(g, diff, p)
+      if !int_array_equal(factor, [1]) {
+        factors.push((factor, k * (i + 1) - j))
+      }
+      g = gf_quo(g, factor, p)
+      j = j - 1
+    }
+  }
+  if !int_array_equal(f, [1]) {
+    factors.push((f, gf_degree(f)))
+  }
+  factors
+}
+
+///|
+/// Equal-degree factorization by the Gathen-Shoup path.
+///
+/// - Does: Uses the trace-map split from SymPy and falls back to the
+///   Cantor-Zassenhaus EDF if the deterministic random choice is unlucky.
+/// - Input: Dense polynomial, equal factor degree, and prime modulus.
+/// - Returns: Sorted monic factors.
+/// - Limits: Random choice is deterministic for reproducible tests.
+pub fn gf_edf_shoup(
+  f : Array[Int],
+  n : Int,
+  p : Int,
+) -> Array[Array[Int]] raise PolyError {
+  let degree = gf_degree(f)
+  if degree <= 0 {
+    return []
+  }
+  if degree <= n {
+    return [f]
+  }
+  let x = [1, 0]
+  let r = gf_random(degree - 1, p)
+  let pieces : Array[Array[Int]] = []
+  if p == 2 {
+    let h = gf_pow_mod(x, p, f, p)
+    let trace = gf_trace_map(r, h, x, n - 1, f, p).1
+    let h1 = gf_gcd(f, trace, p)
+    let h2 = gf_quo(f, h1, p)
+    if int_array_equal(h1, [1]) || int_array_equal(h1, f) {
+      return gf_edf_zassenhaus(f, n, p)
+    }
+    for item in gf_edf_shoup(h1, n, p) {
+      pieces.push(item)
+    }
+    for item in gf_edf_shoup(h2, n, p) {
+      pieces.push(item)
+    }
+  } else {
+    let b = gf_frobenius_monomial_base(f, p)
+    let trace = gf_trace_map_sum_iter(r, n, f, b, p)
+    let h = gf_pow_mod(trace, (p - 1) / 2, f, p)
+    let h1 = gf_gcd(f, h, p)
+    let h2 = gf_gcd(f, gf_sub_ground(h, 1, p), p)
+    let product = gf_mul(h1, h2, p)
+    let h3 = gf_quo(f, product, p)
+    let parts = [h1, h2, h3]
+    let mut progress = false
+    for part in parts {
+      if gf_degree(part) > 0 && !int_array_equal(part, f) {
+        progress = true
+        for item in gf_edf_shoup(part, n, p) {
+          pieces.push(item)
+        }
+      }
+    }
+    if !progress {
+      return gf_edf_zassenhaus(f, n, p)
+    }
+  }
+  _sort_factors(pieces)
+}
+
+///|
+/// Factor a square-free polynomial over `GF(p)` using Zassenhaus.
+///
+/// - Does: Runs DDF followed by EDF and sorts the irreducible factors.
+/// - Input: A monic square-free dense polynomial and prime modulus.
+/// - Returns: Sorted monic irreducible factors.
+/// - Limits: Same low-level assumptions as SymPy's helper.
+pub fn gf_zassenhaus(
+  f : Array[Int],
+  p : Int,
+) -> Array[Array[Int]] raise PolyError {
+  let factors : Array[Array[Int]] = []
+  for item in gf_ddf_zassenhaus(f, p) {
+    for factor in gf_edf_zassenhaus(item.0, item.1, p) {
+      factors.push(factor)
+    }
+  }
+  _sort_factors(factors)
+}
+
+///|
+/// Factor a square-free polynomial over `GF(p)` using Shoup.
+///
+/// - Does: Runs Shoup DDF/EDF and sorts the irreducible factors.
+/// - Input: A monic square-free dense polynomial and prime modulus.
+/// - Returns: Sorted monic irreducible factors.
+/// - Limits: Deterministic random fallback keeps tests reproducible.
+pub fn gf_shoup(f : Array[Int], p : Int) -> Array[Array[Int]] raise PolyError {
+  let factors : Array[Array[Int]] = []
+  for item in gf_ddf_shoup(f, p) {
+    for factor in gf_edf_shoup(item.0, item.1, p) {
+      factors.push(factor)
+    }
+  }
+  _sort_factors(factors)
+}
+
+///|
+/// Factor a square-free polynomial over `GF(p)`.
+///
+/// - Does: Returns `(lc, factors)` with monic irreducible factors.
+/// - Input: Dense coefficients, prime modulus, and optional method name
+///   `"berlekamp"`, `"zassenhaus"`, or `"shoup"`.
+/// - Returns: Leading coefficient and sorted factor list.
+/// - Limits: Unknown method names fall back to Zassenhaus.
+pub fn gf_factor_sqf(
+  f : Array[Int],
+  p : Int,
+  factor_method? : String = "",
+) -> (Int, Array[Array[Int]]) raise PolyError {
+  let lc = gf_LC(f)
+  let monic = gf_monic(f, p)
+  if gf_degree(monic) < 1 {
+    return (lc, [])
+  }
+  let factors = match factor_method {
+    "berlekamp" => gf_berlekamp(monic, p)
+    "shoup" => gf_shoup(monic, p)
+    _ => gf_zassenhaus(monic, p)
+  }
+  (lc, factors)
+}
+
+///|
+/// Factor a finite-field polynomial, including repeated factors.
+///
+/// - Does: Runs square-free decomposition and factors each square-free part
+///   into irreducibles.
+/// - Input: Dense coefficients and a prime modulus.
+/// - Returns: `(lc, [(factor, multiplicity), ...])`.
+/// - Limits: Same dense `Int` representation and deterministic random limits
+///   as the lower-level helpers.
+pub fn gf_factor(
+  f : Array[Int],
+  p : Int,
+) -> (Int, Array[(Array[Int], Int)]) raise PolyError {
+  let lc = gf_LC(f)
+  let monic = gf_monic(f, p)
+  if gf_degree(monic) < 1 {
+    return (lc, [])
+  }
+  let factors : Array[(Array[Int], Int)] = []
+  let (_, sqf) = gf_sqf_list(monic, p)
+  for item in sqf {
+    let (_, irreducibles) = gf_factor_sqf(item.0, p)
+    for factor in irreducibles {
+      factors.push((factor, item.1))
+    }
+  }
+  (lc, _sort_factors_multiple(factors))
 }
 
 ///|

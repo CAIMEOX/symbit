@@ -897,6 +897,10 @@ pub fn gf_crt1(Array[Int]) -> (Int, Array[Int], Array[Int]) raise PolyError
 
 pub fn gf_crt2(Array[Int], Array[Int], Int, Array[Int], Array[Int]) -> Int
 
+pub fn gf_ddf_shoup(Array[Int], Int) -> Array[(Array[Int], Int)] raise PolyError
+
+pub fn gf_ddf_zassenhaus(Array[Int], Int) -> Array[(Array[Int], Int)] raise PolyError
+
 pub fn gf_degree(Array[Int]) -> Int
 
 pub fn gf_diff(Array[Int], Int) -> Array[Int]
@@ -905,11 +909,19 @@ pub fn gf_div(Array[Int], Array[Int], Int) -> (Array[Int], Array[Int]) raise Pol
 
 pub fn gf_domain(Int) -> Domain raise PolyError
 
+pub fn gf_edf_shoup(Array[Int], Int, Int) -> Array[Array[Int]] raise PolyError
+
+pub fn gf_edf_zassenhaus(Array[Int], Int, Int) -> Array[Array[Int]] raise PolyError
+
 pub fn gf_eval(Array[Int], Int, Int) -> Int
 
 pub fn gf_expand(Array[(Array[Int], Int)], Int, lc? : Int) -> Array[Int] raise PolyError
 
 pub fn gf_exquo(Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
+
+pub fn gf_factor(Array[Int], Int) -> (Int, Array[(Array[Int], Int)]) raise PolyError
+
+pub fn gf_factor_sqf(Array[Int], Int, factor_method? : String) -> (Int, Array[Array[Int]]) raise PolyError
 
 pub fn gf_frobenius_map(Array[Int], Array[Int], Array[Array[Int]], Int) -> Array[Int] raise PolyError
 
@@ -928,6 +940,8 @@ pub fn gf_int(Int, Int) -> Int
 pub fn gf_irred_p_ben_or(Array[Int], Int) -> Bool raise PolyError
 
 pub fn gf_irred_p_rabin(Array[Int], Int) -> Bool raise PolyError
+
+pub fn gf_irreducible(Int, Int, seed? : Int) -> Array[Int] raise PolyError
 
 pub fn gf_irreducible_p(Array[Int], Int) -> Bool raise PolyError
 
@@ -955,9 +969,13 @@ pub fn gf_quo(Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
 
 pub fn gf_quo_ground(Array[Int], Int, Int) -> Array[Int] raise PolyError
 
+pub fn gf_random(Int, Int, seed? : Int) -> Array[Int] raise PolyError
+
 pub fn gf_rem(Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
 
 pub fn gf_rshift(Array[Int], Int) -> (Array[Int], Array[Int]) raise PolyError
+
+pub fn gf_shoup(Array[Int], Int) -> Array[Array[Int]] raise PolyError
 
 pub fn gf_sqf_list(Array[Int], Int) -> (Int, Array[(Array[Int], Int)]) raise PolyError
 
@@ -984,6 +1002,8 @@ pub fn gf_trace_map(Array[Int], Array[Int], Array[Int], Int, Array[Int], Int) ->
 pub fn gf_trunc(Array[Int], Int) -> Array[Int]
 
 pub fn gf_value(Array[Int], Int) -> Int
+
+pub fn gf_zassenhaus(Array[Int], Int) -> Array[Array[Int]] raise PolyError
 
 pub fn gff(Poly) -> Poly raise PolyError
 

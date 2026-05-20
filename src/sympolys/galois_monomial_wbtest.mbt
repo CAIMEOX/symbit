@@ -39,6 +39,11 @@ fn galois_wb_sqf_pair(value : (Int, Array[(Array[Int], Int)])) -> String {
 }
 
 ///|
+fn galois_wb_factor_list_pair(value : (Int, Array[Array[Int]])) -> String {
+  "(\{value.0}, \{galois_wb_matrix(value.1)})"
+}
+
+///|
 fn galois_wb_map(values : Map[Int, Int]) -> String {
   let items : Array[(Int, Int)] = []
   for key, value in values {
@@ -249,6 +254,44 @@ test "galoistools wb: squarefree and Berlekamp helpers" {
   inspect(gf_irred_p_rabin([3, 2, 4], 5), content="false")
   inspect(gf_irreducible_p(irreducible, 5), content="true")
   inspect(gf_irreducible_p([3, 2, 4], 5), content="false")
+}
+
+///|
+test "galoistools wb: finite-field factorization helpers" {
+  inspect(galois_wb_arr(gf_random(3, 5)), content="[1, 0, 4, 2]")
+  assert_true(gf_irreducible_p(gf_irreducible(3, 5), 5))
+  let ddf_input = gf_from_dict({ 15: 1, 0: -1 }, 11)
+  inspect(
+    galois_wb_factor_powers(gf_ddf_zassenhaus(ddf_input, 11)),
+    content="[([1, 0, 0, 0, 0, 10], 1), ([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], 2)]",
+  )
+  inspect(
+    galois_wb_matrix(gf_edf_zassenhaus([1, 1, 1, 1], 1, 5)),
+    content="[[1, 1], [1, 2], [1, 3]]",
+  )
+  inspect(
+    galois_wb_factor_powers(
+      gf_ddf_shoup(gf_from_dict({ 6: 1, 5: -1, 4: 1, 3: 1, 1: -1 }, 3), 3),
+    ),
+    content="[([1, 1, 0], 1), ([1, 1, 0, 1, 2], 2)]",
+  )
+  inspect(
+    galois_wb_matrix(gf_edf_shoup([1, 2837, 2277], 1, 2917)),
+    content="[[1, 852], [1, 1985]]",
+  )
+  inspect(
+    galois_wb_matrix(gf_zassenhaus([1, 4, 3], 5)),
+    content="[[1, 1], [1, 3]]",
+  )
+  inspect(galois_wb_matrix(gf_shoup([1, 4, 3], 5)), content="[[1, 1], [1, 3]]")
+  inspect(
+    galois_wb_factor_list_pair(gf_factor_sqf([3, 2, 4], 5)),
+    content="(3, [[1, 1], [1, 3]])",
+  )
+  inspect(
+    galois_wb_sqf_pair(gf_factor([5, 2, 7, 2], 11)),
+    content="(5, [([1, 2], 1), ([1, 8], 2)])",
+  )
 }
 
 ///|

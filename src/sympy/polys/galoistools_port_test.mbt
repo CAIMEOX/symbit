@@ -39,6 +39,11 @@ fn gf_sqf_result_repr(value : (Int, Array[(Array[Int], Int)])) -> String {
 }
 
 ///|
+fn gf_factor_list_pair_repr(value : (Int, Array[Array[Int]])) -> String {
+  "(\{value.0},\{gf_matrix_repr(value.1)})"
+}
+
+///|
 fn gf_map_repr(values : Map[Int, Int]) -> String {
   let items : Array[(Int, Int)] = []
   for key, value in values {
@@ -259,6 +264,49 @@ test "galoistools squarefree and Berlekamp ops" {
     @sympolys.gf_irreducible_p([3, 2, 4], p),
     gf_irreducible_p([3, 2, 4], p),
   )
+}
+
+///|
+test "galoistools finite-field factorization ops" {
+  let ddf_input = @sympolys.gf_from_dict({ 15: 1, 0: -1 }, 11)
+  assert_eq(
+    gf_factor_powers_repr(@sympolys.gf_ddf_zassenhaus(ddf_input, 11)),
+    gf_ddf_zassenhaus(ddf_input, 11),
+  )
+  assert_eq(
+    gf_matrix_repr(@sympolys.gf_edf_zassenhaus([1, 1, 1, 1], 1, 5)),
+    gf_edf_zassenhaus([1, 1, 1, 1], 1, 5),
+  )
+  let shoup_ddf_input = @sympolys.gf_from_dict(
+    { 6: 1, 5: -1, 4: 1, 3: 1, 1: -1 },
+    3,
+  )
+  assert_eq(
+    gf_factor_powers_repr(@sympolys.gf_ddf_shoup(shoup_ddf_input, 3)),
+    gf_ddf_shoup(shoup_ddf_input, 3),
+  )
+  assert_eq(
+    gf_matrix_repr(@sympolys.gf_edf_shoup([1, 2837, 2277], 1, 2917)),
+    gf_edf_shoup([1, 2837, 2277], 1, 2917),
+  )
+  assert_eq(
+    gf_matrix_repr(@sympolys.gf_zassenhaus([1, 4, 3], 5)),
+    gf_zassenhaus([1, 4, 3], 5),
+  )
+  assert_eq(
+    gf_matrix_repr(@sympolys.gf_shoup([1, 4, 3], 5)),
+    gf_shoup([1, 4, 3], 5),
+  )
+  assert_eq(
+    gf_factor_list_pair_repr(@sympolys.gf_factor_sqf([3, 2, 4], 5)),
+    gf_factor_sqf([3, 2, 4], 5),
+  )
+  assert_eq(
+    gf_sqf_result_repr(@sympolys.gf_factor([5, 2, 7, 2], 11)),
+    gf_factor([5, 2, 7, 2], 11),
+  )
+  let generated = @sympolys.gf_irreducible(3, 5)
+  assert_true(@sympolys.gf_irreducible_p(generated, 5))
 }
 
 ///|
