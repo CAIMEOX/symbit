@@ -703,6 +703,8 @@ pub fn dup_copy(Array[FieldElem]) -> Array[FieldElem] raise PolyError
 
 pub fn dup_count_real_roots(Array[FieldElem], Domain, inf? : @symnum.BigRational, sup? : @symnum.BigRational) -> Int raise PolyError
 
+pub fn dup_decompose(Array[FieldElem], Domain) -> Array[Array[FieldElem]] raise PolyError
+
 pub fn dup_deflate(Array[FieldElem], Domain) -> (Int, Array[FieldElem])
 
 pub fn dup_degree(Array[FieldElem]) -> Int

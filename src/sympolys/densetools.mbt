@@ -1376,3 +1376,111 @@ pub fn dup_series_reversion(
   }
   dup_strip(out)
 }
+
+///|
+fn densetools_from_low_coeffs(
+  coeffs : Array[FieldElem],
+) -> Array[FieldElem] raise PolyError {
+  let out : Array[FieldElem] = Array::new()
+  let mut i = coeffs.length() - 1
+  while i >= 0 {
+    out.push(coeffs[i])
+    i = i - 1
+  }
+  dup_strip(out)
+}
+
+///|
+fn densetools_dup_right_decompose(
+  f : Array[FieldElem],
+  s : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let n = dup_degree(f)
+  let lc = dup_LC(f)
+  let r = n / s
+  let zero = fe_from_int(0, domain)
+  let coeffs : Array[FieldElem] = Array::make(s + 1, zero)
+  coeffs.set(s, fe_from_int(1, domain))
+  for i in 1..<s {
+    let mut coeff = zero
+    for j in 0..<i {
+      let fc = dup_nth(f, n + j - i)
+      let gc = coeffs[s - j]
+      let scale = fe_from_int(i - r * j, domain)
+      coeff = fe_add(coeff, fe_mul(scale, fe_mul(fc, gc)))
+    }
+    let denom = fe_mul(fe_from_int(i * r, domain), lc)
+    coeffs.set(s - i, fe_mul(coeff, fe_inv(denom)))
+  }
+  densetools_from_low_coeffs(coeffs)
+}
+
+///|
+fn densetools_dup_left_decompose(
+  f : Array[FieldElem],
+  h : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem]? raise PolyError {
+  let coeffs : Array[FieldElem] = Array::new()
+  let mut rest = dup_strip(f)
+  while !rest.is_empty() {
+    let (q, r) = dup_div(rest, h, domain)
+    if dup_degree(r) > 0 {
+      return None
+    }
+    coeffs.push(dup_LC(r))
+    rest = q
+  }
+  Some(densetools_from_low_coeffs(coeffs))
+}
+
+///|
+fn densetools_dup_decompose_once(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem])? raise PolyError {
+  let df = dup_degree(f)
+  for s in 2..<df {
+    if df % s != 0 {
+      continue
+    }
+    let h = densetools_dup_right_decompose(f, s, domain)
+    match densetools_dup_left_decompose(f, h, domain) {
+      Some(g) => return Some((g, h))
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+/// Compute functional decomposition of a univariate polynomial.
+///
+/// - Does: Returns `[f1, f2, ...]` such that `f = f1 o f2 o ...`.
+/// - Input: A dense coefficient array and a coefficient `domain`.
+/// - Returns: An array of dense coefficient arrays.
+/// - Limits: Requires exact dense univariate arithmetic; decomposition over
+///   finite-characteristic domains is not normalized as a separate path yet.
+pub fn dup_decompose(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> Array[Array[FieldElem]] raise PolyError {
+  let mut current = dup_strip(f)
+  let factors : Array[Array[FieldElem]] = Array::new()
+  while true {
+    match densetools_dup_decompose_once(current, domain) {
+      Some((g, h)) => {
+        factors.insert(0, h)
+        current = g
+      }
+      None => break
+    }
+  }
+  let out : Array[Array[FieldElem]] = Array::new()
+  out.push(current)
+  for factor in factors {
+    out.push(factor)
+  }
+  out
+}

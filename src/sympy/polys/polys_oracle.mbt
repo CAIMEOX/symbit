@@ -9118,6 +9118,18 @@ pub fn dup_series_reversion(
 }
 
 ///|
+pub fn dup_decompose(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dup_decompose", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn gf_strip(f : Array[Int]) -> String raise {
   let res = sympy_call_must("sympy.polys.galoistools.gf_strip", [
     OracleArg::IntList(f),

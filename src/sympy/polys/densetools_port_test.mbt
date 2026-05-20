@@ -11,6 +11,11 @@ fn dt_port_clear_repr(value : (FieldElem, Array[FieldElem])) -> String {
 }
 
 ///|
+fn dt_port_dup_list_repr(polys : Array[Array[FieldElem]]) -> String {
+  "[" + polys.map(poly => dup_repr(poly)).join(",") + "]"
+}
+
+///|
 fn dt_port_dmp_extract_repr(
   value : (FieldElem, DensePoly, DensePoly),
 ) -> String {
@@ -297,5 +302,21 @@ test "densetools series compose reversion oracle parity" {
   assert_eq(
     dup_repr(@sympolys.dup_series_reversion(reversion, 5, Domain::QQ)),
     dup_series_reversion(dup_to_rats(reversion), 5, domain="QQ"),
+  )
+}
+
+///|
+test "densetools functional decomposition oracle parity" {
+  let f = [fezz(1), fezz(-2), fezz(1), fezz(0), fezz(0)]
+  assert_eq(
+    dt_port_dup_list_repr(@sympolys.dup_decompose(f, Domain::ZZ)),
+    dup_decompose(dup_to_rats(f), domain="ZZ"),
+  )
+  let irreducible_shape = [fezz(1), fezz(0), fezz(0), fezz(0)]
+  assert_eq(
+    dt_port_dup_list_repr(
+      @sympolys.dup_decompose(irreducible_shape, Domain::ZZ),
+    ),
+    dup_decompose(dup_to_rats(irreducible_shape), domain="ZZ"),
   )
 }

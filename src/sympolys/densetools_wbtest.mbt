@@ -37,6 +37,11 @@ fn dt_wb_dup_repr(coeffs : Array[FieldElem]) -> String {
 }
 
 ///|
+fn dt_wb_dup_list_repr(polys : Array[Array[FieldElem]]) -> String {
+  "[" + polys.map(poly => dt_wb_dup_repr(poly)).join(",") + "]"
+}
+
+///|
 fn dt_wb_dmp_repr(poly : DensePoly) -> String {
   match poly {
     DensePoly::Coef(c) => c.to_string()
@@ -239,5 +244,17 @@ test "densetools wb: series compose and reversion frontdoors" {
   inspect(
     dt_wb_dup_repr(dup_series_reversion(f, 5, Domain::QQ)),
     content="[5,2,1,1,0]",
+  )
+}
+
+///|
+test "densetools wb: functional decomposition frontdoor" {
+  inspect(
+    dt_wb_dup_list_repr(dup_decompose(dt_wb_dup([1, -2, 1, 0, 0]), Domain::ZZ)),
+    content="[[1,0,0],[1,-1,0]]",
+  )
+  inspect(
+    dt_wb_dup_list_repr(dup_decompose(dt_wb_dup([1, 0, 0, 0]), Domain::ZZ)),
+    content="[[1,0,0,0]]",
   )
 }
