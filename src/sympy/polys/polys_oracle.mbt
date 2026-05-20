@@ -9184,6 +9184,147 @@ pub fn dmp_lift_exprs(
 }
 
 ///|
+fn sqf_dense_bool_call(name : String, args : Array[OracleArg]) -> Bool raise {
+  let res = sympy_call_must("sympy.polys.sqfreetools.\{name}", args)
+  match res {
+    PyBool(v) => py_str_obj(v.obj()) == "True"
+    _ => py_str_enum(res) == "True"
+  }
+}
+
+///|
+pub fn dup_sqf_p(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> Bool raise {
+  sqf_dense_bool_call("dup_sqf_p", [
+    OracleArg::PyObj(py_list_from_rationals_domain(f, domain)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+}
+
+///|
+pub fn dmp_sqf_p(f : DenseData, u : Int, domain? : String = "ZZ") -> Bool raise {
+  sqf_dense_bool_call("dmp_sqf_p", [
+    OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+}
+
+///|
+pub fn dup_sqf_part(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.sqfreetools.dup_sqf_part", [
+    OracleArg::PyObj(py_list_from_rationals_domain(f, domain)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_sqf_part(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_sqf_part", [
+    OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_sqf_list(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+  all? : Bool = false,
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.sqfreetools.dup_sqf_list", [
+    OracleArg::PyObj(py_list_from_rationals_domain(f, domain)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+    OracleArg::PyObj(py_bool_obj(all)),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_sqf_list(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+  all? : Bool = false,
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_sqf_list", [
+    OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+    OracleArg::PyObj(py_bool_obj(all)),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_sqf_list_include(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+  all? : Bool = false,
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.sqfreetools.dup_sqf_list_include", [
+    OracleArg::PyObj(py_list_from_rationals_domain(f, domain)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+    OracleArg::PyObj(py_bool_obj(all)),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_sqf_list_include(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+  all? : Bool = false,
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_sqf_list_include", [
+    OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+    OracleArg::PyObj(py_bool_obj(all)),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_gff_list(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.sqfreetools.dup_gff_list", [
+    OracleArg::PyObj(py_list_from_rationals_domain(f, domain)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_gff_list(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_gff_list", [
+    OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn gf_strip(f : Array[Int]) -> String raise {
   let res = sympy_call_must("sympy.polys.galoistools.gf_strip", [
     OracleArg::IntList(f),

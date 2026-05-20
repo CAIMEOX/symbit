@@ -127,3 +127,113 @@ test "sqfreetools: sqf_list composite factors over ZZ" {
   )
   expect_sqf_list_same(poly)
 }
+
+///|
+fn sqf_dense_port_dup_factor_repr(
+  value : (FieldElem, Array[(Array[FieldElem], Int)]),
+) -> String {
+  let (coeff, factors) = value
+  let parts = factors.map(item => "(\{dup_repr(item.0)},\{item.1})")
+  remove_spaces("(\{coeff},[" + parts.join(",") + "])")
+}
+
+///|
+fn sqf_dense_port_dup_include_repr(
+  items : Array[(Array[FieldElem], Int)],
+) -> String {
+  remove_spaces(
+    "[" + items.map(item => "(\{dup_repr(item.0)},\{item.1})").join(",") + "]",
+  )
+}
+
+///|
+fn sqf_dense_port_dmp_factor_repr(
+  value : (FieldElem, Array[(DensePoly, Int)]),
+) -> String {
+  let (coeff, factors) = value
+  let parts = factors.map(item => "(\{dmp_repr(item.0)},\{item.1})")
+  remove_spaces("(\{coeff},[" + parts.join(",") + "])")
+}
+
+///|
+fn sqf_dense_port_dmp_include_repr(items : Array[(DensePoly, Int)]) -> String {
+  remove_spaces(
+    "[" + items.map(item => "(\{dmp_repr(item.0)},\{item.1})").join(",") + "]",
+  )
+}
+
+///|
+test "sqfreetools: dense dup square-free frontdoors parity" {
+  let repeated = [fezz(1), fezz(-2), fezz(1)]
+  let squarefree = [fezz(1), fezz(0), fezz(-1)]
+  assert_eq(
+    @sympolys.dup_sqf_p(repeated, Domain::ZZ),
+    dup_sqf_p(dup_to_rats(repeated)),
+  )
+  assert_eq(
+    @sympolys.dup_sqf_p(squarefree, Domain::ZZ),
+    dup_sqf_p(dup_to_rats(squarefree)),
+  )
+  let part_input = [fezz(1), fezz(0), fezz(-3), fezz(-2)]
+  assert_eq(
+    dup_repr(@sympolys.dup_sqf_part(part_input, Domain::ZZ)),
+    dup_sqf_part(dup_to_rats(part_input)),
+  )
+  let f = [fezz(2), fezz(16), fezz(50), fezz(76), fezz(56), fezz(16)]
+  assert_eq(
+    sqf_dense_port_dup_factor_repr(@sympolys.dup_sqf_list(f, Domain::ZZ)),
+    dup_sqf_list(dup_to_rats(f)),
+  )
+  assert_eq(
+    sqf_dense_port_dup_factor_repr(
+      @sympolys.dup_sqf_list(f, Domain::ZZ, all=true),
+    ),
+    dup_sqf_list(dup_to_rats(f), all=true),
+  )
+  assert_eq(
+    sqf_dense_port_dup_include_repr(
+      @sympolys.dup_sqf_list_include(f, Domain::ZZ),
+    ),
+    dup_sqf_list_include(dup_to_rats(f)),
+  )
+}
+
+///|
+test "sqfreetools: dense dmp univariate wrappers parity" {
+  let f = poly_int([2, 16, 50, 76, 56, 16])
+  let repeated = poly_int([1, -2, 1])
+  assert_eq(
+    @sympolys.dmp_sqf_p(repeated, 0, Domain::ZZ),
+    dmp_sqf_p(dense_data_of(repeated), 0),
+  )
+  assert_eq(
+    dmp_repr(@sympolys.dmp_sqf_part(poly_int([1, 0, -3, -2]), 0, Domain::ZZ)),
+    dmp_sqf_part(dense_data_of(poly_int([1, 0, -3, -2])), 0),
+  )
+  assert_eq(
+    sqf_dense_port_dmp_factor_repr(@sympolys.dmp_sqf_list(f, 0, Domain::ZZ)),
+    dmp_sqf_list(dense_data_of(f), 0),
+  )
+  assert_eq(
+    sqf_dense_port_dmp_include_repr(
+      @sympolys.dmp_sqf_list_include(f, 0, Domain::ZZ),
+    ),
+    dmp_sqf_list_include(dense_data_of(f), 0),
+  )
+}
+
+///|
+test "sqfreetools: dense greatest factorial factorization parity" {
+  let f = [fezz(1), fezz(2), fezz(-1), fezz(-2), fezz(0), fezz(0)]
+  assert_eq(
+    sqf_dense_port_dup_include_repr(@sympolys.dup_gff_list(f, Domain::ZZ)),
+    dup_gff_list(dup_to_rats(f)),
+  )
+  let dmp_f = poly_int([1, 2, -1, -2, 0, 0])
+  assert_eq(
+    sqf_dense_port_dmp_include_repr(
+      @sympolys.dmp_gff_list(dmp_f, 0, Domain::ZZ),
+    ),
+    dmp_gff_list(dense_data_of(dmp_f), 0),
+  )
+}
