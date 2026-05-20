@@ -10880,6 +10880,46 @@ pub fn compute_sign_qq_zz(base : Int, expo : Int) -> String raise {
 }
 
 ///|
+pub fn backward_eye_qq_zz(n : Int) -> String raise {
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.backward_eye", [
+    OracleArg::Int(n),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn sylvester_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+  kind? : Int = 1,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(p)))
+  args.push(OracleArg::PyObj(expr_to_sympy(q)))
+  args.push(OracleArg::PyObj(sympy_symbol_obj(x)))
+  args.push(OracleArg::Int(kind))
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.sylvester", args)
+  py_str_enum(res)
+}
+
+///|
+pub fn bezout_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+  kind? : String = "bz",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(p)))
+  args.push(OracleArg::PyObj(expr_to_sympy(q)))
+  args.push(OracleArg::PyObj(sympy_symbol_obj(x)))
+  args.push(OracleArg::Str(kind))
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.bezout", args)
+  py_str_enum(res)
+}
+
+///|
 pub fn rem_z_qq_zz(
   p : @symcore.Expr,
   q : @symcore.Expr,

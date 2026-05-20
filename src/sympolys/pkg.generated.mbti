@@ -33,9 +33,13 @@ pub fn apart_undetermined_coeffs(Poly, Poly) -> @symcore.Expr raise PolyError
 
 pub fn assemble_partfrac_list(ApartList) -> @symcore.Expr
 
+pub fn backward_eye(Int, domain? : Domain) -> DomainMatrix raise PolyError
+
 pub fn bernoulli_c_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
 
 pub fn bernoulli_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
+
+pub fn bezout(Poly, Poly, kind? : String) -> DomainMatrix raise PolyError
 
 pub fn binop_dict(Map[Int, Map[Int, FieldElem]], Map[Int, Map[Int, FieldElem]], (FieldElem, FieldElem) -> FieldElem raise PolyError, (FieldElem) -> FieldElem raise PolyError, (FieldElem) -> FieldElem raise PolyError) -> Map[Int, Map[Int, FieldElem]] raise PolyError
 
@@ -1516,6 +1520,8 @@ pub fn subresultants_pg(Poly, Poly) -> Array[Poly] raise PolyError
 pub fn subresultants_rem(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn swinnerton_dyer_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
+
+pub fn sylvester(Poly, Poly, kind? : Int) -> DomainMatrix raise PolyError
 
 pub fn symmetric_poly(Int, Array[@symcore.Expr]) -> @symcore.Expr raise PolyError
 

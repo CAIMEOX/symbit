@@ -104,6 +104,31 @@ test "subresultants_qq_zz: helper parity" {
 }
 
 ///|
+test "subresultants_qq_zz: matrix helper parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let p = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
+  let q = b.from_expr(x + @symcore.int(1))
+  assert_eq(@sympolys.backward_eye(3).to_matrix_string(), backward_eye_qq_zz(3))
+  assert_eq(
+    @sympolys.sylvester(p, q).to_matrix_string(),
+    sylvester_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    @sympolys.sylvester(p, q, kind=2).to_matrix_string(),
+    sylvester_qq_zz(p.to_expr(), q.to_expr(), x="x", kind=2),
+  )
+  assert_eq(
+    @sympolys.bezout(p, q).to_matrix_string(),
+    bezout_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    @sympolys.bezout(p, q, kind="prs").to_matrix_string(),
+    bezout_qq_zz(p.to_expr(), q.to_expr(), x="x", kind="prs"),
+  )
+}
+
+///|
 test "subresultants_qq_zz: euclid_q/sturm_q normalization parity" {
   let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
