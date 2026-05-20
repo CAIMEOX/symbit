@@ -39,6 +39,43 @@ fn euclidtools_dup_primitive(
 }
 
 ///|
+fn euclidtools_field_lcm(
+  a : FieldElem,
+  b : FieldElem,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  if fe_is_zero(a) || fe_is_zero(b) {
+    return fe_from_int(0, domain)
+  }
+  match domain {
+    Domain::ZZ => {
+      let ar = fe_expect_rational(a)
+      let br = fe_expect_rational(b)
+      let an = bigint_abs(ar.numerator())
+      let bn = bigint_abs(br.numerator())
+      let g = @symnum.gcd_bigint(an, bn)
+      fe_from_rational(
+        poly_rational_from_bigints(an.div(g).mul(bn), BigInt::from_int(1)),
+        domain,
+      )
+    }
+    _ => field_elems_content([a, b], domain)
+  }
+}
+
+///|
+fn euclidtools_canonical_unit(
+  value : FieldElem,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  if fe_is_negative(value) {
+    fe_from_int(-1, domain)
+  } else {
+    fe_from_int(1, domain)
+  }
+}
+
+///|
 /// Half extended Euclidean algorithm in `F[x]`.
 ///
 /// - Does: Returns `(s, h)` such that `h = gcd(f, g)` and
@@ -512,4 +549,372 @@ pub fn dmp_discriminant(
     raise PolyError::NotUnivariate
   }
   DensePoly::Coef(dup_discriminant(dmp_to_coeffs(f), domain))
+}
+
+///|
+/// Polynomial GCD and cofactors over a ring in `K[x]`.
+///
+/// - Does: Computes `(h, cff, cfg)` with `h = gcd(f, g)`.
+/// - Input: Two univariate dense coefficient arrays over a ring-like `domain`.
+/// - Returns: Three dense coefficient arrays `(h, cff, cfg)`.
+/// - Limits: Uses the subresultant PRS path; heuristic GCD is exposed
+///   separately when migrated.
+pub fn dup_rr_prs_gcd(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError {
+  let ff = dup_strip(f)
+  let gg = dup_strip(g)
+  if ff.is_empty() && gg.is_empty() {
+    return ([], [], [])
+  }
+  if ff.is_empty() {
+    let lc = dup_LC(gg)
+    if fe_is_negative(lc) {
+      return (dup_neg(gg, domain), [], [fe_from_int(-1, domain)])
+    }
+    return (gg, [], [fe_from_int(1, domain)])
+  }
+  if gg.is_empty() {
+    let lc = dup_LC(ff)
+    if fe_is_negative(lc) {
+      return (dup_neg(ff, domain), [fe_from_int(-1, domain)], [])
+    }
+    return (ff, [fe_from_int(1, domain)], [])
+  }
+  let (fc, prim_f) = euclidtools_dup_primitive(ff, domain)
+  let (gc, prim_g) = euclidtools_dup_primitive(gg, domain)
+  let c0 = field_elems_content([fc, gc], domain)
+  let subres = dup_subresultants(prim_f, prim_g, domain)
+  let (_, h_prim) = euclidtools_dup_primitive(
+    subres[subres.length() - 1],
+    domain,
+  )
+  let unit = euclidtools_canonical_unit(dup_LC(h_prim), domain)
+  let h = dup_mul_ground(h_prim, fe_mul(c0, unit), domain)
+  (h, dup_quo(ff, h, domain), dup_quo(gg, h, domain))
+}
+
+///|
+/// Polynomial GCD and cofactors over a field in `K[x]`.
+///
+/// - Does: Computes `(h, cff, cfg)` with monic `h = gcd(f, g)`.
+/// - Input: Two univariate dense coefficient arrays over a field `domain`.
+/// - Returns: Three dense coefficient arrays `(h, cff, cfg)`.
+/// - Limits: Uses the subresultant PRS path.
+pub fn dup_ff_prs_gcd(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError {
+  euclidtools_require_field(domain)
+  let ff = dup_strip(f)
+  let gg = dup_strip(g)
+  if ff.is_empty() && gg.is_empty() {
+    return ([], [], [])
+  }
+  if ff.is_empty() {
+    let h = dup_monic(gg, domain)
+    return (h, [], [dup_LC(gg)])
+  }
+  if gg.is_empty() {
+    let h = dup_monic(ff, domain)
+    return (h, [dup_LC(ff)], [])
+  }
+  let subres = dup_subresultants(ff, gg, domain)
+  let h = dup_monic(subres[subres.length() - 1], domain)
+  (h, dup_quo(ff, h, domain), dup_quo(gg, h, domain))
+}
+
+///|
+/// Polynomial GCD and cofactors in `K[x]`.
+///
+/// - Does: Dispatches to the field or ring PRS GCD path.
+/// - Input: Two univariate dense coefficient arrays and a coefficient `domain`.
+/// - Returns: Three dense coefficient arrays `(h, cff, cfg)`.
+/// - Limits: Floating exact-domain conversion and heuristic GCD are not part of
+///   this front door yet.
+pub fn dup_inner_gcd(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError {
+  if domain_is_field_pred(domain) {
+    dup_ff_prs_gcd(f, g, domain)
+  } else {
+    dup_rr_prs_gcd(f, g, domain)
+  }
+}
+
+///|
+/// Polynomial GCD in `K[x]`.
+///
+/// - Does: Returns only the gcd from `dup_inner_gcd`.
+/// - Input: Two univariate dense coefficient arrays and a coefficient `domain`.
+/// - Returns: A dense coefficient array.
+/// - Limits: Same as `dup_inner_gcd`.
+pub fn dup_gcd(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  dup_inner_gcd(f, g, domain).0
+}
+
+///|
+/// Polynomial LCM over a ring in `K[x]`.
+///
+/// - Does: Computes `lcm(f, g)` from primitive parts and polynomial gcd.
+/// - Input: Two univariate dense coefficient arrays over a ring-like `domain`.
+/// - Returns: A dense coefficient array.
+/// - Limits: Exact for rational-like coefficient domains.
+pub fn dup_rr_lcm(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let ff = dup_strip(f)
+  let gg = dup_strip(g)
+  if ff.is_empty() || gg.is_empty() {
+    return []
+  }
+  let (fc, prim_f) = euclidtools_dup_primitive(ff, domain)
+  let (gc, prim_g) = euclidtools_dup_primitive(gg, domain)
+  let content_lcm = euclidtools_field_lcm(fc, gc, domain)
+  let h = dup_quo(
+    dup_mul(prim_f, prim_g, domain),
+    dup_gcd(prim_f, prim_g, domain),
+    domain,
+  )
+  let unit = euclidtools_canonical_unit(dup_LC(h), domain)
+  dup_mul_ground(h, fe_mul(content_lcm, unit), domain)
+}
+
+///|
+/// Polynomial LCM over a field in `K[x]`.
+///
+/// - Does: Computes the monic lcm of two dense polynomials.
+/// - Input: Two univariate dense coefficient arrays over a field `domain`.
+/// - Returns: A dense coefficient array.
+/// - Limits: Raises `PolyError::DomainNotField` when `domain` is not a field.
+pub fn dup_ff_lcm(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  euclidtools_require_field(domain)
+  let h = dup_quo(dup_mul(f, g, domain), dup_gcd(f, g, domain), domain)
+  dup_monic(h, domain)
+}
+
+///|
+/// Polynomial LCM in `K[x]`.
+///
+/// - Does: Dispatches to field or ring LCM.
+/// - Input: Two univariate dense coefficient arrays and a coefficient `domain`.
+/// - Returns: A dense coefficient array.
+/// - Limits: Same as the selected LCM path.
+pub fn dup_lcm(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if domain_is_field_pred(domain) {
+    dup_ff_lcm(f, g, domain)
+  } else {
+    dup_rr_lcm(f, g, domain)
+  }
+}
+
+///|
+/// Cancel common polynomial factors in `f/g`.
+///
+/// - Does: Returns the numerator and denominator cofactors after removing
+///   `gcd(f, g)`.
+/// - Input: Two univariate dense coefficient arrays and a coefficient `domain`.
+/// - Returns: `(numerator, denominator)` as dense coefficient arrays.
+/// - Limits: The Python `include=False` scalar-content union return is not
+///   represented by this typed front door.
+pub fn dup_cancel(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem]) raise PolyError {
+  let (_, p0, q0) = dup_inner_gcd(f, g, domain)
+  let mut p = p0
+  let mut q = q0
+  if p.is_empty() || q.is_empty() {
+    return (p, q)
+  }
+  let p_neg = fe_is_negative(dup_LC(p))
+  let q_neg = fe_is_negative(dup_LC(q))
+  if p_neg && q_neg {
+    p = dup_neg(p, domain)
+    q = dup_neg(q, domain)
+  } else if p_neg {
+    p = dup_neg(p, domain)
+  } else if q_neg {
+    q = dup_neg(q, domain)
+  }
+  (p, q)
+}
+
+///|
+/// Polynomial GCD and cofactors over a ring in `K[X]`.
+///
+/// - Does: Delegates to `dup_rr_prs_gcd` for univariate input.
+/// - Input: Two dense recursive polynomials, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: Three dense recursive polynomials `(h, cff, cfg)`.
+/// - Limits: Raises `PolyError::NotUnivariate` for `u > 0`.
+pub fn dmp_rr_prs_gcd(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
+  if u != 0 {
+    raise PolyError::NotUnivariate
+  }
+  let (h, cff, cfg) = dup_rr_prs_gcd(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
+  (dmp_from_coeffs(h), dmp_from_coeffs(cff), dmp_from_coeffs(cfg))
+}
+
+///|
+/// Polynomial GCD and cofactors over a field in `K[X]`.
+///
+/// - Does: Delegates to `dup_ff_prs_gcd` for univariate input.
+/// - Input: Two dense recursive polynomials, a level `u`, and a field `domain`.
+/// - Returns: Three dense recursive polynomials `(h, cff, cfg)`.
+/// - Limits: Raises `PolyError::NotUnivariate` for `u > 0`.
+pub fn dmp_ff_prs_gcd(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
+  if u != 0 {
+    raise PolyError::NotUnivariate
+  }
+  let (h, cff, cfg) = dup_ff_prs_gcd(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
+  (dmp_from_coeffs(h), dmp_from_coeffs(cff), dmp_from_coeffs(cfg))
+}
+
+///|
+/// Polynomial GCD and cofactors in `K[X]`.
+///
+/// - Does: Delegates to `dup_inner_gcd` for univariate input.
+/// - Input: Two dense recursive polynomials, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: Three dense recursive polynomials `(h, cff, cfg)`.
+/// - Limits: Raises `PolyError::NotUnivariate` for `u > 0`.
+pub fn dmp_inner_gcd(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
+  if u != 0 {
+    raise PolyError::NotUnivariate
+  }
+  let (h, cff, cfg) = dup_inner_gcd(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
+  (dmp_from_coeffs(h), dmp_from_coeffs(cff), dmp_from_coeffs(cfg))
+}
+
+///|
+/// Polynomial GCD in `K[X]`.
+///
+/// - Does: Returns only the gcd from `dmp_inner_gcd`.
+/// - Input: Two dense recursive polynomials, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: A dense recursive polynomial.
+/// - Limits: Raises `PolyError::NotUnivariate` for `u > 0`.
+pub fn dmp_gcd(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  dmp_inner_gcd(f, g, u, domain).0
+}
+
+///|
+/// Polynomial LCM over a ring in `K[X]`.
+///
+/// - Does: Delegates to `dup_rr_lcm` for univariate input.
+/// - Input: Two dense recursive polynomials, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: A dense recursive polynomial.
+/// - Limits: Raises `PolyError::NotUnivariate` for `u > 0`.
+pub fn dmp_rr_lcm(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if u != 0 {
+    raise PolyError::NotUnivariate
+  }
+  dmp_from_coeffs(dup_rr_lcm(dmp_to_coeffs(f), dmp_to_coeffs(g), domain))
+}
+
+///|
+/// Polynomial LCM over a field in `K[X]`.
+///
+/// - Does: Delegates to `dup_ff_lcm` for univariate input.
+/// - Input: Two dense recursive polynomials, a level `u`, and a field `domain`.
+/// - Returns: A dense recursive polynomial.
+/// - Limits: Raises `PolyError::NotUnivariate` for `u > 0`.
+pub fn dmp_ff_lcm(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if u != 0 {
+    raise PolyError::NotUnivariate
+  }
+  dmp_from_coeffs(dup_ff_lcm(dmp_to_coeffs(f), dmp_to_coeffs(g), domain))
+}
+
+///|
+/// Polynomial LCM in `K[X]`.
+///
+/// - Does: Delegates to `dup_lcm` for univariate input.
+/// - Input: Two dense recursive polynomials, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: A dense recursive polynomial.
+/// - Limits: Raises `PolyError::NotUnivariate` for `u > 0`.
+pub fn dmp_lcm(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if u != 0 {
+    raise PolyError::NotUnivariate
+  }
+  dmp_from_coeffs(dup_lcm(dmp_to_coeffs(f), dmp_to_coeffs(g), domain))
+}
+
+///|
+/// Cancel common polynomial factors in `f/g`.
+///
+/// - Does: Delegates to `dup_cancel` for univariate input.
+/// - Input: Two dense recursive polynomials, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: `(numerator, denominator)` as dense recursive polynomials.
+/// - Limits: Raises `PolyError::NotUnivariate` for `u > 0`.
+pub fn dmp_cancel(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly) raise PolyError {
+  if u != 0 {
+    raise PolyError::NotUnivariate
+  }
+  let (p, q) = dup_cancel(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
+  (dmp_from_coeffs(p), dmp_from_coeffs(q))
 }

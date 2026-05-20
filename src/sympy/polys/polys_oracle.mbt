@@ -7414,6 +7414,158 @@ pub fn dmp_discriminant(
 }
 
 ///|
+pub fn dup_rr_prs_gcd(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_rr_prs_gcd", f, g, domain)
+}
+
+///|
+pub fn dup_ff_prs_gcd(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dup_call("dup_ff_prs_gcd", f, g, domain)
+}
+
+///|
+pub fn dup_inner_gcd(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_inner_gcd", f, g, domain)
+}
+
+///|
+pub fn dup_gcd(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_gcd", f, g, domain)
+}
+
+///|
+pub fn dup_rr_lcm(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_rr_lcm", f, g, domain)
+}
+
+///|
+pub fn dup_ff_lcm(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dup_call("dup_ff_lcm", f, g, domain)
+}
+
+///|
+pub fn dup_lcm(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_lcm", f, g, domain)
+}
+
+///|
+pub fn dup_cancel(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_cancel", f, g, domain)
+}
+
+///|
+pub fn dmp_rr_prs_gcd(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_rr_prs_gcd", f, g, u, domain)
+}
+
+///|
+pub fn dmp_ff_prs_gcd(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_ff_prs_gcd", f, g, u, domain)
+}
+
+///|
+pub fn dmp_inner_gcd(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_inner_gcd", f, g, u, domain)
+}
+
+///|
+pub fn dmp_gcd(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_gcd", f, g, u, domain)
+}
+
+///|
+pub fn dmp_rr_lcm(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_rr_lcm", f, g, u, domain)
+}
+
+///|
+pub fn dmp_ff_lcm(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_ff_lcm", f, g, u, domain)
+}
+
+///|
+pub fn dmp_lcm(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_lcm", f, g, u, domain)
+}
+
+///|
+pub fn dmp_cancel(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_cancel", f, g, u, domain)
+}
+
+///|
 pub fn dmp_add_term(
   f : DenseData,
   c : DenseData,

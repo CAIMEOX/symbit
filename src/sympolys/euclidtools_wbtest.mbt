@@ -37,6 +37,13 @@ fn euclid_wb_dup_triple_repr(
 }
 
 ///|
+fn euclid_wb_dmp_triple_repr(
+  triple : (DensePoly, DensePoly, DensePoly),
+) -> String {
+  "(\{euclid_wb_dmp_repr(triple.0)},\{euclid_wb_dmp_repr(triple.1)},\{euclid_wb_dmp_repr(triple.2)})"
+}
+
+///|
 fn euclid_wb_dup_list_repr(polys : Array[Array[FieldElem]]) -> String {
   "[" + polys.map(poly => euclid_wb_dup_repr(poly)).join(",") + "]"
 }
@@ -225,5 +232,54 @@ test "euclidtools wb: discriminant and dmp resultant wrappers" {
   inspect(
     euclid_wb_dmp_repr(dmp_discriminant(euclid_wb_poly(f), 0, Domain::ZZ)),
     content="-8",
+  )
+}
+
+///|
+test "euclidtools wb: gcd lcm and cancel frontdoors" {
+  let f = [euclid_wb_qq(1, 1), euclid_wb_qq(0, 1), euclid_wb_qq(-1, 1)]
+  let g = [euclid_wb_qq(1, 1), euclid_wb_qq(-3, 1), euclid_wb_qq(2, 1)]
+  inspect(
+    euclid_wb_dup_triple_repr(dup_rr_prs_gcd(f, g, Domain::ZZ)),
+    content="([1,-1],[1,1],[1,-2])",
+  )
+  inspect(
+    euclid_wb_dup_triple_repr(dup_inner_gcd(f, g, Domain::ZZ)),
+    content="([1,-1],[1,1],[1,-2])",
+  )
+  inspect(euclid_wb_dup_repr(dup_gcd(f, g, Domain::ZZ)), content="[1,-1]")
+  inspect(euclid_wb_dup_repr(dup_lcm(f, g, Domain::ZZ)), content="[1,-2,-1,2]")
+  inspect(
+    euclid_wb_dup_pair_repr(
+      dup_cancel(
+        [euclid_wb_qq(2, 1), euclid_wb_qq(0, 1), euclid_wb_qq(-2, 1)],
+        [euclid_wb_qq(1, 1), euclid_wb_qq(-2, 1), euclid_wb_qq(1, 1)],
+        Domain::ZZ,
+      ),
+    ),
+    content="([2,2],[1,-1])",
+  )
+}
+
+///|
+test "euclidtools wb: field gcd lcm and dmp wrappers" {
+  let f = [euclid_wb_qq(1, 2), euclid_wb_qq(7, 4), euclid_wb_qq(3, 2)]
+  let g = [euclid_wb_qq(1, 2), euclid_wb_qq(1, 1), euclid_wb_qq(0, 1)]
+  inspect(
+    euclid_wb_dup_triple_repr(dup_ff_prs_gcd(f, g, Domain::QQ)),
+    content="([1,2],[1/2,3/4],[1/2,0])",
+  )
+  inspect(euclid_wb_dup_repr(dup_gcd(f, g, Domain::QQ)), content="[1,2]")
+  inspect(euclid_wb_dup_repr(dup_lcm(f, g, Domain::QQ)), content="[1,7/2,3,0]")
+  let fd = euclid_wb_poly(f)
+  let gd = euclid_wb_poly(g)
+  inspect(
+    euclid_wb_dmp_triple_repr(dmp_inner_gcd(fd, gd, 0, Domain::QQ)),
+    content="([1,2],[1/2,3/4],[1/2,0])",
+  )
+  inspect(euclid_wb_dmp_repr(dmp_gcd(fd, gd, 0, Domain::QQ)), content="[1,2]")
+  inspect(
+    euclid_wb_dmp_repr(dmp_lcm(fd, gd, 0, Domain::QQ)),
+    content="[1,7/2,3,0]",
   )
 }

@@ -163,6 +163,8 @@ pub fn dmp_add_term(DensePoly, DensePoly, Int, Int, Domain) -> DensePoly raise P
 
 pub fn dmp_apply_pairs(DensePoly, DensePoly, (FieldElem, FieldElem, Array[FieldElem]) -> FieldElem, Array[FieldElem], Int, Domain) -> DensePoly raise PolyError
 
+pub fn dmp_cancel(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly) raise PolyError
+
 pub fn dmp_convert(DensePoly, Int, Domain, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_copy(DensePoly, Int) -> DensePoly
@@ -207,9 +209,15 @@ pub fn dmp_fateman_poly_F_3(Int, Domain) -> (DensePoly, DensePoly, DensePoly) ra
 
 pub fn dmp_ff_div(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly) raise PolyError
 
+pub fn dmp_ff_lcm(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
+
+pub fn dmp_ff_prs_gcd(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
+
 pub fn dmp_from_dict(Map[Monomial, FieldElem], Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_from_sympy(DenseRat, Int, Domain) -> DensePoly raise PolyError
+
+pub fn dmp_gcd(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_gcdex(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
 
@@ -235,6 +243,8 @@ pub fn dmp_inflate(DensePoly, Array[Int], Int, Domain) -> DensePoly raise PolyEr
 
 pub fn dmp_inject(DensePolyPoly, Int, Array[String], Domain, front? : Bool) -> (DensePoly, Int) raise PolyError
 
+pub fn dmp_inner_gcd(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
+
 pub fn dmp_inner_subresultants(DensePoly, DensePoly, Int, Domain) -> (Array[DensePoly], Array[DensePoly]) raise PolyError
 
 pub fn dmp_integrate(DensePoly, Int, Int, Domain) -> DensePoly raise PolyError
@@ -246,6 +256,8 @@ pub fn dmp_invert(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyErro
 pub fn dmp_l1_norm(DensePoly, Int, Domain) -> FieldElem raise PolyError
 
 pub fn dmp_l2_norm_squared(DensePoly, Int, Domain) -> FieldElem raise PolyError
+
+pub fn dmp_lcm(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_list_terms(DensePoly, Int, Domain, order? : TermOrder) -> Array[(Array[Int], FieldElem)] raise PolyError
 
@@ -304,6 +316,10 @@ pub fn dmp_resultant(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyE
 pub fn dmp_reverse(DensePoly) -> DensePoly raise PolyError
 
 pub fn dmp_rr_div(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly) raise PolyError
+
+pub fn dmp_rr_lcm(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
+
+pub fn dmp_rr_prs_gcd(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
 
 pub fn dmp_slice(DensePoly, Int, Int, Int, Domain) -> DensePoly raise PolyError
 
@@ -639,6 +655,8 @@ pub fn dup_bernoulli(Int, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_bernoulli_c(Int, Domain) -> Array[FieldElem] raise PolyError
 
+pub fn dup_cancel(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem]) raise PolyError
+
 pub fn dup_cauchy_lower_bound(Array[FieldElem], Domain) -> FieldElem raise PolyError
 
 pub fn dup_cauchy_upper_bound(Array[FieldElem], Domain) -> FieldElem raise PolyError
@@ -679,6 +697,10 @@ pub fn dup_factor_list(Array[FieldElem], Domain) -> (FieldElem, Array[(Array[Fie
 
 pub fn dup_ff_div(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem]) raise PolyError
 
+pub fn dup_ff_lcm(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_ff_prs_gcd(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError
+
 pub fn dup_from_dict(Map[Monomial, FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_from_list(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
@@ -686,6 +708,8 @@ pub fn dup_from_list(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyErr
 pub fn dup_from_raw_dict(Map[Int, FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_from_sympy(Array[@symnum.BigRational], Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_gcd(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_gcdex(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError
 
@@ -700,6 +724,8 @@ pub fn dup_hermite(Int, Domain) -> Array[FieldElem] raise PolyError
 pub fn dup_hermite_prob(Int, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_inflate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_inner_gcd(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError
 
 pub fn dup_inner_subresultants(Array[FieldElem], Array[FieldElem], Domain) -> (Array[Array[FieldElem]], Array[FieldElem]) raise PolyError
 
@@ -718,6 +744,8 @@ pub fn dup_l1_norm(Array[FieldElem], Domain) -> FieldElem raise PolyError
 pub fn dup_l2_norm_squared(Array[FieldElem], Domain) -> FieldElem raise PolyError
 
 pub fn dup_laguerre(Int, FieldElem, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_lcm(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_legendre(Int, Domain) -> Array[FieldElem] raise PolyError
 
@@ -782,6 +810,10 @@ pub fn dup_root_upper_bound(Array[FieldElem], Domain) -> FieldElem raise PolyErr
 pub fn dup_routh_hurwitz(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_rr_div(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem]) raise PolyError
+
+pub fn dup_rr_lcm(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_rr_prs_gcd(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError
 
 pub fn dup_rshift(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 

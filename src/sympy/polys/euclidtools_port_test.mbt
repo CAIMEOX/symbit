@@ -552,3 +552,95 @@ test "euclidtools: dense discriminant and dmp resultant oracle parity" {
     dmp_discriminant(dense_data_of(poly_fe(f)), 0, domain="ZZ"),
   )
 }
+
+///|
+test "euclidtools: dense gcd lcm cancel oracle parity over ZZ" {
+  let f = [feqq(1, 1), feqq(0, 1), feqq(-1, 1)]
+  let g = [feqq(1, 1), feqq(-3, 1), feqq(2, 1)]
+  assert_eq(
+    euclid_port_dup_triple_repr(@sympolys.dup_rr_prs_gcd(f, g, Domain::ZZ)),
+    dup_rr_prs_gcd(dup_to_rats(f), dup_to_rats(g), domain="ZZ"),
+  )
+  assert_eq(
+    euclid_port_dup_triple_repr(@sympolys.dup_inner_gcd(f, g, Domain::ZZ)),
+    dup_inner_gcd(dup_to_rats(f), dup_to_rats(g), domain="ZZ"),
+  )
+  assert_eq(
+    dup_repr(@sympolys.dup_gcd(f, g, Domain::ZZ)),
+    dup_gcd(dup_to_rats(f), dup_to_rats(g), domain="ZZ"),
+  )
+  assert_eq(
+    dup_repr(@sympolys.dup_rr_lcm(f, g, Domain::ZZ)),
+    dup_rr_lcm(dup_to_rats(f), dup_to_rats(g), domain="ZZ"),
+  )
+  assert_eq(
+    dup_repr(@sympolys.dup_lcm(f, g, Domain::ZZ)),
+    dup_lcm(dup_to_rats(f), dup_to_rats(g), domain="ZZ"),
+  )
+  let n = [feqq(2, 1), feqq(0, 1), feqq(-2, 1)]
+  let d = [feqq(1, 1), feqq(-2, 1), feqq(1, 1)]
+  assert_eq(
+    dup_repr_tuple(@sympolys.dup_cancel(n, d, Domain::ZZ)),
+    dup_cancel(dup_to_rats(n), dup_to_rats(d), domain="ZZ"),
+  )
+}
+
+///|
+test "euclidtools: dense gcd lcm oracle parity over QQ" {
+  let f = [feqq(1, 2), feqq(7, 4), feqq(3, 2)]
+  let g = [feqq(1, 2), feqq(1, 1), feqq(0, 1)]
+  assert_eq(
+    euclid_port_dup_triple_repr(@sympolys.dup_ff_prs_gcd(f, g, Domain::QQ)),
+    dup_ff_prs_gcd(dup_to_rats(f), dup_to_rats(g), domain="QQ"),
+  )
+  assert_eq(
+    dup_repr(@sympolys.dup_gcd(f, g, Domain::QQ)),
+    dup_gcd(dup_to_rats(f), dup_to_rats(g), domain="QQ"),
+  )
+  assert_eq(
+    dup_repr(@sympolys.dup_ff_lcm(f, g, Domain::QQ)),
+    dup_ff_lcm(dup_to_rats(f), dup_to_rats(g), domain="QQ"),
+  )
+  assert_eq(
+    dup_repr(@sympolys.dup_lcm(f, g, Domain::QQ)),
+    dup_lcm(dup_to_rats(f), dup_to_rats(g), domain="QQ"),
+  )
+}
+
+///|
+test "euclidtools: dense dmp gcd lcm cancel oracle parity" {
+  let f = poly_fe([feqq(1, 1), feqq(0, 1), feqq(-1, 1)])
+  let g = poly_fe([feqq(1, 1), feqq(-3, 1), feqq(2, 1)])
+  assert_eq(
+    euclid_port_dmp_triple_repr(@sympolys.dmp_rr_prs_gcd(f, g, 0, Domain::ZZ)),
+    dmp_rr_prs_gcd(dense_data_of(f), dense_data_of(g), 0, domain="ZZ"),
+  )
+  assert_eq(
+    euclid_port_dmp_triple_repr(@sympolys.dmp_inner_gcd(f, g, 0, Domain::ZZ)),
+    dmp_inner_gcd(dense_data_of(f), dense_data_of(g), 0, domain="ZZ"),
+  )
+  assert_eq(
+    dmp_repr(@sympolys.dmp_gcd(f, g, 0, Domain::ZZ)),
+    dmp_gcd(dense_data_of(f), dense_data_of(g), 0, domain="ZZ"),
+  )
+  assert_eq(
+    dmp_repr(@sympolys.dmp_lcm(f, g, 0, Domain::ZZ)),
+    dmp_lcm(dense_data_of(f), dense_data_of(g), 0, domain="ZZ"),
+  )
+  let n = poly_fe([feqq(2, 1), feqq(0, 1), feqq(-2, 1)])
+  let d = poly_fe([feqq(1, 1), feqq(-2, 1), feqq(1, 1)])
+  assert_eq(
+    dmp_pair_repr(@sympolys.dmp_cancel(n, d, 0, Domain::ZZ)),
+    dmp_cancel(dense_data_of(n), dense_data_of(d), 0, domain="ZZ"),
+  )
+  let fq = poly_fe([feqq(1, 2), feqq(7, 4), feqq(3, 2)])
+  let gq = poly_fe([feqq(1, 2), feqq(1, 1), feqq(0, 1)])
+  assert_eq(
+    euclid_port_dmp_triple_repr(@sympolys.dmp_ff_prs_gcd(fq, gq, 0, Domain::QQ)),
+    dmp_ff_prs_gcd(dense_data_of(fq), dense_data_of(gq), 0, domain="QQ"),
+  )
+  assert_eq(
+    dmp_repr(@sympolys.dmp_ff_lcm(fq, gq, 0, Domain::QQ)),
+    dmp_ff_lcm(dense_data_of(fq), dense_data_of(gq), 0, domain="QQ"),
+  )
+}
