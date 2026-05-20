@@ -279,6 +279,8 @@ pub fn dmp_l2_norm_squared(DensePoly, Int, Domain) -> FieldElem raise PolyError
 
 pub fn dmp_lcm(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
 
+pub fn dmp_lift(DensePoly, Int, Domain) -> DensePoly raise PolyError
+
 pub fn dmp_list_terms(DensePoly, Int, Domain, order? : TermOrder) -> Array[(Array[Int], FieldElem)] raise PolyError
 
 pub fn dmp_max_norm(DensePoly, Int, Domain) -> FieldElem raise PolyError

@@ -340,4 +340,14 @@ test "densetools wb: algebraic coefficient injection frontdoor" {
     dt_wb_dmp_alg_inject_repr(dmp_alg_inject(g, 0, alg_domain)),
     content="([[1,1],[1,0]],1,QQ)",
   )
+
+  let h = DensePoly::Poly([
+    DensePoly::Coef(dt_wb_alg_coeff([1])),
+    DensePoly::Coef(dt_wb_alg_coeff([0, 1])),
+    DensePoly::Coef(dt_wb_alg_coeff([2])),
+  ])
+  inspect(dt_wb_dmp_repr(dmp_lift(h, 0, alg_domain)), content="[1,0,2,0,4]")
+
+  let bad : Result[DensePoly, PolyError] = try? dmp_lift(h, 1, alg_domain)
+  assert_true(bad is Err(PolyError::NotUnivariate))
 }

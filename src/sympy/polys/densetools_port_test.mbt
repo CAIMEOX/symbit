@@ -227,6 +227,12 @@ test "densetools algebraic coefficient injection oracle parity" {
     dt_port_dmp_alg_inject_repr(@sympolys.dmp_alg_inject(g, 0, alg_domain)),
     dmp_alg_inject_exprs(["sqrt(2)+1", "sqrt(2)"], 0),
   )
+
+  let h = dt_port_alg_dense((x ^ @symcore.int(2)) + a * x + @symcore.int(2))
+  assert_eq(
+    dmp_repr(@sympolys.dmp_lift(h, 0, alg_domain)),
+    dmp_lift_exprs(["1", "sqrt(2)", "2"], 0),
+  )
 }
 
 ///|

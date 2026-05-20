@@ -1607,3 +1607,31 @@ pub fn dmp_alg_inject(
   let level = u + 1
   (dmp_from_dict(injected, level, base), level, base)
 }
+
+///|
+/// Lift algebraic coefficients to a base-domain polynomial.
+///
+/// - Does: Computes the resultant norm that removes the algebraic generator
+///   from a dense univariate polynomial over `K(a)`.
+/// - Input: A dense recursive polynomial, its level `u`, and an algebraic
+///   extension `domain`.
+/// - Returns: A dense polynomial over the base domain.
+/// - Limits: The current front door supports the univariate `u == 0` path.
+pub fn dmp_lift(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if u != 0 {
+    raise PolyError::NotUnivariate
+  }
+  let (base, gens, rels) = match domain {
+    Domain::AlgExt(base, gens, rels) => (base, gens, rels)
+    _ => raise PolyError::DomainMismatch
+  }
+  let (minpoly, _) = load_algext_minpoly(base, gens, rels)
+  let coeffs = dmp_to_coeffs(f)
+  let poly = poly_from_dense_desc(coeffs, "x", domain)
+  let lifted = algext_norm(poly, base, minpoly)
+  dmp_from_coeffs(poly_to_dense_desc(lifted))
+}
