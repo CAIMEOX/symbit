@@ -8984,6 +8984,110 @@ pub fn dmp_compose(
 }
 
 ///|
+pub fn dmp_eval_tail(
+  f : DenseData,
+  values : Array[@symnum.BigRational],
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(values, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dmp_eval_tail", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_diff_eval_in(
+  f : DenseData,
+  m : Int,
+  a : @symnum.BigRational,
+  j : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::Int(m))
+  args.push(OracleArg::PyObj(sympy_domain_elem(a, domain)))
+  args.push(OracleArg::Int(j))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dmp_diff_eval_in", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_sign_variations(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dup_sign_variations", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_clear_denoms(
+  f : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dup_clear_denoms", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_clear_denoms(
+  f : DenseData,
+  u : Int,
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dmp_clear_denoms", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_revert(
+  f : Array[@symnum.BigRational],
+  n : Int,
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::Int(n))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dup_revert", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_revert(
+  f : DenseData,
+  n : Int,
+  u : Int,
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::Int(n))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dmp_revert", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn gf_strip(f : Array[Int]) -> String raise {
   let res = sympy_call_must("sympy.polys.galoistools.gf_strip", [
     OracleArg::IntList(f),

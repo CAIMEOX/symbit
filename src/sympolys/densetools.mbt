@@ -943,3 +943,266 @@ pub fn dmp_compose(
   }
   h
 }
+
+///|
+/// Evaluate the tail variables of a dense recursive polynomial.
+///
+/// - Does: Substitutes values for the last `a.length()` variables.
+/// - Input: A dense recursive polynomial, tail values, level `u`, and a
+///   coefficient `domain`.
+/// - Returns: The evaluated dense polynomial.
+/// - Limits: Requires at most `u + 1` tail values.
+pub fn dmp_eval_tail(
+  f : DensePoly,
+  a : Array[FieldElem],
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if a.is_empty() {
+    return f
+  }
+  if a.length() > u + 1 {
+    raise PolyError::BadExponent
+  }
+  if dmp_zero_p(f, u) {
+    return dmp_zero(u - a.length())
+  }
+  let mut cur = f
+  let mut level = u
+  let mut idx = a.length() - 1
+  while idx >= 0 {
+    cur = dmp_eval_in(cur, a[idx], level, level, domain)
+    level = level - 1
+    idx = idx - 1
+  }
+  cur
+}
+
+///|
+/// Differentiate in one variable and evaluate that variable.
+///
+/// - Does: Computes `d/dx_j` order `m` and then substitutes `x_j = a`.
+/// - Input: A dense recursive polynomial, derivative order, value, variable
+///   index `j`, level `u`, and a coefficient `domain`.
+/// - Returns: The differentiated-and-evaluated dense polynomial.
+/// - Limits: Raises `PolyError::BadExponent` when `j` is outside `0..u`.
+pub fn dmp_diff_eval_in(
+  f : DensePoly,
+  m : Int,
+  a : FieldElem,
+  j : Int,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if j < 0 || j > u {
+    raise PolyError::BadExponent
+  }
+  dmp_eval_in(dmp_diff_in(f, m, j, u, domain), a, j, u, domain)
+}
+
+///|
+/// Count sign variations in dense coefficient order.
+///
+/// - Does: Counts sign changes between consecutive nonzero coefficients.
+/// - Input: A dense coefficient array and a coefficient `domain`.
+/// - Returns: The number of sign variations.
+/// - Limits: Supports ordered exact/real coefficient domains.
+pub fn dup_sign_variations(
+  f : Array[FieldElem],
+  _domain : Domain,
+) -> Int raise PolyError {
+  let mut prev = fe_from_int(0, Domain::ZZ)
+  let mut count = 0
+  for coeff in f {
+    if fe_is_negative(fe_mul(coeff, prev)) {
+      count = count + 1
+    }
+    if !fe_is_zero(coeff) {
+      prev = coeff
+    }
+  }
+  count
+}
+
+///|
+fn densetools_lcm_bigint(a : BigInt, b : BigInt) -> BigInt {
+  if a.is_zero() || b.is_zero() {
+    return BigInt::from_int(0)
+  }
+  let aa = bigint_abs(a)
+  let bb = bigint_abs(b)
+  let g = @symnum.gcd_bigint(aa, bb)
+  aa.div(g).mul(bb)
+}
+
+///|
+fn densetools_denominator_lcm(
+  values : Array[FieldElem],
+) -> BigInt raise PolyError {
+  let mut common = BigInt::from_int(1)
+  for value in values {
+    let den = fe_expect_rational(value).denominator()
+    common = densetools_lcm_bigint(common, den)
+  }
+  common
+}
+
+///|
+fn densetools_clear_coeff(
+  value : FieldElem,
+  common : BigInt,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  let q = fe_expect_rational(value)
+  let scale = common.div(q.denominator())
+  fe_from_rational(
+    poly_rational_from_bigints(q.numerator().mul(scale), BigInt::from_int(1)),
+    domain,
+  )
+}
+
+///|
+/// Clear rational denominators in `K[x]`.
+///
+/// - Does: Multiplies by the least common denominator of coefficients.
+/// - Input: A dense coefficient array and a coefficient `domain`.
+/// - Returns: `(common_denominator, cleared_polynomial)`.
+/// - Limits: `convert` is accepted for API shape but coefficients remain encoded
+///   as `FieldElem` values in this package.
+pub fn dup_clear_denoms(
+  f : Array[FieldElem],
+  domain : Domain,
+  convert? : Bool = false,
+) -> (FieldElem, Array[FieldElem]) raise PolyError {
+  ignore(convert)
+  let common = densetools_denominator_lcm(f)
+  let common_elem = fe_from_rational(
+    poly_rational_from_bigints(common, BigInt::from_int(1)),
+    domain,
+  )
+  if fe_is_one(common_elem) {
+    return (common_elem, dup_strip(f))
+  }
+  let out : Array[FieldElem] = Array::new()
+  for c in f {
+    out.push(densetools_clear_coeff(c, common, domain))
+  }
+  (common_elem, dup_strip(out))
+}
+
+///|
+fn densetools_dmp_denominator_lcm(
+  f : DensePoly,
+  u : Int,
+) -> BigInt raise PolyError {
+  if u == 0 {
+    return densetools_denominator_lcm(dmp_to_coeffs(f))
+  }
+  let mut common = BigInt::from_int(1)
+  for c in dmp_items(f) {
+    common = densetools_lcm_bigint(
+      common,
+      densetools_dmp_denominator_lcm(c, u - 1),
+    )
+  }
+  common
+}
+
+///|
+/// Clear rational denominators in `K[X]`.
+///
+/// - Does: Multiplies by the least common denominator of all ground
+///   coefficients.
+/// - Input: A dense recursive polynomial, level `u`, and a coefficient `domain`.
+/// - Returns: `(common_denominator, cleared_polynomial)`.
+/// - Limits: `convert` is accepted for API shape but coefficients remain encoded
+///   as `FieldElem` values in this package.
+pub fn dmp_clear_denoms(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+  convert? : Bool = false,
+) -> (FieldElem, DensePoly) raise PolyError {
+  ignore(convert)
+  if u == 0 {
+    let (common, cleared) = dup_clear_denoms(dmp_to_coeffs(f), domain)
+    return (common, dmp_from_coeffs(cleared))
+  }
+  let common = densetools_dmp_denominator_lcm(f, u)
+  let common_elem = fe_from_rational(
+    poly_rational_from_bigints(common, BigInt::from_int(1)),
+    domain,
+  )
+  if fe_is_one(common_elem) {
+    (common_elem, f)
+  } else {
+    (common_elem, dmp_mul_ground(f, common_elem, u, domain))
+  }
+}
+
+///|
+fn densetools_ceil_log2(n : Int) -> Int {
+  if n <= 1 {
+    return 0
+  }
+  let mut pow = 1
+  let mut exp = 0
+  while pow < n {
+    pow = pow * 2
+    exp = exp + 1
+  }
+  exp
+}
+
+///|
+/// Compute the inverse of `f` modulo `x**n`.
+///
+/// - Does: Uses SymPy's Newton iteration for univariate dense polynomials.
+/// - Input: A dense coefficient array, precision `n`, and a field `domain`.
+/// - Returns: A dense coefficient array.
+/// - Limits: Requires an invertible trailing coefficient.
+pub fn dup_revert(
+  f : Array[FieldElem],
+  n : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if f.is_empty() {
+    return []
+  }
+  let mut g = [fe_inv(dup_TC(f))]
+  let mut h = [
+    fe_from_int(1, domain),
+    fe_from_int(0, domain),
+    fe_from_int(0, domain),
+  ]
+  let rounds = densetools_ceil_log2(n)
+  let mut round = 1
+  while round <= rounds {
+    let a = dup_mul_ground(g, fe_from_int(2, domain), domain)
+    let b = dup_mul(f, dup_sqr(g, domain), domain)
+    g = dup_rem(dup_sub(a, b, domain), h, domain)
+    h = dup_lshift(h, dup_degree(h), domain)
+    round = round + 1
+  }
+  g
+}
+
+///|
+/// Compute the inverse of `f` modulo `x**n` in `K[X]`.
+///
+/// - Does: Delegates to `dup_revert` for univariate input.
+/// - Input: A dense recursive polynomial, precision `n`, level `u`, and a field
+///   `domain`.
+/// - Returns: A dense recursive polynomial.
+/// - Limits: Raises `PolyError::NotUnivariate` for `u > 0`.
+pub fn dmp_revert(
+  f : DensePoly,
+  n : Int,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if u != 0 {
+    raise PolyError::NotUnivariate
+  }
+  dmp_from_coeffs(dup_revert(dmp_to_coeffs(f), n, domain))
+}

@@ -6,10 +6,20 @@ fn dt_port_extract_repr(
 }
 
 ///|
+fn dt_port_clear_repr(value : (FieldElem, Array[FieldElem])) -> String {
+  "(\{value.0},\{dup_repr(value.1)})"
+}
+
+///|
 fn dt_port_dmp_extract_repr(
   value : (FieldElem, DensePoly, DensePoly),
 ) -> String {
   "(\{value.0},\{dmp_repr(value.1)},\{dmp_repr(value.2)})"
+}
+
+///|
+fn dt_port_dmp_clear_repr(value : (FieldElem, DensePoly)) -> String {
+  "(\{value.0},\{dmp_repr(value.1)})"
 }
 
 ///|
@@ -197,5 +207,75 @@ test "densetools shift transform compose oracle parity" {
   assert_eq(
     dmp_repr(@sympolys.dmp_compose(f, y, 1, Domain::ZZ)),
     dmp_compose(dense_data_of(f), dense_data_of(y), 1, domain="ZZ"),
+  )
+}
+
+///|
+test "densetools eval tail diff eval clear denoms revert oracle parity" {
+  let signs = [fezz(1), fezz(0), fezz(-1), fezz(-1), fezz(1)]
+  assert_eq(
+    @sympolys.dup_sign_variations(signs, Domain::ZZ).to_string(),
+    dup_sign_variations(dup_to_rats(signs), domain="ZZ"),
+  )
+
+  let rationals = [feqq(1, 2), feqq(1, 3)]
+  assert_eq(
+    dt_port_clear_repr(@sympolys.dup_clear_denoms(rationals, Domain::QQ)),
+    dup_clear_denoms(dup_to_rats(rationals), domain="QQ"),
+  )
+  let rational_xy = @sympolys.dense_poly([
+    poly_fe([feqq(1, 2)]),
+    poly_fe([feqq(1, 3), feqq(1, 1)]),
+  ])
+  assert_eq(
+    dt_port_dmp_clear_repr(
+      @sympolys.dmp_clear_denoms(rational_xy, 1, Domain::QQ),
+    ),
+    dmp_clear_denoms(dense_data_of(rational_xy), 1, domain="QQ"),
+  )
+
+  let eval_poly = @sympolys.dense_poly([poly_int([2, 3]), poly_int([1, 2])])
+  assert_eq(
+    dmp_repr(@sympolys.dmp_eval_tail(eval_poly, [fezz(2)], 1, Domain::ZZ)),
+    dmp_eval_tail(dense_data_of(eval_poly), [br_int(2)], 1, domain="ZZ"),
+  )
+  assert_eq(
+    dmp_repr(
+      @sympolys.dmp_eval_tail(eval_poly, [fezz(2), fezz(2)], 1, Domain::ZZ),
+    ),
+    dmp_eval_tail(
+      dense_data_of(eval_poly),
+      [br_int(2), br_int(2)],
+      1,
+      domain="ZZ",
+    ),
+  )
+
+  let diff_poly = @sympolys.dense_poly([
+    poly_int([1, 2, 3]),
+    poly_int([2, 3, 1]),
+  ])
+  assert_eq(
+    dmp_repr(
+      @sympolys.dmp_diff_eval_in(diff_poly, 1, fezz(2), 0, 1, Domain::ZZ),
+    ),
+    dmp_diff_eval_in(dense_data_of(diff_poly), 1, br_int(2), 0, 1, domain="ZZ"),
+  )
+  assert_eq(
+    dmp_repr(
+      @sympolys.dmp_diff_eval_in(diff_poly, 1, fezz(2), 1, 1, Domain::ZZ),
+    ),
+    dmp_diff_eval_in(dense_data_of(diff_poly), 1, br_int(2), 1, 1, domain="ZZ"),
+  )
+
+  let inv_poly = [feqq(-1, 1), feqq(1, 1)]
+  assert_eq(
+    dup_repr(@sympolys.dup_revert(inv_poly, 4, Domain::QQ)),
+    dup_revert(dup_to_rats(inv_poly), 4, domain="QQ"),
+  )
+  let inv_dmp = poly_fe(inv_poly)
+  assert_eq(
+    dmp_repr(@sympolys.dmp_revert(inv_dmp, 4, 0, Domain::QQ)),
+    dmp_revert(dense_data_of(inv_dmp), 4, 0, domain="QQ"),
   )
 }
