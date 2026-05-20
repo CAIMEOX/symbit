@@ -10904,6 +10904,66 @@ pub fn sylvester_qq_zz(
 }
 
 ///|
+pub fn correct_sign_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+  rdel? : Int = 1,
+  cdel? : Int = 0,
+) -> String raise {
+  let p_obj = expr_to_sympy(p)
+  let q_obj = expr_to_sympy(q)
+  let x_obj = sympy_symbol_obj(x)
+  let s1 = sympy_call_must("sympy.polys.subresultants_qq_zz.sylvester", [
+    OracleArg::PyObj(p_obj),
+    OracleArg::PyObj(q_obj),
+    OracleArg::PyObj(x_obj),
+    OracleArg::Int(1),
+  ])
+  let deg_f = sympy_call_must("sympy.polys.polytools.degree", [
+    OracleArg::PyObj(p_obj),
+    OracleArg::PyObj(x_obj),
+  ])
+  let deg_g = sympy_call_must("sympy.polys.polytools.degree", [
+    OracleArg::PyObj(q_obj),
+    OracleArg::PyObj(x_obj),
+  ])
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.correct_sign", [
+    OracleArg::PyObj(objenum_to_obj(deg_f)),
+    OracleArg::PyObj(objenum_to_obj(deg_g)),
+    OracleArg::PyObj(objenum_to_obj(s1)),
+    OracleArg::Int(rdel),
+    OracleArg::Int(cdel),
+  ])
+  py_str_enum(res)
+}
+
+///|
+fn subres_oracle_row_matrix(values : Array[Int]) -> @py.PyObject raise {
+  let row = py_list_from_ints(values)
+  let rows = py_list_from_objects([row]).obj()
+  objenum_to_obj(sympy_call_must("sympy.Matrix", [OracleArg::PyObj(rows)]))
+}
+
+///|
+pub fn create_ma_qq_zz(
+  deg_f : Int,
+  deg_g : Int,
+  row1 : Array[Int],
+  row2 : Array[Int],
+  col_num : Int,
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.create_ma", [
+    OracleArg::Int(deg_f),
+    OracleArg::Int(deg_g),
+    OracleArg::PyObj(subres_oracle_row_matrix(row1)),
+    OracleArg::PyObj(subres_oracle_row_matrix(row2)),
+    OracleArg::Int(col_num),
+  ])
+  py_str_enum(res)
+}
+
+///|
 pub fn bezout_qq_zz(
   p : @symcore.Expr,
   q : @symcore.Expr,

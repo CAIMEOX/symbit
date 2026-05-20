@@ -74,6 +74,20 @@ fn subres_single_zero_matrix(domain : Domain) -> DomainMatrix raise PolyError {
 }
 
 ///|
+fn subres_rotate_right(row : Array[FieldElem], k : Int) -> Array[FieldElem] {
+  if row.is_empty() {
+    return []
+  }
+  let n = row.length()
+  let shift = (k % n + n) % n
+  let out : Array[FieldElem] = []
+  for i in 0..<n {
+    out.push(row[(i - shift + n) % n])
+  }
+  out
+}
+
+///|
 /// Return the backward identity matrix.
 ///
 /// - Does: Mirrors SymPy `backward_eye` with ones on the anti-diagonal.
@@ -162,6 +176,94 @@ pub fn sylvester(
     }
   }
   DomainMatrix::from_list(rows, f.domain)
+}
+
+///|
+/// Evaluate the sign/value determinant used by subresultant PRS algorithms.
+///
+/// - Does: Mirrors SymPy `correct_sign` by deleting the same Sylvester-matrix
+///   rows and columns before taking the determinant.
+/// - Input: Original degrees, the first Sylvester matrix, row deletion count,
+///   and column deletion count.
+/// - Returns: A determinant in the matrix domain.
+/// - Limits: Invalid dimensions or deletion counts raise `PolyError`.
+pub fn correct_sign(
+  deg_f : Int,
+  deg_g : Int,
+  s1 : DomainMatrix,
+  rdel : Int,
+  cdel : Int,
+) -> FieldElem raise PolyError {
+  if deg_f < 0 || deg_g < 0 || rdel < 0 || cdel < 0 {
+    raise PolyError::BadExponent
+  }
+  let dim = deg_f + deg_g
+  if s1.rows != dim || s1.cols != dim || rdel > deg_f || rdel > deg_g {
+    raise PolyError::DomainMismatch
+  }
+  let row_ids : Array[Int] = []
+  for i in 0..<(deg_g - rdel) {
+    row_ids.push(i)
+  }
+  for i in deg_g..<(dim - rdel) {
+    row_ids.push(i)
+  }
+  let row_count = row_ids.length()
+  if cdel == 0 {
+    let col_ids : Array[Int] = []
+    for i in 0..<row_count {
+      col_ids.push(i)
+    }
+    return s1.extract(row_ids, col_ids).det()
+  }
+  if row_count == 0 {
+    raise PolyError::DomainMismatch
+  }
+  let replacement_col = row_count + cdel - 1
+  if replacement_col >= s1.cols {
+    raise PolyError::DomainMismatch
+  }
+  let col_ids : Array[Int] = []
+  for i in 0..<(row_count - 1) {
+    col_ids.push(i)
+  }
+  col_ids.push(replacement_col)
+  s1.extract(row_ids, col_ids).det()
+}
+
+///|
+/// Create the small matrix used by Van Vleck-style subresultant steps.
+///
+/// - Does: Mirrors SymPy `create_ma` by stacking right rotations of `row1`
+///   followed by `row2`.
+/// - Input: Dividend/divisor degrees, two coefficient rows, column count, and
+///   optional domain.
+/// - Returns: A `DomainMatrix`.
+/// - Limits: Reversed degree order or row/column mismatches raise `PolyError`.
+pub fn create_ma(
+  deg_f : Int,
+  deg_g : Int,
+  row1 : Array[FieldElem],
+  row2 : Array[FieldElem],
+  col_num : Int,
+  domain? : Domain = Domain::ZZ,
+) -> DomainMatrix raise PolyError {
+  if col_num < 0 {
+    raise PolyError::BadExponent
+  }
+  if deg_g - deg_f >= 1 || row1.length() != col_num || row2.length() != col_num {
+    raise PolyError::DomainMismatch
+  }
+  let row_count = deg_f - deg_g + 2
+  if row_count < 0 {
+    raise PolyError::DomainMismatch
+  }
+  let rows = subres_matrix_new(row_count, col_num, domain)
+  for i in 0..<(deg_f - deg_g + 1) {
+    rows.set(i, subres_rotate_right(row1, i))
+  }
+  rows.set(row_count - 1, row2.copy())
+  DomainMatrix::from_list(rows, domain)
 }
 
 ///|

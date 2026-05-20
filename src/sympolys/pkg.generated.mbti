@@ -81,7 +81,11 @@ pub fn construct_domain(Array[@symcore.Expr], domain? : Domain, composite? : Boo
 
 pub fn content(Poly) -> @symnum.BigRational raise PolyError
 
+pub fn correct_sign(Int, Int, DomainMatrix, Int, Int) -> FieldElem raise PolyError
+
 pub fn count_roots(Poly, inf? : @symnum.BigRational, sup? : @symnum.BigRational) -> Int raise PolyError
+
+pub fn create_ma(Int, Int, Array[FieldElem], Array[FieldElem], Int, domain? : Domain) -> DomainMatrix raise PolyError
 
 pub fn csolve_prime(Array[Int], Int, e? : Int) -> Array[Int] raise PolyError
 

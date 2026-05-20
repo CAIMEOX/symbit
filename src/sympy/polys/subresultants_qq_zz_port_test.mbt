@@ -1,4 +1,15 @@
 ///|
+fn subres_port_fe_row(
+  values : Array[Int],
+) -> Array[@sympolys.FieldElem] raise @sympolys.PolyError {
+  let row : Array[@sympolys.FieldElem] = []
+  for value in values {
+    row.push(@sympolys.fe_from_int(value, @sympolys.Domain::ZZ))
+  }
+  row
+}
+
+///|
 test "subresultants_qq_zz: res parity" {
   let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
@@ -125,6 +136,29 @@ test "subresultants_qq_zz: matrix helper parity" {
   assert_eq(
     @sympolys.bezout(p, q, kind="prs").to_matrix_string(),
     bezout_qq_zz(p.to_expr(), q.to_expr(), x="x", kind="prs"),
+  )
+  let f = b.from_expr(
+    (x ^ @symcore.int(3)) - @symcore.int(2) * x + @symcore.int(1),
+  )
+  let g = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
+  let s1 = @sympolys.sylvester(f, g)
+  assert_eq(
+    @sympolys.correct_sign(3, 2, s1, 1, 0).to_string(),
+    correct_sign_qq_zz(f.to_expr(), g.to_expr(), x="x", rdel=1, cdel=0),
+  )
+  assert_eq(
+    @sympolys.correct_sign(3, 2, s1, 1, 1).to_string(),
+    correct_sign_qq_zz(f.to_expr(), g.to_expr(), x="x", rdel=1, cdel=1),
+  )
+  assert_eq(
+    @sympolys.create_ma(
+      4,
+      2,
+      subres_port_fe_row([1, 2, 3, 4, 5, 6]),
+      subres_port_fe_row([6, 5, 4, 3, 2, 1]),
+      6,
+    ).to_matrix_string(),
+    create_ma_qq_zz(4, 2, [1, 2, 3, 4, 5, 6], [6, 5, 4, 3, 2, 1], 6),
   )
 }
 
