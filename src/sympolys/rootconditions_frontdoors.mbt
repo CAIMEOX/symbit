@@ -17,6 +17,231 @@ fn rootcond_coeff_domain(domain : Domain) -> Domain raise PolyError {
 }
 
 ///|
+fn rootcond_dup_domain(domain : Domain) -> Domain raise PolyError {
+  match domain {
+    Domain::CC | Domain::ZZ_I | Domain::QQ_I => raise PolyError::DomainMismatch
+    _ => domain
+  }
+}
+
+///|
+fn rootcond_dup_neg_one(domain : Domain) -> FieldElem raise PolyError {
+  fe_neg(fe_from_int(1, domain))
+}
+
+///|
+fn rootcond_dup_array_exact_quotient(
+  coeffs : Array[FieldElem],
+  denominator : FieldElem,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let out : Array[FieldElem] = Array::new()
+  for coeff in coeffs {
+    out.push(fe_exquo_ground(coeff, denominator, domain))
+  }
+  dup_strip(out)
+}
+
+///|
+fn rootcond_dup_routh_hurwitz_fraction_free(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let mut p = dup_strip(coeffs)
+  if p.is_empty() {
+    raise PolyError::NonPolynomial
+  }
+  if p.length() == 1 {
+    return []
+  } else if p.length() == 2 {
+    return [fe_mul(p[0], p[1])]
+  } else if p.length() == 3 {
+    return [fe_mul(p[0], p[1]), fe_mul(p[0], p[2])]
+  }
+
+  let leading = p[0]
+  let trailing = p[p.length() - 1]
+  let monic = fe_is_one(leading)
+  let p1s : Array[FieldElem] = [p[1]]
+  while p.length() > 3 {
+    let qs : Array[FieldElem] = Array::new()
+    for i in 1..<p.length() {
+      qs.push(fe_mul(p[1], p[i]))
+    }
+    let mut i = 1
+    while i < qs.length() - 1 {
+      qs[i] = fe_sub(qs[i], fe_mul(p[i + 2], p[0]))
+      i += 2
+    }
+    p = qs
+    let mut p1 = p[1]
+    if fe_is_zero(p1) {
+      return [rootcond_dup_neg_one(domain)]
+    }
+    if p1s.length() >= 2 {
+      p1 = fe_exquo_ground(p1, p1s[p1s.length() - 2], domain)
+    }
+    if p1s.length() >= 3 {
+      let divisor = p1s[p1s.length() - 3]
+      p1 = fe_exquo_ground(p1, divisor, domain)
+      p1 = fe_exquo_ground(p1, divisor, domain)
+      p = rootcond_dup_array_exact_quotient(p, divisor, domain)
+      p = rootcond_dup_array_exact_quotient(p, divisor, domain)
+    }
+    p1s.push(p1)
+  }
+  if !monic {
+    let mut i = 0
+    while i < p1s.length() {
+      p1s[i] = fe_mul(p1s[i], leading)
+      i += 2
+    }
+  }
+  p1s.push(fe_mul(leading, trailing))
+  p1s
+}
+
+///|
+fn rootcond_dup_series_trim(poly : Array[FieldElem]) -> Array[FieldElem] {
+  let mut end = poly.length()
+  while end > 0 && fe_is_zero(poly[end - 1]) {
+    end -= 1
+  }
+  Array::makei(end, i => poly[i])
+}
+
+///|
+fn rootcond_dup_series_add(
+  lhs : Array[FieldElem],
+  rhs : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if lhs.is_empty() {
+    return rhs
+  }
+  if rhs.is_empty() {
+    return lhs
+  }
+  let len = if lhs.length() > rhs.length() {
+    lhs.length()
+  } else {
+    rhs.length()
+  }
+  let zero = fe_from_int(0, domain)
+  let out = Array::makei(len, _ => zero)
+  for i in 0..<len {
+    let a = if i < lhs.length() { lhs[i] } else { zero }
+    let b = if i < rhs.length() { rhs[i] } else { zero }
+    out[i] = fe_add(a, b)
+  }
+  rootcond_dup_series_trim(out)
+}
+
+///|
+fn rootcond_dup_series_mul(
+  lhs : Array[FieldElem],
+  rhs : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if lhs.is_empty() || rhs.is_empty() {
+    return []
+  }
+  let zero = fe_from_int(0, domain)
+  let out = Array::makei(lhs.length() + rhs.length() - 1, _ => zero)
+  for i in 0..<lhs.length() {
+    for j in 0..<rhs.length() {
+      out[i + j] = fe_add(out[i + j], fe_mul(lhs[i], rhs[j]))
+    }
+  }
+  rootcond_dup_series_trim(out)
+}
+
+///|
+fn rootcond_dup_series_scale(
+  poly : Array[FieldElem],
+  scalar : FieldElem,
+  _domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if poly.is_empty() || fe_is_zero(scalar) {
+    return []
+  }
+  rootcond_dup_series_trim(poly.map(coeff => fe_mul(coeff, scalar)))
+}
+
+///|
+fn rootcond_dup_series_pow(
+  base : Array[FieldElem],
+  exp : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if base.is_empty() {
+    return []
+  }
+  let mut result = [fe_from_int(1, domain)]
+  let mut power = base
+  let mut n = exp
+  while n > 0 {
+    if n % 2 == 1 {
+      result = rootcond_dup_series_mul(result, power, domain)
+    }
+    n = n / 2
+    if n > 0 {
+      power = rootcond_dup_series_mul(power, power, domain)
+    }
+  }
+  result
+}
+
+///|
+fn rootcond_dup_schur_transform_desc(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let p = dup_strip(coeffs)
+  if p.is_empty() {
+    raise PolyError::NonPolynomial
+  }
+  let degree = p.length() - 1
+  let one = fe_from_int(1, domain)
+  let neg_one = fe_neg(one)
+  let plus = [one, one]
+  let minus = [one, neg_one]
+  let mut acc : Array[FieldElem] = []
+  for i in 0..<p.length() {
+    let left = rootcond_dup_series_pow(plus, degree - i, domain)
+    let right = rootcond_dup_series_pow(minus, i, domain)
+    let term = rootcond_dup_series_scale(
+      rootcond_dup_series_mul(left, right, domain),
+      p[i],
+      domain,
+    )
+    acc = rootcond_dup_series_add(acc, term, domain)
+  }
+  let trimmed = rootcond_dup_series_trim(acc)
+  let desc = Array::makei(trimmed.length(), i => {
+    trimmed[trimmed.length() - 1 - i]
+  })
+  dup_strip(desc)
+}
+
+///|
+fn rootcond_dup_eval_at_minus_one(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  let p = dup_strip(coeffs)
+  if p.is_empty() {
+    raise PolyError::NonPolynomial
+  }
+  let neg_one = rootcond_dup_neg_one(domain)
+  let mut acc = fe_from_int(0, domain)
+  for coeff in p {
+    acc = fe_add(fe_mul(acc, neg_one), coeff)
+  }
+  acc
+}
+
+///|
 fn rootcond_coeff_zero(gens : Array[String], domain : Domain) -> Poly {
   Poly::zero(gens, domain)
 }
@@ -329,6 +554,50 @@ fn rootcond_eval_at_minus_one(coeffs : Array[Poly]) -> Poly raise PolyError {
     acc = acc.mul(neg_one).add(coeff)
   }
   acc
+}
+
+///|
+/// Compute dense Routh-Hurwitz stability conditions.
+///
+/// - Does: Returns the fraction-free Routh-Hurwitz condition list for a
+///   univariate dense polynomial.
+/// - Input: Dense coefficients in descending degree order plus a coefficient
+///   domain.
+/// - Returns: Dense-domain coefficients whose positivity gives the Hurwitz
+///   criterion.
+/// - Limits: Raises on zero input and complex coefficient domains; expression
+///   domains use the available `FieldElem` representation only.
+pub fn dup_routh_hurwitz(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let checked_domain = rootcond_dup_domain(domain)
+  rootcond_dup_routh_hurwitz_fraction_free(coeffs, checked_domain)
+}
+
+///|
+/// Compute dense Schur stability conditions.
+///
+/// - Does: Applies the Cayley transform `z = (1 + s)/(1 - s)` to the dense
+///   polynomial and then uses `dup_routh_hurwitz`.
+/// - Input: Dense coefficients in descending degree order plus a coefficient
+///   domain.
+/// - Returns: Dense-domain coefficients whose positivity gives the Schur
+///   criterion.
+/// - Limits: Returns `[-1]` when `-1` is a root, matching SymPy's transform
+///   guard; complex coefficient domains are rejected.
+pub fn dup_schur_conditions(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let checked_domain = rootcond_dup_domain(domain)
+  if fe_is_zero(rootcond_dup_eval_at_minus_one(coeffs, checked_domain)) {
+    return [rootcond_dup_neg_one(checked_domain)]
+  }
+  rootcond_dup_routh_hurwitz_fraction_free(
+    rootcond_dup_schur_transform_desc(coeffs, checked_domain),
+    checked_domain,
+  )
 }
 
 ///|

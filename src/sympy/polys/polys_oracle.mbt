@@ -6557,6 +6557,34 @@ fn dense_data_to_pyobj_domain(
 }
 
 ///|
+pub fn dup_routh_hurwitz(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must(
+    "sympy.polys.rootconditions.dup_routh_hurwitz", args,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_schur_conditions(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must(
+    "sympy.polys.rootconditions.dup_schur_conditions", args,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_add_term(
   f : Array[@symnum.BigRational],
   c : @symnum.BigRational,

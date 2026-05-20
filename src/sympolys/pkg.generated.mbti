@@ -731,9 +731,13 @@ pub fn dup_root_lower_bound(Array[FieldElem], Domain) -> FieldElem raise PolyErr
 
 pub fn dup_root_upper_bound(Array[FieldElem], Domain) -> FieldElem raise PolyError
 
+pub fn dup_routh_hurwitz(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
+
 pub fn dup_rr_div(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem]) raise PolyError
 
 pub fn dup_rshift(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_schur_conditions(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_series_mul(Array[FieldElem], Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 
