@@ -433,6 +433,32 @@ test "polytools: constructor gff and stability frontdoor parity with SymPy" {
     ),
     remove_spaces(apart(apart_irreducible, gen="x")),
   )
+  let pf_builder = @sympolys.PolyBuilder::new(["x"], @sympolys.Domain::QQ)
+  let pf_p = pf_builder.from_expr(int(1))
+  let pf_q = pf_builder.from_expr((x ^ int(2)) - int(1))
+  assert_eq(
+    remove_spaces(
+      sympy_normalize(
+        @symprint.pretty_string(@sympolys.apart_undetermined_coeffs(pf_p, pf_q)),
+      ),
+    ),
+    remove_spaces(
+      apart_undetermined_coeffs(pf_p.to_expr(), pf_q.to_expr(), "x"),
+    ),
+  )
+  assert_eq(
+    remove_spaces(
+      sympy_normalize(
+        @symprint.pretty_string(@sympolys.apart_full_decomposition(pf_p, pf_q)),
+      ),
+    ),
+    remove_spaces(apart_full_decomposition(pf_p.to_expr(), pf_q.to_expr(), "x")),
+  )
+  let pf_terms = @sympolys.apart_list_full_decomposition(pf_p, pf_q)
+  assert_eq(
+    pf_terms.length(),
+    apart_list_full_decomposition_count(pf_p.to_expr(), pf_q.to_expr(), "x"),
+  )
 
   let a = Expr::Symbol("a")
   let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [(a ^ int(2)) - int(3)])

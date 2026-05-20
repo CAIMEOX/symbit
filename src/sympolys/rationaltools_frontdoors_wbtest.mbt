@@ -87,3 +87,37 @@ test "rationaltools frontdoors: apart_list assembles back" {
     ),
   )
 }
+
+///|
+test "rationaltools frontdoors: partfrac helper frontdoors" {
+  let x = Expr::Symbol("x")
+  let builder = PolyBuilder::new(["x"], Domain::QQ)
+  let p = builder.from_expr(int(1))
+  let q = builder.from_expr((x ^ int(2)) - int(1))
+  let undetermined = apart_undetermined_coeffs(p, q)
+  inspect(
+    @symprint.pretty_string(undetermined),
+    content=(
+      #|1/(2*(x - 1)) - 1/(2*(x + 1))
+    ),
+  )
+  inspect(
+    @symprint.pretty_string(apart_full_decomposition(p, q)),
+    content=(
+      #|1/(2*(x - 1)) - 1/(2*(x + 1))
+    ),
+  )
+  let terms = apart_list_full_decomposition(p, q)
+  inspect(terms.length(), content="2")
+  let assembled = assemble_partfrac_list(ApartList::{
+    common: int(1),
+    polynomial: int(0),
+    terms,
+  })
+  inspect(
+    @symprint.pretty_string(assembled),
+    content=(
+      #|(2*x - 2)**-1 - (2*x + 2)**-1
+    ),
+  )
+}

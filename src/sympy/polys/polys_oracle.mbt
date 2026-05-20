@@ -5634,6 +5634,71 @@ pub fn apart(
 }
 
 ///|
+fn partfrac_poly_pair_objects(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gen : String,
+) -> (@py.PyObject, @py.PyObject) raise {
+  let gen_objs = sympy_symbols_from_names([gen])
+  let p_obj = call_sympy_poly(expr_to_sympy(p), gen_objs, "", None)
+  let q_obj = call_sympy_poly(expr_to_sympy(q), gen_objs, "", None)
+  (p_obj, q_obj)
+}
+
+///|
+pub fn apart_undetermined_coeffs(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gen : String,
+) -> String raise {
+  let (p_obj, q_obj) = partfrac_poly_pair_objects(p, q, gen)
+  let res = sympy_call_must("sympy.polys.partfrac.apart_undetermined_coeffs", [
+    OracleArg::PyObj(p_obj),
+    OracleArg::PyObj(q_obj),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn apart_full_decomposition(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gen : String,
+  doit? : Bool = true,
+) -> String raise {
+  let (p_obj, q_obj) = partfrac_poly_pair_objects(p, q, gen)
+  let res = sympy_call_must("sympy.polys.partfrac.apart_full_decomposition", [
+    OracleArg::PyObj(p_obj),
+    OracleArg::PyObj(q_obj),
+  ])
+  if doit {
+    let call = resolve_method_callable(objenum_to_obj(res), "doit")
+    py_str_enum(py_call_noargs(call))
+  } else {
+    py_sympy_enum_str(res)
+  }
+}
+
+///|
+pub fn apart_list_full_decomposition_count(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gen : String,
+) -> Int raise {
+  let (p_obj, q_obj) = partfrac_poly_pair_objects(p, q, gen)
+  let dummygen = sympy_call_must("sympy.utilities.iterables.numbered_symbols", [])
+  let res = sympy_call_must(
+    "sympy.polys.partfrac.apart_list_full_decomposition",
+    [
+      OracleArg::PyObj(p_obj),
+      OracleArg::PyObj(q_obj),
+      OracleArg::PyObj(objenum_to_obj(dummygen)),
+    ],
+  )
+  py_list_to_pyobjects(res).length()
+}
+
+///|
 pub fn sqf_norm(
   expr : @symcore.Expr,
   gens? : Array[String] = [],

@@ -399,6 +399,12 @@ fn apart_infer_gen(expr : Expr, gen : String) -> String raise PolyError {
 }
 
 ///|
+fn apart_poly_pair_expr(p : Poly, q : Poly) -> (Expr, String) raise PolyError {
+  check_univar_compat(p, q)
+  (together_make_fraction(p.to_expr(), q.to_expr()), p.gens[0])
+}
+
+///|
 fn apart_linear_distinct(
   expr : Expr,
   gen : String,
@@ -481,6 +487,52 @@ pub fn apart(
 ) -> Expr raise PolyError {
   let main_gen = apart_infer_gen(expr, gen)
   apart_linear_distinct(expr, main_gen, full)
+}
+
+///|
+/// Compute partial fractions by undetermined coefficients.
+///
+/// - Does: Decomposes a univariate rational function represented by
+///   numerator and denominator polynomials.
+/// - Input: Two compatible univariate `Poly` values.
+/// - Returns: A symbolic `Expr` for the decomposed rational expression.
+/// - Limits: Uses the same current coverage as `apart`: distinct rational
+///   linear denominator factors are decomposed; repeated or nonlinear factors
+///   are returned as the combined rational expression.
+pub fn apart_undetermined_coeffs(p : Poly, q : Poly) -> Expr raise PolyError {
+  let (expr, gen) = apart_poly_pair_expr(p, q)
+  apart_linear_distinct(expr, gen, false)
+}
+
+///|
+/// Compute the full partial-fraction front door for a polynomial pair.
+///
+/// - Does: Applies the partial-fraction front door to `p / q`.
+/// - Input: Two compatible univariate `Poly` values.
+/// - Returns: A symbolic `Expr` equivalent to `p / q`.
+/// - Limits: RootSum/Bronstein objects are not yet fully materialized; when
+///   the current local engine can split rational linear factors, it returns the
+///   explicit decomposed form, otherwise the combined rational expression.
+pub fn apart_full_decomposition(p : Poly, q : Poly) -> Expr raise PolyError {
+  let (expr, gen) = apart_poly_pair_expr(p, q)
+  apart_linear_distinct(expr, gen, false)
+}
+
+///|
+/// Return only the rational terms from full partial fractions.
+///
+/// - Does: Builds a structured decomposition for `p / q` and returns the
+///   proper rational terms.
+/// - Input: Two compatible univariate `Poly` values.
+/// - Returns: An `Array[ApartTerm]`.
+/// - Limits: Uses the typed MoonBit `ApartTerm` representation rather than
+///   SymPy's Python tuple of `Poly` and `Lambda` objects.
+pub fn apart_list_full_decomposition(
+  p : Poly,
+  q : Poly,
+) -> Array[ApartTerm] raise PolyError {
+  let (expr, gen) = apart_poly_pair_expr(p, q)
+  apart_list(expr, gen~, full=false).terms
 }
 
 ///|

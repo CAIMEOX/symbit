@@ -23,7 +23,13 @@ pub fn andre_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
 
 pub fn apart(@symcore.Expr, gen? : String, full? : Bool) -> @symcore.Expr raise PolyError
 
+pub fn apart_full_decomposition(Poly, Poly) -> @symcore.Expr raise PolyError
+
 pub fn apart_list(@symcore.Expr, gen? : String, full? : Bool) -> ApartList raise PolyError
+
+pub fn apart_list_full_decomposition(Poly, Poly) -> Array[ApartTerm] raise PolyError
+
+pub fn apart_undetermined_coeffs(Poly, Poly) -> @symcore.Expr raise PolyError
 
 pub fn assemble_partfrac_list(ApartList) -> @symcore.Expr
 
