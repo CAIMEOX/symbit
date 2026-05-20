@@ -222,3 +222,22 @@ test "densetools wb: eval tail diff eval clear denoms and revert" {
     content="[1,1,1,1]",
   )
 }
+
+///|
+test "densetools wb: series compose and reversion frontdoors" {
+  inspect(
+    dt_wb_dup_repr(
+      dup_series_compose(dt_wb_dup([1, 1, 1]), dt_wb_dup([1, 1]), 3, Domain::ZZ),
+    ),
+    content="[1,3,3]",
+  )
+  let f = [dt_wb_qq(-1, 1), dt_wb_qq(1, 1), dt_wb_qq(0, 1)]
+  inspect(
+    dt_wb_dup_repr(dup_series_reversion(f, 4, Domain::QQ)),
+    content="[2,1,1,0]",
+  )
+  inspect(
+    dt_wb_dup_repr(dup_series_reversion(f, 5, Domain::QQ)),
+    content="[5,2,1,1,0]",
+  )
+}

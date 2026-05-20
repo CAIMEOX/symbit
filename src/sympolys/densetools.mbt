@@ -1206,3 +1206,173 @@ pub fn dmp_revert(
   }
   dmp_from_coeffs(dup_revert(dmp_to_coeffs(f), n, domain))
 }
+
+///|
+fn densetools_dup_series_compose_rec(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  n : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if f.length() == 1 {
+    return [f[0]]
+  }
+  let m = f.length() / 2
+  let split = f.length() - m
+  let f_high = f[:split].to_owned()
+  let f_low = f[split:].to_owned()
+  let comp0 = densetools_dup_series_compose_rec(f_low, g, n, domain)
+  let comp1 = densetools_dup_series_compose_rec(f_high, g, n, domain)
+  let g_power = dup_series_pow(g, m, n, domain)
+  let high_term = dup_series_mul(comp1, g_power, n, domain)
+  dup_truncate(dup_add(high_term, comp0, domain), n, domain)
+}
+
+///|
+/// Compose two univariate series modulo `x**n`.
+///
+/// - Does: Computes `f(g(x)) mod x**n` using SymPy's divide-and-conquer
+///   composition helper.
+/// - Input: Dense coefficient arrays `f`, `g`, precision `n`, and a coefficient
+///   `domain`.
+/// - Returns: A dense coefficient array truncated to precision `n`.
+/// - Limits: Uses the current dense series multiplication/power helpers.
+pub fn dup_series_compose(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  n : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let ff = dup_truncate(f, n, domain)
+  let gg = dup_truncate(g, n, domain)
+  if gg.length() <= 1 {
+    let point = if gg.is_empty() { fe_from_int(0, domain) } else { gg[0] }
+    return dup_strip([dup_eval(ff, point, domain)])
+  }
+  if ff.is_empty() {
+    return []
+  }
+  densetools_dup_series_compose_rec(ff, gg, n, domain)
+}
+
+///|
+fn densetools_dup_series_reversion_small(
+  f : Array[FieldElem],
+  n : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if n < 1 || n > 4 {
+    raise PolyError::BadExponent
+  }
+  let truncated = dup_truncate(f, n, domain)
+  let zero = fe_from_int(0, domain)
+  let padded : Array[FieldElem] = Array::make(4 - truncated.length(), zero)
+  for c in truncated {
+    padded.push(c)
+  }
+  let a = padded[0]
+  let b = padded[1]
+  let c = padded[2]
+  let cinv = fe_inv(c)
+  let out : Array[FieldElem] = Array::make(n, zero)
+  if n >= 2 {
+    out.set(n - 2, cinv)
+  }
+  if n >= 3 {
+    out.set(n - 3, fe_neg(fe_mul(b, fe_pow(cinv, 3))))
+  }
+  if n >= 4 {
+    let two_b2 = fe_mul(fe_from_int(2, domain), fe_mul(b, b))
+    let ac = fe_mul(a, c)
+    out.set(n - 4, fe_mul(fe_sub(two_b2, ac), fe_pow(cinv, 5)))
+  }
+  dup_strip(out)
+}
+
+///|
+fn densetools_ceil_sqrt(n : Int) -> Int {
+  if n <= 0 {
+    return 0
+  }
+  let mut r = 0
+  while r * r < n {
+    r = r + 1
+  }
+  r
+}
+
+///|
+fn densetools_div_ground_int(
+  value : FieldElem,
+  divisor : Int,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  fe_mul(value, fe_inv(fe_from_int(divisor, domain)))
+}
+
+///|
+/// Compute the compositional inverse of a univariate series.
+///
+/// - Does: Computes `g` such that `f(g(x)) = x mod x**n`, following SymPy's
+///   Lagrange inversion path.
+/// - Input: Dense coefficient array `f`, precision `n`, and a field `domain`.
+/// - Returns: A dense coefficient array truncated to precision `n`.
+/// - Limits: Requires zero constant term and an invertible linear coefficient.
+pub fn dup_series_reversion(
+  f : Array[FieldElem],
+  n : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if f.is_empty() {
+    return []
+  }
+  if !fe_is_zero(f[f.length() - 1]) {
+    raise PolyError::BadExponent
+  }
+  if n <= 4 {
+    return densetools_dup_series_reversion_small(f, n, domain)
+  }
+  let f1 = dup_rshift(f, 1, domain)
+  let f1_inv = dup_revert(f1, n, domain)
+  let h = dup_truncate(f1_inv, n, domain)
+  let m = densetools_ceil_sqrt(n - 1)
+  let powers : Array[Array[FieldElem]] = Array::new()
+  powers.push(h)
+  let mut pidx = 1
+  while pidx < m {
+    let h_prev = powers[powers.length() - 1]
+    powers.push(dup_series_mul(h_prev, h, n, domain))
+    pidx = pidx + 1
+  }
+  let zero = fe_from_int(0, domain)
+  let out : Array[FieldElem] = Array::make(n, zero)
+  let mut i = 1
+  while i < m {
+    let coeff = dup_nth(powers[i - 1], i - 1)
+    out.set(n - i - 1, densetools_div_ground_int(coeff, i, domain))
+    i = i + 1
+  }
+  let mut t = powers[m - 1]
+  i = m
+  while i < n {
+    let coeff = dup_nth(t, i - 1)
+    out.set(n - i - 1, densetools_div_ground_int(coeff, i, domain))
+    let mut j = 1
+    while j < m {
+      if i + j >= n {
+        break
+      }
+      let mut sum = zero
+      for k in 0..<(i + j) {
+        let c1 = dup_nth(t, k)
+        let c2 = dup_nth(powers[j - 1], i + j - k - 1)
+        sum = fe_add(sum, fe_mul(c1, c2))
+      }
+      out.set(n - i - j - 1, densetools_div_ground_int(sum, i + j, domain))
+      j = j + 1
+    }
+    t = dup_series_mul(t, powers[m - 1], n, domain)
+    i = i + m
+  }
+  dup_strip(out)
+}

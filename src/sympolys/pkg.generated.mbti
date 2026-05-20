@@ -861,9 +861,13 @@ pub fn dup_scale(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] raise 
 
 pub fn dup_schur_conditions(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
+pub fn dup_series_compose(Array[FieldElem], Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
+
 pub fn dup_series_mul(Array[FieldElem], Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_series_pow(Array[FieldElem], Int, Int, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_series_reversion(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_series_sqr(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 

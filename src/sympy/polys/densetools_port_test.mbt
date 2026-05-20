@@ -279,3 +279,23 @@ test "densetools eval tail diff eval clear denoms revert oracle parity" {
     dmp_revert(dense_data_of(inv_dmp), 4, 0, domain="QQ"),
   )
 }
+
+///|
+test "densetools series compose reversion oracle parity" {
+  let f = [fezz(1), fezz(1), fezz(1)]
+  let g = [fezz(1), fezz(1)]
+  assert_eq(
+    dup_repr(@sympolys.dup_series_compose(f, g, 3, Domain::ZZ)),
+    dup_series_compose(dup_to_rats(f), dup_to_rats(g), 3, domain="ZZ"),
+  )
+
+  let reversion = [feqq(-1, 1), feqq(1, 1), feqq(0, 1)]
+  assert_eq(
+    dup_repr(@sympolys.dup_series_reversion(reversion, 4, Domain::QQ)),
+    dup_series_reversion(dup_to_rats(reversion), 4, domain="QQ"),
+  )
+  assert_eq(
+    dup_repr(@sympolys.dup_series_reversion(reversion, 5, Domain::QQ)),
+    dup_series_reversion(dup_to_rats(reversion), 5, domain="QQ"),
+  )
+}
