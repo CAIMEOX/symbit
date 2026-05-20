@@ -36,6 +36,72 @@ fn nf_reps_norm(reps : Array[Array[@symnum.BigRational]]) -> String {
 }
 
 ///|
+fn nf_factor_norm(items : Array[(Int, Int)]) -> String {
+  let parts : Array[String] = []
+  for item in items {
+    parts.push("(\{item.0},\{item.1})")
+  }
+  let body = parts.join(",")
+  "[\{body}]"
+}
+
+///|
+fn nf_factor_pair_norm(item : (Array[(Int, Int)], Array[(Int, Int)])) -> String {
+  "\{nf_factor_norm(item.0)}||\{nf_factor_norm(item.1)}"
+}
+
+///|
+fn nf_num_denom_norm(value : @symnum.BigRational) -> String {
+  let (num, den) = @sympolys.get_num_denom(value)
+  "(\{num},\{den})"
+}
+
+///|
+fn nf_coeff_search_norm(values : Array[Array[Int]]) -> String {
+  let rows : Array[String] = []
+  for row in values {
+    let body = row.map(v => v.to_string()).join(",")
+    rows.push("[\{body}]")
+  }
+  let body = rows.join(",")
+  "[\{body}]"
+}
+
+///|
+test "numberfields: utility frontdoor parity" {
+  let half = @symnum.BigRational::from_ints(1, 2) catch { _ => fail("half") }
+  let minus_three_halves = @symnum.BigRational::from_ints(-3, 2) catch {
+    _ => fail("minus-three-halves")
+  }
+  let two = @symnum.BigRational::from_int(2)
+
+  assert_eq(@sympolys.is_rat(half), numberfield_is_rat("1/2"))
+  assert_eq(@sympolys.is_int(half), numberfield_is_int("1/2"))
+  assert_eq(@sympolys.is_int(two), numberfield_is_int("2"))
+  assert_eq(
+    nf_num_denom_norm(minus_three_halves),
+    numberfield_get_num_denom("-3/2"),
+  )
+
+  for a in [-432, -4, 5, 8, 12] {
+    let ours = nf_factor_pair_norm(
+      @sympolys.extract_fundamental_discriminant(a),
+    )
+    let oracle = numberfield_extract_fundamental_discriminant(a)
+    assert_eq(ours, oracle)
+  }
+
+  assert_eq(
+    nf_coeff_search_norm(@sympolys.coeff_search(2, 1, count=13)),
+    numberfield_coeff_search(2, 1, 13),
+  )
+  assert_eq(
+    nf_coeff_search_norm(@sympolys.coeff_search(3, 1, count=8)),
+    numberfield_coeff_search(3, 1, 8),
+  )
+}
+
+///|
 test "numberfields: minpoly parity for rationals and radicals" {
   let q = @symcore.rational_from_ints(3, 2)
   let q_mp = @sympolys.minpoly(q, gen="x")

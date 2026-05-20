@@ -17,6 +17,16 @@ pub struct Poly {
 }
 
 ///|
+/// Alias for a polynomial with explicit generators.
+///
+/// - Does: Mirrors SymPy's `PurePoly` public name.
+/// - Input: Same representation as `Poly`.
+/// - Returns: A `Poly` value.
+/// - Limits: Symbit does not split `Poly` and `PurePoly` into separate runtime
+///   classes.
+pub type PurePoly = Poly
+
+///|
 /// Build the zero polynomial over a generator list and coefficient domain.
 ///
 /// - Does: Creates the additive identity polynomial.

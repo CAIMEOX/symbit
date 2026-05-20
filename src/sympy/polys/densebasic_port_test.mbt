@@ -660,6 +660,40 @@ test "densebasic: dup_normal/dmp_normal" {
 }
 
 ///|
+test "densebasic: dup_from_list and dup_truncate oracle parity" {
+  let raw : Array[FieldElem] = [
+    fez(0),
+    fez(0),
+    fez(0),
+    fez(2),
+    fez(1),
+    fez(0),
+    fez(0),
+  ]
+  let ours_from = @sympolys.dup_from_list(raw, Domain::ZZ)
+  let oracle_from = dup_from_list([
+    br_int(0),
+    br_int(0),
+    br_int(0),
+    br_int(2),
+    br_int(1),
+    br_int(0),
+    br_int(0),
+  ])
+  assert_eq(dup_repr(ours_from), oracle_from)
+  let poly = @sympolys.dup_from_list(
+    [fez(1), fez(2), fez(3), fez(4), fez(5)],
+    Domain::ZZ,
+  )
+  let ours_trunc = @sympolys.dup_truncate(poly, 3, Domain::ZZ)
+  let oracle_trunc = dup_truncate(
+    [br_int(1), br_int(2), br_int(3), br_int(4), br_int(5)],
+    3,
+  )
+  assert_eq(dup_repr(ours_trunc), oracle_trunc)
+}
+
+///|
 test "densebasic: dup_convert/dmp_convert" {
   let f : Array[FieldElem] = [fez(1), fez(2), fez(0), fez(3)]
   let c1 = @sympolys.dup_convert(f, Domain::ZZ, Domain::ZZ)

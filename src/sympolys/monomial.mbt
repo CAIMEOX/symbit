@@ -246,7 +246,59 @@ pub fn monomial_count(vars : Int, degree : Int) -> Int {
 }
 
 ///|
-fn total_degree(m : Monomial) -> Int {
+/// Divide monomials component-wise without divisibility checking.
+///
+/// - Does: Subtracts exponent vectors, allowing negative exponents.
+/// - Input: Two `Monomial` values with the same arity.
+/// - Returns: A `Monomial`.
+/// - Limits: Raises `PolyError::DomainMismatch` for arity mismatch.
+pub fn monomial_ldiv(a : Monomial, b : Monomial) -> Monomial raise PolyError {
+  if a.exps.length() != b.exps.length() {
+    raise PolyError::DomainMismatch
+  }
+  let len = a.exps.length()
+  Monomial::{ exps: Array::makei(len, i => a.exps[i] - b.exps[i]) }
+}
+
+///|
+/// Return the total degree of a monomial.
+///
+/// - Does: Sums the exponent vector.
+/// - Input: One `Monomial`.
+/// - Returns: An `Int`.
+/// - Limits: Negative exponents are included literally in the sum.
+pub fn monomial_deg(m : Monomial) -> Int {
+  monomial_total_degree(m)
+}
+
+///|
+/// Divide two polynomial terms over a domain.
+///
+/// - Does: Divides monomials and coefficients when exact division is possible.
+/// - Input: `(Monomial, FieldElem)` numerator and denominator terms plus a
+///   coefficient domain.
+/// - Returns: `Some(term)` on success or `None` when the term is not divisible.
+/// - Limits: Raises for zero divisor coefficients and arity mismatches.
+pub fn term_div(
+  a : (Monomial, FieldElem),
+  b : (Monomial, FieldElem),
+  domain : Domain,
+) -> (Monomial, FieldElem)? raise PolyError {
+  match monomial_div(a.0, b.0) {
+    None => None
+    Some(monom) => {
+      let (ok, coeff) = fe_divides(a.1, b.1, domain)
+      if ok {
+        Some((monom, coeff))
+      } else {
+        None
+      }
+    }
+  }
+}
+
+///|
+fn monomial_total_degree(m : Monomial) -> Int {
   m.exps.fold(init=0, (acc, v) => acc + v)
 }
 
@@ -395,6 +447,21 @@ pub fn compare_exps_igrlex(
 }
 
 ///|
+/// Compare exponent arrays in inverse graded reverse lexicographic order.
+///
+/// - Does: Flips the sign of the grevlex comparator.
+/// - Input: Two exponent arrays.
+/// - Returns: An ordering `Int`.
+/// - Limits: Raises `PolyError::DomainMismatch` for length mismatch.
+pub fn compare_exps_igrevlex(
+  a : Array[Int],
+  b : Array[Int],
+) -> Int raise PolyError {
+  let c = compare_exps_grevlex(a, b)
+  -c
+}
+
+///|
 /// Compare monomials under one term order.
 ///
 /// - Does: Dispatches to the selected monomial-order comparator.
@@ -409,20 +476,37 @@ pub fn compare_monomial_order(
   match order {
     TermOrder::Lex => compare_monomial_lex(a, b)
     TermOrder::Grlex => {
-      let da = total_degree(a)
-      let db = total_degree(b)
+      let da = monomial_total_degree(a)
+      let db = monomial_total_degree(b)
       if da != db {
         return cmp_int(da, db)
       }
       compare_monomial_lex(a, b)
     }
     TermOrder::Grevlex => {
-      let da = total_degree(a)
-      let db = total_degree(b)
+      let da = monomial_total_degree(a)
+      let db = monomial_total_degree(b)
       if da != db {
         return cmp_int(da, db)
       }
       compare_monomial_grevlex(a, b)
+    }
+    TermOrder::Ilex => -compare_monomial_lex(a, b)
+    TermOrder::Igrlex => {
+      let da = monomial_total_degree(a)
+      let db = monomial_total_degree(b)
+      if da != db {
+        return -cmp_int(da, db)
+      }
+      -compare_monomial_lex(a, b)
+    }
+    TermOrder::Igrevlex => {
+      let da = monomial_total_degree(a)
+      let db = monomial_total_degree(b)
+      if da != db {
+        return -cmp_int(da, db)
+      }
+      -compare_monomial_grevlex(a, b)
     }
   }
 }

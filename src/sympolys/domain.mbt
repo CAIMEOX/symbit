@@ -49,6 +49,9 @@ pub(all) enum TermOrder {
   Lex
   Grlex
   Grevlex
+  Ilex
+  Igrlex
+  Igrevlex
 } derive(Eq)
 
 ///|

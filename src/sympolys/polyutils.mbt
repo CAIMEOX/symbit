@@ -394,6 +394,36 @@ fn dict_repr(entries : Array[(Array[Int], String)]) -> String {
 }
 
 ///|
+fn poly_dict_repr(poly : Poly) -> String {
+  let entries : Array[(Array[Int], String)] = Array::new()
+  for m, c in poly.coeffs {
+    entries.push((m.exps.copy(), c.to_string()))
+  }
+  entries.sort_by((a, b) => compare_int_lists(a.0, b.0))
+  dict_repr(entries)
+}
+
+///|
+fn gens_repr(gens : Array[String]) -> String {
+  let gens_str = gens.map(n => "\"\{n}\"").join(",")
+  "[\{gens_str}]"
+}
+
+///|
+fn infer_gens_exprs_local(exprs : Array[Expr]) -> Array[String] {
+  let gens : Array[String] = []
+  for expr in exprs {
+    for name in infer_gens_expr_local(expr) {
+      if !gens.contains(name) {
+        gens.push(name)
+      }
+    }
+  }
+  gens.sort()
+  gens
+}
+
+///|
 /// Convert an expression into polynomial dict form under chosen generators.
 
 ///|
@@ -416,12 +446,61 @@ pub fn dict_from_expr(
     gens
   }
   let poly = Poly::from_expr_defaults(expr, gens=gens_list)
-  let entries : Array[(Array[Int], String)] = Array::new()
-  for m, c in poly.coeffs {
-    entries.push((m.exps.copy(), c.to_string()))
+  "\{poly_dict_repr(poly)}||\{gens_repr(gens_list)}"
+}
+
+///|
+/// Convert expressions into polynomial dict forms under shared generators.
+///
+/// - Does: Applies `dict_from_expr` to each expression with one common generator
+///   order.
+/// - Input: An array of expressions and an optional generator name list.
+/// - Returns: A compact string representation of `(reps, gens)`.
+/// - Limits: Uses the existing Symbit polynomial parser, so unsupported
+///   non-polynomial terms raise `PolyError`.
+pub fn parallel_dict_from_expr(
+  exprs : Array[Expr],
+  gens? : Array[String] = [],
+) -> String raise PolyError {
+  let gens_list = if gens.is_empty() {
+    infer_gens_exprs_local(exprs)
+  } else {
+    gens
   }
-  entries.sort_by((a, b) => compare_int_lists(a.0, b.0))
-  let dict_str = dict_repr(entries)
-  let gens_str = gens_list.map(n => "\"\{n}\"").join(",")
-  "\{dict_str}||[\{gens_str}]"
+  let reps : Array[String] = []
+  for expr in exprs {
+    let poly = Poly::from_expr_defaults(expr, gens=gens_list)
+    reps.push(poly_dict_repr(poly))
+  }
+  let reps_str = reps.join(",")
+  "[\{reps_str}]||\{gens_repr(gens_list)}"
+}
+
+///|
+/// Convert a multinomial dictionary back into an expression.
+///
+/// - Does: Multiplies each coefficient by `gens[i] ** monom[i]` and sums terms.
+/// - Input: A map from `Monomial` to expression coefficients plus generator names.
+/// - Returns: An expression.
+/// - Limits: Raises `PolyError::DomainMismatch` when monomial arity exceeds the
+///   generator list.
+pub fn expr_from_dict(
+  rep : Map[Monomial, Expr],
+  gens : Array[String],
+) -> Expr raise PolyError {
+  let terms : Array[Expr] = []
+  for monom, coeff in rep {
+    if monom.exps.length() > gens.length() {
+      raise PolyError::DomainMismatch
+    }
+    let mut term = coeff
+    for i in 0..<monom.exps.length() {
+      let exp = monom.exps[i]
+      if exp != 0 {
+        term = term * (Expr::Symbol(gens[i]) ^ int(exp))
+      }
+    }
+    terms.push(term)
+  }
+  expr_add_all(terms)
 }

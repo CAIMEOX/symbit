@@ -22,6 +22,217 @@ priv struct AffineRadical {
 ///   errors instead of fabricating approximate answers.
 
 ///|
+/// Test whether a rational value is acceptable as a rational coefficient.
+///
+/// - Does: Reports whether the provided exact rational is rational-valued.
+/// - Input: A `BigRational`.
+/// - Returns: Always `true` for this MoonBit exact-rational front door.
+/// - Limits: Python object-type acceptance is not modeled.
+pub fn is_rat(_c : @symnum.BigRational) -> Bool {
+  true
+}
+
+///|
+/// Test whether a rational value is integral.
+///
+/// - Does: Checks whether the denominator is one.
+/// - Input: A `BigRational`.
+/// - Returns: `true` for integral rationals.
+/// - Limits: Python object-type acceptance is not modeled.
+pub fn is_int(c : @symnum.BigRational) -> Bool {
+  c.is_integral()
+}
+
+///|
+/// Return numerator and denominator of an exact rational.
+///
+/// - Does: Extracts the normalized numerator and denominator.
+/// - Input: A `BigRational`.
+/// - Returns: `(numerator, denominator)` as `BigInt` values.
+/// - Limits: The input must already be an exact rational.
+pub fn get_num_denom(c : @symnum.BigRational) -> (BigInt, BigInt) {
+  (c.numerator(), c.denominator())
+}
+
+///|
+/// Extract fundamental discriminant factors.
+///
+/// - Does: Writes `a = d*f^2` and returns prime-factor lists for `d` and `f`.
+/// - Input: An integer congruent to `0` or `1` modulo `4`.
+/// - Returns: `(D, F)` as sorted `(prime, exponent)` arrays.
+/// - Limits: Raises `PolyError::DomainMismatch` when `a` is not `0` or `1`
+///   modulo `4`.
+pub fn extract_fundamental_discriminant(
+  a : Int,
+) -> (Array[(Int, Int)], Array[(Int, Int)]) raise PolyError {
+  let residue = nf_pos_mod(a, 4)
+  if residue != 0 && residue != 1 {
+    raise PolyError::DomainMismatch
+  }
+  if a == 0 {
+    return ([], [(0, 1)])
+  }
+  if a == 1 {
+    return ([], [])
+  }
+  let factors = nf_factorint(a)
+  let d : Array[(Int, Int)] = []
+  let f : Array[(Int, Int)] = []
+  let mut num_3_mod_4 = 0
+  for item in factors {
+    let p = item.0
+    let e = item.1
+    if e % 2 == 1 {
+      nf_set_factor(d, p, 1)
+      if nf_pos_mod(p, 4) == 3 {
+        num_3_mod_4 += 1
+      }
+      if e >= 3 {
+        nf_set_factor(f, p, (e - 1) / 2)
+      }
+    } else {
+      nf_set_factor(f, p, e / 2)
+    }
+  }
+  let even = nf_factor_get(d, 2) is Some(_)
+  if even || num_3_mod_4 % 2 == 1 {
+    let e2 = match nf_factor_get(f, 2) {
+      Some(v) => v
+      None => raise PolyError::DomainMismatch
+    }
+    if e2 == 1 {
+      nf_delete_factor(f, 2)
+    } else {
+      nf_set_factor(f, 2, e2 - 1)
+    }
+    nf_set_factor(d, 2, if even { 3 } else { 2 })
+  }
+  nf_sort_factors(d)
+  nf_sort_factors(f)
+  (d, f)
+}
+
+///|
+/// Generate a finite prefix of coefficient-search candidates.
+///
+/// - Does: Follows SymPy's bounded-coefficient search order.
+/// - Input: List length `m`, positive initial absolute bound `r`, and prefix `count`.
+/// - Returns: `count` coefficient vectors.
+/// - Limits: SymPy returns an infinite generator; MoonBit exposes a finite
+///   prefix front door. Non-positive bounds return an empty prefix.
+pub fn coeff_search(m : Int, r : Int, count? : Int = 16) -> Array[Array[Int]] {
+  if m <= 0 || r <= 0 || count <= 0 {
+    return []
+  }
+  let r0 = r
+  let mut radius = r
+  let c = Array::make(m, radius)
+  let out : Array[Array[Int]] = []
+  while out.length() < count {
+    if radius == r0 || c.contains(radius) || c.contains(-radius) {
+      out.push(c.copy())
+    }
+    let mut j = m - 1
+    while j >= 0 && c[j] == -radius {
+      j -= 1
+    }
+    if j < 0 {
+      radius += 1
+      for i in 0..<m {
+        c[i] = radius
+      }
+      continue
+    }
+    c[j] -= 1
+    for i in (j + 1)..<m {
+      c[i] = radius
+    }
+    let mut all_zero = true
+    for value in c {
+      if value != 0 {
+        all_zero = false
+        break
+      }
+    }
+    if all_zero {
+      radius += 1
+      for i in 0..<m {
+        c[i] = radius
+      }
+    }
+  }
+  out
+}
+
+///|
+fn nf_factorint(a : Int) -> Array[(Int, Int)] {
+  let out : Array[(Int, Int)] = []
+  let mut n = a
+  if n < 0 {
+    out.push((-1, 1))
+    n = -n
+  }
+  let mut p = 2
+  while p * p <= n {
+    if n % p == 0 {
+      let mut e = 0
+      while n % p == 0 {
+        n = n / p
+        e += 1
+      }
+      out.push((p, e))
+    }
+    p = if p == 2 { 3 } else { p + 2 }
+  }
+  if n > 1 {
+    out.push((n, 1))
+  }
+  out
+}
+
+///|
+fn nf_factor_get(items : Array[(Int, Int)], p : Int) -> Int? {
+  for item in items {
+    let key = item.0
+    let exp = item.1
+    if key == p {
+      return Some(exp)
+    }
+  }
+  None
+}
+
+///|
+fn nf_set_factor(items : Array[(Int, Int)], p : Int, e : Int) -> Unit {
+  for i in 0..<items.length() {
+    if items[i].0 == p {
+      items[i] = (p, e)
+      return
+    }
+  }
+  items.push((p, e))
+}
+
+///|
+fn nf_delete_factor(items : Array[(Int, Int)], p : Int) -> Unit {
+  let out : Array[(Int, Int)] = []
+  for item in items {
+    if item.0 != p {
+      out.push(item)
+    }
+  }
+  items.clear()
+  for item in out {
+    items.push(item)
+  }
+}
+
+///|
+fn nf_sort_factors(items : Array[(Int, Int)]) -> Unit {
+  items.sort_by((a, b) => a.0.compare(b.0))
+}
+
+///|
 /// Compute a minimal polynomial over `QQ`.
 ///
 /// - Does: Returns the minimal polynomial for one supported algebraic
@@ -373,6 +584,242 @@ pub fn minpoly(expr : Expr, gen? : String = "x") -> Poly raise PolyError {
 }
 
 ///|
+fn nf_rat(num : Int, den : Int) -> @symnum.BigRational {
+  @symnum.BigRational::from_ints(num, den) catch {
+    _ => abort("numberfields rational helper expects nonzero denominator")
+  }
+}
+
+///|
+fn nf_rat_div_int(
+  value : @symnum.BigRational,
+  den : Int,
+) -> @symnum.BigRational {
+  value.div_r(@symnum.BigRational::from_int(den)) catch {
+    _ =>
+      abort("numberfields rational division helper expects nonzero denominator")
+  }
+}
+
+///|
+fn nf_rat_abs(value : @symnum.BigRational) -> @symnum.BigRational {
+  if value.compare(@symnum.BigRational::zero()) < 0 {
+    value.neg_r()
+  } else {
+    value
+  }
+}
+
+///|
+fn nf_rat_mid(
+  lo : @symnum.BigRational,
+  hi : @symnum.BigRational,
+) -> @symnum.BigRational {
+  nf_rat_div_int(lo.add_r(hi), 2)
+}
+
+///|
+fn nf_rat_width(
+  lo : @symnum.BigRational,
+  hi : @symnum.BigRational,
+) -> @symnum.BigRational {
+  hi.sub_r(lo)
+}
+
+///|
+fn nf_pos_mod(value : Int, modulus : Int) -> Int {
+  let mut out = value % modulus
+  if out < 0 {
+    out = out + modulus
+  }
+  out
+}
+
+///|
+fn nf_radical_integer_interval(
+  rad : @symnum.BigRational,
+  n : Int,
+) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError {
+  if n <= 0 {
+    raise PolyError::BadExponent
+  }
+  if rad.compare(@symnum.BigRational::zero()) < 0 {
+    raise PolyError::DomainMismatch
+  }
+  if rad.is_zero() {
+    return (@symnum.BigRational::zero(), @symnum.BigRational::zero())
+  }
+  let mut hi = 1
+  while rat_pow_nonnegative(@symnum.BigRational::from_int(hi), n).compare(rad) <=
+        0 {
+    hi = hi * 2
+  }
+  let mut lo = hi / 2
+  while lo + 1 < hi {
+    let mid = (lo + hi) / 2
+    let cmp = rat_pow_nonnegative(@symnum.BigRational::from_int(mid), n).compare(
+      rad,
+    )
+    if cmp <= 0 {
+      lo = mid
+    } else {
+      hi = mid
+    }
+  }
+  let lo_rat = @symnum.BigRational::from_int(lo)
+  if rat_pow_nonnegative(lo_rat, n).compare(rad) == 0 {
+    (lo_rat, lo_rat)
+  } else {
+    (lo_rat, @symnum.BigRational::from_int(hi))
+  }
+}
+
+///|
+fn nf_refine_radical_interval(
+  rad : @symnum.BigRational,
+  n : Int,
+  lo0 : @symnum.BigRational,
+  hi0 : @symnum.BigRational,
+  eps : @symnum.BigRational,
+) -> (@symnum.BigRational, @symnum.BigRational) {
+  if eps.compare(@symnum.BigRational::zero()) <= 0 {
+    return (lo0, hi0)
+  }
+  let mut lo = lo0
+  let mut hi = hi0
+  while nf_rat_width(lo, hi).compare(eps) > 0 {
+    let mid = nf_rat_mid(lo, hi)
+    let cmp = rat_pow_nonnegative(mid, n).compare(rad)
+    if cmp == 0 {
+      return (mid, mid)
+    } else if cmp < 0 {
+      lo = mid
+    } else {
+      hi = mid
+    }
+  }
+  (lo, hi)
+}
+
+///|
+fn nf_affine_radical_rough_interval(
+  aff : AffineRadical,
+  eps? : @symnum.BigRational,
+) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError {
+  let (base_lo0, base_hi0) = nf_radical_integer_interval(
+    aff.atom.rad,
+    aff.atom.n,
+  )
+  let (base_lo, base_hi) = match eps {
+    Some(e) => {
+      let abs_scale = nf_rat_abs(aff.scale)
+      if abs_scale.is_zero() {
+        (base_lo0, base_hi0)
+      } else {
+        let base_eps = e.div_r(abs_scale) catch {
+          _ => abort("numberfields affine radical helper expects nonzero scale")
+        }
+        nf_refine_radical_interval(
+          aff.atom.rad,
+          aff.atom.n,
+          base_lo0,
+          base_hi0,
+          base_eps,
+        )
+      }
+    }
+    None => (base_lo0, base_hi0)
+  }
+  let lo = aff.shift.add_r(aff.scale.mul_r(base_lo))
+  let hi = aff.shift.add_r(aff.scale.mul_r(base_hi))
+  if lo.compare(hi) <= 0 {
+    (lo, hi)
+  } else {
+    (hi, lo)
+  }
+}
+
+///|
+fn nf_interval_overlaps(
+  lhs : (@symnum.BigRational, @symnum.BigRational),
+  rhs : (@symnum.BigRational, @symnum.BigRational),
+) -> Bool {
+  lhs.0.compare(rhs.1) <= 0 && rhs.0.compare(lhs.1) <= 0
+}
+
+///|
+fn nf_choose_interval(
+  poly : Poly,
+  rough : (@symnum.BigRational, @symnum.BigRational),
+  eps? : @symnum.BigRational,
+) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError {
+  let all = match eps {
+    Some(e) => intervals(poly, eps=e)
+    None => intervals(poly)
+  }
+  let matches : Array[(@symnum.BigRational, @symnum.BigRational)] = []
+  for item in all {
+    let (iv, _) = item
+    if nf_interval_overlaps(iv, rough) {
+      matches.push(iv)
+    }
+  }
+  if matches.length() == 1 {
+    matches[0]
+  } else if all.length() == 1 {
+    all[0].0
+  } else {
+    raise PolyError::NonPolynomial
+  }
+}
+
+///|
+/// Find a rational isolating interval for a supported real algebraic number.
+///
+/// - Does: Mirrors SymPy's `isolate` front door for rational constants and
+///   affine radical expressions supported by `minimal_polynomial`.
+/// - Input: An `Expr`, optional rational `eps`, and ignored compatibility
+///   flag `fast`.
+/// - Returns: A pair of exact rational endpoints.
+/// - Limits: Complex algebraic numbers and general `AlgebraicNumber` objects
+///   are not modeled; unsupported expressions raise `PolyError`.
+pub fn isolate(
+  expr : Expr,
+  eps? : @symnum.BigRational,
+  fast? : Bool = false,
+) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError {
+  ignore(fast)
+  match expr_rational_constant(expr) {
+    Some(q) => return (q, q)
+    None => ()
+  }
+  let poly = minimal_polynomial(expr)
+  match parse_affine_radical(expr) {
+    Some(aff) => {
+      let rough = match eps {
+        Some(e) => nf_affine_radical_rough_interval(aff, eps=e)
+        None => nf_affine_radical_rough_interval(aff)
+      }
+      match eps {
+        Some(e) => nf_choose_interval(poly, rough, eps=e)
+        None => nf_choose_interval(poly, rough)
+      }
+    }
+    None => {
+      let roots = match eps {
+        Some(e) => intervals(poly, eps=e)
+        None => intervals(poly)
+      }
+      if roots.length() == 1 {
+        roots[0].0
+      } else {
+        raise PolyError::NonPolynomial
+      }
+    }
+  }
+}
+
+///|
 /// Construct a one-generator algebraic field extension.
 ///
 /// - Does: Builds the algebraic field `QQ(a)` from the minimal polynomial of
@@ -452,6 +899,201 @@ pub fn primitive_element_ex(
     }
   }
   (prim, coeffs, reps)
+}
+
+///|
+/// Integral-basis descriptor returned by `round_two`.
+///
+/// - Does: Stores a rational basis matrix and the resulting field
+///   discriminant.
+/// - Input: Produced from a univariate defining polynomial.
+/// - Returns: A `RoundTwoResult`.
+/// - Limits: This is a typed MoonBit descriptor, not SymPy's module object.
+pub struct RoundTwoResult {
+  basis : Array[Array[@symnum.BigRational]]
+  denom : @symnum.BigRational
+  discriminant : FieldElem
+}
+
+///|
+fn nf_basis_row_string(row : Array[@symnum.BigRational]) -> String {
+  "[" + row.map(item => item.to_string()).join(", ") + "]"
+}
+
+///|
+fn nf_basis_string(rows : Array[Array[@symnum.BigRational]]) -> String {
+  "Submodule[" + rows.map(nf_basis_row_string).join(", ") + "]"
+}
+
+///|
+pub impl Show for RoundTwoResult with output(
+  self : RoundTwoResult,
+  logger : &Logger,
+) -> Unit {
+  let basis_text = nf_basis_string(self.basis)
+  let full_basis = if self.denom.is_one() {
+    basis_text
+  } else {
+    "\{basis_text}/\{self.denom}"
+  }
+  logger.write_string("(\{full_basis}, \{self.discriminant})")
+}
+
+///|
+fn nf_identity_basis(degree : Int) -> Array[Array[@symnum.BigRational]] {
+  let rows : Array[Array[@symnum.BigRational]] = []
+  for i in 0..<degree {
+    let row : Array[@symnum.BigRational] = []
+    for j in 0..<degree {
+      row.push(@symnum.BigRational::from_int(if i == j { 1 } else { 0 }))
+    }
+    rows.push(row)
+  }
+  rows
+}
+
+///|
+fn nf_fe_int(elem : FieldElem) -> Int raise PolyError {
+  let q = fe_expect_rational(elem)
+  if !q.denominator().equal_int(1) {
+    raise PolyError::DomainMismatch
+  }
+  q.numerator().to_int()
+}
+
+///|
+/// Compute a Round 2 integral-basis descriptor for a defining polynomial.
+///
+/// - Does: Follows SymPy's public `round_two` front door for monic univariate
+///   integer polynomials, including the quadratic half-integral basis case.
+/// - Input: One univariate `Poly` over `ZZ` or `QQ`.
+/// - Returns: `RoundTwoResult`.
+/// - Limits: Higher-degree output currently uses the power basis with the
+///   polynomial discriminant; full maximal-order refinement is not implemented.
+pub fn round_two(poly : Poly) -> RoundTwoResult raise PolyError {
+  ensure_univar(poly)
+  let degree = poly.degree(0)
+  if degree <= 0 {
+    raise PolyError::NonPolynomial
+  }
+  let disc0 = discriminant(poly)
+  let mut basis = nf_identity_basis(degree)
+  let mut denom = @symnum.BigRational::one()
+  let mut disc = disc0
+  if degree == 2 {
+    let dense = to_dense(poly)
+    let lead = nf_fe_int(dense[2])
+    if lead != 1 {
+      raise PolyError::DomainMismatch
+    }
+    let b = nf_fe_int(dense[1])
+    let c = nf_fe_int(dense[0])
+    if b == 0 {
+      let radicand = -c
+      if nf_pos_mod(radicand, 4) == 1 {
+        basis = [
+          [@symnum.BigRational::from_int(2), @symnum.BigRational::zero()],
+          [@symnum.BigRational::one(), @symnum.BigRational::one()],
+        ]
+        denom = nf_rat(2, 1)
+        disc = fe_from_int(radicand, poly.domain)
+      }
+    }
+  }
+  RoundTwoResult::{ basis, denom, discriminant: disc }
+}
+
+///|
+/// Prime ideal descriptor for the `prime_decomp` front door.
+///
+/// - Does: Stores the rational prime, residue factor, ramification index, and
+///   residue degree.
+/// - Input: Produced by factoring the defining polynomial modulo `p`.
+/// - Returns: A `PrimeIdeal`.
+/// - Limits: This covers the polynomial-factorization front door, not the full
+///   ideal-arithmetic object model.
+pub struct PrimeIdeal {
+  p : Int
+  factor : Poly
+  ramification : Int
+  residue_degree : Int
+  has_generator : Bool
+}
+
+///|
+pub impl Show for PrimeIdeal with output(self : PrimeIdeal, logger : &Logger) -> Unit {
+  if self.has_generator {
+    logger.write_string("(\{self.p}, \{self.factor})")
+  } else {
+    logger.write_string("(\{self.p})")
+  }
+}
+
+///|
+/// Decompose a rational prime in a simple number field.
+///
+/// - Does: Factors the defining polynomial modulo `p`, matching SymPy's
+///   factor-driven prime-decomposition front door for common inputs.
+/// - Input: A rational prime `p` and a univariate defining polynomial `T`.
+/// - Returns: `Array[PrimeIdeal]`.
+/// - Limits: Does not construct full ideal modules or radical-splitting data.
+pub fn prime_decomp(p : Int, poly : Poly) -> Array[PrimeIdeal] raise PolyError {
+  if p <= 1 {
+    raise PolyError::BadModulus
+  }
+  ensure_univar(poly)
+  let defining_degree = poly.degree(0)
+  if defining_degree <= 0 {
+    raise PolyError::NonPolynomial
+  }
+  let gf_poly = map_to_gf(poly, p)
+  let (_, factors) = gf_poly.factor_list()
+  let ideals : Array[PrimeIdeal] = []
+  for item in factors {
+    let factor = item.0
+    let ramification = item.1
+    let factor_degree = factor.degree(0)
+    if factor_degree <= 0 {
+      continue
+    }
+    ideals.push(PrimeIdeal::{
+      p,
+      factor,
+      ramification,
+      residue_degree: factor_degree,
+      has_generator: factor_degree < defining_degree || ramification > 1,
+    })
+  }
+  if ideals.is_empty() {
+    ideals.push(PrimeIdeal::{
+      p,
+      factor: gf_poly,
+      ramification: 1,
+      residue_degree: defining_degree,
+      has_generator: false,
+    })
+  }
+  ideals
+}
+
+///|
+/// Compute the valuation of an integer at a prime ideal.
+///
+/// - Does: Counts the exponent of `prime.p` in an integer principal ideal.
+/// - Input: An integer and one `PrimeIdeal` from `prime_decomp`.
+/// - Returns: A nonnegative exponent.
+/// - Limits: General ideal/module valuations are not modeled.
+pub fn prime_valuation(n : Int, prime : PrimeIdeal) -> Int raise PolyError {
+  if n == 0 {
+    raise PolyError::DivisionByZero
+  }
+  let mut value = if n < 0 { -n } else { n }
+  let mut count = 0
+  while value % prime.p == 0 {
+    count = count + prime.ramification
+    value = value / prime.p
+  }
+  count
 }
 
 ///|

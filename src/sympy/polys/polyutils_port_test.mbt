@@ -24,3 +24,23 @@ test "polyutils: dict_from_expr parity (basic)" {
   let oracle_mixed = dict_from_expr(mixed, gens=["x", "y", "z"])
   assert_eq(ours_mixed, oracle_mixed)
 }
+
+///|
+test "polyutils: parallel_dict_from_expr and expr_from_dict parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let exprs = [x * y + @symcore.int(2), x * x + @symcore.int(3) * y]
+  let ours_parallel = @sympolys.parallel_dict_from_expr(exprs, gens=["x", "y"])
+  let oracle_parallel = parallel_dict_from_expr(exprs, gens=["x", "y"])
+  assert_eq(ours_parallel, oracle_parallel)
+
+  let rep : Map[Monomial, Expr] = Map::new()
+  rep.set(@sympolys.monomial_from_array([2, 1]), @symcore.int(3))
+  rep.set(@sympolys.monomial_from_array([0, 0]), @symcore.int(5))
+  let ours_expr = @sympolys.expr_from_dict(rep, ["x", "y"])
+  let oracle_expr = expr_from_dict("{(2, 1): 3, (0, 0): 5}", ["x", "y"])
+  assert_eq(
+    sympy_normalize(@symprint.pretty_string(ours_expr)),
+    sympy_normalize(oracle_expr),
+  )
+}

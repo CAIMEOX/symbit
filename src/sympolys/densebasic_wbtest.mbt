@@ -57,6 +57,22 @@ test "densebasic wb: dense extraction and coefficient edge branches" {
 }
 
 ///|
+test "densebasic wb: dup_from_list and dup_truncate" {
+  let from = dup_from_list(
+    [db_wb_fe(0), db_wb_fe(0), db_wb_fe(2), db_wb_fe(1), db_wb_fe(0)],
+    Domain::ZZ,
+  )
+  inspect(from.map(c => c.to_string()).join(","), content="2,1,0")
+
+  let truncated = dup_truncate(
+    [db_wb_fe(1), db_wb_fe(2), db_wb_fe(3), db_wb_fe(4), db_wb_fe(5)],
+    3,
+    Domain::ZZ,
+  )
+  inspect(truncated.map(c => c.to_string()).join(","), content="3,4,5")
+}
+
+///|
 test "densebasic wb: dpp conversion helper branches" {
   let gens = ["x"]
   let nonzero = db_wb_const_poly(2, gens, Domain::QQ)

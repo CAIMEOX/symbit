@@ -201,6 +201,80 @@ pub fn dict_from_expr(
 }
 
 ///|
+pub fn parallel_dict_from_expr(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  let expr_objs : Array[@py.PyObject] = Array::new()
+  for expr in exprs {
+    expr_objs.push(expr_to_sympy(expr))
+  }
+  args.push(OracleArg::PyObj(py_list_from_objects(expr_objs).obj()))
+  let kwargs : Map[String, OracleArg] = {}
+  if !gens.is_empty() {
+    let gens_objs = sympy_symbols_from_names(gens)
+    let list = py_list_from_objects(gens_objs)
+    kwargs["gens"] = OracleArg::PyObj(list.obj())
+  }
+  let res = sympy_call_must(
+    "sympy.polys.polyutils.parallel_dict_from_expr",
+    args,
+    kwargs~,
+  )
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 2 else { fail("parallel_dict_from_expr tuple") }
+  let reps_obj = items[0]
+  let gens_obj = items[1]
+  let rep_objs = py_list_to_pyobjects(@py.PyObjectEnum::create(reps_obj))
+  let reps : Array[String] = Array::new()
+  for dict_obj in rep_objs {
+    let items_call = resolve_method_callable(dict_obj, "items")
+    let items_enum = py_call_noargs(items_call)
+    let builtins = ensure_builtins_module()
+    let list_ctor = resolve_callable(builtins, "list")
+    let items_list_enum = py_call_one(list_ctor, objenum_to_obj(items_enum))
+    let kvs = py_list_to_pyobjects(items_list_enum)
+    let entries : Array[(Array[Int], String)] = Array::new()
+    for pair in kvs {
+      let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+      if pair_items.length() >= 2 {
+        let key_obj = pair_items[0]
+        let val_obj = pair_items[1]
+        let exps_objs = py_list_to_pyobjects(@py.PyObjectEnum::create(key_obj))
+        let exps : Array[Int] = Array::new()
+        for e in exps_objs {
+          exps.push(py_obj_to_int(e))
+        }
+        let coeff_str = py_str_obj(val_obj)
+        entries.push((exps, coeff_str))
+      }
+    }
+    entries.sort_by((a, b) => cmp_exps(a.0, b.0))
+    reps.push(dict_repr(entries))
+  }
+  let gens_list = py_list_to_pyobjects(@py.PyObjectEnum::create(gens_obj))
+  let gen_names : Array[String] = Array::new()
+  for g in gens_list {
+    gen_names.push(py_str_obj(g))
+  }
+  let reps_str = reps.join(",")
+  let gens_str = gen_names.map(n => "\"\{n}\"").join(",")
+  "[\{reps_str}]||[\{gens_str}]"
+}
+
+///|
+pub fn expr_from_dict(rep : String, gens : Array[String]) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(sympy_sympify_str(rep)))
+  for gen in gens {
+    args.push(OracleArg::PyObj(sympy_symbol_obj(gen)))
+  }
+  let res = sympy_call_must("sympy.polys.polyutils.expr_from_dict", args)
+  py_sympy_enum_str(res)
+}
+
+///|
 pub fn sort_gens(
   gens : Array[String],
   wrt? : Array[String] = [],
@@ -2053,6 +2127,98 @@ pub fn numberfield_field_isomorphic(lhs : String, rhs : String) -> Bool raise {
     Some(_) => true
     None => false
   }
+}
+
+///|
+pub fn numberfield_is_rat(expr : String) -> Bool raise {
+  let expr_obj = sympy_sympify_str(expr)
+  let res = sympy_call_must("sympy.polys.numberfields.utilities.is_rat", [
+    OracleArg::PyObj(expr_obj),
+  ])
+  py_str_enum(res) == "True"
+}
+
+///|
+pub fn numberfield_is_int(expr : String) -> Bool raise {
+  let expr_obj = sympy_sympify_str(expr)
+  let res = sympy_call_must("sympy.polys.numberfields.utilities.is_int", [
+    OracleArg::PyObj(expr_obj),
+  ])
+  py_str_enum(res) == "True"
+}
+
+///|
+pub fn numberfield_get_num_denom(expr : String) -> String raise {
+  let expr_obj = sympy_sympify_str(expr)
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.utilities.get_num_denom",
+    [OracleArg::PyObj(expr_obj)],
+  )
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 2 else { fail("numberfield-get-num-denom") }
+  "(\{py_str_obj(items[0])},\{py_str_obj(items[1])})"
+}
+
+///|
+fn numberfield_factor_items_text(dict_obj : @py.PyObject) -> String raise {
+  let items_call = resolve_method_callable(dict_obj, "items")
+  let items_enum = py_call_noargs(items_call)
+  let builtins = ensure_builtins_module()
+  let list_ctor = resolve_callable(builtins, "list")
+  let items_list_enum = py_call_one(list_ctor, objenum_to_obj(items_enum))
+  let kvs = py_list_to_pyobjects(items_list_enum)
+  let entries : Array[(Int, Int)] = []
+  for pair in kvs {
+    let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+    if pair_items.length() >= 2 {
+      entries.push((py_obj_to_int(pair_items[0]), py_obj_to_int(pair_items[1])))
+    }
+  }
+  entries.sort_by((a, b) => a.0.compare(b.0))
+  let parts : Array[String] = []
+  for item in entries {
+    parts.push("(\{item.0},\{item.1})")
+  }
+  let body = parts.join(",")
+  "[\{body}]"
+}
+
+///|
+pub fn numberfield_extract_fundamental_discriminant(a : Int) -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.utilities.extract_fundamental_discriminant",
+    [OracleArg::Int(a)],
+  )
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 2 else {
+    fail("numberfield-extract-fundamental-discriminant")
+  }
+  let d = numberfield_factor_items_text(items[0])
+  let f = numberfield_factor_items_text(items[1])
+  "\{d}||\{f}"
+}
+
+///|
+pub fn numberfield_coeff_search(m : Int, r : Int, count : Int) -> String raise {
+  let gen = sympy_call_must("sympy.polys.numberfields.utilities.coeff_search", [
+    OracleArg::Int(m),
+    OracleArg::Int(r),
+  ])
+  let builtins = ensure_builtins_module()
+  let next_call = resolve_callable(builtins, "next")
+  let rows : Array[String] = []
+  for _ in 0..<count {
+    let row_enum = py_call_one(next_call, objenum_to_obj(gen))
+    let values = py_list_to_pyobjects(row_enum)
+    let parts : Array[String] = []
+    for value in values {
+      parts.push(py_obj_to_int(value).to_string())
+    }
+    let body = parts.join(",")
+    rows.push("[\{body}]")
+  }
+  let body = rows.join(",")
+  "[\{body}]"
 }
 
 ///|
@@ -4203,6 +4369,15 @@ fn py_list_from_objects(values : Array[@py.PyObject]) -> @py.PyList {
 }
 
 ///|
+fn py_list_from_ints(values : Array[Int]) -> @py.PyObject {
+  let items : Array[@py.PyObject] = []
+  for value in values {
+    items.push(py_int_obj(value))
+  }
+  py_list_from_objects(items).obj()
+}
+
+///|
 fn py_dict_len(dict : @py.PyDict) -> Int {
   let state = py_gil_ensure()
   let n = dict.len()
@@ -4333,6 +4508,20 @@ fn py_str_obj(obj : @py.PyObject) -> String {
 ///|
 fn py_str_enum(obj : @py.PyObjectEnum) -> String {
   py_str_obj(objenum_to_obj(obj))
+}
+
+///|
+fn sorted_py_iter_str(obj : @py.PyObjectEnum) -> String raise {
+  let builtins = ensure_builtins_module()
+  let list_ctor = resolve_callable(builtins, "list")
+  let list_enum = py_call_one(list_ctor, objenum_to_obj(obj))
+  let items = py_list_to_pyobjects(list_enum)
+  let parts : Array[String] = []
+  for item in items {
+    parts.push(py_str_obj(item))
+  }
+  parts.sort()
+  parts.join(" | ")
 }
 
 ///|
@@ -4716,6 +4905,587 @@ pub fn monic(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
   let as_expr = resolve_method_callable(monic_obj, "as_expr")
   let expr_enum = py_call_noargs(as_expr)
   py_str_enum(expr_enum)
+}
+
+///|
+fn polytools_args(
+  expr : @symcore.Expr,
+  gens : Array[String],
+) -> Array[OracleArg] raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(expr)))
+  for gen in gens {
+    args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
+  }
+  args
+}
+
+///|
+pub fn degree(expr : @symcore.Expr, gen? : String = "") -> String raise {
+  let args = polytools_args(expr, if gen == "" { [] } else { [gen] })
+  let res = sympy_call_must("sympy.polys.polytools.degree", args)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn degree_list(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let args = polytools_args(expr, gens)
+  let res = sympy_call_must("sympy.polys.polytools.degree_list", args)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn polytools_lc(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  order? : String = "",
+) -> String raise {
+  let args = polytools_args(expr, gens)
+  let kwargs : Map[String, OracleArg] = {}
+  if order != "" {
+    kwargs["order"] = OracleArg::Str(order)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.LC", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn polytools_lm(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  order? : String = "",
+) -> String raise {
+  let args = polytools_args(expr, gens)
+  let kwargs : Map[String, OracleArg] = {}
+  if order != "" {
+    kwargs["order"] = OracleArg::Str(order)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.LM", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn polytools_lt(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  order? : String = "",
+) -> String raise {
+  let args = polytools_args(expr, gens)
+  let kwargs : Map[String, OracleArg] = {}
+  if order != "" {
+    kwargs["order"] = OracleArg::Str(order)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.LT", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn pdiv(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+) -> String raise {
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(expr_to_sympy(p)),
+    OracleArg::PyObj(expr_to_sympy(q)),
+  ]
+  for gen in gens {
+    args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.pdiv", args, kwargs~)
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 2 else { fail("pdiv result tuple") }
+  "\{py_sympy_expr_str(items[0])}||\{py_sympy_expr_str(items[1])}"
+}
+
+///|
+pub fn prem(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+) -> String raise {
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(expr_to_sympy(p)),
+    OracleArg::PyObj(expr_to_sympy(q)),
+  ]
+  for gen in gens {
+    args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.prem", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn pquo(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+) -> String raise {
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(expr_to_sympy(p)),
+    OracleArg::PyObj(expr_to_sympy(q)),
+  ]
+  for gen in gens {
+    args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.pquo", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+fn polytools_binary_args(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gens : Array[String],
+) -> Array[OracleArg] raise {
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(expr_to_sympy(p)),
+    OracleArg::PyObj(expr_to_sympy(q)),
+  ]
+  for gen in gens {
+    args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
+  }
+  args
+}
+
+///|
+fn maybe_domain_kwargs(domain : String) -> Map[String, OracleArg] {
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  kwargs
+}
+
+///|
+fn sympy_rational_arg(num : Int, den : Int) -> OracleArg raise {
+  let obj = sympy_call_must("sympy.Rational", [
+    OracleArg::Int(num),
+    OracleArg::Int(den),
+  ])
+  OracleArg::PyObj(objenum_to_obj(obj))
+}
+
+///|
+pub fn half_gcdex(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+) -> String raise {
+  let args = polytools_binary_args(p, q, gens)
+  let kwargs = maybe_domain_kwargs(domain)
+  let res = sympy_call_must("sympy.polys.polytools.half_gcdex", args, kwargs~)
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 2 else { fail("half_gcdex result tuple") }
+  "\{py_sympy_expr_str(items[0])}||\{py_sympy_expr_str(items[1])}"
+}
+
+///|
+pub fn gcdex(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+) -> String raise {
+  let args = polytools_binary_args(p, q, gens)
+  let kwargs = maybe_domain_kwargs(domain)
+  let res = sympy_call_must("sympy.polys.polytools.gcdex", args, kwargs~)
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 3 else { fail("gcdex result tuple") }
+  "\{py_sympy_expr_str(items[0])}||\{py_sympy_expr_str(items[1])}||\{py_sympy_expr_str(items[2])}"
+}
+
+///|
+pub fn invert(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+) -> String raise {
+  let args = polytools_binary_args(p, q, gens)
+  let kwargs = maybe_domain_kwargs(domain)
+  let res = sympy_call_must("sympy.polys.polytools.invert", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn trunc(
+  expr : @symcore.Expr,
+  modulus : Int,
+  gens? : Array[String] = [],
+) -> String raise {
+  let args : Array[OracleArg] = [OracleArg::PyObj(expr_to_sympy(expr))]
+  args.push(OracleArg::Int(modulus))
+  for gen in gens {
+    args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
+  }
+  let res = sympy_call_must("sympy.polys.polytools.trunc", args)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn intervals(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let args = polytools_args(expr, gens)
+  let res = sympy_call_must("sympy.polys.polytools.intervals", args)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn refine_root(
+  expr : @symcore.Expr,
+  s_num : Int,
+  s_den : Int,
+  t_num : Int,
+  t_den : Int,
+  eps_num? : Int = 0,
+  eps_den? : Int = 1,
+) -> String raise {
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(expr_to_sympy(expr)),
+    sympy_rational_arg(s_num, s_den),
+    sympy_rational_arg(t_num, t_den),
+  ]
+  let kwargs : Map[String, OracleArg] = {}
+  if eps_num != 0 {
+    kwargs["eps"] = sympy_rational_arg(eps_num, eps_den)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.refine_root", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn count_roots(
+  expr : @symcore.Expr,
+  inf_num? : Int = 0,
+  inf_den? : Int = 1,
+  sup_num? : Int = 0,
+  sup_den? : Int = 1,
+  has_inf? : Bool = false,
+  has_sup? : Bool = false,
+) -> String raise {
+  let args : Array[OracleArg] = [OracleArg::PyObj(expr_to_sympy(expr))]
+  if has_inf {
+    args.push(sympy_rational_arg(inf_num, inf_den))
+  }
+  if has_sup {
+    if !has_inf {
+      args.push(OracleArg::Null)
+    }
+    args.push(sympy_rational_arg(sup_num, sup_den))
+  }
+  let res = sympy_call_must("sympy.polys.polytools.count_roots", args)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn all_roots(expr : @symcore.Expr) -> String raise {
+  let res = sympy_call_must("sympy.polys.polytools.all_roots", [
+    OracleArg::PyObj(expr_to_sympy(expr)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn ground_roots(expr : @symcore.Expr) -> String raise {
+  let res = sympy_call_must("sympy.polys.polytools.ground_roots", [
+    OracleArg::PyObj(expr_to_sympy(expr)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+fn py_poly_expr_list_str(obj : @py.PyObjectEnum) -> String raise {
+  let items = py_list_to_pyobjects(obj)
+  let parts : Array[String] = []
+  for item in items {
+    parts.push(py_sympy_expr_str(item))
+  }
+  parts.join("||")
+}
+
+///|
+pub fn poly_from_expr_front(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.polytools.poly_from_expr",
+    polytools_args(expr, gens),
+  )
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 1 else { fail("poly_from_expr result tuple") }
+  py_sympy_expr_str(items[0])
+}
+
+///|
+pub fn parallel_poly_from_expr_front(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+) -> String raise {
+  let expr_objs : Array[@py.PyObject] = []
+  for expr in exprs {
+    expr_objs.push(expr_to_sympy(expr))
+  }
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(py_list_from_objects(expr_objs).obj()),
+  ]
+  for gen in gens {
+    args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
+  }
+  let res = sympy_call_must(
+    "sympy.polys.polytools.parallel_poly_from_expr", args,
+  )
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 1 else {
+    fail("parallel_poly_from_expr result tuple")
+  }
+  py_poly_expr_list_str(@py.PyObjectEnum::create(items[0]))
+}
+
+///|
+pub fn poly_front(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.polytools.poly",
+    polytools_args(expr, gens),
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn sqf(expr : @symcore.Expr, gens? : Array[String] = []) -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.polytools.sqf",
+    polytools_args(expr, gens),
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn gff_list(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.polytools.gff_list",
+    polytools_args(expr, gens),
+  )
+  let items = py_list_to_pyobjects(res)
+  let parts : Array[String] = []
+  for item in items {
+    let pair = py_list_to_pyobjects(@py.PyObjectEnum::create(item))
+    if pair.length() >= 2 {
+      parts.push("(\{py_sympy_expr_str(pair[0])}, \{py_str_obj(pair[1])})")
+    }
+  }
+  parts.join("||")
+}
+
+///|
+pub fn real_roots(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.polytools.real_roots",
+    polytools_args(expr, gens),
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn nroots(expr : @symcore.Expr, gens? : Array[String] = []) -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.polytools.nroots",
+    polytools_args(expr, gens),
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn nth_power_roots_poly(
+  expr : @symcore.Expr,
+  n : Int,
+  gens? : Array[String] = [],
+) -> String raise {
+  let args = polytools_args(expr, gens)
+  args.push(OracleArg::Int(n))
+  let res = sympy_call_must("sympy.polys.polytools.nth_power_roots_poly", args)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn is_zero_dimensional(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+) -> String raise {
+  let expr_objs : Array[@py.PyObject] = []
+  for expr in exprs {
+    expr_objs.push(expr_to_sympy(expr))
+  }
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(py_list_from_objects(expr_objs).obj()),
+  ]
+  for gen in gens {
+    args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
+  }
+  let res = sympy_call_must("sympy.polys.polytools.is_zero_dimensional", args)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn hurwitz_conditions(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.polytools.hurwitz_conditions",
+    polytools_args(expr, gens),
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn schur_conditions(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.polytools.schur_conditions",
+    polytools_args(expr, gens),
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn together(
+  expr : @symcore.Expr,
+  deep? : Bool = false,
+  fraction? : Bool = true,
+) -> String raise {
+  let kwargs : Map[String, OracleArg] = {
+    "deep": OracleArg::Bool(deep),
+    "fraction": OracleArg::Bool(fraction),
+  }
+  let res = sympy_call_must(
+    "sympy.polys.rationaltools.together",
+    [OracleArg::PyObj(expr_to_sympy(expr))],
+    kwargs~,
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn apart(
+  expr : @symcore.Expr,
+  gen? : String = "",
+  full? : Bool = false,
+) -> String raise {
+  let args : Array[OracleArg] = [OracleArg::PyObj(expr_to_sympy(expr))]
+  if gen != "" {
+    args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
+  }
+  let kwargs : Map[String, OracleArg] = { "full": OracleArg::Bool(full) }
+  let res = sympy_call_must("sympy.polys.partfrac.apart", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn sqf_norm(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  extension? : String = "",
+) -> String raise {
+  let args = polytools_args(expr, gens)
+  let kwargs : Map[String, OracleArg] = {}
+  if extension != "" {
+    kwargs["extension"] = OracleArg::PyObj(sympy_sympify_str(extension))
+  }
+  let res = sympy_call_must("sympy.polys.polytools.sqf_norm", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn galois_group(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let kwargs : Map[String, OracleArg] = { "by_name": OracleArg::Bool(true) }
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.galoisgroups.galois_group",
+    polytools_args(expr, gens),
+    kwargs~,
+  )
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 2 else { fail("galois_group tuple") }
+  let name = match py_get_attr(items[0], "value") {
+    Some(value) => py_str_enum(value)
+    None => py_str_obj(items[0])
+  }
+  let alt = if py_str_obj(items[1]) == "True" { "true" } else { "false" }
+  "(\{name}, \{alt})"
+}
+
+///|
+pub fn isolate(expr : @symcore.Expr, eps? : String = "") -> String raise {
+  let args : Array[OracleArg] = [OracleArg::PyObj(expr_to_sympy(expr))]
+  if eps != "" {
+    args.push(OracleArg::PyObj(sympy_sympify_str(eps)))
+  }
+  let res = sympy_call_must("sympy.polys.numberfields.utilities.isolate", args)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn round_two(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let gen_objs = sympy_symbols_from_names(gens)
+  let poly = call_sympy_poly(expr_to_sympy(expr), gen_objs, "", None)
+  let res = sympy_call_must("sympy.polys.numberfields.basis.round_two", [
+    OracleArg::PyObj(poly),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn prime_decomp(
+  p : Int,
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let gen_objs = sympy_symbols_from_names(gens)
+  let poly = call_sympy_poly(expr_to_sympy(expr), gen_objs, "", None)
+  let res = sympy_call_must("sympy.polys.numberfields.primes.prime_decomp", [
+    OracleArg::Int(p),
+    OracleArg::PyObj(poly),
+  ])
+  py_sympy_enum_str(res)
 }
 
 ///|
@@ -6588,6 +7358,18 @@ pub fn dup_from_sympy(
 }
 
 ///|
+pub fn dup_from_list(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densebasic.dup_from_list", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dmp_from_sympy(
   f : DenseData,
   u : Int,
@@ -6693,6 +7475,20 @@ pub fn dup_slice(
   args.push(OracleArg::Int(n))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densebasic.dup_slice", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_truncate(
+  f : Array[@symnum.BigRational],
+  n : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::Int(n))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densebasic.dup_truncate", args)
   remove_spaces(py_dense_str(res))
 }
 
@@ -7565,6 +8361,398 @@ pub fn quo_z_qq_zz(
   args.push(OracleArg::PyObj(sympy_symbol_obj(x)))
   let res = sympy_call_must("sympy.polys.subresultants_qq_zz.quo_z", args)
   py_sympy_enum_str(res)
+}
+
+///|
+pub fn itermonomials_total(
+  variables : Array[String],
+  max_degree : Int,
+  min_degree? : Int = 0,
+) -> String raise {
+  let vars = py_list_from_objects(sympy_symbols_from_names(variables)).obj()
+  let res = sympy_call_must("sympy.polys.monomials.itermonomials", [
+    OracleArg::PyObj(vars),
+    OracleArg::Int(max_degree),
+    OracleArg::Int(min_degree),
+  ])
+  sorted_py_iter_str(res)
+}
+
+///|
+pub fn itermonomials_bounded(
+  variables : Array[String],
+  max_degrees : Array[Int],
+  min_degrees : Array[Int],
+) -> String raise {
+  let vars = py_list_from_objects(sympy_symbols_from_names(variables)).obj()
+  let res = sympy_call_must("sympy.polys.monomials.itermonomials", [
+    OracleArg::PyObj(vars),
+    OracleArg::PyObj(py_list_from_ints(max_degrees)),
+    OracleArg::PyObj(py_list_from_ints(min_degrees)),
+  ])
+  sorted_py_iter_str(res)
+}
+
+///|
+pub fn monomial_ldiv(a : Array[Int], b : Array[Int]) -> String raise {
+  let res = sympy_call_must("sympy.polys.monomials.monomial_ldiv", [
+    OracleArg::PyObj(py_list_from_ints(a)),
+    OracleArg::PyObj(py_list_from_ints(b)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn monomial_deg(a : Array[Int]) -> String raise {
+  let res = sympy_call_must("sympy.polys.monomials.monomial_deg", [
+    OracleArg::PyObj(py_list_from_ints(a)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn term_div_zz(
+  a_monom : Array[Int],
+  a_coeff : Int,
+  b_monom : Array[Int],
+  b_coeff : Int,
+) -> String raise {
+  let a_term = py_tuple_from_objects([
+    py_list_from_ints(a_monom),
+    py_int_obj(a_coeff),
+  ]).obj()
+  let b_term = py_tuple_from_objects([
+    py_list_from_ints(b_monom),
+    py_int_obj(b_coeff),
+  ]).obj()
+  let res = sympy_call_must("sympy.polys.monomials.term_div", [
+    OracleArg::PyObj(a_term),
+    OracleArg::PyObj(b_term),
+    OracleArg::PyObj(oracle_domain_from_spec("ZZ")),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn cyclotomic_poly(n : Int, x? : String = "x") -> String raise {
+  let res = sympy_call_must("sympy.polys.specialpolys.cyclotomic_poly", [
+    OracleArg::Int(n),
+    OracleArg::PyObj(sympy_symbol_obj(x)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn swinnerton_dyer_poly(n : Int, x? : String = "x") -> String raise {
+  let res = sympy_call_must("sympy.polys.specialpolys.swinnerton_dyer_poly", [
+    OracleArg::Int(n),
+    OracleArg::PyObj(sympy_symbol_obj(x)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn symmetric_poly(n : Int, gens : Array[String]) -> String raise {
+  let args : Array[OracleArg] = [OracleArg::Int(n)]
+  for gen in gens {
+    args.push(OracleArg::PyObj(sympy_symbol_obj(gen)))
+  }
+  let res = sympy_call_must("sympy.polys.specialpolys.symmetric_poly", args)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn interpolating_poly(n : Int, x? : String = "x") -> String raise {
+  let res = sympy_call_must("sympy.polys.specialpolys.interpolating_poly", [
+    OracleArg::Int(n),
+    OracleArg::PyObj(sympy_symbol_obj(x)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn interpolating_poly_values(
+  n : Int,
+  x : String,
+  xs : Array[Int],
+  ys : Array[Int],
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.specialpolys.interpolating_poly", [
+    OracleArg::Int(n),
+    OracleArg::PyObj(sympy_symbol_obj(x)),
+    OracleArg::PyObj(py_list_from_ints(xs)),
+    OracleArg::PyObj(py_list_from_ints(ys)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+fn fateman_poly_tuple(path : String, n : Int) -> Array[String] raise {
+  let res = sympy_call_must(path, [OracleArg::Int(n)])
+  let items = py_list_to_pyobjects(res)
+  let out : Array[String] = []
+  for item in items {
+    out.push(py_sympy_expr_str(item))
+  }
+  out
+}
+
+///|
+pub fn fateman_poly_F_1(n : Int) -> Array[String] raise {
+  fateman_poly_tuple("sympy.polys.specialpolys.fateman_poly_F_1", n)
+}
+
+///|
+pub fn fateman_poly_F_2(n : Int) -> Array[String] raise {
+  fateman_poly_tuple("sympy.polys.specialpolys.fateman_poly_F_2", n)
+}
+
+///|
+pub fn fateman_poly_F_3(n : Int) -> Array[String] raise {
+  fateman_poly_tuple("sympy.polys.specialpolys.fateman_poly_F_3", n)
+}
+
+///|
+fn named_unary_poly(path : String, n : Int, x : String) -> String raise {
+  let res = sympy_call_must(path, [
+    OracleArg::Int(n),
+    OracleArg::PyObj(sympy_symbol_obj(x)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+fn orth_dup_unary(path : String, n : Int, domain : String) -> String raise {
+  let res = sympy_call_must(path, [
+    OracleArg::Int(n),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+fn orth_dup_param(
+  path : String,
+  n : Int,
+  param : @symnum.BigRational,
+  domain : String,
+) -> String raise {
+  let res = sympy_call_must(path, [
+    OracleArg::Int(n),
+    OracleArg::PyObj(sympy_domain_elem(param, domain)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_jacobi(
+  n : Int,
+  a : @symnum.BigRational,
+  b : @symnum.BigRational,
+  domain? : String = "QQ",
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.orthopolys.dup_jacobi", [
+    OracleArg::Int(n),
+    OracleArg::PyObj(sympy_domain_elem(a, domain)),
+    OracleArg::PyObj(sympy_domain_elem(b, domain)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_gegenbauer(
+  n : Int,
+  a : @symnum.BigRational,
+  domain? : String = "QQ",
+) -> String raise {
+  orth_dup_param("sympy.polys.orthopolys.dup_gegenbauer", n, a, domain)
+}
+
+///|
+pub fn dup_chebyshevt(n : Int, domain? : String = "ZZ") -> String raise {
+  orth_dup_unary("sympy.polys.orthopolys.dup_chebyshevt", n, domain)
+}
+
+///|
+pub fn dup_chebyshevu(n : Int, domain? : String = "ZZ") -> String raise {
+  orth_dup_unary("sympy.polys.orthopolys.dup_chebyshevu", n, domain)
+}
+
+///|
+pub fn dup_hermite(n : Int, domain? : String = "ZZ") -> String raise {
+  orth_dup_unary("sympy.polys.orthopolys.dup_hermite", n, domain)
+}
+
+///|
+pub fn dup_hermite_prob(n : Int, domain? : String = "ZZ") -> String raise {
+  orth_dup_unary("sympy.polys.orthopolys.dup_hermite_prob", n, domain)
+}
+
+///|
+pub fn dup_legendre(n : Int, domain? : String = "QQ") -> String raise {
+  orth_dup_unary("sympy.polys.orthopolys.dup_legendre", n, domain)
+}
+
+///|
+pub fn dup_laguerre(
+  n : Int,
+  alpha : @symnum.BigRational,
+  domain? : String = "QQ",
+) -> String raise {
+  orth_dup_param("sympy.polys.orthopolys.dup_laguerre", n, alpha, domain)
+}
+
+///|
+pub fn dup_spherical_bessel_fn(
+  n : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  orth_dup_unary("sympy.polys.orthopolys.dup_spherical_bessel_fn", n, domain)
+}
+
+///|
+pub fn dup_spherical_bessel_fn_minus(
+  n : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  orth_dup_unary(
+    "sympy.polys.orthopolys.dup_spherical_bessel_fn_minus", n, domain,
+  )
+}
+
+///|
+pub fn chebyshevt_poly(n : Int, x? : String = "x") -> String raise {
+  named_unary_poly("sympy.polys.orthopolys.chebyshevt_poly", n, x)
+}
+
+///|
+pub fn chebyshevu_poly(n : Int, x? : String = "x") -> String raise {
+  named_unary_poly("sympy.polys.orthopolys.chebyshevu_poly", n, x)
+}
+
+///|
+pub fn hermite_poly(n : Int, x? : String = "x") -> String raise {
+  named_unary_poly("sympy.polys.orthopolys.hermite_poly", n, x)
+}
+
+///|
+pub fn hermite_prob_poly(n : Int, x? : String = "x") -> String raise {
+  named_unary_poly("sympy.polys.orthopolys.hermite_prob_poly", n, x)
+}
+
+///|
+pub fn legendre_poly(n : Int, x? : String = "x") -> String raise {
+  named_unary_poly("sympy.polys.orthopolys.legendre_poly", n, x)
+}
+
+///|
+pub fn laguerre_poly(n : Int, x? : String = "x") -> String raise {
+  named_unary_poly("sympy.polys.orthopolys.laguerre_poly", n, x)
+}
+
+///|
+pub fn gegenbauer_poly(
+  n : Int,
+  a : @symnum.BigRational,
+  x? : String = "x",
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.orthopolys.gegenbauer_poly", [
+    OracleArg::Int(n),
+    OracleArg::PyObj(sympy_number_obj_oracle(a)),
+    OracleArg::PyObj(sympy_symbol_obj(x)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn spherical_bessel_fn(n : Int, x? : String = "x") -> String raise {
+  let res = sympy_call_must("sympy.polys.orthopolys.spherical_bessel_fn", [
+    OracleArg::Int(n),
+    OracleArg::PyObj(sympy_symbol_obj(x)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn jacobi_poly(
+  n : Int,
+  a : Int,
+  b : Int,
+  x? : String = "x",
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.orthopolys.jacobi_poly", [
+    OracleArg::Int(n),
+    OracleArg::Int(a),
+    OracleArg::Int(b),
+    OracleArg::PyObj(sympy_symbol_obj(x)),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn dup_bernoulli(n : Int, domain? : String = "QQ") -> String raise {
+  orth_dup_unary("sympy.polys.appellseqs.dup_bernoulli", n, domain)
+}
+
+///|
+pub fn dup_bernoulli_c(n : Int, domain? : String = "QQ") -> String raise {
+  orth_dup_unary("sympy.polys.appellseqs.dup_bernoulli_c", n, domain)
+}
+
+///|
+pub fn dup_genocchi(n : Int, domain? : String = "ZZ") -> String raise {
+  orth_dup_unary("sympy.polys.appellseqs.dup_genocchi", n, domain)
+}
+
+///|
+pub fn dup_euler(n : Int, domain? : String = "QQ") -> String raise {
+  orth_dup_unary("sympy.polys.appellseqs.dup_euler", n, domain)
+}
+
+///|
+pub fn dup_andre(n : Int, domain? : String = "ZZ") -> String raise {
+  orth_dup_unary("sympy.polys.appellseqs.dup_andre", n, domain)
+}
+
+///|
+pub fn bernoulli_poly(n : Int, x? : String = "x") -> String raise {
+  named_unary_poly("sympy.polys.appellseqs.bernoulli_poly", n, x)
+}
+
+///|
+pub fn bernoulli_c_poly(n : Int, x? : String = "x") -> String raise {
+  named_unary_poly("sympy.polys.appellseqs.bernoulli_c_poly", n, x)
+}
+
+///|
+pub fn genocchi_poly(n : Int, x? : String = "x") -> String raise {
+  named_unary_poly("sympy.polys.appellseqs.genocchi_poly", n, x)
+}
+
+///|
+pub fn euler_poly(n : Int, x? : String = "x") -> String raise {
+  named_unary_poly("sympy.polys.appellseqs.euler_poly", n, x)
+}
+
+///|
+pub fn andre_poly(n : Int, x? : String = "x") -> String raise {
+  named_unary_poly("sympy.polys.appellseqs.andre_poly", n, x)
+}
+
+///|
+pub fn construct_domain_domain(exprs : Array[@symcore.Expr]) -> String raise {
+  let py_exprs : Array[@py.PyObject] = []
+  for expr in exprs {
+    py_exprs.push(expr_to_sympy(expr))
+  }
+  let res = sympy_call_must("sympy.polys.constructor.construct_domain", [
+    OracleArg::PyObj(py_list_from_objects(py_exprs).obj()),
+  ])
+  let parts = py_list_to_pyobjects(res)
+  guard parts.length() >= 1 else { fail("construct-domain-result-shape") }
+  py_str_obj(parts[0])
 }
 
 ///|

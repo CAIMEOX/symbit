@@ -4,6 +4,9 @@ fn order_to_sympy(order : TermOrder) -> String {
     TermOrder::Lex => "lex"
     TermOrder::Grlex => "grlex"
     TermOrder::Grevlex => "grevlex"
+    TermOrder::Ilex => "ilex"
+    TermOrder::Igrlex => "igrlex"
+    TermOrder::Igrevlex => "igrevlex"
   }
 }
 

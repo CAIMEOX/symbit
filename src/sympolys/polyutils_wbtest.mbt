@@ -127,3 +127,25 @@ test "polyutils wb: symbol collection and inferred gens" {
   let auto_dict = dict_from_expr(x + y * @symcore.int(2))
   assert_true(auto_dict.contains("\"x1\"") && auto_dict.contains("\"y2\""))
 }
+
+///|
+test "polyutils wb: parallel dict and expr_from_dict frontdoors" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let parallel = parallel_dict_from_expr(
+    [x * y + @symcore.int(2), x * x + @symcore.int(3) * y],
+    gens=["x", "y"],
+  )
+  inspect(
+    parallel,
+    content="[{(0,0):2,(1,1):1},{(0,1):3,(2,0):1}]||[\"x\",\"y\"]",
+  )
+
+  let rep : Map[Monomial, Expr] = Map::new()
+  rep.set(monomial_from_array([2, 1]), @symcore.int(3))
+  rep.set(monomial_from_array([0, 0]), @symcore.int(5))
+  inspect(
+    @symprint.pretty_string(expr_from_dict(rep, ["x", "y"])).trim().to_string(),
+    content="3*x**2*y + 5",
+  )
+}

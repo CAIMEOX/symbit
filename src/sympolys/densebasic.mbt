@@ -1154,6 +1154,25 @@ pub fn dmp_from_sympy(
 }
 
 ///|
+/// Create a dense univariate polynomial from a coefficient list.
+///
+/// - Does: Converts an already-domain-typed coefficient list into normalized
+///   dense representation.
+/// - Input: Coefficients in descending degree order and the target domain.
+/// - Returns: A dense coefficient array with leading zeros stripped.
+/// - Limits: MoonBit callers pass `FieldElem` values directly; Python's
+///   arbitrary `K.convert(c)` coercion is represented by explicit constructors.
+pub fn dup_from_list(
+  f : Array[FieldElem],
+  _domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if f.is_empty() {
+    return Array::new()
+  }
+  dup_strip(f)
+}
+
+///|
 /// Return the ``n``-th coefficient of ``f`` in ``K[x]``.
 
 ///|
@@ -3121,6 +3140,21 @@ pub fn dup_slice(
     out.push(zero)
   }
   out
+}
+
+///|
+/// Truncate a dense univariate polynomial to the first `n` terms.
+///
+/// - Does: Keeps terms with exponents `< n`, matching SymPy's `dup_slice(f, 0, n)`.
+/// - Input: Dense coefficients, cutoff `n`, and coefficient domain.
+/// - Returns: A normalized dense coefficient array.
+/// - Limits: Negative cutoffs follow the underlying `dup_slice` behavior.
+pub fn dup_truncate(
+  f : Array[FieldElem],
+  n : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  dup_slice(f, 0, n, domain)
 }
 
 ///|

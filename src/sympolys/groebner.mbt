@@ -12,6 +12,21 @@ fn check_compat(polys : Array[Poly]) -> Unit raise PolyError {
 }
 
 ///|
+/// Structured Groebner basis result.
+///
+/// - Does: Stores the basis polynomials together with shared ring metadata.
+/// - Input: Produced by `groebner_basis`.
+/// - Returns: A typed basis object.
+/// - Limits: SymPy's rich mutable `GroebnerBasis` methods are not all modeled;
+///   use existing front doors for reduction and zero-dimensional checks.
+pub struct GroebnerBasis {
+  polys : Array[Poly]
+  gens : Array[String]
+  domain : Domain
+  order : TermOrder
+}
+
+///|
 fn coeff_div(
   num : FieldElem,
   den : FieldElem,
@@ -205,6 +220,34 @@ pub fn Poly::groebner(
     }
   })
   reduced
+}
+
+///|
+/// Compute a structured Groebner basis result.
+///
+/// - Does: Runs the existing Groebner basis algorithm and packages the basis
+///   with ring metadata.
+/// - Input: A non-empty compatible polynomial list and optional monomial order.
+/// - Returns: `GroebnerBasis`.
+/// - Limits: Raises on empty input or incompatible polynomial rings.
+pub fn groebner_basis(
+  polys : Array[Poly],
+  order? : TermOrder,
+) -> GroebnerBasis raise PolyError {
+  if polys.is_empty() {
+    raise PolyError::NonPolynomial
+  }
+  let ord = match order {
+    Some(o) => o
+    None => polys[0].order
+  }
+  let basis = Poly::groebner(polys, order=ord)
+  GroebnerBasis::{
+    polys: basis,
+    gens: polys[0].gens,
+    domain: polys[0].domain,
+    order: ord,
+  }
 }
 
 ///|
