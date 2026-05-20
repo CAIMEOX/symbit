@@ -23,11 +23,6 @@ fn expect_resultant_oracle(p : Poly, q : Poly) -> Unit raise {
 }
 
 ///|
-fn expr_rat(n : Int, d : Int) -> @symcore.Expr raise {
-  @symcore.rational_from_ints(n, d)
-}
-
-///|
 test "euclidtools: gcd_univar oracle parity (x^4-1, x^3-1)" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let x = expr_sym("x")
@@ -332,4 +327,110 @@ test "euclidtools: resultant oracle parity (QQ quadratic)" {
   let p = b.from_expr((x ^ expr_int(2)) + expr_rat(1, 2) * x + expr_int(1))
   let q = b.from_expr(x + expr_rat(-1, 2))
   expect_resultant_oracle(p, q)
+}
+
+///|
+fn euclid_port_dup_triple_repr(
+  triple : (Array[FieldElem], Array[FieldElem], Array[FieldElem]),
+) -> String {
+  "(\{dup_repr(triple.0)},\{dup_repr(triple.1)},\{dup_repr(triple.2)})"
+}
+
+///|
+fn euclid_port_dup_list_repr(polys : Array[Array[FieldElem]]) -> String {
+  "[" + polys.map(poly => dup_repr(poly)).join(",") + "]"
+}
+
+///|
+fn euclid_port_dmp_triple_repr(
+  triple : (DensePoly, DensePoly, DensePoly),
+) -> String {
+  "(\{dmp_repr(triple.0)},\{dmp_repr(triple.1)},\{dmp_repr(triple.2)})"
+}
+
+///|
+fn euclid_port_dmp_list_repr(polys : Array[DensePoly]) -> String {
+  "[" + polys.map(poly => dmp_repr(poly)).join(",") + "]"
+}
+
+///|
+test "euclidtools: dense extended Euclidean oracle parity" {
+  let f = [feqq(1, 1), feqq(-2, 1), feqq(-6, 1), feqq(12, 1), feqq(15, 1)]
+  let g = [feqq(1, 1), feqq(1, 1), feqq(-4, 1), feqq(-4, 1)]
+  assert_eq(
+    dup_repr_tuple(@sympolys.dup_half_gcdex(f, g, Domain::QQ)),
+    dup_half_gcdex(dup_to_rats(f), dup_to_rats(g), domain="QQ"),
+  )
+  assert_eq(
+    euclid_port_dup_triple_repr(@sympolys.dup_gcdex(f, g, Domain::QQ)),
+    dup_gcdex(dup_to_rats(f), dup_to_rats(g), domain="QQ"),
+  )
+}
+
+///|
+test "euclidtools: dense inverse oracle parity" {
+  let f = [feqq(1, 1), feqq(0, 1), feqq(-1, 1)]
+  let g = [feqq(2, 1), feqq(-1, 1)]
+  assert_eq(
+    dup_repr(@sympolys.dup_invert(f, g, Domain::QQ)),
+    dup_invert(dup_to_rats(f), dup_to_rats(g), domain="QQ"),
+  )
+}
+
+///|
+test "euclidtools: dense Euclidean PRS oracle parity" {
+  let f = [
+    feqq(1, 1),
+    feqq(0, 1),
+    feqq(1, 1),
+    feqq(0, 1),
+    feqq(-3, 1),
+    feqq(-3, 1),
+    feqq(8, 1),
+    feqq(2, 1),
+    feqq(-5, 1),
+  ]
+  let g = [
+    feqq(3, 1),
+    feqq(0, 1),
+    feqq(5, 1),
+    feqq(0, 1),
+    feqq(-4, 1),
+    feqq(-9, 1),
+    feqq(21, 1),
+  ]
+  assert_eq(
+    euclid_port_dup_list_repr(@sympolys.dup_euclidean_prs(f, g, Domain::QQ)),
+    dup_euclidean_prs(dup_to_rats(f), dup_to_rats(g), domain="QQ"),
+  )
+}
+
+///|
+test "euclidtools: dense dmp univariate oracle parity" {
+  let f = poly_fe([
+    feqq(1, 1),
+    feqq(-2, 1),
+    feqq(-6, 1),
+    feqq(12, 1),
+    feqq(15, 1),
+  ])
+  let g = poly_fe([feqq(1, 1), feqq(1, 1), feqq(-4, 1), feqq(-4, 1)])
+  assert_eq(
+    dmp_pair_repr(@sympolys.dmp_half_gcdex(f, g, 0, Domain::QQ)),
+    dmp_half_gcdex(dense_data_of(f), dense_data_of(g), 0, domain="QQ"),
+  )
+  assert_eq(
+    euclid_port_dmp_triple_repr(@sympolys.dmp_gcdex(f, g, 0, Domain::QQ)),
+    dmp_gcdex(dense_data_of(f), dense_data_of(g), 0, domain="QQ"),
+  )
+  let inv_f = poly_fe([feqq(1, 1), feqq(0, 1), feqq(-1, 1)])
+  let inv_g = poly_fe([feqq(2, 1), feqq(-1, 1)])
+  assert_eq(
+    dmp_repr(@sympolys.dmp_invert(inv_f, inv_g, 0, Domain::QQ)),
+    dmp_invert(dense_data_of(inv_f), dense_data_of(inv_g), 0, domain="QQ"),
+  )
+  assert_eq(
+    euclid_port_dmp_list_repr(@sympolys.dmp_euclidean_prs(f, g, 0, Domain::QQ)),
+    dmp_euclidean_prs(dense_data_of(f), dense_data_of(g), 0, domain="QQ"),
+  )
 }

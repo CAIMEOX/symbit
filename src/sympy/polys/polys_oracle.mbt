@@ -7166,6 +7166,114 @@ pub fn dup_pexquo(
 }
 
 ///|
+fn euclidtools_dup_call(
+  name : String,
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain : String,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(g, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.euclidtools.\{name}", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+fn euclidtools_dmp_call(
+  name : String,
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain : String,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.euclidtools.\{name}", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_half_gcdex(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dup_call("dup_half_gcdex", f, g, domain)
+}
+
+///|
+pub fn dmp_half_gcdex(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_half_gcdex", f, g, u, domain)
+}
+
+///|
+pub fn dup_gcdex(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dup_call("dup_gcdex", f, g, domain)
+}
+
+///|
+pub fn dmp_gcdex(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_gcdex", f, g, u, domain)
+}
+
+///|
+pub fn dup_invert(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dup_call("dup_invert", f, g, domain)
+}
+
+///|
+pub fn dmp_invert(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_invert", f, g, u, domain)
+}
+
+///|
+pub fn dup_euclidean_prs(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dup_call("dup_euclidean_prs", f, g, domain)
+}
+
+///|
+pub fn dmp_euclidean_prs(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_euclidean_prs", f, g, u, domain)
+}
+
+///|
 pub fn dmp_add_term(
   f : DenseData,
   c : DenseData,

@@ -40,6 +40,15 @@ fn expr_int(n : Int) -> @symcore.Expr {
 }
 
 ///|
+fn expr_rat(n : Int, d : Int) -> @symcore.Expr raise {
+  @symcore.Expr::Number(
+    @symnum.BigRational::from_ints(n, d) catch {
+      _ => raise PolyError::DivisionByZero
+    },
+  )
+}
+
+///|
 fn sort_factor_repr(repr_str : String) -> String raise {
   sympy_sort_factor_repr(repr_str)
 }
