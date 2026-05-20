@@ -71,6 +71,8 @@ pub fn complex_field_domain() -> Domain
 
 pub fn compose(Poly, Poly) -> Poly raise PolyError
 
+pub fn compute_sign(Int, Int) -> Int raise PolyError
+
 pub fn construct_domain(Array[@symcore.Expr], domain? : Domain, composite? : Bool) -> ConstructDomainResult
 
 pub fn content(Poly) -> @symnum.BigRational raise PolyError
@@ -1371,6 +1373,8 @@ pub fn primitive_element(Array[@symcore.Expr]) -> (@symcore.Expr, Array[Int]) ra
 
 pub fn primitive_element_ex(Array[@symcore.Expr]) -> (@symcore.Expr, Array[Int], Array[Array[@symnum.BigRational]]) raise PolyError
 
+pub fn process_matrix_output(Array[Poly]) -> Array[Poly]
+
 pub fn python_gcd(Int, Int) -> Int
 
 pub fn python_gcdex(Int, Int) -> (Int, Int, Int)
@@ -1468,6 +1472,8 @@ pub fn sdm_scalar_mul_exraw(SDM, FieldElem, reverse? : Bool) -> SDM raise PolyEr
 pub fn sdm_transpose(SDM) -> SDM raise PolyError
 
 pub fn sfield(Array[@symcore.Expr], gens? : Array[String], domain? : Domain, order? : TermOrder) -> RingFactoryResult
+
+pub fn sign_seq(Array[Poly]) -> Array[Int] raise PolyError
 
 pub fn smith_normal_decomp(DomainMatrix) -> (DomainMatrix, DomainMatrix, DomainMatrix) raise PolyError
 

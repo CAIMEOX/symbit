@@ -65,6 +65,61 @@ test "subresultants_qq_zz: euclid_q/sturm_q parity" {
 }
 
 ///|
+test "subresultants_qq_zz: helper parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let p = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(2) * x)
+  let q = b.from_expr(
+    @symcore.int(-1) * ((x ^ @symcore.int(2)) + @symcore.int(1)),
+  )
+  let zero = Poly::zero(["x"], Domain::ZZ)
+  let ours_sign = @sympolys.sign_seq([p, q, zero])
+    .map(v => v.to_string())
+    .join(",")
+  let oracle_sign = sign_seq_qq_zz([p.to_expr(), q.to_expr(), zero.to_expr()])
+  assert_eq(ours_sign, oracle_sign)
+
+  let r = b.from_expr(x + @symcore.int(1))
+  let same_degree = b.from_expr(@symcore.int(2) * x + @symcore.int(3))
+  let ours_process = poly_list_to_string(
+    @sympolys.process_matrix_output([p, q, zero, r, same_degree]),
+  )
+  let oracle_process = process_matrix_output_qq_zz([
+    p.to_expr(),
+    q.to_expr(),
+    zero.to_expr(),
+    r.to_expr(),
+    same_degree.to_expr(),
+  ])
+  assert_eq(ours_process, oracle_process)
+
+  assert_eq(
+    @sympolys.compute_sign(-2, 4).to_string(),
+    compute_sign_qq_zz(-2, 4),
+  )
+  assert_eq(
+    @sympolys.compute_sign(-2, 5).to_string(),
+    compute_sign_qq_zz(-2, 5),
+  )
+}
+
+///|
+test "subresultants_qq_zz: euclid_q/sturm_q normalization parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let p = b.from_expr(
+    @symcore.int(-1) * ((x ^ @symcore.int(2)) - @symcore.int(1)),
+  )
+  let q = b.from_expr(x - @symcore.int(1))
+  let ours_e = poly_list_to_string(@sympolys.euclid_q(q, p))
+  let oracle_e = euclid_q_qq_zz(q.to_expr(), p.to_expr(), x="x")
+  assert_eq(ours_e, oracle_e)
+  let ours_s = poly_list_to_string(@sympolys.sturm_q(q, p))
+  let oracle_s = sturm_q_qq_zz(q.to_expr(), p.to_expr(), x="x")
+  assert_eq(ours_s, oracle_s)
+}
+
+///|
 test "subresultants_qq_zz: rem_z/quo_z parity" {
   let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)

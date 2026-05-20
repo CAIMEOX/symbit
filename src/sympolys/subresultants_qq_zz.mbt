@@ -33,6 +33,108 @@ fn lift_pair_to_qq(p : Poly, q : Poly) -> (Poly, Poly) raise PolyError {
 }
 
 ///|
+fn field_elem_sign(c : FieldElem) -> Int {
+  if fe_is_positive(c) {
+    1
+  } else if fe_is_negative(c) {
+    -1
+  } else {
+    0
+  }
+}
+
+///|
+fn normalized_q_prs_inputs(
+  p : Poly,
+  q : Poly,
+) -> (Poly, Poly, Bool) raise PolyError {
+  let (a0, b0) = lift_pair_to_qq(p, q)
+  let mut a = a0
+  let mut b = b0
+  if degree(b) > degree(a) {
+    let tmp = a
+    a = b
+    b = tmp
+  }
+  let mut flipped = false
+  if field_elem_sign(a.lc()) < 0 {
+    a = a.neg()
+    b = b.neg()
+    flipped = true
+  }
+  (a, b, flipped)
+}
+
+///|
+fn maybe_flip_prs(seq : Array[Poly], flipped : Bool) -> Array[Poly] {
+  if !flipped {
+    return seq
+  }
+  seq.map(p => p.neg())
+}
+
+///|
+/// Return signs of leading coefficients in a polynomial sequence.
+///
+/// - Does: Mirrors SymPy `sign_seq` by applying `sign(LC(poly))` to every
+///   polynomial in the sequence.
+/// - Input: An array of univariate `Poly` values.
+/// - Returns: `Array[Int]` containing `-1`, `0`, or `1`.
+/// - Limits: Raises `PolyError` when a leading coefficient cannot be formed in
+///   the stored domain.
+pub fn sign_seq(poly_seq : Array[Poly]) -> Array[Int] raise PolyError {
+  poly_seq.map(poly => field_elem_sign(poly.lc()))
+}
+
+///|
+/// Filter a matrix-derived polynomial remainder sequence.
+///
+/// - Does: Removes zero polynomials and later entries whose degree repeats the
+///   previous retained degree, matching SymPy's `process_matrix_output` helper.
+/// - Input: A polynomial remainder sequence with at least the input pair.
+/// - Returns: A filtered `Array[Poly]`.
+/// - Limits: Empty and singleton inputs are returned unchanged.
+pub fn process_matrix_output(poly_seq : Array[Poly]) -> Array[Poly] {
+  if poly_seq.length() < 2 {
+    return poly_seq.copy()
+  }
+  let out : Array[Poly] = [poly_seq[0], poly_seq[1]]
+  let mut previous_degree = degree(poly_seq[1])
+  for i in 2..<poly_seq.length() {
+    let current_degree = degree(poly_seq[i])
+    if current_degree < 0 || current_degree == previous_degree {
+      continue
+    }
+    out.push(poly_seq[i])
+    previous_degree = current_degree
+  }
+  out
+}
+
+///|
+/// Compute the sign of an integer power without evaluating the power.
+///
+/// - Does: Returns `sign(base ** expo)` using only signs and parity.
+/// - Input: Integer `base` and non-negative integer `expo`.
+/// - Returns: `-1`, `0`, or `1`.
+/// - Limits: Negative exponents are outside the SymPy helper contract and raise
+///   `PolyError::BadExponent`.
+pub fn compute_sign(base : Int, expo : Int) -> Int raise PolyError {
+  if expo < 0 {
+    raise PolyError::BadExponent
+  }
+  if base > 0 {
+    1
+  } else if base == 0 {
+    0
+  } else if expo % 2 == 0 {
+    1
+  } else {
+    -1
+  }
+}
+
+///|
 /// Compute a scalar resultant over `QQ` or `ZZ`.
 ///
 /// - Does: Delegates to `Poly::resultant` after validating the input pair.
@@ -87,10 +189,16 @@ pub fn subresultants_rem(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
 /// - Returns: `Array[Poly]`.
 /// - Limits: Raises `PolyError` outside the supported univariate `QQ/ZZ` path.
 pub fn euclid_q(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
-  let (a0, b0) = lift_pair_to_qq(p, q)
+  let (a0, b0, flipped) = normalized_q_prs_inputs(p, q)
   let seq : Array[Poly] = Array::new()
   seq.push(a0)
   seq.push(b0)
+  if a0.is_zero() ||
+    b0.is_zero() ||
+    (degree(a0) == 0 && degree(b0) == 0) ||
+    (degree(a0) > 0 && degree(b0) == 0) {
+    return maybe_flip_prs(seq, flipped)
+  }
   let mut a = a0
   let mut b = b0
   while !b.is_zero() {
@@ -102,7 +210,7 @@ pub fn euclid_q(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
     a = b
     b = r
   }
-  seq
+  maybe_flip_prs(seq, flipped)
 }
 
 ///|
@@ -114,10 +222,16 @@ pub fn euclid_q(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
 /// - Returns: `Array[Poly]`.
 /// - Limits: Raises `PolyError` outside the supported univariate `QQ/ZZ` path.
 pub fn sturm_q(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
-  let (a0, b0) = lift_pair_to_qq(p, q)
+  let (a0, b0, flipped) = normalized_q_prs_inputs(p, q)
   let seq : Array[Poly] = Array::new()
   seq.push(a0)
   seq.push(b0)
+  if a0.is_zero() ||
+    b0.is_zero() ||
+    (degree(a0) == 0 && degree(b0) == 0) ||
+    (degree(a0) > 0 && degree(b0) == 0) {
+    return maybe_flip_prs(seq, flipped)
+  }
   let mut a = a0
   let mut b = b0
   while !b.is_zero() {
@@ -130,7 +244,7 @@ pub fn sturm_q(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
     a = b
     b = neg_r
   }
-  seq
+  maybe_flip_prs(seq, flipped)
 }
 
 ///|

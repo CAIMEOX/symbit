@@ -10712,6 +10712,55 @@ pub fn sturm_q_qq_zz(
 }
 
 ///|
+pub fn sign_seq_qq_zz(
+  polys : Array[@symcore.Expr],
+  x? : String = "x",
+) -> String raise {
+  let items : Array[@py.PyObject] = Array::new()
+  for p in polys {
+    items.push(expr_to_sympy(p))
+  }
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_objects(items).obj()))
+  args.push(OracleArg::PyObj(sympy_symbol_obj(x)))
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.sign_seq", args)
+  let values = py_list_to_pyobjects(res)
+  values.map(v => py_str_obj(v)).join(",")
+}
+
+///|
+pub fn process_matrix_output_qq_zz(
+  polys : Array[@symcore.Expr],
+  x? : String = "x",
+) -> String raise {
+  let items : Array[@py.PyObject] = Array::new()
+  for p in polys {
+    items.push(expr_to_sympy(p))
+  }
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_objects(items).obj()))
+  args.push(OracleArg::PyObj(sympy_symbol_obj(x)))
+  let res = sympy_call_must(
+    "sympy.polys.subresultants_qq_zz.process_matrix_output", args,
+  )
+  let values = py_list_to_pyobjects(res)
+  let parts : Array[String] = Array::new()
+  for item in values {
+    parts.push(py_sympy_expr_str(item))
+  }
+  parts.join(" | ")
+}
+
+///|
+pub fn compute_sign_qq_zz(base : Int, expo : Int) -> String raise {
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.compute_sign", [
+    OracleArg::Int(base),
+    OracleArg::Int(expo),
+  ])
+  py_str_enum(res)
+}
+
+///|
 pub fn rem_z_qq_zz(
   p : @symcore.Expr,
   q : @symcore.Expr,
