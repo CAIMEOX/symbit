@@ -44,6 +44,16 @@ fn euclid_wb_dmp_triple_repr(
 }
 
 ///|
+fn euclid_wb_ground_primitive_repr(value : (FieldElem, DensePoly)) -> String {
+  "(\{value.0},\{euclid_wb_dmp_repr(value.1)})"
+}
+
+///|
+fn euclid_wb_dmp_pair_repr(value : (DensePoly, DensePoly)) -> String {
+  "(\{euclid_wb_dmp_repr(value.0)},\{euclid_wb_dmp_repr(value.1)})"
+}
+
+///|
 fn euclid_wb_dup_list_repr(polys : Array[Array[FieldElem]]) -> String {
   "[" + polys.map(poly => euclid_wb_dup_repr(poly)).join(",") + "]"
 }
@@ -281,5 +291,30 @@ test "euclidtools wb: field gcd lcm and dmp wrappers" {
   inspect(
     euclid_wb_dmp_repr(dmp_lcm(fd, gd, 0, Domain::QQ)),
     content="[1,7/2,3,0]",
+  )
+}
+
+///|
+test "euclidtools wb: dense content and primitive frontdoors" {
+  let f = [euclid_wb_qq(6, 1), euclid_wb_qq(8, 1), euclid_wb_qq(12, 1)]
+  inspect(dup_content(f, Domain::ZZ).to_string(), content="2")
+  let (content, primitive) = dup_primitive(f, Domain::ZZ)
+  inspect(
+    "(\{content},\{euclid_wb_dup_repr(primitive)})",
+    content="(2,[3,4,6])",
+  )
+  let xy = dense_poly([
+    euclid_wb_poly([euclid_wb_qq(2, 1), euclid_wb_qq(6, 1)]),
+    euclid_wb_poly([euclid_wb_qq(4, 1), euclid_wb_qq(12, 1)]),
+  ])
+  inspect(dmp_ground_content(xy, 1, Domain::ZZ).to_string(), content="2")
+  inspect(
+    euclid_wb_ground_primitive_repr(dmp_ground_primitive(xy, 1, Domain::ZZ)),
+    content="(2,[[1,3],[2,6]])",
+  )
+  inspect(euclid_wb_dmp_repr(dmp_content(xy, 1, Domain::ZZ)), content="[2,6]")
+  inspect(
+    euclid_wb_dmp_pair_repr(dmp_primitive(xy, 1, Domain::ZZ)),
+    content="([2,6],[[1],[2]])",
   )
 }

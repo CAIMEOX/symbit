@@ -62,3 +62,32 @@ test "densetools monic" {
   let oracle2 = dmp_ground_monic(dense_data_of(f2), 1)
   assert_eq(ours2, oracle2)
 }
+
+///|
+test "densetools content and primitive" {
+  let f = [fezz(6), fezz(8), fezz(12)]
+  let ours_content = @sympolys.dup_content(f, Domain::ZZ).to_string()
+  let oracle_content = dup_content(dup_to_rats(f), domain="ZZ")
+  assert_eq(ours_content, oracle_content)
+  let ours_primitive = @sympolys.dup_primitive(f, Domain::ZZ)
+  let ours_primitive_str = "(\{ours_primitive.0},\{dup_repr(ours_primitive.1)})"
+  let oracle_primitive = dup_primitive(dup_to_rats(f), domain="ZZ")
+  assert_eq(ours_primitive_str, oracle_primitive)
+
+  let xy = @sympolys.dense_poly([poly_int([2, 6]), poly_int([4, 12])])
+  let ours_ground_content = @sympolys.dmp_ground_content(xy, 1, Domain::ZZ).to_string()
+  let oracle_ground_content = dmp_ground_content(
+    dense_data_of(xy),
+    1,
+    domain="ZZ",
+  )
+  assert_eq(ours_ground_content, oracle_ground_content)
+  let ours_ground_primitive = @sympolys.dmp_ground_primitive(xy, 1, Domain::ZZ)
+  let ours_ground_primitive_str = "(\{ours_ground_primitive.0},\{dmp_repr(ours_ground_primitive.1)})"
+  let oracle_ground_primitive = dmp_ground_primitive(
+    dense_data_of(xy),
+    1,
+    domain="ZZ",
+  )
+  assert_eq(ours_ground_primitive_str, oracle_ground_primitive)
+}

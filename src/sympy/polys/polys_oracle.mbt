@@ -7556,6 +7556,24 @@ pub fn dmp_lcm(
 }
 
 ///|
+pub fn dmp_content(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_unary_call("dmp_content", f, u, domain)
+}
+
+///|
+pub fn dmp_primitive(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_unary_call("dmp_primitive", f, u, domain)
+}
+
+///|
 pub fn dmp_cancel(
   f : DenseData,
   g : DenseData,
@@ -8732,6 +8750,58 @@ pub fn dmp_ground_monic(
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densetools.dmp_ground_monic", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_content(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dup_content", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_ground_content(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dmp_ground_content", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_primitive(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dup_primitive", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_ground_primitive(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dmp_ground_primitive", args)
   remove_spaces(py_dense_str(res))
 }
 

@@ -899,6 +899,77 @@ pub fn dmp_lcm(
 }
 
 ///|
+/// GCD of multivariate coefficients.
+///
+/// - Does: Computes the polynomial content of `f` with respect to its main
+///   variable.
+/// - Input: A dense recursive polynomial, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: A dense recursive polynomial in the remaining variables.
+/// - Limits: Inherits the current `dmp_gcd` limit, so levels above one are not
+///   fully recursive yet.
+pub fn dmp_content(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if u == 0 {
+    return DensePoly::Coef(dup_content(dmp_to_coeffs(f), domain))
+  }
+  let v = u - 1
+  let mut content = dmp_LC(f)
+  if dmp_zero_p(f, u) {
+    return content
+  }
+  let items = dmp_items(f)
+  for i in 1..<items.length() {
+    content = dmp_gcd(content, items[i], v, domain)
+    if dmp_one_p(content, v, domain) {
+      break
+    }
+  }
+  if fe_is_negative(dmp_ground_LC(content, v)) {
+    dmp_neg(content, v, domain)
+  } else {
+    content
+  }
+}
+
+///|
+/// Multivariate content and primitive polynomial.
+///
+/// - Does: Splits `f` into `(content, primitive)` with respect to the main
+///   variable.
+/// - Input: A dense recursive polynomial, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: A dense recursive coefficient polynomial and a primitive dense
+///   recursive polynomial.
+/// - Limits: Inherits the current `dmp_gcd` limit, so levels above one are not
+///   fully recursive yet.
+pub fn dmp_primitive(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly) raise PolyError {
+  if u == 0 {
+    let (content, primitive) = dup_primitive(dmp_to_coeffs(f), domain)
+    return (DensePoly::Coef(content), dmp_from_coeffs(primitive))
+  }
+  let v = u - 1
+  let content = dmp_content(f, u, domain)
+  if dmp_zero_p(f, u) || dmp_one_p(content, v, domain) {
+    (content, f)
+  } else {
+    let items = dmp_items(f)
+    let primitive_items : Array[DensePoly] = Array::new()
+    for c in items {
+      primitive_items.push(dmp_quo(c, content, v, domain))
+    }
+    (content, dmp_strip(DensePoly::Poly(primitive_items)))
+  }
+}
+
+///|
 /// Cancel common polynomial factors in `f/g`.
 ///
 /// - Does: Delegates to `dup_cancel` for univariate input.

@@ -165,6 +165,8 @@ pub fn dmp_apply_pairs(DensePoly, DensePoly, (FieldElem, FieldElem, Array[FieldE
 
 pub fn dmp_cancel(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly) raise PolyError
 
+pub fn dmp_content(DensePoly, Int, Domain) -> DensePoly raise PolyError
+
 pub fn dmp_convert(DensePoly, Int, Domain, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_copy(DensePoly, Int) -> DensePoly
@@ -227,11 +229,15 @@ pub fn dmp_ground_LC(DensePoly, Int) -> FieldElem raise PolyError
 
 pub fn dmp_ground_TC(DensePoly, Int) -> FieldElem raise PolyError
 
+pub fn dmp_ground_content(DensePoly, Int, Domain) -> FieldElem raise PolyError
+
 pub fn dmp_ground_monic(DensePoly, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_ground_nth(DensePoly, Array[Int], Int, Domain) -> FieldElem raise PolyError
 
 pub fn dmp_ground_p(DensePoly, FieldElem?, Int) -> Bool raise PolyError
+
+pub fn dmp_ground_primitive(DensePoly, Int, Domain) -> (FieldElem, DensePoly) raise PolyError
 
 pub fn dmp_grounds(FieldElem, Int, Int, Domain) -> Array[DensePoly]
 
@@ -298,6 +304,8 @@ pub fn dmp_pow(DensePoly, Int, Int, Domain) -> DensePoly raise PolyError
 pub fn dmp_pquo(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_prem(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
+
+pub fn dmp_primitive(DensePoly, Int, Domain) -> (DensePoly, DensePoly) raise PolyError
 
 pub fn dmp_primitive_prs(DensePoly, DensePoly, Int, Domain) -> Array[DensePoly] raise PolyError
 
@@ -665,6 +673,8 @@ pub fn dup_chebyshevt(Int, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_chebyshevu(Int, Domain) -> Array[FieldElem] raise PolyError
 
+pub fn dup_content(Array[FieldElem], Domain) -> FieldElem raise PolyError
+
 pub fn dup_convert(Array[FieldElem], Domain, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_copy(Array[FieldElem]) -> Array[FieldElem] raise PolyError
@@ -782,6 +792,8 @@ pub fn dup_pquo(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] 
 pub fn dup_prem(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_pretty(Array[FieldElem], String, ascending? : Bool) -> String
+
+pub fn dup_primitive(Array[FieldElem], Domain) -> (FieldElem, Array[FieldElem]) raise PolyError
 
 pub fn dup_primitive_prs(Array[FieldElem], Array[FieldElem], Domain) -> Array[Array[FieldElem]] raise PolyError
 

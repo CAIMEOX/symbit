@@ -465,3 +465,108 @@ pub fn dmp_ground_monic(
     dmp_exquo_ground(f, lc, u, domain)
   }
 }
+
+///|
+/// Compute the GCD of coefficients in `K[x]`.
+///
+/// - Does: Computes the ground content of a univariate dense polynomial.
+/// - Input: A dense coefficient array and a coefficient `domain`.
+/// - Returns: A coefficient-domain element.
+/// - Limits: Exact rational-like domains are supported by the current content
+///   helper.
+pub fn dup_content(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  let coeffs = dup_strip(f)
+  if coeffs.is_empty() {
+    return fe_from_int(0, domain)
+  }
+  field_elems_content(coeffs, domain)
+}
+
+///|
+/// Compute the GCD of ground coefficients in `K[X]`.
+///
+/// - Does: Recursively computes the ground content of a dense polynomial.
+/// - Input: A dense recursive polynomial, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: A coefficient-domain element.
+/// - Limits: Exact rational-like domains are supported by the current content
+///   helper.
+pub fn dmp_ground_content(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  if u == 0 {
+    return dup_content(dmp_to_coeffs(f), domain)
+  }
+  if dmp_zero_p(f, u) {
+    return fe_from_int(0, domain)
+  }
+  let mut content = fe_from_int(0, domain)
+  for c in dmp_items(f) {
+    content = field_elems_content(
+      [content, dmp_ground_content(c, u - 1, domain)],
+      domain,
+    )
+    if fe_is_one(content) {
+      break
+    }
+  }
+  content
+}
+
+///|
+/// Compute content and primitive part in `K[x]`.
+///
+/// - Does: Splits a dense univariate polynomial into `(content, primitive)`.
+/// - Input: A dense coefficient array and a coefficient `domain`.
+/// - Returns: A coefficient and a dense coefficient array.
+/// - Limits: Exact rational-like domains are supported by the current content
+///   helper.
+pub fn dup_primitive(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> (FieldElem, Array[FieldElem]) raise PolyError {
+  let coeffs = dup_strip(f)
+  if coeffs.is_empty() {
+    return (fe_from_int(0, domain), coeffs)
+  }
+  let content = dup_content(coeffs, domain)
+  if fe_is_one(content) {
+    (content, coeffs)
+  } else {
+    (content, dup_exquo_ground(coeffs, content, domain))
+  }
+}
+
+///|
+/// Compute ground content and primitive part in `K[X]`.
+///
+/// - Does: Splits a dense recursive polynomial into `(content, primitive)`.
+/// - Input: A dense recursive polynomial, a level `u`, and a coefficient
+///   `domain`.
+/// - Returns: A coefficient and a dense recursive polynomial.
+/// - Limits: Exact rational-like domains are supported by the current content
+///   helper.
+pub fn dmp_ground_primitive(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (FieldElem, DensePoly) raise PolyError {
+  if u == 0 {
+    let (content, primitive) = dup_primitive(dmp_to_coeffs(f), domain)
+    return (content, dmp_from_coeffs(primitive))
+  }
+  if dmp_zero_p(f, u) {
+    return (fe_from_int(0, domain), f)
+  }
+  let content = dmp_ground_content(f, u, domain)
+  if fe_is_one(content) {
+    (content, f)
+  } else {
+    (content, dmp_exquo_ground(f, content, u, domain))
+  }
+}

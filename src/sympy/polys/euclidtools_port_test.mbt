@@ -644,3 +644,15 @@ test "euclidtools: dense dmp gcd lcm cancel oracle parity" {
     dmp_ff_lcm(dense_data_of(fq), dense_data_of(gq), 0, domain="QQ"),
   )
 }
+
+///|
+test "euclidtools: dense dmp content primitive oracle parity" {
+  let xy = @sympolys.dense_poly([poly_int([2, 6]), poly_int([4, 12])])
+  assert_eq(
+    dmp_repr(@sympolys.dmp_content(xy, 1, Domain::ZZ)),
+    dmp_content(dense_data_of(xy), 1, domain="ZZ"),
+  )
+  let ours = @sympolys.dmp_primitive(xy, 1, Domain::ZZ)
+  let ours_str = "(\{dmp_repr(ours.0)},\{dmp_repr(ours.1)})"
+  assert_eq(ours_str, dmp_primitive(dense_data_of(xy), 1, domain="ZZ"))
+}
