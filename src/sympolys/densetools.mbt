@@ -1543,3 +1543,67 @@ pub fn dup_decompose(
   }
   out
 }
+
+///|
+fn densetools_alg_coeff_terms(
+  coeff : FieldElem,
+  base : Domain,
+  minpoly : Poly,
+  gen : String,
+) -> Array[(Int, FieldElem)] raise PolyError {
+  let out : Array[(Int, FieldElem)] = Array::new()
+  match coeff {
+    FieldElem::AlgExt(coeff_base, coeffs, coeff_minpoly, coeff_gen) => {
+      if coeff_base.not_equal(base) ||
+        !minpoly_equal(coeff_minpoly, minpoly) ||
+        coeff_gen != gen {
+        raise PolyError::DomainMismatch
+      }
+      for i in 0..<coeffs.length() {
+        if !fe_is_zero(coeffs[i]) {
+          out.push((i, coeffs[i]))
+        }
+      }
+    }
+    _ => if !fe_is_zero(coeff) { out.push((0, coeff)) }
+  }
+  out
+}
+
+///|
+/// Inject algebraic coefficients as an extra dense polynomial level.
+///
+/// - Does: Converts a recursive dense polynomial over `K(a)` into one over
+///   `K[a, X]`.
+/// - Input: A dense recursive polynomial, its level `u`, and an algebraic
+///   extension `domain`.
+/// - Returns: `(converted, new_level, base_domain)`.
+/// - Limits: Supports monogenic `Domain::AlgExt` values with coefficients using
+///   the same minimal polynomial metadata.
+pub fn dmp_alg_inject(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, Int, Domain) raise PolyError {
+  let (base, gens, rels) = match domain {
+    Domain::AlgExt(base, gens, rels) => (base, gens, rels)
+    _ => raise PolyError::DomainMismatch
+  }
+  let (minpoly, gen) = load_algext_minpoly(base, gens, rels)
+  let source = dmp_to_dict(f, u, domain)
+  let injected : Map[Monomial, FieldElem] = {}
+  for f_monom, coeff in source {
+    let tail = f_monom.to_array()
+    let coeff_terms = densetools_alg_coeff_terms(coeff, base, minpoly, gen)
+    for item in coeff_terms {
+      let merged : Array[Int] = Array::make(tail.length() + 1, 0)
+      merged.set(0, item.0)
+      for i in 0..<tail.length() {
+        merged.set(i + 1, tail[i])
+      }
+      add_term(injected, monomial_from_array(merged), item.1, base)
+    }
+  }
+  let level = u + 1
+  (dmp_from_dict(injected, level, base), level, base)
+}

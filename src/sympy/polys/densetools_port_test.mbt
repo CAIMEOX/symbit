@@ -33,6 +33,31 @@ fn dt_port_dmp_pair_repr(value : (DensePoly, DensePoly)) -> String {
 }
 
 ///|
+fn dt_port_dmp_alg_inject_repr(value : (DensePoly, Int, Domain)) -> String {
+  "(\{dmp_repr(value.0)},\{value.1},\{@sympolys.domain_to_sympy_string(value.2)})"
+}
+
+///|
+fn dt_port_alg_minpoly() -> Poly raise PolyError {
+  let a = @symcore.Expr::Symbol("a")
+  PolyBuilder::new(["a"], Domain::QQ).from_expr(
+    (a ^ @symcore.int(2)) - @symcore.int(2),
+  )
+}
+
+///|
+fn dt_port_alg_domain() -> Domain raise PolyError {
+  let minpoly = dt_port_alg_minpoly()
+  Domain::AlgExt(Domain::QQ, ["a"], [minpoly.to_expr()])
+}
+
+///|
+fn dt_port_alg_dense(expr : @symcore.Expr) -> DensePoly raise PolyError {
+  let poly = Poly::from_expr(expr, ["x"], dt_port_alg_domain())
+  poly_fe(@sympolys.to_dense(poly))
+}
+
+///|
 test "densetools dup integrate/diff/eval" {
   let f = [
     @sympolys.fe_from_int(3, Domain::QQ),
@@ -183,6 +208,24 @@ test "densetools real-imag split oracle parity" {
   assert_eq(
     dt_port_dmp_pair_repr(@sympolys.dup_real_imag(rational, Domain::QQ)),
     dup_real_imag(dup_to_rats(rational), domain="QQ"),
+  )
+}
+
+///|
+test "densetools algebraic coefficient injection oracle parity" {
+  let alg_domain = dt_port_alg_domain()
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let f = dt_port_alg_dense(a * (x ^ @symcore.int(2)) + @symcore.int(1))
+  assert_eq(
+    dt_port_dmp_alg_inject_repr(@sympolys.dmp_alg_inject(f, 0, alg_domain)),
+    dmp_alg_inject_exprs(["sqrt(2)", "0", "1"], 0),
+  )
+
+  let g = dt_port_alg_dense((a + @symcore.int(1)) * x + a)
+  assert_eq(
+    dt_port_dmp_alg_inject_repr(@sympolys.dmp_alg_inject(g, 0, alg_domain)),
+    dmp_alg_inject_exprs(["sqrt(2)+1", "sqrt(2)"], 0),
   )
 }
 

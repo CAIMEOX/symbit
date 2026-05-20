@@ -161,6 +161,8 @@ pub fn dmp_add_mul(DensePoly, DensePoly, DensePoly, Int, Domain) -> DensePoly ra
 
 pub fn dmp_add_term(DensePoly, DensePoly, Int, Int, Domain) -> DensePoly raise PolyError
 
+pub fn dmp_alg_inject(DensePoly, Int, Domain) -> (DensePoly, Int, Domain) raise PolyError
+
 pub fn dmp_apply_pairs(DensePoly, DensePoly, (FieldElem, FieldElem, Array[FieldElem]) -> FieldElem, Array[FieldElem], Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_cancel(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly) raise PolyError

@@ -78,6 +78,36 @@ fn dt_wb_dmp_pair_repr(value : (DensePoly, DensePoly)) -> String {
 }
 
 ///|
+fn dt_wb_dmp_alg_inject_repr(value : (DensePoly, Int, Domain)) -> String {
+  "(\{dt_wb_dmp_repr(value.0)},\{value.1},\{domain_to_sympy_string(value.2)})"
+}
+
+///|
+fn dt_wb_alg_minpoly() -> Poly raise PolyError {
+  let a = @symcore.Expr::Symbol("a")
+  PolyBuilder::new(["a"], Domain::QQ).from_expr(
+    (a ^ @symcore.int(2)) - @symcore.int(2),
+  )
+}
+
+///|
+fn dt_wb_alg_domain() -> Domain raise PolyError {
+  let minpoly = dt_wb_alg_minpoly()
+  Domain::AlgExt(Domain::QQ, ["a"], [minpoly.to_expr()])
+}
+
+///|
+fn dt_wb_alg_coeff(coeffs : Array[Int]) -> FieldElem raise PolyError {
+  let minpoly = dt_wb_alg_minpoly()
+  FieldElem::AlgExt(
+    Domain::QQ,
+    coeffs.map(v => fe_from_int(v, Domain::QQ)),
+    minpoly,
+    "a",
+  )
+}
+
+///|
 test "densetools wb: extract and trunc frontdoors" {
   let f = dt_wb_dup([6, 12, 18])
   let g = dt_wb_dup([4, 8, 12])
@@ -286,5 +316,28 @@ test "densetools wb: functional decomposition frontdoor" {
   inspect(
     dt_wb_dup_list_repr(dup_decompose(dt_wb_dup([1, 0, 0, 0]), Domain::ZZ)),
     content="[[1,0,0,0]]",
+  )
+}
+
+///|
+test "densetools wb: algebraic coefficient injection frontdoor" {
+  let alg_domain = dt_wb_alg_domain()
+  let f = DensePoly::Poly([
+    DensePoly::Coef(dt_wb_alg_coeff([0, 1])),
+    DensePoly::Coef(dt_wb_alg_coeff([0])),
+    DensePoly::Coef(dt_wb_alg_coeff([1])),
+  ])
+  inspect(
+    dt_wb_dmp_alg_inject_repr(dmp_alg_inject(f, 0, alg_domain)),
+    content="([[1,0,0],[1]],1,QQ)",
+  )
+
+  let g = DensePoly::Poly([
+    DensePoly::Coef(dt_wb_alg_coeff([1, 1])),
+    DensePoly::Coef(dt_wb_alg_coeff([0, 1])),
+  ])
+  inspect(
+    dt_wb_dmp_alg_inject_repr(dmp_alg_inject(g, 0, alg_domain)),
+    content="([[1,1],[1,0]],1,QQ)",
   )
 }
