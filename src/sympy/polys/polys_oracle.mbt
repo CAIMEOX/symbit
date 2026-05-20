@@ -8554,6 +8554,64 @@ pub fn gf_sub_mul(
 }
 
 ///|
+fn gf_factor_powers_obj(factors : Array[(Array[Int], Int)]) -> @py.PyObject {
+  let items : Array[@py.PyObject] = []
+  for factor in factors {
+    let coeffs : Array[@py.PyObject] = []
+    for coeff in factor.0 {
+      coeffs.push(py_int_obj(coeff))
+    }
+    let pair = py_tuple_from_objects([
+      py_list_from_objects(coeffs).obj(),
+      py_int_obj(factor.1),
+    ])
+    items.push(pair.obj())
+  }
+  py_list_from_objects(items).obj()
+}
+
+///|
+fn gf_int_matrix_obj(matrix : Array[Array[Int]]) -> @py.PyObject {
+  let rows : Array[@py.PyObject] = []
+  for row in matrix {
+    let items : Array[@py.PyObject] = []
+    for coeff in row {
+      items.push(py_int_obj(coeff))
+    }
+    rows.push(py_list_from_objects(items).obj())
+  }
+  py_list_from_objects(rows).obj()
+}
+
+///|
+fn gf_bool_call(name : String, args : Array[OracleArg]) -> Bool raise {
+  let res = sympy_call_must("sympy.polys.galoistools.\{name}", args)
+  match res {
+    PyBool(v) => py_str_obj(v.obj()) == "True"
+    _ => py_str_enum(res) == "True"
+  }
+}
+
+///|
+pub fn gf_expand(
+  factors : Array[(Array[Int], Int)],
+  p : Int,
+  lc? : Int = 1,
+) -> String raise {
+  let factor_obj = gf_factor_powers_obj(factors)
+  let input_obj = if lc == 1 {
+    factor_obj
+  } else {
+    py_tuple_from_objects([py_int_obj(lc), factor_obj]).obj()
+  }
+  gf_zz_call("gf_expand", [
+    OracleArg::PyObj(input_obj),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
 pub fn gf_div(f : Array[Int], g : Array[Int], p : Int) -> String raise {
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::IntList(f))
@@ -8677,6 +8735,31 @@ pub fn gf_compose_mod(
 }
 
 ///|
+pub fn gf_frobenius_monomial_base(g : Array[Int], p : Int) -> String raise {
+  gf_zz_call("gf_frobenius_monomial_base", [
+    OracleArg::IntList(g),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
+pub fn gf_frobenius_map(
+  f : Array[Int],
+  g : Array[Int],
+  b : Array[Array[Int]],
+  p : Int,
+) -> String raise {
+  gf_zz_call("gf_frobenius_map", [
+    OracleArg::IntList(f),
+    OracleArg::IntList(g),
+    OracleArg::PyObj(gf_int_matrix_obj(b)),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
 pub fn gf_gcd(f : Array[Int], g : Array[Int], p : Int) -> String raise {
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::IntList(f))
@@ -8718,6 +8801,92 @@ pub fn gf_gcdex(f : Array[Int], g : Array[Int], p : Int) -> String raise {
   args.push(OracleArg::PyObj(sympy_domain_obj("ZZ")))
   let res = sympy_call_must("sympy.polys.galoistools.gf_gcdex", args)
   remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn gf_trace_map(
+  a : Array[Int],
+  b : Array[Int],
+  c : Array[Int],
+  n : Int,
+  f : Array[Int],
+  p : Int,
+) -> String raise {
+  gf_zz_call("gf_trace_map", [
+    OracleArg::IntList(a),
+    OracleArg::IntList(b),
+    OracleArg::IntList(c),
+    OracleArg::Int(n),
+    OracleArg::IntList(f),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
+pub fn gf_irred_p_ben_or(f : Array[Int], p : Int) -> Bool raise {
+  gf_bool_call("gf_irred_p_ben_or", [
+    OracleArg::IntList(f),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
+pub fn gf_irred_p_rabin(f : Array[Int], p : Int) -> Bool raise {
+  gf_bool_call("gf_irred_p_rabin", [
+    OracleArg::IntList(f),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
+pub fn gf_irreducible_p(f : Array[Int], p : Int) -> Bool raise {
+  gf_bool_call("gf_irreducible_p", [
+    OracleArg::IntList(f),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
+pub fn gf_sqf_p(f : Array[Int], p : Int) -> Bool raise {
+  gf_bool_call("gf_sqf_p", [
+    OracleArg::IntList(f),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
+pub fn gf_sqf_part(f : Array[Int], p : Int) -> String raise {
+  gf_zz_unary("gf_sqf_part", f, p)
+}
+
+///|
+pub fn gf_sqf_list(f : Array[Int], p : Int) -> String raise {
+  gf_zz_unary("gf_sqf_list", f, p)
+}
+
+///|
+pub fn gf_Qmatrix(f : Array[Int], p : Int) -> String raise {
+  gf_zz_unary("gf_Qmatrix", f, p)
+}
+
+///|
+pub fn gf_Qbasis(q : Array[Array[Int]], p : Int) -> String raise {
+  let res = sympy_call_must("sympy.polys.galoistools.gf_Qbasis", [
+    OracleArg::PyObj(gf_int_matrix_obj(q)),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn gf_berlekamp(f : Array[Int], p : Int) -> String raise {
+  gf_zz_unary("gf_berlekamp", f, p)
 }
 
 ///|

@@ -20,6 +20,25 @@ fn galois_wb_triple(pair : (Array[Int], Array[Int], Array[Int])) -> String {
 }
 
 ///|
+fn galois_wb_matrix(values : Array[Array[Int]]) -> String {
+  "[" + values.map(row => galois_wb_arr(row)).join(", ") + "]"
+}
+
+///|
+fn galois_wb_factor_powers(values : Array[(Array[Int], Int)]) -> String {
+  let parts : Array[String] = []
+  for item in values {
+    parts.push("(\{galois_wb_arr(item.0)}, \{item.1})")
+  }
+  "[" + parts.join(", ") + "]"
+}
+
+///|
+fn galois_wb_sqf_pair(value : (Int, Array[(Array[Int], Int)])) -> String {
+  "(\{value.0}, \{galois_wb_factor_powers(value.1)})"
+}
+
+///|
 fn galois_wb_map(values : Map[Int, Int]) -> String {
   let items : Array[(Int, Int)] = []
   for key, value in values {
@@ -183,6 +202,53 @@ test "galoistools wb: modular algorithm helpers" {
   inspect(gf_crt2(residues, moduli, crt_p, crt_e, crt_s), content="639985")
   inspect(gf_value([1, 7, 2, 4], 11), content="2204")
   inspect(galois_wb_arr(linear_congruence(3, 12, 15)), content="[4, 9, 14]")
+}
+
+///|
+test "galoistools wb: squarefree and Berlekamp helpers" {
+  inspect(
+    galois_wb_arr(gf_expand([([3, 2, 4], 1), ([2, 2], 2), ([3, 1], 3)], 5)),
+    content="[4, 3, 0, 3, 0, 1, 4, 1]",
+  )
+  let frob_base = gf_frobenius_monomial_base([1, 0, 2, 1], 5)
+  inspect(galois_wb_matrix(frob_base), content="[[1], [4, 4, 2], [1, 2]]")
+  inspect(
+    galois_wb_arr(gf_frobenius_map([2, 1, 0, 1], [1, 0, 2, 1], frob_base, 5)),
+    content="[4, 0, 3]",
+  )
+  inspect(
+    galois_wb_pair(gf_trace_map([1, 2], [4, 4], [1, 1], 4, [3, 2, 4], 5)),
+    content="([1, 3], [1, 3])",
+  )
+  inspect(gf_sqf_p([3, 2, 4], 5), content="true")
+  inspect(gf_sqf_p([2, 4, 4, 2, 2, 1, 4], 5), content="false")
+  inspect(
+    galois_wb_arr(gf_sqf_part([1, 1, 3, 0, 1, 0, 2, 2, 1], 5)),
+    content="[1, 4, 3]",
+  )
+  inspect(
+    galois_wb_sqf_pair(gf_sqf_list(gf_from_dict({ 11: 1, 0: 1 }, 11), 11)),
+    content="(1, [([1, 1], 11)])",
+  )
+  inspect(
+    galois_wb_matrix(gf_Qmatrix([3, 2, 4], 5)),
+    content="[[1, 0], [3, 4]]",
+  )
+  inspect(
+    galois_wb_matrix(gf_Qbasis(gf_Qmatrix([1, 0, 0, 0, 1], 5), 5)),
+    content="[[1, 0, 0, 0], [0, 0, 1, 0]]",
+  )
+  inspect(
+    galois_wb_matrix(gf_berlekamp([1, 0, 0, 0, 1], 5)),
+    content="[[1, 0, 2], [1, 0, 3]]",
+  )
+  let irreducible = [1, 4, 2, 2, 3, 2, 4, 1, 4, 0, 4]
+  inspect(gf_irred_p_ben_or(irreducible, 5), content="true")
+  inspect(gf_irred_p_ben_or([3, 2, 4], 5), content="false")
+  inspect(gf_irred_p_rabin(irreducible, 5), content="true")
+  inspect(gf_irred_p_rabin([3, 2, 4], 5), content="false")
+  inspect(gf_irreducible_p(irreducible, 5), content="true")
+  inspect(gf_irreducible_p([3, 2, 4], 5), content="false")
 }
 
 ///|

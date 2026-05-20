@@ -20,6 +20,25 @@ fn gf_triple_repr(pair : (Array[Int], Array[Int], Array[Int])) -> String {
 }
 
 ///|
+fn gf_matrix_repr(values : Array[Array[Int]]) -> String {
+  "[" + values.map(row => gf_repr(row)).join(",") + "]"
+}
+
+///|
+fn gf_factor_powers_repr(values : Array[(Array[Int], Int)]) -> String {
+  let parts : Array[String] = []
+  for item in values {
+    parts.push("(\{gf_repr(item.0)},\{item.1})")
+  }
+  "[" + parts.join(",") + "]"
+}
+
+///|
+fn gf_sqf_result_repr(value : (Int, Array[(Array[Int], Int)])) -> String {
+  "(\{value.0},\{gf_factor_powers_repr(value.1)})"
+}
+
+///|
 fn gf_map_repr(values : Map[Int, Int]) -> String {
   let items : Array[(Int, Int)] = []
   for key, value in values {
@@ -162,6 +181,83 @@ test "galoistools modular algorithm ops" {
   assert_eq(
     gf_repr(@sympolys.linear_congruence(3, 12, 15)),
     linear_congruence(3, 12, 15),
+  )
+}
+
+///|
+test "galoistools squarefree and Berlekamp ops" {
+  let p = 5
+  let factors = [([3, 2, 4], 1), ([2, 2], 2), ([3, 1], 3)]
+  assert_eq(gf_repr(@sympolys.gf_expand(factors, p)), gf_expand(factors, p))
+  let frob_base = @sympolys.gf_frobenius_monomial_base([1, 0, 2, 1], p)
+  assert_eq(
+    gf_matrix_repr(frob_base),
+    gf_frobenius_monomial_base([1, 0, 2, 1], p),
+  )
+  assert_eq(
+    gf_repr(
+      @sympolys.gf_frobenius_map([2, 1, 0, 1], [1, 0, 2, 1], frob_base, p),
+    ),
+    gf_frobenius_map([2, 1, 0, 1], [1, 0, 2, 1], frob_base, p),
+  )
+  assert_eq(
+    gf_pair_repr(
+      @sympolys.gf_trace_map([1, 2], [4, 4], [1, 1], 4, [3, 2, 4], p),
+    ),
+    gf_trace_map([1, 2], [4, 4], [1, 1], 4, [3, 2, 4], p),
+  )
+  assert_eq(@sympolys.gf_sqf_p([3, 2, 4], p), gf_sqf_p([3, 2, 4], p))
+  assert_eq(
+    @sympolys.gf_sqf_p([2, 4, 4, 2, 2, 1, 4], p),
+    gf_sqf_p([2, 4, 4, 2, 2, 1, 4], p),
+  )
+  assert_eq(
+    gf_repr(@sympolys.gf_sqf_part([1, 1, 3, 0, 1, 0, 2, 2, 1], p)),
+    gf_sqf_part([1, 1, 3, 0, 1, 0, 2, 2, 1], p),
+  )
+  let sqf_input = @sympolys.gf_from_dict({ 11: 1, 0: 1 }, 11)
+  assert_eq(
+    gf_sqf_result_repr(@sympolys.gf_sqf_list(sqf_input, 11)),
+    gf_sqf_list(sqf_input, 11),
+  )
+  assert_eq(
+    gf_matrix_repr(@sympolys.gf_Qmatrix([3, 2, 4], p)),
+    gf_Qmatrix([3, 2, 4], p),
+  )
+  assert_eq(
+    gf_matrix_repr(
+      @sympolys.gf_Qbasis(@sympolys.gf_Qmatrix([1, 0, 0, 0, 1], p), p),
+    ),
+    gf_Qbasis(@sympolys.gf_Qmatrix([1, 0, 0, 0, 1], p), p),
+  )
+  assert_eq(
+    gf_matrix_repr(@sympolys.gf_berlekamp([1, 0, 0, 0, 1], p)),
+    gf_berlekamp([1, 0, 0, 0, 1], p),
+  )
+  let irreducible = [1, 4, 2, 2, 3, 2, 4, 1, 4, 0, 4]
+  assert_eq(
+    @sympolys.gf_irred_p_ben_or(irreducible, p),
+    gf_irred_p_ben_or(irreducible, p),
+  )
+  assert_eq(
+    @sympolys.gf_irred_p_ben_or([3, 2, 4], p),
+    gf_irred_p_ben_or([3, 2, 4], p),
+  )
+  assert_eq(
+    @sympolys.gf_irred_p_rabin(irreducible, p),
+    gf_irred_p_rabin(irreducible, p),
+  )
+  assert_eq(
+    @sympolys.gf_irred_p_rabin([3, 2, 4], p),
+    gf_irred_p_rabin([3, 2, 4], p),
+  )
+  assert_eq(
+    @sympolys.gf_irreducible_p(irreducible, p),
+    gf_irreducible_p(irreducible, p),
+  )
+  assert_eq(
+    @sympolys.gf_irreducible_p([3, 2, 4], p),
+    gf_irreducible_p([3, 2, 4], p),
   )
 }
 

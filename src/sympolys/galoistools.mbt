@@ -59,6 +59,62 @@ fn int_gcdex_local(a : Int, b : Int) -> (Int, Int, Int) {
   }
 }
 
+///|
+fn int_array_equal(a : Array[Int], b : Array[Int]) -> Bool {
+  if a.length() != b.length() {
+    return false
+  }
+  for i in 0..<a.length() {
+    if a[i] != b[i] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn int_array_contains(values : Array[Int], needle : Int) -> Bool {
+  for value in values {
+    if value == needle {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn int_array_reverse(values : Array[Int]) -> Array[Int] {
+  let out : Array[Int] = []
+  for i in 0..<values.length() {
+    out.push(values[values.length() - 1 - i])
+  }
+  out
+}
+
+///|
+fn int_prime_factors_unique(n0 : Int) -> Array[Int] {
+  let out : Array[Int] = []
+  let mut n = if n0 < 0 { -n0 } else { n0 }
+  let mut d = 2
+  while d * d <= n {
+    if n % d == 0 {
+      out.push(d)
+      while n % d == 0 {
+        n = n / d
+      }
+    }
+    if d == 2 {
+      d = 3
+    } else {
+      d = d + 2
+    }
+  }
+  if n > 1 {
+    out.push(n)
+  }
+  out
+}
+
 /// Return the leading degree of ``f``.
 
 ///|
@@ -524,6 +580,29 @@ pub fn gf_sub_mul(
 }
 
 ///|
+/// Expand a finite-field factorization.
+///
+/// - Does: Multiplies `(factor, exponent)` pairs in `GF(p)[x]`, including an
+///   optional leading coefficient.
+/// - Input: Dense factors with multiplicities, a prime modulus, and optional
+///   `lc`.
+/// - Returns: A dense polynomial over `GF(p)`.
+/// - Limits: MoonBit uses an explicit `lc` optional argument instead of
+///   accepting either a Python list or `(lc, factors)` tuple.
+pub fn gf_expand(
+  factors : Array[(Array[Int], Int)],
+  p : Int,
+  lc? : Int = 1,
+) -> Array[Int] raise PolyError {
+  let mut out = gf_trunc([lc], p)
+  for entry in factors {
+    let pow = gf_pow(entry.0, entry.1, p)
+    out = gf_mul(out, pow, p)
+  }
+  out
+}
+
+///|
 /// Compute LC and a monic polynomial in ``GF(p)[x]``.
 
 ///|
@@ -893,6 +972,101 @@ pub fn gf_compose_mod(
 }
 
 ///|
+/// Build the Frobenius monomial base modulo a polynomial.
+///
+/// - Does: Computes `x**(i*p) mod g` for `i = 0 .. deg(g)-1`.
+/// - Input: A dense modulus polynomial and a prime modulus.
+/// - Returns: An array of dense remainder polynomials.
+/// - Limits: Raises through `gf_rem`/`gf_pow_mod` if the modulus is invalid.
+pub fn gf_frobenius_monomial_base(
+  g : Array[Int],
+  p : Int,
+) -> Array[Array[Int]] raise PolyError {
+  let n = gf_degree(g)
+  if n == 0 {
+    return []
+  }
+  let base : Array[Array[Int]] = Array::make(n, [])
+  base.set(0, [1])
+  if p < n {
+    for i in 1..<n {
+      let mon = gf_lshift(base[i - 1], p)
+      base.set(i, gf_rem(mon, g, p))
+    }
+  } else if n > 1 {
+    base.set(1, gf_pow_mod([1, 0], p, g, p))
+    for i in 2..<n {
+      base.set(i, gf_rem(gf_mul(base[i - 1], base[1], p), g, p))
+    }
+  }
+  base
+}
+
+///|
+/// Apply the Frobenius map using a precomputed monomial base.
+///
+/// - Does: Computes `f**p mod g` from `x**(i*p) mod g` basis elements.
+/// - Input: A dense polynomial, modulus polynomial, Frobenius base, and prime
+///   modulus.
+/// - Returns: A dense remainder polynomial.
+/// - Limits: The base must come from `gf_frobenius_monomial_base(g, p)`.
+pub fn gf_frobenius_map(
+  f : Array[Int],
+  g : Array[Int],
+  b : Array[Array[Int]],
+  p : Int,
+) -> Array[Int] raise PolyError {
+  let m = gf_degree(g)
+  let ff = if gf_degree(f) >= m { gf_rem(f, g, p) } else { gf_trunc(f, p) }
+  if ff.is_empty() {
+    return []
+  }
+  let n = gf_degree(ff)
+  let mut out = [ff[ff.length() - 1]]
+  for i in 1..<=n {
+    let v = gf_mul_ground(b[i], ff[n - i], p)
+    out = gf_add(out, v, p)
+  }
+  out
+}
+
+///|
+/// Compute a finite-field trace map in a quotient ring.
+///
+/// - Does: Returns `(a**t**n, a + a**t + ... + a**t**n) mod f` using
+///   composition, matching SymPy's low-level helper.
+/// - Input: Dense polynomials `a`, `b`, `c`, an iteration count `n`, modulus
+///   `f`, and prime modulus.
+/// - Returns: A pair of dense polynomials.
+/// - Limits: Assumes `b` and `c` satisfy the same quotient-ring relation as in
+///   SymPy's factorization routines.
+pub fn gf_trace_map(
+  a : Array[Int],
+  b : Array[Int],
+  c : Array[Int],
+  n0 : Int,
+  f : Array[Int],
+  p : Int,
+) -> (Array[Int], Array[Int]) raise PolyError {
+  let mut u = gf_compose_mod(a, b, f, p)
+  let mut v = b
+  let mut n = n0
+  let mut trace_sum = if n % 2 == 1 { gf_add(a, u, p) } else { a }
+  let mut trace_power = if n % 2 == 1 { b } else { c }
+  n = n / 2
+  while n != 0 {
+    u = gf_add(u, gf_compose_mod(u, v, f, p), p)
+    v = gf_compose_mod(v, v, f, p)
+    if n % 2 == 1 {
+      trace_sum = gf_add(trace_sum, gf_compose_mod(u, trace_power, f, p), p)
+      trace_power = gf_compose_mod(v, trace_power, f, p)
+    }
+    n = n / 2
+  }
+  (gf_compose_mod(a, trace_power, f, p), trace_sum)
+}
+
+///|
 /// Evaluate a dense integer polynomial without modular reduction.
 ///
 /// - Does: Uses Horner evaluation over integers.
@@ -1023,6 +1197,344 @@ pub fn gf_gcdex(
     t0 = old_t1
   }
   (s1, t1, r1)
+}
+
+///|
+/// Test whether a finite-field polynomial is irreducible using Ben-Or's test.
+///
+/// - Does: Runs the same low-degree/Frobenius branch structure as SymPy.
+/// - Input: Dense coefficients and a prime modulus.
+/// - Returns: `true` when the polynomial is irreducible over `GF(p)`.
+/// - Limits: Assumes `p` is prime and coefficients use dense high-to-low form.
+pub fn gf_irred_p_ben_or(f : Array[Int], p : Int) -> Bool raise PolyError {
+  let n = gf_degree(f)
+  if n <= 1 {
+    return true
+  }
+  let ff = gf_monic(f, p)
+  if n < 5 {
+    let h_base = gf_pow_mod([1, 0], p, ff, p)
+    let mut h = h_base
+    for _ in 0..<(n / 2) {
+      let g = gf_sub(h, [1, 0], p)
+      if int_array_equal(gf_gcd(ff, g, p), [1]) {
+        h = gf_compose_mod(h, h_base, ff, p)
+      } else {
+        return false
+      }
+    }
+  } else {
+    let b = gf_frobenius_monomial_base(ff, p)
+    let h_base = gf_frobenius_map([1, 0], ff, b, p)
+    let mut h = h_base
+    for _ in 0..<(n / 2) {
+      let g = gf_sub(h, [1, 0], p)
+      if int_array_equal(gf_gcd(ff, g, p), [1]) {
+        h = gf_frobenius_map(h, ff, b, p)
+      } else {
+        return false
+      }
+    }
+  }
+  true
+}
+
+///|
+/// Test whether a finite-field polynomial is irreducible using Rabin's test.
+///
+/// - Does: Checks Frobenius iterates at the prime divisors of the degree and
+///   verifies the final iterate returns `x`.
+/// - Input: Dense coefficients and a prime modulus.
+/// - Returns: `true` when the polynomial is irreducible over `GF(p)`.
+/// - Limits: Uses a local trial-division factorization of the degree.
+pub fn gf_irred_p_rabin(f : Array[Int], p : Int) -> Bool raise PolyError {
+  let n = gf_degree(f)
+  if n <= 1 {
+    return true
+  }
+  let ff = gf_monic(f, p)
+  let x = [1, 0]
+  let prime_factors = int_prime_factors_unique(n)
+  let indices : Array[Int] = []
+  for d in prime_factors {
+    indices.push(n / d)
+  }
+  let b = gf_frobenius_monomial_base(ff, p)
+  let mut h = b[1]
+  for i in 1..<n {
+    if int_array_contains(indices, i) {
+      let g = gf_sub(h, x, p)
+      if !int_array_equal(gf_gcd(ff, g, p), [1]) {
+        return false
+      }
+    }
+    h = gf_frobenius_map(h, ff, b, p)
+  }
+  int_array_equal(h, x)
+}
+
+///|
+/// Test finite-field irreducibility using SymPy's default Rabin path.
+///
+/// - Does: Dispatches to `gf_irred_p_rabin`.
+/// - Input: Dense coefficients and a prime modulus.
+/// - Returns: `true` for irreducible polynomials.
+/// - Limits: Does not expose SymPy's runtime `GF_IRRED_METHOD` configuration.
+pub fn gf_irreducible_p(f : Array[Int], p : Int) -> Bool raise PolyError {
+  gf_irred_p_rabin(f, p)
+}
+
+///|
+/// Test whether a finite-field polynomial is square-free.
+///
+/// - Does: Checks that the monic polynomial is coprime with its derivative.
+/// - Input: Dense coefficients and a prime modulus.
+/// - Returns: `true` for square-free polynomials.
+/// - Limits: Assumes `p` is prime.
+pub fn gf_sqf_p(f : Array[Int], p : Int) -> Bool raise PolyError {
+  let ff = gf_monic(f, p)
+  if ff.is_empty() {
+    true
+  } else {
+    int_array_equal(gf_gcd(ff, gf_diff(ff, p), p), [1])
+  }
+}
+
+///|
+/// Compute the square-free decomposition over `GF(p)`.
+///
+/// - Does: Returns `(lc, [(factor, multiplicity), ...])` for monic
+///   square-free factors, following SymPy's low-level algorithm.
+/// - Input: Dense coefficients and a prime modulus.
+/// - Returns: Leading coefficient and factor/multiplicity pairs.
+/// - Limits: SymPy's unsupported `all=True` branch is not exposed.
+pub fn gf_sqf_list(
+  f : Array[Int],
+  p : Int,
+) -> (Int, Array[(Array[Int], Int)]) raise PolyError {
+  let lc = gf_LC(f)
+  let mut work = gf_monic(f, p)
+  if gf_degree(work) < 1 {
+    return (lc, [])
+  }
+  let mut n = 1
+  let mut sqf = false
+  let factors : Array[(Array[Int], Int)] = []
+  while true {
+    let deriv = gf_diff(work, p)
+    if !deriv.is_empty() {
+      let mut g = gf_gcd(work, deriv, p)
+      let mut h = gf_quo(work, g, p)
+      let mut i = 1
+      while !int_array_equal(h, [1]) {
+        let gcd_part = gf_gcd(g, h, p)
+        let quotient_part = gf_quo(h, gcd_part, p)
+        if gf_degree(quotient_part) > 0 {
+          factors.push((quotient_part, i * n))
+        }
+        g = gf_quo(g, gcd_part, p)
+        h = gcd_part
+        i = i + 1
+      }
+      if int_array_equal(g, [1]) {
+        sqf = true
+      } else {
+        work = g
+      }
+    }
+    if !sqf {
+      let d = gf_degree(work) / p
+      let reduced : Array[Int] = []
+      for i in 0..<=d {
+        reduced.push(work[i * p])
+      }
+      work = gf_strip(reduced)
+      n = n * p
+    } else {
+      break
+    }
+  }
+  (lc, factors)
+}
+
+///|
+/// Compute the square-free part over `GF(p)`.
+///
+/// - Does: Multiplies the factors returned by `gf_sqf_list`.
+/// - Input: Dense coefficients and a prime modulus.
+/// - Returns: A monic square-free dense polynomial.
+/// - Limits: Same representation limits as `gf_sqf_list`.
+pub fn gf_sqf_part(f : Array[Int], p : Int) -> Array[Int] raise PolyError {
+  let (_, factors) = gf_sqf_list(f, p)
+  let mut out = [1]
+  for entry in factors {
+    out = gf_mul(out, entry.0, p)
+  }
+  out
+}
+
+///|
+/// Calculate Berlekamp's Q matrix.
+///
+/// - Does: Builds the Frobenius matrix used by Berlekamp factorization.
+/// - Input: A dense polynomial and a prime modulus.
+/// - Returns: Rows of the Q matrix as integer arrays.
+/// - Limits: Intended for positive-degree dense polynomials.
+pub fn gf_Qmatrix(f : Array[Int], p : Int) -> Array[Array[Int]] {
+  let n = gf_degree(f)
+  if n <= 0 {
+    return [[1]]
+  }
+  let mut q = Array::make(n, 0)
+  q.set(0, 1)
+  let q_matrix : Array[Array[Int]] = Array::make(n, [])
+  q_matrix.set(0, q.copy())
+  for i in 1..<=((n - 1) * p) {
+    let qq : Array[Int] = []
+    let c = q[q.length() - 1]
+    qq.push(mod_pos(-c * f[f.length() - 1], p))
+    for j in 1..<n {
+      qq.push(mod_pos(q[j - 1] - c * f[f.length() - j - 1], p))
+    }
+    if i % p == 0 {
+      q_matrix.set(i / p, qq.copy())
+    }
+    q = qq
+  }
+  q_matrix
+}
+
+///|
+/// Compute a basis of the kernel of Berlekamp's `Q - I`.
+///
+/// - Does: Performs the same column-reduction routine as SymPy's
+///   `gf_Qbasis`.
+/// - Input: A Q matrix and prime modulus.
+/// - Returns: Basis vectors as integer arrays.
+/// - Limits: Assumes a square matrix produced by `gf_Qmatrix`.
+pub fn gf_Qbasis(
+  q0 : Array[Array[Int]],
+  p : Int,
+) -> Array[Array[Int]] raise PolyError {
+  let n = q0.length()
+  let q_matrix : Array[Array[Int]] = []
+  for row in q0 {
+    q_matrix.push(row.copy())
+  }
+  for k in 0..<n {
+    q_matrix[k].set(k, mod_pos(q_matrix[k][k] - 1, p))
+  }
+  for k in 0..<n {
+    let mut pivot : Int? = None
+    for i in k..<n {
+      if q_matrix[k][i] != 0 {
+        pivot = Some(i)
+        break
+      }
+    }
+    match pivot {
+      None => ()
+      Some(col) => {
+        let inv = inv_mod(q_matrix[k][col], p)
+        for j in 0..<n {
+          q_matrix[j].set(col, mod_pos(q_matrix[j][col] * inv, p))
+        }
+        for j in 0..<n {
+          let tmp = q_matrix[j][k]
+          q_matrix[j].set(k, q_matrix[j][col])
+          q_matrix[j].set(col, tmp)
+        }
+        for i in 0..<n {
+          if i != k {
+            let q = q_matrix[k][i]
+            for j in 0..<n {
+              q_matrix[j].set(
+                i,
+                mod_pos(q_matrix[j][i] - q_matrix[j][k] * q, p),
+              )
+            }
+          }
+        }
+      }
+    }
+  }
+  for i in 0..<n {
+    for j in 0..<n {
+      if i == j {
+        q_matrix[i].set(j, mod_pos(1 - q_matrix[i][j], p))
+      } else {
+        q_matrix[i].set(j, mod_pos(-q_matrix[i][j], p))
+      }
+    }
+  }
+  let basis : Array[Array[Int]] = []
+  for qv in q_matrix {
+    let mut nonzero = false
+    for coeff in qv {
+      if coeff != 0 {
+        nonzero = true
+        break
+      }
+    }
+    if nonzero {
+      basis.push(qv)
+    }
+  }
+  basis
+}
+
+///|
+/// Factor a square-free polynomial over a small finite field.
+///
+/// - Does: Applies Berlekamp factorization to a square-free dense polynomial.
+/// - Input: Dense coefficients and a prime modulus.
+/// - Returns: Sorted monic irreducible factors.
+/// - Limits: Intended for square-free input, as in SymPy's low-level helper.
+pub fn gf_berlekamp(
+  f : Array[Int],
+  p : Int,
+) -> Array[Array[Int]] raise PolyError {
+  let q_matrix = gf_Qmatrix(f, p)
+  let basis0 = gf_Qbasis(q_matrix, p)
+  let basis : Array[Array[Int]] = []
+  for v in basis0 {
+    basis.push(gf_strip(int_array_reverse(v)))
+  }
+  let factors : Array[Array[Int]] = [f]
+  for k in 1..<basis.length() {
+    let snapshot = factors.copy()
+    for original in snapshot {
+      let mut current = original
+      let mut s = 0
+      while s < p {
+        let g = gf_sub_ground(basis[k], s, p)
+        let h = gf_gcd(current, g, p)
+        if !int_array_equal(h, [1]) && !int_array_equal(h, current) {
+          let mut found : Int? = None
+          for idx in 0..<factors.length() {
+            if int_array_equal(factors[idx], current) {
+              found = Some(idx)
+              break
+            }
+          }
+          match found {
+            Some(idx) => {
+              ignore(factors.remove(idx))
+              current = gf_quo(current, h, p)
+              factors.push(current)
+              factors.push(h)
+            }
+            None => ()
+          }
+        }
+        if factors.length() == basis.length() {
+          return _sort_factors(factors)
+        }
+        s = s + 1
+      }
+    }
+  }
+  _sort_factors(factors)
 }
 
 ///|
