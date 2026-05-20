@@ -185,6 +185,12 @@ pub fn dmp_exquo(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_exquo_ground(DensePoly, FieldElem, Int, Domain) -> DensePoly raise PolyError
 
+pub fn dmp_fateman_poly_F_1(Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
+
+pub fn dmp_fateman_poly_F_2(Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
+
+pub fn dmp_fateman_poly_F_3(Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
+
 pub fn dmp_ff_div(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly) raise PolyError
 
 pub fn dmp_from_dict(Map[Monomial, FieldElem], Int, Domain) -> DensePoly raise PolyError

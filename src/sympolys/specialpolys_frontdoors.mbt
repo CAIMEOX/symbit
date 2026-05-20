@@ -251,6 +251,85 @@ pub fn fateman_poly_F_3(n : Int) -> (Poly, Poly, Poly) raise PolyError {
 }
 
 ///|
+fn specialpoly_convert_coeff(
+  coeff : FieldElem,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  fe_from_rational(fe_expect_rational(coeff), domain)
+}
+
+///|
+fn specialpoly_to_dmp(
+  poly : Poly,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  for monom, coeff in poly.coeffs {
+    coeffs[monom] = specialpoly_convert_coeff(coeff, domain)
+  }
+  dmp_from_dict(coeffs, poly.gens.length() - 1, domain)
+}
+
+///|
+fn specialpoly_dmp_tuple(
+  triple : (Poly, Poly, Poly),
+  domain : Domain,
+) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
+  (
+    specialpoly_to_dmp(triple.0, domain),
+    specialpoly_to_dmp(triple.1, domain),
+    specialpoly_to_dmp(triple.2, domain),
+  )
+}
+
+///|
+/// Fateman GCD benchmark family F1 in recursive dense representation.
+///
+/// - Does: Builds the same trivial-GCD Fateman benchmark as
+///   `fateman_poly_F_1`, returned as `DensePoly` values.
+/// - Input: Variable count marker `n` and a coefficient domain.
+/// - Returns: Three recursive dense polynomials.
+/// - Limits: Requires `n >= 1`; coefficients must be rationally convertible to
+///   the requested domain.
+pub fn dmp_fateman_poly_F_1(
+  n : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
+  specialpoly_dmp_tuple(fateman_poly_F_1(n), domain)
+}
+
+///|
+/// Fateman GCD benchmark family F2 in recursive dense representation.
+///
+/// - Does: Builds the linearly dense quartic Fateman benchmark as `DensePoly`
+///   values.
+/// - Input: Variable count marker `n` and a coefficient domain.
+/// - Returns: Three recursive dense polynomials.
+/// - Limits: Requires `n >= 1`; coefficients must be rationally convertible to
+///   the requested domain.
+pub fn dmp_fateman_poly_F_2(
+  n : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
+  specialpoly_dmp_tuple(fateman_poly_F_2(n), domain)
+}
+
+///|
+/// Fateman GCD benchmark family F3 in recursive dense representation.
+///
+/// - Does: Builds the sparse high-degree Fateman benchmark as `DensePoly`
+///   values.
+/// - Input: Variable count marker `n` and a coefficient domain.
+/// - Returns: Three recursive dense polynomials.
+/// - Limits: Requires `n >= 1`; expression expansion grows quickly.
+pub fn dmp_fateman_poly_F_3(
+  n : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
+  specialpoly_dmp_tuple(fateman_poly_F_3(n), domain)
+}
+
+///|
 fn symmetric_poly_fill(
   gens : Array[Expr],
   target : Int,

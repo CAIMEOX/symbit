@@ -91,3 +91,30 @@ test "sympolys special polynomial Fateman benchmark frontdoors" {
   inspect(g3.gens.length(), content="3")
   inspect(h3.gens.length(), content="3")
 }
+
+///|
+fn special_dense_repr(p : DensePoly) -> String {
+  match p {
+    DensePoly::Coef(c) => c.to_string()
+    DensePoly::Poly(items) => {
+      let parts : Array[String] = Array::new()
+      for item in items {
+        parts.push(special_dense_repr(item))
+      }
+      let joined = parts.join(",")
+      "[\{joined}]"
+    }
+  }
+}
+
+///|
+test "sympolys special polynomial dense Fateman frontdoors" {
+  let (_, _, h1) = dmp_fateman_poly_F_1(1, Domain::ZZ)
+  inspect(special_dense_repr(h1), content="[[1]]")
+  let (f2, g2, h2) = dmp_fateman_poly_F_2(2, Domain::ZZ)
+  inspect(special_dense_repr(f2).contains("[1,"), content="true")
+  inspect(special_dense_repr(g2).contains("[1,"), content="true")
+  inspect(special_dense_repr(h2).contains("[1,"), content="true")
+  let (f3, _, _) = dmp_fateman_poly_F_3(2, Domain::ZZ)
+  inspect(dmp_degree(f3, 2), content="12")
+}
