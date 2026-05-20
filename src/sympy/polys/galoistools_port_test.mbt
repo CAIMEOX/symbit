@@ -307,6 +307,18 @@ test "galoistools finite-field factorization ops" {
   )
   let generated = @sympolys.gf_irreducible(3, 5)
   assert_true(@sympolys.gf_irreducible_p(generated, 5))
+  assert_eq(
+    gf_repr(@sympolys.csolve_prime([1, 1, 7], 3)),
+    csolve_prime([1, 1, 7], 3),
+  )
+  assert_eq(
+    gf_repr(@sympolys.csolve_prime([1, 1, 7], 3, e=2)),
+    csolve_prime([1, 1, 7], 3, e=2),
+  )
+  assert_eq(
+    gf_repr(@sympolys.gf_csolve([1, 1, 7], 189)),
+    gf_csolve([1, 1, 7], 189),
+  )
 }
 
 ///|

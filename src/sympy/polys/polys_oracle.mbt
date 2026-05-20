@@ -8997,6 +8997,25 @@ pub fn linear_congruence(a : Int, b : Int, m : Int) -> String raise {
 }
 
 ///|
+pub fn csolve_prime(f : Array[Int], p : Int, e? : Int = 1) -> String raise {
+  let res = sympy_call_must("sympy.polys.galoistools.csolve_prime", [
+    OracleArg::IntList(f),
+    OracleArg::Int(p),
+    OracleArg::Int(e),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn gf_csolve(f : Array[Int], n : Int) -> String raise {
+  let res = sympy_call_must("sympy.polys.galoistools.gf_csolve", [
+    OracleArg::IntList(f),
+    OracleArg::Int(n),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn roots_linear(
   expr : @symcore.Expr,
   gens? : Array[String] = [],

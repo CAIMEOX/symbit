@@ -2093,3 +2093,51 @@ pub fn linear_congruence(
   }
   out
 }
+
+///|
+/// Solve a polynomial congruence modulo a prime power.
+///
+/// - Does: Returns all `x` with `f(x) == 0 mod p**e`.
+/// - Input: Dense integer coefficients, a prime modulus, and positive
+///   exponent.
+/// - Returns: Sorted residues in `[0, p**e)`.
+/// - Limits: Uses direct residue scanning; this is equivalent for modest
+///   low-level inputs but not SymPy's Las-Vegas acceleration path.
+pub fn csolve_prime(
+  f : Array[Int],
+  p : Int,
+  e? : Int = 1,
+) -> Array[Int] raise PolyError {
+  if p <= 1 || e <= 0 {
+    raise PolyError::BadModulus
+  }
+  let modulus = int_pow(p, e)
+  let out : Array[Int] = []
+  for x in 0..<modulus {
+    if mod_pos(gf_value(f, x), modulus) == 0 {
+      out.push(x)
+    }
+  }
+  out
+}
+
+///|
+/// Solve a polynomial congruence modulo an integer.
+///
+/// - Does: Returns all `x` with `f(x) == 0 mod n`.
+/// - Input: Dense integer coefficients and a positive modulus.
+/// - Returns: Sorted residues in `[0, n)`.
+/// - Limits: Uses direct residue scanning instead of SymPy's CRT assembly;
+///   large moduli may be slow.
+pub fn gf_csolve(f : Array[Int], n : Int) -> Array[Int] raise PolyError {
+  if n <= 0 {
+    raise PolyError::BadModulus
+  }
+  let out : Array[Int] = []
+  for x in 0..<n {
+    if mod_pos(gf_value(f, x), n) == 0 {
+      out.push(x)
+    }
+  }
+  out
+}

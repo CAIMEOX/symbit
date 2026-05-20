@@ -292,6 +292,12 @@ test "galoistools wb: finite-field factorization helpers" {
     galois_wb_sqf_pair(gf_factor([5, 2, 7, 2], 11)),
     content="(5, [([1, 2], 1), ([1, 8], 2)])",
   )
+  inspect(galois_wb_arr(csolve_prime([1, 1, 7], 3)), content="[1]")
+  inspect(galois_wb_arr(csolve_prime([1, 1, 7], 3, e=2)), content="[1, 4, 7]")
+  inspect(
+    galois_wb_arr(gf_csolve([1, 1, 7], 189)),
+    content="[13, 49, 76, 112, 139, 175]",
+  )
 }
 
 ///|

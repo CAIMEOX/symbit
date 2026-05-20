@@ -77,6 +77,8 @@ pub fn content(Poly) -> @symnum.BigRational raise PolyError
 
 pub fn count_roots(Poly, inf? : @symnum.BigRational, sup? : @symnum.BigRational) -> Int raise PolyError
 
+pub fn csolve_prime(Array[Int], Int, e? : Int) -> Array[Int] raise PolyError
+
 pub fn cyclotomic_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
 
 pub fn ddm_berk(DDM) -> DDM raise PolyError
@@ -896,6 +898,8 @@ pub fn gf_crt(Array[Int], Array[Int]) -> Int raise PolyError
 pub fn gf_crt1(Array[Int]) -> (Int, Array[Int], Array[Int]) raise PolyError
 
 pub fn gf_crt2(Array[Int], Array[Int], Int, Array[Int], Array[Int]) -> Int
+
+pub fn gf_csolve(Array[Int], Int) -> Array[Int] raise PolyError
 
 pub fn gf_ddf_shoup(Array[Int], Int) -> Array[(Array[Int], Int)] raise PolyError
 
