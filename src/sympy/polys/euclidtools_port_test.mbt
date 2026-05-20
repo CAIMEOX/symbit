@@ -342,6 +342,25 @@ fn euclid_port_dup_list_repr(polys : Array[Array[FieldElem]]) -> String {
 }
 
 ///|
+fn euclid_port_field_list_repr(values : Array[FieldElem]) -> String {
+  "[" + values.map(value => value.to_string()).join(",") + "]"
+}
+
+///|
+fn euclid_port_inner_subres_repr(
+  value : (Array[Array[FieldElem]], Array[FieldElem]),
+) -> String {
+  "(\{euclid_port_dup_list_repr(value.0)},\{euclid_port_field_list_repr(value.1)})"
+}
+
+///|
+fn euclid_port_prs_resultant_repr(
+  value : (FieldElem, Array[Array[FieldElem]]),
+) -> String {
+  "(\{value.0},\{euclid_port_dup_list_repr(value.1)})"
+}
+
+///|
 fn euclid_port_dmp_triple_repr(
   triple : (DensePoly, DensePoly, DensePoly),
 ) -> String {
@@ -351,6 +370,20 @@ fn euclid_port_dmp_triple_repr(
 ///|
 fn euclid_port_dmp_list_repr(polys : Array[DensePoly]) -> String {
   "[" + polys.map(poly => dmp_repr(poly)).join(",") + "]"
+}
+
+///|
+fn euclid_port_dmp_pair_list_repr(
+  value : (DensePoly, Array[DensePoly]),
+) -> String {
+  "(\{dmp_repr(value.0)},\{euclid_port_dmp_list_repr(value.1)})"
+}
+
+///|
+fn euclid_port_dmp_inner_subres_repr(
+  value : (Array[DensePoly], Array[DensePoly]),
+) -> String {
+  "(\{euclid_port_dmp_list_repr(value.0)},\{euclid_port_dmp_list_repr(value.1)})"
 }
 
 ///|
@@ -432,5 +465,90 @@ test "euclidtools: dense dmp univariate oracle parity" {
   assert_eq(
     euclid_port_dmp_list_repr(@sympolys.dmp_euclidean_prs(f, g, 0, Domain::QQ)),
     dmp_euclidean_prs(dense_data_of(f), dense_data_of(g), 0, domain="QQ"),
+  )
+}
+
+///|
+test "euclidtools: dense primitive and subresultant oracle parity" {
+  let f = [
+    feqq(1, 1),
+    feqq(0, 1),
+    feqq(1, 1),
+    feqq(0, 1),
+    feqq(-3, 1),
+    feqq(-3, 1),
+    feqq(8, 1),
+    feqq(2, 1),
+    feqq(-5, 1),
+  ]
+  let g = [
+    feqq(3, 1),
+    feqq(0, 1),
+    feqq(5, 1),
+    feqq(0, 1),
+    feqq(-4, 1),
+    feqq(-9, 1),
+    feqq(21, 1),
+  ]
+  assert_eq(
+    euclid_port_dup_list_repr(@sympolys.dup_primitive_prs(f, g, Domain::ZZ)),
+    dup_primitive_prs(dup_to_rats(f), dup_to_rats(g), domain="ZZ"),
+  )
+  let a = [feqq(1, 1), feqq(0, 1), feqq(1, 1)]
+  let b = [feqq(1, 1), feqq(0, 1), feqq(-1, 1)]
+  assert_eq(
+    euclid_port_inner_subres_repr(
+      @sympolys.dup_inner_subresultants(a, b, Domain::ZZ),
+    ),
+    dup_inner_subresultants(dup_to_rats(a), dup_to_rats(b), domain="ZZ"),
+  )
+  assert_eq(
+    euclid_port_dup_list_repr(@sympolys.dup_subresultants(a, b, Domain::ZZ)),
+    dup_subresultants(dup_to_rats(a), dup_to_rats(b), domain="ZZ"),
+  )
+  assert_eq(
+    euclid_port_prs_resultant_repr(
+      @sympolys.dup_prs_resultant(a, b, Domain::ZZ),
+    ),
+    dup_prs_resultant(dup_to_rats(a), dup_to_rats(b), domain="ZZ"),
+  )
+  assert_eq(
+    @sympolys.dup_resultant(a, b, Domain::ZZ).to_string(),
+    dup_resultant(dup_to_rats(a), dup_to_rats(b), domain="ZZ"),
+  )
+}
+
+///|
+test "euclidtools: dense discriminant and dmp resultant oracle parity" {
+  let f = [feqq(1, 1), feqq(2, 1), feqq(3, 1)]
+  assert_eq(
+    @sympolys.dup_discriminant(f, Domain::ZZ).to_string(),
+    dup_discriminant(dup_to_rats(f), domain="ZZ"),
+  )
+  let a = poly_fe([feqq(1, 1), feqq(0, 1), feqq(1, 1)])
+  let b = poly_fe([feqq(1, 1), feqq(0, 1), feqq(-1, 1)])
+  assert_eq(
+    euclid_port_dmp_inner_subres_repr(
+      @sympolys.dmp_inner_subresultants(a, b, 0, Domain::ZZ),
+    ),
+    dmp_inner_subresultants(dense_data_of(a), dense_data_of(b), 0, domain="ZZ"),
+  )
+  assert_eq(
+    euclid_port_dmp_list_repr(@sympolys.dmp_subresultants(a, b, 0, Domain::ZZ)),
+    dmp_subresultants(dense_data_of(a), dense_data_of(b), 0, domain="ZZ"),
+  )
+  assert_eq(
+    euclid_port_dmp_pair_list_repr(
+      @sympolys.dmp_prs_resultant(a, b, 0, Domain::ZZ),
+    ),
+    dmp_prs_resultant(dense_data_of(a), dense_data_of(b), 0, domain="ZZ"),
+  )
+  assert_eq(
+    dmp_repr(@sympolys.dmp_resultant(a, b, 0, Domain::ZZ)),
+    dmp_resultant(dense_data_of(a), dense_data_of(b), 0, domain="ZZ"),
+  )
+  assert_eq(
+    dmp_repr(@sympolys.dmp_discriminant(poly_fe(f), 0, Domain::ZZ)),
+    dmp_discriminant(dense_data_of(poly_fe(f)), 0, domain="ZZ"),
   )
 }

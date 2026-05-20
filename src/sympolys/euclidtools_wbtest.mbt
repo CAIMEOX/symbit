@@ -42,6 +42,25 @@ fn euclid_wb_dup_list_repr(polys : Array[Array[FieldElem]]) -> String {
 }
 
 ///|
+fn euclid_wb_field_list_repr(values : Array[FieldElem]) -> String {
+  "[" + values.map(value => value.to_string()).join(",") + "]"
+}
+
+///|
+fn euclid_wb_inner_subres_repr(
+  value : (Array[Array[FieldElem]], Array[FieldElem]),
+) -> String {
+  "(\{euclid_wb_dup_list_repr(value.0)},\{euclid_wb_field_list_repr(value.1)})"
+}
+
+///|
+fn euclid_wb_prs_resultant_repr(
+  value : (FieldElem, Array[Array[FieldElem]]),
+) -> String {
+  "(\{value.0},\{euclid_wb_dup_list_repr(value.1)})"
+}
+
+///|
 fn euclid_wb_dmp_repr(poly : DensePoly) -> String {
   match poly {
     DensePoly::Coef(c) => c.to_string()
@@ -141,4 +160,70 @@ test "euclidtools wb: dmp univariate wrappers" {
     Domain::QQ,
   )
   assert_true(bad_u is Err(PolyError::NotUnivariate))
+}
+
+///|
+test "euclidtools wb: primitive and subresultant frontdoors" {
+  let f = [
+    euclid_wb_qq(1, 1),
+    euclid_wb_qq(0, 1),
+    euclid_wb_qq(1, 1),
+    euclid_wb_qq(0, 1),
+    euclid_wb_qq(-3, 1),
+    euclid_wb_qq(-3, 1),
+    euclid_wb_qq(8, 1),
+    euclid_wb_qq(2, 1),
+    euclid_wb_qq(-5, 1),
+  ]
+  let g = [
+    euclid_wb_qq(3, 1),
+    euclid_wb_qq(0, 1),
+    euclid_wb_qq(5, 1),
+    euclid_wb_qq(0, 1),
+    euclid_wb_qq(-4, 1),
+    euclid_wb_qq(-9, 1),
+    euclid_wb_qq(21, 1),
+  ]
+  inspect(
+    euclid_wb_dup_list_repr(dup_primitive_prs(f, g, Domain::ZZ)),
+    content=(
+      #|[[1,0,1,0,-3,-3,8,2,-5],[3,0,5,0,-4,-9,21],[-5,0,1,0,-3],[13,25,-49],[4663,-6150],[1]]
+    ),
+  )
+  let a = [euclid_wb_qq(1, 1), euclid_wb_qq(0, 1), euclid_wb_qq(1, 1)]
+  let b = [euclid_wb_qq(1, 1), euclid_wb_qq(0, 1), euclid_wb_qq(-1, 1)]
+  inspect(
+    euclid_wb_inner_subres_repr(dup_inner_subresultants(a, b, Domain::ZZ)),
+    content="([[1,0,1],[1,0,-1],[-2]],[1,1,4])",
+  )
+  inspect(
+    euclid_wb_dup_list_repr(dup_subresultants(a, b, Domain::ZZ)),
+    content="[[1,0,1],[1,0,-1],[-2]]",
+  )
+  inspect(
+    euclid_wb_prs_resultant_repr(dup_prs_resultant(a, b, Domain::ZZ)),
+    content="(4,[[1,0,1],[1,0,-1],[-2]])",
+  )
+  inspect(dup_resultant(a, b, Domain::ZZ), content="4")
+}
+
+///|
+test "euclidtools wb: discriminant and dmp resultant wrappers" {
+  let f = [euclid_wb_qq(1, 1), euclid_wb_qq(2, 1), euclid_wb_qq(3, 1)]
+  inspect(dup_discriminant(f, Domain::ZZ), content="-8")
+  let a = euclid_wb_poly([
+    euclid_wb_qq(1, 1),
+    euclid_wb_qq(0, 1),
+    euclid_wb_qq(1, 1),
+  ])
+  let b = euclid_wb_poly([
+    euclid_wb_qq(1, 1),
+    euclid_wb_qq(0, 1),
+    euclid_wb_qq(-1, 1),
+  ])
+  inspect(euclid_wb_dmp_repr(dmp_resultant(a, b, 0, Domain::ZZ)), content="4")
+  inspect(
+    euclid_wb_dmp_repr(dmp_discriminant(euclid_wb_poly(f), 0, Domain::ZZ)),
+    content="-8",
+  )
 }

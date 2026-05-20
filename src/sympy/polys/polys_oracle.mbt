@@ -7198,6 +7198,34 @@ fn euclidtools_dmp_call(
 }
 
 ///|
+fn euclidtools_dup_unary_call(
+  name : String,
+  f : Array[@symnum.BigRational],
+  domain : String,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.euclidtools.\{name}", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+fn euclidtools_dmp_unary_call(
+  name : String,
+  f : DenseData,
+  u : Int,
+  domain : String,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.euclidtools.\{name}", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_half_gcdex(
   f : Array[@symnum.BigRational],
   g : Array[@symnum.BigRational],
@@ -7271,6 +7299,118 @@ pub fn dmp_euclidean_prs(
   domain? : String = "QQ",
 ) -> String raise {
   euclidtools_dmp_call("dmp_euclidean_prs", f, g, u, domain)
+}
+
+///|
+pub fn dup_primitive_prs(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_primitive_prs", f, g, domain)
+}
+
+///|
+pub fn dmp_primitive_prs(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_primitive_prs", f, g, u, domain)
+}
+
+///|
+pub fn dup_inner_subresultants(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_inner_subresultants", f, g, domain)
+}
+
+///|
+pub fn dmp_inner_subresultants(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_inner_subresultants", f, g, u, domain)
+}
+
+///|
+pub fn dup_subresultants(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_subresultants", f, g, domain)
+}
+
+///|
+pub fn dmp_subresultants(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_subresultants", f, g, u, domain)
+}
+
+///|
+pub fn dup_prs_resultant(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_prs_resultant", f, g, domain)
+}
+
+///|
+pub fn dmp_prs_resultant(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_prs_resultant", f, g, u, domain)
+}
+
+///|
+pub fn dup_resultant(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_resultant", f, g, domain)
+}
+
+///|
+pub fn dmp_resultant(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_resultant", f, g, u, domain)
+}
+
+///|
+pub fn dup_discriminant(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_unary_call("dup_discriminant", f, domain)
+}
+
+///|
+pub fn dmp_discriminant(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_unary_call("dmp_discriminant", f, u, domain)
 }
 
 ///|
