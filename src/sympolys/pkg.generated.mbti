@@ -305,6 +305,8 @@ pub fn dmp_negative_p(DensePoly, Int) -> Bool raise PolyError
 
 pub fn dmp_nest(DensePoly, Int, Domain) -> DensePoly
 
+pub fn dmp_norm(DensePoly, Int, Domain) -> DensePoly raise PolyError
+
 pub fn dmp_normal(DensePoly, Int) -> DensePoly raise PolyError
 
 pub fn dmp_nth(DensePoly, Int, Int) -> DensePoly raise PolyError
@@ -362,6 +364,8 @@ pub fn dmp_slice_in(DensePoly, Int, Int, Int, Int, Domain) -> DensePoly raise Po
 pub fn dmp_sqf_list(DensePoly, Int, Domain, all? : Bool) -> (FieldElem, Array[(DensePoly, Int)]) raise PolyError
 
 pub fn dmp_sqf_list_include(DensePoly, Int, Domain, all? : Bool) -> Array[(DensePoly, Int)] raise PolyError
+
+pub fn dmp_sqf_norm(DensePoly, Int, Domain, max_shift? : Int) -> (Array[Int], DensePoly, DensePoly) raise PolyError
 
 pub fn dmp_sqf_p(DensePoly, Int, Domain) -> Bool raise PolyError
 
@@ -912,6 +916,8 @@ pub fn dup_spherical_bessel_fn_minus(Int, Domain) -> Array[FieldElem] raise Poly
 pub fn dup_sqf_list(Array[FieldElem], Domain, all? : Bool) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError
 
 pub fn dup_sqf_list_include(Array[FieldElem], Domain, all? : Bool) -> Array[(Array[FieldElem], Int)] raise PolyError
+
+pub fn dup_sqf_norm(Array[FieldElem], Domain, max_shift? : Int) -> (Int, Array[FieldElem], Array[FieldElem]) raise PolyError
 
 pub fn dup_sqf_p(Array[FieldElem], Domain) -> Bool raise PolyError
 

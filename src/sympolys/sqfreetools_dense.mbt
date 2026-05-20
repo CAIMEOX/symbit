@@ -433,3 +433,64 @@ pub fn dmp_gff_list(
   }
   out
 }
+
+///|
+/// Compute the norm of a recursive dense polynomial over an algebraic field.
+///
+/// - Does: Removes the algebraic generator by resultant norm, matching the
+///   no-shift path used by SymPy's `dmp_norm`.
+/// - Input: A dense polynomial over `Domain::AlgExt`.
+/// - Returns: A dense polynomial over the base domain.
+/// - Limits: Supports the current univariate `u == 0` dense algebraic path.
+pub fn dmp_norm(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  sqf_dense_require_dmp_univariate(u)
+  dmp_lift(f, u, domain)
+}
+
+///|
+/// Find a square-free norm shift for dense univariate algebraic input.
+///
+/// - Does: Converts the dense polynomial to `Poly`, runs the package
+///   `sqf_norm` front door, then converts shifted and norm polynomials back to
+///   dense high-to-low coefficients.
+/// - Input: Dense coefficients over `Domain::AlgExt`.
+/// - Returns: `(shift, shifted_dense, norm_dense)`.
+/// - Limits: Supports monogenic algebraic extensions and the univariate path.
+pub fn dup_sqf_norm(
+  f : Array[FieldElem],
+  domain : Domain,
+  max_shift? : Int = 16,
+) -> (Int, Array[FieldElem], Array[FieldElem]) raise PolyError {
+  let poly = poly_from_dense_desc(f, "x", domain)
+  let (shifts, shifted, norm) = sqf_norm(poly, max_shift~)
+  if shifts.length() != 1 {
+    raise PolyError::NotUnivariate
+  }
+  (shifts[0], poly_to_dense_desc(shifted), poly_to_dense_desc(norm))
+}
+
+///|
+/// Find a square-free norm shift for recursive dense algebraic input.
+///
+/// - Does: Delegates to `dup_sqf_norm` for `u == 0`.
+/// - Input: A recursive dense polynomial over `Domain::AlgExt`.
+/// - Returns: `([shift], shifted_dense, norm_dense)`.
+/// - Limits: `u > 0` raises `PolyError::NotUnivariate`.
+pub fn dmp_sqf_norm(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+  max_shift? : Int = 16,
+) -> (Array[Int], DensePoly, DensePoly) raise PolyError {
+  sqf_dense_require_dmp_univariate(u)
+  let (shift, shifted, norm) = dup_sqf_norm(
+    dmp_to_coeffs(f),
+    domain,
+    max_shift~,
+  )
+  ([shift], dmp_from_coeffs(shifted), dmp_from_coeffs(norm))
+}

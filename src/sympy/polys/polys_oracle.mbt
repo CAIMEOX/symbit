@@ -9325,6 +9325,64 @@ pub fn dmp_gff_list(
 }
 
 ///|
+fn sqf_dense_alg_coeffs_obj(
+  f : Array[String],
+  domain_spec : String,
+) -> (@py.PyObject, @py.PyObject) raise {
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let from_sympy = resolve_method_callable(domain_obj, "from_sympy")
+  let coeffs : Array[@py.PyObject] = Array::new()
+  for expr in f {
+    let value = sympy_sympify_str(expr)
+    coeffs.push(objenum_to_obj(py_call_one(from_sympy, value)))
+  }
+  (domain_obj, py_list_from_objects(coeffs).obj())
+}
+
+///|
+pub fn dmp_norm_exprs(
+  f : Array[String],
+  u : Int,
+  domain_spec? : String = "QQ<sqrt(3)>",
+) -> String raise {
+  let (domain_obj, coeffs_obj) = sqf_dense_alg_coeffs_obj(f, domain_spec)
+  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_norm", [
+    OracleArg::PyObj(coeffs_obj),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_sqf_norm_exprs(
+  f : Array[String],
+  domain_spec? : String = "QQ<sqrt(3)>",
+) -> String raise {
+  let (domain_obj, coeffs_obj) = sqf_dense_alg_coeffs_obj(f, domain_spec)
+  let res = sympy_call_must("sympy.polys.sqfreetools.dup_sqf_norm", [
+    OracleArg::PyObj(coeffs_obj),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_sqf_norm_exprs(
+  f : Array[String],
+  u : Int,
+  domain_spec? : String = "QQ<sqrt(3)>",
+) -> String raise {
+  let (domain_obj, coeffs_obj) = sqf_dense_alg_coeffs_obj(f, domain_spec)
+  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_sqf_norm", [
+    OracleArg::PyObj(coeffs_obj),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn gf_strip(f : Array[Int]) -> String raise {
   let res = sympy_call_must("sympy.polys.galoistools.gf_strip", [
     OracleArg::IntList(f),

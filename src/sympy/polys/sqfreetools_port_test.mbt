@@ -237,3 +237,58 @@ test "sqfreetools: dense greatest factorial factorization parity" {
     dmp_gff_list(dense_data_of(dmp_f), 0),
   )
 }
+
+///|
+fn sqf_dense_port_alg_minpoly_sqrt3() -> Poly raise PolyError {
+  let a = @symcore.Expr::Symbol("a")
+  PolyBuilder::new(["a"], Domain::QQ).from_expr(
+    (a ^ @symcore.int(2)) - @symcore.int(3),
+  )
+}
+
+///|
+fn sqf_dense_port_alg_domain_sqrt3() -> Domain raise PolyError {
+  let minpoly = sqf_dense_port_alg_minpoly_sqrt3()
+  Domain::AlgExt(Domain::QQ, ["a"], [minpoly.to_expr()])
+}
+
+///|
+fn sqf_dense_port_dup_norm_repr(
+  value : (Int, Array[FieldElem], Array[FieldElem]),
+) -> String {
+  remove_spaces("(\{value.0},\{dup_repr(value.1)},\{dup_repr(value.2)})")
+}
+
+///|
+fn sqf_dense_port_dmp_norm_repr(
+  value : (Array[Int], DensePoly, DensePoly),
+) -> String {
+  remove_spaces("(\{value.0},\{dmp_repr(value.1)},\{dmp_repr(value.2)})")
+}
+
+///|
+test "sqfreetools: dense algebraic norm frontdoors parity" {
+  let domain = sqf_dense_port_alg_domain_sqrt3()
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let x_plus_a_poly = Poly::from_expr(x + a, ["x"], domain)
+  let x_plus_a = @sympolys.dup_reverse(@sympolys.to_dense(x_plus_a_poly))
+  assert_eq(
+    dmp_repr(@sympolys.dmp_norm(poly_fe(x_plus_a), 0, domain)),
+    dmp_norm_exprs(["1", "sqrt(3)"], 0),
+  )
+  let f_poly = Poly::from_expr(
+    (x ^ @symcore.int(2)) - @symcore.int(2),
+    ["x"],
+    domain,
+  )
+  let f = @sympolys.dup_reverse(@sympolys.to_dense(f_poly))
+  assert_eq(
+    sqf_dense_port_dup_norm_repr(@sympolys.dup_sqf_norm(f, domain)),
+    dup_sqf_norm_exprs(["1", "0", "-2"]).replace_all(old="sqrt(3)", new="a"),
+  )
+  assert_eq(
+    sqf_dense_port_dmp_norm_repr(@sympolys.dmp_sqf_norm(poly_fe(f), 0, domain)),
+    dmp_sqf_norm_exprs(["1", "0", "-2"], 0).replace_all(old="sqrt(3)", new="a"),
+  )
+}

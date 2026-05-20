@@ -73,6 +73,28 @@ fn sqf_wb_dmp_include_repr(items : Array[(DensePoly, Int)]) -> String {
 }
 
 ///|
+fn sqf_wb_alg_minpoly_sqrt3() -> Poly raise PolyError {
+  let a = Expr::Symbol("a")
+  PolyBuilder::new(["a"], Domain::QQ).from_expr((a ^ int(2)) - int(3))
+}
+
+///|
+fn sqf_wb_alg_domain_sqrt3() -> Domain raise PolyError {
+  let minpoly = sqf_wb_alg_minpoly_sqrt3()
+  Domain::AlgExt(Domain::QQ, ["a"], [minpoly.to_expr()])
+}
+
+///|
+fn sqf_wb_alg_coeff(c0 : Int, c1 : Int) -> FieldElem raise PolyError {
+  FieldElem::AlgExt(
+    Domain::QQ,
+    [fe_from_int(c0, Domain::QQ), fe_from_int(c1, Domain::QQ)],
+    sqf_wb_alg_minpoly_sqrt3(),
+    "a",
+  )
+}
+
+///|
 test "sqfreetools dense wb: square-free predicate and part" {
   let repeated = sqf_wb_dup([1, -2, 1])
   let squarefree = sqf_wb_dup([1, 0, -1])
@@ -163,4 +185,37 @@ test "sqfreetools dense wb: greatest factorial factorization" {
     Domain::ZZ,
   )
   assert_true(zero is Err(PolyError::BadExponent))
+}
+
+///|
+test "sqfreetools dense wb: algebraic norm frontdoors" {
+  let domain = sqf_wb_alg_domain_sqrt3()
+  let x_plus_a = [fe_from_int(1, domain), sqf_wb_alg_coeff(0, 1)]
+  inspect(
+    sqf_wb_dmp_repr(
+      dmp_norm(
+        DensePoly::Poly(x_plus_a.map(c => DensePoly::Coef(c))),
+        0,
+        domain,
+      ),
+    ),
+    content="[1,0,-3]",
+  )
+  let f = [
+    fe_from_int(1, domain),
+    fe_from_int(0, domain),
+    fe_from_int(-2, domain),
+  ]
+  let normed = dup_sqf_norm(f, domain)
+  inspect(normed.0, content="1")
+  inspect(sqf_wb_dup_repr(normed.1), content="[1,-2*a,1]")
+  inspect(sqf_wb_dup_repr(normed.2), content="[1,0,-10,0,1]")
+  let dmp_normed = dmp_sqf_norm(
+    DensePoly::Poly(f.map(c => DensePoly::Coef(c))),
+    0,
+    domain,
+  )
+  inspect(dmp_normed.0, content="[1]")
+  inspect(sqf_wb_dmp_repr(dmp_normed.1), content="[1,-2*a,1]")
+  inspect(sqf_wb_dmp_repr(dmp_normed.2), content="[1,0,-10,0,1]")
 }
