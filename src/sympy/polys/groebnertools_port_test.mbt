@@ -42,6 +42,44 @@ test "groebnertools: simple lex pair" {
 }
 
 ///|
+test "groebnertools: spoly and basis predicates parity" {
+  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let f1 = b.from_expr(x * y - @symcore.int(1))
+  let f2 = b.from_expr(x - @symcore.int(1))
+
+  let ours_s = sympy_normalize(@sympolys.spoly(f1, f2).to_string())
+  let oracle_s = sympy_normalize(
+    groebnertools_spoly(f1.to_expr(), f2.to_expr(), gens=["x", "y"]),
+  )
+  assert_eq(ours_s, oracle_s)
+
+  let basis = Poly::groebner([f1, f2], order=TermOrder::Lex)
+  let basis_exprs = basis.map(p => p.to_expr())
+  assert_eq(
+    @sympolys.is_groebner(basis).to_string(),
+    is_groebner(basis_exprs, gens=["x", "y"]),
+  )
+  assert_eq(
+    @sympolys.is_minimal(basis).to_string(),
+    is_minimal(basis_exprs, gens=["x", "y"]),
+  )
+  assert_eq(
+    @sympolys.is_reduced(basis).to_string(),
+    is_reduced(basis_exprs, gens=["x", "y"]),
+  )
+  assert_eq(
+    normalize_basis_str(groebner_to_string(@sympolys.red_groebner(basis))),
+    normalize_basis_str(red_groebner(basis_exprs, gens=["x", "y"])),
+  )
+  assert_eq(
+    @sympolys.is_groebner([f1, f2]).to_string(),
+    is_groebner([f1.to_expr(), f2.to_expr()], gens=["x", "y"]),
+  )
+}
+
+///|
 test "groebnertools: grevlex ordering changes basis" {
   let b = PolyBuilder::new(["x", "y"], Domain::QQ).order(TermOrder::Grevlex)
   let x = @symcore.Expr::Symbol("x")

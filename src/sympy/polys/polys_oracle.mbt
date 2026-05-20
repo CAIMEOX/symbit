@@ -5894,6 +5894,125 @@ pub fn groebner(
 }
 
 ///|
+fn groebner_ring_polys(
+  exprs : Array[@symcore.Expr],
+  gens : Array[String],
+  order : String,
+) -> (@py.PyObject, Array[@py.PyObject]) raise {
+  let kwargs : Map[String, OracleArg] = {}
+  if order != "" {
+    kwargs["order"] = OracleArg::Str(order)
+  }
+  let ring_res = sympy_call_must(
+    "sympy.polys.rings.ring",
+    [OracleArg::Str(gens.join(",")), OracleArg::PyObj(sympy_domain_obj("QQ"))],
+    kwargs~,
+  )
+  let items = py_list_to_pyobjects(ring_res)
+  guard items.length() >= 1 else { fail("groebner-ring-result") }
+  let ring = items[0]
+  let from_expr = resolve_method_callable(ring, "from_expr")
+  let polys : Array[@py.PyObject] = []
+  for expr in exprs {
+    let poly = py_call_one(from_expr, expr_to_sympy(expr))
+    polys.push(objenum_to_obj(poly))
+  }
+  (ring, polys)
+}
+
+///|
+fn groebner_ring_list_string(value : @py.PyObjectEnum) -> String raise {
+  let items = py_list_to_pyobjects(value)
+  let parts : Array[String] = []
+  for item in items {
+    parts.push(py_str_obj(item))
+  }
+  parts.sort()
+  parts.join(" | ")
+}
+
+///|
+fn py_bool_text(value : @py.PyObjectEnum) -> String {
+  if py_str_enum(value) == "True" {
+    "true"
+  } else {
+    "false"
+  }
+}
+
+///|
+pub fn groebnertools_spoly(
+  f : @symcore.Expr,
+  g : @symcore.Expr,
+  gens? : Array[String] = ["x", "y"],
+  order? : String = "lex",
+) -> String raise {
+  let (ring, polys) = groebner_ring_polys([f, g], gens, order)
+  let res = sympy_call_must("sympy.polys.groebnertools.spoly", [
+    OracleArg::PyObj(polys[0]),
+    OracleArg::PyObj(polys[1]),
+    OracleArg::PyObj(ring),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn red_groebner(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = ["x", "y"],
+  order? : String = "lex",
+) -> String raise {
+  let (ring, polys) = groebner_ring_polys(exprs, gens, order)
+  let res = sympy_call_must("sympy.polys.groebnertools.red_groebner", [
+    OracleArg::PyObj(py_list_from_objects(polys).obj()),
+    OracleArg::PyObj(ring),
+  ])
+  groebner_ring_list_string(res)
+}
+
+///|
+pub fn is_groebner(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = ["x", "y"],
+  order? : String = "lex",
+) -> String raise {
+  let (ring, polys) = groebner_ring_polys(exprs, gens, order)
+  let res = sympy_call_must("sympy.polys.groebnertools.is_groebner", [
+    OracleArg::PyObj(py_list_from_objects(polys).obj()),
+    OracleArg::PyObj(ring),
+  ])
+  py_bool_text(res)
+}
+
+///|
+pub fn is_minimal(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = ["x", "y"],
+  order? : String = "lex",
+) -> String raise {
+  let (ring, polys) = groebner_ring_polys(exprs, gens, order)
+  let res = sympy_call_must("sympy.polys.groebnertools.is_minimal", [
+    OracleArg::PyObj(py_list_from_objects(polys).obj()),
+    OracleArg::PyObj(ring),
+  ])
+  py_bool_text(res)
+}
+
+///|
+pub fn is_reduced(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = ["x", "y"],
+  order? : String = "lex",
+) -> String raise {
+  let (ring, polys) = groebner_ring_polys(exprs, gens, order)
+  let res = sympy_call_must("sympy.polys.groebnertools.is_reduced", [
+    OracleArg::PyObj(py_list_from_objects(polys).obj()),
+    OracleArg::PyObj(ring),
+  ])
+  py_bool_text(res)
+}
+
+///|
 pub fn sympy_sort_factor_repr(repr_str : String) -> String raise {
   let parsed = sympy_sympify_str(repr_str)
   let parsed_enum = @py.PyObjectEnum::create(parsed)

@@ -1259,11 +1259,17 @@ pub fn invariant_factors(DomainMatrix) -> Array[FieldElem] raise PolyError
 
 pub fn invert(Poly, Poly, auto? : Bool) -> Poly raise PolyError
 
+pub fn is_groebner(Array[Poly]) -> Bool raise PolyError
+
 pub fn is_int(@symnum.BigRational) -> Bool
 
 pub fn is_isomorphism_possible(@symcore.Expr, @symcore.Expr) -> Bool
 
+pub fn is_minimal(Array[Poly]) -> Bool raise PolyError
+
 pub fn is_rat(@symnum.BigRational) -> Bool
+
+pub fn is_reduced(Array[Poly]) -> Bool raise PolyError
 
 pub fn is_smith_normal_form(DomainMatrix) -> Bool raise PolyError
 
@@ -1401,6 +1407,8 @@ pub fn real_roots(Poly, radicals? : Bool) -> Array[@symcore.Expr] raise PolyErro
 
 pub fn reconstruct_coeffs(Array[(Int, Array[Int])], Int) -> Array[Int] raise PolyError
 
+pub fn red_groebner(Array[Poly]) -> Array[Poly] raise PolyError
+
 pub fn reduced(Poly, Array[Poly]) -> (Array[Poly], Poly) raise PolyError
 
 pub fn refine_root(Poly, @symnum.BigRational, @symnum.BigRational, eps? : @symnum.BigRational, steps? : Int) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError
@@ -1482,6 +1490,8 @@ pub fn smith_normal_form(DomainMatrix) -> DomainMatrix raise PolyError
 pub fn solve_lin_sys(LinearEquationSystem) -> Map[String, @symcore.Expr]? raise PolyError
 
 pub fn spherical_bessel_fn(Int, gen? : String) -> @symcore.Expr raise PolyError
+
+pub fn spoly(Poly, Poly) -> Poly raise PolyError
 
 pub fn sqf(Poly) -> Poly raise PolyError
 
