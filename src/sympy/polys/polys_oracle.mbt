@@ -3837,6 +3837,140 @@ fn oracle_domainmatrix_from_ints_fmt(
 }
 
 ///|
+fn oracle_sdm_from_ints(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+) -> @py.PyObject raise {
+  let row_count = rows.length()
+  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
+  for row in rows {
+    if row.length() != col_count {
+      fail("sdm-ragged")
+    }
+  }
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let convert = resolve_method_callable(domain_obj, "convert")
+  let py_rows : Array[@py.PyObject] = Array::new()
+  for row in rows {
+    let py_row : Array[@py.PyObject] = Array::new()
+    for v in row {
+      py_row.push(objenum_to_obj(py_call_one(convert, py_int_obj(v))))
+    }
+    py_rows.push(py_list_from_objects(py_row).obj())
+  }
+  let shape_obj = py_tuple_from_objects([
+    py_int_obj(row_count),
+    py_int_obj(col_count),
+  ]).obj()
+  let sdm = sympy_call_must("sympy.polys.matrices.sdm.SDM.from_list", [
+    OracleArg::PyObj(py_list_from_objects(py_rows).obj()),
+    OracleArg::PyObj(shape_obj),
+    OracleArg::PyObj(domain_obj),
+  ])
+  objenum_to_obj(sdm)
+}
+
+///|
+fn oracle_sdm_from_raw(
+  raw : @py.PyObject,
+  shape : (Int, Int),
+  domain_obj : @py.PyObject,
+) -> @py.PyObject raise {
+  let shape_obj = py_tuple_from_objects([
+    py_int_obj(shape.0),
+    py_int_obj(shape.1),
+  ]).obj()
+  let sdm = sympy_call_must("sympy.polys.matrices.sdm.SDM", [
+    OracleArg::PyObj(raw),
+    OracleArg::PyObj(shape_obj),
+    OracleArg::PyObj(domain_obj),
+  ])
+  objenum_to_obj(sdm)
+}
+
+///|
+fn oracle_sdm_dense_summary(
+  sdm_obj : @py.PyObject,
+  domain_spec : String,
+) -> String raise {
+  let to_ddm = resolve_method_callable(sdm_obj, "to_ddm")
+  let dense = py_str_enum(py_call_noargs(to_ddm))
+  "\{dense}@\{domain_spec}|sparse"
+}
+
+///|
+pub fn sdm_transpose_summary(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let a = oracle_sdm_from_ints(rows, domain_spec)
+  let raw = sympy_call_must("sympy.polys.matrices.sdm.sdm_transpose", [
+    OracleArg::PyObj(a),
+  ])
+  let row_count = rows.length()
+  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let sdm = oracle_sdm_from_raw(
+    objenum_to_obj(raw),
+    (col_count, row_count),
+    domain_obj,
+  )
+  oracle_sdm_dense_summary(sdm, domain_spec)
+}
+
+///|
+pub fn sdm_matmul_summary(
+  a_rows : Array[Array[Int]],
+  b_rows : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let a = oracle_sdm_from_ints(a_rows, domain_spec)
+  let b = oracle_sdm_from_ints(b_rows, domain_spec)
+  let m = a_rows.length()
+  let o = if b_rows.length() == 0 { 0 } else { b_rows[0].length() }
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let raw = sympy_call_must("sympy.polys.matrices.sdm.sdm_matmul", [
+    OracleArg::PyObj(a),
+    OracleArg::PyObj(b),
+    OracleArg::PyObj(domain_obj),
+    OracleArg::Int(m),
+    OracleArg::Int(o),
+  ])
+  let sdm = oracle_sdm_from_raw(objenum_to_obj(raw), (m, o), domain_obj)
+  oracle_sdm_dense_summary(sdm, domain_spec)
+}
+
+///|
+pub fn sdm_rref_den_summary(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let a = oracle_sdm_from_ints(rows, domain_spec)
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let res = sympy_call_must("sympy.polys.matrices.sdm.sdm_rref_den", [
+    OracleArg::PyObj(a),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_str_enum(res))
+}
+
+///|
+pub fn sdm_berk_summary(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let a = oracle_sdm_from_ints(rows, domain_spec)
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let n = rows.length()
+  let res = sympy_call_must("sympy.polys.matrices.sdm.sdm_berk", [
+    OracleArg::PyObj(a),
+    OracleArg::Int(n),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_str_enum(res))
+}
+
+///|
 fn oracle_domainmatrix_from_exprs(
   rows : Array[Array[String]],
   domain_spec : String,

@@ -31,6 +31,8 @@ pub fn bernoulli_c_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
 
 pub fn bernoulli_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
 
+pub fn binop_dict(Map[Int, Map[Int, FieldElem]], Map[Int, Map[Int, FieldElem]], (FieldElem, FieldElem) -> FieldElem raise PolyError, (FieldElem) -> FieldElem raise PolyError, (FieldElem) -> FieldElem raise PolyError) -> Map[Int, Map[Int, FieldElem]] raise PolyError
+
 pub fn build_alg_extension(AlgExtSpec) -> Domain raise PolyError
 
 pub fn cancel(Poly, Poly) -> (Poly, Poly) raise PolyError
@@ -1115,15 +1117,33 @@ pub fn round_two(Poly) -> RoundTwoResult raise PolyError
 
 pub fn schur_conditions(Poly, gen_index? : Int) -> Array[@symcore.Expr] raise PolyError
 
+pub fn sdm_berk(SDM, n? : Int?) -> Map[Int, FieldElem] raise PolyError
+
+pub fn sdm_dotvec(Map[Int, FieldElem], Map[Int, FieldElem], Domain) -> FieldElem raise PolyError
+
 pub fn sdm_from_dense(Array[Array[FieldElem]], Domain) -> SDM raise PolyError
 
 pub fn sdm_from_entries(Int, Int, Array[(Int, Int, FieldElem)], Domain) -> SDM raise PolyError
 
 pub fn sdm_irref(SDM) -> (SDM, Array[Int], Map[Int, Array[Int]]) raise PolyError
 
+pub fn sdm_matmul(SDM, SDM) -> SDM raise PolyError
+
+pub fn sdm_matmul_exraw(SDM, SDM) -> SDM raise PolyError
+
+pub fn sdm_matvecmul(SDM, Map[Int, FieldElem], domain? : Domain?) -> Map[Int, FieldElem] raise PolyError
+
 pub fn sdm_nullspace_from_rref(SDM, FieldElem, Int, Array[Int], Map[Int, Array[Int]]) -> (SDM, Array[Int]) raise PolyError
 
 pub fn sdm_particular_from_rref(SDM, Int, Array[Int]) -> SDM raise PolyError
+
+pub fn sdm_rref_den(SDM) -> (SDM, FieldElem, Array[Int]) raise PolyError
+
+pub fn sdm_scalar_mul(SDM, FieldElem, reverse? : Bool) -> SDM raise PolyError
+
+pub fn sdm_scalar_mul_exraw(SDM, FieldElem, reverse? : Bool) -> SDM raise PolyError
+
+pub fn sdm_transpose(SDM) -> SDM raise PolyError
 
 pub fn sfield(Array[@symcore.Expr], gens? : Array[String], domain? : Domain, order? : TermOrder) -> RingFactoryResult
 
@@ -1188,6 +1208,8 @@ pub fn together(@symcore.Expr, deep? : Bool, fraction? : Bool) -> @symcore.Expr
 pub fn total_degree(Poly) -> Int
 
 pub fn trunc(Poly, Int) -> Poly raise PolyError
+
+pub fn unop_dict(Map[Int, Map[Int, FieldElem]], (FieldElem) -> FieldElem raise PolyError) -> Map[Int, Map[Int, FieldElem]] raise PolyError
 
 pub fn vfield(Array[String], Domain, order? : TermOrder) -> RingFactoryResult
 
@@ -2001,6 +2023,8 @@ pub type DomainMatrixDOD = Map[Int, Map[Int, FieldElem]]
 pub type DomainMatrixDOK = Map[(Int, Int), FieldElem]
 
 pub type DomainMatrixRationalEigenvects = Array[(Domain, FieldElem, Int, DomainMatrix)]
+
+pub type FieldElemBinaryMapper = (FieldElem, FieldElem) -> FieldElem raise PolyError
 
 pub type FieldElemMapper = (FieldElem) -> FieldElem raise PolyError
 

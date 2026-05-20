@@ -24,6 +24,224 @@ fn sdm_nonzero_columns(
 }
 
 ///|
+/// Binary mapper used by sparse dictionary helpers.
+///
+/// - Does: Represents a two-argument operation on sparse matrix entries.
+/// - Input: Two `FieldElem` values.
+/// - Returns: The mapped `FieldElem`.
+/// - Limits: The mapper may raise `PolyError`; zero results are dropped by the
+///   sparse dictionary front doors.
+pub type FieldElemBinaryMapper = (FieldElem, FieldElem) -> FieldElem raise PolyError
+
+///|
+/// Apply a sparse dictionary binary operation.
+///
+/// - Does: Combines two dictionary-of-dictionaries sparse matrices entrywise,
+///   using separate functions for common and one-sided entries.
+/// - Input: Two `DomainMatrixDOD` maps plus `fab`, `fa`, and `fb` callbacks.
+/// - Returns: A sparse dictionary containing nonzero mapped entries.
+/// - Limits: Matrix shape and domain are not encoded in raw DOD values; callers
+///   are responsible for passing compatible sparse dictionaries.
+pub fn binop_dict(
+  a : DomainMatrixDOD,
+  b : DomainMatrixDOD,
+  fab : FieldElemBinaryMapper,
+  fa : FieldElemMapper,
+  fb : FieldElemMapper,
+) -> DomainMatrixDOD raise PolyError {
+  let row_keys : Map[Int, Bool] = {}
+  for row, _ in a {
+    row_keys[row] = true
+  }
+  for row, _ in b {
+    row_keys[row] = true
+  }
+  let out : DomainMatrixDOD = {}
+  for row, _ in row_keys {
+    let cols : Map[Int, Bool] = {}
+    match a.get(row) {
+      Some(arow) =>
+        for col, _ in arow {
+          cols[col] = true
+        }
+      None => ()
+    }
+    match b.get(row) {
+      Some(brow) =>
+        for col, _ in brow {
+          cols[col] = true
+        }
+      None => ()
+    }
+    let out_row : Map[Int, FieldElem] = {}
+    for col, _ in cols {
+      let mapped = match (a.get(row), b.get(row)) {
+        (Some(arow), Some(brow)) =>
+          match (arow.get(col), brow.get(col)) {
+            (Some(av), Some(bv)) => fab(av, bv)
+            (Some(av), None) => fa(av)
+            (None, Some(bv)) => fb(bv)
+            (None, None) => continue
+          }
+        (Some(arow), None) =>
+          match arow.get(col) {
+            Some(av) => fa(av)
+            None => continue
+          }
+        (None, Some(brow)) =>
+          match brow.get(col) {
+            Some(bv) => fb(bv)
+            None => continue
+          }
+        (None, None) => continue
+      }
+      if !fe_is_zero(mapped) {
+        out_row[col] = mapped
+      }
+    }
+    if !out_row.is_empty() {
+      out[row] = out_row
+    }
+  }
+  out
+}
+
+///|
+/// Apply a sparse dictionary unary operation.
+///
+/// - Does: Maps every nonzero sparse entry with a callback.
+/// - Input: A `DomainMatrixDOD` and a unary entry mapper.
+/// - Returns: A sparse dictionary containing nonzero mapped entries.
+/// - Limits: Raw DOD values do not carry matrix shape or domain information.
+pub fn unop_dict(
+  a : DomainMatrixDOD,
+  f : FieldElemMapper,
+) -> DomainMatrixDOD raise PolyError {
+  let out : DomainMatrixDOD = {}
+  for row, values in a {
+    let out_row : Map[Int, FieldElem] = {}
+    for col, value in values {
+      let mapped = f(value)
+      if !fe_is_zero(mapped) {
+        out_row[col] = mapped
+      }
+    }
+    if !out_row.is_empty() {
+      out[row] = out_row
+    }
+  }
+  out
+}
+
+///|
+/// Transpose a sparse domain matrix.
+///
+/// - Does: Provides the function-form front door for `SDM.transpose`.
+/// - Input: An `SDM`.
+/// - Returns: The transposed `SDM`.
+/// - Limits: Uses the package `SDM` wrapper rather than raw Python dicts.
+pub fn sdm_transpose(a : SDM) -> SDM raise PolyError {
+  a.transpose()
+}
+
+///|
+/// Compute the sparse dot product of two row dictionaries.
+///
+/// - Does: Sums products over common sparse indices.
+/// - Input: Two sparse row maps and their coefficient domain.
+/// - Returns: A `FieldElem` in the given domain.
+/// - Limits: Only entries present in both maps contribute, matching sparse
+///   matrix semantics.
+pub fn sdm_dotvec(
+  a : Map[Int, FieldElem],
+  b : Map[Int, FieldElem],
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  sparse_dotvec(a, b, domain)
+}
+
+///|
+/// Multiply a sparse matrix by a sparse vector.
+///
+/// - Does: Computes `A * b` with sparse row dictionaries.
+/// - Input: An `SDM`, a sparse vector map, and optional domain override.
+/// - Returns: A sparse vector map containing nonzero row results.
+/// - Limits: The vector length is not separately checked; incompatible missing
+///   entries behave as zeros.
+pub fn sdm_matvecmul(
+  a : SDM,
+  b : Map[Int, FieldElem],
+  domain? : Domain? = None,
+) -> Map[Int, FieldElem] raise PolyError {
+  let k = match domain {
+    Some(value) => value
+    None => a.domain()
+  }
+  sparse_matvecmul(a.to_dod(), b, k)
+}
+
+///|
+/// Multiply sparse matrices.
+///
+/// - Does: Provides the function-form front door for sparse matrix
+///   multiplication.
+/// - Input: Two `SDM` values.
+/// - Returns: Their sparse product.
+/// - Limits: Optional SymPy-only dimension/domain parameters are represented by
+///   the `SDM` metadata and are not exposed separately.
+pub fn sdm_matmul(a : SDM, b : SDM) -> SDM raise PolyError {
+  a.matmul(b)
+}
+
+///|
+/// Multiply sparse matrices using the conservative EXRAW path.
+///
+/// - Does: Mirrors `sdm_matmul` for MoonBit's current coefficient model.
+/// - Input: Two `SDM` values.
+/// - Returns: Their sparse product.
+/// - Limits: MoonBit `FieldElem` does not model Python `oo/nan` EXRAW
+///   multiplication side effects, so this aliases the exact sparse path.
+pub fn sdm_matmul_exraw(a : SDM, b : SDM) -> SDM raise PolyError {
+  sdm_matmul(a, b)
+}
+
+///|
+/// Multiply a sparse matrix by a scalar.
+///
+/// - Does: Scales every stored nonzero entry.
+/// - Input: An `SDM`, a scalar, and optional reverse flag.
+/// - Returns: A scaled `SDM`.
+/// - Limits: The Python callback argument is not modeled; use `reverse=true`
+///   for the right-multiplication spelling.
+pub fn sdm_scalar_mul(
+  a : SDM,
+  b : FieldElem,
+  reverse? : Bool = false,
+) -> SDM raise PolyError {
+  if reverse {
+    a.rmul(b)
+  } else {
+    a.mul(b)
+  }
+}
+
+///|
+/// Multiply a sparse matrix by a scalar using the conservative EXRAW path.
+///
+/// - Does: Mirrors `sdm_scalar_mul` for MoonBit's current coefficient model.
+/// - Input: An `SDM`, a scalar, and optional reverse flag.
+/// - Returns: A scaled `SDM`.
+/// - Limits: MoonBit `FieldElem` does not model Python `oo/nan` EXRAW
+///   multiplication side effects, so this aliases the exact sparse path.
+pub fn sdm_scalar_mul_exraw(
+  a : SDM,
+  b : FieldElem,
+  reverse? : Bool = false,
+) -> SDM raise PolyError {
+  sdm_scalar_mul(a, b, reverse~)
+}
+
+///|
 /// Functional wrapper for SymPy `polys.matrices.sdm.sdm_irref`.
 
 ///|
@@ -137,7 +355,15 @@ fn sorted_sparse_index_keys(values : Map[Int, Int]) -> Array[Int] {
 }
 
 ///|
-fn sdm_rref_den(a : SDM) -> (SDM, FieldElem, Array[Int]) raise PolyError {
+
+///|
+/// Compute denominator-cleared sparse RREF.
+///
+/// - Does: Runs the fraction-free sparse Gauss-Jordan path.
+/// - Input: An `SDM`.
+/// - Returns: `(rref, denominator, pivots)`.
+/// - Limits: Requires exact division in the coefficient domain.
+pub fn sdm_rref_den(a : SDM) -> (SDM, FieldElem, Array[Int]) raise PolyError {
   let domain = a.domain()
   let shape = a.shape()
   let rows = a.to_dod()
@@ -521,6 +747,26 @@ fn sparse_berk(
     coeffs[i] = value
   }
   coeffs
+}
+
+///|
+/// Compute sparse Berkowitz characteristic-polynomial data.
+///
+/// - Does: Runs the sparse Berkowitz recursion and returns the coefficient map
+///   keyed by dense coefficient index.
+/// - Input: An `SDM` and optional matrix size `n`.
+/// - Returns: `Map[Int, FieldElem]` containing the nonzero coefficients.
+/// - Limits: The input must be square for characteristic-polynomial semantics;
+///   if `n` is omitted the row count is used.
+pub fn sdm_berk(
+  a : SDM,
+  n? : Int? = None,
+) -> Map[Int, FieldElem] raise PolyError {
+  let size = match n {
+    Some(value) => value
+    None => a.shape().0
+  }
+  sparse_berk_map(a.to_dod(), size, a.domain())
 }
 
 ///|

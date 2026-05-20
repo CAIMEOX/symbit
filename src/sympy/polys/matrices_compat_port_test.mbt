@@ -74,6 +74,21 @@ fn sdm_summary_like_oracle(sdm : SDM) -> String raise PolyError {
 }
 
 ///|
+fn sparse_field_map_text(values : Map[Int, FieldElem]) -> String {
+  let keys : Array[Int] = Array::new()
+  for key, _ in values {
+    keys.push(key)
+  }
+  keys.sort()
+  let parts : Array[String] = Array::new()
+  for key in keys {
+    parts.push("\{key}:\{values[key]}")
+  }
+  let body = parts.join(",")
+  "{\{body}}"
+}
+
+///|
 fn solvers_solution_summary(
   sol : Map[String, @symcore.Expr]?,
   syms : Array[String],
@@ -394,6 +409,58 @@ test "matrices: SDM add/matmul/scalarmul and dense conversion" {
   assert_eq(mx_trim(add_dense), "[[3,2],[1,4]]")
   assert_eq(mx_trim(scaled_dense), "[[0,4],[2,0]]")
   assert_eq(mx_trim(mul_dense), "[[0,8],[3,0]]")
+}
+
+///|
+test "matrices: SDM functional frontdoors oracle parity" {
+  let a_rows = [[0, 2], [1, 0]]
+  let b_rows = [[3, 0], [0, 4]]
+  let a = @sympolys.sdm_from_entries(
+    2,
+    2,
+    [
+      (0, 1, @sympolys.fe_from_int(2, Domain::ZZ)),
+      (1, 0, @sympolys.fe_from_int(1, Domain::ZZ)),
+    ],
+    Domain::ZZ,
+  )
+  let b = @sympolys.sdm_from_entries(
+    2,
+    2,
+    [
+      (0, 0, @sympolys.fe_from_int(3, Domain::ZZ)),
+      (1, 1, @sympolys.fe_from_int(4, Domain::ZZ)),
+    ],
+    Domain::ZZ,
+  )
+  assert_eq(
+    mx_trim(sdm_summary_like_oracle(@sympolys.sdm_transpose(a))),
+    mx_trim(sdm_transpose_summary(a_rows, "ZZ")),
+  )
+  assert_eq(
+    mx_trim(sdm_summary_like_oracle(@sympolys.sdm_matmul(a, b))),
+    mx_trim(sdm_matmul_summary(a_rows, b_rows, "ZZ")),
+  )
+  let dense_rows = [[1, 2], [3, 4]]
+  let dense = @sympolys.sdm_from_entries(
+    2,
+    2,
+    [
+      (0, 0, @sympolys.fe_from_int(1, Domain::ZZ)),
+      (0, 1, @sympolys.fe_from_int(2, Domain::ZZ)),
+      (1, 0, @sympolys.fe_from_int(3, Domain::ZZ)),
+      (1, 1, @sympolys.fe_from_int(4, Domain::ZZ)),
+    ],
+    Domain::ZZ,
+  )
+  let rref = @sympolys.sdm_rref_den(dense)
+  let pivots = rref.2.map(i => i.to_string()).join(",")
+  let ours_rref = remove_spaces("(\{rref.0.to_string()},\{rref.1},[\{pivots}])")
+  assert_eq(ours_rref, sdm_rref_den_summary(dense_rows, "ZZ"))
+  assert_eq(
+    sparse_field_map_text(@sympolys.sdm_berk(dense)),
+    sdm_berk_summary(dense_rows, "ZZ"),
+  )
 }
 
 ///|
