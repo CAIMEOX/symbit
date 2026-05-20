@@ -726,6 +726,65 @@ pub fn dmp_ground_extract(
 }
 
 ///|
+fn densetools_add_real_imag_term(
+  real_terms : Map[Monomial, FieldElem],
+  imag_terms : Map[Monomial, FieldElem],
+  coeff : FieldElem,
+  degree : Int,
+  k : Int,
+  domain : Domain,
+) -> Unit raise PolyError {
+  let binom = fe_from_int(int_binomial(degree, k), domain)
+  let term_coeff = fe_mul(coeff, binom)
+  let mono = monomial_from_array([degree - k, k])
+  match k % 4 {
+    0 => add_term(real_terms, mono, term_coeff, domain)
+    1 => add_term(imag_terms, mono, term_coeff, domain)
+    2 => add_term(real_terms, mono, fe_neg(term_coeff), domain)
+    _ => add_term(imag_terms, mono, fe_neg(term_coeff), domain)
+  }
+}
+
+///|
+/// Split `f(x + i*y)` into real and imaginary parts.
+///
+/// - Does: Expands a univariate polynomial after substituting `x + i*y` and
+///   returns the real and imaginary bivariate dense polynomials.
+/// - Input: A dense univariate coefficient array and a coefficient `domain`.
+/// - Returns: `(real_part, imag_part)` as dense recursive polynomials in
+///   `K[x, y]`.
+/// - Limits: Only integer and rational exact coefficient domains are supported.
+pub fn dup_real_imag(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> (DensePoly, DensePoly) raise PolyError {
+  match domain {
+    Domain::ZZ | Domain::QQ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  let real_terms : Map[Monomial, FieldElem] = {}
+  let imag_terms : Map[Monomial, FieldElem] = {}
+  let coeffs = dup_strip(f)
+  let degree = dup_degree(coeffs)
+  if degree < 0 {
+    return (dmp_zero(1), dmp_zero(1))
+  }
+  for i in 0..<coeffs.length() {
+    let coeff = coeffs[i]
+    if fe_is_zero(coeff) {
+      continue
+    }
+    let exp = degree - i
+    for k in 0..<=exp {
+      densetools_add_real_imag_term(
+        real_terms, imag_terms, coeff, exp, k, domain,
+      )
+    }
+  }
+  (dmp_from_dict(real_terms, 1, domain), dmp_from_dict(imag_terms, 1, domain))
+}
+
+///|
 /// Evaluate `f(-x)`.
 ///
 /// - Does: Negates the coefficients of odd powers.

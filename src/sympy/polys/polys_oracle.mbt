@@ -8882,6 +8882,18 @@ pub fn dmp_ground_extract(
 }
 
 ///|
+pub fn dup_real_imag(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densetools.dup_real_imag", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_mirror(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",

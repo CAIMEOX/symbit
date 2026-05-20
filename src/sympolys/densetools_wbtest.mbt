@@ -73,6 +73,11 @@ fn dt_wb_dmp_clear_repr(value : (FieldElem, DensePoly)) -> String {
 }
 
 ///|
+fn dt_wb_dmp_pair_repr(value : (DensePoly, DensePoly)) -> String {
+  "(\{dt_wb_dmp_repr(value.0)},\{dt_wb_dmp_repr(value.1)})"
+}
+
+///|
 test "densetools wb: extract and trunc frontdoors" {
   let f = dt_wb_dup([6, 12, 18])
   let g = dt_wb_dup([4, 8, 12])
@@ -105,6 +110,31 @@ test "densetools wb: extract and trunc frontdoors" {
     dt_wb_dmp_repr(dmp_trunc(h, dt_wb_poly([1, -1]), 1, Domain::ZZ)),
     content="[[11],[11],[5]]",
   )
+}
+
+///|
+test "densetools wb: real-imag split frontdoor" {
+  inspect(
+    dt_wb_dmp_pair_repr(dup_real_imag(dt_wb_dup([]), Domain::ZZ)),
+    content="([[]],[[]])",
+  )
+  inspect(
+    dt_wb_dmp_pair_repr(dup_real_imag(dt_wb_dup([1]), Domain::ZZ)),
+    content="([[1]],[[]])",
+  )
+  inspect(
+    dt_wb_dmp_pair_repr(dup_real_imag(dt_wb_dup([1, 2, 3]), Domain::ZZ)),
+    content="([[1],[2],[-1,0,3]],[[2,0],[2,0]])",
+  )
+  inspect(
+    dt_wb_dmp_pair_repr(dup_real_imag(dt_wb_dup([1, 0, 1, 3]), Domain::ZZ)),
+    content="([[1],[],[-3,0,1],[3]],[[3,0],[],[-1,0,1,0]])",
+  )
+  let ex_result : Result[(DensePoly, DensePoly), PolyError] = try? dup_real_imag(
+    dt_wb_dup([1, 2]),
+    Domain::EX,
+  )
+  assert_true(ex_result is Err(PolyError::DomainMismatch))
 }
 
 ///|

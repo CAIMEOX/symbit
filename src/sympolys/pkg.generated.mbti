@@ -835,6 +835,8 @@ pub fn dup_quo_ground(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] r
 
 pub fn dup_random(Int, Int, Int, Domain) -> Array[FieldElem] raise PolyError
 
+pub fn dup_real_imag(Array[FieldElem], Domain) -> (DensePoly, DensePoly) raise PolyError
+
 pub fn dup_refine_real_root(Array[FieldElem], @symnum.BigRational, @symnum.BigRational, Domain, steps? : Int, eps? : @symnum.BigRational, disjoint? : @symnum.BigRational) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError
 
 pub fn dup_rem(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError

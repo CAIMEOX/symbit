@@ -28,6 +28,11 @@ fn dt_port_dmp_clear_repr(value : (FieldElem, DensePoly)) -> String {
 }
 
 ///|
+fn dt_port_dmp_pair_repr(value : (DensePoly, DensePoly)) -> String {
+  "(\{dmp_repr(value.0)},\{dmp_repr(value.1)})"
+}
+
+///|
 test "densetools dup integrate/diff/eval" {
   let f = [
     @sympolys.fe_from_int(3, Domain::QQ),
@@ -157,6 +162,27 @@ test "densetools extract trunc oracle parity" {
   assert_eq(
     dmp_repr(@sympolys.dmp_trunc(xy, modulus, 1, Domain::ZZ)),
     dmp_trunc(dense_data_of(xy), dense_data_of(modulus), 1, domain="ZZ"),
+  )
+}
+
+///|
+test "densetools real-imag split oracle parity" {
+  let quadratic = [fezz(1), fezz(2), fezz(3)]
+  assert_eq(
+    dt_port_dmp_pair_repr(@sympolys.dup_real_imag(quadratic, Domain::ZZ)),
+    dup_real_imag(dup_to_rats(quadratic), domain="ZZ"),
+  )
+
+  let cubic = [fezz(1), fezz(0), fezz(1), fezz(3)]
+  assert_eq(
+    dt_port_dmp_pair_repr(@sympolys.dup_real_imag(cubic, Domain::ZZ)),
+    dup_real_imag(dup_to_rats(cubic), domain="ZZ"),
+  )
+
+  let rational = [feqq(1, 2), feqq(0, 1), feqq(3, 4)]
+  assert_eq(
+    dt_port_dmp_pair_repr(@sympolys.dup_real_imag(rational, Domain::QQ)),
+    dup_real_imag(dup_to_rats(rational), domain="QQ"),
   )
 }
 
