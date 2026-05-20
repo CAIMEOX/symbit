@@ -9325,6 +9325,198 @@ pub fn dmp_gff_list(
 }
 
 ///|
+fn fact_dense_domain_elem_from_obj(
+  n : @symnum.BigRational,
+  domain_obj : @py.PyObject,
+) -> @py.PyObject raise {
+  let convert_enum = match py_get_attr(domain_obj, "convert") {
+    Some(v) => v
+    None => fail("fact-domain-convert-missing")
+  }
+  let convert = @py.PyCallable::create(objenum_to_obj(convert_enum)) catch {
+    _ => fail("fact-domain-convert-callable")
+  }
+  let num_obj = sympy_number_obj_oracle(n)
+  objenum_to_obj(py_call_one(convert, num_obj))
+}
+
+///|
+fn fact_dense_py_list_from_rationals(
+  coeffs : Array[@symnum.BigRational],
+  domain_obj : @py.PyObject,
+) -> @py.PyObject raise {
+  let items : Array[@py.PyObject] = Array::new()
+  for c in coeffs {
+    items.push(fact_dense_domain_elem_from_obj(c, domain_obj))
+  }
+  py_list_from_objects(items).obj()
+}
+
+///|
+fn fact_dense_py_dense_data(
+  data : DenseData,
+  domain_obj : @py.PyObject,
+) -> @py.PyObject raise {
+  match data {
+    DenseData::Coef(c) => fact_dense_domain_elem_from_obj(c, domain_obj)
+    DenseData::Poly(items) => {
+      let out : Array[@py.PyObject] = Array::new()
+      for it in items {
+        out.push(fact_dense_py_dense_data(it, domain_obj))
+      }
+      py_list_from_objects(out).obj()
+    }
+  }
+}
+
+///|
+fn fact_dense_py_factor_list(
+  factors : Array[Array[@symnum.BigRational]],
+  domain_obj : @py.PyObject,
+) -> @py.PyObject raise {
+  let out : Array[@py.PyObject] = Array::new()
+  for factor in factors {
+    out.push(fact_dense_py_list_from_rationals(factor, domain_obj))
+  }
+  py_list_from_objects(out).obj()
+}
+
+///|
+fn fact_dense_py_dmp_factor_list(
+  factors : Array[DenseData],
+  domain_obj : @py.PyObject,
+) -> @py.PyObject raise {
+  let out : Array[@py.PyObject] = Array::new()
+  for factor in factors {
+    out.push(fact_dense_py_dense_data(factor, domain_obj))
+  }
+  py_list_from_objects(out).obj()
+}
+
+///|
+fn fact_dense_bool_call(name : String, args : Array[OracleArg]) -> Bool raise {
+  let res = sympy_call_must("sympy.polys.factortools.\{name}", args)
+  match res {
+    PyBool(v) => py_str_obj(v.obj()) == "True"
+    _ => py_str_enum(res) == "True"
+  }
+}
+
+///|
+pub fn dup_factor_list_include(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_factor_list_include", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_factor_list(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dmp_factor_list", [
+    OracleArg::PyObj(fact_dense_py_dense_data(f, domain_obj)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_factor_list_include(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dmp_factor_list_include", [
+    OracleArg::PyObj(fact_dense_py_dense_data(f, domain_obj)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_trial_division(
+  f : Array[@symnum.BigRational],
+  factors : Array[Array[@symnum.BigRational]],
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_trial_division", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_factor_list(factors, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_trial_division(
+  f : DenseData,
+  factors : Array[DenseData],
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dmp_trial_division", [
+    OracleArg::PyObj(fact_dense_py_dense_data(f, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_dmp_factor_list(factors, domain_obj)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_irreducible_p(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  fact_dense_bool_call("dup_irreducible_p", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+}
+
+///|
+pub fn dmp_irreducible_p(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  fact_dense_bool_call("dmp_irreducible_p", [
+    OracleArg::PyObj(fact_dense_py_dense_data(f, domain_obj)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+}
+
+///|
+pub fn dup_gf_factor(f : Array[Int], p : Int) -> String raise {
+  let domain_obj = oracle_domain_from_spec("GF(\{p})")
+  let coeffs : Array[@symnum.BigRational] = f.map(n => {
+    @symnum.BigRational::from_int(n)
+  })
+  let res = sympy_call_must("sympy.polys.factortools.dup_gf_factor", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(coeffs, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 fn sqf_dense_alg_coeffs_obj(
   f : Array[String],
   domain_spec : String,
