@@ -73,6 +73,18 @@ test "densebasic wb: dup_from_list and dup_truncate" {
 }
 
 ///|
+test "densebasic wb: dup_pretty frontdoor" {
+  let f = [db_wb_fe(1), db_wb_fe(0), db_wb_fe(5), db_wb_fe(0), db_wb_fe(7)]
+  inspect(dup_pretty(f, "x"), content="x**4 + 5*x**2 + 7")
+  inspect(dup_pretty(f, "x", ascending=true), content="7 + 5*x**2 + x**4")
+  inspect(
+    dup_pretty([db_wb_fe(-1), db_wb_fe(2), db_wb_fe(-3)], "t"),
+    content="-t**2 + 2*t - 3",
+  )
+  inspect(dup_pretty([], "x"), content="0")
+}
+
+///|
 test "densebasic wb: dpp conversion helper branches" {
   let gens = ["x"]
   let nonzero = db_wb_const_poly(2, gens, Domain::QQ)

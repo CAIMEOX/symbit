@@ -6710,6 +6710,52 @@ pub fn dup_pow(
 }
 
 ///|
+pub fn dup_series_mul(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  n : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(g, domain)))
+  args.push(OracleArg::Int(n))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dup_series_mul", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_series_sqr(
+  f : Array[@symnum.BigRational],
+  n : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::Int(n))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dup_series_sqr", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_series_pow(
+  f : Array[@symnum.BigRational],
+  n : Int,
+  prec : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::Int(n))
+  args.push(OracleArg::Int(prec))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dup_series_pow", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_rr_div(
   f : Array[@symnum.BigRational],
   g : Array[@symnum.BigRational],
@@ -7367,6 +7413,23 @@ pub fn dup_from_list(
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densebasic.dup_from_list", args)
   remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_pretty(
+  f : Array[@symnum.BigRational],
+  sym : String,
+  ascending? : Bool = false,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::Str(sym))
+  let kwargs : Map[String, OracleArg] = {
+    "ascending": OracleArg::Bool(ascending),
+  }
+  let res = sympy_call_must("sympy.polys.densebasic.dup_pretty", args, kwargs~)
+  py_str_enum(res)
 }
 
 ///|

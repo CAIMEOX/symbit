@@ -3158,6 +3158,78 @@ pub fn dup_truncate(
 }
 
 ///|
+fn dup_pretty_term(coeff : FieldElem, exp : Int, sym : String) -> String? {
+  if fe_is_zero(coeff) {
+    return None
+  }
+  if exp == 0 {
+    return Some(coeff.to_string())
+  }
+  let base = if exp == 1 { sym } else { "\{sym}**\{exp}" }
+  if fe_is_one(coeff) {
+    Some(base)
+  } else if fe_is_one(fe_neg(coeff)) {
+    Some("-\{base}")
+  } else {
+    Some("\{coeff}*\{base}")
+  }
+}
+
+///|
+/// Return a string representation of a dense univariate polynomial.
+///
+/// - Does: Formats `f` in `K[x]`, matching SymPy `dup_pretty`.
+/// - Input: Dense coefficients, a variable name, and optional ascending order.
+/// - Returns: A human-readable polynomial string.
+/// - Limits: Coefficients are formatted through this package's `FieldElem`
+///   printer; no Python print stream behavior is modeled here.
+pub fn dup_pretty(
+  f : Array[FieldElem],
+  sym : String,
+  ascending? : Bool = false,
+) -> String {
+  if f.is_empty() {
+    return "0"
+  }
+  let deg = dup_degree(f)
+  let terms : Array[String] = []
+  for i in 0..<f.length() {
+    match dup_pretty_term(f[i], deg - i, sym) {
+      Some(term) => terms.push(term)
+      None => ()
+    }
+  }
+  if ascending {
+    let mut i = 0
+    let mut j = terms.length() - 1
+    while i < j {
+      let tmp = terms[i]
+      terms[i] = terms[j]
+      terms[j] = tmp
+      i += 1
+      j -= 1
+    }
+  }
+  terms.join(" + ").replace_all(old="+ -", new="- ")
+}
+
+///|
+/// Print a dense univariate polynomial.
+///
+/// - Does: Prints the `dup_pretty` representation to stdout.
+/// - Input: Dense coefficients, a variable name, and optional ascending order.
+/// - Returns: Unit.
+/// - Limits: Intended for debugging and parity with SymPy's lightweight
+///   `dup_print` front door.
+pub fn dup_print(
+  f : Array[FieldElem],
+  sym : String,
+  ascending? : Bool = false,
+) -> Unit {
+  println(dup_pretty(f, sym, ascending~))
+}
+
+///|
 /// Take a continuous subsequence of terms of ``f`` in ``K[X]``.
 
 ///|

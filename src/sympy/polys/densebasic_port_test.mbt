@@ -691,6 +691,20 @@ test "densebasic: dup_from_list and dup_truncate oracle parity" {
     3,
   )
   assert_eq(dup_repr(ours_trunc), oracle_trunc)
+
+  let pretty = [fez(1), fez(0), fez(5), fez(0), fez(7)]
+  assert_eq(
+    @sympolys.dup_pretty(pretty, "x"),
+    dup_pretty([br_int(1), br_int(0), br_int(5), br_int(0), br_int(7)], "x"),
+  )
+  assert_eq(
+    @sympolys.dup_pretty(pretty, "x", ascending=true),
+    dup_pretty(
+      [br_int(1), br_int(0), br_int(5), br_int(0), br_int(7)],
+      "x",
+      ascending=true,
+    ),
+  )
 }
 
 ///|

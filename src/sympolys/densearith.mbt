@@ -548,6 +548,73 @@ pub fn dup_pow(
 }
 
 ///|
+/// Multiply dense polynomials as truncated formal power series.
+///
+/// - Does: Computes `f*g mod x**n`, matching SymPy `dup_series_mul`.
+/// - Input: Two dense univariate coefficient arrays, precision `n`, and a domain.
+/// - Returns: A normalized dense coefficient array containing terms of degree `< n`.
+/// - Limits: Uses the plain dense product kernel; SymPy's large-input Karatsuba
+///   branch is an optimization detail, not a separate semantic front door.
+pub fn dup_series_mul(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  n : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if f.is_empty() || g.is_empty() || n <= 0 {
+    return []
+  }
+  dup_truncate(dup_mul(f, g, domain), n, domain)
+}
+
+///|
+/// Square a dense polynomial as a truncated formal power series.
+///
+/// - Does: Computes `f**2 mod x**n`, matching SymPy `dup_series_sqr`.
+/// - Input: One dense univariate coefficient array, precision `n`, and a domain.
+/// - Returns: A normalized dense coefficient array containing terms of degree `< n`.
+/// - Limits: Uses multiplication by itself for all sizes.
+pub fn dup_series_sqr(
+  f : Array[FieldElem],
+  n : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if f.is_empty() || n <= 0 {
+    return []
+  }
+  dup_series_mul(f, f, n, domain)
+}
+
+///|
+/// Raise a dense polynomial as a truncated formal power series.
+///
+/// - Does: Computes `f**exp mod x**prec`, matching SymPy `dup_series_pow`.
+/// - Input: One dense univariate coefficient array, a non-negative exponent,
+///   precision, and a domain.
+/// - Returns: A normalized dense coefficient array.
+/// - Limits: Negative exponents raise `PolyError::BadExponent`.
+pub fn dup_series_pow(
+  f : Array[FieldElem],
+  exp : Int,
+  prec : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if f.is_empty() {
+    return []
+  }
+  if exp < 0 {
+    raise PolyError::BadExponent
+  }
+  if exp == 0 {
+    return [fe_from_int(1, domain)]
+  }
+  if exp == 1 || (f.length() == 1 && fe_is_one(f[0])) {
+    return dup_truncate(f, prec, domain)
+  }
+  dup_truncate(dup_pow(f, exp, domain), prec, domain)
+}
+
+///|
 fn dmp_to_coeffs(f : DensePoly) -> Array[FieldElem] raise PolyError {
   match f {
     DensePoly::Coef(c) => dup_strip([c])

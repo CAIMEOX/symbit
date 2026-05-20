@@ -199,6 +199,28 @@ test "densearith: dup_add/sub/mul/sqr/pow parity" {
 }
 
 ///|
+test "densearith: dup series arithmetic parity" {
+  let f = [fezz(1), fezz(0), fezz(1)]
+  let g = [fezz(2), fezz(1)]
+  let ours_mul = dup_repr(@sympolys.dup_series_mul(f, g, 4, Domain::ZZ))
+  let oracle_mul = dup_series_mul(dup_to_rats(f), dup_to_rats(g), 4)
+  assert_eq(ours_mul, oracle_mul)
+
+  let h = [fezz(1), fezz(2), fezz(3)]
+  let ours_sqr = dup_repr(@sympolys.dup_series_sqr(h, 5, Domain::ZZ))
+  let oracle_sqr = dup_series_sqr(dup_to_rats(h), 5)
+  assert_eq(ours_sqr, oracle_sqr)
+
+  let ours_pow = dup_repr(@sympolys.dup_series_pow(h, 2, 5, Domain::ZZ))
+  let oracle_pow = dup_series_pow(dup_to_rats(h), 2, 5)
+  assert_eq(ours_pow, oracle_pow)
+
+  let ours_short = dup_repr(@sympolys.dup_series_pow(h, 3, 4, Domain::ZZ))
+  let oracle_short = dup_series_pow(dup_to_rats(h), 3, 4)
+  assert_eq(ours_short, oracle_short)
+}
+
+///|
 test "densearith: dup_div family parity" {
   let f = [fezz(1), fezz(0), fezz(1)]
   let g = [fezz(1), fezz(-1)]

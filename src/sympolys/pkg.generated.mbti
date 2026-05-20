@@ -701,6 +701,10 @@ pub fn dup_pquo(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] 
 
 pub fn dup_prem(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
+pub fn dup_pretty(Array[FieldElem], String, ascending? : Bool) -> String
+
+pub fn dup_print(Array[FieldElem], String, ascending? : Bool) -> Unit
+
 pub fn dup_quo(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_quo_ground(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] raise PolyError
@@ -720,6 +724,12 @@ pub fn dup_root_upper_bound(Array[FieldElem], Domain) -> FieldElem raise PolyErr
 pub fn dup_rr_div(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem]) raise PolyError
 
 pub fn dup_rshift(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_series_mul(Array[FieldElem], Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_series_pow(Array[FieldElem], Int, Int, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_series_sqr(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_slice(Array[FieldElem], Int, Int, Domain) -> Array[FieldElem] raise PolyError
 

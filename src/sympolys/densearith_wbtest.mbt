@@ -89,6 +89,22 @@ test "densearith wb: dup guard and error branches" {
   )
   assert_true(pow_neg is Err(PolyError::BadExponent))
 
+  let series_neg : Result[Array[FieldElem], PolyError] = try? dup_series_pow(
+    [da_wb_fezz(1), da_wb_fezz(1)],
+    -1,
+    3,
+    Domain::ZZ,
+  )
+  assert_true(series_neg is Err(PolyError::BadExponent))
+  inspect(
+    da_wb_dup_repr(dup_series_mul([], [da_wb_fezz(1)], 3, Domain::ZZ)),
+    content="[]",
+  )
+  inspect(
+    da_wb_dup_repr(dup_series_sqr([da_wb_fezz(1)], 0, Domain::ZZ)),
+    content="[]",
+  )
+
   let pdiv_zero : Result[(Array[FieldElem], Array[FieldElem]), PolyError] = try? dup_pdiv(
     [da_wb_fezz(1)],
     [],
@@ -108,6 +124,47 @@ test "densearith wb: dup guard and error branches" {
     Domain::ZZ,
   )
   assert_true(pexquo_fail is Err(PolyError::ExactQuotientFailed))
+}
+
+///|
+test "densearith wb: series arithmetic frontdoors" {
+  let f = [da_wb_fezz(1), da_wb_fezz(0), da_wb_fezz(1)]
+  let g = [da_wb_fezz(2), da_wb_fezz(1)]
+  inspect(
+    da_wb_dup_repr(dup_series_mul(f, g, 4, Domain::ZZ)),
+    content="[2,1,2,1]",
+  )
+  inspect(
+    da_wb_dup_repr(dup_series_mul(f, g, 3, Domain::ZZ)),
+    content="[1,2,1]",
+  )
+  inspect(
+    da_wb_dup_repr(
+      dup_series_sqr(
+        [da_wb_fezz(1), da_wb_fezz(2), da_wb_fezz(3)],
+        5,
+        Domain::ZZ,
+      ),
+    ),
+    content="[1,4,10,12,9]",
+  )
+  inspect(
+    da_wb_dup_repr(
+      dup_series_pow(
+        [da_wb_fezz(1), da_wb_fezz(2), da_wb_fezz(3)],
+        2,
+        5,
+        Domain::ZZ,
+      ),
+    ),
+    content="[1,4,10,12,9]",
+  )
+  inspect(
+    da_wb_dup_repr(
+      dup_series_pow([da_wb_fezz(1), da_wb_fezz(1)], 0, 0, Domain::ZZ),
+    ),
+    content="[1]",
+  )
 }
 
 ///|
