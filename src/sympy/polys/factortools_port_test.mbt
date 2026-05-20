@@ -193,3 +193,95 @@ test "factortools: dense finite-field factorization parity" {
     dup_gf_factor([1, 0, 1], 2).contains("SymmetricModularIntegerMod2"),
   )
 }
+
+///|
+test "factortools: integer Mignotte frontdoors parity" {
+  let f = [fezz(1), fezz(14), fezz(56), fezz(64)]
+  assert_eq(
+    @sympolys.dup_zz_mignotte_bound(f, Domain::ZZ).to_string(),
+    dup_zz_mignotte_bound(dup_to_rats(f)),
+  )
+  let hard = [
+    fezz(87),
+    fezz(4),
+    fezz(80),
+    fezz(17),
+    fezz(9),
+    fezz(12),
+    fezz(49),
+    fezz(26),
+  ]
+  assert_eq(
+    @sympolys.dup_zz_mignotte_bound(hard, Domain::ZZ).to_string(),
+    dup_zz_mignotte_bound(dup_to_rats(hard)),
+  )
+  let dmp_f = poly_int([1, 2, 1])
+  assert_eq(
+    @sympolys.dmp_zz_mignotte_bound(dmp_f, 0, Domain::ZZ).to_string(),
+    dmp_zz_mignotte_bound(dense_data_of(dmp_f), 0),
+  )
+}
+
+///|
+test "factortools: integer cyclotomic and Eisenstein parity" {
+  let eisenstein = [fezz(1), fezz(0), fezz(2)]
+  let not_eisenstein = [fezz(1), fezz(0), fezz(1)]
+  assert_eq(
+    @sympolys.dup_zz_irreducible_p(eisenstein, Domain::ZZ),
+    dup_zz_irreducible_p(dup_to_rats(eisenstein)),
+  )
+  assert_eq(
+    @sympolys.dup_zz_irreducible_p(not_eisenstein, Domain::ZZ),
+    dup_zz_irreducible_p(dup_to_rats(not_eisenstein)),
+  )
+  assert_eq(
+    dup_repr(@sympolys.dup_zz_cyclotomic_poly(12, Domain::ZZ)),
+    dup_zz_cyclotomic_poly(12),
+  )
+  let false_case = [
+    fezz(1),
+    fezz(0),
+    fezz(1),
+    fezz(0),
+    fezz(0),
+    fezz(0),
+    fezz(-1),
+    fezz(0),
+    fezz(1),
+    fezz(0),
+    fezz(-1),
+    fezz(0),
+    fezz(0),
+    fezz(0),
+    fezz(1),
+    fezz(0),
+    fezz(1),
+  ]
+  let true_case = [
+    fezz(1),
+    fezz(0),
+    fezz(1),
+    fezz(0),
+    fezz(0),
+    fezz(0),
+    fezz(-1),
+    fezz(0),
+    fezz(-1),
+    fezz(0),
+    fezz(-1),
+    fezz(0),
+    fezz(0),
+    fezz(0),
+    fezz(1),
+    fezz(0),
+    fezz(1),
+  ]
+  assert_eq(
+    @sympolys.dup_cyclotomic_p(false_case, Domain::ZZ),
+    dup_cyclotomic_p(dup_to_rats(false_case)),
+  )
+  assert_eq(
+    @sympolys.dup_cyclotomic_p(true_case, Domain::ZZ),
+    dup_cyclotomic_p(dup_to_rats(true_case)),
+  )
+}

@@ -9517,6 +9517,72 @@ pub fn dup_gf_factor(f : Array[Int], p : Int) -> String raise {
 }
 
 ///|
+pub fn dup_zz_mignotte_bound(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_zz_mignotte_bound", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_sympy_enum_str(res))
+}
+
+///|
+pub fn dmp_zz_mignotte_bound(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_mignotte_bound", [
+    OracleArg::PyObj(fact_dense_py_dense_data(f, domain_obj)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_sympy_enum_str(res))
+}
+
+///|
+pub fn dup_zz_irreducible_p(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_zz_irreducible_p", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+  py_sympy_enum_str(res).trim().to_string() == "True"
+}
+
+///|
+pub fn dup_zz_cyclotomic_poly(n : Int, domain? : String = "ZZ") -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_zz_cyclotomic_poly", [
+    OracleArg::Int(n),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_cyclotomic_p(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+  irreducible? : Bool = false,
+) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_cyclotomic_p", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+    OracleArg::PyObj(py_bool_obj(irreducible)),
+  ])
+  py_sympy_enum_str(res).trim().to_string() == "True"
+}
+
+///|
 fn sqf_dense_alg_coeffs_obj(
   f : Array[String],
   domain_spec : String,
