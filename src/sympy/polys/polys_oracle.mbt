@@ -9583,6 +9583,33 @@ pub fn dup_cyclotomic_p(
 }
 
 ///|
+pub fn python_gcd(a : Int, b : Int) -> String raise {
+  let res = sympy_call_must("sympy.polys.domains.groundtypes.python_gcd", [
+    OracleArg::Int(a),
+    OracleArg::Int(b),
+  ])
+  remove_spaces(py_sympy_enum_str(res))
+}
+
+///|
+pub fn python_lcm(a : Int, b : Int) -> String raise {
+  let res = sympy_call_must("sympy.polys.domains.groundtypes.python_lcm", [
+    OracleArg::Int(a),
+    OracleArg::Int(b),
+  ])
+  remove_spaces(py_sympy_enum_str(res))
+}
+
+///|
+pub fn python_gcdex(a : Int, b : Int) -> String raise {
+  let res = sympy_call_must("sympy.polys.domains.groundtypes.python_gcdex", [
+    OracleArg::Int(a),
+    OracleArg::Int(b),
+  ])
+  remove_spaces(py_sympy_enum_str(res))
+}
+
+///|
 fn sqf_dense_alg_coeffs_obj(
   f : Array[String],
   domain_spec : String,

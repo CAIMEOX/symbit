@@ -1371,6 +1371,12 @@ pub fn primitive_element(Array[@symcore.Expr]) -> (@symcore.Expr, Array[Int]) ra
 
 pub fn primitive_element_ex(Array[@symcore.Expr]) -> (@symcore.Expr, Array[Int], Array[Array[@symnum.BigRational]]) raise PolyError
 
+pub fn python_gcd(Int, Int) -> Int
+
+pub fn python_gcdex(Int, Int) -> (Int, Int, Int)
+
+pub fn python_lcm(Int, Int) -> Int
+
 pub fn quo(Poly, Poly, auto? : Bool) -> Poly raise PolyError
 
 pub fn quo_z(Poly, Poly) -> Poly raise PolyError
