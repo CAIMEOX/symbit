@@ -131,6 +131,10 @@ pub fn dict_from_expr(@symcore.Expr, gens? : Array[String]) -> String raise Poly
 
 pub fn discriminant(Poly) -> FieldElem raise PolyError
 
+pub fn dispersion(Poly, q? : Poly) -> Int raise PolyError
+
+pub fn dispersionset(Poly, q? : Poly) -> Array[Int] raise PolyError
+
 pub fn div(Poly, Poly, auto? : Bool) -> (Poly, Poly) raise PolyError
 
 pub fn dmp_LC(DensePoly) -> DensePoly

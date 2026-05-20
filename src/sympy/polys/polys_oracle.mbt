@@ -7433,6 +7433,67 @@ pub fn dup_pretty(
 }
 
 ///|
+fn sympy_poly_obj_from_expr_oracle(
+  expr : @symcore.Expr,
+  gens : Array[String],
+) -> @py.PyObject raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens([expr_obj])
+  } else {
+    sympy_symbols_from_names(gens)
+  }
+  call_sympy_poly(expr_obj, gens_list, "", None)
+}
+
+///|
+pub fn dispersionset_expr(
+  p : @symcore.Expr,
+  q? : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let p_obj = sympy_poly_obj_from_expr_oracle(p, gens)
+  let args : Array[OracleArg] = [OracleArg::PyObj(p_obj)]
+  match q {
+    Some(expr) => {
+      let q_obj = sympy_poly_obj_from_expr_oracle(expr, gens)
+      args.push(OracleArg::PyObj(q_obj))
+    }
+    None => ()
+  }
+  let res = sympy_call_must("sympy.polys.dispersion.dispersionset", args)
+  let builtins = ensure_builtins_module()
+  let sorted_call = resolve_callable(builtins, "sorted")
+  let sorted_res = py_call_one(sorted_call, objenum_to_obj(res))
+  let items = py_list_to_pyobjects(sorted_res)
+  let parts : Array[String] = []
+  for item in items {
+    parts.push(py_obj_to_int(item).to_string())
+  }
+  let body = parts.join(",")
+  "[\{body}]"
+}
+
+///|
+pub fn dispersion_expr(
+  p : @symcore.Expr,
+  q? : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let p_obj = sympy_poly_obj_from_expr_oracle(p, gens)
+  let args : Array[OracleArg] = [OracleArg::PyObj(p_obj)]
+  match q {
+    Some(expr) => {
+      let q_obj = sympy_poly_obj_from_expr_oracle(expr, gens)
+      args.push(OracleArg::PyObj(q_obj))
+    }
+    None => ()
+  }
+  let res = sympy_call_must("sympy.polys.dispersion.dispersion", args)
+  py_str_enum(res)
+}
+
+///|
 pub fn dmp_from_sympy(
   f : DenseData,
   u : Int,
