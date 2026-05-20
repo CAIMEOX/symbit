@@ -8604,6 +8604,79 @@ pub fn gf_pow(f : Array[Int], n : Int, p : Int) -> String raise {
 }
 
 ///|
+pub fn gf_pow_mod(
+  f : Array[Int],
+  n : Int,
+  g : Array[Int],
+  p : Int,
+) -> String raise {
+  gf_zz_call("gf_pow_mod", [
+    OracleArg::IntList(f),
+    OracleArg::Int(n),
+    OracleArg::IntList(g),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
+pub fn gf_diff(f : Array[Int], p : Int) -> String raise {
+  gf_zz_unary("gf_diff", f, p)
+}
+
+///|
+pub fn gf_eval(f : Array[Int], a : Int, p : Int) -> Int raise {
+  let res = sympy_call_must("sympy.polys.galoistools.gf_eval", [
+    OracleArg::IntList(f),
+    OracleArg::Int(a),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+  py_obj_to_int(objenum_to_obj(res))
+}
+
+///|
+pub fn gf_multi_eval(
+  f : Array[Int],
+  values : Array[Int],
+  p : Int,
+) -> String raise {
+  gf_zz_call("gf_multi_eval", [
+    OracleArg::IntList(f),
+    OracleArg::IntList(values),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
+pub fn gf_compose(f : Array[Int], g : Array[Int], p : Int) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::IntList(f))
+  args.push(OracleArg::IntList(g))
+  args.push(OracleArg::Int(p))
+  args.push(OracleArg::PyObj(sympy_domain_obj("ZZ")))
+  let res = sympy_call_must("sympy.polys.galoistools.gf_compose", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn gf_compose_mod(
+  g : Array[Int],
+  h : Array[Int],
+  f : Array[Int],
+  p : Int,
+) -> String raise {
+  gf_zz_call("gf_compose_mod", [
+    OracleArg::IntList(g),
+    OracleArg::IntList(h),
+    OracleArg::IntList(f),
+    OracleArg::Int(p),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+}
+
+///|
 pub fn gf_gcd(f : Array[Int], g : Array[Int], p : Int) -> String raise {
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::IntList(f))
@@ -8611,6 +8684,96 @@ pub fn gf_gcd(f : Array[Int], g : Array[Int], p : Int) -> String raise {
   args.push(OracleArg::Int(p))
   args.push(OracleArg::PyObj(sympy_domain_obj("ZZ")))
   let res = sympy_call_must("sympy.polys.galoistools.gf_gcd", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn gf_lcm(f : Array[Int], g : Array[Int], p : Int) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::IntList(f))
+  args.push(OracleArg::IntList(g))
+  args.push(OracleArg::Int(p))
+  args.push(OracleArg::PyObj(sympy_domain_obj("ZZ")))
+  let res = sympy_call_must("sympy.polys.galoistools.gf_lcm", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn gf_cofactors(f : Array[Int], g : Array[Int], p : Int) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::IntList(f))
+  args.push(OracleArg::IntList(g))
+  args.push(OracleArg::Int(p))
+  args.push(OracleArg::PyObj(sympy_domain_obj("ZZ")))
+  let res = sympy_call_must("sympy.polys.galoistools.gf_cofactors", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn gf_gcdex(f : Array[Int], g : Array[Int], p : Int) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::IntList(f))
+  args.push(OracleArg::IntList(g))
+  args.push(OracleArg::Int(p))
+  args.push(OracleArg::PyObj(sympy_domain_obj("ZZ")))
+  let res = sympy_call_must("sympy.polys.galoistools.gf_gcdex", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn gf_crt(u : Array[Int], m : Array[Int]) -> Int raise {
+  let res = sympy_call_must("sympy.polys.galoistools.gf_crt", [
+    OracleArg::IntList(u),
+    OracleArg::IntList(m),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+  py_obj_to_int(objenum_to_obj(res))
+}
+
+///|
+pub fn gf_crt1(m : Array[Int]) -> String raise {
+  let res = sympy_call_must("sympy.polys.galoistools.gf_crt1", [
+    OracleArg::IntList(m),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn gf_crt2(
+  u : Array[Int],
+  m : Array[Int],
+  p : Int,
+  e : Array[Int],
+  s : Array[Int],
+) -> Int raise {
+  let res = sympy_call_must("sympy.polys.galoistools.gf_crt2", [
+    OracleArg::IntList(u),
+    OracleArg::IntList(m),
+    OracleArg::Int(p),
+    OracleArg::IntList(e),
+    OracleArg::IntList(s),
+    OracleArg::PyObj(sympy_domain_obj("ZZ")),
+  ])
+  py_obj_to_int(objenum_to_obj(res))
+}
+
+///|
+pub fn gf_value(f : Array[Int], a : Int) -> Int raise {
+  let res = sympy_call_must("sympy.polys.galoistools.gf_value", [
+    OracleArg::IntList(f),
+    OracleArg::Int(a),
+  ])
+  py_obj_to_int(objenum_to_obj(res))
+}
+
+///|
+pub fn linear_congruence(a : Int, b : Int, m : Int) -> String raise {
+  let res = sympy_call_must("sympy.polys.galoistools.linear_congruence", [
+    OracleArg::Int(a),
+    OracleArg::Int(b),
+    OracleArg::Int(m),
+  ])
   remove_spaces(py_dense_str(res))
 }
 

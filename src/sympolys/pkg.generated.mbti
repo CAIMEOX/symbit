@@ -879,11 +879,27 @@ pub fn gf_add_ground(Array[Int], Int, Int) -> Array[Int]
 
 pub fn gf_add_mul(Array[Int], Array[Int], Array[Int], Int) -> Array[Int]
 
+pub fn gf_cofactors(Array[Int], Array[Int], Int) -> (Array[Int], Array[Int], Array[Int]) raise PolyError
+
+pub fn gf_compose(Array[Int], Array[Int], Int) -> Array[Int]
+
+pub fn gf_compose_mod(Array[Int], Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
+
+pub fn gf_crt(Array[Int], Array[Int]) -> Int raise PolyError
+
+pub fn gf_crt1(Array[Int]) -> (Int, Array[Int], Array[Int]) raise PolyError
+
+pub fn gf_crt2(Array[Int], Array[Int], Int, Array[Int], Array[Int]) -> Int
+
 pub fn gf_degree(Array[Int]) -> Int
+
+pub fn gf_diff(Array[Int], Int) -> Array[Int]
 
 pub fn gf_div(Array[Int], Array[Int], Int) -> (Array[Int], Array[Int]) raise PolyError
 
 pub fn gf_domain(Int) -> Domain raise PolyError
+
+pub fn gf_eval(Array[Int], Int, Int) -> Int
 
 pub fn gf_exquo(Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
 
@@ -893,7 +909,11 @@ pub fn gf_from_int_poly(Array[Int], Int) -> Array[Int]
 
 pub fn gf_gcd(Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
 
+pub fn gf_gcdex(Array[Int], Array[Int], Int) -> (Array[Int], Array[Int], Array[Int]) raise PolyError
+
 pub fn gf_int(Int, Int) -> Int
+
+pub fn gf_lcm(Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
 
 pub fn gf_lshift(Array[Int], Int) -> Array[Int] raise PolyError
 
@@ -903,11 +923,15 @@ pub fn gf_mul(Array[Int], Array[Int], Int) -> Array[Int]
 
 pub fn gf_mul_ground(Array[Int], Int, Int) -> Array[Int]
 
+pub fn gf_multi_eval(Array[Int], Array[Int], Int) -> Array[Int]
+
 pub fn gf_neg(Array[Int], Int) -> Array[Int]
 
 pub fn gf_normal(Array[Int], Int) -> Array[Int]
 
 pub fn gf_pow(Array[Int], Int, Int) -> Array[Int] raise PolyError
+
+pub fn gf_pow_mod(Array[Int], Int, Array[Int], Int) -> Array[Int] raise PolyError
 
 pub fn gf_quo(Array[Int], Array[Int], Int) -> Array[Int] raise PolyError
 
@@ -932,6 +956,8 @@ pub fn gf_to_dict(Array[Int], Int, symmetric? : Bool) -> Map[Int, Int]
 pub fn gf_to_int_poly(Array[Int], Int, symmetric? : Bool) -> Array[Int]
 
 pub fn gf_trunc(Array[Int], Int) -> Array[Int]
+
+pub fn gf_value(Array[Int], Int) -> Int
 
 pub fn gff(Poly) -> Poly raise PolyError
 
@@ -1014,6 +1040,8 @@ pub fn lcm_list(Array[Poly]) -> Poly raise PolyError
 pub fn legendre_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
 
 pub fn lex() -> TermOrder
+
+pub fn linear_congruence(Int, Int, Int) -> Array[Int] raise PolyError
 
 pub fn linear_solve(DDM, Array[FieldElem]) -> LinearSolveResult raise PolyError
 

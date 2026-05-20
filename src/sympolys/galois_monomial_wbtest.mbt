@@ -14,6 +14,12 @@ fn galois_wb_pair(pair : (Array[Int], Array[Int])) -> String {
 }
 
 ///|
+fn galois_wb_triple(pair : (Array[Int], Array[Int], Array[Int])) -> String {
+  let (a, b, c) = pair
+  "(\{galois_wb_arr(a)}, \{galois_wb_arr(b)}, \{galois_wb_arr(c)})"
+}
+
+///|
 fn galois_wb_map(values : Map[Int, Int]) -> String {
   let items : Array[(Int, Int)] = []
   for key, value in values {
@@ -136,6 +142,47 @@ test "galoistools wb: conversion scalar and power helpers" {
     galois_wb_arr(gf_pow([3, 2, 4], 3, 5)),
     content="[2, 4, 4, 2, 2, 1, 4]",
   )
+}
+
+///|
+test "galoistools wb: modular algorithm helpers" {
+  inspect(galois_wb_arr(gf_diff([3, 2, 4], 5)), content="[1, 2]")
+  inspect(gf_eval([3, 2, 4], 2, 5), content="0")
+  inspect(
+    galois_wb_arr(gf_multi_eval([3, 2, 4], [0, 1, 2, 3, 4], 5)),
+    content="[4, 4, 0, 2, 0]",
+  )
+  inspect(
+    galois_wb_arr(gf_compose([3, 2, 4], [2, 2, 2], 5)),
+    content="[2, 4, 0, 3, 0]",
+  )
+  inspect(
+    galois_wb_arr(gf_compose_mod([3, 2, 4], [2, 2, 2], [4, 3], 5)),
+    content="[4]",
+  )
+  inspect(galois_wb_arr(gf_pow_mod([3, 2, 4], 3, [1, 1], 5)), content="[]")
+  inspect(
+    galois_wb_arr(gf_lcm([3, 2, 4], [2, 2, 3], 5)),
+    content="[1, 2, 0, 4]",
+  )
+  inspect(
+    galois_wb_triple(gf_cofactors([3, 2, 4], [2, 2, 3], 5)),
+    content="([1, 3], [3, 3], [2, 1])",
+  )
+  inspect(
+    galois_wb_triple(gf_gcdex([1, 8, 7], [1, 7, 1, 7], 11)),
+    content="([5, 6], [6], [1, 7])",
+  )
+  let residues = [49, 76, 65]
+  let moduli = [99, 97, 95]
+  inspect(gf_crt(residues, moduli), content="639985")
+  let (crt_p, crt_e, crt_s) = gf_crt1(moduli)
+  inspect(crt_p, content="912285")
+  inspect(galois_wb_arr(crt_e), content="[9215, 9405, 9603]")
+  inspect(galois_wb_arr(crt_s), content="[62, 24, 12]")
+  inspect(gf_crt2(residues, moduli, crt_p, crt_e, crt_s), content="639985")
+  inspect(gf_value([1, 7, 2, 4], 11), content="2204")
+  inspect(galois_wb_arr(linear_congruence(3, 12, 15)), content="[4, 9, 14]")
 }
 
 ///|

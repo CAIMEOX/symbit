@@ -814,7 +814,7 @@ fn factor_gf_seeded(poly : Poly, seed : Int) -> Array[Poly] raise PolyError {
 
 ///|
 /// GF(p) helpers for DDF/EDF
-fn gf_pow_mod(
+fn gf_poly_pow_mod(
   base : Poly,
   exp : Int,
   modulus_poly : Poly,
@@ -851,7 +851,7 @@ fn distinct_degree_decompose(
   let mut pow = x_poly
   let mut i = 1
   while 2 * i <= f.degree(0) {
-    pow = gf_pow_mod(pow, field_size, f)
+    pow = gf_poly_pow_mod(pow, field_size, f)
     let g = pow.sub(x_poly)
     let d = f.gcd_univar(g)
     if !is_one(d) {
@@ -909,7 +909,7 @@ fn equal_degree_factor(
           let g = x_poly.add(
             poly_const_from_fe(const_elem, poly.gens, poly.domain),
           )
-          let h = gf_pow_mod(g, exp, f)
+          let h = gf_poly_pow_mod(g, exp, f)
           let s = h.sub(Poly::one(poly.gens, poly.domain))
           let factor = f.gcd_univar(s)
           let deg_factor = factor.degree(0)

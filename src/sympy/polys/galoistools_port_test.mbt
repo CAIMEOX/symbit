@@ -14,6 +14,12 @@ fn gf_pair_repr(pair : (Array[Int], Array[Int])) -> String {
 }
 
 ///|
+fn gf_triple_repr(pair : (Array[Int], Array[Int], Array[Int])) -> String {
+  let (a, b, c) = pair
+  "(\{gf_repr(a)},\{gf_repr(b)},\{gf_repr(c)})"
+}
+
+///|
 fn gf_map_repr(values : Map[Int, Int]) -> String {
   let items : Array[(Int, Int)] = []
   for key, value in values {
@@ -108,6 +114,55 @@ test "galoistools conversion scalar and power ops" {
     gf_rshift([1, 2, 3, 4, 0], 3),
   )
   assert_eq(gf_repr(@sympolys.gf_pow([3, 2, 4], 3, p)), gf_pow([3, 2, 4], 3, p))
+}
+
+///|
+test "galoistools modular algorithm ops" {
+  let p = 5
+  assert_eq(gf_repr(@sympolys.gf_diff([3, 2, 4], p)), gf_diff([3, 2, 4], p))
+  assert_eq(@sympolys.gf_eval([3, 2, 4], 2, p), gf_eval([3, 2, 4], 2, p))
+  assert_eq(
+    gf_repr(@sympolys.gf_multi_eval([3, 2, 4], [0, 1, 2, 3, 4], p)),
+    gf_multi_eval([3, 2, 4], [0, 1, 2, 3, 4], p),
+  )
+  assert_eq(
+    gf_repr(@sympolys.gf_compose([3, 2, 4], [2, 2, 2], p)),
+    gf_compose([3, 2, 4], [2, 2, 2], p),
+  )
+  assert_eq(
+    gf_repr(@sympolys.gf_compose_mod([3, 2, 4], [2, 2, 2], [4, 3], p)),
+    gf_compose_mod([3, 2, 4], [2, 2, 2], [4, 3], p),
+  )
+  assert_eq(
+    gf_repr(@sympolys.gf_pow_mod([3, 2, 4], 3, [1, 1], p)),
+    gf_pow_mod([3, 2, 4], 3, [1, 1], p),
+  )
+  assert_eq(
+    gf_repr(@sympolys.gf_lcm([3, 2, 4], [2, 2, 3], p)),
+    gf_lcm([3, 2, 4], [2, 2, 3], p),
+  )
+  assert_eq(
+    gf_triple_repr(@sympolys.gf_cofactors([3, 2, 4], [2, 2, 3], p)),
+    gf_cofactors([3, 2, 4], [2, 2, 3], p),
+  )
+  assert_eq(
+    gf_triple_repr(@sympolys.gf_gcdex([1, 8, 7], [1, 7, 1, 7], 11)),
+    gf_gcdex([1, 8, 7], [1, 7, 1, 7], 11),
+  )
+  let residues = [49, 76, 65]
+  let moduli = [99, 97, 95]
+  assert_eq(@sympolys.gf_crt(residues, moduli), gf_crt(residues, moduli))
+  let (crt_p, crt_e, crt_s) = @sympolys.gf_crt1(moduli)
+  assert_eq("(\{crt_p},\{gf_repr(crt_e)},\{gf_repr(crt_s)})", gf_crt1(moduli))
+  assert_eq(
+    @sympolys.gf_crt2(residues, moduli, crt_p, crt_e, crt_s),
+    gf_crt2(residues, moduli, crt_p, crt_e, crt_s),
+  )
+  assert_eq(@sympolys.gf_value([1, 7, 2, 4], 11), gf_value([1, 7, 2, 4], 11))
+  assert_eq(
+    gf_repr(@sympolys.linear_congruence(3, 12, 15)),
+    linear_congruence(3, 12, 15),
+  )
 }
 
 ///|

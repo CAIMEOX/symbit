@@ -33,6 +33,32 @@ fn inv_mod(a : Int, p : Int) -> Int raise PolyError {
 }
 
 ///|
+fn int_gcdex_local(a : Int, b : Int) -> (Int, Int, Int) {
+  let mut old_r = a
+  let mut r = b
+  let mut old_s = 1
+  let mut s = 0
+  let mut old_t = 0
+  let mut t = 1
+  while r != 0 {
+    let q = old_r / r
+    let next_r = old_r - q * r
+    old_r = r
+    r = next_r
+    let next_s = old_s - q * s
+    old_s = s
+    s = next_s
+    let next_t = old_t - q * t
+    old_t = t
+    t = next_t
+  }
+  if old_r < 0 {
+    (-old_s, -old_t, -old_r)
+  } else {
+    (old_s, old_t, old_r)
+  }
+}
+
 /// Return the leading degree of ``f``.
 
 ///|
@@ -707,6 +733,45 @@ pub fn gf_pow(f : Array[Int], n : Int, p : Int) -> Array[Int] raise PolyError {
 }
 
 ///|
+/// Raise a polynomial modulo another polynomial over `GF(p)`.
+///
+/// - Does: Computes `f**n mod g` using repeated squaring.
+/// - Input: Base polynomial, nonnegative exponent, modulus polynomial, and
+///   prime modulus.
+/// - Returns: A dense remainder polynomial.
+/// - Limits: Negative exponents raise `PolyError::BadExponent`; zero modulus
+///   follows `gf_rem` division errors.
+pub fn gf_pow_mod(
+  f : Array[Int],
+  n : Int,
+  g : Array[Int],
+  p : Int,
+) -> Array[Int] raise PolyError {
+  if n < 0 {
+    raise PolyError::BadExponent
+  }
+  if n == 0 {
+    return [1]
+  }
+  if n == 1 {
+    return gf_rem(f, g, p)
+  }
+  let mut base = gf_rem(gf_trunc(f, p), g, p)
+  let mut exp = n
+  let mut acc = [1]
+  while exp > 0 {
+    if exp % 2 == 1 {
+      acc = gf_rem(gf_mul(acc, base, p), g, p)
+    }
+    exp = exp / 2
+    if exp > 0 {
+      base = gf_rem(gf_sqr(base, p), g, p)
+    }
+  }
+  acc
+}
+
+///|
 /// Compute polynomial remainder in ``GF(p)[x]``.
 
 ///|
@@ -726,6 +791,120 @@ pub fn gf_rem(
 ) -> Array[Int] raise PolyError {
   let (_, r) = gf_div(f, g, p)
   r
+}
+
+///|
+/// Differentiate a dense polynomial over `GF(p)`.
+///
+/// - Does: Computes the formal derivative modulo `p`.
+/// - Input: Dense high-to-low coefficients and a prime modulus.
+/// - Returns: A normalized dense derivative.
+/// - Limits: Constants and zero polynomials return the zero polynomial.
+pub fn gf_diff(f : Array[Int], p : Int) -> Array[Int] {
+  let degree = gf_degree(f)
+  if degree <= 0 {
+    return []
+  }
+  let out : Array[Int] = []
+  let mut power = degree
+  for i in 0..<(f.length() - 1) {
+    out.push(mod_pos(f[i] * power, p))
+    power = power - 1
+  }
+  gf_strip(out)
+}
+
+///|
+/// Evaluate a dense polynomial over `GF(p)`.
+///
+/// - Does: Uses Horner evaluation modulo `p`.
+/// - Input: Dense coefficients, evaluation point, and prime modulus.
+/// - Returns: The value in `[0, p)`.
+/// - Limits: Coefficients are reduced modulo `p`.
+pub fn gf_eval(f : Array[Int], a : Int, p : Int) -> Int {
+  let point = mod_pos(a, p)
+  let mut result = 0
+  for coeff in f {
+    result = mod_pos(result * point + coeff, p)
+  }
+  result
+}
+
+///|
+/// Evaluate a dense polynomial at several points over `GF(p)`.
+///
+/// - Does: Applies `gf_eval` to each point.
+/// - Input: Dense coefficients, evaluation points, and prime modulus.
+/// - Returns: Values in `[0, p)`.
+/// - Limits: Same as `gf_eval`.
+pub fn gf_multi_eval(
+  f : Array[Int],
+  values : Array[Int],
+  p : Int,
+) -> Array[Int] {
+  values.map(a => gf_eval(f, a, p))
+}
+
+///|
+/// Compose two dense polynomials over `GF(p)`.
+///
+/// - Does: Computes `f(g)`.
+/// - Input: Two dense polynomials and a prime modulus.
+/// - Returns: A normalized dense polynomial.
+/// - Limits: Same dense high-to-low representation as the other GF helpers.
+pub fn gf_compose(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
+  if g.length() <= 1 {
+    return gf_strip([gf_eval(f, gf_LC(g), p)])
+  }
+  if f.is_empty() {
+    return []
+  }
+  let mut out = [f[0]]
+  for i in 1..<f.length() {
+    out = gf_add_ground(gf_mul(out, g, p), f[i], p)
+  }
+  out
+}
+
+///|
+/// Compose two dense polynomials modulo a third over `GF(p)`.
+///
+/// - Does: Computes `g(h) mod f`.
+/// - Input: Outer polynomial, inner polynomial, modulus polynomial, and prime
+///   modulus.
+/// - Returns: A dense remainder polynomial.
+/// - Limits: Zero modulus follows `gf_rem` division errors.
+pub fn gf_compose_mod(
+  g : Array[Int],
+  h : Array[Int],
+  f : Array[Int],
+  p : Int,
+) -> Array[Int] raise PolyError {
+  if g.is_empty() {
+    return []
+  }
+  let mut out = [g[0]]
+  for i in 1..<g.length() {
+    out = gf_mul(out, h, p)
+    out = gf_add_ground(out, g[i], p)
+    out = gf_rem(out, f, p)
+  }
+  out
+}
+
+///|
+/// Evaluate a dense integer polynomial without modular reduction.
+///
+/// - Does: Uses Horner evaluation over integers.
+/// - Input: Dense high-to-low coefficients and an integer point.
+/// - Returns: The integer value.
+/// - Limits: Uses MoonBit `Int`, so very large values can overflow.
+pub fn gf_value(f : Array[Int], a : Int) -> Int {
+  let mut result = 0
+  for coeff in f {
+    result = result * a + coeff
+  }
+  result
 }
 
 ///|
@@ -754,4 +933,187 @@ pub fn gf_gcd(
     b = r
   }
   gf_monic(a, p)
+}
+
+///|
+/// Compute the polynomial LCM over `GF(p)`.
+///
+/// - Does: Computes a monic least common multiple.
+/// - Input: Two dense polynomials and a prime modulus.
+/// - Returns: A normalized monic dense polynomial.
+/// - Limits: Zero input returns the zero polynomial.
+pub fn gf_lcm(
+  f : Array[Int],
+  g : Array[Int],
+  p : Int,
+) -> Array[Int] raise PolyError {
+  if f.is_empty() || g.is_empty() {
+    return []
+  }
+  gf_monic(gf_quo(gf_mul(f, g, p), gf_gcd(f, g, p), p), p)
+}
+
+///|
+/// Compute GCD and cofactors over `GF(p)`.
+///
+/// - Does: Returns `(h, cff, cfg)` such that `h = gcd(f,g)`,
+///   `f = h*cff`, and `g = h*cfg`.
+/// - Input: Two dense polynomials and a prime modulus.
+/// - Returns: A triple of dense polynomials.
+/// - Limits: Both zero inputs return three zero polynomials.
+pub fn gf_cofactors(
+  f : Array[Int],
+  g : Array[Int],
+  p : Int,
+) -> (Array[Int], Array[Int], Array[Int]) raise PolyError {
+  if f.is_empty() && g.is_empty() {
+    return ([], [], [])
+  }
+  let h = gf_gcd(f, g, p)
+  (h, gf_quo(f, h, p), gf_quo(g, h, p))
+}
+
+///|
+/// Extended Euclidean algorithm over `GF(p)`.
+///
+/// - Does: Finds `s`, `t`, and `h` with `s*f + t*g = h`.
+/// - Input: Two dense polynomials and a prime modulus.
+/// - Returns: `(s, t, h)` with monic `h`.
+/// - Limits: Mirrors the low-level dense representation and raises when a
+///   needed modular inverse does not exist.
+pub fn gf_gcdex(
+  f : Array[Int],
+  g : Array[Int],
+  p : Int,
+) -> (Array[Int], Array[Int], Array[Int]) raise PolyError {
+  if f.is_empty() && g.is_empty() {
+    return ([1], [], [])
+  }
+  let p0 = gf_LC(f)
+  let mut r0 = gf_monic(f, p)
+  let p1 = gf_LC(g)
+  let mut r1 = gf_monic(g, p)
+  if f.is_empty() {
+    return ([], [inv_mod(p1, p)], r1)
+  }
+  if g.is_empty() {
+    return ([inv_mod(p0, p)], [], r0)
+  }
+  let mut s0 = [inv_mod(p0, p)]
+  let mut s1 : Array[Int] = []
+  let mut t0 : Array[Int] = []
+  let mut t1 = [inv_mod(p1, p)]
+  while true {
+    let (q, r) = gf_div(r0, r1, p)
+    if r.is_empty() {
+      break
+    }
+    let lc = gf_LC(r)
+    let inv = inv_mod(lc, p)
+    let new_r1 = gf_monic(r, p)
+    r0 = r1
+    r1 = new_r1
+    let s = gf_sub_mul(s0, s1, q, p)
+    let t = gf_sub_mul(t0, t1, q, p)
+    let old_s1 = s1
+    let old_t1 = t1
+    s1 = gf_mul_ground(s, inv, p)
+    s0 = old_s1
+    t1 = gf_mul_ground(t, inv, p)
+    t0 = old_t1
+  }
+  (s1, t1, r1)
+}
+
+///|
+/// Chinese remainder for pairwise-coprime integer moduli.
+///
+/// - Does: Solves residues `u_i mod m_i`.
+/// - Input: Residues and moduli arrays of matching length.
+/// - Returns: The smallest nonnegative combined residue modulo the product.
+/// - Limits: Assumes pairwise-coprime moduli, matching SymPy's low-level
+///   no-validation helper.
+pub fn gf_crt(u : Array[Int], m : Array[Int]) -> Int raise PolyError {
+  let (p, e, s) = gf_crt1(m)
+  gf_crt2(u, m, p, e, s)
+}
+
+///|
+/// Precompute CRT data for fixed moduli.
+///
+/// - Does: Computes product, partial products, and inverses.
+/// - Input: Pairwise-coprime moduli.
+/// - Returns: `(p, E, S)` for `gf_crt2`.
+/// - Limits: Assumes valid coprime positive moduli.
+pub fn gf_crt1(m : Array[Int]) -> (Int, Array[Int], Array[Int]) raise PolyError {
+  let mut p = 1
+  for modulus in m {
+    p = p * modulus
+  }
+  let e : Array[Int] = []
+  let s : Array[Int] = []
+  for modulus in m {
+    let partial = p / modulus
+    e.push(partial)
+    s.push(inv_mod(mod_pos(partial, modulus), modulus))
+  }
+  (p, e, s)
+}
+
+///|
+/// Finish CRT reconstruction from precomputed data.
+///
+/// - Does: Combines residues with the output of `gf_crt1`.
+/// - Input: Residues, moduli, product, partial products, and inverses.
+/// - Returns: The smallest nonnegative combined residue modulo `p`.
+/// - Limits: Uses the overlapping prefix if arrays have different lengths.
+pub fn gf_crt2(
+  u : Array[Int],
+  m : Array[Int],
+  p : Int,
+  e : Array[Int],
+  s : Array[Int],
+) -> Int {
+  let mut acc = 0
+  let count = u.length().min(m.length()).min(e.length()).min(s.length())
+  for i in 0..<count {
+    acc = acc + e[i] * mod_pos(u[i] * s[i], m[i])
+  }
+  mod_pos(acc, p)
+}
+
+///|
+/// Solve a linear congruence.
+///
+/// - Does: Returns all distinct `x mod m` satisfying `a*x == b mod m`.
+/// - Input: Integers `a`, `b`, and positive modulus `m`.
+/// - Returns: An array of solutions in `[0, m)`.
+/// - Limits: Raises `PolyError::BadModulus` for nonpositive `m`.
+pub fn linear_congruence(
+  a : Int,
+  b : Int,
+  m : Int,
+) -> Array[Int] raise PolyError {
+  if m <= 0 {
+    raise PolyError::BadModulus
+  }
+  if mod_pos(a, m) == 0 {
+    if mod_pos(b, m) == 0 {
+      let out : Array[Int] = []
+      for x in 0..<m {
+        out.push(x)
+      }
+      return out
+    }
+    return []
+  }
+  let (r, _, g) = int_gcdex_local(a, m)
+  if b % g != 0 {
+    return []
+  }
+  let out : Array[Int] = []
+  for t in 0..<g {
+    out.push(mod_pos(r * (b / g) + t * (m / g), m))
+  }
+  out
 }
