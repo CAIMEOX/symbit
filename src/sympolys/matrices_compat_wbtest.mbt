@@ -84,6 +84,49 @@ test "matrices wb: _linsolve handles unique, under, and inconsistent systems" {
 }
 
 ///|
+fn linsolve_solution_text(
+  sol : Map[String, @symcore.Expr]?,
+  syms : Array[String],
+) -> String {
+  match sol {
+    None => "None"
+    Some(values) => {
+      let parts : Array[String] = Array::new()
+      for sym in syms {
+        match values.get(sym) {
+          Some(expr) => parts.push("\{sym}:\{@symprint.pretty_string(expr)}")
+          None => ()
+        }
+      }
+      parts.join("|")
+    }
+  }
+}
+
+///|
+test "matrices wb: polys.solvers front doors prepare and solve affine systems" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let syms = ["x", "y"]
+  let coeffs : Array[Map[String, @symcore.Expr]] = [
+    { "x": @symcore.int(1), "y": @symcore.int(1) },
+    { "x": @symcore.int(1), "y": @symcore.int(-1) },
+  ]
+  let rhs = [@symcore.int(0), @symcore.int(-1)]
+  let matrix = eqs_to_matrix(coeffs, rhs, syms, domain=Domain::ZZ)
+  assert_eq(matrix.to_matrix_string(), "Matrix([[1, 1, 0], [1, -1, 1]])")
+  assert_eq(domain_to_sympy_string(matrix.domain), "ZZ")
+
+  let system = sympy_eqs_to_ring([x - y, x + y - @symcore.int(2)], syms)
+  assert_eq(system.coeffs.length(), 2)
+  assert_eq(system.rhs.length(), 2)
+  assert_eq(linsolve_solution_text(solve_lin_sys(system), syms), "x:1|y:1")
+
+  let under = sympy_eqs_to_ring([x + y], syms)
+  assert_eq(linsolve_solution_text(solve_lin_sys(under), syms), "x:-y")
+}
+
+///|
 test "matrices wb: _linsolve uses numeric complex solve path for float coefficients" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")

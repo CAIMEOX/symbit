@@ -3472,6 +3472,63 @@ pub fn linsolve_sympy_dict_to_dm_summary(
 }
 
 ///|
+pub fn solvers_eqs_to_matrix_summary(
+  eqs_coeffs : Array[Map[String, String]],
+  eqs_rhs : Array[String],
+  syms : Array[String],
+  domain_spec : String,
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let convert = resolve_method_callable(domain_obj, "convert")
+  let py_rows : Array[@py.PyObject] = Array::new()
+  for row in eqs_coeffs {
+    let py_row = py_dict_new()
+    for sym, coeff in row {
+      let converted = py_call_one(convert, sympy_sympify_str(coeff))
+      py_dict_set_obj(py_row, sym, objenum_to_obj(converted))
+    }
+    py_rows.push(py_row.obj())
+  }
+  let py_rhs : Array[@py.PyObject] = Array::new()
+  for rhs in eqs_rhs {
+    let converted = py_call_one(convert, sympy_sympify_str(rhs))
+    py_rhs.push(objenum_to_obj(converted))
+  }
+  let py_syms = sympy_symbols_from_names(syms)
+  let dm = sympy_call_must("sympy.polys.solvers.eqs_to_matrix", [
+    OracleArg::PyObj(py_list_from_objects(py_rows).obj()),
+    OracleArg::PyObj(py_list_from_objects(py_rhs).obj()),
+    OracleArg::PyObj(py_list_from_objects(py_syms).obj()),
+    OracleArg::PyObj(domain_obj),
+  ])
+  let dm_obj = objenum_to_obj(dm)
+  let domain = match py_get_attr(dm_obj, "domain") {
+    Some(obj) => py_str_enum(obj)
+    None => fail("solvers-eqs-to-matrix-domain")
+  }
+  "\{oracle_domainmatrix_to_matrix_str(dm_obj)}@\{domain}"
+}
+
+///|
+pub fn solvers_sympy_eqs_to_ring_summary(
+  eqs : Array[String],
+  syms : Array[String],
+) -> String raise {
+  let py_eqs : Array[@py.PyObject] = Array::new()
+  for eq in eqs {
+    py_eqs.push(sympy_sympify_str(eq))
+  }
+  let py_syms = sympy_symbols_from_names(syms)
+  let res = sympy_call_must("sympy.polys.solvers.sympy_eqs_to_ring", [
+    OracleArg::PyObj(py_list_from_objects(py_eqs).obj()),
+    OracleArg::PyObj(py_list_from_objects(py_syms).obj()),
+  ])
+  let parts = py_list_to_pyobjects(res)
+  guard parts.length() >= 2 else { fail("solvers-sympy-eqs-to-ring") }
+  "\{py_str_obj(parts[0])}||\{py_str_obj(parts[1])}"
+}
+
+///|
 fn oracle_linsolve_dict_summary(
   dict_obj : @py.PyObject,
   syms : Array[String],
@@ -3573,6 +3630,34 @@ pub fn linsolve_internal_summary(
     }
   }
   parts.join("|")
+}
+
+///|
+pub fn solvers_solve_lin_sys_summary(
+  eqs : Array[String],
+  syms : Array[String],
+) -> String raise {
+  let py_eqs : Array[@py.PyObject] = Array::new()
+  for eq in eqs {
+    py_eqs.push(sympy_sympify_str(eq))
+  }
+  let py_syms = sympy_symbols_from_names(syms)
+  let prepared = sympy_call_must("sympy.polys.solvers.sympy_eqs_to_ring", [
+    OracleArg::PyObj(py_list_from_objects(py_eqs).obj()),
+    OracleArg::PyObj(py_list_from_objects(py_syms).obj()),
+  ])
+  let parts = py_list_to_pyobjects(prepared)
+  guard parts.length() >= 2 else { fail("solvers-solve-lin-sys-prepared") }
+  let res = sympy_call(
+    "sympy.polys.solvers.solve_lin_sys",
+    [OracleArg::PyObj(parts[0]), OracleArg::PyObj(parts[1])],
+    kwargs={ "_raw": OracleArg::Bool(false) },
+  )
+  let res_obj = match res {
+    Some(obj) => objenum_to_obj(obj)
+    None => return "None"
+  }
+  oracle_linsolve_dict_summary(res_obj, syms)
 }
 
 ///|

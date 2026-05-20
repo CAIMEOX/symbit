@@ -765,6 +765,8 @@ pub fn dup_to_tuple(Array[FieldElem]) -> Array[FieldElem] raise PolyError
 
 pub fn dup_truncate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 
+pub fn eqs_to_matrix(Array[Map[String, @symcore.Expr]], Array[@symcore.Expr], Array[String], domain? : Domain) -> DomainMatrix raise PolyError
+
 pub fn euclid_q(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn euler_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
@@ -1117,6 +1119,8 @@ pub fn smith_normal_decomp(DomainMatrix) -> (DomainMatrix, DomainMatrix, DomainM
 
 pub fn smith_normal_form(DomainMatrix) -> DomainMatrix raise PolyError
 
+pub fn solve_lin_sys(LinearEquationSystem) -> Map[String, @symcore.Expr]? raise PolyError
+
 pub fn spherical_bessel_fn(Int, gen? : String) -> @symcore.Expr raise PolyError
 
 pub fn sqf(Poly) -> Poly raise PolyError
@@ -1152,6 +1156,8 @@ pub fn symmetrize(@symcore.Expr, gens? : Array[String], formal? : Bool, symbols?
 pub fn symmetrize_list(Array[@symcore.Expr], gens? : Array[String], formal? : Bool, symbols? : Array[String]) -> SymmetrizeListResult raise PolyError
 
 pub fn sympy_dict_to_dm(Array[Map[String, @symcore.Expr]], Array[@symcore.Expr], Array[String]) -> SDM raise PolyError
+
+pub fn sympy_eqs_to_ring(Array[@symcore.Expr], Array[String]) -> LinearEquationSystem raise PolyError
 
 pub fn term_div((Monomial, FieldElem), (Monomial, FieldElem), Domain) -> (Monomial, FieldElem)? raise PolyError
 
@@ -1680,6 +1686,13 @@ pub fn Ideal::ring_domain(Self) -> Domain
 pub fn Ideal::ring_gens(Self) -> Array[String]
 pub fn Ideal::sum(Self, Self) -> Self raise PolyError
 pub fn Ideal::union(Self, Self) -> Self raise PolyError
+
+pub struct LinearEquationSystem {
+  equations : Array[@symcore.Expr]
+  symbols : Array[String]
+  coeffs : Array[Map[String, @symcore.Expr]]
+  rhs : Array[@symcore.Expr]
+}
 
 pub enum LinearSolveResult {
   NoSolution

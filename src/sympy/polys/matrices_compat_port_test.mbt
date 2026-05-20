@@ -74,6 +74,26 @@ fn sdm_summary_like_oracle(sdm : SDM) -> String raise PolyError {
 }
 
 ///|
+fn solvers_solution_summary(
+  sol : Map[String, @symcore.Expr]?,
+  syms : Array[String],
+) -> String raise {
+  match sol {
+    None => "None"
+    Some(values) => {
+      let parts : Array[String] = Array::new()
+      for sym in syms {
+        match values.get(sym) {
+          Some(expr) => parts.push("\{sym}:\{mx_expr_norm(expr)}")
+          None => ()
+        }
+      }
+      parts.join(",")
+    }
+  }
+}
+
+///|
 fn ddm_to_int_rows(ddm : DDM) -> Array[Array[Int]] raise PolyError {
   let rows = ddm.to_list()
   let out : Array[Array[Int]] = Array::new()
@@ -928,4 +948,53 @@ test "matrices: sympy_dict_to_dm parity" {
     syms,
   )
   assert_eq(mx_trim(sdm_summary_like_oracle(ours)), mx_trim(oracle))
+}
+
+///|
+test "matrices: polys.solvers frontdoor parity" {
+  let coeffs : Array[Map[String, @symcore.Expr]] = [
+    { "x": @symcore.int(1), "y": @symcore.int(1) },
+    { "x": @symcore.int(1), "y": @symcore.int(-1) },
+  ]
+  let rhs = [@symcore.int(0), @symcore.int(-1)]
+  let syms = ["x", "y"]
+  let ours_matrix = @sympolys.eqs_to_matrix(
+    coeffs,
+    rhs,
+    syms,
+    domain=@sympolys.Domain::ZZ,
+  )
+  let oracle_matrix = solvers_eqs_to_matrix_summary(
+    [{ "x": "1", "y": "1" }, { "x": "1", "y": "-1" }],
+    ["0", "-1"],
+    syms,
+    "ZZ",
+  )
+  assert_eq(
+    mx_trim(
+      "\{ours_matrix.to_matrix_string()}@\{@sympolys.domain_to_sympy_string(ours_matrix.domain)}",
+    ),
+    mx_trim(oracle_matrix),
+  )
+
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  assert_eq(
+    solvers_sympy_eqs_to_ring_summary(["x - y", "x + y - 2"], syms),
+    "[x - y, x + y - 2]||QQ[x,y]",
+  )
+  let unique = @sympolys.sympy_eqs_to_ring(
+    [x - y, x + y - @symcore.int(2)],
+    syms,
+  )
+  assert_eq(
+    solvers_solution_summary(@sympolys.solve_lin_sys(unique), syms),
+    solvers_solve_lin_sys_summary(["x - y", "x + y - 2"], syms),
+  )
+
+  let under = @sympolys.sympy_eqs_to_ring([x + y], syms)
+  assert_eq(
+    solvers_solution_summary(@sympolys.solve_lin_sys(under), syms),
+    solvers_solve_lin_sys_summary(["x + y"], syms),
+  )
 }

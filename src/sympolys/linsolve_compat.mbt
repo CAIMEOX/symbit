@@ -21,6 +21,21 @@ pub enum LinearSolveResult {
 }
 
 ///|
+/// Prepared linear system for the `polys.solvers` front doors.
+///
+/// - Does: Stores equations after the `sympy_eqs_to_ring` preparation step.
+/// - Input: Built from affine expressions and a symbol order.
+/// - Returns: A `LinearEquationSystem`.
+/// - Limits: This is a typed MoonBit representation, not a Python
+///   `PolyElement`/`PolynomialRing` object pair.
+pub struct LinearEquationSystem {
+  equations : Array[Expr]
+  symbols : Array[String]
+  coeffs : Array[Map[String, Expr]]
+  rhs : Array[Expr]
+}
+
+///|
 /// Build the sparse augmented matrix used by the matrix-based linsolve path.
 ///
 /// - Does: Converts coefficient maps and right-hand sides into one sparse
@@ -86,6 +101,29 @@ pub fn sympy_dict_to_dm(
     next_row += 1
   }
   SDM::from_dod(dod, (eqs_coeffs.length(), syms.length() + 1), domain)
+}
+
+///|
+/// Build an augmented matrix from linear-equation coefficient dictionaries.
+///
+/// - Does: Converts coefficient maps and right-hand sides into a
+///   `DomainMatrix`, using the last column for `-rhs`.
+/// - Input: Coefficient maps keyed by symbol name, right-hand sides, symbol
+///   order, and an optional coefficient domain.
+/// - Returns: A `DomainMatrix`.
+/// - Limits: Coefficients must be convertible to the selected domain; unknown
+///   symbol names or mismatched row counts raise `PolyError::DomainMismatch`.
+pub fn eqs_to_matrix(
+  eqs_coeffs : Array[Map[String, Expr]],
+  eqs_rhs : Array[Expr],
+  syms : Array[String],
+  domain? : Domain,
+) -> DomainMatrix raise PolyError {
+  let matrix = sympy_dict_to_dm(eqs_coeffs, eqs_rhs, syms).to_domain_matrix()
+  match domain {
+    Some(d) => matrix.convert_to(d)
+    None => matrix
+  }
 }
 
 ///|
@@ -543,6 +581,23 @@ pub fn _linear_eq_to_dict(
 }
 
 ///|
+/// Prepare expression equations for the low-level linear solver.
+///
+/// - Does: Parses affine expressions into coefficient dictionaries and keeps
+///   the original equations with their symbol order.
+/// - Input: Equations as `Array[Expr]` and unknowns as `Array[String]`.
+/// - Returns: A `LinearEquationSystem`.
+/// - Limits: Python `PolyElement` and `PolynomialRing` objects are not modeled;
+///   nonlinear equations raise `PolyError::NonPolynomial`.
+pub fn sympy_eqs_to_ring(
+  eqs : Array[Expr],
+  syms : Array[String],
+) -> LinearEquationSystem raise PolyError {
+  let (coeffs, rhs) = _linear_eq_to_dict(eqs, syms)
+  LinearEquationSystem::{ equations: eqs, symbols: syms, coeffs, rhs }
+}
+
+///|
 /// Solve affine equations through the sparse-domain path.
 ///
 /// - Does: Solves the parsed linear system and returns a symbol-to-expression
@@ -615,6 +670,42 @@ pub fn _linsolve(
   }
 
   Some(sol)
+}
+
+///|
+fn linsolve_is_identity_binding(sym : String, expr : Expr) -> Bool {
+  match expr {
+    Expr::Symbol(name) => name == sym
+    _ => false
+  }
+}
+
+///|
+/// Solve a prepared polynomial linear system.
+///
+/// - Does: Solves the system returned by `sympy_eqs_to_ring` and removes
+///   identity bindings for free variables.
+/// - Input: A `LinearEquationSystem`.
+/// - Returns: `Map[String, Expr]?`; `None` means inconsistent.
+/// - Limits: This follows the expression-level path in this package. It does
+///   not expose SymPy's `_raw=True` low-level domain-element return mode.
+pub fn solve_lin_sys(
+  system : LinearEquationSystem,
+) -> Map[String, Expr]? raise PolyError {
+  match _linsolve(system.equations, system.symbols) {
+    None => None
+    Some(sol) => {
+      let out : Map[String, Expr] = Map::new()
+      for sym in system.symbols {
+        match sol.get(sym) {
+          Some(expr) if !linsolve_is_identity_binding(sym, expr) =>
+            out[sym] = expr
+          _ => ()
+        }
+      }
+      Some(out)
+    }
+  }
 }
 
 ///|
