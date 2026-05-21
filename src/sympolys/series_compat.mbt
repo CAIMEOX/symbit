@@ -1897,6 +1897,21 @@ fn series_invert_monoms(
 }
 
 ///|
+fn series_degree(p : SeriesElem) -> Int raise PolyError {
+  match p.valuation() {
+    None => raise PolyError::BadExponent
+    Some(_) => p.coeffs.length() - 1
+  }
+}
+
+///|
+fn series_primitive_part(p : SeriesElem) -> SeriesElem raise PolyError {
+  let poly = from_dense(p.coeffs, [p.ring.sym], p.ring.domain).primitive_part()
+  let dense = to_dense(poly, degree=poly.degree(0))
+  p.ring.from_coeffs(dense)
+}
+
+///|
 /// Compute truncated Newton sums for a univariate polynomial series.
 ///
 /// - Does: Mirrors SymPy `rs_newton`: reverse monomials, invert the reversed
@@ -1990,6 +2005,51 @@ pub fn rs_LambertW(
     p1 = p1.sub(tmp)
   }
   series_at_precision(p1, n)
+}
+
+///|
+/// Compute the composed sum of two univariate polynomials.
+///
+/// - Does: Mirrors SymPy `rs_compose_add`, computing
+///   `prod(p2(x - beta))` for the roots `beta` of `p1`.
+/// - Input: Two compatible regular univariate `SeriesElem` values interpreted
+///   as finite polynomials.
+/// - Returns: A `SeriesElem` polynomial in the same generator.
+/// - Limits: Requires the package's exact univariate truncated-series model;
+///   Puiseux, multivariate, and non-polynomial sparse-ring inputs are outside
+///   this front door.
+pub fn rs_compose_add(
+  p1 : SeriesElem,
+  p2 : SeriesElem,
+) -> SeriesElem raise PolyError {
+  if p1.ring.domain.not_equal(p2.ring.domain) || p1.ring.sym != p2.ring.sym {
+    raise PolyError::DomainMismatch
+  }
+  let d1 = series_degree(p1)
+  let d2 = series_degree(p2)
+  let degree = d1 * d2
+  let prec = degree + 1
+  let ring = SeriesRing::{
+    domain: p1.ring.domain,
+    sym: p1.ring.sym,
+    precision: prec,
+  }
+  let q1 = ring.from_coeffs(p1.coeffs)
+  let q2 = ring.from_coeffs(p2.coeffs)
+  let np1e = rs_hadamard_exp(rs_newton(q1, prec~))
+  let np2e = rs_hadamard_exp(rs_newton(q2, prec~))
+  let np3e = rs_mul(np1e, np2e, prec~)
+  let np3 = rs_hadamard_exp(np3e, inverse=true)
+  let c0 = np3.coeff(0)
+  let np3a = mul_xin(np3.rsub_ground(c0), -1)
+  let mut q = rs_exp(rs_integrate(np3a), prec~)
+  q = series_invert_monoms(q, prec)
+  q = series_primitive_part(q)
+  let dp = degree - series_degree(q)
+  if dp > 0 {
+    q = mul_xin(q, dp)
+  }
+  q
 }
 
 ///|

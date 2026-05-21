@@ -1573,6 +1573,8 @@ pub fn rs_atan(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 
 pub fn rs_atanh(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 
+pub fn rs_compose_add(SeriesElem, SeriesElem) -> SeriesElem raise PolyError
+
 pub fn rs_cos(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 
 pub fn rs_cos_sin(SeriesElem, prec? : Int) -> (SeriesElem, SeriesElem) raise PolyError

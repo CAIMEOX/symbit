@@ -90,6 +90,24 @@ test "ring series frontdoors: arithmetic wrappers" {
     rs_wb_repr(rs_LambertW(x.add(x.mul(x)), prec=6)),
     content="[0, 1, 0, -1/2, 5/6, -23/24]",
   )
+  inspect(
+    rs_wb_repr(
+      rs_compose_add(
+        ring.from_int_coeffs([-2, 0, 1]),
+        ring.from_int_coeffs([-3, 0, 1]),
+      ),
+    ),
+    content="[1, 0, -10, 0, 1]",
+  )
+  inspect(
+    rs_wb_repr(
+      rs_compose_add(
+        ring.from_int_coeffs([-1, 1]),
+        ring.from_int_coeffs([1, 0, 1]),
+      ),
+    ),
+    content="[2, -2, 1]",
+  )
 }
 
 ///|

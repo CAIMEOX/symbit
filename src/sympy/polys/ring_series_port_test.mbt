@@ -90,6 +90,24 @@ test "ring_series: arithmetic frontdoor parity" {
     ring_series_expr(@sympolys.rs_newton(ring_series_make([1, 1], 7), prec=6)),
     ring_series_norm(rs_newton_ring_series([1, 1], 6)),
   )
+  assert_eq(
+    ring_series_expr(
+      @sympolys.rs_compose_add(
+        ring_series_make([-2, 0, 1], 5),
+        ring_series_make([-3, 0, 1], 5),
+      ),
+    ),
+    ring_series_norm(rs_compose_add_ring_series([-2, 0, 1], [-3, 0, 1])),
+  )
+  assert_eq(
+    ring_series_expr(
+      @sympolys.rs_compose_add(
+        ring_series_make([-2, 0, 0, 1], 7),
+        ring_series_make([-3, 0, 1], 7),
+      ),
+    ),
+    ring_series_norm(rs_compose_add_ring_series([-2, 0, 0, 1], [-3, 0, 1])),
+  )
 }
 
 ///|

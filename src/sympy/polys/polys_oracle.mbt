@@ -13019,6 +13019,20 @@ pub fn rs_newton_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
 }
 
 ///|
+pub fn rs_compose_add_ring_series(
+  left : Array[Int],
+  right : Array[Int],
+) -> String raise {
+  let (_, _, p) = ring_series_oracle_poly(left)
+  let (_, _, q) = ring_series_oracle_poly(right)
+  let res = sympy_call_must("sympy.polys.ring_series.rs_compose_add", [
+    OracleArg::PyObj(p),
+    OracleArg::PyObj(q),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
 pub fn mul_xin_ring_series(coeffs : Array[Int], n : Int) -> String raise {
   let (_, _, p) = ring_series_oracle_poly(coeffs)
   let res = sympy_call_must("sympy.polys.ring_series.mul_xin", [
