@@ -1168,3 +1168,423 @@ pub fn SeriesElem::to_expr(self : SeriesElem) -> Expr {
     @symcore.add(terms)
   }
 }
+
+///|
+fn series_precision_or_default(s : SeriesElem, prec : Int) -> Int {
+  if prec < 0 {
+    s.ring.precision
+  } else {
+    prec
+  }
+}
+
+///|
+fn series_at_precision(
+  s : SeriesElem,
+  prec : Int,
+) -> SeriesElem raise PolyError {
+  if prec <= 0 {
+    raise PolyError::BadExponent
+  }
+  if prec == s.ring.precision {
+    return s
+  }
+  let ring = SeriesRing::{
+    domain: s.ring.domain,
+    sym: s.ring.sym,
+    precision: prec,
+  }
+  ring.from_coeffs(s.coeffs)
+}
+
+///|
+fn series_pair_at_precision(
+  a : SeriesElem,
+  b : SeriesElem,
+  prec : Int,
+) -> (SeriesElem, SeriesElem) raise PolyError {
+  if a.ring.domain.not_equal(b.ring.domain) || a.ring.sym != b.ring.sym {
+    raise PolyError::DomainMismatch
+  }
+  let ring = SeriesRing::{
+    domain: a.ring.domain,
+    sym: a.ring.sym,
+    precision: prec,
+  }
+  (ring.from_coeffs(a.coeffs), ring.from_coeffs(b.coeffs))
+}
+
+///|
+/// Truncate a power series.
+///
+/// - Does: Mirrors SymPy `rs_trunc` for the univariate `SeriesElem` model.
+/// - Input: A series and precision bound.
+/// - Returns: A `SeriesElem` with terms below the bound.
+/// - Limits: Only the package's univariate truncated series representation is
+///   supported.
+pub fn rs_trunc(p : SeriesElem, prec : Int) -> SeriesElem {
+  p.truncate(prec)
+}
+
+///|
+/// Multiply two truncated power series.
+///
+/// - Does: Mirrors SymPy `rs_mul` through the univariate series product.
+/// - Input: Two compatible `SeriesElem` values and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Multivariate sparse-ring truncation is not modeled by this front
+///   door.
+pub fn rs_mul(
+  p : SeriesElem,
+  q : SeriesElem,
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  let n = series_precision_or_default(p, prec)
+  let (a, b) = series_pair_at_precision(p, q, n)
+  a.mul(b)
+}
+
+///|
+/// Square a truncated power series.
+///
+/// - Does: Mirrors SymPy `rs_square` by multiplying the series by itself.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Uses the univariate truncated model.
+pub fn rs_square(
+  p : SeriesElem,
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  let n = series_precision_or_default(p, prec)
+  series_at_precision(p, n).square()
+}
+
+///|
+/// Raise a truncated power series to an integer power.
+///
+/// - Does: Mirrors SymPy `rs_pow` for integer exponents.
+/// - Input: A `SeriesElem`, exponent, and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Negative exponents require a unit series; rational exponents use
+///   `rs_nth_root` separately.
+pub fn rs_pow(
+  p : SeriesElem,
+  n : Int,
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  let m = series_precision_or_default(p, prec)
+  let base = series_at_precision(p, m)
+  if n >= 0 {
+    base.pow_int(n)
+  } else {
+    base.pow_int(-n).inverse()
+  }
+}
+
+///|
+/// Differentiate a truncated power series.
+///
+/// - Does: Mirrors SymPy `rs_diff` for the univariate generator.
+/// - Input: A `SeriesElem`.
+/// - Returns: Its formal derivative.
+/// - Limits: There is no separate variable argument because `SeriesElem` is
+///   univariate.
+pub fn rs_diff(p : SeriesElem) -> SeriesElem raise PolyError {
+  p.diff()
+}
+
+///|
+/// Integrate a truncated power series.
+///
+/// - Does: Mirrors SymPy `rs_integrate` for the univariate generator.
+/// - Input: A `SeriesElem`.
+/// - Returns: A zero-constant antiderivative.
+/// - Limits: Requires a domain where exact division by positive integers is
+///   available.
+pub fn rs_integrate(p : SeriesElem) -> SeriesElem raise PolyError {
+  p.integrate()
+}
+
+///|
+/// Invert a truncated power series.
+///
+/// - Does: Mirrors SymPy `rs_series_inversion` for unit series.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: Multiplicative inverse in the truncated ring.
+/// - Limits: Laurent outputs with negative powers are not represented.
+pub fn rs_series_inversion(
+  p : SeriesElem,
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).inverse()
+}
+
+///|
+/// Compute `exp(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_exp` on zero-constant univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Non-zero constant terms are rejected instead of extending the
+///   coefficient ring.
+pub fn rs_exp(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).exp()
+}
+
+///|
+/// Compute `log(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_log` on unit univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Requires constant term `1`.
+pub fn rs_log(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).log()
+}
+
+///|
+/// Compute `sin(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_sin` on zero-constant univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Non-zero constant terms are rejected.
+pub fn rs_sin(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).sin()
+}
+
+///|
+/// Compute `cos(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_cos` on zero-constant univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Non-zero constant terms are rejected.
+pub fn rs_cos(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).cos()
+}
+
+///|
+/// Compute both cosine and sine of a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_cos_sin` by returning `(cos(p), sin(p))`.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A pair of `SeriesElem` values.
+/// - Limits: Shares `rs_cos`/`rs_sin` preconditions.
+pub fn rs_cos_sin(
+  p : SeriesElem,
+  prec? : Int = -1,
+) -> (SeriesElem, SeriesElem) raise PolyError {
+  let q = series_at_precision(p, series_precision_or_default(p, prec))
+  (q.cos(), q.sin())
+}
+
+///|
+/// Compute `tan(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_tan` on zero-constant univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Shares the exact-division requirements of the series quotient.
+pub fn rs_tan(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).tan()
+}
+
+///|
+/// Compute `cot(p)` as a truncated series when it stays regular.
+///
+/// - Does: Mirrors SymPy `rs_cot` for regular quotients `cos(p)/sin(p)`.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Laurent terms such as `x**(-1)` are not represented and raise
+///   `PolyError`.
+pub fn rs_cot(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  let q = series_at_precision(p, series_precision_or_default(p, prec))
+  q.cos().divide(q.sin())
+}
+
+///|
+/// Compute `sinh(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_sinh` on zero-constant univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Non-zero constant terms are rejected.
+pub fn rs_sinh(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).sinh()
+}
+
+///|
+/// Compute `cosh(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_cosh` on zero-constant univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Non-zero constant terms are rejected.
+pub fn rs_cosh(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).cosh()
+}
+
+///|
+/// Compute both hyperbolic cosine and sine of a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_cosh_sinh` by returning `(cosh(p), sinh(p))`.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A pair of `SeriesElem` values.
+/// - Limits: Shares `rs_cosh`/`rs_sinh` preconditions.
+pub fn rs_cosh_sinh(
+  p : SeriesElem,
+  prec? : Int = -1,
+) -> (SeriesElem, SeriesElem) raise PolyError {
+  let q = series_at_precision(p, series_precision_or_default(p, prec))
+  (q.cosh(), q.sinh())
+}
+
+///|
+/// Compute `tanh(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_tanh` on zero-constant univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Shares the exact-division requirements of the series quotient.
+pub fn rs_tanh(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).tanh()
+}
+
+///|
+/// Compute `atan(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_atan` on zero-constant univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Non-zero constant terms are rejected.
+pub fn rs_atan(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).atan()
+}
+
+///|
+/// Compute `atanh(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_atanh` on zero-constant univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Non-zero constant terms are rejected.
+pub fn rs_atanh(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).atanh()
+}
+
+///|
+/// Compute `asin(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_asin` on zero-constant univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Non-zero constant terms are rejected.
+pub fn rs_asin(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).asin()
+}
+
+///|
+/// Compute `asinh(p)` as a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_asinh` on zero-constant univariate input.
+/// - Input: A `SeriesElem` and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Non-zero constant terms are rejected.
+pub fn rs_asinh(p : SeriesElem, prec? : Int = -1) -> SeriesElem raise PolyError {
+  series_at_precision(p, series_precision_or_default(p, prec)).asinh()
+}
+
+///|
+/// Sum a coefficient list against powers of a series.
+///
+/// - Does: Mirrors SymPy `rs_series_from_list` as `sum(c[i] * p**i)`.
+/// - Input: A `SeriesElem`, coefficients in ascending power order, and optional
+///   precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Coefficients must already be representable in the series domain.
+pub fn rs_series_from_list(
+  p : SeriesElem,
+  coeffs : Array[FieldElem],
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  let q = series_at_precision(p, series_precision_or_default(p, prec))
+  let mut power = q.ring.one()
+  let mut out = q.ring.zero()
+  for i in 0..<coeffs.length() {
+    if i > 0 {
+      power = power.mul(q)
+    }
+    out = out.add(power.mul_ground(coeffs[i]))
+  }
+  out
+}
+
+///|
+/// Multiply a series by a power of the generator.
+///
+/// - Does: Mirrors SymPy `mul_xin` for the univariate series generator.
+/// - Input: A `SeriesElem` and integer shift.
+/// - Returns: A shifted `SeriesElem`.
+/// - Limits: Negative shifts discard terms that would become negative powers.
+pub fn mul_xin(p : SeriesElem, n : Int) -> SeriesElem raise PolyError {
+  let coeffs = if n >= 0 {
+    series_shift_left(p.coeffs, n, p.ring.precision, p.ring.domain)
+  } else {
+    series_shift_right(p.coeffs, -n)
+  }
+  SeriesElem::{ ring: p.ring, coeffs: normalize_series_coeffs(p.ring, coeffs) }
+}
+
+///|
+/// Scale exponents of a univariate series.
+///
+/// - Does: Mirrors SymPy `pow_xin` by mapping `x**i` to `x**(i*n)`.
+/// - Input: A `SeriesElem` and non-negative integer exponent scale.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Fractional and negative exponent scales are outside the current
+///   univariate representation.
+pub fn pow_xin(p : SeriesElem, n : Int) -> SeriesElem raise PolyError {
+  if n < 0 {
+    raise PolyError::BadExponent
+  }
+  let zero = fe_from_int(0, p.ring.domain)
+  let coeffs : Array[FieldElem] = Array::make(p.ring.precision, zero)
+  for i in 0..<p.coeffs.length() {
+    let j = i * n
+    if j >= p.ring.precision {
+      continue
+    }
+    coeffs.set(j, fe_add(coeffs[j], p.coeffs[i]))
+  }
+  SeriesElem::{ ring: p.ring, coeffs: normalize_series_coeffs(p.ring, coeffs) }
+}
+
+///|
+/// Apply the exponential Hadamard transform.
+///
+/// - Does: Mirrors SymPy `rs_hadamard_exp` by dividing or multiplying the
+///   coefficient of `x**i` by `i!`.
+/// - Input: A `SeriesElem` and `inverse` flag.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Requires an exact field domain for factorial division.
+pub fn rs_hadamard_exp(
+  p : SeriesElem,
+  inverse? : Bool = false,
+) -> SeriesElem raise PolyError {
+  if !domain_is_field_pred(p.ring.domain) {
+    raise PolyError::DomainNotField
+  }
+  let coeffs : Array[FieldElem] = []
+  for i in 0..<p.coeffs.length() {
+    let fact = fe_from_rational(series_factorial(i), p.ring.domain)
+    coeffs.push(
+      if inverse {
+        fe_mul(p.coeffs[i], fact)
+      } else {
+        fe_series_exact_div(p.coeffs[i], fact, p.ring.domain)
+      },
+    )
+  }
+  SeriesElem::{ ring: p.ring, coeffs: normalize_series_coeffs(p.ring, coeffs) }
+}

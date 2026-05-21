@@ -12499,6 +12499,205 @@ pub fn construct_domain_domain(exprs : Array[@symcore.Expr]) -> String raise {
 }
 
 ///|
+fn ring_series_oracle_poly(
+  coeffs : Array[Int],
+) -> (@py.PyObject, @py.PyObject, @py.PyObject) raise {
+  let ring_tuple = sympy_call_must("sympy.polys.rings.ring", [
+    OracleArg::Str("x"),
+    OracleArg::PyObj(oracle_domain_from_spec("QQ")),
+  ])
+  let parts = py_list_to_pyobjects(ring_tuple)
+  guard parts.length() >= 2 else { fail("ring-series-ring-shape") }
+  let ring_obj = parts[0]
+  let x_obj = parts[1]
+  let reversed : Array[Int] = []
+  let mut i = coeffs.length()
+  while i > 0 {
+    i = i - 1
+    reversed.push(coeffs[i])
+  }
+  let from_list = resolve_method_callable(ring_obj, "from_list")
+  let poly = objenum_to_obj(py_call_one(from_list, py_list_from_ints(reversed)))
+  (ring_obj, x_obj, poly)
+}
+
+///|
+fn ring_series_unary_prec(
+  name : String,
+  coeffs : Array[Int],
+  prec : Int,
+) -> String raise {
+  let (_, x_obj, poly) = ring_series_oracle_poly(coeffs)
+  let res = sympy_call_must("sympy.polys.ring_series.\{name}", [
+    OracleArg::PyObj(poly),
+    OracleArg::PyObj(x_obj),
+    OracleArg::Int(prec),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn rs_mul_ring_series(
+  left : Array[Int],
+  right : Array[Int],
+  prec : Int,
+) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(left)
+  let (_, _, q) = ring_series_oracle_poly(right)
+  let res = sympy_call_must("sympy.polys.ring_series.rs_mul", [
+    OracleArg::PyObj(p),
+    OracleArg::PyObj(q),
+    OracleArg::PyObj(x_obj),
+    OracleArg::Int(prec),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn rs_square_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_square", coeffs, prec)
+}
+
+///|
+pub fn rs_pow_ring_series(
+  coeffs : Array[Int],
+  n : Int,
+  prec : Int,
+) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(coeffs)
+  let res = sympy_call_must("sympy.polys.ring_series.rs_pow", [
+    OracleArg::PyObj(p),
+    OracleArg::Int(n),
+    OracleArg::PyObj(x_obj),
+    OracleArg::Int(prec),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn rs_diff_ring_series(coeffs : Array[Int]) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(coeffs)
+  let res = sympy_call_must("sympy.polys.ring_series.rs_diff", [
+    OracleArg::PyObj(p),
+    OracleArg::PyObj(x_obj),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn rs_integrate_ring_series(coeffs : Array[Int]) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(coeffs)
+  let res = sympy_call_must("sympy.polys.ring_series.rs_integrate", [
+    OracleArg::PyObj(p),
+    OracleArg::PyObj(x_obj),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn rs_series_inversion_ring_series(
+  coeffs : Array[Int],
+  prec : Int,
+) -> String raise {
+  ring_series_unary_prec("rs_series_inversion", coeffs, prec)
+}
+
+///|
+pub fn rs_exp_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_exp", coeffs, prec)
+}
+
+///|
+pub fn rs_log_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_log", coeffs, prec)
+}
+
+///|
+pub fn rs_sin_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_sin", coeffs, prec)
+}
+
+///|
+pub fn rs_cos_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_cos", coeffs, prec)
+}
+
+///|
+pub fn rs_tan_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_tan", coeffs, prec)
+}
+
+///|
+pub fn rs_sinh_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_sinh", coeffs, prec)
+}
+
+///|
+pub fn rs_cosh_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_cosh", coeffs, prec)
+}
+
+///|
+pub fn rs_tanh_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_tanh", coeffs, prec)
+}
+
+///|
+pub fn rs_atan_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_atan", coeffs, prec)
+}
+
+///|
+pub fn rs_atanh_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_atanh", coeffs, prec)
+}
+
+///|
+pub fn rs_asin_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_asin", coeffs, prec)
+}
+
+///|
+pub fn rs_asinh_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_asinh", coeffs, prec)
+}
+
+///|
+pub fn rs_hadamard_exp_ring_series(
+  coeffs : Array[Int],
+  inverse? : Bool = false,
+) -> String raise {
+  let (_, _, p) = ring_series_oracle_poly(coeffs)
+  let res = sympy_call_must("sympy.polys.ring_series.rs_hadamard_exp", [
+    OracleArg::PyObj(p),
+    OracleArg::Bool(inverse),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn mul_xin_ring_series(coeffs : Array[Int], n : Int) -> String raise {
+  let (_, _, p) = ring_series_oracle_poly(coeffs)
+  let res = sympy_call_must("sympy.polys.ring_series.mul_xin", [
+    OracleArg::PyObj(p),
+    OracleArg::Int(0),
+    OracleArg::Int(n),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn pow_xin_ring_series(coeffs : Array[Int], n : Int) -> String raise {
+  let (_, _, p) = ring_series_oracle_poly(coeffs)
+  let res = sympy_call_must("sympy.polys.ring_series.pow_xin", [
+    OracleArg::PyObj(p),
+    OracleArg::Int(0),
+    OracleArg::Int(n),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
 /// Convenience wrapper that returns `str(result)` for SymPy calls.
 pub fn sympy_call_string(
   path : String,

@@ -1405,6 +1405,8 @@ pub fn monomial_one(Int) -> Monomial
 
 pub fn monomial_pow(Monomial, Int) -> Monomial raise PolyError
 
+pub fn mul_xin(SeriesElem, Int) -> SeriesElem raise PolyError
+
 pub fn normalize_alg_ext_spec(AlgExtSpec) -> AlgExtSpec raise PolyError
 
 pub fn normalize_mod(@symnum.BigRational, Domain) -> @symnum.BigRational raise PolyError
@@ -1428,6 +1430,8 @@ pub fn poly(@symcore.Expr, gens? : Array[String], domain? : Domain, modulus? : I
 pub fn poly_from_expr(@symcore.Expr, gens? : Array[String], domain? : Domain, modulus? : Int, gaussian? : Bool, extension? : Array[String], order? : TermOrder) -> Poly raise PolyError
 
 pub fn poly_ring_domain(Domain, Array[String]) -> Domain raise PolyError
+
+pub fn pow_xin(SeriesElem, Int) -> SeriesElem raise PolyError
 
 pub fn power_series_domain(Domain, Array[String], precision? : Int) -> Domain raise PolyError
 
@@ -1524,6 +1528,54 @@ pub fn rotate_r(Array[FieldElem], Int) -> Array[FieldElem]
 pub fn round_two(Poly) -> RoundTwoResult raise PolyError
 
 pub fn row2poly(Array[FieldElem], Int, gen? : String, domain? : Domain) -> Poly raise PolyError
+
+pub fn rs_asin(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_asinh(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_atan(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_atanh(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_cos(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_cos_sin(SeriesElem, prec? : Int) -> (SeriesElem, SeriesElem) raise PolyError
+
+pub fn rs_cosh(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_cosh_sinh(SeriesElem, prec? : Int) -> (SeriesElem, SeriesElem) raise PolyError
+
+pub fn rs_cot(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_diff(SeriesElem) -> SeriesElem raise PolyError
+
+pub fn rs_exp(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_hadamard_exp(SeriesElem, inverse? : Bool) -> SeriesElem raise PolyError
+
+pub fn rs_integrate(SeriesElem) -> SeriesElem raise PolyError
+
+pub fn rs_log(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_mul(SeriesElem, SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_pow(SeriesElem, Int, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_series_from_list(SeriesElem, Array[FieldElem], prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_series_inversion(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_sin(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_sinh(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_square(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_tan(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_tanh(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_trunc(SeriesElem, Int) -> SeriesElem
 
 pub fn s_poly(((Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int), (Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int))) -> ((Monomial, Int), Poly, Int) raise PolyError
 
