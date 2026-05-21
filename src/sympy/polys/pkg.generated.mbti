@@ -736,11 +736,15 @@ pub fn sympy_normalize(String) -> String raise
 
 pub fn sympy_sort_factor_repr(String) -> String raise
 
+pub fn sympify_pythonrational(Int, Int) -> String raise
+
 pub fn terms_gcd(@symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
 
 pub fn unify_gens(Array[String], Array[String]) -> Array[String] raise
 
 pub fn viete(@symcore.Expr, roots? : Array[String], gen? : String) -> String raise
+
+pub fn wrap(String, width? : Int) -> String raise
 
 // Errors
 

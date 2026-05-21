@@ -151,6 +151,28 @@ pub fn polyconfig_setup_text(key : String, value : String) -> String raise {
 }
 
 ///|
+pub fn sympify_pythonrational(num : Int, den : Int) -> String raise {
+  let rational = sympy_call_must(
+    "sympy.polys.domains.pythonrational.PythonRational",
+    [OracleArg::Int(num), OracleArg::Int(den)],
+  )
+  let res = sympy_call_must(
+    "sympy.polys.domains.pythonrational.sympify_pythonrational",
+    [OracleArg::PyObj(objenum_to_obj(rational))],
+  )
+  py_str_enum(res)
+}
+
+///|
+pub fn wrap(text : String, width? : Int = 80) -> String raise {
+  let res = sympy_call_must("sympy.polys.numberfields.galois_resolvents.wrap", [
+    OracleArg::Str(text),
+    OracleArg::Int(width),
+  ])
+  py_str_enum(res)
+}
+
+///|
 /// Canonicalise an expression string via `str(sympy.sympify(expr))` so that
 /// ordering matches SymPy’s printer (helps when our printer orders constants
 /// first).

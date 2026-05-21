@@ -1835,6 +1835,8 @@ pub fn symmetrize(@symcore.Expr, gens? : Array[String], formal? : Bool, symbols?
 
 pub fn symmetrize_list(Array[@symcore.Expr], gens? : Array[String], formal? : Bool, symbols? : Array[String]) -> SymmetrizeListResult raise PolyError
 
+pub fn sympify_pythonrational(Int, Int) -> @symcore.Expr raise PolyError
+
 pub fn sympy_dict_to_dm(Array[Map[String, @symcore.Expr]], Array[@symcore.Expr], Array[String]) -> SDM raise PolyError
 
 pub fn sympy_eqs_to_ring(Array[@symcore.Expr], Array[String]) -> LinearEquationSystem raise PolyError
@@ -1868,6 +1870,8 @@ pub fn viete(@symcore.Expr, roots? : Array[String], gen? : String) -> Array[(@sy
 pub fn vring(Array[String], Domain, order? : TermOrder) -> RingFactoryResult
 
 pub fn w_polys() -> Array[Poly] raise PolyError
+
+pub fn wrap(String, width? : Int) -> String
 
 pub fn xfield(Array[String], Domain, order? : TermOrder) -> RingFactoryResult
 
