@@ -64,8 +64,32 @@ test "numberfields utilities: rational predicates and numerator denominator" {
     to_col([3, -2, 5]).to_matrix_string(),
     content="Matrix([[3], [-2], [5]])",
   )
+  inspect(
+    is_sq_maxrank_HNF(
+      domain_matrix_from_ints([[2, 1, 0], [0, 3, 2], [0, 0, 5]], Domain::ZZ),
+    ),
+    content="true",
+  )
+  inspect(
+    is_sq_maxrank_HNF(domain_matrix_from_ints([[2, 3], [0, 1]], Domain::ZZ)),
+    content="false",
+  )
   inspect(nf_wb_exprs_text(s_vars(4)), content="[s1, s2, s3, s4]")
   inspect(nf_wb_exprs_text(s_vars(0)), content="[]")
+}
+
+///|
+test "numberfields utilities: supplement a subspace" {
+  let basis = domain_matrix_from_ints([[1, 2], [7, 3], [0, 4]], Domain::QQ)
+  inspect(
+    supplement_a_subspace(basis).to_matrix_string(),
+    content="Matrix([[1, 2, 1], [7, 3, 0], [0, 4, 0]])",
+  )
+  let line = domain_matrix_from_ints([[1], [0], [0]], Domain::QQ)
+  inspect(
+    supplement_a_subspace(line).to_matrix_string(),
+    content="Matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])",
+  )
 }
 
 ///|

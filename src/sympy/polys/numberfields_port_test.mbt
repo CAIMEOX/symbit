@@ -97,6 +97,32 @@ test "numberfields: utility frontdoor parity" {
     numberfield_s_vars(4).replace_all(old=" ", new=""),
   )
   assert_eq(nf_exprs_norm(@sympolys.s_vars(0)), numberfield_s_vars(0))
+  let hnf_true = [[2, 1, 0], [0, 3, 2], [0, 0, 5]]
+  let hnf_bad_bound = [[2, 3], [0, 1]]
+  assert_eq(
+    @sympolys.is_sq_maxrank_HNF(
+      @sympolys.domain_matrix_from_ints(hnf_true, @sympolys.Domain::ZZ),
+    ),
+    numberfield_is_sq_maxrank_HNF(hnf_true),
+  )
+  assert_eq(
+    @sympolys.is_sq_maxrank_HNF(
+      @sympolys.domain_matrix_from_ints(hnf_bad_bound, @sympolys.Domain::ZZ),
+    ),
+    numberfield_is_sq_maxrank_HNF(hnf_bad_bound),
+  )
+  let subspace_rows = [[1, 2], [7, 3], [0, 4]]
+  assert_eq(
+    @sympolys.supplement_a_subspace(
+      @sympolys.domain_matrix_from_ints(subspace_rows, @sympolys.Domain::QQ),
+    )
+    .to_matrix_string()
+    .replace_all(old=" ", new=""),
+    numberfield_supplement_a_subspace(subspace_rows, "QQ").replace_all(
+      old=" ",
+      new="",
+    ),
+  )
 
   for a in [-432, -4, 5, 8, 12] {
     let ours = nf_factor_pair_norm(

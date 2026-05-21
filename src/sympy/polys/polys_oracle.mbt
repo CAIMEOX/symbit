@@ -2214,6 +2214,29 @@ pub fn numberfield_s_vars(n : Int) -> String raise {
 }
 
 ///|
+pub fn numberfield_is_sq_maxrank_HNF(rows : Array[Array[Int]]) -> Bool raise {
+  let dm = oracle_domainmatrix_from_ints(rows, "ZZ")
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.modules.is_sq_maxrank_HNF",
+    [OracleArg::PyObj(dm)],
+  )
+  py_str_enum(res) == "True"
+}
+
+///|
+pub fn numberfield_supplement_a_subspace(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(rows, domain_spec)
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.utilities.supplement_a_subspace",
+    [OracleArg::PyObj(dm)],
+  )
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
 fn numberfield_factor_items_text(dict_obj : @py.PyObject) -> String raise {
   let items_call = resolve_method_callable(dict_obj, "items")
   let items_enum = py_call_noargs(items_call)

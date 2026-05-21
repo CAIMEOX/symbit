@@ -1349,6 +1349,8 @@ pub fn is_rewritable_or_comparable((Monomial, Int), Int, Array[((Monomial, Int),
 
 pub fn is_smith_normal_form(DomainMatrix) -> Bool raise PolyError
 
+pub fn is_sq_maxrank_HNF(DomainMatrix) -> Bool raise PolyError
+
 pub fn is_zero_dimensional(Array[Poly], order? : TermOrder) -> Bool raise PolyError
 
 pub fn isolate(@symcore.Expr, eps? : @symnum.BigRational, fast? : Bool) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError
@@ -1770,6 +1772,8 @@ pub fn subresultants_sylv(Poly, Poly) -> Array[Poly] raise PolyError
 pub fn subresultants_vv(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn subresultants_vv_2(Poly, Poly) -> Array[Poly] raise PolyError
+
+pub fn supplement_a_subspace(DomainMatrix) -> DomainMatrix raise PolyError
 
 pub fn swinnerton_dyer_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
 

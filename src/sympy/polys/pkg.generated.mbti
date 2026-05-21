@@ -586,7 +586,11 @@ pub fn numberfield_field_isomorphic(String, String) -> Bool raise
 
 pub fn numberfield_field_isomorphism_coeffs(String, String) -> String raise
 
+pub fn numberfield_is_sq_maxrank_HNF(Array[Array[Int]]) -> Bool raise
+
 pub fn numberfield_s_vars(Int) -> String raise
+
+pub fn numberfield_supplement_a_subspace(Array[Array[Int]], String) -> String raise
 
 pub fn numberfield_to_col(Array[Int]) -> String raise
 

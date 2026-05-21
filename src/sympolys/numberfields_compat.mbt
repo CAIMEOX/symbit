@@ -72,6 +72,71 @@ pub fn to_col(coeffs : Array[Int]) -> DomainMatrix raise PolyError {
 }
 
 ///|
+/// Test whether a domain matrix is square maximal-rank Hermite normal form.
+///
+/// - Does: Mirrors SymPy `numberfields.modules.is_sq_maxrank_HNF`.
+/// - Input: A `DomainMatrix`.
+/// - Returns: `true` when the matrix is over `ZZ`, square, upper triangular,
+///   has positive diagonal entries, and each strict upper entry in column `j`
+///   satisfies `0 <= a_ij < a_ii`.
+/// - Limits: This only checks the special square maximal-rank HNF predicate;
+///   it does not compute a Hermite normal form.
+pub fn is_sq_maxrank_HNF(dm : DomainMatrix) -> Bool raise PolyError {
+  if dm.domain != Domain::ZZ || !dm.is_square() || !dm.is_upper() {
+    return false
+  }
+  let n = dm.rows
+  let zero = @symnum.BigRational::zero()
+  for i in 0..<n {
+    let d = fe_expect_rational(dm.getitem(i, i).element)
+    if d.compare(zero) <= 0 {
+      return false
+    }
+    for j in (i + 1)..<n {
+      let value = fe_expect_rational(dm.getitem(i, j).element)
+      if value.compare(zero) < 0 || value.compare(d) >= 0 {
+        return false
+      }
+    }
+  }
+  true
+}
+
+///|
+/// Extend a subspace basis to a full-space basis.
+///
+/// - Does: Mirrors SymPy `numberfields.utilities.supplement_a_subspace` by
+///   computing an invertible matrix whose first columns equal the input basis.
+/// - Input: An `n x r` `DomainMatrix` over a field, with rank `r`.
+/// - Returns: An invertible `n x n` `DomainMatrix`.
+/// - Limits: Raises when the domain is not a field, when the input columns are
+///   not independent, or when exact inversion is unsupported by the matrix
+///   layer.
+pub fn supplement_a_subspace(m : DomainMatrix) -> DomainMatrix raise PolyError {
+  let n = m.rows
+  let r = m.cols
+  let augmented = m.hstack(DomainMatrix::eye(n, m.domain))
+  let (reduced, pivots) = augmented.rref()
+  if pivots.length() < r {
+    raise PolyError::DomainMismatch
+  }
+  for i in 0..<r {
+    if pivots[i] != i {
+      raise PolyError::DomainMismatch
+    }
+  }
+  let row_indices : Array[Int] = []
+  for i in 0..<n {
+    row_indices.push(i)
+  }
+  let col_indices : Array[Int] = []
+  for j in r..<(r + n) {
+    col_indices.push(j)
+  }
+  reduced.extract(row_indices, col_indices).inv()
+}
+
+///|
 /// Build elementary-symmetric placeholder symbols.
 ///
 /// - Does: Mirrors SymPy `galois_resolvents.s_vars`, producing `s1, s2, ...`.
