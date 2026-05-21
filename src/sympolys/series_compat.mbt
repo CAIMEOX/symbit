@@ -2053,6 +2053,54 @@ pub fn rs_compose_add(
 }
 
 ///|
+/// Revert a regular univariate series.
+///
+/// - Does: Mirrors SymPy `rs_series_reversion` for `p = a*x + O(x**2)`,
+///   solving `p(r(x)) = x` modulo `x**n`.
+/// - Input: A zero-constant `SeriesElem` with non-zero linear coefficient and
+///   target order `n`.
+/// - Returns: A `SeriesElem` representing the reversion.
+/// - Limits: The output uses the same generator name as the input; SymPy's
+///   separate `x` and `y` ring variables are collapsed into this univariate
+///   front door.
+pub fn rs_series_reversion(
+  p : SeriesElem,
+  n : Int,
+) -> SeriesElem raise PolyError {
+  if n <= 0 {
+    raise PolyError::BadExponent
+  }
+  if !fe_is_zero(p.coeff(0)) {
+    raise PolyError::BadExponent
+  }
+  let a = p.coeff(1)
+  if fe_is_zero(a) {
+    raise PolyError::DivisionByZero
+  }
+  let ring = SeriesRing::{
+    domain: p.ring.domain,
+    sym: p.ring.sym,
+    precision: n,
+  }
+  let input = ring.from_coeffs(p.coeffs)
+  let x = ring.gen()
+  let mut r = x.mul_ground(
+    fe_series_exact_div(fe_from_int(1, p.ring.domain), a, p.ring.domain),
+  )
+  for i in 2..<n {
+    let sp = rs_subs(input, r, prec=i + 1)
+    let coeff = sp.coeff(i)
+    if fe_is_zero(coeff) {
+      continue
+    }
+    let scale = fe_series_exact_div(coeff, a, p.ring.domain)
+    let correction = x.pow_int(i).mul_ground(scale)
+    r = r.sub(correction)
+  }
+  r
+}
+
+///|
 /// Multiply a series by a power of the generator.
 ///
 /// - Does: Mirrors SymPy `mul_xin` for the univariate series generator.

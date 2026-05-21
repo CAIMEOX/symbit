@@ -108,6 +108,28 @@ test "ring_series: arithmetic frontdoor parity" {
     ),
     ring_series_norm(rs_compose_add_ring_series([-2, 0, 0, 1], [-3, 0, 1])),
   )
+  assert_eq(
+    ring_series_expr(
+      @sympolys.rs_series_reversion(ring_series_make([0, 1, -1], 6), 6),
+    ),
+    ring_series_norm(
+      rs_series_reversion_ring_series([0, 1, -1], 6).replace_all(
+        old="y",
+        new="x",
+      ),
+    ),
+  )
+  assert_eq(
+    ring_series_expr(
+      @sympolys.rs_series_reversion(ring_series_make([0, 2, 1], 5), 5),
+    ),
+    ring_series_norm(
+      rs_series_reversion_ring_series([0, 2, 1], 5).replace_all(
+        old="y",
+        new="x",
+      ),
+    ),
+  )
 }
 
 ///|

@@ -12780,6 +12780,45 @@ fn ring_series_oracle_poly(
 }
 
 ///|
+fn ring_series_xy_oracle_poly(
+  coeffs : Array[Int],
+) -> (@py.PyObject, @py.PyObject, @py.PyObject, @py.PyObject) raise {
+  let ring_tuple = sympy_call_must("sympy.polys.rings.ring", [
+    OracleArg::Str("x,y"),
+    OracleArg::PyObj(oracle_domain_from_spec("QQ")),
+  ])
+  let parts = py_list_to_pyobjects(ring_tuple)
+  guard parts.length() >= 3 else { fail("ring-series-xy-ring-shape") }
+  let ring_obj = parts[0]
+  let x_obj = parts[1]
+  let y_obj = parts[2]
+  let zero = match py_get_attr(ring_obj, "zero") {
+    Some(obj) => objenum_to_obj(obj)
+    None => fail("ring-series-zero")
+  }
+  let ring_call = resolve_method_callable(ring_obj, "__call__")
+  let builtins = ensure_builtins_module()
+  let pow_fn = resolve_callable(builtins, "pow")
+  let operator = ensure_operator_module()
+  let add_fn = resolve_callable(operator, "add")
+  let mul_fn = resolve_callable(operator, "mul")
+  let mut poly = zero
+  for i in 0..<coeffs.length() {
+    let coeff = coeffs[i]
+    if coeff == 0 {
+      continue
+    }
+    let mut term = objenum_to_obj(py_call_one(ring_call, py_int_obj(coeff)))
+    if i > 0 {
+      let power = py_call_two(pow_fn, x_obj, py_int_obj(i))
+      term = objenum_to_obj(py_call_two(mul_fn, term, objenum_to_obj(power)))
+    }
+    poly = objenum_to_obj(py_call_two(add_fn, poly, term))
+  }
+  (ring_obj, x_obj, y_obj, poly)
+}
+
+///|
 fn ring_series_unary_prec(
   name : String,
   coeffs : Array[Int],
@@ -13046,6 +13085,21 @@ pub fn rs_compose_add_ring_series(
   let res = sympy_call_must("sympy.polys.ring_series.rs_compose_add", [
     OracleArg::PyObj(p),
     OracleArg::PyObj(q),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn rs_series_reversion_ring_series(
+  coeffs : Array[Int],
+  n : Int,
+) -> String raise {
+  let (_, x_obj, y_obj, p) = ring_series_xy_oracle_poly(coeffs)
+  let res = sympy_call_must("sympy.polys.ring_series.rs_series_reversion", [
+    OracleArg::PyObj(p),
+    OracleArg::PyObj(x_obj),
+    OracleArg::Int(n),
+    OracleArg::PyObj(y_obj),
   ])
   py_sympy_enum_str(res)
 }

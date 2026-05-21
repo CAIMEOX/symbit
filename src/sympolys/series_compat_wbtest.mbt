@@ -108,6 +108,14 @@ test "ring series frontdoors: arithmetic wrappers" {
     ),
     content="[2, -2, 1]",
   )
+  inspect(
+    rs_wb_repr(rs_series_reversion(ring.from_int_coeffs([0, 1, -1]), 6)),
+    content="[0, 1, 1, 2, 5, 14]",
+  )
+  inspect(
+    rs_wb_repr(rs_series_reversion(ring.from_int_coeffs([0, 2, 1]), 5)),
+    content="[0, 1/2, -1/8, 1/16, -5/128]",
+  )
 }
 
 ///|
