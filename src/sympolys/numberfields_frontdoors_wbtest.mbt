@@ -40,6 +40,11 @@ fn nf_wb_rat_coeffs_text(value : Array[@symnum.BigRational]?) -> String {
 }
 
 ///|
+fn nf_wb_exprs_text(values : Array[Expr]) -> String {
+  "[" + values.map(e => @symprint.pretty_string(e)).join(", ") + "]"
+}
+
+///|
 test "numberfields utilities: rational predicates and numerator denominator" {
   let half = @symnum.BigRational::from_ints(1, 2) catch { _ => fail("half") }
   let neg_int = @symnum.BigRational::from_ints(-6, 3) catch {
@@ -55,6 +60,12 @@ test "numberfields utilities: rational predicates and numerator denominator" {
   }
   let (num, den) = get_num_denom(reduced)
   inspect("(\{num}, \{den})", content="(-3, 4)")
+  inspect(
+    to_col([3, -2, 5]).to_matrix_string(),
+    content="Matrix([[3], [-2], [5]])",
+  )
+  inspect(nf_wb_exprs_text(s_vars(4)), content="[s1, s2, s3, s4]")
+  inspect(nf_wb_exprs_text(s_vars(0)), content="[]")
 }
 
 ///|

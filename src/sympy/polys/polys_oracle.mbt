@@ -2196,6 +2196,24 @@ pub fn numberfield_get_num_denom(expr : String) -> String raise {
 }
 
 ///|
+pub fn numberfield_to_col(coeffs : Array[Int]) -> String raise {
+  let res = sympy_call_must("sympy.polys.numberfields.modules.to_col", [
+    OracleArg::PyObj(py_list_from_ints(coeffs)),
+  ])
+  let matrix = resolve_method_callable(objenum_to_obj(res), "to_Matrix")
+  py_sympy_enum_str(py_call_noargs(matrix))
+}
+
+///|
+pub fn numberfield_s_vars(n : Int) -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.galois_resolvents.s_vars",
+    [OracleArg::Int(n)],
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
 fn numberfield_factor_items_text(dict_obj : @py.PyObject) -> String raise {
   let items_call = resolve_method_callable(dict_obj, "items")
   let items_enum = py_call_noargs(items_call)

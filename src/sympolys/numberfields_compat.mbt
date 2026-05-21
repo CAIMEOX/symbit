@@ -55,6 +55,39 @@ pub fn get_num_denom(c : @symnum.BigRational) -> (BigInt, BigInt) {
 }
 
 ///|
+/// Transform integer coefficients into a column domain matrix.
+///
+/// - Does: Mirrors SymPy `numberfields.modules.to_col` by treating a flat
+///   coefficient list as a `ZZ` column vector.
+/// - Input: `Array[Int]` coefficients.
+/// - Returns: A `DomainMatrix` with shape `(len(coeffs), 1)` over `Domain::ZZ`.
+/// - Limits: The MoonBit front door accepts integer literals only; callers that
+///   already have `FieldElem` rows should use `domain_matrix_from_dense`.
+pub fn to_col(coeffs : Array[Int]) -> DomainMatrix raise PolyError {
+  let rows : Array[Array[Int]] = []
+  for coeff in coeffs {
+    rows.push([coeff])
+  }
+  domain_matrix_from_ints(rows, Domain::ZZ)
+}
+
+///|
+/// Build elementary-symmetric placeholder symbols.
+///
+/// - Does: Mirrors SymPy `galois_resolvents.s_vars`, producing `s1, s2, ...`.
+/// - Input: A non-negative count `n`.
+/// - Returns: `Array[Expr]` of symbols named `s1` through `sn`.
+/// - Limits: Non-positive `n` returns an empty array; this does not attach
+///   polynomial-ring metadata to the symbols.
+pub fn s_vars(n : Int) -> Array[Expr] {
+  let out : Array[Expr] = []
+  for i in 0..<n {
+    out.push(Expr::Symbol("s\{i + 1}"))
+  }
+  out
+}
+
+///|
 /// Extract fundamental discriminant factors.
 ///
 /// - Does: Writes `a = d*f^2` and returns prime-factor lists for `d` and `f`.

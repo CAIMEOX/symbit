@@ -68,6 +68,12 @@ fn nf_coeff_search_norm(values : Array[Array[Int]]) -> String {
 }
 
 ///|
+fn nf_exprs_norm(values : Array[@symcore.Expr]) -> String {
+  let body = values.map(e => @symprint.pretty_string(e)).join(",")
+  "[\{body}]"
+}
+
+///|
 test "numberfields: utility frontdoor parity" {
   let half = @symnum.BigRational::from_ints(1, 2) catch { _ => fail("half") }
   let minus_three_halves = @symnum.BigRational::from_ints(-3, 2) catch {
@@ -82,6 +88,15 @@ test "numberfields: utility frontdoor parity" {
     nf_num_denom_norm(minus_three_halves),
     numberfield_get_num_denom("-3/2"),
   )
+  assert_eq(
+    @sympolys.to_col([3, -2, 5]).to_matrix_string().replace_all(old=" ", new=""),
+    numberfield_to_col([3, -2, 5]).replace_all(old=" ", new=""),
+  )
+  assert_eq(
+    nf_exprs_norm(@sympolys.s_vars(4)),
+    numberfield_s_vars(4).replace_all(old=" ", new=""),
+  )
+  assert_eq(nf_exprs_norm(@sympolys.s_vars(0)), numberfield_s_vars(0))
 
   for a in [-432, -4, 5, 8, 12] {
     let ours = nf_factor_pair_norm(

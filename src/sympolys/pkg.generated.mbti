@@ -1629,6 +1629,8 @@ pub fn rs_trunc(SeriesElem, Int) -> SeriesElem
 
 pub fn s_poly(((Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int), (Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int))) -> ((Monomial, Int), Poly, Int) raise PolyError
 
+pub fn s_vars(Int) -> Array[@symcore.Expr]
+
 pub fn schur_conditions(Poly, gen_index? : Int) -> Array[@symcore.Expr] raise PolyError
 
 pub fn sdm_LC(Array[(Monomial, FieldElem)], Domain) -> FieldElem raise PolyError
@@ -1786,6 +1788,8 @@ pub fn sympy_eqs_to_ring(Array[@symcore.Expr], Array[String]) -> LinearEquationS
 pub fn term_div((Monomial, FieldElem), (Monomial, FieldElem), Domain) -> (Monomial, FieldElem)? raise PolyError
 
 pub fn terms_gcd(Poly) -> Poly raise PolyError
+
+pub fn to_col(Array[Int]) -> DomainMatrix raise PolyError
 
 pub fn to_dense(Poly, degree? : Int) -> Array[FieldElem] raise PolyError
 
