@@ -155,6 +155,36 @@ test "factortools dense wb: finite field factorization" {
 }
 
 ///|
+test "factortools dense wb: algebraic extension factorization" {
+  let a = @symcore.Expr::Symbol("a")
+  let rel = (a ^ @symcore.int(2)) - @symcore.int(2)
+  let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [rel])
+  let f = [
+    fe_from_int(1, alg_domain),
+    fe_from_int(0, alg_domain),
+    fe_from_int(-2, alg_domain),
+  ]
+  let (coeff, factors) = dup_ext_factor(f, alg_domain)
+  assert_eq(coeff.to_string(), "1")
+  assert_eq(factors.length(), 2)
+  assert_true(factors.all(item => item.0.length() == 2 && item.1 == 1))
+
+  let (dmp_coeff, dmp_factors) = dmp_ext_factor(
+    dmp_from_coeffs(f),
+    0,
+    alg_domain,
+  )
+  assert_eq(dmp_coeff.to_string(), "1")
+  assert_eq(dmp_factors.length(), 2)
+
+  let bad_domain : Result[
+    (FieldElem, Array[(Array[FieldElem], Int)]),
+    PolyError,
+  ] = try? dup_ext_factor(fact_wb_dup([1, 0, -2]), Domain::ZZ)
+  assert_true(bad_domain is Err(PolyError::DomainMismatch))
+}
+
+///|
 test "factortools dense wb: dmp multivariate limits" {
   let bad_factor : Result[(FieldElem, Array[(DensePoly, Int)]), PolyError] = try? dmp_factor_list(
     DensePoly::Poly([fact_wb_poly([1, 0]), fact_wb_poly([1])]),

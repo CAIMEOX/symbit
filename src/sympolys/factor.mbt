@@ -1002,8 +1002,8 @@ fn factor_algext(poly : Poly) -> Array[Poly] raise PolyError {
 ///|
 fn factor_algext_squarefree(
   poly : Poly,
-  base : Domain,
-  minpoly : Poly,
+  _base : Domain,
+  _minpoly : Poly,
 ) -> Array[Poly] raise PolyError {
   if poly.is_zero() || is_one(poly) {
     return Array::new()
@@ -1012,9 +1012,22 @@ fn factor_algext_squarefree(
   if degree <= 1 {
     return [poly]
   }
-  let norm = algext_norm(poly, base, minpoly)
+  let alpha = match poly.domain {
+    Domain::AlgExt(_, gens, _) =>
+      if gens.length() == 1 {
+        gens[0]
+      } else {
+        raise PolyError::DomainMismatch
+      }
+    _ => raise PolyError::DomainMismatch
+  }
+  let (shifts, shifted, norm) = sqf_norm(poly)
+  if shifts.length() != 1 {
+    raise PolyError::NotUnivariate
+  }
   let (_, factors) = norm.factor_list()
   let mut remaining = poly
+  let mut shifted_remaining = shifted
   let out : Array[Poly] = Array::new()
   let lifted_factors : Array[Poly] = Array::new()
   for entry in factors {
@@ -1026,10 +1039,12 @@ fn factor_algext_squarefree(
     if remaining.is_zero() || is_one(remaining) {
       break
     }
-    let g = remaining.gcd_univar(lf)
+    let g = shifted_remaining.gcd_univar(lf)
     if !g.is_zero() && !is_one(g) && g.degree(0) > 0 {
-      out.push(g)
-      remaining = remaining.div_exact_univar(g)
+      let unshifted = sqf_norm_shift(g, -shifts[0], alpha)
+      out.push(unshifted)
+      shifted_remaining = shifted_remaining.div_exact_univar(g)
+      remaining = remaining.div_exact_univar(unshifted)
     }
   }
   if !remaining.is_zero() && !is_one(remaining) {

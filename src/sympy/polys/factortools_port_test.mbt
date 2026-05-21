@@ -115,6 +115,15 @@ fn fact_dense_port_dup_factor_repr(
 }
 
 ///|
+fn fact_dense_port_dup_factor_shape(
+  value : (FieldElem, Array[(Array[FieldElem], Int)]),
+) -> String {
+  let (coeff, factors) = value
+  let parts = factors.map(item => "(\{item.0.length()},\{item.1})")
+  remove_spaces("(\{coeff},[" + parts.join(",") + "])")
+}
+
+///|
 fn fact_dense_port_dmp_factor_repr(
   value : (FieldElem, Array[(DensePoly, Int)]),
 ) -> String {
@@ -229,6 +238,22 @@ test "factortools: dense finite-field factorization parity" {
   assert_eq(ours, "(1,[([1,1],2)])")
   assert_true(
     dup_gf_factor([1, 0, 1], 2).contains("SymmetricModularIntegerMod2"),
+  )
+}
+
+///|
+test "factortools: dense algebraic-extension factorization parity" {
+  let a = @symcore.Expr::Symbol("a")
+  let rel = (a ^ @symcore.int(2)) - @symcore.int(2)
+  let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [rel])
+  let f = [
+    @sympolys.fe_from_int(1, alg_domain),
+    @sympolys.fe_from_int(0, alg_domain),
+    @sympolys.fe_from_int(-2, alg_domain),
+  ]
+  assert_eq(
+    fact_dense_port_dup_factor_shape(@sympolys.dup_ext_factor(f, alg_domain)),
+    dup_ext_factor_shape_exprs(["1", "0", "-2"]),
   )
 }
 

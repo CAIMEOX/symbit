@@ -10512,6 +10512,42 @@ pub fn dup_gf_factor(f : Array[Int], p : Int) -> String raise {
 }
 
 ///|
+pub fn dup_ext_factor_shape_exprs(
+  f : Array[String],
+  domain_spec? : String = "QQ<sqrt(2)>",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let from_sympy = resolve_method_callable(domain_obj, "from_sympy")
+  let coeffs : Array[@py.PyObject] = Array::new()
+  for expr in f {
+    let value = sympy_sympify_str(expr)
+    coeffs.push(objenum_to_obj(py_call_one(from_sympy, value)))
+  }
+  let res = sympy_call_must("sympy.polys.factortools.dup_ext_factor", [
+    OracleArg::PyObj(py_list_from_objects(coeffs).obj()),
+    OracleArg::PyObj(domain_obj),
+  ])
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("dup-ext-factor-shape") }
+  let coeff = remove_spaces(py_str_obj(tuple_items[0]))
+  let factor_pairs = py_list_to_pyobjects(
+    @py.PyObjectEnum::create(tuple_items[1]),
+  )
+  let parts : Array[String] = Array::new()
+  for pair in factor_pairs {
+    let items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+    if items.length() >= 2 {
+      let factor_coeffs = py_list_to_pyobjects(
+        @py.PyObjectEnum::create(items[0]),
+      )
+      let mult = py_obj_to_int(items[1])
+      parts.push("(\{factor_coeffs.length()},\{mult})")
+    }
+  }
+  "(\{coeff},[" + parts.join(",") + "])"
+}
+
+///|
 pub fn dup_zz_zassenhaus(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",

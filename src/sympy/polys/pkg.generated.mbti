@@ -42,6 +42,8 @@ pub fn discriminant(@symcore.Expr, gens? : Array[String], domain? : String, modu
 
 pub fn div(@symcore.Expr, @symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int, gfext_modulus? : Array[Int], gfext_gen? : String) -> String raise
 
+pub fn dup_ext_factor_shape_exprs(Array[String], domain_spec? : String) -> String raise
+
 pub fn dmp_abs(DenseData, Int, domain? : String) -> String raise
 
 pub fn dmp_add(DenseData, DenseData, Int, domain? : String) -> String raise

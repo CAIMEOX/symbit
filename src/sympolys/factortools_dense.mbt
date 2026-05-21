@@ -97,6 +97,44 @@ pub fn dmp_gf_factor(
 }
 
 ///|
+/// Factor a dense polynomial over an algebraic extension.
+///
+/// - Does: Mirrors SymPy `dup_ext_factor` for the public front door by
+///   factoring in the supplied algebraic extension domain.
+/// - Input: Dense high-to-low coefficients over `Domain::AlgExt`.
+/// - Returns: `(leading/content coefficient, [(factor, multiplicity), ...])`.
+/// - Limits: Uses the package algebraic-extension factor-list backend; domains
+///   that are not algebraic extensions raise `PolyError::DomainMismatch`.
+pub fn dup_ext_factor(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError {
+  match domain {
+    Domain::AlgExt(_, _, _) => dup_factor_list(f, domain)
+    _ => raise PolyError::DomainMismatch
+  }
+}
+
+///|
+/// Factor a recursive dense polynomial over an algebraic extension.
+///
+/// - Does: Mirrors SymPy `dmp_ext_factor` for the public front door.
+/// - Input: Recursive dense polynomial, level, and `Domain::AlgExt`.
+/// - Returns: `(leading/content coefficient, [(factor, multiplicity), ...])`.
+/// - Limits: The current recursive dense factor backend supports `u == 0`;
+///   higher levels raise `PolyError::NotUnivariate`.
+pub fn dmp_ext_factor(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (FieldElem, Array[(DensePoly, Int)]) raise PolyError {
+  match domain {
+    Domain::AlgExt(_, _, _) => dmp_factor_list(f, u, domain)
+    _ => raise PolyError::DomainMismatch
+  }
+}
+
+///|
 /// Factor a dense polynomial including its content in the first factor.
 ///
 /// - Does: Runs `dup_factor_list`, then multiplies the returned coefficient

@@ -229,6 +229,8 @@ pub fn dmp_exquo(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_exquo_ground(DensePoly, FieldElem, Int, Domain) -> DensePoly raise PolyError
 
+pub fn dmp_ext_factor(DensePoly, Int, Domain) -> (FieldElem, Array[(DensePoly, Int)]) raise PolyError
+
 pub fn dmp_factor_list(DensePoly, Int, Domain) -> (FieldElem, Array[(DensePoly, Int)]) raise PolyError
 
 pub fn dmp_factor_list_include(DensePoly, Int, Domain) -> Array[(DensePoly, Int)] raise PolyError
@@ -790,6 +792,8 @@ pub fn dup_expand(Array[Array[FieldElem]], Domain) -> Array[FieldElem] raise Pol
 pub fn dup_exquo(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_exquo_ground(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_ext_factor(Array[FieldElem], Domain) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError
 
 pub fn dup_extract(Array[FieldElem], Array[FieldElem], Domain) -> (FieldElem, Array[FieldElem], Array[FieldElem]) raise PolyError
 
