@@ -608,6 +608,8 @@ pub fn mod_rational(Int, Int, Int) -> String raise
 
 pub fn modgcd_univariate(@symcore.Expr, @symcore.Expr, gen? : String) -> String raise
 
+pub fn monomial_key(order? : String) -> String raise
+
 pub fn monic(@symcore.Expr, modulus? : Int) -> String raise
 
 pub fn numberfield_field_isomorphic(String, String) -> Bool raise

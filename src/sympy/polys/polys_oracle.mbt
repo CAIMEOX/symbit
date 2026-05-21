@@ -94,6 +94,14 @@ pub fn canonical_cmp(s : String) -> String {
 }
 
 ///|
+pub fn monomial_key(order? : String = "lex") -> String raise {
+  let res = sympy_call_must("sympy.polys.orderings.monomial_key", [
+    OracleArg::Str(order),
+  ])
+  py_str_enum(res)
+}
+
+///|
 /// Canonicalise an expression string via `str(sympy.sympify(expr))` so that
 /// ordering matches SymPy’s printer (helps when our printer orders constants
 /// first).

@@ -77,6 +77,28 @@ pub fn igrevlex() -> TermOrder {
 }
 
 ///|
+/// Resolve a monomial-order key from its public name.
+///
+/// - Does: Mirrors SymPy's `monomial_key` string/default front door by mapping
+///   supported order names to the corresponding `TermOrder`.
+/// - Input: Optional order name: `"lex"`, `"grlex"`, `"grevlex"`,
+///   `"ilex"`, `"igrlex"`, or `"igrevlex"`.
+/// - Returns: A `TermOrder`.
+/// - Limits: Python callable orders and `gens`-based expression key functions
+///   are not represented by this MoonBit front door.
+pub fn monomial_key(order? : String = "lex") -> TermOrder raise PolyError {
+  match order {
+    "lex" => TermOrder::Lex
+    "grlex" => TermOrder::Grlex
+    "grevlex" => TermOrder::Grevlex
+    "ilex" => TermOrder::Ilex
+    "igrlex" => TermOrder::Igrlex
+    "igrevlex" => TermOrder::Igrevlex
+    _ => raise PolyError::BadGenerator("monomial-order:\{order}")
+  }
+}
+
+///|
 /// Build one polynomial from an expression.
 ///
 /// - Does: Converts an expression through the package's SymPy-style option

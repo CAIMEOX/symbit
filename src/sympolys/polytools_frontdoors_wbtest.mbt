@@ -53,6 +53,10 @@ test "polytools frontdoors: expression constructors and order helpers" {
   inspect(lex() == TermOrder::Lex, content="true")
   inspect(grlex() == TermOrder::Grlex, content="true")
   inspect(grevlex() == TermOrder::Grevlex, content="true")
+  inspect(monomial_key() == TermOrder::Lex, content="true")
+  inspect(monomial_key(order="igrevlex") == TermOrder::Igrevlex, content="true")
+  let bad_order : Result[TermOrder, PolyError] = try? monomial_key(order="bad")
+  assert_true(bad_order is Err(PolyError::BadGenerator(_)))
 }
 
 ///|

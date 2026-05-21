@@ -10,6 +10,18 @@ fn cmp_to_ord(c : Int) -> Int {
 }
 
 ///|
+fn order_name(order : TermOrder) -> String {
+  match order {
+    TermOrder::Lex => "lex"
+    TermOrder::Grlex => "grlex"
+    TermOrder::Grevlex => "grevlex"
+    TermOrder::Ilex => "ilex"
+    TermOrder::Igrlex => "igrlex"
+    TermOrder::Igrevlex => "igrevlex"
+  }
+}
+
+///|
 test "orderings: lex/grlex/grevlex keys and comparisons" {
   let a = [1, 2, 3]
   let b = [2, 2, 3]
@@ -49,4 +61,17 @@ test "orderings: inverse lex and grlex flip comparisons" {
   let r = [0, 2, 3]
   inspect(@sympolys.compare_exps_ilex(p, q), content="1")
   inspect(@sympolys.compare_exps_igrlex(p, r), content="-1")
+}
+
+///|
+test "orderings: monomial_key parity" {
+  assert_eq(order_name(@sympolys.monomial_key()), monomial_key())
+  assert_eq(
+    order_name(@sympolys.monomial_key(order="grevlex")),
+    monomial_key(order="grevlex"),
+  )
+  assert_eq(
+    order_name(@sympolys.monomial_key(order="igrevlex")),
+    monomial_key(order="igrevlex"),
+  )
 }

@@ -1451,6 +1451,8 @@ pub fn monomial_from_array(Array[Int]) -> Monomial
 
 pub fn monomial_gcd(Monomial, Monomial) -> Monomial raise PolyError
 
+pub fn monomial_key(order? : String) -> TermOrder raise PolyError
+
 pub fn monomial_lcm(Monomial, Monomial) -> Monomial raise PolyError
 
 pub fn monomial_ldiv(Monomial, Monomial) -> Monomial raise PolyError
