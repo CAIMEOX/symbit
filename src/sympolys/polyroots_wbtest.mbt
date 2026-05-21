@@ -79,3 +79,16 @@ test "polyroots wb: roots_for_factor and zero-root handling" {
   let zero = Poly::zero(["x"], Domain::QQ)
   assert_eq(roots(zero).length(), 0)
 }
+
+///|
+test "polyroots wb: root_factors frontdoor" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let f = b.from_expr((x - @symcore.int(1)) * (x + @symcore.int(2)))
+  let factors = root_factors(f).map(factor => @symprint.pretty_string(factor))
+  inspect(factors.join(" | "), content="x + 2 | x - 1")
+  let irreducible = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
+  inspect(root_factors(irreducible).length(), content="2")
+  let zero = Poly::zero(["x"], Domain::QQ)
+  inspect(@symprint.pretty_string(root_factors(zero)[0]), content="0")
+}

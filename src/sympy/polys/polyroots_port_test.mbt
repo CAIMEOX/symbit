@@ -89,3 +89,19 @@ test "polyroots: generic roots keeps multiplicities" {
   let expected = sympy_normalize("[1,1,2,2,2]")
   assert_eq(ours, expected)
 }
+
+///|
+test "polyroots: root_factors parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let f = b.from_expr((x - @symcore.int(1)) * (x + @symcore.int(2)))
+  let ours = roots_repr(@sympolys.root_factors(f))
+  let oracle = normalize_root_list(root_factors(f.to_expr(), gens=["x"]))
+  assert_eq(ours, oracle)
+  let g = b.from_expr((x - @symcore.int(1)) ^ @symcore.int(2))
+  let repeated = roots_repr(@sympolys.root_factors(g))
+  assert_eq(
+    repeated,
+    normalize_root_list(root_factors(g.to_expr(), gens=["x"])),
+  )
+}

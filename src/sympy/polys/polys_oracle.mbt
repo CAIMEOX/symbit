@@ -10943,6 +10943,25 @@ pub fn roots_quartic(
 }
 
 ///|
+pub fn root_factors(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens([expr_obj])
+  } else {
+    sympy_symbols_from_names(gens)
+  }
+  let args : Array[OracleArg] = [OracleArg::PyObj(expr_obj)]
+  for gen in gens_list {
+    args.push(OracleArg::PyObj(gen))
+  }
+  let res = sympy_call_must("sympy.polys.polyroots.root_factors", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn rootof(
   expr : @symcore.Expr,
   index : Int,

@@ -1441,6 +1441,8 @@ pub fn ring(Array[String], Domain, order? : TermOrder) -> RingFactoryResult
 
 pub fn ring_homomorphism(Array[String], Array[String], Domain, Map[String, @symcore.Expr]) -> RingHomomorphism raise PolyError
 
+pub fn root_factors(Poly, radicals? : Bool) -> Array[@symcore.Expr] raise PolyError
+
 pub fn root_sum(Poly, func? : @symcore.Expr) -> RootSum
 
 pub fn rootof(Poly, Int) -> RootOf

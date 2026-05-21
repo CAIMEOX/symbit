@@ -298,3 +298,33 @@ pub fn roots(
   }
   roots
 }
+
+///|
+/// Return linear factors built from the symbolic roots of a polynomial.
+///
+/// - Does: Builds `x - r` for each ordered symbolic root `r`.
+/// - Input: One univariate `Poly` and optional `radicals` toggle.
+/// - Returns: `Array[Expr]` containing factor expressions.
+/// - Limits: The current front door returns expressions only; it does not
+///   expose Python's `filter` option or preserve `Poly` objects in the result.
+pub fn root_factors(
+  poly : Poly,
+  radicals? : Bool = true,
+) -> Array[Expr] raise PolyError {
+  ensure_univar(poly)
+  if poly.is_zero() {
+    return [poly.to_expr()]
+  }
+  let x = Expr::Symbol(poly.gens[0])
+  let factors : Array[Expr] = []
+  let rs = roots(poly, radicals~)
+  if rs.is_empty() {
+    return [poly.to_expr()]
+  }
+  // SymPy reference: polyroots.root_factors orders zeros before building factors.
+  rs.sort_by(@symcore.compare_expr)
+  for root in rs {
+    factors.push(x - root)
+  }
+  factors
+}
