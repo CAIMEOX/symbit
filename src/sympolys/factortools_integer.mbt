@@ -562,6 +562,18 @@ fn fact_int_dense_ground_value(
 }
 
 ///|
+fn fact_int_exact_div(
+  numer : Int,
+  denom : Int,
+  marker : String,
+) -> Int raise PolyError {
+  if denom == 0 || numer % denom != 0 {
+    raise PolyError::BadGenerator(marker)
+  }
+  numer / denom
+}
+
+///|
 /// Compute valid divisors for Wang/EEZ factorization.
 ///
 /// - Does: Ports SymPy's `dmp_zz_wang_non_divisors`, filtering evaluation
@@ -659,6 +671,113 @@ pub fn dmp_zz_wang_test_points(
     Some(_) => (c, h, values)
     None => raise PolyError::BadGenerator("wang-evaluation")
   }
+}
+
+///|
+/// Compute corrected leading coefficients for Wang/EEZ lifting.
+///
+/// - Does: Ports SymPy's `dmp_zz_wang_lead_coeffs`, distributing evaluated
+///   leading-coefficient factors across the univariate lifted factors and
+///   scaling the factor list when the global content `cs` is not exhausted.
+/// - Input: Recursive dense integer polynomial `f`, leading-coefficient
+///   factors `T`, content `cs`, evaluated factor values `E`, univariate
+///   factors `H`, evaluation points `A`, level `u`, and `Domain::ZZ`.
+/// - Returns: `(scaled_f, scaled_univariate_factors, leading_coefficients)`.
+/// - Limits: Inputs are expected to come from `dmp_zz_wang_test_points`; unit
+///   or zero evaluated factors raise instead of entering SymPy's internal
+///   non-terminating precondition violation.
+pub fn dmp_zz_wang_lead_coeffs(
+  f : DensePoly,
+  factors : Array[(DensePoly, Int)],
+  cs : FieldElem,
+  values : Array[FieldElem],
+  univar_factors : Array[Array[FieldElem]],
+  eval_points : Array[FieldElem],
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, Array[Array[FieldElem]], Array[DensePoly]) raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  if values.length() != factors.length() {
+    raise PolyError::BadGenerator("wang-leading-coefficients")
+  }
+  let v = u - 1
+  let coeffs : Array[DensePoly] = Array::new()
+  let seen : Array[Bool] = Array::make(values.length(), false)
+  let cs_start = fact_int_fe_to_int(cs)
+  for h in univar_factors {
+    let mut c = dmp_one(v, domain)
+    let mut d = fact_int_fe_to_int(dup_LC(h)) * cs_start
+    let mut idx = values.length()
+    while idx > 0 {
+      idx = idx - 1
+      let e = fact_int_fe_to_int(values[idx])
+      if fact_int_abs(e) == 1 || e == 0 {
+        raise PolyError::BadGenerator("wang-leading-coefficients")
+      }
+      let mut k = 0
+      while d % e == 0 {
+        d = d / e
+        k = k + 1
+      }
+      if k != 0 {
+        let power = dmp_pow(factors[idx].0, k, v, domain)
+        c = dmp_mul(c, power, v, domain)
+        seen.set(idx, true)
+      }
+    }
+    coeffs.push(c)
+  }
+  for flag in seen {
+    if !flag {
+      raise PolyError::BadGenerator("wang-leading-coefficients")
+    }
+  }
+  let corrected_coeffs : Array[DensePoly] = Array::new()
+  let corrected_factors : Array[Array[FieldElem]] = Array::new()
+  let mut cs_work = cs_start
+  for i in 0..<coeffs.length() {
+    let mut c = coeffs[i]
+    let mut h = univar_factors[i]
+    let d_eval = fact_int_fe_to_int(
+      fact_int_dense_ground_value(
+        dmp_eval_tail(c, eval_points, v, domain),
+        domain,
+      ),
+    )
+    let lc = fact_int_fe_to_int(dup_LC(h))
+    let cc = if cs_work == 1 {
+      fact_int_exact_div(lc, d_eval, "wang-leading-coefficients")
+    } else {
+      let g = fact_int_gcd(lc, d_eval)
+      let d_reduced = fact_int_exact_div(d_eval, g, "wang-leading-coefficients")
+      h = dup_mul_ground(h, fe_from_int(d_reduced, domain), domain)
+      cs_work = fact_int_exact_div(
+        cs_work, d_reduced, "wang-leading-coefficients",
+      )
+      fact_int_exact_div(lc, g, "wang-leading-coefficients")
+    }
+    c = dmp_mul_ground(c, fe_from_int(cc, domain), v, domain)
+    corrected_coeffs.push(c)
+    corrected_factors.push(h)
+  }
+  if cs_work == 1 {
+    return (f, corrected_factors, corrected_coeffs)
+  }
+  let scaled_coeffs : Array[DensePoly] = Array::new()
+  let scaled_factors : Array[Array[FieldElem]] = Array::new()
+  let cs_elem = fe_from_int(cs_work, domain)
+  for i in 0..<corrected_coeffs.length() {
+    scaled_coeffs.push(dmp_mul_ground(corrected_coeffs[i], cs_elem, v, domain))
+    scaled_factors.push(dup_mul_ground(corrected_factors[i], cs_elem, domain))
+  }
+  let scale = fe_from_int(
+    fact_int_pow(cs_work, univar_factors.length() - 1),
+    domain,
+  )
+  (dmp_mul_ground(f, scale, u, domain), scaled_factors, scaled_coeffs)
 }
 
 ///|

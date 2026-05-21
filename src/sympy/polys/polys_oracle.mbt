@@ -10722,6 +10722,31 @@ pub fn dmp_zz_wang_test_points(
 }
 
 ///|
+pub fn dmp_zz_wang_lead_coeffs(
+  f : DenseData,
+  factors : Array[(DenseData, Int)],
+  cs : @symnum.BigRational,
+  values : Array[@symnum.BigRational],
+  univar_factors : Array[Array[@symnum.BigRational]],
+  eval_points : Array[@symnum.BigRational],
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_wang_lead_coeffs", [
+    OracleArg::PyObj(fact_dense_py_dense_data(f, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_dmp_factor_pairs(factors, domain_obj)),
+    OracleArg::PyObj(fact_dense_domain_elem_from_obj(cs, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(values, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_factor_list(univar_factors, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(eval_points, domain_obj)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_zz_diophantine(
   factors : Array[Array[@symnum.BigRational]],
   m : Int,

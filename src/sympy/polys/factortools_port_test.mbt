@@ -144,6 +144,15 @@ fn fact_dense_port_wang_test_points_repr(
 }
 
 ///|
+fn fact_dense_port_wang_lead_coeffs_repr(
+  value : (DensePoly, Array[Array[FieldElem]], Array[DensePoly]),
+) -> String {
+  let factors = "[" + value.1.map(dup_repr).join(",") + "]"
+  let coeffs = "[" + value.2.map(dmp_repr).join(",") + "]"
+  remove_spaces("(\{dmp_repr(value.0)},\{factors},\{coeffs})")
+}
+
+///|
 fn fact_dense_port_dup_factor_shape(
   value : (FieldElem, Array[(Array[FieldElem], Int)]),
 ) -> String {
@@ -352,6 +361,29 @@ test "factortools: Wang helper frontdoors parity" {
       1,
     ),
   )
+  assert_eq(
+    fact_dense_port_wang_lead_coeffs_repr(
+      @sympolys.dmp_zz_wang_lead_coeffs(
+        f,
+        factors,
+        fezz(1),
+        [fezz(3)],
+        [[fezz(3), fezz(1), fezz(1)]],
+        [fezz(2)],
+        1,
+        Domain::ZZ,
+      ),
+    ),
+    dmp_zz_wang_lead_coeffs(
+      dense_data_of(f),
+      [(dense_data_of(factors[0].0), factors[0].1)],
+      br_int(1),
+      [br_int(3)],
+      [[br_int(3), br_int(1), br_int(1)]],
+      [br_int(2)],
+      1,
+    ),
+  )
   let negative_lc = @sympolys.dense_poly([
     poly_int([-1, -1]),
     poly_int([1]),
@@ -372,6 +404,29 @@ test "factortools: Wang helper frontdoors parity" {
       dense_data_of(negative_lc),
       [(dense_data_of(factors[0].0), factors[0].1)],
       br_int(1),
+      [br_int(2)],
+      1,
+    ),
+  )
+  assert_eq(
+    fact_dense_port_wang_lead_coeffs_repr(
+      @sympolys.dmp_zz_wang_lead_coeffs(
+        negative_lc,
+        factors,
+        fezz(-1),
+        [fezz(3)],
+        [[fezz(3), fezz(-1), fezz(-1)]],
+        [fezz(2)],
+        1,
+        Domain::ZZ,
+      ),
+    ),
+    dmp_zz_wang_lead_coeffs(
+      dense_data_of(negative_lc),
+      [(dense_data_of(factors[0].0), factors[0].1)],
+      br_int(-1),
+      [br_int(3)],
+      [[br_int(3), br_int(-1), br_int(-1)]],
       [br_int(2)],
       1,
     ),

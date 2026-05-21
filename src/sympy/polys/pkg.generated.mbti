@@ -158,6 +158,8 @@ pub fn dmp_zz_diophantine(Array[DenseData], DenseData, Array[@symnum.BigRational
 
 pub fn dmp_zz_wang_non_divisors(Array[@symnum.BigRational], @symnum.BigRational, @symnum.BigRational, domain? : String) -> String raise
 
+pub fn dmp_zz_wang_lead_coeffs(DenseData, Array[(DenseData, Int)], @symnum.BigRational, Array[@symnum.BigRational], Array[Array[@symnum.BigRational]], Array[@symnum.BigRational], Int, domain? : String) -> String raise
+
 pub fn dmp_zz_wang_test_points(DenseData, Array[(DenseData, Int)], @symnum.BigRational, Array[@symnum.BigRational], Int, domain? : String) -> String raise
 
 pub fn dmp_terms_gcd(DenseData, Int, domain? : String) -> String raise

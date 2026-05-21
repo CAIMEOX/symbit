@@ -57,6 +57,15 @@ fn fact_wb_wang_test_points_repr(
 }
 
 ///|
+fn fact_wb_wang_lead_coeffs_repr(
+  value : (DensePoly, Array[Array[FieldElem]], Array[DensePoly]),
+) -> String {
+  let factors = "[" + value.1.map(fact_wb_dup_repr).join(",") + "]"
+  let coeffs = "[" + value.2.map(fact_wb_dmp_repr).join(",") + "]"
+  "(\{fact_wb_dmp_repr(value.0)},\{factors},\{coeffs})"
+}
+
+///|
 fn fact_wb_dup_include_repr(items : Array[(Array[FieldElem], Int)]) -> String {
   "[" +
   items.map(item => "(\{fact_wb_dup_repr(item.0)},\{item.1})").join(",") +
@@ -361,6 +370,51 @@ test "factortools dense wb: Wang test points" {
     Domain::ZZ,
   )
   assert_true(bad is Err(PolyError::BadGenerator(_)))
+}
+
+///|
+test "factortools dense wb: Wang leading coefficients" {
+  let f = DensePoly::Poly([
+    fact_wb_poly([1, 1]),
+    fact_wb_poly([1]),
+    fact_wb_poly([1]),
+  ])
+  let factors = [(fact_wb_poly([1, 1]), 1)]
+  inspect(
+    fact_wb_wang_lead_coeffs_repr(
+      dmp_zz_wang_lead_coeffs(
+        f,
+        factors,
+        fact_wb_fe(1),
+        [fact_wb_fe(3)],
+        [fact_wb_dup([3, 1, 1])],
+        [fact_wb_fe(2)],
+        1,
+        Domain::ZZ,
+      ),
+    ),
+    content="([[1,1],[1],[1]],[[3,1,1]],[[1,1]])",
+  )
+  let negative_f = DensePoly::Poly([
+    fact_wb_poly([-1, -1]),
+    fact_wb_poly([1]),
+    fact_wb_poly([1]),
+  ])
+  inspect(
+    fact_wb_wang_lead_coeffs_repr(
+      dmp_zz_wang_lead_coeffs(
+        negative_f,
+        factors,
+        fact_wb_fe(-1),
+        [fact_wb_fe(3)],
+        [fact_wb_dup([3, -1, -1])],
+        [fact_wb_fe(2)],
+        1,
+        Domain::ZZ,
+      ),
+    ),
+    content="([[-1,-1],[1],[1]],[[-3,1,1]],[[-1,-1]])",
+  )
 }
 
 ///|
