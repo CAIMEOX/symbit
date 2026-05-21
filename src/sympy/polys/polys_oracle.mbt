@@ -6854,6 +6854,18 @@ fn sdm_oracle_terms_obj(
 }
 
 ///|
+fn sdm_oracle_basis_obj(
+  basis : Array[Array[(Array[Int], Int)]],
+  domain : String,
+) -> @py.PyObject raise {
+  let items : Array[@py.PyObject] = []
+  for term_list in basis {
+    items.push(sdm_oracle_terms_obj(term_list, domain))
+  }
+  py_list_from_objects(items).obj()
+}
+
+///|
 fn sdm_oracle_dict_obj(
   terms : Array[(Array[Int], Int)],
   domain : String,
@@ -7034,6 +7046,66 @@ pub fn sdm_mul_term(
   sdm_oracle_compact("sdm_mul_term", [
     OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
     OracleArg::PyObj(term.obj()),
+    OracleArg::PyObj(sdm_oracle_order_obj(order)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+}
+
+///|
+pub fn sdm_spoly(
+  f : Array[(Array[Int], Int)],
+  g : Array[(Array[Int], Int)],
+  order? : String = "lex",
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_spoly", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+    OracleArg::PyObj(sdm_oracle_terms_obj(g, domain)),
+    OracleArg::PyObj(sdm_oracle_order_obj(order)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+}
+
+///|
+pub fn sdm_nf_mora(
+  f : Array[(Array[Int], Int)],
+  basis : Array[Array[(Array[Int], Int)]],
+  order? : String = "lex",
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_nf_mora", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+    OracleArg::PyObj(sdm_oracle_basis_obj(basis, domain)),
+    OracleArg::PyObj(sdm_oracle_order_obj(order)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+}
+
+///|
+pub fn sdm_nf_buchberger(
+  f : Array[(Array[Int], Int)],
+  basis : Array[Array[(Array[Int], Int)]],
+  order? : String = "lex",
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_nf_buchberger", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+    OracleArg::PyObj(sdm_oracle_basis_obj(basis, domain)),
+    OracleArg::PyObj(sdm_oracle_order_obj(order)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+}
+
+///|
+pub fn sdm_nf_buchberger_reduced(
+  f : Array[(Array[Int], Int)],
+  basis : Array[Array[(Array[Int], Int)]],
+  order? : String = "lex",
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_nf_buchberger_reduced", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+    OracleArg::PyObj(sdm_oracle_basis_obj(basis, domain)),
     OracleArg::PyObj(sdm_oracle_order_obj(order)),
     OracleArg::PyObj(sympy_domain_obj(domain)),
   ])

@@ -47,6 +47,17 @@ fn sdm_port_dict(
 }
 
 ///|
+fn sdm_port_basis(
+  basis : Array[Array[(Array[Int], Int)]],
+) -> Array[@sympolys.Sdm] raise @sympolys.PolyError {
+  let out : Array[@sympolys.Sdm] = []
+  for terms in basis {
+    out.push(sdm_port_terms(terms))
+  }
+  out
+}
+
+///|
 fn sdm_port_map_string(
   values : Map[@sympolys.Monomial, @sympolys.FieldElem],
 ) -> String {
@@ -158,5 +169,70 @@ test "distributedmodules: add multiply zero and degree parity" {
   assert_eq(
     @sympolys.sdm_ecart(sdm_port_terms(ecart_terms)),
     sdm_ecart(ecart_terms),
+  )
+}
+
+///|
+test "distributedmodules: spoly and normal form parity" {
+  let f = [([2, 1, 1], 1), ([1, 0, 1], 1)]
+  let g = [([2, 3, 0], 1)]
+  let h = [([1, 2, 3], 1)]
+  assert_eq(
+    sdm_port_string(
+      @sympolys.sdm_spoly(
+        sdm_port_terms(f),
+        sdm_port_terms(h),
+        @sympolys.lex(),
+        @sympolys.Domain::QQ,
+      ),
+    ),
+    sdm_spoly(f, h),
+  )
+  assert_eq(
+    sdm_port_string(
+      @sympolys.sdm_spoly(
+        sdm_port_terms(f),
+        sdm_port_terms(g),
+        @sympolys.lex(),
+        @sympolys.Domain::QQ,
+      ),
+    ),
+    sdm_spoly(f, g),
+  )
+
+  let target = [([1, 2, 0], 1), ([1, 1, 0], 1), ([1, 0, 0], 1)]
+  let reducers = [[([1, 1, 0], 1), ([1, 0, 0], 1)]]
+  assert_eq(
+    sdm_port_string(
+      @sympolys.sdm_nf_buchberger(
+        sdm_port_terms(target),
+        sdm_port_basis(reducers),
+        @sympolys.lex(),
+        @sympolys.Domain::QQ,
+      ),
+    ),
+    sdm_nf_buchberger(target, reducers),
+  )
+  assert_eq(
+    sdm_port_string(
+      @sympolys.sdm_nf_mora(
+        sdm_port_terms(target),
+        sdm_port_basis(reducers),
+        @sympolys.lex(),
+        @sympolys.Domain::QQ,
+      ),
+    ),
+    sdm_nf_mora(target, reducers),
+  )
+  assert_eq(
+    sdm_port_string(
+      @sympolys.sdm_nf_buchberger_reduced(
+        sdm_port_terms(target),
+        sdm_port_basis(reducers),
+        @sympolys.lex(),
+        @sympolys.Domain::QQ,
+      ),
+    ),
+    sdm_nf_buchberger_reduced(target, reducers),
   )
 }

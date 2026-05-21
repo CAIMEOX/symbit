@@ -307,3 +307,175 @@ pub fn sdm_deg(f : Sdm) -> Int raise PolyError {
 pub fn sdm_ecart(f : Sdm) -> Int raise PolyError {
   sdm_deg(f) - sdm_monomial_deg(sdm_LM(f))
 }
+
+///|
+fn sdm_checked_monomial_div(
+  numer : Monomial,
+  denom : Monomial,
+) -> Monomial raise PolyError {
+  match monomial_div(numer, denom) {
+    Some(value) => value
+    None => raise PolyError::BadExponent
+  }
+}
+
+///|
+fn sdm_field_quo(lhs : FieldElem, rhs : FieldElem) -> FieldElem raise PolyError {
+  fe_mul(lhs, fe_inv(rhs))
+}
+
+///|
+/// Compute the generalized S-polynomial of two SDM elements.
+///
+/// - Does: Cancels matching leading module terms by multiplying both inputs
+///   with the needed polynomial monomial factors.
+/// - Input: Two nonzero SDM elements, a term order, and a coefficient field.
+/// - Returns: The resulting SDM element, or zero if the leading basis indices
+///   differ.
+/// - Limits: The optional transformed-coefficient result used by extended
+///   algorithms is not exposed by this front door.
+pub fn sdm_spoly(
+  f : Sdm,
+  g : Sdm,
+  order : TermOrder,
+  domain : Domain,
+) -> Sdm raise PolyError {
+  if f.is_empty() || g.is_empty() {
+    return sdm_zero()
+  }
+  let lm1 = sdm_LM(f)
+  let lm2 = sdm_LM(g)
+  let lm1_exps = lm1.to_array()
+  let lm2_exps = lm2.to_array()
+  if lm1_exps[0] != lm2_exps[0] {
+    return sdm_zero()
+  }
+  let tail1 = sdm_tail_monomial(lm1)
+  let tail2 = sdm_tail_monomial(lm2)
+  let lcm = monomial_lcm(tail1, tail2)
+  let m1 = sdm_checked_monomial_div(lcm, tail1)
+  let m2 = sdm_checked_monomial_div(lcm, tail2)
+  let c = sdm_field_quo(fe_neg(sdm_LC(f, domain)), sdm_LC(g, domain))
+  sdm_add(
+    sdm_mul_term(f, (m1, fe_from_int(1, domain)), order, domain),
+    sdm_mul_term(g, (m2, c), order, domain),
+    order,
+    domain,
+  )
+}
+
+///|
+/// Compute a Mora weak normal form.
+///
+/// - Does: Repeatedly reduces the leading module term using a divisor with
+///   minimal ecart.
+/// - Input: An SDM element, a basis array, a term order, and a coefficient
+///   field.
+/// - Returns: A weak normal form SDM element.
+/// - Limits: The transformed phantom basis result is not exposed.
+pub fn sdm_nf_mora(
+  f : Sdm,
+  basis : Array[Sdm],
+  order : TermOrder,
+  domain : Domain,
+) -> Sdm raise PolyError {
+  let mut h = f
+  let reducers : Array[Sdm] = []
+  for g in basis {
+    reducers.push(g)
+  }
+  while !h.is_empty() {
+    let mut found = false
+    let mut best : Sdm = []
+    let mut best_ecart = 0
+    for g in reducers {
+      if g.is_empty() {
+        continue
+      }
+      if sdm_monomial_divides(sdm_LM(g), sdm_LM(h)) {
+        let current = sdm_ecart(g)
+        if !found || current < best_ecart {
+          found = true
+          best = g
+          best_ecart = current
+        }
+      }
+    }
+    if !found {
+      break
+    }
+    if best_ecart > sdm_ecart(h) {
+      reducers.push(h)
+    }
+    h = sdm_spoly(h, best, order, domain)
+  }
+  h
+}
+
+///|
+/// Compute a Buchberger weak normal form.
+///
+/// - Does: Repeatedly reduces the leading module term by the first matching
+///   divisor in the basis.
+/// - Input: An SDM element, a basis array, a global term order, and a
+///   coefficient field.
+/// - Returns: A weak normal form SDM element.
+/// - Limits: The transformed phantom basis result is not exposed.
+pub fn sdm_nf_buchberger(
+  f : Sdm,
+  basis : Array[Sdm],
+  order : TermOrder,
+  domain : Domain,
+) -> Sdm raise PolyError {
+  let mut h = f
+  let reducers : Array[Sdm] = []
+  for g in basis {
+    reducers.push(g)
+  }
+  while !h.is_empty() {
+    let mut found = false
+    let mut reducer : Sdm = []
+    for g in reducers {
+      if g.is_empty() {
+        continue
+      }
+      if sdm_monomial_divides(sdm_LM(g), sdm_LM(h)) {
+        found = true
+        reducer = g
+        break
+      }
+    }
+    if !found {
+      break
+    }
+    h = sdm_spoly(h, reducer, order, domain)
+  }
+  h
+}
+
+///|
+/// Compute a reduced Buchberger normal form.
+///
+/// - Does: Reduces repeatedly, appending each surviving leading term to the
+///   result.
+/// - Input: An SDM element, a basis array, a global term order, and a
+///   coefficient field.
+/// - Returns: A reduced normal form SDM element.
+/// - Limits: Only the ordinary non-phantom front door is exposed.
+pub fn sdm_nf_buchberger_reduced(
+  f : Sdm,
+  basis : Array[Sdm],
+  order : TermOrder,
+  domain : Domain,
+) -> Sdm raise PolyError {
+  let mut h = sdm_zero()
+  let mut g = f
+  while !g.is_empty() {
+    g = sdm_nf_buchberger(g, basis, order, domain)
+    if !g.is_empty() {
+      h = sdm_add(h, [sdm_LT(g)], order, domain)
+      g = g[1:].to_owned()
+    }
+  }
+  h
+}

@@ -106,3 +106,41 @@ test "distributedmodules wb: degree and ecart" {
   ]
   inspect(sdm_ecart(g), content="3")
 }
+
+///|
+test "distributedmodules wb: spoly and normal forms" {
+  let f : Sdm = [
+    (sdm_wb_m([2, 1, 1]), sdm_wb_q(1)),
+    (sdm_wb_m([1, 0, 1]), sdm_wb_q(1)),
+  ]
+  let g : Sdm = [(sdm_wb_m([2, 3, 0]), sdm_wb_q(1))]
+  let h : Sdm = [(sdm_wb_m([1, 2, 3]), sdm_wb_q(1))]
+  inspect(sdm_wb_string(sdm_spoly(f, h, lex(), Domain::QQ)), content="[]")
+  inspect(
+    sdm_wb_string(sdm_spoly(f, g, lex(), Domain::QQ)),
+    content="[((1, 2, 1), 1)]",
+  )
+
+  let target : Sdm = [
+    (sdm_wb_m([1, 2, 0]), sdm_wb_q(1)),
+    (sdm_wb_m([1, 1, 0]), sdm_wb_q(1)),
+    (sdm_wb_m([1, 0, 0]), sdm_wb_q(1)),
+  ]
+  let reducers : Array[Sdm] = [
+    [(sdm_wb_m([1, 1, 0]), sdm_wb_q(1)), (sdm_wb_m([1, 0, 0]), sdm_wb_q(1))],
+  ]
+  inspect(
+    sdm_wb_string(sdm_nf_buchberger(target, reducers, lex(), Domain::QQ)),
+    content="[((1, 0, 0), 1)]",
+  )
+  inspect(
+    sdm_wb_string(sdm_nf_mora(target, reducers, lex(), Domain::QQ)),
+    content="[((1, 0, 0), 1)]",
+  )
+  inspect(
+    sdm_wb_string(
+      sdm_nf_buchberger_reduced(target, reducers, lex(), Domain::QQ),
+    ),
+    content="[((1, 0, 0), 1)]",
+  )
+}
