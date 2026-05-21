@@ -695,6 +695,19 @@ pub fn cofactors(f : Poly, g : Poly) -> (Poly, Poly, Poly) raise PolyError {
 }
 
 ///|
+/// Compute polynomial GCD and cofactors through the heuristic-GCD front door.
+///
+/// - Does: Returns `(h, cff, cfg)` where `h = gcd(f, g)` and the cofactors
+///   multiply back to the inputs.
+/// - Input: Two compatible `Poly` values.
+/// - Returns: `(Poly, Poly, Poly)`.
+/// - Limits: Uses the deterministic package GCD/cofactor path rather than a
+///   probabilistic heuristic path, so heuristic failure is not modeled.
+pub fn heugcd(f : Poly, g : Poly) -> (Poly, Poly, Poly) raise PolyError {
+  cofactors(f, g)
+}
+
+///|
 /// Return coefficient content.
 ///
 /// - Does: Computes the gcd of coefficients as an exact rational scalar.

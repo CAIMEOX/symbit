@@ -359,6 +359,8 @@ pub fn dmp_primitive_prs(DensePoly, DensePoly, Int, Domain) -> Array[DensePoly] 
 
 pub fn dmp_prs_resultant(DensePoly, DensePoly, Int, Domain) -> (DensePoly, Array[DensePoly]) raise PolyError
 
+pub fn dmp_qq_heu_gcd(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
+
 pub fn dmp_quo(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dmp_quo_ground(DensePoly, FieldElem, Int, Domain) -> DensePoly raise PolyError
@@ -432,6 +434,8 @@ pub fn dmp_zero(Int) -> DensePoly
 pub fn dmp_zero_p(DensePoly, Int) -> Bool
 
 pub fn dmp_zeros(Int, Int, Domain) -> Array[DensePoly] raise PolyError
+
+pub fn dmp_zz_heu_gcd(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
 
 pub fn dmp_zz_mignotte_bound(DensePoly, Int, Domain) -> FieldElem raise PolyError
 
@@ -893,6 +897,8 @@ pub fn dup_print(Array[FieldElem], String, ascending? : Bool) -> Unit
 
 pub fn dup_prs_resultant(Array[FieldElem], Array[FieldElem], Domain) -> (FieldElem, Array[Array[FieldElem]]) raise PolyError
 
+pub fn dup_qq_heu_gcd(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError
+
 pub fn dup_quo(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_quo_ground(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] raise PolyError
@@ -992,6 +998,8 @@ pub fn dup_trunc(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] raise 
 pub fn dup_truncate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_zz_cyclotomic_poly(Int, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_zz_heu_gcd(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError
 
 pub fn dup_zz_irreducible_p(Array[FieldElem], Domain) -> Bool raise PolyError
 
@@ -1250,6 +1258,8 @@ pub fn hermite_normal_form(DomainMatrix, d? : FieldElem?, check_rank? : Bool) ->
 pub fn hermite_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
 
 pub fn hermite_prob_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
+
+pub fn heugcd(Poly, Poly) -> (Poly, Poly, Poly) raise PolyError
 
 pub fn horner(@symcore.Expr, gens? : Array[String], wrt? : String) -> @symcore.Expr raise PolyError
 

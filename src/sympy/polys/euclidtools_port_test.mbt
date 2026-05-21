@@ -562,6 +562,10 @@ test "euclidtools: dense gcd lcm cancel oracle parity over ZZ" {
     dup_rr_prs_gcd(dup_to_rats(f), dup_to_rats(g), domain="ZZ"),
   )
   assert_eq(
+    euclid_port_dup_triple_repr(@sympolys.dup_zz_heu_gcd(f, g, Domain::ZZ)),
+    dup_zz_heu_gcd(dup_to_rats(f), dup_to_rats(g), domain="ZZ"),
+  )
+  assert_eq(
     euclid_port_dup_triple_repr(@sympolys.dup_inner_gcd(f, g, Domain::ZZ)),
     dup_inner_gcd(dup_to_rats(f), dup_to_rats(g), domain="ZZ"),
   )
@@ -594,6 +598,10 @@ test "euclidtools: dense gcd lcm oracle parity over QQ" {
     dup_ff_prs_gcd(dup_to_rats(f), dup_to_rats(g), domain="QQ"),
   )
   assert_eq(
+    euclid_port_dup_triple_repr(@sympolys.dup_qq_heu_gcd(f, g, Domain::QQ)),
+    dup_qq_heu_gcd(dup_to_rats(f), dup_to_rats(g), domain="QQ"),
+  )
+  assert_eq(
     dup_repr(@sympolys.dup_gcd(f, g, Domain::QQ)),
     dup_gcd(dup_to_rats(f), dup_to_rats(g), domain="QQ"),
   )
@@ -614,6 +622,10 @@ test "euclidtools: dense dmp gcd lcm cancel oracle parity" {
   assert_eq(
     euclid_port_dmp_triple_repr(@sympolys.dmp_rr_prs_gcd(f, g, 0, Domain::ZZ)),
     dmp_rr_prs_gcd(dense_data_of(f), dense_data_of(g), 0, domain="ZZ"),
+  )
+  assert_eq(
+    euclid_port_dmp_triple_repr(@sympolys.dmp_zz_heu_gcd(f, g, 0, Domain::ZZ)),
+    dmp_zz_heu_gcd(dense_data_of(f), dense_data_of(g), 0, domain="ZZ"),
   )
   assert_eq(
     euclid_port_dmp_triple_repr(@sympolys.dmp_inner_gcd(f, g, 0, Domain::ZZ)),
@@ -638,6 +650,10 @@ test "euclidtools: dense dmp gcd lcm cancel oracle parity" {
   assert_eq(
     euclid_port_dmp_triple_repr(@sympolys.dmp_ff_prs_gcd(fq, gq, 0, Domain::QQ)),
     dmp_ff_prs_gcd(dense_data_of(fq), dense_data_of(gq), 0, domain="QQ"),
+  )
+  assert_eq(
+    euclid_port_dmp_triple_repr(@sympolys.dmp_qq_heu_gcd(fq, gq, 0, Domain::QQ)),
+    dmp_qq_heu_gcd(dense_data_of(fq), dense_data_of(gq), 0, domain="QQ"),
   )
   assert_eq(
     dmp_repr(@sympolys.dmp_ff_lcm(fq, gq, 0, Domain::QQ)),

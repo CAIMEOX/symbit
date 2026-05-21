@@ -8247,6 +8247,24 @@ pub fn dup_ff_prs_gcd(
 }
 
 ///|
+pub fn dup_zz_heu_gcd(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dup_call("dup_zz_heu_gcd", f, g, domain)
+}
+
+///|
+pub fn dup_qq_heu_gcd(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dup_call("dup_qq_heu_gcd", f, g, domain)
+}
+
+///|
 pub fn dup_inner_gcd(
   f : Array[@symnum.BigRational],
   g : Array[@symnum.BigRational],
@@ -8318,6 +8336,26 @@ pub fn dmp_ff_prs_gcd(
   domain? : String = "QQ",
 ) -> String raise {
   euclidtools_dmp_call("dmp_ff_prs_gcd", f, g, u, domain)
+}
+
+///|
+pub fn dmp_zz_heu_gcd(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_zz_heu_gcd", f, g, u, domain)
+}
+
+///|
+pub fn dmp_qq_heu_gcd(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "QQ",
+) -> String raise {
+  euclidtools_dmp_call("dmp_qq_heu_gcd", f, g, u, domain)
 }
 
 ///|

@@ -257,6 +257,10 @@ test "euclidtools wb: gcd lcm and cancel frontdoors" {
     euclid_wb_dup_triple_repr(dup_inner_gcd(f, g, Domain::ZZ)),
     content="([1,-1],[1,1],[1,-2])",
   )
+  inspect(
+    euclid_wb_dup_triple_repr(dup_zz_heu_gcd(f, g, Domain::ZZ)),
+    content="([1,-1],[1,1],[1,-2])",
+  )
   inspect(euclid_wb_dup_repr(dup_gcd(f, g, Domain::ZZ)), content="[1,-1]")
   inspect(euclid_wb_dup_repr(dup_lcm(f, g, Domain::ZZ)), content="[1,-2,-1,2]")
   inspect(
@@ -269,6 +273,12 @@ test "euclidtools wb: gcd lcm and cancel frontdoors" {
     ),
     content="([2,2],[1,-1])",
   )
+  let fd = euclid_wb_poly(f)
+  let gd = euclid_wb_poly(g)
+  inspect(
+    euclid_wb_dmp_triple_repr(dmp_zz_heu_gcd(fd, gd, 0, Domain::ZZ)),
+    content="([1,-1],[1,1],[1,-2])",
+  )
 }
 
 ///|
@@ -279,12 +289,20 @@ test "euclidtools wb: field gcd lcm and dmp wrappers" {
     euclid_wb_dup_triple_repr(dup_ff_prs_gcd(f, g, Domain::QQ)),
     content="([1,2],[1/2,3/4],[1/2,0])",
   )
+  inspect(
+    euclid_wb_dup_triple_repr(dup_qq_heu_gcd(f, g, Domain::QQ)),
+    content="([1,2],[1/2,3/4],[1/2,0])",
+  )
   inspect(euclid_wb_dup_repr(dup_gcd(f, g, Domain::QQ)), content="[1,2]")
   inspect(euclid_wb_dup_repr(dup_lcm(f, g, Domain::QQ)), content="[1,7/2,3,0]")
   let fd = euclid_wb_poly(f)
   let gd = euclid_wb_poly(g)
   inspect(
     euclid_wb_dmp_triple_repr(dmp_inner_gcd(fd, gd, 0, Domain::QQ)),
+    content="([1,2],[1/2,3/4],[1/2,0])",
+  )
+  inspect(
+    euclid_wb_dmp_triple_repr(dmp_qq_heu_gcd(fd, gd, 0, Domain::QQ)),
     content="([1,2],[1/2,3/4],[1/2,0])",
   )
   inspect(euclid_wb_dmp_repr(dmp_gcd(fd, gd, 0, Domain::QQ)), content="[1,2]")

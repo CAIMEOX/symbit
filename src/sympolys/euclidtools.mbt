@@ -597,6 +597,22 @@ pub fn dup_rr_prs_gcd(
 }
 
 ///|
+/// Heuristic-style GCD front door over `ZZ[x]`.
+///
+/// - Does: Returns `(h, cff, cfg)` with `h = gcd(f, g)` and exact cofactors.
+/// - Input: Two univariate dense coefficient arrays and a ring-like `domain`.
+/// - Returns: Three dense coefficient arrays.
+/// - Limits: Uses the deterministic PRS path instead of probabilistic
+///   evaluation/interpolation, so it does not model heuristic failure.
+pub fn dup_zz_heu_gcd(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError {
+  dup_rr_prs_gcd(f, g, domain)
+}
+
+///|
 /// Polynomial GCD and cofactors over a field in `K[x]`.
 ///
 /// - Does: Computes `(h, cff, cfg)` with monic `h = gcd(f, g)`.
@@ -625,6 +641,23 @@ pub fn dup_ff_prs_gcd(
   let subres = dup_subresultants(ff, gg, domain)
   let h = dup_monic(subres[subres.length() - 1], domain)
   (h, dup_quo(ff, h, domain), dup_quo(gg, h, domain))
+}
+
+///|
+/// Heuristic-style GCD front door over `QQ[x]`.
+///
+/// - Does: Returns `(h, cff, cfg)` with monic `h = gcd(f, g)` and exact
+///   cofactors.
+/// - Input: Two univariate dense coefficient arrays and a field `domain`.
+/// - Returns: Three dense coefficient arrays.
+/// - Limits: Uses the deterministic field PRS path instead of clearing
+///   denominators and running heuristic integer GCD.
+pub fn dup_qq_heu_gcd(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError {
+  dup_ff_prs_gcd(f, g, domain)
 }
 
 ///|
@@ -782,6 +815,24 @@ pub fn dmp_rr_prs_gcd(
 }
 
 ///|
+/// Heuristic-style GCD front door over `ZZ[X]`.
+///
+/// - Does: Returns `(h, cff, cfg)` with `h = gcd(f, g)` and exact cofactors.
+/// - Input: Two dense recursive polynomials, a level `u`, and a ring-like
+///   `domain`.
+/// - Returns: Three dense recursive polynomials.
+/// - Limits: Supports the current univariate `u == 0` dense representation and
+///   uses deterministic PRS instead of heuristic interpolation.
+pub fn dmp_zz_heu_gcd(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
+  dmp_rr_prs_gcd(f, g, u, domain)
+}
+
+///|
 /// Polynomial GCD and cofactors over a field in `K[X]`.
 ///
 /// - Does: Delegates to `dup_ff_prs_gcd` for univariate input.
@@ -799,6 +850,25 @@ pub fn dmp_ff_prs_gcd(
   }
   let (h, cff, cfg) = dup_ff_prs_gcd(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
   (dmp_from_coeffs(h), dmp_from_coeffs(cff), dmp_from_coeffs(cfg))
+}
+
+///|
+/// Heuristic-style GCD front door over `QQ[X]`.
+///
+/// - Does: Returns `(h, cff, cfg)` with monic `h = gcd(f, g)` and exact
+///   cofactors.
+/// - Input: Two dense recursive polynomials, a level `u`, and a field
+///   `domain`.
+/// - Returns: Three dense recursive polynomials.
+/// - Limits: Supports the current univariate `u == 0` dense representation and
+///   uses deterministic field PRS instead of heuristic interpolation.
+pub fn dmp_qq_heu_gcd(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
+  dmp_ff_prs_gcd(f, g, u, domain)
 }
 
 ///|
