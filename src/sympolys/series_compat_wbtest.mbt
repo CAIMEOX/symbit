@@ -101,6 +101,17 @@ test "ring series frontdoors: arithmetic wrappers" {
     ),
     content="[0, 1, 1]",
   )
+  let sx = Expr::Symbol("x")
+  let sin_plus_exp = @symcore.function("sin", [sx]) +
+    @symcore.function("exp", [sx])
+  inspect(
+    rs_wb_repr(rs_series(sin_plus_exp, "x", 5)),
+    content="[1, 2, 1/2, 0, 1/24]",
+  )
+  inspect(
+    rs_wb_repr(rs_series((int(1) + sx) ^ int(-1), "x", 5)),
+    content="[1, -1, 1, -1, 1]",
+  )
   inspect(
     rs_wb_repr(rs_LambertW(x, prec=6)),
     content="[0, 1, -1, 3/2, -8/3, 125/24]",

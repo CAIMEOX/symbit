@@ -1665,6 +1665,8 @@ pub fn rs_puiseux((SeriesElem, Int) -> SeriesElem raise PolyError, SeriesElem, p
 
 pub fn rs_puiseux2((SeriesElem, SeriesElem, Int) -> SeriesElem raise PolyError, SeriesElem, SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 
+pub fn rs_series(@symcore.Expr, String, Int) -> SeriesElem raise PolyError
+
 pub fn rs_series_from_list(SeriesElem, Array[FieldElem], prec? : Int) -> SeriesElem raise PolyError
 
 pub fn rs_series_inversion(SeriesElem, prec? : Int) -> SeriesElem raise PolyError

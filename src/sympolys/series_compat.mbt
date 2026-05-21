@@ -1974,6 +1974,103 @@ pub fn rs_fun(
 }
 
 ///|
+fn rs_series_integral_exponent(exp : Expr) -> Int raise PolyError {
+  let exp_num = match expr_coeff_rational_value(exp) {
+    Some(value) => value
+    None => raise PolyError::BadExponent
+  }
+  if !exp_num.is_integral() {
+    raise PolyError::BadExponent
+  }
+  exp_num.numerator().to_int()
+}
+
+///|
+fn rs_series_apply_function(
+  name : String,
+  arg : SeriesElem,
+  prec : Int,
+) -> SeriesElem raise PolyError {
+  match name {
+    "exp" => rs_exp(arg, prec~)
+    "log" => rs_log(arg, prec~)
+    "sin" => rs_sin(arg, prec~)
+    "cos" => rs_cos(arg, prec~)
+    "tan" => rs_tan(arg, prec~)
+    "sinh" => rs_sinh(arg, prec~)
+    "cosh" => rs_cosh(arg, prec~)
+    "tanh" => rs_tanh(arg, prec~)
+    "atan" => rs_atan(arg, prec~)
+    "atanh" => rs_atanh(arg, prec~)
+    "asin" => rs_asin(arg, prec~)
+    "asinh" => rs_asinh(arg, prec~)
+    "LambertW" => rs_LambertW(arg, prec~)
+    _ => raise PolyError::NonPolynomial
+  }
+}
+
+///|
+fn rs_series_from_expr_inner(
+  expr : Expr,
+  ring : SeriesRing,
+) -> SeriesElem raise PolyError {
+  let expr = @symcore.normalize_legacy_expr(expr)
+  match expr {
+    Expr::Number(n) => ring.from_coeffs([FieldElem::QQ(n)])
+    Expr::Symbol(name) =>
+      if name == ring.sym {
+        ring.gen()
+      } else {
+        raise PolyError::BadGenerator(name)
+      }
+    Expr::Add(args) => {
+      let mut acc = ring.zero()
+      for child in args {
+        acc = acc.add(rs_series_from_expr_inner(child, ring))
+      }
+      acc
+    }
+    Expr::Mul(args) => {
+      let mut acc = ring.one()
+      for child in args {
+        acc = acc.mul(rs_series_from_expr_inner(child, ring))
+      }
+      acc
+    }
+    Expr::Pow(base, exp) => {
+      let base_series = rs_series_from_expr_inner(base, ring)
+      let n = rs_series_integral_exponent(exp)
+      rs_pow(base_series, n, prec=ring.precision)
+    }
+    Expr::Apply(Expr::FunctionHead(name), [arg]) => {
+      let arg_series = rs_series_from_expr_inner(arg, ring)
+      rs_series_apply_function(name, arg_series, ring.precision)
+    }
+    _ => raise PolyError::NonPolynomial
+  }
+}
+
+///|
+/// Expand an expression as a truncated regular power series around zero.
+///
+/// - Does: Mirrors the main regular branch of SymPy `rs_series` by recursively
+///   evaluating arithmetic nodes and supported elementary functions with the
+///   sparse-series kernels in this package.
+/// - Input: An `Expr`, a generator name, and a positive precision.
+/// - Returns: A `SeriesElem` in `QQ[[sym]]/(sym**prec)`.
+/// - Limits: The current front door is univariate and regular only; fractional
+///   powers, symbolic constants that require ring extension, and unsupported
+///   functions raise `PolyError`.
+pub fn rs_series(
+  expr : Expr,
+  sym : String,
+  prec : Int,
+) -> SeriesElem raise PolyError {
+  let ring = power_series_ring(Domain::QQ, sym, prec)
+  rs_series_from_expr_inner(expr, ring)
+}
+
+///|
 /// Evaluate a regular-series function through the Puiseux adapter.
 ///
 /// - Does: Mirrors SymPy `rs_puiseux` for inputs whose exponents are already

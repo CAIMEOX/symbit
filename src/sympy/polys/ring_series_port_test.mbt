@@ -230,6 +230,18 @@ test "ring_series: analytic frontdoor parity" {
     ),
     ring_series_norm(rs_puiseux2_mul_ring_series([0, 1], [1, 1], 6)),
   )
+  let sx = @symcore.Expr::Symbol("x")
+  let sin_plus_exp = @symcore.function("sin", [sx]) +
+    @symcore.function("exp", [sx])
+  assert_eq(
+    ring_series_expr(@sympolys.rs_series(sin_plus_exp, "x", 5)),
+    ring_series_norm(rs_series_expr(sin_plus_exp, "x", 5)),
+  )
+  let reciprocal = (@symcore.int(1) + sx) ^ @symcore.int(-1)
+  assert_eq(
+    ring_series_expr(@sympolys.rs_series(reciprocal, "x", 5)),
+    ring_series_norm(rs_series_expr(reciprocal, "x", 5)),
+  )
   assert_eq(
     ring_series_expr(@sympolys.rs_LambertW(x, prec=6)),
     ring_series_norm(rs_LambertW_ring_series([0, 1], 6)),

@@ -13560,6 +13560,20 @@ pub fn rs_puiseux2_mul_ring_series(
 }
 
 ///|
+pub fn rs_series_expr(
+  expr : @symcore.Expr,
+  sym : String,
+  prec : Int,
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.ring_series.rs_series", [
+    OracleArg::PyObj(expr_to_sympy(expr)),
+    OracleArg::PyObj(expr_to_sympy(@symcore.Expr::Symbol(sym))),
+    OracleArg::Int(prec),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
 pub fn series_pprint_oracle(
   coeffs : Array[Int],
   prec : Int,
