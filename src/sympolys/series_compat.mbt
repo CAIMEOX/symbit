@@ -241,6 +241,80 @@ fn series_rational_square_root(
 }
 
 ///|
+fn series_bigint_pow_nonnegative(base : BigInt, exp : Int) -> BigInt {
+  let mut out = BigInt::from_int(1)
+  for _ in 0..<exp {
+    out = out.mul(base)
+  }
+  out
+}
+
+///|
+fn series_bigint_nth_root_exact(value : BigInt, n : Int) -> BigInt? {
+  if n <= 0 {
+    return None
+  }
+  let zero = BigInt::from_int(0)
+  let one = BigInt::from_int(1)
+  let two = BigInt::from_int(2)
+  let negative = value.op_lt(zero)
+  if negative && n % 2 == 0 {
+    return None
+  }
+  let target = if negative { value.neg() } else { value }
+  if target.is_zero() {
+    return Some(zero)
+  }
+  let mut lo = zero
+  let mut hi = target.add(one)
+  while lo.add(one).op_lt(hi) {
+    let mid = lo.add(hi).div(two)
+    let pow = series_bigint_pow_nonnegative(mid, n)
+    if pow.equal(target) {
+      return Some(if negative { mid.neg() } else { mid })
+    }
+    if pow.op_lt(target) {
+      lo = mid
+    } else {
+      hi = mid
+    }
+  }
+  None
+}
+
+///|
+fn series_rational_nth_root(
+  value : @symnum.BigRational,
+  n : Int,
+) -> @symnum.BigRational raise PolyError {
+  match
+    (
+      series_bigint_nth_root_exact(value.numerator(), n),
+      series_bigint_nth_root_exact(value.denominator(), n),
+    ) {
+    (Some(num), Some(den)) =>
+      @symnum.BigRational::new(num, den) catch {
+        _ => raise PolyError::BadExponent
+      }
+    _ => raise PolyError::BadExponent
+  }
+}
+
+///|
+fn series_binomial_rational(
+  alpha : @symnum.BigRational,
+  k : Int,
+) -> @symnum.BigRational raise PolyError {
+  let mut out = @symnum.BigRational::one()
+  for i in 0..<k {
+    let factor = alpha.sub_r(@symnum.BigRational::from_int(i))
+    out = out.mul_r(factor)
+    out = poly_rational_div(out, @symnum.BigRational::from_int(i + 1))
+  }
+  out
+}
+
+///|
 /// Return the zero element of the ring.
 ///
 /// - Does: Builds the additive identity in this series ring.
@@ -1317,6 +1391,128 @@ pub fn rs_series_inversion(
   prec? : Int = -1,
 ) -> SeriesElem raise PolyError {
   series_at_precision(p, series_precision_or_default(p, prec)).inverse()
+}
+
+///|
+/// Test whether a series uses Puiseux exponents.
+///
+/// - Does: Mirrors SymPy `rs_is_puiseux` for the package's regular
+///   univariate representation.
+/// - Input: A `SeriesElem`.
+/// - Returns: `false`, because `SeriesElem` stores only non-negative integer
+///   exponents.
+/// - Limits: Negative and fractional powers are not representable in this
+///   series model.
+pub fn rs_is_puiseux(_p : SeriesElem) -> Bool {
+  false
+}
+
+///|
+/// Find the smallest exponent present in a series.
+///
+/// - Does: Mirrors SymPy `rs_min_pow` on an already-expanded univariate
+///   `SeriesElem`.
+/// - Input: A `SeriesElem`.
+/// - Returns: The minimum non-zero exponent.
+/// - Limits: Raises `PolyError::BadExponent` for the zero series, whose minimum
+///   exponent is undefined.
+pub fn rs_min_pow(p : SeriesElem) -> Int raise PolyError {
+  match p.valuation() {
+    Some(v) => v
+    None => raise PolyError::BadExponent
+  }
+}
+
+///|
+fn series_elem_positive_nth_root(
+  p : SeriesElem,
+  n : Int,
+) -> SeriesElem raise PolyError {
+  if !domain_is_field_pred(p.ring.domain) {
+    raise PolyError::DomainNotField
+  }
+  match p.valuation() {
+    None => p.ring.zero()
+    Some(v) => {
+      if v % n != 0 {
+        raise PolyError::BadExponent
+      }
+      let shift = v / n
+      let inner_prec = p.ring.precision - shift
+      if inner_prec <= 0 {
+        return p.ring.zero()
+      }
+      let inner_ring = SeriesRing::{
+        domain: p.ring.domain,
+        sym: p.ring.sym,
+        precision: inner_prec,
+      }
+      let core = inner_ring.from_coeffs(series_shift_right(p.coeffs, v))
+      let c0 = core.coeff(0)
+      let root0_rat = series_rational_nth_root(fe_expect_rational(c0), n)
+      let root0 = fe_from_rational(root0_rat, p.ring.domain)
+      let normalized_coeffs : Array[FieldElem] = []
+      for coeff in core.coeffs {
+        normalized_coeffs.push(fe_series_exact_div(coeff, c0, p.ring.domain))
+      }
+      let normalized = inner_ring.from_coeffs(normalized_coeffs)
+      let delta = normalized.sub(inner_ring.one())
+      let alpha = poly_rational_from_ints(1, n)
+      let mut power = inner_ring.one()
+      let mut out = inner_ring.zero()
+      for k in 0..<inner_prec {
+        if k > 0 {
+          power = power.mul(delta)
+        }
+        let coeff = fe_from_rational(
+          series_binomial_rational(alpha, k),
+          p.ring.domain,
+        )
+        out = out.add(power.mul_ground(coeff))
+      }
+      out = out.mul_ground(root0)
+      let shifted = series_shift_left(
+        out.coeffs,
+        shift,
+        p.ring.precision,
+        p.ring.domain,
+      )
+      SeriesElem::{
+        ring: p.ring,
+        coeffs: normalize_series_coeffs(p.ring, shifted),
+      }
+    }
+  }
+}
+
+///|
+/// Compute an integer nth root of a truncated series.
+///
+/// - Does: Mirrors SymPy `rs_nth_root` for regular univariate power series.
+/// - Input: A `SeriesElem`, an integer root order, and optional precision.
+/// - Returns: A `SeriesElem` satisfying the requested root expansion modulo the
+///   stored precision.
+/// - Limits: Fractional/Puiseux exponents and Laurent outputs are not
+///   represented; constants must have exact rational nth roots in the current
+///   domain.
+pub fn rs_nth_root(
+  p : SeriesElem,
+  n : Int,
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  let q = series_at_precision(p, series_precision_or_default(p, prec))
+  if n == 0 {
+    match q.valuation() {
+      None => raise PolyError::BadExponent
+      Some(_) => q.ring.one()
+    }
+  } else if n == 1 {
+    q
+  } else if n < 0 {
+    series_elem_positive_nth_root(q, -n).inverse()
+  } else {
+    series_elem_positive_nth_root(q, n)
+  }
 }
 
 ///|

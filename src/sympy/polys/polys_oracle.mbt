@@ -12649,6 +12649,32 @@ pub fn rs_series_inversion_ring_series(
 }
 
 ///|
+pub fn rs_is_puiseux_ring_series(coeffs : Array[Int]) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(coeffs)
+  let res = sympy_call_must("sympy.polys.ring_series.rs_is_puiseux", [
+    OracleArg::PyObj(p),
+    OracleArg::PyObj(x_obj),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn rs_nth_root_ring_series(
+  coeffs : Array[Int],
+  n : Int,
+  prec : Int,
+) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(coeffs)
+  let res = sympy_call_must("sympy.polys.ring_series.rs_nth_root", [
+    OracleArg::PyObj(p),
+    OracleArg::Int(n),
+    OracleArg::PyObj(x_obj),
+    OracleArg::Int(prec),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
 pub fn rs_exp_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
   ring_series_unary_prec("rs_exp", coeffs, prec)
 }

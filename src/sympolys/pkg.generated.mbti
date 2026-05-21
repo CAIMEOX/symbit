@@ -1561,9 +1561,15 @@ pub fn rs_hadamard_exp(SeriesElem, inverse? : Bool) -> SeriesElem raise PolyErro
 
 pub fn rs_integrate(SeriesElem) -> SeriesElem raise PolyError
 
+pub fn rs_is_puiseux(SeriesElem) -> Bool
+
 pub fn rs_log(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 
+pub fn rs_min_pow(SeriesElem) -> Int raise PolyError
+
 pub fn rs_mul(SeriesElem, SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_nth_root(SeriesElem, Int, prec? : Int) -> SeriesElem raise PolyError
 
 pub fn rs_pow(SeriesElem, Int, prec? : Int) -> SeriesElem raise PolyError
 

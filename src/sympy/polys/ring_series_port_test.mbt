@@ -41,6 +41,19 @@ test "ring_series: arithmetic frontdoor parity" {
     ring_series_norm(rs_series_inversion_ring_series([1, 1], 6)),
   )
   assert_eq(
+    @sympolys.rs_is_puiseux(one_plus_x).to_string(),
+    rs_is_puiseux_ring_series([1, 1]).to_lower(),
+  )
+  assert_eq(@sympolys.rs_min_pow(ring_series_make([0, 0, 1, 1], 6)), 2)
+  assert_eq(
+    ring_series_expr(@sympolys.rs_nth_root(one_plus_x, 3)),
+    ring_series_norm(rs_nth_root_ring_series([1, 1], 3, 6)),
+  )
+  assert_eq(
+    ring_series_expr(@sympolys.rs_nth_root(one_plus_x, -3)),
+    ring_series_norm(rs_nth_root_ring_series([1, 1], -3, 6)),
+  )
+  assert_eq(
     ring_series_expr(@sympolys.rs_diff(f)),
     ring_series_norm(rs_diff_ring_series([1, 2, 3])),
   )

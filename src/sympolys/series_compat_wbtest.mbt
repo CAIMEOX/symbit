@@ -24,6 +24,16 @@ test "ring series frontdoors: arithmetic wrappers" {
     rs_wb_repr(rs_series_inversion(one.add(x))),
     content="[1, -1, 1, -1, 1, -1]",
   )
+  inspect(rs_is_puiseux(one.add(x)), content="false")
+  inspect(rs_min_pow(x.mul(x).mul(one.add(x))), content="2")
+  inspect(
+    rs_wb_repr(rs_nth_root(one.add(x), 3)),
+    content="[1, 1/3, -1/9, 5/81, -10/243, 22/729]",
+  )
+  inspect(
+    rs_wb_repr(rs_nth_root(one.add(x), -3)),
+    content="[1, -1/3, 2/9, -14/81, 35/243, -91/729]",
+  )
   inspect(rs_wb_repr(rs_diff(f)), content="[2, 6]")
   inspect(rs_wb_repr(rs_integrate(f)), content="[0, 1, 1, 1]")
   inspect(
