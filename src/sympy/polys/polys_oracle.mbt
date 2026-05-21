@@ -5750,6 +5750,25 @@ pub fn galois_group(
 }
 
 ///|
+pub fn has_square_disc(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> Bool raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens([expr_obj])
+  } else {
+    sympy_symbols_from_names(gens)
+  }
+  let poly = call_sympy_poly(expr_obj, gens_list, "", None)
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.galoisgroups.has_square_disc",
+    [OracleArg::PyObj(poly)],
+  )
+  py_str_enum(res) == "True"
+}
+
+///|
 pub fn isolate(expr : @symcore.Expr, eps? : String = "") -> String raise {
   let args : Array[OracleArg] = [OracleArg::PyObj(expr_to_sympy(expr))]
   if eps != "" {

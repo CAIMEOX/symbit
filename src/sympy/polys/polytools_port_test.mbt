@@ -486,7 +486,16 @@ test "polytools: constructor gff and stability frontdoor parity with SymPy" {
       "(\{ours_galois.name}, \{ours_galois.is_alt})",
       galois_group(item.to_expr(), gens=["x"]),
     )
+    assert_eq(
+      @sympolys.has_square_disc(item),
+      has_square_disc(item.to_expr(), gens=["x"]),
+    )
   }
+  let square_disc_reducible = b.from_expr((x ^ int(2)) - int(4))
+  assert_eq(
+    @sympolys.has_square_disc(square_disc_reducible),
+    has_square_disc(square_disc_reducible.to_expr(), gens=["x"]),
+  )
 
   let sqrt2 = int(2) ^ @symcore.rational_from_ints(1, 2)
   assert_eq(nf_port_iv_text(@sympolys.isolate(sqrt2)), isolate(sqrt2))

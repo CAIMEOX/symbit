@@ -44,6 +44,18 @@ fn galois_discriminant_is_square(poly : Poly) -> Bool raise PolyError {
 }
 
 ///|
+/// Test whether a polynomial has square discriminant.
+///
+/// - Does: Computes the discriminant and checks whether it is a non-negative
+///   exact rational square.
+/// - Input: One `Poly`.
+/// - Returns: `Bool`.
+/// - Limits: Non-rational discriminants currently report `false`.
+pub fn has_square_disc(poly : Poly) -> Bool raise PolyError {
+  galois_discriminant_is_square(poly)
+}
+
+///|
 /// Compute the low-degree Galois group name.
 ///
 /// - Does: Classifies irreducible degree `1`, `2`, and `3` polynomials over

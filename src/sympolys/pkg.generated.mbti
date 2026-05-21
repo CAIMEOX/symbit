@@ -1291,6 +1291,8 @@ pub fn ground_roots(Poly) -> Array[(@symcore.Expr, Int)] raise PolyError
 
 pub fn half_gcdex(Poly, Poly, auto? : Bool) -> (Poly, Poly) raise PolyError
 
+pub fn has_square_disc(Poly) -> Bool raise PolyError
+
 pub fn hermite_normal_form(DomainMatrix, d? : FieldElem?, check_rank? : Bool) -> DomainMatrix raise PolyError
 
 pub fn hermite_poly(Int, gen? : String) -> @symcore.Expr raise PolyError

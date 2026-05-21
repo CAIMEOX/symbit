@@ -25,6 +25,9 @@ test "galois frontdoor: low degree group names" {
     ),
     content="(A3, true)",
   )
+  assert_true(has_square_disc(b.from_expr((x ^ int(3)) - int(3) * x + int(1))))
+  assert_false(has_square_disc(b.from_expr((x ^ int(3)) - int(2))))
+  assert_true(has_square_disc(b.from_expr((x ^ int(2)) - int(4))))
   let reducible : Result[GaloisGroupResult, PolyError] = try? galois_group(
     b.from_expr((x ^ int(2)) - int(1)),
   )
