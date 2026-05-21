@@ -146,6 +146,42 @@ pub fn mod_rational(num : Int, den : Int, p : Int) -> String raise {
 }
 
 ///|
+fn oracle_ring_element_from_expr(
+  ring_obj : @py.PyObject,
+  expr : @symcore.Expr,
+) -> @py.PyObject raise {
+  let from_expr = resolve_method_callable(ring_obj, "from_expr")
+  objenum_to_obj(py_call_one(from_expr, expr_to_sympy(expr)))
+}
+
+///|
+pub fn modgcd_univariate(
+  f : @symcore.Expr,
+  g : @symcore.Expr,
+  gen? : String = "x",
+) -> String raise {
+  let ring_tuple = sympy_call_must("sympy.polys.rings.ring", [
+    OracleArg::Str(gen),
+    OracleArg::PyObj(oracle_domain_from_spec("ZZ")),
+  ])
+  let ring_items = py_list_to_pyobjects(ring_tuple)
+  guard ring_items.length() >= 1 else { fail("ring-result-shape") }
+  let ring_obj = ring_items[0]
+  let f_obj = oracle_ring_element_from_expr(ring_obj, f)
+  let g_obj = oracle_ring_element_from_expr(ring_obj, g)
+  let res = sympy_call_must("sympy.polys.modulargcd.modgcd_univariate", [
+    OracleArg::PyObj(f_obj),
+    OracleArg::PyObj(g_obj),
+  ])
+  let parts = py_list_to_pyobjects(res)
+  guard parts.length() == 3 else { fail("modgcd-result-shape") }
+  let h = remove_spaces(sympy_normalize(py_str_obj(parts[0])))
+  let cff = remove_spaces(sympy_normalize(py_str_obj(parts[1])))
+  let cfg = remove_spaces(sympy_normalize(py_str_obj(parts[2])))
+  "(\{h},\{cff},\{cfg})"
+}
+
+///|
 pub fn dict_from_expr(
   expr : @symcore.Expr,
   gens? : Array[String] = [],
