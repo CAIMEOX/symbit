@@ -46,3 +46,64 @@ test "subresultants qq zz wb: prs input normalization" {
   inspect(sr_wb_list_repr(euclid_q(q, p)), content="1 - x**2 | x - 1")
   inspect(sr_wb_list_repr(sturm_q(q, p)), content="1 - x**2 | x - 1")
 }
+
+///|
+test "subresultants qq zz wb: public algorithm aliases" {
+  let x = @symcore.Expr::Symbol("x")
+  let p = sr_wb_poly(
+    (x ^ @symcore.int(3)) - @symcore.int(2) * x + @symcore.int(1),
+  )
+  let q = sr_wb_poly((x ^ @symcore.int(2)) - @symcore.int(1))
+  inspect(
+    sr_wb_list_repr(euclid_pg(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | 1 - x",
+  )
+  inspect(
+    sr_wb_list_repr(euclid_amv(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | 1 - x",
+  )
+  inspect(
+    sr_wb_list_repr(sturm_pg(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | x - 1",
+  )
+  inspect(
+    sr_wb_list_repr(sturm_amv(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | x - 1",
+  )
+  inspect(
+    sr_wb_list_repr(subresultants_sylv(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | 1 - x",
+  )
+  inspect(
+    sr_wb_list_repr(subresultants_bezout(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | 1 - x",
+  )
+  inspect(
+    sr_wb_list_repr(subresultants_amv(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | 1 - x",
+  )
+  inspect(
+    sr_wb_list_repr(subresultants_amv_q(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | 1 - x",
+  )
+  inspect(
+    sr_wb_list_repr(subresultants_vv(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | 1 - x",
+  )
+  inspect(
+    sr_wb_list_repr(subresultants_vv_2(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | 1 - x",
+  )
+  inspect(
+    sr_wb_list_repr(modified_subresultants_sylv(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | x - 1",
+  )
+  inspect(
+    sr_wb_list_repr(modified_subresultants_bezout(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | x - 1",
+  )
+  inspect(
+    sr_wb_list_repr(modified_subresultants_amv(p, q)),
+    content="x**3 - 2*x + 1 | x**2 - 1 | x - 1",
+  )
+}

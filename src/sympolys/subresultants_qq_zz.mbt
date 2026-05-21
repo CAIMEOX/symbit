@@ -299,3 +299,177 @@ pub fn modified_subresultants_pg(
 ) -> Array[Poly] raise PolyError {
   sturm_q(p, q)
 }
+
+///|
+/// Euclidean PRS variant from the Pell-Gordon family.
+///
+/// - Does: Exposes SymPy's `euclid_pg` public front door through the current
+///   Euclidean PRS implementation.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: The specialized Pell-Gordon coefficient path is not separated
+///   from the package PRS path.
+pub fn euclid_pg(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
+  euclid_q(p, q)
+}
+
+///|
+/// Euclidean PRS variant from the Akritas-Malaz-Amiraslani family.
+///
+/// - Does: Exposes SymPy's `euclid_amv` public front door through the current
+///   Euclidean PRS implementation.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: The AMV-specific matrix variant is not separated from the package
+///   PRS path.
+pub fn euclid_amv(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
+  euclid_q(p, q)
+}
+
+///|
+/// Sturmian PRS variant from the Pell-Gordon family.
+///
+/// - Does: Exposes SymPy's `sturm_pg` public front door through the current
+///   Sturmian PRS implementation.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: The specialized Pell-Gordon coefficient path is not separated
+///   from the package PRS path.
+pub fn sturm_pg(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
+  sturm_q(p, q)
+}
+
+///|
+/// Sturmian PRS variant from the Akritas-Malaz-Amiraslani family.
+///
+/// - Does: Exposes SymPy's `sturm_amv` public front door through the current
+///   Sturmian PRS implementation.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: The AMV-specific matrix variant is not separated from the package
+///   PRS path.
+pub fn sturm_amv(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
+  sturm_q(p, q)
+}
+
+///|
+/// Sylvester-matrix subresultant sequence front door.
+///
+/// - Does: Returns the package subresultant PRS under SymPy's
+///   `subresultants_sylv` name.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: Matrix construction details are shared with the existing PRS
+///   implementation.
+pub fn subresultants_sylv(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
+  subresultants_rem(p, q)
+}
+
+///|
+/// Bezout-matrix subresultant sequence front door.
+///
+/// - Does: Returns the package subresultant PRS under SymPy's
+///   `subresultants_bezout` name.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: Matrix construction details are shared with the existing PRS
+///   implementation.
+pub fn subresultants_bezout(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
+  subresultants_rem(p, q)
+}
+
+///|
+/// AMV subresultant sequence front door.
+///
+/// - Does: Returns the package subresultant PRS under SymPy's
+///   `subresultants_amv` name.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: AMV matrix internals are not separately modeled.
+pub fn subresultants_amv(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
+  subresultants_rem(p, q)
+}
+
+///|
+/// AMV subresultant sequence front door over `QQ`.
+///
+/// - Does: Returns the package subresultant PRS under SymPy's
+///   `subresultants_amv_q` name.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: The current implementation shares the same `QQ/ZZ` normalization
+///   path as `subresultants_amv`.
+pub fn subresultants_amv_q(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
+  subresultants_rem(p, q)
+}
+
+///|
+/// Van Vleck subresultant sequence front door.
+///
+/// - Does: Returns the package subresultant PRS under SymPy's
+///   `subresultants_vv` name.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: Van Vleck matrix internals are not separately modeled.
+pub fn subresultants_vv(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
+  subresultants_rem(p, q)
+}
+
+///|
+/// Second Van Vleck subresultant sequence front door.
+///
+/// - Does: Returns the package subresultant PRS under SymPy's
+///   `subresultants_vv_2` name.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: Van Vleck matrix internals are not separately modeled.
+pub fn subresultants_vv_2(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
+  subresultants_rem(p, q)
+}
+
+///|
+/// Modified Sylvester-matrix subresultant sequence front door.
+///
+/// - Does: Returns the Sturmian PRS under SymPy's
+///   `modified_subresultants_sylv` name.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: Matrix construction details are shared with the existing
+///   Sturmian PRS path.
+pub fn modified_subresultants_sylv(
+  p : Poly,
+  q : Poly,
+) -> Array[Poly] raise PolyError {
+  sturm_q(p, q)
+}
+
+///|
+/// Modified Bezout-matrix subresultant sequence front door.
+///
+/// - Does: Returns the Sturmian PRS under SymPy's
+///   `modified_subresultants_bezout` name.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: Matrix construction details are shared with the existing
+///   Sturmian PRS path.
+pub fn modified_subresultants_bezout(
+  p : Poly,
+  q : Poly,
+) -> Array[Poly] raise PolyError {
+  sturm_q(p, q)
+}
+
+///|
+/// Modified AMV subresultant sequence front door.
+///
+/// - Does: Returns the Sturmian PRS under SymPy's
+///   `modified_subresultants_amv` name.
+/// - Input: Two univariate `Poly` values.
+/// - Returns: `Array[Poly]`.
+/// - Limits: AMV matrix internals are not separately modeled.
+pub fn modified_subresultants_amv(
+  p : Poly,
+  q : Poly,
+) -> Array[Poly] raise PolyError {
+  sturm_q(p, q)
+}

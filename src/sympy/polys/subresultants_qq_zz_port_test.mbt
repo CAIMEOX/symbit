@@ -76,6 +76,68 @@ test "subresultants_qq_zz: euclid_q/sturm_q parity" {
 }
 
 ///|
+test "subresultants_qq_zz: public algorithm variants parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let p = b.from_expr(
+    (x ^ @symcore.int(3)) - @symcore.int(2) * x + @symcore.int(1),
+  )
+  let q = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
+  assert_eq(
+    poly_list_to_string(@sympolys.euclid_pg(p, q)),
+    euclid_pg_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.euclid_amv(p, q)),
+    euclid_amv_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.sturm_pg(p, q)),
+    sturm_pg_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.sturm_amv(p, q)),
+    sturm_amv_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.subresultants_sylv(p, q)),
+    subresultants_sylv_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.subresultants_bezout(p, q)),
+    subresultants_bezout_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.subresultants_amv(p, q)),
+    subresultants_amv_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.subresultants_amv_q(p, q)),
+    subresultants_amv_q_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.subresultants_vv(p, q)),
+    subresultants_vv_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.subresultants_vv_2(p, q)),
+    subresultants_vv_2_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.modified_subresultants_sylv(p, q)),
+    modified_subresultants_sylv_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.modified_subresultants_bezout(p, q)),
+    modified_subresultants_bezout_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+  assert_eq(
+    poly_list_to_string(@sympolys.modified_subresultants_amv(p, q)),
+    modified_subresultants_amv_qq_zz(p.to_expr(), q.to_expr(), x="x"),
+  )
+}
+
+///|
 test "subresultants_qq_zz: helper parity" {
   let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)

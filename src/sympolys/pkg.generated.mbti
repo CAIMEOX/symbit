@@ -1017,6 +1017,10 @@ pub fn dup_zz_zassenhaus(Array[FieldElem], Domain) -> Array[Array[FieldElem]] ra
 
 pub fn eqs_to_matrix(Array[Map[String, @symcore.Expr]], Array[@symcore.Expr], Array[String], domain? : Domain) -> DomainMatrix raise PolyError
 
+pub fn euclid_amv(Poly, Poly) -> Array[Poly] raise PolyError
+
+pub fn euclid_pg(Poly, Poly) -> Array[Poly] raise PolyError
+
 pub fn euclid_q(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn euler_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
@@ -1361,7 +1365,13 @@ pub fn minimal_polynomial(@symcore.Expr, gen? : String) -> Poly raise PolyError
 
 pub fn minpoly(@symcore.Expr, gen? : String) -> Poly raise PolyError
 
+pub fn modified_subresultants_amv(Poly, Poly) -> Array[Poly] raise PolyError
+
+pub fn modified_subresultants_bezout(Poly, Poly) -> Array[Poly] raise PolyError
+
 pub fn modified_subresultants_pg(Poly, Poly) -> Array[Poly] raise PolyError
+
+pub fn modified_subresultants_sylv(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn monic(Poly, auto? : Bool) -> Poly raise PolyError
 
@@ -1615,15 +1625,31 @@ pub fn sring(Array[@symcore.Expr], gens? : Array[String], domain? : Domain, orde
 
 pub fn sturm(Poly) -> Array[Poly] raise PolyError
 
+pub fn sturm_amv(Poly, Poly) -> Array[Poly] raise PolyError
+
+pub fn sturm_pg(Poly, Poly) -> Array[Poly] raise PolyError
+
 pub fn sturm_q(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn sturm_sequence(Poly) -> Array[Poly] raise PolyError
 
 pub fn subresultants(Poly, Poly) -> Array[Poly] raise PolyError
 
+pub fn subresultants_amv(Poly, Poly) -> Array[Poly] raise PolyError
+
+pub fn subresultants_amv_q(Poly, Poly) -> Array[Poly] raise PolyError
+
+pub fn subresultants_bezout(Poly, Poly) -> Array[Poly] raise PolyError
+
 pub fn subresultants_pg(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn subresultants_rem(Poly, Poly) -> Array[Poly] raise PolyError
+
+pub fn subresultants_sylv(Poly, Poly) -> Array[Poly] raise PolyError
+
+pub fn subresultants_vv(Poly, Poly) -> Array[Poly] raise PolyError
+
+pub fn subresultants_vv_2(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn swinnerton_dyer_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
 

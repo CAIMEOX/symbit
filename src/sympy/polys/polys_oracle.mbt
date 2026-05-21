@@ -11616,6 +11616,107 @@ pub fn subresultants_rem_qq_zz(
 }
 
 ///|
+fn subresultants_list_call_qq_zz(
+  name : String,
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x : String,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(p)))
+  args.push(OracleArg::PyObj(expr_to_sympy(q)))
+  args.push(OracleArg::PyObj(sympy_symbol_obj(x)))
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.\{name}", args)
+  let items = py_list_to_pyobjects(res)
+  let parts : Array[String] = Array::new()
+  for item in items {
+    parts.push(py_sympy_expr_str(item))
+  }
+  parts.join(" | ")
+}
+
+///|
+pub fn subresultants_sylv_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("subresultants_sylv", p, q, x)
+}
+
+///|
+pub fn subresultants_bezout_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("subresultants_bezout", p, q, x)
+}
+
+///|
+pub fn subresultants_amv_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("subresultants_amv", p, q, x)
+}
+
+///|
+pub fn subresultants_amv_q_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("subresultants_amv_q", p, q, x)
+}
+
+///|
+pub fn subresultants_vv_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("subresultants_vv", p, q, x)
+}
+
+///|
+pub fn subresultants_vv_2_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("subresultants_vv_2", p, q, x)
+}
+
+///|
+pub fn modified_subresultants_sylv_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("modified_subresultants_sylv", p, q, x)
+}
+
+///|
+pub fn modified_subresultants_bezout_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("modified_subresultants_bezout", p, q, x)
+}
+
+///|
+pub fn modified_subresultants_amv_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("modified_subresultants_amv", p, q, x)
+}
+
+///|
 pub fn euclid_q_qq_zz(
   p : @symcore.Expr,
   q : @symcore.Expr,
@@ -11635,6 +11736,24 @@ pub fn euclid_q_qq_zz(
 }
 
 ///|
+pub fn euclid_pg_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("euclid_pg", p, q, x)
+}
+
+///|
+pub fn euclid_amv_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("euclid_amv", p, q, x)
+}
+
+///|
 pub fn sturm_q_qq_zz(
   p : @symcore.Expr,
   q : @symcore.Expr,
@@ -11651,6 +11770,24 @@ pub fn sturm_q_qq_zz(
     parts.push(py_sympy_expr_str(item))
   }
   parts.join(" | ")
+}
+
+///|
+pub fn sturm_pg_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("sturm_pg", p, q, x)
+}
+
+///|
+pub fn sturm_amv_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  subresultants_list_call_qq_zz("sturm_amv", p, q, x)
 }
 
 ///|
