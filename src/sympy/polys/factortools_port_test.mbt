@@ -155,6 +155,67 @@ fn fact_dense_port_dmp_factor_repr(
 }
 
 ///|
+fn fact_dense_port_gaussian_coeff_repr(coeff : FieldElem) -> String {
+  coeff
+  .to_string()
+  .replace_all(old=" ", new="")
+  .replace_all(old="0-1i", new="-I")
+  .replace_all(old="0+1i", new="I")
+  .replace_all(old="-1i", new="-I")
+  .replace_all(old="+1i", new="+I")
+}
+
+///|
+fn fact_dense_port_dup_gaussian_repr(f : Array[FieldElem]) -> String {
+  "[" + f.map(fact_dense_port_gaussian_coeff_repr).join(",") + "]"
+}
+
+///|
+fn fact_dense_port_dmp_gaussian_coeffs(
+  f : DensePoly,
+) -> Array[FieldElem] raise PolyError {
+  match f {
+    DensePoly::Coef(c) => [c]
+    DensePoly::Poly(items) => {
+      let out : Array[FieldElem] = Array::new()
+      for item in items {
+        match item {
+          DensePoly::Coef(c) => out.push(c)
+          DensePoly::Poly(_) => raise PolyError::NotUnivariate
+        }
+      }
+      out
+    }
+  }
+}
+
+///|
+fn fact_dense_port_dup_factor_gaussian_repr(
+  value : (FieldElem, Array[(Array[FieldElem], Int)]),
+) -> String {
+  let (coeff, factors) = value
+  let parts = factors.map(item => {
+    "(\{fact_dense_port_dup_gaussian_repr(item.0)},\{item.1})"
+  })
+  remove_spaces(
+    "(\{fact_dense_port_gaussian_coeff_repr(coeff)},[" + parts.join(",") + "])",
+  )
+}
+
+///|
+fn fact_dense_port_dmp_factor_gaussian_repr(
+  value : (FieldElem, Array[(DensePoly, Int)]),
+) -> String raise PolyError {
+  let (coeff, factors) = value
+  let parts = factors.map(item => {
+    "(\{fact_dense_port_dup_gaussian_repr(fact_dense_port_dmp_gaussian_coeffs(item.0))},\{item.1})"
+  })
+  remove_spaces(
+    "(\{fact_dense_port_gaussian_coeff_repr(coeff)},[" + parts.join(",") + "])",
+  )
+}
+
+///|
 fn fact_dense_port_dmp_include_repr(items : Array[(DensePoly, Int)]) -> String {
   remove_spaces(
     "[" + items.map(item => "(\{dmp_repr(item.0)},\{item.1})").join(",") + "]",
@@ -381,6 +442,47 @@ test "factortools: dense algebraic-extension factorization parity" {
   assert_eq(
     fact_dense_port_dup_factor_shape(@sympolys.dup_ext_factor(f, alg_domain)),
     dup_ext_factor_shape_exprs(["1", "0", "-2"]),
+  )
+}
+
+///|
+test "factortools: dense Gaussian factorization frontdoors parity" {
+  let f_qq = [
+    @sympolys.fe_from_int(1, Domain::QQ_I),
+    @sympolys.fe_from_int(0, Domain::QQ_I),
+    @sympolys.fe_from_int(1, Domain::QQ_I),
+  ]
+  let f_zz = [
+    @sympolys.fe_from_int(1, Domain::ZZ_I),
+    @sympolys.fe_from_int(0, Domain::ZZ_I),
+    @sympolys.fe_from_int(1, Domain::ZZ_I),
+  ]
+  let rats = [br_int(1), br_int(0), br_int(1)]
+  assert_eq(
+    fact_dense_port_dup_factor_gaussian_repr(
+      @sympolys.dup_qq_i_factor(f_qq, Domain::QQ_I),
+    ),
+    dup_qq_i_factor(rats),
+  )
+  assert_eq(
+    fact_dense_port_dup_factor_gaussian_repr(
+      @sympolys.dup_zz_i_factor(f_zz, Domain::ZZ_I),
+    ),
+    dup_zz_i_factor(rats),
+  )
+  let dmp_qq = @sympolys.dense_poly(f_qq.map(c => @sympolys.dense_coef(c)))
+  let dmp_zz = @sympolys.dense_poly(f_zz.map(c => @sympolys.dense_coef(c)))
+  assert_eq(
+    fact_dense_port_dmp_factor_gaussian_repr(
+      @sympolys.dmp_qq_i_factor(dmp_qq, 0, Domain::QQ_I),
+    ),
+    dmp_qq_i_factor(DenseData::Poly(rats.map(c => DenseData::Coef(c))), 0),
+  )
+  assert_eq(
+    fact_dense_port_dmp_factor_gaussian_repr(
+      @sympolys.dmp_zz_i_factor(dmp_zz, 0, Domain::ZZ_I),
+    ),
+    dmp_zz_i_factor(DenseData::Poly(rats.map(c => DenseData::Coef(c))), 0),
   )
 }
 

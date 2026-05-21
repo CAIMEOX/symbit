@@ -10548,6 +10548,62 @@ pub fn dup_ext_factor_shape_exprs(
 }
 
 ///|
+pub fn dup_qq_i_factor(
+  f : Array[@symnum.BigRational],
+  domain? : String = "QQ_I",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_qq_i_factor", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_zz_i_factor(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ_I",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_zz_i_factor", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_qq_i_factor(
+  f : DenseData,
+  u : Int,
+  domain? : String = "QQ_I",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dmp_qq_i_factor", [
+    OracleArg::PyObj(fact_dense_py_dense_data(f, domain_obj)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_zz_i_factor(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ_I",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_i_factor", [
+    OracleArg::PyObj(fact_dense_py_dense_data(f, domain_obj)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_zz_zassenhaus(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",

@@ -46,6 +46,10 @@ pub fn dup_count_complex_roots(Array[@symnum.BigRational], domain? : String) -> 
 
 pub fn dup_ext_factor_shape_exprs(Array[String], domain_spec? : String) -> String raise
 
+pub fn dup_qq_i_factor(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_zz_i_factor(Array[@symnum.BigRational], domain? : String) -> String raise
+
 pub fn dup_zz_diophantine(Array[Array[@symnum.BigRational]], Int, Int, domain? : String) -> String raise
 
 pub fn dup_isolate_all_roots(Array[@symnum.BigRational], domain? : String) -> String raise
@@ -145,6 +149,10 @@ pub fn dmp_sub_ground(DenseData, @symnum.BigRational, Int, domain? : String) -> 
 pub fn dmp_sub_mul(DenseData, DenseData, DenseData, Int, domain? : String) -> String raise
 
 pub fn dmp_sub_term(DenseData, DenseData, Int, Int, domain? : String) -> String raise
+
+pub fn dmp_qq_i_factor(DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_zz_i_factor(DenseData, Int, domain? : String) -> String raise
 
 pub fn dmp_zz_diophantine(Array[DenseData], DenseData, Array[@symnum.BigRational], Int, Int, Int, domain? : String) -> String raise
 

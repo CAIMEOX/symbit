@@ -66,6 +66,70 @@ fn fact_wb_dmp_factor_repr(
 }
 
 ///|
+fn fact_wb_gaussian_coeff(real : Int, imag : Int) -> FieldElem {
+  FieldElem::CC(
+    @symnum.BigRational::from_int(real),
+    @symnum.BigRational::from_int(imag),
+  )
+}
+
+///|
+fn fact_wb_gaussian_coeff_repr(coeff : FieldElem) -> String {
+  match coeff {
+    FieldElem::CC(real, imag) => {
+      if imag.is_zero() {
+        return real.to_string()
+      }
+      let imag_abs = if imag.numerator().op_lt(BigInt::from_int(0)) {
+        imag.neg_r()
+      } else {
+        imag
+      }
+      let imag_text = if imag_abs.is_one() { "I" } else { "\{imag_abs}*I" }
+      if real.is_zero() {
+        if imag.numerator().op_lt(BigInt::from_int(0)) {
+          "-\{imag_text}"
+        } else {
+          imag_text
+        }
+      } else if imag.numerator().op_lt(BigInt::from_int(0)) {
+        "\{real} - \{imag_text}"
+      } else {
+        "\{real} + \{imag_text}"
+      }
+    }
+    _ => coeff.to_string()
+  }
+}
+
+///|
+fn fact_wb_dup_gaussian_repr(f : Array[FieldElem]) -> String {
+  "[" + f.map(fact_wb_gaussian_coeff_repr).join(",") + "]"
+}
+
+///|
+fn fact_wb_dup_factor_gaussian_repr(
+  value : (FieldElem, Array[(Array[FieldElem], Int)]),
+) -> String {
+  let (coeff, factors) = value
+  let parts = factors.map(item => {
+    "(\{fact_wb_dup_gaussian_repr(item.0)},\{item.1})"
+  })
+  "(\{fact_wb_gaussian_coeff_repr(coeff)},[" + parts.join(",") + "])"
+}
+
+///|
+fn fact_wb_dmp_factor_gaussian_repr(
+  value : (FieldElem, Array[(DensePoly, Int)]),
+) -> String raise PolyError {
+  let (coeff, factors) = value
+  let parts = factors.map(item => {
+    "(\{fact_wb_dup_gaussian_repr(dmp_to_coeffs(item.0))},\{item.1})"
+  })
+  "(\{fact_wb_gaussian_coeff_repr(coeff)},[" + parts.join(",") + "])"
+}
+
+///|
 fn fact_wb_dmp_include_repr(items : Array[(DensePoly, Int)]) -> String {
   "[" +
   items.map(item => "(\{fact_wb_dmp_repr(item.0)},\{item.1})").join(",") +
@@ -319,6 +383,40 @@ test "factortools dense wb: algebraic extension factorization" {
     PolyError,
   ] = try? dup_ext_factor(fact_wb_dup([1, 0, -2]), Domain::ZZ)
   assert_true(bad_domain is Err(PolyError::DomainMismatch))
+}
+
+///|
+test "factortools dense wb: Gaussian factorization frontdoors" {
+  let f = [
+    fact_wb_gaussian_coeff(1, 0),
+    fact_wb_gaussian_coeff(0, 0),
+    fact_wb_gaussian_coeff(1, 0),
+  ]
+  inspect(
+    fact_wb_dup_factor_gaussian_repr(dup_qq_i_factor(f, Domain::QQ_I)),
+    content="(1,[([1,-I],1),([1,I],1)])",
+  )
+  inspect(
+    fact_wb_dup_factor_gaussian_repr(dup_zz_i_factor(f, Domain::ZZ_I)),
+    content="(1,[([1,-I],1),([1,I],1)])",
+  )
+  inspect(
+    fact_wb_dmp_factor_gaussian_repr(
+      dmp_qq_i_factor(dmp_from_coeffs(f), 0, Domain::QQ_I),
+    ),
+    content="(1,[([1,-I],1),([1,I],1)])",
+  )
+  inspect(
+    fact_wb_dmp_factor_gaussian_repr(
+      dmp_zz_i_factor(dmp_from_coeffs(f), 0, Domain::ZZ_I),
+    ),
+    content="(1,[([1,-I],1),([1,I],1)])",
+  )
+  let bad : Result[(FieldElem, Array[(Array[FieldElem], Int)]), PolyError] = try? dup_qq_i_factor(
+    f,
+    Domain::QQ,
+  )
+  assert_true(bad is Err(PolyError::DomainMismatch))
 }
 
 ///|
