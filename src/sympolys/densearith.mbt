@@ -622,11 +622,35 @@ fn dmp_to_coeffs(f : DensePoly) -> Array[FieldElem] raise PolyError {
       if items.is_empty() {
         return Array::new()
       }
+      let mut sample : FieldElem? = None
+      for it in items {
+        match it {
+          DensePoly::Coef(c) => {
+            sample = Some(c)
+            break
+          }
+          DensePoly::Poly(_) => ()
+        }
+      }
+      let zero = match sample {
+        Some(c) => fe_sub(c, c)
+        None =>
+          if items.all(it => dmp_zero_p(it, 0)) {
+            return Array::new()
+          } else {
+            raise PolyError::NotUnivariate
+          }
+      }
       let coeffs : Array[FieldElem] = Array::new()
       for it in items {
         match it {
           DensePoly::Coef(c) => coeffs.push(c)
-          DensePoly::Poly(_) => raise PolyError::NotUnivariate
+          DensePoly::Poly(_) =>
+            if dmp_zero_p(it, 0) {
+              coeffs.push(zero)
+            } else {
+              raise PolyError::NotUnivariate
+            }
         }
       }
       dup_strip(coeffs)

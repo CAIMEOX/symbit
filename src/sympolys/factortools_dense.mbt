@@ -204,6 +204,35 @@ fn fact_dense_sort_factors(
 }
 
 ///|
+fn fact_dense_dmp_key(f : DensePoly) -> String {
+  match f {
+    DensePoly::Coef(c) => c.to_string()
+    DensePoly::Poly(items) =>
+      "[" + items.map(item => fact_dense_dmp_key(item)).join(",") + "]"
+  }
+}
+
+///|
+fn fact_dense_compare_dmp_factor(
+  a : (DensePoly, Int),
+  b : (DensePoly, Int),
+) -> Int {
+  if a.1 != b.1 {
+    return a.1 - b.1
+  }
+  fact_dense_dmp_key(b.0).compare(fact_dense_dmp_key(a.0))
+}
+
+///|
+fn fact_dense_sort_dmp_factors(
+  factors : Array[(DensePoly, Int)],
+) -> Array[(DensePoly, Int)] {
+  let out = factors.copy()
+  out.sort_by(fact_dense_compare_dmp_factor)
+  out
+}
+
+///|
 fn fact_dense_dup_factor_list_include_from_parts(
   coeff : FieldElem,
   factors : Array[(Array[FieldElem], Int)],
@@ -495,21 +524,42 @@ pub fn dup_trial_division(
 /// - Input: Recursive dense polynomial, candidate recursive dense factors,
 ///   level, and domain.
 /// - Returns: Sorted `(factor, multiplicity)` pairs.
-/// - Limits: `u > 0` raises `PolyError::NotUnivariate`.
+/// - Limits: Raises `PolyError::PolynomialDivisionFailed` if a candidate does
+///   not divide `f`.
 pub fn dmp_trial_division(
   f : DensePoly,
   factors : Array[DensePoly],
   u : Int,
   domain : Domain,
 ) -> Array[(DensePoly, Int)] raise PolyError {
-  fact_dense_require_dmp_univariate(u)
-  let dup_factors = factors.map(item => dmp_to_coeffs(item))
-  let result = dup_trial_division(dmp_to_coeffs(f), dup_factors, domain)
-  let out : Array[(DensePoly, Int)] = Array::new()
-  for item in result {
-    out.push((dmp_from_coeffs(item.0), item.1))
+  if u == 0 {
+    let dup_factors = factors.map(item => dmp_to_coeffs(item))
+    let result = dup_trial_division(dmp_to_coeffs(f), dup_factors, domain)
+    let out : Array[(DensePoly, Int)] = Array::new()
+    for item in result {
+      out.push((dmp_from_coeffs(item.0), item.1))
+    }
+    return out
   }
-  out
+  let mut rest = f
+  let result : Array[(DensePoly, Int)] = Array::new()
+  for factor in factors {
+    let mut multiplicity = 0
+    while true {
+      let (q, r) = dmp_div(rest, factor, u, domain)
+      if dmp_zero_p(r, u) {
+        rest = q
+        multiplicity = multiplicity + 1
+      } else {
+        break
+      }
+    }
+    if multiplicity == 0 {
+      raise PolyError::PolynomialDivisionFailed
+    }
+    result.push((factor, multiplicity))
+  }
+  fact_dense_sort_dmp_factors(result)
 }
 
 ///|

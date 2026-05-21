@@ -1594,8 +1594,10 @@ pub fn dup_zz_factor(
 ///   `dmp_zz_factor` front door.
 /// - Input: Recursive dense polynomial, level, and `Domain::ZZ`.
 /// - Returns: `(content, [(factor, multiplicity), ...])`.
-/// - Limits: Current dense multivariate factorization supports `u == 0`;
-///   higher levels raise `PolyError::NotUnivariate`.
+/// - Limits: Supports exact integer dense inputs. Multivariate inputs currently
+///   use the Wang square-free path when `dmp_sqf_part` is not yet available for
+///   the level; repeated multivariate factors require the future recursive GCD
+///   kernel.
 pub fn dmp_zz_factor(
   f : DensePoly,
   u : Int,
@@ -1605,7 +1607,49 @@ pub fn dmp_zz_factor(
     Domain::ZZ => ()
     _ => raise PolyError::DomainMismatch
   }
-  dmp_factor_list(f, u, domain)
+  if u == 0 {
+    let (content, factors) = dup_zz_factor(
+      fact_int_dmp_to_coeffs_with_zeros(f, domain),
+      domain,
+    )
+    let out : Array[(DensePoly, Int)] = Array::new()
+    for item in factors {
+      out.push((dmp_from_coeffs(item.0), item.1))
+    }
+    return (content, out)
+  }
+  if dmp_zero_p(f, u) {
+    return (fe_from_int(0, domain), [])
+  }
+  let ground_parts = dmp_ground_primitive(f, u, domain)
+  let mut content = ground_parts.0
+  let mut primitive_ground = ground_parts.1
+  if fe_is_negative(dmp_ground_LC(primitive_ground, u)) {
+    content = fe_neg(content)
+    primitive_ground = dmp_neg(primitive_ground, u, domain)
+  }
+  if dmp_degree_list(primitive_ground, u).all(deg => deg <= 0) {
+    return (content, [])
+  }
+  let (ground_content, primitive) = dmp_primitive(primitive_ground, u, domain)
+  let factors : Array[(DensePoly, Int)] = Array::new()
+  if dmp_degree(primitive, u) > 0 {
+    let sqf_trial = try? dmp_sqf_part(primitive, u, domain)
+    let square_free = match sqf_trial {
+      Ok(sf) => sf
+      Err(PolyError::NotUnivariate) => primitive
+      Err(err) => raise err
+    }
+    let wang_factors = dmp_zz_wang(square_free, u, domain)
+    for item in dmp_trial_division(f, wang_factors, u, domain) {
+      factors.push(item)
+    }
+  }
+  let (_, ground_factors) = dmp_zz_factor(ground_content, u - 1, domain)
+  for item in ground_factors {
+    factors.insert(0, (DensePoly::Poly([item.0]), item.1))
+  }
+  (content, fact_dense_sort_dmp_factors(factors))
 }
 
 ///|

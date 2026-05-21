@@ -193,6 +193,19 @@ test "factortools dense wb: trial division" {
     ),
     content="[([1,2],1),([1,-1],2)]",
   )
+  let xy = DensePoly::Poly([
+    fact_wb_poly([2]),
+    DensePoly::Poly([]),
+    fact_wb_poly([-2, 0, 0]),
+  ])
+  let xy_factors = [
+    DensePoly::Poly([fact_wb_poly([1]), fact_wb_poly([-1, 0])]),
+    DensePoly::Poly([fact_wb_poly([1]), fact_wb_poly([1, 0])]),
+  ]
+  inspect(
+    fact_wb_dmp_include_repr(dmp_trial_division(xy, xy_factors, 1, Domain::ZZ)),
+    content="[([[1],[-1,0]],1),([[1],[1,0]],1)]",
+  )
   let bad : Result[Array[(Array[FieldElem], Int)], PolyError] = try? dup_trial_division(
     f,
     [fact_wb_dup([1, 3])],
@@ -519,6 +532,15 @@ test "factortools dense wb: Wang frontdoor" {
     "[" + dmp_zz_wang(f, 1, Domain::ZZ).map(fact_wb_dmp_repr).join(",") + "]",
     content="[[[1],[2]],[[1,1],[1]]]",
   )
+  let xy = DensePoly::Poly([
+    fact_wb_poly([2]),
+    DensePoly::Poly([]),
+    fact_wb_poly([-2, 0, 0]),
+  ])
+  inspect(
+    fact_wb_dmp_factor_repr(dmp_zz_factor(xy, 1, Domain::ZZ)),
+    content="(2,[([[1],[-1,0]],1),([[1],[1,0]],1)])",
+  )
 }
 
 ///|
@@ -586,18 +608,22 @@ test "factortools dense wb: Gaussian factorization frontdoors" {
 }
 
 ///|
-test "factortools dense wb: dmp multivariate limits" {
+test "factortools dense wb: dmp multivariate limits and empty trials" {
   let bad_factor : Result[(FieldElem, Array[(DensePoly, Int)]), PolyError] = try? dmp_factor_list(
     DensePoly::Poly([fact_wb_poly([1, 0]), fact_wb_poly([1])]),
     1,
     Domain::ZZ,
   )
   assert_true(bad_factor is Err(PolyError::NotUnivariate))
-  let bad_trial : Result[Array[(DensePoly, Int)], PolyError] = try? dmp_trial_division(
-    DensePoly::Poly([fact_wb_poly([1, 0]), fact_wb_poly([1])]),
-    [],
-    1,
-    Domain::ZZ,
+  inspect(
+    fact_wb_dmp_include_repr(
+      dmp_trial_division(
+        DensePoly::Poly([fact_wb_poly([1, 0]), fact_wb_poly([1])]),
+        [],
+        1,
+        Domain::ZZ,
+      ),
+    ),
+    content="[]",
   )
-  assert_true(bad_trial is Err(PolyError::NotUnivariate))
 }

@@ -269,6 +269,15 @@ test "factortools: dense factor-list frontdoors parity" {
     ),
     dmp_zz_factor(dense_data_of(dmp_f), 0),
   )
+  let xy = @sympolys.dense_poly([
+    poly_int([2]),
+    @sympolys.dense_poly([]),
+    poly_int([-2, 0, 0]),
+  ])
+  assert_eq(
+    fact_dense_port_dmp_factor_repr(@sympolys.dmp_zz_factor(xy, 1, Domain::ZZ)),
+    dmp_zz_factor(dense_data_of(xy), 1),
+  )
   assert_eq(
     fact_dense_port_dmp_factor_repr(
       @sympolys.dmp_factor_list(dmp_f, 0, Domain::ZZ),
@@ -553,6 +562,25 @@ test "factortools: dense trial-division frontdoors parity" {
       dense_data_of(dmp_f),
       [dense_data_of(dmp_factors[0]), dense_data_of(dmp_factors[1])],
       0,
+    ),
+  )
+  let xy = @sympolys.dense_poly([
+    poly_int([2]),
+    @sympolys.dense_poly([]),
+    poly_int([-2, 0, 0]),
+  ])
+  let xy_factors = [
+    @sympolys.dense_poly([poly_int([1]), poly_int([-1, 0])]),
+    @sympolys.dense_poly([poly_int([1]), poly_int([1, 0])]),
+  ]
+  assert_eq(
+    fact_dense_port_dmp_include_repr(
+      @sympolys.dmp_trial_division(xy, xy_factors, 1, Domain::ZZ),
+    ),
+    dmp_trial_division(
+      dense_data_of(xy),
+      [dense_data_of(xy_factors[0]), dense_data_of(xy_factors[1])],
+      1,
     ),
   )
 }
