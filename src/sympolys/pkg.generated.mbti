@@ -1593,6 +1593,8 @@ pub fn rs_min_pow(SeriesElem) -> Int raise PolyError
 
 pub fn rs_mul(SeriesElem, SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 
+pub fn rs_newton(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
 pub fn rs_nth_root(SeriesElem, Int, prec? : Int) -> SeriesElem raise PolyError
 
 pub fn rs_pow(SeriesElem, Int, prec? : Int) -> SeriesElem raise PolyError
@@ -1606,6 +1608,8 @@ pub fn rs_sin(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 pub fn rs_sinh(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 
 pub fn rs_square(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_subs(SeriesElem, SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 
 pub fn rs_tan(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 

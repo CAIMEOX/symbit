@@ -912,6 +912,23 @@ pub fn SeriesElem::compose(
 }
 
 ///|
+fn series_compose_truncated(
+  p : SeriesElem,
+  q : SeriesElem,
+) -> SeriesElem raise PolyError {
+  if p.ring != q.ring {
+    raise PolyError::DomainMismatch
+  }
+  let mut out = p.ring.zero()
+  let mut i = p.coeffs.length()
+  while i > 0 {
+    i = i - 1
+    out = out.mul(q).add_ground(p.coeffs[i])
+  }
+  out
+}
+
+///|
 /// Compute the exponential of a series.
 ///
 /// - Does: Expands `exp(self)` in the truncated ring.
@@ -1714,6 +1731,92 @@ pub fn rs_series_from_list(
     out = out.add(power.mul_ground(coeffs[i]))
   }
   out
+}
+
+///|
+/// Substitute the generator by another truncated series.
+///
+/// - Does: Mirrors SymPy `rs_subs` for the package's univariate series model by
+///   evaluating `p(replacement)` and truncating to `prec`.
+/// - Input: Two compatible `SeriesElem` values and optional precision.
+/// - Returns: The substituted `SeriesElem`.
+/// - Limits: Only the single-generator substitution `{x: replacement}` is
+///   modeled; simultaneous multivariate substitutions are outside this
+///   representation.
+pub fn rs_subs(
+  p : SeriesElem,
+  replacement : SeriesElem,
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  let n = series_precision_or_default(p, prec)
+  let (pp, qq) = series_pair_at_precision(p, replacement, n)
+  series_compose_truncated(pp, qq)
+}
+
+///|
+fn series_invert_monoms(
+  p : SeriesElem,
+  precision : Int,
+) -> SeriesElem raise PolyError {
+  if p.coeffs.is_empty() {
+    raise PolyError::DivisionByZero
+  }
+  let degree = p.coeffs.length() - 1
+  let ring = SeriesRing::{ domain: p.ring.domain, sym: p.ring.sym, precision }
+  let coeffs : Array[FieldElem] = Array::new()
+  for i in 0..<precision {
+    let src = degree - i
+    coeffs.push(
+      if src >= 0 && src < p.coeffs.length() {
+        p.coeffs[src]
+      } else {
+        fe_from_int(0, p.ring.domain)
+      },
+    )
+  }
+  ring.from_coeffs(coeffs)
+}
+
+///|
+/// Compute truncated Newton sums for a univariate polynomial series.
+///
+/// - Does: Mirrors SymPy `rs_newton`: reverse monomials, invert the reversed
+///   polynomial as a series, multiply by its derivative, and shift back.
+/// - Input: A finite univariate `SeriesElem` and precision `prec`.
+/// - Returns: A `SeriesElem` containing Newton sums up to degree `prec`.
+/// - Limits: Uses the package's univariate truncated representation; the zero
+///   polynomial raises `PolyError::DivisionByZero`.
+pub fn rs_newton(
+  p : SeriesElem,
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  if p.coeffs.is_empty() {
+    raise PolyError::DivisionByZero
+  }
+  let n = if prec < 0 { p.ring.precision - 1 } else { prec }
+  if n < 0 {
+    raise PolyError::BadExponent
+  }
+  let degree = p.coeffs.length() - 1
+  let out_ring = SeriesRing::{
+    domain: p.ring.domain,
+    sym: p.ring.sym,
+    precision: n + 1,
+  }
+  if n == 0 {
+    return out_ring.from_coeffs([fe_from_int(degree, p.ring.domain)])
+  }
+  let p1 = series_invert_monoms(p, n)
+  let p2 = p1.inverse()
+  let p3 = p1.diff().mul(p2)
+  let shifted = SeriesElem::{
+    ring: out_ring,
+    coeffs: normalize_series_coeffs(
+      out_ring,
+      series_shift_left(p3.coeffs, 1, n + 1, p.ring.domain),
+    ),
+  }
+  shifted.neg().add_ground(fe_from_int(degree, p.ring.domain))
 }
 
 ///|

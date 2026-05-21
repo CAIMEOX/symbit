@@ -12835,6 +12835,25 @@ pub fn rs_integrate_ring_series(coeffs : Array[Int]) -> String raise {
 }
 
 ///|
+pub fn rs_subs_ring_series(
+  coeffs : Array[Int],
+  replacement : Array[Int],
+  prec : Int,
+) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(coeffs)
+  let (_, _, q) = ring_series_oracle_poly(replacement)
+  let rules = py_dict_new()
+  rules.setByObj(x_obj, q)
+  let res = sympy_call_must("sympy.polys.ring_series.rs_subs", [
+    OracleArg::PyObj(p),
+    OracleArg::PyObj(rules.obj()),
+    OracleArg::PyObj(x_obj),
+    OracleArg::Int(prec),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
 pub fn rs_series_inversion_ring_series(
   coeffs : Array[Int],
   prec : Int,
@@ -12937,6 +12956,17 @@ pub fn rs_hadamard_exp_ring_series(
   let res = sympy_call_must("sympy.polys.ring_series.rs_hadamard_exp", [
     OracleArg::PyObj(p),
     OracleArg::Bool(inverse),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn rs_newton_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(coeffs)
+  let res = sympy_call_must("sympy.polys.ring_series.rs_newton", [
+    OracleArg::PyObj(p),
+    OracleArg::PyObj(x_obj),
+    OracleArg::Int(prec),
   ])
   py_sympy_enum_str(res)
 }

@@ -40,6 +40,21 @@ test "ring series frontdoors: arithmetic wrappers" {
     rs_wb_repr(rs_series_from_list(one.add(x), rs_wb_coeffs([1, 2, 3]))),
     content="[6, 8, 3]",
   )
+  let p = ring.from_int_coeffs([1, 1, 1])
+  let replacement = ring.from_int_coeffs([0, 1, 1])
+  inspect(
+    rs_wb_repr(rs_subs(p, replacement, prec=5)),
+    content="[1, 1, 2, 2, 1]",
+  )
+  let newton_input = ring.from_int_coeffs([-2, 0, 1])
+  inspect(
+    rs_wb_repr(rs_newton(newton_input, prec=5)),
+    content="[2, 0, 4, 0, 8]",
+  )
+  inspect(
+    rs_wb_repr(rs_newton(ring.from_int_coeffs([1, 1]), prec=6)),
+    content="[1, -1, 1, -1, 1, -1, 1]",
+  )
 }
 
 ///|

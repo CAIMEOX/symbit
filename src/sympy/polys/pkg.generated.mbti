@@ -620,6 +620,10 @@ pub fn res_z_qq_zz(@symcore.Expr, @symcore.Expr, x? : String) -> String raise
 
 pub fn resultant(@symcore.Expr, @symcore.Expr, x? : String, gens? : Array[String], domain? : String, modulus? : Int, gfext_modulus? : Array[Int], gfext_gen? : String) -> String raise
 
+pub fn rs_newton_ring_series(Array[Int], Int) -> String raise
+
+pub fn rs_subs_ring_series(Array[Int], Array[Int], Int) -> String raise
+
 pub fn preprocess_roots(@symcore.Expr, gens? : Array[String]) -> String raise
 
 pub fn rootof(@symcore.Expr, Int, radicals? : Bool) -> String raise

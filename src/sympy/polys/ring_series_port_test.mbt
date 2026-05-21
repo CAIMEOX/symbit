@@ -61,6 +61,22 @@ test "ring_series: arithmetic frontdoor parity" {
     ring_series_expr(@sympolys.rs_integrate(f)),
     ring_series_norm(rs_integrate_ring_series([1, 2, 3])),
   )
+  assert_eq(
+    ring_series_expr(
+      @sympolys.rs_subs(ring_series_make([1, 1, 1], 5), g, prec=5),
+    ),
+    ring_series_norm(rs_subs_ring_series([1, 1, 1], [0, 1, 1], 5)),
+  )
+  assert_eq(
+    ring_series_expr(
+      @sympolys.rs_newton(ring_series_make([-2, 0, 1], 6), prec=5),
+    ),
+    ring_series_norm(rs_newton_ring_series([-2, 0, 1], 5)),
+  )
+  assert_eq(
+    ring_series_expr(@sympolys.rs_newton(ring_series_make([1, 1], 7), prec=6)),
+    ring_series_norm(rs_newton_ring_series([1, 1], 6)),
+  )
 }
 
 ///|
