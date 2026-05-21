@@ -6817,6 +6817,251 @@ fn sympy_domain_elem(
 }
 
 ///|
+fn sdm_oracle_tuple_obj(values : Array[Int]) -> @py.PyObject {
+  let items : Array[@py.PyObject] = []
+  for value in values {
+    items.push(py_int_obj(value))
+  }
+  py_tuple_from_objects(items).obj()
+}
+
+///|
+fn sdm_oracle_coeff_obj(value : Int, domain : String) -> @py.PyObject raise {
+  sympy_domain_elem(@symnum.BigRational::from_int(value), domain)
+}
+
+///|
+fn sdm_oracle_term_obj(
+  term : (Array[Int], Int),
+  domain : String,
+) -> @py.PyObject raise {
+  py_tuple_from_objects([
+    sdm_oracle_tuple_obj(term.0),
+    sdm_oracle_coeff_obj(term.1, domain),
+  ]).obj()
+}
+
+///|
+fn sdm_oracle_terms_obj(
+  terms : Array[(Array[Int], Int)],
+  domain : String,
+) -> @py.PyObject raise {
+  let items : Array[@py.PyObject] = []
+  for term in terms {
+    items.push(sdm_oracle_term_obj(term, domain))
+  }
+  py_list_from_objects(items).obj()
+}
+
+///|
+fn sdm_oracle_dict_obj(
+  terms : Array[(Array[Int], Int)],
+  domain : String,
+) -> @py.PyObject raise {
+  let dict = py_dict_new()
+  let setitem = resolve_method_callable(dict.obj(), "__setitem__")
+  for term in terms {
+    let key = sdm_oracle_tuple_obj(term.0)
+    let value = sdm_oracle_coeff_obj(term.1, domain)
+    let pair = py_tuple_from_objects([key, value])
+    let _ = py_call_object_allow_none(setitem, pair, print_err=true)
+  }
+  dict.obj()
+}
+
+///|
+fn sdm_oracle_order_obj(name : String) -> @py.PyObject raise {
+  let sympy = ensure_sympy_module_oracle()
+  match sympy.get_attr(name, print_err=false) {
+    Some(obj) => objenum_to_obj(obj)
+    None => fail("sympy-order-missing:\{name}")
+  }
+}
+
+///|
+fn sdm_oracle_call(
+  name : String,
+  args : Array[OracleArg],
+) -> @py.PyObjectEnum raise {
+  sympy_call_must("sympy.polys.distributedmodules.\{name}", args)
+}
+
+///|
+fn sdm_oracle_compact(name : String, args : Array[OracleArg]) -> String raise {
+  remove_spaces(py_dense_str(sdm_oracle_call(name, args)))
+}
+
+///|
+pub fn sdm_monomial_mul(m : Array[Int], x : Array[Int]) -> String raise {
+  sdm_oracle_compact("sdm_monomial_mul", [
+    OracleArg::PyObj(sdm_oracle_tuple_obj(m)),
+    OracleArg::PyObj(sdm_oracle_tuple_obj(x)),
+  ])
+}
+
+///|
+pub fn sdm_monomial_deg(m : Array[Int]) -> Int raise {
+  let res = sdm_oracle_call("sdm_monomial_deg", [
+    OracleArg::PyObj(sdm_oracle_tuple_obj(m)),
+  ])
+  py_obj_to_int(objenum_to_obj(res))
+}
+
+///|
+pub fn sdm_monomial_lcm(a : Array[Int], b : Array[Int]) -> String raise {
+  sdm_oracle_compact("sdm_monomial_lcm", [
+    OracleArg::PyObj(sdm_oracle_tuple_obj(a)),
+    OracleArg::PyObj(sdm_oracle_tuple_obj(b)),
+  ])
+}
+
+///|
+pub fn sdm_monomial_divides(a : Array[Int], b : Array[Int]) -> Bool raise {
+  let res = sdm_oracle_call("sdm_monomial_divides", [
+    OracleArg::PyObj(sdm_oracle_tuple_obj(a)),
+    OracleArg::PyObj(sdm_oracle_tuple_obj(b)),
+  ])
+  py_str_enum(res) == "True"
+}
+
+///|
+pub fn sdm_LC(
+  f : Array[(Array[Int], Int)],
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_LC", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+}
+
+///|
+pub fn sdm_LM(
+  f : Array[(Array[Int], Int)],
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_LM", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+  ])
+}
+
+///|
+pub fn sdm_LT(
+  f : Array[(Array[Int], Int)],
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_LT", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+  ])
+}
+
+///|
+pub fn sdm_to_dict(
+  f : Array[(Array[Int], Int)],
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_to_dict", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+  ])
+}
+
+///|
+pub fn sdm_strip(
+  f : Array[(Array[Int], Int)],
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_strip", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+  ])
+}
+
+///|
+pub fn sdm_sort(
+  f : Array[(Array[Int], Int)],
+  order? : String = "lex",
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_sort", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+    OracleArg::PyObj(sdm_oracle_order_obj(order)),
+  ])
+}
+
+///|
+pub fn sdm_from_dict(
+  f : Array[(Array[Int], Int)],
+  order? : String = "lex",
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_from_dict", [
+    OracleArg::PyObj(sdm_oracle_dict_obj(f, domain)),
+    OracleArg::PyObj(sdm_oracle_order_obj(order)),
+  ])
+}
+
+///|
+pub fn sdm_add(
+  f : Array[(Array[Int], Int)],
+  g : Array[(Array[Int], Int)],
+  order? : String = "lex",
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_add", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+    OracleArg::PyObj(sdm_oracle_terms_obj(g, domain)),
+    OracleArg::PyObj(sdm_oracle_order_obj(order)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+}
+
+///|
+pub fn sdm_zero() -> String raise {
+  sdm_oracle_compact("sdm_zero", [])
+}
+
+///|
+pub fn sdm_mul_term(
+  f : Array[(Array[Int], Int)],
+  monom : Array[Int],
+  coeff : Int,
+  order? : String = "lex",
+  domain? : String = "QQ",
+) -> String raise {
+  let term = py_tuple_from_objects([
+    sdm_oracle_tuple_obj(monom),
+    sdm_oracle_coeff_obj(coeff, domain),
+  ])
+  sdm_oracle_compact("sdm_mul_term", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+    OracleArg::PyObj(term.obj()),
+    OracleArg::PyObj(sdm_oracle_order_obj(order)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+}
+
+///|
+pub fn sdm_deg(
+  f : Array[(Array[Int], Int)],
+  domain? : String = "QQ",
+) -> Int raise {
+  let res = sdm_oracle_call("sdm_deg", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+  ])
+  py_obj_to_int(objenum_to_obj(res))
+}
+
+///|
+pub fn sdm_ecart(
+  f : Array[(Array[Int], Int)],
+  domain? : String = "QQ",
+) -> Int raise {
+  let res = sdm_oracle_call("sdm_ecart", [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+  ])
+  py_obj_to_int(objenum_to_obj(res))
+}
+
+///|
 fn py_list_from_rationals(
   coeffs : Array[@symnum.BigRational],
 ) -> @py.PyObject raise {

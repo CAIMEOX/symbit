@@ -1459,11 +1459,25 @@ pub fn round_two(Poly) -> RoundTwoResult raise PolyError
 
 pub fn schur_conditions(Poly, gen_index? : Int) -> Array[@symcore.Expr] raise PolyError
 
+pub fn sdm_LC(Array[(Monomial, FieldElem)], Domain) -> FieldElem raise PolyError
+
+pub fn sdm_LM(Array[(Monomial, FieldElem)]) -> Monomial raise PolyError
+
+pub fn sdm_LT(Array[(Monomial, FieldElem)]) -> (Monomial, FieldElem) raise PolyError
+
+pub fn sdm_add(Array[(Monomial, FieldElem)], Array[(Monomial, FieldElem)], TermOrder, Domain) -> Array[(Monomial, FieldElem)] raise PolyError
+
 pub fn sdm_berk(SDM, n? : Int?) -> Map[Int, FieldElem] raise PolyError
+
+pub fn sdm_deg(Array[(Monomial, FieldElem)]) -> Int raise PolyError
 
 pub fn sdm_dotvec(Map[Int, FieldElem], Map[Int, FieldElem], Domain) -> FieldElem raise PolyError
 
+pub fn sdm_ecart(Array[(Monomial, FieldElem)]) -> Int raise PolyError
+
 pub fn sdm_from_dense(Array[Array[FieldElem]], Domain) -> SDM raise PolyError
+
+pub fn sdm_from_dict(Map[Monomial, FieldElem], TermOrder) -> Array[(Monomial, FieldElem)]
 
 pub fn sdm_from_entries(Int, Int, Array[(Int, Int, FieldElem)], Domain) -> SDM raise PolyError
 
@@ -1475,6 +1489,16 @@ pub fn sdm_matmul_exraw(SDM, SDM) -> SDM raise PolyError
 
 pub fn sdm_matvecmul(SDM, Map[Int, FieldElem], domain? : Domain?) -> Map[Int, FieldElem] raise PolyError
 
+pub fn sdm_monomial_deg(Monomial) -> Int raise PolyError
+
+pub fn sdm_monomial_divides(Monomial, Monomial) -> Bool raise PolyError
+
+pub fn sdm_monomial_lcm(Monomial, Monomial) -> Monomial raise PolyError
+
+pub fn sdm_monomial_mul(Monomial, Monomial) -> Monomial raise PolyError
+
+pub fn sdm_mul_term(Array[(Monomial, FieldElem)], (Monomial, FieldElem), TermOrder, Domain) -> Array[(Monomial, FieldElem)] raise PolyError
+
 pub fn sdm_nullspace_from_rref(SDM, FieldElem, Int, Array[Int], Map[Int, Array[Int]]) -> (SDM, Array[Int]) raise PolyError
 
 pub fn sdm_particular_from_rref(SDM, Int, Array[Int]) -> SDM raise PolyError
@@ -1485,7 +1509,15 @@ pub fn sdm_scalar_mul(SDM, FieldElem, reverse? : Bool) -> SDM raise PolyError
 
 pub fn sdm_scalar_mul_exraw(SDM, FieldElem, reverse? : Bool) -> SDM raise PolyError
 
+pub fn sdm_sort(Array[(Monomial, FieldElem)], TermOrder) -> Array[(Monomial, FieldElem)]
+
+pub fn sdm_strip(Array[(Monomial, FieldElem)]) -> Array[(Monomial, FieldElem)]
+
+pub fn sdm_to_dict(Array[(Monomial, FieldElem)]) -> Map[Monomial, FieldElem]
+
 pub fn sdm_transpose(SDM) -> SDM raise PolyError
+
+pub fn sdm_zero() -> Array[(Monomial, FieldElem)]
 
 pub fn sfield(Array[@symcore.Expr], gens? : Array[String], domain? : Domain, order? : TermOrder) -> RingFactoryResult
 
@@ -2381,6 +2413,10 @@ pub type Matrix = Array[Array[@bigint.BigInt]]
 pub type MatrixExpr = Array[Array[@symcore.Expr]]
 
 pub type MatrixExprDOD = Map[Int, Map[Int, @symcore.Expr]]
+
+pub type Sdm = Array[(Monomial, FieldElem)]
+
+pub type SdmTerm = (Monomial, FieldElem)
 
 pub type SympyEigenvects = Array[(@symcore.Expr, Int, Array[Array[@symcore.Expr]])]
 
