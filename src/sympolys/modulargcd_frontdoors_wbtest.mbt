@@ -27,3 +27,30 @@ test "modulargcd frontdoor: univariate gcd cofactors" {
     content="(x - 1, 0, -1)",
   )
 }
+
+///|
+test "modulargcd frontdoor: bivariate and multivariate gcd cofactors" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let b2 = PolyBuilder::new(["x", "y"], Domain::ZZ)
+  let f = b2.from_expr((x ^ int(2)) - (y ^ int(2)))
+  let g = b2.from_expr((x ^ int(2)) + int(2) * x * y + (y ^ int(2)))
+  inspect(
+    modgcd_wb_repr(modgcd_bivariate(f, g)),
+    content="(x + y, x - y, x + y)",
+  )
+  inspect(
+    modgcd_wb_repr(modgcd_multivariate(f, g)),
+    content="(x + y, x - y, x + y)",
+  )
+
+  let z = Expr::Symbol("z")
+  let b3 = PolyBuilder::new(["x", "y", "z"], Domain::ZZ)
+  let h = x + y + z
+  let f3 = b3.from_expr(h * (x - z))
+  let g3 = b3.from_expr(h * (y + z))
+  inspect(
+    modgcd_wb_repr(modgcd_multivariate(f3, g3)),
+    content="(x + y + z, x - z, y + z)",
+  )
+}

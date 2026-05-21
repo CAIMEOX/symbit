@@ -239,8 +239,36 @@ pub fn modgcd_univariate(
   g : @symcore.Expr,
   gen? : String = "x",
 ) -> String raise {
+  oracle_modgcd("sympy.polys.modulargcd.modgcd_univariate", f, g, gen)
+}
+
+///|
+pub fn modgcd_bivariate(
+  f : @symcore.Expr,
+  g : @symcore.Expr,
+  gens? : String = "x,y",
+) -> String raise {
+  oracle_modgcd("sympy.polys.modulargcd.modgcd_bivariate", f, g, gens)
+}
+
+///|
+pub fn modgcd_multivariate(
+  f : @symcore.Expr,
+  g : @symcore.Expr,
+  gens? : String = "x,y,z",
+) -> String raise {
+  oracle_modgcd("sympy.polys.modulargcd.modgcd_multivariate", f, g, gens)
+}
+
+///|
+fn oracle_modgcd(
+  path : String,
+  f : @symcore.Expr,
+  g : @symcore.Expr,
+  gens : String,
+) -> String raise {
   let ring_tuple = sympy_call_must("sympy.polys.rings.ring", [
-    OracleArg::Str(gen),
+    OracleArg::Str(gens),
     OracleArg::PyObj(oracle_domain_from_spec("ZZ")),
   ])
   let ring_items = py_list_to_pyobjects(ring_tuple)
@@ -248,7 +276,7 @@ pub fn modgcd_univariate(
   let ring_obj = ring_items[0]
   let f_obj = oracle_ring_element_from_expr(ring_obj, f)
   let g_obj = oracle_ring_element_from_expr(ring_obj, g)
-  let res = sympy_call_must("sympy.polys.modulargcd.modgcd_univariate", [
+  let res = sympy_call_must(path, [
     OracleArg::PyObj(f_obj),
     OracleArg::PyObj(g_obj),
   ])

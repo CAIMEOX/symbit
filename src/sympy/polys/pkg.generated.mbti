@@ -616,6 +616,10 @@ pub fn mod_rational(Int, Int, Int) -> String raise
 
 pub fn modgcd_univariate(@symcore.Expr, @symcore.Expr, gen? : String) -> String raise
 
+pub fn modgcd_bivariate(@symcore.Expr, @symcore.Expr, gens? : String) -> String raise
+
+pub fn modgcd_multivariate(@symcore.Expr, @symcore.Expr, gens? : String) -> String raise
+
 pub fn monomial_key(order? : String) -> String raise
 
 pub fn polyconfig_configure() -> String raise

@@ -1437,6 +1437,10 @@ pub fn minimal_polynomial(@symcore.Expr, gen? : String) -> Poly raise PolyError
 
 pub fn minpoly(@symcore.Expr, gen? : String) -> Poly raise PolyError
 
+pub fn modgcd_bivariate(Poly, Poly) -> (Poly, Poly, Poly) raise PolyError
+
+pub fn modgcd_multivariate(Poly, Poly) -> (Poly, Poly, Poly) raise PolyError
+
 pub fn modgcd_univariate(Poly, Poly) -> (Poly, Poly, Poly) raise PolyError
 
 pub fn modified_subresultants_amv(Poly, Poly) -> Array[Poly] raise PolyError

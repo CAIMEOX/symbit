@@ -42,3 +42,32 @@ test "modulargcd: univariate parity" {
     assert_eq(ours, oracle)
   }
 }
+
+///|
+test "modulargcd: bivariate and multivariate parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let b2 = PolyBuilder::new(["x", "y"], Domain::ZZ)
+  let f = b2.from_expr((x ^ @symcore.int(2)) - (y ^ @symcore.int(2)))
+  let g = b2.from_expr(
+    (x ^ @symcore.int(2)) + @symcore.int(2) * x * y + (y ^ @symcore.int(2)),
+  )
+  assert_eq(
+    modgcd_port_repr(@sympolys.modgcd_bivariate(f, g)),
+    modgcd_bivariate(f.to_expr(), g.to_expr(), gens="x,y"),
+  )
+  assert_eq(
+    modgcd_port_repr(@sympolys.modgcd_multivariate(f, g)),
+    modgcd_multivariate(f.to_expr(), g.to_expr(), gens="x,y"),
+  )
+
+  let z = @symcore.Expr::Symbol("z")
+  let b3 = PolyBuilder::new(["x", "y", "z"], Domain::ZZ)
+  let h = x + y + z
+  let f3 = b3.from_expr(h * (x - z))
+  let g3 = b3.from_expr(h * (y + z))
+  assert_eq(
+    modgcd_port_repr(@sympolys.modgcd_multivariate(f3, g3)),
+    modgcd_multivariate(f3.to_expr(), g3.to_expr(), gens="x,y,z"),
+  )
+}
