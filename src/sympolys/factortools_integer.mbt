@@ -544,6 +544,24 @@ pub fn dmp_zz_diophantine(
 }
 
 ///|
+fn fact_int_dense_ground_value(
+  f : DensePoly,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  match f {
+    DensePoly::Coef(c) => c
+    DensePoly::Poly(items) =>
+      if items.is_empty() {
+        fe_from_int(0, domain)
+      } else if items.length() == 1 {
+        fact_int_dense_ground_value(items[0], domain)
+      } else {
+        raise PolyError::NotUnivariate
+      }
+  }
+}
+
+///|
 /// Compute valid divisors for Wang/EEZ factorization.
 ///
 /// - Does: Ports SymPy's `dmp_zz_wang_non_divisors`, filtering evaluation
@@ -589,6 +607,58 @@ pub fn dmp_zz_wang_non_divisors(
     out.push(fe_from_int(result[i], Domain::ZZ))
   }
   Some(out)
+}
+
+///|
+/// Test Wang/EEZ evaluation points for suitability.
+///
+/// - Does: Ports SymPy's `dmp_zz_wang_test_points` helper: evaluate tail
+///   variables, require a square-free primitive univariate image, normalize its
+///   sign, and check evaluated leading-coefficient factors with
+///   `dmp_zz_wang_non_divisors`.
+/// - Input: A recursive dense integer polynomial `f`, leading-coefficient
+///   factors `T`, integer content `ct`, evaluation points `A`, level `u`, and
+///   `Domain::ZZ`.
+/// - Returns: `(content, primitive_image, evaluated_factor_values)`.
+/// - Limits: Failed suitability checks raise `PolyError::BadGenerator` with an
+///   evaluation marker rather than a separate Python exception subclass.
+pub fn dmp_zz_wang_test_points(
+  f : DensePoly,
+  factors : Array[(DensePoly, Int)],
+  ct : FieldElem,
+  eval_points : Array[FieldElem],
+  u : Int,
+  domain : Domain,
+) -> (FieldElem, Array[FieldElem], Array[FieldElem]) raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  let lc_eval = dmp_eval_tail(dmp_LC(f), eval_points, u - 1, domain)
+  if dmp_zero_p(lc_eval, 0) {
+    raise PolyError::BadGenerator("wang-evaluation")
+  }
+  let g = dmp_to_coeffs(dmp_eval_tail(f, eval_points, u, domain))
+  if !dup_sqf_p(g, domain) {
+    raise PolyError::BadGenerator("wang-evaluation")
+  }
+  let primitive = dup_primitive(g, domain)
+  let mut c = primitive.0
+  let mut h = primitive.1
+  if !h.is_empty() && fe_is_negative(dup_LC(h)) {
+    c = fe_neg(c)
+    h = dup_neg(h, domain)
+  }
+  let v = u - 1
+  let values : Array[FieldElem] = Array::new()
+  for item in factors {
+    let evaluated = dmp_eval_tail(item.0, eval_points, v, domain)
+    values.push(fact_int_dense_ground_value(evaluated, domain))
+  }
+  match dmp_zz_wang_non_divisors(values, c, ct, domain) {
+    Some(_) => (c, h, values)
+    None => raise PolyError::BadGenerator("wang-evaluation")
+  }
 }
 
 ///|

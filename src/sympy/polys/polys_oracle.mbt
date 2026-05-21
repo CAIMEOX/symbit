@@ -10397,6 +10397,20 @@ fn fact_dense_py_dmp_factor_list(
 }
 
 ///|
+fn fact_dense_py_dmp_factor_pairs(
+  factors : Array[(DenseData, Int)],
+  domain_obj : @py.PyObject,
+) -> @py.PyObject raise {
+  let out : Array[@py.PyObject] = Array::new()
+  for factor in factors {
+    let dense = fact_dense_py_dense_data(factor.0, domain_obj)
+    let pair = py_tuple_from_objects([dense, py_int_obj(factor.1)])
+    out.push(pair.obj())
+  }
+  py_list_from_objects(out).obj()
+}
+
+///|
 fn fact_dense_bool_call(name : String, args : Array[OracleArg]) -> Bool raise {
   let res = sympy_call_must("sympy.polys.factortools.\{name}", args)
   match res {
@@ -10683,6 +10697,27 @@ pub fn dmp_zz_wang_non_divisors(
       OracleArg::PyObj(domain_obj),
     ],
   )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_zz_wang_test_points(
+  f : DenseData,
+  factors : Array[(DenseData, Int)],
+  ct : @symnum.BigRational,
+  eval_points : Array[@symnum.BigRational],
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_wang_test_points", [
+    OracleArg::PyObj(fact_dense_py_dense_data(f, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_dmp_factor_pairs(factors, domain_obj)),
+    OracleArg::PyObj(fact_dense_domain_elem_from_obj(ct, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(eval_points, domain_obj)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
   remove_spaces(py_dense_str(res))
 }
 

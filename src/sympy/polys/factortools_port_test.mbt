@@ -137,6 +137,13 @@ fn fact_dense_port_dup_factor_repr(
 }
 
 ///|
+fn fact_dense_port_wang_test_points_repr(
+  value : (FieldElem, Array[FieldElem], Array[FieldElem]),
+) -> String {
+  remove_spaces("(\{value.0},\{dup_repr(value.1)},\{dup_repr(value.2)})")
+}
+
+///|
 fn fact_dense_port_dup_factor_shape(
   value : (FieldElem, Array[(Array[FieldElem], Int)]),
 ) -> String {
@@ -323,6 +330,51 @@ test "factortools: Wang helper frontdoors parity" {
       @sympolys.dmp_zz_wang_non_divisors(fail_e, fezz(1), fezz(1), Domain::ZZ),
     ),
     dmp_zz_wang_non_divisors(dup_to_rats(fail_e), br_int(1), br_int(1)),
+  )
+  let f = @sympolys.dense_poly([poly_int([1, 1]), poly_int([1]), poly_int([1])])
+  let factors = [(poly_int([1, 1]), 1)]
+  assert_eq(
+    fact_dense_port_wang_test_points_repr(
+      @sympolys.dmp_zz_wang_test_points(
+        f,
+        factors,
+        fezz(1),
+        [fezz(2)],
+        1,
+        Domain::ZZ,
+      ),
+    ),
+    dmp_zz_wang_test_points(
+      dense_data_of(f),
+      [(dense_data_of(factors[0].0), factors[0].1)],
+      br_int(1),
+      [br_int(2)],
+      1,
+    ),
+  )
+  let negative_lc = @sympolys.dense_poly([
+    poly_int([-1, -1]),
+    poly_int([1]),
+    poly_int([1]),
+  ])
+  assert_eq(
+    fact_dense_port_wang_test_points_repr(
+      @sympolys.dmp_zz_wang_test_points(
+        negative_lc,
+        factors,
+        fezz(1),
+        [fezz(2)],
+        1,
+        Domain::ZZ,
+      ),
+    ),
+    dmp_zz_wang_test_points(
+      dense_data_of(negative_lc),
+      [(dense_data_of(factors[0].0), factors[0].1)],
+      br_int(1),
+      [br_int(2)],
+      1,
+    ),
   )
 }
 

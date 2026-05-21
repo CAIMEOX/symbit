@@ -50,6 +50,13 @@ fn fact_wb_dup_factor_repr(
 }
 
 ///|
+fn fact_wb_wang_test_points_repr(
+  value : (FieldElem, Array[FieldElem], Array[FieldElem]),
+) -> String {
+  "(\{value.0},\{fact_wb_dup_repr(value.1)},\{fact_wb_dup_repr(value.2)})"
+}
+
+///|
 fn fact_wb_dup_include_repr(items : Array[(Array[FieldElem], Int)]) -> String {
   "[" +
   items.map(item => "(\{fact_wb_dup_repr(item.0)},\{item.1})").join(",") +
@@ -304,6 +311,56 @@ test "factortools dense wb: Wang non divisors" {
     ),
     content="None",
   )
+}
+
+///|
+test "factortools dense wb: Wang test points" {
+  let f = DensePoly::Poly([
+    fact_wb_poly([1, 1]),
+    fact_wb_poly([1]),
+    fact_wb_poly([1]),
+  ])
+  let factors = [(fact_wb_poly([1, 1]), 1)]
+  inspect(
+    fact_wb_wang_test_points_repr(
+      dmp_zz_wang_test_points(
+        f,
+        factors,
+        fact_wb_fe(1),
+        [fact_wb_fe(2)],
+        1,
+        Domain::ZZ,
+      ),
+    ),
+    content="(1,[3,1,1],[3])",
+  )
+  let negative_lc = DensePoly::Poly([
+    fact_wb_poly([-1, -1]),
+    fact_wb_poly([1]),
+    fact_wb_poly([1]),
+  ])
+  inspect(
+    fact_wb_wang_test_points_repr(
+      dmp_zz_wang_test_points(
+        negative_lc,
+        factors,
+        fact_wb_fe(1),
+        [fact_wb_fe(2)],
+        1,
+        Domain::ZZ,
+      ),
+    ),
+    content="(-1,[3,-1,-1],[3])",
+  )
+  let bad : Result[(FieldElem, Array[FieldElem], Array[FieldElem]), PolyError] = try? dmp_zz_wang_test_points(
+    f,
+    [(fact_wb_poly([1]), 1)],
+    fact_wb_fe(1),
+    [fact_wb_fe(2)],
+    1,
+    Domain::ZZ,
+  )
+  assert_true(bad is Err(PolyError::BadGenerator(_)))
 }
 
 ///|
