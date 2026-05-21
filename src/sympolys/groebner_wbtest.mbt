@@ -21,6 +21,16 @@ test "groebner wb: spoly monic path" {
 }
 
 ///|
+test "groebner wb: gcd and lcm frontdoors" {
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let x = @symcore.Expr::Symbol("x")
+  let f = b.from_expr((x - @symcore.int(1)) * (x + @symcore.int(2)))
+  let g = b.from_expr((x - @symcore.int(1)) * (x + @symcore.int(3)))
+  inspect(groebner_gcd(f, g).to_string(), content="x - 1")
+  inspect(groebner_lcm(f, g).to_string(), content="x**3 + 4*x**2 + x - 6")
+}
+
+///|
 test "groebner wb: basis predicates and reduction" {
   let b = groebner_wb_builder()
   let x = @symcore.Expr::Symbol("x")

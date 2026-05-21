@@ -5972,6 +5972,36 @@ pub fn groebnertools_spoly(
 }
 
 ///|
+pub fn groebnertools_gcd(
+  f : @symcore.Expr,
+  g : @symcore.Expr,
+  gens? : Array[String] = ["x"],
+  order? : String = "lex",
+) -> String raise {
+  let (_, polys) = groebner_ring_polys([f, g], gens, order)
+  let res = sympy_call_must("sympy.polys.groebnertools.groebner_gcd", [
+    OracleArg::PyObj(polys[0]),
+    OracleArg::PyObj(polys[1]),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn groebnertools_lcm(
+  f : @symcore.Expr,
+  g : @symcore.Expr,
+  gens? : Array[String] = ["x"],
+  order? : String = "lex",
+) -> String raise {
+  let (_, polys) = groebner_ring_polys([f, g], gens, order)
+  let res = sympy_call_must("sympy.polys.groebnertools.groebner_lcm", [
+    OracleArg::PyObj(polys[0]),
+    OracleArg::PyObj(polys[1]),
+  ])
+  py_str_enum(res)
+}
+
+///|
 pub fn red_groebner(
   exprs : Array[@symcore.Expr],
   gens? : Array[String] = ["x", "y"],

@@ -80,6 +80,22 @@ test "groebnertools: spoly and basis predicates parity" {
 }
 
 ///|
+test "groebnertools: gcd and lcm parity" {
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let x = @symcore.Expr::Symbol("x")
+  let f = b.from_expr((x - @symcore.int(1)) * (x + @symcore.int(2)))
+  let g = b.from_expr((x - @symcore.int(1)) * (x + @symcore.int(3)))
+  assert_eq(
+    sympy_normalize(@sympolys.groebner_gcd(f, g).to_string()),
+    sympy_normalize(groebnertools_gcd(f.to_expr(), g.to_expr(), gens=["x"])),
+  )
+  assert_eq(
+    sympy_normalize(@sympolys.groebner_lcm(f, g).to_string()),
+    sympy_normalize(groebnertools_lcm(f.to_expr(), g.to_expr(), gens=["x"])),
+  )
+}
+
+///|
 test "groebnertools: grevlex ordering changes basis" {
   let b = PolyBuilder::new(["x", "y"], Domain::QQ).order(TermOrder::Grevlex)
   let x = @symcore.Expr::Symbol("x")

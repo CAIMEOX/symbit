@@ -1229,6 +1229,10 @@ pub fn groebner_basis(Array[Poly], order? : TermOrder) -> GroebnerBasis raise Po
 
 pub fn groebner_expr(Array[@symcore.Expr], gens? : Array[String], domain? : Domain, modulus? : Int, extension? : Array[String], gf_degree? : Int, order? : TermOrder) -> Array[Poly] raise PolyError
 
+pub fn groebner_gcd(Poly, Poly) -> Poly raise PolyError
+
+pub fn groebner_lcm(Poly, Poly) -> Poly raise PolyError
+
 pub fn ground_roots(Poly) -> Array[(@symcore.Expr, Int)] raise PolyError
 
 pub fn half_gcdex(Poly, Poly, auto? : Bool) -> (Poly, Poly) raise PolyError

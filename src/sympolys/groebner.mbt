@@ -191,6 +191,32 @@ pub fn spoly(f : Poly, g : Poly) -> Poly raise PolyError {
 }
 
 ///|
+/// Compute the least common multiple through the Groebner-tools front door.
+///
+/// - Does: Returns the polynomial lcm through the Groebner-tools helper.
+/// - Input: Two compatible `Poly` values.
+/// - Returns: A normalized `Poly`.
+/// - Limits: Uses the package's current `Poly` lcm path, so it inherits the
+///   same univariate-centered exact-division limits.
+pub fn groebner_lcm(f : Poly, g : Poly) -> Poly raise PolyError {
+  check_compat([f, g])
+  lcm(f, g)
+}
+
+///|
+/// Compute the greatest common divisor through the Groebner-tools front door.
+///
+/// - Does: Returns the polynomial gcd through the Groebner-tools helper.
+/// - Input: Two compatible `Poly` values.
+/// - Returns: A normalized `Poly`.
+/// - Limits: Uses the package's current `Poly` gcd path, so it inherits the
+///   same domain and multivariate limits as `gcd`.
+pub fn groebner_gcd(f : Poly, g : Poly) -> Poly raise PolyError {
+  check_compat([f, g])
+  gcd(f, g)
+}
+
+///|
 fn leading_monomial_divides(a : Poly, b : Poly) -> Bool raise PolyError {
   monomial_divides(leading_monomial(a), leading_monomial(b))
 }
