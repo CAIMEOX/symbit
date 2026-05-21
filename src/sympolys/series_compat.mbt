@@ -54,6 +54,110 @@ pub fn power_series_ring(
 }
 
 ///|
+fn series_pprint_base(sym : String, exp : Int) -> String {
+  if exp == 0 {
+    ""
+  } else if exp == 1 {
+    sym
+  } else {
+    sym + "**" + exp.to_string()
+  }
+}
+
+///|
+fn series_pprint_term(coeff : FieldElem, sym : String, exp : Int) -> String {
+  let c = coeff.to_string()
+  if exp == 0 {
+    c
+  } else {
+    let base = series_pprint_base(sym, exp)
+    if c == "1" {
+      base
+    } else if c == "-1" {
+      "-" + base
+    } else {
+      c + "*" + base
+    }
+  }
+}
+
+///|
+fn series_join_terms(parts : Array[String]) -> String {
+  if parts.is_empty() {
+    return "0"
+  }
+  let mut out = parts[0]
+  for i in 1..<parts.length() {
+    let part = parts[i]
+    if part.has_prefix("-") {
+      out = out + " - " + part[1:].to_owned()
+    } else {
+      out = out + " + " + part
+    }
+  }
+  out
+}
+
+///|
+/// Convert dense coefficients to a power-series string.
+///
+/// - Does: Mirrors SymPy `series_pprint` for dense univariate coefficient
+///   lists.
+/// - Input: Dense coefficients in SymPy order, optional precision, variable
+///   name, and display order flag.
+/// - Returns: A polynomial/series string, optionally followed by `O(x**n)`.
+/// - Limits: Coefficients are formatted through `FieldElem::to_string`; `prec =
+///   -1` is used as the MoonBit front-door spelling of Python `None`.
+pub fn series_pprint(
+  coeffs : Array[FieldElem],
+  prec? : Int = -1,
+  sym? : String = "x",
+  ascending? : Bool = true,
+) -> String {
+  if prec == 0 {
+    return "O(" + sym + "**0)"
+  }
+  let mut start = 0
+  while start < coeffs.length() && fe_is_zero(coeffs[start]) {
+    start = start + 1
+  }
+  if start == coeffs.length() {
+    if prec >= 0 {
+      return "O(" + sym + "**" + prec.to_string() + ")"
+    }
+    return "0"
+  }
+  let degree = coeffs.length() - start - 1
+  let terms : Array[(Int, String)] = []
+  for i in start..<coeffs.length() {
+    let coeff = coeffs[i]
+    if fe_is_zero(coeff) {
+      continue
+    }
+    let exp = degree - (i - start)
+    terms.push((exp, series_pprint_term(coeff, sym, exp)))
+  }
+  let ordered : Array[String] = []
+  if ascending {
+    let mut i = terms.length()
+    while i > 0 {
+      i = i - 1
+      ordered.push(terms[i].1)
+    }
+  } else {
+    for term in terms {
+      ordered.push(term.1)
+    }
+  }
+  let poly = series_join_terms(ordered)
+  if prec >= 0 {
+    poly + " + O(" + sym + "**" + prec.to_string() + ")"
+  } else {
+    poly
+  }
+}
+
+///|
 fn normalize_series_coeffs(
   ring : SeriesRing,
   coeffs : Array[FieldElem],

@@ -27,6 +27,11 @@ fn ring_series_tan_fun(
 }
 
 ///|
+fn ring_series_coeffs(values : Array[Int]) -> Array[@sympolys.FieldElem] raise {
+  values.map(v => @sympolys.fe_from_int(v, @sympolys.Domain::QQ))
+}
+
+///|
 test "ring_series: arithmetic frontdoor parity" {
   let f = ring_series_make([1, 2, 3], 6)
   let g = ring_series_make([0, 1, 1], 6)
@@ -84,6 +89,23 @@ test "ring_series: arithmetic frontdoor parity" {
   assert_eq(
     ring_series_expr(@sympolys.rs_newton(ring_series_make([1, 1], 7), prec=6)),
     ring_series_norm(rs_newton_ring_series([1, 1], 6)),
+  )
+}
+
+///|
+test "ring_series: pprint parity" {
+  assert_eq(
+    @sympolys.series_pprint(ring_series_coeffs([1, 2, 3]), prec=5),
+    series_pprint_oracle([1, 2, 3], 5),
+  )
+  assert_eq(
+    @sympolys.series_pprint(
+      ring_series_coeffs([1, 0, 3]),
+      prec=5,
+      sym="t",
+      ascending=false,
+    ),
+    series_pprint_oracle([1, 0, 3], 5, sym="t", ascending=false),
   )
 }
 

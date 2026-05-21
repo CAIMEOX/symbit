@@ -12977,6 +12977,24 @@ pub fn rs_fun_tan_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
 }
 
 ///|
+pub fn series_pprint_oracle(
+  coeffs : Array[Int],
+  prec : Int,
+  sym? : String = "x",
+  ascending? : Bool = true,
+) -> String raise {
+  let kwargs : Map[String, OracleArg] = {}
+  kwargs.set("sym", OracleArg::Str(sym))
+  kwargs.set("ascending", OracleArg::Bool(ascending))
+  let res = sympy_call_must(
+    "sympy.polys.series.base.series_pprint",
+    [OracleArg::PyObj(py_list_from_ints(coeffs)), OracleArg::Int(prec)],
+    kwargs~,
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
 pub fn rs_hadamard_exp_ring_series(
   coeffs : Array[Int],
   inverse? : Bool = false,

@@ -1699,6 +1699,8 @@ pub fn sdm_transpose(SDM) -> SDM raise PolyError
 
 pub fn sdm_zero() -> Array[(Monomial, FieldElem)]
 
+pub fn series_pprint(Array[FieldElem], prec? : Int, sym? : String, ascending? : Bool) -> String
+
 pub fn sfield(Array[@symcore.Expr], gens? : Array[String], domain? : Domain, order? : TermOrder) -> RingFactoryResult
 
 pub fn sig(Monomial, Int) -> (Monomial, Int)

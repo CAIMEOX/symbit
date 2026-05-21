@@ -14,6 +14,24 @@ fn rs_wb_tan_fun(q : SeriesElem, n : Int) -> SeriesElem raise PolyError {
 }
 
 ///|
+test "ring series frontdoors: pprint" {
+  inspect(
+    series_pprint(rs_wb_coeffs([1, 2, 3]), prec=5),
+    content="3 + 2*x + x**2 + O(x**5)",
+  )
+  inspect(
+    series_pprint(rs_wb_coeffs([1, 0, 3]), prec=5, sym="t"),
+    content="3 + t**2 + O(t**5)",
+  )
+  inspect(
+    series_pprint(rs_wb_coeffs([1, 0, 3]), prec=5, sym="t", ascending=false),
+    content="t**2 + 3 + O(t**5)",
+  )
+  inspect(series_pprint([], prec=4), content="O(x**4)")
+  inspect(series_pprint([]), content="0")
+}
+
+///|
 test "ring series frontdoors: arithmetic wrappers" {
   let ring = power_series_ring(Domain::QQ, "x", 6)
   let x = ring.gen()
