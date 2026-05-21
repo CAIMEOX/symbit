@@ -10775,6 +10775,21 @@ pub fn dmp_zz_wang_hensel_lifting(
 }
 
 ///|
+pub fn dmp_zz_wang(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_wang", [
+    OracleArg::PyObj(fact_dense_py_dense_data(f, domain_obj)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_zz_diophantine(
   factors : Array[Array[@symnum.BigRational]],
   m : Int,

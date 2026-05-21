@@ -61,6 +61,36 @@ fn fact_int_factorial(n : Int) -> Int {
 }
 
 ///|
+fn fact_int_is_prime(n : Int) -> Bool {
+  if n < 2 {
+    return false
+  }
+  if n == 2 {
+    return true
+  }
+  if n % 2 == 0 {
+    return false
+  }
+  let mut d = 3
+  while d * d <= n {
+    if n % d == 0 {
+      return false
+    }
+    d = d + 2
+  }
+  true
+}
+
+///|
+fn fact_int_next_prime(n : Int) -> Int {
+  let mut candidate = if n < 2 { 2 } else { n + 1 }
+  while !fact_int_is_prime(candidate) {
+    candidate = candidate + 1
+  }
+  candidate
+}
+
+///|
 fn fact_int_binomial(n : Int, k : Int) -> Int {
   if k < 0 || k > n {
     return 0
@@ -740,6 +770,62 @@ fn fact_int_dmp_prepend(
 }
 
 ///|
+fn fact_int_wang_points_key(points : Array[FieldElem]) -> String {
+  points.map(point => point.to_string()).join(",")
+}
+
+///|
+fn fact_int_wang_config_seen(
+  history : Array[String],
+  points : Array[FieldElem],
+) -> Bool {
+  let key = fact_int_wang_points_key(points)
+  history.any(item => item == key)
+}
+
+///|
+fn fact_int_wang_enum_config(
+  index : Int,
+  modulus : Int,
+  u : Int,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let width = 2 * modulus + 1
+  let points : Array[FieldElem] = Array::new()
+  let mut value = index
+  for _ in 0..<u {
+    let digit = value % width
+    points.push(fe_from_int(digit - modulus, domain))
+    value = value / width
+  }
+  points
+}
+
+///|
+fn fact_int_wang_seed_config(
+  seed : Array[Int],
+  start : Int,
+  modulus : Int,
+  u : Int,
+  domain : Domain,
+) -> (Array[FieldElem], Int)? raise PolyError {
+  let points : Array[FieldElem] = Array::new()
+  let mut idx = start
+  while idx < seed.length() && points.length() < u {
+    let value = seed[idx]
+    idx = idx + 1
+    if value >= -modulus && value <= modulus {
+      points.push(fe_from_int(value, domain))
+    }
+  }
+  if points.length() == u {
+    Some((points, idx))
+  } else {
+    None
+  }
+}
+
+///|
 fn fact_int_exact_div(
   numer : Int,
   denom : Int,
@@ -1087,6 +1173,188 @@ pub fn dmp_zz_wang_hensel_lifting(
     raise PolyError::BadGenerator("wang-hensel")
   }
   factor_polys
+}
+
+///|
+/// Factor a primitive square-free recursive integer dense polynomial.
+///
+/// - Does: Ports SymPy's `dmp_zz_wang` Enhanced Extended Zassenhaus front
+///   door, using evaluation-point search, corrected leading coefficients, and
+///   parallel Hensel lifting.
+/// - Input: Primitive square-free recursive dense polynomial `f`, level `u`,
+///   `Domain::ZZ`, optional search modulus, and optional deterministic seed
+///   values for evaluation-point search.
+/// - Returns: Recursive dense irreducible factors over integers.
+/// - Limits: Supports exact integer dense inputs. If no valid Wang evaluation
+///   configuration is found, raises `PolyError::BadGenerator("wang-evaluation")`.
+pub fn dmp_zz_wang(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+  modulus? : Int,
+  seed? : Array[Int],
+) -> Array[DensePoly] raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  if u == 0 {
+    let (_, factors) = dup_zz_factor_sqf(
+      fact_int_dmp_to_coeffs_with_zeros(f, domain),
+      domain,
+    )
+    return factors.map(factor => dmp_from_coeffs(factor))
+  }
+  let (ct, lc_factors) = dmp_zz_factor(dmp_LC(f), u - 1, domain)
+  let bound = fact_int_abs_fe_to_int(dmp_zz_mignotte_bound(f, u, domain))
+  let p = fact_int_next_prime(bound)
+  let mut current_mod = match modulus {
+    Some(m) => m
+    None => if u == 1 { 2 } else { 1 }
+  }
+  let eez_num_configs = 3
+  let eez_num_tries = 5
+  let eez_mod_step = 2
+  let history : Array[String] = Array::new()
+  let configs : Array[
+    (
+      Array[FieldElem],
+      FieldElem,
+      Array[FieldElem],
+      Array[Array[FieldElem]],
+      Array[FieldElem],
+    ),
+  ] = Array::new()
+  let mut factor_count : Int? = None
+  let zero = fe_from_int(0, domain)
+  let initial_points = Array::make(u, zero)
+  let initial_trial = try? dmp_zz_wang_test_points(
+    f, lc_factors, ct, initial_points, u, domain,
+  )
+  match initial_trial {
+    Ok((cs, s, e_values)) => {
+      let (_, h) = dup_zz_factor_sqf(s, domain)
+      factor_count = Some(h.length())
+      if h.length() == 1 {
+        return [f]
+      }
+      configs.push((s, cs, e_values, h, initial_points))
+    }
+    Err(_) => ()
+  }
+  let mut candidate_index = 0
+  let mut seed_index = 0
+  while configs.length() < eez_num_configs {
+    let mut added = false
+    for _ in 0..<eez_num_tries {
+      let points = match seed {
+        Some(seq) =>
+          match
+            fact_int_wang_seed_config(seq, seed_index, current_mod, u, domain) {
+            Some((candidate, next_index)) => {
+              seed_index = next_index
+              candidate
+            }
+            None => raise PolyError::BadGenerator("wang-seed")
+          }
+        None => {
+          let candidate = fact_int_wang_enum_config(
+            candidate_index, current_mod, u, domain,
+          )
+          candidate_index = candidate_index + 1
+          candidate
+        }
+      }
+      if fact_int_wang_config_seen(history, points) {
+        continue
+      }
+      history.push(fact_int_wang_points_key(points))
+      let trial = try? dmp_zz_wang_test_points(
+        f, lc_factors, ct, points, u, domain,
+      )
+      guard trial is Ok((cs, s, e_values)) else { continue }
+      let (_, h) = dup_zz_factor_sqf(s, domain)
+      let rr = h.length()
+      match factor_count {
+        Some(prev) =>
+          if rr != prev {
+            if rr < prev {
+              configs.clear()
+              factor_count = Some(rr)
+            } else {
+              continue
+            }
+          }
+        None => factor_count = Some(rr)
+      }
+      if rr == 1 {
+        return [f]
+      }
+      configs.push((s, cs, e_values, h, points))
+      added = true
+      if configs.length() == eez_num_configs {
+        break
+      }
+    }
+    if !added {
+      current_mod = current_mod + eez_mod_step
+    }
+    if seed is Some(_) && !added {
+      raise PolyError::BadGenerator("wang-seed")
+    }
+  }
+  if configs.is_empty() {
+    raise PolyError::BadGenerator("wang-evaluation")
+  }
+  let mut best_index = 0
+  let mut best_norm : Int? = None
+  for i in 0..<configs.length() {
+    let norm = fact_int_abs_fe_to_int(dup_max_norm(configs[i].0, domain))
+    match best_norm {
+      Some(prev) =>
+        if norm < prev {
+          best_norm = Some(norm)
+          best_index = i
+        }
+      None => best_norm = Some(norm)
+    }
+  }
+  let selected = configs[best_index]
+  let orig_f = f
+  let (scaled_f, corrected_factors, lead_coeffs) = dmp_zz_wang_lead_coeffs(
+    f,
+    lc_factors,
+    selected.1,
+    selected.2,
+    selected.3,
+    selected.4,
+    u,
+    domain,
+  )
+  let lifted = dmp_zz_wang_hensel_lifting(
+    scaled_f,
+    corrected_factors,
+    lead_coeffs,
+    selected.4,
+    p,
+    u,
+    domain,
+  )
+  let result : Array[DensePoly] = Array::new()
+  for factor in lifted {
+    let (_, primitive) = dmp_ground_primitive(factor, u, domain)
+    let normalized = if fe_is_negative(dmp_ground_LC(primitive, u)) {
+      dmp_neg(primitive, u, domain)
+    } else {
+      primitive
+    }
+    result.push(normalized)
+  }
+  if result.is_empty() {
+    [orig_f]
+  } else {
+    result
+  }
 }
 
 ///|

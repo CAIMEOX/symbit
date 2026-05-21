@@ -455,6 +455,8 @@ pub fn dmp_zz_mignotte_bound(DensePoly, Int, Domain) -> FieldElem raise PolyErro
 
 pub fn dmp_zz_modular_resultant(DensePoly, DensePoly, Int, Int, Domain) -> DensePoly raise PolyError
 
+pub fn dmp_zz_wang(DensePoly, Int, Domain, modulus? : Int, seed? : Array[Int]) -> Array[DensePoly] raise PolyError
+
 pub fn dmp_zz_wang_hensel_lifting(DensePoly, Array[Array[FieldElem]], Array[DensePoly], Array[FieldElem], Int, Int, Domain) -> Array[DensePoly] raise PolyError
 
 pub fn dmp_zz_wang_lead_coeffs(DensePoly, Array[(DensePoly, Int)], FieldElem, Array[FieldElem], Array[Array[FieldElem]], Array[FieldElem], Int, Domain) -> (DensePoly, Array[Array[FieldElem]], Array[DensePoly]) raise PolyError

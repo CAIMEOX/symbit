@@ -509,6 +509,19 @@ test "factortools dense wb: Wang Hensel lifting" {
 }
 
 ///|
+test "factortools dense wb: Wang frontdoor" {
+  let f = DensePoly::Poly([
+    fact_wb_poly([1, 1]),
+    fact_wb_poly([2, 3]),
+    fact_wb_poly([2]),
+  ])
+  inspect(
+    "[" + dmp_zz_wang(f, 1, Domain::ZZ).map(fact_wb_dmp_repr).join(",") + "]",
+    content="[[[1],[2]],[[1,1],[1]]]",
+  )
+}
+
+///|
 test "factortools dense wb: algebraic extension factorization" {
   let a = @symcore.Expr::Symbol("a")
   let rel = (a ^ @symcore.int(2)) - @symcore.int(2)

@@ -524,6 +524,10 @@ test "factortools: Diophantine helper frontdoors parity" {
       1,
     ),
   )
+  assert_eq(
+    fact_dense_port_dmp_list_repr(@sympolys.dmp_zz_wang(wang_f, 1, Domain::ZZ)),
+    dmp_zz_wang(dense_data_of(wang_f), 1),
+  )
 }
 
 ///|
