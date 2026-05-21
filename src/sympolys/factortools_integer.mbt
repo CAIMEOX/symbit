@@ -283,6 +283,192 @@ pub fn dup_zz_cyclotomic_poly(
 }
 
 ///|
+fn fact_int_cyclotomic_decompose(
+  n : Int,
+  domain : Domain,
+) -> Array[Array[FieldElem]] raise PolyError {
+  let factors : Array[Array[FieldElem]] = [
+    [fe_from_int(1, domain), fe_from_int(-1, domain)],
+  ]
+  for item in fact_int_factor_powers(n) {
+    let p = item.0
+    let k = item.1
+    let mut q : Array[Array[FieldElem]] = Array::new()
+    for h in factors {
+      q.push(dup_quo(dup_inflate(h, p, domain), h, domain))
+    }
+    for h in q {
+      factors.push(h)
+    }
+    for _ in 1..<k {
+      let next : Array[Array[FieldElem]] = Array::new()
+      for h in q {
+        next.push(dup_inflate(h, p, domain))
+      }
+      q = next
+      for h in q {
+        factors.push(h)
+      }
+    }
+  }
+  factors
+}
+
+///|
+fn fact_int_dup_list_contains(
+  items : Array[Array[FieldElem]],
+  candidate : Array[FieldElem],
+) -> Bool raise PolyError {
+  for item in items {
+    if fact_int_dup_equal(item, candidate) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// Factor `x**n - 1` and `x**n + 1` through cyclotomic decomposition.
+///
+/// - Does: Recognizes sparse monic integer polynomials of the form
+///   `x**n - 1` or `x**n + 1` and returns their cyclotomic factors.
+/// - Input: Dense high-to-low integer coefficients and `Domain::ZZ`.
+/// - Returns: `Some(factors)` when recognized; otherwise `None`.
+/// - Limits: Only the exact sparse `x**n +/- 1` cases are recognized.
+pub fn dup_zz_cyclotomic_factor(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> Array[Array[FieldElem]]? raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  let ff = dup_strip(f)
+  if dup_degree(ff) <= 0 {
+    return None
+  }
+  let one = fe_from_int(1, Domain::ZZ)
+  let neg_one = fe_from_int(-1, Domain::ZZ)
+  let lc = dup_LC(ff)
+  let tc = dup_TC(ff)
+  if !fact_int_fe_equal(lc, one) ||
+    (!fact_int_fe_equal(tc, neg_one) && !fact_int_fe_equal(tc, one)) {
+    return None
+  }
+  if ff.length() > 2 {
+    for i in 1..<(ff.length() - 1) {
+      if !fe_is_zero(ff[i]) {
+        return None
+      }
+    }
+  }
+  let n = dup_degree(ff)
+  let base = fact_int_cyclotomic_decompose(n, domain)
+  if fact_int_fe_equal(tc, neg_one) {
+    Some(base)
+  } else {
+    let out : Array[Array[FieldElem]] = Array::new()
+    for h in fact_int_cyclotomic_decompose(2 * n, domain) {
+      if !fact_int_dup_list_contains(base, h) {
+        out.push(h)
+      }
+    }
+    Some(out)
+  }
+}
+
+///|
+/// Factor a primitive square-free integer polynomial with Zassenhaus semantics.
+///
+/// - Does: Exposes SymPy's `dup_zz_zassenhaus` front door and returns the
+///   irreducible factors obtained from the package factorization path.
+/// - Input: Dense high-to-low integer coefficients and `Domain::ZZ`.
+/// - Returns: Dense factors without multiplicity entries.
+/// - Limits: Uses the existing complete factor-list backend rather than a
+///   separate Hensel/Zassenhaus implementation.
+pub fn dup_zz_zassenhaus(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> Array[Array[FieldElem]] raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  let (_, factors) = dup_factor_list(f, domain)
+  let out : Array[Array[FieldElem]] = Array::new()
+  for item in factors {
+    out.push(item.0)
+  }
+  out
+}
+
+///|
+/// Factor a square-free integer dense polynomial.
+///
+/// - Does: Returns `(content, factors)` for SymPy's `dup_zz_factor_sqf` front
+///   door.
+/// - Input: Dense high-to-low integer coefficients and `Domain::ZZ`.
+/// - Returns: Scalar content and dense factors without multiplicities.
+/// - Limits: Multiplicity entries from the general factor backend are
+///   intentionally collapsed because this front door is for square-free input.
+pub fn dup_zz_factor_sqf(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> (FieldElem, Array[Array[FieldElem]]) raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  let (content, factors) = dup_factor_list(f, domain)
+  let out : Array[Array[FieldElem]] = Array::new()
+  for item in factors {
+    out.push(item.0)
+  }
+  (content, out)
+}
+
+///|
+/// Factor an integer dense polynomial.
+///
+/// - Does: Returns content and irreducible factors with multiplicities,
+///   matching SymPy's `dup_zz_factor` public front door.
+/// - Input: Dense high-to-low integer coefficients and `Domain::ZZ`.
+/// - Returns: `(content, [(factor, multiplicity), ...])`.
+/// - Limits: Delegates to the package's current complete univariate factor
+///   backend.
+pub fn dup_zz_factor(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  dup_factor_list(f, domain)
+}
+
+///|
+/// Factor an integer recursive dense polynomial.
+///
+/// - Does: Returns content and factors with multiplicities for SymPy's
+///   `dmp_zz_factor` front door.
+/// - Input: Recursive dense polynomial, level, and `Domain::ZZ`.
+/// - Returns: `(content, [(factor, multiplicity), ...])`.
+/// - Limits: Current dense multivariate factorization supports `u == 0`;
+///   higher levels raise `PolyError::NotUnivariate`.
+pub fn dmp_zz_factor(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (FieldElem, Array[(DensePoly, Int)]) raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  dmp_factor_list(f, u, domain)
+}
+
+///|
 fn fact_int_euler_phi(n : Int) -> Int {
   if n <= 0 {
     return 0

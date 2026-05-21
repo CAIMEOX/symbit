@@ -10370,6 +10370,60 @@ pub fn dup_gf_factor(f : Array[Int], p : Int) -> String raise {
 }
 
 ///|
+pub fn dup_zz_zassenhaus(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_zz_zassenhaus", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_zz_factor_sqf(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_zz_factor_sqf", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_zz_factor(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_zz_factor", [
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_zz_factor(
+  f : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_factor", [
+    OracleArg::PyObj(fact_dense_py_dense_data(f, domain_obj)),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_zz_mignotte_bound(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
@@ -10417,6 +10471,22 @@ pub fn dup_zz_cyclotomic_poly(n : Int, domain? : String = "ZZ") -> String raise 
     OracleArg::Int(n),
     OracleArg::PyObj(domain_obj),
   ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_zz_cyclotomic_factor(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must(
+    "sympy.polys.factortools.dup_zz_cyclotomic_factor",
+    [
+      OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+      OracleArg::PyObj(domain_obj),
+    ],
+  )
   remove_spaces(py_dense_str(res))
 }
 

@@ -19,6 +19,46 @@ fn fact_int_wb_dup_repr(f : Array[FieldElem]) -> String {
 }
 
 ///|
+fn fact_int_wb_dup_list_repr(items : Array[Array[FieldElem]]) -> String {
+  "[" + items.map(fact_int_wb_dup_repr).join(",") + "]"
+}
+
+///|
+fn fact_int_wb_factor_repr(
+  value : (FieldElem, Array[(Array[FieldElem], Int)]),
+) -> String {
+  let (coeff, factors) = value
+  let parts = factors.map(item => "(\{fact_int_wb_dup_repr(item.0)},\{item.1})")
+  "(\{coeff},[" + parts.join(",") + "])"
+}
+
+///|
+fn fact_int_wb_factor_sqf_repr(
+  value : (FieldElem, Array[Array[FieldElem]]),
+) -> String {
+  let (coeff, factors) = value
+  "(\{coeff},\{fact_int_wb_dup_list_repr(factors)})"
+}
+
+///|
+fn fact_int_wb_dmp_factor_repr(
+  value : (FieldElem, Array[(DensePoly, Int)]),
+) -> String {
+  let (coeff, factors) = value
+  let parts = factors.map(item => "(\{fact_int_wb_dmp_repr(item.0)},\{item.1})")
+  "(\{coeff},[" + parts.join(",") + "])"
+}
+
+///|
+fn fact_int_wb_dmp_repr(f : DensePoly) -> String {
+  match f {
+    DensePoly::Coef(c) => c.to_string()
+    DensePoly::Poly(items) =>
+      "[" + items.map(item => fact_int_wb_dmp_repr(item)).join(",") + "]"
+  }
+}
+
+///|
 test "factortools integer wb: Mignotte bounds" {
   inspect(
     dup_zz_mignotte_bound(fact_int_wb_dup([1, 14, 56, 64]), Domain::ZZ),
@@ -59,6 +99,58 @@ test "factortools integer wb: cyclotomic polynomial" {
     fact_int_wb_dup_repr(dup_zz_cyclotomic_poly(12, Domain::ZZ)),
     content="[1,0,-1,0,1]",
   )
+}
+
+///|
+test "factortools integer wb: ZZ factor frontdoors" {
+  let f = fact_int_wb_dup([2, 0, -2])
+  inspect(
+    fact_int_wb_factor_repr(dup_zz_factor(f, Domain::ZZ)),
+    content="(2,[([1,-1],1),([1,1],1)])",
+  )
+  inspect(
+    fact_int_wb_factor_sqf_repr(dup_zz_factor_sqf(f, Domain::ZZ)),
+    content="(2,[[1,-1],[1,1]])",
+  )
+  inspect(
+    fact_int_wb_dup_list_repr(
+      dup_zz_zassenhaus(fact_int_wb_dup([1, 0, -1]), Domain::ZZ),
+    ),
+    content="[[1,-1],[1,1]]",
+  )
+  inspect(
+    fact_int_wb_dmp_factor_repr(
+      dmp_zz_factor(fact_int_wb_poly([2, 0, -2]), 0, Domain::ZZ),
+    ),
+    content="(2,[([1,-1],1),([1,1],1)])",
+  )
+}
+
+///|
+test "factortools integer wb: cyclotomic factor frontdoor" {
+  let minus = dup_zz_cyclotomic_factor(
+    fact_int_wb_dup([1, 0, 0, 0, -1]),
+    Domain::ZZ,
+  )
+  match minus {
+    Some(factors) =>
+      inspect(
+        fact_int_wb_dup_list_repr(factors),
+        content="[[1,-1],[1,1],[1,0,1]]",
+      )
+    None => fail("x**4 - 1 should be cyclotomic-factorable")
+  }
+  let plus = dup_zz_cyclotomic_factor(
+    fact_int_wb_dup([1, 0, 0, 0, 1]),
+    Domain::ZZ,
+  )
+  match plus {
+    Some(factors) =>
+      inspect(fact_int_wb_dup_list_repr(factors), content="[[1,0,0,0,1]]")
+    None => fail("x**4 + 1 should be cyclotomic-factorable")
+  }
+  let none = dup_zz_cyclotomic_factor(fact_int_wb_dup([1, 1, 1]), Domain::ZZ)
+  assert_true(none is None)
 }
 
 ///|

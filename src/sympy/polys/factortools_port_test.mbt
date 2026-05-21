@@ -84,6 +84,28 @@ fn fact_dense_port_dup_include_repr(
 }
 
 ///|
+fn fact_dense_port_dup_list_repr(items : Array[Array[FieldElem]]) -> String {
+  remove_spaces("[" + items.map(dup_repr).join(",") + "]")
+}
+
+///|
+fn fact_dense_port_dup_list_opt_repr(
+  items : Array[Array[FieldElem]]?,
+) -> String {
+  match items {
+    Some(values) => fact_dense_port_dup_list_repr(values)
+    None => "None"
+  }
+}
+
+///|
+fn fact_dense_port_dup_factor_sqf_repr(
+  value : (FieldElem, Array[Array[FieldElem]]),
+) -> String {
+  remove_spaces("(\{value.0},\{fact_dense_port_dup_list_repr(value.1)})")
+}
+
+///|
 fn fact_dense_port_dup_factor_repr(
   value : (FieldElem, Array[(Array[FieldElem], Int)]),
 ) -> String {
@@ -112,12 +134,28 @@ fn fact_dense_port_dmp_include_repr(items : Array[(DensePoly, Int)]) -> String {
 test "factortools: dense factor-list frontdoors parity" {
   let f = [fezz(2), fezz(0), fezz(-2)]
   assert_eq(
+    fact_dense_port_dup_factor_repr(@sympolys.dup_zz_factor(f, Domain::ZZ)),
+    dup_zz_factor(dup_to_rats(f)),
+  )
+  assert_eq(
+    fact_dense_port_dup_factor_sqf_repr(
+      @sympolys.dup_zz_factor_sqf(f, Domain::ZZ),
+    ),
+    dup_zz_factor_sqf(dup_to_rats(f)),
+  )
+  assert_eq(
     fact_dense_port_dup_include_repr(
       @sympolys.dup_factor_list_include(f, Domain::ZZ),
     ),
     dup_factor_list_include(dup_to_rats(f)),
   )
   let dmp_f = poly_int([2, 0, -2])
+  assert_eq(
+    fact_dense_port_dmp_factor_repr(
+      @sympolys.dmp_zz_factor(dmp_f, 0, Domain::ZZ),
+    ),
+    dmp_zz_factor(dense_data_of(dmp_f), 0),
+  )
   assert_eq(
     fact_dense_port_dmp_factor_repr(
       @sympolys.dmp_factor_list(dmp_f, 0, Domain::ZZ),
@@ -237,6 +275,26 @@ test "factortools: integer cyclotomic and Eisenstein parity" {
   assert_eq(
     dup_repr(@sympolys.dup_zz_cyclotomic_poly(12, Domain::ZZ)),
     dup_zz_cyclotomic_poly(12),
+  )
+  let cyclo_minus = [fezz(1), fezz(0), fezz(0), fezz(0), fezz(-1)]
+  assert_eq(
+    fact_dense_port_dup_list_opt_repr(
+      @sympolys.dup_zz_cyclotomic_factor(cyclo_minus, Domain::ZZ),
+    ),
+    dup_zz_cyclotomic_factor(dup_to_rats(cyclo_minus)),
+  )
+  let cyclo_plus = [fezz(1), fezz(0), fezz(0), fezz(0), fezz(1)]
+  assert_eq(
+    fact_dense_port_dup_list_opt_repr(
+      @sympolys.dup_zz_cyclotomic_factor(cyclo_plus, Domain::ZZ),
+    ),
+    dup_zz_cyclotomic_factor(dup_to_rats(cyclo_plus)),
+  )
+  assert_eq(
+    fact_dense_port_dup_list_repr(
+      @sympolys.dup_zz_zassenhaus([fezz(1), fezz(0), fezz(-1)], Domain::ZZ),
+    ),
+    dup_zz_zassenhaus(dup_to_rats([fezz(1), fezz(0), fezz(-1)])),
   )
   let false_case = [
     fezz(1),
