@@ -47,6 +47,25 @@ pub type Signature = (Monomial, Int)
 pub type LabeledPolynomial = (Signature, Poly, Int)
 
 ///|
+/// F5 critical-pair tuple.
+///
+/// - Does: Stores `(sign1, term1, f, sign2, term2, g)` so `term1*f -
+///   term2*g` can be formed without eagerly multiplying the labeled
+///   polynomials.
+/// - Input: Produced by `critical_pair`.
+/// - Returns: A tuple alias used by F5 Groebner helper front doors.
+/// - Limits: Terms and labeled polynomials are assumed to belong to compatible
+///   polynomial rings.
+pub type CriticalPair = (
+  Signature,
+  (Monomial, FieldElem),
+  LabeledPolynomial,
+  Signature,
+  (Monomial, FieldElem),
+  LabeledPolynomial,
+)
+
+///|
 fn coeff_div(
   num : FieldElem,
   den : FieldElem,
@@ -392,6 +411,198 @@ pub fn lbp_cmp(f : LabeledPolynomial, g : LabeledPolynomial) -> Int {
 ///   fully ordered sorting outside direct compatibility checks.
 pub fn lbp_key(f : LabeledPolynomial) -> ((Int, Monomial), Int) {
   (sig_key(lbp_sign(f), lbp_polyn(f).order), -lbp_num(f))
+}
+
+///|
+fn zero_like_poly(p : Poly) -> Poly {
+  Poly::{ coeffs: Map([]), gens: p.gens, domain: p.domain, order: p.order }
+}
+
+///|
+fn leading_term_or_raise(p : Poly) -> (Monomial, FieldElem) raise PolyError {
+  match p.leading_term() {
+    Some(term) => term
+    None => raise PolyError::DivisionByZero
+  }
+}
+
+///|
+fn leading_term_poly(p : Poly) -> Poly raise PolyError {
+  let (m, c) = leading_term_or_raise(p)
+  poly_from_term(m, c, p.gens, p.domain, p.order)
+}
+
+///|
+fn term_div_or_raise(
+  numer : (Monomial, FieldElem),
+  denom : (Monomial, FieldElem),
+  domain : Domain,
+) -> (Monomial, FieldElem) raise PolyError {
+  match term_div(numer, denom, domain) {
+    Some(term) => term
+    None => raise PolyError::ExactQuotientFailed
+  }
+}
+
+///|
+/// Compute the F5 critical pair for two labeled polynomials.
+///
+/// - Does: Forms the two multiplier terms needed for the S-polynomial and
+///   returns them in the order used by `s_poly`.
+/// - Input: Two compatible `LabeledPolynomial` values.
+/// - Returns: A `CriticalPair`.
+/// - Limits: Raises on zero polynomial parts or non-exact leading-term
+///   division.
+pub fn critical_pair(
+  f : LabeledPolynomial,
+  g : LabeledPolynomial,
+) -> CriticalPair raise PolyError {
+  let fp = lbp_polyn(f)
+  let gp = lbp_polyn(g)
+  check_compat([fp, gp])
+  let ltf = leading_term_or_raise(fp)
+  let ltg = leading_term_or_raise(gp)
+  let lt = (monomial_lcm(ltf.0, ltg.0), fe_from_int(1, fp.domain))
+  let um = term_div_or_raise(lt, ltf, fp.domain)
+  let vm = term_div_or_raise(lt, ltg, fp.domain)
+  let fr = lbp_mul_term(lbp(lbp_sign(f), leading_term_poly(fp), lbp_num(f)), um)
+  let gr = lbp_mul_term(lbp(lbp_sign(g), leading_term_poly(gp), lbp_num(g)), vm)
+  if lbp_cmp(fr, gr) == -1 {
+    (lbp_sign(gr), vm, g, lbp_sign(fr), um, f)
+  } else {
+    (lbp_sign(fr), um, f, lbp_sign(gr), vm, g)
+  }
+}
+
+///|
+/// Compare two F5 critical pairs.
+///
+/// - Does: Orders critical pairs by the leading labeled multiple, matching the
+///   F5 helper comparator.
+/// - Input: Two `CriticalPair` values.
+/// - Returns: `-1` when `c < d`, otherwise `1`.
+/// - Limits: The equality branch is unreachable with the current `lbp_cmp`
+///   semantics, matching the source helper's effective behavior.
+pub fn cp_cmp(c : CriticalPair, d : CriticalPair) -> Int {
+  let zero = zero_like_poly(lbp_polyn(c.2))
+  let c0 = lbp(c.0, zero, lbp_num(c.2))
+  let d0 = lbp(d.0, zero, lbp_num(d.2))
+  let r = lbp_cmp(c0, d0)
+  if r == -1 {
+    return -1
+  }
+  if r == 0 {
+    let c1 = lbp(c.3, zero, lbp_num(c.5))
+    let d1 = lbp(d.3, zero, lbp_num(d.5))
+    if lbp_cmp(c1, d1) == -1 {
+      return -1
+    }
+  }
+  1
+}
+
+///|
+/// Build a sorting key for an F5 critical pair.
+///
+/// - Does: Encodes the two labeled-polynomial keys used by `cp_cmp`.
+/// - Input: One `CriticalPair`.
+/// - Returns: A nested tuple key for the leading and trailing pair sides.
+/// - Limits: As with `lbp_key`, monomial components still need the active term
+///   order for total sorting outside compatibility checks.
+pub fn cp_key(
+  c : CriticalPair,
+) -> (((Int, Monomial), Int), ((Int, Monomial), Int)) {
+  let zero = zero_like_poly(lbp_polyn(c.2))
+  (lbp_key(lbp(c.0, zero, lbp_num(c.2))), lbp_key(lbp(c.3, zero, lbp_num(c.5))))
+}
+
+///|
+/// Compute the labeled S-polynomial of a critical pair.
+///
+/// - Does: Forms `term1*f - term2*g` from the stored critical-pair tuple.
+/// - Input: One `CriticalPair`.
+/// - Returns: A `LabeledPolynomial`.
+/// - Limits: Raises from term multiplication or polynomial subtraction when
+///   the stored pair is incompatible.
+pub fn s_poly(cp : CriticalPair) -> LabeledPolynomial raise PolyError {
+  lbp_sub(lbp_mul_term(cp.2, cp.1), lbp_mul_term(cp.5, cp.4))
+}
+
+///|
+/// Test F5 rewritability or comparability against a labeled basis.
+///
+/// - Does: Returns true when a signature/number is redundant by the F5
+///   comparable or rewritable criteria.
+/// - Input: A `Signature`, insertion number, and labeled-polynomial basis.
+/// - Returns: `Bool`.
+/// - Limits: Raises if a basis polynomial is zero where a leading monomial is
+///   required.
+pub fn is_rewritable_or_comparable(
+  sign : Signature,
+  num : Int,
+  basis : Array[LabeledPolynomial],
+) -> Bool raise PolyError {
+  for h in basis {
+    if sign.1 < lbp_sign(h).1 &&
+      monomial_divides(leading_monomial(lbp_polyn(h)), sign.0) {
+      return true
+    }
+    if sign.1 == lbp_sign(h).1 &&
+      num < lbp_num(h) &&
+      monomial_divides(lbp_sign(h).0, sign.0) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// F5-reduce one labeled polynomial by a labeled basis.
+///
+/// - Does: Repeatedly subtracts admissible labeled multiples whose leading
+///   term divides the current leading term and whose multiplied signature is
+///   smaller.
+/// - Input: One `LabeledPolynomial` and an array of labeled basis elements.
+/// - Returns: The F5-reduced `LabeledPolynomial`.
+/// - Limits: Raises on incompatible rings, zero divisors, or non-exact
+///   leading-term division.
+pub fn f5_reduce(
+  f : LabeledPolynomial,
+  basis : Array[LabeledPolynomial],
+) -> LabeledPolynomial raise PolyError {
+  let mut current = f
+  let order = lbp_polyn(current).order
+  let domain = lbp_polyn(current).domain
+  if lbp_polyn(current).is_zero() {
+    return current
+  }
+  while true {
+    let mut changed = false
+    for h in basis {
+      if lbp_polyn(h).is_zero() {
+        continue
+      }
+      if monomial_divides(
+          leading_monomial(lbp_polyn(h)),
+          leading_monomial(lbp_polyn(current)),
+        ) {
+        let t = term_div_or_raise(
+          leading_term_or_raise(lbp_polyn(current)),
+          leading_term_or_raise(lbp_polyn(h)),
+          domain,
+        )
+        if sig_cmp(sig_mult(lbp_sign(h), t.0), lbp_sign(current), order) < 0 {
+          current = lbp_sub(current, lbp_mul_term(h, t))
+          changed = true
+          break
+        }
+      }
+    }
+    if !changed || lbp_polyn(current).is_zero() {
+      return current
+    }
+  }
+  current
 }
 
 ///|

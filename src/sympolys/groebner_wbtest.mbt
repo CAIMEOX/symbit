@@ -77,6 +77,69 @@ test "groebner wb: f5 labeled polynomial helpers" {
 }
 
 ///|
+test "groebner wb: f5 critical pair and s polynomial" {
+  let b = groebner_wb_builder()
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let f = lbp(
+    sig(monomial_from_array([0, 0]), 1),
+    b.from_expr(x * y - @symcore.int(1)),
+    1,
+  )
+  let g = lbp(
+    sig(monomial_from_array([0, 0]), 2),
+    b.from_expr(x - @symcore.int(1)),
+    2,
+  )
+  let cp = critical_pair(f, g)
+  inspect(cp.1.0.to_array().to_string(), content="[0, 0]")
+  inspect(cp.4.0.to_array().to_string(), content="[0, 1]")
+  let s = s_poly(cp)
+  inspect(s.1.to_string(), content="y - 1")
+  inspect(cp_cmp(cp, cp), content="1")
+  inspect(cp_key(cp).0.1, content="-1")
+}
+
+///|
+test "groebner wb: f5 rewritable comparable and reduce" {
+  let b = groebner_wb_builder()
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let comparable = lbp(sig(monomial_from_array([0, 0]), 2), b.from_expr(x), 2)
+  inspect(
+    is_rewritable_or_comparable(sig(monomial_from_array([1, 0]), 1), 1, [
+      comparable,
+    ]),
+    content="true",
+  )
+  let rewritable = lbp(sig(monomial_from_array([1, 0]), 2), b.from_expr(y), 3)
+  inspect(
+    is_rewritable_or_comparable(sig(monomial_from_array([1, 0]), 2), 1, [
+      rewritable,
+    ]),
+    content="true",
+  )
+  let f = lbp(sig(monomial_from_array([0, 0]), 2), b.from_expr(x + y), 3)
+  let g = lbp(sig(monomial_from_array([0, 0]), 3), b.from_expr(x), 1)
+  let reduced = f5_reduce(f, [g])
+  inspect(reduced.0.0.to_array().to_string(), content="[0, 0]")
+  inspect(reduced.2, content="3")
+  inspect(reduced.1.to_string(), content="y")
+}
+
+///|
+test "groebner wb: f5 reduction preserves non admissible reductions" {
+  let b = PolyBuilder::new(["x", "y", "z"], Domain::QQ)
+  let x = @symcore.Expr::Symbol("x")
+  let f = lbp(sig(monomial_from_array([1, 1, 1]), 4), b.from_expr(x), 3)
+  let g = lbp(sig(monomial_from_array([0, 0, 0]), 2), b.from_expr(x), 2)
+  let reduced = f5_reduce(f, [g])
+  inspect(reduced.0.0.to_array().to_string(), content="[1, 1, 1]")
+  inspect(reduced.2, content="3")
+  inspect(reduced.1.to_string(), content="x")
+}
+
+///|
 test "groebner wb: basis predicates and reduction" {
   let b = groebner_wb_builder()
   let x = @symcore.Expr::Symbol("x")

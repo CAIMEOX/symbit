@@ -85,7 +85,13 @@ pub fn correct_sign(Int, Int, DomainMatrix, Int, Int) -> FieldElem raise PolyErr
 
 pub fn count_roots(Poly, inf? : @symnum.BigRational, sup? : @symnum.BigRational) -> Int raise PolyError
 
+pub fn cp_cmp(((Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int), (Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int)), ((Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int), (Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int))) -> Int
+
+pub fn cp_key(((Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int), (Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int))) -> (((Int, Monomial), Int), ((Int, Monomial), Int))
+
 pub fn create_ma(Int, Int, Array[FieldElem], Array[FieldElem], Int, domain? : Domain) -> DomainMatrix raise PolyError
+
+pub fn critical_pair(((Monomial, Int), Poly, Int), ((Monomial, Int), Poly, Int)) -> ((Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int), (Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int)) raise PolyError
 
 pub fn csolve_prime(Array[Int], Int, e? : Int) -> Array[Int] raise PolyError
 
@@ -1007,6 +1013,8 @@ pub fn exquo(Poly, Poly, auto? : Bool) -> Poly raise PolyError
 
 pub fn extract_fundamental_discriminant(Int) -> (Array[(Int, Int)], Array[(Int, Int)]) raise PolyError
 
+pub fn f5_reduce(((Monomial, Int), Poly, Int), Array[((Monomial, Int), Poly, Int)]) -> ((Monomial, Int), Poly, Int) raise PolyError
+
 pub fn f_polys() -> Array[Poly] raise PolyError
 
 pub fn factor(Poly, modulus? : Int, extension? : Array[String], seed? : Int, gens? : Array[String]) -> Array[(Poly, Int)] raise PolyError
@@ -1283,6 +1291,8 @@ pub fn is_rat(@symnum.BigRational) -> Bool
 
 pub fn is_reduced(Array[Poly]) -> Bool raise PolyError
 
+pub fn is_rewritable_or_comparable((Monomial, Int), Int, Array[((Monomial, Int), Poly, Int)]) -> Bool raise PolyError
+
 pub fn is_smith_normal_form(DomainMatrix) -> Bool raise PolyError
 
 pub fn is_zero_dimensional(Array[Poly], order? : TermOrder) -> Bool raise PolyError
@@ -1472,6 +1482,8 @@ pub fn roots_quadratic(Poly) -> Array[@symcore.Expr] raise PolyError
 pub fn roots_quartic(Poly) -> Array[@symcore.Expr] raise PolyError
 
 pub fn round_two(Poly) -> RoundTwoResult raise PolyError
+
+pub fn s_poly(((Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int), (Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int))) -> ((Monomial, Int), Poly, Int) raise PolyError
 
 pub fn schur_conditions(Poly, gen_index? : Int) -> Array[@symcore.Expr] raise PolyError
 
@@ -2434,6 +2446,8 @@ pub(all) enum TermOrder {
 } derive(Eq)
 
 // Type aliases
+pub type CriticalPair = ((Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int), (Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int))
+
 pub type DomainMatrixAlgebraicEigenvects = Array[(Domain, Poly, Int, DomainMatrix)]
 
 pub type DomainMatrixDOD = Map[Int, Map[Int, FieldElem]]

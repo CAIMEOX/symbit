@@ -179,6 +179,78 @@ test "groebnertools: f5 labeled polynomial helper parity" {
 }
 
 ///|
+test "groebnertools: f5 critical s-polynomial parity" {
+  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let f_expr = x * y - @symcore.int(1)
+  let g_expr = x - @symcore.int(1)
+  let f = @sympolys.lbp(
+    @sympolys.sig(@sympolys.monomial_from_array([0, 0]), 1),
+    b.from_expr(f_expr),
+    1,
+  )
+  let g = @sympolys.lbp(
+    @sympolys.sig(@sympolys.monomial_from_array([0, 0]), 2),
+    b.from_expr(g_expr),
+    2,
+  )
+  assert_eq(
+    f5_lbp_string(@sympolys.s_poly(@sympolys.critical_pair(f, g))),
+    groebnertools_critical_s_poly([0, 0], 1, f_expr, 1, [0, 0], 2, g_expr, 2, gens=[
+      "x", "y",
+    ]),
+  )
+}
+
+///|
+test "groebnertools: f5 rewritable and reduce parity" {
+  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let comparable = @sympolys.lbp(
+    @sympolys.sig(@sympolys.monomial_from_array([0, 0]), 2),
+    b.from_expr(x),
+    2,
+  )
+  assert_eq(
+    @sympolys.is_rewritable_or_comparable(
+      @sympolys.sig(@sympolys.monomial_from_array([1, 0]), 1),
+      1,
+      [comparable],
+    ).to_string(),
+    groebnertools_is_rewritable_or_comparable_one(
+      [1, 0],
+      1,
+      1,
+      [0, 0],
+      2,
+      x,
+      2,
+      gens=["x", "y"],
+    ),
+  )
+  let f_expr = x + y
+  let h_expr = x
+  let f = @sympolys.lbp(
+    @sympolys.sig(@sympolys.monomial_from_array([0, 0]), 2),
+    b.from_expr(f_expr),
+    3,
+  )
+  let h = @sympolys.lbp(
+    @sympolys.sig(@sympolys.monomial_from_array([0, 0]), 3),
+    b.from_expr(h_expr),
+    1,
+  )
+  assert_eq(
+    f5_lbp_string(@sympolys.f5_reduce(f, [h])),
+    groebnertools_f5_reduce_one([0, 0], 2, f_expr, 3, [0, 0], 3, h_expr, 1, gens=[
+      "x", "y",
+    ]),
+  )
+}
+
+///|
 test "groebnertools: grevlex ordering changes basis" {
   let b = PolyBuilder::new(["x", "y"], Domain::QQ).order(TermOrder::Grevlex)
   let x = @symcore.Expr::Symbol("x")
