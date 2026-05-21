@@ -1481,6 +1481,8 @@ pub fn sdm_from_dict(Map[Monomial, FieldElem], TermOrder) -> Array[(Monomial, Fi
 
 pub fn sdm_from_entries(Int, Int, Array[(Int, Int, FieldElem)], Domain) -> SDM raise PolyError
 
+pub fn sdm_groebner(Array[Array[(Monomial, FieldElem)]], TermOrder, Domain, normal_form? : String) -> Array[Array[(Monomial, FieldElem)]] raise PolyError
+
 pub fn sdm_irref(SDM) -> (SDM, Array[Int], Map[Int, Array[Int]]) raise PolyError
 
 pub fn sdm_matmul(SDM, SDM) -> SDM raise PolyError

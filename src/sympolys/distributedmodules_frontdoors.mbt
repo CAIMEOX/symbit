@@ -17,6 +17,9 @@ pub type SdmTerm = (Monomial, FieldElem)
 pub type Sdm = Array[SdmTerm]
 
 ///|
+type SdmCriticalPair = (Int, Int, Int, Monomial)
+
+///|
 fn sdm_tail_monomial(m : Monomial) -> Monomial {
   let exps = m.to_array()
   Monomial::{ exps: exps[1:].to_owned() }
@@ -478,4 +481,198 @@ pub fn sdm_nf_buchberger_reduced(
     }
   }
   h
+}
+
+///|
+fn sdm_pair_key_compare(
+  left : SdmCriticalPair,
+  right : SdmCriticalPair,
+  order : TermOrder,
+) -> Int {
+  if left.2 != right.2 {
+    return left.2 - right.2
+  }
+  let monom_cmp = compare_monomial_order(left.3, right.3, order)
+  if monom_cmp != 0 {
+    return monom_cmp
+  }
+  left.1 - right.1
+}
+
+///|
+fn sdm_pair_sort_desc(
+  pairs : Array[SdmCriticalPair],
+  order : TermOrder,
+) -> Unit {
+  pairs.sort_by((left, right) => -sdm_pair_key_compare(left, right, order))
+}
+
+///|
+fn sdm_sugar(
+  i : Int,
+  j : Int,
+  basis : Array[Sdm],
+  sugars : Array[Int],
+) -> Int raise PolyError {
+  let lm_i = sdm_LM(basis[i])
+  let lm_j = sdm_LM(basis[j])
+  let base = {
+    let a = sugars[i] - sdm_monomial_deg(lm_i)
+    let b = sugars[j] - sdm_monomial_deg(lm_j)
+    if a > b {
+      a
+    } else {
+      b
+    }
+  }
+  base + sdm_monomial_deg(sdm_monomial_lcm(lm_i, lm_j))
+}
+
+///|
+fn sdm_groebner_update(
+  f : Sdm,
+  sugar : Int,
+  pairs : Array[SdmCriticalPair],
+  basis : Array[Sdm],
+  sugars : Array[Int],
+  order : TermOrder,
+) -> Array[SdmCriticalPair] raise PolyError {
+  if f.is_empty() {
+    return pairs
+  }
+  let k = basis.length()
+  basis.push(f)
+  sugars.push(sugar)
+  let lm_f = sdm_LM(f)
+  let lm_f_exps = lm_f.to_array()
+
+  let filtered : Array[SdmCriticalPair] = []
+  for pair in pairs {
+    let (i, j, _, t) = pair
+    if lm_f_exps[0] != t.to_array()[0] {
+      filtered.push(pair)
+      continue
+    }
+    let tik = sdm_monomial_lcm(lm_f, sdm_LM(basis[i]))
+    let tjk = sdm_monomial_lcm(lm_f, sdm_LM(basis[j]))
+    let remove = tik != t &&
+      tjk != t &&
+      sdm_monomial_divides(tik, t) &&
+      sdm_monomial_divides(tjk, t)
+    if !remove {
+      filtered.push(pair)
+    }
+  }
+
+  let new_pairs : Array[SdmCriticalPair] = []
+  for i in 0..<k {
+    let lm_i = sdm_LM(basis[i])
+    if lm_f_exps[0] == lm_i.to_array()[0] {
+      let lcm = sdm_monomial_lcm(lm_f, lm_i)
+      new_pairs.push((i, k, sdm_sugar(i, k, basis, sugars), lcm))
+    }
+  }
+  new_pairs.sort_by((left, right) => sdm_pair_key_compare(left, right, order))
+  let remove_new = Array::make(new_pairs.length(), false)
+  for i in 0..<new_pairs.length() {
+    for j in (i + 1)..<new_pairs.length() {
+      if sdm_monomial_divides(new_pairs[i].3, new_pairs[j].3) {
+        remove_new.set(j, true)
+      }
+    }
+  }
+  for i in 0..<new_pairs.length() {
+    if !remove_new[i] {
+      filtered.push(new_pairs[i])
+    }
+  }
+  sdm_pair_sort_desc(filtered, order)
+  filtered
+}
+
+///|
+fn sdm_apply_normal_form(
+  normal_form : String,
+  f : Sdm,
+  basis : Array[Sdm],
+  order : TermOrder,
+  domain : Domain,
+) -> Sdm raise PolyError {
+  match normal_form {
+    "buchberger" => sdm_nf_buchberger(f, basis, order, domain)
+    "reduced" | "buchberger_reduced" =>
+      sdm_nf_buchberger_reduced(f, basis, order, domain)
+    _ => sdm_nf_mora(f, basis, order, domain)
+  }
+}
+
+///|
+/// Compute a minimal standard basis for sparse distributed modules.
+///
+/// - Does: Runs the sugar-strategy Buchberger loop over SDM generators and
+///   interreduces leading module monomials at the end.
+/// - Input: SDM generators, a term order, a coefficient field, and an optional
+///   normal-form selector (`"mora"`, `"buchberger"`, or `"reduced"`).
+/// - Returns: A minimal standard basis as an array of SDM elements.
+/// - Limits: The extended transition-matrix result is not exposed.
+pub fn sdm_groebner(
+  generators : Array[Sdm],
+  order : TermOrder,
+  domain : Domain,
+  normal_form? : String = "mora",
+) -> Array[Sdm] raise PolyError {
+  let basis : Array[Sdm] = []
+  let sugars : Array[Int] = []
+  let mut pairs : Array[SdmCriticalPair] = []
+  let mut has_nonzero = false
+  for f in generators {
+    if !f.is_empty() {
+      has_nonzero = true
+      pairs = sdm_groebner_update(f, sdm_deg(f), pairs, basis, sugars, order)
+    }
+  }
+  if !has_nonzero {
+    return []
+  }
+  while !pairs.is_empty() {
+    let pair = match pairs.pop() {
+      Some(value) => value
+      None => break
+    }
+    let (i, j, _, _) = pair
+    let sp = sdm_spoly(basis[i], basis[j], order, domain)
+    let h = sdm_apply_normal_form(normal_form, sp, basis, order, domain)
+    pairs = sdm_groebner_update(
+      h,
+      sdm_sugar(i, j, basis, sugars),
+      pairs,
+      basis,
+      sugars,
+      order,
+    )
+  }
+
+  let keep = Array::make(basis.length(), true)
+  for ai in 0..<basis.length() {
+    if !keep[ai] {
+      continue
+    }
+    for bi in 0..<basis.length() {
+      if ai != bi &&
+        keep[bi] &&
+        sdm_monomial_divides(sdm_LM(basis[ai]), sdm_LM(basis[bi])) {
+        keep.set(bi, false)
+      }
+    }
+  }
+  let indexed : Array[(Sdm, Monomial)] = []
+  for i in 0..<basis.length() {
+    if keep[i] {
+      indexed.push((basis[i], sdm_LM(basis[i])))
+    }
+  }
+  indexed.sort_by((left, right) => {
+    -compare_monomial_order(left.1, right.1, order)
+  })
+  indexed.map(item => item.0)
 }

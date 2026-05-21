@@ -29,6 +29,12 @@ fn sdm_wb_string(f : Sdm) -> String {
 }
 
 ///|
+fn sdm_wb_basis_string(basis : Array[Sdm]) -> String {
+  let body = basis.map(sdm_wb_string).join(", ")
+  "[\{body}]"
+}
+
+///|
 test "distributedmodules wb: module monomial helpers" {
   inspect(
     sdm_monomial_mul(sdm_wb_m([1, 1, 0]), sdm_wb_m([1, 3])).to_array(),
@@ -142,5 +148,24 @@ test "distributedmodules wb: spoly and normal forms" {
       sdm_nf_buchberger_reduced(target, reducers, lex(), Domain::QQ),
     ),
     content="[((1, 0, 0), 1)]",
+  )
+}
+
+///|
+test "distributedmodules wb: groebner standard basis" {
+  let generators : Array[Sdm] = [
+    [(sdm_wb_m([1, 2, 0]), sdm_wb_q(1)), (sdm_wb_m([1, 0, 1]), sdm_wb_q(1))],
+    [(sdm_wb_m([1, 1, 0]), sdm_wb_q(1))],
+    [(sdm_wb_m([1, 0, 1]), sdm_wb_q(1))],
+  ]
+  inspect(
+    sdm_wb_basis_string(sdm_groebner(generators, lex(), Domain::QQ)),
+    content="[[((1, 1, 0), 1)], [((1, 0, 1), 1)]]",
+  )
+  inspect(
+    sdm_wb_basis_string(
+      sdm_groebner(generators, lex(), Domain::QQ, normal_form="buchberger"),
+    ),
+    content="[[((1, 1, 0), 1)], [((1, 0, 1), 1)]]",
   )
 }

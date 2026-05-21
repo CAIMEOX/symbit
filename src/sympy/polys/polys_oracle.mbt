@@ -4506,6 +4506,21 @@ fn ensure_domains_module_oracle() -> @py.PyModule raise {
 }
 
 ///|
+fn ensure_distributedmodules_module_oracle() -> @py.PyModule raise {
+  ensure_python()
+  let state = py_gil_ensure()
+  let mod = match @py.pyimport("sympy.polys.distributedmodules") {
+    Some(m) => m
+    None => {
+      py_gil_release(state)
+      fail("sympy-polys-distributedmodules-missing")
+    }
+  }
+  py_gil_release(state)
+  mod
+}
+
+///|
 
 ///|
 fn resolve_callable(mod : @py.PyModule, name : String) -> @py.PyCallable raise {
@@ -6891,6 +6906,17 @@ fn sdm_oracle_order_obj(name : String) -> @py.PyObject raise {
 }
 
 ///|
+fn sdm_oracle_nf_obj(name : String) -> @py.PyObject raise {
+  let dm_mod = ensure_distributedmodules_module_oracle()
+  let function_name = match name {
+    "buchberger" => "sdm_nf_buchberger"
+    "reduced" | "buchberger_reduced" => "sdm_nf_buchberger_reduced"
+    _ => "sdm_nf_mora"
+  }
+  resolve_callable(dm_mod, function_name).obj()
+}
+
+///|
 fn sdm_oracle_call(
   name : String,
   args : Array[OracleArg],
@@ -7106,6 +7132,21 @@ pub fn sdm_nf_buchberger_reduced(
   sdm_oracle_compact("sdm_nf_buchberger_reduced", [
     OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
     OracleArg::PyObj(sdm_oracle_basis_obj(basis, domain)),
+    OracleArg::PyObj(sdm_oracle_order_obj(order)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+}
+
+///|
+pub fn sdm_groebner(
+  generators : Array[Array[(Array[Int], Int)]],
+  normal_form? : String = "mora",
+  order? : String = "lex",
+  domain? : String = "QQ",
+) -> String raise {
+  sdm_oracle_compact("sdm_groebner", [
+    OracleArg::PyObj(sdm_oracle_basis_obj(generators, domain)),
+    OracleArg::PyObj(sdm_oracle_nf_obj(normal_form)),
     OracleArg::PyObj(sdm_oracle_order_obj(order)),
     OracleArg::PyObj(sympy_domain_obj(domain)),
   ])

@@ -25,6 +25,12 @@ fn sdm_port_string(f : @sympolys.Sdm) -> String {
 }
 
 ///|
+fn sdm_port_basis_string(basis : Array[@sympolys.Sdm]) -> String {
+  let body = basis.map(sdm_port_string).join(",")
+  "[\{body}]"
+}
+
+///|
 fn sdm_port_terms(
   terms : Array[(Array[Int], Int)],
 ) -> @sympolys.Sdm raise @sympolys.PolyError {
@@ -234,5 +240,35 @@ test "distributedmodules: spoly and normal form parity" {
       ),
     ),
     sdm_nf_buchberger_reduced(target, reducers),
+  )
+}
+
+///|
+test "distributedmodules: groebner parity" {
+  let generators = [
+    [([1, 2, 0], 1), ([1, 0, 1], 1)],
+    [([1, 1, 0], 1)],
+    [([1, 0, 1], 1)],
+  ]
+  assert_eq(
+    sdm_port_basis_string(
+      @sympolys.sdm_groebner(
+        sdm_port_basis(generators),
+        @sympolys.lex(),
+        @sympolys.Domain::QQ,
+      ),
+    ),
+    sdm_groebner(generators),
+  )
+  assert_eq(
+    sdm_port_basis_string(
+      @sympolys.sdm_groebner(
+        sdm_port_basis(generators),
+        @sympolys.lex(),
+        @sympolys.Domain::QQ,
+        normal_form="buchberger",
+      ),
+    ),
+    sdm_groebner(generators, normal_form="buchberger"),
   )
 }
