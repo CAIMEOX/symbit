@@ -118,6 +118,24 @@ fn fact_int_dup_to_zz(f : Array[FieldElem]) -> Array[FieldElem] raise PolyError 
 }
 
 ///|
+fn fact_int_dup_to_ints(f : Array[FieldElem]) -> Array[Int] raise PolyError {
+  let out : Array[Int] = Array::new()
+  for c in f {
+    out.push(fact_int_fe_to_int(c))
+  }
+  out
+}
+
+///|
+fn fact_int_dup_from_ints(f : Array[Int]) -> Array[FieldElem] raise PolyError {
+  let out : Array[FieldElem] = Array::new()
+  for c in f {
+    out.push(fe_from_int(c, Domain::ZZ))
+  }
+  dup_strip(out)
+}
+
+///|
 fn fact_int_fe_equal(a : FieldElem, b : FieldElem) -> Bool {
   fe_is_zero(fe_sub(a, b) catch { _ => return false })
 }
@@ -215,6 +233,165 @@ pub fn dmp_zz_mignotte_bound(
   let n = dmp_degree_list(f, u).fold(init=0, fn(acc, value) { acc + value })
   let bound = fact_int_floor_sqrt(n + 1) * fact_int_pow(2, n) * a * b
   fe_from_int(bound, Domain::ZZ)
+}
+
+///|
+/// Perform one integer Hensel lifting step.
+///
+/// - Does: Ports SymPy's `dup_zz_hensel_step`, lifting a coprime factor pair
+///   and Bezout pair from modulus `m` to `m**2`.
+/// - Input: Positive modulus `m`, dense integer `f, g, h, s, t`, and
+///   `Domain::ZZ`.
+/// - Returns: `(G, H, S, T)` with dense integer coefficients.
+/// - Limits: Preconditions are the same as the SymPy low-level helper; invalid
+///   coprime/factor data may raise through dense division.
+pub fn dup_zz_hensel_step(
+  m : Int,
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  h : Array[FieldElem],
+  s : Array[FieldElem],
+  t : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  if m <= 0 {
+    raise PolyError::BadModulus
+  }
+  let modulus_elem = fe_from_int(m * m, Domain::ZZ)
+  let e = dup_trunc(dup_sub_mul(f, g, h, domain), modulus_elem, domain)
+  let (q0, r0) = dup_div(dup_mul(s, e, domain), h, domain)
+  let q = dup_trunc(q0, modulus_elem, domain)
+  let r = dup_trunc(r0, modulus_elem, domain)
+  let u = dup_add(dup_mul(t, e, domain), dup_mul(q, g, domain), domain)
+  let big_g = dup_trunc(dup_add(g, u, domain), modulus_elem, domain)
+  let big_h = dup_trunc(dup_add(h, r, domain), modulus_elem, domain)
+  let unity = [fe_from_int(1, Domain::ZZ)]
+  let bezout = dup_add(
+    dup_mul(s, big_g, domain),
+    dup_mul(t, big_h, domain),
+    domain,
+  )
+  let b = dup_trunc(dup_sub(bezout, unity, domain), modulus_elem, domain)
+  let (c0, d0) = dup_div(dup_mul(s, b, domain), big_h, domain)
+  let c = dup_trunc(c0, modulus_elem, domain)
+  let d = dup_trunc(d0, modulus_elem, domain)
+  let u2 = dup_add(dup_mul(t, b, domain), dup_mul(c, big_g, domain), domain)
+  let big_s = dup_trunc(dup_sub(s, d, domain), modulus_elem, domain)
+  let big_t = dup_trunc(dup_sub(t, u2, domain), modulus_elem, domain)
+  (big_g, big_h, big_s, big_t)
+}
+
+///|
+fn fact_int_zz_inv_mod(a : Int, modulus : Int) -> Int raise PolyError {
+  let (s, _, g) = int_gcdex_local(a, modulus)
+  if g != 1 {
+    raise PolyError::DivisionByZero
+  }
+  let mut value = s % modulus
+  if value > modulus / 2 {
+    value = value - modulus
+  } else if value < -(modulus / 2) {
+    value = value + modulus
+  }
+  value
+}
+
+///|
+fn fact_int_zz_hensel_lift_rec(
+  p : Int,
+  f : Array[FieldElem],
+  f_list : Array[Array[FieldElem]],
+  l : Int,
+  domain : Domain,
+) -> Array[Array[FieldElem]] raise PolyError {
+  let r = f_list.length()
+  let lc = dup_LC(f)
+  if r == 0 {
+    return Array::new()
+  }
+  if r == 1 {
+    let modulus = fact_int_pow(p, l)
+    let coeff = fe_from_int(
+      fact_int_zz_inv_mod(fact_int_fe_to_int(lc), modulus),
+      Domain::ZZ,
+    )
+    return [
+      dup_trunc(
+        dup_mul_ground(f, coeff, domain),
+        fe_from_int(modulus, Domain::ZZ),
+        domain,
+      ),
+    ]
+  }
+  let k = r / 2
+  let rounds = densetools_ceil_log2(l)
+  let left_items = f_list[:k].to_owned()
+  let right_items = f_list[k:].to_owned()
+  let mut g_int = gf_from_int_poly([fact_int_fe_to_int(lc)], p)
+  for factor in left_items {
+    g_int = gf_mul(g_int, gf_from_int_poly(fact_int_dup_to_ints(factor), p), p)
+  }
+  let mut h_int = gf_from_int_poly(fact_int_dup_to_ints(right_items[0]), p)
+  for i in 1..<right_items.length() {
+    h_int = gf_mul(
+      h_int,
+      gf_from_int_poly(fact_int_dup_to_ints(right_items[i]), p),
+      p,
+    )
+  }
+  let (s_int0, t_int0, _) = gf_gcdex(g_int, h_int, p)
+  let mut g = fact_int_dup_from_ints(gf_to_int_poly(g_int, p))
+  let mut h = fact_int_dup_from_ints(gf_to_int_poly(h_int, p))
+  let mut s = fact_int_dup_from_ints(gf_to_int_poly(s_int0, p))
+  let mut t = fact_int_dup_from_ints(gf_to_int_poly(t_int0, p))
+  let mut m = p
+  for _ in 0..<rounds {
+    let next = dup_zz_hensel_step(m, f, g, h, s, t, domain)
+    g = next.0
+    h = next.1
+    s = next.2
+    t = next.3
+    m = m * m
+  }
+  let out = fact_int_zz_hensel_lift_rec(p, g, left_items, l, domain)
+  for item in fact_int_zz_hensel_lift_rec(p, h, right_items, l, domain) {
+    out.push(item)
+  }
+  out
+}
+
+///|
+/// Lift modular integer factors to integer factors.
+///
+/// - Does: Ports SymPy's `dup_zz_hensel_lift`, recursively splitting the
+///   factor list and applying `dup_zz_hensel_step`.
+/// - Input: Prime `p`, dense integer polynomial `f`, monic pairwise-coprime
+///   modular factors, positive exponent `l`, and `Domain::ZZ`.
+/// - Returns: Monic dense integer factors congruent to the input factors modulo
+///   `p` and whose product matches `f` modulo `p**l`.
+/// - Limits: Inputs must satisfy SymPy's low-level Hensel preconditions;
+///   arithmetic currently assumes coefficient moduli fit in `Int`.
+pub fn dup_zz_hensel_lift(
+  p : Int,
+  f : Array[FieldElem],
+  f_list : Array[Array[FieldElem]],
+  l : Int,
+  domain : Domain,
+) -> Array[Array[FieldElem]] raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  if p <= 1 || l <= 0 {
+    raise PolyError::BadModulus
+  }
+  let ff = fact_int_dup_to_zz(f)
+  let items = f_list.map(item => fact_int_dup_to_zz(item))
+  fact_int_zz_hensel_lift_rec(p, ff, items, l, domain)
 }
 
 ///|

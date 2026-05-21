@@ -10561,6 +10561,48 @@ pub fn dup_zz_zassenhaus(
 }
 
 ///|
+pub fn dup_zz_hensel_step(
+  m : Int,
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  h : Array[@symnum.BigRational],
+  s : Array[@symnum.BigRational],
+  t : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_zz_hensel_step", [
+    OracleArg::Int(m),
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(g, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(h, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(s, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(t, domain_obj)),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_zz_hensel_lift(
+  p : Int,
+  f : Array[@symnum.BigRational],
+  f_list : Array[Array[@symnum.BigRational]],
+  l : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_zz_hensel_lift", [
+    OracleArg::Int(p),
+    OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_factor_list(f_list, domain_obj)),
+    OracleArg::Int(l),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_zz_factor_sqf(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",

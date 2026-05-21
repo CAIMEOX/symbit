@@ -1039,6 +1039,10 @@ pub fn dup_zz_factor(Array[FieldElem], Domain) -> (FieldElem, Array[(Array[Field
 
 pub fn dup_zz_factor_sqf(Array[FieldElem], Domain) -> (FieldElem, Array[Array[FieldElem]]) raise PolyError
 
+pub fn dup_zz_hensel_lift(Int, Array[FieldElem], Array[Array[FieldElem]], Int, Domain) -> Array[Array[FieldElem]] raise PolyError
+
+pub fn dup_zz_hensel_step(Int, Array[FieldElem], Array[FieldElem], Array[FieldElem], Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError
+
 pub fn dup_zz_heu_gcd(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError
 
 pub fn dup_zz_irreducible_p(Array[FieldElem], Domain) -> Bool raise PolyError

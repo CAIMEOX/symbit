@@ -52,6 +52,10 @@ pub fn dup_isolate_all_roots_sqf(Array[@symnum.BigRational], domain? : String) -
 
 pub fn dup_isolate_complex_roots_sqf(Array[@symnum.BigRational], domain? : String) -> String raise
 
+pub fn dup_zz_hensel_lift(Int, Array[@symnum.BigRational], Array[Array[@symnum.BigRational]], Int, domain? : String) -> String raise
+
+pub fn dup_zz_hensel_step(Int, Array[@symnum.BigRational], Array[@symnum.BigRational], Array[@symnum.BigRational], Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
+
 pub fn dmp_abs(DenseData, Int, domain? : String) -> String raise
 
 pub fn dmp_add(DenseData, DenseData, Int, domain? : String) -> String raise

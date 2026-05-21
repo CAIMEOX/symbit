@@ -155,6 +155,60 @@ test "factortools dense wb: finite field factorization" {
 }
 
 ///|
+fn fact_wb_hensel_step_repr(
+  value : (
+    Array[FieldElem],
+    Array[FieldElem],
+    Array[FieldElem],
+    Array[FieldElem],
+  ),
+) -> String {
+  "(\{fact_wb_dup_repr(value.0)},\{fact_wb_dup_repr(value.1)},\{fact_wb_dup_repr(value.2)},\{fact_wb_dup_repr(value.3)})"
+}
+
+///|
+fn fact_wb_hensel_lift_repr(items : Array[Array[FieldElem]]) -> String {
+  "[" + items.map(fact_wb_dup_repr).join(",") + "]"
+}
+
+///|
+test "factortools dense wb: Hensel step and lift" {
+  let f = fact_wb_dup([1, 18, 77])
+  let g = fact_wb_dup([1, 2])
+  let h = fact_wb_dup([1, 1])
+  inspect(
+    fact_wb_hensel_step_repr(
+      dup_zz_hensel_step(
+        5,
+        f,
+        g,
+        h,
+        fact_wb_dup([1]),
+        fact_wb_dup([-1]),
+        Domain::ZZ,
+      ),
+    ),
+    content="([1,7],[1,11],[6],[-6])",
+  )
+  inspect(
+    fact_wb_hensel_lift_repr(dup_zz_hensel_lift(5, f, [g, h], 2, Domain::ZZ)),
+    content="[[1,7],[1,11]]",
+  )
+  inspect(
+    fact_wb_hensel_lift_repr(
+      dup_zz_hensel_lift(
+        5,
+        fact_wb_dup([1, 14, 45]),
+        [fact_wb_dup([1, 4]), fact_wb_dup([1, 0])],
+        2,
+        Domain::ZZ,
+      ),
+    ),
+    content="[[1,9],[1,5]]",
+  )
+}
+
+///|
 test "factortools dense wb: algebraic extension factorization" {
   let a = @symcore.Expr::Symbol("a")
   let rel = (a ^ @symcore.int(2)) - @symcore.int(2)

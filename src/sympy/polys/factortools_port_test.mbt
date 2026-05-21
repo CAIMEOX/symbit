@@ -89,6 +89,20 @@ fn fact_dense_port_dup_list_repr(items : Array[Array[FieldElem]]) -> String {
 }
 
 ///|
+fn fact_dense_port_hensel_step_repr(
+  value : (
+    Array[FieldElem],
+    Array[FieldElem],
+    Array[FieldElem],
+    Array[FieldElem],
+  ),
+) -> String {
+  remove_spaces(
+    "(\{dup_repr(value.0)},\{dup_repr(value.1)},\{dup_repr(value.2)},\{dup_repr(value.3)})",
+  )
+}
+
+///|
 fn fact_dense_port_dup_list_opt_repr(
   items : Array[Array[FieldElem]]?,
 ) -> String {
@@ -176,6 +190,47 @@ test "factortools: dense factor-list frontdoors parity" {
       @sympolys.dmp_factor_list_include(dmp_f, 0, Domain::ZZ),
     ),
     dmp_factor_list_include(dense_data_of(dmp_f), 0),
+  )
+}
+
+///|
+test "factortools: Hensel frontdoors parity" {
+  let f = [fezz(1), fezz(18), fezz(77)]
+  let g = [fezz(1), fezz(2)]
+  let h = [fezz(1), fezz(1)]
+  let s = [fezz(1)]
+  let t = [fezz(-1)]
+  assert_eq(
+    fact_dense_port_hensel_step_repr(
+      @sympolys.dup_zz_hensel_step(5, f, g, h, s, t, Domain::ZZ),
+    ),
+    dup_zz_hensel_step(
+      5,
+      dup_to_rats(f),
+      dup_to_rats(g),
+      dup_to_rats(h),
+      dup_to_rats(s),
+      dup_to_rats(t),
+    ),
+  )
+  assert_eq(
+    fact_dense_port_dup_list_repr(
+      @sympolys.dup_zz_hensel_lift(5, f, [g, h], 2, Domain::ZZ),
+    ),
+    dup_zz_hensel_lift(5, dup_to_rats(f), [dup_to_rats(g), dup_to_rats(h)], 2),
+  )
+  let f2 = [fezz(1), fezz(14), fezz(45)]
+  let factors2 = [[fezz(1), fezz(4)], [fezz(1), fezz(0)]]
+  assert_eq(
+    fact_dense_port_dup_list_repr(
+      @sympolys.dup_zz_hensel_lift(5, f2, factors2, 2, Domain::ZZ),
+    ),
+    dup_zz_hensel_lift(
+      5,
+      dup_to_rats(f2),
+      [dup_to_rats(factors2[0]), dup_to_rats(factors2[1])],
+      2,
+    ),
   )
 }
 
