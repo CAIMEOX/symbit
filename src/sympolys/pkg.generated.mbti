@@ -1559,6 +1559,8 @@ pub fn round_two(Poly) -> RoundTwoResult raise PolyError
 
 pub fn row2poly(Array[FieldElem], Int, gen? : String, domain? : Domain) -> Poly raise PolyError
 
+pub fn rs_LambertW(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
 pub fn rs_asin(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 
 pub fn rs_asinh(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
@@ -1580,6 +1582,8 @@ pub fn rs_cot(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
 pub fn rs_diff(SeriesElem) -> SeriesElem raise PolyError
 
 pub fn rs_exp(SeriesElem, prec? : Int) -> SeriesElem raise PolyError
+
+pub fn rs_fun(SeriesElem, (SeriesElem, Int) -> SeriesElem raise PolyError, prec? : Int) -> SeriesElem raise PolyError
 
 pub fn rs_hadamard_exp(SeriesElem, inverse? : Bool) -> SeriesElem raise PolyError
 

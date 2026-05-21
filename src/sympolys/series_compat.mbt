@@ -929,6 +929,21 @@ fn series_compose_truncated(
 }
 
 ///|
+fn series_giant_steps(target : Int) -> Array[Int] {
+  let steps : Array[Int] = []
+  if target <= 0 {
+    return steps
+  }
+  let mut step = 2
+  while step < target {
+    steps.push(step)
+    step = step * 2
+  }
+  steps.push(target)
+  steps
+}
+
+///|
 /// Compute the exponential of a series.
 ///
 /// - Does: Expands `exp(self)` in the truncated ring.
@@ -1817,6 +1832,60 @@ pub fn rs_newton(
     ),
   }
   shifted.neg().add_ground(fe_from_int(degree, p.ring.domain))
+}
+
+///|
+/// Apply a series function to a univariate truncated series.
+///
+/// - Does: Mirrors the univariate `rs_fun` path by evaluating the supplied
+///   series function at `p` with the requested precision.
+/// - Input: A `SeriesElem`, a function `(SeriesElem, Int) -> SeriesElem`, and
+///   optional precision.
+/// - Returns: The function expansion as `SeriesElem`.
+/// - Limits: SymPy's multivariate dummy-variable substitution is not modeled;
+///   callers pass functions that already understand the univariate
+///   `SeriesElem` representation.
+pub fn rs_fun(
+  p : SeriesElem,
+  f : (SeriesElem, Int) -> SeriesElem raise PolyError,
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  let n = series_precision_or_default(p, prec)
+  f(series_at_precision(p, n), n)
+}
+
+///|
+/// Expand the principal branch of Lambert W.
+///
+/// - Does: Mirrors SymPy `rs_LambertW` through Newton iteration on
+///   `w*exp(w) - p`.
+/// - Input: A zero-constant `SeriesElem` and optional precision.
+/// - Returns: The truncated Lambert W expansion.
+/// - Limits: Puiseux and multivariate inputs are outside the current
+///   `SeriesElem` representation; non-zero constant terms raise `PolyError`.
+pub fn rs_LambertW(
+  p : SeriesElem,
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  let n = series_precision_or_default(p, prec)
+  if n <= 0 {
+    raise PolyError::BadExponent
+  }
+  let input = series_at_precision(p, n)
+  series_require_zero_constant(input, "LambertW")
+  let one = fe_from_int(1, input.ring.domain)
+  let mut p1 = input.ring.zero()
+  for step in series_giant_steps(n) {
+    p1 = series_at_precision(p1, step)
+    let local_input = series_at_precision(input, step)
+    let e = rs_exp(p1, prec=step)
+    let p2 = rs_mul(e, p1, prec=step).sub(local_input)
+    let p3 = rs_mul(e, p1.add_ground(one), prec=step)
+    let inv = rs_series_inversion(p3, prec=step)
+    let tmp = rs_mul(p2, inv, prec=step)
+    p1 = p1.sub(tmp)
+  }
+  series_at_precision(p1, n)
 }
 
 ///|

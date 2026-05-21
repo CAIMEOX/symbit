@@ -19,6 +19,14 @@ fn ring_series_make(
 }
 
 ///|
+fn ring_series_tan_fun(
+  q : @sympolys.SeriesElem,
+  n : Int,
+) -> @sympolys.SeriesElem raise @sympolys.PolyError {
+  @sympolys.rs_tan(q, prec=n)
+}
+
+///|
 test "ring_series: arithmetic frontdoor parity" {
   let f = ring_series_make([1, 2, 3], 6)
   let g = ring_series_make([0, 1, 1], 6)
@@ -131,6 +139,20 @@ test "ring_series: analytic frontdoor parity" {
   assert_eq(
     ring_series_expr(@sympolys.rs_asinh(x)),
     ring_series_norm(rs_asinh_ring_series([0, 1], 6)),
+  )
+  assert_eq(
+    ring_series_expr(@sympolys.rs_fun(x, ring_series_tan_fun, prec=6)),
+    ring_series_norm(rs_fun_tan_ring_series([0, 1], 6)),
+  )
+  assert_eq(
+    ring_series_expr(@sympolys.rs_LambertW(x, prec=6)),
+    ring_series_norm(rs_LambertW_ring_series([0, 1], 6)),
+  )
+  assert_eq(
+    ring_series_expr(
+      @sympolys.rs_LambertW(ring_series_make([0, 1, 1], 6), prec=6),
+    ),
+    ring_series_norm(rs_LambertW_ring_series([0, 1, 1], 6)),
   )
 }
 

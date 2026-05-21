@@ -12948,6 +12948,35 @@ pub fn rs_asinh_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
 }
 
 ///|
+pub fn rs_LambertW_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  ring_series_unary_prec("rs_LambertW", coeffs, prec)
+}
+
+///|
+pub fn rs_fun_tan_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(coeffs)
+  let ring_series_mod = match @py.pyimport("sympy.polys.ring_series") {
+    Some(mod) => mod
+    None => fail("ring-series-import")
+  }
+  let tan_callable = match ring_series_mod.get_attr("rs_tan", print_err=true) {
+    Some(PyCallable(callable)) => callable
+    Some(other) =>
+      @py.PyCallable::create(objenum_to_obj(other)) catch {
+        _ => fail("ring-series-rs-tan-callable")
+      }
+    None => fail("ring-series-rs-tan-missing")
+  }
+  let res = sympy_call_must("sympy.polys.ring_series.rs_fun", [
+    OracleArg::PyObj(p),
+    OracleArg::PyObj(tan_callable.obj()),
+    OracleArg::PyObj(x_obj),
+    OracleArg::Int(prec),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
 pub fn rs_hadamard_exp_ring_series(
   coeffs : Array[Int],
   inverse? : Bool = false,

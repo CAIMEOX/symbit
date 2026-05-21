@@ -9,6 +9,11 @@ fn rs_wb_coeffs(values : Array[Int]) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
+fn rs_wb_tan_fun(q : SeriesElem, n : Int) -> SeriesElem raise PolyError {
+  rs_tan(q, prec=n)
+}
+
+///|
 test "ring series frontdoors: arithmetic wrappers" {
   let ring = power_series_ring(Domain::QQ, "x", 6)
   let x = ring.gen()
@@ -54,6 +59,18 @@ test "ring series frontdoors: arithmetic wrappers" {
   inspect(
     rs_wb_repr(rs_newton(ring.from_int_coeffs([1, 1]), prec=6)),
     content="[1, -1, 1, -1, 1, -1, 1]",
+  )
+  inspect(
+    rs_wb_repr(rs_fun(x, rs_wb_tan_fun, prec=6)),
+    content="[0, 1, 0, 1/3, 0, 2/15]",
+  )
+  inspect(
+    rs_wb_repr(rs_LambertW(x, prec=6)),
+    content="[0, 1, -1, 3/2, -8/3, 125/24]",
+  )
+  inspect(
+    rs_wb_repr(rs_LambertW(x.add(x.mul(x)), prec=6)),
+    content="[0, 1, 0, -1/2, 5/6, -23/24]",
   )
 }
 
