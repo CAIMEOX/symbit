@@ -473,3 +473,189 @@ pub fn modified_subresultants_amv(
 ) -> Array[Poly] raise PolyError {
   sturm_q(p, q)
 }
+
+///|
+/// Rotate a coefficient row to the right.
+///
+/// - Does: Mirrors SymPy `rotate_r` by moving the last entry to the front
+///   `k` times.
+/// - Input: A coefficient row and a non-negative rotation count.
+/// - Returns: A new rotated row.
+/// - Limits: Negative counts leave the row unchanged, matching Python
+///   `range(k)` behavior in SymPy's helper.
+pub fn rotate_r(row : Array[FieldElem], k : Int) -> Array[FieldElem] {
+  let out = row.copy()
+  if out.is_empty() || k <= 0 {
+    return out
+  }
+  for _ in 0..<k {
+    match out.pop() {
+      Some(last) => out.insert(0, last)
+      None => ()
+    }
+  }
+  out
+}
+
+///|
+/// Rotate a coefficient row to the left using SymPy's helper semantics.
+///
+/// - Does: Mirrors SymPy `rotate_l` by removing the first entry and inserting
+///   it just before the last current entry, repeated `k` times.
+/// - Input: A coefficient row and a non-negative rotation count.
+/// - Returns: A new rotated row.
+/// - Limits: This intentionally follows SymPy's historical helper, which is
+///   not a standard cyclic left rotation.
+pub fn rotate_l(row : Array[FieldElem], k : Int) -> Array[FieldElem] {
+  let out = row.copy()
+  if out.is_empty() || k <= 0 {
+    return out
+  }
+  for _ in 0..<k {
+    let first = out[0]
+    ignore(out.remove(0))
+    let insert_at = if out.is_empty() { 0 } else { out.length() - 1 }
+    out.insert(insert_at, first)
+  }
+  out
+}
+
+///|
+/// Triangularize entries below a pivot in a subresultant helper matrix.
+///
+/// - Does: Mirrors SymPy `pivot(M, i, j)` by clearing column `j` below row
+///   `i` and updating the trailing entries with cross products.
+/// - Input: A `DomainMatrix` and a valid pivot position.
+/// - Returns: A new `DomainMatrix`.
+/// - Limits: Invalid indices raise `PolyError::DomainMismatch`.
+pub fn pivot(
+  matrix : DomainMatrix,
+  i : Int,
+  j : Int,
+) -> DomainMatrix raise PolyError {
+  if i < 0 || j < 0 || i >= matrix.rows || j >= matrix.cols {
+    raise PolyError::DomainMismatch
+  }
+  let ma = clone_dense_rows(matrix.to_list())
+  let pivot_val = ma[i][j]
+  let zero = subres_matrix_zero(matrix.domain)
+  for r in (i + 1)..<matrix.rows {
+    let row_val = ma[r][j]
+    if fe_is_zero(row_val) {
+      continue
+    }
+    for c in (j + 1)..<matrix.cols {
+      let left = fe_mul(pivot_val, ma[r][c])
+      let right = fe_mul(ma[i][c], row_val)
+      ma[r].set(c, fe_sub(left, right))
+    }
+    ma[r].set(j, zero)
+  }
+  DomainMatrix::from_list(ma, matrix.domain)
+}
+
+///|
+/// Convert a matrix row slice into a univariate polynomial.
+///
+/// - Does: Mirrors SymPy `row2poly` by dropping leading zero entries and
+///   reading the next `deg + 1` coefficients as descending powers.
+/// - Input: A coefficient row, target degree, generator name, and coefficient
+///   domain.
+/// - Returns: A univariate `Poly`.
+/// - Limits: Negative degrees raise `PolyError::BadExponent`; all-zero rows
+///   raise `PolyError::NonPolynomial`.
+pub fn row2poly(
+  row : Array[FieldElem],
+  deg : Int,
+  gen? : String = "x",
+  domain? : Domain = Domain::ZZ,
+) -> Poly raise PolyError {
+  if deg < 0 {
+    raise PolyError::BadExponent
+  }
+  let mut start = 0
+  while start < row.length() && fe_is_zero(row[start]) {
+    start = start + 1
+  }
+  if start >= row.length() {
+    raise PolyError::NonPolynomial
+  }
+  let coeffs : Array[FieldElem] = []
+  let zero = subres_matrix_zero(domain)
+  for offset in 0..<=deg {
+    let idx = start + offset
+    if idx < row.length() {
+      coeffs.push(row[idx])
+    } else {
+      coeffs.push(zero)
+    }
+  }
+  poly_from_dense_desc(coeffs, gen, domain)
+}
+
+///|
+/// Find the degree represented by the last row of a small matrix.
+///
+/// - Does: Mirrors SymPy `find_degree` by scanning the last row from left to
+///   right and decrementing from `deg_f` for every leading zero.
+/// - Input: A `DomainMatrix` and the dividend degree.
+/// - Returns: `Some(degree)` or `None` for an all-zero/empty last row.
+/// - Limits: Matrix decoding errors propagate as `PolyError`.
+pub fn find_degree(matrix : DomainMatrix, deg_f : Int) -> Int? raise PolyError {
+  if matrix.rows == 0 {
+    return None
+  }
+  let dense = matrix.to_list()
+  let last = dense[matrix.rows - 1]
+  let mut degree = deg_f
+  for c in 0..<matrix.cols {
+    if fe_is_zero(last[c]) {
+      degree = degree - 1
+    } else if degree < 0 {
+      return Some(0)
+    } else {
+      return Some(degree)
+    }
+  }
+  None
+}
+
+///|
+/// Fill the trailing rotated rows after a Van Vleck gcd insertion.
+///
+/// - Does: Mirrors SymPy `final_touches` by copying row `r - 1` into following
+///   rows, rotated right by increasing offsets until the last term is aligned.
+/// - Input: A `DomainMatrix`, row pointer `r`, and degree of the last inserted
+///   polynomial.
+/// - Returns: A new `DomainMatrix`.
+/// - Limits: Invalid row pointers raise `PolyError::DomainMismatch`; an all-zero
+///   source row is returned unchanged.
+pub fn final_touches(
+  matrix : DomainMatrix,
+  r : Int,
+  deg_g : Int,
+) -> DomainMatrix raise PolyError {
+  if r <= 0 || r > matrix.rows {
+    raise PolyError::DomainMismatch
+  }
+  let rows = clone_dense_rows(matrix.to_list())
+  let source = rows[r - 1]
+  let mut first_nonzero = -1
+  for c in 0..<matrix.cols {
+    if !fe_is_zero(source[c]) {
+      first_nonzero = c
+      break
+    }
+  }
+  if first_nonzero < 0 {
+    return DomainMatrix::from_list(rows, matrix.domain)
+  }
+  let mut missing_rows = matrix.cols - (first_nonzero + deg_g + 1)
+  let mut offset = 0
+  while missing_rows != 0 && r + offset < matrix.rows {
+    rows.set(r + offset, rotate_r(source, offset + 1))
+    offset = offset + 1
+    missing_rows = missing_rows - 1
+  }
+  DomainMatrix::from_list(rows, matrix.domain)
+}

@@ -1081,6 +1081,10 @@ pub fn field_isomorphic(Domain, Domain) -> Bool
 
 pub fn field_isomorphism(@symcore.Expr, @symcore.Expr) -> Array[@symnum.BigRational]?
 
+pub fn final_touches(DomainMatrix, Int, Int) -> DomainMatrix raise PolyError
+
+pub fn find_degree(DomainMatrix, Int) -> Int? raise PolyError
+
 pub fn finite_field_domain(Int) -> Domain raise PolyError
 
 pub fn from_dense(Array[FieldElem], Array[String], Domain) -> Poly raise PolyError
@@ -1417,6 +1421,8 @@ pub fn pdiv(Poly, Poly) -> (Poly, Poly) raise PolyError
 
 pub fn pexquo(Poly, Poly) -> Poly raise PolyError
 
+pub fn pivot(DomainMatrix, Int, Int) -> DomainMatrix raise PolyError
+
 pub fn poly(@symcore.Expr, gens? : Array[String], domain? : Domain, modulus? : Int, gaussian? : Bool, extension? : Array[String], order? : TermOrder) -> Poly raise PolyError
 
 pub fn poly_from_expr(@symcore.Expr, gens? : Array[String], domain? : Domain, modulus? : Int, gaussian? : Bool, extension? : Array[String], order? : TermOrder) -> Poly raise PolyError
@@ -1511,7 +1517,13 @@ pub fn roots_quadratic(Poly) -> Array[@symcore.Expr] raise PolyError
 
 pub fn roots_quartic(Poly) -> Array[@symcore.Expr] raise PolyError
 
+pub fn rotate_l(Array[FieldElem], Int) -> Array[FieldElem]
+
+pub fn rotate_r(Array[FieldElem], Int) -> Array[FieldElem]
+
 pub fn round_two(Poly) -> RoundTwoResult raise PolyError
+
+pub fn row2poly(Array[FieldElem], Int, gen? : String, domain? : Domain) -> Poly raise PolyError
 
 pub fn s_poly(((Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int), (Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int))) -> ((Monomial, Int), Poly, Int) raise PolyError
 

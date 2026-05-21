@@ -11906,6 +11906,16 @@ fn subres_oracle_row_matrix(values : Array[Int]) -> @py.PyObject raise {
 }
 
 ///|
+fn subres_oracle_matrix(values : Array[Array[Int]]) -> @py.PyObject raise {
+  let rows : Array[@py.PyObject] = []
+  for row in values {
+    rows.push(py_list_from_ints(row))
+  }
+  let py_rows = py_list_from_objects(rows).obj()
+  objenum_to_obj(sympy_call_must("sympy.Matrix", [OracleArg::PyObj(py_rows)]))
+}
+
+///|
 pub fn create_ma_qq_zz(
   deg_f : Int,
   deg_g : Int,
@@ -11919,6 +11929,80 @@ pub fn create_ma_qq_zz(
     OracleArg::PyObj(subres_oracle_row_matrix(row1)),
     OracleArg::PyObj(subres_oracle_row_matrix(row2)),
     OracleArg::Int(col_num),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn rotate_r_qq_zz(row : Array[Int], k : Int) -> String raise {
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.rotate_r", [
+    OracleArg::PyObj(py_list_from_ints(row)),
+    OracleArg::Int(k),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn rotate_l_qq_zz(row : Array[Int], k : Int) -> String raise {
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.rotate_l", [
+    OracleArg::PyObj(py_list_from_ints(row)),
+    OracleArg::Int(k),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn row2poly_qq_zz(
+  row : Array[Int],
+  deg : Int,
+  x? : String = "x",
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.row2poly", [
+    OracleArg::PyObj(py_list_from_ints(row)),
+    OracleArg::Int(deg),
+    OracleArg::PyObj(sympy_symbol_obj(x)),
+  ])
+  let as_expr = resolve_method_callable(objenum_to_obj(res), "as_expr")
+  let expr = py_call_noargs(as_expr)
+  py_str_enum(expr)
+}
+
+///|
+pub fn pivot_qq_zz(
+  matrix : Array[Array[Int]],
+  i : Int,
+  j : Int,
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.pivot", [
+    OracleArg::PyObj(subres_oracle_matrix(matrix)),
+    OracleArg::Int(i),
+    OracleArg::Int(j),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn find_degree_qq_zz(
+  matrix : Array[Array[Int]],
+  deg_f : Int,
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.find_degree", [
+    OracleArg::PyObj(subres_oracle_matrix(matrix)),
+    OracleArg::Int(deg_f),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn final_touches_qq_zz(
+  matrix : Array[Array[Int]],
+  r : Int,
+  deg_g : Int,
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.final_touches", [
+    OracleArg::PyObj(subres_oracle_matrix(matrix)),
+    OracleArg::Int(r),
+    OracleArg::Int(deg_g),
   ])
   py_str_enum(res)
 }

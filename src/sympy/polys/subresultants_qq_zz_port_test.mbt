@@ -10,6 +10,30 @@ fn subres_port_fe_row(
 }
 
 ///|
+fn subres_port_matrix(
+  values : Array[Array[Int]],
+) -> @sympolys.DomainMatrix raise @sympolys.PolyError {
+  let rows : Array[Array[@sympolys.FieldElem]] = []
+  for row in values {
+    rows.push(subres_port_fe_row(row))
+  }
+  @sympolys.DomainMatrix::from_list(rows, @sympolys.Domain::ZZ)
+}
+
+///|
+fn subres_port_row_string(row : Array[@sympolys.FieldElem]) -> String {
+  "[" + row.map(v => v.to_string()).join(", ") + "]"
+}
+
+///|
+fn subres_port_option_string(value : Int?) -> String {
+  match value {
+    Some(v) => v.to_string()
+    None => "None"
+  }
+}
+
+///|
 test "subresultants_qq_zz: res parity" {
   let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
@@ -221,6 +245,39 @@ test "subresultants_qq_zz: matrix helper parity" {
       6,
     ).to_matrix_string(),
     create_ma_qq_zz(4, 2, [1, 2, 3, 4, 5, 6], [6, 5, 4, 3, 2, 1], 6),
+  )
+  assert_eq(
+    subres_port_row_string(
+      @sympolys.rotate_r(subres_port_fe_row([1, 2, 3, 4]), 2),
+    ),
+    rotate_r_qq_zz([1, 2, 3, 4], 2),
+  )
+  assert_eq(
+    subres_port_row_string(
+      @sympolys.rotate_l(subres_port_fe_row([1, 2, 3, 4]), 2),
+    ),
+    rotate_l_qq_zz([1, 2, 3, 4], 2),
+  )
+  assert_eq(
+    @sympolys.row2poly(subres_port_fe_row([0, 0, 1, 2, 3, 0]), 2).to_string(),
+    row2poly_qq_zz([0, 0, 1, 2, 3, 0], 2, x="x"),
+  )
+  let pivot_input = [[2, 1, 3], [4, 5, 6], [0, 7, 8]]
+  assert_eq(
+    @sympolys.pivot(subres_port_matrix(pivot_input), 0, 0).to_matrix_string(),
+    pivot_qq_zz(pivot_input, 0, 0),
+  )
+  let degree_input = [[1, 2, 3, 0], [0, 0, 4, 5]]
+  assert_eq(
+    subres_port_option_string(
+      @sympolys.find_degree(subres_port_matrix(degree_input), 3),
+    ),
+    find_degree_qq_zz(degree_input, 3),
+  )
+  let touch_input = [[0, 0, 0, 0], [0, 1, 2, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+  assert_eq(
+    @sympolys.final_touches(subres_port_matrix(touch_input), 2, 1).to_matrix_string(),
+    final_touches_qq_zz(touch_input, 2, 1),
   )
 }
 

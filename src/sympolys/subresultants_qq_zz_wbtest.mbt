@@ -9,6 +9,20 @@ fn sr_wb_list_repr(polys : Array[Poly]) -> String {
 }
 
 ///|
+fn sr_wb_fe_row(values : Array[Int]) -> Array[FieldElem] raise PolyError {
+  values.map(v => fe_from_int(v, Domain::ZZ))
+}
+
+///|
+fn sr_wb_matrix(values : Array[Array[Int]]) -> DomainMatrix raise PolyError {
+  let rows : Array[Array[FieldElem]] = []
+  for row in values {
+    rows.push(sr_wb_fe_row(row))
+  }
+  DomainMatrix::from_list(rows, Domain::ZZ)
+}
+
+///|
 test "subresultants qq zz wb: sign and matrix output helpers" {
   let x = @symcore.Expr::Symbol("x")
   let p = sr_wb_poly((x ^ @symcore.int(3)) - @symcore.int(2) * x)
@@ -105,5 +119,37 @@ test "subresultants qq zz wb: public algorithm aliases" {
   inspect(
     sr_wb_list_repr(modified_subresultants_amv(p, q)),
     content="x**3 - 2*x + 1 | x**2 - 1 | x - 1",
+  )
+}
+
+///|
+test "subresultants qq zz wb: row and matrix helper frontdoors" {
+  inspect(
+    rotate_r(sr_wb_fe_row([1, 2, 3, 4]), 2).map(v => v.to_string()).join(", "),
+    content="3, 4, 1, 2",
+  )
+  inspect(
+    rotate_l(sr_wb_fe_row([1, 2, 3, 4]), 2).map(v => v.to_string()).join(", "),
+    content="3, 1, 2, 4",
+  )
+  inspect(
+    row2poly(sr_wb_fe_row([0, 0, 1, 2, 3, 0]), 2).to_string(),
+    content="x**2 + 2*x + 3",
+  )
+  inspect(
+    pivot(sr_wb_matrix([[2, 1, 3], [4, 5, 6], [0, 7, 8]]), 0, 0).to_matrix_string(),
+    content="Matrix([[2, 1, 3], [0, 6, 0], [0, 7, 8]])",
+  )
+  inspect(
+    find_degree(sr_wb_matrix([[1, 2, 3, 0], [0, 0, 4, 5]]), 3),
+    content="Some(1)",
+  )
+  inspect(
+    final_touches(
+      sr_wb_matrix([[0, 0, 0, 0], [0, 1, 2, 0], [0, 0, 0, 0], [0, 0, 0, 0]]),
+      2,
+      1,
+    ).to_matrix_string(),
+    content="Matrix([[0, 0, 0, 0], [0, 1, 2, 0], [0, 0, 1, 2], [0, 0, 0, 0]])",
   )
 }
