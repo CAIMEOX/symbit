@@ -52,6 +52,15 @@ fn fact_int_pow(base : Int, exp : Int) -> Int {
 }
 
 ///|
+fn fact_int_factorial(n : Int) -> Int {
+  let mut result = 1
+  for i in 2..<=n {
+    result = result * i
+  }
+  result
+}
+
+///|
 fn fact_int_binomial(n : Int, k : Int) -> Int {
   if k < 0 || k > n {
     return 0
@@ -168,6 +177,50 @@ fn fact_int_dup_equal(
     }
   }
   true
+}
+
+///|
+fn fact_int_dmp_to_coeffs_with_zeros(
+  f : DensePoly,
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  match f {
+    DensePoly::Coef(c) => dup_strip([c])
+    DensePoly::Poly(items) => {
+      if items.is_empty() {
+        return Array::new()
+      }
+      let zero = fe_from_int(0, domain)
+      let coeffs : Array[FieldElem] = Array::new()
+      for item in items {
+        match item {
+          DensePoly::Coef(c) => coeffs.push(c)
+          DensePoly::Poly(_) =>
+            if dmp_zero_p(item, 0) {
+              coeffs.push(zero)
+            } else {
+              raise PolyError::NotUnivariate
+            }
+        }
+      }
+      dup_strip(coeffs)
+    }
+  }
+}
+
+///|
+fn fact_int_dmp_quo_ground_with_zeros(
+  f : DensePoly,
+  c : FieldElem,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if u == 0 {
+    return dmp_from_coeffs(
+      dup_quo_ground(fact_int_dmp_to_coeffs_with_zeros(f, domain), c, domain),
+    )
+  }
+  dmp_quo_ground(f, c, u, domain)
 }
 
 ///|
@@ -510,37 +563,104 @@ pub fn dup_zz_diophantine(
 ///|
 /// Solve a dense Wang/EEZ Diophantine equation.
 ///
-/// - Does: Ports the `A == []` branch of SymPy's `dmp_zz_diophantine`, which
-///   is the branch used by the public univariate helper.
+/// - Does: Ports SymPy's `dmp_zz_diophantine`, including the recursive
+///   evaluation-chain branch used by Wang/EEZ lifting.
 /// - Input: Dense factors, dense coefficient polynomial `c`, evaluation list
 ///   `A`, degree bound `d`, prime modulus `p`, level `u`, and `Domain::ZZ`.
 /// - Returns: Dense solution polynomials.
-/// - Limits: Non-empty `A` is the multivariate lifting path and currently
-///   raises `PolyError::DomainMismatch`.
+/// - Limits: Supports exact integer dense inputs. Invalid factor/evaluation
+///   shapes propagate dense arithmetic `PolyError`s.
 pub fn dmp_zz_diophantine(
   factors : Array[DensePoly],
   c : DensePoly,
   eval_points : Array[FieldElem],
-  _d : Int,
+  d : Int,
   p : Int,
-  _u : Int,
+  u : Int,
   domain : Domain,
 ) -> Array[DensePoly] raise PolyError {
   match domain {
     Domain::ZZ => ()
     _ => raise PolyError::DomainMismatch
   }
-  if !eval_points.is_empty() {
-    raise PolyError::DomainMismatch
+  if eval_points.is_empty() {
+    let dup_factors = factors.map(f => {
+      fact_int_dmp_to_coeffs_with_zeros(f, domain)
+    })
+    let solutions = fact_int_dup_zz_diophantine_coeff(
+      dup_factors,
+      fact_int_dmp_to_coeffs_with_zeros(c, domain),
+      p,
+      domain,
+    )
+    return solutions.map(s => dmp_from_coeffs(s))
   }
-  let dup_factors = factors.map(f => dmp_to_coeffs(f))
-  let solutions = fact_int_dup_zz_diophantine_coeff(
-    dup_factors,
-    dmp_to_coeffs(c),
-    p,
-    domain,
+  let n = eval_points.length()
+  let p_elem = fe_from_int(p, domain)
+  let e = dmp_expand(factors, u, domain)
+  let a = eval_points[n - 1]
+  let rest = eval_points[:n - 1].to_owned()
+  let quotients : Array[DensePoly] = Array::new()
+  let evaluated_factors : Array[DensePoly] = Array::new()
+  for factor in factors {
+    quotients.push(dmp_quo(e, factor, u, domain))
+    evaluated_factors.push(dmp_eval_in(factor, a, n, u, domain))
+  }
+  let evaluated_c = dmp_eval_in(c, a, n, u, domain)
+  let v = u - 1
+  let base_solutions = dmp_zz_diophantine(
+    evaluated_factors, evaluated_c, rest, d, p, v, domain,
   )
-  solutions.map(s => dmp_from_coeffs(s))
+  let solutions : Array[DensePoly] = Array::new()
+  for solution in base_solutions {
+    solutions.push(dmp_raise(solution, 1, v, domain))
+  }
+  let mut remainder = c
+  for i in 0..<solutions.length() {
+    remainder = dmp_sub_mul(remainder, solutions[i], quotients[i], u, domain)
+  }
+  remainder = dmp_ground_trunc(remainder, p_elem, u, domain)
+  let one = fe_from_int(1, domain)
+  let m = dmp_nest(dmp_from_coeffs([one, fe_neg(a)]), n, domain)
+  let mut multiplier = dmp_one(n, domain)
+  for k in 0..<d {
+    if dmp_zero_p(remainder, u) {
+      break
+    }
+    multiplier = dmp_mul(multiplier, m, u, domain)
+    let mut coeff = dmp_diff_eval_in(remainder, k + 1, a, n, u, domain)
+    if !dmp_zero_p(coeff, v) {
+      coeff = fact_int_dmp_quo_ground_with_zeros(
+        coeff,
+        fe_from_int(fact_int_factorial(k + 1), domain),
+        v,
+        domain,
+      )
+      let correction_base = dmp_zz_diophantine(
+        evaluated_factors, coeff, rest, d, p, v, domain,
+      )
+      let corrections : Array[DensePoly] = Array::new()
+      for correction in correction_base {
+        corrections.push(
+          dmp_mul(dmp_raise(correction, 1, v, domain), multiplier, u, domain),
+        )
+      }
+      for i in 0..<solutions.length() {
+        solutions.set(i, dmp_add(solutions[i], corrections[i], u, domain))
+      }
+      for i in 0..<corrections.length() {
+        remainder = dmp_sub_mul(
+          remainder,
+          corrections[i],
+          quotients[i],
+          u,
+          domain,
+        )
+      }
+      remainder = dmp_ground_trunc(remainder, p_elem, u, domain)
+    }
+  }
+  solutions.map(solution => dmp_ground_trunc(solution, p_elem, u, domain))
 }
 
 ///|
@@ -558,6 +678,64 @@ fn fact_int_dense_ground_value(
       } else {
         raise PolyError::NotUnivariate
       }
+  }
+}
+
+///|
+fn fact_int_dense_equal(a : DensePoly, b : DensePoly) -> Bool {
+  match (a, b) {
+    (DensePoly::Coef(ca), DensePoly::Coef(cb)) => fact_int_fe_equal(ca, cb)
+    (DensePoly::Poly(aa), DensePoly::Poly(bb)) => {
+      if aa.length() != bb.length() {
+        return false
+      }
+      for i in 0..<aa.length() {
+        if !fact_int_dense_equal(aa[i], bb[i]) {
+          return false
+        }
+      }
+      true
+    }
+    _ => fact_int_dense_zero_equiv(a) && fact_int_dense_zero_equiv(b)
+  }
+}
+
+///|
+fn fact_int_dense_zero_equiv(f : DensePoly) -> Bool {
+  match f {
+    DensePoly::Coef(c) => fe_is_zero(c)
+    DensePoly::Poly(items) =>
+      items.is_empty() || items.all(fact_int_dense_zero_equiv)
+  }
+}
+
+///|
+fn fact_int_dmp_tail(f : DensePoly) -> DensePoly {
+  match f {
+    DensePoly::Coef(_) => DensePoly::Poly(Array::new())
+    DensePoly::Poly(items) =>
+      if items.length() <= 1 {
+        DensePoly::Poly(Array::new())
+      } else {
+        DensePoly::Poly(items[1:].to_owned())
+      }
+  }
+}
+
+///|
+fn fact_int_dmp_prepend(
+  head : DensePoly,
+  tail : DensePoly,
+) -> DensePoly raise PolyError {
+  match tail {
+    DensePoly::Poly(items) => {
+      let out : Array[DensePoly] = [head]
+      for item in items {
+        out.push(item)
+      }
+      dmp_strip(DensePoly::Poly(out))
+    }
+    DensePoly::Coef(c) => dmp_strip(DensePoly::Poly([head, DensePoly::Coef(c)]))
   }
 }
 
@@ -778,6 +956,137 @@ pub fn dmp_zz_wang_lead_coeffs(
     domain,
   )
   (dmp_mul_ground(f, scale, u, domain), scaled_factors, scaled_coeffs)
+}
+
+///|
+/// Parallel Hensel lifting for Wang/EEZ factorization.
+///
+/// - Does: Ports SymPy's `dmp_zz_wang_hensel_lifting`, lifting corrected
+///   univariate factors through the supplied evaluation point chain.
+/// - Input: Scaled recursive dense polynomial `f`, univariate factors `H`,
+///   leading coefficient polynomials, evaluation points `A`, prime modulus
+///   `p`, level `u`, and `Domain::ZZ`.
+/// - Returns: Lifted recursive dense factors whose product is `f`.
+/// - Limits: Invalid/extraneous factor configurations raise
+///   `PolyError::BadGenerator("wang-hensel")`.
+pub fn dmp_zz_wang_hensel_lifting(
+  f : DensePoly,
+  factors : Array[Array[FieldElem]],
+  lead_coeffs : Array[DensePoly],
+  eval_points : Array[FieldElem],
+  p : Int,
+  u : Int,
+  domain : Domain,
+) -> Array[DensePoly] raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  let p_elem = fe_from_int(p, domain)
+  let partials : Array[DensePoly] = [f]
+  let n = eval_points.length()
+  let v = u - 1
+  let factor_polys = factors.map(factor => dmp_from_coeffs(factor))
+  if lead_coeffs.length() != factor_polys.length() {
+    raise PolyError::BadGenerator("wang-hensel")
+  }
+  if n > 1 {
+    let mut idx = 0
+    while idx < n - 1 {
+      let a = eval_points[n - 1 - idx]
+      let s = dmp_eval_in(partials[0], a, n - idx, u - idx, domain)
+      partials.insert(0, dmp_ground_trunc(s, p_elem, v - idx, domain))
+      idx = idx + 1
+    }
+  }
+  let degrees = dmp_degree_list(f, u)
+  let mut d = 0
+  for i in 1..<degrees.length() {
+    if degrees[i] > d {
+      d = degrees[i]
+    }
+  }
+  for idx in 0..<n {
+    let j = idx + 2
+    let s = partials[idx]
+    let a = eval_points[idx]
+    let w = j - 1
+    let fixed_factors = factor_polys.copy()
+    let left_points = eval_points[:j - 2].to_owned()
+    let right_points = if j - 1 < eval_points.length() {
+      eval_points[j - 1:].to_owned()
+    } else {
+      []
+    }
+    for i in 0..<factor_polys.length() {
+      let lc = dmp_ground_trunc(
+        dmp_eval_tail(lead_coeffs[i], right_points, v, domain),
+        p_elem,
+        w - 1,
+        domain,
+      )
+      let tail = dmp_raise(fact_int_dmp_tail(factor_polys[i]), 1, w - 1, domain)
+      factor_polys.set(i, fact_int_dmp_prepend(lc, tail))
+    }
+    let m = dmp_nest(
+      dmp_from_coeffs([fe_from_int(1, domain), fe_neg(a)]),
+      w,
+      domain,
+    )
+    let mut multiplier = dmp_one(w, domain)
+    let mut remainder = dmp_sub(
+      s,
+      dmp_expand(factor_polys, w, domain),
+      w,
+      domain,
+    )
+    let dj = dmp_degree_in(s, w, w)
+    for k in 0..<dj {
+      if dmp_zero_p(remainder, w) {
+        break
+      }
+      multiplier = dmp_mul(multiplier, m, w, domain)
+      let mut coeff = dmp_diff_eval_in(remainder, k + 1, a, w, w, domain)
+      if !dmp_zero_p(coeff, w - 1) {
+        coeff = fact_int_dmp_quo_ground_with_zeros(
+          coeff,
+          fe_from_int(fact_int_factorial(k + 1), domain),
+          w - 1,
+          domain,
+        )
+        let corrections = dmp_zz_diophantine(
+          fixed_factors,
+          coeff,
+          left_points,
+          d,
+          p,
+          w - 1,
+          domain,
+        )
+        for i in 0..<factor_polys.length() {
+          let lifted = dmp_raise(corrections[i], 1, w - 1, domain)
+          let updated = dmp_add_mul(
+            factor_polys[i],
+            lifted,
+            multiplier,
+            w,
+            domain,
+          )
+          factor_polys.set(i, dmp_ground_trunc(updated, p_elem, w, domain))
+        }
+        remainder = dmp_ground_trunc(
+          dmp_sub(s, dmp_expand(factor_polys, w, domain), w, domain),
+          p_elem,
+          w,
+          domain,
+        )
+      }
+    }
+  }
+  if !fact_int_dense_equal(dmp_expand(factor_polys, u, domain), f) {
+    raise PolyError::BadGenerator("wang-hensel")
+  }
+  factor_polys
 }
 
 ///|

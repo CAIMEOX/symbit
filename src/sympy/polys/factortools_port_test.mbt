@@ -472,6 +472,58 @@ test "factortools: Diophantine helper frontdoors parity" {
       1,
     ),
   )
+  let chain0 = @sympolys.dense_poly([poly_int([1]), poly_int([2])])
+  let chain1 = @sympolys.dense_poly([poly_int([1, 1]), poly_int([1])])
+  let chain_c = @sympolys.dense_poly([poly_int([1]), poly_int([0])])
+  assert_eq(
+    fact_dense_port_dmp_list_repr(
+      @sympolys.dmp_zz_diophantine(
+        [chain0, chain1],
+        chain_c,
+        [fezz(2)],
+        1,
+        5,
+        1,
+        Domain::ZZ,
+      ),
+    ),
+    dmp_zz_diophantine(
+      [dense_data_of(chain0), dense_data_of(chain1)],
+      dense_data_of(chain_c),
+      [br_int(2)],
+      1,
+      5,
+      1,
+    ),
+  )
+  let wang_f = @sympolys.dense_poly([
+    poly_int([1, 1]),
+    poly_int([2, 3]),
+    poly_int([2]),
+  ])
+  let wang_factors = [[fezz(1), fezz(2)], [fezz(3), fezz(1)]]
+  let lead_coeffs = [poly_int([1]), poly_int([1, 1])]
+  assert_eq(
+    fact_dense_port_dmp_list_repr(
+      @sympolys.dmp_zz_wang_hensel_lifting(
+        wang_f,
+        wang_factors,
+        lead_coeffs,
+        [fezz(2)],
+        5,
+        1,
+        Domain::ZZ,
+      ),
+    ),
+    dmp_zz_wang_hensel_lifting(
+      dense_data_of(wang_f),
+      [dup_to_rats(wang_factors[0]), dup_to_rats(wang_factors[1])],
+      [dense_data_of(lead_coeffs[0]), dense_data_of(lead_coeffs[1])],
+      [br_int(2)],
+      5,
+      1,
+    ),
+  )
 }
 
 ///|

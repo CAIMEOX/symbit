@@ -454,16 +454,58 @@ test "factortools dense wb: Diophantine helpers" {
     "[" + dmp_res.map(fact_wb_dmp_repr).join(",") + "]",
     content="[[2],[]]",
   )
-  let bad : Result[Array[DensePoly], PolyError] = try? dmp_zz_diophantine(
-    [fact_wb_poly([1, 1]), fact_wb_poly([1, -1])],
-    fact_wb_poly([1]),
-    [fact_wb_fe(0)],
-    0,
+  let chain_factors = [
+    DensePoly::Poly([fact_wb_poly([1]), fact_wb_poly([2])]),
+    DensePoly::Poly([fact_wb_poly([1, 1]), fact_wb_poly([1])]),
+  ]
+  let chain_c = DensePoly::Poly([fact_wb_poly([1]), fact_wb_poly([0])])
+  let chain_res = dmp_zz_diophantine(
+    chain_factors,
+    chain_c,
+    [fact_wb_fe(2)],
+    1,
     5,
     1,
     Domain::ZZ,
   )
+  inspect(
+    "[" + chain_res.map(fact_wb_dmp_repr).join(",") + "]",
+    content="[[[]],[[1],[]]]",
+  )
+  let bad : Result[Array[DensePoly], PolyError] = try? dmp_zz_diophantine(
+    [fact_wb_poly([1, 1]), fact_wb_poly([1, -1])],
+    fact_wb_poly([1]),
+    [],
+    0,
+    5,
+    0,
+    Domain::QQ,
+  )
   assert_true(bad is Err(PolyError::DomainMismatch))
+}
+
+///|
+test "factortools dense wb: Wang Hensel lifting" {
+  let f = DensePoly::Poly([
+    fact_wb_poly([1, 1]),
+    fact_wb_poly([2, 3]),
+    fact_wb_poly([2]),
+  ])
+  let factors = [fact_wb_dup([1, 2]), fact_wb_dup([3, 1])]
+  let lead_coeffs = [fact_wb_poly([1]), fact_wb_poly([1, 1])]
+  let lifted = dmp_zz_wang_hensel_lifting(
+    f,
+    factors,
+    lead_coeffs,
+    [fact_wb_fe(2)],
+    5,
+    1,
+    Domain::ZZ,
+  )
+  inspect(
+    "[" + lifted.map(fact_wb_dmp_repr).join(",") + "]",
+    content="[[[1],[2]],[[1,1],[1]]]",
+  )
 }
 
 ///|
