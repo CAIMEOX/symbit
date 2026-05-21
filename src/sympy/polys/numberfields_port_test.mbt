@@ -326,6 +326,34 @@ test "numberfields: subfield field_isomorphism coefficient parity" {
 }
 
 ///|
+test "numberfields: field_isomorphism algorithm alias parity" {
+  let half = @symcore.rational_from_ints(1, 2)
+  let sqrt2 = @symcore.int(2) ^ half
+  let sqrt8 = @symcore.int(8) ^ half
+  let sqrt3 = @symcore.int(3) ^ half
+
+  let oracle = numberfield_field_isomorphism_coeffs("sqrt(2)", "sqrt(8)").replace_all(
+    old=" ",
+    new="",
+  )
+  assert_eq(
+    nf_coeffs_norm(@sympolys.field_isomorphism_pslq(sqrt2, sqrt8)),
+    oracle,
+  )
+  assert_eq(
+    nf_coeffs_norm(@sympolys.field_isomorphism_factor(sqrt2, sqrt8)),
+    oracle,
+  )
+  assert_eq(
+    nf_coeffs_norm(@sympolys.field_isomorphism_pslq(sqrt2, sqrt3)),
+    numberfield_field_isomorphism_coeffs("sqrt(2)", "sqrt(3)").replace_all(
+      old=" ",
+      new="",
+    ),
+  )
+}
+
+///|
 test "numberfields: is_isomorphism_possible basic sanity" {
   let half = @symcore.rational_from_ints(1, 2)
   let sqrt2 = @symcore.int(2) ^ half

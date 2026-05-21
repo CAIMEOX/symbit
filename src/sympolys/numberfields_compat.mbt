@@ -1831,6 +1831,40 @@ pub fn field_isomorphism(a : Expr, b : Expr) -> Array[@symnum.BigRational]? {
 }
 
 ///|
+/// Construct a field embedding through the PSLQ-named front door.
+///
+/// - Does: Mirrors SymPy's `field_isomorphism_pslq` public entry point for the
+///   exact radical families supported by this package.
+/// - Input: Two algebraic `Expr` values.
+/// - Returns: Coefficients of a polynomial in `b` representing `a`, or `None`.
+/// - Limits: The current implementation reuses the exact
+///   `field_isomorphism` compatibility layer; it does not run a numeric PSLQ
+///   search for general algebraic numbers.
+pub fn field_isomorphism_pslq(
+  a : Expr,
+  b : Expr,
+) -> Array[@symnum.BigRational]? {
+  field_isomorphism(a, b)
+}
+
+///|
+/// Construct a field embedding through the factorization-named front door.
+///
+/// - Does: Mirrors SymPy's `field_isomorphism_factor` public entry point for
+///   the exact radical families supported by this package.
+/// - Input: Two algebraic `Expr` values.
+/// - Returns: Coefficients of a polynomial in `b` representing `a`, or `None`.
+/// - Limits: The current implementation reuses the exact
+///   `field_isomorphism` compatibility layer; general linear-factor extraction
+///   over algebraic extensions is not yet modeled.
+pub fn field_isomorphism_factor(
+  a : Expr,
+  b : Expr,
+) -> Array[@symnum.BigRational]? {
+  field_isomorphism(a, b)
+}
+
+///|
 fn affine_embedding_coeffs(
   aff_a : AffineRadical,
   aff_b : AffineRadical,

@@ -1101,6 +1101,10 @@ pub fn field_isomorphic(Domain, Domain) -> Bool
 
 pub fn field_isomorphism(@symcore.Expr, @symcore.Expr) -> Array[@symnum.BigRational]?
 
+pub fn field_isomorphism_factor(@symcore.Expr, @symcore.Expr) -> Array[@symnum.BigRational]?
+
+pub fn field_isomorphism_pslq(@symcore.Expr, @symcore.Expr) -> Array[@symnum.BigRational]?
+
 pub fn final_touches(DomainMatrix, Int, Int) -> DomainMatrix raise PolyError
 
 pub fn find_degree(DomainMatrix, Int) -> Int? raise PolyError

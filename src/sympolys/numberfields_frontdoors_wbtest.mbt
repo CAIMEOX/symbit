@@ -32,6 +32,14 @@ fn nf_wb_coeff_search_text(values : Array[Array[Int]]) -> String {
 }
 
 ///|
+fn nf_wb_rat_coeffs_text(value : Array[@symnum.BigRational]?) -> String {
+  match value {
+    Some(items) => "[" + items.map(c => c.to_string()).join(",") + "]"
+    None => "None"
+  }
+}
+
+///|
 test "numberfields utilities: rational predicates and numerator denominator" {
   let half = @symnum.BigRational::from_ints(1, 2) catch { _ => fail("half") }
   let neg_int = @symnum.BigRational::from_ints(-6, 3) catch {
@@ -91,6 +99,31 @@ test "numberfields frontdoors: isolate rational and real radicals" {
   inspect(nf_wb_iv_text(isolate(sqrt2)), content="(1, 2)")
   inspect(nf_wb_iv_text(isolate(int(0) - sqrt2)), content="(-2, -1)")
   inspect(nf_wb_iv_text(isolate(int(2) * sqrt2)), content="(2, 3)")
+}
+
+///|
+test "numberfields frontdoors: field isomorphism algorithm aliases" {
+  let half = @symcore.rational_from_ints(1, 2)
+  let sqrt2 = int(2) ^ half
+  let sqrt8 = int(8) ^ half
+  let sqrt3 = int(3) ^ half
+
+  inspect(
+    nf_wb_rat_coeffs_text(field_isomorphism_pslq(sqrt2, sqrt8)),
+    content="[1/2,0]",
+  )
+  inspect(
+    nf_wb_rat_coeffs_text(field_isomorphism_factor(sqrt2, sqrt8)),
+    content="[1/2,0]",
+  )
+  inspect(
+    nf_wb_rat_coeffs_text(field_isomorphism_pslq(sqrt2, sqrt3)),
+    content="None",
+  )
+  inspect(
+    nf_wb_rat_coeffs_text(field_isomorphism_factor(sqrt2, sqrt3)),
+    content="None",
+  )
 }
 
 ///|
