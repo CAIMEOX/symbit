@@ -11,6 +11,18 @@ fn fact_int_abs(n : Int) -> Int {
 }
 
 ///|
+fn fact_int_gcd(a0 : Int, b0 : Int) -> Int {
+  let mut a = fact_int_abs(a0)
+  let mut b = fact_int_abs(b0)
+  while b != 0 {
+    let r = a % b
+    a = b
+    b = r
+  }
+  a
+}
+
+///|
 fn fact_int_floor_sqrt(n : Int) -> Int {
   if n <= 0 {
     return 0
@@ -392,6 +404,54 @@ pub fn dup_zz_hensel_lift(
   let ff = fact_int_dup_to_zz(f)
   let items = f_list.map(item => fact_int_dup_to_zz(item))
   fact_int_zz_hensel_lift_rec(p, ff, items, l, domain)
+}
+
+///|
+/// Compute valid divisors for Wang/EEZ factorization.
+///
+/// - Does: Ports SymPy's `dmp_zz_wang_non_divisors`, filtering evaluation
+///   contents that would introduce non-divisors.
+/// - Input: Integer values `E`, integer content scalars `cs` and `ct`, and
+///   `Domain::ZZ`.
+/// - Returns: `Some(divisors)` when all checks pass, or `None` when SymPy
+///   would return `None`.
+/// - Limits: Coefficients currently fit in `Int`; this is the low-level Wang
+///   helper, not the full multivariate factorization front door.
+pub fn dmp_zz_wang_non_divisors(
+  values : Array[FieldElem],
+  cs : FieldElem,
+  ct : FieldElem,
+  domain : Domain,
+) -> Array[FieldElem]? raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  let result : Array[Int] = [fact_int_fe_to_int(cs) * fact_int_fe_to_int(ct)]
+  for q0 in values {
+    let mut q = fact_int_abs(fact_int_fe_to_int(q0))
+    let mut i = result.length()
+    while i > 0 {
+      i = i - 1
+      let mut r = result[i]
+      while r != 1 {
+        r = fact_int_gcd(r, q)
+        if r == 0 {
+          break
+        }
+        q = q / r
+      }
+      if q == 1 {
+        return None
+      }
+    }
+    result.push(q)
+  }
+  let out : Array[FieldElem] = Array::new()
+  for i in 1..<result.length() {
+    out.push(fe_from_int(result[i], Domain::ZZ))
+  }
+  Some(out)
 }
 
 ///|

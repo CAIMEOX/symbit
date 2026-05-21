@@ -113,6 +113,14 @@ fn fact_dense_port_dup_list_opt_repr(
 }
 
 ///|
+fn fact_dense_port_dup_opt_repr(items : Array[FieldElem]?) -> String {
+  match items {
+    Some(values) => dup_repr(values)
+    None => "None"
+  }
+}
+
+///|
 fn fact_dense_port_dup_factor_sqf_repr(
   value : (FieldElem, Array[Array[FieldElem]]),
 ) -> String {
@@ -231,6 +239,24 @@ test "factortools: Hensel frontdoors parity" {
       [dup_to_rats(factors2[0]), dup_to_rats(factors2[1])],
       2,
     ),
+  )
+}
+
+///|
+test "factortools: Wang helper frontdoors parity" {
+  let pass_e = [fezz(2), fezz(3), fezz(5)]
+  assert_eq(
+    fact_dense_port_dup_opt_repr(
+      @sympolys.dmp_zz_wang_non_divisors(pass_e, fezz(1), fezz(1), Domain::ZZ),
+    ),
+    dmp_zz_wang_non_divisors(dup_to_rats(pass_e), br_int(1), br_int(1)),
+  )
+  let fail_e = [fezz(2), fezz(4)]
+  assert_eq(
+    fact_dense_port_dup_opt_repr(
+      @sympolys.dmp_zz_wang_non_divisors(fail_e, fezz(1), fezz(1), Domain::ZZ),
+    ),
+    dmp_zz_wang_non_divisors(dup_to_rats(fail_e), br_int(1), br_int(1)),
   )
 }
 

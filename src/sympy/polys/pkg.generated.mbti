@@ -144,6 +144,8 @@ pub fn dmp_sub_mul(DenseData, DenseData, DenseData, Int, domain? : String) -> St
 
 pub fn dmp_sub_term(DenseData, DenseData, Int, Int, domain? : String) -> String raise
 
+pub fn dmp_zz_wang_non_divisors(Array[@symnum.BigRational], @symnum.BigRational, @symnum.BigRational, domain? : String) -> String raise
+
 pub fn dmp_terms_gcd(DenseData, Int, domain? : String) -> String raise
 
 pub fn domain_abs_expr(String, String) -> String raise

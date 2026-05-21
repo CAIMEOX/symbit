@@ -10603,6 +10603,26 @@ pub fn dup_zz_hensel_lift(
 }
 
 ///|
+pub fn dmp_zz_wang_non_divisors(
+  values : Array[@symnum.BigRational],
+  cs : @symnum.BigRational,
+  ct : @symnum.BigRational,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must(
+    "sympy.polys.factortools.dmp_zz_wang_non_divisors",
+    [
+      OracleArg::PyObj(fact_dense_py_list_from_rationals(values, domain_obj)),
+      OracleArg::PyObj(fact_dense_domain_elem_from_obj(cs, domain_obj)),
+      OracleArg::PyObj(fact_dense_domain_elem_from_obj(ct, domain_obj)),
+      OracleArg::PyObj(domain_obj),
+    ],
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_zz_factor_sqf(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",

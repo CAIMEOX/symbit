@@ -172,6 +172,14 @@ fn fact_wb_hensel_lift_repr(items : Array[Array[FieldElem]]) -> String {
 }
 
 ///|
+fn fact_wb_dup_opt_repr(items : Array[FieldElem]?) -> String {
+  match items {
+    Some(values) => fact_wb_dup_repr(values)
+    None => "None"
+  }
+}
+
+///|
 test "factortools dense wb: Hensel step and lift" {
   let f = fact_wb_dup([1, 18, 77])
   let g = fact_wb_dup([1, 2])
@@ -205,6 +213,32 @@ test "factortools dense wb: Hensel step and lift" {
       ),
     ),
     content="[[1,9],[1,5]]",
+  )
+}
+
+///|
+test "factortools dense wb: Wang non divisors" {
+  inspect(
+    fact_wb_dup_opt_repr(
+      dmp_zz_wang_non_divisors(
+        fact_wb_dup([2, 3, 5]),
+        fact_wb_fe(1),
+        fact_wb_fe(1),
+        Domain::ZZ,
+      ),
+    ),
+    content="[2,3,5]",
+  )
+  inspect(
+    fact_wb_dup_opt_repr(
+      dmp_zz_wang_non_divisors(
+        fact_wb_dup([2, 4]),
+        fact_wb_fe(1),
+        fact_wb_fe(1),
+        Domain::ZZ,
+      ),
+    ),
+    content="None",
   )
 }
 

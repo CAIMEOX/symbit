@@ -449,6 +449,8 @@ pub fn dmp_zz_mignotte_bound(DensePoly, Int, Domain) -> FieldElem raise PolyErro
 
 pub fn dmp_zz_modular_resultant(DensePoly, DensePoly, Int, Int, Domain) -> DensePoly raise PolyError
 
+pub fn dmp_zz_wang_non_divisors(Array[FieldElem], FieldElem, FieldElem, Domain) -> Array[FieldElem]? raise PolyError
+
 pub fn dom_eigenvects(DomainMatrix, l? : String) -> (Array[(Domain, FieldElem, Int, DomainMatrix)], Array[(Domain, Poly, Int, DomainMatrix)]) raise PolyError
 
 pub fn dom_eigenvects_to_sympy(Array[(Domain, FieldElem, Int, DomainMatrix)], Array[(Domain, Poly, Int, DomainMatrix)]) -> Array[(@symcore.Expr, Int, Array[Array[@symcore.Expr]])] raise PolyError
