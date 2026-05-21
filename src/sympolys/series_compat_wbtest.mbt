@@ -14,6 +14,15 @@ fn rs_wb_tan_fun(q : SeriesElem, n : Int) -> SeriesElem raise PolyError {
 }
 
 ///|
+fn rs_wb_mul_fun(
+  p : SeriesElem,
+  q : SeriesElem,
+  n : Int,
+) -> SeriesElem raise PolyError {
+  rs_mul(p, q, prec=n)
+}
+
+///|
 test "ring series frontdoors: pprint" {
   inspect(
     series_pprint(rs_wb_coeffs([1, 2, 3]), prec=5),
@@ -81,6 +90,16 @@ test "ring series frontdoors: arithmetic wrappers" {
   inspect(
     rs_wb_repr(rs_fun(x, rs_wb_tan_fun, prec=6)),
     content="[0, 1, 0, 1/3, 0, 2/15]",
+  )
+  inspect(
+    rs_wb_repr(rs_puiseux(rs_wb_tan_fun, x, prec=6)),
+    content="[0, 1, 0, 1/3, 0, 2/15]",
+  )
+  inspect(
+    rs_wb_repr(
+      rs_puiseux2(rs_wb_mul_fun, x, ring.from_int_coeffs([1, 1]), prec=5),
+    ),
+    content="[0, 1, 1]",
   )
   inspect(
     rs_wb_repr(rs_LambertW(x, prec=6)),

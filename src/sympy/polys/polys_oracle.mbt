@@ -13494,23 +13494,65 @@ pub fn rs_LambertW_ring_series(coeffs : Array[Int], prec : Int) -> String raise 
 }
 
 ///|
-pub fn rs_fun_tan_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
-  let (_, x_obj, p) = ring_series_oracle_poly(coeffs)
+fn ring_series_callable_obj(name : String) -> @py.PyObject raise {
   let ring_series_mod = match @py.pyimport("sympy.polys.ring_series") {
     Some(mod) => mod
     None => fail("ring-series-import")
   }
-  let tan_callable = match ring_series_mod.get_attr("rs_tan", print_err=true) {
+  let callable : @py.PyCallable = match
+    ring_series_mod.get_attr(name, print_err=true) {
     Some(PyCallable(callable)) => callable
     Some(other) =>
       @py.PyCallable::create(objenum_to_obj(other)) catch {
-        _ => fail("ring-series-rs-tan-callable")
+        _ => fail("ring-series-\{name}-callable")
       }
-    None => fail("ring-series-rs-tan-missing")
+    None => fail("ring-series-\{name}-missing")
   }
+  callable.obj()
+}
+
+///|
+pub fn rs_fun_tan_ring_series(coeffs : Array[Int], prec : Int) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(coeffs)
+  let tan_callable = ring_series_callable_obj("rs_tan")
   let res = sympy_call_must("sympy.polys.ring_series.rs_fun", [
     OracleArg::PyObj(p),
-    OracleArg::PyObj(tan_callable.obj()),
+    OracleArg::PyObj(tan_callable),
+    OracleArg::PyObj(x_obj),
+    OracleArg::Int(prec),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn rs_puiseux_tan_ring_series(
+  coeffs : Array[Int],
+  prec : Int,
+) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(coeffs)
+  let tan_callable = ring_series_callable_obj("rs_tan")
+  let res = sympy_call_must("sympy.polys.ring_series.rs_puiseux", [
+    OracleArg::PyObj(tan_callable),
+    OracleArg::PyObj(p),
+    OracleArg::PyObj(x_obj),
+    OracleArg::Int(prec),
+  ])
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn rs_puiseux2_mul_ring_series(
+  left : Array[Int],
+  right : Array[Int],
+  prec : Int,
+) -> String raise {
+  let (_, x_obj, p) = ring_series_oracle_poly(left)
+  let (_, _, q) = ring_series_oracle_poly(right)
+  let mul_callable = ring_series_callable_obj("rs_mul")
+  let res = sympy_call_must("sympy.polys.ring_series.rs_puiseux2", [
+    OracleArg::PyObj(mul_callable),
+    OracleArg::PyObj(p),
+    OracleArg::PyObj(q),
     OracleArg::PyObj(x_obj),
     OracleArg::Int(prec),
   ])

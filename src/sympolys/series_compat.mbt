@@ -1974,6 +1974,46 @@ pub fn rs_fun(
 }
 
 ///|
+/// Evaluate a regular-series function through the Puiseux adapter.
+///
+/// - Does: Mirrors SymPy `rs_puiseux` for inputs whose exponents are already
+///   integral by calling `f(p, prec)`.
+/// - Input: A unary series function, one `SeriesElem`, and optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: The current `SeriesElem` model cannot store fractional exponents,
+///   so the denominator-lifting branch of SymPy's Puiseux adapter is not
+///   represented yet.
+pub fn rs_puiseux(
+  f : (SeriesElem, Int) -> SeriesElem raise PolyError,
+  p : SeriesElem,
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  let n = series_precision_or_default(p, prec)
+  f(series_at_precision(p, n), n)
+}
+
+///|
+/// Evaluate a binary regular-series function through the Puiseux adapter.
+///
+/// - Does: Mirrors SymPy `rs_puiseux2` for regular integer-exponent inputs by
+///   calling `f(p, q, prec)`.
+/// - Input: A binary series function, two compatible `SeriesElem` values, and
+///   optional precision.
+/// - Returns: A `SeriesElem`.
+/// - Limits: Fractional-exponent normalization is not represented until the
+///   series model grows Puiseux exponents.
+pub fn rs_puiseux2(
+  f : (SeriesElem, SeriesElem, Int) -> SeriesElem raise PolyError,
+  p : SeriesElem,
+  q : SeriesElem,
+  prec? : Int = -1,
+) -> SeriesElem raise PolyError {
+  let n = series_precision_or_default(p, prec)
+  let (pp, qq) = series_pair_at_precision(p, q, n)
+  f(pp, qq, n)
+}
+
+///|
 /// Expand the principal branch of Lambert W.
 ///
 /// - Does: Mirrors SymPy `rs_LambertW` through Newton iteration on

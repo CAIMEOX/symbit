@@ -27,6 +27,15 @@ fn ring_series_tan_fun(
 }
 
 ///|
+fn ring_series_mul_fun(
+  p : @sympolys.SeriesElem,
+  q : @sympolys.SeriesElem,
+  n : Int,
+) -> @sympolys.SeriesElem raise @sympolys.PolyError {
+  @sympolys.rs_mul(p, q, prec=n)
+}
+
+///|
 fn ring_series_coeffs(values : Array[Int]) -> Array[@sympolys.FieldElem] raise {
   values.map(v => @sympolys.fe_from_int(v, @sympolys.Domain::QQ))
 }
@@ -205,6 +214,21 @@ test "ring_series: analytic frontdoor parity" {
   assert_eq(
     ring_series_expr(@sympolys.rs_fun(x, ring_series_tan_fun, prec=6)),
     ring_series_norm(rs_fun_tan_ring_series([0, 1], 6)),
+  )
+  assert_eq(
+    ring_series_expr(@sympolys.rs_puiseux(ring_series_tan_fun, x, prec=6)),
+    ring_series_norm(rs_puiseux_tan_ring_series([0, 1], 6)),
+  )
+  assert_eq(
+    ring_series_expr(
+      @sympolys.rs_puiseux2(
+        ring_series_mul_fun,
+        x,
+        ring_series_make([1, 1], 6),
+        prec=6,
+      ),
+    ),
+    ring_series_norm(rs_puiseux2_mul_ring_series([0, 1], [1, 1], 6)),
   )
   assert_eq(
     ring_series_expr(@sympolys.rs_LambertW(x, prec=6)),
