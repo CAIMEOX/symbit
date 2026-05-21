@@ -7038,6 +7038,52 @@ pub fn sdm_from_dict(
 }
 
 ///|
+pub fn sdm_from_vector(
+  exprs : Array[String],
+  gens : Array[String],
+  order? : String = "lex",
+  domain? : String = "QQ",
+) -> String raise {
+  let kwargs : Map[String, OracleArg] = {}
+  kwargs["gens"] = OracleArg::PyObj(
+    py_list_from_objects(sympy_symbols_from_names(gens)).obj(),
+  )
+  let res = sympy_call_must(
+    "sympy.polys.distributedmodules.sdm_from_vector",
+    [
+      OracleArg::PyObj(
+        py_list_from_objects(sympy_exprs_from_texts(exprs)).obj(),
+      ),
+      OracleArg::PyObj(sdm_oracle_order_obj(order)),
+      OracleArg::PyObj(sympy_domain_obj(domain)),
+    ],
+    kwargs~,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn sdm_to_vector(
+  f : Array[(Array[Int], Int)],
+  gens : Array[String],
+  n? : Int = 0,
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(sdm_oracle_terms_obj(f, domain)),
+    OracleArg::PyObj(py_list_from_objects(sympy_symbols_from_names(gens)).obj()),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ]
+  if n != 0 {
+    args.push(OracleArg::Int(n))
+  }
+  let res = sympy_call_must(
+    "sympy.polys.distributedmodules.sdm_to_vector", args,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn sdm_add(
   f : Array[(Array[Int], Int)],
   g : Array[(Array[Int], Int)],

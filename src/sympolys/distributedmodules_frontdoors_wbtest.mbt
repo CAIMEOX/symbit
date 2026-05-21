@@ -35,6 +35,12 @@ fn sdm_wb_basis_string(basis : Array[Sdm]) -> String {
 }
 
 ///|
+fn sdm_wb_expr_list_string(values : Array[Expr]) -> String {
+  let body = values.map(value => @symprint.pretty_string(value)).join(", ")
+  "[\{body}]"
+}
+
+///|
 test "distributedmodules wb: module monomial helpers" {
   inspect(
     sdm_monomial_mul(sdm_wb_m([1, 1, 0]), sdm_wb_m([1, 3])).to_array(),
@@ -96,6 +102,38 @@ test "distributedmodules wb: add and multiply term" {
     content="[((2, 1, 2), 8), ((1, 2, 1), 6)]",
   )
   inspect(sdm_wb_string(sdm_zero()), content="[]")
+}
+
+///|
+test "distributedmodules wb: vector conversion" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let z = Expr::Symbol("z")
+  let f = sdm_from_vector(
+    [(x ^ int(2)) + (y ^ int(2)), int(2) * z],
+    ["x", "y", "z"],
+    lex(),
+    Domain::QQ,
+  )
+  inspect(
+    sdm_wb_string(f),
+    content="[((1, 0, 0, 1), 2), ((0, 2, 0, 0), 1), ((0, 0, 2, 0), 1)]",
+  )
+  inspect(
+    sdm_wb_expr_list_string(sdm_to_vector(f, ["x", "y", "z"], Domain::QQ)),
+    content="[x**2 + y**2, 2*z]",
+  )
+  inspect(
+    sdm_wb_expr_list_string(
+      sdm_to_vector(
+        [(sdm_wb_m([1, 0, 1]), sdm_wb_q(2))],
+        ["x", "y"],
+        Domain::QQ,
+        n=3,
+      ),
+    ),
+    content="[0, 2*y, 0]",
+  )
 }
 
 ///|

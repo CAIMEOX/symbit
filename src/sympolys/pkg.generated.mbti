@@ -1481,6 +1481,8 @@ pub fn sdm_from_dict(Map[Monomial, FieldElem], TermOrder) -> Array[(Monomial, Fi
 
 pub fn sdm_from_entries(Int, Int, Array[(Int, Int, FieldElem)], Domain) -> SDM raise PolyError
 
+pub fn sdm_from_vector(Array[@symcore.Expr], Array[String], TermOrder, Domain) -> Array[(Monomial, FieldElem)] raise PolyError
+
 pub fn sdm_groebner(Array[Array[(Monomial, FieldElem)]], TermOrder, Domain, normal_form? : String) -> Array[Array[(Monomial, FieldElem)]] raise PolyError
 
 pub fn sdm_irref(SDM) -> (SDM, Array[Int], Map[Int, Array[Int]]) raise PolyError
@@ -1524,6 +1526,8 @@ pub fn sdm_spoly(Array[(Monomial, FieldElem)], Array[(Monomial, FieldElem)], Ter
 pub fn sdm_strip(Array[(Monomial, FieldElem)]) -> Array[(Monomial, FieldElem)]
 
 pub fn sdm_to_dict(Array[(Monomial, FieldElem)]) -> Map[Monomial, FieldElem]
+
+pub fn sdm_to_vector(Array[(Monomial, FieldElem)], Array[String], Domain, n? : Int) -> Array[@symcore.Expr] raise PolyError
 
 pub fn sdm_transpose(SDM) -> SDM raise PolyError
 

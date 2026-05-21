@@ -312,6 +312,87 @@ pub fn sdm_ecart(f : Sdm) -> Int raise PolyError {
 }
 
 ///|
+/// Create an SDM element from a vector of polynomial expressions.
+///
+/// - Does: Converts each vector component into sparse polynomial terms and
+///   prefixes every monomial with its component index.
+/// - Input: A vector of expressions, an explicit generator list, a module
+///   monomial order, and a coefficient domain.
+/// - Returns: A sorted sparse distributed module element.
+/// - Limits: Generator inference and Python-style keyword forwarding are not
+///   exposed; pass generators explicitly.
+pub fn sdm_from_vector(
+  vec : Array[Expr],
+  gens : Array[String],
+  order : TermOrder,
+  domain : Domain,
+) -> Sdm raise PolyError {
+  let dict : Map[Monomial, FieldElem] = Map([])
+  for i in 0..<vec.length() {
+    let poly = Poly::from_expr(vec[i], gens, domain)
+    for monom, coeff in poly.coeffs {
+      dict[sdm_module_monomial(i, monom)] = coeff
+    }
+  }
+  sdm_from_dict(dict, order)
+}
+
+///|
+/// Convert an SDM element into a vector of polynomial expressions.
+///
+/// - Does: Groups module terms by their leading component index and drops that
+///   index before rebuilding each polynomial expression.
+/// - Input: An SDM element, generator names, coefficient domain, and optional
+///   module rank `n`.
+/// - Returns: An array of symbolic expressions.
+/// - Limits: When `n` is omitted, the rank is the number of nonzero component
+///   groups, matching the source front door; malformed module monomials raise
+///   `PolyError::DomainMismatch`.
+pub fn sdm_to_vector(
+  f : Sdm,
+  gens : Array[String],
+  domain : Domain,
+  n? : Int = 0,
+) -> Array[Expr] raise PolyError {
+  let groups : Map[Int, Map[Monomial, FieldElem]] = Map([])
+  for monom, coeff in sdm_to_dict(f) {
+    let exps = monom.to_array()
+    if exps.is_empty() {
+      raise PolyError::DomainMismatch
+    }
+    let tail = sdm_tail_monomial(monom)
+    if tail.to_array().length() != gens.length() {
+      raise PolyError::DomainMismatch
+    }
+    let basis = exps[0]
+    let coeffs = match groups.get(basis) {
+      Some(existing) => existing
+      None => {
+        let created : Map[Monomial, FieldElem] = Map([])
+        groups[basis] = created
+        created
+      }
+    }
+    add_term(coeffs, tail, coeff, domain)
+  }
+  let rank = if n == 0 { groups.length() } else { n }
+  if rank <= 0 {
+    return []
+  }
+  let out : Array[Expr] = []
+  for i in 0..<rank {
+    match groups.get(i) {
+      Some(coeffs) =>
+        out.push(
+          Poly::{ coeffs, gens, domain, order: TermOrder::Lex }.to_expr(),
+        )
+      None => out.push(int(0))
+    }
+  }
+  out
+}
+
+///|
 fn sdm_checked_monomial_div(
   numer : Monomial,
   denom : Monomial,

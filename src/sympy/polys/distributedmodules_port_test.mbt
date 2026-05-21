@@ -31,6 +31,12 @@ fn sdm_port_basis_string(basis : Array[@sympolys.Sdm]) -> String {
 }
 
 ///|
+fn sdm_port_expr_list_string(values : Array[@symcore.Expr]) -> String {
+  let body = values.map(value => @symprint.pretty_string(value)).join(",")
+  remove_spaces("[\{body}]")
+}
+
+///|
 fn sdm_port_terms(
   terms : Array[(Array[Int], Int)],
 ) -> @sympolys.Sdm raise @sympolys.PolyError {
@@ -126,6 +132,43 @@ test "distributedmodules: conversion and leading term parity" {
   assert_eq(
     sdm_port_map_string(@sympolys.sdm_to_dict(f)),
     sdm_to_dict([([1, 1, 0], 1), ([1, 0, 0], 2)]),
+  )
+
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
+  assert_eq(
+    sdm_port_string(
+      @sympolys.sdm_from_vector(
+        [(x ^ @symcore.int(2)) + (y ^ @symcore.int(2)), @symcore.int(2) * z],
+        ["x", "y", "z"],
+        @sympolys.lex(),
+        @sympolys.Domain::QQ,
+      ),
+    ),
+    sdm_from_vector(["x**2 + y**2", "2*z"], ["x", "y", "z"]),
+  )
+  let vector_terms = [([1, 0, 0, 1], 2), ([0, 2, 0, 0], 1), ([0, 0, 2, 0], 1)]
+  assert_eq(
+    sdm_port_expr_list_string(
+      @sympolys.sdm_to_vector(
+        sdm_port_terms(vector_terms),
+        ["x", "y", "z"],
+        @sympolys.Domain::QQ,
+      ),
+    ),
+    sdm_to_vector(vector_terms, ["x", "y", "z"]),
+  )
+  assert_eq(
+    sdm_port_expr_list_string(
+      @sympolys.sdm_to_vector(
+        sdm_port_terms([([1, 0, 1], 2)]),
+        ["x", "y"],
+        @sympolys.Domain::QQ,
+        n=3,
+      ),
+    ),
+    sdm_to_vector([([1, 0, 1], 2)], ["x", "y"], n=3),
   )
 }
 
