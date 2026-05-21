@@ -511,6 +511,78 @@ pub fn dmp_resultant(
 }
 
 ///|
+/// Modular resultant over `ZZ`.
+///
+/// - Does: Computes the resultant and reduces it modulo `p` using the package's
+///   centered integer residue convention.
+/// - Input: Two dense recursive polynomials, a modulus `p`, a level `u`, and
+///   coefficient `domain`.
+/// - Returns: A dense scalar coefficient node for the univariate path.
+/// - Limits: Current dense resultant support is univariate; `u > 0` raises
+///   `PolyError::NotUnivariate`.
+pub fn dmp_zz_modular_resultant(
+  f : DensePoly,
+  g : DensePoly,
+  p : Int,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if u != 0 {
+    raise PolyError::NotUnivariate
+  }
+  let modulus = fe_from_int(p, domain)
+  let res = dup_resultant(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
+  let reduced = dup_trunc([res], modulus, domain)
+  DensePoly::Coef(
+    if reduced.is_empty() {
+      fe_from_int(0, domain)
+    } else {
+      reduced[0]
+    },
+  )
+}
+
+///|
+/// Collins resultant front door over `ZZ`.
+///
+/// - Does: Exposes the Collins-resultant API name and returns the same exact
+///   resultant as `dmp_resultant` on the supported dense path.
+/// - Input: Two dense recursive polynomials, a level `u`, and coefficient
+///   `domain`.
+/// - Returns: A dense resultant polynomial; scalar for univariate input.
+/// - Limits: The specialized multivariate modular Collins kernel is not yet
+///   modeled; current support follows `dmp_resultant`, so `u > 0` raises
+///   `PolyError::NotUnivariate`.
+pub fn dmp_zz_collins_resultant(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  dmp_resultant(f, g, u, domain)
+}
+
+///|
+/// Collins resultant front door over `QQ`.
+///
+/// - Does: Exposes the rational Collins-resultant API name and returns the
+///   same exact resultant as `dmp_resultant` on the supported dense path.
+/// - Input: Two dense recursive polynomials, a level `u`, and coefficient
+///   `domain`.
+/// - Returns: A dense resultant polynomial; scalar for univariate input.
+/// - Limits: Denominator clearing plus multivariate Collins evaluation is not
+///   separately modeled; current support follows `dmp_resultant`, so `u > 0`
+///   raises `PolyError::NotUnivariate`.
+pub fn dmp_qq_collins_resultant(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  dmp_resultant(f, g, u, domain)
+}
+
+///|
 /// Discriminant in `K[x]`.
 ///
 /// - Does: Computes `res(f, f') / (LC(f) * (-1)**(n*(n-1)/2))`.

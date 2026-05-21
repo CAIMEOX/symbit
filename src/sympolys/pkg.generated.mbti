@@ -359,6 +359,8 @@ pub fn dmp_primitive_prs(DensePoly, DensePoly, Int, Domain) -> Array[DensePoly] 
 
 pub fn dmp_prs_resultant(DensePoly, DensePoly, Int, Domain) -> (DensePoly, Array[DensePoly]) raise PolyError
 
+pub fn dmp_qq_collins_resultant(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
+
 pub fn dmp_qq_heu_gcd(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
 
 pub fn dmp_quo(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
@@ -435,11 +437,15 @@ pub fn dmp_zero_p(DensePoly, Int) -> Bool
 
 pub fn dmp_zeros(Int, Int, Domain) -> Array[DensePoly] raise PolyError
 
+pub fn dmp_zz_collins_resultant(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
+
 pub fn dmp_zz_factor(DensePoly, Int, Domain) -> (FieldElem, Array[(DensePoly, Int)]) raise PolyError
 
 pub fn dmp_zz_heu_gcd(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
 
 pub fn dmp_zz_mignotte_bound(DensePoly, Int, Domain) -> FieldElem raise PolyError
+
+pub fn dmp_zz_modular_resultant(DensePoly, DensePoly, Int, Int, Domain) -> DensePoly raise PolyError
 
 pub fn dom_eigenvects(DomainMatrix, l? : String) -> (Array[(Domain, FieldElem, Int, DomainMatrix)], Array[(Domain, Poly, Int, DomainMatrix)]) raise PolyError
 

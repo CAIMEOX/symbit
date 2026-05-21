@@ -8212,6 +8212,52 @@ pub fn dmp_resultant(
 }
 
 ///|
+pub fn dmp_zz_modular_resultant(
+  f : DenseData,
+  g : DenseData,
+  p : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(p))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must(
+    "sympy.polys.euclidtools.dmp_zz_modular_resultant", args,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_zz_collins_resultant(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  if u == 0 {
+    return dmp_resultant(f, g, u, domain~)
+  }
+  euclidtools_dmp_call("dmp_zz_collins_resultant", f, g, u, domain)
+}
+
+///|
+pub fn dmp_qq_collins_resultant(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "QQ",
+) -> String raise {
+  if u == 0 {
+    return dmp_resultant(f, g, u, domain~)
+  }
+  euclidtools_dmp_call("dmp_qq_collins_resultant", f, g, u, domain)
+}
+
+///|
 pub fn dup_discriminant(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",

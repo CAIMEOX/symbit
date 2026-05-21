@@ -548,6 +548,20 @@ test "euclidtools: dense discriminant and dmp resultant oracle parity" {
     dmp_resultant(dense_data_of(a), dense_data_of(b), 0, domain="ZZ"),
   )
   assert_eq(
+    dmp_repr(@sympolys.dmp_zz_modular_resultant(a, b, 5, 0, Domain::ZZ)),
+    dmp_zz_modular_resultant(dense_data_of(a), dense_data_of(b), 5, 0),
+  )
+  assert_eq(
+    dmp_repr(@sympolys.dmp_zz_collins_resultant(a, b, 0, Domain::ZZ)),
+    dmp_resultant(dense_data_of(a), dense_data_of(b), 0, domain="ZZ"),
+  )
+  let qf = poly_fe([feqq(1, 2), feqq(1, 1)])
+  let qg = poly_fe([feqq(2, 1), feqq(3, 1)])
+  assert_eq(
+    dmp_repr(@sympolys.dmp_qq_collins_resultant(qf, qg, 0, Domain::QQ)),
+    dmp_resultant(dense_data_of(qf), dense_data_of(qg), 0, domain="QQ"),
+  )
+  assert_eq(
     dmp_repr(@sympolys.dmp_discriminant(poly_fe(f), 0, Domain::ZZ)),
     dmp_discriminant(dense_data_of(poly_fe(f)), 0, domain="ZZ"),
   )

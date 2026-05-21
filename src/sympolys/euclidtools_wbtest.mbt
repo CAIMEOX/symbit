@@ -240,6 +240,28 @@ test "euclidtools wb: discriminant and dmp resultant wrappers" {
   ])
   inspect(euclid_wb_dmp_repr(dmp_resultant(a, b, 0, Domain::ZZ)), content="4")
   inspect(
+    euclid_wb_dmp_repr(dmp_zz_modular_resultant(a, b, 5, 0, Domain::ZZ)),
+    content="-1",
+  )
+  inspect(
+    euclid_wb_dmp_repr(dmp_zz_collins_resultant(a, b, 0, Domain::ZZ)),
+    content="4",
+  )
+  let qf = euclid_wb_poly([euclid_wb_qq(1, 2), euclid_wb_qq(1, 1)])
+  let qg = euclid_wb_poly([euclid_wb_qq(2, 1), euclid_wb_qq(3, 1)])
+  inspect(
+    euclid_wb_dmp_repr(dmp_qq_collins_resultant(qf, qg, 0, Domain::QQ)),
+    content="-1/2",
+  )
+  let nested = dense_poly([a, b])
+  let bad : Result[DensePoly, PolyError] = try? dmp_zz_collins_resultant(
+    nested,
+    nested,
+    1,
+    Domain::ZZ,
+  )
+  assert_true(bad is Err(PolyError::NotUnivariate))
+  inspect(
     euclid_wb_dmp_repr(dmp_discriminant(euclid_wb_poly(f), 0, Domain::ZZ)),
     content="-8",
   )
