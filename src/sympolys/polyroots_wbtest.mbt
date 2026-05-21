@@ -92,3 +92,37 @@ test "polyroots wb: root_factors frontdoor" {
   let zero = Poly::zero(["x"], Domain::QQ)
   inspect(@symprint.pretty_string(root_factors(zero)[0]), content="0")
 }
+
+///|
+test "polyroots wb: binomial roots use ordered roots of unity" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let quartic = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(16))
+  let roots4 = roots_binomial(quartic).map(r => @symprint.pretty_string(r))
+  inspect(roots4[0], content="-2")
+  inspect(roots4[1], content="2")
+  assert_eq(roots4.length(), 4)
+  let quintic = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(32))
+  assert_eq(roots_binomial(quintic).length(), 5)
+  let zero_roots = roots_binomial(b.from_expr(x ^ @symcore.int(3)))
+  inspect(
+    zero_roots.map(r => @symprint.pretty_string(r)).join(","),
+    content="0,0,0",
+  )
+}
+
+///|
+test "polyroots wb: cyclotomic roots detect primitive roots" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let phi4 = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
+  let roots4 = roots_cyclotomic(phi4).map(r => @symprint.pretty_string(r))
+  assert_eq(roots4.length(), 2)
+  assert_true(roots4[0].contains("sin"))
+  let phi5 = Poly::from_expr(cyclotomic_poly(5), ["x"], Domain::QQ)
+  assert_eq(roots_cyclotomic(phi5).length(), 4)
+  let not_cyclotomic : Result[Array[@symcore.Expr], PolyError] = try? roots_cyclotomic(
+    b.from_expr((x ^ @symcore.int(2)) + x + @symcore.int(2)),
+  )
+  assert_true(not_cyclotomic is Err(PolyError::BadExponent))
+}

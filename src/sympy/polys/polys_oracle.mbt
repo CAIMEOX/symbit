@@ -11389,6 +11389,42 @@ pub fn roots_quartic(
 }
 
 ///|
+pub fn roots_binomial(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens([expr_obj])
+  } else {
+    sympy_symbols_from_names(gens)
+  }
+  let poly = call_sympy_poly(expr_obj, gens_list, "", None)
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(poly))
+  let res = sympy_call_must("sympy.polys.polyroots.roots_binomial", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn roots_cyclotomic(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens([expr_obj])
+  } else {
+    sympy_symbols_from_names(gens)
+  }
+  let poly = call_sympy_poly(expr_obj, gens_list, "", None)
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(poly))
+  let res = sympy_call_must("sympy.polys.polyroots.roots_cyclotomic", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn root_factors(
   expr : @symcore.Expr,
   gens? : Array[String] = [],

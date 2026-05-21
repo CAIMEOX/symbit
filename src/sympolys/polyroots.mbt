@@ -29,6 +29,16 @@ fn coeff_expr(poly : Poly, exp : Int) -> Expr raise PolyError {
 }
 
 ///|
+fn coeff_fe(poly : Poly, exp : Int) -> FieldElem raise PolyError {
+  let mono = monomial_one(1)
+  mono.exps.set(0, exp)
+  match poly.coeffs.get(mono) {
+    Some(c) => c
+    None => fe_from_int(0, poly.domain)
+  }
+}
+
+///|
 fn sqrt_bigint_if_square(value : BigInt) -> BigInt? {
   if value.op_lt(0N) {
     return None
@@ -163,6 +173,315 @@ fn append_roots(out : Array[Expr], roots : Array[Expr], mult : Int) -> Unit {
 ///|
 fn rootof_expr(poly : Poly, index : Int) -> Expr {
   @symcore.function("CRootOf", [poly.to_expr(), int(index)])
+}
+
+///|
+fn polyroots_rational_expr(num : Int, den : Int) -> Expr raise PolyError {
+  @symcore.rational_from_ints(num, den) catch {
+    _ => raise PolyError::DivisionByZero
+  }
+}
+
+///|
+fn bigint_pow_int(base : BigInt, exp : Int) -> BigInt {
+  let mut result = 1N
+  let mut b = base
+  let mut e = exp
+  while e > 0 {
+    if e % 2 == 1 {
+      result = result.mul(b)
+    }
+    e = e / 2
+    if e > 0 {
+      b = b.mul(b)
+    }
+  }
+  result
+}
+
+///|
+fn bigint_nth_root_exact(value : BigInt, n : Int) -> BigInt? {
+  if n <= 0 || value.op_lt(0N) {
+    return None
+  }
+  if value.compare(0N) == 0 {
+    return Some(0N)
+  }
+  let high_bits = (value.bit_length() + n - 1) / n
+  let mut low = 0N
+  let mut high = 1N << high_bits
+  while low.compare(high) <= 0 {
+    let mid = (low + high).div(2N)
+    let powered = bigint_pow_int(mid, n)
+    let cmp = powered.compare(value)
+    if cmp == 0 {
+      return Some(mid)
+    } else if cmp < 0 {
+      low = mid + 1N
+    } else {
+      high = mid - 1N
+    }
+  }
+  None
+}
+
+///|
+fn positive_rational_nth_root_expr(
+  value : @symnum.BigRational,
+  n : Int,
+) -> Expr raise PolyError {
+  if value.is_zero() {
+    return int(0)
+  }
+  let num_root = bigint_nth_root_exact(value.numerator(), n)
+  let den_root = bigint_nth_root_exact(value.denominator(), n)
+  match (num_root, den_root) {
+    (Some(num), Some(den)) => Expr::Number(poly_rational_from_bigints(num, den))
+    _ => @symcore.pow(Expr::Number(value), polyroots_rational_expr(1, n))
+  }
+}
+
+///|
+fn pi_expr() -> Expr {
+  Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+}
+
+///|
+fn imag_expr() -> Expr {
+  Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+}
+
+///|
+fn angle_expr(num : Int, den : Int) -> Expr raise PolyError {
+  @symcore.mul([polyroots_rational_expr(num, den), pi_expr()])
+}
+
+///|
+fn zeta_from_angle(
+  num : Int,
+  den : Int,
+  conjugate : Bool,
+) -> Expr raise PolyError {
+  let theta = angle_expr(num, den)
+  let real = @symcore.function("cos", [theta])
+  let imag_part = @symcore.function("sin", [theta])
+  let signed_imag = if conjugate {
+    @symcore.mul([int(-1), imag_expr(), imag_part])
+  } else {
+    @symcore.mul([imag_expr(), imag_part])
+  }
+  @symcore.add([real, signed_imag])
+}
+
+///|
+fn append_binomial_zetas(
+  zetas : Array[Expr],
+  n : Int,
+  minus : Bool,
+) -> Unit raise PolyError {
+  let even = n % 2 == 0
+  if even && !minus {
+    zetas.push(int(-1))
+    zetas.push(int(1))
+    let mut k = n / 2 - 1
+    while k > 0 {
+      zetas.push(zeta_from_angle(2 * k, n, true))
+      zetas.push(zeta_from_angle(2 * k, n, false))
+      k = k - 1
+    }
+  } else if even && minus {
+    let mut k = n / 2 - 1
+    while k >= 0 {
+      zetas.push(zeta_from_angle(2 * k + 1, n, true))
+      zetas.push(zeta_from_angle(2 * k + 1, n, false))
+      k = k - 1
+    }
+  } else if !even && !minus {
+    zetas.push(int(1))
+    let mut k = n / 2
+    while k > 0 {
+      zetas.push(zeta_from_angle(2 * k, n, true))
+      zetas.push(zeta_from_angle(2 * k, n, false))
+      k = k - 1
+    }
+  } else {
+    zetas.push(int(-1))
+    let mut k = n / 2 - 1
+    while k >= 0 {
+      zetas.push(zeta_from_angle(2 * k + 1, n, true))
+      zetas.push(zeta_from_angle(2 * k + 1, n, false))
+      k = k - 1
+    }
+  }
+}
+
+///|
+fn polyroots_rational_abs(value : @symnum.BigRational) -> @symnum.BigRational {
+  if value.compare(@symnum.BigRational::zero()) < 0 {
+    value.neg_r()
+  } else {
+    value
+  }
+}
+
+///|
+/// Solve a binomial polynomial through roots of unity.
+///
+/// - Does: Mirrors SymPy's `roots_binomial` by using the leading and constant
+///   coefficients as `a*x**n + b`, forming `x**n = -b/a`, and multiplying one
+///   principal magnitude by the ordered `n`-th roots of unity.
+/// - Input: One univariate `Poly`.
+/// - Returns: `Array[Expr]` of length equal to the polynomial degree.
+/// - Limits: The current front door handles exact rational coefficients. Like
+///   SymPy's helper, non-binomial middle terms are not inspected.
+pub fn roots_binomial(poly : Poly) -> Array[Expr] raise PolyError {
+  ensure_univar(poly)
+  let n = poly.degree(0)
+  if n <= 0 {
+    return []
+  }
+  let a = fe_expect_rational(coeff_fe(poly, n))
+  let b = fe_expect_rational(coeff_fe(poly, 0))
+  let base = b.neg_r().div_r(a) catch { _ => raise PolyError::DivisionByZero }
+  if base.is_zero() {
+    return Array::make(n, int(0))
+  }
+  let minus = base.compare(@symnum.BigRational::zero()) < 0
+  let alpha = positive_rational_nth_root_expr(polyroots_rational_abs(base), n)
+  let zetas : Array[Expr] = Array::new()
+  append_binomial_zetas(zetas, n, minus)
+  zetas.map(zeta => @symcore.mul([alpha, zeta]))
+}
+
+///|
+fn polyroots_divisors_int(n : Int) -> Array[Int] {
+  let out : Array[Int] = Array::new()
+  for d in 1..<=n {
+    if n % d == 0 {
+      out.push(d)
+    }
+  }
+  out
+}
+
+///|
+fn inv_totient_estimate(m : Int) -> (Int, Int) {
+  let primes : Array[Int] = Array::new()
+  for d in polyroots_divisors_int(m) {
+    let p = d + 1
+    if is_prime_int(p) {
+      primes.push(p)
+    }
+  }
+  let mut a = 1
+  let mut b = 1
+  for p in primes {
+    a = a * p
+    b = b * (p - 1)
+  }
+  let lower = m
+  let mut upper = (m * a + b - 1) / b
+  let mut product = 2
+  let mut p = 2
+  let search_primes : Array[Int] = Array::new()
+  while product <= upper {
+    p = next_prime_int(p)
+    search_primes.push(p)
+    product = product * p
+  }
+  product = product / p
+  b = 1
+  if search_primes.length() > 0 {
+    for i in 0..<(search_primes.length() - 1) {
+      b = b * (search_primes[i] - 1)
+    }
+  }
+  upper = (m * product + b - 1) / b
+  (lower, upper)
+}
+
+///|
+fn polyroots_poly_equal_qq(a : Poly, b : Poly) -> Bool raise PolyError {
+  if !same_gens(a.gens, b.gens) {
+    return false
+  }
+  lift_to_qq(a).sub(lift_to_qq(b)).is_zero()
+}
+
+///|
+fn cyclotomic_index(poly : Poly) -> Int raise PolyError {
+  ensure_univar(poly)
+  let degree = poly.degree(0)
+  if degree <= 0 {
+    raise PolyError::BadExponent
+  }
+  let (lower, upper) = inv_totient_estimate(degree)
+  for n in lower..<=upper {
+    let candidate = cyclotomic_poly_domain(n, poly.gens[0])
+    if polyroots_poly_equal_qq(poly, candidate) {
+      return n
+    }
+  }
+  raise PolyError::BadExponent
+}
+
+///|
+fn cyclotomic_key_primary(k : Int, n : Int) -> Int {
+  let h = n / 2
+  if k <= h {
+    k
+  } else {
+    fact_int_abs(k - n)
+  }
+}
+
+///|
+fn cyclotomic_key_secondary(k : Int, n : Int) -> Int {
+  if k <= n / 2 {
+    -1
+  } else {
+    1
+  }
+}
+
+///|
+/// Compute roots of a cyclotomic polynomial.
+///
+/// - Does: Recognizes the cyclotomic index and returns primitive roots of
+///   unity in SymPy's ordering.
+/// - Input: One univariate cyclotomic `Poly`.
+/// - Returns: `Array[Expr]`.
+/// - Limits: `factor=true` is not modeled yet; non-cyclotomic inputs raise
+///   `PolyError::BadExponent`.
+pub fn roots_cyclotomic(
+  poly : Poly,
+  factor? : Bool = false,
+) -> Array[Expr] raise PolyError {
+  if factor {
+    raise PolyError::DomainMismatch
+  }
+  let n = cyclotomic_index(poly)
+  let ks : Array[Int] = Array::new()
+  for k in 1..<=n {
+    if python_gcd(k, n) == 1 {
+      ks.push(k)
+    }
+  }
+  ks.sort_by((lhs, rhs) => {
+    let primary = cyclotomic_key_primary(lhs, n) -
+      cyclotomic_key_primary(rhs, n)
+    if primary != 0 {
+      primary
+    } else {
+      cyclotomic_key_secondary(lhs, n) - cyclotomic_key_secondary(rhs, n)
+    }
+  })
+  let roots : Array[Expr] = Array::new()
+  for i in 0..<ks.length() {
+    let k = ks[ks.length() - 1 - i]
+    roots.push(zeta_from_angle(2 * k, n, false))
+  }
+  roots
 }
 
 ///|

@@ -1533,7 +1533,11 @@ pub fn rootof(Poly, Int) -> RootOf
 
 pub fn roots(Poly, radicals? : Bool) -> Array[@symcore.Expr] raise PolyError
 
+pub fn roots_binomial(Poly) -> Array[@symcore.Expr] raise PolyError
+
 pub fn roots_cubic(Poly) -> Array[@symcore.Expr] raise PolyError
+
+pub fn roots_cyclotomic(Poly, factor? : Bool) -> Array[@symcore.Expr] raise PolyError
 
 pub fn roots_linear(Poly) -> Array[@symcore.Expr] raise PolyError
 

@@ -618,7 +618,11 @@ pub fn resultant(@symcore.Expr, @symcore.Expr, x? : String, gens? : Array[String
 
 pub fn rootof(@symcore.Expr, Int, radicals? : Bool) -> String raise
 
+pub fn roots_binomial(@symcore.Expr, gens? : Array[String]) -> String raise
+
 pub fn roots_cubic(@symcore.Expr, gens? : Array[String]) -> String raise
+
+pub fn roots_cyclotomic(@symcore.Expr, gens? : Array[String]) -> String raise
 
 pub fn roots_linear(@symcore.Expr, gens? : Array[String]) -> String raise
 
@@ -672,4 +676,3 @@ pub(all) enum DenseData {
 pub using @sympy {type OracleArg}
 
 // Traits
-

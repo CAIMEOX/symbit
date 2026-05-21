@@ -105,3 +105,34 @@ test "polyroots: root_factors parity" {
     normalize_root_list(root_factors(g.to_expr(), gens=["x"])),
   )
 }
+
+///|
+test "polyroots: binomial roots parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  for
+    expr in [
+      (x ^ @symcore.int(2)) - @symcore.int(4),
+      (x ^ @symcore.int(3)) + @symcore.int(8),
+      (x ^ @symcore.int(4)) + @symcore.int(16),
+      @symcore.int(2) * (x ^ @symcore.int(3)) + @symcore.int(4),
+      (x ^ @symcore.int(5)) - @symcore.int(32),
+    ] {
+    let poly = b.from_expr(expr)
+    let ours = roots_repr(@sympolys.roots_binomial(poly))
+    let oracle = normalize_root_list(roots_binomial(poly.to_expr(), gens=["x"]))
+    assert_eq(ours, oracle)
+  }
+}
+
+///|
+test "polyroots: cyclotomic roots parity" {
+  for n in [1, 2, 3, 4, 5, 6, 8, 10, 12] {
+    let phi = Poly::from_expr(@sympolys.cyclotomic_poly(n), ["x"], Domain::QQ)
+    let ours = roots_repr(@sympolys.roots_cyclotomic(phi))
+    let oracle = normalize_root_list(
+      roots_cyclotomic(phi.to_expr(), gens=["x"]),
+    )
+    assert_eq(ours, oracle)
+  }
+}
