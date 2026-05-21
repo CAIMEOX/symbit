@@ -11870,6 +11870,62 @@ pub fn dup_count_real_roots(
 }
 
 ///|
+pub fn dup_count_complex_roots(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_count_complex_roots", args,
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn dup_isolate_complex_roots_sqf(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_isolate_complex_roots_sqf", args,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_isolate_all_roots_sqf(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_isolate_all_roots_sqf", args,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_isolate_all_roots(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_isolate_all_roots", args,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn res_qq_zz(
   p : @symcore.Expr,
   q : @symcore.Expr,

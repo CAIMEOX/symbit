@@ -272,6 +272,45 @@ fn interval_mult_list_repr(
 }
 
 ///|
+fn all_roots_sqf_repr(
+  value : (
+    Array[@sympolys.RealRootInterval],
+    Array[@sympolys.ComplexRootRectangle],
+  ),
+) -> String {
+  let real_part = interval_list_repr(value.0)
+  let complex_part = value.1
+    .map(rect => {
+      "(\{interval_repr(rect.0.0, rect.0.1)},\{interval_repr(rect.1.0, rect.1.1)})"
+    })
+    .join(",")
+  "(\{real_part},[\{complex_part}])"
+}
+
+///|
+fn all_roots_repr(
+  value : (
+    Array[(@sympolys.RealRootInterval, Int)],
+    Array[(@sympolys.ComplexRootRectangle, Int)],
+  ),
+) -> String {
+  let real_parts : Array[String] = []
+  for item in value.0 {
+    real_parts.push("(\{interval_repr(item.0.0, item.0.1)},\{item.1})")
+  }
+  let complex_parts : Array[String] = []
+  for item in value.1 {
+    let rect = item.0
+    complex_parts.push(
+      "((\{interval_repr(rect.0.0, rect.0.1)},\{interval_repr(rect.1.0, rect.1.1)}),\{item.1})",
+    )
+  }
+  let real_text = real_parts.join(",")
+  let complex_text = complex_parts.join(",")
+  "([\{real_text}],[\{complex_text}])"
+}
+
+///|
 test "rootisolation: dup_isolate_real_roots parity with multiplicities" {
   let f = [feqq(1, 1), feqq(0, 1), feqq(-3, 1), feqq(2, 1)] // (x-1)^2*(x+2)
   let ours = interval_mult_list_repr(
@@ -300,4 +339,28 @@ test "rootisolation: dup_count_real_roots parity" {
     sup=br_int(2),
   )
   assert_eq(ours_range, oracle_range)
+}
+
+///|
+test "rootisolation: complex and all-root frontdoors parity on all-real input" {
+  let f = [feqq(1, 1), feqq(0, 1), feqq(-2, 1)] // x^2 - 2
+  assert_eq(
+    @sympolys.dup_count_complex_roots(f, Domain::QQ).to_string(),
+    dup_count_complex_roots(dup_to_rats(f), domain="QQ"),
+  )
+  assert_eq(
+    @sympolys.dup_isolate_complex_roots_sqf(f, Domain::QQ).length().to_string(),
+    "0",
+  )
+  assert_eq("[]", dup_isolate_complex_roots_sqf(dup_to_rats(f), domain="QQ"))
+  assert_eq(
+    all_roots_sqf_repr(@sympolys.dup_isolate_all_roots_sqf(f, Domain::QQ)),
+    dup_isolate_all_roots_sqf(dup_to_rats(f), domain="QQ"),
+  )
+
+  let repeated = [feqq(1, 1), feqq(0, 1), feqq(-4, 1), feqq(0, 1), feqq(4, 1)] // (x^2 - 2)^2
+  assert_eq(
+    all_roots_repr(@sympolys.dup_isolate_all_roots(repeated, Domain::QQ)),
+    dup_isolate_all_roots(dup_to_rats(repeated), domain="QQ"),
+  )
 }

@@ -17,6 +17,32 @@ fn ri_wb_iv_repr(iv : (@symnum.BigRational, @symnum.BigRational)) -> String {
 }
 
 ///|
+fn ri_wb_all_sqf_repr(
+  value : (Array[RealRootInterval], Array[ComplexRootRectangle]),
+) -> String {
+  let real_part = value.0.map(ri_wb_iv_repr).join(",")
+  let complex_part = value.1
+    .map(rect => "(\{ri_wb_iv_repr(rect.0)},\{ri_wb_iv_repr(rect.1)})")
+    .join(",")
+  "([\{real_part}],[\{complex_part}])"
+}
+
+///|
+fn ri_wb_all_repr(
+  value : (Array[(RealRootInterval, Int)], Array[(ComplexRootRectangle, Int)]),
+) -> String {
+  let real_part = value.0
+    .map(item => "(\{ri_wb_iv_repr(item.0)},\{item.1})")
+    .join(",")
+  let complex_part = value.1
+    .map(item => {
+      "((\{ri_wb_iv_repr(item.0.0)},\{ri_wb_iv_repr(item.0.1)}),\{item.1})"
+    })
+    .join(",")
+  "([\{real_part}],[\{complex_part}])"
+}
+
+///|
 test "rootisolation wb: helper/error branches" {
   let empty_to_poly : Result[Poly, PolyError] = try? dup_to_poly([], Domain::QQ)
   assert_true(empty_to_poly is Err(PolyError::NonPolynomial))
@@ -178,4 +204,34 @@ test "rootisolation wb: compatibility frontdoors" {
     rendered,
     content="((-2,-1),0,1),((-1,-1),1,1),((1,1),1,1),((1,2),0,1)",
   )
+}
+
+///|
+test "rootisolation wb: complex and all-roots frontdoors on all-real inputs" {
+  let f = [ri_wb_feqq(1, 1), ri_wb_feqq(0, 1), ri_wb_feqq(-2, 1)] // x^2 - 2
+  inspect(dup_count_complex_roots(f, Domain::QQ), content="2")
+  inspect(dup_isolate_complex_roots_sqf(f, Domain::QQ).length(), content="0")
+  inspect(
+    ri_wb_all_sqf_repr(dup_isolate_all_roots_sqf(f, Domain::QQ)),
+    content="([(-2,-1),(1,2)],[])",
+  )
+
+  let repeated = [
+    ri_wb_feqq(1, 1),
+    ri_wb_feqq(0, 1),
+    ri_wb_feqq(-4, 1),
+    ri_wb_feqq(0, 1),
+    ri_wb_feqq(4, 1),
+  ] // (x^2 - 2)^2
+  inspect(
+    ri_wb_all_repr(dup_isolate_all_roots(repeated, Domain::QQ)),
+    content="([((-2,-1),2),((1,2),2)],[])",
+  )
+
+  let complex = [ri_wb_feqq(1, 1), ri_wb_feqq(0, 1), ri_wb_feqq(1, 1)] // x^2 + 1
+  let complex_res : Result[Array[ComplexRootRectangle], PolyError] = try? dup_isolate_complex_roots_sqf(
+    complex,
+    Domain::QQ,
+  )
+  assert_true(complex_res is Err(PolyError::DomainMismatch))
 }

@@ -6,6 +6,12 @@
 ///   rational-like domains.
 /// - The API is intentionally low-level and works on dense coefficient
 ///   sequences rather than `Poly` output objects.
+pub type RealRootInterval = (@symnum.BigRational, @symnum.BigRational)
+
+///|
+pub type ComplexRootRectangle = (RealRootInterval, RealRootInterval)
+
+///|
 fn abs_rational(r : @symnum.BigRational) -> @symnum.BigRational {
   if r.compare(@symnum.BigRational::zero()) < 0 {
     r.neg()
@@ -777,4 +783,138 @@ pub fn dup_count_real_roots(
     }
   }
   total
+}
+
+///|
+fn rootisolation_require_qq_zz(domain : Domain) -> Unit raise PolyError {
+  match domain {
+    Domain::ZZ | Domain::QQ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+}
+
+///|
+fn rootisolation_no_complex_options(
+  inf : RealRootInterval?,
+  sup : RealRootInterval?,
+  exclude : Array[String]?,
+) -> Unit raise PolyError {
+  match (inf, sup, exclude) {
+    (None, None, None) => ()
+    _ => raise PolyError::DomainMismatch
+  }
+}
+
+///|
+/// Count roots in the default complex isolation rectangle.
+///
+/// - Does: Mirrors the default SymPy `dup_count_complex_roots` front door when
+///   no explicit rectangle is supplied; that default rectangle contains every
+///   complex root, so the count is the polynomial degree.
+/// - Input: Dense high-to-low coefficients over `ZZ` or `QQ`.
+/// - Returns: Number of complex roots counted with multiplicity.
+/// - Limits: Explicit complex rectangles and boundary-exclusion flags are not
+///   implemented yet and raise `PolyError::DomainMismatch`.
+pub fn dup_count_complex_roots(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+  inf? : RealRootInterval,
+  sup? : RealRootInterval,
+  exclude? : Array[String],
+) -> Int raise PolyError {
+  rootisolation_require_qq_zz(domain)
+  rootisolation_no_complex_options(inf, sup, exclude)
+  let f = dup_strip(coeffs)
+  let degree = dup_degree(f)
+  if degree < 0 {
+    0
+  } else {
+    degree
+  }
+}
+
+///|
+/// Isolate non-real complex roots of a square-free polynomial.
+///
+/// - Does: Mirrors the SymPy front door for the all-real case, returning an
+///   empty complex-rectangle list when every root is already isolated on the
+///   real line.
+/// - Input: Dense square-free coefficients over `ZZ` or `QQ`.
+/// - Returns: Complex-root rectangles.
+/// - Limits: Collins-Krandick subdivision for genuine non-real roots is not
+///   implemented yet; such inputs raise `PolyError::DomainMismatch`.
+pub fn dup_isolate_complex_roots_sqf(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+  inf? : @symnum.BigRational,
+  sup? : @symnum.BigRational,
+) -> Array[ComplexRootRectangle] raise PolyError {
+  rootisolation_require_qq_zz(domain)
+  match (inf, sup) {
+    (None, None) => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  let f = dup_strip(coeffs)
+  let degree = dup_degree(f)
+  if degree <= 0 {
+    return []
+  }
+  let real_roots = dup_isolate_real_roots_sqf(f, domain)
+  if real_roots.length() == degree {
+    []
+  } else {
+    raise PolyError::DomainMismatch
+  }
+}
+
+///|
+/// Isolate all roots of a square-free polynomial.
+///
+/// - Does: Mirrors SymPy `dup_isolate_all_roots_sqf` on the currently
+///   supported all-real path by returning real intervals and an empty complex
+///   rectangle list.
+/// - Input: Dense square-free coefficients over `ZZ` or `QQ`.
+/// - Returns: `(real_intervals, complex_rectangles)`.
+/// - Limits: Genuine non-real complex isolation is not implemented yet.
+pub fn dup_isolate_all_roots_sqf(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> (Array[RealRootInterval], Array[ComplexRootRectangle]) raise PolyError {
+  let real_part = dup_isolate_real_roots_sqf(coeffs, domain)
+  let complex_part = dup_isolate_complex_roots_sqf(coeffs, domain)
+  (real_part, complex_part)
+}
+
+///|
+/// Isolate all roots of a polynomial with multiplicities.
+///
+/// - Does: Mirrors SymPy `dup_isolate_all_roots` for the trivial
+///   square-free-decomposition case, attaching the single multiplicity to every
+///   isolated real root.
+/// - Input: Dense coefficients over `ZZ` or `QQ`.
+/// - Returns: `(real_intervals_with_multiplicity, complex_rectangles_with_multiplicity)`.
+/// - Limits: As in SymPy's conservative path, multiple distinct square-free
+///   factors are not handled here; genuine non-real complex roots are also not
+///   isolated yet.
+pub fn dup_isolate_all_roots(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> (Array[(RealRootInterval, Int)], Array[(ComplexRootRectangle, Int)]) raise PolyError {
+  rootisolation_require_qq_zz(domain)
+  let (_, factors) = dup_sqf_list(coeffs, domain)
+  if factors.length() != 1 {
+    raise PolyError::DomainMismatch
+  }
+  let factor = factors[0].0
+  let mult = factors[0].1
+  let (real_part, complex_part) = dup_isolate_all_roots_sqf(factor, domain)
+  let real_with_mult : Array[(RealRootInterval, Int)] = []
+  for iv in real_part {
+    real_with_mult.push((iv, mult))
+  }
+  let complex_with_mult : Array[(ComplexRootRectangle, Int)] = []
+  for rect in complex_part {
+    complex_with_mult.push((rect, mult))
+  }
+  (real_with_mult, complex_with_mult)
 }

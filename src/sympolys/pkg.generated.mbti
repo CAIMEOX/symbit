@@ -765,6 +765,8 @@ pub fn dup_convert(Array[FieldElem], Domain, Domain) -> Array[FieldElem] raise P
 
 pub fn dup_copy(Array[FieldElem]) -> Array[FieldElem] raise PolyError
 
+pub fn dup_count_complex_roots(Array[FieldElem], Domain, inf? : (@symnum.BigRational, @symnum.BigRational), sup? : (@symnum.BigRational, @symnum.BigRational), exclude? : Array[String]) -> Int raise PolyError
+
 pub fn dup_count_real_roots(Array[FieldElem], Domain, inf? : @symnum.BigRational, sup? : @symnum.BigRational) -> Int raise PolyError
 
 pub fn dup_cyclotomic_p(Array[FieldElem], Domain, irreducible? : Bool) -> Bool raise PolyError
@@ -856,6 +858,12 @@ pub fn dup_integrate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise Po
 pub fn dup_invert(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_irreducible_p(Array[FieldElem], Domain) -> Bool raise PolyError
+
+pub fn dup_isolate_all_roots(Array[FieldElem], Domain) -> (Array[((@symnum.BigRational, @symnum.BigRational), Int)], Array[(((@symnum.BigRational, @symnum.BigRational), (@symnum.BigRational, @symnum.BigRational)), Int)]) raise PolyError
+
+pub fn dup_isolate_all_roots_sqf(Array[FieldElem], Domain) -> (Array[(@symnum.BigRational, @symnum.BigRational)], Array[((@symnum.BigRational, @symnum.BigRational), (@symnum.BigRational, @symnum.BigRational))]) raise PolyError
+
+pub fn dup_isolate_complex_roots_sqf(Array[FieldElem], Domain, inf? : @symnum.BigRational, sup? : @symnum.BigRational) -> Array[((@symnum.BigRational, @symnum.BigRational), (@symnum.BigRational, @symnum.BigRational))] raise PolyError
 
 pub fn dup_isolate_real_roots(Array[FieldElem], Domain) -> Array[((@symnum.BigRational, @symnum.BigRational), Int)] raise PolyError
 
@@ -2622,6 +2630,8 @@ pub(all) enum TermOrder {
 } derive(Eq)
 
 // Type aliases
+pub type ComplexRootRectangle = ((@symnum.BigRational, @symnum.BigRational), (@symnum.BigRational, @symnum.BigRational))
+
 pub type CriticalPair = ((Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int), (Monomial, Int), (Monomial, FieldElem), ((Monomial, Int), Poly, Int))
 
 pub type DomainMatrixAlgebraicEigenvects = Array[(Domain, Poly, Int, DomainMatrix)]
@@ -2643,6 +2653,8 @@ pub type Matrix = Array[Array[@bigint.BigInt]]
 pub type MatrixExpr = Array[Array[@symcore.Expr]]
 
 pub type MatrixExprDOD = Map[Int, Map[Int, @symcore.Expr]]
+
+pub type RealRootInterval = (@symnum.BigRational, @symnum.BigRational)
 
 pub type Sdm = Array[(Monomial, FieldElem)]
 
