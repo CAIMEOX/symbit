@@ -27,6 +27,26 @@ pub struct GroebnerBasis {
 }
 
 ///|
+/// F5 signature `(monomial, generator-index)`.
+///
+/// - Does: Identifies the origin and monomial multiplier carried by an F5
+///   labeled polynomial.
+/// - Input: A `Monomial` and an `Int` index.
+/// - Returns: A tuple alias used by the Groebner F5 helper front doors.
+/// - Limits: The index is not range-checked by the constructor helper.
+pub type Signature = (Monomial, Int)
+
+///|
+/// F5 labeled polynomial `(signature, polynomial, insertion-number)`.
+///
+/// - Does: Stores the metadata used by F5-style Groebner reductions.
+/// - Input: A `Signature`, a `Poly`, and an `Int` number.
+/// - Returns: A tuple alias used by the Groebner F5 helper front doors.
+/// - Limits: The polynomial must be compatible with the operations that
+///   consume it; the tuple constructor does not validate that relation.
+pub type LabeledPolynomial = (Signature, Poly, Int)
+
+///|
 fn coeff_div(
   num : FieldElem,
   den : FieldElem,
@@ -214,6 +234,164 @@ pub fn groebner_lcm(f : Poly, g : Poly) -> Poly raise PolyError {
 pub fn groebner_gcd(f : Poly, g : Poly) -> Poly raise PolyError {
   check_compat([f, g])
   gcd(f, g)
+}
+
+///|
+/// Construct an F5 signature.
+///
+/// - Does: Mirrors the Groebner helper `sig` by pairing a monomial with a
+///   generator index.
+/// - Input: A `Monomial` and an `Int` index.
+/// - Returns: A `Signature`.
+/// - Limits: This is a structural constructor and performs no index
+///   validation.
+pub fn sig(monomial : Monomial, index : Int) -> Signature {
+  (monomial, index)
+}
+
+///|
+/// Construct an F5 labeled polynomial.
+///
+/// - Does: Mirrors the Groebner helper `lbp` by pairing a signature,
+///   polynomial, and insertion number.
+/// - Input: `Signature`, `Poly`, and `Int`.
+/// - Returns: A `LabeledPolynomial`.
+/// - Limits: This is a structural constructor; compatibility is checked by
+///   consumers when needed.
+pub fn lbp(
+  signature : Signature,
+  polynomial : Poly,
+  number : Int,
+) -> LabeledPolynomial {
+  (signature, polynomial, number)
+}
+
+///|
+/// Compare two F5 signatures.
+///
+/// - Does: Extends the selected monomial order to module signatures: higher
+///   index sorts first, then lower monomial order sorts first for equal index.
+/// - Input: Two `Signature` values and one `TermOrder`.
+/// - Returns: `-1` when `u < v` in the F5 ordering, otherwise `1`.
+/// - Limits: Like the source helper, equal signatures also return `1` rather
+///   than a distinct equality result.
+pub fn sig_cmp(u : Signature, v : Signature, order : TermOrder) -> Int {
+  if u.1 > v.1 {
+    return -1
+  }
+  if u.1 == v.1 && compare_monomial_order(u.0, v.0, order) < 0 {
+    return -1
+  }
+  1
+}
+
+///|
+/// Build a sorting key for an F5 signature.
+///
+/// - Does: Encodes the same order as `sig_cmp`.
+/// - Input: One `Signature` and one `TermOrder`.
+/// - Returns: `(-index, monomial)` as a tuple key.
+/// - Limits: The monomial component still needs the matching term-order
+///   comparator when used outside simple display tests.
+pub fn sig_key(s : Signature, _order : TermOrder) -> (Int, Monomial) {
+  (-s.1, s.0)
+}
+
+///|
+/// Multiply an F5 signature by a monomial.
+///
+/// - Does: Adds the multiplier exponents to the signature monomial and keeps
+///   the original index.
+/// - Input: A `Signature` and a `Monomial`.
+/// - Returns: A `Signature`.
+/// - Limits: Raises `PolyError::DomainMismatch` if monomial arities differ.
+pub fn sig_mult(s : Signature, m : Monomial) -> Signature raise PolyError {
+  sig(monomial_mul(s.0, m), s.1)
+}
+
+///|
+fn lbp_sign(f : LabeledPolynomial) -> Signature {
+  f.0
+}
+
+///|
+fn lbp_polyn(f : LabeledPolynomial) -> Poly {
+  f.1
+}
+
+///|
+fn lbp_num(f : LabeledPolynomial) -> Int {
+  f.2
+}
+
+///|
+/// Subtract one F5 labeled polynomial from another.
+///
+/// - Does: Subtracts polynomial parts and keeps the signature/number of the
+///   larger input under `lbp_cmp`.
+/// - Input: Two compatible `LabeledPolynomial` values.
+/// - Returns: A `LabeledPolynomial`.
+/// - Limits: Uses the first polynomial's order for signature comparison and
+///   raises from polynomial subtraction on incompatible rings.
+pub fn lbp_sub(
+  f : LabeledPolynomial,
+  g : LabeledPolynomial,
+) -> LabeledPolynomial raise PolyError {
+  let max_poly = if sig_cmp(lbp_sign(f), lbp_sign(g), lbp_polyn(f).order) < 0 {
+    g
+  } else {
+    f
+  }
+  lbp(lbp_sign(max_poly), lbp_polyn(f).sub(lbp_polyn(g)), lbp_num(max_poly))
+}
+
+///|
+/// Multiply an F5 labeled polynomial by a term.
+///
+/// - Does: Multiplies both the signature and polynomial by the term monomial,
+///   preserving the insertion number.
+/// - Input: A `LabeledPolynomial` and a term `(Monomial, FieldElem)`.
+/// - Returns: A `LabeledPolynomial`.
+/// - Limits: Raises if the monomial arity or coefficient domain is
+///   incompatible with the polynomial.
+pub fn lbp_mul_term(
+  f : LabeledPolynomial,
+  cx : (Monomial, FieldElem),
+) -> LabeledPolynomial raise PolyError {
+  let p = lbp_polyn(f)
+  let term = poly_from_term(cx.0, cx.1, p.gens, p.domain, p.order)
+  lbp(sig_mult(lbp_sign(f), cx.0), p.mul(term), lbp_num(f))
+}
+
+///|
+/// Compare two F5 labeled polynomials.
+///
+/// - Does: Orders first by signature and then, for equal signatures, by
+///   descending insertion number.
+/// - Input: Two `LabeledPolynomial` values.
+/// - Returns: `-1` when `f < g` in the F5 ordering, otherwise `1`.
+/// - Limits: Like the source helper, equality is folded into the positive
+///   branch rather than returned as `0`.
+pub fn lbp_cmp(f : LabeledPolynomial, g : LabeledPolynomial) -> Int {
+  if sig_cmp(lbp_sign(f), lbp_sign(g), lbp_polyn(f).order) == -1 {
+    return -1
+  }
+  if lbp_sign(f) == lbp_sign(g) && lbp_num(f) > lbp_num(g) {
+    return -1
+  }
+  1
+}
+
+///|
+/// Build a sorting key for an F5 labeled polynomial.
+///
+/// - Does: Encodes the signature key and descending insertion number.
+/// - Input: One `LabeledPolynomial`.
+/// - Returns: A tuple key `((index-key, monomial), number-key)`.
+/// - Limits: The monomial component still needs the polynomial term order for
+///   fully ordered sorting outside direct compatibility checks.
+pub fn lbp_key(f : LabeledPolynomial) -> ((Int, Monomial), Int) {
+  (sig_key(lbp_sign(f), lbp_polyn(f).order), -lbp_num(f))
 }
 
 ///|

@@ -1297,6 +1297,16 @@ pub fn jacobi_poly(Int, @symcore.Expr, @symcore.Expr, gen? : String) -> @symcore
 
 pub fn laguerre_poly(Int, gen? : String, alpha? : @symcore.Expr) -> @symcore.Expr raise PolyError
 
+pub fn lbp((Monomial, Int), Poly, Int) -> ((Monomial, Int), Poly, Int)
+
+pub fn lbp_cmp(((Monomial, Int), Poly, Int), ((Monomial, Int), Poly, Int)) -> Int
+
+pub fn lbp_key(((Monomial, Int), Poly, Int)) -> ((Int, Monomial), Int)
+
+pub fn lbp_mul_term(((Monomial, Int), Poly, Int), (Monomial, FieldElem)) -> ((Monomial, Int), Poly, Int) raise PolyError
+
+pub fn lbp_sub(((Monomial, Int), Poly, Int), ((Monomial, Int), Poly, Int)) -> ((Monomial, Int), Poly, Int) raise PolyError
+
 pub fn lc(Poly, order? : TermOrder) -> FieldElem raise PolyError
 
 pub fn lcm(Poly, Poly) -> Poly raise PolyError
@@ -1540,6 +1550,14 @@ pub fn sdm_transpose(SDM) -> SDM raise PolyError
 pub fn sdm_zero() -> Array[(Monomial, FieldElem)]
 
 pub fn sfield(Array[@symcore.Expr], gens? : Array[String], domain? : Domain, order? : TermOrder) -> RingFactoryResult
+
+pub fn sig(Monomial, Int) -> (Monomial, Int)
+
+pub fn sig_cmp((Monomial, Int), (Monomial, Int), TermOrder) -> Int
+
+pub fn sig_key((Monomial, Int), TermOrder) -> (Int, Monomial)
+
+pub fn sig_mult((Monomial, Int), Monomial) -> (Monomial, Int) raise PolyError
 
 pub fn sign_seq(Array[Poly]) -> Array[Int] raise PolyError
 
@@ -2428,6 +2446,8 @@ pub type FieldElemBinaryMapper = (FieldElem, FieldElem) -> FieldElem raise PolyE
 
 pub type FieldElemMapper = (FieldElem) -> FieldElem raise PolyError
 
+pub type LabeledPolynomial = ((Monomial, Int), Poly, Int)
+
 pub type Matrix = Array[Array[@bigint.BigInt]]
 
 pub type MatrixExpr = Array[Array[@symcore.Expr]]
@@ -2437,6 +2457,8 @@ pub type MatrixExprDOD = Map[Int, Map[Int, @symcore.Expr]]
 pub type Sdm = Array[(Monomial, FieldElem)]
 
 pub type SdmTerm = (Monomial, FieldElem)
+
+pub type Signature = (Monomial, Int)
 
 pub type SympyEigenvects = Array[(@symcore.Expr, Int, Array[Array[@symcore.Expr]])]
 

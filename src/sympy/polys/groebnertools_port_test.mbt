@@ -23,6 +23,23 @@ fn normalize_basis_str(s : String) -> String {
 }
 
 ///|
+fn tuple_int_string(values : Array[Int]) -> String {
+  let parts = values.map(v => v.to_string())
+  let joined = parts.join(", ")
+  "(\{joined})"
+}
+
+///|
+fn f5_signature_string(s : @sympolys.Signature) -> String {
+  "(\{tuple_int_string(s.0.to_array())}, \{s.1})"
+}
+
+///|
+fn f5_lbp_string(f : @sympolys.LabeledPolynomial) -> String {
+  "\{f5_signature_string(f.0)}|\{f.1.to_string()}|\{f.2}"
+}
+
+///|
 fn expect_groebner_same(polys : Array[Poly], order : TermOrder) -> Unit raise {
   let basis = Poly::groebner(polys, order~)
   let ours = normalize_basis_str(groebner_to_string(basis))
@@ -92,6 +109,72 @@ test "groebnertools: gcd and lcm parity" {
   assert_eq(
     sympy_normalize(@sympolys.groebner_lcm(f, g).to_string()),
     sympy_normalize(groebnertools_lcm(f.to_expr(), g.to_expr(), gens=["x"])),
+  )
+}
+
+///|
+test "groebnertools: f5 signature helper parity" {
+  assert_eq(
+    @sympolys.sig_cmp(
+      @sympolys.sig(@sympolys.monomial_from_array([0, 3]), 3),
+      @sympolys.sig(@sympolys.monomial_from_array([1, 0]), 3),
+      @sympolys.TermOrder::Lex,
+    ).to_string(),
+    groebnertools_sig_cmp([0, 3], 3, [1, 0], 3, gens=["x", "y"]),
+  )
+  assert_eq(
+    @sympolys.sig_cmp(
+      @sympolys.sig(@sympolys.monomial_from_array([1, 0]), 2),
+      @sympolys.sig(@sympolys.monomial_from_array([1, 0]), 3),
+      @sympolys.TermOrder::Lex,
+    ).to_string(),
+    groebnertools_sig_cmp([1, 0], 2, [1, 0], 3, gens=["x", "y"]),
+  )
+  assert_eq(
+    f5_signature_string(
+      @sympolys.sig_mult(
+        @sympolys.sig(@sympolys.monomial_from_array([1, 0]), 3),
+        @sympolys.monomial_from_array([0, 2]),
+      ),
+    ),
+    groebnertools_sig_mult([1, 0], 3, [0, 2]),
+  )
+}
+
+///|
+test "groebnertools: f5 labeled polynomial helper parity" {
+  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let f = @sympolys.lbp(
+    @sympolys.sig(@sympolys.monomial_from_array([1, 0]), 2),
+    b.from_expr(x + y),
+    3,
+  )
+  let g = @sympolys.lbp(
+    @sympolys.sig(@sympolys.monomial_from_array([0, 2]), 3),
+    b.from_expr(y),
+    4,
+  )
+  assert_eq(
+    @sympolys.lbp_cmp(f, g).to_string(),
+    groebnertools_lbp_cmp([1, 0], 2, x + y, 3, [0, 2], 3, y, 4, gens=["x", "y"]),
+  )
+  assert_eq(
+    f5_lbp_string(@sympolys.lbp_sub(f, g)),
+    groebnertools_lbp_sub([1, 0], 2, x + y, 3, [0, 2], 3, y, 4, gens=["x", "y"]),
+  )
+  assert_eq(
+    f5_lbp_string(
+      @sympolys.lbp_mul_term(
+        f,
+        (
+          @sympolys.monomial_from_array([0, 1]),
+          @sympolys.fe_from_int(2, @sympolys.Domain::QQ),
+        ),
+      ),
+    ),
+    groebnertools_lbp_mul_term([1, 0], 2, x + y, 3, [0, 1], 2, gens=["x", "y"]),
   )
 }
 

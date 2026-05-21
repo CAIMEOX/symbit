@@ -6002,6 +6002,172 @@ pub fn groebnertools_lcm(
 }
 
 ///|
+fn groebner_monomial_obj(monomial : Array[Int]) -> @py.PyObject {
+  let items : Array[@py.PyObject] = []
+  for exp in monomial {
+    items.push(py_int_obj(exp))
+  }
+  py_tuple_from_objects(items).obj()
+}
+
+///|
+fn groebner_signature_obj(monomial : Array[Int], index : Int) -> @py.PyObject {
+  py_tuple_from_objects([groebner_monomial_obj(monomial), py_int_obj(index)]).obj()
+}
+
+///|
+fn groebner_order_obj(
+  gens : Array[String],
+  order : String,
+) -> @py.PyObject raise {
+  let (ring, _) = groebner_ring_polys([], gens, order)
+  match py_get_attr(ring, "order") {
+    Some(value) => objenum_to_obj(value)
+    None => fail("groebner-ring-order-missing")
+  }
+}
+
+///|
+fn groebner_lbp_obj(
+  signature : @py.PyObject,
+  polynomial : @py.PyObject,
+  number : Int,
+) -> @py.PyObject {
+  py_tuple_from_objects([signature, polynomial, py_int_obj(number)]).obj()
+}
+
+///|
+fn groebner_lbp_result_string(value : @py.PyObjectEnum) -> String raise {
+  let items = py_list_to_pyobjects(value)
+  guard items.length() == 3 else { fail("groebner-lbp-result") }
+  "\{py_str_obj(items[0])}|\{py_str_obj(items[1])}|\{py_str_obj(items[2])}"
+}
+
+///|
+fn groebner_term_obj(monomial : Array[Int], coeff : Int) -> @py.PyObject raise {
+  py_tuple_from_objects([
+    groebner_monomial_obj(monomial),
+    sympy_domain_elem(@symnum.BigRational::from_int(coeff), "QQ"),
+  ]).obj()
+}
+
+///|
+pub fn groebnertools_sig_cmp(
+  a_monomial : Array[Int],
+  a_index : Int,
+  b_monomial : Array[Int],
+  b_index : Int,
+  gens? : Array[String] = ["x", "y"],
+  order? : String = "lex",
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.groebnertools.sig_cmp", [
+    OracleArg::PyObj(groebner_signature_obj(a_monomial, a_index)),
+    OracleArg::PyObj(groebner_signature_obj(b_monomial, b_index)),
+    OracleArg::PyObj(groebner_order_obj(gens, order)),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn groebnertools_sig_mult(
+  monomial : Array[Int],
+  index : Int,
+  multiplier : Array[Int],
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.groebnertools.sig_mult", [
+    OracleArg::PyObj(groebner_signature_obj(monomial, index)),
+    OracleArg::PyObj(groebner_monomial_obj(multiplier)),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn groebnertools_lbp_cmp(
+  f_monomial : Array[Int],
+  f_index : Int,
+  f_expr : @symcore.Expr,
+  f_number : Int,
+  g_monomial : Array[Int],
+  g_index : Int,
+  g_expr : @symcore.Expr,
+  g_number : Int,
+  gens? : Array[String] = ["x", "y"],
+  order? : String = "lex",
+) -> String raise {
+  let (_, polys) = groebner_ring_polys([f_expr, g_expr], gens, order)
+  let f = groebner_lbp_obj(
+    groebner_signature_obj(f_monomial, f_index),
+    polys[0],
+    f_number,
+  )
+  let g = groebner_lbp_obj(
+    groebner_signature_obj(g_monomial, g_index),
+    polys[1],
+    g_number,
+  )
+  let res = sympy_call_must("sympy.polys.groebnertools.lbp_cmp", [
+    OracleArg::PyObj(f),
+    OracleArg::PyObj(g),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn groebnertools_lbp_sub(
+  f_monomial : Array[Int],
+  f_index : Int,
+  f_expr : @symcore.Expr,
+  f_number : Int,
+  g_monomial : Array[Int],
+  g_index : Int,
+  g_expr : @symcore.Expr,
+  g_number : Int,
+  gens? : Array[String] = ["x", "y"],
+  order? : String = "lex",
+) -> String raise {
+  let (_, polys) = groebner_ring_polys([f_expr, g_expr], gens, order)
+  let f = groebner_lbp_obj(
+    groebner_signature_obj(f_monomial, f_index),
+    polys[0],
+    f_number,
+  )
+  let g = groebner_lbp_obj(
+    groebner_signature_obj(g_monomial, g_index),
+    polys[1],
+    g_number,
+  )
+  let res = sympy_call_must("sympy.polys.groebnertools.lbp_sub", [
+    OracleArg::PyObj(f),
+    OracleArg::PyObj(g),
+  ])
+  groebner_lbp_result_string(res)
+}
+
+///|
+pub fn groebnertools_lbp_mul_term(
+  monomial : Array[Int],
+  index : Int,
+  expr : @symcore.Expr,
+  number : Int,
+  term_monomial : Array[Int],
+  term_coeff : Int,
+  gens? : Array[String] = ["x", "y"],
+  order? : String = "lex",
+) -> String raise {
+  let (_, polys) = groebner_ring_polys([expr], gens, order)
+  let f = groebner_lbp_obj(
+    groebner_signature_obj(monomial, index),
+    polys[0],
+    number,
+  )
+  let res = sympy_call_must("sympy.polys.groebnertools.lbp_mul_term", [
+    OracleArg::PyObj(f),
+    OracleArg::PyObj(groebner_term_obj(term_monomial, term_coeff)),
+  ])
+  groebner_lbp_result_string(res)
+}
+
+///|
 pub fn red_groebner(
   exprs : Array[@symcore.Expr],
   gens? : Array[String] = ["x", "y"],
