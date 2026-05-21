@@ -11425,6 +11425,30 @@ pub fn roots_cyclotomic(
 }
 
 ///|
+pub fn preprocess_roots(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens([expr_obj])
+  } else {
+    sympy_symbols_from_names(gens)
+  }
+  let poly = call_sympy_poly(expr_obj, gens_list, "", None)
+  let res = sympy_call_must("sympy.polys.polyroots.preprocess_roots", [
+    OracleArg::PyObj(poly),
+  ])
+  let items = py_list_to_pyobjects(res)
+  guard items.length() == 2 else { fail("preprocess-roots-result-shape") }
+  let as_expr = resolve_method_callable(items[1], "as_expr")
+  let poly_expr = py_call_noargs(as_expr)
+  let coeff_text = remove_spaces(py_str_obj(items[0]))
+  let poly_text = remove_spaces(py_str_enum(poly_expr))
+  "\{coeff_text}||\{poly_text}"
+}
+
+///|
 pub fn root_factors(
   expr : @symcore.Expr,
   gens? : Array[String] = [],

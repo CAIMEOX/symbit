@@ -24,6 +24,14 @@ fn rootof_list(expr : @symcore.Expr, deg : Int) -> String raise {
 }
 
 ///|
+fn preprocess_repr(pair : (@symcore.Expr, @sympolys.Poly)) -> String raise {
+  let (coeff, poly) = pair
+  let coeff_text = sympy_normalize(@symprint.pretty_string(coeff))
+  let poly_text = sympy_normalize(@symprint.pretty_string(poly.to_expr()))
+  "\{coeff_text}||\{poly_text}"
+}
+
+///|
 test "polyroots: linear/quadratic parity" {
   let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::QQ)
@@ -121,6 +129,31 @@ test "polyroots: binomial roots parity" {
     let poly = b.from_expr(expr)
     let ours = roots_repr(@sympolys.roots_binomial(poly))
     let oracle = normalize_root_list(roots_binomial(poly.to_expr(), gens=["x"]))
+    assert_eq(ours, oracle)
+  }
+}
+
+///|
+test "polyroots: preprocess_roots parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let zz = PolyBuilder::new(["x"], Domain::ZZ)
+  let qq = PolyBuilder::new(["x"], Domain::QQ)
+  let half = @symcore.rational_from_ints(1, 2)
+  for
+    poly in [
+      zz.from_expr((x ^ @symcore.int(3)) - @symcore.int(1)),
+      zz.from_expr(
+        (x ^ @symcore.int(5)) + @symcore.int(512) * x + @symcore.int(1024),
+      ),
+      zz.from_expr(
+        @symcore.int(2) * (x ^ @symcore.int(2)) +
+        @symcore.int(4) * x +
+        @symcore.int(2),
+      ),
+      qq.from_expr(half * (x ^ @symcore.int(2)) + x + half),
+    ] {
+    let ours = preprocess_repr(@sympolys.preprocess_roots(poly))
+    let oracle = preprocess_roots(poly.to_expr(), gens=["x"])
     assert_eq(ours, oracle)
   }
 }

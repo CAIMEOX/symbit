@@ -126,3 +126,30 @@ test "polyroots wb: cyclotomic roots detect primitive roots" {
   )
   assert_true(not_cyclotomic is Err(PolyError::BadExponent))
 }
+
+///|
+test "polyroots wb: preprocess_roots clears content and integer basis" {
+  let x = @symcore.Expr::Symbol("x")
+  let zz = PolyBuilder::new(["x"], Domain::ZZ)
+  let scaled = zz.from_expr(
+    (x ^ @symcore.int(5)) + @symcore.int(512) * x + @symcore.int(1024),
+  )
+  let (basis_coeff, basis_poly) = preprocess_roots(scaled)
+  inspect(@symprint.pretty_string(basis_coeff), content="4")
+  inspect(basis_poly.to_string(), content="x**5 + 2*x + 1")
+
+  let content_poly = zz.from_expr(
+    @symcore.int(2) * (x ^ @symcore.int(2)) +
+    @symcore.int(4) * x +
+    @symcore.int(2),
+  )
+  let (content_coeff, primitive_poly) = preprocess_roots(content_poly)
+  inspect(@symprint.pretty_string(content_coeff), content="1")
+  inspect(primitive_poly.to_string(), content="x**2 + 2*x + 1")
+
+  let half = @symcore.rational_from_ints(1, 2)
+  let qq = PolyBuilder::new(["x"], Domain::QQ)
+  let rational_poly = qq.from_expr(half * (x ^ @symcore.int(2)) + x + half)
+  let (_, cleared_poly) = preprocess_roots(rational_poly)
+  inspect(cleared_poly.to_string(), content="x**2 + 2*x + 1")
+}

@@ -325,6 +325,156 @@ fn polyroots_rational_abs(value : @symnum.BigRational) -> @symnum.BigRational {
 }
 
 ///|
+fn polyroots_bigint_abs(value : BigInt) -> BigInt {
+  if value.op_lt(0N) {
+    value.neg()
+  } else {
+    value
+  }
+}
+
+///|
+fn integer_coeff_abs(coeff : FieldElem) -> BigInt raise PolyError {
+  let value = fe_expect_rational(coeff)
+  if !value.is_integral() {
+    raise PolyError::CoefficientNotInteger
+  }
+  polyroots_bigint_abs(value.numerator())
+}
+
+///|
+fn gcd_bigint_values(values : Array[BigInt]) -> BigInt {
+  let mut result = 0N
+  for value in values {
+    let current = polyroots_bigint_abs(value)
+    if current.compare(0N) == 0 {
+      continue
+    }
+    if result.compare(0N) == 0 {
+      result = current
+    } else {
+      result = @symnum.gcd_bigint(result, current)
+    }
+  }
+  result
+}
+
+///|
+fn integer_basis(poly : Poly) -> Int? raise PolyError {
+  ensure_univar(poly)
+  let dense = to_dense(poly)
+  let monoms : Array[Int] = Array::new()
+  let coeffs : Array[BigInt] = Array::new()
+  for offset in 0..<dense.length() {
+    let exp = dense.length() - 1 - offset
+    let coeff = dense[exp]
+    if !fe_is_zero(coeff) {
+      monoms.push(exp)
+      coeffs.push(integer_coeff_abs(coeff))
+    }
+  }
+  if coeffs.length() < 2 {
+    return None
+  }
+  if coeffs[0].compare(coeffs[coeffs.length() - 1]) >= 0 {
+    return None
+  }
+  let degree = monoms[0]
+  let scaled_monoms : Array[Int] = Array::new()
+  let scaled_coeffs : Array[BigInt] = Array::new()
+  for i in 0..<(monoms.length() - 1) {
+    let idx = monoms.length() - 1 - i
+    scaled_monoms.push(degree - monoms[idx])
+    scaled_coeffs.push(coeffs[idx])
+  }
+  if scaled_monoms.length() == 1 {
+    match bigint_nth_root_exact(scaled_coeffs[0], scaled_monoms[0]) {
+      Some(root) => return Some(root.to_int())
+      None => return None
+    }
+  }
+  let gcd = gcd_bigint_values(scaled_coeffs)
+  if gcd.compare(1N) <= 0 {
+    return None
+  }
+  let divisors = polyroots_divisors_int(gcd.to_int())
+  if divisors.length() <= 1 {
+    return None
+  }
+  let mut idx = divisors.length() - 1
+  while idx >= 1 {
+    let div = divisors[idx]
+    let div_big = BigInt::from_int(div)
+    let mut ok = true
+    for i in 0..<scaled_monoms.length() {
+      let power = bigint_pow_int(div_big, scaled_monoms[i])
+      if power.compare(0N) == 0 || scaled_coeffs[i].mod(power).compare(0N) != 0 {
+        ok = false
+        break
+      }
+    }
+    if ok {
+      return Some(div)
+    }
+    if idx == 1 {
+      break
+    }
+    idx = idx - 1
+  }
+  None
+}
+
+///|
+fn preprocess_scale_by_basis(poly : Poly, basis : Int) -> Poly raise PolyError {
+  let degree = poly.degree(0)
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let base = BigInt::from_int(basis)
+  for monom, coeff in poly.coeffs {
+    let exp = monom.exps[0]
+    let divisor = bigint_pow_int(base, degree - exp)
+    let value = fe_expect_rational(coeff)
+    let scaled = value.div_r(@symnum.BigRational::from_bigint(divisor)) catch {
+      _ => raise PolyError::DivisionByZero
+    }
+    add_term(coeffs, monom, fe_from_rational(scaled, poly.domain), poly.domain)
+  }
+  Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
+}
+
+///|
+/// Preprocess a polynomial before symbolic root solving.
+///
+/// - Does: Clears rational denominators, removes primitive integer content, and
+///   applies SymPy's integer basis scaling for univariate integer polynomials.
+/// - Input: One `Poly`.
+/// - Returns: `(Expr, Poly)`, where the expression is the root rescaling
+///   coefficient and the polynomial is the transformed input.
+/// - Limits: Symbolic coefficient-domain stripping is not modeled yet; inputs
+///   whose coefficients cannot be projected to exact rationals are returned
+///   unchanged with coefficient `1`.
+pub fn preprocess_roots(poly : Poly) -> (Expr, Poly) raise PolyError {
+  let mut coeff = int(1)
+  let cleared_result : Result[Poly, PolyError] = try? clear_denominators(poly)
+  let cleared = match cleared_result {
+    Ok(value) => value
+    Err(PolyError::DomainMismatch) => return (coeff, poly)
+    Err(PolyError::CoefficientNotInteger) => return (coeff, poly)
+    Err(error) => raise error
+  }
+  let primitive_poly = cleared.primitive_part()
+  if primitive_poly.gens.length() == 1 && primitive_poly.domain == Domain::ZZ {
+    match integer_basis(primitive_poly) {
+      Some(basis) => {
+        coeff = @symcore.mul([coeff, int(basis)])
+        return (coeff, preprocess_scale_by_basis(primitive_poly, basis))
+      }
+      None => ()
+    }
+  }
+  (coeff, primitive_poly)
+}
+
+///|
 /// Solve a binomial polynomial through roots of unity.
 ///
 /// - Does: Mirrors SymPy's `roots_binomial` by using the leading and constant

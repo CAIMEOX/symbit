@@ -1461,6 +1461,8 @@ pub fn pquo(Poly, Poly) -> Poly raise PolyError
 
 pub fn prem(Poly, Poly) -> Poly raise PolyError
 
+pub fn preprocess_roots(Poly) -> (@symcore.Expr, Poly) raise PolyError
+
 pub fn prime_decomp(Int, Poly) -> Array[PrimeIdeal] raise PolyError
 
 pub fn prime_valuation(Int, PrimeIdeal) -> Int raise PolyError
