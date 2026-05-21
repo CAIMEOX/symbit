@@ -837,6 +837,14 @@ pub fn dup_inflate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise Poly
 
 pub fn dup_inner_gcd(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError
 
+pub fn dup_inner_isolate_negative_roots(Array[FieldElem], Domain) -> Array[(@symnum.BigRational, @symnum.BigRational)] raise PolyError
+
+pub fn dup_inner_isolate_positive_roots(Array[FieldElem], Domain) -> Array[(@symnum.BigRational, @symnum.BigRational)] raise PolyError
+
+pub fn dup_inner_isolate_real_roots(Array[FieldElem], Domain) -> Array[(@symnum.BigRational, @symnum.BigRational)] raise PolyError
+
+pub fn dup_inner_refine_real_root(Array[FieldElem], @symnum.BigRational, @symnum.BigRational, Domain, steps? : Int, eps? : @symnum.BigRational, disjoint? : @symnum.BigRational) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError
+
 pub fn dup_inner_subresultants(Array[FieldElem], Array[FieldElem], Domain) -> (Array[Array[FieldElem]], Array[FieldElem]) raise PolyError
 
 pub fn dup_integrate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
@@ -846,6 +854,8 @@ pub fn dup_invert(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem
 pub fn dup_irreducible_p(Array[FieldElem], Domain) -> Bool raise PolyError
 
 pub fn dup_isolate_real_roots(Array[FieldElem], Domain) -> Array[((@symnum.BigRational, @symnum.BigRational), Int)] raise PolyError
+
+pub fn dup_isolate_real_roots_list(Array[Array[FieldElem]], Domain) -> Array[((@symnum.BigRational, @symnum.BigRational), Int, Int)] raise PolyError
 
 pub fn dup_isolate_real_roots_sqf(Array[FieldElem], Domain) -> Array[(@symnum.BigRational, @symnum.BigRational)] raise PolyError
 
@@ -884,6 +894,8 @@ pub fn dup_neg(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 pub fn dup_normal(Array[FieldElem]) -> Array[FieldElem] raise PolyError
 
 pub fn dup_nth(Array[FieldElem], Int) -> FieldElem raise PolyError
+
+pub fn dup_outer_refine_real_root(Array[FieldElem], @symnum.BigRational, @symnum.BigRational, Domain, steps? : Int, eps? : @symnum.BigRational, disjoint? : @symnum.BigRational) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError
 
 pub fn dup_pdiv(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem]) raise PolyError
 
@@ -974,6 +986,8 @@ pub fn dup_sqf_p(Array[FieldElem], Domain) -> Bool raise PolyError
 pub fn dup_sqf_part(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_sqr(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_step_refine_real_root(Array[FieldElem], @symnum.BigRational, @symnum.BigRational, Domain) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError
 
 pub fn dup_strip(Array[FieldElem]) -> Array[FieldElem] raise PolyError
 

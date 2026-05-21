@@ -132,3 +132,50 @@ test "rootisolation wb: isolate_sturm endpoint handling and empty isolates" {
   let full_empty = dup_isolate_real_roots([ri_wb_feqq(3, 1)], Domain::QQ)
   assert_eq(full_empty.length(), 0)
 }
+
+///|
+test "rootisolation wb: compatibility frontdoors" {
+  let f = [ri_wb_feqq(1, 1), ri_wb_feqq(0, 1), ri_wb_feqq(-2, 1)] // x^2 - 2
+  let step = dup_step_refine_real_root(
+    f,
+    ri_wb_rat(1, 1),
+    ri_wb_rat(2, 1),
+    Domain::QQ,
+  )
+  assert_eq(ri_wb_iv_repr(step), "(1,3/2)")
+  let inner = dup_inner_refine_real_root(
+    f,
+    ri_wb_rat(1, 1),
+    ri_wb_rat(2, 1),
+    Domain::QQ,
+    steps=2,
+  )
+  let outer = dup_outer_refine_real_root(
+    f,
+    ri_wb_rat(1, 1),
+    ri_wb_rat(2, 1),
+    Domain::QQ,
+    steps=2,
+  )
+  assert_eq(ri_wb_iv_repr(inner), ri_wb_iv_repr(outer))
+  let all = dup_inner_isolate_real_roots(f, Domain::QQ)
+  inspect(all.map(iv => ri_wb_iv_repr(iv)).join(","), content="(-2,-1),(1,2)")
+  let positive = dup_inner_isolate_positive_roots(f, Domain::QQ)
+  inspect(positive.map(iv => ri_wb_iv_repr(iv)).join(","), content="(1,2)")
+  let negative = dup_inner_isolate_negative_roots(f, Domain::QQ)
+  inspect(negative.map(iv => ri_wb_iv_repr(iv)).join(","), content="(-2,-1)")
+  let list_roots = dup_isolate_real_roots_list(
+    [f, [ri_wb_feqq(1, 1), ri_wb_feqq(0, 1), ri_wb_feqq(-1, 1)]],
+    Domain::QQ,
+  )
+  let rendered = list_roots
+    .map(entry => {
+      let (iv, idx, mult) = entry
+      "(\{ri_wb_iv_repr(iv)},\{idx},\{mult})"
+    })
+    .join(",")
+  inspect(
+    rendered,
+    content="((-2,-1),0,1),((-1,-1),1,1),((1,1),1,1),((1,2),0,1)",
+  )
+}

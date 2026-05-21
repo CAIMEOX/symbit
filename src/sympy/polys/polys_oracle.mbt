@@ -11544,6 +11544,43 @@ pub fn dup_refine_real_root(
 }
 
 ///|
+pub fn dup_outer_refine_real_root(
+  coeffs : Array[@symnum.BigRational],
+  s : @symnum.BigRational,
+  t : @symnum.BigRational,
+  domain? : String = "QQ",
+  steps? : Int,
+  eps? : @symnum.BigRational,
+  disjoint? : @symnum.BigRational,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(s, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(t, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let kwargs : Map[String, OracleArg] = {}
+  match steps {
+    Some(k) => kwargs["steps"] = OracleArg::Int(k)
+    None => ()
+  }
+  match eps {
+    Some(e) => kwargs["eps"] = OracleArg::PyObj(sympy_domain_elem(e, domain))
+    None => ()
+  }
+  match disjoint {
+    Some(d) =>
+      kwargs["disjoint"] = OracleArg::PyObj(sympy_domain_elem(d, domain))
+    None => ()
+  }
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_outer_refine_real_root",
+    args,
+    kwargs~,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_isolate_real_roots_sqf(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
@@ -11553,6 +11590,48 @@ pub fn dup_isolate_real_roots_sqf(
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must(
     "sympy.polys.rootisolation.dup_isolate_real_roots_sqf", args,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_inner_isolate_real_roots(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_inner_isolate_real_roots", args,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_inner_isolate_positive_roots(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_inner_isolate_positive_roots", args,
+  )
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_inner_isolate_negative_roots(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_inner_isolate_negative_roots", args,
   )
   remove_spaces(py_dense_str(res))
 }

@@ -185,6 +185,40 @@ test "rootisolation: dup_refine_real_root parity (negative)" {
 }
 
 ///|
+test "rootisolation: compatibility frontdoor parity" {
+  let f = [feqq(1, 1), feqq(0, 1), feqq(-2, 1)] // x^2 - 2
+  let s = br_int(1)
+  let t = br_int(2)
+  let (a, b) = @sympolys.dup_outer_refine_real_root(
+    f,
+    s,
+    t,
+    Domain::QQ,
+    steps=2,
+  )
+  assert_eq(
+    interval_repr(a, b),
+    dup_outer_refine_real_root(dup_to_rats(f), s, t, domain="QQ", steps=2),
+  )
+  assert_eq(
+    interval_list_repr(@sympolys.dup_inner_isolate_real_roots(f, Domain::QQ)),
+    dup_inner_isolate_real_roots(dup_to_rats(f), domain="QQ"),
+  )
+  assert_eq(
+    interval_list_repr(
+      @sympolys.dup_inner_isolate_positive_roots(f, Domain::QQ),
+    ),
+    dup_inner_isolate_positive_roots(dup_to_rats(f), domain="QQ"),
+  )
+  assert_eq(
+    interval_list_repr(
+      @sympolys.dup_inner_isolate_negative_roots(f, Domain::QQ),
+    ),
+    dup_inner_isolate_negative_roots(dup_to_rats(f), domain="QQ"),
+  )
+}
+
+///|
 test "rootisolation: dup_isolate_real_roots_sqf parity" {
   let f = [feqq(1, 1), feqq(0, 1), feqq(-2, 1)] // x^2 - 2
   let ours = interval_list_repr(

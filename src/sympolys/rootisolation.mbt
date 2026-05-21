@@ -446,6 +446,95 @@ pub fn dup_refine_real_root(
 }
 
 ///|
+/// Perform one interval-refinement step for a real root.
+///
+/// - Does: Narrows the supplied isolating interval by one refinement step.
+/// - Input: Dense coefficient array, interval endpoints, and coefficient
+///   `Domain`.
+/// - Returns: The refined interval.
+/// - Limits: This typed front door accepts intervals directly rather than
+///   SymPy's internal Mobius-transform tuple.
+pub fn dup_step_refine_real_root(
+  coeffs : Array[FieldElem],
+  s : @symnum.BigRational,
+  t : @symnum.BigRational,
+  domain : Domain,
+) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError {
+  dup_refine_real_root(coeffs, s, t, domain, steps=1)
+}
+
+///|
+fn dup_refine_real_root_with_options(
+  coeffs : Array[FieldElem],
+  s : @symnum.BigRational,
+  t : @symnum.BigRational,
+  domain : Domain,
+  steps : Int?,
+  eps : @symnum.BigRational?,
+  disjoint : @symnum.BigRational?,
+) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError {
+  match (steps, eps, disjoint) {
+    (None, None, None) => dup_refine_real_root(coeffs, s, t, domain)
+    (Some(k), None, None) => dup_refine_real_root(coeffs, s, t, domain, steps=k)
+    (None, Some(e), None) => dup_refine_real_root(coeffs, s, t, domain, eps=e)
+    (None, None, Some(d)) =>
+      dup_refine_real_root(coeffs, s, t, domain, disjoint=d)
+    (Some(k), Some(e), None) =>
+      dup_refine_real_root(coeffs, s, t, domain, steps=k, eps=e)
+    (Some(k), None, Some(d)) =>
+      dup_refine_real_root(coeffs, s, t, domain, steps=k, disjoint=d)
+    (None, Some(e), Some(d)) =>
+      dup_refine_real_root(coeffs, s, t, domain, eps=e, disjoint=d)
+    (Some(k), Some(e), Some(d)) =>
+      dup_refine_real_root(coeffs, s, t, domain, steps=k, eps=e, disjoint=d)
+  }
+}
+
+///|
+/// Refine an inner real-root interval.
+///
+/// - Does: Refines an isolating interval using the same interval algorithm as
+///   `dup_refine_real_root`.
+/// - Input: Dense coefficient array, interval endpoints, coefficient `Domain`,
+///   and optional refinement controls.
+/// - Returns: The refined interval.
+/// - Limits: Mobius-transform input/output is not represented; callers pass
+///   intervals directly.
+pub fn dup_inner_refine_real_root(
+  coeffs : Array[FieldElem],
+  s : @symnum.BigRational,
+  t : @symnum.BigRational,
+  domain : Domain,
+  steps? : Int,
+  eps? : @symnum.BigRational,
+  disjoint? : @symnum.BigRational,
+) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError {
+  dup_refine_real_root_with_options(coeffs, s, t, domain, steps, eps, disjoint)
+}
+
+///|
+/// Refine an outer real-root interval.
+///
+/// - Does: Refines an isolating interval after the outer interval has already
+///   been chosen by the caller.
+/// - Input: Dense coefficient array, interval endpoints, coefficient `Domain`,
+///   and optional refinement controls.
+/// - Returns: The refined interval.
+/// - Limits: Uses the package's direct interval representation rather than
+///   exposing internal Mobius transforms.
+pub fn dup_outer_refine_real_root(
+  coeffs : Array[FieldElem],
+  s : @symnum.BigRational,
+  t : @symnum.BigRational,
+  domain : Domain,
+  steps? : Int,
+  eps? : @symnum.BigRational,
+  disjoint? : @symnum.BigRational,
+) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError {
+  dup_refine_real_root_with_options(coeffs, s, t, domain, steps, eps, disjoint)
+}
+
+///|
 /// Isolate real roots of a square-free dense polynomial.
 ///
 /// - Does: Uses Sturm subdivision inside a global Cauchy bound to produce
@@ -483,6 +572,67 @@ pub fn dup_isolate_real_roots_sqf(
     }
   })
   intervals
+}
+
+///|
+fn root_interval_positive(
+  interval : (@symnum.BigRational, @symnum.BigRational),
+) -> Bool {
+  let (a, b) = interval
+  b.compare(@symnum.BigRational::zero()) > 0 && !(a.is_zero() && b.is_zero())
+}
+
+///|
+fn root_interval_negative(
+  interval : (@symnum.BigRational, @symnum.BigRational),
+) -> Bool {
+  let (a, b) = interval
+  a.compare(@symnum.BigRational::zero()) < 0 && !(a.is_zero() && b.is_zero())
+}
+
+///|
+/// Isolate square-free real roots without postprocessing multiplicities.
+///
+/// - Does: Exposes the internal real-root isolation front door over the current
+///   Sturm-subdivision implementation.
+/// - Input: Dense coefficient array and coefficient `Domain`.
+/// - Returns: Isolating intervals for all real roots.
+/// - Limits: Returns intervals rather than SymPy's internal Mobius data.
+pub fn dup_inner_isolate_real_roots(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> Array[(@symnum.BigRational, @symnum.BigRational)] raise PolyError {
+  dup_isolate_real_roots_sqf(coeffs, domain)
+}
+
+///|
+/// Isolate positive real roots of a square-free polynomial.
+///
+/// - Does: Filters the real isolating intervals to positive roots.
+/// - Input: Dense coefficient array and coefficient `Domain`.
+/// - Returns: Positive-root intervals.
+/// - Limits: Optional interval bounds and Mobius output from SymPy's Python API
+///   are not represented.
+pub fn dup_inner_isolate_positive_roots(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> Array[(@symnum.BigRational, @symnum.BigRational)] raise PolyError {
+  dup_isolate_real_roots_sqf(coeffs, domain).filter(root_interval_positive)
+}
+
+///|
+/// Isolate negative real roots of a square-free polynomial.
+///
+/// - Does: Filters the real isolating intervals to negative roots.
+/// - Input: Dense coefficient array and coefficient `Domain`.
+/// - Returns: Negative-root intervals.
+/// - Limits: Optional interval bounds and Mobius output from SymPy's Python API
+///   are not represented.
+pub fn dup_inner_isolate_negative_roots(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> Array[(@symnum.BigRational, @symnum.BigRational)] raise PolyError {
+  dup_isolate_real_roots_sqf(coeffs, domain).filter(root_interval_negative)
 }
 
 ///|
@@ -550,6 +700,46 @@ pub fn dup_isolate_real_roots(
       cmp
     } else {
       b1.compare(b2)
+    }
+  })
+  out
+}
+
+///|
+/// Isolate real roots for a list of dense polynomials.
+///
+/// - Does: Applies `dup_isolate_real_roots` to each polynomial in order and
+///   records the source polynomial index.
+/// - Input: Dense coefficient arrays and coefficient `Domain`.
+/// - Returns: Triples `(interval, polynomial_index, multiplicity)`.
+/// - Limits: The Python API disjoins and groups shared roots across input
+///   polynomials; this typed front door keeps source indices explicit instead
+///   of returning Python dictionaries.
+pub fn dup_isolate_real_roots_list(
+  polys : Array[Array[FieldElem]],
+  domain : Domain,
+) -> Array[((@symnum.BigRational, @symnum.BigRational), Int, Int)] raise PolyError {
+  let out : Array[((@symnum.BigRational, @symnum.BigRational), Int, Int)] = []
+  for i in 0..<polys.length() {
+    let roots = dup_isolate_real_roots(polys[i], domain)
+    for entry in roots {
+      let (interval, mult) = entry
+      out.push((interval, i, mult))
+    }
+  }
+  out.sort_by((lhs, rhs) => {
+    let ((a1, b1), i1, _) = lhs
+    let ((a2, b2), i2, _) = rhs
+    let cmp = a1.compare(a2)
+    if cmp != 0 {
+      cmp
+    } else {
+      let cmp_b = b1.compare(b2)
+      if cmp_b != 0 {
+        cmp_b
+      } else {
+        i1.compare(i2)
+      }
     }
   })
   out
