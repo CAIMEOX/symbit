@@ -441,6 +441,8 @@ pub fn dmp_zeros(Int, Int, Domain) -> Array[DensePoly] raise PolyError
 
 pub fn dmp_zz_collins_resultant(DensePoly, DensePoly, Int, Domain) -> DensePoly raise PolyError
 
+pub fn dmp_zz_diophantine(Array[DensePoly], DensePoly, Array[FieldElem], Int, Int, Int, Domain) -> Array[DensePoly] raise PolyError
+
 pub fn dmp_zz_factor(DensePoly, Int, Domain) -> (FieldElem, Array[(DensePoly, Int)]) raise PolyError
 
 pub fn dmp_zz_heu_gcd(DensePoly, DensePoly, Int, Domain) -> (DensePoly, DensePoly, DensePoly) raise PolyError
@@ -1036,6 +1038,8 @@ pub fn dup_truncate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise Pol
 pub fn dup_zz_cyclotomic_factor(Array[FieldElem], Domain) -> Array[Array[FieldElem]]? raise PolyError
 
 pub fn dup_zz_cyclotomic_poly(Int, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_zz_diophantine(Array[Array[FieldElem]], Int, Int, Domain) -> Array[Array[FieldElem]] raise PolyError
 
 pub fn dup_zz_factor(Array[FieldElem], Domain) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError
 

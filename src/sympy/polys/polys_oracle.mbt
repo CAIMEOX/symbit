@@ -10623,6 +10623,47 @@ pub fn dmp_zz_wang_non_divisors(
 }
 
 ///|
+pub fn dup_zz_diophantine(
+  factors : Array[Array[@symnum.BigRational]],
+  m : Int,
+  p : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let res = sympy_call_must("sympy.polys.factortools.dup_zz_diophantine", [
+    OracleArg::PyObj(fact_dense_py_factor_list(factors, domain_obj)),
+    OracleArg::Int(m),
+    OracleArg::Int(p),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_zz_diophantine(
+  factors : Array[DenseData],
+  c : DenseData,
+  eval_points : Array[@symnum.BigRational],
+  d : Int,
+  p : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(domain)
+  let points = fact_dense_py_list_from_rationals(eval_points, domain_obj)
+  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_diophantine", [
+    OracleArg::PyObj(fact_dense_py_dmp_factor_list(factors, domain_obj)),
+    OracleArg::PyObj(fact_dense_py_dense_data(c, domain_obj)),
+    OracleArg::PyObj(points),
+    OracleArg::Int(d),
+    OracleArg::Int(p),
+    OracleArg::Int(u),
+    OracleArg::PyObj(domain_obj),
+  ])
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_zz_factor_sqf(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",

@@ -162,6 +162,11 @@ fn fact_dense_port_dmp_include_repr(items : Array[(DensePoly, Int)]) -> String {
 }
 
 ///|
+fn fact_dense_port_dmp_list_repr(items : Array[DensePoly]) -> String {
+  remove_spaces("[" + items.map(dmp_repr).join(",") + "]")
+}
+
+///|
 test "factortools: dense factor-list frontdoors parity" {
   let f = [fezz(2), fezz(0), fezz(-2)]
   assert_eq(
@@ -257,6 +262,47 @@ test "factortools: Wang helper frontdoors parity" {
       @sympolys.dmp_zz_wang_non_divisors(fail_e, fezz(1), fezz(1), Domain::ZZ),
     ),
     dmp_zz_wang_non_divisors(dup_to_rats(fail_e), br_int(1), br_int(1)),
+  )
+}
+
+///|
+test "factortools: Diophantine helper frontdoors parity" {
+  let f0 = [fezz(1), fezz(1)]
+  let f1 = [fezz(1), fezz(-1)]
+  assert_eq(
+    fact_dense_port_dup_list_repr(
+      @sympolys.dup_zz_diophantine([f0, f1], 0, 5, Domain::ZZ),
+    ),
+    dup_zz_diophantine([dup_to_rats(f0), dup_to_rats(f1)], 0, 5),
+  )
+  let g0 = [fezz(1), fezz(0)]
+  let g1 = [fezz(1), fezz(-1)]
+  let g2 = [fezz(1), fezz(1)]
+  assert_eq(
+    fact_dense_port_dup_list_repr(
+      @sympolys.dup_zz_diophantine([g0, g1, g2], 2, 5, Domain::ZZ),
+    ),
+    dup_zz_diophantine(
+      [dup_to_rats(g0), dup_to_rats(g1), dup_to_rats(g2)],
+      2,
+      5,
+    ),
+  )
+  let d0 = poly_int([1, 1])
+  let d1 = poly_int([1, -1])
+  let c = poly_int([2, 3])
+  assert_eq(
+    fact_dense_port_dmp_list_repr(
+      @sympolys.dmp_zz_diophantine([d0, d1], c, [], 0, 5, 1, Domain::ZZ),
+    ),
+    dmp_zz_diophantine(
+      [dense_data_of(d0), dense_data_of(d1)],
+      dense_data_of(c),
+      [],
+      0,
+      5,
+      1,
+    ),
   )
 }
 

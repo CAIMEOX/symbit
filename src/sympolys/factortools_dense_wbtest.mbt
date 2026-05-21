@@ -243,6 +243,55 @@ test "factortools dense wb: Wang non divisors" {
 }
 
 ///|
+test "factortools dense wb: Diophantine helpers" {
+  inspect(
+    fact_wb_hensel_lift_repr(
+      dup_zz_diophantine(
+        [fact_wb_dup([1, 1]), fact_wb_dup([1, -1])],
+        0,
+        5,
+        Domain::ZZ,
+      ),
+    ),
+    content="[[2],[-2]]",
+  )
+  inspect(
+    fact_wb_hensel_lift_repr(
+      dup_zz_diophantine(
+        [fact_wb_dup([1, 0]), fact_wb_dup([1, -1]), fact_wb_dup([1, 1])],
+        2,
+        5,
+        Domain::ZZ,
+      ),
+    ),
+    content="[[],[-2],[-2]]",
+  )
+  let dmp_res = dmp_zz_diophantine(
+    [fact_wb_poly([1, 1]), fact_wb_poly([1, -1])],
+    fact_wb_poly([2, 3]),
+    [],
+    0,
+    5,
+    1,
+    Domain::ZZ,
+  )
+  inspect(
+    "[" + dmp_res.map(fact_wb_dmp_repr).join(",") + "]",
+    content="[[2],[]]",
+  )
+  let bad : Result[Array[DensePoly], PolyError] = try? dmp_zz_diophantine(
+    [fact_wb_poly([1, 1]), fact_wb_poly([1, -1])],
+    fact_wb_poly([1]),
+    [fact_wb_fe(0)],
+    0,
+    5,
+    1,
+    Domain::ZZ,
+  )
+  assert_true(bad is Err(PolyError::DomainMismatch))
+}
+
+///|
 test "factortools dense wb: algebraic extension factorization" {
   let a = @symcore.Expr::Symbol("a")
   let rel = (a ^ @symcore.int(2)) - @symcore.int(2)

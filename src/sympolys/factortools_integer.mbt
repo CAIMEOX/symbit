@@ -407,6 +407,143 @@ pub fn dup_zz_hensel_lift(
 }
 
 ///|
+fn fact_int_dup_zz_diophantine_coeff(
+  factors : Array[Array[FieldElem]],
+  coeffs : Array[FieldElem],
+  p : Int,
+  domain : Domain,
+) -> Array[Array[FieldElem]] raise PolyError {
+  let result : Array[Array[FieldElem]] = Array::new()
+  for _ in factors {
+    result.push(Array::new())
+  }
+  let n = dup_degree(coeffs)
+  let modulus = fe_from_int(p, Domain::ZZ)
+  for i in 0..<coeffs.length() {
+    let coeff = coeffs[i]
+    if fe_is_zero(coeff) {
+      continue
+    }
+    let terms = dup_zz_diophantine(factors, n - i, p, domain)
+    for j in 0..<result.length() {
+      let scaled = dup_mul_ground(terms[j], coeff, domain)
+      result.set(
+        j,
+        dup_trunc(dup_add(result[j], scaled, domain), modulus, domain),
+      )
+    }
+  }
+  result
+}
+
+///|
+/// Solve a univariate Wang/EEZ Diophantine equation.
+///
+/// - Does: Ports SymPy's `dup_zz_diophantine`, including the recursive
+///   multi-factor reduction through the empty-evaluation `dmp` branch.
+/// - Input: Integer dense factors `F`, shift `m`, prime modulus `p`, and
+///   `Domain::ZZ`.
+/// - Returns: Dense integer solution polynomials in the same order as `F`.
+/// - Limits: Coefficients and moduli currently fit in `Int`.
+pub fn dup_zz_diophantine(
+  factors : Array[Array[FieldElem]],
+  m : Int,
+  p : Int,
+  domain : Domain,
+) -> Array[Array[FieldElem]] raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  if p <= 1 || factors.length() < 2 {
+    raise PolyError::BadModulus
+  }
+  let normalized = factors.map(f => fact_int_dup_to_zz(f))
+  if normalized.length() == 2 {
+    let a = normalized[0]
+    let b = normalized[1]
+    let f = gf_from_int_poly(fact_int_dup_to_ints(a), p)
+    let g = gf_from_int_poly(fact_int_dup_to_ints(b), p)
+    let (s0, t0, _) = gf_gcdex(g, f, p)
+    let shifted_s = gf_lshift(s0, m)
+    let shifted_t = gf_lshift(t0, m)
+    let (q, rem_s) = gf_div(shifted_s, f, p)
+    let final_t = gf_add_mul(shifted_t, q, g, p)
+    [
+      fact_int_dup_from_ints(gf_to_int_poly(rem_s, p)),
+      fact_int_dup_from_ints(gf_to_int_poly(final_t, p)),
+    ]
+  } else {
+    let products : Array[Array[FieldElem]] = [
+      normalized[normalized.length() - 1],
+    ]
+    let mut idx = normalized.length() - 1
+    while idx > 1 {
+      idx = idx - 1
+      products.insert(0, dup_mul(normalized[idx], products[0], domain))
+    }
+    let partial_s : Array[Array[FieldElem]] = Array::new()
+    let partial_t : Array[Array[FieldElem]] = [[fe_from_int(1, Domain::ZZ)]]
+    for i in 0..<products.length() {
+      let pair = fact_int_dup_zz_diophantine_coeff(
+        [products[i], normalized[i]],
+        partial_t[partial_t.length() - 1],
+        p,
+        domain,
+      )
+      partial_t.push(pair[0])
+      partial_s.push(pair[1])
+    }
+    let all_s = partial_s.copy()
+    all_s.push(partial_t[partial_t.length() - 1])
+    let result : Array[Array[FieldElem]] = Array::new()
+    for i in 0..<normalized.length() {
+      let s_int = gf_from_int_poly(fact_int_dup_to_ints(all_s[i]), p)
+      let f_int = gf_from_int_poly(fact_int_dup_to_ints(normalized[i]), p)
+      let rem = gf_rem(gf_lshift(s_int, m), f_int, p)
+      result.push(fact_int_dup_from_ints(gf_to_int_poly(rem, p)))
+    }
+    result
+  }
+}
+
+///|
+/// Solve a dense Wang/EEZ Diophantine equation.
+///
+/// - Does: Ports the `A == []` branch of SymPy's `dmp_zz_diophantine`, which
+///   is the branch used by the public univariate helper.
+/// - Input: Dense factors, dense coefficient polynomial `c`, evaluation list
+///   `A`, degree bound `d`, prime modulus `p`, level `u`, and `Domain::ZZ`.
+/// - Returns: Dense solution polynomials.
+/// - Limits: Non-empty `A` is the multivariate lifting path and currently
+///   raises `PolyError::DomainMismatch`.
+pub fn dmp_zz_diophantine(
+  factors : Array[DensePoly],
+  c : DensePoly,
+  eval_points : Array[FieldElem],
+  _d : Int,
+  p : Int,
+  _u : Int,
+  domain : Domain,
+) -> Array[DensePoly] raise PolyError {
+  match domain {
+    Domain::ZZ => ()
+    _ => raise PolyError::DomainMismatch
+  }
+  if !eval_points.is_empty() {
+    raise PolyError::DomainMismatch
+  }
+  let dup_factors = factors.map(f => dmp_to_coeffs(f))
+  let solutions = fact_int_dup_zz_diophantine_coeff(
+    dup_factors,
+    dmp_to_coeffs(c),
+    p,
+    domain,
+  )
+  solutions.map(s => dmp_from_coeffs(s))
+}
+
+///|
 /// Compute valid divisors for Wang/EEZ factorization.
 ///
 /// - Does: Ports SymPy's `dmp_zz_wang_non_divisors`, filtering evaluation
