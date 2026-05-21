@@ -102,6 +102,55 @@ pub fn monomial_key(order? : String = "lex") -> String raise {
 }
 
 ///|
+pub fn polyconfig_configure() -> String raise {
+  let res = sympy_call_must("sympy.polys.polyconfig.configure", [])
+  py_str_enum(res)
+}
+
+///|
+pub fn polyconfig_query(key : String) -> String raise {
+  let res = sympy_call_must("sympy.polys.polyconfig.query", [
+    OracleArg::Str(key),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn polyconfig_setup_default(key : String) -> String raise {
+  let res = sympy_call_must("sympy.polys.polyconfig.setup", [
+    OracleArg::Str(key),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn polyconfig_setup_bool(key : String, value : Bool) -> String raise {
+  let res = sympy_call_must("sympy.polys.polyconfig.setup", [
+    OracleArg::Str(key),
+    OracleArg::Bool(value),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn polyconfig_setup_int(key : String, value : Int) -> String raise {
+  let res = sympy_call_must("sympy.polys.polyconfig.setup", [
+    OracleArg::Str(key),
+    OracleArg::Int(value),
+  ])
+  py_str_enum(res)
+}
+
+///|
+pub fn polyconfig_setup_text(key : String, value : String) -> String raise {
+  let res = sympy_call_must("sympy.polys.polyconfig.setup", [
+    OracleArg::Str(key),
+    OracleArg::Str(value),
+  ])
+  py_str_enum(res)
+}
+
+///|
 /// Canonicalise an expression string via `str(sympy.sympify(expr))` so that
 /// ordering matches SymPy’s printer (helps when our printer orders constants
 /// first).

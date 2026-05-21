@@ -618,6 +618,18 @@ pub fn modgcd_univariate(@symcore.Expr, @symcore.Expr, gen? : String) -> String 
 
 pub fn monomial_key(order? : String) -> String raise
 
+pub fn polyconfig_configure() -> String raise
+
+pub fn polyconfig_query(String) -> String raise
+
+pub fn polyconfig_setup_bool(String, Bool) -> String raise
+
+pub fn polyconfig_setup_default(String) -> String raise
+
+pub fn polyconfig_setup_int(String, Int) -> String raise
+
+pub fn polyconfig_setup_text(String, String) -> String raise
+
 pub fn monic(@symcore.Expr, modulus? : Int) -> String raise
 
 pub fn numberfield_field_isomorphic(String, String) -> Bool raise
