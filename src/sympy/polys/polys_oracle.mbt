@@ -6143,6 +6143,23 @@ pub fn sparse_symmetrize_resolvent_coeffs(
 }
 
 ///|
+pub fn generate_lambda_lookup(
+  verbose? : Bool = false,
+  trial_run? : Bool = false,
+) -> String raise {
+  let kwargs : Map[String, OracleArg] = {
+    "verbose": OracleArg::Bool(verbose),
+    "trial_run": OracleArg::Bool(trial_run),
+  }
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.galois_resolvents.generate_lambda_lookup",
+    [],
+    kwargs~,
+  )
+  py_str_enum(res)
+}
+
+///|
 pub fn has_square_disc(
   expr : @symcore.Expr,
   gens? : Array[String] = [],

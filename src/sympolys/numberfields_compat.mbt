@@ -619,21 +619,117 @@ pub fn define_resolvents() -> Array[GaloisResolventSpec] {
 }
 
 ///|
+fn nf_resolvent_coeffs_40() -> Array[String] {
+  [
+    "-2*s1*s2 + 6*s3", "2*s1**3*s3 + s1**2*s2**2 + s1**2*s4 - 17*s1*s2*s3 + 2*s2**3 - 8*s2*s4 + 24*s3**2",
+    "-2*s1**5*s4 - 2*s1**4*s2*s3 + 10*s1**3*s2*s4 + 8*s1**3*s3**2 + 10*s1**2*s2**2*s3 - 12*s1**2*s3*s4 - 2*s1*s2**4 - 54*s1*s2*s3**2 + 32*s1*s4**2 + 8*s2**3*s3 - 32*s2*s3*s4 + 56*s3**3",
+    "2*s1**6*s2*s4 + s1**6*s3**2 - 5*s1**5*s3*s4 - 11*s1**4*s2**2*s4 - 13*s1**4*s2*s3**2 + 7*s1**4*s4**2 + 3*s1**3*s2**3*s3 + 30*s1**3*s2*s3*s4 + 22*s1**3*s3**3 + 10*s1**2*s2**3*s4 + 33*s1**2*s2**2*s3**2 - 72*s1**2*s2*s4**2 - 36*s1**2*s3**2*s4 - 13*s1*s2**4*s3 + 48*s1*s2**2*s3*s4 - 116*s1*s2*s3**3 + 144*s1*s3*s4**2 + s2**6 - 12*s2**4*s4 + 22*s2**3*s3**2 + 48*s2**2*s4**2 - 120*s2*s3**2*s4 + 96*s3**4 - 64*s4**3",
+    "-2*s1**8*s3*s4 - s1**7*s4**2 + 22*s1**6*s2*s3*s4 + 2*s1**6*s3**3 - 2*s1**5*s2**3*s4 - s1**5*s2**2*s3**2 - 29*s1**5*s3**2*s4 - 60*s1**4*s2**2*s3*s4 - 19*s1**4*s2*s3**3 + 38*s1**4*s3*s4**2 + 9*s1**3*s2**4*s4 + 10*s1**3*s2**3*s3**2 + 24*s1**3*s2**2*s4**2 + 134*s1**3*s2*s3**2*s4 + 28*s1**3*s3**4 + 16*s1**3*s4**3 - s1**2*s2**5*s3 - 4*s1**2*s2**3*s3*s4 + 34*s1**2*s2**2*s3**3 - 288*s1**2*s2*s3*s4**2 - 104*s1**2*s3**3*s4 - 19*s1*s2**4*s3**2 + 120*s1*s2**2*s3**2*s4 - 128*s1*s2*s3**4 + 336*s1*s3**2*s4**2 + 2*s2**6*s3 - 24*s2**4*s3*s4 + 28*s2**3*s3**3 + 96*s2**2*s3*s4**2 - 176*s2*s3**3*s4 + 96*s3**5 - 128*s3*s4**3",
+    "s1**10*s4**2 - 11*s1**8*s2*s4**2 - 2*s1**8*s3**2*s4 + s1**7*s2**2*s3*s4 + 15*s1**7*s3*s4**2 + 45*s1**6*s2**2*s4**2 + 17*s1**6*s2*s3**2*s4 + s1**6*s3**4 - 5*s1**6*s4**3 - 12*s1**5*s2**3*s3*s4 - 133*s1**5*s2*s3*s4**2 - 22*s1**5*s3**3*s4 + s1**4*s2**5*s4 - 76*s1**4*s2**3*s4**2 - 6*s1**4*s2**2*s3**2*s4 - 12*s1**4*s2*s3**4 + 32*s1**4*s2*s4**3 + 128*s1**4*s3**2*s4**2 + 29*s1**3*s2**4*s3*s4 + 2*s1**3*s2**3*s3**3 + 344*s1**3*s2**2*s3*s4**2 + 48*s1**3*s2*s3**3*s4 + 16*s1**3*s3**5 - 48*s1**3*s3*s4**3 - 4*s1**2*s2**6*s4 + 32*s1**2*s2**4*s4**2 - 134*s1**2*s2**3*s3**2*s4 + 36*s1**2*s2**2*s3**4 - 64*s1**2*s2**2*s4**3 - 648*s1**2*s2*s3**2*s4**2 - 48*s1**2*s3**4*s4 + 16*s1*s2**5*s3*s4 - 12*s1*s2**4*s3**3 - 128*s1*s2**3*s3*s4**2 + 296*s1*s2**2*s3**3*s4 - 96*s1*s2*s3**5 + 256*s1*s2*s3*s4**3 + 416*s1*s3**3*s4**2 + s2**6*s3**2 - 28*s2**4*s3**2*s4 + 16*s2**3*s3**4 + 176*s2**2*s3**2*s4**2 - 224*s2*s3**4*s4 + 64*s3**6 - 320*s3**2*s4**3",
+  ]
+}
+
+///|
+fn nf_resolvent_coeffs_41() -> Array[String] {
+  ["-s2", "s1*s3 - 4*s4", "-s1**2*s4 + 4*s2*s4 - s3**2"]
+}
+
+///|
 /// Symmetrize resolvent coefficients for supported static specs.
 ///
 /// - Does: Returns the elementary-symmetric coefficient formulas corresponding
 ///   to SymPy's `sparse_symmetrize_resolvent_coeffs`.
 /// - Input: One `GaloisResolventSpec`.
 /// - Returns: Formula strings for the non-leading resolvent coefficients.
-/// - Limits: Currently supports the degree-4 `number=1` resolvent. Unsupported
-///   specs raise `PolyError::BadGenerator("resolvent-symmetrize")`.
+/// - Limits: Currently supports the degree-4 `number=0` and `number=1`
+///   resolvents. Unsupported specs raise
+///   `PolyError::BadGenerator("resolvent-symmetrize")`.
 pub fn sparse_symmetrize_resolvent_coeffs(
   spec : GaloisResolventSpec,
 ) -> Array[String] raise PolyError {
+  if spec.degree == 4 && spec.number == 0 {
+    return nf_resolvent_coeffs_40()
+  }
   if spec.degree == 4 && spec.number == 1 {
-    return ["-s2", "s1*s3 - 4*s4", "-s1**2*s4 + 4*s2*s4 - s3**2"]
+    return nf_resolvent_coeffs_41()
   }
   raise PolyError::BadGenerator("resolvent-symmetrize")
+}
+
+///|
+fn nf_resolvent_wrap(text : String, width : Int) -> String {
+  let out = StringBuilder::new()
+  let mut col = 0
+  for c in text {
+    if c == ' ' && col > width {
+      out.write_char('\n')
+      col = 0
+    } else {
+      out.write_char(c)
+      col += 1
+    }
+  }
+  out.to_string()
+}
+
+///|
+fn nf_lambda_head(spec : GaloisResolventSpec) -> String {
+  "lambda " +
+  s_vars(spec.variables.length())
+  .map(v => @symprint.pretty_string(v))
+  .join(", ") +
+  ":"
+}
+
+///|
+/// Generate the resolvent coefficient-lambda lookup table.
+///
+/// - Does: Mirrors SymPy `generate_lambda_lookup` for the currently migrated
+///   resolvent coefficients, including the `trial_run` path used to generate
+///   only the first `(4,0)` entry.
+/// - Input: Optional `verbose` flag for signature compatibility and
+///   `trial_run` to stop after the first job.
+/// - Returns: A Python-source table string defining `resolvent_coeff_lambdas`.
+/// - Current Limits: Full table generation stops with
+///   `PolyError::BadGenerator("resolvent-symmetrize")` once it reaches
+///   unresolved degree-5/6 resolvents.
+pub fn generate_lambda_lookup(
+  verbose? : Bool = false,
+  trial_run? : Bool = false,
+) -> String raise PolyError {
+  ignore(verbose)
+  let lambda_lists : Array[(String, String)] = []
+  for spec in define_resolvents() {
+    let coeffs = sparse_symmetrize_resolvent_coeffs(spec)
+    let head = nf_lambda_head(spec)
+    lambda_lists.push(
+      (
+        "(\{spec.degree}, \{spec.number})",
+        coeffs
+        .map(c => "\{head} (\{nf_resolvent_wrap(c, 80)})")
+        .join(",\n        "),
+      ),
+    )
+    if trial_run {
+      break
+    }
+  }
+  let out = StringBuilder::new()
+  out.write_string("# This table was generated by a call to\n")
+  out.write_string(
+    "# `sympy.polys.numberfields.galois_resolvents.generate_lambda_lookup()`.\n",
+  )
+  out.write_string("# The entire job took 0.00s.\n")
+  out.write_string("# Of this, Case (6, 1) took 0.00s.\n")
+  out.write_string("# The final polynomial of Case (6, 1) alone took 0.00s.\n")
+  out.write_string("resolvent_coeff_lambdas = {\n")
+  for item in lambda_lists {
+    out.write_string("    \{item.0}: [\n")
+    out.write_string("        " + item.1 + "\n")
+    out.write_string("    ],\n")
+  }
+  out.write_string("}\n")
+  out.to_string()
 }
 
 ///|

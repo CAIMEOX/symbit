@@ -1175,6 +1175,8 @@ pub fn gcdex_steps(Poly, Poly, auto? : Bool) -> Array[(Poly, Poly, Poly)] raise 
 
 pub fn gegenbauer_poly(Int, @symcore.Expr, gen? : String) -> @symcore.Expr raise PolyError
 
+pub fn generate_lambda_lookup(verbose? : Bool, trial_run? : Bool) -> String raise PolyError
+
 pub fn genocchi_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
 
 pub fn get_num_denom(@symnum.BigRational) -> (@bigint.BigInt, @bigint.BigInt)

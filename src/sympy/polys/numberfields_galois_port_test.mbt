@@ -76,8 +76,37 @@ test "numberfields galois: resolvent definitions parity" {
   let specs = @sympolys.define_resolvents()
   assert_eq(resolvent_spec_port_summary(specs), define_resolvents())
   assert_eq(
+    @sympolys.sparse_symmetrize_resolvent_coeffs(specs[0]).join("|"),
+    sparse_symmetrize_resolvent_coeffs(4, 0),
+  )
+  assert_eq(
     @sympolys.sparse_symmetrize_resolvent_coeffs(specs[1]).join("|"),
     sparse_symmetrize_resolvent_coeffs(4, 1),
+  )
+}
+
+///|
+fn lambda_lookup_body(text : String) -> String {
+  let out = StringBuilder::new()
+  let mut seen = false
+  for line_view in text.split("\n") {
+    let line = line_view.to_owned()
+    if line.has_prefix("resolvent_coeff_lambdas = {") {
+      seen = true
+    }
+    if seen {
+      out.write_string(line)
+      out.write_char('\n')
+    }
+  }
+  out.to_string()
+}
+
+///|
+test "numberfields galois: generate lambda lookup trial parity" {
+  assert_eq(
+    lambda_lookup_body(@sympolys.generate_lambda_lookup(trial_run=true)),
+    lambda_lookup_body(generate_lambda_lookup(trial_run=true)),
   )
 }
 

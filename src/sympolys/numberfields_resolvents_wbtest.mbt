@@ -52,12 +52,26 @@ test "numberfields galois: resolvent definitions and symmetrized coefficients" {
     content="(4,0):4:6|(4,1):4:3|(5,1):5:6|(6,1):6:6|(6,2):6:10",
   )
   inspect(specs[1].form, content="X0*X2 + X1*X3")
+  let coeffs40 = sparse_symmetrize_resolvent_coeffs(specs[0])
+  inspect(coeffs40.length(), content="6")
+  inspect(coeffs40[0], content="-2*s1*s2 + 6*s3")
   inspect(
     sparse_symmetrize_resolvent_coeffs(specs[1]).join("|"),
     content="-s2|s1*s3 - 4*s4|-s1**2*s4 + 4*s2*s4 - s3**2",
   )
   let unsupported : Result[Array[String], PolyError] = try? sparse_symmetrize_resolvent_coeffs(
-    specs[0],
+    specs[2],
   )
   assert_true(unsupported is Err(PolyError::BadGenerator(_)))
+}
+
+///|
+test "numberfields galois: generate lambda lookup trial table" {
+  let table = generate_lambda_lookup(trial_run=true)
+  assert_true(table.contains("resolvent_coeff_lambdas = {"))
+  assert_true(table.contains("(4, 0): ["))
+  assert_true(table.contains("lambda s1, s2, s3, s4: (-2*s1*s2 + 6*s3)"))
+  assert_false(table.contains("(4, 1): ["))
+  let full : Result[String, PolyError] = try? generate_lambda_lookup()
+  assert_true(full is Err(PolyError::BadGenerator(_)))
 }

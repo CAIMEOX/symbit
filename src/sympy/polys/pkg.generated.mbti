@@ -592,6 +592,8 @@ pub fn gf_sub(Array[Int], Array[Int], Int) -> String raise
 
 pub fn gf_trunc(Array[Int], Int) -> String raise
 
+pub fn generate_lambda_lookup(verbose? : Bool, trial_run? : Bool) -> String raise
+
 pub fn groebner(Array[@symcore.Expr], order? : String) -> String raise
 
 pub fn matrix_fglm(Array[@symcore.Expr], gens? : Array[String], source_order? : String, target_order? : String) -> String raise
