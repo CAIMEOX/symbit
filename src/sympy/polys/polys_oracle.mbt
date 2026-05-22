@@ -1074,6 +1074,102 @@ pub fn domain_from_complex_field_expr(
 }
 
 ///|
+fn py_quote_single_polys(text : String) -> String {
+  "'" +
+  text.replace_all(old="\\", new="\\\\").replace_all(old="'", new="\\'") +
+  "'"
+}
+
+///|
+fn py_exec_polys_result(
+  script : String,
+  result_expr : String,
+) -> @py.PyObject raise {
+  let builtins = ensure_builtins_module()
+  let exec_obj = match builtins.get_attr("exec", print_err=true) {
+    Some(obj) => objenum_to_obj(obj)
+    None => fail("builtins-exec-missing")
+  }
+  let exec_call = @py.PyCallable::create(exec_obj) catch {
+    _ => fail("builtins-exec-callable")
+  }
+  let eval_obj = match builtins.get_attr("eval", print_err=true) {
+    Some(obj) => objenum_to_obj(obj)
+    None => fail("builtins-eval-missing")
+  }
+  let eval_call = @py.PyCallable::create(eval_obj) catch {
+    _ => fail("builtins-eval-callable")
+  }
+  let globals = py_dict_new()
+  globals.set("__builtins__", builtins.obj())
+  globals.set("sympy", ensure_sympy_module_oracle().obj())
+  ignore(
+    py_call_with_args(
+      exec_call,
+      [@py.PyString::from(script).obj(), globals.obj()],
+      py_dict_new(),
+    ),
+  )
+  objenum_to_obj(
+    py_call_with_args(
+      eval_call,
+      [@py.PyString::from(result_expr).obj(), globals.obj()],
+      py_dict_new(),
+    ),
+  )
+}
+
+///|
+pub fn to_rational(
+  value : String,
+  max_denom : String,
+  limit? : Bool = true,
+) -> String raise {
+  let limit_text = if limit { "True" } else { "False" }
+  let value_code = py_quote_single_polys(value)
+  let denom_code = py_quote_single_polys(max_denom)
+  let script = "from sympy import Float\n" +
+    "try:\n" +
+    "    from sympy.polys.domains.realfield import to_rational as _to_rational\n" +
+    "except (ImportError, AttributeError):\n" +
+    "    _to_rational = None\n" +
+    "_value = Float(\{value_code})\n" +
+    "_max_denom = int(\{denom_code})\n" +
+    "_limit = \{limit_text}\n" +
+    "if _to_rational is not None:\n" +
+    "    __result__ = _to_rational(_value, _max_denom, _limit)\n" +
+    "else:\n" +
+    "    from fractions import Fraction\n" +
+    "    from sympy.external.mpmath import to_rational as _mpmath_to_rational\n" +
+    "    p, q = _mpmath_to_rational(_value._mpf_)\n" +
+    "    p = int(p)\n" +
+    "    q = int(q)\n" +
+    "    if (not _limit) or q <= _max_denom:\n" +
+    "        __result__ = (p, q)\n" +
+    "    else:\n" +
+    "        p0, q0, p1, q1 = 0, 1, 1, 0\n" +
+    "        n, d = p, q\n" +
+    "        while True:\n" +
+    "            a = n // d\n" +
+    "            q2 = q0 + a*q1\n" +
+    "            if q2 > _max_denom:\n" +
+    "                break\n" +
+    "            p0, q0, p1, q1 = p1, q1, p0 + a*p1, q2\n" +
+    "            n, d = d, n - a*d\n" +
+    "        k = (_max_denom - q0) // q1\n" +
+    "        number = Fraction(p, q)\n" +
+    "        bound1 = Fraction(p0 + k*p1, q0 + k*q1)\n" +
+    "        bound2 = Fraction(p1, q1)\n" +
+    "        if not bound2 or not bound1:\n" +
+    "            __result__ = (p, q)\n" +
+    "        elif abs(bound2 - number) <= abs(bound1 - number):\n" +
+    "            __result__ = (bound2.numerator, bound2.denominator)\n" +
+    "        else:\n" +
+    "            __result__ = (bound1.numerator, bound1.denominator)\n"
+  py_str_obj(py_exec_polys_result(script, "__result__"))
+}
+
+///|
 pub fn domain_from_algebraic_field_expr(
   spec : String,
   expr : String,

@@ -1881,6 +1881,8 @@ pub fn to_number_field(@symcore.Expr, gen? : String) -> Domain raise PolyError
 
 pub fn to_number_field_coeffs(@symcore.Expr, @symcore.Expr) -> Array[@symnum.BigRational] raise PolyError
 
+pub fn to_rational(@symcore.Float, @bigint.BigInt, limit? : Bool) -> (@bigint.BigInt, @bigint.BigInt) raise PolyError
+
 pub fn together(@symcore.Expr, deep? : Bool, fraction? : Bool) -> @symcore.Expr
 
 pub fn total_degree(Poly) -> Int
@@ -2534,6 +2536,7 @@ pub fn RealField::neg(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn RealField::new(precision? : Int) -> Self
 pub fn RealField::one(Self) -> @symcore.Expr
 pub fn RealField::precision(Self) -> Int
+pub fn RealField::to_rational(Self, @symcore.Float, limit? : Bool) -> (@bigint.BigInt, @bigint.BigInt) raise PolyError
 pub fn RealField::zero(Self) -> @symcore.Expr
 
 pub struct RingFactoryResult {

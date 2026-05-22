@@ -38,6 +38,54 @@ fn complex_float_expr_from_gaussian(
 }
 
 ///|
+fn floating_floor_div(n : BigInt, d : BigInt) -> BigInt raise PolyError {
+  if d.is_zero() {
+    raise PolyError::DivisionByZero
+  }
+  let q = n.div(d)
+  let r = n.sub(q.mul(d))
+  if r.is_zero() {
+    return q
+  }
+  let opposite_sign = (r.op_lt(0N) && d.op_gt(0N)) ||
+    (r.op_gt(0N) && d.op_lt(0N))
+  if opposite_sign {
+    q.sub(1N)
+  } else {
+    q
+  }
+}
+
+///|
+fn floating_rational(
+  num : BigInt,
+  den : BigInt,
+) -> @symnum.BigRational raise PolyError {
+  @symnum.BigRational::new(num, den) catch {
+    _ => raise PolyError::DivisionByZero
+  }
+}
+
+///|
+fn floating_rational_abs(value : @symnum.BigRational) -> @symnum.BigRational {
+  if value.compare(@symnum.BigRational::zero()) < 0 {
+    value.neg_r()
+  } else {
+    value
+  }
+}
+
+///|
+fn floating_field_max_denom(precision : Int) -> BigInt {
+  let candidate = (1N << precision).div(200N)
+  if candidate.op_gt(99N) {
+    candidate
+  } else {
+    99N
+  }
+}
+
+///|
 /// Floating-field compatibility front doors.
 ///
 /// Current Limits:
@@ -110,6 +158,89 @@ pub fn RealField::precision(self : RealField) -> Int {
 /// - Limits: This is metadata only.
 pub fn ComplexField::precision(self : ComplexField) -> Int {
   self.precision
+}
+
+///|
+/// Convert a floating element to a rational with an optional denominator cap.
+///
+/// - Does: Converts the exact dyadic value of a float to a rational and, when
+///   requested, chooses the closest rational with denominator at most
+///   `max_denom`.
+/// - Input: A finite `@symcore.Float`, a positive `BigInt` denominator cap, and
+///   optional `limit`.
+/// - Returns: A numerator/denominator pair as `(BigInt, BigInt)`.
+/// - Limits: Raises `PolyError::DivisionByZero` for non-positive caps, and
+///   `PolyError::BadGenerator("to_rational")` for non-finite floats.
+pub fn to_rational(
+  value : @symcore.Float,
+  max_denom : BigInt,
+  limit? : Bool = true,
+) -> (BigInt, BigInt) raise PolyError {
+  if max_denom.op_le(0N) {
+    raise PolyError::DivisionByZero
+  }
+  let pair = value.to_rational() catch {
+    _ => raise PolyError::BadGenerator("to_rational")
+  }
+  let (p, q) = pair
+  if !limit || q.op_le(max_denom) {
+    return (p, q)
+  }
+  let mut p0 = 0N
+  let mut q0 = 1N
+  let mut p1 = 1N
+  let mut q1 = 0N
+  let mut n = p
+  let mut d = q
+  while true {
+    let a = floating_floor_div(n, d)
+    let q2 = q0.add(a.mul(q1))
+    if q2.op_gt(max_denom) {
+      break
+    }
+    let next_p0 = p1
+    let next_q0 = q1
+    let next_p1 = p0.add(a.mul(p1))
+    let next_q1 = q2
+    let next_n = d
+    let next_d = n.sub(a.mul(d))
+    p0 = next_p0
+    q0 = next_q0
+    p1 = next_p1
+    q1 = next_q1
+    n = next_n
+    d = next_d
+  }
+  let k = floating_floor_div(max_denom.sub(q0), q1)
+  let number = floating_rational(p, q)
+  let bound1 = floating_rational(p0.add(k.mul(p1)), q0.add(k.mul(q1)))
+  let bound2 = floating_rational(p1, q1)
+  if bound2.is_zero() || bound1.is_zero() {
+    return (p, q)
+  }
+  let diff2 = floating_rational_abs(bound2.sub_r(number))
+  let diff1 = floating_rational_abs(bound1.sub_r(number))
+  if diff2.compare(diff1) <= 0 {
+    (bound2.numerator(), bound2.denominator())
+  } else {
+    (bound1.numerator(), bound1.denominator())
+  }
+}
+
+///|
+/// Convert a real-field element to a rational using the field precision cap.
+///
+/// - Does: Applies `to_rational` with the same max-denominator rule as the
+///   field descriptor.
+/// - Input: A `RealField`, a finite `@symcore.Float`, and optional `limit`.
+/// - Returns: A numerator/denominator pair as `(BigInt, BigInt)`.
+/// - Limits: Raises the same errors as `to_rational`.
+pub fn RealField::to_rational(
+  self : RealField,
+  value : @symcore.Float,
+  limit? : Bool = true,
+) -> (BigInt, BigInt) raise PolyError {
+  to_rational(value, floating_field_max_denom(self.precision), limit~)
 }
 
 ///|

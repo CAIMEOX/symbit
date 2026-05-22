@@ -768,6 +768,8 @@ pub fn sympify_pythonrational(Int, Int) -> String raise
 
 pub fn terms_gcd(@symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
 
+pub fn to_rational(String, String, limit? : Bool) -> String raise
+
 pub fn unify_gens(Array[String], Array[String]) -> Array[String] raise
 
 pub fn viete(@symcore.Expr, roots? : Array[String], gen? : String) -> String raise

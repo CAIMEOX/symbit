@@ -137,3 +137,43 @@ test "floating field objects expose native coercion and arithmetic" {
     _ => fail("expected complex float conjugate")
   }
 }
+
+///|
+fn floating_pair_text(pair : (BigInt, BigInt)) -> String {
+  let (num, den) = pair
+  "(\{num}, \{den})"
+}
+
+///|
+test "to_rational limits dyadic float denominators" {
+  let pi5 = @symcore.Float::from_str("3.14159") catch { _ => fail("float") }
+  inspect(floating_pair_text(to_rational(pi5, 10N)), content="(22, 7)")
+  inspect(floating_pair_text(to_rational(pi5, 100N)), content="(311, 99)")
+  inspect(floating_pair_text(to_rational(pi5, 1000N)), content="(355, 113)")
+  inspect(
+    floating_pair_text(to_rational(pi5, 10N, limit=false)),
+    content="(3537115888337719, 1125899906842624)",
+  )
+}
+
+///|
+test "to_rational handles signs and field precision caps" {
+  let neg = @symcore.Float::from_str("-0.3333333333333333") catch {
+    _ => fail("negative")
+  }
+  inspect(floating_pair_text(to_rational(neg, 10N)), content="(-1, 3)")
+  let rr = RealField::new()
+  let third = @symcore.Float::from_str("0.3333333333333333") catch {
+    _ => fail("third")
+  }
+  inspect(floating_pair_text(rr.to_rational(third)), content="(1, 3)")
+}
+
+///|
+test "to_rational rejects non-positive denominator caps" {
+  let value = @symcore.Float::from_int(1)
+  let zero_cap : Result[(BigInt, BigInt), PolyError] = try? to_rational(
+    value, 0N,
+  )
+  assert_true(zero_cap is Err(PolyError::DivisionByZero))
+}
