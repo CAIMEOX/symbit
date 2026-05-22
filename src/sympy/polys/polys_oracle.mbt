@@ -261,6 +261,40 @@ pub fn modgcd_multivariate(
 }
 
 ///|
+pub fn func_field_modgcd_sqrt2(
+  f : @symcore.Expr,
+  g : @symcore.Expr,
+  gens? : String = "x",
+) -> String raise {
+  let ring_tuple = sympy_call_must("sympy.polys.rings.ring", [
+    OracleArg::Str(gens),
+    OracleArg::PyObj(oracle_domain_from_spec("QQ<sqrt(2)>")),
+  ])
+  let ring_items = py_list_to_pyobjects(ring_tuple)
+  guard ring_items.length() >= 1 else { fail("ring-result-shape") }
+  let ring_obj = ring_items[0]
+  let f_obj = oracle_ring_element_from_expr(ring_obj, f)
+  let g_obj = oracle_ring_element_from_expr(ring_obj, g)
+  let res = sympy_call_must("sympy.polys.modulargcd.func_field_modgcd", [
+    OracleArg::PyObj(f_obj),
+    OracleArg::PyObj(g_obj),
+  ])
+  let parts = py_list_to_pyobjects(res)
+  guard parts.length() == 3 else { fail("func-field-modgcd-result-shape") }
+  let h = oracle_poly_element_as_expr(parts[0])
+  let cff = oracle_poly_element_as_expr(parts[1])
+  let cfg = oracle_poly_element_as_expr(parts[2])
+  "(\{h},\{cff},\{cfg})"
+}
+
+///|
+fn oracle_poly_element_as_expr(poly : @py.PyObject) -> String raise {
+  let as_expr = resolve_method_callable(poly, "as_expr")
+  let expr = py_call_noargs(as_expr)
+  remove_spaces(sympy_normalize(py_str_enum(expr)))
+}
+
+///|
 fn oracle_modgcd(
   path : String,
   f : @symcore.Expr,

@@ -119,3 +119,65 @@ pub fn modgcd_multivariate(
   }
   modgcd_exact_cofactors(f, g)
 }
+
+///|
+fn func_field_exact_division(a : Poly, b : Poly) -> Poly raise PolyError {
+  if a.gens.length() == 1 {
+    exquo(a, b, auto=false)
+  } else {
+    poly_div_exact(a, b)
+  }
+}
+
+///|
+fn func_field_one_like(poly : Poly) -> Poly raise PolyError {
+  Poly::one(poly.gens, poly.domain)
+}
+
+///|
+fn func_field_zero_like(poly : Poly) -> Poly {
+  Poly::zero(poly.gens, poly.domain)
+}
+
+///|
+fn func_field_check_compat(f : Poly, g : Poly) -> Unit raise PolyError {
+  if f.domain != g.domain || f.gens != g.gens {
+    raise PolyError::DomainMismatch
+  }
+  match f.domain {
+    Domain::AlgExt(_, _, _) => ()
+    _ => raise PolyError::DomainMismatch
+  }
+}
+
+///|
+/// Compute algebraic-function-field polynomial gcd and cofactors.
+///
+/// - Does: Mirrors SymPy's `func_field_modgcd` public contract over a
+///   monogenic algebraic coefficient field: returns `(h, cff, cfg)` such that
+///   `cff*h == f` and `cfg*h == g`.
+/// - Input: Two compatible `Poly` values over `Domain::AlgExt`.
+/// - Returns: `(Poly, Poly, Poly)`.
+/// - Limits: The observable result is aligned, but the current kernel reuses
+///   the package exact algebraic-field GCD and exact division path rather than
+///   SymPy's modular reconstruction loop.
+pub fn func_field_modgcd(
+  f : Poly,
+  g : Poly,
+) -> (Poly, Poly, Poly) raise PolyError {
+  func_field_check_compat(f, g)
+  let zero = func_field_zero_like(f)
+  if f.is_zero() && g.is_zero() {
+    return (zero, zero, zero)
+  }
+  if f.is_zero() {
+    return (g, zero, func_field_one_like(g))
+  }
+  if g.is_zero() {
+    return (f, func_field_one_like(f), zero)
+  }
+  let h = gcd(f, g)
+  let cff = func_field_exact_division(f, h)
+  let cfg = func_field_exact_division(g, h)
+  (h, cff, cfg)
+}

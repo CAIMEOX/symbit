@@ -497,8 +497,70 @@ fn expr_coeff_field_elem_value(expr : Expr, domain : Domain) -> FieldElem? {
       match expr_coeff_rational_value(expr) {
         Some(value) =>
           Some(ensure_coeff_domain(value, domain) catch { _ => return None })
-        None => None
+        None =>
+          match domain {
+            Domain::AlgExt(base, gens, rels) =>
+              expr_coeff_algext_value(expr, base, gens, rels)
+            _ => None
+          }
       }
+  }
+}
+
+///|
+fn expr_coeff_algext_value(
+  expr : Expr,
+  base : Domain,
+  gens : Array[String],
+  rels : Array[Expr],
+) -> FieldElem? {
+  if gens.length() != 1 || rels.is_empty() {
+    return None
+  }
+  if !expr_in_algext(base, gens, rels, expr) {
+    return None
+  }
+  let loaded : Result[(Poly, String), PolyError] = try? load_algext_minpoly(
+    base, gens, rels,
+  )
+  let (minpoly, gen) = match loaded {
+    Ok(value) => value
+    Err(_) => return None
+  }
+  let poly = Poly::from_expr(expr, [gen], base) catch { _ => return None }
+  let coeffs : Array[FieldElem] = []
+  for mono, coeff in poly.coeffs {
+    if mono.exps.length() != 1 {
+      return None
+    }
+    let exp = mono.exps[0]
+    let zero = fe_from_int(0, base) catch { _ => return None }
+    while coeffs.length() <= exp {
+      coeffs.push(zero)
+    }
+    let updated = fe_add(coeffs[exp], coeff) catch { _ => return None }
+    coeffs.set(exp, updated)
+  }
+  let reduced = fe_alg_poly_mod(coeffs, minpoly) catch { _ => return None }
+  Some(FieldElem::AlgExt(base, reduced, minpoly, gen))
+}
+
+///|
+fn parse_scalar_poly(
+  expr : Expr,
+  gens : Array[String],
+  domain : Domain,
+) -> Poly? {
+  match expr_coeff_field_elem_value(expr, domain) {
+    Some(coeff) => {
+      let mono = monomial_one(gens.length())
+      let coeffs : Map[Monomial, FieldElem] = Map([])
+      add_term(coeffs, mono, coeff, domain) catch {
+        _ => return None
+      }
+      Some(Poly::{ coeffs, gens, domain, order: TermOrder::Lex })
+    }
+    None => None
   }
 }
 
@@ -529,7 +591,11 @@ fn parse_expr(
           add_term(coeffs, mono, fe_from_int(1, domain), domain)
           Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
         }
-        None => raise PolyError::BadGenerator(name)
+        None =>
+          match parse_scalar_poly(expr, gens, domain) {
+            Some(poly) => poly
+            None => raise PolyError::BadGenerator(name)
+          }
       }
     Expr::Add(args) => {
       let mut acc = Poly::zero(gens, domain)

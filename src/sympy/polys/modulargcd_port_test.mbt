@@ -15,6 +15,25 @@ fn modgcd_port_repr(
 }
 
 ///|
+fn func_field_modgcd_port_repr(
+  parts : (@sympolys.Poly, @sympolys.Poly, @sympolys.Poly),
+) -> String raise {
+  let h = func_field_modgcd_poly_text(parts.0)
+  let cff = func_field_modgcd_poly_text(parts.1)
+  let cfg = func_field_modgcd_poly_text(parts.2)
+  "(\{h},\{cff},\{cfg})"
+}
+
+///|
+fn func_field_modgcd_poly_text(poly : @sympolys.Poly) -> String raise {
+  let text = @symprint.pretty_string(poly.to_expr()).replace_all(
+    old="a",
+    new="sqrt(2)",
+  )
+  remove_spaces(sympy_normalize(text))
+}
+
+///|
 test "modulargcd: univariate parity" {
   let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
@@ -69,5 +88,42 @@ test "modulargcd: bivariate and multivariate parity" {
   assert_eq(
     modgcd_port_repr(@sympolys.modgcd_multivariate(f3, g3)),
     modgcd_multivariate(f3.to_expr(), g3.to_expr(), gens="x,y,z"),
+  )
+}
+
+///|
+test "modulargcd: function field parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let a = @symcore.Expr::Symbol("a")
+  let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
+  let alg_domain = @sympolys.Domain::AlgExt(@sympolys.Domain::QQ, ["a"], [
+    (a ^ @symcore.int(2)) - @symcore.int(2),
+  ])
+
+  let b1 = PolyBuilder::new(["x"], alg_domain)
+  let f1 = b1.from_expr((x ^ @symcore.int(2)) - @symcore.int(2))
+  let g1 = b1.from_expr(x + a)
+  assert_eq(
+    func_field_modgcd_port_repr(@sympolys.func_field_modgcd(f1, g1)),
+    func_field_modgcd_sqrt2((x ^ @symcore.int(2)) - @symcore.int(2), x + sqrt2),
+  )
+
+  let b2 = PolyBuilder::new(["x", "y"], alg_domain)
+  let f2 = b2.from_expr(
+    (x ^ @symcore.int(2)) +
+    @symcore.int(2) * a * x * y +
+    @symcore.int(2) * (y ^ @symcore.int(2)),
+  )
+  let g2 = b2.from_expr(x + a * y)
+  assert_eq(
+    func_field_modgcd_port_repr(@sympolys.func_field_modgcd(f2, g2)),
+    func_field_modgcd_sqrt2(
+      (x ^ @symcore.int(2)) +
+      @symcore.int(2) * sqrt2 * x * y +
+      @symcore.int(2) * (y ^ @symcore.int(2)),
+      x + sqrt2 * y,
+      gens="x,y",
+    ),
   )
 }

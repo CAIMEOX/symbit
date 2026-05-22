@@ -1155,6 +1155,8 @@ pub fn from_dense(Array[FieldElem], Array[String], Domain) -> Poly raise PolyErr
 
 pub fn from_dense_multi(Array[FieldElem], Array[String], Domain, Array[Int]) -> Poly raise PolyError
 
+pub fn func_field_modgcd(Poly, Poly) -> (Poly, Poly, Poly) raise PolyError
+
 pub fn galois_group(Poly) -> GaloisGroupResult raise PolyError
 
 pub fn gaussian_integer_ring_domain() -> Domain
