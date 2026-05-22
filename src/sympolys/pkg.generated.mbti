@@ -1363,6 +1363,8 @@ pub fn igrlex() -> TermOrder
 
 pub fn ilex() -> TermOrder
 
+pub fn init_normal_ANP(Array[FieldElem], Array[FieldElem], Domain) -> ANP raise PolyError
+
 pub fn integer_ring_domain() -> Domain
 
 pub fn interpolate(Array[(@symnum.BigRational, @symnum.BigRational)], String, Domain) -> Poly raise PolyError
@@ -1943,6 +1945,13 @@ pub(all) suberror PolyError {
 pub impl Show for PolyError
 
 // Types and methods
+pub struct ANP {
+  rep : Array[FieldElem]
+  mod : Array[FieldElem]
+  domain : Domain
+}
+pub impl Show for ANP
+
 pub struct AlgExtSpec {
   base : Domain
   gen : String

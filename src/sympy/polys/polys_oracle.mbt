@@ -5968,6 +5968,51 @@ pub fn galois_group(
 }
 
 ///|
+fn nf_anp_oracle_coeffs_obj(
+  coeffs : Array[Int],
+  domain : String,
+) -> @py.PyObject raise {
+  let items : Array[@py.PyObject] = []
+  for coeff in coeffs {
+    items.push(sympy_domain_elem(@symnum.BigRational::from_int(coeff), domain))
+  }
+  py_list_from_objects(items).obj()
+}
+
+///|
+fn nf_anp_oracle_coeffs_text(value : @py.PyObjectEnum) -> String raise {
+  let items = py_list_to_pyobjects(value)
+  "[" + items.map(item => py_str_obj(item)).join(", ") + "]"
+}
+
+///|
+pub fn init_normal_ANP(
+  rep : Array[Int],
+  mod : Array[Int],
+  domain? : String = "QQ",
+) -> String raise {
+  let res = sympy_call_must("sympy.polys.polyclasses.init_normal_ANP", [
+    OracleArg::PyObj(nf_anp_oracle_coeffs_obj(rep, domain)),
+    OracleArg::PyObj(nf_anp_oracle_coeffs_obj(mod, domain)),
+    OracleArg::PyObj(sympy_domain_obj(domain)),
+  ])
+  let res_obj = objenum_to_obj(res)
+  let rep_attr = match py_get_attr(res_obj, "rep") {
+    Some(v) => v
+    None => fail("init_normal_ANP-rep")
+  }
+  let mod_attr = match py_get_attr(res_obj, "mod") {
+    Some(v) => v
+    None => fail("init_normal_ANP-mod")
+  }
+  let dom_attr = match py_get_attr(res_obj, "dom") {
+    Some(v) => v
+    None => fail("init_normal_ANP-dom")
+  }
+  "ANP(\{nf_anp_oracle_coeffs_text(rep_attr)}, \{nf_anp_oracle_coeffs_text(mod_attr)}, \{py_str_enum(dom_attr)})"
+}
+
+///|
 pub fn tschirnhausen_transformation(
   expr : @symcore.Expr,
   gens? : Array[String] = [],

@@ -80,3 +80,28 @@ test "numberfields galois: resolvent definitions parity" {
     sparse_symmetrize_resolvent_coeffs(4, 1),
   )
 }
+
+///|
+fn anp_port_text(rep : Array[Int], mod : Array[Int]) -> String raise {
+  let rep_coeffs : Array[@sympolys.FieldElem] = []
+  for n in rep {
+    rep_coeffs.push(@sympolys.fe_from_int(n, @sympolys.Domain::QQ))
+  }
+  let mod_coeffs : Array[@sympolys.FieldElem] = []
+  for n in mod {
+    mod_coeffs.push(@sympolys.fe_from_int(n, @sympolys.Domain::QQ))
+  }
+  @sympolys.init_normal_ANP(rep_coeffs, mod_coeffs, @sympolys.Domain::QQ).to_string()
+}
+
+///|
+test "numberfields galois: init_normal_ANP parity" {
+  assert_eq(
+    anp_port_text([0, 1, 0], [1, 0, -2]),
+    init_normal_ANP([0, 1, 0], [1, 0, -2]),
+  )
+  assert_eq(
+    anp_port_text([0, 0], [1, 0, -2]),
+    init_normal_ANP([0, 0], [1, 0, -2]),
+  )
+}

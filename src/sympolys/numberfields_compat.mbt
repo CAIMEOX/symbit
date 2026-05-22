@@ -22,6 +22,73 @@ priv struct AffineRadical {
 ///   errors instead of fabricating approximate answers.
 
 ///|
+/// Dense algebraic-number polynomial data.
+///
+/// - Does: Stores the normalized representative, modulus polynomial, and
+///   coefficient domain for an algebraic-number polynomial.
+/// - Input: Built by `init_normal_ANP` from dense univariate coefficient lists.
+/// - Returns: An `ANP` value.
+/// - Current Limits: This is the data-level compatibility object used by
+///   front-door tests; full Python `ANP` arithmetic is not exposed here yet.
+pub struct ANP {
+  rep : Array[FieldElem]
+  mod : Array[FieldElem]
+  domain : Domain
+}
+
+///|
+fn nf_anp_coeffs_to_string(coeffs : Array[FieldElem]) -> String {
+  "[" + coeffs.map(c => c.to_string()).join(", ") + "]"
+}
+
+///|
+/// Display implementation for `ANP.to_string`.
+///
+/// - Does: Formats an algebraic-number polynomial in `ANP(rep, mod, domain)`
+///   form.
+/// - Input: An `ANP` value.
+/// - Returns: A `String`.
+/// - Current Limits: The output is intended for diagnostics and parity tests,
+///   not as a complete serialization of Python `ANP` internals.
+pub impl Show for ANP with to_string(self) -> String {
+  "ANP(\{nf_anp_coeffs_to_string(self.rep)}, \{nf_anp_coeffs_to_string(self.mod)}, \{domain_to_sympy_string(self.domain)})"
+}
+
+///|
+/// Display implementation for `ANP.output`.
+///
+/// - Does: Writes the same text as `ANP::to_string`.
+/// - Input: An `ANP` value and a logger.
+/// - Returns: `Unit`.
+/// - Current Limits: See `ANP::to_string`.
+pub impl Show for ANP with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+/// Initialize a normalized algebraic-number polynomial.
+///
+/// - Does: Mirrors SymPy `init_normal_ANP`: normalize dense representative and
+///   modulus coefficient lists, then reduce the representative modulo the
+///   modulus.
+/// - Input: Dense univariate coefficient arrays and the coefficient `Domain`.
+/// - Returns: An `ANP` containing normalized `rep`, normalized `mod`, and the
+///   original domain descriptor.
+/// - Current Limits: This front door exposes the normalized data object only;
+///   arithmetic methods of Python `ANP` are not implemented. Invalid or zero
+///   moduli raise the underlying polynomial-division error.
+pub fn init_normal_ANP(
+  rep : Array[FieldElem],
+  mod : Array[FieldElem],
+  domain : Domain,
+) -> ANP raise PolyError {
+  let rep_normal = dup_normal(rep)
+  let mod_normal = dup_normal(mod)
+  let rep_reduced = dup_rem(rep_normal, mod_normal, domain)
+  ANP::{ rep: rep_reduced, mod: mod_normal, domain }
+}
+
+///|
 /// Test whether a rational value is acceptable as a rational coefficient.
 ///
 /// - Does: Reports whether the provided exact rational is rational-valued.
