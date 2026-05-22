@@ -34,3 +34,30 @@ test "numberfields galois: degree four resolvent lookup" {
   )
   assert_true(unsupported is Err(PolyError::BadGenerator(_)))
 }
+
+///|
+fn nf_resolvent_spec_summary(specs : Array[GaloisResolventSpec]) -> String {
+  specs
+  .map(spec => {
+    "(\{spec.degree},\{spec.number}):\{spec.variables.length()}:\{spec.permutations.length()}"
+  })
+  .join("|")
+}
+
+///|
+test "numberfields galois: resolvent definitions and symmetrized coefficients" {
+  let specs = define_resolvents()
+  inspect(
+    nf_resolvent_spec_summary(specs),
+    content="(4,0):4:6|(4,1):4:3|(5,1):5:6|(6,1):6:6|(6,2):6:10",
+  )
+  inspect(specs[1].form, content="X0*X2 + X1*X3")
+  inspect(
+    sparse_symmetrize_resolvent_coeffs(specs[1]).join("|"),
+    content="-s2|s1*s3 - 4*s4|-s1**2*s4 + 4*s2*s4 - s3**2",
+  )
+  let unsupported : Result[Array[String], PolyError] = try? sparse_symmetrize_resolvent_coeffs(
+    specs[0],
+  )
+  assert_true(unsupported is Err(PolyError::BadGenerator(_)))
+}

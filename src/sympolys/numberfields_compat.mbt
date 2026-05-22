@@ -432,6 +432,144 @@ fn nf_resolvent_lookup_4_1(
 }
 
 ///|
+/// Static description of a Galois resolvent definition.
+///
+/// - Does: Stores the `(degree, number)` key, variables, sparse form text, and
+///   permutation images used by the Galois resolvent lookup helpers.
+/// - Input: Built by `define_resolvents`.
+/// - Returns: A value describing one resolvent specification.
+/// - Limits: Forms are stored as text, not as `xring` polynomial objects.
+pub struct GaloisResolventSpec {
+  degree : Int
+  number : Int
+  variables : Array[String]
+  form : String
+  permutations : Array[Array[Int]]
+}
+
+///|
+fn nf_identity_perm(size : Int) -> Array[Int] {
+  Array::makei(size, i => i)
+}
+
+///|
+fn nf_transposition_perm(size : Int, a : Int, b : Int) -> Array[Int] {
+  let perm = nf_identity_perm(size)
+  perm[a] = b
+  perm[b] = a
+  perm
+}
+
+///|
+fn nf_resolvent_vars(count : Int) -> Array[String] {
+  Array::makei(count, i => "X\{i}")
+}
+
+///|
+/// Define the finite set of Galois resolvent specifications.
+///
+/// - Does: Mirrors SymPy `define_resolvents` at the metadata level for the
+///   degree 4 through 6 resolvents used by lookup-based Galois routines.
+/// - Input: No parameters.
+/// - Returns: Five `GaloisResolventSpec` values keyed by `(4,0)`, `(4,1)`,
+///   `(5,1)`, `(6,1)`, and `(6,2)`.
+/// - Limits: This returns static metadata rather than live SymPy `xring`
+///   elements and `Permutation` objects.
+pub fn define_resolvents() -> Array[GaloisResolventSpec] {
+  [
+    GaloisResolventSpec::{
+      degree: 4,
+      number: 0,
+      variables: nf_resolvent_vars(4),
+      form: "X0*X1**2 + X1*X2**2 + X2*X3**2 + X3*X0**2",
+      permutations: [
+        nf_identity_perm(4),
+        nf_transposition_perm(4, 0, 1),
+        nf_transposition_perm(4, 0, 2),
+        nf_transposition_perm(4, 0, 3),
+        nf_transposition_perm(4, 1, 2),
+        nf_transposition_perm(4, 2, 3),
+      ],
+    },
+    GaloisResolventSpec::{
+      degree: 4,
+      number: 1,
+      variables: nf_resolvent_vars(4),
+      form: "X0*X2 + X1*X3",
+      permutations: [
+        nf_identity_perm(4),
+        nf_transposition_perm(4, 0, 1),
+        nf_transposition_perm(4, 0, 3),
+      ],
+    },
+    GaloisResolventSpec::{
+      degree: 5,
+      number: 1,
+      variables: nf_resolvent_vars(5),
+      form: "X0**2*(X1*X4 + X2*X3) + X1**2*(X2*X0 + X3*X4) + X2**2*(X3*X1 + X4*X0) + X3**2*(X4*X2 + X0*X1) + X4**2*(X0*X3 + X1*X2)",
+      permutations: [
+        nf_identity_perm(5),
+        nf_transposition_perm(5, 0, 1),
+        nf_transposition_perm(5, 0, 2),
+        nf_transposition_perm(5, 0, 3),
+        nf_transposition_perm(5, 0, 4),
+        nf_transposition_perm(5, 1, 4),
+      ],
+    },
+    GaloisResolventSpec::{
+      degree: 6,
+      number: 1,
+      variables: nf_resolvent_vars(6),
+      form: "sum(PGL2F5 orbit of X0**2*X5**2*(X1*X4 + X2*X3))",
+      permutations: [
+        nf_identity_perm(6),
+        nf_transposition_perm(6, 0, 1),
+        nf_transposition_perm(6, 0, 2),
+        nf_transposition_perm(6, 0, 3),
+        nf_transposition_perm(6, 0, 4),
+        nf_transposition_perm(6, 0, 5),
+      ],
+    },
+    GaloisResolventSpec::{
+      degree: 6,
+      number: 2,
+      variables: nf_resolvent_vars(6),
+      form: "X0*X1*X2 + X3*X4*X5",
+      permutations: [
+        nf_identity_perm(6),
+        nf_transposition_perm(6, 0, 3),
+        nf_transposition_perm(6, 0, 4),
+        nf_transposition_perm(6, 0, 5),
+        nf_transposition_perm(6, 1, 3),
+        nf_transposition_perm(6, 1, 4),
+        nf_transposition_perm(6, 1, 5),
+        nf_transposition_perm(6, 2, 3),
+        nf_transposition_perm(6, 2, 4),
+        nf_transposition_perm(6, 2, 5),
+      ],
+    },
+  ]
+}
+
+///|
+/// Symmetrize resolvent coefficients for supported static specs.
+///
+/// - Does: Returns the elementary-symmetric coefficient formulas corresponding
+///   to SymPy's `sparse_symmetrize_resolvent_coeffs`.
+/// - Input: One `GaloisResolventSpec`.
+/// - Returns: Formula strings for the non-leading resolvent coefficients.
+/// - Limits: Currently supports the degree-4 `number=1` resolvent. Unsupported
+///   specs raise `PolyError::BadGenerator("resolvent-symmetrize")`.
+pub fn sparse_symmetrize_resolvent_coeffs(
+  spec : GaloisResolventSpec,
+) -> Array[String] raise PolyError {
+  if spec.degree == 4 && spec.number == 1 {
+    return ["-s2", "s1*s3 - 4*s4", "-s1**2*s4 + 4*s2*s4 - s3**2"]
+  }
+  raise PolyError::BadGenerator("resolvent-symmetrize")
+}
+
+///|
 /// Compute a Galois resolvent from SymPy's lookup-table formulas.
 ///
 /// - Does: Mirrors SymPy `get_resolvent_by_lookup` by evaluating stored

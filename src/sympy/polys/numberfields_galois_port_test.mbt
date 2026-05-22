@@ -59,3 +59,24 @@ test "numberfields galois: resolvent lookup parity" {
     )
   }
 }
+
+///|
+fn resolvent_spec_port_summary(
+  specs : Array[@sympolys.GaloisResolventSpec],
+) -> String {
+  specs
+  .map(spec => {
+    "(\{spec.degree},\{spec.number}):\{spec.variables.length()}:\{spec.permutations.length()}"
+  })
+  .join("|")
+}
+
+///|
+test "numberfields galois: resolvent definitions parity" {
+  let specs = @sympolys.define_resolvents()
+  assert_eq(resolvent_spec_port_summary(specs), define_resolvents())
+  assert_eq(
+    @sympolys.sparse_symmetrize_resolvent_coeffs(specs[1]).join("|"),
+    sparse_symmetrize_resolvent_coeffs(4, 1),
+  )
+}

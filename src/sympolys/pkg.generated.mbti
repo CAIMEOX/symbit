@@ -139,6 +139,8 @@ pub fn ddm_transpose(DDM) -> DDM raise PolyError
 
 pub fn decompose(Poly) -> Array[Poly] raise PolyError
 
+pub fn define_resolvents() -> Array[GaloisResolventSpec]
+
 pub fn degree(Poly, gen_index? : Int) -> Int
 
 pub fn degree_list(Poly) -> Array[Int]
@@ -1797,6 +1799,8 @@ pub fn smith_normal_form(DomainMatrix) -> DomainMatrix raise PolyError
 
 pub fn solve_lin_sys(LinearEquationSystem) -> Map[String, @symcore.Expr]? raise PolyError
 
+pub fn sparse_symmetrize_resolvent_coeffs(GaloisResolventSpec) -> Array[String] raise PolyError
+
 pub fn spherical_bessel_fn(Int, gen? : String) -> @symcore.Expr raise PolyError
 
 pub fn spoly(Poly, Poly) -> Poly raise PolyError
@@ -2373,6 +2377,14 @@ pub impl Show for FieldElem
 pub struct GaloisGroupResult {
   name : String
   is_alt : Bool
+}
+
+pub struct GaloisResolventSpec {
+  degree : Int
+  number : Int
+  variables : Array[String]
+  form : String
+  permutations : Array[Array[Int]]
 }
 
 pub struct GroebnerBasis {

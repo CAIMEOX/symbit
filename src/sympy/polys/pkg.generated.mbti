@@ -572,6 +572,8 @@ pub fn expr_equal(String, String) -> Bool raise
 
 pub fn factor_list(@symcore.Expr, modulus? : Int, extension? : Array[String], gfext_modulus? : Array[Int], gfext_gen? : String) -> String raise
 
+pub fn define_resolvents() -> String raise
+
 pub fn gcd(@symcore.Expr, @symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int, gfext_modulus? : Array[Int], gfext_gen? : String) -> String raise
 
 pub fn gcd_list(Array[@symcore.Expr], gens? : Array[String], domain? : String, modulus? : Int) -> String raise
@@ -733,6 +735,8 @@ pub fn sort_factors(Array[Array[Int]]) -> String raise
 pub fn sort_factors_multiple(Array[(Array[Int], Int)]) -> String raise
 
 pub fn sort_gens(Array[String], wrt? : Array[String], sort? : String) -> Array[String] raise
+
+pub fn sparse_symmetrize_resolvent_coeffs(Int, Int) -> String raise
 
 pub fn sqf_list(@symcore.Expr, modulus? : Int, gfext_modulus? : Array[Int], gfext_gen? : String) -> String raise
 

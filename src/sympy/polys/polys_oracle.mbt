@@ -6014,6 +6014,90 @@ pub fn get_resolvent_by_lookup(
 }
 
 ///|
+pub fn define_resolvents() -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.galois_resolvents.define_resolvents",
+    [],
+  )
+  let dict_obj = objenum_to_obj(res)
+  let items_call = resolve_method_callable(dict_obj, "items")
+  let items_enum = py_call_noargs(items_call)
+  let builtins = ensure_builtins_module()
+  let list_ctor = resolve_callable(builtins, "list")
+  let items_list_enum = py_call_one(list_ctor, objenum_to_obj(items_enum))
+  let kvs = py_list_to_pyobjects(items_list_enum)
+  let parts : Array[String] = []
+  for pair in kvs {
+    let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+    if pair_items.length() >= 2 {
+      let key = remove_spaces(py_str_obj(pair_items[0]))
+      let value_items = py_list_to_pyobjects(
+        @py.PyObjectEnum::create(pair_items[1]),
+      )
+      if value_items.length() >= 3 {
+        let vars = py_list_to_pyobjects(
+          @py.PyObjectEnum::create(value_items[1]),
+        )
+        let perms = py_list_to_pyobjects(
+          @py.PyObjectEnum::create(value_items[2]),
+        )
+        parts.push("\{key}:\{vars.length()}:\{perms.length()}")
+      }
+    }
+  }
+  parts.sort()
+  parts.join("|")
+}
+
+///|
+pub fn sparse_symmetrize_resolvent_coeffs(
+  degree : Int,
+  number : Int,
+) -> String raise {
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.galois_resolvents.define_resolvents",
+    [],
+  )
+  let dict_obj = objenum_to_obj(res)
+  let items_call = resolve_method_callable(dict_obj, "items")
+  let items_enum = py_call_noargs(items_call)
+  let builtins = ensure_builtins_module()
+  let list_ctor = resolve_callable(builtins, "list")
+  let items_list_enum = py_call_one(list_ctor, objenum_to_obj(items_enum))
+  let kvs = py_list_to_pyobjects(items_list_enum)
+  let target = "(\{degree},\{number})"
+  for pair in kvs {
+    let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+    if pair_items.length() >= 2 &&
+      remove_spaces(py_str_obj(pair_items[0])) == target {
+      let value_items = py_list_to_pyobjects(
+        @py.PyObjectEnum::create(pair_items[1]),
+      )
+      guard value_items.length() >= 3 else { fail("resolvent spec tuple") }
+      let symm = sympy_call_must(
+        "sympy.polys.numberfields.galois_resolvents.sparse_symmetrize_resolvent_coeffs",
+        [
+          OracleArg::PyObj(value_items[0]),
+          OracleArg::PyObj(value_items[1]),
+          OracleArg::PyObj(value_items[2]),
+        ],
+      )
+      let symm_items = py_list_to_pyobjects(symm)
+      guard symm_items.length() >= 1 else { fail("resolvent symmetrize tuple") }
+      let coeff_objs = py_list_to_pyobjects(
+        @py.PyObjectEnum::create(symm_items[0]),
+      )
+      let coeffs : Array[String] = []
+      for coeff in coeff_objs {
+        coeffs.push(py_str_obj(coeff))
+      }
+      return coeffs.join("|")
+    }
+  }
+  fail("resolvent key not found")
+}
+
+///|
 pub fn has_square_disc(
   expr : @symcore.Expr,
   gens? : Array[String] = [],
