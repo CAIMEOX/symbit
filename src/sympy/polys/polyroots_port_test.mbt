@@ -86,6 +86,28 @@ test "polyroots: generic roots handles degree > 4 via CRootOf fallback" {
 }
 
 ///|
+test "polyroots: quintic parity for supported and empty frontdoor branches" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let solvable = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(2))
+  assert_eq(
+    roots_repr(@sympolys.roots_quintic(solvable)),
+    normalize_root_list(roots_quintic(solvable.to_expr(), gens=["x"])),
+  )
+
+  for
+    poly in [
+      b.from_expr((x ^ @symcore.int(5)) - @symcore.int(32)),
+      b.from_expr((x ^ @symcore.int(5)) + x + @symcore.int(1)),
+    ] {
+    assert_eq(
+      roots_repr(@sympolys.roots_quintic(poly)),
+      normalize_root_list(roots_quintic(poly.to_expr(), gens=["x"])),
+    )
+  }
+}
+
+///|
 test "polyroots: generic roots keeps multiplicities" {
   let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)

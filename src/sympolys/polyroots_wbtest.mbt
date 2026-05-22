@@ -112,6 +112,27 @@ test "polyroots wb: binomial roots use ordered roots of unity" {
 }
 
 ///|
+test "polyroots wb: quintic frontdoor handles supported and empty branches" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let solvable = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(2))
+  let roots5 = roots_quintic(solvable)
+  assert_eq(roots5.length(), 5)
+  inspect(@symprint.pretty_string(roots5[0]), content="2**(1/5)")
+
+  let reducible = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(32))
+  assert_eq(roots_quintic(reducible).length(), 0)
+
+  let unsupported = b.from_expr((x ^ @symcore.int(5)) + x + @symcore.int(1))
+  assert_eq(roots_quintic(unsupported).length(), 0)
+
+  let bad : Result[Array[@symcore.Expr], PolyError] = try? roots_quintic(
+    b.from_expr((x ^ @symcore.int(4)) + @symcore.int(1)),
+  )
+  assert_true(bad is Err(PolyError::BadExponent))
+}
+
+///|
 test "polyroots wb: cyclotomic roots detect primitive roots" {
   let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::QQ)

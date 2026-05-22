@@ -2,7 +2,8 @@
 /// Symbolic root extraction for univariate polynomials.
 ///
 /// Current Limits:
-/// - Closed-form radicals are only exposed through degree `4`.
+/// - General closed-form radicals are exposed through degree `4`.
+/// - `roots_quintic` covers the solvable irreducible binomial quintic path.
 /// - Higher-degree irreducible factors fall back to symbolic `CRootOf`.
 
 ///|
@@ -700,6 +701,121 @@ pub fn roots_quartic(poly : Poly) -> Array[Expr] raise PolyError {
     }
   }
   roots
+}
+
+///|
+fn roots_quintic_coeff_rat(poly : Poly, exp : Int) -> @symnum.BigRational? {
+  let coeff = coeff_fe(poly, exp) catch { _ => return None }
+  let value = fe_expect_rational(coeff) catch { _ => return None }
+  Some(value)
+}
+
+///|
+fn roots_quintic_binomial_base(poly : Poly) -> @symnum.BigRational? {
+  let lead = match roots_quintic_coeff_rat(poly, 5) {
+    Some(value) => value
+    None => return None
+  }
+  if lead.is_zero() {
+    return None
+  }
+  for exp in 1..<5 {
+    match roots_quintic_coeff_rat(poly, exp) {
+      Some(value) => if !value.is_zero() { return None }
+      None => return None
+    }
+  }
+  let constant = match roots_quintic_coeff_rat(poly, 0) {
+    Some(value) => value
+    None => return None
+  }
+  let base = constant.neg_r().div_r(lead) catch { _ => return None }
+  Some(base)
+}
+
+///|
+fn roots_quintic_sqrt(expr : Expr) -> Expr {
+  @symcore.function("sqrt", [expr])
+}
+
+///|
+fn roots_quintic_imag_term(sign : Int, inner : Expr) -> Expr {
+  if sign == 1 {
+    @symcore.mul([imag_expr(), inner])
+  } else {
+    @symcore.mul([int(-1), imag_expr(), inner])
+  }
+}
+
+///|
+fn roots_quintic_binomial_roots(
+  base : @symnum.BigRational,
+) -> Array[Expr] raise PolyError {
+  let fifth = polyroots_rational_expr(1, 5)
+  let root = @symcore.pow(Expr::Number(base), fifth)
+  let q1 = polyroots_rational_expr(1, 4)
+  let qneg1 = polyroots_rational_expr(-1, 4)
+  let q5_8 = polyroots_rational_expr(5, 8)
+  let q1_8 = polyroots_rational_expr(1, 8)
+  let sqrt5 = roots_quintic_sqrt(int(5))
+  let small = roots_quintic_sqrt(
+    @symcore.add([q5_8, @symcore.mul([int(-1), sqrt5, q1_8])]),
+  )
+  let large = roots_quintic_sqrt(
+    @symcore.add([@symcore.mul([sqrt5, q1_8]), q5_8]),
+  )
+  let signed = if base.compare(@symnum.BigRational::zero()) < 0 {
+    -1
+  } else {
+    1
+  }
+  let left_real = @symcore.add([@symcore.mul([int(-1), sqrt5, q1]), qneg1])
+  let right_real = @symcore.add([qneg1, @symcore.mul([sqrt5, q1])])
+  [
+    root,
+    @symcore.mul([
+      root,
+      @symcore.add([left_real, roots_quintic_imag_term(signed, small)]),
+    ]),
+    @symcore.mul([
+      root,
+      @symcore.add([right_real, roots_quintic_imag_term(0 - signed, large)]),
+    ]),
+    @symcore.mul([
+      root,
+      @symcore.add([right_real, roots_quintic_imag_term(signed, large)]),
+    ]),
+    @symcore.mul([
+      root,
+      @symcore.add([left_real, roots_quintic_imag_term(0 - signed, small)]),
+    ]),
+  ]
+}
+
+///|
+/// Solve supported solvable quintic polynomials by radicals.
+///
+/// - Does: Mirrors SymPy's `roots_quintic` front-door contract: reducible or
+///   unsupported quintics return `[]`, while supported solvable irreducible
+///   quintics return exact radical roots.
+/// - Input: One univariate degree-`5` `Poly` with rational coefficients.
+/// - Returns: `Array[Expr]`.
+/// - Limits: The current radical branch covers irreducible binomial quintics
+///   `a*x**5 + b`; the full `PolyQuintic` resolvent algorithm is not yet
+///   migrated.
+pub fn roots_quintic(poly : Poly) -> Array[Expr] raise PolyError {
+  ensure_univar(poly)
+  if poly.degree(0) != 5 {
+    raise PolyError::BadExponent
+  }
+  let (_, factors) = poly.factor_list()
+  if factors.length() != 1 || factors[0].0.degree(0) != 5 || factors[0].1 != 1 {
+    return []
+  }
+  match roots_quintic_binomial_base(poly) {
+    Some(base) => roots_quintic_binomial_roots(base)
+    None => []
+  }
 }
 
 ///|

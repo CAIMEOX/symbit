@@ -720,6 +720,8 @@ pub fn roots_quadratic(@symcore.Expr, gens? : Array[String]) -> String raise
 
 pub fn roots_quartic(@symcore.Expr, gens? : Array[String]) -> String raise
 
+pub fn roots_quintic(@symcore.Expr, gens? : Array[String]) -> String raise
+
 pub fn series_pprint_oracle(Array[Int], Int, sym? : String, ascending? : Bool) -> String raise
 
 pub fn sort_factors(Array[Array[Int]]) -> String raise

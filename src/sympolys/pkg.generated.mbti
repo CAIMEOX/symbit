@@ -1611,6 +1611,8 @@ pub fn roots_quadratic(Poly) -> Array[@symcore.Expr] raise PolyError
 
 pub fn roots_quartic(Poly) -> Array[@symcore.Expr] raise PolyError
 
+pub fn roots_quintic(Poly) -> Array[@symcore.Expr] raise PolyError
+
 pub fn rotate_l(Array[FieldElem], Int) -> Array[FieldElem]
 
 pub fn rotate_r(Array[FieldElem], Int) -> Array[FieldElem]
