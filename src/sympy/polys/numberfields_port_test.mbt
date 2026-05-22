@@ -68,6 +68,11 @@ fn nf_coeff_search_norm(values : Array[Array[Int]]) -> String {
 }
 
 ///|
+fn nf_mod_elt_summary(value : @sympolys.ModuleElement) -> String {
+  "\{value.type_name()}:\{value}"
+}
+
+///|
 fn nf_exprs_norm(values : Array[@symcore.Expr]) -> String {
   let body = values.map(e => @symprint.pretty_string(e)).join(",")
   "[\{body}]"
@@ -110,6 +115,22 @@ test "numberfields: utility frontdoor parity" {
       @sympolys.domain_matrix_from_ints(hnf_bad_bound, @sympolys.Domain::ZZ),
     ),
     numberfield_is_sq_maxrank_HNF(hnf_bad_bound),
+  )
+  let x = @symcore.Expr::Symbol("x")
+  let b = @sympolys.PolyBuilder::new(["x"], @sympolys.Domain::ZZ)
+  let pb = @sympolys.numberfield_power_basis(
+    b.from_expr((x ^ @symcore.int(2)) - @symcore.int(2)),
+  )
+  let power_elt = @sympolys.make_mod_elt(pb, [1N, 2N], denom=3N)
+  assert_eq(
+    nf_mod_elt_summary(power_elt),
+    make_mod_elt_power_basis("x**2 - 2", [1, 2], denom=3),
+  )
+  let sm = @sympolys.numberfield_submodule([[1N, 0N], [0N, 1N]])
+  let module_elt = @sympolys.make_mod_elt(sm, [1N, 2N], denom=3N)
+  assert_eq(
+    nf_mod_elt_summary(module_elt),
+    make_mod_elt_submodule("x**2 - 2", [[1, 0], [0, 1]], [1, 2], denom=3),
   )
   let subspace_rows = [[1, 2], [7, 3], [0, 4]]
   assert_eq(

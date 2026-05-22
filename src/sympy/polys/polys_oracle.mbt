@@ -2372,6 +2372,60 @@ pub fn numberfield_to_number_field_coeffs(
 }
 
 ///|
+fn py_int_array_literal(values : Array[Int]) -> String {
+  "[" + values.map(item => item.to_string()).join(", ") + "]"
+}
+
+///|
+fn py_col_matrix_literal(values : Array[Int]) -> String {
+  "[" + values.map(item => "[\{item}]").join(", ") + "]"
+}
+
+///|
+pub fn make_mod_elt_power_basis(
+  def_expr : String,
+  col : Array[Int],
+  denom? : Int = 1,
+) -> String raise {
+  let def_code = py_quote_single_polys(def_expr)
+  let col_code = py_col_matrix_literal(col)
+  let script = "from sympy import Poly, symbols, sympify\n" +
+    "from sympy.polys.domains import ZZ\n" +
+    "from sympy.polys.matrices import DomainMatrix\n" +
+    "from sympy.polys.numberfields.modules import PowerBasis, make_mod_elt\n" +
+    "x = symbols('x')\n" +
+    "_module = PowerBasis(Poly(sympify(\{def_code}), x))\n" +
+    "_col = DomainMatrix(\{col_code}, (\{col.length()}, 1), ZZ)\n" +
+    "_elt = make_mod_elt(_module, _col, denom=\{denom})\n" +
+    "__result__ = type(_elt).__name__ + ':' + str(_elt)\n"
+  py_str_obj(py_exec_polys_result(script, "__result__"))
+}
+
+///|
+pub fn make_mod_elt_submodule(
+  def_expr : String,
+  basis : Array[Array[Int]],
+  col : Array[Int],
+  denom? : Int = 1,
+) -> String raise {
+  let def_code = py_quote_single_polys(def_expr)
+  let rows = "[" + basis.map(py_int_array_literal).join(", ") + "]"
+  let col_code = py_col_matrix_literal(col)
+  let script = "from sympy import Poly, symbols, sympify\n" +
+    "from sympy.polys.domains import ZZ\n" +
+    "from sympy.polys.matrices import DomainMatrix\n" +
+    "from sympy.polys.numberfields.modules import PowerBasis, make_mod_elt\n" +
+    "x = symbols('x')\n" +
+    "_power = PowerBasis(Poly(sympify(\{def_code}), x))\n" +
+    "_basis = DomainMatrix(\{rows}, (\{basis.length()}, \{basis.length()}), ZZ)\n" +
+    "_module = _power.submodule_from_matrix(_basis)\n" +
+    "_col = DomainMatrix(\{col_code}, (\{col.length()}, 1), ZZ)\n" +
+    "_elt = make_mod_elt(_module, _col, denom=\{denom})\n" +
+    "__result__ = type(_elt).__name__ + ':' + str(_elt)\n"
+  py_str_obj(py_exec_polys_result(script, "__result__"))
+}
+
+///|
 pub fn numberfield_field_isomorphism_coeffs(
   lhs : String,
   rhs : String,

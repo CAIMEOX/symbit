@@ -179,3 +179,33 @@ test "numberfields frontdoors: round_two and prime decomposition" {
   inspect(ramified.map(item => item.to_string()).join(" | "), content="(2, x)")
   inspect(prime_valuation(8, ramified[0]), content="6")
 }
+
+///|
+test "numberfields frontdoors: make_mod_elt preserves module flavor" {
+  let x = Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let pb = numberfield_power_basis(b.from_expr((x ^ int(2)) - int(2)))
+  let power_elt = make_mod_elt(pb, [1N, 2N], denom=3N) catch {
+    _ => fail("power element")
+  }
+  inspect(power_elt.type_name(), content="PowerBasisElement")
+  inspect(power_elt, content="[1, 2]/3")
+
+  let sm = numberfield_submodule([[1N, 0N], [0N, 1N]]) catch {
+    _ => fail("submodule")
+  }
+  let module_elt = make_mod_elt(sm, [1N, 2N], denom=3N) catch {
+    _ => fail("module element")
+  }
+  inspect(module_elt.type_name(), content="ModuleElement")
+  inspect(module_elt, content="[1, 2]/3")
+
+  let bad_denom : Result[ModuleElement, PolyError] = try? make_mod_elt(
+    pb,
+    [1N, 2N],
+    denom=0N,
+  )
+  assert_true(bad_denom is Err(PolyError::DivisionByZero))
+  let bad_rank : Result[ModuleElement, PolyError] = try? make_mod_elt(pb, [1N])
+  assert_true(bad_rank is Err(PolyError::DomainMismatch))
+}

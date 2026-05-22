@@ -1443,6 +1443,8 @@ pub fn lm(Poly, order? : TermOrder) -> @symcore.Expr raise PolyError
 
 pub fn lt(Poly, order? : TermOrder) -> @symcore.Expr raise PolyError
 
+pub fn make_mod_elt(NFModule, Array[@bigint.BigInt], denom? : @bigint.BigInt) -> ModuleElement raise PolyError
+
 pub fn matrix_fglm(Array[Poly], order? : TermOrder) -> Array[Poly] raise PolyError
 
 pub fn minimal_polynomial(@symcore.Expr, gen? : String) -> Poly raise PolyError
@@ -1502,6 +1504,10 @@ pub fn normalize_mod(@symnum.BigRational, Domain) -> @symnum.BigRational raise P
 pub fn nroots(Poly, n? : Int, maxsteps? : Int, cleanup? : Bool) -> Array[@symcore.Expr] raise PolyError
 
 pub fn nth_power_roots_poly(Poly, Int) -> Poly raise PolyError
+
+pub fn numberfield_power_basis(Poly) -> NFModule raise PolyError
+
+pub fn numberfield_submodule(Array[Array[@bigint.BigInt]]) -> NFModule raise PolyError
 
 pub fn parallel_dict_from_expr(Array[@symcore.Expr], gens? : Array[String]) -> String raise PolyError
 
@@ -2435,10 +2441,26 @@ pub enum LinearSolveResult {
   Parametric(Array[@symcore.Expr], Array[String])
 }
 
+pub struct ModuleElement {
+  parent : NFModule
+  col : Array[@bigint.BigInt]
+  denom : @bigint.BigInt
+  is_power_basis_element : Bool
+}
+pub fn ModuleElement::type_name(Self) -> String
+pub impl Show for ModuleElement
+
 pub struct Monomial {
   exps : Array[Int]
 } derive(Eq, Hash)
 pub fn Monomial::to_array(Self) -> Array[Int]
+
+pub struct NFModule {
+  rank : Int
+  basis : Array[Array[@bigint.BigInt]]
+  is_power_basis : Bool
+}
+pub impl Show for NFModule
 
 pub struct Options {
   gens : Array[String]

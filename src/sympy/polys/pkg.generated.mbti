@@ -624,6 +624,10 @@ pub fn linsolve_sympy_dict_to_dm_summary(Array[Map[String, String]], Array[Strin
 
 pub fn matrix_hnf_code(Array[Array[Int]]) -> String raise
 
+pub fn make_mod_elt_power_basis(String, Array[Int], denom? : Int) -> String raise
+
+pub fn make_mod_elt_submodule(String, Array[Array[Int]], Array[Int], denom? : Int) -> String raise
+
 pub fn mod_rational(Int, Int, Int) -> String raise
 
 pub fn modgcd_univariate(@symcore.Expr, @symcore.Expr, gen? : String) -> String raise

@@ -1525,6 +1525,160 @@ pub fn to_number_field_coeffs(
 }
 
 ///|
+/// Number-field module descriptor used by `make_mod_elt`.
+///
+/// - Does: Distinguishes a power basis from an ordinary submodule so the
+///   element factory can choose the corresponding element flavor.
+/// - Input: Built from a defining polynomial or an explicit integer basis.
+/// - Returns: An `NFModule`.
+/// - Limits: This is a compact descriptor for factory-front-door parity, not
+///   the full module algebra hierarchy.
+pub struct NFModule {
+  rank : Int
+  basis : Array[Array[BigInt]]
+  is_power_basis : Bool
+}
+
+///|
+/// Number-field module element descriptor.
+///
+/// - Does: Stores an integer column and denominator together with the module
+///   family chosen by `make_mod_elt`.
+/// - Input: Produced by `make_mod_elt`.
+/// - Returns: A `ModuleElement`.
+/// - Limits: Arithmetic on module elements is not exposed through this compact
+///   compatibility descriptor.
+pub struct ModuleElement {
+  parent : NFModule
+  col : Array[BigInt]
+  denom : BigInt
+  is_power_basis_element : Bool
+}
+
+///|
+fn nf_identity_bigint_basis(rank : Int) -> Array[Array[BigInt]] {
+  let rows : Array[Array[BigInt]] = []
+  for i in 0..<rank {
+    let row : Array[BigInt] = []
+    for j in 0..<rank {
+      row.push(if i == j { 1N } else { 0N })
+    }
+    rows.push(row)
+  }
+  rows
+}
+
+///|
+fn nf_bigint_row_string(row : Array[BigInt]) -> String {
+  "[" + row.map(item => item.to_string()).join(", ") + "]"
+}
+
+///|
+/// Build a power-basis module descriptor from a defining polynomial.
+///
+/// - Does: Uses the degree of a univariate defining polynomial as the module
+///   rank and marks the module as a power basis.
+/// - Input: A univariate `Poly`.
+/// - Returns: An `NFModule`.
+/// - Limits: Raises `PolyError::NotUnivariate` for multivariate input.
+pub fn numberfield_power_basis(poly : Poly) -> NFModule raise PolyError {
+  ensure_univar(poly)
+  let rank = poly.degree(0)
+  if rank <= 0 {
+    raise PolyError::NonPolynomial
+  }
+  { rank, basis: nf_identity_bigint_basis(rank), is_power_basis: true }
+}
+
+///|
+/// Build an ordinary submodule descriptor from an integer basis matrix.
+///
+/// - Does: Stores an explicit square integer basis and marks it as a non-power
+///   module.
+/// - Input: A non-empty square matrix of `BigInt` rows.
+/// - Returns: An `NFModule`.
+/// - Limits: Raises `PolyError::DomainMismatch` when the matrix is not square.
+pub fn numberfield_submodule(
+  basis : Array[Array[BigInt]],
+) -> NFModule raise PolyError {
+  if basis.is_empty() {
+    raise PolyError::DomainMismatch
+  }
+  let rank = basis.length()
+  for row in basis {
+    if row.length() != rank {
+      raise PolyError::DomainMismatch
+    }
+  }
+  { rank, basis, is_power_basis: false }
+}
+
+///|
+/// Name the concrete element flavor selected by `make_mod_elt`.
+///
+/// - Does: Reports whether an element came from a power basis or ordinary
+///   module.
+/// - Input: A `ModuleElement`.
+/// - Returns: `"PowerBasisElement"` or `"ModuleElement"`.
+/// - Limits: This mirrors the front-door factory choice only.
+pub fn ModuleElement::type_name(self : ModuleElement) -> String {
+  if self.is_power_basis_element {
+    "PowerBasisElement"
+  } else {
+    "ModuleElement"
+  }
+}
+
+///|
+pub impl Show for NFModule with output(self : NFModule, logger : &Logger) -> Unit {
+  if self.is_power_basis {
+    logger.write_string("PowerBasis(rank=\{self.rank})")
+  } else {
+    logger.write_string(
+      "Submodule[" + self.basis.map(nf_bigint_row_string).join(", ") + "]",
+    )
+  }
+}
+
+///|
+pub impl Show for ModuleElement with output(
+  self : ModuleElement,
+  logger : &Logger,
+) -> Unit {
+  let col = "[" + self.col.map(item => item.to_string()).join(", ") + "]"
+  if self.denom.equal_int(1) {
+    logger.write_string(col)
+  } else {
+    logger.write_string("\{col}/\{self.denom}")
+  }
+}
+
+///|
+/// Build a number-field module element, preserving power-basis flavor.
+///
+/// - Does: Mirrors the SymPy factory rule: power-basis modules produce
+///   `PowerBasisElement`-flavored descriptors; other modules produce ordinary
+///   `ModuleElement` descriptors.
+/// - Input: An `NFModule`, a column of `BigInt` coefficients, and optional
+///   denominator.
+/// - Returns: A `ModuleElement`.
+/// - Limits: Raises `PolyError::DivisionByZero` for zero denominator and
+///   `PolyError::DomainMismatch` for rank mismatch.
+pub fn make_mod_elt(
+  parent : NFModule,
+  col : Array[BigInt],
+  denom? : BigInt = 1N,
+) -> ModuleElement raise PolyError {
+  if denom.is_zero() {
+    raise PolyError::DivisionByZero
+  }
+  if col.length() != parent.rank {
+    raise PolyError::DomainMismatch
+  }
+  { parent, col, denom, is_power_basis_element: parent.is_power_basis }
+}
+
+///|
 /// Return a primitive-element candidate.
 ///
 /// - Does: Chooses one primitive-element candidate together with the integer
