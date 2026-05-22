@@ -6150,6 +6150,27 @@ fn groebner_ring_list_string(value : @py.PyObjectEnum) -> String raise {
 }
 
 ///|
+pub fn matrix_fglm(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = ["x", "y"],
+  source_order? : String = "grlex",
+  target_order? : String = "lex",
+) -> String raise {
+  let (ring, polys) = groebner_ring_polys(exprs, gens, source_order)
+  let source = sympy_call_must("sympy.polys.groebnertools.groebner", [
+    OracleArg::PyObj(py_list_from_objects(polys).obj()),
+    OracleArg::PyObj(ring),
+  ])
+  let target_order_obj = groebner_order_obj(gens, target_order)
+  let res = sympy_call_must("sympy.polys.fglmtools.matrix_fglm", [
+    OracleArg::PyObj(objenum_to_obj(source)),
+    OracleArg::PyObj(ring),
+    OracleArg::PyObj(target_order_obj),
+  ])
+  groebner_ring_list_string(res)
+}
+
+///|
 fn py_bool_text(value : @py.PyObjectEnum) -> String {
   if py_str_enum(value) == "True" {
     "true"

@@ -592,6 +592,8 @@ pub fn gf_trunc(Array[Int], Int) -> String raise
 
 pub fn groebner(Array[@symcore.Expr], order? : String) -> String raise
 
+pub fn matrix_fglm(Array[@symcore.Expr], gens? : Array[String], source_order? : String, target_order? : String) -> String raise
+
 pub fn has_square_disc(@symcore.Expr, gens? : Array[String]) -> Bool raise
 
 pub fn horner(@symcore.Expr, gens? : Array[String], wrt? : String) -> String raise

@@ -154,3 +154,20 @@ test "groebner wb: basis predicates and reduction" {
   inspect(is_groebner([f, g]), content="false")
   inspect(groebner_wb_sorted(red_groebner(basis)), content="x - 1 | y - 1")
 }
+
+///|
+test "groebner wb: matrix_fglm converts through target order" {
+  let b = groebner_wb_builder()
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let f = b.from_expr(
+    (x ^ @symcore.int(2)) + @symcore.int(2) * x * (y ^ @symcore.int(2)),
+  )
+  let g = b.from_expr(
+    x * y + @symcore.int(2) * (y ^ @symcore.int(3)) - @symcore.int(1),
+  )
+  let source = Poly::groebner([f, g], order=TermOrder::Grlex)
+  let converted = matrix_fglm(source, order=TermOrder::Lex)
+  let target = Poly::groebner([f, g], order=TermOrder::Lex)
+  inspect(groebner_wb_sorted(converted), content=groebner_wb_sorted(target))
+}

@@ -1433,6 +1433,8 @@ pub fn lm(Poly, order? : TermOrder) -> @symcore.Expr raise PolyError
 
 pub fn lt(Poly, order? : TermOrder) -> @symcore.Expr raise PolyError
 
+pub fn matrix_fglm(Array[Poly], order? : TermOrder) -> Array[Poly] raise PolyError
+
 pub fn minimal_polynomial(@symcore.Expr, gen? : String) -> Poly raise PolyError
 
 pub fn minpoly(@symcore.Expr, gen? : String) -> Poly raise PolyError

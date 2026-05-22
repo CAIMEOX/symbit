@@ -838,6 +838,26 @@ pub fn groebner_basis(
 }
 
 ///|
+/// Convert a zero-dimensional Groebner basis to another monomial order.
+///
+/// - Does: Mirrors the public contract of SymPy `matrix_fglm`: returns a
+///   Groebner basis for the same ideal in the requested target order.
+/// - Input: A compatible Groebner basis and an optional target `TermOrder`.
+/// - Returns: An array of `Poly` values in the target order.
+/// - Limits: This front door currently reuses the package Groebner basis
+///   computation instead of SymPy's matrix FGLM kernel, so it has the same
+///   correctness envelope and performance profile as `Poly::groebner`.
+pub fn matrix_fglm(
+  basis : Array[Poly],
+  order? : TermOrder = TermOrder::Lex,
+) -> Array[Poly] raise PolyError {
+  if basis.is_empty() {
+    raise PolyError::NonPolynomial
+  }
+  Poly::groebner(basis, order~)
+}
+
+///|
 /// Groebner wrapper that accepts expressions + optional domain/modulus/order/gens.
 
 ///|

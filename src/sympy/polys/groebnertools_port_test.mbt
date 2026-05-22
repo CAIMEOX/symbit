@@ -275,6 +275,32 @@ test "groebnertools: lex basis for x^2 + 2*x*y^2, x*y + 2*y^3 - 1" {
 }
 
 ///|
+test "fglmtools: matrix_fglm target order parity" {
+  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let f = b.from_expr(
+    (x ^ @symcore.int(2)) + @symcore.int(2) * x * (y ^ @symcore.int(2)),
+  )
+  let g = b.from_expr(
+    x * y + @symcore.int(2) * (y ^ @symcore.int(3)) - @symcore.int(1),
+  )
+  let source = Poly::groebner([f, g], order=TermOrder::Grlex)
+  let ours = normalize_basis_str(
+    groebner_to_string(@sympolys.matrix_fglm(source, order=TermOrder::Lex)),
+  )
+  let oracle = normalize_basis_str(
+    matrix_fglm(
+      [f.to_expr(), g.to_expr()],
+      gens=["x", "y"],
+      source_order="grlex",
+      target_order="lex",
+    ),
+  )
+  assert_eq(ours, oracle)
+}
+
+///|
 test "groebnertools: grlex basis for x^3-2*x*y, x^2*y + x - 2*y^2" {
   let b = PolyBuilder::new(["x", "y"], Domain::QQ).order(TermOrder::Grlex)
   let x = @symcore.Expr::Symbol("x")
