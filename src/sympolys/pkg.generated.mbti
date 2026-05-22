@@ -1877,6 +1877,8 @@ pub fn total_degree(Poly) -> Int
 
 pub fn trunc(Poly, Int) -> Poly raise PolyError
 
+pub fn tschirnhausen_transformation(Poly, max_coeff? : Int, max_tries? : Int, history? : Array[Poly], fixed_order? : Bool) -> (Poly, Poly) raise PolyError
+
 pub fn unop_dict(Map[Int, Map[Int, FieldElem]], (FieldElem) -> FieldElem raise PolyError) -> Map[Int, Map[Int, FieldElem]] raise PolyError
 
 pub fn vfield(Array[String], Domain, order? : TermOrder) -> RingFactoryResult

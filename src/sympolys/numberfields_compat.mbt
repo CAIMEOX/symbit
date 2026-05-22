@@ -263,6 +263,212 @@ pub fn coeff_search(m : Int, r : Int, count? : Int = 16) -> Array[Array[Int]] {
 }
 
 ///|
+fn nf_abs_int(value : Int) -> Int {
+  if value < 0 {
+    -value
+  } else {
+    value
+  }
+}
+
+///|
+fn nf_poly_dense_high(poly : Poly) -> Array[FieldElem] raise PolyError {
+  if poly.gens.length() != 1 {
+    raise PolyError::NotUnivariate
+  }
+  if poly.is_zero() {
+    return []
+  }
+  let degree = poly.degree(0)
+  let coeffs = Array::make(degree + 1, fe_from_int(0, poly.domain))
+  for m, c in poly.coeffs {
+    if m.exps.length() != 1 {
+      raise PolyError::NotUnivariate
+    }
+    coeffs[degree - m.exps[0]] = c
+  }
+  coeffs
+}
+
+///|
+fn nf_poly_rep_key(poly : Poly) -> String raise PolyError {
+  nf_poly_dense_high(poly).map(c => c.to_string()).join(",")
+}
+
+///|
+fn nf_poly_rep_in_history(
+  poly : Poly,
+  history : Array[Poly],
+) -> Bool raise PolyError {
+  let key = nf_poly_rep_key(poly)
+  for item in history {
+    if nf_poly_rep_key(item) == key {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn nf_unique_dummy(base : String, gens : Array[String]) -> String {
+  let mut name = base
+  while gens.contains(name) {
+    name = "_" + name
+  }
+  name
+}
+
+///|
+fn nf_poly_from_high_ints(
+  coeffs_high : Array[Int],
+  gen : String,
+  domain : Domain,
+) -> Poly raise PolyError {
+  let coeffs : Map[Monomial, FieldElem] = Map([])
+  let degree = coeffs_high.length() - 1
+  for i in 0..<coeffs_high.length() {
+    let value = coeffs_high[i]
+    if value != 0 {
+      add_term(
+        coeffs,
+        monomial_from_array([degree - i]),
+        fe_from_int(value, domain),
+        domain,
+      )
+    }
+  }
+  Poly::{ coeffs, gens: [gen], domain, order: TermOrder::Lex }
+}
+
+///|
+fn nf_embed_extra_gen(poly : Poly, extra : String) -> Poly raise PolyError {
+  let gens = poly.gens.copy()
+  gens.push(extra)
+  let coeffs : Map[Monomial, FieldElem] = Map([])
+  for m, c in poly.coeffs {
+    let exps = m.exps.copy()
+    exps.push(0)
+    add_term(coeffs, monomial_from_array(exps), c, poly.domain)
+  }
+  Poly::{ coeffs, gens, domain: poly.domain, order: poly.order }
+}
+
+///|
+fn nf_dummy_variable_poly(
+  gens : Array[String],
+  domain : Domain,
+  index : Int,
+) -> Poly raise PolyError {
+  let coeffs : Map[Monomial, FieldElem] = Map([])
+  let exps = Array::make(gens.length(), 0)
+  exps[index] = 1
+  add_term(coeffs, monomial_from_array(exps), fe_from_int(1, domain), domain)
+  Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
+}
+
+///|
+fn nf_tschirnhausen_candidate(
+  poly : Poly,
+  coeffs_high : Array[Int],
+  dummy : String,
+) -> (Poly, Poly) raise PolyError {
+  let gen = poly.gens[0]
+  let transform = nf_poly_from_high_ints(coeffs_high, gen, poly.domain)
+  let t_lifted = nf_embed_extra_gen(poly, dummy)
+  let a_lifted = nf_embed_extra_gen(transform, dummy)
+  let x_poly = nf_dummy_variable_poly(t_lifted.gens, poly.domain, 1)
+  let relation = x_poly.sub(a_lifted)
+  let transformed = t_lifted.resultant_poly(relation, 0)
+  (transform, transformed)
+}
+
+///|
+fn nf_tschir_candidate_coeffs(degree : Int, index : Int) -> Array[Int] {
+  let prefix = coeff_search(degree, 1, count=index + 1)
+  prefix[index]
+}
+
+///|
+fn nf_tschir_squarefree(poly : Poly) -> Bool raise PolyError {
+  dup_sqf_p(nf_poly_dense_high(poly), poly.domain)
+}
+
+///|
+/// Find a Tschirnhausen transformation for a univariate integer polynomial.
+///
+/// - Does: Mirrors SymPy's fixed-order `tschirnhausen_transformation` main
+///   path: enumerate nonlinear `A(x)`, compute
+///   `resultant(T(x), _X - A(x), x)`, and return the first square-free
+///   transformed polynomial not present in history.
+/// - Input: A univariate `Poly`; optional `max_coeff`, `max_tries`, `history`,
+///   and `fixed_order` parameters.
+/// - Returns: `(A, U)` where `A` is the transformation in the input generator
+///   and `U` is a polynomial in a fresh `_X` generator.
+/// - Limits: The random `fixed_order=false` branch is deterministic in this
+///   package and reuses the fixed-order search. Exhausting `max_tries` raises
+///   `PolyError::BadGenerator("tschirnhausen-max-tries")`.
+pub fn tschirnhausen_transformation(
+  poly : Poly,
+  max_coeff? : Int = 10,
+  max_tries? : Int = 30,
+  history? : Array[Poly] = [],
+  fixed_order? : Bool = true,
+) -> (Poly, Poly) raise PolyError {
+  ignore(max_coeff)
+  ignore(fixed_order)
+  if poly.gens.length() != 1 {
+    raise PolyError::NotUnivariate
+  }
+  if max_tries <= 0 {
+    raise PolyError::BadGenerator("tschirnhausen-max-tries")
+  }
+  let dummy = nf_unique_dummy("_X", poly.gens)
+  let seen = history.copy()
+  seen.push(poly)
+  let degree_indices : Map[Int, Int] = Map([])
+  let mut deg_coeff_sum = 3
+  let mut current_degree = 2
+  for _ in 0..<max_tries {
+    let idx = match degree_indices.get(current_degree) {
+      Some(value) => value
+      None => 0
+    }
+    let mut coeffs = nf_tschir_candidate_coeffs(current_degree, idx)
+    degree_indices[current_degree] = idx + 1
+    let mut max_abs = 0
+    for c in coeffs {
+      let a = nf_abs_int(c)
+      if a > max_abs {
+        max_abs = a
+      }
+    }
+    if current_degree + max_abs > deg_coeff_sum {
+      if current_degree == 2 {
+        deg_coeff_sum = deg_coeff_sum + 1
+        current_degree = deg_coeff_sum - 1
+      } else {
+        current_degree = current_degree - 1
+      }
+      let next_idx = match degree_indices.get(current_degree) {
+        Some(value) => value
+        None => 0
+      }
+      coeffs = nf_tschir_candidate_coeffs(current_degree, next_idx)
+      degree_indices[current_degree] = next_idx + 1
+    }
+    let transform_coeffs = [1]
+    for c in coeffs {
+      transform_coeffs.push(c)
+    }
+    let (a, u) = nf_tschirnhausen_candidate(poly, transform_coeffs, dummy)
+    if !nf_poly_rep_in_history(u, seen) && nf_tschir_squarefree(u) {
+      return (a, u)
+    }
+  }
+  raise PolyError::BadGenerator("tschirnhausen-max-tries")
+}
+
+///|
 fn nf_factorint(a : Int) -> Array[(Int, Int)] {
   let out : Array[(Int, Int)] = []
   let mut n = a

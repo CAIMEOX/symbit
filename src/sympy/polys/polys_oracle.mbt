@@ -5968,6 +5968,32 @@ pub fn galois_group(
 }
 
 ///|
+pub fn tschirnhausen_transformation(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  max_tries? : Int = 30,
+) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens([expr_obj])
+  } else {
+    sympy_symbols_from_names(gens)
+  }
+  let poly = call_sympy_poly(expr_obj, gens_list, "", None)
+  let kwargs : Map[String, OracleArg] = {
+    "max_tries": OracleArg::Int(max_tries),
+  }
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.galoisgroups.tschirnhausen_transformation",
+    [OracleArg::PyObj(poly)],
+    kwargs~,
+  )
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 2 else { fail("tschirnhausen tuple") }
+  "(\{oracle_poly_element_as_expr(items[0])}, \{oracle_poly_element_as_expr(items[1])})"
+}
+
+///|
 pub fn has_square_disc(
   expr : @symcore.Expr,
   gens? : Array[String] = [],
