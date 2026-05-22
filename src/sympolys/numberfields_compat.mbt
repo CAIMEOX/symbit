@@ -394,6 +394,70 @@ fn nf_tschir_squarefree(poly : Poly) -> Bool raise PolyError {
 }
 
 ///|
+fn nf_coeff_from_int(value : Int, domain : Domain) -> FieldElem raise PolyError {
+  fe_from_int(value, domain)
+}
+
+///|
+fn nf_int_mul_coeff(
+  value : Int,
+  coeff : FieldElem,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  fe_mul(nf_coeff_from_int(value, domain), coeff)
+}
+
+///|
+fn nf_resolvent_lookup_4_1(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  guard coeffs.length() >= 4 else {
+    raise PolyError::BadGenerator("resolvent-lookup")
+  }
+  let s1 = coeffs[0]
+  let s2 = coeffs[1]
+  let s3 = coeffs[2]
+  let s4 = coeffs[3]
+  let c1 = fe_neg(s2)
+  let c2 = fe_sub(fe_mul(s1, s3), nf_int_mul_coeff(4, s4, domain))
+  let c3 = fe_sub(
+    fe_add(
+      fe_neg(fe_mul(fe_pow(s1, 2), s4)),
+      nf_int_mul_coeff(4, fe_mul(s2, s4), domain),
+    ),
+    fe_pow(s3, 2),
+  )
+  [nf_coeff_from_int(1, domain), c1, c2, c3]
+}
+
+///|
+/// Compute a Galois resolvent from SymPy's lookup-table formulas.
+///
+/// - Does: Mirrors SymPy `get_resolvent_by_lookup` by evaluating stored
+///   coefficient lambdas on the non-leading coefficients of `poly`.
+/// - Input: A univariate `Poly` and a lookup `number`.
+/// - Returns: Dense high-to-low resolvent coefficients as `Array[FieldElem]`.
+/// - Limits: Currently implements the degree-4 `number=1` lookup table entry.
+///   Unsupported degree/number pairs raise
+///   `PolyError::BadGenerator("resolvent-lookup")`.
+pub fn get_resolvent_by_lookup(
+  poly : Poly,
+  number : Int,
+) -> Array[FieldElem] raise PolyError {
+  let dense = nf_poly_dense_high(poly)
+  if dense.length() < 2 {
+    raise PolyError::BadGenerator("resolvent-lookup")
+  }
+  let degree = dense.length() - 1
+  let coeffs = dense[1:].to_owned()
+  if degree == 4 && number == 1 {
+    return nf_resolvent_lookup_4_1(coeffs, poly.domain)
+  }
+  raise PolyError::BadGenerator("resolvent-lookup")
+}
+
+///|
 /// Find a Tschirnhausen transformation for a univariate integer polynomial.
 ///
 /// - Does: Mirrors SymPy's fixed-order `tschirnhausen_transformation` main

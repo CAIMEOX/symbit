@@ -5994,6 +5994,26 @@ pub fn tschirnhausen_transformation(
 }
 
 ///|
+pub fn get_resolvent_by_lookup(
+  expr : @symcore.Expr,
+  number : Int,
+  gens? : Array[String] = [],
+) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens([expr_obj])
+  } else {
+    sympy_symbols_from_names(gens)
+  }
+  let poly = call_sympy_poly(expr_obj, gens_list, "", None)
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.galois_resolvents.get_resolvent_by_lookup",
+    [OracleArg::PyObj(poly), OracleArg::Int(number)],
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
 pub fn has_square_disc(
   expr : @symcore.Expr,
   gens? : Array[String] = [],

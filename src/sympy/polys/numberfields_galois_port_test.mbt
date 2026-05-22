@@ -31,3 +31,31 @@ test "numberfields galois: tschirnhausen transformation parity" {
     )
   }
 }
+
+///|
+fn resolvent_port_text(coeffs : Array[@sympolys.FieldElem]) -> String {
+  "[" + coeffs.map(c => c.to_string()).join(", ") + "]"
+}
+
+///|
+test "numberfields galois: resolvent lookup parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = @sympolys.PolyBuilder::new(["x"], @sympolys.Domain::ZZ)
+  let cases = [
+    b.from_expr((x ^ @symcore.int(4)) + x + @symcore.int(1)),
+    b.from_expr((x ^ @symcore.int(4)) - @symcore.int(2)),
+    b.from_expr(
+      (x ^ @symcore.int(4)) +
+      (x ^ @symcore.int(3)) +
+      @symcore.int(2) * (x ^ @symcore.int(2)) +
+      @symcore.int(3) * x +
+      @symcore.int(4),
+    ),
+  ]
+  for item in cases {
+    assert_eq(
+      resolvent_port_text(@sympolys.get_resolvent_by_lookup(item, 1)),
+      get_resolvent_by_lookup(item.to_expr(), 1, gens=["x"]),
+    )
+  }
+}

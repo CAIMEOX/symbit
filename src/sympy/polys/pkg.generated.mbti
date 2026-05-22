@@ -596,6 +596,8 @@ pub fn matrix_fglm(Array[@symcore.Expr], gens? : Array[String], source_order? : 
 
 pub fn has_square_disc(@symcore.Expr, gens? : Array[String]) -> Bool raise
 
+pub fn get_resolvent_by_lookup(@symcore.Expr, Int, gens? : Array[String]) -> String raise
+
 pub fn tschirnhausen_transformation(@symcore.Expr, gens? : Array[String], max_tries? : Int) -> String raise
 
 pub fn horner(@symcore.Expr, gens? : Array[String], wrt? : String) -> String raise

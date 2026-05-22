@@ -1177,6 +1177,8 @@ pub fn genocchi_poly(Int, gen? : String) -> @symcore.Expr raise PolyError
 
 pub fn get_num_denom(@symnum.BigRational) -> (@bigint.BigInt, @bigint.BigInt)
 
+pub fn get_resolvent_by_lookup(Poly, Int) -> Array[FieldElem] raise PolyError
+
 pub fn gf_LC(Array[Int]) -> Int
 
 pub fn gf_Qbasis(Array[Array[Int]], Int) -> Array[Array[Int]] raise PolyError
