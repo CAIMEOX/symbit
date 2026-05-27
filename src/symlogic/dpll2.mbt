@@ -26,7 +26,7 @@ fn conflict_union(
   a : Array[LraConflictLit],
   b : Array[LraConflictLit],
 ) -> Array[LraConflictLit] {
-  let seen : Map[String, LraConflictLit] = Map::new()
+  let seen : Map[String, LraConflictLit] = Map([])
   for lit in a {
     seen[conflict_key(lit)] = lit
   }
@@ -195,7 +195,7 @@ pub fn dpll2_satisfiable(
   use_lra_theory? : Bool = false,
 ) -> Map[String, Bool]? {
   match expr {
-    BoolExpr::True => return Some(Map::new())
+    BoolExpr::True => return Some(Map([]))
     BoolExpr::False => return None
     _ => ()
   }
@@ -214,7 +214,7 @@ pub fn dpll2_satisfiable(
       symbol_names.push(key)
     }
   }
-  let lra_map : Map[String, LinearConstraint] = Map::new()
+  let lra_map : Map[String, LinearConstraint] = Map([])
   for s in symbols {
     match s {
       BoolExpr::LRA(constraint) => {
@@ -225,7 +225,7 @@ pub fn dpll2_satisfiable(
     }
   }
   let indices : Array[Int] = Array::new()
-  let sym_index : Map[String, Int] = Map::new()
+  let sym_index : Map[String, Int] = Map([])
   for i in 0..<symbol_names.length() {
     let idx = i + 1
     indices.push(idx)
@@ -234,12 +234,12 @@ pub fn dpll2_satisfiable(
   let clauses_int = to_int_repr(clauses, symbols)
   let use_lra = use_lra_theory && !lra_map.is_empty()
   if !use_lra {
-    let models = dpll_int_repr_all_models(clauses_int, indices, Map::new())
+    let models = dpll_int_repr_all_models(clauses_int, indices, Map([]))
     if models.is_empty() {
       return None
     }
     let model = models[0]
-    let out : Map[String, Bool] = Map::new()
+    let out : Map[String, Bool] = Map([])
     for key, val in model {
       let idx = key - 1
       if idx >= 0 && idx < symbol_names.length() {
@@ -252,7 +252,7 @@ pub fn dpll2_satisfiable(
     conflict : Array[LraConflictLit],
     sym_index : Map[String, Int],
   ) -> Array[Int] {
-    let set : Map[Int, Bool] = Map::new()
+    let set : Map[Int, Bool] = Map([])
     for lit in conflict {
       match sym_index.get(lit.key) {
         Some(idx) => {
@@ -271,13 +271,13 @@ pub fn dpll2_satisfiable(
   }
 
   while true {
-    let model_opt = dpll_int_repr(clauses_int, indices, Map::new())
+    let model_opt = dpll_int_repr(clauses_int, indices, Map([]))
     match model_opt {
       None => return None
       Some(model) =>
         match lra_model_conflict(model, symbol_names, lra_map) {
           None => {
-            let out : Map[String, Bool] = Map::new()
+            let out : Map[String, Bool] = Map([])
             for key, val in model {
               let idx = key - 1
               if idx >= 0 && idx < symbol_names.length() {
@@ -305,7 +305,7 @@ pub fn dpll2_all_models(
   use_lra_theory? : Bool = false,
 ) -> Array[Map[String, Bool]?] {
   match expr {
-    BoolExpr::True => return [Some(Map::new())]
+    BoolExpr::True => return [Some(Map([]))]
     BoolExpr::False => return [None]
     _ => ()
   }
@@ -324,7 +324,7 @@ pub fn dpll2_all_models(
       symbol_names.push(key)
     }
   }
-  let lra_map : Map[String, LinearConstraint] = Map::new()
+  let lra_map : Map[String, LinearConstraint] = Map([])
   for s in symbols {
     match s {
       BoolExpr::LRA(constraint) => {
@@ -339,7 +339,7 @@ pub fn dpll2_all_models(
     indices.push(i + 1)
   }
   let clauses_int = to_int_repr(clauses, symbols)
-  let models = dpll_int_repr_all_models(clauses_int, indices, Map::new())
+  let models = dpll_int_repr_all_models(clauses_int, indices, Map([]))
   if models.is_empty() {
     return [None]
   }
@@ -349,7 +349,7 @@ pub fn dpll2_all_models(
     if use_lra && !lra_model_satisfiable(model, symbol_names, lra_map) {
       continue
     }
-    let map : Map[String, Bool] = Map::new()
+    let map : Map[String, Bool] = Map([])
     for key, val in model {
       let idx = key - 1
       if idx >= 0 && idx < symbol_names.length() {

@@ -57,7 +57,7 @@ fn ensure_pos_mod(value : Int, modulus : Int) -> Int {
 
 ///|
 fn map_to_gf(poly : Poly, modulus : Int) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for m, c in poly.coeffs {
     let r = fe_expect_rational(c)
     let fe = fe_from_int(r.numerator().to_int(), Domain::GF(modulus))
@@ -90,7 +90,7 @@ fn map_to_mod(poly : Poly, modulus : Int) -> Array[Int] raise PolyError {
 
 ///|
 fn lift_gf_factor_to_int(f : Poly, modulus : Int) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for m, c in f.coeffs {
     let mut v = ensure_pos_mod(
       fe_expect_rational(c).numerator().to_int(),
@@ -271,7 +271,7 @@ fn quadratic_factor(
   domain : Domain,
   order : TermOrder,
 ) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   let mono0 = monomial_one(gens.length())
   add_term(coeffs, mono0, fe_from_int(s, domain), domain)
   let mono2 = monomial_one(gens.length())
@@ -374,7 +374,7 @@ fn dense_to_poly_int(
   gens : Array[String],
   domain : Domain,
 ) -> Poly raise PolyError {
-  let map : Map[Monomial, FieldElem] = Map::new()
+  let map : Map[Monomial, FieldElem] = Map([])
   for i in 0..<coeffs.length() {
     if coeffs[i] == 0 {
       continue

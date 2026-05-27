@@ -83,7 +83,7 @@ fn parse_path(path : String) -> Array[ESelector] {
     Some(rest) => {
       let selectors : Array[ESelector] = Array::new()
       for raw_sel in rest.split("/") {
-        let sel = raw_sel.trim().to_string()
+        let sel = raw_sel.trim().to_owned()
         if sel != "" {
           selectors.push(parse_selector(sel))
         }
@@ -126,10 +126,10 @@ fn parse_selector(raw : String) -> ESelector {
   let types : Array[String] = Array::new()
   if head != "" {
     for part_view in head.split("|") {
-      let part = part_view.trim().to_string()
+      let part = part_view.trim().to_owned()
       if part != "" {
         match part.strip_suffix("?") {
-          Some(attr) => attrs.push(attr.to_string())
+          Some(attr) => attrs.push(attr.to_owned())
           None => types.push(part)
         }
       }
@@ -147,7 +147,7 @@ fn parse_selector_span(tail : String) -> ESpan {
     match tail.strip_prefix("[") {
       Some(without_prefix) =>
         match without_prefix.strip_suffix("]") {
-          Some(content) => parse_span(content.to_string())
+          Some(content) => parse_span(content.to_owned())
           None => ESpan::All
         }
       None => ESpan::All
@@ -171,7 +171,7 @@ fn parse_span_part(parts : Array[StringView], idx : Int) -> Int? {
   if idx >= parts.length() {
     return None
   }
-  let token = parts[idx].trim().to_string()
+  let token = parts[idx].trim().to_owned()
   if token == "" {
     None
   } else {
@@ -181,7 +181,7 @@ fn parse_span_part(parts : Array[StringView], idx : Int) -> Int? {
 
 ///|
 fn parse_span(content : String) -> ESpan {
-  let trimmed = content.trim().to_string()
+  let trimmed = content.trim().to_owned()
   if trimmed == "" {
     return ESpan::All
   }

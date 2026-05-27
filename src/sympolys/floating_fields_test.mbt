@@ -29,7 +29,7 @@ test "CC evalf_expr returns complex float expressions" {
     Err(_) => fail("cc evalf")
   }
   match evaled {
-    @symcore.Expr::ComplexFloat(z) => assert_eq(z.precision(), 110)
+    @symcore.Expr::ComplexFloat(z) => assert_true(z.precision() == 110)
     _ => fail("expected complex float")
   }
   assert_true(domain_almosteq_expr(Domain::CC, evaled, expr))
@@ -56,8 +56,8 @@ test "RealField object carries precision and evaluates to float leaves" {
   }
   match evaled {
     @symcore.Expr::Float(f) => {
-      assert_eq(rr.precision(), 85)
-      assert_eq(f.precision(), 85)
+      assert_true(rr.precision() == 85)
+      assert_true(f.precision() == 85)
     }
     _ => fail("expected float")
   }
@@ -96,9 +96,9 @@ test "ComplexField object evaluates gaussian rationals to complex float expressi
     Domain::CC => ()
     _ => fail("expected CC domain")
   }
-  assert_eq(cc.precision(), 95)
+  assert_true(cc.precision() == 95)
   match evaled {
-    @symcore.Expr::ComplexFloat(z) => assert_eq(z.precision(), 95)
+    @symcore.Expr::ComplexFloat(z) => assert_true(z.precision() == 95)
     _ => fail("expected complex float")
   }
   assert_true(domain_almosteq_expr(Domain::CC, evaled, expr))

@@ -97,8 +97,8 @@ test "matrices rref rank rowspace columnspace nullspace" {
   ])
   let (rref, pivots) = a.rref()
   inspect(rref.to_string(), content="Matrix([[1, 2, 3], [0, 0, 0]])")
-  inspect(pivots, content="[0]")
-  assert_eq(a.rank(), 1)
+  debug_inspect(pivots, content="[0]")
+  assert_true(a.rank() == 1)
   inspect(vecs_to_string(a.rowspace()), content="[[1, 2, 3]]")
   inspect(vecs_to_string(a.columnspace()), content="[[1, 2]]")
   inspect(vecs_to_string(a.nullspace()), content="[[-2, 1, 0], [-3, 0, 1]]")
@@ -113,10 +113,10 @@ test "matrices lu and qr decomposition" {
   let (l, u, swaps) = a.lu()
   inspect(l.to_string(), content="Matrix([[1, 0], [3, 1]])")
   inspect(u.to_string(), content="Matrix([[1, 2], [0, -2]])")
-  inspect(swaps, content="[]")
+  debug_inspect(swaps, content="[]")
   let (q, r) = a.qr()
-  assert_eq(q.shape(), (2, 2))
-  assert_eq(r.shape(), (2, 2))
+  assert_true(q.shape() == (2, 2))
+  assert_true(r.shape() == (2, 2))
   assert_true(eigen_matrix_equal(q * r, a))
   assert_true(eigen_matrix_equal(q.transpose() * q, eye(2)))
 }
@@ -140,7 +140,7 @@ test "matrices minors cofactors adjugate and echelon helpers" {
   )
   let (echelon, pivots) = a.echelon_form_with_pivots()
   assert_true(echelon.is_echelon())
-  inspect(pivots, content="[0, 1, 2]")
+  debug_inspect(pivots, content="[0, 1, 2]")
 }
 
 ///|
@@ -195,10 +195,10 @@ test "matrices triangular solves rref rhs cholesky and ldl" {
     [@symcore.int(4), @symcore.int(2)],
     [@symcore.int(2), @symcore.int(3)],
   ])
-  inspect(spd.cholesky().shape(), content="(2, 2)")
+  debug_inspect(spd.cholesky().shape(), content="(2, 2)")
   let (l, d) = spd.ldl()
-  assert_eq(l.shape(), (2, 2))
-  assert_eq(d.shape(), (2, 2))
+  assert_true(l.shape() == (2, 2))
+  assert_true(d.shape() == (2, 2))
 }
 
 ///|
@@ -216,7 +216,7 @@ test "matrices numeric backend keeps float and complex-float results" {
     _ => fail("expected float inverse entries")
   }
   let (rref, pivots) = a.rref()
-  inspect(pivots, content="[0, 1]")
+  debug_inspect(pivots, content="[0, 1]")
   match rref.getitem(0, 0) {
     @symcore.Expr::Float(f) => assert_true(f.format(dps=8).has_prefix("1.0"))
     _ => fail("expected float rref pivot")

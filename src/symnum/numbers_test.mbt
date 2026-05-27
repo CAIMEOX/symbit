@@ -14,7 +14,7 @@ test "zero denominator error" {
     BigInt::from_int(1),
     BigInt::from_int(0),
   )
-  inspect(result, content="Err(ZeroDenominator)")
+  assert_true(result is Err(RationalError::ZeroDenominator))
 }
 
 ///|
@@ -36,5 +36,5 @@ test "division by zero raises rational error" {
   let result : Result[BigRational, RationalError] = try? a.div_r(
     BigRational::zero(),
   )
-  inspect(result, content="Err(ZeroDenominator)")
+  assert_true(result is Err(RationalError::ZeroDenominator))
 }

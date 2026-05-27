@@ -3,7 +3,7 @@ test "matrices expressions shape and render" {
   let a = matrix_symbol("A", 2, 2)
   let b = matrix_symbol("B", 2, 2)
   let expr = matrix_expr_transpose(matrix_expr_mul([a, matrix_expr_inverse(b)]))
-  assert_eq(expr.shape(), (2, 2))
+  assert_true(expr.shape() == (2, 2))
   inspect(expr.to_string(), content="(B^-1.T * A.T)")
 }
 
@@ -44,7 +44,7 @@ test "matrices expressions block helpers" {
   let a = matrix_symbol("A", 1, 2)
   let b = matrix_symbol("B", 2, 1)
   let expr = matrix_expr_block_diag([a, b])
-  assert_eq(expr.shape(), (3, 3))
+  assert_true(expr.shape() == (3, 3))
   let env : Map[String, Matrix] = {}
   env["A"] = matrix([[@symcore.int(1), @symcore.int(2)]])
   env["B"] = matrix([[@symcore.int(3)], [@symcore.int(4)]])
@@ -61,7 +61,7 @@ test "matrices expressions identity zero and block evaluation" {
     matrix_expr_block([[identity_expr(1), zero_matrix_expr(1, 1)], [a, a]]),
     zero_matrix_expr(2, 2),
   ])
-  assert_eq(expr.shape(), (2, 2))
+  assert_true(expr.shape() == (2, 2))
   let env : Map[String, Matrix] = {}
   env["A"] = matrix([[@symcore.int(5)]])
   inspect(expr.eval(env).to_string(), content="Matrix([[1, 0], [5, 5]])")

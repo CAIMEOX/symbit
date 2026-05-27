@@ -121,7 +121,7 @@ test "factor wb: GF splitting and seed helpers" {
     Domain::GF(5),
   )
   let edf_same = equal_degree_factor(gf_poly, 2, 5, 5, 1, 17, None)
-  assert_eq(edf_same.length(), 1)
+  assert_true(edf_same.length() == 1)
 
   let edf_try = equal_degree_factor(gf_poly, 1, 5, 5, 1, 19, None)
   assert_true(!edf_try.is_empty())
@@ -180,11 +180,11 @@ test "factor wb: algext conversion and factoring helper branches" {
 
   let zero_alg = Poly::zero(["x"], alg_domain)
   let sf_zero = factor_algext_squarefree(zero_alg, Domain::QQ, minpoly)
-  assert_eq(sf_zero.length(), 0)
+  assert_true(sf_zero.length() == 0)
 
   let lin_alg = fw_univar(x + @symcore.int(1), alg_domain)
   let sf_lin = factor_algext_squarefree(lin_alg, Domain::QQ, minpoly)
-  assert_eq(sf_lin.length(), 1)
+  assert_true(sf_lin.length() == 1)
 
   let bad_factor_domain : Result[Array[Poly], PolyError] = try? factor_algext(
     fw_univar(x + @symcore.int(1), Domain::QQ),
@@ -196,7 +196,7 @@ test "factor wb: algext conversion and factoring helper branches" {
   )
   assert_true(bad_factor_nonuni is Err(PolyError::NotUnivariate))
 
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   coeffs.set(Monomial::{ exps: [1] }, FieldElem::QQ(@symnum.BigRational::one()))
   coeffs.set(
     Monomial::{ exps: [0] },
@@ -220,7 +220,7 @@ test "factor wb: algext conversion and factoring helper branches" {
   assert_true(t_coeffs.length() >= 2)
 
   let m_coeffs = minpoly_to_t_coeffs(minpoly, Domain::QQ, "x")
-  assert_eq(m_coeffs.length(), minpoly.degree(0) + 1)
+  assert_true(m_coeffs.length() == minpoly.degree(0) + 1)
 
   let base_poly = fw_univar((x ^ @symcore.int(2)) + @symcore.int(1), Domain::QQ)
   let lifted = lift_base_poly_to_algext(base_poly, alg_domain)
@@ -247,7 +247,9 @@ test "factor wb: high-gap branch sweep" {
     PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y),
   )
   assert_true(sqf_nonuni is Err(PolyError::NotUnivariate))
-  assert_eq(square_free_decompose(Poly::zero(["x"], Domain::QQ)).length(), 0)
+  assert_true(
+    square_free_decompose(Poly::zero(["x"], Domain::QQ)).length() == 0,
+  )
   let gfext_domain = Domain::GFExt(5, 2, [1, 0, 1])
   let sqf_gfext = square_free_decompose(
     PolyBuilder::new(["x"], gfext_domain).from_expr(
@@ -263,7 +265,7 @@ test "factor wb: high-gap branch sweep" {
   assert_true(ext_passthrough.domain == Domain::QQ)
 
   let zero_zz = Poly::zero(["x"], Domain::ZZ)
-  assert_eq(zero_zz.factor().length(), 0)
+  assert_true(zero_zz.factor().length() == 0)
   let fl_zero = zero_zz.factor_list()
   assert_true(fl_zero.0.is_zero() && fl_zero.1.length() == 0)
   assert_true(zero_zz.sqf_part().is_zero())
@@ -301,14 +303,14 @@ test "factor wb: high-gap branch sweep" {
       @symcore.int(2) * x + @symcore.int(1),
     ),
   )
-  assert_eq(norm_zz.1.to_string(), "2")
+  assert_true(norm_zz.1.to_string() == "2")
 
   let lin_parts = factor_linear_rationals(
     PolyBuilder::new(["x"], Domain::QQ).from_expr(x),
   )
-  assert_eq(lin_parts.length(), 1)
+  assert_true(lin_parts.length() == 1)
 
-  let gf_coeffs : Map[Monomial, FieldElem] = Map::new()
+  let gf_coeffs : Map[Monomial, FieldElem] = Map([])
   gf_coeffs.set(Monomial::{ exps: [1] }, FieldElem::GFp(5, 0))
   gf_coeffs.set(Monomial::{ exps: [0] }, FieldElem::GFp(5, 3))
   let gf_with_zero = Poly::{
@@ -318,7 +320,7 @@ test "factor wb: high-gap branch sweep" {
     order: TermOrder::Lex,
   }
   let gf_norm = normalize_poly_mod(gf_with_zero)
-  assert_eq(gf_norm.degree(0), 0)
+  assert_true(gf_norm.degree(0) == 0)
   let gfext_norm = normalize_poly_mod(
     PolyBuilder::new(["x"], gfext_domain).from_expr(x + @symcore.int(1)),
   )
@@ -328,7 +330,7 @@ test "factor wb: high-gap branch sweep" {
     PolyBuilder::new(["x"], Domain::GF(5)).from_expr(@symcore.int(3)),
     5,
   )
-  assert_eq(stripped_const.1.length(), 0)
+  assert_true(stripped_const.1.length() == 0)
 
   let gf_repeated = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(
     (x + @symcore.int(1)) ^ @symcore.int(2),
@@ -353,7 +355,7 @@ test "factor wb: high-gap branch sweep" {
     fail("field_elem_from_seed(Some(mod_poly)) mismatch")
   }
   let seeded_other = field_elem_from_seed(5, 7, 1, None, Domain::QQ)
-  assert_eq(seeded_other.to_string(), "5")
+  assert_true(seeded_other.to_string() == "5")
 
   let c1 = poly_const_from_fe(
     FieldElem::QQ(@symnum.BigRational::one()),
@@ -363,12 +365,12 @@ test "factor wb: high-gap branch sweep" {
   assert_true(!c1.is_zero())
 
   let alg_one = Poly::one(["x"], alg_domain)
-  assert_eq(factor_algext(alg_one).length(), 0)
+  assert_true(factor_algext(alg_one).length() == 0)
   let alg_linear = PolyBuilder::new(["x"], alg_domain).from_expr(
     x + @symcore.int(1),
   )
   let alg_factored = factor_algext(alg_linear)
-  assert_eq(alg_factored.length(), 1)
+  assert_true(alg_factored.length() == 1)
 
   let rf = [fw_const(1, Domain::QQ), fw_const(2, Domain::QQ)]
   let rg = [fw_const(3, Domain::QQ), fw_const(4, Domain::QQ)]
@@ -407,7 +409,7 @@ test "factor wb: residual reachable branch sweep" {
     x + @symcore.int(1),
   )
   let alg_via_poly_factor = alg_linear.factor()
-  assert_eq(alg_via_poly_factor.length(), 1)
+  assert_true(alg_via_poly_factor.length() == 1)
 
   let gfext_domain = Domain::GFExt(5, 2, [1, 0, 1])
   let sqf_tail = square_free_decompose(
@@ -436,7 +438,7 @@ test "factor wb: residual reachable branch sweep" {
     PolyBuilder::new(["x"], gfext_domain).from_expr(x + @symcore.int(1)),
     15,
   )
-  assert_eq(gfext_linear_parts.length(), 1)
+  assert_true(gfext_linear_parts.length() == 1)
 
   let edf_poly = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(
     ((x ^ @symcore.int(2)) + @symcore.int(2)) *
@@ -458,7 +460,7 @@ test "factor wb: rational linear roots use divisor candidates" {
   let texts = parts
     .filter(p => p.degree(0) == 1)
     .map(p => @symprint.pretty_string(p.to_expr()))
-  assert_eq(texts.length(), 2)
+  assert_true(texts.length() == 2)
   assert_true(texts.contains("x - 1/2"))
   assert_true(texts.contains("x + 1/3"))
 }
@@ -481,7 +483,7 @@ test "factor wb: monic integer linear roots split repeated divisor family" {
   let texts = parts
     .filter(p => p.degree(0) == 1)
     .map(p => @symprint.pretty_string(p.to_expr()))
-  assert_eq(texts.length(), 6)
+  assert_true(texts.length() == 6)
   for i in 1..<=6 {
     assert_true(texts.contains("x - \{i}"))
   }

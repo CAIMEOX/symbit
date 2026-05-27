@@ -4,12 +4,12 @@
 ///|
 fn join_resource_path(base_dir : String, identifier : String) -> String {
   let base = if base_dir.has_suffix("/") {
-    base_dir[:base_dir.length() - 1].to_string()
+    base_dir[:base_dir.length() - 1].to_owned()
   } else {
     base_dir
   }
   let rel = if identifier.has_prefix("/") {
-    identifier[1:identifier.length()].to_string()
+    identifier[1:identifier.length()].to_owned()
   } else {
     identifier
   }

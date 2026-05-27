@@ -83,8 +83,8 @@ test "cse extracts and reconstructs shared structure" {
   inspect(pretty_string(rhs), content="sin(x)")
 
   let rebuilt = cse_reconstruct(result)
-  assert_eq(pretty_string(rebuilt[0]), pretty_string(exprs[0]))
-  assert_eq(pretty_string(rebuilt[1]), pretty_string(exprs[1]))
+  assert_true(pretty_string(rebuilt[0]) == pretty_string(exprs[0]))
+  assert_true(pretty_string(rebuilt[1]) == pretty_string(exprs[1]))
 }
 ```
 

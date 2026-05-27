@@ -16,7 +16,7 @@
 /// - Returns: A `Domain`.
 /// - Limits: Raises `PolyError` when the token is malformed or unsupported.
 pub fn domain_from_string(spec : String) -> Domain raise PolyError {
-  let s = spec.trim().to_string()
+  let s = spec.trim().to_owned()
   match s {
     "ZZ" | "IntegerRing" => Domain::ZZ
     "QQ" | "RationalField" => Domain::QQ
@@ -68,13 +68,13 @@ fn find_matching_open_from_end(
 
 ///|
 fn find_matching_double_open_from_end(s : String) -> Int? {
-  if s.length() < 4 || s[s.length() - 2:s.length()].to_string() != "]]" {
+  if s.length() < 4 || s[s.length() - 2:s.length()].to_owned() != "]]" {
     return None
   }
   let mut depth = 0
   let mut i = s.length() - 2
   while i >= 0 {
-    if i + 2 <= s.length() && s[i:i + 2].to_string() == "]]" {
+    if i + 2 <= s.length() && s[i:i + 2].to_owned() == "]]" {
       depth += 1
       if i == 0 {
         break
@@ -82,7 +82,7 @@ fn find_matching_double_open_from_end(s : String) -> Int? {
       i -= 1
       continue
     }
-    if i + 2 <= s.length() && s[i:i + 2].to_string() == "[[" {
+    if i + 2 <= s.length() && s[i:i + 2].to_owned() == "[[" {
       depth -= 1
       if depth == 0 {
         return Some(i)
@@ -110,7 +110,7 @@ fn find_last_substring(s : String, needle : String) -> Int? {
   let mut i = s.length() - n + 1
   while i > 0 {
     i -= 1
-    if s[i:i + n].to_string() == needle {
+    if s[i:i + n].to_owned() == needle {
       return Some(i)
     }
   }
@@ -122,11 +122,11 @@ fn split_gf_descriptor(
   raw : String,
   spec : String,
 ) -> (Int, Int?) raise PolyError {
-  let body = raw.trim().to_string()
+  let body = raw.trim().to_owned()
   if body.contains("**") {
     let parts : Array[String] = Array::new()
     for p in body.split("**") {
-      parts.push(p.trim().to_string())
+      parts.push(p.trim().to_owned())
     }
     if parts.length() != 2 {
       raise PolyError::BadGenerator(spec)
@@ -142,7 +142,7 @@ fn split_gf_descriptor(
   if body.contains(",") {
     let parts : Array[String] = Array::new()
     for p in body.split(",") {
-      parts.push(p.trim().to_string())
+      parts.push(p.trim().to_owned())
     }
     if parts.length() != 2 {
       raise PolyError::BadGenerator(spec)
@@ -171,7 +171,7 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let inner = s[left + 1:s.length() - 1].to_string()
+    let inner = s[left + 1:s.length() - 1].to_owned()
     let parsed = split_gf_descriptor(inner, s)
     let p = parsed.0
     let ext_opt = parsed.1
@@ -195,22 +195,22 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let ps_head = s[:right + 2].to_string()
+    let ps_head = s[:right + 2].to_owned()
     let left = match find_matching_double_open_from_end(ps_head) {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let base = domain_from_string(s[:left].to_string())
-    let gens_str = s[left + 2:right].to_string()
+    let base = domain_from_string(s[:left].to_owned())
+    let gens_str = s[left + 2:right].to_owned()
     let gens = split_gens(gens_str)
     if right + 2 == s.length() {
       return Domain::PowerSeries(base, gens, -1)
     }
     if s.has_suffix(")") &&
       right + 8 <= s.length() - 1 &&
-      s[right + 2:right + 8].to_string() == "(prec=" {
-      let prec_text = s[right + 8:s.length() - 1].to_string()
-      let precision = @string.parse_int(prec_text.trim().to_string()) catch {
+      s[right + 2:right + 8].to_owned() == "(prec=" {
+      let prec_text = s[right + 8:s.length() - 1].to_owned()
+      let precision = @string.parse_int(prec_text.trim().to_owned()) catch {
         _ => raise PolyError::BadGenerator(s)
       }
       return Domain::PowerSeries(base, gens, precision)
@@ -222,13 +222,13 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let base = domain_from_string(s[:left].to_string())
-    let gens_str = s[left + 1:s.length() - 1].to_string()
+    let base = domain_from_string(s[:left].to_owned())
+    let gens_str = s[left + 1:s.length() - 1].to_owned()
     let gens = split_gens(gens_str)
     return Domain::AlgExt(base, gens, [])
   }
   if s.has_prefix("Frac(") && s.has_suffix(")") {
-    let inner = s[5:s.length() - 1].to_string()
+    let inner = s[5:s.length() - 1].to_owned()
     return Domain::Frac(domain_from_string(inner))
   }
   if s.has_suffix("]") && !s.has_suffix("]]") {
@@ -236,8 +236,8 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let base = domain_from_string(s[:left].to_string())
-    let gens_str = s[left + 1:s.length() - 1].to_string()
+    let base = domain_from_string(s[:left].to_owned())
+    let gens_str = s[left + 1:s.length() - 1].to_owned()
     let gens = split_gens(gens_str)
     return Domain::PolyRing(base, gens)
   }
@@ -246,8 +246,8 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let base = domain_from_string(s[:left].to_string())
-    let gens_str = s[left + 1:s.length() - 1].to_string()
+    let base = domain_from_string(s[:left].to_owned())
+    let gens_str = s[left + 1:s.length() - 1].to_owned()
     let gens = split_gens(gens_str)
     return Domain::RationalFunctionField(base, gens)
   }
@@ -264,13 +264,13 @@ fn gfext_default_modulus(k : Int) -> Array[Int] {
 
 ///|
 fn split_gens(text : String) -> Array[String] raise PolyError {
-  let raw = text.trim().to_string()
+  let raw = text.trim().to_owned()
   if raw == "" {
     raise PolyError::BadGenerator(text)
   }
   let normalized : Array[String] = Array::new()
   for g in raw.split(",") {
-    let name = g.trim().to_string()
+    let name = g.trim().to_owned()
     if name == "" {
       raise PolyError::BadGenerator(text)
     }
@@ -2200,7 +2200,7 @@ fn normalized_gen_keys(gens : Array[String]) -> Array[String] {
 
 ///|
 fn gen_symbol_name(gen : String) -> String? {
-  let text = gen.trim().to_string()
+  let text = gen.trim().to_owned()
   if text == "" {
     return None
   }
@@ -2211,7 +2211,7 @@ fn gen_symbol_name(gen : String) -> String? {
     return Some(text)
   }
   if text.has_prefix("1/") {
-    let rest = text[2:text.length()].to_string().trim().to_string()
+    let rest = text[2:text.length()].to_owned().trim().to_owned()
     if rest != "" &&
       !rest.contains("/") &&
       !rest.contains("(") &&
@@ -3473,7 +3473,7 @@ fn expr_constant_term(expr : Expr, symbols : Array[String]) -> Expr? {
 
 ///|
 fn expr_terms_one(var_count : Int) -> Map[Monomial, Expr] {
-  let out : Map[Monomial, Expr] = Map::new()
+  let out : Map[Monomial, Expr] = Map([])
   out.set(monomial_one(var_count), int(1))
   out
 }
@@ -3484,7 +3484,7 @@ fn expr_terms_from_coeff(
   coeff : Expr,
   var_count : Int,
 ) -> Map[Monomial, Expr] {
-  let out : Map[Monomial, Expr] = Map::new()
+  let out : Map[Monomial, Expr] = Map([])
   if !domain_is_zero_expr(coeff_domain, coeff) {
     out.set(monomial_one(var_count), coeff)
   }
@@ -3497,7 +3497,7 @@ fn expr_terms_add(
   left : Map[Monomial, Expr],
   right : Map[Monomial, Expr],
 ) -> Map[Monomial, Expr] {
-  let out : Map[Monomial, Expr] = Map::new()
+  let out : Map[Monomial, Expr] = Map([])
   for mono, coeff in left {
     if !domain_is_zero_expr(coeff_domain, coeff) {
       out.set(mono, coeff)
@@ -3528,7 +3528,7 @@ fn expr_terms_mul(
   left : Map[Monomial, Expr],
   right : Map[Monomial, Expr],
 ) -> Map[Monomial, Expr] {
-  let out : Map[Monomial, Expr] = Map::new()
+  let out : Map[Monomial, Expr] = Map([])
   if left.is_empty() || right.is_empty() {
     return out
   }
@@ -3580,11 +3580,11 @@ fn expr_terms_pow(
 
 ///|
 fn reciprocal_gen_symbol_name(gen : String) -> String? {
-  let text = gen.trim().to_string()
+  let text = gen.trim().to_owned()
   if !text.has_prefix("1/") {
     return None
   }
-  let rest = text[2:text.length()].to_string().trim().to_string()
+  let rest = text[2:text.length()].to_owned().trim().to_owned()
   if rest == "" ||
     rest.contains("/") ||
     rest.contains("(") ||
@@ -3605,7 +3605,7 @@ fn expr_generator_rational(
   for i in 0..<gens.length() {
     let gen = gens[i]
     if expr_text == gen.replace_all(old=" ", new="") {
-      let numer : Map[Monomial, Expr] = Map::new()
+      let numer : Map[Monomial, Expr] = Map([])
       let mono = monomial_one(gens.length())
       mono.exps.set(i, 1)
       numer.set(mono, int(1))
@@ -3615,7 +3615,7 @@ fn expr_generator_rational(
       Some(name) =>
         match expr {
           Expr::Symbol(expr_name) if expr_name == name => {
-            let denom : Map[Monomial, Expr] = Map::new()
+            let denom : Map[Monomial, Expr] = Map([])
             let mono = monomial_one(gens.length())
             mono.exps.set(i, 1)
             denom.set(mono, int(1))
@@ -3650,7 +3650,7 @@ fn expr_collect_rational_terms(
   }
   match expr {
     Expr::Add(args) => {
-      let mut numer : Map[Monomial, Expr] = Map::new()
+      let mut numer : Map[Monomial, Expr] = Map([])
       let mut denom = expr_terms_one(var_count)
       let mut first = true
       for arg in args {
@@ -4925,7 +4925,7 @@ fn poly_from_expr_terms(
   gens : Array[String],
   terms : Map[Monomial, Expr],
 ) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for mono, coeff_expr in terms {
     let coeff = field_elem_from_scalar_expr(coeff_expr, coeff_domain) catch {
       _ => raise PolyError::DomainMismatch
@@ -4963,7 +4963,7 @@ fn poly_from_ground_expr(
   expr : Expr,
 ) -> Poly raise PolyError {
   let coeff = field_elem_from_scalar_expr(expr, coeff_domain)
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   add_term(coeffs, monomial_one(gens.length()), coeff, coeff_domain)
   Poly::{ coeffs, gens, domain: coeff_domain, order: TermOrder::Lex }
 }

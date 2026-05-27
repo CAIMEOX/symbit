@@ -811,7 +811,7 @@ fn trunc_coeff(
 /// - Returns: A `Poly` over the same generators and domain.
 /// - Limits: Coefficients must be rational integers representable as `Int`.
 pub fn trunc(poly : Poly, modulus : Int) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for mono, coeff in poly.coeffs {
     add_term(
       coeffs,

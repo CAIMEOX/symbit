@@ -291,7 +291,7 @@ fn join_signed(parts : Array[String]) -> String {
   let mut out = parts[0]
   for part in parts[1:] {
     if part.has_prefix("-") {
-      out = out + " - " + part[1:].to_string()
+      out = out + " - " + part[1:].to_owned()
     } else {
       out = out + " + " + part
     }

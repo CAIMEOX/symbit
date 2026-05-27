@@ -1537,6 +1537,7 @@ pub struct NFModule {
   rank : Int
   basis : Array[Array[BigInt]]
   is_power_basis : Bool
+  defining_poly : Poly?
 }
 
 ///|
@@ -1587,7 +1588,12 @@ pub fn numberfield_power_basis(poly : Poly) -> NFModule raise PolyError {
   if rank <= 0 {
     raise PolyError::NonPolynomial
   }
-  { rank, basis: nf_identity_bigint_basis(rank), is_power_basis: true }
+  {
+    rank,
+    basis: nf_identity_bigint_basis(rank),
+    is_power_basis: true,
+    defining_poly: Some(poly),
+  }
 }
 
 ///|
@@ -1610,7 +1616,7 @@ pub fn numberfield_submodule(
       raise PolyError::DomainMismatch
     }
   }
-  { rank, basis, is_power_basis: false }
+  { rank, basis, is_power_basis: false, defining_poly: None }
 }
 
 ///|
@@ -1676,6 +1682,55 @@ pub fn make_mod_elt(
     raise PolyError::DomainMismatch
   }
   { parent, col, denom, is_power_basis_element: parent.is_power_basis }
+}
+
+///|
+/// Find a least-degree polynomial for a supported module element.
+///
+/// - Does: Computes the minimal polynomial for constants and quadratic
+///   power-basis elements `[a, b]` using the defining polynomial of the basis.
+/// - Input: A `ModuleElement`, target `Domain`, and optional polynomial
+///   variable name.
+/// - Returns: A univariate `Poly`.
+/// - Limits: Current support is limited to quadratic power-basis descriptors;
+///   higher-rank module linear dependence is not implemented.
+pub fn find_min_poly(
+  alpha : ModuleElement,
+  domain : Domain,
+  x? : String = "x",
+) -> Poly raise PolyError {
+  if !alpha.parent.is_power_basis {
+    raise PolyError::DomainMismatch
+  }
+  let def_poly = match alpha.parent.defining_poly {
+    Some(poly) => poly
+    None => raise PolyError::DomainMismatch
+  }
+  ensure_univar(def_poly)
+  if alpha.parent.rank != 2 || alpha.col.length() != 2 {
+    raise PolyError::BadGenerator("find_min_poly")
+  }
+  let a = alpha.col[0].to_int()
+  let b = alpha.col[1].to_int()
+  let x_expr = Expr::Symbol(x)
+  let builder = PolyBuilder::new([x], domain)
+  if b == 0 {
+    return builder.from_expr(x_expr - int(a))
+  }
+  let dense = to_dense(def_poly)
+  if dense.length() != 3 {
+    raise PolyError::BadGenerator("find_min_poly")
+  }
+  let lead = nf_fe_int(dense[2])
+  if lead != 1 {
+    raise PolyError::DomainMismatch
+  }
+  let lin = nf_fe_int(dense[1])
+  let constant = nf_fe_int(dense[0])
+  let x2 = x_expr ^ int(2)
+  let x_coeff = lin * b - 2 * a
+  let c = a * a - lin * b * a + constant * b * b
+  builder.from_expr(x2 + int(x_coeff) * x_expr + int(c))
 }
 
 ///|

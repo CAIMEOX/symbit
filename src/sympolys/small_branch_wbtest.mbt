@@ -19,7 +19,7 @@ fn sb_bi(n : Int) -> BigInt {
 test "small branches: core/domain paths" {
   let half = sb_rat(1, 2)
   let frac_coeff = ensure_coeff_domain(half, Domain::Frac(Domain::QQ))
-  assert_eq(frac_coeff.to_string(), "1/2")
+  assert_true(frac_coeff.to_string() == "1/2")
 
   let a = @symcore.Expr::Symbol("a")
   let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [
@@ -80,7 +80,7 @@ test "small branches: domain_utils normalize_mod paths" {
   assert_true(den_zero is Err(PolyError::DivisionByZero))
 
   let frac_norm = normalize_mod(sb_rat(8, 3), Domain::Frac(Domain::GF(7)))
-  assert_eq(frac_norm.to_string(), "5")
+  assert_true(frac_norm.to_string() == "5")
 
   let inv_fail : Result[@symnum.BigRational, PolyError] = try? normalize_mod(
     sb_rat(1, 2),
@@ -111,7 +111,7 @@ test "small branches: dense conversion guard branches" {
   )
   assert_true(bad_to_dense_shape is Err(PolyError::BadGenerator(_)))
 
-  let malformed_coeffs : Map[Monomial, FieldElem] = Map::new()
+  let malformed_coeffs : Map[Monomial, FieldElem] = Map([])
   malformed_coeffs.set(Monomial::{ exps: [1] }, sb_feqq(1, 1))
   let malformed_poly = Poly::{
     coeffs: malformed_coeffs,
@@ -122,7 +122,7 @@ test "small branches: dense conversion guard branches" {
   let malformed_dense = to_dense_multi(malformed_poly, [1, 1])
   assert_true(malformed_dense.all(c => fe_is_zero(c)))
 
-  let out_of_range_coeffs : Map[Monomial, FieldElem] = Map::new()
+  let out_of_range_coeffs : Map[Monomial, FieldElem] = Map([])
   out_of_range_coeffs.set(Monomial::{ exps: [3, 0] }, sb_feqq(1, 1))
   let out_of_range_poly = Poly::{
     coeffs: out_of_range_coeffs,
@@ -179,7 +179,7 @@ test "small branches: lll helper branches" {
     [sb_bi(3), sb_bi(0)],
   ]
   let (mu, _bnorm) = gram_schmidt(gs_basis)
-  assert_eq(mu[2][1].to_string(), "0")
+  assert_true(mu[2][1].to_string() == "0")
 
   let k0_basis : Matrix = [[sb_bi(2), sb_bi(1)]]
   let k0_transform : Matrix = [[sb_bi(1)]]
@@ -187,5 +187,5 @@ test "small branches: lll helper branches" {
     [@symnum.BigRational::zero()],
   ]
   size_reduce(k0_basis, k0_transform, k0_mu, 0)
-  assert_eq(k0_basis[0][0].to_string(), "2")
+  assert_true(k0_basis[0][0].to_string() == "2")
 }

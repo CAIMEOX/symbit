@@ -3,13 +3,13 @@ test "expr float constructor participates in add and mul folding" {
   let quarter = Float::from_str("0.25", prec=90) catch { _ => fail("float") }
   let sum_expr = add([int(1), Expr::Float(quarter)])
   match sum_expr {
-    Expr::Float(f) => assert_eq(f.to_rational(), (5N, 4N))
+    Expr::Float(f) => assert_true(f.to_rational() == (5N, 4N))
     _ => fail("expected float sum")
   }
 
   let prod_expr = mul([rational_from_ints(3, 2), Expr::Float(quarter)])
   match prod_expr {
-    Expr::Float(f) => assert_eq(f.to_rational(), (3N, 8N))
+    Expr::Float(f) => assert_true(f.to_rational() == (3N, 8N))
     _ => fail("expected float product")
   }
 }
@@ -18,7 +18,7 @@ test "expr float constructor participates in add and mul folding" {
 test "evalf converts exact numeric expressions and constants" {
   let sqrt4 = evalf(function("sqrt", [int(4)]), prec=80)
   match sqrt4 {
-    Expr::Float(f) => assert_eq(f.to_rational(), (2N, 1N))
+    Expr::Float(f) => assert_true(f.to_rational() == (2N, 1N))
     _ => fail("expected float sqrt")
   }
 
@@ -42,7 +42,7 @@ test "evalf numerically evaluates powers and unary functions" {
 
   let exp0 = evalf(function("exp", [int(0)]), prec=80)
   match exp0 {
-    Expr::Float(f) => assert_eq(f.to_rational(), (1N, 1N))
+    Expr::Float(f) => assert_true(f.to_rational() == (1N, 1N))
     _ => fail("expected float exp(0)")
   }
 }

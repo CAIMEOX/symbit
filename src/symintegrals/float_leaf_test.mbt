@@ -59,8 +59,8 @@ test "symintegrals manual integration keeps float scalar terms" {
 test "symintegrals quadrature evaluates symbolic parameters via evalf" {
   let alpha = @symelem.sqrt(@symcore.int(2)) * @symelem.sqrt(@symcore.int(2))
   let res = gauss_gen_laguerre(2, alpha, n_digits=10)
-  assert_eq(res.0.length(), 2)
-  assert_eq(res.1.length(), 2)
+  assert_true(res.0.length() == 2)
+  assert_true(res.1.length() == 2)
 }
 
 ///|

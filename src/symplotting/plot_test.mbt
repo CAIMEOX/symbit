@@ -105,14 +105,14 @@ test "symplotting plot creates text backend over explicit range" {
     backend="text",
   )
   let series = backend.series()
-  assert_eq(series.length(), 1)
+  assert_true(series.length() == 1)
   let line = unwrap_line_series(series[0])
   assert_true(line.expr == x)
   assert_true(line.variable == x)
   assert_true(line.start == @symcore.int(0))
   assert_true(line.end == @symcore.int(3))
-  assert_eq(
-    plot_joined_lines(backend.render_lines()),
+  assert_true(
+    plot_joined_lines(backend.render_lines()) ==
     plot_joined_lines(textplot_str(x, @symcore.int(0), @symcore.int(3))),
   )
 }
@@ -125,14 +125,14 @@ test "symplotting plot creates default range like SymPy" {
     show=false,
   )
   let series = backend.series()
-  assert_eq(series.length(), 1)
+  assert_true(series.length() == 1)
   let line = unwrap_line_series(series[0])
-  assert_eq(backend.backend(), "matplotlib")
+  assert_true(backend.backend() == "matplotlib")
   assert_true(line.variable == x)
   assert_true(line.start == @symcore.int(-10))
   assert_true(line.end == @symcore.int(10))
-  assert_eq(backend.xlabel, Some("x"))
-  assert_eq(backend.ylabel, Some("f(x)"))
+  assert_true(backend.xlabel == Some("x"))
+  assert_true(backend.ylabel == Some("f(x)"))
 }
 
 ///|
@@ -147,7 +147,7 @@ test "symplotting plot supports multiple expressions over one range" {
     show=false,
   )
   let series = backend.series()
-  assert_eq(series.length(), 2)
+  assert_true(series.length() == 2)
   let line0 = unwrap_line_series(series[0])
   let line1 = unwrap_line_series(series[1])
   assert_true(line0.start == @symcore.int(0))
@@ -171,7 +171,7 @@ test "symplotting plot supports grouped per-expression ranges" {
     show=false,
   )
   let series = backend.series()
-  assert_eq(series.length(), 2)
+  assert_true(series.length() == 2)
   let line0 = unwrap_line_series(series[0])
   let line1 = unwrap_line_series(series[1])
   assert_true(line0.start == @symcore.int(-5))
@@ -227,10 +227,10 @@ test "symplotting plot accepts matplotlib frontend and exposes uniform data" {
     adaptive=false,
     n=30,
   )
-  assert_eq(backend.backend(), "matplotlib")
+  assert_true(backend.backend() == "matplotlib")
   let (xs, ys) = backend.get_data(0)
-  assert_eq(xs.length(), 30)
-  assert_eq(ys.length(), 30)
+  assert_true(xs.length() == 30)
+  assert_true(ys.length() == 30)
 }
 
 ///|
@@ -243,10 +243,10 @@ test "symplotting plot accepts text frontend and exposes uniform data" {
     adaptive=false,
     n=30,
   )
-  assert_eq(backend.backend(), "text")
+  assert_true(backend.backend() == "text")
   let (xs, ys) = backend.get_points(0)
-  assert_eq(xs.length(), 30)
-  assert_eq(ys.length(), 30)
+  assert_true(xs.length() == 30)
+  assert_true(ys.length() == 30)
 }
 
 ///|
@@ -265,24 +265,24 @@ test "symplotting plot stores frontend metadata like SymPy plot kwargs" {
     autoscale=false,
     margin=3,
   )
-  assert_eq(backend.backend(), "matplotlib")
+  assert_true(backend.backend() == "matplotlib")
   assert_true(backend.legend)
-  assert_eq(backend.aspect_ratio, "1:1")
-  assert_eq(backend.axis_center, "center")
+  assert_true(backend.aspect_ratio == "1:1")
+  assert_true(backend.axis_center == "center")
   assert_false(backend.axis)
-  assert_eq(backend.xscale, "log")
-  assert_eq(backend.yscale, "log")
+  assert_true(backend.xscale == "log")
+  assert_true(backend.yscale == "log")
   assert_false(backend.autoscale)
-  assert_eq(backend.margin, 3)
+  assert_true(backend.margin == 3)
 }
 
 ///|
 test "symplotting plot supports empty plot objects" {
   let backend = plot([], show=false)
-  assert_eq(backend.backend(), "matplotlib")
-  assert_eq(backend.series().length(), 0)
-  assert_eq(backend.xlabel, Some("x"))
-  assert_eq(backend.ylabel, Some("f(x)"))
+  assert_true(backend.backend() == "matplotlib")
+  assert_true(backend.series().length() == 0)
+  assert_true(backend.xlabel == Some("x"))
+  assert_true(backend.ylabel == Some("f(x)"))
 }
 
 ///|
@@ -302,8 +302,8 @@ test "symplotting plot supports log-scaled uniform sampling frontdoor" {
     n=30,
   )
   let (xs, ys) = backend.get_data(0)
-  assert_eq(xs.length(), 30)
-  assert_eq(ys.length(), 30)
+  assert_true(xs.length() == 30)
+  assert_true(ys.length() == 30)
   assert_true(xs[0] > 0.0)
   assert_true(xs[0] < 0.01)
   assert_true(xs[xs.length() - 1] > 90.0)
@@ -331,10 +331,10 @@ test "symplotting plot supports additional SymPy uniform line families" {
   )
   let (lambert_xs, lambert_ys) = plot_lambert.get_data(0)
   let (family_xs, family_ys) = plot_family.get_data(0)
-  assert_eq(lambert_xs.length(), 30)
-  assert_eq(lambert_ys.length(), 30)
-  assert_eq(family_xs.length(), 30)
-  assert_eq(family_ys.length(), 30)
+  assert_true(lambert_xs.length() == 30)
+  assert_true(lambert_ys.length() == 30)
+  assert_true(family_xs.length() == 30)
+  assert_true(family_ys.length() == 30)
 }
 
 ///|
@@ -376,17 +376,17 @@ test "symplotting plot_parametric creates default range like SymPy" {
     [plot_parametric_expr(@symcore.add([x, @symcore.int(1)]), x)],
     show=false,
   )
-  assert_eq(backend.backend(), "matplotlib")
+  assert_true(backend.backend() == "matplotlib")
   let series = unwrap_parametric_series(backend.series()[0])
   assert_true(series.expr_x == @symcore.add([x, @symcore.int(1)]))
   assert_true(series.expr_y == x)
   assert_true(series.variable == x)
   assert_true(series.start == @symcore.int(-10))
   assert_true(series.end == @symcore.int(10))
-  assert_eq(series.get_label(), "x")
+  assert_true(series.get_label() == "x")
   assert_true(series.adaptive)
-  assert_eq(backend.xlabel, Some("x"))
-  assert_eq(backend.ylabel, Some("y"))
+  assert_true(backend.xlabel == Some("x"))
+  assert_true(backend.ylabel == Some("y"))
 }
 
 ///|
@@ -437,9 +437,9 @@ test "symplotting plot_parametric supports shared ranges and grouped overrides" 
   let group1 = unwrap_parametric_series(grouped.series()[1])
   assert_true(group0.variable == x)
   assert_true(group1.variable == y)
-  assert_eq(group0.get_label(), "test1")
-  assert_eq(group1.get_label(), "test2")
-  assert_eq(group1.rendering_kw, Some({ "cmap": "Reds" }))
+  assert_true(group0.get_label() == "test1")
+  assert_true(group1.get_label() == "test2")
+  assert_true(group1.rendering_kw == Some({ "cmap": "Reds" }))
 }
 
 ///|
@@ -472,16 +472,16 @@ test "symplotting plot_parametric exposes uniform and adaptive public data" {
   )
   let (uxs, uys, uparams) = uniform.get_parametric_data(0)
   let (axs, ays, aparams) = adaptive_plot.get_parametric_data(0)
-  assert_eq(uxs.length(), 30)
-  assert_eq(uys.length(), 30)
-  assert_eq(uparams.length(), 30)
+  assert_true(uxs.length() == 30)
+  assert_true(uys.length() == 30)
+  assert_true(uparams.length() == 30)
   assert_true(
     uparams[1] - uparams[0] <
     uparams[uparams.length() - 1] - uparams[uparams.length() - 2],
   )
   assert_true(axs.length() >= 30)
-  assert_eq(axs.length(), ays.length())
-  assert_eq(axs.length(), aparams.length())
+  assert_true(axs.length() == ays.length())
+  assert_true(axs.length() == aparams.length())
 }
 
 ///|
@@ -523,16 +523,16 @@ test "symplotting plot3d_parametric_line creates default range like SymPy" {
     ],
     show=false,
   )
-  assert_eq(backend.backend(), "matplotlib")
-  assert_eq(backend.xlabel, Some("x"))
-  assert_eq(backend.ylabel, Some("y"))
-  assert_eq(backend.zlabel, Some("z"))
+  assert_true(backend.backend() == "matplotlib")
+  assert_true(backend.xlabel == Some("x"))
+  assert_true(backend.ylabel == Some("y"))
+  assert_true(backend.zlabel == Some("z"))
   let series = unwrap_parametric3d_series(backend.series()[0])
   assert_true(series.variable == x)
   assert_true(series.start == @symcore.int(-10))
   assert_true(series.end == @symcore.int(10))
   assert_false(series.adaptive)
-  assert_eq(series.get_label(), "x")
+  assert_true(series.get_label() == "x")
 }
 
 ///|
@@ -575,7 +575,7 @@ test "symplotting plot3d_parametric_line supports grouped overrides and shared r
     show=false,
   )
   let series = unwrap_parametric3d_series(grouped.series()[0])
-  assert_eq(series.get_label(), "helix")
+  assert_true(series.get_label() == "helix")
 }
 
 ///|
@@ -596,10 +596,10 @@ test "symplotting plot3d_parametric_line exposes uniform public data" {
     adaptive=true,
   )
   let (xs, ys, zs, params) = backend.get_parametric3d_data(0)
-  assert_eq(xs.length(), 20)
-  assert_eq(xs.length(), ys.length())
-  assert_eq(xs.length(), zs.length())
-  assert_eq(xs.length(), params.length())
+  assert_true(xs.length() == 20)
+  assert_true(xs.length() == ys.length())
+  assert_true(xs.length() == zs.length())
+  assert_true(xs.length() == params.length())
   assert_true(
     params[1] - params[0] <
     params[params.length() - 1] - params[params.length() - 2],
@@ -638,15 +638,15 @@ test "symplotting plot3d creates default ranges and labels like SymPy" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let backend = plot3d([plot_expr(@symcore.add([x, y]))], show=false)
-  assert_eq(backend.backend(), "matplotlib")
-  assert_eq(backend.xlabel, Some("x"))
-  assert_eq(backend.ylabel, Some("y"))
-  assert_eq(backend.zlabel, Some("f(x, y)"))
+  assert_true(backend.backend() == "matplotlib")
+  assert_true(backend.xlabel == Some("x"))
+  assert_true(backend.ylabel == Some("y"))
+  assert_true(backend.zlabel == Some("f(x, y)"))
   let series = unwrap_surface_series(backend.series()[0])
   let range_symbols = [series.variable_x, series.variable_y]
   assert_true(range_symbols.contains(x))
   assert_true(range_symbols.contains(y))
-  assert_eq(series.get_label(), "x + y")
+  assert_true(series.get_label() == "x + y")
 }
 
 ///|
@@ -684,7 +684,7 @@ test "symplotting plot3d supports shared ranges and grouped overrides" {
     show=false,
   )
   let series = unwrap_surface_series(grouped.series()[0])
-  assert_eq(series.get_label(), "surface")
+  assert_true(series.get_label() == "surface")
 }
 
 ///|
@@ -703,9 +703,9 @@ test "symplotting plot3d exposes uniform public surface data" {
     yscale="log",
   )
   let (mesh_x, mesh_y, mesh_z) = backend.get_surface_data(0)
-  assert_eq(mesh_x.length(), 5)
-  assert_eq(mesh_y.length(), 5)
-  assert_eq(mesh_z.length(), 5)
+  assert_true(mesh_x.length() == 5)
+  assert_true(mesh_y.length() == 5)
+  assert_true(mesh_z.length() == 5)
   assert_true(mesh_x[0][1] - mesh_x[0][0] < mesh_x[0][4] - mesh_x[0][3])
   assert_true(mesh_y[1][0] - mesh_y[0][0] < mesh_y[4][0] - mesh_y[3][0])
 }
@@ -742,15 +742,15 @@ test "symplotting plot3d_parametric_surface creates default ranges like SymPy" {
     ],
     show=false,
   )
-  assert_eq(backend.backend(), "matplotlib")
-  assert_eq(backend.xlabel, Some("x"))
-  assert_eq(backend.ylabel, Some("y"))
-  assert_eq(backend.zlabel, Some("z"))
+  assert_true(backend.backend() == "matplotlib")
+  assert_true(backend.xlabel == Some("x"))
+  assert_true(backend.ylabel == Some("y"))
+  assert_true(backend.zlabel == Some("z"))
   let series = unwrap_parametric_surface_series(backend.series()[0])
   let range_symbols = [series.variable_u, series.variable_v]
   assert_true(range_symbols.contains(u))
   assert_true(range_symbols.contains(v))
-  assert_eq(series.get_label(), "(u + v, cos(u + v), sin(u + v))")
+  assert_true(series.get_label() == "(u + v, cos(u + v), sin(u + v))")
 }
 
 ///|
@@ -792,7 +792,7 @@ test "symplotting plot3d_parametric_surface supports shared ranges and grouped o
     show=false,
   )
   let series = unwrap_parametric_surface_series(grouped.series()[0])
-  assert_eq(series.get_label(), "psurface")
+  assert_true(series.get_label() == "psurface")
 }
 
 ///|
@@ -817,9 +817,9 @@ test "symplotting plot3d_parametric_surface exposes uniform public data" {
   let (mesh_x, mesh_y, mesh_z, mesh_u, mesh_v) = backend.get_parametric_surface_data(
     0,
   )
-  assert_eq(mesh_x.length(), 5)
-  assert_eq(mesh_y.length(), 5)
-  assert_eq(mesh_z.length(), 5)
+  assert_true(mesh_x.length() == 5)
+  assert_true(mesh_y.length() == 5)
+  assert_true(mesh_z.length() == 5)
   assert_true(mesh_u[0][1] - mesh_u[0][0] < mesh_u[0][4] - mesh_u[0][3])
   assert_true(mesh_v[1][0] - mesh_v[0][0] < mesh_v[4][0] - mesh_v[3][0])
 }
@@ -851,14 +851,14 @@ test "symplotting plot_contour creates default ranges and labels like SymPy" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let backend = plot_contour([plot_expr(@symcore.add([x, y]))], show=false)
-  assert_eq(backend.backend(), "matplotlib")
-  assert_eq(backend.xlabel, Some("x"))
-  assert_eq(backend.ylabel, Some("y"))
+  assert_true(backend.backend() == "matplotlib")
+  assert_true(backend.xlabel == Some("x"))
+  assert_true(backend.ylabel == Some("y"))
   let series = unwrap_contour_series(backend.series()[0])
   let range_symbols = [series.variable_x, series.variable_y]
   assert_true(range_symbols.contains(x))
   assert_true(range_symbols.contains(y))
-  assert_eq(series.get_label(), "x + y")
+  assert_true(series.get_label() == "x + y")
 }
 
 ///|
@@ -896,7 +896,7 @@ test "symplotting plot_contour supports shared ranges and grouped overrides" {
     show=false,
   )
   let series = unwrap_contour_series(grouped.series()[0])
-  assert_eq(series.get_label(), "contour")
+  assert_true(series.get_label() == "contour")
 }
 
 ///|
@@ -915,9 +915,9 @@ test "symplotting plot_contour exposes uniform public contour data" {
     yscale="log",
   )
   let (mesh_x, mesh_y, mesh_z) = backend.get_contour_data(0)
-  assert_eq(mesh_x.length(), 5)
-  assert_eq(mesh_y.length(), 5)
-  assert_eq(mesh_z.length(), 5)
+  assert_true(mesh_x.length() == 5)
+  assert_true(mesh_y.length() == 5)
+  assert_true(mesh_z.length() == 5)
   assert_true(mesh_x[0][1] - mesh_x[0][0] < mesh_x[0][4] - mesh_x[0][3])
   assert_true(mesh_y[1][0] - mesh_y[0][0] < mesh_y[4][0] - mesh_y[3][0])
 }
@@ -957,14 +957,18 @@ test "symplotting plot_implicit creates default ranges like SymPy" {
     @symcore.int(1),
   )
   let backend = plot_implicit(expr, show=false)
-  assert_eq(backend.backend(), "matplotlib")
+  assert_true(backend.backend() == "matplotlib")
   let series = unwrap_implicit_series(backend.series()[0])
   let range_symbols = [series.variable_x, series.variable_y]
   assert_true(range_symbols.contains(x))
   assert_true(range_symbols.contains(y))
-  assert_eq(series.get_label(), "Eq(x**2 + y**2, 1)")
-  assert_eq(backend.xlabel, Some(@symprint.pretty_string(series.variable_x)))
-  assert_eq(backend.ylabel, Some(@symprint.pretty_string(series.variable_y)))
+  assert_true(series.get_label() == "Eq(x**2 + y**2, 1)")
+  assert_true(
+    backend.xlabel == Some(@symprint.pretty_string(series.variable_x)),
+  )
+  assert_true(
+    backend.ylabel == Some(@symprint.pretty_string(series.variable_y)),
+  )
 }
 
 ///|
@@ -982,14 +986,14 @@ test "symplotting plot_implicit supports explicit ranges and mesh data" {
     show=false,
   )
   let series = unwrap_implicit_series(backend.series()[0])
-  assert_eq(series.line_color, "green")
-  assert_eq(series.depth, 8)
+  assert_true(series.line_color == "green")
+  assert_true(series.depth == 8)
   match backend.get_implicit_data(0) {
     ImplicitPlotData::Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
-      assert_eq(plot_type, "contourf")
-      assert_eq(mesh_x.length(), 5)
-      assert_eq(mesh_y.length(), 5)
-      assert_eq(mesh_z.length(), 5)
+      assert_true(plot_type == "contourf")
+      assert_true(mesh_x.length() == 5)
+      assert_true(mesh_y.length() == 5)
+      assert_true(mesh_z.length() == 5)
     }
     ImplicitPlotData::Fill(_) => fail("expected mesh data")
   }
@@ -1007,10 +1011,10 @@ test "symplotting plot_implicit handles one-variable expressions like SymPy" {
   assert_true(series.variable_x == x || series.variable_y == x)
   match backend.get_implicit_data(0) {
     ImplicitPlotData::Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
-      assert_eq(plot_type, "contour")
-      assert_eq(mesh_x.length(), 300)
-      assert_eq(mesh_y.length(), 300)
-      assert_eq(mesh_z.length(), 300)
+      assert_true(plot_type == "contour")
+      assert_true(mesh_x.length() == 300)
+      assert_true(mesh_y.length() == 300)
+      assert_true(mesh_z.length() == 300)
     }
     ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
   }
@@ -1033,7 +1037,7 @@ test "symplotting plot_implicit auto-switches boolean combinations to adaptive f
     show=false,
   )
   let series = unwrap_implicit_series(backend.series()[0])
-  assert_eq(series.adaptive, true)
+  assert_true(series.adaptive == true)
   match backend.get_implicit_data(0) {
     ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
     ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
@@ -1065,11 +1069,11 @@ test "symplotting plot_implicit supports n1 n2 and log scales like SymPy series"
     show=false,
   )
   let series = unwrap_implicit_series(backend.series()[0])
-  assert_eq(series.n1, 3)
-  assert_eq(series.n2, 3)
+  assert_true(series.n1 == 3)
+  assert_true(series.n2 == 3)
   match backend.get_implicit_data(0) {
     ImplicitPlotData::Mesh(mesh_x, mesh_y, _, plot_type) => {
-      assert_eq(plot_type, "contourf")
+      assert_true(plot_type == "contourf")
       assert_true((mesh_x[0][0] - 1.0).abs() <= 1.0e-12)
       assert_true((mesh_x[0][1] - 10.0).abs() <= 1.0e-10)
       assert_true((mesh_y[0][0] - 1.0).abs() <= 1.0e-12)
@@ -1223,8 +1227,8 @@ test "symplotting plot_implicit clamps depth like SymPy source cases" {
     depth=5,
     show=false,
   )
-  assert_eq(unwrap_implicit_series(shallow.series()[0]).depth, 4)
-  assert_eq(unwrap_implicit_series(deep.series()[0]).depth, 8)
+  assert_true(unwrap_implicit_series(shallow.series()[0]).depth == 4)
+  assert_true(unwrap_implicit_series(deep.series()[0]).depth == 8)
 }
 
 ///|

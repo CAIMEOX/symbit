@@ -80,7 +80,7 @@ fn dedent_lines(lines : Array[String]) -> Array[String] {
     if width == 0 || line.length() < width {
       line
     } else {
-      line[width:line.length()].to_string()
+      line[width:line.length()].to_owned()
     }
   })
 }
@@ -142,7 +142,7 @@ fn wrap_paragraph(text : String, width : Int) -> String {
 /// `w` columns. The result matches the SymPy helper convention of starting
 /// with a leading newline so that it can be dropped into docstrings directly.
 pub fn filldedent(s : String, w? : Int = 70) -> String {
-  let raw_lines = Array::from_iter(s.split("\n")).map(part => part.to_string())
+  let raw_lines = Array::from_iter(s.split("\n")).map(part => part.to_owned())
   let trimmed = trim_blank_lines(raw_lines)
   let dedented = dedent_lines(trimmed)
   let body = wrap_paragraph(dedented.join(" "), w)
@@ -186,7 +186,7 @@ pub fn strlines(s : String, c? : Int = 64, short? : Bool = false) -> String {
   let mut i = 0
   while i < s.length() {
     let stop = if i + chunk > s.length() { s.length() } else { i + chunk }
-    let part = s[i:stop].to_string()
+    let part = s[i:stop].to_owned()
     let escaped = if raw {
       part
     } else if quote == "'" {
@@ -207,7 +207,7 @@ pub fn strlines(s : String, c? : Int = 64, short? : Bool = false) -> String {
 /// Return a multi-line literal layout for `s`, using `dedent('''...''')`
 /// when that form is cleaner and tuple-of-lines syntax otherwise.
 pub fn rawlines(s : String) -> String {
-  let lines = Array::from_iter(s.split("\n")).map(part => part.to_string())
+  let lines = Array::from_iter(s.split("\n")).map(part => part.to_owned())
   if lines.length() == 1 {
     return repr_like(lines[0])
   }
@@ -260,7 +260,7 @@ pub fn replace(string : String, reps : Array[(String, String)]) -> String {
   let out = StringBuilder::new()
   let mut i = 0
   while i < string.length() {
-    let rest = string[i:string.length()].to_string()
+    let rest = string[i:string.length()].to_owned()
     let mut matched : (String, String)? = None
     for item in ordered {
       if rest.has_prefix(item.0) {
@@ -274,7 +274,7 @@ pub fn replace(string : String, reps : Array[(String, String)]) -> String {
         i += old.length()
       }
       None => {
-        out.write_string(string[i:i + 1].to_string())
+        out.write_string(string[i:i + 1].to_owned())
         i += 1
       }
     }
@@ -377,7 +377,7 @@ pub fn func_name(name : String, short? : Bool = false) -> String {
   if start <= 0 || start >= name.length() {
     name
   } else {
-    name[start:name.length()].to_string()
+    name[start:name.length()].to_owned()
   }
 }
 

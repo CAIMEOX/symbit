@@ -23,7 +23,7 @@ fn textplot_trim_trailing_zeros(text : String) -> String {
   if end <= 0 {
     "0"
   } else {
-    String::from_array(chars[:end].to_array())
+    String::from_array(chars[:end].to_owned())
   }
 }
 

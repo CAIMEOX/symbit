@@ -34,7 +34,7 @@ pub type PurePoly = Poly
 /// - Returns: A `Poly` with no non-zero terms.
 /// - Limits: The returned polynomial always starts with `Lex` term order.
 pub fn Poly::zero(gens : Array[String], domain : Domain) -> Poly {
-  Poly::{ coeffs: Map::new(), gens, domain, order: TermOrder::Lex }
+  Poly::{ coeffs: Map([]), gens, domain, order: TermOrder::Lex }
 }
 
 ///|
@@ -46,7 +46,7 @@ pub fn Poly::zero(gens : Array[String], domain : Domain) -> Poly {
 /// - Limits: Raises `PolyError` when the target domain cannot represent `1`.
 pub fn Poly::one(gens : Array[String], domain : Domain) -> Poly raise PolyError {
   let mono = monomial_one(gens.length())
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   coeffs.set(mono, fe_from_int(1, domain))
   Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
 }
@@ -177,7 +177,7 @@ pub fn Poly::scale_coeff(
   self : Poly,
   factor : FieldElem,
 ) -> Poly raise PolyError {
-  let coeffs = Map::new()
+  let coeffs = Map([])
   for m, c in self.coeffs {
     add_term(coeffs, m, fe_mul(c, factor), self.domain)
   }
@@ -225,7 +225,7 @@ pub fn Poly::add(self : Poly, other : Poly) -> Poly raise PolyError {
 /// - Limits: This front door assumes coefficients are already normalized in the
 ///   polynomial domain.
 pub fn Poly::neg(self : Poly) -> Poly {
-  let coeffs = Map::new()
+  let coeffs = Map([])
   for m, c in self.coeffs {
     coeffs.set(m, fe_neg(c))
   }
@@ -255,7 +255,7 @@ pub fn Poly::mul(self : Poly, other : Poly) -> Poly raise PolyError {
   if self.domain.not_equal(other.domain) || !same_gens(self.gens, other.gens) {
     raise PolyError::DomainMismatch
   }
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for m1, c1 in self.coeffs {
     for m2, c2 in other.coeffs {
       let mono = monomial_mul(m1, m2)

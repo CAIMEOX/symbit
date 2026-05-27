@@ -1111,11 +1111,11 @@ fn pow10(count : Int) -> BigInt {
 fn split_exponent_literal(text : String) -> (String, String)? {
   match text.split_once("e") {
     Some((mantissa, exponent)) =>
-      Some((mantissa.to_string(), exponent.to_string()))
+      Some((mantissa.to_owned(), exponent.to_owned()))
     None =>
       match text.split_once("E") {
         Some((mantissa, exponent)) =>
-          Some((mantissa.to_string(), exponent.to_string()))
+          Some((mantissa.to_owned(), exponent.to_owned()))
         None => None
       }
   }

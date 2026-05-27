@@ -49,55 +49,55 @@ test "orthogonal low-level dup kernels match standard small values" {
 ///|
 test "orthogonal polynomial frontdoors match standard small values" {
   inspect(
-    @symprint.pretty_string(chebyshevt_poly(4)).trim().to_string(),
+    @symprint.pretty_string(chebyshevt_poly(4)).trim().to_owned(),
     content=(
       #|-8*x**2 + 8*x**4 + 1
     ),
   )
   inspect(
-    @symprint.pretty_string(chebyshevu_poly(4)).trim().to_string(),
+    @symprint.pretty_string(chebyshevu_poly(4)).trim().to_owned(),
     content=(
       #|-12*x**2 + 16*x**4 + 1
     ),
   )
   inspect(
-    @symprint.pretty_string(hermite_poly(4)).trim().to_string(),
+    @symprint.pretty_string(hermite_poly(4)).trim().to_owned(),
     content=(
       #|-48*x**2 + 16*x**4 + 12
     ),
   )
   inspect(
-    @symprint.pretty_string(hermite_prob_poly(4)).trim().to_string(),
+    @symprint.pretty_string(hermite_prob_poly(4)).trim().to_owned(),
     content=(
       #|x**4 - 6*x**2 + 3
     ),
   )
   inspect(
-    @symprint.pretty_string(legendre_poly(4)).trim().to_string(),
+    @symprint.pretty_string(legendre_poly(4)).trim().to_owned(),
     content=(
       #|-15*x**2/4 + 35*x**4/8 + 3/8
     ),
   )
   inspect(
-    @symprint.pretty_string(laguerre_poly(3)).trim().to_string(),
+    @symprint.pretty_string(laguerre_poly(3)).trim().to_owned(),
     content=(
       #|-3*x - x**3/6 + 3*x**2/2 + 1
     ),
   )
   inspect(
-    @symprint.pretty_string(jacobi_poly(3, int(1), int(2))).trim().to_string(),
+    @symprint.pretty_string(jacobi_poly(3, int(1), int(2))).trim().to_owned(),
     content=(
       #|-7*x**2/2 - 7*x/2 + 21*x**3/2 + 1/2
     ),
   )
   inspect(
-    @symprint.pretty_string(gegenbauer_poly(4, int(2))).trim().to_string(),
+    @symprint.pretty_string(gegenbauer_poly(4, int(2))).trim().to_owned(),
     content=(
       #|-48*x**2 + 80*x**4 + 3
     ),
   )
   inspect(
-    @symprint.pretty_string(spherical_bessel_fn(4)).trim().to_string(),
+    @symprint.pretty_string(spherical_bessel_fn(4)).trim().to_owned(),
     content=(
       #|x**-1 - 45/x**3 + 105/x**5
     ),
@@ -107,31 +107,31 @@ test "orthogonal polynomial frontdoors match standard small values" {
 ///|
 test "appell polynomial frontdoors match standard small values" {
   inspect(
-    @symprint.pretty_string(bernoulli_poly(5)).trim().to_string(),
+    @symprint.pretty_string(bernoulli_poly(5)).trim().to_owned(),
     content=(
       #|x**5 - 5*x**4/2 - x/6 + 5*x**3/3
     ),
   )
   inspect(
-    @symprint.pretty_string(bernoulli_c_poly(4)).trim().to_string(),
+    @symprint.pretty_string(bernoulli_c_poly(4)).trim().to_owned(),
     content=(
       #|x**4 - 2*x**2 + 7/15
     ),
   )
   inspect(
-    @symprint.pretty_string(genocchi_poly(4)).trim().to_string(),
+    @symprint.pretty_string(genocchi_poly(4)).trim().to_owned(),
     content=(
       #|-4*x**3 + 6*x**2 - 1
     ),
   )
   inspect(
-    @symprint.pretty_string(euler_poly(4)).trim().to_string(),
+    @symprint.pretty_string(euler_poly(4)).trim().to_owned(),
     content=(
       #|x**4 - 2*x**3 + x
     ),
   )
   inspect(
-    @symprint.pretty_string(andre_poly(5)).trim().to_string(),
+    @symprint.pretty_string(andre_poly(5)).trim().to_owned(),
     content=(
       #|x**5 - 10*x**3 + 25*x
     ),

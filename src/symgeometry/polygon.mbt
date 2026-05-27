@@ -532,7 +532,7 @@ fn polygon_distance_to_polygon(
 
 ///|
 pub fn Polygon::vertices(self : Polygon) -> Array[Point] {
-  self.vertices_[:].to_array()
+  self.vertices_[:].to_owned()
 }
 
 ///|
@@ -1062,7 +1062,7 @@ pub fn RegularPolygon::parameter_value(
 
 ///|
 pub fn Triangle::vertices(self : Triangle) -> Array[Point] {
-  self.vertices_[:].to_array()
+  self.vertices_[:].to_owned()
 }
 
 ///|

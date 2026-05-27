@@ -61,7 +61,7 @@ test "galoistools wb: edge-case branches" {
   let not_invertible : Result[Int, PolyError] = try? inv_mod(2, 4)
   assert_true(not_invertible is Err(PolyError::DivisionByZero))
 
-  assert_eq(gf_strip([0, 0, 0]).length(), 0)
+  assert_true(gf_strip([0, 0, 0]).length() == 0)
 
   let add_empty_left = gf_add([], [6, 7], 5)
   assert_true(
@@ -105,8 +105,8 @@ test "galoistools wb: edge-case branches" {
     sub_mixed_rev[1] == 1,
   )
 
-  assert_eq(gf_mul([], [1], 5).length(), 0)
-  assert_eq(gf_monic([], 5).length(), 0)
+  assert_true(gf_mul([], [1], 5).length() == 0)
+  assert_true(gf_monic([], 5).length() == 0)
 
   let div_by_zero : Result[(Array[Int], Array[Int]), PolyError] = try? gf_div(
     [1, 2],
@@ -342,14 +342,14 @@ test "monomial wb: mismatch/error/order branches" {
   ])
   assert_true(min_mismatch is Err(PolyError::DomainMismatch))
 
-  assert_eq(monomial_count(-1, 2), 0)
+  assert_true(monomial_count(-1, 2) == 0)
 
-  assert_eq(cmp_int(2, 2), 0)
+  assert_true(cmp_int(2, 2) == 0)
 
   let lex_mismatch : Result[Int, PolyError] = try? compare_exps_lex([1], [1, 0])
   assert_true(lex_mismatch is Err(PolyError::DomainMismatch))
 
-  assert_eq(compare_exps_grlex([1, 0], [0, 1]), 1)
+  assert_true(compare_exps_grlex([1, 0], [0, 1]) == 1)
   let grlex_mismatch : Result[Int, PolyError] = try? compare_exps_grlex([1], [
     1, 0,
   ])
@@ -360,5 +360,5 @@ test "monomial wb: mismatch/error/order branches" {
     [1, 0],
   )
   assert_true(grevlex_mismatch is Err(PolyError::DomainMismatch))
-  assert_eq(compare_exps_grevlex([2, 0], [1, 0]), 1)
+  assert_true(compare_exps_grevlex([2, 0], [1, 0]) == 1)
 }

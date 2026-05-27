@@ -30,7 +30,7 @@ fn _simplified_pairs(terms : Array[Array[Int]]) -> Array[Array[Int]] {
   }
   let simplified_terms : Array[Array[Int]] = Array::new()
   let todo : Array[Bool] = Array::make(terms.length(), true)
-  let termdict : Map[Int, Array[Int]] = Map::new()
+  let termdict : Map[Int, Array[Int]] = Map([])
   for i in 0..<terms.length() {
     let term = terms[i]
     let mut ones = 0
@@ -152,7 +152,7 @@ fn _rem_redundancy(
         }
       }
     }
-    let colcache : Map[Int, Array[Int]] = Map::new()
+    let colcache : Map[Int, Array[Int]] = Map([])
     for coli in 0..<nl1 {
       if colcount[coli] == 0 {
         continue
@@ -326,7 +326,7 @@ fn _input_to_binlist(
         }
         let combos = all_bit_vectors(nonspec.length())
         for combo in combos {
-          let filled : Map[String, Int] = Map::new()
+          let filled : Map[String, Int] = Map([])
           for k, v in map {
             filled[k] = v
           }

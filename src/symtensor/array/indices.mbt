@@ -36,7 +36,7 @@ fn linear_index(shape : Array[Int], index : Array[Int]) -> Int {
 
 ///|
 fn parse_int_simple(s : StringView) -> Int {
-  let text = s.to_string()
+  let text = s.to_owned()
   if text.is_empty() {
     return 0
   }

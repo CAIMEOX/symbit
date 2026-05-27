@@ -361,7 +361,7 @@ fn matrix_rref_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) {
 ///     [@symcore.int(2), @symcore.int(4)],
 ///   ])
 ///   let (_, pivots) = m.rref()
-///   inspect(pivots, content="[0]")
+///   debug_inspect(pivots, content="[0]")
 /// }
 /// ```
 pub fn Matrix::rref(self : Matrix) -> (Matrix, Array[Int]) {

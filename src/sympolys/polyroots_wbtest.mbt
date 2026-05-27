@@ -47,7 +47,7 @@ test "polyroots wb: cubic/quartic mixed-factor quadratic branch" {
   // Degree-3 polynomial with a linear and an irreducible quadratic factor.
   let cubic = b.from_expr(x * ((x ^ @symcore.int(2)) + @symcore.int(1)))
   let cubic_roots = roots_cubic(cubic)
-  assert_eq(cubic_roots.length(), 3)
+  assert_true(cubic_roots.length() == 3)
 
   // Degree-4 polynomial with a quadratic factor to force the quadratic branch.
   let quartic = b.from_expr(
@@ -56,7 +56,7 @@ test "polyroots wb: cubic/quartic mixed-factor quadratic branch" {
     ((x ^ @symcore.int(2)) + @symcore.int(1)),
   )
   let quartic_roots = roots_quartic(quartic)
-  assert_eq(quartic_roots.length(), 4)
+  assert_true(quartic_roots.length() == 4)
 }
 
 ///|
@@ -65,19 +65,19 @@ test "polyroots wb: roots_for_factor and zero-root handling" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
 
   let const_poly = b.from_expr(@symcore.int(7))
-  assert_eq(roots_for_factor(const_poly, true).length(), 0)
+  assert_true(roots_for_factor(const_poly, true).length() == 0)
 
   let quadratic = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(2))
-  assert_eq(roots_for_factor(quadratic, true).length(), 2)
+  assert_true(roots_for_factor(quadratic, true).length() == 2)
 
   let cubic = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
-  assert_eq(roots_for_factor(cubic, true).length(), 3)
+  assert_true(roots_for_factor(cubic, true).length() == 3)
 
   let quartic = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
-  assert_eq(roots_for_factor(quartic, true).length(), 4)
+  assert_true(roots_for_factor(quartic, true).length() == 4)
 
   let zero = Poly::zero(["x"], Domain::QQ)
-  assert_eq(roots(zero).length(), 0)
+  assert_true(roots(zero).length() == 0)
 }
 
 ///|
@@ -101,9 +101,9 @@ test "polyroots wb: binomial roots use ordered roots of unity" {
   let roots4 = roots_binomial(quartic).map(r => @symprint.pretty_string(r))
   inspect(roots4[0], content="-2")
   inspect(roots4[1], content="2")
-  assert_eq(roots4.length(), 4)
+  assert_true(roots4.length() == 4)
   let quintic = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(32))
-  assert_eq(roots_binomial(quintic).length(), 5)
+  assert_true(roots_binomial(quintic).length() == 5)
   let zero_roots = roots_binomial(b.from_expr(x ^ @symcore.int(3)))
   inspect(
     zero_roots.map(r => @symprint.pretty_string(r)).join(","),
@@ -117,14 +117,14 @@ test "polyroots wb: quintic frontdoor handles supported and empty branches" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
   let solvable = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(2))
   let roots5 = roots_quintic(solvable)
-  assert_eq(roots5.length(), 5)
+  assert_true(roots5.length() == 5)
   inspect(@symprint.pretty_string(roots5[0]), content="2**(1/5)")
 
   let reducible = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(32))
-  assert_eq(roots_quintic(reducible).length(), 0)
+  assert_true(roots_quintic(reducible).length() == 0)
 
   let unsupported = b.from_expr((x ^ @symcore.int(5)) + x + @symcore.int(1))
-  assert_eq(roots_quintic(unsupported).length(), 0)
+  assert_true(roots_quintic(unsupported).length() == 0)
 
   let bad : Result[Array[@symcore.Expr], PolyError] = try? roots_quintic(
     b.from_expr((x ^ @symcore.int(4)) + @symcore.int(1)),
@@ -138,10 +138,10 @@ test "polyroots wb: cyclotomic roots detect primitive roots" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
   let phi4 = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let roots4 = roots_cyclotomic(phi4).map(r => @symprint.pretty_string(r))
-  assert_eq(roots4.length(), 2)
+  assert_true(roots4.length() == 2)
   assert_true(roots4[0].contains("sin"))
   let phi5 = Poly::from_expr(cyclotomic_poly(5), ["x"], Domain::QQ)
-  assert_eq(roots_cyclotomic(phi5).length(), 4)
+  assert_true(roots_cyclotomic(phi5).length() == 4)
   let not_cyclotomic : Result[Array[@symcore.Expr], PolyError] = try? roots_cyclotomic(
     b.from_expr((x ^ @symcore.int(2)) + x + @symcore.int(2)),
   )

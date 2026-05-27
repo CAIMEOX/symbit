@@ -468,8 +468,8 @@ pub fn FpGroup::_finite_index_subgroup(
       }
   }
   let mid = (s_local.length() + 1) / 2
-  let half1 = s_local[:mid].to_array()
-  let half2 = s_local[mid:].to_array()
+  let half1 = s_local[:mid].to_owned()
+  let half2 = s_local[mid:].to_owned()
   let mut draft1 : CosetTable? = None
   let mut draft2 : CosetTable? = None
   let mut m = 200
@@ -557,12 +557,12 @@ pub fn FpGroup::subgroup(
 
 ///|
 /// Return a readable description of the finitely presented group.
-pub impl Show for FpGroup with to_string(self) -> String {
+pub impl Show for FpGroup with fn to_string(self) -> String {
   fp_group_name(self.free_group, self.generators)
 }
 
 ///|
-pub impl Show for FpGroup with output(self, logger : &Logger) -> Unit {
+pub impl Show for FpGroup with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

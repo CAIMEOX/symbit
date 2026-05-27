@@ -36,7 +36,7 @@ pub(all) enum Expr {
 }
 
 ///|
-impl Show for Expr with to_string(self) {
+impl Show for Expr with fn to_string(self) {
   match self {
     Expr::Number(n) => n.to_string()
     Expr::Float(f) => f.to_string()
@@ -116,27 +116,27 @@ impl Show for Expr with to_string(self) {
 }
 
 ///|
-pub impl Add for Expr with add(self, other) {
+pub impl Add for Expr with fn add(self, other) {
   add([self, other])
 }
 
 ///|
-pub impl Mul for Expr with mul(self, other) {
+pub impl Mul for Expr with fn mul(self, other) {
   mul([self, other])
 }
 
 ///|
-pub impl Sub for Expr with sub(self, other) {
+pub impl Sub for Expr with fn sub(self, other) {
   add([self, mul([int(-1), other])])
 }
 
 ///|
-impl Show for Expr with output(self, logger) {
+impl Show for Expr with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl BitXOr for Expr with lxor(self, other) {
+pub impl BitXOr for Expr with fn lxor(self, other) {
   pow(self, other)
 }
 
@@ -1745,9 +1745,22 @@ pub fn[T] arbitrary_array_use_gen(
 test "arbitrary array use gen" {
   let gen = arbitrary_array_use_gen(5, @qc.int_bound(10))
   let arr = gen.samples(size=10, seed=101)
-  inspect(
+  debug_inspect(
     arr,
-    content="[[3, 6], [0], [0, 0], [9, 6, 7], [1, 5], [3], [6], [0], [8, 7], [8, 7]]",
+    content=(
+      #|[
+      #|  [3, 6],
+      #|  [0],
+      #|  [0, 0],
+      #|  [9, 6, 7],
+      #|  [1, 5],
+      #|  [3],
+      #|  [6],
+      #|  [0],
+      #|  [8, 7],
+      #|  [8, 7],
+      #|]
+    ),
   )
 }
 

@@ -1731,7 +1731,7 @@ pub fn dmp_from_dict(
   }
   let mut max_exp = 0
   let mut first = true
-  let grouped : Map[Int, Map[Monomial, FieldElem]] = Map::new()
+  let grouped : Map[Int, Map[Monomial, FieldElem]] = Map([])
   for m, coeff in f {
     let exps = m.to_array()
     if exps.length() != u + 1 {
@@ -1751,7 +1751,7 @@ pub fn dmp_from_dict(
     let sub = grouped.get(head)
     match sub {
       None => {
-        let inner : Map[Monomial, FieldElem] = Map::new()
+        let inner : Map[Monomial, FieldElem] = Map([])
         inner.set(tail, coeff)
         grouped.set(head, inner)
       }
@@ -1791,7 +1791,7 @@ pub fn dup_to_dict(
   f : Array[FieldElem],
   _domain : Domain,
 ) -> Map[Monomial, FieldElem] {
-  let out : Map[Monomial, FieldElem] = Map::new()
+  let out : Map[Monomial, FieldElem] = Map([])
   let deg = f.length() - 1
   for i in 0..<f.length() {
     let coeff = f[i]
@@ -1820,7 +1820,7 @@ pub fn dup_to_raw_dict(
   f : Array[FieldElem],
   _domain : Domain,
 ) -> Map[Int, FieldElem] {
-  let out : Map[Int, FieldElem] = Map::new()
+  let out : Map[Int, FieldElem] = Map([])
   let deg = f.length() - 1
   for i in 0..<f.length() {
     let coeff = f[i]
@@ -1855,7 +1855,7 @@ pub fn dmp_to_dict(
     let coeffs = dense_to_coeffs(stripped)
     return dup_to_dict(coeffs, domain)
   }
-  let out : Map[Monomial, FieldElem] = Map::new()
+  let out : Map[Monomial, FieldElem] = Map([])
   match stripped {
     DensePoly::Poly(items) => {
       let deg = dmp_degree(stripped, u)
@@ -1898,7 +1898,7 @@ pub fn dmp_to_raw_dict(
   u : Int,
   _domain : Domain,
 ) -> Map[Int, DensePoly] {
-  let out : Map[Int, DensePoly] = Map::new()
+  let out : Map[Int, DensePoly] = Map([])
   let stripped = dmp_strip(f) catch { _ => f }
   match stripped {
     DensePoly::Poly(items) => {
@@ -1944,7 +1944,7 @@ pub fn dmp_swap(
     return f
   }
   let dict = dmp_to_dict(f, u, domain)
-  let out : Map[Monomial, FieldElem] = Map::new()
+  let out : Map[Monomial, FieldElem] = Map([])
   for m, coeff in dict {
     let exps = copy_int_array(m.to_array())
     let tmp = exps[i]
@@ -1975,7 +1975,7 @@ pub fn dmp_permute(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   let dict = dmp_to_dict(f, u, domain)
-  let out : Map[Monomial, FieldElem] = Map::new()
+  let out : Map[Monomial, FieldElem] = Map([])
   for m, coeff in dict {
     let old = m.to_array()
     let len = old.length()
@@ -2168,7 +2168,7 @@ pub fn dmp_deflate(
   if all_one {
     return (b, f)
   }
-  let out : Map[Monomial, FieldElem] = Map::new()
+  let out : Map[Monomial, FieldElem] = Map([])
   for m, coeff in dict {
     let old = m.to_array()
     let exps : Array[Int] = Array::make(old.length(), 0)
@@ -2304,7 +2304,7 @@ pub fn dmp_multi_deflate(
   }
   let out : Array[DensePoly] = Array::new()
   for d in dicts {
-    let new_map : Map[Monomial, FieldElem] = Map::new()
+    let new_map : Map[Monomial, FieldElem] = Map([])
     for m, coeff in d {
       let old = m.to_array()
       let exps : Array[Int] = Array::make(old.length(), 0)
@@ -2521,7 +2521,7 @@ fn dpp_from_dict(
   }
   let mut max_exp = 0
   let mut first = true
-  let grouped : Map[Int, Map[Monomial, Poly]] = Map::new()
+  let grouped : Map[Int, Map[Monomial, Poly]] = Map([])
   for m, coeff in f {
     let exps = m.to_array()
     if exps.length() != u + 1 {
@@ -2541,7 +2541,7 @@ fn dpp_from_dict(
     let sub = grouped.get(head)
     match sub {
       None => {
-        let inner : Map[Monomial, Poly] = Map::new()
+        let inner : Map[Monomial, Poly] = Map([])
         inner.set(tail, coeff)
         grouped.set(head, inner)
       }
@@ -2574,7 +2574,7 @@ fn dpp_to_dict(
   f : DensePolyPoly,
   u : Int,
 ) -> Map[Monomial, Poly] raise PolyError {
-  let out : Map[Monomial, Poly] = Map::new()
+  let out : Map[Monomial, Poly] = Map([])
   if u == 0 {
     match f {
       DensePolyPoly::Coef(p) =>
@@ -2658,7 +2658,7 @@ pub fn dmp_exclude(
   if jlist.is_empty() {
     return (Array::new(), f, u)
   }
-  let out : Map[Monomial, FieldElem] = Map::new()
+  let out : Map[Monomial, FieldElem] = Map([])
   for m, coeff in dict {
     let exps = copy_int_array(m.to_array())
     let mut idx = jlist.length()
@@ -2696,7 +2696,7 @@ pub fn dmp_include(
     return f
   }
   let dict = dmp_to_dict(f, u, domain)
-  let out : Map[Monomial, FieldElem] = Map::new()
+  let out : Map[Monomial, FieldElem] = Map([])
   for m, coeff in dict {
     let exps = copy_int_array(m.to_array())
     for j in jlist {
@@ -2731,7 +2731,7 @@ pub fn dmp_inject(
 ) -> (DensePoly, Int) raise PolyError {
   let dict = dpp_to_dict(f, u)
   let v = gens.length() - 1
-  let out : Map[Monomial, FieldElem] = Map::new()
+  let out : Map[Monomial, FieldElem] = Map([])
   for f_monom, poly in dict {
     if !poly.gens.equal(gens) {
       raise PolyError::DomainMismatch
@@ -2789,7 +2789,7 @@ pub fn dmp_eject(
     raise PolyError::BadExponent
   }
   let dict = dmp_to_dict(f, u, domain)
-  let grouped : Map[Monomial, Map[Monomial, FieldElem]] = Map::new()
+  let grouped : Map[Monomial, Map[Monomial, FieldElem]] = Map([])
   for monom, coeff in dict {
     let exps = monom.to_array()
     let split = exps.length() - n
@@ -2818,7 +2818,7 @@ pub fn dmp_eject(
     let f_monom = Monomial::{ exps: f_exps }
     match grouped.get(f_monom) {
       None => {
-        let inner : Map[Monomial, FieldElem] = Map::new()
+        let inner : Map[Monomial, FieldElem] = Map([])
         add_term(inner, g_monom, coeff, domain)
         grouped.set(f_monom, inner)
       }
@@ -2828,7 +2828,7 @@ pub fn dmp_eject(
       }
     }
   }
-  let out : Map[Monomial, Poly] = Map::new()
+  let out : Map[Monomial, Poly] = Map([])
   for monom, coeffs in grouped {
     let poly = Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
     out.set(monom, poly)
@@ -2916,7 +2916,7 @@ pub fn dmp_terms_gcd(
   if all_zero {
     return (exps, f)
   }
-  let out : Map[Monomial, FieldElem] = Map::new()
+  let out : Map[Monomial, FieldElem] = Map([])
   for m, coeff in dict {
     let old = m.to_array()
     let new_exps : Array[Int] = Array::make(old.length(), 0)
@@ -3282,7 +3282,7 @@ pub fn dmp_slice_in(
     return dense_from_coeffs(sliced)
   }
   let dict = dmp_to_dict(f, u, domain)
-  let out : Map[Monomial, FieldElem] = Map::new()
+  let out : Map[Monomial, FieldElem] = Map([])
   for monom, coeff in dict {
     let exps = copy_int_array(monom.to_array())
     let k = exps[j]

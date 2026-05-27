@@ -570,7 +570,7 @@ pub fn fe_from_rational(
 /// - Limits: Does not add a separate error channel beyond the called helpers; inputs
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
-pub impl Show for FieldElem with to_string(self) -> String {
+pub impl Show for FieldElem with fn to_string(self) -> String {
   match self {
     FieldElem::QQ(x) => x.to_string()
     FieldElem::CC(a, b) => {
@@ -590,7 +590,8 @@ pub impl Show for FieldElem with to_string(self) -> String {
       sb.to_string()
     }
     FieldElem::GFp(_, v) => v.to_string()
-    FieldElem::GFExt(_, coeffs, _) => coeffs.to_string()
+    FieldElem::GFExt(_, coeffs, _) =>
+      "[" + coeffs.map(item => item.to_string()).join(", ") + "]"
     FieldElem::AlgExt(_, coeffs, minpoly, gen) =>
       fe_algext_to_string(coeffs, gen, minpoly)
   }
@@ -887,7 +888,7 @@ fn load_algext_minpoly(
 /// - Limits: Does not add a separate error channel beyond the called helpers; inputs
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
-pub impl Show for FieldElem with output(self, logger : &Logger) -> Unit {
+pub impl Show for FieldElem with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

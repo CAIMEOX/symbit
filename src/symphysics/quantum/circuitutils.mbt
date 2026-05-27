@@ -143,7 +143,7 @@ fn circuit_symbol_name(index : Int) -> String {
 
 ///|
 fn clone_index_map(qubit_map : Map[String, Int]) -> Map[String, Int] {
-  let out : Map[String, Int] = Map::new()
+  let out : Map[String, Int] = Map([])
   for key in qubit_map.keys() {
     match qubit_map.get(key) {
       Some(value) => out.set(key, value)
@@ -155,7 +155,7 @@ fn clone_index_map(qubit_map : Map[String, Int]) -> Map[String, Int] {
 
 ///|
 fn index_inverse_map(qubit_map : Map[String, Int]) -> Map[Int, String] {
-  let out : Map[Int, String] = Map::new()
+  let out : Map[Int, String] = Map([])
   for key in qubit_map.keys() {
     match qubit_map.get(key) {
       Some(value) => out.set(value, key)
@@ -268,7 +268,7 @@ fn symbolic_index_expr(
 pub fn convert_to_symbolic_indices(
   seq : Expr,
   start_index? : Int = 0,
-  qubit_map? : Map[String, Int] = Map::new(),
+  qubit_map? : Map[String, Int] = Map([]),
 ) -> SymbolicCircuit {
   let map_copy = clone_index_map(qubit_map)
   let inverse_map = index_inverse_map(map_copy)

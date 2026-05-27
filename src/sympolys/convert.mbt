@@ -298,7 +298,7 @@ fn fe_cast_to_base(
 /// - Limits: Does not add a separate error channel beyond the called helpers; inputs
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
-pub impl Show for Poly with output(self, logger : &Logger) -> Unit {
+pub impl Show for Poly with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -402,7 +402,7 @@ pub fn Poly::from_expr(
 
 ///|
 fn build_gen_index(gens : Array[String]) -> Map[String, Int] {
-  let index : Map[String, Int] = Map::new()
+  let index : Map[String, Int] = Map([])
   for i in 0..<gens.length() {
     index.set(gens[i], i)
   }
@@ -578,7 +578,7 @@ fn parse_expr(
         None => raise PolyError::NonPolynomial
       }
       let mono = monomial_one(gens.length())
-      let coeffs : Map[Monomial, FieldElem] = Map::new()
+      let coeffs : Map[Monomial, FieldElem] = Map([])
       add_term(coeffs, mono, coeff, domain)
       Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
     }
@@ -587,7 +587,7 @@ fn parse_expr(
         Some(idx) => {
           let mono = monomial_one(gens.length())
           mono.exps.set(idx, 1)
-          let coeffs : Map[Monomial, FieldElem] = Map::new()
+          let coeffs : Map[Monomial, FieldElem] = Map([])
           add_term(coeffs, mono, fe_from_int(1, domain), domain)
           Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
         }

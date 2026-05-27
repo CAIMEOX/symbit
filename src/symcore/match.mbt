@@ -463,7 +463,7 @@ fn match_commutative_items(
         )
       _ => {
         let current = remaining_patterns[0]
-        let rest = remaining_patterns[1:].to_array()
+        let rest = remaining_patterns[1:].to_owned()
         let masks : Array[Int] = []
         let max_mask = 1 << remaining_items.length()
         for mask in 0..<max_mask {
@@ -667,7 +667,7 @@ fn divide_add_by_exact_template(
       return quotient
     }
     let factor_term = remaining_factor[0]
-    let rest_factor = remaining_factor[1:].to_array()
+    let rest_factor = remaining_factor[1:].to_owned()
     for i in 0..<remaining_expr.length() {
       let expr_term = remaining_expr[i]
       match divide_monomial_expr(expr_term, factor_term) {

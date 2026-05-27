@@ -53,7 +53,7 @@ pub fn from_dense(
   if gens.length() != 1 {
     raise PolyError::NotUnivariate
   }
-  let map : Map[Monomial, FieldElem] = Map::new()
+  let map : Map[Monomial, FieldElem] = Map([])
   for i in 0..<coeffs.length() {
     let c = coeffs[i]
     if fe_is_zero(c) {
@@ -138,7 +138,7 @@ pub fn from_dense_multi(
     raise PolyError::BadGenerator("dense-length")
   }
   let strides = compute_strides(degrees)
-  let map : Map[Monomial, FieldElem] = Map::new()
+  let map : Map[Monomial, FieldElem] = Map([])
   for idx in 0..<coeffs.length() {
     let c = coeffs[idx]
     if fe_is_zero(c) {

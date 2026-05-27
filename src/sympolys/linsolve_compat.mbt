@@ -52,7 +52,7 @@ pub fn sympy_dict_to_dm(
   if eqs_coeffs.length() != eqs_rhs.length() {
     raise PolyError::DomainMismatch
   }
-  let sym2index : Map[String, Int] = Map::new()
+  let sym2index : Map[String, Int] = Map([])
   for i in 0..<syms.length() {
     sym2index[syms[i]] = i
   }
@@ -85,10 +85,10 @@ pub fn sympy_dict_to_dm(
     }
     value_rows.push(converted)
   }
-  let dod : DomainMatrixDOD = Map::new()
+  let dod : DomainMatrixDOD = Map([])
   let mut next_row = 0
   for row_items in value_rows {
-    let row : Map[Int, FieldElem] = Map::new()
+    let row : Map[Int, FieldElem] = Map([])
     for item in row_items {
       if !fe_is_zero(item.1) {
         row[item.0] = item.1
@@ -362,7 +362,7 @@ fn numeric_expr_linsolve(
   if pivots.length() != n {
     return NumericExprLinsolveResult::Unsupported
   }
-  let sol : Map[String, Expr] = Map::new()
+  let sol : Map[String, Expr] = Map([])
   for i in 0..<n {
     sol[syms[pivots[i]]] = linsolve_complex_to_expr(mat[i][n])
   }
@@ -412,7 +412,7 @@ fn scale_linear_terms(
   terms : Map[String, Expr],
   scale : Expr,
 ) -> Map[String, Expr] {
-  let out : Map[String, Expr] = Map::new()
+  let out : Map[String, Expr] = Map([])
   if expr_is_zero(scale) {
     return out
   }
@@ -430,11 +430,11 @@ fn linsolve_sdm_nonzero_columns(
   rref : SDM,
   pivots : Array[Int],
 ) -> Map[Int, Array[Int]] raise PolyError {
-  let pivot_set : Map[Int, Bool] = Map::new()
+  let pivot_set : Map[Int, Bool] = Map([])
   for pivot in pivots {
     pivot_set[pivot] = true
   }
-  let out : Map[Int, Array[Int]] = Map::new()
+  let out : Map[Int, Array[Int]] = Map([])
   let dod = rref.to_dod()
   for row_index, row in dod {
     for col, value in row {
@@ -452,7 +452,7 @@ fn linsolve_sdm_nonzero_columns(
 
 ///|
 fn linsolve_symset(syms : Array[String]) -> Map[String, Bool] {
-  let out : Map[String, Bool] = Map::new()
+  let out : Map[String, Bool] = Map([])
   for sym in syms {
     out[sym] = true
   }
@@ -467,14 +467,14 @@ fn lin_eq2dict_impl(
   match expr {
     Expr::Symbol(name) =>
       if symset.get(name) is Some(_) {
-        let terms : Map[String, Expr] = Map::new()
+        let terms : Map[String, Expr] = Map([])
         terms[name] = int(1)
         (int(0), terms)
       } else {
         (expr, {})
       }
     Expr::Add(args) => {
-      let coeff_terms : Map[String, Expr] = Map::new()
+      let coeff_terms : Map[String, Expr] = Map([])
       let const_terms : Array[Expr] = Array::new()
       for arg in args {
         let (const_part, terms_part) = lin_eq2dict_impl(arg, symset)
@@ -559,7 +559,7 @@ pub fn _linear_eq_to_dict(
       Some((@symcore.RelOp::Eq, lhs, rhs)) => {
         let (lhs_const, lhs_terms) = lin_eq2dict_impl(lhs, symset)
         let (rhs_const, rhs_terms) = lin_eq2dict_impl(rhs, symset)
-        let merged : Map[String, Expr] = Map::new()
+        let merged : Map[String, Expr] = Map([])
         for sym, coeff in lhs_terms {
           add_linear_coeff(merged, sym, coeff)
         }
@@ -641,7 +641,7 @@ pub fn _linsolve(
     arref, one, nsyms, pivots, nzcols,
   )
 
-  let sol : Map[String, Expr] = Map::new()
+  let sol : Map[String, Expr] = Map([])
   let p_rows = particular.to_dense().to_list()
   if !p_rows.is_empty() {
     let p = p_rows[0]
@@ -695,7 +695,7 @@ pub fn solve_lin_sys(
   match _linsolve(system.equations, system.symbols) {
     None => None
     Some(sol) => {
-      let out : Map[String, Expr] = Map::new()
+      let out : Map[String, Expr] = Map([])
       for sym in system.symbols {
         match sol.get(sym) {
           Some(expr) if !linsolve_is_identity_binding(sym, expr) =>

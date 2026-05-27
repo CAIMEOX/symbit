@@ -8,7 +8,7 @@ test "polytools frontdoors: degree and leading term helpers" {
   )
   inspect(degree(p, gen_index=0), content="2")
   inspect(degree(p, gen_index=1), content="2")
-  inspect(degree_list(p), content="[2, 2]")
+  debug_inspect(degree_list(p), content="[2, 2]")
   inspect(total_degree(p), content="3")
   inspect(lc(p), content="4")
   inspect(@symprint.pretty_string(lm(p)), content="x**2")
@@ -19,7 +19,7 @@ test "polytools frontdoors: degree and leading term helpers" {
 test "polytools frontdoors: zero leading conventions" {
   let z = Poly::zero(["x"], Domain::ZZ)
   inspect(degree(z), content="-1")
-  inspect(degree_list(z), content="[-1]")
+  debug_inspect(degree_list(z), content="[-1]")
   inspect(total_degree(z), content="0")
   inspect(lc(z), content="0")
   inspect(@symprint.pretty_string(lm(z)), content="1")
@@ -31,7 +31,7 @@ test "polytools frontdoors: expression constructors and order helpers" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let p = poly_from_expr(x * y + @symcore.rational_from_ints(1, 2))
-  inspect(p.gens, content="[\"x\", \"y\"]")
+  debug_inspect(p.gens, content="[\"x\", \"y\"]")
   match p.domain {
     Domain::QQ => ()
     _ => fail("expected QQ domain")
@@ -202,7 +202,7 @@ test "polytools frontdoors: factor squarefree sturm groebner resultant" {
       #|x - 1 | y - 1
     ),
   )
-  inspect(basis_obj.gens, content="[\"x\", \"y\"]")
+  debug_inspect(basis_obj.gens, content="[\"x\", \"y\"]")
   inspect(domain_to_sympy_string(basis_obj.domain), content="QQ")
   inspect(basis_obj.order == TermOrder::Lex, content="true")
   let r = resultant(
@@ -333,8 +333,14 @@ test "polytools frontdoors: trunc and root fronts" {
       #|((-2, -1), 1) | ((1, 2), 1)
     ),
   )
+  let refined = refine_root(
+    q,
+    pt_wb_rat(1, 1),
+    pt_wb_rat(2, 1),
+    eps=pt_wb_rat(1, 100),
+  )
   inspect(
-    refine_root(q, pt_wb_rat(1, 1), pt_wb_rat(2, 1), eps=pt_wb_rat(1, 100)),
+    "(\{refined.0.to_string()}, \{refined.1.to_string()})",
     content="(19/11, 26/15)",
   )
   inspect(

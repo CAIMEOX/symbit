@@ -227,7 +227,7 @@ fn explicit_matrix_cell_string(value : Expr) -> String {
   if txt == "-1" {
     "-1"
   } else if txt.has_prefix("-1*") {
-    "-" + txt[3:].to_string()
+    "-" + txt[3:].to_owned()
   } else {
     txt
   }

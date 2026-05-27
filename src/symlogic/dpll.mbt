@@ -79,13 +79,13 @@ pub fn find_unit_clause_int_repr(
   clauses : Array[Array[Int]],
   model : Map[Int, Bool],
 ) -> (Int?, Bool?) {
-  let bound : Map[Int, Bool] = Map::new()
+  let bound : Map[Int, Bool] = Map([])
   for key, _ in model {
     bound[key] = true
     bound[-key] = true
   }
   for clause in clauses {
-    let unbound : Map[Int, Bool] = Map::new()
+    let unbound : Map[Int, Bool] = Map([])
     for lit in clause {
       if !bound.contains(lit) {
         unbound[lit] = true
@@ -108,7 +108,7 @@ pub fn find_pure_symbol_int_repr(
   symbols : Array[Int],
   clauses : Array[Array[Int]],
 ) -> (Int?, Bool?) {
-  let polarity : Map[Int, Int] = Map::new()
+  let polarity : Map[Int, Int] = Map([])
   for clause in clauses {
     for lit in clause {
       let lit_var = abs_int(lit)
@@ -311,7 +311,7 @@ pub fn dpll(
     }
   }
   let indices : Array[Int] = Array::new()
-  let model_int : Map[Int, Bool] = Map::new()
+  let model_int : Map[Int, Bool] = Map([])
   for i in 0..<symbol_names.length() {
     let name = symbol_names[i]
     match model.get(name) {
@@ -324,7 +324,7 @@ pub fn dpll(
   match result {
     None => None
     Some(int_model) => {
-      let out : Map[String, Bool] = Map::new()
+      let out : Map[String, Bool] = Map([])
       for name, val in model {
         out[name] = val
       }
@@ -342,7 +342,7 @@ pub fn dpll(
 ///|
 pub fn dpll_satisfiable(expr : BoolExpr) -> Map[String, Bool]? {
   match expr {
-    BoolExpr::True => return Some(Map::new())
+    BoolExpr::True => return Some(Map([]))
     BoolExpr::False => return None
     _ => ()
   }
@@ -366,11 +366,11 @@ pub fn dpll_satisfiable(expr : BoolExpr) -> Map[String, Bool]? {
     indices.push(i + 1)
   }
   let clauses_int = to_int_repr(clauses, symbols)
-  let result = dpll_int_repr(clauses_int, indices, Map::new())
+  let result = dpll_int_repr(clauses_int, indices, Map([]))
   match result {
     None => None
     Some(model) => {
-      let out : Map[String, Bool] = Map::new()
+      let out : Map[String, Bool] = Map([])
       for key, val in model {
         let idx = key - 1
         if idx >= 0 && idx < symbol_names.length() {

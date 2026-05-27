@@ -24,7 +24,7 @@ fn poly_from_term(
   domain : Domain,
   order : TermOrder,
 ) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   add_term(coeffs, mono, coeff, domain)
   Poly::{ coeffs, gens, domain, order }
 }
@@ -196,7 +196,7 @@ fn lift_to_qq(poly : Poly) -> Poly {
 
 ///|
 fn try_round_to_int(poly : Poly) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for m, c in poly.coeffs {
     let r = fe_expect_rational(c)
     if !r.is_integral() {
@@ -443,7 +443,7 @@ fn poly_const_coeff(poly : Poly) -> FieldElem? {
 
 ///|
 fn poly_zero(gens : Array[String], domain : Domain) -> Poly {
-  Poly::{ coeffs: Map::new(), gens, domain, order: TermOrder::Lex }
+  Poly::{ coeffs: Map([]), gens, domain, order: TermOrder::Lex }
 }
 
 ///|
@@ -453,7 +453,7 @@ fn poly_to_univar_coeffs(
 ) -> Array[Poly] raise PolyError {
   let rest_gens = remove_gen(poly.gens, var_index)
   let mut max_exp = 0
-  let by_exp : Map[Int, Poly] = Map::new()
+  let by_exp : Map[Int, Poly] = Map([])
   for m, c in poly.coeffs {
     let exp = m.exps[var_index]
     if exp > max_exp {
@@ -472,7 +472,7 @@ fn poly_to_univar_coeffs(
       Some(p) => p
       None =>
         Poly::{
-          coeffs: Map::new(),
+          coeffs: Map([]),
           gens: rest_gens,
           domain: poly.domain,
           order: poly.order,
@@ -498,7 +498,7 @@ fn univar_coeffs_to_poly(
   gens : Array[String],
   domain : Domain,
 ) -> Poly raise PolyError {
-  let out_coeffs : Map[Monomial, FieldElem] = Map::new()
+  let out_coeffs : Map[Monomial, FieldElem] = Map([])
   for exp in 0..<coeffs.length() {
     let coeff_poly = coeffs[exp]
     for m, c in coeff_poly.coeffs {

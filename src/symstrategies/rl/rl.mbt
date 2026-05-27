@@ -181,7 +181,7 @@ fn[T, K : Eq + Hash] sift(
   values : Array[T],
   key : (T) -> K,
 ) -> Map[K, Array[T]] {
-  let out : Map[K, Array[T]] = Map::new()
+  let out : Map[K, Array[T]] = Map([])
   for v in values {
     let k = key(v)
     match out.get(k) {

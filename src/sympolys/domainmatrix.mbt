@@ -144,9 +144,9 @@ fn clone_dense_rows(rows : Array[Array[FieldElem]]) -> Array[Array[FieldElem]] {
 
 ///|
 fn clone_dod(dod : DomainMatrixDOD) -> DomainMatrixDOD {
-  let out : DomainMatrixDOD = Map::new()
+  let out : DomainMatrixDOD = Map([])
   for r, row in dod {
-    let row_copy : Map[Int, FieldElem] = Map::new()
+    let row_copy : Map[Int, FieldElem] = Map([])
     for c, value in row {
       row_copy[c] = value
     }
@@ -618,7 +618,7 @@ fn poly_from_dense_desc(
   gen : String,
   domain : Domain,
 ) -> Poly raise PolyError {
-  let map : Map[Monomial, FieldElem] = Map::new()
+  let map : Map[Monomial, FieldElem] = Map([])
   let degree = coeffs.length() - 1
   for i in 0..<coeffs.length() {
     let coeff = coeffs[i]
@@ -803,7 +803,7 @@ pub fn domain_matrix_from_sparse(
   entries : Array[(Int, Int, FieldElem)],
   domain : Domain,
 ) -> DomainMatrix raise PolyError {
-  let sparse : Map[Int, Map[Int, FieldElem]] = Map::new()
+  let sparse : Map[Int, Map[Int, FieldElem]] = Map([])
   for entry in entries {
     let (r, c, v) = entry
     if r < 0 || r >= rows || c < 0 || c >= cols {
@@ -815,7 +815,7 @@ pub fn domain_matrix_from_sparse(
     match sparse.get(r) {
       Some(row_map) => row_map[c] = v
       None => {
-        let row_map : Map[Int, FieldElem] = Map::new()
+        let row_map : Map[Int, FieldElem] = Map([])
         row_map[c] = v
         sparse[r] = row_map
       }
@@ -1000,7 +1000,7 @@ pub fn DomainMatrix::from_dict_sympy(
     gaussian~,
     modulus~,
   )
-  let dod : DomainMatrixDOD = Map::new()
+  let dod : DomainMatrixDOD = Map([])
   for i in 0..<positions.length() {
     let (r, c) = positions[i]
     let value = values[i]
@@ -1010,7 +1010,7 @@ pub fn DomainMatrix::from_dict_sympy(
     match dod.get(r) {
       Some(row) => row[c] = value
       None => {
-        let row : Map[Int, FieldElem] = Map::new()
+        let row : Map[Int, FieldElem] = Map([])
         row[c] = value
         dod[r] = row
       }
@@ -1053,13 +1053,13 @@ pub fn DomainMatrix::from_Matrix(
       )
     "sparse" => {
       let zero_expr = @symcore.int(0)
-      let dod : MatrixExprDOD = Map::new()
+      let dod : MatrixExprDOD = Map([])
       for i in 0..<nrows {
         let row = rows[i]
         if row.length() != ncols {
           raise PolyError::DomainMismatch
         }
-        let sparse_row : Map[Int, Expr] = Map::new()
+        let sparse_row : Map[Int, Expr] = Map([])
         for j in 0..<ncols {
           let value = row[j]
           if value != zero_expr {
@@ -1241,9 +1241,9 @@ pub fn DomainMatrix::to_sparse(
   match self.rep {
     DomainMatrixRep::Sparse(_) => self.copy()
     DomainMatrixRep::Dense(rows) => {
-      let dod : DomainMatrixDOD = Map::new()
+      let dod : DomainMatrixDOD = Map([])
       for i in 0..<self.rows {
-        let row_map : Map[Int, FieldElem] = Map::new()
+        let row_map : Map[Int, FieldElem] = Map([])
         for j in 0..<self.cols {
           let v = rows[i][j]
           if !fe_is_zero(v) {
@@ -2442,12 +2442,12 @@ pub fn DomainMatrix::from_flat_nz(
 pub fn DomainMatrix::to_dod(
   self : DomainMatrix,
 ) -> DomainMatrixDOD raise PolyError {
-  let dod : DomainMatrixDOD = Map::new()
+  let dod : DomainMatrixDOD = Map([])
   for entry in dense_matrix_nonzero_entries(self.to_dense()) {
     match dod.get(entry.0) {
       Some(row) => row[entry.1] = entry.2
       None => {
-        let row : Map[Int, FieldElem] = Map::new()
+        let row : Map[Int, FieldElem] = Map([])
         row[entry.1] = entry.2
         dod[entry.0] = row
       }
@@ -2498,7 +2498,7 @@ pub fn DomainMatrix::from_dod_like(
 pub fn DomainMatrix::to_dok(
   self : DomainMatrix,
 ) -> DomainMatrixDOK raise PolyError {
-  let dok : DomainMatrixDOK = Map::new()
+  let dok : DomainMatrixDOK = Map([])
   for entry in dense_matrix_nonzero_entries(self.to_dense()) {
     dok[(entry.0, entry.1)] = entry.2
   }
@@ -2873,7 +2873,7 @@ pub fn DomainMatrix::applyfunc(
       domain_matrix_from_dense(out, out_domain)
     }
     DomainMatrixRep::Sparse(entries) => {
-      let sparse : Map[Int, Map[Int, FieldElem]] = Map::new()
+      let sparse : Map[Int, Map[Int, FieldElem]] = Map([])
       for r, row in entries {
         for c, value in row {
           let mapped = func(value)
@@ -2883,7 +2883,7 @@ pub fn DomainMatrix::applyfunc(
           match sparse.get(r) {
             Some(row_out) => row_out[c] = mapped
             None => {
-              let row_out : Map[Int, FieldElem] = Map::new()
+              let row_out : Map[Int, FieldElem] = Map([])
               row_out[c] = mapped
               sparse[r] = row_out
             }

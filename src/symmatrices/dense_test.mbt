@@ -7,7 +7,7 @@ fn mtxt(m : Matrix) -> String {
 test "matrices dense constructors and indexing" {
   let x = @symcore.Expr::Symbol("x")
   let m = matrix([[x, @symcore.int(2)], [@symcore.int(3), @symcore.int(4)]])
-  assert_eq(m.shape(), (2, 2))
+  assert_true(m.shape() == (2, 2))
   inspect(@symprint.pretty_string(m.getitem(0, 0)), content="x")
   inspect(
     mtxt(m.setitem(0, 1, @symcore.int(9))),
@@ -99,7 +99,7 @@ test "matrices dense predicates and sparse conversions" {
       [@symcore.int(0), @symcore.int(1)],
     ]).is_diagonal(),
   )
-  assert_eq(a.nnz(), 2)
+  assert_true(a.nnz() == 2)
   inspect(a.to_sparse().to_string(), content="Matrix([[1, 0], [0, 2]])")
   inspect(a.todok().length(), content="2")
 }

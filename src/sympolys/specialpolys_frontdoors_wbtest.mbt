@@ -22,7 +22,7 @@ test "sympolys monomial frontdoors enumerate total and bounded degrees" {
   )
   let a = monomial_from_array([3, 4, 1])
   let b = monomial_from_array([1, 2, 2])
-  inspect(monomial_ldiv(a, b).to_array(), content="[2, 2, -1]")
+  debug_inspect(monomial_ldiv(a, b).to_array(), content="[2, 2, -1]")
   inspect(monomial_deg(a), content="8")
   match
     term_div(
@@ -31,7 +31,7 @@ test "sympolys monomial frontdoors enumerate total and bounded degrees" {
       Domain::ZZ,
     ) {
     Some((m, c)) => {
-      inspect(m.to_array(), content="[2, 1]")
+      debug_inspect(m.to_array(), content="[2, 1]")
       inspect(c, content="2")
     }
     None => fail("expected exact term division")

@@ -4,7 +4,7 @@ test "from_expr_defaults infers gens and QQ domain" {
   let y = @symcore.Expr::Symbol("y")
   let expr = x * y + @symcore.rational_from_ints(1, 2)
   let poly = Poly::from_expr_defaults(expr)
-  inspect(poly.gens, content="[\"x\", \"y\"]")
+  debug_inspect(poly.gens, content="[\"x\", \"y\"]")
   match poly.domain {
     Domain::QQ => ()
     _ => fail("expected QQ domain")
@@ -64,7 +64,7 @@ test "resolve_domain gf extension builds default modulus poly" {
     Domain::GFExt(p, k, poly) => {
       inspect("\{p}", content="3")
       inspect("\{k}", content="2")
-      inspect(poly, content="[1, 0, 1]")
+      debug_inspect(poly, content="[1, 0, 1]")
     }
     _ => fail("expected GFExt")
   }
@@ -87,7 +87,7 @@ test "resolve_domain builds algebraic extension" {
         Domain::QQ => ()
         _ => fail("expected QQ base")
       }
-      inspect(gens, content="[\"alpha\"]")
+      debug_inspect(gens, content="[\"alpha\"]")
       inspect("\{rels.length()}", content="1")
     }
     _ => fail("expected AlgExt")

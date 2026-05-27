@@ -338,7 +338,7 @@ pub fn IntegerPartition::as_dict(self : IntegerPartition) -> Map[Int, Int] {
   match self.dict_cache {
     Some(d) => d
     None => {
-      let d : Map[Int, Int] = Map::new()
+      let d : Map[Int, Int] = Map([])
       for p in self.partition {
         let cur = match d.get(p) {
           Some(v) => v
@@ -364,13 +364,13 @@ pub fn IntegerPartition::as_dict(self : IntegerPartition) -> Map[Int, Int] {
 pub fn IntegerPartition::prev_lex(
   self : IntegerPartition,
 ) -> IntegerPartition raise CombinatoricsError {
-  let d : Map[Int, Int] = Map::new()
+  let d : Map[Int, Int] = Map([])
   for k, v in self.as_dict() {
     d[k] = v
   }
   let keys = self.keys_cache.unwrap()
   if keys.length() == 1 && keys[0] == 1 {
-    let dict : Map[Int, Int] = Map::new()
+    let dict : Map[Int, Int] = Map([])
     dict[self.integer] = 1
     return IntegerPartition::from_dict(self.integer, dict)
   }
@@ -414,14 +414,14 @@ pub fn IntegerPartition::prev_lex(
 pub fn IntegerPartition::next_lex(
   self : IntegerPartition,
 ) -> IntegerPartition raise CombinatoricsError {
-  let mut d : Map[Int, Int] = Map::new()
+  let mut d : Map[Int, Int] = Map([])
   for k, v in self.as_dict() {
     d[k] = v
   }
   let keys = self.keys_cache.unwrap()
   let a = keys[keys.length() - 1]
   if a == self.integer {
-    let dict : Map[Int, Int] = Map::new()
+    let dict : Map[Int, Int] = Map([])
     dict[1] = self.integer
     return IntegerPartition::from_dict(self.integer, dict)
   } else if a == 1 {
@@ -444,7 +444,7 @@ pub fn IntegerPartition::next_lex(
     }
   } else if d[a] > 1 {
     if keys.length() == 1 {
-      let fresh : Map[Int, Int] = Map::new()
+      let fresh : Map[Int, Int] = Map([])
       fresh[a + 1] = 1
       fresh[1] = self.integer - a - 1
       d = fresh
@@ -549,12 +549,12 @@ pub fn IntegerPartition::le(
 
 ///|
 /// Return the canonical string representation of the partition.
-pub impl Show for IntegerPartition with to_string(self) -> String {
-  "\{self.partition}"
+pub impl Show for IntegerPartition with fn to_string(self) -> String {
+  repr(self.partition)
 }
 
 ///|
-pub impl Show for IntegerPartition with output(self, logger : &Logger) -> Unit {
+pub impl Show for IntegerPartition with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

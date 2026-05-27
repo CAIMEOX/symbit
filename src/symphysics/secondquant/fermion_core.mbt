@@ -98,9 +98,9 @@ fn sq_tuple_inner_product(lhs : Array[Expr], rhs : Array[Expr]) -> Expr {
 ///|
 fn sq_symbol_prefix(name : String) -> String {
   if name.length() >= 2 {
-    name[:2].to_string()
+    name[:2].to_owned()
   } else if name.length() == 1 {
-    name[:1].to_string()
+    name[:1].to_owned()
   } else {
     ""
   }
@@ -109,7 +109,7 @@ fn sq_symbol_prefix(name : String) -> String {
 ///|
 fn sq_symbol_head(name : String) -> String {
   if name.length() >= 1 {
-    name[:1].to_string()
+    name[:1].to_owned()
   } else {
     ""
   }
@@ -400,12 +400,12 @@ pub fn FermionState::repr(self : FermionState) -> String {
 }
 
 ///|
-pub impl Show for FermionState with to_string(self) {
+pub impl Show for FermionState with fn to_string(self) {
   sq_tuple_string(self.orbitals)
 }
 
 ///|
-pub impl Show for FermionState with output(self, logger : &Logger) -> Unit {
+pub impl Show for FermionState with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -460,7 +460,7 @@ pub fn FermionicOperatorExpr::dagger(
 }
 
 ///|
-pub impl Show for FermionicOperatorExpr with to_string(self) {
+pub impl Show for FermionicOperatorExpr with fn to_string(self) {
   if self.is_annihilation {
     "f(\{@symprint.pretty_string(self.index)})"
   } else {
@@ -469,7 +469,7 @@ pub impl Show for FermionicOperatorExpr with to_string(self) {
 }
 
 ///|
-pub impl Show for FermionicOperatorExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for FermionicOperatorExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

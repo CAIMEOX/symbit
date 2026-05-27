@@ -136,7 +136,7 @@ fn circuitplot_grid(count : Int, scale : Double) -> Array[Double] {
 
 ///|
 fn circuitplot_measurements(gates : Array[Expr]) -> Map[Int, Int] {
-  let out : Map[Int, Int] = Map::new()
+  let out : Map[Int, Int] = Map([])
   for gate_idx in 0..<gates.length() {
     let gate = gates[gate_idx]
     if circuitplot_is_measurement(gate) {
@@ -161,7 +161,7 @@ fn circuitplot_measurements(gates : Array[Expr]) -> Map[Int, Int] {
 ///|
 pub fn render_label(
   label : String,
-  inits? : Map[String, String] = Map::new(),
+  inits? : Map[String, String] = Map([]),
 ) -> String {
   match inits.get(label) {
     Some(init) =>
@@ -211,7 +211,7 @@ pub fn CircuitPlot::new(
   circuit : Expr,
   nqubits : Int,
   labels? : Array[String] = [],
-  inits? : Map[String, String] = Map::new(),
+  inits? : Map[String, String] = Map([]),
   scale? : Double = 1.0,
   fontsize? : Double = 20.0,
   linewidth? : Double = 1.0,
@@ -246,7 +246,7 @@ pub fn circuit_plot(
   circuit : Expr,
   nqubits : Int,
   labels? : Array[String] = [],
-  inits? : Map[String, String] = Map::new(),
+  inits? : Map[String, String] = Map([]),
   scale? : Double = 1.0,
   fontsize? : Double = 20.0,
   linewidth? : Double = 1.0,

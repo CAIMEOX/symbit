@@ -5,44 +5,44 @@ fn assert_cell(
   col : Int,
   expected : Object?,
 ) -> Unit raise {
-  assert_eq(grid.get(row, col), expected)
+  assert_true(grid.get(row, col) == expected)
 }
 
 ///|
 test "growable grid supports append and prepend operations" {
   let grid : GrowableGrid[String] = growable_grid(1, 2)
-  assert_eq(grid.width(), 1)
-  assert_eq(grid.height(), 2)
-  assert_eq(grid.get(0, 0), None)
-  assert_eq(grid.get(1, 0), None)
+  assert_true(grid.width() == 1)
+  assert_true(grid.height() == 2)
+  assert_true(grid.get(0, 0) == None)
+  assert_true(grid.get(1, 0) == None)
 
   grid.set(0, 0, Some("one"))
   grid.set(1, 0, Some("two"))
-  assert_eq(grid.get(0, 0), Some("one"))
-  assert_eq(grid.get(1, 0), Some("two"))
+  assert_true(grid.get(0, 0) == Some("one"))
+  assert_true(grid.get(1, 0) == Some("two"))
 
   grid.append_row()
-  assert_eq(grid.height(), 3)
-  assert_eq(grid.get(2, 0), None)
+  assert_true(grid.height() == 3)
+  assert_true(grid.get(2, 0) == None)
 
   grid.append_column()
-  assert_eq(grid.width(), 2)
-  assert_eq(grid.get(0, 1), None)
-  assert_eq(grid.get(1, 1), None)
-  assert_eq(grid.get(2, 1), None)
+  assert_true(grid.width() == 2)
+  assert_true(grid.get(0, 1) == None)
+  assert_true(grid.get(1, 1) == None)
+  assert_true(grid.get(2, 1) == None)
 
   let grid2 : GrowableGrid[String] = growable_grid(1, 2)
   grid2.set(0, 0, Some("one"))
   grid2.set(1, 0, Some("two"))
   grid2.prepend_row()
-  assert_eq(grid2.get(0, 0), None)
-  assert_eq(grid2.get(1, 0), Some("one"))
-  assert_eq(grid2.get(2, 0), Some("two"))
+  assert_true(grid2.get(0, 0) == None)
+  assert_true(grid2.get(1, 0) == Some("one"))
+  assert_true(grid2.get(2, 0) == Some("two"))
 
   grid2.prepend_column()
-  assert_eq(grid2.width(), 2)
-  assert_eq(grid2.get(1, 1), Some("one"))
-  assert_eq(grid2.get(2, 1), Some("two"))
+  assert_true(grid2.width() == 2)
+  assert_true(grid2.get(1, 1) == Some("one"))
+  assert_true(grid2.get(2, 1) == Some("two"))
 }
 
 ///|
@@ -65,8 +65,8 @@ test "diagram grid handles generic sequential and grouped layouts" {
   ) catch {
     _ => fail("one-grid")
   }
-  assert_eq(one.width(), 2)
-  assert_eq(one.height(), 1)
+  assert_true(one.width() == 2)
+  assert_true(one.height() == 1)
   assert_cell(one, 0, 0, Some(a))
   assert_cell(one, 0, 1, Some(b))
 
@@ -82,8 +82,8 @@ test "diagram grid handles generic sequential and grouped layouts" {
   ) catch {
     _ => fail("triangle-grid")
   }
-  assert_eq(triangle.width(), 2)
-  assert_eq(triangle.height(), 2)
+  assert_true(triangle.width() == 2)
+  assert_true(triangle.height() == 2)
   assert_cell(triangle, 0, 0, Some(a))
   assert_cell(triangle, 0, 1, Some(b))
   assert_cell(triangle, 1, 0, Some(c))
@@ -97,8 +97,8 @@ test "diagram grid handles generic sequential and grouped layouts" {
   ) catch {
     _ => fail("loop-grid")
   }
-  assert_eq(loop_grid.width(), 2)
-  assert_eq(loop_grid.height(), 2)
+  assert_true(loop_grid.width() == 2)
+  assert_true(loop_grid.height() == 2)
   assert_cell(loop_grid, 0, 0, Some(a))
   assert_cell(loop_grid, 0, 1, Some(b))
   assert_cell(loop_grid, 1, 0, None)
@@ -111,10 +111,10 @@ test "diagram grid handles generic sequential and grouped layouts" {
   ) catch {
     _ => fail("simple-grid")
   }
-  assert_eq(simple.width(), 3)
-  assert_eq(simple.height(), 2)
-  assert_eq(
-    simple.to_string(),
+  assert_true(simple.width() == 3)
+  assert_true(simple.height() == 2)
+  assert_true(
+    simple.to_string() ==
     "[[Object(\"A\"), Object(\"B\"), Object(\"D\")], [None, Object(\"C\"), None]]",
   )
 
@@ -124,8 +124,8 @@ test "diagram grid handles generic sequential and grouped layouts" {
     _ => fail("chain-diagram")
   }
   let chain_grid = diagram_grid(chain) catch { _ => fail("chain-grid") }
-  assert_eq(chain_grid.width(), 3)
-  assert_eq(chain_grid.height(), 3)
+  assert_true(chain_grid.width() == 3)
+  assert_true(chain_grid.height() == 3)
   assert_cell(chain_grid, 0, 0, Some(a))
   assert_cell(chain_grid, 0, 1, Some(b))
   assert_cell(chain_grid, 1, 1, Some(c))
@@ -135,8 +135,8 @@ test "diagram grid handles generic sequential and grouped layouts" {
   let sequential = diagram_grid(chain, hints=sequential_hints()) catch {
     _ => fail("sequential-grid")
   }
-  assert_eq(sequential.width(), 5)
-  assert_eq(sequential.height(), 1)
+  assert_true(sequential.width() == 5)
+  assert_true(sequential.height() == 1)
   assert_cell(sequential, 0, 0, Some(a))
   assert_cell(sequential, 0, 1, Some(b))
   assert_cell(sequential, 0, 2, Some(c))
@@ -146,8 +146,8 @@ test "diagram grid handles generic sequential and grouped layouts" {
   let sequential_t = diagram_grid(chain, hints=sequential_hints(transpose=true)) catch {
     _ => fail("sequential-grid-t")
   }
-  assert_eq(sequential_t.width(), 1)
-  assert_eq(sequential_t.height(), 5)
+  assert_true(sequential_t.width() == 1)
+  assert_true(sequential_t.height() == 5)
   assert_cell(sequential_t, 0, 0, Some(a))
   assert_cell(sequential_t, 1, 0, Some(b))
   assert_cell(sequential_t, 4, 0, Some(e))
@@ -173,8 +173,8 @@ test "diagram grid handles generic sequential and grouped layouts" {
   ]) catch {
     _ => fail("pullback-grouped")
   }
-  assert_eq(pullback_grouped.width(), 3)
-  assert_eq(pullback_grouped.height(), 2)
+  assert_true(pullback_grouped.width() == 3)
+  assert_true(pullback_grouped.height() == 2)
   assert_cell(pullback_grouped, 0, 0, Some(e))
   assert_cell(pullback_grouped, 0, 1, Some(a))
   assert_cell(pullback_grouped, 0, 2, Some(b))
@@ -189,8 +189,8 @@ test "diagram grid handles generic sequential and grouped layouts" {
   ) catch {
     _ => fail("disconnected-grid")
   }
-  assert_eq(disconnected.width(), 4)
-  assert_eq(disconnected.height(), 1)
+  assert_true(disconnected.width() == 4)
+  assert_true(disconnected.height() == 1)
   assert_cell(disconnected, 0, 0, Some(a))
   assert_cell(disconnected, 0, 1, Some(b))
   assert_cell(disconnected, 0, 2, Some(c))
@@ -210,7 +210,7 @@ test "arrow string description matches xy-pic encoding" {
     "_",
     "f",
   )
-  assert_eq(astr.to_string(), "\\ar[dr]_{f}")
+  assert_true(astr.to_string() == "\\ar[dr]_{f}")
 
   let curved = arrow_string_description(
     "cm",
@@ -223,7 +223,7 @@ test "arrow string description matches xy-pic encoding" {
     "_",
     "f",
   )
-  assert_eq(curved.to_string(), "\\ar@/^12cm/[dr]_{f}")
+  assert_true(curved.to_string() == "\\ar@/^12cm/[dr]_{f}")
 
   let looped = arrow_string_description(
     "cm",
@@ -236,10 +236,10 @@ test "arrow string description matches xy-pic encoding" {
     "_",
     "f",
   )
-  assert_eq(looped.to_string(), "\\ar@(r,u)[dr]_{f}")
+  assert_true(looped.to_string() == "\\ar@(r,u)[dr]_{f}")
 
   looped.set_arrow_style("{-->}")
-  assert_eq(looped.to_string(), "\\ar@(r,u)@{-->}[dr]_{f}")
+  assert_true(looped.to_string() == "\\ar@(r,u)@{-->}[dr]_{f}")
 
   let styled = arrow_string_description(
     "cm",
@@ -253,7 +253,7 @@ test "arrow string description matches xy-pic encoding" {
     "f",
   )
   styled.set_arrow_style("{-->}")
-  assert_eq(styled.to_string(), "\\ar@/_12cm/@{-->}[dr]_{f}")
+  assert_true(styled.to_string() == "\\ar@/_12cm/@{-->}[dr]_{f}")
 }
 
 ///|
@@ -275,8 +275,8 @@ test "xypic drawer handles line triangle and curves" {
     _ => fail("line-grid")
   }
   let drawer = xypic_diagram_drawer()
-  assert_eq(
-    drawer.draw(line, line_grid),
+  assert_true(
+    drawer.draw(line, line_grid) ==
     "\\xymatrix{\n" +
     "A \\ar[r]^{f} & B \\ar[r]^{g} & C \\ar[r]^{h} & D \\ar[r]^{i} & E \n" +
     "}\n",
@@ -293,16 +293,16 @@ test "xypic drawer handles line triangle and curves" {
   let triangle_grid = diagram_grid(triangle, hints=transpose_hints()) catch {
     _ => fail("triangle-grid")
   }
-  assert_eq(
-    drawer.draw(triangle, triangle_grid),
+  assert_true(
+    drawer.draw(triangle, triangle_grid) ==
     "\\xymatrix{\n" +
     "A \\ar[r]^{g\\circ f} \\ar[d]_{f} & C \\\\\n" +
     "B \\ar[ru]_{g} & \n" +
     "}\n",
   )
 
-  assert_eq(
-    drawer.draw(triangle, triangle_grid, masked=[g]),
+  assert_true(
+    drawer.draw(triangle, triangle_grid, masked=[g]) ==
     "\\xymatrix{\n" +
     "A \\ar[r]^{g\\circ f} \\ar[d]_{f} & C \\\\\n" +
     "B & \n" +
@@ -313,8 +313,8 @@ test "xypic drawer handles line triangle and curves" {
     astr.set_label("\\exists !" + astr.label)
     astr.set_arrow_style("{-->}")
   })
-  assert_eq(
-    drawer.draw(triangle, triangle_grid),
+  assert_true(
+    drawer.draw(triangle, triangle_grid) ==
     "\\xymatrix{\n" +
     "A \\ar@{-->}[r]^{\\exists !g\\circ f} \\ar[d]_{f} & C \\\\\n" +
     "B \\ar[ru]_{g} & \n" +
@@ -324,8 +324,8 @@ test "xypic drawer handles line triangle and curves" {
   drawer.set_default_arrow_formatter(
     Some(astr => astr.set_label_displacement("(0.45)")),
   )
-  assert_eq(
-    drawer.draw(triangle, triangle_grid),
+  assert_true(
+    drawer.draw(triangle, triangle_grid) ==
     "\\xymatrix{\n" +
     "A \\ar@{-->}[r]^(0.45){\\exists !g\\circ f} \\ar[d]_(0.45){f} & C \\\\\n" +
     "B \\ar[ru]_(0.45){g} & \n" +
@@ -339,8 +339,8 @@ test "xypic drawer handles line triangle and curves" {
   }
   let curved_grid = diagram_grid(curved) catch { _ => fail("curved-grid") }
   let curved_drawer = xypic_diagram_drawer()
-  assert_eq(
-    curved_drawer.draw(curved, curved_grid),
+  assert_true(
+    curved_drawer.draw(curved, curved_grid) ==
     "\\xymatrix{\n" +
     "A \\ar[r]_{f} & B \\ar[d]^{g} & D \\ar[l]^{k} \\ar@/_3mm/[ll]_{h} \\\\\n" +
     "& C & \n" +
@@ -366,5 +366,5 @@ test "xypic draw helper delegates to diagram grid and drawer" {
   let via_helper = xypic_draw_diagram(diag) catch { _ => fail("helper") }
   let grid = diagram_grid(diag) catch { _ => fail("grid") }
   let drawer = xypic_diagram_drawer()
-  assert_eq(via_helper, drawer.draw(diag, grid))
+  assert_true(via_helper == drawer.draw(diag, grid))
 }

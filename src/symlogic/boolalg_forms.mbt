@@ -215,7 +215,7 @@ fn to_nnf_inner(expr : BoolExpr, simplify : Bool, form : String) -> BoolExpr {
     BoolExpr::And(args) => {
       let mapped = args.map(a => to_nnf_inner(a, simplify, form))
       if simplify {
-        let seen : Map[BoolExpr, Bool] = Map::new()
+        let seen : Map[BoolExpr, Bool] = Map([])
         for arg in mapped {
           let comp = bool_not(arg)
           if seen.contains(comp) {
@@ -229,7 +229,7 @@ fn to_nnf_inner(expr : BoolExpr, simplify : Bool, form : String) -> BoolExpr {
     BoolExpr::Or(args) => {
       let mapped = args.map(a => to_nnf_inner(a, simplify, form))
       if simplify {
-        let seen : Map[BoolExpr, Bool] = Map::new()
+        let seen : Map[BoolExpr, Bool] = Map([])
         for arg in mapped {
           let comp = bool_not(arg)
           if seen.contains(comp) {
@@ -315,7 +315,7 @@ pub fn is_nnf(expr : BoolExpr, simplified? : Bool = true) -> Bool {
     match current {
       BoolExpr::And(args) | BoolExpr::Or(args) => {
         if simplified {
-          let seen : Map[BoolExpr, Bool] = Map::new()
+          let seen : Map[BoolExpr, Bool] = Map([])
           for arg in args {
             let comp = bool_not(arg)
             if seen.contains(comp) {

@@ -25,7 +25,7 @@ test "symunify rewrite handles simple and moderate cases" {
     @symcore.raw_function("Basic", [rp(), @symcore.int(2)]),
     variables=[rp()],
   )
-  inspect(
+  debug_inspect(
     rl
     .apply(@symcore.raw_function("Basic", [@symcore.int(3), @symcore.int(1)]))
     .map(@symprint.pretty_string),
@@ -37,7 +37,7 @@ test "symunify rewrite handles simple and moderate cases" {
     @symcore.raw_pow(rp(), @symcore.int(3)),
     variables=[rp()],
   )
-  inspect(
+  debug_inspect(
     pow_rule
     .apply(@symcore.raw_pow(rx(), @symcore.int(2)))
     .map(@symprint.pretty_string),
@@ -52,7 +52,7 @@ test "symunify rewrite handles simple and moderate cases" {
     @symcore.raw_pow(@symcore.raw_mul([rp(), rq()]), @symcore.int(4)),
     variables=[rp(), rq()],
   )
-  inspect(
+  debug_inspect(
     moderate
     .apply(
       @symcore.raw_add([
@@ -80,7 +80,7 @@ test "symunify rewrite handles conditions and assumptions" {
     },
   )
   inspect(simple.apply(@symcore.int(15)).length(), content="0")
-  inspect(
+  debug_inspect(
     simple.apply(@symcore.int(5)).map(@symprint.pretty_string),
     content="[\"1 + 5\"]",
   )
@@ -93,7 +93,7 @@ test "symunify rewrite handles conditions and assumptions" {
   )
   let a = @symcore.Expr::Symbol("a")
   let b = @symcore.Expr::Symbol("b")
-  inspect(
+  debug_inspect(
     assume_rule
     .apply(@symcore.raw_add([a, b]), assumptions=@symassume.q_integer(b))
     .map(@symprint.pretty_string),

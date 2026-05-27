@@ -8,7 +8,7 @@ test "sqf_norm frontdoor: univariate algebraic extension shift" {
     (x ^ int(2)) - int(2),
   )
   let (shifts, shifted, norm) = sqf_norm(poly)
-  inspect(shifts, content="[1]")
+  debug_inspect(shifts, content="[1]")
   inspect(
     shifted,
     content=(

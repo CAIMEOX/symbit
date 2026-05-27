@@ -3,12 +3,12 @@
 /// `sympy.physics.vector.frame`.
 
 ///|
-pub impl Eq for ReferenceFrame with equal(self, other : ReferenceFrame) -> Bool {
+pub impl Eq for ReferenceFrame with fn equal(self, other : ReferenceFrame) -> Bool {
   self.index_ == other.index_
 }
 
 ///|
-pub impl Eq for ReferenceFrame with not_equal(self, other : ReferenceFrame) -> Bool {
+pub impl Eq for ReferenceFrame with fn not_equal(self, other : ReferenceFrame) -> Bool {
   self.index_ != other.index_
 }
 
@@ -234,7 +234,7 @@ fn set_direct_ang_vel(
 
 ///|
 fn parse_rotation_order(order : String) -> Array[Int] raise VectorError {
-  let trimmed = order.trim().to_string()
+  let trimmed = order.trim().to_owned()
   if trimmed.length() != 3 {
     raise VectorError::ValueError("rotation order must have length 3")
   }

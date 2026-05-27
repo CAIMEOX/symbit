@@ -110,7 +110,7 @@ test "numberfields utilities: fundamental discriminant extraction" {
     2,
   )
   match invalid {
-    Ok(value) => fail("expected invalid discriminant error, got \{value}")
+    Ok(_) => fail("expected invalid discriminant error")
     Err(_) => ()
   }
 }
@@ -208,4 +208,35 @@ test "numberfields frontdoors: make_mod_elt preserves module flavor" {
   assert_true(bad_denom is Err(PolyError::DivisionByZero))
   let bad_rank : Result[ModuleElement, PolyError] = try? make_mod_elt(pb, [1N])
   assert_true(bad_rank is Err(PolyError::DomainMismatch))
+}
+
+///|
+test "numberfields frontdoors: find_min_poly for quadratic power basis elements" {
+  let x = Expr::Symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let pb = numberfield_power_basis(b.from_expr((x ^ int(2)) - int(2)))
+  let theta = make_mod_elt(pb, [0N, 1N]) catch { _ => fail("theta") }
+  inspect(
+    @symprint.pretty_string(find_min_poly(theta, Domain::QQ).to_expr()),
+    content="x**2 - 2",
+  )
+  let shifted = make_mod_elt(pb, [1N, 1N]) catch { _ => fail("shifted") }
+  inspect(
+    @symprint.pretty_string(find_min_poly(shifted, Domain::QQ).to_expr()),
+    content="x**2 - 2*x - 1",
+  )
+  let scaled = make_mod_elt(pb, [1N, 2N], denom=3N) catch {
+    _ => fail("scaled")
+  }
+  inspect(
+    @symprint.pretty_string(find_min_poly(scaled, Domain::QQ).to_expr()),
+    content="x**2 - 2*x - 7",
+  )
+  let constant = make_mod_elt(pb, [2N, 0N], denom=3N) catch {
+    _ => fail("constant")
+  }
+  inspect(
+    @symprint.pretty_string(find_min_poly(constant, Domain::QQ).to_expr()),
+    content="x - 2",
+  )
 }

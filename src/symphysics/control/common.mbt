@@ -468,7 +468,7 @@ fn control_trim_leading_zeros(coeffs : Array[Double]) -> Array[Double] {
   while idx < coeffs.length() - 1 && coeffs[idx].abs() <= 1.0e-16 {
     idx += 1
   }
-  coeffs[idx:].to_array()
+  coeffs[idx:].to_owned()
 }
 
 ///|

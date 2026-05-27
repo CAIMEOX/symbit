@@ -1,28 +1,28 @@
 ///|
 test "dps precision helpers follow mpmath formulas" {
-  assert_eq(dps_to_prec(15), 53)
-  assert_eq(prec_to_dps(53), 15)
-  assert_eq(repr_dps(53), 17)
-  assert_eq(giant_steps(50, 1000), [66, 128, 253, 502, 1000])
+  assert_true(dps_to_prec(15) == 53)
+  assert_true(prec_to_dps(53) == 15)
+  assert_true(repr_dps(53) == 17)
+  assert_true(giant_steps(50, 1000) == [66, 128, 253, 502, 1000])
 }
 
 ///|
 test "rational and float conversions roundtrip" {
   let three_eighths = from_rational(3N, 8N, 80)
-  assert_eq(to_rational(three_eighths), (3N, 8N))
+  assert_true(to_rational(three_eighths) == (3N, 8N))
   let eighth = from_float(0.125)
-  assert_eq(to_rational(eighth), (1N, 8N))
-  assert_eq(to_float(eighth), 0.125)
+  assert_true(to_rational(eighth) == (1N, 8N))
+  assert_true(to_float(eighth) == 0.125)
 }
 
 ///|
 test "to_int honors directed rounding" {
   let x = from_rational(7N, 2N, 80)
-  assert_eq(to_int(x), 3N)
-  assert_eq(to_int(x, rnd=round_ceiling), 4N)
+  assert_true(to_int(x) == 3N)
+  assert_true(to_int(x, rnd=round_ceiling) == 4N)
   let y = from_rational(-7N, 2N, 80)
-  assert_eq(to_int(y), -3N)
-  assert_eq(to_int(y, rnd=round_floor), -4N)
+  assert_true(to_int(y) == -3N)
+  assert_true(to_int(y, rnd=round_floor) == -4N)
 }
 
 ///|
@@ -51,7 +51,7 @@ test "context wrappers expose root finding and integration" {
   )
 
   let area = quadts(x => x, from_int(0), from_int(1), prec=100)
-  assert_eq(to_rational(area), (1N, 2N))
+  assert_true(to_rational(area) == (1N, 2N))
 }
 
 ///|
@@ -78,16 +78,16 @@ test "compat surface exposes sqrt factorial and matrix helpers" {
   )
 
   let fac5 = fac(from_int(5), prec=120) catch { _ => fail("fac") }
-  assert_eq(to_rational(fac5), (120N, 1N))
+  assert_true(to_rational(fac5) == (120N, 1N))
 
   let (ch, sh) = mpf_cosh_sinh(fzero, 80, round_nearest)
-  assert_eq(ch, fone)
-  assert_eq(sh, fzero)
+  assert_true(ch == fone)
+  assert_true(sh == fzero)
 
   let mat = _matrix([[from_int(1), from_int(2)], [from_int(3), from_int(4)]]) catch {
     _ => fail("matrix")
   }
-  inspect(
+  debug_inspect(
     mat
     .tolist()
     .map(row => row.map(x => to_rational(x) catch { _ => fail("rat") })),

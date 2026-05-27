@@ -60,7 +60,7 @@ pub fn bool_and(args : Array[BoolExpr]) -> BoolExpr {
     return BoolExpr::False
   }
   let uniq : Array[BoolExpr] = Array::new()
-  let seen : Map[BoolExpr, Bool] = Map::new()
+  let seen : Map[BoolExpr, Bool] = Map([])
   for arg in flat {
     match seen.get(arg) {
       Some(_) => ()
@@ -100,7 +100,7 @@ pub fn bool_or(args : Array[BoolExpr]) -> BoolExpr {
     return BoolExpr::True
   }
   let uniq : Array[BoolExpr] = Array::new()
-  let seen : Map[BoolExpr, Bool] = Map::new()
+  let seen : Map[BoolExpr, Bool] = Map([])
   for arg in flat {
     match seen.get(arg) {
       Some(_) => ()
@@ -146,7 +146,7 @@ fn xor_internal(args : Array[BoolExpr], keep_true : Bool) -> BoolExpr {
       _ => flat.push(arg)
     }
   }
-  let toggled : Map[BoolExpr, Bool] = Map::new()
+  let toggled : Map[BoolExpr, Bool] = Map([])
   for arg in flat {
     if toggled.contains(arg) {
       toggled.remove(arg)
@@ -207,7 +207,7 @@ pub fn bool_equivalent(args : Array[BoolExpr]) -> BoolExpr {
   if args.length() <= 1 {
     return BoolExpr::True
   }
-  let uniq_map : Map[BoolExpr, Bool] = Map::new()
+  let uniq_map : Map[BoolExpr, Bool] = Map([])
   for arg in args {
     uniq_map[arg] = true
   }
@@ -308,12 +308,12 @@ pub fn to_string(expr : BoolExpr) -> String {
 }
 
 ///|
-impl Show for BoolExpr with to_string(self) {
+impl Show for BoolExpr with fn to_string(self) {
   to_string(self)
 }
 
 ///|
-impl Show for BoolExpr with output(self, logger) {
+impl Show for BoolExpr with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
@@ -439,29 +439,29 @@ fn compare_bool(a : BoolExpr, b : BoolExpr) -> Int {
 }
 
 ///|
-pub impl Compare for BoolExpr with compare(self, other : BoolExpr) -> Int {
+pub impl Compare for BoolExpr with fn compare(self, other : BoolExpr) -> Int {
   compare_bool(self, other)
 }
 
 ///|
-pub impl Eq for BoolExpr with equal(self, other : BoolExpr) -> Bool {
+pub impl Eq for BoolExpr with fn equal(self, other : BoolExpr) -> Bool {
   compare_bool(self, other) == 0
 }
 
 ///|
-pub impl Eq for BoolExpr with not_equal(self, other : BoolExpr) -> Bool {
+pub impl Eq for BoolExpr with fn not_equal(self, other : BoolExpr) -> Bool {
   !self.equal(other)
 }
 
 ///|
-pub impl Hash for BoolExpr with hash(self) -> Int {
+pub impl Hash for BoolExpr with fn hash(self) -> Int {
   let hasher = Hasher::new()
   self.hash_combine(hasher)
   hasher.finalize()
 }
 
 ///|
-pub impl Hash for BoolExpr with hash_combine(self, hasher : Hasher) -> Unit {
+pub impl Hash for BoolExpr with fn hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_int(variant_rank(self))
   match self {
     BoolExpr::Symbol(name) => hasher.combine_string(name)

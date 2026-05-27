@@ -26,11 +26,11 @@ fn parse_reflections(weylelt : String) -> Array[Int] {
     return out
   }
   for part in weylelt.split("*") {
-    let token = part.to_string()
+    let token = part.to_owned()
     if token.length() < 2 {
       continue
     }
-    let num_str = token[1:token.length()].to_string()
+    let num_str = token[1:token.length()].to_owned()
     out.push(@string.parse_int(num_str, base=10) catch { _ => continue })
   }
   out

@@ -117,7 +117,7 @@ pub fn bool_map(bool1 : BoolExpr, bool2 : BoolExpr) -> BoolMapResult? {
   let names_b = symbol_names_from_exprs(vars_b)
   let perms = permutations_strings(names_b)
   for perm in perms {
-    let mapping : Map[String, BoolExpr] = Map::new()
+    let mapping : Map[String, BoolExpr] = Map([])
     for i in 0..<names_a.length() {
       mapping[names_a[i]] = BoolExpr::Symbol(perm[i])
     }
@@ -139,9 +139,9 @@ pub fn simplify_univariate(expr : BoolExpr) -> BoolExpr {
     BoolExpr::Symbol(n) => n
     _ => return expr
   }
-  let env0 : Map[String, Bool] = Map::new()
+  let env0 : Map[String, Bool] = Map([])
   env0[name] = false
-  let env1 : Map[String, Bool] = Map::new()
+  let env1 : Map[String, Bool] = Map([])
   env1[name] = true
   let v0 = bool_eval(expr, env0)
   let v1 = bool_eval(expr, env1)

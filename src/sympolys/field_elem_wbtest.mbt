@@ -81,7 +81,8 @@ fn fe_wb_minpoly(
 
 ///|
 test "field_elem wb: helper branches and domain mismatches" {
-  assert_eq(fe_trim([], 5).to_string(), "[0]")
+  let trimmed = fe_trim([], 5).map(item => item.to_string()).join(", ")
+  inspect("[\{trimmed}]", content="[0]")
   inspect(fe_mod_inv_int(2, 4), content="0")
 
   let pow_neg = fe_pow(
@@ -232,7 +233,7 @@ test "field_elem wb: algebraic helpers and string formatting branches" {
     fe_wb_qq(1, 1),
     fe_wb_qq(1, 1),
   ])
-  assert_eq(div_short.0.length(), 1)
+  assert_true(div_short.0.length() == 1)
 
   let inv_zero : Result[Array[FieldElem], PolyError] = try? fe_alg_poly_inv(
     [fe_wb_qq(0, 1)],
@@ -271,7 +272,7 @@ test "field_elem wb: algebraic helpers and string formatting branches" {
 ///|
 test "field_elem wb: remaining branch sweep" {
   let poly_add = fe_poly_add([1, 2], [3], 5)
-  assert_eq(poly_add.length(), 2)
+  assert_true(poly_add.length() == 2)
 
   let qpow = fe_pow(FieldElem::QQ(@symnum.BigRational::from_int(2)), 3)
   inspect(qpow, content="8")
@@ -326,13 +327,13 @@ test "field_elem wb: remaining branch sweep" {
   assert_true(!fe_is_positive(alg_sign_probe))
 
   let pm_edge = fe_poly_mod([1, 0], [1], 1)
-  assert_eq(pm_edge.length(), 0)
+  assert_true(pm_edge.length() == 0)
   let mp_const = fe_wb_minpoly("a", @symcore.int(1), Domain::QQ)
   let alg_mod_edge = fe_alg_poly_mod(
     [FieldElem::QQ(@symnum.BigRational::zero())],
     mp_const,
   )
-  assert_eq(alg_mod_edge.length(), 0)
+  assert_true(alg_mod_edge.length() == 0)
 
   inspect(
     fe_add(
@@ -434,7 +435,7 @@ test "field_elem wb: remaining branch sweep" {
   ).to_string()
   inspect(alg_str, content="1 + a")
 
-  assert_eq(fe_alg_poly_trim([]).length(), 1)
+  assert_true(fe_alg_poly_trim([]).length() == 1)
   let padded = fe_alg_poly_add([fe_wb_qq(1, 1)], [
     fe_wb_qq(2, 1),
     fe_wb_qq(3, 1),

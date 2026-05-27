@@ -23,7 +23,7 @@ fn deriv_univar(poly : Poly) -> Poly raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate
   }
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for m, c in poly.coeffs {
     let exp = m.exps[0]
     if exp == 0 {
@@ -45,7 +45,7 @@ fn pth_root_univar_gf(poly : Poly, p : Int) -> Poly raise PolyError {
   if poly.is_zero() {
     return Poly::zero(poly.gens, poly.domain)
   }
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for m, c in poly.coeffs {
     let exp = m.exps[0]
     if exp % p != 0 {
@@ -549,7 +549,7 @@ fn rational_root_candidates(
     }
     return candidates
   }
-  let seen : Map[@symnum.BigRational, Bool] = Map::new()
+  let seen : Map[@symnum.BigRational, Bool] = Map([])
   if has_zero {
     push_unique_rational(candidates, seen, @symnum.BigRational::zero())
   }
@@ -702,7 +702,7 @@ fn factor_linear_rationals(poly : Poly) -> Array[Poly] raise PolyError {
 fn normalize_poly_mod(poly : Poly) -> Poly raise PolyError {
   match poly.domain {
     Domain::GF(p) => {
-      let coeffs : Map[Monomial, FieldElem] = Map::new()
+      let coeffs : Map[Monomial, FieldElem] = Map([])
       for m, c in poly.coeffs {
         if fe_is_zero(c) {
           continue
@@ -966,7 +966,7 @@ fn poly_const_from_fe(
     return Poly::zero(gens, domain)
   }
   let mono = monomial_one(gens.length())
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   add_term(coeffs, mono, coeff, domain)
   Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
 }
@@ -1088,7 +1088,7 @@ fn algext_poly_to_t_coeffs(
   }
   let buckets : Array[Map[Monomial, FieldElem]] = Array::new()
   for _ in 0..<=max_j {
-    buckets.push(Map::new())
+    buckets.push(Map([]))
   }
   for m, c in poly.coeffs {
     let exp_x = m.exps[0]
@@ -1129,7 +1129,7 @@ fn minpoly_to_t_coeffs(
     let exp_t = m.exps[0]
     let mono = monomial_one(1)
     mono.exps.set(0, 0)
-    let coeffs_map : Map[Monomial, FieldElem] = Map::new()
+    let coeffs_map : Map[Monomial, FieldElem] = Map([])
     add_term(coeffs_map, mono, c, base)
     coeffs.set(exp_t, Poly::{
       coeffs: coeffs_map,
@@ -1241,7 +1241,7 @@ fn lift_base_poly_to_algext(
   poly : Poly,
   domain : Domain,
 ) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for m, c in poly.coeffs {
     let r = fe_expect_rational(c)
     let lifted = fe_from_rational(r, domain)

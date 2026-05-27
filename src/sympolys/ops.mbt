@@ -406,7 +406,7 @@ fn poly_from_const_coeff(
     return Poly::zero(gens, domain)
   }
   let mono = monomial_one(gens.length())
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   add_term(coeffs, mono, coeff, domain)
   Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
 }

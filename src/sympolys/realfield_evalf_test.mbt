@@ -18,8 +18,8 @@ test "RR evalf_expr returns Expr::Float with requested precision" {
   }
   match evaled {
     @symcore.Expr::Float(f) => {
-      assert_eq(f.precision(), 90)
-      assert_eq(f.to_rational(), (1N, 2N))
+      assert_true(f.precision() == 90)
+      assert_true(f.to_rational() == (1N, 2N))
     }
     _ => fail("expected float")
   }

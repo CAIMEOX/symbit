@@ -31,7 +31,7 @@ pub fn are_similar(
 
 ///|
 pub fn ordered_points(points : Array[Point]) -> Array[Point] {
-  let out = points[:].to_array()
+  let out = points[:].to_owned()
   let n = out.length()
   for i in 0..<n {
     for j in (i + 1)..<n {
@@ -67,7 +67,7 @@ fn point_order_cmp(lhs : Point, rhs : Point) -> Int raise GeometryError {
 
 ///|
 fn sort_points_lex(points : Array[Point]) -> Array[Point] raise GeometryError {
-  let out = points[:].to_array()
+  let out = points[:].to_owned()
   let n = out.length()
   for i in 0..<n {
     for j in (i + 1)..<n {
@@ -350,7 +350,7 @@ pub fn farthest_points(
 fn sort_point_pairs(
   pairs : Array[(Point, Point)],
 ) -> Array[(Point, Point)] raise GeometryError {
-  let out = pairs[:].to_array()
+  let out = pairs[:].to_owned()
   let n = out.length()
   for i in 0..<n {
     for j in (i + 1)..<n {

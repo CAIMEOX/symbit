@@ -4,9 +4,9 @@ test "complex float constructors preserve rational parts" {
   let imag = @symnum.BigRational::from_ints(-5, 4) catch { _ => fail("rat") }
   let value = ComplexFloat::from_exact_parts(real, imag, prec=95)
   let parts = value.to_rational_parts() catch { _ => fail("rational parts") }
-  assert_eq(parts.0, (3N, 2N))
-  assert_eq(parts.1, (-5N, 4N))
-  assert_eq(value.precision(), 95)
+  assert_true(parts.0 == (3N, 2N))
+  assert_true(parts.1 == (-5N, 4N))
+  assert_true(value.precision() == 95)
 }
 
 ///|

@@ -32,7 +32,7 @@ fn collect_symbol_names(expr : BoolExpr, seen : Map[String, BoolExpr]) -> Unit {
 
 ///|
 pub fn symbols_in(expr : BoolExpr) -> Array[BoolExpr] {
-  let seen : Map[String, BoolExpr] = Map::new()
+  let seen : Map[String, BoolExpr] = Map([])
   collect_symbol_names(expr, seen)
   let names : Array[String] = Array::new()
   for name, _ in seen {

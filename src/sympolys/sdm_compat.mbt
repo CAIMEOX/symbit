@@ -1171,7 +1171,7 @@ pub fn SDM::lll_transform(
 ///   serialization.
 pub fn SDM::to_string(self : SDM) -> String raise PolyError {
   let entries = self.to_sparse_entries()
-  let by_row : Map[Int, Array[(Int, FieldElem)]] = Map::new()
+  let by_row : Map[Int, Array[(Int, FieldElem)]] = Map([])
   for e in entries {
     let (r, c, v) = e
     match by_row.get(r) {

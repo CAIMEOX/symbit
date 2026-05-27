@@ -230,7 +230,7 @@ pub fn symmetrize(
   let mut sym_expr = sym_poly.to_expr()
   let rem_expr = rem_poly.to_expr()
   let mapping : Array[(Expr, Expr)] = Array::new()
-  let env : Map[String, Expr] = Map::new()
+  let env : Map[String, Expr] = Map([])
   let limit = if sym_names.length() < elem_polys.length() {
     sym_names.length()
   } else {
@@ -263,7 +263,7 @@ pub fn symmetrize_list(
   symbols? : Array[String] = [],
 ) -> SymmetrizeListResult raise PolyError {
   let gens_final = if gens.is_empty() {
-    let seen : Map[String, Bool] = Map::new()
+    let seen : Map[String, Bool] = Map([])
     for expr in exprs {
       collect_symbols(expr, seen)
     }
@@ -482,7 +482,7 @@ fn poly_from_coeffs(
   gen : String,
   domain : Domain,
 ) -> Poly raise PolyError {
-  let map : Map[Monomial, FieldElem] = Map::new()
+  let map : Map[Monomial, FieldElem] = Map([])
   for i in 0..<coeffs.length() {
     let coeff = coeffs[i]
     if coeff.is_zero() {
@@ -498,7 +498,7 @@ fn poly_from_coeffs(
 
 ///|
 fn infer_gens_expr(expr : Expr) -> Array[String] {
-  let seen : Map[String, Bool] = Map::new()
+  let seen : Map[String, Bool] = Map([])
   collect_symbols_expr_pf(expr, seen)
   let names : Array[String] = Array::new()
   for name, _ in seen {
@@ -553,7 +553,7 @@ fn elementary_symmetric_polys(
   let n = gens.length()
   let out : Array[Poly] = Array::new()
   for k in 1..<=n {
-    let coeffs : Map[Monomial, FieldElem] = Map::new()
+    let coeffs : Map[Monomial, FieldElem] = Map([])
     build_sym_terms(coeffs, n, k, 0, [], domain)
     out.push(Poly::{ coeffs, gens, domain, order: TermOrder::Lex })
   }
@@ -779,7 +779,7 @@ fn build_sym_expr_terms(
 
 ///|
 fn field_elem_to_expr(fe : FieldElem, domain : Domain) -> Expr raise PolyError {
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   let mono = monomial_one(1)
   add_term(coeffs, mono, fe, domain)
   let poly = Poly::{ coeffs, gens: ["x"], domain, order: TermOrder::Lex }

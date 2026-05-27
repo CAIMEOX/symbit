@@ -47,7 +47,7 @@ pub fn Curve::ambient_dimension(self : Curve) -> Int {
 
 ///|
 pub fn Curve::functions(self : Curve) -> Array[Expr] {
-  self.functions_[:].to_array()
+  self.functions_[:].to_owned()
 }
 
 ///|

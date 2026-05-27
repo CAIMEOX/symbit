@@ -37,7 +37,7 @@ fn db_wb_add_pair(
 ///|
 test "densebasic wb: dense extraction and coefficient edge branches" {
   let c0 = dense_to_coeffs(DensePoly::Coef(db_wb_fe(0)))
-  assert_eq(c0.length(), 0)
+  assert_true(c0.length() == 0)
 
   let c1 = dense_to_coeffs(DensePoly::Coef(db_wb_fe(3)))
   assert_true(c1.length() == 1 && c1[0].to_string() == "3")
@@ -90,11 +90,11 @@ test "densebasic wb: dpp conversion helper branches" {
   let nonzero = db_wb_const_poly(2, gens, Domain::QQ)
   let zero = Poly::zero(gens, Domain::QQ)
 
-  let empty : Map[Monomial, Poly] = Map::new()
+  let empty : Map[Monomial, Poly] = Map([])
   let u0_empty = dpp_from_dict(empty, 0, gens, Domain::QQ)
   assert_true(dpp_zero_p(u0_empty))
 
-  let bad_u0 : Map[Monomial, Poly] = Map::new()
+  let bad_u0 : Map[Monomial, Poly] = Map([])
   bad_u0.set(Monomial::{ exps: [1, 0] }, nonzero)
   let bad_u0_res : Result[DensePolyPoly, PolyError] = try? dpp_from_dict(
     bad_u0,
@@ -107,7 +107,7 @@ test "densebasic wb: dpp conversion helper branches" {
   let u1_empty = dpp_from_dict(empty, 1, gens, Domain::QQ)
   assert_true(dpp_zero_p(u1_empty))
 
-  let bad_u1 : Map[Monomial, Poly] = Map::new()
+  let bad_u1 : Map[Monomial, Poly] = Map([])
   bad_u1.set(Monomial::{ exps: [2] }, nonzero)
   let bad_u1_res : Result[DensePolyPoly, PolyError] = try? dpp_from_dict(
     bad_u1,
@@ -117,13 +117,13 @@ test "densebasic wb: dpp conversion helper branches" {
   )
   assert_true(bad_u1_res is Err(PolyError::DomainMismatch))
 
-  let only_zero : Map[Monomial, Poly] = Map::new()
+  let only_zero : Map[Monomial, Poly] = Map([])
   only_zero.set(Monomial::{ exps: [2, 1] }, zero)
   let only_zero_dpp = dpp_from_dict(only_zero, 1, gens, Domain::QQ)
   assert_true(dpp_zero_p(only_zero_dpp))
 
   let td0 = dpp_to_dict(DensePolyPoly::Coef(nonzero), 0)
-  assert_eq(td0.length(), 1)
+  assert_true(td0.length() == 1)
 
   let bad_nested : DensePolyPoly = DensePolyPoly::Poly([DensePolyPoly::Poly([])])
   let bad_nested_res : Result[Map[Monomial, Poly], PolyError] = try? dpp_to_dict(
@@ -132,7 +132,7 @@ test "densebasic wb: dpp conversion helper branches" {
   assert_true(bad_nested_res is Err(PolyError::NonPolynomial))
 
   let td1 = dpp_to_dict(DensePolyPoly::Coef(nonzero), 1)
-  assert_eq(td1.length(), 1)
+  assert_true(td1.length() == 1)
 }
 
 ///|
@@ -163,7 +163,7 @@ test "densebasic wb: inject/eject, terms, pairwise apply, slice/random edges" {
     Domain::QQ,
     front=true,
   )
-  assert_eq(w_front, 2)
+  assert_true(w_front == 2)
   let ejected = dmp_eject(
     inj_front,
     w_front,
@@ -172,7 +172,7 @@ test "densebasic wb: inject/eject, terms, pairwise apply, slice/random edges" {
     front=true,
   )
   let ejected_dict = dpp_to_dict(ejected, 0)
-  assert_eq(ejected_dict.length(), 1)
+  assert_true(ejected_dict.length() == 1)
 
   let bad_eject : Result[DensePolyPoly, PolyError] = try? dmp_eject(
     db_wb_poly([]),
@@ -206,7 +206,7 @@ test "densebasic wb: inject/eject, terms, pairwise apply, slice/random edges" {
     [],
     Domain::ZZ,
   )
-  assert_eq(ap1.length(), 3)
+  assert_true(ap1.length() == 3)
   let ap2 = dup_apply_pairs(
     [db_wb_fe(4)],
     [db_wb_fe(1), db_wb_fe(2), db_wb_fe(3)],
@@ -214,7 +214,7 @@ test "densebasic wb: inject/eject, terms, pairwise apply, slice/random edges" {
     [],
     Domain::ZZ,
   )
-  assert_eq(ap2.length(), 3)
+  assert_true(ap2.length() == 3)
 
   let da = dmp_apply_pairs(
     db_wb_poly([db_wb_coef(1), db_wb_coef(2)]),
@@ -228,7 +228,7 @@ test "densebasic wb: inject/eject, terms, pairwise apply, slice/random edges" {
   assert_true(da_dict.length() > 0)
 
   let s0 = dup_slice([db_wb_fe(0), db_wb_fe(0)], 2, 0, Domain::ZZ)
-  assert_eq(s0.length(), 0)
+  assert_true(s0.length() == 0)
   let s1 = dup_slice([db_wb_fe(1), db_wb_fe(2), db_wb_fe(3)], 1, 2, Domain::ZZ)
   assert_true(s1.length() > 0 && fe_is_zero(s1[s1.length() - 1]))
 
@@ -260,7 +260,7 @@ test "densebasic wb: inject/eject, terms, pairwise apply, slice/random edges" {
 test "densebasic wb: remaining branch sweep for deflate/inflate/dict/pairs helpers" {
   inspect(dup_LC([]), content="0")
   inspect(dup_TC([]), content="0")
-  assert_eq(dup_copy([]).length(), 0)
+  assert_true(dup_copy([]).length() == 0)
   inspect(dup_nth([], 0), content="0")
 
   let z_lc = dmp_LC(DensePoly::Poly([]))
@@ -277,9 +277,9 @@ test "densebasic wb: remaining branch sweep for deflate/inflate/dict/pairs helpe
     fail("dmp_reverse([]) should stay []")
   }
 
-  let empty_dict : Map[Monomial, FieldElem] = Map::new()
-  assert_eq(dup_from_dict(empty_dict, Domain::ZZ).length(), 0)
-  let bad_uni_dict : Map[Monomial, FieldElem] = Map::new()
+  let empty_dict : Map[Monomial, FieldElem] = Map([])
+  assert_true(dup_from_dict(empty_dict, Domain::ZZ).length() == 0)
+  let bad_uni_dict : Map[Monomial, FieldElem] = Map([])
   bad_uni_dict.set(Monomial::{ exps: [1, 0] }, db_wb_fe(1))
   let bad_uni_res : Result[Array[FieldElem], PolyError] = try? dup_from_dict(
     bad_uni_dict,
@@ -287,10 +287,10 @@ test "densebasic wb: remaining branch sweep for deflate/inflate/dict/pairs helpe
   )
   assert_true(bad_uni_res is Err(PolyError::DomainMismatch))
 
-  let empty_raw : Map[Int, FieldElem] = Map::new()
-  assert_eq(dup_from_raw_dict(empty_raw, Domain::ZZ).length(), 0)
+  let empty_raw : Map[Int, FieldElem] = Map([])
+  assert_true(dup_from_raw_dict(empty_raw, Domain::ZZ).length() == 0)
 
-  let bad_mv_dict : Map[Monomial, FieldElem] = Map::new()
+  let bad_mv_dict : Map[Monomial, FieldElem] = Map([])
   bad_mv_dict.set(Monomial::{ exps: [2] }, db_wb_fe(1))
   let bad_mv_res : Result[DensePoly, PolyError] = try? dmp_from_dict(
     bad_mv_dict,
@@ -300,10 +300,9 @@ test "densebasic wb: remaining branch sweep for deflate/inflate/dict/pairs helpe
   assert_true(bad_mv_res is Err(PolyError::DomainMismatch))
 
   let td_coef = dmp_to_dict(DensePoly::Coef(db_wb_fe(4)), 1, Domain::ZZ)
-  assert_eq(td_coef.length(), 1)
-  assert_eq(
-    dmp_to_raw_dict(DensePoly::Coef(db_wb_fe(3)), 1, Domain::ZZ).length(),
-    0,
+  assert_true(td_coef.length() == 1)
+  assert_true(
+    dmp_to_raw_dict(DensePoly::Coef(db_wb_fe(3)), 1, Domain::ZZ).length() == 0,
   )
 
   let sw_bad : Result[DensePoly, PolyError] = try? dmp_swap(
@@ -316,7 +315,7 @@ test "densebasic wb: remaining branch sweep for deflate/inflate/dict/pairs helpe
   assert_true(sw_bad is Err(PolyError::BadExponent))
   let sw_same = dmp_swap(db_wb_poly([db_wb_coef(1)]), 0, 0, 0, Domain::ZZ)
   let sw_same_coeffs = dense_to_coeffs(sw_same)
-  assert_eq(sw_same_coeffs.length(), 1)
+  assert_true(sw_same_coeffs.length() == 1)
 
   let perm_bad : Result[DensePoly, PolyError] = try? dmp_permute(
     db_wb_poly([db_wb_coef(1)]),
@@ -336,14 +335,14 @@ test "densebasic wb: remaining branch sweep for deflate/inflate/dict/pairs helpe
   assert_true(raised_bad is Err(PolyError::NotUnivariate))
 
   let (g0, _) = dup_deflate([db_wb_fe(2)], Domain::ZZ)
-  assert_eq(g0, 1)
+  assert_true(g0 == 1)
   let (dz_b, dz_poly) = dmp_deflate(dmp_zero(1), 1, Domain::ZZ)
   assert_true(dz_b.length() == 2 && dmp_zero_p(dz_poly, 1))
 
   let (md_empty_m, md_empty_out) = dup_multi_deflate([], Domain::ZZ)
   assert_true(md_empty_m == 1 && md_empty_out.length() == 0)
   let (md_const_m, _) = dup_multi_deflate([[db_wb_fe(5)]], Domain::ZZ)
-  assert_eq(md_const_m, 1)
+  assert_true(md_const_m == 1)
 
   let dmd_empty = dmp_multi_deflate([], 1, Domain::ZZ)
   assert_true(dmd_empty.0.length() == 2 && dmd_empty.1.length() == 0)
@@ -360,7 +359,7 @@ test "densebasic wb: remaining branch sweep for deflate/inflate/dict/pairs helpe
     Domain::ZZ,
   )
   assert_true(bad_inflate is Err(PolyError::BadExponent))
-  assert_eq(dup_inflate([db_wb_fe(1)], 1, Domain::ZZ).length(), 1)
+  assert_true(dup_inflate([db_wb_fe(1)], 1, Domain::ZZ).length() == 1)
 
   let bad_mvec : Result[DensePoly, PolyError] = try? dmp_inflate(
     db_wb_poly([db_wb_coef(1)]),
@@ -376,7 +375,7 @@ test "densebasic wb: remaining branch sweep for deflate/inflate/dict/pairs helpe
     Domain::ZZ,
   )
   let keep_all_one_dict = dmp_to_dict(keep_all_one, 1, Domain::ZZ)
-  assert_eq(keep_all_one_dict.length(), 1)
+  assert_true(keep_all_one_dict.length() == 1)
 
   guard dpp_zero(-1) is DensePolyPoly::Poly(items) && items.length() == 0 else {
     fail("dpp_zero(-1) should return []")
@@ -448,13 +447,13 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
   inspect(dmp_ground_TC(DensePoly::Poly([]), 1), content="0")
 
   let lt_coef_depth = dmp_true_LT(DensePoly::Coef(db_wb_fe(2)), 1)
-  assert_eq(lt_coef_depth.1.to_string(), "2")
+  assert_true(lt_coef_depth.1.to_string() == "2")
   let lt_empty_depth = dmp_true_LT(DensePoly::Poly([]), 1)
-  assert_eq(lt_empty_depth.1.to_string(), "0")
+  assert_true(lt_empty_depth.1.to_string() == "0")
   let lt_coef_u0 = dmp_true_LT(DensePoly::Coef(db_wb_fe(3)), 0)
-  assert_eq(lt_coef_u0.1.to_string(), "3")
+  assert_true(lt_coef_u0.1.to_string() == "3")
   let lt_nested_u0 = dmp_true_LT(DensePoly::Poly([DensePoly::Poly([])]), 0)
-  assert_eq(lt_nested_u0.1.to_string(), "0")
+  assert_true(lt_nested_u0.1.to_string() == "0")
 
   inspect(dmp_degree(DensePoly::Coef(db_wb_fe(5)), 0), content="0")
   inspect(dmp_degree_in(DensePoly::Coef(db_wb_fe(0)), 1, 1), content="-1")
@@ -492,14 +491,14 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
   )
   assert_true(conv_coef_u1 is DensePoly::Coef(_))
   let conv_empty = dup_convert([], Domain::ZZ, Domain::QQ)
-  assert_eq(conv_empty.length(), 0)
+  assert_true(conv_empty.length() == 0)
   let gfext_sample = FieldElem::GFExt(5, [1], [1, 0, 1])
   let gfext_keep = dup_convert(
     [gfext_sample],
     Domain::GFExt(5, 2, [1, 0, 1]),
     Domain::GFExt(5, 2, [1, 0, 1]),
   )
-  assert_eq(gfext_keep.length(), 1)
+  assert_true(gfext_keep.length() == 1)
   let a_alg = @symcore.Expr::Symbol("a")
   let minpoly_alg = PolyBuilder::new(["a"], Domain::QQ).from_expr(
     (a_alg ^ @symcore.int(2)) + @symcore.int(1),
@@ -511,12 +510,12 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
     "a",
   )
   let alg_keep = dup_convert([alg_sample], Domain::QQ, Domain::QQ)
-  assert_eq(alg_keep.length(), 1)
+  assert_true(alg_keep.length() == 1)
 
   let copy_coef_u1 = dmp_copy(DensePoly::Coef(db_wb_fe(7)), 1)
   assert_true(copy_coef_u1 is DensePoly::Coef(_))
 
-  assert_eq(dup_from_sympy([], Domain::ZZ).length(), 0)
+  assert_true(dup_from_sympy([], Domain::ZZ).length() == 0)
   let rat_coef = dense_rat_to_dense(
     DenseRat::Coef(@symnum.BigRational::from_int(3)),
     0,
@@ -600,14 +599,14 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
     [db_wb_fe(1), db_wb_fe(1), db_wb_fe(0), db_wb_fe(0)],
     Domain::ZZ,
   )
-  assert_eq(g_hit1, 1)
+  assert_true(g_hit1 == 1)
   let (g_le1, _) = dup_deflate(
     [db_wb_fe(0), db_wb_fe(0), db_wb_fe(0), db_wb_fe(1)],
     Domain::ZZ,
   )
-  assert_eq(g_le1, 1)
+  assert_true(g_le1 == 1)
 
-  let def_map : Map[Monomial, FieldElem] = Map::new()
+  let def_map : Map[Monomial, FieldElem] = Map([])
   def_map.set(Monomial::{ exps: [1, 1] }, db_wb_fe(1))
   def_map.set(Monomial::{ exps: [0, 0] }, db_wb_fe(1))
   let def_dense = dmp_from_dict(def_map, 1, Domain::ZZ)
@@ -617,7 +616,7 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
     def_all_one.0[0] == 1 &&
     def_all_one.0[1] == 1,
   )
-  let def_need_fill_map : Map[Monomial, FieldElem] = Map::new()
+  let def_need_fill_map : Map[Monomial, FieldElem] = Map([])
   def_need_fill_map.set(Monomial::{ exps: [2, 0] }, db_wb_fe(1))
   def_need_fill_map.set(Monomial::{ exps: [0, 0] }, db_wb_fe(1))
   let def_need_fill = dmp_deflate(
@@ -635,7 +634,7 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
     [[db_wb_fe(1), db_wb_fe(1), db_wb_fe(0)]],
     Domain::ZZ,
   )
-  assert_eq(g_early1, 1)
+  assert_true(g_early1 == 1)
   let (g_all_mix, _) = dup_multi_deflate(
     [
       [db_wb_fe(1), db_wb_fe(0), db_wb_fe(1), db_wb_fe(0), db_wb_fe(0)],
@@ -651,7 +650,7 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
     ],
     Domain::ZZ,
   )
-  assert_eq(g_all_mix, 1)
+  assert_true(g_all_mix == 1)
   let (g_all_zeroish, _) = dup_multi_deflate(
     [
       [db_wb_fe(0), db_wb_fe(0), db_wb_fe(1)],
@@ -659,9 +658,9 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
     ],
     Domain::ZZ,
   )
-  assert_eq(g_all_zeroish, 1)
+  assert_true(g_all_zeroish == 1)
 
-  let dmd_map : Map[Monomial, FieldElem] = Map::new()
+  let dmd_map : Map[Monomial, FieldElem] = Map([])
   dmd_map.set(Monomial::{ exps: [1, 0] }, db_wb_fe(1))
   dmd_map.set(Monomial::{ exps: [0, 1] }, db_wb_fe(1))
   dmd_map.set(Monomial::{ exps: [0, 0] }, db_wb_fe(1))
@@ -690,7 +689,7 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
   )
   assert_true(inflated_u0 is DensePoly::Poly(_))
 
-  let dpp_merge : Map[Monomial, Poly] = Map::new()
+  let dpp_merge : Map[Monomial, Poly] = Map([])
   let px = PolyBuilder::new(["x"], Domain::QQ).from_expr(
     @symcore.Expr::Symbol("x") + @symcore.int(1),
   )
@@ -705,14 +704,14 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
     DensePolyPoly::Poly([DensePolyPoly::Coef(px)]),
   ])
   let dpp_tree_map = dpp_to_dict(dpp_tree, 1)
-  assert_eq(dpp_tree_map.length(), 1)
+  assert_true(dpp_tree_map.length() == 1)
 
-  let ex_map : Map[Monomial, FieldElem] = Map::new()
+  let ex_map : Map[Monomial, FieldElem] = Map([])
   ex_map.set(Monomial::{ exps: [1, 0] }, db_wb_fe(1))
   ex_map.set(Monomial::{ exps: [0, 1] }, db_wb_fe(1))
   let ex_dense = dmp_from_dict(ex_map, 1, Domain::ZZ)
   let ex_none = dmp_exclude(ex_dense, 1, Domain::ZZ)
-  assert_eq(ex_none.0.length(), 0)
+  assert_true(ex_none.0.length() == 0)
 
   let terms_early = dmp_terms_gcd(
     dense_from_coeffs([db_wb_fe(1)]),

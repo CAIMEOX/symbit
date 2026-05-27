@@ -89,7 +89,7 @@ pub fn ratioize(items : Array[Int], n : Int) -> Int {
   if items.length() == 1 {
     return items[0]
   }
-  items[0] + ratioize(items[1:items.length()].to_array(), n)
+  items[0] + ratioize(items[1:items.length()].to_owned(), n)
 }
 
 ///|

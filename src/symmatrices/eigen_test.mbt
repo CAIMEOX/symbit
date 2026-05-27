@@ -78,7 +78,7 @@ test "matrices charpoly and eigenvals" {
     ),
   )
   let eigenvals = a.eigenvals()
-  assert_eq(eigenvals.length(), 2)
+  assert_true(eigenvals.length() == 2)
   assert_true(
     eigenvals[0].1 == 1 &&
     eigen_expr_equal(
@@ -156,7 +156,7 @@ test "matrices jordan cells and jordan form" {
     [@symcore.int(0), @symcore.int(4)],
   ])
   let cells = defective.jordan_cells()
-  assert_eq(cells.length(), 1)
+  assert_true(cells.length() == 1)
   inspect(cells[0].to_string(), content="Matrix([[4, 1], [0, 4]])")
   let (p, j) = defective.jordan_form()
   inspect(j.to_string(), content="Matrix([[4, 1], [0, 4]])")
@@ -177,7 +177,7 @@ test "matrices jordan form handles longer generalized eigenvector chains" {
     [@symcore.int(0), @symcore.int(0), @symcore.int(5)],
   ])
   let cells = upper.jordan_cells()
-  assert_eq(cells.length(), 1)
+  assert_true(cells.length() == 1)
   inspect(
     cells[0].to_string(),
     content="Matrix([[5, 1, 0], [0, 5, 1], [0, 0, 5]])",
@@ -250,7 +250,7 @@ test "matrices exact eigen path supports general non-companion algebraic 3x3" {
     [@symcore.int(0), @symcore.int(1), @symcore.int(1)],
   ])
   let eigenvals = algebraic.eigenvals()
-  assert_eq(eigenvals.length(), 3)
+  assert_true(eigenvals.length() == 3)
   assert_true(
     eigenvals[0].1 == 1 && eigen_expr_equal(eigenvals[0].0, @symcore.int(1)),
   )

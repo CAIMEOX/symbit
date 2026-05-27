@@ -190,7 +190,7 @@ pub fn prufer_edges(
     }
   }
 
-  let edge_map : Map[String, Bool] = Map::new()
+  let edge_map : Map[String, Bool] = Map([])
   let mut nmin : Int? = None
   let mut nmax : Int? = None
   for run in runs {

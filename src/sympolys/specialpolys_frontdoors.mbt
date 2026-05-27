@@ -263,7 +263,7 @@ fn specialpoly_to_dmp(
   poly : Poly,
   domain : Domain,
 ) -> DensePoly raise PolyError {
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for monom, coeff in poly.coeffs {
     coeffs[monom] = specialpoly_convert_coeff(coeff, domain)
   }
@@ -334,7 +334,7 @@ fn special_poly_from_terms(
   gens : Array[String],
   terms : Array[(Int, Array[Int])],
 ) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for term in terms {
     let (coeff, exps) = term
     if exps.length() != gens.length() {

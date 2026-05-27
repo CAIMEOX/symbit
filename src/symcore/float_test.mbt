@@ -1,8 +1,8 @@
 ///|
 test "float constructors roundtrip exact dyadics" {
   let dyadic = Float::from_str("0.125", prec=80) catch { _ => fail("parse") }
-  assert_eq(dyadic.to_rational(), (1N, 8N))
-  assert_eq(dyadic.precision(), 80)
+  assert_true(dyadic.to_rational() == (1N, 8N))
+  assert_true(dyadic.precision() == 80)
   inspect(dyadic.to_string(), content="0.125")
 }
 
@@ -10,15 +10,15 @@ test "float constructors roundtrip exact dyadics" {
 test "float can be built from exact rationals" {
   let exact = @symnum.BigRational::from_ints(3, 8) catch { _ => fail("rat") }
   let approx = Float::from_exact(exact, prec=100) catch { _ => fail("float") }
-  assert_eq(approx.to_rational(), (3N, 8N))
+  assert_true(approx.to_rational() == (3N, 8N))
   assert_true(approx.is_finite())
 }
 
 ///|
 test "float double bridge uses symnum compat layer" {
   let quarter = Float::from_double(0.25, prec=90)
-  assert_eq(quarter.to_rational(), (1N, 4N))
-  assert_eq(quarter.to_double(), 0.25)
+  assert_true(quarter.to_rational() == (1N, 4N))
+  assert_true(quarter.to_double() == 0.25)
   inspect(float_from_double(0.5, prec=90).format(), content="0.5")
 }
 

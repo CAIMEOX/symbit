@@ -15,6 +15,18 @@ fn nf_oracle_minpoly(expr : String, gen? : String = "x") -> String raise {
 }
 
 ///|
+fn nf_oracle_find_min_poly_power_basis(
+  def_expr : String,
+  col : Array[Int],
+  denom? : Int = 1,
+) -> String raise {
+  sympy_normalize(find_min_poly_power_basis(def_expr, col, denom~))
+  .trim()
+  .to_string()
+  .replace_all(old=" ", new="")
+}
+
+///|
 fn nf_coeffs_norm(coeffs : Array[@symnum.BigRational]?) -> String {
   match coeffs {
     Some(items) => {
@@ -177,6 +189,39 @@ test "numberfields: minpoly parity for rationals and radicals" {
   let s_ours = nf_norm(s_mp.to_expr())
   let s_oracle = nf_oracle_minpoly("sqrt(2)", gen="x")
   assert_eq(s_ours, s_oracle)
+}
+
+///|
+test "numberfields: find_min_poly power-basis parity" {
+  let x = @symcore.Expr::Symbol("x")
+  let b = @sympolys.PolyBuilder::new(["x"], @sympolys.Domain::ZZ)
+  let pb = @sympolys.numberfield_power_basis(
+    b.from_expr((x ^ @symcore.int(2)) - @symcore.int(2)),
+  )
+
+  let theta = @sympolys.make_mod_elt(pb, [0N, 1N])
+  assert_eq(
+    nf_norm(@sympolys.find_min_poly(theta, @sympolys.Domain::QQ).to_expr()),
+    nf_oracle_find_min_poly_power_basis("x**2 - 2", [0, 1]),
+  )
+
+  let shifted = @sympolys.make_mod_elt(pb, [1N, 1N])
+  assert_eq(
+    nf_norm(@sympolys.find_min_poly(shifted, @sympolys.Domain::QQ).to_expr()),
+    nf_oracle_find_min_poly_power_basis("x**2 - 2", [1, 1]),
+  )
+
+  let scaled = @sympolys.make_mod_elt(pb, [1N, 2N], denom=3N)
+  assert_eq(
+    nf_norm(@sympolys.find_min_poly(scaled, @sympolys.Domain::QQ).to_expr()),
+    nf_oracle_find_min_poly_power_basis("x**2 - 2", [1, 2], denom=3),
+  )
+
+  let constant = @sympolys.make_mod_elt(pb, [2N, 0N], denom=3N)
+  assert_eq(
+    nf_norm(@sympolys.find_min_poly(constant, @sympolys.Domain::QQ).to_expr()),
+    nf_oracle_find_min_poly_power_basis("x**2 - 2", [2, 0], denom=3),
+  )
 }
 
 ///|

@@ -3,11 +3,11 @@ fn sdm_nonzero_columns(
   rref : SDM,
   pivots : Array[Int],
 ) -> Map[Int, Array[Int]] raise PolyError {
-  let pivot_set : Map[Int, Bool] = Map::new()
+  let pivot_set : Map[Int, Bool] = Map([])
   for pivot in pivots {
     pivot_set[pivot] = true
   }
-  let out : Map[Int, Array[Int]] = Map::new()
+  let out : Map[Int, Array[Int]] = Map([])
   let dod = rref.to_dod()
   for row_index, row in dod {
     for col, value in row {
@@ -273,7 +273,7 @@ fn sorted_sparse_cols(row : Map[Int, FieldElem]) -> Array[Int] {
 
 ///|
 fn clone_sparse_row(row : Map[Int, FieldElem]) -> Map[Int, FieldElem] {
-  let out : Map[Int, FieldElem] = Map::new()
+  let out : Map[Int, FieldElem] = Map([])
   for col, value in row {
     out[col] = value
   }
@@ -376,13 +376,13 @@ pub fn sdm_rref_den(a : SDM) -> (SDM, FieldElem, Array[Int]) raise PolyError {
     let row = clone_sparse_row(rows_in_order[0])
     let pivot_col = sparse_row_lead(row)
     let pivot = row[pivot_col]
-    let dod : DomainMatrixDOD = Map::new()
+    let dod : DomainMatrixDOD = Map([])
     dod[0] = row
     return (SDM::new(dod, shape, domain), pivot, [pivot_col])
   }
 
-  let col_to_row_reduced : Map[Int, Int] = Map::new()
-  let col_to_row_unreduced : Map[Int, Int] = Map::new()
+  let col_to_row_reduced : Map[Int, Int] = Map([])
+  let col_to_row_unreduced : Map[Int, Int] = Map([])
   let rref_rows : Array[Map[Int, FieldElem]] = Array::new()
   let mut denom : FieldElem? = None
   let mut divisor : FieldElem? = None
@@ -393,14 +393,14 @@ pub fn sdm_rref_den(a : SDM) -> (SDM, FieldElem, Array[Int]) raise PolyError {
   })
 
   for input_row in work_rows {
-    let ai : Map[Int, FieldElem] = Map::new()
+    let ai : Map[Int, FieldElem] = Map([])
     for col, value in input_row {
       if col_to_row_reduced.get(col) is None {
         ai[col] = value
       }
     }
 
-    let ai_cancel : Map[Int, FieldElem] = Map::new()
+    let ai_cancel : Map[Int, FieldElem] = Map([])
     let ai_cols = sorted_sparse_cols(ai)
     for col in ai_cols {
       match col_to_row_unreduced.get(col) {
@@ -422,8 +422,8 @@ pub fn sdm_rref_den(a : SDM) -> (SDM, FieldElem, Array[Int]) raise PolyError {
     }
     let ai_nz = sorted_sparse_cols(ai)
     let ai_cancel_nz = sorted_sparse_cols(ai_cancel)
-    let ai_nz_set : Map[Int, Bool] = Map::new()
-    let ai_cancel_set : Map[Int, Bool] = Map::new()
+    let ai_nz_set : Map[Int, Bool] = Map([])
+    let ai_cancel_set : Map[Int, Bool] = Map([])
     for col in ai_nz {
       ai_nz_set[col] = true
     }
@@ -472,8 +472,8 @@ pub fn sdm_rref_den(a : SDM) -> (SDM, FieldElem, Array[Int]) raise PolyError {
       ignore(ak.remove(pivot_col))
       let ai_keys = sorted_sparse_cols(ai)
       let ak_keys = sorted_sparse_cols(ak)
-      let ai_key_set : Map[Int, Bool] = Map::new()
-      let ak_key_set : Map[Int, Bool] = Map::new()
+      let ai_key_set : Map[Int, Bool] = Map([])
+      let ak_key_set : Map[Int, Bool] = Map([])
       for col in ai_keys {
         ai_key_set[col] = true
       }
@@ -569,7 +569,7 @@ pub fn sdm_rref_den(a : SDM) -> (SDM, FieldElem, Array[Int]) raise PolyError {
     Some(value) => value
     None => one
   }
-  let row_to_col : Map[Int, Int] = Map::new()
+  let row_to_col : Map[Int, Int] = Map([])
   for col, row_index in col_to_row_reduced {
     row_to_col[row_index] = col
   }
@@ -582,7 +582,7 @@ pub fn sdm_rref_den(a : SDM) -> (SDM, FieldElem, Array[Int]) raise PolyError {
   }
   ordered.sort_by(fn(lhs, rhs) { lhs.0.compare(rhs.0) })
   let pivots : Array[Int] = Array::new()
-  let dod : DomainMatrixDOD = Map::new()
+  let dod : DomainMatrixDOD = Map([])
   for i in 0..<ordered.length() {
     let pivot_col = ordered[i].0
     let row = ordered[i].1
@@ -618,7 +618,7 @@ fn sparse_matvecmul(
   vec : Map[Int, FieldElem],
   domain : Domain,
 ) -> Map[Int, FieldElem] raise PolyError {
-  let out : Map[Int, FieldElem] = Map::new()
+  let out : Map[Int, FieldElem] = Map([])
   for row, values in matrix {
     let total = sparse_dotvec(values, vec, domain)
     if !fe_is_zero(total) {
@@ -638,12 +638,12 @@ fn sparse_berk_map(
   let one = fe_from_int(1, domain)
 
   if n == 0 {
-    let out : Map[Int, FieldElem] = Map::new()
+    let out : Map[Int, FieldElem] = Map([])
     out[0] = one
     return out
   }
   if n == 1 {
-    let out : Map[Int, FieldElem] = Map::new()
+    let out : Map[Int, FieldElem] = Map([])
     out[0] = one
     let a00 = match matrix.get(0) {
       Some(row) =>
@@ -660,16 +660,16 @@ fn sparse_berk_map(
   }
 
   let mut a = zero
-  let r : Map[Int, FieldElem] = Map::new()
-  let c : Map[Int, FieldElem] = Map::new()
-  let minor : DomainMatrixDOD = Map::new()
+  let r : Map[Int, FieldElem] = Map([])
+  let c : Map[Int, FieldElem] = Map([])
+  let minor : DomainMatrixDOD = Map([])
   for i, row in matrix {
     for j, value in row {
       if i > 0 && j > 0 {
         match minor.get(i - 1) {
           Some(existing) => existing[j - 1] = value
           None => {
-            let new_row : Map[Int, FieldElem] = Map::new()
+            let new_row : Map[Int, FieldElem] = Map([])
             new_row[j - 1] = value
             minor[i - 1] = new_row
           }
@@ -711,7 +711,7 @@ fn sparse_berk_map(
   }
   q_keys.sort()
   if q_keys.is_empty() {
-    return Map::new()
+    return Map([])
   }
   let min_q = q_keys[0]
   let max_q = q_keys[q_keys.length() - 1]
@@ -720,9 +720,9 @@ fn sparse_berk_map(
   } else {
     n + 1
   }
-  let out : Map[Int, FieldElem] = Map::new()
+  let out : Map[Int, FieldElem] = Map([])
   for i in min_q..<limit {
-    let row : Map[Int, FieldElem] = Map::new()
+    let row : Map[Int, FieldElem] = Map([])
     let start = i - reversed.length() + 1
     for offset in 0..<reversed.length() {
       row[start + offset] = reversed[offset]

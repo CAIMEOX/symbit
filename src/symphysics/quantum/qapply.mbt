@@ -252,7 +252,7 @@ fn quantum_apply_discrete_sum_to_ket(
 ) -> Expr? {
   guard !sum_args.is_empty() else { return None }
   let (sum_name, lower, upper) = match
-    quantum_single_symbolic_limit(sum_args[1:sum_args.length()].to_array()) {
+    quantum_single_symbolic_limit(sum_args[1:sum_args.length()].to_owned()) {
     Some(spec) => spec
     None => return None
   }
@@ -280,7 +280,7 @@ fn quantum_project_discrete_bra_against_sum(
 ) -> Expr? {
   guard !sum_args.is_empty() else { return None }
   let (sum_name, lower, upper) = match
-    quantum_single_symbolic_limit(sum_args[1:sum_args.length()].to_array()) {
+    quantum_single_symbolic_limit(sum_args[1:sum_args.length()].to_owned()) {
     Some(spec) => spec
     None => return None
   }
@@ -430,7 +430,7 @@ fn quantum_apply_operator_pair(
                 ip_doit~,
                 sum_doit~,
               ),
-              args[1:args.length()].to_array(),
+              args[1:args.length()].to_owned(),
               sum_doit,
             ),
           )
@@ -447,7 +447,7 @@ fn quantum_apply_operator_pair(
                 ip_doit~,
                 sum_doit~,
               ),
-              args[1:args.length()].to_array(),
+              args[1:args.length()].to_owned(),
               sum_doit,
             ),
           )
@@ -650,7 +650,7 @@ pub fn qapply(
         Some(args) if !args.is_empty() =>
           quantum_sum_expr(
             qapply(args[0], dagger~, ip_doit~, sum_doit~),
-            args[1:args.length()].to_array(),
+            args[1:args.length()].to_owned(),
             sum_doit,
           )
         _ => expr

@@ -395,7 +395,7 @@ fn sq_term_normalization_env(
   let general_letters = pretty_indices.get("general").unwrap_or("pq")
   for idx in 0..<above.length() {
     let name = if new_indices && idx < above_letters.length() {
-      "_" + above_letters[idx:idx + 1].to_string()
+      "_" + above_letters[idx:idx + 1].to_owned()
     } else {
       "_" + "a_\{idx}"
     }
@@ -403,7 +403,7 @@ fn sq_term_normalization_env(
   }
   for idx in 0..<below.length() {
     let name = if new_indices && idx < below_letters.length() {
-      "_" + below_letters[idx:idx + 1].to_string()
+      "_" + below_letters[idx:idx + 1].to_owned()
     } else {
       "_" + "i_\{idx}"
     }
@@ -411,7 +411,7 @@ fn sq_term_normalization_env(
   }
   for idx in 0..<general.length() {
     let name = if new_indices && idx < general_letters.length() {
-      "_" + general_letters[idx:idx + 1].to_string()
+      "_" + general_letters[idx:idx + 1].to_owned()
     } else {
       "_" + "p_\{idx}"
     }

@@ -554,8 +554,8 @@ test "factortools dense wb: algebraic extension factorization" {
     fe_from_int(-2, alg_domain),
   ]
   let (coeff, factors) = dup_ext_factor(f, alg_domain)
-  assert_eq(coeff.to_string(), "1")
-  assert_eq(factors.length(), 2)
+  assert_true(coeff.to_string() == "1")
+  assert_true(factors.length() == 2)
   assert_true(factors.all(item => item.0.length() == 2 && item.1 == 1))
 
   let (dmp_coeff, dmp_factors) = dmp_ext_factor(
@@ -563,8 +563,8 @@ test "factortools dense wb: algebraic extension factorization" {
     0,
     alg_domain,
   )
-  assert_eq(dmp_coeff.to_string(), "1")
-  assert_eq(dmp_factors.length(), 2)
+  assert_true(dmp_coeff.to_string() == "1")
+  assert_true(dmp_factors.length() == 2)
 
   let bad_domain : Result[
     (FieldElem, Array[(Array[FieldElem], Int)]),

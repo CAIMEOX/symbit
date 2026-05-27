@@ -89,7 +89,7 @@ fn divmod_multivar(
   let n = divisors.length()
   let mk_zero = fn() {
     Poly::{
-      coeffs: Map::new(),
+      coeffs: Map([]),
       gens: dividend.gens,
       domain: dividend.domain,
       order: dividend.order,
@@ -929,7 +929,7 @@ pub fn groebner_expr(
 
 ///|
 fn infer_gens_union(exprs : Array[Expr]) -> Array[String] {
-  let seen : Map[String, Bool] = Map::new()
+  let seen : Map[String, Bool] = Map([])
   for e in exprs {
     collect_symbols_expr(e, seen)
   }

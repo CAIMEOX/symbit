@@ -17,13 +17,13 @@ test "symplotting line series samples uniformly on a linear range" {
     n=5,
   )
   let (xs, ys) = series.get_points()
-  assert_eq(xs.length(), 5)
-  assert_eq(xs[0], 0.0)
-  assert_eq(xs[2], 2.0)
-  assert_eq(xs[4], 4.0)
-  assert_eq(ys[0], Some(0.0))
-  assert_eq(ys[2], Some(2.0))
-  assert_eq(ys[4], Some(4.0))
+  assert_true(xs.length() == 5)
+  assert_true(xs[0] == 0.0)
+  assert_true(xs[2] == 2.0)
+  assert_true(xs[4] == 4.0)
+  assert_true(ys[0] == Some(0.0))
+  assert_true(ys[2] == Some(2.0))
+  assert_true(ys[4] == Some(4.0))
 }
 
 ///|
@@ -35,8 +35,8 @@ test "symplotting line series supports integer-only discretization" {
     only_integers=true,
   )
   let (xs, ys) = series.get_data()
-  assert_eq(xs, [-1.0, 0.0, 1.0, 2.0])
-  assert_eq(ys, [Some(-1.0), Some(0.0), Some(1.0), Some(2.0)])
+  assert_true(xs == [-1.0, 0.0, 1.0, 2.0])
+  assert_true(ys == [Some(-1.0), Some(0.0), Some(1.0), Some(2.0)])
 }
 
 ///|
@@ -68,7 +68,7 @@ test "symplotting line series supports complex return modes on uniform data" {
     return_mode=Some("imag"),
   )
   let (_, ys) = series.get_data()
-  assert_eq(ys, [Some(0.0), Some(1.0), Some(2.0)])
+  assert_true(ys == [Some(0.0), Some(1.0), Some(2.0)])
 }
 
 ///|
@@ -85,8 +85,8 @@ test "symplotting line series supports complex ranges with constant imaginary pa
     return_mode=Some("imag"),
   )
   let (xs, ys) = series.get_data()
-  assert_eq(xs, [-1.0, 0.0, 1.0])
-  assert_eq(ys, [Some(-2.0), Some(-2.0), Some(-2.0)])
+  assert_true(xs == [-1.0, 0.0, 1.0])
+  assert_true(ys == [Some(-2.0), Some(-2.0), Some(-2.0)])
 }
 
 ///|
@@ -101,7 +101,7 @@ test "symplotting line series samples polynomial curves across interior points" 
     n=5,
   )
   let (xs, ys) = series.get_data()
-  assert_eq(xs, [-4.0, -2.0, 0.0, 2.0, 4.0])
+  assert_true(xs == [-4.0, -2.0, 0.0, 2.0, 4.0])
   let expected = [-52.0, -2.0, 0.0, 2.0, 52.0]
   for i in 0..<expected.length() {
     match ys[i] {
@@ -171,7 +171,7 @@ test "symplotting line series adaptive sampling generates dense public data" {
   )
   let (xs, ys) = series.get_data()
   assert_true(xs.length() >= 30)
-  assert_eq(xs.length(), ys.length())
+  assert_true(xs.length() == ys.length())
 }
 
 ///|
@@ -185,12 +185,12 @@ test "symplotting parametric series samples uniformly on a linear range" {
     n=5,
   )
   let (xs, ys, params) = series.get_data()
-  assert_eq(params.length(), 5)
-  assert_eq(params[0], 0.0)
-  assert_eq(params[2], 2.0)
-  assert_eq(params[4], 4.0)
-  assert_eq(xs[2], Some(2.0))
-  assert_eq(ys[2], Some(4.0))
+  assert_true(params.length() == 5)
+  assert_true(params[0] == 0.0)
+  assert_true(params[2] == 2.0)
+  assert_true(params[4] == 4.0)
+  assert_true(xs[2] == Some(2.0))
+  assert_true(ys[2] == Some(4.0))
 }
 
 ///|
@@ -227,8 +227,8 @@ test "symplotting parametric series adaptive sampling generates dense public dat
   )
   let (xs, ys, params) = series.get_data()
   assert_true(xs.length() >= 30)
-  assert_eq(xs.length(), ys.length())
-  assert_eq(xs.length(), params.length())
+  assert_true(xs.length() == ys.length())
+  assert_true(xs.length() == params.length())
 }
 
 ///|
@@ -242,11 +242,11 @@ test "symplotting 3d parametric series samples uniformly on a linear range" {
     n=5,
   )
   let (xs, ys, zs, params) = series.get_data()
-  assert_eq(params.length(), 5)
-  assert_eq(params[2], 2.0)
-  assert_eq(xs[2], Some(2.0))
-  assert_eq(ys[2], Some(4.0))
-  assert_eq(zs[2], Some(8.0))
+  assert_true(params.length() == 5)
+  assert_true(params[2] == 2.0)
+  assert_true(xs[2] == Some(2.0))
+  assert_true(ys[2] == Some(4.0))
+  assert_true(zs[2] == Some(8.0))
   assert_false(series.adaptive)
 }
 
@@ -279,13 +279,13 @@ test "symplotting surface series samples uniformly on linear ranges" {
     n2=5,
   )
   let (mesh_x, mesh_y, mesh_z) = series.get_data()
-  assert_eq(mesh_x.length(), 5)
-  assert_eq(mesh_y.length(), 5)
-  assert_eq(mesh_z.length(), 5)
-  assert_eq(mesh_x[0].length(), 3)
-  assert_eq(mesh_x[0][1], 1.0)
-  assert_eq(mesh_y[2][0], 2.0)
-  assert_eq(mesh_z[2][1], Some(3.0))
+  assert_true(mesh_x.length() == 5)
+  assert_true(mesh_y.length() == 5)
+  assert_true(mesh_z.length() == 5)
+  assert_true(mesh_x[0].length() == 3)
+  assert_true(mesh_x[0][1] == 1.0)
+  assert_true(mesh_y[2][0] == 2.0)
+  assert_true(mesh_z[2][1] == Some(3.0))
 }
 
 ///|
@@ -324,13 +324,13 @@ test "symplotting parametric surface series samples uniformly on linear ranges" 
     n2=5,
   )
   let (mesh_x, mesh_y, mesh_z, mesh_u, mesh_v) = series.get_data()
-  assert_eq(mesh_x.length(), 5)
-  assert_eq(mesh_x[0].length(), 3)
-  assert_eq(mesh_u[0][1], 1.0)
-  assert_eq(mesh_v[2][0], 2.0)
-  assert_eq(mesh_x[2][1], Some(1.0))
-  assert_eq(mesh_y[2][1], Some(2.0))
-  assert_eq(mesh_z[2][1], Some(3.0))
+  assert_true(mesh_x.length() == 5)
+  assert_true(mesh_x[0].length() == 3)
+  assert_true(mesh_u[0][1] == 1.0)
+  assert_true(mesh_v[2][0] == 2.0)
+  assert_true(mesh_x[2][1] == Some(1.0))
+  assert_true(mesh_y[2][1] == Some(2.0))
+  assert_true(mesh_z[2][1] == Some(3.0))
 }
 
 ///|
@@ -374,12 +374,12 @@ test "symplotting implicit series samples a cartesian mesh for equalities" {
   )
   match series.get_data() {
     ImplicitPlotData::Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
-      assert_eq(plot_type, "contour")
-      assert_eq(mesh_x.length(), 3)
-      assert_eq(mesh_x[0].length(), 3)
-      assert_eq(mesh_x[0][1], 0.0)
-      assert_eq(mesh_y[1][0], 0.0)
-      assert_eq(mesh_z[1][1], Some(0.0))
+      assert_true(plot_type == "contour")
+      assert_true(mesh_x.length() == 3)
+      assert_true(mesh_x[0].length() == 3)
+      assert_true(mesh_x[0][1] == 0.0)
+      assert_true(mesh_y[1][0] == 0.0)
+      assert_true(mesh_z[1][1] == Some(0.0))
     }
     ImplicitPlotData::Fill(_) => fail("expected mesh data")
   }
@@ -403,8 +403,8 @@ test "symplotting implicit series adaptive path returns fill rectangles" {
     }
     ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
-  assert_eq(series.depth, 4)
-  assert_eq(series.line_color, "blue")
+  assert_true(series.depth == 4)
+  assert_true(series.line_color == "blue")
 }
 
 ///|
@@ -424,7 +424,7 @@ test "symplotting implicit series auto-switches boolean expressions to adaptive"
     @symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)]),
     adaptive=false,
   )
-  assert_eq(series.adaptive, true)
+  assert_true(series.adaptive == true)
 }
 
 ///|
@@ -452,7 +452,7 @@ test "symplotting implicit series supports independent discretization and log sc
   )
   match series.get_data() {
     ImplicitPlotData::Mesh(mesh_x, mesh_y, _, plot_type) => {
-      assert_eq(plot_type, "contourf")
+      assert_true(plot_type == "contourf")
       assert_true((mesh_x[0][0] - 1.0).abs() <= 1.0e-12)
       assert_true((mesh_x[0][1] - 10.0).abs() <= 1.0e-10)
       assert_true((mesh_x[0][2] - 100.0).abs() <= 1.0e-8)
@@ -494,7 +494,7 @@ test "symplotting implicit series adaptive path handles SymPy pi over x family a
     @symcore.Expr::Tuple([y, @symcore.int(-1), @symcore.int(1)]),
     adaptive=false,
   )
-  assert_eq(not_equal.adaptive, true)
+  assert_true(not_equal.adaptive == true)
   match not_equal.get_data() {
     ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
     ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")

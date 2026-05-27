@@ -197,16 +197,27 @@ test "pretty printers render Mod as a structured core node" {
 test "arbitarary polys" {
   let gen = @symcore.arbitrary_polys()
   let exprs = gen.samples(size=5, seed=42)
-  inspect(
+  debug_inspect(
     exprs.map(pretty_string),
     content=(
       #|["y", "w", "b**8", "z", "(b) + w"]
     ),
   )
-  inspect(
+  debug_inspect(
     gen.samples(size=10, seed=99).map(pretty_string),
     content=(
-      #|["89*z*z**50 + b**91 + c + z + c + 59 + 34 + 95 + z + a", "87", "y**78", "z", "y**80", "9", "a**56", "46", "x*94*87*w*a**90", "z**63"]
+      #|[
+      #|  "89*z*z**50 + b**91 + c + z + c + 59 + 34 + 95 + z + a",
+      #|  "87",
+      #|  "y**78",
+      #|  "z",
+      #|  "y**80",
+      #|  "9",
+      #|  "a**56",
+      #|  "46",
+      #|  "x*94*87*w*a**90",
+      #|  "z**63",
+      #|]
     ),
   )
 }

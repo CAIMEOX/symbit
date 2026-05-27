@@ -38,8 +38,8 @@ test "symplotting can build line and implicit plots" {
 
   let p = plot([plot_expr(@symcore.function("sin", [x]))], show=false, n=20)
   let (xs, ys) = p.get_data(0)
-  assert_eq(xs.length(), 20)
-  assert_eq(xs.length(), ys.length())
+  assert_true(xs.length() == 20)
+  assert_true(xs.length() == ys.length())
 
   let implicit = plot_implicit(
     @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),

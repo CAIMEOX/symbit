@@ -100,7 +100,7 @@ test "pde wb: simple separate handles cylindrical reduced equation" {
   )
   let separated = solver_simple_pde_separate(reduced, [wb_theta()], [wb_r()]).unwrap_or([],
   )
-  assert_eq(separated.length(), 2)
+  assert_true(separated.length() == 2)
   assert_true(
     wb_same_expr(
       separated[0],
@@ -173,7 +173,7 @@ test "pde wb: multiplicative preprocessing matches cylindrical reduced equation"
     @symcore.int(0),
   )
   let first_stage = pde_separate_mul(laplace_eq, phi, [zfun, ufun]).unwrap_or([])
-  assert_eq(first_stage.length(), 2)
+  assert_true(first_stage.length() == 2)
   assert_true(
     wb_same_expr(
       first_stage[1],

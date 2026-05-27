@@ -60,7 +60,7 @@ fn sparse_row_entries(matrix : SparseMatrix) -> Array[Array[(Int, Expr)]] {
 
 ///|
 fn sparse_row_maps(matrix : SparseMatrix) -> Array[Map[Int, Expr]] {
-  let rows = Array::makei(matrix.rows, fn(_) { Map::new() })
+  let rows = Array::makei(matrix.rows, fn(_) { Map([]) })
   for key, value in matrix.entries {
     rows[key.0][key.1] = value
   }
@@ -490,12 +490,12 @@ pub fn SparseMatrix::transpose(self : SparseMatrix) -> SparseMatrix {
 }
 
 ///|
-pub impl Show for SparseMatrix with to_string(self) {
+pub impl Show for SparseMatrix with fn to_string(self) {
   self.to_dense().to_string()
 }
 
 ///|
-pub impl Show for SparseMatrix with output(self, logger : &Logger) -> Unit {
+pub impl Show for SparseMatrix with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -1283,7 +1283,7 @@ pub fn SparseMatrix::qr(
 }
 
 ///|
-pub impl Add for SparseMatrix with add(self, other) {
+pub impl Add for SparseMatrix with fn add(self, other) {
   let out = clone_sparse_entries(self.entries)
   for key, value in other.entries {
     sparse_accumulate(out, key, value)
@@ -1292,7 +1292,7 @@ pub impl Add for SparseMatrix with add(self, other) {
 }
 
 ///|
-pub impl Sub for SparseMatrix with sub(self, other) {
+pub impl Sub for SparseMatrix with fn sub(self, other) {
   let out = clone_sparse_entries(self.entries)
   for key, value in other.entries {
     sparse_accumulate(out, key, expr_neg(value))
@@ -1301,7 +1301,7 @@ pub impl Sub for SparseMatrix with sub(self, other) {
 }
 
 ///|
-pub impl Mul for SparseMatrix with mul(self, other) {
+pub impl Mul for SparseMatrix with fn mul(self, other) {
   let rhs_rows = sparse_row_entries(other)
   let out : Map[(Int, Int), Expr] = {}
   for key, value in self.entries {

@@ -928,7 +928,7 @@ pub fn contains(set : Set, elem : Expr) -> SetBool {
           if var_name == "" {
             return SetBool::Unknown
           }
-          let env : Map[String, Expr] = Map::new()
+          let env : Map[String, Expr] = Map([])
           for item in items {
             env[var_name] = item
             let mapped = @symcore.subst(expr, env)

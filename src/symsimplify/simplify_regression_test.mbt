@@ -206,11 +206,11 @@ test "symsimplify numer_expand balances linear-factor products like SymPy expand
     @symcore.mul([@symcore.int(-1764), x]),
     @symcore.int(720),
   ])
-  assert_eq(
+  assert_true(
     @symcore.compare_expr(
       simplify(expanded + @symcore.int(-1) * expected),
       @symcore.int(0),
-    ),
+    ) ==
     0,
   )
 }
@@ -237,11 +237,11 @@ test "symsimplify numer_expand expands affine bivariate products via polynomial 
     @symcore.mul([@symcore.int(18), y]),
     @symcore.int(6),
   ])
-  assert_eq(
+  assert_true(
     @symcore.compare_expr(
       simplify(expanded + @symcore.int(-1) * expected),
       @symcore.int(0),
-    ),
+    ) ==
     0,
   )
 }
@@ -339,19 +339,19 @@ test "symsimplify handles float numeric leaf identities and powers" {
   }
 
   match simplify(@symcore.function("sin", [zero_f])) {
-    @symcore.Expr::Float(f) => assert_eq(f.to_rational(), (0N, 1N))
+    @symcore.Expr::Float(f) => assert_true(f.to_rational() == (0N, 1N))
     _ => fail("expected float zero")
   }
   match simplify(@symcore.function("sqrt", [one_f])) {
-    @symcore.Expr::Float(f) => assert_eq(f.to_rational(), (1N, 1N))
+    @symcore.Expr::Float(f) => assert_true(f.to_rational() == (1N, 1N))
     _ => fail("expected float one")
   }
   match simplify(@symcore.function("Abs", [minus_half_f])) {
-    @symcore.Expr::Float(f) => assert_eq(f.to_rational(), (1N, 2N))
+    @symcore.Expr::Float(f) => assert_true(f.to_rational() == (1N, 2N))
     _ => fail("expected float abs")
   }
   match simplify(@symcore.pow(four_f, half)) {
-    @symcore.Expr::Float(f) => assert_eq(f.to_rational(), (2N, 1N))
+    @symcore.Expr::Float(f) => assert_true(f.to_rational() == (2N, 1N))
     _ => fail("expected float pow")
   }
 }

@@ -77,7 +77,7 @@ pub fn PolyBuilder::from_expr(
 ///   let x = @symcore.Expr::Symbol("x")
 ///   let y = @symcore.Expr::Symbol("y")
 ///   let poly = Poly::from_expr_defaults(x * y + @symcore.rational_from_ints(1, 2))
-///   inspect(poly.gens, content="[\"x\", \"y\"]")
+///   debug_inspect(poly.gens, content="[\"x\", \"y\"]")
 ///   match poly.domain {
 ///     Domain::QQ => ()
 ///     _ => fail("expected QQ domain")
@@ -117,7 +117,7 @@ pub fn Poly::from_expr_defaults(
 
 ///|
 fn infer_gens(expr : Expr) -> Array[String] {
-  let seen : Map[String, Bool] = Map::new()
+  let seen : Map[String, Bool] = Map([])
   collect_symbols(expr, seen)
   let names : Array[String] = Array::new()
   for name, _ in seen {

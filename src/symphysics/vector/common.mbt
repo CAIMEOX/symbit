@@ -307,7 +307,7 @@ fn tokenize_dynamicsymbols(names : String) -> Array[String] {
   let normalized = names.replace(old=",", new=" ")
   let out : Array[String] = []
   for piece in normalized.split(" ") {
-    let token = piece.trim().to_string()
+    let token = piece.trim().to_owned()
     if token != "" {
       out.push(token)
     }
@@ -321,8 +321,8 @@ fn expand_dynamicsymbol_token(token : String) -> Array[String] {
   if parts.length() != 2 {
     return [token]
   }
-  let start_s = parts[0].to_string()
-  let end_s = parts[1].to_string()
+  let start_s = parts[0].to_owned()
+  let end_s = parts[1].to_owned()
   let mut digit_start = start_s.length()
   for i in 0..<start_s.length() {
     let ch = start_s[i]
@@ -334,8 +334,8 @@ fn expand_dynamicsymbol_token(token : String) -> Array[String] {
   if digit_start == start_s.length() {
     return [token]
   }
-  let prefix = start_s[:digit_start].to_string()
-  let start_num = @string.parse_int(start_s[digit_start:].to_string(), base=10) catch {
+  let prefix = start_s[:digit_start].to_owned()
+  let start_num = @string.parse_int(start_s[digit_start:].to_owned(), base=10) catch {
     _ => return [token]
   }
   let end_num = @string.parse_int(end_s, base=10) catch { _ => return [token] }

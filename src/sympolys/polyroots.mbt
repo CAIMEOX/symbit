@@ -428,7 +428,7 @@ fn integer_basis(poly : Poly) -> Int? raise PolyError {
 ///|
 fn preprocess_scale_by_basis(poly : Poly, basis : Int) -> Poly raise PolyError {
   let degree = poly.degree(0)
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   let base = BigInt::from_int(basis)
   for monom, coeff in poly.coeffs {
     let exp = monom.exps[0]

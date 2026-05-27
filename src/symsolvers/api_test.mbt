@@ -986,9 +986,8 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
     @symcore.int(-10),
   )
   inspect(@symprint.pretty_string(linear_root), content="1.0")
-  assert_eq(
-    @symprint.pretty_string(eq_root),
-    @symprint.pretty_string(linear_root),
+  assert_true(
+    @symprint.pretty_string(eq_root) == @symprint.pretty_string(linear_root),
   )
 
   let pi_root_default = nsolve(
@@ -1827,14 +1826,14 @@ test "linsolve matches additional SymPy public cases batch 5" {
   )
   match linsolve_eqns {
     @symsets.Set::FiniteSet(items) => {
-      assert_eq(items.length(), 1)
+      assert_true(items.length() == 1)
       assert_true(tuple_expr_semantically_equal(items[0], expected_parametric))
     }
     _ => fail("linsolve parametric equations should return FiniteSet")
   }
   match linsolve_aug {
     @symsets.Set::FiniteSet(items) => {
-      assert_eq(items.length(), 1)
+      assert_true(items.length() == 1)
       assert_true(tuple_expr_semantically_equal(items[0], expected_parametric))
     }
     _ => fail("linsolve parametric matrix should return FiniteSet")
@@ -2140,7 +2139,7 @@ test "solveset matches additional SymPy public cases batch 7" {
       [@symcore.int(2)],
     ),
   )
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         x() + @symcore.int(-1) * (y() ^ @symcore.int(3)),
@@ -2151,7 +2150,7 @@ test "solveset matches additional SymPy public cases batch 7" {
         @symsets.finite_set([y() ^ @symcore.int(3)]),
         real_domain,
       ]),
-    ),
+    ) ==
     0,
   )
   assert_true(
@@ -3088,18 +3087,18 @@ test "solve matches additional SymPy public cases batch 15" {
         ((a11 * a22 + @symcore.int(-1) * (a12 * a21)) ^ @symcore.int(-1))
       let expected_y = (a11 * b2 + @symcore.int(-1) * (a21 * b1)) *
         ((a11 * a22 + @symcore.int(-1) * (a12 * a21)) ^ @symcore.int(-1))
-      assert_eq(
+      assert_true(
         @symcore.compare_expr(
           values.get("x").unwrap_or(@symcore.int(0)),
           expected_x,
-        ),
+        ) ==
         0,
       )
-      assert_eq(
+      assert_true(
         @symcore.compare_expr(
           values.get("y").unwrap_or(@symcore.int(0)),
           expected_y,
-        ),
+        ) ==
         0,
       )
     }
@@ -3323,7 +3322,7 @@ test "solveset matches additional SymPy complex public cases batch 17" {
     ),
     content="EmptySet",
   )
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         (x() + @symcore.int(-1) * (y() ^ @symcore.int(3))) *
@@ -3341,7 +3340,7 @@ test "solveset matches additional SymPy complex public cases batch 17" {
         @symsets.finite_set([y() ^ @symcore.int(3)]),
         @symsets.reals(),
       ]),
-    ),
+    ) ==
     0,
   )
   assert_true(
@@ -3743,7 +3742,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
   let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
   let pi_over_two = half *
     @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(f(x()) - pi_over_two, symbol=Some(x()), domain=real_domain),
       @symsets.condition_set(
@@ -3751,10 +3750,10 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
         @symlogic.bool_symbol("Eq(f(x) - pi/2, 0)"),
         base=real_domain,
       ),
-    ),
+    ) ==
     0,
   )
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(f(g(x())) - pi_over_two, symbol=Some(x()), domain=real_domain),
       @symsets.condition_set(
@@ -3762,7 +3761,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
         @symlogic.bool_symbol("Eq(f(g(x)) - pi/2, 0)"),
         base=real_domain,
       ),
-    ),
+    ) ==
     0,
   )
 }
@@ -3860,7 +3859,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
     x() + inv_x,
     @symcore.int(-2) + inv_x,
   )
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(issue_8715, symbol=Some(x()), domain=@symsets.reals()),
       @symsets.union([
@@ -3877,7 +3876,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
           right_open=true,
         ),
       ]),
-    ),
+    ) ==
     0,
   )
 
@@ -3887,7 +3886,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
     log_x + (log_x ^ @symcore.int(-1)),
     @symcore.int(-2) + (log_x ^ @symcore.int(-1)),
   )
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(issue_8715_log, symbol=Some(x()), domain=@symsets.reals()),
       @symsets.union([
@@ -3904,14 +3903,14 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
           right_open=true,
         ),
       ]),
-    ),
+    ) ==
     0,
   )
 
   let issue_11174 = (z() ^ @symcore.int(2)) +
     @symcore.function("exp", [@symcore.int(2) * x()]) -
     sin(y())
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(issue_11174, symbol=Some(x()), domain=@symsets.reals()),
       @symsets.intersection([
@@ -3923,7 +3922,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
           ]),
         ]),
       ]),
-    ),
+    ) ==
     0,
   )
 }
@@ -3958,14 +3957,14 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
       @symcore.int(-1),
     ),
   ])
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(issue_11174_b, symbol=Some(x()), domain=@symsets.reals()),
       @symsets.intersection([
         @symsets.reals(),
         @symsets.finite_set([issue_11174_b_expected]),
       ]),
-    ),
+    ) ==
     0,
   )
 
@@ -3977,7 +3976,7 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
     ]),
     @symcore.int(2),
   )
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(issue_10477, symbol=Some(x()), domain=@symsets.reals()),
       @symsets.union([
@@ -3994,7 +3993,7 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
           right_open=true,
         ),
       ]),
-    ),
+    ) ==
     0,
   )
 
@@ -4004,20 +4003,20 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
     @symcore.int(0),
   )
   let closed_unit_ten = @symsets.interval(@symcore.int(1), @symcore.int(10))
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(issue_10671_b, symbol=Some(x()), domain=closed_unit_ten),
       closed_unit_ten,
-    ),
+    ) ==
     0,
   )
 
   let issue_12478 = sqrt(x() + @symcore.int(-2)) + @symcore.int(2)
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(issue_12478, symbol=Some(x()), domain=@symsets.reals()),
       @symsets.empty_set(),
-    ),
+    ) ==
     0,
   )
   let issue_14300 = @symcore.add([
@@ -4035,7 +4034,7 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
     content="Intersection({-log(1 - y)/18000000}, Reals)",
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         (x() ^ @symcore.int(2)) + @symcore.int(-2) * x() + @symcore.int(-15),
@@ -4048,7 +4047,7 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
         ),
       ),
       @symsets.finite_set([@symcore.int(-3)]),
-    ),
+    ) ==
     0,
   )
 
@@ -4136,7 +4135,7 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
   let one_fifth = @symcore.rational_from_ints(1, 5) catch { _ => fail("1/5") }
   let t = @symcore.Expr::Symbol("t")
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.pow(sqrt(x()), @symcore.int(-1)),
@@ -4144,11 +4143,11 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
         domain=@symsets.reals(),
       ),
       @symsets.empty_set(),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcalculus.diff(sqrt((x() ^ @symcore.int(-1)) + x()), x()),
@@ -4156,11 +4155,11 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
         domain=@symsets.reals(),
       ),
       @symsets.finite_set([@symcore.int(-1), @symcore.int(1)]),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.pow(
@@ -4171,11 +4170,11 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
         domain=@symsets.reals(),
       ),
       @symsets.empty_set(),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.mul([
@@ -4192,11 +4191,11 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
         domain=@symsets.reals(),
       ),
       @symsets.finite_set([@symcore.int(-5)]),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       nonlinsolve(
         [
@@ -4221,11 +4220,11 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
           (@symcore.int(5) ^ (@symcore.int(-1) * one_fifth)),
         ]),
       ]),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       nonlinsolve(
         [
@@ -4240,15 +4239,15 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
         [t],
       ),
       @symsets.empty_set(),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(@symcore.int(3) ^ x(), symbol=Some(x()), domain=@symsets.reals()),
       @symsets.empty_set(),
-    ),
+    ) ==
     0,
   )
 
@@ -4306,7 +4305,7 @@ test "solveset matches additional SymPy exponential conditionset cases batch 25"
 
   let f1 = ((@symcore.function("exp", [x()]) + @symcore.int(1)) ^ x()) +
     @symcore.int(-2)
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(f1, symbol=Some(x()), domain=real_domain),
       @symsets.condition_set(
@@ -4314,12 +4313,12 @@ test "solveset matches additional SymPy exponential conditionset cases batch 25"
         @symlogic.bool_symbol("Eq((exp(x) + 1)**x - 2, 0)"),
         base=real_domain,
       ),
-    ),
+    ) ==
     0,
   )
 
   let f2 = ((x() + @symcore.int(2)) ^ y()) * x() + @symcore.int(-3)
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(f2, symbol=Some(x()), domain=real_domain),
       @symsets.condition_set(
@@ -4327,14 +4326,14 @@ test "solveset matches additional SymPy exponential conditionset cases batch 25"
         @symlogic.bool_symbol("Eq(x*(x + 2)**y - 3, 0)"),
         base=real_domain,
       ),
-    ),
+    ) ==
     0,
   )
 
   let f3 = (@symcore.int(2) ^ x()) +
     @symcore.int(-1) * @symcore.function("exp", [x()]) +
     @symcore.int(-3)
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(f3, symbol=Some(x()), domain=real_domain),
       @symsets.condition_set(
@@ -4342,13 +4341,13 @@ test "solveset matches additional SymPy exponential conditionset cases batch 25"
         @symlogic.bool_symbol("Eq(2**x - exp(x) - 3, 0)"),
         base=real_domain,
       ),
-    ),
+    ) ==
     0,
   )
 
   let f4 = @symcore.function("log", [x()]) +
     @symcore.int(-1) * @symcore.function("exp", [x()])
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(f4, symbol=Some(x()), domain=real_domain),
       @symsets.condition_set(
@@ -4356,14 +4355,14 @@ test "solveset matches additional SymPy exponential conditionset cases batch 25"
         @symlogic.bool_symbol("Eq(log(x) - exp(x), 0)"),
         base=real_domain,
       ),
-    ),
+    ) ==
     0,
   )
 
   let f5 = (@symcore.int(2) ^ x()) +
     (@symcore.int(3) ^ x()) +
     @symcore.int(-1) * (@symcore.int(5) ^ x())
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(f5, symbol=Some(x()), domain=real_domain),
       @symsets.condition_set(
@@ -4371,11 +4370,11 @@ test "solveset matches additional SymPy exponential conditionset cases batch 25"
         @symlogic.bool_symbol("Eq(2**x + 3**x - 5**x, 0)"),
         base=real_domain,
       ),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(x() ^ x(), symbol=Some(x()), domain=positive_open),
       @symsets.condition_set(
@@ -4383,7 +4382,7 @@ test "solveset matches additional SymPy exponential conditionset cases batch 25"
         @symlogic.bool_symbol("Eq(x**x, 0)"),
         base=positive_open,
       ),
-    ),
+    ) ==
     0,
   )
 }
@@ -4411,21 +4410,21 @@ test "solveset matches additional SymPy logarithmic and shifted exponential case
   let log_product = @symcore.function("log", [
     (x() + @symcore.int(-1)) * (x() + @symcore.int(1)),
   ])
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(log_product, symbol=Some(x()), domain=real_domain),
       @symsets.finite_set([pow2_half, @symcore.int(-1) * pow2_half]),
-    ),
+    ) ==
     0,
   )
 
   let log_pair = @symcore.function("log", [x() + @symcore.int(-3)]) +
     @symcore.function("log", [x() + @symcore.int(3)])
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(log_pair, symbol=Some(x()), domain=real_domain),
       @symsets.finite_set([pow10_half, @symcore.int(-1) * pow10_half]),
-    ),
+    ) ==
     0,
   )
 
@@ -4514,7 +4513,7 @@ test "solveset matches additional SymPy scaled logarithmic and exponential cases
     content="Intersection({log(y/3)}, Reals)",
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.function("log", [@symcore.int(3) * x()]),
@@ -4522,11 +4521,11 @@ test "solveset matches additional SymPy scaled logarithmic and exponential cases
         domain=real_domain,
       ),
       @symsets.finite_set([third]),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.function("log", [x() + @symcore.int(3)]),
@@ -4534,7 +4533,7 @@ test "solveset matches additional SymPy scaled logarithmic and exponential cases
         domain=real_domain,
       ),
       @symsets.finite_set([@symcore.int(-2)]),
-    ),
+    ) ==
     0,
   )
 
@@ -4557,7 +4556,7 @@ test "solveset matches additional SymPy scaled logarithmic and exponential cases
     content="Intersection({exp(y/3)}, Reals)",
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.function("exp", [x() + @symcore.int(3)]) + @symcore.int(-3),
@@ -4567,7 +4566,7 @@ test "solveset matches additional SymPy scaled logarithmic and exponential cases
       @symsets.finite_set([
         @symcore.function("log", [@symcore.int(3)]) + @symcore.int(-3),
       ]),
-    ),
+    ) ==
     0,
   )
 
@@ -4580,7 +4579,7 @@ test "solveset matches additional SymPy scaled logarithmic and exponential cases
     content="Intersection({y/3}, Reals)",
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.int(3) * @symcore.function("exp", [x()]) + @symcore.int(-1),
@@ -4588,11 +4587,11 @@ test "solveset matches additional SymPy scaled logarithmic and exponential cases
         domain=real_domain,
       ),
       @symsets.finite_set([@symcore.function("log", [third])]),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.function("exp", [@symcore.int(3) * x()]) + @symcore.int(-1),
@@ -4600,11 +4599,11 @@ test "solveset matches additional SymPy scaled logarithmic and exponential cases
         domain=real_domain,
       ),
       @symsets.finite_set([@symcore.int(0)]),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.int(3) * @symcore.function("log", [x()]) + @symcore.int(-3),
@@ -4612,7 +4611,7 @@ test "solveset matches additional SymPy scaled logarithmic and exponential cases
         domain=real_domain,
       ),
       @symsets.finite_set([@symcore.function("exp", [@symcore.int(1)])]),
-    ),
+    ) ==
     0,
   )
 }
@@ -4621,7 +4620,7 @@ test "solveset matches additional SymPy scaled logarithmic and exponential cases
 test "solveset matches additional SymPy real exponential equation cases batch 28" {
   let real_domain = @symsets.reals()
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.Expr::Relational(
@@ -4633,11 +4632,11 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
         domain=real_domain,
       ),
       @symsets.finite_set([@symcore.int(2)]),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.Expr::Relational(
@@ -4649,11 +4648,11 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
         domain=real_domain,
       ),
       @symsets.empty_set(),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.Expr::Relational(
@@ -4665,11 +4664,11 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
         domain=real_domain,
       ),
       @symsets.empty_set(),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.Expr::Relational(
@@ -4681,11 +4680,11 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
         domain=real_domain,
       ),
       @symsets.finite_set([@symcore.int(3)]),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.Expr::Relational(
@@ -4697,11 +4696,11 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
         domain=real_domain,
       ),
       @symsets.empty_set(),
-    ),
+    ) ==
     0,
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.Expr::Relational(
@@ -4713,7 +4712,7 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
         domain=real_domain,
       ),
       @symsets.finite_set([@symcore.int(42)]),
-    ),
+    ) ==
     0,
   )
 
@@ -4847,7 +4846,7 @@ test "decompogen factors functional composition and polynomial composition" {
     ]),
     sin(x()),
   ]
-  assert_eq(trig_poly.length(), trig_poly_expected.length())
+  assert_true(trig_poly.length() == trig_poly_expected.length())
   for i in 0..<trig_poly.length() {
     assert_true(expr_semantically_equal(trig_poly[i], trig_poly_expected[i]))
   }
@@ -4864,7 +4863,7 @@ test "decompogen factors functional composition and polynomial composition" {
     @symcore.int(3) * x() + (cos(y()) ^ @symcore.int(2)) + @symcore.int(-4),
     cos(x()),
   ]
-  assert_eq(mixed_abs.length(), mixed_abs_expected.length())
+  assert_true(mixed_abs.length() == mixed_abs_expected.length())
   for i in 0..<mixed_abs.length() {
     assert_true(expr_semantically_equal(mixed_abs[i], mixed_abs_expected[i]))
   }
@@ -4929,7 +4928,7 @@ test "decompogen factors functional composition and polynomial composition" {
     (x() ^ @symcore.int(2)) - x() + @symcore.int(-1),
     (x() ^ @symcore.int(2)) + x(),
   ]
-  assert_eq(quartic_poly.length(), quartic_poly_expected.length())
+  assert_true(quartic_poly.length() == quartic_poly_expected.length())
   for i in 0..<quartic_poly.length() {
     assert_true(
       expr_semantically_equal(quartic_poly[i], quartic_poly_expected[i]),
@@ -5520,11 +5519,11 @@ test "constantsimp matches SymPy Eq normalization cases" {
     ),
     [c1],
   )
-  assert_eq(
+  assert_true(
     @symcore.compare_expr(
       local_constant_renumber(eq_add),
       @symcore.Expr::Relational(@symcore.RelOp::Eq, x() * f(x()), c1),
-    ),
+    ) ==
     0,
   )
   let eq_mul = constantsimp(
@@ -5535,11 +5534,11 @@ test "constantsimp matches SymPy Eq normalization cases" {
     ),
     [c1],
   )
-  assert_eq(
+  assert_true(
     @symcore.compare_expr(
       local_constant_renumber(eq_mul),
       @symcore.Expr::Relational(@symcore.RelOp::Eq, x() * f(x()), c1),
-    ),
+    ) ==
     0,
   )
 }
@@ -5593,7 +5592,7 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
       c2 * @symcore.function("cosh", [x() * one_third]),
     ),
   )
-  assert_eq(@symcore.compare_expr(hyperbolic, hyperbolic_expected), 0)
+  assert_true(@symcore.compare_expr(hyperbolic, hyperbolic_expected) == 0)
 
   let acos_case = local_constant_renumber(
     constantsimp(
@@ -5614,7 +5613,7 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
       @symcore.function("acos", [c1 * (cos(x()) ^ @symcore.int(-1))]),
     ),
   )
-  assert_eq(@symcore.compare_expr(acos_case, acos_expected), 0)
+  assert_true(@symcore.compare_expr(acos_case, acos_expected) == 0)
 
   let log_case = local_constant_renumber(
     constantsimp(
@@ -5637,7 +5636,7 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
       @symcore.int(0),
     ),
   )
-  assert_eq(@symcore.compare_expr(log_case, log_expected), 0)
+  assert_true(@symcore.compare_expr(log_case, log_expected) == 0)
 
   let sqrt_log_case = local_constant_renumber(
     constantsimp(
@@ -5668,7 +5667,7 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
       @symcore.int(0),
     ),
   )
-  assert_eq(@symcore.compare_expr(sqrt_log_case, sqrt_log_expected), 0)
+  assert_true(@symcore.compare_expr(sqrt_log_case, sqrt_log_expected) == 0)
 
   let ratio = f(x()) * (x() ^ @symcore.int(-1))
   let exp_ratio = @symcore.function("exp", [@symcore.int(-1) * ratio])
@@ -5693,7 +5692,7 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
       @symcore.int(0),
     ),
   )
-  assert_eq(@symcore.compare_expr(trig_log_case, trig_log_expected), 0)
+  assert_true(@symcore.compare_expr(trig_log_case, trig_log_expected) == 0)
 
   let sqrt_pair = [
     constantsimp(
@@ -5726,7 +5725,7 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
       @symcore.int(-1) * sqrt(x() * (c1 + x())),
     ),
   ]
-  assert_eq(expr_list_text(sqrt_pair), expr_list_text(sqrt_pair_expected))
+  assert_true(expr_list_text(sqrt_pair) == expr_list_text(sqrt_pair_expected))
 
   let integral_case = local_constant_renumber(
     constantsimp(
@@ -5763,7 +5762,7 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
       @symcore.int(0),
     ),
   )
-  assert_eq(@symcore.compare_expr(integral_case, integral_expected), 0)
+  assert_true(@symcore.compare_expr(integral_case, integral_expected) == 0)
 }
 
 ///|
@@ -7846,7 +7845,7 @@ test "solveset matches additional SymPy real set cases batch 29" {
     content="Intersection({y**3}, Reals)",
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.int(2) * x() * ((x() + @symcore.int(2)) ^ @symcore.int(-1)) +
@@ -7855,7 +7854,7 @@ test "solveset matches additional SymPy real set cases batch 29" {
         domain=real_domain,
       ),
       @symsets.finite_set([@symcore.int(2)]),
-    ),
+    ) ==
     0,
   )
 
@@ -7894,7 +7893,7 @@ test "solveset matches additional SymPy real set cases batch 29" {
     content="Intersection({2*cm}, Reals)",
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         x() * ((x() ^ one_third) + @symcore.int(-3)),
@@ -7902,7 +7901,7 @@ test "solveset matches additional SymPy real set cases batch 29" {
         domain=real_domain,
       ),
       @symsets.finite_set([@symcore.int(0), @symcore.int(27)]),
-    ),
+    ) ==
     0,
   )
 
@@ -7938,7 +7937,7 @@ test "solveset matches additional SymPy set behavior cases batch 30" {
   let a = @symcore.Expr::Symbol("a")
   let real_domain = @symsets.reals()
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         x() * (@symcore.function("log", [x()]) ^ @symcore.int(-1)),
@@ -7946,7 +7945,7 @@ test "solveset matches additional SymPy set behavior cases batch 30" {
         domain=real_domain,
       ),
       @symsets.empty_set(),
-    ),
+    ) ==
     0,
   )
 
@@ -7961,7 +7960,7 @@ test "solveset matches additional SymPy set behavior cases batch 30" {
     content="Intersection({(-a)**(1/2), -(-a)**(1/2)}, Reals)",
   )
 
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(
         @symcore.int(1) * (sqrt(x()) ^ @symcore.int(-1)),
@@ -7969,7 +7968,7 @@ test "solveset matches additional SymPy set behavior cases batch 30" {
         domain=real_domain,
       ),
       @symsets.empty_set(),
-    ),
+    ) ==
     0,
   )
 }
@@ -7981,11 +7980,11 @@ test "solveset finds rational linear roots via SymPy-style polynomial root enume
   let third = @symcore.rational_from_ints(1, 3) catch { _ => fail("1/3") }
   let expr = (@symcore.int(2) * x() + @symcore.int(-1)) *
     (@symcore.int(3) * x() + @symcore.int(1))
-  assert_eq(
+  assert_true(
     @symsets.compare_set(
       solveset(expr, symbol=Some(x()), domain=real_domain),
       @symsets.finite_set([half, @symcore.int(-1) * third]),
-    ),
+    ) ==
     0,
   )
 }

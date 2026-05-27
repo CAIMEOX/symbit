@@ -97,16 +97,16 @@ fn starts_decimal(src : String, index : Int) -> Bool {
 fn decimal_parts(text : String) -> (String, String, String) {
   match text.split_once(".") {
     Some((whole, frac_part)) =>
-      match frac_part.to_string().split_once("[") {
+      match frac_part.to_owned().split_once("[") {
         Some((nonrepeat, repeat_part)) =>
           (
-            whole.to_string(),
-            nonrepeat.to_string(),
+            whole.to_owned(),
+            nonrepeat.to_owned(),
             repeat_part
-            .to_string()
+            .to_owned()
             .unsafe_substring(start=0, end=repeat_part.length() - 1),
           )
-        None => (whole.to_string(), frac_part.to_string(), "")
+        None => (whole.to_owned(), frac_part.to_owned(), "")
       }
     None => (text, "", "")
   }

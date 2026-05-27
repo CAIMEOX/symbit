@@ -30,7 +30,7 @@ test "subresultants qq zz wb: sign and matrix output helpers" {
     @symcore.int(-1) * ((x ^ @symcore.int(2)) + @symcore.int(1)),
   )
   let zero = Poly::zero(["x"], Domain::ZZ)
-  inspect(sign_seq([p, q, zero]), content="[1, -1, 0]")
+  debug_inspect(sign_seq([p, q, zero]), content="[1, -1, 0]")
 
   let r = sr_wb_poly(x + @symcore.int(1))
   let same_degree = sr_wb_poly(@symcore.int(2) * x + @symcore.int(3))
@@ -140,7 +140,7 @@ test "subresultants qq zz wb: row and matrix helper frontdoors" {
     pivot(sr_wb_matrix([[2, 1, 3], [4, 5, 6], [0, 7, 8]]), 0, 0).to_matrix_string(),
     content="Matrix([[2, 1, 3], [0, 6, 0], [0, 7, 8]])",
   )
-  inspect(
+  debug_inspect(
     find_degree(sr_wb_matrix([[1, 2, 3, 0], [0, 0, 4, 5]]), 3),
     content="Some(1)",
   )

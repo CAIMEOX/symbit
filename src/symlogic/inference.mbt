@@ -8,7 +8,7 @@ pub enum SatResult {
 }
 
 ///|
-pub impl Show for SatResult with to_string(self) {
+pub impl Show for SatResult with fn to_string(self) {
   match self {
     SatResult::Single(model) => model_to_string(model)
     SatResult::All(models) => models_to_string(models)
@@ -16,7 +16,7 @@ pub impl Show for SatResult with to_string(self) {
 }
 
 ///|
-pub impl Show for SatResult with output(self, logger : &Logger) -> Unit {
+pub impl Show for SatResult with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -216,7 +216,7 @@ pub struct PropKB {
 
 ///|
 pub fn PropKB::new() -> PropKB {
-  { clauses: Map::new() }
+  { clauses: Map([]) }
 }
 
 ///|

@@ -15,7 +15,7 @@ fn join_signed(parts : Array[String]) -> String {
   for part in parts[1:] {
     let piece = part.to_string()
     if piece.has_prefix("-") {
-      out = out + " - " + piece[1:].to_string()
+      out = out + " - " + piece[1:].to_owned()
     } else {
       out = out + " + " + piece
     }
@@ -31,7 +31,7 @@ fn scalar_with_basis(coeff : Expr, basis : String) -> String {
   } else if txt == "-1" {
     "-" + basis
   } else if txt.has_prefix("-1*") {
-    "-" + txt[3:].to_string() + "*" + basis
+    "-" + txt[3:].to_owned() + "*" + basis
   } else {
     txt + "*" + basis
   }

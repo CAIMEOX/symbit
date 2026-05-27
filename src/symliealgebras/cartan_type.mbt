@@ -24,12 +24,12 @@ fn cartan_series_string(series : CartanSeries) -> String {
 }
 
 ///|
-pub impl Show for CartanSeries with to_string(self) {
+pub impl Show for CartanSeries with fn to_string(self) {
   cartan_series_string(self)
 }
 
 ///|
-pub impl Show for CartanSeries with output(self, logger : &Logger) -> Unit {
+pub impl Show for CartanSeries with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(cartan_series_string(self))
 }
 
@@ -97,7 +97,7 @@ pub fn cartan_type_from_string(ct : String) -> CartanType raise {
   if len <= 1 {
     fail("Argument must be a string like 'A3'")
   }
-  let num_str = ct[1:len].to_string()
+  let num_str = ct[1:len].to_owned()
   let n = @string.parse_int(num_str, base=10)
   cartan_type_from_series(cartan_series_from_string(series), n)
 }

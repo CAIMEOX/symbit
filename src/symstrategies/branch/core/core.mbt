@@ -14,7 +14,7 @@ pub fn[T] identity(x : T) -> Array[T] {
 /// Apply a branching rule repeatedly until it has no effect.
 pub fn[T : Eq + Hash] exhaust(brule : BRule[T]) -> BRule[T] {
   (expr : T) => {
-    let seen : Map[T, Bool] = Map::new()
+    let seen : Map[T, Bool] = Map([])
     seen[expr] = true
     let out : Array[T] = Array::new()
     let mut progressed = false
@@ -71,7 +71,7 @@ pub fn[T : Eq + Show] debug(
 /// Multiplex many branching rules into one.
 pub fn[T : Eq + Hash] multiplex(brules : Array[BRule[T]]) -> BRule[T] {
   (expr : T) => {
-    let seen : Map[T, Bool] = Map::new()
+    let seen : Map[T, Bool] = Map([])
     let out : Array[T] = Array::new()
     for brule in brules {
       for nexpr in brule(expr) {

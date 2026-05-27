@@ -215,7 +215,7 @@ test "sqfreetools dense wb: algebraic norm frontdoors" {
     0,
     domain,
   )
-  inspect(dmp_normed.0, content="[1]")
+  debug_inspect(dmp_normed.0, content="[1]")
   inspect(sqf_wb_dmp_repr(dmp_normed.1), content="[1,-2*a,1]")
   inspect(sqf_wb_dmp_repr(dmp_normed.2), content="[1,0,-10,0,1]")
 }

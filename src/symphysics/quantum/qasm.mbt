@@ -41,7 +41,7 @@ pub fn trim(line : String) -> String {
   if parts.is_empty() {
     line
   } else {
-    parts[0].to_string()
+    parts[0].to_owned()
   }
 }
 
@@ -122,7 +122,7 @@ fn qasm_fullsplit(
   let raw_words = Array::from_iter(trimmed.split(" "))
   let words : Array[String] = []
   for raw in raw_words {
-    let word = raw.trim().to_string()
+    let word = raw.trim().to_owned()
     if word != "" {
       words.push(word)
     }
@@ -143,7 +143,7 @@ fn qasm_fullsplit(
   let args = if rest == "" {
     []
   } else {
-    Array::from_iter(rest.split(",")).map(part => part.trim().to_string())
+    Array::from_iter(rest.split(",")).map(part => part.trim().to_owned())
   }
   (command, args)
 }
@@ -165,7 +165,7 @@ pub fn qasm(lines : Array[String]) -> Qasm raise @symphysics.PhysicsError {
 
 ///|
 pub fn read_qasm(text : String) -> Qasm raise @symphysics.PhysicsError {
-  qasm(text.split("\n").map(part => part.to_string()).collect())
+  qasm(text.split("\n").map(part => part.to_owned()).collect())
 }
 
 ///|
@@ -204,7 +204,7 @@ fn qasm_apply_definition(
       )
     }
     create_cgate(definition.symbol)(
-      indices[:definition.ncontrols].to_array(),
+      indices[:definition.ncontrols].to_owned(),
       indices[indices.length() - 1],
     )
   }
@@ -244,7 +244,7 @@ fn qasm_apply_builtin(
     "toffoli" => {
       let indices = parser.indices(rest)
       parser.circuit.push(
-        cgate(indices[:2].to_array(), qasm_builtin_gate("X", [indices[2]])),
+        cgate(indices[:2].to_owned(), qasm_builtin_gate("X", [indices[2]])),
       )
     }
     "cx" => {

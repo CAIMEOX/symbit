@@ -202,7 +202,7 @@ fn ll_op(
   for item in right {
     new_right.push(item)
   }
-  Some(GateRule::{ left: left[1:left.length()].to_array(), right: new_right })
+  Some(GateRule::{ left: left[1:left.length()].to_owned(), right: new_right })
 }
 
 ///|
@@ -218,7 +218,7 @@ fn lr_op(
   let new_right = right.copy()
   new_right.push(dagger(gate))
   Some(GateRule::{
-    left: left[0:left.length() - 1].to_array(),
+    left: left[0:left.length() - 1].to_owned(),
     right: new_right,
   })
 }
@@ -237,7 +237,7 @@ fn rl_op(
   for item in left {
     new_left.push(item)
   }
-  Some(GateRule::{ left: new_left, right: right[1:right.length()].to_array() })
+  Some(GateRule::{ left: new_left, right: right[1:right.length()].to_owned() })
 }
 
 ///|
@@ -254,7 +254,7 @@ fn rr_op(
   new_left.push(dagger(gate))
   Some(GateRule::{
     left: new_left,
-    right: right[0:right.length() - 1].to_array(),
+    right: right[0:right.length() - 1].to_owned(),
   })
 }
 
@@ -354,12 +354,12 @@ pub fn GateRule::right_expr(self : GateRule) -> Expr {
 }
 
 ///|
-pub impl Show for GateRule with to_string(self) {
+pub impl Show for GateRule with fn to_string(self) {
   gate_rule_key(self)
 }
 
 ///|
-pub impl Show for GateRule with output(self, logger : &Logger) -> Unit {
+pub impl Show for GateRule with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -400,12 +400,12 @@ pub fn GateIdentity::equivalent_id_exprs(self : GateIdentity) -> Array[Expr] {
 }
 
 ///|
-pub impl Show for GateIdentity with to_string(self) {
+pub impl Show for GateIdentity with fn to_string(self) {
   @symprint.pretty_string(self.circuit())
 }
 
 ///|
-pub impl Show for GateIdentity with output(self, logger : &Logger) -> Unit {
+pub impl Show for GateIdentity with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

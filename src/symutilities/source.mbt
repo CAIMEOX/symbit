@@ -15,8 +15,8 @@ pub fn get_mod_func(callback : String) -> (String, String) {
   }
   match dot {
     Some(idx) => {
-      let module_name = callback[:idx].to_string()
-      let func_name = callback[idx + 1:callback.length()].to_string()
+      let module_name = callback[:idx].to_owned()
+      let func_name = callback[idx + 1:callback.length()].to_owned()
       (module_name, func_name)
     }
     None => (callback, "")

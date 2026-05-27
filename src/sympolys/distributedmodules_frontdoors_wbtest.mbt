@@ -42,12 +42,12 @@ fn sdm_wb_expr_list_string(values : Array[Expr]) -> String {
 
 ///|
 test "distributedmodules wb: module monomial helpers" {
-  inspect(
+  debug_inspect(
     sdm_monomial_mul(sdm_wb_m([1, 1, 0]), sdm_wb_m([1, 3])).to_array(),
     content="[1, 2, 3]",
   )
   inspect(sdm_monomial_deg(sdm_wb_m([5, 2, 1])), content="3")
-  inspect(
+  debug_inspect(
     sdm_monomial_lcm(sdm_wb_m([1, 2, 3]), sdm_wb_m([1, 0, 5])).to_array(),
     content="[1, 2, 5]",
   )
@@ -70,7 +70,7 @@ test "distributedmodules wb: sort strip dict and leading terms" {
   let f = sdm_from_dict(d, lex())
   inspect(sdm_wb_string(f), content="[((1, 1, 0), 1), ((1, 0, 0), 2)]")
   inspect(sdm_LC(f, Domain::QQ).to_string(), content="1")
-  inspect(sdm_LM(f).to_array(), content="[1, 1, 0]")
+  debug_inspect(sdm_LM(f).to_array(), content="[1, 1, 0]")
   inspect(
     "(\{sdm_wb_tuple(sdm_LT(f).0.to_array())}, \{sdm_LT(f).1})",
     content="((1, 1, 0), 1)",

@@ -23,7 +23,7 @@ pub fn[T : Eq] exhaust(rule : (T) -> T) -> (T) -> T {
 ///|
 /// Memoized version of a rule.
 pub fn[T : Eq + Hash, U] memoize(rule : (T) -> U) -> (T) -> U {
-  let cache : Map[T, U] = Map::new()
+  let cache : Map[T, U] = Map([])
   (expr : T) => {
     match cache.get(expr) {
       Some(v) => v

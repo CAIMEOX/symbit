@@ -1,14 +1,14 @@
 ///|
 /// Parse a comma-separated wrt spec into list of names.
 fn parse_wrt_string(spec : String) -> Array[String] {
-  let trimmed = spec.trim().to_string()
+  let trimmed = spec.trim().to_owned()
   if trimmed == "" {
     return Array::new()
   }
   let parts = trimmed.split(",")
   let out : Array[String] = Array::new()
   for part in parts {
-    let name = part.trim().to_string()
+    let name = part.trim().to_owned()
     if name != "" {
       out.push(name)
     }
@@ -19,14 +19,14 @@ fn parse_wrt_string(spec : String) -> Array[String] {
 ///|
 /// Parse a sort string like "x > p > q" into list of names.
 fn parse_sort_string(spec : String) -> Array[String] {
-  let trimmed = spec.trim().to_string()
+  let trimmed = spec.trim().to_owned()
   if trimmed == "" {
     return Array::new()
   }
   let parts = trimmed.split(">")
   let out : Array[String] = Array::new()
   for part in parts {
-    let name = part.trim().to_string()
+    let name = part.trim().to_owned()
     if name != "" {
       out.push(name)
     }
@@ -48,7 +48,7 @@ fn split_name(name : String) -> (String, Int?) {
   if i == name.length() {
     (name, None)
   } else {
-    let prefix = name[:i].to_string()
+    let prefix = name[:i].to_owned()
     let mut num = 0
     for j in i..<name.length() {
       let digit = name[j].to_int() - 48
@@ -95,7 +95,7 @@ fn compare_gens(a : String, b : String) -> Int {
 
 ///|
 fn unique_preserve(xs : Array[String]) -> Array[String] {
-  let seen : Map[String, Bool] = Map::new()
+  let seen : Map[String, Bool] = Map([])
   let out : Array[String] = Array::new()
   for x in xs {
     if seen.get(x) is None {
@@ -140,7 +140,7 @@ fn _sort_gens(
     }
   }
   if !sort_list.is_empty() {
-    let sort_rank : Map[String, Int] = Map::new()
+    let sort_rank : Map[String, Int] = Map([])
     let mut idx = 0
     for name in sort_list {
       sort_rank.set(name, idx)
@@ -208,8 +208,8 @@ fn _unify_gens(a : Array[String], b : Array[String]) -> Array[String] {
     merged.push(name)
   }
   let nodes = unique_preserve(merged)
-  let adj : Map[String, Array[String]] = Map::new()
-  let indeg : Map[String, Int] = Map::new()
+  let adj : Map[String, Array[String]] = Map([])
+  let indeg : Map[String, Int] = Map([])
   for n in nodes {
     indeg.set(n, 0)
   }
@@ -344,7 +344,7 @@ fn _sort_factors_multiple(
 
 ///|
 fn infer_gens_expr_local(expr : Expr) -> Array[String] {
-  let seen : Map[String, Bool] = Map::new()
+  let seen : Map[String, Bool] = Map([])
   collect_symbols_local(expr, seen)
   let names : Array[String] = Array::new()
   for name, _ in seen {

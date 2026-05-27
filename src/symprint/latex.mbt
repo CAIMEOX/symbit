@@ -279,17 +279,17 @@ fn split_super_sub_name(
       i += 1
     }
     let pos_next = if pos_hat < pos_usc { pos_hat } else { pos_usc }
-    let part = text[pos:pos_next].to_string()
+    let part = text[pos:pos_next].to_owned()
     pos = pos_next
     match name {
       None => name = Some(part)
       Some(_) =>
         if part.has_prefix("^") {
-          supers.push(part[1:part.length()].to_string())
+          supers.push(part[1:part.length()].to_owned())
         } else if part.has_prefix("__") {
-          supers.push(part[2:part.length()].to_string())
+          supers.push(part[2:part.length()].to_owned())
         } else if part.has_prefix("_") {
-          subs.push(part[1:part.length()].to_string())
+          subs.push(part[1:part.length()].to_owned())
         } else {
           return (text, [], [])
         }
@@ -328,12 +328,12 @@ fn split_super_sub_name(
     }
     if alpha_prefix {
       let with_digit_sub : Array[String] = [
-        base[digit_start:base.length()].to_string(),
+        base[digit_start:base.length()].to_owned(),
       ]
       for item in subs {
         with_digit_sub.push(item)
       }
-      base = base[:digit_start].to_string()
+      base = base[:digit_start].to_owned()
       return (base, supers, with_digit_sub)
     }
   }
@@ -419,49 +419,49 @@ fn translate_symbol_name(name : String) -> String {
     None => {
       let lower = name.to_lower()
       if lower.has_suffix("ddddot") && name.length() > 6 {
-        return "\\ddddot{\{translate_symbol_name(name[:name.length() - 6].to_string())}}"
+        return "\\ddddot{\{translate_symbol_name(name[:name.length() - 6].to_owned())}}"
       }
       if lower.has_suffix("dddot") && name.length() > 5 {
-        return "\\dddot{\{translate_symbol_name(name[:name.length() - 5].to_string())}}"
+        return "\\dddot{\{translate_symbol_name(name[:name.length() - 5].to_owned())}}"
       }
       if lower.has_suffix("ddot") && name.length() > 4 {
-        return "\\ddot{\{translate_symbol_name(name[:name.length() - 4].to_string())}}"
+        return "\\ddot{\{translate_symbol_name(name[:name.length() - 4].to_owned())}}"
       }
       if lower.has_suffix("dot") && name.length() > 3 {
-        return "\\dot{\{translate_symbol_name(name[:name.length() - 3].to_string())}}"
+        return "\\dot{\{translate_symbol_name(name[:name.length() - 3].to_owned())}}"
       }
       if lower.has_suffix("tilde") && name.length() > 5 {
-        return "\\tilde{\{translate_symbol_name(name[:name.length() - 5].to_string())}}"
+        return "\\tilde{\{translate_symbol_name(name[:name.length() - 5].to_owned())}}"
       }
       if lower.has_suffix("hat") && name.length() > 3 {
-        return "\\hat{\{translate_symbol_name(name[:name.length() - 3].to_string())}}"
+        return "\\hat{\{translate_symbol_name(name[:name.length() - 3].to_owned())}}"
       }
       if lower.has_suffix("bar") && name.length() > 3 {
-        return "\\bar{\{translate_symbol_name(name[:name.length() - 3].to_string())}}"
+        return "\\bar{\{translate_symbol_name(name[:name.length() - 3].to_owned())}}"
       }
       if lower.has_suffix("vec") && name.length() > 3 {
-        return "\\vec{\{translate_symbol_name(name[:name.length() - 3].to_string())}}"
+        return "\\vec{\{translate_symbol_name(name[:name.length() - 3].to_owned())}}"
       }
       if lower.has_suffix("prime") && name.length() > 5 {
-        return "{\{translate_symbol_name(name[:name.length() - 5].to_string())}}'"
+        return "{\{translate_symbol_name(name[:name.length() - 5].to_owned())}}'"
       }
       if lower.has_suffix("prm") && name.length() > 3 {
-        return "{\{translate_symbol_name(name[:name.length() - 3].to_string())}}'"
+        return "{\{translate_symbol_name(name[:name.length() - 3].to_owned())}}'"
       }
       if lower.has_suffix("bold") && name.length() > 4 {
-        return "\\boldsymbol{\{translate_symbol_name(name[:name.length() - 4].to_string())}}"
+        return "\\boldsymbol{\{translate_symbol_name(name[:name.length() - 4].to_owned())}}"
       }
       if lower.has_suffix("bm") && name.length() > 2 {
-        return "\\boldsymbol{\{translate_symbol_name(name[:name.length() - 2].to_string())}}"
+        return "\\boldsymbol{\{translate_symbol_name(name[:name.length() - 2].to_owned())}}"
       }
       if lower.has_suffix("cal") && name.length() > 3 {
-        return "\\mathcal{\{translate_symbol_name(name[:name.length() - 3].to_string())}}"
+        return "\\mathcal{\{translate_symbol_name(name[:name.length() - 3].to_owned())}}"
       }
       if lower.has_suffix("scr") && name.length() > 3 {
-        return "\\mathscr{\{translate_symbol_name(name[:name.length() - 3].to_string())}}"
+        return "\\mathscr{\{translate_symbol_name(name[:name.length() - 3].to_owned())}}"
       }
       if lower.has_suffix("frak") && name.length() > 4 {
-        return "\\mathfrak{\{translate_symbol_name(name[:name.length() - 4].to_string())}}"
+        return "\\mathfrak{\{translate_symbol_name(name[:name.length() - 4].to_owned())}}"
       }
       name
     }
@@ -542,7 +542,7 @@ fn latex_hprint_function(name : String) -> String {
   } else {
     match boundary {
       Some(idx) =>
-        "\\operatorname{\{rendered[:idx].to_string()}}\{rendered[idx:rendered.length()].to_string()}"
+        "\\operatorname{\{rendered[:idx].to_owned()}}\{rendered[idx:rendered.length()].to_owned()}"
       None => "\\operatorname{\{rendered}}"
     }
   }
@@ -614,7 +614,7 @@ fn latex_complex_float(
   }
   let imag_tex_raw = latex_float(imag, settings)
   let imag_tex = if imag_negative && imag_tex_raw.has_prefix("-") {
-    imag_tex_raw[1:imag_tex_raw.length()].to_string()
+    imag_tex_raw[1:imag_tex_raw.length()].to_owned()
   } else {
     imag_tex_raw
   }
@@ -1807,9 +1807,9 @@ fn latex_function_application(
     match settings.inv_trig_style {
       "full" =>
         func = (if func.has_suffix("h") { "ar" } else { "arc" }) +
-          func[1:func.length()].to_string()
+          func[1:func.length()].to_owned()
       "power" => {
-        func = func[1:func.length()].to_string()
+        func = func[1:func.length()].to_owned()
         inv_trig_power_case = true
         if exp is Some(_) {
           can_fold_brackets = false

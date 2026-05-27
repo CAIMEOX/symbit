@@ -9,7 +9,7 @@ pub(all) enum TruthTableRow {
 
 ///|
 fn env_from_bits(names : Array[String], bits : Array[Int]) -> Map[String, Bool] {
-  let env : Map[String, Bool] = Map::new()
+  let env : Map[String, Bool] = Map([])
   for i in 0..<names.length() {
     env[names[i]] = bits[i] == 1
   }
@@ -84,14 +84,14 @@ pub fn to_int_repr(
   symbols : Array[BoolExpr],
 ) -> Array[Array[Int]] {
   let names = symbol_names_from_exprs(symbols)
-  let sym_map : Map[String, Int] = Map::new()
+  let sym_map : Map[String, Int] = Map([])
   for i in 0..<names.length() {
     sym_map[names[i]] = i + 1
   }
   let out : Array[Array[Int]] = Array::new()
   for clause in clauses {
     let parts = disjuncts(clause)
-    let set : Map[Int, Bool] = Map::new()
+    let set : Map[Int, Bool] = Map([])
     for part in parts {
       match part {
         BoolExpr::Symbol(name) =>

@@ -105,7 +105,7 @@ test "normalize algebraic extension spec to monic" {
   let normalized = normalize_alg_ext_spec(spec)
   match build_alg_extension(normalized) {
     Domain::AlgExt(_, gens, rels) => {
-      inspect(gens, content="[\"x\"]")
+      debug_inspect(gens, content="[\"x\"]")
       // Leading coefficient should be 1 after normalization.
       inspect(@symprint.pretty_string(rels[0]), content="x**2 + 1/2")
     }

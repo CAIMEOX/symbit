@@ -11,7 +11,7 @@ pub(all) enum RelOp {
 } derive(Eq)
 
 ///|
-impl Show for RelOp with to_string(self) {
+impl Show for RelOp with fn to_string(self) {
   match self {
     RelOp::Le => "<="
     RelOp::Ge => ">="
@@ -22,7 +22,7 @@ impl Show for RelOp with to_string(self) {
 }
 
 ///|
-impl Show for RelOp with output(self, logger) {
+impl Show for RelOp with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
@@ -132,7 +132,7 @@ fn origin_union(
   a : Array[LraConflictLit],
   b : Array[LraConflictLit],
 ) -> Array[LraConflictLit] {
-  let seen : Map[String, LraConflictLit] = Map::new()
+  let seen : Map[String, LraConflictLit] = Map([])
   for lit in a {
     seen[origin_key(lit)] = lit
   }
@@ -148,7 +148,7 @@ fn origin_union(
 
 ///|
 fn expr_from_rhs(rhs : @symnum.BigRational) -> LinearExpr {
-  { coeffs: Map::new(), constant: rhs }
+  { coeffs: Map([]), constant: rhs }
 }
 
 ///|
@@ -161,7 +161,7 @@ fn expr_from_coeffs(
 
 ///|
 fn expr_sub(a : LinearExpr, b : LinearExpr) -> LinearExpr {
-  let out : Map[String, @symnum.BigRational] = Map::new()
+  let out : Map[String, @symnum.BigRational] = Map([])
   for name, value in a.coeffs {
     add_coeff(out, name, value)
   }
@@ -174,9 +174,9 @@ fn expr_sub(a : LinearExpr, b : LinearExpr) -> LinearExpr {
 ///|
 fn expr_mul_scalar(a : LinearExpr, k : @symnum.BigRational) -> LinearExpr {
   if k.is_zero() {
-    return { coeffs: Map::new(), constant: br_zero() }
+    return { coeffs: Map([]), constant: br_zero() }
   }
-  let out : Map[String, @symnum.BigRational] = Map::new()
+  let out : Map[String, @symnum.BigRational] = Map([])
   for name, value in a.coeffs {
     add_coeff(out, name, value * k)
   }
@@ -228,7 +228,7 @@ fn bound_from_ineq(
   var_name : String,
   coeff : @symnum.BigRational,
 ) -> LinearExpr {
-  let rest_coeffs : Map[String, @symnum.BigRational] = Map::new()
+  let rest_coeffs : Map[String, @symnum.BigRational] = Map([])
   for name, value in ineq.coeffs {
     if name != var_name {
       add_coeff(rest_coeffs, name, value)
@@ -283,7 +283,7 @@ fn eliminate_var(ineqs : Array[Ineq], var_name : String) -> LraCheck {
 fn normalize_coeffs(
   coeffs : Map[String, @symnum.BigRational],
 ) -> Map[String, @symnum.BigRational] {
-  let out : Map[String, @symnum.BigRational] = Map::new()
+  let out : Map[String, @symnum.BigRational] = Map([])
   for name, value in coeffs {
     add_coeff(out, name, value)
   }
@@ -294,7 +294,7 @@ fn normalize_coeffs(
 fn clone_coeffs(
   coeffs : Map[String, @symnum.BigRational],
 ) -> Map[String, @symnum.BigRational] {
-  let out : Map[String, @symnum.BigRational] = Map::new()
+  let out : Map[String, @symnum.BigRational] = Map([])
   for name, value in coeffs {
     out[name] = value
   }
@@ -311,7 +311,7 @@ fn ineqs_from_constraint(
     RelOp::Le => [Ineq::{ coeffs, rhs: constraint.rhs, strict: false, origin }]
     RelOp::Lt => [Ineq::{ coeffs, rhs: constraint.rhs, strict: true, origin }]
     RelOp::Ge => {
-      let neg_coeffs : Map[String, @symnum.BigRational] = Map::new()
+      let neg_coeffs : Map[String, @symnum.BigRational] = Map([])
       for name, value in coeffs {
         add_coeff(neg_coeffs, name, br_neg(value))
       }
@@ -325,7 +325,7 @@ fn ineqs_from_constraint(
       ]
     }
     RelOp::Gt => {
-      let neg_coeffs : Map[String, @symnum.BigRational] = Map::new()
+      let neg_coeffs : Map[String, @symnum.BigRational] = Map([])
       for name, value in coeffs {
         add_coeff(neg_coeffs, name, br_neg(value))
       }
@@ -339,7 +339,7 @@ fn ineqs_from_constraint(
       ]
     }
     RelOp::Eq => {
-      let neg_coeffs : Map[String, @symnum.BigRational] = Map::new()
+      let neg_coeffs : Map[String, @symnum.BigRational] = Map([])
       for name, value in coeffs {
         add_coeff(neg_coeffs, name, br_neg(value))
       }
@@ -362,7 +362,7 @@ pub fn linear_constraint_from_ints(
   rhs : Int,
   op : RelOp,
 ) -> LinearConstraint {
-  let out : Map[String, @symnum.BigRational] = Map::new()
+  let out : Map[String, @symnum.BigRational] = Map([])
   for pair in coeffs {
     let name = pair.0
     let value = pair.1
@@ -472,7 +472,7 @@ fn linear_lhs_to_string(coeffs : Map[String, @symnum.BigRational]) -> String {
 }
 
 ///|
-pub impl Show for LinearConstraint with to_string(self) {
+pub impl Show for LinearConstraint with fn to_string(self) {
   let lhs = linear_lhs_to_string(self.coeffs)
   let rhs = self.rhs.to_string()
   let op = self.op.to_string()
@@ -480,7 +480,7 @@ pub impl Show for LinearConstraint with to_string(self) {
 }
 
 ///|
-pub impl Show for LinearConstraint with output(self, logger : &Logger) -> Unit {
+pub impl Show for LinearConstraint with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -505,7 +505,7 @@ pub fn lra_check_with_conflict(
     LraCheck::Unsat(conflict) => return Some(conflict)
     LraCheck::Sat(filtered) => current = filtered
   }
-  let vars : Map[String, Bool] = Map::new()
+  let vars : Map[String, Bool] = Map([])
   for ineq in current {
     for name, _ in ineq.coeffs {
       vars[name] = true

@@ -114,16 +114,16 @@ test "matrices wb: polys.solvers front doors prepare and solve affine systems" {
   ]
   let rhs = [@symcore.int(0), @symcore.int(-1)]
   let matrix = eqs_to_matrix(coeffs, rhs, syms, domain=Domain::ZZ)
-  assert_eq(matrix.to_matrix_string(), "Matrix([[1, 1, 0], [1, -1, 1]])")
-  assert_eq(domain_to_sympy_string(matrix.domain), "ZZ")
+  assert_true(matrix.to_matrix_string() == "Matrix([[1, 1, 0], [1, -1, 1]])")
+  assert_true(domain_to_sympy_string(matrix.domain) == "ZZ")
 
   let system = sympy_eqs_to_ring([x - y, x + y - @symcore.int(2)], syms)
-  assert_eq(system.coeffs.length(), 2)
-  assert_eq(system.rhs.length(), 2)
-  assert_eq(linsolve_solution_text(solve_lin_sys(system), syms), "x:1|y:1")
+  assert_true(system.coeffs.length() == 2)
+  assert_true(system.rhs.length() == 2)
+  assert_true(linsolve_solution_text(solve_lin_sys(system), syms) == "x:1|y:1")
 
   let under = sympy_eqs_to_ring([x + y], syms)
-  assert_eq(linsolve_solution_text(solve_lin_sys(under), syms), "x:-y")
+  assert_true(linsolve_solution_text(solve_lin_sys(under), syms) == "x:-y")
 }
 
 ///|

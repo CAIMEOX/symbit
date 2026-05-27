@@ -189,7 +189,7 @@ test "eigen_compat: shifted algebraic matrix rref over QQ extension" {
   }
   let (rref, pivots) = shifted.rref()
   guard pivots == [0] else {
-    fail("unexpected algebraic pivots: \{pivots.to_string()}")
+    fail("unexpected algebraic pivots: \{repr(pivots)}")
   }
   guard rref.to_matrix_string() == "Matrix([[1, -1*_lambda], [0, 0]])" else {
     fail("unexpected algebraic rref: \{rref.to_matrix_string()}")

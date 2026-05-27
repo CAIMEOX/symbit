@@ -46,8 +46,8 @@ fn pauli_symbol_parts(expr : Expr) -> (Int, String)? {
       if name.length() < 2 {
         return None
       }
-      let last = name[name.length() - 1:name.length()].to_string()
-      let label = name[:name.length() - 1].to_string()
+      let last = name[name.length() - 1:name.length()].to_owned()
+      let label = name[:name.length() - 1].to_owned()
       if label == "" {
         return None
       }

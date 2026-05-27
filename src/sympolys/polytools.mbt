@@ -99,7 +99,7 @@ pub fn terms_gcd(poly : Poly) -> Poly raise PolyError {
       }
     None => ()
   }
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   let coeff_fe = ensure_coeff_domain(content, poly.domain)
   add_term(coeffs, mono, coeff_fe, poly.domain)
   Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
@@ -213,7 +213,7 @@ fn dup_right_decompose_local(
   let n = f.length() - 1
   let lc = dup_LC(f)
   let fd = dup_to_raw_dict(f, domain)
-  let g : Map[Int, FieldElem] = Map::new()
+  let g : Map[Int, FieldElem] = Map([])
   g.set(s, fe_from_int(1, domain))
   let r = n / s
   for i in 1..<s {
@@ -242,7 +242,7 @@ fn dup_left_decompose_local(
   h : Array[FieldElem],
   domain : Domain,
 ) -> Array[FieldElem]? raise PolyError {
-  let g : Map[Int, FieldElem] = Map::new()
+  let g : Map[Int, FieldElem] = Map([])
   let mut work = f
   let mut i = 0
   while !work.is_empty() {
@@ -380,7 +380,7 @@ fn deriv_univar_polytools(poly : Poly) -> Poly raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate
   }
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for m, c in poly.coeffs {
     let exp = m.exps[0]
     if exp == 0 {

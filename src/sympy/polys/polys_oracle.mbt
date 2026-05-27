@@ -2426,6 +2426,28 @@ pub fn make_mod_elt_submodule(
 }
 
 ///|
+pub fn find_min_poly_power_basis(
+  def_expr : String,
+  col : Array[Int],
+  denom? : Int = 1,
+  x? : String = "x",
+) -> String raise {
+  let def_code = py_quote_single_polys(def_expr)
+  let x_code = py_quote_single_polys(x)
+  let col_code = py_col_matrix_literal(col)
+  let script = "from sympy import Poly, QQ, symbols, sympify\n" +
+    "from sympy.polys.domains import ZZ\n" +
+    "from sympy.polys.matrices import DomainMatrix\n" +
+    "from sympy.polys.numberfields.modules import PowerBasis, find_min_poly, make_mod_elt\n" +
+    "_x = symbols(\{x_code})\n" +
+    "_module = PowerBasis(Poly(sympify(\{def_code}), _x))\n" +
+    "_col = DomainMatrix(\{col_code}, (\{col.length()}, 1), ZZ)\n" +
+    "_elt = make_mod_elt(_module, _col, denom=\{denom})\n" +
+    "__result__ = find_min_poly(_elt, QQ, x=_x).as_expr()\n"
+  py_str_obj(py_exec_polys_result(script, "__result__"))
+}
+
+///|
 pub fn numberfield_field_isomorphism_coeffs(
   lhs : String,
   rhs : String,

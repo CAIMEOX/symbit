@@ -60,13 +60,13 @@ test "rootisolation wb: helper/error branches" {
   assert_true(mignotte_short is Err(PolyError::BadExponent))
 
   let sturm_const = dup_sturm([ri_wb_feqq(7, 1)], Domain::QQ)
-  assert_eq(sturm_const.length(), 1)
+  assert_true(sturm_const.length() == 1)
   assert_true(
     sturm_const[0].length() == 1 && sturm_const[0][0].to_string() == "1",
   )
 
-  assert_eq(ceil_pos_rational(ri_wb_rat(3, 2)), 2)
-  assert_eq(rat_mid(ri_wb_rat(1, 3), ri_wb_rat(2, 3)).to_string(), "1/2")
+  assert_true(ceil_pos_rational(ri_wb_rat(3, 2)) == 2)
+  assert_true(rat_mid(ri_wb_rat(1, 3), ri_wb_rat(2, 3)).to_string() == "1/2")
   assert_true(interval_small(ri_wb_rat(1, 3), ri_wb_rat(2, 3)))
 }
 
@@ -91,7 +91,7 @@ test "rootisolation wb: refine edge branches" {
     ri_wb_rat(1, 1),
     Domain::QQ,
   )
-  assert_eq(ri_wb_iv_repr(same), "(1,1)")
+  assert_true(ri_wb_iv_repr(same) == "(1,1)")
 
   let swapped = dup_refine_real_root(
     f,
@@ -108,7 +108,7 @@ test "rootisolation wb: refine edge branches" {
     ri_wb_rat(2, 1),
     Domain::QQ,
   )
-  assert_eq(ri_wb_iv_repr(with_root_left), "(1,1)")
+  assert_true(ri_wb_iv_repr(with_root_left) == "(1,1)")
 
   let with_root_right = dup_refine_real_root(
     [ri_wb_feqq(1, 1), ri_wb_feqq(0, 1), ri_wb_feqq(-1, 1)], // x^2 - 1
@@ -116,7 +116,7 @@ test "rootisolation wb: refine edge branches" {
     ri_wb_rat(1, 1),
     Domain::QQ,
   )
-  assert_eq(ri_wb_iv_repr(with_root_right), "(1,1)")
+  assert_true(ri_wb_iv_repr(with_root_right) == "(1,1)")
 
   let no_root = dup_refine_real_root(
     [ri_wb_feqq(1, 1), ri_wb_feqq(0, 1), ri_wb_feqq(1, 1)], // x^2 + 1
@@ -124,7 +124,7 @@ test "rootisolation wb: refine edge branches" {
     ri_wb_rat(1, 1),
     Domain::QQ,
   )
-  assert_eq(ri_wb_iv_repr(no_root), "(-1,1)")
+  assert_true(ri_wb_iv_repr(no_root) == "(-1,1)")
 
   let mediant_root = dup_refine_real_root(
     [ri_wb_feqq(1, 1), ri_wb_feqq(-1, 1)], // x - 1
@@ -133,7 +133,7 @@ test "rootisolation wb: refine edge branches" {
     Domain::QQ,
     steps=5,
   )
-  assert_eq(ri_wb_iv_repr(mediant_root), "(1,1)")
+  assert_true(ri_wb_iv_repr(mediant_root) == "(1,1)")
 
   let default_refine = dup_refine_real_root(
     f,
@@ -154,9 +154,9 @@ test "rootisolation wb: isolate_sturm endpoint handling and empty isolates" {
   assert_true(rendered.contains("(0,0)") && rendered.contains("(1,1)"))
 
   let sqf_empty = dup_isolate_real_roots_sqf([ri_wb_feqq(3, 1)], Domain::QQ)
-  assert_eq(sqf_empty.length(), 0)
+  assert_true(sqf_empty.length() == 0)
   let full_empty = dup_isolate_real_roots([ri_wb_feqq(3, 1)], Domain::QQ)
-  assert_eq(full_empty.length(), 0)
+  assert_true(full_empty.length() == 0)
 }
 
 ///|
@@ -168,7 +168,7 @@ test "rootisolation wb: compatibility frontdoors" {
     ri_wb_rat(2, 1),
     Domain::QQ,
   )
-  assert_eq(ri_wb_iv_repr(step), "(1,3/2)")
+  assert_true(ri_wb_iv_repr(step) == "(1,3/2)")
   let inner = dup_inner_refine_real_root(
     f,
     ri_wb_rat(1, 1),
@@ -183,7 +183,7 @@ test "rootisolation wb: compatibility frontdoors" {
     Domain::QQ,
     steps=2,
   )
-  assert_eq(ri_wb_iv_repr(inner), ri_wb_iv_repr(outer))
+  assert_true(ri_wb_iv_repr(inner) == ri_wb_iv_repr(outer))
   let all = dup_inner_isolate_real_roots(f, Domain::QQ)
   inspect(all.map(iv => ri_wb_iv_repr(iv)).join(","), content="(-2,-1),(1,2)")
   let positive = dup_inner_isolate_positive_roots(f, Domain::QQ)

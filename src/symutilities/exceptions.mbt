@@ -21,7 +21,7 @@ fn validate_deprecation_target(target : String) -> Unit raise UtilitiesError {
 pub fn SymPyDeprecationWarning::full_message(
   self : SymPyDeprecationWarning,
 ) -> String {
-  let body = filldedent(self.message).trim().to_string()
+  let body = filldedent(self.message).trim().to_owned()
   "\n\n" +
   body +
   "\n\n" +
@@ -34,7 +34,7 @@ pub fn SymPyDeprecationWarning::full_message(
 }
 
 ///|
-pub impl Show for SymPyDeprecationWarning with output(self, logger : &Logger) -> Unit {
+pub impl Show for SymPyDeprecationWarning with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.full_message())
 }
 
