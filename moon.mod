@@ -1,6 +1,6 @@
 name = "CAIMEOX/symbit"
 
-version = "0.5.9"
+version = "0.5.10"
 
 import {
   "CAIMEOX/qc_pyext@0.1.1",

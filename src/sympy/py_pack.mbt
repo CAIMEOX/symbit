@@ -57,7 +57,7 @@ pub fn py_pack_args(args : Array[OracleArg]) -> @py.PyTuple {
   let _ = py_gil_ensure()
   let tup = @py.PyTuple::new(args.length().to_uint64())
   for i in 0..<args.length() {
-    tup.set(i, py_pack(args[i]))
+    tuple_set_borrowed(tup, i, py_pack(args[i]))
   }
   tup
 }
@@ -93,7 +93,7 @@ fn resolve_sympy_callable(path : String) -> @py.PyCallable raise {
   guard trimmed.length() > 0 else { fail("sympy-call-empty") }
   let parts : Array[String] = Array::new()
   for part in trimmed.split(".") {
-    parts.push(part.to_string())
+    parts.push(part.to_owned())
   }
   if parts.length() == 1 {
     let sympy = resolve_sympy_module_path("sympy")

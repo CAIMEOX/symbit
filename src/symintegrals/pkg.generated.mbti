@@ -5,21 +5,56 @@ import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symgeometry",
   "CAIMEOX/symbit/symmatrices",
+  "CAIMEOX/symbit/symplotting",
   "moonbitlang/core/debug",
 }
 
 // Values
 pub fn _laplace_deep_collect(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
+pub fn add_rule(IntegralInfo) -> ManualStep?
+
+pub fn alternatives(Array[(IntegralInfo) -> ManualStep?]) -> (IntegralInfo) -> ManualStep?
+
+pub fn as_poly_1t(@symcore.Expr, String) -> @symcore.Expr
+
+pub fn best_origin(Array[@symcore.Expr], @symcore.Expr, @symgeometry.Segment, @symcore.Expr) -> @symgeometry.Point raise IntegralError
+
+pub fn bound_degree(@symcore.Expr, String) -> Int?
+
+pub fn cancel_exp(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn cancel_primitive(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn canonical_representation(@symcore.Expr, String) -> @symcore.Expr
+
 pub fn change_mul(@symcore.Expr, String) -> (@symcore.Expr?, @symcore.Expr?)
 
 pub fn components(@symcore.Expr, String) -> Array[@symcore.Expr]
+
+pub fn constant_rule(IntegralInfo) -> ManualStep?
+
+pub fn constant_system(Array[@symcore.Expr], String) -> Array[@symcore.Expr]
 
 pub fn cosine_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn cosine_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
+pub fn cotcsc_pattern(@symcore.Expr) -> Map[String, @symcore.Expr]
+
+pub fn cross_product(@symgeometry.Point, @symgeometry.Point, @symgeometry.Point) -> Array[@symcore.Expr] raise IntegralError
+
+pub fn decompose(@symcore.Expr, separate? : Bool) -> Array[(Int, @symcore.Expr)] raise IntegralError
+
 pub fn deltaintegrate(@symcore.Expr, String, @symcore.Expr?, @symcore.Expr?) -> @symcore.Expr?
+
+pub fn derivation(@symcore.Expr, String) -> @symcore.Expr
+
+pub fn derivative_rule(IntegralInfo) -> ManualStep?
+
+pub fn dirac_delta_rule(IntegralInfo) -> ManualStep?
+
+pub fn distance_to_side(@symgeometry.Point, @symgeometry.Segment, @symgeometry.Point) -> @symcore.Expr raise IntegralError
 
 pub fn do_cosine_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
@@ -47,9 +82,19 @@ pub fn do_sine_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Exp
 
 pub fn doit(@symcore.Expr) -> @symcore.Expr
 
+pub fn exp_rule(IntegralInfo) -> ManualStep?
+
+pub fn expand_dirac_delta(@symcore.Expr) -> Map[@symcore.Expr, @symcore.Expr]
+
+pub fn fallback_rule(IntegralInfo) -> ManualStep
+
+pub fn find_substitutions(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[(@symcore.Expr, @symcore.Expr, @symcore.Expr)]
+
 pub fn fourier_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn fourier_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn frac_in(@symcore.Expr, String) -> (@symcore.Expr, @symcore.Expr)?
 
 pub fn gauss_chebyshev_t(Int, n_digits? : Int) -> (Array[Double], Array[Double]) raise IntegralError
 
@@ -67,9 +112,21 @@ pub fn gauss_legendre(Int, n_digits? : Int) -> (Array[Double], Array[Double]) ra
 
 pub fn gauss_lobatto(Int, n_digits? : Int) -> (Array[Double], Array[Double]) raise IntegralError
 
+pub fn gcdex_diophantine(@symcore.Expr, @symcore.Expr, String) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr)
+
+pub fn get_case(@symcore.Expr, String) -> String
+
+pub fn gradient_terms(binomial_power? : Int, no_of_gens? : Int) -> Array[Array[@symcore.Expr]] raise IntegralError
+
 pub fn hankel_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn hankel_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn heaviside_pattern(@symcore.Expr) -> Map[String, @symcore.Expr]
+
+pub fn heaviside_rule(IntegralInfo) -> ManualStep?
+
+pub fn hermite_reduce(@symcore.Expr, String) -> (@symcore.Expr, @symcore.Expr?)
 
 pub fn heurisch(@symcore.Expr, String) -> @symcore.Expr?
 
@@ -77,13 +134,41 @@ pub fn heurisch_integrate(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn heurisch_wrapper(@symcore.Expr, String) -> @symcore.Expr
 
+pub fn hyperbolic_rule(IntegralInfo) -> ManualStep?
+
+pub fn hyperplane_parameters(@symgeometry.Polygon) -> Array[(Array[@symcore.Expr], @symcore.Expr)] raise IntegralError
+
+pub fn integer_powers(@symcore.Expr, String) -> Bool
+
 pub fn integral(@symcore.Expr, limits? : Array[@symcore.Expr]) -> @symcore.Expr
 
+pub fn integral_info(@symcore.Expr, @symcore.Expr) -> IntegralInfo
+
 pub fn integral_limit(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn integral_steps(@symcore.Expr, @symcore.Expr) -> ManualStep
 
 pub fn integral_transform_error(String) -> IntegralError
 
 pub fn integrate(@symcore.Expr, limits? : Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn integrate_hyperexponential(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn integrate_hyperexponential_polynomial(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn integrate_hypertangent_polynomial(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn integrate_nonlinear_no_specials(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn integrate_primitive(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn integrate_primitive_polynomial(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn integration_reduction(Array[@symgeometry.Segment], Int, Array[@symcore.Expr], @symcore.Expr, @symcore.Expr, Array[@symcore.Expr], Int) -> @symcore.Expr raise IntegralError
+
+pub fn integration_reduction_dynamic(Array[@symgeometry.Segment], Int, Array[@symcore.Expr], @symcore.Expr, @symcore.Expr, Int, Array[@symcore.Expr], Int, Int, Int, @symgeometry.Point, Array[Array[@symcore.Expr]], Int) -> @symcore.Expr raise IntegralError
+
+pub fn intersection(@symgeometry.Segment, @symgeometry.Segment, String) -> @symgeometry.Point? raise IntegralError
 
 pub fn inverse_cosine_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
@@ -109,6 +194,16 @@ pub fn inverse_sine_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @s
 
 pub fn inverse_sine_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
+pub fn inverse_trig_rule(IntegralInfo) -> ManualStep?
+
+pub fn is_deriv_k(@symcore.Expr, @symcore.Expr, String) -> Bool
+
+pub fn is_log_deriv_k_t_radical(@symcore.Expr, @symcore.Expr, String) -> Bool
+
+pub fn is_log_deriv_k_t_radical_in_field(@symcore.Expr, @symcore.Expr, String) -> Bool
+
+pub fn is_vertex(@symgeometry.Point) -> Bool
+
 pub fn laplace_correspondence(@symcore.Expr, Map[String, String]) -> @symcore.Expr
 
 pub fn laplace_initial_conds(@symcore.Expr, @symcore.Expr, Map[String, Array[@symcore.Expr]]) -> @symcore.Expr
@@ -123,13 +218,45 @@ pub fn laplace_transform_matrix_result(@symmatrices.Matrix, @symcore.Expr, @symc
 
 pub fn laplace_transform_result(@symcore.Expr, @symcore.Expr, @symcore.Expr, noconds? : Bool) -> @symcore.Expr
 
+pub fn laurent_series(@symcore.Expr, String, _order? : Int) -> @symcore.Expr
+
+pub fn left_integral2D(Int, Int, Array[@symgeometry.Segment], @symgeometry.Point, @symcore.Expr, Array[@symcore.Expr]) -> @symcore.Expr raise IntegralError
+
+pub fn left_integral3D(Array[Array[Int]], Int, @symcore.Expr, Array[@symgeometry.Point], (Array[@symcore.Expr], @symcore.Expr), Int) -> @symcore.Expr raise IntegralError
+
+pub fn limited_integrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn limited_integrate_reduce(@symcore.Expr, String) -> @symcore.Expr?
+
 pub fn line_integrate(@symcore.Expr, @symgeometry.Curve, Array[@symcore.Expr]) -> @symcore.Expr raise IntegralError
 
+pub fn lineseg_integrate(Array[@symgeometry.Point], Int, @symgeometry.Segment, @symcore.Expr, Int) -> @symcore.Expr raise IntegralError
+
+pub fn log_to_atan(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn log_to_real(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn main_integrate(@symcore.Expr, Array[@symgeometry.Segment], Array[(Array[@symcore.Expr], @symcore.Expr)], max_degree? : Int) -> @symcore.Expr raise IntegralError
+
+pub fn main_integrate3d(@symcore.Expr, Array[Array[Int]], Array[@symgeometry.Point], Array[(Array[@symcore.Expr], @symcore.Expr)], max_degree? : Int) -> @symcore.Expr raise IntegralError
+
+pub fn make_wilds(@symcore.Expr) -> Map[String, @symcore.Expr]
+
+pub fn manual_diff(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
 pub fn manual_integrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn manual_subs(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn manualintegrate(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn meijerg_integrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn meijerint_definite(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, Bool)?
+
+pub fn meijerint_indefinite(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn meijerint_inversion(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
 pub fn mellin_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
@@ -137,21 +264,111 @@ pub fn mellin_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, nocond
 
 pub fn mellin_transform_result(@symcore.Expr, @symcore.Expr, @symcore.Expr, noconds? : Bool) -> @symcore.Expr
 
+pub fn mul_rule(IntegralInfo) -> ManualStep?
+
+pub fn multiplexer(Array[((IntegralInfo) -> Bool, (IntegralInfo) -> ManualStep?)]) -> (IntegralInfo) -> ManualStep?
+
+pub fn nested_pow_rule(IntegralInfo) -> ManualStep?
+
+pub fn no_cancel_b_large(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn no_cancel_b_small(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn no_cancel_equal(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn norm(@symgeometry.Point) -> @symcore.Expr raise IntegralError
+
+pub fn normal_denom(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn order_at(@symcore.Expr, @symcore.Expr, String) -> Int?
+
+pub fn order_at_oo(@symcore.Expr, String) -> Int?
+
+pub fn orthogonal_poly_rule(IntegralInfo) -> ManualStep?
+
+pub fn param_poly_rischDE(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn param_rischDE(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn parametric_log_deriv(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn parametric_log_deriv_heu(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn parts_rule(IntegralInfo) -> ManualStep?
+
+pub fn plot_polynomial(@symcore.Expr) -> @symplotting.Plot raise IntegralError
+
+pub fn plot_polytope(@symgeometry.Polygon) -> @symplotting.Plot raise IntegralError
+
+pub fn point_sort(Array[@symgeometry.Point], normal? : @symgeometry.Point?, clockwise? : Bool) -> Array[@symgeometry.Point] raise IntegralError
+
+pub fn poly_linear_constraints(Array[@symcore.Expr], String) -> Array[@symcore.Expr]
+
+pub fn polygon_integrate(Array[Int], (Array[@symcore.Expr], @symcore.Expr), Int, Array[Array[Int]], Array[@symgeometry.Point], @symcore.Expr, Int) -> @symcore.Expr raise IntegralError
+
+pub fn polynomial_reduce(@symcore.Expr, String) -> (@symcore.Expr, @symcore.Expr?)
+
 pub fn polytope_integrate(@symgeometry.Polygon, @symcore.Expr, vars? : Array[@symcore.Expr]) -> @symcore.Expr raise IntegralError
 
 pub fn polytope_integrate_many(@symgeometry.Polygon, Array[@symcore.Expr], vars? : Array[@symcore.Expr]) -> Map[@symcore.Expr, @symcore.Expr] raise IntegralError
 
 pub fn polytope_integrate_upto(@symgeometry.Polygon, Int, vars? : Array[@symcore.Expr]) -> Map[@symcore.Expr, @symcore.Expr] raise IntegralError
 
+pub fn power_rule(IntegralInfo) -> ManualStep?
+
+pub fn powsimp_rule(IntegralInfo) -> ManualStep?
+
+pub fn prde_cancel_liouvillian(@symcore.Expr, String) -> @symcore.Expr?
+
 pub fn prde_integrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn prde_linear_constraints(Array[@symcore.Expr], String) -> Array[@symcore.Expr]
+
+pub fn prde_no_cancel_b_large(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn prde_no_cancel_b_small(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn prde_normal_denom(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn prde_spde(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn prde_special_denom(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn proxy_rewriter((@symcore.Expr, IntegralInfo) -> Bool, (@symcore.Expr, IntegralInfo) -> @symcore.Expr) -> (@symcore.Expr, IntegralInfo) -> ManualStep?
+
+pub fn quadratic_denom_rule(IntegralInfo) -> ManualStep?
 
 pub fn ratint(@symcore.Expr, String) -> @symcore.Expr?
 
+pub fn ratint_logpart(@symcore.Expr, @symcore.Expr, String, t? : @symcore.Expr) -> Array[(@symcore.Expr, @symcore.Expr)]
+
+pub fn ratint_ratpart(@symcore.Expr, @symcore.Expr, String) -> (@symcore.Expr, @symcore.Expr)?
+
 pub fn rde_integrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn real_imag(@symcore.Expr) -> (@symcore.Expr, @symcore.Expr)
+
+pub fn recognize_derivative(@symcore.Expr, @symcore.Expr, String) -> Bool
+
+pub fn recognize_log_derivative(@symcore.Expr, @symcore.Expr, String) -> Bool
+
+pub fn residue_reduce(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn residue_reduce_derivation(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn residue_reduce_to_basic(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn rewriter((IntegralInfo) -> Bool, (IntegralInfo) -> @symcore.Expr) -> (IntegralInfo) -> ManualStep?
+
+pub fn rewrites_rule(IntegralInfo) -> ManualStep?
+
+pub fn rischDE(@symcore.Expr, String) -> @symcore.Expr?
 
 pub fn risch_integrate(@symcore.Expr, String) -> @symcore.Expr?
 
 pub fn segment_integrate(@symgeometry.Segment, @symcore.Expr, vars? : Array[@symcore.Expr]) -> @symcore.Expr raise IntegralError
+
+pub fn sincos_pattern(@symcore.Expr) -> Map[String, @symcore.Expr]
 
 pub fn sine_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
@@ -159,7 +376,55 @@ pub fn sine_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symc
 
 pub fn singularityintegrate(@symcore.Expr, String) -> @symcore.Expr?
 
+pub fn solve_poly_rde(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn spde(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn special_denom(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn special_function_rule(IntegralInfo) -> ManualStep?
+
+pub fn splitfactor(@symcore.Expr, String) -> (@symcore.Expr, @symcore.Expr)
+
+pub fn splitfactor_sqf(@symcore.Expr, String) -> (@symcore.Expr, @symcore.Expr)
+
+pub fn sqrt_linear_rule(IntegralInfo) -> ManualStep?
+
+pub fn sqrt_quadratic_rule(IntegralInfo) -> ManualStep?
+
+pub fn strip(@symcore.Expr) -> (@symcore.Expr, @symcore.Expr)
+
+pub fn substitution_rule(IntegralInfo) -> ManualStep?
+
+pub fn tansec_pattern(@symcore.Expr) -> Map[String, @symcore.Expr]
+
+pub fn trig_cmplx_exp_rule(IntegralInfo) -> ManualStep?
+
+pub fn trig_cotcsc_rule(IntegralInfo) -> ManualStep?
+
+pub fn trig_powers_products_rule(IntegralInfo) -> ManualStep?
+
+pub fn trig_product_rule(IntegralInfo) -> ManualStep?
+
+pub fn trig_rewriter(String) -> (IntegralInfo) -> ManualStep?
+
+pub fn trig_rule(IntegralInfo) -> ManualStep?
+
+pub fn trig_sincos_rule(IntegralInfo) -> ManualStep?
+
+pub fn trig_sindouble_rule(IntegralInfo) -> ManualStep?
+
+pub fn trig_substitution_rule(IntegralInfo) -> ManualStep?
+
+pub fn trig_tansec_rule(IntegralInfo) -> ManualStep?
+
 pub fn trigintegrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn uncurry((Array[@symcore.Expr]) -> @symcore.Expr) -> (Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn update_sets(Array[@symcore.Expr], @symcore.Expr) -> Array[@symcore.Expr]
+
+pub fn weak_normalizer(@symcore.Expr, String) -> @symcore.Expr?
 
 // Errors
 pub suberror IntegralError {
@@ -168,6 +433,22 @@ pub suberror IntegralError {
 } derive(@debug.Debug)
 
 // Types and methods
+pub struct IntegralInfo {
+  integrand : @symcore.Expr
+  symbol : @symcore.Expr
+}
+
+pub struct ManualStep {
+  rule_name : String
+  integrand : @symcore.Expr
+  variable : @symcore.Expr
+  result : @symcore.Expr?
+}
+pub fn ManualStep::contains_dont_know(Self) -> Bool
+pub fn ManualStep::eval(Self) -> @symcore.Expr?
+pub fn ManualStep::integrand(Self) -> @symcore.Expr
+pub fn ManualStep::name(Self) -> String
+pub fn ManualStep::variable(Self) -> @symcore.Expr
 
 // Type aliases
 pub using @symcore {type Expr}

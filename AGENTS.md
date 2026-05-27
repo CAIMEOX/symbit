@@ -39,6 +39,26 @@ This is a [MoonBit](https://docs.moonbitlang.com) project.
   testing, so when your changes indeed change the behavior of the code, you
   should run `moon test --update` to update the snapshot.
 
+- For native Python oracle/parity packages under `src/sympy/*`, use miniconda
+  Python and force Moon away from `tcc -run`:
+
+  ```bash
+  env -u CC \
+  MallocNanoZone=0 \
+  MOON_CC=/usr/bin/gcc \
+  PATH=$HOME/miniconda3/bin:$PATH \
+  LIBRARY_PATH=$HOME/miniconda3/lib \
+  DYLD_LIBRARY_PATH=$HOME/miniconda3/lib \
+  moon test --target native <pkg-path>
+  ```
+
+  `PATH` must put miniconda first so `python3-config` exposes the matching
+  `Python.h` and libpython flags. `MOON_CC=/usr/bin/gcc` is the switch that
+  disables Moon's default `tcc -run`; setting only `CC=gcc` is not enough. On
+  macOS, `/usr/bin/gcc` is usually Apple clang and is fine for this purpose.
+  Keep `MallocNanoZone=0` for native oracle tests; it avoids allocator-level
+  nondeterminism when embedded Python and Moon native code share a process.
+
 - You can run `moon check` to check the code is linted correctly.
 
 - When writing tests, you are encouraged to use `inspect` and run

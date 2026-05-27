@@ -1,14 +1,13 @@
 import {
-  "CAIMEOX/symbit/sympy" @sympy,
-  "Kaida-Amethyst/python" @py,
+  "CAIMEOX/symbit/sympy",
 }
 
 import {
   "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symgeometry",
-  "CAIMEOX/symbit/symintegrals" @symintegrals,
-  "CAIMEOX/symbit/symmatrices" @symmatrices,
+  "CAIMEOX/symbit/symintegrals",
+  "CAIMEOX/symbit/symmatrices",
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symsimplify",
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,
@@ -18,5 +17,6 @@ import {
 supported_targets = "native"
 
 options(
+  "native-stub": [ "integrals_eval_stub.c" ],
   targets: { "*.mbt": [ "native" ] },
 )

@@ -27,7 +27,7 @@ pub fn py_tuple_from_objects(values : Array[@py.PyObject]) -> @py.PyTuple {
   let state = py_gil_ensure()
   let tup = @py.PyTuple::new(values.length().to_uint64())
   for i in 0..<values.length() {
-    tup.set(i, values[i])
+    tuple_set_borrowed(tup, i, values[i])
   }
   py_gil_release(state)
   tup

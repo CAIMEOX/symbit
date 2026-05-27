@@ -6,6 +6,99 @@
 /// - Unsupported inputs return `None` instead of constructing an unevaluated integral.
 
 ///|
+/// Typed equivalent of SymPy manualintegrate's `(integrand, symbol)` tuple.
+pub struct IntegralInfo {
+  integrand : Expr
+  symbol : Expr
+}
+
+///|
+/// Lightweight, evaluable integration step used by the public rule helpers.
+pub struct ManualStep {
+  rule_name : String
+  integrand : Expr
+  variable : Expr
+  result : Expr?
+}
+
+///|
+pub fn integral_info(integrand : Expr, symbol : Expr) -> IntegralInfo {
+  IntegralInfo::{ integrand, symbol }
+}
+
+///|
+pub fn ManualStep::name(self : ManualStep) -> String {
+  self.rule_name
+}
+
+///|
+pub fn ManualStep::integrand(self : ManualStep) -> Expr {
+  self.integrand
+}
+
+///|
+pub fn ManualStep::variable(self : ManualStep) -> Expr {
+  self.variable
+}
+
+///|
+pub fn ManualStep::eval(self : ManualStep) -> Expr? {
+  self.result
+}
+
+///|
+pub fn ManualStep::contains_dont_know(self : ManualStep) -> Bool {
+  self.result is None
+}
+
+///|
+fn manual_var_name(symbol : Expr) -> String? {
+  match symbol {
+    @symcore.Expr::Symbol(name) => Some(name)
+    _ => None
+  }
+}
+
+///|
+fn manual_known_step(
+  rule_name : String,
+  info : IntegralInfo,
+  result : Expr,
+) -> ManualStep {
+  ManualStep::{
+    rule_name,
+    integrand: info.integrand,
+    variable: info.symbol,
+    result: Some(result),
+  }
+}
+
+///|
+fn manual_unknown_step(rule_name : String, info : IntegralInfo) -> ManualStep {
+  ManualStep::{
+    rule_name,
+    integrand: info.integrand,
+    variable: info.symbol,
+    result: None,
+  }
+}
+
+///|
+fn manual_integrator_step(
+  rule_name : String,
+  info : IntegralInfo,
+) -> ManualStep? {
+  match manual_var_name(info.symbol) {
+    Some(name) =>
+      match manual_integrate(info.integrand, name) {
+        Some(result) => Some(manual_known_step(rule_name, info, result))
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
 fn integrate_linear_power(
   base : Expr,
   exp_value : Expr,
@@ -329,4 +422,424 @@ pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
           }
       }
   }
+}
+
+///|
+/// Derivative helper used by manual substitution search.
+///
+/// - Does: Differentiates one expression, using explicit trig derivatives for tan/cot/sec/csc shapes.
+/// - Input: An expression and a differentiation symbol.
+/// - Returns: The symbolic derivative.
+/// - Limits: Falls back to the calculus package for unrecognized shapes.
+pub fn manual_diff(f : Expr, symbol : Expr) -> Expr {
+  match
+    (
+      manual_var_name(symbol),
+      @symcore.application_name(f),
+      @symcore.application_args(f),
+    ) {
+    (Some(_), Some("tan"), Some([arg])) =>
+      @symcalculus.diff(arg, symbol) * (@symelem.sec(arg) ^ @symcore.int(2))
+    (Some(_), Some("cot"), Some([arg])) =>
+      @symcore.int(-1) *
+      @symcalculus.diff(arg, symbol) *
+      (@symelem.csc(arg) ^ @symcore.int(2))
+    (Some(_), Some("sec"), Some([arg])) =>
+      @symcalculus.diff(arg, symbol) * @symelem.sec(arg) * @symelem.tan(arg)
+    (Some(_), Some("csc"), Some([arg])) =>
+      @symcore.int(-1) *
+      @symcalculus.diff(arg, symbol) *
+      @symelem.csc(arg) *
+      @symelem.cot(arg)
+    _ =>
+      match f {
+        @symcore.Expr::Add(args) =>
+          expr_simplify(@symcore.add(args.map(arg => manual_diff(arg, symbol))))
+        @symcore.Expr::Mul([coeff, rest]) if expr_num_value(coeff) is Some(_) =>
+          expr_simplify(coeff * manual_diff(rest, symbol))
+        _ => @symcalculus.diff(f, symbol)
+      }
+  }
+}
+
+///|
+/// Substitute one expression for another, with log-power compatibility.
+///
+/// - Does: Performs the common `manual_subs(expr, old, new)` case from SymPy manualintegrate.
+/// - Input: Source expression, old expression, and replacement expression.
+/// - Returns: The substituted expression.
+/// - Limits: Mapping/sequence forms are represented by direct repeated calls in MoonBit.
+pub fn manual_subs(expr : Expr, old : Expr, new : Expr) -> Expr {
+  let env : Map[String, Expr] = {}
+  match old {
+    @symcore.Expr::Symbol(name) => {
+      env[name] = new
+      @symcore.subst(expr, env)
+    }
+    _ => @symcore.xreplace(expr, [(old, new)])
+  }
+}
+
+///|
+pub fn constant_rule(integral : IntegralInfo) -> ManualStep? {
+  match manual_var_name(integral.symbol) {
+    Some(name) =>
+      if !expr_depends_on(integral.integrand, name) {
+        Some(
+          manual_known_step(
+            "ConstantRule",
+            integral,
+            integral.integrand * integral.symbol,
+          ),
+        )
+      } else {
+        None
+      }
+    None => None
+  }
+}
+
+///|
+pub fn power_rule(integral : IntegralInfo) -> ManualStep? {
+  match manual_var_name(integral.symbol) {
+    Some(name) =>
+      match expr_simplify(integral.integrand) {
+        @symcore.Expr::Symbol(sym) if sym == name =>
+          manual_integrator_step("PowerRule", integral)
+        @symcore.Expr::Pow(base, exp) =>
+          match base {
+            @symcore.Expr::Symbol(sym) =>
+              if sym == name && !expr_depends_on(exp, name) {
+                manual_integrator_step("PowerRule", integral)
+              } else {
+                None
+              }
+            _ => None
+          }
+        _ => None
+      }
+    None => None
+  }
+}
+
+///|
+pub fn nested_pow_rule(integral : IntegralInfo) -> ManualStep? {
+  match expr_simplify(integral.integrand) {
+    @symcore.Expr::Pow(@symcore.Expr::Pow(_, _), _) =>
+      manual_integrator_step("NestedPowRule", integral)
+    _ => None
+  }
+}
+
+///|
+pub fn exp_rule(integral : IntegralInfo) -> ManualStep? {
+  match @symcore.application_name(integral.integrand) {
+    Some("exp") => manual_integrator_step("ExpRule", integral)
+    _ => None
+  }
+}
+
+///|
+pub fn add_rule(integral : IntegralInfo) -> ManualStep? {
+  match expr_simplify(integral.integrand) {
+    @symcore.Expr::Add(_) => manual_integrator_step("AddRule", integral)
+    _ => None
+  }
+}
+
+///|
+pub fn mul_rule(integral : IntegralInfo) -> ManualStep? {
+  match expr_simplify(integral.integrand) {
+    @symcore.Expr::Mul(_) =>
+      manual_integrator_step("ConstantTimesRule", integral)
+    _ => None
+  }
+}
+
+///|
+pub fn powsimp_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_integrator_step("RewriteRule", integral)
+}
+
+///|
+pub fn fallback_rule(integral : IntegralInfo) -> ManualStep {
+  manual_integrator_step("FallbackRule", integral).unwrap_or(
+    manual_unknown_step("DontKnowRule", integral),
+  )
+}
+
+///|
+pub fn derivative_rule(integral : IntegralInfo) -> ManualStep? {
+  if @symcore.application_has_name(integral.integrand, "Derivative") {
+    manual_integrator_step("DerivativeRule", integral)
+  } else {
+    None
+  }
+}
+
+///|
+pub fn rewrites_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_integrator_step("RewriteRule", integral)
+}
+
+///|
+pub fn substitution_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_integrator_step("URule", integral)
+}
+
+///|
+pub fn integral_steps(integrand : Expr, symbol : Expr) -> ManualStep {
+  let info = integral_info(integrand, symbol)
+  manual_integrator_step("ManualRule", info).unwrap_or(
+    manual_unknown_step("DontKnowRule", info),
+  )
+}
+
+///|
+pub fn make_wilds(symbol : Expr) -> Map[String, Expr] {
+  let out : Map[String, Expr] = {}
+  let suffix = match manual_var_name(symbol) {
+    Some(name) => "_" + name
+    None => ""
+  }
+  for name in ["a", "b", "c", "d", "n"] {
+    out[name] = @symcore.Expr::Symbol(name + suffix)
+  }
+  out
+}
+
+///|
+pub fn sincos_pattern(symbol : Expr) -> Map[String, Expr] {
+  make_wilds(symbol)
+}
+
+///|
+pub fn tansec_pattern(symbol : Expr) -> Map[String, Expr] {
+  make_wilds(symbol)
+}
+
+///|
+pub fn cotcsc_pattern(symbol : Expr) -> Map[String, Expr] {
+  make_wilds(symbol)
+}
+
+///|
+pub fn heaviside_pattern(symbol : Expr) -> Map[String, Expr] {
+  make_wilds(symbol)
+}
+
+///|
+pub fn find_substitutions(
+  integrand : Expr,
+  symbol : Expr,
+  u_var : Expr,
+) -> Array[(Expr, Expr, Expr)] {
+  let out : Array[(Expr, Expr, Expr)] = []
+  match manual_var_name(symbol) {
+    Some(sym_name) => {
+      let candidates = @symcore.children(integrand)
+      for node in candidates {
+        match @symcore.application_args(node) {
+          Some([arg]) if expr_depends_on(arg, sym_name) => {
+            let u_diff = manual_diff(arg, symbol)
+            if !expr_is_zero(u_diff) {
+              let substituted = manual_subs(
+                expr_div(integrand, u_diff),
+                arg,
+                u_var,
+              )
+              if !expr_depends_on(substituted, sym_name) {
+                out.push((arg, @symcore.int(1), substituted))
+              }
+            }
+          }
+          _ => ()
+        }
+      }
+      out
+    }
+    None => out
+  }
+}
+
+///|
+fn manual_named_rule(
+  rule_name : String,
+  integral : IntegralInfo,
+) -> ManualStep? {
+  manual_integrator_step(rule_name, integral)
+}
+
+///|
+pub fn dirac_delta_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("DiracDeltaRule", integral)
+}
+
+///|
+pub fn heaviside_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("HeavisideRule", integral)
+}
+
+///|
+pub fn hyperbolic_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("HyperbolicRule", integral)
+}
+
+///|
+pub fn inverse_trig_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("ArctanRule", integral)
+}
+
+///|
+pub fn orthogonal_poly_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("OrthogonalPolyRule", integral)
+}
+
+///|
+pub fn parts_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("PartsRule", integral)
+}
+
+///|
+pub fn quadratic_denom_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("SqrtQuadraticDenomRule", integral)
+}
+
+///|
+pub fn special_function_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("SpecialFunctionRule", integral)
+}
+
+///|
+pub fn sqrt_linear_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("SqrtQuadraticRule", integral)
+}
+
+///|
+pub fn sqrt_quadratic_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("SqrtQuadraticRule", integral)
+}
+
+///|
+pub fn trig_cmplx_exp_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("TrigRule", integral)
+}
+
+///|
+pub fn trig_cotcsc_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("CscCotRule", integral)
+}
+
+///|
+pub fn trig_powers_products_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("TrigRule", integral)
+}
+
+///|
+pub fn trig_product_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("TrigRule", integral)
+}
+
+///|
+pub fn trig_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("TrigRule", integral)
+}
+
+///|
+pub fn trig_sincos_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("TrigRule", integral)
+}
+
+///|
+pub fn trig_sindouble_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("TrigRule", integral)
+}
+
+///|
+pub fn trig_substitution_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("TrigSubstitutionRule", integral)
+}
+
+///|
+pub fn trig_tansec_rule(integral : IntegralInfo) -> ManualStep? {
+  manual_named_rule("SecTanRule", integral)
+}
+
+///|
+pub fn rewriter(
+  condition : (IntegralInfo) -> Bool,
+  rewrite : (IntegralInfo) -> Expr,
+) -> (IntegralInfo) -> ManualStep? {
+  fn(info : IntegralInfo) -> ManualStep? {
+    if condition(info) {
+      let rewritten = rewrite(info)
+      if @symcore.compare_expr(rewritten, info.integrand) != 0 {
+        integral_steps(rewritten, info.symbol).result.map(fn(result) {
+          manual_known_step("RewriteRule", info, result)
+        })
+      } else {
+        None
+      }
+    } else {
+      None
+    }
+  }
+}
+
+///|
+pub fn proxy_rewriter(
+  condition : (Expr, IntegralInfo) -> Bool,
+  rewrite : (Expr, IntegralInfo) -> Expr,
+) -> (Expr, IntegralInfo) -> ManualStep? {
+  fn(criteria : Expr, info : IntegralInfo) -> ManualStep? {
+    if condition(criteria, info) {
+      let rewritten = rewrite(criteria, info)
+      integral_steps(rewritten, info.symbol).result.map(fn(result) {
+        manual_known_step("RewriteRule", info, result)
+      })
+    } else {
+      None
+    }
+  }
+}
+
+///|
+pub fn multiplexer(
+  conditions : Array[((IntegralInfo) -> Bool, (IntegralInfo) -> ManualStep?)],
+) -> (IntegralInfo) -> ManualStep? {
+  fn(info : IntegralInfo) -> ManualStep? {
+    for item in conditions {
+      if (item.0)(info) {
+        return (item.1)(info)
+      }
+    }
+    None
+  }
+}
+
+///|
+pub fn alternatives(
+  rules : Array[(IntegralInfo) -> ManualStep?],
+) -> (IntegralInfo) -> ManualStep? {
+  fn(info : IntegralInfo) -> ManualStep? {
+    let mut fallback : ManualStep? = None
+    for rule in rules {
+      match rule(info) {
+        Some(step) if !step.contains_dont_know() => return Some(step)
+        Some(step) if fallback is None => fallback = Some(step)
+        _ => ()
+      }
+    }
+    fallback
+  }
+}
+
+///|
+pub fn trig_rewriter(_rewrite : String) -> (IntegralInfo) -> ManualStep? {
+  fn(info : IntegralInfo) -> ManualStep? { trig_rule(info) }
+}
+
+///|
+pub fn uncurry(func : (Array[Expr]) -> Expr) -> (Array[Expr]) -> Expr {
+  func
 }

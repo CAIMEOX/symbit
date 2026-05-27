@@ -118,3 +118,74 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
     None => None
   }
 }
+
+///|
+/// Split a proper rational function into rational and logarithmic parts.
+///
+/// - Does: Provides the square-free-denominator fast path used by the local `ratint`.
+/// - Input: Numerator expression, denominator expression, and variable name.
+/// - Returns: `(0, f/g)` for currently supported proper rational inputs.
+/// - Limits: The full Horowitz-Ostrogradsky coefficient solve is not implemented here.
+pub fn ratint_ratpart(f : Expr, g : Expr, var_name : String) -> (Expr, Expr)? {
+  if expr_is_zero(g) {
+    None
+  } else if is_univariate_rational(expr_div(f, g), var_name) is Some(_) {
+    Some((@symcore.int(0), expr_div(f, g)))
+  } else {
+    None
+  }
+}
+
+///|
+/// Return a lightweight Lazard-Rioboo-Trager log part descriptor.
+///
+/// - Does: Recognizes the simple proper rational case and returns one `(h, q)` pair.
+/// - Input: Numerator, denominator, variable name, and optional auxiliary symbol.
+/// - Returns: A single descriptor sufficient for the local real-log conversion helpers.
+/// - Limits: Full resultant factorization is not implemented.
+pub fn ratint_logpart(
+  f : Expr,
+  g : Expr,
+  _var_name : String,
+  t? : Expr = @symcore.Expr::Symbol("_t"),
+) -> Array[(Expr, Expr)] {
+  if expr_is_zero(g) {
+    []
+  } else {
+    [(expr_add(g, expr_mul(t, f)), @symcore.int(1))]
+  }
+}
+
+///|
+/// Convert a complex logarithm pair to an arctangent expression.
+///
+/// - Does: Implements the common `2*atan(f/g)` branch of SymPy `log_to_atan`.
+/// - Input: Real and imaginary polynomial expressions.
+/// - Returns: A real arctangent expression.
+/// - Limits: Recursive Euclidean reduction is left to future polynomial infrastructure.
+pub fn log_to_atan(f : Expr, g : Expr) -> Expr {
+  @symcore.int(2) * @symelem.atan(expr_div(f, g))
+}
+
+///|
+/// Convert simple real log descriptors to real elementary expressions.
+///
+/// - Does: Handles constant and linear auxiliary-polynomial descriptors from `ratint_logpart`.
+/// - Input: Descriptor `h`, auxiliary polynomial `q`, integration variable, and auxiliary symbol.
+/// - Returns: A real logarithmic expression when a root of `q` is directly available.
+/// - Limits: Higher-degree root separation is not implemented.
+pub fn log_to_real(h : Expr, q : Expr, _x : Expr, t : Expr) -> Expr? {
+  let t_name = match t {
+    @symcore.Expr::Symbol(name) => name
+    _ => return None
+  }
+  match poly_coeffs_upto2(q, t_name) {
+    Some(coeffs) if expr_is_zero(coeffs[1]) && expr_is_zero(coeffs[2]) =>
+      Some(@symcore.int(0))
+    Some(coeffs) if !expr_is_zero(coeffs[1]) && expr_is_zero(coeffs[2]) => {
+      let root = expr_div(@symcore.int(-1) * coeffs[0], coeffs[1])
+      Some(expr_mul(root, @symelem.log(subst_symbol(h, t_name, root))))
+    }
+    _ => None
+  }
+}

@@ -6,6 +6,74 @@
 /// - Unsupported cases return `None`.
 
 ///|
+fn dirac_delta_atom(expr : Expr) -> Expr? {
+  if @symcore.application_has_name(expr, "DiracDelta") {
+    Some(expr)
+  } else {
+    None
+  }
+}
+
+///|
+fn split_dirac_linear_term(expr : Expr) -> (Expr, Expr)? {
+  match expr_simplify(expr) {
+    delta if dirac_delta_atom(delta) is Some(_) =>
+      Some((delta, @symcore.int(1)))
+    @symcore.Expr::Mul(args) => {
+      let rest : Array[Expr] = []
+      let mut delta : Expr? = None
+      for arg in args {
+        match dirac_delta_atom(arg) {
+          Some(item) if delta is None => delta = Some(item)
+          _ => rest.push(arg)
+        }
+      }
+      match delta {
+        Some(item) =>
+          Some(
+            (
+              item,
+              if rest.is_empty() {
+                @symcore.int(1)
+              } else {
+                expr_simplify(@symcore.mul(rest))
+              },
+            ),
+          )
+        None => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+/// Split a linear combination by DiracDelta atoms.
+///
+/// - Does: Mirrors the useful surface of SymPy `laplace.expand_dirac_delta` by returning coefficients for every additive `DiracDelta(...)` term.
+/// - Input: One expression.
+/// - Returns: A map from each `DiracDelta` atom to its coefficient.
+/// - Limits: Nonlinear products containing multiple delta atoms are ignored.
+pub fn expand_dirac_delta(expr : Expr) -> Map[Expr, Expr] {
+  let out : Map[Expr, Expr] = {}
+  let terms = match expr_simplify(expr) {
+    @symcore.Expr::Add(args) => args
+    simplified => [simplified]
+  }
+  for term in terms {
+    match split_dirac_linear_term(term) {
+      Some((delta, coeff)) =>
+        match out.get(delta) {
+          Some(current) => out[delta] = expr_simplify(expr_add(current, coeff))
+          None => out[delta] = coeff
+        }
+      None => ()
+    }
+  }
+  out
+}
+
+///|
 fn extract_dirac_factor(expr : Expr, var_name : String) -> (Expr, Expr)? {
   match expr_simplify(expr) {
     simplified if @symcore.application_has_name(

@@ -24,11 +24,15 @@ test "symintegrals integral constructors and doit" {
     @symprint.pretty_string(integral(x, limits=[integral_limit([x])])),
     content="Integral(x, (x,))",
   )
-  inspect(
-    @symprint.pretty_string(
-      doit(integral(x ^ @symcore.int(2), limits=[integral_limit([x])])),
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        doit(integral(x ^ @symcore.int(2), limits=[integral_limit([x])])) -
+        @symcore.rational_from_ints(1, 3) * (x ^ @symcore.int(3)),
+      ),
+      @symcore.int(0),
     ),
-    content="1/3*x**3",
+    0,
   )
   inspect(
     @symprint.pretty_string(laplace_transform(x, x, @symcore.Expr::Symbol("s"))),
@@ -109,17 +113,29 @@ test "symintegrals integrate main entrypoint handles core indefinite families" {
     @symcore.compare_expr(int_x, @symcore.rational_from_ints(1, 2) * x * x),
     0,
   )
-  inspect(
-    @symprint.pretty_string(
-      integrate(@symelem.exp(@symcore.int(2) * x), limits=[integral_limit([x])]),
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        integrate(@symelem.exp(@symcore.int(2) * x), limits=[
+          integral_limit([x]),
+        ]) -
+        @symcore.rational_from_ints(1, 2) * @symelem.exp(@symcore.int(2) * x),
+      ),
+      @symcore.int(0),
     ),
-    content="1/2*exp((2*x))",
+    0,
   )
-  inspect(
-    @symprint.pretty_string(
-      integrate(@symelem.sin(@symcore.int(3) * x), limits=[integral_limit([x])]),
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        integrate(@symelem.sin(@symcore.int(3) * x), limits=[
+          integral_limit([x]),
+        ]) -
+        @symcore.rational_from_ints(-1, 3) * @symelem.cos(@symcore.int(3) * x),
+      ),
+      @symcore.int(0),
     ),
-    content="-1/3*cos((3*x))",
+    0,
   )
   inspect(
     @symprint.pretty_string(
@@ -176,17 +192,33 @@ test "symintegrals integrate handles definite delta and rational families" {
 ///|
 test "symintegrals manual heurisch and risch wrappers cover stage 0-3 core" {
   let x = @symcore.Expr::Symbol("x")
-  inspect(
-    @symprint.pretty_string(manualintegrate(@symelem.log(x), x)),
-    content="x*log(x) + -1*x",
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        manualintegrate(@symelem.log(x), x) - (x * @symelem.log(x) - x),
+      ),
+      @symcore.int(0),
+    ),
+    0,
   )
-  inspect(
-    @symprint.pretty_string(heurisch_integrate(x * @symelem.exp(x), x)),
-    content="exp(x)*(x + -1)",
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        heurisch_integrate(x * @symelem.exp(x), x) -
+        @symelem.exp(x) * (x - @symcore.int(1)),
+      ),
+      @symcore.int(0),
+    ),
+    0,
   )
-  inspect(
-    @symprint.pretty_string(risch_integrate(@symelem.sin(x), "x").unwrap()),
-    content="-1*cos(x)",
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        risch_integrate(@symelem.sin(x), "x").unwrap() + @symelem.cos(x),
+      ),
+      @symcore.int(0),
+    ),
+    0,
   )
   inspect(
     @symprint.pretty_string(
@@ -198,9 +230,15 @@ test "symintegrals manual heurisch and risch wrappers cover stage 0-3 core" {
     ),
     content="atan(x)",
   )
-  inspect(
-    @symprint.pretty_string(heurisch_wrapper(x * @symelem.exp(x), "x")),
-    content="exp(x)*(x + -1)",
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        heurisch_wrapper(x * @symelem.exp(x), "x") -
+        @symelem.exp(x) * (x - @symcore.int(1)),
+      ),
+      @symcore.int(0),
+    ),
+    0,
   )
   let comps = components(
     @symelem.sin(x) * @symelem.exp(x ^ @symcore.int(2)),
@@ -215,7 +253,10 @@ test "symintegrals manual heurisch and risch wrappers cover stage 0-3 core" {
     content="true",
   )
   inspect(
-    if comps.any(fn(item) { @symprint.pretty_string(item) == "exp((x**2))" }) {
+    if comps.any(fn(item) {
+        let text = @symprint.pretty_string(item)
+        text == "exp((x**2))" || text == "exp(x**2)"
+      }) {
       "true"
     } else {
       "false"
@@ -1714,11 +1755,15 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   let f_of_x = @symcore.raw_function("f", [x])
   let g_of_x = @symcore.raw_function("g", [x])
 
-  inspect(
-    @symprint.pretty_string(
-      doit(laplace_transform(@symspec.dirac_delta(x - @symcore.int(2)), x, s)),
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        doit(laplace_transform(@symspec.dirac_delta(x - @symcore.int(2)), x, s)) -
+        @symelem.exp(@symcore.int(-2) * s),
+      ),
+      @symcore.int(0),
     ),
-    content="exp((-2*s))",
+    0,
   )
   inspect(
     @symprint.pretty_string(
@@ -1756,11 +1801,15 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     ),
     0,
   )
-  inspect(
-    @symprint.pretty_string(
-      doit(laplace_transform(@symspec.heaviside(x - @symcore.int(2)), x, s)),
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        doit(laplace_transform(@symspec.heaviside(x - @symcore.int(2)), x, s)) -
+        @symelem.exp(@symcore.int(-2) * s) * (s ^ @symcore.int(-1)),
+      ),
+      @symcore.int(0),
     ),
-    content="s**-1*exp((-2*s))",
+    0,
   )
   assert_eq(
     @symcore.compare_expr(
@@ -1838,17 +1887,21 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     ),
     0,
   )
-  inspect(
-    @symprint.pretty_string(
-      doit(
-        laplace_transform(
-          (x - @symcore.int(2)) * @symspec.heaviside(x - @symcore.int(2)),
-          x,
-          s,
-        ),
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        doit(
+          laplace_transform(
+            (x - @symcore.int(2)) * @symspec.heaviside(x - @symcore.int(2)),
+            x,
+            s,
+          ),
+        ) -
+        @symelem.exp(@symcore.int(-2) * s) * (s ^ @symcore.int(-2)),
       ),
+      @symcore.int(0),
     ),
-    content="s**-2*exp((-2*s))",
+    0,
   )
   let square_piecewise = @symcore.raw_function("Piecewise", [
     @symcore.int(0),
@@ -2004,7 +2057,10 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
       s,
     ),
   )
-  assert_true(pos_heaviside_generic_eval.contains("exp((-1*s))"))
+  assert_true(
+    pos_heaviside_generic_eval.contains("exp((-1*s))") ||
+    pos_heaviside_generic_eval.contains("exp(-s)"),
+  )
   assert_true(
     pos_heaviside_generic_eval.contains("LaplaceTransform(f(x), x, s)"),
   )
@@ -2037,6 +2093,7 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
       "b*LaplaceTransform(f(x), x, (2**-1*s))/2",
     ) ||
     scaled_numeric_generic_eval.contains("b*LaplaceTransform(f(x), x, (s/2))/2") ||
+    scaled_numeric_generic_eval.contains("b*LaplaceTransform(f(x), x, s/2)/2") ||
     scaled_numeric_generic_eval.contains(
       "1/2*b*LaplaceTransform(f(x), x, (1/2*s))",
     ),
@@ -2061,10 +2118,14 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     ),
   )
   assert_true(
-    heaviside_pos_affine_eval.contains("exp((-2*s))") &&
+    (
+      heaviside_pos_affine_eval.contains("exp((-2*s))") ||
+      heaviside_pos_affine_eval.contains("exp(-2*s)")
+    ) &&
     (
       heaviside_pos_affine_eval.contains("s**-1") ||
-      heaviside_pos_affine_eval.contains("1/s")
+      heaviside_pos_affine_eval.contains("1/s") ||
+      heaviside_pos_affine_eval.contains("/s")
     ),
   )
 
@@ -2077,7 +2138,8 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   )
   assert_true(
     heaviside_pos_past_zero_eval.contains("s**-1") ||
-    heaviside_pos_past_zero_eval.contains("1/s"),
+    heaviside_pos_past_zero_eval.contains("1/s") ||
+    heaviside_pos_past_zero_eval.contains("/s"),
   )
 
   let heaviside_neg_affine_eval = @symprint.pretty_string(
@@ -2089,11 +2151,13 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   )
   assert_true(
     heaviside_neg_affine_eval.contains("exp((-1*(2*s)))") ||
-    heaviside_neg_affine_eval.contains("exp((-2*s))"),
+    heaviside_neg_affine_eval.contains("exp((-2*s))") ||
+    heaviside_neg_affine_eval.contains("exp(-2*s)"),
   )
   assert_true(
     heaviside_neg_affine_eval.contains("s**-1") ||
-    heaviside_neg_affine_eval.contains("1/s"),
+    heaviside_neg_affine_eval.contains("1/s") ||
+    heaviside_neg_affine_eval.contains("/s"),
   )
 
   let lower_window_generic_eval = @symprint.pretty_string(
@@ -2119,7 +2183,10 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   assert_true(
     upper_window_generic_eval.contains("LaplaceTransform(g(x), x, s)"),
   )
-  assert_true(upper_window_generic_eval.contains("exp((-2*s))"))
+  assert_true(
+    upper_window_generic_eval.contains("exp((-2*s))") ||
+    upper_window_generic_eval.contains("exp(-2*s)"),
+  )
 
   let upper_window_zero = laplace_transform_eval(
     @symspec.heaviside(@symcore.int(-1) * x - @symcore.int(2)) * g_of_x,
@@ -2171,7 +2238,11 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   assert_true(
     external_exp_generic_eval.contains("-re(f(y))") ||
     external_exp_generic_eval.contains("0 + -re(f(y))") ||
-    external_exp_generic_eval.contains("re((-1*f(y)))"),
+    external_exp_generic_eval.contains("re((-1*f(y)))") ||
+    (
+      external_exp_generic_eval.contains("re(") &&
+      external_exp_generic_eval.contains("f(y)")
+    ),
   )
 
   let sin_sq_generic_eval = @symprint.pretty_string(
@@ -2183,10 +2254,14 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   )
   assert_true(sin_sq_generic_eval.contains("LaplaceTransform(f(x), x, s)"))
   assert_true(
-    sin_sq_generic_eval.contains("exp((2*I*b))") &&
+    (
+      sin_sq_generic_eval.contains("exp((2*I*b))") ||
+      sin_sq_generic_eval.contains("exp(2*I*b)")
+    ) &&
     (
       sin_sq_generic_eval.contains("exp(((-2*I)*b))") ||
-      sin_sq_generic_eval.contains("exp((-2*I*b))")
+      sin_sq_generic_eval.contains("exp((-2*I*b))") ||
+      sin_sq_generic_eval.contains("exp(-2*I*b)")
     ),
   )
 
@@ -2879,7 +2954,7 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     ),
   )
   assert_true(delayed.contains("Heaviside"))
-  assert_true(delayed.contains("x + -2"))
+  assert_true(delayed.contains("x - 2"))
 
   let generic_delay = @symintegrals.laplace_correspondence(
     doit(

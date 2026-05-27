@@ -353,7 +353,7 @@ fn laplace_initial_conds_walk(
   t_name : String,
   fdict : Map[String, Array[Expr]],
 ) -> Expr {
-  match match_initial_condition(expr, t_name, fdict) {
+  match match_initial_condition(expr, fdict) {
     Some(value) => value
     None =>
       match expr {
@@ -392,11 +392,10 @@ fn laplace_initial_conds_walk(
 ///|
 fn match_initial_condition(
   expr : Expr,
-  t_name : String,
   fdict : Map[String, Array[Expr]],
 ) -> Expr? {
   for func_name, values in fdict {
-    match initial_condition_order(expr, func_name, t_name) {
+    match initial_condition_order(expr, func_name) {
       Some(order) if order >= 0 && order < values.length() =>
         return Some(values[order])
       _ => ()
@@ -406,11 +405,7 @@ fn match_initial_condition(
 }
 
 ///|
-fn initial_condition_order(
-  expr : Expr,
-  func_name : String,
-  t_name : String,
-) -> Int? {
+fn initial_condition_order(expr : Expr, func_name : String) -> Int? {
   match @symcore.application_parts(expr) {
     Some((head, [arg])) =>
       match @symcore.function_head_name(head) {
@@ -421,10 +416,12 @@ fn initial_condition_order(
           } else {
             match @symcore.subs_parts(expr) {
               Some((inner, sub_var, value)) =>
-                if @symcore.compare_expr(sub_var, @symcore.Expr::Symbol(t_name)) ==
-                  0 &&
-                  expr_is_zero(value) {
-                  derivative_ic_order(inner, func_name, t_name)
+                if expr_is_zero(value) {
+                  match symbol_name(sub_var) {
+                    Some(source_name) =>
+                      derivative_ic_order(inner, func_name, source_name)
+                    None => None
+                  }
                 } else {
                   None
                 }
@@ -438,10 +435,12 @@ fn initial_condition_order(
       } else {
         match @symcore.subs_parts(expr) {
           Some((inner, sub_var, value)) =>
-            if @symcore.compare_expr(sub_var, @symcore.Expr::Symbol(t_name)) ==
-              0 &&
-              expr_is_zero(value) {
-              derivative_ic_order(inner, func_name, t_name)
+            if expr_is_zero(value) {
+              match symbol_name(sub_var) {
+                Some(source_name) =>
+                  derivative_ic_order(inner, func_name, source_name)
+                None => None
+              }
             } else {
               None
             }
@@ -520,27 +519,14 @@ fn derivative_ic_order(
   t_name : String,
 ) -> Int? {
   match @symcore.derivative_parts(expr) {
-    Some((inner, [wrt])) =>
-      if @symcore.compare_expr(wrt, @symcore.Expr::Symbol(t_name)) == 0 {
-        match derivative_chain_order(inner, func_name, t_name) {
-          Some(order) => Some(order + 1)
-          None => None
-        }
-      } else {
-        None
-      }
-    Some((inner, [wrt, order])) =>
-      if @symcore.compare_expr(wrt, @symcore.Expr::Symbol(t_name)) == 0 {
-        match
-          (
-            derivative_chain_order(inner, func_name, t_name),
-            expr_is_int_value(order),
-          ) {
-          (Some(base_order), Some(n)) if n >= 1 => Some(base_order + n)
-          _ => None
-        }
-      } else {
-        None
+    Some((inner, deriv_args)) =>
+      match
+        (
+          derivative_chain_order(inner, func_name, t_name),
+          derivative_args_order(deriv_args, t_name),
+        ) {
+        (Some(base_order), Some(n)) if n >= 1 => Some(base_order + n)
+        _ => None
       }
     _ => None
   }
@@ -561,30 +547,62 @@ fn derivative_chain_order(
   match @symcore.expr_form(expr) {
     _ =>
       match @symcore.derivative_parts(expr) {
-        Some((inner, [wrt])) =>
-          if @symcore.compare_expr(wrt, @symcore.Expr::Symbol(t_name)) == 0 {
-            match derivative_chain_order(inner, func_name, t_name) {
-              Some(order) => Some(order + 1)
-              None => None
-            }
-          } else {
-            None
-          }
-        Some((inner, [wrt, order])) =>
-          if @symcore.compare_expr(wrt, @symcore.Expr::Symbol(t_name)) == 0 {
-            match
-              (
-                derivative_chain_order(inner, func_name, t_name),
-                expr_is_int_value(order),
-              ) {
-              (Some(base_order), Some(n)) if n >= 1 => Some(base_order + n)
-              _ => None
-            }
-          } else {
-            None
+        Some((inner, deriv_args)) =>
+          match
+            (
+              derivative_chain_order(inner, func_name, t_name),
+              derivative_args_order(deriv_args, t_name),
+            ) {
+            (Some(base_order), Some(n)) if n >= 1 => Some(base_order + n)
+            _ => None
           }
         _ => None
       }
+  }
+}
+
+///|
+fn derivative_args_order(args : Array[Expr], t_name : String) -> Int? {
+  let t_sym = @symcore.Expr::Symbol(t_name)
+  let mut total = 0
+  let mut idx = 0
+  while idx < args.length() {
+    match args[idx] {
+      @symcore.Expr::Tuple([wrt, order]) =>
+        if @symcore.compare_expr(wrt, t_sym) == 0 {
+          match expr_is_int_value(order) {
+            Some(n) if n >= 1 => {
+              total += n
+              idx += 1
+            }
+            _ => return None
+          }
+        } else {
+          return None
+        }
+      wrt if @symcore.compare_expr(wrt, t_sym) == 0 =>
+        if idx + 1 < args.length() {
+          match expr_is_int_value(args[idx + 1]) {
+            Some(n) if n >= 1 => {
+              total += n
+              idx += 2
+            }
+            _ => {
+              total += 1
+              idx += 1
+            }
+          }
+        } else {
+          total += 1
+          idx += 1
+        }
+      _ => return None
+    }
+  }
+  if total > 0 {
+    Some(total)
+  } else {
+    None
   }
 }
 
@@ -986,7 +1004,7 @@ fn laplace_symbolic_power_times_term(
     return None
   }
   let power = symbolic_power.unwrap()
-  match laplace_base_term(rest[0], t_name, shifted_s) {
+  match laplace_info_doit(rest[0], t_name, shifted_s) {
     Some((value, plane, cond)) =>
       if @symcore.application_has_name(value, "LaplaceTransform") ||
         @symcore.derivative_parts(value) != None {
@@ -1029,7 +1047,7 @@ fn laplace_power_times_term(
   if total_power == 0 || rest.length() != 1 {
     return None
   }
-  match laplace_base_term(rest[0], t_name, shifted_s) {
+  match laplace_info_doit(rest[0], t_name, shifted_s) {
     Some((value, plane, cond)) => {
       let out = match laplace_generic_power_derivative(value, s, total_power) {
         Some(generic_out) => generic_out
@@ -1960,57 +1978,61 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
         _ => None
       }
     _ =>
-      match @symcore.derivative_parts(expr) {
-        Some((inner, deriv_args)) => {
-          let args : Array[Expr] = [inner]
-          for arg in deriv_args {
-            args.push(arg)
-          }
-          laplace_derivative_term(args, t_name, s)
-        }
+      match laplace_subs_derivative_term(expr, t_name, s) {
+        Some(info) => Some(info)
         None =>
-          match named_unary_application(expr) {
-            Some((name, arg)) =>
-              match linear_coeffs(arg, t_name) {
-                Some((coeff, offset)) =>
-                  if expr_is_positive(coeff) && expr_is_zero(offset) {
-                    Some(
-                      (
-                        expr_simplify(
-                          expr_div(
-                            @symcore.raw_function("LaplaceTransform", [
-                              @symcore.raw_function(name, [
-                                @symcore.Expr::Symbol(t_name),
-                              ]),
-                              @symcore.Expr::Symbol(t_name),
-                              expr_div(s, coeff),
-                            ]),
-                            coeff,
-                          ),
-                        ),
-                        @symcore.Expr::NumberSymbol(
-                          @symcore.NumberSymbolKind::NegativeInfinity,
-                        ),
-                        true_expr(),
-                      ),
-                    )
-                  } else if expr_depends_on(arg, t_name) {
-                    Some(generic_laplace_object(expr, t_name, s))
-                  } else {
-                    None
-                  }
-                _ =>
-                  if expr_depends_on(arg, t_name) {
-                    Some(generic_laplace_object(expr, t_name, s))
-                  } else {
-                    None
-                  }
+          match @symcore.derivative_parts(expr) {
+            Some((inner, deriv_args)) => {
+              let args : Array[Expr] = [inner]
+              for arg in deriv_args {
+                args.push(arg)
               }
+              laplace_derivative_term(args, t_name, s)
+            }
             None =>
-              if expr_depends_on(expr, t_name) {
-                Some(generic_laplace_object(expr, t_name, s))
-              } else {
-                None
+              match named_unary_application(expr) {
+                Some((name, arg)) =>
+                  match linear_coeffs(arg, t_name) {
+                    Some((coeff, offset)) =>
+                      if expr_is_positive(coeff) && expr_is_zero(offset) {
+                        Some(
+                          (
+                            expr_simplify(
+                              expr_div(
+                                @symcore.raw_function("LaplaceTransform", [
+                                  @symcore.raw_function(name, [
+                                    @symcore.Expr::Symbol(t_name),
+                                  ]),
+                                  @symcore.Expr::Symbol(t_name),
+                                  expr_div(s, coeff),
+                                ]),
+                                coeff,
+                              ),
+                            ),
+                            @symcore.Expr::NumberSymbol(
+                              @symcore.NumberSymbolKind::NegativeInfinity,
+                            ),
+                            true_expr(),
+                          ),
+                        )
+                      } else if expr_depends_on(arg, t_name) {
+                        Some(generic_laplace_object(expr, t_name, s))
+                      } else {
+                        None
+                      }
+                    _ =>
+                      if expr_depends_on(arg, t_name) {
+                        Some(generic_laplace_object(expr, t_name, s))
+                      } else {
+                        None
+                      }
+                  }
+                None =>
+                  if expr_depends_on(expr, t_name) {
+                    Some(generic_laplace_object(expr, t_name, s))
+                  } else {
+                    None
+                  }
               }
           }
       }
@@ -2368,14 +2390,20 @@ fn laplace_identity_product_term(
       Some(
         expr_mul(
           expr_rat(1, 2),
-          expr_sub(@symelem.cos(expr_sub(u, v)), @symelem.cos(expr_add(u, v))),
+          expr_sub(
+            @symelem.cos(expr_simplify(expr_sub(u, v))),
+            @symelem.cos(expr_simplify(expr_add(u, v))),
+          ),
         ),
       )
     (Some(("cos", u)), Some(("cos", v))) =>
       Some(
         expr_mul(
           expr_rat(1, 2),
-          expr_add(@symelem.cos(expr_sub(u, v)), @symelem.cos(expr_add(u, v))),
+          expr_add(
+            @symelem.cos(expr_simplify(expr_sub(u, v))),
+            @symelem.cos(expr_simplify(expr_add(u, v))),
+          ),
         ),
       )
     (Some(("cos", u)), Some(("sin", v)))
@@ -2383,17 +2411,32 @@ fn laplace_identity_product_term(
       Some(
         expr_mul(
           expr_rat(1, 2),
-          expr_add(@symelem.sin(expr_add(u, v)), @symelem.sin(expr_sub(v, u))),
+          expr_add(
+            @symelem.sin(expr_simplify(expr_add(u, v))),
+            @symelem.sin(expr_simplify(expr_sub(v, u))),
+          ),
         ),
       )
     (Some(("sinh", u)), Some(("cosh", v)))
     | (Some(("cosh", v)), Some(("sinh", u))) =>
-      Some(
-        expr_mul(
-          expr_rat(1, 2),
-          expr_add(@symelem.sinh(expr_add(u, v)), @symelem.sinh(expr_sub(u, v))),
-        ),
-      )
+      if expr_same_simplified(u, v) {
+        Some(
+          expr_mul(
+            expr_rat(1, 2),
+            @symelem.sinh(expr_simplify(expr_mul(@symcore.int(2), u))),
+          ),
+        )
+      } else {
+        Some(
+          expr_mul(
+            expr_rat(1, 2),
+            expr_add(
+              @symelem.sinh(expr_simplify(expr_add(u, v))),
+              @symelem.sinh(expr_simplify(expr_sub(u, v))),
+            ),
+          ),
+        )
+      }
     (Some(("sin", u)), Some(("cosh", v)))
     | (Some(("cosh", v)), Some(("sin", u))) =>
       match (linear_coeffs(u, t_name), linear_coeffs(v, t_name)) {
@@ -2425,6 +2468,41 @@ fn laplace_identity_product_term(
   }
   match rewrite {
     Some(expr) => laplace_info_doit(expr_simplify(expr), t_name, s)
+    None => None
+  }
+}
+
+///|
+fn laplace_subs_derivative_term(
+  expr : Expr,
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  match @symcore.subs_parts(expr) {
+    Some((inner, sub_var, value)) => {
+      if @symcore.compare_expr(value, @symcore.Expr::Symbol(t_name)) != 0 {
+        return None
+      }
+      match (symbol_name(sub_var), @symcore.derivative_parts(inner)) {
+        (Some(source_name), Some((base, deriv_args))) =>
+          match derivative_args_order(deriv_args, source_name) {
+            Some(order) if order > 0 => {
+              let base_at_t = subst_symbol(
+                base,
+                source_name,
+                @symcore.Expr::Symbol(t_name),
+              )
+              laplace_derivative_term(
+                [base_at_t, @symcore.Expr::Symbol(t_name), @symcore.int(order)],
+                t_name,
+                s,
+              )
+            }
+            _ => None
+          }
+        _ => None
+      }
+    }
     None => None
   }
 }
@@ -3253,11 +3331,21 @@ fn laplace_initial_value(
   if order == 0 {
     expr_simplify(subst_symbol(base, t_name, @symcore.int(0)))
   } else {
+    match @symcore.undefined_application_parts(base) {
+      Some((_, [arg])) if @symcore.compare_expr(arg, t_sym) == 0 =>
+        return @symcore.raw_function("Subs", [
+          @symcore.raw_derivative(base, [t_sym, @symcore.int(order)]),
+          t_sym,
+          @symcore.int(0),
+        ])
+      _ => ()
+    }
     let mut deriv = base
     for _ in 0..<order {
       deriv = @symcalculus.diff(deriv, t_sym)
     }
-    if expr_has_function_name(deriv, "Derivative") {
+    if @symcore.derivative_parts(deriv) is Some(_) ||
+      expr_has_function_name(deriv, "Derivative") {
       @symcore.raw_function("Subs", [deriv, t_sym, @symcore.int(0)])
     } else {
       expr_simplify(subst_symbol(deriv, t_name, @symcore.int(0)))

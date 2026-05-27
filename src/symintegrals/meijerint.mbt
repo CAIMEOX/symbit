@@ -35,6 +35,61 @@ pub fn meijerg_integrate(expr : Expr, var_name : String) -> Expr? {
 }
 
 ///|
+/// Compute an indefinite integral through the local Meijer-style rules.
+///
+/// - Does: Public SymPy-compatible front door over `meijerg_integrate`.
+/// - Input: One integrand and one variable symbol.
+/// - Returns: `Some(Expr)` for recognized Meijer-style antiderivatives.
+/// - Limits: Uses the currently implemented special-function families.
+pub fn meijerint_indefinite(expr : Expr, symbol : Expr) -> Expr? {
+  match symbol {
+    @symcore.Expr::Symbol(name) => meijerg_integrate(expr, name)
+    _ => None
+  }
+}
+
+///|
+/// Compute a definite integral using a Meijer-style antiderivative when available.
+///
+/// - Does: Evaluates the local indefinite result at the two bounds.
+/// - Input: Integrand, variable symbol, lower bound, and upper bound.
+/// - Returns: `(value, true)` when an antiderivative is found.
+/// - Limits: Does not implement SymPy's full convergence-condition search.
+pub fn meijerint_definite(
+  expr : Expr,
+  symbol : Expr,
+  lower : Expr,
+  upper : Expr,
+) -> (Expr, Bool)? {
+  match (symbol, meijerint_indefinite(expr, symbol)) {
+    (@symcore.Expr::Symbol(name), Some(anti)) =>
+      Some(
+        (
+          expr_simplify(
+            expr_sub(
+              subst_symbol(anti, name, upper),
+              subst_symbol(anti, name, lower),
+            ),
+          ),
+          true,
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
+/// Try an inversion-style integral by delegating to inverse Laplace support.
+///
+/// - Does: Provides a practical local equivalent for the public `meijerint_inversion` hook.
+/// - Input: Transform expression, source variable, and target variable.
+/// - Returns: A recognized inverse transform result, if any.
+/// - Limits: Full Mellin-Barnes contour inversion is not implemented.
+pub fn meijerint_inversion(expr : Expr, source : Expr, target : Expr) -> Expr? {
+  do_inverse_laplace_doit(expr, source, target)
+}
+
+///|
 fn sincos_division(expr : Expr, var_name : String) -> Expr? {
   let (numerator, den_opt) = extract_division(expr)
   match den_opt {

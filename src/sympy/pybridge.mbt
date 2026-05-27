@@ -136,7 +136,7 @@ fn ensure_sympy_module() -> @py.PyModule raise {
 fn sympy_attr_obj(path : String) -> @py.PyObject raise {
   let parts : Array[String] = []
   for part in path.trim().split(".") {
-    parts.push(part.to_string())
+    parts.push(part.to_owned())
   }
   guard !parts.is_empty() && parts[0] == "sympy" else {
     fail("sympy-attr-invalid:\{path}")
