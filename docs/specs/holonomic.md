@@ -1,84 +1,55 @@
-# Symbit Holonomic — Design and Port Plan (Stages 0–5)
+# Symbit Holonomic — Current Design
 
-Goal: port SymPy `sympy.holonomic` to MoonBit with deterministic, testable
-behavior and explicit API boundaries.
+`symholonomic` provides recurrence and differential-operator support together
+with holonomic sequence/function objects, runtime APIs, and parity tests.
 
 ## Scope
 
-- Operator algebras:
-  - recurrence operators (`Sn`) over polynomial coefficients in `n`
-  - differential operators (`Dx`) over polynomial coefficients in `x`
-- Symbolic objects:
-  - `HolonomicSequence`
-  - `HolonomicFunction`
-- Core workflows:
-  - operator arithmetic (`+`, `*`, `**`)
-  - sequence extraction from constant-coefficient ODEs
-  - truncated series generation
-  - numeric approximation via truncated series
-  - expression conversion for common elementary holonomic forms
-- Oracle parity:
-  - recurrence/differential operator `str`/`srepr`
-  - selected holonomic function canonical display
+- Recurrence operators (`Sn`) over symbolic polynomial coefficients in `n`.
+- Differential operators (`Dx`) over symbolic polynomial coefficients in `x`.
+- `HolonomicSequence`.
+- `HolonomicFunction`.
+- Operator arithmetic (`+`, `*`, powers).
+- Sequence extraction from supported constant-coefficient ODE shapes.
+- Truncated series generation and numeric approximation via truncated series.
+- Conversion/display support for common elementary holonomic forms.
 
-## Data model
+## Data Model
 
 - `RecurrenceOperatorAlgebra`
-  - `var : Expr` (must be `Symbol`)
-  - `generator : String` (default `"Sn"`)
+  - `var : Expr`, normally a symbol;
+  - `generator : String`, defaulting to `"Sn"`.
 - `RecurrenceOperator`
-  - `coeffs : Array[Expr]` (coefficient of `Sn**k` at index `k`)
-  - invariant: trailing zero coefficients removed
+  - coefficient array indexed by generator power;
+  - trailing zero coefficients are trimmed.
 - `DifferentialOperatorAlgebra`
-  - `var : Expr` (must be `Symbol`)
-  - `generator : String` (default `"Dx"`)
+  - `var : Expr`, normally a symbol;
+  - `generator : String`, defaulting to `"Dx"`.
 - `DifferentialOperator`
-  - `coeffs : Array[Expr]` (coefficient of `Dx**k` at index `k`)
-  - invariant: trailing zero coefficients removed
+  - coefficient array indexed by generator power;
+  - trailing zero coefficients are trimmed.
 - `HolonomicSequence`
-  - `recurrence : RecurrenceOperator`
-  - `u0 : Array[Expr]`
+  - recurrence operator plus initial values.
 - `HolonomicFunction`
-  - `annihilator : DifferentialOperator?`
-  - `x : Expr` (must be `Symbol`)
-  - `x0 : Expr`
-  - `y0 : Array[Expr]`
-  - `expr_hint : Expr?` (used by conversion/pretty fallback)
+  - optional annihilator, variable, base point, initial values, and optional
+    expression hint for conversion/printing fallbacks.
 
-## Canonical invariants
+## Canonical Invariants
 
-- Coefficients are always canonical `Expr` from `symcore` constructors.
-- Operator coefficient arrays are always trimmed:
-  - zero operator -> `[0]`
-  - order = `coeffs.length() - 1`
-- Parent equality (`var`, `generator`) must hold for binary operations.
-- `HolonomicFunction` arithmetic preserves variable and base point equality.
+- Coefficients are canonical `symcore.Expr` values.
+- Zero operators use the package's stable zero representation.
+- Binary operator operations require matching parent algebra data.
+- Holonomic-function arithmetic preserves variable and base-point consistency.
 
-## Implemented algorithmic commitments
+## Algorithms
 
-- Recurrence multiplication uses:
-  - `Sn^i * p(n) = p(n + i) * Sn^i`
-- Differential multiplication uses generalized Leibniz rule:
-  - `Dx^i * p(x) = sum_{r=0..i} binom(i, r) p^{(r)}(x) Dx^{i-r}`
-- Series/sequence engine (first complete pass):
-  - constant-coefficient linear ODE support
-  - finite-order recurrence for Maclaurin coefficients
-  - fallback to `expr_hint` for known elementary forms
+- Recurrence multiplication follows `Sn^i * p(n) = p(n + i) * Sn^i`.
+- Differential multiplication uses the generalized Leibniz rule.
+- Series and sequence logic supports the implemented constant-coefficient and
+  known-elementary cases, with expression hints used for conservative fallback.
 
-## Staged delivery
+## Testing And Parity
 
-- Stage 0: package + spec + oracle wiring
-- Stage 1: recurrence operators
-- Stage 2: differential operators
-- Stage 3: holonomic sequence object and conversions
-- Stage 4: holonomic function core ops
-- Stage 5: conversions, series, numerical evaluation
-
-## Test strategy
-
-- Port tests assert direct parity with SymPy oracle on:
-  - recurrence and differential operator algebra arithmetic
-  - selected canonical `HolonomicFunction` string forms
-- Unit tests assert:
-  - canonicalization and invariants
-  - deterministic output and stable behavior
+Port tests compare recurrence and differential operator arithmetic plus selected
+holonomic-function displays with SymPy. Runtime tests cover canonicalization,
+parent matching, deterministic output, and supported sequence/series behavior.

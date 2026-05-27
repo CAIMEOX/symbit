@@ -1,60 +1,50 @@
-# Symbit Algebras — Quaternion (Draft Design)
+# Symbit Algebras — Quaternion Current Design
 
-Goal: port SymPy `algebras/quaternion.py` into MoonBit with a symbolic core
-based on `symcore.Expr` and parity tests driven by a Python/SymPy oracle.
+`symalgebras` currently provides the quaternion layer corresponding to SymPy's
+`algebras/quaternion.py`. Components are symbolic `symcore.Expr` values, and
+parity tests are driven by the test-only SymPy oracle.
 
-## Scope (first cut)
+## Scope
 
-- Core quaternion type with symbolic components (`Expr`).
-- Hamilton product, scalar add/mul, conjugate, norm, inverse, normalize, pow.
-- Axis/angle and Euler conversions, rotation matrix helpers.
-- Vector semantics: axis, angle, coplanar/parallel/orthogonal checks (3‑valued).
-- Matrix outputs represented as `Array[Array[Expr]]` (row-major).
+- Core quaternion type with symbolic components.
+- Hamilton product, scalar arithmetic, conjugate, norm, inverse, normalize, and
+  powers.
+- Exponential/logarithmic helpers and trigonometric power forms.
+- Axis/angle and Euler conversions.
+- Rotation matrix conversion and point rotation.
+- Vector semantics: axis, angle, coplanar/parallel/orthogonal checks, and
+  three-valued pure/zero predicates.
+- Matrix outputs represented as row-major `Array[Array[Expr]]`.
 
-## Data model (package `symalgebras`)
+## Data Model
 
 - `type Expr = @symcore.Expr`
 - `type Matrix = Array[Array[Expr]]`
-- `struct Quaternion`
-  - `a, b, c, d : Expr` (scalar + vector parts)
-  - `real_field : Bool` (kept for parity; no complex splitting yet)
-  - `norm_override : Expr?` (optional pre-defined norm)
+- `Quaternion`
+  - `a, b, c, d : Expr` for scalar and vector parts;
+  - `real_field : Bool` retained for SymPy parity;
+  - `norm_override : Expr?` for externally supplied norm semantics.
 
-### Invariants
+## Invariants
 
-- Components are commutative expressions (MoonBit core has only commutative
-  `Expr` today).
-- If `norm_override` is a numeric literal, it must be non‑negative; if all
-  components are numeric, `norm_override^2 == a^2+b^2+c^2+d^2` must hold.
+- Components are commutative symbolic expressions.
+- Numeric `norm_override` values must be non-negative.
+- When all components are numeric, a provided norm must agree with
+  `sqrt(a^2 + b^2 + c^2 + d^2)` according to the implemented exact checks.
 
-## Key APIs (planned)
+## Public Surface
 
-- Construction:
-- `Quaternion::new(a, b, c, d, real_field?=true, norm?)`
-  - `Quaternion::with_norm(norm?)`
-  - `Quaternion::from_matrix(elements)` (len 3 or 4)
-- Arithmetic:
-  - `add`, `sub`, `mul`, `neg`, `div` (+ scalar variants)
-- Core operations:
-  - `conjugate`, `norm`, `normalize`, `inverse`, `pow`
-  - `exp`, `log`, `pow_cos_sin`
-- Rotation helpers:
-  - `from_axis_angle`, `to_axis_angle`
-  - `from_euler`, `to_euler`
-  - `to_rotation_matrix`, `from_rotation_matrix`
-  - `rotate_point`
-- Vector queries:
-  - `scalar_part`, `vector_part`, `axis`, `angle`, `index_vector`, `mensor`
-  - `is_pure`, `is_zero_quaternion` (3‑valued)
-  - `arc_coplanar`, `vector_coplanar`, `parallel`, `orthogonal`
+- Construction: `Quaternion::new`, `with_norm`, sequence/matrix constructors.
+- Arithmetic: add/sub/mul/div, scalar variants, negation, and powers.
+- Core operations: conjugate, norm, normalize, inverse, exp, log,
+  `pow_cos_sin`.
+- Rotation helpers: axis-angle, Euler conversion, rotation matrices, and
+  `rotate_point`.
+- Vector queries: scalar/vector parts, axis, angle, index vector, mensor,
+  coplanarity, parallelism, orthogonality, purity, and zero-quaternion checks.
 
-## Testing plan
+## Testing And Parity
 
-- Oracle parity via SymPy for add/mul/conjugate/norm/inverse/pow.
-- Axis/angle round‑trips and rotation matrix entries via SymPy comparison.
-- 3‑valued predicates validated on numeric examples.
-
-## Notes
-
-- No full calculus support yet; diff/integrate are excluded for now.
-- Trig simplification (`trigsimp`) is treated as identity in the core.
+Oracle tests compare arithmetic, conjugation, norm, inverse, powers,
+axis-angle behavior, rotations, and selected predicate behavior with SymPy.
+Package tests cover symbolic and numeric edge cases in the MoonBit runtime.

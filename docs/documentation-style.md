@@ -6,7 +6,7 @@ This repository treats documentation as part of the public API. The default form
 
 - Public source docstrings are the canonical description of runtime behavior.
 - `README.mbt.md` files are package guides only.
-- The test-only oracle layer under `src/sympy` is excluded from user-facing documentation.
+- The test-only oracle layer is excluded from user-facing documentation.
 
 ## Comment Kinds
 

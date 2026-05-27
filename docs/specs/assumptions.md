@@ -1,76 +1,73 @@
-# Symbit Assumptions — Initial Spec
+# Symbit Assumptions — Current Design
 
-Goal: add a MoonBit-first assumptions layer aligned with SymPy's tri-valued
-predicate model, while keeping `symcore` unchanged.
+`symassume` is the assumptions and predicate-query layer for Symbit. It follows
+SymPy's tri-valued style while keeping assumptions external to `symcore.Symbol`.
 
-## Package layout
+## Package Layout
 
-- `symassume`
-  - `Tri` truth values: `True | False | Unknown`.
-  - `SymbolFacts` and `AssumeEnv` for symbol-scoped assumptions.
-  - predicate queries: `is_zero`, `is_nonzero`, `is_integer`, `is_rational`,
-    `is_real`, `is_positive`, `is_nonnegative`.
-  - Q/ask layer:
-    - `PredicateKey` + `Query` AST (`Atom/Not/And/Or/Implies/Equivalent`).
-    - `ask(...)` with SAT-based tri-valued decision.
-    - global assumptions APIs: `add/remove/clear/get_global_assumptions`,
-      `ask_global`.
-- `sympy/assumptions`
-  - oracle bridge to evaluate SymPy `expr.is_*` attributes.
-  - supports per-symbol assumptions and `ask(...)` parity tests.
+- `Tri` truth values: `True`, `False`, and `Unknown`.
+- `SymbolFacts` and `AssumeEnv` for symbol-scoped assumptions.
+- Predicate queries such as `is_zero`, `is_nonzero`, `is_integer`,
+  `is_rational`, `is_real`, `is_positive`, and `is_nonnegative`.
+- Q/ask layer:
+  - `PredicateKey`;
+  - `Query` AST (`Atom`, `Not`, `And`, `Or`, `Implies`, `Equivalent`);
+  - SAT-backed `ask`;
+  - global assumption APIs: `add_global_assumption`,
+    `remove_global_assumption`, `clear_global_assumptions`,
+    `get_global_assumptions`, and `ask_global`.
+- Oracle package `src/sympy/assumptions` for SymPy parity tests.
 
-## Data model
+## Data Model
 
-- `symcore.Expr::Symbol(name)` remains unchanged.
-- assumptions are provided externally via `AssumeEnv : Map[String, SymbolFacts]`.
-- `SymbolFacts` stores tri-state values for the seven baseline predicates.
+`symcore.Expr::Symbol(name)` remains assumption-free. Assumptions are supplied
+through `AssumeEnv`, so the same symbol can be queried under different
+contexts.
 
-## Invariants and closure rules
+## Invariants And Closure Rules
 
-- Facts are normalized through implication closure:
-  - `integer -> rational -> real`
-  - `positive -> nonnegative & nonzero & real`
-  - `zero -> !nonzero & !positive & nonnegative & integer`
-  - `nonnegative & nonzero -> positive`
-- Conflicting input assumptions merge conservatively to `Unknown`.
+Facts are normalized through conservative implication closure:
 
-## Predicate inference policy
+- `integer -> rational -> real`
+- `positive -> nonnegative & nonzero & real`
+- `zero -> !nonzero & !positive & nonnegative & integer`
+- `nonnegative & nonzero -> positive`
 
-- Conservative and monotonic: only return `True/False` when justified by local
-  rules; otherwise return `Unknown`.
-- Supported structural inference:
-  - numeric literals (`Number`)
-  - `Add`, `Mul`, `Pow`
-  - basic functions: `exp`, `log`, `sqrt`, `Abs/abs`, `sin/cos/tan`, `re/im`.
+Conflicting input assumptions merge conservatively to `Unknown`.
 
-## Oracle parity
+## Predicate Inference Policy
 
-- Compare each `symassume` predicate with SymPy's `expr.is_*`.
-- Build SymPy symbols using the same per-symbol assumptions from `AssumeEnv`.
-- Use this as regression guard for supported rule surface.
-- For Q/ask parity, compare stringified tri-values against SymPy `ask`
-  (`True/False/None` plus `InconsistentAssumptions` sentinel on conflicting
-  assumptions).
+Inference is monotonic and conservative: return `True` or `False` only when a
+local rule, explicit assumption, or SAT consequence justifies it; otherwise
+return `Unknown`.
 
-## Q/ask family checklist
+Implemented structural inference includes numeric literals, arithmetic
+structure (`Add`, `Mul`, `Pow`), common elementary functions, selected
+relations, infinity/constant handling, and a matrix/tensor predicate subset.
 
-- Done: propositional core (`And/Or/Not/Implies/Equivalent`) + CNF SAT solve.
-- Done: relation family surface (`Eq/Ne/Gt/Ge/Lt/Le`) with consistency clauses.
-- Done: numeric scalar family parity (`0/2/-3/1/2`) across key unary predicates.
-- Done: sign and extended-sign family on infinities (`oo/-oo/zoo`) and
-  transcendental constants (`I/pi/E`).
-- Done: context handling (`ask_global`) and conjunction literal projection to
-  `AssumeEnv` for structural reasoning.
-- Done: structural handlers now covered by parity tests:
-  `Q.complex(x+1)`, `Q.finite(x+1)`, `Q.nonzero(x+1)`,
-  `Q.extended_nonnegative(x+1)`, `Q.imaginary(I*x)` under assumptions.
-- Done: relation family adds conservative symbolic inference for
-  `x` vs constant and linear forms `x + c` vs constant, aligned to current
-  SymPy `ask` behavior (`Eq/Ne/Gt/Ge/Lt/Le` subset).
-- Done: matrix/tensor predicate subset extended with
-  `positive_definite(MatrixSymbol(...))` fine branches to
-  `~hermitian` / `~antihermitian` (parity-guarded).
-- Pending: matrix/tensor-specific predicates (`symmetric/invertible/...`) still
-  use conservative `Unknown`-first behavior, parity-guarded where applicable.
-- Pending: richer symbolic relation reasoning (beyond current conservative
-  `ask` behavior) needs dedicated handler families aligned with SymPy internals.
+## Q/Ask Coverage
+
+- Propositional query core and CNF SAT solving.
+- Relation family surface (`Eq`, `Ne`, `Gt`, `Ge`, `Lt`, `Le`) with consistency
+  clauses.
+- Numeric scalar family parity across key unary predicates.
+- Sign and extended-sign handling for infinities and common constants.
+- Global context handling and conjunction projection to `AssumeEnv`.
+- Structural handlers for complex/finite/nonzero/extended-nonnegative and
+  selected imaginary queries.
+- Conservative symbolic relation inference for simple symbol-vs-constant and
+  linear-form cases.
+- Matrix/tensor predicate subset for positive-definite branches guarded by
+  parity tests.
+
+## Current Limits
+
+Matrix/tensor-specific predicates such as richer symmetric/invertible families
+and relation reasoning beyond the current conservative subset still return
+`Unknown` unless an implemented handler can justify the result.
+
+## Oracle Parity
+
+Predicate tests compare against SymPy `expr.is_*` attributes and `ask` results
+(`True`, `False`, `None`, plus an inconsistency sentinel for conflicting
+assumptions).

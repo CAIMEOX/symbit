@@ -1,63 +1,46 @@
-# Symbit Stats Port Plan (Stage 0-8)
+# Symbit Stats — Current Coverage
 
-Goal: port the SymPy `sympy.stats` stack into MoonBit with stable symbolic
-behavior and deterministic query APIs.
+`symstats` implements a broad symbolic statistics surface: random variables,
+distributions, query functions, stochastic-process placeholders, matrix
+ensembles, and compatibility constructors. Read this package as a runtime
+implementation with active parity tests and an explicit gap checklist.
 
-## Scope Summary
+## Scope
 
-- Core random variable model and query interface.
-- Finite/discrete/continuous scalar distributions.
-- Symbolic `Probability`/`Expectation` style wrappers.
-- Joint random variables (independent-product first).
-- Compound RV and error propagation helpers.
-- Stochastic process and matrix-distribution starter layer.
+- Core random-variable model and event/query interface.
+- Finite, discrete, continuous, joint, compound, process, and matrix-family
+  compatibility constructors.
+- Symbolic `Probability`, `Expectation`, variance, covariance, density, CDF,
+  moment, moment-generating, characteristic-function, quantile, and entropy
+  front doors.
+- Distribution-specific symbolic fallback nodes for cases without closed forms.
+- Oracle/parity tests under `src/sympy/stats`.
 
-## Stage Map
+## Current Runtime Behavior
 
-- Stage 0: package skeleton + specs + oracle test bridge.
-- Stage 1: core `RandomVar`, `Event`, `RExpr`, `P/E/variance` base.
-- Stage 2: finite RVs (`FiniteRV`, `Die`, `Coin`, `Bernoulli`, `DiscreteUniform`).
-- Stage 3: symbolic wrappers (`ProbabilityExpr`, `ExpectationExpr`, ...)
-- Stage 4: discrete infinite RVs (`Binomial`, `Poisson`, `Geometric`,
-  `NegativeBinomial`).
-- Stage 5: continuous RVs (`Normal`, `Exponential`, `Gamma`) + `pdf/cdf`.
-- Stage 6: joint RV (independent product) and marginal expectation/covariance.
-- Stage 7: compound RV (basic finite mixture) + `error_prop.variance_prop`.
-- Stage 8: stochastic process + random matrix/matrix distributions starter APIs.
+- Public query functions return canonical `@symcore.Expr` values.
+- Numeric finite cases are evaluated exactly with `BigRational` where practical.
+- Concrete formulas exist for many common continuous and discrete families.
+- Symbolic compatibility RVs retain parameters in `RVKind::Symbolic`.
+- Compatibility constructors are family-tagged (`C/D/J/P/M`) so dispatch can
+  choose distribution-specific symbolic forms instead of generic wrappers.
+- `moment_generating_function`, `characteristic_function`, `quantile`, and
+  `entropy` attempt closed-form evaluation for supported RV kinds.
+- `central_moment` computes exact finite-atom moments when possible.
 
-## Post-Stage-8 Expansion
+## Known API Difference
 
-- Symbolic distribution constructors now retain parameters in `RVKind::Symbolic`.
-- Symbolic compatibility constructors are family-tagged (`C/D/J/P/M`) so query
-  dispatch can avoid generic `density(...)`/`cdf(...)` fallback for compat APIs.
-- Added concrete continuous formulas (density/cdf/mean/variance) for:
-  `Uniform`, `Beta`, `Laplace`, `Cauchy`, `Pareto`, `Rayleigh`,
-  `LogNormal`, `Weibull`, `StudentT`.
-- Upgraded compat query helpers:
-  - `moment_generating_function`, `characteristic_function`, `quantile`
-    attempt closed-form evaluation for supported RV kinds.
-  - `entropy` computes exact finite-atom entropy when possible.
-  - `central_moment` computes exact finite-atom moments when possible.
-- Oracle equivalence now sympifies expressions with `locals`, reducing float
-  parsing drift in parity checks.
-- For symbolic compat RVs without closed forms, query APIs emit distribution-
-  specific symbolic nodes (`<Name>PMF`, `<Name>CDF`, `<Name>Mean`, etc.) rather
-  than generic wrappers.
+`sympy.stats.where` cannot be exported as `where` in MoonBit because `where` is
+a reserved keyword. The public alias is `where_`.
 
-## Known Parity Gap
+## Gap Tracking
 
-- `sympy.stats.where` cannot be exported as `where` in MoonBit because
-  `where` is a reserved keyword. Current public alias is `where_`.
-
-## Canonical Rules
-
-- All public query functions return canonical `@symcore.Expr`.
-- Numeric cases are evaluated exactly using `BigRational` whenever practical.
-- Non-evaluable cases return symbolic function nodes (e.g. `Probability(...)`).
-- Independence defaults to `True` for distinct scalar RVs unless explicitly joint.
+The distribution metric checklist lives in
+`docs/stats-gap-checklist.md`. That file records which density/CDF/moment-style
+metrics are aligned for the broad compatibility surface.
 
 ## Oracle Strategy
 
-- Add `sympy/stats/stats_oracle.mbt` with eval helpers to compute expected
-  SymPy output for parity tests.
-- Use `sympy.simplify(a-b)==0` for algebraic equivalence, not raw string only.
+`src/sympy/stats/stats_oracle.mbt` evaluates SymPy-side expressions for parity
+tests. Tests use algebraic equivalence where possible instead of raw string
+comparison only.

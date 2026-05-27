@@ -1,82 +1,66 @@
-# Symbit Polys — Draft Design (Milestone 5)
+# Symbit Polys — Current Design
 
-Goal: mirror SymPy’s `polys` spirit with a minimal, strong-typed core that slots
-on top of existing `symnum` + `symcore`. Focus on correctness and
-canonicalization; performance tuning comes later.
+`sympolys` is the polynomial and exact-domain stack for Symbit. It now covers
+far more than the original sparse-polynomial milestone: domains, finite fields,
+algebraic extensions, dense/sparse polynomial algorithms, domain matrices,
+factorization, roots, Groebner-style helpers, resultants, subresultants, and
+multiple SymPy-compatible front doors.
 
-## Scope (first cut)
+## Core Data Model
 
-- Domains: `ZZ` (BigInt), `QQ` (BigRational). No algebraic extensions yet.
-- Gens: ordered symbols `[x0, x1, ...]` captured as `Array[String]`; order is
-  part of the polynomial identity (lexicographic by position).
-- Representation: sparse multivariate polynomials.
-- Operations: `add`, `sub`, `neg`, `mul`, `monomial_mul`, `degree`, `leading_term`.
-- Conversions: Expr ⇄ Poly bridge for expressions that are pure polynomials in
-  the given gens (integers/rationals, symbols, Add/Mul/Pow with non-negative
-  integer exponents).
-- Printing: deterministic S-expression and infix.
+- `Domain`
+  - exact integer/rational domains: `ZZ`, `QQ`;
+  - real/complex-flavored domains: `RR`, `CC`, `ZZ_I`, `QQ_I`;
+  - expression domains: `EX`, `EXRAW`;
+  - composite domains: fraction fields, polynomial rings, rational function
+    fields, quotient rings, power series, finite fields, finite-field
+    extensions, and algebraic extensions.
+- `TermOrder`
+  - `Lex`, `Grlex`, `Grevlex`, and inverse variants.
+- `Monomial`
+  - fixed-length exponent vectors with non-negative exponents.
+- `FieldElem`
+  - coefficient values used by the implemented domains.
+- `Poly`
+  - sparse monomial-to-coefficient map plus generators, domain, and term order.
+- `PolyBuilder`
+  - ergonomic construction around a generator list, domain, and term order.
 
-## Data model (package `sympolys`)
+## Canonicalization
 
-- `enum Domain { ZZ, QQ }`
-- `struct Monomial { exps : Array[Int] }`
-  - invariant: length == gens.len, all exps ≥ 0
-  - ordering: lex on exponent array (left-to-right), tie-breaker by length
-- `struct Poly { coeffs : Map[Monomial, Coeff], gens : Array[String], domain : Domain }`
-  - `Coeff = BigInt` for ZZ, `BigRational` for QQ
-  - invariant: no zero coeff entries; coeffs map keyed by canonical monomials
-  - zero poly: empty map; one: coeffs[{0,..0}] = 1
+- Polynomial storage omits zero coefficients.
+- Operations merge like terms and preserve domain consistency.
+- Generator order is part of polynomial identity.
+- Public operations raise `PolyError` for non-polynomial input, bad generators,
+  bad exponents, domain mismatch, failed exact division, unsupported field
+  requests, or invalid moduli.
 
-### Canonicalization
+## Implemented Surface
 
-- All operations produce maps without zero coefficients; combine like terms on
-  insert.
-- Monomial arrays fixed-length per poly; creation validates lengths.
-- Domain dictates coefficient arithmetic; integer literals lifted to domain.
+- Expression conversion: `Poly::from_expr`, `Poly::to_expr`,
+  `poly_from_expr`, parallel conversion helpers, and dictionary conversion.
+- Arithmetic: add/sub/neg/mul/powers, division, exact quotient, gcd/lcm-style
+  helpers, dense arithmetic, and distributed-module helpers.
+- Domains: domain parsing, conversion, unification, finite-field operations,
+  algebraic-extension helpers, rational-function helpers, and matrix-domain
+  compatibility layers.
+- Algorithms: factorization, square-free tools, modular gcd, root isolation,
+  polynomial roots, resultants, discriminants, Groebner helpers, special
+  polynomials, orthogonal-polynomial front doors, interpolation-style helpers,
+  and number-field compatibility front doors.
+- Matrix-adjacent support: domain matrices, dense/sparse matrix compatibility,
+  LLL helpers, and solver-adjacent linear algebra support.
 
-## Core APIs (planned)
+## Current Limits
 
-- `fn Poly::from_expr(expr : Expr, gens : Array[String], domain : Domain) -> Result[Poly, PolyError]`
-  - accepts Number/Symbol/Add/Mul/Pow with int exponents only; rejects others.
-- `fn Poly::to_expr(poly : Poly) -> Expr`
-- Arithmetic: `add`, `sub`, `neg`, `mul` (schoolbook), `scale_coeff`.
-- Structural: `degree(poly, gen_index)`, `total_degree`, `leading_term(order?)`
-  - default order: lex with gens order; extensible to grlex later.
-- Helpers: `monomial_one(len)`, `monomial_mul`, `monomial_pow`.
-- Errors: `PolyError::NonPolynomial`, `PolyError::BadGenerator`, `PolyError::BadExponent`,
-  `PolyError::DomainMismatch`.
+The package is broad but still not a full clone of the upstream `polys`
+ecosystem. Some domain combinations, advanced algebraic-number workflows,
+AGCA surfaces, and matrix-polynomial interactions remain conservative and raise
+`PolyError` rather than guessing.
 
-## Package layout and deps
+## Testing And Parity
 
-- `sympolys` imports `symnum` and `symcore`.
-- No reverse deps into core.
-- Tests use `symprint.debug_repr` snapshots.
-
-## Example (intended)
-
-```mbt nocheck
-let x = @symcore.symbol("x")
-let y = @symcore.symbol("y")
-let p = Poly::from_expr(
-  (@symcore.int(2) * (x ^ @symcore.int(2))) + y,
-  ["x", "y"],
-  Domain::ZZ
-)? // Ok
-let q = Poly::from_expr(x, ["x", "y"], Domain::ZZ)?
-let sum = p.add(q) // 2*x^2 + y + x
-```
-
-## Testing plan
-
-- Round-trips: `from_expr` then `to_expr` produce canonicalized expr/print.
-- Rejection cases: negative/ non-integer exponents, unknown symbols, non-poly
-  ops (Function, Pow with non-int exp) yield `NonPolynomial`.
-- Arithmetic snapshots: `(x + 1)^2` expansion via mul, zero elimination, degree
-  queries.
-
-## Next steps
-
-- Implement `sympolys` skeleton with the above types and invariants.
-- Add `symbit` prelude helpers: `poly(expr, gens, domain)` returning Result.
-- Once stable: add `gcd` prototype (univariate) and factor stubs; extend domain
-  to `QQ` by default for Expr import (matching SymPy’s rationalization).
+Package white-box tests cover core algebraic invariants and algorithm-specific
+branches. Oracle tests under `src/sympy/polys` compare many front doors with
+SymPy across dense arithmetic, domains, factorization, roots, Groebner helpers,
+matrices, subresultants, and number-field-adjacent behavior.

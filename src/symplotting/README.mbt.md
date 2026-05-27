@@ -4,7 +4,7 @@
 
 `CAIMEOX/symbit/symplotting` is the public import path for this package.
 
-Symbolic plotting frontends, plot series objects, text plotting, uniform/adaptive sampling, and implicit plotting utilities aligned with SymPy's `plotting` package.
+Symbolic plotting frontends, plot series objects, text plotting, uniform/adaptive sampling, and implicit plotting utilities for the plotting runtime surface.
 
 ## When To Use This Package
 

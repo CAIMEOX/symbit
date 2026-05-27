@@ -2,16 +2,15 @@
 
 This file tracks the MoonBit-side compatibility layer built on top of
 `CAIMEOX/moon_floating`, and how it maps to the subset of
-`sympy.external.mpmath` that SymPy actually imports.
+`sympy.external.mpmath` that SymPy imports.
 
-The implementation lives in `src/symnum/`. The goal is not to reproduce
-Python's global-runtime behavior exactly; the goal is to provide an equivalent
-numeric backend that Symbit can depend on while making MoonBit-specific API
-choices explicit.
+The implementation lives in `src/symnum/`. It does not reproduce Python's
+global-runtime behavior exactly; it provides the numeric backend Symbit needs
+while making MoonBit-specific API choices explicit.
 
-## Directly implemented
+## Directly Implemented
 
-The following names now exist with close semantics:
+The following names exist with close semantics:
 
 - precision / formatting:
   - `dps_to_prec`, `prec_to_dps`, `repr_dps`
@@ -46,69 +45,54 @@ The following names now exist with close semantics:
 - matrix constructor subset:
   - `_matrix`
 
-## Implemented with MoonBit-specific adaptation
+## MoonBit-Specific Adaptations
 
 - `local_workprec`
   - SymPy/mpmath exposes a context manager.
   - Symbit exposes a higher-order function: `local_workprec(prec, f)`.
-  - This keeps precision changes local without any global mutable runtime.
-
 - `workprec`
-  - In Python this temporarily mutates `mp`.
-  - In Symbit it returns an explicit `MPContext`.
-
+  - Python temporarily mutates `mp`.
+  - Symbit returns an explicit `MPContext`.
 - `mpf`
-  - Python exposes an overloaded numeric class/constructor.
+  - Python exposes an overloaded class/constructor.
   - Symbit exposes a minimal constructor subset: `mpf(string, prec?, rnd?)`.
-
 - `mpc`
   - Python exposes a complex numeric class/constructor.
   - Symbit exposes `mpc(real, imag?)` from explicit `Mpf` parts.
-
 - `ComplexResult`
   - Python exposes an exception class.
   - Symbit normalizes this to `MPError::ComplexResult(msg)`.
-  - Convenience probe: `is_complex_result(err)`.
-
 - `NoConvergence`
   - Python exposes an exception class hanging off `mp`.
   - Symbit normalizes this to `MPError::ConvergenceError(msg)`.
-  - Convenience probe: `is_no_convergence(err)`.
-
 - `MPZ_ONE`
   - Python exposes an uppercase constant.
-  - MoonBit does not allow a `BigInt` uppercase constant binding in the same
-    way, so Symbit exports `mpz_one`.
-
+  - Symbit exports `mpz_one`.
 - `_matrix`
   - Python's `_matrix` is a class from `mpmath.matrices`.
-  - Symbit currently provides the dense real constructor subset
+  - Symbit provides the dense real constructor subset
     `_matrix(rows_data, prec?, rounding?) -> MpfMatrix`.
 
-## Still missing
+## Still Missing
 
-These names do not yet have a direct counterpart:
+These names do not have a direct counterpart:
 
 - `bernfrac`
-  - Needs an exact Bernoulli-fraction algorithm, not just a floating
-    approximation.
-
+  - needs an exact Bernoulli-fraction algorithm;
 - `eulernum`
-  - Needs exact Euler-number generation.
-
+  - needs exact Euler-number generation;
 - `mpnumeric`
-  - Python-specific numeric base class; no clean MoonBit analogue.
-
+  - Python-specific numeric base class;
 - `int_types`
-  - Python tuple of runtime integer classes; not meaningful as-is in MoonBit.
+  - Python tuple of runtime integer classes, not meaningful as-is in MoonBit.
 
-## Practical guidance
+## Practical Guidance
 
 - For new Symbit code, prefer the explicit MoonBit surface:
   - `MPContext` / `local_workprec`
   - `Mpf`, `Mpc`, `Mpi`
   - `from_*` / `to_*`
   - raw `mpf_*` / `mpc_*` helpers
-- Use the compatibility names only where they help align future SymPy ports.
-- `symcore.Float` is already wired to this layer, but `Expr::Float` is not
-  introduced yet to avoid breaking exhaustive `Expr` matches across the repo.
+- Use compatibility names only where they help align SymPy-port code.
+- `symcore.Float`, `symcore.ComplexFloat`, `Expr::Float`, and
+  `Expr::ComplexFloat` are wired to this layer.

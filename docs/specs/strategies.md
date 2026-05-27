@@ -1,45 +1,51 @@
-# Strategies (SymPy port)
+# Symbit Strategies — Current Design
 
-Scope: port `sympy.strategies` (core/rl/traverse/tools/tree + branch subpackage) into MoonBit.
-The port targets SymPy semantics but adapts to MoonBit’s static types.
+`symstrategies` implements the strategy-combinator stack corresponding to
+SymPy's `strategies` packages (`core`, `rl`, `traverse`, `tools`, `tree`, and
+the `branch` subpackage). It targets the same observable rewrite semantics while
+using MoonBit's static types.
 
-## API shape and deviations
+## API Shape And Deviations
 
-- Rules are first-class functions. Branching rules return `Array[T]` instead of Python generators.
-- Variadic rule combinators accept `Array[(T)->T]` (or `Array[(T)->Array[T]]`) instead of `*rules`.
-- Tree strategies use a `Tree[T]` enum instead of Python lists/tuples.
+- Rules are first-class functions.
+- Branching rules return `Array[T]` instead of Python generators.
+- Variadic rule combinators accept arrays of functions instead of `*rules`.
+- Tree strategies use a typed `Tree[T]` enum instead of Python lists/tuples.
 
 ```mbt
 pub enum Tree[T] {
   Leaf(T)
-  Choice(Array[Tree[T]])  // list in SymPy
-  Seq(Array[Tree[T]])     // tuple in SymPy
+  Choice(Array[Tree[T]])  // list-like branch
+  Seq(Array[Tree[T]])     // tuple-like sequence
 }
 ```
 
-- Debug wrappers accept an explicit `name` parameter because MoonBit cannot reflect a function name.
+- Debug wrappers accept an explicit `name` parameter because MoonBit cannot
+  reflect a function name.
 
-## Expr integration
+## Expr Integration
 
 - `symstrategies.util` defines `ExprOp` and `Fns` for `@symcore.Expr` trees.
-- `basic_fns` uses *raw* constructors (no canonicalization) to mirror `Basic.__new__`.
-- `expr_fns` uses canonical constructors (`@symcore.add/mul/pow/function`).
+- `basic_fns` uses raw constructors to mirror `Basic.__new__`-style structural
+  preservation.
+- `expr_fns` uses canonical constructors (`@symcore.add`, `mul`, `pow`,
+  `function`).
 
-## Raw vs canonical constructors
+## Raw Vs Canonical Constructors
 
 Raw constructors are used for `basic_fns` and `rl.new`:
-- `Expr::Add(args)` and `Expr::Mul(args)` preserve argument order and do not fold.
+
+- `Expr::Add(args)` and `Expr::Mul(args)` preserve argument order and do not
+  fold.
 - `Expr::Pow(base, exp)` is not simplified.
 
 Canonical constructors are used for `expr_fns` and `rl.rebuild`:
-- `@symcore.add/mul/pow/function` rebuild canonical form.
 
-## Testing and oracle parity
+- `@symcore.add`, `mul`, `pow`, and `function` rebuild canonical form.
 
-- Tests follow SymPy’s `sympy/strategies/tests` and `sympy/strategies/branch/tests`.
-- Oracle package `sympy/strategies` calls SymPy strategies and returns:
-  - `Int` results for numeric strategies,
-  - `String` (SymPy `str`) for Expr/Basic trees,
-  - `Array[String]` for branching rule results.
-- Compare MoonBit results to oracle outputs (with normalization when needed).
+## Testing And Parity
 
+Oracle tests under `src/sympy/strategies` call SymPy strategies and return
+numeric results, stringified expression trees, or branching result arrays.
+Runtime tests compare MoonBit results to oracle outputs with normalization where
+needed.

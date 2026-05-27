@@ -1,192 +1,90 @@
-# Symbit Parsing — Draft Design and Execution Plan
+# Symbit Parsing — Current Design
 
-This document records the parser migration plan for SymPy's `parsing` package
-in a form that fits Symbit's MoonBit architecture.
+This file describes the parser implemented in `src/symparse`. `symparse` is a
+top-level runtime package with an oracle/parity package under
+`src/sympy/parsing`.
 
-The immediate target is **not** the full upstream `sympy.parsing` tree. The
-first target is the core string parser represented by
-`sympy.parsing.sympy_parser`, because that is the foundation required by later
-LaTeX / Mathematica / Maxima / C / Fortran frontends.
+## Current Scope
 
-## Current state
+The implemented front door covers the Python-like expression syntax needed by
+the current Symbit browser, tests, and package front doors:
 
-- There is currently **no** dedicated `symparse` package in Symbit.
-- The repository contains many internal shape recognizers and local
-  `parse_*` helpers, but no user-facing `parse_expr` surface.
-- Therefore parser support should be treated as a new top-level migration,
-  not as an incremental extension of an existing package.
+- integer and decimal literals;
+- identifiers and automatic symbol insertion;
+- parentheses and tuples;
+- unary `+` / `-`;
+- binary `+`, `-`, `*`, `/`, `**`;
+- optional `^` to power conversion;
+- function calls and callable-name contexts;
+- lambda notation;
+- chained comparisons and optional single-`=` conversion;
+- factorial and double-factorial notation;
+- repeated-decimal and rationalization transformations;
+- implicit multiplication / implicit application / function exponentiation,
+  when explicitly enabled.
 
-## Upstream surface to mirror
+External formats such as LaTeX, Mathematica, Maxima, C, and Fortran are not part
+of this front door.
 
-SymPy's `parsing` package includes several distinct layers:
+## Package Layout
 
-- `sympy_parser.py`
-  - token transformations
-  - implicit multiplication / implicit application
-  - number coercions and symbol insertion
-  - `parse_expr`
-- `ast_parser.py`
-  - Python-AST based safe expression parsing
-- `latex/*`
-  - LaTeX frontends and transformers
-- `mathematica.py`, `maxima.py`
-  - foreign syntax adapters
-- `c/c_parser.py`, `fortran/fortran_parser.py`
-  - source-language translators
+Runtime package: `src/symparse`
 
-The correct migration order is to build the **core expression parser first**,
-then layer foreign syntaxes on top.
-
-## Why the MoonBit implementation should differ
-
-SymPy's parser is heavily shaped by Python:
-
-- Python token streams
-- Python AST transforms
-- controlled `eval`-style expression construction
-- dynamic name resolution
-
-Symbit should not reproduce that architecture mechanically. MoonBit gives us
-better tools for a typed and more explicit implementation:
-
-- `Token` as an ADT rather than Python token tuples
-- explicit `Ast` / concrete syntax nodes
-- pure lexer and parser passes
-- Pratt / precedence-climbing expression parsing
-- explicit lowering into `symcore.Expr`
-- explicit environments and registries instead of dynamic `eval`
-
-So the migration goal is:
-
-- keep the **user-facing semantics** as close to SymPy as practical
-- intentionally make the **internal architecture** more functional, explicit,
-  and typed
-
-## Proposed package layout
-
-Package: `src/symparse`
-
-- `errors.mbt`
-  - spans, parser errors
-- `token.mbt`
-  - token kinds and token records
-- `ast.mbt`
-  - parser AST for user syntax
-- `lexer.mbt`
-  - string -> token stream
-- `parser_expr.mbt`
-  - Pratt / precedence parser for infix expressions
-- `lower_expr.mbt`
-  - AST -> `symcore.Expr`
-- `api.mbt`
-  - public entry points such as `parse_expr`
+- `errors.mbt` — spans and `ParseError`.
+- `token.mbt` — token kinds and token records.
+- `lexer.mbt` — source text to token stream.
+- `ast.mbt` — typed syntax tree, `ParseOptions`, `ParseContext`, and
+  transformation descriptors.
+- `parser_expr.mbt` — Pratt / precedence expression parser.
+- `ast_parser.mbt` — AST front doors.
+- `lower_expr.mbt` — AST to `symcore.Expr` lowering.
+- `api.mbt` — public parse front doors.
+- `builtin_callable_names.mbt` — built-in callable-name registry used by
+  parsing and lowering.
 
 Oracle package: `src/sympy/parsing`
 
-- minimal Python/SymPy bridge for parity tests against
-  `sympy.parsing.sympy_parser.parse_expr`
+- parity tests against `sympy.parsing.sympy_parser.parse_expr`;
+- support helpers for normalizing SymPy and Symbit output.
 
-## Public API direction
+## Public API
 
-The eventual API should look SymPy-like at the top, but stay explicit:
+- `lex(src) -> Array[Token] raise ParseError`
+- `parse_ast*` front doors for callers that need syntax before lowering
+- `parse_expr(src) -> Expr raise ParseError`
+- `parse_expr_with(src, options) -> Expr raise ParseError`
+- `parse_expr_in(src, options, context) -> Expr raise ParseError`
+- `parse_expr_with_transformations(...)`
+- `parse_expr_in_with_transformations(...)`
 
-- `lex(src : String) -> Array[Token] raise ParseError`
-- `parse_ast(src : String) -> Ast raise ParseError`
-- `parse_expr(src : String) -> Expr raise ParseError`
-- `parse_expr_with(src : String, options : ParseOptions) -> Expr raise ParseError`
+`ParseOptions` controls evaluation and syntax transformations. `ParseContext`
+controls local/global bindings and callable-name declarations.
 
-`ParseOptions` should control only explicit parser behavior. It should not
-smuggle runtime evaluation or Python-like execution into the parser.
+## Architecture
 
-## Stage plan
+The parser intentionally does not mimic SymPy's Python `eval`-style pipeline.
+It uses:
 
-### Stage 0 — parser boundary and data model
+- an explicit token ADT;
+- a typed AST with source spans;
+- transformation switches represented as `Transformation` variants;
+- a typed lowering pass into `symcore.Expr`;
+- explicit name-resolution context instead of dynamic Python locals.
 
-Goal: establish a stable typed parser core.
+This keeps parser behavior testable and makes unsupported syntax fail through
+structured `ParseError` values with source spans.
 
-- define `Span`, `ParseError`, `TokenKind`, `Token`
-- define a parser AST that is independent from `symcore.Expr`
-- define `ParseOptions`
-- decide the lowering boundary into `symcore`
+## Current Limits
 
-This stage should introduce no implicit-multiplication heuristics yet.
+- The parser is an expression parser, not a full Python parser.
+- External parser families are not implemented here.
+- Some transformation switches are conservative and cover only the syntax that
+  the current parser/lowerer can represent.
+- `evaluate=false` preserves raw tree shape where possible, but it is not a
+  complete clone of every SymPy construction edge case.
 
-### Stage 1 — minimal expression grammar
+## Testing And Parity
 
-Goal: parse and lower the core infix language reliably.
-
-Required syntax:
-
-- numbers
-- identifiers
-- parentheses
-- unary `+` / `-`
-- binary `+`, `-`, `*`, `/`, `**`
-- `^` as configurable power sugar
-- function calls `f(x, y)`
-- tuples `(x, y)`
-- comparison chains such as `x < y <= z`
-
-Lowering rules:
-
-- division lowers to multiplication by reciprocal power
-- subtraction lowers to `Add(lhs, -rhs)`
-- tuple lowers to a symbolic `Tuple(...)` form for now
-- chained comparisons lower to `And(op(...), op(...), ...)`
-
-### Stage 2 — SymPy-style token/AST transforms
-
-Goal: close the first semantic gap with `sympy_parser.py`.
-
-- implicit multiplication
-- implicit application
-- factorial notation
-- auto symbol insertion
-- repeated-decimal / rationalization passes
-- `=` / `==` normalization
-
-These should be implemented as typed passes over tokens / AST, not by copying
-SymPy's Python token-hack pipeline.
-
-### Stage 3 — more exact compatibility
-
-- `evaluate=False` behavior
-- better raw / non-canonical construction paths
-- more complete symbolic name resolution
-- error messages and source spans that survive lowering
-
-### Stage 4 — parity hardening
-
-- `*_port_test.mbt` coverage grouped by feature family
-- black-box failure tests
-- explicit documented list of still-unsupported constructs
-
-### Stage 5 — LaTeX
-
-This should be a separate frontend built on top of the typed expression core.
-Do not block core parser work on LaTeX completeness.
-
-### Stage 6 — foreign syntax adapters
-
-- Mathematica
-- Maxima
-- C
-- Fortran
-
-These should also target the same lowering boundary instead of each inventing
-its own partial expression builder.
-
-## Stage 0/1 scope committed now
-
-The implementation work starting now covers:
-
-- a new `symparse` package
-- a typed lexer
-- a typed AST
-- a precedence parser
-- lowering to current `symcore.Expr`
-- targeted black-box tests
-- first oracle parity against SymPy `parse_expr`
-
-This first cut is expected to cover the core arithmetic grammar only. It is
-not yet the complete `sympy.parsing` port.
+Runtime tests cover lexer, AST parser, lowering, parse options, implicit syntax,
+and regression cases. Oracle tests in `src/sympy/parsing` compare supported
+front-door behavior with SymPy.

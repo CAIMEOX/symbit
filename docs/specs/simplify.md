@@ -1,62 +1,62 @@
-# Symbit Simplify — ADT + Pattern Matching
+# Symbit Simplify — Current Design
 
-Goal: port `sympy.simplify` in staged, oracle-verified increments with a
-MoonBit-first functional architecture centered on ADT-driven rewrite passes.
+`symsimplify` provides the general simplification pipeline plus targeted
+rewrite families for rational, radical, trigonometric, combinatorial,
+hypergeometric, logarithmic, CSE, and traversal workflows.
 
-## Package layout
+## Package Layout
 
-- `symsimplify`
-  - `SimplifyPattern` / `SimplifyPlan` ADTs.
-  - bottom-up rewrite engine driven by pattern matching.
-  - public APIs:
-    - core: `simplify`, `powsimp`, `trigsimp`, `signsimp`
-    - rational: `radsimp`, `ratsimp`, `ratsimpmodprime`, `sqrtdenest`,
-      `fraction`, `numer`, `denom`, `collect`, `rcollect`, `collect_const`
-    - special: `combsimp`, `hyperexpand`, `powdenest`, `exptrigsimp`,
-      `gammasimp`, `logcombine`, `separatevars`, `posify`, `hypersimp`,
-      `hypersimilar`, `fu`
-    - cse/traversal: `cse`, `sub_pre`, `sub_post`, `EPath`, `epath`,
-      `epath_apply`, `use`
-    - compat: `besselsimp`, `kroneckersimp`, `nsimplify`
-- `sympy/simplify`
-  - oracle wrappers for SymPy simplify family.
-  - returns `srepr` strings for stable parity checks.
+- `SimplifyPattern` and `SimplifyPlan` describe named rewrite families.
+- `simplify` runs a bounded bottom-up fixed-point pipeline.
+- Targeted front doors include:
+  - core: `simplify`, `powsimp`, `trigsimp`, `signsimp`;
+  - rational/radical: `radsimp`, `ratsimp`, `ratsimpmodprime`,
+    `sqrtdenest`, `fraction`, `numer`, `denom`, `collect`, `rcollect`,
+    `collect_const`;
+  - special: `combsimp`, `hyperexpand`, `powdenest`, `exptrigsimp`,
+    `gammasimp`, `logcombine`, `separatevars`, `posify`, `hypersimp`,
+    `hypersimilar`, and the Fu rule family;
+  - CSE/traversal: `cse`, `sub_pre`, `sub_post`, `EPath`, `epath`,
+    `epath_apply`, `use`;
+  - compatibility helpers: `besselsimp`, `kroneckersimp`, `nsimplify`.
+- Oracle package `src/sympy/simplify` compares supported behavior with SymPy.
 
-## Functional rewrite model
+## Rewrite Model
 
-- Rules are declared as ADT variants:
-  - `FoldConstants`
-  - `AddLikeTerms`
-  - `MulLikeBases`
-  - `PowDenest`
-  - `TrigPythagorean`
-  - `FunctionIdentities`
-- Execution is pure and compositional:
-  - recurse bottom-up,
-  - apply one local rule with `match`,
-  - chain rule list,
-  - iterate to fixed point (bounded passes).
+Simplification is pure and compositional:
 
-## Implemented rewrites (current)
+- recursively simplify children;
+- apply local rewrite patterns;
+- compare candidates by structural complexity;
+- iterate to a bounded fixed point;
+- preserve symbolic structure when a targeted rule does not apply.
 
-- Arithmetic:
-  - combine like-add terms (`x + x -> 2*x`, `x + 2*x -> 3*x`)
-  - combine multiplicative powers (`x*x*y -> x^2*y`, `x^a*x^b -> x^(a+b)` for numeric exponents)
-  - denest numeric power towers (`(x^2)^3 -> x^6`)
-  - evaluate numeric powers with integer exponent (`2^3 -> 8`).
-- Function identities:
-  - `sin(0)`, `cos(0)`, `tan(0)`, `exp(0)`, `log(1)`, `log(E)`, `sqrt(0/1)`, `Abs(number)`.
-- Trigonometric:
-  - `sin(x)^2 + cos(x)^2 -> 1`.
+The broad `simplify` pass composes sign normalization, local pattern rewrites,
+simple expansion/factoring, rational structure cleanup, power simplification,
+radical denesting, trigonometric/exponential rewrites, logarithmic combination,
+special-function simplifiers, and final cleanup.
 
-## Oracle parity
+## Implemented Rewrite Families
 
-- Compare `srepr` of:
-  - MoonBit output converted via Python bridge,
-  - direct SymPy call output (`simplify`, `powsimp`, `trigsimp`, `signsimp`).
-- Current parity set also includes:
-  - `radsimp/ratsimp/sqrtdenest/combsimp/hyperexpand`
-  - `powdenest/exptrigsimp/gammasimp/logcombine`
-  - `separatevars/hypersimp/hypersimilar/fu`
-  - `besselsimp/kroneckersimp/nsimplify/ratsimpmodprime`
-  - `cse_opts.sub_pre/sub_post`
+- Exact arithmetic folding and numeric power evaluation.
+- Additive term collection and multiplicative power merging.
+- Simple factor/collect helpers.
+- Rational numerator/denominator extraction and cancellation.
+- Radical/rational denominator simplification.
+- Trigonometric identities and the Fu `TR*`-style helper family.
+- Exponential/trigonometric, logarithmic, gamma, combinatorial,
+  hypergeometric, Bessel, and Kronecker-delta helpers.
+- CSE extraction/reconstruction and traversal helpers.
+
+## Current Limits
+
+The package is heuristic and bounded. Difficult expressions can remain only
+partially simplified, and many specialized SymPy internals are represented by
+conservative front doors rather than full one-for-one ports.
+
+## Oracle Parity
+
+Parity tests compare selected outputs by converting MoonBit expressions through
+the test-only Python bridge and comparing against direct SymPy calls. The parity
+surface includes broad simplify calls, targeted simplify families, CSE helpers,
+and Fu-style trigonometric rewrites.

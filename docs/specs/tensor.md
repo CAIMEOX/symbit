@@ -1,62 +1,54 @@
-# Tensor migration spec (symtensor)
+# Symbit Tensor — Current Design
 
-## Scope
+`symtensor` implements the tensor-oriented runtime packages corresponding to
+the indexed, array, and tensor-expression portions of SymPy's tensor stack.
 
-Port SymPy `sympy/tensor` into MoonBit `symtensor` in staged layers:
+## Package Layout
 
-- indexed: Idx / IndexedBase / Indexed + index analysis
-- array: NDimArray / Dense / Sparse + tensor ops
-- tensor: abstract index notation types (TensorIndexType / TensorIndex / TensorHead / TensorSymmetry) and tensor expressions
-- canonicalization: hook tensor_can from symcombinatorics
-- operators: partial derivatives + array expressions (minimal parity)
+- `symtensor`
+  - shared tensor-oriented types and helpers.
+- `symtensor/indexed`
+  - `Idx`, `IndexedBase`, `Indexed`, index analysis, and printing.
+- `symtensor/array`
+  - dense/sparse N-dimensional arrays, array construction, indexing, and array
+    operations.
+- `symtensor/tensor`
+  - tensor index types, tensor indices, tensor heads, tensor expressions,
+    canonicalization, operators, and LaTeX/string rendering.
 
-## Data structures
+## Indexed Layer
 
-### Indexed layer
+- `Idx` stores a name and optional upper bound/dimension.
+- `IndexedBase` stores a name and optional shape.
+- `Indexed` stores a base and non-empty index list.
+- When a shape is present, shape length must match the index count for indexed
+  values that rely on shape-aware operations.
 
-- `Idx`: name + optional upper bound (dimension). Keep `lower` implicit as 0.
-- `IndexedBase`: name + optional shape (array of Expr). Optional label `assumptions` TBD.
-- `Indexed`: base + indices (array of Expr or Idx).
+## Array Layer
 
-Invariants:
-- `Indexed` must have at least one index.
-- `IndexedBase` shape length matches indices length when both present.
+- `NDimArray` supports dense and sparse representations.
+- Dense arrays store shape and row-major data.
+- Sparse arrays store shape and keyed non-zero data.
+- Constructors validate shape/data consistency and bounds where applicable.
 
-### Array layer
+## Tensor Layer
 
-- `NDimArray`: sum type with `Dense` and `Sparse` variants.
-- Dense stores `shape : Array[Int]`, `data : Array[Expr]` (row-major).
-- Sparse stores `shape : Array[Int]`, `data : Map[String, Expr]` with index key `"i,j,k"`.
+- `TensorIndexType` stores the index-family name, optional dimension, and metric
+  symmetry metadata.
+- `TensorIndex` stores name, index type, and variance.
+- `TensorHead` stores name, index types, and symmetry data.
+- `TensorExpr` represents tensor atoms, tensor additions/products, scalar
+  expressions, and partial derivatives.
+- Tensor additions/products are normalized by the package front doors.
 
-Invariants:
-- `data.length == product(shape)` for dense.
-- Sparse keys must be within bounds.
+## Printing And Canonicalization
 
-### Tensor layer
+The tensor packages provide stable `to_string`, debug, and LaTeX surfaces.
+Canonicalization integrates with `symcombinatorics` tensor canonicalization
+where the supported expression shape permits it.
 
-- `TensorIndexType` : name + dim (Expr?) + metric symmetry info.
-- `TensorIndex` : name + type + variance (up/down).
-- `TensorHead` : name + index types + symmetry object.
-- `TensorExpr` : sum type with `Tensor`, `TensAdd`, `TensMul`, `Scalar`, `PartialDerivative`.
+## Testing And Parity
 
-Invariants:
-- Tensor indices length matches head rank.
-- `TensAdd` and `TensMul` are flattened, zero/one removed.
-
-## Printers
-
-- `symtensor.print` should provide stable `to_string` and `debug_repr` for tensor types.
-- String form follows SymPy pretty string when possible (e.g., `A[i, j]`, `TensorHead(i, j)` style).
-
-## Oracle parity
-
-- Use `sympy/tensor` oracle to compare string / srepr.
-- Skip parity for constructs with non-determinism (e.g., Dummy indices) and document in tests.
-
-## Tests
-
-- Stage 1: indexed construction + get_indices/contraction structure.
-- Stage 2: array ops on small integer arrays + compare with SymPy array printing.
-- Stage 3: tensor index bookkeeping + basic add/mul.
-- Stage 4: tensor_can canonicalization parity.
-- Stage 5: operators / expression layer parity.
+Oracle tests under `src/sympy/tensor` compare indexed, array, tensor,
+operator, expression, tensor-canonicalization, and LaTeX behavior for supported
+cases. Runtime tests cover construction invariants and deterministic rendering.

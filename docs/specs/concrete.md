@@ -1,73 +1,54 @@
-# Symbit Concrete — Draft Design (Stages 0–5)
+# Symbit Concrete — Current Design
 
-Goal: port SymPy `sympy.concrete` features into MoonBit with a small, explicit
-API that still mirrors SymPy behavior for sums/products, delta simplification,
-and sequence guessing. Prefer determinism and canonicalization; defer heavy
-performance tuning.
+`symconcrete` implements concrete mathematics front doors for sums, products,
+integer limits, Kronecker-delta simplification, Gosper-style helpers, and
+sequence guessing. It mirrors SymPy-facing behavior where the current runtime
+surface supports it, while keeping MoonBit data structures explicit.
 
 ## Scope
 
-- Core: `ExprWithLimits` + `ExprWithIntLimits` base types.
-- Summations: `Sum`, `summation`, evaluation helpers (finite, polynomial,
-  geometric, telescoping, Gosper-style rational).
-- Products: `Product`, `product`, finite evaluation, simple closed forms.
-- Delta: `deltasummation`, `deltaproduct` for `KroneckerDelta`-driven rewrites.
-- Guessing: `guess`, `find_simple_recurrence`, `guess_generating_function`.
+- `ExprWithLimits` and `ExprWithIntLimits` base types.
+- `Sum`, `summation`, finite evaluation, polynomial/geometric/telescoping
+  cases, and Gosper-style rational helpers.
+- `Product`, `product`, finite evaluation, and simple closed forms.
+- `deltasummation` and `deltaproduct` for `KroneckerDelta`-driven rewrites.
+- `guess`, `find_simple_recurrence`, `guess_generating_function`, and related
+  recurrence helpers.
 
-## Data model
+## Data Model
 
-- `enum LimitSpec`:
-  - `Var(symbol)`
-  - `Lower(symbol, lower)`
-  - `Range(symbol, lower, upper)`
-  - invariant: `symbol` is a `Symbol` expression
-- `struct ExprWithLimits`:
-  - `expr : Expr`
-  - `limits : Array[LimitSpec]`
-- `struct ExprWithIntLimits`:
-  - `expr : Expr`
-  - `limits : Array[LimitSpec]`
+- `LimitSpec`
+  - variable-only, lower-bound, and finite-range forms;
+  - variables are represented as `symcore.Expr` symbols.
+- `ExprWithLimits`
+  - expression plus general symbolic limits.
+- `ExprWithIntLimits`
+  - expression plus integer-oriented limits.
+- `Sum` and `Product`
+  - wrappers that provide `doit`, expression conversion, reordering, reverse
+    ordering, and index-change helpers.
 
-`Sum` and `Product` wrap the above and provide `doit`, `as_expr`, and
-manipulation helpers (reorder, reverse_order, change_index).
+## Canonical Form
 
-## Canonical form
+- Limits are normalized into stable internal forms.
+- Conversion to symbolic expressions uses `Sum` / `Product` function nodes with
+  tuple-encoded limits.
+- Evaluation keeps exact arithmetic when bounds and terms are exact.
+- Unsupported or intentionally unevaluated cases remain symbolic instead of
+  falling back to Python.
 
-- Limits are normalized to `Var`/`Lower`/`Range` order, with symbols retained.
-- Conversion to `Expr` uses `Function("Sum"| "Product")` with `Tuple`-encoded
-  limits: `Sum(expr, Tuple(i, a, b), Tuple(j, c, d))`.
+## Evaluation Rules
 
-## Evaluation rules (first pass)
+- Finite integer bounds can be evaluated by exact loops.
+- Polynomial terms use closed-form summation rules where implemented.
+- Geometric and telescoping patterns are detected by shape.
+- Products support finite evaluation and simple product identities.
+- Delta simplification reduces exact in-range/out-of-range cases.
+- Sequence guessing uses rational/integer sequence algorithms and returns the
+  simplest supported recurrence or generating-function candidate.
 
-- Finite integer bounds: evaluate by loop when feasible.
-- Polynomial in the summation variable: use closed-form formulas (Faulhaber).
-- Geometric series: detect `a*r**k` and evaluate.
-- Telescoping: detect `f(k+1) - f(k)` or ratio for products.
-- Fallback: return symbolic `Sum`/`Product`.
+## Testing And Parity
 
-## Delta simplification
-
-- `Sum(KroneckerDelta(i, k), (i, a, b))` reduces to `1` if `k` in range, else `0`
-  when bounds are integer literals.
-- Products with delta use similar checks (zeroing when delta is zero).
-
-## Guessing
-
-- `find_simple_recurrence` via Berlekamp–Massey (integer/rational sequences).
-- `guess_generating_function` uses rational interpolation on coefficients.
-- `guess` selects simplest candidate based on polynomial degree + recurrence
-  order.
-
-## Package layout
-
-- `symconcrete/expr_with_limits.mbt`
-- `symconcrete/summations.mbt`
-- `symconcrete/products.mbt`
-- `symconcrete/delta.mbt`
-- `symconcrete/guess.mbt`
-- `symconcrete/utils.mbt`
-
-## Tests
-
-- Snapshot parity with SymPy `srepr` and string normalization.
-- Separate port tests for sums/products, delta, and guess algorithms.
+Package tests cover data-model invariants, exact evaluation, delta behavior, and
+guessing helpers. Oracle tests under `src/sympy/concrete` compare supported
+front doors with SymPy.

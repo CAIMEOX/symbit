@@ -1,106 +1,91 @@
-# Symbit Core & Numbers — Draft Spec
+# Symbit Core & Numbers — Current Design
 
-This file captures the first iteration of the core object model and numeric
-layer for the SymPy → MoonBit rewrite. It follows the AGENTS milestones:
-L0 (numbers/domains) and the lower half of L1 (Expr kernel + canonicalization).
+This file describes the current core object model and numeric layer used by
+the MoonBit implementation.
 
-## Package layout (module `CAIMEOX/symbit`)
+## Package Layout
 
-- `symnum` — `BigInt` helpers + `BigRational` (normalized, denominator > 0).
-- `symcore` — expression AST, constructors with canonicalization, traversal
-  helpers.
-- `symprint` — stable printers (`debug_repr`, minimal infix string).
-- Root package (`symbit`) re-exports convenience constructors as a prelude.
+- `symnum` — exact rationals, MP-compatible real/complex numeric helpers,
+  precision helpers, and interval-context support.
+- `symcore` — the symbolic expression tree, canonical and raw constructors,
+  traversal, substitution, matching, ordering, singleton handling, and `evalf`.
+- `symprint` — deterministic string and LaTeX-oriented printers.
+- Root package `CAIMEOX/symbit` — the small facade for common expression,
+  matrix, simplification, printing, and CSE front doors.
 
-## Numeric layer (symnum)
+## Numeric Layer
 
-- `BigRational { num: BigInt, den: BigInt }`
-  - invariants: `den != 0`, `den > 0`, `gcd(|num|, den) == 1`.
-  - normalization: flip sign to numerator if `den < 0`; divide by `gcd`.
-  - operations: `add`, `mul`, `neg`, `compare`, `is_zero`, `one`, `zero`,
-    `from_int`, `from_bigint`.
-  - errors: `RationalError::ZeroDenominator` on invalid construction.
-- helpers: `gcd_bigint(a, b)` using Euclidean algorithm on absolute values.
-- floating backend bridge:
-  - `symnum` now exposes an mpmath-style compatibility layer over
-    `CAIMEOX/moon_floating` (`Mpf`, `Mpc`, precision helpers, interval context,
-    raw ops, high-level numeric wrappers).
-  - this is the intended backend for future `Float`/`evalf` work; exact
-    `BigRational` remains the canonical exact-number layer.
+- `BigRational` remains the exact numeric atom used throughout the symbolic
+  stack.
+  - denominator is non-zero and positive;
+  - numerator and denominator are normalized by gcd;
+  - arithmetic preserves exactness;
+  - invalid construction raises `RationalError`.
+- The MP compatibility layer in `symnum` wraps `CAIMEOX/moon_floating` and
+  provides `Mpf`, `Mpc`, precision conversion, interval context, raw `mpf_*` /
+  `mpc_*` operations, and higher-level helpers used by `evalf`.
 
-## Floating sketch (`symcore.Float`)
+## Floating Values
 
-- `symcore.Float` is intentionally **not** an `Expr` variant yet.
-  - Reason: adding a new `Expr` constructor today would require widening
-    exhaustive matches across the entire repository.
-  - Instead, the first step is a dedicated core wrapper around `symnum.Mpf`
-    with tracked binary precision.
-- current surface:
-  - constructors from string / `Double` / exact rational / `BigRational`
-  - `to_mpf`, `to_rational`, `to_double`, `precision`, `is_finite`
-  - stable `Show`/`format` using the `symnum` mpmath-compatible printer
-- next step:
-  - once enough downstream packages are ready, `Expr::Float` can be introduced
-    in a controlled repo-wide refactor instead of a partial break.
+`symcore.Expr` now has floating leaves:
 
-## Expr kernel (symcore)
+- `Expr::Float(Float)` for real MP-backed floating values.
+- `Expr::ComplexFloat(ComplexFloat)` for complex MP-backed floating values.
 
-Chosen route: **recursive ADT** for fast iteration; arena/hash-consing can be
-added later without changing public shape.
+`Float` tracks binary precision and can be built from strings, `Double`, exact
+rationals, or `BigRational`. `evalf` can therefore return symbolic expressions
+that still carry precision information instead of collapsing to plain MoonBit
+`Double` values.
 
-### Types
+## Expression Kernel
 
-- `enum Expr`
-  - `Number(BigRational)` — exact numeric atoms.
-  - `Symbol(String)` — atomic symbols (no assumptions yet).
-  - `Add(Array[Expr])`, `Mul(Array[Expr])` — variadic, canonicalized on build.
-  - `Pow(base~, exp~)` — binary, normalized for trivial exponents.
-  - `Function(name~, args~ : Array[Expr])` — function application node.
+Symbit uses a recursive algebraic data type for expression structure. The main
+variants currently include:
 
-### Canonicalization invariants
+- numeric and symbolic atoms: `Number`, `Float`, `ComplexFloat`,
+  `NumberSymbol`, `Boolean`, `Symbol`, `Dummy`;
+- pattern/callable atoms: `Wild`, `WildFunction`, `FunctionHead`,
+  `UndefinedFunction`, `IdentityFunction`;
+- structural nodes: `Apply`, `Add`, `Mul`, `Pow`, `Mod`, `Tuple`, `Dict`;
+- semantic nodes: `Relational`, `Derivative`, `Subs`, `Lambda`;
+- legacy `Function(name, args)` nodes, normalized by `normalize_legacy_expr`
+  into the newer callable-head representation where applicable.
 
-- `Add`:
-  - flatten nested `Add`.
-  - merge numeric terms into a single `Number`; drop zeros.
-  - sort args by total order (variant order + lexicographic structure).
-  - collapse to `0` when empty, or the sole child when length == 1.
-- `Mul`:
-  - flatten nested `Mul`.
-  - zero annihilator: any zero factor → `0`.
-  - drop multiplicative identity `1`.
-  - merge numeric terms into one `Number`.
-  - sort args by same total order; collapse to `1`/single child accordingly.
-- `Pow`:
-  - `x^1 = x`, `x^0 = 1` (with a note: 0^0 currently treated as 1; revisit).
-- `Symbol` names are opaque strings; comparison uses string order.
+This ADT is the shared substrate for simplification, parsing, assumptions,
+polys, matrices, solvers, physics, and oracle conversion.
 
-### Ordering / equality / hashing
+## Canonical And Raw Construction
 
-- Total order: `Number < Symbol < Pow < Mul < Add < Function`.
-- Structural comparison: lexicographic on children after variant tag;
-  numbers compare via `BigRational::compare`.
-- `Eq`/`Hash` rely on normalized representation, so structural equality matches
-  mathematical equality under these invariants.
+Canonical constructors are used by ordinary front doors:
 
-### Traversal utilities
+- `add` flattens nested additions, merges exact numeric terms, removes zeros,
+  sorts terms, and collapses empty/singleton results.
+- `mul` flattens nested products, handles the zero annihilator, merges exact
+  numeric factors, removes ones, sorts factors, and collapses empty/singleton
+  results.
+- `pow` simplifies trivial powers, evaluates exact numeric integer powers, and
+  keeps non-trivial powers symbolic.
 
-- `children(e)` returns `ArrayView[Expr]` (empty for atoms).
-- `map_children(e, f)` reconstructs with canonical builders.
-- `subst(e, env : Map[String, Expr])` substitutes symbols (re-normalizes).
+Raw constructors such as `raw_add`, `raw_mul`, `raw_pow`, and `raw_apply` are
+available for parser, strategy, and parity paths that need to preserve shape,
+argument order, or `evaluate=false` behavior.
 
-## Printing (symprint)
+## Ordering, Equality, And Hashing
 
-- `debug_repr(e)` — S-expression style, deterministic and aligned with sort
-  order; primary target for snapshot tests.
-- `to_string(e)` — minimal infix printer with parentheses for precedence
-  (Add/Mul/Pow).
+Ordering and hashing operate over normalized expression structure. This keeps
+structural equality aligned with the canonicalization rules while still allowing
+raw expression paths when a caller explicitly needs them.
 
-## Testing plan (milestone 0/1 scope)
+## Traversal And Substitution
 
-- Numeric normalization tests: sign handling, gcd reduction, zero denominator
-  error, arithmetic closure.
-- Core canonicalization tests: different construction paths for Add/Mul/Pow
-  yield identical `debug_repr`.
-- Ordering tests: `compare_expr` sorts mixed numbers/symbols/functions
-  deterministically.
-- Printing snapshots via `debug_repr` for stability.
+`children`, `map_children`, substitution helpers, match helpers, and expression
+path utilities work over normalized expression views. Higher-level packages
+should use these front doors rather than inspecting every variant manually unless
+they own a specific semantic node.
+
+## Testing And Parity
+
+Core tests cover numeric normalization, constructor canonicalization,
+`evaluate=false` paths, singleton behavior, traversal, matching, ordering,
+floating conversion, and `evalf`. Oracle tests under `src/sympy/core` compare
+selected observable behavior with live SymPy through the test-only bridge.
