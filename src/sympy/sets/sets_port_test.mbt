@@ -108,4 +108,8 @@ test "symsets contains parity" {
   let res2 = contains(set, @symcore.int(2))
   let sympy2 = sympy_contains_str(set, @symcore.int(2))
   assert_eq(setbool_str(res2), sympy2)
+  let complexes = Set::Complexes
+  let res3 = contains(complexes, @symcore.int(2))
+  let sympy3 = sympy_contains_str(complexes, @symcore.int(2))
+  assert_eq(setbool_str(res3), sympy3)
 }

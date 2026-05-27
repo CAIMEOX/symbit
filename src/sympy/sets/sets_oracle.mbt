@@ -91,6 +91,7 @@ fn set_to_sympy(set : @symsets.Set) -> @py.PyObject raise {
     @symsets.Set::Integers => sympy_const("Integers")
     @symsets.Set::Rationals => sympy_const("Rationals")
     @symsets.Set::Reals => sympy_const("Reals")
+    @symsets.Set::Complexes => sympy_const("Complexes")
     @symsets.Set::FiniteSet(items) => {
       let args : Array[OracleArg] = Array::new()
       for item in items {
