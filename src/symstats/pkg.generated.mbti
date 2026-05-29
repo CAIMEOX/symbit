@@ -4,6 +4,8 @@ package "CAIMEOX/symbit/symstats"
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symsets",
+  "CAIMEOX/symbit/symsolvers",
 }
 
 // Values
@@ -121,6 +123,12 @@ pub fn discrete_uniform(String, Array[@symcore.Expr]) -> RandomVar
 
 pub fn discrete_variance(RandomVar) -> @symcore.Expr?
 
+pub fn do_sample_numpy(RandomVar, n? : Int, seed? : Int?) -> Array[@symcore.Expr]?
+
+pub fn do_sample_pymc(RandomVar, n? : Int, seed? : Int?) -> Array[@symcore.Expr]?
+
+pub fn do_sample_scipy(RandomVar, n? : Int, seed? : Int?) -> Array[@symcore.Expr]?
+
 pub fn e(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
 
 pub fn entropy(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
@@ -235,6 +243,8 @@ pub fn independent(RandomVar, RandomVar) -> Bool
 
 pub fn invert_relop(RelOp) -> RelOp
 
+pub fn is_random(@symcore.Expr, rvs? : Array[RandomVar]) -> Bool
+
 pub fn joint_components(RandomVar) -> Array[RandomVar]?
 
 pub fn joint_eigen_distribution(String, params? : Array[@symcore.Expr]) -> RandomVar
@@ -341,6 +351,8 @@ pub fn probability(Event, rv? : RandomVar) -> @symcore.Expr
 
 pub fn probability_expr(Event) -> @symcore.Expr
 
+pub fn probability_space_independent(RandomVar, RandomVar) -> TriBool
+
 pub fn process_cdf_at(RandomVar, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
 pub fn process_increment_mean(RandomVar, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
@@ -361,6 +373,8 @@ pub fn process_variance_at(RandomVar, @symcore.Expr) -> @symcore.Expr?
 
 pub fn pspace(@symcore.Expr) -> @symcore.Expr
 
+pub fn pspace_independent(RandomVar, RandomVar) -> TriBool
+
 pub fn quadratic_u(String, params? : Array[@symcore.Expr]) -> RandomVar
 
 pub fn quantile(@symcore.Expr, @symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
@@ -371,15 +385,19 @@ pub fn raised_cosine(String, params? : Array[@symcore.Expr]) -> RandomVar
 
 pub fn random_symbol(RandomVar) -> @symcore.Expr
 
-pub fn random_symbols(@symcore.Expr) -> Array[String]
+pub fn random_symbols(@symcore.Expr, rvs? : Array[RandomVar]) -> Array[String]
 
 pub fn random_var(String, RVKind) -> RandomVar
+
+pub fn random_var_symbol_swap(Array[RandomVar], Array[RandomVar]) -> Map[String, String]
 
 pub fn rat_from_int(Int) -> @symnum.BigRational
 
 pub fn rayleigh(String, params? : Array[@symcore.Expr]) -> RandomVar
 
 pub fn reciprocal(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn reduce_rational_inequalities_wrap(Event, @symcore.Expr) -> @symsets.Set raise @symsolvers.SolverError
 
 pub fn rel(RelOp, @symcore.Expr, @symcore.Expr) -> Event
 
@@ -389,13 +407,31 @@ pub fn rename_random_var(RandomVar, String) -> RandomVar
 
 pub fn robust_soliton(String, params? : Array[@symcore.Expr]) -> RandomVar
 
-pub fn sample(@symcore.Expr) -> @symcore.Expr
+pub fn rs_swap(Array[RandomVar], Array[RandomVar]) -> Map[String, String]
 
-pub fn sample_iter(@symcore.Expr, n? : Int) -> Array[@symcore.Expr]
+pub fn rv(String, String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn rv_subs(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn sample(@symcore.Expr, rvs? : Array[RandomVar], seed? : Int?) -> @symcore.Expr
+
+pub fn sample_expr(@symcore.Expr, rvs? : Array[RandomVar], seed? : Int?) -> @symcore.Expr?
+
+pub fn sample_iter(@symcore.Expr, n? : Int, rvs? : Array[RandomVar], seed? : Int?) -> Array[@symcore.Expr]
+
+pub fn sample_iter_lambdify(@symcore.Expr, n? : Int, rvs? : Array[RandomVar], seed? : Int?) -> Array[@symcore.Expr]
+
+pub fn sample_iter_subs(@symcore.Expr, n? : Int, rvs? : Array[RandomVar], seed? : Int?) -> Array[@symcore.Expr]
+
+pub fn sample_random_var(RandomVar, seed? : Int?) -> @symcore.Expr?
 
 pub fn sample_stochastic_process(RandomVar, @symcore.Expr, @symcore.Expr, n? : Int) -> @symcore.Expr
 
-pub fn sampling_density(@symcore.Expr) -> @symcore.Expr
+pub fn sampling_density(@symcore.Expr, rvs? : Array[RandomVar], numsamples? : Int, seed? : Int?) -> @symcore.Expr
+
+pub fn sampling_e(@symcore.Expr, rvs? : Array[RandomVar], numsamples? : Int, seed? : Int?) -> @symcore.Expr
+
+pub fn sampling_p(Event, rvs? : Array[RandomVar], numsamples? : Int, seed? : Int?) -> @symcore.Expr
 
 pub fn shifted_gompertz(String, params? : Array[@symcore.Expr]) -> RandomVar
 
@@ -414,6 +450,8 @@ pub fn stochastic_state_space_of(@symcore.Expr) -> @symcore.Expr
 pub fn student_t(String, params? : Array[@symcore.Expr]) -> RandomVar
 
 pub fn substitute_symbol(@symcore.Expr, String, @symcore.Expr) -> @symcore.Expr
+
+pub fn sumsets(Array[Array[@symcore.Expr]]) -> Array[@symcore.Expr]
 
 pub fn symbolic_kind_family(SymbolicKind) -> SymbolicFamily
 
@@ -460,6 +498,8 @@ pub fn wald(String, params? : Array[@symcore.Expr]) -> RandomVar
 pub fn weibull(String, params? : Array[@symcore.Expr]) -> RandomVar
 
 pub fn where_(Event) -> @symcore.Expr
+
+pub fn where_set(Event, RandomVar) -> @symsets.Set? raise @symsolvers.SolverError
 
 pub fn wiener_process(String, time_symbol? : String) -> RandomVar
 

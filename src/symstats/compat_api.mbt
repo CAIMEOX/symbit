@@ -31,7 +31,60 @@ pub fn h(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.Expr {
 
 ///|
 pub fn given(expr : @symcore.Expr, condition : Event) -> @symcore.Expr {
-  @symcore.function("given", [expr, event_to_expr(condition)])
+  match condition {
+    Event::Bool(true) => expr
+    Event::Bool(false) =>
+      @symcore.function("given", [expr, event_to_expr(condition)])
+    Event::Rel(op~, lhs~, rhs~) =>
+      match (op, lhs, rhs) {
+        (RelOp::Eq, @symcore.Expr::Symbol(name), value) =>
+          substitute_symbol(expr, name, value)
+        (RelOp::Eq, value, @symcore.Expr::Symbol(name)) =>
+          substitute_symbol(expr, name, value)
+        _ => {
+          let expr_names = random_symbols(expr)
+          let cond_names = event_symbols(condition)
+          let mut overlaps = false
+          for left in expr_names {
+            for right in cond_names {
+              if left == right {
+                overlaps = true
+                break
+              }
+            }
+            if overlaps {
+              break
+            }
+          }
+          if overlaps {
+            @symcore.function("given", [expr, event_to_expr(condition)])
+          } else {
+            expr
+          }
+        }
+      }
+    _ => {
+      let expr_names = random_symbols(expr)
+      let cond_names = event_symbols(condition)
+      let mut overlaps = false
+      for left in expr_names {
+        for right in cond_names {
+          if left == right {
+            overlaps = true
+            break
+          }
+        }
+        if overlaps {
+          break
+        }
+      }
+      if overlaps {
+        @symcore.function("given", [expr, event_to_expr(condition)])
+      } else {
+        expr
+      }
+    }
+  }
 }
 
 ///|
@@ -40,16 +93,296 @@ pub fn where_(condition : Event) -> @symcore.Expr {
 }
 
 ///|
-pub fn sample(expr : @symcore.Expr) -> @symcore.Expr {
-  @symcore.function("sample", [expr])
+fn stats_positive_infinity() -> @symcore.Expr {
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
 }
 
 ///|
-pub fn sample_iter(expr : @symcore.Expr, n? : Int = 1) -> Array[@symcore.Expr] {
+fn stats_int_range_set(lo : Int, hi : Int) -> @symsets.Set {
+  if hi < lo {
+    return @symsets.finite_set([])
+  }
+  let values : Array[@symcore.Expr] = []
+  for i in lo..<=hi {
+    values.push(@symcore.int(i))
+  }
+  @symsets.finite_set(values)
+}
+
+///|
+fn stats_symbolic_support(
+  kind : SymbolicKind,
+  params : Array[@symcore.Expr],
+) -> @symsets.Set {
+  match kind {
+    SymbolicKind::Continuous(tag) =>
+      match tag {
+        ContinuousTag::Arcsin
+        | ContinuousTag::Beta
+        | ContinuousTag::Kumaraswamy =>
+          @symsets.interval(@symcore.int(0), @symcore.int(1))
+        ContinuousTag::BetaPrime
+        | ContinuousTag::Chi
+        | ContinuousTag::ChiSquared
+        | ContinuousTag::Erlang
+        | ContinuousTag::Exponential
+        | ContinuousTag::FDistribution
+        | ContinuousTag::Frechet
+        | ContinuousTag::GammaInverse
+        | ContinuousTag::GaussianInverse
+        | ContinuousTag::LogLogistic
+        | ContinuousTag::LogNormal
+        | ContinuousTag::Lomax
+        | ContinuousTag::Maxwell
+        | ContinuousTag::Nakagami
+        | ContinuousTag::Rayleigh
+        | ContinuousTag::Weibull =>
+          @symsets.interval(@symcore.int(0), stats_positive_infinity())
+        ContinuousTag::Pareto if params.length() == 2 =>
+          @symsets.interval(params[0], stats_positive_infinity())
+        ContinuousTag::PowerFunction if params.length() == 3 =>
+          @symsets.interval(params[1], params[2])
+        ContinuousTag::Reciprocal if params.length() == 2 =>
+          @symsets.interval(params[0], params[1])
+        ContinuousTag::Triangular if params.length() == 3 =>
+          @symsets.interval(params[0], params[1])
+        ContinuousTag::Trapezoidal if params.length() == 4 =>
+          @symsets.interval(params[0], params[3])
+        ContinuousTag::Uniform if params.length() == 2 =>
+          @symsets.interval(params[0], params[1])
+        ContinuousTag::WignerSemicircle if params.length() == 1 =>
+          @symsets.interval(
+            @symcore.mul([@symcore.int(-1), params[0]]),
+            params[0],
+          )
+        _ => @symsets.reals()
+      }
+    SymbolicKind::Discrete(tag) =>
+      match tag {
+        DiscreteTag::BetaBinomial if params.length() == 3 =>
+          match expr_as_int(params[0]) {
+            Some(n) => stats_int_range_set(0, n)
+            None =>
+              @symsets.intersection([
+                @symsets.naturals0(),
+                @symsets.interval(@symcore.int(0), params[0]),
+              ])
+          }
+        DiscreteTag::FiniteDistributionHandmade =>
+          match symbolic_finite_handmade_pairs(params) {
+            Some(pairs) => @symsets.finite_set(pairs.map(pair => pair.0))
+            None => @symsets.reals()
+          }
+        DiscreteTag::FlorySchulz
+        | DiscreteTag::IdealSoliton
+        | DiscreteTag::Logarithmic
+        | DiscreteTag::RobustSoliton
+        | DiscreteTag::YuleSimon
+        | DiscreteTag::Zeta => @symsets.naturals()
+        DiscreteTag::Hermite
+        | DiscreteTag::Multinomial
+        | DiscreteTag::NegativeMultinomial => @symsets.naturals0()
+        DiscreteTag::Hypergeometric if params.length() == 3 =>
+          match
+            (
+              expr_as_int(params[0]),
+              expr_as_int(params[1]),
+              expr_as_int(params[2]),
+            ) {
+            (Some(population), Some(successes), Some(draws)) => {
+              let lo = if 0 > draws + successes - population {
+                0
+              } else {
+                draws + successes - population
+              }
+              let hi = if draws < successes { draws } else { successes }
+              stats_int_range_set(lo, hi)
+            }
+            _ => @symsets.naturals0()
+          }
+        DiscreteTag::Skellam => @symsets.integers()
+        _ => @symsets.reals()
+      }
+    SymbolicKind::Joint(_)
+    | SymbolicKind::Process(_)
+    | SymbolicKind::Matrix(_) => @symsets.reals()
+  }
+}
+
+///|
+fn stats_random_var_support(rv : RandomVar) -> @symsets.Set {
+  match rv.kind {
+    RVKind::Finite(items) => @symsets.finite_set(items.map(item => item.0))
+    RVKind::Binomial(n~, ..) => @symsets.interval(@symcore.int(0), n)
+    RVKind::Poisson(_) | RVKind::NegativeBinomial(_) => @symsets.naturals0()
+    RVKind::Geometric(_) => @symsets.naturals()
+    RVKind::Normal(_) => @symsets.reals()
+    RVKind::Exponential(_) | RVKind::Gamma(_) =>
+      @symsets.interval(@symcore.int(0), stats_positive_infinity())
+    RVKind::JointIndependent(_)
+    | RVKind::Compound(_)
+    | RVKind::StochasticProcess(_)
+    | RVKind::Matrix(_) => @symsets.reals()
+    RVKind::Symbolic(kind~, params~) => stats_symbolic_support(kind, params)
+  }
+}
+
+///|
+pub fn where_set(
+  condition : Event,
+  rv : RandomVar,
+) -> @symsets.Set? raise @symsolvers.SolverError {
+  match rv.kind {
+    RVKind::Finite(items) => {
+      let values : Array[@symcore.Expr] = []
+      let env : Map[String, @symcore.Expr] = {}
+      for item in items {
+        let (value, _) = item
+        env[rv.name] = value
+        match evaluate_event(condition, env) {
+          TriBool::True => values.push(value)
+          TriBool::False => ()
+          TriBool::Unknown => return None
+        }
+      }
+      Some(@symsets.finite_set(values))
+    }
+    _ => {
+      let solved = reduce_rational_inequalities_wrap(
+        condition,
+        @symcore.Expr::Symbol(rv.name),
+      )
+      let support = stats_random_var_support(rv)
+      if support is @symsets.Set::Reals {
+        Some(solved)
+      } else {
+        Some(@symsets.intersection([support, solved]))
+      }
+    }
+  }
+}
+
+///|
+pub fn sample(
+  expr : @symcore.Expr,
+  rvs? : Array[RandomVar] = [],
+  seed? : Int? = None,
+) -> @symcore.Expr {
+  match sample_expr(expr, rvs~, seed~) {
+    Some(value) => value
+    None => @symcore.function("sample", [expr])
+  }
+}
+
+///|
+pub fn sample_iter(
+  expr : @symcore.Expr,
+  n? : Int = 1,
+  rvs? : Array[RandomVar] = [],
+  seed? : Int? = None,
+) -> Array[@symcore.Expr] {
   if n <= 0 {
     return []
   }
-  Array::make(n, expr)
+  let rng = stats_rng(seed~)
+  let out : Array[@symcore.Expr] = []
+  for _ in 0..<n {
+    match sample_expr_with_rng(expr, rvs, rng) {
+      Some(value) => out.push(value)
+      None => out.push(@symcore.function("sample", [expr]))
+    }
+  }
+  out
+}
+
+///|
+pub fn sample_iter_lambdify(
+  expr : @symcore.Expr,
+  n? : Int = 1,
+  rvs? : Array[RandomVar] = [],
+  seed? : Int? = None,
+) -> Array[@symcore.Expr] {
+  sample_iter(expr, n~, rvs~, seed~)
+}
+
+///|
+pub fn sample_iter_subs(
+  expr : @symcore.Expr,
+  n? : Int = 1,
+  rvs? : Array[RandomVar] = [],
+  seed? : Int? = None,
+) -> Array[@symcore.Expr] {
+  sample_iter(expr, n~, rvs~, seed~)
+}
+
+///|
+pub fn rv(
+  name : String,
+  distribution : String,
+  params? : Array[@symcore.Expr] = [],
+) -> RandomVar {
+  match distribution {
+    "Binomial" if params.length() == 2 => binomial(name, params[0], params[1])
+    "Poisson" if params.length() == 1 => poisson(name, params[0])
+    "Geometric" if params.length() == 1 => geometric(name, params[0])
+    "NegativeBinomial" if params.length() == 2 =>
+      negative_binomial(name, params[0], params[1])
+    "Normal" if params.length() == 2 => normal(name, params[0], params[1])
+    "Exponential" if params.length() == 1 => exponential(name, params[0])
+    "Gamma" if params.length() == 2 => gamma_dist(name, params[0], params[1])
+    "Bernoulli" if params.length() == 1 =>
+      match expr_as_number(params[0]) {
+        Some(p) => bernoulli(name, p)
+        None =>
+          finite_distribution_handmade(name, params=[
+            @symcore.Expr::Tuple([
+              @symcore.Expr::Tuple([@symcore.int(1), params[0]]),
+              @symcore.Expr::Tuple([
+                @symcore.int(0),
+                eval_arith(
+                  @symcore.add([
+                    @symcore.int(1),
+                    @symcore.mul([@symcore.int(-1), params[0]]),
+                  ]),
+                ),
+              ]),
+            ]),
+          ])
+      }
+    "Coin" =>
+      if params.is_empty() {
+        coin(name)
+      } else {
+        match expr_as_number(params[0]) {
+          Some(p) => coin(name, p_head=p)
+          None =>
+            finite_distribution_handmade(name, params=[
+              @symcore.Expr::Tuple([
+                @symcore.Expr::Tuple([@symcore.int(1), params[0]]),
+                @symcore.Expr::Tuple([
+                  @symcore.int(0),
+                  eval_arith(
+                    @symcore.add([
+                      @symcore.int(1),
+                      @symcore.mul([@symcore.int(-1), params[0]]),
+                    ]),
+                  ),
+                ]),
+              ]),
+            ])
+        }
+      }
+    "Die" =>
+      if params.is_empty() {
+        die(name)
+      } else {
+        match expr_as_int(params[0]) {
+          Some(sides) => die(name, sides~)
+          None => symbolic_rv(name, distribution, params)
+        }
+      }
+    _ => symbolic_rv(name, distribution, params)
+  }
 }
 
 ///|
@@ -59,12 +392,201 @@ pub fn sample_stochastic_process(
   t1 : @symcore.Expr,
   n? : Int = 2,
 ) -> @symcore.Expr {
+  match sample_stochastic_process_path(proc, t0, t1, n) {
+    Some(path) => return path
+    None => ()
+  }
   @symcore.function("sample_stochastic_process", [
     @symcore.Expr::Symbol(proc.name),
     t0,
     t1,
     @symcore.int(n),
   ])
+}
+
+///|
+fn sample_time_grid(
+  t0 : @symcore.Expr,
+  t1 : @symcore.Expr,
+  n : Int,
+) -> Array[(@symcore.Expr, Double)]? {
+  if n <= 0 {
+    return None
+  }
+  match (stats_expr_to_double(t0), stats_expr_to_double(t1)) {
+    (Some(start), Some(stop)) if stop >= start && start >= 0.0 => {
+      let out : Array[(@symcore.Expr, Double)] = []
+      if n == 1 {
+        out.push((t0, start))
+        return Some(out)
+      }
+      let step = (stop - start) / (n - 1).to_double()
+      for i in 0..<n {
+        let time = start + step * i.to_double()
+        out.push((stats_expr_from_double(time), time))
+      }
+      Some(out)
+    }
+    _ => None
+  }
+}
+
+///|
+fn sample_path_expr(
+  times : Array[(@symcore.Expr, Double)],
+  values : Array[@symcore.Expr],
+) -> @symcore.Expr {
+  let pairs : Array[@symcore.Expr] = []
+  for i in 0..<values.length() {
+    pairs.push(@symcore.Expr::Tuple([times[i].0, values[i]]))
+  }
+  @symcore.Expr::Tuple(pairs)
+}
+
+///|
+fn sample_poisson_process_path(
+  rate : @symcore.Expr,
+  times : Array[(@symcore.Expr, Double)],
+  rng : @random.Rand,
+) -> @symcore.Expr? {
+  let rate_d = match stats_expr_to_double(rate) {
+    Some(value) if value >= 0.0 => value
+    _ => return None
+  }
+  let values : Array[@symcore.Expr] = []
+  let mut current = 0
+  let mut previous = 0.0
+  for i in 0..<times.length() {
+    let time = times[i].1
+    let delta = if i == 0 { time } else { time - previous }
+    previous = time
+    match stats_sample_poisson(stats_expr_from_double(rate_d * delta), rng) {
+      Some(sampled) =>
+        match expr_as_int(sampled) {
+          Some(k) => {
+            current += k
+            values.push(@symcore.int(current))
+          }
+          None => return None
+        }
+      None => return None
+    }
+  }
+  Some(sample_path_expr(times, values))
+}
+
+///|
+fn sample_wiener_process_path(
+  times : Array[(@symcore.Expr, Double)],
+  rng : @random.Rand,
+) -> @symcore.Expr? {
+  let values : Array[@symcore.Expr] = []
+  let mut current = 0.0
+  let mut previous = 0.0
+  for i in 0..<times.length() {
+    let time = times[i].1
+    let delta = if i == 0 { time } else { time - previous }
+    previous = time
+    if delta < 0.0 {
+      return None
+    }
+    if delta > 0.0 {
+      current += delta.sqrt() * stats_sample_standard_normal(rng)
+    }
+    values.push(stats_expr_from_double(current))
+  }
+  Some(sample_path_expr(times, values))
+}
+
+///|
+fn sample_gamma_process_path(
+  lamda : @symcore.Expr,
+  gamma : @symcore.Expr,
+  times : Array[(@symcore.Expr, Double)],
+  rng : @random.Rand,
+) -> @symcore.Expr? {
+  let lamda_d = match stats_expr_to_double(lamda) {
+    Some(value) if value > 0.0 => value
+    _ => return None
+  }
+  let gamma_d = match stats_expr_to_double(gamma) {
+    Some(value) if value > 0.0 => value
+    _ => return None
+  }
+  let values : Array[@symcore.Expr] = []
+  let mut current = 0.0
+  let mut previous = 0.0
+  for i in 0..<times.length() {
+    let time = times[i].1
+    let delta = if i == 0 { time } else { time - previous }
+    previous = time
+    if delta < 0.0 {
+      return None
+    }
+    if delta > 0.0 {
+      match stats_sample_gamma_double(gamma_d * delta, 1.0 / lamda_d, rng) {
+        Some(increment) => current += increment
+        None => return None
+      }
+    }
+    values.push(stats_expr_from_double(current))
+  }
+  Some(sample_path_expr(times, values))
+}
+
+///|
+fn sample_bernoulli_process_path(
+  params : Array[@symcore.Expr],
+  times : Array[(@symcore.Expr, Double)],
+  rng : @random.Rand,
+) -> @symcore.Expr? {
+  if params.length() < 1 {
+    return None
+  }
+  let p = match expr_as_number(params[0]) {
+    Some(value) => value
+    None => return None
+  }
+  let success = if params.length() >= 2 { params[1] } else { @symcore.int(1) }
+  let failure = if params.length() >= 3 { params[2] } else { @symcore.int(0) }
+  let one_minus_p = @symnum.BigRational::one().add_r(p.neg_r())
+  let values : Array[@symcore.Expr] = []
+  for _ in times {
+    match stats_sample_finite([(success, p), (failure, one_minus_p)], rng) {
+      Some(value) => values.push(value)
+      None => return None
+    }
+  }
+  Some(sample_path_expr(times, values))
+}
+
+///|
+fn sample_stochastic_process_path(
+  proc : RandomVar,
+  t0 : @symcore.Expr,
+  t1 : @symcore.Expr,
+  n : Int,
+) -> @symcore.Expr? {
+  let times = match sample_time_grid(t0, t1, n) {
+    Some(value) => value
+    None => return None
+  }
+  let rng = stats_rng()
+  match proc.kind {
+    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) =>
+      sample_poisson_process_path(rate, times, rng)
+    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) =>
+      sample_wiener_process_path(times, rng)
+    RVKind::Symbolic(kind~, params~) =>
+      match kind {
+        SymbolicKind::Process(ProcessTag::BernoulliProcess) =>
+          sample_bernoulli_process_path(params, times, rng)
+        SymbolicKind::Process(ProcessTag::GammaProcess) if params.length() >= 2 =>
+          sample_gamma_process_path(params[0], params[1], times, rng)
+        _ => None
+      }
+    _ => None
+  }
 }
 
 ///|
@@ -100,11 +622,28 @@ fn symbolic_metric_with_head(
   head : @symcore.Expr,
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = [head]
-  for p in params {
-    args.push(p)
+  let dist = symbolic_distribution_expr(name, params)
+  match suffix {
+    "MGF" =>
+      @symcore.function("Expectation", [
+        @symcore.function("exp", [eval_arith(@symcore.mul([head, dist]))]),
+      ])
+    "CF" =>
+      @symcore.function("Expectation", [
+        @symcore.function("exp", [
+          eval_arith(
+            @symcore.mul([
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ImaginaryUnit,
+              ),
+              head,
+              dist,
+            ]),
+          ),
+        ]),
+      ])
+    _ => @symcore.function(suffix, [dist, head])
   }
-  @symcore.function("\{name}\{suffix}", args)
 }
 
 ///|
@@ -113,7 +652,11 @@ fn symbolic_metric_no_head(
   suffix : String,
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr {
-  @symcore.function("\{name}\{suffix}", params)
+  let dist = symbolic_distribution_expr(name, params)
+  match suffix {
+    "Entropy" => @symcore.function("Entropy", [dist])
+    _ => @symcore.function(suffix, [dist])
+  }
 }
 
 ///|
@@ -1941,14 +2484,71 @@ fn process_metric_head(
   extras : Array[@symcore.Expr],
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = [time]
-  for extra in extras {
-    args.push(extra)
+  let value = process_symbolic_value(name, time, params)
+  match suffix {
+    "MGF" =>
+      match extras {
+        [t] =>
+          @symcore.function("Expectation", [
+            @symcore.function("exp", [eval_arith(@symcore.mul([t, value]))]),
+          ])
+        _ => @symcore.function("Expectation", [value])
+      }
+    "CF" =>
+      match extras {
+        [t] =>
+          @symcore.function("Expectation", [
+            @symcore.function("exp", [
+              eval_arith(
+                @symcore.mul([
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::ImaginaryUnit,
+                  ),
+                  t,
+                  value,
+                ]),
+              ),
+            ]),
+          ])
+        _ => @symcore.function("Expectation", [value])
+      }
+    "Entropy" => @symcore.function("Entropy", [value])
+    "Quantile" =>
+      match extras {
+        [q] => {
+          let x = @symcore.Expr::Symbol("_x")
+          @symcore.function("ConditionSet", [
+            x,
+            @symcore.function("Eq", [
+              @symcore.function("Probability", [
+                @symcore.function("Le", [value, x]),
+              ]),
+              q,
+            ]),
+            @symcore.function("Interval", [
+              eval_arith(
+                @symcore.mul([
+                  @symcore.int(-1),
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::Infinity,
+                  ),
+                ]),
+              ),
+              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+            ]),
+          ])
+        }
+        _ => @symcore.function("ConditionSet", [value])
+      }
+    _ => {
+      ignore(params)
+      let args : Array[@symcore.Expr] = [value]
+      for extra in extras {
+        args.push(extra)
+      }
+      @symcore.function(suffix, args)
+    }
   }
-  for p in params {
-    args.push(p)
-  }
-  @symcore.function("\{name}\{suffix}At", args)
 }
 
 ///|
@@ -2123,8 +2723,29 @@ fn process_cf_at(
 ///|
 fn process_entropy_at(rv : RandomVar, time : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) =>
-      Some(@symcore.function("PoissonProcessEntropyAt", [time, rate]))
+    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) => {
+      let k = @symcore.Expr::Symbol("_k")
+      let mean = eval_arith(@symcore.mul([rate, time]))
+      let pmf = poisson_pmf_expr(mean, k)
+      Some(
+        eval_arith(
+          @symcore.function("Sum", [
+            eval_arith(
+              @symcore.mul([
+                @symcore.int(-1),
+                pmf,
+                @symcore.function("log", [pmf]),
+              ]),
+            ),
+            @symcore.function("Tuple", [
+              k,
+              @symcore.int(0),
+              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+            ]),
+          ]),
+        ),
+      )
+    }
     RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) =>
       Some(
         eval_arith(
@@ -3056,6 +3677,22 @@ pub fn independent(a : RandomVar, b : RandomVar) -> Bool {
 }
 
 ///|
+pub fn probability_space_independent(a : RandomVar, b : RandomVar) -> TriBool {
+  if a.name == b.name {
+    TriBool::False
+  } else if assume_independent(a, b) {
+    TriBool::True
+  } else {
+    TriBool::Unknown
+  }
+}
+
+///|
+pub fn pspace_independent(a : RandomVar, b : RandomVar) -> TriBool {
+  probability_space_independent(a, b)
+}
+
+///|
 fn collect_symbols(expr : @symcore.Expr, out : Map[String, Bool]) -> Unit {
   match expr {
     @symcore.Expr::Symbol(name) => out[name] = true
@@ -3067,15 +3704,177 @@ fn collect_symbols(expr : @symcore.Expr, out : Map[String, Bool]) -> Unit {
 }
 
 ///|
-pub fn random_symbols(expr : @symcore.Expr) -> Array[String] {
+pub fn random_symbols(
+  expr : @symcore.Expr,
+  rvs? : Array[RandomVar] = [],
+) -> Array[String] {
   let seen : Map[String, Bool] = {}
   collect_symbols(expr, seen)
   let out : Array[String] = Array::new()
-  for key, _ in seen {
-    out.push(key)
+  if rvs.is_empty() {
+    for key, _ in seen {
+      out.push(key)
+    }
+  } else {
+    for rv in rvs {
+      if seen.contains(rv.name) {
+        out.push(rv.name)
+      }
+    }
   }
   out.sort()
   out
+}
+
+///|
+fn expr_mentions_random_var(expr : @symcore.Expr, rv : RandomVar) -> Bool {
+  match expr {
+    @symcore.Expr::Symbol(name) if name == rv.name => true
+    _ if @symcore.application_has_name(expr, rv.name) => true
+    _ => {
+      for child in @symcore.children(expr) {
+        if expr_mentions_random_var(child, rv) {
+          return true
+        }
+      }
+      false
+    }
+  }
+}
+
+///|
+pub fn is_random(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> Bool {
+  for rv in rvs {
+    if expr_mentions_random_var(expr, rv) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+pub fn rv_subs(
+  expr : @symcore.Expr,
+  rvs? : Array[RandomVar] = [],
+) -> @symcore.Expr {
+  if rvs.length() == 0 {
+    return expr
+  }
+  let env : Map[String, @symcore.Expr] = {}
+  for rv in rvs {
+    env[rv.name] = @symcore.Expr::Symbol(rv.name)
+  }
+  @symcore.subst(expr, env)
+}
+
+///|
+pub fn sumsets(sets : Array[Array[@symcore.Expr]]) -> Array[@symcore.Expr] {
+  let out : Array[@symcore.Expr] = []
+  for set in sets {
+    for item in set {
+      let mut seen = false
+      for prev in out {
+        if prev == item {
+          seen = true
+          break
+        }
+      }
+      if !seen {
+        out.push(item)
+      }
+    }
+  }
+  @symcore.sort_exprs_in_place(out)
+  out
+}
+
+///|
+pub fn random_var_symbol_swap(
+  lhs : Array[RandomVar],
+  rhs : Array[RandomVar],
+) -> Map[String, String] {
+  let out : Map[String, String] = {}
+  for left in lhs {
+    for right in rhs {
+      if left.name == right.name {
+        out[left.name] = right.name
+        break
+      }
+    }
+  }
+  out
+}
+
+///|
+pub fn rs_swap(
+  lhs : Array[RandomVar],
+  rhs : Array[RandomVar],
+) -> Map[String, String] {
+  random_var_symbol_swap(lhs, rhs)
+}
+
+///|
+fn stats_relop_to_core(op : RelOp) -> @symcore.RelOp {
+  match op {
+    RelOp::Eq => @symcore.RelOp::Eq
+    RelOp::Ne => @symcore.RelOp::Ne
+    RelOp::Lt => @symcore.RelOp::Lt
+    RelOp::Le => @symcore.RelOp::Le
+    RelOp::Gt => @symcore.RelOp::Gt
+    RelOp::Ge => @symcore.RelOp::Ge
+  }
+}
+
+///|
+fn event_relational_expr(event : Event) -> @symcore.Expr {
+  match event {
+    Event::Rel(op~, lhs~, rhs~) =>
+      @symcore.Expr::Relational(stats_relop_to_core(op), lhs, rhs)
+    _ => event_to_expr(event)
+  }
+}
+
+///|
+pub fn reduce_rational_inequalities_wrap(
+  condition : Event,
+  symbol : @symcore.Expr,
+) -> @symsets.Set raise @symsolvers.SolverError {
+  match condition {
+    Event::Bool(true) => @symsets.reals()
+    Event::Bool(false) => @symsets.empty_set()
+    Event::Rel(..) =>
+      match
+        @symsolvers.solve_univariate_inequality(
+          event_relational_expr(condition),
+          symbol,
+          relational=false,
+        ) {
+        @symsolvers.InequalityResult::Set(set) => set
+        @symsolvers.InequalityResult::Relational(_) => @symsets.empty_set()
+      }
+    Event::Or(items) => {
+      let parts : Array[@symsets.Set] = []
+      for item in items {
+        parts.push(reduce_rational_inequalities_wrap(item, symbol))
+      }
+      @symsets.union(parts)
+    }
+    Event::And(items) => {
+      if items.is_empty() {
+        return @symsets.reals()
+      }
+      let parts : Array[@symsets.Set] = []
+      for item in items {
+        parts.push(reduce_rational_inequalities_wrap(item, symbol))
+      }
+      @symsets.intersection(parts)
+    }
+    Event::Not(inner) =>
+      @symsets.complement(
+        @symsets.reals(),
+        reduce_rational_inequalities_wrap(inner, symbol),
+      )
+  }
 }
 
 ///|
@@ -3128,8 +3927,87 @@ pub fn cmoment(
 }
 
 ///|
-pub fn sampling_density(expr : @symcore.Expr) -> @symcore.Expr {
-  @symcore.function("sampling_density", [expr])
+pub fn sampling_p(
+  condition : Event,
+  rvs? : Array[RandomVar] = [],
+  numsamples? : Int = 1,
+  seed? : Int? = None,
+) -> @symcore.Expr {
+  if numsamples <= 0 {
+    return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
+  }
+  let rng = stats_rng(seed~)
+  let mut count_true = 0
+  for _ in 0..<numsamples {
+    let env = sample_env_with_rng(rvs, rng)
+    match env {
+      Some(values) =>
+        match evaluate_event(condition, values) {
+          TriBool::True => count_true += 1
+          TriBool::False | TriBool::Unknown => ()
+        }
+      None => ()
+    }
+  }
+  match stats_exact_big_rational(count_true, numsamples) {
+    Some(value) => expr_from_big_rational(value)
+    None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
+  }
+}
+
+///|
+pub fn sampling_e(
+  expr : @symcore.Expr,
+  rvs? : Array[RandomVar] = [],
+  numsamples? : Int = 1,
+  seed? : Int? = None,
+) -> @symcore.Expr {
+  if numsamples <= 0 {
+    return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
+  }
+  let samples = sample_iter(expr, n=numsamples, rvs~, seed~)
+  if samples.is_empty() {
+    return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
+  }
+  let scale = match stats_exact_big_rational(1, samples.length()) {
+    Some(value) => expr_from_big_rational(value)
+    None => @symcore.int(1)
+  }
+  eval_arith(@symcore.mul([@symcore.add(samples), scale]))
+}
+
+///|
+pub fn sampling_density(
+  expr : @symcore.Expr,
+  rvs? : Array[RandomVar] = [],
+  numsamples? : Int = 1,
+  seed? : Int? = None,
+) -> @symcore.Expr {
+  if numsamples <= 0 {
+    return @symcore.Expr::Dict([])
+  }
+  let samples = sample_iter(expr, n=numsamples, rvs~, seed~)
+  let keys : Array[@symcore.Expr] = []
+  let counts : Array[Int] = []
+  for sample_value in samples {
+    let mut found = false
+    for i in 0..<keys.length() {
+      if @symcore.compare_expr(keys[i], sample_value) == 0 {
+        counts[i] = counts[i] + 1
+        found = true
+        break
+      }
+    }
+    if !found {
+      keys.push(sample_value)
+      counts.push(1)
+    }
+  }
+  let entries : Array[(@symcore.Expr, @symcore.Expr)] = []
+  for i in 0..<keys.length() {
+    entries.push((keys[i], @symcore.int(counts[i])))
+  }
+  @symcore.Expr::Dict(entries)
 }
 
 ///|

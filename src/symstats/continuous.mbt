@@ -680,11 +680,7 @@ fn symbolic_density_expr(
   params : Array[@symcore.Expr],
   x : @symcore.Expr,
 ) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = [x]
-  for p in params {
-    args.push(p)
-  }
-  @symcore.function("\{name}Density", args)
+  @symcore.function("density", [symbolic_distribution_expr(name, params), x])
 }
 
 ///|
@@ -1218,11 +1214,21 @@ fn symbolic_cdf_expr(
   params : Array[@symcore.Expr],
   x : @symcore.Expr,
 ) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = [x]
-  for p in params {
-    args.push(p)
+  @symcore.function("cdf", [symbolic_distribution_expr(name, params), x])
+}
+
+///|
+fn symbolic_stat_expr(
+  name : String,
+  suffix : String,
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr {
+  let dist = symbolic_distribution_expr(name, params)
+  match suffix {
+    "Mean" => @symcore.function("Expectation", [dist])
+    "Variance" => @symcore.function("Variance", [dist])
+    _ => @symcore.function(suffix, [dist])
   }
-  @symcore.function("\{name}CDF", args)
 }
 
 ///|
@@ -1452,15 +1458,6 @@ fn symbolic_continuous_variance_via_integral(
 }
 
 ///|
-fn symbolic_stat_expr(
-  name : String,
-  suffix : String,
-  params : Array[@symcore.Expr],
-) -> @symcore.Expr {
-  @symcore.function("\{name}\{suffix}", params)
-}
-
-///|
 pub fn continuous_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
     RVKind::Normal(mu~, sigma~) => {
@@ -1555,6 +1552,9 @@ pub fn continuous_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
 pub fn continuous_cdf(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
     RVKind::Normal(mu~, sigma~) => {
+      if expr_known_equal(x, mu) {
+        return Some(eval_arith(@symcore.pow(@symcore.int(2), @symcore.int(-1))))
+      }
       let two = @symcore.int(2)
       let arg = eval_arith(
         @symcore.mul([

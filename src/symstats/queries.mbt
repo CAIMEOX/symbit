@@ -22,11 +22,21 @@ fn symbolic_query_expr(
   head : @symcore.Expr,
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = [head]
-  for p in params {
-    args.push(p)
+  let dist = @symcore.function(name, params)
+  match suffix {
+    "Probability" => @symcore.function("Probability", [head])
+    "Mean" => @symcore.function("Expectation", [head])
+    "Variance" => @symcore.function("Variance", [head])
+    "Density" => @symcore.function("density", [dist, head])
+    "CDF" => @symcore.function("cdf", [dist, head])
+    _ => {
+      let args : Array[@symcore.Expr] = [head]
+      for p in params {
+        args.push(p)
+      }
+      @symcore.function("\{name}\{suffix}", args)
+    }
   }
-  @symcore.function("\{name}\{suffix}", args)
 }
 
 ///|
@@ -2040,6 +2050,58 @@ fn symbolic_matrix_derived_distribution(
 }
 
 ///|
+fn expr_known_compare(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Int? {
+  let l = eval_arith(lhs)
+  let r = eval_arith(rhs)
+  match (expr_as_number(l), expr_as_number(r)) {
+    (Some(ln), Some(rn)) => Some(ln.compare(rn))
+    _ => if @symcore.compare_expr(l, r) == 0 { Some(0) } else { None }
+  }
+}
+
+///|
+fn expr_known_equal(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
+  match expr_known_compare(lhs, rhs) {
+    Some(0) => true
+    _ => false
+  }
+}
+
+///|
+fn bernoulli_process_cdf_exact_point(
+  x : @symcore.Expr,
+  p : @symcore.Expr,
+  success : @symcore.Expr,
+  failure : @symcore.Expr,
+  one_minus_p : @symcore.Expr,
+) -> @symcore.Expr? {
+  let support_order = expr_known_compare(success, failure)
+  if expr_known_equal(x, failure) {
+    match support_order {
+      Some(cmp) =>
+        if cmp <= 0 {
+          return Some(@symcore.int(1))
+        } else {
+          return Some(one_minus_p)
+        }
+      None => ()
+    }
+  }
+  if expr_known_equal(x, success) {
+    match support_order {
+      Some(cmp) =>
+        if cmp < 0 {
+          return Some(p)
+        } else {
+          return Some(@symcore.int(1))
+        }
+      None => ()
+    }
+  }
+  None
+}
+
+///|
 fn symbolic_process_density(
   name : String,
   params : Array[@symcore.Expr],
@@ -2048,6 +2110,9 @@ fn symbolic_process_density(
   match process_tag_from_name(name) {
     ProcessTag::BernoulliProcess if params.length() >= 1 => {
       let p = params[0]
+      let one_minus_p = eval_arith(
+        @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])]),
+      )
       let success = if params.length() >= 2 {
         params[1]
       } else {
@@ -2058,16 +2123,18 @@ fn symbolic_process_density(
       } else {
         @symcore.int(0)
       }
+      if expr_known_equal(success, failure) && expr_known_equal(x, success) {
+        return Some(@symcore.int(1))
+      } else if expr_known_equal(x, success) {
+        return Some(p)
+      } else if expr_known_equal(x, failure) {
+        return Some(one_minus_p)
+      }
       Some(
         @symcore.function("Piecewise", [
           @symcore.Expr::Tuple([p, @symcore.function("Eq", [x, success])]),
           @symcore.Expr::Tuple([
-            eval_arith(
-              @symcore.add([
-                @symcore.int(1),
-                @symcore.mul([@symcore.int(-1), p]),
-              ]),
-            ),
+            one_minus_p,
             @symcore.function("Eq", [x, failure]),
           ]),
           @symcore.Expr::Tuple([@symcore.int(0), @symcore.Expr::Boolean(true)]),
@@ -2124,6 +2191,11 @@ fn symbolic_process_cdf(
         params[2]
       } else {
         @symcore.int(0)
+      }
+      match
+        bernoulli_process_cdf_exact_point(x, p, success, failure, one_minus_p) {
+        Some(value) => return Some(value)
+        None => ()
       }
       let between_value = @symcore.function("Piecewise", [
         @symcore.Expr::Tuple([p, @symcore.function("Lt", [success, failure])]),
@@ -3330,36 +3402,45 @@ pub fn density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr {
       match continuous_density(rv, x) {
         Some(v) => v
         None =>
-          match rv.kind {
-            RVKind::Symbolic(kind~, params~) => {
-              let name = symbolic_kind_name(kind)
-              if symbolic_kind_is_opaque(kind) {
-                match symbolic_opaque_density(name, params, x) {
-                  Some(v) => v
-                  None =>
-                    @symcore.function("density", [
-                      @symcore.Expr::Symbol(rv.name),
-                      x,
-                    ])
-                }
-              } else {
-                match kind {
-                  SymbolicKind::Process(_) =>
-                    match symbolic_process_density(name, params, x) {
+          match matrix_density(rv, x) {
+            Some(v) => v
+            None =>
+              match rv.kind {
+                RVKind::Symbolic(kind~, params~) => {
+                  let name = symbolic_kind_name(kind)
+                  if symbolic_kind_is_opaque(kind) {
+                    match symbolic_opaque_density(name, params, x) {
                       Some(v) => v
-                      None => symbolic_query_expr(name, "Density", x, params)
+                      None =>
+                        @symcore.function("density", [
+                          @symcore.Expr::Symbol(rv.name),
+                          x,
+                        ])
                     }
-                  SymbolicKind::Joint(_) =>
-                    match symbolic_joint_density(name, params, x) {
-                      Some(v) => v
-                      None => symbolic_query_expr(name, "Density", x, params)
+                  } else {
+                    match kind {
+                      SymbolicKind::Process(_) =>
+                        match symbolic_process_density(name, params, x) {
+                          Some(v) => v
+                          None =>
+                            symbolic_query_expr(name, "Density", x, params)
+                        }
+                      SymbolicKind::Joint(_) =>
+                        match symbolic_joint_density(name, params, x) {
+                          Some(v) => v
+                          None =>
+                            symbolic_query_expr(name, "Density", x, params)
+                        }
+                      _ => symbolic_query_expr(name, "Density", x, params)
                     }
-                  _ => symbolic_query_expr(name, "Density", x, params)
+                  }
                 }
+                _ =>
+                  @symcore.function("density", [
+                    @symcore.Expr::Symbol(rv.name),
+                    x,
+                  ])
               }
-            }
-            _ =>
-              @symcore.function("density", [@symcore.Expr::Symbol(rv.name), x])
           }
       }
   }

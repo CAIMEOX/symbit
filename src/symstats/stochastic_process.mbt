@@ -32,6 +32,19 @@ fn process_expr_sub(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+fn process_symbolic_value(
+  name : String,
+  time : @symcore.Expr,
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr {
+  let args : Array[@symcore.Expr] = [time]
+  for p in params {
+    args.push(p)
+  }
+  @symcore.function(name, args)
+}
+
+///|
 pub fn process_mean_at(proc : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
   match proc.kind {
     RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) =>
@@ -80,11 +93,11 @@ pub fn process_mean_at(proc : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
         }
         _ => {
           let name = process_tag_name(tag)
-          let args : Array[@symcore.Expr] = [t]
-          for p in params {
-            args.push(p)
-          }
-          Some(@symcore.function("\{name}MeanAt", args))
+          Some(
+            @symcore.function("Expectation", [
+              process_symbolic_value(name, t, params),
+            ]),
+          )
         }
       }
     _ => None
@@ -148,11 +161,11 @@ pub fn process_variance_at(
         }
         _ => {
           let name = process_tag_name(tag)
-          let args : Array[@symcore.Expr] = [t]
-          for p in params {
-            args.push(p)
-          }
-          Some(@symcore.function("\{name}VarianceAt", args))
+          Some(
+            @symcore.function("Variance", [
+              process_symbolic_value(name, t, params),
+            ]),
+          )
         }
       }
     _ => None
@@ -185,11 +198,17 @@ fn process_state_query_head(
   x : @symcore.Expr,
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = [time, x]
-  for p in params {
-    args.push(p)
+  let value = process_symbolic_value(name, time, params)
+  match suffix {
+    "Probability" =>
+      @symcore.function("Probability", [@symcore.function("Eq", [value, x])])
+    "CDF" =>
+      @symcore.function("Probability", [@symcore.function("Le", [value, x])])
+    _ => {
+      ignore(params)
+      @symcore.function(suffix, [value, x])
+    }
   }
-  @symcore.function("\{name}\{suffix}At", args)
 }
 
 ///|
@@ -303,6 +322,13 @@ pub fn process_cdf_at(
             params[2]
           } else {
             @symcore.int(0)
+          }
+          match
+            bernoulli_process_cdf_exact_point(
+              x, p, success, failure, one_minus_p,
+            ) {
+            Some(value) => return Some(value)
+            None => ()
           }
           let between_value = @symcore.function("Piecewise", [
             @symcore.function("Tuple", [

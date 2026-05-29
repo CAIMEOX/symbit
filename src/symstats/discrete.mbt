@@ -203,8 +203,18 @@ fn negative_binomial_pmf_expr(
   p : @symcore.Expr,
   k : @symcore.Expr,
 ) -> @symcore.Expr {
-  match expr_as_int(k) {
-    Some(ki) if ki < 0 => @symcore.int(0)
+  match (expr_as_int(r), expr_as_int(k)) {
+    (_, Some(ki)) if ki < 0 => @symcore.int(0)
+    (Some(ri), Some(ki)) if ri > 0 => {
+      let choose = expr_from_bigint(binomial_bigint(ki + ri - 1, ki))
+      eval_arith(
+        @symcore.mul([
+          choose,
+          @symcore.pow(discrete_one_minus(p), k),
+          @symcore.pow(p, r),
+        ]),
+      )
+    }
     _ =>
       eval_arith(
         @symcore.mul([
@@ -235,15 +245,26 @@ fn symbolic_discrete_expr(
   params : Array[@symcore.Expr],
   k? : @symcore.Expr,
 ) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = Array::new()
-  match k {
-    Some(v) => args.push(v)
-    None => ()
+  let dist = symbolic_distribution_expr(name, params)
+  match suffix {
+    "PMF" =>
+      match k {
+        Some(v) => @symcore.function("density", [dist, v])
+        None => @symcore.function("density", [dist])
+      }
+    "CDF" =>
+      match k {
+        Some(v) => @symcore.function("cdf", [dist, v])
+        None => @symcore.function("cdf", [dist])
+      }
+    "Mean" => @symcore.function("Expectation", [dist])
+    "Variance" => @symcore.function("Variance", [dist])
+    _ =>
+      match k {
+        Some(v) => @symcore.function(suffix, [dist, v])
+        None => @symcore.function(suffix, [dist])
+      }
   }
-  for p in params {
-    args.push(p)
-  }
-  @symcore.function("\{name}\{suffix}", args)
 }
 
 ///|

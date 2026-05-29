@@ -1,7 +1,11 @@
 import {
+  "moonbitlang/core/math",
+  "moonbitlang/core/random",
   "moonbitlang/core/bigint",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symsets",
+  "CAIMEOX/symbit/symsolvers",
 }
 
 options(

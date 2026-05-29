@@ -89,6 +89,14 @@ pub fn random_symbol(rv : RandomVar) -> @symcore.Expr {
 }
 
 ///|
+fn symbolic_distribution_expr(
+  name : String,
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr {
+  @symcore.function(name, params)
+}
+
+///|
 pub fn rename_random_var(rv : RandomVar, name : String) -> RandomVar {
   match rv.kind {
     RVKind::JointIndependent(items) => {

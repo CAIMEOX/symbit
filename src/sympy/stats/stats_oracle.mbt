@@ -105,7 +105,8 @@ fn sympy_names() -> Array[String] {
     "Sum", "Indexed", "IndexedBase", "pi", "I", "E", "erf", "erfc", "erfinv", "erfcinv",
     "atan", "Abs", "besseli", "besselk", "betaincinv", "gammaincinv", "gamma", "beta",
     "lowergamma", "EulerGamma", "factorial", "binomial", "simplify", "srepr", "oo",
-    "S", "Matrix", "MatrixSymbol", "Trace", "Integral", "Piecewise", "Tuple",
+    "S", "Matrix", "MatrixSymbol", "Trace", "Determinant", "Inverse", "Transpose",
+    "Identity", "Integral", "Piecewise", "Tuple",
   ]
 }
 
@@ -115,9 +116,11 @@ fn sympy_stats_names() -> Array[String] {
     "P", "E", "H", "Probability", "Expectation", "Variance", "Covariance", "variance",
     "covariance", "density", "cdf", "characteristic_function", "moment_generating_function",
     "quantile", "median", "skewness", "kurtosis", "entropy", "factorial_moment",
-    "cmoment", "smoment", "Die", "Coin", "Bernoulli", "DiscreteUniform", "Binomial",
-    "Poisson", "Geometric", "NegativeBinomial", "Normal", "Exponential", "Gamma",
-    "PoissonProcess", "WienerProcess", "Wishart", "MatrixNormal",
+    "cmoment", "smoment", "moment", "correlation", "dependent", "given", "pspace",
+    "random_symbols", "sample_stochastic_process", "Die", "Coin", "Bernoulli", "DiscreteUniform",
+    "Binomial", "Poisson", "Geometric", "NegativeBinomial", "Normal", "Exponential",
+    "Gamma", "PoissonProcess", "WienerProcess", "Wishart", "MatrixNormal", "MatrixGamma",
+    "MatrixStudentT",
   ]
 }
 
