@@ -13,6 +13,68 @@ test "pretty to_string respects precedence" {
 }
 
 ///|
+test "sympy printing text front doors are wired" {
+  let x = @symcore.Expr::Symbol("x")
+  let expr = @symcore.pow(x, @symcore.int(2)) + @symcore.int(1)
+  inspect(sstr(expr), content="x**2 + 1")
+  inspect(sstrrepr(expr), content="x**2 + 1")
+  inspect(srepr(expr), content="Add(Pow(Symbol('x'), Integer(2)), Integer(1))")
+  inspect(pretty(expr), content="x**2 + 1")
+  inspect(pretty_print(expr), content="x**2 + 1")
+  inspect(pager_print(expr), content="x**2 + 1")
+  inspect(print_latex(expr), content="x^{2} + 1")
+  inspect(
+    multiline_latex(x, expr),
+    content="\\begin{align*}x &= x^{2} + 1\\end{align*}",
+  )
+}
+
+///|
+test "sympy printing code front doors are wired" {
+  let x = @symcore.Expr::Symbol("x")
+  let expr = @symcore.pow(x, @symcore.int(2)) + @symcore.int(1)
+  inspect(pycode(expr), content="x**2 + 1")
+  inspect(python(expr), content="x = Symbol('x')\ne = x**2 + 1")
+  inspect(print_python(expr), content="x = Symbol('x')\ne = x**2 + 1")
+  inspect(ccode(expr), content="pow(x, 2.0) + 1.0")
+  inspect(
+    ccode(expr, assign_to=Some("out")),
+    content="out = pow(x, 2.0) + 1.0;",
+  )
+  inspect(print_ccode(expr), content="pow(x, 2.0) + 1.0")
+  inspect(cxxcode(expr), content="pow(x, 2.0) + 1.0")
+  inspect(fcode(expr), content="x**2.0 + 1.0")
+  inspect(print_fcode(expr), content="x**2.0 + 1.0")
+  inspect(rcode(expr), content="x^2 + 1")
+  inspect(print_rcode(expr), content="x^2 + 1")
+  inspect(jscode(expr), content="pow(x, 2.0) + 1.0")
+  inspect(print_jscode(expr), content="pow(x, 2.0) + 1.0")
+  inspect(julia_code(expr), content="x^2 + 1")
+  inspect(octave_code(expr), content="x^2 + 1")
+  inspect(rust_code(expr), content="x.powf(2.0) + 1.0")
+  inspect(glsl_code(expr), content="pow(x, 2.0) + 1.0")
+  inspect(print_glsl(expr), content="pow(x, 2.0) + 1.0")
+  inspect(mathematica_code(expr), content="x^2 + 1")
+  inspect(maple_code(expr), content="x^2 + 1")
+  inspect(print_maple_code(expr), content="x^2 + 1")
+  inspect(smtlib_code(expr), content="(assert (+ (^ x 2) 1))")
+}
+
+///|
+test "sympy printing markup tree and graph front doors are wired" {
+  let x = @symcore.Expr::Symbol("x")
+  let expr = @symcore.function("sin", [x + @symcore.int(1)])
+  assert_true(mathml(expr).contains("<apply><sin/>"))
+  assert_true(print_mathml(expr, printer="presentation").contains("<mrow>"))
+  inspect(print_gtk(expr), content="<mrow><mi>sin(x + 1)</mi></mrow>")
+  inspect(preview(expr), content="\\sin{\\left(x + 1 \\right)}")
+  assert_true(print_tree(expr).contains("sin(x + 1)\n  x + 1"))
+  let dot = dotprint(expr)
+  assert_true(dot.contains("digraph{"))
+  assert_true(dot.contains("->"))
+}
+
+///|
 test "pretty to_string wraps multiplicative denominator" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")

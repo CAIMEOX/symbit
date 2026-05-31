@@ -6,13 +6,83 @@ import {
 }
 
 // Values
+pub fn ccode(@symcore.Expr, assign_to? : String?, standard? : String) -> String
+
+pub fn cxxcode(@symcore.Expr, assign_to? : String?, standard? : String) -> String
+
+pub fn dotprint(@symcore.Expr, maxdepth? : Int?, repeat? : Bool) -> String
+
+pub fn fcode(@symcore.Expr, assign_to? : String?) -> String
+
+pub fn glsl_code(@symcore.Expr, assign_to? : String?) -> String
+
+pub fn jscode(@symcore.Expr, assign_to? : String?) -> String
+
+pub fn julia_code(@symcore.Expr, assign_to? : String?) -> String
+
 pub fn latex(@symcore.Expr, mode? : String, full_prec? : Bool, fold_frac_powers? : Bool, fold_func_brackets? : Bool, fold_short_frac? : Bool?, inv_trig_style? : String, itex? : Bool, ln_notation? : Bool, long_frac_ratio? : Int?, mul_symbol? : String?, root_notation? : Bool, imaginary_unit? : String, diff_operator? : String, parenthesize_super? : Bool, symbol_names? : Map[String, String]) -> String
 
 pub fn latex_settings(mode? : String, full_prec? : Bool, fold_frac_powers? : Bool, fold_func_brackets? : Bool, fold_short_frac? : Bool?, inv_trig_style? : String, itex? : Bool, ln_notation? : Bool, long_frac_ratio? : Int?, mul_symbol? : String?, root_notation? : Bool, imaginary_unit? : String, diff_operator? : String, parenthesize_super? : Bool, symbol_names? : Map[String, String]) -> LatexSettings
 
 pub fn latex_with_settings(@symcore.Expr, LatexSettings) -> String
 
+pub fn maple_code(@symcore.Expr, assign_to? : String?) -> String
+
+pub fn mathematica_code(@symcore.Expr) -> String
+
+pub fn mathml(@symcore.Expr, printer? : String) -> String
+
+pub fn multiline_latex(@symcore.Expr, @symcore.Expr, terms_per_line? : Int, environment? : String, use_dots? : Bool) -> String
+
+pub fn octave_code(@symcore.Expr, assign_to? : String?) -> String
+
+pub fn pager_print(@symcore.Expr) -> String
+
+pub fn pretty(@symcore.Expr, use_unicode? : Bool, wrap_line? : Bool, num_columns? : Int?) -> String
+
+pub fn pretty_print(@symcore.Expr, use_unicode? : Bool, wrap_line? : Bool, num_columns? : Int?) -> String
+
 pub fn pretty_string(@symcore.Expr) -> String
+
+pub fn preview(@symcore.Expr, output? : String, viewer? : String?, filename? : String?) -> String
+
+pub fn print_ccode(@symcore.Expr) -> String
+
+pub fn print_fcode(@symcore.Expr) -> String
+
+pub fn print_glsl(@symcore.Expr) -> String
+
+pub fn print_gtk(@symcore.Expr, start_viewer? : Bool) -> String
+
+pub fn print_jscode(@symcore.Expr) -> String
+
+pub fn print_latex(@symcore.Expr, mode? : String, full_prec? : Bool, fold_frac_powers? : Bool, fold_func_brackets? : Bool, fold_short_frac? : Bool?, inv_trig_style? : String, itex? : Bool, ln_notation? : Bool, long_frac_ratio? : Int?, mul_symbol? : String?, root_notation? : Bool, imaginary_unit? : String, diff_operator? : String, parenthesize_super? : Bool, symbol_names? : Map[String, String]) -> String
+
+pub fn print_maple_code(@symcore.Expr) -> String
+
+pub fn print_mathml(@symcore.Expr, printer? : String) -> String
+
+pub fn print_python(@symcore.Expr) -> String
+
+pub fn print_rcode(@symcore.Expr) -> String
+
+pub fn print_tree(@symcore.Expr, assumptions? : Bool) -> String
+
+pub fn pycode(@symcore.Expr) -> String
+
+pub fn python(@symcore.Expr) -> String
+
+pub fn rcode(@symcore.Expr, assign_to? : String?) -> String
+
+pub fn rust_code(@symcore.Expr, assign_to? : String?) -> String
+
+pub fn smtlib_code(@symcore.Expr, auto_assert? : Bool, auto_declare? : Bool) -> String
+
+pub fn srepr(@symcore.Expr) -> String
+
+pub fn sstr(@symcore.Expr) -> String
+
+pub fn sstrrepr(@symcore.Expr) -> String
 
 // Errors
 
