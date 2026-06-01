@@ -6563,8 +6563,41 @@ fn inverse_laplace_e1_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
   if matches_log_one_plus_linear(numerator, s_name) {
     Some(inverse_laplace_heaviside(t, @symspec.e1(t)))
   } else {
-    None
+    inverse_laplace_e1_log_linear_term(numerator, s_name, t)
   }
+}
+
+///|
+fn inverse_laplace_e1_log_linear_term(
+  numerator : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let inner = match unary_application_arg(numerator, "log") {
+    Some(value) => value
+    None => return None
+  }
+  let (coeff, offset) = match linear_coeffs(inner, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  if expr_is_zero(coeff) ||
+    expr_depends_on(coeff, s_name) ||
+    expr_depends_on(offset, s_name) ||
+    !expr_is_positive(coeff) ||
+    !expr_is_positive(offset) {
+    return None
+  }
+  let scale = expr_simplify(expr_div(offset, coeff))
+  if !expr_is_positive(scale) {
+    return None
+  }
+  Some(
+    inverse_laplace_heaviside(
+      t,
+      expr_add(@symelem.log(offset), @symspec.e1(expr_mul(scale, t))),
+    ),
+  )
 }
 
 ///|
@@ -6573,44 +6606,173 @@ fn inverse_laplace_expint2_term(
   s_name : String,
   t : Expr,
 ) -> Expr? {
-  if inverse_laplace_matches_expint2(expr, s_name) {
-    Some(inverse_laplace_heaviside(t, @symspec.expint(@symcore.int(2), t)))
+  match inverse_laplace_expint2_scale(expr, s_name) {
+    Some(scale) =>
+      Some(
+        inverse_laplace_heaviside(
+          t,
+          @symspec.expint(@symcore.int(2), expr_mul(scale, t)),
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn inverse_laplace_expint2_scale(expr : Expr, s_name : String) -> Expr? {
+  let s_sym = @symcore.Expr::Symbol(s_name)
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(value) => value
+    None => return None
+  }
+  if !expr_eq(den, expr_pow(s_sym, @symcore.int(2))) {
+    return None
+  }
+  retry_with_simplified(factors_expr(num), numerator => {
+    match numerator {
+      @symcore.Expr::Add(terms) =>
+        inverse_laplace_expint2_scale_from_terms(terms, s_name)
+      _ => None
+    }
+  })
+}
+
+///|
+fn inverse_laplace_expint2_scale_from_terms(
+  terms : Array[Expr],
+  s_name : String,
+) -> Expr? {
+  let s_sym = @symcore.Expr::Symbol(s_name)
+  if terms.length() == 2 {
+    let mut saw_s = false
+    let mut scale : Expr? = None
+    for term in terms {
+      if expr_same_simplified(term, s_sym) {
+        saw_s = true
+      } else {
+        match inverse_laplace_expint2_log_ratio_scale(term, s_name) {
+          Some(value) if scale is None => scale = Some(value)
+          _ => return None
+        }
+      }
+    }
+    if saw_s {
+      scale
+    } else {
+      None
+    }
+  } else if terms.length() == 3 {
+    let mut saw_s = false
+    let mut negative_log_scale : Expr? = None
+    let mut positive_log_scale : Expr? = None
+    for term in terms {
+      if expr_same_simplified(term, s_sym) {
+        saw_s = true
+      } else {
+        match
+          inverse_laplace_expint2_expanded_negative_log_scale(term, s_name) {
+          Some(value) if negative_log_scale is None =>
+            negative_log_scale = Some(value)
+          Some(_) => return None
+          None =>
+            match
+              inverse_laplace_expint2_expanded_positive_log_scale(term, s_name) {
+              Some(value) if positive_log_scale is None =>
+                positive_log_scale = Some(value)
+              _ => return None
+            }
+        }
+      }
+    }
+    match (saw_s, negative_log_scale, positive_log_scale) {
+      (true, Some(left), Some(right)) if expr_same_simplified(left, right) =>
+        Some(left)
+      _ => None
+    }
   } else {
     None
   }
 }
 
 ///|
-fn inverse_laplace_matches_expint2(expr : Expr, s_name : String) -> Bool {
-  let s_sym = @symcore.Expr::Symbol(s_name)
-  let (num, den_opt) = split_division(expr)
-  let den = match den_opt {
+fn inverse_laplace_expint2_log_ratio_scale(
+  term : Expr,
+  s_name : String,
+) -> Expr? {
+  let (coeff, log_inner) = match inverse_laplace_log_factor(term) {
     Some(value) => value
-    None => return false
+    _ => return None
   }
-  if !expr_eq(den, expr_pow(s_sym, @symcore.int(2))) {
-    return false
+  let scale = match extract_explicit_negative_factor(coeff) {
+    Some(value) if expr_is_positive(value) => value
+    _ => return None
   }
-  match factors_expr(num) {
-    @symcore.Expr::Add(terms) if terms.length() == 2 => {
-      let mut saw_s = false
-      let mut saw_neg_log = false
-      for term in terms {
-        if expr_eq(term, s_sym) {
-          saw_s = true
-        } else if inverse_laplace_scaled_log_s_plus_one(
-            term,
-            s_name,
-            @symcore.int(-1),
-          ) {
-          saw_neg_log = true
+  match linear_coeffs(log_inner, s_name) {
+    Some((linear, offset)) if expr_is_one(offset) &&
+      expr_same_simplified(expr_mul(linear, scale), @symcore.int(1)) =>
+      Some(scale)
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_expint2_expanded_negative_log_scale(
+  term : Expr,
+  s_name : String,
+) -> Expr? {
+  let (coeff, log_inner) = match inverse_laplace_log_factor(term) {
+    Some(value) => value
+    _ => return None
+  }
+  let scale = match extract_explicit_negative_factor(coeff) {
+    Some(value) if expr_is_positive(value) => value
+    _ => return None
+  }
+  match linear_coeffs(log_inner, s_name) {
+    Some((linear, offset)) if expr_is_one(linear) &&
+      expr_same_simplified(offset, scale) => Some(scale)
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_expint2_expanded_positive_log_scale(
+  term : Expr,
+  s_name : String,
+) -> Expr? {
+  let (coeff, log_inner) = match inverse_laplace_log_factor(term) {
+    Some(value) => value
+    _ => return None
+  }
+  if !expr_is_positive(coeff) || expr_depends_on(log_inner, s_name) {
+    return None
+  }
+  if expr_same_simplified(log_inner, coeff) {
+    Some(coeff)
+  } else {
+    None
+  }
+}
+
+///|
+fn inverse_laplace_log_factor(term : Expr) -> (Expr, Expr)? {
+  let coeff_parts : Array[Expr] = []
+  let mut log_inner : Expr? = None
+  for factor in expr_factors(term) {
+    match unary_application_arg(factor, "log") {
+      Some(inner) =>
+        if log_inner is None {
+          log_inner = Some(inner)
         } else {
-          return false
+          return None
         }
-      }
-      saw_s && saw_neg_log
+      None => coeff_parts.push(factor)
     }
-    _ => false
+  }
+  match log_inner {
+    Some(inner) => Some((factors_expr(coeff_parts), inner))
+    None => None
   }
 }
 
@@ -6724,31 +6886,6 @@ fn inverse_laplace_scaled_log_s(
   factors.length() == 1 &&
   expr_same_simplified(coeff, target_coeff) &&
   inverse_laplace_is_log_s(factors[0], s_name)
-}
-
-///|
-fn inverse_laplace_scaled_log_s_plus_one(
-  expr : Expr,
-  s_name : String,
-  target_coeff : Expr,
-) -> Bool {
-  let (coeff, factors) = split_mul_raw(expr, s_name)
-  factors.length() == 1 &&
-  expr_same_simplified(coeff, target_coeff) &&
-  inverse_laplace_is_log_s_plus_one(factors[0], s_name)
-}
-
-///|
-fn inverse_laplace_is_log_s_plus_one(expr : Expr, s_name : String) -> Bool {
-  match unary_application_arg(expr, "log") {
-    Some(inner) =>
-      match linear_coeffs(inner, s_name) {
-        Some((coeff, offset)) =>
-          expr_is_one(coeff) && expr_eq(offset, @symcore.int(1))
-        _ => false
-      }
-    _ => false
-  }
 }
 
 ///|
