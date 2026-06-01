@@ -310,6 +310,14 @@ fn py_src_expr(text : String) -> String {
 }
 
 ///|
+fn inverse_laplace_plane_sstr(plane : Expr?) -> String raise {
+  match plane {
+    None => "None"
+    Some(value) => integrals_eval_str("sympy.sstr(" + py_expr(value) + ")")
+  }
+}
+
+///|
 fn integrals_eval_zero_batch(checks : Array[String]) -> Array[String] raise {
   if checks.is_empty() {
     []
@@ -6624,6 +6632,34 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
   let f_of_s = @symcore.raw_function("f", [s])
   let t = @symcore.Expr::Symbol("t")
   let f_t = @symcore.raw_function("f", [t])
+
+  let default_plane_object = inverse_laplace_transform(f_of_s, s, x)
+  assert_eq(
+    inverse_laplace_plane_sstr(
+      @symintegrals.inverse_laplace_transform_fundamental_plane(
+        default_plane_object,
+      ),
+    ),
+    integrals_eval_str(
+      "str((" + py_expr(default_plane_object) + ").fundamental_plane)",
+    ),
+  )
+  let explicit_plane_object = inverse_laplace_transform(
+    f_of_s,
+    s,
+    x,
+    plane=Some(@symcore.int(7)),
+  )
+  assert_eq(
+    inverse_laplace_plane_sstr(
+      @symintegrals.inverse_laplace_transform_fundamental_plane(
+        explicit_plane_object,
+      ),
+    ),
+    integrals_eval_str(
+      "sympy.sstr((" + py_expr(explicit_plane_object) + ").fundamental_plane)",
+    ),
+  )
 
   let r = @symcore.Expr::Symbol("r")
   let positive_shift_object = doit(

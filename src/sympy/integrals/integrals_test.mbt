@@ -2959,6 +2959,25 @@ test "symintegrals inverse Laplace transform objects roundtrip" {
   let explicit_plane_object = doit(
     inverse_laplace_transform(@symelem.cos(s), s, x, plane=Some(plane)),
   )
+  match
+    @symintegrals.inverse_laplace_transform_fundamental_plane(
+      inverse_laplace_transform(f_s, s, x),
+    ) {
+    None => ()
+    Some(_) => fail("expected default inverse Laplace plane to read as None")
+  }
+  let recovered_plane = match
+    @symintegrals.inverse_laplace_transform_fundamental_plane(
+      inverse_laplace_transform(f_s, s, x, plane=Some(plane)),
+    ) {
+    Some(value) => value
+    None => fail("expected explicit inverse Laplace plane")
+  }
+  assert_eq(@symcore.compare_expr(recovered_plane, plane), 0)
+  match @symintegrals.inverse_laplace_transform_fundamental_plane(f_s) {
+    None => ()
+    Some(_) => fail("expected non inverse-Laplace object to have no plane")
+  }
   assert_eq(
     @symcore.compare_expr(
       explicit_plane_object,

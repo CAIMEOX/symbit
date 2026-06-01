@@ -188,6 +188,8 @@ pub fn inverse_laplace_transform_as_integral(@symcore.Expr) -> @symcore.Expr?
 
 pub fn inverse_laplace_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, plane? : @symcore.Expr?, noconds? : Bool, simplify? : Bool) -> @symcore.Expr
 
+pub fn inverse_laplace_transform_fundamental_plane(@symcore.Expr) -> @symcore.Expr?
+
 pub fn inverse_laplace_transform_matrix(@symmatrices.Matrix, @symcore.Expr, @symcore.Expr) -> @symmatrices.Matrix raise @symmatrices.MatrixError
 
 pub fn inverse_mellin_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr

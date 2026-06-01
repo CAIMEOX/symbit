@@ -80,8 +80,34 @@ fn inverse_laplace_transform_with_none(expr : Expr, s : Expr, t : Expr) -> Expr 
     expr,
     s,
     t,
-    @symcore.Expr::Symbol("_None"),
+    inverse_laplace_none_sentinel(),
   ])
+}
+
+///|
+fn inverse_laplace_none_sentinel() -> Expr {
+  @symcore.Expr::Symbol("_None")
+}
+
+///|
+/// Read the fundamental plane from an inverse Laplace transform object.
+///
+/// - Does: Mirrors SymPy's `InverseLaplaceTransform.fundamental_plane` property.
+/// - Input: One `InverseLaplaceTransform(F, s, t, plane)` object.
+/// - Returns: `Some(plane)` for explicit planes, and `None` for SymPy's stored `None` sentinel.
+/// - Limits: Non inverse-Laplace expressions also return `None`.
+pub fn inverse_laplace_transform_fundamental_plane(transform : Expr) -> Expr? {
+  match @symcore.application_parts(transform) {
+    Some((head, [_, _, _])) if @symcore.function_head_name(head) ==
+      Some("InverseLaplaceTransform") => None
+    Some((head, [_, _, _, plane])) if @symcore.function_head_name(head) ==
+      Some("InverseLaplaceTransform") =>
+      match plane {
+        @symcore.Expr::Symbol("_None") => None
+        _ => Some(plane)
+      }
+    _ => None
+  }
 }
 
 ///|
