@@ -3445,6 +3445,16 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   let delayed_positive_symbolic_power_str = @symprint.pretty_string(
     delayed_positive_symbolic_power,
   )
+  let delayed_scaled_positive_symbolic_power = doit(
+    inverse_laplace_transform(
+      @symelem.exp(@symcore.int(-2) * a * s) * (s ^ (@symcore.int(-1) * b)),
+      s,
+      x,
+    ),
+  )
+  let delayed_scaled_positive_symbolic_power_str = @symprint.pretty_string(
+    delayed_scaled_positive_symbolic_power,
+  )
   let sqrt_linear_positive_const = doit(
     inverse_laplace_transform((@symelem.sqrt(s) + a) ^ @symcore.int(-1), s, x),
   )
@@ -3456,6 +3466,13 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     !delayed_positive_symbolic_power_str.contains("InverseLaplaceTransform") &&
     delayed_positive_symbolic_power_str.contains("gamma") &&
     delayed_positive_symbolic_power_str.contains("Heaviside"),
+  )
+  assert_true(
+    !delayed_scaled_positive_symbolic_power_str.contains(
+      "InverseLaplaceTransform",
+    ) &&
+    delayed_scaled_positive_symbolic_power_str.contains("gamma") &&
+    delayed_scaled_positive_symbolic_power_str.contains("Heaviside"),
   )
   assert_true(
     !sqrt_linear_positive_const_str.contains("InverseLaplaceTransform") &&

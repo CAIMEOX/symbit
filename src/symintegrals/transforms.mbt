@@ -18824,7 +18824,33 @@ fn expr_has_function_name(expr : Expr, name : String) -> Bool {
 }
 
 ///|
+fn expr_assumption_contains(
+  assumption : @symassume.Query,
+  query : @symassume.Query,
+) -> Bool {
+  if assumption == query {
+    true
+  } else {
+    match assumption {
+      @symassume.Query::And(items) =>
+        items.any(fn(item) { expr_assumption_contains(item, query) })
+      _ => false
+    }
+  }
+}
+
+///|
+fn expr_assumption_direct_true(query : @symassume.Query) -> Bool {
+  @symassume.get_global_assumptions().any(fn(assumption) {
+    expr_assumption_contains(assumption, query)
+  })
+}
+
+///|
 fn expr_assumption_true(query : @symassume.Query) -> Bool {
+  if expr_assumption_direct_true(query) {
+    return true
+  }
   try @symassume.ask_global(query) catch {
     _ => false
   } noraise {
@@ -18834,14 +18860,75 @@ fn expr_assumption_true(query : @symassume.Query) -> Bool {
 }
 
 ///|
+fn expr_negative_factor_body(expr : Expr) -> Expr? {
+  match expr {
+    @symcore.Expr::Mul(factors) => {
+      let mut coeff = @symnum.BigRational::one()
+      let rest : Array[Expr] = []
+      for factor in factors {
+        match expr_num_value(factor) {
+          Some(value) => coeff = coeff * value
+          None => rest.push(factor)
+        }
+      }
+      if rest.length() == 0 || coeff.compare(@symnum.BigRational::zero()) >= 0 {
+        None
+      } else {
+        let positive_coeff = coeff.neg_r()
+        if positive_coeff.compare(@symnum.BigRational::one()) == 0 {
+          Some(factors_expr(rest))
+        } else {
+          let positive_factors = [expr_from_num(positive_coeff)]
+          for factor in rest {
+            positive_factors.push(factor)
+          }
+          Some(factors_expr(positive_factors))
+        }
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn expr_locally_positive(expr : Expr) -> Bool {
+  match expr_num_value(expr) {
+    Some(value) => value.compare(@symnum.BigRational::zero()) > 0
+    None =>
+      expr_assumption_direct_true(@symassume.q_positive(expr)) ||
+      @symassume.is_positive(expr) == @symassume.Tri::True
+  }
+}
+
+///|
+fn expr_positive_factor_product(expr : Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Mul(factors) if factors.length() > 0 => {
+      for factor in factors {
+        if !expr_locally_positive(factor) {
+          return false
+        }
+      }
+      true
+    }
+    _ => false
+  }
+}
+
+///|
 fn expr_is_negative(expr : Expr) -> Bool {
   match expr_num_value(expr) {
     Some(value) => value.compare(@symnum.BigRational::zero()) < 0
-    None =>
+    None => {
+      match expr_negative_factor_body(expr) {
+        Some(body) => if expr_is_positive(body) { return true }
+        None => ()
+      }
       expr_assumption_true(@symassume.q_negative(expr)) ||
       expr_assumption_true(
         @symassume.q_positive(expr_mul(@symcore.int(-1), expr)),
       )
+    }
   }
 }
 
@@ -18849,6 +18936,18 @@ fn expr_is_negative(expr : Expr) -> Bool {
 fn expr_is_positive(expr : Expr) -> Bool {
   match expr_num_value(expr) {
     Some(value) => value.compare(@symnum.BigRational::zero()) > 0
-    None => expr_assumption_true(@symassume.q_positive(expr))
+    None => {
+      match expr_negative_factor_body(expr) {
+        Some(body) => if expr_is_negative(body) { return true }
+        None => ()
+      }
+      if expr_positive_factor_product(expr) {
+        return true
+      }
+      match @symassume.is_positive(expr) {
+        @symassume.Tri::True => true
+        _ => expr_assumption_true(@symassume.q_positive(expr))
+      }
+    }
   }
 }

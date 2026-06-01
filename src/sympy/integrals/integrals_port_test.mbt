@@ -6230,6 +6230,13 @@ test "symintegrals parity inverse Laplace symbolic kernel rules" {
       x,
     ),
   )
+  let delayed_scaled_positive_symbolic_power_inverse = doit(
+    inverse_laplace_transform(
+      @symelem.exp(@symcore.int(-2) * a * s) * (s ^ (@symcore.int(-1) * b)),
+      s,
+      x,
+    ),
+  )
   let sqrt_linear_positive_const_inverse = doit(
     inverse_laplace_transform((@symelem.sqrt(s) + a) ^ @symcore.int(-1), s, x),
   )
@@ -6239,6 +6246,14 @@ test "symintegrals parity inverse Laplace symbolic kernel rules" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(delayed_positive_symbolic_power_inverse) +
       ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True), sympy.Symbol('b'): sympy.Symbol('b', positive=True)}) - sympy.inverse_laplace_transform(sympy.exp(-sympy.Symbol('a', positive=True)*sympy.Symbol('s'))/sympy.Symbol('s')**sympy.Symbol('b', positive=True), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(delayed_scaled_positive_symbolic_power_inverse) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True), sympy.Symbol('b'): sympy.Symbol('b', positive=True)}) - sympy.inverse_laplace_transform(sympy.exp(-2*sympy.Symbol('a', positive=True)*sympy.Symbol('s'))/sympy.Symbol('s')**sympy.Symbol('b', positive=True), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
     ),
     "0",
   )
