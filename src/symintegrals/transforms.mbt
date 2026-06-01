@@ -18528,10 +18528,67 @@ fn parse_negative_linear_exp_raw(inner : Expr, var_name : String) -> Expr? {
 }
 
 ///|
+fn parse_laplace_exp_linear_coeff_direct(
+  inner : Expr,
+  var_name : String,
+) -> Expr? {
+  match inner {
+    @symcore.Expr::Symbol(name) if name == var_name => Some(@symcore.int(1))
+    @symcore.Expr::Mul(factors) => {
+      let coeff_factors : Array[Expr] = []
+      let mut saw_var = false
+      for factor in factors {
+        match factor {
+          @symcore.Expr::Symbol(name) if name == var_name && !saw_var =>
+            saw_var = true
+          _ =>
+            if expr_depends_on(factor, var_name) {
+              return None
+            } else {
+              coeff_factors.push(factor)
+            }
+        }
+      }
+      if saw_var {
+        Some(factors_expr(coeff_factors))
+      } else {
+        None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn expr_known_negative_amount(expr : Expr) -> Expr? {
+  match expr_num_value(expr) {
+    Some(value) =>
+      if value.compare(@symnum.BigRational::zero()) < 0 {
+        Some(expr_from_num(value.neg_r()))
+      } else {
+        None
+      }
+    None =>
+      match expr_negative_factor_body(expr) {
+        Some(body) => if expr_is_positive(body) { Some(body) } else { None }
+        None => None
+      }
+  }
+}
+
+///|
 fn parse_laplace_negative_linear_exp_raw(
   inner : Expr,
   var_name : String,
 ) -> Expr? {
+  match parse_laplace_exp_linear_coeff_direct(inner, var_name) {
+    Some(coeff) =>
+      match expr_known_negative_amount(coeff) {
+        Some(amount) => return Some(amount)
+        None => ()
+      }
+    None => ()
+  }
   match linear_coeffs(inner, var_name) {
     Some((a, b)) =>
       if expr_is_zero(b) && expr_is_negative(a) {
