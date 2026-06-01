@@ -4743,7 +4743,7 @@ fn inverse_laplace_linear_quadratic_apart_term(
     Some(coeffs) if coeffs.length() <= 3 => coeffs
     _ => return None
   }
-  let quad_coeffs = match poly_coeffs_upto2(quad, s_name) {
+  let quad_coeffs = match poly_coeffs_upto2_raw(quad, s_name) {
     Some(coeffs) if !expr_is_zero(coeffs[2]) => coeffs
     _ => return None
   }
@@ -4762,24 +4762,34 @@ fn inverse_laplace_linear_quadratic_apart_term(
   let q2 = quad_coeffs[2]
   let root = expr_div(expr_mul(@symcore.int(-1), lin_b), lin_a)
   let root_sq = expr_pow(root, @symcore.int(2))
-  let q_at_root = expr_simplify(
+  let q_at_root = inverse_laplace_exact_or_simplify(
     expr_add(q0, expr_add(expr_mul(q1, root), expr_mul(q2, root_sq))),
   )
   if expr_is_zero(q_at_root) {
     return None
   }
-  let n_at_root = expr_simplify(
+  let n_at_root = inverse_laplace_exact_or_simplify(
     expr_add(n0, expr_add(expr_mul(n1, root), expr_mul(n2, root_sq))),
   )
-  let linear_residue = expr_simplify(expr_div(n_at_root, q_at_root))
-  let rem2 = expr_simplify(expr_sub(n2, expr_mul(linear_residue, q2)))
-  let rem1 = expr_simplify(expr_sub(n1, expr_mul(linear_residue, q1)))
-  let rem0 = expr_simplify(expr_sub(n0, expr_mul(linear_residue, q0)))
-  let quad_num_linear = expr_simplify(expr_div(rem2, lin_a))
-  let quad_num_const = expr_simplify(
+  let linear_residue = inverse_laplace_exact_or_simplify(
+    expr_div(n_at_root, q_at_root),
+  )
+  let rem2 = inverse_laplace_exact_or_simplify(
+    expr_sub(n2, expr_mul(linear_residue, q2)),
+  )
+  let rem1 = inverse_laplace_exact_or_simplify(
+    expr_sub(n1, expr_mul(linear_residue, q1)),
+  )
+  let rem0 = inverse_laplace_exact_or_simplify(
+    expr_sub(n0, expr_mul(linear_residue, q0)),
+  )
+  let quad_num_linear = inverse_laplace_exact_or_simplify(expr_div(rem2, lin_a))
+  let quad_num_const = inverse_laplace_exact_or_simplify(
     expr_div(expr_sub(rem1, expr_mul(quad_num_linear, lin_b)), lin_a),
   )
-  let check_const = expr_simplify(expr_mul(quad_num_const, lin_b))
+  let check_const = inverse_laplace_exact_or_simplify(
+    expr_mul(quad_num_const, lin_b),
+  )
   if !expr_same_simplified(check_const, rem0) {
     return None
   }
@@ -4797,24 +4807,10 @@ fn inverse_laplace_linear_quadratic_apart_term(
     }
   }
   if !expr_is_zero(quad_num_linear) || !expr_is_zero(quad_num_const) {
-    let quad_part = match
-      inverse_laplace_shifted_square_term(
-        quad_num_linear, quad_num_const, quad, t, s_name,
+    match
+      inverse_laplace_quadratic_degree2_from_coeffs(
+        quad_num_linear, quad_num_const, quad_coeffs, t, s_name,
       ) {
-      Some(v) => Some(v)
-      None =>
-        match
-          inverse_laplace_shifted_diff_square_term(
-            quad_num_linear, quad_num_const, quad, t, s_name,
-          ) {
-          Some(v) => Some(v)
-          None =>
-            inverse_laplace_quadratic_repeated_root_term(
-              quad_num_linear, quad_num_const, quad, t, s_name,
-            )
-        }
-    }
-    match quad_part {
       Some(v) => parts.push(v)
       None => return None
     }
@@ -10313,17 +10309,21 @@ fn inverse_laplace_quadratic_degree2_from_coeffs(
   // a = dc[1]/2 and b = dc[2] - a**2 to select the repeated, hyperbolic, or
   // trigonometric form.
   let lead = coeffs[2]
-  let shift = expr_div(coeffs[1], expr_mul(@symcore.int(2), lead))
-  let offset = expr_div(coeffs[0], lead)
+  let shift = inverse_laplace_exact_or_simplify(
+    expr_div(coeffs[1], expr_mul(@symcore.int(2), lead)),
+  )
+  let offset = inverse_laplace_exact_or_simplify(expr_div(coeffs[0], lead))
   let b = inverse_laplace_quadratic_b(offset, shift)
-  let l = expr_div(num_linear, lead)
-  let m = expr_div(num_const, lead)
+  let l = inverse_laplace_exact_or_simplify(expr_div(num_linear, lead))
+  let m = inverse_laplace_exact_or_simplify(expr_div(num_const, lead))
   if expr_is_zero(b) {
     return Some(
       inverse_laplace_quadratic_repeated_root_normalized_body(l, m, shift, t),
     )
   }
-  let centered_const = expr_sub(m, expr_mul(shift, l))
+  let centered_const = inverse_laplace_exact_or_simplify(
+    expr_sub(m, expr_mul(shift, l)),
+  )
   if expr_is_negative(b) {
     let freq = inverse_laplace_sqrt_quadratic_b(expr_mul(@symcore.int(-1), b))
     inverse_laplace_quadratic_degree2_transcendental_body(
@@ -10345,6 +10345,14 @@ fn inverse_laplace_quadratic_b(offset : Expr, shift : Expr) -> Expr {
   match inverse_laplace_exact_number_no_simplify(raw) {
     Some(value) => expr_from_num(value)
     None => expr_simplify(raw)
+  }
+}
+
+///|
+fn inverse_laplace_exact_or_simplify(expr : Expr) -> Expr {
+  match inverse_laplace_exact_number_no_simplify(expr) {
+    Some(value) => expr_from_num(value)
+    None => expr_simplify(expr)
   }
 }
 
