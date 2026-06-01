@@ -3857,9 +3857,11 @@ fn inverse_laplace_rational_term(
     None => return None
   }
   let num = factors_expr(num_exprs)
-  match inverse_laplace_improper_rational_term(num, den, t, s_name) {
-    Some(v) => return Some(v)
-    None => ()
+  if inverse_laplace_should_try_improper_first(num, den, s_name) {
+    match inverse_laplace_improper_rational_term(num, den, t, s_name) {
+      Some(v) => return Some(v)
+      None => ()
+    }
   }
   match split_linear_power_factors_direct(den, s_name) {
     Some(factors) => {
@@ -3913,22 +3915,91 @@ fn inverse_laplace_rational_term(
   match direct {
     Some(v) => Some(v)
     None =>
-      match
-        inverse_laplace_linear_power_factors_apart_term(num, den, t, s_name) {
+      match inverse_laplace_improper_rational_term(num, den, t, s_name) {
         Some(v) => Some(v)
         None =>
           match
-            inverse_laplace_repeated_linear_apart_term(num, den, t, s_name) {
+            inverse_laplace_linear_power_factors_apart_term(num, den, t, s_name) {
             Some(v) => Some(v)
             None =>
               match
-                inverse_laplace_linear_factors_apart_term(num, den, t, s_name) {
+                inverse_laplace_repeated_linear_apart_term(num, den, t, s_name) {
                 Some(v) => Some(v)
-                None => inverse_laplace_cubic_apart_term(num, den, t, s_name)
+                None =>
+                  match
+                    inverse_laplace_linear_factors_apart_term(
+                      num, den, t, s_name,
+                    ) {
+                    Some(v) => Some(v)
+                    None =>
+                      inverse_laplace_cubic_apart_term(num, den, t, s_name)
+                  }
               }
           }
       }
   }
+}
+
+///|
+fn inverse_laplace_should_try_improper_first(
+  num : Expr,
+  den : Expr,
+  s_name : String,
+) -> Bool {
+  let num_degree = match inverse_laplace_poly_degree_upto2_raw(num, s_name) {
+    Some(value) if value <= 1 => return false
+    value => value
+  }
+  let den_degree = match inverse_laplace_den_degree_direct(den, s_name) {
+    Some(value) if value > 0 => value
+    _ => return false
+  }
+  match num_degree {
+    Some(num_degree) => num_degree >= den_degree
+    None => den_degree <= 3
+  }
+}
+
+///|
+fn inverse_laplace_poly_degree_upto2_raw(expr : Expr, s_name : String) -> Int? {
+  match poly_coeffs_upto2_raw(expr, s_name) {
+    Some(coeffs) =>
+      if !expr_is_zero(coeffs[2]) {
+        Some(2)
+      } else if !expr_is_zero(coeffs[1]) {
+        Some(1)
+      } else {
+        Some(0)
+      }
+    None => None
+  }
+}
+
+///|
+fn inverse_laplace_den_degree_direct(den : Expr, s_name : String) -> Int? {
+  match split_linear_power_factors_direct(den, s_name) {
+    Some(factors) => {
+      let mut degree = 0
+      for factor in factors {
+        degree += factor.2
+      }
+      return Some(degree)
+    }
+    None => ()
+  }
+  match split_linear_power_denom_direct(den, s_name) {
+    Some((_, _, power)) => return Some(power)
+    None => ()
+  }
+  match split_linear_quadratic_factors_direct(den, s_name) {
+    Some(_) => return Some(3)
+    None => ()
+  }
+  match split_quadratic_power_denom_direct(den, s_name) {
+    Some((_, _, _, power)) => return Some(2 * power)
+    None => ()
+  }
+  inverse_laplace_poly_degree_upto2_raw(den, s_name)
 }
 
 ///|
