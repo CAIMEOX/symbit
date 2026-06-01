@@ -55,6 +55,8 @@ pub fn inverse_laplace_transform(expr : Expr, s : Expr, t : Expr) -> Expr {
 
 ///|
 fn inverse_laplace_transform_with_none(expr : Expr, s : Expr, t : Expr) -> Expr {
+  // Source map: SymPy's InverseLaplaceTransform.__new__ stores plane=None as
+  // a private sentinel, and sstr renders that sentinel as `_None`.
   @symcore.raw_function("InverseLaplaceTransform", [
     expr,
     s,
@@ -369,15 +371,98 @@ pub fn inverse_laplace_transform_eval(
   expr : Expr,
   s : Expr,
   t : Expr,
-  noconds? : Bool = false,
+  noconds? : Bool = true,
 ) -> Expr {
-  let value = do_inverse_laplace_doit(expr, s, t).unwrap_or(
-    inverse_laplace_transform_with_none(expr, s, t),
+  // Source map: SymPy's public inverse_laplace_transform defaults to
+  // noconds=True, while internally it still calls
+  // InverseLaplaceTransform(...).doit(noconds=False) and strips the condition
+  // only at the public wrapper boundary.
+  let value = inverse_laplace_mark_none_plane(
+    do_inverse_laplace_doit(expr, s, t).unwrap_or(
+      inverse_laplace_transform_with_none(expr, s, t),
+    ),
   )
   if noconds {
     value
   } else {
     Expr::Tuple([value, @symcore.Expr::Boolean(true)])
+  }
+}
+
+///|
+fn inverse_laplace_mark_none_plane(expr : Expr) -> Expr {
+  match @symcore.application_parts(expr) {
+    Some((head, args)) =>
+      match @symcore.function_head_name(head) {
+        Some("InverseLaplaceTransform") =>
+          match args {
+            [inner, s, t] | [inner, s, t, _] =>
+              inverse_laplace_transform_with_none(inner, s, t)
+            _ => expr
+          }
+        _ =>
+          @symcore.raw_apply(
+            head,
+            args.map(fn(arg) { inverse_laplace_mark_none_plane(arg) }),
+          ).unwrap_or(expr)
+      }
+    None =>
+      match expr {
+        Expr::Add(args) =>
+          @symcore.add(
+            args.map(fn(arg) { inverse_laplace_mark_none_plane(arg) }),
+          )
+        Expr::Mul(args) =>
+          @symcore.mul(
+            args.map(fn(arg) { inverse_laplace_mark_none_plane(arg) }),
+          )
+        Expr::Pow(base, exp) =>
+          @symcore.pow(
+            inverse_laplace_mark_none_plane(base),
+            inverse_laplace_mark_none_plane(exp),
+          )
+        Expr::Mod(lhs, rhs) =>
+          Expr::Mod(
+            inverse_laplace_mark_none_plane(lhs),
+            inverse_laplace_mark_none_plane(rhs),
+          )
+        Expr::Tuple(args) =>
+          Expr::Tuple(
+            args.map(fn(arg) { inverse_laplace_mark_none_plane(arg) }),
+          )
+        Expr::Dict(items) =>
+          Expr::Dict(
+            items.map(fn(item) {
+              (
+                inverse_laplace_mark_none_plane(item.0),
+                inverse_laplace_mark_none_plane(item.1),
+              )
+            }),
+          )
+        Expr::Relational(op, lhs, rhs) =>
+          Expr::Relational(
+            op,
+            inverse_laplace_mark_none_plane(lhs),
+            inverse_laplace_mark_none_plane(rhs),
+          )
+        Expr::Derivative(inner, args) =>
+          Expr::Derivative(
+            inverse_laplace_mark_none_plane(inner),
+            args.map(fn(arg) { inverse_laplace_mark_none_plane(arg) }),
+          )
+        Expr::Subs(inner, variable, value) =>
+          Expr::Subs(
+            inverse_laplace_mark_none_plane(inner),
+            inverse_laplace_mark_none_plane(variable),
+            inverse_laplace_mark_none_plane(value),
+          )
+        Expr::Lambda(vars, body) =>
+          Expr::Lambda(
+            inverse_laplace_mark_none_plane(vars),
+            inverse_laplace_mark_none_plane(body),
+          )
+        _ => expr
+      }
   }
 }
 

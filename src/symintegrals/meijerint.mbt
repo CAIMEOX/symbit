@@ -84,9 +84,613 @@ pub fn meijerint_definite(
 /// - Does: Provides a practical local equivalent for the public `meijerint_inversion` hook.
 /// - Input: Transform expression, source variable, and target variable.
 /// - Returns: A recognized inverse transform result, if any.
-/// - Limits: Full Mellin-Barnes contour inversion is not implemented.
+/// - Source map: SymPy's `meijerint_inversion` in
+///   `sympy/integrals/meijerint.py` is not a thin alias for the inverse
+///   Laplace front door. It assumes the target is real positive, strips
+///   exponential/base-power shifts, may return a shifted `DiracDelta`, `None`
+///   for a provably non-real shift, or conditional `Piecewise` for an unknown
+///   shift, then uses `_rewrite1 -> _rewrite_inversion -> _int_inversion` for
+///   the non-recursive Mellin-Barnes contour path. The inverse Laplace
+///   integration fallback in `laplace.py` calls that only after inverse Mellin
+///   fails.
+/// - Limits: This hook intentionally covers the cases already recognized by
+///   local inverse Laplace rules. It does not yet implement SymPy's independent
+///   analytic/condition-producing Mellin-Barnes contour inversion.
 pub fn meijerint_inversion(expr : Expr, source : Expr, target : Expr) -> Expr? {
-  do_inverse_laplace_doit(expr, source, target)
+  match meijerint_inversion_no_laplace_fallback(expr, source, target) {
+    Some(value) => return Some(value)
+    None => ()
+  }
+  if meijerint_inversion_rejects_laplace_fallback(expr, source) {
+    return None
+  }
+  match do_inverse_laplace_doit(expr, source, target) {
+    Some(value) if @symcore.has(
+        value,
+        @symcore.Expr::FunctionHead("InverseLaplaceTransform"),
+      ) => None
+    other => other
+  }
+}
+
+///|
+fn meijerint_inversion_no_laplace_fallback(
+  expr : Expr,
+  source : Expr,
+  target : Expr,
+) -> Expr? {
+  if meijerint_explicit_nonreal_exp_shift(expr, source) {
+    return None
+  }
+  match meijerint_exp_shift_delta(expr, source, target) {
+    Some(value) => return Some(value)
+    None => ()
+  }
+  match meijerint_exp_shifted_transform(expr, source, target) {
+    Some(value) => return Some(value)
+    None => ()
+  }
+  match meijerint_sqrt_exp_kernel(expr, source, target) {
+    Some(value) => return Some(value)
+    None => ()
+  }
+  if meijerint_source_rejects_base_power_shift(expr, source) {
+    return None
+  }
+  if meijerint_source_rejects_unadorned_sqrt_kernel(expr, source) {
+    return None
+  }
+  if meijerint_source_rejects_add(expr, source) {
+    return None
+  }
+  None
+}
+
+///|
+fn meijerint_inversion_rejects_laplace_fallback(
+  expr : Expr,
+  source : Expr,
+) -> Bool {
+  meijerint_explicit_nonreal_exp_shift(expr, source) ||
+  meijerint_source_rejects_base_power_shift(expr, source) ||
+  meijerint_source_rejects_unadorned_sqrt_kernel(expr, source) ||
+  meijerint_source_rejects_add(expr, source)
+}
+
+///|
+fn meijerint_source_rejects_add(expr : Expr, source : Expr) -> Bool {
+  let s_name = match symbol_name(source) {
+    Some(name) => name
+    None => return false
+  }
+  match expr {
+    // Source map: SymPy's meijerint_inversion does not split Add terms. The
+    // termwise split lives one layer up in laplace.py's integration fallback,
+    // so the public Meijer hook should reject source-dependent sums here.
+    @symcore.Expr::Add(_) => expr_depends_on(expr, s_name)
+    _ => false
+  }
+}
+
+///|
+fn meijerint_source_rejects_base_power_shift(
+  expr : Expr,
+  source : Expr,
+) -> Bool {
+  let s_name = match symbol_name(source) {
+    Some(name) => name
+    None => return false
+  }
+  meijerint_has_source_base_power_shift(expr, s_name)
+}
+
+///|
+fn meijerint_has_source_base_power_shift(expr : Expr, s_name : String) -> Bool {
+  match expr {
+    @symcore.Expr::Pow(base, exp) =>
+      if !meijerint_is_exp1(base) &&
+        !expr_depends_on(base, s_name) &&
+        expr_depends_on(exp, s_name) {
+        true
+      } else {
+        @symcore.children(expr).any(child => {
+          meijerint_has_source_base_power_shift(child, s_name)
+        })
+      }
+    _ =>
+      @symcore.children(expr).any(child => {
+        meijerint_has_source_base_power_shift(child, s_name)
+      })
+  }
+}
+
+///|
+fn meijerint_is_exp1(expr : Expr) -> Bool {
+  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1)
+}
+
+///|
+fn meijerint_source_rejects_unadorned_sqrt_kernel(
+  expr : Expr,
+  source : Expr,
+) -> Bool {
+  let s_name = match symbol_name(source) {
+    Some(name) => name
+    None => return false
+  }
+  let (num_factors, den_opt) = split_division_raw(expr)
+  match den_opt {
+    Some(den) => {
+      let num = factors_expr(num_factors)
+      !expr_depends_on(num, s_name) &&
+      meijerint_source_rejects_sqrt_denominator(den, s_name)
+    }
+    None => {
+      let (coeff, factors) = split_mul(expr, s_name)
+      if factors.length() != 1 || expr_depends_on(coeff, s_name) {
+        false
+      } else {
+        meijerint_source_rejects_negative_half_power(factors[0], s_name)
+      }
+    }
+  }
+}
+
+///|
+fn meijerint_source_rejects_sqrt_denominator(
+  den : Expr,
+  s_name : String,
+) -> Bool {
+  match parse_sqrt_affine(den, s_name) {
+    Some(_) => return true
+    None => ()
+  }
+  match parse_scaled_sqrt_linear_plus_const(den, s_name) {
+    Some(_) => true
+    None => false
+  }
+}
+
+///|
+fn meijerint_source_rejects_negative_half_power(
+  expr : Expr,
+  s_name : String,
+) -> Bool {
+  match expr {
+    @symcore.Expr::Pow(base, exp) if expr_same_simplified(exp, expr_rat(-1, 2)) =>
+      match split_linear_coeff_direct(base, s_name) {
+        Some((coeff, offset)) =>
+          !expr_is_zero(coeff) &&
+          !expr_depends_on(coeff, s_name) &&
+          !expr_depends_on(offset, s_name)
+        None => false
+      }
+    _ => false
+  }
+}
+
+///|
+fn meijerint_explicit_nonreal_exp_shift(expr : Expr, source : Expr) -> Bool {
+  match meijerint_exp_shift_components(expr, source) {
+    Some((_scale, shift, _offset)) =>
+      match meijerint_exact_complex_parts(shift) {
+        Some((_real, imag)) => !expr_is_zero(imag)
+        None => false
+      }
+    None => false
+  }
+}
+
+///|
+fn meijerint_exp_shift_delta(
+  expr : Expr,
+  source : Expr,
+  target : Expr,
+) -> Expr? {
+  match meijerint_exp_shift_components(expr, source) {
+    Some((scale, shift, offset)) =>
+      match meijerint_exact_complex_parts(shift) {
+        Some((real_shift, imag_shift)) if expr_is_zero(imag_shift) => {
+          let weight = if expr_is_zero(offset) {
+            scale
+          } else {
+            expr_mul(scale, @symelem.exp(offset))
+          }
+          Some(
+            expr_simplify(
+              expr_mul(
+                weight,
+                @symcore.raw_function("DiracDelta", [
+                  expr_add(target, real_shift),
+                ]),
+              ),
+            ),
+          )
+        }
+        Some((_real_shift, _imag_shift)) => None
+        None => {
+          let weight = if expr_is_zero(offset) {
+            scale
+          } else {
+            expr_mul(scale, @symelem.exp(offset))
+          }
+          let value = expr_simplify(
+            expr_mul(
+              weight,
+              @symcore.raw_function("DiracDelta", [expr_add(target, shift)]),
+            ),
+          )
+          let cond = @symcore.raw_function("Eq", [
+            meijerint_symbolic_im(shift),
+            @symcore.int(0),
+          ])
+          Some(@symcore.raw_function("Piecewise", [value, cond]))
+        }
+      }
+    None => None
+  }
+}
+
+///|
+fn meijerint_exp_shift_components(
+  expr : Expr,
+  source : Expr,
+) -> (Expr, Expr, Expr)? {
+  let s_name = match symbol_name(source) {
+    Some(name) => name
+    None => return None
+  }
+  let (scale, factors) = split_mul(expr, s_name)
+  if factors.length() == 0 {
+    return None
+  }
+  // Source map: SymPy's meijerint_inversion scans a Mul and accumulates every
+  // exp(a*x + b) shift before deciding whether the remaining expression is
+  // source-free. This is intentionally narrower than normal inverse-Laplace
+  // dispatch: if any source-dependent non-exp factor remains, this helper
+  // declines and the ordinary inverse rules handle it.
+  let mut shift = @symcore.int(0)
+  let mut offset = @symcore.int(0)
+  for factor in factors {
+    match unary_application_arg(factor, "exp") {
+      Some(inner) =>
+        match linear_coeffs(inner, s_name) {
+          Some((part_shift, part_offset)) => {
+            shift = expr_simplify(expr_add(shift, part_shift))
+            offset = expr_simplify(expr_add(offset, part_offset))
+          }
+          None => return None
+        }
+      None => return None
+    }
+  }
+  Some((scale, shift, offset))
+}
+
+///|
+fn meijerint_exp_shifted_transform(
+  expr : Expr,
+  source : Expr,
+  target : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(source) {
+    Some(name) => name
+    None => return None
+  }
+  let t_name = match symbol_name(target) {
+    Some(name) => name
+    None => return None
+  }
+  let (scale, factors) = split_mul(expr, s_name)
+  if factors.length() == 0 {
+    return None
+  }
+  let residual_factors : Array[Expr] = []
+  let mut residual_scale = scale
+  let mut shift = @symcore.int(0)
+  let mut stripped = false
+  for factor in factors {
+    match unary_application_arg(factor, "exp") {
+      Some(inner) =>
+        match linear_coeffs(inner, s_name) {
+          Some((part_shift, part_offset)) if !expr_is_zero(part_shift) => {
+            stripped = true
+            shift = expr_simplify(expr_add(shift, part_shift))
+            if !expr_is_zero(part_offset) {
+              residual_scale = expr_simplify(
+                expr_mul(residual_scale, @symelem.exp(part_offset)),
+              )
+            }
+          }
+          _ => residual_factors.push(factor)
+        }
+      None => residual_factors.push(factor)
+    }
+  }
+  if !stripped {
+    return None
+  }
+  let residual = expr_simplify(
+    expr_mul(residual_scale, factors_expr(residual_factors)),
+  )
+  if !expr_depends_on(residual, s_name) ||
+    !meijerint_shift_residual_supported(residual, s_name) {
+    return None
+  }
+  match do_inverse_laplace_doit(residual, source, target) {
+    Some(value) =>
+      Some(subst_symbol(value, t_name, expr_simplify(expr_add(target, shift))))
+    None => None
+  }
+}
+
+///|
+fn meijerint_shift_residual_supported(expr : Expr, s_name : String) -> Bool {
+  if !expr_laplace_rational_candidate(expr, s_name) {
+    return false
+  }
+  let (num_factors, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(value) => value
+    None => return false
+  }
+  let num = factors_expr(num_factors)
+  match num {
+    @symcore.Expr::Add(_) if expr_depends_on(num, s_name) => return false
+    _ => ()
+  }
+  let num_coeffs = match poly_coeffs_general_int(num, s_name) {
+    Some(value) => poly_trim_general_int(value)
+    None => return false
+  }
+  let den_coeffs = match poly_coeffs_general_int(den, s_name) {
+    Some(value) => poly_trim_general_int(value)
+    None => return false
+  }
+  den_coeffs.length() > 1 && num_coeffs.length() < den_coeffs.length()
+}
+
+///|
+fn meijerint_symbolic_im(expr : Expr) -> Expr {
+  match meijerint_exact_complex_parts(expr) {
+    Some((_real, imag)) => return imag
+    None => ()
+  }
+  match expr {
+    @symcore.Expr::Add(args) => {
+      let parts : Array[Expr] = []
+      for arg in args {
+        let imag = meijerint_symbolic_im(arg)
+        if !expr_is_zero(imag) {
+          parts.push(imag)
+        }
+      }
+      if parts.length() == 0 {
+        @symcore.int(0)
+      } else {
+        expr_simplify(@symcore.add(parts))
+      }
+    }
+    @symcore.Expr::Mul(args) => {
+      let unknown : Array[Expr] = []
+      let mut real = @symcore.int(1)
+      let mut imag = @symcore.int(0)
+      for arg in args {
+        match meijerint_exact_complex_parts(arg) {
+          Some((arg_real, arg_imag)) => {
+            let next_real = expr_sub(
+              expr_mul(real, arg_real),
+              expr_mul(imag, arg_imag),
+            )
+            let next_imag = expr_add(
+              expr_mul(real, arg_imag),
+              expr_mul(imag, arg_real),
+            )
+            real = expr_simplify(next_real)
+            imag = expr_simplify(next_imag)
+          }
+          None => unknown.push(arg)
+        }
+      }
+      if unknown.length() == 0 {
+        imag
+      } else {
+        let rest = factors_expr(unknown)
+        expr_simplify(
+          expr_add(
+            expr_mul(real, @symelem.im(rest)),
+            expr_mul(imag, @symelem.re(rest)),
+          ),
+        )
+      }
+    }
+    _ => @symelem.im(expr)
+  }
+}
+
+///|
+fn meijerint_exact_complex_parts(expr : Expr) -> (Expr, Expr)? {
+  match expr {
+    @symcore.Expr::Number(_)
+    | @symcore.Expr::Float(_)
+    | @symcore.Expr::NumberSymbol(
+      @symcore.NumberSymbolKind::Pi
+      | @symcore.NumberSymbolKind::Exp1
+      | @symcore.NumberSymbolKind::EulerGamma
+      | @symcore.NumberSymbolKind::GoldenRatio
+      | @symcore.NumberSymbolKind::Catalan
+    ) => Some((expr, @symcore.int(0)))
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) =>
+      Some((@symcore.int(0), @symcore.int(1)))
+    @symcore.Expr::Add(args) => {
+      let mut real = @symcore.int(0)
+      let mut imag = @symcore.int(0)
+      for arg in args {
+        match meijerint_exact_complex_parts(arg) {
+          Some((arg_real, arg_imag)) => {
+            real = expr_add(real, arg_real)
+            imag = expr_add(imag, arg_imag)
+          }
+          None => return None
+        }
+      }
+      Some((expr_simplify(real), expr_simplify(imag)))
+    }
+    @symcore.Expr::Mul(args) => {
+      let mut real = @symcore.int(1)
+      let mut imag = @symcore.int(0)
+      for arg in args {
+        match meijerint_exact_complex_parts(arg) {
+          Some((arg_real, arg_imag)) => {
+            let next_real = expr_sub(
+              expr_mul(real, arg_real),
+              expr_mul(imag, arg_imag),
+            )
+            let next_imag = expr_add(
+              expr_mul(real, arg_imag),
+              expr_mul(imag, arg_real),
+            )
+            real = expr_simplify(next_real)
+            imag = expr_simplify(next_imag)
+          }
+          None => return None
+        }
+      }
+      Some((real, imag))
+    }
+    _ => None
+  }
+}
+
+///|
+fn meijerint_sqrt_exp_kernel(
+  expr : Expr,
+  source : Expr,
+  target : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(source) {
+    Some(name) => name
+    None => return None
+  }
+  let (scale, factors) = split_mul(expr, s_name)
+  if factors.length() != 1 {
+    return None
+  }
+  let param = match
+    meijerint_sqrt_exp_kernel_param(factors[0], source, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  if !meijerint_sqrt_exp_kernel_scale_matches(scale, param) {
+    return None
+  }
+  match meijerint_exact_complex_parts(param) {
+    Some((real, imag)) =>
+      if !expr_is_zero(imag) || !expr_is_positive(real) {
+        return None
+      }
+    None => ()
+  }
+  let body = meijerint_sqrt_exp_kernel_body(param, target)
+  if expr_is_positive(param) {
+    Some(body)
+  } else {
+    Some(
+      @symcore.raw_function("Piecewise", [
+        body,
+        meijerint_sqrt_exp_kernel_cond(param),
+        @symcore.raw_function("InverseLaplaceTransform", [
+          expr,
+          source,
+          target,
+          @symcore.Expr::Symbol("_None"),
+        ]),
+        true_expr(),
+      ]),
+    )
+  }
+}
+
+///|
+fn meijerint_sqrt_exp_kernel_param(
+  factor : Expr,
+  source : Expr,
+  s_name : String,
+) -> Expr? {
+  let inner = match unary_application_arg(factor, "exp") {
+    Some(value) => value
+    None => return None
+  }
+  let (coeff, factors) = split_mul(inner, s_name)
+  if factors.length() != 1 || !meijerint_is_source_sqrt(factors[0], source) {
+    return None
+  }
+  match
+    unary_application_arg(
+      expr_simplify(expr_div(coeff, @symcore.int(-2))),
+      "sqrt",
+    ) {
+    Some(param) => Some(param)
+    None => None
+  }
+}
+
+///|
+fn meijerint_is_source_sqrt(expr : Expr, source : Expr) -> Bool {
+  match unary_application_arg(expr, "sqrt") {
+    Some(arg) => expr_eq(arg, source)
+    None =>
+      match expr {
+        @symcore.Expr::Pow(base, exp) =>
+          expr_eq(base, source) && expr_same_simplified(exp, expr_rat(1, 2))
+        _ => false
+      }
+  }
+}
+
+///|
+fn meijerint_sqrt_exp_kernel_scale_matches(scale : Expr, param : Expr) -> Bool {
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  expr_same_simplified(expr_mul(scale, @symelem.sqrt(param)), sqrt_pi()) ||
+  expr_same_simplified(scale, @symelem.sqrt(expr_div(pi, param))) ||
+  expr_same_simplified(scale, expr_div(sqrt_pi(), @symelem.sqrt(param)))
+}
+
+///|
+fn meijerint_sqrt_exp_kernel_body(param : Expr, target : Expr) -> Expr {
+  expr_simplify(
+    expr_div(
+      expr_mul(
+        @symelem.exp(expr_mul(@symcore.int(-1), expr_div(param, target))),
+        @symspec.heaviside(target),
+      ),
+      expr_pow(target, expr_rat(3, 2)),
+    ),
+  )
+}
+
+///|
+fn meijerint_sqrt_exp_kernel_cond(param : Expr) -> Expr {
+  let polar = @symcore.raw_function("polar_lift", [param])
+  let root = @symelem.sqrt(polar)
+  let imag = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::ImaginaryUnit,
+  )
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let quarter_i_pi = expr_div(expr_mul(imag, pi), @symcore.int(4))
+  @symcore.raw_function("And", [
+    @symcore.raw_function("Ne", [root, @symcore.int(0)]),
+    @symcore.raw_function("Gt", [
+      @symelem.re(
+        expr_mul(@symelem.exp(expr_mul(@symcore.int(-1), quarter_i_pi)), root),
+      ),
+      @symcore.int(0),
+    ]),
+    @symcore.raw_function("Gt", [
+      @symelem.re(expr_mul(@symelem.exp(quarter_i_pi), root)),
+      @symcore.int(0),
+    ]),
+  ])
 }
 
 ///|

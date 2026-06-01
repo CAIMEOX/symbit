@@ -20,7 +20,10 @@ extern PyObject *PyObject_Str(PyObject *);
 extern void PyErr_Print(void);
 extern moonbit_string_t py_unicode_as_moonbit_string(PyObject *);
 
-enum { SYMBIT_PY_EVAL_INPUT = 258 };
+enum {
+  SYMBIT_PY_FILE_INPUT = 257,
+  SYMBIT_PY_EVAL_INPUT = 258
+};
 
 static char *symbit_moonbit_string_to_c(moonbit_string_t ms) {
   int32_t len = Moonbit_array_length(ms);
@@ -65,6 +68,40 @@ static PyObject *symbit_integrals_globals(void) {
     return NULL;
   }
 
+  PyObject *path_setup = PyRun_StringFlags(
+    "from pathlib import Path\n"
+    "import sys\n"
+    "_mods = [k for k in list(sys.modules) if k == 'sympy' or k.startswith('sympy.')]\n"
+    "_cwd = Path.cwd().resolve()\n"
+    "_seen = set()\n"
+    "_path = None\n"
+    "for _base in [_cwd, *_cwd.parents]:\n"
+    "    for _candidate in (_base / 'sympy', _base.parent / 'sympy'):\n"
+    "        if _candidate in _seen:\n"
+    "            continue\n"
+    "        _seen.add(_candidate)\n"
+    "        if (_candidate / 'sympy').is_dir():\n"
+    "            _path = str(_candidate)\n"
+    "            break\n"
+    "    if _path is not None:\n"
+    "        break\n"
+    "if _path is None:\n"
+    "    raise RuntimeError('repo sympy path not found')\n"
+    "if _path not in sys.path:\n"
+    "    sys.path.insert(0, _path)\n"
+    "for _name in _mods:\n"
+    "    sys.modules.pop(_name, None)\n",
+    SYMBIT_PY_FILE_INPUT,
+    globals,
+    globals,
+    NULL
+  );
+  if (path_setup == NULL) {
+    PyErr_Print();
+    return NULL;
+  }
+  Py_DecRef(path_setup);
+
   PyObject *sympy = PyImport_ImportModule("sympy");
   if (sympy == NULL) {
     PyErr_Print();
@@ -88,6 +125,42 @@ static PyObject *symbit_integrals_globals(void) {
     return NULL;
   }
   Py_DecRef(json);
+
+  PyObject *helpers = PyRun_StringFlags(
+    "__symbit_locals = {\n"
+    "    name: getattr(sympy, name)\n"
+    "    for name in (\n"
+    "        'sqrt', 'exp', 'exp_polar', 'sin', 'cos', 'tan', 'cot',\n"
+    "        'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'acoth',\n"
+    "        'log', 'atan', 'atanh', 'asin', 'asinh', 'arg', 're', 'im',\n"
+    "        'polar_lift',\n"
+    "        'Ei', 'expint', 'E1', 'Si', 'Ci', 'Shi', 'Chi', 'erf',\n"
+    "        'erfc', 'fresnels', 'fresnelc', 'besselj', 'bessely',\n"
+    "        'besselk', 'besseli', 'gamma', 'lowergamma', 'uppergamma',\n"
+    "        'Abs', 'DiracDelta', 'Heaviside', 'SingularityFunction',\n"
+    "        'Piecewise', 'Tuple', 'And', 'Or', 'Not', 'Eq', 'Ne', 'Min',\n"
+    "        'Max', 'Lt', 'Le', 'Gt', 'Ge', 'Derivative', 'Subs',\n"
+    "        'LaplaceTransform', 'InverseLaplaceTransform', 'Matrix'\n"
+    "    )\n"
+    "}\n"
+    "__symbit_symbol_cache = {}\n"
+    "def __symbit_symbol(name):\n"
+    "    try:\n"
+    "        return __symbit_symbol_cache[name]\n"
+    "    except KeyError:\n"
+    "        value = sympy.Symbol(name)\n"
+    "        __symbit_symbol_cache[name] = value\n"
+    "        return value\n",
+    SYMBIT_PY_FILE_INPUT,
+    globals,
+    globals,
+    NULL
+  );
+  if (helpers == NULL) {
+    PyErr_Print();
+    return NULL;
+  }
+  Py_DecRef(helpers);
 
   return globals;
 }

@@ -522,7 +522,7 @@ fn poly_coeffs_upto2_raw(expr : Expr, var_name : String) -> Array[Expr]? {
     @symcore.Expr::Add(args) => {
       let coeffs = [@symcore.int(0), @symcore.int(0), @symcore.int(0)]
       for arg in args {
-        match poly_coeffs_upto2(arg, var_name) {
+        match poly_coeffs_upto2_raw(arg, var_name) {
           Some(c) => {
             coeffs[0] = expr_add(coeffs[0], c[0])
             coeffs[1] = expr_add(coeffs[1], c[1])
@@ -536,7 +536,7 @@ fn poly_coeffs_upto2_raw(expr : Expr, var_name : String) -> Array[Expr]? {
     @symcore.Expr::Mul(args) => {
       let coeffs = [@symcore.int(1), @symcore.int(0), @symcore.int(0)]
       for arg in args {
-        match poly_coeffs_upto2(arg, var_name) {
+        match poly_coeffs_upto2_raw(arg, var_name) {
           Some(c) => {
             let next = [@symcore.int(0), @symcore.int(0), @symcore.int(0)]
             for i in 0..<3 {
@@ -562,9 +562,9 @@ fn poly_coeffs_upto2_raw(expr : Expr, var_name : String) -> Array[Expr]? {
     @symcore.Expr::Pow(base, exp) =>
       match expr_is_int_value(exp) {
         Some(0) => Some([@symcore.int(1), @symcore.int(0), @symcore.int(0)])
-        Some(1) => poly_coeffs_upto2(base, var_name)
+        Some(1) => poly_coeffs_upto2_raw(base, var_name)
         Some(2) =>
-          match poly_coeffs_upto2(base, var_name) {
+          match poly_coeffs_upto2_raw(base, var_name) {
             Some(c) =>
               if !expr_is_zero(c[2]) {
                 None
