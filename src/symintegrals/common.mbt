@@ -179,12 +179,17 @@ fn expr_eval_special(expr : Expr) -> Expr {
 
 ///|
 fn expr_add(lhs : Expr, rhs : Expr) -> Expr {
-  if expr_trivial_zero(lhs) {
-    rhs
-  } else if expr_trivial_zero(rhs) {
-    lhs
-  } else {
-    @symcore.add([lhs, rhs])
+  match (lhs, rhs) {
+    (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) =>
+      @symcore.Expr::Number(a + b)
+    _ =>
+      if expr_trivial_zero(lhs) {
+        rhs
+      } else if expr_trivial_zero(rhs) {
+        lhs
+      } else {
+        @symcore.add([lhs, rhs])
+      }
   }
 }
 
@@ -201,31 +206,45 @@ fn expr_sub(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn expr_mul(lhs : Expr, rhs : Expr) -> Expr {
-  if expr_trivial_zero(lhs) || expr_trivial_zero(rhs) {
-    @symcore.int(0)
-  } else if expr_trivial_one(lhs) {
-    rhs
-  } else if expr_trivial_one(rhs) {
-    lhs
-  } else if expr_trivial_minus_one(lhs) {
-    @symcore.mul([@symcore.int(-1), rhs])
-  } else if expr_trivial_minus_one(rhs) {
-    @symcore.mul([@symcore.int(-1), lhs])
-  } else {
-    @symcore.mul([lhs, rhs])
+  match (lhs, rhs) {
+    (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) =>
+      @symcore.Expr::Number(a * b)
+    _ =>
+      if expr_trivial_zero(lhs) || expr_trivial_zero(rhs) {
+        @symcore.int(0)
+      } else if expr_trivial_one(lhs) {
+        rhs
+      } else if expr_trivial_one(rhs) {
+        lhs
+      } else if expr_trivial_minus_one(lhs) {
+        @symcore.mul([@symcore.int(-1), rhs])
+      } else if expr_trivial_minus_one(rhs) {
+        @symcore.mul([@symcore.int(-1), lhs])
+      } else {
+        @symcore.mul([lhs, rhs])
+      }
   }
 }
 
 ///|
 fn expr_div(lhs : Expr, rhs : Expr) -> Expr {
-  if expr_trivial_zero(lhs) {
-    @symcore.int(0)
-  } else if expr_trivial_one(rhs) {
-    lhs
-  } else if expr_trivial_minus_one(rhs) {
-    @symcore.mul([@symcore.int(-1), lhs])
-  } else {
-    @symcore.mul([lhs, @symcore.pow(rhs, @symcore.int(-1))])
+  match (lhs, rhs) {
+    (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) =>
+      match
+        (try? a.div_r(b) : Result[@symnum.BigRational, @symnum.RationalError]) {
+        Ok(value) => @symcore.Expr::Number(value)
+        Err(_) => @symcore.mul([lhs, @symcore.pow(rhs, @symcore.int(-1))])
+      }
+    _ =>
+      if expr_trivial_zero(lhs) {
+        @symcore.int(0)
+      } else if expr_trivial_one(rhs) {
+        lhs
+      } else if expr_trivial_minus_one(rhs) {
+        @symcore.mul([@symcore.int(-1), lhs])
+      } else {
+        @symcore.mul([lhs, @symcore.pow(rhs, @symcore.int(-1))])
+      }
   }
 }
 
