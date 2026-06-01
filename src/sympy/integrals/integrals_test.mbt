@@ -4199,6 +4199,42 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     ),
     0,
   )
+  let gamma_ratio_source = @symspec.gamma(s) *
+    (@symspec.gamma(s + a) ^ @symcore.int(-1))
+  let gamma_ratio_with_conditions = @symintegrals.inverse_laplace_transform_eval(
+    gamma_ratio_source,
+    s,
+    x,
+    noconds=false,
+  )
+  match @symcore.tuple_items(gamma_ratio_with_conditions) {
+    Some([value, cond]) => {
+      let gamma_ratio_base = @symcore.int(1) -
+        @symelem.exp(@symcore.int(-1) * x)
+      let expected = (gamma_ratio_base ^ (a - @symcore.int(1))) *
+        @symspec.heaviside(x) *
+        (@symspec.gamma(a) ^ @symcore.int(-1))
+      assert_eq(
+        @symcore.compare_expr(
+          @symsimplify.simplify(value),
+          @symsimplify.simplify(expected),
+        ),
+        0,
+      )
+      assert_eq(
+        @symcore.compare_expr(
+          cond,
+          @symcore.function("Le", [
+            @symcore.int(1) - @symelem.re(a),
+            @symcore.int(0),
+          ]),
+        ),
+        0,
+      )
+    }
+    _ =>
+      fail("expected Tuple from inverse_laplace_transform_eval noconds=false")
+  }
 
   let z = @symcore.Expr::Symbol("z")
   let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)

@@ -7495,6 +7495,33 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
     "0",
   )
 
+  let gamma_ratio_with_conditions = @symintegrals.inverse_laplace_transform_eval(
+    @symspec.gamma(s) * (@symspec.gamma(s + a) ^ @symcore.int(-1)),
+    s,
+    x,
+    noconds=false,
+  )
+  match @symcore.tuple_items(gamma_ratio_with_conditions) {
+    Some([value, cond]) => {
+      assert_eq(
+        integrals_eval_str(
+          "sympy.sstr(sympy.simplify((" +
+          py_expr(value) +
+          ") - sympy.inverse_laplace_transform(sympy.gamma(sympy.Symbol('s'))/sympy.gamma(sympy.Symbol('s') + sympy.Symbol('a')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+        ),
+        "0",
+      )
+      assert_eq(
+        integrals_eval_str("sympy.sstr(" + py_expr(cond) + ")"),
+        integrals_eval_str(
+          "sympy.sstr(sympy.inverse_laplace_transform(sympy.gamma(sympy.Symbol('s'))/sympy.gamma(sympy.Symbol('s') + sympy.Symbol('a')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=False)[1])",
+        ),
+      )
+    }
+    _ =>
+      fail("expected Tuple from inverse_laplace_transform_eval noconds=false")
+  }
+
   let z = @symcore.Expr::Symbol("z")
   let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
   let sqrt_kernel = @symelem.sqrt(pi) *

@@ -3630,6 +3630,11 @@ fn inverse_laplace_condition_hint(
     }
     _ => {
       match
+        inverse_laplace_inverse_mellin_condition(expr, s_name, t, computed) {
+        Some(cond) => return cond
+        None => ()
+      }
+      match
         inverse_laplace_integration_piecewise_condition(
           expr, s_name, t, computed,
         ) {
@@ -4976,6 +4981,36 @@ fn inverse_laplace_integration_term(
           )
         None => None
       }
+  }
+}
+
+///|
+fn inverse_laplace_inverse_mellin_condition(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+  computed : Expr,
+) -> Expr? {
+  let x_name = "__symbit_laplace_mellin_x"
+  let x = @symcore.Expr::Symbol(x_name)
+  match
+    do_inverse_mellin_doit_with_condition(
+      expr,
+      @symcore.Expr::Symbol(s_name),
+      x,
+    ) {
+    Some((value, cond)) => {
+      let mapped = inverse_laplace_mellin_subst_simplify(
+        subst_symbol(value, x_name, @symelem.exp(expr_mul(@symcore.int(-1), t))),
+        t,
+      )
+      if expr_same_simplified(mapped, computed) {
+        Some(cond)
+      } else {
+        None
+      }
+    }
+    None => None
   }
 }
 
@@ -12028,6 +12063,19 @@ pub fn do_inverse_mellin_doit(_expr : Expr, s : Expr, x : Expr) -> Expr? {
 }
 
 ///|
+fn do_inverse_mellin_doit_with_condition(
+  _expr : Expr,
+  s : Expr,
+  x : Expr,
+) -> (Expr, Expr)? {
+  match (symbol_name(s), symbol_name(x)) {
+    (Some(s_name), Some(_)) =>
+      inverse_mellin_doit_with_condition(expr_simplify(_expr), s_name, x)
+    _ => None
+  }
+}
+
+///|
 /// Evaluate a Mellin transform with optional metadata.
 ///
 /// - Does: Runs the Mellin rule engine and optionally keeps strip and condition metadata.
@@ -14328,6 +14376,40 @@ fn inverse_mellin_doit(expr : Expr, s_name : String, x : Expr) -> Expr? {
 }
 
 ///|
+fn inverse_mellin_doit_with_condition(
+  expr : Expr,
+  s_name : String,
+  x : Expr,
+) -> (Expr, Expr)? {
+  let s_sym = @symcore.Expr::Symbol(s_name)
+  match expr {
+    @symcore.Expr::Add(terms) => {
+      let values : Array[Expr] = []
+      let mut cond = true_expr()
+      for term in terms {
+        match inverse_mellin_doit_with_condition(term, s_name, x) {
+          Some((value, term_cond)) => {
+            values.push(value)
+            cond = and_expr(cond, term_cond)
+          }
+          None => return None
+        }
+      }
+      Some((expr_simplify(@symcore.add(values)), cond))
+    }
+    _ =>
+      match inverse_mellin_gamma_ratio_with_condition(expr, s_sym, x) {
+        Some(pair) => Some(pair)
+        None =>
+          match inverse_mellin_doit(expr, s_name, x) {
+            Some(value) => Some((value, true_expr()))
+            None => None
+          }
+      }
+  }
+}
+
+///|
 fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
   let s_name = match symbol_name(s_sym) {
     Some(name) => name
@@ -14538,6 +14620,10 @@ fn inverse_mellin_named_gamma_ratio_term(
   s_sym : Expr,
   x : Expr,
 ) -> Expr? {
+  match inverse_mellin_gamma_ratio_with_condition(expr, s_sym, x) {
+    Some((value, _)) => return Some(value)
+    None => ()
+  }
   let s_name = match symbol_name(s_sym) {
     Some(name) => name
     None => return None
@@ -14581,6 +14667,59 @@ fn inverse_mellin_named_gamma_ratio_term(
     }
   }
   None
+}
+
+///|
+fn inverse_mellin_gamma_ratio_with_condition(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> (Expr, Expr)? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(value) => value
+    None => return None
+  }
+  let numerator = factors_expr(num)
+  let (coeff, factors) = split_mul(numerator, s_name)
+  if !expr_eq(coeff, @symcore.int(1)) || factors.length() != 1 {
+    return None
+  }
+  match
+    (
+      unary_application_arg(factors[0], "gamma"),
+      unary_application_arg(den, "gamma"),
+    ) {
+    (Some(gamma_arg), Some(den_arg)) if expr_eq(gamma_arg, s_sym) =>
+      match linear_coeffs(den_arg, s_name) {
+        Some((den_coeff, den_offset)) if expr_eq(den_coeff, @symcore.int(1)) &&
+          !expr_is_zero(den_offset) => {
+          let value = expr_simplify(
+            expr_div(
+              expr_mul(
+                expr_pow(
+                  expr_sub(@symcore.int(1), x),
+                  expr_sub(den_offset, @symcore.int(1)),
+                ),
+                @symspec.heaviside(expr_sub(@symcore.int(1), x)),
+              ),
+              @symspec.gamma(den_offset),
+            ),
+          )
+          let cond = @symcore.function("Le", [
+            expr_sub(@symcore.int(1), @symelem.re(den_offset)),
+            @symcore.int(0),
+          ])
+          Some((value, cond))
+        }
+        _ => None
+      }
+    _ => None
+  }
 }
 
 ///|
