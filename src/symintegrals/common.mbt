@@ -54,38 +54,59 @@ fn[T] retry_with_simplified(expr : Expr, parse : (Expr) -> T?) -> T? {
 
 ///|
 fn expr_exact_int(expr : Expr) -> Int? {
-  match @symcore.exact_number_num_den(expr) {
-    Some((num, den)) =>
-      if den.to_int() == 1 {
-        Some(num.to_int())
+  match expr {
+    @symcore.Expr::Number(n) =>
+      if n.is_integral() {
+        Some(n.numerator().to_int())
       } else {
         None
       }
-    None => None
+    _ =>
+      match @symcore.exact_number_num_den(expr) {
+        Some((num, den)) =>
+          if den.to_int() == 1 {
+            Some(num.to_int())
+          } else {
+            None
+          }
+        None => None
+      }
   }
 }
 
 ///|
 fn expr_trivial_zero(expr : Expr) -> Bool {
-  match expr_exact_int(expr) {
-    Some(0) => true
-    _ => false
+  match expr {
+    @symcore.Expr::Number(n) => n.is_zero()
+    _ =>
+      match expr_exact_int(expr) {
+        Some(0) => true
+        _ => false
+      }
   }
 }
 
 ///|
 fn expr_trivial_one(expr : Expr) -> Bool {
-  match expr_exact_int(expr) {
-    Some(1) => true
-    _ => false
+  match expr {
+    @symcore.Expr::Number(n) => n.is_one()
+    _ =>
+      match expr_exact_int(expr) {
+        Some(1) => true
+        _ => false
+      }
   }
 }
 
 ///|
 fn expr_trivial_minus_one(expr : Expr) -> Bool {
-  match expr_exact_int(expr) {
-    Some(-1) => true
-    _ => false
+  match expr {
+    @symcore.Expr::Number(n) => n.is_integral() && n.numerator().equal_int(-1)
+    _ =>
+      match expr_exact_int(expr) {
+        Some(-1) => true
+        _ => false
+      }
   }
 }
 
