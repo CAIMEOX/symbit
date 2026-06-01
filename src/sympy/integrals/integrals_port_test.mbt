@@ -6156,6 +6156,38 @@ test "symintegrals parity inverse Laplace symbolic kernel rules" {
     "0",
   )
 
+  let np = @symcore.Expr::Symbol("np")
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(np))
+  @symassume.add_global_assumption(@symassume.q_integer(np))
+  let symbolic_integer_time_diff_inverse = doit(
+    inverse_laplace_transform(
+      (s ^ np) * ((s + @symcore.int(1)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let symbolic_integer_unknown_time_diff_inverse = doit(
+    inverse_laplace_transform((s ^ np) * @symcore.raw_function("f", [s]), s, x),
+  )
+  @symassume.clear_global_assumptions()
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(symbolic_integer_time_diff_inverse) +
+      ") - sympy.inverse_laplace_transform(sympy.Symbol('s')**sympy.Symbol('np', positive=True, integer=True)/(sympy.Symbol('s') + 1), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(symbolic_integer_unknown_time_diff_inverse) +
+      ") - sympy.inverse_laplace_transform(sympy.Symbol('s')**sympy.Symbol('np', positive=True, integer=True)*sympy.Function('f')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
   let shifted_power_frequency_diff_inverse = doit(
     inverse_laplace_transform(
       @symcore.raw_derivative((s + @symcore.int(1)) ^ @symcore.int(-2), [s]),

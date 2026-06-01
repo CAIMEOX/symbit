@@ -3365,6 +3365,24 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     symbolic_shifted_time_diff_str.contains("Heaviside"),
   )
 
+  let np = @symcore.Expr::Symbol("np")
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(np))
+  @symassume.add_global_assumption(@symassume.q_integer(np))
+  let symbolic_integer_time_diff = doit(
+    inverse_laplace_transform(
+      (s ^ np) * ((s + @symcore.int(1)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let symbolic_integer_unknown_time_diff = doit(
+    inverse_laplace_transform((s ^ np) * @symcore.raw_function("f", [s]), s, x),
+  )
+  @symassume.clear_global_assumptions()
+  assert_true(symbolic_integer_time_diff == @symcore.int(0))
+  assert_true(symbolic_integer_unknown_time_diff == @symcore.int(0))
+
   let shifted_power_frequency_diff = doit(
     inverse_laplace_transform(
       @symcore.raw_derivative((s + @symcore.int(1)) ^ @symcore.int(-2), [s]),

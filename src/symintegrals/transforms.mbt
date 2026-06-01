@@ -5705,9 +5705,6 @@ fn inverse_laplace_time_diff_term(
   t : Expr,
 ) -> Expr? {
   let (_, den_opt) = split_division_raw(expr)
-  if den_opt is Some(_) {
-    return None
-  }
   let (coeff, factors) = split_mul(expr, s_name)
   if factors.length() == 0 {
     return None
@@ -5715,6 +5712,7 @@ fn inverse_laplace_time_diff_term(
   let rest : Array[Expr] = []
   let mut order = 0
   let mut removed = false
+  let mut symbolic_positive_integer_order = false
   for factor in factors {
     match parse_power_factor(factor, s_name) {
       Some(power) =>
@@ -5723,12 +5721,26 @@ fn inverse_laplace_time_diff_term(
             order += n
             removed = true
           }
+          _ if expr_is_integer_assumed(power) && expr_is_positive(power) => {
+            symbolic_positive_integer_order = true
+            removed = true
+          }
           _ => rest.push(factor)
         }
       None => rest.push(factor)
     }
   }
   if !removed || rest.length() == 0 {
+    return None
+  }
+  if symbolic_positive_integer_order {
+    // Source map: SymPy accepts symbolic positive integer powers in
+    // _inverse_laplace_time_diff, then calls diff(..., t, n). In current
+    // SymPy that symbolic-order diff evaluates to 0 rather than an
+    // unevaluated Derivative object.
+    return Some(@symcore.int(0))
+  }
+  if den_opt is Some(_) {
     return None
   }
   let reduced = expr_simplify(factors_expr(rest))
@@ -18913,6 +18925,17 @@ fn expr_assumption_true(query : @symassume.Query) -> Bool {
   } noraise {
     @symassume.Tri::True => true
     _ => false
+  }
+}
+
+///|
+fn expr_is_integer_assumed(expr : Expr) -> Bool {
+  match expr_num_value(expr) {
+    Some(value) => value.is_integral()
+    None =>
+      expr_assumption_direct_true(@symassume.q_integer(expr)) ||
+      @symassume.is_integer(expr) == @symassume.Tri::True ||
+      expr_assumption_true(@symassume.q_integer(expr))
   }
 }
 
