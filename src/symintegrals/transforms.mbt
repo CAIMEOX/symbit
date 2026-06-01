@@ -3882,9 +3882,11 @@ fn inverse_laplace_rational_term(
   // SymPy calls apart(s) before matching low-degree denominators. For a
   // linear times quadratic denominator, avoid probing the direct quadratic
   // rules on the unsplit product and go straight to the apart decomposition.
-  match inverse_laplace_linear_quadratic_apart_term(num, den, t, s_name) {
-    Some(v) => return Some(v)
-    None => ()
+  if poly_coeffs_upto2_raw(den, s_name) is None {
+    match inverse_laplace_linear_quadratic_apart_term(num, den, t, s_name) {
+      Some(v) => return Some(v)
+      None => ()
+    }
   }
   let (coeff, var_expr_opt) = split_mul_factor(num_exprs, s_name)
   let direct = match var_expr_opt {
@@ -9800,6 +9802,17 @@ fn inverse_laplace_no_var(
     None => ()
   }
   match
+    inverse_laplace_quadratic_degree2_direct_term(
+      @symcore.int(0),
+      coeff,
+      den,
+      t,
+      s_name,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
     inverse_laplace_shifted_diff_square_power(
       @symcore.int(0),
       coeff,
@@ -9995,6 +10008,57 @@ fn inverse_laplace_linear_power_with_var(
 }
 
 ///|
+fn inverse_laplace_linear_power_with_var_direct(
+  num_linear : Expr,
+  num_const : Expr,
+  den : Expr,
+  t : Expr,
+  s_name : String,
+) -> Expr? {
+  let (a, b, power) = match split_linear_power_denom_direct(den, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  inverse_laplace_linear_power_with_var_from_parts(
+    num_linear, num_const, a, b, power, t,
+  )
+}
+
+///|
+fn inverse_laplace_linear_power_with_var_from_parts(
+  num_linear : Expr,
+  num_const : Expr,
+  a : Expr,
+  b : Expr,
+  power : Int,
+  t : Expr,
+) -> Expr? {
+  if expr_is_zero(a) {
+    return None
+  }
+  let quotient_coeff = expr_div(num_linear, a)
+  let residual_const = expr_sub(num_const, expr_mul(quotient_coeff, b))
+  let residual_part = inverse_laplace_linear_power_no_var_from_parts(
+    residual_const, a, b, power, t,
+  )
+  let quotient_part = if power == 1 {
+    Some(expr_mul(quotient_coeff, @symspec.dirac_delta(t)))
+  } else {
+    inverse_laplace_linear_power_no_var_from_parts(
+      quotient_coeff,
+      a,
+      b,
+      power - 1,
+      t,
+    )
+  }
+  match (quotient_part, residual_part) {
+    (Some(left), Some(right)) => Some(expr_add(left, right))
+    _ => None
+  }
+}
+
+///|
 fn inverse_laplace_with_var(
   coeff : Expr,
   num_var : Expr,
@@ -10007,7 +10071,14 @@ fn inverse_laplace_with_var(
       let num_linear = expr_mul(coeff, lin_coeff)
       let num_const = expr_mul(coeff, lin_const)
       match
-        inverse_laplace_linear_power_with_var(
+        inverse_laplace_linear_power_with_var_direct(
+          num_linear, num_const, den, t, s_name,
+        ) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match
+        inverse_laplace_quadratic_degree2_direct_term(
           num_linear, num_const, den, t, s_name,
         ) {
         Some(v) => return Some(v)
@@ -10017,69 +10088,71 @@ fn inverse_laplace_with_var(
         inverse_laplace_shifted_diff_square_power(
           num_linear, num_const, den, t, s_name,
         ) {
-        Some(v) => Some(v)
-        None =>
-          match
-            inverse_laplace_shifted_square_power(
-              num_linear, num_const, den, t, s_name,
-            ) {
-            Some(v) => Some(v)
-            None =>
-              match
-                inverse_laplace_quadratic_power(
-                  num_linear, num_const, den, t, s_name,
-                ) {
-                Some(v) => Some(v)
-                None =>
-                  match
-                    inverse_laplace_quadratic_repeated_root_term(
-                      num_linear, num_const, den, t, s_name,
-                    ) {
-                    Some(v) => Some(v)
-                    None =>
-                      match
-                        inverse_laplace_two_linear_factors(
-                          num_linear, num_const, den, t, s_name,
-                        ) {
-                        Some(v) => Some(v)
-                        None =>
-                          match
-                            inverse_laplace_shifted_diff_square_term(
-                              num_linear, num_const, den, t, s_name,
-                            ) {
-                            Some(v) => Some(v)
-                            None =>
-                              match
-                                inverse_laplace_shifted_square_term(
-                                  num_linear, num_const, den, t, s_name,
-                                ) {
-                                Some(v) => Some(v)
-                                None =>
-                                  match denom_to_diff_square_freq(den, s_name) {
-                                    Some(freq) =>
-                                      Some(
-                                        inverse_laplace_heaviside(
-                                          t,
-                                          expr_add(
-                                            expr_mul(
-                                              num_linear,
-                                              @symelem.cosh(expr_mul(freq, t)),
-                                            ),
-                                            expr_mul(
-                                              expr_div(num_const, freq),
-                                              @symelem.sinh(expr_mul(freq, t)),
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                    None => None
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-          }
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match
+        inverse_laplace_shifted_square_power(
+          num_linear, num_const, den, t, s_name,
+        ) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match
+        inverse_laplace_quadratic_power(num_linear, num_const, den, t, s_name) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match
+        inverse_laplace_quadratic_repeated_root_term(
+          num_linear, num_const, den, t, s_name,
+        ) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match
+        inverse_laplace_linear_power_with_var(
+          num_linear, num_const, den, t, s_name,
+        ) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match
+        inverse_laplace_two_linear_factors(
+          num_linear, num_const, den, t, s_name,
+        ) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match
+        inverse_laplace_shifted_diff_square_term(
+          num_linear, num_const, den, t, s_name,
+        ) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match
+        inverse_laplace_shifted_square_term(
+          num_linear, num_const, den, t, s_name,
+        ) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match denom_to_diff_square_freq(den, s_name) {
+        Some(freq) =>
+          Some(
+            inverse_laplace_heaviside(
+              t,
+              expr_add(
+                expr_mul(num_linear, @symelem.cosh(expr_mul(freq, t))),
+                expr_mul(
+                  expr_div(num_const, freq),
+                  @symelem.sinh(expr_mul(freq, t)),
+                ),
+              ),
+            ),
+          )
+        None => None
       }
     }
     None => None
@@ -10095,23 +10168,137 @@ fn inverse_laplace_quadratic_repeated_root_term(
   s_name : String,
 ) -> Expr? {
   match split_quadratic_repeated_root_denom(den, s_name) {
-    Some((lead, shift)) => {
-      let l = expr_div(num_linear, lead)
-      let m = expr_div(num_const, lead)
+    Some((lead, shift)) =>
       Some(
-        inverse_laplace_heaviside(
-          t,
-          expr_mul(
-            expr_add(
-              expr_mul(m, t),
-              expr_mul(l, expr_sub(@symcore.int(1), expr_mul(shift, t))),
-            ),
-            @symelem.exp(expr_mul(@symcore.int(-1), expr_mul(shift, t))),
-          ),
+        inverse_laplace_quadratic_repeated_root_body(
+          num_linear, num_const, lead, shift, t,
         ),
       )
-    }
     None => None
+  }
+}
+
+///|
+fn inverse_laplace_quadratic_degree2_direct_term(
+  num_linear : Expr,
+  num_const : Expr,
+  den : Expr,
+  t : Expr,
+  s_name : String,
+) -> Expr? {
+  let coeffs = match poly_coeffs_upto2_raw(den, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  if expr_is_zero(coeffs[2]) ||
+    expr_depends_on(coeffs[0], s_name) ||
+    expr_depends_on(coeffs[1], s_name) ||
+    expr_depends_on(coeffs[2], s_name) {
+    return None
+  }
+
+  // Source map: SymPy's _inverse_laplace_rational len(dc) == 3 branch.
+  // Normalize by the leading denominator coefficient once, then use
+  // a = dc[1]/2 and b = dc[2] - a**2 to select the repeated, hyperbolic, or
+  // trigonometric form.
+  let lead = coeffs[2]
+  let shift = expr_div(coeffs[1], expr_mul(@symcore.int(2), lead))
+  let offset = expr_div(coeffs[0], lead)
+  let b = expr_simplify(expr_sub(offset, expr_pow(shift, @symcore.int(2))))
+  let l = expr_div(num_linear, lead)
+  let m = expr_div(num_const, lead)
+  if expr_is_zero(b) {
+    return Some(
+      inverse_laplace_quadratic_repeated_root_normalized_body(l, m, shift, t),
+    )
+  }
+  let centered_const = expr_sub(m, expr_mul(shift, l))
+  if expr_is_negative(b) {
+    let freq = expr_sqrt_positive(expr_mul(@symcore.int(-1), b))
+    inverse_laplace_quadratic_degree2_transcendental_body(
+      l, centered_const, shift, freq, t, true,
+    )
+  } else {
+    let freq = expr_sqrt_positive(b)
+    inverse_laplace_quadratic_degree2_transcendental_body(
+      l, centered_const, shift, freq, t, false,
+    )
+  }
+}
+
+///|
+fn inverse_laplace_quadratic_repeated_root_normalized_body(
+  l : Expr,
+  m : Expr,
+  shift : Expr,
+  t : Expr,
+) -> Expr {
+  inverse_laplace_heaviside(
+    t,
+    expr_mul(
+      expr_add(
+        expr_mul(m, t),
+        expr_mul(l, expr_sub(@symcore.int(1), expr_mul(shift, t))),
+      ),
+      @symelem.exp(expr_mul(@symcore.int(-1), expr_mul(shift, t))),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_quadratic_repeated_root_body(
+  num_linear : Expr,
+  num_const : Expr,
+  lead : Expr,
+  shift : Expr,
+  t : Expr,
+) -> Expr {
+  let l = expr_div(num_linear, lead)
+  let m = expr_div(num_const, lead)
+  inverse_laplace_quadratic_repeated_root_normalized_body(l, m, shift, t)
+}
+
+///|
+fn inverse_laplace_quadratic_degree2_transcendental_body(
+  l : Expr,
+  centered_const : Expr,
+  shift : Expr,
+  freq : Expr,
+  t : Expr,
+  hyperbolic : Bool,
+) -> Expr? {
+  if expr_is_zero(freq) {
+    None
+  } else {
+    let first_part = if expr_is_zero(l) {
+      @symcore.int(0)
+    } else if hyperbolic {
+      expr_mul(l, @symelem.cosh(expr_mul(freq, t)))
+    } else {
+      expr_mul(l, @symelem.cos(expr_mul(freq, t)))
+    }
+    let second_part = if expr_is_zero(centered_const) {
+      @symcore.int(0)
+    } else if hyperbolic {
+      expr_mul(
+        inverse_laplace_div_by_quadratic_freq(centered_const, freq),
+        @symelem.sinh(expr_mul(freq, t)),
+      )
+    } else {
+      expr_mul(
+        inverse_laplace_div_by_quadratic_freq(centered_const, freq),
+        @symelem.sin(expr_mul(freq, t)),
+      )
+    }
+    Some(
+      inverse_laplace_heaviside(
+        t,
+        expr_mul(
+          @symelem.exp(expr_mul(@symcore.int(-1), expr_mul(shift, t))),
+          expr_add(first_part, second_part),
+        ),
+      ),
+    )
   }
 }
 
@@ -10125,37 +10312,51 @@ fn inverse_laplace_shifted_diff_square_term(
 ) -> Expr? {
   match split_shifted_diff_square_denom(den, s_name) {
     Some((lead, shift, freq)) =>
-      if expr_is_zero(freq) {
-        None
-      } else {
-        let centered_const = expr_sub(num_const, expr_mul(num_linear, shift))
-        let cosh_part = if expr_is_zero(num_linear) {
-          @symcore.int(0)
-        } else {
-          expr_mul(num_linear, @symelem.cosh(expr_mul(freq, t)))
-        }
-        let sinh_part = if expr_is_zero(centered_const) {
-          @symcore.int(0)
-        } else {
-          expr_mul(
-            inverse_laplace_div_by_quadratic_freq(centered_const, freq),
-            @symelem.sinh(expr_mul(freq, t)),
-          )
-        }
-        Some(
-          inverse_laplace_heaviside(
-            t,
-            expr_mul(
-              expr_mul(
-                expr_div(@symcore.int(1), lead),
-                @symelem.exp(expr_mul(@symcore.int(-1), expr_mul(shift, t))),
-              ),
-              expr_add(cosh_part, sinh_part),
-            ),
-          ),
-        )
-      }
+      inverse_laplace_shifted_diff_square_body(
+        num_linear, num_const, lead, shift, freq, t,
+      )
     None => None
+  }
+}
+
+///|
+fn inverse_laplace_shifted_diff_square_body(
+  num_linear : Expr,
+  num_const : Expr,
+  lead : Expr,
+  shift : Expr,
+  freq : Expr,
+  t : Expr,
+) -> Expr? {
+  if expr_is_zero(freq) {
+    None
+  } else {
+    let centered_const = expr_sub(num_const, expr_mul(num_linear, shift))
+    let cosh_part = if expr_is_zero(num_linear) {
+      @symcore.int(0)
+    } else {
+      expr_mul(num_linear, @symelem.cosh(expr_mul(freq, t)))
+    }
+    let sinh_part = if expr_is_zero(centered_const) {
+      @symcore.int(0)
+    } else {
+      expr_mul(
+        inverse_laplace_div_by_quadratic_freq(centered_const, freq),
+        @symelem.sinh(expr_mul(freq, t)),
+      )
+    }
+    Some(
+      inverse_laplace_heaviside(
+        t,
+        expr_mul(
+          expr_mul(
+            expr_div(@symcore.int(1), lead),
+            @symelem.exp(expr_mul(@symcore.int(-1), expr_mul(shift, t))),
+          ),
+          expr_add(cosh_part, sinh_part),
+        ),
+      ),
+    )
   }
 }
 
@@ -10169,37 +10370,51 @@ fn inverse_laplace_shifted_square_term(
 ) -> Expr? {
   match split_shifted_square_denom(den, s_name) {
     Some((lead, shift, freq)) =>
-      if expr_is_zero(freq) {
-        None
-      } else {
-        let centered_const = expr_sub(num_const, expr_mul(num_linear, shift))
-        let cos_part = if expr_is_zero(num_linear) {
-          @symcore.int(0)
-        } else {
-          expr_mul(num_linear, @symelem.cos(expr_mul(freq, t)))
-        }
-        let sin_part = if expr_is_zero(centered_const) {
-          @symcore.int(0)
-        } else {
-          expr_mul(
-            inverse_laplace_div_by_quadratic_freq(centered_const, freq),
-            @symelem.sin(expr_mul(freq, t)),
-          )
-        }
-        Some(
-          inverse_laplace_heaviside(
-            t,
-            expr_mul(
-              expr_mul(
-                expr_div(@symcore.int(1), lead),
-                @symelem.exp(expr_mul(@symcore.int(-1), expr_mul(shift, t))),
-              ),
-              expr_add(cos_part, sin_part),
-            ),
-          ),
-        )
-      }
+      inverse_laplace_shifted_square_body(
+        num_linear, num_const, lead, shift, freq, t,
+      )
     None => None
+  }
+}
+
+///|
+fn inverse_laplace_shifted_square_body(
+  num_linear : Expr,
+  num_const : Expr,
+  lead : Expr,
+  shift : Expr,
+  freq : Expr,
+  t : Expr,
+) -> Expr? {
+  if expr_is_zero(freq) {
+    None
+  } else {
+    let centered_const = expr_sub(num_const, expr_mul(num_linear, shift))
+    let cos_part = if expr_is_zero(num_linear) {
+      @symcore.int(0)
+    } else {
+      expr_mul(num_linear, @symelem.cos(expr_mul(freq, t)))
+    }
+    let sin_part = if expr_is_zero(centered_const) {
+      @symcore.int(0)
+    } else {
+      expr_mul(
+        inverse_laplace_div_by_quadratic_freq(centered_const, freq),
+        @symelem.sin(expr_mul(freq, t)),
+      )
+    }
+    Some(
+      inverse_laplace_heaviside(
+        t,
+        expr_mul(
+          expr_mul(
+            expr_div(@symcore.int(1), lead),
+            @symelem.exp(expr_mul(@symcore.int(-1), expr_mul(shift, t))),
+          ),
+          expr_add(cos_part, sin_part),
+        ),
+      ),
+    )
   }
 }
 
@@ -10207,21 +10422,15 @@ fn inverse_laplace_shifted_square_term(
 fn inverse_laplace_div_by_quadratic_freq(numer : Expr, freq : Expr) -> Expr {
   match @symcore.application_parts(freq) {
     Some((head, [inner])) if @symcore.function_head_name(head) == Some("sqrt") =>
-      if expr_same_simplified(numer, inner) {
+      if @symcore.compare_expr(numer, inner) == 0 {
         return freq
-      } else if expr_same_simplified(numer, expr_mul(@symcore.int(-1), inner)) {
+      } else if @symcore.compare_expr(numer, expr_mul(@symcore.int(-1), inner)) ==
+        0 {
         return expr_mul(@symcore.int(-1), freq)
       }
     _ => ()
   }
-  let freq_sq = expr_simplify(expr_pow(freq, @symcore.int(2)))
-  if expr_same_simplified(numer, freq_sq) {
-    freq
-  } else if expr_same_simplified(numer, expr_mul(@symcore.int(-1), freq_sq)) {
-    expr_mul(@symcore.int(-1), freq)
-  } else {
-    expr_simplify(expr_div(numer, freq))
-  }
+  expr_div(numer, freq)
 }
 
 ///|
