@@ -3856,6 +3856,36 @@ fn inverse_laplace_rational_term(
     Some(v) => v
     None => return None
   }
+  let num = factors_expr(num_exprs)
+  match inverse_laplace_improper_rational_term(num, den, t, s_name) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match split_linear_power_factors_direct(den, s_name) {
+    Some(_) => {
+      match
+        inverse_laplace_linear_power_factors_apart_term(num, den, t, s_name) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match inverse_laplace_repeated_linear_apart_term(num, den, t, s_name) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match inverse_laplace_linear_factors_apart_term(num, den, t, s_name) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+    }
+    None => ()
+  }
+  // SymPy calls apart(s) before matching low-degree denominators. For a
+  // linear times quadratic denominator, avoid probing the direct quadratic
+  // rules on the unsplit product and go straight to the apart decomposition.
+  match inverse_laplace_linear_quadratic_apart_term(num, den, t, s_name) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let (coeff, var_expr_opt) = split_mul_factor(num_exprs, s_name)
   let direct = match var_expr_opt {
     None => inverse_laplace_no_var(coeff, den, t, s_name)
@@ -3865,58 +3895,17 @@ fn inverse_laplace_rational_term(
     Some(v) => Some(v)
     None =>
       match
-        inverse_laplace_improper_rational_term(
-          factors_expr(num_exprs),
-          den,
-          t,
-          s_name,
-        ) {
+        inverse_laplace_linear_power_factors_apart_term(num, den, t, s_name) {
         Some(v) => Some(v)
         None =>
           match
-            inverse_laplace_linear_power_factors_apart_term(
-              factors_expr(num_exprs),
-              den,
-              t,
-              s_name,
-            ) {
+            inverse_laplace_repeated_linear_apart_term(num, den, t, s_name) {
             Some(v) => Some(v)
             None =>
               match
-                inverse_laplace_repeated_linear_apart_term(
-                  factors_expr(num_exprs),
-                  den,
-                  t,
-                  s_name,
-                ) {
+                inverse_laplace_linear_factors_apart_term(num, den, t, s_name) {
                 Some(v) => Some(v)
-                None =>
-                  match
-                    inverse_laplace_linear_factors_apart_term(
-                      factors_expr(num_exprs),
-                      den,
-                      t,
-                      s_name,
-                    ) {
-                    Some(v) => Some(v)
-                    None =>
-                      match
-                        inverse_laplace_linear_quadratic_apart_term(
-                          factors_expr(num_exprs),
-                          den,
-                          t,
-                          s_name,
-                        ) {
-                        Some(v) => Some(v)
-                        None =>
-                          inverse_laplace_cubic_apart_term(
-                            factors_expr(num_exprs),
-                            den,
-                            t,
-                            s_name,
-                          )
-                      }
-                  }
+                None => inverse_laplace_cubic_apart_term(num, den, t, s_name)
               }
           }
       }
@@ -4760,7 +4749,7 @@ fn inverse_laplace_linear_quadratic_apart_term(
   if parts.is_empty() {
     None
   } else {
-    Some(expr_simplify(@symcore.add(parts)))
+    Some(@symcore.add(parts))
   }
 }
 
