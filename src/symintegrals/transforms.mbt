@@ -3811,7 +3811,7 @@ fn inverse_laplace_independent_factor_term(
     return None
   }
   match inverse_laplace_doit_control(core, s_name, t, dorational) {
-    Some(value) => Some(expr_simplify(expr_mul(coeff, value)))
+    Some(value) => Some(expr_mul(coeff, value))
     None => None
   }
 }
@@ -3863,12 +3863,16 @@ fn inverse_laplace_rational_term(
   }
   match split_linear_power_factors_direct(den, s_name) {
     Some(_) => {
-      match
-        inverse_laplace_linear_power_factors_apart_term(num, den, t, s_name) {
+      match inverse_laplace_two_linear_factors_apart_term(num, den, t, s_name) {
         Some(v) => return Some(v)
         None => ()
       }
       match inverse_laplace_repeated_linear_apart_term(num, den, t, s_name) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+      match
+        inverse_laplace_linear_power_factors_apart_term(num, den, t, s_name) {
         Some(v) => return Some(v)
         None => ()
       }
@@ -3963,7 +3967,7 @@ fn inverse_laplace_improper_rational_term(
   if terms.is_empty() {
     None
   } else {
-    Some(expr_simplify(@symcore.add(terms)))
+    Some(@symcore.add(terms))
   }
 }
 
@@ -4149,6 +4153,36 @@ fn inverse_laplace_linear_power_factors_apart_term(
   } else {
     Some(@symcore.add(terms))
   }
+}
+
+///|
+fn inverse_laplace_two_linear_factors_apart_term(
+  num : Expr,
+  den : Expr,
+  t : Expr,
+  s_name : String,
+) -> Expr? {
+  let ((a1, b1), (a2, b2)) = match
+    split_two_linear_factors_direct(den, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  let num_coeffs = match poly_coeffs_upto2_raw(num, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  if !expr_is_zero(num_coeffs[2]) {
+    return None
+  }
+  inverse_laplace_two_linear_factors_from_coeffs(
+    num_coeffs[1],
+    num_coeffs[0],
+    a1,
+    b1,
+    a2,
+    b2,
+    t,
+  )
 }
 
 ///|
@@ -10764,41 +10798,55 @@ fn inverse_laplace_two_linear_factors(
   s_name : String,
 ) -> Expr? {
   match split_two_linear_factors(den, s_name) {
-    Some(((a1, b1), (a2, b2))) => {
-      let det = expr_sub(expr_mul(a2, b1), expr_mul(a1, b2))
-      if expr_is_zero(det) {
-        None
-      } else {
-        let left_coeff = expr_div(
-          expr_sub(expr_mul(num_linear, b1), expr_mul(num_const, a1)),
-          det,
-        )
-        let right_coeff = expr_div(
-          expr_sub(expr_mul(num_const, a2), expr_mul(num_linear, b2)),
-          det,
-        )
-        Some(
-          inverse_laplace_heaviside(
-            t,
-            expr_add(
-              expr_mul(
-                expr_div(left_coeff, a1),
-                @symelem.exp(
-                  expr_mul(expr_div(@symcore.int(-1), a1), expr_mul(b1, t)),
-                ),
-              ),
-              expr_mul(
-                expr_div(right_coeff, a2),
-                @symelem.exp(
-                  expr_mul(expr_div(@symcore.int(-1), a2), expr_mul(b2, t)),
-                ),
-              ),
+    Some(((a1, b1), (a2, b2))) =>
+      inverse_laplace_two_linear_factors_from_coeffs(
+        num_linear, num_const, a1, b1, a2, b2, t,
+      )
+    None => None
+  }
+}
+
+///|
+fn inverse_laplace_two_linear_factors_from_coeffs(
+  num_linear : Expr,
+  num_const : Expr,
+  a1 : Expr,
+  b1 : Expr,
+  a2 : Expr,
+  b2 : Expr,
+  t : Expr,
+) -> Expr? {
+  let det = expr_sub(expr_mul(a2, b1), expr_mul(a1, b2))
+  if expr_is_zero(det) {
+    None
+  } else {
+    let left_coeff = expr_div(
+      expr_sub(expr_mul(num_linear, b1), expr_mul(num_const, a1)),
+      det,
+    )
+    let right_coeff = expr_div(
+      expr_sub(expr_mul(num_const, a2), expr_mul(num_linear, b2)),
+      det,
+    )
+    Some(
+      inverse_laplace_heaviside(
+        t,
+        expr_add(
+          expr_mul(
+            expr_div(left_coeff, a1),
+            @symelem.exp(
+              expr_mul(expr_div(@symcore.int(-1), a1), expr_mul(b1, t)),
             ),
           ),
-        )
-      }
-    }
-    None => None
+          expr_mul(
+            expr_div(right_coeff, a2),
+            @symelem.exp(
+              expr_mul(expr_div(@symcore.int(-1), a2), expr_mul(b2, t)),
+            ),
+          ),
+        ),
+      ),
+    )
   }
 }
 
