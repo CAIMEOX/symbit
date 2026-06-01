@@ -195,12 +195,17 @@ fn expr_add(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn expr_sub(lhs : Expr, rhs : Expr) -> Expr {
-  if expr_trivial_zero(rhs) {
-    lhs
-  } else if expr_trivial_zero(lhs) {
-    @symcore.mul([@symcore.int(-1), rhs])
-  } else {
-    @symcore.add([lhs, @symcore.mul([@symcore.int(-1), rhs])])
+  match (lhs, rhs) {
+    (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) =>
+      @symcore.Expr::Number(a - b)
+    _ =>
+      if expr_trivial_zero(rhs) {
+        lhs
+      } else if expr_trivial_zero(lhs) {
+        @symcore.mul([@symcore.int(-1), rhs])
+      } else {
+        @symcore.add([lhs, @symcore.mul([@symcore.int(-1), rhs])])
+      }
   }
 }
 
@@ -259,7 +264,14 @@ fn expr_pow(base : Expr, exp : Expr) -> Expr {
   } else if expr_trivial_one(base) {
     @symcore.int(1)
   } else {
-    @symcore.pow(base, exp)
+    match (base, expr_exact_int(exp)) {
+      (@symcore.Expr::Number(value), Some(power)) =>
+        match expr_exact_number_pow_no_simplify(value, power) {
+          Some(pow_value) => @symcore.Expr::Number(pow_value)
+          None => @symcore.pow(base, exp)
+        }
+      _ => @symcore.pow(base, exp)
+    }
   }
 }
 

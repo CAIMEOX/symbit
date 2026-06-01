@@ -10484,7 +10484,7 @@ fn inverse_laplace_exact_number_no_simplify(
           inverse_laplace_exact_int_no_simplify(exp),
         ) {
         (Some(base_value), Some(power)) =>
-          inverse_laplace_exact_number_pow_no_simplify(base_value, power)
+          expr_exact_number_pow_no_simplify(base_value, power)
         _ => None
       }
     _ => None
@@ -10501,7 +10501,7 @@ fn inverse_laplace_exact_int_no_simplify(expr : Expr) -> Int? {
 }
 
 ///|
-fn inverse_laplace_exact_number_pow_no_simplify(
+fn expr_exact_number_pow_no_simplify(
   base : @symnum.BigRational,
   power : Int,
 ) -> @symnum.BigRational? {
