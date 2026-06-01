@@ -6831,6 +6831,40 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
     ),
   )
 
+  let rewritten_integral = match
+    @symintegrals.inverse_laplace_transform_as_integral(
+      inverse_laplace_transform(f_of_s, s, x),
+    ) {
+    Some(value) => value
+    None => fail("expected inverse Laplace integral rewrite")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(2*sympy.pi*sympy.I*(" + py_expr(rewritten_integral) + "))",
+    ),
+    integrals_eval_str(
+      "sympy.sstr(2*sympy.pi*sympy.I*sympy.inverse_laplace_transform(sympy.Function('f')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x')).rewrite('Integral'))",
+    ),
+  )
+
+  let explicit_plane_rewritten_integral = match
+    @symintegrals.inverse_laplace_transform_as_integral(
+      inverse_laplace_transform(f_of_s, s, x, plane=Some(plane)),
+    ) {
+    Some(value) => value
+    None => fail("expected explicit-plane inverse Laplace integral rewrite")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(2*sympy.pi*sympy.I*(" +
+      py_expr(explicit_plane_rewritten_integral) +
+      "))",
+    ),
+    integrals_eval_str(
+      "sympy.sstr(2*sympy.pi*sympy.I*sympy.InverseLaplaceTransform(sympy.Function('f')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 7).rewrite('Integral'))",
+    ),
+  )
+
   let known_frequency_shift = doit(
     inverse_laplace_transform(@symelem.sin(s - @symcore.int(2)), s, x),
   )

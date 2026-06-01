@@ -85,6 +85,43 @@ fn inverse_laplace_transform_with_none(expr : Expr, s : Expr, t : Expr) -> Expr 
 }
 
 ///|
+/// Rewrite an unevaluated inverse Laplace transform object as its Bromwich integral.
+///
+/// - Does: Mirrors SymPy's `InverseLaplaceTransform._as_integral` object hook.
+/// - Input: One `InverseLaplaceTransform(F, s, t, plane)` object.
+/// - Returns: `Some(Integral(exp(s*t)*F, (s, _c - I*oo, _c + I*oo))/(2*pi*I))`.
+/// - Limits: The source hook ignores the stored plane and uses a fresh contour symbol `_c`.
+pub fn inverse_laplace_transform_as_integral(transform : Expr) -> Expr? {
+  match @symcore.application_parts(transform) {
+    Some((head, [inner, s, t])) | Some((head, [inner, s, t, _])) if @symcore.function_head_name(
+        head,
+      ) ==
+      Some("InverseLaplaceTransform") =>
+      Some(inverse_laplace_bromwich_integral(inner, s, t))
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_bromwich_integral(inner : Expr, s : Expr, t : Expr) -> Expr {
+  let contour = @symcore.Expr::Symbol("_c")
+  let imag = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::ImaginaryUnit,
+  )
+  let infinity = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::Infinity,
+  )
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let imag_infinity = imag * infinity
+  expr_div(
+    integral(@symelem.exp(s * t) * inner, limits=[
+      integral_limit([s, contour - imag_infinity, contour + imag_infinity]),
+    ]),
+    @symcore.int(2) * pi * imag,
+  )
+}
+
+///|
 /// Construct an unevaluated Fourier transform object.
 ///
 /// - Does: Wraps the source expression and variables as `FourierTransform(...)`.

@@ -3009,6 +3009,39 @@ test "symintegrals inverse Laplace transform objects roundtrip" {
     ),
     0,
   )
+
+  let rewritten_integral = match
+    @symintegrals.inverse_laplace_transform_as_integral(
+      inverse_laplace_transform(f_s, s, x),
+    ) {
+    Some(value) => value
+    None => fail("expected inverse Laplace integral rewrite")
+  }
+  let contour = @symcore.Expr::Symbol("_c")
+  let imag = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::ImaginaryUnit,
+  )
+  let infinity = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::Infinity,
+  )
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let expected_integral = integral(@symelem.exp(s * x) * f_s, limits=[
+      integral_limit([s, contour - imag * infinity, contour + imag * infinity]),
+    ]) *
+    ((@symcore.int(2) * pi * imag) ^ @symcore.int(-1))
+  assert_eq(@symcore.compare_expr(rewritten_integral, expected_integral), 0)
+
+  let explicit_plane_rewritten_integral = match
+    @symintegrals.inverse_laplace_transform_as_integral(
+      inverse_laplace_transform(f_s, s, x, plane=Some(plane)),
+    ) {
+    Some(value) => value
+    None => fail("expected explicit-plane inverse Laplace integral rewrite")
+  }
+  assert_eq(
+    @symcore.compare_expr(explicit_plane_rewritten_integral, rewritten_integral),
+    0,
+  )
 }
 
 ///|
