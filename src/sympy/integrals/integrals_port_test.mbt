@@ -5970,6 +5970,29 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
     ),
   )
 
+  let ni = @symcore.Expr::Symbol("ni")
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_integer(ni))
+  let symbolic_integer_frequency_diff = @symintegrals.laplace_correspondence(
+    doit(
+      inverse_laplace_transform(
+        @symcore.Expr::Derivative(f_big_of_s, [s, ni]),
+        s,
+        x,
+      ),
+    ),
+    generic_fdict,
+  )
+  @symassume.clear_global_assumptions()
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(symbolic_integer_frequency_diff) +
+      ").xreplace({sympy.Symbol('ni'): sympy.Symbol('ni', integer=True)}) - ((-sympy.Symbol('x'))**sympy.Symbol('ni', integer=True)*sympy.Function('f')(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
   let generic_mixed_source_diff = @symcore.raw_function("Derivative", [
     f_big_of_s, s, u,
   ])

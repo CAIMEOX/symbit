@@ -747,9 +747,9 @@ pub fn normalize_legacy_expr(expr : Expr) -> Expr {
         normalize_legacy_expr(rhs),
       )
     Expr::Derivative(inner, deriv_args) =>
-      raw_derivative(
+      Expr::Derivative(
         normalize_legacy_expr(inner),
-        deriv_args.map(normalize_legacy_expr)[:],
+        canonical_derivative_args(deriv_args.map(normalize_legacy_expr)[:]),
       )
     Expr::Subs(inner, variable, value) =>
       subs_expr(

@@ -3150,6 +3150,30 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     0,
   )
 
+  let ni = @symcore.Expr::Symbol("ni")
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_integer(ni))
+  let symbolic_integer_frequency_diff = @symintegrals.laplace_correspondence(
+    doit(
+      inverse_laplace_transform(
+        @symcore.Expr::Derivative(f_big_of_s, [s, ni]),
+        s,
+        x,
+      ),
+    ),
+    generic_fdict,
+  )
+  @symassume.clear_global_assumptions()
+  let symbolic_integer_frequency_diff_str = @symprint.pretty_string(
+    symbolic_integer_frequency_diff,
+  )
+  assert_true(
+    !symbolic_integer_frequency_diff_str.contains("Derivative") &&
+    !symbolic_integer_frequency_diff_str.contains("InverseLaplaceTransform") &&
+    symbolic_integer_frequency_diff_str.contains("ni") &&
+    symbolic_integer_frequency_diff_str.contains("f"),
+  )
+
   let generic_mixed_source_diff = @symcore.raw_function("Derivative", [
     f_big_of_s, s, u,
   ])

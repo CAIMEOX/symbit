@@ -603,6 +603,12 @@ test "legacy function storage normalizes to canonical core semantics" {
     @symprint.pretty_string(normalize_legacy_expr(Expr::Derivative(x, [x]))),
     content="Derivative(x, x)",
   )
+  inspect(
+    @symprint.pretty_string(
+      normalize_legacy_expr(Expr::Derivative(x, [x, Expr::Symbol("n")])),
+    ),
+    content="Derivative(x, (x, n))",
+  )
 }
 
 ///|

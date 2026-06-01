@@ -5832,18 +5832,23 @@ fn inverse_laplace_frequency_diff_term(
     Some(value) => value
     None => return None
   }
-  let order = match inverse_laplace_derivative_order_args(deriv_args, s_name) {
-    Some(value) if value > 0 => value
+  let (order, symbolic_order) = match
+    inverse_laplace_derivative_order_args(deriv_args, s_name) {
+    Some(value) => value
     _ => return None
   }
   let base = match inverse_laplace_doit_control(inner, s_name, t, false) {
     Some(value) => value
     None => make_inverse_laplace_object(inner, s_name, t)
   }
-  let signed_power = if order % 2 == 0 {
-    expr_pow(t, @symcore.int(order))
-  } else {
-    expr_mul(@symcore.int(-1), expr_pow(t, @symcore.int(order)))
+  let signed_power = match symbolic_order {
+    Some(value) => @symcore.raw_pow(expr_mul(@symcore.int(-1), t), value)
+    None =>
+      if order % 2 == 0 {
+        expr_pow(t, @symcore.int(order))
+      } else {
+        expr_mul(@symcore.int(-1), expr_pow(t, @symcore.int(order)))
+      }
   }
   Some(expr_mul(coeff, expr_mul(signed_power, base)))
 }
@@ -5894,24 +5899,39 @@ fn inverse_laplace_frequency_shift_offset_supported(offset : Expr) -> Bool {
 fn inverse_laplace_derivative_order_args(
   deriv_args : Array[Expr],
   s_name : String,
-) -> Int? {
+) -> (Int, Expr?)? {
   if deriv_args.length() == 0 || deriv_args.length() % 2 != 0 {
     return None
   }
   let mut order = 0
+  let symbolic_terms : Array[Expr] = []
   let mut idx = 0
   while idx < deriv_args.length() {
     match deriv_args[idx] {
       @symcore.Expr::Symbol(name) if name == s_name =>
         match expr_is_int_value(deriv_args[idx + 1]) {
           Some(value) if value > 0 => order += value
+          Some(_) => return None
+          None if expr_is_integer_assumed(deriv_args[idx + 1]) =>
+            symbolic_terms.push(deriv_args[idx + 1])
           _ => return None
         }
       _ => return None
     }
     idx += 2
   }
-  Some(order)
+  if symbolic_terms.length() == 0 {
+    if order > 0 {
+      Some((order, None))
+    } else {
+      None
+    }
+  } else {
+    if order > 0 {
+      symbolic_terms.push(@symcore.int(order))
+    }
+    Some((0, Some(expr_simplify(@symcore.add(symbolic_terms)))))
+  }
 }
 
 ///|
