@@ -2,6 +2,7 @@ import {
   "moonbitlang/core/math",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symassume",
   "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symgeometry",
   "CAIMEOX/symbit/symmatrices",

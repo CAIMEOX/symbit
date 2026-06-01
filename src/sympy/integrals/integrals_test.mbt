@@ -3432,6 +3432,37 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   )
   assert_true(delayed_symbolic_power_str.contains("InverseLaplaceTransform"))
 
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(a))
+  @symassume.add_global_assumption(@symassume.q_positive(b))
+  let delayed_positive_symbolic_power = doit(
+    inverse_laplace_transform(
+      @symelem.exp(@symcore.int(-1) * a * s) * (s ^ (@symcore.int(-1) * b)),
+      s,
+      x,
+    ),
+  )
+  let delayed_positive_symbolic_power_str = @symprint.pretty_string(
+    delayed_positive_symbolic_power,
+  )
+  let sqrt_linear_positive_const = doit(
+    inverse_laplace_transform((@symelem.sqrt(s) + a) ^ @symcore.int(-1), s, x),
+  )
+  let sqrt_linear_positive_const_str = @symprint.pretty_string(
+    sqrt_linear_positive_const,
+  )
+  @symassume.clear_global_assumptions()
+  assert_true(
+    !delayed_positive_symbolic_power_str.contains("InverseLaplaceTransform") &&
+    delayed_positive_symbolic_power_str.contains("gamma") &&
+    delayed_positive_symbolic_power_str.contains("Heaviside"),
+  )
+  assert_true(
+    !sqrt_linear_positive_const_str.contains("InverseLaplaceTransform") &&
+    sqrt_linear_positive_const_str.contains("erfc") &&
+    sqrt_linear_positive_const_str.contains("Heaviside"),
+  )
+
   let bessel_i_branch = doit(
     inverse_laplace_transform(
       (a ^ b) *

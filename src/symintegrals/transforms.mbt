@@ -18824,10 +18824,24 @@ fn expr_has_function_name(expr : Expr, name : String) -> Bool {
 }
 
 ///|
+fn expr_assumption_true(query : @symassume.Query) -> Bool {
+  try @symassume.ask_global(query) catch {
+    _ => false
+  } noraise {
+    @symassume.Tri::True => true
+    _ => false
+  }
+}
+
+///|
 fn expr_is_negative(expr : Expr) -> Bool {
   match expr_num_value(expr) {
     Some(value) => value.compare(@symnum.BigRational::zero()) < 0
-    None => false
+    None =>
+      expr_assumption_true(@symassume.q_negative(expr)) ||
+      expr_assumption_true(
+        @symassume.q_positive(expr_mul(@symcore.int(-1), expr)),
+      )
   }
 }
 
@@ -18835,6 +18849,6 @@ fn expr_is_negative(expr : Expr) -> Bool {
 fn expr_is_positive(expr : Expr) -> Bool {
   match expr_num_value(expr) {
     Some(value) => value.compare(@symnum.BigRational::zero()) > 0
-    None => false
+    None => expr_assumption_true(@symassume.q_positive(expr))
   }
 }

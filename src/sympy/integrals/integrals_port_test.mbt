@@ -6220,6 +6220,37 @@ test "symintegrals parity inverse Laplace symbolic kernel rules" {
     ),
   )
 
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(a))
+  @symassume.add_global_assumption(@symassume.q_positive(b))
+  let delayed_positive_symbolic_power_inverse = doit(
+    inverse_laplace_transform(
+      @symelem.exp(@symcore.int(-1) * a * s) * (s ^ (@symcore.int(-1) * b)),
+      s,
+      x,
+    ),
+  )
+  let sqrt_linear_positive_const_inverse = doit(
+    inverse_laplace_transform((@symelem.sqrt(s) + a) ^ @symcore.int(-1), s, x),
+  )
+  @symassume.clear_global_assumptions()
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(delayed_positive_symbolic_power_inverse) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True), sympy.Symbol('b'): sympy.Symbol('b', positive=True)}) - sympy.inverse_laplace_transform(sympy.exp(-sympy.Symbol('a', positive=True)*sympy.Symbol('s'))/sympy.Symbol('s')**sympy.Symbol('b', positive=True), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sqrt_linear_positive_const_inverse) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}) - sympy.inverse_laplace_transform(1/(sympy.sqrt(sympy.Symbol('s')) + sympy.Symbol('a', positive=True)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
   let bessel_i_branch_inverse = doit(
     inverse_laplace_transform(
       (a ^ b) *

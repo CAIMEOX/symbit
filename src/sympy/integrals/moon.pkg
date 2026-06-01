@@ -5,6 +5,7 @@ import {
 import {
   "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symassume",
   "CAIMEOX/symbit/symgeometry",
   "CAIMEOX/symbit/symintegrals",
   "CAIMEOX/symbit/symmatrices",
