@@ -528,6 +528,33 @@ fn parse_limit(limit : Expr) -> LimitSpec? {
 }
 
 ///|
+fn poly_coeffs_upto2_scale(coeff : Expr, coeffs : Array[Expr]) -> Array[Expr] {
+  if expr_trivial_zero(coeff) {
+    [@symcore.int(0), @symcore.int(0), @symcore.int(0)]
+  } else if expr_trivial_one(coeff) {
+    coeffs
+  } else {
+    [
+      if expr_trivial_zero(coeffs[0]) {
+        @symcore.int(0)
+      } else {
+        expr_mul(coeff, coeffs[0])
+      },
+      if expr_trivial_zero(coeffs[1]) {
+        @symcore.int(0)
+      } else {
+        expr_mul(coeff, coeffs[1])
+      },
+      if expr_trivial_zero(coeffs[2]) {
+        @symcore.int(0)
+      } else {
+        expr_mul(coeff, coeffs[2])
+      },
+    ]
+  }
+}
+
+///|
 fn poly_coeffs_upto2_raw(expr : Expr, var_name : String) -> Array[Expr]? {
   match expr {
     @symcore.Expr::Number(_)
@@ -555,6 +582,39 @@ fn poly_coeffs_upto2_raw(expr : Expr, var_name : String) -> Array[Expr]? {
       Some(coeffs)
     }
     @symcore.Expr::Mul(args) => {
+      let var_factors : Array[Expr] = []
+      let mut const_coeff : Expr? = None
+      for arg in args {
+        if expr_depends_on(arg, var_name) {
+          var_factors.push(arg)
+        } else {
+          const_coeff = Some(
+            match const_coeff {
+              Some(prev) => expr_mul(prev, arg)
+              None => arg
+            },
+          )
+        }
+      }
+      if var_factors.is_empty() {
+        return Some([
+          const_coeff.unwrap_or(@symcore.int(1)),
+          @symcore.int(0),
+          @symcore.int(0),
+        ])
+      }
+      if var_factors.length() == 1 {
+        match poly_coeffs_upto2_raw(var_factors[0], var_name) {
+          Some(coeffs) =>
+            return Some(
+              match const_coeff {
+                Some(coeff) => poly_coeffs_upto2_scale(coeff, coeffs)
+                None => coeffs
+              },
+            )
+          None => return None
+        }
+      }
       let coeffs = [@symcore.int(1), @symcore.int(0), @symcore.int(0)]
       for arg in args {
         match poly_coeffs_upto2_raw(arg, var_name) {
