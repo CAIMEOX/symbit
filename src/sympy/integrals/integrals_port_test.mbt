@@ -6561,6 +6561,23 @@ test "symintegrals parity inverse Laplace delta matrix and time-diff rules" {
     ),
   )
 
+  let mixed_time_diff_inverse = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(2)) *
+      (f_of_s + (((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-1))),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(mixed_time_diff_inverse) +
+      ") - sympy.inverse_laplace_transform(sympy.Symbol('s')**2*(sympy.Function('f')(sympy.Symbol('s')) + 1/(sympy.Symbol('s')**2 + 1)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
   let delayed_bessel_inverse = doit(
     inverse_laplace_transform(
       @symelem.exp(@symcore.int(-1) * a * s) *

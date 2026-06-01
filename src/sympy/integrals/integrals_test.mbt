@@ -5695,6 +5695,33 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     0,
   )
 
+  let mixed_time_diff_inverse = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(2)) *
+      (f_of_s + (((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-1))),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        mixed_time_diff_inverse -
+        (
+          @symcore.raw_function("Derivative", [
+            inverse_laplace_transform(f_of_s, s, x),
+            x,
+            @symcore.int(2),
+          ]) -
+          @symelem.sin(x) * @symspec.heaviside(x) +
+          @symspec.dirac_delta(x)
+        ),
+      ),
+      @symcore.int(0),
+    ),
+    0,
+  )
+
   let delayed_bessel_inverse = doit(
     inverse_laplace_transform(
       @symelem.exp(@symcore.int(-1) * a * s) *
@@ -5750,6 +5777,22 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   assert_true(exp_normalized_str.contains("x - 2"))
   assert_true(exp_normalized_str.contains("x - 1"))
   assert_true(exp_normalized_str.contains("cos"))
+  let exp_normalized_expected = @symelem.cos(x) * @symspec.heaviside(x) +
+    @symcore.int(4) *
+    @symelem.cos(x - @symcore.int(2)) *
+    @symspec.heaviside(x - @symcore.int(2)) -
+    @symcore.int(4) *
+    @symelem.cos(x - @symcore.int(1)) *
+    @symspec.heaviside(x - @symcore.int(1)) -
+    @symcore.int(4) * @symspec.heaviside(x - @symcore.int(2)) +
+    @symcore.int(4) * @symspec.heaviside(x - @symcore.int(1))
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(exp_normalized_inverse - exp_normalized_expected),
+      @symcore.int(0),
+    ),
+    0,
+  )
 
   let improper_quadratic_remainder_inverse = doit(
     inverse_laplace_transform(

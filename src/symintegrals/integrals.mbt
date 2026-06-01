@@ -460,12 +460,20 @@ pub fn inverse_laplace_transform_eval(
   // Source map: SymPy's public inverse_laplace_transform defaults to
   // noconds=True, while internally it still calls
   // InverseLaplaceTransform(...).doit(noconds=False) and strips the condition
-  // only at the public wrapper boundary.
-  let (raw_found, cond) = match
-    do_inverse_laplace_doit_with_condition(expr, s, t) {
-    Some((value, condition)) => (value, condition)
-    None =>
-      (inverse_laplace_transform_with_plane(expr, s, t, plane), true_expr())
+  // only at the public wrapper boundary. The local condition reconstruction is
+  // post-hoc and recursive, so skip it when the public result will discard it.
+  let (raw_found, cond) = if noconds {
+    let raw_value = match do_inverse_laplace_doit(expr, s, t) {
+      Some(value) => value
+      None => inverse_laplace_transform_with_plane(expr, s, t, plane)
+    }
+    (raw_value, true_expr())
+  } else {
+    match do_inverse_laplace_doit_with_condition(expr, s, t) {
+      Some((value, condition)) => (value, condition)
+      None =>
+        (inverse_laplace_transform_with_plane(expr, s, t, plane), true_expr())
+    }
   }
   let raw_value = inverse_laplace_fill_plane(raw_found, plane)
   let value = if simplify {
