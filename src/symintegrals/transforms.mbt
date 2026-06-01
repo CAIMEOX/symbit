@@ -3888,6 +3888,10 @@ fn inverse_laplace_rational_term(
       None => ()
     }
   }
+  match inverse_laplace_quadratic_degree2_rational_term(num, den, t, s_name) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let (coeff, var_expr_opt) = split_mul_factor(num_exprs, s_name)
   let direct = match var_expr_opt {
     None => inverse_laplace_no_var(coeff, den, t, s_name)
@@ -10179,6 +10183,33 @@ fn inverse_laplace_quadratic_repeated_root_term(
 }
 
 ///|
+fn inverse_laplace_quadratic_degree2_rational_term(
+  num : Expr,
+  den : Expr,
+  t : Expr,
+  s_name : String,
+) -> Expr? {
+  let den_coeffs = match poly_coeffs_upto2_raw(den, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  let num_coeffs = match poly_coeffs_upto2_raw(num, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  if !expr_is_zero(num_coeffs[2]) {
+    return None
+  }
+  inverse_laplace_quadratic_degree2_from_coeffs(
+    num_coeffs[1],
+    num_coeffs[0],
+    den_coeffs,
+    t,
+    s_name,
+  )
+}
+
+///|
 fn inverse_laplace_quadratic_degree2_direct_term(
   num_linear : Expr,
   num_const : Expr,
@@ -10190,6 +10221,19 @@ fn inverse_laplace_quadratic_degree2_direct_term(
     Some(value) => value
     None => return None
   }
+  inverse_laplace_quadratic_degree2_from_coeffs(
+    num_linear, num_const, coeffs, t, s_name,
+  )
+}
+
+///|
+fn inverse_laplace_quadratic_degree2_from_coeffs(
+  num_linear : Expr,
+  num_const : Expr,
+  coeffs : Array[Expr],
+  t : Expr,
+  s_name : String,
+) -> Expr? {
   if expr_is_zero(coeffs[2]) ||
     expr_depends_on(coeffs[0], s_name) ||
     expr_depends_on(coeffs[1], s_name) ||
@@ -10204,7 +10248,7 @@ fn inverse_laplace_quadratic_degree2_direct_term(
   let lead = coeffs[2]
   let shift = expr_div(coeffs[1], expr_mul(@symcore.int(2), lead))
   let offset = expr_div(coeffs[0], lead)
-  let b = expr_simplify(expr_sub(offset, expr_pow(shift, @symcore.int(2))))
+  let b = inverse_laplace_quadratic_b(offset, shift)
   let l = expr_div(num_linear, lead)
   let m = expr_div(num_const, lead)
   if expr_is_zero(b) {
@@ -10214,15 +10258,118 @@ fn inverse_laplace_quadratic_degree2_direct_term(
   }
   let centered_const = expr_sub(m, expr_mul(shift, l))
   if expr_is_negative(b) {
-    let freq = expr_sqrt_positive(expr_mul(@symcore.int(-1), b))
+    let freq = inverse_laplace_sqrt_quadratic_b(expr_mul(@symcore.int(-1), b))
     inverse_laplace_quadratic_degree2_transcendental_body(
       l, centered_const, shift, freq, t, true,
     )
   } else {
-    let freq = expr_sqrt_positive(b)
+    let freq = inverse_laplace_sqrt_quadratic_b(b)
     inverse_laplace_quadratic_degree2_transcendental_body(
       l, centered_const, shift, freq, t, false,
     )
+  }
+}
+
+///|
+fn inverse_laplace_quadratic_b(offset : Expr, shift : Expr) -> Expr {
+  let raw = expr_sub(offset, expr_pow(shift, @symcore.int(2)))
+  // Source map: SymPy factors b = dc[2] - a**2. For exact numeric b,
+  // factorization is already complete; avoid the generic simplifier.
+  match inverse_laplace_exact_number_no_simplify(raw) {
+    Some(value) => expr_from_num(value)
+    None => expr_simplify(raw)
+  }
+}
+
+///|
+fn inverse_laplace_sqrt_quadratic_b(expr : Expr) -> Expr {
+  // Source map: SymPy uses sqrt(b).simplify() in _inverse_laplace_rational.
+  // Preserve the symbolic path, but avoid the generic simplifier for exact
+  // numeric b where sqrt(4) -> 2 is a local arithmetic fact.
+  match inverse_laplace_exact_number_no_simplify(expr) {
+    Some(value) => expr_exact_sqrt(expr_from_num(value))
+    None => expr_sqrt_positive(expr)
+  }
+}
+
+///|
+fn inverse_laplace_exact_number_no_simplify(
+  expr : Expr,
+) -> @symnum.BigRational? {
+  match expr {
+    @symcore.Expr::Number(value) => Some(value)
+    @symcore.Expr::Add(args) => {
+      let mut acc = @symnum.BigRational::zero()
+      for arg in args {
+        match inverse_laplace_exact_number_no_simplify(arg) {
+          Some(value) => acc = acc + value
+          None => return None
+        }
+      }
+      Some(acc)
+    }
+    @symcore.Expr::Mul(args) => {
+      let mut acc = @symnum.BigRational::one()
+      for arg in args {
+        match inverse_laplace_exact_number_no_simplify(arg) {
+          Some(value) => acc = acc * value
+          None => return None
+        }
+      }
+      Some(acc)
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      match
+        (
+          inverse_laplace_exact_number_no_simplify(base),
+          inverse_laplace_exact_int_no_simplify(exp),
+        ) {
+        (Some(base_value), Some(power)) =>
+          inverse_laplace_exact_number_pow_no_simplify(base_value, power)
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_exact_int_no_simplify(expr : Expr) -> Int? {
+  match expr {
+    @symcore.Expr::Number(value) if value.is_integral() =>
+      Some(value.numerator().to_int())
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_exact_number_pow_no_simplify(
+  base : @symnum.BigRational,
+  power : Int,
+) -> @symnum.BigRational? {
+  if power == 0 {
+    return Some(@symnum.BigRational::one())
+  }
+  if power < 0 && base.is_zero() {
+    return None
+  }
+  let factor = if power < 0 { try? base.reciprocal() } else { Ok(base) }
+  match factor {
+    Err(_) => None
+    Ok(factor0) => {
+      let mut out = @symnum.BigRational::one()
+      let mut factor = factor0
+      let mut n = if power < 0 { -power } else { power }
+      while n > 0 {
+        if (n & 1) == 1 {
+          out = out * factor
+        }
+        n = n / 2
+        if n > 0 {
+          factor = factor * factor
+        }
+      }
+      Some(out)
+    }
   }
 }
 

@@ -475,7 +475,11 @@ pub fn inverse_laplace_transform_eval(
         (inverse_laplace_transform_with_plane(expr, s, t, plane), true_expr())
     }
   }
-  let raw_value = inverse_laplace_fill_plane(raw_found, plane)
+  let raw_value = if noconds && plane is None {
+    raw_found
+  } else {
+    inverse_laplace_fill_plane(raw_found, plane)
+  }
   let value = if simplify {
     @symsimplify.simplify(raw_value)
   } else {
