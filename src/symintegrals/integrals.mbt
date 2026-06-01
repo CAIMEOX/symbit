@@ -364,7 +364,7 @@ pub fn laplace_transform_eval(
 /// Evaluate an inverse Laplace transform.
 ///
 /// - Does: Runs the inverse Laplace rule engine and optionally keeps a trailing condition flag.
-/// - Input: One source `Expr`, variables `s` and `t`, and an optional `noconds` flag.
+/// - Input: One source `Expr`, variables `s` and `t`, plus optional `noconds` and `simplify` flags.
 /// - Returns: Either the transformed `Expr` or a tuple carrying the value and a condition flag.
 /// - Limits: Unevaluated transforms are returned when no rule applies.
 pub fn inverse_laplace_transform_eval(
@@ -372,16 +372,22 @@ pub fn inverse_laplace_transform_eval(
   s : Expr,
   t : Expr,
   noconds? : Bool = true,
+  simplify? : Bool = false,
 ) -> Expr {
   // Source map: SymPy's public inverse_laplace_transform defaults to
   // noconds=True, while internally it still calls
   // InverseLaplaceTransform(...).doit(noconds=False) and strips the condition
   // only at the public wrapper boundary.
-  let value = inverse_laplace_mark_none_plane(
+  let raw_value = inverse_laplace_mark_none_plane(
     do_inverse_laplace_doit(expr, s, t).unwrap_or(
       inverse_laplace_transform_with_none(expr, s, t),
     ),
   )
+  let value = if simplify {
+    @symsimplify.simplify(raw_value)
+  } else {
+    raw_value
+  }
   if noconds {
     value
   } else {

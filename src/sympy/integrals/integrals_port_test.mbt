@@ -6437,6 +6437,21 @@ test "symintegrals parity inverse Laplace delta matrix and time-diff rules" {
     ),
   )
 
+  let reciprocal_public_simplified = @symintegrals.inverse_laplace_transform_eval(
+    a * (s ^ @symcore.int(-1)),
+    s,
+    x,
+    simplify=true,
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(" + py_expr(reciprocal_public_simplified) + ")",
+    ),
+    integrals_eval_str(
+      "sympy.sstr(sympy.inverse_laplace_transform(sympy.Symbol('a')/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), simplify=True))",
+    ),
+  )
+
   let reciprocal_public_with_conditions = @symintegrals.inverse_laplace_transform_eval(
     a * (s ^ @symcore.int(-1)),
     s,

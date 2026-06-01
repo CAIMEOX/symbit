@@ -5331,6 +5331,20 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   )
   assert_true(@symcore.tuple_items(reciprocal_public_default) is None)
 
+  let reciprocal_public_simplified = @symintegrals.inverse_laplace_transform_eval(
+    a * (s ^ @symcore.int(-1)),
+    s,
+    x,
+    simplify=true,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      reciprocal_public_simplified,
+      a * @symspec.heaviside(x),
+    ),
+    0,
+  )
+
   let reciprocal_public_with_conditions = @symintegrals.inverse_laplace_transform_eval(
     a * (s ^ @symcore.int(-1)),
     s,
