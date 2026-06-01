@@ -3862,21 +3862,28 @@ fn inverse_laplace_rational_term(
     None => ()
   }
   match split_linear_power_factors_direct(den, s_name) {
-    Some(_) => {
-      match inverse_laplace_two_linear_factors_apart_term(num, den, t, s_name) {
-        Some(v) => return Some(v)
-        None => ()
-      }
-      match inverse_laplace_repeated_linear_apart_term(num, den, t, s_name) {
-        Some(v) => return Some(v)
-        None => ()
+    Some(factors) => {
+      if inverse_laplace_linear_power_factors_all_single(factors) {
+        if factors.length() == 2 {
+          match
+            inverse_laplace_two_linear_factors_apart_term(num, den, t, s_name) {
+            Some(v) => return Some(v)
+            None => ()
+          }
+        } else {
+          match inverse_laplace_linear_factors_apart_term(num, den, t, s_name) {
+            Some(v) => return Some(v)
+            None => ()
+          }
+        }
+      } else if inverse_laplace_repeated_linear_pair_shape(factors) {
+        match inverse_laplace_repeated_linear_apart_term(num, den, t, s_name) {
+          Some(v) => return Some(v)
+          None => ()
+        }
       }
       match
         inverse_laplace_linear_power_factors_apart_term(num, den, t, s_name) {
-        Some(v) => return Some(v)
-        None => ()
-      }
-      match inverse_laplace_linear_factors_apart_term(num, den, t, s_name) {
         Some(v) => return Some(v)
         None => ()
       }
@@ -4156,6 +4163,31 @@ fn inverse_laplace_linear_power_factors_apart_term(
 }
 
 ///|
+fn inverse_laplace_linear_power_factors_all_single(
+  factors : Array[(Expr, Expr, Int)],
+) -> Bool {
+  for factor in factors {
+    if factor.2 != 1 {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn inverse_laplace_repeated_linear_pair_shape(
+  factors : Array[(Expr, Expr, Int)],
+) -> Bool {
+  if factors.length() != 2 {
+    return false
+  }
+  let (_, _, first_power) = factors[0]
+  let (_, _, second_power) = factors[1]
+  (first_power >= 2 && second_power == 1) ||
+  (first_power == 1 && second_power >= 2)
+}
+
+///|
 fn inverse_laplace_two_linear_factors_apart_term(
   num : Expr,
   den : Expr,
@@ -4240,12 +4272,13 @@ fn inverse_laplace_rational_apart_expr(
   den : Expr,
   s_name : String,
 ) -> Expr? {
-  match inverse_laplace_linear_power_factors_apart_expr(num, den, s_name) {
+  match inverse_laplace_repeated_linear_apart_expr(num, den, s_name) {
     Some(value) => Some(value)
     None =>
-      match inverse_laplace_repeated_linear_apart_expr(num, den, s_name) {
+      match inverse_laplace_linear_factors_apart_expr(num, den, s_name) {
         Some(value) => Some(value)
-        None => inverse_laplace_linear_factors_apart_expr(num, den, s_name)
+        None =>
+          inverse_laplace_linear_power_factors_apart_expr(num, den, s_name)
       }
   }
 }
