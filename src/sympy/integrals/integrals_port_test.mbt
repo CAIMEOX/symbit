@@ -4653,6 +4653,40 @@ test "symintegrals parity inverse Laplace delay and sqrt elementary families" {
     "0",
   )
 
+  let b = @symcore.Expr::Symbol("b")
+  let scaled_symbolic_power_inverse = doit(
+    inverse_laplace_transform(
+      (@symcore.int(2) * s + @symcore.int(4)) ^ (@symcore.int(-1) * b),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(scaled_symbolic_power_inverse) +
+      ") - sympy.inverse_laplace_transform((2*sympy.Symbol('s') + 4)**(-sympy.Symbol('b')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let scaled_symbolic_lowergamma_inverse = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(-1)) *
+      ((@symcore.int(2) * s + @symcore.int(4)) ^ (@symcore.int(-1) * b)),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(scaled_symbolic_lowergamma_inverse) +
+      ") - sympy.inverse_laplace_transform(1/(sympy.Symbol('s')*(2*sympy.Symbol('s') + 4)**sympy.Symbol('b')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
   let shifted_quad_inverse = doit(
     inverse_laplace_transform(
       (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^

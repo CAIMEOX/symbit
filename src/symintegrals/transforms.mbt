@@ -6381,21 +6381,28 @@ fn inverse_laplace_shifted_power_law_term(
   if factors.length() != 1 || expr_depends_on(coeff, s_name) {
     return None
   }
-  let (shift, power) = match
-    inverse_laplace_parse_shifted_linear_negative_power(factors[0], s_name) {
+  let (scale, shift, power) = match
+    inverse_laplace_parse_scaled_shifted_linear_negative_power(
+      factors[0],
+      s_name,
+    ) {
     Some(value) => value
     None => return None
   }
-  if expr_is_zero(shift) {
+  if expr_is_zero(shift) && expr_is_one(scale) {
     return None
   }
+  let scaled_coeff = expr_mul(
+    coeff,
+    expr_pow(scale, expr_mul(@symcore.int(-1), power)),
+  )
   let exponent = inverse_laplace_power_exponent(power)
   Some(
     inverse_laplace_heaviside(
       t,
       expr_div(
         expr_mul(
-          expr_mul(coeff, expr_pow(t, exponent)),
+          expr_mul(scaled_coeff, expr_pow(t, exponent)),
           @symelem.exp(expr_mul(@symcore.int(-1), expr_mul(shift, t))),
         ),
         @symspec.gamma(power),
@@ -6444,7 +6451,7 @@ fn inverse_laplace_lowergamma_shifted_power_from_negative_factors(
     return None
   }
   let mut saw_symbol_reciprocal = false
-  let mut shifted : (Expr, Expr)? = None
+  let mut shifted : (Expr, Expr, Expr)? = None
   for factor in factors {
     if inverse_laplace_is_symbol_reciprocal_factor(factor, s_name) {
       if saw_symbol_reciprocal {
@@ -6453,7 +6460,9 @@ fn inverse_laplace_lowergamma_shifted_power_from_negative_factors(
       saw_symbol_reciprocal = true
     } else {
       match
-        inverse_laplace_parse_shifted_linear_negative_power(factor, s_name) {
+        inverse_laplace_parse_scaled_shifted_linear_negative_power(
+          factor, s_name,
+        ) {
         Some(value) if shifted is None => shifted = Some(value)
         _ => return None
       }
@@ -6463,7 +6472,14 @@ fn inverse_laplace_lowergamma_shifted_power_from_negative_factors(
     return None
   }
   match shifted {
-    Some((shift, power)) => Some((coeff, shift, power))
+    Some((scale, shift, power)) =>
+      Some(
+        (
+          expr_mul(coeff, expr_pow(scale, expr_mul(@symcore.int(-1), power))),
+          shift,
+          power,
+        ),
+      )
     None => None
   }
 }
@@ -6490,7 +6506,7 @@ fn inverse_laplace_lowergamma_shifted_power_from_denominator(
     return None
   }
   let mut saw_symbol = false
-  let mut shifted : (Expr, Expr)? = None
+  let mut shifted : (Expr, Expr, Expr)? = None
   for factor in den_factors {
     if expr_eq(factor, @symcore.Expr::Symbol(s_name)) {
       if saw_symbol {
@@ -6499,7 +6515,9 @@ fn inverse_laplace_lowergamma_shifted_power_from_denominator(
       saw_symbol = true
     } else {
       match
-        inverse_laplace_parse_shifted_linear_positive_power(factor, s_name) {
+        inverse_laplace_parse_scaled_shifted_linear_positive_power(
+          factor, s_name,
+        ) {
         Some(value) if shifted is None => shifted = Some(value)
         _ => return None
       }
@@ -6509,7 +6527,14 @@ fn inverse_laplace_lowergamma_shifted_power_from_denominator(
     return None
   }
   match shifted {
-    Some((shift, power)) => Some((coeff, shift, power))
+    Some((scale, shift, power)) =>
+      Some(
+        (
+          expr_mul(coeff, expr_pow(scale, expr_mul(@symcore.int(-1), power))),
+          shift,
+          power,
+        ),
+      )
     None => None
   }
 }
@@ -6526,18 +6551,18 @@ fn inverse_laplace_is_symbol_reciprocal_factor(
 }
 
 ///|
-fn inverse_laplace_parse_shifted_linear_negative_power(
+fn inverse_laplace_parse_scaled_shifted_linear_negative_power(
   expr : Expr,
   s_name : String,
-) -> (Expr, Expr)? {
+) -> (Expr, Expr, Expr)? {
   retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Pow(base, exponent) =>
         match extract_explicit_negative_factor(exponent) {
           Some(power) =>
-            match inverse_laplace_parse_monic_shifted_linear(base, s_name) {
-              Some(shift) if !expr_depends_on(power, s_name) =>
-                Some((shift, power))
+            match inverse_laplace_parse_scaled_shifted_linear(base, s_name) {
+              Some((scale, shift)) if !expr_depends_on(power, s_name) =>
+                Some((scale, shift, power))
               _ => None
             }
           None => None
@@ -6548,15 +6573,16 @@ fn inverse_laplace_parse_shifted_linear_negative_power(
 }
 
 ///|
-fn inverse_laplace_parse_shifted_linear_positive_power(
+fn inverse_laplace_parse_scaled_shifted_linear_positive_power(
   expr : Expr,
   s_name : String,
-) -> (Expr, Expr)? {
+) -> (Expr, Expr, Expr)? {
   retry_with_simplified(expr, expr => {
     match expr {
       @symcore.Expr::Pow(base, power) =>
-        match inverse_laplace_parse_monic_shifted_linear(base, s_name) {
-          Some(shift) if !expr_depends_on(power, s_name) => Some((shift, power))
+        match inverse_laplace_parse_scaled_shifted_linear(base, s_name) {
+          Some((scale, shift)) if !expr_depends_on(power, s_name) =>
+            Some((scale, shift, power))
           _ => None
         }
       _ => None
@@ -6565,13 +6591,14 @@ fn inverse_laplace_parse_shifted_linear_positive_power(
 }
 
 ///|
-fn inverse_laplace_parse_monic_shifted_linear(
+fn inverse_laplace_parse_scaled_shifted_linear(
   expr : Expr,
   s_name : String,
-) -> Expr? {
+) -> (Expr, Expr)? {
   match linear_coeffs(expr, s_name) {
-    Some((coeff, shift)) if expr_is_one(coeff) &&
-      !expr_depends_on(shift, s_name) => Some(shift)
+    Some((coeff, shift)) if expr_is_positive(coeff) &&
+      !expr_depends_on(coeff, s_name) &&
+      !expr_depends_on(shift, s_name) => Some((coeff, expr_div(shift, coeff)))
     _ => None
   }
 }

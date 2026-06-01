@@ -3496,6 +3496,39 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     0,
   )
 
+  let scaled_symbolic_power = doit(
+    inverse_laplace_transform(
+      (@symcore.int(2) * s + @symcore.int(4)) ^ (@symcore.int(-1) * b),
+      s,
+      x,
+    ),
+  )
+  let scaled_symbolic_power_str = @symprint.pretty_string(scaled_symbolic_power)
+  assert_true(
+    !scaled_symbolic_power_str.contains("InverseLaplaceTransform") &&
+    scaled_symbolic_power_str.contains("gamma") &&
+    scaled_symbolic_power_str.contains("exp") &&
+    scaled_symbolic_power_str.contains("Heaviside"),
+  )
+
+  let scaled_symbolic_lowergamma = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(-1)) *
+      ((@symcore.int(2) * s + @symcore.int(4)) ^ (@symcore.int(-1) * b)),
+      s,
+      x,
+    ),
+  )
+  let scaled_symbolic_lowergamma_str = @symprint.pretty_string(
+    scaled_symbolic_lowergamma,
+  )
+  assert_true(
+    !scaled_symbolic_lowergamma_str.contains("InverseLaplaceTransform") &&
+    scaled_symbolic_lowergamma_str.contains("lowergamma") &&
+    scaled_symbolic_lowergamma_str.contains("gamma") &&
+    scaled_symbolic_lowergamma_str.contains("Heaviside"),
+  )
+
   let repeated_linear_apart = doit(
     inverse_laplace_transform(
       (((s + @symcore.int(1)) ^ @symcore.int(3)) * (s + @symcore.int(2))) ^
