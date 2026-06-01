@@ -3893,11 +3893,13 @@ fn inverse_laplace_rational_term(
   // SymPy calls apart(s) before matching low-degree denominators. For a
   // linear times quadratic denominator, avoid probing the direct quadratic
   // rules on the unsplit product and go straight to the apart decomposition.
-  if poly_coeffs_upto2_raw(den, s_name) is None {
-    match inverse_laplace_linear_quadratic_apart_term(num, den, t, s_name) {
-      Some(v) => return Some(v)
-      None => ()
-    }
+  match split_linear_quadratic_factors_direct(den, s_name) {
+    Some(_) =>
+      match inverse_laplace_linear_quadratic_apart_term(num, den, t, s_name) {
+        Some(v) => return Some(v)
+        None => ()
+      }
+    None => ()
   }
   match inverse_laplace_quadratic_degree2_rational_term(num, den, t, s_name) {
     Some(v) => return Some(v)
@@ -3957,8 +3959,7 @@ fn inverse_laplace_improper_rational_term(
   }
   let terms : Array[Expr] = []
   if !inverse_laplace_poly_coeffs_are_zero(quotient) {
-    let quotient_expr = polynomial_horner_light_from_coeffs(quotient, s_name)
-    match inverse_laplace_doit_control(quotient_expr, s_name, t, false) {
+    match inverse_laplace_polynomial_coeffs(quotient, t) {
       Some(value) => terms.push(value)
       None => return None
     }
@@ -3970,6 +3971,28 @@ fn inverse_laplace_improper_rational_term(
       Some(value) => terms.push(value)
       None => return None
     }
+  }
+  if terms.is_empty() {
+    None
+  } else {
+    Some(@symcore.add(terms))
+  }
+}
+
+///|
+fn inverse_laplace_polynomial_coeffs(coeffs : Array[Expr], t : Expr) -> Expr? {
+  let terms : Array[Expr] = []
+  for degree in 0..<coeffs.length() {
+    let coeff = coeffs[degree]
+    if expr_is_zero(coeff) {
+      continue
+    }
+    let delta = if degree == 0 {
+      @symspec.dirac_delta(t)
+    } else {
+      @symcore.raw_function("DiracDelta", [t, @symcore.int(degree)])
+    }
+    terms.push(expr_mul(coeff, delta))
   }
   if terms.is_empty() {
     None
@@ -4003,7 +4026,7 @@ fn inverse_laplace_poly_divmod_expr(
   while !remainder.is_empty() && remainder.length() >= divisor.length() {
     let remainder_degree = remainder.length() - 1
     let offset = remainder_degree - divisor_degree
-    let coeff = expr_simplify(
+    let coeff = inverse_laplace_exact_or_simplify(
       expr_div(remainder[remainder_degree], divisor_lead),
     )
     quotient[offset] = expr_add(quotient[offset], coeff)
@@ -9880,17 +9903,11 @@ fn inverse_laplace_no_var(
     None => ()
   }
   match
-    inverse_laplace_shifted_diff_square_power(
-      @symcore.int(0),
-      coeff,
-      den,
-      t,
-      s_name,
-    ) {
+    inverse_laplace_shifted_square_power(@symcore.int(0), coeff, den, t, s_name) {
     Some(v) => Some(v)
     None =>
       match
-        inverse_laplace_shifted_square_power(
+        inverse_laplace_shifted_diff_square_power(
           @symcore.int(0),
           coeff,
           den,
