@@ -7511,6 +7511,32 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
     ),
     "0",
   )
+  let sqrt_kernel_public_with_conditions = @symintegrals.inverse_laplace_transform_eval(
+    sqrt_kernel,
+    s,
+    x,
+    noconds=false,
+  )
+  match @symcore.tuple_items(sqrt_kernel_public_with_conditions) {
+    Some([value, cond]) => {
+      assert_eq(
+        integrals_eval_str(
+          "sympy.sstr(sympy.simplify((" +
+          py_expr(value) +
+          ") - sympy.inverse_laplace_transform(sympy.sqrt(sympy.pi)*sympy.exp(-2*sympy.sqrt(sympy.Symbol('z'))*sympy.sqrt(sympy.Symbol('s')))/sympy.sqrt(sympy.Symbol('z')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+        ),
+        "0",
+      )
+      assert_eq(
+        integrals_eval_str("sympy.sstr(" + py_expr(cond) + ")"),
+        integrals_eval_str(
+          "sympy.sstr(sympy.inverse_laplace_transform(sympy.sqrt(sympy.pi)*sympy.exp(-2*sympy.sqrt(sympy.Symbol('z'))*sympy.sqrt(sympy.Symbol('s')))/sympy.sqrt(sympy.Symbol('z')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=False)[1])",
+        ),
+      )
+    }
+    _ =>
+      fail("expected Tuple from inverse_laplace_transform_eval noconds=false")
+  }
 
   let scaled_mellin_left_inverse = doit(
     inverse_laplace_transform(

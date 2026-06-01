@@ -461,12 +461,13 @@ pub fn inverse_laplace_transform_eval(
   // noconds=True, while internally it still calls
   // InverseLaplaceTransform(...).doit(noconds=False) and strips the condition
   // only at the public wrapper boundary.
-  let raw_value = inverse_laplace_fill_plane(
-    do_inverse_laplace_doit(expr, s, t).unwrap_or(
-      inverse_laplace_transform_with_plane(expr, s, t, plane),
-    ),
-    plane,
-  )
+  let (raw_found, cond) = match
+    do_inverse_laplace_doit_with_condition(expr, s, t) {
+    Some((value, condition)) => (value, condition)
+    None =>
+      (inverse_laplace_transform_with_plane(expr, s, t, plane), true_expr())
+  }
+  let raw_value = inverse_laplace_fill_plane(raw_found, plane)
   let value = if simplify {
     @symsimplify.simplify(raw_value)
   } else {
@@ -475,7 +476,7 @@ pub fn inverse_laplace_transform_eval(
   if noconds {
     value
   } else {
-    Expr::Tuple([value, @symcore.Expr::Boolean(true)])
+    Expr::Tuple([value, cond])
   }
 }
 

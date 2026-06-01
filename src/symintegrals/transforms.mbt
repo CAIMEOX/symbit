@@ -3583,6 +3583,78 @@ pub fn do_inverse_laplace_doit(expr : Expr, s : Expr, t : Expr) -> Expr? {
 }
 
 ///|
+fn do_inverse_laplace_doit_with_condition(
+  expr : Expr,
+  s : Expr,
+  t : Expr,
+) -> (Expr, Expr)? {
+  match symbol_name(s) {
+    Some(s_name) => inverse_laplace_doit_with_condition(expr, s_name, t)
+    None => None
+  }
+}
+
+///|
+fn inverse_laplace_doit_with_condition(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> (Expr, Expr)? {
+  match inverse_laplace_doit(expr, s_name, t) {
+    Some(value) =>
+      Some((value, inverse_laplace_condition_hint(expr, s_name, t, value)))
+    None => None
+  }
+}
+
+///|
+fn inverse_laplace_condition_hint(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+  computed : Expr,
+) -> Expr {
+  match expr {
+    @symcore.Expr::Add(terms) => {
+      let mut cond = true_expr()
+      for term in terms {
+        let term_value = inverse_laplace_doit_control(term, s_name, t, true).unwrap_or(
+          make_inverse_laplace_object(term, s_name, t),
+        )
+        cond = and_expr(
+          cond,
+          inverse_laplace_condition_hint(term, s_name, t, term_value),
+        )
+      }
+      cond
+    }
+    _ => {
+      match
+        inverse_laplace_integration_piecewise_condition(
+          expr, s_name, t, computed,
+        ) {
+        Some(cond) => return cond
+        None => ()
+      }
+      let (coeff, factors) = split_mul(expr, s_name)
+      if !expr_is_one(coeff) && factors.length() > 0 {
+        let core = factors_expr(factors)
+        match inverse_laplace_doit_control(core, s_name, t, true) {
+          Some(core_value) => {
+            let scaled = expr_simplify(expr_mul(coeff, core_value))
+            if expr_same_simplified(scaled, computed) {
+              return inverse_laplace_condition_hint(core, s_name, t, core_value)
+            }
+          }
+          None => ()
+        }
+      }
+      true_expr()
+    }
+  }
+}
+
+///|
 /// Apply SymPy's narrow `_fast_inverse_laplace` helper.
 ///
 /// - Does: Mirrors the recursive helper used by `sympy.physics.control.control_plots`.
@@ -4908,11 +4980,53 @@ fn inverse_laplace_integration_term(
 }
 
 ///|
-fn inverse_laplace_meijer_first_piece(expr : Expr) -> Expr {
+fn inverse_laplace_integration_piecewise_condition(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+  computed : Expr,
+) -> Expr? {
+  if inverse_laplace_has_applied_undefined(expr, s_name) {
+    return None
+  }
+  match
+    meijerint_inversion_no_laplace_fallback(
+      expr,
+      @symcore.Expr::Symbol(s_name),
+      t,
+    ) {
+    Some(value) =>
+      match inverse_laplace_meijer_first_piece_and_condition(value) {
+        Some((first, cond)) => {
+          let mapped = inverse_laplace_mellin_subst_simplify(first, t)
+          if expr_same_simplified(mapped, computed) {
+            Some(cond)
+          } else {
+            None
+          }
+        }
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
+fn inverse_laplace_meijer_first_piece_and_condition(
+  expr : Expr,
+) -> (Expr, Expr)? {
   match @symcore.application_parts(expr) {
     Some((head, args)) if @symcore.function_head_name(head) == Some("Piecewise") &&
-      args.length() >= 2 => args[0]
-    _ => expr
+      args.length() >= 2 => Some((args[0], args[1]))
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_meijer_first_piece(expr : Expr) -> Expr {
+  match inverse_laplace_meijer_first_piece_and_condition(expr) {
+    Some((value, _)) => value
+    None => expr
   }
 }
 

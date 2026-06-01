@@ -4224,6 +4224,34 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     ),
     0,
   )
+  let sqrt_kernel_public_with_conditions = @symintegrals.inverse_laplace_transform_eval(
+    sqrt_kernel,
+    s,
+    x,
+    noconds=false,
+  )
+  match @symcore.tuple_items(sqrt_kernel_public_with_conditions) {
+    Some([value, cond]) => {
+      assert_eq(
+        @symcore.compare_expr(
+          @symsimplify.simplify(value),
+          @symsimplify.simplify(sqrt_kernel_public),
+        ),
+        0,
+      )
+      assert_true(
+        @symcore.compare_expr(cond, @symcore.Expr::Boolean(true)) != 0,
+      )
+      let cond_str = @symprint.pretty_string(cond)
+      assert_true(
+        cond_str.contains("polar_lift") &&
+        cond_str.contains("Ne") &&
+        cond_str.contains(">"),
+      )
+    }
+    _ =>
+      fail("expected Tuple from inverse_laplace_transform_eval noconds=false")
+  }
 
   let one_half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
   let scaled_mellin_left = doit(
