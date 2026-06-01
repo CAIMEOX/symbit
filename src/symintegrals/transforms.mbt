@@ -3895,9 +3895,12 @@ fn inverse_laplace_rational_term(
   // SymPy calls apart(s) before matching low-degree denominators. For a
   // linear times quadratic denominator, avoid probing the direct quadratic
   // rules on the unsplit product and go straight to the apart decomposition.
-  match split_linear_quadratic_factors_direct(den, s_name) {
-    Some(_) =>
-      match inverse_laplace_linear_quadratic_apart_term(num, den, t, s_name) {
+  match split_linear_quadratic_factors_direct_with_coeffs(den, s_name) {
+    Some(((lin_a, lin_b), _, quad_coeffs)) =>
+      match
+        inverse_laplace_linear_quadratic_apart_from_parts(
+          num, lin_a, lin_b, quad_coeffs, t, s_name,
+        ) {
         Some(v) => return Some(v)
         None => ()
       }
@@ -4822,23 +4825,16 @@ fn inverse_laplace_cubic_apart_term(
 }
 
 ///|
-fn inverse_laplace_linear_quadratic_apart_term(
+fn inverse_laplace_linear_quadratic_apart_from_parts(
   num : Expr,
-  den : Expr,
+  lin_a : Expr,
+  lin_b : Expr,
+  quad_coeffs : Array[Expr],
   t : Expr,
   s_name : String,
 ) -> Expr? {
-  let ((lin_a, lin_b), quad) = match
-    split_linear_quadratic_factors(den, s_name) {
-    Some(value) => value
-    None => return None
-  }
   let num_coeffs = match poly_coeffs_general(num, s_name) {
     Some(coeffs) if coeffs.length() <= 3 => coeffs
-    _ => return None
-  }
-  let quad_coeffs = match poly_coeffs_upto2_raw(quad, s_name) {
-    Some(coeffs) if !expr_is_zero(coeffs[2]) => coeffs
     _ => return None
   }
   if expr_is_zero(lin_a) {
@@ -18670,51 +18666,53 @@ fn split_two_linear_factors(
 }
 
 ///|
-fn split_linear_quadratic_factors(
-  den : Expr,
-  s_name : String,
-) -> ((Expr, Expr), Expr)? {
-  match split_linear_quadratic_factors_direct(den, s_name) {
-    Some(value) => Some(value)
-    None => {
-      let simplified = expr_simplify(den)
-      if @symcore.compare_expr(simplified, den) == 0 {
-        None
-      } else {
-        split_linear_quadratic_factors_direct(simplified, s_name)
-      }
-    }
-  }
-}
-
-///|
 fn split_linear_quadratic_factors_direct(
   den : Expr,
   s_name : String,
 ) -> ((Expr, Expr), Expr)? {
+  match split_linear_quadratic_factors_direct_with_coeffs(den, s_name) {
+    Some((linear, quad, _)) => Some((linear, quad))
+    None => None
+  }
+}
+
+///|
+fn split_linear_quadratic_factors_direct_with_coeffs(
+  den : Expr,
+  s_name : String,
+) -> ((Expr, Expr), Expr, Array[Expr])? {
   match den {
-    @symcore.Expr::Mul(args) if args.length() == 2 => {
-      let first_linear = split_linear_power_denom_direct(args[0], s_name)
-      let second_linear = split_linear_power_denom_direct(args[1], s_name)
-      let first_quadratic = split_quadratic_factor_direct(args[0], s_name)
-      let second_quadratic = split_quadratic_factor_direct(args[1], s_name)
-      match (first_linear, second_quadratic, second_linear, first_quadratic) {
-        (Some((a, b, 1)), Some(quad), _, _) => Some(((a, b), quad))
-        (_, _, Some((a, b, 1)), Some(quad)) => Some(((a, b), quad))
-        _ => None
+    @symcore.Expr::Mul(args) if args.length() == 2 =>
+      match split_linear_power_denom_direct(args[0], s_name) {
+        Some((a, b, 1)) =>
+          match split_quadratic_factor_direct_with_coeffs(args[1], s_name) {
+            Some((quad, coeffs)) => Some(((a, b), quad, coeffs))
+            None => None
+          }
+        _ =>
+          match split_linear_power_denom_direct(args[1], s_name) {
+            Some((a, b, 1)) =>
+              match split_quadratic_factor_direct_with_coeffs(args[0], s_name) {
+                Some((quad, coeffs)) => Some(((a, b), quad, coeffs))
+                None => None
+              }
+            _ => None
+          }
       }
-    }
     _ => None
   }
 }
 
 ///|
-fn split_quadratic_factor_direct(expr : Expr, s_name : String) -> Expr? {
+fn split_quadratic_factor_direct_with_coeffs(
+  expr : Expr,
+  s_name : String,
+) -> (Expr, Array[Expr])? {
   match poly_coeffs_upto2_raw(expr, s_name) {
     Some(coeffs) if !expr_is_zero(coeffs[2]) &&
       !expr_depends_on(coeffs[0], s_name) &&
       !expr_depends_on(coeffs[1], s_name) &&
-      !expr_depends_on(coeffs[2], s_name) => Some(expr)
+      !expr_depends_on(coeffs[2], s_name) => Some((expr, coeffs))
     _ => None
   }
 }
