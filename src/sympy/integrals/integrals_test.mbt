@@ -4113,6 +4113,31 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     0,
   )
 
+  let linear_quadratic_apart_inverse = doit(
+    inverse_laplace_transform(
+      (s + @symcore.int(8)) *
+      (
+        (
+          (s + @symcore.int(2)) *
+          ((s ^ @symcore.int(2)) + @symcore.int(2) * s + @symcore.int(10))
+        ) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
+  let linear_quadratic_apart_str = @symprint.pretty_string(
+    linear_quadratic_apart_inverse,
+  )
+  assert_true(
+    !linear_quadratic_apart_str.contains("InverseLaplaceTransform") &&
+    linear_quadratic_apart_str.contains("sin") &&
+    linear_quadratic_apart_str.contains("cos") &&
+    linear_quadratic_apart_str.contains("exp") &&
+    linear_quadratic_apart_str.contains("Heaviside"),
+  )
+
   let gamma_mellin_fallback = doit(
     inverse_laplace_transform(@symspec.gamma(s), s, x),
   )

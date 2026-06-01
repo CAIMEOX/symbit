@@ -7109,6 +7109,29 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
     "0",
   )
 
+  let linear_quadratic_apart_inverse = doit(
+    inverse_laplace_transform(
+      (s + @symcore.int(8)) *
+      (
+        (
+          (s + @symcore.int(2)) *
+          ((s ^ @symcore.int(2)) + @symcore.int(2) * s + @symcore.int(10))
+        ) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(linear_quadratic_apart_inverse) +
+      ") - sympy.inverse_laplace_transform((sympy.Symbol('s') + 8)/((sympy.Symbol('s') + 2)*(sympy.Symbol('s')**2 + 2*sympy.Symbol('s') + 10)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
   let three_linear_apart_inverse = doit(
     inverse_laplace_transform(
       (s * (s + @symcore.int(1)) * (s + @symcore.int(2))) ^ @symcore.int(-1),

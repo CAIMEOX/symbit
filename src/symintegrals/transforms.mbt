@@ -3900,12 +3900,22 @@ fn inverse_laplace_rational_term(
                     ) {
                     Some(v) => Some(v)
                     None =>
-                      inverse_laplace_cubic_apart_term(
-                        factors_expr(num_exprs),
-                        den,
-                        t,
-                        s_name,
-                      )
+                      match
+                        inverse_laplace_linear_quadratic_apart_term(
+                          factors_expr(num_exprs),
+                          den,
+                          t,
+                          s_name,
+                        ) {
+                        Some(v) => Some(v)
+                        None =>
+                          inverse_laplace_cubic_apart_term(
+                            factors_expr(num_exprs),
+                            den,
+                            t,
+                            s_name,
+                          )
+                      }
                   }
               }
           }
@@ -4652,6 +4662,105 @@ fn inverse_laplace_cubic_apart_term(
     None
   } else {
     Some(@symcore.add(parts))
+  }
+}
+
+///|
+fn inverse_laplace_linear_quadratic_apart_term(
+  num : Expr,
+  den : Expr,
+  t : Expr,
+  s_name : String,
+) -> Expr? {
+  let ((lin_a, lin_b), quad) = match
+    split_linear_quadratic_factors(den, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  let num_coeffs = match poly_coeffs_general(num, s_name) {
+    Some(coeffs) if coeffs.length() <= 3 => coeffs
+    _ => return None
+  }
+  let quad_coeffs = match poly_coeffs_upto2(quad, s_name) {
+    Some(coeffs) if !expr_is_zero(coeffs[2]) => coeffs
+    _ => return None
+  }
+  if expr_is_zero(lin_a) {
+    return None
+  }
+
+  // SymPy's rational path calls apart(s). For N/(L*Q), evaluate at the root
+  // of L to get the A/L residue, then divide the remainder by L to obtain
+  // the linear numerator over Q.
+  let n0 = inverse_laplace_coeff_at(num_coeffs, 0)
+  let n1 = inverse_laplace_coeff_at(num_coeffs, 1)
+  let n2 = inverse_laplace_coeff_at(num_coeffs, 2)
+  let q0 = quad_coeffs[0]
+  let q1 = quad_coeffs[1]
+  let q2 = quad_coeffs[2]
+  let root = expr_div(expr_mul(@symcore.int(-1), lin_b), lin_a)
+  let root_sq = expr_pow(root, @symcore.int(2))
+  let q_at_root = expr_simplify(
+    expr_add(q0, expr_add(expr_mul(q1, root), expr_mul(q2, root_sq))),
+  )
+  if expr_is_zero(q_at_root) {
+    return None
+  }
+  let n_at_root = expr_simplify(
+    expr_add(n0, expr_add(expr_mul(n1, root), expr_mul(n2, root_sq))),
+  )
+  let linear_residue = expr_simplify(expr_div(n_at_root, q_at_root))
+  let rem2 = expr_simplify(expr_sub(n2, expr_mul(linear_residue, q2)))
+  let rem1 = expr_simplify(expr_sub(n1, expr_mul(linear_residue, q1)))
+  let rem0 = expr_simplify(expr_sub(n0, expr_mul(linear_residue, q0)))
+  let quad_num_linear = expr_simplify(expr_div(rem2, lin_a))
+  let quad_num_const = expr_simplify(
+    expr_div(expr_sub(rem1, expr_mul(quad_num_linear, lin_b)), lin_a),
+  )
+  let check_const = expr_simplify(expr_mul(quad_num_const, lin_b))
+  if !expr_same_simplified(check_const, rem0) {
+    return None
+  }
+
+  let linear_den = expr_add(
+    expr_mul(lin_a, @symcore.Expr::Symbol(s_name)),
+    lin_b,
+  )
+  let parts : Array[Expr] = []
+  if !expr_is_zero(linear_residue) {
+    match
+      inverse_laplace_linear_power_no_var(linear_residue, linear_den, t, s_name) {
+      Some(v) => parts.push(v)
+      None => return None
+    }
+  }
+  if !expr_is_zero(quad_num_linear) || !expr_is_zero(quad_num_const) {
+    let quad_part = match
+      inverse_laplace_shifted_square_term(
+        quad_num_linear, quad_num_const, quad, t, s_name,
+      ) {
+      Some(v) => Some(v)
+      None =>
+        match
+          inverse_laplace_shifted_diff_square_term(
+            quad_num_linear, quad_num_const, quad, t, s_name,
+          ) {
+          Some(v) => Some(v)
+          None =>
+            inverse_laplace_quadratic_repeated_root_term(
+              quad_num_linear, quad_num_const, quad, t, s_name,
+            )
+        }
+    }
+    match quad_part {
+      Some(v) => parts.push(v)
+      None => return None
+    }
+  }
+  if parts.is_empty() {
+    None
+  } else {
+    Some(expr_simplify(@symcore.add(parts)))
   }
 }
 
@@ -18035,6 +18144,56 @@ fn split_two_linear_factors(
         split_two_linear_factors_direct(simplified, s_name)
       }
     }
+  }
+}
+
+///|
+fn split_linear_quadratic_factors(
+  den : Expr,
+  s_name : String,
+) -> ((Expr, Expr), Expr)? {
+  match split_linear_quadratic_factors_direct(den, s_name) {
+    Some(value) => Some(value)
+    None => {
+      let simplified = expr_simplify(den)
+      if @symcore.compare_expr(simplified, den) == 0 {
+        None
+      } else {
+        split_linear_quadratic_factors_direct(simplified, s_name)
+      }
+    }
+  }
+}
+
+///|
+fn split_linear_quadratic_factors_direct(
+  den : Expr,
+  s_name : String,
+) -> ((Expr, Expr), Expr)? {
+  match den {
+    @symcore.Expr::Mul(args) if args.length() == 2 => {
+      let first_linear = split_linear_power_denom_direct(args[0], s_name)
+      let second_linear = split_linear_power_denom_direct(args[1], s_name)
+      let first_quadratic = split_quadratic_factor_direct(args[0], s_name)
+      let second_quadratic = split_quadratic_factor_direct(args[1], s_name)
+      match (first_linear, second_quadratic, second_linear, first_quadratic) {
+        (Some((a, b, 1)), Some(quad), _, _) => Some(((a, b), quad))
+        (_, _, Some((a, b, 1)), Some(quad)) => Some(((a, b), quad))
+        _ => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn split_quadratic_factor_direct(expr : Expr, s_name : String) -> Expr? {
+  match poly_coeffs_upto2_raw(expr, s_name) {
+    Some(coeffs) if !expr_is_zero(coeffs[2]) &&
+      !expr_depends_on(coeffs[0], s_name) &&
+      !expr_depends_on(coeffs[1], s_name) &&
+      !expr_depends_on(coeffs[2], s_name) => Some(expr)
+    _ => None
   }
 }
 
