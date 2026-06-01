@@ -182,9 +182,9 @@ pub fn inverse_hankel_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr, @sy
 
 pub fn inverse_hankel_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
-pub fn inverse_laplace_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+pub fn inverse_laplace_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr, plane? : @symcore.Expr?) -> @symcore.Expr
 
-pub fn inverse_laplace_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, noconds? : Bool, simplify? : Bool) -> @symcore.Expr
+pub fn inverse_laplace_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, plane? : @symcore.Expr?, noconds? : Bool, simplify? : Bool) -> @symcore.Expr
 
 pub fn inverse_laplace_transform_matrix(@symmatrices.Matrix, @symcore.Expr, @symcore.Expr) -> @symmatrices.Matrix raise @symmatrices.MatrixError
 

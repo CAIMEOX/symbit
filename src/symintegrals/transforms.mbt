@@ -399,50 +399,25 @@ fn laplace_correspondence_walk(
                 laplace_correspondence_walk(source_s, fdict),
               ])
           }
-        (Some("InverseLaplaceTransform"), [target_expr, source_s, source_t])
-        | (Some("InverseLaplaceTransform"), [target_expr, source_s, source_t, _]
+        (Some("InverseLaplaceTransform"), [target_expr, source_s, source_t]) =>
+          return laplace_correspondence_inverse_transform(
+            target_expr,
+            source_s,
+            source_t,
+            None,
+            fdict,
+          )
+        (
+          Some("InverseLaplaceTransform"),
+          [target_expr, source_s, source_t, plane],
         ) =>
-          match @symcore.application_parts(target_expr) {
-            Some((target_head, [arg])) =>
-              match @symcore.function_head_name(target_head) {
-                Some(target_name) =>
-                  if @symcore.compare_expr(arg, source_s) == 0 {
-                    match find_inverse_laplace_source(target_name, fdict) {
-                      Some(source_name) =>
-                        return @symcore.raw_function(source_name, [
-                          laplace_correspondence_walk(source_t, fdict),
-                        ])
-                      None =>
-                        return @symcore.raw_function(
-                          "InverseLaplaceTransform",
-                          [
-                            laplace_correspondence_walk(target_expr, fdict),
-                            laplace_correspondence_walk(source_s, fdict),
-                            laplace_correspondence_walk(source_t, fdict),
-                          ],
-                        )
-                    }
-                  } else {
-                    return @symcore.raw_function("InverseLaplaceTransform", [
-                      laplace_correspondence_walk(target_expr, fdict),
-                      laplace_correspondence_walk(source_s, fdict),
-                      laplace_correspondence_walk(source_t, fdict),
-                    ])
-                  }
-                None =>
-                  return @symcore.raw_function("InverseLaplaceTransform", [
-                    laplace_correspondence_walk(target_expr, fdict),
-                    laplace_correspondence_walk(source_s, fdict),
-                    laplace_correspondence_walk(source_t, fdict),
-                  ])
-              }
-            _ =>
-              return @symcore.raw_function("InverseLaplaceTransform", [
-                laplace_correspondence_walk(target_expr, fdict),
-                laplace_correspondence_walk(source_s, fdict),
-                laplace_correspondence_walk(source_t, fdict),
-              ])
-          }
+          return laplace_correspondence_inverse_transform(
+            target_expr,
+            source_s,
+            source_t,
+            Some(plane),
+            fdict,
+          )
         _ => ()
       }
     None => ()
@@ -475,6 +450,56 @@ fn laplace_correspondence_walk(
         None => expr
       }
   }
+}
+
+///|
+fn laplace_correspondence_inverse_transform(
+  target_expr : Expr,
+  source_s : Expr,
+  source_t : Expr,
+  plane : Expr?,
+  fdict : Map[String, String],
+) -> Expr {
+  match @symcore.application_parts(target_expr) {
+    Some((target_head, [arg])) =>
+      match @symcore.function_head_name(target_head) {
+        Some(target_name) =>
+          if @symcore.compare_expr(arg, source_s) == 0 {
+            match find_inverse_laplace_source(target_name, fdict) {
+              Some(source_name) =>
+                return @symcore.raw_function(source_name, [
+                  laplace_correspondence_walk(source_t, fdict),
+                ])
+              None => ()
+            }
+          }
+        None => ()
+      }
+    _ => ()
+  }
+  laplace_correspondence_rebuild_inverse_transform(
+    target_expr, source_s, source_t, plane, fdict,
+  )
+}
+
+///|
+fn laplace_correspondence_rebuild_inverse_transform(
+  target_expr : Expr,
+  source_s : Expr,
+  source_t : Expr,
+  plane : Expr?,
+  fdict : Map[String, String],
+) -> Expr {
+  let args = [
+    laplace_correspondence_walk(target_expr, fdict),
+    laplace_correspondence_walk(source_s, fdict),
+    laplace_correspondence_walk(source_t, fdict),
+  ]
+  match plane {
+    Some(value) => args.push(laplace_correspondence_walk(value, fdict))
+    None => ()
+  }
+  @symcore.raw_function("InverseLaplaceTransform", args)
 }
 
 ///|

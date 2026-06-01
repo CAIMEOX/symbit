@@ -2954,6 +2954,61 @@ test "symintegrals inverse Laplace transform objects roundtrip" {
       inverse_laplace_transform(laplace_transform(f_s, s, q), s, t),
     ),
   )
+
+  let plane = @symcore.int(7)
+  let explicit_plane_object = doit(
+    inverse_laplace_transform(@symelem.cos(s), s, x, plane=Some(plane)),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      explicit_plane_object,
+      @symcore.raw_function("InverseLaplaceTransform", [
+        @symelem.cos(s),
+        s,
+        x,
+        plane,
+      ]),
+    ),
+    0,
+  )
+
+  let explicit_plane_time_diff = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(2)) * f_s,
+      s,
+      x,
+      plane=Some(plane),
+    ),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      explicit_plane_time_diff,
+      @symcore.raw_function("Derivative", [
+        @symcore.raw_function("InverseLaplaceTransform", [f_s, s, x, plane]),
+        x,
+        @symcore.int(2),
+      ]),
+    ),
+    0,
+  )
+
+  let explicit_plane_frequency_diff = doit(
+    inverse_laplace_transform(
+      @symcore.raw_derivative(f_s, [s]),
+      s,
+      x,
+      plane=Some(plane),
+    ),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      explicit_plane_frequency_diff,
+      @symcore.int(-1) *
+      x *
+      @symcore.raw_function("InverseLaplaceTransform", [f_s, s, x, plane]),
+    ),
+    0,
+  )
 }
 
 ///|

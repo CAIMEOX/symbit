@@ -100,6 +100,19 @@ fn py_expr(expr : Expr) -> String {
       ", " +
       py_expr(var_t) +
       ", None)"
+    @symcore.Expr::Function(
+      "InverseLaplaceTransform",
+      [inner, var_s, var_t, plane]
+    ) =>
+      "sympy.InverseLaplaceTransform(" +
+      py_expr(inner) +
+      ", " +
+      py_expr(var_s) +
+      ", " +
+      py_expr(var_t) +
+      ", " +
+      py_expr(plane) +
+      ")"
     @symcore.Expr::Function("DiracDelta", [arg]) =>
       "sympy.DiracDelta(" + py_expr(arg) + ")"
     @symcore.Expr::Function("DiracDelta", [arg, order]) =>
@@ -149,6 +162,37 @@ fn py_expr(expr : Expr) -> String {
           [inner, var_s, var_t, @symcore.Expr::Symbol("_None")]
           .map(py_expr)
           .join(", ") +
+          ")"
+      }
+    @symcore.Expr::Apply(head, [inner, var_s, var_t, plane]) =>
+      match @symcore.function_head_name(head) {
+        Some("InverseLaplaceTransform") =>
+          "sympy.InverseLaplaceTransform(" +
+          py_expr(inner) +
+          ", " +
+          py_expr(var_s) +
+          ", " +
+          py_expr(var_t) +
+          ", " +
+          py_expr(plane) +
+          ")"
+        Some("Piecewise") => {
+          let args = [inner, var_s, var_t, plane]
+          let items : Array[String] = []
+          let mut i = 0
+          while i + 1 < args.length() {
+            items.push(
+              "(" + py_expr(args[i]) + ", " + py_expr(args[i + 1]) + ")",
+            )
+            i += 2
+          }
+          "sympy.Piecewise(" + items.join(", ") + ")"
+        }
+        Some(name) => py_function_call(name, [inner, var_s, var_t, plane])
+        None =>
+          py_expr(head) +
+          "(" +
+          [inner, var_s, var_t, plane].map(py_expr).join(", ") +
           ")"
       }
     @symcore.Expr::Apply(head, args) =>
@@ -4553,7 +4597,7 @@ test "symintegrals parity inverse Laplace named special families" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(log_one_plus_inverse) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(-sympy.exp(sympy.Symbol('s')/sympy.Symbol('a'))*sympy.Ei(-sympy.Symbol('s')/sympy.Symbol('a'))/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(-sympy.exp(sympy.Symbol('s')/sympy.Symbol('a'))*sympy.Ei(-sympy.Symbol('s')/sympy.Symbol('a'))/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -4834,7 +4878,7 @@ test "symintegrals parity inverse Laplace delay and sqrt elementary families" {
       "sympy.sstr(" + py_expr(sqrt_linear_negative_const_object) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(1/(sympy.sqrt(sympy.Symbol('s')) - 2), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(1/(sympy.sqrt(sympy.Symbol('s')) - 2), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -4847,7 +4891,7 @@ test "symintegrals parity inverse Laplace delay and sqrt elementary families" {
       "sympy.sstr(" + py_expr(sqrt_linear_symbolic_const_object) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(1/(sympy.sqrt(sympy.Symbol('s')) + sympy.Symbol('a')), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(1/(sympy.sqrt(sympy.Symbol('s')) + sympy.Symbol('a')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -5777,7 +5821,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
     integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(scaled_ilt_roundtrip) +
-      ") - sympy.InverseLaplaceTransform(2*sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('t')), sympy.Symbol('t'), sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit()))",
+      ") - sympy.InverseLaplaceTransform(2*sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('t')), sympy.Symbol('t'), sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit()))",
     ),
     "0",
   )
@@ -5791,7 +5835,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
       "sympy.sstr(" + py_expr(wrong_inner_frequency_dependent) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('q')), sympy.Symbol('s'), sympy.Symbol('t'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('q')), sympy.Symbol('s'), sympy.Symbol('t'), None).doit())",
     ),
   )
 
@@ -5803,7 +5847,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
       "sympy.sstr(" + py_expr(wrong_inner_frequency_independent) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('t')), sympy.Symbol('t'), sympy.Symbol('q')), sympy.Symbol('s'), sympy.Symbol('t'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('t')), sympy.Symbol('t'), sympy.Symbol('q')), sympy.Symbol('s'), sympy.Symbol('t'), None).doit())",
     ),
   )
 
@@ -5875,7 +5919,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
       "sympy.sstr(" + py_expr(generic_negative_real_frequency_shift) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s') + 1 - sympy.I), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s') + 1 - sympy.I), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -5887,7 +5931,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
       "sympy.sstr(" + py_expr(generic_applied_undef_square) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Symbol('k')*sympy.Function('F')(sympy.Symbol('s'))**2, sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Symbol('k')*sympy.Function('F')(sympy.Symbol('s'))**2, sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -5899,7 +5943,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
       "sympy.sstr(" + py_expr(generic_applied_undef_product) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s'))*sympy.sin(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s'))*sympy.sin(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -5914,7 +5958,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
     integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(reciprocal_frequency_diff) +
-      ") - sympy.InverseLaplaceTransform(sympy.Derivative(1/sympy.Symbol('s'), sympy.Symbol('s'), evaluate=False), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit()))",
+      ") - sympy.InverseLaplaceTransform(sympy.Derivative(1/sympy.Symbol('s'), sympy.Symbol('s'), evaluate=False), sympy.Symbol('s'), sympy.Symbol('x'), None).doit()))",
     ),
     "0",
   )
@@ -6004,7 +6048,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
       "sympy.sstr(" + py_expr(generic_mixed_source_inverse) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Derivative(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('u')), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Derivative(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('u')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6017,7 +6061,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(generic_other_var_inverse) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Derivative(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('u')), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Derivative(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('u')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6028,7 +6072,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(unknown_nested_inverse) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.sin(sympy.Function('F')(sympy.Symbol('s'))), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.sin(sympy.Function('F')(sympy.Symbol('s'))), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6042,7 +6086,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
       "sympy.sstr(" + py_expr(unknown_exp_source_inverse) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(sympy.Function('F')(sympy.Symbol('s')))/(sympy.Symbol('s') + 1), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(sympy.Function('F')(sympy.Symbol('s')))/(sympy.Symbol('s') + 1), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6059,7 +6103,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
       "sympy.sstr(" + py_expr(independent_unknown_factor_inverse) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('u'))/(sympy.Symbol('s') + 1), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('u'))/(sympy.Symbol('s') + 1), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6069,7 +6113,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(generic_expanded_sum) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0) + sympy.Derivative(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0), sympy.Symbol('x')))",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None) + sympy.Derivative(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None), sympy.Symbol('x')))",
     ),
   )
 
@@ -6085,7 +6129,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
       "sympy.sstr(" + py_expr(generic_additive_expanded_terms) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform((sympy.Symbol('s') + 1)*sympy.Function('F')(sympy.Symbol('s')) + (sympy.Symbol('s') + 2)*sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform((sympy.Symbol('s') + 1)*sympy.Function('F')(sympy.Symbol('s')) + (sympy.Symbol('s') + 2)*sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6099,7 +6143,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(generic_expanded_power) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0) + 2*sympy.Derivative(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0), sympy.Symbol('x')) + sympy.Derivative(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0), (sympy.Symbol('x'), 2)))",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None) + 2*sympy.Derivative(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None), sympy.Symbol('x')) + sympy.Derivative(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None), (sympy.Symbol('x'), 2)))",
     ),
   )
 
@@ -6113,7 +6157,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(generic_expanded_product) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform((sympy.Symbol('s') + 1)*(sympy.Symbol('s') + 2)*sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform((sympy.Symbol('s') + 1)*(sympy.Symbol('s') + 2)*sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6127,7 +6171,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(generic_expanded_cubic) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform((sympy.Symbol('s') + 1)**3*sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform((sympy.Symbol('s') + 1)**3*sympy.Function('F')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 }
@@ -6271,7 +6315,7 @@ test "symintegrals parity inverse Laplace symbolic kernel rules" {
       "sympy.sstr(" + py_expr(delayed_symbolic_power_inverse) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(-sympy.Symbol('a')*sympy.Symbol('s'))/sympy.Symbol('s')**sympy.Symbol('b'), sympy.Symbol('s'), sympy.Symbol('x'), 0))",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(-sympy.Symbol('a')*sympy.Symbol('s'))/sympy.Symbol('s')**sympy.Symbol('b'), sympy.Symbol('s'), sympy.Symbol('x'), None))",
     ),
   )
 
@@ -6408,7 +6452,7 @@ test "symintegrals parity inverse Laplace delta matrix and time-diff rules" {
     integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(constant_delta_inverse) +
-      ") - sympy.InverseLaplaceTransform(sympy.Symbol('a'), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit()))",
+      ") - sympy.InverseLaplaceTransform(sympy.Symbol('a'), sympy.Symbol('s'), sympy.Symbol('x'), None).doit()))",
     ),
     "0",
   )
@@ -6420,7 +6464,7 @@ test "symintegrals parity inverse Laplace delta matrix and time-diff rules" {
     integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(reciprocal_simple_inverse) +
-      ") - sympy.InverseLaplaceTransform(sympy.Symbol('a')/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit()))",
+      ") - sympy.InverseLaplaceTransform(sympy.Symbol('a')/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), None).doit()))",
     ),
     "0",
   )
@@ -6505,7 +6549,7 @@ test "symintegrals parity inverse Laplace delta matrix and time-diff rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(time_diff_inverse) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.Derivative(sympy.InverseLaplaceTransform(sympy.Function('f')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0), (sympy.Symbol('x'), 42)))",
+      "sympy.sstr(sympy.Derivative(sympy.InverseLaplaceTransform(sympy.Function('f')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None), (sympy.Symbol('x'), 42)))",
     ),
   )
 
@@ -6523,7 +6567,7 @@ test "symintegrals parity inverse Laplace delta matrix and time-diff rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(delayed_bessel_inverse) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(-sympy.Symbol('a')*sympy.Symbol('s'))/sympy.sqrt(sympy.Symbol('s')**2 + 1), sympy.Symbol('s'), sympy.Symbol('x'), 0))",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(-sympy.Symbol('a')*sympy.Symbol('s'))/sympy.sqrt(sympy.Symbol('s')**2 + 1), sympy.Symbol('s'), sympy.Symbol('x'), None))",
     ),
   )
 
@@ -6588,7 +6632,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(positive_shift_object) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0))",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None))",
     ),
   )
 
@@ -6605,7 +6649,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
       "sympy.sstr(" + py_expr(positive_shift_product_object) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s'))/(sympy.Symbol('s') + 1), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s'))/(sympy.Symbol('s') + 1), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6621,7 +6665,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
       "sympy.sstr(" + py_expr(positive_shift_scaled_object) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.E*sympy.exp(2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.E*sympy.exp(2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6637,7 +6681,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
       "sympy.sstr(" + py_expr(positive_shift_offset_delta) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s') + 1), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s') + 1), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6656,7 +6700,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
       "))",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.simplify(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s') + 1)/(sympy.Symbol('s') + 1), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit()))",
+      "sympy.sstr(sympy.simplify(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s') + 1)/(sympy.Symbol('s') + 1), sympy.Symbol('s'), sympy.Symbol('x'), None).doit()))",
     ),
   )
 
@@ -6673,7 +6717,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
       "sympy.sstr(" + py_expr(positive_shift_offset_double_pole) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s') + 1)/sympy.Symbol('s')**2, sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s') + 1)/sympy.Symbol('s')**2, sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6692,7 +6736,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
       "))",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.simplify(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s') + 1)/(sympy.Symbol('s') + 1)**2, sympy.Symbol('s'), sympy.Symbol('x'), 0).doit()))",
+      "sympy.sstr(sympy.simplify(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s') + 1)/(sympy.Symbol('s') + 1)**2, sympy.Symbol('s'), sympy.Symbol('x'), None).doit()))",
     ),
   )
 
@@ -6709,7 +6753,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
       "sympy.sstr(" + py_expr(positive_shift_offset_triple_pole) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s') + 1)/sympy.Symbol('s')**3, sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(2*sympy.Symbol('s') + 1)/sympy.Symbol('s')**3, sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6719,7 +6763,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(symbolic_shift_object) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(sympy.Symbol('r')*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0))",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(sympy.Symbol('r')*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None))",
     ),
   )
 
@@ -6740,7 +6784,50 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(cos_object) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.cos(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0))",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.cos(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None))",
+    ),
+  )
+
+  let plane = @symcore.int(7)
+  let explicit_plane_object = doit(
+    inverse_laplace_transform(@symelem.cos(s), s, x, plane=Some(plane)),
+  )
+  assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(explicit_plane_object) + ")"),
+    integrals_eval_str(
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.cos(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 7).doit())",
+    ),
+  )
+
+  let explicit_plane_time_diff = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(2)) * f_of_s,
+      s,
+      x,
+      plane=Some(plane),
+    ),
+  )
+  assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(explicit_plane_time_diff) + ")"),
+    integrals_eval_str(
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Symbol('s')**2*sympy.Function('f')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 7).doit())",
+    ),
+  )
+
+  let explicit_plane_frequency_diff = doit(
+    inverse_laplace_transform(
+      @symcore.raw_derivative(f_of_s, [s]),
+      s,
+      x,
+      plane=Some(plane),
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(" + py_expr(explicit_plane_frequency_diff) + ")",
+    ),
+    integrals_eval_str(
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Derivative(sympy.Function('f')(sympy.Symbol('s')), sympy.Symbol('s'), evaluate=False), sympy.Symbol('s'), sympy.Symbol('x'), 7).doit())",
     ),
   )
 
@@ -6750,7 +6837,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(known_frequency_shift) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.sin(sympy.Symbol('s') - 2), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.sin(sympy.Symbol('s') - 2), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6775,7 +6862,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(gamma_frequency_shift) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.gamma(sympy.Symbol('s') - 1), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.gamma(sympy.Symbol('s') - 1), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6785,7 +6872,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(positive_arg_shift_object) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.sin(sympy.Symbol('s') + 2), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.sin(sympy.Symbol('s') + 2), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6796,7 +6883,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(unknown_arg_shift_object) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s') - sympy.Symbol('a')), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.Function('F')(sympy.Symbol('s') - sympy.Symbol('a')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6812,7 +6899,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
       "sympy.sstr(" + py_expr(binary_frequency_shift_object) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.besselj(0, sympy.Symbol('s') - 1), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.besselj(0, sympy.Symbol('s') - 1), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 
@@ -6823,7 +6910,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(generic_complex_shift) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(sympy.Symbol('z')*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0))",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.exp(sympy.Symbol('z')*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None))",
     ),
   )
 
@@ -6838,7 +6925,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
   assert_eq(
     integrals_eval_str("sympy.sstr(" + py_expr(mixed_shift_sum) + ")"),
     integrals_eval_str(
-      "sympy.sstr(2*sympy.InverseLaplaceTransform(sympy.exp(3*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0) - 5*sympy.DiracDelta(sympy.Symbol('x') - 7))",
+      "sympy.sstr(2*sympy.InverseLaplaceTransform(sympy.exp(3*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None) - 5*sympy.DiracDelta(sympy.Symbol('x') - 7))",
     ),
   )
 
@@ -7391,7 +7478,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
     integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(additive_time_diff) +
-      ") - (sympy.Derivative(sympy.InverseLaplaceTransform(sympy.Function('f')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), 0), (sympy.Symbol('x'), 2)) + sympy.DiracDelta(sympy.Symbol('x')) - sympy.sqrt(sympy.Symbol('a')**2)*sympy.sin(sympy.Symbol('x')*sympy.sqrt(sympy.Symbol('a')**2))*sympy.Heaviside(sympy.Symbol('x')))))",
+      ") - (sympy.Derivative(sympy.InverseLaplaceTransform(sympy.Function('f')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None), (sympy.Symbol('x'), 2)) + sympy.DiracDelta(sympy.Symbol('x')) - sympy.sqrt(sympy.Symbol('a')**2)*sympy.sin(sympy.Symbol('x')*sympy.sqrt(sympy.Symbol('a')**2))*sympy.Heaviside(sympy.Symbol('x')))))",
     ),
     "0",
   )

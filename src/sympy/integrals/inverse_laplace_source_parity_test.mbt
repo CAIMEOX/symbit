@@ -95,7 +95,7 @@ test "symintegrals parity inverse Laplace SymPy source frontdoor cases" {
       "sympy.sstr(" + py_expr(unassumed_sqrt_linear_scale_object) + ")",
     ),
     integrals_eval_str(
-      "sympy.sstr(sympy.InverseLaplaceTransform(1/(sympy.sqrt(sympy.Symbol('b')*sympy.Symbol('s')) + sympy.Symbol('a')), sympy.Symbol('s'), sympy.Symbol('x'), 0).doit())",
+      "sympy.sstr(sympy.InverseLaplaceTransform(1/(sympy.sqrt(sympy.Symbol('b')*sympy.Symbol('s')) + sympy.Symbol('a')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
   )
 }
