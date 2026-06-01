@@ -3583,6 +3583,93 @@ pub fn do_inverse_laplace_doit(expr : Expr, s : Expr, t : Expr) -> Expr? {
 }
 
 ///|
+/// Apply SymPy's narrow `_fast_inverse_laplace` helper.
+///
+/// - Does: Mirrors the recursive helper used by `sympy.physics.control.control_plots`.
+/// - Input: One expression in frequency variable `s` and one target time variable `t`.
+/// - Returns: `Some` for constants, sums, independent multiples of one dependent factor, and `(a*s + b)**n`.
+/// - Limits: Unsupported shapes return `None`; `RootSum` is not represented in this package yet.
+pub fn _fast_inverse_laplace(expr : Expr, s : Expr, t : Expr) -> Expr? {
+  match symbol_name(s) {
+    Some(s_name) => fast_inverse_laplace_expr(expr, s_name, t)
+    None => None
+  }
+}
+
+///|
+fn fast_inverse_laplace_expr(expr : Expr, s_name : String, t : Expr) -> Expr? {
+  if !expr_depends_on(expr, s_name) {
+    return Some(expr)
+  }
+  match expr {
+    @symcore.Expr::Add(terms) =>
+      transform_add(terms, s_name, term => {
+        fast_inverse_laplace_expr(term, s_name, t)
+      })
+    @symcore.Expr::Mul(_) => fast_inverse_laplace_mul(expr, s_name, t)
+    @symcore.Expr::Pow(base, exp) =>
+      fast_inverse_laplace_pow(base, exp, s_name, t)
+    _ => None
+  }
+}
+
+///|
+fn fast_inverse_laplace_mul(expr : Expr, s_name : String, t : Expr) -> Expr? {
+  // Source map: SymPy's helper splits `coeff, expr = e.as_independent(s)`,
+  // then refuses products whose dependent part is still a Mul.
+  let (coeff, factors) = split_mul(expr, s_name)
+  if factors.length() != 1 {
+    return None
+  }
+  match fast_inverse_laplace_expr(factors[0], s_name, t) {
+    Some(value) => Some(expr_simplify(expr_mul(coeff, value)))
+    None => None
+  }
+}
+
+///|
+fn fast_inverse_laplace_pow(
+  base : Expr,
+  exp : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  // Source map: SymPy matches `(a*s + b)**n` with wildcards excluding `s`.
+  match split_linear_coeff(base, s_name) {
+    Some((a, b)) if !expr_is_zero(a) &&
+      !expr_depends_on(a, s_name) &&
+      !expr_depends_on(b, s_name) =>
+      match expr_is_int_value(exp) {
+        Some(n) if n < 0 => {
+          let minus_n = -n
+          let exp_part = @symelem.exp(
+            expr_mul(expr_div(expr_mul(@symcore.int(-1), b), a), t),
+          )
+          Some(
+            expr_simplify(
+              expr_div(
+                expr_mul(expr_pow(t, @symcore.int(minus_n - 1)), exp_part),
+                expr_mul(
+                  expr_pow(a, @symcore.int(minus_n)),
+                  @symspec.gamma(@symcore.int(minus_n)),
+                ),
+              ),
+            ),
+          )
+        }
+        Some(1) => {
+          let exp_part = @symelem.exp(
+            expr_mul(expr_div(expr_mul(@symcore.int(-1), b), a), t),
+          )
+          Some(expr_simplify(expr_div(exp_part, a)))
+        }
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
 fn inverse_laplace_doit(expr : Expr, s_name : String, t : Expr) -> Expr? {
   inverse_laplace_doit_control(expr, s_name, t, true)
 }

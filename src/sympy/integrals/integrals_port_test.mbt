@@ -6625,6 +6625,76 @@ test "symintegrals parity inverse Laplace delta matrix and time-diff rules" {
 }
 
 ///|
+test "symintegrals parity fast inverse Laplace helper" {
+  let x = @symcore.Expr::Symbol("x")
+  let s = @symcore.Expr::Symbol("s")
+  let a = @symcore.Expr::Symbol("a")
+  let py_fast = "__import__('sympy.integrals.laplace', fromlist=['_fast_inverse_laplace'])._fast_inverse_laplace"
+
+  let shifted_power = match
+    @symintegrals._fast_inverse_laplace(
+      (s + @symcore.int(2)) ^ @symcore.int(-3),
+      s,
+      x,
+    ) {
+    Some(value) => value
+    None => fail("expected fast inverse Laplace shifted power")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(shifted_power) +
+      ") - " +
+      py_fast +
+      "((sympy.Symbol('s') + 2)**(-3), sympy.Symbol('s'), sympy.Symbol('x'))))",
+    ),
+    "0",
+  )
+
+  let linear_power_sum = match
+    @symintegrals._fast_inverse_laplace(
+      a +
+      @symcore.int(3) *
+      ((@symcore.int(2) * s + @symcore.int(4)) ^ @symcore.int(-2)),
+      s,
+      x,
+    ) {
+    Some(value) => value
+    None => fail("expected fast inverse Laplace sum")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(linear_power_sum) +
+      ") - " +
+      py_fast +
+      "(sympy.Symbol('a') + 3*(2*sympy.Symbol('s') + 4)**(-2), sympy.Symbol('s'), sympy.Symbol('x'))))",
+    ),
+    "0",
+  )
+
+  let explicit_power_one = match
+    @symintegrals._fast_inverse_laplace(
+      @symcore.Expr::Pow(@symcore.int(2) * s + @symcore.int(4), @symcore.int(1)),
+      s,
+      x,
+    ) {
+    Some(value) => value
+    None => fail("expected fast inverse Laplace power-one branch")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_power_one) +
+      ") - " +
+      py_fast +
+      "(sympy.Pow(2*sympy.Symbol('s') + 4, 1, evaluate=False), sympy.Symbol('s'), sympy.Symbol('x'))))",
+    ),
+    "0",
+  )
+}
+
+///|
 test "symintegrals parity inverse Laplace object and shift edge rules" {
   let x = @symcore.Expr::Symbol("x")
   let s = @symcore.Expr::Symbol("s")

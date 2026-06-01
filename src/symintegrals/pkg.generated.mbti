@@ -10,6 +10,8 @@ import {
 }
 
 // Values
+pub fn _fast_inverse_laplace(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
 pub fn _laplace_deep_collect(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn add_rule(IntegralInfo) -> ManualStep?

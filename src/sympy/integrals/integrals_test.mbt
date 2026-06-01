@@ -3064,6 +3064,94 @@ test "symintegrals inverse Laplace transform objects roundtrip" {
 }
 
 ///|
+test "symintegrals fast inverse Laplace helper matches source shapes" {
+  let x = @symcore.Expr::Symbol("x")
+  let s = @symcore.Expr::Symbol("s")
+  let a = @symcore.Expr::Symbol("a")
+
+  let shifted_power = match
+    @symintegrals._fast_inverse_laplace(
+      (s + @symcore.int(2)) ^ @symcore.int(-3),
+      s,
+      x,
+    ) {
+    Some(value) => value
+    None => fail("expected fast inverse Laplace shifted power")
+  }
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        shifted_power -
+        (x ^ @symcore.int(2)) *
+        @symelem.exp(@symcore.int(-2) * x) *
+        (@symspec.gamma(@symcore.int(3)) ^ @symcore.int(-1)),
+      ),
+      @symcore.int(0),
+    ),
+    0,
+  )
+
+  let linear_power_sum = match
+    @symintegrals._fast_inverse_laplace(
+      a +
+      @symcore.int(3) *
+      ((@symcore.int(2) * s + @symcore.int(4)) ^ @symcore.int(-2)),
+      s,
+      x,
+    ) {
+    Some(value) => value
+    None => fail("expected fast inverse Laplace sum")
+  }
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        linear_power_sum -
+        (
+          a +
+          @symcore.rational_from_ints(3, 4) *
+          x *
+          @symelem.exp(@symcore.int(-2) * x)
+        ),
+      ),
+      @symcore.int(0),
+    ),
+    0,
+  )
+
+  let explicit_power_one = match
+    @symintegrals._fast_inverse_laplace(
+      @symcore.Expr::Pow(@symcore.int(2) * s + @symcore.int(4), @symcore.int(1)),
+      s,
+      x,
+    ) {
+    Some(value) => value
+    None => fail("expected fast inverse Laplace power-one branch")
+  }
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        explicit_power_one -
+        @symcore.rational_from_ints(1, 2) * @symelem.exp(@symcore.int(-2) * x),
+      ),
+      @symcore.int(0),
+    ),
+    0,
+  )
+
+  match
+    @symintegrals._fast_inverse_laplace(
+      ((s + @symcore.int(1)) ^ @symcore.int(-1)) *
+      ((s + @symcore.int(2)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ) {
+    None => ()
+    Some(_) => fail("expected dependent product to remain unsupported")
+  }
+  assert_eq(@symprint.pretty_string(shifted_power).contains("Heaviside"), false)
+}
+
+///|
 test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   let x = @symcore.Expr::Symbol("x")
   let s = @symcore.Expr::Symbol("s")
