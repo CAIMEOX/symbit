@@ -73,12 +73,29 @@ test "symintegrals parity inverse Laplace SymPy source frontdoor cases" {
       x,
     ),
   )
+  let bateman_538_inverse = doit(
+    inverse_laplace_transform(
+      (a ^ @symcore.int(2)) *
+      ((@symelem.sqrt(s) + a) ^ @symcore.int(-1)) *
+      (s ^ @symcore.rational_from_ints(-3, 2)),
+      s,
+      x,
+    ),
+  )
   @symassume.clear_global_assumptions()
   assert_eq(
     integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(bateman_537_inverse) +
       ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True), sympy.Symbol('b'): sympy.Symbol('b', positive=True)}) - sympy.inverse_laplace_transform(1/(sympy.sqrt(sympy.Symbol('s'))*(sympy.sqrt(sympy.Symbol('b', positive=True)*sympy.Symbol('s')) + sympy.Symbol('a', positive=True))), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(bateman_538_inverse) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}) - sympy.inverse_laplace_transform(sympy.Symbol('a', positive=True)**2/((sympy.sqrt(sympy.Symbol('s')) + sympy.Symbol('a', positive=True))*sympy.Symbol('s')**sympy.Rational(3, 2)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
     ),
     "0",
   )

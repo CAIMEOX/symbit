@@ -222,6 +222,43 @@ test "symintegrals inverse Laplace integration sqrt exponential over s" {
 }
 
 ///|
+test "symintegrals inverse Laplace Bateman irrational s three halves form" {
+  let s = @symcore.Expr::Symbol("s")
+  let t = @symcore.Expr::Symbol("t")
+  guard do_inverse_laplace_doit(
+      @symcore.int(4) *
+      ((@symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-1)) *
+      (s ^ @symcore.rational_from_ints(-3, 2)),
+      s,
+      t,
+    )
+    is Some(value) else {
+    fail("expected inverse for 4/(s**(3/2)*(sqrt(s) + 2))")
+  }
+  let expected = @symspec.heaviside(t) *
+    (
+      @symcore.int(4) *
+      @symelem.sqrt(t) *
+      (
+        @symelem.sqrt(
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        ) ^
+        @symcore.int(-1)
+      ) +
+      @symelem.exp(@symcore.int(4) * t) *
+      @symspec.erfc(@symcore.int(2) * @symelem.sqrt(t)) -
+      @symcore.int(1)
+    )
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(value - expected),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+}
+
+///|
 test "symintegrals inverse Laplace symbolic Bessel branch kernels" {
   let s = @symcore.Expr::Symbol("s")
   let t = @symcore.Expr::Symbol("t")

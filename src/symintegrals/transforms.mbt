@@ -50,6 +50,7 @@ priv struct TransformHeadFlags {
   mut has_cot : Bool
   mut has_factorial : Bool
   mut has_irrational_shape : Bool
+  mut has_sqrt_shape : Bool
 }
 
 ///|
@@ -67,6 +68,7 @@ fn transform_head_flags_new() -> TransformHeadFlags {
     has_cot: false,
     has_factorial: false,
     has_irrational_shape: false,
+    has_sqrt_shape: false,
   }
 }
 
@@ -105,8 +107,10 @@ fn transform_head_flags_visit(
         depends = transform_head_flags_visit(arg, flags, s_name) || depends
       }
       match @symcore.function_head_name(head) {
-        Some("sqrt") | Some("root") if depends =>
+        Some("sqrt") | Some("root") if depends => {
+          flags.has_sqrt_shape = true
           flags.has_irrational_shape = true
+        }
         _ => ()
       }
       depends
@@ -118,6 +122,7 @@ fn transform_head_flags_visit(
         depends = transform_head_flags_visit(arg, flags, s_name) || depends
       }
       if (name == "sqrt" || name == "root") && depends {
+        flags.has_sqrt_shape = true
         flags.has_irrational_shape = true
       }
       depends
@@ -5046,9 +5051,12 @@ fn inverse_laplace_special_term(
     Some(v) => return Some(v)
     None => ()
   }
-  match inverse_laplace_lowergamma_shifted_power_term(expr, s_name, t) {
-    Some(v) => return Some(v)
-    None => ()
+  let flags = transform_head_flags(expr, s_name)
+  if !flags.has_sqrt_shape {
+    match inverse_laplace_lowergamma_shifted_power_term(expr, s_name, t) {
+      Some(v) => return Some(v)
+      None => ()
+    }
   }
   match inverse_laplace_reciprocal_exp_bessel_term(expr, s_name, t) {
     Some(v) => return Some(v)
@@ -5058,7 +5066,6 @@ fn inverse_laplace_special_term(
     Some(v) => return Some(v)
     None => ()
   }
-  let flags = transform_head_flags(expr, s_name)
   let has_irrational_shape = flags.has_irrational_shape
   if flags.has_exp {
     match inverse_laplace_erf_linear_term(expr, s_name, t) {
@@ -8246,6 +8253,10 @@ fn inverse_laplace_irrational_algebraic_term(
   }
   match laplace_irrational_den_factors(ctx).length() {
     1 => {
+      match inverse_laplace_s_pow_three_halves_sqrt_linear_term(ctx, t) {
+        Some(v) => return Some(v)
+        None => ()
+      }
       match inverse_laplace_shifted_sqrt_over_linear_term(ctx, t) {
         Some(v) => return Some(v)
         None => ()
@@ -8736,26 +8747,120 @@ fn inverse_laplace_sqrt_linear_over_s_pow_three_halves_term(
       ),
     ),
   )
+  Some(
+    inverse_laplace_s_pow_three_halves_sqrt_linear_value(
+      scale_factor, normalized_const, t,
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_s_pow_three_halves_sqrt_linear_term(
+  ctx : LaplaceIrrationalContext,
+  t : Expr,
+) -> Expr? {
+  if laplace_irrational_den_factors(ctx).length() != 1 {
+    return None
+  }
+  let (coeff, factors) = split_mul(ctx.numerator, ctx.s_name)
+  if expr_depends_on(coeff, ctx.s_name) || factors.length() != 1 {
+    return None
+  }
+  let s_pow_scale = match
+    inverse_laplace_parse_negative_three_halves_linear_factor(
+      factors[0],
+      ctx.s_name,
+    ) {
+    Some(value) if !expr_is_zero(value) => value
+    _ => return None
+  }
+  let (sqrt_scale, constant) = match
+    parse_scaled_sqrt_linear_plus_const(
+      laplace_irrational_den_factors(ctx)[0],
+      ctx.s_name,
+    ) {
+    Some((scale, parsed_const)) => (scale, parsed_const)
+    None =>
+      match
+        parse_sqrt_affine_plus_const(
+          laplace_irrational_den_factors(ctx)[0],
+          ctx.s_name,
+        ) {
+        Some((scale, offset, parsed_const)) if expr_is_zero(offset) =>
+          (preferred_positive_sqrt(scale), parsed_const)
+        _ => return None
+      }
+  }
+  if expr_is_zero(sqrt_scale) || expr_is_zero(constant) {
+    return None
+  }
+  let normalized_const = expr_simplify(expr_div(constant, sqrt_scale))
+  if !laplace_source_positive(normalized_const) {
+    return None
+  }
+  let scale_factor = expr_simplify(
+    expr_div(
+      coeff,
+      expr_mul(
+        s_pow_scale,
+        expr_mul(sqrt_scale, expr_pow(normalized_const, @symcore.int(2))),
+      ),
+    ),
+  )
+  Some(
+    inverse_laplace_s_pow_three_halves_sqrt_linear_value(
+      scale_factor, normalized_const, t,
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_parse_negative_three_halves_linear_factor(
+  expr : Expr,
+  s_name : String,
+) -> Expr? {
+  retry_with_simplified(expr, expr => {
+    match expr {
+      @symcore.Expr::Pow(base, exp) if expr_same_simplified(
+          exp,
+          expr_rat(-3, 2),
+        ) =>
+        match linear_coeffs(base, s_name) {
+          Some((coeff, offset)) if expr_is_zero(offset) &&
+            !expr_is_zero(coeff) &&
+            !expr_depends_on(coeff, s_name) =>
+            Some(expr_pow(coeff, expr_rat(3, 2)))
+          _ => None
+        }
+      _ => None
+    }
+  })
+}
+
+///|
+fn inverse_laplace_s_pow_three_halves_sqrt_linear_value(
+  scale_factor : Expr,
+  normalized_const : Expr,
+  t : Expr,
+) -> Expr {
   let sqrt_t = @symelem.sqrt(t)
   let c2t = expr_mul(expr_pow(normalized_const, @symcore.int(2)), t)
-  Some(
-    expr_mul(
-      scale_factor,
-      inverse_laplace_heaviside(
-        t,
+  expr_mul(
+    scale_factor,
+    inverse_laplace_heaviside(
+      t,
+      expr_add(
         expr_add(
-          expr_add(
-            expr_div(
-              expr_mul(@symcore.int(2), expr_mul(normalized_const, sqrt_t)),
-              sqrt_pi(),
-            ),
-            expr_mul(
-              @symelem.exp(c2t),
-              @symspec.erfc(expr_mul(normalized_const, sqrt_t)),
-            ),
+          expr_div(
+            expr_mul(@symcore.int(2), expr_mul(normalized_const, sqrt_t)),
+            sqrt_pi(),
           ),
-          @symcore.int(-1),
+          expr_mul(
+            @symelem.exp(c2t),
+            @symspec.erfc(expr_mul(normalized_const, sqrt_t)),
+          ),
         ),
+        @symcore.int(-1),
       ),
     ),
   )
