@@ -259,6 +259,47 @@ test "symintegrals inverse Laplace Bateman irrational s three halves form" {
 }
 
 ///|
+test "symintegrals inverse Laplace Gaussian erfc kernel" {
+  let s = @symcore.Expr::Symbol("s")
+  let t = @symcore.Expr::Symbol("t")
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let kernel = @symcore.rational_from_ints(1, 4) *
+    @symelem.sqrt(pi) *
+    @symelem.exp((s ^ @symcore.int(2)) * @symcore.rational_from_ints(1, 16)) *
+    @symspec.erfc(s * @symcore.rational_from_ints(1, 4))
+  guard do_inverse_laplace_doit(kernel, s, t) is Some(value) else {
+    fail("expected inverse for Gaussian erfc kernel")
+  }
+  let expected = @symspec.heaviside(t) *
+    @symelem.exp(@symcore.int(-4) * (t ^ @symcore.int(2)))
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(value - expected),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+  guard do_inverse_laplace_doit(
+      @symelem.exp(@symcore.int(-2) * s) * kernel,
+      s,
+      t,
+    )
+    is Some(delayed_value) else {
+    fail("expected delayed inverse for Gaussian erfc kernel")
+  }
+  let shifted_t = t - @symcore.int(2)
+  let delayed_expected = @symspec.heaviside(shifted_t) *
+    @symelem.exp(@symcore.int(-4) * (shifted_t ^ @symcore.int(2)))
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(delayed_value - delayed_expected),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+}
+
+///|
 test "symintegrals inverse Laplace symbolic Bessel branch kernels" {
   let s = @symcore.Expr::Symbol("s")
   let t = @symcore.Expr::Symbol("t")

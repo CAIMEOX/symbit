@@ -3807,6 +3807,10 @@ fn inverse_laplace_independent_factor_term(
   // term.as_independent(s, as_Add=False) before the rule cascade. We first
   // try that split only when the dependent core can actually be evaluated, so
   // full-expression rules that still need the independent factor get a chance.
+  match inverse_laplace_gaussian_erfc_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let (coeff, factors) = split_mul(expr, s_name)
   if expr_is_one(coeff) || factors.length() == 0 {
     return None
@@ -5068,6 +5072,10 @@ fn inverse_laplace_special_term(
   }
   let has_irrational_shape = flags.has_irrational_shape
   if flags.has_exp {
+    match inverse_laplace_gaussian_erfc_term(expr, s_name, t) {
+      Some(v) => return Some(v)
+      None => ()
+    }
     match inverse_laplace_erf_linear_term(expr, s_name, t) {
       Some(v) => return Some(v)
       None => ()
@@ -6861,6 +6869,125 @@ fn inverse_laplace_erf_linear_term(
       expr_mul(coeff, @symspec.erf(expr_mul(scale, t))),
     ),
   )
+}
+
+///|
+fn inverse_laplace_gaussian_erfc_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  // Source map: the integration fallback inverts the Gaussian Laplace pair
+  // sqrt(pi/a)*exp(s**2/(4*a))*erfc(s/(2*sqrt(a)))/2
+  // back to exp(-a*t**2)*Heaviside(t).  Recognize the equivalent
+  // C*exp((k*s)**2)*erfc(k*s) shape before the expensive fallback.
+  let (coeff, factors) = split_mul(expr, s_name)
+  if factors.length() != 2 {
+    return None
+  }
+  let mut exp_coeff : Expr? = None
+  let mut erfc_coeff : Expr? = None
+  for factor in factors {
+    match unary_application_arg(factor, "exp") {
+      Some(inner) =>
+        match parse_pure_quadratic_coeff(inner, s_name) {
+          Some(value) if exp_coeff is None => exp_coeff = Some(value)
+          _ => return None
+        }
+      None =>
+        match unary_application_arg(factor, "erfc") {
+          Some(inner) =>
+            match linear_coeffs(inner, s_name) {
+              Some((scale, offset)) if erfc_coeff is None &&
+                expr_is_zero(offset) &&
+                !expr_depends_on(scale, s_name) => erfc_coeff = Some(scale)
+              _ => return None
+            }
+          None => return None
+        }
+    }
+  }
+  let parsed_exp_coeff = match exp_coeff {
+    Some(value) => value
+    None => return None
+  }
+  let parsed_erfc_coeff = match erfc_coeff {
+    Some(value) if !expr_is_zero(value) => value
+    _ => return None
+  }
+  let amount = match
+    inverse_laplace_gaussian_erfc_amount(parsed_exp_coeff, parsed_erfc_coeff) {
+    Some(value) => value
+    None => return None
+  }
+  let denom = expr_mul(sqrt_pi(), parsed_erfc_coeff)
+  let exponent = expr_mul(
+    @symcore.int(-1),
+    expr_mul(amount, expr_pow(t, @symcore.int(2))),
+  )
+  Some(
+    inverse_laplace_heaviside(
+      t,
+      expr_mul(expr_div(coeff, denom), @symelem.exp(exponent)),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_gaussian_erfc_amount(
+  exp_coeff : Expr,
+  erfc_coeff : Expr,
+) -> Expr? {
+  if laplace_source_positive(erfc_coeff) &&
+    expr_same_simplified(exp_coeff, expr_pow(erfc_coeff, @symcore.int(2))) {
+    return Some(
+      expr_div(
+        @symcore.int(1),
+        expr_mul(@symcore.int(4), expr_pow(erfc_coeff, @symcore.int(2))),
+      ),
+    )
+  }
+  match inverse_laplace_gaussian_erfc_sqrt_amount(erfc_coeff) {
+    Some(amount) if laplace_source_positive(amount) &&
+      expr_same_simplified(
+        exp_coeff,
+        expr_pow(expr_mul(@symcore.int(4), amount), @symcore.int(-1)),
+      ) => Some(amount)
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_gaussian_erfc_sqrt_amount(scale : Expr) -> Expr? {
+  let (num_exprs, den_opt) = split_division(scale)
+  let den = match den_opt {
+    Some(value) => value
+    None => return None
+  }
+  if !expr_is_one(factors_expr(num_exprs)) {
+    return None
+  }
+  let factors = expr_factors(den)
+  if factors.length() != 2 {
+    return None
+  }
+  let mut saw_two = false
+  let mut amount : Expr? = None
+  for factor in factors {
+    if !saw_two && expr_same_simplified(factor, @symcore.int(2)) {
+      saw_two = true
+    } else {
+      match unary_application_arg(factor, "sqrt") {
+        Some(inner) if amount is None => amount = Some(inner)
+        _ => return None
+      }
+    }
+  }
+  if saw_two {
+    amount
+  } else {
+    None
+  }
 }
 
 ///|
