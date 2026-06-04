@@ -118,6 +118,112 @@ test "symintegrals parity inverse Laplace SymPy source frontdoor cases" {
 }
 
 ///|
+fn inverse_laplace_positive_abck_zero_check(
+  checks : Array[String],
+  ours : Expr,
+  target : String,
+) -> Unit {
+  checks.push(
+    "sympy.sstr(sympy.simplify((" +
+    py_expr(ours) +
+    ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True), sympy.Symbol('b'): sympy.Symbol('b', positive=True), sympy.Symbol('c'): sympy.Symbol('c', positive=True), sympy.Symbol('k'): sympy.Symbol('k', positive=True)}) - (" +
+    target +
+    ")))",
+  )
+}
+
+///|
+test "symintegrals parity inverse Laplace symbolic Bateman irrational paths" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let c = @symcore.Expr::Symbol("c")
+  let k = @symcore.Expr::Symbol("k")
+
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(a))
+  @symassume.add_global_assumption(@symassume.q_positive(b))
+  @symassume.add_global_assumption(@symassume.q_positive(c))
+  @symassume.add_global_assumption(@symassume.q_positive(k))
+
+  let bateman_531 = doit(
+    inverse_laplace_transform(
+      (@symelem.sqrt(k * s) ^ @symcore.int(-1)) *
+      ((c * s - a) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let bateman_535 = doit(
+    inverse_laplace_transform(
+      a *
+      (s ^ @symcore.int(-1)) *
+      ((b * @symelem.sqrt(s) + a) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let bateman_5310 = doit(
+    inverse_laplace_transform((@symelem.sqrt(s) + a) ^ @symcore.int(-2), s, x),
+  )
+  let bateman_5311 = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(-1)) * ((@symelem.sqrt(s) + a) ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
+  let bateman_5312 = doit(
+    inverse_laplace_transform(
+      (@symelem.sqrt(s) ^ @symcore.int(-1)) *
+      ((@symelem.sqrt(s) + a) ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
+  let bateman_5313 = doit(
+    inverse_laplace_transform((@symelem.sqrt(s) + a) ^ @symcore.int(-3), s, x),
+  )
+  let bateman_5317 = doit(
+    inverse_laplace_transform(
+      (@symelem.sqrt(s) - a) *
+      (s ^ @symcore.int(-1)) *
+      ((@symelem.sqrt(s) + a) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  @symassume.clear_global_assumptions()
+
+  let bateman_checks : Array[String] = []
+  inverse_laplace_positive_abck_zero_check(
+    bateman_checks, bateman_531, "sympy.inverse_laplace_transform(1/(sympy.sqrt(sympy.Symbol('k', positive=True)*sympy.Symbol('s'))*(sympy.Symbol('c', positive=True)*sympy.Symbol('s') - sympy.Symbol('a', positive=True))), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)",
+  )
+  inverse_laplace_positive_abck_zero_check(
+    bateman_checks, bateman_535, "sympy.inverse_laplace_transform(sympy.Symbol('a', positive=True)/(sympy.Symbol('s')*(sympy.Symbol('b', positive=True)*sympy.sqrt(sympy.Symbol('s')) + sympy.Symbol('a', positive=True))), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)",
+  )
+  inverse_laplace_positive_abck_zero_check(
+    bateman_checks, bateman_5310, "sympy.inverse_laplace_transform(1/(sympy.sqrt(sympy.Symbol('s')) + sympy.Symbol('a', positive=True))**2, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)",
+  )
+  inverse_laplace_positive_abck_zero_check(
+    bateman_checks, bateman_5311, "sympy.inverse_laplace_transform(1/(sympy.Symbol('s')*(sympy.sqrt(sympy.Symbol('s')) + sympy.Symbol('a', positive=True))**2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)",
+  )
+  inverse_laplace_positive_abck_zero_check(
+    bateman_checks, bateman_5312, "sympy.inverse_laplace_transform(1/(sympy.sqrt(sympy.Symbol('s'))*(sympy.sqrt(sympy.Symbol('s')) + sympy.Symbol('a', positive=True))**2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)",
+  )
+  inverse_laplace_positive_abck_zero_check(
+    bateman_checks, bateman_5313, "sympy.inverse_laplace_transform(1/(sympy.sqrt(sympy.Symbol('s')) + sympy.Symbol('a', positive=True))**3, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)",
+  )
+  inverse_laplace_positive_abck_zero_check(
+    bateman_checks, bateman_5317, "sympy.inverse_laplace_transform((sympy.sqrt(sympy.Symbol('s')) - sympy.Symbol('a', positive=True))/(sympy.Symbol('s')*(sympy.sqrt(sympy.Symbol('s')) + sympy.Symbol('a', positive=True))), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)",
+  )
+  for oracle in integrals_eval_zero_batch(bateman_checks) {
+    inspect(oracle, content="0")
+  }
+}
+
+///|
 test "symintegrals parity inverse Laplace positive-parameter fallback paths" {
   let s = @symcore.Expr::Symbol("s")
   let x = @symcore.Expr::Symbol("x")

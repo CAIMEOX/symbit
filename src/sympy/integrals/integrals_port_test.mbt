@@ -27,7 +27,7 @@ fn py_function_call(name : String, args : Array[Expr]) -> String {
     "MellinTransform", "InverseMellinTransform", "FourierTransform", "InverseFourierTransform",
     "SineTransform", "InverseSineTransform", "CosineTransform", "InverseCosineTransform",
     "HankelTransform", "InverseHankelTransform", "Integral", "Matrix", "meijerg",
-    "gamma", "lerchphi",
+    "gamma", "lerchphi", "RootSum",
   ]
   if known.contains(name) {
     "sympy." + name + "(" + rendered + ")"
@@ -6893,6 +6893,7 @@ test "symintegrals parity fast inverse Laplace helper" {
   let x = @symcore.Expr::Symbol("x")
   let s = @symcore.Expr::Symbol("s")
   let a = @symcore.Expr::Symbol("a")
+  let z = @symcore.Expr::Symbol("z")
   let py_fast = "__import__('sympy.integrals.laplace', fromlist=['_fast_inverse_laplace'])._fast_inverse_laplace"
 
   let shifted_power = match
@@ -6953,6 +6954,73 @@ test "symintegrals parity fast inverse Laplace helper" {
       ") - " +
       py_fast +
       "(sympy.Pow(2*sympy.Symbol('s') + 4, 1, evaluate=False), sympy.Symbol('s'), sympy.Symbol('x'))))",
+    ),
+    "0",
+  )
+
+  let rootsum_poly = (z ^ @symcore.int(3)) + z + @symcore.int(1)
+  let rootsum_linear = @symcore.raw_function("RootSum", [
+    rootsum_poly,
+    @symcore.lambda_expr(z, (s - z) ^ @symcore.int(-1)),
+  ])
+  let rootsum_linear_fast = match
+    @symintegrals._fast_inverse_laplace(rootsum_linear, s, x) {
+    Some(value) => value
+    None => fail("expected fast inverse Laplace RootSum linear pole")
+  }
+  assert_eq(
+    integrals_eval_str(
+      py_zero_if_equal_code(
+        "sympy.sstr(" + py_expr(rootsum_linear_fast) + ")",
+        "sympy.sstr(" +
+        py_fast +
+        "(sympy.RootSum(sympy.Symbol('z')**3 + sympy.Symbol('z') + 1, sympy.Lambda(sympy.Symbol('z'), 1/(sympy.Symbol('s') - sympy.Symbol('z'))), auto=False), sympy.Symbol('s'), sympy.Symbol('x')))",
+      ),
+    ),
+    "0",
+  )
+
+  let rootsum_repeated = @symcore.raw_function("RootSum", [
+    rootsum_poly,
+    @symcore.lambda_expr(z, (s - z) ^ @symcore.int(-2)),
+  ])
+  let rootsum_repeated_fast = match
+    @symintegrals._fast_inverse_laplace(rootsum_repeated, s, x) {
+    Some(value) => value
+    None => fail("expected fast inverse Laplace RootSum repeated pole")
+  }
+  assert_eq(
+    integrals_eval_str(
+      py_zero_if_equal_code(
+        "sympy.sstr(" + py_expr(rootsum_repeated_fast) + ")",
+        "sympy.sstr(" +
+        py_fast +
+        "(sympy.RootSum(sympy.Symbol('z')**3 + sympy.Symbol('z') + 1, sympy.Lambda(sympy.Symbol('z'), 1/(sympy.Symbol('s') - sympy.Symbol('z'))**2), auto=False), sympy.Symbol('s'), sympy.Symbol('x')))",
+      ),
+    ),
+    "0",
+  )
+
+  let rootsum_mixed = @symcore.raw_function("RootSum", [
+    rootsum_poly,
+    @symcore.lambda_expr(
+      z,
+      ((s - z) ^ @symcore.int(-1)) + ((s - z) ^ @symcore.int(-2)),
+    ),
+  ])
+  let rootsum_mixed_fast = match
+    @symintegrals._fast_inverse_laplace(rootsum_mixed, s, x) {
+    Some(value) => value
+    None => fail("expected fast inverse Laplace RootSum mixed pole")
+  }
+  assert_eq(
+    integrals_eval_str(
+      py_zero_if_equal_code(
+        "sympy.sstr(" + py_expr(rootsum_mixed_fast) + ")",
+        "sympy.sstr(" +
+        py_fast +
+        "(sympy.RootSum(sympy.Symbol('z')**3 + sympy.Symbol('z') + 1, sympy.Lambda(sympy.Symbol('z'), 1/(sympy.Symbol('s') - sympy.Symbol('z')) + 1/(sympy.Symbol('s') - sympy.Symbol('z'))**2), auto=False), sympy.Symbol('s'), sympy.Symbol('x')))",
+      ),
     ),
     "0",
   )

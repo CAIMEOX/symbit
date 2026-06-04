@@ -3669,8 +3669,8 @@ fn inverse_laplace_condition_hint(
 ///
 /// - Does: Mirrors the recursive helper used by `sympy.physics.control.control_plots`.
 /// - Input: One expression in frequency variable `s` and one target time variable `t`.
-/// - Returns: `Some` for constants, sums, independent multiples of one dependent factor, and `(a*s + b)**n`.
-/// - Limits: Unsupported shapes return `None`; `RootSum` is not represented in this package yet.
+/// - Returns: `Some` for constants, sums, independent multiples of one dependent factor, `RootSum`, and `(a*s + b)**n`.
+/// - Limits: Unsupported shapes return `None`.
 pub fn _fast_inverse_laplace(expr : Expr, s : Expr, t : Expr) -> Expr? {
   match symbol_name(s) {
     Some(s_name) => fast_inverse_laplace_expr(expr, s_name, t)
@@ -3691,7 +3691,118 @@ fn fast_inverse_laplace_expr(expr : Expr, s_name : String, t : Expr) -> Expr? {
     @symcore.Expr::Mul(_) => fast_inverse_laplace_mul(expr, s_name, t)
     @symcore.Expr::Pow(base, exp) =>
       fast_inverse_laplace_pow(base, exp, s_name, t)
+    _ => fast_inverse_laplace_rootsum(expr, s_name, t)
+  }
+}
+
+///|
+fn fast_inverse_laplace_rootsum(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  match named_application(expr) {
+    Some(("RootSum", args)) if args.length() >= 2 =>
+      match @symcore.lambda_parts(args[1]) {
+        Some((vars, body)) =>
+          match lambda_single_variable(vars) {
+            Some(lambda_var) =>
+              match fast_inverse_laplace_expr(body, s_name, t) {
+                Some(transformed) => {
+                  let out_args = args.copy()
+                  Some(
+                    fast_inverse_laplace_rootsum_value(
+                      out_args, lambda_var, transformed,
+                    ),
+                  )
+                }
+                None => None
+              }
+            None => None
+          }
+        None => None
+      }
     _ => None
+  }
+}
+
+///|
+fn fast_inverse_laplace_rootsum_value(
+  out_args : Array[Expr],
+  lambda_var : Expr,
+  transformed : Expr,
+) -> Expr {
+  match symbol_name(lambda_var) {
+    Some(lambda_name) =>
+      match rootsum_lambda_independent_factor(transformed, lambda_name) {
+        Some((coeff, body)) if !expr_is_one(coeff) => {
+          out_args[1] = @symcore.lambda_expr(lambda_var, body)
+          expr_simplify(
+            expr_mul(coeff, @symcore.raw_function("RootSum", out_args)),
+          )
+        }
+        _ => {
+          out_args[1] = @symcore.lambda_expr(lambda_var, transformed)
+          @symcore.raw_function("RootSum", out_args)
+        }
+      }
+    None => {
+      out_args[1] = @symcore.lambda_expr(lambda_var, transformed)
+      @symcore.raw_function("RootSum", out_args)
+    }
+  }
+}
+
+///|
+fn rootsum_lambda_independent_factor(
+  expr : Expr,
+  lambda_name : String,
+) -> (Expr, Expr)? {
+  match expr {
+    @symcore.Expr::Add(terms) => {
+      let coeffs : Array[Expr] = []
+      let mut common_body : Expr? = None
+      for term in terms {
+        let (coeff, factors) = split_mul(term, lambda_name)
+        if factors.length() == 0 {
+          return None
+        }
+        let body = factors_expr_light(factors)
+        match common_body {
+          Some(common) =>
+            if expr_same_simplified(body, common) {
+              coeffs.push(coeff)
+            } else {
+              return None
+            }
+          None => {
+            common_body = Some(body)
+            coeffs.push(coeff)
+          }
+        }
+      }
+      match common_body {
+        Some(body) => Some((expr_simplify(@symcore.add(coeffs)), body))
+        None => None
+      }
+    }
+    _ => {
+      let (coeff, factors) = split_mul(expr, lambda_name)
+      if factors.length() == 0 {
+        None
+      } else {
+        Some((coeff, factors_expr_light(factors)))
+      }
+    }
+  }
+}
+
+///|
+fn lambda_single_variable(vars : Expr) -> Expr? {
+  match @symcore.tuple_items(vars) {
+    Some([lambda_var]) => Some(lambda_var)
+    Some(_) => None
+    None => Some(vars)
   }
 }
 
