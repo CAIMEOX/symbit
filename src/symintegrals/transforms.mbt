@@ -5101,6 +5101,10 @@ fn inverse_laplace_special_term(
     None => ()
   }
   if flags.has_log {
+    match inverse_laplace_log_over_power_term(expr, s_name, t) {
+      Some(v) => return Some(v)
+      None => ()
+    }
     match inverse_laplace_e1_term(expr, s_name, t) {
       Some(v) => return Some(v)
       None => ()
@@ -6884,6 +6888,57 @@ fn inverse_laplace_log_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
     Some(v) => Some(v)
     None => inverse_laplace_log_one_plus_linear_term(expr, s_name, t)
   }
+}
+
+///|
+fn inverse_laplace_log_over_power_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (num_factors, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(value) => value
+    None => return None
+  }
+  let den_power = match split_linear_power_denom(den, s_name) {
+    Some((coeff, offset, power)) if expr_is_one(coeff) &&
+      expr_is_zero(offset) &&
+      power > 0 => power
+    _ => return None
+  }
+  let numerator = factors_expr(num_factors)
+  let (coeff, factors) = split_mul(numerator, s_name)
+  if factors.length() != 1 || !inverse_laplace_is_log_s(factors[0], s_name) {
+    return None
+  }
+  let order = den_power - 1
+  let time_power = if order == 0 {
+    @symcore.int(1)
+  } else {
+    expr_pow(t, @symcore.int(order))
+  }
+  let base = expr_div(time_power, factorial_expr(@symcore.int(order)))
+  let euler = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma)
+  let log_part = expr_add(
+    inverse_laplace_harmonic_int(order),
+    expr_add(
+      expr_mul(@symcore.int(-1), euler),
+      expr_mul(@symcore.int(-1), @symelem.log(t)),
+    ),
+  )
+  Some(inverse_laplace_heaviside(t, expr_mul(coeff, expr_mul(base, log_part))))
+}
+
+///|
+fn inverse_laplace_harmonic_int(n : Int) -> Expr {
+  let mut acc = @symcore.int(0)
+  let mut k = 1
+  while k <= n {
+    acc = expr_add(acc, expr_rat(1, k))
+    k += 1
+  }
+  expr_simplify(acc)
 }
 
 ///|

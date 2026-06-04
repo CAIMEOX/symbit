@@ -334,3 +334,48 @@ test "symintegrals parity inverse Laplace positive-parameter fallback paths" {
       fail("expected Tuple from inverse_laplace_transform_eval noconds=false")
   }
 }
+
+///|
+test "symintegrals parity inverse Laplace log over power fallback" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+
+  let log_over_s = doit(
+    inverse_laplace_transform(@symelem.log(s) * (s ^ @symcore.int(-1)), s, x),
+  )
+  let log_over_s2 = doit(
+    inverse_laplace_transform(@symelem.log(s) * (s ^ @symcore.int(-2)), s, x),
+  )
+  let scaled_log_over_s3 = doit(
+    inverse_laplace_transform(
+      @symcore.int(3) * @symelem.log(s) * (s ^ @symcore.int(-3)),
+      s,
+      x,
+    ),
+  )
+
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(log_over_s) +
+      ") - sympy.inverse_laplace_transform(sympy.log(sympy.Symbol('s'))/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(log_over_s2) +
+      ") - sympy.inverse_laplace_transform(sympy.log(sympy.Symbol('s'))/sympy.Symbol('s')**2, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(scaled_log_over_s3) +
+      ") - sympy.inverse_laplace_transform(3*sympy.log(sympy.Symbol('s'))/sympy.Symbol('s')**3, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+}
