@@ -5041,6 +5041,10 @@ fn inverse_laplace_special_term(
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_laplace_reciprocal_exp_bessel_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let flags = transform_head_flags(expr, s_name)
   let has_irrational_shape = flags.has_irrational_shape
   if !has_irrational_shape && expr_laplace_rational_candidate(expr, s_name) {
@@ -6675,6 +6679,65 @@ fn inverse_laplace_expint2_scale(expr : Expr, s_name : String) -> Expr? {
       _ => None
     }
   })
+}
+
+///|
+fn inverse_laplace_reciprocal_exp_bessel_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (num_factors, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(value) => value
+    None => return None
+  }
+  let den_power = match split_linear_power_denom(den, s_name) {
+    Some((coeff, offset, power)) if expr_is_one(coeff) &&
+      expr_is_zero(offset) &&
+      power > 0 => power
+    _ => return None
+  }
+  let numerator = factors_expr(num_factors)
+  let (coeff, factors) = split_mul(numerator, s_name)
+  if factors.length() != 1 {
+    return None
+  }
+  let scale = match unary_application_arg(factors[0], "exp") {
+    Some(inner) =>
+      match parse_scaled_inverse_symbol(inner, s_name) {
+        Some(value) if !expr_is_zero(value) => value
+        _ => return None
+      }
+    None => return None
+  }
+  let (use_ordinary_bessel, amount) = match
+    extract_explicit_negative_factor(scale) {
+    Some(value) => (true, value)
+    None => (false, scale)
+  }
+  let order_int = den_power - 1
+  let order = @symcore.int(order_int)
+  let amplitude = if order_int == 0 {
+    @symcore.int(1)
+  } else {
+    expr_div(
+      expr_pow(t, expr_rat(order_int, 2)),
+      expr_pow(amount, expr_rat(order_int, 2)),
+    )
+  }
+  let argument = expr_mul(
+    @symcore.int(2),
+    expr_mul(@symelem.sqrt(amount), @symelem.sqrt(t)),
+  )
+  let bessel = if use_ordinary_bessel {
+    @symspec.besselj(order, argument)
+  } else {
+    @symspec.besseli(order, argument)
+  }
+  Some(
+    inverse_laplace_heaviside(t, expr_mul(coeff, expr_mul(amplitude, bessel))),
+  )
 }
 
 ///|

@@ -183,6 +183,35 @@ test "symintegrals parity inverse Laplace positive-parameter fallback paths" {
       x,
     ),
   )
+  let reciprocal_exp_besselj0 = doit(
+    inverse_laplace_transform(
+      @symelem.exp(@symcore.int(-1) * a * (s ^ @symcore.int(-1))) *
+      (s ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let reciprocal_exp_besseli0 = doit(
+    inverse_laplace_transform(
+      @symelem.exp(a * (s ^ @symcore.int(-1))) * (s ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let reciprocal_exp_besselj1 = doit(
+    inverse_laplace_transform(
+      @symelem.exp(@symcore.int(-1) * a * (s ^ @symcore.int(-1))) *
+      (s ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
+  let reciprocal_exp_besseli1 = @symintegrals.inverse_laplace_transform_eval(
+    @symelem.exp(a * (s ^ @symcore.int(-1))) * (s ^ @symcore.int(-2)),
+    s,
+    x,
+    noconds=false,
+  )
   @symassume.clear_global_assumptions()
 
   assert_eq(
@@ -265,4 +294,43 @@ test "symintegrals parity inverse Laplace positive-parameter fallback paths" {
     ),
     "0",
   )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(reciprocal_exp_besselj0) +
+      ") - sympy.inverse_laplace_transform(sympy.exp(-sympy.Symbol('a')/sympy.Symbol('s'))/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(reciprocal_exp_besseli0) +
+      ") - sympy.inverse_laplace_transform(sympy.exp(sympy.Symbol('a')/sympy.Symbol('s'))/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(reciprocal_exp_besselj1) +
+      ") - sympy.inverse_laplace_transform(sympy.exp(-sympy.Symbol('a')/sympy.Symbol('s'))/sympy.Symbol('s')**2, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  match @symcore.tuple_items(reciprocal_exp_besseli1) {
+    Some([value, cond]) => {
+      assert_eq(
+        integrals_eval_str(
+          "sympy.sstr(sympy.simplify((" +
+          py_expr(value) +
+          ") - sympy.inverse_laplace_transform(sympy.exp(sympy.Symbol('a')/sympy.Symbol('s'))/sympy.Symbol('s')**2, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+        ),
+        "0",
+      )
+      assert_eq(integrals_eval_str("sympy.sstr(" + py_expr(cond) + ")"), "True")
+    }
+    _ =>
+      fail("expected Tuple from inverse_laplace_transform_eval noconds=false")
+  }
 }
