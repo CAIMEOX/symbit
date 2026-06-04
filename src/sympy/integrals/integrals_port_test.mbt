@@ -734,6 +734,98 @@ test "symintegrals parity meijer inversion source shift rules" {
     ),
     "0",
   )
+
+  guard @symintegrals.meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [],
+        [@symcore.rational_from_ints(-1, 2)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_b1_neg_half) else {
+    fail("expected explicit single-G b1=-1/2 inversion")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_b1_neg_half) +
+      ") - sympy.integrals.meijerint.meijerint_inversion(sympy.meijerg([0], [], [sympy.Rational(-1, 2)], [], 2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('t'))))",
+    ),
+    "0",
+  )
+
+  guard @symintegrals.meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [],
+        [@symcore.rational_from_ints(1, 2)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_b1_pos_half) else {
+    fail("expected explicit single-G b1=1/2 inversion")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_b1_pos_half) +
+      ") - sympy.integrals.meijerint.meijerint_inversion(sympy.meijerg([0], [], [sympy.Rational(1, 2)], [], 2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('t'))))",
+    ),
+    "0",
+  )
+
+  guard @symintegrals.meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [],
+        [],
+        [@symcore.rational_from_ints(-1, 2)],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_b2_neg_half) else {
+    fail("expected explicit single-G b2=-1/2 inversion")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_b2_neg_half) +
+      ") - sympy.integrals.meijerint.meijerint_inversion(sympy.meijerg([0], [], [], [sympy.Rational(-1, 2)], 2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('t'))))",
+    ),
+    "0",
+  )
+
+  guard @symintegrals.meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [],
+        [],
+        [@symcore.rational_from_ints(1, 2)],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_b2_pos_half) else {
+    fail("expected explicit single-G b2=1/2 inversion")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_b2_pos_half) +
+      ") - sympy.integrals.meijerint.meijerint_inversion(sympy.meijerg([0], [], [], [sympy.Rational(1, 2)], 2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('t'))))",
+    ),
+    "0",
+  )
 }
 
 ///|

@@ -564,6 +564,84 @@ test "symintegrals meijer inversion smoke cases follow SymPy source tests" {
     0,
   )
 
+  guard meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [],
+        [@symcore.rational_from_ints(-1, 2)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_b1_neg_half) else {
+    fail("expected explicit single-G b1=-1/2 Bessel-I inversion")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        explicit_g_b1_neg_half -
+        @symelem.sqrt(
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        ) *
+        @symelem.exp(@symcore.rational_from_ints(-1, 4) * t) *
+        @symspec.besseli(@symcore.int(0), @symcore.rational_from_ints(1, 4) * t) *
+        (@symcore.int(2) ^ @symcore.int(-1)) *
+        @symspec.heaviside(t),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
+  guard meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [],
+        [],
+        [@symcore.rational_from_ints(1, 2)],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_b2_pos_half) else {
+    fail("expected explicit single-G b2=1/2 Bessel-I inversion")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        explicit_g_b2_pos_half -
+        ({
+          let sqrt_pi_expr = @symelem.sqrt(
+            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+          )
+          let denominator_inverse = (@symcore.int(4) * sqrt_pi_expr) ^
+            @symcore.int(-1)
+          let i0 = @symspec.besseli(
+            @symcore.int(0),
+            @symcore.rational_from_ints(1, 4) * t,
+          )
+          let i1 = @symspec.besseli(
+            @symcore.int(1),
+            @symcore.rational_from_ints(1, 4) * t,
+          )
+          @symcore.int(-1) *
+          @symelem.exp(@symcore.rational_from_ints(1, 4) * t) *
+          (
+            (@symcore.int(1) + @symcore.rational_from_ints(1, 2) * t) * i0 +
+            @symcore.rational_from_ints(1, 2) * t * i1
+          ) *
+          denominator_inverse *
+          @symspec.heaviside(t)
+        }),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
   match meijerint_inversion(@symelem.sqrt(s) ^ @symcore.int(-1), s, t) {
     None => ()
     Some(_) => fail("expected source rejection for 1/sqrt(s)")

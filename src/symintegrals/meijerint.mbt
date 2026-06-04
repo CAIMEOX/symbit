@@ -252,6 +252,21 @@ fn meijerint_explicit_single_g_inversion(
             Some(
               meijerint_explicit_single_g_laguerre_body(order, coeff, target),
             )
+          None =>
+            match meijerint_single_half_param(b1) {
+              Some(sign) =>
+                Some(
+                  meijerint_explicit_single_g_b1_half_body(sign, coeff, target),
+                )
+              None => None
+            }
+        }
+      } else if meijerint_single_zero_param(a1) &&
+        a2.is_empty() &&
+        b1.is_empty() {
+        match meijerint_single_half_param(b2) {
+          Some(sign) =>
+            Some(meijerint_explicit_single_g_b2_half_body(sign, coeff, target))
           None => None
         }
       } else {
@@ -313,6 +328,26 @@ fn meijerint_single_nonnegative_int_param(params : Array[Expr]) -> Int? {
 }
 
 ///|
+fn meijerint_single_half_param(params : Array[Expr]) -> Int? {
+  if params.length() != 1 {
+    return None
+  }
+  match expr_num_value(params[0]) {
+    Some(value) =>
+      if value.denominator().to_int() == 2 {
+        match value.numerator().to_int() {
+          1 => Some(1)
+          -1 => Some(-1)
+          _ => None
+        }
+      } else {
+        None
+      }
+    None => None
+  }
+}
+
+///|
 fn meijerint_explicit_single_g_laguerre_body(
   order : Int,
   coeff : Expr,
@@ -330,6 +365,62 @@ fn meijerint_explicit_single_g_laguerre_body(
       expr_mul(shape, @symelem.exp(expr_mul(@symcore.int(-1), scaled_target))),
       coeff,
     ),
+  )
+}
+
+///|
+fn meijerint_explicit_single_g_b1_half_body(
+  sign : Int,
+  coeff : Expr,
+  target : Expr,
+) -> Expr {
+  let u = expr_div(target, expr_mul(@symcore.int(2), coeff))
+  let scaled = expr_div(target, coeff)
+  let i0 = @symspec.besseli(@symcore.int(0), u)
+  let exp_term = @symelem.exp(expr_mul(@symcore.int(-1), u))
+  let core = if sign < 0 {
+    i0
+  } else {
+    let i1 = @symspec.besseli(@symcore.int(1), u)
+    expr_div(
+      expr_add(
+        expr_mul(expr_sub(@symcore.int(1), scaled), i0),
+        expr_mul(scaled, i1),
+      ),
+      @symcore.int(2),
+    )
+  }
+  inverse_laplace_heaviside(
+    target,
+    expr_div(expr_mul(sqrt_pi(), expr_mul(exp_term, core)), coeff),
+  )
+}
+
+///|
+fn meijerint_explicit_single_g_b2_half_body(
+  sign : Int,
+  coeff : Expr,
+  target : Expr,
+) -> Expr {
+  let u = expr_div(target, expr_mul(@symcore.int(2), coeff))
+  let scaled = expr_div(target, coeff)
+  let i0 = @symspec.besseli(@symcore.int(0), u)
+  let exp_term = @symelem.exp(u)
+  let core = if sign < 0 {
+    i0
+  } else {
+    let i1 = @symspec.besseli(@symcore.int(1), u)
+    expr_mul(
+      expr_rat(-1, 2),
+      expr_add(
+        expr_mul(expr_add(@symcore.int(1), scaled), i0),
+        expr_mul(scaled, i1),
+      ),
+    )
+  }
+  inverse_laplace_heaviside(
+    target,
+    expr_div(expr_mul(exp_term, core), expr_mul(sqrt_pi(), coeff)),
   )
 }
 
@@ -354,7 +445,7 @@ fn meijerint_factorial_laguerre_poly(order : Int, x : Expr) -> Expr {
     }
     terms.push(expr_mul(signed_coeff, power))
   }
-  expr_simplify(@symcore.add(terms))
+  @symcore.add(terms)
 }
 
 ///|
