@@ -5013,8 +5013,6 @@ fn inverse_laplace_special_term(
   s_name : String,
   t : Expr,
 ) -> Expr? {
-  let flags = transform_head_flags(expr, s_name)
-  let has_irrational_shape = flags.has_irrational_shape
   // Keep this order source-led: SymPy's _inverse_laplace_transform tries
   // simple rules, early program rules, then time/frequency/differentiation
   // program rules before falling back to integration.
@@ -5043,6 +5041,8 @@ fn inverse_laplace_special_term(
     Some(v) => return Some(v)
     None => ()
   }
+  let flags = transform_head_flags(expr, s_name)
+  let has_irrational_shape = flags.has_irrational_shape
   if !has_irrational_shape && expr_laplace_rational_candidate(expr, s_name) {
     match inverse_laplace_square_over_quadratic_term(expr, s_name, t) {
       Some(v) => return Some(v)
@@ -5142,12 +5142,16 @@ fn inverse_laplace_expand_term(expr : Expr, s_name : String, t : Expr) -> Expr? 
     @symcore.Expr::Add(_) => return None
     _ => ()
   }
+  let rational_candidate = expr_laplace_rational_candidate(expr, s_name)
+  if !rational_candidate && !inverse_laplace_expand_structural_candidate(expr) {
+    return None
+  }
   let expanded = inverse_laplace_expand_mul_expr(expr)
   match expanded {
     @symcore.Expr::Add(_) if @symcore.compare_expr(expanded, expr) != 0 =>
       inverse_laplace_doit(expanded, s_name, t)
     _ =>
-      if expr_laplace_rational_candidate(expr, s_name) {
+      if rational_candidate {
         let (num_exprs, den_opt) = split_division(expr)
         match den_opt {
           Some(den) =>
@@ -5165,6 +5169,41 @@ fn inverse_laplace_expand_term(expr : Expr, s_name : String, t : Expr) -> Expr? 
         }
       } else {
         None
+      }
+  }
+}
+
+///|
+fn inverse_laplace_expand_structural_candidate(expr : Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Add(_) => true
+    @symcore.Expr::Mul(args) => {
+      let mut saw_add = false
+      for arg in args {
+        match arg {
+          @symcore.Expr::Add(_) => saw_add = true
+          _ =>
+            if inverse_laplace_expand_structural_candidate(arg) {
+              return true
+            }
+        }
+      }
+      saw_add
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      match expr_is_int_value(exp) {
+        Some(power) if power > 1 =>
+          match base {
+            @symcore.Expr::Add(_) => true
+            _ => inverse_laplace_expand_structural_candidate(base)
+          }
+        _ => false
+      }
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((_, args)) =>
+          args.any(fn(arg) { inverse_laplace_expand_structural_candidate(arg) })
+        None => false
       }
   }
 }
