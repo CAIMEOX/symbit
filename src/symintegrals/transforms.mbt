@@ -5045,6 +5045,10 @@ fn inverse_laplace_special_term(
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_laplace_quadratic_three_half_bessel_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let flags = transform_head_flags(expr, s_name)
   let has_irrational_shape = flags.has_irrational_shape
   if !has_irrational_shape && expr_laplace_rational_candidate(expr, s_name) {
@@ -6746,6 +6750,89 @@ fn inverse_laplace_reciprocal_exp_bessel_term(
   Some(
     inverse_laplace_heaviside(t, expr_mul(coeff, expr_mul(amplitude, bessel))),
   )
+}
+
+///|
+fn inverse_laplace_quadratic_three_half_bessel_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (coeff, factors) = split_mul(expr, s_name)
+  if factors.length() == 0 {
+    return None
+  }
+  let mut saw_symbol = false
+  let mut quadratic : (Expr, Expr)? = None
+  for factor in factors {
+    if expr_eq(factor, @symcore.Expr::Symbol(s_name)) && !saw_symbol {
+      saw_symbol = true
+    } else {
+      match inverse_laplace_parse_quadratic_three_half_factor(factor, s_name) {
+        Some(value) if quadratic is None => quadratic = Some(value)
+        _ => return None
+      }
+    }
+  }
+  let (lead, constant) = match quadratic {
+    Some(value) => value
+    None => return None
+  }
+  if expr_is_zero(lead) || expr_is_zero(constant) {
+    return None
+  }
+  let normalized_constant = expr_simplify(expr_div(constant, lead))
+  let (use_modified_bessel, amount) = match
+    extract_explicit_negative_factor(normalized_constant) {
+    Some(value) => (true, value)
+    None => (false, normalized_constant)
+  }
+  let freq = preferred_positive_sqrt(amount)
+  let arg = expr_mul(freq, t)
+  let bessel = if saw_symbol {
+    if use_modified_bessel {
+      @symspec.besseli(@symcore.int(0), arg)
+    } else {
+      @symspec.besselj(@symcore.int(0), arg)
+    }
+  } else if use_modified_bessel {
+    @symspec.besseli(@symcore.int(1), arg)
+  } else {
+    @symspec.besselj(@symcore.int(1), arg)
+  }
+  let body = if saw_symbol {
+    expr_mul(t, bessel)
+  } else {
+    expr_mul(expr_div(t, freq), bessel)
+  }
+  Some(
+    inverse_laplace_heaviside(
+      t,
+      expr_mul(coeff, expr_mul(expr_pow(lead, expr_rat(-3, 2)), body)),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_parse_quadratic_three_half_factor(
+  expr : Expr,
+  s_name : String,
+) -> (Expr, Expr)? {
+  retry_with_simplified(expr, expr => {
+    match expr {
+      @symcore.Expr::Pow(base, exp) if expr_same_simplified(
+          exp,
+          expr_rat(-3, 2),
+        ) =>
+        match poly_coeffs_upto2(base, s_name) {
+          Some(coeffs) if expr_is_zero(coeffs[1]) &&
+            !expr_depends_on(coeffs[0], s_name) &&
+            !expr_depends_on(coeffs[2], s_name) => Some((coeffs[2], coeffs[0]))
+          _ => None
+        }
+      _ => None
+    }
+  })
 }
 
 ///|

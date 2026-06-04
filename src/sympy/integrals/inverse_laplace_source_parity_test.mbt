@@ -409,3 +409,58 @@ test "symintegrals parity inverse Laplace log over power fallback" {
     "0",
   )
 }
+
+///|
+test "symintegrals parity inverse Laplace quadratic three-half Bessel kernels" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let neg_three_halves = @symcore.rational_from_ints(-3, 2)
+  let plus_quad = (s ^ @symcore.int(2)) + @symcore.int(4)
+  let minus_quad = (s ^ @symcore.int(2)) - @symcore.int(4)
+
+  let reciprocal_j = doit(
+    inverse_laplace_transform(plus_quad ^ neg_three_halves, s, x),
+  )
+  let symbol_j = doit(
+    inverse_laplace_transform(s * (plus_quad ^ neg_three_halves), s, x),
+  )
+  let reciprocal_i = doit(
+    inverse_laplace_transform(minus_quad ^ neg_three_halves, s, x),
+  )
+  let symbol_i = doit(
+    inverse_laplace_transform(s * (minus_quad ^ neg_three_halves), s, x),
+  )
+
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(reciprocal_j) +
+      ") - sympy.inverse_laplace_transform((sympy.Symbol('s')**2 + 4)**sympy.Rational(-3, 2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(symbol_j) +
+      ") - sympy.inverse_laplace_transform(sympy.Symbol('s')*(sympy.Symbol('s')**2 + 4)**sympy.Rational(-3, 2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(reciprocal_i) +
+      ") - sympy.inverse_laplace_transform((sympy.Symbol('s')**2 - 4)**sympy.Rational(-3, 2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(symbol_i) +
+      ") - sympy.inverse_laplace_transform(sympy.Symbol('s')*(sympy.Symbol('s')**2 - 4)**sympy.Rational(-3, 2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+}
