@@ -5056,6 +5056,16 @@ fn inverse_laplace_special_term(
     None => ()
   }
   let flags = transform_head_flags(expr, s_name)
+  // Source map: SymPy's `_inverse_laplace_apply_prog_rules` tries
+  // `_inverse_laplace_time_shift` before integration fallback. Keep this
+  // before local exp/inverse-Mellin fallback recognizers so delayed kernels
+  // are shifted first instead of probing every non-shifted special shape.
+  if flags.has_exp {
+    match inverse_laplace_delay_term(expr, s_name, t) {
+      Some(v) => return Some(v)
+      None => ()
+    }
+  }
   if !flags.has_sqrt_shape {
     match inverse_laplace_lowergamma_shifted_power_term(expr, s_name, t) {
       Some(v) => return Some(v)
@@ -5115,10 +5125,6 @@ fn inverse_laplace_special_term(
     }
   }
   match inverse_laplace_positive_time_shift_object_term(expr, s_name, t) {
-    Some(v) => return Some(v)
-    None => ()
-  }
-  match inverse_laplace_delay_term(expr, s_name, t) {
     Some(v) => return Some(v)
     None => ()
   }
@@ -5262,6 +5268,9 @@ fn inverse_laplace_expand_structural_candidate(expr : Expr) -> Bool {
 fn inverse_laplace_exp_normalize_term(expr : Expr, s_name : String) -> Expr? {
   let flags = transform_head_flags(expr, s_name)
   if !flags.has_exp {
+    return None
+  }
+  if inverse_laplace_exp_normalize_delay_ready(expr, s_name) {
     return None
   }
   if !inverse_laplace_has_normalizable_exp(expr, s_name) {
@@ -5956,6 +5965,50 @@ fn inverse_laplace_known_function_name(name : String) -> Bool {
     | "lerchphi"
     | "factorial" => true
     _ => false
+  }
+}
+
+///|
+fn inverse_laplace_exp_normalize_delay_ready(
+  expr : Expr,
+  s_name : String,
+) -> Bool {
+  let (negative_count, blocked) = inverse_laplace_linear_exp_shift_scan(
+    expr, s_name,
+  )
+  negative_count == 1 && !blocked
+}
+
+///|
+fn inverse_laplace_linear_exp_shift_scan(
+  expr : Expr,
+  s_name : String,
+) -> (Int, Bool) {
+  match unary_application_arg(expr, "exp") {
+    Some(inner) =>
+      match linear_coeffs(inner, s_name) {
+        Some((coeff, offset)) if !expr_depends_on(coeff, s_name) =>
+          if expr_is_zero(coeff) {
+            (0, false)
+          } else if expr_is_zero(offset) && expr_is_negative(coeff) {
+            (1, false)
+          } else {
+            (0, true)
+          }
+        _ => (0, false)
+      }
+    None => {
+      let mut negative_count = 0
+      let mut blocked = false
+      for arg in @symcore.args(expr) {
+        let (arg_negative_count, arg_blocked) = inverse_laplace_linear_exp_shift_scan(
+          arg, s_name,
+        )
+        negative_count += arg_negative_count
+        blocked = blocked || arg_blocked
+      }
+      (negative_count, blocked)
+    }
   }
 }
 
@@ -10801,15 +10854,24 @@ fn inverse_laplace_delay_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
     Some(amount) =>
       match
         inverse_laplace_doit(
-          expr_simplify(expr_mul(@symelem.exp(exp_const), factors_expr(rest))),
+          inverse_laplace_delay_core(exp_const, rest),
           s_name,
           t,
         ) {
-        Some(value) =>
-          Some(expr_simplify(subst_symbol(value, t_name, expr_sub(t, amount))))
+        Some(value) => Some(subst_symbol(value, t_name, expr_sub(t, amount)))
         None => None
       }
     None => None
+  }
+}
+
+///|
+fn inverse_laplace_delay_core(exp_const : Expr, rest : Array[Expr]) -> Expr {
+  let core = factors_expr(rest)
+  if expr_is_zero(exp_const) {
+    core
+  } else {
+    expr_mul(@symelem.exp(exp_const), core)
   }
 }
 
