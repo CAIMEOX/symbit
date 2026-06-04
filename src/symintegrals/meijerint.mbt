@@ -119,6 +119,10 @@ fn meijerint_inversion_no_laplace_fallback(
   source : Expr,
   target : Expr,
 ) -> Expr? {
+  match meijerint_explicit_single_g_inversion(expr, source, target) {
+    Some(value) => return Some(value)
+    None => ()
+  }
   if meijerint_explicit_nonreal_exp_shift(expr, source) {
     return None
   }
@@ -127,10 +131,6 @@ fn meijerint_inversion_no_laplace_fallback(
     None => ()
   }
   match meijerint_exp_shifted_transform(expr, source, target) {
-    Some(value) => return Some(value)
-    None => ()
-  }
-  match meijerint_explicit_single_g_inversion(expr, source, target) {
     Some(value) => return Some(value)
     None => ()
   }
@@ -225,41 +225,36 @@ fn meijerint_explicit_single_g_inversion(
   }
   match meijerint_explicit_single_g_parts(expr, s_name) {
     Some((a1, a2, b1, b2, coeff)) =>
-      if meijerint_single_zero_param(a1) &&
-        a2.is_empty() &&
-        b1.is_empty() &&
-        b2.is_empty() {
-        Some(
-          inverse_laplace_heaviside(
-            target,
-            expr_div(
-              @symspec.besselj(
-                @symcore.int(0),
-                expr_div(
-                  expr_mul(@symcore.int(2), @symelem.sqrt(target)),
-                  @symelem.sqrt(coeff),
-                ),
-              ),
-              coeff,
-            ),
-          ),
-        )
-      } else if meijerint_single_zero_param(a1) &&
-        a2.is_empty() &&
-        b2.is_empty() {
-        match meijerint_single_nonnegative_int_param(b1) {
-          Some(order) =>
-            Some(
-              meijerint_explicit_single_g_laguerre_body(order, coeff, target),
-            )
-          None =>
-            match meijerint_single_half_param(b1) {
-              Some(sign) =>
-                Some(
-                  meijerint_explicit_single_g_b1_half_body(sign, coeff, target),
-                )
-              None => None
-            }
+      if a2.is_empty() && b1.is_empty() && b2.is_empty() {
+        if meijerint_single_zero_param(a1) {
+          Some(meijerint_explicit_single_g_j0_body(coeff, target))
+        } else {
+          match meijerint_single_half_param(a1) {
+            Some(-1) =>
+              Some(meijerint_explicit_single_g_a1_neg_half_body(coeff, target))
+            _ => None
+          }
+        }
+      } else if meijerint_single_zero_param(a1) && b2.is_empty() {
+        if a2.is_empty() {
+          match meijerint_single_nonnegative_int_param(b1) {
+            Some(order) =>
+              Some(
+                meijerint_explicit_single_g_laguerre_body(order, coeff, target),
+              )
+            None =>
+              match meijerint_single_half_param(b1) {
+                Some(sign) =>
+                  Some(
+                    meijerint_explicit_single_g_b1_half_body(
+                      sign, coeff, target,
+                    ),
+                  )
+                None => None
+              }
+          }
+        } else {
+          meijerint_explicit_single_g_a2_b1_body(a2, b1, coeff, target)
         }
       } else if meijerint_single_zero_param(a1) &&
         a2.is_empty() &&
@@ -309,6 +304,119 @@ fn meijerint_explicit_single_g_parts(
       }
     _ => None
   }
+}
+
+///|
+fn meijerint_explicit_single_g_j_arg(coeff : Expr, target : Expr) -> Expr {
+  expr_div(
+    expr_mul(@symcore.int(2), @symelem.sqrt(target)),
+    @symelem.sqrt(coeff),
+  )
+}
+
+///|
+fn meijerint_explicit_single_g_j0_body(coeff : Expr, target : Expr) -> Expr {
+  inverse_laplace_heaviside(
+    target,
+    expr_div(
+      @symspec.besselj(
+        @symcore.int(0),
+        meijerint_explicit_single_g_j_arg(coeff, target),
+      ),
+      coeff,
+    ),
+  )
+}
+
+///|
+fn meijerint_explicit_single_g_a1_neg_half_body(
+  coeff : Expr,
+  target : Expr,
+) -> Expr {
+  inverse_laplace_heaviside(
+    target,
+    expr_div(
+      @symelem.sin(meijerint_explicit_single_g_j_arg(coeff, target)),
+      expr_mul(sqrt_pi(), coeff),
+    ),
+  )
+}
+
+///|
+fn meijerint_explicit_single_g_a2_b1_body(
+  a2 : Array[Expr],
+  b1 : Array[Expr],
+  coeff : Expr,
+  target : Expr,
+) -> Expr? {
+  if meijerint_single_zero_param(a2) {
+    match meijerint_single_nonnegative_int_param(b1) {
+      Some(0) => Some(meijerint_explicit_single_g_j0_body(coeff, target))
+      Some(1) =>
+        Some(meijerint_explicit_single_g_a2_zero_b1_one_body(coeff, target))
+      _ => None
+    }
+  } else {
+    match (meijerint_single_half_param(a2), meijerint_single_zero_param(b1)) {
+      (Some(1), true) =>
+        Some(
+          meijerint_explicit_single_g_a2_pos_half_b1_zero_body(coeff, target),
+        )
+      (Some(-1), true) =>
+        Some(
+          meijerint_explicit_single_g_a2_neg_half_b1_zero_body(coeff, target),
+        )
+      _ => None
+    }
+  }
+}
+
+///|
+fn meijerint_explicit_single_g_a2_zero_b1_one_body(
+  coeff : Expr,
+  target : Expr,
+) -> Expr {
+  let arg = meijerint_explicit_single_g_j_arg(coeff, target)
+  inverse_laplace_heaviside(
+    target,
+    expr_div(
+      expr_sub(
+        @symspec.besselj(@symcore.int(0), arg),
+        expr_mul(
+          expr_div(@symelem.sqrt(target), @symelem.sqrt(coeff)),
+          @symspec.besselj(@symcore.int(1), arg),
+        ),
+      ),
+      coeff,
+    ),
+  )
+}
+
+///|
+fn meijerint_explicit_single_g_a2_pos_half_b1_zero_body(
+  coeff : Expr,
+  target : Expr,
+) -> Expr {
+  let arg = meijerint_explicit_single_g_j_arg(coeff, target)
+  inverse_laplace_heaviside(
+    target,
+    expr_div(
+      @symelem.sin(arg),
+      expr_mul(sqrt_pi(), expr_mul(@symelem.sqrt(coeff), @symelem.sqrt(target))),
+    ),
+  )
+}
+
+///|
+fn meijerint_explicit_single_g_a2_neg_half_b1_zero_body(
+  coeff : Expr,
+  target : Expr,
+) -> Expr {
+  let arg = meijerint_explicit_single_g_j_arg(coeff, target)
+  inverse_laplace_heaviside(
+    target,
+    expr_div(@symelem.cos(arg), expr_mul(sqrt_pi(), coeff)),
+  )
 }
 
 ///|

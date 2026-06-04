@@ -788,6 +788,94 @@ test "symintegrals parity inverse Laplace explicit single Meijer G fallback" {
     ),
     "0",
   )
+
+  let explicit_g_a1_neg_half = doit(
+    inverse_laplace_transform(
+      @symspec.meijerg(
+        [@symcore.rational_from_ints(-1, 2)],
+        [],
+        [],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_a1_neg_half) +
+      ") - sympy.inverse_laplace_transform(sympy.meijerg([sympy.Rational(-1, 2)], [], [], [], 2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let explicit_g_a2_zero_b1_one = doit(
+    inverse_laplace_transform(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [@symcore.int(0)],
+        [@symcore.int(1)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_a2_zero_b1_one) +
+      ") - sympy.inverse_laplace_transform(sympy.meijerg([0], [0], [1], [], 2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let explicit_g_a2_pos_half_b1_zero = doit(
+    inverse_laplace_transform(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [@symcore.rational_from_ints(1, 2)],
+        [@symcore.int(0)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_a2_pos_half_b1_zero) +
+      ") - sympy.inverse_laplace_transform(sympy.meijerg([0], [sympy.Rational(1, 2)], [0], [], 2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let explicit_g_a2_neg_half_b1_zero = doit(
+    inverse_laplace_transform(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [@symcore.rational_from_ints(-1, 2)],
+        [@symcore.int(0)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_a2_neg_half_b1_zero) +
+      ") - sympy.inverse_laplace_transform(sympy.meijerg([0], [sympy.Rational(-1, 2)], [0], [], 2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
 }
 
 ///|

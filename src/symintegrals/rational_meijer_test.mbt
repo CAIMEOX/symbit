@@ -642,6 +642,128 @@ test "symintegrals meijer inversion smoke cases follow SymPy source tests" {
     0,
   )
 
+  let j_arg = @symcore.int(2) *
+    @symelem.sqrt(t) *
+    (@symelem.sqrt(@symcore.int(2)) ^ @symcore.int(-1))
+  let sqrt_pi_expr = @symelem.sqrt(
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+  )
+  guard meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.rational_from_ints(-1, 2)],
+        [],
+        [],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_a1_neg_half) else {
+    fail("expected explicit single-G a1=-1/2 sine inversion")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        explicit_g_a1_neg_half -
+        @symspec.heaviside(t) *
+        @symelem.sin(j_arg) *
+        ((@symcore.int(2) * sqrt_pi_expr) ^ @symcore.int(-1)),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
+  guard meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [@symcore.int(0)],
+        [@symcore.int(1)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_a2_zero_b1_one) else {
+    fail("expected explicit single-G a2=0,b1=1 Bessel-J inversion")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        explicit_g_a2_zero_b1_one -
+        @symspec.heaviside(t) *
+        (
+          @symcore.rational_from_ints(1, 2) *
+          @symspec.besselj(@symcore.int(0), j_arg) -
+          @symcore.rational_from_ints(1, 2) *
+          @symelem.sqrt(t) *
+          (@symelem.sqrt(@symcore.int(2)) ^ @symcore.int(-1)) *
+          @symspec.besselj(@symcore.int(1), j_arg)
+        ),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
+  guard meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [@symcore.rational_from_ints(1, 2)],
+        [@symcore.int(0)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_a2_pos_half_b1_zero) else {
+    fail("expected explicit single-G a2=1/2,b1=0 sine-over-root inversion")
+  }
+  let sine_over_root_scale = (
+      sqrt_pi_expr * @symelem.sqrt(@symcore.int(2)) * @symelem.sqrt(t)
+    ) ^
+    @symcore.int(-1)
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        explicit_g_a2_pos_half_b1_zero -
+        @symspec.heaviside(t) * @symelem.sin(j_arg) * sine_over_root_scale,
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
+  guard meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [@symcore.rational_from_ints(-1, 2)],
+        [@symcore.int(0)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_a2_neg_half_b1_zero) else {
+    fail("expected explicit single-G a2=-1/2,b1=0 cosine inversion")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        explicit_g_a2_neg_half_b1_zero -
+        @symspec.heaviside(t) *
+        @symelem.cos(j_arg) *
+        ((@symcore.int(2) * sqrt_pi_expr) ^ @symcore.int(-1)),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
   match meijerint_inversion(@symelem.sqrt(s) ^ @symcore.int(-1), s, t) {
     None => ()
     Some(_) => fail("expected source rejection for 1/sqrt(s)")
