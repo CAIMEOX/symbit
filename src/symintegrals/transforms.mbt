@@ -3906,6 +3906,15 @@ fn inverse_laplace_rational_term(
       }
     None => ()
   }
+  match
+    inverse_laplace_symbol_square_quadratic_product_term(num, den, t, s_name) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_laplace_quadratic_square_degree2_term(num, den, t, s_name) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   match inverse_laplace_quadratic_degree2_rational_term(num, den, t, s_name) {
     Some(v) => return Some(v)
     None => ()
@@ -11371,6 +11380,92 @@ fn inverse_laplace_quadratic_power(
     }
     _ => None
   }
+}
+
+///|
+fn inverse_laplace_quadratic_square_degree2_term(
+  num : Expr,
+  den : Expr,
+  t : Expr,
+  s_name : String,
+) -> Expr? {
+  let coeffs = match poly_coeffs_upto2_raw(num, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  let num_square = coeffs[2]
+  if expr_is_zero(num_square) || expr_depends_on(num_square, s_name) {
+    return None
+  }
+  let (lead, freq, is_diff, power) = match
+    split_quadratic_power_denom(den, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  if power != 2 || expr_is_zero(freq) {
+    return None
+  }
+  let lower_degree = match
+    inverse_laplace_quadratic_power(coeffs[1], coeffs[0], den, t, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  let lead_scale = expr_pow(lead, @symcore.int(2))
+  let arg = expr_mul(freq, t)
+  let square_body = expr_mul(
+    expr_div(num_square, expr_mul(@symcore.int(2), lead_scale)),
+    if is_diff {
+      expr_add(
+        expr_mul(t, @symelem.cosh(arg)),
+        expr_div(@symelem.sinh(arg), freq),
+      )
+    } else {
+      expr_add(
+        expr_mul(t, @symelem.cos(arg)),
+        expr_div(@symelem.sin(arg), freq),
+      )
+    },
+  )
+  Some(expr_add(lower_degree, inverse_laplace_heaviside(t, square_body)))
+}
+
+///|
+fn inverse_laplace_symbol_square_quadratic_product_term(
+  num : Expr,
+  den : Expr,
+  t : Expr,
+  s_name : String,
+) -> Expr? {
+  if expr_depends_on(num, s_name) {
+    return None
+  }
+  let (linear_scale, quad_lead, freq, is_diff) = match
+    split_symbol_square_quadratic_product(den, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  if expr_is_zero(linear_scale) || expr_is_zero(quad_lead) || expr_is_zero(freq) {
+    return None
+  }
+  let scale = expr_div(
+    num,
+    expr_mul(expr_pow(linear_scale, @symcore.int(2)), quad_lead),
+  )
+  let freq_sq = expr_pow(freq, @symcore.int(2))
+  let freq_cu = expr_pow(freq, @symcore.int(3))
+  let arg = expr_mul(freq, t)
+  let body = if is_diff {
+    expr_mul(
+      scale,
+      expr_sub(expr_div(@symelem.sinh(arg), freq_cu), expr_div(t, freq_sq)),
+    )
+  } else {
+    expr_mul(
+      scale,
+      expr_sub(expr_div(t, freq_sq), expr_div(@symelem.sin(arg), freq_cu)),
+    )
+  }
+  Some(inverse_laplace_heaviside(t, body))
 }
 
 ///|
@@ -19158,6 +19253,94 @@ fn split_linear_quadratic_factors_direct_with_coeffs(
             _ => None
           }
       }
+    _ => None
+  }
+}
+
+///|
+fn split_symbol_square_quadratic_product(
+  den : Expr,
+  s_name : String,
+) -> (Expr, Expr, Expr, Bool)? {
+  match split_symbol_square_quadratic_product_direct(den, s_name) {
+    Some(value) => Some(value)
+    None => {
+      let simplified = expr_simplify(den)
+      if @symcore.compare_expr(simplified, den) == 0 {
+        None
+      } else {
+        split_symbol_square_quadratic_product_direct(simplified, s_name)
+      }
+    }
+  }
+}
+
+///|
+fn split_symbol_square_quadratic_product_direct(
+  den : Expr,
+  s_name : String,
+) -> (Expr, Expr, Expr, Bool)? {
+  match den {
+    @symcore.Expr::Mul(args) if args.length() == 2 =>
+      match split_symbol_square_factor_direct(args[0], s_name) {
+        Some(linear_scale) =>
+          match split_quadratic_base_direct(args[1], s_name) {
+            Some((quad_lead, freq, is_diff)) =>
+              Some((linear_scale, quad_lead, freq, is_diff))
+            None => None
+          }
+        None =>
+          match split_symbol_square_factor_direct(args[1], s_name) {
+            Some(linear_scale) =>
+              match split_quadratic_base_direct(args[0], s_name) {
+                Some((quad_lead, freq, is_diff)) =>
+                  Some((linear_scale, quad_lead, freq, is_diff))
+                None => None
+              }
+            None => None
+          }
+      }
+    _ => split_symbol_square_quadratic_product_expanded(den, s_name)
+  }
+}
+
+///|
+fn split_symbol_square_quadratic_product_expanded(
+  den : Expr,
+  s_name : String,
+) -> (Expr, Expr, Expr, Bool)? {
+  let coeffs = match poly_coeffs_general(den, s_name) {
+    Some(value) if value.length() == 5 => value
+    _ => return None
+  }
+  if !expr_is_zero(coeffs[0]) ||
+    !expr_is_zero(coeffs[1]) ||
+    !expr_is_zero(coeffs[3]) ||
+    expr_is_zero(coeffs[2]) ||
+    expr_is_zero(coeffs[4]) ||
+    expr_depends_on(coeffs[2], s_name) ||
+    expr_depends_on(coeffs[4], s_name) {
+    return None
+  }
+  let ratio = expr_div(coeffs[2], coeffs[4])
+  if expr_is_negative(ratio) {
+    Some(
+      (
+        @symcore.int(1),
+        coeffs[4],
+        expr_sqrt_positive(expr_mul(@symcore.int(-1), ratio)),
+        true,
+      ),
+    )
+  } else {
+    Some((@symcore.int(1), coeffs[4], expr_sqrt_positive(ratio), false))
+  }
+}
+
+///|
+fn split_symbol_square_factor_direct(expr : Expr, s_name : String) -> Expr? {
+  match split_linear_power_denom_direct(expr, s_name) {
+    Some((scale, offset, 2)) if expr_is_zero(offset) => Some(scale)
     _ => None
   }
 }

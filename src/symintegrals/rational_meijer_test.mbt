@@ -42,6 +42,106 @@ test "symintegrals rationaltools public helpers cover simple rational descriptor
 }
 
 ///|
+test "symintegrals inverse Laplace rational fallback square quadratic kernels" {
+  let s = @symcore.Expr::Symbol("s")
+  let t = @symcore.Expr::Symbol("t")
+  let plus_quad = (s ^ @symcore.int(2)) + @symcore.int(4)
+  let minus_quad = (s ^ @symcore.int(2)) - @symcore.int(4)
+
+  guard do_inverse_laplace_doit(
+      (s ^ @symcore.int(2)) * (plus_quad ^ @symcore.int(-2)),
+      s,
+      t,
+    )
+    is Some(square_plus) else {
+    fail("expected inverse for s**2/(s**2 + 4)**2")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        square_plus -
+        @symspec.heaviside(t) *
+        (
+          @symcore.rational_from_ints(1, 2) *
+          t *
+          @symelem.cos(@symcore.int(2) * t) +
+          @symcore.rational_from_ints(1, 4) * @symelem.sin(@symcore.int(2) * t)
+        ),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
+  guard do_inverse_laplace_doit(
+      (s ^ @symcore.int(2)) * (minus_quad ^ @symcore.int(-2)),
+      s,
+      t,
+    )
+    is Some(square_minus) else {
+    fail("expected inverse for s**2/(s**2 - 4)**2")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        square_minus -
+        @symspec.heaviside(t) *
+        (
+          @symcore.rational_from_ints(1, 2) *
+          t *
+          @symelem.cosh(@symcore.int(2) * t) +
+          @symcore.rational_from_ints(1, 4) * @symelem.sinh(@symcore.int(2) * t)
+        ),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
+  guard do_inverse_laplace_doit(
+      (s ^ @symcore.int(-2)) *
+      (((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-1)),
+      s,
+      t,
+    )
+    is Some(symbol_square_plus) else {
+    fail("expected inverse for 1/(s**2*(s**2 + 1))")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        symbol_square_plus - @symspec.heaviside(t) * (t - @symelem.sin(t)),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
+  guard do_inverse_laplace_doit(
+      (s ^ @symcore.int(-2)) * (minus_quad ^ @symcore.int(-1)),
+      s,
+      t,
+    )
+    is Some(symbol_square_minus) else {
+    fail("expected inverse for 1/(s**2*(s**2 - 4))")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        symbol_square_minus -
+        @symspec.heaviside(t) *
+        (
+          @symcore.rational_from_ints(1, 8) * @symelem.sinh(@symcore.int(2) * t) -
+          @symcore.rational_from_ints(1, 4) * t
+        ),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+}
+
+///|
 test "symintegrals meijer public helpers delegate to local special integrator" {
   let x = @symcore.Expr::Symbol("x")
   guard meijerint_indefinite(@symelem.sin(x) * (x ^ @symcore.int(-1)), x)

@@ -464,3 +464,85 @@ test "symintegrals parity inverse Laplace quadratic three-half Bessel kernels" {
     "0",
   )
 }
+
+///|
+test "symintegrals parity inverse Laplace rational fallback square quadratic kernels" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let d = @symcore.Expr::Symbol("d")
+
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(a))
+  @symassume.add_global_assumption(@symassume.q_positive(b))
+  @symassume.add_global_assumption(@symassume.q_positive(d))
+
+  let symbolic_square_quadratic = doit(
+    inverse_laplace_transform(
+      (b * (s ^ @symcore.int(2)) + d) *
+      (((a ^ @symcore.int(2)) + (s ^ @symcore.int(2))) ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
+  @symassume.clear_global_assumptions()
+
+  let symbol_square_plus = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(-2)) *
+      (((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let symbol_square_minus = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(-2)) *
+      (((s ^ @symcore.int(2)) - @symcore.int(4)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let square_minus = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(2)) *
+      (((s ^ @symcore.int(2)) - @symcore.int(4)) ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
+
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(symbolic_square_quadratic) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True), sympy.Symbol('b'): sympy.Symbol('b', positive=True), sympy.Symbol('d'): sympy.Symbol('d', positive=True)}) - sympy.inverse_laplace_transform((sympy.Symbol('b', positive=True)*sympy.Symbol('s')**2 + sympy.Symbol('d', positive=True))/(sympy.Symbol('a', positive=True)**2 + sympy.Symbol('s')**2)**2, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(symbol_square_plus) +
+      ") - sympy.inverse_laplace_transform(1/(sympy.Symbol('s')**2*(sympy.Symbol('s')**2 + 1)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(symbol_square_minus) +
+      ") - sympy.inverse_laplace_transform(1/(sympy.Symbol('s')**2*(sympy.Symbol('s')**2 - 4)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)).rewrite(sympy.exp)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(square_minus) +
+      ") - sympy.inverse_laplace_transform(sympy.Symbol('s')**2/(sympy.Symbol('s')**2 - 4)**2, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)).rewrite(sympy.exp)))",
+    ),
+    "0",
+  )
+}
