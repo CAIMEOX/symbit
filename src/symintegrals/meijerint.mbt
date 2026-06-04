@@ -130,6 +130,10 @@ fn meijerint_inversion_no_laplace_fallback(
     Some(value) => return Some(value)
     None => ()
   }
+  match meijerint_explicit_single_g_inversion(expr, source, target) {
+    Some(value) => return Some(value)
+    None => ()
+  }
   match meijerint_sqrt_exp_kernel(expr, source, target) {
     Some(value) => return Some(value)
     None => ()
@@ -210,6 +214,97 @@ fn meijerint_is_exp1(expr : Expr) -> Bool {
 }
 
 ///|
+fn meijerint_explicit_single_g_inversion(
+  expr : Expr,
+  source : Expr,
+  target : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(source) {
+    Some(name) => name
+    None => return None
+  }
+  match meijerint_explicit_single_g_parts(expr, s_name) {
+    Some((a1, a2, b1, b2, coeff)) =>
+      if meijerint_single_zero_param(a1) &&
+        a2.is_empty() &&
+        b1.is_empty() &&
+        b2.is_empty() {
+        Some(
+          inverse_laplace_heaviside(
+            target,
+            expr_div(
+              @symspec.besselj(
+                @symcore.int(0),
+                expr_div(
+                  expr_mul(@symcore.int(2), @symelem.sqrt(target)),
+                  @symelem.sqrt(coeff),
+                ),
+              ),
+              coeff,
+            ),
+          ),
+        )
+      } else if meijerint_single_zero_param(a1) &&
+        a2.is_empty() &&
+        meijerint_single_zero_param(b1) &&
+        b2.is_empty() {
+        Some(
+          inverse_laplace_heaviside(
+            target,
+            expr_div(
+              @symelem.exp(expr_mul(@symcore.int(-1), expr_div(target, coeff))),
+              coeff,
+            ),
+          ),
+        )
+      } else {
+        None
+      }
+    None => None
+  }
+}
+
+///|
+fn meijerint_explicit_single_g_parts(
+  expr : Expr,
+  s_name : String,
+) -> (Array[Expr], Array[Expr], Array[Expr], Array[Expr], Expr)? {
+  match named_ternary_application(expr) {
+    Some(("meijerg", a, b, arg)) =>
+      match
+        (
+          @symcore.tuple_items(a),
+          @symcore.tuple_items(b),
+          linear_coeffs(arg, s_name),
+        ) {
+        (Some([a1, a2]), Some([b1, b2]), Some((coeff, offset))) =>
+          if expr_is_zero(offset) && !expr_is_zero(coeff) {
+            match
+              (
+                @symcore.tuple_items(a1),
+                @symcore.tuple_items(a2),
+                @symcore.tuple_items(b1),
+                @symcore.tuple_items(b2),
+              ) {
+              (Some(a1s), Some(a2s), Some(b1s), Some(b2s)) =>
+                Some((a1s, a2s, b1s, b2s, coeff))
+              _ => None
+            }
+          } else {
+            None
+          }
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn meijerint_single_zero_param(params : Array[Expr]) -> Bool {
+  params.length() == 1 && expr_is_zero(params[0])
+}
+
+///|
 fn meijerint_source_rejects_unadorned_sqrt_kernel(
   expr : Expr,
   source : Expr,
@@ -217,6 +312,9 @@ fn meijerint_source_rejects_unadorned_sqrt_kernel(
   let s_name = match symbol_name(source) {
     Some(name) => name
     None => return false
+  }
+  if !transform_head_flags(expr, s_name).has_irrational_shape {
+    return false
   }
   let (num_factors, den_opt) = split_division_raw(expr)
   match den_opt {

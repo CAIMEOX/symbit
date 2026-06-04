@@ -671,6 +671,46 @@ test "symintegrals parity meijer inversion source shift rules" {
       "sympy.sstr(sympy.integrals.meijerint.meijerint_inversion(sympy.sqrt(sympy.pi)*sympy.exp(-2*sympy.sqrt(sympy.Symbol('z'))*sympy.sqrt(sympy.Symbol('s')))/sympy.sqrt(sympy.Symbol('z')), sympy.Symbol('s'), sympy.Symbol('t')))",
     ),
   )
+
+  guard @symintegrals.meijerint_inversion(
+      @symspec.meijerg([@symcore.int(0)], [], [], [], s),
+      s,
+      t,
+    )
+    is Some(explicit_g_bessel) else {
+    fail("expected explicit single-G bessel inversion")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_bessel) +
+      ") - sympy.integrals.meijerint.meijerint_inversion(sympy.meijerg([0], [], [], [], sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('t'))))",
+    ),
+    "0",
+  )
+
+  guard @symintegrals.meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [],
+        [@symcore.int(0)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_exp) else {
+    fail("expected explicit single-G exponential inversion")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_exp) +
+      ") - sympy.integrals.meijerint.meijerint_inversion(sympy.meijerg([0], [], [0], [], 2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('t'))))",
+    ),
+    "0",
+  )
 }
 
 ///|
