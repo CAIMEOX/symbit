@@ -564,6 +564,28 @@ test "symintegrals meijer inversion smoke cases follow SymPy source tests" {
     0,
   )
 
+  guard do_inverse_laplace_doit(
+      @symelem.sqrt(@symcore.int(8) + @symcore.int(2) * (s ^ @symcore.int(2))) ^
+      @symcore.int(-1),
+      s,
+      t,
+    )
+    is Some(scaled_bessel_value) else {
+    fail("expected inverse of 1/sqrt(2*s**2 + 8)")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        scaled_bessel_value -
+        (@symelem.sqrt(@symcore.int(2)) ^ @symcore.int(-1)) *
+        @symspec.besselj(@symcore.int(0), @symcore.int(2) * t) *
+        @symspec.heaviside(t),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
   guard meijerint_inversion(
       @symspec.meijerg([@symcore.int(0)], [], [], [], s),
       s,

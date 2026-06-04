@@ -712,6 +712,26 @@ test "symintegrals parity inverse Laplace integration sqrt exponential over s" {
 }
 
 ///|
+test "symintegrals parity inverse Laplace source reciprocal sqrt quadratic fast path" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let kernel = @symelem.sqrt(
+      @symcore.int(8) + @symcore.int(2) * (s ^ @symcore.int(2)),
+    ) ^
+    @symcore.int(-1)
+  let value = doit(inverse_laplace_transform(kernel, s, x))
+
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(value) +
+      ") - sympy.inverse_laplace_transform(1/sympy.sqrt(2*sympy.Symbol('s')**2 + 8), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+}
+
+///|
 test "symintegrals parity inverse Laplace explicit single Meijer G fallback" {
   let s = @symcore.Expr::Symbol("s")
   let x = @symcore.Expr::Symbol("x")

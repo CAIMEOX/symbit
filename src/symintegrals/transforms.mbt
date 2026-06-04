@@ -3815,7 +3815,7 @@ fn inverse_laplace_independent_factor_term(
   if expr_is_one(coeff) || factors.length() == 0 {
     return None
   }
-  let core = factors_expr(factors)
+  let core = factors_expr_light(factors)
   if @symcore.compare_expr(core, expr) == 0 {
     return None
   }
@@ -5072,13 +5072,23 @@ fn inverse_laplace_special_term(
       None => ()
     }
   }
-  match inverse_laplace_reciprocal_exp_bessel_term(expr, s_name, t) {
-    Some(v) => return Some(v)
-    None => ()
+  if flags.has_exp {
+    match inverse_laplace_reciprocal_exp_bessel_term(expr, s_name, t) {
+      Some(v) => return Some(v)
+      None => ()
+    }
   }
-  match inverse_laplace_quadratic_three_half_bessel_term(expr, s_name, t) {
-    Some(v) => return Some(v)
-    None => ()
+  if flags.has_sqrt_shape {
+    match inverse_laplace_reciprocal_sqrt_quadratic_fast_term(expr, s_name, t) {
+      Some(v) => return Some(v)
+      None => ()
+    }
+  }
+  if !flags.has_exp {
+    match inverse_laplace_quadratic_three_half_bessel_term(expr, s_name, t) {
+      Some(v) => return Some(v)
+      None => ()
+    }
   }
   let has_irrational_shape = flags.has_irrational_shape
   if flags.has_exp {
@@ -5986,7 +5996,7 @@ fn inverse_laplace_linear_exp_shift_scan(
 ) -> (Int, Bool) {
   match unary_application_arg(expr, "exp") {
     Some(inner) =>
-      match linear_coeffs(inner, s_name) {
+      match split_linear_coeff_direct(inner, s_name) {
         Some((coeff, offset)) if !expr_depends_on(coeff, s_name) =>
           if expr_is_zero(coeff) {
             (0, false)
@@ -6138,7 +6148,7 @@ fn inverse_laplace_combine_exp_product(
 fn inverse_laplace_linear_exp_inner(expr : Expr, s_name : String) -> Expr? {
   match unary_application_arg(expr, "exp") {
     Some(inner) =>
-      match linear_coeffs(inner, s_name) {
+      match split_linear_coeff_direct(inner, s_name) {
         Some(_) => Some(inner)
         None => None
       }
@@ -6818,9 +6828,17 @@ fn inverse_laplace_reciprocal_exp_bessel_term(
   }
   let scale = match unary_application_arg(factors[0], "exp") {
     Some(inner) =>
-      match parse_scaled_inverse_symbol(inner, s_name) {
+      match parse_scaled_inverse_symbol_light(inner, s_name) {
         Some(value) if !expr_is_zero(value) => value
-        _ => return None
+        _ => {
+          if transform_head_flags(inner, s_name).has_sqrt_shape {
+            return None
+          }
+          match parse_scaled_inverse_symbol(inner, s_name) {
+            Some(value) if !expr_is_zero(value) => value
+            _ => return None
+          }
+        }
       }
     None => return None
   }
@@ -7080,9 +7098,14 @@ fn inverse_laplace_sqrt_exp_over_s_term(
     Some(value) => value
     None => return None
   }
-  let positive_sqrt_part = match extract_explicit_negative_factor(exp_inner) {
+  let positive_sqrt_part = match
+    extract_explicit_negative_factor_light(exp_inner) {
     Some(value) => value
-    None => return None
+    None =>
+      match extract_explicit_negative_factor(exp_inner) {
+        Some(value) => value
+        None => return None
+      }
   }
   let scale = match
     inverse_laplace_parse_sqrt_symbol_scale(positive_sqrt_part, s_name) {
@@ -7752,6 +7775,9 @@ fn inverse_laplace_shifted_power_law_term(
   if factors.length() != 1 || expr_depends_on(coeff, s_name) {
     return None
   }
+  if !inverse_laplace_shifted_power_law_candidate_factor(factors[0], s_name) {
+    return None
+  }
   let (scale, shift, power) = match
     inverse_laplace_parse_scaled_shifted_linear_negative_power(
       factors[0],
@@ -7780,6 +7806,24 @@ fn inverse_laplace_shifted_power_law_term(
       ),
     ),
   )
+}
+
+///|
+fn inverse_laplace_shifted_power_law_candidate_factor(
+  factor : Expr,
+  s_name : String,
+) -> Bool {
+  match factor {
+    @symcore.Expr::Pow(base, _) =>
+      match split_linear_coeff_direct(base, s_name) {
+        Some((coeff, shift)) =>
+          !expr_is_zero(coeff) &&
+          !expr_depends_on(coeff, s_name) &&
+          !expr_depends_on(shift, s_name)
+        None => false
+      }
+    _ => false
+  }
 }
 
 ///|
@@ -8046,7 +8090,7 @@ fn inverse_laplace_generic_head_term(
                 match linear_coeffs(inner, s_name) {
                   Some((coeff, offset)) =>
                     if expr_is_negative(coeff) {
-                      match extract_explicit_negative_factor(coeff) {
+                      match extract_explicit_negative_factor_light(coeff) {
                         Some(amount) =>
                           if delay is None {
                             delay = Some(amount)
@@ -8054,7 +8098,17 @@ fn inverse_laplace_generic_head_term(
                           } else {
                             return None
                           }
-                        None => rest.push(factor)
+                        None =>
+                          match extract_explicit_negative_factor(coeff) {
+                            Some(amount) =>
+                              if delay is None {
+                                delay = Some(amount)
+                                exp_const = offset
+                              } else {
+                                return None
+                              }
+                            None => rest.push(factor)
+                          }
                       }
                     } else {
                       rest.push(factor)
@@ -8486,6 +8540,88 @@ fn inverse_laplace_irrational_algebraic_term(
       inverse_laplace_reciprocal_sqrt_shifted_linear_over_s_term(ctx, t)
     }
     _ => None
+  }
+}
+
+///|
+fn inverse_laplace_reciprocal_sqrt_quadratic_fast_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  // Source map: SymPy Bateman 5.3.35/44 directly recognizes
+  // 1/sqrt(a*s**2 + b). Keep this as a cheap front-door before broader
+  // irrational probes, which otherwise invoke general simplification.
+  let (coeff, inner) = match
+    inverse_laplace_reciprocal_sqrt_quadratic_fast_parts(expr, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  let coeffs = match poly_coeffs_upto2_raw(inner, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  if !expr_is_zero(coeffs[1]) ||
+    expr_is_zero(coeffs[2]) ||
+    expr_depends_on(coeffs[0], s_name) ||
+    expr_depends_on(coeffs[2], s_name) {
+    return None
+  }
+  let body = match
+    inverse_laplace_reciprocal_sqrt_quadratic_body(
+      expr_div(coeffs[0], coeffs[2]),
+      t,
+    ) {
+    Some(value) => value
+    None => return None
+  }
+  let scaled = if expr_is_one(coeffs[2]) {
+    body
+  } else {
+    expr_mul(
+      expr_pow(preferred_positive_sqrt(coeffs[2]), @symcore.int(-1)),
+      body,
+    )
+  }
+  Some(expr_mul(coeff, scaled))
+}
+
+///|
+fn inverse_laplace_reciprocal_sqrt_quadratic_fast_parts(
+  expr : Expr,
+  s_name : String,
+) -> (Expr, Expr)? {
+  let (coeff, factors) = split_mul_raw(expr, s_name)
+  if factors.length() != 1 {
+    return None
+  }
+  let factor = factors[0]
+  match factor {
+    @symcore.Expr::Pow(base, exponent) if expr_is_negative_half(exponent) =>
+      Some((coeff, base))
+    _ => {
+      let (num, den_opt) = split_division_raw(factor)
+      if !(num.length() == 0 || (num.length() == 1 && expr_is_one(num[0]))) {
+        return None
+      }
+      let den = match den_opt {
+        Some(value) => value
+        None => return None
+      }
+      match unary_application_arg(den, "sqrt") {
+        Some(inner) => Some((coeff, inner))
+        None => None
+      }
+    }
+  }
+}
+
+///|
+fn expr_is_negative_half(expr : Expr) -> Bool {
+  match expr_num_value(expr) {
+    Some(value) =>
+      value.numerator().to_int() == -1 && value.denominator().to_int() == 2
+    None => false
   }
 }
 
@@ -10429,6 +10565,26 @@ fn parse_scaled_inverse_symbol(expr : Expr, var_name : String) -> Expr? {
 }
 
 ///|
+fn parse_scaled_inverse_symbol_light(expr : Expr, var_name : String) -> Expr? {
+  let (num, den_opt) = split_division_raw(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  match den {
+    @symcore.Expr::Symbol(name) if name == var_name => {
+      let numerator = factors_expr_light(num)
+      if expr_depends_on(numerator, var_name) {
+        None
+      } else {
+        Some(numerator)
+      }
+    }
+    _ => None
+  }
+}
+
+///|
 fn parse_symbol_negative_power(expr : Expr, var_name : String) -> Expr? {
   retry_with_simplified(expr, expr => {
     match expr {
@@ -10805,10 +10961,6 @@ fn inverse_laplace_has_nonnegative_time_shift_exp(
 
 ///|
 fn inverse_laplace_delay_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
-  let t_name = match symbol_name(t) {
-    Some(v) => v
-    None => return None
-  }
   let factors = match expr {
     @symcore.Expr::Mul(args) => args
     _ if unary_application_arg(expr, "exp") is Some(_) => [expr]
@@ -10829,10 +10981,10 @@ fn inverse_laplace_delay_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
   for factor in factors {
     match unary_application_arg(factor, "exp") {
       Some(inner) =>
-        match linear_coeffs(inner, s_name) {
+        match split_linear_coeff_direct(inner, s_name) {
           Some((coeff, offset)) =>
             if expr_is_negative(coeff) {
-              match extract_explicit_negative_factor(coeff) {
+              match extract_explicit_negative_factor_light(coeff) {
                 Some(amount) =>
                   if delay is None {
                     delay = Some(amount)
@@ -10840,7 +10992,17 @@ fn inverse_laplace_delay_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
                   } else {
                     return None
                   }
-                None => rest.push(factor)
+                None =>
+                  match extract_explicit_negative_factor(coeff) {
+                    Some(amount) =>
+                      if delay is None {
+                        delay = Some(amount)
+                        exp_const = offset
+                      } else {
+                        return None
+                      }
+                    None => rest.push(factor)
+                  }
               }
             } else {
               rest.push(factor)
@@ -10856,9 +11018,9 @@ fn inverse_laplace_delay_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
         inverse_laplace_doit(
           inverse_laplace_delay_core(exp_const, rest),
           s_name,
-          t,
+          expr_sub(t, amount),
         ) {
-        Some(value) => Some(subst_symbol(value, t_name, expr_sub(t, amount)))
+        Some(value) => Some(value)
         None => None
       }
     None => None
@@ -10867,7 +11029,7 @@ fn inverse_laplace_delay_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
 
 ///|
 fn inverse_laplace_delay_core(exp_const : Expr, rest : Array[Expr]) -> Expr {
-  let core = factors_expr(rest)
+  let core = factors_expr_light(rest)
   if expr_is_zero(exp_const) {
     core
   } else {
@@ -19017,6 +19179,17 @@ fn factors_expr(factors : Array[Expr]) -> Expr {
 }
 
 ///|
+fn factors_expr_light(factors : Array[Expr]) -> Expr {
+  if factors.length() == 0 {
+    @symcore.int(1)
+  } else if factors.length() == 1 {
+    factors[0]
+  } else {
+    @symcore.mul(factors)
+  }
+}
+
+///|
 fn split_linear_coeff(expr : Expr, var_name : String) -> (Expr, Expr)? {
   match poly_coeffs_upto2(expr, var_name) {
     Some(coeffs) =>
@@ -20190,6 +20363,51 @@ fn extract_explicit_negative_factor(expr : Expr) -> Expr? {
 }
 
 ///|
+fn extract_explicit_negative_factor_light(expr : Expr) -> Expr? {
+  match expr_number_value_raw(expr) {
+    Some(value) =>
+      if value.compare(@symnum.BigRational::zero()) < 0 {
+        Some(@symcore.Expr::Number(value.neg()))
+      } else {
+        None
+      }
+    None =>
+      match expr {
+        @symcore.Expr::Mul(args) => {
+          let positive_factors : Array[Expr] = []
+          let mut sign = 1
+          for arg in args {
+            match expr_number_value_raw(arg) {
+              Some(value) =>
+                if value.compare(@symnum.BigRational::zero()) < 0 {
+                  sign = -sign
+                  positive_factors.push(@symcore.Expr::Number(value.neg()))
+                } else {
+                  positive_factors.push(arg)
+                }
+              None => positive_factors.push(arg)
+            }
+          }
+          if sign < 0 {
+            Some(factors_expr_light(positive_factors))
+          } else {
+            None
+          }
+        }
+        _ => None
+      }
+  }
+}
+
+///|
+fn expr_number_value_raw(expr : Expr) -> @symnum.BigRational? {
+  match expr {
+    @symcore.Expr::Number(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
 fn factorial_expr(n : Expr) -> Expr {
   match expr_is_int_value(n) {
     Some(v) if v > 1 => {
@@ -20767,10 +20985,13 @@ fn parse_laplace_negative_linear_exp_raw(
       }
     None => ()
   }
-  match linear_coeffs(inner, var_name) {
+  match split_linear_coeff_direct(inner, var_name) {
     Some((a, b)) =>
       if expr_is_zero(b) && expr_is_negative(a) {
-        extract_explicit_negative_factor(a)
+        match extract_explicit_negative_factor_light(a) {
+          Some(value) => Some(value)
+          None => extract_explicit_negative_factor(a)
+        }
       } else {
         None
       }
