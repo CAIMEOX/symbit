@@ -546,3 +546,92 @@ test "symintegrals parity inverse Laplace rational fallback square quadratic ker
     "0",
   )
 }
+
+///|
+test "symintegrals parity inverse Laplace erf table kernel" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+
+  let numeric_kernel = @symelem.exp(
+      (s ^ @symcore.int(2)) * @symcore.rational_from_ints(1, 16),
+    ) *
+    @symspec.erfc(s * @symcore.rational_from_ints(1, 4)) *
+    (s ^ @symcore.int(-1))
+  let numeric_inverse = doit(inverse_laplace_transform(numeric_kernel, s, x))
+  let numeric_inverse_with_conditions = @symintegrals.inverse_laplace_transform_eval(
+    numeric_kernel,
+    s,
+    x,
+    noconds=false,
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(numeric_inverse) +
+      ") - sympy.inverse_laplace_transform(sympy.exp(sympy.Symbol('s')**2/16)*sympy.erfc(sympy.Symbol('s')/4)/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(" + py_expr(numeric_inverse_with_conditions) + ")",
+    ),
+    integrals_eval_str(
+      "sympy.sstr(sympy.inverse_laplace_transform(sympy.exp(sympy.Symbol('s')**2/16)*sympy.erfc(sympy.Symbol('s')/4)/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), noconds=False))",
+    ),
+  )
+
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(a))
+  let symbolic_kernel = @symelem.exp(
+      (s ^ @symcore.int(2)) *
+      ((@symcore.int(4) * (a ^ @symcore.int(2))) ^ @symcore.int(-1)),
+    ) *
+    @symspec.erfc(s * ((@symcore.int(2) * a) ^ @symcore.int(-1))) *
+    (s ^ @symcore.int(-1))
+  let symbolic_inverse = doit(inverse_laplace_transform(symbolic_kernel, s, x))
+  @symassume.clear_global_assumptions()
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(symbolic_inverse) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}) - sympy.inverse_laplace_transform(sympy.exp(sympy.Symbol('s')**2/(4*sympy.Symbol('a', positive=True)**2))*sympy.erfc(sympy.Symbol('s')/(2*sympy.Symbol('a', positive=True)))/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+}
+
+///|
+test "symintegrals parity inverse Laplace integration sqrt exponential over s" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let kernel = @symelem.exp(@symcore.int(-1) * @symelem.sqrt(s)) *
+    (s ^ @symcore.int(-1))
+  let value = doit(inverse_laplace_transform(kernel, s, x))
+
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(value) +
+      ") - sympy.inverse_laplace_transform(sympy.exp(-sympy.sqrt(sympy.Symbol('s')))/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(a))
+  let symbolic_kernel = @symelem.exp(@symcore.int(-1) * @symelem.sqrt(a * s)) *
+    (s ^ @symcore.int(-1))
+  let symbolic_value = doit(inverse_laplace_transform(symbolic_kernel, s, x))
+  @symassume.clear_global_assumptions()
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(symbolic_value) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}) - sympy.inverse_laplace_transform(sympy.exp(-sympy.sqrt(sympy.Symbol('a', positive=True)*sympy.Symbol('s')))/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+}

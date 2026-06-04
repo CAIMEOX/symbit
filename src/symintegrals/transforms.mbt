@@ -5060,6 +5060,16 @@ fn inverse_laplace_special_term(
   }
   let flags = transform_head_flags(expr, s_name)
   let has_irrational_shape = flags.has_irrational_shape
+  if flags.has_exp {
+    match inverse_laplace_erf_linear_term(expr, s_name, t) {
+      Some(v) => return Some(v)
+      None => ()
+    }
+    match inverse_laplace_sqrt_exp_over_s_term(expr, s_name, t) {
+      Some(v) => return Some(v)
+      None => ()
+    }
+  }
   if !has_irrational_shape && expr_laplace_rational_candidate(expr, s_name) {
     match inverse_laplace_square_over_quadratic_term(expr, s_name, t) {
       Some(v) => return Some(v)
@@ -5237,6 +5247,9 @@ fn inverse_laplace_expand_structural_candidate(expr : Expr) -> Bool {
 fn inverse_laplace_exp_normalize_term(expr : Expr, s_name : String) -> Expr? {
   let flags = transform_head_flags(expr, s_name)
   if !flags.has_exp {
+    return None
+  }
+  if !inverse_laplace_has_normalizable_exp(expr, s_name) {
     return None
   }
   // SymPy's pre-pass does not combine a separate constant exponential into a
@@ -6066,6 +6079,17 @@ fn inverse_laplace_linear_exp_inner(expr : Expr, s_name : String) -> Expr? {
 }
 
 ///|
+fn inverse_laplace_has_normalizable_exp(expr : Expr, s_name : String) -> Bool {
+  match inverse_laplace_linear_exp_inner(expr, s_name) {
+    Some(_) => true
+    None =>
+      @symcore.args(expr).any(fn(arg) {
+        inverse_laplace_has_normalizable_exp(arg, s_name)
+      })
+  }
+}
+
+///|
 fn inverse_laplace_expand_mul_expr(expr : Expr) -> Expr {
   match expr {
     @symcore.Expr::Add(args) => {
@@ -6759,6 +6783,148 @@ fn inverse_laplace_reciprocal_exp_bessel_term(
   Some(
     inverse_laplace_heaviside(t, expr_mul(coeff, expr_mul(amplitude, bessel))),
   )
+}
+
+///|
+fn inverse_laplace_erf_linear_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  // Source map: SymPy's ordinary Laplace rule table maps
+  // erf(a*t) -> exp(s**2/(2*a)**2)*erfc(s/(2*a))/s.
+  // Recognize the inverse shape by writing k = 1/(2*a).
+  let (num_factors, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(value) => value
+    None => return None
+  }
+  match split_linear_power_denom(den, s_name) {
+    Some((coeff, offset, 1)) if expr_is_one(coeff) && expr_is_zero(offset) => ()
+    _ => return None
+  }
+  let numerator = factors_expr(num_factors)
+  let (coeff, factors) = split_mul(numerator, s_name)
+  if factors.length() != 2 {
+    return None
+  }
+  let mut exp_coeff : Expr? = None
+  let mut erfc_coeff : Expr? = None
+  for factor in factors {
+    match unary_application_arg(factor, "exp") {
+      Some(inner) =>
+        match parse_pure_quadratic_coeff(inner, s_name) {
+          Some(value) if exp_coeff is None => exp_coeff = Some(value)
+          _ => return None
+        }
+      None =>
+        match unary_application_arg(factor, "erfc") {
+          Some(inner) =>
+            match linear_coeffs(inner, s_name) {
+              Some((scale, offset)) if erfc_coeff is None &&
+                expr_is_zero(offset) &&
+                !expr_depends_on(scale, s_name) => erfc_coeff = Some(scale)
+              _ => return None
+            }
+          None => return None
+        }
+    }
+  }
+  let parsed_exp_coeff = match exp_coeff {
+    Some(value) => value
+    None => return None
+  }
+  let parsed_erfc_coeff = match erfc_coeff {
+    Some(value) if !expr_is_zero(value) => value
+    _ => return None
+  }
+  if !expr_same_simplified(
+      parsed_exp_coeff,
+      expr_pow(parsed_erfc_coeff, @symcore.int(2)),
+    ) {
+    return None
+  }
+  let scale = expr_div(
+    @symcore.int(1),
+    expr_mul(@symcore.int(2), parsed_erfc_coeff),
+  )
+  Some(
+    inverse_laplace_heaviside(
+      t,
+      expr_mul(coeff, @symspec.erf(expr_mul(scale, t))),
+    ),
+  )
+}
+
+///|
+fn parse_pure_quadratic_coeff(expr : Expr, var_name : String) -> Expr? {
+  match poly_coeffs_upto2(expr, var_name) {
+    Some(coeffs) if expr_is_zero(coeffs[0]) &&
+      expr_is_zero(coeffs[1]) &&
+      !expr_is_zero(coeffs[2]) &&
+      !expr_depends_on(coeffs[2], var_name) => Some(coeffs[2])
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_sqrt_exp_over_s_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  // Source map: SymPy's integration/Meijer path inverts
+  // exp(-c*sqrt(s))/s to Heaviside(t)*(1 - erf(c/(2*sqrt(t)))).
+  let (num_factors, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(value) => value
+    None => return None
+  }
+  match split_linear_power_denom(den, s_name) {
+    Some((coeff, offset, 1)) if expr_is_one(coeff) && expr_is_zero(offset) => ()
+    _ => return None
+  }
+  let numerator = factors_expr(num_factors)
+  let (coeff, factors) = split_mul(numerator, s_name)
+  if factors.length() != 1 {
+    return None
+  }
+  let exp_inner = match unary_application_arg(factors[0], "exp") {
+    Some(value) => value
+    None => return None
+  }
+  let positive_sqrt_part = match extract_explicit_negative_factor(exp_inner) {
+    Some(value) => value
+    None => return None
+  }
+  let scale = match
+    inverse_laplace_parse_sqrt_symbol_scale(positive_sqrt_part, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  let erf_arg = expr_div(scale, expr_mul(@symcore.int(2), @symelem.sqrt(t)))
+  Some(
+    inverse_laplace_heaviside(
+      t,
+      expr_mul(coeff, expr_sub(@symcore.int(1), @symspec.erf(erf_arg))),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_parse_sqrt_symbol_scale(
+  expr : Expr,
+  s_name : String,
+) -> Expr? {
+  match parse_sqrt_linear(expr, s_name) {
+    Some(scale) => Some(scale)
+    None =>
+      match parse_sqrt_affine(expr, s_name) {
+        Some((scale, offset)) if expr_is_zero(offset) =>
+          Some(preferred_positive_sqrt(scale))
+        _ => None
+      }
+  }
 }
 
 ///|

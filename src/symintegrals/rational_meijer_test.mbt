@@ -142,6 +142,86 @@ test "symintegrals inverse Laplace rational fallback square quadratic kernels" {
 }
 
 ///|
+test "symintegrals inverse Laplace special table erf kernel" {
+  let s = @symcore.Expr::Symbol("s")
+  let t = @symcore.Expr::Symbol("t")
+  let kernel = @symelem.exp(
+      (s ^ @symcore.int(2)) * @symcore.rational_from_ints(1, 16),
+    ) *
+    @symspec.erfc(s * @symcore.rational_from_ints(1, 4)) *
+    (s ^ @symcore.int(-1))
+
+  guard do_inverse_laplace_doit(kernel, s, t) is Some(erf_value) else {
+    fail("expected inverse for exp(s**2/16)*erfc(s/4)/s")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        erf_value - @symspec.heaviside(t) * @symspec.erf(@symcore.int(2) * t),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
+  guard do_inverse_laplace_doit(@symcore.int(5) * kernel, s, t)
+    is Some(scaled_erf_value) else {
+    fail("expected scaled inverse for exp(s**2/16)*erfc(s/4)/s")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        scaled_erf_value -
+        @symcore.int(5) *
+        @symspec.heaviside(t) *
+        @symspec.erf(@symcore.int(2) * t),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+}
+
+///|
+test "symintegrals inverse Laplace integration sqrt exponential over s" {
+  let s = @symcore.Expr::Symbol("s")
+  let t = @symcore.Expr::Symbol("t")
+  let kernel = @symelem.exp(@symcore.int(-1) * @symelem.sqrt(s)) *
+    (s ^ @symcore.int(-1))
+
+  guard do_inverse_laplace_doit(kernel, s, t) is Some(value) else {
+    fail("expected inverse for exp(-sqrt(s))/s")
+  }
+  let expected = @symspec.heaviside(t) *
+    (
+      @symcore.int(1) -
+      @symspec.erf((@symcore.int(2) * @symelem.sqrt(t)) ^ @symcore.int(-1))
+    )
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(value - expected),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
+  let scaled_kernel = @symelem.exp(@symcore.int(-2) * @symelem.sqrt(s)) *
+    (s ^ @symcore.int(-1))
+  guard do_inverse_laplace_doit(scaled_kernel, s, t) is Some(scaled_value) else {
+    fail("expected inverse for exp(-2*sqrt(s))/s")
+  }
+  let scaled_expected = @symspec.heaviside(t) *
+    (@symcore.int(1) - @symspec.erf(@symelem.sqrt(t) ^ @symcore.int(-1)))
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(scaled_value - scaled_expected),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+}
+
+///|
 test "symintegrals meijer public helpers delegate to local special integrator" {
   let x = @symcore.Expr::Symbol("x")
   guard meijerint_indefinite(@symelem.sin(x) * (x ^ @symcore.int(-1)), x)
