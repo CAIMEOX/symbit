@@ -635,3 +635,53 @@ test "symintegrals parity inverse Laplace integration sqrt exponential over s" {
     "0",
   )
 }
+
+///|
+test "symintegrals parity inverse Laplace symbolic Bessel branch kernels" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(a))
+  @symassume.add_global_assumption(@symassume.q_positive(b))
+  let plus_root = @symelem.sqrt((s ^ @symcore.int(2)) + (a ^ @symcore.int(2)))
+  let minus_root = @symelem.sqrt((s ^ @symcore.int(2)) - (a ^ @symcore.int(2)))
+  let besselj_branch = doit(
+    inverse_laplace_transform(
+      (a ^ b) *
+      ((s + plus_root) ^ (@symcore.int(-1) * b)) *
+      (plus_root ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let besseli_branch = doit(
+    inverse_laplace_transform(
+      (a ^ b) *
+      ((s + minus_root) ^ (@symcore.int(-1) * b)) *
+      (minus_root ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  @symassume.clear_global_assumptions()
+
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(besselj_branch) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True), sympy.Symbol('b'): sympy.Symbol('b', positive=True)})).rewrite(sympy.exp) - (sympy.inverse_laplace_transform(sympy.Symbol('a', positive=True)**sympy.Symbol('b', positive=True)*(sympy.Symbol('s') + sympy.sqrt(sympy.Symbol('s')**2 + sympy.Symbol('a', positive=True)**2))**(-sympy.Symbol('b', positive=True))/sympy.sqrt(sympy.Symbol('s')**2 + sympy.Symbol('a', positive=True)**2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)).rewrite(sympy.exp)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(besseli_branch) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True), sympy.Symbol('b'): sympy.Symbol('b', positive=True)})).rewrite(sympy.exp) - (sympy.inverse_laplace_transform(sympy.Symbol('a', positive=True)**sympy.Symbol('b', positive=True)*(sympy.Symbol('s') + sympy.sqrt(sympy.Symbol('s')**2 - sympy.Symbol('a', positive=True)**2))**(-sympy.Symbol('b', positive=True))/sympy.sqrt(sympy.Symbol('s')**2 - sympy.Symbol('a', positive=True)**2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)).rewrite(sympy.exp)))",
+    ),
+    "0",
+  )
+}

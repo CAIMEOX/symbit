@@ -222,6 +222,48 @@ test "symintegrals inverse Laplace integration sqrt exponential over s" {
 }
 
 ///|
+test "symintegrals inverse Laplace symbolic Bessel branch kernels" {
+  let s = @symcore.Expr::Symbol("s")
+  let t = @symcore.Expr::Symbol("t")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let plus_root = @symelem.sqrt((s ^ @symcore.int(2)) + (a ^ @symcore.int(2)))
+  let minus_root = @symelem.sqrt((s ^ @symcore.int(2)) - (a ^ @symcore.int(2)))
+
+  let j_kernel = (a ^ b) *
+    ((s + plus_root) ^ (@symcore.int(-1) * b)) *
+    (plus_root ^ @symcore.int(-1))
+  guard do_inverse_laplace_doit(j_kernel, s, t) is Some(j_value) else {
+    fail("expected inverse for symbolic besselj branch kernel")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        j_value - @symspec.heaviside(t) * @symspec.besselj(b, a * t),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
+  let i_kernel = (a ^ b) *
+    ((s + minus_root) ^ (@symcore.int(-1) * b)) *
+    (minus_root ^ @symcore.int(-1))
+  guard do_inverse_laplace_doit(i_kernel, s, t) is Some(i_value) else {
+    fail("expected inverse for symbolic besseli branch kernel")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        i_value - @symspec.heaviside(t) * @symspec.besseli(b, a * t),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+}
+
+///|
 test "symintegrals meijer public helpers delegate to local special integrator" {
   let x = @symcore.Expr::Symbol("x")
   guard meijerint_indefinite(@symelem.sin(x) * (x ^ @symcore.int(-1)), x)
