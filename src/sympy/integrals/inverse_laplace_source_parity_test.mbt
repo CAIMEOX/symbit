@@ -353,6 +353,20 @@ test "symintegrals parity inverse Laplace log over power fallback" {
       x,
     ),
   )
+  let log_square_over_s = doit(
+    inverse_laplace_transform(
+      (@symelem.log(s) ^ @symcore.int(2)) * (s ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let log_square_over_s2 = doit(
+    inverse_laplace_transform(
+      (@symelem.log(s) ^ @symcore.int(2)) * (s ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
 
   assert_eq(
     integrals_eval_str(
@@ -375,6 +389,22 @@ test "symintegrals parity inverse Laplace log over power fallback" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(scaled_log_over_s3) +
       ") - sympy.inverse_laplace_transform(3*sympy.log(sympy.Symbol('s'))/sympy.Symbol('s')**3, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(log_square_over_s) +
+      ") - sympy.inverse_laplace_transform(sympy.log(sympy.Symbol('s'))**2/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(log_square_over_s2) +
+      ") - sympy.inverse_laplace_transform(sympy.log(sympy.Symbol('s'))**2/sympy.Symbol('s')**2, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
     ),
     "0",
   )

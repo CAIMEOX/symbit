@@ -5101,6 +5101,10 @@ fn inverse_laplace_special_term(
     None => ()
   }
   if flags.has_log {
+    match inverse_laplace_log_square_over_power_term(expr, s_name, t) {
+      Some(v) => return Some(v)
+      None => ()
+    }
     match inverse_laplace_log_over_power_term(expr, s_name, t) {
       Some(v) => return Some(v)
       None => ()
@@ -6931,11 +6935,71 @@ fn inverse_laplace_log_over_power_term(
 }
 
 ///|
+fn inverse_laplace_log_square_over_power_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (num_factors, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(value) => value
+    None => return None
+  }
+  let den_power = match split_linear_power_denom(den, s_name) {
+    Some((coeff, offset, power)) if expr_is_one(coeff) &&
+      expr_is_zero(offset) &&
+      power > 0 => power
+    _ => return None
+  }
+  let numerator = factors_expr(num_factors)
+  let (coeff, factors) = split_mul(numerator, s_name)
+  if factors.length() != 1 ||
+    !inverse_laplace_is_log_s_power(factors[0], s_name, 2) {
+    return None
+  }
+  let order = den_power - 1
+  let time_power = if order == 0 {
+    @symcore.int(1)
+  } else {
+    expr_pow(t, @symcore.int(order))
+  }
+  let base = expr_div(time_power, factorial_expr(@symcore.int(order)))
+  let euler = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma)
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let harmonic = inverse_laplace_harmonic_int(order)
+  let harmonic2 = inverse_laplace_harmonic2_int(order)
+  let log_shift = expr_add(
+    @symelem.log(t),
+    expr_add(euler, expr_mul(@symcore.int(-1), harmonic)),
+  )
+  let trigamma = expr_sub(
+    expr_div(expr_pow(pi, @symcore.int(2)), @symcore.int(6)),
+    harmonic2,
+  )
+  let body = expr_mul(
+    base,
+    expr_sub(expr_pow(log_shift, @symcore.int(2)), trigamma),
+  )
+  Some(inverse_laplace_heaviside(t, expr_mul(coeff, body)))
+}
+
+///|
 fn inverse_laplace_harmonic_int(n : Int) -> Expr {
   let mut acc = @symcore.int(0)
   let mut k = 1
   while k <= n {
     acc = expr_add(acc, expr_rat(1, k))
+    k += 1
+  }
+  expr_simplify(acc)
+}
+
+///|
+fn inverse_laplace_harmonic2_int(n : Int) -> Expr {
+  let mut acc = @symcore.int(0)
+  let mut k = 1
+  while k <= n {
+    acc = expr_add(acc, expr_rat(1, k * k))
     k += 1
   }
   expr_simplify(acc)
@@ -7029,6 +7093,20 @@ fn inverse_laplace_matches_neg_log_s_minus_euler(
 fn inverse_laplace_is_log_s(expr : Expr, s_name : String) -> Bool {
   match unary_application_arg(expr, "log") {
     Some(@symcore.Expr::Symbol(name)) => name == s_name
+    _ => false
+  }
+}
+
+///|
+fn inverse_laplace_is_log_s_power(
+  expr : Expr,
+  s_name : String,
+  power : Int,
+) -> Bool {
+  match expr {
+    @symcore.Expr::Pow(base, exp) =>
+      expr_is_int_value(exp) == Some(power) &&
+      inverse_laplace_is_log_s(base, s_name)
     _ => false
   }
 }
