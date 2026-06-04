@@ -711,6 +711,29 @@ test "symintegrals parity meijer inversion source shift rules" {
     ),
     "0",
   )
+
+  guard @symintegrals.meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [],
+        [@symcore.int(2)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_laguerre) else {
+    fail("expected explicit single-G Laguerre inversion")
+  }
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_laguerre) +
+      ") - sympy.integrals.meijerint.meijerint_inversion(sympy.meijerg([0], [], [2], [], 2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('t'))))",
+    ),
+    "0",
+  )
 }
 
 ///|

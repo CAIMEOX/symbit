@@ -533,6 +533,37 @@ test "symintegrals meijer inversion smoke cases follow SymPy source tests" {
     0,
   )
 
+  guard meijerint_inversion(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [],
+        [@symcore.int(2)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      t,
+    )
+    is Some(explicit_g_laguerre) else {
+    fail("expected explicit single-G Laguerre inversion")
+  }
+  assert_true(
+    @symcore.compare_expr(
+      @symsimplify.simplify(
+        explicit_g_laguerre -
+        (
+          @symcore.int(1) -
+          t +
+          @symcore.rational_from_ints(1, 8) * (t ^ @symcore.int(2))
+        ) *
+        @symelem.exp(@symcore.rational_from_ints(-1, 2) * t) *
+        @symspec.heaviside(t),
+      ),
+      @symcore.int(0),
+    ) ==
+    0,
+  )
+
   match meijerint_inversion(@symelem.sqrt(s) ^ @symcore.int(-1), s, t) {
     None => ()
     Some(_) => fail("expected source rejection for 1/sqrt(s)")

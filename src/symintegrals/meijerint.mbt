@@ -246,17 +246,14 @@ fn meijerint_explicit_single_g_inversion(
         )
       } else if meijerint_single_zero_param(a1) &&
         a2.is_empty() &&
-        meijerint_single_zero_param(b1) &&
         b2.is_empty() {
-        Some(
-          inverse_laplace_heaviside(
-            target,
-            expr_div(
-              @symelem.exp(expr_mul(@symcore.int(-1), expr_div(target, coeff))),
-              coeff,
-            ),
-          ),
-        )
+        match meijerint_single_nonnegative_int_param(b1) {
+          Some(order) =>
+            Some(
+              meijerint_explicit_single_g_laguerre_body(order, coeff, target),
+            )
+          None => None
+        }
       } else {
         None
       }
@@ -302,6 +299,62 @@ fn meijerint_explicit_single_g_parts(
 ///|
 fn meijerint_single_zero_param(params : Array[Expr]) -> Bool {
   params.length() == 1 && expr_is_zero(params[0])
+}
+
+///|
+fn meijerint_single_nonnegative_int_param(params : Array[Expr]) -> Int? {
+  if params.length() != 1 {
+    return None
+  }
+  match expr_is_int_value(params[0]) {
+    Some(value) if value >= 0 => Some(value)
+    _ => None
+  }
+}
+
+///|
+fn meijerint_explicit_single_g_laguerre_body(
+  order : Int,
+  coeff : Expr,
+  target : Expr,
+) -> Expr {
+  let scaled_target = expr_div(target, coeff)
+  let shape = if order == 0 {
+    @symcore.int(1)
+  } else {
+    meijerint_factorial_laguerre_poly(order, scaled_target)
+  }
+  inverse_laplace_heaviside(
+    target,
+    expr_div(
+      expr_mul(shape, @symelem.exp(expr_mul(@symcore.int(-1), scaled_target))),
+      coeff,
+    ),
+  )
+}
+
+///|
+fn meijerint_factorial_laguerre_poly(order : Int, x : Expr) -> Expr {
+  let n_fact = factorial_expr(@symcore.int(order))
+  let terms : Array[Expr] = []
+  for k in 0..<=order {
+    let k_fact = factorial_expr(@symcore.int(k))
+    let nk_fact = factorial_expr(@symcore.int(order - k))
+    let denom = expr_mul(expr_mul(k_fact, k_fact), nk_fact)
+    let coeff = expr_div(expr_mul(n_fact, n_fact), denom)
+    let signed_coeff = if k % 2 == 0 {
+      coeff
+    } else {
+      expr_mul(@symcore.int(-1), coeff)
+    }
+    let power = if k == 0 {
+      @symcore.int(1)
+    } else {
+      expr_pow(x, @symcore.int(k))
+    }
+    terms.push(expr_mul(signed_coeff, power))
+  }
+  expr_simplify(@symcore.add(terms))
 }
 
 ///|

@@ -678,6 +678,28 @@ test "symintegrals parity inverse Laplace explicit single Meijer G fallback" {
     ),
     "0",
   )
+
+  let explicit_g_laguerre = doit(
+    inverse_laplace_transform(
+      @symspec.meijerg(
+        [@symcore.int(0)],
+        [],
+        [@symcore.int(2)],
+        [],
+        @symcore.int(2) * s,
+      ),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(explicit_g_laguerre) +
+      ") - sympy.inverse_laplace_transform(sympy.meijerg([0], [], [2], [], 2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
 }
 
 ///|
