@@ -6892,13 +6892,13 @@ fn inverse_laplace_chi_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
     return None
   }
   let scale = preferred_positive_sqrt(expr_div(beta, alpha))
-  let log_shift = @symelem.log(preferred_positive_sqrt(beta))
-  Some(
-    inverse_laplace_heaviside(
-      t,
-      expr_sub(@symspec.chi(expr_mul(scale, t)), log_shift),
-    ),
-  )
+  let chi_part = @symspec.chi(expr_mul(scale, t))
+  let body = if expr_is_one(beta) {
+    chi_part
+  } else {
+    expr_sub(chi_part, @symelem.log(preferred_positive_sqrt(beta)))
+  }
+  Some(inverse_laplace_heaviside(t, body))
 }
 
 ///|

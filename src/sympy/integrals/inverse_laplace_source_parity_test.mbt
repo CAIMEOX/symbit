@@ -1464,6 +1464,21 @@ test "symintegrals parity inverse Laplace source special function fallbacks" {
     "0",
   )
 
+  let scaled_chi_kernel = @symcore.rational_from_ints(-1, 2) *
+    @symelem.log(a * (s ^ @symcore.int(2)) - b) *
+    (s ^ @symcore.int(-1))
+  let scaled_chi_value = doit(
+    inverse_laplace_transform(scaled_chi_kernel, s, x),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr((sympy.simplify(((" +
+      py_expr(scaled_chi_value) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True), sympy.Symbol('b'): sympy.Symbol('b', positive=True), sympy.Symbol('x'): sympy.Symbol('x', positive=True)})) - sympy.inverse_laplace_transform(-sympy.log(sympy.Symbol('a', positive=True)*sympy.Symbol('s')**2 - sympy.Symbol('b', positive=True))/(2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x', positive=True), noconds=True, simplify=True))).rewrite(sympy.expint).expand())",
+    ),
+    "0",
+  )
+
   let e1_kernel = @symelem.log(s + @symcore.int(1)) * (s ^ @symcore.int(-1))
   let e1_value = doit(inverse_laplace_transform(e1_kernel, s, x))
   assert_eq(
