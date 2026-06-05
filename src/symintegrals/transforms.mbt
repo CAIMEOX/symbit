@@ -3737,9 +3737,7 @@ fn fast_inverse_laplace_rootsum_value(
       match rootsum_lambda_independent_factor(transformed, lambda_name) {
         Some((coeff, body)) if !expr_is_one(coeff) => {
           out_args[1] = @symcore.lambda_expr(lambda_var, body)
-          expr_simplify(
-            expr_mul(coeff, @symcore.raw_function("RootSum", out_args)),
-          )
+          expr_mul(coeff, @symcore.raw_function("RootSum", out_args))
         }
         _ => {
           out_args[1] = @symcore.lambda_expr(lambda_var, transformed)
@@ -3770,7 +3768,7 @@ fn rootsum_lambda_independent_factor(
         let body = factors_expr_light(factors)
         match common_body {
           Some(common) =>
-            if expr_same_simplified(body, common) {
+            if @symcore.compare_expr(body, common) == 0 {
               coeffs.push(coeff)
             } else {
               return None
@@ -3782,7 +3780,7 @@ fn rootsum_lambda_independent_factor(
         }
       }
       match common_body {
-        Some(body) => Some((expr_simplify(@symcore.add(coeffs)), body))
+        Some(body) => Some((@symcore.add(coeffs), body))
         None => None
       }
     }
@@ -7191,21 +7189,90 @@ fn inverse_laplace_sqrt_exp_over_s_term(
 ) -> Expr? {
   // Source map: SymPy's integration/Meijer path inverts
   // exp(-c*sqrt(s))/s to Heaviside(t)*(1 - erf(c/(2*sqrt(t)))).
-  let (num_factors, den_opt) = split_division(expr)
-  let den = match den_opt {
+  // The same fallback also covers the adjacent table entries
+  // sqrt(pi/s)*exp(-c*sqrt(s)) and exp(-c*sqrt(s)).
+  let (coeff, scale, den_units) = match
+    inverse_laplace_sqrt_exp_parts(expr, s_name) {
     Some(value) => value
     None => return None
   }
-  match split_linear_power_denom(den, s_name) {
-    Some((coeff, offset, 1)) if expr_is_one(coeff) && expr_is_zero(offset) => ()
-    _ => return None
-  }
-  let numerator = factors_expr(num_factors)
-  let (coeff, factors) = split_mul(numerator, s_name)
-  if factors.length() != 1 {
+  if den_units != 2 && !laplace_source_positive(scale) {
     return None
   }
-  let exp_inner = match unary_application_arg(factors[0], "exp") {
+  let sqrt_t = @symelem.sqrt(t)
+  let exp_arg = expr_simplify(
+    expr_mul(
+      @symcore.int(-1),
+      expr_div(expr_pow(scale, @symcore.int(2)), expr_mul(@symcore.int(4), t)),
+    ),
+  )
+  let gaussian = match inverse_laplace_mellin_complex_exp(exp_arg, t) {
+    Some(value) => value
+    None => @symelem.exp(exp_arg)
+  }
+  let body = match den_units {
+    2 =>
+      expr_mul(
+        coeff,
+        expr_sub(
+          @symcore.int(1),
+          @symspec.erf(expr_div(scale, expr_mul(@symcore.int(2), sqrt_t))),
+        ),
+      )
+    1 => expr_div(expr_mul(coeff, gaussian), expr_mul(sqrt_pi(), sqrt_t))
+    0 =>
+      expr_div(
+        expr_mul(coeff, expr_mul(scale, gaussian)),
+        expr_mul(
+          @symcore.int(2),
+          expr_mul(sqrt_pi(), expr_pow(t, expr_rat(3, 2))),
+        ),
+      )
+    _ => return None
+  }
+  Some(inverse_laplace_heaviside(t, body))
+}
+
+///|
+fn inverse_laplace_sqrt_exp_parts(
+  expr : Expr,
+  s_name : String,
+) -> (Expr, Expr, Int)? {
+  let (base_coeff, factors) = split_mul(expr, s_name)
+  let mut coeff = base_coeff
+  let mut scale : Expr? = None
+  let mut den_units = 0
+  for factor in factors {
+    match inverse_laplace_sqrt_exp_factor_scale(factor, s_name) {
+      Some(parsed_scale) =>
+        if scale is None {
+          scale = Some(parsed_scale)
+        } else {
+          return None
+        }
+      None =>
+        match inverse_laplace_sqrt_exp_den_factor(factor, s_name) {
+          Some((factor_coeff, units)) => {
+            coeff = expr_mul(coeff, factor_coeff)
+            den_units += units
+          }
+          None => return None
+        }
+    }
+  }
+  match scale {
+    Some(parsed_scale) if den_units >= 0 && den_units <= 2 =>
+      Some((coeff, parsed_scale, den_units))
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_sqrt_exp_factor_scale(
+  factor : Expr,
+  s_name : String,
+) -> Expr? {
+  let exp_inner = match unary_application_arg(factor, "exp") {
     Some(value) => value
     None => return None
   }
@@ -7218,18 +7285,67 @@ fn inverse_laplace_sqrt_exp_over_s_term(
         None => return None
       }
   }
-  let scale = match
-    inverse_laplace_parse_sqrt_symbol_scale(positive_sqrt_part, s_name) {
+  inverse_laplace_parse_sqrt_symbol_scale(positive_sqrt_part, s_name)
+}
+
+///|
+fn inverse_laplace_sqrt_exp_den_factor(
+  factor : Expr,
+  s_name : String,
+) -> (Expr, Int)? {
+  match factor {
+    @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) if name == s_name =>
+      if expr_same_simplified(exp, @symcore.int(-1)) {
+        return Some((@symcore.int(1), 2))
+      } else if expr_same_simplified(exp, expr_rat(-1, 2)) {
+        return Some((@symcore.int(1), 1))
+      }
+    @symcore.Expr::Pow(base, exp) if expr_same_simplified(exp, @symcore.int(-1)) =>
+      match unary_application_arg(base, "sqrt") {
+        Some(@symcore.Expr::Symbol(name)) if name == s_name =>
+          return Some((@symcore.int(1), 1))
+        _ => ()
+      }
+    _ => ()
+  }
+  match unary_application_arg(factor, "sqrt") {
+    Some(inner) =>
+      match inverse_laplace_sqrt_reciprocal_inner_coeff(inner, s_name) {
+        Some(value) => Some((value, 1))
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
+fn inverse_laplace_sqrt_reciprocal_inner_coeff(
+  inner : Expr,
+  s_name : String,
+) -> Expr? {
+  let (num_factors, den_opt) = split_division_raw(inner)
+  let den = match den_opt {
     Some(value) => value
     None => return None
   }
-  let erf_arg = expr_div(scale, expr_mul(@symcore.int(2), @symelem.sqrt(t)))
-  Some(
-    inverse_laplace_heaviside(
-      t,
-      expr_mul(coeff, expr_sub(@symcore.int(1), @symspec.erf(erf_arg))),
-    ),
-  )
+  let (den_coeff, den_offset, den_power) = match
+    split_linear_power_denom(den, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  if den_power != 1 || expr_is_zero(den_coeff) || !expr_is_zero(den_offset) {
+    return None
+  }
+  let numerator = if num_factors.length() == 0 {
+    @symcore.int(1)
+  } else {
+    factors_expr(num_factors)
+  }
+  if expr_depends_on(numerator, s_name) {
+    None
+  } else {
+    Some(preferred_positive_sqrt(expr_div(numerator, den_coeff)))
+  }
 }
 
 ///|
@@ -7243,7 +7359,16 @@ fn inverse_laplace_parse_sqrt_symbol_scale(
       match parse_sqrt_affine(expr, s_name) {
         Some((scale, offset)) if expr_is_zero(offset) =>
           Some(preferred_positive_sqrt(scale))
-        _ => None
+        _ =>
+          match split_mul_raw(expr, s_name) {
+            (coeff, [factor]) if !expr_depends_on(coeff, s_name) =>
+              match parse_sqrt_affine(factor, s_name) {
+                Some((scale, offset)) if expr_is_zero(offset) =>
+                  Some(expr_mul(coeff, preferred_positive_sqrt(scale)))
+                _ => None
+              }
+            _ => None
+          }
       }
   }
 }
