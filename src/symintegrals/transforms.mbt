@@ -6807,6 +6807,11 @@ fn make_inverse_laplace_object(expr : Expr, s_name : String, t : Expr) -> Expr {
 
 ///|
 fn inverse_laplace_ci_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
+  // Source map: SymPy's integration fallback evaluates
+  // -log(beta + alpha*s**2)/(2*s) to
+  // Heaviside(t)*(Ci(sqrt(beta/alpha)*t) - log(sqrt(beta))) when the scale is
+  // on the positive real branch. The unscaled test_laplace.py case is
+  // alpha=beta=1.
   let (num, den_opt) = split_division(expr)
   let den = match den_opt {
     Some(v) => v
@@ -6823,14 +6828,25 @@ fn inverse_laplace_ci_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
   match unary_application_arg(factors[0], "log") {
     Some(inner) =>
       match poly_coeffs_upto2(inner, s_name) {
-        Some(coeffs) =>
-          if expr_eq(coeffs[0], @symcore.int(1)) &&
-            expr_is_zero(coeffs[1]) &&
-            expr_eq(coeffs[2], @symcore.int(1)) {
-            Some(inverse_laplace_heaviside(t, @symspec.ci(t)))
+        Some(coeffs) => {
+          let beta = coeffs[0]
+          let alpha = coeffs[2]
+          if expr_is_zero(coeffs[1]) &&
+            !expr_is_zero(alpha) &&
+            expr_is_positive(alpha) &&
+            expr_is_positive(beta) {
+            let scale = preferred_positive_sqrt(expr_div(beta, alpha))
+            let ci_part = @symspec.ci(expr_mul(scale, t))
+            let body = if expr_is_one(beta) {
+              ci_part
+            } else {
+              expr_sub(ci_part, @symelem.log(preferred_positive_sqrt(beta)))
+            }
+            Some(inverse_laplace_heaviside(t, body))
           } else {
             None
           }
+        }
         None => None
       }
     None => None

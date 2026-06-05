@@ -1439,3 +1439,51 @@ test "symintegrals parity inverse Laplace Chi logarithmic fallback" {
     "0",
   )
 }
+
+///|
+test "symintegrals parity inverse Laplace source special function fallbacks" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(a))
+  @symassume.add_global_assumption(@symassume.q_positive(b))
+  let scaled_ci_kernel = @symcore.rational_from_ints(-1, 2) *
+    @symelem.log(a * (s ^ @symcore.int(2)) + b) *
+    (s ^ @symcore.int(-1))
+  let scaled_ci_value = doit(inverse_laplace_transform(scaled_ci_kernel, s, x))
+  @symassume.clear_global_assumptions()
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(scaled_ci_value) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True), sympy.Symbol('b'): sympy.Symbol('b', positive=True), sympy.Symbol('x'): sympy.Symbol('x', positive=True)})) - sympy.inverse_laplace_transform(-sympy.log(sympy.Symbol('a', positive=True)*sympy.Symbol('s')**2 + sympy.Symbol('b', positive=True))/(2*sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x', positive=True), noconds=True, simplify=True)))",
+    ),
+    "0",
+  )
+
+  let e1_kernel = @symelem.log(s + @symcore.int(1)) * (s ^ @symcore.int(-1))
+  let e1_value = doit(inverse_laplace_transform(e1_kernel, s, x))
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr((sympy.simplify((" +
+      py_expr(e1_value) +
+      ") - sympy.inverse_laplace_transform(sympy.log(sympy.Symbol('s') + 1)/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True, simplify=True))).rewrite(sympy.expint).expand())",
+    ),
+    "0",
+  )
+
+  let expint2_kernel = (s - @symelem.log(s + @symcore.int(1))) *
+    (s ^ @symcore.int(-2))
+  let expint2_value = doit(inverse_laplace_transform(expint2_kernel, s, x))
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr((lambda e: sympy.simplify(e.replace(lambda node: getattr(node, 'func', None) == sympy.expint and len(node.args) == 2 and node.args[0] == 2, lambda node: sympy.exp(-node.args[1]) - node.args[1]*sympy.expint(1, node.args[1])) - (sympy.inverse_laplace_transform((sympy.Symbol('s') - sympy.log(sympy.Symbol('s') + 1))/sympy.Symbol('s')**2, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True, simplify=True)).rewrite(sympy.expint).expand()))((" +
+      py_expr(expint2_value) +
+      ")))",
+    ),
+    "0",
+  )
+}
