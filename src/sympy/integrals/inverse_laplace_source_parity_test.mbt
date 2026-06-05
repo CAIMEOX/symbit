@@ -408,6 +408,28 @@ test "symintegrals parity inverse Laplace positive-parameter fallback paths" {
   let generic_frequency_shift = doit(
     inverse_laplace_transform(@symcore.raw_function("F", [s - a]), s, x),
   )
+  let log_frequency_shift = doit(
+    inverse_laplace_transform(@symelem.log(s - a), s, x),
+  )
+  let sqrt_shifted_power = doit(
+    inverse_laplace_transform(@symelem.sqrt(s - a), s, x),
+  )
+  let scaled_sqrt_shifted_object = doit(
+    inverse_laplace_transform(
+      @symelem.sqrt(@symcore.int(2) * s + @symcore.int(4)),
+      s,
+      x,
+    ),
+  )
+  let sin_shift_object = doit(
+    inverse_laplace_transform(@symelem.sin(s - a), s, x),
+  )
+  let cos_shift_object = doit(
+    inverse_laplace_transform(@symelem.cos(s - a), s, x),
+  )
+  let erfc_shift_object = doit(
+    inverse_laplace_transform(@symspec.erfc(s - a), s, x),
+  )
   let positive_base_right = doit(
     inverse_laplace_transform((a ^ s) * (s ^ @symcore.int(-1)), s, x),
   )
@@ -515,6 +537,60 @@ test "symintegrals parity inverse Laplace positive-parameter fallback paths" {
       ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}) - sympy.inverse_laplace_transform(sympy.Function('F')(sympy.Symbol('s') - sympy.Symbol('a', positive=True)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
     ),
     "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(log_frequency_shift) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}) - sympy.inverse_laplace_transform(sympy.log(sympy.Symbol('s') - sympy.Symbol('a', positive=True)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sqrt_shifted_power) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}) - sympy.inverse_laplace_transform(sympy.sqrt(sympy.Symbol('s') - sympy.Symbol('a', positive=True)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(" + py_expr(scaled_sqrt_shifted_object) + ")",
+    ),
+    integrals_eval_str(
+      "sympy.sstr(sympy.inverse_laplace_transform(sympy.sqrt(2*sympy.Symbol('s') + 4), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True))",
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr((" +
+      py_expr(sin_shift_object) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}))",
+    ),
+    integrals_eval_str(
+      "sympy.sstr(sympy.inverse_laplace_transform(sympy.sin(sympy.Symbol('s') - sympy.Symbol('a', positive=True)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True))",
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr((" +
+      py_expr(cos_shift_object) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}))",
+    ),
+    integrals_eval_str(
+      "sympy.sstr(sympy.inverse_laplace_transform(sympy.cos(sympy.Symbol('s') - sympy.Symbol('a', positive=True)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True))",
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr((" +
+      py_expr(erfc_shift_object) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}))",
+    ),
+    integrals_eval_str(
+      "sympy.sstr(sympy.inverse_laplace_transform(sympy.erfc(sympy.Symbol('s') - sympy.Symbol('a', positive=True)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True))",
+    ),
   )
   assert_eq(
     integrals_eval_str(
@@ -1006,12 +1082,43 @@ test "symintegrals parity inverse Laplace integration sqrt exponential over s" {
   let symbolic_kernel = @symelem.exp(@symcore.int(-1) * @symelem.sqrt(a * s)) *
     (s ^ @symcore.int(-1))
   let symbolic_value = doit(inverse_laplace_transform(symbolic_kernel, s, x))
+  let symbolic_three_halves_kernel = @symelem.exp(
+      @symcore.int(-1) * @symelem.sqrt(a * s),
+    ) *
+    (s ^ @symcore.rational_from_ints(-3, 2))
+  let symbolic_three_halves_value = doit(
+    inverse_laplace_transform(symbolic_three_halves_kernel, s, x),
+  )
   @symassume.clear_global_assumptions()
   assert_eq(
     integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(symbolic_value) +
       ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}) - sympy.inverse_laplace_transform(sympy.exp(-sympy.sqrt(sympy.Symbol('a', positive=True)*sympy.Symbol('s')))/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(symbolic_three_halves_value) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}) - sympy.inverse_laplace_transform(sympy.exp(-sympy.sqrt(sympy.Symbol('a', positive=True)*sympy.Symbol('s')))/sympy.Symbol('s')**sympy.Rational(3, 2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let sqrt_power_three_kernel = @symelem.exp(
+      @symcore.int(-1) * @symelem.sqrt(@symcore.int(3) * s),
+    ) *
+    (@symelem.sqrt(s) ^ @symcore.int(-3))
+  let sqrt_power_three_value = doit(
+    inverse_laplace_transform(sqrt_power_three_kernel, s, x),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sqrt_power_three_value) +
+      ") - sympy.inverse_laplace_transform(sympy.exp(-sympy.sqrt(3*sympy.Symbol('s')))/sympy.sqrt(sympy.Symbol('s'))**3, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
     ),
     "0",
   )

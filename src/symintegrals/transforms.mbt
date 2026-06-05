@@ -5267,6 +5267,10 @@ fn inverse_laplace_special_term(
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_laplace_canonical_unary_shift_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   match inverse_laplace_frequency_shift_term(expr, s_name, t) {
     Some(v) => return Some(v)
     None => ()
@@ -6659,6 +6663,78 @@ fn inverse_laplace_frequency_diff_term(
 }
 
 ///|
+fn inverse_laplace_canonical_unary_shift_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  // Source map: SymPy canonicalizes odd/even unary elementary heads before
+  // `_inverse_laplace_freq_shift`, e.g. sin(s-a) becomes -sin(a-s). MoonBit's
+  // expression constructors keep the original orientation, so mirror that
+  // front-door object shape here instead of applying the frequency-shift rule.
+  let (coeff, factors) = split_mul(expr, s_name)
+  if factors.length() != 1 {
+    return None
+  }
+  let (name, arg) = match named_unary_application(factors[0]) {
+    Some(value) => value
+    None => return None
+  }
+  let parity = match inverse_laplace_canonical_unary_shift_parity(name) {
+    Some(value) => value
+    None => return None
+  }
+  match linear_coeffs(arg, s_name) {
+    Some((arg_coeff, offset)) if expr_is_one(arg_coeff) &&
+      inverse_laplace_frequency_shift_offset_supported(offset) => {
+      if inverse_laplace_offset_explicit_negative_number(offset) {
+        return None
+      }
+      let reflected = @symcore.raw_function(name, [
+        expr_simplify(expr_mul(@symcore.int(-1), arg)),
+      ])
+      let reflected_object = make_inverse_laplace_object(reflected, s_name, t)
+      if name == "erfc" {
+        return Some(
+          expr_mul(
+            coeff,
+            expr_sub(
+              expr_mul(@symcore.int(2), @symspec.dirac_delta(t)),
+              reflected_object,
+            ),
+          ),
+        )
+      }
+      let body = if parity < 0 {
+        expr_mul(@symcore.int(-1), reflected_object)
+      } else {
+        reflected_object
+      }
+      Some(expr_mul(coeff, body))
+    }
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_canonical_unary_shift_parity(name : String) -> Int? {
+  match name {
+    "sin"
+    | "tan"
+    | "sinh"
+    | "tanh"
+    | "asin"
+    | "atan"
+    | "asinh"
+    | "atanh"
+    | "erf" => Some(-1)
+    "cos" | "sec" | "cosh" => Some(1)
+    "erfc" => Some(0)
+    _ => None
+  }
+}
+
+///|
 fn inverse_laplace_frequency_shift_term(
   expr : Expr,
   s_name : String,
@@ -6674,7 +6750,8 @@ fn inverse_laplace_frequency_shift_term(
     Some((name, arg)) =>
       match linear_coeffs(arg, s_name) {
         Some((arg_coeff, offset)) if expr_is_one(arg_coeff) &&
-          inverse_laplace_frequency_shift_offset_supported(offset) => {
+          inverse_laplace_frequency_shift_offset_supported(offset) &&
+          inverse_laplace_frequency_shift_head_supported(name, offset) => {
           let shifted = @symcore.raw_function(name, [
             @symcore.Expr::Symbol(s_name),
           ])
@@ -6686,6 +6763,50 @@ fn inverse_laplace_frequency_shift_term(
         _ => None
       }
     None => None
+  }
+}
+
+///|
+fn inverse_laplace_frequency_shift_head_supported(
+  name : String,
+  offset : Expr,
+) -> Bool {
+  if inverse_laplace_offset_explicit_negative_number(offset) {
+    return true
+  }
+  match name {
+    // SymPy canonicalizes these odd/even elementary heads before
+    // `_inverse_laplace_freq_shift` sees them, e.g. sin(s-a) -> -sin(a-s)
+    // and cos(s-a) -> cos(a-s). Keeping them out preserves that front door.
+    "sin"
+    | "cos"
+    | "tan"
+    | "cot"
+    | "sec"
+    | "csc"
+    | "sinh"
+    | "cosh"
+    | "tanh"
+    | "coth"
+    | "asin"
+    | "acos"
+    | "atan"
+    | "asinh"
+    | "acosh"
+    | "atanh"
+    | "erf"
+    | "erfc"
+    | "sqrt"
+    | "root" => false
+    _ => true
+  }
+}
+
+///|
+fn inverse_laplace_offset_explicit_negative_number(offset : Expr) -> Bool {
+  match expr_num_value(offset) {
+    Some(value) => value.compare(@symnum.BigRational::zero()) < 0
+    None => false
   }
 }
 
@@ -7266,7 +7387,8 @@ fn inverse_laplace_sqrt_exp_over_s_term(
   // Source map: SymPy's integration/Meijer path inverts
   // exp(-c*sqrt(s))/s to Heaviside(t)*(1 - erf(c/(2*sqrt(t)))).
   // The same fallback also covers the adjacent table entries
-  // sqrt(pi/s)*exp(-c*sqrt(s)) and exp(-c*sqrt(s)).
+  // sqrt(pi/s)*exp(-c*sqrt(s)), exp(-c*sqrt(s)), and the next
+  // inverse-Mellin antiderivative exp(-c*sqrt(s))/s**(3/2).
   let (coeff, scale, den_units) = match
     inverse_laplace_sqrt_exp_parts(expr, s_name) {
     Some(value) => value
@@ -7307,6 +7429,23 @@ fn inverse_laplace_sqrt_exp_over_s_term(
         expr_mul(
           @symcore.int(2),
           expr_mul(sqrt_pi(), expr_pow(t, expr_rat(3, 2))),
+        ),
+      )
+    3 =>
+      expr_mul(
+        coeff,
+        expr_add(
+          expr_div(
+            expr_mul(@symcore.int(2), expr_mul(sqrt_t, gaussian)),
+            sqrt_pi(),
+          ),
+          expr_mul(
+            scale,
+            expr_sub(
+              @symspec.erf(expr_div(scale, expr_mul(@symcore.int(2), sqrt_t))),
+              @symcore.int(1),
+            ),
+          ),
         ),
       )
     _ => return None
@@ -7544,7 +7683,7 @@ fn inverse_laplace_sqrt_exp_parts(
     }
   }
   match scale {
-    Some(parsed_scale) if den_units >= 0 && den_units <= 2 =>
+    Some(parsed_scale) if den_units >= 0 && den_units <= 3 =>
       Some((coeff, parsed_scale, den_units))
     _ => None
   }
@@ -7582,11 +7721,21 @@ fn inverse_laplace_sqrt_exp_den_factor(
         return Some((@symcore.int(1), 2))
       } else if expr_same_simplified(exp, expr_rat(-1, 2)) {
         return Some((@symcore.int(1), 1))
+      } else if expr_same_simplified(exp, expr_rat(-3, 2)) {
+        return Some((@symcore.int(1), 3))
       }
     @symcore.Expr::Pow(base, exp) if expr_same_simplified(exp, @symcore.int(-1)) =>
       match unary_application_arg(base, "sqrt") {
         Some(@symcore.Expr::Symbol(name)) if name == s_name =>
           return Some((@symcore.int(1), 1))
+        _ => ()
+      }
+    @symcore.Expr::Pow(base, exp) =>
+      match (unary_application_arg(base, "sqrt"), expr_is_int_value(exp)) {
+        (Some(@symcore.Expr::Symbol(name)), Some(power)) =>
+          if name == s_name && power < 0 && power >= -3 {
+            return Some((@symcore.int(1), -power))
+          }
         _ => ()
       }
     _ => ()
@@ -8242,10 +8391,7 @@ fn inverse_laplace_shifted_power_law_term(
     return None
   }
   let (scale, shift, power) = match
-    inverse_laplace_parse_scaled_shifted_linear_negative_power(
-      factors[0],
-      s_name,
-    ) {
+    inverse_laplace_parse_scaled_shifted_linear_rule_power(factors[0], s_name) {
     Some(value) => value
     None => return None
   }
@@ -8285,8 +8431,59 @@ fn inverse_laplace_shifted_power_law_candidate_factor(
           !expr_depends_on(shift, s_name)
         None => false
       }
-    _ => false
+    _ =>
+      match unary_application_arg(factor, "sqrt") {
+        Some(inner) =>
+          match split_linear_coeff_direct(inner, s_name) {
+            Some((coeff, shift)) =>
+              !expr_is_zero(coeff) &&
+              !expr_depends_on(coeff, s_name) &&
+              !expr_depends_on(shift, s_name)
+            None => false
+          }
+        None => false
+      }
   }
+}
+
+///|
+fn inverse_laplace_parse_scaled_shifted_linear_rule_power(
+  expr : Expr,
+  s_name : String,
+) -> (Expr, Expr, Expr)? {
+  match
+    inverse_laplace_parse_scaled_shifted_linear_negative_power(expr, s_name) {
+    Some(value) => return Some(value)
+    None => ()
+  }
+  match unary_application_arg(expr, "sqrt") {
+    Some(inner) =>
+      match inverse_laplace_parse_scaled_shifted_linear(inner, s_name) {
+        Some((scale, shift)) if expr_is_one(scale) =>
+          return Some((scale, shift, expr_rat(-1, 2)))
+        _ => ()
+      }
+    _ => ()
+  }
+  retry_with_simplified(expr, expr => {
+    match expr {
+      @symcore.Expr::Pow(base, exponent) =>
+        match expr_is_int_value(exponent) {
+          Some(value) if value >= 0 => None
+          _ =>
+            if expr_depends_on(exponent, s_name) {
+              None
+            } else {
+              match inverse_laplace_parse_scaled_shifted_linear(base, s_name) {
+                Some((scale, shift)) if expr_is_one(scale) =>
+                  Some((scale, shift, expr_mul(@symcore.int(-1), exponent)))
+                _ => None
+              }
+            }
+        }
+      _ => None
+    }
+  })
 }
 
 ///|
