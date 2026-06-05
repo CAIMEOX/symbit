@@ -5296,18 +5296,6 @@ fn inverse_laplace_special_term(
       None => ()
     }
   }
-  if flags.has_atan {
-    match inverse_laplace_atan_term(expr, s_name, t) {
-      Some(v) => return Some(v)
-      None => ()
-    }
-  }
-  if flags.has_log {
-    match inverse_laplace_sinh_over_t_term(expr, s_name, t) {
-      Some(v) => return Some(v)
-      None => ()
-    }
-  }
   if flags.has_log {
     match inverse_laplace_ci_term(expr, s_name, t) {
       Some(v) => return Some(v)
@@ -8167,62 +8155,6 @@ fn inverse_laplace_log_one_plus_linear_term(
       @symelem.log(expr_add(@symcore.int(1), expr_mul(a, t))),
     ),
   )
-}
-
-///|
-fn inverse_laplace_atan_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
-  let atan_arg = match unary_application_arg(expr, "atan") {
-    Some(inner) => Some(inner)
-    None => unary_application_arg(expr_simplify(expr), "atan")
-  }
-  match atan_arg {
-    Some(inner) =>
-      match parse_scaled_inverse_symbol(inner, s_name) {
-        Some(scale) =>
-          Some(
-            inverse_laplace_heaviside(
-              t,
-              @symelem.sin(expr_mul(scale, t)) * expr_pow(t, @symcore.int(-1)),
-            ),
-          )
-        None => None
-      }
-    None => None
-  }
-}
-
-///|
-fn inverse_laplace_sinh_over_t_term(
-  expr : Expr,
-  s_name : String,
-  t : Expr,
-) -> Expr? {
-  let (coeff, factors) = split_mul(expr, s_name)
-  if !expr_same_simplified(coeff, expr_rat(1, 2)) || factors.length() != 1 {
-    return None
-  }
-  match unary_application_arg(factors[0], "log") {
-    Some(inner) =>
-      match parse_log_ratio_linear_offsets(inner, s_name) {
-        Some((num_offset, den_offset)) =>
-          if expr_same_simplified(
-              den_offset,
-              expr_mul(@symcore.int(-1), num_offset),
-            ) {
-            Some(
-              inverse_laplace_heaviside(
-                t,
-                @symelem.sinh(expr_mul(num_offset, t)) *
-                expr_pow(t, @symcore.int(-1)),
-              ),
-            )
-          } else {
-            None
-          }
-        _ => None
-      }
-    None => None
-  }
 }
 
 ///|
@@ -11404,28 +11336,6 @@ fn parse_scaled_sqrt_linear_plus_const_power_raw(
             None => None
           }
         _ => None
-      }
-    _ => None
-  }
-}
-
-///|
-fn parse_log_ratio_linear_offsets(
-  expr : Expr,
-  var_name : String,
-) -> (Expr, Expr)? {
-  let (num, den_opt) = split_division(expr)
-  let den = match den_opt {
-    Some(v) => v
-    None => return None
-  }
-  match
-    (linear_coeffs(factors_expr(num), var_name), linear_coeffs(den, var_name)) {
-    (Some((num_coeff, num_offset)), Some((den_coeff, den_offset))) =>
-      if expr_is_one(num_coeff) && expr_is_one(den_coeff) {
-        Some((num_offset, den_offset))
-      } else {
-        None
       }
     _ => None
   }

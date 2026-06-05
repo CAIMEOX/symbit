@@ -4860,12 +4860,10 @@ test "symintegrals parity inverse Laplace named special families" {
     inverse_laplace_transform(@symelem.atan(a * (s ^ @symcore.int(-1))), s, x),
   )
   assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(atan_inverse) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.simplify((" +
-      py_expr(atan_inverse) +
-      ") - (sympy.Heaviside(sympy.Symbol('x'))*sympy.sin(sympy.Symbol('a')*sympy.Symbol('x'))/sympy.Symbol('x'))))",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.atan(sympy.Symbol('a')/sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
-    "0",
   )
 
   let sinh_over_x_inverse = doit(
@@ -4877,12 +4875,10 @@ test "symintegrals parity inverse Laplace named special families" {
     ),
   )
   assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(sinh_over_x_inverse) + ")"),
     integrals_eval_str(
-      "sympy.sstr(sympy.simplify((" +
-      py_expr(sinh_over_x_inverse) +
-      ") - (sympy.Heaviside(sympy.Symbol('x'))*sympy.sinh(sympy.Symbol('a')*sympy.Symbol('x'))/sympy.Symbol('x'))))",
+      "sympy.sstr(sympy.InverseLaplaceTransform(sympy.log((sympy.Symbol('a') + sympy.Symbol('s'))/(sympy.Symbol('s') - sympy.Symbol('a')))/2, sympy.Symbol('s'), sympy.Symbol('x'), None).doit())",
     ),
-    "0",
   )
 }
 
