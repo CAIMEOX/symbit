@@ -141,6 +141,9 @@ fn transform_head_flags_visit(
       let exp_depends = transform_head_flags_visit(exp, flags, s_name)
       if base_depends && expr_is_int_value(exp) is None {
         flags.has_irrational_shape = true
+        if expr_has_half_integer_power(exp) {
+          flags.has_sqrt_shape = true
+        }
       }
       base_depends || exp_depends
     }
@@ -182,6 +185,14 @@ fn transform_head_flags(expr : Expr, s_name : String) -> TransformHeadFlags {
   let flags = transform_head_flags_new()
   ignore(transform_head_flags_visit(expr, flags, s_name))
   flags
+}
+
+///|
+fn expr_has_half_integer_power(expr : Expr) -> Bool {
+  match expr_num_value(expr) {
+    Some(value) => value.denominator().to_int() == 2
+    None => false
+  }
 }
 
 ///|
@@ -9103,11 +9114,20 @@ fn laplace_irrational_context(
   s_name : String,
 ) -> LaplaceIrrationalContext? {
   let (num, den_opt, preserved_den_factors) = split_division_raw_preserve_factors(
-    expr,
+    expr, s_name,
   )
-  let den = match den_opt {
+  let raw_den = match den_opt {
     Some(value) => value
     None => return None
+  }
+  let den_factors_cache = match preserved_den_factors {
+    Some(factors) =>
+      Some(laplace_irrational_normalize_den_factors(factors, s_name))
+    None => None
+  }
+  let den = match den_factors_cache {
+    Some(factors) => factors_expr(factors)
+    None => raw_den
   }
   let unit_numerator = num.length() == 0 ||
     (num.length() == 1 && expr_is_one(num[0]))
@@ -9116,9 +9136,32 @@ fn laplace_irrational_context(
     numerator: factors_expr(num),
     den,
     unit_numerator,
-    den_factors_cache: preserved_den_factors,
+    den_factors_cache,
     den_factor_infos_cache: None,
   })
+}
+
+///|
+fn laplace_irrational_normalize_den_factors(
+  factors : Array[Expr],
+  s_name : String,
+) -> Array[Expr] {
+  // SymPy's Bateman 5.3 table treats (a*s)**(3/2) as an s pole plus sqrt pole.
+  let normalized : Array[Expr] = []
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Pow(base, exp) if expr_same_simplified(exp, expr_rat(3, 2)) =>
+        match linear_coeffs(base, s_name) {
+          Some((coeff, offset)) if !expr_is_zero(coeff) && expr_is_zero(offset) => {
+            normalized.push(base)
+            normalized.push(@symelem.sqrt(base))
+          }
+          _ => normalized.push(factor)
+        }
+      _ => normalized.push(factor)
+    }
+  }
+  normalized
 }
 
 ///|
@@ -19619,16 +19662,16 @@ fn split_division_raw(expr : Expr) -> (Array[Expr], Expr?) {
 ///|
 fn split_division_raw_preserve_factors(
   expr : Expr,
+  var_name : String,
 ) -> (Array[Expr], Expr?, Array[Expr]?) {
   match expr {
     @symcore.Expr::Pow(base, exp) if expr_is_int_value(exp) is Some(exp_int) &&
       exp_int < 0 => {
       let n = -exp_int
       let den_factor = if n == 1 { base } else { base ^ @symcore.int(n) }
-      let den_factors = match den_factor {
-        @symcore.Expr::Mul(args) => args
-        _ => [den_factor]
-      }
+      let den_factors = split_division_preserved_den_factors(
+        den_factor, var_name,
+      )
       ([], Some(factors_expr(den_factors)), Some(den_factors))
     }
     @symcore.Expr::Mul(args) => {
@@ -19641,7 +19684,12 @@ fn split_division_raw_preserve_factors(
             exp_int < 0 => {
             let n = -exp_int
             if n == 1 {
-              den.push(base)
+              let base_factors = split_division_preserved_den_factors(
+                base, var_name,
+              )
+              for base_factor in base_factors {
+                den.push(base_factor)
+              }
             } else {
               den.push(base ^ @symcore.int(n))
             }
@@ -19656,6 +19704,24 @@ fn split_division_raw_preserve_factors(
       }
     }
     _ => ([expr], None, None)
+  }
+}
+
+///|
+fn split_division_preserved_den_factors(
+  base : Expr,
+  var_name : String,
+) -> Array[Expr] {
+  match base {
+    @symcore.Expr::Mul(args) => {
+      for arg in args {
+        if !expr_depends_on(arg, var_name) {
+          return [base]
+        }
+      }
+      args
+    }
+    _ => [base]
   }
 }
 

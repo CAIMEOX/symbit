@@ -5924,6 +5924,120 @@ test "symintegrals parity inverse Laplace sqrt power and ratio families" {
     ),
     "0",
   )
+
+  let half_power_quadratic_inverse = doit(
+    inverse_laplace_transform(
+      ((s ^ @symcore.int(2)) + @symcore.int(1)) ^
+      @symcore.rational_from_ints(-1, 2),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(half_power_quadratic_inverse) +
+      ") - sympy.inverse_laplace_transform(1/sympy.sqrt(sympy.Symbol('s')**2 + 1), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let packed_s_three_halves_sqrt_pole_inverse = doit(
+    inverse_laplace_transform(
+      (
+        (s ^ @symcore.rational_from_ints(3, 2)) *
+        (@symelem.sqrt(s) + @symcore.int(1))
+      ) ^
+      @symcore.int(-1),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(packed_s_three_halves_sqrt_pole_inverse) +
+      ") - sympy.inverse_laplace_transform(1/(sympy.Symbol('s')**sympy.Rational(3, 2)*(sympy.sqrt(sympy.Symbol('s')) + 1)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let scaled_packed_s_three_halves_sqrt_pole_inverse = doit(
+    inverse_laplace_transform(
+      (
+        ((@symcore.int(5) * s) ^ @symcore.rational_from_ints(3, 2)) *
+        (@symcore.int(3) * @symelem.sqrt(s) + @symcore.int(2))
+      ) ^
+      @symcore.int(-1),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.factor_terms(sympy.simplify(sympy.expand((" +
+      py_expr(scaled_packed_s_three_halves_sqrt_pole_inverse) +
+      ") - sympy.inverse_laplace_transform(1/((5*sympy.Symbol('s'))**sympy.Rational(3, 2)*(3*sympy.sqrt(sympy.Symbol('s')) + 2)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))))",
+    ),
+    "0",
+  )
+
+  let packed_sqrt_ratio_linear_sqrt_inverse = doit(
+    inverse_laplace_transform(
+      @symelem.sqrt(s) *
+      (
+        ((s - @symcore.int(1)) * (@symelem.sqrt(s) + @symcore.int(2))) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(packed_sqrt_ratio_linear_sqrt_inverse) +
+      ") - sympy.inverse_laplace_transform(sympy.sqrt(sympy.Symbol('s'))/((sympy.Symbol('s') - 1)*(sympy.sqrt(sympy.Symbol('s')) + 2)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let packed_sqrt_ratio_squared_inverse = doit(
+    inverse_laplace_transform(
+      ((@symelem.sqrt(s) - @symcore.int(2)) ^ @symcore.int(2)) *
+      (
+        (s * ((@symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(2))) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(packed_sqrt_ratio_squared_inverse) +
+      ") - sympy.inverse_laplace_transform((sympy.sqrt(sympy.Symbol('s')) - 2)**2/(sympy.Symbol('s')*(sympy.sqrt(sympy.Symbol('s')) + 2)**2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let packed_sqrt_ratio_cancel_inverse = doit(
+    inverse_laplace_transform(
+      (@symelem.sqrt(s) - @symcore.int(1)) *
+      ((s * (@symelem.sqrt(s) + @symcore.int(1))) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(packed_sqrt_ratio_cancel_inverse) +
+      ") - sympy.inverse_laplace_transform((sympy.sqrt(sympy.Symbol('s')) - 1)/(sympy.Symbol('s')*(sympy.sqrt(sympy.Symbol('s')) + 1)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
 }
 
 ///|
@@ -5994,6 +6108,27 @@ test "symintegrals parity inverse Laplace irrational factor sorting" {
     integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(reordered_three_poles) +
+      ") - sympy.inverse_laplace_transform(1/((sympy.Symbol('s') - 2)*sympy.sqrt(sympy.Symbol('s'))*(sympy.sqrt(sympy.Symbol('s')) + 3)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let packed_three_poles = doit(
+    inverse_laplace_transform(
+      (
+        (s - @symcore.int(2)) *
+        @symelem.sqrt(s) *
+        (@symelem.sqrt(s) + @symcore.int(3))
+      ) ^
+      @symcore.int(-1),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(packed_three_poles) +
       ") - sympy.inverse_laplace_transform(1/((sympy.Symbol('s') - 2)*sympy.sqrt(sympy.Symbol('s'))*(sympy.sqrt(sympy.Symbol('s')) + 3)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
     ),
     "0",
