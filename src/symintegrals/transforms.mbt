@@ -3635,7 +3635,7 @@ fn inverse_laplace_condition_hint(
     }
     _ => {
       match
-        inverse_laplace_inverse_mellin_condition(expr, s_name, t, computed) {
+        inverse_laplace_sqrt_exp_meijer_condition(expr, s_name, t, computed) {
         Some(cond) => return cond
         None => ()
       }
@@ -3643,6 +3643,11 @@ fn inverse_laplace_condition_hint(
         inverse_laplace_integration_piecewise_condition(
           expr, s_name, t, computed,
         ) {
+        Some(cond) => return cond
+        None => ()
+      }
+      match
+        inverse_laplace_inverse_mellin_condition(expr, s_name, t, computed) {
         Some(cond) => return cond
         None => ()
       }
@@ -3917,6 +3922,10 @@ fn inverse_laplace_independent_factor_term(
   // try that split only when the dependent core can actually be evaluated, so
   // full-expression rules that still need the independent factor get a chance.
   match inverse_laplace_gaussian_erfc_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_laplace_sqrt_exp_over_s_term(expr, s_name, t) {
     Some(v) => return Some(v)
     None => ()
   }
@@ -5301,6 +5310,10 @@ fn inverse_laplace_special_term(
   }
   if flags.has_log {
     match inverse_laplace_ci_term(expr, s_name, t) {
+      Some(v) => return Some(v)
+      None => ()
+    }
+    match inverse_laplace_chi_term(expr, s_name, t) {
       Some(v) => return Some(v)
       None => ()
     }
@@ -6825,6 +6838,54 @@ fn inverse_laplace_ci_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
 }
 
 ///|
+fn inverse_laplace_chi_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
+  // Source map: SymPy's integration path evaluates
+  // -log(alpha*s**2 - beta)/(2*s) through a complex-expanded Meijer route.
+  // For alpha,beta > 0 this is Heaviside(t)*(Chi(sqrt(beta/alpha)*t)
+  // - log(sqrt(beta))). The common Chi(t) front door is beta=alpha=1.
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  if !expr_eq(den, @symcore.Expr::Symbol(s_name)) {
+    return None
+  }
+  let numerator = factors_expr(num)
+  let (coeff, factors) = split_mul(numerator, s_name)
+  if !expr_eq(coeff, expr_rat(-1, 2)) || factors.length() != 1 {
+    return None
+  }
+  let inner = match unary_application_arg(factors[0], "log") {
+    Some(value) => value
+    None => return None
+  }
+  let coeffs = match poly_coeffs_upto2(inner, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  if !expr_is_zero(coeffs[1]) || expr_is_zero(coeffs[2]) {
+    return None
+  }
+  let beta = match extract_explicit_negative_factor(coeffs[0]) {
+    Some(value) if !expr_is_zero(value) => value
+    _ => return None
+  }
+  let alpha = coeffs[2]
+  if !expr_is_positive(alpha) || !expr_is_positive(beta) {
+    return None
+  }
+  let scale = preferred_positive_sqrt(expr_div(beta, alpha))
+  let log_shift = @symelem.log(preferred_positive_sqrt(beta))
+  Some(
+    inverse_laplace_heaviside(
+      t,
+      expr_sub(@symspec.chi(expr_mul(scale, t)), log_shift),
+    ),
+  )
+}
+
+///|
 fn inverse_laplace_e1_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
   let (num, den_opt) = split_division(expr)
   let den = match den_opt {
@@ -7196,6 +7257,11 @@ fn inverse_laplace_sqrt_exp_over_s_term(
     Some(value) => value
     None => return None
   }
+  match
+    inverse_laplace_sqrt_exp_meijer_kernel_body(coeff, scale, den_units, t) {
+    Some(value) => return Some(value)
+    None => ()
+  }
   if den_units != 2 && !laplace_source_positive(scale) {
     return None
   }
@@ -7231,6 +7297,208 @@ fn inverse_laplace_sqrt_exp_over_s_term(
     _ => return None
   }
   Some(inverse_laplace_heaviside(t, body))
+}
+
+///|
+fn inverse_laplace_sqrt_exp_meijer_kernel_body(
+  coeff : Expr,
+  scale : Expr,
+  den_units : Int,
+  t : Expr,
+) -> Expr? {
+  if den_units != 0 {
+    return None
+  }
+  let param = match inverse_laplace_sqrt_exp_meijer_param(scale) {
+    Some(value) => value
+    None => return None
+  }
+  if !inverse_laplace_sqrt_exp_meijer_coeff_matches(coeff, param) {
+    return None
+  }
+  let raw = expr_simplify(
+    expr_div(
+      expr_mul(
+        @symelem.exp(expr_mul(@symcore.int(-1), expr_div(param, t))),
+        @symspec.heaviside(t),
+      ),
+      expr_pow(t, expr_rat(3, 2)),
+    ),
+  )
+  Some(
+    if laplace_source_positive(param) {
+      raw
+    } else {
+      inverse_laplace_mellin_subst_simplify(raw, t)
+    },
+  )
+}
+
+///|
+fn inverse_laplace_sqrt_exp_meijer_condition(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+  computed : Expr,
+) -> Expr? {
+  let (coeff, scale, den_units) = match
+    inverse_laplace_sqrt_exp_parts(expr, s_name) {
+    Some(value) => value
+    None => return None
+  }
+  let value = match
+    inverse_laplace_sqrt_exp_meijer_kernel_body(coeff, scale, den_units, t) {
+    Some(value) => value
+    None => return None
+  }
+  if @symcore.compare_expr(value, computed) != 0 {
+    return None
+  }
+  let param = match inverse_laplace_sqrt_exp_meijer_param(scale) {
+    Some(value) => value
+    None => return None
+  }
+  Some(inverse_laplace_sqrt_exp_meijer_param_condition(param))
+}
+
+///|
+fn inverse_laplace_sqrt_exp_meijer_param_condition(param : Expr) -> Expr {
+  let imag = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::ImaginaryUnit,
+  )
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let quarter_i_pi = imag * pi * (@symcore.int(4) ^ @symcore.int(-1))
+  let polar_param = @symcore.raw_function("polar_lift", [param])
+  let polar_root = @symelem.sqrt(polar_param)
+  @symcore.raw_function("And", [
+    @symcore.raw_function("Ne", [polar_root, @symcore.int(0)]),
+    @symcore.raw_function("Gt", [
+      @symelem.re(@symelem.exp(@symcore.int(-1) * quarter_i_pi) * polar_root),
+      @symcore.int(0),
+    ]),
+    @symcore.raw_function("Gt", [
+      @symelem.re(@symelem.exp(quarter_i_pi) * polar_root),
+      @symcore.int(0),
+    ]),
+  ])
+}
+
+///|
+fn inverse_laplace_sqrt_exp_meijer_param(scale : Expr) -> Expr? {
+  let factors = expr_factors(scale)
+  let rest : Array[Expr] = []
+  let mut saw_two = false
+  for factor in factors {
+    if !saw_two && expr_same_simplified(factor, @symcore.int(2)) {
+      saw_two = true
+    } else {
+      rest.push(factor)
+    }
+  }
+  if !saw_two || rest.length() != 1 {
+    return None
+  }
+  match unary_application_arg(rest[0], "sqrt") {
+    Some(param) if !expr_is_zero(param) => Some(param)
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_sqrt_exp_meijer_coeff_matches(
+  coeff : Expr,
+  param : Expr,
+) -> Bool {
+  if inverse_laplace_sqrt_pi_over_param_quick(coeff, param) {
+    return true
+  }
+  if inverse_laplace_sqrt_pi_over_sqrt_param_quick(coeff, param) {
+    return true
+  }
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  expr_same_simplified(expr_mul(coeff, @symelem.sqrt(param)), sqrt_pi()) ||
+  expr_same_simplified(coeff, @symelem.sqrt(expr_div(pi, param))) ||
+  expr_same_simplified(coeff, expr_div(sqrt_pi(), @symelem.sqrt(param)))
+}
+
+///|
+fn inverse_laplace_sqrt_pi_over_param_quick(coeff : Expr, param : Expr) -> Bool {
+  match unary_application_arg(coeff, "sqrt") {
+    Some(inner) => inverse_laplace_pi_over_param_quick(inner, param)
+    None => false
+  }
+}
+
+///|
+fn inverse_laplace_pi_over_param_quick(inner : Expr, param : Expr) -> Bool {
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let factors = expr_factors(inner)
+  if factors.length() != 2 {
+    return false
+  }
+  let mut saw_pi = false
+  let mut saw_param_reciprocal = false
+  for factor in factors {
+    if !saw_pi && expr_eq(factor, pi) {
+      saw_pi = true
+    } else if !saw_param_reciprocal &&
+      inverse_laplace_is_param_reciprocal(factor, param) {
+      saw_param_reciprocal = true
+    } else {
+      return false
+    }
+  }
+  saw_pi && saw_param_reciprocal
+}
+
+///|
+fn inverse_laplace_is_param_reciprocal(expr : Expr, param : Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Pow(base, exp) =>
+      expr_eq(base, param) && expr_same_simplified(exp, @symcore.int(-1))
+    _ => false
+  }
+}
+
+///|
+fn inverse_laplace_sqrt_pi_over_sqrt_param_quick(
+  coeff : Expr,
+  param : Expr,
+) -> Bool {
+  let factors = match coeff {
+    @symcore.Expr::Mul(args) => args
+    _ => return false
+  }
+  if factors.length() != 2 {
+    return false
+  }
+  let mut saw_sqrt_pi = false
+  let mut saw_sqrt_param_reciprocal = false
+  for factor in factors {
+    if !saw_sqrt_pi && expr_is_sqrt_pi(factor) {
+      saw_sqrt_pi = true
+    } else if !saw_sqrt_param_reciprocal &&
+      inverse_laplace_is_sqrt_param_reciprocal(factor, param) {
+      saw_sqrt_param_reciprocal = true
+    } else {
+      return false
+    }
+  }
+  saw_sqrt_pi && saw_sqrt_param_reciprocal
+}
+
+///|
+fn inverse_laplace_is_sqrt_param_reciprocal(expr : Expr, param : Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Pow(base, exp) => {
+      if expr_eq(base, @symelem.sqrt(param)) &&
+        expr_same_simplified(exp, @symcore.int(-1)) {
+        return true
+      }
+      expr_eq(base, param) && expr_is_negative_half(exp)
+    }
+    _ => false
+  }
 }
 
 ///|

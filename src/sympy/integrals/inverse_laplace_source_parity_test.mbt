@@ -1265,3 +1265,114 @@ test "symintegrals parity inverse Laplace symbolic Bessel branch kernels" {
     "0",
   )
 }
+
+///|
+test "symintegrals parity inverse Laplace positive sqrt exponential frontdoor" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(a))
+  let positive_kernel = @symelem.sqrt(pi * (a ^ @symcore.int(-1))) *
+    @symelem.exp(@symcore.int(-2) * @symelem.sqrt(a) * @symelem.sqrt(s))
+  let positive_value = doit(inverse_laplace_transform(positive_kernel, s, x))
+  @symassume.clear_global_assumptions()
+  let expected_value = @symelem.exp(
+      @symcore.int(-1) * a * (x ^ @symcore.int(-1)),
+    ) *
+    @symspec.heaviside(x) *
+    (x ^ @symcore.rational_from_ints(-3, 2))
+  assert_eq(@symcore.compare_expr(positive_value, expected_value), 0)
+}
+
+///|
+test "symintegrals parity inverse Laplace conditional sqrt exponential condition" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let b = @symcore.Expr::Symbol("b")
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+
+  let conditional_kernel = @symelem.sqrt(pi * (b ^ @symcore.int(-1))) *
+    @symelem.exp(@symcore.int(-2) * @symelem.sqrt(b) * @symelem.sqrt(s))
+  let conditional_value = @symintegrals.inverse_laplace_transform_eval(
+    conditional_kernel,
+    s,
+    x,
+    noconds=false,
+  )
+  match @symcore.tuple_items(conditional_value) {
+    Some([value, cond]) => {
+      let imag = @symcore.Expr::NumberSymbol(
+        @symcore.NumberSymbolKind::ImaginaryUnit,
+      )
+      let phase = @symcore.int(-1) * @symelem.im(b) * (x ^ @symcore.int(-1))
+      let expected_value = @symelem.exp(
+          @symcore.int(-1) * @symelem.re(b) * (x ^ @symcore.int(-1)),
+        ) *
+        (@symelem.cos(phase) + imag * @symelem.sin(phase)) *
+        @symspec.heaviside(x) *
+        (x ^ @symcore.rational_from_ints(-3, 2))
+      assert_eq(@symcore.compare_expr(value, expected_value), 0)
+      let quarter_i_pi = imag *
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+        (@symcore.int(4) ^ @symcore.int(-1))
+      let polar_b = @symcore.raw_function("polar_lift", [b])
+      let polar_root = @symelem.sqrt(polar_b)
+      let expected_cond = @symcore.raw_function("And", [
+        @symcore.raw_function("Ne", [polar_root, @symcore.int(0)]),
+        @symcore.raw_function("Gt", [
+          @symelem.re(
+            @symelem.exp(@symcore.int(-1) * quarter_i_pi) * polar_root,
+          ),
+          @symcore.int(0),
+        ]),
+        @symcore.raw_function("Gt", [
+          @symelem.re(@symelem.exp(quarter_i_pi) * polar_root),
+          @symcore.int(0),
+        ]),
+      ])
+      assert_eq(@symcore.compare_expr(cond, expected_cond), 0)
+    }
+    _ => fail("expected value and condition tuple for sqrt exponential kernel")
+  }
+}
+
+///|
+test "symintegrals parity inverse Laplace Chi logarithmic fallback" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+
+  let chi_kernel = @symcore.rational_from_ints(-1, 2) *
+    @symelem.log((s ^ @symcore.int(2)) - @symcore.int(1)) *
+    (s ^ @symcore.int(-1))
+  let chi_value = doit(inverse_laplace_transform(chi_kernel, s, x))
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr((sympy.simplify((" +
+      py_expr(chi_value) +
+      ") - sympy.Chi(sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')))).rewrite(sympy.expint).expand())",
+    ),
+    "0",
+  )
+
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(a))
+  let scaled_chi_kernel = @symcore.rational_from_ints(-1, 2) *
+    @symelem.log((s ^ @symcore.int(2)) - (a ^ @symcore.int(2))) *
+    (s ^ @symcore.int(-1))
+  let scaled_chi_value = doit(
+    inverse_laplace_transform(scaled_chi_kernel, s, x),
+  )
+  @symassume.clear_global_assumptions()
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr((sympy.simplify(((" +
+      py_expr(scaled_chi_value) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)})) - (sympy.Chi(sympy.Symbol('a', positive=True)*sympy.Symbol('x')) - sympy.log(sympy.Symbol('a', positive=True)))*sympy.Heaviside(sympy.Symbol('x')))).rewrite(sympy.expint).expand())",
+    ),
+    "0",
+  )
+}
