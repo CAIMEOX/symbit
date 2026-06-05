@@ -9067,12 +9067,26 @@ fn inverse_laplace_reciprocal_sqrt_quadratic_body(
 
 ///|
 fn laplace_source_positive(expr : Expr) -> Bool {
-  let simplified = expr_simplify(expr)
-  if expr_is_positive(simplified) {
+  if expr_local_positive_quick(expr) {
     true
   } else {
+    match unary_application_arg(expr, "sqrt") {
+      Some(inner) if expr_local_positive_quick(inner) => return true
+      _ => ()
+    }
+    let simplified = expr_simplify(expr)
+    if expr_local_positive_quick(simplified) || expr_is_positive(simplified) {
+      return true
+    }
     match unary_application_arg(simplified, "sqrt") {
-      Some(inner) => expr_is_positive(expr_simplify(inner))
+      Some(inner) =>
+        if expr_local_positive_quick(inner) {
+          true
+        } else {
+          let simplified_inner = expr_simplify(inner)
+          expr_local_positive_quick(simplified_inner) ||
+          expr_is_positive(simplified_inner)
+        }
       None => false
     }
   }
@@ -21595,12 +21609,7 @@ fn expr_negative_factor_body(expr : Expr) -> Expr? {
 
 ///|
 fn expr_locally_positive(expr : Expr) -> Bool {
-  match expr_num_value(expr) {
-    Some(value) => value.compare(@symnum.BigRational::zero()) > 0
-    None =>
-      expr_assumption_direct_true(@symassume.q_positive(expr)) ||
-      @symassume.is_positive(expr) == @symassume.Tri::True
-  }
+  expr_local_positive_quick(expr)
 }
 
 ///|
@@ -21619,13 +21628,206 @@ fn expr_positive_factor_product(expr : Expr) -> Bool {
 }
 
 ///|
+fn expr_local_positive_quick(expr : Expr) -> Bool {
+  match expr_num_value(expr) {
+    Some(value) => return value.compare(@symnum.BigRational::zero()) > 0
+    None => ()
+  }
+  if expr_assumption_direct_true(@symassume.q_positive(expr)) ||
+    @symassume.is_positive(expr) == @symassume.Tri::True {
+    return true
+  }
+  match unary_application_arg(expr, "sqrt") {
+    Some(inner) if expr_local_positive_quick(inner) => return true
+    _ => ()
+  }
+  match unary_application_arg(expr, "Abs") {
+    Some(inner) if expr_local_nonzero_quick(inner) => return true
+    _ => ()
+  }
+  match unary_application_arg(expr, "abs") {
+    Some(inner) if expr_local_nonzero_quick(inner) => return true
+    _ => ()
+  }
+  match unary_application_arg(expr, "exp") {
+    Some(inner) if expr_local_real_quick(inner) => return true
+    _ => ()
+  }
+  match expr {
+    @symcore.Expr::Add(terms) if terms.length() > 0 => {
+      let mut any_positive = false
+      for term in terms {
+        if !expr_local_nonnegative_quick(term) {
+          return false
+        }
+        if expr_local_positive_quick(term) {
+          any_positive = true
+        }
+      }
+      any_positive
+    }
+    @symcore.Expr::Mul(factors) if factors.length() > 0 => {
+      let mut all_positive = true
+      let mut all_nonnegative = true
+      let mut all_nonzero = true
+      for factor in factors {
+        if expr_local_positive_quick(factor) == false {
+          all_positive = false
+        }
+        if expr_local_nonnegative_quick(factor) == false {
+          all_nonnegative = false
+        }
+        if expr_local_nonzero_quick(factor) == false {
+          all_nonzero = false
+        }
+      }
+      all_positive || (all_nonnegative && all_nonzero)
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      if expr_local_positive_quick(base) && expr_local_real_quick(exp) {
+        true
+      } else {
+        match expr_is_int_value(exp) {
+          Some(power) if power % 2 == 0 =>
+            expr_local_real_quick(base) && expr_local_nonzero_quick(base)
+          Some(power) if power % 2 != 0 => expr_local_positive_quick(base)
+          _ => false
+        }
+      }
+    _ => false
+  }
+}
+
+///|
+fn expr_local_nonnegative_quick(expr : Expr) -> Bool {
+  match expr_num_value(expr) {
+    Some(value) => return value.compare(@symnum.BigRational::zero()) >= 0
+    None => ()
+  }
+  if expr_assumption_direct_true(@symassume.q_nonnegative(expr)) ||
+    expr_assumption_direct_true(@symassume.q_positive(expr)) ||
+    expr_assumption_direct_true(@symassume.q_zero(expr)) ||
+    @symassume.is_nonnegative(expr) == @symassume.Tri::True {
+    return true
+  }
+  match unary_application_arg(expr, "sqrt") {
+    Some(inner) if expr_local_nonnegative_quick(inner) => return true
+    _ => ()
+  }
+  match unary_application_arg(expr, "Abs") {
+    Some(_) => return true
+    _ => ()
+  }
+  match unary_application_arg(expr, "abs") {
+    Some(_) => return true
+    _ => ()
+  }
+  match unary_application_arg(expr, "exp") {
+    Some(inner) if expr_local_real_quick(inner) => return true
+    _ => ()
+  }
+  match expr {
+    @symcore.Expr::Add(terms) if terms.length() > 0 =>
+      terms.all(fn(term) { expr_local_nonnegative_quick(term) })
+    @symcore.Expr::Mul(factors) if factors.length() > 0 =>
+      factors.all(fn(factor) { expr_local_nonnegative_quick(factor) })
+    @symcore.Expr::Pow(base, exp) =>
+      match expr_is_int_value(exp) {
+        Some(power) if power % 2 == 0 => expr_local_real_quick(base)
+        _ => expr_local_positive_quick(base)
+      }
+    _ => false
+  }
+}
+
+///|
+fn expr_local_nonzero_quick(expr : Expr) -> Bool {
+  match expr_num_value(expr) {
+    Some(value) => return value.compare(@symnum.BigRational::zero()) != 0
+    None => ()
+  }
+  if expr_assumption_direct_true(@symassume.q_nonzero(expr)) ||
+    expr_assumption_direct_true(@symassume.q_positive(expr)) ||
+    @symassume.is_nonzero(expr) == @symassume.Tri::True {
+    return true
+  }
+  match unary_application_arg(expr, "sqrt") {
+    Some(inner) if expr_local_nonzero_quick(inner) => return true
+    _ => ()
+  }
+  match unary_application_arg(expr, "exp") {
+    Some(_) => return true
+    _ => ()
+  }
+  match expr {
+    @symcore.Expr::Mul(factors) if factors.length() > 0 =>
+      factors.all(fn(factor) { expr_local_nonzero_quick(factor) })
+    @symcore.Expr::Pow(base, exp) =>
+      !expr_is_zero(exp) && expr_local_nonzero_quick(base)
+    _ => false
+  }
+}
+
+///|
+fn expr_local_real_quick(expr : Expr) -> Bool {
+  match expr_num_value(expr) {
+    Some(_) => return true
+    None => ()
+  }
+  if expr_assumption_direct_true(@symassume.q_real(expr)) ||
+    expr_assumption_direct_true(@symassume.q_positive(expr)) ||
+    expr_assumption_direct_true(@symassume.q_nonnegative(expr)) ||
+    @symassume.is_real(expr) == @symassume.Tri::True {
+    return true
+  }
+  match unary_application_arg(expr, "sqrt") {
+    Some(inner) if expr_local_nonnegative_quick(inner) => return true
+    _ => ()
+  }
+  match unary_application_arg(expr, "Abs") {
+    Some(_) => return true
+    _ => ()
+  }
+  match unary_application_arg(expr, "abs") {
+    Some(_) => return true
+    _ => ()
+  }
+  match expr {
+    @symcore.Expr::Add(terms) if terms.length() > 0 =>
+      terms.all(fn(term) { expr_local_real_quick(term) })
+    @symcore.Expr::Mul(factors) if factors.length() > 0 =>
+      factors.all(fn(factor) { expr_local_real_quick(factor) })
+    @symcore.Expr::Pow(base, exp) =>
+      if expr_local_positive_quick(base) && expr_local_real_quick(exp) {
+        true
+      } else {
+        match expr_is_int_value(exp) {
+          Some(_) => expr_local_real_quick(base)
+          None => false
+        }
+      }
+    _ => false
+  }
+}
+
+///|
 fn expr_is_negative(expr : Expr) -> Bool {
   match expr_num_value(expr) {
     Some(value) => value.compare(@symnum.BigRational::zero()) < 0
     None => {
       match expr_negative_factor_body(expr) {
-        Some(body) => if expr_is_positive(body) { return true }
+        Some(body) =>
+          if expr_local_positive_quick(body) || expr_is_positive(body) {
+            return true
+          }
         None => ()
+      }
+      if expr_local_positive_quick(expr) {
+        return false
+      }
+      if expr_assumption_direct_true(@symassume.q_negative(expr)) ||
+        expr_local_positive_quick(expr_mul(@symcore.int(-1), expr)) {
+        return true
       }
       expr_assumption_true(@symassume.q_negative(expr)) ||
       expr_assumption_true(
@@ -21644,7 +21846,7 @@ fn expr_is_positive(expr : Expr) -> Bool {
         Some(body) => if expr_is_negative(body) { return true }
         None => ()
       }
-      if expr_positive_factor_product(expr) {
+      if expr_local_positive_quick(expr) || expr_positive_factor_product(expr) {
         return true
       }
       match @symassume.is_positive(expr) {
