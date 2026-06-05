@@ -12016,16 +12016,19 @@ fn inverse_laplace_quadratic_degree2_from_coeffs(
   let centered_const = inverse_laplace_exact_or_simplify(
     expr_sub(m, expr_mul(shift, l)),
   )
-  if expr_is_negative(b) {
-    let freq = inverse_laplace_sqrt_quadratic_b(expr_mul(@symcore.int(-1), b))
-    inverse_laplace_quadratic_degree2_transcendental_body(
-      l, centered_const, shift, freq, t, true,
-    )
-  } else {
-    let freq = inverse_laplace_sqrt_quadratic_b(b)
-    inverse_laplace_quadratic_degree2_transcendental_body(
-      l, centered_const, shift, freq, t, false,
-    )
+  match inverse_laplace_quadratic_b_negative_source_tri(b) {
+    @symassume.Tri::True => {
+      let freq = inverse_laplace_sqrt_quadratic_b(expr_mul(@symcore.int(-1), b))
+      inverse_laplace_quadratic_degree2_transcendental_body(
+        l, centered_const, shift, freq, t, true,
+      )
+    }
+    _ => {
+      let freq = inverse_laplace_sqrt_quadratic_b(b)
+      inverse_laplace_quadratic_degree2_transcendental_body(
+        l, centered_const, shift, freq, t, false,
+      )
+    }
   }
 }
 
@@ -12038,6 +12041,85 @@ fn inverse_laplace_quadratic_b(offset : Expr, shift : Expr) -> Expr {
     Some(value) => expr_from_num(value)
     None => expr_simplify(raw)
   }
+}
+
+///|
+fn inverse_laplace_quadratic_b_negative_source_tri(
+  expr : Expr,
+) -> @symassume.Tri {
+  // Source map: SymPy's rational inverse branch tests only `b.is_negative`.
+  // Keep that as a cheap structural/assumption-property query here; an
+  // unknown result intentionally chooses the trigonometric branch below.
+  match expr_num_value(expr) {
+    Some(value) =>
+      if value.compare(@symnum.BigRational::zero()) < 0 {
+        return @symassume.Tri::True
+      } else {
+        return @symassume.Tri::False
+      }
+    None => ()
+  }
+  let negative_expr = expr_mul(@symcore.int(-1), expr)
+  if expr_assumption_direct_true(@symassume.q_negative(expr)) ||
+    expr_assumption_direct_true(@symassume.q_positive(negative_expr)) {
+    return @symassume.Tri::True
+  }
+  if expr_assumption_direct_true(@symassume.q_positive(expr)) ||
+    expr_assumption_direct_true(@symassume.q_nonnegative(expr)) ||
+    expr_assumption_direct_true(@symassume.q_zero(expr)) ||
+    expr_local_nonnegative_quick(expr) ||
+    inverse_laplace_source_positive_property(expr) {
+    return @symassume.Tri::False
+  }
+  match expr_negative_factor_body(expr) {
+    Some(body) =>
+      if inverse_laplace_source_positive_property(body) {
+        return @symassume.Tri::True
+      }
+    None => ()
+  }
+  if inverse_laplace_source_positive_property(negative_expr) {
+    return @symassume.Tri::True
+  }
+  match @symassume.is_positive(expr) {
+    @symassume.Tri::True => @symassume.Tri::False
+    _ => @symassume.Tri::Unknown
+  }
+}
+
+///|
+fn inverse_laplace_source_positive_property(expr : Expr) -> Bool {
+  if expr_local_positive_quick(expr) ||
+    expr_positive_factor_product(expr) ||
+    expr_assumption_direct_true(@symassume.q_positive(expr)) ||
+    @symassume.is_positive(expr) == @symassume.Tri::True {
+    return true
+  }
+  match expr {
+    @symcore.Expr::Mul(factors) if factors.length() > 0 =>
+      factors.all(fn(factor) {
+        inverse_laplace_source_positive_property(factor)
+      })
+    @symcore.Expr::Pow(base, exp) =>
+      match expr_is_int_value(exp) {
+        Some(power) if power % 2 == 0 =>
+          inverse_laplace_source_nonzero_real_property(base)
+        Some(_) => inverse_laplace_source_positive_property(base)
+        None => false
+      }
+    _ => false
+  }
+}
+
+///|
+fn inverse_laplace_source_nonzero_real_property(expr : Expr) -> Bool {
+  expr_assumption_direct_true(@symassume.q_negative(expr)) ||
+  expr_assumption_direct_true(@symassume.q_positive(expr)) ||
+  (
+    expr_assumption_direct_true(@symassume.q_nonzero(expr)) &&
+    expr_assumption_direct_true(@symassume.q_real(expr))
+  ) ||
+  (expr_local_nonzero_quick(expr) && expr_local_real_quick(expr))
 }
 
 ///|

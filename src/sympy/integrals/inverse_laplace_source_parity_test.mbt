@@ -118,6 +118,69 @@ test "symintegrals parity inverse Laplace SymPy source frontdoor cases" {
 }
 
 ///|
+test "symintegrals parity inverse Laplace quadratic source sign branches" {
+  let s = @symcore.Expr::Symbol("s")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_positive(a))
+  let trig_branch = doit(
+    inverse_laplace_transform(
+      ((s ^ @symcore.int(2)) + (a ^ @symcore.int(2))) ^ @symcore.int(-1),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(trig_branch) +
+      ").xreplace({sympy.Symbol('a'): sympy.Symbol('a', positive=True)}) - sympy.inverse_laplace_transform(1/(sympy.Symbol('s')**2 + sympy.Symbol('a', positive=True)**2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  @symassume.clear_global_assumptions()
+  @symassume.add_global_assumption(@symassume.q_negative(b))
+  let hyperbolic_branch = doit(
+    inverse_laplace_transform(
+      ((s ^ @symcore.int(2)) + b) ^ @symcore.int(-1),
+      s,
+      x,
+    ),
+  )
+  @symassume.clear_global_assumptions()
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(hyperbolic_branch) +
+      ").xreplace({sympy.Symbol('b'): sympy.Symbol('b', negative=True)}) - sympy.inverse_laplace_transform(1/(sympy.Symbol('s')**2 + sympy.Symbol('b', negative=True)), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  @symassume.add_global_assumption(@symassume.q_negative(b))
+  let negative_square_branch = doit(
+    inverse_laplace_transform(
+      ((s ^ @symcore.int(2)) - (b ^ @symcore.int(2))) ^ @symcore.int(-1),
+      s,
+      x,
+    ),
+  )
+  @symassume.clear_global_assumptions()
+  assert_eq(
+    integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(negative_square_branch) +
+      ").xreplace({sympy.Symbol('b'): sympy.Symbol('b', negative=True)}) - sympy.inverse_laplace_transform(1/(sympy.Symbol('s')**2 - sympy.Symbol('b', negative=True)**2), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+}
+
+///|
 fn inverse_laplace_positive_abck_zero_check(
   checks : Array[String],
   ours : Expr,
