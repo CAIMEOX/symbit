@@ -27,9 +27,17 @@ GIL, and `Python.h` dependencies. Programs should finish all Python object work
 inside one request; do not add global remote-object handles without a concrete
 case that cannot be expressed as request-scoped work.
 
+Current migrated programs:
+
+- `integrals.eval_str` evaluates one expression with the integrals helper
+  profile.
+- `unify.exec_result_str` executes one request-scoped parity script and returns
+  its `__result__` value as a string.
+
 The runtime and the first migrated package can be checked with:
 
 ```sh
 SYMBIT_PYTHON=/absolute/path/to/python moon test --target native src/sympy/runtime
 SYMBIT_PYTHON=/absolute/path/to/python moon test --target native src/sympy/integrals
+SYMBIT_PYTHON=/absolute/path/to/python moon test --target native src/sympy/unify
 ```

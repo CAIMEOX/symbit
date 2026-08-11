@@ -1,6 +1,5 @@
 import {
-  "CAIMEOX/symbit/sympy",
-  "Kaida-Amethyst/python" @py,
+  "CAIMEOX/symbit/sympy/runtime",
 }
 
 import {
@@ -9,6 +8,7 @@ import {
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symunify",
+  "CAIMEOX/symbit/sympy/runtime",
 } for "test"
 
 supported_targets = "native"

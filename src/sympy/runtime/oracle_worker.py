@@ -126,6 +126,17 @@ def _eval_str(code: Any) -> str:
     return str(eval(code, globals_dict, globals_dict))
 
 
+def _exec_result_str(script: Any) -> str:
+    if not isinstance(script, str):
+        raise ProtocolFault("script-execution input must be a string")
+    globals_dict = {
+        "__builtins__": builtins.__dict__,
+        "sympy": sympy,
+    }
+    exec(script, globals_dict, globals_dict)
+    return str(globals_dict["__result__"])
+
+
 def _crash(_: Any) -> None:
     os._exit(86)
 
@@ -136,6 +147,7 @@ PROGRAMS: dict[str, Callable[[Any], Any]] = {
     "runtime.eval_str": _eval_str,
     "runtime.crash": _crash,
     "integrals.eval_str": _eval_str,
+    "unify.exec_result_str": _exec_result_str,
 }
 
 
