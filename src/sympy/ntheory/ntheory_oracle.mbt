@@ -2,122 +2,96 @@
 /// Oracle helpers for SymPy ntheory.
 
 ///|
-pub type OracleArg = @sympy.OracleArg
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
+priv enum OracleArg {
+  Int(Int)
+  Bool(Bool)
+  IntList(Array[Int])
 }
 
 ///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
+priv struct RecipeCallable {
+  builder : @recipe.Builder
+  value : @recipe.ValueRef
 }
 
 ///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
+priv struct RecipeResult {
+  builder : @recipe.Builder
+  value : @recipe.ValueRef
 }
 
 ///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
+fn int_arg(value : Int) -> @recipe.RecipeArg {
+  DecimalInt(Show::to_string(value))
 }
 
 ///|
-fn py_str_enum(obj : @py.PyObjectEnum) -> String {
-  py_str_obj(objenum_to_obj(obj))
-}
-
-///|
-fn py_eval(expr : String) -> @py.PyObjectEnum raise {
-  let state = py_gil_ensure()
-  let res = try {
-    let builtins = match @py.pyimport("builtins") {
-      Some(mod) => mod
-      None => fail("py-builtins-missing")
-    }
-    let eval_obj = match builtins.get_attr("eval", print_err=true) {
-      Some(obj) => obj
-      None => fail("py-eval-missing")
-    }
-    let eval_callable = match eval_obj {
-      PyCallable(callable) => callable
-      PyClass(obj0) =>
-        @py.PyCallable::create(obj0) catch {
-          _ => fail("py-callable")
-        }
-      _ =>
-        @py.PyCallable::create(objenum_to_obj(eval_obj)) catch {
-          _ => fail("py-callable")
-        }
-    }
-    let globals = @py.PyDict::new()
-    globals.set("__builtins__", builtins.obj())
-    let args = @sympy.py_pack_args([
-      Str(expr),
-      PyObj(globals.obj()),
-      PyObj(globals.obj()),
-    ])
-    match @sympy.py_call_object(eval_callable, args, print_err=true) {
-      Some(obj) => obj
-      None => fail("py-eval-none")
-    }
-  } catch {
-    err => {
-      py_gil_release(state)
-      raise err
+fn OracleArg::materialize(
+  self : OracleArg,
+  builder : @recipe.Builder,
+) -> @recipe.RecipeArg raise {
+  match self {
+    Int(value) => int_arg(value)
+    Bool(value) => Bool(value)
+    IntList(values) => {
+      let items : Array[@recipe.RecipeArg] = values.map(int_arg)
+      Ref(builder.list(items))
     }
   }
-  py_gil_release(state)
-  res
 }
 
 ///|
-fn py_eval_callable(expr : String) -> @py.PyCallable raise {
-  match py_eval(expr) {
-    PyCallable(callable) => callable
-    PyClass(obj0) =>
-      @py.PyCallable::create(obj0) catch {
-        _ => fail("py-callable")
-      }
-    other =>
-      @py.PyCallable::create(objenum_to_obj(other)) catch {
-        _ => fail("py-callable")
-      }
+fn py_eval_callable(source : String) -> RecipeCallable raise {
+  let builder = @recipe.Builder::new()
+  let builtins = builder.import_module("builtins")
+  let scope = builder.dict([(Str("__builtins__"), Ref(builtins))])
+  let callable = builder.eval(scope, source)
+  let callable = builder.require_non_none(callable, message="py-eval-none")
+  { builder, value: callable }
+}
+
+///|
+fn recipe_call(
+  callable : RecipeCallable,
+  args : Array[OracleArg],
+) -> RecipeResult raise {
+  let call_args : Array[@recipe.RecipeArg] = []
+  for arg in args {
+    call_args.push(arg.materialize(callable.builder))
   }
+  let result = callable.builder.call(callable.value, call_args)
+  { builder: callable.builder, value: result }
 }
 
 ///|
 fn py_call_with_args(
-  callable : @py.PyCallable,
+  callable : RecipeCallable,
   args : Array[OracleArg],
-) -> @py.PyObjectEnum raise {
-  let tup = @sympy.py_pack_args(args)
-  match @sympy.py_call_object(callable, tup, print_err=true) {
-    Some(obj) => obj
-    None => fail("py-call-none")
-  }
+) -> RecipeResult raise {
+  let result = recipe_call(callable, args)
+  let value = result.builder.require_non_none(
+    result.value,
+    message="py-call-none",
+  )
+  { builder: result.builder, value }
 }
 
 ///|
 fn py_call_with_args_opt(
-  callable : @py.PyCallable,
+  callable : RecipeCallable,
   args : Array[OracleArg],
-) -> @py.PyObjectEnum? {
-  let tup = @sympy.py_pack_args(args)
-  @sympy.py_call_object(callable, tup, print_err=true)
+) -> RecipeResult raise {
+  recipe_call(callable, args)
 }
 
 ///|
-fn py_str_enum_opt(obj : @py.PyObjectEnum?) -> String {
-  match obj {
-    Some(value) => py_str_enum(value)
-    None => "None"
-  }
+fn py_str_enum(result : RecipeResult) -> String raise {
+  result.builder.request_str(result.value)
+}
+
+///|
+fn py_str_enum_opt(result : RecipeResult) -> String raise {
+  result.builder.request_str(result.value)
 }
 
 ///|
