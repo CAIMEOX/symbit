@@ -58,27 +58,14 @@ pub fn matrix_cache(dtype? : String = "complex") -> MatrixCache {
   cache.cache_matrix(
     "Y",
     cached_matrix([
-      [
-        int(0),
-        int(-1) *
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-      ],
-      [
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-        int(0),
-      ],
+      [int(0), int(-1) * NumberSymbol(ImaginaryUnit)],
+      [NumberSymbol(ImaginaryUnit), int(0)],
     ]),
   )
   cache.cache_matrix("Z", cached_matrix([[int(1), int(0)], [int(0), int(-1)]]))
   cache.cache_matrix(
     "S",
-    cached_matrix([
-      [int(1), int(0)],
-      [
-        int(0),
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-      ],
-    ]),
+    cached_matrix([[int(1), int(0)], [int(0), NumberSymbol(ImaginaryUnit)]]),
   )
   cache.cache_matrix(
     "T",
@@ -87,9 +74,7 @@ pub fn matrix_cache(dtype? : String = "complex") -> MatrixCache {
       [
         int(0),
         @symcore.raw_function("exp", [
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-          quarter,
+          NumberSymbol(ImaginaryUnit) * NumberSymbol(Pi) * quarter,
         ]),
       ],
     ]),
@@ -118,15 +103,8 @@ pub fn matrix_cache(dtype? : String = "complex") -> MatrixCache {
   cache.cache_matrix(
     "ZY",
     cached_matrix([
-      [
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-        int(0),
-      ],
-      [
-        int(0),
-        int(-1) *
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-      ],
+      [NumberSymbol(ImaginaryUnit), int(0)],
+      [int(0), int(-1) * NumberSymbol(ImaginaryUnit)],
     ]),
   )
   cache
@@ -148,14 +126,12 @@ pub fn MatrixCache::get_matrix(
   format? : String = "sympy",
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   guard format == "sympy" else {
-    raise @symphysics.PhysicsError::ValueError(
-      "Only the exact sympy-style matrix backend is available",
-    )
+    raise ValueError("Only the exact sympy-style matrix backend is available")
   }
   match self.entries.get(name) {
     Some(matrix) => matrix
     None =>
-      raise @symphysics.PhysicsError::ValueError(
+      raise ValueError(
         "Matrix with name \{name} and format \{format} is not available",
       )
   }

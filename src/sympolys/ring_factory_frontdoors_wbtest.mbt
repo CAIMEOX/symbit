@@ -5,7 +5,7 @@ fn ring_wb_domain_text(result : RingFactoryResult) -> String {
 
 ///|
 test "ring factory frontdoors: typed polynomial rings and fields" {
-  let r = ring(["x", "y"], Domain::ZZ)
+  let r = ring(["x", "y"], ZZ)
   inspect(ring_wb_domain_text(r), content="ZZ[x,y]")
   debug_inspect(r.gens, content="[\"x\", \"y\"]")
   inspect(
@@ -13,10 +13,10 @@ test "ring factory frontdoors: typed polynomial rings and fields" {
     content="x,y",
   )
 
-  let f = field(["x"], Domain::QQ)
+  let f = field(["x"], QQ)
   inspect(ring_wb_domain_text(f), content="QQ(x)")
-  inspect(xring(["t"], Domain::QQ).order == TermOrder::Lex, content="true")
-  debug_inspect(vfield(["t"], Domain::QQ).gens, content="[\"t\"]")
+  inspect(xring(["t"], QQ).order == Lex, content="true")
+  debug_inspect(vfield(["t"], QQ).gens, content="[\"t\"]")
 }
 
 ///|

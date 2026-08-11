@@ -30,7 +30,7 @@ pub struct PolyBuilder {
 /// - Returns: A `PolyBuilder`.
 /// - Limits: The initial term order is always `TermOrder::Lex`.
 pub fn PolyBuilder::new(gens : Array[String], domain : Domain) -> PolyBuilder {
-  PolyBuilder::{ gens, domain, order: TermOrder::Lex }
+  { gens, domain, order: Lex }
 }
 
 ///|
@@ -42,7 +42,7 @@ pub fn PolyBuilder::new(gens : Array[String], domain : Domain) -> PolyBuilder {
 /// - Returns: A `PolyBuilder`.
 /// - Limits: This only changes how future conversions order terms.
 pub fn PolyBuilder::order(self : PolyBuilder, order : TermOrder) -> PolyBuilder {
-  PolyBuilder::{ gens: self.gens, domain: self.domain, order }
+  { gens: self.gens, domain: self.domain, order }
 }
 
 ///|
@@ -79,7 +79,7 @@ pub fn PolyBuilder::from_expr(
 ///   let poly = Poly::from_expr_defaults(x * y + @symcore.rational_from_ints(1, 2))
 ///   debug_inspect(poly.gens, content="[\"x\", \"y\"]")
 ///   match poly.domain {
-///     Domain::QQ => ()
+///     QQ => ()
 ///     _ => fail("expected QQ domain")
 ///   }
 ///   inspect(poly, content="x*y + 1/2")
@@ -108,7 +108,7 @@ pub fn Poly::from_expr_defaults(
   )
   let resolved_order = match order {
     Some(o) => o
-    None => TermOrder::Lex
+    None => Lex
   }
   Poly::from_expr(expr, resolved_gens, resolved_domain).with_order(
     resolved_order,
@@ -130,12 +130,12 @@ fn infer_gens(expr : Expr) -> Array[String] {
 ///|
 fn collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    Expr::Symbol(name) => seen.set(name, true)
-    Expr::Add(args) | Expr::Mul(args) =>
+    Symbol(name) => seen.set(name, true)
+    Add(args) | Mul(args) =>
       for child in args {
         collect_symbols(child, seen)
       }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       collect_symbols(base, seen)
       collect_symbols(exp, seen)
     }
@@ -149,23 +149,22 @@ fn collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
 ///|
 fn infer_domain(expr : Expr) -> Domain {
   if has_complex_float_coeff(expr) {
-    Domain::CC
+    CC
   } else if has_float_coeff(expr) {
-    Domain::RR
+    RR
   } else if has_fractional_coeff(expr) {
-    Domain::QQ
+    QQ
   } else {
-    Domain::ZZ
+    ZZ
   }
 }
 
 ///|
 fn has_complex_float_coeff(expr : Expr) -> Bool {
   match expr {
-    Expr::ComplexFloat(z) => !@symnum.is_zero(z.to_mpc().imag)
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(child => has_complex_float_coeff(child))
-    Expr::Pow(base, exp) =>
+    ComplexFloat(z) => !@symnum.is_zero(z.to_mpc().imag)
+    Add(args) | Mul(args) => args.any(child => has_complex_float_coeff(child))
+    Pow(base, exp) =>
       has_complex_float_coeff(base) || has_complex_float_coeff(exp)
     _ => @symcore.args(expr).any(child => has_complex_float_coeff(child))
   }
@@ -174,10 +173,9 @@ fn has_complex_float_coeff(expr : Expr) -> Bool {
 ///|
 fn has_float_coeff(expr : Expr) -> Bool {
   match expr {
-    Expr::Float(_) | Expr::ComplexFloat(_) => true
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(child => has_float_coeff(child))
-    Expr::Pow(base, exp) => has_float_coeff(base) || has_float_coeff(exp)
+    Float(_) | ComplexFloat(_) => true
+    Add(args) | Mul(args) => args.any(child => has_float_coeff(child))
+    Pow(base, exp) => has_float_coeff(base) || has_float_coeff(exp)
     _ => @symcore.args(expr).any(child => has_float_coeff(child))
   }
 }
@@ -201,63 +199,52 @@ fn resolve_domain(
   let mut base : Domain = match gf_degree {
     Some(k) =>
       match (domain, modulus) {
-        (Some(Domain::GFExt(p, k0, poly)), Some(m)) =>
+        (Some(GFExt(p, k0, poly)), Some(m)) =>
           if p == m && k0 == k {
-            Domain::GFExt(p, k, poly)
+            GFExt(p, k, poly)
           } else {
-            raise PolyError::BadModulus
+            raise BadModulus
           }
-        (Some(Domain::GFExt(p, k0, poly)), None) =>
+        (Some(GFExt(p, k0, poly)), None) =>
           if k0 == k {
-            Domain::GFExt(p, k0, poly)
+            GFExt(p, k0, poly)
           } else {
-            raise PolyError::BadModulus
+            raise BadModulus
           }
-        (Some(Domain::GF(p)), Some(m)) =>
+        (Some(GF(p)), Some(m)) =>
           if p == m {
-            Domain::GFExt(p, k, gfext_default_poly(k))
+            GFExt(p, k, gfext_default_poly(k))
           } else {
-            raise PolyError::BadModulus
+            raise BadModulus
           }
-        (Some(Domain::GF(p)), None) =>
-          Domain::GFExt(p, k, gfext_default_poly(k))
+        (Some(GF(p)), None) => GFExt(p, k, gfext_default_poly(k))
         (None, Some(m)) =>
           if m <= 1 {
-            raise PolyError::BadModulus
+            raise BadModulus
           } else {
-            Domain::GFExt(m, k, gfext_default_poly(k))
+            GFExt(m, k, gfext_default_poly(k))
           }
-        (Some(_), Some(_)) | (Some(_), None) => raise PolyError::BadModulus
-        (None, None) => raise PolyError::BadModulus
+        (Some(_), Some(_)) | (Some(_), None) => raise BadModulus
+        (None, None) => raise BadModulus
       }
     None =>
       match (domain, modulus) {
-        (Some(Domain::GFExt(p, k, poly)), Some(m)) =>
+        (Some(GFExt(p, k, poly)), Some(m)) =>
           if p == m {
-            Domain::GFExt(p, k, poly)
+            GFExt(p, k, poly)
           } else {
-            raise PolyError::BadModulus
+            raise BadModulus
           }
-        (Some(Domain::GFExt(p, k, poly)), None) => Domain::GFExt(p, k, poly)
-        (Some(Domain::GF(p)), Some(m)) =>
-          if p == m {
-            Domain::GF(p)
-          } else {
-            raise PolyError::BadModulus
-          }
-        (Some(Domain::GF(p)), None) => Domain::GF(p)
-        (None, Some(m)) =>
-          if m <= 1 {
-            raise PolyError::BadModulus
-          } else {
-            Domain::GF(m)
-          }
-        (Some(_), Some(_)) => raise PolyError::BadModulus
+        (Some(GFExt(p, k, poly)), None) => GFExt(p, k, poly)
+        (Some(GF(p)), Some(m)) => if p == m { GF(p) } else { raise BadModulus }
+        (Some(GF(p)), None) => GF(p)
+        (None, Some(m)) => if m <= 1 { raise BadModulus } else { GF(m) }
+        (Some(_), Some(_)) => raise BadModulus
         (Some(d), None) => d
         (None, None) =>
           match expr {
             Some(e) => infer_domain(e)
-            None => Domain::QQ
+            None => QQ
           }
       }
   }
@@ -266,7 +253,7 @@ fn resolve_domain(
   match gaussian {
     Some(true) =>
       base = match base {
-        Domain::ZZ | Domain::QQ => Domain::CC
+        ZZ | QQ => CC
         _ => base
       }
     _ => ()
@@ -279,7 +266,7 @@ fn resolve_domain(
         Some(e) => [e]
         None => Array::new()
       }
-      Domain::AlgExt(base, exts, rels)
+      AlgExt(base, exts, rels)
     }
     _ => base
   }
@@ -296,12 +283,10 @@ fn gfext_default_poly(k : Int) -> Array[Int] {
 ///|
 fn has_fractional_coeff(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) => !n.is_integral()
-    Expr::Float(_) | Expr::ComplexFloat(_) => false
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(child => has_fractional_coeff(child))
-    Expr::Pow(base, exp) =>
-      has_fractional_coeff(base) || has_fractional_coeff(exp)
+    Number(n) => !n.is_integral()
+    Float(_) | ComplexFloat(_) => false
+    Add(args) | Mul(args) => args.any(child => has_fractional_coeff(child))
+    Pow(base, exp) => has_fractional_coeff(base) || has_fractional_coeff(exp)
     _ => @symcore.args(expr).any(child => has_fractional_coeff(child))
   }
 }

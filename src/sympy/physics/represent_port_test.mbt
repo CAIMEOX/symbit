@@ -1,20 +1,22 @@
 ///|
 test "physics.quantum.represent: parity for gate powers, (anti)commutators, and outer products" {
   inspect(
-    represent(x_gate(0).as_expr() ^ @symcore.int(2), nqubits=1).to_string(),
+    Show::to_string(represent(x_gate(0).as_expr() ^ @symcore.int(2), nqubits=1)),
     content=physics_eval_str("represent(XGate(0)**2, nqubits=1)"),
   )
   inspect(
-    represent(
-      @symcore.raw_mul([x_gate(0).as_expr(), x_gate(0).as_expr()]),
-      nqubits=1,
-    ).to_string(),
+    Show::to_string(
+      represent(
+        @symcore.raw_mul([x_gate(0).as_expr(), x_gate(0).as_expr()]),
+        nqubits=1,
+      ),
+    ),
     content=physics_eval_str("represent(XGate(0)*XGate(0), nqubits=1)"),
   )
 
   let phase2 = represent(phase_gate(0).as_expr() ^ @symcore.int(2), nqubits=1)
   match phase2 {
-    MatrixScalarValue::Matrix(matrix) =>
+    Matrix(matrix) =>
       quantum_test_assert_matrix_expr_equal(
         matrix,
         physics_eval_matrix("represent(PhaseGate(0)**2, nqubits=1)"),
@@ -29,7 +31,7 @@ test "physics.quantum.represent: parity for gate powers, (anti)commutators, and 
     commutator(sigma_x().as_expr(), sigma_y().as_expr(), evaluate=false),
   )
   match comm {
-    MatrixScalarValue::Matrix(matrix) =>
+    Matrix(matrix) =>
       quantum_test_assert_matrix_expr_equal(
         matrix,
         physics_eval_matrix("represent(Commutator(SigmaX(), SigmaY()))"),
@@ -44,7 +46,7 @@ test "physics.quantum.represent: parity for gate powers, (anti)commutators, and 
     anticommutator(sigma_x().as_expr(), sigma_y().as_expr(), evaluate=false),
   )
   match anti {
-    MatrixScalarValue::Matrix(matrix) =>
+    Matrix(matrix) =>
       quantum_test_assert_matrix_expr_equal(
         matrix,
         physics_eval_matrix("represent(AntiCommutator(SigmaX(), SigmaY()))"),
@@ -60,7 +62,7 @@ test "physics.quantum.represent: parity for gate powers, (anti)commutators, and 
     nqubits=1,
   )
   match outer {
-    MatrixScalarValue::Matrix(matrix) =>
+    Matrix(matrix) =>
       quantum_test_assert_matrix_expr_equal(
         matrix,
         physics_eval_matrix(

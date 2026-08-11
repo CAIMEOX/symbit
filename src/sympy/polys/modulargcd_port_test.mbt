@@ -36,7 +36,7 @@ fn func_field_modgcd_poly_text(poly : @sympolys.Poly) -> String raise {
 ///|
 test "modulargcd: univariate parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   for
     pair in [
       (
@@ -52,7 +52,7 @@ test "modulargcd: univariate parity" {
         ),
       ),
       (
-        Poly::zero(["x"], Domain::ZZ),
+        Poly::zero(["x"], ZZ),
         b.from_expr(@symcore.int(-1) * x + @symcore.int(1)),
       ),
     ] {
@@ -66,7 +66,7 @@ test "modulargcd: univariate parity" {
 test "modulargcd: bivariate and multivariate parity" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let b2 = PolyBuilder::new(["x", "y"], Domain::ZZ)
+  let b2 = PolyBuilder::new(["x", "y"], ZZ)
   let f = b2.from_expr((x ^ @symcore.int(2)) - (y ^ @symcore.int(2)))
   let g = b2.from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x * y + (y ^ @symcore.int(2)),
@@ -81,7 +81,7 @@ test "modulargcd: bivariate and multivariate parity" {
   )
 
   let z = @symcore.Expr::Symbol("z")
-  let b3 = PolyBuilder::new(["x", "y", "z"], Domain::ZZ)
+  let b3 = PolyBuilder::new(["x", "y", "z"], ZZ)
   let h = x + y + z
   let f3 = b3.from_expr(h * (x - z))
   let g3 = b3.from_expr(h * (y + z))
@@ -97,7 +97,7 @@ test "modulargcd: function field parity" {
   let y = @symcore.Expr::Symbol("y")
   let a = @symcore.Expr::Symbol("a")
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
-  let alg_domain = @sympolys.Domain::AlgExt(@sympolys.Domain::QQ, ["a"], [
+  let alg_domain = @sympolys.Domain::AlgExt(QQ, ["a"], [
     (a ^ @symcore.int(2)) - @symcore.int(2),
   ])
 

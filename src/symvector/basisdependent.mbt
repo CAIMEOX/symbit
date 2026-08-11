@@ -26,7 +26,7 @@ pub fn vector_add_expr(terms : Array[Vector]) -> VectorAdd {
 
 ///|
 pub fn cross_unevaluated(lhs : Vector, rhs : Vector) -> Cross {
-  if lhs.to_string() <= rhs.to_string() {
+  if Show::to_string(lhs) <= Show::to_string(rhs) {
     { lhs_: lhs, rhs_: rhs, sign_: 1 }
   } else {
     { lhs_: rhs, rhs_: lhs, sign_: -1 }
@@ -35,7 +35,7 @@ pub fn cross_unevaluated(lhs : Vector, rhs : Vector) -> Cross {
 
 ///|
 pub fn dot_unevaluated(lhs : Vector, rhs : Vector) -> Dot {
-  if lhs.to_string() <= rhs.to_string() {
+  if Show::to_string(lhs) <= Show::to_string(rhs) {
     { lhs_: lhs, rhs_: rhs }
   } else {
     { lhs_: rhs, rhs_: lhs }

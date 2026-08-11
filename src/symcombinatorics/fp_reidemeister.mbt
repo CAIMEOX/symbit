@@ -34,7 +34,7 @@ pub fn define_schreier_generators(
               tau[beta] = curr.mul(x)
             }
           } else if gens.any(g => g == x) && labels[alpha][idx] is None {
-            let name = "\{x.to_string()}_\{alpha}"
+            let name = "\{Show::to_string(x)}_\{alpha}"
             y.push(name)
             labels[alpha][idx] = Some(name)
             if homomorphism {

@@ -135,9 +135,7 @@ pub fn[T : Eq + Show] Partition::new(
     let seen : Array[T] = Array::new()
     for item in block {
       if seen.any(v => v == item) {
-        raise CombinatoricsError::ValueError(
-          "Partition contained duplicate elements",
-        )
+        raise ValueError("Partition contained duplicate elements")
       }
       seen.push(item)
       all_items.push(item)
@@ -148,9 +146,7 @@ pub fn[T : Eq + Show] Partition::new(
     if !unique.any(v => v == item) {
       unique.push(item)
     } else {
-      raise CombinatoricsError::ValueError(
-        "Partition contained duplicate elements",
-      )
+      raise ValueError("Partition contained duplicate elements")
     }
   }
   let members = sort_by_string(unique)
@@ -245,7 +241,7 @@ pub fn[T : Eq + Show] Partition::from_rgs(
   elements : Array[T],
 ) -> Partition[T] raise CombinatoricsError {
   if rgs.length() != elements.length() {
-    raise CombinatoricsError::ValueError("mismatch in rgs and element lengths")
+    raise ValueError("mismatch in rgs and element lengths")
   }
   let mut max_elem = 0
   for v in rgs {
@@ -263,9 +259,7 @@ pub fn[T : Eq + Show] Partition::from_rgs(
   }
   for b in blocks {
     if b.is_empty() {
-      raise CombinatoricsError::ValueError(
-        "some blocks of the partition were empty",
-      )
+      raise ValueError("some blocks of the partition were empty")
     }
   }
   Partition::new(blocks)
@@ -295,9 +289,7 @@ pub fn IntegerPartition::new(
   let parts : Array[Int] = Array::new()
   for p in partition {
     if p < 1 {
-      raise CombinatoricsError::ValueError(
-        "All integer summands must be greater than one",
-      )
+      raise ValueError("All integer summands must be greater than one")
     }
     parts.push(p)
   }
@@ -309,7 +301,7 @@ pub fn IntegerPartition::new(
     None => total
   }
   if n != total {
-    raise CombinatoricsError::ValueError("Partition did not add to integer")
+    raise ValueError("Partition did not add to integer")
   }
   { integer: n, partition: parts, dict_cache: None, keys_cache: None }
 }
@@ -555,7 +547,7 @@ pub impl Show for IntegerPartition with fn to_string(self) -> String {
 
 ///|
 pub impl Show for IntegerPartition with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -568,7 +560,7 @@ pub fn random_integer_partition(
   seed? : Array[Int],
 ) -> Array[Int] raise CombinatoricsError {
   if n < 1 {
-    raise CombinatoricsError::ValueError("n must be a positive integer")
+    raise ValueError("n must be a positive integer")
   }
   let mut state = 0
   let mut seed_idx = 0
@@ -664,11 +656,11 @@ pub fn rgs_enum(m : Int) -> Int {
 /// Return the restricted growth string of rank `rank` and length `m`.
 pub fn rgs_unrank(rank : Int, m : Int) -> Array[Int] raise CombinatoricsError {
   if m < 1 {
-    raise CombinatoricsError::ValueError("The superset size must be >= 1")
+    raise ValueError("The superset size must be >= 1")
   }
   let total = rgs_enum(m)
   if rank < 0 || rank >= total {
-    raise CombinatoricsError::ValueError("Invalid arguments")
+    raise ValueError("Invalid arguments")
   }
   let mut r = rank
   let levels : Array[Int] = Array::make(m + 1, 1)

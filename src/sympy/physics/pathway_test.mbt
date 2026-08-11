@@ -14,7 +14,7 @@ test "physics.mechanics pathway core" {
   inspect(linear.repr(), content="LinearPathway(pA, pB)")
   inspect(@symprint.pretty_string(linear.length()), content="sqrt((q(t)**2))")
   inspect(
-    mechanics_load_summary(linear.to_loads(@symcore.Expr::Symbol("F"))),
+    mechanics_load_summary(linear.to_loads(Symbol("F"))),
     content="[Force(point=pA, force=-F*sqrt((q(t)**2))**-1*q(t)*PN.x), Force(point=pB, force=F*sqrt((q(t)**2))**-1*q(t)*PN.x)]",
   )
 

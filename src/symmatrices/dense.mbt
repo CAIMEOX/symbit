@@ -59,7 +59,7 @@ pub fn Matrix::as_immutable(self : Matrix) -> ImmutableDenseMatrix {
 ///     [@symcore.int(3), @symcore.int(4)],
 ///   ])
 ///   guard m.shape() == (2, 2) else { fail("unexpected dense matrix shape") }
-///   inspect(m.to_string(), content="Matrix([[1, 2], [3, 4]])")
+///   inspect(Show::to_string(m), content="Matrix([[1, 2], [3, 4]])")
 /// }
 /// ```
 pub fn matrix(rows : Array[Array[Expr]]) -> Matrix raise MatrixError {
@@ -69,7 +69,7 @@ pub fn matrix(rows : Array[Array[Expr]]) -> Matrix raise MatrixError {
   let cols = rows[0].length()
   for row in rows {
     if row.length() != cols {
-      raise MatrixError::ShapeError("matrix rows must all have the same length")
+      raise ShapeError("matrix rows must all have the same length")
     }
   }
   { rows: rows.length(), cols, data: clone_expr_rows(rows) }
@@ -88,9 +88,7 @@ pub fn matrix_from_flat(
   values : Array[Expr],
 ) -> Matrix raise MatrixError {
   if rows < 0 || cols < 0 || values.length() != rows * cols {
-    raise MatrixError::ShapeError(
-      "flat data length does not match matrix shape",
-    )
+    raise ShapeError("flat data length does not match matrix shape")
   }
   let out : Array[Array[Expr]] = []
   for i in 0..<rows {
@@ -116,7 +114,7 @@ pub fn zeros(rows : Int, cols? : Int? = None) -> Matrix raise MatrixError {
     None => rows
   }
   if rows < 0 || cols < 0 {
-    raise MatrixError::ShapeError("matrix dimensions must be non-negative")
+    raise ShapeError("matrix dimensions must be non-negative")
   }
   let out : Array[Array[Expr]] = []
   for _ in 0..<rows {
@@ -138,7 +136,7 @@ pub fn ones(rows : Int, cols? : Int? = None) -> Matrix raise MatrixError {
     None => rows
   }
   if rows < 0 || cols < 0 {
-    raise MatrixError::ShapeError("matrix dimensions must be non-negative")
+    raise ShapeError("matrix dimensions must be non-negative")
   }
   let out : Array[Array[Expr]] = []
   for _ in 0..<rows {
@@ -159,7 +157,7 @@ pub fn ones(rows : Int, cols? : Int? = None) -> Matrix raise MatrixError {
 /// test "eye builds an identity matrix" {
 ///   let ident = @symmatrices.eye(3)
 ///   inspect(
-///     ident.to_string(),
+///     Show::to_string(ident),
 ///     content="Matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])",
 ///   )
 /// }
@@ -209,7 +207,7 @@ pub fn diag(
 fn normalize_index(index : Int, size : Int) -> Int raise MatrixError {
   let normalized = if index < 0 { size + index } else { index }
   if normalized < 0 || normalized >= size {
-    raise MatrixError::IndexError("matrix index out of range")
+    raise IndexError("matrix index out of range")
   }
   normalized
 }
@@ -218,7 +216,7 @@ fn normalize_index(index : Int, size : Int) -> Int raise MatrixError {
 fn normalize_insert_pos(index : Int, size : Int) -> Int raise MatrixError {
   let normalized = if index < 0 { size + index } else { index }
   if normalized < 0 || normalized > size {
-    raise MatrixError::IndexError("matrix insertion index out of range")
+    raise IndexError("matrix insertion index out of range")
   }
   normalized
 }
@@ -257,7 +255,7 @@ pub impl Show for Matrix with fn to_string(self) {
 
 ///|
 pub impl Show for Matrix with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -380,9 +378,7 @@ pub fn Matrix::reshape(
   cols : Int,
 ) -> Matrix raise MatrixError {
   if rows < 0 || cols < 0 || rows * cols != self.rows * self.cols {
-    raise MatrixError::ShapeError(
-      "cannot reshape matrix to incompatible dimensions",
-    )
+    raise ShapeError("cannot reshape matrix to incompatible dimensions")
   }
   let flat : Array[Expr] = []
   for row in self.data {
@@ -439,7 +435,7 @@ pub fn Matrix::row_insert(
   other : Matrix,
 ) -> Matrix raise MatrixError {
   if other.cols != self.cols {
-    raise MatrixError::ShapeError("row_insert expects matching column counts")
+    raise ShapeError("row_insert expects matching column counts")
   }
   let insert_at = normalize_insert_pos(pos, self.rows)
   let out : Array[Array[Expr]] = []
@@ -466,7 +462,7 @@ pub fn Matrix::col_insert(
   other : Matrix,
 ) -> Matrix raise MatrixError {
   if other.rows != self.rows {
-    raise MatrixError::ShapeError("col_insert expects matching row counts")
+    raise ShapeError("col_insert expects matching row counts")
   }
   let insert_at = normalize_insert_pos(pos, self.cols)
   let out : Array[Array[Expr]] = []
@@ -541,7 +537,7 @@ pub fn Matrix::applyfunc(
 ///   let left = @symmatrices.eye(2)
 ///   let right = @symmatrices.ones(2, cols=Some(1))
 ///   inspect(
-///     @symmatrices.hstack([left, right]).to_string(),
+///     Show::to_string(@symmatrices.hstack([left, right])),
 ///     content="Matrix([[1, 0, 1], [0, 1, 1]])",
 ///   )
 /// }
@@ -553,7 +549,7 @@ pub fn hstack(parts : Array[Matrix]) -> Matrix raise MatrixError {
   let rows = parts[0].rows
   for part in parts {
     if part.rows != rows {
-      raise MatrixError::ShapeError(
+      raise ShapeError(
         "hstack expects all matrices to have the same number of rows",
       )
     }
@@ -586,7 +582,7 @@ pub fn vstack(parts : Array[Matrix]) -> Matrix raise MatrixError {
   let out : Array[Array[Expr]] = []
   for part in parts {
     if part.cols != cols {
-      raise MatrixError::ShapeError(
+      raise ShapeError(
         "vstack expects all matrices to have the same number of columns",
       )
     }
@@ -607,9 +603,7 @@ pub fn matrix_multiply_elementwise(
   rhs : Matrix,
 ) -> Matrix raise MatrixError {
   if lhs.shape() != rhs.shape() {
-    raise MatrixError::ShapeError(
-      "elementwise multiplication expects equal shapes",
-    )
+    raise ShapeError("elementwise multiplication expects equal shapes")
   }
   let out : Array[Array[Expr]] = []
   for i in 0..<lhs.rows {
@@ -682,7 +676,7 @@ pub fn Matrix::scalar_mul(
 /// - Limits: Raises `MatrixError::NonSquareMatrixError` when the matrix is not square.
 pub fn Matrix::trace(self : Matrix) -> Expr raise MatrixError {
   if self.rows != self.cols {
-    raise MatrixError::NonSquareMatrixError("trace requires a square matrix")
+    raise NonSquareMatrixError("trace requires a square matrix")
   }
   let mut acc = @symcore.int(0)
   for i in 0..<self.rows {

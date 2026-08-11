@@ -143,10 +143,7 @@ fn ellipse_tangent_lines_from_point(
         [line(pt, t1), line(pt, t2)]
       }
     }
-    None =>
-      raise GeometryError::Undecidable(
-        "cannot decide tangent multiplicity for ellipse",
-      )
+    None => raise Undecidable("cannot decide tangent multiplicity for ellipse")
   }
 }
 
@@ -160,7 +157,7 @@ fn conic_points_from_linear_entity(
   let out : Array[GeometryEntity] = []
   for root in quadratic_roots(a, b, c) {
     let ok = linear_param_ok(linear_kind(entity), root) catch {
-      GeometryError::Undecidable(_) => false
+      Undecidable(_) => false
       e => raise e
     }
     if !ok {
@@ -170,7 +167,7 @@ fn conic_points_from_linear_entity(
     let mut seen = false
     for item in out {
       match item {
-        GeometryEntity::Point(prev) if geo_point_eq(prev, pt) => seen = true
+        Point(prev) if geo_point_eq(prev, pt) => seen = true
         _ => ()
       }
     }
@@ -186,7 +183,7 @@ fn unique_intersection_points(hits : Array[GeometryEntity]) -> Array[Point] {
   let out : Array[Point] = []
   for hit in hits {
     match hit {
-      GeometryEntity::Point(pt) => unique_push_point(out, pt)
+      Point(pt) => unique_push_point(out, pt)
       _ => ()
     }
   }
@@ -266,12 +263,9 @@ pub fn ellipse(
     )
   }
   if geo_expr_eq(hradius, vradius) {
-    return geometry_circle(Circle::{
-      center_: center,
-      radius_: geo_simplify(hradius),
-    })
+    return geometry_circle({ center_: center, radius_: geo_simplify(hradius) })
   }
-  geometry_ellipse(Ellipse::{
+  geometry_ellipse({
     center_: center,
     hradius_: geo_simplify(hradius),
     vradius_: geo_simplify(vradius),
@@ -282,9 +276,9 @@ pub fn ellipse(
 pub fn circle(center : Point, radius : Expr) -> Circle raise GeometryError {
   let center = center.with_dim(2)
   if geo_expr_is_zero(radius) {
-    raise GeometryError::ValueError("circle radius must be nonzero")
+    raise ValueError("circle radius must be nonzero")
   }
-  Circle::{ center_: center, radius_: geo_simplify(radius) }
+  { center_: center, radius_: geo_simplify(radius) }
 }
 
 ///|
@@ -320,11 +314,7 @@ pub fn Ellipse::repr(self : Ellipse) -> String {
 
 ///|
 pub fn Ellipse::area(self : Ellipse) -> Expr {
-  geo_simplify(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    self.hradius_ *
-    self.vradius_,
-  )
+  geo_simplify(NumberSymbol(Pi) * self.hradius_ * self.vradius_)
 }
 
 ///|
@@ -412,8 +402,8 @@ pub fn Ellipse::foci(self : Ellipse) -> Array[Point] raise GeometryError {
 ///|
 pub fn Ellipse::equation(
   self : Ellipse,
-  x? : Expr = Expr::Symbol("x"),
-  y? : Expr = Expr::Symbol("y"),
+  x? : Expr = Symbol("x"),
+  y? : Expr = Symbol("y"),
   _slope? : Expr? = None,
 ) -> Expr {
   let dx = x - self.center_.coords_[0]
@@ -439,7 +429,7 @@ pub fn Ellipse::equation(
 ///|
 pub fn Ellipse::arbitrary_point(
   self : Ellipse,
-  parameter? : Expr = Expr::Symbol("t"),
+  parameter? : Expr = Symbol("t"),
 ) -> Point raise GeometryError {
   point2d(
     geo_simplify(
@@ -471,10 +461,7 @@ pub fn Ellipse::encloses_point(
   }
   match geo_expr_sign(self.equation(x=pt.coords_[0], y=pt.coords_[1])) {
     Some(sign) => sign < 0
-    None =>
-      raise GeometryError::Undecidable(
-        "cannot decide strict ellipse containment",
-      )
+    None => raise Undecidable("cannot decide strict ellipse containment")
   }
 }
 
@@ -495,7 +482,7 @@ pub fn Ellipse::bounds(self : Ellipse) -> (Point, Point) raise GeometryError {
 ///|
 pub fn Ellipse::plot_interval(
   _self : Ellipse,
-  parameter? : Expr = Expr::Symbol("t"),
+  parameter? : Expr = Symbol("t"),
 ) -> Array[Expr] {
   [parameter, int(0) - geo_pi(), geo_pi()]
 }
@@ -508,7 +495,7 @@ pub fn Ellipse::parameter_value(
 ) -> Map[Expr, Expr] raise GeometryError {
   let pt = other.with_dim(2)
   if !self.contains_point(pt) {
-    raise GeometryError::ValueError("point is not on ellipse")
+    raise ValueError("point is not on ellipse")
   }
   let ux = geo_div(pt.coords_[0] - self.center_.coords_[0], self.hradius_)
   let uy = geo_div(pt.coords_[1] - self.center_.coords_[1], self.vradius_)
@@ -523,17 +510,17 @@ pub fn Ellipse::encloses(
   other : GeometryEntity,
 ) -> Bool raise GeometryError {
   match other {
-    GeometryEntity::Ellipse(value) if self == value => return false
+    Ellipse(value) if self == value => return false
     _ => ()
   }
   if !self.intersection(other).is_empty() {
     return false
   }
   match other {
-    GeometryEntity::Point(pt) => self.encloses_point(pt)
-    GeometryEntity::Segment(seg) =>
+    Point(pt) => self.encloses_point(pt)
+    Segment(seg) =>
       self.encloses_point(seg.p1()) && self.encloses_point(seg.p2())
-    GeometryEntity::Polygon(poly) => {
+    Polygon(poly) => {
       for pt in poly.vertices() {
         if !self.encloses_point(pt) {
           return false
@@ -541,7 +528,7 @@ pub fn Ellipse::encloses(
       }
       true
     }
-    GeometryEntity::RegularPolygon(poly) => {
+    RegularPolygon(poly) => {
       let vertices = poly.vertices()
       for pt in vertices {
         if !self.encloses_point(pt) {
@@ -550,7 +537,7 @@ pub fn Ellipse::encloses(
       }
       true
     }
-    GeometryEntity::Triangle(poly) => {
+    Triangle(poly) => {
       for pt in poly.vertices() {
         if !self.encloses_point(pt) {
           return false
@@ -567,7 +554,7 @@ pub fn Ellipse::translate(
   self : Ellipse,
   offsets : Array[Expr],
 ) -> Ellipse raise GeometryError {
-  Ellipse::{
+  {
     center_: self.center_.translate(offsets),
     hradius_: self.hradius_,
     vradius_: self.vradius_,
@@ -597,7 +584,7 @@ pub fn Ellipse::rotate(
   pt? : Point? = None,
 ) -> GeometryEntity raise GeometryError {
   let center = self.center_.rotate(angle, pt~)
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let half_pi = geo_div(pi, geo_int(2))
   if geo_expr_is_zero(angle) ||
     geo_expr_eq(angle, pi) ||
@@ -607,7 +594,7 @@ pub fn Ellipse::rotate(
   if geo_expr_eq(angle, half_pi) || geo_expr_eq(angle, int(0) - half_pi) {
     return ellipse(center, self.vradius_, self.hradius_)
   }
-  raise GeometryError::ValueError(
+  raise ValueError(
     "only rotations by multiples of pi/2 are currently supported for Ellipse",
   )
 }
@@ -618,15 +605,13 @@ pub fn Ellipse::intersection(
   other : GeometryEntity,
 ) -> Array[GeometryEntity] raise GeometryError {
   match other {
-    GeometryEntity::Point(point_obj) =>
+    Point(point_obj) =>
       if self.contains_point(point_obj) {
         [geometry_point(point_obj.with_dim(2))]
       } else {
         []
       }
-    GeometryEntity::Line(_)
-    | GeometryEntity::Ray(_)
-    | GeometryEntity::Segment(_) => {
+    Line(_) | Ray(_) | Segment(_) => {
       let p1 = linear_p1(other).with_dim(2)
       let d = linear_direction_coords(other)
       let dx = d[0]
@@ -640,19 +625,16 @@ pub fn Ellipse::intersection(
       let qc = geo_div(x0 * x0, h2) + geo_div(y0 * y0, v2) - int(1)
       conic_points_from_linear_entity(other, qa, qb, qc)
     }
-    GeometryEntity::Circle(_) => []
-    GeometryEntity::Ellipse(ellipse_obj) =>
+    Circle(_) => []
+    Ellipse(ellipse_obj) =>
       if self == ellipse_obj {
         [geometry_ellipse(self)]
       } else {
         []
       }
-    GeometryEntity::Polygon(poly_obj) =>
-      poly_obj.intersection(geometry_ellipse(self))
-    GeometryEntity::RegularPolygon(poly_obj) =>
-      poly_obj.intersection(geometry_ellipse(self))
-    GeometryEntity::Triangle(poly_obj) =>
-      poly_obj.intersection(geometry_ellipse(self))
+    Polygon(poly_obj) => poly_obj.intersection(geometry_ellipse(self))
+    RegularPolygon(poly_obj) => poly_obj.intersection(geometry_ellipse(self))
+    Triangle(poly_obj) => poly_obj.intersection(geometry_ellipse(self))
     _ => []
   }
 }
@@ -676,14 +658,14 @@ pub fn Ellipse::is_tangent(
   other : GeometryEntity,
 ) -> Bool raise GeometryError {
   match other {
-    GeometryEntity::Line(_) =>
+    Line(_) =>
       ellipse_supporting_line_is_tangent(
         self.center_,
         self.hradius_,
         self.vradius_,
         other,
       )
-    GeometryEntity::Ray(_) | GeometryEntity::Segment(_) => {
+    Ray(_) | Segment(_) => {
       if !ellipse_supporting_line_is_tangent(
           self.center_,
           self.hradius_,
@@ -702,7 +684,7 @@ pub fn Ellipse::is_tangent(
         ),
       )
     }
-    GeometryEntity::Circle(_) => {
+    Circle(_) => {
       let hits = self.intersection(other)
       unique_intersection_points(hits).length() == 1
     }
@@ -737,20 +719,12 @@ pub fn Circle::repr(self : Circle) -> String {
 
 ///|
 pub fn Circle::area(self : Circle) -> Expr {
-  geo_simplify(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    self.radius_ *
-    self.radius_,
-  )
+  geo_simplify(NumberSymbol(Pi) * self.radius_ * self.radius_)
 }
 
 ///|
 pub fn Circle::circumference(self : Circle) -> Expr {
-  geo_simplify(
-    geo_int(2) *
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    self.radius_,
-  )
+  geo_simplify(geo_int(2) * NumberSymbol(Pi) * self.radius_)
 }
 
 ///|
@@ -770,7 +744,7 @@ pub fn Circle::bounds(self : Circle) -> (Point, Point) raise GeometryError {
 ///|
 pub fn Circle::plot_interval(
   _self : Circle,
-  parameter? : Expr = Expr::Symbol("t"),
+  parameter? : Expr = Symbol("t"),
 ) -> Array[Expr] {
   [parameter, int(0) - geo_pi(), geo_pi()]
 }
@@ -783,7 +757,7 @@ pub fn Circle::parameter_value(
 ) -> Map[Expr, Expr] raise GeometryError {
   let pt = other.with_dim(2)
   if !self.contains_point(pt) {
-    raise GeometryError::ValueError("point is not on circle")
+    raise ValueError("point is not on circle")
   }
   let ux = geo_div(pt.coords_[0] - self.center_.coords_[0], self.radius_)
   let uy = geo_div(pt.coords_[1] - self.center_.coords_[1], self.radius_)
@@ -795,8 +769,8 @@ pub fn Circle::parameter_value(
 ///|
 pub fn Circle::equation(
   self : Circle,
-  x? : Expr = Expr::Symbol("x"),
-  y? : Expr = Expr::Symbol("y"),
+  x? : Expr = Symbol("x"),
+  y? : Expr = Symbol("y"),
 ) -> Expr {
   geo_simplify(
     ((x - self.center_.coords_[0]) ^ geo_int(2)) +
@@ -808,7 +782,7 @@ pub fn Circle::equation(
 ///|
 pub fn Circle::arbitrary_point(
   self : Circle,
-  parameter? : Expr = Expr::Symbol("t"),
+  parameter? : Expr = Symbol("t"),
 ) -> Point raise GeometryError {
   point2d(
     geo_simplify(
@@ -840,10 +814,7 @@ pub fn Circle::encloses_point(
   }
   match geo_expr_sign(self.equation(x=pt.coords_[0], y=pt.coords_[1])) {
     Some(sign) => sign < 0
-    None =>
-      raise GeometryError::Undecidable(
-        "cannot decide strict circle containment",
-      )
+    None => raise Undecidable("cannot decide strict circle containment")
   }
 }
 
@@ -865,7 +836,7 @@ pub fn Circle::translate(
   self : Circle,
   offsets : Array[Expr],
 ) -> Circle raise GeometryError {
-  Circle::{ center_: self.center_.translate(offsets), radius_: self.radius_ }
+  { center_: self.center_.translate(offsets), radius_: self.radius_ }
 }
 
 ///|
@@ -877,7 +848,7 @@ pub fn Circle::scale(
 ) -> GeometryEntity raise GeometryError {
   let center = self.center_.scale([x, y], pt~)
   if geo_expr_eq(x, y) {
-    return geometry_circle(Circle::{
+    return geometry_circle({
       center_: center,
       radius_: geo_simplify(self.radius_ * x),
     })
@@ -895,7 +866,7 @@ pub fn Circle::rotate(
   angle : Expr,
   pt? : Point? = None,
 ) -> GeometryEntity raise GeometryError {
-  geometry_circle(Circle::{
+  geometry_circle({
     center_: self.center_.rotate(angle, pt~),
     radius_: self.radius_,
   })
@@ -942,15 +913,13 @@ pub fn Circle::intersection(
   other : GeometryEntity,
 ) -> Array[GeometryEntity] raise GeometryError {
   match other {
-    GeometryEntity::Point(point_obj) =>
+    Point(point_obj) =>
       if self.contains_point(point_obj) {
         [geometry_point(point_obj.with_dim(2))]
       } else {
         []
       }
-    GeometryEntity::Line(_)
-    | GeometryEntity::Ray(_)
-    | GeometryEntity::Segment(_) => {
+    Line(_) | Ray(_) | Segment(_) => {
       let as_ellipse = Ellipse::{
         center_: self.center_,
         hradius_: self.radius_,
@@ -958,15 +927,11 @@ pub fn Circle::intersection(
       }
       as_ellipse.intersection(other)
     }
-    GeometryEntity::Circle(circle_obj) =>
-      circle_circle_intersection(self, circle_obj)
-    GeometryEntity::Ellipse(_) => []
-    GeometryEntity::Polygon(poly_obj) =>
-      poly_obj.intersection(geometry_circle(self))
-    GeometryEntity::RegularPolygon(poly_obj) =>
-      poly_obj.intersection(geometry_circle(self))
-    GeometryEntity::Triangle(poly_obj) =>
-      poly_obj.intersection(geometry_circle(self))
+    Circle(circle_obj) => circle_circle_intersection(self, circle_obj)
+    Ellipse(_) => []
+    Polygon(poly_obj) => poly_obj.intersection(geometry_circle(self))
+    RegularPolygon(poly_obj) => poly_obj.intersection(geometry_circle(self))
+    Triangle(poly_obj) => poly_obj.intersection(geometry_circle(self))
     _ => []
   }
 }
@@ -985,14 +950,14 @@ pub fn Circle::is_tangent(
   other : GeometryEntity,
 ) -> Bool raise GeometryError {
   match other {
-    GeometryEntity::Line(_) =>
+    Line(_) =>
       ellipse_supporting_line_is_tangent(
         self.center_,
         self.radius_,
         self.radius_,
         other,
       )
-    GeometryEntity::Ray(_) | GeometryEntity::Segment(_) => {
+    Ray(_) | Segment(_) => {
       if !ellipse_supporting_line_is_tangent(
           self.center_,
           self.radius_,
@@ -1011,7 +976,7 @@ pub fn Circle::is_tangent(
         ),
       )
     }
-    GeometryEntity::Circle(_) => {
+    Circle(_) => {
       let hits = self.intersection(other)
       unique_intersection_points(hits).length() == 1
     }

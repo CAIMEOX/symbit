@@ -24,7 +24,7 @@ fn polygon_clean_vertices(
   vertices : Array[Point],
 ) -> Array[Point] raise GeometryError {
   if vertices.is_empty() {
-    raise GeometryError::ValueError("polygon requires at least one point")
+    raise ValueError("polygon requires at least one point")
   }
   let normalized = geo_normalize_dim(vertices)
   let out : Array[Point] = []
@@ -50,9 +50,9 @@ pub fn polygon(vertices : Array[Point]) -> GeometryEntity raise GeometryError {
       if point_are_collinear(items) {
         geometry_segment(segment(items[0], items[2]))
       } else {
-        geometry_triangle(Triangle::{ vertices_: items })
+        geometry_triangle({ vertices_: items })
       }
-    _ => geometry_polygon(Polygon::{ vertices_: items })
+    _ => geometry_polygon({ vertices_: items })
   }
 }
 
@@ -64,11 +64,9 @@ pub fn regular_polygon(
   rotation? : Expr = int(0),
 ) -> RegularPolygon raise GeometryError {
   if n < 3 {
-    raise GeometryError::ValueError(
-      "regular polygon must have at least 3 sides",
-    )
+    raise ValueError("regular polygon must have at least 3 sides")
   }
-  RegularPolygon::{
+  {
     center_: center.with_dim(2),
     radius_: geo_simplify(radius),
     n_: n,
@@ -84,11 +82,9 @@ pub fn triangle(
 ) -> Triangle raise GeometryError {
   let items = polygon_clean_vertices([a, b, c])
   if items.length() != 3 || point_are_collinear(items) {
-    raise GeometryError::ValueError(
-      "triangle requires three non-collinear points",
-    )
+    raise ValueError("triangle requires three non-collinear points")
   }
-  Triangle::{ vertices_: items }
+  { vertices_: items }
 }
 
 ///|
@@ -133,10 +129,7 @@ fn polygon_centroid_point(vertices : Array[Point]) -> Point raise GeometryError 
     let avg = centroid(vertices) catch { _ => None }
     match avg {
       Some(pt) => return pt
-      None =>
-        raise GeometryError::ValueError(
-          "cannot compute centroid of degenerate polygon",
-        )
+      None => raise ValueError("cannot compute centroid of degenerate polygon")
     }
   }
   let mut cx = int(0)
@@ -184,10 +177,7 @@ fn polygon_contains_point_impl(
     let y_between = match
       (geo_expr_sign(ay - pt.coords_[1]), geo_expr_sign(by - pt.coords_[1])) {
       (Some(sa), Some(sb)) => (sa > 0) != (sb > 0)
-      _ =>
-        raise GeometryError::Undecidable(
-          "cannot decide polygon containment crossing",
-        )
+      _ => raise Undecidable("cannot decide polygon containment crossing")
     }
     if !y_between {
       continue
@@ -199,10 +189,7 @@ fn polygon_contains_point_impl(
     match geo_expr_sign(x_cross - pt.coords_[0]) {
       Some(sign) if sign > 0 => inside = !inside
       Some(_) => ()
-      None =>
-        raise GeometryError::Undecidable(
-          "cannot decide polygon containment crossing",
-        )
+      None => raise Undecidable("cannot decide polygon containment crossing")
     }
   }
   inside
@@ -215,13 +202,13 @@ fn polygon_encloses_impl(
 ) -> Bool raise GeometryError {
   let poly = Polygon::{ vertices_: vertices }
   match other {
-    GeometryEntity::Point(point_obj) => poly.encloses_point(point_obj)
-    GeometryEntity::Segment(seg_obj) =>
+    Point(point_obj) => poly.encloses_point(point_obj)
+    Segment(seg_obj) =>
       poly.encloses_point(seg_obj.p1()) &&
       poly.encloses_point(seg_obj.p2()) &&
       polygon_intersection_impl(vertices, geometry_segment(seg_obj)).is_empty()
-    GeometryEntity::Line(_) | GeometryEntity::Ray(_) => false
-    GeometryEntity::Circle(circle_obj) =>
+    Line(_) | Ray(_) => false
+    Circle(circle_obj) =>
       poly.encloses_point(circle_obj.center()) &&
       poly.encloses_point(
         point2d(
@@ -230,7 +217,7 @@ fn polygon_encloses_impl(
         ),
       ) &&
       polygon_intersection_impl(vertices, geometry_circle(circle_obj)).is_empty()
-    GeometryEntity::Ellipse(ellipse_obj) =>
+    Ellipse(ellipse_obj) =>
       poly.encloses_point(ellipse_obj.center()) &&
       poly.encloses_point(
         point2d(
@@ -239,18 +226,18 @@ fn polygon_encloses_impl(
         ),
       ) &&
       polygon_intersection_impl(vertices, geometry_ellipse(ellipse_obj)).is_empty()
-    GeometryEntity::Polygon(poly_obj) =>
+    Polygon(poly_obj) =>
       poly_obj
       .vertices()
       .all(fn(vertex) { poly.encloses_point(vertex) catch { _ => false } }) &&
       polygon_intersection_impl(vertices, geometry_polygon(poly_obj)).is_empty()
-    GeometryEntity::RegularPolygon(poly_obj) =>
+    RegularPolygon(poly_obj) =>
       poly.encloses_point(poly_obj.center()) &&
       poly_obj
       .vertices()
       .all(fn(vertex) { poly.encloses_point(vertex) catch { _ => false } }) &&
       polygon_intersection_impl(vertices, geometry_regular_polygon(poly_obj)).is_empty()
-    GeometryEntity::Triangle(poly_obj) =>
+    Triangle(poly_obj) =>
       poly_obj
       .vertices()
       .all(fn(vertex) { poly.encloses_point(vertex) catch { _ => false } }) &&
@@ -268,11 +255,11 @@ fn polygon_intersection_impl(
   for side in polygon_sides_array(vertices) {
     for item in side.intersection(other) {
       match item {
-        GeometryEntity::Point(pt) => {
+        Point(pt) => {
           let mut seen = false
           for prev in out {
             match prev {
-              GeometryEntity::Point(old) if old == pt => seen = true
+              Point(old) if old == pt => seen = true
               _ => ()
             }
           }
@@ -286,7 +273,7 @@ fn polygon_intersection_impl(
   }
   if out.is_empty() {
     match other {
-      GeometryEntity::Point(pt) if polygon_contains_point_impl(vertices, pt) =>
+      Point(pt) if polygon_contains_point_impl(vertices, pt) =>
         [geometry_point(pt.with_dim(2))]
       _ => []
     }
@@ -315,8 +302,7 @@ fn polygon_is_convex(vertices : Array[Point]) -> Bool raise GeometryError {
         } else if sign != cur {
           return false
         }
-      None =>
-        raise GeometryError::Undecidable("cannot decide polygon convexity")
+      None => raise Undecidable("cannot decide polygon convexity")
     }
   }
   true
@@ -367,10 +353,7 @@ fn polygon_turn_is_clockwise(
 ) -> Bool raise GeometryError {
   match geo_expr_sign(hull_orientation(a, b, c)) {
     Some(sign) => sign < 0
-    None =>
-      raise GeometryError::Undecidable(
-        "cannot determine polygon turn orientation",
-      )
+    None => raise Undecidable("cannot determine polygon turn orientation")
   }
 }
 
@@ -463,8 +446,7 @@ fn polygon_bisectors_map(
   for vertex in vertices {
     let angle = match angles.get(vertex) {
       Some(value) => value
-      None =>
-        raise GeometryError::ValueError("vertex missing from polygon angle map")
+      None => raise ValueError("vertex missing from polygon angle map")
     }
     let mut idx = -1
     for i in 0..<pts.length() {
@@ -474,7 +456,7 @@ fn polygon_bisectors_map(
       }
     }
     guard idx >= 0 && idx + 1 < pts.length() else {
-      raise GeometryError::ValueError("vertex missing from polygon cycle")
+      raise ValueError("vertex missing from polygon cycle")
     }
     let base_ray = ray(pts[idx], pts[idx + 1])
     let rotated = base_ray.rotate(geo_div(angle, geo_int(2)), pt=Some(vertex))
@@ -611,7 +593,7 @@ pub fn Polygon::encloses(
 ///|
 pub fn Polygon::plot_interval(
   _self : Polygon,
-  parameter? : Expr = Expr::Symbol("t"),
+  parameter? : Expr = Symbol("t"),
 ) -> Array[Expr] {
   [parameter, int(0), int(1)]
 }
@@ -619,7 +601,7 @@ pub fn Polygon::plot_interval(
 ///|
 pub fn Polygon::arbitrary_point(
   self : Polygon,
-  parameter? : Expr = Expr::Symbol("t"),
+  parameter? : Expr = Symbol("t"),
 ) -> Point raise GeometryError {
   let perimeter = self.perimeter()
   let x_cases : Array[Expr] = []
@@ -653,9 +635,9 @@ pub fn Polygon::arbitrary_point(
     start = end_
   }
   x_cases.push(self.vertices_[0].coords_[0])
-  x_cases.push(@symcore.Expr::Boolean(true))
+  x_cases.push(Boolean(true))
   y_cases.push(self.vertices_[0].coords_[1])
-  y_cases.push(@symcore.Expr::Boolean(true))
+  y_cases.push(Boolean(true))
   point2d(
     @symcore.raw_function("Piecewise", x_cases),
     @symcore.raw_function("Piecewise", y_cases),
@@ -683,7 +665,7 @@ pub fn Polygon::parameter_value(
     }
     start = geo_simplify(start + geo_div(side.length(), perimeter))
   }
-  raise GeometryError::ValueError("point is not on polygon")
+  raise ValueError("point is not on polygon")
 }
 
 ///|
@@ -700,7 +682,7 @@ pub fn Polygon::distance(
   other : GeometryEntity,
 ) -> Expr raise GeometryError {
   match other {
-    GeometryEntity::Point(point_obj) =>
+    Point(point_obj) =>
       if self.contains_point(point_obj) {
         int(0)
       } else {
@@ -722,14 +704,14 @@ pub fn Polygon::distance(
           None => int(0)
         }
       }
-    GeometryEntity::Polygon(poly_obj) =>
+    Polygon(poly_obj) =>
       polygon_distance_to_polygon(self.vertices_, poly_obj.vertices())
-    GeometryEntity::RegularPolygon(poly_obj) =>
+    RegularPolygon(poly_obj) =>
       polygon_distance_to_polygon(self.vertices_, poly_obj.vertices())
-    GeometryEntity::Triangle(poly_obj) =>
+    Triangle(poly_obj) =>
       polygon_distance_to_polygon(self.vertices_, poly_obj.vertices())
     _ =>
-      raise GeometryError::TypeError(
+      raise TypeError(
         "polygon distance currently supports Point/Polygon-like entities",
       )
   }
@@ -752,7 +734,7 @@ pub fn Polygon::translate(
   for pt in self.vertices_ {
     vertices.push(pt.translate(offsets))
   }
-  Polygon::{ vertices_: vertices }
+  { vertices_: vertices }
 }
 
 ///|
@@ -765,7 +747,7 @@ pub fn Polygon::rotate(
   for vertex in self.vertices_ {
     vertices.push(vertex.rotate(angle, pt~))
   }
-  Polygon::{ vertices_: vertices }
+  { vertices_: vertices }
 }
 
 ///|
@@ -778,7 +760,7 @@ pub fn Polygon::scale(
   for vertex in self.vertices_ {
     vertices.push(vertex.scale(factors, pt~))
   }
-  Polygon::{ vertices_: vertices }
+  { vertices_: vertices }
 }
 
 ///|
@@ -789,8 +771,7 @@ fn regular_polygon_vertices_of(
   for i in 0..<poly.n_ {
     let angle = geo_simplify(
       poly.rotation_ +
-      geo_div(geo_int(2 * i), geo_int(poly.n_)) *
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+      geo_div(geo_int(2 * i), geo_int(poly.n_)) * NumberSymbol(Pi),
     )
     out.push(
       point2d(
@@ -810,7 +791,7 @@ fn regular_polygon_vertices_of(
 fn regular_polygon_as_polygon(
   poly : RegularPolygon,
 ) -> Polygon raise GeometryError {
-  Polygon::{ vertices_: regular_polygon_vertices_of(poly) }
+  { vertices_: regular_polygon_vertices_of(poly) }
 }
 
 ///|
@@ -864,10 +845,7 @@ pub fn RegularPolygon::area(self : RegularPolygon) -> Expr {
     geo_int(self.n_) *
     self.radius_ *
     self.radius_ *
-    @symelem.sin(
-      geo_div(geo_int(2), geo_int(self.n_)) *
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-    ),
+    @symelem.sin(geo_div(geo_int(2), geo_int(self.n_)) * NumberSymbol(Pi)),
     geo_int(2),
   )
 }
@@ -877,12 +855,7 @@ pub fn RegularPolygon::length(self : RegularPolygon) -> Expr {
   geo_simplify(
     geo_int(2) *
     self.radius_ *
-    @symelem.sin(
-      geo_div(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        geo_int(self.n_),
-      ),
-    ),
+    @symelem.sin(geo_div(NumberSymbol(Pi), geo_int(self.n_))),
   )
 }
 
@@ -894,13 +867,7 @@ pub fn RegularPolygon::perimeter(self : RegularPolygon) -> Expr {
 ///|
 pub fn RegularPolygon::apothem(self : RegularPolygon) -> Expr {
   geo_simplify(
-    self.radius_ *
-    @symelem.cos(
-      geo_div(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        geo_int(self.n_),
-      ),
-    ),
+    self.radius_ * @symelem.cos(geo_div(NumberSymbol(Pi), geo_int(self.n_))),
   )
 }
 
@@ -931,12 +898,12 @@ pub fn RegularPolygon::circumcenter(self : RegularPolygon) -> Point {
 
 ///|
 pub fn RegularPolygon::circumcircle(self : RegularPolygon) -> Circle {
-  Circle::{ center_: self.center_, radius_: self.radius_ }
+  { center_: self.center_, radius_: self.radius_ }
 }
 
 ///|
 pub fn RegularPolygon::incircle(self : RegularPolygon) -> Circle {
-  Circle::{ center_: self.center_, radius_: self.apothem() }
+  { center_: self.center_, radius_: self.apothem() }
 }
 
 ///|
@@ -966,10 +933,7 @@ pub fn RegularPolygon::encloses_point(
         Some(inner) =>
           inner < 0 &&
           regular_polygon_as_polygon(self).encloses_point(point_obj)
-        None =>
-          raise GeometryError::Undecidable(
-            "cannot decide regular polygon containment",
-          )
+        None => raise Undecidable("cannot decide regular polygon containment")
       }
     Some(_) => false
     None => regular_polygon_as_polygon(self).encloses_point(point_obj)
@@ -989,7 +953,7 @@ pub fn RegularPolygon::spin(
   self : RegularPolygon,
   angle : Expr,
 ) -> RegularPolygon {
-  RegularPolygon::{
+  {
     center_: self.center_,
     radius_: self.radius_,
     n_: self.n_,
@@ -1003,7 +967,7 @@ pub fn RegularPolygon::rotate(
   angle : Expr,
   pt? : Point? = None,
 ) -> RegularPolygon raise GeometryError {
-  RegularPolygon::{
+  {
     center_: self.center_.rotate(angle, pt~),
     radius_: self.radius_,
     n_: self.n_,
@@ -1016,7 +980,7 @@ pub fn RegularPolygon::translate(
   self : RegularPolygon,
   offsets : Array[Expr],
 ) -> RegularPolygon raise GeometryError {
-  RegularPolygon::{
+  {
     center_: self.center_.translate(offsets),
     radius_: self.radius_,
     n_: self.n_,
@@ -1032,7 +996,7 @@ pub fn RegularPolygon::scale(
   pt? : Point? = None,
 ) -> GeometryEntity raise GeometryError {
   if geo_expr_eq(x, y) {
-    return geometry_regular_polygon(RegularPolygon::{
+    return geometry_regular_polygon({
       center_: self.center_.scale([x, y], pt~),
       radius_: geo_simplify(self.radius_ * x),
       n_: self.n_,
@@ -1077,7 +1041,7 @@ pub fn Triangle::ambient_dimension(_self : Triangle) -> Int {
 
 ///|
 fn triangle_as_polygon_of(poly : Triangle) -> Polygon {
-  Polygon::{ vertices_: poly.vertices_ }
+  { vertices_: poly.vertices_ }
 }
 
 ///|
@@ -1140,7 +1104,7 @@ pub fn Triangle::translate(
   for vertex in self.vertices_ {
     vertices.push(vertex.translate(offsets))
   }
-  Triangle::{ vertices_: vertices }
+  { vertices_: vertices }
 }
 
 ///|
@@ -1153,7 +1117,7 @@ pub fn Triangle::rotate(
   for vertex in self.vertices_ {
     vertices.push(vertex.rotate(angle, pt~))
   }
-  Triangle::{ vertices_: vertices }
+  { vertices_: vertices }
 }
 
 ///|
@@ -1166,7 +1130,7 @@ pub fn Triangle::scale(
   for vertex in self.vertices_ {
     vertices.push(vertex.scale(factors, pt~))
   }
-  Triangle::{ vertices_: vertices }
+  { vertices_: vertices }
 }
 
 ///|
@@ -1184,10 +1148,7 @@ fn triangle_angles_of(poly : Triangle) -> Array[Expr] raise GeometryError {
   for vertex in poly.vertices_ {
     match angle_map.get(vertex) {
       Some(value) => out.push(value)
-      None =>
-        raise GeometryError::ValueError(
-          "vertex missing from triangle angle map",
-        )
+      None => raise ValueError("vertex missing from triangle angle map")
     }
   }
   out
@@ -1232,7 +1193,7 @@ pub fn Triangle::is_similar(
   other : GeometryEntity,
 ) -> Bool raise GeometryError {
   let rhs = match other {
-    GeometryEntity::Triangle(value) => value
+    Triangle(value) => value
     _ => return false
   }
   let lhs = triangle_angles_of(self)
@@ -1257,11 +1218,8 @@ pub fn Triangle::circumcenter(self : Triangle) -> Point raise GeometryError {
   let a = segment_perpendicular_bisector(sides[0])
   let b = segment_perpendicular_bisector(sides[1])
   match a.intersection(geometry_line(b)) {
-    [GeometryEntity::Point(pt), ..] => pt
-    _ =>
-      raise GeometryError::ValueError(
-        "triangle circumcenter could not be determined",
-      )
+    [Point(pt), ..] => pt
+    _ => raise ValueError("triangle circumcenter could not be determined")
   }
 }
 
@@ -1272,7 +1230,7 @@ pub fn Triangle::circumradius(self : Triangle) -> Expr raise GeometryError {
 
 ///|
 pub fn Triangle::circumcircle(self : Triangle) -> Circle raise GeometryError {
-  Circle::{ center_: self.circumcenter(), radius_: self.circumradius() }
+  { center_: self.circumcenter(), radius_: self.circumradius() }
 }
 
 ///|
@@ -1302,7 +1260,7 @@ pub fn Triangle::inradius(self : Triangle) -> Expr raise GeometryError {
 
 ///|
 pub fn Triangle::incircle(self : Triangle) -> Circle raise GeometryError {
-  Circle::{ center_: self.incenter(), radius_: self.inradius() }
+  { center_: self.incenter(), radius_: self.inradius() }
 }
 
 ///|
@@ -1325,11 +1283,8 @@ pub fn Triangle::orthocenter(self : Triangle) -> Point raise GeometryError {
   let a = line_from_segment(altitudes[vertices[0]])
   let b = line_from_segment(altitudes[vertices[1]])
   match a.intersection(geometry_line(b)) {
-    [GeometryEntity::Point(pt), ..] => pt
-    _ =>
-      raise GeometryError::ValueError(
-        "triangle orthocenter could not be determined",
-      )
+    [Point(pt), ..] => pt
+    _ => raise ValueError("triangle orthocenter could not be determined")
   }
 }
 
@@ -1345,21 +1300,21 @@ pub fn Triangle::bisectors(
     line(vertices[0], center).intersection(
       geometry_line(line_from_segment(sides[1])),
     ) {
-    [GeometryEntity::Point(pt), ..] => pt
+    [Point(pt), ..] => pt
     _ => center
   }
   let hit1 = match
     line(vertices[1], center).intersection(
       geometry_line(line_from_segment(sides[2])),
     ) {
-    [GeometryEntity::Point(pt), ..] => pt
+    [Point(pt), ..] => pt
     _ => center
   }
   let hit2 = match
     line(vertices[2], center).intersection(
       geometry_line(line_from_segment(sides[0])),
     ) {
-    [GeometryEntity::Point(pt), ..] => pt
+    [Point(pt), ..] => pt
     _ => center
   }
   out.set(vertices[0], segment(vertices[0], hit0))

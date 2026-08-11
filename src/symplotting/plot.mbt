@@ -13,20 +13,20 @@ fn plot_free_symbols(exprs : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
 
 ///|
 fn plot_default_range(symbol : @symcore.Expr) -> @symcore.Expr {
-  @symcore.Expr::Tuple([symbol, @symcore.int(-10), @symcore.int(10)])
+  Tuple([symbol, @symcore.int(-10), @symcore.int(10)])
 }
 
 ///|
 fn plot_default_symbol() -> @symcore.Expr {
-  @symcore.Expr::Symbol("x")
+  Symbol("x")
 }
 
 ///|
 fn plot_secondary_default_symbol(primary : @symcore.Expr) -> @symcore.Expr {
   match primary {
-    @symcore.Expr::Symbol("x") => @symcore.Expr::Symbol("y")
-    @symcore.Expr::Symbol("y") => @symcore.Expr::Symbol("x")
-    _ => @symcore.Expr::Symbol("y")
+    Symbol("x") => Symbol("y")
+    Symbol("y") => Symbol("x")
+    _ => Symbol("y")
   }
 }
 
@@ -35,9 +35,9 @@ fn plot_range_symbol(
   range : @symcore.Expr,
 ) -> @symcore.Expr raise PlottingError {
   match range {
-    @symcore.Expr::Tuple([symbol, _, _]) if is_plot_range(range) => symbol
+    Tuple([symbol, _, _]) if is_plot_range(range) => symbol
     _ =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A plotting range must be a tuple of the form (symbol, start, end)",
       )
   }
@@ -51,7 +51,7 @@ fn plot_create_ranges(
 ) -> Array[@symcore.Expr] raise PlottingError {
   let free_symbols = plot_free_symbols(exprs)
   if free_symbols.length() > npar {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "Too many free symbols.\nExpected " +
       npar.to_string() +
       " free symbols.\nReceived " +
@@ -62,7 +62,7 @@ fn plot_create_ranges(
     )
   }
   if ranges.length() > npar {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "Too many ranges. Received " +
       ranges.length().to_string() +
       ", expected " +
@@ -73,13 +73,13 @@ fn plot_create_ranges(
   let out : Array[@symcore.Expr] = []
   for range in ranges {
     if !is_plot_range(range) {
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A plotting range must be a tuple of the form (symbol, start, end)",
       )
     }
     let symbol = plot_range_symbol(range)
     if out.any(existing => plot_range_symbol(existing) == symbol) {
-      raise PlottingError::ValueError("Multiple ranges with the same symbol")
+      raise ValueError("Multiple ranges with the same symbol")
     }
     out.push(range)
   }
@@ -97,7 +97,7 @@ fn plot_create_ranges(
     let range_symbols = out.map(range => plot_range_symbol(range))
     let missing = free_symbols.filter(symbol => !range_symbols.contains(symbol))
     if !missing.is_empty() {
-      raise PlottingError::ValueError(
+      raise ValueError(
         "Incompatible free symbols of the expressions with the ranges.\n" +
         "Free symbols in the expressions: {" +
         free_symbols.map(@symprint.pretty_string).join(", ") +
@@ -130,11 +130,11 @@ fn plot_unpack(
 
   for arg in args {
     match arg {
-      PlotInput::Expr(expr) => exprs.push(expr)
-      PlotInput::Range(range) => ranges.push(range)
-      PlotInput::Label(value) => label = Some(value)
-      PlotInput::RenderingKw(value) => rendering_kw = Some(value)
-      PlotInput::Group(items) => groups.push(items)
+      Expr(expr) => exprs.push(expr)
+      Range(range) => ranges.push(range)
+      Label(value) => label = Some(value)
+      RenderingKw(value) => rendering_kw = Some(value)
+      Group(items) => groups.push(items)
     }
   }
 
@@ -159,11 +159,11 @@ fn plot_parametric_unpack(
 
   for arg in args {
     match arg {
-      ParametricPlotInput::Exprs(expr_x, expr_y) => exprs.push((expr_x, expr_y))
-      ParametricPlotInput::Range(range) => ranges.push(range)
-      ParametricPlotInput::Label(value) => label = Some(value)
-      ParametricPlotInput::RenderingKw(value) => rendering_kw = Some(value)
-      ParametricPlotInput::Group(items) => groups.push(items)
+      Exprs(expr_x, expr_y) => exprs.push((expr_x, expr_y))
+      Range(range) => ranges.push(range)
+      Label(value) => label = Some(value)
+      RenderingKw(value) => rendering_kw = Some(value)
+      Group(items) => groups.push(items)
     }
   }
 
@@ -188,12 +188,11 @@ fn plot_parametric3d_unpack(
 
   for arg in args {
     match arg {
-      Parametric3DPlotInput::Exprs(expr_x, expr_y, expr_z) =>
-        exprs.push((expr_x, expr_y, expr_z))
-      Parametric3DPlotInput::Range(range) => ranges.push(range)
-      Parametric3DPlotInput::Label(value) => label = Some(value)
-      Parametric3DPlotInput::RenderingKw(value) => rendering_kw = Some(value)
-      Parametric3DPlotInput::Group(items) => groups.push(items)
+      Exprs(expr_x, expr_y, expr_z) => exprs.push((expr_x, expr_y, expr_z))
+      Range(range) => ranges.push(range)
+      Label(value) => label = Some(value)
+      RenderingKw(value) => rendering_kw = Some(value)
+      Group(items) => groups.push(items)
     }
   }
 
@@ -221,9 +220,7 @@ fn plot_build_line_specs(
       group,
     )
     if !nested.is_empty() {
-      raise PlottingError::ValueError(
-        "Nested grouped plotting arguments are not supported",
-      )
+      raise ValueError("Nested grouped plotting arguments are not supported")
     }
     let resolved_ranges = plot_create_ranges(group_exprs, group_ranges, 1)
     for expr in group_exprs {
@@ -259,12 +256,10 @@ fn plot_build_surface_specs(
       group,
     )
     if !nested.is_empty() {
-      raise PlottingError::ValueError(
-        "Nested grouped plotting arguments are not supported",
-      )
+      raise ValueError("Nested grouped plotting arguments are not supported")
     }
     if group_exprs.length() != 1 {
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A grouped surface specification must contain exactly one expression",
       )
     }
@@ -311,7 +306,7 @@ fn plot_build_parametric3d_specs(
   )
 
   if ranges.length() > 1 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "Too many ranges. Received " +
       ranges.length().to_string() +
       ", expected 1",
@@ -335,12 +330,10 @@ fn plot_build_parametric3d_specs(
       group,
     )
     if !nested.is_empty() {
-      raise PlottingError::ValueError(
-        "Nested grouped plotting arguments are not supported",
-      )
+      raise ValueError("Nested grouped plotting arguments are not supported")
     }
     if group_exprs.length() != 1 {
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A grouped 3D parametric specification must contain exactly one expression triplet",
       )
     }
@@ -395,7 +388,7 @@ fn plot_build_parametric_surface_specs(
   )
 
   if ranges.length() > 2 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "Too many ranges. Received " +
       ranges.length().to_string() +
       ", expected 2",
@@ -427,12 +420,10 @@ fn plot_build_parametric_surface_specs(
       group,
     )
     if !nested.is_empty() {
-      raise PlottingError::ValueError(
-        "Nested grouped plotting arguments are not supported",
-      )
+      raise ValueError("Nested grouped plotting arguments are not supported")
     }
     if group_exprs.length() != 1 {
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A grouped parametric surface specification must contain exactly one expression triplet",
       )
     }
@@ -472,7 +463,7 @@ fn plot_build_parametric_specs(
   )
 
   if ranges.length() > 1 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "Too many ranges. Received " +
       ranges.length().to_string() +
       ", expected 1",
@@ -490,12 +481,10 @@ fn plot_build_parametric_specs(
       group,
     )
     if !nested.is_empty() {
-      raise PlottingError::ValueError(
-        "Nested grouped plotting arguments are not supported",
-      )
+      raise ValueError("Nested grouped plotting arguments are not supported")
     }
     if group_exprs.length() != 1 {
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A grouped parametric specification must contain exactly one expression pair",
       )
     }
@@ -531,9 +520,7 @@ pub fn plot_factory(
   margin? : Int = 0,
 ) -> Plot raise PlottingError {
   if backend != "default" && backend != "text" && backend != "matplotlib" {
-    raise PlottingError::TypeError(
-      "backend must be either 'default', 'text' or 'matplotlib'",
-    )
+    raise TypeError("backend must be either 'default', 'text' or 'matplotlib'")
   }
   let resolved_backend = if backend == "default" {
     "matplotlib"
@@ -590,7 +577,7 @@ pub fn plot(
   for spec in specs {
     let (expr, range, label, rendering_kw) = spec
     series.push(
-      PlotSeries::Line(
+      Line(
         line_over_1d_range_series(
           expr,
           range,
@@ -676,7 +663,7 @@ pub fn plot_parametric(
   margin? : Int = 0,
 ) -> Plot raise PlottingError {
   if backend == "text" {
-    raise PlottingError::TypeError(
+    raise TypeError(
       "plot_parametric only supports the default or matplotlib backend",
     )
   }
@@ -685,7 +672,7 @@ pub fn plot_parametric(
   for spec in specs {
     let (expr_x, expr_y, range, label, rendering_kw) = spec
     series.push(
-      PlotSeries::Parametric2D(
+      Parametric2D(
         parametric_2d_line_series(
           expr_x,
           expr_y,
@@ -761,7 +748,7 @@ pub fn plot3d_parametric_line(
   margin? : Int = 0,
 ) -> Plot raise PlottingError {
   if backend == "text" {
-    raise PlottingError::TypeError(
+    raise TypeError(
       "plot3d_parametric_line only supports the default or matplotlib backend",
     )
   }
@@ -770,7 +757,7 @@ pub fn plot3d_parametric_line(
   for spec in specs {
     let (expr_x, expr_y, expr_z, range, label, rendering_kw) = spec
     series.push(
-      PlotSeries::Parametric3D(
+      Parametric3D(
         parametric_3d_line_series(
           expr_x,
           expr_y,
@@ -850,9 +837,7 @@ pub fn plot3d(
   margin? : Int = 0,
 ) -> Plot raise PlottingError {
   if backend == "text" {
-    raise PlottingError::TypeError(
-      "plot3d only supports the default or matplotlib backend",
-    )
+    raise TypeError("plot3d only supports the default or matplotlib backend")
   }
   let resolved_n1 = match n1 {
     Some(value) => value
@@ -867,7 +852,7 @@ pub fn plot3d(
   for spec in specs {
     let (expr, range_x, range_y, label, rendering_kw) = spec
     series.push(
-      PlotSeries::Surface(
+      Surface(
         surface_over_2d_range_series(
           expr,
           range_x,
@@ -971,7 +956,7 @@ pub fn plot_contour(
   margin? : Int = 0,
 ) -> Plot raise PlottingError {
   if backend == "text" {
-    raise PlottingError::TypeError(
+    raise TypeError(
       "plot_contour only supports the default or matplotlib backend",
     )
   }
@@ -988,7 +973,7 @@ pub fn plot_contour(
   for spec in specs {
     let (expr, range_x, range_y, label, rendering_kw) = spec
     series.push(
-      PlotSeries::Contour(
+      Contour(
         contour_series(
           expr,
           range_x,
@@ -1092,7 +1077,7 @@ pub fn plot3d_parametric_surface(
   margin? : Int = 0,
 ) -> Plot raise PlottingError {
   if backend == "text" {
-    raise PlottingError::TypeError(
+    raise TypeError(
       "plot3d_parametric_surface only supports the default or matplotlib backend",
     )
   }
@@ -1109,7 +1094,7 @@ pub fn plot3d_parametric_surface(
   for spec in specs {
     let (expr_x, expr_y, expr_z, range_u, range_v, label, rendering_kw) = spec
     series.push(
-      PlotSeries::ParametricSurface(
+      ParametricSurface(
         parametric_surface_series(
           expr_x,
           expr_y,
@@ -1170,10 +1155,9 @@ fn plot_implicit_range_tuple(
     return value
   }
   match value {
-    @symcore.Expr::Symbol(_) | @symcore.Expr::Dummy(_, _) =>
-      @symcore.Expr::Tuple([value, @symcore.int(-5), @symcore.int(5)])
+    Symbol(_) | Dummy(_, _) => Tuple([value, @symcore.int(-5), @symcore.int(5)])
     _ =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "symbol or `(symbol, min, max)` expected but got " +
         @symprint.pretty_string(value),
       )
@@ -1211,7 +1195,7 @@ pub fn plot_implicit(
   margin? : Int = 0,
 ) -> Plot raise PlottingError {
   if backend == "text" {
-    raise PlottingError::TypeError(
+    raise TypeError(
       "plot_implicit only supports the default or matplotlib backend",
     )
   }
@@ -1237,7 +1221,7 @@ pub fn plot_implicit(
     .filter(symbol => range_symbols.contains(symbol))
     .length()
   if overlap_count > 2 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "Implicit plotting is not implemented for more than 2 variables",
     )
   }

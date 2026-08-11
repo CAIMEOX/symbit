@@ -9,15 +9,15 @@ pub fn explicit_matrix_from_rows(
   rows : Array[Array[Expr]],
 ) -> ExplicitMatrix raise PhysicsError {
   if rows.is_empty() {
-    return ExplicitMatrix::{ rows, }
+    return { rows, }
   }
   let width = rows[0].length()
   for row in rows {
     if row.length() != width {
-      raise PhysicsError::ShapeError("matrix rows must have equal length")
+      raise ShapeError("matrix rows must have equal length")
     }
   }
-  ExplicitMatrix::{ rows, }
+  { rows, }
 }
 
 ///|
@@ -30,7 +30,7 @@ pub fn explicit_matrix_from_ints(rows : Array[Array[Int]]) -> ExplicitMatrix {
     }
     out.push(next)
   }
-  ExplicitMatrix::{ rows: out }
+  { rows: out }
 }
 
 ///|
@@ -39,7 +39,7 @@ pub fn explicit_matrix_column(exprs : Array[Expr]) -> ExplicitMatrix {
   for expr in exprs {
     rows.push([expr])
   }
-  ExplicitMatrix::{ rows, }
+  { rows, }
 }
 
 ///|
@@ -50,7 +50,7 @@ pub fn explicit_matrix_eye(n : Int) -> ExplicitMatrix {
     row[i] = int(1)
     rows.push(row)
   }
-  ExplicitMatrix::{ rows, }
+  { rows, }
 }
 
 ///|
@@ -59,7 +59,7 @@ pub fn explicit_matrix_zeros(rows : Int, cols : Int) -> ExplicitMatrix {
   for _ in 0..<rows {
     out.push(Array::make(cols, int(0)))
   }
-  ExplicitMatrix::{ rows: out }
+  { rows: out }
 }
 
 ///|
@@ -68,13 +68,13 @@ pub fn explicit_matrix_horizontal_concat(
   rhs : ExplicitMatrix,
 ) -> ExplicitMatrix raise PhysicsError {
   if lhs.height() != rhs.height() {
-    raise PhysicsError::ShapeError("matrix row join requires equal heights")
+    raise ShapeError("matrix row join requires equal heights")
   }
   let rows : Array[Array[Expr]] = Array::new()
   for i in 0..<lhs.height() {
     rows.push(lhs.rows[i].copy() + rhs.rows[i].copy())
   }
-  ExplicitMatrix::{ rows, }
+  { rows, }
 }
 
 ///|
@@ -83,9 +83,9 @@ pub fn explicit_matrix_vertical_concat(
   bottom : ExplicitMatrix,
 ) -> ExplicitMatrix raise PhysicsError {
   if top.width() != bottom.width() {
-    raise PhysicsError::ShapeError("matrix column join requires equal widths")
+    raise ShapeError("matrix column join requires equal widths")
   }
-  ExplicitMatrix::{ rows: top.rows_copy() + bottom.rows_copy() }
+  { rows: top.rows_copy() + bottom.rows_copy() }
 }
 
 ///|
@@ -118,7 +118,7 @@ pub fn ExplicitMatrix::get(
   col : Int,
 ) -> Expr raise PhysicsError {
   if row < 0 || row >= self.height() || col < 0 || col >= self.width() {
-    raise PhysicsError::IndexError("matrix index out of range")
+    raise IndexError("matrix index out of range")
   }
   self.rows[row][col]
 }
@@ -136,7 +136,7 @@ pub fn ExplicitMatrix::scale(
     }
     out.push(next)
   }
-  ExplicitMatrix::{ rows: out }
+  { rows: out }
 }
 
 ///|
@@ -157,7 +157,7 @@ pub fn ExplicitMatrix::map(
     }
     out.push(next)
   }
-  ExplicitMatrix::{ rows: out }
+  { rows: out }
 }
 
 ///|
@@ -177,7 +177,7 @@ pub fn ExplicitMatrix::add(
   other : ExplicitMatrix,
 ) -> ExplicitMatrix raise PhysicsError {
   if self.height() != other.height() || self.width() != other.width() {
-    raise PhysicsError::ShapeError("matrix shapes differ")
+    raise ShapeError("matrix shapes differ")
   }
   let out : Array[Array[Expr]] = Array::new()
   for i in 0..<self.height() {
@@ -187,7 +187,7 @@ pub fn ExplicitMatrix::add(
     }
     out.push(row)
   }
-  ExplicitMatrix::{ rows: out }
+  { rows: out }
 }
 
 ///|
@@ -204,7 +204,7 @@ pub fn ExplicitMatrix::mul(
   other : ExplicitMatrix,
 ) -> ExplicitMatrix raise PhysicsError {
   if self.width() != other.height() {
-    raise PhysicsError::ShapeError("matrix product shape mismatch")
+    raise ShapeError("matrix product shape mismatch")
   }
   let out : Array[Array[Expr]] = Array::new()
   for i in 0..<self.height() {
@@ -218,7 +218,7 @@ pub fn ExplicitMatrix::mul(
     }
     out.push(row)
   }
-  ExplicitMatrix::{ rows: out }
+  { rows: out }
 }
 
 ///|

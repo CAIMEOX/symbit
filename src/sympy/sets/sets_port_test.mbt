@@ -30,7 +30,7 @@ fn sympy_contains_str(set : Set, elem : @symcore.Expr) -> String raise {
 
 ///|
 fn setbool_str(val : SetBool) -> String {
-  val.to_string()
+  Show::to_string(val)
 }
 
 ///|

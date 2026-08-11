@@ -127,16 +127,42 @@ pub struct AxisOrienter {
 }
 pub fn AxisOrienter::angle(Self) -> @symcore.Expr
 pub fn AxisOrienter::axis(Self) -> Vector
+#deprecated
+pub fn AxisOrienter::output(Self, &Logger) -> Unit
 pub fn AxisOrienter::rotation_matrix(Self, CoordSys3D) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+#deprecated
+pub fn AxisOrienter::to_string(Self) -> String
 pub impl Show for AxisOrienter
 
 pub struct BaseDyadic {
   left_ : BaseVector
   right_ : BaseVector
 }
+#deprecated
+pub fn BaseDyadic::compare(Self, Self) -> Int
+#deprecated
+pub fn BaseDyadic::equal(Self, Self) -> Bool
+#deprecated
+pub fn BaseDyadic::hash(Self) -> Int
+#deprecated
+pub fn BaseDyadic::hash_combine(Self, Hasher) -> Unit
 pub fn BaseDyadic::left(Self) -> BaseVector
+#deprecated
+pub fn BaseDyadic::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn BaseDyadic::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn BaseDyadic::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn BaseDyadic::op_le(Self, Self) -> Bool
+#deprecated
+pub fn BaseDyadic::op_lt(Self, Self) -> Bool
+#deprecated
+pub fn BaseDyadic::output(Self, &Logger) -> Unit
 pub fn BaseDyadic::right(Self) -> BaseVector
 pub fn BaseDyadic::to_dyadic(Self) -> Dyadic
+#deprecated
+pub fn BaseDyadic::to_string(Self) -> String
 pub impl Compare for BaseDyadic
 pub impl Eq for BaseDyadic
 pub impl Hash for BaseDyadic
@@ -148,9 +174,31 @@ pub struct BaseScalar {
   name_ : String
   expr_ : @symcore.Expr
 }
+#deprecated
+pub fn BaseScalar::compare(Self, Self) -> Int
+#deprecated
+pub fn BaseScalar::equal(Self, Self) -> Bool
 pub fn BaseScalar::expr(Self) -> @symcore.Expr
+#deprecated
+pub fn BaseScalar::hash(Self) -> Int
+#deprecated
+pub fn BaseScalar::hash_combine(Self, Hasher) -> Unit
 pub fn BaseScalar::kind(Self) -> String
+#deprecated
+pub fn BaseScalar::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn BaseScalar::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn BaseScalar::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn BaseScalar::op_le(Self, Self) -> Bool
+#deprecated
+pub fn BaseScalar::op_lt(Self, Self) -> Bool
+#deprecated
+pub fn BaseScalar::output(Self, &Logger) -> Unit
 pub fn BaseScalar::system(Self) -> CoordSys3D
+#deprecated
+pub fn BaseScalar::to_string(Self) -> String
 pub impl Compare for BaseScalar
 pub impl Eq for BaseScalar
 pub impl Hash for BaseScalar
@@ -160,10 +208,32 @@ pub struct BaseVector {
   axis_ : Int
   system_ : CoordSys3D
 }
+#deprecated
+pub fn BaseVector::compare(Self, Self) -> Int
+#deprecated
+pub fn BaseVector::equal(Self, Self) -> Bool
+#deprecated
+pub fn BaseVector::hash(Self) -> Int
+#deprecated
+pub fn BaseVector::hash_combine(Self, Hasher) -> Unit
 pub fn BaseVector::kind(Self) -> VectorKind
+#deprecated
+pub fn BaseVector::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn BaseVector::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn BaseVector::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn BaseVector::op_le(Self, Self) -> Bool
+#deprecated
+pub fn BaseVector::op_lt(Self, Self) -> Bool
 pub fn BaseVector::outer(Self, Self) -> Dyadic raise @vector.VectorError
+#deprecated
+pub fn BaseVector::output(Self, &Logger) -> Unit
 pub fn BaseVector::scale(Self, @symcore.Expr) -> Vector
 pub fn BaseVector::system(Self) -> CoordSys3D
+#deprecated
+pub fn BaseVector::to_string(Self) -> String
 pub fn BaseVector::to_vector(Self) -> Vector
 pub impl Compare for BaseVector
 pub impl Eq for BaseVector
@@ -177,7 +247,11 @@ pub struct BodyOrienter {
   rotation_order_ : String
   parent_orient_ : @symphysics.ExplicitMatrix
 }
+#deprecated
+pub fn BodyOrienter::output(Self, &Logger) -> Unit
 pub fn BodyOrienter::rotation_matrix(Self) -> @symphysics.ExplicitMatrix
+#deprecated
+pub fn BodyOrienter::to_string(Self) -> String
 pub impl Show for BodyOrienter
 
 pub struct CoordSys3D {
@@ -202,25 +276,47 @@ pub struct CoordSys3D {
 pub fn CoordSys3D::base_scalars(Self) -> Array[BaseScalar]
 pub fn CoordSys3D::base_vectors(Self) -> Array[BaseVector]
 pub fn CoordSys3D::change_of_basis_matrix_from(Self, Self) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+#deprecated
+pub fn CoordSys3D::compare(Self, Self) -> Int
 pub fn CoordSys3D::create_new(Self, String, String, variable_names? : Array[String]?, vector_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::create_new_with_transform(Self, String, CoordTransform, variable_names? : Array[String]?, vector_names? : Array[String]?) -> Self raise @vector.VectorError
+#deprecated
+pub fn CoordSys3D::equal(Self, Self) -> Bool
+#deprecated
+pub fn CoordSys3D::hash(Self) -> Int
+#deprecated
+pub fn CoordSys3D::hash_combine(Self, Hasher) -> Unit
 pub fn CoordSys3D::i(Self) -> BaseVector
 pub fn CoordSys3D::j(Self) -> BaseVector
 pub fn CoordSys3D::k(Self) -> BaseVector
 pub fn CoordSys3D::lame_coefficients(Self) -> Array[@symcore.Expr]
 pub fn CoordSys3D::locate_new(Self, String, Vector, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::name(Self) -> String
+#deprecated
+pub fn CoordSys3D::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn CoordSys3D::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn CoordSys3D::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn CoordSys3D::op_le(Self, Self) -> Bool
+#deprecated
+pub fn CoordSys3D::op_lt(Self, Self) -> Bool
 pub fn CoordSys3D::orient_new(Self, String, Array[Orienter], location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::orient_new_axis(Self, String, @symcore.Expr, Vector, location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::orient_new_body(Self, String, @symcore.Expr, @symcore.Expr, @symcore.Expr, String, location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::orient_new_quaternion(Self, String, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::orient_new_space(Self, String, @symcore.Expr, @symcore.Expr, @symcore.Expr, String, location? : Vector?, vector_names? : Array[String]?, variable_names? : Array[String]?) -> Self raise @vector.VectorError
 pub fn CoordSys3D::origin(Self) -> Point
+#deprecated
+pub fn CoordSys3D::output(Self, &Logger) -> Unit
 pub fn CoordSys3D::parent(Self) -> Self?
 pub fn CoordSys3D::position_wrt(Self, PointReference) -> Vector raise @vector.VectorError
 pub fn CoordSys3D::rotation_matrix(Self, Self) -> @symphysics.ExplicitMatrix raise @vector.VectorError
 pub fn CoordSys3D::scalar(Self, Int) -> BaseScalar
 pub fn CoordSys3D::scalar_map(Self, Self) -> Map[BaseScalar, @symcore.Expr] raise @vector.VectorError
+#deprecated
+pub fn CoordSys3D::to_string(Self) -> String
 pub fn CoordSys3D::transformation_from_parent(Self) -> Array[@symcore.Expr] raise @vector.VectorError
 pub fn CoordSys3D::transformation_from_parent_function(Self) -> TransformFunction raise @vector.VectorError
 pub fn CoordSys3D::transformation_to_parent(Self) -> Array[@symcore.Expr]
@@ -240,6 +336,14 @@ pub enum CoordTransform {
   LambdaTransform(TransformFunction)
   TupleTransform(@symphysics.ExplicitMatrix, Vector)
 } derive(Eq)
+#deprecated
+pub fn CoordTransform::equal(Self, Self) -> Bool
+#deprecated
+pub fn CoordTransform::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn CoordTransform::output(Self, &Logger) -> Unit
+#deprecated
+pub fn CoordTransform::to_string(Self) -> String
 pub impl Show for CoordTransform
 
 pub struct Cross {
@@ -248,6 +352,14 @@ pub struct Cross {
   sign_ : Int
 }
 pub fn Cross::doit(Self) -> Vector raise @vector.VectorError
+#deprecated
+pub fn Cross::equal(Self, Self) -> Bool
+#deprecated
+pub fn Cross::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Cross::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Cross::to_string(Self) -> String
 pub impl Eq for Cross
 pub impl Show for Cross
 
@@ -255,20 +367,34 @@ pub struct Curl {
   field_ : Vector
 }
 pub fn Curl::doit(Self) -> Vector raise @vector.VectorError
+#deprecated
+pub fn Curl::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Curl::to_string(Self) -> String
 pub impl Show for Curl
 
 pub struct Del {
-}
+} derive(Default)
 pub fn Del::call(Self, @symcore.Expr, doit? : Bool) -> Vector
 pub fn Del::cross(Self, Vector, doit? : Bool) -> Vector raise @vector.VectorError
+#deprecated
+pub fn Del::default() -> Self
 pub fn Del::dot(Self, Vector, doit? : Bool) -> @symcore.Expr raise @vector.VectorError
 pub fn Del::gradient(Self, @symcore.Expr, doit? : Bool) -> Vector
+#deprecated
+pub fn Del::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Del::to_string(Self) -> String
 pub impl Show for Del
 
 pub struct Divergence {
   field_ : Vector
 }
 pub fn Divergence::doit(Self) -> @symcore.Expr raise @vector.VectorError
+#deprecated
+pub fn Divergence::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Divergence::to_string(Self) -> String
 pub impl Show for Divergence
 
 pub struct Dot {
@@ -276,25 +402,45 @@ pub struct Dot {
   rhs_ : Vector
 }
 pub fn Dot::doit(Self) -> @symcore.Expr raise @vector.VectorError
+#deprecated
+pub fn Dot::equal(Self, Self) -> Bool
+#deprecated
+pub fn Dot::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Dot::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Dot::to_string(Self) -> String
 pub impl Eq for Dot
 pub impl Show for Dot
 
 pub struct Dyadic {
   raw_ : @vector.Dyadic
 }
+#deprecated
+pub fn Dyadic::add(Self, Self) -> Self
 pub fn Dyadic::components(Self) -> Map[BaseDyadic, @symcore.Expr]
 pub fn Dyadic::cross(Self, Vector) -> Self raise @vector.VectorError
 pub fn Dyadic::doit(Self) -> Self
 pub fn Dyadic::dot_dyadic(Self, Self) -> Self raise @vector.VectorError
 pub fn Dyadic::dot_vector(Self, Vector) -> Vector raise @vector.VectorError
+#deprecated
+pub fn Dyadic::equal(Self, Self) -> Bool
 pub fn Dyadic::evalf(Self, prec? : Int) -> Self
 pub fn Dyadic::express(Self, CoordSys3D, system2? : CoordSys3D?, variables? : Bool) -> Self raise @vector.VectorError
 pub fn Dyadic::factor(Self) -> Self
 pub fn Dyadic::is_zero(Self) -> Bool
 pub fn Dyadic::neg(Self) -> Self
+#deprecated
+pub fn Dyadic::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Dyadic::output(Self, &Logger) -> Unit
 pub fn Dyadic::scale(Self, @symcore.Expr) -> Self
 pub fn Dyadic::simplify(Self) -> Self
+#deprecated
+pub fn Dyadic::sub(Self, Self) -> Self
 pub fn Dyadic::to_matrix(Self, CoordSys3D, system2? : CoordSys3D?) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+#deprecated
+pub fn Dyadic::to_string(Self) -> String
 pub fn Dyadic::trigsimp(Self) -> Self
 pub fn Dyadic::truediv(Self, @symcore.Expr) -> Self raise @vector.VectorError
 pub impl Add for Dyadic
@@ -307,6 +453,14 @@ pub struct DyadicAdd {
   value_ : Dyadic
 }
 pub fn DyadicAdd::doit(Self) -> Dyadic
+#deprecated
+pub fn DyadicAdd::equal(Self, Self) -> Bool
+#deprecated
+pub fn DyadicAdd::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn DyadicAdd::output(Self, &Logger) -> Unit
+#deprecated
+pub fn DyadicAdd::to_string(Self) -> String
 pub impl Eq for DyadicAdd
 pub impl Show for DyadicAdd
 
@@ -317,7 +471,15 @@ pub struct DyadicMul {
 }
 pub fn DyadicMul::base_dyadic(Self) -> BaseDyadic
 pub fn DyadicMul::doit(Self) -> Dyadic
+#deprecated
+pub fn DyadicMul::equal(Self, Self) -> Bool
 pub fn DyadicMul::measure_number(Self) -> @symcore.Expr
+#deprecated
+pub fn DyadicMul::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn DyadicMul::output(Self, &Logger) -> Unit
+#deprecated
+pub fn DyadicMul::to_string(Self) -> String
 pub impl Eq for DyadicMul
 pub impl Show for DyadicMul
 
@@ -325,6 +487,14 @@ pub struct DyadicZero {
   value_ : Dyadic
 }
 pub fn DyadicZero::doit(Self) -> Dyadic
+#deprecated
+pub fn DyadicZero::equal(Self, Self) -> Bool
+#deprecated
+pub fn DyadicZero::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn DyadicZero::output(Self, &Logger) -> Unit
+#deprecated
+pub fn DyadicZero::to_string(Self) -> String
 pub impl Eq for DyadicZero
 pub impl Show for DyadicZero
 
@@ -332,6 +502,10 @@ pub struct Gradient {
   field_ : ScalarOrVector
 }
 pub fn Gradient::doit(Self) -> GradientValue raise @vector.VectorError
+#deprecated
+pub fn Gradient::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Gradient::to_string(Self) -> String
 pub impl Show for Gradient
 
 pub enum GradientValue {
@@ -343,6 +517,10 @@ pub struct Laplacian {
   field_ : ScalarOrVector
 }
 pub fn Laplacian::doit(Self) -> ScalarOrVector raise @vector.VectorError
+#deprecated
+pub fn Laplacian::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Laplacian::to_string(Self) -> String
 pub impl Show for Laplacian
 
 pub enum Orienter {
@@ -356,10 +534,22 @@ pub struct Point {
   name_ : String
   raw_ : @vector.Point
 }
+#deprecated
+pub fn Point::equal(Self, Self) -> Bool
 pub fn Point::express_coordinates(Self, CoordSys3D) -> Array[@symcore.Expr] raise @vector.VectorError
+#deprecated
+pub fn Point::hash(Self) -> Int
+#deprecated
+pub fn Point::hash_combine(Self, Hasher) -> Unit
 pub fn Point::locate_new(Self, String, Vector) -> Self raise @vector.VectorError
 pub fn Point::name(Self) -> String
+#deprecated
+pub fn Point::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Point::output(Self, &Logger) -> Unit
 pub fn Point::position_wrt(Self, PointReference) -> Vector raise @vector.VectorError
+#deprecated
+pub fn Point::to_string(Self) -> String
 pub impl Eq for Point
 pub impl Hash for Point
 pub impl Show for Point
@@ -376,7 +566,11 @@ pub struct QuaternionOrienter {
   q3_ : @symcore.Expr
   parent_orient_ : @symphysics.ExplicitMatrix
 }
+#deprecated
+pub fn QuaternionOrienter::output(Self, &Logger) -> Unit
 pub fn QuaternionOrienter::rotation_matrix(Self) -> @symphysics.ExplicitMatrix
+#deprecated
+pub fn QuaternionOrienter::to_string(Self) -> String
 pub impl Show for QuaternionOrienter
 
 pub enum ScalarOrVector {
@@ -391,23 +585,39 @@ pub struct SpaceOrienter {
   rotation_order_ : String
   parent_orient_ : @symphysics.ExplicitMatrix
 }
+#deprecated
+pub fn SpaceOrienter::output(Self, &Logger) -> Unit
 pub fn SpaceOrienter::rotation_matrix(Self) -> @symphysics.ExplicitMatrix
+#deprecated
+pub fn SpaceOrienter::to_string(Self) -> String
 pub impl Show for SpaceOrienter
 
 pub struct TransformFunction {
   equations_ : Array[@symcore.Expr]
 } derive(Eq)
 pub fn TransformFunction::call(Self, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[@symcore.Expr]
+#deprecated
+pub fn TransformFunction::equal(Self, Self) -> Bool
+#deprecated
+pub fn TransformFunction::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn TransformFunction::output(Self, &Logger) -> Unit
+#deprecated
+pub fn TransformFunction::to_string(Self) -> String
 pub impl Show for TransformFunction
 
 pub struct Vector {
   raw_ : @vector.Vector
 }
+#deprecated
+pub fn Vector::add(Self, Self) -> Self
 pub fn Vector::components(Self) -> Map[BaseVector, @symcore.Expr]
 pub fn Vector::cross(Self, Self) -> Self raise @vector.VectorError
 pub fn Vector::diff(Self, @symcore.Expr, CoordSys3D, var_in_dcm? : Bool) -> Self raise @vector.VectorError
 pub fn Vector::doit(Self) -> Self
 pub fn Vector::dot(Self, Self) -> @symcore.Expr raise @vector.VectorError
+#deprecated
+pub fn Vector::equal(Self, Self) -> Bool
 pub fn Vector::equals(Self, Self) -> Bool? raise @vector.VectorError
 pub fn Vector::evalf(Self, prec? : Int) -> Self
 pub fn Vector::express(Self, CoordSys3D, variables? : Bool) -> Self raise @vector.VectorError
@@ -417,13 +627,21 @@ pub fn Vector::kind(Self) -> VectorKind
 pub fn Vector::magnitude(Self) -> @symcore.Expr raise @vector.VectorError
 pub fn Vector::neg(Self) -> Self
 pub fn Vector::normalize(Self) -> Self raise @vector.VectorError
+#deprecated
+pub fn Vector::not_equal(Self, Self) -> Bool
 pub fn Vector::outer(Self, Self) -> Dyadic raise @vector.VectorError
+#deprecated
+pub fn Vector::output(Self, &Logger) -> Unit
 pub fn Vector::projection(Self, Self, scalar? : Bool) -> ScalarOrVector raise @vector.VectorError
 pub fn Vector::scale(Self, @symcore.Expr) -> Self
 pub fn Vector::separate(Self) -> Map[CoordSys3D, Self]
 pub fn Vector::simplify(Self) -> Self
+#deprecated
+pub fn Vector::sub(Self, Self) -> Self
 pub fn Vector::subs(Self, Map[String, @symcore.Expr]) -> Self
 pub fn Vector::to_matrix(Self, CoordSys3D) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+#deprecated
+pub fn Vector::to_string(Self) -> String
 pub fn Vector::trigsimp(Self) -> Self
 pub impl Add for Vector
 pub impl Eq for Vector
@@ -435,12 +653,28 @@ pub struct VectorAdd {
   value_ : Vector
 }
 pub fn VectorAdd::doit(Self) -> Vector
+#deprecated
+pub fn VectorAdd::equal(Self, Self) -> Bool
+#deprecated
+pub fn VectorAdd::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn VectorAdd::output(Self, &Logger) -> Unit
+#deprecated
+pub fn VectorAdd::to_string(Self) -> String
 pub impl Eq for VectorAdd
 pub impl Show for VectorAdd
 
 pub struct VectorKind {
   element_kind_ : String
 }
+#deprecated
+pub fn VectorKind::equal(Self, Self) -> Bool
+#deprecated
+pub fn VectorKind::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn VectorKind::output(Self, &Logger) -> Unit
+#deprecated
+pub fn VectorKind::to_string(Self) -> String
 pub impl Eq for VectorKind
 pub impl Show for VectorKind
 
@@ -451,7 +685,15 @@ pub struct VectorMul {
 }
 pub fn VectorMul::base_vector(Self) -> BaseVector
 pub fn VectorMul::doit(Self) -> Vector
+#deprecated
+pub fn VectorMul::equal(Self, Self) -> Bool
 pub fn VectorMul::measure_number(Self) -> @symcore.Expr
+#deprecated
+pub fn VectorMul::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn VectorMul::output(Self, &Logger) -> Unit
+#deprecated
+pub fn VectorMul::to_string(Self) -> String
 pub impl Eq for VectorMul
 pub impl Show for VectorMul
 
@@ -459,6 +701,14 @@ pub struct VectorZero {
   value_ : Vector
 }
 pub fn VectorZero::doit(Self) -> Vector
+#deprecated
+pub fn VectorZero::equal(Self, Self) -> Bool
+#deprecated
+pub fn VectorZero::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn VectorZero::output(Self, &Logger) -> Unit
+#deprecated
+pub fn VectorZero::to_string(Self) -> String
 pub impl Eq for VectorZero
 pub impl Show for VectorZero
 

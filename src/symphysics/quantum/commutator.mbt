@@ -9,30 +9,28 @@ fn quantum_commutator_raw(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn gate_commutator_zero(lhs_gate : GateExpr, rhs_gate : GateExpr) -> Bool {
-  if lhs_gate.kind == GateKind::CNot &&
-    rhs_gate.kind == GateKind::CNot &&
+  if lhs_gate.kind == CNot &&
+    rhs_gate.kind == CNot &&
     lhs_gate.args.length() == 2 &&
     rhs_gate.args.length() == 2 &&
     lhs_gate.args[0] == rhs_gate.args[0] {
     return true
   }
-  if lhs_gate.kind == GateKind::CNot &&
+  if lhs_gate.kind == CNot &&
     lhs_gate.args.length() == 2 &&
     rhs_gate.args.length() == 1 {
     return match rhs_gate.kind {
-      GateKind::Z | GateKind::Phase | GateKind::T =>
-        rhs_gate.args[0] == lhs_gate.args[0]
-      GateKind::X => rhs_gate.args[0] == lhs_gate.args[1]
+      Z | Phase | T => rhs_gate.args[0] == lhs_gate.args[0]
+      X => rhs_gate.args[0] == lhs_gate.args[1]
       _ => false
     }
   }
-  if rhs_gate.kind == GateKind::CNot &&
+  if rhs_gate.kind == CNot &&
     rhs_gate.args.length() == 2 &&
     lhs_gate.args.length() == 1 {
     return match lhs_gate.kind {
-      GateKind::Z | GateKind::Phase | GateKind::T =>
-        lhs_gate.args[0] == rhs_gate.args[0]
-      GateKind::X => lhs_gate.args[0] == rhs_gate.args[1]
+      Z | Phase | T => lhs_gate.args[0] == rhs_gate.args[0]
+      X => lhs_gate.args[0] == rhs_gate.args[1]
       _ => false
     }
   }
@@ -64,83 +62,59 @@ fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
           ) => return int(0)
         (Some(lhs_pauli), Some(rhs_pauli)) =>
           match (lhs_pauli.kind, rhs_pauli.kind) {
-            (PauliKind::X, PauliKind::Y) =>
+            (X, Y) =>
               return int(2) *
-                @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
+                NumberSymbol(ImaginaryUnit) *
                 sigma_z(name=lhs_pauli.name).as_expr()
-            (PauliKind::Y, PauliKind::X) =>
+            (Y, X) =>
               return int(-2) *
-                @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
+                NumberSymbol(ImaginaryUnit) *
                 sigma_z(name=lhs_pauli.name).as_expr()
-            (PauliKind::Y, PauliKind::Z) =>
+            (Y, Z) =>
               return int(2) *
-                @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
+                NumberSymbol(ImaginaryUnit) *
                 sigma_x(name=lhs_pauli.name).as_expr()
-            (PauliKind::Z, PauliKind::Y) =>
+            (Z, Y) =>
               return int(-2) *
-                @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
+                NumberSymbol(ImaginaryUnit) *
                 sigma_x(name=lhs_pauli.name).as_expr()
-            (PauliKind::Z, PauliKind::X) =>
+            (Z, X) =>
               return int(2) *
-                @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
+                NumberSymbol(ImaginaryUnit) *
                 sigma_y(name=lhs_pauli.name).as_expr()
-            (PauliKind::X, PauliKind::Z) =>
+            (X, Z) =>
               return int(-2) *
-                @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
+                NumberSymbol(ImaginaryUnit) *
                 sigma_y(name=lhs_pauli.name).as_expr()
-            (PauliKind::Minus, PauliKind::X) =>
+            (Minus, X) =>
               return int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
-            (PauliKind::X, PauliKind::Minus) =>
-              return sigma_z(name=lhs_pauli.name).as_expr()
-            (PauliKind::Minus, PauliKind::Y) =>
-              return @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
+            (X, Minus) => return sigma_z(name=lhs_pauli.name).as_expr()
+            (Minus, Y) =>
+              return NumberSymbol(ImaginaryUnit) *
                 sigma_z(name=lhs_pauli.name).as_expr()
-            (PauliKind::Y, PauliKind::Minus) =>
+            (Y, Minus) =>
               return int(-1) *
-                @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
+                NumberSymbol(ImaginaryUnit) *
                 sigma_z(name=lhs_pauli.name).as_expr()
-            (PauliKind::Minus, PauliKind::Z) =>
+            (Minus, Z) =>
               return int(2) * sigma_minus(name=lhs_pauli.name).as_expr()
-            (PauliKind::Z, PauliKind::Minus) =>
+            (Z, Minus) =>
               return int(-2) * sigma_minus(name=lhs_pauli.name).as_expr()
-            (PauliKind::Plus, PauliKind::X) =>
-              return sigma_z(name=lhs_pauli.name).as_expr()
-            (PauliKind::X, PauliKind::Plus) =>
-              return int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
-            (PauliKind::Plus, PauliKind::Y) =>
-              return @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
+            (Plus, X) => return sigma_z(name=lhs_pauli.name).as_expr()
+            (X, Plus) => return int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
+            (Plus, Y) =>
+              return NumberSymbol(ImaginaryUnit) *
                 sigma_z(name=lhs_pauli.name).as_expr()
-            (PauliKind::Y, PauliKind::Plus) =>
+            (Y, Plus) =>
               return int(-1) *
-                @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
+                NumberSymbol(ImaginaryUnit) *
                 sigma_z(name=lhs_pauli.name).as_expr()
-            (PauliKind::Plus, PauliKind::Z) =>
+            (Plus, Z) =>
               return int(-2) * sigma_plus(name=lhs_pauli.name).as_expr()
-            (PauliKind::Z, PauliKind::Plus) =>
+            (Z, Plus) =>
               return int(2) * sigma_plus(name=lhs_pauli.name).as_expr()
-            (PauliKind::Plus, PauliKind::Minus) =>
-              return sigma_z(name=lhs_pauli.name).as_expr()
-            (PauliKind::Minus, PauliKind::Plus) =>
+            (Plus, Minus) => return sigma_z(name=lhs_pauli.name).as_expr()
+            (Minus, Plus) =>
               return int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
             _ => ()
           }
@@ -159,29 +133,17 @@ fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
         _ => ()
       }
       match (nlhs, nrhs) {
-        (Expr::Symbol(lhs_name), Expr::Symbol(rhs_name)) =>
+        (Symbol(lhs_name), Symbol(rhs_name)) =>
           match (lhs_name, rhs_name) {
             ("Jx", "Jy") =>
-              return @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
-                hbar *
-                Expr::Symbol("Jz")
+              return NumberSymbol(ImaginaryUnit) * hbar * Symbol("Jz")
             ("Jy", "Jz") =>
-              return @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
-                hbar *
-                Expr::Symbol("Jx")
+              return NumberSymbol(ImaginaryUnit) * hbar * Symbol("Jx")
             ("Jz", "Jx") =>
-              return @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
-                hbar *
-                Expr::Symbol("Jy")
-            ("Jplus", "Jminus") => return int(2) * hbar * Expr::Symbol("Jz")
-            ("Jz", "Jplus") => return hbar * Expr::Symbol("Jplus")
-            ("Jz", "Jminus") => return int(-1) * hbar * Expr::Symbol("Jminus")
+              return NumberSymbol(ImaginaryUnit) * hbar * Symbol("Jy")
+            ("Jplus", "Jminus") => return int(2) * hbar * Symbol("Jz")
+            ("Jz", "Jplus") => return hbar * Symbol("Jplus")
+            ("Jz", "Jminus") => return int(-1) * hbar * Symbol("Jminus")
             _ => ()
           }
         _ => ()
@@ -231,16 +193,11 @@ fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
       }
       if quantum_expr_has_name(nlhs, "XOp") &&
         quantum_expr_has_name(nrhs, "PxOp") {
-        return @symcore.Expr::NumberSymbol(
-            @symcore.NumberSymbolKind::ImaginaryUnit,
-          ) *
-          hbar
+        return NumberSymbol(ImaginaryUnit) * hbar
       }
       if quantum_expr_has_name(nlhs, "PxOp") &&
         quantum_expr_has_name(nrhs, "XOp") {
-        return int(-1) *
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
-          hbar
+        return int(-1) * NumberSymbol(ImaginaryUnit) * hbar
       }
       if quantum_expr_has_name(nlhs, "RaisingOp") &&
         quantum_expr_has_name(nrhs, "LoweringOp") {
@@ -276,7 +233,7 @@ fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
         ) {
         return int(0)
       }
-      if lhs.compare(rhs) > 0 {
+      if Compare::compare(lhs, rhs) > 0 {
         return int(-1) * quantum_make_commutator(rhs, lhs)
       }
       quantum_commutator_raw(lhs, rhs)
@@ -314,7 +271,7 @@ fn quantum_expand_pow_commutator(
   sign : Int,
 ) -> Expr {
   match base_expr {
-    Expr::Pow(base, exp_expr) =>
+    Pow(base, exp_expr) =>
       match quantum_integer_value(exp_expr) {
         Some(exp) if exp.abs() > 1 => {
           let mut effective_base = base
@@ -358,13 +315,13 @@ pub fn commutator_expand(expr : Expr) -> Expr {
   match @symcore.application_args(expr) {
     Some([lhs, rhs]) if quantum_expr_has_name(expr, "Commutator") =>
       match lhs {
-        Expr::Add(lhs_args) =>
+        Add(lhs_args) =>
           quantum_add_from_args_preserve(
             lhs_args.map(term => {
               commutator_expand(commutator(term, rhs, evaluate=false))
             }),
           )
-        Expr::Mul(lhs_args) if lhs_args.length() > 1 => {
+        Mul(lhs_args) if lhs_args.length() > 1 => {
           let head = lhs_args[0]
           let tail = quantum_mul_slice(lhs_args, 1, lhs_args.length())
           quantum_add_from_args_preserve([
@@ -378,16 +335,16 @@ pub fn commutator_expand(expr : Expr) -> Expr {
             ]),
           ])
         }
-        Expr::Pow(_, _) => quantum_expand_pow_commutator(lhs, rhs, 1)
+        Pow(_, _) => quantum_expand_pow_commutator(lhs, rhs, 1)
         _ =>
           match rhs {
-            Expr::Add(rhs_args) =>
+            Add(rhs_args) =>
               quantum_add_from_args_preserve(
                 rhs_args.map(term => {
                   commutator_expand(commutator(lhs, term, evaluate=false))
                 }),
               )
-            Expr::Mul(rhs_args) if rhs_args.length() > 1 => {
+            Mul(rhs_args) if rhs_args.length() > 1 => {
               let head = rhs_args[0]
               let tail = quantum_mul_slice(rhs_args, 1, rhs_args.length())
               quantum_add_from_args_preserve([
@@ -401,7 +358,7 @@ pub fn commutator_expand(expr : Expr) -> Expr {
                 ]),
               ])
             }
-            Expr::Pow(_, _) => quantum_expand_pow_commutator(rhs, lhs, -1)
+            Pow(_, _) => quantum_expand_pow_commutator(rhs, lhs, -1)
             _ => expr
           }
       }

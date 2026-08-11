@@ -15,7 +15,7 @@ test "physics.quantum.piab: local Hamiltonian, overlaps, and wavefunction" {
     "PIAB overlaps",
   )
   match represent(piab_ket(n)) {
-    MatrixScalarValue::Scalar(expr) =>
+    Scalar(expr) =>
       quantum_test_assert_expr_equal(
         expr, "sqrt(2/L)*sin(n*pi*x/L)", "PIAB wavefunction",
       )

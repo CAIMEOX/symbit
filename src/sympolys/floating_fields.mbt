@@ -12,7 +12,7 @@ fn field_float_expr_from_exact(
   value : @symnum.BigRational,
   precision : Int,
 ) -> Expr {
-  @symcore.Expr::Float(
+  Float(
     @symcore.Float::from_exact(value, prec=precision) catch {
       _ => @symcore.Float::from_mpf(@symnum.fnan, prec=precision)
     },
@@ -27,7 +27,7 @@ fn complex_float_expr_from_gaussian(
   if value.im.is_zero() {
     field_float_expr_from_exact(value.re, precision)
   } else {
-    @symcore.Expr::ComplexFloat(
+    ComplexFloat(
       @symcore.ComplexFloat::from_exact_parts(
         value.re,
         value.im,
@@ -40,7 +40,7 @@ fn complex_float_expr_from_gaussian(
 ///|
 fn floating_floor_div(n : BigInt, d : BigInt) -> BigInt raise PolyError {
   if d.is_zero() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let q = n.div(d)
   let r = n.sub(q.mul(d))
@@ -61,7 +61,7 @@ fn floating_rational(
   den : BigInt,
 ) -> @symnum.BigRational raise PolyError {
   @symnum.BigRational::new(num, den) catch {
-    _ => raise PolyError::DivisionByZero
+    _ => raise DivisionByZero
   }
 }
 
@@ -176,10 +176,10 @@ pub fn to_rational(
   limit? : Bool = true,
 ) -> (BigInt, BigInt) raise PolyError {
   if max_denom <= 0N {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let pair = value.to_rational() catch {
-    _ => raise PolyError::BadGenerator("to_rational")
+    _ => raise BadGenerator("to_rational")
   }
   let (p, q) = pair
   if !limit || q <= max_denom {
@@ -251,7 +251,7 @@ pub fn RealField::to_rational(
 /// - Limits: This is a structural descriptor only.
 pub fn RealField::domain(self : RealField) -> Domain {
   ignore(self)
-  Domain::RR
+  RR
 }
 
 ///|
@@ -263,7 +263,7 @@ pub fn RealField::domain(self : RealField) -> Domain {
 /// - Limits: This is a structural descriptor only.
 pub fn ComplexField::domain(self : ComplexField) -> Domain {
   ignore(self)
-  Domain::CC
+  CC
 }
 
 ///|
@@ -312,7 +312,7 @@ pub fn RealField::evalf_expr(
   self : RealField,
   expr : Expr,
 ) -> Expr raise PolyError {
-  domain_evalf_expr(Domain::RR, expr, prec=Some(self.precision))
+  domain_evalf_expr(RR, expr, prec=Some(self.precision))
 }
 
 ///|
@@ -327,7 +327,7 @@ pub fn ComplexField::evalf_expr(
   self : ComplexField,
   expr : Expr,
 ) -> Expr raise PolyError {
-  domain_evalf_expr(Domain::CC, expr, prec=Some(self.precision))
+  domain_evalf_expr(CC, expr, prec=Some(self.precision))
 }
 
 ///|
@@ -356,10 +356,7 @@ pub fn ComplexField::from_exact_parts(
   real : @symnum.BigRational,
   imag : @symnum.BigRational,
 ) -> Expr {
-  complex_float_expr_from_gaussian(
-    GaussianRatCompat::{ re: real, im: imag },
-    self.precision,
-  )
+  complex_float_expr_from_gaussian({ re: real, im: imag }, self.precision)
 }
 
 ///|
@@ -375,7 +372,7 @@ pub fn ComplexField::from_exact_parts(
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub fn RealField::from_float(self : RealField, value : @symcore.Float) -> Expr {
-  @symcore.Expr::Float(
+  Float(
     @symcore.Float::from_mpf(
       @symnum.mpf_pos(value.to_mpf(), self.precision, @symnum.round_nearest),
       prec=self.precision,
@@ -399,7 +396,7 @@ pub fn ComplexField::from_complex_float(
   self : ComplexField,
   value : @symcore.ComplexFloat,
 ) -> Expr {
-  @symcore.Expr::ComplexFloat(
+  ComplexFloat(
     @symcore.ComplexFloat::from_parts(
       @symnum.mpf_pos(
         value.to_mpc().real,
@@ -430,14 +427,14 @@ pub fn RealField::coerce_float(
   expr : Expr,
 ) -> @symcore.Float raise PolyError {
   match self.evalf_expr(expr) {
-    Expr::Float(f) => f
-    Expr::ComplexFloat(z) =>
+    Float(f) => f
+    ComplexFloat(z) =>
       if @symnum.is_zero(z.to_mpc().imag) {
         z.real_part()
       } else {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
 }
 
@@ -455,21 +452,21 @@ pub fn ComplexField::coerce_complex(
   expr : Expr,
 ) -> @symcore.ComplexFloat raise PolyError {
   match self.evalf_expr(expr) {
-    Expr::ComplexFloat(z) => z
-    Expr::Float(f) =>
+    ComplexFloat(z) => z
+    Float(f) =>
       @symcore.ComplexFloat::from_real(
         @symcore.Float::from_mpf(
           @symnum.mpf_pos(f.to_mpf(), self.precision, @symnum.round_nearest),
           prec=self.precision,
         ),
       )
-    Expr::Number(n) =>
+    Number(n) =>
       @symcore.ComplexFloat::from_exact_parts(
         n,
         @symnum.BigRational::zero(),
         prec=self.precision,
       )
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
 }
 
@@ -572,7 +569,7 @@ pub fn RealField::neg(self : RealField, expr : Expr) -> Expr raise PolyError {
 pub fn RealField::inv(self : RealField, expr : Expr) -> Expr raise PolyError {
   self.from_float(
     self.coerce_float(expr).reciprocal() catch {
-      _ => raise PolyError::DivisionByZero
+      _ => raise DivisionByZero
     },
   )
 }
@@ -648,7 +645,7 @@ pub fn ComplexField::inv(
 ) -> Expr raise PolyError {
   self.from_complex_float(
     self.coerce_complex(expr).reciprocal() catch {
-      _ => raise PolyError::DivisionByZero
+      _ => raise DivisionByZero
     },
   )
 }

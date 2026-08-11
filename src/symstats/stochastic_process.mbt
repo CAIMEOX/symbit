@@ -7,18 +7,12 @@ pub fn poisson_process(
   rate : @symcore.Expr,
   time_symbol? : String = "t",
 ) -> RandomVar {
-  random_var(
-    name,
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, time_symbol~)),
-  )
+  random_var(name, StochasticProcess(PoissonProcess(rate~, time_symbol~)))
 }
 
 ///|
 pub fn wiener_process(name : String, time_symbol? : String = "t") -> RandomVar {
-  random_var(
-    name,
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(time_symbol~)),
-  )
+  random_var(name, StochasticProcess(WienerProcess(time_symbol~)))
 }
 
 ///|
@@ -47,13 +41,12 @@ fn process_symbolic_value(
 ///|
 pub fn process_mean_at(proc : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
   match proc.kind {
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) =>
+    StochasticProcess(PoissonProcess(rate~, ..)) =>
       Some(eval_arith(@symcore.mul([rate, t])))
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) =>
-      Some(@symcore.int(0))
-    RVKind::Symbolic(kind~, params~) if kind is SymbolicKind::Process(tag) =>
+    StochasticProcess(WienerProcess(..)) => Some(@symcore.int(0))
+    Symbolic(kind~, params~) if kind is Process(tag) =>
       match tag {
-        ProcessTag::BernoulliProcess if params.length() >= 1 => {
+        BernoulliProcess if params.length() >= 1 => {
           let p = params[0]
           let success = if params.length() >= 2 {
             params[1]
@@ -82,7 +75,7 @@ pub fn process_mean_at(proc : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
             ),
           )
         }
-        ProcessTag::GammaProcess if params.length() >= 2 => {
+        GammaProcess if params.length() >= 2 => {
           let lamda = params[0]
           let gamma = params[1]
           Some(
@@ -110,12 +103,12 @@ pub fn process_variance_at(
   t : @symcore.Expr,
 ) -> @symcore.Expr? {
   match proc.kind {
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) =>
+    StochasticProcess(PoissonProcess(rate~, ..)) =>
       Some(eval_arith(@symcore.mul([rate, t])))
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) => Some(t)
-    RVKind::Symbolic(kind~, params~) if kind is SymbolicKind::Process(tag) =>
+    StochasticProcess(WienerProcess(..)) => Some(t)
+    Symbolic(kind~, params~) if kind is Process(tag) =>
       match tag {
-        ProcessTag::BernoulliProcess if params.length() >= 1 => {
+        BernoulliProcess if params.length() >= 1 => {
           let p = params[0]
           let success = if params.length() >= 2 {
             params[1]
@@ -150,7 +143,7 @@ pub fn process_variance_at(
             ),
           )
         }
-        ProcessTag::GammaProcess if params.length() >= 2 => {
+        GammaProcess if params.length() >= 2 => {
           let lamda = params[0]
           let gamma = params[1]
           Some(
@@ -214,13 +207,11 @@ fn process_state_query_head(
 ///|
 pub fn process_is_discrete(proc : RandomVar) -> Bool {
   match proc.kind {
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(..)) => true
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) => false
-    RVKind::Symbolic(kind~, ..) if kind is SymbolicKind::Process(tag) =>
+    StochasticProcess(PoissonProcess(..)) => true
+    StochasticProcess(WienerProcess(..)) => false
+    Symbolic(kind~, ..) if kind is Process(tag) =>
       match tag {
-        ProcessTag::BernoulliProcess
-        | ProcessTag::DiscreteMarkovChain
-        | ProcessTag::ContinuousMarkovChain => true
+        BernoulliProcess | DiscreteMarkovChain | ContinuousMarkovChain => true
         _ => false
       }
     _ => false
@@ -234,13 +225,12 @@ pub fn process_probability_at(
   x : @symcore.Expr,
 ) -> @symcore.Expr? {
   match proc.kind {
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) =>
+    StochasticProcess(PoissonProcess(rate~, ..)) =>
       Some(poisson_pmf_expr(eval_arith(@symcore.mul([rate, t])), x))
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) =>
-      Some(@symcore.int(0))
-    RVKind::Symbolic(kind~, params~) if kind is SymbolicKind::Process(tag) =>
+    StochasticProcess(WienerProcess(..)) => Some(@symcore.int(0))
+    Symbolic(kind~, params~) if kind is Process(tag) =>
       match tag {
-        ProcessTag::BernoulliProcess if params.length() >= 1 => {
+        BernoulliProcess if params.length() >= 1 => {
           let p = params[0]
           let success = if params.length() >= 2 {
             params[1]
@@ -267,19 +257,15 @@ pub fn process_probability_at(
                 ),
                 @symcore.function("Eq", [x, failure]),
               ]),
-              @symcore.function("Tuple", [
-                @symcore.int(0),
-                @symcore.Expr::Boolean(true),
-              ]),
+              @symcore.function("Tuple", [@symcore.int(0), Boolean(true)]),
             ]),
           )
         }
-        ProcessTag::GammaProcess if params.length() >= 2 =>
-          Some(@symcore.int(0))
-        ProcessTag::DiscreteMarkovChain
-        | ProcessTag::ContinuousMarkovChain
-        | ProcessTag::StochasticProcess
-        | ProcessTag::DiscreteTimeStochasticProcess => {
+        GammaProcess if params.length() >= 2 => Some(@symcore.int(0))
+        DiscreteMarkovChain
+        | ContinuousMarkovChain
+        | StochasticProcess
+        | DiscreteTimeStochasticProcess => {
           let name = process_tag_name(tag)
           Some(process_state_query_head(name, "Probability", t, x, params))
         }
@@ -299,16 +285,16 @@ pub fn process_cdf_at(
   x : @symcore.Expr,
 ) -> @symcore.Expr? {
   match proc.kind {
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) =>
+    StochasticProcess(PoissonProcess(rate~, ..)) =>
       Some(poisson_cdf_expr(eval_arith(@symcore.mul([rate, t])), x))
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) => {
+    StochasticProcess(WienerProcess(..)) => {
       let sigma = eval_arith(@symcore.function("sqrt", [t]))
-      let rv = random_var("_W", RVKind::Normal(mu=@symcore.int(0), sigma~))
+      let rv = random_var("_W", Normal(mu=@symcore.int(0), sigma~))
       continuous_cdf(rv, x)
     }
-    RVKind::Symbolic(kind~, params~) if kind is SymbolicKind::Process(tag) =>
+    Symbolic(kind~, params~) if kind is Process(tag) =>
       match tag {
-        ProcessTag::BernoulliProcess if params.length() >= 1 => {
+        BernoulliProcess if params.length() >= 1 => {
           let p = params[0]
           let one_minus_p = eval_arith(
             @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])]),
@@ -335,10 +321,7 @@ pub fn process_cdf_at(
               p,
               @symcore.function("Lt", [success, failure]),
             ]),
-            @symcore.function("Tuple", [
-              one_minus_p,
-              @symcore.Expr::Boolean(true),
-            ]),
+            @symcore.function("Tuple", [one_minus_p, Boolean(true)]),
           ])
           Some(
             @symcore.function("Piecewise", [
@@ -356,30 +339,27 @@ pub fn process_cdf_at(
                   @symcore.function("Max", [success, failure]),
                 ]),
               ]),
-              @symcore.function("Tuple", [
-                @symcore.int(1),
-                @symcore.Expr::Boolean(true),
-              ]),
+              @symcore.function("Tuple", [@symcore.int(1), Boolean(true)]),
             ]),
           )
         }
-        ProcessTag::GammaProcess if params.length() >= 2 => {
+        GammaProcess if params.length() >= 2 => {
           let lamda = params[0]
           let gamma = params[1]
           let shape = eval_arith(@symcore.mul([gamma, t]))
           let rv = random_var(
             "_G",
-            RVKind::Gamma(
+            Gamma(
               shape~,
               scale=eval_arith(@symcore.pow(lamda, @symcore.int(-1))),
             ),
           )
           continuous_cdf(rv, x)
         }
-        ProcessTag::DiscreteMarkovChain
-        | ProcessTag::ContinuousMarkovChain
-        | ProcessTag::StochasticProcess
-        | ProcessTag::DiscreteTimeStochasticProcess => {
+        DiscreteMarkovChain
+        | ContinuousMarkovChain
+        | StochasticProcess
+        | DiscreteTimeStochasticProcess => {
           let name = process_tag_name(tag)
           Some(process_state_query_head(name, "CDF", t, x, params))
         }
@@ -407,17 +387,14 @@ pub fn process_transition_probability(
           @symcore.int(1),
           @symcore.function("Eq", [to, from]),
         ]),
-        @symcore.function("Tuple", [
-          @symcore.int(0),
-          @symcore.Expr::Boolean(true),
-        ]),
+        @symcore.function("Tuple", [@symcore.int(0), Boolean(true)]),
       ]),
     )
   }
   let delta_t = process_expr_sub(t1, t0)
   let k = eval_arith(process_expr_sub(to, from))
   match proc.kind {
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) =>
+    StochasticProcess(PoissonProcess(rate~, ..)) =>
       Some(
         eval_arith(
           @symcore.mul([
@@ -429,12 +406,11 @@ pub fn process_transition_probability(
           ]),
         ),
       )
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) =>
+    StochasticProcess(WienerProcess(..)) =>
       Some(@symcore.function("NormalTransitionProb", [from, to, delta_t]))
-    RVKind::Symbolic(kind~, params~) if kind is SymbolicKind::Process(tag) =>
+    Symbolic(kind~, params~) if kind is Process(tag) =>
       match tag {
-        ProcessTag::StochasticProcess
-        | ProcessTag::DiscreteTimeStochasticProcess => {
+        StochasticProcess | DiscreteTimeStochasticProcess => {
           let name = process_tag_name(tag)
           let args : Array[@symcore.Expr] = [from, to, t0, t1]
           for p in params {
@@ -442,7 +418,7 @@ pub fn process_transition_probability(
           }
           Some(@symcore.function("\{name}TransitionProb", args))
         }
-        ProcessTag::DiscreteMarkovChain if params.length() >= 1 => {
+        DiscreteMarkovChain if params.length() >= 1 => {
           let tmat = params[0]
           Some(
             @symcore.function("MatrixElement", [
@@ -452,7 +428,7 @@ pub fn process_transition_probability(
             ]),
           )
         }
-        ProcessTag::ContinuousMarkovChain if params.length() >= 1 => {
+        ContinuousMarkovChain if params.length() >= 1 => {
           let qmat = params[0]
           Some(
             @symcore.function("MatrixElement", [
@@ -464,7 +440,7 @@ pub fn process_transition_probability(
             ]),
           )
         }
-        ProcessTag::BernoulliProcess if params.length() >= 1 => {
+        BernoulliProcess if params.length() >= 1 => {
           let p = params[0]
           let success = if params.length() >= 2 {
             params[1]
@@ -492,15 +468,12 @@ pub fn process_transition_probability(
                   ),
                   @symcore.function("Eq", [to, failure]),
                 ]),
-                @symcore.function("Tuple", [
-                  @symcore.int(0),
-                  @symcore.Expr::Boolean(true),
-                ]),
+                @symcore.function("Tuple", [@symcore.int(0), Boolean(true)]),
               ]),
             ),
           )
         }
-        ProcessTag::GammaProcess if params.length() >= 2 => {
+        GammaProcess if params.length() >= 2 => {
           let lamda = params[0]
           let gamma = params[1]
           let delta = eval_arith(process_expr_sub(to, from))
@@ -526,10 +499,7 @@ pub fn process_transition_probability(
                 ),
                 @symcore.function("Ge", [delta, @symcore.int(0)]),
               ]),
-              @symcore.function("Tuple", [
-                @symcore.int(0),
-                @symcore.Expr::Boolean(true),
-              ]),
+              @symcore.function("Tuple", [@symcore.int(0), Boolean(true)]),
             ]),
           )
         }

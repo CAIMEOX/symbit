@@ -30,24 +30,20 @@ pub fn GrayCode::new(
   rank? : Int,
 ) -> GrayCode raise CombinatoricsError {
   if n < 1 {
-    raise CombinatoricsError::ValueError(
-      "Gray code dimension must be a positive integer",
-    )
+    raise ValueError("Gray code dimension must be a positive integer")
   }
   let mut current_str = int_to_bin(0, n)
   let mut rank_cache : Int? = None
   if start is Some(start_str) {
     if start_str.length() > n {
-      raise CombinatoricsError::ValueError(
+      raise ValueError(
         "Gray code start has length \{start_str.length()} but should not be greater than \{n}",
       )
     }
     current_str = start_str
   } else if rank is Some(r) {
     if r < 0 {
-      raise CombinatoricsError::ValueError(
-        "Gray code rank must be non-negative",
-      )
+      raise ValueError("Gray code rank must be non-negative")
     }
     let selections = pow_int(2, n)
     let rr = if selections == 0 { 0 } else { r % selections }
@@ -132,7 +128,7 @@ pub fn GrayCode::generate_gray(
   }
   let graycode_bin = gray_to_bin(start_str)
   if graycode_bin.length() > bits {
-    raise CombinatoricsError::ValueError(
+    raise ValueError(
       "Gray code start has length \{graycode_bin.length()} but should not be greater than \{bits}",
     )
   }
@@ -241,7 +237,7 @@ pub fn[T] get_subset_from_bitstring(
   bitstring : String,
 ) -> Array[T] raise CombinatoricsError {
   if super_set.length() != bitstring.length() {
-    raise CombinatoricsError::ValueError("The sizes of the lists are not equal")
+    raise ValueError("The sizes of the lists are not equal")
   }
   let bits = string_to_chars(bitstring)
   let out : Array[T] = Array::new()

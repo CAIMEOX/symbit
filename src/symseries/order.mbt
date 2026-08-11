@@ -8,17 +8,12 @@
 ///|
 fn normalize_order_arg(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Number(n) =>
-      if n.is_zero() {
-        @symcore.int(0)
-      } else {
-        @symcore.int(1)
-      }
-    @symcore.Expr::Mul(args) => {
+    Number(n) => if n.is_zero() { @symcore.int(0) } else { @symcore.int(1) }
+    Mul(args) => {
       let kept : Array[@symcore.Expr] = Array::new()
       for arg in args {
         match arg {
-          @symcore.Expr::Number(_) => ()
+          Number(_) => ()
           _ => kept.push(arg)
         }
       }
@@ -30,10 +25,10 @@ fn normalize_order_arg(expr : @symcore.Expr) -> @symcore.Expr {
         @symcore.mul(kept)
       }
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match exp {
-        @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(1)
-        @symcore.Expr::Number(n) if n.is_one() => base
+        Number(n) if n.is_zero() => @symcore.int(1)
+        Number(n) if n.is_one() => base
         _ => expr
       }
     _ => expr
@@ -83,7 +78,7 @@ pub fn big_o(expr : @symcore.Expr) -> @symcore.Expr {
     _ => {
       let norm = normalize_order_arg(expr)
       match norm {
-        @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(0)
+        Number(n) if n.is_zero() => @symcore.int(0)
         _ => @symcore.function("O", [norm])
       }
     }

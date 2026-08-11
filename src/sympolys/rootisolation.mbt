@@ -14,7 +14,7 @@ pub type ComplexRootRectangle = (RealRootInterval, RealRootInterval)
 ///|
 fn abs_rational(r : @symnum.BigRational) -> @symnum.BigRational {
   if r.compare(@symnum.BigRational::zero()) < 0 {
-    r.neg()
+    Neg::neg(r)
   } else {
     r
   }
@@ -27,11 +27,11 @@ fn pow_rational(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational {
   let mut e = exp
   while e > 0 {
     if e % 2 == 1 {
-      result = result.mul(b)
+      result = Mul::mul(result, b)
     }
     e = e / 2
     if e > 0 {
-      b = b.mul(b)
+      b = Mul::mul(b, b)
     }
   }
   result
@@ -55,7 +55,7 @@ fn dup_to_poly(
 ) -> Poly raise PolyError {
   let f = dup_strip(coeffs)
   if f.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let asc = reverse_coeffs(f)
   from_dense(asc, ["x"], domain)
@@ -82,11 +82,11 @@ pub fn dup_cauchy_upper_bound(
 ) -> FieldElem raise PolyError {
   let f = dup_strip(coeffs)
   if f.length() < 2 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let lc = fe_expect_rational(f[0])
   if lc.is_zero() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let mut max_ratio = @symnum.BigRational::zero()
   for i in 1..<f.length() {
@@ -97,7 +97,7 @@ pub fn dup_cauchy_upper_bound(
     }
   }
   let one = @symnum.BigRational::one()
-  fe_from_rational(one.add(max_ratio), Domain::QQ)
+  fe_from_rational(Add::add(one, max_ratio), QQ)
 }
 
 ///|
@@ -113,14 +113,12 @@ pub fn dup_cauchy_lower_bound(
 ) -> FieldElem raise PolyError {
   let g = dup_strip(reverse_coeffs(coeffs))
   if g.length() < 2 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let upper = dup_cauchy_upper_bound(g, domain)
   let upper_rat = fe_expect_rational(upper)
-  let inv = upper_rat.reciprocal() catch {
-    _ => raise PolyError::DivisionByZero
-  }
-  fe_from_rational(inv, Domain::QQ)
+  let inv = upper_rat.reciprocal() catch { _ => raise DivisionByZero }
+  fe_from_rational(inv, QQ)
 }
 
 ///|
@@ -138,7 +136,7 @@ pub fn dup_mignotte_sep_bound_squared(
   let f = dup_strip(coeffs)
   let n = dup_degree(f)
   if n < 2 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let asc : Array[FieldElem] = Array::new()
   let mut i = f.length()
@@ -152,13 +150,13 @@ pub fn dup_mignotte_sep_bound_squared(
   let l2sq_fe = dup_l2_norm_squared(f, domain)
   let l2sq = fe_expect_rational(l2sq_fe)
   let n_rat = @symnum.BigRational::from_int(n)
-  let num = @symnum.BigRational::from_int(3).mul(disc_rat)
-  let denom = pow_rational(n_rat, n + 1).mul(pow_rational(l2sq, n - 1))
+  let num = Mul::mul(@symnum.BigRational::from_int(3), disc_rat)
+  let denom = Mul::mul(pow_rational(n_rat, n + 1), pow_rational(l2sq, n - 1))
   if denom.is_zero() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let bound = poly_rational_div(num, denom)
-  fe_from_rational(bound, Domain::QQ)
+  fe_from_rational(bound, QQ)
 }
 
 ///|
@@ -175,7 +173,7 @@ pub fn dup_sturm(
 ) -> Array[Array[FieldElem]] raise PolyError {
   let f = dup_strip(coeffs)
   if f.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   if f.length() == 1 {
     return [[fe_from_int(1, domain)]]
@@ -210,7 +208,7 @@ fn rat_mediant(
   let num = a.numerator().add(b.numerator())
   let den = a.denominator().add(b.denominator())
   @symnum.BigRational::new(num, den) catch {
-    _ => raise PolyError::DivisionByZero
+    _ => raise DivisionByZero
   }
 }
 
@@ -356,7 +354,7 @@ pub fn dup_refine_real_root(
 ) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError {
   let f = dup_strip(coeffs)
   if f.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   if s.compare(t) == 0 {
     return (s, t)
@@ -788,8 +786,8 @@ pub fn dup_count_real_roots(
 ///|
 fn rootisolation_require_qq_zz(domain : Domain) -> Unit raise PolyError {
   match domain {
-    Domain::ZZ | Domain::QQ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ | QQ => ()
+    _ => raise DomainMismatch
   }
 }
 
@@ -801,7 +799,7 @@ fn rootisolation_no_complex_options(
 ) -> Unit raise PolyError {
   match (inf, sup, exclude) {
     (None, None, None) => ()
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
 }
 
@@ -852,7 +850,7 @@ pub fn dup_isolate_complex_roots_sqf(
   rootisolation_require_qq_zz(domain)
   match (inf, sup) {
     (None, None) => ()
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
   let f = dup_strip(coeffs)
   let degree = dup_degree(f)
@@ -863,7 +861,7 @@ pub fn dup_isolate_complex_roots_sqf(
   if real_roots.length() == degree {
     []
   } else {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
 }
 
@@ -903,7 +901,7 @@ pub fn dup_isolate_all_roots(
   rootisolation_require_qq_zz(domain)
   let (_, factors) = dup_sqf_list(coeffs, domain)
   if factors.length() != 1 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let factor = factors[0].0
   let mult = factors[0].1

@@ -10,24 +10,24 @@ pub enum SatResult {
 ///|
 pub impl Show for SatResult with fn to_string(self) {
   match self {
-    SatResult::Single(model) => model_to_string(model)
-    SatResult::All(models) => models_to_string(models)
+    Single(model) => model_to_string(model)
+    All(models) => models_to_string(models)
   }
 }
 
 ///|
 pub impl Show for SatResult with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 pub fn literal_symbol(literal : BoolExpr) -> BoolExpr {
   match literal {
-    BoolExpr::True => BoolExpr::True
-    BoolExpr::False => BoolExpr::False
-    BoolExpr::Symbol(_) => literal
-    BoolExpr::LRA(_) => literal
-    BoolExpr::Not(inner) => literal_symbol(inner)
+    True => True
+    False => False
+    Symbol(_) => literal
+    LRA(_) => literal
+    Not(inner) => literal_symbol(inner)
     _ => literal
   }
 }
@@ -35,24 +35,24 @@ pub fn literal_symbol(literal : BoolExpr) -> BoolExpr {
 ///|
 fn pl_true_eval(expr : BoolExpr, model : Map[String, Bool?]) -> Bool? {
   match expr {
-    BoolExpr::True => Some(true)
-    BoolExpr::False => Some(false)
-    BoolExpr::Symbol(name) =>
+    True => Some(true)
+    False => Some(false)
+    Symbol(name) =>
       match model.get(name) {
         Some(v) => v
         None => None
       }
-    BoolExpr::LRA(constraint) =>
+    LRA(constraint) =>
       match model.get(linear_constraint_key(constraint)) {
         Some(v) => v
         None => None
       }
-    BoolExpr::Not(inner) =>
+    Not(inner) =>
       match pl_true_eval(inner, model) {
         Some(v) => Some(!v)
         None => None
       }
-    BoolExpr::And(args) => {
+    And(args) => {
       let mut has_unknown = false
       for arg in args {
         match pl_true_eval(arg, model) {
@@ -67,7 +67,7 @@ fn pl_true_eval(expr : BoolExpr, model : Map[String, Bool?]) -> Bool? {
         Some(true)
       }
     }
-    BoolExpr::Or(args) => {
+    Or(args) => {
       let mut has_unknown = false
       for arg in args {
         match pl_true_eval(arg, model) {
@@ -82,7 +82,7 @@ fn pl_true_eval(expr : BoolExpr, model : Map[String, Bool?]) -> Bool? {
         Some(false)
       }
     }
-    BoolExpr::Xor(args) => {
+    Xor(args) => {
       let mut count = 0
       for arg in args {
         match pl_true_eval(arg, model) {
@@ -93,7 +93,7 @@ fn pl_true_eval(expr : BoolExpr, model : Map[String, Bool?]) -> Bool? {
       }
       Some(count % 2 == 1)
     }
-    BoolExpr::Implies(a, b) =>
+    Implies(a, b) =>
       match pl_true_eval(a, model) {
         Some(false) => Some(true)
         Some(true) => pl_true_eval(b, model)
@@ -104,7 +104,7 @@ fn pl_true_eval(expr : BoolExpr, model : Map[String, Bool?]) -> Bool? {
             None => None
           }
       }
-    BoolExpr::Equivalent(args) => {
+    Equivalent(args) => {
       if args.is_empty() {
         return Some(true)
       }
@@ -125,7 +125,7 @@ fn pl_true_eval(expr : BoolExpr, model : Map[String, Bool?]) -> Bool? {
         None => None
       }
     }
-    BoolExpr::ITE(c, t, e) =>
+    ITE(c, t, e) =>
       match pl_true_eval(c, model) {
         Some(true) => pl_true_eval(t, model)
         Some(false) => pl_true_eval(e, model)
@@ -155,7 +155,7 @@ pub fn pl_true(
         return Some(true)
       }
       match satisfiable(expr) {
-        SatResult::Single(None) => Some(false)
+        Single(None) => Some(false)
         _ => None
       }
     }
@@ -180,20 +180,20 @@ pub fn satisfiable(
   }
   if all_models {
     let models = dpll2_all_models(expr, use_lra_theory~)
-    return SatResult::All(models)
+    return All(models)
   }
   let model = if algo == "dpll" {
     dpll_satisfiable(expr)
   } else {
     dpll2_satisfiable(expr, use_lra_theory~)
   }
-  SatResult::Single(model)
+  Single(model)
 }
 
 ///|
 pub fn valid(expr : BoolExpr) -> Bool {
   match satisfiable(bool_not(expr)) {
-    SatResult::Single(None) => true
+    Single(None) => true
     _ => false
   }
 }
@@ -204,7 +204,7 @@ pub fn entails(expr : BoolExpr, formula_set? : Array[BoolExpr] = []) -> Bool {
   formulas.push(bool_not(expr))
   let combined = bool_and(formulas)
   match satisfiable(combined) {
-    SatResult::Single(None) => true
+    Single(None) => true
     _ => false
   }
 }

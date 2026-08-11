@@ -62,7 +62,7 @@ pub fn sign(expr : Expr) -> Expr {
 ///   expressions.
 pub fn abs(expr : Expr) -> Expr {
   match num_value(expr) {
-    Some(n) => @symcore.Expr::Number(abs_rational(n))
+    Some(n) => Number(abs_rational(n))
     None => @symcore.function("Abs", [expr])
   }
 }

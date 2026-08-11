@@ -11,7 +11,7 @@ fn normalize_vector_matrix(vec : Matrix) -> Matrix raise MatrixError {
   if vec.rows == 1 {
     return vec.transpose()
   }
-  raise MatrixError::ShapeError("expected a row or column vector")
+  raise ShapeError("expected a row or column vector")
 }
 
 ///|
@@ -19,7 +19,7 @@ fn vector_dot(lhs : Matrix, rhs : Matrix) -> Expr raise MatrixError {
   let left = normalize_vector_matrix(lhs)
   let right = normalize_vector_matrix(rhs)
   if left.rows != right.rows {
-    raise MatrixError::ShapeError("vector dimensions must agree")
+    raise ShapeError("vector dimensions must agree")
   }
   let mut acc = @symcore.int(0)
   for i in 0..<left.rows {
@@ -33,7 +33,7 @@ fn vector_sub(lhs : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
   let left = normalize_vector_matrix(lhs)
   let right = normalize_vector_matrix(rhs)
   if left.rows != right.rows {
-    raise MatrixError::ShapeError("vector dimensions must agree")
+    raise ShapeError("vector dimensions must agree")
   }
   let out : Array[Array[Expr]] = []
   for i in 0..<left.rows {
@@ -61,7 +61,7 @@ fn trig_function(name : String, theta : Expr) -> Expr {
 /// - Limits: Raises `MatrixError::ShapeError` when `n` is negative.
 pub fn jordan_cell(eigenval : Expr, n : Int) -> Matrix raise MatrixError {
   if n < 0 {
-    raise MatrixError::ShapeError("jordan_cell size must be non-negative")
+    raise ShapeError("jordan_cell size must be non-negative")
   }
   let out = zeros(n, cols=Some(n))
   let data = clone_expr_rows(out.data)
@@ -195,9 +195,7 @@ pub fn gram_schmidt(
       current = vector_sub(current, vector_scale(prev, coeff))
     }
     if current.is_zero_matrix() {
-      raise MatrixError::SingularMatrixError(
-        "gram_schmidt found linearly dependent vectors",
-      )
+      raise SingularMatrixError("gram_schmidt found linearly dependent vectors")
     }
     if orthonormal {
       let norm = expr_simplify(
@@ -284,8 +282,8 @@ pub fn casoratian(
   let rows = seqs.length()
   let data : Array[Array[Expr]] = []
   let name = match n {
-    @symcore.Expr::Symbol(sym) => sym
-    _ => raise MatrixError::ValueError("casoratian variable must be a Symbol")
+    Symbol(sym) => sym
+    _ => raise ValueError("casoratian variable must be a Symbol")
   }
   for i in 0..<rows {
     let row : Array[Expr] = []

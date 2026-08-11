@@ -5,16 +5,16 @@
 ///|
 pub fn expr_conjugate(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(_) => expr
-    Expr::Symbol(name) =>
+    Number(_) => expr
+    Symbol(name) =>
       if name == "I" {
         int(-1) * expr
       } else {
         @symcore.raw_function("conjugate", [expr])
       }
-    Expr::Add(args) => @symcore.add(args.map(expr_conjugate))
-    Expr::Mul(args) => @symcore.mul(args.map(expr_conjugate))
-    Expr::Pow(base, exp) => expr_conjugate(base) ^ exp
+    Add(args) => @symcore.add(args.map(expr_conjugate))
+    Mul(args) => @symcore.mul(args.map(expr_conjugate))
+    Pow(base, exp) => expr_conjugate(base) ^ exp
     _ =>
       match @symcore.application_args(expr) {
         Some([arg]) if @symcore.application_has_name(expr, "conjugate") => arg
@@ -29,21 +29,19 @@ pub fn dagger(expr : Expr, evaluate? : Bool = true) -> Expr {
     return @symcore.raw_function("Dagger", [expr])
   }
   match expr {
-    Expr::Add(args) => @symcore.raw_add(args.map(arg => dagger(arg)))
-    Expr::Mul(args) => {
+    Add(args) => @symcore.raw_add(args.map(arg => dagger(arg)))
+    Mul(args) => {
       let reversed : Array[Expr] = Array::new()
       for idx in 0..<args.length() {
         reversed.push(dagger(args[args.length() - 1 - idx]))
       }
       @symcore.raw_mul(reversed)
     }
-    Expr::Pow(base, exp) => @symcore.raw_pow(dagger(base), exp)
-    Expr::Symbol(name) if name == "Jplus" || name == "Jminus" =>
+    Pow(base, exp) => @symcore.raw_pow(dagger(base), exp)
+    Symbol(name) if name == "Jplus" || name == "Jminus" =>
       @symcore.raw_function("Dagger", [expr])
-    Expr::Symbol(name) if name == "Jx" ||
-      name == "Jy" ||
-      name == "Jz" ||
-      name == "J2" => expr
+    Symbol(name) if name == "Jx" || name == "Jy" || name == "Jz" || name == "J2" =>
+      expr
     _ =>
       match (@symcore.application_name(expr), @symcore.application_args(expr)) {
         (Some("Ket"), Some(args)) => @symcore.raw_function("Bra", args)

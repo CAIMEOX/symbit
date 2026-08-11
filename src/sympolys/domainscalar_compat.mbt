@@ -35,14 +35,14 @@ fn scalar_quo(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   if fe_is_zero(b) {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   match domain {
-    Domain::ZZ => {
+    ZZ => {
       let aq = fe_expect_rational(a)
       let bq = fe_expect_rational(b)
       let q = aq.numerator().div(bq.numerator())
-      fe_from_rational(@symnum.BigRational::from_bigint(q), Domain::ZZ)
+      fe_from_rational(@symnum.BigRational::from_bigint(q), ZZ)
     }
     _ => fe_mul(a, fe_inv(b))
   }
@@ -55,14 +55,14 @@ fn scalar_rem(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   if fe_is_zero(b) {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   match domain {
-    Domain::ZZ => {
+    ZZ => {
       let aq = fe_expect_rational(a)
       let bq = fe_expect_rational(b)
       let r = aq.numerator().mod(bq.numerator())
-      fe_from_rational(@symnum.BigRational::from_bigint(r), Domain::ZZ)
+      fe_from_rational(@symnum.BigRational::from_bigint(r), ZZ)
     }
     _ => fe_from_int(0, domain)
   }
@@ -83,7 +83,7 @@ pub fn domain_scalar_new(
 ) -> DomainScalar raise PolyError {
   // Validation: element must support arithmetic with domain zero.
   let _ = fe_add(element, fe_from_int(0, domain))
-  DomainScalar::{ element, domain }
+  { element, domain }
 }
 
 ///|
@@ -229,7 +229,7 @@ pub fn DomainScalar::pow(
   n : Int,
 ) -> DomainScalar raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let mut acc = fe_from_int(1, self.domain)
   let mut base = self.element
@@ -357,7 +357,7 @@ pub fn DomainScalar::is_one(self : DomainScalar) -> Bool {
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub impl Show for DomainScalar with fn to_string(self) -> String {
-  self.element.to_string()
+  Show::to_string(self.element)
 }
 
 ///|
@@ -372,7 +372,7 @@ pub impl Show for DomainScalar with fn to_string(self) -> String {
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub impl Show for DomainScalar with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|

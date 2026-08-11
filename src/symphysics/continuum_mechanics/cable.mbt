@@ -41,10 +41,10 @@ pub fn cable(
   right : CableSupportSpec,
 ) -> Cable raise CableError {
   guard left.0 != right.0 else {
-    raise CableError::ValueError("supports cannot have the same label")
+    raise ValueError("supports cannot have the same label")
   }
   guard !cm_expr_eq(left.1, right.1) || !cm_expr_eq(left.2, right.2) else {
-    raise CableError::ValueError("supports cannot be at the same location")
+    raise ValueError("supports cannot be at the same location")
   }
   let ordered = if cm_sign_of_difference(left.1, right.1).unwrap_or(-1) <= 0 {
     (left, right)
@@ -59,7 +59,7 @@ pub fn cable(
     reaction_loads["R_" + label + "_x"] = @symcore.int(0)
     reaction_loads["R_" + label + "_y"] = @symcore.int(0)
   }
-  Cable::{
+  {
     supports_: supports,
     support_labels_: [ordered.0.0, ordered.1.0],
     left_support_: [ordered.0.1, ordered.0.2],
@@ -87,13 +87,13 @@ fn cable_segment_length(
 
 ///|
 fn cable_pi() -> @symcore.Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  NumberSymbol(Pi)
 }
 
 ///|
 fn cable_normalized_degree(angle : @symcore.Expr) -> Int? {
   match angle {
-    @symcore.Expr::Number(n) if n.is_integral() => {
+    Number(n) if n.is_integral() => {
       let mut deg = n.numerator().to_int() % 360
       if deg < 0 {
         deg += 360
@@ -189,7 +189,7 @@ pub fn Cable::change_support(
   new_support : CableSupportSpec,
 ) -> Unit raise CableError {
   guard self.supports_.get(label) is Some(_) else {
-    raise CableError::ValueError("no support exists with the given label")
+    raise ValueError("no support exists with the given label")
   }
   self.supports_.remove(label)
   self.supports_[new_support.0] = [new_support.1, new_support.2]
@@ -211,10 +211,10 @@ pub fn Cable::apply_point_load(
   load : CablePointLoadSpec,
 ) -> Unit raise CableError {
   guard self.distributed_loads_.is_empty() else {
-    raise CableError::ValueError("distributed load already exists")
+    raise ValueError("distributed load already exists")
   }
   guard self.point_loads_.get(load.0) is None else {
-    raise CableError::ValueError("label already exists")
+    raise ValueError("label already exists")
   }
   self.point_loads_[load.0] = [load.3, load.4]
   self.loads_position_[load.0] = [load.1, load.2]
@@ -227,10 +227,10 @@ pub fn Cable::apply_distributed_load(
   magnitude : @symcore.Expr,
 ) -> Unit raise CableError {
   guard self.loads_position_.is_empty() else {
-    raise CableError::ValueError("point loads already exist")
+    raise ValueError("point loads already exist")
   }
   guard self.distributed_loads_.get(label) is None else {
-    raise CableError::ValueError("label already exists")
+    raise ValueError("label already exists")
   }
   self.distributed_loads_[label] = magnitude
 }
@@ -247,9 +247,7 @@ pub fn Cable::remove_loads(
     } else if self.distributed_loads_.get(label) is Some(_) {
       self.distributed_loads_.remove(label)
     } else {
-      raise CableError::ValueError(
-        "error removing load " + label + ": no such load exists",
-      )
+      raise ValueError("error removing load " + label + ": no such load exists")
     }
   }
 }
@@ -403,14 +401,14 @@ pub fn Cable::solve(
     let right_dx = self.right_support_[0] - x0
     let coeffs = cm_linear_solve(
       [
-        @symcore.Expr::Symbol("A") * (left_dx ^ @symcore.int(2)) +
-        @symcore.Expr::Symbol("c") -
+        Symbol("A") * (left_dx ^ @symcore.int(2)) +
+        Symbol("c") -
         self.left_support_[1],
-        @symcore.Expr::Symbol("A") * (right_dx ^ @symcore.int(2)) +
-        @symcore.Expr::Symbol("c") -
+        Symbol("A") * (right_dx ^ @symcore.int(2)) +
+        Symbol("c") -
         self.right_support_[1],
       ],
-      [@symcore.Expr::Symbol("A"), @symcore.Expr::Symbol("c")],
+      [Symbol("A"), Symbol("c")],
     ).unwrap_or({})
     let a_coeff = coeffs.get("A").unwrap_or(@symcore.int(0))
     let c_coeff = coeffs.get("c").unwrap_or(@symcore.int(0))
@@ -463,9 +461,6 @@ pub fn Cable::tension_at(
 ) -> @symcore.Expr raise CableError {
   match self.tension_.get("distributed") {
     Some(expr) => @symcore.subst(expr, { "X": x - self.lowest_x_ })
-    None =>
-      raise CableError::ValueError(
-        "no distributed load added or solve not called",
-      )
+    None => raise ValueError("no distributed load added or solve not called")
   }
 }

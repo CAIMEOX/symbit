@@ -11,7 +11,7 @@ fn quantum_expand_powers(factors : Array[Expr]) -> Array[Expr] {
   let out : Array[Expr] = Array::new()
   for factor in factors {
     match factor {
-      Expr::Pow(base, exp) =>
+      Pow(base, exp) =>
         match quantum_integer_value(exp) {
           Some(n) if n > 0 =>
             for _ in 0..<n {
@@ -136,7 +136,7 @@ fn quantum_reorder_product(
 ) -> Expr {
   guard recursive_depth <= recursive_limit else { return expr }
   match expr {
-    Expr::Mul(args) => {
+    Mul(args) => {
       let factors = quantum_expand_powers(args)
       let rebuilt : Array[Expr] = Array::new()
       let mut idx = 0
@@ -190,7 +190,7 @@ fn quantum_reorder_expression(
   recursive_depth : Int,
 ) -> Expr {
   match expr {
-    Expr::Add(args) =>
+    Add(args) =>
       quantum_add_from_args_preserve(
         args.map(term => {
           quantum_reorder_product(
@@ -198,7 +198,7 @@ fn quantum_reorder_expression(
           )
         }),
       )
-    Expr::Mul(_) =>
+    Mul(_) =>
       quantum_reorder_product(
         expr, ordered_form, independent, recursive_limit, recursive_depth,
       )

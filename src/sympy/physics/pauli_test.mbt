@@ -5,12 +5,9 @@ test "physics.quantum.pauli: local operators, states, and simplification" {
   let sz = sigma_z()
   let sp = sigma_plus()
   let sm = sigma_minus()
-  inspect(sx.to_string(), content="SigmaX()")
-  inspect(
-    sigma_x(name=Some(@symcore.Expr::Symbol("a"))).repr(),
-    content="SigmaX(Symbol('a'))",
-  )
-  inspect(sigma_z_ket(0).dual().to_string(), content="<0|")
+  inspect(Show::to_string(sx), content="SigmaX()")
+  inspect(sigma_x(name=Some(Symbol("a"))).repr(), content="SigmaX(Symbol('a'))")
+  inspect(Show::to_string(sigma_z_ket(0).dual()), content="<0|")
 
   quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([sx.as_expr(), sigma_z_ket(0).as_expr()])),

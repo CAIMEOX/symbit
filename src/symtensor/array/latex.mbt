@@ -101,7 +101,7 @@ fn axis_pair_latex(
   settings : @symprint.LatexSettings,
 ) -> String {
   @symprint.latex_with_settings(
-    @symcore.Expr::Tuple([@symcore.int(pair.0), @symcore.int(pair.1)]),
+    Tuple([@symcore.int(pair.0), @symcore.int(pair.1)]),
     settings,
   )
 }
@@ -109,8 +109,8 @@ fn axis_pair_latex(
 ///|
 fn array_expr_prec(expr : ArrayExpr) -> Int {
   match expr {
-    ArrayExpr::Add(_) => 1
-    ArrayExpr::Mul(_) => 2
+    Add(_) => 1
+    Mul(_) => 2
     _ => 3
   }
 }
@@ -121,20 +121,19 @@ fn array_expr_atomish(
   settings : @symprint.LatexSettings,
 ) -> String {
   match expr {
-    ArrayExpr::Symbol(name, _) =>
-      @symprint.latex_with_settings(@symcore.Expr::Symbol(name), settings)
-    ArrayExpr::Element(base, indices) => {
+    Symbol(name, _) => @symprint.latex_with_settings(Symbol(name), settings)
+    Element(base, indices) => {
       let base_tex = array_expr_atomish(base, settings)
       let indices_tex = indices
         .map(idx => array_expr_part(idx, settings))
         .join(", ")
       "{{\{base_tex}}_{\{indices_tex}}}"
     }
-    ArrayExpr::TensorProduct(items) => {
+    TensorProduct(items) => {
       let args_tex = items.map(item => item.latex(settings~)).join(", ")
       "\\operatorname{ArrayTensorProduct}\\left(\{args_tex}\\right)"
     }
-    ArrayExpr::Contraction(base, axes) => {
+    Contraction(base, axes) => {
       let parts : Array[String] = [base.latex(settings~)]
       for pair in axes {
         parts.push(axis_pair_latex(pair, settings))
@@ -142,7 +141,7 @@ fn array_expr_atomish(
       let parts_tex = parts.join(", ")
       "\\operatorname{ArrayContraction}\\left(\{parts_tex}\\right)"
     }
-    ArrayExpr::Add(_) | ArrayExpr::Mul(_) => abort("array_expr_atomish")
+    Add(_) | Mul(_) => abort("array_expr_atomish")
   }
 }
 
@@ -154,15 +153,15 @@ fn array_expr_format(
 ) -> String {
   let prec = array_expr_prec(expr)
   let body = match expr {
-    ArrayExpr::Add(items) =>
+    Add(items) =>
       items.map(item => array_expr_format(item, prec, settings)).join(" + ")
-    ArrayExpr::Mul(items) => {
+    Mul(items) => {
       let rendered : Array[String] = []
       for item in items {
         let tex = array_expr_format(item, prec, settings)
         rendered.push(
           match item {
-            ArrayExpr::Add(_) => latex_parens(tex)
+            Add(_) => latex_parens(tex)
             _ => tex
           },
         )

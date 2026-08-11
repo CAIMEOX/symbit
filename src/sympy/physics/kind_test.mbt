@@ -1,30 +1,25 @@
 ///|
 test "physics.quantum.kind: local kinds" {
   let x = @symcore.Expr::Symbol("x")
-  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
-  let b = bra([@symcore.Expr::Symbol("k")]).as_expr()
-  let k = ket([@symcore.Expr::Symbol("k")]).as_expr()
+  let a = operator([Symbol("A")]).as_expr()
+  let b = bra([Symbol("k")]).as_expr()
+  let k = ket([Symbol("k")]).as_expr()
 
-  assert_true(quantum_kind(k) == QuantumKind::QKet)
-  assert_true(quantum_kind(b) == QuantumKind::QBra)
-  assert_true(quantum_kind(@symcore.raw_mul([b, k])) == QuantumKind::QNumber)
-  assert_true(quantum_kind(@symcore.raw_mul([x, k])) == QuantumKind::QKet)
-  assert_true(quantum_kind(a) == QuantumKind::QOperator)
-  assert_true(quantum_kind(@symcore.raw_mul([k, b])) == QuantumKind::QOperator)
-  assert_true(quantum_kind(@symcore.raw_mul([a, k])) == QuantumKind::QUndefined)
-  assert_true(quantum_kind(dagger(k)) == QuantumKind::QBra)
+  assert_true(quantum_kind(k) == QKet)
+  assert_true(quantum_kind(b) == QBra)
+  assert_true(quantum_kind(@symcore.raw_mul([b, k])) == QNumber)
+  assert_true(quantum_kind(@symcore.raw_mul([x, k])) == QKet)
+  assert_true(quantum_kind(a) == QOperator)
+  assert_true(quantum_kind(@symcore.raw_mul([k, b])) == QOperator)
+  assert_true(quantum_kind(@symcore.raw_mul([a, k])) == QUndefined)
+  assert_true(quantum_kind(dagger(k)) == QBra)
   assert_true(
     quantum_kind(
-      commutator(
-        a,
-        operator([@symcore.Expr::Symbol("B")]).as_expr(),
-        evaluate=false,
-      ),
+      commutator(a, operator([Symbol("B")]).as_expr(), evaluate=false),
     ) ==
-    QuantumKind::QOperator,
+    QOperator,
   )
   assert_true(
-    quantum_kind(@symcore.raw_function("TensorProduct", [k, k])) ==
-    QuantumKind::QKet,
+    quantum_kind(@symcore.raw_function("TensorProduct", [k, k])) == QKet,
   )
 }

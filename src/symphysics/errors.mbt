@@ -11,8 +11,8 @@ pub(all) suberror PhysicsError {
 ///|
 pub impl Show for PhysicsError with fn output(self, logger : &Logger) -> Unit {
   match self {
-    PhysicsError::ValueError(msg) => logger.write_string("ValueError(\{msg})")
-    PhysicsError::IndexError(msg) => logger.write_string("IndexError(\{msg})")
-    PhysicsError::ShapeError(msg) => logger.write_string("ShapeError(\{msg})")
+    ValueError(msg) => logger.write_string("ValueError(\{msg})")
+    IndexError(msg) => logger.write_string("IndexError(\{msg})")
+    ShapeError(msg) => logger.write_string("ShapeError(\{msg})")
   }
 }

@@ -3,7 +3,7 @@ test "float constructors roundtrip exact dyadics" {
   let dyadic = Float::from_str("0.125", prec=80) catch { _ => fail("parse") }
   assert_true(dyadic.to_rational() == (1N, 8N))
   assert_true(dyadic.precision() == 80)
-  inspect(dyadic.to_string(), content="0.125")
+  inspect(Show::to_string(dyadic), content="0.125")
 }
 
 ///|

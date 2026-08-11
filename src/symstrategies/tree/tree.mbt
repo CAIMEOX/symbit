@@ -22,12 +22,12 @@ fn[A, B] treeapply_map(
   leaf : (A) -> B,
 ) -> B {
   match tree {
-    Tree::Leaf(v) => leaf(v)
-    Tree::Choice(items) => {
+    Leaf(v) => leaf(v)
+    Choice(items) => {
       let mapped : Array[B] = items.map(item => treeapply_map(item, join, leaf))
       (join.choice)(mapped)
     }
-    Tree::Seq(items) => {
+    Seq(items) => {
       let mapped : Array[B] = items.map(item => treeapply_map(item, join, leaf))
       (join.seq)(mapped)
     }

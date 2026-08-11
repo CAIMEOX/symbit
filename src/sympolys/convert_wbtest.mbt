@@ -7,25 +7,19 @@ fn conv_wb_rat(num : Int, den : Int) -> @symnum.BigRational {
 
 ///|
 fn conv_wb_qq(num : Int, den : Int) -> FieldElem {
-  FieldElem::QQ(conv_wb_rat(num, den))
+  QQ(conv_wb_rat(num, den))
 }
 
 ///|
 test "convert wb: fe_to_expr_const covers CC branch variants" {
-  let pure_real = fe_to_expr_const(
-    FieldElem::CC(conv_wb_rat(2, 1), conv_wb_rat(0, 1)),
-  )
+  let pure_real = fe_to_expr_const(CC(conv_wb_rat(2, 1), conv_wb_rat(0, 1)))
   inspect(@symprint.pretty_string(pure_real), content="2")
 
-  let pure_imag = fe_to_expr_const(
-    FieldElem::CC(conv_wb_rat(0, 1), conv_wb_rat(3, 1)),
-  )
+  let pure_imag = fe_to_expr_const(CC(conv_wb_rat(0, 1), conv_wb_rat(3, 1)))
   let pure_imag_s = @symprint.pretty_string(pure_imag)
   assert_true(pure_imag_s.contains("I") && pure_imag_s.contains("3"))
 
-  let full = fe_to_expr_const(
-    FieldElem::CC(conv_wb_rat(2, 1), conv_wb_rat(3, 1)),
-  )
+  let full = fe_to_expr_const(CC(conv_wb_rat(2, 1), conv_wb_rat(3, 1)))
   let full_s = @symprint.pretty_string(full)
   assert_true(
     full_s.contains("I") && full_s.contains("2") && full_s.contains("3"),
@@ -56,20 +50,20 @@ test "convert wb: fe_ext_to_expr handles empty/sparse/mixed terms" {
 ///|
 test "convert wb: fe_algext_to_expr and AlgExt constant rendering" {
   let a = @symcore.Expr::Symbol("a")
-  let minpoly = PolyBuilder::new(["a"], Domain::QQ).from_expr(
+  let minpoly = PolyBuilder::new(["a"], QQ).from_expr(
     (a ^ @symcore.int(2)) + @symcore.int(1),
   )
 
   inspect(
     @symprint.pretty_string(
-      fe_algext_to_expr(Domain::QQ, [conv_wb_qq(0, 1)], minpoly, "a"),
+      fe_algext_to_expr(QQ, [conv_wb_qq(0, 1)], minpoly, "a"),
     ),
     content="0",
   )
   inspect(
     @symprint.pretty_string(
       fe_algext_to_expr(
-        Domain::QQ,
+        QQ,
         [conv_wb_qq(3, 1), conv_wb_qq(1, 1), conv_wb_qq(2, 1)],
         minpoly,
         "a",
@@ -79,7 +73,7 @@ test "convert wb: fe_algext_to_expr and AlgExt constant rendering" {
   )
 
   let coeff = FieldElem::AlgExt(
-    Domain::QQ,
+    QQ,
     [conv_wb_qq(1, 1), conv_wb_qq(1, 1), conv_wb_qq(2, 1)],
     minpoly,
     "a",
@@ -92,22 +86,15 @@ test "convert wb: fe_algext_to_expr and AlgExt constant rendering" {
   // Single non-zero term exercises the `terms.length() == 1` return path.
   inspect(
     @symprint.pretty_string(
-      fe_algext_to_expr(
-        Domain::QQ,
-        [conv_wb_qq(0, 1), conv_wb_qq(1, 1)],
-        minpoly,
-        "a",
-      ),
+      fe_algext_to_expr(QQ, [conv_wb_qq(0, 1), conv_wb_qq(1, 1)], minpoly, "a"),
     ),
     content="a",
   )
 
   // Nested AlgExt coefficient exercises `fe_cast_to_base` AlgExt arm.
-  let nested = FieldElem::AlgExt(Domain::QQ, [conv_wb_qq(2, 1)], minpoly, "a")
+  let nested = FieldElem::AlgExt(QQ, [conv_wb_qq(2, 1)], minpoly, "a")
   inspect(
-    @symprint.pretty_string(
-      fe_algext_to_expr(Domain::QQ, [nested], minpoly, "a"),
-    ),
+    @symprint.pretty_string(fe_algext_to_expr(QQ, [nested], minpoly, "a")),
     content="2",
   )
 }

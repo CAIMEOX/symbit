@@ -25,14 +25,11 @@ fn qubit_parse_bits(bits : String) -> Array[Int] raise @symphysics.PhysicsError 
     match ch {
       '0' => out.push(0)
       '1' => out.push(1)
-      _ =>
-        raise @symphysics.PhysicsError::ValueError(
-          "Qubit bits must be a string of 0/1 digits",
-        )
+      _ => raise ValueError("Qubit bits must be a string of 0/1 digits")
     }
   }
   guard !out.is_empty() else {
-    raise @symphysics.PhysicsError::ValueError("Qubit needs at least one bit")
+    raise ValueError("Qubit needs at least one bit")
   }
   out
 }
@@ -43,14 +40,10 @@ fn int_to_bits(
   nqubits : Int,
 ) -> Array[Int] raise @symphysics.PhysicsError {
   guard number >= 0 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "IntQubit expects a nonnegative integer",
-    )
+    raise ValueError("IntQubit expects a nonnegative integer")
   }
   guard nqubits > 0 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "IntQubit expects a positive number of qubits",
-    )
+    raise ValueError("IntQubit expects a positive number of qubits")
   }
   let bits : Array[Int] = Array::make(nqubits, 0)
   for idx in 0..<nqubits {
@@ -62,12 +55,12 @@ fn int_to_bits(
 
 ///|
 pub fn qubit(bits : String) -> QubitExpr raise @symphysics.PhysicsError {
-  QubitExpr::{ bits: qubit_parse_bits(bits), is_bra: false, int_form: false }
+  { bits: qubit_parse_bits(bits), is_bra: false, int_form: false }
 }
 
 ///|
 pub fn qubit_bra(bits : String) -> QubitExpr raise @symphysics.PhysicsError {
-  QubitExpr::{ bits: qubit_parse_bits(bits), is_bra: true, int_form: false }
+  { bits: qubit_parse_bits(bits), is_bra: true, int_form: false }
 }
 
 ///|
@@ -75,11 +68,7 @@ pub fn int_qubit(
   number : Int,
   nqubits : Int,
 ) -> QubitExpr raise @symphysics.PhysicsError {
-  QubitExpr::{
-    bits: int_to_bits(number, nqubits),
-    is_bra: false,
-    int_form: true,
-  }
+  { bits: int_to_bits(number, nqubits), is_bra: false, int_form: true }
 }
 
 ///|
@@ -87,11 +76,7 @@ pub fn int_qubit_bra(
   number : Int,
   nqubits : Int,
 ) -> QubitExpr raise @symphysics.PhysicsError {
-  QubitExpr::{
-    bits: int_to_bits(number, nqubits),
-    is_bra: true,
-    int_form: true,
-  }
+  { bits: int_to_bits(number, nqubits), is_bra: true, int_form: true }
 }
 
 ///|
@@ -102,13 +87,13 @@ pub fn qubit_from_bits(
 ) -> QubitExpr raise @symphysics.PhysicsError {
   for bit in bits {
     guard bit == 0 || bit == 1 else {
-      raise @symphysics.PhysicsError::ValueError("Qubit bits must be 0 or 1")
+      raise ValueError("Qubit bits must be 0 or 1")
     }
   }
   guard !bits.is_empty() else {
-    raise @symphysics.PhysicsError::ValueError("Qubit needs at least one bit")
+    raise ValueError("Qubit needs at least one bit")
   }
-  QubitExpr::{ bits: bits.copy(), is_bra: bra, int_form }
+  { bits: bits.copy(), is_bra: bra, int_form }
 }
 
 ///|
@@ -125,9 +110,7 @@ fn int_to_minimal_bits(
   number : Int,
 ) -> Array[Int] raise @symphysics.PhysicsError {
   guard number >= 0 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "IntQubit expects a nonnegative integer",
-    )
+    raise ValueError("IntQubit expects a nonnegative integer")
   }
   let nqubits = if number <= 1 {
     1
@@ -181,7 +164,7 @@ pub impl Show for QubitExpr with fn to_string(self) {
 
 ///|
 pub impl Show for QubitExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -198,7 +181,7 @@ pub fn QubitExpr::repr(self : QubitExpr) -> String {
 
 ///|
 pub fn QubitExpr::dual(self : QubitExpr) -> QubitExpr {
-  QubitExpr::{ bits: self.bits, is_bra: !self.is_bra, int_form: self.int_form }
+  { bits: self.bits, is_bra: !self.is_bra, int_form: self.int_form }
 }
 
 ///|
@@ -217,7 +200,7 @@ pub fn QubitExpr::bit(
   index : Int,
 ) -> Int raise @symphysics.PhysicsError {
   guard index >= 0 && index < self.bits.length() else {
-    raise @symphysics.PhysicsError::IndexError("qubit index out of range")
+    raise IndexError("qubit index out of range")
   }
   self.bits[self.bits.length() - 1 - index]
 }
@@ -228,12 +211,12 @@ pub fn QubitExpr::flip(
   index : Int,
 ) -> QubitExpr raise @symphysics.PhysicsError {
   guard index >= 0 && index < self.bits.length() else {
-    raise @symphysics.PhysicsError::IndexError("qubit index out of range")
+    raise IndexError("qubit index out of range")
   }
   let bits = self.bits.copy()
   let pos = bits.length() - 1 - index
   bits[pos] = if bits[pos] == 0 { 1 } else { 0 }
-  QubitExpr::{ bits, is_bra: self.is_bra, int_form: self.int_form }
+  { bits, is_bra: self.is_bra, int_form: self.int_form }
 }
 
 ///|
@@ -245,12 +228,11 @@ pub fn qubit_from_expr(expr : Expr) -> QubitExpr? {
           let bits : Array[Int] = []
           for arg in args {
             match arg {
-              Expr::Number(n) if n.is_integral() =>
-                bits.push(n.numerator().to_int())
+              Number(n) if n.is_integral() => bits.push(n.numerator().to_int())
               _ => return None
             }
           }
-          Some(QubitExpr::{ bits, is_bra: name == "QubitBra", int_form: false })
+          Some({ bits, is_bra: name == "QubitBra", int_form: false })
         }
         None => None
       }
@@ -258,15 +240,11 @@ pub fn qubit_from_expr(expr : Expr) -> QubitExpr? {
       match quantum_expr_args(expr) {
         Some([arg]) =>
           match arg {
-            Expr::Number(n) if n.is_integral() && n.numerator().to_int() >= 0 => {
+            Number(n) if n.is_integral() && n.numerator().to_int() >= 0 => {
               let bits = int_to_minimal_bits(n.numerator().to_int()) catch {
                 _ => return None
               }
-              Some(QubitExpr::{
-                bits,
-                is_bra: name == "IntQubitBra",
-                int_form: true,
-              })
+              Some({ bits, is_bra: name == "IntQubitBra", int_form: true })
             }
             _ => None
           }
@@ -282,9 +260,7 @@ fn qubit_basis_vector(
   nqubits : Int,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   guard q.nqubits() == nqubits else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "Qubit size does not match requested basis",
-    )
+    raise ShapeError("Qubit size does not match requested basis")
   }
   let size = 1 << nqubits
   if q.is_bra {
@@ -306,7 +282,7 @@ fn qubit_expr_nqubits(expr : Expr) -> Int? {
     Some(q) => Some(q.nqubits())
     None =>
       match expr {
-        Expr::Add(args) => {
+        Add(args) => {
           let sizes = args.map(qubit_expr_nqubits)
           for size in sizes {
             match size {
@@ -316,7 +292,7 @@ fn qubit_expr_nqubits(expr : Expr) -> Int? {
           }
           None
         }
-        Expr::Mul(args) => {
+        Mul(args) => {
           for arg in args {
             match qubit_expr_nqubits(arg) {
               Some(v) => return Some(v)
@@ -348,17 +324,12 @@ pub fn qubit_to_matrix(
   } else {
     match qubit_expr_nqubits(expr) {
       Some(v) => v
-      None =>
-        raise @symphysics.PhysicsError::ValueError(
-          "Expression does not contain a qubit state",
-        )
+      None => raise ValueError("Expression does not contain a qubit state")
     }
   }
   match expr {
-    Expr::Add(args) => {
-      guard !args.is_empty() else {
-        raise @symphysics.PhysicsError::ValueError("Empty qubit sum")
-      }
+    Add(args) => {
+      guard !args.is_empty() else { raise ValueError("Empty qubit sum") }
       let mut acc = qubit_to_matrix(args[0], nqubits=effective_nqubits)
       for idx in 1..<args.length() {
         acc = matrix_add_or_scalar(
@@ -368,26 +339,20 @@ pub fn qubit_to_matrix(
       }
       acc
     }
-    Expr::Mul(_) => {
+    Mul(_) => {
       let (scalar, body) = quantum_split_scalar_factors(expr)
       match body {
         Some(body_expr) => {
           let base = qubit_to_matrix(body_expr, nqubits=effective_nqubits)
           base.scale(scalar)
         }
-        None =>
-          raise @symphysics.PhysicsError::ValueError(
-            "Pure scalar is not a qubit state",
-          )
+        None => raise ValueError("Pure scalar is not a qubit state")
       }
     }
     _ =>
       match qubit_from_expr(expr) {
         Some(q) => qubit_basis_vector(q, effective_nqubits)
-        None =>
-          raise @symphysics.PhysicsError::ValueError(
-            "Expected a qubit expression",
-          )
+        None => raise ValueError("Expected a qubit expression")
       }
   }
 }
@@ -405,9 +370,7 @@ pub fn matrix_to_qubit(
     nqubits += 1
   }
   guard width == size else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "Matrix size is not a power-of-two qubit basis",
-    )
+    raise ShapeError("Matrix size is not a power-of-two qubit basis")
   }
   let terms : Array[Expr] = []
   for idx in 0..<size {
@@ -463,9 +426,7 @@ fn qubit_matrix_size(
     width = width * 2
   }
   guard width == size else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "Matrix size is not a power-of-two qubit basis",
-    )
+    raise ShapeError("Matrix size is not a power-of-two qubit basis")
   }
   size
 }
@@ -477,9 +438,7 @@ fn qubit_partial_outcome_matrix(
   outcome : Int,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   guard matrix.width() == 1 else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "Measurements currently expect qubit kets",
-    )
+    raise ShapeError("Measurements currently expect qubit kets")
   }
   let size = qubit_matrix_size(matrix)
   let rows : Array[Array[Expr]] = []
@@ -500,9 +459,7 @@ fn qubit_probability_terms(
   matrix : @symphysics.ExplicitMatrix,
 ) -> Array[(Expr, Expr)] raise @symphysics.PhysicsError {
   guard matrix.width() == 1 else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "Measurements currently expect qubit kets",
-    )
+    raise ShapeError("Measurements currently expect qubit kets")
   }
   let size = qubit_matrix_size(matrix)
   let mut nqubits = 0

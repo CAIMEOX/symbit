@@ -6,7 +6,7 @@ test "geometry.ellipse core helpers" {
     @symcore.int(1),
   )
   let e = match ellipse_value {
-    GeometryEntity::Ellipse(value) => value
+    Ellipse(value) => value
     _ => fail("expected ellipse")
   }
   assert_true(geometry_expr_equal(geometry_py_expr_text(e.area()), "2*pi"))
@@ -54,7 +54,7 @@ test "geometry.ellipse tangency bounds and parameter values" {
       @symcore.int(2),
       @symcore.int(1),
     ) {
-    GeometryEntity::Ellipse(value) => value
+    Ellipse(value) => value
     _ => fail("expected ellipse")
   }
   geometry_assert_expr_equal(e.major(), "2", "ellipse major")
@@ -67,10 +67,7 @@ test "geometry.ellipse tangency bounds and parameter values" {
   geometry_assert_point_equal(bounds.1, "2", "1", "ellipse bounds max")
   assert_eq(
     expr_map_summary(
-      e.parameter_value(
-        point2d(@symcore.int(2), @symcore.int(0)),
-        @symcore.Expr::Symbol("t"),
-      ),
+      e.parameter_value(point2d(@symcore.int(2), @symcore.int(0)), Symbol("t")),
     ),
     "{t: 0}",
   )
@@ -116,10 +113,7 @@ test "geometry.circle tangency bounds and parameter values" {
   geometry_assert_point_equal(bounds.1, "1", "1", "circle bounds max")
   assert_eq(
     expr_map_summary(
-      c.parameter_value(
-        point2d(@symcore.int(1), @symcore.int(0)),
-        @symcore.Expr::Symbol("t"),
-      ),
+      c.parameter_value(point2d(@symcore.int(1), @symcore.int(0)), Symbol("t")),
     ),
     "{t: 0}",
   )
@@ -154,7 +148,7 @@ test "geometry.ellipse higher helpers" {
       @symcore.int(5),
       @symcore.int(4),
     ) {
-    GeometryEntity::Ellipse(value) => value
+    Ellipse(value) => value
     _ => fail("expected ellipse")
   }
   assert_eq(
@@ -179,9 +173,8 @@ test "geometry.ellipse higher helpers" {
 ///|
 test "geometry.ellipse auxiliary director evolute reflect and random" {
   let c = point2d(@symcore.int(1), @symcore.int(2))
-  let ellipse_obj = match
-    ellipse(c, @symcore.Expr::Symbol("a"), @symcore.Expr::Symbol("b")) {
-    GeometryEntity::Ellipse(value) => value
+  let ellipse_obj = match ellipse(c, Symbol("a"), Symbol("b")) {
+    Ellipse(value) => value
     _ => fail("expected symbolic ellipse")
   }
   assert_eq(
@@ -203,7 +196,7 @@ test "geometry.ellipse auxiliary director evolute reflect and random" {
       @symcore.int(1),
       @symcore.int(2),
     ) {
-    GeometryEntity::Ellipse(value) => value
+    Ellipse(value) => value
     _ => fail("expected numeric ellipse")
   }
   let horizontal = line(
@@ -239,7 +232,7 @@ test "geometry.ellipse normal lines" {
       @symcore.int(2),
       @symcore.int(1),
     ) {
-    GeometryEntity::Ellipse(value) => value
+    Ellipse(value) => value
     _ => fail("expected ellipse")
   }
   assert_eq(

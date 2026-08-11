@@ -34,7 +34,7 @@ fn kane_identity_kdes(
   kd_eqs : Array[Expr],
 ) -> Array[Substitution] raise @symphysics.PhysicsError {
   guard coords.length() == speeds.length() && kd_eqs.length() == coords.length() else {
-    raise @symphysics.PhysicsError::ValueError(
+    raise ValueError(
       "KanesMethod currently requires one kinematic equation per coordinate",
     )
   }
@@ -44,7 +44,7 @@ fn kane_identity_kdes(
     let simplified = mech_simplify_expr(kd_eqs[i])
     let merged = mech_simplify_expr(msubs_expr(simplified, [(qd, speeds[i])]))
     if !mech_expr_is_zero(merged) {
-      raise @symphysics.PhysicsError::ValueError(
+      raise ValueError(
         "KanesMethod currently supports identity-style kinematic differential equations only",
       )
     }
@@ -64,11 +64,11 @@ fn kane_generalized_forces(
     let mut total = int(0)
     for load in loads {
       match load {
-        Load::ForceLoad(value) =>
+        ForceLoad(value) =>
           total = mech_simplify_expr(
             total + value.point.partial_velocity(frame, speed).dot(value.force),
           )
-        Load::TorqueLoad(value) => {
+        TorqueLoad(value) => {
           let partials = value.frame.partial_velocity(frame, [speed])
           total = mech_simplify_expr(total + partials[0].dot(value.torque))
         }
@@ -91,7 +91,7 @@ pub fn kanes_method(
 ) -> KanesMethod raise @symphysics.PhysicsError {
   validate_coordinates(coordinates=q_ind, speeds=u_ind)
   ignore(kane_identity_kdes(q_ind, u_ind, kd_eqs))
-  KanesMethod::{
+  {
     frame_: frame,
     q_ind_: q_ind.copy(),
     u_ind_: u_ind.copy(),

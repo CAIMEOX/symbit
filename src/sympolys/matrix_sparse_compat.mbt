@@ -794,7 +794,7 @@ pub fn sdm_nullspace_from_rref(
   let _ = nonzero_cols
   let (rows, cols) = a.shape()
   if cols < ncols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let work = if cols == ncols {
     a
@@ -837,7 +837,7 @@ pub fn sdm_particular_from_rref(
   pivots : Array[Int],
 ) -> SDM raise PolyError {
   if a.shape().1 != ncols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   a.particular(pivots~)
 }

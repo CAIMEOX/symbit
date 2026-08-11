@@ -126,7 +126,7 @@ fn sympy_stats_names() -> Array[String] {
 
 ///|
 fn bind_symbol(globals : @py.PyDict, name : String) -> Unit raise {
-  let sym = sympy_call_must("sympy.Symbol", [OracleArg::Str(name)])
+  let sym = sympy_call_must("sympy.Symbol", [Str(name)])
   globals.set(name, objenum_to_obj(sym))
 }
 
@@ -170,9 +170,9 @@ fn py_eval_stats(expr : String) -> @py.PyObjectEnum raise {
     let eval_callable = py_callable_from_enum(eval_obj)
     let globals = stats_globals()
     let args = @sympy.py_pack_args([
-      OracleArg::Str(expr),
-      OracleArg::PyObj(globals.obj()),
-      OracleArg::PyObj(globals.obj()),
+      Str(expr),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match py_call_object(eval_callable, args, print_err=true) {
       Some(obj) => obj
@@ -200,9 +200,9 @@ fn py_eval_stats_silent(expr : String) -> @py.PyObjectEnum? {
     let eval_callable = py_callable_from_enum(eval_obj)
     let globals = stats_globals()
     let args = @sympy.py_pack_args([
-      OracleArg::Str(expr),
-      OracleArg::PyObj(globals.obj()),
-      OracleArg::PyObj(globals.obj()),
+      Str(expr),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     py_call_object(eval_callable, args, print_err=false)
   } catch {
@@ -231,27 +231,24 @@ pub fn stats_try_eval_str(expr : String) -> String? {
 ///|
 pub fn stats_eval_srepr(expr : String) -> String raise {
   let obj = objenum_to_obj(py_eval_stats(expr))
-  let srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(obj)])
+  let srepr = sympy_call_must("sympy.srepr", [PyObj(obj)])
   py_str_enum(srepr)
 }
 
 ///|
 pub fn stats_expr_equiv(a : String, b : String) -> Bool raise {
   let locals = stats_globals()
-  let kwargs : Map[String, OracleArg] = {
-    "locals": OracleArg::PyObj(locals.obj()),
-  }
+  let kwargs : Map[String, OracleArg] = { "locals": PyObj(locals.obj()) }
   let a_obj = objenum_to_obj(
-    sympy_call_must("sympy.sympify", [OracleArg::Str(a)], kwargs~),
+    sympy_call_must("sympy.sympify", [Str(a)], kwargs~),
   )
   let b_obj = objenum_to_obj(
-    sympy_call_must("sympy.sympify", [OracleArg::Str(b)], kwargs~),
+    sympy_call_must("sympy.sympify", [Str(b)], kwargs~),
   )
-  match
-    sympy_call("sympy.Eq", [OracleArg::PyObj(a_obj), OracleArg::PyObj(b_obj)]) {
+  match sympy_call("sympy.Eq", [PyObj(a_obj), PyObj(b_obj)]) {
     Some(eq_obj) => {
       let simp = sympy_call_must("sympy.simplify", [
-        OracleArg::PyObj(objenum_to_obj(eq_obj)),
+        PyObj(objenum_to_obj(eq_obj)),
       ])
       let txt = py_str_enum(simp)
       if txt == "True" {
@@ -263,8 +260,8 @@ pub fn stats_expr_equiv(a : String, b : String) -> Bool raise {
     }
     None => ()
   }
-  let arepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(a_obj)])
-  let brepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(b_obj)])
+  let arepr = sympy_call_must("sympy.srepr", [PyObj(a_obj)])
+  let brepr = sympy_call_must("sympy.srepr", [PyObj(b_obj)])
   py_str_enum(arepr) == py_str_enum(brepr)
 }
 

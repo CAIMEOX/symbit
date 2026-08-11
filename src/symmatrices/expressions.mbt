@@ -133,11 +133,11 @@ fn normalize_add_items(items : Array[MatrixExpr]) -> Array[MatrixExpr] {
   let out : Array[MatrixExpr] = []
   for item in items {
     match item {
-      MatrixExpr::Add(inner) =>
+      Add(inner) =>
         for nested in normalize_add_items(inner) {
           out.push(nested)
         }
-      MatrixExpr::Zero(_, _) => ()
+      Zero(_, _) => ()
       _ => out.push(item)
     }
   }
@@ -149,11 +149,11 @@ fn normalize_mul_items(items : Array[MatrixExpr]) -> Array[MatrixExpr] {
   let out : Array[MatrixExpr] = []
   for item in items {
     match item {
-      MatrixExpr::Mul(inner) =>
+      Mul(inner) =>
         for nested in normalize_mul_items(inner) {
           out.push(nested)
         }
-      MatrixExpr::Identity(_) => ()
+      Identity(_) => ()
       _ => out.push(item)
     }
   }
@@ -165,7 +165,7 @@ fn normalize_block_diag_items(items : Array[MatrixExpr]) -> Array[MatrixExpr] {
   let out : Array[MatrixExpr] = []
   for item in items {
     match item {
-      MatrixExpr::BlockDiag(inner) =>
+      BlockDiag(inner) =>
         for nested in normalize_block_diag_items(inner) {
           out.push(nested)
         }
@@ -179,7 +179,7 @@ fn normalize_block_diag_items(items : Array[MatrixExpr]) -> Array[MatrixExpr] {
 fn all_concrete(items : Array[MatrixExpr]) -> Bool {
   items.all(fn(item) {
     match item {
-      MatrixExpr::Concrete(_) => true
+      Concrete(_) => true
       _ => false
     }
   })
@@ -188,31 +188,31 @@ fn all_concrete(items : Array[MatrixExpr]) -> Bool {
 ///|
 fn concrete_add(items : Array[MatrixExpr]) -> MatrixExpr {
   let mut acc = match items[0] {
-    MatrixExpr::Concrete(m) => m
+    Concrete(m) => m
     _ => abort("unreachable")
   }
   for item in items[1:] {
     match item {
-      MatrixExpr::Concrete(m) => acc = acc + m
+      Concrete(m) => acc = acc + m
       _ => abort("unreachable")
     }
   }
-  MatrixExpr::Concrete(acc)
+  Concrete(acc)
 }
 
 ///|
 fn concrete_mul(items : Array[MatrixExpr]) -> MatrixExpr {
   let mut acc = match items[0] {
-    MatrixExpr::Concrete(m) => m
+    Concrete(m) => m
     _ => abort("unreachable")
   }
   for item in items[1:] {
     match item {
-      MatrixExpr::Concrete(m) => acc = acc * m
+      Concrete(m) => acc = acc * m
       _ => abort("unreachable")
     }
   }
-  MatrixExpr::Concrete(acc)
+  Concrete(acc)
 }
 
 ///|
@@ -227,13 +227,13 @@ fn matrix_expr_same(lhs : MatrixExpr, rhs : MatrixExpr) -> Bool {
   catch {
     err => Err(err)
   }
-  lhs_shape == rhs_shape && lhs.to_string() == rhs.to_string()
+  lhs_shape == rhs_shape && Show::to_string(lhs) == Show::to_string(rhs)
 }
 
 ///|
 fn matrix_expr_power_view(expr : MatrixExpr) -> (MatrixExpr, Int) {
   match expr {
-    MatrixExpr::Pow(base, exp) => (base, exp)
+    Pow(base, exp) => (base, exp)
     _ => (expr, 1)
   }
 }
@@ -244,7 +244,7 @@ fn matrix_expr_cancel_or_merge_pair(
   rhs : MatrixExpr,
 ) -> MatrixExpr? {
   match (lhs, rhs) {
-    (MatrixExpr::Inverse(inner), other) =>
+    (Inverse(inner), other) =>
       if matrix_expr_same(inner, other) {
         try inner.shape() catch {
           _ => None
@@ -259,7 +259,7 @@ fn matrix_expr_cancel_or_merge_pair(
       } else {
         None
       }
-    (other, MatrixExpr::Inverse(inner)) =>
+    (other, Inverse(inner)) =>
       if matrix_expr_same(other, inner) {
         try inner.shape() catch {
           _ => None
@@ -363,7 +363,7 @@ fn block_identity_like(rows : Array[Array[MatrixExpr]]) -> MatrixExpr? {
 /// - Returns: A symbolic `MatrixExpr`.
 /// - Limits: Shape metadata is trusted as given; negative dimensions are not rejected here.
 pub fn matrix_symbol(name : String, rows : Int, cols : Int) -> MatrixExpr {
-  MatrixExpr::Symbol(name, rows, cols)
+  Symbol(name, rows, cols)
 }
 
 ///|
@@ -374,7 +374,7 @@ pub fn matrix_symbol(name : String, rows : Int, cols : Int) -> MatrixExpr {
 /// - Returns: A `MatrixExpr`.
 /// - Limits: This is a structural wrapper only; it does not copy or simplify entries beyond the underlying value semantics.
 pub fn matrix_expr(m : Matrix) -> MatrixExpr {
-  MatrixExpr::Concrete(m)
+  Concrete(m)
 }
 
 ///|
@@ -385,7 +385,7 @@ pub fn matrix_expr(m : Matrix) -> MatrixExpr {
 /// - Returns: `MatrixExpr::Identity(n)`.
 /// - Limits: This front door does not validate that `n` is non-negative.
 pub fn identity_expr(n : Int) -> MatrixExpr {
-  MatrixExpr::Identity(n)
+  Identity(n)
 }
 
 ///|
@@ -396,7 +396,7 @@ pub fn identity_expr(n : Int) -> MatrixExpr {
 /// - Returns: `MatrixExpr::Zero(rows, cols)`.
 /// - Limits: This front door does not validate that the provided dimensions are non-negative.
 pub fn zero_matrix_expr(rows : Int, cols : Int) -> MatrixExpr {
-  MatrixExpr::Zero(rows, cols)
+  Zero(rows, cols)
 }
 
 ///|
@@ -408,7 +408,7 @@ pub fn zero_matrix_expr(rows : Int, cols : Int) -> MatrixExpr {
 /// - Limits: If shapes are inconsistent, the expression may stay unevaluated until callers ask for `shape()` or `eval()`.
 pub fn matrix_expr_add(items : Array[MatrixExpr]) -> MatrixExpr {
   if items.is_empty() {
-    return MatrixExpr::Zero(0, 0)
+    return Zero(0, 0)
   }
   let normalized = normalize_add_items(items)
   if normalized.length() > 1 && all_concrete(normalized) {
@@ -417,17 +417,17 @@ pub fn matrix_expr_add(items : Array[MatrixExpr]) -> MatrixExpr {
   if normalized.length() > 1 &&
     normalized.all(fn(item) {
       match item {
-        MatrixExpr::BlockDiag(_) => true
+        BlockDiag(_) => true
         _ => false
       }
     }) {
     let first = match normalized[0] {
-      MatrixExpr::BlockDiag(items) => items
+      BlockDiag(items) => items
       _ => []
     }
     if normalized.all(fn(item) {
         match item {
-          MatrixExpr::BlockDiag(parts) => parts.length() == first.length()
+          BlockDiag(parts) => parts.length() == first.length()
           _ => false
         }
       }) {
@@ -436,7 +436,7 @@ pub fn matrix_expr_add(items : Array[MatrixExpr]) -> MatrixExpr {
         let pieces : Array[MatrixExpr] = []
         for item in normalized {
           match item {
-            MatrixExpr::BlockDiag(parts) => pieces.push(parts[i])
+            BlockDiag(parts) => pieces.push(parts[i])
             _ => ()
           }
         }
@@ -448,11 +448,11 @@ pub fn matrix_expr_add(items : Array[MatrixExpr]) -> MatrixExpr {
   match normalized.length() {
     0 =>
       match items[0] {
-        MatrixExpr::Zero(rows, cols) => MatrixExpr::Zero(rows, cols)
+        Zero(rows, cols) => Zero(rows, cols)
         _ => items[0]
       }
     1 => normalized[0]
-    _ => MatrixExpr::Add(normalized)
+    _ => Add(normalized)
   }
 }
 
@@ -465,7 +465,7 @@ pub fn matrix_expr_add(items : Array[MatrixExpr]) -> MatrixExpr {
 /// - Limits: Incompatible dimensions are not rejected here unless they are needed for a zero or identity shortcut; callers should use `shape()` or `eval()` for strict checking.
 pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
   if items.is_empty() {
-    return MatrixExpr::Identity(0)
+    return Identity(0)
   }
   let normalized = normalize_mul_items(items)
   if normalized.length() > 1 && all_concrete(normalized) {
@@ -473,13 +473,13 @@ pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
   }
   if normalized.any(fn(item) {
       match item {
-        MatrixExpr::Zero(_, _) => true
+        Zero(_, _) => true
         _ => false
       }
     }) {
     try {
       let (rows, cols) = MatrixExpr::Mul(normalized).shape()
-      return MatrixExpr::Zero(rows, cols)
+      return Zero(rows, cols)
     } catch {
       _ => ()
     }
@@ -495,15 +495,15 @@ pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
       Some(merged) => {
         ignore(reduced.pop())
         match merged {
-          MatrixExpr::Identity(_) => ()
+          Identity(_) => ()
           _ => reduced.push(merged)
         }
       }
       None =>
         match (last, item) {
-          (MatrixExpr::Concrete(lhs), MatrixExpr::Concrete(rhs)) => {
+          (Concrete(lhs), Concrete(rhs)) => {
             ignore(reduced.pop())
-            reduced.push(MatrixExpr::Concrete(lhs * rhs))
+            reduced.push(Concrete(lhs * rhs))
           }
           _ => reduced.push(item)
         }
@@ -512,17 +512,17 @@ pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
   if reduced.length() > 1 &&
     reduced.all(fn(item) {
       match item {
-        MatrixExpr::BlockDiag(_) => true
+        BlockDiag(_) => true
         _ => false
       }
     }) {
     let first = match reduced[0] {
-      MatrixExpr::BlockDiag(items) => items
+      BlockDiag(items) => items
       _ => []
     }
     if reduced.all(fn(item) {
         match item {
-          MatrixExpr::BlockDiag(parts) => parts.length() == first.length()
+          BlockDiag(parts) => parts.length() == first.length()
           _ => false
         }
       }) {
@@ -531,7 +531,7 @@ pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
         let pieces : Array[MatrixExpr] = []
         for item in reduced {
           match item {
-            MatrixExpr::BlockDiag(parts) => pieces.push(parts[i])
+            BlockDiag(parts) => pieces.push(parts[i])
             _ => ()
           }
         }
@@ -545,19 +545,14 @@ pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
       try MatrixExpr::Mul(items).shape() catch {
         _ =>
           match items[0] {
-            MatrixExpr::Identity(n) => MatrixExpr::Identity(n)
+            Identity(n) => Identity(n)
             _ => items[0]
           }
       } noraise {
-        (rows, cols) =>
-          if rows == cols {
-            MatrixExpr::Identity(rows)
-          } else {
-            items[0]
-          }
+        (rows, cols) => if rows == cols { Identity(rows) } else { items[0] }
       }
     1 => reduced[0]
-    _ => MatrixExpr::Mul(reduced)
+    _ => Mul(reduced)
   }
 }
 
@@ -570,17 +565,17 @@ pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
 /// - Limits: Empty input returns a `0 x 0` zero expression.
 pub fn matrix_expr_block_diag(items : Array[MatrixExpr]) -> MatrixExpr {
   if items.is_empty() {
-    return MatrixExpr::Zero(0, 0)
+    return Zero(0, 0)
   }
   let normalized = normalize_block_diag_items(items)
   match normalized.length() {
     0 =>
       match items[0] {
-        MatrixExpr::Zero(rows, cols) => MatrixExpr::Zero(rows, cols)
+        Zero(rows, cols) => Zero(rows, cols)
         _ => items[0]
       }
     1 => normalized[0]
-    _ => MatrixExpr::BlockDiag(normalized)
+    _ => BlockDiag(normalized)
   }
 }
 
@@ -595,7 +590,7 @@ pub fn matrix_expr_block(rows : Array[Array[MatrixExpr]]) -> MatrixExpr {
   if rows.length() == 1 && rows[0].length() == 1 {
     return rows[0][0]
   }
-  MatrixExpr::Block(rows)
+  Block(rows)
 }
 
 ///|
@@ -651,21 +646,20 @@ pub fn block_diag_matrix_expr(items : Array[MatrixExpr]) -> MatrixExpr {
 /// - Limits: Unsupported rewrites remain as explicit `Transpose(...)` nodes.
 pub fn matrix_expr_transpose(expr : MatrixExpr) -> MatrixExpr {
   match expr {
-    MatrixExpr::Transpose(inner) => inner
-    MatrixExpr::Identity(n) => MatrixExpr::Identity(n)
-    MatrixExpr::Zero(rows, cols) => MatrixExpr::Zero(cols, rows)
-    MatrixExpr::Add(items) =>
-      mat_add(items.map(fn(item) { matrix_expr_transpose(item) }))
-    MatrixExpr::Mul(items) =>
+    Transpose(inner) => inner
+    Identity(n) => Identity(n)
+    Zero(rows, cols) => Zero(cols, rows)
+    Add(items) => mat_add(items.map(fn(item) { matrix_expr_transpose(item) }))
+    Mul(items) =>
       mat_mul(
         reverse_matrix_exprs(items).map(fn(item) { matrix_expr_transpose(item) }),
       )
-    MatrixExpr::BlockDiag(items) =>
+    BlockDiag(items) =>
       block_diag_matrix_expr(
         items.map(fn(item) { matrix_expr_transpose(item) }),
       )
-    MatrixExpr::Block(rows) => block_matrix_expr(transpose_block_rows(rows))
-    _ => MatrixExpr::Transpose(expr)
+    Block(rows) => block_matrix_expr(transpose_block_rows(rows))
+    _ => Transpose(expr)
   }
 }
 
@@ -678,24 +672,23 @@ pub fn matrix_expr_transpose(expr : MatrixExpr) -> MatrixExpr {
 /// - Limits: General block-matrix inversion is not expanded here; unsupported cases remain as `Inverse(...)`.
 pub fn matrix_expr_inverse(expr : MatrixExpr) -> MatrixExpr {
   match expr {
-    MatrixExpr::Identity(n) => MatrixExpr::Identity(n)
-    MatrixExpr::Inverse(inner) => inner
-    MatrixExpr::Transpose(inner) =>
-      matrix_expr_transpose(matrix_expr_inverse(inner))
-    MatrixExpr::BlockDiag(items) =>
+    Identity(n) => Identity(n)
+    Inverse(inner) => inner
+    Transpose(inner) => matrix_expr_transpose(matrix_expr_inverse(inner))
+    BlockDiag(items) =>
       block_diag_matrix_expr(items.map(fn(item) { matrix_expr_inverse(item) }))
-    MatrixExpr::Block(rows) =>
+    Block(rows) =>
       if rows.length() == 1 && rows[0].length() == 1 {
         matrix_expr_inverse(rows[0][0])
       } else {
-        MatrixExpr::Inverse(expr)
+        Inverse(expr)
       }
-    MatrixExpr::Mul(items) =>
+    Mul(items) =>
       mat_mul(
         reverse_matrix_exprs(items).map(fn(item) { matrix_expr_inverse(item) }),
       )
-    MatrixExpr::Pow(inner, exp) => matrix_expr_pow(inner, -exp)
-    _ => MatrixExpr::Inverse(expr)
+    Pow(inner, exp) => matrix_expr_pow(inner, -exp)
+    _ => Inverse(expr)
   }
 }
 
@@ -724,15 +717,13 @@ pub fn matrix_expr_pow(expr : MatrixExpr, exp : Int) -> MatrixExpr {
     return matrix_expr_inverse(expr)
   }
   match expr {
-    MatrixExpr::Identity(n) => MatrixExpr::Identity(n)
-    MatrixExpr::Zero(rows, cols) if rows == cols && exp > 0 =>
-      MatrixExpr::Zero(rows, cols)
-    MatrixExpr::Transpose(inner) =>
-      matrix_expr_transpose(matrix_expr_pow(inner, exp))
-    MatrixExpr::Pow(inner, inner_exp) => MatrixExpr::Pow(inner, inner_exp * exp)
-    MatrixExpr::BlockDiag(items) if exp > 0 =>
+    Identity(n) => Identity(n)
+    Zero(rows, cols) if rows == cols && exp > 0 => Zero(rows, cols)
+    Transpose(inner) => matrix_expr_transpose(matrix_expr_pow(inner, exp))
+    Pow(inner, inner_exp) => Pow(inner, inner_exp * exp)
+    BlockDiag(items) if exp > 0 =>
       block_diag_matrix_expr(items.map(fn(item) { matrix_expr_pow(item, exp) }))
-    _ => MatrixExpr::Pow(expr, exp)
+    _ => Pow(expr, exp)
   }
 }
 
@@ -745,42 +736,34 @@ pub fn matrix_expr_pow(expr : MatrixExpr, exp : Int) -> MatrixExpr {
 /// - Limits: Raises `MatrixError::ShapeError` when add/mul/block layouts are inconsistent.
 pub fn MatrixExpr::shape(self : MatrixExpr) -> (Int, Int) raise MatrixError {
   match self {
-    MatrixExpr::Concrete(m) => m.shape()
-    MatrixExpr::Symbol(_, rows, cols) => (rows, cols)
-    MatrixExpr::Identity(n) => (n, n)
-    MatrixExpr::Zero(rows, cols) => (rows, cols)
-    MatrixExpr::Add(items) => {
-      guard !items.is_empty() else {
-        raise MatrixError::ShapeError("empty MatrixExpr Add")
-      }
+    Concrete(m) => m.shape()
+    Symbol(_, rows, cols) => (rows, cols)
+    Identity(n) => (n, n)
+    Zero(rows, cols) => (rows, cols)
+    Add(items) => {
+      guard !items.is_empty() else { raise ShapeError("empty MatrixExpr Add") }
       let shape = items[0].shape()
       for item in items[1:] {
         if item.shape() != shape {
-          raise MatrixError::ShapeError(
-            "matrix expression add expects equal shapes",
-          )
+          raise ShapeError("matrix expression add expects equal shapes")
         }
       }
       shape
     }
-    MatrixExpr::Mul(items) => {
-      guard !items.is_empty() else {
-        raise MatrixError::ShapeError("empty MatrixExpr Mul")
-      }
+    Mul(items) => {
+      guard !items.is_empty() else { raise ShapeError("empty MatrixExpr Mul") }
       let first = items[0].shape()
       let mut last = first
       for item in items[1:] {
         let current = item.shape()
         if last.1 != current.0 {
-          raise MatrixError::ShapeError(
-            "matrix expression mul expects aligned dimensions",
-          )
+          raise ShapeError("matrix expression mul expects aligned dimensions")
         }
         last = current
       }
       (first.0, last.1)
     }
-    MatrixExpr::BlockDiag(items) => {
+    BlockDiag(items) => {
       let mut rows = 0
       let mut cols = 0
       for item in items {
@@ -790,14 +773,14 @@ pub fn MatrixExpr::shape(self : MatrixExpr) -> (Int, Int) raise MatrixError {
       }
       (rows, cols)
     }
-    MatrixExpr::Block(rows0) => {
+    Block(rows0) => {
       guard !rows0.is_empty() else { return (0, 0) }
       let mut rows = 0
       let col_widths : Array[Int] = []
       let first_width = rows0[0].length()
       for row in rows0 {
         if row.length() != first_width {
-          raise MatrixError::ShapeError(
+          raise ShapeError(
             "block matrix expression expects rectangular block layout",
           )
         }
@@ -809,9 +792,7 @@ pub fn MatrixExpr::shape(self : MatrixExpr) -> (Int, Int) raise MatrixError {
           if i == 0 {
             width = shape.1
           } else if width != shape.1 {
-            raise MatrixError::ShapeError(
-              "blocks in the same column must have equal widths",
-            )
+            raise ShapeError("blocks in the same column must have equal widths")
           }
         }
         col_widths.push(width)
@@ -823,9 +804,7 @@ pub fn MatrixExpr::shape(self : MatrixExpr) -> (Int, Int) raise MatrixError {
           if height == 0 {
             height = shape.0
           } else if height != shape.0 {
-            raise MatrixError::ShapeError(
-              "blocks in the same row must have equal heights",
-            )
+            raise ShapeError("blocks in the same row must have equal heights")
           }
         }
         rows += height
@@ -833,11 +812,11 @@ pub fn MatrixExpr::shape(self : MatrixExpr) -> (Int, Int) raise MatrixError {
       let cols = col_widths.fold(init=0, fn(acc, v) { acc + v })
       (rows, cols)
     }
-    MatrixExpr::Transpose(inner) => {
+    Transpose(inner) => {
       let shape = inner.shape()
       (shape.1, shape.0)
     }
-    MatrixExpr::Inverse(inner) | MatrixExpr::Pow(inner, _) => inner.shape()
+    Inverse(inner) | Pow(inner, _) => inner.shape()
   }
 }
 
@@ -850,28 +829,30 @@ pub fn MatrixExpr::shape(self : MatrixExpr) -> (Int, Int) raise MatrixError {
 /// - Limits: The text reflects structural form rather than full algebraic equivalence.
 pub impl Show for MatrixExpr with fn to_string(self) {
   match self {
-    MatrixExpr::Concrete(m) => m.to_string()
-    MatrixExpr::Symbol(name, _, _) => name
-    MatrixExpr::Identity(n) => "Identity(" + n.to_string() + ")"
-    MatrixExpr::Zero(rows, cols) =>
+    Concrete(m) => Show::to_string(m)
+    Symbol(name, _, _) => name
+    Identity(n) => "Identity(" + n.to_string() + ")"
+    Zero(rows, cols) =>
       "ZeroMatrix(" + rows.to_string() + ", " + cols.to_string() + ")"
-    MatrixExpr::Add(items) =>
-      "(" + items.map(fn(item) { item.to_string() }).join(" + ") + ")"
-    MatrixExpr::Mul(items) =>
-      "(" + items.map(fn(item) { item.to_string() }).join(" * ") + ")"
-    MatrixExpr::BlockDiag(items) =>
-      "BlockDiag(" + items.map(fn(item) { item.to_string() }).join(", ") + ")"
-    MatrixExpr::Block(rows) =>
+    Add(items) =>
+      "(" + items.map(fn(item) { Show::to_string(item) }).join(" + ") + ")"
+    Mul(items) =>
+      "(" + items.map(fn(item) { Show::to_string(item) }).join(" * ") + ")"
+    BlockDiag(items) =>
+      "BlockDiag(" +
+      items.map(fn(item) { Show::to_string(item) }).join(", ") +
+      ")"
+    Block(rows) =>
       "Block(" +
       rows
       .map(fn(row) {
-        "[" + row.map(fn(item) { item.to_string() }).join(", ") + "]"
+        "[" + row.map(fn(item) { Show::to_string(item) }).join(", ") + "]"
       })
       .join(", ") +
       ")"
-    MatrixExpr::Transpose(inner) => inner.to_string() + ".T"
-    MatrixExpr::Inverse(inner) => inner.to_string() + "^-1"
-    MatrixExpr::Pow(inner, exp) => inner.to_string() + "^" + exp.to_string()
+    Transpose(inner) => Show::to_string(inner) + ".T"
+    Inverse(inner) => Show::to_string(inner) + "^-1"
+    Pow(inner, exp) => Show::to_string(inner) + "^" + exp.to_string()
   }
 }
 
@@ -883,7 +864,7 @@ pub impl Show for MatrixExpr with fn to_string(self) {
 /// - Returns: `Unit`.
 /// - Limits: Output stability matters for tests and diagnostics.
 pub impl Show for MatrixExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -898,57 +879,51 @@ pub fn MatrixExpr::eval(
   env : Map[String, Matrix],
 ) -> Matrix raise MatrixError {
   match self {
-    MatrixExpr::Concrete(m) => m
-    MatrixExpr::Symbol(name, rows, cols) =>
+    Concrete(m) => m
+    Symbol(name, rows, cols) =>
       match env.get(name) {
         Some(value) => {
           if value.shape() != (rows, cols) {
-            raise MatrixError::ShapeError(
-              "matrix symbol binding has wrong shape",
-            )
+            raise ShapeError("matrix symbol binding has wrong shape")
           }
           value
         }
-        None => raise MatrixError::ValueError("missing matrix symbol binding")
+        None => raise ValueError("missing matrix symbol binding")
       }
-    MatrixExpr::Identity(n) => eye(n)
-    MatrixExpr::Zero(rows, cols) => zeros(rows, cols=Some(cols))
-    MatrixExpr::Add(items) => {
+    Identity(n) => eye(n)
+    Zero(rows, cols) => zeros(rows, cols=Some(cols))
+    Add(items) => {
       guard !items.is_empty() else { return zeros(0, cols=Some(0)) }
       let mut acc = items[0].eval(env)
       for item in items[1:] {
         let next = item.eval(env)
         if acc.shape() != next.shape() {
-          raise MatrixError::ShapeError(
-            "matrix expression add expects equal shapes",
-          )
+          raise ShapeError("matrix expression add expects equal shapes")
         }
         acc = acc + next
       }
       acc
     }
-    MatrixExpr::Mul(items) => {
+    Mul(items) => {
       guard !items.is_empty() else { return zeros(0, cols=Some(0)) }
       let mut acc = items[0].eval(env)
       for item in items[1:] {
         let next = item.eval(env)
         if acc.cols != next.rows {
-          raise MatrixError::ShapeError(
-            "matrix expression mul expects aligned dimensions",
-          )
+          raise ShapeError("matrix expression mul expects aligned dimensions")
         }
         acc = acc * next
       }
       acc
     }
-    MatrixExpr::BlockDiag(items) => {
+    BlockDiag(items) => {
       let mats : Array[Matrix] = []
       for item in items {
         mats.push(item.eval(env))
       }
       block_diag(mats)
     }
-    MatrixExpr::Block(rows) => {
+    Block(rows) => {
       let mats : Array[Array[Matrix]] = []
       for row in rows {
         let mat_row : Array[Matrix] = []
@@ -959,14 +934,12 @@ pub fn MatrixExpr::eval(
       }
       block_matrix(mats)
     }
-    MatrixExpr::Transpose(inner) => inner.eval(env).transpose()
-    MatrixExpr::Inverse(inner) => inner.eval(env).inv()
-    MatrixExpr::Pow(inner, exp) => {
+    Transpose(inner) => inner.eval(env).transpose()
+    Inverse(inner) => inner.eval(env).inv()
+    Pow(inner, exp) => {
       let base = inner.eval(env)
       if !base.is_square() {
-        raise MatrixError::NonSquareMatrixError(
-          "matrix power requires a square matrix",
-        )
+        raise NonSquareMatrixError("matrix power requires a square matrix")
       }
       if exp == 0 {
         return eye(base.rows)
@@ -1025,11 +998,11 @@ pub fn MatrixExpr::as_explicit(
 /// - Limits: This is not a full symbolic canonicalizer; many semantically equivalent expressions remain structurally different.
 pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
   match self {
-    MatrixExpr::Add(items) => {
+    Add(items) => {
       let collapsed = items.map(fn(item) { item.block_collapse() })
       if collapsed.any(fn(item) {
           match item {
-            MatrixExpr::BlockDiag(_) => true
+            BlockDiag(_) => true
             _ => false
           }
         }) {
@@ -1038,7 +1011,7 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
         let mut template : MatrixExpr? = None
         for item in collapsed {
           match item {
-            MatrixExpr::BlockDiag(_) => {
+            BlockDiag(_) => {
               template = Some(item)
               break
             }
@@ -1046,10 +1019,10 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
           }
         }
         match template {
-          Some(MatrixExpr::BlockDiag(parts)) =>
+          Some(BlockDiag(parts)) =>
             for item in collapsed {
               match item {
-                MatrixExpr::Identity(_) =>
+                Identity(_) =>
                   match blockdiag_identity_like(parts) {
                     Some(identity) => {
                       normalized.push(identity)
@@ -1068,17 +1041,17 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
       }
       if collapsed.all(fn(item) {
           match item {
-            MatrixExpr::BlockDiag(_) => true
+            BlockDiag(_) => true
             _ => false
           }
         }) {
         let first = match collapsed[0] {
-          MatrixExpr::BlockDiag(items) => items
+          BlockDiag(items) => items
           _ => []
         }
         let aligned = collapsed.all(fn(item) {
           match item {
-            MatrixExpr::BlockDiag(parts) => parts.length() == first.length()
+            BlockDiag(parts) => parts.length() == first.length()
             _ => false
           }
         })
@@ -1088,7 +1061,7 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
             let pieces : Array[MatrixExpr] = []
             for item in collapsed {
               match item {
-                MatrixExpr::BlockDiag(parts) => pieces.push(parts[i])
+                BlockDiag(parts) => pieces.push(parts[i])
                 _ => ()
               }
             }
@@ -1099,17 +1072,17 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
       }
       if collapsed.all(fn(item) {
           match item {
-            MatrixExpr::Block(_) => true
+            Block(_) => true
             _ => false
           }
         }) {
         let rows = match collapsed[0] {
-          MatrixExpr::Block(rows) => rows
+          Block(rows) => rows
           _ => []
         }
         let aligned = collapsed.all(fn(item) {
           match item {
-            MatrixExpr::Block(other) => block_same_layout(rows, other)
+            Block(other) => block_same_layout(rows, other)
             _ => false
           }
         })
@@ -1117,7 +1090,7 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
           let mut acc = rows
           for item in collapsed[1:] {
             match item {
-              MatrixExpr::Block(other) => acc = block_add_rows(acc, other)
+              Block(other) => acc = block_add_rows(acc, other)
               _ => ()
             }
           }
@@ -1126,7 +1099,7 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
       }
       if collapsed.any(fn(item) {
           match item {
-            MatrixExpr::Block(_) => true
+            Block(_) => true
             _ => false
           }
         }) {
@@ -1135,7 +1108,7 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
         let mut template : MatrixExpr? = None
         for item in collapsed {
           match item {
-            MatrixExpr::Block(_) => {
+            Block(_) => {
               template = Some(item)
               break
             }
@@ -1143,10 +1116,10 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
           }
         }
         match template {
-          Some(MatrixExpr::Block(rows)) =>
+          Some(Block(rows)) =>
             for item in collapsed {
               match item {
-                MatrixExpr::Identity(_) =>
+                Identity(_) =>
                   match block_identity_like(rows) {
                     Some(identity) => {
                       normalized.push(identity)
@@ -1165,27 +1138,27 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
       }
       matrix_expr_add(collapsed)
     }
-    MatrixExpr::Mul(items) => {
+    Mul(items) => {
       let collapsed = items.map(fn(item) { item.block_collapse() })
-      guard !collapsed.is_empty() else { return MatrixExpr::Identity(0) }
+      guard !collapsed.is_empty() else { return Identity(0) }
       let mut acc = collapsed[0]
       for item in collapsed[1:] {
         acc = match (acc, item) {
-          (MatrixExpr::BlockDiag(lhs), MatrixExpr::BlockDiag(rhs)) =>
+          (BlockDiag(lhs), BlockDiag(rhs)) =>
             if lhs.length() == rhs.length() {
               block_diag_matrix_expr(
                 Array::makei(lhs.length(), fn(i) { mat_mul([lhs[i], rhs[i]]) }),
               )
             } else {
-              mat_mul([MatrixExpr::BlockDiag(lhs), MatrixExpr::BlockDiag(rhs)])
+              mat_mul([BlockDiag(lhs), BlockDiag(rhs)])
             }
-          (MatrixExpr::Block(lhs), MatrixExpr::Block(rhs)) =>
+          (Block(lhs), Block(rhs)) =>
             if block_mul_compatible(lhs, rhs) {
               block_matrix_expr(block_mul_rows(lhs, rhs))
             } else {
-              mat_mul([MatrixExpr::Block(lhs), MatrixExpr::Block(rhs)])
+              mat_mul([Block(lhs), Block(rhs)])
             }
-          (MatrixExpr::BlockDiag(lhs), MatrixExpr::Block(rhs)) =>
+          (BlockDiag(lhs), Block(rhs)) =>
             if lhs.length() == rhs.length() {
               let rows : Array[Array[MatrixExpr]] = []
               for i in 0..<rhs.length() {
@@ -1197,9 +1170,9 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
               }
               block_matrix_expr(rows)
             } else {
-              mat_mul([MatrixExpr::BlockDiag(lhs), MatrixExpr::Block(rhs)])
+              mat_mul([BlockDiag(lhs), Block(rhs)])
             }
-          (MatrixExpr::Block(lhs), MatrixExpr::BlockDiag(rhs)) =>
+          (Block(lhs), BlockDiag(rhs)) =>
             if !lhs.is_empty() && lhs[0].length() == rhs.length() {
               let rows : Array[Array[MatrixExpr]] = []
               for i in 0..<lhs.length() {
@@ -1211,25 +1184,24 @@ pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
               }
               block_matrix_expr(rows)
             } else {
-              mat_mul([MatrixExpr::Block(lhs), MatrixExpr::BlockDiag(rhs)])
+              mat_mul([Block(lhs), BlockDiag(rhs)])
             }
           (left, right) => mat_mul([left, right])
         }
       }
       acc
     }
-    MatrixExpr::BlockDiag(items) =>
+    BlockDiag(items) =>
       matrix_expr_block_diag(items.map(fn(item) { item.block_collapse() }))
-    MatrixExpr::Block(rows) => {
+    Block(rows) => {
       let collapsed = rows.map(fn(row) {
         row.map(fn(item) { item.block_collapse() })
       })
       matrix_expr_block(collapsed)
     }
-    MatrixExpr::Transpose(inner) =>
-      matrix_expr_transpose(inner.block_collapse())
-    MatrixExpr::Inverse(inner) => matrix_expr_inverse(inner.block_collapse())
-    MatrixExpr::Pow(inner, exp) => matrix_expr_pow(inner.block_collapse(), exp)
+    Transpose(inner) => matrix_expr_transpose(inner.block_collapse())
+    Inverse(inner) => matrix_expr_inverse(inner.block_collapse())
+    Pow(inner, exp) => matrix_expr_pow(inner.block_collapse(), exp)
     _ => self
   }
 }

@@ -30,14 +30,13 @@ fn density_exact_rational(num : Int, den : Int) -> Expr {
 
 ///|
 fn density_tuple_expr(term : DensityTerm) -> Expr {
-  @symcore.Expr::Tuple([term.state, term.prob])
+  Tuple([term.state, term.prob])
 }
 
 ///|
 fn density_term_from_expr(expr : Expr) -> DensityTerm? {
   match @symcore.tuple_items(expr) {
-    Some(args) if args.length() == 2 =>
-      Some(DensityTerm::{ state: args[0], prob: args[1] })
+    Some(args) if args.length() == 2 => Some({ state: args[0], prob: args[1] })
     _ => None
   }
 }
@@ -46,9 +45,9 @@ fn density_term_from_expr(expr : Expr) -> DensityTerm? {
 pub fn density(values : Array[(Expr, Expr)]) -> DensityExpr {
   let terms : Array[DensityTerm] = []
   for value in values {
-    terms.push(DensityTerm::{ state: value.0, prob: value.1 })
+    terms.push({ state: value.0, prob: value.1 })
   }
-  DensityExpr::{ terms, }
+  { terms, }
 }
 
 ///|
@@ -58,12 +57,12 @@ pub fn DensityExpr::as_expr(self : DensityExpr) -> Expr {
 
 ///|
 pub fn DensityExpr::states(self : DensityExpr) -> Expr {
-  @symcore.Expr::Tuple(self.terms.map(term => term.state))
+  Tuple(self.terms.map(term => term.state))
 }
 
 ///|
 pub fn DensityExpr::probs(self : DensityExpr) -> Expr {
-  @symcore.Expr::Tuple(self.terms.map(term => term.prob))
+  Tuple(self.terms.map(term => term.prob))
 }
 
 ///|
@@ -72,9 +71,7 @@ pub fn DensityExpr::get_state(
   index : Int,
 ) -> Expr raise @symphysics.PhysicsError {
   guard index >= 0 && index < self.terms.length() else {
-    raise @symphysics.PhysicsError::IndexError(
-      "density state index out of range",
-    )
+    raise IndexError("density state index out of range")
   }
   self.terms[index].state
 }
@@ -85,9 +82,7 @@ pub fn DensityExpr::get_prob(
   index : Int,
 ) -> Expr raise @symphysics.PhysicsError {
   guard index >= 0 && index < self.terms.length() else {
-    raise @symphysics.PhysicsError::IndexError(
-      "density probability index out of range",
-    )
+    raise IndexError("density probability index out of range")
   }
   self.terms[index].prob
 }
@@ -96,26 +91,26 @@ pub fn DensityExpr::get_prob(
 pub fn DensityExpr::apply_op(self : DensityExpr, op : Expr) -> DensityExpr {
   let terms : Array[DensityTerm] = []
   for term in self.terms {
-    terms.push(DensityTerm::{
+    terms.push({
       state: quantum_mul_from_args_preserve([op, term.state]),
       prob: term.prob,
     })
   }
-  DensityExpr::{ terms, }
+  { terms, }
 }
 
 ///|
 fn density_mul_flatten(lhs : Expr, rhs : Expr) -> Expr {
   let args : Array[Expr] = []
   match lhs {
-    Expr::Mul(lhs_args) =>
+    Mul(lhs_args) =>
       for arg in lhs_args {
         args.push(arg)
       }
     _ => args.push(lhs)
   }
   match rhs {
-    Expr::Mul(rhs_args) =>
+    Mul(rhs_args) =>
       for arg in rhs_args {
         args.push(arg)
       }
@@ -127,7 +122,7 @@ fn density_mul_flatten(lhs : Expr, rhs : Expr) -> Expr {
 ///|
 fn density_expand_terms(expr : Expr) -> Array[Expr] {
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let out : Array[Expr] = []
       for arg in args {
         for term in density_expand_terms(arg) {
@@ -136,7 +131,7 @@ fn density_expand_terms(expr : Expr) -> Array[Expr] {
       }
       out
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut partials : Array[Expr] = [int(1)]
       for arg in args {
         let expanded = density_expand_terms(arg)
@@ -217,7 +212,7 @@ pub fn density_from_expr(expr : Expr) -> DensityExpr? {
           None => return None
         }
       }
-      Some(DensityExpr::{ terms, })
+      Some({ terms, })
     }
     _ => None
   }
@@ -229,7 +224,7 @@ fn density_infer_nqubits_expr(expr : Expr) -> Int {
     Some(q) => q.nqubits()
     None =>
       match expr {
-        Expr::Add(args) | Expr::Mul(args) => {
+        Add(args) | Mul(args) => {
           let mut inferred = 0
           for arg in args {
             let next = density_infer_nqubits_expr(arg)
@@ -249,7 +244,7 @@ fn density_infer_nqubits_expr(expr : Expr) -> Int {
           }
           inferred
         }
-        Expr::Pow(base, exp) => {
+        Pow(base, exp) => {
           let left = density_infer_nqubits_expr(base)
           let right = density_infer_nqubits_expr(exp)
           if left > right {
@@ -269,7 +264,7 @@ fn density_infer_spin_j_expr(expr : Expr) -> Expr? {
     Some(state) => Some(state.j)
     None =>
       match expr {
-        Expr::Add(args) | Expr::Mul(args) => {
+        Add(args) | Mul(args) => {
           for arg in args {
             match density_infer_spin_j_expr(arg) {
               Some(value) => return Some(value)
@@ -287,7 +282,7 @@ fn density_infer_spin_j_expr(expr : Expr) -> Expr? {
           }
           None
         }
-        Expr::Pow(base, exp) =>
+        Pow(base, exp) =>
           match density_infer_spin_j_expr(base) {
             Some(value) => Some(value)
             None => density_infer_spin_j_expr(exp)
@@ -338,14 +333,14 @@ fn density_matrix(
       ndim~,
     )
     let state_matrix = match represented {
-      MatrixScalarValue::Matrix(matrix) => matrix
-      MatrixScalarValue::Scalar(_) =>
-        raise @symphysics.PhysicsError::ValueError(
+      Matrix(matrix) => matrix
+      Scalar(_) =>
+        raise ValueError(
           "Density representation expects states with matrix representations",
         )
     }
     guard state_matrix.width() == 1 else {
-      raise @symphysics.PhysicsError::ShapeError(
+      raise ShapeError(
         "Density representation currently expects ket-like column states",
       )
     }
@@ -358,8 +353,8 @@ fn density_matrix(
     )
   }
   match acc {
-    Some(matrix) => MatrixScalarValue::Matrix(matrix)
-    None => MatrixScalarValue::Matrix(@symphysics.explicit_matrix_from_rows([]))
+    Some(matrix) => Matrix(matrix)
+    None => Matrix(@symphysics.explicit_matrix_from_rows([]))
   }
 }
 
@@ -449,9 +444,7 @@ fn matrix_det_2x2(
   matrix : @symphysics.ExplicitMatrix,
 ) -> Expr raise @symphysics.PhysicsError {
   guard matrix_is_2x2(matrix) else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "2x2 determinant expects a 2x2 matrix",
-    )
+    raise ShapeError("2x2 determinant expects a 2x2 matrix")
   }
   matrix.get(0, 0) * matrix.get(1, 1) - matrix.get(0, 1) * matrix.get(1, 0)
 }
@@ -498,17 +491,11 @@ fn density_matrix_from_expr(
       let effective_spin_j = density_infer_spin_j(density_expr, spin_j)
       match
         density_matrix(density_expr, basis, nqubits, effective_spin_j, ndim) {
-        MatrixScalarValue::Matrix(matrix) => matrix
-        MatrixScalarValue::Scalar(_) =>
-          raise @symphysics.PhysicsError::ValueError(
-            "density should represent as a matrix",
-          )
+        Matrix(matrix) => matrix
+        Scalar(_) => raise ValueError("density should represent as a matrix")
       }
     }
-    None =>
-      raise @symphysics.PhysicsError::ValueError(
-        "Expected a Density expression",
-      )
+    None => raise ValueError("Expected a Density expression")
   }
 }
 
@@ -528,7 +515,7 @@ pub fn entropy(
   } else if matrix_is_2x2(matrix) {
     entropy_from_eigenvalues(density_matrix_eigenvalues_2x2(matrix))
   } else {
-    raise @symphysics.PhysicsError::ValueError(
+    raise ValueError(
       "entropy currently expects a diagonal density matrix, a rank-one projector, or a 2x2 density matrix",
     )
   }
@@ -594,9 +581,7 @@ pub fn fidelity(
   guard left.height() == right.height() &&
     left.width() == right.width() &&
     matrix_is_square(left) else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "fidelity expects equal square density matrices",
-    )
+    raise ShapeError("fidelity expects equal square density matrices")
   }
   if matrix_is_diagonal(left) && matrix_is_diagonal(right) {
     fidelity_from_diagonal(left, right)
@@ -609,7 +594,7 @@ pub fn fidelity(
   } else if matrix_is_2x2(left) && matrix_is_2x2(right) {
     fidelity_2x2(left, right)
   } else {
-    raise @symphysics.PhysicsError::ValueError(
+    raise ValueError(
       "fidelity currently expects diagonal density matrices, at least one rank-one projector, or 2x2 density matrices",
     )
   }

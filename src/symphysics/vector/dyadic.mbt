@@ -23,7 +23,7 @@ pub impl Sub for Dyadic with fn sub(self, other : Dyadic) {
 
 ///|
 pub fn dyadic_zero() -> Dyadic {
-  Dyadic::{ args: [] }
+  { args: [] }
 }
 
 ///|
@@ -71,7 +71,7 @@ fn dyadic_normalize(items : Array[(Expr, Int, Int, Int, Int)]) -> Dyadic {
       out.push((coeff, value.1, value.2, value.3, value.4))
     }
   }
-  Dyadic::{ args: out }
+  { args: out }
 }
 
 ///|
@@ -204,7 +204,7 @@ pub fn Dyadic::dt(
   order? : Int = 1,
 ) -> Dyadic raise VectorError {
   if order < 0 {
-    raise VectorError::ValueError("order must be non-negative")
+    raise ValueError("order must be non-negative")
   }
   if order == 0 || self.args.is_empty() {
     return self

@@ -217,7 +217,7 @@ pub fn unit_propagate(
   let neg = bool_not(symbol)
   for clause in clauses {
     match clause {
-      BoolExpr::Or(args) => {
+      Or(args) => {
         if contains_expr(args, symbol) {
           continue
         }
@@ -251,7 +251,7 @@ pub fn find_unit_clause(
     for literal in disjuncts(clause) {
       let sym = literal_symbol(literal)
       let in_model = match sym {
-        BoolExpr::Symbol(name) => model.contains(name)
+        Symbol(name) => model.contains(name)
         _ => false
       }
       if !in_model {
@@ -259,7 +259,7 @@ pub fn find_unit_clause(
         p = Some(sym)
         value = Some(
           match literal {
-            BoolExpr::Not(_) => false
+            Not(_) => false
             _ => true
           },
         )
@@ -342,14 +342,14 @@ pub fn dpll(
 ///|
 pub fn dpll_satisfiable(expr : BoolExpr) -> Map[String, Bool]? {
   match expr {
-    BoolExpr::True => return Some(Map([]))
-    BoolExpr::False => return None
+    True => return Some(Map([]))
+    False => return None
     _ => ()
   }
   let cnf_expr = to_cnf(expr)
   let clauses = conjuncts(cnf_expr)
   for clause in clauses {
-    if clause == BoolExpr::False {
+    if clause == False {
       return None
     }
   }

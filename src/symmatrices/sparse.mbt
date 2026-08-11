@@ -283,7 +283,7 @@ fn sparse_echelon_internal(
 /// - Returns: Another `SparseMatrix` with the same shape and stored entries.
 /// - Limits: This package uses value semantics, so the original sparse matrix is never mutated in place.
 pub fn SparseMatrix::as_mutable(self : SparseMatrix) -> MutableSparseMatrix {
-  SparseMatrix::{
+  {
     rows: self.rows,
     cols: self.cols,
     entries: clone_sparse_entries(self.entries),
@@ -314,12 +314,12 @@ pub fn sparse_matrix(
   entries : Map[(Int, Int), Expr],
 ) -> SparseMatrix raise MatrixError {
   if rows < 0 || cols < 0 {
-    raise MatrixError::ShapeError("matrix dimensions must be non-negative")
+    raise ShapeError("matrix dimensions must be non-negative")
   }
   let out : Map[(Int, Int), Expr] = Map([])
   for key, value in entries {
     if key.0 < 0 || key.0 >= rows || key.1 < 0 || key.1 >= cols {
-      raise MatrixError::IndexError("sparse entry index out of range")
+      raise IndexError("sparse entry index out of range")
     }
     if !expr_is_zero(value) {
       out[key] = value
@@ -491,12 +491,12 @@ pub fn SparseMatrix::transpose(self : SparseMatrix) -> SparseMatrix {
 
 ///|
 pub impl Show for SparseMatrix with fn to_string(self) {
-  self.to_dense().to_string()
+  Show::to_string(self.to_dense())
 }
 
 ///|
 pub impl Show for SparseMatrix with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -582,9 +582,7 @@ pub fn SparseMatrix::reshape(
   cols : Int,
 ) -> SparseMatrix raise MatrixError {
   if rows < 0 || cols < 0 || rows * cols != self.rows * self.cols {
-    raise MatrixError::ShapeError(
-      "cannot reshape matrix to incompatible dimensions",
-    )
+    raise ShapeError("cannot reshape matrix to incompatible dimensions")
   }
   let out : Map[(Int, Int), Expr] = Map([])
   for key, value in self.entries {
@@ -626,9 +624,7 @@ pub fn SparseMatrix::row_join(
   other : SparseMatrix,
 ) -> SparseMatrix raise MatrixError {
   if self.rows != other.rows {
-    raise MatrixError::ShapeError(
-      "row_join requires matrices with the same row count",
-    )
+    raise ShapeError("row_join requires matrices with the same row count")
   }
   let out = clone_sparse_entries(self.entries)
   for key, value in other.entries {
@@ -643,9 +639,7 @@ pub fn SparseMatrix::col_join(
   other : SparseMatrix,
 ) -> SparseMatrix raise MatrixError {
   if self.cols != other.cols {
-    raise MatrixError::ShapeError(
-      "col_join requires matrices with the same column count",
-    )
+    raise ShapeError("col_join requires matrices with the same column count")
   }
   let out = clone_sparse_entries(self.entries)
   for key, value in other.entries {
@@ -661,9 +655,7 @@ pub fn SparseMatrix::row_insert(
   other : SparseMatrix,
 ) -> SparseMatrix raise MatrixError {
   if self.cols != other.cols {
-    raise MatrixError::ShapeError(
-      "row_insert requires matrices with the same column count",
-    )
+    raise ShapeError("row_insert requires matrices with the same column count")
   }
   let insert_at = normalize_insert_pos(pos, self.rows)
   let out : Map[(Int, Int), Expr] = Map([])
@@ -684,9 +676,7 @@ pub fn SparseMatrix::col_insert(
   other : SparseMatrix,
 ) -> SparseMatrix raise MatrixError {
   if self.rows != other.rows {
-    raise MatrixError::ShapeError(
-      "col_insert requires matrices with the same row count",
-    )
+    raise ShapeError("col_insert requires matrices with the same row count")
   }
   let insert_at = normalize_insert_pos(pos, self.cols)
   let out : Map[(Int, Int), Expr] = Map([])
@@ -804,7 +794,7 @@ pub fn SparseMatrix::is_lower(self : SparseMatrix) -> Bool {
 /// - Limits: Raises `MatrixError::NonSquareMatrixError` when the matrix is not square.
 pub fn SparseMatrix::trace(self : SparseMatrix) -> Expr raise MatrixError {
   if self.rows != self.cols {
-    raise MatrixError::NonSquareMatrixError("trace requires a square matrix")
+    raise NonSquareMatrixError("trace requires a square matrix")
   }
   let mut acc = @symcore.int(0)
   for i in 0..<self.rows {
@@ -836,9 +826,7 @@ pub fn SparseMatrix::rank(self : SparseMatrix) -> Int {
 /// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs. General sparse determinants currently fall back to dense evaluation.
 pub fn SparseMatrix::det(self : SparseMatrix) -> Expr raise MatrixError {
   if self.rows != self.cols {
-    raise MatrixError::NonSquareMatrixError(
-      "determinant requires a square matrix",
-    )
+    raise NonSquareMatrixError("determinant requires a square matrix")
   }
   if self.rows == 0 {
     return @symcore.int(1)
@@ -868,7 +856,7 @@ pub fn SparseMatrix::det(self : SparseMatrix) -> Expr raise MatrixError {
 /// - Limits: Raises `MatrixError::NonSquareMatrixError` or `MatrixError::SingularMatrixError` under the same conditions as dense inversion, and it does not preserve sparsity in the return type.
 pub fn SparseMatrix::inv(self : SparseMatrix) -> Matrix raise MatrixError {
   if self.rows != self.cols {
-    raise MatrixError::NonSquareMatrixError("inverse requires a square matrix")
+    raise NonSquareMatrixError("inverse requires a square matrix")
   }
   self.solve(eye(self.rows))
 }
@@ -951,9 +939,7 @@ pub fn SparseMatrix::lu(
   self : SparseMatrix,
 ) -> (Matrix, Matrix, Array[(Int, Int)]) raise MatrixError {
   if self.rows != self.cols {
-    raise MatrixError::NonSquareMatrixError(
-      "LU decomposition requires a square matrix",
-    )
+    raise NonSquareMatrixError("LU decomposition requires a square matrix")
   }
   let n = self.rows
   let u_rows = clone_sparse_row_maps(sparse_row_maps(self))
@@ -1032,12 +1018,10 @@ pub fn SparseMatrix::solve(
   rhs : Matrix,
 ) -> Matrix raise MatrixError {
   if self.rows != self.cols {
-    raise MatrixError::NonSquareMatrixError("solve requires a square matrix")
+    raise NonSquareMatrixError("solve requires a square matrix")
   }
   if rhs.rows != self.rows {
-    raise MatrixError::ShapeError(
-      "solve expects rhs with the same number of rows",
-    )
+    raise ShapeError("solve expects rhs with the same number of rows")
   }
   let dense = self.to_dense()
   let numeric_prec = {
@@ -1078,14 +1062,12 @@ pub fn SparseMatrix::lower_triangular_solve(
   rhs : Matrix,
 ) -> Matrix raise MatrixError {
   if self.rows != self.cols {
-    raise MatrixError::NonSquareMatrixError(
+    raise NonSquareMatrixError(
       "lower_triangular_solve requires a square matrix",
     )
   }
   if rhs.rows != self.rows {
-    raise MatrixError::ShapeError(
-      "lower_triangular_solve expects matching row counts",
-    )
+    raise ShapeError("lower_triangular_solve expects matching row counts")
   }
   let dense = self.to_dense()
   let numeric_prec = {
@@ -1114,11 +1096,11 @@ pub fn SparseMatrix::lower_triangular_solve(
       if col == i {
         diag = value
       } else if col > i && !expr_is_zero(value) {
-        raise MatrixError::ValueError("matrix is not lower triangular")
+        raise ValueError("matrix is not lower triangular")
       }
     }
     if expr_is_zero(diag) {
-      raise MatrixError::SingularMatrixError("matrix is singular")
+      raise SingularMatrixError("matrix is singular")
     }
     for j in 0..<rhs.cols {
       let mut acc = rhs.data[i][j]
@@ -1140,14 +1122,12 @@ pub fn SparseMatrix::upper_triangular_solve(
   rhs : Matrix,
 ) -> Matrix raise MatrixError {
   if self.rows != self.cols {
-    raise MatrixError::NonSquareMatrixError(
+    raise NonSquareMatrixError(
       "upper_triangular_solve requires a square matrix",
     )
   }
   if rhs.rows != self.rows {
-    raise MatrixError::ShapeError(
-      "upper_triangular_solve expects matching row counts",
-    )
+    raise ShapeError("upper_triangular_solve expects matching row counts")
   }
   let dense = self.to_dense()
   let numeric_prec = {
@@ -1177,11 +1157,11 @@ pub fn SparseMatrix::upper_triangular_solve(
       if col == i {
         diag = value
       } else if col < i && !expr_is_zero(value) {
-        raise MatrixError::ValueError("matrix is not upper triangular")
+        raise ValueError("matrix is not upper triangular")
       }
     }
     if expr_is_zero(diag) {
-      raise MatrixError::SingularMatrixError("matrix is singular")
+      raise SingularMatrixError("matrix is singular")
     }
     for j in 0..<rhs.cols {
       let mut acc = rhs.data[i][j]
@@ -1200,7 +1180,7 @@ pub fn SparseMatrix::upper_triangular_solve(
 ///|
 pub fn SparseMatrix::cholesky(self : SparseMatrix) -> Matrix raise MatrixError {
   if self.rows != self.cols {
-    raise MatrixError::NonSquareMatrixError(
+    raise NonSquareMatrixError(
       "cholesky decomposition requires a square matrix",
     )
   }
@@ -1234,9 +1214,7 @@ pub fn SparseMatrix::ldl(
   self : SparseMatrix,
 ) -> (Matrix, Matrix) raise MatrixError {
   if self.rows != self.cols {
-    raise MatrixError::NonSquareMatrixError(
-      "LDL decomposition requires a square matrix",
-    )
+    raise NonSquareMatrixError("LDL decomposition requires a square matrix")
   }
   let dense = self.to_dense()
   let numeric_prec = expr_numeric_precision(dense.data)

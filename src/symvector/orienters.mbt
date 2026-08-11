@@ -181,22 +181,22 @@ pub fn quaternion_orienter(
 
 ///|
 pub fn orienter_axis(value : AxisOrienter) -> Orienter {
-  Orienter::Axis(value)
+  Axis(value)
 }
 
 ///|
 pub fn orienter_body(value : BodyOrienter) -> Orienter {
-  Orienter::Body(value)
+  Body(value)
 }
 
 ///|
 pub fn orienter_space(value : SpaceOrienter) -> Orienter {
-  Orienter::Space(value)
+  Space(value)
 }
 
 ///|
 pub fn orienter_quaternion(value : QuaternionOrienter) -> Orienter {
-  Orienter::Quaternion(value)
+  Quaternion(value)
 }
 
 ///|
@@ -261,12 +261,9 @@ fn orienter_rotation_matrix(
   system : CoordSys3D,
 ) -> @symphysics.ExplicitMatrix raise @rawvec.VectorError {
   match orienter {
-    Orienter::Axis(value) =>
-      value.rotation_matrix(system) catch {
-        err => raise err
-      }
-    Orienter::Body(value) => value.rotation_matrix()
-    Orienter::Space(value) => value.rotation_matrix()
-    Orienter::Quaternion(value) => value.rotation_matrix()
+    Axis(value) => value.rotation_matrix(system) catch { err => raise err }
+    Body(value) => value.rotation_matrix()
+    Space(value) => value.rotation_matrix()
+    Quaternion(value) => value.rotation_matrix()
   }
 }

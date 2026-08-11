@@ -162,15 +162,15 @@ fn accum_bounds_obj(
   max : @symcore.Expr,
 ) -> @py.PyObject raise {
   let res = sympy_call_must("sympy.AccumBounds", [
-    OracleArg::PyObj(expr_to_sympy(min)),
-    OracleArg::PyObj(expr_to_sympy(max)),
+    PyObj(expr_to_sympy(min)),
+    PyObj(expr_to_sympy(max)),
   ])
   objenum_to_obj(res)
 }
 
 ///|
 pub fn sympy_normalize(expr_str : String) -> String raise {
-  let expr = sympy_call_must("sympy.sympify", [OracleArg::Str(expr_str)])
+  let expr = sympy_call_must("sympy.sympify", [Str(expr_str)])
   py_str_enum(expr)
 }
 
@@ -183,10 +183,7 @@ pub fn accum_add(
 ) -> String raise {
   let a = accum_bounds_obj(a_min, a_max)
   let b = accum_bounds_obj(b_min, b_max)
-  let res = sympy_call_must("sympy.Add", [
-    OracleArg::PyObj(a),
-    OracleArg::PyObj(b),
-  ])
+  let res = sympy_call_must("sympy.Add", [PyObj(a), PyObj(b)])
   py_str_enum(res)
 }
 
@@ -199,14 +196,8 @@ pub fn accum_sub(
 ) -> String raise {
   let a = accum_bounds_obj(a_min, a_max)
   let b = accum_bounds_obj(b_min, b_max)
-  let neg = sympy_call_must("sympy.Mul", [
-    OracleArg::Int(-1),
-    OracleArg::PyObj(b),
-  ])
-  let res = sympy_call_must("sympy.Add", [
-    OracleArg::PyObj(a),
-    OracleArg::PyObj(objenum_to_obj(neg)),
-  ])
+  let neg = sympy_call_must("sympy.Mul", [Int(-1), PyObj(b)])
+  let res = sympy_call_must("sympy.Add", [PyObj(a), PyObj(objenum_to_obj(neg))])
   py_str_enum(res)
 }
 
@@ -219,10 +210,7 @@ pub fn accum_mul(
 ) -> String raise {
   let a = accum_bounds_obj(a_min, a_max)
   let b = accum_bounds_obj(b_min, b_max)
-  let res = sympy_call_must("sympy.Mul", [
-    OracleArg::PyObj(a),
-    OracleArg::PyObj(b),
-  ])
+  let res = sympy_call_must("sympy.Mul", [PyObj(a), PyObj(b)])
   py_str_enum(res)
 }
 
@@ -235,14 +223,8 @@ pub fn accum_div(
 ) -> String raise {
   let a = accum_bounds_obj(a_min, a_max)
   let b = accum_bounds_obj(b_min, b_max)
-  let inv = sympy_call_must("sympy.Pow", [
-    OracleArg::PyObj(b),
-    OracleArg::Int(-1),
-  ])
-  let res = sympy_call_must("sympy.Mul", [
-    OracleArg::PyObj(a),
-    OracleArg::PyObj(objenum_to_obj(inv)),
-  ])
+  let inv = sympy_call_must("sympy.Pow", [PyObj(b), Int(-1)])
+  let res = sympy_call_must("sympy.Mul", [PyObj(a), PyObj(objenum_to_obj(inv))])
   py_str_enum(res)
 }
 
@@ -254,10 +236,7 @@ pub fn accum_pow(
 ) -> String raise {
   let a = accum_bounds_obj(a_min, a_max)
   let e = expr_to_sympy(exp)
-  let res = sympy_call_must("sympy.Pow", [
-    OracleArg::PyObj(a),
-    OracleArg::PyObj(e),
-  ])
+  let res = sympy_call_must("sympy.Pow", [PyObj(a), PyObj(e)])
   py_str_enum(res)
 }
 
@@ -312,9 +291,9 @@ pub fn finite_diff_weights_str(
   let list = py_list_from_objects(x_objs)
   let x0_obj = sympy_number_obj(x0)
   let res = sympy_call_must("sympy.calculus.finite_diff.finite_diff_weights", [
-    OracleArg::Int(order),
-    OracleArg::PyObj(list.obj()),
-    OracleArg::PyObj(x0_obj),
+    Int(order),
+    PyObj(list.obj()),
+    PyObj(x0_obj),
   ])
   py_str_enum(res)
 }
@@ -338,10 +317,10 @@ pub fn apply_finite_diff_str(
   let y_list_obj = py_list_from_objects(y_objs)
   let x0_obj = sympy_number_obj(x0)
   let res = sympy_call_must("sympy.calculus.finite_diff.apply_finite_diff", [
-    OracleArg::Int(order),
-    OracleArg::PyObj(x_list_obj.obj()),
-    OracleArg::PyObj(y_list_obj.obj()),
-    OracleArg::PyObj(x0_obj),
+    Int(order),
+    PyObj(x_list_obj.obj()),
+    PyObj(y_list_obj.obj()),
+    PyObj(x0_obj),
   ])
   py_str_enum(res)
 }
@@ -364,9 +343,9 @@ pub fn euler_equations_str(
   let f_list = py_list_from_objects(f_objs)
   let v_list = py_list_from_objects(v_objs)
   let res = sympy_call_must("sympy.calculus.euler.euler_equations", [
-    OracleArg::PyObj(l_obj),
-    OracleArg::PyObj(f_list.obj()),
-    OracleArg::PyObj(v_list.obj()),
+    PyObj(l_obj),
+    PyObj(f_list.obj()),
+    PyObj(v_list.obj()),
   ])
   let items = py_list_to_pyobjects(res)
   let out : Array[String] = Array::new()
@@ -384,8 +363,8 @@ pub fn singularities_str(
   let e_obj = expr_to_sympy(expr)
   let s_obj = expr_to_sympy(symbol)
   let res = sympy_call_must("sympy.calculus.singularities.singularities", [
-    OracleArg::PyObj(e_obj),
-    OracleArg::PyObj(s_obj),
+    PyObj(e_obj),
+    PyObj(s_obj),
   ])
   py_str_enum(res)
 }
@@ -398,8 +377,8 @@ pub fn periodicity_str(
   let e_obj = expr_to_sympy(expr)
   let s_obj = expr_to_sympy(symbol)
   let res = sympy_call("sympy.calculus.util.periodicity", [
-    OracleArg::PyObj(e_obj),
-    OracleArg::PyObj(s_obj),
+    PyObj(e_obj),
+    PyObj(s_obj),
   ])
   match res {
     Some(obj) => py_str_enum(obj)

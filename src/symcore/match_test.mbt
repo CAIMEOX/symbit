@@ -1,10 +1,7 @@
 ///|
 test "wild helpers expose exclude and property payloads" {
   let x = Expr::Symbol("x")
-  let wild = Expr::Wild("a", [x], [
-    WildProperty::Integer,
-    WildProperty::Positive,
-  ])
+  let wild = Expr::Wild("a", [x], [Integer, Positive])
   match wild_parts(wild) {
     Some((name, exclude, properties)) => {
       inspect(name, content="a")
@@ -23,8 +20,8 @@ test "wild_matches respects exclude and direct properties" {
   let y = Expr::Symbol("y")
   let a = Expr::Wild("a", [], [])
   let b = Expr::Wild("b", [x], [])
-  let p = Expr::Wild("p", [], [WildProperty::Positive, WildProperty::Integer])
-  let s = Expr::Wild("s", [], [WildProperty::Symbol])
+  let p = Expr::Wild("p", [], [Positive, Integer])
+  let s = Expr::Wild("s", [], [Symbol])
   match wild_matches(a, function("sin", [x])) {
     Some(env) =>
       inspect(
@@ -39,14 +36,8 @@ test "wild_matches respects exclude and direct properties" {
   assert_false(wild_matches(p, rational_from_ints(1, 2)) is Some(_))
   assert_true(wild_matches(s, y) is Some(_))
   assert_false(wild_matches(s, int(3)) is Some(_))
-  assert_false(
-    wild_matches(s, Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit))
-    is Some(_),
-  )
-  assert_false(
-    wild_matches(p, Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity))
-    is Some(_),
-  )
+  assert_false(wild_matches(s, NumberSymbol(ImaginaryUnit)) is Some(_))
+  assert_false(wild_matches(p, NumberSymbol(NegativeInfinity)) is Some(_))
   let seeded : MatchEnv = Map([])
   seeded.set(a, y)
   let overridden = wild_matches(a, x, repl_dict=seeded)
@@ -66,8 +57,8 @@ test "expr_match uses full wild identity and structural recursion" {
   let y = Expr::Symbol("y")
   let a = Expr::Wild("a", [], [])
   let a_excluding_x = Expr::Wild("a", [x], [])
-  let pattern = apply(Expr::FunctionHead("f"), [a, a]).unwrap_or(int(0))
-  let match_expr = apply(Expr::FunctionHead("f"), [x, x]).unwrap_or(int(0))
+  let pattern = apply(FunctionHead("f"), [a, a]).unwrap_or(int(0))
+  let match_expr = apply(FunctionHead("f"), [x, x]).unwrap_or(int(0))
   match expr_match(pattern, match_expr) {
     Some(env) =>
       inspect(
@@ -77,19 +68,16 @@ test "expr_match uses full wild identity and structural recursion" {
     None => fail("expected repeated wild match")
   }
   assert_false(
-    expr_match(
-      pattern,
-      apply(Expr::FunctionHead("f"), [x, y]).unwrap_or(int(0)),
-    )
+    expr_match(pattern, apply(FunctionHead("f"), [x, y]).unwrap_or(int(0)))
     is Some(_),
   )
-  let distinct_pattern = apply(Expr::FunctionHead("f"), [a, a_excluding_x]).unwrap_or(
+  let distinct_pattern = apply(FunctionHead("f"), [a, a_excluding_x]).unwrap_or(
     int(0),
   )
   match
     expr_match(
       distinct_pattern,
-      apply(Expr::FunctionHead("f"), [y, y]).unwrap_or(int(0)),
+      apply(FunctionHead("f"), [y, y]).unwrap_or(int(0)),
     ) {
     Some(env) => {
       inspect(
@@ -106,18 +94,18 @@ test "expr_match uses full wild identity and structural recursion" {
   assert_false(
     expr_match(
       distinct_pattern,
-      apply(Expr::FunctionHead("f"), [x, x]).unwrap_or(int(0)),
+      apply(FunctionHead("f"), [x, x]).unwrap_or(int(0)),
     )
     is Some(_),
   )
   let b_nested = Expr::Wild("b", [], [])
-  let nested_pattern = apply(Expr::FunctionHead("f"), [a, add([a, b_nested])]).unwrap_or(
+  let nested_pattern = apply(FunctionHead("f"), [a, add([a, b_nested])]).unwrap_or(
     int(0),
   )
   match
     expr_match(
       nested_pattern,
-      apply(Expr::FunctionHead("f"), [x, add([x, y])]).unwrap_or(int(0)),
+      apply(FunctionHead("f"), [x, add([x, y])]).unwrap_or(int(0)),
     ) {
     Some(env) => {
       inspect(
@@ -369,11 +357,11 @@ test "expr_match covers source function-head and complex wildcard examples" {
   let q = Expr::Wild("q", [], [])
   let g = Expr::WildFunction("g", [])
   let w = Expr::Wild("w", [], [])
-  let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
+  let imag = Expr::NumberSymbol(ImaginaryUnit)
 
   match
     expr_match(
-      mul([p, Expr::Apply(g, [mul([q, x])])]),
+      mul([p, Apply(g, [mul([q, x])])]),
       function("cos", [mul([int(5), x])]),
     ) {
     Some(env) => {
@@ -494,7 +482,7 @@ test "expr_match covers more SymPy source factorization and derivative examples"
     None => fail("expected repeated additive factor match from SymPy source")
   }
 
-  match expr_match(mul([p, q]), add([mul([x, Expr::Symbol("y")]), int(1)])) {
+  match expr_match(mul([p, q]), add([mul([x, Symbol("y")]), int(1)])) {
     Some(env) => {
       let lhs = @symprint.pretty_string(env.get(p).unwrap_or(int(0)))
       let rhs = @symprint.pretty_string(env.get(q).unwrap_or(int(0)))
@@ -527,7 +515,7 @@ test "expr_match follows more SymPy source exclude and wild-on-wild examples" {
   let a = Expr::Symbol("a")
   let p = Expr::Wild("p", [int(1), x], [])
   let q = Expr::Wild("q", [], [])
-  let r = Expr::Wild("r", [Expr::FunctionHead("sin"), y], [])
+  let r = Expr::Wild("r", [FunctionHead("sin"), y], [])
 
   guard expr_match(r, function("sin", [x])) is None else {
     fail("expected exclude=[sin, y] to reject sin(x)")
@@ -887,11 +875,7 @@ test "expr_match follows SymPy source positive power wildcard examples" {
     None => fail("expected x**e to match y**2 from SymPy source")
   }
 
-  match
-    expr_match(
-      pow(a, int(2)),
-      mul([int(-1), Expr::NumberSymbol(NumberSymbolKind::Pi)]),
-    ) {
+  match expr_match(pow(a, int(2)), mul([int(-1), NumberSymbol(Pi)])) {
     Some(env) =>
       inspect(
         @symprint.pretty_string(env.get(a).unwrap_or(int(0))),
@@ -1031,7 +1015,7 @@ test "expr_match follows more SymPy source trig exclude and duplicate-function c
   let p = Expr::Wild("p", [], [])
   let q = Expr::Wild("q", [], [])
   let c = Expr::Wild("c", [], [])
-  let r = Expr::Wild("r", [Expr::FunctionHead("sin"), y], [])
+  let r = Expr::Wild("r", [FunctionHead("sin"), y], [])
 
   match
     expr_match(
@@ -1422,9 +1406,9 @@ test "expr_match follows more SymPy source additive exclude ambiguity cases" {
   let expr = mul([int(-1), x, add([eighth, mul([int(-1), y])])])
   let expected_rest = add([mul([int(-1), eighth]), y])
   let patterns : Array[Expr] = [
-    add([mul([Expr::Wild("coeff", [x], []), x]), Expr::Wild("rest", [], [])]),
-    add([mul([Expr::Wild("w", [x], []), x]), Expr::Wild("rest", [], [])]),
-    add([mul([Expr::Wild("e", [x], []), x]), Expr::Wild("rest", [], [])]),
+    add([mul([Wild("coeff", [x], []), x]), Wild("rest", [], [])]),
+    add([mul([Wild("w", [x], []), x]), Wild("rest", [], [])]),
+    add([mul([Wild("e", [x], []), x]), Wild("rest", [], [])]),
   ]
   for pattern in patterns {
     match expr_match(pattern, expr) {
@@ -1486,17 +1470,8 @@ test "expr_match follows more SymPy source trig and infinity wildcard cases" {
   let a = Expr::Wild("a", [], [])
   match
     expr_match(
-      mul([
-        Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit),
-        a,
-        Expr::NumberSymbol(NumberSymbolKind::Infinity),
-      ]),
-      mul([
-        int(-1),
-        Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit),
-        x,
-        Expr::NumberSymbol(NumberSymbolKind::Infinity),
-      ]),
+      mul([NumberSymbol(ImaginaryUnit), a, NumberSymbol(Infinity)]),
+      mul([int(-1), NumberSymbol(ImaginaryUnit), x, NumberSymbol(Infinity)]),
     ) {
     Some(env) =>
       assert_true(
@@ -1632,7 +1607,7 @@ test "expr_match follows more SymPy source gamma collection cases" {
     add([
       mul([int(-1), gamma, pow(add([x, mul([int(-1), mu])]), int(2))]),
       mul([int(-1), function("log", [gamma])]),
-      function("log", [mul([int(2), Expr::NumberSymbol(NumberSymbolKind::Pi)])]),
+      function("log", [mul([int(2), NumberSymbol(Pi)])]),
     ]),
   ])
   let pattern = add([mul([a, function("log", [gamma])]), mul([b, gamma]), c])
@@ -1660,9 +1635,7 @@ test "expr_match follows more SymPy source gamma collection cases" {
           c_value,
           mul([
             rational_from_ints(1, 2),
-            function("log", [
-              mul([int(2), Expr::NumberSymbol(NumberSymbolKind::Pi)]),
-            ]),
+            function("log", [mul([int(2), NumberSymbol(Pi)])]),
           ]),
         ) !=
         0 {
@@ -1697,10 +1670,7 @@ test "expr_match follows more SymPy source expanded gamma collection cases" {
       ]),
     ]),
     mul([rational_from_ints(1, 2), function("log", [int(2)])]),
-    mul([
-      rational_from_ints(1, 2),
-      function("log", [Expr::NumberSymbol(NumberSymbolKind::Pi)]),
-    ]),
+    mul([rational_from_ints(1, 2), function("log", [NumberSymbol(Pi)])]),
   ])
 
   let expected_gamma_coeff = add([
@@ -1710,10 +1680,7 @@ test "expr_match follows more SymPy source expanded gamma collection cases" {
   ])
   let expected_const = add([
     mul([rational_from_ints(1, 2), function("log", [int(2)])]),
-    mul([
-      rational_from_ints(1, 2),
-      function("log", [Expr::NumberSymbol(NumberSymbolKind::Pi)]),
-    ]),
+    mul([rational_from_ints(1, 2), function("log", [NumberSymbol(Pi)])]),
   ])
 
   match

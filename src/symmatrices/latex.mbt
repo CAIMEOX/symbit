@@ -45,8 +45,8 @@ pub fn SparseMatrix::latex(
 ///|
 fn matrix_expr_prec(expr : MatrixExpr) -> Int {
   match expr {
-    MatrixExpr::Add(_) => 1
-    MatrixExpr::Mul(_) => 2
+    Add(_) => 1
+    Mul(_) => 2
     _ => 3
   }
 }
@@ -54,7 +54,7 @@ fn matrix_expr_prec(expr : MatrixExpr) -> Int {
 ///|
 fn matrix_expr_needs_parens(expr : MatrixExpr) -> Bool {
   match expr {
-    MatrixExpr::Add(_) | MatrixExpr::Mul(_) => true
+    Add(_) | Mul(_) => true
     _ => false
   }
 }
@@ -64,7 +64,7 @@ fn matrix_symbol_latex(
   name : String,
   settings : @symprint.LatexSettings,
 ) -> String {
-  @symprint.latex_with_settings(@symcore.Expr::Symbol(name), settings)
+  @symprint.latex_with_settings(Symbol(name), settings)
 }
 
 ///|
@@ -100,15 +100,15 @@ fn latex_matrix_expr_format(
 ) -> String {
   let prec = matrix_expr_prec(expr)
   let body = match expr {
-    MatrixExpr::Concrete(m) => m.latex(settings~)
-    MatrixExpr::Symbol(name, _, _) => matrix_symbol_latex(name, settings)
-    MatrixExpr::Identity(_) => "\\mathbb{I}"
-    MatrixExpr::Zero(_, _) => "0"
-    MatrixExpr::Add(items) =>
+    Concrete(m) => m.latex(settings~)
+    Symbol(name, _, _) => matrix_symbol_latex(name, settings)
+    Identity(_) => "\\mathbb{I}"
+    Zero(_, _) => "0"
+    Add(items) =>
       items
       .map(item => latex_matrix_expr_format(item, prec, settings))
       .join(" + ")
-    MatrixExpr::Mul(items) => {
+    Mul(items) => {
       let rendered : Array[String] = []
       for item in items {
         let tex = latex_matrix_expr_format(item, prec, settings)
@@ -122,27 +122,26 @@ fn latex_matrix_expr_format(
       }
       rendered.join(" ")
     }
-    MatrixExpr::BlockDiag(items) =>
-      latex_matrix_expr_block_diag(items, settings)
-    MatrixExpr::Block(rows) => latex_matrix_expr_block(rows, settings)
-    MatrixExpr::Transpose(inner) => {
+    BlockDiag(items) => latex_matrix_expr_block_diag(items, settings)
+    Block(rows) => latex_matrix_expr_block(rows, settings)
+    Transpose(inner) => {
       let inner_tex = inner.latex(settings~)
       match inner {
-        MatrixExpr::Symbol(_, _, _) => "\{inner_tex}^{T}"
+        Symbol(_, _, _) => "\{inner_tex}^{T}"
         _ => "\\left(\{inner_tex}\\right)^{T}"
       }
     }
-    MatrixExpr::Inverse(inner) => {
+    Inverse(inner) => {
       let inner_tex = inner.latex(settings~)
       match inner {
-        MatrixExpr::Symbol(_, _, _) => "\{inner_tex}^{-1}"
+        Symbol(_, _, _) => "\{inner_tex}^{-1}"
         _ => "\\left(\{inner_tex}\\right)^{-1}"
       }
     }
-    MatrixExpr::Pow(inner, exp) => {
+    Pow(inner, exp) => {
       let inner_tex = inner.latex(settings~)
       match inner {
-        MatrixExpr::Symbol(_, _, _) => "\{inner_tex}^{\{exp.to_string()}}"
+        Symbol(_, _, _) => "\{inner_tex}^{\{exp.to_string()}}"
         _ => "\\left(\{inner_tex}\\right)^{\{exp.to_string()}}"
       }
     }

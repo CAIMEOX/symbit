@@ -9,7 +9,7 @@ pub fn wavefunction(n : Expr, x : Expr) -> Expr {
 ///|
 pub fn energy(n : Expr, m : Expr, r : Expr) -> Expr raise PhysicsError {
   guard expr_integer_value(n) != None else {
-    raise PhysicsError::ValueError("'n' must be integer")
+    raise ValueError("'n' must be integer")
   }
   expr_div((n ^ int(2)) * (hbar ^ int(2)), int(2) * m * (r ^ int(2)))
 }

@@ -81,7 +81,7 @@ pub fn vec_equal(lhs : RootVector, rhs : RootVector) -> Bool {
 pub fn vec_to_string_list(values : RootVector) -> Array[String] {
   let out : Array[String] = Array::new()
   for v in values {
-    out.push(v.to_string())
+    out.push(Show::to_string(v))
   }
   out
 }

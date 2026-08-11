@@ -19,7 +19,7 @@ test "geometry.plane equation projection and intersection" {
   )
   let hit = pl.intersection(geometry_line(l))
   match hit[0] {
-    GeometryEntity::Point(pt) => assert_eq(pt.repr(), "Point3D(0, 0, 1)")
+    Point(pt) => assert_eq(pt.repr(), "Point3D(0, 0, 1)")
     _ => fail("expected plane-line point")
   }
 }
@@ -53,7 +53,7 @@ test "geometry.plane parallel perpendicular and parameter helpers" {
     ),
   )
   match projected {
-    GeometryEntity::Point(pt) => assert_eq(pt.repr(), "Point3D(1, 1, 1)")
+    Point(pt) => assert_eq(pt.repr(), "Point3D(1, 1, 1)")
     _ => fail("expected projected point")
   }
   let u = @symcore.Expr::Symbol("u")

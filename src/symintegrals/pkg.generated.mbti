@@ -437,6 +437,8 @@ pub suberror IntegralError {
   ValueError(String)
   IntegralTransformError(String)
 } derive(@debug.Debug)
+#deprecated
+pub fn IntegralError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub struct IntegralInfo {

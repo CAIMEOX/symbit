@@ -181,6 +181,12 @@ pub(all) enum ESpan {
   Index(Int)
   Slice(Int?, Int?, Int?)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn ESpan::equal(Self, Self) -> Bool
+#deprecated
+pub fn ESpan::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn ESpan::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SimplifyPattern {
   FoldConstants
@@ -190,12 +196,24 @@ pub(all) enum SimplifyPattern {
   TrigPythagorean
   FunctionIdentities
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn SimplifyPattern::equal(Self, Self) -> Bool
+#deprecated
+pub fn SimplifyPattern::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn SimplifyPattern::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SimplifyPlan {
   Default
   Aggressive
   Custom(Array[SimplifyPattern])
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn SimplifyPlan::equal(Self, Self) -> Bool
+#deprecated
+pub fn SimplifyPlan::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn SimplifyPlan::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

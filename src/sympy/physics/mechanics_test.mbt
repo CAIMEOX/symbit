@@ -42,18 +42,10 @@ test "physics.mechanics inertia core" {
 test "physics.mechanics particle and rigidbody core" {
   let n = @symvector.reference_frame("PN")
   let o = @symvector.point("PO")
-  let p = o.locatenew("PP", n.x().scale(@symcore.Expr::Symbol("r")))
-  p.set_vel(
-    n,
-    n.x().scale(@symcore.Expr::Symbol("v1")) +
-    n.z().scale(@symcore.Expr::Symbol("v3")),
-  )
+  let p = o.locatenew("PP", n.x().scale(Symbol("r")))
+  p.set_vel(n, n.x().scale(Symbol("v1")) + n.z().scale(Symbol("v3")))
 
-  let part = particle(
-    "pa",
-    point=Some(p),
-    mass=Some(@symcore.Expr::Symbol("m")),
-  )
+  let part = particle("pa", point=Some(p), mass=Some(Symbol("m")))
   inspect(part.repr(), content="Particle('pa', masscenter=PP, mass=m)")
   inspect(
     @symvector.vsprint(part.linear_momentum(n)),
@@ -65,12 +57,12 @@ test "physics.mechanics particle and rigidbody core" {
   )
 
   let b = @symvector.reference_frame("PB")
-  b.set_ang_vel(n, b.x().scale(@symcore.Expr::Symbol("omega")))
+  b.set_ang_vel(n, b.x().scale(Symbol("omega")))
   let rb = rigid_body(
     "B",
     masscenter=Some(p),
     frame=Some(b),
-    mass=Some(@symcore.Expr::Symbol("m")),
+    mass=Some(Symbol("m")),
     inertia=Some(inertia_tuple(@symvector.outer(b.x(), b.x()), p)),
   )
   inspect(
@@ -88,9 +80,7 @@ test "physics.mechanics wrapper functions and substitutions" {
   let p = o.locatenew("FP", n.x())
   p.set_vel(n, n.x().scale(@symcore.int(10)))
   let pa = particle("Pa", point=Some(p), mass=Some(@symcore.int(1)))
-  pa.set_potential_energy(
-    @symcore.Expr::Symbol("g") * @symcore.Expr::Symbol("h"),
-  )
+  pa.set_potential_energy(Symbol("g") * Symbol("h"))
 
   let ac = o.locatenew("FAc", n.y().scale(@symcore.int(2)))
   ac.set_vel(n, n.y().scale(@symcore.int(5)))
@@ -103,11 +93,7 @@ test "physics.mechanics wrapper functions and substitutions" {
     mass=Some(@symcore.int(20)),
     inertia=Some(inertia_tuple(@symvector.outer(n.z(), n.z()), ac)),
   )
-  rb.set_potential_energy(
-    @symcore.Expr::Symbol("M") *
-    @symcore.Expr::Symbol("g") *
-    @symcore.Expr::Symbol("h"),
-  )
+  rb.set_potential_energy(Symbol("M") * Symbol("g") * Symbol("h"))
 
   inspect(
     @symvector.vsprint(linear_momentum(n, [rb.as_bodylike(), pa.as_bodylike()])),
@@ -132,17 +118,12 @@ test "physics.mechanics wrapper functions and substitutions" {
   let x = @symvector.dynamicsymbol("x")
   let y = @symvector.dynamicsymbol("y")
   let expr = @symelem.cos(x + y) * @symelem.tan(x + y) +
-    @symcore.Expr::Symbol("b") *
-    @symcalculus.diff(x, @symvector.dynamicsymbols_t)
+    Symbol("b") * @symcalculus.diff(x, @symvector.dynamicsymbols_t)
   let replaced = msubs_expr(
     expr,
     [
       (x, @symcore.int(0)),
-      (
-        y,
-        @symcore.rational_from_ints(1, 2) *
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-      ),
+      (y, @symcore.rational_from_ints(1, 2) * NumberSymbol(Pi)),
       (@symcalculus.diff(x, @symvector.dynamicsymbols_t), @symcore.int(1)),
     ],
     smart=true,
@@ -168,7 +149,7 @@ test "physics.mechanics body loads and helpers" {
   let p2 = @symvector.point("P2")
   p1.set_vel(b1.frame(), b1.x())
   p2.set_vel(b2.frame(), b2.x())
-  let f = n.z().scale(@symcore.Expr::Symbol("f"))
+  let f = n.z().scale(Symbol("f"))
   b1.apply_force(
     f,
     point=Some(p1),

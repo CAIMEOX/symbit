@@ -12,13 +12,13 @@ pub fn plane_from_normal(
 ) -> Plane raise GeometryError {
   let point_value = point_value.with_dim(3)
   if normal_vector.length() != 3 {
-    raise GeometryError::ValueError("plane normal vector must have length 3")
+    raise ValueError("plane normal vector must have length 3")
   }
   let normal = normal_vector.map(geo_simplify)
   if geo_all_zero(normal) {
-    raise GeometryError::ValueError("plane normal vector cannot be zero")
+    raise ValueError("plane normal vector cannot be zero")
   }
-  Plane::{ point_: point_value, normal_: normal }
+  { point_: point_value, normal_: normal }
 }
 
 ///|
@@ -35,7 +35,7 @@ pub fn plane_from_points(
   let ac = geo_sub_coords(c.coords_, a.coords_)
   let normal = geo_cross3(ab, ac)
   if geo_all_zero(normal) {
-    raise GeometryError::ValueError("plane points must not be collinear")
+    raise ValueError("plane points must not be collinear")
   }
   plane_from_normal(a, normal)
 }
@@ -130,9 +130,9 @@ fn plane_basis_coeffs(plane_obj : Plane, target : Point) -> (Expr, Expr)? {
 ///|
 pub fn Plane::equation(
   self : Plane,
-  x? : Expr = Expr::Symbol("x"),
-  y? : Expr = Expr::Symbol("y"),
-  z? : Expr = Expr::Symbol("z"),
+  x? : Expr = Symbol("x"),
+  y? : Expr = Symbol("y"),
+  z? : Expr = Symbol("z"),
 ) -> Expr {
   geo_simplify(
     self.normal_[0] * (x - self.point_.coords_[0]) +
@@ -152,14 +152,14 @@ pub fn Plane::arbitrary_point(
     Some(vsym) => {
       let usym = match u {
         Some(value) => value
-        None => Expr::Symbol("u")
+        None => Symbol("u")
       }
       plane_point_with_basis(self.point_, basis1, basis2, usym, vsym)
     }
     None => {
       let tsym = match u {
         Some(value) => value
-        None => Expr::Symbol("t")
+        None => Symbol("t")
       }
       let norm1 = geo_norm(basis1)
       let norm2 = geo_norm(basis2)
@@ -204,14 +204,14 @@ pub fn Plane::contains(
   other : GeometryEntity,
 ) -> Bool raise GeometryError {
   match other {
-    GeometryEntity::Point(point_obj) => self.contains_point(point_obj)
-    GeometryEntity::Line(line_obj) =>
+    Point(point_obj) => self.contains_point(point_obj)
+    Line(line_obj) =>
       self.contains_point(line_obj.p1_) && self.contains_point(line_obj.p2_)
-    GeometryEntity::Ray(ray_obj) =>
+    Ray(ray_obj) =>
       self.contains_point(ray_obj.p1_) && self.contains_point(ray_obj.p2_)
-    GeometryEntity::Segment(seg_obj) =>
+    Segment(seg_obj) =>
       self.contains_point(seg_obj.p1_) && self.contains_point(seg_obj.p2_)
-    GeometryEntity::Plane(plane_obj) =>
+    Plane(plane_obj) =>
       self.contains_point(plane_obj.point_) &&
       geo_all_zero(geo_cross3(self.normal_, plane_obj.normal_))
     _ => false
@@ -278,7 +278,7 @@ pub fn Plane::equals(
   other : GeometryEntity,
 ) -> Bool raise GeometryError {
   match other {
-    GeometryEntity::Plane(plane_obj) =>
+    Plane(plane_obj) =>
       self.contains_point(plane_obj.point_) &&
       geo_all_zero(geo_cross3(self.normal_, plane_obj.normal_))
     _ => false
@@ -291,7 +291,7 @@ pub fn Plane::angle_between(
   other : GeometryEntity,
 ) -> Expr raise GeometryError {
   match other {
-    GeometryEntity::Line(line_obj) =>
+    Line(line_obj) =>
       @symelem.asin(
         geo_div(
           geo_dot(self.normal_, line_obj.direction().with_dim(3).coords()),
@@ -299,7 +299,7 @@ pub fn Plane::angle_between(
           geo_norm(line_obj.direction().with_dim(3).coords()),
         ),
       )
-    GeometryEntity::Ray(ray_obj) =>
+    Ray(ray_obj) =>
       @symelem.asin(
         geo_div(
           geo_dot(self.normal_, ray_obj.direction().with_dim(3).coords()),
@@ -307,7 +307,7 @@ pub fn Plane::angle_between(
           geo_norm(ray_obj.direction().with_dim(3).coords()),
         ),
       )
-    GeometryEntity::Segment(seg_obj) =>
+    Segment(seg_obj) =>
       @symelem.asin(
         geo_div(
           geo_dot(self.normal_, seg_obj.direction().with_dim(3).coords()),
@@ -315,17 +315,14 @@ pub fn Plane::angle_between(
           geo_norm(seg_obj.direction().with_dim(3).coords()),
         ),
       )
-    GeometryEntity::Plane(plane_obj) =>
+    Plane(plane_obj) =>
       @symelem.acos(
         geo_div(
           geo_dot(self.normal_, plane_obj.normal_),
           geo_norm(self.normal_) * geo_norm(plane_obj.normal_),
         ),
       )
-    _ =>
-      raise GeometryError::TypeError(
-        "angle_between expects a plane or linear entity",
-      )
+    _ => raise TypeError("angle_between expects a plane or linear entity")
   }
 }
 
@@ -335,19 +332,19 @@ pub fn Plane::is_parallel(
   other : GeometryEntity,
 ) -> Bool raise GeometryError {
   match other {
-    GeometryEntity::Line(line_obj) => {
+    Line(line_obj) => {
       let direction = line_obj.direction().with_dim(3).coords()
       geo_expr_is_zero(geo_dot(self.normal_, direction))
     }
-    GeometryEntity::Ray(ray_obj) => {
+    Ray(ray_obj) => {
       let direction = ray_obj.direction().with_dim(3).coords()
       geo_expr_is_zero(geo_dot(self.normal_, direction))
     }
-    GeometryEntity::Segment(seg_obj) => {
+    Segment(seg_obj) => {
       let direction = seg_obj.direction().with_dim(3).coords()
       geo_expr_is_zero(geo_dot(self.normal_, direction))
     }
-    GeometryEntity::Plane(plane_obj) =>
+    Plane(plane_obj) =>
       geo_all_zero(geo_cross3(self.normal_, plane_obj.normal_))
     _ => false
   }
@@ -359,19 +356,19 @@ pub fn Plane::is_perpendicular(
   other : GeometryEntity,
 ) -> Bool raise GeometryError {
   match other {
-    GeometryEntity::Line(line_obj) => {
+    Line(line_obj) => {
       let direction = line_obj.direction().with_dim(3).coords()
       geo_all_zero(geo_cross3(self.normal_, direction))
     }
-    GeometryEntity::Ray(ray_obj) => {
+    Ray(ray_obj) => {
       let direction = ray_obj.direction().with_dim(3).coords()
       geo_all_zero(geo_cross3(self.normal_, direction))
     }
-    GeometryEntity::Segment(seg_obj) => {
+    Segment(seg_obj) => {
       let direction = seg_obj.direction().with_dim(3).coords()
       geo_all_zero(geo_cross3(self.normal_, direction))
     }
-    GeometryEntity::Plane(plane_obj) =>
+    Plane(plane_obj) =>
       geo_expr_is_zero(geo_dot(self.normal_, plane_obj.normal_))
     _ => false
   }
@@ -401,7 +398,7 @@ pub fn Plane::perpendicular_plane(
   pts? : Array[Point] = [],
 ) -> Plane raise GeometryError {
   if pts.length() > 2 {
-    raise GeometryError::ValueError("no more than 2 points should be provided")
+    raise ValueError("no more than 2 points should be provided")
   }
   let items : Array[Point] = []
   for item in pts {
@@ -446,7 +443,7 @@ pub fn Plane::projection_line(
   other : GeometryEntity,
 ) -> GeometryEntity raise GeometryError {
   match other {
-    GeometryEntity::Line(line_obj) => {
+    Line(line_obj) => {
       let a = self.projection(line_obj.p1_)
       let b = self.projection(line_obj.p2_)
       if a.equals(b) {
@@ -455,7 +452,7 @@ pub fn Plane::projection_line(
         geometry_line(line(a, b))
       }
     }
-    GeometryEntity::Ray(ray_obj) => {
+    Ray(ray_obj) => {
       let a = self.projection(ray_obj.p1_)
       let b = self.projection(ray_obj.p2_)
       if a.equals(b) {
@@ -464,7 +461,7 @@ pub fn Plane::projection_line(
         geometry_ray(ray(a, b))
       }
     }
-    GeometryEntity::Segment(seg_obj) => {
+    Segment(seg_obj) => {
       let a = self.projection(seg_obj.p1_)
       let b = self.projection(seg_obj.p2_)
       if a.equals(b) {
@@ -473,8 +470,7 @@ pub fn Plane::projection_line(
         geometry_segment(segment(a, b))
       }
     }
-    _ =>
-      raise GeometryError::TypeError("projection_line expects a linear entity")
+    _ => raise TypeError("projection_line expects a linear entity")
   }
 }
 
@@ -502,7 +498,7 @@ pub fn Plane::parameter_value(
           out.set(u, geo_normalized_atan2(beta, alpha))
           out
         }
-        None => raise GeometryError::ValueError("given point is not on plane")
+        None => raise ValueError("given point is not on plane")
       }
     }
     Some(vsym) =>
@@ -512,7 +508,7 @@ pub fn Plane::parameter_value(
           out.set(vsym, v_value)
           return out
         }
-        None => raise GeometryError::ValueError("given point is not on plane")
+        None => raise ValueError("given point is not on plane")
       }
   }
 }
@@ -523,20 +519,16 @@ pub fn Plane::intersection(
   other : GeometryEntity,
 ) -> Array[GeometryEntity] raise GeometryError {
   match other {
-    GeometryEntity::Point(point_obj) =>
+    Point(point_obj) =>
       if self.contains_point(point_obj) {
-        [GeometryEntity::Point(point_obj.with_dim(3))]
+        [Point(point_obj.with_dim(3))]
       } else {
         []
       }
-    GeometryEntity::Line(line_obj) =>
-      plane_intersection_linear(self, GeometryEntity::Line(line_obj))
-    GeometryEntity::Ray(ray_obj) =>
-      plane_intersection_linear(self, GeometryEntity::Ray(ray_obj))
-    GeometryEntity::Segment(seg_obj) =>
-      plane_intersection_linear(self, GeometryEntity::Segment(seg_obj))
-    GeometryEntity::Plane(plane_obj) =>
-      plane_intersection_plane(self, plane_obj)
+    Line(line_obj) => plane_intersection_linear(self, Line(line_obj))
+    Ray(ray_obj) => plane_intersection_linear(self, Ray(ray_obj))
+    Segment(seg_obj) => plane_intersection_linear(self, Segment(seg_obj))
+    Plane(plane_obj) => plane_intersection_plane(self, plane_obj)
     _ => []
   }
 }
@@ -563,7 +555,7 @@ fn plane_intersection_linear(
   if !linear_param_ok(linear_kind(entity), t) {
     return []
   }
-  [GeometryEntity::Point(linear_point_at(entity, t))]
+  [Point(linear_point_at(entity, t))]
 }
 
 ///|
@@ -574,7 +566,7 @@ fn plane_intersection_plane(
   let direction = geo_cross3(lhs.normal_, rhs.normal_)
   if geo_all_zero(direction) {
     if lhs.contains_point(rhs.point_) {
-      return [GeometryEntity::Plane(lhs)]
+      return [Plane(lhs)]
     }
     return []
   }
@@ -609,5 +601,5 @@ fn plane_intersection_plane(
   point_coords[fixed_idx] = int(0)
   let pt = point(point_coords, dim=3)
   let next_pt = point(geo_add_coords(pt.coords_, direction), dim=3)
-  [GeometryEntity::Line(line(pt, next_pt))]
+  [Line(line(pt, next_pt))]
 }

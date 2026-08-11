@@ -1,21 +1,21 @@
 ///|
 fn rx() -> @symcore.Expr {
-  @symcore.Expr::Symbol("x")
+  Symbol("x")
 }
 
 ///|
 fn ry() -> @symcore.Expr {
-  @symcore.Expr::Symbol("y")
+  Symbol("y")
 }
 
 ///|
 fn rp() -> @symcore.Expr {
-  @symcore.Expr::Symbol("p")
+  Symbol("p")
 }
 
 ///|
 fn rq() -> @symcore.Expr {
-  @symcore.Expr::Symbol("q")
+  Symbol("q")
 }
 
 ///|
@@ -73,8 +73,7 @@ test "symunify rewrite handles conditions and assumptions" {
     variables=[rx()],
     condition=args => {
       match args {
-        [@symcore.Expr::Number(value)] =>
-          value.compare(@symnum.BigRational::from_int(10)) < 0
+        [Number(value)] => value.compare(@symnum.BigRational::from_int(10)) < 0
         _ => false
       }
     },

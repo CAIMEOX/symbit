@@ -72,7 +72,7 @@ fn put_tri_kw(
   value : @symassume.Tri,
 ) -> Unit {
   match @symassume.tri_to_bool_option(value) {
-    Some(v) => kwargs[key] = OracleArg::Bool(v)
+    Some(v) => kwargs[key] = Bool(v)
     None => ()
   }
 }
@@ -90,9 +90,7 @@ fn symbol_obj_with_facts(
   put_tri_kw(kwargs, "real", facts.is_real)
   put_tri_kw(kwargs, "positive", facts.is_positive)
   put_tri_kw(kwargs, "nonnegative", facts.is_nonnegative)
-  objenum_to_obj(
-    sympy_call_must("sympy.Symbol", [OracleArg::Str(name)], kwargs~),
-  )
+  objenum_to_obj(sympy_call_must("sympy.Symbol", [Str(name)], kwargs~))
 }
 
 ///|
@@ -101,7 +99,7 @@ fn locals_from_env(
 ) -> Map[String, OracleArg] raise {
   let locals : Map[String, OracleArg] = Map([])
   for name, facts in env {
-    locals[name] = OracleArg::PyObj(symbol_obj_with_facts(name, facts))
+    locals[name] = PyObj(symbol_obj_with_facts(name, facts))
   }
   locals
 }
@@ -111,11 +109,9 @@ fn sympify_with_env(
   expr : @symcore.Expr,
   env : Map[String, @symassume.SymbolFacts],
 ) -> @py.PyObjectEnum raise {
-  let kwargs : Map[String, OracleArg] = {
-    "locals": OracleArg::Dict(locals_from_env(env)),
-  }
+  let kwargs : Map[String, OracleArg] = { "locals": Dict(locals_from_env(env)) }
   let expr_str = @symprint.pretty_string(expr)
-  sympy_call_must("sympy.sympify", [OracleArg::Str(expr_str)], kwargs~)
+  sympy_call_must("sympy.sympify", [Str(expr_str)], kwargs~)
 }
 
 ///|
@@ -211,7 +207,7 @@ fn assumptions_globals() -> @py.PyDict raise {
     }
   }
   for sym_name in ["x", "y", "z", "a", "b", "c", "n", "m", "t", "u", "v"] {
-    let sym = sympy_call_must("sympy.Symbol", [OracleArg::Str(sym_name)])
+    let sym = sympy_call_must("sympy.Symbol", [Str(sym_name)])
     globals.set(sym_name, objenum_to_obj(sym))
   }
   for const_name in ["oo", "zoo", "I", "E", "pi"] {
@@ -238,9 +234,9 @@ fn py_eval_assumptions(expr : String) -> @py.PyObjectEnum raise {
     let eval_callable = py_callable_from_enum(eval_obj)
     let globals = assumptions_globals()
     let args = @sympy.py_pack_args([
-      OracleArg::Str(expr),
-      OracleArg::PyObj(globals.obj()),
-      OracleArg::PyObj(globals.obj()),
+      Str(expr),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match @sympy.py_call_object(eval_callable, args, print_err=false) {
       Some(obj) => obj

@@ -321,6 +321,8 @@ pub fn CosetTable::modified_scan_and_fill(Self, Int, FreeGroupElement, FreeGroup
 pub fn CosetTable::n(Self) -> Int
 pub fn CosetTable::new(FreeGroup, Array[FreeGroupElement], Array[FreeGroupElement], String, Array[FreeGroupElement], max_cosets? : Int) -> Self
 pub fn CosetTable::omega(Self) -> Array[Int]
+#deprecated
+pub fn CosetTable::output(Self, &Logger) -> Unit
 pub fn CosetTable::process_deductions(Self, Array[FreeGroupElement], Array[FreeGroupElement]) -> Unit raise CombinatoricsError
 pub fn CosetTable::process_deductions_check(Self, Array[FreeGroupElement], Array[FreeGroupElement]) -> Bool
 pub fn CosetTable::rep(Self, Int, modified? : Bool) -> Int raise CombinatoricsError
@@ -331,6 +333,8 @@ pub fn CosetTable::scan_c(Self, Int, FreeGroupElement) -> Unit raise Combinatori
 pub fn CosetTable::scan_check(Self, Int, FreeGroupElement) -> Bool
 pub fn CosetTable::standardize(Self) -> Unit
 pub fn CosetTable::switch(Self, Int, Int) -> Unit
+#deprecated
+pub fn CosetTable::to_string(Self) -> String
 pub impl Show for CosetTable
 
 pub struct Cycle {
@@ -341,7 +345,11 @@ pub fn Cycle::compose(Self, Self) -> Self
 pub fn Cycle::from_permutation(Permutation) -> Self
 pub fn Cycle::list(Self, size? : Int) -> Array[Int] raise CombinatoricsError
 pub fn Cycle::new(Array[Int]) -> Self raise CombinatoricsError
+#deprecated
+pub fn Cycle::output(Self, &Logger) -> Unit
 pub fn Cycle::size(Self) -> Int
+#deprecated
+pub fn Cycle::to_string(Self) -> String
 pub impl Show for Cycle
 
 pub struct FpGroup {
@@ -366,10 +374,14 @@ pub fn FpGroup::make_confluent(Self) -> Unit raise CombinatoricsError
 pub fn FpGroup::most_frequent_generator(Self) -> FreeGroupElement raise CombinatoricsError
 pub fn FpGroup::new(FreeGroup, Array[FreeGroupElement]) -> Self
 pub fn FpGroup::order(Self, strategy? : String) -> GroupOrder raise CombinatoricsError
+#deprecated
+pub fn FpGroup::output(Self, &Logger) -> Unit
 pub fn FpGroup::random(Self) -> FreeGroupElement raise CombinatoricsError
 pub fn FpGroup::reduce(Self, FreeGroupElement) -> FreeGroupElement raise CombinatoricsError
 pub fn FpGroup::standardize_coset_table(Self) -> Unit
 pub fn FpGroup::subgroup(Self, Array[FreeGroupElement], draft? : CosetTable) -> Self raise CombinatoricsError
+#deprecated
+pub fn FpGroup::to_string(Self) -> String
 pub impl Show for FpGroup
 
 pub struct FpSubgroup {
@@ -382,7 +394,11 @@ pub struct FpSubgroup {
 pub fn FpSubgroup::contains(Self, FreeGroupElement) -> Bool raise CombinatoricsError
 pub fn FpSubgroup::new(SubgroupParent, Array[FreeGroupElement], normal? : Bool) -> Self
 pub fn FpSubgroup::order(Self) -> GroupOrder raise CombinatoricsError
+#deprecated
+pub fn FpSubgroup::output(Self, &Logger) -> Unit
 pub fn FpSubgroup::to_fp_group(Self) -> FpGroup raise CombinatoricsError
+#deprecated
+pub fn FpSubgroup::to_string(Self) -> String
 pub impl Show for FpSubgroup
 
 pub struct FreeGroup {
@@ -392,13 +408,25 @@ pub struct FreeGroup {
 pub fn FreeGroup::center(Self) -> Array[FreeGroupElement]
 pub fn FreeGroup::contains(Self, FreeGroupElement) -> Bool
 pub fn FreeGroup::elements(Self) -> Array[FreeGroupElement] raise CombinatoricsError
+#deprecated
+pub fn FreeGroup::equal(Self, Self) -> Bool
 pub fn FreeGroup::generators(Self) -> Array[FreeGroupElement]
+#deprecated
+pub fn FreeGroup::hash(Self) -> Int
+#deprecated
+pub fn FreeGroup::hash_combine(Self, Hasher) -> Unit
 pub fn FreeGroup::identity(Self) -> FreeGroupElement
 pub fn FreeGroup::index(Self, FreeGroupElement) -> Int raise CombinatoricsError
 pub fn FreeGroup::is_abelian(Self) -> Bool
 pub fn FreeGroup::new(Array[String]) -> Self
+#deprecated
+pub fn FreeGroup::not_equal(Self, Self) -> Bool
 pub fn FreeGroup::order(Self) -> GroupOrder
+#deprecated
+pub fn FreeGroup::output(Self, &Logger) -> Unit
 pub fn FreeGroup::symbols(Self) -> Array[String]
+#deprecated
+pub fn FreeGroup::to_string(Self) -> String
 pub impl Show for FreeGroup
 
 #alias(FpGroupElement)
@@ -408,6 +436,8 @@ pub struct FreeGroupElement {
 } derive(Eq, Hash)
 pub fn FreeGroupElement::array_form(Self) -> Array[(Int, Int)]
 pub fn FreeGroupElement::commutator(Self, Self) -> Self raise CombinatoricsError
+#deprecated
+pub fn FreeGroupElement::compare(Self, Self) -> Int
 pub fn FreeGroupElement::contains(Self, Self) -> Bool
 pub fn FreeGroupElement::contains_generators(Self) -> Array[Self]
 pub fn FreeGroupElement::copy(Self) -> Self
@@ -419,11 +449,17 @@ pub fn FreeGroupElement::div(Self, Self) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::eliminate_word(Self, Self, by? : Self, all? : Bool, inverse? : Bool) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::eliminate_words(Self, Array[Self], all? : Bool, inverse? : Bool) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::eliminate_words_map(Self, Map[Self, Self], all? : Bool, inverse? : Bool) -> Self raise CombinatoricsError
+#deprecated
+pub fn FreeGroupElement::equal(Self, Self) -> Bool
 pub fn FreeGroupElement::exponent_sum(Self, Self) -> Int raise CombinatoricsError
 pub fn FreeGroupElement::exponent_syllable(Self, Int) -> Int raise CombinatoricsError
 pub fn FreeGroupElement::ext_rep(Self) -> Array[Int]
 pub fn FreeGroupElement::generator_count(Self, Self) -> Int raise CombinatoricsError
 pub fn FreeGroupElement::generator_syllable(Self, Int) -> Int raise CombinatoricsError
+#deprecated
+pub fn FreeGroupElement::hash(Self) -> Int
+#deprecated
+pub fn FreeGroupElement::hash_combine(Self, Hasher) -> Unit
 pub fn FreeGroupElement::identity_cyclic_reduction(Self) -> Self
 pub fn FreeGroupElement::index(Self, Self) -> Int raise CombinatoricsError
 pub fn FreeGroupElement::inverse(Self) -> Self
@@ -437,14 +473,28 @@ pub fn FreeGroupElement::letter_at(Self, Int) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::letter_form(Self) -> Array[Int]
 pub fn FreeGroupElement::letter_form_elm(Self) -> Array[Self]
 pub fn FreeGroupElement::mul(Self, Self) -> Self raise CombinatoricsError
+#deprecated
+pub fn FreeGroupElement::not_equal(Self, Self) -> Bool
 pub fn FreeGroupElement::number_syllables(Self) -> Int
+#deprecated
+pub fn FreeGroupElement::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn FreeGroupElement::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn FreeGroupElement::op_le(Self, Self) -> Bool
+#deprecated
+pub fn FreeGroupElement::op_lt(Self, Self) -> Bool
 pub fn FreeGroupElement::order(Self) -> GroupOrder
+#deprecated
+pub fn FreeGroupElement::output(Self, &Logger) -> Unit
 pub fn FreeGroupElement::pow(Self, Int) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::power_of(Self, Self) -> Bool raise CombinatoricsError
 pub fn FreeGroupElement::sub_syllables(Self, Int, Int) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::substituted_word(Self, Int, Int, Self) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::subword(Self, Int, Int, strict? : Bool) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::subword_index(Self, Self, start? : Int) -> Int raise CombinatoricsError
+#deprecated
+pub fn FreeGroupElement::to_string(Self) -> String
 pub impl Compare for FreeGroupElement
 pub impl Show for FreeGroupElement
 
@@ -490,12 +540,28 @@ pub enum GroupOrder {
   Finite(Int)
   Infinite
 } derive(Eq)
+#deprecated
+pub fn GroupOrder::equal(Self, Self) -> Bool
+#deprecated
+pub fn GroupOrder::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn GroupOrder::output(Self, &Logger) -> Unit
+#deprecated
+pub fn GroupOrder::to_string(Self) -> String
 pub impl Show for GroupOrder
 
 pub(all) enum HomElement {
   Perm(Permutation)
   Word(FreeGroupElement)
 } derive(Eq, Hash)
+#deprecated
+pub fn HomElement::equal(Self, Self) -> Bool
+#deprecated
+pub fn HomElement::hash(Self) -> Int
+#deprecated
+pub fn HomElement::hash_combine(Self, Hasher) -> Unit
+#deprecated
+pub fn HomElement::not_equal(Self, Self) -> Bool
 
 pub(all) enum HomGroup {
   PermGroup(PermutationGroup)
@@ -522,10 +588,18 @@ pub fn IntegerPartition::le(Self, Self) -> Bool
 pub fn IntegerPartition::lt(Self, Self) -> Bool
 pub fn IntegerPartition::new(Array[Int], integer? : Int) -> Self raise CombinatoricsError
 pub fn IntegerPartition::next_lex(Self) -> Self raise CombinatoricsError
+#deprecated
+pub fn IntegerPartition::output(Self, &Logger) -> Unit
 pub fn IntegerPartition::prev_lex(Self) -> Self raise CombinatoricsError
+#deprecated
+pub fn IntegerPartition::to_string(Self) -> String
 pub impl Show for IntegerPartition
 
 type MinWord derive(Eq)
+#deprecated
+pub fn MinWord::equal(Self, Self) -> Bool
+#deprecated
+pub fn MinWord::not_equal(Self, Self) -> Bool
 
 pub struct OrbitsTransversals {
   basic_orbits : Array[Array[Int]]
@@ -569,6 +643,8 @@ pub fn Permutation::cycle_structure_pairs(Self) -> Array[(Int, Int)]
 pub fn Permutation::cycles(Self) -> Int
 pub fn Permutation::cyclic_form(Self) -> Array[Array[Int]]
 pub fn Permutation::descents(Self) -> Array[Int]
+#deprecated
+pub fn Permutation::equal(Self, Self) -> Bool
 pub fn Permutation::from_array(Array[Int], size? : Int) -> Self raise CombinatoricsError
 pub fn Permutation::from_cycle(Cycle, size? : Int) -> Self raise CombinatoricsError
 pub fn Permutation::from_cycles(Array[Array[Int]], size? : Int) -> Self raise CombinatoricsError
@@ -576,6 +652,10 @@ pub fn Permutation::from_inversion_vector(Array[Int]) -> Self raise Combinatoric
 pub fn Permutation::from_sequence_chars(Array[Char]) -> Self
 pub fn Permutation::from_sequence_string(String) -> Self
 pub fn Permutation::full_cyclic_form(Self) -> Array[Array[Int]]
+#deprecated
+pub fn Permutation::hash(Self) -> Int
+#deprecated
+pub fn Permutation::hash_combine(Self, Hasher) -> Unit
 pub fn Permutation::identity(Int) -> Self
 pub fn Permutation::index(Self) -> Int
 pub fn Permutation::inversion_vector(Self) -> Array[Int]
@@ -593,6 +673,8 @@ pub fn Permutation::new(Array[Int]) -> Self raise CombinatoricsError
 pub fn Permutation::next_lex(Self) -> Self?
 pub fn Permutation::next_nonlex(Self) -> Self?
 pub fn Permutation::next_trotterjohnson(Self) -> Self?
+#deprecated
+pub fn Permutation::not_equal(Self, Self) -> Bool
 pub fn Permutation::order(Self) -> Int
 pub fn Permutation::parity(Self) -> Int
 pub fn Permutation::pow(Self, Int) -> Self
@@ -742,18 +824,30 @@ pub fn RewritingSystem::set_max(Self, Int) -> Unit
 pub(all) enum S1TransitiveSubgroups {
   S1
 } derive(Eq)
+#deprecated
+pub fn S1TransitiveSubgroups::equal(Self, Self) -> Bool
 pub fn S1TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+#deprecated
+pub fn S1TransitiveSubgroups::not_equal(Self, Self) -> Bool
 
 pub(all) enum S2TransitiveSubgroups {
   S2
 } derive(Eq)
+#deprecated
+pub fn S2TransitiveSubgroups::equal(Self, Self) -> Bool
 pub fn S2TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+#deprecated
+pub fn S2TransitiveSubgroups::not_equal(Self, Self) -> Bool
 
 pub(all) enum S3TransitiveSubgroups {
   A3
   S3
 } derive(Eq)
+#deprecated
+pub fn S3TransitiveSubgroups::equal(Self, Self) -> Bool
 pub fn S3TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+#deprecated
+pub fn S3TransitiveSubgroups::not_equal(Self, Self) -> Bool
 
 pub(all) enum S4TransitiveSubgroups {
   C4
@@ -762,7 +856,11 @@ pub(all) enum S4TransitiveSubgroups {
   A4
   S4
 } derive(Eq)
+#deprecated
+pub fn S4TransitiveSubgroups::equal(Self, Self) -> Bool
 pub fn S4TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+#deprecated
+pub fn S4TransitiveSubgroups::not_equal(Self, Self) -> Bool
 
 pub(all) enum S5TransitiveSubgroups {
   C5
@@ -771,7 +869,11 @@ pub(all) enum S5TransitiveSubgroups {
   A5
   S5
 } derive(Eq)
+#deprecated
+pub fn S5TransitiveSubgroups::equal(Self, Self) -> Bool
 pub fn S5TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+#deprecated
+pub fn S5TransitiveSubgroups::not_equal(Self, Self) -> Bool
 
 pub(all) enum S6TransitiveSubgroups {
   C6
@@ -791,7 +893,11 @@ pub(all) enum S6TransitiveSubgroups {
   A6
   S6
 } derive(Eq)
+#deprecated
+pub fn S6TransitiveSubgroups::equal(Self, Self) -> Bool
 pub fn S6TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+#deprecated
+pub fn S6TransitiveSubgroups::not_equal(Self, Self) -> Bool
 
 pub struct State {
   name : StateName
@@ -821,12 +927,24 @@ pub enum StateName {
   Start
   Word(FreeGroupElement)
 } derive(Eq, Hash)
+#deprecated
+pub fn StateName::equal(Self, Self) -> Bool
+#deprecated
+pub fn StateName::hash(Self) -> Int
+#deprecated
+pub fn StateName::hash_combine(Self, Hasher) -> Unit
+#deprecated
+pub fn StateName::not_equal(Self, Self) -> Bool
 
 pub enum StateType {
   Start
   Accept
   Dead
 } derive(Eq)
+#deprecated
+pub fn StateType::equal(Self, Self) -> Bool
+#deprecated
+pub fn StateType::not_equal(Self, Self) -> Bool
 
 pub enum SubgroupParent {
   Free(FreeGroup)

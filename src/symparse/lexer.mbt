@@ -79,9 +79,9 @@ fn scan_number(src : String, start : Int) -> (TokenKind, Int) {
     _ => ()
   }
   if has_dot || has_exponent {
-    (TokenKind::DecimalLit(src.unsafe_substring(start~, end=i)), i)
+    (DecimalLit(src.unsafe_substring(start~, end=i)), i)
   } else {
-    (TokenKind::IntLit(src.unsafe_substring(start~, end=i)), i)
+    (IntLit(src.unsafe_substring(start~, end=i)), i)
   }
 }
 
@@ -121,7 +121,7 @@ fn scan_ident(src : String, start : Int) -> (TokenKind, Int) {
         }) {
     i += 1
   }
-  (TokenKind::Ident(src.unsafe_substring(start~, end=i)), i)
+  (Ident(src.unsafe_substring(start~, end=i)), i)
 }
 
 ///|
@@ -147,51 +147,48 @@ pub fn lex(src : String) -> Array[Token] raise ParseError {
     let start = index
     let (kind, next_index) = match ch {
       '+' => (TokenKind::Plus, index + 1)
-      '-' => (TokenKind::Minus, index + 1)
-      '/' => (TokenKind::Slash, index + 1)
-      '(' => (TokenKind::LParen, index + 1)
-      ')' => (TokenKind::RParen, index + 1)
-      ',' => (TokenKind::Comma, index + 1)
-      ':' => (TokenKind::Colon, index + 1)
-      '^' => (TokenKind::Caret, index + 1)
+      '-' => (Minus, index + 1)
+      '/' => (Slash, index + 1)
+      '(' => (LParen, index + 1)
+      ')' => (RParen, index + 1)
+      ',' => (Comma, index + 1)
+      ':' => (Colon, index + 1)
+      '^' => (Caret, index + 1)
       '!' =>
         match char_at(src, index + 1) {
-          Some('=') => (TokenKind::Ne, index + 2)
-          Some('!') => (TokenKind::BangBang, index + 2)
-          _ => (TokenKind::Bang, index + 1)
+          Some('=') => (Ne, index + 2)
+          Some('!') => (BangBang, index + 2)
+          _ => (Bang, index + 1)
         }
       '<' =>
         match char_at(src, index + 1) {
-          Some('=') => (TokenKind::Le, index + 2)
-          _ => (TokenKind::Lt, index + 1)
+          Some('=') => (Le, index + 2)
+          _ => (Lt, index + 1)
         }
       '>' =>
         match char_at(src, index + 1) {
-          Some('=') => (TokenKind::Ge, index + 2)
-          _ => (TokenKind::Gt, index + 1)
+          Some('=') => (Ge, index + 2)
+          _ => (Gt, index + 1)
         }
       '=' =>
         match char_at(src, index + 1) {
-          Some('=') => (TokenKind::EqEq, index + 2)
-          _ => (TokenKind::Eq, index + 1)
+          Some('=') => (EqEq, index + 2)
+          _ => (Eq, index + 1)
         }
       '*' =>
         match char_at(src, index + 1) {
-          Some('*') => (TokenKind::Pow, index + 2)
-          _ => (TokenKind::Star, index + 1)
+          Some('*') => (Pow, index + 2)
+          _ => (Star, index + 1)
         }
       '.' if starts_decimal(src, index) => scan_number(src, start)
       ch if ch.is_ascii_digit() => scan_number(src, start)
       ch if is_ident_start(ch) => scan_ident(src, start)
       other =>
-        raise ParseError::UnexpectedChar(
-          span=span(start, start + other.utf16_len()),
-          other,
-        )
+        raise UnexpectedChar(span=span(start, start + other.utf16_len()), other)
     }
     tokens.push(token(kind, span(start, next_index)))
     index = next_index
   }
-  tokens.push(token(TokenKind::Eof, span(len, len)))
+  tokens.push(token(Eof, span(len, len)))
   tokens
 }

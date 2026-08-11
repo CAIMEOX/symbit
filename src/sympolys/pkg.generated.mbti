@@ -1954,6 +1954,10 @@ pub(all) suberror PolyError {
   NotUnivariate
   BadModulus
 }
+#deprecated
+pub fn PolyError::output(Self, &Logger) -> Unit
+#deprecated
+pub fn PolyError::to_string(Self) -> String
 pub impl Show for PolyError
 
 // Types and methods
@@ -1962,6 +1966,10 @@ pub struct ANP {
   mod : Array[FieldElem]
   domain : Domain
 }
+#deprecated
+pub fn ANP::output(Self, &Logger) -> Unit
+#deprecated
+pub fn ANP::to_string(Self) -> String
 pub impl Show for ANP
 
 pub struct AlgExtSpec {
@@ -1990,6 +1998,8 @@ pub fn ComplexField::coerce_complex(Self, @symcore.Expr) -> @symcore.ComplexFloa
 pub fn ComplexField::conjugate(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn ComplexField::contains_expr(Self, @symcore.Expr) -> Bool
 pub fn ComplexField::domain(Self) -> Domain
+#deprecated
+pub fn ComplexField::equal(Self, Self) -> Bool
 pub fn ComplexField::evalf_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn ComplexField::from_complex_float(Self, @symcore.ComplexFloat) -> @symcore.Expr
 pub fn ComplexField::from_exact_parts(Self, @symnum.BigRational, @symnum.BigRational) -> @symcore.Expr
@@ -1998,8 +2008,12 @@ pub fn ComplexField::inv(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn ComplexField::mul(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn ComplexField::neg(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn ComplexField::new(precision? : Int) -> Self
+#deprecated
+pub fn ComplexField::not_equal(Self, Self) -> Bool
 pub fn ComplexField::one(Self) -> @symcore.Expr
 pub fn ComplexField::precision(Self) -> Int
+#deprecated
+pub fn ComplexField::to_repr(Self) -> @debug.Repr
 pub fn ComplexField::zero(Self) -> @symcore.Expr
 
 pub struct ConstructDomainResult {
@@ -2154,6 +2168,7 @@ pub fn Domain::cyclotomic_field(Self, Int, ss? : Bool, extension_name? : String,
 pub fn Domain::denom_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn Domain::div_expr(Self, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) raise PolyError
 pub fn Domain::drop(Self, Array[String]) -> Self raise PolyError
+#deprecated
 pub fn Domain::equal(Self, Self) -> Bool
 pub fn Domain::evalf_expr(Self, @symcore.Expr, prec? : Int?) -> @symcore.Expr raise PolyError
 pub fn Domain::exquo_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
@@ -2207,6 +2222,7 @@ pub fn Domain::mul_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr rai
 pub fn Domain::neg_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn Domain::new_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn Domain::normal_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+#deprecated
 pub fn Domain::not_equal(Self, Self) -> Bool
 pub fn Domain::numer_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn Domain::of_type_expr(Self, @symcore.Expr) -> Bool
@@ -2380,10 +2396,14 @@ pub fn DomainScalar::mod(Self, Self) -> Self raise PolyError
 pub fn DomainScalar::mul(Self, Self) -> Self raise PolyError
 pub fn DomainScalar::neg(Self) -> Self raise PolyError
 pub fn DomainScalar::new(FieldElem, Domain) -> Self raise PolyError
+#deprecated
+pub fn DomainScalar::output(Self, &Logger) -> Unit
 pub fn DomainScalar::pos(Self) -> Self raise PolyError
 pub fn DomainScalar::pow(Self, Int) -> Self raise PolyError
 pub fn DomainScalar::sub(Self, Self) -> Self raise PolyError
 pub fn DomainScalar::to_domain(Self, Domain) -> Self raise PolyError
+#deprecated
+pub fn DomainScalar::to_string(Self) -> String
 pub fn DomainScalar::to_sympy(Self) -> @symcore.Expr
 pub fn DomainScalar::unify(Self, Self) -> (Self, Self) raise PolyError
 pub impl Show for DomainScalar
@@ -2395,6 +2415,10 @@ pub enum FieldElem {
   GFExt(Int, Array[Int], Array[Int])
   AlgExt(Domain, Array[FieldElem], Poly, String)
 }
+#deprecated
+pub fn FieldElem::output(Self, &Logger) -> Unit
+#deprecated
+pub fn FieldElem::to_string(Self) -> String
 pub impl Show for FieldElem
 
 pub struct GaloisGroupResult {
@@ -2451,12 +2475,24 @@ pub struct ModuleElement {
   denom : @bigint.BigInt
   is_power_basis_element : Bool
 }
+#deprecated
+pub fn ModuleElement::output(Self, &Logger) -> Unit
+#deprecated
+pub fn ModuleElement::to_string(Self) -> String
 pub fn ModuleElement::type_name(Self) -> String
 pub impl Show for ModuleElement
 
 pub struct Monomial {
   exps : Array[Int]
 } derive(Eq, Hash)
+#deprecated
+pub fn Monomial::equal(Self, Self) -> Bool
+#deprecated
+pub fn Monomial::hash(Self) -> Int
+#deprecated
+pub fn Monomial::hash_combine(Self, Hasher) -> Unit
+#deprecated
+pub fn Monomial::not_equal(Self, Self) -> Bool
 pub fn Monomial::to_array(Self) -> Array[Int]
 
 pub struct NFModule {
@@ -2465,6 +2501,10 @@ pub struct NFModule {
   is_power_basis : Bool
   defining_poly : Poly?
 }
+#deprecated
+pub fn NFModule::output(Self, &Logger) -> Unit
+#deprecated
+pub fn NFModule::to_string(Self) -> String
 pub impl Show for NFModule
 
 pub struct Options {
@@ -2505,6 +2545,8 @@ pub fn Poly::lt(Self, order? : TermOrder) -> (Monomial, FieldElem)?
 pub fn Poly::mul(Self, Self) -> Self raise PolyError
 pub fn Poly::neg(Self) -> Self
 pub fn Poly::one(Array[String], Domain) -> Self raise PolyError
+#deprecated
+pub fn Poly::output(Self, &Logger) -> Unit
 pub fn Poly::pow(Self, Int) -> Self raise PolyError
 pub fn Poly::primitive_part(Self) -> Self raise PolyError
 pub fn Poly::pseudo_div_univar_int(Self, Self) -> (Self, Self, Int) raise PolyError
@@ -2536,6 +2578,10 @@ pub(all) enum PolyConfigValue {
   Int(Int)
   Text(String)
 } derive(Eq)
+#deprecated
+pub fn PolyConfigValue::equal(Self, Self) -> Bool
+#deprecated
+pub fn PolyConfigValue::not_equal(Self, Self) -> Bool
 
 pub struct PrimeIdeal {
   p : Int
@@ -2544,6 +2590,10 @@ pub struct PrimeIdeal {
   residue_degree : Int
   has_generator : Bool
 }
+#deprecated
+pub fn PrimeIdeal::output(Self, &Logger) -> Unit
+#deprecated
+pub fn PrimeIdeal::to_string(Self) -> String
 pub impl Show for PrimeIdeal
 
 pub struct RealField {
@@ -2553,6 +2603,8 @@ pub fn RealField::add(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise
 pub fn RealField::coerce_float(Self, @symcore.Expr) -> @symcore.Float raise PolyError
 pub fn RealField::contains_expr(Self, @symcore.Expr) -> Bool
 pub fn RealField::domain(Self) -> Domain
+#deprecated
+pub fn RealField::equal(Self, Self) -> Bool
 pub fn RealField::evalf_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn RealField::from_exact(Self, @symnum.BigRational) -> @symcore.Expr
 pub fn RealField::from_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
@@ -2561,9 +2613,13 @@ pub fn RealField::inv(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn RealField::mul(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn RealField::neg(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn RealField::new(precision? : Int) -> Self
+#deprecated
+pub fn RealField::not_equal(Self, Self) -> Bool
 pub fn RealField::one(Self) -> @symcore.Expr
 pub fn RealField::precision(Self) -> Int
 pub fn RealField::to_rational(Self, @symcore.Float, limit? : Bool) -> (@bigint.BigInt, @bigint.BigInt) raise PolyError
+#deprecated
+pub fn RealField::to_repr(Self) -> @debug.Repr
 pub fn RealField::zero(Self) -> @symcore.Expr
 
 pub struct RingFactoryResult {
@@ -2588,12 +2644,20 @@ pub struct RootOf {
   poly : Poly
   index : Int
 }
+#deprecated
+pub fn RootOf::output(Self, &Logger) -> Unit
+#deprecated
+pub fn RootOf::to_string(Self) -> String
 pub impl Show for RootOf
 
 pub struct RootSum {
   poly : Poly
   func : @symcore.Expr?
 }
+#deprecated
+pub fn RootSum::output(Self, &Logger) -> Unit
+#deprecated
+pub fn RootSum::to_string(Self) -> String
 pub impl Show for RootSum
 
 pub struct RoundTwoResult {
@@ -2601,6 +2665,10 @@ pub struct RoundTwoResult {
   denom : @symnum.BigRational
   discriminant : FieldElem
 }
+#deprecated
+pub fn RoundTwoResult::output(Self, &Logger) -> Unit
+#deprecated
+pub fn RoundTwoResult::to_string(Self) -> String
 pub impl Show for RoundTwoResult
 
 pub struct SDM {
@@ -2721,10 +2789,14 @@ pub struct SeriesRing {
   sym : String
   precision : Int
 } derive(Eq)
+#deprecated
+pub fn SeriesRing::equal(Self, Self) -> Bool
 pub fn SeriesRing::from_coeffs(Self, Array[FieldElem]) -> SeriesElem
 pub fn SeriesRing::from_int_coeffs(Self, Array[Int]) -> SeriesElem raise PolyError
 pub fn SeriesRing::from_poly(Self, Poly) -> SeriesElem raise PolyError
 pub fn SeriesRing::gen(Self) -> SeriesElem raise PolyError
+#deprecated
+pub fn SeriesRing::not_equal(Self, Self) -> Bool
 pub fn SeriesRing::one(Self) -> SeriesElem raise PolyError
 pub fn SeriesRing::zero(Self) -> SeriesElem
 
@@ -2747,6 +2819,10 @@ pub(all) enum TermOrder {
   Igrlex
   Igrevlex
 } derive(Eq)
+#deprecated
+pub fn TermOrder::equal(Self, Self) -> Bool
+#deprecated
+pub fn TermOrder::not_equal(Self, Self) -> Bool
 
 // Type aliases
 pub type ComplexRootRectangle = ((@symnum.BigRational, @symnum.BigRational), (@symnum.BigRational, @symnum.BigRational))

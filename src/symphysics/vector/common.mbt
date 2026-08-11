@@ -28,7 +28,7 @@ pub suberror VectorError {
 
 ///|
 pub fn raise_value_error(message : String) -> Unit raise VectorError {
-  raise VectorError::ValueError(message)
+  raise ValueError(message)
 }
 
 ///|
@@ -72,7 +72,7 @@ pub struct Dyadic {
 }
 
 ///|
-pub let dynamicsymbols_t : Expr = Expr::Symbol("t")
+pub let dynamicsymbols_t : Expr = Symbol("t")
 
 ///|
 let vector_frame_registry : Array[ReferenceFrame] = []
@@ -109,7 +109,7 @@ fn simplify_expr(expr : Expr) -> Expr {
 ///|
 fn expr_is_zero(expr : Expr) -> Bool {
   match simplify_expr(expr) {
-    Expr::Number(n) => n.is_zero()
+    Number(n) => n.is_zero()
     _ => false
   }
 }
@@ -285,7 +285,7 @@ fn coordinate_symbol_name(frame : ReferenceFrame, axis : Int) -> String {
 
 ///|
 fn coordinate_symbol(frame : ReferenceFrame, axis : Int) -> CoordinateSym {
-  Expr::Symbol(coordinate_symbol_name(frame, axis))
+  Symbol(coordinate_symbol_name(frame, axis))
 }
 
 ///|
@@ -349,12 +349,12 @@ fn expand_dynamicsymbol_token(token : String) -> Array[String] {
 ///|
 fn collect_symbol_names(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    Expr::Symbol(name) => seen.set(name, true)
-    Expr::Add(args) | Expr::Mul(args) =>
+    Symbol(name) => seen.set(name, true)
+    Add(args) | Mul(args) =>
       for arg in args {
         collect_symbol_names(arg, seen)
       }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       collect_symbol_names(base, seen)
       collect_symbol_names(exp, seen)
     }

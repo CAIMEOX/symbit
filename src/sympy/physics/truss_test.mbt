@@ -1,16 +1,16 @@
 ///|
 fn cm_collect_symbols(expr : @symcore.Expr, names : Map[String, Bool]) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => names[name] = true
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Symbol(name) => names[name] = true
+    Add(args) | Mul(args) =>
       for arg in args {
         cm_collect_symbols(arg, names)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       cm_collect_symbols(base, names)
       cm_collect_symbols(exp, names)
     }
-    @symcore.Expr::Function(_, args) =>
+    Function(_, args) =>
       for arg in args {
         cm_collect_symbols(arg, names)
       }
@@ -44,13 +44,13 @@ fn cm_double_pow(base : Double, exp : Int) -> Double {
 ///|
 fn cm_expr_eval(expr : @symcore.Expr, env : Map[String, Double]) -> Double? {
   match expr {
-    @symcore.Expr::Number(n) => {
+    Number(n) => {
       let num = Double::from_int(n.numerator().to_int())
       let den = Double::from_int(n.denominator().to_int())
       Some(num / den)
     }
-    @symcore.Expr::Symbol(name) => env.get(name)
-    @symcore.Expr::Add(args) => {
+    Symbol(name) => env.get(name)
+    Add(args) => {
       let mut acc = 0.0
       for arg in args {
         match cm_expr_eval(arg, env) {
@@ -60,7 +60,7 @@ fn cm_expr_eval(expr : @symcore.Expr, env : Map[String, Double]) -> Double? {
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = 1.0
       for arg in args {
         match cm_expr_eval(arg, env) {
@@ -70,13 +70,13 @@ fn cm_expr_eval(expr : @symcore.Expr, env : Map[String, Double]) -> Double? {
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (cm_expr_eval(base, env), exp) {
-        (Some(base_value), @symcore.Expr::Number(n)) if n.is_integral() =>
+        (Some(base_value), Number(n)) if n.is_integral() =>
           Some(cm_double_pow(base_value, n.numerator().to_int()))
         _ => None
       }
-    @symcore.Expr::Function("sqrt", args) if args.length() == 1 =>
+    Function("sqrt", args) if args.length() == 1 =>
       match cm_expr_eval(args[0], env) {
         Some(value) => Some(value.sqrt())
         None => None

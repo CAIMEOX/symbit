@@ -49,7 +49,7 @@ pub fn jacobi_poly(
     m2 = m1
     m1 = next
   }
-  canonical_poly_expr(m1, gen, Domain::QQ)
+  canonical_poly_expr(m1, gen, QQ)
 }
 
 ///|
@@ -67,12 +67,12 @@ fn jacobi_poly_rational(
   let mut m1 : Array[Expr] = [
     rational_to_expr(
       a.sub_r(b).div_r(rat_int(2)) catch {
-        _ => raise PolyError::DivisionByZero
+        _ => raise DivisionByZero
       },
     ),
     rational_to_expr(
       a.add_r(b).div_r(rat_int(2)) catch {
-        _ => raise PolyError::DivisionByZero
+        _ => raise DivisionByZero
       },
     ) +
     int(1),
@@ -83,7 +83,7 @@ fn jacobi_poly_rational(
       .mul_r(a.add_r(b).add_r(i_rat))
       .mul_r(a.add_r(b).add_r(rat_int(2 * i - 2)))
     if den.is_zero() {
-      raise PolyError::DivisionByZero
+      raise DivisionByZero
     }
     let common = a.add_r(b).add_r(rat_int(2 * i - 1))
     let f0 = rat_div_sp(
@@ -113,7 +113,7 @@ fn jacobi_poly_rational(
     m2 = m1
     m1 = next
   }
-  canonical_poly_expr(poly_expr_from_coeffs(m1, x), gen, Domain::QQ)
+  canonical_poly_expr(poly_expr_from_coeffs(m1, x), gen, QQ)
 }
 
 ///|
@@ -233,16 +233,8 @@ pub fn gegenbauer_poly(
   let x = Expr::Symbol(gen)
   match expr_rat_sp(a) {
     Some(ar) => {
-      let coeffs = dup_gegenbauer(
-        n,
-        fe_from_rational(ar, Domain::QQ),
-        Domain::QQ,
-      )
-      return canonical_poly_expr(
-        dense_coeffs_to_expr(coeffs, x),
-        gen,
-        Domain::QQ,
-      )
+      let coeffs = dup_gegenbauer(n, fe_from_rational(ar, QQ), QQ)
+      return canonical_poly_expr(dense_coeffs_to_expr(coeffs, x), gen, QQ)
     }
     None => ()
   }
@@ -259,7 +251,7 @@ pub fn gegenbauer_poly(
     m2 = m1
     m1 = expr_poly_sub(p1, p2)
   }
-  canonical_poly_expr(poly_expr_from_coeffs(m1, x), gen, Domain::QQ)
+  canonical_poly_expr(poly_expr_from_coeffs(m1, x), gen, QQ)
 }
 
 ///|
@@ -343,7 +335,7 @@ pub fn chebyshevt_poly(n : Int, gen? : String = "x") -> Expr raise PolyError {
     m2 = m1
     m1 = next
   }
-  canonical_poly_expr(m1, gen, Domain::ZZ)
+  canonical_poly_expr(m1, gen, ZZ)
 }
 
 ///|
@@ -370,7 +362,7 @@ pub fn chebyshevu_poly(n : Int, gen? : String = "x") -> Expr raise PolyError {
     m2 = m1
     m1 = next
   }
-  canonical_poly_expr(m1, gen, Domain::ZZ)
+  canonical_poly_expr(m1, gen, ZZ)
 }
 
 ///|
@@ -397,7 +389,7 @@ pub fn hermite_poly(n : Int, gen? : String = "x") -> Expr raise PolyError {
     m2 = m1
     m1 = next
   }
-  canonical_poly_expr(m1, gen, Domain::ZZ)
+  canonical_poly_expr(m1, gen, ZZ)
 }
 
 ///|
@@ -424,7 +416,7 @@ pub fn hermite_prob_poly(n : Int, gen? : String = "x") -> Expr raise PolyError {
     m2 = m1
     m1 = next
   }
-  canonical_poly_expr(m1, gen, Domain::ZZ)
+  canonical_poly_expr(m1, gen, ZZ)
 }
 
 ///|
@@ -508,7 +500,7 @@ pub fn legendre_poly(n : Int, gen? : String = "x") -> Expr raise PolyError {
     m2 = m1
     m1 = next
   }
-  canonical_poly_expr(m1, gen, Domain::QQ)
+  canonical_poly_expr(m1, gen, QQ)
 }
 
 ///|
@@ -565,7 +557,7 @@ pub fn laguerre_poly(
     m2 = m1
     m1 = a - b
   }
-  canonical_poly_expr(m1, gen, Domain::QQ)
+  canonical_poly_expr(m1, gen, QQ)
 }
 
 ///|
@@ -685,9 +677,9 @@ pub fn spherical_bessel_fn(
 ) -> Expr raise PolyError {
   let x_inv = Expr::Symbol(gen) ^ int(-1)
   let coeffs = if n < 0 {
-    dup_spherical_bessel_fn_minus(-n, Domain::ZZ)
+    dup_spherical_bessel_fn_minus(-n, ZZ)
   } else {
-    dup_spherical_bessel_fn(n, Domain::ZZ)
+    dup_spherical_bessel_fn(n, ZZ)
   }
   dense_coeffs_to_expr(coeffs, x_inv)
 }
@@ -711,7 +703,7 @@ pub fn bernoulli_poly(n : Int, gen? : String = "x") -> Expr raise PolyError {
       expr_pow_int(x, n - k),
     )
   }
-  canonical_poly_expr(expr_add_all(terms), gen, Domain::QQ)
+  canonical_poly_expr(expr_add_all(terms), gen, QQ)
 }
 
 ///|
@@ -768,7 +760,7 @@ pub fn bernoulli_c_poly(n : Int, gen? : String = "x") -> Expr raise PolyError {
     )
   }
   let expr = int_pow_expr(2, n) * expr_add_all(terms)
-  canonical_poly_expr(expr, gen, Domain::QQ)
+  canonical_poly_expr(expr, gen, QQ)
 }
 
 ///|
@@ -812,7 +804,7 @@ pub fn dup_bernoulli_c(
 pub fn genocchi_poly(n : Int, gen? : String = "x") -> Expr raise PolyError {
   guard_nonnegative_degree(n)
   let expr = int(2) * (bernoulli_poly(n, gen~) - bernoulli_c_poly(n, gen~))
-  canonical_poly_expr(expr, gen, Domain::QQ)
+  canonical_poly_expr(expr, gen, QQ)
 }
 
 ///|
@@ -857,7 +849,7 @@ pub fn dup_genocchi(
 pub fn euler_poly(n : Int, gen? : String = "x") -> Expr raise PolyError {
   guard_nonnegative_degree(n)
   let expr = int(-1) * genocchi_poly(n + 1, gen~) * sp_rat(1, n + 1)
-  canonical_poly_expr(expr, gen, Domain::QQ)
+  canonical_poly_expr(expr, gen, QQ)
 }
 
 ///|
@@ -869,11 +861,7 @@ pub fn euler_poly(n : Int, gen? : String = "x") -> Expr raise PolyError {
 /// - Limits: Raises for unsupported exact division in the domain.
 pub fn dup_euler(n : Int, domain : Domain) -> Array[FieldElem] raise PolyError {
   guard_nonnegative_degree(n)
-  dup_exquo_ground(
-    dup_genocchi(n + 1, Domain::ZZ),
-    fe_from_int(-n - 1, domain),
-    domain,
-  )
+  dup_exquo_ground(dup_genocchi(n + 1, ZZ), fe_from_int(-n - 1, domain), domain)
 }
 
 ///|
@@ -894,7 +882,7 @@ pub fn andre_poly(n : Int, gen? : String = "x") -> Expr raise PolyError {
       coeffs[0] = coeffs[0] - value_at_one
     }
   }
-  canonical_poly_expr(poly_expr_from_coeffs(coeffs, x), gen, Domain::QQ)
+  canonical_poly_expr(poly_expr_from_coeffs(coeffs, x), gen, QQ)
 }
 
 ///|
@@ -923,7 +911,7 @@ pub fn dup_andre(n : Int, domain : Domain) -> Array[FieldElem] raise PolyError {
 ///|
 fn guard_nonnegative_degree(n : Int) -> Unit raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
 }
 
@@ -934,7 +922,7 @@ fn orth_fe_rat(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   let rat = @symnum.BigRational::from_ints(num, den) catch {
-    _ => raise PolyError::DivisionByZero
+    _ => raise DivisionByZero
   }
   fe_from_rational(rat, domain)
 }
@@ -987,7 +975,7 @@ fn sp_rat(num : Int, den : Int) -> Expr {
 
 ///|
 fn rational_to_expr(value : @symnum.BigRational) -> Expr {
-  Expr::Number(value)
+  Number(value)
 }
 
 ///|
@@ -1001,7 +989,7 @@ fn rat_div_sp(
   rhs : @symnum.BigRational,
 ) -> @symnum.BigRational raise PolyError {
   lhs.div_r(rhs) catch {
-    _ => raise PolyError::DivisionByZero
+    _ => raise DivisionByZero
   }
 }
 

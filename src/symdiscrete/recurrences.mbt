@@ -15,11 +15,11 @@ pub fn linrec(
     return @symcore.int(0)
   }
   if n < 0 {
-    raise DiscreteError::ValueError("n must be non-negative")
+    raise ValueError("n must be non-negative")
   }
   let k = coeffs.length()
   if init.length() > k {
-    raise DiscreteError::TypeError("init longer than coeffs")
+    raise TypeError("init longer than coeffs")
   }
   let b : Array[Expr] = Array::new()
   for v in init {

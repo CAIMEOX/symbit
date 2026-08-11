@@ -7,21 +7,20 @@
 
 ///|
 fn is_pos_oo(expr : @symcore.Expr) -> Bool {
-  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  expr == NumberSymbol(Infinity)
 }
 
 ///|
 fn is_neg_oo(expr : @symcore.Expr) -> Bool {
-  expr ==
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
+  expr == NumberSymbol(NegativeInfinity)
 }
 
 ///|
 fn infinity_from_sign(sign : Int) -> @symcore.Expr {
   if sign < 0 {
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
+    NumberSymbol(NegativeInfinity)
   } else {
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+    NumberSymbol(Infinity)
   }
 }
 
@@ -32,7 +31,7 @@ fn leading_rational_near_zero(
   dir : String,
 ) -> @symcore.Expr? {
   let var_name = match t {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => return None
   }
   let (num_expr, den_expr) = split_num_den(expr)
@@ -65,11 +64,7 @@ fn leading_rational_near_zero(
       }
       let pole_order = ord_den - ord_num
       if dir == "+-" && pole_order % 2 == 1 {
-        return Some(
-          @symcore.Expr::NumberSymbol(
-            @symcore.NumberSymbolKind::ComplexInfinity,
-          ),
-        )
+        return Some(NumberSymbol(ComplexInfinity))
       }
       let side_sign = if dir == "-" && pole_order % 2 == 1 { -1 } else { 1 }
       let sign = sign_of_expr(lead_coeff)
@@ -77,8 +72,7 @@ fn leading_rational_near_zero(
         match sign {
           Some(0) => @symcore.int(0)
           Some(s) => infinity_from_sign(s * side_sign)
-          None =>
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+          None => NumberSymbol(Infinity)
         },
       )
     }
@@ -110,11 +104,7 @@ fn leading_series_near_zero(
         return Some(poly[idx])
       }
       if dir == "+-" && total_order % 2 != 0 {
-        return Some(
-          @symcore.Expr::NumberSymbol(
-            @symcore.NumberSymbolKind::ComplexInfinity,
-          ),
-        )
+        return Some(NumberSymbol(ComplexInfinity))
       }
       let side_sign = if dir == "-" && total_order % 2 != 0 { -1 } else { 1 }
       let sign = sign_of_expr(poly[idx])
@@ -122,8 +112,7 @@ fn leading_series_near_zero(
         match sign {
           Some(0) => @symcore.int(0)
           Some(s) => infinity_from_sign(s * side_sign)
-          None =>
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+          None => NumberSymbol(Infinity)
         },
       )
     }
@@ -135,7 +124,7 @@ fn leading_series_near_zero(
 fn strip_order_terms(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     _ if @symcore.application_has_name(expr, "O") => @symcore.int(0)
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let kept : Array[@symcore.Expr] = Array::new()
       for arg in args {
         if @symcore.application_has_name(arg, "O") {
@@ -175,7 +164,7 @@ fn eval_elementary_from_leading(
   match name {
     "exp" =>
       if is_pos_oo(arg_lead) {
-        Some(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
+        Some(NumberSymbol(Infinity))
       } else if is_neg_oo(arg_lead) {
         Some(@symcore.int(0))
       } else {
@@ -183,16 +172,11 @@ fn eval_elementary_from_leading(
       }
     "log" =>
       if is_pos_oo(arg_lead) {
-        Some(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
+        Some(NumberSymbol(Infinity))
       } else {
         match arg_lead {
-          @symcore.Expr::Number(n) if n.is_zero() =>
-            Some(
-              @symcore.Expr::NumberSymbol(
-                @symcore.NumberSymbolKind::NegativeInfinity,
-              ),
-            )
-          @symcore.Expr::Number(_) => Some(const_log(arg_lead))
+          Number(n) if n.is_zero() => Some(NumberSymbol(NegativeInfinity))
+          Number(_) => Some(const_log(arg_lead))
           _ => None
         }
       }
@@ -222,10 +206,10 @@ priv struct ExpTerm {
 fn parse_exp_term(term : @symcore.Expr) -> ExpTerm? {
   match @symcore.application_args(term) {
     Some([arg]) if @symcore.application_has_name(term, "exp") =>
-      Some(ExpTerm::{ coeff: @symcore.int(1), arg })
+      Some({ coeff: @symcore.int(1), arg })
     _ =>
       match term {
-        @symcore.Expr::Mul(args) => {
+        Mul(args) => {
           let mut exp_arg : @symcore.Expr? = None
           let rest : Array[@symcore.Expr] = Array::new()
           for factor in args {
@@ -245,7 +229,7 @@ fn parse_exp_term(term : @symcore.Expr) -> ExpTerm? {
               } else {
                 @symcore.mul(rest)
               }
-              Some(ExpTerm::{ coeff, arg })
+              Some({ coeff, arg })
             }
             None => None
           }
@@ -262,7 +246,7 @@ fn finite_limit_hint(
   dir : String,
 ) -> @symcore.Expr? raise {
   let t_name = match t {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => return None
   }
   if !contains_symbol(expr, t_name) {
@@ -297,7 +281,7 @@ fn dominant_exp_add(
   dir : String,
 ) -> @symcore.Expr? raise {
   let args = match expr {
-    @symcore.Expr::Add(a) => a
+    Add(a) => a
     _ => return None
   }
   if args.length() != 2 {
@@ -322,8 +306,7 @@ fn dominant_exp_add(
   if is_neg_oo(diff_lim) {
     return Some(gruntz_near_zero(args[1], t, dir))
   }
-  if diff_lim ==
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity) {
+  if diff_lim == NumberSymbol(ComplexInfinity) {
     return None
   }
   let dom_lim = gruntz_near_zero(@symcore.function("exp", [left.arg]), t, dir)
@@ -344,7 +327,7 @@ fn dominant_exp_add(
       match sign {
         Some(0) => @symcore.int(0)
         Some(s) => infinity_from_sign(s)
-        None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        None => NumberSymbol(Infinity)
       },
     )
   }
@@ -358,7 +341,7 @@ fn gruntz_near_zero(
   dir : String,
 ) -> @symcore.Expr raise {
   let t_name = match t {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("gruntz internal variable must be a Symbol")
   }
   if !contains_symbol(expr, t_name) {
@@ -467,7 +450,7 @@ pub fn gruntz(
   dir? : String = "+",
 ) -> @symcore.Expr raise {
   let var_name = match x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("gruntz requires a Symbol")
   }
   if !contains_symbol(expr, var_name) {

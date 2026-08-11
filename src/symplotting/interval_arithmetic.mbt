@@ -30,9 +30,9 @@ fn plot_interval(
   is_valid? : Bool? = Some(true),
 ) -> PlotInterval {
   if start <= end {
-    PlotInterval::{ start, end, is_valid }
+    { start, end, is_valid }
   } else {
-    PlotInterval::{ start: end, end: start, is_valid }
+    { start: end, end: start, is_valid }
   }
 }
 
@@ -43,7 +43,7 @@ fn plot_interval_point(value : Double) -> PlotInterval {
 
 ///|
 fn plot_interval_invalid(validity : Bool?) -> PlotInterval {
-  PlotInterval::{ start: -1.0 / 0.0, end: 1.0 / 0.0, is_valid: validity }
+  { start: -1.0 / 0.0, end: 1.0 / 0.0, is_valid: validity }
 }
 
 ///|

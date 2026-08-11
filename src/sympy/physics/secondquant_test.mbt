@@ -34,8 +34,8 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
   let bd0 = boson_creator(@symcore.int(0))
   let b1d = boson_creator(@symcore.int(1))
 
-  inspect(b0.to_string(), content="b(0)")
-  inspect(bd0.to_string(), content="b+(0)")
+  inspect(Show::to_string(b0), content="b(0)")
+  inspect(Show::to_string(bd0), content="b+(0)")
   inspect(b0.dagger().repr(), content="CreateBoson(0)")
 
   let state = boson_state([
@@ -105,8 +105,8 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
   )
   sq_assert_expr_equal(
     secondquant_inner_product(
-      boson_bra([@symcore.Expr::Symbol("i"), @symcore.Expr::Symbol("j")]),
-      boson_ket([@symcore.Expr::Symbol("k"), @symcore.Expr::Symbol("l")]),
+      boson_bra([Symbol("i"), Symbol("j")]),
+      boson_ket([Symbol("k"), Symbol("l")]),
     ),
     "KroneckerDelta(i, k)*KroneckerDelta(j, l)",
     "tuple inner product",
@@ -126,7 +126,7 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
 
   let variable = variable_bosonic_basis(5)
   inspect(
-    variable.to_string(),
+    Show::to_string(variable),
     content="[FockState((0,)), FockState((1,)), FockState((2,)), FockState((3,)), FockState((4,))]",
   )
   let matrix_a = secondquant_matrix_rep(b0.as_expr(), variable.as_basis())
@@ -154,7 +154,7 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
 
   let fixed = fixed_bosonic_basis(2, 2)
   inspect(
-    fixed.to_string(),
+    Show::to_string(fixed),
     content="[FockState((2, 0)), FockState((1, 1)), FockState((0, 2))]",
   )
   inspect(

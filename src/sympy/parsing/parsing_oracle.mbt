@@ -86,9 +86,9 @@ pub fn parsing_eval(expr : String) -> @py.PyObjectEnum raise {
     }
     globals.set("sympy", sympy_mod)
     let args = @sympy.py_pack_args([
-      @sympy.OracleArg::Str(expr),
-      @sympy.OracleArg::PyObj(globals.obj()),
-      @sympy.OracleArg::PyObj(globals.obj()),
+      Str(expr),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match py_call_object(eval_callable, args, print_err=true) {
       Some(obj) => obj
@@ -135,15 +135,15 @@ fn parsing_exec_result_str(script : String) -> String raise {
     }
     globals.set("sympy", sympy_mod)
     let exec_args = @sympy.py_pack_args([
-      @sympy.OracleArg::Str(script),
-      @sympy.OracleArg::PyObj(globals.obj()),
-      @sympy.OracleArg::PyObj(globals.obj()),
+      Str(script),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     ignore(py_call_object(exec_callable, exec_args, print_err=true))
     let eval_args = @sympy.py_pack_args([
-      @sympy.OracleArg::Str("__result__"),
-      @sympy.OracleArg::PyObj(globals.obj()),
-      @sympy.OracleArg::PyObj(globals.obj()),
+      Str("__result__"),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match py_call_object(eval_callable, eval_args, print_err=true) {
       Some(obj) => py_str_obj(objenum_to_obj(obj))

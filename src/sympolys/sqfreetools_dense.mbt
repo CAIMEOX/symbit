@@ -9,7 +9,7 @@
 ///|
 fn sqf_dense_domain_is_gf(domain : Domain) -> Bool {
   match domain {
-    Domain::GF(_) => true
+    GF(_) => true
     _ => false
   }
 }
@@ -17,20 +17,15 @@ fn sqf_dense_domain_is_gf(domain : Domain) -> Bool {
 ///|
 fn sqf_dense_gf_modulus(domain : Domain) -> Int raise PolyError {
   match domain {
-    Domain::GF(p) => p
-    _ => raise PolyError::DomainMismatch
+    GF(p) => p
+    _ => raise DomainMismatch
   }
 }
 
 ///|
 fn sqf_dense_fe_to_gf_int(c : FieldElem, p : Int) -> Int raise PolyError {
   match c {
-    FieldElem::GFp(q, value) =>
-      if p == q {
-        value
-      } else {
-        raise PolyError::DomainMismatch
-      }
+    GFp(q, value) => if p == q { value } else { raise DomainMismatch }
     _ => fe_expect_rational(c).numerator().to_int()
   }
 }
@@ -54,7 +49,7 @@ fn sqf_dense_gf_ints_to_dup(
 ) -> Array[FieldElem] raise PolyError {
   let out : Array[FieldElem] = Array::new()
   for c in gf_trunc(f, p) {
-    out.push(FieldElem::GFp(p, c))
+    out.push(GFp(p, c))
   }
   dup_strip(out)
 }
@@ -67,7 +62,7 @@ fn sqf_dense_coeff_neg(c : FieldElem) -> FieldElem {
 ///|
 fn sqf_dense_require_dmp_univariate(u : Int) -> Unit raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
 }
 
@@ -208,7 +203,7 @@ pub fn dup_gf_sqf_list(
   for item in factors {
     out.push((sqf_dense_gf_ints_to_dup(item.0, p), item.1))
   }
-  (FieldElem::GFp(p, coeff), out)
+  (GFp(p, coeff), out)
 }
 
 ///|
@@ -386,7 +381,7 @@ pub fn dup_gff_list(
 ) -> Array[(Array[FieldElem], Int)] raise PolyError {
   let mut ff = dup_strip(f)
   if ff.is_empty() {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   ff = dup_monic(ff, domain)
   if dup_degree(ff) == 0 {
@@ -468,7 +463,7 @@ pub fn dup_sqf_norm(
   let poly = poly_from_dense_desc(f, "x", domain)
   let (shifts, shifted, norm) = sqf_norm(poly, max_shift~)
   if shifts.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   (shifts[0], poly_to_dense_desc(shifted), poly_to_dense_desc(norm))
 }

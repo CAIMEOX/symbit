@@ -573,6 +573,10 @@ pub(all) enum ContinuousTag {
   Weibull
   WignerSemicircle
 } derive(Eq)
+#deprecated
+pub fn ContinuousTag::equal(Self, Self) -> Bool
+#deprecated
+pub fn ContinuousTag::not_equal(Self, Self) -> Bool
 
 pub(all) enum DiscreteTag {
   BetaBinomial
@@ -592,6 +596,10 @@ pub(all) enum DiscreteTag {
   Zeta
   Named(name~ : String)
 } derive(Eq)
+#deprecated
+pub fn DiscreteTag::equal(Self, Self) -> Bool
+#deprecated
+pub fn DiscreteTag::not_equal(Self, Self) -> Bool
 
 pub(all) enum Event {
   Bool(Bool)
@@ -614,6 +622,10 @@ pub(all) enum JointTag {
   MultivariateLaplace
   Named(name~ : String)
 } derive(Eq)
+#deprecated
+pub fn JointTag::equal(Self, Self) -> Bool
+#deprecated
+pub fn JointTag::not_equal(Self, Self) -> Bool
 
 pub(all) enum MatrixKind {
   Wishart(df~ : @symcore.Expr, scale~ : @symcore.Expr)
@@ -637,6 +649,10 @@ pub(all) enum MatrixTag {
   GaussianSymplecticEnsemble
   Named(name~ : String)
 } derive(Eq)
+#deprecated
+pub fn MatrixTag::equal(Self, Self) -> Bool
+#deprecated
+pub fn MatrixTag::not_equal(Self, Self) -> Bool
 
 pub(all) enum ProcessKind {
   PoissonProcess(rate~ : @symcore.Expr, time_symbol~ : String)
@@ -652,6 +668,10 @@ pub(all) enum ProcessTag {
   GammaProcess
   Named(name~ : String)
 } derive(Eq)
+#deprecated
+pub fn ProcessTag::equal(Self, Self) -> Bool
+#deprecated
+pub fn ProcessTag::not_equal(Self, Self) -> Bool
 
 pub(all) enum RVKind {
   Finite(Array[(@symcore.Expr, @symnum.BigRational)])
@@ -690,6 +710,10 @@ pub(all) enum SymbolicFamily {
   Process
   Matrix
 } derive(Eq)
+#deprecated
+pub fn SymbolicFamily::equal(Self, Self) -> Bool
+#deprecated
+pub fn SymbolicFamily::not_equal(Self, Self) -> Bool
 
 pub(all) enum SymbolicKind {
   Continuous(ContinuousTag)
@@ -698,6 +722,10 @@ pub(all) enum SymbolicKind {
   Process(ProcessTag)
   Matrix(MatrixTag)
 } derive(Eq)
+#deprecated
+pub fn SymbolicKind::equal(Self, Self) -> Bool
+#deprecated
+pub fn SymbolicKind::not_equal(Self, Self) -> Bool
 
 pub enum TriBool {
   True

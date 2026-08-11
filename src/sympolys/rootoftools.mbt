@@ -42,7 +42,7 @@ pub struct RootSum {
 /// - Returns: A `RootOf`.
 /// - Limits: Index validity is not checked at construction time.
 pub fn rootof(poly : Poly, index : Int) -> RootOf {
-  RootOf::{ poly, index }
+  { poly, index }
 }
 
 ///|
@@ -53,7 +53,7 @@ pub fn rootof(poly : Poly, index : Int) -> RootOf {
 /// - Returns: A `RootSum`.
 /// - Limits: No algebraic expansion is attempted.
 pub fn root_sum(poly : Poly, func? : Expr) -> RootSum {
-  RootSum::{ poly, func }
+  { poly, func }
 }
 
 ///|
@@ -85,7 +85,7 @@ pub impl Show for RootOf with fn to_string(self) -> String {
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub impl Show for RootOf with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -99,5 +99,5 @@ pub impl Show for RootSum with fn to_string(self) -> String {
 
 ///|
 pub impl Show for RootSum with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }

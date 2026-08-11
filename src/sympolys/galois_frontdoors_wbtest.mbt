@@ -6,7 +6,7 @@ fn galois_wb_repr(result : GaloisGroupResult) -> String {
 ///|
 test "galois frontdoor: low degree group names" {
   let x = Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   inspect(
     galois_wb_repr(galois_group(b.from_expr(x - int(1)))),
     content="(S1, true)",

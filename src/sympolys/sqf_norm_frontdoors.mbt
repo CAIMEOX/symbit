@@ -23,15 +23,15 @@ fn sqf_norm_shift(
   alpha : String,
 ) -> Poly raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (base, gens, rels) = match poly.domain {
-    Domain::AlgExt(base, gens, rels) => (base, gens, rels)
-    _ => raise PolyError::DomainMismatch
+    AlgExt(base, gens, rels) => (base, gens, rels)
+    _ => raise DomainMismatch
   }
   let (minpoly, loaded_alpha) = load_algext_minpoly(base, gens, rels)
   if loaded_alpha != alpha {
-    raise PolyError::BadGenerator(alpha)
+    raise BadGenerator(alpha)
   }
   let shift_elem = FieldElem::AlgExt(
     base,
@@ -52,7 +52,7 @@ fn sqf_norm_shift(
       add_term(coeffs, term_mono, term_coeff, poly.domain)
     }
   }
-  Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
+  { coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
 }
 
 ///|
@@ -61,9 +61,8 @@ fn sqf_norm_lift_coeff(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   match (domain, coeff) {
-    (Domain::AlgExt(_, _, _), FieldElem::AlgExt(_, _, _, _)) => coeff
-    (Domain::AlgExt(_, _, _), FieldElem::QQ(value)) =>
-      fe_from_rational(value, domain)
+    (AlgExt(_, _, _), AlgExt(_, _, _, _)) => coeff
+    (AlgExt(_, _, _), QQ(value)) => fe_from_rational(value, domain)
     _ => coeff
   }
 }
@@ -82,14 +81,14 @@ pub fn sqf_norm(
   max_shift? : Int = 16,
 ) -> (Array[Int], Poly, Poly) raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (base, gens, rels) = match poly.domain {
-    Domain::AlgExt(base, gens, rels) => (base, gens, rels)
-    _ => raise PolyError::DomainMismatch
+    AlgExt(base, gens, rels) => (base, gens, rels)
+    _ => raise DomainMismatch
   }
   if gens.length() != 1 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let (minpoly, _) = load_algext_minpoly(base, gens, rels)
   for shift in 0..<=max_shift {
@@ -99,5 +98,5 @@ pub fn sqf_norm(
       return ([shift], shifted, norm)
     }
   }
-  raise PolyError::BadExponent
+  raise BadExponent
 }

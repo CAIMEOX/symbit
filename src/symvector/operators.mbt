@@ -23,14 +23,9 @@ pub fn Gradient::doit(
   self : Gradient,
 ) -> GradientValue raise @rawvec.VectorError {
   match self.field_ {
-    ScalarOrVector::ScalarExpr(expr) =>
-      GradientValue::VectorValue(gradient(expr))
-    ScalarOrVector::VectorExpr(vect) =>
-      GradientValue::DyadicValue(
-        gradient_vector(vect) catch {
-          err => raise err
-        },
-      )
+    ScalarExpr(expr) => VectorValue(gradient(expr))
+    VectorExpr(vect) =>
+      DyadicValue(gradient_vector(vect) catch { err => raise err })
   }
 }
 

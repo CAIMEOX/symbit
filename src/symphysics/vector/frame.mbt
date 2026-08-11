@@ -20,22 +20,22 @@ pub fn reference_frame(
   variables? : Array[String]? = None,
 ) -> ReferenceFrame raise VectorError {
   if name == "" {
-    raise VectorError::ValueError("frame name must be non-empty")
+    raise ValueError("frame name must be non-empty")
   }
   let next_index = vector_frame_registry.length() + 1
   let idxs = match indices {
     Some(vals) if vals.length() == 3 => vals
-    Some(_) => raise VectorError::ValueError("indices must have length 3")
+    Some(_) => raise ValueError("indices must have length 3")
     None => ["x", "y", "z"]
   }
   let ltx = match latexs {
     Some(vals) if vals.length() == 3 => vals
-    Some(_) => raise VectorError::ValueError("latexs must have length 3")
+    Some(_) => raise ValueError("latexs must have length 3")
     None => [name + "_x", name + "_y", name + "_z"]
   }
   let vars = match variables {
     Some(vals) if vals.length() == 3 => vals
-    Some(_) => raise VectorError::ValueError("variables must have length 3")
+    Some(_) => raise ValueError("variables must have length 3")
     None => [name + "_x", name + "_y", name + "_z"]
   }
   let frame = ReferenceFrame::{
@@ -50,7 +50,7 @@ pub fn reference_frame(
   init_dcm.set(next_index, @symphysics.explicit_matrix_eye(3))
   let init_cache : Map[Int, @symphysics.ExplicitMatrix] = Map([])
   init_cache.set(next_index, @symphysics.explicit_matrix_eye(3))
-  vector_frame_states.push(FrameState::{
+  vector_frame_states.push({
     dcm_dict: init_dcm,
     dcm_cache: init_cache,
     ang_vel_dict: {},
@@ -73,7 +73,7 @@ pub fn ReferenceFrame::basis(
   axis : Int,
 ) -> Vector raise VectorError {
   if axis < 0 || axis > 2 {
-    raise VectorError::ValueError("basis axis must be 0, 1, or 2")
+    raise ValueError("basis axis must be 0, 1, or 2")
   }
   vector_from_components(self, basis_components(axis))
 }
@@ -149,7 +149,7 @@ pub fn ReferenceFrame::coord(
   axis : Int,
 ) -> CoordinateSym raise VectorError {
   if axis < 0 || axis > 2 {
-    raise VectorError::ValueError("coordinate axis must be 0, 1, or 2")
+    raise ValueError("coordinate axis must be 0, 1, or 2")
   }
   coordinate_symbol(self, axis)
 }
@@ -210,7 +210,7 @@ fn frame_path_between(
       queue.push(next)
     }
   }
-  raise VectorError::ValueError("no connecting orientation path between frames")
+  raise ValueError("no connecting orientation path between frames")
 }
 
 ///|
@@ -236,7 +236,7 @@ fn set_direct_ang_vel(
 fn parse_rotation_order(order : String) -> Array[Int] raise VectorError {
   let trimmed = order.trim().to_owned()
   if trimmed.length() != 3 {
-    raise VectorError::ValueError("rotation order must have length 3")
+    raise ValueError("rotation order must have length 3")
   }
   let out : Array[Int] = []
   for i in 0..<3 {
@@ -245,7 +245,7 @@ fn parse_rotation_order(order : String) -> Array[Int] raise VectorError {
       '1' | 'x' | 'X' => 0
       '2' | 'y' | 'Y' => 1
       '3' | 'z' | 'Z' => 2
-      _ => raise VectorError::ValueError("invalid rotation order")
+      _ => raise ValueError("invalid rotation order")
     }
     out.push(axis)
   }
@@ -259,12 +259,12 @@ fn orientation_from_spec(
   spec : OrientationSpec,
 ) -> @symphysics.ExplicitMatrix raise VectorError {
   match spec {
-    OrientationSpec::AxisSpec(angle, axis_vector) => {
+    AxisSpec(angle, axis_vector) => {
       let axis_in_parent = axis_vector.express(parent)
       let comps = axis_in_parent.components_in(parent)
       let norm_sq = components_norm_sq(comps)
       if expr_is_zero(norm_sq) {
-        raise VectorError::ValueError("axis vector must be nonzero")
+        raise ValueError("axis vector must be nonzero")
       }
       let unit = if expr_eq(norm_sq, int(1)) {
         comps
@@ -280,23 +280,22 @@ fn orientation_from_spec(
       set_direct_ang_vel(parent, child, ang_vel.neg())
       parent_dcm_child
     }
-    OrientationSpec::DcmSpec(matrix) => matrix
-    OrientationSpec::BodySpec(angles, order)
-    | OrientationSpec::SpaceSpec(angles, order) => {
+    DcmSpec(matrix) => matrix
+    BodySpec(angles, order) | SpaceSpec(angles, order) => {
       if angles.length() != 3 {
-        raise VectorError::ValueError("body/space orientation needs 3 angles")
+        raise ValueError("body/space orientation needs 3 angles")
       }
       let axes = parse_rotation_order(order)
       let mut parent_dcm_child = @symphysics.explicit_matrix_eye(3)
       for i in 0..<3 {
         let single = rotation_matrix(axes[i], angles[i])
         parent_dcm_child = parent_dcm_child.mul(single) catch {
-          _ => raise VectorError::ValueError("rotation composition failed")
+          _ => raise ValueError("rotation composition failed")
         }
       }
       parent_dcm_child
     }
-    OrientationSpec::QuaternionSpec(q0, q1, q2, q3) => {
+    QuaternionSpec(q0, q1, q2, q3) => {
       let two = int_expr(2)
       let q0sq = q0 ^ two
       let q1sq = q1 ^ two
@@ -343,7 +342,7 @@ pub fn ReferenceFrame::orient(
   spec : OrientationSpec,
 ) -> Unit raise VectorError {
   if self == parent {
-    raise VectorError::ValueError("frame cannot orient relative to itself")
+    raise ValueError("frame cannot orient relative to itself")
   }
   let parent_dcm_child = orientation_from_spec(parent, self, spec)
   set_direct_dcm(parent, self, parent_dcm_child)
@@ -372,7 +371,7 @@ pub fn ReferenceFrame::orient_axis(
   axis : Vector,
   angle : Expr,
 ) -> Unit raise VectorError {
-  self.orient(parent, OrientationSpec::AxisSpec(angle, axis))
+  self.orient(parent, AxisSpec(angle, axis))
 }
 
 ///|
@@ -394,9 +393,9 @@ pub fn ReferenceFrame::dcm(
         match vector_frame_states[lhs.index_ - 1].dcm_dict.get(rhs.index_) {
           Some(step) =>
             acc = acc.mul(step) catch {
-              _ => raise VectorError::ValueError("dcm multiplication failed")
+              _ => raise ValueError("dcm multiplication failed")
             }
-          None => raise VectorError::ValueError("missing direct dcm relation")
+          None => raise ValueError("missing direct dcm relation")
         }
       }
       vector_frame_states[self.index_ - 1].dcm_cache.set(other.index_, acc)
@@ -450,8 +449,7 @@ pub fn ReferenceFrame::ang_vel_in(
         let rhs = path[i + 1]
         match vector_frame_states[lhs.index_ - 1].ang_vel_dict.get(rhs.index_) {
           Some(value) => acc = acc + value
-          None =>
-            raise VectorError::ValueError("missing angular velocity relation")
+          None => raise ValueError("missing angular velocity relation")
         }
       }
       vector_frame_states[self.index_ - 1].ang_vel_dict.set(other.index_, acc)

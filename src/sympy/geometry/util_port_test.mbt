@@ -34,7 +34,7 @@ test "geometry.util parity convex hull and point-pair helpers" {
   ]
   let hull = convex_hull(hull_points)
   match hull {
-    GeometryEntity::Polygon(poly_obj) =>
+    Polygon(poly_obj) =>
       assert_eq(
         point_list_summary(ordered_points(poly_obj.vertices())),
         "[Point2D(-5, -2), Point2D(1, -1), Point2D(3, -1), Point2D(15, -4)]",

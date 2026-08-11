@@ -33,29 +33,29 @@ pub fn medium(
     Some(index) =>
       match (permittivity, permeability) {
         (Some(ep), None) =>
-          Medium::MediumPP(
+          MediumPP(
             name,
             ep,
             (index ^ int(2)) * (speed_of_light ^ int(-2)) * (ep ^ int(-1)),
           )
         (None, Some(mu)) =>
-          Medium::MediumPP(
+          MediumPP(
             name,
             (index ^ int(2)) * (speed_of_light ^ int(-2)) * (mu ^ int(-1)),
             mu,
           )
         (Some(_), Some(_)) =>
-          raise PhysicsError::ValueError(
+          raise ValueError(
             "Specifying all of permittivity, permeability, and n is not allowed",
           )
-        (None, None) => Medium::MediumN(name, index)
+        (None, None) => MediumN(name, index)
       }
     None =>
       match (permittivity, permeability) {
-        (Some(ep), Some(mu)) => Medium::MediumPP(name, ep, mu)
-        (None, None) => Medium::MediumPP(name, e0, u0)
+        (Some(ep), Some(mu)) => MediumPP(name, ep, mu)
+        (None, None) => MediumPP(name, e0, u0)
         _ =>
-          raise PhysicsError::ValueError(
+          raise ValueError(
             "Arguments are underspecified. Either specify n or any two of permittivity, permeability, and n",
           )
       }
@@ -65,16 +65,16 @@ pub fn medium(
 ///|
 pub fn Medium::name(self : Medium) -> String {
   match self {
-    Medium::MediumN(name, _) => name
-    Medium::MediumPP(name, _, _) => name
+    MediumN(name, _) => name
+    MediumPP(name, _, _) => name
   }
 }
 
 ///|
 pub fn Medium::n(self : Medium) -> Expr {
   match self {
-    Medium::MediumN(_, index) => index
-    Medium::MediumPP(_, ep, mu) =>
+    MediumN(_, index) => index
+    MediumPP(_, ep, mu) =>
       if is_vacuum_pair(ep, mu) {
         int(1)
       } else {
@@ -86,8 +86,8 @@ pub fn Medium::n(self : Medium) -> Expr {
 ///|
 pub fn Medium::speed(self : Medium) -> Expr {
   match self {
-    Medium::MediumN(_, index) => speed_of_light * (index ^ int(-1))
-    Medium::MediumPP(_, ep, mu) =>
+    MediumN(_, index) => speed_of_light * (index ^ int(-1))
+    MediumPP(_, ep, mu) =>
       if is_vacuum_pair(ep, mu) {
         speed_of_light
       } else {
@@ -99,8 +99,8 @@ pub fn Medium::speed(self : Medium) -> Expr {
 ///|
 pub fn Medium::refractive_index(self : Medium) -> Expr {
   match self {
-    Medium::MediumN(_, index) => index
-    Medium::MediumPP(_, ep, mu) =>
+    MediumN(_, index) => index
+    MediumPP(_, ep, mu) =>
       if is_vacuum_pair(ep, mu) {
         int(1)
       } else {
@@ -112,31 +112,28 @@ pub fn Medium::refractive_index(self : Medium) -> Expr {
 ///|
 pub fn Medium::permittivity(self : Medium) -> Expr raise PhysicsError {
   match self {
-    Medium::MediumPP(_, ep, _) => ep
-    _ => raise PhysicsError::ValueError("permittivity is undefined for MediumN")
+    MediumPP(_, ep, _) => ep
+    _ => raise ValueError("permittivity is undefined for MediumN")
   }
 }
 
 ///|
 pub fn Medium::permeability(self : Medium) -> Expr raise PhysicsError {
   match self {
-    Medium::MediumPP(_, _, mu) => mu
-    _ => raise PhysicsError::ValueError("permeability is undefined for MediumN")
+    MediumPP(_, _, mu) => mu
+    _ => raise ValueError("permeability is undefined for MediumN")
   }
 }
 
 ///|
 pub fn Medium::intrinsic_impedance(self : Medium) -> Expr raise PhysicsError {
   match self {
-    Medium::MediumPP(_, ep, mu) =>
+    MediumPP(_, ep, mu) =>
       if is_vacuum_pair(ep, mu) {
         vacuum_impedance_expr()
       } else {
         @symelem.sqrt(mu * (ep ^ int(-1)))
       }
-    _ =>
-      raise PhysicsError::ValueError(
-        "intrinsic_impedance is undefined for MediumN",
-      )
+    _ => raise ValueError("intrinsic_impedance is undefined for MediumN")
   }
 }

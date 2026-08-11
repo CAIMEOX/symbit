@@ -35,69 +35,42 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
       Some(
         expr_div(
           @symcore.int(-1) *
-          @symelem.cos(
-            expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
-          ),
+          @symelem.cos(expr_add(expr_mul(a, Symbol(var_name)), b)),
           a,
         ),
       )
     Some(("cos", a, b)) =>
       Some(
-        expr_div(
-          @symelem.sin(
-            expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
-          ),
-          a,
-        ),
+        expr_div(@symelem.sin(expr_add(expr_mul(a, Symbol(var_name)), b)), a),
       )
     Some(("tan", a, b)) =>
       Some(
         expr_div(
           @symcore.int(-1) *
-          @symelem.log(
-            @symelem.cos(
-              expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
-            ),
-          ),
+          @symelem.log(@symelem.cos(expr_add(expr_mul(a, Symbol(var_name)), b))),
           a,
         ),
       )
     Some(("cot", a, b)) =>
       Some(
         expr_div(
-          @symelem.log(
-            @symelem.sin(
-              expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
-            ),
-          ),
+          @symelem.log(@symelem.sin(expr_add(expr_mul(a, Symbol(var_name)), b))),
           a,
         ),
       )
     Some(("sinh", a, b)) =>
       Some(
-        expr_div(
-          @symelem.cosh(
-            expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
-          ),
-          a,
-        ),
+        expr_div(@symelem.cosh(expr_add(expr_mul(a, Symbol(var_name)), b)), a),
       )
     Some(("cosh", a, b)) =>
       Some(
-        expr_div(
-          @symelem.sinh(
-            expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
-          ),
-          a,
-        ),
+        expr_div(@symelem.sinh(expr_add(expr_mul(a, Symbol(var_name)), b)), a),
       )
     Some(("tanh", a, b)) =>
       Some(
         expr_div(
           @symelem.log(
-            @symelem.cosh(
-              expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
-            ),
+            @symelem.cosh(expr_add(expr_mul(a, Symbol(var_name)), b)),
           ),
           a,
         ),
@@ -106,23 +79,19 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
       Some(
         expr_div(
           @symelem.log(
-            @symelem.sinh(
-              expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
-            ),
+            @symelem.sinh(expr_add(expr_mul(a, Symbol(var_name)), b)),
           ),
           a,
         ),
       )
     _ =>
       match expr_simplify(expr) {
-        @symcore.Expr::Pow(base, exp) if expr_eq(exp, @symcore.int(2)) =>
+        Pow(base, exp) if expr_eq(exp, @symcore.int(2)) =>
           match trig_linear_arg(base, var_name) {
             Some(("sec", a, b)) =>
               Some(
                 expr_div(
-                  @symelem.tan(
-                    expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
-                  ),
+                  @symelem.tan(expr_add(expr_mul(a, Symbol(var_name)), b)),
                   a,
                 ),
               )
@@ -130,19 +99,14 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
               Some(
                 expr_div(
                   @symcore.int(-1) *
-                  @symelem.cot(
-                    expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
-                  ),
+                  @symelem.cot(expr_add(expr_mul(a, Symbol(var_name)), b)),
                   a,
                 ),
               )
             Some(("sin", a, b)) => {
-              let arg = expr_add(
-                expr_mul(a, @symcore.Expr::Symbol(var_name)),
-                b,
-              )
+              let arg = expr_add(expr_mul(a, Symbol(var_name)), b)
               Some(
-                @symcore.Expr::Symbol(var_name) * expr_rat(1, 2) -
+                Symbol(var_name) * expr_rat(1, 2) -
                 expr_div(
                   @symelem.sin(expr_mul(@symcore.int(2), arg)),
                   expr_mul(@symcore.int(4), a),
@@ -150,12 +114,9 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
               )
             }
             Some(("cos", a, b)) => {
-              let arg = expr_add(
-                expr_mul(a, @symcore.Expr::Symbol(var_name)),
-                b,
-              )
+              let arg = expr_add(expr_mul(a, Symbol(var_name)), b)
               Some(
-                @symcore.Expr::Symbol(var_name) * expr_rat(1, 2) +
+                Symbol(var_name) * expr_rat(1, 2) +
                 expr_div(
                   @symelem.sin(expr_mul(@symcore.int(2), arg)),
                   expr_mul(@symcore.int(4), a),
@@ -164,17 +125,14 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
             }
             _ => None
           }
-        @symcore.Expr::Mul(args) if args.length() == 2 => {
+        Mul(args) if args.length() == 2 => {
           let left = args[0]
           let right = args[1]
           match
             (trig_linear_arg(left, var_name), trig_linear_arg(right, var_name)) {
             (Some(("sin", a1, b1)), Some(("cos", a2, b2))) if expr_eq(a1, a2) &&
               expr_eq(b1, b2) => {
-              let arg = expr_add(
-                expr_mul(a1, @symcore.Expr::Symbol(var_name)),
-                b1,
-              )
+              let arg = expr_add(expr_mul(a1, Symbol(var_name)), b1)
               Some(
                 expr_div(
                   expr_pow(@symelem.sin(arg), @symcore.int(2)),
@@ -184,10 +142,7 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
             }
             (Some(("cos", a1, b1)), Some(("sin", a2, b2))) if expr_eq(a1, a2) &&
               expr_eq(b1, b2) => {
-              let arg = expr_add(
-                expr_mul(a1, @symcore.Expr::Symbol(var_name)),
-                b1,
-              )
+              let arg = expr_add(expr_mul(a1, Symbol(var_name)), b1)
               Some(
                 expr_div(
                   expr_pow(@symelem.sin(arg), @symcore.int(2)),

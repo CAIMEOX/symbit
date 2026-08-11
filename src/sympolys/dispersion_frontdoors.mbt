@@ -1,6 +1,6 @@
 ///|
 fn dispersion_coeff(poly : Poly, exp : Int) -> FieldElem raise PolyError {
-  guard poly.gens.length() == 1 else { raise PolyError::NotUnivariate }
+  guard poly.gens.length() == 1 else { raise NotUnivariate }
   match poly.coeffs.get(monomial_from_array([exp])) {
     Some(coeff) => coeff
     None => fe_from_int(0, poly.domain)
@@ -14,7 +14,7 @@ fn dispersion_fe_equal(a : FieldElem, b : FieldElem) -> Bool raise PolyError {
 
 ///|
 fn dispersion_poly_equal(a : Poly, b : Poly) -> Bool raise PolyError {
-  if a.domain.not_equal(b.domain) || !same_gens(a.gens, b.gens) {
+  if Eq::not_equal(a.domain, b.domain) || !same_gens(a.gens, b.gens) {
     return false
   }
   a.sub(b).is_zero()
@@ -71,10 +71,10 @@ pub fn dispersionset(p : Poly, q? : Poly) -> Array[Int] raise PolyError {
     None => p
   }
   guard p.gens.length() == 1 && rhs.gens.length() == 1 else {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
-  guard p.gens[0] == rhs.gens[0] else { raise PolyError::DomainMismatch }
-  guard !p.domain.not_equal(rhs.domain) else { raise PolyError::DomainMismatch }
+  guard p.gens[0] == rhs.gens[0] else { raise DomainMismatch }
+  guard !Eq::not_equal(p.domain, rhs.domain) else { raise DomainMismatch }
   if p.degree(0) < 1 || rhs.degree(0) < 1 {
     return [0]
   }

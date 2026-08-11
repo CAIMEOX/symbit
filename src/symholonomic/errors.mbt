@@ -9,9 +9,9 @@ pub(all) suberror HolonomicError {
 ///|
 pub impl Show for HolonomicError with fn output(self, logger : &Logger) -> Unit {
   match self {
-    HolonomicError::NotPowerSeries(msg) => logger.write_string(msg)
-    HolonomicError::NotHyperSeries(msg) => logger.write_string(msg)
-    HolonomicError::Singularity(msg) => logger.write_string(msg)
-    HolonomicError::NotHolonomic(msg) => logger.write_string(msg)
+    NotPowerSeries(msg) => logger.write_string(msg)
+    NotHyperSeries(msg) => logger.write_string(msg)
+    Singularity(msg) => logger.write_string(msg)
+    NotHolonomic(msg) => logger.write_string(msg)
   }
 }

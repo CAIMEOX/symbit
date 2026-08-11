@@ -339,6 +339,12 @@ pub fn workprec(Int, rounding? : @mpf.RoundMode) -> @mp.MPContext
 pub(all) suberror RationalError {
   ZeroDenominator
 } derive(@debug.Debug)
+#deprecated
+pub fn RationalError::output(Self, &Logger) -> Unit
+#deprecated
+pub fn RationalError::to_repr(Self) -> @debug.Repr
+#deprecated
+pub fn RationalError::to_string(Self) -> String
 pub impl Show for RationalError
 
 // Types and methods
@@ -346,23 +352,43 @@ pub struct BigRational {
   num : @bigint.BigInt
   den : @bigint.BigInt
 } derive(Eq, Hash)
+#deprecated
+pub fn BigRational::add(Self, Self) -> Self
 pub fn BigRational::add_r(Self, Self) -> Self
 pub fn BigRational::compare(Self, Self) -> Int
 pub fn BigRational::denominator(Self) -> @bigint.BigInt
 pub fn BigRational::div_r(Self, Self) -> Self raise RationalError
+#deprecated
+pub fn BigRational::equal(Self, Self) -> Bool
 pub fn BigRational::from_bigint(@bigint.BigInt) -> Self
 pub fn BigRational::from_int(Int) -> Self
 pub fn BigRational::from_ints(Int, Int) -> Self raise RationalError
+#deprecated
+pub fn BigRational::hash(Self) -> Int
+#deprecated
+pub fn BigRational::hash_combine(Self, Hasher) -> Unit
 pub fn BigRational::is_integral(Self) -> Bool
 pub fn BigRational::is_one(Self) -> Bool
 pub fn BigRational::is_zero(Self) -> Bool
+#deprecated
+pub fn BigRational::mul(Self, Self) -> Self
 pub fn BigRational::mul_r(Self, Self) -> Self
+#deprecated
+pub fn BigRational::neg(Self) -> Self
 pub fn BigRational::neg_r(Self) -> Self
 pub fn BigRational::new(@bigint.BigInt, @bigint.BigInt) -> Self raise RationalError
+#deprecated
+pub fn BigRational::not_equal(Self, Self) -> Bool
 pub fn BigRational::numerator(Self) -> @bigint.BigInt
 pub fn BigRational::one() -> Self
+#deprecated
+pub fn BigRational::output(Self, &Logger) -> Unit
 pub fn BigRational::reciprocal(Self) -> Self raise RationalError
+#deprecated
+pub fn BigRational::sub(Self, Self) -> Self
 pub fn BigRational::sub_r(Self, Self) -> Self
+#deprecated
+pub fn BigRational::to_string(Self) -> String
 pub fn BigRational::zero() -> Self
 pub impl Add for BigRational
 pub impl Mul for BigRational
@@ -377,6 +403,8 @@ pub fn MPIntervalContext::abs(Self, @libmpi.RawMpi) -> @libmpi.RawMpi
 pub fn MPIntervalContext::add(Self, @libmpi.RawMpi, @libmpi.RawMpi) -> @libmpi.RawMpi
 pub fn MPIntervalContext::cos(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
 pub fn MPIntervalContext::div(Self, @libmpi.RawMpi, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
+#deprecated
+pub fn MPIntervalContext::equal(Self, Self) -> Bool
 pub fn MPIntervalContext::exp(Self, @libmpi.RawMpi) -> @libmpi.RawMpi
 pub fn MPIntervalContext::gamma(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
 pub fn MPIntervalContext::log(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
@@ -384,11 +412,15 @@ pub fn MPIntervalContext::make_float(Self, String) -> @libmpi.RawMpi raise @libm
 pub fn MPIntervalContext::make_interval(Self, @mpf.RawMpf, @mpf.RawMpf) -> @libmpi.RawMpi
 pub fn MPIntervalContext::mul(Self, @libmpi.RawMpi, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
 pub fn MPIntervalContext::neg(Self, @libmpi.RawMpi) -> @libmpi.RawMpi
+#deprecated
+pub fn MPIntervalContext::not_equal(Self, Self) -> Bool
 pub fn MPIntervalContext::precision(Self) -> Int
 pub fn MPIntervalContext::sin(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
 pub fn MPIntervalContext::sqrt(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
 pub fn MPIntervalContext::sub(Self, @libmpi.RawMpi, @libmpi.RawMpi) -> @libmpi.RawMpi
 pub fn MPIntervalContext::tan(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
+#deprecated
+pub fn MPIntervalContext::to_repr(Self) -> @debug.Repr
 pub fn MPIntervalContext::to_string(Self, @libmpi.RawMpi, dps? : Int) -> String raise @libmpi.MpiError
 
 // Type aliases

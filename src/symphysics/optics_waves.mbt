@@ -17,48 +17,32 @@ pub fn t_wave(
   frequency? : Expr? = None,
   phase? : Expr = int(0),
   time_period? : Expr? = None,
-  n? : Expr = Expr::Symbol("n"),
+  n? : Expr = Symbol("n"),
 ) -> TWave raise PhysicsError {
   match (frequency, time_period) {
     (None, None) =>
-      raise PhysicsError::ValueError(
-        "Either frequency or time period is needed.",
-      )
+      raise ValueError("Either frequency or time period is needed.")
     (Some(freq), Some(period)) => {
       guard freq == (period ^ int(-1)) else {
-        raise PhysicsError::ValueError(
-          "frequency and time_period should be consistent.",
-        )
+        raise ValueError("frequency and time_period should be consistent.")
       }
-      TWave::{ amplitude, frequency: freq, phase, time_period: period, n }
+      { amplitude, frequency: freq, phase, time_period: period, n }
     }
     (Some(freq), None) =>
-      TWave::{
-        amplitude,
-        frequency: freq,
-        phase,
-        time_period: freq ^ int(-1),
-        n,
-      }
+      { amplitude, frequency: freq, phase, time_period: freq ^ int(-1), n }
     (None, Some(period)) =>
-      TWave::{
-        amplitude,
-        frequency: period ^ int(-1),
-        phase,
-        time_period: period,
-        n,
-      }
+      { amplitude, frequency: period ^ int(-1), phase, time_period: period, n }
   }
 }
 
 ///|
 fn twave_render_arg(expr : Expr) -> String {
   match expr {
-    Expr::Pow(base, Expr::Number(n)) if n.is_integral() &&
+    Pow(base, Number(n)) if n.is_integral() &&
       n.numerator() == BigInt::from_int(-1) => {
       let base_txt = @symprint.pretty_string(base)
       match base {
-        Expr::Add(_) | Expr::Mul(_) => "1/(\{base_txt})"
+        Add(_) | Mul(_) => "1/(\{base_txt})"
         _ => "1/\{base_txt}"
       }
     }
@@ -96,7 +80,7 @@ pub impl Show for TWave with fn to_string(self) {
 
 ///|
 pub impl Show for TWave with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -151,7 +135,7 @@ pub fn TWave::superpose(
 ) -> TWave raise PhysicsError {
   guard self.frequency == other.frequency &&
     self.wavelength() == other.wavelength() else {
-    raise PhysicsError::ValueError(
+    raise ValueError(
       "Interference of waves with different frequencies has not been implemented.",
     )
   }
@@ -178,11 +162,8 @@ pub fn TWave::superpose(
 ///|
 pub fn TWave::scale(self : TWave, factor : Expr) -> TWave raise PhysicsError {
   match factor {
-    Expr::Number(_) => TWave::{ ..self, amplitude: self.amplitude * factor }
-    _ =>
-      raise PhysicsError::ValueError(
-        "Only scalar numeric factors are supported.",
-      )
+    Number(_) => { ..self, amplitude: self.amplitude * factor }
+    _ => raise ValueError("Only scalar numeric factors are supported.")
   }
 }
 
@@ -200,8 +181,8 @@ pub fn TWave::sub(self : TWave, other : TWave) -> TWave raise PhysicsError {
 pub fn TWave::rewrite_as_sin(self : TWave) -> Expr {
   self.amplitude *
   @symelem.sin(
-    self.wavenumber() * Expr::Symbol("x") -
-    self.angular_velocity() * Expr::Symbol("t") +
+    self.wavenumber() * Symbol("x") -
+    self.angular_velocity() * Symbol("t") +
     self.phase +
     pi_expr() * rational_expr(1, 2),
   )
@@ -211,8 +192,8 @@ pub fn TWave::rewrite_as_sin(self : TWave) -> Expr {
 pub fn TWave::rewrite_as_cos(self : TWave) -> Expr {
   self.amplitude *
   @symelem.cos(
-    self.wavenumber() * Expr::Symbol("x") -
-    self.angular_velocity() * Expr::Symbol("t") +
+    self.wavenumber() * Symbol("x") -
+    self.angular_velocity() * Symbol("t") +
     self.phase,
   )
 }
@@ -223,8 +204,8 @@ pub fn TWave::rewrite_as_exp(self : TWave) -> Expr {
   @symelem.exp(
     i_expr() *
     (
-      self.wavenumber() * Expr::Symbol("x") -
-      self.angular_velocity() * Expr::Symbol("t") +
+      self.wavenumber() * Symbol("x") -
+      self.angular_velocity() * Symbol("t") +
       self.phase
     ),
   )

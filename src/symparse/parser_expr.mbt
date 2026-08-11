@@ -20,7 +20,7 @@ fn parser(
   options : ParseOptions,
   context : ParseContext,
 ) -> Parser {
-  Parser::{ tokens, options, context, index: 0 }
+  { tokens, options, context, index: 0 }
 }
 
 ///|
@@ -38,13 +38,8 @@ fn Parser::advance(self : Parser) -> Token {
 ///|
 fn unexpected_token(tok : Token, expected : String) -> ParseError {
   match tok.kind {
-    TokenKind::Eof => ParseError::UnexpectedEof(span=tok.span, expected)
-    _ =>
-      ParseError::UnexpectedToken(
-        span=tok.span,
-        expected,
-        token_kind_name(tok.kind),
-      )
+    Eof => UnexpectedEof(span=tok.span, expected)
+    _ => UnexpectedToken(span=tok.span, expected, token_kind_name(tok.kind))
   }
 }
 
@@ -135,9 +130,8 @@ fn split_symbol_predicate(options : ParseOptions) -> ((String) -> Bool)? {
   let mut custom : ((String) -> Bool)? = None
   for transformation in options.transformations {
     match transformation {
-      Transformation::SplitSymbolsCustom(predicate) => custom = Some(predicate)
-      Transformation::SplitSymbols
-      | Transformation::ImplicitMultiplicationApplication => saw_default = true
+      SplitSymbolsCustom(predicate) => custom = Some(predicate)
+      SplitSymbols | ImplicitMultiplicationApplication => saw_default = true
       _ => ()
     }
   }
@@ -158,13 +152,12 @@ fn binary_info(
   options : ParseOptions,
 ) -> (BinaryOp, Int, Bool)? {
   match kind {
-    TokenKind::Plus => Some((BinaryOp::Add, 10, false))
-    TokenKind::Minus => Some((BinaryOp::Sub, 10, false))
-    TokenKind::Star => Some((BinaryOp::Mul, 20, false))
-    TokenKind::Slash => Some((BinaryOp::Div, 20, false))
-    TokenKind::Pow => Some((BinaryOp::Pow, 40, true))
-    TokenKind::Caret if option_has_convert_xor(options) =>
-      Some((BinaryOp::Pow, 40, true))
+    Plus => Some((Add, 10, false))
+    Minus => Some((Sub, 10, false))
+    Star => Some((Mul, 20, false))
+    Slash => Some((Div, 20, false))
+    Pow => Some((Pow, 40, true))
+    Caret if option_has_convert_xor(options) => Some((Pow, 40, true))
     _ => None
   }
 }
@@ -172,14 +165,13 @@ fn binary_info(
 ///|
 fn compare_op(kind : TokenKind, options : ParseOptions) -> CompareOp? {
   match kind {
-    TokenKind::Eq if option_has_convert_equals_signs(options) =>
-      Some(CompareOp::Eq)
-    TokenKind::EqEq => Some(CompareOp::EqEq)
-    TokenKind::Ne => Some(CompareOp::Ne)
-    TokenKind::Lt => Some(CompareOp::Lt)
-    TokenKind::Le => Some(CompareOp::Le)
-    TokenKind::Gt => Some(CompareOp::Gt)
-    TokenKind::Ge => Some(CompareOp::Ge)
+    Eq if option_has_convert_equals_signs(options) => Some(Eq)
+    EqEq => Some(EqEq)
+    Ne => Some(Ne)
+    Lt => Some(Lt)
+    Le => Some(Le)
+    Gt => Some(Gt)
+    Ge => Some(Ge)
     _ => None
   }
 }
@@ -187,10 +179,7 @@ fn compare_op(kind : TokenKind, options : ParseOptions) -> CompareOp? {
 ///|
 fn token_can_start_primary(kind : TokenKind) -> Bool {
   match kind {
-    TokenKind::IntLit(_)
-    | TokenKind::DecimalLit(_)
-    | TokenKind::Ident(_)
-    | TokenKind::LParen => true
+    IntLit(_) | DecimalLit(_) | Ident(_) | LParen => true
     _ => false
   }
 }
@@ -284,15 +273,15 @@ fn name_is_bound_or_reserved(
 fn ast_is_known_callable(ast : Ast, context : ParseContext) -> Bool {
   let binding_is_callable = fn(bound : Expr) -> Bool {
     match @symcore.normalize_legacy_expr(bound) {
-      Expr::FunctionHead(_)
-      | Expr::UndefinedFunction(_)
-      | Expr::Lambda(_, _)
-      | Expr::IdentityFunction => true
+      FunctionHead(_)
+      | UndefinedFunction(_)
+      | Lambda(_, _)
+      | IdentityFunction => true
       _ => false
     }
   }
   match ast {
-    Ast::Symbol(span~, name) => {
+    Symbol(span~, name) => {
       ignore(span)
       if context_has_binding(context, name) {
         match lookup_binding(context, name) {
@@ -350,9 +339,9 @@ fn split_identifier_parts(
         digits.write_char(chars[i])
         i += 1
       }
-      parts.push(Ast::Number(span=source_span, digits.to_string()))
+      parts.push(Number(span=source_span, digits.to_string()))
     } else {
-      parts.push(Ast::Symbol(span=source_span, ch.to_string()))
+      parts.push(Symbol(span=source_span, ch.to_string()))
       i += 1
     }
   }
@@ -368,31 +357,26 @@ fn fold_mul_ast(parts : Array[Ast]) -> Ast {
   let mut out = parts[0]
   for i in 1..<parts.length() {
     let rhs = parts[i]
-    out = Ast::Binary(
-      span=span_merge(ast_span(out), ast_span(rhs)),
-      BinaryOp::Mul,
-      out,
-      rhs,
-    )
+    out = Binary(span=span_merge(ast_span(out), ast_span(rhs)), Mul, out, rhs)
   }
   out
 }
 
 ///|
 fn Parser::parse_call_args(self : Parser) -> Array[Ast] raise ParseError {
-  ignore(self.expect_kind(TokenKind::LParen, "`(`"))
+  ignore(self.expect_kind(LParen, "`(`"))
   let args : Array[Ast] = []
-  if self.match_kind(TokenKind::RParen) is Some(_) {
+  if self.match_kind(RParen) is Some(_) {
     return args
   }
   while true {
     args.push(self.parse_compare())
-    if self.match_kind(TokenKind::Comma) is Some(_) {
-      if self.match_kind(TokenKind::RParen) is Some(_) {
+    if self.match_kind(Comma) is Some(_) {
+      if self.match_kind(RParen) is Some(_) {
         return args
       }
     } else {
-      ignore(self.expect_kind(TokenKind::RParen, "`)`"))
+      ignore(self.expect_kind(RParen, "`)`"))
       return args
     }
   }
@@ -404,36 +388,36 @@ fn Parser::parse_group_or_tuple(
   self : Parser,
   start_tok : Token,
 ) -> Ast raise ParseError {
-  if self.match_kind(TokenKind::RParen) is Some(tok) {
-    return Ast::Tuple(span=span_merge(start_tok.span, tok.span), [])
+  if self.match_kind(RParen) is Some(tok) {
+    return Tuple(span=span_merge(start_tok.span, tok.span), [])
   }
   let first = self.parse_compare()
-  if self.match_kind(TokenKind::Comma) is Some(_) {
+  if self.match_kind(Comma) is Some(_) {
     let items : Array[Ast] = [first]
-    if self.match_kind(TokenKind::RParen) is Some(tok) {
-      return Ast::Tuple(span=span_merge(start_tok.span, tok.span), items)
+    if self.match_kind(RParen) is Some(tok) {
+      return Tuple(span=span_merge(start_tok.span, tok.span), items)
     }
     while true {
       items.push(self.parse_compare())
-      if self.match_kind(TokenKind::Comma) is Some(_) {
-        if self.match_kind(TokenKind::RParen) is Some(tok) {
-          return Ast::Tuple(span=span_merge(start_tok.span, tok.span), items)
+      if self.match_kind(Comma) is Some(_) {
+        if self.match_kind(RParen) is Some(tok) {
+          return Tuple(span=span_merge(start_tok.span, tok.span), items)
         }
       } else {
-        let end_tok = self.expect_kind(TokenKind::RParen, "`)`")
-        return Ast::Tuple(span=span_merge(start_tok.span, end_tok.span), items)
+        let end_tok = self.expect_kind(RParen, "`)`")
+        return Tuple(span=span_merge(start_tok.span, end_tok.span), items)
       }
     }
-    Ast::Tuple(span=start_tok.span, items)
+    Tuple(span=start_tok.span, items)
   } else {
-    ignore(self.expect_kind(TokenKind::RParen, "`)`"))
+    ignore(self.expect_kind(RParen, "`)`"))
     first
   }
 }
 
 ///|
 fn Parser::should_parse_explicit_call(self : Parser, callee : Ast) -> Bool {
-  if !token_tag_eq(self.peek().kind, TokenKind::LParen) {
+  if !token_tag_eq(self.peek().kind, LParen) {
     return false
   }
   if !option_has_implicit_multiplication(self.options) {
@@ -449,21 +433,21 @@ fn Parser::parenthesized_args_require_call(self : Parser) -> Bool {
   let mut i = self.index
   while i < self.tokens.length() {
     match self.tokens[i].kind {
-      TokenKind::LParen => {
+      LParen => {
         depth += 1
         if depth == 1 &&
           i + 1 < self.tokens.length() &&
-          token_tag_eq(self.tokens[i + 1].kind, TokenKind::RParen) {
+          token_tag_eq(self.tokens[i + 1].kind, RParen) {
           return true
         }
       }
-      TokenKind::RParen => {
+      RParen => {
         depth -= 1
         if depth == 0 {
           return false
         }
       }
-      TokenKind::Comma if depth == 1 => return true
+      Comma if depth == 1 => return true
       _ => ()
     }
     i += 1
@@ -498,20 +482,18 @@ fn Parser::parse_postfix(self : Parser, base : Ast) -> Ast raise ParseError {
     if self.should_parse_explicit_call(expr) {
       let args = self.parse_call_args()
       let end_span = self.tokens[self.index - 1].span
-      expr = Ast::Call(span=span_merge(ast_span(expr), end_span), expr, args)
+      expr = Call(span=span_merge(ast_span(expr), end_span), expr, args)
     } else if option_has_factorial(self.options) &&
-      self.match_kind(TokenKind::BangBang) is Some(tok) {
+      self.match_kind(BangBang) is Some(tok) {
       let callee = Ast::Symbol(span=tok.span, "factorial2")
-      expr = Ast::Call(span=span_merge(ast_span(expr), tok.span), callee, [expr])
+      expr = Call(span=span_merge(ast_span(expr), tok.span), callee, [expr])
     } else if option_has_factorial(self.options) &&
-      self.match_kind(TokenKind::Bang) is Some(tok) {
+      self.match_kind(Bang) is Some(tok) {
       let callee = Ast::Symbol(span=tok.span, "factorial")
-      expr = Ast::Call(span=span_merge(ast_span(expr), tok.span), callee, [expr])
+      expr = Call(span=span_merge(ast_span(expr), tok.span), callee, [expr])
     } else if self.should_parse_implicit_application(expr) {
       let arg = self.parse_binary(20)
-      expr = Ast::Call(span=span_merge(ast_span(expr), ast_span(arg)), expr, [
-        arg,
-      ])
+      expr = Call(span=span_merge(ast_span(expr), ast_span(arg)), expr, [arg])
     } else {
       return expr
     }
@@ -522,9 +504,8 @@ fn Parser::parse_postfix(self : Parser, base : Ast) -> Ast raise ParseError {
 ///|
 fn Parser::match_power_token(self : Parser) -> Token? {
   match self.peek().kind {
-    TokenKind::Pow => Some(self.advance())
-    TokenKind::Caret if option_has_convert_xor(self.options) =>
-      Some(self.advance())
+    Pow => Some(self.advance())
+    Caret if option_has_convert_xor(self.options) => Some(self.advance())
     _ => None
   }
 }
@@ -537,17 +518,12 @@ fn Parser::parse_function_exponentiation(
   let exponent = self.parse_binary(40)
   let called = self.parse_postfix(base)
   match called {
-    Ast::Call(span~, _, _) =>
-      Ast::Binary(
-        span=span_merge(span, ast_span(exponent)),
-        BinaryOp::Pow,
-        called,
-        exponent,
-      )
+    Call(span~, _, _) =>
+      Binary(span=span_merge(span, ast_span(exponent)), Pow, called, exponent)
     _ =>
-      Ast::Binary(
+      Binary(
         span=span_merge(ast_span(base), ast_span(exponent)),
-        BinaryOp::Pow,
+        Pow,
         base,
         exponent,
       )
@@ -560,32 +536,32 @@ fn Parser::parse_lambda(
   start_tok : Token,
 ) -> Ast raise ParseError {
   let args : Array[String] = []
-  if self.match_kind(TokenKind::Colon) is None {
+  if self.match_kind(Colon) is None {
     while true {
       match self.peek().kind {
-        TokenKind::Ident(name) => {
+        Ident(name) => {
           ignore(self.advance())
           args.push(name)
         }
-        TokenKind::Star | TokenKind::Pow =>
-          raise ParseError::UnsupportedConstruct(
+        Star | Pow =>
+          raise UnsupportedConstruct(
             span=self.peek().span,
             "starred arguments in lambda not supported",
           )
         _ => raise unexpected_token(self.peek(), "lambda parameter")
       }
-      if self.match_kind(TokenKind::Comma) is Some(_) {
-        if token_tag_eq(self.peek().kind, TokenKind::Colon) {
+      if self.match_kind(Comma) is Some(_) {
+        if token_tag_eq(self.peek().kind, Colon) {
           break
         }
       } else {
         break
       }
     }
-    ignore(self.expect_kind(TokenKind::Colon, "`:`"))
+    ignore(self.expect_kind(Colon, "`:`"))
   }
   let body = self.parse_compare()
-  Ast::Lambda(span=span_merge(start_tok.span, ast_span(body)), args, body)
+  Lambda(span=span_merge(start_tok.span, ast_span(body)), args, body)
 }
 
 ///|
@@ -594,12 +570,12 @@ fn Parser::parse_split_identifier(
   parts : Array[Ast],
 ) -> Ast raise ParseError {
   let effective = parts.map(x => x)
-  if token_tag_eq(self.peek().kind, TokenKind::LParen) &&
+  if token_tag_eq(self.peek().kind, LParen) &&
     ast_is_known_callable(effective[effective.length() - 1], self.context) {
     let args = self.parse_call_args()
     let end_span = self.tokens[self.index - 1].span
     let last = effective[effective.length() - 1]
-    effective[effective.length() - 1] = Ast::Call(
+    effective[effective.length() - 1] = Call(
       span=span_merge(ast_span(last), end_span),
       last,
       args,
@@ -633,42 +609,33 @@ fn Parser::parse_identifier(
 fn Parser::parse_prefix(self : Parser) -> Ast raise ParseError {
   let tok = self.peek()
   match tok.kind {
-    TokenKind::Plus => {
+    Plus => {
       ignore(self.advance())
       let operand = self.parse_binary(30)
-      Ast::Unary(
-        span=span_merge(tok.span, ast_span(operand)),
-        UnaryOp::Plus,
-        operand,
-      )
+      Unary(span=span_merge(tok.span, ast_span(operand)), Plus, operand)
     }
-    TokenKind::Minus => {
+    Minus => {
       ignore(self.advance())
       let operand = self.parse_binary(30)
-      Ast::Unary(
-        span=span_merge(tok.span, ast_span(operand)),
-        UnaryOp::Minus,
-        operand,
-      )
+      Unary(span=span_merge(tok.span, ast_span(operand)), Minus, operand)
     }
-    TokenKind::IntLit(text) => {
+    IntLit(text) => {
       ignore(self.advance())
-      self.parse_postfix(Ast::Number(span=tok.span, text))
+      self.parse_postfix(Number(span=tok.span, text))
     }
-    TokenKind::DecimalLit(text) => {
+    DecimalLit(text) => {
       ignore(self.advance())
-      self.parse_postfix(Ast::Number(span=tok.span, text))
+      self.parse_postfix(Number(span=tok.span, text))
     }
-    TokenKind::Ident(name) if option_has_lambda(self.options) &&
-      name == "lambda" => {
+    Ident(name) if option_has_lambda(self.options) && name == "lambda" => {
       let start = self.advance()
       self.parse_lambda(start)
     }
-    TokenKind::Ident(name) => {
+    Ident(name) => {
       ignore(self.advance())
       self.parse_identifier(tok, name)
     }
-    TokenKind::LParen => {
+    LParen => {
       let start = self.advance()
       let grouped = self.parse_group_or_tuple(start)
       self.parse_postfix(grouped)
@@ -686,7 +653,7 @@ fn Parser::parse_binary(self : Parser, min_prec : Int) -> Ast raise ParseError {
         ignore(self.advance())
         let next_min = if right_assoc { prec } else { prec + 1 }
         let rhs = self.parse_binary(next_min)
-        lhs = Ast::Binary(
+        lhs = Binary(
           span=span_merge(ast_span(lhs), ast_span(rhs)),
           op,
           lhs,
@@ -695,9 +662,9 @@ fn Parser::parse_binary(self : Parser, min_prec : Int) -> Ast raise ParseError {
       }
       _ if self.should_parse_implicit_multiplication(min_prec) => {
         let rhs = self.parse_binary(21)
-        lhs = Ast::Binary(
+        lhs = Binary(
           span=span_merge(ast_span(lhs), ast_span(rhs)),
-          BinaryOp::Mul,
+          Mul,
           lhs,
           rhs,
         )
@@ -727,11 +694,7 @@ fn Parser::parse_compare(self : Parser) -> Ast raise ParseError {
         exprs.push(rhs)
       }
       None =>
-        return Ast::Compare(
-          span=span_merge(ast_span(first), end_span),
-          exprs,
-          ops,
-        )
+        return Compare(span=span_merge(ast_span(first), end_span), exprs, ops)
     }
   }
   first
@@ -771,7 +734,7 @@ pub fn parse_ast_in(
   let p = parser(lex(src), options, context)
   let expr = p.parse_compare()
   match p.peek().kind {
-    TokenKind::Eof => expr
+    Eof => expr
     _ => raise unexpected_token(p.peek(), "end of input")
   }
 }

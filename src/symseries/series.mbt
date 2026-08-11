@@ -34,12 +34,12 @@ fn poly_to_expr(poly : Array[Expr], x : Expr, n : Int) -> Expr {
 ///|
 fn split_num_den(expr : Expr) -> (Expr, Expr) {
   match expr {
-    Expr::Mul(args) => {
+    Mul(args) => {
       let num : Array[Expr] = Array::new()
       let den : Array[Expr] = Array::new()
       for arg in args {
         match arg {
-          Expr::Pow(base, exp) =>
+          Pow(base, exp) =>
             match int_exp(exp) {
               Some(e) if e < 0 => den.push(@symcore.pow(base, int(-e)))
               _ => num.push(arg)
@@ -51,7 +51,7 @@ fn split_num_den(expr : Expr) -> (Expr, Expr) {
       let den_expr = if den.is_empty() { int(1) } else { @symcore.mul(den) }
       (num_expr, den_expr)
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match int_exp(exp) {
         Some(e) if e < 0 => (int(1), @symcore.pow(base, int(-e)))
         _ => (expr, int(1))
@@ -100,7 +100,7 @@ fn series_rational(expr : Expr, x : Expr, n : Int) -> (Expr, Bool)? {
 /// - Limits: Raises if `x` is not a Symbol or if `n` is not positive; complicated inputs may use a fallback expansion path.
 pub fn series(
   expr : Expr,
-  x? : Expr = Expr::Symbol("x"),
+  x? : Expr = Symbol("x"),
   x0? : Expr = int(0),
   n? : Int = 6,
   dir? : String = "+",
@@ -109,7 +109,7 @@ pub fn series(
     fail("series n must be positive")
   }
   let var_name = match x {
-    Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("series variable must be a Symbol")
   }
   let t = Expr::Symbol("__series_t")
@@ -138,7 +138,7 @@ pub fn series(
       let order_shift = @symcore.add([x, expr_neg(x0)])
       if needs_order {
         match x0 {
-          Expr::Number(n0) if !n0.is_zero() => {
+          Number(n0) if !n0.is_zero() => {
             let poly_sub = @symcore.subst(poly_expr, back)
             let order_term = @symcore.function("O", [
               @symcore.pow(order_shift, int(n)),
@@ -165,7 +165,7 @@ pub fn series(
       back["__series_t"] = order_shift
       let poly_sub = @symcore.subst(taylor, back)
       let order_term = match x0 {
-        Expr::Number(n0) if !n0.is_zero() =>
+        Number(n0) if !n0.is_zero() =>
           @symcore.function("O", [
             @symcore.pow(order_shift, int(n)),
             @symcore.function("Tuple", [x, x0]),
@@ -259,7 +259,7 @@ fn rational_expr(num : Int, den : Int) -> Expr {
 ///|
 fn inv_factorial_expr(n : Int) -> Expr {
   let den = factorial_bigint(n)
-  @symcore.Expr::Number(safe_rational(BigInt::from_int(1), den))
+  Number(safe_rational(BigInt::from_int(1), den))
 }
 
 ///|
@@ -276,7 +276,7 @@ fn series_substitute_symbol(
 ///|
 fn taylor_series_expr(expr : Expr, x : Expr, n : Int) -> Expr {
   let x_name = match x {
-    Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => return expr
   }
   let mut current = expr
@@ -305,7 +305,7 @@ fn taylor_series_expr(expr : Expr, x : Expr, n : Int) -> Expr {
 fn numeric_constant_function(name : String, expr : Expr) -> Expr? {
   let evaluated = @symcore.evalf(@symcore.function(name, [expr]), prec=80)
   match evaluated {
-    Expr::Float(_) | Expr::ComplexFloat(_) => Some(evaluated)
+    Float(_) | ComplexFloat(_) => Some(evaluated)
     _ => None
   }
 }
@@ -313,7 +313,7 @@ fn numeric_constant_function(name : String, expr : Expr) -> Expr? {
 ///|
 fn const_sin(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(n) if n.is_zero() => int(0)
+    Number(n) if n.is_zero() => int(0)
     _ =>
       match numeric_constant_function("sin", expr) {
         Some(value) => value
@@ -325,7 +325,7 @@ fn const_sin(expr : Expr) -> Expr {
 ///|
 fn const_cos(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(n) if n.is_zero() => int(1)
+    Number(n) if n.is_zero() => int(1)
     _ =>
       match numeric_constant_function("cos", expr) {
         Some(value) => value
@@ -337,7 +337,7 @@ fn const_cos(expr : Expr) -> Expr {
 ///|
 fn const_tan(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(n) if n.is_zero() => int(0)
+    Number(n) if n.is_zero() => int(0)
     _ =>
       match numeric_constant_function("tan", expr) {
         Some(value) => value
@@ -349,7 +349,7 @@ fn const_tan(expr : Expr) -> Expr {
 ///|
 fn const_exp(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(n) if n.is_zero() => int(1)
+    Number(n) if n.is_zero() => int(1)
     _ =>
       match numeric_constant_function("exp", expr) {
         Some(value) => value
@@ -361,7 +361,7 @@ fn const_exp(expr : Expr) -> Expr {
 ///|
 fn const_sinh(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(n) if n.is_zero() => int(0)
+    Number(n) if n.is_zero() => int(0)
     _ =>
       match numeric_constant_function("sinh", expr) {
         Some(value) => value
@@ -373,7 +373,7 @@ fn const_sinh(expr : Expr) -> Expr {
 ///|
 fn const_cosh(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(n) if n.is_zero() => int(1)
+    Number(n) if n.is_zero() => int(1)
     _ =>
       match numeric_constant_function("cosh", expr) {
         Some(value) => value
@@ -385,7 +385,7 @@ fn const_cosh(expr : Expr) -> Expr {
 ///|
 fn const_tanh(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(n) if n.is_zero() => int(0)
+    Number(n) if n.is_zero() => int(0)
     _ =>
       match numeric_constant_function("tanh", expr) {
         Some(value) => value
@@ -397,7 +397,7 @@ fn const_tanh(expr : Expr) -> Expr {
 ///|
 fn const_log(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(n) if n.is_one() => int(0)
+    Number(n) if n.is_one() => int(0)
     _ =>
       match numeric_constant_function("log", expr) {
         Some(value) => value
@@ -605,11 +605,11 @@ fn replace_expr(expr : Expr, target : Expr, replacement : Expr) -> Expr {
     return replacement
   }
   match expr {
-    Expr::Add(args) =>
+    Add(args) =>
       @symcore.add(args.map(child => replace_expr(child, target, replacement)))
-    Expr::Mul(args) =>
+    Mul(args) =>
       @symcore.mul(args.map(child => replace_expr(child, target, replacement)))
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       @symcore.pow(
         replace_expr(base, target, replacement),
         replace_expr(exp, target, replacement),
@@ -646,28 +646,25 @@ fn simplify_tan_coeff(expr : Expr, tan_c0 : Expr) -> Expr {
 ///|
 fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
   match expr {
-    Expr::Number(_)
-    | Expr::Float(_)
-    | Expr::ComplexFloat(_)
-    | Expr::NumberSymbol(_)
-    | Expr::Boolean(_) => Some(([expr], false))
-    Expr::Symbol(_)
-    | Expr::Dummy(_, _)
-    | Expr::Wild(_, _, _)
-    | Expr::FunctionHead(_)
-    | Expr::UndefinedFunction(_) =>
+    Number(_) | Float(_) | ComplexFloat(_) | NumberSymbol(_) | Boolean(_) =>
+      Some(([expr], false))
+    Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | FunctionHead(_)
+    | UndefinedFunction(_) =>
       if expr == x {
         Some(([@symcore.int(0), @symcore.int(1)], false))
       } else {
         Some(([expr], false))
       }
-    Expr::Tuple(_)
-    | Expr::Dict(_)
-    | Expr::Relational(_, _, _)
-    | Expr::Derivative(_, _)
-    | Expr::Subs(_, _, _)
-    | Expr::Lambda(_, _) => None
-    Expr::Add(args) => {
+    Tuple(_)
+    | Dict(_)
+    | Relational(_, _, _)
+    | Derivative(_, _)
+    | Subs(_, _, _)
+    | Lambda(_, _) => None
+    Add(args) => {
       let mut acc : Array[Expr] = [@symcore.int(0)]
       let mut inf = false
       for arg in args {
@@ -681,7 +678,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
       }
       Some((poly_truncate(acc, n), inf))
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc : Array[Expr] = [@symcore.int(1)]
       let mut inf = false
       for arg in args {
@@ -695,7 +692,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
       }
       Some((poly_truncate(acc, n), inf))
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match int_exp(exp) {
         Some(e) if e >= 0 =>
           match series_poly(base, x, n) {
@@ -718,7 +715,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
           }
         _ =>
           match exp {
-            Expr::Number(alpha) =>
+            Number(alpha) =>
               match series_poly(base, x, n) {
                 Some((poly, _)) => series_pow_general(poly, alpha, exp, n)
                 None => None
@@ -726,7 +723,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
             _ => None
           }
       }
-    Expr::Mod(_, _) => None
+    Mod(_, _) => None
     _ =>
       match @symcore.application_args(expr) {
         Some([arg]) =>

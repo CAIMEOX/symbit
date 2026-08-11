@@ -7,12 +7,12 @@ pub fn normal(
   mu : @symcore.Expr,
   sigma : @symcore.Expr,
 ) -> RandomVar {
-  random_var(name, RVKind::Normal(mu~, sigma~))
+  random_var(name, Normal(mu~, sigma~))
 }
 
 ///|
 pub fn exponential(name : String, rate : @symcore.Expr) -> RandomVar {
-  random_var(name, RVKind::Exponential(rate~))
+  random_var(name, Exponential(rate~))
 }
 
 ///|
@@ -21,7 +21,7 @@ pub fn gamma_dist(
   shape : @symcore.Expr,
   scale : @symcore.Expr,
 ) -> RandomVar {
-  random_var(name, RVKind::Gamma(shape~, scale~))
+  random_var(name, Gamma(shape~, scale~))
 }
 
 ///|
@@ -41,7 +41,7 @@ fn cont_extract_rel_to_var(
 ) -> (RelOp, @symcore.Expr)? {
   let x = @symcore.Expr::Symbol(var_name)
   match event {
-    Event::Rel(op~, lhs~, rhs~) =>
+    Rel(op~, lhs~, rhs~) =>
       if @symcore.compare_expr(lhs, x) == 0 {
         Some((op, rhs))
       } else if @symcore.compare_expr(rhs, x) == 0 {
@@ -62,7 +62,7 @@ fn cont_piecewise(
   let args : Array[@symcore.Expr] = Array::new()
   for pair in pairs {
     let (value, cond) = pair
-    args.push(@symcore.Expr::Tuple([value, cond]))
+    args.push(Tuple([value, cond]))
   }
   @symcore.function("Piecewise", args)
 }
@@ -87,29 +87,28 @@ fn cont_param_condition(
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr? {
   match continuous_tag_from_name(name) {
-    ContinuousTag::Arcsin if params.length() == 2 =>
+    Arcsin if params.length() == 2 => Some(cont_rel("Lt", params[0], params[1]))
+    Uniform if params.length() == 2 =>
       Some(cont_rel("Lt", params[0], params[1]))
-    ContinuousTag::Uniform if params.length() == 2 =>
-      Some(cont_rel("Lt", params[0], params[1]))
-    ContinuousTag::Beta if params.length() == 2 =>
+    Beta if params.length() == 2 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
           cont_rel("Gt", params[1], @symcore.int(0)),
         ),
       )
-    ContinuousTag::Laplace if params.length() == 2 =>
+    Laplace if params.length() == 2 =>
       Some(cont_rel("Gt", params[1], @symcore.int(0)))
-    ContinuousTag::Cauchy if params.length() == 2 =>
+    Cauchy if params.length() == 2 =>
       Some(cont_rel("Gt", params[1], @symcore.int(0)))
-    ContinuousTag::Pareto if params.length() == 2 =>
+    Pareto if params.length() == 2 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
           cont_rel("Gt", params[1], @symcore.int(0)),
         ),
       )
-    ContinuousTag::BoundedPareto if params.length() == 3 =>
+    BoundedPareto if params.length() == 3 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
@@ -119,38 +118,38 @@ fn cont_param_condition(
           ),
         ),
       )
-    ContinuousTag::Kumaraswamy if params.length() == 2 =>
+    Kumaraswamy if params.length() == 2 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
           cont_rel("Gt", params[1], @symcore.int(0)),
         ),
       )
-    ContinuousTag::Rayleigh if params.length() == 1 =>
+    Rayleigh if params.length() == 1 =>
       Some(cont_rel("Gt", params[0], @symcore.int(0)))
-    ContinuousTag::LogNormal if params.length() == 2 =>
+    LogNormal if params.length() == 2 =>
       Some(cont_rel("Gt", params[1], @symcore.int(0)))
-    ContinuousTag::Weibull if params.length() == 2 =>
+    Weibull if params.length() == 2 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
           cont_rel("Gt", params[1], @symcore.int(0)),
         ),
       )
-    ContinuousTag::PowerFunction if params.length() == 3 =>
+    PowerFunction if params.length() == 3 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
           cont_rel("Lt", params[1], params[2]),
         ),
       )
-    ContinuousTag::StudentT if params.length() == 1 =>
+    StudentT if params.length() == 1 =>
       Some(cont_rel("Gt", params[0], @symcore.int(0)))
-    ContinuousTag::Moyal if params.length() == 2 =>
+    Moyal if params.length() == 2 =>
       Some(cont_rel("Gt", params[1], @symcore.int(0)))
-    ContinuousTag::WignerSemicircle if params.length() == 1 =>
+    WignerSemicircle if params.length() == 1 =>
       Some(cont_rel("Gt", params[0], @symcore.int(0)))
-    ContinuousTag::Trapezoidal if params.length() == 4 =>
+    Trapezoidal if params.length() == 4 =>
       Some(
         cont_and(
           cont_and(
@@ -199,25 +198,21 @@ fn cont_bool_and(a : Bool?, b : Bool?) -> Bool? {
 ///|
 fn cont_known_valid(name : String, params : Array[@symcore.Expr]) -> Bool? {
   match continuous_tag_from_name(name) {
-    ContinuousTag::Arcsin if params.length() == 2 =>
-      cont_numeric_lt(params[0], params[1])
-    ContinuousTag::Uniform if params.length() == 2 =>
-      cont_numeric_lt(params[0], params[1])
-    ContinuousTag::Beta if params.length() == 2 =>
+    Arcsin if params.length() == 2 => cont_numeric_lt(params[0], params[1])
+    Uniform if params.length() == 2 => cont_numeric_lt(params[0], params[1])
+    Beta if params.length() == 2 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_numeric_gt_zero(params[1]),
       )
-    ContinuousTag::Laplace if params.length() == 2 =>
-      cont_numeric_gt_zero(params[1])
-    ContinuousTag::Cauchy if params.length() == 2 =>
-      cont_numeric_gt_zero(params[1])
-    ContinuousTag::Pareto if params.length() == 2 =>
+    Laplace if params.length() == 2 => cont_numeric_gt_zero(params[1])
+    Cauchy if params.length() == 2 => cont_numeric_gt_zero(params[1])
+    Pareto if params.length() == 2 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_numeric_gt_zero(params[1]),
       )
-    ContinuousTag::BoundedPareto if params.length() == 3 =>
+    BoundedPareto if params.length() == 3 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_bool_and(
@@ -225,32 +220,27 @@ fn cont_known_valid(name : String, params : Array[@symcore.Expr]) -> Bool? {
           cont_numeric_lt(params[1], params[2]),
         ),
       )
-    ContinuousTag::Kumaraswamy if params.length() == 2 =>
+    Kumaraswamy if params.length() == 2 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_numeric_gt_zero(params[1]),
       )
-    ContinuousTag::Rayleigh if params.length() == 1 =>
-      cont_numeric_gt_zero(params[0])
-    ContinuousTag::LogNormal if params.length() == 2 =>
-      cont_numeric_gt_zero(params[1])
-    ContinuousTag::Weibull if params.length() == 2 =>
+    Rayleigh if params.length() == 1 => cont_numeric_gt_zero(params[0])
+    LogNormal if params.length() == 2 => cont_numeric_gt_zero(params[1])
+    Weibull if params.length() == 2 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_numeric_gt_zero(params[1]),
       )
-    ContinuousTag::PowerFunction if params.length() == 3 =>
+    PowerFunction if params.length() == 3 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_numeric_lt(params[1], params[2]),
       )
-    ContinuousTag::StudentT if params.length() == 1 =>
-      cont_numeric_gt_zero(params[0])
-    ContinuousTag::Moyal if params.length() == 2 =>
-      cont_numeric_gt_zero(params[1])
-    ContinuousTag::WignerSemicircle if params.length() == 1 =>
-      cont_numeric_gt_zero(params[0])
-    ContinuousTag::Trapezoidal if params.length() == 4 =>
+    StudentT if params.length() == 1 => cont_numeric_gt_zero(params[0])
+    Moyal if params.length() == 2 => cont_numeric_gt_zero(params[1])
+    WignerSemicircle if params.length() == 1 => cont_numeric_gt_zero(params[0])
+    Trapezoidal if params.length() == 4 =>
       cont_bool_and(
         cont_bool_and(
           cont_numeric_lt(params[0], params[1]),
@@ -273,16 +263,13 @@ fn cont_guard_params(
 ) -> @symcore.Expr {
   match cont_known_valid(name, params) {
     Some(true) => expr
-    Some(false) => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
+    Some(false) => NumberSymbol(NaN)
     None =>
       match cont_param_condition(name, params) {
         Some(valid_cond) =>
           cont_piecewise([
             (expr, valid_cond),
-            (
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
-              @symcore.Expr::Boolean(true),
-            ),
+            (NumberSymbol(NaN), Boolean(true)),
           ])
         None => expr
       }
@@ -301,7 +288,7 @@ fn symbolic_continuous_density(
       let b = params[1]
       let denom = eval_arith(
         @symcore.mul([
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+          NumberSymbol(Pi),
           @symcore.function("sqrt", [
             eval_arith(
               @symcore.mul([
@@ -319,7 +306,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_and(cont_rel("Le", a, x), cont_rel("Le", x, b))),
-          (@symcore.int(0), @symcore.Expr::Boolean(true)),
+          (@symcore.int(0), Boolean(true)),
         ]),
       )
     }
@@ -332,7 +319,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_and(cont_rel("Le", a, x), cont_rel("Le", x, b))),
-          (@symcore.int(0), @symcore.Expr::Boolean(true)),
+          (@symcore.int(0), Boolean(true)),
         ]),
       )
     }
@@ -361,7 +348,7 @@ fn symbolic_continuous_density(
               cont_rel("Le", x, @symcore.int(1)),
             ),
           ),
-          (@symcore.int(0), @symcore.Expr::Boolean(true)),
+          (@symcore.int(0), Boolean(true)),
         ]),
       )
     }
@@ -399,7 +386,7 @@ fn symbolic_continuous_density(
       )
       let denom = eval_arith(
         @symcore.mul([
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+          NumberSymbol(Pi),
           gamma,
           eval_arith(
             @symcore.add([@symcore.int(1), @symcore.pow(ratio, @symcore.int(2))]),
@@ -429,7 +416,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_rel("Ge", x, xm)),
-          (@symcore.int(0), @symcore.Expr::Boolean(true)),
+          (@symcore.int(0), Boolean(true)),
         ]),
       )
     }
@@ -461,7 +448,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_rel("Ge", x, @symcore.int(0))),
-          (@symcore.int(0), @symcore.Expr::Boolean(true)),
+          (@symcore.int(0), Boolean(true)),
         ]),
       )
     }
@@ -477,12 +464,7 @@ fn symbolic_continuous_density(
                 x,
                 sigma,
                 @symcore.function("sqrt", [
-                  eval_arith(
-                    @symcore.mul([
-                      @symcore.int(2),
-                      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                    ]),
-                  ),
+                  eval_arith(@symcore.mul([@symcore.int(2), NumberSymbol(Pi)])),
                 ]),
               ]),
             ),
@@ -510,7 +492,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_rel("Gt", x, @symcore.int(0))),
-          (@symcore.int(0), @symcore.Expr::Boolean(true)),
+          (@symcore.int(0), Boolean(true)),
         ]),
       )
     }
@@ -533,7 +515,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_rel("Ge", x, @symcore.int(0))),
-          (@symcore.int(0), @symcore.Expr::Boolean(true)),
+          (@symcore.int(0), Boolean(true)),
         ]),
       )
     }
@@ -553,12 +535,7 @@ fn symbolic_continuous_density(
             eval_arith(
               @symcore.mul([
                 @symcore.function("sqrt", [
-                  eval_arith(
-                    @symcore.mul([
-                      nu,
-                      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                    ]),
-                  ),
+                  eval_arith(@symcore.mul([nu, NumberSymbol(Pi)])),
                 ]),
                 @symcore.function("gamma", [
                   eval_arith(@symcore.mul([stats_exact_rational(1, 2), nu])),
@@ -631,7 +608,7 @@ fn symbolic_continuous_density(
           @symcore.function("Tuple", [
             kk,
             @symcore.int(0),
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+            NumberSymbol(Infinity),
           ]),
         ]),
       )
@@ -709,7 +686,7 @@ fn symbolic_continuous_integral_cdf(
   if guard_lower {
     cont_piecewise([
       (integral, cont_rel("Ge", x, lower)),
-      (@symcore.int(0), @symcore.Expr::Boolean(true)),
+      (@symcore.int(0), Boolean(true)),
     ])
   } else {
     integral
@@ -739,16 +716,13 @@ fn symbolic_continuous_cdf(
             eval_arith(
               @symcore.mul([
                 stats_exact_rational(2, 1),
-                @symcore.pow(
-                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                  @symcore.int(-1),
-                ),
+                @symcore.pow(NumberSymbol(Pi), @symcore.int(-1)),
                 @symcore.function("asin", [@symcore.function("sqrt", [ratio])]),
               ]),
             ),
             cont_rel("Le", x, b),
           ),
-          (@symcore.int(1), @symcore.Expr::Boolean(true)),
+          (@symcore.int(1), Boolean(true)),
         ]),
       )
     }
@@ -765,7 +739,7 @@ fn symbolic_continuous_cdf(
         cont_piecewise([
           (@symcore.int(0), cont_rel("Lt", x, a)),
           (mid, cont_rel("Le", x, b)),
-          (@symcore.int(1), @symcore.Expr::Boolean(true)),
+          (@symcore.int(1), Boolean(true)),
         ]),
       )
     }
@@ -803,10 +777,7 @@ fn symbolic_continuous_cdf(
         ]),
       )
       Some(
-        cont_piecewise([
-          (left, cont_rel("Lt", x, mu)),
-          (right, @symcore.Expr::Boolean(true)),
-        ]),
+        cont_piecewise([(left, cont_rel("Lt", x, mu)), (right, Boolean(true))]),
       )
     }
     "Cauchy" if params.length() == 2 => {
@@ -818,10 +789,7 @@ fn symbolic_continuous_cdf(
             stats_exact_rational(1, 2),
             eval_arith(
               @symcore.mul([
-                @symcore.pow(
-                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                  @symcore.int(-1),
-                ),
+                @symcore.pow(NumberSymbol(Pi), @symcore.int(-1)),
                 @symcore.function("atan", [
                   eval_arith(
                     @symcore.mul([
@@ -857,7 +825,7 @@ fn symbolic_continuous_cdf(
                 ]),
               ]),
             ),
-            @symcore.Expr::Boolean(true),
+            Boolean(true),
           ),
         ]),
       )
@@ -893,7 +861,7 @@ fn symbolic_continuous_cdf(
                 ]),
               ]),
             ),
-            @symcore.Expr::Boolean(true),
+            Boolean(true),
           ),
         ]),
       )
@@ -908,13 +876,7 @@ fn symbolic_continuous_cdf(
             eval_arith(cont_expr_sub(r2, @symcore.pow(x, @symcore.int(2)))),
           ]),
           @symcore.pow(
-            eval_arith(
-              @symcore.mul([
-                @symcore.int(2),
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                r2,
-              ]),
-            ),
+            eval_arith(@symcore.mul([@symcore.int(2), NumberSymbol(Pi), r2])),
             @symcore.int(-1),
           ),
         ]),
@@ -924,10 +886,7 @@ fn symbolic_continuous_cdf(
           @symcore.function("asin", [
             eval_arith(@symcore.mul([x, @symcore.pow(r, @symcore.int(-1))])),
           ]),
-          @symcore.pow(
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-            @symcore.int(-1),
-          ),
+          @symcore.pow(NumberSymbol(Pi), @symcore.int(-1)),
         ]),
       )
       let body = eval_arith(
@@ -939,7 +898,7 @@ fn symbolic_continuous_cdf(
             body,
             cont_rel("Ge", x, eval_arith(@symcore.mul([@symcore.int(-1), r]))),
           ),
-          (@symcore.int(0), @symcore.Expr::Boolean(true)),
+          (@symcore.int(0), Boolean(true)),
         ]),
       )
     }
@@ -961,7 +920,7 @@ fn symbolic_continuous_cdf(
                 ),
               ]),
             ),
-            @symcore.Expr::Boolean(true),
+            Boolean(true),
           ),
         ]),
       )
@@ -995,7 +954,7 @@ fn symbolic_continuous_cdf(
                 ),
               ]),
             ),
-            @symcore.Expr::Boolean(true),
+            Boolean(true),
           ),
         ]),
       )
@@ -1022,7 +981,7 @@ fn symbolic_continuous_cdf(
                 ]),
               ]),
             ),
-            @symcore.Expr::Boolean(true),
+            Boolean(true),
           ),
         ]),
       )
@@ -1105,7 +1064,7 @@ fn symbolic_continuous_cdf(
           (left, cont_rel("Le", x, b)),
           (mid, cont_rel("Le", x, c)),
           (right, cont_rel("Le", x, d)),
-          (@symcore.int(1), @symcore.Expr::Boolean(true)),
+          (@symcore.int(1), Boolean(true)),
         ]),
       )
     }
@@ -1146,12 +1105,7 @@ fn symbolic_continuous_cdf(
           "FisherZ",
           params,
           x,
-          eval_arith(
-            @symcore.mul([
-              @symcore.int(-1),
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-            ]),
-          ),
+          eval_arith(@symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])),
           guard_lower=false,
         ),
       )
@@ -1187,7 +1141,7 @@ fn symbolic_continuous_cdf(
             ),
             cont_rel("Le", x, n),
           ),
-          (@symcore.int(1), @symcore.Expr::Boolean(true)),
+          (@symcore.int(1), Boolean(true)),
         ]),
       )
     }
@@ -1237,146 +1191,56 @@ fn symbolic_continuous_mean_bounds(
   params : Array[@symcore.Expr],
 ) -> (@symcore.Expr, @symcore.Expr)? {
   match continuous_tag_from_name(name) {
-    ContinuousTag::Benini if params.length() == 3 =>
-      Some(
-        (
-          params[2],
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::BetaNoncentral if params.length() == 3 =>
+    Benini if params.length() == 3 => Some((params[2], NumberSymbol(Infinity)))
+    BetaNoncentral if params.length() == 3 =>
       Some((@symcore.int(0), @symcore.int(1)))
-    ContinuousTag::BetaPrime if params.length() == 2 =>
+    BetaPrime if params.length() == 2 =>
+      Some((@symcore.int(0), NumberSymbol(Infinity)))
+    ChiNoncentral if params.length() == 2 =>
+      Some((@symcore.int(0), NumberSymbol(Infinity)))
+    Dagum if params.length() == 3 =>
+      Some((@symcore.int(0), NumberSymbol(Infinity)))
+    Davis if params.length() == 3 => Some((params[2], NumberSymbol(Infinity)))
+    ExponentialPower if params.length() == 3 =>
       Some(
         (
-          @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+          eval_arith(@symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])),
+          NumberSymbol(Infinity),
         ),
       )
-    ContinuousTag::ChiNoncentral if params.length() == 2 =>
+    FDistribution if params.length() == 2 =>
+      Some((@symcore.int(0), NumberSymbol(Infinity)))
+    FisherZ if params.length() == 2 =>
       Some(
         (
-          @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+          eval_arith(@symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])),
+          NumberSymbol(Infinity),
         ),
       )
-    ContinuousTag::Dagum if params.length() == 3 =>
-      Some(
-        (
-          @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::Davis if params.length() == 3 =>
-      Some(
-        (
-          params[2],
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::ExponentialPower if params.length() == 3 =>
-      Some(
-        (
-          eval_arith(
-            @symcore.mul([
-              @symcore.int(-1),
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-            ]),
-          ),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::FDistribution if params.length() == 2 =>
-      Some(
-        (
-          @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::FisherZ if params.length() == 2 =>
-      Some(
-        (
-          eval_arith(
-            @symcore.mul([
-              @symcore.int(-1),
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-            ]),
-          ),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::Frechet if params.length() == 1 =>
-      Some(
-        (
-          @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::GammaInverse if params.length() == 2 =>
-      Some(
-        (
-          @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::Levy if params.length() == 2 =>
-      Some(
-        (
-          params[0],
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::LogCauchy if params.length() == 2 =>
-      Some(
-        (
-          @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::LogitNormal if params.length() == 2 =>
+    Frechet if params.length() == 1 =>
+      Some((@symcore.int(0), NumberSymbol(Infinity)))
+    GammaInverse if params.length() == 2 =>
+      Some((@symcore.int(0), NumberSymbol(Infinity)))
+    Levy if params.length() == 2 => Some((params[0], NumberSymbol(Infinity)))
+    LogCauchy if params.length() == 2 =>
+      Some((@symcore.int(0), NumberSymbol(Infinity)))
+    LogitNormal if params.length() == 2 =>
       Some((@symcore.int(0), @symcore.int(1)))
-    ContinuousTag::Lomax if params.length() == 2 =>
+    Lomax if params.length() == 2 =>
+      Some((@symcore.int(0), NumberSymbol(Infinity)))
+    Maxwell if params.length() == 1 =>
+      Some((@symcore.int(0), NumberSymbol(Infinity)))
+    Nakagami if params.length() == 2 =>
+      Some((@symcore.int(0), NumberSymbol(Infinity)))
+    PowerFunction if params.length() == 3 => Some((params[1], params[2]))
+    QuadraticU if params.length() == 2 => Some((params[0], params[1]))
+    ShiftedGompertz if params.length() == 2 =>
+      Some((@symcore.int(0), NumberSymbol(Infinity)))
+    VonMises if params.length() == 2 =>
       Some(
         (
           @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::Maxwell if params.length() == 1 =>
-      Some(
-        (
-          @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::Nakagami if params.length() == 2 =>
-      Some(
-        (
-          @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::PowerFunction if params.length() == 3 =>
-      Some((params[1], params[2]))
-    ContinuousTag::QuadraticU if params.length() == 2 =>
-      Some((params[0], params[1]))
-    ContinuousTag::ShiftedGompertz if params.length() == 2 =>
-      Some(
-        (
-          @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
-    ContinuousTag::VonMises if params.length() == 2 =>
-      Some(
-        (
-          @symcore.int(0),
-          eval_arith(
-            @symcore.mul([
-              @symcore.int(2),
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-            ]),
-          ),
+          eval_arith(@symcore.mul([@symcore.int(2), NumberSymbol(Pi)])),
         ),
       )
     _ => None
@@ -1421,7 +1285,7 @@ fn symbolic_continuous_variance_via_integral(
   match symbolic_continuous_mean_bounds(name, params) {
     Some((lower, upper)) => {
       let kind = symbolic_kind_from_name(name)
-      let rv = random_var("_X", RVKind::Symbolic(kind~, params~))
+      let rv = random_var("_X", Symbolic(kind~, params~))
       let mean_expr = match continuous_mean(rv) {
         Some(v) => v
         None => symbolic_stat_expr(name, "Mean", params)
@@ -1460,9 +1324,9 @@ fn symbolic_continuous_variance_via_integral(
 ///|
 pub fn continuous_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Normal(mu~, sigma~) => {
+    Normal(mu~, sigma~) => {
       let two = @symcore.int(2)
-      let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+      let pi = @symcore.Expr::NumberSymbol(Pi)
       let diff = cont_expr_sub(x, mu)
       let numer = @symcore.function("exp", [
         @symcore.mul([
@@ -1482,7 +1346,7 @@ pub fn continuous_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
         eval_arith(@symcore.mul([numer, @symcore.pow(denom, @symcore.int(-1))])),
       )
     }
-    RVKind::Exponential(rate~) => {
+    Exponential(rate~) => {
       let raw = eval_arith(
         @symcore.mul([
           rate,
@@ -1492,11 +1356,11 @@ pub fn continuous_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
       Some(
         cont_piecewise([
           (@symcore.int(0), @symcore.function("Lt", [x, @symcore.int(0)])),
-          (raw, @symcore.Expr::Boolean(true)),
+          (raw, Boolean(true)),
         ]),
       )
     }
-    RVKind::Gamma(shape~, scale~) => {
+    Gamma(shape~, scale~) => {
       let base = eval_arith(
         @symcore.mul([
           @symcore.pow(x, cont_expr_sub(shape, @symcore.int(1))),
@@ -1514,17 +1378,14 @@ pub fn continuous_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
       Some(
         cont_piecewise([
           (@symcore.int(0), @symcore.function("Lt", [x, @symcore.int(0)])),
-          (base, @symcore.Expr::Boolean(true)),
+          (base, Boolean(true)),
         ]),
       )
     }
-    RVKind::Symbolic(kind~, params~) =>
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Continuous(
-          ContinuousTag::ContinuousRV
-          | ContinuousTag::ContinuousDistributionHandmade
-        ) => None
-        SymbolicKind::Continuous(tag) => {
+        Continuous(ContinuousRV | ContinuousDistributionHandmade) => None
+        Continuous(tag) => {
           let name = continuous_tag_name(tag)
           match symbolic_continuous_density(name, params, x) {
             Some(v) => Some(cont_guard_params(name, params, v))
@@ -1551,7 +1412,7 @@ pub fn continuous_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
 ///|
 pub fn continuous_cdf(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Normal(mu~, sigma~) => {
+    Normal(mu~, sigma~) => {
       if expr_known_equal(x, mu) {
         return Some(eval_arith(@symcore.pow(@symcore.int(2), @symcore.int(-1))))
       }
@@ -1575,7 +1436,7 @@ pub fn continuous_cdf(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
         ),
       )
     }
-    RVKind::Exponential(rate~) =>
+    Exponential(rate~) =>
       Some(
         cont_piecewise([
           (@symcore.int(0), @symcore.function("Lt", [x, @symcore.int(0)])),
@@ -1585,11 +1446,11 @@ pub fn continuous_cdf(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
                 @symcore.mul([@symcore.int(-1), rate, x]),
               ]),
             ),
-            @symcore.Expr::Boolean(true),
+            Boolean(true),
           ),
         ]),
       )
-    RVKind::Gamma(shape~, scale~) =>
+    Gamma(shape~, scale~) =>
       Some(
         cont_piecewise([
           (@symcore.int(0), @symcore.function("Lt", [x, @symcore.int(0)])),
@@ -1608,17 +1469,14 @@ pub fn continuous_cdf(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
                 ),
               ]),
             ),
-            @symcore.Expr::Boolean(true),
+            Boolean(true),
           ),
         ]),
       )
-    RVKind::Symbolic(kind~, params~) =>
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Continuous(
-          ContinuousTag::ContinuousRV
-          | ContinuousTag::ContinuousDistributionHandmade
-        ) => None
-        SymbolicKind::Continuous(tag) => {
+        Continuous(ContinuousRV | ContinuousDistributionHandmade) => None
+        Continuous(tag) => {
           let name = continuous_tag_name(tag)
           match symbolic_continuous_cdf(name, params, x) {
             Some(v) => Some(cont_guard_params(name, params, v))
@@ -1648,20 +1506,20 @@ pub fn continuous_probability(rv : RandomVar, event : Event) -> @symcore.Expr? {
     return None
   }
   match event {
-    Event::Bool(v) => Some(if v { @symcore.int(1) } else { @symcore.int(0) })
-    Event::Not(inner) =>
+    Bool(v) => Some(if v { @symcore.int(1) } else { @symcore.int(0) })
+    Not(inner) =>
       match continuous_probability(rv, inner) {
         Some(p) => Some(eval_arith(cont_expr_sub(@symcore.int(1), p)))
         None => None
       }
-    Event::Rel(..) =>
+    Rel(..) =>
       match cont_extract_rel_to_var(event, rv.name) {
         Some((op, bnd)) =>
           match op {
-            RelOp::Eq => Some(@symcore.int(0))
-            RelOp::Ne => Some(@symcore.int(1))
-            RelOp::Le | RelOp::Lt => continuous_cdf(rv, bnd)
-            RelOp::Ge | RelOp::Gt =>
+            Eq => Some(@symcore.int(0))
+            Ne => Some(@symcore.int(1))
+            Le | Lt => continuous_cdf(rv, bnd)
+            Ge | Gt =>
               match continuous_cdf(rv, bnd) {
                 Some(cdf) =>
                   Some(eval_arith(cont_expr_sub(@symcore.int(1), cdf)))
@@ -1670,20 +1528,20 @@ pub fn continuous_probability(rv : RandomVar, event : Event) -> @symcore.Expr? {
           }
         None => None
       }
-    Event::And(items) =>
+    And(items) =>
       if items.length() == 2 {
         let first = cont_extract_rel_to_var(items[0], rv.name)
         let second = cont_extract_rel_to_var(items[1], rv.name)
         match (first, second) {
           (Some((op1, b1)), Some((op2, b2))) => {
             let lower_opt = match (op1, op2) {
-              (RelOp::Gt | RelOp::Ge, _) => Some(b1)
-              (_, RelOp::Gt | RelOp::Ge) => Some(b2)
+              (Gt | Ge, _) => Some(b1)
+              (_, Gt | Ge) => Some(b2)
               _ => None
             }
             let upper_opt = match (op1, op2) {
-              (RelOp::Lt | RelOp::Le, _) => Some(b1)
-              (_, RelOp::Lt | RelOp::Le) => Some(b2)
+              (Lt | Le, _) => Some(b1)
+              (_, Lt | Le) => Some(b2)
               _ => None
             }
             match (lower_opt, upper_opt) {
@@ -1708,17 +1566,15 @@ pub fn continuous_probability(rv : RandomVar, event : Event) -> @symcore.Expr? {
 ///|
 pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Normal(mu~, sigma~) => {
+    Normal(mu~, sigma~) => {
       ignore(sigma)
       Some(mu)
     }
-    RVKind::Exponential(rate~) =>
-      Some(eval_arith(@symcore.pow(rate, @symcore.int(-1))))
-    RVKind::Gamma(shape~, scale~) =>
-      Some(eval_arith(@symcore.mul([shape, scale])))
-    RVKind::Symbolic(kind~, params~) =>
+    Exponential(rate~) => Some(eval_arith(@symcore.pow(rate, @symcore.int(-1))))
+    Gamma(shape~, scale~) => Some(eval_arith(@symcore.mul([shape, scale])))
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Continuous(tag) => {
+        Continuous(tag) => {
           let name = continuous_tag_name(tag)
           match generated_mean(name, params) {
             Some(v) => Some(cont_guard_params(name, params, v))
@@ -1728,21 +1584,21 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                 Some(v) => v
                 None =>
                   match tag {
-                    ContinuousTag::Arcsin if params.length() == 2 =>
+                    Arcsin if params.length() == 2 =>
                       eval_arith(
                         @symcore.mul([
                           stats_exact_rational(1, 2),
                           @symcore.add([params[0], params[1]]),
                         ]),
                       )
-                    ContinuousTag::Uniform if params.length() == 2 =>
+                    Uniform if params.length() == 2 =>
                       eval_arith(
                         @symcore.mul([
                           stats_exact_rational(1, 2),
                           @symcore.add([params[0], params[1]]),
                         ]),
                       )
-                    ContinuousTag::Beta if params.length() == 2 =>
+                    Beta if params.length() == 2 =>
                       eval_arith(
                         @symcore.mul([
                           params[0],
@@ -1752,7 +1608,7 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                           ),
                         ]),
                       )
-                    ContinuousTag::Kumaraswamy if params.length() == 2 =>
+                    Kumaraswamy if params.length() == 2 =>
                       eval_arith(
                         @symcore.mul([
                           params[1],
@@ -1767,12 +1623,9 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                           ]),
                         ]),
                       )
-                    ContinuousTag::Laplace if params.length() == 2 => params[0]
-                    ContinuousTag::Cauchy if params.length() == 2 =>
-                      @symcore.Expr::NumberSymbol(
-                        @symcore.NumberSymbolKind::NaN,
-                      )
-                    ContinuousTag::Pareto if params.length() == 2 =>
+                    Laplace if params.length() == 2 => params[0]
+                    Cauchy if params.length() == 2 => NumberSymbol(NaN)
+                    Pareto if params.length() == 2 =>
                       eval_arith(
                         @symcore.mul([
                           params[1],
@@ -1783,21 +1636,19 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                           ),
                         ]),
                       )
-                    ContinuousTag::Rayleigh if params.length() == 1 =>
+                    Rayleigh if params.length() == 1 =>
                       eval_arith(
                         @symcore.mul([
                           params[0],
                           @symcore.function("sqrt", [
                             @symcore.mul([
-                              @symcore.Expr::NumberSymbol(
-                                @symcore.NumberSymbolKind::Pi,
-                              ),
+                              NumberSymbol(Pi),
                               stats_exact_rational(1, 2),
                             ]),
                           ]),
                         ]),
                       )
-                    ContinuousTag::LogNormal if params.length() == 2 =>
+                    LogNormal if params.length() == 2 =>
                       eval_arith(
                         @symcore.function("exp", [
                           eval_arith(
@@ -1811,7 +1662,7 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                           ),
                         ]),
                       )
-                    ContinuousTag::Weibull if params.length() == 2 =>
+                    Weibull if params.length() == 2 =>
                       eval_arith(
                         @symcore.mul([
                           params[0],
@@ -1825,9 +1676,8 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                           ]),
                         ]),
                       )
-                    ContinuousTag::StudentT if params.length() == 1 =>
-                      @symcore.int(0)
-                    ContinuousTag::Trapezoidal if params.length() == 4 => {
+                    StudentT if params.length() == 1 => @symcore.int(0)
+                    Trapezoidal if params.length() == 4 => {
                       let a = params[0]
                       let b = params[1]
                       let c = params[2]
@@ -1885,27 +1735,25 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
 ///|
 pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Normal(mu~, sigma~) => {
+    Normal(mu~, sigma~) => {
       ignore(mu)
       Some(eval_arith(@symcore.pow(sigma, @symcore.int(2))))
     }
-    RVKind::Exponential(rate~) =>
-      Some(eval_arith(@symcore.pow(rate, @symcore.int(-2))))
-    RVKind::Gamma(shape~, scale~) =>
+    Exponential(rate~) => Some(eval_arith(@symcore.pow(rate, @symcore.int(-2))))
+    Gamma(shape~, scale~) =>
       Some(
         eval_arith(@symcore.mul([shape, @symcore.pow(scale, @symcore.int(2))])),
       )
-    RVKind::Symbolic(kind~, params~) =>
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Continuous(tag) => {
+        Continuous(tag) => {
           let name = continuous_tag_name(tag)
           match generated_variance(name, params) {
             Some(v) => Some(cont_guard_params(name, params, v))
             None => {
               let raw = match tag {
-                ContinuousTag::Arcsin if params.length() == 0 =>
-                  stats_exact_rational(1, 8)
-                ContinuousTag::Arcsin if params.length() == 2 =>
+                Arcsin if params.length() == 0 => stats_exact_rational(1, 8)
+                Arcsin if params.length() == 2 =>
                   eval_arith(
                     @symcore.mul([
                       stats_exact_rational(1, 8),
@@ -1915,7 +1763,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                       ),
                     ]),
                   )
-                ContinuousTag::Uniform if params.length() == 2 =>
+                Uniform if params.length() == 2 =>
                   eval_arith(
                     @symcore.mul([
                       stats_exact_rational(1, 12),
@@ -1925,7 +1773,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                       ),
                     ]),
                   )
-                ContinuousTag::Beta if params.length() == 2 => {
+                Beta if params.length() == 2 => {
                   let a = params[0]
                   let b = params[1]
                   eval_arith(
@@ -1940,7 +1788,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                     ]),
                   )
                 }
-                ContinuousTag::Kumaraswamy if params.length() == 2 => {
+                Kumaraswamy if params.length() == 2 => {
                   let a = params[0]
                   let b = params[1]
                   let m1 = eval_arith(
@@ -1986,16 +1834,15 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                     ]),
                   )
                 }
-                ContinuousTag::Laplace if params.length() == 2 =>
+                Laplace if params.length() == 2 =>
                   eval_arith(
                     @symcore.mul([
                       @symcore.int(2),
                       @symcore.pow(params[1], @symcore.int(2)),
                     ]),
                   )
-                ContinuousTag::Cauchy if params.length() == 2 =>
-                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
-                ContinuousTag::Pareto if params.length() == 2 => {
+                Cauchy if params.length() == 2 => NumberSymbol(NaN)
+                Pareto if params.length() == 2 => {
                   let xm = params[0]
                   let a = params[1]
                   eval_arith(
@@ -2013,7 +1860,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                     ]),
                   )
                 }
-                ContinuousTag::BoundedPareto if params.length() == 3 => {
+                BoundedPareto if params.length() == 3 => {
                   let a = params[0]
                   let l = params[1]
                   let h = params[2]
@@ -2126,23 +1973,18 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                     ]),
                   )
                 }
-                ContinuousTag::Rayleigh if params.length() == 1 =>
+                Rayleigh if params.length() == 1 =>
                   eval_arith(
                     @symcore.mul([
                       stats_exact_rational(1, 2),
                       @symcore.add([
                         @symcore.int(4),
-                        @symcore.mul([
-                          @symcore.int(-1),
-                          @symcore.Expr::NumberSymbol(
-                            @symcore.NumberSymbolKind::Pi,
-                          ),
-                        ]),
+                        @symcore.mul([@symcore.int(-1), NumberSymbol(Pi)]),
                       ]),
                       @symcore.pow(params[0], @symcore.int(2)),
                     ]),
                   )
-                ContinuousTag::LogNormal if params.length() == 2 => {
+                LogNormal if params.length() == 2 => {
                   let mu = params[0]
                   let sigma = params[1]
                   eval_arith(
@@ -2166,7 +2008,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                     ]),
                   )
                 }
-                ContinuousTag::Weibull if params.length() == 2 => {
+                Weibull if params.length() == 2 => {
                   let lam = params[0]
                   let k = params[1]
                   let g1 = @symcore.function("gamma", [
@@ -2205,7 +2047,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                     ]),
                   )
                 }
-                ContinuousTag::StudentT if params.length() == 1 =>
+                StudentT if params.length() == 1 =>
                   eval_arith(
                     @symcore.mul([
                       params[0],
@@ -2215,7 +2057,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                       ),
                     ]),
                   )
-                ContinuousTag::PowerFunction if params.length() == 3 =>
+                PowerFunction if params.length() == 3 =>
                   eval_arith(
                     @symcore.mul([
                       params[0],
@@ -2238,7 +2080,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                       ),
                     ]),
                   )
-                ContinuousTag::Trapezoidal if params.length() == 4 => {
+                Trapezoidal if params.length() == 4 => {
                   let a = params[0]
                   let b = params[1]
                   let c = params[2]

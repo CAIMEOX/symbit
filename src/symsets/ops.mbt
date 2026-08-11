@@ -8,38 +8,36 @@
 ///|
 fn setbool_or(a : SetBool, b : SetBool) -> SetBool {
   match (a, b) {
-    (SetBool::True, _) | (_, SetBool::True) => SetBool::True
-    (SetBool::Unknown, _) | (_, SetBool::Unknown) => SetBool::Unknown
-    _ => SetBool::False
+    (True, _) | (_, True) => True
+    (Unknown, _) | (_, Unknown) => Unknown
+    _ => False
   }
 }
 
 ///|
 fn setbool_and(a : SetBool, b : SetBool) -> SetBool {
   match (a, b) {
-    (SetBool::False, _) | (_, SetBool::False) => SetBool::False
-    (SetBool::Unknown, _) | (_, SetBool::Unknown) => SetBool::Unknown
-    _ => SetBool::True
+    (False, _) | (_, False) => False
+    (Unknown, _) | (_, Unknown) => Unknown
+    _ => True
   }
 }
 
 ///|
 fn setbool_not(a : SetBool) -> SetBool {
   match a {
-    SetBool::True => SetBool::False
-    SetBool::False => SetBool::True
-    SetBool::Unknown => SetBool::Unknown
+    True => False
+    False => True
+    Unknown => Unknown
   }
 }
 
 ///|
 fn expr_depends_on(expr : Expr, name : String) -> Bool {
   match expr {
-    Expr::Symbol(s) => s == name
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(child => expr_depends_on(child, name))
-    Expr::Pow(base, exp) =>
-      expr_depends_on(base, name) || expr_depends_on(exp, name)
+    Symbol(s) => s == name
+    Add(args) | Mul(args) => args.any(child => expr_depends_on(child, name))
+    Pow(base, exp) => expr_depends_on(base, name) || expr_depends_on(exp, name)
     _ => @symcore.args(expr).any(child => expr_depends_on(child, name))
   }
 }
@@ -47,34 +45,24 @@ fn expr_depends_on(expr : Expr, name : String) -> Bool {
 ///|
 fn set_is_empty(set : Set) -> SetBool {
   match set {
-    Set::EmptySet => SetBool::True
-    Set::UniversalSet => SetBool::False
-    Set::FiniteSet(items) =>
-      if items.is_empty() {
-        SetBool::True
-      } else {
-        SetBool::False
-      }
-    Set::Interval(..) => SetBool::False
-    Set::Naturals
-    | Set::Naturals0
-    | Set::Integers
-    | Set::Rationals
-    | Set::Reals
-    | Set::Complexes => SetBool::False
-    Set::ProductSet(items) => {
+    EmptySet => True
+    UniversalSet => False
+    FiniteSet(items) => if items.is_empty() { True } else { False }
+    Interval(..) => False
+    Naturals | Naturals0 | Integers | Rationals | Reals | Complexes => False
+    ProductSet(items) => {
       for item in items {
         match set_is_empty(item) {
-          SetBool::True => return SetBool::True
-          SetBool::Unknown => return SetBool::Unknown
+          True => return True
+          Unknown => return Unknown
           _ => ()
         }
       }
-      SetBool::False
+      False
     }
-    Set::ConditionSet(symbol=_, condition=_, base~) => set_is_empty(base)
-    Set::ImageSet(symbol=_, expr=_, base~) => set_is_empty(base)
-    _ => SetBool::Unknown
+    ConditionSet(symbol=_, condition=_, base~) => set_is_empty(base)
+    ImageSet(symbol=_, expr=_, base~) => set_is_empty(base)
+    _ => Unknown
   }
 }
 
@@ -90,77 +78,27 @@ fn eval_lra_constraint(
   if coeffs.is_empty() {
     let cmp = @symnum.BigRational::zero().compare(constraint.rhs)
     return match constraint.op {
-      @symlogic.RelOp::Le =>
-        if cmp <= 0 {
-          SetBool::True
-        } else {
-          SetBool::False
-        }
-      @symlogic.RelOp::Ge =>
-        if cmp >= 0 {
-          SetBool::True
-        } else {
-          SetBool::False
-        }
-      @symlogic.RelOp::Lt =>
-        if cmp < 0 {
-          SetBool::True
-        } else {
-          SetBool::False
-        }
-      @symlogic.RelOp::Gt =>
-        if cmp > 0 {
-          SetBool::True
-        } else {
-          SetBool::False
-        }
-      @symlogic.RelOp::Eq =>
-        if cmp == 0 {
-          SetBool::True
-        } else {
-          SetBool::False
-        }
+      Le => if cmp <= 0 { True } else { False }
+      Ge => if cmp >= 0 { True } else { False }
+      Lt => if cmp < 0 { True } else { False }
+      Gt => if cmp > 0 { True } else { False }
+      Eq => if cmp == 0 { True } else { False }
     }
   }
   if coeffs.length() != 1 {
-    return SetBool::Unknown
+    return Unknown
   }
   match coeffs.get(var_name) {
-    None => SetBool::Unknown
+    None => Unknown
     Some(coeff) => {
       let lhs = coeff.mul_r(value)
       let cmp = lhs.compare(constraint.rhs)
       match constraint.op {
-        @symlogic.RelOp::Le =>
-          if cmp <= 0 {
-            SetBool::True
-          } else {
-            SetBool::False
-          }
-        @symlogic.RelOp::Ge =>
-          if cmp >= 0 {
-            SetBool::True
-          } else {
-            SetBool::False
-          }
-        @symlogic.RelOp::Lt =>
-          if cmp < 0 {
-            SetBool::True
-          } else {
-            SetBool::False
-          }
-        @symlogic.RelOp::Gt =>
-          if cmp > 0 {
-            SetBool::True
-          } else {
-            SetBool::False
-          }
-        @symlogic.RelOp::Eq =>
-          if cmp == 0 {
-            SetBool::True
-          } else {
-            SetBool::False
-          }
+        Le => if cmp <= 0 { True } else { False }
+        Ge => if cmp >= 0 { True } else { False }
+        Lt => if cmp < 0 { True } else { False }
+        Gt => if cmp > 0 { True } else { False }
+        Eq => if cmp == 0 { True } else { False }
       }
     }
   }
@@ -173,62 +111,61 @@ fn eval_bool_expr(
   value : @symnum.BigRational?,
 ) -> SetBool {
   match expr {
-    @symlogic.BoolExpr::True => SetBool::True
-    @symlogic.BoolExpr::False => SetBool::False
-    @symlogic.BoolExpr::Not(inner) =>
-      setbool_not(eval_bool_expr(inner, var_name, value))
-    @symlogic.BoolExpr::And(args) => {
+    True => True
+    False => False
+    Not(inner) => setbool_not(eval_bool_expr(inner, var_name, value))
+    And(args) => {
       let mut acc = SetBool::True
       for arg in args {
         acc = setbool_and(acc, eval_bool_expr(arg, var_name, value))
-        if acc == SetBool::False {
+        if acc == False {
           return acc
         }
       }
       acc
     }
-    @symlogic.BoolExpr::Or(args) => {
+    Or(args) => {
       let mut acc = SetBool::False
       for arg in args {
         acc = setbool_or(acc, eval_bool_expr(arg, var_name, value))
-        if acc == SetBool::True {
+        if acc == True {
           return acc
         }
       }
       acc
     }
-    @symlogic.BoolExpr::Implies(a, b) => {
+    Implies(a, b) => {
       let not_a = setbool_not(eval_bool_expr(a, var_name, value))
       setbool_or(not_a, eval_bool_expr(b, var_name, value))
     }
-    @symlogic.BoolExpr::Equivalent(args) => {
+    Equivalent(args) => {
       if args.is_empty() {
-        return SetBool::True
+        return True
       }
       let first = eval_bool_expr(args[0], var_name, value)
       for i in 1..<args.length() {
         let current = eval_bool_expr(args[i], var_name, value)
-        if first == SetBool::Unknown || current == SetBool::Unknown {
-          return SetBool::Unknown
+        if first == Unknown || current == Unknown {
+          return Unknown
         }
         if first != current {
-          return SetBool::False
+          return False
         }
       }
       first
     }
-    @symlogic.BoolExpr::ITE(c, t, e) =>
+    ITE(c, t, e) =>
       match eval_bool_expr(c, var_name, value) {
-        SetBool::True => eval_bool_expr(t, var_name, value)
-        SetBool::False => eval_bool_expr(e, var_name, value)
-        SetBool::Unknown => SetBool::Unknown
+        True => eval_bool_expr(t, var_name, value)
+        False => eval_bool_expr(e, var_name, value)
+        Unknown => Unknown
       }
-    @symlogic.BoolExpr::LRA(constraint) =>
+    LRA(constraint) =>
       match value {
         Some(v) => eval_lra_constraint(constraint, var_name, v)
-        None => SetBool::Unknown
+        None => Unknown
       }
-    _ => SetBool::Unknown
+    _ => Unknown
   }
 }
 
@@ -266,13 +203,11 @@ priv enum IntervalBound {
 ///|
 fn interval_bound(expr : Expr) -> IntervalBound? {
   match expr_number_value(expr) {
-    Some(value) => Some(IntervalBound::Finite(value))
+    Some(value) => Some(Finite(value))
     None =>
       match @symcore.number_symbol_kind(expr) {
-        Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
-          Some(IntervalBound::NegativeInfinity)
-        Some(@symcore.NumberSymbolKind::Infinity) =>
-          Some(IntervalBound::Infinity)
+        Some(NegativeInfinity) => Some(NegativeInfinity)
+        Some(Infinity) => Some(Infinity)
         _ => None
       }
   }
@@ -281,27 +216,24 @@ fn interval_bound(expr : Expr) -> IntervalBound? {
 ///|
 fn compare_interval_bound(a : IntervalBound, b : IntervalBound) -> Int {
   match (a, b) {
-    (IntervalBound::NegativeInfinity, IntervalBound::NegativeInfinity)
-    | (IntervalBound::Infinity, IntervalBound::Infinity) => 0
-    (IntervalBound::NegativeInfinity, _) => -1
-    (_, IntervalBound::NegativeInfinity) => 1
-    (IntervalBound::Infinity, _) => 1
-    (_, IntervalBound::Infinity) => -1
-    (IntervalBound::Finite(left), IntervalBound::Finite(right)) =>
-      left.compare(right)
+    (NegativeInfinity, NegativeInfinity) | (Infinity, Infinity) => 0
+    (NegativeInfinity, _) => -1
+    (_, NegativeInfinity) => 1
+    (Infinity, _) => 1
+    (_, Infinity) => -1
+    (Finite(left), Finite(right)) => left.compare(right)
   }
 }
 
 ///|
 fn interval_spans_reals(set : Set) -> Bool {
   match set {
-    Set::Interval(left~, right~, left_open=_, right_open=_) =>
+    Interval(left~, right~, left_open=_, right_open=_) =>
       match (interval_bound(left), interval_bound(right)) {
-        (Some(IntervalBound::NegativeInfinity), Some(IntervalBound::Infinity)) =>
-          true
+        (Some(NegativeInfinity), Some(Infinity)) => true
         _ => false
       }
-    Set::Reals => true
+    Reals => true
     _ => false
   }
 }
@@ -311,7 +243,7 @@ fn interval_numeric(
   set : Set,
 ) -> (IntervalBound, IntervalBound, Bool, Bool, Expr, Expr)? {
   match set {
-    Set::Interval(left~, right~, left_open~, right_open~) =>
+    Interval(left~, right~, left_open~, right_open~) =>
       match (interval_bound(left), interval_bound(right)) {
         (Some(lv), Some(rv)) =>
           Some((lv, rv, left_open, right_open, left, right))
@@ -435,7 +367,7 @@ fn combine_finite_sets(items : Array[Expr]) -> Set {
 /// - Limits: Interval coalescing is strongest for numeric interval data.
 pub fn union(args : Array[Set]) -> Set {
   if args.is_empty() {
-    return Set::EmptySet
+    return EmptySet
   }
   let flat : Array[Set] = Array::new()
   let mut has_universal = false
@@ -443,22 +375,22 @@ pub fn union(args : Array[Set]) -> Set {
   let intervals : Array[Set] = Array::new()
   for set in args {
     match set {
-      Set::Union(inner) =>
+      Union(inner) =>
         for item in inner {
           flat.push(item)
         }
-      Set::EmptySet => ()
-      Set::UniversalSet => has_universal = true
-      Set::FiniteSet(items) =>
+      EmptySet => ()
+      UniversalSet => has_universal = true
+      FiniteSet(items) =>
         for item in items {
           finite_items.push(item)
         }
-      Set::Interval(..) => intervals.push(set)
+      Interval(..) => intervals.push(set)
       _ => flat.push(set)
     }
   }
   if has_universal {
-    return Set::UniversalSet
+    return UniversalSet
   }
   let merged_intervals = merge_intervals(intervals)
   for item in merged_intervals {
@@ -467,19 +399,19 @@ pub fn union(args : Array[Set]) -> Set {
   if !finite_items.is_empty() {
     let fset = combine_finite_sets(finite_items)
     match fset {
-      Set::EmptySet => ()
+      EmptySet => ()
       _ => flat.push(fset)
     }
   }
   let uniq = dedup_sets(flat)
   if uniq.is_empty() {
-    Set::EmptySet
+    EmptySet
   } else if uniq.length() == 1 && interval_spans_reals(uniq[0]) {
-    Set::Reals
+    Reals
   } else if uniq.length() == 1 {
     uniq[0]
   } else {
-    Set::Union(uniq)
+    Union(uniq)
   }
 }
 
@@ -508,10 +440,10 @@ fn interval_intersection(a : Set, b : Set) -> Set? {
       }
       let cmp = compare_interval_bound(left_val, right_val)
       if cmp > 0 {
-        Some(Set::EmptySet)
+        Some(EmptySet)
       } else if cmp == 0 {
         if left_open || right_open {
-          Some(Set::EmptySet)
+          Some(EmptySet)
         } else {
           Some(finite_set([left_expr]))
         }
@@ -550,7 +482,7 @@ fn filter_finite_by_interval(
   for item in items {
     let res = contains(interval_set, item)
     match res {
-      SetBool::True => out.push(item)
+      True => out.push(item)
       _ => ()
     }
   }
@@ -566,12 +498,12 @@ fn filter_finite_by_interval(
 /// - Limits: Deep symbolic intersections outside the implemented special cases stay symbolic.
 pub fn intersection(args : Array[Set]) -> Set {
   if args.is_empty() {
-    return Set::UniversalSet
+    return UniversalSet
   }
   let flat : Array[Set] = Array::new()
   for set in args {
     match set {
-      Set::Intersection(inner) =>
+      Intersection(inner) =>
         for item in inner {
           flat.push(item)
         }
@@ -581,13 +513,13 @@ pub fn intersection(args : Array[Set]) -> Set {
   let trimmed : Array[Set] = Array::new()
   for set in flat {
     match set {
-      Set::EmptySet => return Set::EmptySet
-      Set::UniversalSet => ()
+      EmptySet => return EmptySet
+      UniversalSet => ()
       _ => trimmed.push(set)
     }
   }
   if trimmed.is_empty() {
-    return Set::UniversalSet
+    return UniversalSet
   }
   if trimmed.length() == 1 {
     return trimmed[0]
@@ -598,12 +530,12 @@ pub fn intersection(args : Array[Set]) -> Set {
   let rest : Array[Set] = Array::new()
   for set in trimmed {
     match set {
-      Set::FiniteSet(items) =>
+      FiniteSet(items) =>
         match finite_items {
           None => finite_items = Some(items)
           Some(prev) => finite_items = Some(intersect_finite_sets(prev, items))
         }
-      Set::Interval(..) =>
+      Interval(..) =>
         match interval_acc {
           None => interval_acc = Some(set)
           Some(prev) =>
@@ -616,24 +548,23 @@ pub fn intersection(args : Array[Set]) -> Set {
     }
   }
   match interval_acc {
-    Some(Set::EmptySet) => return Set::EmptySet
+    Some(EmptySet) => return EmptySet
     _ => ()
   }
   if finite_items is Some(items) {
     let filtered = match interval_acc {
       Some(interval_set) =>
         match interval_set {
-          Set::Interval(..) => filter_finite_by_interval(items, interval_set)
-          Set::FiniteSet(other_items) =>
-            intersect_finite_sets(items, other_items)
-          Set::EmptySet => []
+          Interval(..) => filter_finite_by_interval(items, interval_set)
+          FiniteSet(other_items) => intersect_finite_sets(items, other_items)
+          EmptySet => []
           _ => items
         }
       None => items
     }
     let fset = finite_set(filtered)
     match fset {
-      Set::EmptySet => return Set::EmptySet
+      EmptySet => return EmptySet
       _ => rest.push(fset)
     }
   } else {
@@ -644,11 +575,11 @@ pub fn intersection(args : Array[Set]) -> Set {
   }
   let uniq = dedup_sets(rest)
   if uniq.is_empty() {
-    Set::UniversalSet
+    UniversalSet
   } else if uniq.length() == 1 {
     uniq[0]
   } else {
-    Set::Intersection(uniq)
+    Intersection(uniq)
   }
 }
 
@@ -669,7 +600,7 @@ fn interval_difference(a : Set, b : Set) -> Set? {
       let right_cmp = compare_interval_bound(br, ar)
       if (left_cmp < 0 || (left_cmp == 0 && (!alo || !blo))) &&
         (right_cmp > 0 || (right_cmp == 0 && (!aro || !bro))) {
-        return Some(Set::EmptySet)
+        return Some(EmptySet)
       }
       let parts : Array[Set] = Array::new()
       if left_cmp > 0 || (left_cmp == 0 && !alo && blo) {
@@ -681,7 +612,7 @@ fn interval_difference(a : Set, b : Set) -> Set? {
         parts.push(interval(bright, aright, left_open~, right_open=aro))
       }
       if parts.is_empty() {
-        Some(Set::EmptySet)
+        Some(EmptySet)
       } else if parts.length() == 1 {
         Some(parts[0])
       } else {
@@ -701,11 +632,11 @@ fn interval_difference(a : Set, b : Set) -> Set? {
 /// - Limits: Cases outside the implemented simplifiers remain symbolic.
 pub fn complement(a : Set, b : Set) -> Set {
   match (a, b) {
-    (Set::EmptySet, _) => Set::EmptySet
-    (_, Set::EmptySet) => a
-    (Set::UniversalSet, Set::UniversalSet) => Set::EmptySet
-    (x, y) if compare_set(x, y) == 0 => Set::EmptySet
-    (Set::FiniteSet(items), Set::FiniteSet(remove)) => {
+    (EmptySet, _) => EmptySet
+    (_, EmptySet) => a
+    (UniversalSet, UniversalSet) => EmptySet
+    (x, y) if compare_set(x, y) == 0 => EmptySet
+    (FiniteSet(items), FiniteSet(remove)) => {
       let remaining : Array[Expr] = Array::new()
       for item in items {
         let mut found = false
@@ -721,42 +652,42 @@ pub fn complement(a : Set, b : Set) -> Set {
       }
       finite_set(remaining)
     }
-    (Set::FiniteSet(items), interval_set) =>
+    (FiniteSet(items), interval_set) =>
       match interval_set {
-        Set::Interval(..) => {
+        Interval(..) => {
           // filter_finite_by_interval keeps contained items; we need complement
           let out : Array[Expr] = Array::new()
           for item in items {
             let res = contains(interval_set, item)
             match res {
-              SetBool::True => ()
+              True => ()
               _ => out.push(item)
             }
           }
           finite_set(out)
         }
-        _ => Set::Complement(a, interval_set)
+        _ => Complement(a, interval_set)
       }
-    (Set::Interval(..), Set::Interval(..)) =>
+    (Interval(..), Interval(..)) =>
       match interval_difference(a, b) {
         Some(res) => res
-        None => Set::Complement(a, b)
+        None => Complement(a, b)
       }
-    (Set::Union(items), other) => {
+    (Union(items), other) => {
       let parts : Array[Set] = Array::new()
       for item in items {
         parts.push(complement(item, other))
       }
       union(parts)
     }
-    _ => Set::Complement(a, b)
+    _ => Complement(a, b)
   }
 }
 
 ///|
 fn interval_contains(set : Set, elem : Expr) -> SetBool {
   match (set, expr_number_value(elem)) {
-    (Set::Interval(left~, right~, left_open~, right_open~), Some(value)) => {
+    (Interval(left~, right~, left_open~, right_open~), Some(value)) => {
       let left_kind = @symcore.number_symbol_kind(left)
       let right_kind = @symcore.number_symbol_kind(right)
       let lower_ok = match expr_number_value(left) {
@@ -772,7 +703,7 @@ fn interval_contains(set : Set, elem : Expr) -> SetBool {
         }
         None =>
           match left_kind {
-            Some(@symcore.NumberSymbolKind::NegativeInfinity) => Some(true)
+            Some(NegativeInfinity) => Some(true)
             _ => None
           }
       }
@@ -789,17 +720,17 @@ fn interval_contains(set : Set, elem : Expr) -> SetBool {
         }
         None =>
           match right_kind {
-            Some(@symcore.NumberSymbolKind::Infinity) => Some(true)
+            Some(Infinity) => Some(true)
             _ => None
           }
       }
       match (lower_ok, upper_ok) {
-        (Some(true), Some(true)) => SetBool::True
-        (Some(false), _) | (_, Some(false)) => SetBool::False
-        _ => SetBool::Unknown
+        (Some(true), Some(true)) => True
+        (Some(false), _) | (_, Some(false)) => False
+        _ => Unknown
       }
     }
-    _ => SetBool::Unknown
+    _ => Unknown
   }
 }
 
@@ -807,46 +738,43 @@ fn interval_contains(set : Set, elem : Expr) -> SetBool {
 fn finite_contains(items : Array[Expr], elem : Expr) -> SetBool {
   for item in items {
     if @symcore.compare_expr(item, elem) == 0 {
-      return SetBool::True
+      return True
     }
   }
-  SetBool::False
+  False
 }
 
 ///|
 fn contains_numerical_set(kind : Set, elem : Expr) -> SetBool {
   let is_noncomplex_infinite = fn(expr : Expr) {
     match @symcore.number_symbol_kind(expr) {
-      Some(@symcore.NumberSymbolKind::ComplexInfinity) => true
+      Some(ComplexInfinity) => true
       _ => false
     }
   }
-  if kind == Set::Complexes {
+  if kind == Complexes {
     return match
-      @symassume.tri_to_bool_option(
-        @symassume.ask_predicate(elem, @symassume.Predicate::IsReal),
-      ) {
-      Some(true) => SetBool::True
+      @symassume.tri_to_bool_option(@symassume.ask_predicate(elem, IsReal)) {
+      Some(true) => True
       Some(false) =>
         match elem {
-          Expr::ComplexFloat(_) => SetBool::True
+          ComplexFloat(_) => True
           _ =>
             if @symcore.is_complex_number_atom(elem) &&
               !is_noncomplex_infinite(elem) {
-              SetBool::True
+              True
             } else {
-              SetBool::Unknown
+              Unknown
             }
         }
       None =>
         match elem {
-          Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) =>
-            SetBool::True
+          Number(_) | Float(_) | ComplexFloat(_) => True
           _ =>
             if @symcore.is_number_symbol(elem) && !is_noncomplex_infinite(elem) {
-              SetBool::True
+              True
             } else {
-              SetBool::Unknown
+              Unknown
             }
         }
     }
@@ -855,25 +783,25 @@ fn contains_numerical_set(kind : Set, elem : Expr) -> SetBool {
     Some(value) => {
       let is_int = value.is_integral()
       match kind {
-        Set::Naturals =>
+        Naturals =>
           if is_int && value.compare(@symnum.BigRational::zero()) > 0 {
-            SetBool::True
+            True
           } else {
-            SetBool::False
+            False
           }
-        Set::Naturals0 =>
+        Naturals0 =>
           if is_int && value.compare(@symnum.BigRational::zero()) >= 0 {
-            SetBool::True
+            True
           } else {
-            SetBool::False
+            False
           }
-        Set::Integers => if is_int { SetBool::True } else { SetBool::False }
-        Set::Rationals => SetBool::True
-        Set::Reals => SetBool::True
-        _ => SetBool::Unknown
+        Integers => if is_int { True } else { False }
+        Rationals => True
+        Reals => True
+        _ => Unknown
       }
     }
-    None => SetBool::Unknown
+    None => Unknown
   }
 }
 
@@ -886,22 +814,22 @@ fn contains_numerical_set(kind : Set, elem : Expr) -> SetBool {
 /// - Limits: Returns `Unknown` when the current implementation cannot decide the membership query exactly.
 pub fn contains(set : Set, elem : Expr) -> SetBool {
   match set {
-    Set::EmptySet => SetBool::False
-    Set::UniversalSet => SetBool::True
-    Set::FiniteSet(items) => finite_contains(items, elem)
-    Set::Interval(..) => interval_contains(set, elem)
-    Set::ConditionSet(symbol~, condition~, base~) => {
+    EmptySet => False
+    UniversalSet => True
+    FiniteSet(items) => finite_contains(items, elem)
+    Interval(..) => interval_contains(set, elem)
+    ConditionSet(symbol~, condition~, base~) => {
       let base_res = contains(base, elem)
       match base_res {
-        SetBool::False => SetBool::False
-        SetBool::Unknown => SetBool::Unknown
-        SetBool::True => {
+        False => False
+        Unknown => Unknown
+        True => {
           let var_name = match symbol {
-            Expr::Symbol(name) => name
+            Symbol(name) => name
             _ => ""
           }
           if var_name == "" {
-            SetBool::Unknown
+            Unknown
           } else {
             let value = expr_number_value(elem)
             eval_bool_expr(condition, var_name, value)
@@ -909,82 +837,77 @@ pub fn contains(set : Set, elem : Expr) -> SetBool {
         }
       }
     }
-    Set::ImageSet(symbol~, expr~, base~) => {
+    ImageSet(symbol~, expr~, base~) => {
       let var_name = match symbol {
-        Expr::Symbol(name) => name
+        Symbol(name) => name
         _ => ""
       }
       if var_name != "" && !expr_depends_on(expr, var_name) {
         let eq = @symcore.compare_expr(expr, elem) == 0
         match set_is_empty(base) {
-          SetBool::True => return SetBool::False
-          SetBool::False =>
-            return if eq { SetBool::True } else { SetBool::False }
-          SetBool::Unknown => return SetBool::Unknown
+          True => return False
+          False => return if eq { True } else { False }
+          Unknown => return Unknown
         }
       }
       match base {
-        Set::FiniteSet(items) => {
+        FiniteSet(items) => {
           if var_name == "" {
-            return SetBool::Unknown
+            return Unknown
           }
           let env : Map[String, Expr] = Map([])
           for item in items {
             env[var_name] = item
             let mapped = @symcore.subst(expr, env)
             if @symcore.compare_expr(mapped, elem) == 0 {
-              return SetBool::True
+              return True
             }
           }
-          SetBool::False
+          False
         }
-        _ => SetBool::Unknown
+        _ => Unknown
       }
     }
-    Set::ProductSet(items) =>
+    ProductSet(items) =>
       match @symcore.tuple_items(elem) {
         Some(args) => {
           if args.length() != items.length() {
-            return SetBool::False
+            return False
           }
           let mut acc = SetBool::True
           for i in 0..<items.length() {
             acc = setbool_and(acc, contains(items[i], args[i]))
-            if acc == SetBool::False {
+            if acc == False {
               return acc
             }
           }
           acc
         }
-        None => SetBool::False
+        None => False
       }
-    Set::Naturals
-    | Set::Naturals0
-    | Set::Integers
-    | Set::Rationals
-    | Set::Reals
-    | Set::Complexes => contains_numerical_set(set, elem)
-    Set::Union(items) => {
+    Naturals | Naturals0 | Integers | Rationals | Reals | Complexes =>
+      contains_numerical_set(set, elem)
+    Union(items) => {
       let mut acc = SetBool::False
       for item in items {
         acc = setbool_or(acc, contains(item, elem))
-        if acc == SetBool::True {
+        if acc == True {
           return acc
         }
       }
       acc
     }
-    Set::Intersection(items) => {
+    Intersection(items) => {
       let mut acc = SetBool::True
       for item in items {
         acc = setbool_and(acc, contains(item, elem))
-        if acc == SetBool::False {
+        if acc == False {
           return acc
         }
       }
       acc
     }
-    Set::Complement(a, b) =>
+    Complement(a, b) =>
       setbool_and(contains(a, elem), setbool_not(contains(b, elem)))
   }
 }
@@ -998,20 +921,20 @@ pub fn contains(set : Set, elem : Expr) -> SetBool {
 /// - Limits: Returns `Unknown` when the package does not implement enough reasoning to prove or refute inclusion.
 pub fn is_subset(a : Set, b : Set) -> SetBool {
   match (a, b) {
-    (Set::EmptySet, _) => SetBool::True
-    (_, Set::UniversalSet) => SetBool::True
-    (x, y) if compare_set(x, y) == 0 => SetBool::True
-    (Set::FiniteSet(items), other) => {
+    (EmptySet, _) => True
+    (_, UniversalSet) => True
+    (x, y) if compare_set(x, y) == 0 => True
+    (FiniteSet(items), other) => {
       let mut acc = SetBool::True
       for item in items {
         acc = setbool_and(acc, contains(other, item))
-        if acc == SetBool::False {
+        if acc == False {
           return acc
         }
       }
       acc
     }
-    (Set::Interval(..), Set::Interval(..)) =>
+    (Interval(..), Interval(..)) =>
       match (interval_numeric(a), interval_numeric(b)) {
         (
           Some((al, ar, alo, aro, _alexpr, _arexpr)),
@@ -1034,34 +957,27 @@ pub fn is_subset(a : Set, b : Set) -> SetBool {
             false
           }
           if left_ok && right_ok {
-            SetBool::True
+            True
           } else {
-            SetBool::False
+            False
           }
         }
-        _ => SetBool::Unknown
+        _ => Unknown
       }
-    (Set::ProductSet(xs), Set::ProductSet(ys)) => {
+    (ProductSet(xs), ProductSet(ys)) => {
       if xs.length() != ys.length() {
-        return SetBool::False
+        return False
       }
       let mut acc = SetBool::True
       for i in 0..<xs.length() {
         acc = setbool_and(acc, is_subset(xs[i], ys[i]))
-        if acc == SetBool::False {
+        if acc == False {
           return acc
         }
       }
       acc
     }
-    (
-      Set::Naturals
-      | Set::Naturals0
-      | Set::Integers
-      | Set::Rationals
-      | Set::Reals,
-      Set::Complexes,
-    ) => SetBool::True
-    _ => SetBool::Unknown
+    (Naturals | Naturals0 | Integers | Rationals | Reals, Complexes) => True
+    _ => Unknown
   }
 }

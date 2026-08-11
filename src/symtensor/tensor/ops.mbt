@@ -4,7 +4,7 @@
 ///|
 fn is_zero_expr(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.is_zero()
+    Number(n) => n.is_zero()
     _ => false
   }
 }
@@ -12,7 +12,7 @@ fn is_zero_expr(expr : @symcore.Expr) -> Bool {
 ///|
 fn is_one_expr(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.is_one()
+    Number(n) => n.is_one()
     _ => false
   }
 }
@@ -22,7 +22,7 @@ fn flatten_add(args : Array[TensorExpr]) -> Array[TensorExpr] {
   let out : Array[TensorExpr] = Array::new()
   for arg in args {
     match arg {
-      TensorExpr::Add(items) =>
+      Add(items) =>
         for item in items {
           out.push(item)
         }
@@ -37,7 +37,7 @@ fn flatten_mul(args : Array[TensorExpr]) -> Array[TensorExpr] {
   let out : Array[TensorExpr] = Array::new()
   for arg in args {
     match arg {
-      TensorExpr::Mul(items) =>
+      Mul(items) =>
         for item in items {
           out.push(item)
         }
@@ -54,20 +54,20 @@ pub fn add(args : Array[TensorExpr]) -> TensorExpr {
   let others : Array[TensorExpr] = Array::new()
   for arg in flat {
     match arg {
-      TensorExpr::Scalar(expr) => scalars.push(expr)
+      Scalar(expr) => scalars.push(expr)
       _ => others.push(arg)
     }
   }
   if !scalars.is_empty() {
     let sum = @symcore.add(scalars)
     if !is_zero_expr(sum) {
-      others.push(TensorExpr::Scalar(sum))
+      others.push(Scalar(sum))
     }
   }
   match others.length() {
-    0 => TensorExpr::Scalar(@symcore.int(0))
+    0 => Scalar(@symcore.int(0))
     1 => others[0]
-    _ => TensorExpr::Add(others)
+    _ => Add(others)
   }
 }
 
@@ -78,9 +78,9 @@ pub fn mul(args : Array[TensorExpr]) -> TensorExpr {
   let others : Array[TensorExpr] = Array::new()
   for arg in flat {
     match arg {
-      TensorExpr::Scalar(expr) => {
+      Scalar(expr) => {
         if is_zero_expr(expr) {
-          return TensorExpr::Scalar(@symcore.int(0))
+          return Scalar(@symcore.int(0))
         }
         scalars.push(expr)
       }
@@ -90,12 +90,12 @@ pub fn mul(args : Array[TensorExpr]) -> TensorExpr {
   if !scalars.is_empty() {
     let prod = @symcore.mul(scalars)
     if !is_one_expr(prod) {
-      others.push(TensorExpr::Scalar(prod))
+      others.push(Scalar(prod))
     }
   }
   match others.length() {
-    0 => TensorExpr::Scalar(@symcore.int(1))
+    0 => Scalar(@symcore.int(1))
     1 => others[0]
-    _ => TensorExpr::Mul(others)
+    _ => Mul(others)
   }
 }

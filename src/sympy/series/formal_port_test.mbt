@@ -19,12 +19,12 @@ test "symseries fps truncate parity" {
   let expr = @symcore.pow(denom, @symcore.int(-1))
   let res = fps(expr, x~)
   match res {
-    FpsResult::Series(fps_obj) => {
+    Series(fps_obj) => {
       let ours = fps_obj.truncate(n=5)
       let sympy = fps_truncate_str(expr, "x", @symcore.int(0), 5)
       assert_eq(normalize_fps_expr(ours), normalize_fps_str(sympy))
     }
-    FpsResult::Expr(_) => fail("expected FormalPowerSeries")
+    Expr(_) => fail("expected FormalPowerSeries")
   }
 }
 
@@ -34,12 +34,12 @@ test "symseries fps coeff parity" {
   let expr = @symcore.function("log", [@symcore.add([@symcore.int(1), x])])
   let res = fps(expr, x~)
   match res {
-    FpsResult::Series(fps_obj) => {
+    Series(fps_obj) => {
       let ours = fps_obj.coeff(2)
       let sympy = fps_coeff_str(expr, "x", @symcore.int(0), 2)
       assert_eq(normalize_fps_expr(ours), normalize_fps_str(sympy))
     }
-    FpsResult::Expr(_) => fail("expected FormalPowerSeries")
+    Expr(_) => fail("expected FormalPowerSeries")
   }
 }
 
@@ -50,12 +50,12 @@ test "symseries fps multivar truncate parity" {
   let expr = @symcore.function("exp", [@symcore.add([x, y])])
   let res = fps(expr, x~)
   match res {
-    FpsResult::Series(fps_obj) => {
+    Series(fps_obj) => {
       let ours = fps_obj.truncate(n=4)
       let sympy = fps_truncate_str(expr, "x", @symcore.int(0), 4)
       assert_eq(normalize_fps_expr(ours), normalize_fps_str(sympy))
     }
-    FpsResult::Expr(_) => fail("expected FormalPowerSeries")
+    Expr(_) => fail("expected FormalPowerSeries")
   }
 }
 

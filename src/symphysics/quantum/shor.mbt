@@ -63,11 +63,7 @@ fn shor_continued_fraction_terms(
   num : Int,
   den : Int,
 ) -> Array[Int] raise @symphysics.PhysicsError {
-  guard den != 0 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "getr expects a nonzero denominator",
-    )
-  }
+  guard den != 0 else { raise ValueError("getr expects a nonzero denominator") }
   let out : Array[Int] = []
   let mut a = num
   let mut b = den
@@ -103,16 +99,10 @@ pub fn cmod(
   a : Int,
   modulus : Int,
 ) -> Expr raise @symphysics.PhysicsError {
-  guard t > 0 else {
-    raise @symphysics.PhysicsError::ValueError("CMod expects t > 0")
-  }
-  guard modulus > 0 else {
-    raise @symphysics.PhysicsError::ValueError("CMod expects modulus > 0")
-  }
+  guard t > 0 else { raise ValueError("CMod expects t > 0") }
+  guard modulus > 0 else { raise ValueError("CMod expects modulus > 0") }
   guard modulus <= shor_int_pow(2, t) else {
-    raise @symphysics.PhysicsError::ValueError(
-      "CMod expects modulus to fit in t output qubits",
-    )
+    raise ValueError("CMod expects modulus to fit in t output qubits")
   }
   @symcore.raw_function("CMod", [int(t), int(a), int(modulus)])
 }
@@ -136,7 +126,7 @@ fn cmod_from_expr(expr : Expr) -> CModExpr? {
           quantum_integer_value(a_expr),
           quantum_integer_value(modulus_expr),
         ) {
-        (Some(t), Some(a), Some(modulus)) => Some(CModExpr::{ t, a, modulus })
+        (Some(t), Some(a), Some(modulus)) => Some({ t, a, modulus })
         _ => None
       }
     _ => None
@@ -149,9 +139,7 @@ fn cmod_apply(
   ket : QubitExpr,
 ) -> Expr raise @symphysics.PhysicsError {
   guard ket.nqubits() == 2 * op.t else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "CMod operates on exactly 2*t qubits",
-    )
+    raise ShapeError("CMod operates on exactly 2*t qubits")
   }
   let mut exponent = 0
   for i in 0..<op.t {
@@ -197,10 +185,7 @@ fn cmod_matrix(
     let out = cmod_apply(op, input)
     let q = match qubit_from_expr(out) {
       Some(value) => value
-      None =>
-        raise @symphysics.PhysicsError::ValueError(
-          "CMod matrix expects basis-state output",
-        )
+      None => raise ValueError("CMod matrix expects basis-state output")
     }
     rows[bits_to_int(q.bits)][col] = int(1)
   }
@@ -216,11 +201,9 @@ pub fn shor_represent(
     Some(op) => {
       let expected = 2 * op.t
       guard nqubits == 0 || nqubits == expected else {
-        raise @symphysics.PhysicsError::ShapeError(
-          "CMod representation size mismatch",
-        )
+        raise ShapeError("CMod representation size mismatch")
       }
-      Some(MatrixScalarValue::Matrix(cmod_matrix(op)))
+      Some(Matrix(cmod_matrix(op)))
     }
     None => None
   }
@@ -228,16 +211,10 @@ pub fn shor_represent(
 
 ///|
 pub fn period_find(a : Int, n : Int) -> Int raise @symphysics.PhysicsError {
-  guard n > 1 else {
-    raise @symphysics.PhysicsError::ValueError("period_find expects n > 1")
-  }
-  guard a > 0 else {
-    raise @symphysics.PhysicsError::ValueError("period_find expects a > 0")
-  }
+  guard n > 1 else { raise ValueError("period_find expects n > 1") }
+  guard a > 0 else { raise ValueError("period_find expects a > 0") }
   guard shor_int_gcd(a, n) == 1 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "period_find expects gcd(a, n) == 1",
-    )
+    raise ValueError("period_find expects gcd(a, n) == 1")
   }
   let reduced = a % n
   let mut r = 1
@@ -246,9 +223,7 @@ pub fn period_find(a : Int, n : Int) -> Int raise @symphysics.PhysicsError {
     r += 1
     value = value * reduced % n
     if r > n * n {
-      raise @symphysics.PhysicsError::ValueError(
-        "period_find failed to detect a multiplicative order",
-      )
+      raise ValueError("period_find failed to detect a multiplicative order")
     }
   }
   r
@@ -268,9 +243,7 @@ fn shor_factor_pair(a : Int, r : Int, n : Int) -> (Int, Int) {
 
 ///|
 pub fn shor(n : Int) -> Expr raise @symphysics.PhysicsError {
-  guard n > 1 else {
-    raise @symphysics.PhysicsError::ValueError("shor expects n > 1")
-  }
+  guard n > 1 else { raise ValueError("shor expects n > 1") }
   for a in 2..<n {
     let divisor = shor_int_gcd(n, a)
     if divisor != 1 {
@@ -282,10 +255,8 @@ pub fn shor(n : Int) -> Expr raise @symphysics.PhysicsError {
     }
     let factors = shor_factor_pair(a, r, n)
     if factors.0 > 1 && factors.0 < n && factors.1 > 1 && factors.1 < n {
-      return @symcore.Expr::Tuple([int(factors.0), int(factors.1)])
+      return Tuple([int(factors.0), int(factors.1)])
     }
   }
-  raise @symphysics.PhysicsError::ValueError(
-    "shor failed to find a nontrivial factor",
-  )
+  raise ValueError("shor failed to find a nontrivial factor")
 }

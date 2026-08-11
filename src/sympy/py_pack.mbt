@@ -13,36 +13,36 @@ fn py_none_obj() -> @py.PyObject {
 pub fn py_pack(arg : OracleArg) -> @py.PyObject {
   let _ = py_gil_ensure()
   match arg {
-    OracleArg::Null => py_none_obj()
-    OracleArg::Str(s) => @py.PyString::from(s).obj()
-    OracleArg::Int(n) => @py.PyInteger::from(n.to_int64()).obj()
-    OracleArg::Bool(b) => @py.PyBool::from(b).obj()
-    OracleArg::PyObj(obj) => {
+    Null => py_none_obj()
+    Str(s) => @py.PyString::from(s).obj()
+    Int(n) => @py.PyInteger::from(n.to_int64()).obj()
+    Bool(b) => @py.PyBool::from(b).obj()
+    PyObj(obj) => {
       @cpython.py_incref(obj.obj_ref())
       obj
     }
-    OracleArg::StrList(list) => {
+    StrList(list) => {
       let py_list = @py.PyList::new()
       for v in list {
         py_list.append(@py.PyString::from(v))
       }
       py_list.obj()
     }
-    OracleArg::IntList(list) => {
+    IntList(list) => {
       let py_list = @py.PyList::new()
       for v in list {
         py_list.append(@py.PyInteger::from(v.to_int64()))
       }
       py_list.obj()
     }
-    OracleArg::List(list) => {
+    List(list) => {
       let py_list = @py.PyList::new()
       for v in list {
         py_list.append(@py.PyObject::create(py_pack(v).obj_ref()))
       }
       py_list.obj()
     }
-    OracleArg::Dict(map) => {
+    Dict(map) => {
       let py_dict = @py.PyDict::new()
       for k, v in map {
         py_dict.set(k, py_pack(v))

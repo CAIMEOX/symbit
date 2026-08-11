@@ -26,14 +26,12 @@ test "physics.mechanics system core" {
     bob.as_bodylike(),
     child_interframe=Some(joint_interframe_frame(bob_frame)),
     child_point=Some(
-      joint_attachment_offset(
-        bob_frame.y().scale(@symcore.Expr::Symbol("l")).neg(),
-      ),
+      joint_attachment_offset(bob_frame.y().scale(Symbol("l")).neg()),
     ),
     joint_axis=Some(cart.frame().z()),
   )
   sys.add_joints([slider.as_joint(), pin.as_joint()])
-  sys.apply_uniform_gravity(n.y().scale(@symcore.Expr::Symbol("g")).neg())
+  sys.apply_uniform_gravity(n.y().scale(Symbol("g")).neg())
   sys.add_loads([
     force_load(cart.masscenter(), n.x().scale(@symvector.dynamicsymbol("F"))),
   ])
@@ -56,9 +54,9 @@ test "physics.mechanics system core" {
 ///|
 test "physics.mechanics system backend equations" {
   let wall = rigid_body("wall")
-  let bob = particle("bob", mass=Some(@symcore.Expr::Symbol("m")))
+  let bob = particle("bob", mass=Some(Symbol("m")))
   bob.set_potential_energy(
-    @symcore.Expr::Symbol("k") *
+    Symbol("k") *
     (@symvector.dynamicsymbol("q") ^ @symcore.int(2)) *
     @symcore.rational_from_ints(1, 2),
   )
@@ -82,7 +80,7 @@ test "physics.mechanics system backend equations" {
       sys
       .x()
       .scale(
-        @symcore.Expr::Symbol("b") *
+        Symbol("b") *
         @symcalculus.diff(
           @symvector.dynamicsymbol("q"),
           @symvector.dynamicsymbols_t,
@@ -114,7 +112,7 @@ test "physics.mechanics system validation semantics" {
   let origin = @symvector.point("SVO")
   origin.set_vel(n, @symvector.vector_zero())
   let wall = rigid_body("wall", masscenter=Some(origin), frame=Some(n))
-  let bob = particle("bob", mass=Some(@symcore.Expr::Symbol("m")))
+  let bob = particle("bob", mass=Some(Symbol("m")))
   let q = @symvector.dynamicsymbol("q")
   let qd = @symcalculus.diff(q, @symvector.dynamicsymbols_t)
 
@@ -143,7 +141,7 @@ test "physics.mechanics system validation semantics" {
   catch {
     err => Err(err)
   }
-  assert_true(bad_kane is Err(@symphysics.PhysicsError::ValueError(_)))
+  assert_true(bad_kane is Err(ValueError(_)))
 
   let invalid_lagrange = system_from_newtonian(wall.as_bodylike())
   let bad_joint = prismatic_joint(
@@ -159,5 +157,5 @@ test "physics.mechanics system validation semantics" {
   catch {
     err => Err(err)
   }
-  assert_true(bad_lagrange is Err(@symphysics.PhysicsError::ValueError(_)))
+  assert_true(bad_lagrange is Err(ValueError(_)))
 }

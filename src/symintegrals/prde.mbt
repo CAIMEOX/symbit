@@ -18,7 +18,7 @@ pub fn prde_integrate(expr : Expr, var_name : String) -> Expr? {
 
 ///|
 pub fn is_deriv_k(expr : Expr, candidate : Expr, var_name : String) -> Bool {
-  expr_eq(@symcalculus.diff(candidate, @symcore.Expr::Symbol(var_name)), expr)
+  expr_eq(@symcalculus.diff(candidate, Symbol(var_name)), expr)
 }
 
 ///|
@@ -27,7 +27,7 @@ pub fn is_log_deriv_k_t_radical(
   candidate : Expr,
   var_name : String,
 ) -> Bool {
-  let deriv = @symcalculus.diff(candidate, @symcore.Expr::Symbol(var_name))
+  let deriv = @symcalculus.diff(candidate, Symbol(var_name))
   expr_eq(expr, expr_div(deriv, candidate))
 }
 

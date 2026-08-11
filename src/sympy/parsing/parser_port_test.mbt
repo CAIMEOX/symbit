@@ -66,7 +66,7 @@ fn parse_error_detail(src : String) -> String {
   try parse_expr(src) catch {
     error =>
       match error {
-        ParseError::UnsupportedConstruct(span=_, detail) => detail
+        UnsupportedConstruct(span=_, detail) => detail
         _ => "unexpected-parse-error"
       }
   } noraise {
@@ -89,7 +89,7 @@ fn ast_parse_error_detail(
   try ast_parse_expr(src, local_bindings~) catch {
     error =>
       match error {
-        ParseError::UnsupportedConstruct(span=_, detail) => detail
+        UnsupportedConstruct(span=_, detail) => detail
         _ => "unexpected-parse-error"
       }
   } noraise {
@@ -259,10 +259,10 @@ test "symparse parity callable context" {
       parse_expr_in(
         "f(x)",
         default_parse_options(),
-        parse_context(bindings={ "f": @symcore.Expr::Symbol("g") }),
+        parse_context(bindings={ "f": Symbol("g") }),
       )
     catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -314,7 +314,7 @@ test "symparse parity callable context" {
       parse_expr_in(
         "pi x",
         parse_options(transformations=relaxed_transformations()),
-        parse_context(bindings={ "pi": @symcore.Expr::UndefinedFunction("f") }),
+        parse_context(bindings={ "pi": UndefinedFunction("f") }),
       ),
     ),
     content=parse_expr_sstr_in_relaxed("pi x", [], binding_names=["pi"], binding_exprs=[
@@ -326,7 +326,7 @@ test "symparse parity callable context" {
       parse_expr_in(
         "f x",
         parse_options(transformations=relaxed_transformations()),
-        parse_context(bindings={ "f": @symcore.Expr::FunctionHead("cos") }),
+        parse_context(bindings={ "f": FunctionHead("cos") }),
       ),
     ),
     content=parse_expr_sstr_in_relaxed("f x", [], binding_names=["f"], binding_exprs=[
@@ -343,8 +343,8 @@ test "symparse parity callable context" {
         parse_options(transformations=relaxed_transformations()),
         parse_context(bindings={
           "f": @symcore.lambda_expr(
-            @symcore.Expr::Symbol("x"),
-            @symcore.add([@symcore.Expr::Symbol("x"), @symcore.int(1)]),
+            Symbol("x"),
+            @symcore.add([Symbol("x"), @symcore.int(1)]),
           ),
         }),
       ),
@@ -358,7 +358,7 @@ test "symparse parity callable context" {
       parse_expr_in(
         "f x",
         parse_options(transformations=relaxed_transformations()),
-        parse_context(bindings={ "f": @symcore.Expr::IdentityFunction }),
+        parse_context(bindings={ "f": IdentityFunction }),
       ),
     ),
     content=parse_expr_sstr_in_relaxed("f x", [], binding_names=["f"], binding_exprs=[
@@ -376,8 +376,8 @@ test "symparse parity split symbols custom and ast parser" {
         parse_options(
           transformations=[
             ..standard_transformations(),
-            Transformation::SplitSymbols,
-            Transformation::ImplicitMultiplication,
+            SplitSymbols,
+            ImplicitMultiplication,
           ],
         ),
       ),
@@ -399,10 +399,10 @@ test "symparse parity split symbols custom and ast parser" {
         parse_options(
           transformations=[
             ..standard_transformations(),
-            Transformation::SplitSymbolsCustom(fn(symbol : String) -> Bool {
+            SplitSymbolsCustom(fn(symbol : String) -> Bool {
               symbol != "unsplittable" && default_split_symbol_predicate(symbol)
             }),
-            Transformation::ImplicitMultiplication,
+            ImplicitMultiplication,
           ],
         ),
       ),
@@ -439,9 +439,7 @@ test "symparse parity split symbols custom and ast parser" {
   )
   inspect(
     @symprint.pretty_string(
-      ast_parse_expr("f", local_bindings={
-        "f": @symcore.Expr::FunctionHead("cos"),
-      }),
+      ast_parse_expr("f", local_bindings={ "f": FunctionHead("cos") }),
     ),
     content=ast_parse_expr_sstr("f", binding_names=["f"], binding_exprs=[
       "sympy.cos",
@@ -449,9 +447,7 @@ test "symparse parity split symbols custom and ast parser" {
   )
   inspect(
     @symprint.pretty_string(
-      ast_parse_expr("f", local_bindings={
-        "f": @symcore.Expr::UndefinedFunction("g"),
-      }),
+      ast_parse_expr("f", local_bindings={ "f": UndefinedFunction("g") }),
     ),
     content=ast_parse_expr_sstr("f", binding_names=["f"], binding_exprs=[
       "sympy.Function('g')",
@@ -463,9 +459,7 @@ test "symparse parity split symbols custom and ast parser" {
   )
   inspect(
     @symprint.pretty_string(
-      ast_parse_expr("f(x)", local_bindings={
-        "f": @symcore.Expr::FunctionHead("cos"),
-      }),
+      ast_parse_expr("f(x)", local_bindings={ "f": FunctionHead("cos") }),
     ),
     content=ast_parse_expr_sstr("f(x)", binding_names=["f"], binding_exprs=[
       "sympy.cos",
@@ -473,16 +467,14 @@ test "symparse parity split symbols custom and ast parser" {
   )
   inspect(
     @symprint.pretty_string(
-      ast_parse_expr("f(x)", local_bindings={
-        "f": @symcore.Expr::UndefinedFunction("g"),
-      }),
+      ast_parse_expr("f(x)", local_bindings={ "f": UndefinedFunction("g") }),
     ),
     content=ast_parse_expr_sstr("f(x)", binding_names=["f"], binding_exprs=[
       "sympy.Function('g')",
     ]),
   )
   inspect(
-    ast_parse_error_detail("f(x)", { "f": @symcore.Expr::Symbol("g") }),
+    ast_parse_error_detail("f(x)", { "f": Symbol("g") }),
     content=ast_parse_expr_error_sstr("f(x)", binding_names=["f"], binding_exprs=[
       "g",
     ]),
@@ -538,7 +530,7 @@ test "symparse parity builtin bindings shadow builtin heads like SymPy" {
       parse_expr_in(
         "pi(x)",
         default_parse_options(),
-        parse_context(bindings={ "pi": @symcore.Expr::UndefinedFunction("f") }),
+        parse_context(bindings={ "pi": UndefinedFunction("f") }),
       ),
     ),
     content=parse_expr_sstr_in("pi(x)", [], binding_names=["pi"], binding_exprs=[
@@ -550,9 +542,7 @@ test "symparse parity builtin bindings shadow builtin heads like SymPy" {
       parse_expr_in(
         "Integral(x)",
         default_parse_options(),
-        parse_context(bindings={
-          "Integral": @symcore.Expr::UndefinedFunction("f"),
-        }),
+        parse_context(bindings={ "Integral": UndefinedFunction("f") }),
       ),
     ),
     content=parse_expr_sstr_in("Integral(x)", [], binding_names=["Integral"], binding_exprs=[
@@ -564,10 +554,10 @@ test "symparse parity builtin bindings shadow builtin heads like SymPy" {
       parse_expr_in(
         "Integral(x)",
         default_parse_options(),
-        parse_context(bindings={ "Integral": @symcore.Expr::Symbol("g") }),
+        parse_context(bindings={ "Integral": Symbol("g") }),
       )
     catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -582,7 +572,7 @@ test "symparse parity builtin bindings shadow builtin heads like SymPy" {
   inspect(
     @symprint.pretty_string(
       ast_parse_expr("DiracDelta(x)", local_bindings={
-        "DiracDelta": @symcore.Expr::UndefinedFunction("f"),
+        "DiracDelta": UndefinedFunction("f"),
       }),
     ),
     content=ast_parse_expr_sstr("DiracDelta(x)", binding_names=["DiracDelta"], binding_exprs=[
@@ -756,7 +746,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Rational(pi)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -824,7 +814,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("pi(x)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -836,7 +826,7 @@ test "symparse parity builtin callable semantics" {
       parse_expr_in(
         "pi",
         default_parse_options(),
-        parse_context(bindings={ "pi": @symcore.Expr::Symbol("x") }),
+        parse_context(bindings={ "pi": Symbol("x") }),
       ),
     ),
     content=parse_expr_sstr_in("pi", [], binding_names=["pi"], binding_exprs=[
@@ -845,7 +835,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("sin(x, y)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -854,7 +844,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("atan2(x)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -863,7 +853,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("beta()") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -872,7 +862,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Integer()") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -881,7 +871,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Integer(sin(x))") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -890,7 +880,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Integer(I*pi)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -899,7 +889,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Integer(1 + I)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -908,7 +898,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Rational()") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -917,7 +907,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Rational(sin(x))") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -926,7 +916,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Rational(sin(x), 2)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -935,7 +925,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Rational(sin(x), 0)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -944,7 +934,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Rational(2, sin(x))") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -953,7 +943,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Float()") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -962,7 +952,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("Float((2, 1, 0))") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -971,7 +961,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr("S()") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -988,7 +978,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)) catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1038,7 +1028,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     @symprint.pretty_string(
-      ast_parse_expr("pi", local_bindings={ "pi": @symcore.Expr::Symbol("x") }),
+      ast_parse_expr("pi", local_bindings={ "pi": Symbol("x") }),
     ),
     content=ast_parse_expr_sstr("pi", binding_names=["pi"], binding_exprs=["x"]),
   )
@@ -1164,7 +1154,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("pi(x)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1173,7 +1163,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("Integer()") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1182,7 +1172,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("Float((2, 1, 0))") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1191,7 +1181,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("Integer(sin(x))") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1200,7 +1190,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("Integer(I*pi)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1209,7 +1199,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("Integer(1 + I)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1218,7 +1208,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("S()") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1227,7 +1217,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("Rational(sin(x))") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1236,7 +1226,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("Rational(sin(x), 2)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1245,7 +1235,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("Rational(sin(x), 0)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1254,7 +1244,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("Rational(2, sin(x))") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1263,7 +1253,7 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(
     try ast_parse_expr("Subs(x, (x, x), (0, 1))") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1348,7 +1338,7 @@ test "symparse parity explicit core constructor calls stay canonical" {
   )
   inspect(
     try parse_expr_with("Rational(3/2)", parse_options(evaluate=false)) catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1407,7 +1397,7 @@ test "symparse parity explicit core constructor calls stay canonical" {
   inspect(@symprint.pretty_string(parse_expr("Integer(E)")), content="2")
   inspect(
     try parse_expr("Integer(oo)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1416,7 +1406,7 @@ test "symparse parity explicit core constructor calls stay canonical" {
   )
   inspect(
     try parse_expr("Integer(nan)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1425,7 +1415,7 @@ test "symparse parity explicit core constructor calls stay canonical" {
   )
   inspect(
     try parse_expr("Integer(I)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1434,7 +1424,7 @@ test "symparse parity explicit core constructor calls stay canonical" {
   )
   inspect(
     try parse_expr("Integer(zoo)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1507,7 +1497,7 @@ test "symparse parity explicit core constructor calls stay canonical" {
   inspect(@symprint.pretty_string(ast_parse_expr("Integer(E)")), content="2")
   inspect(
     try ast_parse_expr("Integer(oo)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1516,7 +1506,7 @@ test "symparse parity explicit core constructor calls stay canonical" {
   )
   inspect(
     try ast_parse_expr("Integer(nan)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1525,7 +1515,7 @@ test "symparse parity explicit core constructor calls stay canonical" {
   )
   inspect(
     try ast_parse_expr("Integer(I)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1534,7 +1524,7 @@ test "symparse parity explicit core constructor calls stay canonical" {
   )
   inspect(
     try ast_parse_expr("Integer(zoo)") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"
@@ -1607,7 +1597,7 @@ test "symparse parity explicit core constructor calls stay canonical" {
   )
   inspect(
     try parse_expr("Subs(x, (x, x), (0, 1))") catch {
-      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
     } noraise {
       _ => "unexpected-success"

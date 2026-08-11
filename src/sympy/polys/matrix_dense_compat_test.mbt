@@ -24,9 +24,9 @@ fn md_column_coeffs_text(column : DDM) -> String raise PolyError {
   let parts : Array[String] = Array::new()
   for row in rows {
     if row.length() != 1 {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
-    parts.push(row[0].to_string())
+    parts.push(Show::to_string(row[0]))
   }
   let joined = parts.join(", ")
   "[\{joined}]"
@@ -34,10 +34,10 @@ fn md_column_coeffs_text(column : DDM) -> String raise PolyError {
 
 ///|
 test "matrix dense wrappers: arithmetic helpers match DDM methods" {
-  let a = @sympolys.ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
-  let b = @sympolys.ddm_from_ints([[5, 6], [7, 8]], Domain::QQ)
-  let acc = @sympolys.ddm_from_ints([[1, 0], [0, 1]], Domain::QQ)
-  let two = @sympolys.fe_from_int(2, Domain::QQ)
+  let a = @sympolys.ddm_from_ints([[1, 2], [3, 4]], QQ)
+  let b = @sympolys.ddm_from_ints([[5, 6], [7, 8]], QQ)
+  let acc = @sympolys.ddm_from_ints([[1, 0], [0, 1]], QQ)
+  let two = @sympolys.fe_from_int(2, QQ)
   assert_eq(
     md_trim(@sympolys.ddm_transpose(a).to_string()),
     md_trim(a.transpose().to_string()),
@@ -70,7 +70,7 @@ test "matrix dense wrappers: arithmetic helpers match DDM methods" {
 
 ///|
 test "matrix dense wrappers: elimination and determinant helpers match methods and oracle" {
-  let rref_source = @sympolys.ddm_from_ints([[1, 2, 3], [4, 5, 6]], Domain::QQ)
+  let rref_source = @sympolys.ddm_from_ints([[1, 2, 3], [4, 5, 6]], QQ)
   let (rref_wrap, pivots_wrap) = @sympolys.ddm_irref(rref_source)
   let (rref_method, pivots_method) = rref_source.rref()
   assert_eq(pivots_wrap, pivots_method)
@@ -83,12 +83,12 @@ test "matrix dense wrappers: elimination and determinant helpers match methods a
     md_trim(oracle_rref),
   )
 
-  let zz = @sympolys.ddm_from_ints([[2, 4], [6, 8]], Domain::ZZ)
+  let zz = @sympolys.ddm_from_ints([[2, 4], [6, 8]], ZZ)
   let (rref_den_wrap, den_wrap, den_pivots_wrap) = @sympolys.ddm_irref_den(zz)
   let (rref_den_method, den_method, den_pivots_method) = zz.rref_den()
   assert_true(
     den_pivots_wrap == den_pivots_method &&
-    den_wrap.to_string() == den_method.to_string(),
+    Show::to_string(den_wrap) == Show::to_string(den_method),
   )
   assert_eq(
     md_trim(rref_den_wrap.to_string()),
@@ -97,19 +97,19 @@ test "matrix dense wrappers: elimination and determinant helpers match methods a
   let oracle_rref_den = domainmatrix_rref_den([[2, 4], [6, 8]], "ZZ")
   assert_eq(
     md_trim(
-      "\{rref_den_wrap.to_domain_matrix().to_matrix_string()}||\{den_wrap.to_string()}||\{Repr(den_pivots_wrap).to_string()}",
+      "\{rref_den_wrap.to_domain_matrix().to_matrix_string()}||\{Show::to_string(den_wrap)}||\{Repr(den_pivots_wrap).to_string()}",
     ),
     md_trim(oracle_rref_den),
   )
 
   let det_source = @sympolys.ddm_from_ints(
     [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
-    Domain::ZZ,
+    ZZ,
   )
   let (bareiss, det) = @sympolys.ddm_idet(det_source)
-  assert_eq(det.to_string(), det_source.det().to_string())
+  assert_eq(Show::to_string(det), Show::to_string(det_source.det()))
   let oracle_det = domainmatrix_det([[1, 2, 3], [4, 5, 6], [7, 8, 9]], "ZZ")
-  assert_eq(det.to_string(), oracle_det)
+  assert_eq(Show::to_string(det), oracle_det)
   let bareiss_diag_text = bareiss.diagonal().map(fe_to_string).join(", ")
   let bareiss_diag = "[\{bareiss_diag_text}]"
   assert_eq(md_trim(bareiss_diag), md_trim("[1, -3, 0]"))
@@ -117,12 +117,12 @@ test "matrix dense wrappers: elimination and determinant helpers match methods a
 
 ///|
 test "matrix dense wrappers: LU, inverse, and berkowitz helpers line up" {
-  let a = @sympolys.ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
+  let a = @sympolys.ddm_from_ints([[1, 2], [3, 4]], QQ)
   let (packed, swaps) = @sympolys.ddm_ilu(a)
   let (l, u, split_swaps) = @sympolys.ddm_ilu_split(a)
   assert_eq(swaps, split_swaps)
   assert_eq(md_trim(packed.to_string()), md_trim(md_pack_lu(l, u).to_string()))
-  let rhs = @sympolys.ddm_from_ints([[5], [6]], Domain::QQ)
+  let rhs = @sympolys.ddm_from_ints([[5], [6]], QQ)
   assert_eq(
     md_trim(@sympolys.ddm_ilu_solve(l, u, swaps, rhs).to_string()),
     md_trim(a.lu_solve(rhs).to_string()),
@@ -137,9 +137,7 @@ test "matrix dense wrappers: LU, inverse, and berkowitz helpers line up" {
     md_trim(oracle_inv),
   )
 
-  let berk = @sympolys.ddm_berk(
-    @sympolys.ddm_from_ints([[1, 2], [3, 4]], Domain::ZZ),
-  )
+  let berk = @sympolys.ddm_berk(@sympolys.ddm_from_ints([[1, 2], [3, 4]], ZZ))
   assert_eq(md_trim(md_column_coeffs_text(berk)), md_trim("[1, -5, -2]"))
   let oracle_charpoly = domainmatrix_charpoly([[1, 2], [3, 4]], "ZZ")
   assert_eq(md_trim(md_column_coeffs_text(berk)), md_trim(oracle_charpoly))
@@ -147,24 +145,24 @@ test "matrix dense wrappers: LU, inverse, and berkowitz helpers line up" {
 
 ///|
 test "matrix dense wrappers: internal DDM helpers stay aligned" {
-  let zz = @sympolys.ddm_from_ints([[1, 2], [3, 4]], Domain::ZZ)
+  let zz = @sympolys.ddm_from_ints([[1, 2], [3, 4]], ZZ)
   let phase1 = zz._fflu()
   assert_eq(md_trim(phase1.0.to_string()), md_trim("[[1, 2], [3, -2]]"))
   assert_eq(phase1.1, [0, 1])
 
-  let swapped = @sympolys.ddm_from_ints([[0, 1], [2, 3]], Domain::ZZ)._fflu()
+  let swapped = @sympolys.ddm_from_ints([[0, 1], [2, 3]], ZZ)._fflu()
   assert_eq(md_trim(swapped.0.to_string()), md_trim("[[2, 3], [0, 2]]"))
   assert_eq(swapped.1, [1, 0])
 
-  let other_domain = @sympolys.ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
+  let other_domain = @sympolys.ddm_from_ints([[1, 2], [3, 4]], QQ)
   let domain_error = expect_poly_error(fn() raise PolyError {
     zz._check("+", other_domain, zz.shape(), other_domain.shape())
   })
-  assert_true(domain_error is PolyError::DomainMismatch)
+  assert_true(domain_error is DomainMismatch)
 
-  let wrong_shape = @sympolys.ddm_from_ints([[1, 2]], Domain::ZZ)
+  let wrong_shape = @sympolys.ddm_from_ints([[1, 2]], ZZ)
   let shape_error = expect_poly_error(fn() raise PolyError {
     zz._check("+", wrong_shape, zz.shape(), wrong_shape.shape())
   })
-  assert_true(shape_error is PolyError::DomainMismatch)
+  assert_true(shape_error is DomainMismatch)
 }

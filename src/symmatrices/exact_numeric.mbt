@@ -27,12 +27,12 @@ fn exact_integer_from_expr(expr : Expr) -> BigInt? {
 
 ///|
 fn exact_expr_from_rational(value : @symnum.BigRational) -> Expr {
-  Expr::Number(value)
+  Number(value)
 }
 
 ///|
 fn exact_expr_from_integer(value : BigInt) -> Expr {
-  Expr::Number(@symnum.BigRational::from_bigint(value))
+  Number(@symnum.BigRational::from_bigint(value))
 }
 
 ///|
@@ -329,7 +329,7 @@ fn exact_integer_fraction_rows_to_expr_rows(
               "exact_integer_fraction_rows_to_expr_rows: invalid denominator",
             )
         }
-        rendered.push(Expr::Number(value))
+        rendered.push(Number(value))
       }
     }
     out.push(rendered)

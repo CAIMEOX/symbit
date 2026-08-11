@@ -10,7 +10,7 @@ fn series_exact_float_expr(
   let value = @symcore.Float::from_exact(rat, prec~) catch {
     _ => @symcore.Float::from_int(0, prec~)
   }
-  @symcore.Expr::Float(value)
+  Float(value)
 }
 
 ///|
@@ -27,15 +27,13 @@ fn series_exact_complex_float_expr(
   let imag = @symnum.BigRational::from_ints(imag_num, imag_den) catch {
     _ => @symnum.BigRational::zero()
   }
-  @symcore.Expr::ComplexFloat(
-    @symcore.ComplexFloat::from_exact_parts(real, imag, prec~),
-  )
+  ComplexFloat(@symcore.ComplexFloat::from_exact_parts(real, imag, prec~))
 }
 
 ///|
 fn series_contains_float_leaf(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Float(_) | @symcore.Expr::ComplexFloat(_) => true
+    Float(_) | ComplexFloat(_) => true
     _ => @symcore.children(expr).any(series_contains_float_leaf)
   }
 }
@@ -43,7 +41,7 @@ fn series_contains_float_leaf(expr : @symcore.Expr) -> Bool {
 ///|
 fn series_contains_function_named(expr : @symcore.Expr, name : String) -> Bool {
   match expr {
-    @symcore.Expr::Function(found, _) if found == name => true
+    Function(found, _) if found == name => true
     _ =>
       @symcore.children(expr).any(child => {
         series_contains_function_named(child, name)
@@ -61,9 +59,9 @@ fn series_eval_finite(
   let env : Map[String, @symcore.Expr] = Map([])
   env[var_name] = sample
   match @symcore.evalf(@symcore.subst(expr, env), prec~) {
-    @symcore.Expr::Number(_) => true
-    @symcore.Expr::Float(value) => value.is_finite()
-    @symcore.Expr::ComplexFloat(value) => value.is_finite()
+    Number(_) => true
+    Float(value) => value.is_finite()
+    ComplexFloat(value) => value.is_finite()
     _ => false
   }
 }
@@ -86,11 +84,11 @@ test "symseries fps handles float geometric coefficients" {
   )
   let res = fps(expr, x~)
   match res {
-    FpsResult::Series(fps_obj) => {
+    Series(fps_obj) => {
       let truncated = fps_obj.truncate(n=4)
       assert_true(series_contains_float_leaf(truncated))
     }
-    FpsResult::Expr(_) => fail("expected FormalPowerSeries")
+    Expr(_) => fail("expected FormalPowerSeries")
   }
 }
 
@@ -134,7 +132,7 @@ test "symseries sequence coeff evaluates numeric transcendental forms to complex
     stop=5,
   )
   match seq.coeff(2) {
-    @symcore.Expr::ComplexFloat(value) => assert_true(value.is_finite())
+    ComplexFloat(value) => assert_true(value.is_finite())
     _ => fail("expected complex float sequence value")
   }
 }

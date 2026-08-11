@@ -1,10 +1,10 @@
 ///|
 test "physics.quantum.boson/fermion: local operator and qapply rules" {
-  let a = boson_op(@symcore.Expr::Symbol("a"))
-  let c = fermion_op(@symcore.Expr::Symbol("c"))
-  inspect(a.to_string(), content="a")
-  inspect(a.dagger().to_string(), content="Dagger(a)")
-  inspect(c.dagger().to_string(), content="Dagger(c)")
+  let a = boson_op(Symbol("a"))
+  let c = fermion_op(Symbol("c"))
+  inspect(Show::to_string(a), content="a")
+  inspect(Show::to_string(a.dagger()), content="Dagger(a)")
+  inspect(Show::to_string(c.dagger()), content="Dagger(c)")
 
   quantum_test_assert_expr_equal(
     commutator(a.as_expr(), a.dagger().as_expr()),
@@ -23,12 +23,7 @@ test "physics.quantum.boson/fermion: local operator and qapply rules" {
     "boson fock apply",
   )
   quantum_test_assert_expr_equal(
-    qapply(
-      @symcore.raw_mul([
-        a.as_expr(),
-        boson_coherent_ket(@symcore.Expr::Symbol("alpha")),
-      ]),
-    ),
+    qapply(@symcore.raw_mul([a.as_expr(), boson_coherent_ket(Symbol("alpha"))])),
     "alpha*BosonCoherentKet(alpha)",
     "boson coherent apply",
   )
@@ -48,8 +43,8 @@ test "physics.quantum.boson/fermion: local operator and qapply rules" {
 
 ///|
 test "physics.quantum.operatorordering: local normal forms" {
-  let a = boson_op(@symcore.Expr::Symbol("a"))
-  let c = fermion_op(@symcore.Expr::Symbol("c"))
+  let a = boson_op(Symbol("a"))
+  let c = fermion_op(Symbol("c"))
   quantum_test_assert_expr_equal(
     normal_ordered_form(@symcore.raw_mul([a.as_expr(), a.dagger().as_expr()])),
     "1 + BosonOp(a, 0)*BosonOp(a, 1)",

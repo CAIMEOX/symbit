@@ -17,7 +17,7 @@ pub struct RingFactoryResult {
 
 ///|
 fn ring_factory_symbols(gens : Array[String]) -> Array[Expr] {
-  gens.map(name => Expr::Symbol(name))
+  gens.map(name => Symbol(name))
 }
 
 ///|
@@ -26,19 +26,13 @@ fn ring_factory_result(
   gens : Array[String],
   order : TermOrder,
 ) -> RingFactoryResult {
-  RingFactoryResult::{
-    domain,
-    gens,
-    symbols: ring_factory_symbols(gens),
-    order,
-  }
+  { domain, gens, symbols: ring_factory_symbols(gens), order }
 }
 
 ///|
 fn ring_factory_ground_domain(domain : Domain, gens : Array[String]) -> Domain {
   match domain {
-    Domain::PolyRing(base, domain_gens)
-    | Domain::RationalFunctionField(base, domain_gens) =>
+    PolyRing(base, domain_gens) | RationalFunctionField(base, domain_gens) =>
       if domain_gens == gens {
         base
       } else {
@@ -58,9 +52,9 @@ fn ring_factory_ground_domain(domain : Domain, gens : Array[String]) -> Domain {
 pub fn ring(
   gens : Array[String],
   domain : Domain,
-  order? : TermOrder = TermOrder::Lex,
+  order? : TermOrder = Lex,
 ) -> RingFactoryResult {
-  ring_factory_result(Domain::PolyRing(domain, gens), gens, order)
+  ring_factory_result(PolyRing(domain, gens), gens, order)
 }
 
 ///|
@@ -73,7 +67,7 @@ pub fn ring(
 pub fn xring(
   gens : Array[String],
   domain : Domain,
-  order? : TermOrder = TermOrder::Lex,
+  order? : TermOrder = Lex,
 ) -> RingFactoryResult {
   ring(gens, domain, order~)
 }
@@ -88,7 +82,7 @@ pub fn xring(
 pub fn vring(
   gens : Array[String],
   domain : Domain,
-  order? : TermOrder = TermOrder::Lex,
+  order? : TermOrder = Lex,
 ) -> RingFactoryResult {
   ring(gens, domain, order~)
 }
@@ -104,7 +98,7 @@ pub fn sring(
   exprs : Array[Expr],
   gens? : Array[String] = [],
   domain? : Domain,
-  order? : TermOrder = TermOrder::Lex,
+  order? : TermOrder = Lex,
 ) -> RingFactoryResult {
   let resolved_gens = if gens.is_empty() {
     infer_gens_union(exprs)
@@ -129,9 +123,9 @@ pub fn sring(
 pub fn field(
   gens : Array[String],
   domain : Domain,
-  order? : TermOrder = TermOrder::Lex,
+  order? : TermOrder = Lex,
 ) -> RingFactoryResult {
-  ring_factory_result(Domain::RationalFunctionField(domain, gens), gens, order)
+  ring_factory_result(RationalFunctionField(domain, gens), gens, order)
 }
 
 ///|
@@ -144,7 +138,7 @@ pub fn field(
 pub fn xfield(
   gens : Array[String],
   domain : Domain,
-  order? : TermOrder = TermOrder::Lex,
+  order? : TermOrder = Lex,
 ) -> RingFactoryResult {
   field(gens, domain, order~)
 }
@@ -159,7 +153,7 @@ pub fn xfield(
 pub fn vfield(
   gens : Array[String],
   domain : Domain,
-  order? : TermOrder = TermOrder::Lex,
+  order? : TermOrder = Lex,
 ) -> RingFactoryResult {
   field(gens, domain, order~)
 }
@@ -175,7 +169,7 @@ pub fn sfield(
   exprs : Array[Expr],
   gens? : Array[String] = [],
   domain? : Domain,
-  order? : TermOrder = TermOrder::Lex,
+  order? : TermOrder = Lex,
 ) -> RingFactoryResult {
   let resolved_gens = if gens.is_empty() {
     infer_gens_union(exprs)

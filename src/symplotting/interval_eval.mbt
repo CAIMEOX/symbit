@@ -1,11 +1,10 @@
 ///|
 fn plot_interval_numeric_constant(expr : @symcore.Expr) -> PlotInterval? {
   match expr {
-    @symcore.Expr::NumberSymbol(kind) =>
+    NumberSymbol(kind) =>
       match kind {
-        @symcore.NumberSymbolKind::Pi => Some(plot_interval_point(@math.PI))
-        @symcore.NumberSymbolKind::Exp1 =>
-          Some(plot_interval_point(@math.exp(1.0)))
+        Pi => Some(plot_interval_point(@math.PI))
+        Exp1 => Some(plot_interval_point(@math.exp(1.0)))
         _ => None
       }
     _ =>
@@ -20,10 +19,9 @@ fn plot_interval_numeric_constant(expr : @symcore.Expr) -> PlotInterval? {
 ///|
 fn plot_interval_exact_rational(expr : @symcore.Expr) -> (BigInt, BigInt)? {
   match expr {
-    @symcore.Expr::Number(value) =>
-      Some((value.numerator(), value.denominator()))
-    @symcore.Expr::Boolean(true) => Some((1N, 1N))
-    @symcore.Expr::Boolean(false) => Some((0N, 1N))
+    Number(value) => Some((value.numerator(), value.denominator()))
+    Boolean(true) => Some((1N, 1N))
+    Boolean(false) => Some((0N, 1N))
     _ => None
   }
 }
@@ -47,7 +45,7 @@ fn plot_interval_eval_scalar(
     None => ()
   }
   match expr {
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let mut current = plot_interval_point(0.0)
       for arg in args {
         match
@@ -60,7 +58,7 @@ fn plot_interval_eval_scalar(
       }
       Some(current)
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut current = plot_interval_point(1.0)
       for arg in args {
         match
@@ -73,7 +71,7 @@ fn plot_interval_eval_scalar(
       }
       Some(current)
     }
-    @symcore.Expr::Pow(base, exponent) =>
+    Pow(base, exponent) =>
       match
         (
           plot_interval_eval_scalar(
@@ -91,8 +89,7 @@ fn plot_interval_eval_scalar(
           Some(plot_interval_pow_float(base_interval, power_interval.start))
         _ => None
       }
-    @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), args)
-    | @symcore.Expr::Function(name, args) =>
+    Apply(FunctionHead(name), args) | Function(name, args) =>
       match (name, args) {
         ("Min", _) => {
           let values : Array[PlotInterval] = []
@@ -211,9 +208,8 @@ fn plot_interval_eval_boolean(
   interval_y : PlotInterval,
 ) -> IntervalMembership? {
   match expr {
-    @symcore.Expr::Boolean(value) =>
-      Some(interval_membership(Some(value), Some(true)))
-    @symcore.Expr::Relational(op, lhs, rhs) =>
+    Boolean(value) => Some(interval_membership(Some(value), Some(true)))
+    Relational(op, lhs, rhs) =>
       match
         (
           plot_interval_eval_scalar(
@@ -226,24 +222,17 @@ fn plot_interval_eval_boolean(
         (Some(lhs_interval), Some(rhs_interval)) =>
           Some(
             match op {
-              @symcore.RelOp::Eq =>
-                plot_interval_compare_eq(lhs_interval, rhs_interval)
-              @symcore.RelOp::Ne =>
-                plot_interval_compare_ne(lhs_interval, rhs_interval)
-              @symcore.RelOp::Lt =>
-                plot_interval_compare_lt(lhs_interval, rhs_interval)
-              @symcore.RelOp::Le =>
-                plot_interval_compare_le(lhs_interval, rhs_interval)
-              @symcore.RelOp::Gt =>
-                plot_interval_compare_gt(lhs_interval, rhs_interval)
-              @symcore.RelOp::Ge =>
-                plot_interval_compare_ge(lhs_interval, rhs_interval)
+              Eq => plot_interval_compare_eq(lhs_interval, rhs_interval)
+              Ne => plot_interval_compare_ne(lhs_interval, rhs_interval)
+              Lt => plot_interval_compare_lt(lhs_interval, rhs_interval)
+              Le => plot_interval_compare_le(lhs_interval, rhs_interval)
+              Gt => plot_interval_compare_gt(lhs_interval, rhs_interval)
+              Ge => plot_interval_compare_ge(lhs_interval, rhs_interval)
             },
           )
         _ => None
       }
-    @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), args)
-    | @symcore.Expr::Function(name, args) =>
+    Apply(FunctionHead(name), args) | Function(name, args) =>
       match (name, args) {
         ("And", _) => {
           let mut current = interval_membership(Some(true), Some(true))
@@ -339,13 +328,12 @@ fn plot_interval_eval_boolean(
 ///|
 fn plot_implicit_has_equality(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Relational(op, _, _) =>
+    Relational(op, _, _) =>
       match op {
-        @symcore.RelOp::Eq | @symcore.RelOp::Ge | @symcore.RelOp::Le => true
+        Eq | Ge | Le => true
         _ => false
       }
-    @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), args)
-    | @symcore.Expr::Function(name, args) =>
+    Apply(FunctionHead(name), args) | Function(name, args) =>
       if name == "And" || name == "Or" || name == "Xor" {
         args.any(plot_implicit_has_equality)
       } else if name == "Not" {

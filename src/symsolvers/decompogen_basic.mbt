@@ -35,8 +35,8 @@ fn expr_array_tail(items : Array[Expr], start : Int) -> Array[Expr] {
 ///|
 fn compogen_symbol_name(symbol : Expr) -> String {
   match @symcore.normalize_legacy_expr(symbol) {
-    Expr::Symbol(name) => name
-    Expr::Dummy(name, _) => name
+    Symbol(name) => name
+    Dummy(name, _) => name
     other => @symprint.pretty_string(other)
   }
 }
@@ -44,8 +44,8 @@ fn compogen_symbol_name(symbol : Expr) -> String {
 ///|
 fn first_decompose_arg(expr : Expr) -> Expr? {
   match expr {
-    Expr::Pow(base, exp) =>
-      if base == Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1) {
+    Pow(base, exp) =>
+      if base == NumberSymbol(Exp1) {
         Some(exp)
       } else {
         Some(base)
@@ -167,10 +167,10 @@ fn expr_is_polynomial_in_symbol(expr : Expr, symbol : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Symbol(_) => @symcore.compare_expr(expr, symbol) == 0
-    Expr::Add(args) | Expr::Mul(args) =>
+    Symbol(_) => @symcore.compare_expr(expr, symbol) == 0
+    Add(args) | Mul(args) =>
       args.all(arg => expr_is_polynomial_in_symbol(arg, symbol))
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       if !expr_is_polynomial_in_symbol(base, symbol) {
         false
       } else {
@@ -220,7 +220,7 @@ fn decompogen_from_poly(
 pub fn decompogen(expr : Expr, symbol : Expr) -> Array[Expr] raise SolverError {
   ignore(symbol_name(symbol))
   if expr_is_relational(expr) {
-    raise SolverError::ValueError("decompogen: expecting a non-relational Expr")
+    raise ValueError("decompogen: expecting a non-relational Expr")
   }
   if !expr_mentions_symbol(expr, symbol) {
     return [expr]

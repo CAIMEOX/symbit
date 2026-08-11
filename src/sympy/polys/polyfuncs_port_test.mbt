@@ -76,7 +76,7 @@ test "polyfuncs: interpolate parity for quadratic data" {
     (@symnum.BigRational::from_int(2), @symnum.BigRational::from_int(4)),
     (@symnum.BigRational::from_int(3), @symnum.BigRational::from_int(9)),
   ]
-  let p = @sympolys.interpolate(pts, "x", Domain::QQ)
+  let p = @sympolys.interpolate(pts, "x", QQ)
   let ours = poly_canon_str(p).trim().to_owned()
   let oracle = interpolate(pts, x="x").trim().to_owned()
   assert_eq(ours, oracle)
@@ -89,7 +89,7 @@ test "polyfuncs: interpolate parity for shifted quadratic" {
     (@symnum.BigRational::from_int(2), @symnum.BigRational::from_int(5)),
     (@symnum.BigRational::from_int(3), @symnum.BigRational::from_int(10)),
   ]
-  let p = @sympolys.interpolate(pts, "x", Domain::QQ)
+  let p = @sympolys.interpolate(pts, "x", QQ)
   let ours = poly_canon_str(p).trim().to_owned()
   let oracle = interpolate(pts, x="x").trim().to_owned()
   assert_eq(ours, oracle)
@@ -103,7 +103,7 @@ test "polyfuncs: interpolate parity for values list" {
     @symnum.BigRational::from_int(9),
     @symnum.BigRational::from_int(16),
   ]
-  let p = @sympolys.interpolate_values(vals, "x", Domain::QQ)
+  let p = @sympolys.interpolate_values(vals, "x", QQ)
   let ours = poly_canon_str(p).trim().to_owned()
   let oracle = interpolate_values(vals, x="x").trim().to_owned()
   assert_eq(ours, oracle)
@@ -120,7 +120,7 @@ test "polyfuncs: interpolate parity for dict input" {
   for pair in pts {
     map.set(pair.0, pair.1)
   }
-  let p = @sympolys.interpolate_dict(map, "x", Domain::QQ)
+  let p = @sympolys.interpolate_dict(map, "x", QQ)
   let ours = poly_canon_str(p).trim().to_owned()
   let oracle = interpolate_dict(pts, x="x").trim().to_owned()
   assert_eq(ours, oracle)
@@ -139,7 +139,7 @@ test "polyfuncs: rational_interpolate parity (degnum=2)" {
       ),
     )
   }
-  let (num, den) = @sympolys.rational_interpolate(pts, 2, "x", Domain::QQ)
+  let (num, den) = @sympolys.rational_interpolate(pts, 2, "x", QQ)
   let ours = div_pair_to_string(num, den).trim().to_owned()
   let oracle = rational_interpolate(pts, 2, x="x").trim().to_owned()
   inspect(ours, content="60*x**2 + 60||x")
@@ -159,7 +159,7 @@ test "polyfuncs: rational_interpolate parity (degnum=3)" {
       ),
     )
   }
-  let (num, den) = @sympolys.rational_interpolate(pts, 3, "x", Domain::QQ)
+  let (num, den) = @sympolys.rational_interpolate(pts, 3, "x", QQ)
   let ours = div_pair_to_string(num, den).trim().to_owned()
   let oracle = rational_interpolate(pts, 3, x="x").trim().to_owned()
   assert_eq(ours, oracle)
@@ -177,7 +177,7 @@ test "polyfuncs: rational_interpolate parity (degnum=5, larger data)" {
   for i in 0..<xdata.length() {
     pts.push((@symnum.BigRational::from_int(xdata[i]), br_from_str(ydata[i])))
   }
-  let (num, den) = @sympolys.rational_interpolate(pts, 5, "x", Domain::QQ)
+  let (num, den) = @sympolys.rational_interpolate(pts, 5, "x", QQ)
   let ours = div_pair_to_string(num, den).trim().to_owned()
   let oracle = rational_interpolate(pts, 5, x="x").trim().to_owned()
   assert_eq(ours, oracle)
@@ -196,7 +196,7 @@ test "polyfuncs: rational_interpolate parity (degnum=2, y)" {
       ),
     )
   }
-  let (num, den) = @sympolys.rational_interpolate(pts, 2, "y", Domain::QQ)
+  let (num, den) = @sympolys.rational_interpolate(pts, 2, "y", QQ)
   let ours = div_pair_to_string(num, den).trim().to_owned()
   let oracle = rational_interpolate(pts, 2, x="y").trim().to_owned()
   assert_eq(ours, oracle)

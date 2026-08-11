@@ -21,7 +21,7 @@ pub struct Sieve {
 /// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
 pub fn Sieve::new() -> Sieve {
   let p : Array[BigInt] = [bi(2), bi(3), bi(5), bi(7), bi(11), bi(13)]
-  Sieve::{ primes: p }
+  { primes: p }
 }
 
 ///|
@@ -445,9 +445,9 @@ pub fn cycle_length(
       lam += 1
     }
     if nmax_val != 0 && i == nmax_val {
-      return CycleLengthResult::Values(out)
+      return Values(out)
     }
-    return CycleLengthResult::Values(out)
+    return Values(out)
   }
   while tortoise != hare && (nmax_val == 0 || i < nmax_val) {
     i += 1
@@ -460,7 +460,7 @@ pub fn cycle_length(
     lam += 1
   }
   if nmax_val != 0 && i == nmax_val {
-    return CycleLengthResult::Params(nmax_val, None)
+    return Params(nmax_val, None)
   }
   let mut mu = 0
   tortoise = x0
@@ -473,5 +473,5 @@ pub fn cycle_length(
     hare = f(hare)
     mu += 1
   }
-  CycleLengthResult::Params(lam, Some(mu))
+  Params(lam, Some(mu))
 }

@@ -112,7 +112,7 @@ test "matrices wb: polys.solvers front doors prepare and solve affine systems" {
     { "x": @symcore.int(1), "y": @symcore.int(-1) },
   ]
   let rhs = [@symcore.int(0), @symcore.int(-1)]
-  let matrix = eqs_to_matrix(coeffs, rhs, syms, domain=Domain::ZZ)
+  let matrix = eqs_to_matrix(coeffs, rhs, syms, domain=ZZ)
   assert_true(matrix.to_matrix_string() == "Matrix([[1, 1, 0], [1, -1, 1]])")
   assert_true(domain_to_sympy_string(matrix.domain) == "ZZ")
 
@@ -155,16 +155,15 @@ test "matrices wb: _linsolve uses numeric complex solve path for float coefficie
     None => fail("numeric complex _linsolve")
   }
   match sol.get("x") {
-    Some(@symcore.Expr::Float(value)) =>
-      assert_true(value.format(dps=12).has_prefix("1.0"))
-    Some(@symcore.Expr::ComplexFloat(value)) => {
+    Some(Float(value)) => assert_true(value.format(dps=12).has_prefix("1.0"))
+    Some(ComplexFloat(value)) => {
       assert_true(value.real_part().format(dps=12).has_prefix("1.0"))
       assert_true(@symnum.is_zero(value.to_mpc().imag))
     }
     _ => fail("expected numeric x solution")
   }
   match sol.get("y") {
-    Some(@symcore.Expr::Float(value)) =>
+    Some(Float(value)) =>
       assert_true(value.format(dps=12).has_prefix("0.666666666"))
     _ => fail("expected numeric y solution")
   }
@@ -178,12 +177,12 @@ test "matrices wb: DomainMatrix infers CC from complex float entries" {
     prec=90,
   )
   let dm = DomainMatrix::from_Matrix(
-    [[@symcore.Expr::ComplexFloat(z), @symcore.int(0)]],
+    [[ComplexFloat(z), @symcore.int(0)]],
     fmt="dense",
     field=true,
   )
   match dm.domain {
-    Domain::CC => ()
+    CC => ()
     _ => fail("expected CC domain")
   }
 }

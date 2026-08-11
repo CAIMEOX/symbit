@@ -76,7 +76,7 @@ fn tensor_product_as_expr(args : Array[Expr]) -> Expr {
 
 ///|
 pub fn tensor_product(args : Array[Expr]) -> TensorProductExpr {
-  TensorProductExpr::{ args, }
+  { args, }
 }
 
 ///|
@@ -92,7 +92,7 @@ pub fn tensor_product_expand(expr : Expr) -> Expr {
         Some(args) => {
           for idx in 0..<args.length() {
             match args[idx] {
-              Expr::Add(terms) => {
+              Add(terms) => {
                 let expanded : Array[Expr] = []
                 for term in terms {
                   let rebuilt = args.copy()
@@ -110,7 +110,7 @@ pub fn tensor_product_expand(expr : Expr) -> Expr {
         }
         None => expr
       }
-    Expr::Add(args) =>
+    Add(args) =>
       quantum_add_from_args_preserve(
         args.map(arg => tensor_product_expand(arg)),
       )
@@ -130,7 +130,7 @@ fn tensor_product_items(expr : Expr) -> Array[Expr]? {
 ///|
 fn tensor_product_pow_items(expr : Expr) -> Array[Expr]? {
   match expr {
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match tensor_product_items(base) {
         Some(items) =>
           Some(
@@ -192,10 +192,10 @@ fn tensor_product_merge_factors(factors : Array[Expr]) -> Expr {
 ///|
 pub fn tensor_product_simp(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) =>
+    Add(args) =>
       quantum_add_from_args_preserve(args.map(arg => tensor_product_simp(arg)))
-    Expr::Mul(args) => tensor_product_merge_factors(args)
-    Expr::Pow(base, exp) =>
+    Mul(args) => tensor_product_merge_factors(args)
+    Pow(base, exp) =>
       match tensor_product_items(tensor_product_simp(base)) {
         Some(items) =>
           tensor_product(
@@ -210,7 +210,7 @@ pub fn tensor_product_simp(expr : Expr) -> Expr {
 ///|
 fn tensor_product_needs_parens(expr : Expr) -> Bool {
   match expr {
-    Expr::Add(_) | Expr::Mul(_) | Expr::Pow(_, _) => true
+    Add(_) | Mul(_) | Pow(_, _) => true
     _ => false
   }
 }
@@ -231,7 +231,7 @@ pub impl Show for TensorProductExpr with fn to_string(self) {
 
 ///|
 pub impl Show for TensorProductExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|

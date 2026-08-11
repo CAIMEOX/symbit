@@ -9,7 +9,7 @@
 fn strip_order_expr(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     _ if @symcore.application_has_name(expr, "O") => @symcore.int(0)
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let kept : Array[@symcore.Expr] = Array::new()
       for arg in args {
         if @symcore.application_has_name(arg, "O") {
@@ -37,7 +37,7 @@ fn poly_from_rationals(
 ) -> @symcore.Expr {
   let expr_coeffs : Array[@symcore.Expr] = Array::new()
   for c in coeffs {
-    expr_coeffs.push(@symcore.Expr::Number(c))
+    expr_coeffs.push(Number(c))
   }
   poly_to_expr(expr_coeffs, x, expr_coeffs.length())
 }
@@ -53,7 +53,7 @@ fn poly_from_expr_coeffs(
 ///|
 fn expr_to_rational(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
+    Number(n) => Some(n)
     _ => None
   }
 }
@@ -112,13 +112,13 @@ fn br_div(
 ///|
 fn approx_numeric_prec_expr(expr : @symcore.Expr) -> Int {
   match @symcore.number_symbol_kind(expr) {
-    Some(@symcore.NumberSymbolKind::ImaginaryUnit) => 80
+    Some(ImaginaryUnit) => 80
     _ =>
       match expr {
-        @symcore.Expr::Float(f) => f.precision()
-        @symcore.Expr::ComplexFloat(z) => z.precision()
-        @symcore.Expr::Number(_) => 80
-        @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) => {
+        Float(f) => f.precision()
+        ComplexFloat(z) => z.precision()
+        Number(_) => 80
+        Add(args) | Mul(args) => {
           let mut best = 0
           for arg in args {
             let p = approx_numeric_prec_expr(arg)
@@ -128,7 +128,7 @@ fn approx_numeric_prec_expr(expr : @symcore.Expr) -> Int {
           }
           best
         }
-        @symcore.Expr::Pow(base, exp) => {
+        Pow(base, exp) => {
           let pb = approx_numeric_prec_expr(base)
           let pe = approx_numeric_prec_expr(exp)
           if pb > pe {
@@ -161,7 +161,7 @@ fn approx_expr_to_complex(
   prec : Int,
 ) -> @symcore.ComplexFloat? {
   match @symcore.evalf(expr, prec~) {
-    @symcore.Expr::Number(n) =>
+    Number(n) =>
       Some(
         @symcore.ComplexFloat::from_exact_parts(
           n,
@@ -169,8 +169,8 @@ fn approx_expr_to_complex(
           prec~,
         ),
       )
-    @symcore.Expr::Float(f) => Some(@symcore.ComplexFloat::from_real(f))
-    @symcore.Expr::ComplexFloat(z) => Some(z)
+    Float(f) => Some(@symcore.ComplexFloat::from_real(f))
+    ComplexFloat(z) => Some(z)
     _ => None
   }
 }
@@ -178,9 +178,9 @@ fn approx_expr_to_complex(
 ///|
 fn approx_complex_to_expr(value : @symcore.ComplexFloat) -> @symcore.Expr {
   if @symnum.is_zero(value.to_mpc().imag) {
-    @symcore.Expr::Float(value.real_part())
+    Float(value.real_part())
   } else {
-    @symcore.Expr::ComplexFloat(value)
+    ComplexFloat(value)
   }
 }
 
@@ -599,7 +599,7 @@ fn pade_expr_best(
 ///|
 fn pade_inv_factorial_expr(n : Int) -> @symcore.Expr {
   let den = factorial_bigint(n)
-  @symcore.Expr::Number(safe_rational(BigInt::from_int(1), den))
+  Number(safe_rational(BigInt::from_int(1), den))
 }
 
 ///|
@@ -641,14 +641,14 @@ pub fn pade_approximant(
     fail("pade m and n must be non-negative")
   }
   let var_name = match x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("pade variable must be a Symbol")
   }
   let around_zero = match x0 {
-    @symcore.Expr::Number(n0v) => n0v.is_zero()
+    Number(n0v) => n0v.is_zero()
     _ => false
   }
-  let work_x = if around_zero { x } else { @symcore.Expr::Symbol("__pade_t") }
+  let work_x = if around_zero { x } else { Symbol("__pade_t") }
   let work_expr = if around_zero {
     expr
   } else {
@@ -657,7 +657,7 @@ pub fn pade_approximant(
     @symcore.subst(expr, env)
   }
   let work_name = match work_x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => "__pade_t"
   }
   let order = m + n0 + 1
@@ -723,7 +723,7 @@ pub fn pade_approximant(
 /// - Limits: Raises if the recurrence hits a zero divisor; the `simplify` flag is accepted but currently not used.
 pub fn approximants(
   coeffs : Array[@symcore.Expr],
-  x? : @symcore.Expr = @symcore.Expr::Symbol("x"),
+  x? : @symcore.Expr = Symbol("x"),
   simplify? : Bool = false,
 ) -> Array[@symcore.Expr] raise {
   let _ = simplify

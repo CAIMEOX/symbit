@@ -82,23 +82,15 @@ fn lra_model_conflict(
     match lra_map.get(name) {
       Some(constraint) =>
         if val {
-          base.push(LraAssumption::{ constraint, key: name, negated: false })
+          base.push({ constraint, key: name, negated: false })
         } else {
           let negated = linear_constraint_negate(constraint)
           if negated.length() == 1 {
-            base.push(LraAssumption::{
-              constraint: negated[0],
-              key: name,
-              negated: true,
-            })
+            base.push({ constraint: negated[0], key: name, negated: true })
           } else {
             let options : Array[LraAssumption] = Array::new()
             for neg in negated {
-              options.push(LraAssumption::{
-                constraint: neg,
-                key: name,
-                negated: true,
-              })
+              options.push({ constraint: neg, key: name, negated: true })
             }
             branches.push(options)
           }
@@ -195,14 +187,14 @@ pub fn dpll2_satisfiable(
   use_lra_theory? : Bool = false,
 ) -> Map[String, Bool]? {
   match expr {
-    BoolExpr::True => return Some(Map([]))
-    BoolExpr::False => return None
+    True => return Some(Map([]))
+    False => return None
     _ => ()
   }
   let cnf_expr = to_cnf(expr)
   let clauses = conjuncts(cnf_expr)
   for clause in clauses {
-    if clause == BoolExpr::False {
+    if clause == False {
       return None
     }
   }
@@ -217,7 +209,7 @@ pub fn dpll2_satisfiable(
   let lra_map : Map[String, LinearConstraint] = Map([])
   for s in symbols {
     match s {
-      BoolExpr::LRA(constraint) => {
+      LRA(constraint) => {
         let key = linear_constraint_key(constraint)
         lra_map[key] = constraint
       }
@@ -305,14 +297,14 @@ pub fn dpll2_all_models(
   use_lra_theory? : Bool = false,
 ) -> Array[Map[String, Bool]?] {
   match expr {
-    BoolExpr::True => return [Some(Map([]))]
-    BoolExpr::False => return [None]
+    True => return [Some(Map([]))]
+    False => return [None]
     _ => ()
   }
   let cnf_expr = to_cnf(expr)
   let clauses = conjuncts(cnf_expr)
   for clause in clauses {
-    if clause == BoolExpr::False {
+    if clause == False {
       return [None]
     }
   }
@@ -327,7 +319,7 @@ pub fn dpll2_all_models(
   let lra_map : Map[String, LinearConstraint] = Map([])
   for s in symbols {
     match s {
-      BoolExpr::LRA(constraint) => {
+      LRA(constraint) => {
         let key = linear_constraint_key(constraint)
         lra_map[key] = constraint
       }

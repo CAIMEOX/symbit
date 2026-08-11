@@ -15,11 +15,9 @@ pub fn curve(
   end : Expr,
 ) -> Curve raise GeometryError {
   if functions.length() < 2 {
-    raise GeometryError::ValueError(
-      "curve requires at least two coordinate functions",
-    )
+    raise ValueError("curve requires at least two coordinate functions")
   }
-  Curve::{
+  {
     functions_: functions.map(geo_simplify),
     parameter_: parameter,
     start_: start,
@@ -70,12 +68,12 @@ pub fn Curve::free_symbols(self : Curve) -> Array[Expr] {
   geo_collect_symbols(self.end_, seen)
   let out : Array[Expr] = []
   let parameter_name = match self.parameter_ {
-    Expr::Symbol(name) => Some(name)
+    Symbol(name) => Some(name)
     _ => None
   }
   for item in seen {
     if parameter_name != Some(item.0) {
-      out.push(Expr::Symbol(item.0))
+      out.push(Symbol(item.0))
     }
   }
   let n = out.length()
@@ -97,7 +95,7 @@ pub fn Curve::free_symbols(self : Curve) -> Array[Expr] {
 ///|
 pub fn Curve::plot_interval(
   self : Curve,
-  parameter? : Expr = Expr::Symbol("t"),
+  parameter? : Expr = Symbol("t"),
 ) -> Array[Expr] {
   [parameter, self.start_, self.end_]
 }
@@ -105,16 +103,16 @@ pub fn Curve::plot_interval(
 ///|
 pub fn Curve::arbitrary_point(
   self : Curve,
-  parameter? : Expr = Expr::Symbol("t"),
+  parameter? : Expr = Symbol("t"),
 ) -> Point raise GeometryError {
   let env : Map[String, Expr] = Map([])
-  let actual = if @symcore.compare_expr(parameter, Expr::Symbol("t")) == 0 {
+  let actual = if @symcore.compare_expr(parameter, Symbol("t")) == 0 {
     self.parameter_
   } else {
     parameter
   }
   match self.parameter_ {
-    Expr::Symbol(name) => env.set(name, actual)
+    Symbol(name) => env.set(name, actual)
     _ => ()
   }
   point(
@@ -138,7 +136,7 @@ pub fn Curve::parameter_value(
     }
     let roots = match geo_solve_univar_deg2(diff, self.parameter_) {
       Some(items) if !items.is_empty() => items
-      _ => raise GeometryError::ValueError("point is not on curve")
+      _ => raise ValueError("point is not on curve")
     }
     let unique_roots : Array[Expr] = []
     for root in roots {
@@ -162,13 +160,13 @@ pub fn Curve::parameter_value(
   }
   let matches = match candidates {
     Some(items) if !items.is_empty() => items
-    _ => raise GeometryError::ValueError("point is not on curve")
+    _ => raise ValueError("point is not on curve")
   }
   for candidate in matches {
     let candidate = geo_simplify(candidate)
     let env : Map[String, Expr] = Map([])
     match self.parameter_ {
-      Expr::Symbol(name) => env.set(name, candidate)
+      Symbol(name) => env.set(name, candidate)
       _ => ()
     }
     let mut ok = true
@@ -184,7 +182,7 @@ pub fn Curve::parameter_value(
       return out
     }
   }
-  raise GeometryError::ValueError("point is not on curve")
+  raise ValueError("point is not on curve")
 }
 
 ///|
@@ -193,9 +191,7 @@ pub fn Curve::translate(
   offsets : Array[Expr],
 ) -> Curve raise GeometryError {
   if offsets.length() != self.functions_.length() {
-    raise GeometryError::ValueError(
-      "curve translation offsets must match ambient dimension",
-    )
+    raise ValueError("curve translation offsets must match ambient dimension")
   }
   curve(
     self.functions_.mapi(fn(i, expr) { geo_simplify(expr + offsets[i]) }),
@@ -212,9 +208,7 @@ pub fn Curve::scale(
   pt? : Point? = None,
 ) -> Curve raise GeometryError {
   if factors.length() != self.functions_.length() {
-    raise GeometryError::ValueError(
-      "curve scale factors must match ambient dimension",
-    )
+    raise ValueError("curve scale factors must match ambient dimension")
   }
   let origin = match pt {
     Some(value) => value.with_dim(self.functions_.length())
@@ -239,9 +233,7 @@ pub fn Curve::rotate(
   pt? : Point? = None,
 ) -> Curve raise GeometryError {
   if self.functions_.length() != 2 {
-    raise GeometryError::ValueError(
-      "curve rotation is only implemented for planar curves",
-    )
+    raise ValueError("curve rotation is only implemented for planar curves")
   }
   let pivot = match pt {
     Some(value) => value.with_dim(2)

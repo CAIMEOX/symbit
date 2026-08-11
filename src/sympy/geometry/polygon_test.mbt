@@ -7,7 +7,7 @@ test "geometry.polygon area convexity and bounds" {
     point2d(@symcore.int(0), @symcore.int(3)),
   ])
   let poly = match polygon_value {
-    GeometryEntity::Polygon(value) => value
+    Polygon(value) => value
     _ => fail("expected polygon")
   }
   assert_true(geometry_expr_equal(@symprint.pretty_string(poly.area()), "12"))
@@ -60,7 +60,7 @@ test "geometry.regular polygon and triangle centers" {
     expr_map_summary(
       geometry_regular_polygon(rp).parameter_value(
         point2d(@symcore.int(1), @symcore.int(0)),
-        @symcore.Expr::Symbol("t"),
+        Symbol("t"),
       ),
     ),
     "{t: 0}",
@@ -76,7 +76,7 @@ test "geometry.polygon enclosure parameter and bisector helpers" {
       point2d(@symcore.int(1), @symcore.int(1)),
       point2d(@symcore.int(1), @symcore.int(0)),
     ]) {
-    GeometryEntity::Polygon(value) => value
+    Polygon(value) => value
     _ => fail("expected polygon")
   }
   assert_true(
@@ -100,7 +100,7 @@ test "geometry.polygon enclosure parameter and bisector helpers" {
     expr_map_summary(
       sq.parameter_value(
         point2d(@symcore.rational_from_ints(1, 2), @symcore.int(1)),
-        @symcore.Expr::Symbol("t"),
+        Symbol("t"),
       ),
     ),
     "{t: 3/8}",

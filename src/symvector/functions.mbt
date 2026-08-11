@@ -120,8 +120,8 @@ pub fn orthogonalize(
     for prev in ortho_vlist {
       let projected = prev.projection(vector)
       match projected {
-        ScalarOrVector::ScalarExpr(_) => abort("orthogonalize")
-        ScalarOrVector::VectorExpr(value) => term = term - value
+        ScalarExpr(_) => abort("orthogonalize")
+        VectorExpr(value) => term = term - value
       }
     }
     let is_zero = term.equals(vector_zero())

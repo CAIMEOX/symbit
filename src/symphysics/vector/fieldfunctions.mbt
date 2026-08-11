@@ -7,10 +7,8 @@ fn expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(fn(arg) { expr_depends_on(arg, wrt) })
-    Expr::Pow(base, exp) =>
-      expr_depends_on(base, wrt) || expr_depends_on(exp, wrt)
+    Add(args) | Mul(args) => args.any(fn(arg) { expr_depends_on(arg, wrt) })
+    Pow(base, exp) => expr_depends_on(base, wrt) || expr_depends_on(exp, wrt)
     _ => @symcore.args(expr).any(fn(arg) { expr_depends_on(arg, wrt) })
   }
 }
@@ -18,7 +16,7 @@ fn expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
 ///|
 fn expr_int_value(expr : Expr) -> Int? {
   match expr {
-    Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
+    Number(n) if n.is_integral() => Some(n.numerator().to_int())
     _ => None
   }
 }
@@ -32,14 +30,14 @@ fn integrate_scalar(expr : Expr, wrt : Expr) -> Expr raise VectorError {
     return simplify_expr((wrt ^ int_expr(2)) * rational_expr(1, 2))
   }
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let out : Array[Expr] = []
       for arg in args {
         out.push(integrate_scalar(arg, wrt))
       }
       simplify_expr(@symcore.add(out))
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let indep : Array[Expr] = []
       let dep : Array[Expr] = []
       for arg in args {
@@ -53,19 +51,17 @@ fn integrate_scalar(expr : Expr, wrt : Expr) -> Expr raise VectorError {
       if dep.length() == 1 {
         return simplify_expr(coeff * integrate_scalar(dep[0], wrt))
       }
-      raise VectorError::ValueError("unsupported antiderivative")
+      raise ValueError("unsupported antiderivative")
     }
-    Expr::Pow(base, exp) if @symcore.compare_expr(base, wrt) == 0 =>
+    Pow(base, exp) if @symcore.compare_expr(base, wrt) == 0 =>
       match expr_int_value(exp) {
-        Some(-1) =>
-          raise VectorError::ValueError("log antiderivative not implemented")
+        Some(-1) => raise ValueError("log antiderivative not implemented")
         Some(n) => {
           let next = n + 1
           let coeff = rational_expr(1, next)
           simplify_expr(coeff * (wrt ^ int_expr(next)))
         }
-        None =>
-          raise VectorError::ValueError("unsupported power antiderivative")
+        None => raise ValueError("unsupported power antiderivative")
       }
     _ if @symcore.application_has_name(expr, "sin", arity=1) &&
       @symcore.compare_expr(@symcore.application_args(expr).unwrap()[0], wrt) ==
@@ -73,7 +69,7 @@ fn integrate_scalar(expr : Expr, wrt : Expr) -> Expr raise VectorError {
     _ if @symcore.application_has_name(expr, "cos", arity=1) &&
       @symcore.compare_expr(@symcore.application_args(expr).unwrap()[0], wrt) ==
       0 => simplify_expr(@symelem.sin(wrt))
-    _ => raise VectorError::ValueError("unsupported antiderivative")
+    _ => raise ValueError("unsupported antiderivative")
   }
 }
 
@@ -172,9 +168,7 @@ pub fn scalar_potential(
   }
   let check = gradient(phi, frame) - field.express(frame, variables=true)
   if !check.is_zero() {
-    raise VectorError::ValueError(
-      "field is not conservative in the requested frame",
-    )
+    raise ValueError("field is not conservative in the requested frame")
   }
   simplify_expr(phi)
 }

@@ -33,7 +33,7 @@ test "symsimplify simplify parity basic" {
 test "symsimplify simplify parity composite heuristics" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
 
   let rational_trig = @symcore.mul([
     @symcore.add([x, @symcore.pow(x, @symcore.int(2))]),
@@ -249,26 +249,14 @@ test "symsimplify exptrigsimp parity" {
   let x = @symcore.Expr::Symbol("x")
   let exprs = [
     @symcore.add([
+      @symcore.function("exp", [@symcore.mul([NumberSymbol(ImaginaryUnit), x])]),
       @symcore.function("exp", [
-        @symcore.mul([
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-          x,
-        ]),
-      ]),
-      @symcore.function("exp", [
-        @symcore.mul([
-          @symcore.int(-1),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-          x,
-        ]),
+        @symcore.mul([@symcore.int(-1), NumberSymbol(ImaginaryUnit), x]),
       ]),
     ]),
     @symcore.add([
       @symcore.function("cos", [x]),
-      @symcore.mul([
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-        @symcore.function("sin", [x]),
-      ]),
+      @symcore.mul([NumberSymbol(ImaginaryUnit), @symcore.function("sin", [x])]),
     ]),
   ]
   for expr in exprs {
@@ -359,11 +347,9 @@ test "symsimplify compat simplify parity" {
 ///|
 test "symsimplify compat simplify advanced parity" {
   let a = @symcore.Expr::Symbol("a")
-  let golden = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::GoldenRatio,
-  )
+  let golden = @symcore.Expr::NumberSymbol(GoldenRatio)
   let i = @symcore.Expr::Symbol("i")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let x = @symcore.Expr::Symbol("x")
   let z = @symcore.Expr::Symbol("z")
   let half = @symcore.rational_from_ints(1, 2)
@@ -481,7 +467,7 @@ test "symsimplify radsimp extras parity" {
 test "symsimplify fu rules parity" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let pi6 = @symcore.mul([@symcore.rational_from_ints(1, 6), pi])
 
   assert_true(

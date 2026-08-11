@@ -9,10 +9,7 @@ fn vector_substitute_time(vec : Vector, value : Expr) -> Vector {
 
 ///|
 fn motion_integral_symbolic(expr : Expr, lower : Expr, upper : Expr) -> Expr {
-  @symcore.function("Integral", [
-    expr,
-    @symcore.Expr::Tuple([dynamicsymbols_t, lower, upper]),
-  ])
+  @symcore.function("Integral", [expr, Tuple([dynamicsymbols_t, lower, upper])])
 }
 
 ///|
@@ -25,14 +22,14 @@ fn motion_integral_scalar(expr : Expr, lower : Expr, upper : Expr) -> Expr {
     return simplify_expr(expr * (upper - lower))
   }
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let out : Array[Expr] = []
       for arg in args {
         out.push(motion_integral_scalar(arg, lower, upper))
       }
       simplify_expr(@symcore.add(out))
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let indep : Array[Expr] = []
       let dep : Array[Expr] = []
       for arg in args {
@@ -51,11 +48,11 @@ fn motion_integral_scalar(expr : Expr, lower : Expr, upper : Expr) -> Expr {
         motion_integral_symbolic(expr, lower, upper)
       }
     }
-    Expr::Symbol(name) if name == "t" =>
+    Symbol(name) if name == "t" =>
       simplify_expr(half * ((upper ^ int_expr(2)) - (lower ^ int_expr(2))))
-    Expr::Pow(base, exp) if @symcore.compare_expr(base, dynamicsymbols_t) == 0 =>
+    Pow(base, exp) if @symcore.compare_expr(base, dynamicsymbols_t) == 0 =>
       match exp {
-        Expr::Number(n) if n.is_integral() => {
+        Number(n) if n.is_integral() => {
           let power = n.numerator().to_int()
           if power == -1 {
             motion_integral_symbolic(expr, lower, upper)
@@ -147,14 +144,14 @@ pub fn kinematic_equations(
     "323", "1", "2", "3", "",
   ]
   if speeds.length() != 3 {
-    raise VectorError::TypeError("Need to supply 3 body-fixed speeds")
+    raise TypeError("Need to supply 3 body-fixed speeds")
   }
   if rot_kind == "body" || rot_kind == "space" {
     if !approved.contains(order) {
-      raise VectorError::ValueError("Not an acceptable rotation order")
+      raise ValueError("Not an acceptable rotation order")
     }
     if coords.length() != 3 {
-      raise VectorError::ValueError("Need 3 coordinates for body or space")
+      raise ValueError("Need 3 coordinates for body or space")
     }
     let w1 = speeds[0]
     let w2 = speeds[1]
@@ -253,7 +250,7 @@ pub fn kinematic_equations(
               q2d - w1 * s3 - w2 * c3,
               q3d - (w1 * c3 - w2 * s3) * c2 * inv_s2 - w3,
             ]
-          _ => raise VectorError::ValueError("Not an acceptable rotation order")
+          _ => raise ValueError("Not an acceptable rotation order")
         }
       "space" =>
         match order {
@@ -329,20 +326,20 @@ pub fn kinematic_equations(
               q2d - w1 * s1 - w2 * c1,
               q3d - (mw1 * c1 + w2 * s1) * inv_s2,
             ]
-          _ => raise VectorError::ValueError("Not an acceptable rotation order")
+          _ => raise ValueError("Not an acceptable rotation order")
         }
-      _ => raise VectorError::ValueError("Not an approved rotation type")
+      _ => raise ValueError("Not an approved rotation type")
     }
     return out.map(simplify_expr)
   }
   if rot_kind != "quaternion" {
-    raise VectorError::ValueError("Not an approved rotation type")
+    raise ValueError("Not an approved rotation type")
   }
   if order != "" {
-    raise VectorError::ValueError("Cannot have rotation order for quaternion")
+    raise ValueError("Cannot have rotation order for quaternion")
   }
   if coords.length() != 4 {
-    raise VectorError::ValueError("Need 4 coordinates for quaternion")
+    raise ValueError("Need 4 coordinates for quaternion")
   }
   let q0 = coords[0]
   let q1 = coords[1]

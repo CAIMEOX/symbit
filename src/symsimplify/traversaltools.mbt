@@ -26,7 +26,7 @@ fn use_at(expr : Expr, func : (Expr) -> Expr, depth : Int) -> Expr {
 ///|
 fn is_atom_traversal(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(_) | Expr::Symbol(_) => true
+    Number(_) | Symbol(_) => true
     _ => false
   }
 }

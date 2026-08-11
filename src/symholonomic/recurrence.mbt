@@ -16,12 +16,12 @@ pub fn recurrence_operator(
   parent : RecurrenceOperatorAlgebra,
 ) -> RecurrenceOperator {
   let normalized = trim_coeffs(coeffs)
-  RecurrenceOperator::{ coeffs: normalized, parent }
+  { coeffs: normalized, parent }
 }
 
 ///|
 pub fn recurrence_operators(
-  symbol_var? : Expr = Expr::Symbol("n"),
+  symbol_var? : Expr = Symbol("n"),
   generator? : String = "Sn",
 ) -> (RecurrenceOperatorAlgebra, RecurrenceOperator) {
   ignore(require_symbol_name(symbol_var))

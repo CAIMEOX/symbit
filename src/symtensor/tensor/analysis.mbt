@@ -16,21 +16,21 @@ fn index_key(index : TensorIndex) -> String {
 fn collect_indices(expr : TensorExpr) -> Array[TensorIndex] {
   let out : Array[TensorIndex] = Array::new()
   match expr {
-    TensorExpr::Tensor(_, indices) =>
+    Tensor(_, indices) =>
       for idx in indices {
         out.push(idx)
       }
-    TensorExpr::Mul(items) =>
+    Mul(items) =>
       for item in items {
         match item {
-          TensorExpr::Tensor(_, indices) =>
+          Tensor(_, indices) =>
             for idx in indices {
               out.push(idx)
             }
           _ => ()
         }
       }
-    TensorExpr::Add(items) =>
+    Add(items) =>
       for item in items {
         let indices = collect_indices(item)
         for idx in indices {
@@ -92,7 +92,7 @@ pub fn get_indices(expr : TensorExpr) -> TensorIndexInfo {
       }
     }
   }
-  TensorIndexInfo::{ free, dummy }
+  { free, dummy }
 }
 
 ///|

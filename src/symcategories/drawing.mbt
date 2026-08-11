@@ -1,6 +1,6 @@
 ///|
 fn latex_name(name : String) -> String {
-  @symprint.latex(@symcore.Expr::Symbol(name))
+  @symprint.latex(Symbol(name))
 }
 
 ///|
@@ -116,7 +116,7 @@ pub impl Show for ArrowStringDescription with fn to_string(self) -> String {
 
 ///|
 pub impl Show for ArrowStringDescription with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -557,8 +557,8 @@ fn process_morphism(
   }
 
   let morphism_name = match morphism {
-    Morphism::Identity(obj) => "id_{" + latex_object(obj) + "}"
-    Morphism::Composite(items) => {
+    Identity(obj) => "id_{" + latex_object(obj) + "}"
+    Composite(items) => {
       let component_names : Array[String] = Array::new()
       for item in items {
         match item.name() {
@@ -572,7 +572,7 @@ fn process_morphism(
       }
       reversed.join("\\circ ")
     }
-    Morphism::Named(_, _, name) => latex_name(name)
+    Named(_, _, name) => latex_name(name)
   }
 
   arrow_string_description(
@@ -867,7 +867,7 @@ fn build_xypic_string(
         Some(obj) => {
           result += latex_object(obj) + " "
           for morphism in object_morphisms[obj] {
-            result += morphisms_str_info[morphism].to_string() + " "
+            result += Show::to_string(morphisms_str_info[morphism]) + " "
           }
         }
         None => ()
@@ -965,7 +965,7 @@ pub fn preview_diagram(
   _euler? : Bool = true,
   _hints? : GridHints = generic_hints(),
 ) -> Unit raise CategoryError {
-  raise CategoryError::Unsupported(
+  raise Unsupported(
     "preview_diagram requires an external LaTeX preview backend and is not implemented in symbit.",
   )
 }

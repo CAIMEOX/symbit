@@ -53,18 +53,18 @@ test "monomial checked division helpers match sympy" {
     monomial_deg([3, 4, 1]),
   )
   let exact = @sympolys.term_div(
-    (m([3, 2]), @sympolys.fe_from_int(6, Domain::ZZ)),
-    (m([1, 1]), @sympolys.fe_from_int(3, Domain::ZZ)),
-    Domain::ZZ,
+    (m([3, 2]), @sympolys.fe_from_int(6, ZZ)),
+    (m([1, 1]), @sympolys.fe_from_int(3, ZZ)),
+    ZZ,
   )
   assert_eq(
     remove_spaces(term_text(exact)),
     remove_spaces(term_div_zz([3, 2], 6, [1, 1], 3)),
   )
   let inexact = @sympolys.term_div(
-    (m([3, 2]), @sympolys.fe_from_int(5, Domain::ZZ)),
-    (m([1, 1]), @sympolys.fe_from_int(3, Domain::ZZ)),
-    Domain::ZZ,
+    (m([3, 2]), @sympolys.fe_from_int(5, ZZ)),
+    (m([1, 1]), @sympolys.fe_from_int(3, ZZ)),
+    ZZ,
   )
   assert_eq(
     remove_spaces(term_text(inexact)),

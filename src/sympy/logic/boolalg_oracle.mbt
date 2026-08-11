@@ -52,7 +52,7 @@ fn py_str_enum(obj : @py.PyObjectEnum) -> String {
 
 ///|
 fn sympy_expr(expr : String) -> @py.PyObjectEnum raise {
-  sympy_call_must("sympy.sympify", [OracleArg::Str(expr)])
+  sympy_call_must("sympy.sympify", [Str(expr)])
 }
 
 ///|
@@ -62,11 +62,7 @@ fn sympy_str_call(
   kwargs? : Map[String, OracleArg] = {},
 ) -> String raise {
   let expr_obj = sympy_expr(expr)
-  let res = sympy_call_must(
-    path,
-    [OracleArg::PyObj(objenum_to_obj(expr_obj))],
-    kwargs~,
-  )
+  let res = sympy_call_must(path, [PyObj(objenum_to_obj(expr_obj))], kwargs~)
   py_str_enum(res)
 }
 
@@ -83,9 +79,7 @@ pub fn boolalg_to_nnf(
   form? : String,
 ) -> String raise {
   let _ = form
-  let kwargs : Map[String, OracleArg] = {
-    "simplify": OracleArg::Bool(simplify),
-  }
+  let kwargs : Map[String, OracleArg] = { "simplify": Bool(simplify) }
   sympy_str_call("sympy.logic.boolalg.to_nnf", expr, kwargs~)
 }
 
@@ -96,8 +90,8 @@ pub fn boolalg_to_cnf(
   force? : Bool = false,
 ) -> String raise {
   let kwargs : Map[String, OracleArg] = {
-    "simplify": OracleArg::Bool(simplify),
-    "force": OracleArg::Bool(force),
+    "simplify": Bool(simplify),
+    "force": Bool(force),
   }
   sympy_str_call("sympy.logic.boolalg.to_cnf", expr, kwargs~)
 }
@@ -109,15 +103,15 @@ pub fn boolalg_to_dnf(
   force? : Bool = false,
 ) -> String raise {
   let kwargs : Map[String, OracleArg] = {
-    "simplify": OracleArg::Bool(simplify),
-    "force": OracleArg::Bool(force),
+    "simplify": Bool(simplify),
+    "force": Bool(force),
   }
   sympy_str_call("sympy.logic.boolalg.to_dnf", expr, kwargs~)
 }
 
 ///|
 pub fn boolalg_to_anf(expr : String, deep? : Bool = true) -> String raise {
-  let kwargs : Map[String, OracleArg] = { "deep": OracleArg::Bool(deep) }
+  let kwargs : Map[String, OracleArg] = { "deep": Bool(deep) }
   sympy_str_call("sympy.logic.boolalg.to_anf", expr, kwargs~)
 }
 
@@ -142,9 +136,7 @@ pub fn boolalg_is_dnf(expr : String) -> String raise {
 
 ///|
 pub fn boolalg_is_nnf(expr : String, simplified? : Bool = true) -> String raise {
-  let kwargs : Map[String, OracleArg] = {
-    "simplified": OracleArg::Bool(simplified),
-  }
+  let kwargs : Map[String, OracleArg] = { "simplified": Bool(simplified) }
   sympy_str_call("sympy.logic.boolalg.is_nnf", expr, kwargs~)
 }
 
@@ -173,7 +165,7 @@ fn sympy_symbols_from_names(names : Array[String]) -> Array[OracleArg] raise {
   let out : Array[OracleArg] = Array::new()
   for name in names {
     let obj = sympy_expr(name)
-    out.push(OracleArg::PyObj(objenum_to_obj(obj)))
+    out.push(PyObj(objenum_to_obj(obj)))
   }
   out
 }
@@ -185,9 +177,9 @@ pub fn boolalg_sop_form_ints(
   dontcares? : Array[Int],
 ) -> String raise {
   let var_list = OracleArg::List(sympy_symbols_from_names(variables))
-  let args : Array[OracleArg] = [var_list, OracleArg::IntList(minterms)]
+  let args : Array[OracleArg] = [var_list, IntList(minterms)]
   match dontcares {
-    Some(dc) => args.push(OracleArg::IntList(dc))
+    Some(dc) => args.push(IntList(dc))
     None => ()
   }
   let res = sympy_call_must("sympy.logic.boolalg.SOPform", args)
@@ -201,9 +193,9 @@ pub fn boolalg_pos_form_ints(
   dontcares? : Array[Int],
 ) -> String raise {
   let var_list = OracleArg::List(sympy_symbols_from_names(variables))
-  let args : Array[OracleArg] = [var_list, OracleArg::IntList(minterms)]
+  let args : Array[OracleArg] = [var_list, IntList(minterms)]
   match dontcares {
-    Some(dc) => args.push(OracleArg::IntList(dc))
+    Some(dc) => args.push(IntList(dc))
     None => ()
   }
   let res = sympy_call_must("sympy.logic.boolalg.POSform", args)
@@ -216,7 +208,7 @@ pub fn boolalg_anf_form(
   truthvalues : Array[Int],
 ) -> String raise {
   let var_list = OracleArg::List(sympy_symbols_from_names(variables))
-  let args : Array[OracleArg] = [var_list, OracleArg::IntList(truthvalues)]
+  let args : Array[OracleArg] = [var_list, IntList(truthvalues)]
   let res = sympy_call_must("sympy.logic.boolalg.ANFform", args)
   py_str_enum(res)
 }
@@ -230,17 +222,17 @@ pub fn boolalg_simplify_logic(
   dontcare? : String,
 ) -> String raise {
   let kwargs : Map[String, OracleArg] = {
-    "deep": OracleArg::Bool(deep),
-    "force": OracleArg::Bool(force),
+    "deep": Bool(deep),
+    "force": Bool(force),
   }
   match form {
-    Some(v) => kwargs["form"] = OracleArg::Str(v)
+    Some(v) => kwargs["form"] = Str(v)
     None => ()
   }
   match dontcare {
     Some(dc) => {
       let dc_obj = sympy_expr(dc)
-      kwargs["dontcare"] = OracleArg::PyObj(objenum_to_obj(dc_obj))
+      kwargs["dontcare"] = PyObj(objenum_to_obj(dc_obj))
     }
     None => ()
   }
@@ -257,8 +249,8 @@ pub fn boolalg_bool_map(expr1 : String, expr2 : String) -> String raise {
   let obj1 = sympy_expr(expr1)
   let obj2 = sympy_expr(expr2)
   let res = sympy_call_must("sympy.logic.boolalg.bool_map", [
-    OracleArg::PyObj(objenum_to_obj(obj1)),
-    OracleArg::PyObj(objenum_to_obj(obj2)),
+    PyObj(objenum_to_obj(obj1)),
+    PyObj(objenum_to_obj(obj2)),
   ])
   py_str_enum(res)
 }
@@ -269,7 +261,7 @@ pub fn boolalg_bool_minterm_int(
   k : Int,
 ) -> String raise {
   let var_list = OracleArg::List(sympy_symbols_from_names(variables))
-  let args : Array[OracleArg] = [OracleArg::Int(k), var_list]
+  let args : Array[OracleArg] = [Int(k), var_list]
   let res = sympy_call_must("sympy.logic.boolalg.bool_minterm", args)
   py_str_enum(res)
 }
@@ -280,7 +272,7 @@ pub fn boolalg_bool_minterm_bits(
   bits : Array[Int],
 ) -> String raise {
   let var_list = OracleArg::List(sympy_symbols_from_names(variables))
-  let args : Array[OracleArg] = [OracleArg::IntList(bits), var_list]
+  let args : Array[OracleArg] = [IntList(bits), var_list]
   let res = sympy_call_must("sympy.logic.boolalg.bool_minterm", args)
   py_str_enum(res)
 }
@@ -291,7 +283,7 @@ pub fn boolalg_bool_maxterm_int(
   k : Int,
 ) -> String raise {
   let var_list = OracleArg::List(sympy_symbols_from_names(variables))
-  let args : Array[OracleArg] = [OracleArg::Int(k), var_list]
+  let args : Array[OracleArg] = [Int(k), var_list]
   let res = sympy_call_must("sympy.logic.boolalg.bool_maxterm", args)
   py_str_enum(res)
 }
@@ -302,7 +294,7 @@ pub fn boolalg_bool_maxterm_bits(
   bits : Array[Int],
 ) -> String raise {
   let var_list = OracleArg::List(sympy_symbols_from_names(variables))
-  let args : Array[OracleArg] = [OracleArg::IntList(bits), var_list]
+  let args : Array[OracleArg] = [IntList(bits), var_list]
   let res = sympy_call_must("sympy.logic.boolalg.bool_maxterm", args)
   py_str_enum(res)
 }
@@ -313,7 +305,7 @@ pub fn boolalg_bool_monomial_int(
   k : Int,
 ) -> String raise {
   let var_list = OracleArg::List(sympy_symbols_from_names(variables))
-  let args : Array[OracleArg] = [OracleArg::Int(k), var_list]
+  let args : Array[OracleArg] = [Int(k), var_list]
   let res = sympy_call_must("sympy.logic.boolalg.bool_monomial", args)
   py_str_enum(res)
 }
@@ -324,7 +316,7 @@ pub fn boolalg_bool_monomial_bits(
   bits : Array[Int],
 ) -> String raise {
   let var_list = OracleArg::List(sympy_symbols_from_names(variables))
-  let args : Array[OracleArg] = [OracleArg::IntList(bits), var_list]
+  let args : Array[OracleArg] = [IntList(bits), var_list]
   let res = sympy_call_must("sympy.logic.boolalg.bool_monomial", args)
   py_str_enum(res)
 }

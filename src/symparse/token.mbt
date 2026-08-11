@@ -61,7 +61,7 @@ pub struct Token {
 /// - Returns: A `Token` value.
 /// - Limits: Performs no source-text validation.
 pub fn token(kind : TokenKind, span : Span) -> Token {
-  Token::{ kind, span }
+  { kind, span }
 }
 
 ///|
@@ -76,29 +76,29 @@ pub fn token(kind : TokenKind, span : Span) -> Token {
 /// - Limits: Literal payloads are not included in the returned name.
 pub fn token_kind_name(kind : TokenKind) -> String {
   match kind {
-    TokenKind::IntLit(_) => "integer"
-    TokenKind::DecimalLit(_) => "decimal"
-    TokenKind::Ident(_) => "identifier"
-    TokenKind::Plus => "`+`"
-    TokenKind::Minus => "`-`"
-    TokenKind::Star => "`*`"
-    TokenKind::Slash => "`/`"
-    TokenKind::Pow => "`**`"
-    TokenKind::Caret => "`^`"
-    TokenKind::Bang => "`!`"
-    TokenKind::BangBang => "`!!`"
-    TokenKind::LParen => "`(`"
-    TokenKind::RParen => "`)`"
-    TokenKind::Comma => "`,`"
-    TokenKind::Colon => "`:`"
-    TokenKind::Eq => "`=`"
-    TokenKind::EqEq => "`==`"
-    TokenKind::Ne => "`!=`"
-    TokenKind::Lt => "`<`"
-    TokenKind::Le => "`<=`"
-    TokenKind::Gt => "`>`"
-    TokenKind::Ge => "`>=`"
-    TokenKind::Eof => "end of input"
+    IntLit(_) => "integer"
+    DecimalLit(_) => "decimal"
+    Ident(_) => "identifier"
+    Plus => "`+`"
+    Minus => "`-`"
+    Star => "`*`"
+    Slash => "`/`"
+    Pow => "`**`"
+    Caret => "`^`"
+    Bang => "`!`"
+    BangBang => "`!!`"
+    LParen => "`(`"
+    RParen => "`)`"
+    Comma => "`,`"
+    Colon => "`:`"
+    Eq => "`=`"
+    EqEq => "`==`"
+    Ne => "`!=`"
+    Lt => "`<`"
+    Le => "`<=`"
+    Gt => "`>`"
+    Ge => "`>=`"
+    Eof => "end of input"
   }
 }
 

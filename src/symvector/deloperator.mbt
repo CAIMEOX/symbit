@@ -1,5 +1,5 @@
 ///|
-pub let delop : Del = Del::{  }
+pub let delop : Del = Default::default()
 
 ///|
 pub fn Del::gradient(

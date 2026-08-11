@@ -30,7 +30,7 @@ fn nf_oracle_find_min_poly_power_basis(
 fn nf_coeffs_norm(coeffs : Array[@symnum.BigRational]?) -> String {
   match coeffs {
     Some(items) => {
-      let body = items.map(c => c.to_string()).join(",")
+      let body = items.map(c => Show::to_string(c)).join(",")
       "[\{body}]"
     }
     None => "None"
@@ -40,7 +40,7 @@ fn nf_coeffs_norm(coeffs : Array[@symnum.BigRational]?) -> String {
 ///|
 fn nf_reps_norm(reps : Array[Array[@symnum.BigRational]]) -> String {
   let outer = reps.map(rep => {
-    let body = rep.map(c => c.to_string()).join(",")
+    let body = rep.map(c => Show::to_string(c)).join(",")
     "[\{body}]"
   })
   let joined = outer.join(",")
@@ -117,19 +117,17 @@ test "numberfields: utility frontdoor parity" {
   let hnf_true = [[2, 1, 0], [0, 3, 2], [0, 0, 5]]
   let hnf_bad_bound = [[2, 3], [0, 1]]
   assert_eq(
-    @sympolys.is_sq_maxrank_HNF(
-      @sympolys.domain_matrix_from_ints(hnf_true, @sympolys.Domain::ZZ),
-    ),
+    @sympolys.is_sq_maxrank_HNF(@sympolys.domain_matrix_from_ints(hnf_true, ZZ)),
     numberfield_is_sq_maxrank_HNF(hnf_true),
   )
   assert_eq(
     @sympolys.is_sq_maxrank_HNF(
-      @sympolys.domain_matrix_from_ints(hnf_bad_bound, @sympolys.Domain::ZZ),
+      @sympolys.domain_matrix_from_ints(hnf_bad_bound, ZZ),
     ),
     numberfield_is_sq_maxrank_HNF(hnf_bad_bound),
   )
   let x = @symcore.Expr::Symbol("x")
-  let b = @sympolys.PolyBuilder::new(["x"], @sympolys.Domain::ZZ)
+  let b = @sympolys.PolyBuilder::new(["x"], ZZ)
   let pb = @sympolys.numberfield_power_basis(
     b.from_expr((x ^ @symcore.int(2)) - @symcore.int(2)),
   )
@@ -147,7 +145,7 @@ test "numberfields: utility frontdoor parity" {
   let subspace_rows = [[1, 2], [7, 3], [0, 4]]
   assert_eq(
     @sympolys.supplement_a_subspace(
-      @sympolys.domain_matrix_from_ints(subspace_rows, @sympolys.Domain::QQ),
+      @sympolys.domain_matrix_from_ints(subspace_rows, QQ),
     )
     .to_matrix_string()
     .replace_all(old=" ", new=""),
@@ -194,32 +192,32 @@ test "numberfields: minpoly parity for rationals and radicals" {
 ///|
 test "numberfields: find_min_poly power-basis parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = @sympolys.PolyBuilder::new(["x"], @sympolys.Domain::ZZ)
+  let b = @sympolys.PolyBuilder::new(["x"], ZZ)
   let pb = @sympolys.numberfield_power_basis(
     b.from_expr((x ^ @symcore.int(2)) - @symcore.int(2)),
   )
 
   let theta = @sympolys.make_mod_elt(pb, [0N, 1N])
   assert_eq(
-    nf_norm(@sympolys.find_min_poly(theta, @sympolys.Domain::QQ).to_expr()),
+    nf_norm(@sympolys.find_min_poly(theta, QQ).to_expr()),
     nf_oracle_find_min_poly_power_basis("x**2 - 2", [0, 1]),
   )
 
   let shifted = @sympolys.make_mod_elt(pb, [1N, 1N])
   assert_eq(
-    nf_norm(@sympolys.find_min_poly(shifted, @sympolys.Domain::QQ).to_expr()),
+    nf_norm(@sympolys.find_min_poly(shifted, QQ).to_expr()),
     nf_oracle_find_min_poly_power_basis("x**2 - 2", [1, 1]),
   )
 
   let scaled = @sympolys.make_mod_elt(pb, [1N, 2N], denom=3N)
   assert_eq(
-    nf_norm(@sympolys.find_min_poly(scaled, @sympolys.Domain::QQ).to_expr()),
+    nf_norm(@sympolys.find_min_poly(scaled, QQ).to_expr()),
     nf_oracle_find_min_poly_power_basis("x**2 - 2", [1, 2], denom=3),
   )
 
   let constant = @sympolys.make_mod_elt(pb, [2N, 0N], denom=3N)
   assert_eq(
-    nf_norm(@sympolys.find_min_poly(constant, @sympolys.Domain::QQ).to_expr()),
+    nf_norm(@sympolys.find_min_poly(constant, QQ).to_expr()),
     nf_oracle_find_min_poly_power_basis("x**2 - 2", [2, 0], denom=3),
   )
 }
@@ -321,8 +319,8 @@ test "numberfields: to_number_field and primitive_element parity" {
   let sqrt3 = @symcore.int(3) ^ half
   let k = @sympolys.to_number_field(sqrt2, gen="a")
   match k {
-    Domain::AlgExt(base, gens, rels) => {
-      assert_true(base is Domain::QQ && gens.equal(["a"]) && rels.length() == 1)
+    AlgExt(base, gens, rels) => {
+      assert_true(base is QQ && gens.equal(["a"]) && rels.length() == 1)
       let rel = nf_norm(rels[0])
       assert_eq(rel, "a**2-2")
     }

@@ -10,9 +10,7 @@ pub enum OpticsMediumArg {
 
 ///|
 fn is_infinite_expr(expr : Expr) -> Bool {
-  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) ||
-  expr ==
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
+  expr == NumberSymbol(Infinity) || expr == NumberSymbol(NegativeInfinity)
 }
 
 ///|
@@ -33,9 +31,9 @@ fn optics_rational_to_double(value : @symnum.BigRational) -> Double {
 ///|
 fn optics_expr_real_double(expr : Expr) -> Double? {
   match expr {
-    Expr::Number(value) => Some(optics_rational_to_double(value))
-    Expr::Symbol(name) if name == "pi" => Some(@math.PI)
-    Expr::Add(args) => {
+    Number(value) => Some(optics_rational_to_double(value))
+    Symbol(name) if name == "pi" => Some(@math.PI)
+    Add(args) => {
       let mut acc = 0.0
       for arg in args {
         match optics_expr_real_double(arg) {
@@ -45,7 +43,7 @@ fn optics_expr_real_double(expr : Expr) -> Double? {
       }
       Some(acc)
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = 1.0
       for arg in args {
         match optics_expr_real_double(arg) {
@@ -55,7 +53,7 @@ fn optics_expr_real_double(expr : Expr) -> Double? {
       }
       Some(acc)
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (optics_expr_real_double(base), expr_number_value(exp)) {
         (Some(lhs), Some(rhs)) =>
           Some(@math.pow(lhs, optics_rational_to_double(rhs)))
@@ -92,19 +90,19 @@ fn optics_numeric_tir(
 
 ///|
 pub fn optics_medium_arg(medium : Medium) -> OpticsMediumArg {
-  OpticsMediumArg::Medium(medium)
+  Medium(medium)
 }
 
 ///|
 pub fn optics_index_arg(index : Expr) -> OpticsMediumArg {
-  OpticsMediumArg::Index(index)
+  Index(index)
 }
 
 ///|
 pub fn refractive_index_of_medium(medium : OpticsMediumArg) -> Expr {
   match medium {
-    OpticsMediumArg::Medium(value) => value.refractive_index()
-    OpticsMediumArg::Index(value) => value
+    Medium(value) => value.refractive_index()
+    Index(value) => value
   }
 }
 
@@ -116,16 +114,16 @@ pub fn refraction_angle(
 ) -> Expr raise PhysicsError {
   match expr_number_value(incident) {
     Some(value) if value.compare(@symnum.BigRational::zero()) < 0 =>
-      raise PhysicsError::ValueError("Angle of incidence not in range [0:pi/2)")
+      raise ValueError("Angle of incidence not in range [0:pi/2)")
     _ => ()
   }
   match optics_expr_real_double(incident) {
     Some(value) if value < 0.0 || value >= @math.PI * 0.5 =>
-      raise PhysicsError::ValueError("Angle of incidence not in range [0:pi/2)")
+      raise ValueError("Angle of incidence not in range [0:pi/2)")
     _ => ()
   }
   if optics_numeric_tir(incident, medium1, medium2) {
-    raise PhysicsError::ValueError("Ray undergoes total internal reflection")
+    raise ValueError("Ray undergoes total internal reflection")
   }
   let n1 = refractive_index_of_medium(medium1)
   let n2 = refractive_index_of_medium(medium2)
@@ -140,12 +138,12 @@ pub fn fresnel_coefficients(
 ) -> Array[Expr] raise PhysicsError {
   match expr_number_value(angle_of_incidence) {
     Some(value) if value.compare(@symnum.BigRational::zero()) < 0 =>
-      raise PhysicsError::ValueError("Angle of incidence not in range [0:pi/2)")
+      raise ValueError("Angle of incidence not in range [0:pi/2)")
     _ => ()
   }
   match optics_expr_real_double(angle_of_incidence) {
     Some(value) if value < 0.0 || value >= @math.PI * 0.5 =>
-      raise PhysicsError::ValueError("Angle of incidence not in range [0:pi/2)")
+      raise ValueError("Angle of incidence not in range [0:pi/2)")
     _ => ()
   }
   if optics_numeric_tir(angle_of_incidence, medium1, medium2) {
@@ -216,9 +214,7 @@ pub fn critical_angle(
   let n2 = refractive_index_of_medium(medium2)
   match (expr_number_value(n1), expr_number_value(n2)) {
     (Some(lhs), Some(rhs)) if rhs.compare(lhs) > 0 =>
-      raise PhysicsError::ValueError(
-        "Total internal reflection impossible for n1 < n2",
-      )
+      raise ValueError("Total internal reflection impossible for n1 < n2")
     _ => ()
   }
   @symelem.asin(expr_div(n2, n1))
@@ -251,12 +247,12 @@ pub fn mirror_formula(
     (if u is Some(_) { 1 } else { 0 }) +
     (if v is Some(_) { 1 } else { 0 })
   guard supplied == 2 else {
-    raise PhysicsError::ValueError("Please provide exactly two parameters")
+    raise ValueError("Please provide exactly two parameters")
   }
   match (focal_length, u, v) {
     (None, Some(uv), Some(vv)) =>
       if is_infinite_expr(uv) && is_infinite_expr(vv) {
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        NumberSymbol(Infinity)
       } else if is_infinite_expr(uv) {
         vv
       } else if is_infinite_expr(vv) {
@@ -266,7 +262,7 @@ pub fn mirror_formula(
       }
     (Some(ff), None, Some(vv)) =>
       if is_infinite_expr(vv) && is_infinite_expr(ff) {
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        NumberSymbol(Infinity)
       } else if is_infinite_expr(vv) {
         ff
       } else if is_infinite_expr(ff) {
@@ -276,7 +272,7 @@ pub fn mirror_formula(
       }
     (Some(ff), Some(uv), None) =>
       if is_infinite_expr(uv) && is_infinite_expr(ff) {
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        NumberSymbol(Infinity)
       } else if is_infinite_expr(uv) {
         ff
       } else if is_infinite_expr(ff) {
@@ -284,7 +280,7 @@ pub fn mirror_formula(
       } else {
         expr_div(ff * uv, uv - ff)
       }
-    _ => raise PhysicsError::ValueError("Please provide exactly two parameters")
+    _ => raise ValueError("Please provide exactly two parameters")
   }
 }
 
@@ -298,12 +294,12 @@ pub fn lens_formula(
     (if u is Some(_) { 1 } else { 0 }) +
     (if v is Some(_) { 1 } else { 0 })
   guard supplied == 2 else {
-    raise PhysicsError::ValueError("Please provide exactly two parameters")
+    raise ValueError("Please provide exactly two parameters")
   }
   match (focal_length, u, v) {
     (None, Some(uv), Some(vv)) =>
       if is_infinite_expr(uv) && is_infinite_expr(vv) {
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        NumberSymbol(Infinity)
       } else if is_infinite_expr(uv) {
         vv
       } else if is_infinite_expr(vv) {
@@ -313,7 +309,7 @@ pub fn lens_formula(
       }
     (Some(ff), None, Some(vv)) =>
       if is_infinite_expr(vv) && is_infinite_expr(ff) {
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
+        NumberSymbol(NegativeInfinity)
       } else if is_infinite_expr(vv) {
         int(-1) * ff
       } else if is_infinite_expr(ff) {
@@ -323,7 +319,7 @@ pub fn lens_formula(
       }
     (Some(ff), Some(uv), None) =>
       if is_infinite_expr(uv) && is_infinite_expr(ff) {
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        NumberSymbol(Infinity)
       } else if is_infinite_expr(uv) {
         ff
       } else if is_infinite_expr(ff) {
@@ -331,7 +327,7 @@ pub fn lens_formula(
       } else {
         expr_div(ff * uv, ff + uv)
       }
-    _ => raise PhysicsError::ValueError("Please provide exactly two parameters")
+    _ => raise ValueError("Please provide exactly two parameters")
   }
 }
 

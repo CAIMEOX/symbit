@@ -17,8 +17,8 @@
 /// - Limits: Does not validate convergence or simplify parameter overlaps.
 pub fn hyper(a : Array[Expr], b : Array[Expr], z : Expr) -> Expr {
   let args : Array[Expr] = Array::new()
-  args.push(@symcore.Expr::Tuple(a))
-  args.push(@symcore.Expr::Tuple(b))
+  args.push(Tuple(a))
+  args.push(Tuple(b))
   args.push(z)
   @symcore.function("hyper", args)
 }
@@ -40,14 +40,8 @@ pub fn meijerg(
   z : Expr,
 ) -> Expr {
   let args : Array[Expr] = Array::new()
-  let a = @symcore.Expr::Tuple([
-    @symcore.Expr::Tuple(a1),
-    @symcore.Expr::Tuple(a2),
-  ])
-  let b = @symcore.Expr::Tuple([
-    @symcore.Expr::Tuple(b1),
-    @symcore.Expr::Tuple(b2),
-  ])
+  let a = @symcore.Expr::Tuple([Tuple(a1), Tuple(a2)])
+  let b = @symcore.Expr::Tuple([Tuple(b1), Tuple(b2)])
   args.push(a)
   args.push(b)
   args.push(z)

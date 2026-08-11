@@ -37,7 +37,7 @@ pub fn plane_are_concurrent(planes : Array[Plane]) -> Bool raise GeometryError {
     return false
   }
   let base_line = match base[0] {
-    GeometryEntity::Line(line_obj) => line_obj
+    Line(line_obj) => line_obj
     _ => return false
   }
   for i in 2..<unique.length() {
@@ -46,7 +46,7 @@ pub fn plane_are_concurrent(planes : Array[Plane]) -> Bool raise GeometryError {
       return false
     }
     match hits[0] {
-      GeometryEntity::Line(line_obj) =>
+      Line(line_obj) =>
         if !(base_line.contains(line_obj.p1()) &&
           base_line.contains(line_obj.p2())) {
           return false
@@ -63,28 +63,28 @@ pub fn Plane::is_coplanar(
   other : GeometryEntity,
 ) -> Bool raise GeometryError {
   match other {
-    GeometryEntity::Plane(plane_obj) =>
+    Plane(plane_obj) =>
       self.contains_point(plane_obj.point_) &&
       geo_all_zero(geo_cross3(self.normal_, plane_obj.normal_))
-    GeometryEntity::Point(point_obj) =>
+    Point(point_obj) =>
       if point_obj.ambient_dimension() <= 2 {
         plane_has_xy_normal_only(self)
       } else {
         self.contains_point(point_obj)
       }
-    GeometryEntity::Line(line_obj) =>
+    Line(line_obj) =>
       if line_obj.ambient_dimension() <= 2 {
         plane_has_xy_normal_only(self)
       } else {
         self.contains_point(line_obj.p1_) && self.contains_point(line_obj.p2_)
       }
-    GeometryEntity::Ray(ray_obj) =>
+    Ray(ray_obj) =>
       if ray_obj.ambient_dimension() <= 2 {
         plane_has_xy_normal_only(self)
       } else {
         self.contains_point(ray_obj.p1_) && self.contains_point(ray_obj.p2_)
       }
-    GeometryEntity::Segment(seg_obj) =>
+    Segment(seg_obj) =>
       if seg_obj.ambient_dimension() <= 2 {
         plane_has_xy_normal_only(self)
       } else {

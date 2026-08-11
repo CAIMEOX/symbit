@@ -10,7 +10,7 @@ fn sympy_contains_str_adv(set : Set, elem : @symcore.Expr) -> String raise {
 
 ///|
 fn setbool_str_adv(val : SetBool) -> String {
-  val.to_string()
+  Show::to_string(val)
 }
 
 ///|
@@ -21,11 +21,7 @@ test "symsets conditionset parity" {
   assert_eq(to_string(cs_true), sympy_set_str_adv(cs_true))
   let cs_false = condition_set(x, @symlogic.bool_false(), base~)
   assert_eq(to_string(cs_false), sympy_set_str_adv(cs_false))
-  let constraint = @symlogic.linear_constraint_from_ints(
-    [("x", 1)],
-    0,
-    @symlogic.RelOp::Gt,
-  )
+  let constraint = @symlogic.linear_constraint_from_ints([("x", 1)], 0, Gt)
   let cond = @symlogic.BoolExpr::LRA(constraint)
   let cs = condition_set(x, cond, base~)
   assert_eq(to_string(cs), sympy_set_str_adv(cs))

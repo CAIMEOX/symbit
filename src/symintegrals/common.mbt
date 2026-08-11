@@ -17,7 +17,7 @@ pub type LimitSpec = (String, Expr?, Expr?)
 
 ///|
 fn expr_from_num(value : @symnum.BigRational) -> Expr {
-  @symcore.Expr::Number(value)
+  Number(value)
 }
 
 ///|
@@ -50,7 +50,7 @@ fn[T] retry_with_simplified(expr : Expr, parse : (Expr) -> T?) -> T? {
 ///|
 fn expr_exact_int(expr : Expr) -> Int? {
   match expr {
-    @symcore.Expr::Number(n) =>
+    Number(n) =>
       if n.is_integral() {
         Some(n.numerator().to_int())
       } else {
@@ -72,7 +72,7 @@ fn expr_exact_int(expr : Expr) -> Int? {
 ///|
 fn expr_trivial_zero(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.is_zero()
+    Number(n) => n.is_zero()
     _ =>
       match expr_exact_int(expr) {
         Some(0) => true
@@ -84,7 +84,7 @@ fn expr_trivial_zero(expr : Expr) -> Bool {
 ///|
 fn expr_trivial_one(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.is_one()
+    Number(n) => n.is_one()
     _ =>
       match expr_exact_int(expr) {
         Some(1) => true
@@ -96,7 +96,7 @@ fn expr_trivial_one(expr : Expr) -> Bool {
 ///|
 fn expr_trivial_minus_one(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.is_integral() && n.numerator().equal_int(-1)
+    Number(n) => n.is_integral() && n.numerator().equal_int(-1)
     _ =>
       match expr_exact_int(expr) {
         Some(-1) => true
@@ -108,11 +108,9 @@ fn expr_trivial_minus_one(expr : Expr) -> Bool {
 ///|
 fn expr_eval_special(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) =>
-      expr_simplify(@symcore.add(args.map(expr_eval_special)))
-    @symcore.Expr::Mul(args) =>
-      expr_simplify(@symcore.mul(args.map(expr_eval_special)))
-    @symcore.Expr::Pow(base, exp) =>
+    Add(args) => expr_simplify(@symcore.add(args.map(expr_eval_special)))
+    Mul(args) => expr_simplify(@symcore.mul(args.map(expr_eval_special)))
+    Pow(base, exp) =>
       expr_simplify(expr_eval_special(base) ^ expr_eval_special(exp))
     _ if @symcore.application_has_name(expr, "exp", arity=1) =>
       match @symcore.application_args(expr) {
@@ -123,7 +121,7 @@ fn expr_eval_special(expr : Expr) -> Expr {
               Some("log") => expr_eval_special(arg)
             _ =>
               match inner {
-                @symcore.Expr::Mul(args) if args.length() == 2 => {
+                Mul(args) if args.length() == 2 => {
                   let mut numeric : @symnum.BigRational? = None
                   let mut logged : Expr? = None
                   for arg in args {
@@ -175,8 +173,7 @@ fn expr_eval_special(expr : Expr) -> Expr {
 ///|
 fn expr_add(lhs : Expr, rhs : Expr) -> Expr {
   match (lhs, rhs) {
-    (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) =>
-      @symcore.Expr::Number(a + b)
+    (Number(a), Number(b)) => Number(a + b)
     _ =>
       if expr_trivial_zero(lhs) {
         rhs
@@ -191,8 +188,7 @@ fn expr_add(lhs : Expr, rhs : Expr) -> Expr {
 ///|
 fn expr_sub(lhs : Expr, rhs : Expr) -> Expr {
   match (lhs, rhs) {
-    (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) =>
-      @symcore.Expr::Number(a - b)
+    (Number(a), Number(b)) => Number(a - b)
     _ =>
       if expr_trivial_zero(rhs) {
         lhs
@@ -207,8 +203,7 @@ fn expr_sub(lhs : Expr, rhs : Expr) -> Expr {
 ///|
 fn expr_mul(lhs : Expr, rhs : Expr) -> Expr {
   match (lhs, rhs) {
-    (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) =>
-      @symcore.Expr::Number(a * b)
+    (Number(a), Number(b)) => Number(a * b)
     _ =>
       if expr_trivial_zero(lhs) || expr_trivial_zero(rhs) {
         @symcore.int(0)
@@ -229,8 +224,8 @@ fn expr_mul(lhs : Expr, rhs : Expr) -> Expr {
 ///|
 fn expr_div(lhs : Expr, rhs : Expr) -> Expr {
   match (lhs, rhs) {
-    (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) =>
-      @symcore.Expr::Number(a.div_r(b)) catch {
+    (Number(a), Number(b)) =>
+      Number(a.div_r(b)) catch {
         _ => @symcore.mul([lhs, @symcore.pow(rhs, @symcore.int(-1))])
       }
     _ =>
@@ -258,9 +253,9 @@ fn expr_pow(base : Expr, exp : Expr) -> Expr {
     @symcore.int(1)
   } else {
     match (base, expr_exact_int(exp)) {
-      (@symcore.Expr::Number(value), Some(power)) =>
+      (Number(value), Some(power)) =>
         match expr_exact_number_pow_no_simplify(value, power) {
-          Some(pow_value) => @symcore.Expr::Number(pow_value)
+          Some(pow_value) => Number(pow_value)
           None => @symcore.pow(base, exp)
         }
       _ => @symcore.pow(base, exp)
@@ -277,8 +272,8 @@ fn expr_eq(lhs : Expr, rhs : Expr) -> Bool {
 ///|
 fn expr_num_value(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
-    @symcore.Expr::Add(args) => {
+    Number(n) => Some(n)
+    Add(args) => {
       let mut acc = @symnum.BigRational::zero()
       for arg in args {
         match expr_num_value(arg) {
@@ -288,7 +283,7 @@ fn expr_num_value(expr : Expr) -> @symnum.BigRational? {
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = @symnum.BigRational::one()
       for arg in args {
         match expr_num_value(arg) {
@@ -298,7 +293,7 @@ fn expr_num_value(expr : Expr) -> @symnum.BigRational? {
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (expr_num_value(base), expr_exact_int(exp)) {
         (Some(base), Some(power)) => {
           let zero = @symnum.BigRational::zero()
@@ -331,7 +326,7 @@ fn expr_num_value(expr : Expr) -> @symnum.BigRational? {
         }
         _ => None
       }
-    @symcore.Expr::Float(f) =>
+    Float(f) =>
       if !f.is_finite() {
         None
       } else {
@@ -341,7 +336,7 @@ fn expr_num_value(expr : Expr) -> @symnum.BigRational? {
         }
         Some(value)
       }
-    @symcore.Expr::ComplexFloat(z) =>
+    ComplexFloat(z) =>
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
@@ -422,13 +417,13 @@ fn expr_exact_sqrt(expr : Expr) -> Expr {
 ///|
 fn expr_sqrt_positive(expr : Expr) -> Expr {
   match expr_simplify(expr) {
-    @symcore.Expr::Pow(base, exp) if expr_eq(exp, @symcore.int(2)) &&
+    Pow(base, exp) if expr_eq(exp, @symcore.int(2)) &&
       @symcore.application_has_name(base, "exp", arity=1) =>
       match @symcore.application_args(base) {
         Some([arg]) => @symelem.exp(arg)
         _ => @symelem.sqrt(expr)
       }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut numeric = @symcore.int(1)
       let mut exp_square : Expr? = None
       let rest : Array[Expr] = []
@@ -436,7 +431,7 @@ fn expr_sqrt_positive(expr : Expr) -> Expr {
         match arg {
           _ if expr_num_value(arg) is Some(_) =>
             numeric = expr_mul(numeric, arg)
-          @symcore.Expr::Pow(base, exp) =>
+          Pow(base, exp) =>
             if expr_eq(exp, @symcore.int(2)) &&
               exp_square is None &&
               @symcore.application_has_name(base, "exp", arity=1) {
@@ -473,7 +468,7 @@ fn piecewise_expr(
     args.push(item.1)
   }
   args.push(default)
-  args.push(@symcore.Expr::Boolean(true))
+  args.push(Boolean(true))
   @symcore.raw_function("Piecewise", args)
 }
 
@@ -487,7 +482,7 @@ fn subst_symbol(expr : Expr, var_name : String, value : Expr) -> Expr {
 ///|
 fn expr_depends_on(expr : Expr, var_name : String) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(name) => name == var_name
+    Symbol(name) => name == var_name
     _ => @symcore.children(expr).any(child => expr_depends_on(child, var_name))
   }
 }
@@ -495,7 +490,7 @@ fn expr_depends_on(expr : Expr, var_name : String) -> Bool {
 ///|
 fn collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => seen[name] = true
+    Symbol(name) => seen[name] = true
     _ =>
       for child in @symcore.children(expr) {
         collect_symbols(child, seen)
@@ -521,11 +516,11 @@ fn infer_single_symbol(expr : Expr) -> String? {
 ///|
 fn parse_limit(limit : Expr) -> LimitSpec? {
   match limit {
-    @symcore.Expr::Symbol(name) => Some((name, None, None))
+    Symbol(name) => Some((name, None, None))
     _ =>
       match @symcore.tuple_items(limit) {
-        Some([@symcore.Expr::Symbol(name)]) => Some((name, None, None))
-        Some([@symcore.Expr::Symbol(name), lower, upper]) =>
+        Some([Symbol(name)]) => Some((name, None, None))
+        Some([Symbol(name), lower, upper]) =>
           Some((name, Some(lower), Some(upper)))
         _ => None
       }
@@ -562,17 +557,15 @@ fn poly_coeffs_upto2_scale(coeff : Expr, coeffs : Array[Expr]) -> Array[Expr] {
 ///|
 fn poly_coeffs_upto2_raw(expr : Expr, var_name : String) -> Array[Expr]? {
   match expr {
-    @symcore.Expr::Number(_)
-    | @symcore.Expr::Float(_)
-    | @symcore.Expr::ComplexFloat(_) =>
+    Number(_) | Float(_) | ComplexFloat(_) =>
       Some([expr, @symcore.int(0), @symcore.int(0)])
-    @symcore.Expr::Symbol(name) =>
+    Symbol(name) =>
       if name == var_name {
         Some([@symcore.int(0), @symcore.int(1), @symcore.int(0)])
       } else {
         Some([expr, @symcore.int(0), @symcore.int(0)])
       }
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let coeffs = [@symcore.int(0), @symcore.int(0), @symcore.int(0)]
       for arg in args {
         match poly_coeffs_upto2_raw(arg, var_name) {
@@ -586,7 +579,7 @@ fn poly_coeffs_upto2_raw(expr : Expr, var_name : String) -> Array[Expr]? {
       }
       Some(coeffs)
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let var_factors : Array[Expr] = []
       let mut const_coeff : Expr? = None
       for arg in args {
@@ -645,7 +638,7 @@ fn poly_coeffs_upto2_raw(expr : Expr, var_name : String) -> Array[Expr]? {
       }
       Some(coeffs)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match expr_is_int_value(exp) {
         Some(0) => Some([@symcore.int(1), @symcore.int(0), @symcore.int(0)])
         Some(1) => poly_coeffs_upto2_raw(base, var_name)
@@ -690,27 +683,22 @@ fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
 ///|
 fn poly_coeffs_general_int(expr : Expr, var_name : String) -> Array[Expr]? {
   match expr {
-    @symcore.Expr::Number(_)
-    | @symcore.Expr::Float(_)
-    | @symcore.Expr::NumberSymbol(_)
-    | @symcore.Expr::ComplexFloat(_) => Some([expr])
-    @symcore.Expr::Symbol(name) =>
+    Number(_) | Float(_) | NumberSymbol(_) | ComplexFloat(_) => Some([expr])
+    Symbol(name) =>
       if name == var_name {
         Some([@symcore.int(0), @symcore.int(1)])
       } else {
         Some([expr])
       }
-    @symcore.Expr::Dummy(_, _)
-    | @symcore.Expr::Wild(_, _, _)
-    | @symcore.Expr::FunctionHead(_)
-    | @symcore.Expr::UndefinedFunction(_) => Some([expr])
-    @symcore.Expr::Apply(_, _) =>
+    Dummy(_, _) | Wild(_, _, _) | FunctionHead(_) | UndefinedFunction(_) =>
+      Some([expr])
+    Apply(_, _) =>
       if expr_depends_on(expr, var_name) {
         None
       } else {
         Some([expr])
       }
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let acc : Array[Expr] = [@symcore.int(0)]
       for arg in args {
         match poly_coeffs_general_int(arg, var_name) {
@@ -720,7 +708,7 @@ fn poly_coeffs_general_int(expr : Expr, var_name : String) -> Array[Expr]? {
       }
       Some(poly_trim_general_int(acc))
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc : Array[Expr] = [@symcore.int(1)]
       for arg in args {
         match poly_coeffs_general_int(arg, var_name) {
@@ -730,7 +718,7 @@ fn poly_coeffs_general_int(expr : Expr, var_name : String) -> Array[Expr]? {
       }
       Some(poly_trim_general_int(acc))
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match expr_is_int_value(exp) {
         Some(power) if power >= 0 =>
           match poly_coeffs_general_int(base, var_name) {
@@ -739,13 +727,13 @@ fn poly_coeffs_general_int(expr : Expr, var_name : String) -> Array[Expr]? {
           }
         _ => if expr_depends_on(expr, var_name) { None } else { Some([expr]) }
       }
-    @symcore.Expr::Mod(_, _) =>
+    Mod(_, _) =>
       if expr_depends_on(expr, var_name) {
         None
       } else {
         Some([expr])
       }
-    @symcore.Expr::Derivative(_, _) | @symcore.Expr::Subs(_, _, _) =>
+    Derivative(_, _) | Subs(_, _, _) =>
       if expr_depends_on(expr, var_name) {
         None
       } else {
@@ -757,11 +745,7 @@ fn poly_coeffs_general_int(expr : Expr, var_name : String) -> Array[Expr]? {
       } else {
         Some([expr])
       }
-    @symcore.Expr::Boolean(_)
-    | @symcore.Expr::Tuple(_)
-    | @symcore.Expr::Dict(_)
-    | @symcore.Expr::Relational(_, _, _)
-    | @symcore.Expr::Lambda(_, _) => None
+    Boolean(_) | Tuple(_) | Dict(_) | Relational(_, _, _) | Lambda(_, _) => None
     _ => if expr_depends_on(expr, var_name) { None } else { Some([expr]) }
   }
 }
@@ -871,13 +855,12 @@ fn linear_coeffs(expr : Expr, var_name : String) -> (Expr, Expr)? {
 ///|
 fn is_univariate_rational(expr : Expr, var_name : String) -> (Expr, Expr)? {
   match expr_simplify(expr) {
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let num_parts : Array[Expr] = []
       let den_parts : Array[Expr] = []
       for arg in args {
         match arg {
-          @symcore.Expr::Pow(base, exp) if expr_is_minus_one(exp) =>
-            den_parts.push(base)
+          Pow(base, exp) if expr_is_minus_one(exp) => den_parts.push(base)
           _ => num_parts.push(arg)
         }
       }
@@ -898,7 +881,7 @@ fn is_univariate_rational(expr : Expr, var_name : String) -> (Expr, Expr)? {
         None
       }
     }
-    @symcore.Expr::Pow(base, exp) if expr_is_minus_one(exp) =>
+    Pow(base, exp) if expr_is_minus_one(exp) =>
       if poly_coeffs_upto2(base, var_name) is Some(_) {
         Some((@symcore.int(1), base))
       } else {
@@ -916,7 +899,7 @@ fn quadratic_discriminant(a : Expr, b : Expr, c : Expr) -> Expr {
 ///|
 fn symbol_name(expr : Expr) -> String? {
   match expr {
-    @symcore.Expr::Symbol(name) => Some(name)
+    Symbol(name) => Some(name)
     _ => None
   }
 }

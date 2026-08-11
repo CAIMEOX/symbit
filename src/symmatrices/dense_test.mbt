@@ -1,6 +1,6 @@
 ///|
 fn mtxt(m : Matrix) -> String {
-  m.to_string()
+  Show::to_string(m)
 }
 
 ///|
@@ -79,7 +79,7 @@ test "matrices dense insertion deletion diagonal and vec" {
   inspect(mtxt(a.row_del(0)), content="Matrix([[3, 4]])")
   inspect(mtxt(a.col_del(1)), content="Matrix([[1], [3]])")
   inspect(a.diagonal().map(@symprint.pretty_string).join(","), content="1,4")
-  inspect(a.vec().to_string(), content="Matrix([[1], [3], [2], [4]])")
+  inspect(Show::to_string(a.vec()), content="Matrix([[1], [3], [2], [4]])")
 }
 
 ///|
@@ -100,6 +100,6 @@ test "matrices dense predicates and sparse conversions" {
     ]).is_diagonal(),
   )
   assert_true(a.nnz() == 2)
-  inspect(a.to_sparse().to_string(), content="Matrix([[1, 0], [0, 2]])")
+  inspect(Show::to_string(a.to_sparse()), content="Matrix([[1, 0], [0, 2]])")
   inspect(a.todok().length(), content="2")
 }

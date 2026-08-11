@@ -27,38 +27,24 @@ test "latex renders arithmetic and function powers like SymPy" {
 test "latex renders symbolic names constants and wrappers" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  inspect(latex(@symcore.Expr::Symbol("alpha_1")), content="\\alpha_{1}")
-  inspect(latex(@symcore.Expr::Symbol("alphahat")), content="\\hat{\\alpha}")
-  inspect(
-    latex(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
-    content="\\pi",
-  )
-  inspect(
-    latex(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1)),
-    content="e",
-  )
-  inspect(
-    latex(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma)),
-    content="\\gamma",
-  )
-  inspect(
-    latex(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity),
-    ),
-    content="\\tilde{\\infty}",
-  )
+  inspect(latex(Symbol("alpha_1")), content="\\alpha_{1}")
+  inspect(latex(Symbol("alphahat")), content="\\hat{\\alpha}")
+  inspect(latex(NumberSymbol(Pi)), content="\\pi")
+  inspect(latex(NumberSymbol(Exp1)), content="e")
+  inspect(latex(NumberSymbol(EulerGamma)), content="\\gamma")
+  inspect(latex(NumberSymbol(ComplexInfinity)), content="\\tilde{\\infty}")
   inspect(latex(@symcore.dummy(name="x")), content="x")
-  inspect(latex(@symcore.Expr::Wild("x", [], [])), content="x")
+  inspect(latex(Wild("x", [], [])), content="x")
   inspect(
-    latex(@symcore.Expr::Tuple([x, @symcore.int(2)])),
+    latex(Tuple([x, @symcore.int(2)])),
     content="\\left( x, \\  2\\right)",
   )
   inspect(
-    latex(@symcore.Expr::Subs(x + y, x, @symcore.int(1))),
+    latex(Subs(x + y, x, @symcore.int(1))),
     content="\\left. x + y \\right|_{\\substack{ x=1 }}",
   )
   inspect(
-    latex(@symcore.lambda_expr(@symcore.Expr::Tuple([x]), x + @symcore.int(1))),
+    latex(@symcore.lambda_expr(Tuple([x]), x + @symcore.int(1))),
     content="\\left( x \\mapsto x + 1 \\right)",
   )
 }
@@ -68,10 +54,7 @@ test "latex supports mode wrappers and relationals" {
   let x = @symcore.Expr::Symbol("x")
   inspect(latex(x, mode="inline"), content="$x$")
   inspect(
-    latex(
-      @symcore.Expr::Relational(@symcore.RelOp::Le, x, @symcore.int(2)),
-      mode="equation",
-    ),
+    latex(Relational(Le, x, @symcore.int(2)), mode="equation"),
     content="\\begin{equation}x \\leq 2\\end{equation}",
   )
 }
@@ -123,13 +106,7 @@ test "latex supports SymPy-style printer settings" {
     latex(@symcore.raw_mul([@symcore.int(2), x, y]), mul_symbol=Some("times")),
     content="2 \\times x \\times y",
   )
-  inspect(
-    latex(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-      imaginary_unit="j",
-    ),
-    content="j",
-  )
+  inspect(latex(NumberSymbol(ImaginaryUnit), imaginary_unit="j"), content="j")
   inspect(
     latex(@symcore.derivative_constructor_expr(fx, [x]), diff_operator="rd"),
     content="\\frac{\\mathrm{d}}{\\mathrm{d} x} f{\\left(x \\right)}",
@@ -140,7 +117,7 @@ test "latex supports SymPy-style printer settings" {
   )
   inspect(
     latex(
-      @symcore.pow(@symcore.Expr::Symbol("x^*"), @symcore.int(2)),
+      @symcore.pow(Symbol("x^*"), @symcore.int(2)),
       parenthesize_super=false,
     ),
     content="{x^{*}}^{2}",
@@ -160,24 +137,21 @@ test "latex renders integrals big operators piecewise and transforms" {
   let ft = @symcore.applied_undefined_function("f", [t])
   let fk = @symcore.applied_undefined_function("f", [k])
   inspect(
-    latex(@symcore.function("Integral", [x, @symcore.Expr::Tuple([x])])),
+    latex(@symcore.function("Integral", [x, Tuple([x])])),
     content="\\int x\\, dx",
   )
   inspect(
     latex(
       @symcore.function("Integral", [
         x,
-        @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(1)]),
+        Tuple([x, @symcore.int(0), @symcore.int(1)]),
       ]),
     ),
     content="\\int\\limits_{0}^{1} x\\, dx",
   )
   inspect(
     latex(
-      @symcore.function("Sum", [
-        x,
-        @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(3)]),
-      ]),
+      @symcore.function("Sum", [x, Tuple([x, @symcore.int(1), @symcore.int(3)])]),
     ),
     content="\\sum_{x=1}^{3} x",
   )
@@ -185,7 +159,7 @@ test "latex renders integrals big operators piecewise and transforms" {
     latex(
       @symcore.function("Product", [
         x,
-        @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(3)]),
+        Tuple([x, @symcore.int(1), @symcore.int(3)]),
       ]),
     ),
     content="\\prod_{x=1}^{3} x",
@@ -194,9 +168,9 @@ test "latex renders integrals big operators piecewise and transforms" {
     latex(
       @symcore.function("Piecewise", [
         x,
-        @symcore.Expr::Relational(@symcore.RelOp::Lt, x, @symcore.int(1)),
+        Relational(Lt, x, @symcore.int(1)),
         @symcore.int(1),
-        @symcore.Expr::Boolean(true),
+        Boolean(true),
       ]),
     ),
     content="\\begin{cases} x & \\text{for}\\: x < 1 \\\\1 & \\text{otherwise} \\end{cases}",
@@ -288,7 +262,7 @@ test "latex renders logic set notation and delta-like special functions" {
     content="\\varepsilon_{x y 1}",
   )
   inspect(latex(reals), content="\\mathbb{R}")
-  inspect(latex(@symcore.Expr::Symbol("UniversalSet")), content="\\mathbb{U}")
+  inspect(latex(Symbol("UniversalSet")), content="\\mathbb{U}")
   inspect(
     latex(@symcore.function("FiniteSet", [x, @symcore.int(1), y])),
     content="\\left\\{1, x, y\\right\\}",
@@ -298,8 +272,8 @@ test "latex renders logic set notation and delta-like special functions" {
       @symcore.function("Interval", [
         @symcore.int(0),
         @symcore.int(1),
-        @symcore.Expr::Boolean(true),
-        @symcore.Expr::Boolean(true),
+        Boolean(true),
+        Boolean(true),
       ]),
     ),
     content="\\left(0, 1\\right)",
@@ -343,7 +317,7 @@ test "latex renders logic set notation and delta-like special functions" {
     latex(
       @symcore.function("ConditionSet", [
         x,
-        @symcore.Expr::Relational(@symcore.RelOp::Gt, x, @symcore.int(0)),
+        Relational(Gt, x, @symcore.int(0)),
         reals,
       ]),
     ),

@@ -36,10 +36,10 @@ fn eigen_expr_equal(lhs : Expr, rhs : Expr) -> Bool {
     return false
   }
   match @symcore.evalf(diff, prec=120) {
-    @symcore.Expr::Number(value) => value == @symnum.BigRational::zero()
-    @symcore.Expr::Float(value) =>
+    Number(value) => value == @symnum.BigRational::zero()
+    Float(value) =>
       (value.to_double() catch { _ => return false }).abs() <= 1.0e-12
-    @symcore.Expr::ComplexFloat(value) =>
+    ComplexFloat(value) =>
       (value.real_part().to_double() catch { _ => return false }).abs() <=
       1.0e-12 &&
       (value.imag_part().to_double() catch { _ => return false }).abs() <=
@@ -72,8 +72,8 @@ test "matrices charpoly and eigenvals" {
   assert_true(
     eigen_expr_equal(
       a.charpoly(),
-      (@symcore.Expr::Symbol("lambda") ^ @symcore.int(2)) +
-      @symcore.int(-5) * @symcore.Expr::Symbol("lambda") +
+      (Symbol("lambda") ^ @symcore.int(2)) +
+      @symcore.int(-5) * Symbol("lambda") +
       @symcore.int(-2),
     ),
   )
@@ -105,18 +105,18 @@ test "matrices charpoly preserves dense diagonally dominant benchmark family" {
   let a = diag_dominant_matrix(4)
   assert_true(
     eigen_expr_equal(
-      a.charpoly(x=@symcore.Expr::Symbol("x")),
+      a.charpoly(x=Symbol("x")),
       @symcore.add([
-        @symcore.pow(@symcore.Expr::Symbol("x"), @symcore.int(4)),
+        @symcore.pow(Symbol("x"), @symcore.int(4)),
         @symcore.mul([
           @symcore.int(-74),
-          @symcore.pow(@symcore.Expr::Symbol("x"), @symcore.int(3)),
+          @symcore.pow(Symbol("x"), @symcore.int(3)),
         ]),
         @symcore.mul([
           @symcore.int(2033),
-          @symcore.pow(@symcore.Expr::Symbol("x"), @symcore.int(2)),
+          @symcore.pow(Symbol("x"), @symcore.int(2)),
         ]),
-        @symcore.mul([@symcore.int(-24600), @symcore.Expr::Symbol("x")]),
+        @symcore.mul([@symcore.int(-24600), Symbol("x")]),
         @symcore.int(110702),
       ]),
     ),
@@ -135,8 +135,8 @@ test "matrices eigenvects diagonalizable and diagonalize" {
   )
   assert_true(a.is_diagonalizable())
   let (p, d) = a.diagonalize()
-  inspect(p.to_string(), content="Matrix([[1, 0], [0, 1]])")
-  inspect(d.to_string(), content="Matrix([[2, 0], [0, 3]])")
+  inspect(Show::to_string(p), content="Matrix([[1, 0], [0, 1]])")
+  inspect(Show::to_string(d), content="Matrix([[2, 0], [0, 3]])")
 }
 
 ///|
@@ -157,16 +157,16 @@ test "matrices jordan cells and jordan form" {
   ])
   let cells = defective.jordan_cells()
   assert_true(cells.length() == 1)
-  inspect(cells[0].to_string(), content="Matrix([[4, 1], [0, 4]])")
+  inspect(Show::to_string(cells[0]), content="Matrix([[4, 1], [0, 4]])")
   let (p, j) = defective.jordan_form()
-  inspect(j.to_string(), content="Matrix([[4, 1], [0, 4]])")
-  inspect((defective * p).to_string(), content=(p * j).to_string())
+  inspect(Show::to_string(j), content="Matrix([[4, 1], [0, 4]])")
+  inspect(Show::to_string(defective * p), content=Show::to_string(p * j))
   let diagonal = matrix([
     [@symcore.int(2), @symcore.int(0)],
     [@symcore.int(0), @symcore.int(3)],
   ])
   let (_, jd) = diagonal.jordan_form(calc_transform=false)
-  inspect(jd.to_string(), content="Matrix([[2, 0], [0, 3]])")
+  inspect(Show::to_string(jd), content="Matrix([[2, 0], [0, 3]])")
 }
 
 ///|
@@ -179,12 +179,15 @@ test "matrices jordan form handles longer generalized eigenvector chains" {
   let cells = upper.jordan_cells()
   assert_true(cells.length() == 1)
   inspect(
-    cells[0].to_string(),
+    Show::to_string(cells[0]),
     content="Matrix([[5, 1, 0], [0, 5, 1], [0, 0, 5]])",
   )
   let (p, j) = upper.jordan_form()
-  inspect(j.to_string(), content="Matrix([[5, 1, 0], [0, 5, 1], [0, 0, 5]])")
-  inspect((upper * p).to_string(), content=(p * j).to_string())
+  inspect(
+    Show::to_string(j),
+    content="Matrix([[5, 1, 0], [0, 5, 1], [0, 0, 5]])",
+  )
+  inspect(Show::to_string(upper * p), content=Show::to_string(p * j))
 }
 
 ///|
@@ -196,12 +199,15 @@ test "matrices jordan form handles mixed Jordan block sizes" {
   ])
   let cells = mixed.jordan_cells()
   inspect(
-    "[" + cells.map(fn(item) { item.to_string() }).join(", ") + "]",
+    "[" + cells.map(fn(item) { Show::to_string(item) }).join(", ") + "]",
     content="[Matrix([[5, 1], [0, 5]]), Matrix([[5]])]",
   )
   let (p, j) = mixed.jordan_form()
-  inspect(j.to_string(), content="Matrix([[5, 1, 0], [0, 5, 0], [0, 0, 5]])")
-  inspect((mixed * p).to_string(), content=(p * j).to_string())
+  inspect(
+    Show::to_string(j),
+    content="Matrix([[5, 1, 0], [0, 5, 0], [0, 0, 5]])",
+  )
+  inspect(Show::to_string(mixed * p), content=Show::to_string(p * j))
 }
 
 ///|
@@ -236,10 +242,10 @@ test "matrices diagonalize supports general non-triangular 4x4 companion" {
   )
   let (p, d) = companion.diagonalize()
   inspect(
-    d.to_string(),
+    Show::to_string(d),
     content="Matrix([[1, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 0], [0, 0, 0, 4]])",
   )
-  inspect((companion * p).to_string(), content=(p * d).to_string())
+  inspect(Show::to_string(companion * p), content=Show::to_string(p * d))
 }
 
 ///|
@@ -288,6 +294,9 @@ test "matrices jordan form supports defective non-triangular 3x3 after exact eig
     ],
   ])
   let (p, j) = transformed.jordan_form()
-  inspect(j.to_string(), content="Matrix([[5, 1, 0], [0, 5, 1], [0, 0, 5]])")
-  inspect((transformed * p).to_string(), content=(p * j).to_string())
+  inspect(
+    Show::to_string(j),
+    content="Matrix([[5, 1, 0], [0, 5, 1], [0, 0, 5]])",
+  )
+  inspect(Show::to_string(transformed * p), content=Show::to_string(p * j))
 }

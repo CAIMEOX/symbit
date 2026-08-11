@@ -34,15 +34,12 @@ pub fn[K : Eq + Hash, V] assoc(m : Map[K, V], k : K, v : V) -> Map[K, V] {
 /// Extract the operator for an Expr.
 pub fn expr_op(expr : @symcore.Expr) -> ExprOp {
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_)
-    | @symcore.ExprForm::Float(_)
-    | @symcore.ExprForm::ComplexFloat(_)
-    | @symcore.ExprForm::Boolean(_) => ExprOp::Number
-    @symcore.ExprForm::Symbol(_) => ExprOp::Symbol
-    @symcore.ExprForm::Add(_) => ExprOp::Add
-    @symcore.ExprForm::Mul(_) => ExprOp::Mul
-    @symcore.ExprForm::Pow(_, _) => ExprOp::Pow
-    _ => ExprOp::Function(@symcore.head_name(expr))
+    Number(_) | Float(_) | ComplexFloat(_) | Boolean(_) => Number
+    Symbol(_) => Symbol
+    Add(_) => Add
+    Mul(_) => Mul
+    Pow(_, _) => Pow
+    _ => Function(@symcore.head_name(expr))
   }
 }
 
@@ -50,19 +47,19 @@ pub fn expr_op(expr : @symcore.Expr) -> ExprOp {
 /// Raw (non-canonical) constructor, mirroring Basic.__new__.
 pub fn expr_new_raw(op : ExprOp, args : Array[@symcore.Expr]) -> @symcore.Expr {
   match op {
-    ExprOp::Number =>
+    Number =>
       match args.length() {
         1 => args[0]
         _ => @symcore.int(0)
       }
-    ExprOp::Symbol =>
+    Symbol =>
       match args.length() {
         1 => args[0]
-        _ => @symcore.Expr::Symbol("")
+        _ => Symbol("")
       }
-    ExprOp::Add => @symcore.raw_add(args)
-    ExprOp::Mul => @symcore.raw_mul(args)
-    ExprOp::Pow =>
+    Add => @symcore.raw_add(args)
+    Mul => @symcore.raw_mul(args)
+    Pow =>
       if args.length() >= 2 {
         @symcore.raw_pow(args[0], args[1])
       } else if args.length() == 1 {
@@ -70,7 +67,7 @@ pub fn expr_new_raw(op : ExprOp, args : Array[@symcore.Expr]) -> @symcore.Expr {
       } else {
         @symcore.raw_pow(@symcore.int(0), @symcore.int(1))
       }
-    ExprOp::Function(name) => @symcore.raw_function(name, args)
+    Function(name) => @symcore.raw_function(name, args)
   }
 }
 
@@ -78,19 +75,19 @@ pub fn expr_new_raw(op : ExprOp, args : Array[@symcore.Expr]) -> @symcore.Expr {
 /// Canonical constructor for Expr.
 pub fn expr_new_eval(op : ExprOp, args : Array[@symcore.Expr]) -> @symcore.Expr {
   match op {
-    ExprOp::Number =>
+    Number =>
       match args.length() {
         1 => args[0]
         _ => @symcore.int(0)
       }
-    ExprOp::Symbol =>
+    Symbol =>
       match args.length() {
         1 => args[0]
-        _ => @symcore.Expr::Symbol("")
+        _ => Symbol("")
       }
-    ExprOp::Add => @symcore.add(args)
-    ExprOp::Mul => @symcore.mul(args)
-    ExprOp::Pow =>
+    Add => @symcore.add(args)
+    Mul => @symcore.mul(args)
+    Pow =>
       if args.length() >= 2 {
         @symcore.pow(args[0], args[1])
       } else if args.length() == 1 {
@@ -98,7 +95,7 @@ pub fn expr_new_eval(op : ExprOp, args : Array[@symcore.Expr]) -> @symcore.Expr 
       } else {
         @symcore.pow(@symcore.int(0), @symcore.int(1))
       }
-    ExprOp::Function(name) => @symcore.function(name, args)
+    Function(name) => @symcore.function(name, args)
   }
 }
 

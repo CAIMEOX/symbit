@@ -133,12 +133,12 @@ test "physics.control.lti: pid and create_transfer_function" {
     s + @symcore.int(1),
     s,
   )
-  assert_true(continuous is SISOLinearTimeInvariant::TF(_))
+  assert_true(continuous is TF(_))
   let discrete = create_transfer_function(
     @symcore.int(1),
     z + @symcore.int(1),
     z,
     sampling_time=control_test_rat(1, 5),
   )
-  assert_true(discrete is SISOLinearTimeInvariant::DTF(_))
+  assert_true(discrete is DTF(_))
 }

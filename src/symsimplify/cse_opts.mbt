@@ -27,7 +27,7 @@ fn rewrite_bottom_up_cseopts(expr : Expr, rule : (Expr) -> Expr) -> Expr {
 ///|
 fn rewrite_sub_pre(expr : Expr) -> Expr {
   match expr {
-    Expr::Add([a, b]) => {
+    Add([a, b]) => {
       let (sa, pa) = split_sign(a)
       let (sb, pb) = split_sign(b)
       if sa < 0 && sb > 0 {
@@ -45,7 +45,7 @@ fn rewrite_sub_pre(expr : Expr) -> Expr {
 ///|
 fn rewrite_sub_post(expr : Expr) -> Expr {
   match expr {
-    Expr::Mul(args) => {
+    Mul(args) => {
       if args.length() < 2 {
         return expr
       }
@@ -53,8 +53,8 @@ fn rewrite_sub_post(expr : Expr) -> Expr {
       let mut neg_count = 0
       for arg in args {
         match arg {
-          Expr::Number(n) if n.is_one() => ()
-          Expr::Number(n) if n.compare(@symnum.BigRational::from_int(-1)) == 0 =>
+          Number(n) if n.is_one() => ()
+          Number(n) if n.compare(@symnum.BigRational::from_int(-1)) == 0 =>
             neg_count = neg_count + 1
           _ => filtered.push(arg)
         }
@@ -73,20 +73,20 @@ fn rewrite_sub_post(expr : Expr) -> Expr {
 ///|
 fn split_sign(expr : Expr) -> (Int, Expr) {
   match expr {
-    Expr::Number(n) =>
+    Number(n) =>
       if n.compare(@symnum.BigRational::zero()) < 0 {
-        (-1, @symcore.Expr::Number(n.neg_r()))
+        (-1, Number(n.neg_r()))
       } else {
         (1, expr)
       }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut sign = 1
       let factors : Array[Expr] = Array::new()
       for arg in args {
         match arg {
-          Expr::Number(n) if n.compare(@symnum.BigRational::zero()) < 0 => {
+          Number(n) if n.compare(@symnum.BigRational::zero()) < 0 => {
             sign = -sign
-            factors.push(@symcore.Expr::Number(n.neg_r()))
+            factors.push(Number(n.neg_r()))
           }
           _ => factors.push(arg)
         }

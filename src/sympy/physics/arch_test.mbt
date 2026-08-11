@@ -41,7 +41,7 @@ test "physics.continuum_mechanics.arch: init and force queries" {
     crown_y=Some(@symcore.int(5)),
   )
   let expected_shape = @symcore.int(5) +
-    ((@symcore.Expr::Symbol("x") - @symcore.int(5)) ^ @symcore.int(2)) *
+    ((Symbol("x") - @symcore.int(5)) ^ @symcore.int(2)) *
     @symcore.rational_from_ints(-1, 5)
   assert_true(cm_numeric_expr_eq(a.get_shape_eqn(), expected_shape))
   assert_true(

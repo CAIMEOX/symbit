@@ -2,7 +2,7 @@
 test "convert: to_expr roundtrip over ZZ" {
   let x = @symcore.Expr::Symbol("x")
   let expr = (x ^ @symcore.int(3)) + @symcore.int(2) * x + @symcore.int(1)
-  let poly = PolyBuilder::new(["x"], Domain::ZZ).from_expr(expr)
+  let poly = PolyBuilder::new(["x"], ZZ).from_expr(expr)
   let ours = poly.to_string()
   assert_true(expr_equal(ours, @symprint.pretty_string(expr)))
 }
@@ -14,9 +14,7 @@ test "convert: to_expr roundtrip over QQ with ordering" {
   let expr = @symcore.rational_from_ints(1, 2) * (x ^ @symcore.int(2)) +
     @symcore.rational_from_ints(3, 4) * y +
     @symcore.int(1)
-  let poly = PolyBuilder::new(["x", "y"], Domain::QQ)
-    .order(TermOrder::Lex)
-    .from_expr(expr)
+  let poly = PolyBuilder::new(["x", "y"], QQ).order(Lex).from_expr(expr)
   let ours = poly.to_string()
   assert_true(expr_equal(ours, @symprint.pretty_string(expr)))
 }
@@ -26,7 +24,7 @@ test "convert: to_string matches SymPy poly_expr over GF" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.rational_from_ints(3, 2) * x +
     @symcore.rational_from_ints(1, 3)
-  let poly = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(expr)
+  let poly = PolyBuilder::new(["x"], GF(5)).from_expr(expr)
   let ours = sympy_normalize(poly.to_string()).trim().to_owned()
   let c1 = mod_rational(3, 2, 5)
   let c0 = mod_rational(1, 3, 5)
@@ -39,21 +37,21 @@ test "convert: to_string matches SymPy poly_expr over GF" {
 test "convert: explicit order and leading helpers cover option branches" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let poly = PolyBuilder::new(["x", "y"], Domain::QQ)
-    .order(TermOrder::Grlex)
+  let poly = PolyBuilder::new(["x", "y"], QQ)
+    .order(Grlex)
     .from_expr((x ^ @symcore.int(2)) + y + @symcore.int(1))
 
-  let as_lex = sympy_normalize(poly.to_string(order=TermOrder::Lex))
+  let as_lex = sympy_normalize(poly.to_string(order=Lex))
   let as_default = sympy_normalize(poly.to_string())
   assert_eq(as_lex, as_default)
 
-  let lc = poly.lc(order=TermOrder::Lex)
-  assert_eq(lc.to_string(), "1")
-  assert_true(poly.lm(order=TermOrder::Lex) is Some(_))
-  assert_true(poly.lt(order=TermOrder::Lex) is Some(_))
+  let lc = poly.lc(order=Lex)
+  assert_eq(Show::to_string(lc), "1")
+  assert_true(poly.lm(order=Lex) is Some(_))
+  assert_true(poly.lt(order=Lex) is Some(_))
 
-  let z = Poly::zero(["x"], Domain::QQ)
-  assert_eq(z.lc().to_string(), "0")
+  let z = Poly::zero(["x"], QQ)
+  assert_eq(Show::to_string(z.lc()), "0")
   assert_true(z.lm() is None)
   assert_true(z.lt() is None)
 
@@ -68,22 +66,22 @@ test "convert: parse_expr failure branches are typed" {
   let y = @symcore.Expr::Symbol("y")
 
   let bad_gen = expect_poly_error(fn() raise PolyError {
-    Poly::from_expr(y, ["x"], Domain::QQ)
+    Poly::from_expr(y, ["x"], QQ)
   })
-  assert_true(bad_gen is PolyError::BadGenerator(_))
+  assert_true(bad_gen is BadGenerator(_))
 
   let bad_pow_kind = expect_poly_error(fn() raise PolyError {
-    Poly::from_expr(x ^ y, ["x"], Domain::QQ)
+    Poly::from_expr(x ^ y, ["x"], QQ)
   })
-  assert_true(bad_pow_kind is PolyError::BadExponent)
+  assert_true(bad_pow_kind is BadExponent)
 
   let bad_pow_neg = expect_poly_error(fn() raise PolyError {
-    Poly::from_expr(x ^ @symcore.int(-1), ["x"], Domain::QQ)
+    Poly::from_expr(x ^ @symcore.int(-1), ["x"], QQ)
   })
-  assert_true(bad_pow_neg is PolyError::BadExponent)
+  assert_true(bad_pow_neg is BadExponent)
 
   let bad_expr_kind = expect_poly_error(fn() raise PolyError {
-    Poly::from_expr(@symcore.function("sin", [x]), ["x"], Domain::QQ)
+    Poly::from_expr(@symcore.function("sin", [x]), ["x"], QQ)
   })
-  assert_true(bad_expr_kind is PolyError::NonPolynomial)
+  assert_true(bad_expr_kind is NonPolynomial)
 }

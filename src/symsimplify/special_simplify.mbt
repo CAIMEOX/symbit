@@ -45,7 +45,7 @@ fn rewrite_bottom_up_special(expr : Expr, rule : (Expr) -> Expr) -> Expr {
 ///|
 fn rewrite_combsimp(expr : Expr) -> Expr {
   match expr {
-    Expr::Mul(args) => reduce_factorial_ratios(args)
+    Mul(args) => reduce_factorial_ratios(args)
     _ =>
       match (@symcore.application_name(expr), @symcore.application_args(expr)) {
         (Some(name), Some(args)) => rewrite_combinatorial_call(name, args, expr)
@@ -65,7 +65,7 @@ fn rewrite_combinatorial_call(
       match exact_numeric_value(arg) {
         Some(value) =>
           match to_nonnegative_int(value) {
-            Some(k) => @symcore.Expr::Number(int_factorial_rational(k))
+            Some(k) => Number(int_factorial_rational(k))
             None => original
           }
         None => original
@@ -74,7 +74,7 @@ fn rewrite_combinatorial_call(
       match exact_numeric_value(arg) {
         Some(value) =>
           match to_positive_int(value) {
-            Some(k) => @symcore.Expr::Number(int_factorial_rational(k - 1))
+            Some(k) => Number(int_factorial_rational(k - 1))
             None => original
           }
         None => original
@@ -97,11 +97,11 @@ fn rewrite_combinatorial_call(
           } else if ki == 0 || ki == ni {
             int(1)
           } else if ki == 1 {
-            @symcore.Expr::Number(
+            Number(
               exact_numeric_value(n_expr).unwrap_or(@symnum.BigRational::zero()),
             )
           } else {
-            @symcore.Expr::Number(int_binomial_rational(ni, ki))
+            Number(int_binomial_rational(ni, ki))
           }
         (None, Some(0)) => int(1)
         (None, Some(1)) => n_expr
@@ -159,7 +159,7 @@ fn factorial_arg(expr : Expr) -> Expr? {
 ///|
 fn inverse_factorial_arg(expr : Expr) -> Expr? {
   match pow_named_unary_application(expr) {
-    Some((name, arg, Expr::Number(exp))) =>
+    Some((name, arg, Number(exp))) =>
       if name == "factorial" &&
         exp.is_integral() &&
         exp.numerator().to_int() == -1 {

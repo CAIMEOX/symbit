@@ -36,13 +36,13 @@ fn pauli_symbol_name(index : Int, label : String) -> String {
 
 ///|
 fn pauli_symbol_expr(index : Int, label : String) -> Expr {
-  Expr::Symbol(pauli_symbol_name(index, label))
+  Symbol(pauli_symbol_name(index, label))
 }
 
 ///|
 fn pauli_symbol_parts(expr : Expr) -> (Int, String)? {
   match expr {
-    Expr::Symbol(name) => {
+    Symbol(name) => {
       if name.length() < 2 {
         return None
       }
@@ -68,7 +68,7 @@ fn pauli_power_atom(expr : Expr) -> (Int, String)? {
     Some(atom) => Some(atom)
     None =>
       match expr {
-        Expr::Pow(base, exp) =>
+        Pow(base, exp) =>
           match (pauli_symbol_parts(base), expr_integer_value(exp)) {
             (Some(atom), Some(n)) if n % 2 != 0 => Some(atom)
             (Some(_), Some(_)) => Some((0, ""))
@@ -82,7 +82,7 @@ fn pauli_power_atom(expr : Expr) -> (Int, String)? {
 ///|
 fn ncsymbol_expr_name(expr : Expr) -> String? {
   match @symcore.application_args(expr) {
-    Some([Expr::Symbol(name)]) if @symcore.application_has_name(
+    Some([Symbol(name)]) if @symcore.application_has_name(
         expr,
         "NCSymbol",
         arity=1,
@@ -104,7 +104,7 @@ fn expr_has_ordered_factor(expr : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(parts) | Expr::Mul(parts) => {
+    Add(parts) | Mul(parts) => {
       for part in parts {
         if expr_has_ordered_factor(part) {
           return true
@@ -112,7 +112,7 @@ fn expr_has_ordered_factor(expr : Expr) -> Bool {
       }
       false
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       expr_has_ordered_factor(base) || expr_has_ordered_factor(exp)
     _ => {
       for part in @symcore.args(expr) {
@@ -178,7 +178,7 @@ fn pauli_absorb_atom(basis : Int, coeff : Expr, next : Int) -> (Int, Expr) {
 ///|
 pub fn pauli(index : Int, label? : String = "sigma") -> Expr raise PhysicsError {
   guard index == 1 || index == 2 || index == 3 else {
-    raise PhysicsError::IndexError("Invalid Pauli index")
+    raise IndexError("Invalid Pauli index")
   }
   pauli_symbol_expr(index, label)
 }
@@ -216,7 +216,7 @@ pub fn tensor_product(factors : Array[Expr]) -> Expr {
 
 ///|
 pub fn ncsymbol(name : String) -> Expr {
-  @symcore.function("NCSymbol", [Expr::Symbol(name)])
+  @symcore.function("NCSymbol", [Symbol(name)])
 }
 
 ///|
@@ -245,7 +245,7 @@ pub fn pauli_mul(lhs : Expr, rhs : Expr) -> Expr {
 ///|
 pub fn evaluate_pauli_product(arg : Expr) -> Expr {
   match arg {
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (pauli_symbol_parts(base), expr_integer_value(exp)) {
         (Some((i, label)), Some(n)) =>
           if n % 2 == 0 {
@@ -259,12 +259,12 @@ pub fn evaluate_pauli_product(arg : Expr) -> Expr {
             evaluate_pauli_product(exp),
           )
       }
-    Expr::Add(parts) => @symcore.add(parts.map(evaluate_pauli_product))
+    Add(parts) => @symcore.add(parts.map(evaluate_pauli_product))
     _ if @symcore.application_has_name(arg, "TensorProduct") =>
       tensor_product(
         @symcore.application_args(arg).unwrap().map(evaluate_pauli_product),
       )
-    Expr::Mul(parts) => {
+    Mul(parts) => {
       let scalars : Array[Expr] = Array::new()
       let ordered : Array[Expr] = Array::new()
       let mut current_label = ""
@@ -315,7 +315,7 @@ pub fn evaluate_pauli_product(arg : Expr) -> Expr {
                   Some(_) => {
                     flush_current()
                     match ncsymbol_expr_name(part) {
-                      Some(name) => ordered.push(Expr::Symbol(name))
+                      Some(name) => ordered.push(Symbol(name))
                       None => ()
                     }
                   }

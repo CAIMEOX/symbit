@@ -23,14 +23,14 @@ fn quantum_accumulate_linear_term(
 ///|
 fn quantum_linear_term(expr : Expr) -> (Expr?, @symnum.BigRational)? {
   match expr {
-    Expr::Number(n) => Some((None, n))
-    Expr::Add(_) => None
-    Expr::Mul(args) => {
+    Number(n) => Some((None, n))
+    Add(_) => None
+    Mul(args) => {
       let mut coeff = @symnum.BigRational::one()
       let bases : Array[Expr] = []
       for arg in args {
         match arg {
-          Expr::Number(n) => coeff = coeff.mul_r(n)
+          Number(n) => coeff = coeff.mul_r(n)
           _ => bases.push(arg)
         }
       }
@@ -49,7 +49,7 @@ fn quantum_collect_linear_terms(
   expr : Expr,
 ) -> (Array[(Expr, @symnum.BigRational)], @symnum.BigRational)? {
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let terms : Array[(Expr, @symnum.BigRational)] = []
       let mut const_coeff = @symnum.BigRational::zero()
       for arg in args {
@@ -117,7 +117,7 @@ fn quantum_tuple_inner_product(lhs : Array[Expr], rhs : Array[Expr]) -> Expr {
   for idx in 0..<lhs.length() {
     if lhs[idx] == rhs[idx] {
       ()
-    } else if lhs[idx] is Expr::Number(_) && rhs[idx] is Expr::Number(_) {
+    } else if lhs[idx] is Number(_) && rhs[idx] is Number(_) {
       return int(0)
     } else {
       out = out * @symcore.raw_function("KroneckerDelta", [lhs[idx], rhs[idx]])

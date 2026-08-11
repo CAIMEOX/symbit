@@ -37,22 +37,22 @@ pub enum GradientValue {
 
 ///|
 pub fn point_reference_point(point : Point) -> PointReference {
-  PointReference::PointObject(point)
+  PointObject(point)
 }
 
 ///|
 pub fn point_reference_coord_system(system : CoordSys3D) -> PointReference {
-  PointReference::CoordSystem(system)
+  CoordSystem(system)
 }
 
 ///|
 pub fn scalar_or_vector_scalar(expr : @symcore.Expr) -> ScalarOrVector {
-  ScalarOrVector::ScalarExpr(expr)
+  ScalarExpr(expr)
 }
 
 ///|
 pub fn scalar_or_vector_vector(vector : Vector) -> ScalarOrVector {
-  ScalarOrVector::VectorExpr(vector)
+  VectorExpr(vector)
 }
 
 ///|
@@ -76,7 +76,7 @@ pub struct Laplacian {
 }
 
 ///|
-pub struct Del {}
+pub struct Del {} derive(Default)
 
 ///|
 pub struct Point {

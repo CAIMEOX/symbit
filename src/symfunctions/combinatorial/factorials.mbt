@@ -222,7 +222,7 @@ pub fn factorial2(n : Expr) -> Expr {
         let value = @symnum.BigRational::new(numerator, denominator) catch {
           _ => return @symcore.function("factorial2", [n])
         }
-        @symcore.Expr::Number(value)
+        Number(value)
       } else {
         @symcore.function("factorial2", [n])
       }

@@ -1,40 +1,40 @@
 ///|
 ///\
 fn leaf_int(v : Int) -> @strategies_tree.Tree[Int] {
-  @strategies_tree.Tree::Leaf(v)
+  Leaf(v)
 }
 
 ///|
 fn choice_int(
   items : Array[@strategies_tree.Tree[Int]],
 ) -> @strategies_tree.Tree[Int] {
-  @strategies_tree.Tree::Choice(items)
+  Choice(items)
 }
 
 ///|
 fn seq_int(
   items : Array[@strategies_tree.Tree[Int]],
 ) -> @strategies_tree.Tree[Int] {
-  @strategies_tree.Tree::Seq(items)
+  Seq(items)
 }
 
 ///|
 fn leaf_rule(rule : (Int) -> Int) -> @strategies_tree.Tree[(Int) -> Int] {
-  @strategies_tree.Tree::Leaf(rule)
+  Leaf(rule)
 }
 
 ///|
 fn choice_rule(
   items : Array[@strategies_tree.Tree[(Int) -> Int]],
 ) -> @strategies_tree.Tree[(Int) -> Int] {
-  @strategies_tree.Tree::Choice(items)
+  Choice(items)
 }
 
 ///|
 fn seq_rule(
   items : Array[@strategies_tree.Tree[(Int) -> Int]],
 ) -> @strategies_tree.Tree[(Int) -> Int] {
-  @strategies_tree.Tree::Seq(items)
+  Seq(items)
 }
 
 ///|

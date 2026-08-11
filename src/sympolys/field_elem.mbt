@@ -133,13 +133,12 @@ fn fe_pow(base : FieldElem, exp : Int) -> FieldElem raise PolyError {
     return fe_inv(fe_pow(base, -exp))
   }
   let mut result = match base {
-    FieldElem::QQ(_) => FieldElem::QQ(@symnum.BigRational::one())
-    FieldElem::CC(_, _) =>
-      FieldElem::CC(@symnum.BigRational::one(), @symnum.BigRational::zero())
-    FieldElem::GFp(p, _) => FieldElem::GFp(p, 1)
-    FieldElem::GFExt(p, _, m) => FieldElem::GFExt(p, [1], m)
-    FieldElem::AlgExt(base, _, minpoly, gen) =>
-      FieldElem::AlgExt(base, [fe_from_int(1, base)], minpoly, gen)
+    QQ(_) => FieldElem::QQ(@symnum.BigRational::one())
+    CC(_, _) => CC(@symnum.BigRational::one(), @symnum.BigRational::zero())
+    GFp(p, _) => GFp(p, 1)
+    GFExt(p, _, m) => GFExt(p, [1], m)
+    AlgExt(base, _, minpoly, gen) =>
+      AlgExt(base, [fe_from_int(1, base)], minpoly, gen)
   }
   let mut b = base
   let mut e = exp
@@ -165,11 +164,11 @@ fn fe_pow(base : FieldElem, exp : Int) -> FieldElem raise PolyError {
 ///   non-canonical representations.
 pub fn fe_is_zero(a : FieldElem) -> Bool {
   match a {
-    FieldElem::QQ(x) => x.is_zero()
-    FieldElem::CC(a, b) => a.is_zero() && b.is_zero()
-    FieldElem::GFp(_, v) => v == 0
-    FieldElem::GFExt(_, coeffs, _) => coeffs.all(v => v == 0)
-    FieldElem::AlgExt(_, coeffs, _, _) => coeffs.all(v => fe_is_zero(v))
+    QQ(x) => x.is_zero()
+    CC(a, b) => a.is_zero() && b.is_zero()
+    GFp(_, v) => v == 0
+    GFExt(_, coeffs, _) => coeffs.all(v => v == 0)
+    AlgExt(_, coeffs, _, _) => coeffs.all(v => fe_is_zero(v))
   }
 }
 
@@ -184,12 +183,11 @@ pub fn fe_is_zero(a : FieldElem) -> Bool {
 ///   equivalent non-canonical values.
 pub fn fe_is_one(a : FieldElem) -> Bool {
   match a {
-    FieldElem::QQ(x) => x.is_one()
-    FieldElem::CC(a, b) => a.is_one() && b.is_zero()
-    FieldElem::GFp(_, v) => v == 1
-    FieldElem::GFExt(_, coeffs, _) => coeffs.length() == 1 && coeffs[0] == 1
-    FieldElem::AlgExt(_, coeffs, _, _) =>
-      coeffs.length() == 1 && fe_is_one(coeffs[0])
+    QQ(x) => x.is_one()
+    CC(a, b) => a.is_one() && b.is_zero()
+    GFp(_, v) => v == 1
+    GFExt(_, coeffs, _) => coeffs.length() == 1 && coeffs[0] == 1
+    AlgExt(_, coeffs, _, _) => coeffs.length() == 1 && fe_is_one(coeffs[0])
   }
 }
 
@@ -202,12 +200,12 @@ pub fn fe_is_one(a : FieldElem) -> Bool {
 /// - Limits: Finite fields and algebraic extension values report `false`.
 pub fn fe_is_negative(a : FieldElem) -> Bool {
   match a {
-    FieldElem::QQ(x) => x.compare(@symnum.BigRational::zero()) < 0
-    FieldElem::CC(real, imag) =>
+    QQ(x) => x.compare(@symnum.BigRational::zero()) < 0
+    CC(real, imag) =>
       imag.is_zero() && real.compare(@symnum.BigRational::zero()) < 0
-    FieldElem::GFp(_, _) => false
-    FieldElem::GFExt(_, _, _) => false
-    FieldElem::AlgExt(_, _, _, _) => false
+    GFp(_, _) => false
+    GFExt(_, _, _) => false
+    AlgExt(_, _, _, _) => false
   }
 }
 
@@ -220,12 +218,12 @@ pub fn fe_is_negative(a : FieldElem) -> Bool {
 /// - Limits: Finite fields and algebraic extension values report `false`.
 pub fn fe_is_positive(a : FieldElem) -> Bool {
   match a {
-    FieldElem::QQ(x) => x.compare(@symnum.BigRational::zero()) > 0
-    FieldElem::CC(real, imag) =>
+    QQ(x) => x.compare(@symnum.BigRational::zero()) > 0
+    CC(real, imag) =>
       imag.is_zero() && real.compare(@symnum.BigRational::zero()) > 0
-    FieldElem::GFp(_, _) => false
-    FieldElem::GFExt(_, _, _) => false
-    FieldElem::AlgExt(_, _, _, _) => false
+    GFp(_, _) => false
+    GFExt(_, _, _) => false
+    AlgExt(_, _, _, _) => false
   }
 }
 
@@ -240,34 +238,29 @@ pub fn fe_is_positive(a : FieldElem) -> Bool {
 ///   values.
 pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError {
   match a {
-    FieldElem::QQ(x) => x
+    QQ(x) => x
     // SymPy reference: sympy/polys/domains/domain.py Domain.convert.
     // Only extension constants can be projected back to QQ.
-    FieldElem::CC(real, imag) =>
-      if imag.is_zero() {
-        real
-      } else {
-        raise PolyError::DomainMismatch
-      }
-    FieldElem::GFp(_, v) => @symnum.BigRational::from_int(v)
-    FieldElem::GFExt(_, coeffs, _) => {
+    CC(real, imag) => if imag.is_zero() { real } else { raise DomainMismatch }
+    GFp(_, v) => @symnum.BigRational::from_int(v)
+    GFExt(_, coeffs, _) => {
       if coeffs.is_empty() {
         return @symnum.BigRational::zero()
       }
       for i in 1..<coeffs.length() {
         if coeffs[i] != 0 {
-          raise PolyError::DomainMismatch
+          raise DomainMismatch
         }
       }
       @symnum.BigRational::from_int(coeffs[0])
     }
-    FieldElem::AlgExt(_, coeffs, _, _) => {
+    AlgExt(_, coeffs, _, _) => {
       if coeffs.is_empty() {
         return @symnum.BigRational::zero()
       }
       for i in 1..<coeffs.length() {
         if !fe_is_zero(coeffs[i]) {
-          raise PolyError::DomainMismatch
+          raise DomainMismatch
         }
       }
       fe_expect_rational(coeffs[0])
@@ -285,30 +278,29 @@ pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError 
 ///   compatible domain representation.
 pub fn fe_add(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
   match (a, b) {
-    (FieldElem::QQ(x), FieldElem::QQ(y)) => FieldElem::QQ(x.add_r(y))
-    (FieldElem::CC(a1, b1), FieldElem::CC(a2, b2)) =>
-      FieldElem::CC(a1.add_r(a2), b1.add_r(b2))
-    (FieldElem::CC(a1, b1), FieldElem::QQ(y)) => FieldElem::CC(a1.add_r(y), b1)
-    (FieldElem::QQ(x), FieldElem::CC(a2, b2)) => FieldElem::CC(x.add_r(a2), b2)
-    (FieldElem::GFp(p1, x), FieldElem::GFp(p2, y)) =>
+    (QQ(x), QQ(y)) => QQ(x.add_r(y))
+    (CC(a1, b1), CC(a2, b2)) => CC(a1.add_r(a2), b1.add_r(b2))
+    (CC(a1, b1), QQ(y)) => CC(a1.add_r(y), b1)
+    (QQ(x), CC(a2, b2)) => CC(x.add_r(a2), b2)
+    (GFp(p1, x), GFp(p2, y)) =>
       if p1 != p2 {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       } else {
-        FieldElem::GFp(p1, fe_pos_mod(x + y, p1))
+        GFp(p1, fe_pos_mod(x + y, p1))
       }
-    (FieldElem::GFExt(p, coeffs, mod_poly), FieldElem::GFExt(p2, c2, m2)) =>
+    (GFExt(p, coeffs, mod_poly), GFExt(p2, c2, m2)) =>
       if p != p2 || !mod_poly.equal(m2) {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       } else {
-        FieldElem::GFExt(p, fe_poly_add(coeffs, c2, p), mod_poly)
+        GFExt(p, fe_poly_add(coeffs, c2, p), mod_poly)
       }
-    (FieldElem::AlgExt(base, c1, m1, g1), FieldElem::AlgExt(base2, c2, m2, g2)) =>
-      if base.not_equal(base2) || !minpoly_equal(m1, m2) || g1 != g2 {
-        raise PolyError::DomainMismatch
+    (AlgExt(base, c1, m1, g1), AlgExt(base2, c2, m2, g2)) =>
+      if Eq::not_equal(base, base2) || !minpoly_equal(m1, m2) || g1 != g2 {
+        raise DomainMismatch
       } else {
-        FieldElem::AlgExt(base, fe_alg_poly_add(c1, c2), m1, g1)
+        AlgExt(base, fe_alg_poly_add(c1, c2), m1, g1)
       }
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
 }
 
@@ -327,13 +319,13 @@ pub fn fe_add(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
 /// layer.
 pub fn fe_neg(a : FieldElem) -> FieldElem {
   match a {
-    FieldElem::QQ(x) => FieldElem::QQ(x.neg_r())
-    FieldElem::CC(a, b) => FieldElem::CC(a.neg_r(), b.neg_r())
-    FieldElem::GFp(p, x) => FieldElem::GFp(p, fe_pos_mod(-x, p))
-    FieldElem::GFExt(p, coeffs, mod_poly) =>
-      FieldElem::GFExt(p, coeffs.map(v => fe_pos_mod(-v, p)), mod_poly)
-    FieldElem::AlgExt(base, coeffs, minpoly, gen) =>
-      FieldElem::AlgExt(base, coeffs.map(v => fe_neg(v)), minpoly, gen)
+    QQ(x) => QQ(x.neg_r())
+    CC(a, b) => CC(a.neg_r(), b.neg_r())
+    GFp(p, x) => GFp(p, fe_pos_mod(-x, p))
+    GFExt(p, coeffs, mod_poly) =>
+      GFExt(p, coeffs.map(v => fe_pos_mod(-v, p)), mod_poly)
+    AlgExt(base, coeffs, minpoly, gen) =>
+      AlgExt(base, coeffs.map(v => fe_neg(v)), minpoly, gen)
   }
 }
 
@@ -369,37 +361,35 @@ pub fn fe_sub(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
 /// this compatibility layer.
 pub fn fe_mul(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
   match (a, b) {
-    (FieldElem::QQ(x), FieldElem::QQ(y)) => FieldElem::QQ(x.mul_r(y))
-    (FieldElem::CC(a1, b1), FieldElem::CC(a2, b2)) => {
+    (QQ(x), QQ(y)) => QQ(x.mul_r(y))
+    (CC(a1, b1), CC(a2, b2)) => {
       let real = a1.mul_r(a2).add_r(b1.mul_r(b2).neg_r())
       let imag = a1.mul_r(b2).add_r(b1.mul_r(a2))
-      FieldElem::CC(real, imag)
+      CC(real, imag)
     }
-    (FieldElem::CC(a1, b1), FieldElem::QQ(y)) =>
-      FieldElem::CC(a1.mul_r(y), b1.mul_r(y))
-    (FieldElem::QQ(x), FieldElem::CC(a2, b2)) =>
-      FieldElem::CC(x.mul_r(a2), x.mul_r(b2))
-    (FieldElem::GFp(p1, x), FieldElem::GFp(p2, y)) =>
+    (CC(a1, b1), QQ(y)) => CC(a1.mul_r(y), b1.mul_r(y))
+    (QQ(x), CC(a2, b2)) => CC(x.mul_r(a2), x.mul_r(b2))
+    (GFp(p1, x), GFp(p2, y)) =>
       if p1 != p2 {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       } else {
-        FieldElem::GFp(p1, fe_pos_mod(x * y, p1))
+        GFp(p1, fe_pos_mod(x * y, p1))
       }
-    (FieldElem::GFExt(p, coeffs, mod_poly), FieldElem::GFExt(p2, c2, m2)) =>
+    (GFExt(p, coeffs, mod_poly), GFExt(p2, c2, m2)) =>
       if p != p2 || !mod_poly.equal(m2) {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       } else {
         let prod = fe_poly_mul(coeffs, c2, p)
-        FieldElem::GFExt(p, fe_poly_mod(prod, mod_poly, p), mod_poly)
+        GFExt(p, fe_poly_mod(prod, mod_poly, p), mod_poly)
       }
-    (FieldElem::AlgExt(base, c1, m1, g1), FieldElem::AlgExt(base2, c2, m2, g2)) =>
-      if base.not_equal(base2) || !minpoly_equal(m1, m2) || g1 != g2 {
-        raise PolyError::DomainMismatch
+    (AlgExt(base, c1, m1, g1), AlgExt(base2, c2, m2, g2)) =>
+      if Eq::not_equal(base, base2) || !minpoly_equal(m1, m2) || g1 != g2 {
+        raise DomainMismatch
       } else {
         let prod = fe_alg_poly_mul(c1, c2, m1)
-        FieldElem::AlgExt(base, fe_alg_poly_mod(prod, m1), m1, g1)
+        AlgExt(base, fe_alg_poly_mod(prod, m1), m1, g1)
       }
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
 }
 
@@ -418,41 +408,36 @@ pub fn fe_mul(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
 /// this compatibility layer.
 pub fn fe_inv(a : FieldElem) -> FieldElem raise PolyError {
   match a {
-    FieldElem::QQ(x) =>
-      FieldElem::QQ(
-        x.reciprocal() catch {
-          _ => raise PolyError::DivisionByZero
-        },
-      )
-    FieldElem::CC(a, b) => {
+    QQ(x) => QQ(x.reciprocal() catch { _ => raise DivisionByZero })
+    CC(a, b) => {
       let denom = a.mul_r(a).add_r(b.mul_r(b))
       if denom.is_zero() {
-        raise PolyError::DivisionByZero
+        raise DivisionByZero
       }
       let real = poly_rational_div(a, denom)
       let imag = poly_rational_div(b.neg_r(), denom)
-      FieldElem::CC(real, imag)
+      CC(real, imag)
     }
-    FieldElem::GFp(p, x) => {
+    GFp(p, x) => {
       if x == 0 {
-        raise PolyError::DivisionByZero
+        raise DivisionByZero
       }
-      FieldElem::GFp(p, fe_mod_inv_int(x, p))
+      GFp(p, fe_mod_inv_int(x, p))
     }
-    FieldElem::GFExt(p, coeffs, mod_poly) => {
-      if fe_is_zero(FieldElem::GFExt(p, coeffs, mod_poly)) {
-        raise PolyError::DivisionByZero
+    GFExt(p, coeffs, mod_poly) => {
+      if fe_is_zero(GFExt(p, coeffs, mod_poly)) {
+        raise DivisionByZero
       }
       let deg = mod_poly.length() - 1
       let q = fe_int_pow(p, deg)
-      fe_pow(FieldElem::GFExt(p, coeffs, mod_poly), q - 2)
+      fe_pow(GFExt(p, coeffs, mod_poly), q - 2)
     }
-    FieldElem::AlgExt(base, coeffs, minpoly, gen) => {
-      if fe_is_zero(FieldElem::AlgExt(base, coeffs, minpoly, gen)) {
-        raise PolyError::DivisionByZero
+    AlgExt(base, coeffs, minpoly, gen) => {
+      if fe_is_zero(AlgExt(base, coeffs, minpoly, gen)) {
+        raise DivisionByZero
       }
       let inv_coeffs = fe_alg_poly_inv(coeffs, minpoly)
-      FieldElem::AlgExt(base, inv_coeffs, minpoly, gen)
+      AlgExt(base, inv_coeffs, minpoly, gen)
     }
   }
 }
@@ -472,38 +457,26 @@ pub fn fe_inv(a : FieldElem) -> FieldElem raise PolyError {
 /// this compatibility layer.
 pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
   match domain {
-    Domain::QQ | Domain::ZZ => FieldElem::QQ(@symnum.BigRational::from_int(val))
-    Domain::CC =>
-      FieldElem::CC(
-        @symnum.BigRational::from_int(val),
-        @symnum.BigRational::zero(),
-      )
-    Domain::ZZ_I | Domain::QQ_I =>
-      FieldElem::CC(
-        @symnum.BigRational::from_int(val),
-        @symnum.BigRational::zero(),
-      )
-    Domain::EX | Domain::EXRAW =>
-      FieldElem::QQ(@symnum.BigRational::from_int(val))
-    Domain::GF(p) => FieldElem::GFp(p, fe_pos_mod(val, p))
-    Domain::GFExt(p, _, m) => FieldElem::GFExt(p, [fe_pos_mod(val, p)], m)
-    Domain::AlgExt(base, gens, rels) => {
+    QQ | ZZ => QQ(@symnum.BigRational::from_int(val))
+    CC => CC(@symnum.BigRational::from_int(val), @symnum.BigRational::zero())
+    ZZ_I | QQ_I =>
+      CC(@symnum.BigRational::from_int(val), @symnum.BigRational::zero())
+    EX | EXRAW => QQ(@symnum.BigRational::from_int(val))
+    GF(p) => GFp(p, fe_pos_mod(val, p))
+    GFExt(p, _, m) => GFExt(p, [fe_pos_mod(val, p)], m)
+    AlgExt(base, gens, rels) => {
       let (minpoly, gen) = load_algext_minpoly(base, gens, rels)
       let base_const = fe_from_int(val, base)
-      FieldElem::AlgExt(base, [base_const], minpoly, gen)
+      AlgExt(base, [base_const], minpoly, gen)
     }
-    Domain::RR =>
-      FieldElem::CC(
-        @symnum.BigRational::from_int(val),
-        @symnum.BigRational::zero(),
-      )
+    RR => CC(@symnum.BigRational::from_int(val), @symnum.BigRational::zero())
     // SymPy reference: sympy/polys/domains/fractionfield.py FractionField.convert.
     // Ground integers are embedded into the base domain and viewed in Frac(base).
-    Domain::Frac(inner) => fe_from_int(val, inner)
-    Domain::PolyRing(base, _) => fe_from_int(val, base)
-    Domain::RationalFunctionField(base, _) => fe_from_int(val, base)
-    Domain::QuotientRing(base, _, _) => fe_from_int(val, base)
-    Domain::PowerSeries(base, _, _) => fe_from_int(val, base)
+    Frac(inner) => fe_from_int(val, inner)
+    PolyRing(base, _) => fe_from_int(val, base)
+    RationalFunctionField(base, _) => fe_from_int(val, base)
+    QuotientRing(base, _, _) => fe_from_int(val, base)
+    PowerSeries(base, _, _) => fe_from_int(val, base)
   }
 }
 
@@ -525,35 +498,29 @@ pub fn fe_from_rational(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   match domain {
-    Domain::QQ => FieldElem::QQ(val)
-    Domain::ZZ =>
-      if val.is_integral() {
-        FieldElem::QQ(val)
-      } else {
-        raise PolyError::CoefficientNotInteger
-      }
-    Domain::CC => FieldElem::CC(val, @symnum.BigRational::zero())
-    Domain::RR => FieldElem::CC(val, @symnum.BigRational::zero())
-    Domain::ZZ_I | Domain::QQ_I =>
-      FieldElem::CC(val, @symnum.BigRational::zero())
-    Domain::EX | Domain::EXRAW => FieldElem::QQ(val)
-    Domain::GF(p) => {
-      let norm = normalize_mod(val, Domain::GF(p))
-      FieldElem::GFp(p, fe_pos_mod(norm.numerator().to_int(), p))
+    QQ => QQ(val)
+    ZZ => if val.is_integral() { QQ(val) } else { raise CoefficientNotInteger }
+    CC => CC(val, @symnum.BigRational::zero())
+    RR => CC(val, @symnum.BigRational::zero())
+    ZZ_I | QQ_I => CC(val, @symnum.BigRational::zero())
+    EX | EXRAW => QQ(val)
+    GF(p) => {
+      let norm = normalize_mod(val, GF(p))
+      GFp(p, fe_pos_mod(norm.numerator().to_int(), p))
     }
-    Domain::GFExt(p, _, m) => {
-      let norm = normalize_mod(val, Domain::GFExt(p, 1, m))
-      FieldElem::GFExt(p, [fe_pos_mod(norm.numerator().to_int(), p)], m)
+    GFExt(p, _, m) => {
+      let norm = normalize_mod(val, GFExt(p, 1, m))
+      GFExt(p, [fe_pos_mod(norm.numerator().to_int(), p)], m)
     }
-    Domain::Frac(inner) => fe_from_rational(val, inner)
-    Domain::PolyRing(base, _) => fe_from_rational(val, base)
-    Domain::RationalFunctionField(base, _) => fe_from_rational(val, base)
-    Domain::QuotientRing(base, _, _) => fe_from_rational(val, base)
-    Domain::PowerSeries(base, _, _) => fe_from_rational(val, base)
-    Domain::AlgExt(base, gens, rels) => {
+    Frac(inner) => fe_from_rational(val, inner)
+    PolyRing(base, _) => fe_from_rational(val, base)
+    RationalFunctionField(base, _) => fe_from_rational(val, base)
+    QuotientRing(base, _, _) => fe_from_rational(val, base)
+    PowerSeries(base, _, _) => fe_from_rational(val, base)
+    AlgExt(base, gens, rels) => {
       let (minpoly, gen) = load_algext_minpoly(base, gens, rels)
       let base_const = fe_from_rational(val, base)
-      FieldElem::AlgExt(base, [base_const], minpoly, gen)
+      AlgExt(base, [base_const], minpoly, gen)
     }
   }
 }
@@ -572,28 +539,27 @@ pub fn fe_from_rational(
 /// layer.
 pub impl Show for FieldElem with fn to_string(self) -> String {
   match self {
-    FieldElem::QQ(x) => x.to_string()
-    FieldElem::CC(a, b) => {
+    QQ(x) => Show::to_string(x)
+    CC(a, b) => {
       let sb = StringBuilder::new()
-      sb.write_string(a.to_string())
+      sb.write_string(Show::to_string(a))
       if !b.is_zero() {
         let neg = b.numerator() < BigInt::from_int(0)
         if neg {
           sb.write_string(" - ")
-          sb.write_string(b.neg_r().to_string())
+          sb.write_string(Show::to_string(b.neg_r()))
         } else {
           sb.write_string(" + ")
-          sb.write_string(b.to_string())
+          sb.write_string(Show::to_string(b))
         }
         sb.write_char('i')
       }
       sb.to_string()
     }
-    FieldElem::GFp(_, v) => v.to_string()
-    FieldElem::GFExt(_, coeffs, _) =>
+    GFp(_, v) => v.to_string()
+    GFExt(_, coeffs, _) =>
       "[" + coeffs.map(item => item.to_string()).join(", ") + "]"
-    FieldElem::AlgExt(_, coeffs, minpoly, gen) =>
-      fe_algext_to_string(coeffs, gen, minpoly)
+    AlgExt(_, coeffs, minpoly, gen) => fe_algext_to_string(coeffs, gen, minpoly)
   }
 }
 
@@ -614,7 +580,7 @@ fn fe_algext_to_string(
       sb.write_string(" + ")
     }
     first = false
-    let coeff_str = c.to_string()
+    let coeff_str = Show::to_string(c)
     if i == 0 {
       sb.write_string(coeff_str)
     } else {
@@ -655,7 +621,7 @@ fn fe_alg_poly_trim(coeffs : Array[FieldElem]) -> Array[FieldElem] {
     }
   }
   if res.is_empty() {
-    res.push(FieldElem::QQ(@symnum.BigRational::zero()))
+    res.push(QQ(@symnum.BigRational::zero()))
   }
   res
 }
@@ -666,21 +632,10 @@ fn fe_alg_poly_add(
   b : Array[FieldElem],
 ) -> Array[FieldElem] raise PolyError {
   let n = if a.length() > b.length() { a.length() } else { b.length() }
-  let res : Array[FieldElem] = Array::make(
-    n,
-    FieldElem::QQ(@symnum.BigRational::zero()),
-  )
+  let res : Array[FieldElem] = Array::make(n, QQ(@symnum.BigRational::zero()))
   for i in 0..<n {
-    let av = if i < a.length() {
-      a[i]
-    } else {
-      FieldElem::QQ(@symnum.BigRational::zero())
-    }
-    let bv = if i < b.length() {
-      b[i]
-    } else {
-      FieldElem::QQ(@symnum.BigRational::zero())
-    }
+    let av = if i < a.length() { a[i] } else { QQ(@symnum.BigRational::zero()) }
+    let bv = if i < b.length() { b[i] } else { QQ(@symnum.BigRational::zero()) }
     res.set(i, fe_add(av, bv))
   }
   fe_alg_poly_trim(res)
@@ -692,21 +647,10 @@ fn fe_alg_poly_sub(
   b : Array[FieldElem],
 ) -> Array[FieldElem] raise PolyError {
   let n = if a.length() > b.length() { a.length() } else { b.length() }
-  let res : Array[FieldElem] = Array::make(
-    n,
-    FieldElem::QQ(@symnum.BigRational::zero()),
-  )
+  let res : Array[FieldElem] = Array::make(n, QQ(@symnum.BigRational::zero()))
   for i in 0..<n {
-    let av = if i < a.length() {
-      a[i]
-    } else {
-      FieldElem::QQ(@symnum.BigRational::zero())
-    }
-    let bv = if i < b.length() {
-      b[i]
-    } else {
-      FieldElem::QQ(@symnum.BigRational::zero())
-    }
+    let av = if i < a.length() { a[i] } else { QQ(@symnum.BigRational::zero()) }
+    let bv = if i < b.length() { b[i] } else { QQ(@symnum.BigRational::zero()) }
     res.set(i, fe_sub(av, bv))
   }
   fe_alg_poly_trim(res)
@@ -717,7 +661,7 @@ fn dense_from_poly(poly : Poly) -> Array[FieldElem] {
   let deg = poly.degree(0)
   let res : Array[FieldElem] = Array::make(
     deg + 1,
-    FieldElem::QQ(@symnum.BigRational::zero()),
+    QQ(@symnum.BigRational::zero()),
   )
   for m, c in poly.coeffs {
     let k = m.exps[0]
@@ -735,7 +679,7 @@ fn fe_alg_poly_mod(
   let m_deg = minpoly.degree(0)
   let m_dense = dense_from_poly(minpoly)
   if fe_is_zero(m_dense[m_deg]) || !fe_is_one(m_dense[m_deg]) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   while r.length() - 1 >= m_deg {
     let deg_r = r.length() - 1
@@ -764,7 +708,7 @@ fn fe_alg_poly_mul(
 ) -> Array[FieldElem] raise PolyError {
   let res : Array[FieldElem] = Array::make(
     a.length() + b.length() - 1,
-    FieldElem::QQ(@symnum.BigRational::zero()),
+    QQ(@symnum.BigRational::zero()),
   )
   for i in 0..<a.length() {
     for j in 0..<b.length() {
@@ -783,10 +727,7 @@ fn fe_alg_poly_divmod(
 ) -> (Array[FieldElem], Array[FieldElem]) raise PolyError {
   let div_trim = fe_alg_poly_trim(divisor)
   if div_trim.is_empty() || (div_trim.length() == 1 && fe_is_zero(div_trim[0])) {
-    return (
-      Array::make(1, FieldElem::QQ(@symnum.BigRational::zero())),
-      dividend,
-    )
+    return (Array::make(1, QQ(@symnum.BigRational::zero())), dividend)
   }
   let n = dividend.length()
   let m = div_trim.length()
@@ -796,7 +737,7 @@ fn fe_alg_poly_divmod(
     } else {
       1
     },
-    FieldElem::QQ(@symnum.BigRational::zero()),
+    QQ(@symnum.BigRational::zero()),
   )
   let mut r = fe_alg_poly_trim(dividend)
   let lc_div = div_trim[m - 1]
@@ -823,7 +764,7 @@ fn fe_alg_poly_inv(
   let mut old_r = dense_from_poly(minpoly)
   let mut r = fe_alg_poly_trim(a)
   if r.length() == 1 && fe_is_zero(r[0]) {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let zero = FieldElem::QQ(@symnum.BigRational::zero())
   let one = FieldElem::QQ(@symnum.BigRational::one())
@@ -845,7 +786,7 @@ fn fe_alg_poly_inv(
     t = new_t
   }
   if old_r.length() != 1 || fe_is_zero(old_r[0]) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   let gcd_inv = fe_inv(old_r[0])
   let normalized : Array[FieldElem] = Array::new()
@@ -862,17 +803,17 @@ fn load_algext_minpoly(
   rels : Array[Expr],
 ) -> (Poly, String) raise PolyError {
   if gens.length() != 1 || rels.length() != 1 {
-    raise PolyError::BadGenerator("algext")
+    raise BadGenerator("algext")
   }
   let gen = gens[0]
   match base {
-    Domain::QQ | Domain::GF(_) | Domain::GFExt(_, _, _) => ()
-    _ => raise PolyError::DomainNotField
+    QQ | GF(_) | GFExt(_, _, _) => ()
+    _ => raise DomainNotField
   }
   let builder = PolyBuilder::new([gen], base)
   let minpoly = builder.from_expr(rels[0]) catch { e => raise e }
   if minpoly.degree(0) <= 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   (make_monic_if_field(minpoly), gen)
 }
@@ -889,7 +830,7 @@ fn load_algext_minpoly(
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub impl Show for FieldElem with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|

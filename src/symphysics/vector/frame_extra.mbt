@@ -21,7 +21,7 @@ pub fn ReferenceFrame::orient_dcm(
   parent : ReferenceFrame,
   matrix : @symphysics.ExplicitMatrix,
 ) -> Unit raise VectorError {
-  self.orient(parent, OrientationSpec::DcmSpec(matrix))
+  self.orient(parent, DcmSpec(matrix))
 }
 
 ///|
@@ -40,7 +40,7 @@ pub fn ReferenceFrame::orient_body_fixed(
   angles : Array[Expr],
   order : String,
 ) -> Unit raise VectorError {
-  self.orient(parent, OrientationSpec::BodySpec(angles, order))
+  self.orient(parent, BodySpec(angles, order))
 }
 
 ///|
@@ -50,7 +50,7 @@ pub fn ReferenceFrame::orient_space_fixed(
   angles : Array[Expr],
   order : String,
 ) -> Unit raise VectorError {
-  self.orient(parent, OrientationSpec::SpaceSpec(angles, order))
+  self.orient(parent, SpaceSpec(angles, order))
 }
 
 ///|
@@ -59,10 +59,7 @@ pub fn ReferenceFrame::orient_quaternion(
   parent : ReferenceFrame,
   quat : (Expr, Expr, Expr, Expr),
 ) -> Unit raise VectorError {
-  self.orient(
-    parent,
-    OrientationSpec::QuaternionSpec(quat.0, quat.1, quat.2, quat.3),
-  )
+  self.orient(parent, QuaternionSpec(quat.0, quat.1, quat.2, quat.3))
 }
 
 ///|

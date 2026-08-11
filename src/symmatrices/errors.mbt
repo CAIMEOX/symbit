@@ -22,12 +22,12 @@ pub(all) suberror MatrixError {
 /// - Limits: Output is intended for diagnostics and tests, so changing it can invalidate string-based assertions.
 pub impl Show for MatrixError with fn output(self, logger : &Logger) -> Unit {
   match self {
-    MatrixError::ShapeError(msg) => logger.write_string("ShapeError(\{msg})")
-    MatrixError::ValueError(msg) => logger.write_string("ValueError(\{msg})")
-    MatrixError::NonSquareMatrixError(msg) =>
+    ShapeError(msg) => logger.write_string("ShapeError(\{msg})")
+    ValueError(msg) => logger.write_string("ValueError(\{msg})")
+    NonSquareMatrixError(msg) =>
       logger.write_string("NonSquareMatrixError(\{msg})")
-    MatrixError::SingularMatrixError(msg) =>
+    SingularMatrixError(msg) =>
       logger.write_string("SingularMatrixError(\{msg})")
-    MatrixError::IndexError(msg) => logger.write_string("IndexError(\{msg})")
+    IndexError(msg) => logger.write_string("IndexError(\{msg})")
   }
 }

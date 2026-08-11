@@ -11,7 +11,7 @@ fn list_string(items : Array[String]) -> String {
 test "liealgebras weyl_group A3 parity" {
   let wg = weyl_group_from_string("A3")
   assert_eq(list_string(wg.generators()), weyl_group_generators_list_str("A3"))
-  assert_eq(wg.group_order().to_string(), weyl_group_group_order_str("A3"))
+  assert_eq(Show::to_string(wg.group_order()), weyl_group_group_order_str("A3"))
   assert_eq(wg.group_name(), weyl_group_group_name_str("A3"))
   assert_eq(wg.coxeter_diagram(), weyl_group_coxeter_diagram_str("A3"))
   assert_eq(
@@ -31,7 +31,7 @@ test "liealgebras weyl_group A3 parity" {
 ///|
 test "liealgebras weyl_group B5 parity" {
   let wg = weyl_group_from_string("B5")
-  assert_eq(wg.group_order().to_string(), weyl_group_group_order_str("B5"))
+  assert_eq(Show::to_string(wg.group_order()), weyl_group_group_order_str("B5"))
   assert_eq(
     wg.element_order("r1*r2*r4*r5").to_string(),
     weyl_group_element_order_str("B5", "r1*r2*r4*r5"),
@@ -92,5 +92,5 @@ test "liealgebras weyl_group F4 parity" {
 ///|
 test "liealgebras weyl_group E6 parity" {
   let wg = weyl_group_from_string("E6")
-  assert_eq(wg.group_order().to_string(), weyl_group_group_order_str("E6"))
+  assert_eq(Show::to_string(wg.group_order()), weyl_group_group_order_str("E6"))
 }

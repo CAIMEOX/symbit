@@ -69,7 +69,7 @@ pub fn linear_pathway(
   attachment_2 : @symvector.Point,
 ) -> LinearPathway {
   pathway_validate_pair(attachment_1, attachment_2)
-  LinearPathway::{ attachment_1_: attachment_1, attachment_2_: attachment_2 }
+  { attachment_1_: attachment_1, attachment_2_: attachment_2 }
 }
 
 ///|
@@ -126,7 +126,7 @@ pub fn LinearPathway::repr(self : LinearPathway) -> String {
 
 ///|
 pub fn LinearPathway::as_pathway(self : LinearPathway) -> PathwayLike {
-  PathwayLike::Linear(self)
+  Linear(self)
 }
 
 ///|
@@ -134,11 +134,11 @@ pub fn obstacle_set_pathway(
   attachments : Array[@symvector.Point],
 ) -> ObstacleSetPathway raise @symphysics.PhysicsError {
   if attachments.length() < 3 {
-    raise @symphysics.PhysicsError::ValueError(
+    raise ValueError(
       "obstacle set pathway requires at least three attachment points",
     )
   }
-  ObstacleSetPathway::{ attachments_: attachments.copy() }
+  { attachments_: attachments.copy() }
 }
 
 ///|
@@ -206,7 +206,7 @@ pub fn ObstacleSetPathway::repr(self : ObstacleSetPathway) -> String {
 
 ///|
 pub fn ObstacleSetPathway::as_pathway(self : ObstacleSetPathway) -> PathwayLike {
-  PathwayLike::Obstacle(self)
+  Obstacle(self)
 }
 
 ///|
@@ -216,7 +216,7 @@ pub fn wrapping_pathway(
   geometry : WrappingGeometryLike,
 ) -> WrappingPathway {
   pathway_validate_pair(attachment_1, attachment_2)
-  WrappingPathway::{
+  {
     attachment_1_: attachment_1,
     attachment_2_: attachment_2,
     geometry_: geometry,
@@ -279,24 +279,24 @@ pub fn WrappingPathway::repr(self : WrappingPathway) -> String {
 
 ///|
 pub fn WrappingPathway::as_pathway(self : WrappingPathway) -> PathwayLike {
-  PathwayLike::Wrapping(self)
+  Wrapping(self)
 }
 
 ///|
 pub fn PathwayLike::length(self : PathwayLike) -> Expr raise {
   match self {
-    PathwayLike::Linear(value) => value.length()
-    PathwayLike::Obstacle(value) => value.length()
-    PathwayLike::Wrapping(value) => value.length()
+    Linear(value) => value.length()
+    Obstacle(value) => value.length()
+    Wrapping(value) => value.length()
   }
 }
 
 ///|
 pub fn PathwayLike::extension_velocity(self : PathwayLike) -> Expr raise {
   match self {
-    PathwayLike::Linear(value) => value.extension_velocity()
-    PathwayLike::Obstacle(value) => value.extension_velocity()
-    PathwayLike::Wrapping(value) => value.extension_velocity()
+    Linear(value) => value.extension_velocity()
+    Obstacle(value) => value.extension_velocity()
+    Wrapping(value) => value.extension_velocity()
   }
 }
 
@@ -306,17 +306,17 @@ pub fn PathwayLike::to_loads(
   force_value : Expr,
 ) -> Array[Force] raise {
   match self {
-    PathwayLike::Linear(value) => value.to_loads(force_value)
-    PathwayLike::Obstacle(value) => value.to_loads(force_value)
-    PathwayLike::Wrapping(value) => value.to_loads(force_value)
+    Linear(value) => value.to_loads(force_value)
+    Obstacle(value) => value.to_loads(force_value)
+    Wrapping(value) => value.to_loads(force_value)
   }
 }
 
 ///|
 pub fn PathwayLike::repr(self : PathwayLike) -> String {
   match self {
-    PathwayLike::Linear(value) => value.repr()
-    PathwayLike::Obstacle(value) => value.repr()
-    PathwayLike::Wrapping(value) => value.repr()
+    Linear(value) => value.repr()
+    Obstacle(value) => value.repr()
+    Wrapping(value) => value.repr()
   }
 }

@@ -149,7 +149,7 @@ fn fact_int_factor_powers(n0 : Int) -> Array[(Int, Int)] {
 fn fact_int_fe_to_int(c : FieldElem) -> Int raise PolyError {
   let q = fe_expect_rational(c)
   if !q.is_integral() {
-    raise PolyError::CoefficientNotInteger
+    raise CoefficientNotInteger
   }
   q.numerator().to_int()
 }
@@ -163,7 +163,7 @@ fn fact_int_abs_fe_to_int(c : FieldElem) -> Int raise PolyError {
 fn fact_int_dup_to_zz(f : Array[FieldElem]) -> Array[FieldElem] raise PolyError {
   let out : Array[FieldElem] = Array::new()
   for c in f {
-    out.push(fe_from_int(fact_int_fe_to_int(c), Domain::ZZ))
+    out.push(fe_from_int(fact_int_fe_to_int(c), ZZ))
   }
   dup_strip(out)
 }
@@ -181,7 +181,7 @@ fn fact_int_dup_to_ints(f : Array[FieldElem]) -> Array[Int] raise PolyError {
 fn fact_int_dup_from_ints(f : Array[Int]) -> Array[FieldElem] raise PolyError {
   let out : Array[FieldElem] = Array::new()
   for c in f {
-    out.push(fe_from_int(c, Domain::ZZ))
+    out.push(fe_from_int(c, ZZ))
   }
   dup_strip(out)
 }
@@ -215,8 +215,8 @@ fn fact_int_dmp_to_coeffs_with_zeros(
   domain : Domain,
 ) -> Array[FieldElem] raise PolyError {
   match f {
-    DensePoly::Coef(c) => dup_strip([c])
-    DensePoly::Poly(items) => {
+    Coef(c) => dup_strip([c])
+    Poly(items) => {
       if items.is_empty() {
         return Array::new()
       }
@@ -224,12 +224,12 @@ fn fact_int_dmp_to_coeffs_with_zeros(
       let coeffs : Array[FieldElem] = Array::new()
       for item in items {
         match item {
-          DensePoly::Coef(c) => coeffs.push(c)
-          DensePoly::Poly(_) =>
+          Coef(c) => coeffs.push(c)
+          Poly(_) =>
             if dmp_zero_p(item, 0) {
               coeffs.push(zero)
             } else {
-              raise PolyError::NotUnivariate
+              raise NotUnivariate
             }
         }
       }
@@ -259,12 +259,7 @@ fn fact_int_dup_is_one_factor(
   factors : Array[(Array[FieldElem], Int)],
   f : Array[FieldElem],
 ) -> Bool raise PolyError {
-  fact_int_fe_equal(
-    coeff,
-    fe_from_int(1, Domain::ZZ) catch {
-      _ => return false
-    },
-  ) &&
+  fact_int_fe_equal(coeff, fe_from_int(1, ZZ) catch { _ => return false }) &&
   factors.length() == 1 &&
   factors[0].1 == 1 &&
   fact_int_dup_equal(factors[0].0, f)
@@ -283,8 +278,8 @@ pub fn dup_zz_mignotte_bound(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   let ff = dup_strip(f)
   let d = dup_degree(ff)
@@ -299,12 +294,12 @@ pub fn dup_zz_mignotte_bound(
   let t1 = fact_int_binomial(delta - 1, delta2)
   let t2 = fact_int_binomial(delta - 1, delta2 - 1)
   let lc = fact_int_abs_fe_to_int(dup_LC(ff))
-  let max_norm = fact_int_abs_fe_to_int(dup_max_norm(ff, Domain::ZZ))
+  let max_norm = fact_int_abs_fe_to_int(dup_max_norm(ff, ZZ))
   let mut bound = t1 * eucl_norm + t2 * lc + max_norm
   if bound % 2 != 0 {
     bound = bound + 1
   }
-  fe_from_int(bound, Domain::ZZ)
+  fe_from_int(bound, ZZ)
 }
 
 ///|
@@ -320,14 +315,14 @@ pub fn dmp_zz_mignotte_bound(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   let a = fact_int_abs_fe_to_int(dmp_max_norm(f, u, domain))
   let b = fact_int_abs_fe_to_int(dmp_ground_LC(f, u))
   let n = dmp_degree_list(f, u).fold(init=0, fn(acc, value) { acc + value })
   let bound = fact_int_floor_sqrt(n + 1) * fact_int_pow(2, n) * a * b
-  fe_from_int(bound, Domain::ZZ)
+  fe_from_int(bound, ZZ)
 }
 
 ///|
@@ -350,13 +345,13 @@ pub fn dup_zz_hensel_step(
   domain : Domain,
 ) -> (Array[FieldElem], Array[FieldElem], Array[FieldElem], Array[FieldElem]) raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   if m <= 0 {
-    raise PolyError::BadModulus
+    raise BadModulus
   }
-  let modulus_elem = fe_from_int(m * m, Domain::ZZ)
+  let modulus_elem = fe_from_int(m * m, ZZ)
   let e = dup_trunc(dup_sub_mul(f, g, h, domain), modulus_elem, domain)
   let (q0, r0) = dup_div(dup_mul(s, e, domain), h, domain)
   let q = dup_trunc(q0, modulus_elem, domain)
@@ -364,7 +359,7 @@ pub fn dup_zz_hensel_step(
   let u = dup_add(dup_mul(t, e, domain), dup_mul(q, g, domain), domain)
   let big_g = dup_trunc(dup_add(g, u, domain), modulus_elem, domain)
   let big_h = dup_trunc(dup_add(h, r, domain), modulus_elem, domain)
-  let unity = [fe_from_int(1, Domain::ZZ)]
+  let unity = [fe_from_int(1, ZZ)]
   let bezout = dup_add(
     dup_mul(s, big_g, domain),
     dup_mul(t, big_h, domain),
@@ -384,7 +379,7 @@ pub fn dup_zz_hensel_step(
 fn fact_int_zz_inv_mod(a : Int, modulus : Int) -> Int raise PolyError {
   let (s, _, g) = int_gcdex_local(a, modulus)
   if g != 1 {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let mut value = s % modulus
   if value > modulus / 2 {
@@ -412,12 +407,12 @@ fn fact_int_zz_hensel_lift_rec(
     let modulus = fact_int_pow(p, l)
     let coeff = fe_from_int(
       fact_int_zz_inv_mod(fact_int_fe_to_int(lc), modulus),
-      Domain::ZZ,
+      ZZ,
     )
     return [
       dup_trunc(
         dup_mul_ground(f, coeff, domain),
-        fe_from_int(modulus, Domain::ZZ),
+        fe_from_int(modulus, ZZ),
         domain,
       ),
     ]
@@ -478,11 +473,11 @@ pub fn dup_zz_hensel_lift(
   domain : Domain,
 ) -> Array[Array[FieldElem]] raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   if p <= 1 || l <= 0 {
-    raise PolyError::BadModulus
+    raise BadModulus
   }
   let ff = fact_int_dup_to_zz(f)
   let items = f_list.map(item => fact_int_dup_to_zz(item))
@@ -501,7 +496,7 @@ fn fact_int_dup_zz_diophantine_coeff(
     result.push(Array::new())
   }
   let n = dup_degree(coeffs)
-  let modulus = fe_from_int(p, Domain::ZZ)
+  let modulus = fe_from_int(p, ZZ)
   for i in 0..<coeffs.length() {
     let coeff = coeffs[i]
     if fe_is_zero(coeff) {
@@ -535,11 +530,11 @@ pub fn dup_zz_diophantine(
   domain : Domain,
 ) -> Array[Array[FieldElem]] raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   if p <= 1 || factors.length() < 2 {
-    raise PolyError::BadModulus
+    raise BadModulus
   }
   let normalized = factors.map(f => fact_int_dup_to_zz(f))
   if normalized.length() == 2 {
@@ -566,7 +561,7 @@ pub fn dup_zz_diophantine(
       products.insert(0, dup_mul(normalized[idx], products[0], domain))
     }
     let partial_s : Array[Array[FieldElem]] = Array::new()
-    let partial_t : Array[Array[FieldElem]] = [[fe_from_int(1, Domain::ZZ)]]
+    let partial_t : Array[Array[FieldElem]] = [[fe_from_int(1, ZZ)]]
     for i in 0..<products.length() {
       let pair = fact_int_dup_zz_diophantine_coeff(
         [products[i], normalized[i]],
@@ -610,8 +605,8 @@ pub fn dmp_zz_diophantine(
   domain : Domain,
 ) -> Array[DensePoly] raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   if eval_points.is_empty() {
     let dup_factors = factors.map(f => {
@@ -699,14 +694,14 @@ fn fact_int_dense_ground_value(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   match f {
-    DensePoly::Coef(c) => c
-    DensePoly::Poly(items) =>
+    Coef(c) => c
+    Poly(items) =>
       if items.is_empty() {
         fe_from_int(0, domain)
       } else if items.length() == 1 {
         fact_int_dense_ground_value(items[0], domain)
       } else {
-        raise PolyError::NotUnivariate
+        raise NotUnivariate
       }
   }
 }
@@ -714,8 +709,8 @@ fn fact_int_dense_ground_value(
 ///|
 fn fact_int_dense_equal(a : DensePoly, b : DensePoly) -> Bool {
   match (a, b) {
-    (DensePoly::Coef(ca), DensePoly::Coef(cb)) => fact_int_fe_equal(ca, cb)
-    (DensePoly::Poly(aa), DensePoly::Poly(bb)) => {
+    (Coef(ca), Coef(cb)) => fact_int_fe_equal(ca, cb)
+    (Poly(aa), Poly(bb)) => {
       if aa.length() != bb.length() {
         return false
       }
@@ -733,21 +728,20 @@ fn fact_int_dense_equal(a : DensePoly, b : DensePoly) -> Bool {
 ///|
 fn fact_int_dense_zero_equiv(f : DensePoly) -> Bool {
   match f {
-    DensePoly::Coef(c) => fe_is_zero(c)
-    DensePoly::Poly(items) =>
-      items.is_empty() || items.all(fact_int_dense_zero_equiv)
+    Coef(c) => fe_is_zero(c)
+    Poly(items) => items.is_empty() || items.all(fact_int_dense_zero_equiv)
   }
 }
 
 ///|
 fn fact_int_dmp_tail(f : DensePoly) -> DensePoly {
   match f {
-    DensePoly::Coef(_) => DensePoly::Poly(Array::new())
-    DensePoly::Poly(items) =>
+    Coef(_) => Poly(Array::new())
+    Poly(items) =>
       if items.length() <= 1 {
-        DensePoly::Poly(Array::new())
+        Poly(Array::new())
       } else {
-        DensePoly::Poly(items[1:].to_owned())
+        Poly(items[1:].to_owned())
       }
   }
 }
@@ -758,20 +752,20 @@ fn fact_int_dmp_prepend(
   tail : DensePoly,
 ) -> DensePoly raise PolyError {
   match tail {
-    DensePoly::Poly(items) => {
+    Poly(items) => {
       let out : Array[DensePoly] = [head]
       for item in items {
         out.push(item)
       }
-      dmp_strip(DensePoly::Poly(out))
+      dmp_strip(Poly(out))
     }
-    DensePoly::Coef(c) => dmp_strip(DensePoly::Poly([head, DensePoly::Coef(c)]))
+    Coef(c) => dmp_strip(Poly([head, Coef(c)]))
   }
 }
 
 ///|
 fn fact_int_wang_points_key(points : Array[FieldElem]) -> String {
-  points.map(point => point.to_string()).join(",")
+  points.map(point => Show::to_string(point)).join(",")
 }
 
 ///|
@@ -832,7 +826,7 @@ fn fact_int_exact_div(
   marker : String,
 ) -> Int raise PolyError {
   if denom == 0 || numer % denom != 0 {
-    raise PolyError::BadGenerator(marker)
+    raise BadGenerator(marker)
   }
   numer / denom
 }
@@ -855,8 +849,8 @@ pub fn dmp_zz_wang_non_divisors(
   domain : Domain,
 ) -> Array[FieldElem]? raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   let result : Array[Int] = [fact_int_fe_to_int(cs) * fact_int_fe_to_int(ct)]
   for q0 in values {
@@ -880,7 +874,7 @@ pub fn dmp_zz_wang_non_divisors(
   }
   let out : Array[FieldElem] = Array::new()
   for i in 1..<result.length() {
-    out.push(fe_from_int(result[i], Domain::ZZ))
+    out.push(fe_from_int(result[i], ZZ))
   }
   Some(out)
 }
@@ -907,16 +901,16 @@ pub fn dmp_zz_wang_test_points(
   domain : Domain,
 ) -> (FieldElem, Array[FieldElem], Array[FieldElem]) raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   let lc_eval = dmp_eval_tail(dmp_LC(f), eval_points, u - 1, domain)
   if dmp_zero_p(lc_eval, 0) {
-    raise PolyError::BadGenerator("wang-evaluation")
+    raise BadGenerator("wang-evaluation")
   }
   let g = dmp_to_coeffs(dmp_eval_tail(f, eval_points, u, domain))
   if !dup_sqf_p(g, domain) {
-    raise PolyError::BadGenerator("wang-evaluation")
+    raise BadGenerator("wang-evaluation")
   }
   let primitive = dup_primitive(g, domain)
   let mut c = primitive.0
@@ -933,7 +927,7 @@ pub fn dmp_zz_wang_test_points(
   }
   match dmp_zz_wang_non_divisors(values, c, ct, domain) {
     Some(_) => (c, h, values)
-    None => raise PolyError::BadGenerator("wang-evaluation")
+    None => raise BadGenerator("wang-evaluation")
   }
 }
 
@@ -961,11 +955,11 @@ pub fn dmp_zz_wang_lead_coeffs(
   domain : Domain,
 ) -> (DensePoly, Array[Array[FieldElem]], Array[DensePoly]) raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   if values.length() != factors.length() {
-    raise PolyError::BadGenerator("wang-leading-coefficients")
+    raise BadGenerator("wang-leading-coefficients")
   }
   let v = u - 1
   let coeffs : Array[DensePoly] = Array::new()
@@ -979,7 +973,7 @@ pub fn dmp_zz_wang_lead_coeffs(
       idx = idx - 1
       let e = fact_int_fe_to_int(values[idx])
       if fact_int_abs(e) == 1 || e == 0 {
-        raise PolyError::BadGenerator("wang-leading-coefficients")
+        raise BadGenerator("wang-leading-coefficients")
       }
       let mut k = 0
       while d % e == 0 {
@@ -996,7 +990,7 @@ pub fn dmp_zz_wang_lead_coeffs(
   }
   for flag in seen {
     if !flag {
-      raise PolyError::BadGenerator("wang-leading-coefficients")
+      raise BadGenerator("wang-leading-coefficients")
     }
   }
   let corrected_coeffs : Array[DensePoly] = Array::new()
@@ -1065,8 +1059,8 @@ pub fn dmp_zz_wang_hensel_lifting(
   domain : Domain,
 ) -> Array[DensePoly] raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   let p_elem = fe_from_int(p, domain)
   let partials : Array[DensePoly] = [f]
@@ -1074,7 +1068,7 @@ pub fn dmp_zz_wang_hensel_lifting(
   let v = u - 1
   let factor_polys = factors.map(factor => dmp_from_coeffs(factor))
   if lead_coeffs.length() != factor_polys.length() {
-    raise PolyError::BadGenerator("wang-hensel")
+    raise BadGenerator("wang-hensel")
   }
   if n > 1 {
     let mut idx = 0
@@ -1170,7 +1164,7 @@ pub fn dmp_zz_wang_hensel_lifting(
     }
   }
   if !fact_int_dense_equal(dmp_expand(factor_polys, u, domain), f) {
-    raise PolyError::BadGenerator("wang-hensel")
+    raise BadGenerator("wang-hensel")
   }
   factor_polys
 }
@@ -1195,8 +1189,8 @@ pub fn dmp_zz_wang(
   seed? : Array[Int],
 ) -> Array[DensePoly] raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   if u == 0 {
     let (_, factors) = dup_zz_factor_sqf(
@@ -1255,7 +1249,7 @@ pub fn dmp_zz_wang(
               seed_index = next_index
               candidate
             }
-            None => raise PolyError::BadGenerator("wang-seed")
+            None => raise BadGenerator("wang-seed")
           }
         None => {
           let candidate = fact_int_wang_enum_config(
@@ -1303,11 +1297,11 @@ pub fn dmp_zz_wang(
       current_mod = current_mod + eez_mod_step
     }
     if seed is Some(_) && !added {
-      raise PolyError::BadGenerator("wang-seed")
+      raise BadGenerator("wang-seed")
     }
   }
   if configs.is_empty() {
-    raise PolyError::BadGenerator("wang-evaluation")
+    raise BadGenerator("wang-evaluation")
   }
   let mut best_index = 0
   let mut best_norm : Int? = None
@@ -1373,8 +1367,8 @@ pub fn dup_zz_irreducible_p(
   domain : Domain,
 ) -> Bool raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   let ff = dup_strip(f)
   if ff.length() < 2 {
@@ -1386,7 +1380,7 @@ pub fn dup_zz_irreducible_p(
   for i in 1..<ff.length() {
     tail.push(ff[i])
   }
-  let content = fact_int_abs_fe_to_int(dup_content(tail, Domain::ZZ))
+  let content = fact_int_abs_fe_to_int(dup_content(tail, ZZ))
   if content == 0 {
     return false
   }
@@ -1411,16 +1405,16 @@ pub fn dup_zz_cyclotomic_poly(
   domain : Domain,
 ) -> Array[FieldElem] raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   if n <= 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
-  let mut h = [fe_from_int(1, Domain::ZZ), fe_from_int(-1, Domain::ZZ)]
+  let mut h = [fe_from_int(1, ZZ), fe_from_int(-1, ZZ)]
   for item in fact_int_factor_powers(n) {
-    h = dup_quo(dup_inflate(h, item.0, Domain::ZZ), h, Domain::ZZ)
-    h = dup_inflate(h, fact_int_pow(item.0, item.1 - 1), Domain::ZZ)
+    h = dup_quo(dup_inflate(h, item.0, ZZ), h, ZZ)
+    h = dup_inflate(h, fact_int_pow(item.0, item.1 - 1), ZZ)
   }
   h
 }
@@ -1483,15 +1477,15 @@ pub fn dup_zz_cyclotomic_factor(
   domain : Domain,
 ) -> Array[Array[FieldElem]]? raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   let ff = dup_strip(f)
   if dup_degree(ff) <= 0 {
     return None
   }
-  let one = fe_from_int(1, Domain::ZZ)
-  let neg_one = fe_from_int(-1, Domain::ZZ)
+  let one = fe_from_int(1, ZZ)
+  let neg_one = fe_from_int(-1, ZZ)
   let lc = dup_LC(ff)
   let tc = dup_TC(ff)
   if !fact_int_fe_equal(lc, one) ||
@@ -1534,8 +1528,8 @@ pub fn dup_zz_zassenhaus(
   domain : Domain,
 ) -> Array[Array[FieldElem]] raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   let (_, factors) = dup_factor_list(f, domain)
   let out : Array[Array[FieldElem]] = Array::new()
@@ -1559,8 +1553,8 @@ pub fn dup_zz_factor_sqf(
   domain : Domain,
 ) -> (FieldElem, Array[Array[FieldElem]]) raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   let (content, factors) = dup_factor_list(f, domain)
   let out : Array[Array[FieldElem]] = Array::new()
@@ -1584,8 +1578,8 @@ pub fn dup_zz_factor(
   domain : Domain,
 ) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   dup_factor_list(f, domain)
 }
@@ -1607,8 +1601,8 @@ pub fn dmp_zz_factor(
   domain : Domain,
 ) -> (FieldElem, Array[(DensePoly, Int)]) raise PolyError {
   match domain {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   if u == 0 {
     let (content, factors) = dup_zz_factor(
@@ -1638,7 +1632,7 @@ pub fn dmp_zz_factor(
   let factors : Array[(DensePoly, Int)] = Array::new()
   if dmp_degree(primitive, u) > 0 {
     let square_free = try dmp_sqf_part(primitive, u, domain) catch {
-      PolyError::NotUnivariate => primitive
+      NotUnivariate => primitive
       err => raise err
     } noraise {
       value => value
@@ -1650,7 +1644,7 @@ pub fn dmp_zz_factor(
   }
   let (_, ground_factors) = dmp_zz_factor(ground_content, u - 1, domain)
   for item in ground_factors {
-    factors.insert(0, (DensePoly::Poly([item.0]), item.1))
+    factors.insert(0, (Poly([item.0]), item.1))
   }
   (content, fact_dense_sort_dmp_factors(factors))
 }
@@ -1673,7 +1667,7 @@ fn fact_int_cyclotomic_by_degree(f : Array[FieldElem]) -> Bool raise PolyError {
   let limit = if degree < 2 { 8 } else { 8 * degree * degree + 16 }
   for n in 1..<=limit {
     if fact_int_euler_phi(n) == degree &&
-      fact_int_dup_equal(dup_zz_cyclotomic_poly(n, Domain::ZZ), f) {
+      fact_int_dup_equal(dup_zz_cyclotomic_poly(n, ZZ), f) {
       return true
     }
   }
@@ -1695,8 +1689,8 @@ pub fn dup_cyclotomic_p(
   irreducible? : Bool = false,
 ) -> Bool raise PolyError {
   let ff = match domain {
-    Domain::ZZ => fact_int_dup_to_zz(f)
-    Domain::QQ => fact_int_dup_to_zz(f) catch { _ => return false }
+    ZZ => fact_int_dup_to_zz(f)
+    QQ => fact_int_dup_to_zz(f) catch { _ => return false }
     _ => return false
   }
   if ff.is_empty() {
@@ -1708,7 +1702,7 @@ pub fn dup_cyclotomic_p(
     return false
   }
   if !irreducible {
-    try dup_factor_list(ff, Domain::ZZ) catch {
+    try dup_factor_list(ff, ZZ) catch {
       // The recursive cyclotomic test is still useful when the current dense
       // factor backend cannot split a hard irreducible candidate yet.
       _ => ()

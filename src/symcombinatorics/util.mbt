@@ -256,7 +256,7 @@ pub fn _orbits_transversals_from_bsgs(
   let transversals : Array[Map[Int, Permutation]] = Array::new()
   let slps : Array[Map[Int, Array[Int]]] = Array::new()
   if base_len == 0 {
-    return OrbitsTransversals::{ basic_orbits, transversals, slps }
+    return { basic_orbits, transversals, slps }
   }
   let degree = strong_gens_distr[0][0].size()
   for i in 0..<base_len {
@@ -277,7 +277,7 @@ pub fn _orbits_transversals_from_bsgs(
     transversals.push(trans_map)
     slps.push(slp_dict)
   }
-  OrbitsTransversals::{ basic_orbits, transversals, slps }
+  { basic_orbits, transversals, slps }
 }
 
 ///|

@@ -4,11 +4,11 @@
 ///|
 pub fn is_literal(expr : BoolExpr) -> Bool {
   match expr {
-    BoolExpr::True => true
-    BoolExpr::False => true
-    BoolExpr::Symbol(_) => true
-    BoolExpr::LRA(_) => true
-    BoolExpr::Not(inner) => is_literal(inner)
+    True => true
+    False => true
+    Symbol(_) => true
+    LRA(_) => true
+    Not(inner) => is_literal(inner)
     _ => false
   }
 }
@@ -16,7 +16,7 @@ pub fn is_literal(expr : BoolExpr) -> Bool {
 ///|
 pub fn conjuncts(expr : BoolExpr) -> Array[BoolExpr] {
   match expr {
-    BoolExpr::And(args) => args
+    And(args) => args
     _ => [expr]
   }
 }
@@ -24,7 +24,7 @@ pub fn conjuncts(expr : BoolExpr) -> Array[BoolExpr] {
 ///|
 pub fn disjuncts(expr : BoolExpr) -> Array[BoolExpr] {
   match expr {
-    BoolExpr::Or(args) => args
+    Or(args) => args
     _ => [expr]
   }
 }
@@ -39,19 +39,19 @@ priv enum LogicOp {
 ///|
 fn op_is(expr : BoolExpr, op : LogicOp) -> Bool {
   match op {
-    LogicOp::And =>
+    And =>
       match expr {
-        BoolExpr::And(_) => true
+        And(_) => true
         _ => false
       }
-    LogicOp::Or =>
+    Or =>
       match expr {
-        BoolExpr::Or(_) => true
+        Or(_) => true
         _ => false
       }
-    LogicOp::Xor =>
+    Xor =>
       match expr {
-        BoolExpr::Xor(_) => true
+        Xor(_) => true
         _ => false
       }
   }
@@ -60,19 +60,19 @@ fn op_is(expr : BoolExpr, op : LogicOp) -> Bool {
 ///|
 fn op_args(expr : BoolExpr, op : LogicOp) -> Array[BoolExpr] {
   match op {
-    LogicOp::And =>
+    And =>
       match expr {
-        BoolExpr::And(args) => args
+        And(args) => args
         _ => []
       }
-    LogicOp::Or =>
+    Or =>
       match expr {
-        BoolExpr::Or(args) => args
+        Or(args) => args
         _ => []
       }
-    LogicOp::Xor =>
+    Xor =>
       match expr {
-        BoolExpr::Xor(args) => args
+        Xor(args) => args
         _ => []
       }
   }
@@ -81,9 +81,9 @@ fn op_args(expr : BoolExpr, op : LogicOp) -> Array[BoolExpr] {
 ///|
 fn op_make(op : LogicOp, args : Array[BoolExpr]) -> BoolExpr {
   match op {
-    LogicOp::And => bool_and(args)
-    LogicOp::Or => bool_or(args)
-    LogicOp::Xor => xor_keep_true(args)
+    And => bool_and(args)
+    Or => bool_or(args)
+    Xor => xor_keep_true(args)
   }
 }
 
@@ -128,17 +128,17 @@ fn _distribute(expr : BoolExpr, op1 : LogicOp, op2 : LogicOp) -> BoolExpr {
 
 ///|
 pub fn distribute_and_over_or(expr : BoolExpr) -> BoolExpr {
-  _distribute(expr, LogicOp::And, LogicOp::Or)
+  _distribute(expr, And, Or)
 }
 
 ///|
 pub fn distribute_or_over_and(expr : BoolExpr) -> BoolExpr {
-  _distribute(expr, LogicOp::Or, LogicOp::And)
+  _distribute(expr, Or, And)
 }
 
 ///|
 pub fn distribute_xor_over_and(expr : BoolExpr) -> BoolExpr {
-  _distribute(expr, LogicOp::Xor, LogicOp::And)
+  _distribute(expr, Xor, And)
 }
 
 ///|
@@ -212,46 +212,46 @@ fn to_nnf_inner(expr : BoolExpr, simplify : Bool, form : String) -> BoolExpr {
     return expr
   }
   match expr {
-    BoolExpr::And(args) => {
+    And(args) => {
       let mapped = args.map(a => to_nnf_inner(a, simplify, form))
       if simplify {
         let seen : Map[BoolExpr, Bool] = Map([])
         for arg in mapped {
           let comp = bool_not(arg)
           if seen.contains(comp) {
-            return BoolExpr::False
+            return False
           }
           seen[arg] = true
         }
       }
       bool_and(mapped)
     }
-    BoolExpr::Or(args) => {
+    Or(args) => {
       let mapped = args.map(a => to_nnf_inner(a, simplify, form))
       if simplify {
         let seen : Map[BoolExpr, Bool] = Map([])
         for arg in mapped {
           let comp = bool_not(arg)
           if seen.contains(comp) {
-            return BoolExpr::True
+            return True
           }
           seen[arg] = true
         }
       }
       bool_or(mapped)
     }
-    BoolExpr::Not(inner) => {
+    Not(inner) => {
       if is_literal(inner) {
         return expr
       }
       match inner {
-        BoolExpr::And(args) =>
+        And(args) =>
           bool_or(args.map(a => to_nnf_inner(bool_not(a), simplify, form)))
-        BoolExpr::Or(args) =>
+        Or(args) =>
           bool_and(args.map(a => to_nnf_inner(bool_not(a), simplify, form)))
-        BoolExpr::Implies(a, b) =>
+        Implies(a, b) =>
           to_nnf_inner(bool_and([a, bool_not(b)]), simplify, form)
-        BoolExpr::Equivalent(args) => {
+        Equivalent(args) => {
           let pos = bool_or(args)
           let neg_args : Array[BoolExpr] = Array::new()
           for arg in args {
@@ -260,11 +260,11 @@ fn to_nnf_inner(expr : BoolExpr, simplify : Bool, form : String) -> BoolExpr {
           let neg = bool_or(neg_args)
           to_nnf_inner(bool_and([pos, neg]), simplify, form)
         }
-        BoolExpr::Xor(args) => {
+        Xor(args) => {
           let clauses = xor_cnf_clauses(args, true)
           to_nnf_inner(bool_and(clauses), simplify, form)
         }
-        BoolExpr::ITE(c, t, e) => {
+        ITE(c, t, e) => {
           let left = bool_or([c, bool_not(e)])
           let right = bool_or([bool_not(c), bool_not(t)])
           to_nnf_inner(bool_and([left, right]), simplify, form)
@@ -272,11 +272,10 @@ fn to_nnf_inner(expr : BoolExpr, simplify : Bool, form : String) -> BoolExpr {
         _ => bool_not(to_nnf_inner(inner, simplify, form))
       }
     }
-    BoolExpr::Implies(a, b) =>
-      to_nnf_inner(bool_or([bool_not(a), b]), simplify, form)
-    BoolExpr::Equivalent(args) => {
+    Implies(a, b) => to_nnf_inner(bool_or([bool_not(a), b]), simplify, form)
+    Equivalent(args) => {
       if args.is_empty() {
-        return BoolExpr::True
+        return True
       }
       let pairs : Array[BoolExpr] = Array::new()
       for i in 0..<(args.length() - 1) {
@@ -285,7 +284,7 @@ fn to_nnf_inner(expr : BoolExpr, simplify : Bool, form : String) -> BoolExpr {
       pairs.push(bool_or([bool_not(args[args.length() - 1]), args[0]]))
       to_nnf_inner(bool_and(pairs), simplify, form)
     }
-    BoolExpr::Xor(args) => {
+    Xor(args) => {
       let nnf_args = args.map(a => to_nnf_inner(a, simplify, form))
       if form == "dnf" {
         let terms = xor_dnf_terms(nnf_args)
@@ -295,7 +294,7 @@ fn to_nnf_inner(expr : BoolExpr, simplify : Bool, form : String) -> BoolExpr {
         to_nnf_inner(bool_and(clauses), simplify, form)
       }
     }
-    BoolExpr::ITE(c, t, e) => {
+    ITE(c, t, e) => {
       let left = bool_or([bool_not(c), t])
       let right = bool_or([c, e])
       to_nnf_inner(bool_and([left, right]), simplify, form)
@@ -313,7 +312,7 @@ pub fn is_nnf(expr : BoolExpr, simplified? : Bool = true) -> Bool {
   while !stack.is_empty() {
     let current = stack.remove(stack.length() - 1)
     match current {
-      BoolExpr::And(args) | BoolExpr::Or(args) => {
+      And(args) | Or(args) => {
         if simplified {
           let seen : Map[BoolExpr, Bool] = Map([])
           for arg in args {
@@ -337,12 +336,12 @@ pub fn is_nnf(expr : BoolExpr, simplified? : Bool = true) -> Bool {
 ///|
 pub fn is_cnf(expr : BoolExpr) -> Bool {
   let clauses = match expr {
-    BoolExpr::And(args) => args
+    And(args) => args
     _ => [expr]
   }
   for clause in clauses {
     let lits = match clause {
-      BoolExpr::Or(args) => args
+      Or(args) => args
       _ => [clause]
     }
     for lit in lits {
@@ -357,12 +356,12 @@ pub fn is_cnf(expr : BoolExpr) -> Bool {
 ///|
 pub fn is_dnf(expr : BoolExpr) -> Bool {
   let clauses = match expr {
-    BoolExpr::Or(args) => args
+    Or(args) => args
     _ => [expr]
   }
   for clause in clauses {
     let lits = match clause {
-      BoolExpr::And(args) => args
+      And(args) => args
       _ => [clause]
     }
     for lit in lits {
@@ -423,7 +422,7 @@ fn maybe_to_anf(arg : BoolExpr, deep : Bool) -> BoolExpr {
     return to_anf(arg, deep~)
   }
   match arg {
-    BoolExpr::Not(_) => to_anf(arg, deep~)
+    Not(_) => to_anf(arg, deep~)
     _ => arg
   }
 }
@@ -434,22 +433,22 @@ pub fn to_anf(expr : BoolExpr, deep? : Bool = true) -> BoolExpr {
     return expr
   }
   match expr {
-    BoolExpr::True => BoolExpr::True
-    BoolExpr::False => BoolExpr::False
-    BoolExpr::Symbol(_) => expr
-    BoolExpr::LRA(_) => expr
-    BoolExpr::Not(inner) => {
+    True => True
+    False => False
+    Symbol(_) => expr
+    LRA(_) => expr
+    Not(inner) => {
       let term = maybe_to_anf(inner, deep)
-      xor_keep_true([BoolExpr::True, term])
+      xor_keep_true([True, term])
     }
-    BoolExpr::And(args) => {
+    And(args) => {
       if !deep {
         return expr
       }
       let mapped = args.map(a => maybe_to_anf(a, deep))
       distribute_xor_over_and(bool_and(mapped))
     }
-    BoolExpr::Or(args) => {
+    Or(args) => {
       let terms : Array[BoolExpr] = Array::new()
       for size in 1..<=args.length() {
         let combos = combinations_bool(args, size)
@@ -460,17 +459,17 @@ pub fn to_anf(expr : BoolExpr, deep? : Bool = true) -> BoolExpr {
       }
       xor_keep_true(terms)
     }
-    BoolExpr::Xor(args) => {
+    Xor(args) => {
       let mapped = args.map(a => maybe_to_anf(a, deep))
       xor_keep_true(mapped)
     }
-    BoolExpr::Implies(a, b) => {
+    Implies(a, b) => {
       let term = bool_and([a, b])
       let args = [BoolExpr::True, a, term]
       let mapped = args.map(a0 => maybe_to_anf(a0, deep))
       xor_keep_true(mapped)
     }
-    BoolExpr::Equivalent(args) => {
+    Equivalent(args) => {
       let a = bool_and(args)
       let negs : Array[BoolExpr] = Array::new()
       for arg in args {
@@ -481,11 +480,11 @@ pub fn to_anf(expr : BoolExpr, deep? : Bool = true) -> BoolExpr {
       let mapped = [a, b_dist].map(a0 => maybe_to_anf(a0, deep))
       xor_keep_true(mapped)
     }
-    BoolExpr::ITE(c, t, e) => {
+    ITE(c, t, e) => {
       if !deep {
         return expr
       }
-      BoolExpr::ITE(to_anf(c, deep~), to_anf(t, deep~), to_anf(e, deep~))
+      ITE(to_anf(c, deep~), to_anf(t, deep~), to_anf(e, deep~))
     }
   }
 }
@@ -493,36 +492,36 @@ pub fn to_anf(expr : BoolExpr, deep? : Bool = true) -> BoolExpr {
 ///|
 pub fn is_anf(expr : BoolExpr) -> Bool {
   match expr {
-    BoolExpr::True => true
-    BoolExpr::False => true
-    BoolExpr::Symbol(_) => true
-    BoolExpr::LRA(_) => true
-    BoolExpr::Not(_) => false
-    BoolExpr::And(args) => {
+    True => true
+    False => true
+    Symbol(_) => true
+    LRA(_) => true
+    Not(_) => false
+    And(args) => {
       for arg in args {
         match arg {
-          BoolExpr::Symbol(_) => ()
-          BoolExpr::LRA(_) => ()
+          Symbol(_) => ()
+          LRA(_) => ()
           _ => return false
         }
       }
       true
     }
-    BoolExpr::Xor(args) => {
+    Xor(args) => {
       for arg in args {
         match arg {
-          BoolExpr::And(terms) =>
+          And(terms) =>
             for t in terms {
               match t {
-                BoolExpr::Symbol(_) => ()
-                BoolExpr::LRA(_) => ()
+                Symbol(_) => ()
+                LRA(_) => ()
                 _ => return false
               }
             }
-          BoolExpr::Symbol(_) => ()
-          BoolExpr::LRA(_) => ()
-          BoolExpr::True => ()
-          BoolExpr::False => ()
+          Symbol(_) => ()
+          LRA(_) => ()
+          True => ()
+          False => ()
           _ => return false
         }
       }

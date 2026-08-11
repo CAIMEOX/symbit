@@ -147,7 +147,7 @@ test "matrices parity eigenvals on general non-triangular 3x3" {
     ),
   )
   let (p, d) = a.diagonalize()
-  inspect((a * p).to_string(), content=(p * d).to_string())
+  inspect(Show::to_string(a * p), content=Show::to_string(p * d))
 }
 
 ///|

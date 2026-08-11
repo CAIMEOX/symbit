@@ -2,7 +2,6 @@
 using @symcontrol {
   type ControlComplex,
   type DiscreteTransferFunction,
-  type SISOLinearTimeInvariant,
   type TransferFunction,
   bode_magnitude_numerical_data,
   bode_phase_numerical_data,

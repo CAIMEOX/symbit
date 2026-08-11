@@ -11,7 +11,7 @@ pub struct SymPyDeprecationWarning {
 ///|
 fn validate_deprecation_target(target : String) -> Unit raise UtilitiesError {
   if target.contains("(") || target.contains(")") || target.contains("=") {
-    raise UtilitiesError::InvalidArgument(
+    raise InvalidArgument(
       "active_deprecations_target should be the anchor fragment without '(...)=' syntax",
     )
   }
@@ -45,7 +45,7 @@ pub fn sympy_deprecation_warning(
   active_deprecations_target : String,
 ) -> SymPyDeprecationWarning raise UtilitiesError {
   if deprecated_since_version.length() == 0 {
-    raise UtilitiesError::InvalidArgument(
+    raise InvalidArgument(
       "deprecated_since_version should be a non-empty string",
     )
   }

@@ -70,6 +70,28 @@ pub(all) enum Set {
   Reals
   Complexes
 }
+#deprecated
+pub fn Set::compare(Self, Self) -> Int
+#deprecated
+pub fn Set::equal(Self, Self) -> Bool
+#deprecated
+pub fn Set::hash(Self) -> Int
+#deprecated
+pub fn Set::hash_combine(Self, Hasher) -> Unit
+#deprecated
+pub fn Set::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Set::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn Set::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn Set::op_le(Self, Self) -> Bool
+#deprecated
+pub fn Set::op_lt(Self, Self) -> Bool
+#deprecated
+pub fn Set::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Set::to_string(Self) -> String
 pub impl Compare for Set
 pub impl Eq for Set
 pub impl Hash for Set
@@ -80,6 +102,14 @@ pub enum SetBool {
   False
   Unknown
 } derive(Eq)
+#deprecated
+pub fn SetBool::equal(Self, Self) -> Bool
+#deprecated
+pub fn SetBool::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn SetBool::output(Self, &Logger) -> Unit
+#deprecated
+pub fn SetBool::to_string(Self) -> String
 pub impl Show for SetBool
 
 // Type aliases

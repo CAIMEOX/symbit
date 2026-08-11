@@ -1,6 +1,6 @@
 ///|
 fn fezz_wb(n : Int) -> FieldElem {
-  FieldElem::QQ(@symnum.BigRational::from_int(n))
+  QQ(@symnum.BigRational::from_int(n))
 }
 
 ///|
@@ -9,7 +9,7 @@ fn[T] sympolys_assert_error(
   expected : String,
 ) -> Unit raise {
   try action() catch {
-    error => assert_true(error.to_string().has_prefix(expected))
+    error => assert_true(Show::to_string(error).has_prefix(expected))
   } noraise {
     _ => fail("expected \{expected} to be raised")
   }
@@ -17,7 +17,7 @@ fn[T] sympolys_assert_error(
 
 ///|
 test "errors: exact division failures are explicit" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = @symcore.Expr::Symbol("x")
   let p = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let q = b.from_expr(x + @symcore.int(1))
@@ -27,9 +27,7 @@ test "errors: exact division failures are explicit" {
   )
 
   sympolys_assert_error(
-    fn() raise PolyError {
-      dup_exquo_ground([fezz_wb(1)], fezz_wb(2), Domain::ZZ)
-    },
+    fn() raise PolyError { dup_exquo_ground([fezz_wb(1)], fezz_wb(2), ZZ) },
     "ExactQuotientFailed",
   )
 }
@@ -46,12 +44,12 @@ test "errors: empty monomial and root-isolation inputs are typed" {
   )
 
   sympolys_assert_error(
-    fn() raise PolyError { dup_cauchy_upper_bound([fezz_wb(1)], Domain::QQ) },
+    fn() raise PolyError { dup_cauchy_upper_bound([fezz_wb(1)], QQ) },
     "BadExponent",
   )
 
   sympolys_assert_error(
-    fn() raise PolyError { dup_sturm([], Domain::QQ) },
+    fn() raise PolyError { dup_sturm([], QQ) },
     "NonPolynomial",
   )
 }
@@ -60,7 +58,7 @@ test "errors: empty monomial and root-isolation inputs are typed" {
 test "errors: normalize_mod on AlgExt reduces in base domain" {
   let alpha = @symcore.Expr::Symbol("alpha")
   let rel = (alpha ^ @symcore.int(2)) + @symcore.int(1)
-  let d = Domain::AlgExt(Domain::QQ, ["alpha"], [rel])
+  let d = Domain::AlgExt(QQ, ["alpha"], [rel])
   let value = @symnum.BigRational::new(BigInt::from_int(3), BigInt::from_int(2))
   let got = normalize_mod(value, d)
   inspect(got, content="3/2")
@@ -69,18 +67,18 @@ test "errors: normalize_mod on AlgExt reduces in base domain" {
 ///|
 test "rr: coefficients are no longer QQ-backed" {
   let half = @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))
-  match ensure_coeff_domain(half, Domain::RR) {
-    FieldElem::CC(real, imag) => {
+  match ensure_coeff_domain(half, RR) {
+    CC(real, imag) => {
       inspect(real, content="1/2")
       inspect(imag, content="0")
     }
     _ => fail("RR coefficients should use CC(real, 0) storage")
   }
 
-  let rr_half = fe_from_rational(half, Domain::RR)
-  let rr_one = fe_from_int(1, Domain::RR)
+  let rr_half = fe_from_rational(half, RR)
+  let rr_one = fe_from_int(1, RR)
   match fe_add(rr_half, rr_one) {
-    FieldElem::CC(real, imag) => {
+    CC(real, imag) => {
       inspect(real, content="3/2")
       inspect(imag, content="0")
     }

@@ -28,7 +28,7 @@ fn mm_sympy_eigen_text(items : SympyEigenvects) -> String {
 
 ///|
 test "matrix module wrappers: lll wrappers align with methods" {
-  let a = @sympolys.ddm_from_ints([[1, 0, 0], [0, 1, 0], [1, 1, 1]], Domain::ZZ)
+  let a = @sympolys.ddm_from_ints([[1, 0, 0], [0, 1, 0], [1, 1, 1]], ZZ)
   assert_eq(
     mm_trim(@sympolys.ddm_lll(a).to_string()),
     mm_trim(a.lll().to_string()),
@@ -42,7 +42,7 @@ test "matrix module wrappers: lll wrappers align with methods" {
 ///|
 test "matrix module wrappers: normalform wrappers match methods and oracle" {
   let rows = [[12, 6, 4], [3, 9, 6], [2, 16, 14]]
-  let dm = @sympolys.domain_matrix_from_ints(rows, Domain::ZZ)
+  let dm = @sympolys.domain_matrix_from_ints(rows, ZZ)
   assert_eq(
     mm_trim(@sympolys.hermite_normal_form(dm).to_matrix_string()),
     mm_trim(
@@ -53,7 +53,7 @@ test "matrix module wrappers: normalform wrappers match methods and oracle" {
   let ours_invs = if invs.is_empty() {
     "()"
   } else if invs.length() == 1 {
-    "(\{invs[0].to_string()},)"
+    "(\{Show::to_string(invs[0])},)"
   } else {
     let joined = invs.map(fe_to_string).join(", ")
     "(\{joined})"
@@ -79,14 +79,14 @@ test "matrix module wrappers: normalform wrappers match methods and oracle" {
 
 ///|
 test "matrix module wrappers: eigen wrappers preserve method data" {
-  let dm = @sympolys.domain_matrix_from_ints([[1, 0], [0, 2]], Domain::QQ)
+  let dm = @sympolys.domain_matrix_from_ints([[1, 0], [0, 2]], QQ)
   let wrapped = @sympolys.dom_eigenvects(dm)
   let expected = dm.dom_eigenvects()
   let wrapped_rational = wrapped.0.map(item => {
-    (item.1.to_string(), item.2, item.3.to_matrix_string())
+    (Show::to_string(item.1), item.2, item.3.to_matrix_string())
   })
   let expected_rational = expected.0.map(item => {
-    (item.1.to_string(), item.2, item.3.to_matrix_string())
+    (Show::to_string(item.1), item.2, item.3.to_matrix_string())
   })
   assert_eq(wrapped_rational, expected_rational)
   let sympy_view = @sympolys.dom_eigenvects_to_sympy(wrapped.0, wrapped.1)
@@ -98,15 +98,15 @@ test "matrix module wrappers: eigen wrappers preserve method data" {
 
 ///|
 test "matrix module wrappers: add_columns and symmetric_residue helpers" {
-  let m = @sympolys.ddm_from_ints([[1, 2], [3, 4]], Domain::ZZ)
+  let m = @sympolys.ddm_from_ints([[1, 2], [3, 4]], ZZ)
   let out = @sympolys.add_columns(
     m,
     0,
     1,
-    @sympolys.fe_from_int(1, Domain::ZZ),
-    @sympolys.fe_from_int(1, Domain::ZZ),
-    @sympolys.fe_from_int(0, Domain::ZZ),
-    @sympolys.fe_from_int(1, Domain::ZZ),
+    @sympolys.fe_from_int(1, ZZ),
+    @sympolys.fe_from_int(1, ZZ),
+    @sympolys.fe_from_int(0, ZZ),
+    @sympolys.fe_from_int(1, ZZ),
   )
   assert_eq(mm_trim(out.to_string()), mm_trim("[[3, 2], [7, 4]]"))
   assert_eq(
@@ -118,12 +118,12 @@ test "matrix module wrappers: add_columns and symmetric_residue helpers" {
 ///|
 test "matrix module wrappers: dup_factor_list exposes dense factors for charpoly data" {
   let f = [
-    @sympolys.fe_from_int(1, Domain::ZZ),
-    @sympolys.fe_from_int(-1, Domain::ZZ),
-    @sympolys.fe_from_int(-2, Domain::ZZ),
+    @sympolys.fe_from_int(1, ZZ),
+    @sympolys.fe_from_int(-1, ZZ),
+    @sympolys.fe_from_int(-2, ZZ),
   ]
-  let (content, factors) = @sympolys.dup_factor_list(f, Domain::ZZ)
-  assert_eq(content.to_string(), "1")
+  let (content, factors) = @sympolys.dup_factor_list(f, ZZ)
+  assert_eq(Show::to_string(content), "1")
   let parts : Array[String] = Array::new()
   for factor in factors {
     let coeffs = factor.0.map(fe_to_string).join(", ")

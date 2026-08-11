@@ -1,6 +1,6 @@
 ///|
 test "core: add/mul/pow parity over ZZ" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = @symcore.Expr::Symbol("x")
   let p = b.from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
@@ -20,8 +20,8 @@ test "core: add/mul/pow parity over ZZ" {
 ///|
 test "core: domain mismatch raises" {
   let x = @symcore.Expr::Symbol("x")
-  let p = PolyBuilder::new(["x"], Domain::ZZ).from_expr(x + @symcore.int(1))
-  let q = PolyBuilder::new(["x"], Domain::QQ).from_expr(x + @symcore.int(1))
+  let p = PolyBuilder::new(["x"], ZZ).from_expr(x + @symcore.int(1))
+  let q = PolyBuilder::new(["x"], QQ).from_expr(x + @symcore.int(1))
   let error = expect_poly_error(fn() raise PolyError { p.add(q) })
-  assert_true(error is PolyError::DomainMismatch)
+  assert_true(error is DomainMismatch)
 }

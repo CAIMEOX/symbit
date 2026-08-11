@@ -82,13 +82,7 @@ pub fn partitions(
   if n <= 0 ||
     (m is Some(limit) && limit < 1) ||
     (k is Some(limit) && limit < 1) {
-    return [
-      if size {
-        PartitionResult::Sized(0, {})
-      } else {
-        PartitionResult::Parts({})
-      },
-    ]
+    return [if size { Sized(0, {}) } else { Parts({}) }]
   }
   let max_parts = match m {
     Some(limit) => if limit < n { limit } else { n }
@@ -99,13 +93,7 @@ pub fn partitions(
     None => n
   }
   if max_parts * max_keys < n {
-    return [
-      if size {
-        PartitionResult::Sized(0, {})
-      } else {
-        PartitionResult::Parts({})
-      },
-    ]
+    return [if size { Sized(0, {}) } else { Parts({}) }]
   }
   let raw : Array[Array[Int]] = []
   generate_partitions(n, n, None, [], raw, max_keys)
@@ -116,9 +104,9 @@ pub fn partitions(
     }
     let counts = partition_counts(parts)
     if size {
-      out.push(PartitionResult::Sized(parts.length(), counts))
+      out.push(Sized(parts.length(), counts))
     } else {
-      out.push(PartitionResult::Parts(counts))
+      out.push(Parts(counts))
     }
   }
   out

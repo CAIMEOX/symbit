@@ -15,15 +15,15 @@ fn truth_bits_to_string(bits : Array[Int]) -> String {
 ///|
 pub impl Show for TruthTableRow with fn to_string(self) {
   match self {
-    TruthTableRow::WithInput(bits, value) =>
+    WithInput(bits, value) =>
       "WithInput(" + truth_bits_to_string(bits) + ", " + value.to_string() + ")"
-    TruthTableRow::Value(value) => "Value(" + value.to_string() + ")"
+    Value(value) => "Value(" + value.to_string() + ")"
   }
 }
 
 ///|
 pub impl Show for TruthTableRow with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -48,9 +48,9 @@ pub fn truth_table(
     let env = env_from_bits(names, bits)
     let value = bool_eval(expr, env)
     if input {
-      out.push(TruthTableRow::WithInput(bits, value))
+      out.push(WithInput(bits, value))
     } else {
-      out.push(TruthTableRow::Value(value))
+      out.push(Value(value))
     }
   }
   out
@@ -113,26 +113,26 @@ pub fn to_int_repr(
     let set : Map[Int, Bool] = Map([])
     for part in parts {
       match part {
-        BoolExpr::Symbol(name) =>
+        Symbol(name) =>
           match sym_map.get(name) {
             Some(idx) => set[idx] = true
             None => ()
           }
-        BoolExpr::LRA(constraint) => {
+        LRA(constraint) => {
           let key = linear_constraint_key(constraint)
           match sym_map.get(key) {
             Some(idx) => set[idx] = true
             None => ()
           }
         }
-        BoolExpr::Not(inner) =>
+        Not(inner) =>
           match inner {
-            BoolExpr::Symbol(name) =>
+            Symbol(name) =>
               match sym_map.get(name) {
                 Some(idx) => set[-idx] = true
                 None => ()
               }
-            BoolExpr::LRA(constraint) => {
+            LRA(constraint) => {
               let key = linear_constraint_key(constraint)
               match sym_map.get(key) {
                 Some(idx) => set[-idx] = true
@@ -166,8 +166,8 @@ pub fn bool_minterm(
   variables : Array[BoolExpr],
 ) -> BoolExpr {
   let bits = match pattern {
-    BitPattern::Index(k) => ibin(k, variables.length())
-    BitPattern::Bits(b) => b
+    Index(k) => ibin(k, variables.length())
+    Bits(b) => b
   }
   _convert_to_varsSOP(bits, variables)
 }
@@ -178,8 +178,8 @@ pub fn bool_maxterm(
   variables : Array[BoolExpr],
 ) -> BoolExpr {
   let bits = match pattern {
-    BitPattern::Index(k) => ibin(k, variables.length())
-    BitPattern::Bits(b) => b
+    Index(k) => ibin(k, variables.length())
+    Bits(b) => b
   }
   _convert_to_varsPOS(bits, variables)
 }
@@ -190,8 +190,8 @@ pub fn bool_monomial(
   variables : Array[BoolExpr],
 ) -> BoolExpr {
   let bits = match pattern {
-    BitPattern::Index(k) => ibin(k, variables.length())
-    BitPattern::Bits(b) => b
+    Index(k) => ibin(k, variables.length())
+    Bits(b) => b
   }
   _convert_to_varsANF(bits, variables)
 }

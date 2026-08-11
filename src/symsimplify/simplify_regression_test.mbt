@@ -32,7 +32,7 @@ fn simplify_exact_float_expr(
   let value = @symcore.Float::from_exact(rat, prec~) catch {
     _ => @symcore.Float::from_int(0, prec~)
   }
-  @symcore.Expr::Float(value)
+  Float(value)
 }
 
 ///|
@@ -67,7 +67,7 @@ test "symsimplify dispatcher rational trig regression" {
 ///|
 test "symsimplify exptrigsimp exp trig regression" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let exp_trig = @symcore.add([
     @symcore.function("exp", [@symcore.mul([i, x])]),
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
@@ -81,7 +81,7 @@ test "symsimplify exptrigsimp exp trig regression" {
 ///|
 test "symsimplify dispatcher exp trig regression" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let exp_trig = @symcore.add([
     @symcore.function("exp", [@symcore.mul([i, x])]),
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
@@ -333,19 +333,19 @@ test "symsimplify handles float numeric leaf identities and powers" {
   let half = @symcore.rational_from_ints(1, 2)
 
   match simplify(@symcore.function("sin", [zero_f])) {
-    @symcore.Expr::Float(f) => assert_true(f.to_rational() == (0N, 1N))
+    Float(f) => assert_true(f.to_rational() == (0N, 1N))
     _ => fail("expected float zero")
   }
   match simplify(@symcore.function("sqrt", [one_f])) {
-    @symcore.Expr::Float(f) => assert_true(f.to_rational() == (1N, 1N))
+    Float(f) => assert_true(f.to_rational() == (1N, 1N))
     _ => fail("expected float one")
   }
   match simplify(@symcore.function("Abs", [minus_half_f])) {
-    @symcore.Expr::Float(f) => assert_true(f.to_rational() == (1N, 2N))
+    Float(f) => assert_true(f.to_rational() == (1N, 2N))
     _ => fail("expected float abs")
   }
   match simplify(@symcore.pow(four_f, half)) {
-    @symcore.Expr::Float(f) => assert_true(f.to_rational() == (2N, 1N))
+    Float(f) => assert_true(f.to_rational() == (2N, 1N))
     _ => fail("expected float pow")
   }
 }

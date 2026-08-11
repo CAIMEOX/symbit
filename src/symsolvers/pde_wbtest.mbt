@@ -15,12 +15,12 @@ fn wb_same_expr(lhs : Expr, rhs : Expr) -> Bool {
 
 ///|
 fn wb_r() -> Expr {
-  Expr::Symbol("r")
+  Symbol("r")
 }
 
 ///|
 fn wb_theta() -> Expr {
-  Expr::Symbol("theta")
+  Symbol("theta")
 }
 
 ///|
@@ -147,12 +147,12 @@ test "pde wb: multiplicative preprocessing matches cylindrical reduced equation"
   let phi = @symcore.applied_undefined_function("Phi", [
     wb_r(),
     wb_theta(),
-    Expr::Symbol("z"),
+    Symbol("z"),
   ])
-  let zfun = @symcore.applied_undefined_function("Z", [Expr::Symbol("z")])
+  let zfun = @symcore.applied_undefined_function("Z", [Symbol("z")])
   let ufun = @symcore.applied_undefined_function("u", [wb_theta(), wb_r()])
   let laplace_eq = Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     canonical_expr(
       @symcore.add([
         @symcore.mul([
@@ -164,10 +164,7 @@ test "pde wb: multiplicative preprocessing matches cylindrical reduced equation"
           @symcore.pow(wb_r() ^ @symcore.int(2), @symcore.int(-1)),
           @symcalculus.diff(@symcalculus.diff(phi, wb_theta()), wb_theta()),
         ]),
-        @symcalculus.diff(
-          @symcalculus.diff(phi, Expr::Symbol("z")),
-          Expr::Symbol("z"),
-        ),
+        @symcalculus.diff(@symcalculus.diff(phi, Symbol("z")), Symbol("z")),
       ]),
     ),
     @symcore.int(0),
@@ -222,7 +219,7 @@ test "pde wb: poly times exp helper integrates eq_c4 characteristic source" {
   )
   let normalized = solver_combine_exp_product(canonical_expr(integrand))
   let (factor, exponent) = match normalized {
-    Expr::Mul(args) => {
+    Mul(args) => {
       let other_args : Array[Expr] = []
       let exp_args : Array[Expr] = []
       for arg in args {
@@ -307,7 +304,7 @@ test "pde wb: pdsolve eq_c4 terminates without Integral fallback" {
   )
   let sol = pdsolve(eq_c4, func=Some(u))
   let rhs = match sol {
-    Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    Relational(Eq, _, rhs) => rhs
     _ => panic()
   }
   assert_true(!solver_expr_has_application_name(rhs, "Integral"))

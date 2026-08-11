@@ -15,13 +15,7 @@ pub fn sqrt_int(n : Int) -> Expr {
 ///|
 /// Build the complex expression `re + im*I`.
 pub fn complex(re : Expr, im : Expr) -> Expr {
-  @symcore.add([
-    re,
-    @symcore.mul([
-      im,
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-    ]),
-  ])
+  @symcore.add([re, @symcore.mul([im, NumberSymbol(ImaginaryUnit)])])
 }
 
 ///|

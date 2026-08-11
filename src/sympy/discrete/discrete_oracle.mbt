@@ -159,36 +159,27 @@ fn sympy_call_obj(
 
 ///|
 fn sympy_sub_obj(a : @py.PyObject, b : @py.PyObject) -> @py.PyObject raise {
-  let neg = sympy_call_obj("sympy.Mul", [
-    OracleArg::Int(-1),
-    OracleArg::PyObj(b),
-  ])
-  sympy_call_obj("sympy.Add", [OracleArg::PyObj(a), OracleArg::PyObj(neg)])
+  let neg = sympy_call_obj("sympy.Mul", [Int(-1), PyObj(b)])
+  sympy_call_obj("sympy.Add", [PyObj(a), PyObj(neg)])
 }
 
 ///|
 fn sympy_is_zero(obj : @py.PyObject) -> Bool raise {
-  let simp = sympy_call_obj("sympy.simplify", [OracleArg::PyObj(obj)])
+  let simp = sympy_call_obj("sympy.simplify", [PyObj(obj)])
   let eq = resolve_method_callable(simp, "equals")
-  let zero = sympy_call_obj("sympy.Integer", [OracleArg::Str("0")])
-  let res = py_call_with_args(eq, [OracleArg::PyObj(zero)])
+  let zero = sympy_call_obj("sympy.Integer", [Str("0")])
+  let res = py_call_with_args(eq, [PyObj(zero)])
   py_str_enum(res) == "True"
 }
 
 ///|
 fn sympy_is_zero_tol(obj : @py.PyObject, dps : Int) -> Bool raise {
-  let abs_obj = sympy_call_obj("sympy.Abs", [OracleArg::PyObj(obj)])
-  let abs_eval = sympy_call_obj("sympy.N", [
-    OracleArg::PyObj(abs_obj),
-    OracleArg::Int(dps),
-  ])
+  let abs_obj = sympy_call_obj("sympy.Abs", [PyObj(obj)])
+  let abs_eval = sympy_call_obj("sympy.N", [PyObj(abs_obj), Int(dps)])
   let exp = -dps + 2
   let thresh_str = "1e\{exp}"
-  let thresh = sympy_call_obj("sympy.Float", [OracleArg::Str(thresh_str)])
-  let lt = sympy_call_obj("sympy.Lt", [
-    OracleArg::PyObj(abs_eval),
-    OracleArg::PyObj(thresh),
-  ])
+  let thresh = sympy_call_obj("sympy.Float", [Str(thresh_str)])
+  let lt = sympy_call_obj("sympy.Lt", [PyObj(abs_eval), PyObj(thresh)])
   py_str_obj(lt) == "True"
 }
 
@@ -201,14 +192,8 @@ fn expr_equiv_pyobj(
   match dps {
     Some(v) => {
       let a_obj = expr_to_sympy(expr)
-      let a_eval = sympy_call_obj("sympy.N", [
-        OracleArg::PyObj(a_obj),
-        OracleArg::Int(v),
-      ])
-      let b_eval = sympy_call_obj("sympy.N", [
-        OracleArg::PyObj(other),
-        OracleArg::Int(v),
-      ])
+      let a_eval = sympy_call_obj("sympy.N", [PyObj(a_obj), Int(v)])
+      let b_eval = sympy_call_obj("sympy.N", [PyObj(other), Int(v)])
       let diff = sympy_sub_obj(a_eval, b_eval)
       sympy_is_zero_tol(diff, v)
     }
@@ -272,10 +257,10 @@ pub fn fft_equiv(
   dps? : Int,
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
+  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
   let kwargs : Map[String, OracleArg] = Map([])
   match dps {
-    Some(v) => kwargs["dps"] = OracleArg::Int(v)
+    Some(v) => kwargs["dps"] = Int(v)
     None => ()
   }
   let items = sympy_list_call("sympy.discrete.transforms.fft", args, kwargs~)
@@ -292,10 +277,10 @@ pub fn ifft_equiv(
   dps? : Int,
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
+  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
   let kwargs : Map[String, OracleArg] = Map([])
   match dps {
-    Some(v) => kwargs["dps"] = OracleArg::Int(v)
+    Some(v) => kwargs["dps"] = Int(v)
     None => ()
   }
   let items = sympy_list_call("sympy.discrete.transforms.ifft", args, kwargs~)
@@ -312,10 +297,7 @@ pub fn ntt_equiv(
   prime : Int,
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [
-    OracleArg::PyObj(list_obj.obj()),
-    OracleArg::Int(prime),
-  ]
+  let args : Array[OracleArg] = [PyObj(list_obj.obj()), Int(prime)]
   let items = sympy_list_call("sympy.discrete.transforms.ntt", args)
   list_equiv(ours, items)
 }
@@ -327,10 +309,7 @@ pub fn intt_equiv(
   prime : Int,
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [
-    OracleArg::PyObj(list_obj.obj()),
-    OracleArg::Int(prime),
-  ]
+  let args : Array[OracleArg] = [PyObj(list_obj.obj()), Int(prime)]
   let items = sympy_list_call("sympy.discrete.transforms.intt", args)
   list_equiv(ours, items)
 }
@@ -341,7 +320,7 @@ pub fn fwht_equiv(
   ours : Array[@symcore.Expr],
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
+  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
   let items = sympy_list_call("sympy.discrete.transforms.fwht", args)
   list_equiv(ours, items)
 }
@@ -352,7 +331,7 @@ pub fn ifwht_equiv(
   ours : Array[@symcore.Expr],
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
+  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
   let items = sympy_list_call("sympy.discrete.transforms.ifwht", args)
   list_equiv(ours, items)
 }
@@ -364,9 +343,9 @@ pub fn mobius_transform_equiv(
   subset? : Bool = true,
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
+  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
   let kwargs : Map[String, OracleArg] = Map([])
-  kwargs["subset"] = OracleArg::Bool(subset)
+  kwargs["subset"] = Bool(subset)
   let items = sympy_list_call(
     "sympy.discrete.transforms.mobius_transform",
     args,
@@ -382,9 +361,9 @@ pub fn inverse_mobius_transform_equiv(
   subset? : Bool = true,
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
+  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
   let kwargs : Map[String, OracleArg] = Map([])
-  kwargs["subset"] = OracleArg::Bool(subset)
+  kwargs["subset"] = Bool(subset)
   let items = sympy_list_call(
     "sympy.discrete.transforms.inverse_mobius_transform",
     args,
@@ -402,13 +381,10 @@ pub fn convolution_fft_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [
-    OracleArg::PyObj(a_obj.obj()),
-    OracleArg::PyObj(b_obj.obj()),
-  ]
+  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
   let kwargs : Map[String, OracleArg] = Map([])
   match dps {
-    Some(v) => kwargs["dps"] = OracleArg::Int(v)
+    Some(v) => kwargs["dps"] = Int(v)
     None => ()
   }
   let items = sympy_list_call(
@@ -432,9 +408,9 @@ pub fn convolution_ntt_equiv(
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
   let args : Array[OracleArg] = [
-    OracleArg::PyObj(a_obj.obj()),
-    OracleArg::PyObj(b_obj.obj()),
-    OracleArg::Int(prime),
+    PyObj(a_obj.obj()),
+    PyObj(b_obj.obj()),
+    Int(prime),
   ]
   let items = sympy_list_call(
     "sympy.discrete.convolutions.convolution_ntt", args,
@@ -450,10 +426,7 @@ pub fn convolution_fwht_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [
-    OracleArg::PyObj(a_obj.obj()),
-    OracleArg::PyObj(b_obj.obj()),
-  ]
+  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
   let items = sympy_list_call(
     "sympy.discrete.convolutions.convolution_fwht", args,
   )
@@ -468,10 +441,7 @@ pub fn convolution_subset_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [
-    OracleArg::PyObj(a_obj.obj()),
-    OracleArg::PyObj(b_obj.obj()),
-  ]
+  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
   let items = sympy_list_call(
     "sympy.discrete.convolutions.convolution_subset", args,
   )
@@ -486,10 +456,7 @@ pub fn covering_product_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [
-    OracleArg::PyObj(a_obj.obj()),
-    OracleArg::PyObj(b_obj.obj()),
-  ]
+  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
   let items = sympy_list_call(
     "sympy.discrete.convolutions.covering_product", args,
   )
@@ -504,10 +471,7 @@ pub fn intersecting_product_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [
-    OracleArg::PyObj(a_obj.obj()),
-    OracleArg::PyObj(b_obj.obj()),
-  ]
+  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
   let items = sympy_list_call(
     "sympy.discrete.convolutions.intersecting_product", args,
   )
@@ -527,28 +491,25 @@ pub fn convolution_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [
-    OracleArg::PyObj(a_obj.obj()),
-    OracleArg::PyObj(b_obj.obj()),
-  ]
+  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
   let kwargs : Map[String, OracleArg] = Map([])
   if cycle != 0 {
-    kwargs["cycle"] = OracleArg::Int(cycle)
+    kwargs["cycle"] = Int(cycle)
   }
   match dps {
-    Some(v) => kwargs["dps"] = OracleArg::Int(v)
+    Some(v) => kwargs["dps"] = Int(v)
     None => ()
   }
   match prime {
-    Some(p) => kwargs["prime"] = OracleArg::Int(p)
+    Some(p) => kwargs["prime"] = Int(p)
     None => ()
   }
   match dyadic {
-    Some(v) => kwargs["dyadic"] = OracleArg::Bool(v)
+    Some(v) => kwargs["dyadic"] = Bool(v)
     None => ()
   }
   match subset {
-    Some(v) => kwargs["subset"] = OracleArg::Bool(v)
+    Some(v) => kwargs["subset"] = Bool(v)
     None => ()
   }
   let items = sympy_list_call(
@@ -568,7 +529,7 @@ pub fn convolution_int_equiv(
   b : Array[Int],
   ours : Array[Int],
 ) -> Bool raise {
-  let args : Array[OracleArg] = [OracleArg::IntList(a), OracleArg::IntList(b)]
+  let args : Array[OracleArg] = [IntList(a), IntList(b)]
   let items = sympy_list_call(
     "sympy.discrete.convolutions.convolution_int", args,
   )
@@ -596,11 +557,7 @@ pub fn linrec_equiv(
 ) -> Bool raise {
   let c_obj = py_list_from_exprs(coeffs)
   let b_obj = py_list_from_exprs(init)
-  let args : Array[OracleArg] = [
-    OracleArg::PyObj(c_obj.obj()),
-    OracleArg::PyObj(b_obj.obj()),
-    OracleArg::Int(n),
-  ]
+  let args : Array[OracleArg] = [PyObj(c_obj.obj()), PyObj(b_obj.obj()), Int(n)]
   let sympy_obj = sympy_call_obj("sympy.discrete.recurrences.linrec", args)
   expr_equiv_pyobj(ours, sympy_obj)
 }

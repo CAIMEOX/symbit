@@ -52,8 +52,20 @@ pub fn singularities(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 // Errors
 type AccumBoundsError derive(Eq, @debug.Debug)
+#deprecated
+pub fn AccumBoundsError::equal(Self, Self) -> Bool
+#deprecated
+pub fn AccumBoundsError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn AccumBoundsError::to_repr(Self) -> @debug.Repr
 
 type FiniteDiffError derive(Eq, @debug.Debug)
+#deprecated
+pub fn FiniteDiffError::equal(Self, Self) -> Bool
+#deprecated
+pub fn FiniteDiffError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn FiniteDiffError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 

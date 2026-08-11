@@ -23,7 +23,7 @@ pub struct OperatorExpr {
 
 ///|
 fn default_operator_label() -> Array[Expr] {
-  [Expr::Symbol("O")]
+  [Symbol("O")]
 }
 
 ///|
@@ -38,24 +38,20 @@ fn normalize_operator_label(label : Array[Expr]) -> Array[Expr] {
 ///|
 fn operator_class_name(flavor : OperatorFlavor) -> String {
   match flavor {
-    OperatorFlavor::Generic => "Operator"
-    OperatorFlavor::Hermitian => "HermitianOperator"
-    OperatorFlavor::Unitary => "UnitaryOperator"
-    OperatorFlavor::Identity => "IdentityOperator"
+    Generic => "Operator"
+    Hermitian => "HermitianOperator"
+    Unitary => "UnitaryOperator"
+    Identity => "IdentityOperator"
   }
 }
 
 ///|
 pub fn quantum_operator(
   label : Array[Expr],
-  flavor? : OperatorFlavor = OperatorFlavor::Generic,
+  flavor? : OperatorFlavor = Generic,
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
-  OperatorExpr::{
-    flavor,
-    label: normalize_operator_label(label),
-    hilbert_space,
-  }
+  { flavor, label: normalize_operator_label(label), hilbert_space }
 }
 
 ///|
@@ -71,7 +67,7 @@ pub fn hermitian_operator(
   label : Array[Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
-  quantum_operator(label, flavor=OperatorFlavor::Hermitian, hilbert_space~)
+  quantum_operator(label, flavor=Hermitian, hilbert_space~)
 }
 
 ///|
@@ -79,17 +75,15 @@ pub fn unitary_operator(
   label : Array[Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
-  quantum_operator(label, flavor=OperatorFlavor::Unitary, hilbert_space~)
+  quantum_operator(label, flavor=Unitary, hilbert_space~)
 }
 
 ///|
 pub fn identity_operator(
-  dimension? : Expr = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::Infinity,
-  ),
+  dimension? : Expr = NumberSymbol(Infinity),
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
-  quantum_operator([dimension], flavor=OperatorFlavor::Identity, hilbert_space~)
+  quantum_operator([dimension], flavor=Identity, hilbert_space~)
 }
 
 ///|
@@ -100,7 +94,7 @@ pub fn OperatorExpr::as_expr(self : OperatorExpr) -> Expr {
 ///|
 pub impl Show for OperatorExpr with fn to_string(self) {
   match self.flavor {
-    OperatorFlavor::Identity => "I"
+    Identity => "I"
     _ => {
       let rendered = self.label.map(@symprint.pretty_string).join(", ")
       if self.label.length() == 1 {
@@ -114,7 +108,7 @@ pub impl Show for OperatorExpr with fn to_string(self) {
 
 ///|
 pub impl Show for OperatorExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -126,7 +120,7 @@ pub fn OperatorExpr::repr(self : OperatorExpr) -> String {
 ///|
 pub fn OperatorExpr::inverse(self : OperatorExpr) -> Expr {
   match self.flavor {
-    OperatorFlavor::Identity => self.as_expr()
+    Identity => self.as_expr()
     _ => @symcore.raw_pow(self.as_expr(), int(-1))
   }
 }
@@ -139,13 +133,13 @@ fn outer_product_raw(ket_expr : Expr, bra_expr : Expr) -> Expr {
 ///|
 pub fn outer_product(ket_expr : Expr, bra_expr : Expr) -> Expr {
   match ket_expr {
-    Expr::Add(args) =>
+    Add(args) =>
       quantum_add_from_args_preserve(
         args.map(term => outer_product(term, bra_expr)),
       )
     _ =>
       match bra_expr {
-        Expr::Add(args) =>
+        Add(args) =>
           quantum_add_from_args_preserve(
             args.map(term => outer_product(ket_expr, term)),
           )
@@ -184,7 +178,7 @@ pub fn operator_from_expr(expr : Expr) -> OperatorExpr? {
             "UnitaryOperator" => Some(unitary_operator(args))
             "IdentityOperator" => {
               let dimension = if args.is_empty() {
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+                @symcore.Expr::NumberSymbol(Infinity)
               } else {
                 args[0]
               }

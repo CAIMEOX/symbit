@@ -178,7 +178,5 @@ using @symstats {
 
 ///|
 fn stats_matrix_literal(rows : Array[Array[@symcore.Expr]]) -> @symcore.Expr {
-  @symcore.function("Matrix", [
-    @symcore.Expr::Tuple(rows.map(row => @symcore.Expr::Tuple(row))),
-  ])
+  @symcore.function("Matrix", [Tuple(rows.map(row => Tuple(row)))])
 }

@@ -2,7 +2,7 @@
 ///\
 fn br_inc_if_int(expr : @symcore.Expr) -> Array[@symcore.Expr] {
   match expr {
-    @symcore.Expr::Number(_) => [expr + @symcore.int(1)]
+    Number(_) => [expr + @symcore.int(1)]
     _ => []
   }
 }

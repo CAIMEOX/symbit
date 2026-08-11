@@ -10,14 +10,14 @@ fn geo_rational_to_double(value : @symnum.BigRational) -> Double {
 ///|
 fn geo_expr_real_double(expr : Expr) -> Double? {
   match geo_simplify(expr) {
-    Expr::Number(value) => Some(geo_rational_to_double(value))
-    Expr::Float(value) =>
+    Number(value) => Some(geo_rational_to_double(value))
+    Float(value) =>
       try value.to_double() catch {
         _ => None
       } noraise {
         out => Some(out)
       }
-    Expr::ComplexFloat(value) =>
+    ComplexFloat(value) =>
       if @symnum.is_zero(value.to_mpc().imag) {
         try value.real_part().to_double() catch {
           _ => None
@@ -27,28 +27,25 @@ fn geo_expr_real_double(expr : Expr) -> Double? {
       } else {
         None
       }
-    Expr::Dummy(_, _)
-    | Expr::Wild(_, _, _)
-    | Expr::FunctionHead(_)
-    | Expr::UndefinedFunction(_) => None
-    Expr::Dict(_) => None
-    Expr::Mod(_, _) => None
-    Expr::NumberSymbol(kind) =>
+    Dummy(_, _) | Wild(_, _, _) | FunctionHead(_) | UndefinedFunction(_) => None
+    Dict(_) => None
+    Mod(_, _) => None
+    NumberSymbol(kind) =>
       match kind {
-        @symcore.NumberSymbolKind::Pi => Some(@math.PI)
-        @symcore.NumberSymbolKind::Exp1 => Some(2.718281828459045)
-        @symcore.NumberSymbolKind::EulerGamma => Some(0.5772156649015329)
-        @symcore.NumberSymbolKind::GoldenRatio => Some(1.618033988749895)
-        @symcore.NumberSymbolKind::Catalan => Some(0.915965594177219)
+        Pi => Some(@math.PI)
+        Exp1 => Some(2.718281828459045)
+        EulerGamma => Some(0.5772156649015329)
+        GoldenRatio => Some(1.618033988749895)
+        Catalan => Some(0.915965594177219)
         _ => None
       }
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       match name {
         "pi" => Some(@math.PI)
         "E" => Some(2.718281828459045)
         _ => None
       }
-    Expr::Add(args) => {
+    Add(args) => {
       let mut acc = 0.0
       for arg in args {
         match geo_expr_real_double(arg) {
@@ -58,7 +55,7 @@ fn geo_expr_real_double(expr : Expr) -> Double? {
       }
       Some(acc)
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = 1.0
       for arg in args {
         match geo_expr_real_double(arg) {
@@ -68,7 +65,7 @@ fn geo_expr_real_double(expr : Expr) -> Double? {
       }
       Some(acc)
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (geo_expr_real_double(base), geo_expr_real_double(exp)) {
         (Some(lhs), Some(rhs)) => Some(@math.pow(lhs, rhs))
         _ => None

@@ -15,9 +15,8 @@ test "physics.quantum.tensorproduct: parity" {
     quantum_eval_str(
       @symprint.pretty_string(
         @symquant.tensor_product([
-          @symcore.Expr::Symbol("x") *
-          operator([@symcore.Expr::Symbol("A")]).as_expr(),
-          @symcore.int(2) * operator([@symcore.Expr::Symbol("B")]).as_expr(),
+          Symbol("x") * operator([Symbol("A")]).as_expr(),
+          @symcore.int(2) * operator([Symbol("B")]).as_expr(),
         ]).as_expr(),
       ),
     ),
@@ -29,10 +28,10 @@ test "physics.quantum.tensorproduct: parity" {
       @symprint.pretty_string(
         tensor_product_expand(
           @symquant.tensor_product([
-            operator([@symcore.Expr::Symbol("A")]).as_expr() +
-            operator([@symcore.Expr::Symbol("B")]).as_expr(),
-            operator([@symcore.Expr::Symbol("B")]).as_expr() +
-            operator([@symcore.Expr::Symbol("C")]).as_expr(),
+            operator([Symbol("A")]).as_expr() +
+            operator([Symbol("B")]).as_expr(),
+            operator([Symbol("B")]).as_expr() +
+            operator([Symbol("C")]).as_expr(),
           ]).as_expr(),
         ),
       ),
@@ -47,17 +46,17 @@ test "physics.quantum.tensorproduct: parity" {
       @symprint.pretty_string(
         tensor_product_simp(
           @symcore.raw_mul([
-            @symcore.Expr::Symbol("x"),
+            Symbol("x"),
             @symcore.raw_pow(
               @symquant.tensor_product([
-                operator([@symcore.Expr::Symbol("A")]).as_expr(),
-                operator([@symcore.Expr::Symbol("B")]).as_expr(),
+                operator([Symbol("A")]).as_expr(),
+                operator([Symbol("B")]).as_expr(),
               ]).as_expr(),
               @symcore.int(2),
             ),
             @symquant.tensor_product([
-              operator([@symcore.Expr::Symbol("C")]).as_expr(),
-              operator([@symcore.Expr::Symbol("D")]).as_expr(),
+              operator([Symbol("C")]).as_expr(),
+              operator([Symbol("D")]).as_expr(),
             ]).as_expr(),
           ]),
         ),
@@ -73,15 +72,15 @@ test "physics.quantum.tensorproduct: parity" {
       @symprint.pretty_string(
         tensor_product_simp(
           @symquant.tensor_product([
-            operator([@symcore.Expr::Symbol("A")]).as_expr(),
-            operator([@symcore.Expr::Symbol("B")]).as_expr(),
+            operator([Symbol("A")]).as_expr(),
+            operator([Symbol("B")]).as_expr(),
           ]).as_expr() -
           @symcore.raw_pow(
             @symquant.tensor_product([
-              operator([@symcore.Expr::Symbol("C")]).as_expr(),
-              operator([@symcore.Expr::Symbol("D")]).as_expr(),
+              operator([Symbol("C")]).as_expr(),
+              operator([Symbol("D")]).as_expr(),
             ]).as_expr(),
-            @symcore.Expr::Symbol("y"),
+            Symbol("y"),
           ),
         ),
       ),

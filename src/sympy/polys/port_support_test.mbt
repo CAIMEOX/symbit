@@ -11,10 +11,8 @@ using @sympolys {
   type DomainMatrixDOD,
   type DomainMatrixDOK,
   type DomainMatrixRationalEigenvects,
-  type DomainMatrixRep,
   type DomainScalar,
   type FieldElem,
-  type LinearSolveResult,
   type Matrix,
   type MatrixExpr,
   type Monomial,
@@ -39,7 +37,7 @@ fn[T] expect_poly_error(action : () -> T raise PolyError) -> PolyError raise {
 
 ///|
 fn expr_sym(name : String) -> @symcore.Expr {
-  @symcore.Expr::Symbol(name)
+  Symbol(name)
 }
 
 ///|
@@ -49,7 +47,7 @@ fn expr_int(n : Int) -> @symcore.Expr {
 
 ///|
 fn expr_rat(n : Int, d : Int) -> @symcore.Expr raise {
-  @symcore.Expr::Number(
+  Number(
     @symnum.BigRational::from_ints(n, d) catch {
       _ => raise PolyError::DivisionByZero
     },
@@ -135,5 +133,5 @@ fn div_pair_to_string(quo : Poly, rem : Poly) -> String raise {
 
 ///|
 fn fe_to_string(value : FieldElem) -> String {
-  value.to_string()
+  Show::to_string(value)
 }

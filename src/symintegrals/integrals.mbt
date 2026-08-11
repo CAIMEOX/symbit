@@ -28,7 +28,7 @@ pub fn integral(expr : Expr, limits? : Array[Expr] = []) -> Expr {
 /// - Returns: One tuple `Expr`.
 /// - Limits: The tuple is not validated here beyond being wrapped as-is.
 pub fn integral_limit(items : Array[Expr]) -> Expr {
-  Expr::Tuple(items)
+  Tuple(items)
 }
 
 ///|
@@ -86,7 +86,7 @@ fn inverse_laplace_transform_with_none(expr : Expr, s : Expr, t : Expr) -> Expr 
 
 ///|
 fn inverse_laplace_none_sentinel() -> Expr {
-  @symcore.Expr::Symbol("_None")
+  Symbol("_None")
 }
 
 ///|
@@ -103,7 +103,7 @@ pub fn inverse_laplace_transform_fundamental_plane(transform : Expr) -> Expr? {
     Some((head, [_, _, _, plane])) if @symcore.function_head_name(head) ==
       Some("InverseLaplaceTransform") =>
       match plane {
-        @symcore.Expr::Symbol("_None") => None
+        Symbol("_None") => None
         _ => Some(plane)
       }
     _ => None
@@ -131,13 +131,9 @@ pub fn inverse_laplace_transform_as_integral(transform : Expr) -> Expr? {
 ///|
 fn inverse_laplace_bromwich_integral(inner : Expr, s : Expr, t : Expr) -> Expr {
   let contour = @symcore.Expr::Symbol("_c")
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
-  let infinity = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::Infinity,
-  )
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
+  let infinity = @symcore.Expr::NumberSymbol(Infinity)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let imag_infinity = imag * infinity
   expr_div(
     integral(@symelem.exp(s * t) * inner, limits=[
@@ -275,31 +271,24 @@ pub fn line_integrate(
   vars : Array[Expr],
 ) -> Expr raise IntegralError {
   if vars.is_empty() {
-    raise IntegralError::ValueError("Expecting ordered iterable for variables.")
+    raise ValueError("Expecting ordered iterable for variables.")
   }
   let functions = curve.functions()
   if functions.length() != vars.length() {
-    raise IntegralError::ValueError(
-      "Field variable size does not match curve dimension.",
-    )
+    raise ValueError("Field variable size does not match curve dimension.")
   }
   let (parameter, lower, upper) = curve.limits()
   for variable in vars {
     if @symcore.compare_expr(variable, parameter) == 0 {
-      raise IntegralError::ValueError(
-        "Curve parameter clashes with field parameters.",
-      )
+      raise ValueError("Curve parameter clashes with field parameters.")
     }
   }
   let mut transformed = field
   let mut speed_sq = @symcore.int(0)
   for i in 0..<functions.length() {
     let name = match vars[i] {
-      @symcore.Expr::Symbol(var_name) => var_name
-      _ =>
-        raise IntegralError::ValueError(
-          "Expecting symbols as line integral variables.",
-        )
+      Symbol(var_name) => var_name
+      _ => raise ValueError("Expecting symbols as line integral variables.")
     }
     let deriv = @symcalculus.diff(functions[i], parameter)
     speed_sq = expr_add(speed_sq, deriv * deriv)
@@ -360,10 +349,7 @@ pub fn integrate(expr : Expr, limits? : Array[Expr] = []) -> Expr {
           None =>
             match meijerg_integrate(expr, name) {
               Some(res) => expr_simplify(res)
-              None =>
-                integral(expr, limits=[
-                  Expr::Tuple([@symcore.Expr::Symbol(name)]),
-                ])
+              None => integral(expr, limits=[Tuple([Symbol(name)])])
             }
         }
       None => integral(expr)
@@ -488,7 +474,7 @@ pub fn inverse_laplace_transform_eval(
   if noconds {
     value
   } else {
-    Expr::Tuple([value, cond])
+    Tuple([value, cond])
   }
 }
 
@@ -523,30 +509,28 @@ fn inverse_laplace_fill_plane(expr : Expr, plane : Expr?) -> Expr {
       }
     None =>
       match expr {
-        Expr::Add(args) =>
+        Add(args) =>
           @symcore.add(
             args.map(fn(arg) { inverse_laplace_fill_plane(arg, plane) }),
           )
-        Expr::Mul(args) =>
+        Mul(args) =>
           @symcore.mul(
             args.map(fn(arg) { inverse_laplace_fill_plane(arg, plane) }),
           )
-        Expr::Pow(base, exp) =>
+        Pow(base, exp) =>
           @symcore.pow(
             inverse_laplace_fill_plane(base, plane),
             inverse_laplace_fill_plane(exp, plane),
           )
-        Expr::Mod(lhs, rhs) =>
-          Expr::Mod(
+        Mod(lhs, rhs) =>
+          Mod(
             inverse_laplace_fill_plane(lhs, plane),
             inverse_laplace_fill_plane(rhs, plane),
           )
-        Expr::Tuple(args) =>
-          Expr::Tuple(
-            args.map(fn(arg) { inverse_laplace_fill_plane(arg, plane) }),
-          )
-        Expr::Dict(items) =>
-          Expr::Dict(
+        Tuple(args) =>
+          Tuple(args.map(fn(arg) { inverse_laplace_fill_plane(arg, plane) }))
+        Dict(items) =>
+          Dict(
             items.map(fn(item) {
               (
                 inverse_laplace_fill_plane(item.0, plane),
@@ -554,25 +538,25 @@ fn inverse_laplace_fill_plane(expr : Expr, plane : Expr?) -> Expr {
               )
             }),
           )
-        Expr::Relational(op, lhs, rhs) =>
-          Expr::Relational(
+        Relational(op, lhs, rhs) =>
+          Relational(
             op,
             inverse_laplace_fill_plane(lhs, plane),
             inverse_laplace_fill_plane(rhs, plane),
           )
-        Expr::Derivative(inner, args) =>
-          Expr::Derivative(
+        Derivative(inner, args) =>
+          Derivative(
             inverse_laplace_fill_plane(inner, plane),
             args.map(fn(arg) { inverse_laplace_fill_plane(arg, plane) }),
           )
-        Expr::Subs(inner, variable, value) =>
-          Expr::Subs(
+        Subs(inner, variable, value) =>
+          Subs(
             inverse_laplace_fill_plane(inner, plane),
             inverse_laplace_fill_plane(variable, plane),
             inverse_laplace_fill_plane(value, plane),
           )
-        Expr::Lambda(vars, body) =>
-          Expr::Lambda(
+        Lambda(vars, body) =>
+          Lambda(
             inverse_laplace_fill_plane(vars, plane),
             inverse_laplace_fill_plane(body, plane),
           )

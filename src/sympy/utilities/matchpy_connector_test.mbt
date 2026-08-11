@@ -25,11 +25,7 @@ test "replacer handles sequence wildcards in associative nodes" {
   let tail = wild_star("tail")
   let r = replacer()
   r.add(@symcore.raw_add([head, tail]), @symcore.raw_add([tail, head]))
-  let expr = @symcore.raw_add([
-    @symcore.Expr::Symbol("a"),
-    @symcore.Expr::Symbol("b"),
-    @symcore.Expr::Symbol("c"),
-  ])
+  let expr = @symcore.raw_add([Symbol("a"), Symbol("b"), Symbol("c")])
   let result = r.replace(expr, max_count=1)
   inspect(@symprint.pretty_string(result), content="b + c + a")
 }

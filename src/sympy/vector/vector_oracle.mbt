@@ -45,9 +45,9 @@ fn ensure_repo_sympy_path() -> Unit raise {
   ignore(
     exec_fn.invoke(
       args=@sympy.py_pack_args([
-        OracleArg::Str(script),
-        OracleArg::PyObj(globals.obj()),
-        OracleArg::PyObj(globals.obj()),
+        Str(script),
+        PyObj(globals.obj()),
+        PyObj(globals.obj()),
       ]),
       kwargs=@sympy.py_pack_kwargs({}),
       print_err=true,

@@ -92,6 +92,16 @@ pub(all) suberror MatrixError {
   SingularMatrixError(String)
   IndexError(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn MatrixError::equal(Self, Self) -> Bool
+#deprecated
+pub fn MatrixError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn MatrixError::output(Self, &Logger) -> Unit
+#deprecated
+pub fn MatrixError::to_repr(Self) -> @debug.Repr
+#deprecated
+pub fn MatrixError::to_string(Self) -> String
 pub impl Show for MatrixError
 
 // Types and methods
@@ -104,6 +114,8 @@ pub struct Matrix {
   cols : Int
   data : Array[Array[@symcore.Expr]]
 }
+#deprecated
+pub fn Matrix::add(Self, Self) -> Self
 pub fn Matrix::adjugate(Self) -> Self raise MatrixError
 pub fn Matrix::applyfunc(Self, (@symcore.Expr) -> @symcore.Expr) -> Self raise MatrixError
 pub fn Matrix::as_immutable(Self) -> Self
@@ -147,8 +159,12 @@ pub fn Matrix::lower_triangular_solve(Self, Self) -> Self raise MatrixError
 pub fn Matrix::lu(Self) -> (Self, Self, Array[(Int, Int)]) raise MatrixError
 pub fn Matrix::minor(Self, Int, Int) -> @symcore.Expr raise MatrixError
 pub fn Matrix::minor_submatrix(Self, Int, Int) -> Self raise MatrixError
+#deprecated
+pub fn Matrix::mul(Self, Self) -> Self
 pub fn Matrix::nnz(Self) -> Int
 pub fn Matrix::nullspace(Self) -> Array[Array[@symcore.Expr]]
+#deprecated
+pub fn Matrix::output(Self, &Logger) -> Unit
 pub fn Matrix::qr(Self) -> (Self, Self) raise MatrixError
 pub fn Matrix::rank(Self) -> Int
 pub fn Matrix::reshape(Self, Int, Int) -> Self raise MatrixError
@@ -164,8 +180,12 @@ pub fn Matrix::setitem(Self, Int, Int, @symcore.Expr) -> Self raise MatrixError
 pub fn Matrix::shape(Self) -> (Int, Int)
 pub fn Matrix::simplify(Self) -> Self raise MatrixError
 pub fn Matrix::solve(Self, Self) -> Self raise MatrixError
+#deprecated
+pub fn Matrix::sub(Self, Self) -> Self
 pub fn Matrix::to_list(Self) -> Array[Array[@symcore.Expr]]
 pub fn Matrix::to_sparse(Self) -> SparseMatrix
+#deprecated
+pub fn Matrix::to_string(Self) -> String
 pub fn Matrix::todod(Self) -> Map[Int, Map[Int, @symcore.Expr]]
 pub fn Matrix::todok(Self) -> Map[(Int, Int), @symcore.Expr]
 pub fn Matrix::tolist(Self) -> Array[Array[@symcore.Expr]]
@@ -196,7 +216,11 @@ pub fn MatrixExpr::block_collapse(Self) -> Self
 pub fn MatrixExpr::doit(Self, Map[String, Matrix]) -> Matrix raise MatrixError
 pub fn MatrixExpr::eval(Self, Map[String, Matrix]) -> Matrix raise MatrixError
 pub fn MatrixExpr::latex(Self, settings? : @symprint.LatexSettings) -> String
+#deprecated
+pub fn MatrixExpr::output(Self, &Logger) -> Unit
 pub fn MatrixExpr::shape(Self) -> (Int, Int) raise MatrixError
+#deprecated
+pub fn MatrixExpr::to_string(Self) -> String
 pub impl Show for MatrixExpr
 
 #alias(ImmutableSparseMatrix)
@@ -206,6 +230,8 @@ pub struct SparseMatrix {
   cols : Int
   entries : Map[(Int, Int), @symcore.Expr]
 }
+#deprecated
+pub fn SparseMatrix::add(Self, Self) -> Self
 pub fn SparseMatrix::applyfunc(Self, (@symcore.Expr) -> @symcore.Expr) -> Self raise MatrixError
 pub fn SparseMatrix::as_immutable(Self) -> Self
 pub fn SparseMatrix::as_mutable(Self) -> Self
@@ -235,8 +261,12 @@ pub fn SparseMatrix::latex(Self, settings? : @symprint.LatexSettings) -> String
 pub fn SparseMatrix::ldl(Self) -> (Matrix, Matrix) raise MatrixError
 pub fn SparseMatrix::lower_triangular_solve(Self, Matrix) -> Matrix raise MatrixError
 pub fn SparseMatrix::lu(Self) -> (Matrix, Matrix, Array[(Int, Int)]) raise MatrixError
+#deprecated
+pub fn SparseMatrix::mul(Self, Self) -> Self
 pub fn SparseMatrix::nnz(Self) -> Int
 pub fn SparseMatrix::nullspace(Self) -> Array[Array[@symcore.Expr]]
+#deprecated
+pub fn SparseMatrix::output(Self, &Logger) -> Unit
 pub fn SparseMatrix::qr(Self) -> (Matrix, Matrix) raise MatrixError
 pub fn SparseMatrix::rank(Self) -> Int
 pub fn SparseMatrix::reshape(Self, Int, Int) -> Self raise MatrixError
@@ -251,8 +281,12 @@ pub fn SparseMatrix::setitem(Self, Int, Int, @symcore.Expr) -> Self raise Matrix
 pub fn SparseMatrix::shape(Self) -> (Int, Int)
 pub fn SparseMatrix::solve(Self, Matrix) -> Matrix raise MatrixError
 pub fn SparseMatrix::solve_least_squares(Self, Matrix) -> Matrix raise MatrixError
+#deprecated
+pub fn SparseMatrix::sub(Self, Self) -> Self
 pub fn SparseMatrix::to_dense(Self) -> Matrix
 pub fn SparseMatrix::to_list(Self) -> Array[Array[@symcore.Expr]]
+#deprecated
+pub fn SparseMatrix::to_string(Self) -> String
 pub fn SparseMatrix::todok(Self) -> Map[(Int, Int), @symcore.Expr]
 pub fn SparseMatrix::tolist(Self) -> Array[Array[@symcore.Expr]]
 pub fn SparseMatrix::trace(Self) -> @symcore.Expr raise MatrixError

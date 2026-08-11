@@ -32,7 +32,7 @@ pub fn sdm_from_entries(
   entries : Array[(Int, Int, FieldElem)],
   domain : Domain,
 ) -> SDM raise PolyError {
-  SDM::{ dm: domain_matrix_from_sparse(rows, cols, entries, domain) }
+  { dm: domain_matrix_from_sparse(rows, cols, entries, domain) }
 }
 
 ///|
@@ -46,7 +46,7 @@ pub fn sdm_from_dense(
   rows : Array[Array[FieldElem]],
   domain : Domain,
 ) -> SDM raise PolyError {
-  SDM::{ dm: domain_matrix_from_dense(rows, domain).to_sparse() }
+  { dm: domain_matrix_from_dense(rows, domain).to_sparse() }
 }
 
 ///|
@@ -61,7 +61,7 @@ pub fn SDM::new(
   shape : (Int, Int),
   domain : Domain,
 ) -> SDM raise PolyError {
-  SDM::{ dm: DomainMatrix::from_dod(dod, shape, domain).to_sparse() }
+  { dm: DomainMatrix::from_dod(dod, shape, domain).to_sparse() }
 }
 
 ///|
@@ -79,14 +79,14 @@ pub fn SDM::from_list(
 ) -> SDM raise PolyError {
   let (nrows, ncols) = shape
   if rows.length() != nrows {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   for row in rows {
     if row.length() != ncols {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
   }
-  SDM::{ dm: DomainMatrix::from_list(rows, domain).to_sparse() }
+  { dm: DomainMatrix::from_list(rows, domain).to_sparse() }
 }
 
 ///|
@@ -97,7 +97,7 @@ pub fn SDM::from_list(
 /// - Returns: An `SDM`.
 /// - Limits: Raises `PolyError` only if the dense view cannot be converted.
 pub fn SDM::from_ddm(other : DDM) -> SDM raise PolyError {
-  SDM::{ dm: other.to_domain_matrix().to_sparse() }
+  { dm: other.to_domain_matrix().to_sparse() }
 }
 
 ///|
@@ -117,7 +117,7 @@ pub fn SDM::from_list_flat(
   shape : (Int, Int),
   domain : Domain,
 ) -> SDM raise PolyError {
-  SDM::{ dm: DomainMatrix::from_list_flat(elements, shape, domain).to_sparse() }
+  { dm: DomainMatrix::from_list_flat(elements, shape, domain).to_sparse() }
 }
 
 ///|
@@ -137,7 +137,7 @@ pub fn SDM::from_dod(
   shape : (Int, Int),
   domain : Domain,
 ) -> SDM raise PolyError {
-  SDM::{ dm: DomainMatrix::from_dod(dod, shape, domain).to_sparse() }
+  { dm: DomainMatrix::from_dod(dod, shape, domain).to_sparse() }
 }
 
 ///|
@@ -157,7 +157,7 @@ pub fn SDM::from_dok(
   shape : (Int, Int),
   domain : Domain,
 ) -> SDM raise PolyError {
-  SDM::{ dm: DomainMatrix::from_dok(dok, shape, domain).to_sparse() }
+  { dm: DomainMatrix::from_dok(dok, shape, domain).to_sparse() }
 }
 
 ///|
@@ -172,7 +172,7 @@ pub fn SDM::zeros(
   cols : Int,
   domain : Domain,
 ) -> SDM raise PolyError {
-  SDM::{ dm: DomainMatrix::zeros(rows, cols, domain).to_sparse() }
+  { dm: DomainMatrix::zeros(rows, cols, domain).to_sparse() }
 }
 
 ///|
@@ -192,7 +192,7 @@ pub fn SDM::ones(
   cols : Int,
   domain : Domain,
 ) -> SDM raise PolyError {
-  SDM::{ dm: DomainMatrix::ones(rows, cols, domain).to_sparse() }
+  { dm: DomainMatrix::ones(rows, cols, domain).to_sparse() }
 }
 
 ///|
@@ -203,7 +203,7 @@ pub fn SDM::ones(
 /// - Returns: An `SDM`.
 /// - Limits: Raises `PolyError` when the matrix cannot be created.
 pub fn SDM::eye(n : Int, domain : Domain) -> SDM raise PolyError {
-  SDM::{ dm: DomainMatrix::eye(n, domain).to_sparse() }
+  { dm: DomainMatrix::eye(n, domain).to_sparse() }
 }
 
 ///|
@@ -225,7 +225,7 @@ pub fn SDM::diag(
   rows? : Int? = None,
   cols? : Int? = None,
 ) -> SDM raise PolyError {
-  SDM::{ dm: DomainMatrix::diag(values, domain, rows~, cols~).to_sparse() }
+  { dm: DomainMatrix::diag(values, domain, rows~, cols~).to_sparse() }
 }
 
 ///|
@@ -241,7 +241,7 @@ pub fn SDM::diag(
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn SDM::copy(self : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.copy().to_sparse() }
+  { dm: self.dm.copy().to_sparse() }
 }
 
 ///|
@@ -274,7 +274,7 @@ pub fn SDM::domain(self : SDM) -> Domain {
 /// - Returns: An `SDM`.
 /// - Limits: Raises `PolyError` when an entry cannot be converted.
 pub fn SDM::convert_to(self : SDM, domain : Domain) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.convert_to(domain).to_sparse() }
+  { dm: self.dm.convert_to(domain).to_sparse() }
 }
 
 ///|
@@ -286,7 +286,7 @@ pub fn SDM::convert_to(self : SDM, domain : Domain) -> SDM raise PolyError {
 /// - Limits: Raises `PolyError` when the sparse storage cannot be expanded.
 pub fn SDM::to_dense(self : SDM) -> DDM raise PolyError {
   let rows = self.dm.to_dense()
-  DDM::{ dm: domain_matrix_from_dense(rows, self.dm.domain) }
+  { dm: domain_matrix_from_dense(rows, self.dm.domain) }
 }
 
 ///|
@@ -450,7 +450,7 @@ pub fn SDM::from_flat_nz(
   data : DomainMatrixFlatNZData,
   domain : Domain,
 ) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.from_flat_nz(elements, data, domain).to_sparse() }
+  { dm: self.dm.from_flat_nz(elements, data, domain).to_sparse() }
 }
 
 ///|
@@ -585,7 +585,7 @@ pub fn SDM::setitem(
   col : Int,
   value : FieldElem,
 ) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.setitem(row, col, value).to_sparse() }
+  { dm: self.dm.setitem(row, col, value).to_sparse() }
 }
 
 ///|
@@ -610,7 +610,7 @@ pub fn SDM::extract_slice(
   col_stop? : Int? = None,
   col_step? : Int = 1,
 ) -> SDM raise PolyError {
-  SDM::{
+  {
     dm: self.dm
     .extract_slice(
       row_start~,
@@ -641,7 +641,7 @@ pub fn SDM::applyfunc(
   func : FieldElemMapper,
   domain? : Domain? = None,
 ) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.applyfunc(func, domain~).to_sparse() }
+  { dm: self.dm.applyfunc(func, domain~).to_sparse() }
 }
 
 ///|
@@ -657,7 +657,7 @@ pub fn SDM::applyfunc(
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn SDM::transpose(self : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.transpose().to_sparse() }
+  { dm: self.dm.transpose().to_sparse() }
 }
 
 ///|
@@ -673,7 +673,7 @@ pub fn SDM::transpose(self : SDM) -> SDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn SDM::add(self : SDM, other : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.add(other.dm).to_sparse() }
+  { dm: self.dm.add(other.dm).to_sparse() }
 }
 
 ///|
@@ -689,7 +689,7 @@ pub fn SDM::add(self : SDM, other : SDM) -> SDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn SDM::sub(self : SDM, other : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.sub(other.dm).to_sparse() }
+  { dm: self.dm.sub(other.dm).to_sparse() }
 }
 
 ///|
@@ -705,7 +705,7 @@ pub fn SDM::sub(self : SDM, other : SDM) -> SDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn SDM::neg(self : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.neg().to_sparse() }
+  { dm: self.dm.neg().to_sparse() }
 }
 
 ///|
@@ -721,7 +721,7 @@ pub fn SDM::neg(self : SDM) -> SDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn SDM::mul(self : SDM, scalar : FieldElem) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.mul(scalar).to_sparse() }
+  { dm: self.dm.mul(scalar).to_sparse() }
 }
 
 ///|
@@ -737,7 +737,7 @@ pub fn SDM::mul(self : SDM, scalar : FieldElem) -> SDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn SDM::matmul(self : SDM, other : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.matmul(other.dm).to_sparse() }
+  { dm: self.dm.matmul(other.dm).to_sparse() }
 }
 
 ///|
@@ -753,7 +753,7 @@ pub fn SDM::matmul(self : SDM, other : SDM) -> SDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn SDM::mul_elementwise(self : SDM, other : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.mul_elementwise(other.dm).to_sparse() }
+  { dm: self.dm.mul_elementwise(other.dm).to_sparse() }
 }
 
 ///|
@@ -769,7 +769,7 @@ pub fn SDM::mul_elementwise(self : SDM, other : SDM) -> SDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn SDM::rmul(self : SDM, scalar : FieldElem) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.rmul(scalar).to_sparse() }
+  { dm: self.dm.rmul(scalar).to_sparse() }
 }
 
 ///|
@@ -805,7 +805,7 @@ pub fn SDM::extract(
   row_ids : Array[Int],
   col_ids : Array[Int],
 ) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.extract(row_ids, col_ids).to_sparse() }
+  { dm: self.dm.extract(row_ids, col_ids).to_sparse() }
 }
 
 ///|
@@ -821,7 +821,7 @@ pub fn SDM::extract(
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn SDM::hstack(self : SDM, other : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.hstack(other.dm).to_sparse() }
+  { dm: self.dm.hstack(other.dm).to_sparse() }
 }
 
 ///|
@@ -837,7 +837,7 @@ pub fn SDM::hstack(self : SDM, other : SDM) -> SDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn SDM::vstack(self : SDM, other : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.vstack(other.dm).to_sparse() }
+  { dm: self.dm.vstack(other.dm).to_sparse() }
 }
 
 ///|
@@ -944,7 +944,7 @@ pub fn SDM::det(self : SDM) -> FieldElem raise PolyError {
 /// - Limits: Raises `PolyError` when the underlying elimination fails.
 pub fn SDM::rref(self : SDM) -> (SDM, Array[Int]) raise PolyError {
   let (r, pivots) = self.dm.rref()
-  (SDM::{ dm: r.to_sparse() }, pivots)
+  ({ dm: r.to_sparse() }, pivots)
 }
 
 ///|
@@ -960,7 +960,7 @@ pub fn SDM::rref_den(
   keep_domain? : Bool = true,
 ) -> (SDM, FieldElem, Array[Int]) raise PolyError {
   let (r, den, pivots) = self.dm.rref_den(rref_method~, keep_domain~)
-  (SDM::{ dm: r.to_sparse() }, den, pivots)
+  ({ dm: r.to_sparse() }, den, pivots)
 }
 
 ///|
@@ -980,7 +980,7 @@ pub fn SDM::nullspace_from_rref(
   pivots? : Array[Int] = [],
 ) -> (SDM, Array[Int]) raise PolyError {
   let (basis, nonpivots) = nullspace_from_rref_with_nonpivots(self.dm, pivots~)
-  (SDM::{ dm: basis.to_sparse() }, nonpivots)
+  ({ dm: basis.to_sparse() }, nonpivots)
 }
 
 ///|
@@ -1006,7 +1006,7 @@ pub fn SDM::nullspace(
 /// - Limits: Raises `PolyError` when the factorization fails.
 pub fn SDM::lu(self : SDM) -> (SDM, SDM, Array[(Int, Int)]) raise PolyError {
   let (l, u, swaps) = self.dm.lu()
-  (SDM::{ dm: l.to_sparse() }, SDM::{ dm: u.to_sparse() }, swaps)
+  ({ dm: l.to_sparse() }, { dm: u.to_sparse() }, swaps)
 }
 
 ///|
@@ -1023,7 +1023,7 @@ pub fn SDM::lu(self : SDM) -> (SDM, SDM, Array[(Int, Int)]) raise PolyError {
 /// this compatibility layer.
 pub fn SDM::qr(self : SDM) -> (SDM, SDM) raise PolyError {
   let (q, r) = self.dm.qr()
-  (SDM::{ dm: q.to_sparse() }, SDM::{ dm: r.to_sparse() })
+  ({ dm: q.to_sparse() }, { dm: r.to_sparse() })
 }
 
 ///|
@@ -1034,7 +1034,7 @@ pub fn SDM::qr(self : SDM) -> (SDM, SDM) raise PolyError {
 /// - Returns: An `SDM`.
 /// - Limits: Raises `PolyError` when the exact solve path fails.
 pub fn SDM::lu_solve(self : SDM, rhs : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.lu_solve(rhs.dm).to_sparse() }
+  { dm: self.dm.lu_solve(rhs.dm).to_sparse() }
 }
 
 ///|
@@ -1052,10 +1052,10 @@ pub fn SDM::lu_solve(self : SDM, rhs : SDM) -> SDM raise PolyError {
 pub fn SDM::fflu(self : SDM) -> (SDM, SDM, SDM, SDM) raise PolyError {
   let (p, l, d, u) = self.dm.fflu()
   (
-    SDM::{ dm: p.to_sparse() },
-    SDM::{ dm: l.to_sparse() },
-    SDM::{ dm: d.to_sparse() },
-    SDM::{ dm: u.to_sparse() },
+    { dm: p.to_sparse() },
+    { dm: l.to_sparse() },
+    { dm: d.to_sparse() },
+    { dm: u.to_sparse() },
   )
 }
 
@@ -1078,7 +1078,7 @@ pub fn SDM::charpoly(self : SDM) -> Array[FieldElem] raise PolyError {
 /// - Returns: An `SDM`.
 /// - Limits: Raises `PolyError` for non-square or singular inputs.
 pub fn SDM::inv(self : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.inv().to_sparse() }
+  { dm: self.dm.inv().to_sparse() }
 }
 
 ///|
@@ -1097,7 +1097,7 @@ pub fn SDM::particular(
   self : SDM,
   pivots? : Array[Int] = [],
 ) -> SDM raise PolyError {
-  SDM::{ dm: particular_from_rref(self.dm, pivots~).to_sparse() }
+  { dm: particular_from_rref(self.dm, pivots~).to_sparse() }
 }
 
 ///|
@@ -1132,7 +1132,7 @@ pub fn SDM::lll(
     Some(d) => self.to_dense().lll(delta=d)
     None => self.to_dense().lll()
   }
-  SDM::{ dm: reduced.to_domain_matrix().to_sparse() }
+  { dm: reduced.to_domain_matrix().to_sparse() }
 }
 
 ///|
@@ -1156,8 +1156,8 @@ pub fn SDM::lll_transform(
     None => self.to_dense().lll_transform()
   }
   (
-    SDM::{ dm: reduced.to_domain_matrix().to_sparse() },
-    SDM::{ dm: transform.to_domain_matrix().to_sparse() },
+    { dm: reduced.to_domain_matrix().to_sparse() },
+    { dm: transform.to_domain_matrix().to_sparse() },
   )
 }
 
@@ -1188,7 +1188,7 @@ pub fn SDM::to_string(self : SDM) -> String raise PolyError {
   for r in row_ids {
     let cells = by_row[r]
     cells.sort_by((a, b) => a.0 - b.0)
-    let cell_text = cells.map(p => "\{p.0}: \{p.1.to_string()}").join(", ")
+    let cell_text = cells.map(p => "\{p.0}: \{Show::to_string(p.1)}").join(", ")
     row_parts.push("\{r}: {\{cell_text}}")
   }
   let body = row_parts.join(", ")

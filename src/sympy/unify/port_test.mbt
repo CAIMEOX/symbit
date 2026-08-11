@@ -1,7 +1,6 @@
 ///|
 using @symunify {
   type ExprOp,
-  type CombineMode,
   type MatchVar,
   type Substitution,
   type UnifyTerm,
@@ -30,39 +29,31 @@ enum CoreAtom {
 ///|
 fn render_core_atom(atom_ : CoreAtom) -> String {
   match atom_ {
-    CoreAtom::Text(text) => text
-    CoreAtom::Int(value) => value.to_string()
+    Text(text) => text
+    Int(value) => value.to_string()
   }
 }
 
 ///|
 fn render_core_key(key : MatchVar[CoreAtom]) -> String {
   match key {
-    MatchVar::Variable(key0) => "Variable(" + render_core_atom(key0.arg()) + ")"
-    MatchVar::CondVariable(key0) =>
-      "CondVariable(" + render_core_atom(key0.arg()) + ")"
+    Variable(key0) => "Variable(" + render_core_atom(key0.arg()) + ")"
+    CondVariable(key0) => "CondVariable(" + render_core_atom(key0.arg()) + ")"
   }
 }
 
 ///|
 fn compare_core_atom(lhs : CoreAtom, rhs : CoreAtom) -> Int {
   match lhs {
-    CoreAtom::Text(lhs0) =>
+    Text(lhs0) =>
       match rhs {
-        CoreAtom::Text(rhs0) => lhs0.compare(rhs0)
-        CoreAtom::Int(_) => -1
+        Text(rhs0) => lhs0.compare(rhs0)
+        Int(_) => -1
       }
-    CoreAtom::Int(lhs0) =>
+    Int(lhs0) =>
       match rhs {
-        CoreAtom::Text(_) => 1
-        CoreAtom::Int(rhs0) =>
-          if lhs0 < rhs0 {
-            -1
-          } else if lhs0 > rhs0 {
-            1
-          } else {
-            0
-          }
+        Text(_) => 1
+        Int(rhs0) => if lhs0 < rhs0 { -1 } else if lhs0 > rhs0 { 1 } else { 0 }
       }
   }
 }
@@ -73,16 +64,15 @@ fn compare_core_key_struct(
   rhs : MatchVar[CoreAtom],
 ) -> Int {
   match lhs {
-    MatchVar::CondVariable(lhs0) =>
+    CondVariable(lhs0) =>
       match rhs {
-        MatchVar::CondVariable(rhs0) =>
-          compare_core_atom(lhs0.arg(), rhs0.arg())
-        MatchVar::Variable(_) => -1
+        CondVariable(rhs0) => compare_core_atom(lhs0.arg(), rhs0.arg())
+        Variable(_) => -1
       }
-    MatchVar::Variable(lhs0) =>
+    Variable(lhs0) =>
       match rhs {
-        MatchVar::CondVariable(_) => 1
-        MatchVar::Variable(rhs0) => compare_core_atom(lhs0.arg(), rhs0.arg())
+        CondVariable(_) => 1
+        Variable(rhs0) => compare_core_atom(lhs0.arg(), rhs0.arg())
       }
   }
 }
@@ -90,15 +80,12 @@ fn compare_core_key_struct(
 ///|
 fn render_core_term(term : UnifyTerm[CoreAtom, String]) -> String {
   match term {
-    UnifyTerm::Atom(atom_) => render_core_atom(atom_)
-    UnifyTerm::Variable(key0) =>
-      "Variable(" + render_core_atom(key0.arg()) + ")"
-    UnifyTerm::CondVariable(key0, _) =>
+    Atom(atom_) => render_core_atom(atom_)
+    Variable(key0) => "Variable(" + render_core_atom(key0.arg()) + ")"
+    CondVariable(key0, _) =>
       "CondVariable(" + render_core_atom(key0.arg()) + ")"
-    UnifyTerm::Sequence(items) =>
-      "(" + items.map(render_core_term).join(", ") + ")"
-    UnifyTerm::Compound(op, args) =>
-      op + "[" + args.map(render_core_term).join(", ") + "]"
+    Sequence(items) => "(" + items.map(render_core_term).join(", ") + ")"
+    Compound(op, args) => op + "[" + args.map(render_core_term).join(", ") + "]"
   }
 }
 
@@ -166,26 +153,19 @@ fn render_expr_substs(
 ///|
 fn render_expr_term(term : UnifyTerm[@symcore.Expr, ExprOp]) -> String {
   match term {
-    UnifyTerm::Atom(expr) => @symprint.pretty_string(expr)
-    UnifyTerm::Variable(key) =>
-      "Variable(" + @symprint.pretty_string(key.arg()) + ")"
-    UnifyTerm::CondVariable(key, _) =>
+    Atom(expr) => @symprint.pretty_string(expr)
+    Variable(key) => "Variable(" + @symprint.pretty_string(key.arg()) + ")"
+    CondVariable(key, _) =>
       "CondVariable(" + @symprint.pretty_string(key.arg()) + ")"
-    UnifyTerm::Sequence(items) =>
-      "(" + items.map(render_expr_term).join(", ") + ")"
-    UnifyTerm::Compound(op, args) =>
+    Sequence(items) => "(" + items.map(render_expr_term).join(", ") + ")"
+    Compound(op, args) =>
       match op {
-        @strategies_util.ExprOp::Number =>
-          "Number[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Symbol =>
-          "Symbol[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Add =>
-          "Add[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Mul =>
-          "Mul[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Pow =>
-          "Pow[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Function(name) =>
+        Number => "Number[" + args.map(render_expr_term).join(", ") + "]"
+        Symbol => "Symbol[" + args.map(render_expr_term).join(", ") + "]"
+        Add => "Add[" + args.map(render_expr_term).join(", ") + "]"
+        Mul => "Mul[" + args.map(render_expr_term).join(", ") + "]"
+        Pow => "Pow[" + args.map(render_expr_term).join(", ") + "]"
+        Function(name) =>
           "Function(" +
           name +
           ")[" +
@@ -198,7 +178,7 @@ fn render_expr_term(term : UnifyTerm[@symcore.Expr, ExprOp]) -> String {
 ///|
 fn core_is_associative(term : UnifyTerm[CoreAtom, String]) -> Bool {
   match term {
-    UnifyTerm::Compound(op, _) =>
+    Compound(op, _) =>
       op == "Add" || op == "Mul" || op == "CAdd" || op == "CMul"
     _ => false
   }
@@ -207,7 +187,7 @@ fn core_is_associative(term : UnifyTerm[CoreAtom, String]) -> Bool {
 ///|
 fn core_is_commutative(term : UnifyTerm[CoreAtom, String]) -> Bool {
   match term {
-    UnifyTerm::Compound(op, _) => op == "CAdd" || op == "CMul"
+    Compound(op, _) => op == "CAdd" || op == "CMul"
     _ => false
   }
 }
@@ -229,12 +209,12 @@ fn core_match(
 
 ///|
 fn ct(text : String) -> UnifyTerm[CoreAtom, String] {
-  atom(CoreAtom::Text(text))
+  atom(Text(text))
 }
 
 ///|
 fn ci(value : Int) -> UnifyTerm[CoreAtom, String] {
-  atom(CoreAtom::Int(value))
+  atom(Int(value))
 }
 
 ///|
@@ -253,16 +233,16 @@ fn ccadd(
 
 ///|
 fn core_summary() -> String {
-  let x_key : VariableKey[CoreAtom] = variable(CoreAtom::Text("x"))
-  let y_key : VariableKey[CoreAtom] = variable(CoreAtom::Text("y"))
+  let x_key : VariableKey[CoreAtom] = variable(Text("x"))
+  let y_key : VariableKey[CoreAtom] = variable(Text("y"))
   let x_var : UnifyTerm[CoreAtom, String] = variable_term(x_key)
   let y_var : UnifyTerm[CoreAtom, String] = variable_term(y_key)
   let subst_x : Substitution[CoreAtom, String] = Map([])
-  subst_x[MatchVar::Variable(x_key)] = ci(10)
+  subst_x[Variable(x_key)] = ci(10)
   let even_key = cond_variable(CoreAtom::Text("y"))
   let even_var : UnifyTerm[CoreAtom, String] = cond_variable_term(even_key, term => {
     match term {
-      UnifyTerm::Atom(CoreAtom::Int(value)) => value % 2 == 0
+      Atom(Int(value)) => value % 2 == 0
       _ => false
     }
   })
@@ -284,9 +264,7 @@ fn core_summary() -> String {
     render_core_substs(
       core_match(ccadd([ci(1), ci(2)]), ccadd([x_var, even_var])),
     ),
-    allcombinations([1, 2], [1, 2], CombineMode::Commutative)
-    .length()
-    .to_string(),
+    allcombinations([1, 2], [1, 2], Commutative).length().to_string(),
   ].join("\n")
 }
 
@@ -318,13 +296,13 @@ fn usympy_summary() -> String {
   let n_sym = @symcore.Expr::Symbol("n")
   let xmat = @symcore.function("MatrixSymbol", [x_name, n_sym, n_sym])
   let ymat = @symcore.function("MatrixSymbol", [
-    @symcore.Expr::Symbol("Y"),
+    Symbol("Y"),
     @symcore.int(2),
     @symcore.int(2),
   ])
   let finite = @symcore.function("FiniteSet", [set_a, set_b, set_c])
   let rel = @symcore.function("And", [
-    @symcore.function("Gt", [@symcore.Expr::Symbol("z"), @symcore.int(0)]),
+    @symcore.function("Gt", [Symbol("z"), @symcore.int(0)]),
     @symcore.function("Lt", [n_sym, @symcore.int(3)]),
   ])
   [
@@ -387,8 +365,7 @@ fn rewrite_summary() -> String raise {
     variables=[rx],
     condition=args => {
       match args {
-        [@symcore.Expr::Number(value)] =>
-          value.compare(@symnum.BigRational::from_int(10)) < 0
+        [Number(value)] => value.compare(@symnum.BigRational::from_int(10)) < 0
         _ => false
       }
     },

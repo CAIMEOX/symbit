@@ -4,10 +4,10 @@ test "boolalg truth_table and term conversions" {
   let y = bool_symbol("y")
   let rows = truth_table(bool_implies(x, y), [x, y])
   let expected : Array[TruthTableRow] = [
-    TruthTableRow::WithInput([0, 0], true),
-    TruthTableRow::WithInput([0, 1], true),
-    TruthTableRow::WithInput([1, 0], false),
-    TruthTableRow::WithInput([1, 1], true),
+    WithInput([0, 0], true),
+    WithInput([0, 1], true),
+    WithInput([1, 0], false),
+    WithInput([1, 1], true),
   ]
   assert_eq(rows, expected)
   assert_eq(term_to_integer_bits([1, 0, 0]), 4)
@@ -17,26 +17,26 @@ test "boolalg truth_table and term conversions" {
 ///|
 test "boolalg minterm/maxterm/monomial parity" {
   let vars = [bool_symbol("x"), bool_symbol("y"), bool_symbol("z")]
-  let min_bits = bool_minterm(BitPattern::Bits([1, 0, 1]), vars)
+  let min_bits = bool_minterm(Bits([1, 0, 1]), vars)
   assert_eq(
     to_string(min_bits),
     boolalg_bool_minterm_bits(["x", "y", "z"], [1, 0, 1]),
   )
-  let min_idx = bool_minterm(BitPattern::Index(6), vars)
+  let min_idx = bool_minterm(Index(6), vars)
   assert_eq(to_string(min_idx), boolalg_bool_minterm_int(["x", "y", "z"], 6))
-  let max_bits = bool_maxterm(BitPattern::Bits([1, 0, 1]), vars)
+  let max_bits = bool_maxterm(Bits([1, 0, 1]), vars)
   assert_eq(
     to_string(max_bits),
     boolalg_bool_maxterm_bits(["x", "y", "z"], [1, 0, 1]),
   )
-  let max_idx = bool_maxterm(BitPattern::Index(6), vars)
+  let max_idx = bool_maxterm(Index(6), vars)
   assert_eq(to_string(max_idx), boolalg_bool_maxterm_int(["x", "y", "z"], 6))
-  let mono_bits = bool_monomial(BitPattern::Bits([1, 0, 1]), vars)
+  let mono_bits = bool_monomial(Bits([1, 0, 1]), vars)
   assert_eq(
     to_string(mono_bits),
     boolalg_bool_monomial_bits(["x", "y", "z"], [1, 0, 1]),
   )
-  let mono_idx = bool_monomial(BitPattern::Index(6), vars)
+  let mono_idx = bool_monomial(Index(6), vars)
   assert_eq(to_string(mono_idx), boolalg_bool_monomial_int(["x", "y", "z"], 6))
 }
 

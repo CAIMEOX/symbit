@@ -36,9 +36,5 @@ fn sympy_call_must(
 ///|
 pub fn printing_call(name : String, expr : @symcore.Expr) -> String raise {
   let obj = @sympy.expr_to_sympy(expr)
-  py_str_obj(
-    objenum_to_obj(
-      sympy_call_must("sympy.\{name}", [@sympy.OracleArg::PyObj(obj)]),
-    ),
-  )
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.\{name}", [PyObj(obj)])))
 }

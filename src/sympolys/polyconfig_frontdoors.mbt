@@ -26,18 +26,18 @@ let polyconfig_current : Map[String, PolyConfigValue] = Map([])
 ///|
 fn polyconfig_default(key : String) -> PolyConfigValue? {
   match key {
-    "USE_COLLINS_RESULTANT" => Some(PolyConfigValue::Bool(false))
-    "USE_SIMPLIFY_GCD" => Some(PolyConfigValue::Bool(true))
-    "USE_HEU_GCD" => Some(PolyConfigValue::Bool(true))
-    "USE_IRREDUCIBLE_IN_FACTOR" => Some(PolyConfigValue::Bool(false))
-    "USE_CYCLOTOMIC_FACTOR" => Some(PolyConfigValue::Bool(true))
-    "EEZ_RESTART_IF_NEEDED" => Some(PolyConfigValue::Bool(true))
-    "EEZ_NUMBER_OF_CONFIGS" => Some(PolyConfigValue::Int(3))
-    "EEZ_NUMBER_OF_TRIES" => Some(PolyConfigValue::Int(5))
-    "EEZ_MODULUS_STEP" => Some(PolyConfigValue::Int(2))
-    "GF_IRRED_METHOD" => Some(PolyConfigValue::Text("rabin"))
-    "GF_FACTOR_METHOD" => Some(PolyConfigValue::Text("zassenhaus"))
-    "GROEBNER" => Some(PolyConfigValue::Text("buchberger"))
+    "USE_COLLINS_RESULTANT" => Some(Bool(false))
+    "USE_SIMPLIFY_GCD" => Some(Bool(true))
+    "USE_HEU_GCD" => Some(Bool(true))
+    "USE_IRREDUCIBLE_IN_FACTOR" => Some(Bool(false))
+    "USE_CYCLOTOMIC_FACTOR" => Some(Bool(true))
+    "EEZ_RESTART_IF_NEEDED" => Some(Bool(true))
+    "EEZ_NUMBER_OF_CONFIGS" => Some(Int(3))
+    "EEZ_NUMBER_OF_TRIES" => Some(Int(5))
+    "EEZ_MODULUS_STEP" => Some(Int(2))
+    "GF_IRRED_METHOD" => Some(Text("rabin"))
+    "GF_FACTOR_METHOD" => Some(Text("zassenhaus"))
+    "GROEBNER" => Some(Text("buchberger"))
     _ => None
   }
 }
@@ -61,7 +61,7 @@ fn polyconfig_reset_key(key : String) -> Unit raise PolyError {
   let norm = polyconfig_normalize_key(key)
   match polyconfig_default(norm) {
     Some(value) => polyconfig_current.set(norm, value)
-    None => raise PolyError::BadGenerator(norm)
+    None => raise BadGenerator(norm)
   }
 }
 

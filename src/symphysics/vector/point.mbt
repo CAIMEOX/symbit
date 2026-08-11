@@ -14,16 +14,12 @@ pub impl Eq for Point with fn not_equal(self, other : Point) -> Bool {
 ///|
 pub fn point(name : String) -> Point raise VectorError {
   if name == "" {
-    raise VectorError::ValueError("point name must be non-empty")
+    raise ValueError("point name must be non-empty")
   }
   let next_index = vector_point_registry.length() + 1
   let p = Point::{ name_: name, index_: next_index }
   vector_point_registry.push(p)
-  vector_point_states.push(PointState::{
-    pos_dict: {},
-    vel_dict: {},
-    acc_dict: {},
-  })
+  vector_point_states.push({ pos_dict: {}, vel_dict: {}, acc_dict: {} })
   p
 }
 
@@ -93,7 +89,7 @@ fn point_path_between(
       queue.push(next)
     }
   }
-  raise VectorError::ValueError("no connecting path between points")
+  raise ValueError("no connecting path between points")
 }
 
 ///|
@@ -108,7 +104,7 @@ pub fn Point::pos_from(self : Point, other : Point) -> Vector raise VectorError 
     let nxt = path[i + 1]
     match vector_point_states[nxt.index_ - 1].pos_dict.get(cur.index_) {
       Some(value) => out = out + value
-      None => raise VectorError::ValueError("missing point position relation")
+      None => raise ValueError("missing point position relation")
     }
   }
   out
@@ -171,9 +167,7 @@ pub fn Point::vel(
           value
         }
         None =>
-          raise VectorError::ValueError(
-            "velocity is not defined in the requested frame",
-          )
+          raise ValueError("velocity is not defined in the requested frame")
       }
     }
   }

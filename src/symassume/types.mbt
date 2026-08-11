@@ -12,24 +12,24 @@ pub(all) enum Tri {
 ///|
 pub impl Show for Tri with fn to_string(self) {
   match self {
-    Tri::True => "True"
-    Tri::False => "False"
-    Tri::Unknown => "Unknown"
+    True => "True"
+    False => "False"
+    Unknown => "Unknown"
   }
 }
 
 ///|
 pub impl Show for Tri with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 /// Convert a concrete boolean into a three-valued result.
 pub fn tri_of_bool(value : Bool) -> Tri {
   if value {
-    Tri::True
+    True
   } else {
-    Tri::False
+    False
   }
 }
 
@@ -39,9 +39,9 @@ pub fn tri_of_bool(value : Bool) -> Tri {
 /// `True` and `False` become `Some`, while `Unknown` becomes `None`.
 pub fn tri_to_bool_option(value : Tri) -> Bool? {
   match value {
-    Tri::True => Some(true)
-    Tri::False => Some(false)
-    Tri::Unknown => None
+    True => Some(true)
+    False => Some(false)
+    Unknown => None
   }
 }
 
@@ -49,9 +49,9 @@ pub fn tri_to_bool_option(value : Tri) -> Bool? {
 /// Negate a three-valued result.
 pub fn tri_not(value : Tri) -> Tri {
   match value {
-    Tri::True => Tri::False
-    Tri::False => Tri::True
-    Tri::Unknown => Tri::Unknown
+    True => False
+    False => True
+    Unknown => Unknown
   }
 }
 
@@ -59,9 +59,9 @@ pub fn tri_not(value : Tri) -> Tri {
 /// Combine two three-valued results with logical conjunction.
 pub fn tri_and(lhs : Tri, rhs : Tri) -> Tri {
   match (lhs, rhs) {
-    (Tri::False, _) | (_, Tri::False) => Tri::False
-    (Tri::True, Tri::True) => Tri::True
-    _ => Tri::Unknown
+    (False, _) | (_, False) => False
+    (True, True) => True
+    _ => Unknown
   }
 }
 
@@ -69,9 +69,9 @@ pub fn tri_and(lhs : Tri, rhs : Tri) -> Tri {
 /// Combine two three-valued results with logical disjunction.
 pub fn tri_or(lhs : Tri, rhs : Tri) -> Tri {
   match (lhs, rhs) {
-    (Tri::True, _) | (_, Tri::True) => Tri::True
-    (Tri::False, Tri::False) => Tri::False
-    _ => Tri::Unknown
+    (True, _) | (_, True) => True
+    (False, False) => False
+    _ => Unknown
   }
 }
 
@@ -82,10 +82,10 @@ pub fn tri_or(lhs : Tri, rhs : Tri) -> Tri {
 /// back to `Unknown` so callers can detect inconsistency separately.
 pub fn tri_merge(current : Tri, incoming : Tri) -> Tri {
   match (current, incoming) {
-    (Tri::Unknown, value) | (value, Tri::Unknown) => value
-    (Tri::True, Tri::True) => Tri::True
-    (Tri::False, Tri::False) => Tri::False
-    _ => Tri::Unknown
+    (Unknown, value) | (value, Unknown) => value
+    (True, True) => True
+    (False, False) => False
+    _ => Unknown
   }
 }
 

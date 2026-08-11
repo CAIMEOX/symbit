@@ -2,7 +2,7 @@
 fn terms_from_ints(values : Array[Int]) -> Array[TermInput] {
   let out : Array[TermInput] = Array::new()
   for v in values {
-    out.push(TermInput::IntTerm(v))
+    out.push(IntTerm(v))
   }
   out
 }

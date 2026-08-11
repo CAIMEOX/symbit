@@ -537,7 +537,7 @@ pub fn sqrtrem(n : BigInt) -> (BigInt, BigInt) raise IntMathError {
 /// Big-integer factorial.
 pub fn ifac(n : Int) -> BigInt raise IntMathError {
   if n < 0 {
-    raise @intmath.IntMathError::ValueError("ifac: n must be non-negative")
+    raise ValueError("ifac: n must be non-negative")
   }
   let mut acc = 1N
   for i in 2..<=n {
@@ -550,7 +550,7 @@ pub fn ifac(n : Int) -> BigInt raise IntMathError {
 /// Big-integer Fibonacci number.
 pub fn ifib(n : Int) -> BigInt raise IntMathError {
   if n < 0 {
-    raise @intmath.IntMathError::ValueError("ifib: n must be non-negative")
+    raise ValueError("ifib: n must be non-negative")
   }
   // Dijkstra's logarithmic algorithm, matching mpmath.ifib used by SymPy.
   let mut m = n

@@ -28,12 +28,12 @@ fn test_rational_expr(num : Int, den : Int) -> @symcore.Expr {
 
 ///|
 fn test_pi_expr() -> @symcore.Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  NumberSymbol(Pi)
 }
 
 ///|
 fn test_oo_expr() -> @symcore.Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  NumberSymbol(Infinity)
 }
 
 ///|

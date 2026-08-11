@@ -29,40 +29,37 @@ fn expr_new_raw(op : ExprOp, args : Array[@symcore.Expr]) -> @symcore.Expr {
 fn expr_is_commutative(expr : @symcore.Expr) -> Bool {
   let expr = @symcore.normalize_legacy_expr(expr)
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_)
-    | @symcore.ExprForm::Float(_)
-    | @symcore.ExprForm::ComplexFloat(_)
-    | @symcore.ExprForm::NumberSymbol(_)
-    | @symcore.ExprForm::Boolean(_)
-    | @symcore.ExprForm::IdentityFunction
-    | @symcore.ExprForm::Symbol(_)
-    | @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::WildFunction(_, _)
-    | @symcore.ExprForm::FunctionHead(_)
-    | @symcore.ExprForm::UndefinedFunction(_) => true
-    @symcore.ExprForm::Add(_) => true
-    @symcore.ExprForm::Mul(args) => args.all(expr_is_commutative)
-    @symcore.ExprForm::Pow(base, exp) =>
-      expr_is_commutative(base) && expr_is_commutative(exp)
-    @symcore.ExprForm::Tuple(items) => items.all(expr_is_commutative)
-    @symcore.ExprForm::Dict(items) =>
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | Boolean(_)
+    | IdentityFunction
+    | Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | WildFunction(_, _)
+    | FunctionHead(_)
+    | UndefinedFunction(_) => true
+    Add(_) => true
+    Mul(args) => args.all(expr_is_commutative)
+    Pow(base, exp) => expr_is_commutative(base) && expr_is_commutative(exp)
+    Tuple(items) => items.all(expr_is_commutative)
+    Dict(items) =>
       items.all(item => {
         expr_is_commutative(item.0) && expr_is_commutative(item.1)
       })
-    @symcore.ExprForm::Relational(_, lhs, rhs) =>
+    Relational(_, lhs, rhs) =>
       expr_is_commutative(lhs) && expr_is_commutative(rhs)
-    @symcore.ExprForm::Derivative(inner, args) =>
+    Derivative(inner, args) =>
       expr_is_commutative(inner) && args.all(expr_is_commutative)
-    @symcore.ExprForm::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       expr_is_commutative(inner) &&
       expr_is_commutative(variable) &&
       expr_is_commutative(value)
-    @symcore.ExprForm::Lambda(vars, body) =>
-      expr_is_commutative(vars) && expr_is_commutative(body)
-    @symcore.ExprForm::Mod(lhs, rhs) =>
-      expr_is_commutative(lhs) && expr_is_commutative(rhs)
-    @symcore.ExprForm::Apply(head, args) =>
+    Lambda(vars, body) => expr_is_commutative(vars) && expr_is_commutative(body)
+    Mod(lhs, rhs) => expr_is_commutative(lhs) && expr_is_commutative(rhs)
+    Apply(head, args) =>
       match @symcore.function_head_name(head) {
         Some("MatAdd")
         | Some("Union")
@@ -77,8 +74,8 @@ fn expr_is_commutative(expr : @symcore.Expr) -> Bool {
 ///|
 fn op_is_associative(op : ExprOp) -> Bool {
   match op {
-    @strategies_util.ExprOp::Add | @strategies_util.ExprOp::Mul => true
-    @strategies_util.ExprOp::Function(name) =>
+    Add | Mul => true
+    Function(name) =>
       name == "MatAdd" ||
       name == "MatMul" ||
       name == "Union" ||
@@ -91,8 +88,8 @@ fn op_is_associative(op : ExprOp) -> Bool {
 ///|
 fn op_is_commutative(op : ExprOp) -> Bool {
   match op {
-    @strategies_util.ExprOp::Add => true
-    @strategies_util.ExprOp::Function(name) =>
+    Add => true
+    Function(name) =>
       name == "MatAdd" ||
       name == "Union" ||
       name == "Intersection" ||
@@ -111,7 +108,7 @@ fn op_is_commutative(op : ExprOp) -> Bool {
 /// - Limits: Atoms, variables, and unsupported heads return `false`.
 pub fn is_associative(term : UnifyTerm[@symcore.Expr, ExprOp]) -> Bool {
   match term {
-    UnifyTerm::Compound(op, _) => op_is_associative(op)
+    Compound(op, _) => op_is_associative(op)
     _ => false
   }
 }
@@ -127,13 +124,12 @@ pub fn is_associative(term : UnifyTerm[@symcore.Expr, ExprOp]) -> Bool {
 ///   commutative under the current expression check.
 pub fn is_commutative(term : UnifyTerm[@symcore.Expr, ExprOp]) -> Bool {
   match term {
-    UnifyTerm::Compound(op, args) =>
+    Compound(op, args) =>
       if op_is_commutative(op) {
         true
       } else {
         match op {
-          @strategies_util.ExprOp::Mul =>
-            args.all(arg => expr_is_commutative(construct(arg)))
+          Mul => args.all(arg => expr_is_commutative(construct(arg)))
           _ => false
         }
       }
@@ -178,13 +174,11 @@ pub fn deconstruct(
 /// - Limits: Variables reconstruct to their payload expressions.
 pub fn construct(term : UnifyTerm[@symcore.Expr, ExprOp]) -> @symcore.Expr {
   match term {
-    UnifyTerm::Atom(expr) => expr
-    UnifyTerm::Variable(key) => key.arg()
-    UnifyTerm::CondVariable(key, _) => key.arg()
-    UnifyTerm::Sequence(items) =>
-      @symcore.Expr::Tuple(items.map(item => construct(item)))
-    UnifyTerm::Compound(op, args) =>
-      expr_new_raw(op, args.map(arg => construct(arg)))
+    Atom(expr) => expr
+    Variable(key) => key.arg()
+    CondVariable(key, _) => key.arg()
+    Sequence(items) => Tuple(items.map(item => construct(item)))
+    Compound(op, args) => expr_new_raw(op, args.map(arg => construct(arg)))
   }
 }
 
@@ -209,7 +203,7 @@ fn internal_substitution(
 ) -> Substitution[@symcore.Expr, ExprOp] {
   let out : Substitution[@symcore.Expr, ExprOp] = Map([])
   for key, value in values {
-    out[MatchVar::Variable(variable(key))] = deconstruct(value, variables~)
+    out[Variable(variable(key))] = deconstruct(value, variables~)
   }
   out
 }

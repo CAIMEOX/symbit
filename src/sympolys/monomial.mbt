@@ -21,7 +21,7 @@ pub struct Monomial {
 /// - Returns: A `Monomial`.
 /// - Limits: Negative lengths are not expected by this front door.
 pub fn monomial_one(len : Int) -> Monomial {
-  Monomial::{ exps: Array::make(len, 0) }
+  { exps: Array::make(len, 0) }
 }
 
 ///|
@@ -32,7 +32,7 @@ pub fn monomial_one(len : Int) -> Monomial {
 /// - Returns: A `Monomial`.
 /// - Limits: No validation is performed on exponent signs.
 pub fn monomial_from_array(exps : Array[Int]) -> Monomial {
-  Monomial::{ exps, }
+  { exps, }
 }
 
 ///|
@@ -55,11 +55,11 @@ pub fn Monomial::to_array(self : Monomial) -> Array[Int] {
 /// - Limits: Raises `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_mul(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let len = a.exps.length()
   let exps = Array::makei(len, i => a.exps[i] + b.exps[i])
-  Monomial::{ exps, }
+  { exps, }
 }
 
 ///|
@@ -71,11 +71,11 @@ pub fn monomial_mul(a : Monomial, b : Monomial) -> Monomial raise PolyError {
 /// - Limits: Raises `PolyError::BadExponent` for negative powers.
 pub fn monomial_pow(m : Monomial, k : Int) -> Monomial raise PolyError {
   if k < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let len = m.exps.length()
   let exps = Array::makei(len, i => m.exps[i] * k)
-  Monomial::{ exps, }
+  { exps, }
 }
 
 ///|
@@ -87,7 +87,7 @@ pub fn monomial_pow(m : Monomial, k : Int) -> Monomial raise PolyError {
 /// - Limits: Raises `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_divides(a : Monomial, b : Monomial) -> Bool raise PolyError {
   if a.exps.length() != b.exps.length() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let len = a.exps.length()
   for i in 0..<len {
@@ -111,7 +111,7 @@ pub fn monomial_div(
   denom : Monomial,
 ) -> Monomial? raise PolyError {
   if numer.exps.length() != denom.exps.length() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let len = numer.exps.length()
   let exps = Array::make(len, 0)
@@ -121,7 +121,7 @@ pub fn monomial_div(
     }
     exps.set(i, numer.exps[i] - denom.exps[i])
   }
-  Some(Monomial::{ exps, })
+  Some({ exps, })
 }
 
 ///|
@@ -133,7 +133,7 @@ pub fn monomial_div(
 /// - Limits: Raises `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_lcm(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let len = a.exps.length()
   let exps = Array::makei(len, i => {
@@ -143,7 +143,7 @@ pub fn monomial_lcm(a : Monomial, b : Monomial) -> Monomial raise PolyError {
       b.exps[i]
     }
   })
-  Monomial::{ exps, }
+  { exps, }
 }
 
 ///|
@@ -155,7 +155,7 @@ pub fn monomial_lcm(a : Monomial, b : Monomial) -> Monomial raise PolyError {
 /// - Limits: Raises `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_gcd(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let len = a.exps.length()
   let exps = Array::makei(len, i => {
@@ -165,7 +165,7 @@ pub fn monomial_gcd(a : Monomial, b : Monomial) -> Monomial raise PolyError {
       b.exps[i]
     }
   })
-  Monomial::{ exps, }
+  { exps, }
 }
 
 ///|
@@ -178,14 +178,14 @@ pub fn monomial_gcd(a : Monomial, b : Monomial) -> Monomial raise PolyError {
 ///   `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_max(monoms : Array[Monomial]) -> Monomial raise PolyError {
   if monoms.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let len = monoms[0].exps.length()
   let exps = Array::makei(len, i => monoms[0].exps[i])
   for idx in 1..<monoms.length() {
     let m = monoms[idx]
     if m.exps.length() != len {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     for i in 0..<len {
       if m.exps[i] > exps[i] {
@@ -193,7 +193,7 @@ pub fn monomial_max(monoms : Array[Monomial]) -> Monomial raise PolyError {
       }
     }
   }
-  Monomial::{ exps, }
+  { exps, }
 }
 
 ///|
@@ -206,14 +206,14 @@ pub fn monomial_max(monoms : Array[Monomial]) -> Monomial raise PolyError {
 ///   `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_min(monoms : Array[Monomial]) -> Monomial raise PolyError {
   if monoms.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let len = monoms[0].exps.length()
   let exps = Array::makei(len, i => monoms[0].exps[i])
   for idx in 1..<monoms.length() {
     let m = monoms[idx]
     if m.exps.length() != len {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     for i in 0..<len {
       if m.exps[i] < exps[i] {
@@ -221,7 +221,7 @@ pub fn monomial_min(monoms : Array[Monomial]) -> Monomial raise PolyError {
       }
     }
   }
-  Monomial::{ exps, }
+  { exps, }
 }
 
 ///|
@@ -254,10 +254,10 @@ pub fn monomial_count(vars : Int, degree : Int) -> Int {
 /// - Limits: Raises `PolyError::DomainMismatch` for arity mismatch.
 pub fn monomial_ldiv(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let len = a.exps.length()
-  Monomial::{ exps: Array::makei(len, i => a.exps[i] - b.exps[i]) }
+  { exps: Array::makei(len, i => a.exps[i] - b.exps[i]) }
 }
 
 ///|
@@ -351,7 +351,7 @@ fn cmp_int(a : Int, b : Int) -> Int {
 /// - Limits: Raises `PolyError::DomainMismatch` for length mismatch.
 pub fn compare_exps_lex(a : Array[Int], b : Array[Int]) -> Int raise PolyError {
   if a.length() != b.length() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let len = a.length()
   for i in 0..<len {
@@ -377,7 +377,7 @@ pub fn compare_exps_grlex(
   b : Array[Int],
 ) -> Int raise PolyError {
   if a.length() != b.length() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let da = a.fold(init=0, (s, v) => s + v)
   let db = b.fold(init=0, (s, v) => s + v)
@@ -399,7 +399,7 @@ pub fn compare_exps_grevlex(
   b : Array[Int],
 ) -> Int raise PolyError {
   if a.length() != b.length() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let da = a.fold(init=0, (s, v) => s + v)
   let db = b.fold(init=0, (s, v) => s + v)
@@ -474,8 +474,8 @@ pub fn compare_monomial_order(
   order : TermOrder,
 ) -> Int {
   match order {
-    TermOrder::Lex => compare_monomial_lex(a, b)
-    TermOrder::Grlex => {
+    Lex => compare_monomial_lex(a, b)
+    Grlex => {
       let da = monomial_total_degree(a)
       let db = monomial_total_degree(b)
       if da != db {
@@ -483,7 +483,7 @@ pub fn compare_monomial_order(
       }
       compare_monomial_lex(a, b)
     }
-    TermOrder::Grevlex => {
+    Grevlex => {
       let da = monomial_total_degree(a)
       let db = monomial_total_degree(b)
       if da != db {
@@ -491,8 +491,8 @@ pub fn compare_monomial_order(
       }
       compare_monomial_grevlex(a, b)
     }
-    TermOrder::Ilex => -compare_monomial_lex(a, b)
-    TermOrder::Igrlex => {
+    Ilex => -compare_monomial_lex(a, b)
+    Igrlex => {
       let da = monomial_total_degree(a)
       let db = monomial_total_degree(b)
       if da != db {
@@ -500,7 +500,7 @@ pub fn compare_monomial_order(
       }
       -compare_monomial_lex(a, b)
     }
-    TermOrder::Igrevlex => {
+    Igrevlex => {
       let da = monomial_total_degree(a)
       let db = monomial_total_degree(b)
       if da != db {

@@ -40,7 +40,7 @@ jobs:
           moon version --all
           moon update
 
-      - name: Enforce formatting and default warning gate
+      - name: Enforce formatting and warning gates
         shell: bash
         run: |
           find src -type f -name moon.pkg ! -path 'src/sympy/*' -print \
@@ -50,7 +50,7 @@ jobs:
           find src -type f -name moon.pkg ! -path 'src/sympy/*' -print \
             | sed 's#/moon.pkg$##' \
             | sort \
-            | xargs moon check --frozen --deny-warn
+            | xargs moon check --frozen --deny-warn --warn-list +73+79
 
       - name: Run non-oracle tests
         shell: bash

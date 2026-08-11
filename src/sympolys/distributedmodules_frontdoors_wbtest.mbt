@@ -5,7 +5,7 @@ fn sdm_wb_m(exps : Array[Int]) -> Monomial {
 
 ///|
 fn sdm_wb_q(n : Int) -> FieldElem raise PolyError {
-  fe_from_int(n, Domain::QQ)
+  fe_from_int(n, QQ)
 }
 
 ///|
@@ -69,7 +69,7 @@ test "distributedmodules wb: sort strip dict and leading terms" {
   d[sdm_wb_m([0, 1, 0])] = sdm_wb_q(0)
   let f = sdm_from_dict(d, lex())
   inspect(sdm_wb_string(f), content="[((1, 1, 0), 1), ((1, 0, 0), 2)]")
-  inspect(sdm_LC(f, Domain::QQ).to_string(), content="1")
+  inspect(Show::to_string(sdm_LC(f, QQ)), content="1")
   debug_inspect(sdm_LM(f).to_array(), content="[1, 1, 0]")
   inspect(
     "(\{sdm_wb_tuple(sdm_LT(f).0.to_array())}, \{sdm_LT(f).1})",
@@ -82,12 +82,12 @@ test "distributedmodules wb: add and multiply term" {
   let xyf1 : Sdm = [(sdm_wb_m([1, 1, 1]), sdm_wb_q(1))]
   let f2 : Sdm = [(sdm_wb_m([2, 0, 0]), sdm_wb_q(1))]
   inspect(
-    sdm_wb_string(sdm_add(xyf1, f2, lex(), Domain::QQ)),
+    sdm_wb_string(sdm_add(xyf1, f2, lex(), QQ)),
     content="[((2, 0, 0), 1), ((1, 1, 1), 1)]",
   )
   inspect(
     sdm_wb_string(
-      sdm_add(xyf1, [(sdm_wb_m([1, 1, 1]), sdm_wb_q(-1))], lex(), Domain::QQ),
+      sdm_add(xyf1, [(sdm_wb_m([1, 1, 1]), sdm_wb_q(-1))], lex(), QQ),
     ),
     content="[]",
   )
@@ -96,9 +96,7 @@ test "distributedmodules wb: add and multiply term" {
     (sdm_wb_m([1, 1, 0]), sdm_wb_q(3)),
   ]
   inspect(
-    sdm_wb_string(
-      sdm_mul_term(f, (sdm_wb_m([1, 1]), sdm_wb_q(2)), lex(), Domain::QQ),
-    ),
+    sdm_wb_string(sdm_mul_term(f, (sdm_wb_m([1, 1]), sdm_wb_q(2)), lex(), QQ)),
     content="[((2, 1, 2), 8), ((1, 2, 1), 6)]",
   )
   inspect(sdm_wb_string(sdm_zero()), content="[]")
@@ -113,24 +111,19 @@ test "distributedmodules wb: vector conversion" {
     [(x ^ int(2)) + (y ^ int(2)), int(2) * z],
     ["x", "y", "z"],
     lex(),
-    Domain::QQ,
+    QQ,
   )
   inspect(
     sdm_wb_string(f),
     content="[((1, 0, 0, 1), 2), ((0, 2, 0, 0), 1), ((0, 0, 2, 0), 1)]",
   )
   inspect(
-    sdm_wb_expr_list_string(sdm_to_vector(f, ["x", "y", "z"], Domain::QQ)),
+    sdm_wb_expr_list_string(sdm_to_vector(f, ["x", "y", "z"], QQ)),
     content="[x**2 + y**2, 2*z]",
   )
   inspect(
     sdm_wb_expr_list_string(
-      sdm_to_vector(
-        [(sdm_wb_m([1, 0, 1]), sdm_wb_q(2))],
-        ["x", "y"],
-        Domain::QQ,
-        n=3,
-      ),
+      sdm_to_vector([(sdm_wb_m([1, 0, 1]), sdm_wb_q(2))], ["x", "y"], QQ, n=3),
     ),
     content="[0, 2*y, 0]",
   )
@@ -159,11 +152,8 @@ test "distributedmodules wb: spoly and normal forms" {
   ]
   let g : Sdm = [(sdm_wb_m([2, 3, 0]), sdm_wb_q(1))]
   let h : Sdm = [(sdm_wb_m([1, 2, 3]), sdm_wb_q(1))]
-  inspect(sdm_wb_string(sdm_spoly(f, h, lex(), Domain::QQ)), content="[]")
-  inspect(
-    sdm_wb_string(sdm_spoly(f, g, lex(), Domain::QQ)),
-    content="[((1, 2, 1), 1)]",
-  )
+  inspect(sdm_wb_string(sdm_spoly(f, h, lex(), QQ)), content="[]")
+  inspect(sdm_wb_string(sdm_spoly(f, g, lex(), QQ)), content="[((1, 2, 1), 1)]")
 
   let target : Sdm = [
     (sdm_wb_m([1, 2, 0]), sdm_wb_q(1)),
@@ -174,17 +164,15 @@ test "distributedmodules wb: spoly and normal forms" {
     [(sdm_wb_m([1, 1, 0]), sdm_wb_q(1)), (sdm_wb_m([1, 0, 0]), sdm_wb_q(1))],
   ]
   inspect(
-    sdm_wb_string(sdm_nf_buchberger(target, reducers, lex(), Domain::QQ)),
+    sdm_wb_string(sdm_nf_buchberger(target, reducers, lex(), QQ)),
     content="[((1, 0, 0), 1)]",
   )
   inspect(
-    sdm_wb_string(sdm_nf_mora(target, reducers, lex(), Domain::QQ)),
+    sdm_wb_string(sdm_nf_mora(target, reducers, lex(), QQ)),
     content="[((1, 0, 0), 1)]",
   )
   inspect(
-    sdm_wb_string(
-      sdm_nf_buchberger_reduced(target, reducers, lex(), Domain::QQ),
-    ),
+    sdm_wb_string(sdm_nf_buchberger_reduced(target, reducers, lex(), QQ)),
     content="[((1, 0, 0), 1)]",
   )
 }
@@ -197,12 +185,12 @@ test "distributedmodules wb: groebner standard basis" {
     [(sdm_wb_m([1, 0, 1]), sdm_wb_q(1))],
   ]
   inspect(
-    sdm_wb_basis_string(sdm_groebner(generators, lex(), Domain::QQ)),
+    sdm_wb_basis_string(sdm_groebner(generators, lex(), QQ)),
     content="[[((1, 1, 0), 1)], [((1, 0, 1), 1)]]",
   )
   inspect(
     sdm_wb_basis_string(
-      sdm_groebner(generators, lex(), Domain::QQ, normal_form="buchberger"),
+      sdm_groebner(generators, lex(), QQ, normal_form="buchberger"),
     ),
     content="[[((1, 1, 0), 1)], [((1, 0, 1), 1)]]",
   )

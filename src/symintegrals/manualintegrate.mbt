@@ -23,7 +23,7 @@ pub struct ManualStep {
 
 ///|
 pub fn integral_info(integrand : Expr, symbol : Expr) -> IntegralInfo {
-  IntegralInfo::{ integrand, symbol }
+  { integrand, symbol }
 }
 
 ///|
@@ -54,7 +54,7 @@ pub fn ManualStep::contains_dont_know(self : ManualStep) -> Bool {
 ///|
 fn manual_var_name(symbol : Expr) -> String? {
   match symbol {
-    @symcore.Expr::Symbol(name) => Some(name)
+    Symbol(name) => Some(name)
     _ => None
   }
 }
@@ -65,7 +65,7 @@ fn manual_known_step(
   info : IntegralInfo,
   result : Expr,
 ) -> ManualStep {
-  ManualStep::{
+  {
     rule_name,
     integrand: info.integrand,
     variable: info.symbol,
@@ -75,12 +75,7 @@ fn manual_known_step(
 
 ///|
 fn manual_unknown_step(rule_name : String, info : IntegralInfo) -> ManualStep {
-  ManualStep::{
-    rule_name,
-    integrand: info.integrand,
-    variable: info.symbol,
-    result: None,
-  }
+  { rule_name, integrand: info.integrand, variable: info.symbol, result: None }
 }
 
 ///|
@@ -172,12 +167,10 @@ fn reciprocal_sqrt_quadratic(inner : Expr, var_name : String) -> Expr? {
   match poly_coeffs_upto2(inner, var_name) {
     Some(coeffs) if expr_is_one(coeffs[0]) &&
       expr_is_zero(coeffs[1]) &&
-      expr_is_minus_one(coeffs[2]) =>
-      Some(@symelem.asin(@symcore.Expr::Symbol(var_name)))
+      expr_is_minus_one(coeffs[2]) => Some(@symelem.asin(Symbol(var_name)))
     Some(coeffs) if expr_is_one(coeffs[0]) &&
       expr_is_zero(coeffs[1]) &&
-      expr_is_one(coeffs[2]) =>
-      Some(@symelem.asinh(@symcore.Expr::Symbol(var_name)))
+      expr_is_one(coeffs[2]) => Some(@symelem.asinh(Symbol(var_name)))
     _ => None
   }
 }
@@ -210,33 +203,24 @@ fn fallback_pow_integrate(base : Expr, exp : Expr, var_name : String) -> Expr? {
   }
   if expr_eq(
       base,
-      expr_add(
-        expr_pow(@symcore.Expr::Symbol(var_name), @symcore.int(2)),
-        @symcore.int(1),
-      ),
+      expr_add(expr_pow(Symbol(var_name), @symcore.int(2)), @symcore.int(1)),
     ) &&
     expr_eq(exp, @symcore.int(-1)) {
-    return Some(@symelem.atan(@symcore.Expr::Symbol(var_name)))
+    return Some(@symelem.atan(Symbol(var_name)))
   }
   if expr_eq(
       base,
-      expr_sub(
-        @symcore.int(1),
-        expr_pow(@symcore.Expr::Symbol(var_name), @symcore.int(2)),
-      ),
+      expr_sub(@symcore.int(1), expr_pow(Symbol(var_name), @symcore.int(2))),
     ) &&
     expr_eq(exp, expr_rat(-1, 2)) {
-    return Some(@symelem.asin(@symcore.Expr::Symbol(var_name)))
+    return Some(@symelem.asin(Symbol(var_name)))
   }
   if expr_eq(
       base,
-      expr_add(
-        expr_pow(@symcore.Expr::Symbol(var_name), @symcore.int(2)),
-        @symcore.int(1),
-      ),
+      expr_add(expr_pow(Symbol(var_name), @symcore.int(2)), @symcore.int(1)),
     ) &&
     expr_eq(exp, expr_rat(-1, 2)) {
-    return Some(@symelem.asinh(@symcore.Expr::Symbol(var_name)))
+    return Some(@symelem.asinh(Symbol(var_name)))
   }
   None
 }
@@ -255,14 +239,14 @@ pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
   }
   let simplified = expr_simplify(expr)
   if !expr_depends_on(simplified, var_name) {
-    return Some(simplified * @symcore.Expr::Symbol(var_name))
+    return Some(simplified * Symbol(var_name))
   }
   match singularityintegrate(simplified, var_name) {
     Some(res) => return Some(expr_simplify(res))
     None => ()
   }
   match simplified {
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let out : Array[Expr] = []
       for arg in args {
         match manual_integrate(arg, var_name) {
@@ -272,7 +256,7 @@ pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
       }
       return Some(expr_simplify(@symcore.add(out)))
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let indep : Array[Expr] = []
       let dep : Array[Expr] = []
       for arg in args {
@@ -346,12 +330,9 @@ pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
         None => None
       }
     }
-    @symcore.Expr::Symbol(name) if name == var_name =>
-      Some(
-        expr_rat(1, 2) *
-        expr_pow(@symcore.Expr::Symbol(var_name), @symcore.int(2)),
-      )
-    @symcore.Expr::Pow(base, exp) => {
+    Symbol(name) if name == var_name =>
+      Some(expr_rat(1, 2) * expr_pow(Symbol(var_name), @symcore.int(2)))
+    Pow(base, exp) => {
       let pow_res = match
         (@symcore.application_name(base), @symcore.application_args(base)) {
         (Some("sqrt"), Some([inner])) if expr_eq(exp, @symcore.int(-1)) =>
@@ -384,11 +365,9 @@ pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
               Some(expr_div(arg * @symspec.heaviside(arg), a))
             _ => None
           }
-        (Some("log"), Some([@symcore.Expr::Symbol(name)])) if name == var_name =>
+        (Some("log"), Some([Symbol(name)])) if name == var_name =>
           Some(
-            @symcore.Expr::Symbol(var_name) *
-            @symelem.log(@symcore.Expr::Symbol(var_name)) -
-            @symcore.Expr::Symbol(var_name),
+            Symbol(var_name) * @symelem.log(Symbol(var_name)) - Symbol(var_name),
           )
         (Some("Piecewise"), Some(args)) => {
           let out_cases : Array[(Expr, Expr)] = []
@@ -396,7 +375,7 @@ pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
           while i + 1 < args.length() {
             let branch = args[i]
             let cond = args[i + 1]
-            if cond == @symcore.Expr::Boolean(true) {
+            if cond == Boolean(true) {
               match manual_integrate(branch, var_name) {
                 Some(item) =>
                   return Some(piecewise_expr(out_cases, default=item))
@@ -453,9 +432,9 @@ pub fn manual_diff(f : Expr, symbol : Expr) -> Expr {
       @symelem.cot(arg)
     _ =>
       match f {
-        @symcore.Expr::Add(args) =>
+        Add(args) =>
           expr_simplify(@symcore.add(args.map(arg => manual_diff(arg, symbol))))
-        @symcore.Expr::Mul([coeff, rest]) if expr_num_value(coeff) is Some(_) =>
+        Mul([coeff, rest]) if expr_num_value(coeff) is Some(_) =>
           expr_simplify(coeff * manual_diff(rest, symbol))
         _ => @symcalculus.diff(f, symbol)
       }
@@ -472,7 +451,7 @@ pub fn manual_diff(f : Expr, symbol : Expr) -> Expr {
 pub fn manual_subs(expr : Expr, old : Expr, new : Expr) -> Expr {
   let env : Map[String, Expr] = Map([])
   match old {
-    @symcore.Expr::Symbol(name) => {
+    Symbol(name) => {
       env[name] = new
       @symcore.subst(expr, env)
     }
@@ -504,11 +483,11 @@ pub fn power_rule(integral : IntegralInfo) -> ManualStep? {
   match manual_var_name(integral.symbol) {
     Some(name) =>
       match expr_simplify(integral.integrand) {
-        @symcore.Expr::Symbol(sym) if sym == name =>
+        Symbol(sym) if sym == name =>
           manual_integrator_step("PowerRule", integral)
-        @symcore.Expr::Pow(base, exp) =>
+        Pow(base, exp) =>
           match base {
-            @symcore.Expr::Symbol(sym) =>
+            Symbol(sym) =>
               if sym == name && !expr_depends_on(exp, name) {
                 manual_integrator_step("PowerRule", integral)
               } else {
@@ -525,8 +504,7 @@ pub fn power_rule(integral : IntegralInfo) -> ManualStep? {
 ///|
 pub fn nested_pow_rule(integral : IntegralInfo) -> ManualStep? {
   match expr_simplify(integral.integrand) {
-    @symcore.Expr::Pow(@symcore.Expr::Pow(_, _), _) =>
-      manual_integrator_step("NestedPowRule", integral)
+    Pow(Pow(_, _), _) => manual_integrator_step("NestedPowRule", integral)
     _ => None
   }
 }
@@ -542,7 +520,7 @@ pub fn exp_rule(integral : IntegralInfo) -> ManualStep? {
 ///|
 pub fn add_rule(integral : IntegralInfo) -> ManualStep? {
   match expr_simplify(integral.integrand) {
-    @symcore.Expr::Add(_) => manual_integrator_step("AddRule", integral)
+    Add(_) => manual_integrator_step("AddRule", integral)
     _ => None
   }
 }
@@ -550,8 +528,7 @@ pub fn add_rule(integral : IntegralInfo) -> ManualStep? {
 ///|
 pub fn mul_rule(integral : IntegralInfo) -> ManualStep? {
   match expr_simplify(integral.integrand) {
-    @symcore.Expr::Mul(_) =>
-      manual_integrator_step("ConstantTimesRule", integral)
+    Mul(_) => manual_integrator_step("ConstantTimesRule", integral)
     _ => None
   }
 }
@@ -603,7 +580,7 @@ pub fn make_wilds(symbol : Expr) -> Map[String, Expr] {
     None => ""
   }
   for name in ["a", "b", "c", "d", "n"] {
-    out[name] = @symcore.Expr::Symbol(name + suffix)
+    out[name] = Symbol(name + suffix)
   }
   out
 }

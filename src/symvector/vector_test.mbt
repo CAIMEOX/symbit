@@ -11,7 +11,7 @@ fn scalar_map_text(mapping : Map[BaseScalar, @symcore.Expr]) -> String {
   let keys = mapping.keys().to_array()
   keys.sort()
   keys
-  .map(key => key.to_string() + "=" + @symprint.pretty_string(mapping[key]))
+  .map(key => Show::to_string(key) + "=" + @symprint.pretty_string(mapping[key]))
   .join("|")
 }
 
@@ -20,20 +20,22 @@ test "coord systems expose base scalars and vectors" {
   let c = coord_sys3d("C") catch { _ => fail("C") }
   let c2 = coord_sys3d("C") catch { _ => fail("C2") }
   assert_true(c == c2)
-  assert_true(c.to_string() == "C")
-  assert_true(c.x().to_string() == "C.x")
-  assert_true(c.y().to_string() == "C.y")
-  assert_true(c.z().to_string() == "C.z")
-  assert_true(c.i().to_string() == "C.i")
-  assert_true(c.j().to_string() == "C.j")
-  assert_true(c.k().to_string() == "C.k")
+  assert_true(Show::to_string(c) == "C")
+  assert_true(Show::to_string(c.x()) == "C.x")
+  assert_true(Show::to_string(c.y()) == "C.y")
+  assert_true(Show::to_string(c.z()) == "C.z")
+  assert_true(Show::to_string(c.i()) == "C.i")
+  assert_true(Show::to_string(c.j()) == "C.j")
+  assert_true(Show::to_string(c.k()) == "C.k")
   assert_true(
-    c.base_scalars().map(item => item.to_string()).join("|") == "C.x|C.y|C.z",
+    c.base_scalars().map(item => Show::to_string(item)).join("|") ==
+    "C.x|C.y|C.z",
   )
   assert_true(
-    c.base_vectors().map(item => item.to_string()).join("|") == "C.i|C.j|C.k",
+    c.base_vectors().map(item => Show::to_string(item)).join("|") ==
+    "C.i|C.j|C.k",
   )
-  assert_true(c.i().kind().to_string() == "VectorKind(NumberKind)")
+  assert_true(Show::to_string(c.i().kind()) == "VectorKind(NumberKind)")
 }
 
 ///|
@@ -56,7 +58,7 @@ test "vectors support basic arithmetic and axis orientation" {
     (c.y().expr(), c.j()),
     (c.z().expr(), c.k()),
   ])
-  assert_true(v.to_string() == "C.x*C.i + C.y*C.j + C.z*C.k")
+  assert_true(Show::to_string(v) == "C.x*C.i + C.y*C.j + C.z*C.k")
   assert_true(
     matrix_text(v.to_matrix(c) catch { _ => fail("mat") }) == "C.x|C.y|C.z",
   )
@@ -74,11 +76,13 @@ test "vectors support basic arithmetic and axis orientation" {
   )
 
   let expressed = express(b.i().to_vector(), c) catch { _ => fail("express") }
-  assert_true(expressed.to_string() == "cos(q)*C.i + sin(q)*C.j")
+  assert_true(Show::to_string(expressed) == "cos(q)*C.i + sin(q)*C.j")
   let normalized = (c.i().to_vector() + c.j().to_vector()).normalize() catch {
     _ => fail("normalize")
   }
-  assert_true(normalized.to_string() == "sqrt(2)**-1*C.i + sqrt(2)**-1*C.j")
+  assert_true(
+    Show::to_string(normalized) == "sqrt(2)**-1*C.i + sqrt(2)**-1*C.j",
+  )
 }
 
 ///|
@@ -143,7 +147,9 @@ fn separate_text(parts : Map[CoordSys3D, Vector]) -> String {
   let systems = parts.keys().to_array()
   systems.sort()
   systems
-  .map(fn(system) { system.to_string() + ":" + parts[system].to_string() })
+  .map(fn(system) {
+    Show::to_string(system) + ":" + Show::to_string(parts[system])
+  })
   .join("|")
 }
 
@@ -161,9 +167,11 @@ test "points expose relative position and coordinates" {
   let p2 = p1.locate_new("p2", c.k().to_vector()) catch { _ => fail("p2") }
 
   assert_true(
-    (p2.position_wrt(point_reference_coord_system(c)) catch {
-      _ => fail("pos")
-    }).to_string() ==
+    Show::to_string(
+      p2.position_wrt(point_reference_coord_system(c)) catch {
+        _ => fail("pos")
+      },
+    ) ==
     "2*C.i + 3*C.j + C.k",
   )
   assert_true(
@@ -175,7 +183,7 @@ test "points expose relative position and coordinates" {
 ///|
 test "vector surface includes equals projection separate orthogonalize and laplacian" {
   let c = coord_sys3d("C") catch { _ => fail("C") }
-  let half_pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+  let half_pi = @symcore.Expr::NumberSymbol(Pi) *
     (@symcore.int(2) ^ @symcore.int(-1))
   let d = c.orient_new_axis("D", half_pi, c.k().to_vector()) catch {
     _ => fail("D")
@@ -207,17 +215,16 @@ test "vector surface includes equals projection separate orthogonalize and lapla
     _ => fail("projection-vector")
   }
   match projection_vector {
-    ScalarOrVector::VectorExpr(value) =>
-      assert_true(value.to_string() == "7/3*C.i + 7/3*C.j + 7/3*C.k")
-    ScalarOrVector::ScalarExpr(_) => fail("expected vector projection")
+    VectorExpr(value) =>
+      assert_true(Show::to_string(value) == "7/3*C.i + 7/3*C.j + 7/3*C.k")
+    ScalarExpr(_) => fail("expected vector projection")
   }
   let projection_scalar = v1.projection(v2, scalar=true) catch {
     _ => fail("projection-scalar")
   }
   match projection_scalar {
-    ScalarOrVector::ScalarExpr(value) =>
-      assert_true(@symprint.pretty_string(value) == "7/3")
-    ScalarOrVector::VectorExpr(_) => fail("expected scalar projection")
+    ScalarExpr(value) => assert_true(@symprint.pretty_string(value) == "7/3")
+    VectorExpr(_) => fail("expected scalar projection")
   }
 
   assert_true(
@@ -235,8 +242,8 @@ test "vector surface includes equals projection separate orthogonalize and lapla
     _ => fail("orthogonalize")
   }
   assert_true(ortho.length() == 2)
-  assert_true(ortho[0].to_string() == "C.i + 2*C.j")
-  assert_true(ortho[1].to_string() == "2/5*C.i - 1/5*C.j")
+  assert_true(Show::to_string(ortho[0]) == "C.i + 2*C.j")
+  assert_true(Show::to_string(ortho[1]) == "2/5*C.i - 1/5*C.j")
 
   let lap_scalar = laplacian_unevaluated(
     scalar_or_vector_scalar(
@@ -245,12 +252,13 @@ test "vector surface includes equals projection separate orthogonalize and lapla
       (c.z().expr() ^ @symcore.int(2)),
     ),
   )
-  assert_true(lap_scalar.to_string() == "Laplacian(C.x**2 + C.y**2 + C.z**2)")
+  assert_true(
+    Show::to_string(lap_scalar) == "Laplacian(C.x**2 + C.y**2 + C.z**2)",
+  )
   let lap_scalar_value = lap_scalar.doit() catch { _ => fail("lap-scalar") }
   match lap_scalar_value {
-    ScalarOrVector::ScalarExpr(value) =>
-      assert_true(@symprint.pretty_string(value) == "6")
-    ScalarOrVector::VectorExpr(_) => fail("expected scalar laplacian result")
+    ScalarExpr(value) => assert_true(@symprint.pretty_string(value) == "6")
+    VectorExpr(_) => fail("expected scalar laplacian result")
   }
 
   let lap_vector = laplacian_unevaluated(
@@ -263,13 +271,14 @@ test "vector surface includes equals projection separate orthogonalize and lapla
     ),
   )
   assert_true(
-    lap_vector.to_string() == "Laplacian(C.x**2*C.i + C.y**2*C.j + C.z**2*C.k)",
+    Show::to_string(lap_vector) ==
+    "Laplacian(C.x**2*C.i + C.y**2*C.j + C.z**2*C.k)",
   )
   let lap_vector_value = lap_vector.doit() catch { _ => fail("lap-vector") }
   match lap_vector_value {
-    ScalarOrVector::VectorExpr(value) =>
-      assert_true(value.to_string() == "2*C.i + 2*C.j + 2*C.k")
-    ScalarOrVector::ScalarExpr(_) => fail("expected vector laplacian result")
+    VectorExpr(value) =>
+      assert_true(Show::to_string(value) == "2*C.i + 2*C.j + 2*C.k")
+    ScalarExpr(_) => fail("expected vector laplacian result")
   }
 }
 
@@ -285,14 +294,14 @@ test "del operator exposes cartesian differential surface" {
     (x * y * z, c.k()),
   ])
 
-  assert_true(delop.to_string() == "delop")
+  assert_true(Show::to_string(delop) == "delop")
   assert_true(
     matrix_text(delop.gradient(x).to_matrix(c) catch { _ => fail("del-grad") }) ==
     "Derivative(C.x, C.x)|Derivative(C.x, C.y)|Derivative(C.x, C.z)",
   )
   assert_true(delop.call(x * y * z) == delop.gradient(x * y * z))
   assert_true(
-    delop.gradient(x * y * z, doit=true).to_string() ==
+    Show::to_string(delop.gradient(x * y * z, doit=true)) ==
     "C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k",
   )
   assert_true(
@@ -307,12 +316,14 @@ test "del operator exposes cartesian differential surface" {
     true,
   )
   assert_true(
-    (delop.cross(
-      vector_term(@symcore.int(2) * (x ^ @symcore.int(2)), c.j()),
-      doit=true,
-    ) catch {
-      _ => fail("del-curl")
-    }).to_string() ==
+    Show::to_string(
+      delop.cross(
+        vector_term(@symcore.int(2) * (x ^ @symcore.int(2)), c.j()),
+        doit=true,
+      ) catch {
+        _ => fail("del-curl")
+      },
+    ) ==
     "4*C.x*C.k",
   )
 }
@@ -341,11 +352,11 @@ test "field functions align with top-level vector surface" {
     }
   let p2 = p1.locate_new("p2", c.k().to_vector()) catch { _ => fail("p2") }
 
-  assert_true(gradient(scalar).to_string() == field.to_string())
+  assert_true(Show::to_string(gradient(scalar)) == Show::to_string(field))
   assert_true(
     @symprint.pretty_string(divergence(field) catch { _ => fail("div") }) == "0",
   )
-  assert_true((curl(field) catch { _ => fail("curl") }).to_string() == "0")
+  assert_true(Show::to_string(curl(field) catch { _ => fail("curl") }) == "0")
   assert_true(
     (is_conservative(field) catch { _ => fail("conservative") }) == true,
   )
@@ -365,13 +376,13 @@ test "field functions align with top-level vector surface" {
     _ => fail("dd-scalar")
   }
   match dd_scalar {
-    ScalarOrVector::ScalarExpr(value) => {
+    ScalarExpr(value) => {
       let expected = c.x().expr() * c.y().expr() +
         @symcore.int(4) * c.x().expr() * c.z().expr() +
         @symcore.int(3) * c.y().expr() * c.z().expr()
       assert_true(expr_eq(value, expected) == true)
     }
-    ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
+    VectorExpr(_) => fail("expected scalar result")
   }
   let lap_scalar = laplacian(
     scalar_or_vector_scalar(c.x().expr() ^ @symcore.int(2)),
@@ -379,9 +390,8 @@ test "field functions align with top-level vector surface" {
     _ => fail("laplacian")
   }
   match lap_scalar {
-    ScalarOrVector::ScalarExpr(value) =>
-      assert_true(@symprint.pretty_string(value) == "2")
-    ScalarOrVector::VectorExpr(_) => fail("expected scalar laplacian")
+    ScalarExpr(value) => assert_true(@symprint.pretty_string(value) == "2")
+    VectorExpr(_) => fail("expected scalar laplacian")
   }
   assert_true(
     @symprint.pretty_string(
@@ -444,9 +454,11 @@ test "curvilinear field functions support cylindrical and spherical systems" {
     true,
   )
   assert_true(
-    (curl(vector_from_terms([(b.x().expr(), b.j()), (b.z().expr(), b.k())])) catch {
-      _ => fail("curl-cyl")
-    }).to_string() ==
+    Show::to_string(
+      curl(vector_from_terms([(b.x().expr(), b.j()), (b.z().expr(), b.k())])) catch {
+        _ => fail("curl-cyl")
+      },
+    ) ==
     "2*B.k",
   )
   let scalar_dd = directional_derivative(
@@ -462,7 +474,7 @@ test "curvilinear field functions support cylindrical and spherical systems" {
     _ => fail("dd-sph-scalar")
   }
   match scalar_dd {
-    ScalarOrVector::ScalarExpr(value) =>
+    ScalarExpr(value) =>
       assert_true(
         expr_eq(
           value,
@@ -473,7 +485,7 @@ test "curvilinear field functions support cylindrical and spherical systems" {
         ) ==
         true,
       )
-    ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
+    VectorExpr(_) => fail("expected scalar result")
   }
 
   let r = b.x().expr()
@@ -534,7 +546,7 @@ test "directional derivative covers more scalar and vector cases" {
     _ => fail("dd-more-scalar")
   }
   match dd_more_scalar {
-    ScalarOrVector::ScalarExpr(value) =>
+    ScalarExpr(value) =>
       assert_true(
         expr_eq(
           value,
@@ -542,7 +554,7 @@ test "directional derivative covers more scalar and vector cases" {
         ) ==
         true,
       )
-    ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
+    VectorExpr(_) => fail("expected scalar result")
   }
 
   let dd_zero = directional_derivative(
@@ -552,21 +564,20 @@ test "directional derivative covers more scalar and vector cases" {
     _ => fail("dd-zero")
   }
   match dd_zero {
-    ScalarOrVector::ScalarExpr(value) =>
-      assert_true(@symprint.pretty_string(value) == "0")
-    ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
+    ScalarExpr(value) => assert_true(@symprint.pretty_string(value) == "0")
+    VectorExpr(_) => fail("expected scalar result")
   }
 
   let dd_vector = directional_derivative(scalar_or_vector_vector(vec), dir) catch {
     _ => fail("dd-vector")
   }
   match dd_vector {
-    ScalarOrVector::VectorExpr(value) =>
+    VectorExpr(value) =>
       assert_true(
         matrix_text(value.to_matrix(c) catch { _ => fail("dd-vector-mat") }) ==
         "Derivative(u(C.x, C.y, C.z), C.x) + Derivative(u(C.x, C.y, C.z), C.y) + Derivative(u(C.x, C.y, C.z), C.z)|Derivative(v(C.x, C.y, C.z), C.x) + Derivative(v(C.x, C.y, C.z), C.y) + Derivative(v(C.x, C.y, C.z), C.z)|Derivative(w(C.x, C.y, C.z), C.x) + Derivative(w(C.x, C.y, C.z), C.y) + Derivative(w(C.x, C.y, C.z), C.z)",
       )
-    ScalarOrVector::ScalarExpr(_) => fail("expected vector result")
+    ScalarExpr(_) => fail("expected vector result")
   }
 }
 
@@ -588,34 +599,35 @@ test "unevaluated operator wrappers support doit" {
   let vec = vector_from_terms([(u, c.i()), (v, c.j()), (w, c.k())])
 
   let grad_scalar = gradient_unevaluated(scalar_or_vector_scalar(scalar))
-  assert_true(grad_scalar.to_string() == "Gradient(C.x*C.y*C.z)")
+  assert_true(Show::to_string(grad_scalar) == "Gradient(C.x*C.y*C.z)")
   let grad_scalar_value = grad_scalar.doit() catch { _ => fail("grad-scalar") }
   match grad_scalar_value {
-    GradientValue::VectorValue(value) =>
+    VectorValue(value) =>
       assert_true(
-        value.to_string() == "C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k",
+        Show::to_string(value) == "C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k",
       )
-    GradientValue::DyadicValue(_) => fail("expected vector result")
+    DyadicValue(_) => fail("expected vector result")
   }
 
   let grad_vector = gradient_unevaluated(scalar_or_vector_vector(vec))
   assert_true(
-    grad_vector.to_string() ==
+    Show::to_string(grad_vector) ==
     "Gradient(u(C.x, C.y, C.z)*C.i + v(C.x, C.y, C.z)*C.j + w(C.x, C.y, C.z)*C.k)",
   )
   let grad_vector_value = grad_vector.doit() catch { _ => fail("grad-vector") }
   match grad_vector_value {
-    GradientValue::DyadicValue(value) =>
+    DyadicValue(value) =>
       assert_true(
         matrix3_text(value.to_matrix(c) catch { _ => fail("grad-mat") }) ==
         "Derivative(u(C.x, C.y, C.z), C.x),Derivative(v(C.x, C.y, C.z), C.x),Derivative(w(C.x, C.y, C.z), C.x)|Derivative(u(C.x, C.y, C.z), C.y),Derivative(v(C.x, C.y, C.z), C.y),Derivative(w(C.x, C.y, C.z), C.y)|Derivative(u(C.x, C.y, C.z), C.z),Derivative(v(C.x, C.y, C.z), C.z),Derivative(w(C.x, C.y, C.z), C.z)",
       )
-    GradientValue::VectorValue(_) => fail("expected dyadic result")
+    VectorValue(_) => fail("expected dyadic result")
   }
 
   let div = divergence_unevaluated(vector_field)
   assert_true(
-    div.to_string() == "Divergence(C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k)",
+    Show::to_string(div) ==
+    "Divergence(C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k)",
   )
   assert_true(
     @symprint.pretty_string(div.doit() catch { _ => fail("div-doit") }) == "0",
@@ -623,10 +635,10 @@ test "unevaluated operator wrappers support doit" {
 
   let curl_op = curl_unevaluated(vector_field)
   assert_true(
-    curl_op.to_string() == "Curl(C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k)",
+    Show::to_string(curl_op) == "Curl(C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k)",
   )
   assert_true(
-    (curl_op.doit() catch { _ => fail("curl-doit") }).to_string() == "0",
+    Show::to_string(curl_op.doit() catch { _ => fail("curl-doit") }) == "0",
   )
 }
 
@@ -638,23 +650,23 @@ test "dyadics support outer products and matrix conversion" {
   let d1 = c.i().outer(c.i()) catch { _ => fail("d1") }
   let d2 = c.i().outer(c.j()) catch { _ => fail("d2") }
   let v = vector_from_terms([
-    (@symcore.Expr::Symbol("a"), c.i()),
-    (@symcore.Expr::Symbol("b"), c.j()),
-    (@symcore.Expr::Symbol("c"), c.k()),
+    (Symbol("a"), c.i()),
+    (Symbol("b"), c.j()),
+    (Symbol("c"), c.k()),
   ])
   let w = vector_from_terms([
-    (@symcore.Expr::Symbol("d"), c.i()),
-    (@symcore.Expr::Symbol("e"), c.j()),
-    (@symcore.Expr::Symbol("f"), c.k()),
+    (Symbol("d"), c.i()),
+    (Symbol("e"), c.j()),
+    (Symbol("f"), c.k()),
   ])
 
-  assert_true(d1.to_string() == "(C.i|C.i)")
+  assert_true(Show::to_string(d1) == "(C.i|C.i)")
   assert_true(
     (d1.dot_vector(c.i().to_vector()) catch { _ => fail("dotv") }) ==
     c.i().to_vector(),
   )
   assert_true(
-    (d1.cross(c.k().to_vector()) catch { _ => fail("cross") }).to_string() ==
+    Show::to_string(d1.cross(c.k().to_vector()) catch { _ => fail("cross") }) ==
     "-(C.i|C.j)",
   )
   assert_true(
@@ -666,20 +678,22 @@ test "dyadics support outer products and matrix conversion" {
     "cos(q),-sin(q),0|0,0,0|0,0,0",
   )
   assert_true(
-    matrix_to_dyadic(
-      @symphysics.explicit_matrix_from_rows([
-        [@symcore.int(1), @symcore.int(2), @symcore.int(3)],
-        [@symcore.int(4), @symcore.int(5), @symcore.int(6)],
-        [@symcore.int(7), @symcore.int(8), @symcore.int(9)],
-      ]) catch {
-        _ => fail("srcmat")
-      },
-      c,
-    ).to_string() ==
+    Show::to_string(
+      matrix_to_dyadic(
+        @symphysics.explicit_matrix_from_rows([
+          [@symcore.int(1), @symcore.int(2), @symcore.int(3)],
+          [@symcore.int(4), @symcore.int(5), @symcore.int(6)],
+          [@symcore.int(7), @symcore.int(8), @symcore.int(9)],
+        ]) catch {
+          _ => fail("srcmat")
+        },
+        c,
+      ),
+    ) ==
     "(C.i|C.i) + 2*(C.i|C.j) + 3*(C.i|C.k) + 4*(C.j|C.i) + 5*(C.j|C.j) + 6*(C.j|C.k) + 7*(C.k|C.i) + 8*(C.k|C.j) + 9*(C.k|C.k)",
   )
   assert_true(
-    (v.outer(w) catch { _ => fail("outer") }).to_string() ==
+    Show::to_string(v.outer(w) catch { _ => fail("outer") }) ==
     "a*d*(C.i|C.i) + a*e*(C.i|C.j) + a*f*(C.i|C.k) + b*d*(C.j|C.i) + b*e*(C.j|C.j) + b*f*(C.j|C.k) + c*d*(C.k|C.i) + c*e*(C.k|C.j) + c*f*(C.k|C.k)",
   )
   assert_true(
@@ -696,27 +710,27 @@ test "dyadics support outer products and matrix conversion" {
 test "basisdependent wrappers expose sympy-style vector surface" {
   let c = coord_sys3d("C") catch { _ => fail("C") }
   let zero = vector_zero_expr()
-  assert_true(zero.to_string() == "0")
+  assert_true(Show::to_string(zero) == "0")
   assert_true(zero.doit() == vector_zero())
 
   let mul = vector_mul_expr(c.x().expr(), c.i())
-  assert_true(mul.to_string() == "C.x*C.i")
+  assert_true(Show::to_string(mul) == "C.x*C.i")
   assert_true(mul.base_vector() == c.i())
   assert_true(@symprint.pretty_string(mul.measure_number()) == "C.x")
   assert_true(mul.doit() == vector_term(c.x().expr(), c.i()))
 
   let add = vector_add_expr([c.i().to_vector(), c.j().to_vector()])
-  assert_true(add.to_string() == "C.i + C.j")
+  assert_true(Show::to_string(add) == "C.i + C.j")
   assert_true(add.doit() == c.i().to_vector() + c.j().to_vector())
 
   let cross_op = cross_unevaluated(c.j().to_vector(), c.i().to_vector())
-  assert_true(cross_op.to_string() == "-Cross(C.i, C.j)")
+  assert_true(Show::to_string(cross_op) == "-Cross(C.i, C.j)")
   assert_true(
     (cross_op.doit() catch { _ => fail("cross-op") }) == c.k().to_vector().neg(),
   )
 
   let dot_op = dot_unevaluated(c.j().to_vector(), c.i().to_vector())
-  assert_true(dot_op.to_string() == "Dot(C.i, C.j)")
+  assert_true(Show::to_string(dot_op) == "Dot(C.i, C.j)")
   assert_true(
     @symprint.pretty_string(dot_op.doit() catch { _ => fail("dot-op") }) == "0",
   )
@@ -944,9 +958,9 @@ test "create_new exposes transformations and change of basis" {
 test "generic lambda and tuple transformations follow coordsysrect semantics" {
   let a = coord_sys3d("A") catch { _ => fail("A") }
   let lambda_transform = coord_transform_lambda([
-    @symcore.int(2) * @symcore.Expr::Symbol("x"),
-    @symcore.Expr::Symbol("z"),
-    @symcore.Expr::Symbol("y"),
+    @symcore.int(2) * Symbol("x"),
+    Symbol("z"),
+    Symbol("y"),
   ]) catch {
     _ => fail("lambda-transform")
   }
@@ -956,9 +970,9 @@ test "generic lambda and tuple transformations follow coordsysrect semantics" {
   ) catch {
     _ => fail("root-lambda")
   }
-  assert_true(root_lambda.x().to_string() == "L.x1")
-  assert_true(root_lambda.y().to_string() == "L.x2")
-  assert_true(root_lambda.z().to_string() == "L.x3")
+  assert_true(Show::to_string(root_lambda.x()) == "L.x1")
+  assert_true(Show::to_string(root_lambda.y()) == "L.x2")
+  assert_true(Show::to_string(root_lambda.z()) == "L.x3")
 
   let b = a.create_new_with_transform("B", lambda_transform) catch {
     _ => fail("B")
@@ -1062,15 +1076,17 @@ test "basisdependent component-wise expr propagation stays on scalar coefficient
     (trig_coeff, c.i()),
     (c.x().expr() * (c.x().expr() + @symcore.int(1)), c.j()),
   ])
-  assert_true(trig_vector.trigsimp().to_string() == "C.i + C.x*(C.x + 1)*C.j")
+  assert_true(
+    Show::to_string(trig_vector.trigsimp()) == "C.i + C.x*(C.x + 1)*C.j",
+  )
   let factored_vector = vector_from_terms([
     ((c.x().expr() ^ @symcore.int(2)) + c.x().expr(), c.j()),
   ])
-  assert_true(factored_vector.factor().to_string() == "C.x*(C.x + 1)*C.j")
+  assert_true(Show::to_string(factored_vector.factor()) == "C.x*(C.x + 1)*C.j")
   assert_true(
     vector_from_terms([
       (@symelem.sqrt(@symcore.int(2)), c.i()),
-      (@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), c.j()),
+      (NumberSymbol(Pi), c.j()),
     ])
     .evalf(prec=80)
     .components()
@@ -1081,10 +1097,12 @@ test "basisdependent component-wise expr propagation stays on scalar coefficient
   let trig_dyadic = (c.i().outer(c.j()) catch { _ => fail("outer") }).scale(
     trig_coeff,
   )
-  assert_true(trig_dyadic.trigsimp().to_string() == "(C.i|C.j)")
+  assert_true(Show::to_string(trig_dyadic.trigsimp()) == "(C.i|C.j)")
   let factored_dyadic = (c.i().outer(c.j()) catch { _ => fail("outer-2") }).scale(
     (c.x().expr() ^ @symcore.int(2)) + c.x().expr(),
   )
-  assert_true(factored_dyadic.factor().to_string() == "C.x*(C.x + 1)*(C.i|C.j)")
+  assert_true(
+    Show::to_string(factored_dyadic.factor()) == "C.x*(C.x + 1)*(C.i|C.j)",
+  )
   assert_true(trig_dyadic.evalf(prec=80).components().length() == 1)
 }

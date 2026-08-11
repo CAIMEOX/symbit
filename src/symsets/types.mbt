@@ -52,7 +52,7 @@ pub enum SetBool {
 /// - Returns: `Set::EmptySet`.
 /// - Limits: None.
 pub fn empty_set() -> Set {
-  Set::EmptySet
+  EmptySet
 }
 
 ///|
@@ -63,7 +63,7 @@ pub fn empty_set() -> Set {
 /// - Returns: `Set::UniversalSet`.
 /// - Limits: None.
 pub fn universal_set() -> Set {
-  Set::UniversalSet
+  UniversalSet
 }
 
 ///|
@@ -74,7 +74,7 @@ pub fn universal_set() -> Set {
 /// - Returns: `Set::Naturals`.
 /// - Limits: None.
 pub fn naturals() -> Set {
-  Set::Naturals
+  Naturals
 }
 
 ///|
@@ -85,7 +85,7 @@ pub fn naturals() -> Set {
 /// - Returns: `Set::Naturals0`.
 /// - Limits: None.
 pub fn naturals0() -> Set {
-  Set::Naturals0
+  Naturals0
 }
 
 ///|
@@ -96,7 +96,7 @@ pub fn naturals0() -> Set {
 /// - Returns: `Set::Integers`.
 /// - Limits: None.
 pub fn integers() -> Set {
-  Set::Integers
+  Integers
 }
 
 ///|
@@ -107,7 +107,7 @@ pub fn integers() -> Set {
 /// - Returns: `Set::Rationals`.
 /// - Limits: None.
 pub fn rationals() -> Set {
-  Set::Rationals
+  Rationals
 }
 
 ///|
@@ -118,7 +118,7 @@ pub fn rationals() -> Set {
 /// - Returns: `Set::Reals`.
 /// - Limits: None.
 pub fn reals() -> Set {
-  Set::Reals
+  Reals
 }
 
 ///|
@@ -129,7 +129,7 @@ pub fn reals() -> Set {
 /// - Returns: `Set::Complexes`.
 /// - Limits: None.
 pub fn complexes() -> Set {
-  Set::Complexes
+  Complexes
 }
 
 ///|
@@ -166,9 +166,9 @@ fn dedup_exprs(items : Array[Expr]) -> Array[Expr] {
 pub fn finite_set(items : Array[Expr]) -> Set {
   let uniq = dedup_exprs(items)
   if uniq.is_empty() {
-    Set::EmptySet
+    EmptySet
   } else {
-    Set::FiniteSet(uniq)
+    FiniteSet(uniq)
   }
 }
 
@@ -182,15 +182,15 @@ pub fn finite_set(items : Array[Expr]) -> Set {
 pub fn condition_set(
   symbol : Expr,
   condition : @symlogic.BoolExpr,
-  base? : Set = Set::UniversalSet,
+  base? : Set = UniversalSet,
 ) -> Set {
   match base {
-    Set::EmptySet => Set::EmptySet
+    EmptySet => EmptySet
     _ =>
       match condition {
-        @symlogic.BoolExpr::True => base
-        @symlogic.BoolExpr::False => Set::EmptySet
-        _ => Set::ConditionSet(symbol~, condition~, base~)
+        True => base
+        False => EmptySet
+        _ => ConditionSet(symbol~, condition~, base~)
       }
   }
 }
@@ -202,13 +202,9 @@ pub fn condition_set(
 /// - Input: One bound `Expr`, one target expression, and an optional base set.
 /// - Returns: A simplified `Set`, often `base`, `EmptySet`, a singleton `FiniteSet`, or `ImageSet`.
 /// - Limits: Constant-map simplification is eager; general image reasoning is deferred.
-pub fn image_set(
-  symbol : Expr,
-  expr : Expr,
-  base? : Set = Set::UniversalSet,
-) -> Set {
+pub fn image_set(symbol : Expr, expr : Expr, base? : Set = UniversalSet) -> Set {
   let var_name = match symbol {
-    Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => ""
   }
   if expr_equal(expr, symbol) {
@@ -216,14 +212,14 @@ pub fn image_set(
   }
   if var_name != "" && !expr_depends_on(expr, var_name) {
     match set_is_empty(base) {
-      SetBool::True => return Set::EmptySet
-      SetBool::False => return finite_set([expr])
-      SetBool::Unknown => ()
+      True => return EmptySet
+      False => return finite_set([expr])
+      Unknown => ()
     }
   }
   match base {
-    Set::EmptySet => Set::EmptySet
-    _ => Set::ImageSet(symbol~, expr~, base~)
+    EmptySet => EmptySet
+    _ => ImageSet(symbol~, expr~, base~)
   }
 }
 
@@ -241,7 +237,7 @@ pub fn product_set(sets : Array[Set]) -> Set {
   let flat : Array[Set] = Array::new()
   for set in sets {
     match set {
-      Set::ProductSet(inner) =>
+      ProductSet(inner) =>
         for item in inner {
           flat.push(item)
         }
@@ -250,17 +246,17 @@ pub fn product_set(sets : Array[Set]) -> Set {
   }
   for item in flat {
     match set_is_empty(item) {
-      SetBool::True => return Set::EmptySet
+      True => return EmptySet
       _ => ()
     }
   }
-  Set::ProductSet(flat)
+  ProductSet(flat)
 }
 
 ///|
 fn expr_number_value(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    Expr::Number(n) => Some(n)
+    Number(n) => Some(n)
     _ => None
   }
 }
@@ -285,7 +281,7 @@ pub fn interval(
 ) -> Set {
   if expr_equal(left, right) {
     if left_open || right_open {
-      return Set::EmptySet
+      return EmptySet
     }
     return finite_set([left])
   }
@@ -293,40 +289,40 @@ pub fn interval(
     (Some(lv), Some(rv)) => {
       let cmp = lv.compare(rv)
       if cmp > 0 {
-        Set::EmptySet
+        EmptySet
       } else if cmp == 0 {
         if left_open || right_open {
-          Set::EmptySet
+          EmptySet
         } else {
           finite_set([left])
         }
       } else {
-        Set::Interval(left~, right~, left_open~, right_open~)
+        Interval(left~, right~, left_open~, right_open~)
       }
     }
-    _ => Set::Interval(left~, right~, left_open~, right_open~)
+    _ => Interval(left~, right~, left_open~, right_open~)
   }
 }
 
 ///|
 fn variant_rank(set : Set) -> Int {
   match set {
-    Set::EmptySet => 0
-    Set::UniversalSet => 1
-    Set::Interval(..) => 2
-    Set::FiniteSet(_) => 3
-    Set::ConditionSet(..) => 4
-    Set::ImageSet(..) => 5
-    Set::ProductSet(_) => 6
-    Set::Naturals => 7
-    Set::Naturals0 => 8
-    Set::Integers => 9
-    Set::Rationals => 10
-    Set::Reals => 11
-    Set::Complexes => 12
-    Set::Union(_) => 13
-    Set::Intersection(_) => 14
-    Set::Complement(_, _) => 15
+    EmptySet => 0
+    UniversalSet => 1
+    Interval(..) => 2
+    FiniteSet(_) => 3
+    ConditionSet(..) => 4
+    ImageSet(..) => 5
+    ProductSet(_) => 6
+    Naturals => 7
+    Naturals0 => 8
+    Integers => 9
+    Rationals => 10
+    Reals => 11
+    Complexes => 12
+    Union(_) => 13
+    Intersection(_) => 14
+    Complement(_, _) => 15
   }
 }
 
@@ -390,8 +386,8 @@ pub fn compare_set(a : Set, b : Set) -> Int {
   }
   match (a, b) {
     (
-      Set::Interval(left=al, right=ar, left_open=alo, right_open=aro),
-      Set::Interval(left=bl, right=br, left_open=blo, right_open=bro),
+      Interval(left=al, right=ar, left_open=alo, right_open=aro),
+      Interval(left=bl, right=br, left_open=blo, right_open=bro),
     ) => {
       let cmp_l = compare_exprs(al, bl)
       if cmp_l != 0 {
@@ -409,10 +405,10 @@ pub fn compare_set(a : Set, b : Set) -> Int {
       }
       0
     }
-    (Set::FiniteSet(xs), Set::FiniteSet(ys)) => compare_expr_arrays(xs, ys)
+    (FiniteSet(xs), FiniteSet(ys)) => compare_expr_arrays(xs, ys)
     (
-      Set::ConditionSet(symbol=sym_a, condition=cond_a, base=base_a),
-      Set::ConditionSet(symbol=sym_b, condition=cond_b, base=base_b),
+      ConditionSet(symbol=sym_a, condition=cond_a, base=base_a),
+      ConditionSet(symbol=sym_b, condition=cond_b, base=base_b),
     ) => {
       let c0 = compare_exprs(sym_a, sym_b)
       if c0 != 0 {
@@ -429,8 +425,8 @@ pub fn compare_set(a : Set, b : Set) -> Int {
       }
     }
     (
-      Set::ImageSet(symbol=sym_a, expr=expr_a, base=base_a),
-      Set::ImageSet(symbol=sym_b, expr=expr_b, base=base_b),
+      ImageSet(symbol=sym_a, expr=expr_a, base=base_a),
+      ImageSet(symbol=sym_b, expr=expr_b, base=base_b),
     ) => {
       let c0 = compare_exprs(sym_a, sym_b)
       if c0 != 0 {
@@ -444,10 +440,10 @@ pub fn compare_set(a : Set, b : Set) -> Int {
         }
       }
     }
-    (Set::ProductSet(xs), Set::ProductSet(ys)) => compare_set_arrays(xs, ys)
-    (Set::Union(xs), Set::Union(ys)) => compare_set_arrays(xs, ys)
-    (Set::Intersection(xs), Set::Intersection(ys)) => compare_set_arrays(xs, ys)
-    (Set::Complement(a0, a1), Set::Complement(b0, b1)) => {
+    (ProductSet(xs), ProductSet(ys)) => compare_set_arrays(xs, ys)
+    (Union(xs), Union(ys)) => compare_set_arrays(xs, ys)
+    (Intersection(xs), Intersection(ys)) => compare_set_arrays(xs, ys)
+    (Complement(a0, a1), Complement(b0, b1)) => {
       let c0 = compare_set(a0, b0)
       if c0 != 0 {
         c0
@@ -500,7 +496,7 @@ pub impl Eq for Set with fn equal(self, other : Set) -> Bool {
 /// - Returns: `true` when the sets are not structurally equal.
 /// - Limits: Has the same structural semantics as `equal`.
 pub impl Eq for Set with fn not_equal(self, other : Set) -> Bool {
-  !self.equal(other)
+  !Eq::equal(self, other)
 }
 
 ///|
@@ -512,7 +508,7 @@ pub impl Eq for Set with fn not_equal(self, other : Set) -> Bool {
 /// - Limits: Hash stability follows the package's structural canonicalization rules.
 pub impl Hash for Set with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
@@ -526,37 +522,37 @@ pub impl Hash for Set with fn hash(self) -> Int {
 pub impl Hash for Set with fn hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_int(variant_rank(self))
   match self {
-    Set::FiniteSet(items) =>
+    FiniteSet(items) =>
       for item in items {
-        item.hash_combine(hasher)
+        Hash::hash_combine(item, hasher)
       }
-    Set::Interval(left~, right~, left_open~, right_open~) => {
-      left.hash_combine(hasher)
-      right.hash_combine(hasher)
+    Interval(left~, right~, left_open~, right_open~) => {
+      Hash::hash_combine(left, hasher)
+      Hash::hash_combine(right, hasher)
       hasher.combine_int(if left_open { 1 } else { 0 })
       hasher.combine_int(if right_open { 1 } else { 0 })
     }
-    Set::ConditionSet(symbol~, condition~, base~) => {
-      symbol.hash_combine(hasher)
-      condition.hash_combine(hasher)
-      base.hash_combine(hasher)
+    ConditionSet(symbol~, condition~, base~) => {
+      Hash::hash_combine(symbol, hasher)
+      Hash::hash_combine(condition, hasher)
+      Hash::hash_combine(base, hasher)
     }
-    Set::ImageSet(symbol~, expr~, base~) => {
-      symbol.hash_combine(hasher)
-      expr.hash_combine(hasher)
-      base.hash_combine(hasher)
+    ImageSet(symbol~, expr~, base~) => {
+      Hash::hash_combine(symbol, hasher)
+      Hash::hash_combine(expr, hasher)
+      Hash::hash_combine(base, hasher)
     }
-    Set::ProductSet(items) =>
+    ProductSet(items) =>
       for item in items {
-        item.hash_combine(hasher)
+        Hash::hash_combine(item, hasher)
       }
-    Set::Union(items) | Set::Intersection(items) =>
+    Union(items) | Intersection(items) =>
       for item in items {
-        item.hash_combine(hasher)
+        Hash::hash_combine(item, hasher)
       }
-    Set::Complement(a, b) => {
-      a.hash_combine(hasher)
-      b.hash_combine(hasher)
+    Complement(a, b) => {
+      Hash::hash_combine(a, hasher)
+      Hash::hash_combine(b, hasher)
     }
     _ => ()
   }

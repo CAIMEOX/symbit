@@ -11,7 +11,7 @@ let qubit_measure_random_source : @random.Rand = @random.Rand::new()
 ///|
 fn expr_number_value_local(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    Expr::Number(n) => Some(n)
+    Number(n) => Some(n)
     _ => None
   }
 }
@@ -51,14 +51,14 @@ fn complex_inv(value : (Double, Double)) -> (Double, Double)? {
 ///|
 fn expr_complex_double(expr : Expr) -> (Double, Double)? {
   match expr {
-    Expr::Number(n) => Some((expr_rational_to_double(n), 0.0))
-    Expr::Symbol(name) =>
+    Number(n) => Some((expr_rational_to_double(n), 0.0))
+    Symbol(name) =>
       match name {
         "I" => Some((0.0, 1.0))
         "pi" => Some((@math.PI, 0.0))
         _ => None
       }
-    Expr::Add(args) => {
+    Add(args) => {
       let mut acc = (0.0, 0.0)
       for arg in args {
         match expr_complex_double(arg) {
@@ -68,7 +68,7 @@ fn expr_complex_double(expr : Expr) -> (Double, Double)? {
       }
       Some(acc)
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = (1.0, 0.0)
       for arg in args {
         match expr_complex_double(arg) {
@@ -78,7 +78,7 @@ fn expr_complex_double(expr : Expr) -> (Double, Double)? {
       }
       Some(acc)
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (expr_complex_double(base), expr_number_value_local(exp)) {
         (Some(base_value), Some(exp_value)) =>
           if base_value.1 != 0.0 {
@@ -143,9 +143,7 @@ fn oneshot_sample_value(
 ) -> Double raise @symphysics.PhysicsError {
   if sample >= 0.0 {
     guard sample < 1.0 else {
-      raise @symphysics.PhysicsError::ValueError(
-        "measurement sample must lie in [0, 1)",
-      )
+      raise ValueError("measurement sample must lie in [0, 1)")
     }
     sample
   } else {
@@ -159,9 +157,7 @@ fn choose_measurement_state(
   sample : Double,
 ) -> Expr raise @symphysics.PhysicsError {
   guard !states.is_empty() else {
-    raise @symphysics.PhysicsError::ValueError(
-      "measurement produced no possible outcomes",
-    )
+    raise ValueError("measurement produced no possible outcomes")
   }
   let cutoff = oneshot_sample_value(sample)
   let mut total = 0.0
@@ -169,7 +165,7 @@ fn choose_measurement_state(
     let prob = match expr_real_probability(item.1) {
       Some(value) => value
       None =>
-        raise @symphysics.PhysicsError::ValueError(
+        raise ValueError(
           "one-shot measurement needs numerically evaluable probabilities",
         )
     }

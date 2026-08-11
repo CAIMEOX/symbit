@@ -12,11 +12,11 @@ fn default_vector_names() -> Array[String] {
 ///|
 fn default_variable_names(transform : CoordTransform) -> Array[String] {
   match transform {
-    CoordTransform::Cartesian => ["x", "y", "z"]
-    CoordTransform::Cylindrical => ["r", "theta", "z"]
-    CoordTransform::Spherical => ["r", "theta", "phi"]
-    CoordTransform::LambdaTransform(_) => ["x1", "x2", "x3"]
-    CoordTransform::TupleTransform(_, _) => ["x", "y", "z"]
+    Cartesian => ["x", "y", "z"]
+    Cylindrical => ["r", "theta", "z"]
+    Spherical => ["r", "theta", "phi"]
+    LambdaTransform(_) => ["x1", "x2", "x3"]
+    TupleTransform(_, _) => ["x", "y", "z"]
   }
 }
 
@@ -25,10 +25,10 @@ fn normalize_named_transformation(
   transformation : String?,
 ) -> CoordTransform raise @rawvec.VectorError {
   match transformation {
-    None => CoordTransform::Cartesian
-    Some("cartesian") => CoordTransform::Cartesian
-    Some("cylindrical") => CoordTransform::Cylindrical
-    Some("spherical") => CoordTransform::Spherical
+    None => Cartesian
+    Some("cartesian") => Cartesian
+    Some("cylindrical") => Cylindrical
+    Some("spherical") => Spherical
     Some(other) => {
       @rawvec.raise_value_error("unsupported transformation: " + other)
       abort("unsupported transformation: " + other)
@@ -51,7 +51,7 @@ pub fn coord_transform_lambda(
     @rawvec.raise_value_error("lambda transformation must have length 3")
     abort("coord_transform_lambda")
   }
-  CoordTransform::LambdaTransform({ equations_: equations })
+  LambdaTransform({ equations_: equations })
 }
 
 ///|
@@ -72,7 +72,7 @@ pub fn coord_transform_tuple(
     )
     abort("coord_transform_tuple")
   }
-  CoordTransform::TupleTransform(rotation_matrix, location)
+  TupleTransform(rotation_matrix, location)
 }
 
 ///|
@@ -266,7 +266,7 @@ fn raw_basis(frame : @rawvec.ReferenceFrame, axis : Int) -> @rawvec.Vector {
 ///|
 fn scalar_with_basis(coeff : @symcore.Expr, basis : String) -> String {
   let display_coeff = match coeff {
-    @symcore.Expr::Add(_) => @symsimplify.factor_terms(coeff)
+    Add(_) => @symsimplify.factor_terms(coeff)
     _ => coeff
   }
   let txt = @symprint.pretty_string(display_coeff)
@@ -276,7 +276,7 @@ fn scalar_with_basis(coeff : @symcore.Expr, basis : String) -> String {
     "-" + basis
   } else {
     let wrapped = match display_coeff {
-      @symcore.Expr::Add(_) => "(" + txt + ")"
+      Add(_) => "(" + txt + ")"
       _ => txt
     }
     wrapped + "*" + basis

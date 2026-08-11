@@ -3,7 +3,7 @@
 fn br_posdec_expr(expr : @symcore.Expr) -> Array[@symcore.Expr] {
   match expr {
     _ if expr > @symcore.int(0) => [expr + @symcore.int(-1)]
-    @symcore.Expr::Number(_) => [expr]
+    Number(_) => [expr]
     _ => []
   }
 }
@@ -17,7 +17,7 @@ fn br_branch5_expr(expr : @symcore.Expr) -> Array[@symcore.Expr] {
       [expr + @symcore.int(1)]
     _ if expr == @symcore.int(5) =>
       [expr + @symcore.int(1), expr + @symcore.int(-1)]
-    @symcore.Expr::Number(_) => [expr]
+    Number(_) => [expr]
     _ => []
   }
 }

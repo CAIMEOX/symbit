@@ -30,7 +30,7 @@ pub fn derivative_expr(expr : Expr, vars : Array[Expr]) -> Expr {
 ///|
 fn expr_is_zero(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) => n.is_zero()
+    Number(n) => n.is_zero()
     _ => false
   }
 }
@@ -38,7 +38,7 @@ fn expr_is_zero(expr : Expr) -> Bool {
 ///|
 fn expr_is_number(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    Expr::Number(n) => Some(n)
+    Number(n) => Some(n)
     _ => None
   }
 }
@@ -46,7 +46,7 @@ fn expr_is_number(expr : Expr) -> @symnum.BigRational? {
 ///|
 fn expr_is_symbol(expr : Expr) -> Bool {
   match expr {
-    Expr::Symbol(_) => true
+    Symbol(_) => true
     _ => false
   }
 }
@@ -54,7 +54,7 @@ fn expr_is_symbol(expr : Expr) -> Bool {
 ///|
 fn expr_is_symbol_like(expr : Expr) -> Bool {
   match expr {
-    Expr::Symbol(_) | Expr::Dummy(_, _) => true
+    Symbol(_) | Dummy(_, _) => true
     _ => false
   }
 }
@@ -62,7 +62,7 @@ fn expr_is_symbol_like(expr : Expr) -> Bool {
 ///|
 fn subs_items_local(expr : Expr) -> Array[Expr] {
   match expr {
-    Expr::Tuple(items) => items
+    Tuple(items) => items
     other => [other]
   }
 }
@@ -76,18 +76,16 @@ fn append_derivative_wrt(
   let out = @symcore.canonical_derivative_args(deriv_args[:])
   if out.length() >= 2 && @symcore.compare_expr(out[out.length() - 2], wrt) == 0 {
     match out[out.length() - 1] {
-      Expr::Number(n) if n.denominator() == 1N => {
-        out[out.length() - 1] = Expr::Number(
-          n.add_r(@symnum.BigRational::one()),
-        )
-        return Expr::Derivative(inner, out)
+      Number(n) if n.denominator() == 1N => {
+        out[out.length() - 1] = Number(n.add_r(@symnum.BigRational::one()))
+        return Derivative(inner, out)
       }
       _ => ()
     }
   }
   out.push(wrt)
   out.push(@symcore.int(1))
-  Expr::Derivative(inner, out)
+  Derivative(inner, out)
 }
 
 ///|
@@ -134,10 +132,8 @@ fn expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(arg => expr_depends_on(arg, wrt))
-    Expr::Pow(base, exp) =>
-      expr_depends_on(base, wrt) || expr_depends_on(exp, wrt)
+    Add(args) | Mul(args) => args.any(arg => expr_depends_on(arg, wrt))
+    Pow(base, exp) => expr_depends_on(base, wrt) || expr_depends_on(exp, wrt)
     _ => @symcore.args(expr).any(arg => expr_depends_on(arg, wrt))
   }
 }
@@ -165,8 +161,7 @@ fn can_build_diff_mul_term_fast(
   d : Expr,
 ) -> Bool {
   match d {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) | Expr::Mul(_) =>
-      return false
+    Number(_) | Float(_) | ComplexFloat(_) | Mul(_) => return false
     _ => ()
   }
   for j in 0..<args.length() {
@@ -213,7 +208,7 @@ fn build_diff_mul_term(
   match factors.length() {
     0 => @symcore.int(1)
     1 => factors[0]
-    _ => Expr::Mul(factors)
+    _ => Mul(factors)
   }
 }
 
@@ -229,10 +224,8 @@ fn diff_mul(args : Array[Expr], wrt : Expr) -> Expr {
     let term = build_diff_mul_term(args, i, d)
     if can_return_direct_add {
       match term {
-        Expr::Number(_)
-        | Expr::Float(_)
-        | Expr::ComplexFloat(_)
-        | Expr::Add(_) => can_return_direct_add = false
+        Number(_) | Float(_) | ComplexFloat(_) | Add(_) =>
+          can_return_direct_add = false
         _ => ()
       }
     }
@@ -265,7 +258,7 @@ fn diff_mul(args : Array[Expr], wrt : Expr) -> Expr {
   } else if out.length() == 1 {
     out[0]
   } else if can_return_direct_add {
-    Expr::Add(out)
+    Add(out)
   } else {
     @symcore.add(out)
   }
@@ -282,7 +275,7 @@ fn diff_pow(base : Expr, exp : Expr, wrt : Expr) -> Expr {
       let one = @symnum.BigRational::one()
       let n_minus_one = n.add_r(one.neg_r())
       let coeff = @symcore.Expr::Number(n)
-      let pow_expr = @symcore.pow(base, @symcore.Expr::Number(n_minus_one))
+      let pow_expr = @symcore.pow(base, Number(n_minus_one))
       @symcore.mul([coeff, pow_expr, dbase])
     }
     None =>
@@ -338,7 +331,7 @@ fn diff_function(name : String, args : Array[Expr], wrt : Expr) -> Expr {
       let dg = @symcore.function("digamma", [arg])
       @symcore.mul([g, dg, darg])
     }
-    _ => diff_apply(@symcore.Expr::FunctionHead(name), args, wrt)
+    _ => diff_apply(FunctionHead(name), args, wrt)
   }
 }
 
@@ -357,7 +350,7 @@ fn diff_apply(head : Expr, args : Array[Expr], wrt : Expr) -> Expr {
     let dummy = @symcore.Expr::Symbol("_xi\{i}")
     lifted[i] = dummy
     let partial = @symcore.Expr::Subs(
-      derivative_expr(@symcore.Expr::Apply(head, lifted), [dummy]),
+      derivative_expr(Apply(head, lifted), [dummy]),
       dummy,
       args[i],
     )
@@ -403,17 +396,14 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
     return @symcore.int(1)
   }
   match expr {
-    Expr::Number(_)
-    | Expr::Float(_)
-    | Expr::ComplexFloat(_)
-    | Expr::NumberSymbol(_)
-    | Expr::Boolean(_) => @symcore.int(0)
-    Expr::Symbol(_)
-    | Expr::Dummy(_, _)
-    | Expr::Wild(_, _, _)
-    | Expr::FunctionHead(_)
-    | Expr::UndefinedFunction(_) => @symcore.int(0)
-    Expr::Apply(head, args) =>
+    Number(_) | Float(_) | ComplexFloat(_) | NumberSymbol(_) | Boolean(_) =>
+      @symcore.int(0)
+    Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | FunctionHead(_)
+    | UndefinedFunction(_) => @symcore.int(0)
+    Apply(head, args) =>
       match @symcore.undefined_application_parts(expr) {
         Some((_, undefined_args)) =>
           diff_undefined_function(expr, head, undefined_args, wrt)
@@ -423,16 +413,16 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
             None => diff_apply(head, args, wrt)
           }
       }
-    Expr::Add(args) => diff_add(args, wrt)
-    Expr::Mul(args) => diff_mul(args, wrt)
-    Expr::Pow(base, exp) => diff_pow(base, exp, wrt)
-    Expr::Mod(_, _) =>
+    Add(args) => diff_add(args, wrt)
+    Mul(args) => diff_mul(args, wrt)
+    Pow(base, exp) => diff_pow(base, exp, wrt)
+    Mod(_, _) =>
       if expr_depends_on(expr, wrt) {
         derivative_expr(expr, [wrt])
       } else {
         @symcore.int(0)
       }
-    Expr::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       match diff_subs_chain(inner, variable, value, wrt) {
         Some(applied) => applied
         None =>
@@ -442,16 +432,13 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
             @symcore.int(0)
           }
       }
-    Expr::Tuple(_)
-    | Expr::Dict(_)
-    | Expr::Relational(_, _, _)
-    | Expr::Lambda(_, _) =>
+    Tuple(_) | Dict(_) | Relational(_, _, _) | Lambda(_, _) =>
       if expr_depends_on(expr, wrt) {
         derivative_expr(expr, [wrt])
       } else {
         @symcore.int(0)
       }
-    Expr::Derivative(inner, deriv_args) =>
+    Derivative(inner, deriv_args) =>
       if expr_is_symbol(wrt) && expr_depends_on(expr, wrt) {
         append_derivative_wrt(inner, deriv_args, wrt)
       } else {
@@ -487,7 +474,7 @@ fn max_derivative_order(expr : Expr, target : Expr) -> Int {
       }
     None =>
       match expr {
-        Expr::Add(args) | Expr::Mul(args) => {
+        Add(args) | Mul(args) => {
           let mut max = 0
           for arg in args {
             let m = max_derivative_order(arg, target)
@@ -497,7 +484,7 @@ fn max_derivative_order(expr : Expr, target : Expr) -> Int {
           }
           max
         }
-        Expr::Pow(base, exp) => {
+        Pow(base, exp) => {
           let m1 = max_derivative_order(base, target)
           let m2 = max_derivative_order(exp, target)
           if m1 > m2 {
@@ -588,11 +575,7 @@ pub fn euler_equations(
         eq = @symcore.add([eq, signed])
       }
     }
-    let eq_expr = @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
-      eq,
-      @symcore.int(0),
-    )
+    let eq_expr = @symcore.Expr::Relational(Eq, eq, @symcore.int(0))
     eqns.push(eq_expr)
   }
   eqns

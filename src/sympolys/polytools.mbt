@@ -16,7 +16,7 @@
 ///   the univariate/domain limits of `gcd_univar`.
 pub fn gcd_list(polys : Array[Poly]) -> Poly raise PolyError {
   if polys.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let mut g = polys[0]
   for i in 1..<polys.length() {
@@ -36,7 +36,7 @@ pub fn gcd_list(polys : Array[Poly]) -> Poly raise PolyError {
 ///   the same compatibility limits as `gcd_list`.
 pub fn lcm_list(polys : Array[Poly]) -> Poly raise PolyError {
   if polys.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let mut l = polys[0]
   for i in 1..<polys.length() {
@@ -100,7 +100,7 @@ pub fn terms_gcd(poly : Poly) -> Poly raise PolyError {
   let coeffs : Map[Monomial, FieldElem] = Map([])
   let coeff_fe = ensure_coeff_domain(content, poly.domain)
   add_term(coeffs, mono, coeff_fe, poly.domain)
-  Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
+  { coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
 }
 
 ///|
@@ -134,8 +134,8 @@ pub fn cancel(num : Poly, den : Poly) -> (Poly, Poly) raise PolyError {
 ///|
 /// Minimal multivariate gcd: detect exact divisibility and fall back to 1.
 fn gcd_multivar_simple(a : Poly, b : Poly) -> Poly raise PolyError {
-  if a.domain.not_equal(b.domain) || a.gens != b.gens {
-    raise PolyError::DomainMismatch
+  if Eq::not_equal(a.domain, b.domain) || a.gens != b.gens {
+    raise DomainMismatch
   }
   if a.is_zero() {
     return b
@@ -166,7 +166,7 @@ pub fn reduced(
   divisors : Array[Poly],
 ) -> (Array[Poly], Poly) raise PolyError {
   match poly.domain {
-    Domain::ZZ => {
+    ZZ => {
       let poly_q = lift_to_qq(poly)
       let divs_q = divisors.map(d => lift_to_qq(d))
       poly_q.divmod_multivar(divs_q)
@@ -184,7 +184,7 @@ pub fn reduced(
 /// - Limits: Raises `PolyError::NotUnivariate` outside the one-generator case.
 pub fn compose(f : Poly, g : Poly) -> Poly raise PolyError {
   if f.gens != g.gens || f.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let mut result = Poly::zero(f.gens, f.domain)
   let deg_f = f.degree(0)
@@ -305,7 +305,7 @@ fn decompose_restore_domain(
   parts : Array[Poly],
   original : Domain,
 ) -> Array[Poly] {
-  if original is Domain::ZZ {
+  if original is ZZ {
     let restored : Array[Poly] = []
     for part in parts {
       let value = try try_round_to_int(part) catch {
@@ -331,11 +331,11 @@ fn decompose_restore_domain(
 ///   unsupported cases may stop at `[f]`.
 pub fn decompose(f : Poly) -> Array[Poly] raise PolyError {
   if f.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let working = if domain_is_field_pred(f.domain) {
     f
-  } else if f.domain is Domain::ZZ {
+  } else if f.domain is ZZ {
     lift_to_qq(f)
   } else {
     return [f]
@@ -378,7 +378,7 @@ fn _gcd_int(a : Int, b : Int) -> Int {
 ///|
 fn deriv_univar_polytools(poly : Poly) -> Poly raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let coeffs : Map[Monomial, FieldElem] = Map([])
   for m, c in poly.coeffs {
@@ -392,7 +392,7 @@ fn deriv_univar_polytools(poly : Poly) -> Poly raise PolyError {
     let new_coeff = fe_mul(c, scale)
     add_term(coeffs, mono, new_coeff, poly.domain)
   }
-  Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
+  { coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
 }
 
 ///|
@@ -404,7 +404,7 @@ fn deriv_univar_polytools(poly : Poly) -> Poly raise PolyError {
 /// - Limits: Raises `PolyError::NotUnivariate` outside the one-generator case.
 pub fn sturm_sequence(poly : Poly) -> Array[Poly] raise PolyError {
   let seq : Array[Poly] = Array::new()
-  let use_rat = poly.domain is Domain::ZZ
+  let use_rat = poly.domain is ZZ
   let p0 = if use_rat { lift_to_qq(poly) } else { poly }
   let p1 = if use_rat {
     lift_to_qq(deriv_univar_polytools(poly))
@@ -442,7 +442,7 @@ pub fn sturm_sequence(poly : Poly) -> Array[Poly] raise PolyError {
 ///   degree `0` and `1` inputs return `0`.
 pub fn discriminant(poly : Poly) -> FieldElem raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let n = poly.degree(0)
   if n <= 1 {

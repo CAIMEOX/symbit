@@ -1,7 +1,7 @@
 ///|
 fn plot_symbol_like(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(_) | @symcore.Expr::Dummy(_, _) => true
+    Symbol(_) | Dummy(_, _) => true
     _ => false
   }
 }
@@ -13,7 +13,7 @@ fn plot_symbol_like(expr : @symcore.Expr) -> Bool {
 /// - Limits: This is a structural check only; numeric validity is enforced later by series constructors.
 pub fn is_plot_range(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Tuple([symbol, _, _]) => plot_symbol_like(symbol)
+    Tuple([symbol, _, _]) => plot_symbol_like(symbol)
     _ => false
   }
 }
@@ -78,11 +78,8 @@ pub fn LineOver1DRangeSeries::nb_of_points(self : LineOver1DRangeSeries) -> Int 
 ///|
 fn plot_expr_to_complex_parts(expr : @symcore.Expr) -> (Double, Double)? {
   match @symcore.evalf(expr, prec=80) {
-    @symcore.Expr::Float(value) =>
-      Some((value.to_double(), 0.0)) catch {
-        _ => None
-      }
-    @symcore.Expr::ComplexFloat(value) =>
+    Float(value) => Some((value.to_double(), 0.0)) catch { _ => None }
+    ComplexFloat(value) =>
       Some((value.real_part().to_double(), value.imag_part().to_double())) catch {
         _ => None
       }
@@ -101,9 +98,9 @@ fn plot_numeric_sample_expr(
     }
   }
   if sample_imag.abs() <= 1.0e-8 {
-    @symcore.Expr::Float(to_plot_float(sample_real))
+    Float(to_plot_float(sample_real))
   } else {
-    @symcore.Expr::ComplexFloat(
+    ComplexFloat(
       @symcore.ComplexFloat::from_real(
         to_plot_float(sample_real),
         imag=to_plot_float(sample_imag),
@@ -125,23 +122,22 @@ fn plot_raw_xreplace_impl(
     }
   }
   match expr {
-    @symcore.Expr::Add(args) =>
+    Add(args) =>
       @symcore.raw_add(args.map(arg => plot_raw_xreplace_impl(arg, rules)))
-    @symcore.Expr::Mul(args) =>
+    Mul(args) =>
       @symcore.raw_mul(args.map(arg => plot_raw_xreplace_impl(arg, rules)))
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       @symcore.raw_pow(
         plot_raw_xreplace_impl(base, rules),
         plot_raw_xreplace_impl(exp, rules),
       )
-    @symcore.Expr::Mod(lhs, rhs) =>
+    Mod(lhs, rhs) =>
       @symcore.raw_mod_expr(
         plot_raw_xreplace_impl(lhs, rules),
         plot_raw_xreplace_impl(rhs, rules),
       )
-    @symcore.Expr::Tuple(args) =>
-      @symcore.Expr::Tuple(args.map(arg => plot_raw_xreplace_impl(arg, rules)))
-    @symcore.Expr::Dict(items) => {
+    Tuple(args) => Tuple(args.map(arg => plot_raw_xreplace_impl(arg, rules)))
+    Dict(items) => {
       let out : Array[(@symcore.Expr, @symcore.Expr)] = []
       for item in items {
         let (key, value) = item
@@ -152,38 +148,38 @@ fn plot_raw_xreplace_impl(
           ),
         )
       }
-      @symcore.Expr::Dict(out)
+      Dict(out)
     }
-    @symcore.Expr::Relational(op, lhs, rhs) =>
-      @symcore.Expr::Relational(
+    Relational(op, lhs, rhs) =>
+      Relational(
         op,
         plot_raw_xreplace_impl(lhs, rules),
         plot_raw_xreplace_impl(rhs, rules),
       )
-    @symcore.Expr::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       let out : Array[@symcore.Expr] = []
       for arg in deriv_args {
         out.push(plot_raw_xreplace_impl(arg, rules))
       }
-      @symcore.Expr::Derivative(plot_raw_xreplace_impl(inner, rules), out)
+      Derivative(plot_raw_xreplace_impl(inner, rules), out)
     }
-    @symcore.Expr::Subs(inner, variable, value) =>
-      @symcore.Expr::Subs(
+    Subs(inner, variable, value) =>
+      Subs(
         plot_raw_xreplace_impl(inner, rules),
         plot_raw_xreplace_impl(variable, rules),
         plot_raw_xreplace_impl(value, rules),
       )
-    @symcore.Expr::Lambda(vars, body) =>
-      @symcore.Expr::Lambda(
+    Lambda(vars, body) =>
+      Lambda(
         plot_raw_xreplace_impl(vars, rules),
         plot_raw_xreplace_impl(body, rules),
       )
-    @symcore.Expr::Apply(head, args) => {
+    Apply(head, args) => {
       let rewritten_head = plot_raw_xreplace_impl(head, rules)
       let rewritten_args = args.map(arg => plot_raw_xreplace_impl(arg, rules))
       match @symcore.raw_apply(rewritten_head, rewritten_args) {
         Some(applied) => applied
-        None => @symcore.Expr::Apply(rewritten_head, rewritten_args)
+        None => Apply(rewritten_head, rewritten_args)
       }
     }
     _ => expr
@@ -216,11 +212,8 @@ fn plot_eval_numeric(
   let substituted = plot_raw_xreplace(expr, [(variable, sample_expr)])
   let evaluated = @symcore.evalf(substituted, prec=80)
   match evaluated {
-    @symcore.Expr::Float(value) =>
-      Some((value.to_double(), 0.0)) catch {
-        _ => None
-      }
-    @symcore.Expr::ComplexFloat(value) =>
+    Float(value) => Some((value.to_double(), 0.0)) catch { _ => None }
+    ComplexFloat(value) =>
       Some((value.real_part().to_double(), value.imag_part().to_double())) catch {
         _ => None
       }
@@ -241,9 +234,7 @@ fn plot_output_value(
     Some("abs") => Some((real * real + imag * imag).sqrt())
     Some("arg") => Some(@math.atan2(imag, real))
     Some(other) =>
-      raise PlottingError::ValueError(
-        "`_return` not recognized. Received: " + other,
-      )
+      raise ValueError("`_return` not recognized. Received: " + other)
   }
 }
 
@@ -254,12 +245,10 @@ fn plot_geomspace(
   count : Int,
 ) -> Array[Double] raise PlottingError {
   if start == 0.0 || end == 0.0 {
-    raise PlottingError::ValueError("log scale requires non-zero range bounds")
+    raise ValueError("log scale requires non-zero range bounds")
   }
   if (start > 0.0 && end < 0.0) || (start < 0.0 && end > 0.0) {
-    raise PlottingError::ValueError(
-      "log scale requires start and end to have the same sign",
-    )
+    raise ValueError("log scale requires start and end to have the same sign")
   }
   let sign = if start < 0.0 { -1.0 } else { 1.0 }
   let log_start = @math.ln(start.abs())
@@ -300,7 +289,7 @@ fn plot_discretize(
   if scale == "log" {
     return plot_geomspace(start, end, count)
   }
-  raise PlottingError::ValueError("unknown plotting scale: " + scale)
+  raise ValueError("unknown plotting scale: " + scale)
 }
 
 ///|
@@ -449,19 +438,15 @@ pub fn LineOver1DRangeSeries::get_points(
   let (start_real, start_imag) = match plot_expr_to_complex_parts(self.start) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
-        "LineOver1DRangeSeries requires numeric range bounds",
-      )
+      raise ValueError("LineOver1DRangeSeries requires numeric range bounds")
   }
   let (end_real, end_imag) = match plot_expr_to_complex_parts(self.end) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
-        "LineOver1DRangeSeries requires numeric range bounds",
-      )
+      raise ValueError("LineOver1DRangeSeries requires numeric range bounds")
   }
   if (start_imag - end_imag).abs() > 1.0e-8 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "LineOver1DRangeSeries requires the imaginary part of the start and end values of the range to be the same.",
     )
   }
@@ -551,8 +536,8 @@ pub fn line_over_1d_range_series(
     None => Some(@symprint.pretty_string(expr))
   }
   match range {
-    @symcore.Expr::Tuple([variable, start, end]) if is_plot_range(range) =>
-      LineOver1DRangeSeries::{
+    Tuple([variable, start, end]) if is_plot_range(range) =>
+      {
         expr,
         variable,
         start,
@@ -567,7 +552,7 @@ pub fn line_over_1d_range_series(
         xscale,
       }
     _ =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A plotting range must be a tuple of the form (symbol, start, end)",
       )
   }
@@ -685,11 +670,8 @@ fn plot_eval_numeric_2d(
   ])
   let evaluated = @symcore.evalf(substituted, prec=80)
   match evaluated {
-    @symcore.Expr::Float(value) =>
-      Some((value.to_double(), 0.0)) catch {
-        _ => None
-      }
-    @symcore.Expr::ComplexFloat(value) =>
+    Float(value) => Some((value.to_double(), 0.0)) catch { _ => None }
+    ComplexFloat(value) =>
       Some((value.real_part().to_double(), value.imag_part().to_double())) catch {
         _ => None
       }
@@ -739,12 +721,12 @@ fn plot_implicit_compare(
   rhs : Double,
 ) -> Bool {
   match op {
-    @symcore.RelOp::Eq => (lhs - rhs).abs() <= 1.0e-8
-    @symcore.RelOp::Ne => (lhs - rhs).abs() > 1.0e-8
-    @symcore.RelOp::Lt => lhs < rhs
-    @symcore.RelOp::Le => lhs <= rhs
-    @symcore.RelOp::Gt => lhs > rhs
-    @symcore.RelOp::Ge => lhs >= rhs
+    Eq => (lhs - rhs).abs() <= 1.0e-8
+    Ne => (lhs - rhs).abs() > 1.0e-8
+    Lt => lhs < rhs
+    Le => lhs <= rhs
+    Gt => lhs > rhs
+    Ge => lhs >= rhs
   }
 }
 
@@ -759,8 +741,8 @@ fn plot_implicit_boolean_expr(
   sample_y_imag : Double,
 ) -> Bool? {
   match expr {
-    @symcore.Expr::Boolean(value) => Some(value)
-    @symcore.Expr::Relational(op, lhs, rhs) =>
+    Boolean(value) => Some(value)
+    Relational(op, lhs, rhs) =>
       match
         (
           plot_implicit_eval_real_2d(
@@ -776,8 +758,7 @@ fn plot_implicit_boolean_expr(
           Some(plot_implicit_compare(op, lhs_value, rhs_value))
         _ => None
       }
-    @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), args)
-    | @symcore.Expr::Function(name, args) =>
+    Apply(FunctionHead(name), args) | Function(name, args) =>
       match name {
         "And" => {
           let mut saw_unknown = false
@@ -874,14 +855,13 @@ fn plot_implicit_boolean_expr(
 ///|
 fn plot_implicit_plot_type(expr : @symcore.Expr) -> String {
   match expr {
-    @symcore.Expr::Boolean(_) => "contourf"
-    @symcore.Expr::Relational(op, _, _) =>
+    Boolean(_) => "contourf"
+    Relational(op, _, _) =>
       match op {
-        @symcore.RelOp::Eq => "contour"
+        Eq => "contour"
         _ => "contourf"
       }
-    @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), _)
-    | @symcore.Expr::Function(name, _) =>
+    Apply(FunctionHead(name), _) | Function(name, _) =>
       match name {
         "And" | "Or" | "Not" | "Xor" => "contourf"
         _ => "contour"
@@ -893,7 +873,7 @@ fn plot_implicit_plot_type(expr : @symcore.Expr) -> String {
 ///|
 fn plot_implicit_scalar_expr(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) =>
+    Relational(Eq, lhs, rhs) =>
       @symcore.add([lhs, @symcore.mul([@symcore.int(-1), rhs])])
     _ => expr
   }
@@ -917,7 +897,7 @@ fn plot_implicit_interval_fill(
   let interval_list : Array[ImplicitRectangle] = []
   for yi in 0..<(ys.length() - 1) {
     for xi in 0..<(xs.length() - 1) {
-      interval_list.push(ImplicitRectangle::{
+      interval_list.push({
         x_start: xs[xi],
         x_end: xs[xi + 1],
         y_start: ys[yi],
@@ -979,9 +959,8 @@ fn plot_implicit_interval_fill(
 ///|
 fn plot_implicit_requires_adaptive(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Relational(@symcore.RelOp::Ne, _, _) => true
-    @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), _)
-    | @symcore.Expr::Function(name, _) =>
+    Relational(Ne, _, _) => true
+    Apply(FunctionHead(name), _) | Function(name, _) =>
       name == "And" || name == "Or" || name == "Not" || name == "Xor"
     _ => false
   }
@@ -994,30 +973,10 @@ fn plot_implicit_subdivide_rect(
   let mid_x = (rect.x_start + rect.x_end) / 2.0
   let mid_y = (rect.y_start + rect.y_end) / 2.0
   [
-    ImplicitRectangle::{
-      x_start: rect.x_start,
-      x_end: mid_x,
-      y_start: rect.y_start,
-      y_end: mid_y,
-    },
-    ImplicitRectangle::{
-      x_start: rect.x_start,
-      x_end: mid_x,
-      y_start: mid_y,
-      y_end: rect.y_end,
-    },
-    ImplicitRectangle::{
-      x_start: mid_x,
-      x_end: rect.x_end,
-      y_start: rect.y_start,
-      y_end: mid_y,
-    },
-    ImplicitRectangle::{
-      x_start: mid_x,
-      x_end: rect.x_end,
-      y_start: mid_y,
-      y_end: rect.y_end,
-    },
+    { x_start: rect.x_start, x_end: mid_x, y_start: rect.y_start, y_end: mid_y },
+    { x_start: rect.x_start, x_end: mid_x, y_start: mid_y, y_end: rect.y_end },
+    { x_start: mid_x, x_end: rect.x_end, y_start: rect.y_start, y_end: mid_y },
+    { x_start: mid_x, x_end: rect.x_end, y_start: mid_y, y_end: rect.y_end },
   ]
 }
 
@@ -1334,19 +1293,15 @@ pub fn Parametric2DLineSeries::get_data(
   let (start_real, start_imag) = match plot_expr_to_complex_parts(self.start) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
-        "Parametric2DLineSeries requires numeric range bounds",
-      )
+      raise ValueError("Parametric2DLineSeries requires numeric range bounds")
   }
   let (end_real, end_imag) = match plot_expr_to_complex_parts(self.end) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
-        "Parametric2DLineSeries requires numeric range bounds",
-      )
+      raise ValueError("Parametric2DLineSeries requires numeric range bounds")
   }
   if (start_imag - end_imag).abs() > 1.0e-8 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "Parametric2DLineSeries requires the imaginary part of the start and end values of the range to be the same.",
     )
   }
@@ -1420,8 +1375,8 @@ pub fn parametric_2d_line_series(
 ) -> Parametric2DLineSeries raise PlottingError {
   let resolved_label = plot_parametric_2d_label(expr_x, expr_y, label, use_cm)
   match range {
-    @symcore.Expr::Tuple([variable, start, end]) if is_plot_range(range) =>
-      Parametric2DLineSeries::{
+    Tuple([variable, start, end]) if is_plot_range(range) =>
+      {
         expr_x,
         expr_y,
         variable,
@@ -1437,7 +1392,7 @@ pub fn parametric_2d_line_series(
         xscale,
       }
     _ =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A plotting range must be a tuple of the form (symbol, start, end)",
       )
   }
@@ -1559,19 +1514,15 @@ pub fn Parametric3DLineSeries::get_data(
   let (start_real, start_imag) = match plot_expr_to_complex_parts(self.start) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
-        "Parametric3DLineSeries requires numeric range bounds",
-      )
+      raise ValueError("Parametric3DLineSeries requires numeric range bounds")
   }
   let (end_real, end_imag) = match plot_expr_to_complex_parts(self.end) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
-        "Parametric3DLineSeries requires numeric range bounds",
-      )
+      raise ValueError("Parametric3DLineSeries requires numeric range bounds")
   }
   if (start_imag - end_imag).abs() > 1.0e-8 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "Parametric3DLineSeries requires the imaginary part of the start and end values of the range to be the same.",
     )
   }
@@ -1617,8 +1568,8 @@ pub fn parametric_3d_line_series(
   )
   ignore(adaptive)
   match range {
-    @symcore.Expr::Tuple([variable, start, end]) if is_plot_range(range) =>
-      Parametric3DLineSeries::{
+    Tuple([variable, start, end]) if is_plot_range(range) =>
+      {
         expr_x,
         expr_y,
         expr_z,
@@ -1635,7 +1586,7 @@ pub fn parametric_3d_line_series(
         xscale,
       }
     _ =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A plotting range must be a tuple of the form (symbol, start, end)",
       )
   }
@@ -1748,14 +1699,14 @@ pub fn SurfaceOver2DRangeSeries::get_data(
     plot_expr_to_complex_parts(self.start_x) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "SurfaceOver2DRangeSeries requires numeric x range bounds",
       )
   }
   let (end_x_real, end_x_imag) = match plot_expr_to_complex_parts(self.end_x) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "SurfaceOver2DRangeSeries requires numeric x range bounds",
       )
   }
@@ -1763,24 +1714,24 @@ pub fn SurfaceOver2DRangeSeries::get_data(
     plot_expr_to_complex_parts(self.start_y) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "SurfaceOver2DRangeSeries requires numeric y range bounds",
       )
   }
   let (end_y_real, end_y_imag) = match plot_expr_to_complex_parts(self.end_y) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "SurfaceOver2DRangeSeries requires numeric y range bounds",
       )
   }
   if (start_x_imag - end_x_imag).abs() > 1.0e-8 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "SurfaceOver2DRangeSeries requires the imaginary part of the start and end values of the x range to be the same.",
     )
   }
   if (start_y_imag - end_y_imag).abs() > 1.0e-8 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "SurfaceOver2DRangeSeries requires the imaginary part of the start and end values of the y range to be the same.",
     )
   }
@@ -1841,11 +1792,11 @@ pub fn surface_over_2d_range_series(
   let resolved_label = plot_surface_label(expr, label)
   ignore(adaptive)
   match (range_x, range_y) {
-    (
-      @symcore.Expr::Tuple([variable_x, start_x, end_x]),
-      @symcore.Expr::Tuple([variable_y, start_y, end_y]),
-    ) if is_plot_range(range_x) && is_plot_range(range_y) =>
-      SurfaceOver2DRangeSeries::{
+    (Tuple([variable_x, start_x, end_x]), Tuple([variable_y, start_y, end_y])) if is_plot_range(
+        range_x,
+      ) &&
+      is_plot_range(range_y) =>
+      {
         expr,
         variable_x,
         start_x,
@@ -1863,7 +1814,7 @@ pub fn surface_over_2d_range_series(
         yscale,
       }
     _ =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A plotting range must be a tuple of the form (symbol, start, end)",
       )
   }
@@ -2008,14 +1959,14 @@ pub fn ParametricSurfaceSeries::get_data(
     plot_expr_to_complex_parts(self.start_u) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "ParametricSurfaceSeries requires numeric u range bounds",
       )
   }
   let (end_u_real, end_u_imag) = match plot_expr_to_complex_parts(self.end_u) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "ParametricSurfaceSeries requires numeric u range bounds",
       )
   }
@@ -2023,24 +1974,24 @@ pub fn ParametricSurfaceSeries::get_data(
     plot_expr_to_complex_parts(self.start_v) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "ParametricSurfaceSeries requires numeric v range bounds",
       )
   }
   let (end_v_real, end_v_imag) = match plot_expr_to_complex_parts(self.end_v) {
     Some(value) => value
     None =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "ParametricSurfaceSeries requires numeric v range bounds",
       )
   }
   if (start_u_imag - end_u_imag).abs() > 1.0e-8 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "ParametricSurfaceSeries requires the imaginary part of the start and end values of the u range to be the same.",
     )
   }
   if (start_v_imag - end_v_imag).abs() > 1.0e-8 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "ParametricSurfaceSeries requires the imaginary part of the start and end values of the v range to be the same.",
     )
   }
@@ -2133,11 +2084,11 @@ pub fn parametric_surface_series(
   )
   ignore(adaptive)
   match (range_u, range_v) {
-    (
-      @symcore.Expr::Tuple([variable_u, start_u, end_u]),
-      @symcore.Expr::Tuple([variable_v, start_v, end_v]),
-    ) if is_plot_range(range_u) && is_plot_range(range_v) =>
-      ParametricSurfaceSeries::{
+    (Tuple([variable_u, start_u, end_u]), Tuple([variable_v, start_v, end_v])) if is_plot_range(
+        range_u,
+      ) &&
+      is_plot_range(range_v) =>
+      {
         expr_x,
         expr_y,
         expr_z,
@@ -2157,7 +2108,7 @@ pub fn parametric_surface_series(
         yscale,
       }
     _ =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A plotting range must be a tuple of the form (symbol, start, end)",
       )
   }
@@ -2231,8 +2182,8 @@ pub fn ContourSeries::get_data(
 ) -> (Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]]) raise PlottingError {
   surface_over_2d_range_series(
     self.expr,
-    @symcore.Expr::Tuple([self.variable_x, self.start_x, self.end_x]),
-    @symcore.Expr::Tuple([self.variable_y, self.start_y, self.end_y]),
+    Tuple([self.variable_x, self.start_x, self.end_x]),
+    Tuple([self.variable_y, self.start_y, self.end_y]),
     label=self.label,
     rendering_kw=self.rendering_kw,
     adaptive=self.adaptive,
@@ -2275,7 +2226,7 @@ pub fn contour_series(
     xscale~,
     yscale~,
   )
-  ContourSeries::{
+  {
     expr: surface.expr,
     variable_x: surface.variable_x,
     start_x: surface.start_x,
@@ -2364,40 +2315,28 @@ pub fn ImplicitSeries::get_data(
   let (start_x_real, start_x_imag) = match
     plot_expr_to_complex_parts(self.start_x) {
     Some(value) => value
-    None =>
-      raise PlottingError::ValueError(
-        "ImplicitSeries requires numeric x range bounds",
-      )
+    None => raise ValueError("ImplicitSeries requires numeric x range bounds")
   }
   let (end_x_real, end_x_imag) = match plot_expr_to_complex_parts(self.end_x) {
     Some(value) => value
-    None =>
-      raise PlottingError::ValueError(
-        "ImplicitSeries requires numeric x range bounds",
-      )
+    None => raise ValueError("ImplicitSeries requires numeric x range bounds")
   }
   let (start_y_real, start_y_imag) = match
     plot_expr_to_complex_parts(self.start_y) {
     Some(value) => value
-    None =>
-      raise PlottingError::ValueError(
-        "ImplicitSeries requires numeric y range bounds",
-      )
+    None => raise ValueError("ImplicitSeries requires numeric y range bounds")
   }
   let (end_y_real, end_y_imag) = match plot_expr_to_complex_parts(self.end_y) {
     Some(value) => value
-    None =>
-      raise PlottingError::ValueError(
-        "ImplicitSeries requires numeric y range bounds",
-      )
+    None => raise ValueError("ImplicitSeries requires numeric y range bounds")
   }
   if (start_x_imag - end_x_imag).abs() > 1.0e-8 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "ImplicitSeries requires the imaginary part of the start and end values of the x range to be the same.",
     )
   }
   if (start_y_imag - end_y_imag).abs() > 1.0e-8 {
-    raise PlottingError::ValueError(
+    raise ValueError(
       "ImplicitSeries requires the imaginary part of the start and end values of the y range to be the same.",
     )
   }
@@ -2415,13 +2354,13 @@ pub fn ImplicitSeries::get_data(
         end_y_real,
         self.depth,
       ) {
-      Some(rectangles) => return ImplicitPlotData::Fill(rectangles)
+      Some(rectangles) => return Fill(rectangles)
       None => ()
     }
     let rectangles : Array[ImplicitRectangle] = []
     let pending : Array[(ImplicitRectangle, Int)] = [
       (
-        ImplicitRectangle::{
+        {
           x_start: start_x_real,
           x_end: end_x_real,
           y_start: start_y_real,
@@ -2474,7 +2413,7 @@ pub fn ImplicitSeries::get_data(
         }
       }
     }
-    return ImplicitPlotData::Fill(rectangles)
+    return Fill(rectangles)
   }
   let xs = plot_discretize(
     start_x_real,
@@ -2529,12 +2468,7 @@ pub fn ImplicitSeries::get_data(
     }
     mesh_z.push(row_z)
   }
-  ImplicitPlotData::Mesh(
-    mesh_x,
-    mesh_y,
-    mesh_z,
-    plot_implicit_plot_type(self.expr),
-  )
+  Mesh(mesh_x, mesh_y, mesh_z, plot_implicit_plot_type(self.expr))
 }
 
 ///|
@@ -2568,11 +2502,11 @@ pub fn implicit_series(
     None => n
   }
   match (range_x, range_y) {
-    (
-      @symcore.Expr::Tuple([variable_x, start_x, end_x]),
-      @symcore.Expr::Tuple([variable_y, start_y, end_y]),
-    ) if is_plot_range(range_x) && is_plot_range(range_y) =>
-      ImplicitSeries::{
+    (Tuple([variable_x, start_x, end_x]), Tuple([variable_y, start_y, end_y])) if is_plot_range(
+        range_x,
+      ) &&
+      is_plot_range(range_y) =>
+      {
         expr,
         variable_x,
         start_x,
@@ -2591,7 +2525,7 @@ pub fn implicit_series(
         yscale,
       }
     _ =>
-      raise PlottingError::ValueError(
+      raise ValueError(
         "A plotting range must be a tuple of the form (symbol, start, end)",
       )
   }
@@ -2619,12 +2553,12 @@ pub enum PlotSeries {
 /// - Limits: Output is intended for inspection and tests, so string format changes can break assertions.
 pub fn PlotSeries::to_string(self : PlotSeries) -> String {
   match self {
-    PlotSeries::Line(series) => series.to_string()
-    PlotSeries::Parametric2D(series) => series.to_string()
-    PlotSeries::Parametric3D(series) => series.to_string()
-    PlotSeries::Surface(series) => series.to_string()
-    PlotSeries::ParametricSurface(series) => series.to_string()
-    PlotSeries::Contour(series) => series.to_string()
-    PlotSeries::Implicit(series) => series.to_string()
+    Line(series) => series.to_string()
+    Parametric2D(series) => series.to_string()
+    Parametric3D(series) => series.to_string()
+    Surface(series) => series.to_string()
+    ParametricSurface(series) => series.to_string()
+    Contour(series) => series.to_string()
+    Implicit(series) => series.to_string()
   }
 }

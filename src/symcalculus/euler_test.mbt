@@ -12,9 +12,7 @@ fn exact_complex_rate_expr(
   let imag = @symnum.BigRational::from_ints(imag_num, imag_den) catch {
     _ => @symnum.BigRational::zero()
   }
-  @symcore.Expr::ComplexFloat(
-    @symcore.ComplexFloat::from_exact_parts(real, imag, prec~),
-  )
+  ComplexFloat(@symcore.ComplexFloat::from_exact_parts(real, imag, prec~))
 }
 
 ///|
@@ -34,10 +32,10 @@ test "symcalculus diff of complex exponential evaluates at numeric points" {
   let expr = @symcore.function("exp", [@symcore.mul([rate, x])])
   let deriv = diff(expr, x)
   let env : Map[String, @symcore.Expr] = Map([])
-  env["x"] = @symcore.Expr::Float(@symcore.Float::from_rational(1N, 10N, 120))
+  env["x"] = Float(@symcore.Float::from_rational(1N, 10N, 120))
   match @symcore.evalf(@symcore.subst(deriv, env), prec=120) {
-    @symcore.Expr::Float(value) => assert_true(value.is_finite())
-    @symcore.Expr::ComplexFloat(value) => assert_true(value.is_finite())
+    Float(value) => assert_true(value.is_finite())
+    ComplexFloat(value) => assert_true(value.is_finite())
     _ => fail("expected finite numeric derivative value")
   }
 }
@@ -60,7 +58,7 @@ test "symcalculus diff applies chain rule to undefined functions" {
   let expected_x = @symcore.mul([
     @symcore.int(2),
     x,
-    @symcore.Expr::Subs(
+    Subs(
       derivative_expr(@symcore.applied_undefined_function("F", [xi]), [xi]),
       xi,
       inner,
@@ -69,7 +67,7 @@ test "symcalculus diff applies chain rule to undefined functions" {
   let expected_y = @symcore.mul([
     @symcore.int(2),
     y,
-    @symcore.Expr::Subs(
+    Subs(
       derivative_expr(@symcore.applied_undefined_function("F", [xi]), [xi]),
       xi,
       inner,
@@ -94,7 +92,7 @@ test "symcalculus diff evaluates Subs of derivative placeholders by chain rule" 
   )
   let expected_dx = @symcore.mul([
     a,
-    @symcore.Expr::Subs(
+    Subs(
       derivative_expr(@symcore.applied_undefined_function("F", [xi]), [
         xi,
         @symcore.int(2),
@@ -105,7 +103,7 @@ test "symcalculus diff evaluates Subs of derivative placeholders by chain rule" 
   ])
   let expected_dy = @symcore.mul([
     b,
-    @symcore.Expr::Subs(
+    Subs(
       derivative_expr(@symcore.applied_undefined_function("F", [xi]), [
         xi,
         @symcore.int(2),

@@ -39,12 +39,12 @@ pub fn convolution_fft(
 ) -> Array[Expr] raise DiscreteError {
   for v in a {
     if expr_has_symbol(v) {
-      raise DiscreteError::ValueError("expected non-symbolic coefficients")
+      raise ValueError("expected non-symbolic coefficients")
     }
   }
   for v in b {
     if expr_has_symbol(v) {
-      raise DiscreteError::ValueError("expected non-symbolic coefficients")
+      raise ValueError("expected non-symbolic coefficients")
     }
   }
   if a.is_empty() || b.is_empty() {
@@ -251,7 +251,7 @@ pub fn convolution(
   subset? : Bool,
 ) -> Array[Expr] raise DiscreteError {
   if cycle < 0 {
-    raise DiscreteError::ValueError("cycle must be non-negative")
+    raise ValueError("cycle must be non-negative")
   }
   let dyadic_hint = match dyadic {
     Some(true) => true
@@ -277,7 +277,7 @@ pub fn convolution(
     hint_count = hint_count + 1
   }
   if hint_count > 1 {
-    raise DiscreteError::TypeError("ambiguous convolution hints")
+    raise TypeError("ambiguous convolution hints")
   }
   match prime {
     Some(p) => {

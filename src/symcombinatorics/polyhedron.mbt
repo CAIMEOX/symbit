@@ -182,9 +182,7 @@ pub fn Polyhedron::new(
     gens.push(Permutation::identity(corners.length()))
   }
   if !gens.is_empty() && gens[0].size() != corners.length() {
-    raise CombinatoricsError::ValueError(
-      "Permutation size unequal to number of corners",
-    )
+    raise ValueError("Permutation size unequal to number of corners")
   }
   let group = PermutationGroup::new(gens)
   {
@@ -239,7 +237,7 @@ pub fn Polyhedron::array_form(
       }
     }
     if !found {
-      raise CombinatoricsError::ValueError("corner not found in original list")
+      raise ValueError("corner not found in original list")
     }
     out.push(idx)
   }
@@ -323,17 +321,15 @@ pub fn Polyhedron::rotate(
   arg : PolyRotate,
 ) -> Unit raise CombinatoricsError {
   let perm = match arg {
-    PolyRotate::Index(i) => {
+    Index(i) => {
       if i < 0 || i >= self.pgroup_generators.length() {
-        raise CombinatoricsError::ValueError("pgroup index out of range")
+        raise ValueError("pgroup index out of range")
       }
       self.pgroup_generators[i]
     }
-    PolyRotate::Perm(p) => {
+    Perm(p) => {
       if p.size() != self.size() {
-        raise CombinatoricsError::ValueError(
-          "Polyhedron and Permutation sizes differ",
-        )
+        raise ValueError("Polyhedron and Permutation sizes differ")
       }
       p
     }

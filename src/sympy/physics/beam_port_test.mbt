@@ -1,7 +1,7 @@
 ///|
 test "physics.continuum_mechanics.beam: oracle parity" {
-  let e = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1)
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let e = @symcore.Expr::NumberSymbol(Exp1)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let a = @symcore.Expr::Symbol("A")
   let r1 = @symcore.Expr::Symbol("R1")
   let r2 = @symcore.Expr::Symbol("R2")

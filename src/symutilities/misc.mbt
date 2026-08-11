@@ -11,22 +11,22 @@ pub enum IntLike {
 
 ///|
 pub fn int_like_int(value : Int) -> IntLike {
-  IntLike::Int(value)
+  Int(value)
 }
 
 ///|
 pub fn int_like_double(value : Double) -> IntLike {
-  IntLike::Double(value)
+  Double(value)
 }
 
 ///|
 pub fn int_like_bool(value : Bool) -> IntLike {
-  IntLike::Bool(value)
+  Bool(value)
 }
 
 ///|
 pub fn int_like_expr(value : Expr) -> IntLike {
-  IntLike::Expr(value)
+  Expr(value)
 }
 
 ///|
@@ -303,9 +303,7 @@ pub fn translate(
   match oldchars {
     None =>
       if newchars is Some(_) {
-        raise UtilitiesError::InvalidArgument(
-          "newchars should be None when oldchars is None",
-        )
+        raise InvalidArgument("newchars should be None when oldchars is None")
       }
     Some(old0) => {
       let new0 = match newchars {
@@ -313,9 +311,7 @@ pub fn translate(
         None => ""
       }
       if old0.length() != new0.length() {
-        raise UtilitiesError::InvalidArgument(
-          "oldchars and newchars must have the same length",
-        )
+        raise InvalidArgument("oldchars and newchars must have the same length")
       }
       let olds : Array[Char] = []
       let news : Array[Char] = []
@@ -388,29 +384,25 @@ pub fn as_int(
   strict? : Bool = true,
 ) -> Int raise UtilitiesError {
   match value {
-    IntLike::Int(n) => n
-    IntLike::Bool(_) if strict =>
-      raise UtilitiesError::InvalidArgument(
+    Int(n) => n
+    Bool(_) if strict =>
+      raise InvalidArgument(
         "True/False are not accepted as integers in strict mode",
       )
-    IntLike::Bool(b) => if b { 1 } else { 0 }
-    IntLike::Double(d) => {
+    Bool(b) => if b { 1 } else { 0 }
+    Double(d) => {
       if strict {
-        raise UtilitiesError::InvalidArgument(
-          "double value is not an integer in strict mode",
-        )
+        raise InvalidArgument("double value is not an integer in strict mode")
       }
       let n = d.to_int()
       if d != n.to_double() {
-        raise UtilitiesError::InvalidArgument(
-          d.to_string() + " is not an integer",
-        )
+        raise InvalidArgument(d.to_string() + " is not an integer")
       }
       n
     }
-    IntLike::Expr(Expr::Number(n)) if n.is_integral() => n.numerator().to_int()
-    IntLike::Expr(expr) =>
-      raise UtilitiesError::InvalidArgument(
+    Expr(Number(n)) if n.is_integral() => n.numerator().to_int()
+    Expr(expr) =>
+      raise InvalidArgument(
         @symprint.pretty_string(expr) + " is not an integer",
       )
   }

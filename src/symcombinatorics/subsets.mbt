@@ -48,13 +48,11 @@ pub fn[T : Eq] Subset::new(
   superset : Array[T],
 ) -> Subset[T] raise CombinatoricsError {
   if subset.length() > superset.length() {
-    raise CombinatoricsError::ValueError(
-      "The superset must be larger than the subset",
-    )
+    raise ValueError("The superset must be larger than the subset")
   }
   for elem in subset {
     if !superset.any(v => v == elem) {
-      raise CombinatoricsError::ValueError("Superset does not contain element")
+      raise ValueError("Superset does not contain element")
     }
   }
   {
@@ -283,7 +281,7 @@ pub fn[T : Eq] Subset::subset_from_bitlist(
   bitlist : String,
 ) -> Subset[T] raise CombinatoricsError {
   if super_set.length() != bitlist.length() {
-    raise CombinatoricsError::ValueError("The sizes of the lists are not equal")
+    raise ValueError("The sizes of the lists are not equal")
   }
   let bits = string_to_chars(bitlist)
   let out : Array[T] = Array::new()

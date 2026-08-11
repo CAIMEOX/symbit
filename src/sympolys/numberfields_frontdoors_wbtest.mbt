@@ -34,7 +34,7 @@ fn nf_wb_coeff_search_text(values : Array[Array[Int]]) -> String {
 ///|
 fn nf_wb_rat_coeffs_text(value : Array[@symnum.BigRational]?) -> String {
   match value {
-    Some(items) => "[" + items.map(c => c.to_string()).join(",") + "]"
+    Some(items) => "[" + items.map(c => Show::to_string(c)).join(",") + "]"
     None => "None"
   }
 }
@@ -66,12 +66,12 @@ test "numberfields utilities: rational predicates and numerator denominator" {
   )
   inspect(
     is_sq_maxrank_HNF(
-      domain_matrix_from_ints([[2, 1, 0], [0, 3, 2], [0, 0, 5]], Domain::ZZ),
+      domain_matrix_from_ints([[2, 1, 0], [0, 3, 2], [0, 0, 5]], ZZ),
     ),
     content="true",
   )
   inspect(
-    is_sq_maxrank_HNF(domain_matrix_from_ints([[2, 3], [0, 1]], Domain::ZZ)),
+    is_sq_maxrank_HNF(domain_matrix_from_ints([[2, 3], [0, 1]], ZZ)),
     content="false",
   )
   inspect(nf_wb_exprs_text(s_vars(4)), content="[s1, s2, s3, s4]")
@@ -80,12 +80,12 @@ test "numberfields utilities: rational predicates and numerator denominator" {
 
 ///|
 test "numberfields utilities: supplement a subspace" {
-  let basis = domain_matrix_from_ints([[1, 2], [7, 3], [0, 4]], Domain::QQ)
+  let basis = domain_matrix_from_ints([[1, 2], [7, 3], [0, 4]], QQ)
   inspect(
     supplement_a_subspace(basis).to_matrix_string(),
     content="Matrix([[1, 2, 1], [7, 3, 0], [0, 4, 0]])",
   )
-  let line = domain_matrix_from_ints([[1], [0], [0]], Domain::QQ)
+  let line = domain_matrix_from_ints([[1], [0], [0]], QQ)
   inspect(
     supplement_a_subspace(line).to_matrix_string(),
     content="Matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])",
@@ -161,7 +161,7 @@ test "numberfields frontdoors: field isomorphism algorithm aliases" {
 ///|
 test "numberfields frontdoors: round_two and prime decomposition" {
   let x = Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   inspect(
     round_two(b.from_expr((x ^ int(2)) - int(2))),
     content="(Submodule[[1, 0], [0, 1]], 8)",
@@ -171,16 +171,19 @@ test "numberfields frontdoors: round_two and prime decomposition" {
     content="(Submodule[[2, 0], [1, 1]]/2, 5)",
   )
   let inert = prime_decomp(3, b.from_expr((x ^ int(2)) - int(2)))
-  inspect(inert.map(item => item.to_string()).join(" | "), content="(3)")
+  inspect(inert.map(item => Show::to_string(item)).join(" | "), content="(3)")
   let ramified = prime_decomp(2, b.from_expr((x ^ int(2)) - int(2)))
-  inspect(ramified.map(item => item.to_string()).join(" | "), content="(2, x)")
+  inspect(
+    ramified.map(item => Show::to_string(item)).join(" | "),
+    content="(2, x)",
+  )
   inspect(prime_valuation(8, ramified[0]), content="6")
 }
 
 ///|
 test "numberfields frontdoors: make_mod_elt preserves module flavor" {
   let x = Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let pb = numberfield_power_basis(b.from_expr((x ^ int(2)) - int(2)))
   let power_elt = make_mod_elt(pb, [1N, 2N], denom=3N) catch {
     _ => fail("power element")
@@ -210,30 +213,30 @@ test "numberfields frontdoors: make_mod_elt preserves module flavor" {
 ///|
 test "numberfields frontdoors: find_min_poly for quadratic power basis elements" {
   let x = Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let pb = numberfield_power_basis(b.from_expr((x ^ int(2)) - int(2)))
   let theta = make_mod_elt(pb, [0N, 1N]) catch { _ => fail("theta") }
   inspect(
-    @symprint.pretty_string(find_min_poly(theta, Domain::QQ).to_expr()),
+    @symprint.pretty_string(find_min_poly(theta, QQ).to_expr()),
     content="x**2 - 2",
   )
   let shifted = make_mod_elt(pb, [1N, 1N]) catch { _ => fail("shifted") }
   inspect(
-    @symprint.pretty_string(find_min_poly(shifted, Domain::QQ).to_expr()),
+    @symprint.pretty_string(find_min_poly(shifted, QQ).to_expr()),
     content="x**2 - 2*x - 1",
   )
   let scaled = make_mod_elt(pb, [1N, 2N], denom=3N) catch {
     _ => fail("scaled")
   }
   inspect(
-    @symprint.pretty_string(find_min_poly(scaled, Domain::QQ).to_expr()),
+    @symprint.pretty_string(find_min_poly(scaled, QQ).to_expr()),
     content="x**2 - 2*x - 7",
   )
   let constant = make_mod_elt(pb, [2N, 0N], denom=3N) catch {
     _ => fail("constant")
   }
   inspect(
-    @symprint.pretty_string(find_min_poly(constant, Domain::QQ).to_expr()),
+    @symprint.pretty_string(find_min_poly(constant, QQ).to_expr()),
     content="x - 2",
   )
 }

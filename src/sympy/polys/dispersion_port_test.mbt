@@ -10,7 +10,7 @@ fn dispersion_int_norm(value : Int) -> String {
 ///|
 test "dispersion: frontdoor parity for linear-split polynomials" {
   let x = @symcore.Expr::Symbol("x")
-  let b = @sympolys.PolyBuilder::new(["x"], @sympolys.Domain::QQ)
+  let b = @sympolys.PolyBuilder::new(["x"], QQ)
   let fp = b.from_expr((x - @symcore.int(3)) * (x + @symcore.int(3)))
 
   assert_eq(
@@ -39,7 +39,7 @@ test "dispersion: frontdoor parity for linear-split polynomials" {
 ///|
 test "dispersion: empty dispersion parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = @sympolys.PolyBuilder::new(["x"], @sympolys.Domain::QQ)
+  let b = @sympolys.PolyBuilder::new(["x"], QQ)
   let far_left = b.from_expr(x - @symcore.int(5))
   let origin = b.from_expr(x)
   assert_eq(

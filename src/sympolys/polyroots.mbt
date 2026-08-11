@@ -15,7 +15,7 @@
 /// - Limits: Raises `PolyError::BadExponent` when the input degree is not `1`.
 fn ensure_univar(poly : Poly) -> Unit raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
 }
 
@@ -72,9 +72,7 @@ fn sqrt_rational_expr(value : @symnum.BigRational) -> Expr? {
   }
   let base = Expr::Number(rat)
   if negative {
-    let imag = @symcore.Expr::NumberSymbol(
-      @symcore.NumberSymbolKind::ImaginaryUnit,
-    )
+    let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
     Some(@symcore.mul([base, imag]))
   } else {
     Some(base)
@@ -84,7 +82,7 @@ fn sqrt_rational_expr(value : @symnum.BigRational) -> Expr? {
 ///|
 fn quadratic_sqrt(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(n) =>
+    Number(n) =>
       match sqrt_rational_expr(n) {
         Some(value) => value
         None => @symcore.function("sqrt", [expr])
@@ -104,7 +102,7 @@ pub fn roots_linear(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
   if deg != 1 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let a = coeff_expr(poly, 1)
   let b = coeff_expr(poly, 0)
@@ -127,7 +125,7 @@ pub fn roots_quadratic(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
   if deg != 2 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let a = coeff_expr(poly, 2)
   let b = coeff_expr(poly, 1)
@@ -179,7 +177,7 @@ fn rootof_expr(poly : Poly, index : Int) -> Expr {
 ///|
 fn polyroots_rational_expr(num : Int, den : Int) -> Expr raise PolyError {
   @symcore.rational_from_ints(num, den) catch {
-    _ => raise PolyError::DivisionByZero
+    _ => raise DivisionByZero
   }
 }
 
@@ -237,19 +235,19 @@ fn positive_rational_nth_root_expr(
   let num_root = bigint_nth_root_exact(value.numerator(), n)
   let den_root = bigint_nth_root_exact(value.denominator(), n)
   match (num_root, den_root) {
-    (Some(num), Some(den)) => Expr::Number(poly_rational_from_bigints(num, den))
-    _ => @symcore.pow(Expr::Number(value), polyroots_rational_expr(1, n))
+    (Some(num), Some(den)) => Number(poly_rational_from_bigints(num, den))
+    _ => @symcore.pow(Number(value), polyroots_rational_expr(1, n))
   }
 }
 
 ///|
 fn pi_expr() -> Expr {
-  Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  NumberSymbol(Pi)
 }
 
 ///|
 fn imag_expr() -> Expr {
-  Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  NumberSymbol(ImaginaryUnit)
 }
 
 ///|
@@ -338,7 +336,7 @@ fn polyroots_bigint_abs(value : BigInt) -> BigInt {
 fn integer_coeff_abs(coeff : FieldElem) -> BigInt raise PolyError {
   let value = fe_expect_rational(coeff)
   if !value.is_integral() {
-    raise PolyError::CoefficientNotInteger
+    raise CoefficientNotInteger
   }
   polyroots_bigint_abs(value.numerator())
 }
@@ -435,11 +433,11 @@ fn preprocess_scale_by_basis(poly : Poly, basis : Int) -> Poly raise PolyError {
     let divisor = bigint_pow_int(base, degree - exp)
     let value = fe_expect_rational(coeff)
     let scaled = value.div_r(@symnum.BigRational::from_bigint(divisor)) catch {
-      _ => raise PolyError::DivisionByZero
+      _ => raise DivisionByZero
     }
     add_term(coeffs, monom, fe_from_rational(scaled, poly.domain), poly.domain)
   }
-  Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
+  { coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
 }
 
 ///|
@@ -456,14 +454,13 @@ fn preprocess_scale_by_basis(poly : Poly, basis : Int) -> Poly raise PolyError {
 pub fn preprocess_roots(poly : Poly) -> (Expr, Poly) raise PolyError {
   let mut coeff = int(1)
   let cleared = try clear_denominators(poly) catch {
-    PolyError::DomainMismatch | PolyError::CoefficientNotInteger =>
-      return (coeff, poly)
+    DomainMismatch | CoefficientNotInteger => return (coeff, poly)
     error => raise error
   } noraise {
     value => value
   }
   let primitive_poly = cleared.primitive_part()
-  if primitive_poly.gens.length() == 1 && primitive_poly.domain == Domain::ZZ {
+  if primitive_poly.gens.length() == 1 && primitive_poly.domain == ZZ {
     match integer_basis(primitive_poly) {
       Some(basis) => {
         coeff = @symcore.mul([coeff, int(basis)])
@@ -493,7 +490,7 @@ pub fn roots_binomial(poly : Poly) -> Array[Expr] raise PolyError {
   }
   let a = fe_expect_rational(coeff_fe(poly, n))
   let b = fe_expect_rational(coeff_fe(poly, 0))
-  let base = b.neg_r().div_r(a) catch { _ => raise PolyError::DivisionByZero }
+  let base = b.neg_r().div_r(a) catch { _ => raise DivisionByZero }
   if base.is_zero() {
     return Array::make(n, int(0))
   }
@@ -564,7 +561,7 @@ fn cyclotomic_index(poly : Poly) -> Int raise PolyError {
   ensure_univar(poly)
   let degree = poly.degree(0)
   if degree <= 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let (lower, upper) = inv_totient_estimate(degree)
   for n in lower..<=upper {
@@ -573,7 +570,7 @@ fn cyclotomic_index(poly : Poly) -> Int raise PolyError {
       return n
     }
   }
-  raise PolyError::BadExponent
+  raise BadExponent
 }
 
 ///|
@@ -609,7 +606,7 @@ pub fn roots_cyclotomic(
   factor? : Bool = false,
 ) -> Array[Expr] raise PolyError {
   if factor {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let n = cyclotomic_index(poly)
   let ks : Array[Int] = Array::new()
@@ -647,7 +644,7 @@ pub fn roots_cubic(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
   if deg != 3 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let (_, factors) = poly.factor_list()
   let roots : Array[Expr] = Array::new()
@@ -681,7 +678,7 @@ pub fn roots_quartic(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
   if deg != 4 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let (_, factors) = poly.factor_list()
   let roots : Array[Expr] = Array::new()
@@ -752,7 +749,7 @@ fn roots_quintic_binomial_roots(
   base : @symnum.BigRational,
 ) -> Array[Expr] raise PolyError {
   let fifth = polyroots_rational_expr(1, 5)
-  let root = @symcore.pow(Expr::Number(base), fifth)
+  let root = @symcore.pow(Number(base), fifth)
   let q1 = polyroots_rational_expr(1, 4)
   let qneg1 = polyroots_rational_expr(-1, 4)
   let q5_8 = polyroots_rational_expr(5, 8)
@@ -806,7 +803,7 @@ fn roots_quintic_binomial_roots(
 pub fn roots_quintic(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   if poly.degree(0) != 5 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let (_, factors) = poly.factor_list()
   if factors.length() != 1 || factors[0].0.degree(0) != 5 || factors[0].1 != 1 {
@@ -860,7 +857,7 @@ fn roots_for_factor(
 /// ```mbt check
 /// test "sympolys roots returns the unique linear root" {
 ///   let x = @symcore.Expr::Symbol("x")
-///   let poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(x - @symcore.int(1))
+///   let poly = PolyBuilder::new(["x"], QQ).from_expr(x - @symcore.int(1))
 ///   let rs = roots(poly)
 ///   inspect(rs.length(), content="1")
 ///   inspect(@symprint.pretty_string(rs[0]), content="1")

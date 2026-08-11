@@ -35,35 +35,23 @@ test "symprint latex parity arithmetic core nodes" {
 test "symprint latex parity symbol wrappers and structural forms" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  assert_latex_parity(@symcore.Expr::Symbol("alpha_1"))
-  assert_latex_parity(@symcore.Expr::Symbol("alphahat"))
+  assert_latex_parity(Symbol("alpha_1"))
+  assert_latex_parity(Symbol("alphahat"))
   assert_latex_parity(@symcore.dummy(name="x"))
-  assert_latex_parity(@symcore.Expr::Wild("x", [], []))
-  assert_latex_parity(
-    @symcore.Expr::Relational(@symcore.RelOp::Ne, x, @symcore.int(2)),
-  )
-  assert_latex_parity(@symcore.Expr::Tuple([x, @symcore.int(2)]))
-  assert_latex_parity(@symcore.Expr::Subs(x + y, x, @symcore.int(1)))
-  assert_latex_parity(
-    @symcore.lambda_expr(@symcore.Expr::Tuple([x]), x + @symcore.int(1)),
-  )
+  assert_latex_parity(Wild("x", [], []))
+  assert_latex_parity(Relational(Ne, x, @symcore.int(2)))
+  assert_latex_parity(Tuple([x, @symcore.int(2)]))
+  assert_latex_parity(Subs(x + y, x, @symcore.int(1)))
+  assert_latex_parity(@symcore.lambda_expr(Tuple([x]), x + @symcore.int(1)))
 }
 
 ///|
 test "symprint latex parity constants and generic function names" {
   let x = @symcore.Expr::Symbol("x")
-  assert_latex_parity(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  )
-  assert_latex_parity(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma),
-  )
-  assert_latex_parity(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-  )
-  assert_latex_parity(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity),
-  )
+  assert_latex_parity(NumberSymbol(Pi))
+  assert_latex_parity(NumberSymbol(EulerGamma))
+  assert_latex_parity(NumberSymbol(Infinity))
+  assert_latex_parity(NumberSymbol(ComplexInfinity))
   assert_latex_parity(@symcore.applied_undefined_function("Li", [x]))
 }
 
@@ -82,17 +70,17 @@ test "symprint latex parity printer settings" {
   assert_latex_parity_kwargs(
     @symcore.raw_mul([half, x]),
     @symprint.latex(@symcore.raw_mul([half, x]), fold_short_frac=Some(true)),
-    kwargs={ "fold_short_frac": @sympy.OracleArg::Bool(true) },
+    kwargs={ "fold_short_frac": Bool(true) },
   )
   assert_latex_parity_kwargs(
     @symcore.pow(x + y, three_fourths),
     @symprint.latex(@symcore.pow(x + y, three_fourths), fold_frac_powers=true),
-    kwargs={ "fold_frac_powers": @sympy.OracleArg::Bool(true) },
+    kwargs={ "fold_frac_powers": Bool(true) },
   )
   assert_latex_parity_kwargs(
     @symcore.function("asin", [x]),
     @symprint.latex(@symcore.function("asin", [x]), inv_trig_style="full"),
-    kwargs={ "inv_trig_style": @sympy.OracleArg::Str("full") },
+    kwargs={ "inv_trig_style": Str("full") },
   )
   assert_latex_parity_kwargs(
     @symcore.function("asin", [@symcore.pow(x, @symcore.int(2))]),
@@ -101,15 +89,12 @@ test "symprint latex parity printer settings" {
       inv_trig_style="power",
       fold_func_brackets=true,
     ),
-    kwargs={
-      "inv_trig_style": @sympy.OracleArg::Str("power"),
-      "fold_func_brackets": @sympy.OracleArg::Bool(true),
-    },
+    kwargs={ "inv_trig_style": Str("power"), "fold_func_brackets": Bool(true) },
   )
   assert_latex_parity_kwargs(
     @symcore.function("log", [x]),
     @symprint.latex(@symcore.function("log", [x]), ln_notation=true),
-    kwargs={ "ln_notation": @sympy.OracleArg::Bool(true) },
+    kwargs={ "ln_notation": Bool(true) },
   )
   assert_latex_parity_kwargs(
     @symcore.raw_mul([@symcore.int(2), x, y]),
@@ -117,15 +102,12 @@ test "symprint latex parity printer settings" {
       @symcore.raw_mul([@symcore.int(2), x, y]),
       mul_symbol=Some("times"),
     ),
-    kwargs={ "mul_symbol": @sympy.OracleArg::Str("times") },
+    kwargs={ "mul_symbol": Str("times") },
   )
   assert_latex_parity_kwargs(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-    @symprint.latex(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-      imaginary_unit="j",
-    ),
-    kwargs={ "imaginary_unit": @sympy.OracleArg::Str("j") },
+    NumberSymbol(ImaginaryUnit),
+    @symprint.latex(NumberSymbol(ImaginaryUnit), imaginary_unit="j"),
+    kwargs={ "imaginary_unit": Str("j") },
   )
   assert_latex_parity_kwargs(
     @symcore.derivative_constructor_expr(fx, [x]),
@@ -133,20 +115,20 @@ test "symprint latex parity printer settings" {
       @symcore.derivative_constructor_expr(fx, [x]),
       diff_operator="rd",
     ),
-    kwargs={ "diff_operator": @sympy.OracleArg::Str("rd") },
+    kwargs={ "diff_operator": Str("rd") },
   )
   assert_latex_parity_kwargs(
     @symcore.pow(x, one_third),
     @symprint.latex(@symcore.pow(x, one_third), root_notation=false),
-    kwargs={ "root_notation": @sympy.OracleArg::Bool(false) },
+    kwargs={ "root_notation": Bool(false) },
   )
   assert_latex_parity_kwargs(
-    @symcore.pow(@symcore.Expr::Symbol("x^*"), @symcore.int(2)),
+    @symcore.pow(Symbol("x^*"), @symcore.int(2)),
     @symprint.latex(
-      @symcore.pow(@symcore.Expr::Symbol("x^*"), @symcore.int(2)),
+      @symcore.pow(Symbol("x^*"), @symcore.int(2)),
       parenthesize_super=false,
     ),
-    kwargs={ "parenthesize_super": @sympy.OracleArg::Bool(false) },
+    kwargs={ "parenthesize_super": Bool(false) },
   )
 }
 
@@ -157,33 +139,28 @@ test "symprint latex parity integrals piecewise and transforms" {
   let k = @symcore.Expr::Symbol("k")
   let ft = @symcore.applied_undefined_function("f", [t])
   let fk = @symcore.applied_undefined_function("f", [k])
-  assert_latex_parity(
-    @symcore.function("Integral", [x, @symcore.Expr::Tuple([x])]),
-  )
+  assert_latex_parity(@symcore.function("Integral", [x, Tuple([x])]))
   assert_latex_parity(
     @symcore.function("Integral", [
       x,
-      @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(1)]),
+      Tuple([x, @symcore.int(0), @symcore.int(1)]),
     ]),
   )
   assert_latex_parity(
-    @symcore.function("Sum", [
-      x,
-      @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(3)]),
-    ]),
+    @symcore.function("Sum", [x, Tuple([x, @symcore.int(1), @symcore.int(3)])]),
   )
   assert_latex_parity(
     @symcore.function("Product", [
       x,
-      @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(3)]),
+      Tuple([x, @symcore.int(1), @symcore.int(3)]),
     ]),
   )
   assert_latex_parity(
     @symcore.function("Piecewise", [
       x,
-      @symcore.Expr::Relational(@symcore.RelOp::Lt, x, @symcore.int(1)),
+      Relational(Lt, x, @symcore.int(1)),
       @symcore.int(1),
-      @symcore.Expr::Boolean(true),
+      Boolean(true),
     ]),
   )
   assert_latex_parity(@symcore.function("Min", [@symcore.int(1), x]))
@@ -230,14 +207,14 @@ test "symprint latex parity logic sets and delta-style specials" {
   assert_latex_parity(@symcore.function("KroneckerDelta", [x, y]))
   assert_latex_parity(@symcore.function("LeviCivita", [x, y, @symcore.int(1)]))
   assert_latex_parity(reals)
-  assert_latex_parity(@symcore.Expr::Symbol("UniversalSet"))
+  assert_latex_parity(Symbol("UniversalSet"))
   assert_latex_parity(@symcore.function("FiniteSet", [x, @symcore.int(1), y]))
   assert_latex_parity(
     @symcore.function("Interval", [
       @symcore.int(0),
       @symcore.int(1),
-      @symcore.Expr::Boolean(true),
-      @symcore.Expr::Boolean(true),
+      Boolean(true),
+      Boolean(true),
     ]),
   )
   assert_latex_parity(
@@ -260,7 +237,7 @@ test "symprint latex parity logic sets and delta-style specials" {
   assert_latex_parity(
     @symcore.function("ConditionSet", [
       x,
-      @symcore.Expr::Relational(@symcore.RelOp::Gt, x, @symcore.int(0)),
+      Relational(Gt, x, @symcore.int(0)),
       reals,
     ]),
   )

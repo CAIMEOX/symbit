@@ -1,6 +1,6 @@
 ///|
 fn plot_complex_float(real : Double, imag : Double) -> @symcore.Expr {
-  @symcore.Expr::ComplexFloat(
+  ComplexFloat(
     @symcore.ComplexFloat::from_real(
       @symcore.Float::from_double(real, prec=80),
       imag=@symcore.Float::from_double(imag, prec=80),
@@ -13,7 +13,7 @@ test "symplotting line series samples uniformly on a linear range" {
   let x = @symcore.Expr::Symbol("x")
   let series = line_over_1d_range_series(
     x,
-    @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(4)]),
+    Tuple([x, @symcore.int(0), @symcore.int(4)]),
     n=5,
   )
   let (xs, ys) = series.get_points()
@@ -31,7 +31,7 @@ test "symplotting line series supports integer-only discretization" {
   let x = @symcore.Expr::Symbol("x")
   let series = line_over_1d_range_series(
     x,
-    @symcore.Expr::Tuple([x, @symcore.int(-1), @symcore.int(2)]),
+    Tuple([x, @symcore.int(-1), @symcore.int(2)]),
     only_integers=true,
   )
   let (xs, ys) = series.get_data()
@@ -44,7 +44,7 @@ test "symplotting line series supports logarithmic discretization" {
   let x = @symcore.Expr::Symbol("x")
   let series = line_over_1d_range_series(
     x,
-    @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)]),
+    Tuple([x, @symcore.int(1), @symcore.int(100)]),
     n=3,
     xscale="log",
   )
@@ -57,13 +57,11 @@ test "symplotting line series supports logarithmic discretization" {
 ///|
 test "symplotting line series supports complex return modes on uniform data" {
   let x = @symcore.Expr::Symbol("x")
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let expr = @symcore.mul([imag, x])
   let series = line_over_1d_range_series(
     expr,
-    @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(2)]),
+    Tuple([x, @symcore.int(0), @symcore.int(2)]),
     n=3,
     return_mode=Some("imag"),
   )
@@ -76,11 +74,7 @@ test "symplotting line series supports complex ranges with constant imaginary pa
   let x = @symcore.Expr::Symbol("x")
   let series = line_over_1d_range_series(
     x,
-    @symcore.Expr::Tuple([
-      x,
-      plot_complex_float(-1.0, -2.0),
-      plot_complex_float(1.0, -2.0),
-    ]),
+    Tuple([x, plot_complex_float(-1.0, -2.0), plot_complex_float(1.0, -2.0)]),
     n=3,
     return_mode=Some("imag"),
   )
@@ -97,7 +91,7 @@ test "symplotting line series samples polynomial curves across interior points" 
       @symcore.pow(x, @symcore.int(3)),
       @symcore.mul([@symcore.int(-3), x]),
     ]),
-    @symcore.Expr::Tuple([x, @symcore.int(-4), @symcore.int(4)]),
+    Tuple([x, @symcore.int(-4), @symcore.int(4)]),
     n=5,
   )
   let (xs, ys) = series.get_data()
@@ -119,7 +113,7 @@ test "symplotting line series samples non-integer polynomial points correctly" {
       @symcore.pow(x, @symcore.int(3)),
       @symcore.mul([@symcore.int(-3), x]),
     ]),
-    @symcore.Expr::Tuple([x, @symcore.int(-4), @symcore.int(4)]),
+    Tuple([x, @symcore.int(-4), @symcore.int(4)]),
     n=1000,
   )
   let (xs, ys) = series.get_data()
@@ -141,7 +135,7 @@ test "symplotting line series rejects complex ranges with mismatched imaginary p
       ignore(
         line_over_1d_range_series(
           x,
-          @symcore.Expr::Tuple([
+          Tuple([
             x,
             plot_complex_float(-1.0, -2.0),
             plot_complex_float(1.0, 2.0),
@@ -165,7 +159,7 @@ test "symplotting line series adaptive sampling generates dense public data" {
   let x = @symcore.Expr::Symbol("x")
   let series = line_over_1d_range_series(
     @symcore.function("sin", [x]),
-    @symcore.Expr::Tuple([x, @symcore.int(-10), @symcore.int(10)]),
+    Tuple([x, @symcore.int(-10), @symcore.int(10)]),
     adaptive=true,
     n=30,
   )
@@ -180,7 +174,7 @@ test "symplotting parametric series samples uniformly on a linear range" {
   let series = parametric_2d_line_series(
     x,
     @symcore.pow(x, @symcore.int(2)),
-    @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(4)]),
+    Tuple([x, @symcore.int(0), @symcore.int(4)]),
     adaptive=false,
     n=5,
   )
@@ -199,7 +193,7 @@ test "symplotting parametric series supports logarithmic parameter spacing" {
   let series = parametric_2d_line_series(
     @symcore.function("cos", [x]),
     @symcore.function("sin", [x]),
-    @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)]),
+    Tuple([x, @symcore.int(1), @symcore.int(100)]),
     adaptive=false,
     n=3,
     xscale="log",
@@ -213,15 +207,11 @@ test "symplotting parametric series supports logarithmic parameter spacing" {
 ///|
 test "symplotting parametric series adaptive sampling generates dense public data" {
   let x = @symcore.Expr::Symbol("x")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let series = parametric_2d_line_series(
     @symcore.function("cos", [x]),
     @symcore.function("sin", [x]),
-    @symcore.Expr::Tuple([
-      x,
-      @symcore.int(0),
-      @symcore.mul([@symcore.int(2), pi]),
-    ]),
+    Tuple([x, @symcore.int(0), @symcore.mul([@symcore.int(2), pi])]),
     adaptive=true,
     n=30,
   )
@@ -238,7 +228,7 @@ test "symplotting 3d parametric series samples uniformly on a linear range" {
     x,
     @symcore.pow(x, @symcore.int(2)),
     @symcore.pow(x, @symcore.int(3)),
-    @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(4)]),
+    Tuple([x, @symcore.int(0), @symcore.int(4)]),
     n=5,
   )
   let (xs, ys, zs, params) = series.get_data()
@@ -257,7 +247,7 @@ test "symplotting 3d parametric series supports logarithmic parameter spacing" {
     @symcore.function("cos", [x]),
     @symcore.function("sin", [x]),
     x,
-    @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)]),
+    Tuple([x, @symcore.int(1), @symcore.int(100)]),
     n=3,
     xscale="log",
   )
@@ -273,8 +263,8 @@ test "symplotting surface series samples uniformly on linear ranges" {
   let y = @symcore.Expr::Symbol("y")
   let series = surface_over_2d_range_series(
     @symcore.add([x, y]),
-    @symcore.Expr::Tuple([x, @symcore.int(0), @symcore.int(2)]),
-    @symcore.Expr::Tuple([y, @symcore.int(0), @symcore.int(4)]),
+    Tuple([x, @symcore.int(0), @symcore.int(2)]),
+    Tuple([y, @symcore.int(0), @symcore.int(4)]),
     n1=3,
     n2=5,
   )
@@ -294,8 +284,8 @@ test "symplotting surface series supports logarithmic discretization on both axe
   let y = @symcore.Expr::Symbol("y")
   let series = surface_over_2d_range_series(
     @symcore.mul([x, y]),
-    @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)]),
-    @symcore.Expr::Tuple([y, @symcore.int(1), @symcore.int(100)]),
+    Tuple([x, @symcore.int(1), @symcore.int(100)]),
+    Tuple([y, @symcore.int(1), @symcore.int(100)]),
     n1=3,
     n2=3,
     xscale="log",
@@ -318,8 +308,8 @@ test "symplotting parametric surface series samples uniformly on linear ranges" 
     u,
     v,
     @symcore.add([u, v]),
-    @symcore.Expr::Tuple([u, @symcore.int(0), @symcore.int(2)]),
-    @symcore.Expr::Tuple([v, @symcore.int(0), @symcore.int(4)]),
+    Tuple([u, @symcore.int(0), @symcore.int(2)]),
+    Tuple([v, @symcore.int(0), @symcore.int(4)]),
     n1=3,
     n2=5,
   )
@@ -341,8 +331,8 @@ test "symplotting parametric surface series supports logarithmic parameter spaci
     @symcore.function("cos", [u]),
     @symcore.function("sin", [v]),
     @symcore.add([u, v]),
-    @symcore.Expr::Tuple([u, @symcore.int(1), @symcore.int(100)]),
-    @symcore.Expr::Tuple([v, @symcore.int(1), @symcore.int(100)]),
+    Tuple([u, @symcore.int(1), @symcore.int(100)]),
+    Tuple([v, @symcore.int(1), @symcore.int(100)]),
     n1=3,
     n2=3,
     xscale="log",
@@ -362,18 +352,14 @@ test "symplotting implicit series samples a cartesian mesh for equalities" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let series = implicit_series(
-    @symcore.Relational(
-      @symcore.RelOp::Eq,
-      @symcore.add([x, y]),
-      @symcore.int(0),
-    ),
-    @symcore.Expr::Tuple([x, @symcore.int(-1), @symcore.int(1)]),
-    @symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)]),
+    Relational(Eq, @symcore.add([x, y]), @symcore.int(0)),
+    Tuple([x, @symcore.int(-1), @symcore.int(1)]),
+    Tuple([y, @symcore.int(-2), @symcore.int(2)]),
     adaptive=false,
     n=3,
   )
   match series.get_data() {
-    ImplicitPlotData::Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
+    Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
       assert_true(plot_type == "contour")
       assert_true(mesh_x.length() == 3)
       assert_true(mesh_x[0].length() == 3)
@@ -381,7 +367,7 @@ test "symplotting implicit series samples a cartesian mesh for equalities" {
       assert_true(mesh_y[1][0] == 0.0)
       assert_true(mesh_z[1][1] == Some(0.0))
     }
-    ImplicitPlotData::Fill(_) => fail("expected mesh data")
+    Fill(_) => fail("expected mesh data")
   }
 }
 
@@ -390,18 +376,18 @@ test "symplotting implicit series adaptive path returns fill rectangles" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let series = implicit_series(
-    @symcore.Relational(@symcore.RelOp::Gt, y, x),
-    @symcore.Expr::Tuple([x, @symcore.int(-1), @symcore.int(1)]),
-    @symcore.Expr::Tuple([y, @symcore.int(-1), @symcore.int(1)]),
+    Relational(Gt, y, x),
+    Tuple([x, @symcore.int(-1), @symcore.int(1)]),
+    Tuple([y, @symcore.int(-1), @symcore.int(1)]),
     adaptive=true,
     n=3,
   )
   match series.get_data() {
-    ImplicitPlotData::Fill(rectangles) => {
+    Fill(rectangles) => {
       assert_true(rectangles.length() > 0)
       assert_true(rectangles.any(rect => rect.y_end > rect.x_start))
     }
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
   assert_true(series.depth == 4)
   assert_true(series.line_color == "blue")
@@ -412,16 +398,12 @@ test "symplotting implicit series auto-switches boolean expressions to adaptive"
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let series = implicit_series(
-    @symcore.Expr::Function("And", [
-      @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Gt,
-        y,
-        @symcore.mul([@symcore.int(-1), x]),
-      ),
+    Function("And", [
+      Relational(Gt, y, x),
+      Relational(Gt, y, @symcore.mul([@symcore.int(-1), x])),
     ]),
-    @symcore.Expr::Tuple([x, @symcore.int(-2), @symcore.int(2)]),
-    @symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)]),
+    Tuple([x, @symcore.int(-2), @symcore.int(2)]),
+    Tuple([y, @symcore.int(-2), @symcore.int(2)]),
     adaptive=false,
   )
   assert_true(series.adaptive == true)
@@ -432,8 +414,8 @@ test "symplotting implicit series supports independent discretization and log sc
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let series = implicit_series(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Gt,
+    Relational(
+      Gt,
       @symcore.function("cos", [
         @symcore.add([
           @symcore.pow(x, @symcore.int(2)),
@@ -442,8 +424,8 @@ test "symplotting implicit series supports independent discretization and log sc
       ]),
       @symcore.int(0),
     ),
-    @symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)]),
-    @symcore.Expr::Tuple([y, @symcore.int(1), @symcore.int(100)]),
+    Tuple([x, @symcore.int(1), @symcore.int(100)]),
+    Tuple([y, @symcore.int(1), @symcore.int(100)]),
     adaptive=false,
     n1=Some(3),
     n2=Some(3),
@@ -451,7 +433,7 @@ test "symplotting implicit series supports independent discretization and log sc
     yscale="log",
   )
   match series.get_data() {
-    ImplicitPlotData::Mesh(mesh_x, mesh_y, _, plot_type) => {
+    Mesh(mesh_x, mesh_y, _, plot_type) => {
       assert_true(plot_type == "contourf")
       assert_true((mesh_x[0][0] - 1.0).abs() <= 1.0e-12)
       assert_true((mesh_x[0][1] - 10.0).abs() <= 1.0e-10)
@@ -460,7 +442,7 @@ test "symplotting implicit series supports independent discretization and log sc
       assert_true((mesh_y[1][0] - 10.0).abs() <= 1.0e-10)
       assert_true((mesh_y[2][0] - 100.0).abs() <= 1.0e-8)
     }
-    ImplicitPlotData::Fill(_) => fail("expected mesh data")
+    Fill(_) => fail("expected mesh data")
   }
 }
 
@@ -468,7 +450,7 @@ test "symplotting implicit series supports independent discretization and log sc
 test "symplotting implicit series adaptive path handles SymPy pi over x family and Ne" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let oscillatory = implicit_series(
     @symcore.add([
       y,
@@ -479,25 +461,25 @@ test "symplotting implicit series adaptive path handles SymPy pi over x family a
         ]),
       ]),
     ]),
-    @symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)]),
-    @symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)]),
+    Tuple([x, @symcore.int(-5), @symcore.int(5)]),
+    Tuple([y, @symcore.int(-2), @symcore.int(2)]),
     adaptive=true,
   )
   match oscillatory.get_data() {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let not_equal = implicit_series(
-    @symcore.Expr::Relational(@symcore.RelOp::Ne, y, x),
-    @symcore.Expr::Tuple([x, @symcore.int(-1), @symcore.int(1)]),
-    @symcore.Expr::Tuple([y, @symcore.int(-1), @symcore.int(1)]),
+    Relational(Ne, y, x),
+    Tuple([x, @symcore.int(-1), @symcore.int(1)]),
+    Tuple([y, @symcore.int(-1), @symcore.int(1)]),
     adaptive=false,
   )
   assert_true(not_equal.adaptive == true)
   match not_equal.get_data() {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -506,7 +488,7 @@ test "symplotting implicit series adaptive path handles SymPy Not and Xor region
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let base = @symcore.Expr::Relational(
-    @symcore.RelOp::Lt,
+    Lt,
     @symcore.add([
       @symcore.pow(@symcore.add([x, @symcore.int(-1)]), @symcore.int(2)),
       @symcore.pow(y, @symcore.int(2)),
@@ -514,7 +496,7 @@ test "symplotting implicit series adaptive path handles SymPy Not and Xor region
     @symcore.int(2),
   )
   let other = @symcore.Expr::Relational(
-    @symcore.RelOp::Lt,
+    Lt,
     @symcore.add([
       @symcore.pow(@symcore.add([x, @symcore.int(1)]), @symcore.int(2)),
       @symcore.pow(y, @symcore.int(2)),
@@ -522,24 +504,24 @@ test "symplotting implicit series adaptive path handles SymPy Not and Xor region
     @symcore.int(2),
   )
   let inverted = implicit_series(
-    @symcore.Expr::Function("Not", [base]),
-    @symcore.Expr::Tuple([x, @symcore.int(-3), @symcore.int(3)]),
-    @symcore.Expr::Tuple([y, @symcore.int(-3), @symcore.int(3)]),
+    Function("Not", [base]),
+    Tuple([x, @symcore.int(-3), @symcore.int(3)]),
+    Tuple([y, @symcore.int(-3), @symcore.int(3)]),
     adaptive=true,
   )
   match inverted.get_data() {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let exclusive = implicit_series(
-    @symcore.Expr::Function("Xor", [base, other]),
-    @symcore.Expr::Tuple([x, @symcore.int(-3), @symcore.int(3)]),
-    @symcore.Expr::Tuple([y, @symcore.int(-3), @symcore.int(3)]),
+    Function("Xor", [base, other]),
+    Tuple([x, @symcore.int(-3), @symcore.int(3)]),
+    Tuple([y, @symcore.int(-3), @symcore.int(3)]),
     adaptive=true,
   )
   match exclusive.get_data() {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }

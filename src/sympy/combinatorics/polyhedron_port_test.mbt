@@ -32,7 +32,7 @@ test "polyhedron standard parity" {
 ///|
 test "polyhedron rotation parity" {
   let t = tetrahedron.copy()
-  t.rotate(PolyRotate::Index(0))
+  t.rotate(Index(0))
   assert_true(
     polyhedron_array_form_equiv_index("tetrahedron", 0, t.array_form()),
   )
@@ -41,7 +41,7 @@ test "polyhedron rotation parity" {
   )
   let perm = Permutation::from_array([0, 1, 3, 2])
   let t2 = tetrahedron.copy()
-  t2.rotate(PolyRotate::Perm(perm))
+  t2.rotate(Perm(perm))
   assert_true(
     polyhedron_array_form_equiv_perm(
       "tetrahedron",
@@ -58,7 +58,7 @@ test "polyhedron reset" {
   for v in c.corners() {
     original.push(@symprint.pretty_string(v))
   }
-  c.rotate(PolyRotate::Index(0))
+  c.rotate(Index(0))
   c.reset()
   let after : Array[String] = Array::new()
   for v in c.corners() {

@@ -50,7 +50,7 @@ fn scalar_map_text(
   let keys = mapping.keys().to_array()
   keys.sort()
   keys
-  .map(key => key.to_string() + "=" + @symprint.pretty_string(mapping[key]))
+  .map(key => Show::to_string(key) + "=" + @symprint.pretty_string(mapping[key]))
   .join("|")
 }
 
@@ -70,7 +70,9 @@ fn separate_text(
   let systems = parts.keys().to_array()
   systems.sort()
   systems
-  .map(fn(system) { system.to_string() + ":" + parts[system].to_string() })
+  .map(fn(system) {
+    Show::to_string(system) + ":" + Show::to_string(parts[system])
+  })
   .join("|")
 }
 
@@ -111,19 +113,19 @@ fn matrix_matches_py_expr(
 test "vector root objects parity for names and basis" {
   let c = @symvector.coord_sys3d("C") catch { _ => fail("C") }
   assert_eq(
-    c.x().to_string(),
+    Show::to_string(c.x()),
     vector_eval_str(
       "str(__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C').x)",
     ),
   )
   assert_eq(
-    c.i().to_string(),
+    Show::to_string(c.i()),
     vector_eval_str(
       "str(__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C').i)",
     ),
   )
   assert_eq(
-    c.k().kind().to_string(),
+    Show::to_string(c.k().kind()),
     vector_eval_str(
       "repr(__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C').i.kind)",
     ),
@@ -156,7 +158,11 @@ test "axis orientation parity for rotation matrix scalar map and express" {
 
   assert_eq(
     strip_parens(
-      (@symvector.express(b.i().to_vector(), c) catch { _ => fail("express") }).to_string(),
+      Show::to_string(
+        @symvector.express(b.i().to_vector(), c) catch {
+          _ => fail("express")
+        },
+      ),
     ),
     strip_parens(
       vector_eval_str(
@@ -194,9 +200,11 @@ test "point and field-function parity against repo sympy" {
   ])
 
   assert_eq(
-    (p2.position_wrt(@symvector.point_reference_coord_system(c)) catch {
-      _ => fail("pos")
-    }).to_string(),
+    Show::to_string(
+      p2.position_wrt(@symvector.point_reference_coord_system(c)) catch {
+        _ => fail("pos")
+      },
+    ),
     vector_eval_str(
       "(lambda C: str(C.origin.locate_new('p1', 2*C.i + 3*C.j).locate_new('p2', C.k).position_wrt(C)))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
@@ -212,7 +220,9 @@ test "point and field-function parity against repo sympy" {
     ),
   )
   assert_eq(
-    @symvector.gradient(c.x().expr() * c.y().expr() * c.z().expr()).to_string(),
+    Show::to_string(
+      @symvector.gradient(c.x().expr() * c.y().expr() * c.z().expr()),
+    ),
     vector_eval_str(
       "(lambda C: str(__import__('sympy.vector', fromlist=['gradient']).gradient(C.x*C.y*C.z)))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
@@ -238,7 +248,7 @@ test "point and field-function parity against repo sympy" {
     _ => fail("dd")
   }
   match dd {
-    @symvector.ScalarOrVector::ScalarExpr(value) =>
+    ScalarExpr(value) =>
       assert_eq(
         vector_eval_str(
           "(lambda C: str(sympy.simplify((" +
@@ -248,7 +258,7 @@ test "point and field-function parity against repo sympy" {
         ),
         "0",
       )
-    @symvector.ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
+    VectorExpr(_) => fail("expected scalar result")
   }
   assert_eq(
     @symprint.pretty_string(
@@ -273,7 +283,7 @@ test "point and field-function parity against repo sympy" {
 test "vector surface parity for equals projection separate orthogonalize and laplacian" {
   let c = @symvector.coord_sys3d("C") catch { _ => fail("C") }
   let c_py = "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')"
-  let half_pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+  let half_pi = @symcore.Expr::NumberSymbol(Pi) *
     (@symcore.int(2) ^ @symcore.int(-1))
   let d = c.orient_new_axis("D", half_pi, c.k().to_vector()) catch {
     _ => fail("D")
@@ -315,7 +325,7 @@ test "vector surface parity for equals projection separate orthogonalize and lap
 
   let proj_vector = v1.projection(v2) catch { _ => fail("proj-vector") }
   match proj_vector {
-    @symvector.ScalarOrVector::VectorExpr(value) =>
+    VectorExpr(value) =>
       assert_true(
         vector_matches_sympy(
           value, c, "C", c_py, "(C.i + C.j + C.k).projection(3*C.i + 4*C.j)",
@@ -323,14 +333,13 @@ test "vector surface parity for equals projection separate orthogonalize and lap
           _ => fail("proj-vector-parity")
         },
       )
-    @symvector.ScalarOrVector::ScalarExpr(_) =>
-      fail("expected vector projection")
+    ScalarExpr(_) => fail("expected vector projection")
   }
   let proj_scalar = v1.projection(v2, scalar=true) catch {
     _ => fail("proj-scalar")
   }
   match proj_scalar {
-    @symvector.ScalarOrVector::ScalarExpr(value) =>
+    ScalarExpr(value) =>
       assert_eq(
         @symprint.pretty_string(value),
         vector_eval_str(
@@ -339,8 +348,7 @@ test "vector surface parity for equals projection separate orthogonalize and lap
           ")",
         ),
       )
-    @symvector.ScalarOrVector::VectorExpr(_) =>
-      fail("expected scalar projection")
+    VectorExpr(_) => fail("expected scalar projection")
   }
 
   assert_eq(
@@ -395,7 +403,7 @@ test "vector surface parity for equals projection separate orthogonalize and lap
     ),
   )
   assert_eq(
-    lap_scalar.to_string(),
+    Show::to_string(lap_scalar),
     vector_eval_str(
       "(lambda C: str(__import__('sympy.vector.operators', fromlist=['Laplacian']).Laplacian(C.x**2 + C.y**2 + C.z**2)))(" +
       c_py +
@@ -404,7 +412,7 @@ test "vector surface parity for equals projection separate orthogonalize and lap
   )
   let lap_scalar_value = lap_scalar.doit() catch { _ => fail("lap-scalar") }
   match lap_scalar_value {
-    @symvector.ScalarOrVector::ScalarExpr(value) =>
+    ScalarExpr(value) =>
       assert_eq(
         @symprint.pretty_string(value),
         vector_eval_str(
@@ -413,8 +421,7 @@ test "vector surface parity for equals projection separate orthogonalize and lap
           ")",
         ),
       )
-    @symvector.ScalarOrVector::VectorExpr(_) =>
-      fail("expected scalar laplacian result")
+    VectorExpr(_) => fail("expected scalar laplacian result")
   }
 
   let lap_vector = @symvector.laplacian_unevaluated(
@@ -427,7 +434,7 @@ test "vector surface parity for equals projection separate orthogonalize and lap
     ),
   )
   assert_eq(
-    lap_vector.to_string(),
+    Show::to_string(lap_vector),
     vector_eval_str(
       "(lambda C: str(__import__('sympy.vector.operators', fromlist=['Laplacian']).Laplacian(C.x**2*C.i + C.y**2*C.j + C.z**2*C.k)))(" +
       c_py +
@@ -436,7 +443,7 @@ test "vector surface parity for equals projection separate orthogonalize and lap
   )
   let lap_vector_value = lap_vector.doit() catch { _ => fail("lap-vector") }
   match lap_vector_value {
-    @symvector.ScalarOrVector::VectorExpr(value) =>
+    VectorExpr(value) =>
       assert_true(
         vector_matches_sympy(
           value, c, "C", c_py, "__import__('sympy.vector.operators', fromlist=['Laplacian']).Laplacian(C.x**2*C.i + C.y**2*C.j + C.z**2*C.k).doit()",
@@ -444,8 +451,7 @@ test "vector surface parity for equals projection separate orthogonalize and lap
           _ => fail("lap-vector-parity")
         },
       )
-    @symvector.ScalarOrVector::ScalarExpr(_) =>
-      fail("expected vector laplacian result")
+    ScalarExpr(_) => fail("expected vector laplacian result")
   }
 }
 
@@ -461,7 +467,7 @@ test "del operator parity against repo sympy" {
     (x * y * z, c.k()),
   ])
 
-  assert_eq(@symvector.delop.to_string(), "delop")
+  assert_eq(Show::to_string(@symvector.delop), "delop")
   assert_eq(
     matrix_text(
       @symvector.delop.gradient(x).to_matrix(c) catch {
@@ -487,12 +493,14 @@ test "del operator parity against repo sympy" {
     ),
   )
   assert_eq(
-    (@symvector.delop.cross(
-      @symvector.vector_term(@symcore.int(2) * (x ^ @symcore.int(2)), c.j()),
-      doit=true,
-    ) catch {
-      _ => fail("del-cross")
-    }).to_string(),
+    Show::to_string(
+      @symvector.delop.cross(
+        @symvector.vector_term(@symcore.int(2) * (x ^ @symcore.int(2)), c.j()),
+        doit=true,
+      ) catch {
+        _ => fail("del-cross")
+      },
+    ),
     vector_eval_str(
       "(lambda C, D: str(D().cross(2*C.x**2*C.j, doit=True)))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')," +
@@ -565,14 +573,16 @@ test "curvilinear field-function parity against repo sympy" {
     "0",
   )
   assert_eq(
-    (@symvector.curl(
-      @symvector.vector_from_terms([
-        (b.x().expr(), b.j()),
-        (b.z().expr(), b.k()),
-      ]),
-    ) catch {
-      _ => fail("curl-cyl")
-    }).to_string(),
+    Show::to_string(
+      @symvector.curl(
+        @symvector.vector_from_terms([
+          (b.x().expr(), b.j()),
+          (b.z().expr(), b.k()),
+        ]),
+      ) catch {
+        _ => fail("curl-cyl")
+      },
+    ),
     vector_eval_str(
       "(lambda B: str(__import__('sympy.vector', fromlist=['curl']).curl(B.r*B.j + B.z*B.k)))(" +
       b_py +
@@ -592,7 +602,7 @@ test "curvilinear field-function parity against repo sympy" {
     _ => fail("dd-sph")
   }
   match scalar_dd {
-    @symvector.ScalarOrVector::ScalarExpr(value) =>
+    ScalarExpr(value) =>
       assert_eq(
         vector_eval_str(
           "(lambda A: str(sympy.simplify((" +
@@ -603,7 +613,7 @@ test "curvilinear field-function parity against repo sympy" {
         ),
         "0",
       )
-    @symvector.ScalarOrVector::VectorExpr(_) => fail("expected scalar result")
+    VectorExpr(_) => fail("expected scalar result")
   }
   assert_eq(
     matrix_matches_sympy(
@@ -651,21 +661,21 @@ test "operator wrappers and vector gradient parity against repo sympy" {
   )
 
   assert_eq(
-    scalar_grad.to_string(),
+    Show::to_string(scalar_grad),
     vector_eval_str(
       "(lambda C: str(__import__('sympy.vector.operators', fromlist=['Gradient']).Gradient(C.x*C.y*C.z)))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
     ),
   )
   assert_eq(
-    div.to_string(),
+    Show::to_string(div),
     vector_eval_str(
       "(lambda C: str(__import__('sympy.vector.operators', fromlist=['Divergence']).Divergence(C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k)))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
     ),
   )
   assert_eq(
-    curl_op.to_string(),
+    Show::to_string(curl_op),
     vector_eval_str(
       "(lambda C: str(__import__('sympy.vector.operators', fromlist=['Curl']).Curl(C.y*C.z*C.i + C.x*C.z*C.j + C.x*C.y*C.k)))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
@@ -675,21 +685,21 @@ test "operator wrappers and vector gradient parity against repo sympy" {
     _ => fail("scalar-grad-doit")
   }
   match scalar_grad_value {
-    @symvector.GradientValue::VectorValue(value) =>
+    VectorValue(value) =>
       assert_eq(
-        value.to_string(),
+        Show::to_string(value),
         vector_eval_str(
           "(lambda C: str(__import__('sympy.vector.operators', fromlist=['Gradient']).Gradient(C.x*C.y*C.z).doit()))(" +
           "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
         ),
       )
-    @symvector.GradientValue::DyadicValue(_) => fail("expected vector result")
+    DyadicValue(_) => fail("expected vector result")
   }
   let vector_grad_value = vector_grad.doit() catch {
     _ => fail("vector-grad-doit")
   }
   match vector_grad_value {
-    @symvector.GradientValue::DyadicValue(value) =>
+    DyadicValue(value) =>
       assert_eq(
         matrix_text(value.to_matrix(c) catch { _ => fail("vector-grad-mat") }),
         vector_eval_str(
@@ -698,7 +708,7 @@ test "operator wrappers and vector gradient parity against repo sympy" {
           "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
         ),
       )
-    @symvector.GradientValue::VectorValue(_) => fail("expected dyadic result")
+    VectorValue(_) => fail("expected dyadic result")
   }
 }
 
@@ -711,7 +721,7 @@ test "dyadic parity against repo sympy" {
   let d2 = c.i().outer(c.j()) catch { _ => fail("d2") }
 
   assert_eq(
-    d1.to_string(),
+    Show::to_string(d1),
     vector_eval_str(
       "(lambda C: str(C.i.outer(C.i)))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
@@ -726,16 +736,18 @@ test "dyadic parity against repo sympy" {
     ),
   )
   assert_eq(
-    @symvector.matrix_to_dyadic(
-      @symphysics.explicit_matrix_from_rows([
-        [@symcore.int(1), @symcore.int(2), @symcore.int(3)],
-        [@symcore.int(4), @symcore.int(5), @symcore.int(6)],
-        [@symcore.int(7), @symcore.int(8), @symcore.int(9)],
-      ]) catch {
-        _ => fail("srcmat")
-      },
-      c,
-    ).to_string(),
+    Show::to_string(
+      @symvector.matrix_to_dyadic(
+        @symphysics.explicit_matrix_from_rows([
+          [@symcore.int(1), @symcore.int(2), @symcore.int(3)],
+          [@symcore.int(4), @symcore.int(5), @symcore.int(6)],
+          [@symcore.int(7), @symcore.int(8), @symcore.int(9)],
+        ]) catch {
+          _ => fail("srcmat")
+        },
+        c,
+      ),
+    ),
     vector_eval_str(
       "(lambda C: str(__import__('sympy.vector', fromlist=['matrix_to_dyadic']).matrix_to_dyadic(sympy.Matrix([[1,2,3],[4,5,6],[7,8,9]]), C)))(" +
       "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C'))",
@@ -766,7 +778,7 @@ test "basisdependent wrapper parity against repo sympy" {
   let c_py = "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('C')"
 
   assert_eq(
-    @symvector.vector_zero_expr().to_string(),
+    Show::to_string(@symvector.vector_zero_expr()),
     vector_eval_str(
       "(lambda C, VectorZero: str(VectorZero()))(" +
       c_py +
@@ -774,7 +786,7 @@ test "basisdependent wrapper parity against repo sympy" {
     ),
   )
   assert_eq(
-    @symvector.vector_mul_expr(c.x().expr(), c.i()).to_string(),
+    Show::to_string(@symvector.vector_mul_expr(c.x().expr(), c.i())),
     vector_eval_str(
       "(lambda C, VectorMul: str(VectorMul(C.x, C.i)))(" +
       c_py +
@@ -782,7 +794,9 @@ test "basisdependent wrapper parity against repo sympy" {
     ),
   )
   assert_eq(
-    @symvector.vector_add_expr([c.i().to_vector(), c.j().to_vector()]).to_string(),
+    Show::to_string(
+      @symvector.vector_add_expr([c.i().to_vector(), c.j().to_vector()]),
+    ),
     vector_eval_str(
       "(lambda C, VectorAdd: str(VectorAdd(C.i, C.j)))(" +
       c_py +
@@ -790,7 +804,9 @@ test "basisdependent wrapper parity against repo sympy" {
     ),
   )
   assert_eq(
-    @symvector.cross_unevaluated(c.j().to_vector(), c.i().to_vector()).to_string(),
+    Show::to_string(
+      @symvector.cross_unevaluated(c.j().to_vector(), c.i().to_vector()),
+    ),
     vector_eval_str(
       "(lambda C, Cross: str(Cross(C.j, C.i)))(" +
       c_py +
@@ -798,7 +814,9 @@ test "basisdependent wrapper parity against repo sympy" {
     ),
   )
   assert_eq(
-    @symvector.dot_unevaluated(c.j().to_vector(), c.i().to_vector()).to_string(),
+    Show::to_string(
+      @symvector.dot_unevaluated(c.j().to_vector(), c.i().to_vector()),
+    ),
     vector_eval_str(
       "(lambda C, Dot: str(Dot(C.j, C.i)))(" +
       c_py +
@@ -967,9 +985,9 @@ test "generic transformation and basisdependent propagation parity against repo 
   let a = @symvector.coord_sys3d("A") catch { _ => fail("A") }
   let a_py = "__import__('sympy.vector', fromlist=['CoordSys3D']).CoordSys3D('A')"
   let lambda_transform = @symvector.coord_transform_lambda([
-    @symcore.int(2) * @symcore.Expr::Symbol("x"),
-    @symcore.Expr::Symbol("z"),
-    @symcore.Expr::Symbol("y"),
+    @symcore.int(2) * Symbol("x"),
+    Symbol("z"),
+    Symbol("y"),
   ]) catch {
     _ => fail("lambda-transform")
   }

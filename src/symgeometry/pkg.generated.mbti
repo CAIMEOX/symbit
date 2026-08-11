@@ -97,6 +97,12 @@ pub suberror GeometryError {
   TypeError(String)
   Undecidable(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn GeometryError::equal(Self, Self) -> Bool
+#deprecated
+pub fn GeometryError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn GeometryError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub struct Circle {
@@ -114,11 +120,15 @@ pub fn Circle::contains_point(Self, Point) -> Bool raise GeometryError
 pub fn Circle::director_circle(Self) -> Self raise GeometryError
 pub fn Circle::encloses(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Circle::encloses_point(Self, Point) -> Bool raise GeometryError
+#deprecated
+pub fn Circle::equal(Self, Self) -> Bool
 pub fn Circle::equation(Self, x? : @symcore.Expr, y? : @symcore.Expr) -> @symcore.Expr
 pub fn Circle::evolute(Self, x? : @symcore.Expr, y? : @symcore.Expr) -> @symcore.Expr raise
 pub fn Circle::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
 pub fn Circle::is_tangent(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Circle::normal_lines(Self, Point, prec? : Int?) -> Array[Line] raise GeometryError
+#deprecated
+pub fn Circle::not_equal(Self, Self) -> Bool
 pub fn Circle::parameter_value(Self, Point, @symcore.Expr) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError
 pub fn Circle::plot_interval(Self, parameter? : @symcore.Expr) -> Array[@symcore.Expr]
 pub fn Circle::polar_second_moment_of_area(Self) -> @symcore.Expr raise GeometryError
@@ -142,10 +152,14 @@ pub struct Curve {
 } derive(Eq)
 pub fn Curve::ambient_dimension(Self) -> Int
 pub fn Curve::arbitrary_point(Self, parameter? : @symcore.Expr) -> Point raise GeometryError
+#deprecated
+pub fn Curve::equal(Self, Self) -> Bool
 pub fn Curve::free_symbols(Self) -> Array[@symcore.Expr]
 pub fn Curve::functions(Self) -> Array[@symcore.Expr]
 pub fn Curve::length(Self) -> @symcore.Expr
 pub fn Curve::limits(Self) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr)
+#deprecated
+pub fn Curve::not_equal(Self, Self) -> Bool
 pub fn Curve::parameter(Self) -> @symcore.Expr
 pub fn Curve::parameter_value(Self, Point, @symcore.Expr) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError
 pub fn Curve::plot_interval(Self, parameter? : @symcore.Expr) -> Array[@symcore.Expr]
@@ -172,6 +186,8 @@ pub fn Ellipse::director_circle(Self) -> Circle raise GeometryError
 pub fn Ellipse::eccentricity(Self) -> @symcore.Expr
 pub fn Ellipse::encloses(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Ellipse::encloses_point(Self, Point) -> Bool raise GeometryError
+#deprecated
+pub fn Ellipse::equal(Self, Self) -> Bool
 pub fn Ellipse::equation(Self, x? : @symcore.Expr, y? : @symcore.Expr, _slope? : @symcore.Expr?) -> @symcore.Expr
 pub fn Ellipse::evolute(Self, x? : @symcore.Expr, y? : @symcore.Expr) -> @symcore.Expr raise
 pub fn Ellipse::foci(Self) -> Array[Point] raise GeometryError
@@ -182,6 +198,8 @@ pub fn Ellipse::is_tangent(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Ellipse::major(Self) -> @symcore.Expr
 pub fn Ellipse::minor(Self) -> @symcore.Expr
 pub fn Ellipse::normal_lines(Self, Point, prec? : Int?) -> Array[Line] raise GeometryError
+#deprecated
+pub fn Ellipse::not_equal(Self, Self) -> Bool
 pub fn Ellipse::parameter_value(Self, Point, @symcore.Expr) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError
 pub fn Ellipse::periapsis(Self) -> @symcore.Expr
 pub fn Ellipse::plot_interval(Self, parameter? : @symcore.Expr) -> Array[@symcore.Expr]
@@ -214,7 +232,11 @@ pub enum GeometryEntity {
 } derive(Eq)
 pub fn GeometryEntity::ambient_dimension(Self) -> Int
 pub fn GeometryEntity::encloses(Self, Self) -> Bool raise GeometryError
+#deprecated
+pub fn GeometryEntity::equal(Self, Self) -> Bool
 pub fn GeometryEntity::is_similar(Self, Self) -> Bool raise GeometryError
+#deprecated
+pub fn GeometryEntity::not_equal(Self, Self) -> Bool
 pub fn GeometryEntity::parameter_value(Self, Point, @symcore.Expr) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError
 pub fn GeometryEntity::repr(Self) -> String raise GeometryError
 pub fn GeometryEntity::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise GeometryError
@@ -231,11 +253,19 @@ pub fn Line::arbitrary_point(Self, parameter? : @symcore.Expr) -> Point raise Ge
 pub fn Line::contains(Self, Point) -> Bool raise GeometryError
 pub fn Line::direction(Self) -> Point
 pub fn Line::distance(Self, Point) -> @symcore.Expr raise GeometryError
+#deprecated
+pub fn Line::equal(Self, Self) -> Bool
 pub fn Line::equals(Self, GeometryEntity) -> Bool raise GeometryError
+#deprecated
+pub fn Line::hash(Self) -> Int
+#deprecated
+pub fn Line::hash_combine(Self, Hasher) -> Unit
 pub fn Line::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
 pub fn Line::is_parallel(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Line::is_perpendicular(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Line::is_similar(Self, GeometryEntity) -> Bool raise GeometryError
+#deprecated
+pub fn Line::not_equal(Self, Self) -> Bool
 pub fn Line::p1(Self) -> Point
 pub fn Line::p2(Self) -> Point
 pub fn Line::plot_interval(Self, parameter? : @symcore.Expr) -> Array[@symcore.Expr]
@@ -254,10 +284,14 @@ pub fn Parabola::ambient_dimension(Self) -> Int
 pub fn Parabola::axis_of_symmetry(Self) -> Line raise GeometryError
 pub fn Parabola::directrix(Self) -> Line
 pub fn Parabola::eccentricity(Self) -> @symcore.Expr
+#deprecated
+pub fn Parabola::equal(Self, Self) -> Bool
 pub fn Parabola::equation(Self, x? : @symcore.Expr, y? : @symcore.Expr) -> @symcore.Expr
 pub fn Parabola::focal_length(Self) -> @symcore.Expr raise GeometryError
 pub fn Parabola::focus(Self) -> Point
 pub fn Parabola::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
+#deprecated
+pub fn Parabola::not_equal(Self, Self) -> Bool
 pub fn Parabola::p_parameter(Self) -> @symcore.Expr raise GeometryError
 pub fn Parabola::repr(Self) -> String raise GeometryError
 pub fn Parabola::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise GeometryError
@@ -275,6 +309,8 @@ pub fn Plane::arbitrary_point(Self, u? : @symcore.Expr?, v? : @symcore.Expr?) ->
 pub fn Plane::contains(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Plane::contains_point(Self, Point) -> Bool raise GeometryError
 pub fn Plane::distance(Self, Point) -> @symcore.Expr raise GeometryError
+#deprecated
+pub fn Plane::equal(Self, Self) -> Bool
 pub fn Plane::equals(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Plane::equation(Self, x? : @symcore.Expr, y? : @symcore.Expr, z? : @symcore.Expr) -> @symcore.Expr
 pub fn Plane::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
@@ -282,6 +318,8 @@ pub fn Plane::is_coplanar(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Plane::is_parallel(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Plane::is_perpendicular(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Plane::normal_vector(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn Plane::not_equal(Self, Self) -> Bool
 pub fn Plane::p1(Self) -> Point
 pub fn Plane::parallel_plane(Self, Point) -> Self raise GeometryError
 pub fn Plane::parameter_value(Self, Point, @symcore.Expr, v? : @symcore.Expr?) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError
@@ -299,13 +337,21 @@ pub struct Point {
   coords_ : Array[@symcore.Expr]
 } derive(Eq, Hash)
 pub fn Point::abs(Self) -> @symcore.Expr raise GeometryError
+#deprecated
+pub fn Point::add(Self, Self) -> Self
 pub fn Point::ambient_dimension(Self) -> Int
 pub fn Point::canberra_distance(Self, Self) -> @symcore.Expr raise GeometryError
 pub fn Point::coords(Self) -> Array[@symcore.Expr]
 pub fn Point::distance(Self, Self) -> @symcore.Expr raise GeometryError
 pub fn Point::dot(Self, Self) -> @symcore.Expr raise GeometryError
+#deprecated
+pub fn Point::equal(Self, Self) -> Bool
 pub fn Point::equals(Self, Self) -> Bool
 pub fn Point::get(Self, Int) -> @symcore.Expr raise GeometryError
+#deprecated
+pub fn Point::hash(Self) -> Int
+#deprecated
+pub fn Point::hash_combine(Self, Hasher) -> Unit
 pub fn Point::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
 pub fn Point::is_collinear(Self, Array[Self]) -> Bool raise GeometryError
 pub fn Point::is_concyclic(Self, Array[Self]) -> Bool raise GeometryError
@@ -316,12 +362,16 @@ pub fn Point::len(Self) -> Int
 pub fn Point::length(Self) -> Int
 pub fn Point::midpoint(Self, Self) -> Self raise GeometryError
 pub fn Point::mul(Self, @symcore.Expr) -> Self
+#deprecated
+pub fn Point::not_equal(Self, Self) -> Bool
 pub fn Point::origin(Self) -> Self raise GeometryError
 pub fn Point::orthogonal_direction(Self) -> Self raise GeometryError
 pub fn Point::project(Self, Self) -> Self raise GeometryError
 pub fn Point::repr(Self) -> String
 pub fn Point::rotate(Self, @symcore.Expr, pt? : Self?) -> Self raise GeometryError
 pub fn Point::scale(Self, Array[@symcore.Expr], pt? : Self?) -> Self raise GeometryError
+#deprecated
+pub fn Point::sub(Self, Self) -> Self
 pub fn Point::subs(Self, Map[String, @symcore.Expr]) -> Self
 pub fn Point::taxicab_distance(Self, Self) -> @symcore.Expr raise GeometryError
 pub fn Point::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
@@ -348,8 +398,12 @@ pub fn Polygon::contains_point(Self, Point) -> Bool raise GeometryError
 pub fn Polygon::distance(Self, GeometryEntity) -> @symcore.Expr raise GeometryError
 pub fn Polygon::encloses(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Polygon::encloses_point(Self, Point) -> Bool raise GeometryError
+#deprecated
+pub fn Polygon::equal(Self, Self) -> Bool
 pub fn Polygon::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
 pub fn Polygon::is_convex(Self) -> Bool raise GeometryError
+#deprecated
+pub fn Polygon::not_equal(Self, Self) -> Bool
 pub fn Polygon::parameter_value(Self, Point, @symcore.Expr) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError
 pub fn Polygon::perimeter(Self) -> @symcore.Expr raise GeometryError
 pub fn Polygon::plot_interval(Self, parameter? : @symcore.Expr) -> Array[@symcore.Expr]
@@ -368,9 +422,17 @@ pub fn Ray::ambient_dimension(Self) -> Int
 pub fn Ray::contains(Self, Point) -> Bool raise GeometryError
 pub fn Ray::direction(Self) -> Point
 pub fn Ray::distance(Self, Point) -> @symcore.Expr raise GeometryError
+#deprecated
+pub fn Ray::equal(Self, Self) -> Bool
 pub fn Ray::equals(Self, GeometryEntity) -> Bool raise GeometryError
+#deprecated
+pub fn Ray::hash(Self) -> Int
+#deprecated
+pub fn Ray::hash_combine(Self, Hasher) -> Unit
 pub fn Ray::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
 pub fn Ray::is_similar(Self, GeometryEntity) -> Bool raise GeometryError
+#deprecated
+pub fn Ray::not_equal(Self, Self) -> Bool
 pub fn Ray::p1(Self) -> Point
 pub fn Ray::p2(Self) -> Point
 pub fn Ray::plot_interval(Self, parameter? : @symcore.Expr) -> Array[@symcore.Expr]
@@ -397,12 +459,16 @@ pub fn RegularPolygon::circumcircle(Self) -> Circle
 pub fn RegularPolygon::circumradius(Self) -> @symcore.Expr
 pub fn RegularPolygon::encloses(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn RegularPolygon::encloses_point(Self, Point) -> Bool raise GeometryError
+#deprecated
+pub fn RegularPolygon::equal(Self, Self) -> Bool
 pub fn RegularPolygon::exterior_angle(Self) -> @symcore.Expr
 pub fn RegularPolygon::incircle(Self) -> Circle
 pub fn RegularPolygon::inradius(Self) -> @symcore.Expr
 pub fn RegularPolygon::interior_angle(Self) -> @symcore.Expr
 pub fn RegularPolygon::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
 pub fn RegularPolygon::length(Self) -> @symcore.Expr
+#deprecated
+pub fn RegularPolygon::not_equal(Self, Self) -> Bool
 pub fn RegularPolygon::parameter_value(Self, Point, @symcore.Expr) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError
 pub fn RegularPolygon::perimeter(Self) -> @symcore.Expr
 pub fn RegularPolygon::radius(Self) -> @symcore.Expr
@@ -422,11 +488,19 @@ pub fn Segment::ambient_dimension(Self) -> Int
 pub fn Segment::contains(Self, Point) -> Bool raise GeometryError
 pub fn Segment::direction(Self) -> Point
 pub fn Segment::distance(Self, Point) -> @symcore.Expr raise GeometryError
+#deprecated
+pub fn Segment::equal(Self, Self) -> Bool
 pub fn Segment::equals(Self, GeometryEntity) -> Bool
+#deprecated
+pub fn Segment::hash(Self) -> Int
+#deprecated
+pub fn Segment::hash_combine(Self, Hasher) -> Unit
 pub fn Segment::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
 pub fn Segment::is_similar(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Segment::length(Self) -> @symcore.Expr raise GeometryError
 pub fn Segment::midpoint(Self) -> Point raise GeometryError
+#deprecated
+pub fn Segment::not_equal(Self, Self) -> Bool
 pub fn Segment::p1(Self) -> Point
 pub fn Segment::p2(Self) -> Point
 pub fn Segment::perpendicular_bisector(Self, p? : Point?) -> GeometryEntity raise GeometryError
@@ -450,6 +524,8 @@ pub fn Triangle::circumcircle(Self) -> Circle raise GeometryError
 pub fn Triangle::circumradius(Self) -> @symcore.Expr raise GeometryError
 pub fn Triangle::contains_point(Self, Point) -> Bool raise GeometryError
 pub fn Triangle::encloses(Self, GeometryEntity) -> Bool raise GeometryError
+#deprecated
+pub fn Triangle::equal(Self, Self) -> Bool
 pub fn Triangle::eulerline(Self) -> GeometryEntity raise GeometryError
 pub fn Triangle::excenters(Self) -> Map[Segment, Point] raise GeometryError
 pub fn Triangle::exradii(Self) -> Map[Segment, @symcore.Expr] raise GeometryError
@@ -465,6 +541,8 @@ pub fn Triangle::is_similar(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Triangle::medial(Self) -> Self raise GeometryError
 pub fn Triangle::medians(Self) -> Map[Point, Segment] raise GeometryError
 pub fn Triangle::nine_point_circle(Self) -> Circle raise GeometryError
+#deprecated
+pub fn Triangle::not_equal(Self, Self) -> Bool
 pub fn Triangle::orthocenter(Self) -> Point raise GeometryError
 pub fn Triangle::perimeter(Self) -> @symcore.Expr raise GeometryError
 pub fn Triangle::repr(Self) -> String

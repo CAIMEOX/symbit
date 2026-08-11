@@ -35,7 +35,7 @@ test "symsimplify function identities" {
 test "symsimplify dispatcher handles composite heuristics" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
 
   let numerator = @symcore.add([x, @symcore.pow(x, @symcore.int(2))])
   let denominator = @symcore.add([
@@ -128,18 +128,9 @@ test "symsimplify advanced rewrites basics" {
   inspect(Repr(pd), content="(^ sym:x 6)")
   let ee = exptrigsimp(
     @symcore.add([
+      @symcore.function("exp", [@symcore.mul([NumberSymbol(ImaginaryUnit), x])]),
       @symcore.function("exp", [
-        @symcore.mul([
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-          x,
-        ]),
-      ]),
-      @symcore.function("exp", [
-        @symcore.mul([
-          @symcore.int(-1),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-          x,
-        ]),
+        @symcore.mul([@symcore.int(-1), NumberSymbol(ImaginaryUnit), x]),
       ]),
     ]),
   )
@@ -225,7 +216,7 @@ test "symsimplify compat api advanced cases" {
   let z = @symcore.Expr::Symbol("z")
   let half = @symcore.rational_from_ints(1, 2)
   let minus_half = @symcore.rational_from_ints(-1, 2)
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
 
   let kd_cancel = kroneckersimp(
     @symcore.add([
@@ -314,9 +305,7 @@ test "symsimplify compat api advanced cases" {
   )
   assert_true(trig_ns == @symcore.int(3))
 
-  let golden = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::GoldenRatio,
-  )
+  let golden = @symcore.Expr::NumberSymbol(GoldenRatio)
   let golden_ns = nsimplify(
     @symcore.add([
       @symcore.function("sqrt", [@symcore.int(5)]),
@@ -346,7 +335,7 @@ test "symsimplify traversal/cse_opts basics" {
 test "symsimplify fu rules smoke" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
 
   inspect(
     Repr(tr1(@symcore.function("sec", [x]))),

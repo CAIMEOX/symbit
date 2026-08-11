@@ -8,11 +8,7 @@
 
 ///|
 fn ast_parser_transformations() -> Array[Transformation] {
-  [
-    Transformation::LambdaNotation,
-    Transformation::AutoSymbol,
-    Transformation::AutoNumber,
-  ]
+  [LambdaNotation, AutoSymbol, AutoNumber]
 }
 
 ///|

@@ -38,86 +38,87 @@ pub(all) enum Expr {
 ///|
 impl Show for Expr with fn to_string(self) {
   match self {
-    Expr::Number(n) => n.to_string()
-    Expr::Float(f) => f.to_string()
-    Expr::ComplexFloat(z) => z.to_string()
-    Expr::NumberSymbol(kind) => number_symbol_name(kind)
-    Expr::Boolean(true) => "True"
-    Expr::Boolean(false) => "False"
-    Expr::IdentityFunction => "Lambda(_x, _x)"
-    Expr::Symbol(s) => s
-    Expr::Dummy(name, _) => dummy_display_name(name)
-    Expr::Wild(name, _, _) => wild_display_name(name)
-    Expr::WildFunction(name, _) => wild_display_name(name)
-    Expr::FunctionHead(name) => standalone_function_head_display_name(name)
-    Expr::UndefinedFunction(name) => name
-    Expr::Apply(head, args) =>
-      head.to_string() +
+    Number(n) => Show::to_string(n)
+    Float(f) => Show::to_string(f)
+    ComplexFloat(z) => Show::to_string(z)
+    NumberSymbol(kind) => number_symbol_name(kind)
+    Boolean(true) => "True"
+    Boolean(false) => "False"
+    IdentityFunction => "Lambda(_x, _x)"
+    Symbol(s) => s
+    Dummy(name, _) => dummy_display_name(name)
+    Wild(name, _, _) => wild_display_name(name)
+    WildFunction(name, _) => wild_display_name(name)
+    FunctionHead(name) => standalone_function_head_display_name(name)
+    UndefinedFunction(name) => name
+    Apply(head, args) =>
+      Show::to_string(head) +
       "(" +
-      args.map(child => child.to_string()).join(", ") +
+      args.map(child => Show::to_string(child)).join(", ") +
       ")"
-    Expr::Add(args) =>
-      "(" + args.map(child => child.to_string()).join(" + ") + ")"
-    Expr::Mul(args) =>
-      "(" + args.map(child => child.to_string()).join(" * ") + ")"
-    Expr::Pow(base, exp) =>
-      "(" + base.to_string() + " ** " + exp.to_string() + ")"
-    Expr::Mod(lhs, rhs) =>
-      "Mod(" + lhs.to_string() + ", " + rhs.to_string() + ")"
-    Expr::Tuple(args) =>
-      "Tuple(" + args.map(child => child.to_string()).join(", ") + ")"
-    Expr::Dict(items) => {
+    Add(args) =>
+      "(" + args.map(child => Show::to_string(child)).join(" + ") + ")"
+    Mul(args) =>
+      "(" + args.map(child => Show::to_string(child)).join(" * ") + ")"
+    Pow(base, exp) =>
+      "(" + Show::to_string(base) + " ** " + Show::to_string(exp) + ")"
+    Mod(lhs, rhs) =>
+      "Mod(" + Show::to_string(lhs) + ", " + Show::to_string(rhs) + ")"
+    Tuple(args) =>
+      "Tuple(" + args.map(child => Show::to_string(child)).join(", ") + ")"
+    Dict(items) => {
       let rendered : Array[String] = []
       for item in sorted_dict_entries(items) {
         let (key, value) = item
-        rendered.push(key.to_string() + ": " + value.to_string())
+        rendered.push(Show::to_string(key) + ": " + Show::to_string(value))
       }
       "{" + rendered.join(", ") + "}"
     }
-    Expr::Relational(op, lhs, rhs) => {
+    Relational(op, lhs, rhs) => {
       let name = match op {
-        RelOp::Eq => "Eq"
-        RelOp::Ne => "Ne"
-        RelOp::Lt => "Lt"
-        RelOp::Le => "Le"
-        RelOp::Gt => "Gt"
-        RelOp::Ge => "Ge"
+        Eq => "Eq"
+        Ne => "Ne"
+        Lt => "Lt"
+        Le => "Le"
+        Gt => "Gt"
+        Ge => "Ge"
       }
-      name + "(" + lhs.to_string() + ", " + rhs.to_string() + ")"
+      name + "(" + Show::to_string(lhs) + ", " + Show::to_string(rhs) + ")"
     }
-    Expr::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       let deriv_args = canonical_derivative_args(deriv_args)
-      let args : Array[String] = [inner.to_string()]
+      let args : Array[String] = [Show::to_string(inner)]
       let pair_count = deriv_args.length() / 2
       for i in 0..<pair_count {
         let wrt = deriv_args[i * 2]
         let order = deriv_args[i * 2 + 1]
         match order {
-          Expr::Number(n) if n == @symnum.BigRational::one() =>
-            args.push(wrt.to_string())
-          _ => args.push(Expr::Tuple([wrt, order]).to_string())
+          Number(n) if n == @symnum.BigRational::one() =>
+            args.push(Show::to_string(wrt))
+          _ => args.push(Show::to_string(Expr::Tuple([wrt, order])))
         }
       }
       "Derivative(" + args.join(", ") + ")"
     }
-    Expr::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       "Subs(" +
-      inner.to_string() +
+      Show::to_string(inner) +
       ", " +
-      variable.to_string() +
+      Show::to_string(variable) +
       ", " +
-      value.to_string() +
+      Show::to_string(value) +
       ")"
-    Expr::Lambda(vars, body) =>
-      "Lambda(" + vars.to_string() + ", " + body.to_string() + ")"
-    Expr::Function(name, args) =>
-      normalize_legacy_function(name, args).to_string()
+    Lambda(vars, body) =>
+      "Lambda(" + Show::to_string(vars) + ", " + Show::to_string(body) + ")"
+    Function(name, args) =>
+      Show::to_string(normalize_legacy_function(name, args))
   }
 }
 
 ///|
 /// Keep the `Expr::to_string` dot-style API explicit now that trait
 /// implementations are no longer promoted to methods implicitly.
+#deprecated
 pub extend Expr with Show::{to_string}
 
 ///|
@@ -137,7 +138,7 @@ pub impl Sub for Expr with fn sub(self, other) {
 
 ///|
 impl Show for Expr with fn output(self, logger) {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -159,7 +160,7 @@ pub impl BitXOr for Expr with fn lxor(self, other) {
 /// }
 /// ```
 pub fn int(value : Int) -> Expr {
-  Expr::Number(@symnum.BigRational::from_int(value))
+  Number(@symnum.BigRational::from_int(value))
 }
 
 ///|
@@ -173,19 +174,19 @@ pub fn rational_from_ints(
   num : Int,
   den : Int,
 ) -> Expr raise @symnum.RationalError {
-  Expr::Number(@symnum.BigRational::from_ints(num, den))
+  Number(@symnum.BigRational::from_ints(num, den))
 }
 
 ///|
 fn atomic_numeric_expr_to_exact_rational(expr : Expr) -> @symnum.BigRational? {
   match normalize_legacy_expr(expr) {
-    Expr::Number(value) => Some(value)
-    Expr::Float(value) => {
+    Number(value) => Some(value)
+    Float(value) => {
       let (num, den) = value.to_rational() catch { _ => return None }
       Some(@symnum.BigRational::new(num, den) catch { _ => return None })
     }
-    Expr::Boolean(true) => Some(@symnum.BigRational::one())
-    Expr::Boolean(false) => Some(@symnum.BigRational::zero())
+    Boolean(true) => Some(@symnum.BigRational::one())
+    Boolean(false) => Some(@symnum.BigRational::zero())
     _ => None
   }
 }
@@ -220,7 +221,7 @@ fn pow_exact_rational(
 ///|
 fn exact_numeric_expr_to_rational(expr : Expr) -> @symnum.BigRational? {
   match normalize_legacy_expr(expr) {
-    Expr::Add(args) => {
+    Add(args) => {
       let mut acc = @symnum.BigRational::zero()
       for arg in args {
         match exact_numeric_expr_to_rational(arg) {
@@ -230,7 +231,7 @@ fn exact_numeric_expr_to_rational(expr : Expr) -> @symnum.BigRational? {
       }
       Some(acc)
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = @symnum.BigRational::one()
       for arg in args {
         match exact_numeric_expr_to_rational(arg) {
@@ -240,7 +241,7 @@ fn exact_numeric_expr_to_rational(expr : Expr) -> @symnum.BigRational? {
       }
       Some(acc)
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match
         (
           exact_numeric_expr_to_rational(base),
@@ -265,7 +266,7 @@ pub fn exact_numeric_expr_num_den(expr : Expr) -> (BigInt, BigInt)? {
 ///|
 fn trunc_exact_rational(value : @symnum.BigRational) -> Expr {
   let truncated = value.numerator().div(value.denominator())
-  Expr::Number(@symnum.BigRational::from_bigint(truncated))
+  Number(@symnum.BigRational::from_bigint(truncated))
 }
 
 ///|
@@ -274,18 +275,18 @@ fn constructor_integer_value(arg : Expr) -> Expr {
     Some(value) => trunc_exact_rational(value)
     None =>
       match evalf(normalize_legacy_expr(arg)) {
-        Expr::Float(value) => {
+        Float(value) => {
           let (num, den) = value.to_rational() catch {
-            _ => return Expr::Apply(Expr::FunctionHead("Integer"), [arg])
+            _ => return Apply(FunctionHead("Integer"), [arg])
           }
           trunc_exact_rational(
             @symnum.BigRational::new(num, den) catch {
-              _ => return Expr::Apply(Expr::FunctionHead("Integer"), [arg])
+              _ => return Apply(FunctionHead("Integer"), [arg])
             },
           )
         }
-        Expr::Number(value) => trunc_exact_rational(value)
-        _ => Expr::Apply(Expr::FunctionHead("Integer"), [arg])
+        Number(value) => trunc_exact_rational(value)
+        _ => Apply(FunctionHead("Integer"), [arg])
       }
   }
 }
@@ -294,7 +295,7 @@ fn constructor_integer_value(arg : Expr) -> Expr {
 fn constructor_integer(args : Array[Expr]) -> Expr {
   match args {
     [arg] => constructor_integer_value(arg)
-    _ => Expr::Apply(Expr::FunctionHead("Integer"), args)
+    _ => Apply(FunctionHead("Integer"), args)
   }
 }
 
@@ -310,28 +311,28 @@ fn constructor_rational(args : Array[Expr]) -> Expr {
   match args {
     [arg] =>
       match exact_rational_input(arg) {
-        Some(value) => Expr::Number(value)
-        None => Expr::Apply(Expr::FunctionHead("Rational"), args)
+        Some(value) => Number(value)
+        None => Apply(FunctionHead("Rational"), args)
       }
     [lhs, rhs] =>
       match (exact_rational_input(lhs), exact_rational_input(rhs)) {
         (Some(lhs_value), Some(rhs_value)) =>
           if rhs_value.is_zero() {
             if lhs_value.is_zero() {
-              Expr::NumberSymbol(NumberSymbolKind::NaN)
+              NumberSymbol(NaN)
             } else {
-              Expr::NumberSymbol(NumberSymbolKind::ComplexInfinity)
+              NumberSymbol(ComplexInfinity)
             }
           } else {
-            Expr::Number(
+            Number(
               lhs_value.div_r(rhs_value) catch {
-                _ => return Expr::Apply(Expr::FunctionHead("Rational"), args)
+                _ => return Apply(FunctionHead("Rational"), args)
               },
             )
           }
-        _ => Expr::Apply(Expr::FunctionHead("Rational"), args)
+        _ => Apply(FunctionHead("Rational"), args)
       }
-    _ => Expr::Apply(Expr::FunctionHead("Rational"), args)
+    _ => Apply(FunctionHead("Rational"), args)
   }
 }
 
@@ -339,7 +340,7 @@ fn constructor_rational(args : Array[Expr]) -> Expr {
 fn constructor_float(args : Array[Expr]) -> Expr {
   let exact_integer_atom = fn(arg : Expr) -> BigInt? {
     match normalize_legacy_expr(arg) {
-      Expr::Number(value) if value.is_integral() => Some(value.numerator())
+      Number(value) if value.is_integral() => Some(value.numerator())
       _ => None
     }
   }
@@ -352,15 +353,15 @@ fn constructor_float(args : Array[Expr]) -> Expr {
   }
   let float_from_mpf = fn(value : @symnum.Mpf, prec : Int) -> Expr {
     if value == @symnum.fnan {
-      Expr::NumberSymbol(NumberSymbolKind::NaN)
+      NumberSymbol(NaN)
     } else if value == @symnum.finf {
-      Expr::NumberSymbol(NumberSymbolKind::Infinity)
+      NumberSymbol(Infinity)
     } else if value == @symnum.fninf {
-      Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
+      NumberSymbol(NegativeInfinity)
     } else if @symnum.is_zero(value) {
       int(0)
     } else {
-      Expr::Float(Float::from_mpf(value, prec~))
+      Float(Float::from_mpf(value, prec~))
     }
   }
   let float_from_tuple = fn(
@@ -372,21 +373,21 @@ fn constructor_float(args : Array[Expr]) -> Expr {
     for item in items {
       match exact_integer_atom(item) {
         Some(value) => ints.push(value)
-        None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+        None => return Apply(FunctionHead("Float"), fallback_args)
       }
     }
     match ints {
       [sign, man, exp] => {
         let sign_i = match small_int(sign) {
           Some(value) => value
-          None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+          None => return Apply(FunctionHead("Float"), fallback_args)
         }
         let exp_i = match small_int(exp) {
           Some(value) => value
-          None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+          None => return Apply(FunctionHead("Float"), fallback_args)
         }
         guard (sign_i == 0 || sign_i == 1) && man.compare(0N) >= 0 else {
-          return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+          return Apply(FunctionHead("Float"), fallback_args)
         }
         let bc = man.bit_length()
         float_from_mpf(
@@ -399,25 +400,25 @@ fn constructor_float(args : Array[Expr]) -> Expr {
       [sign, man, exp, bc] => {
         let sign_i = match small_int(sign) {
           Some(value) => value
-          None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+          None => return Apply(FunctionHead("Float"), fallback_args)
         }
         let exp_i = match small_int(exp) {
           Some(value) => value
-          None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+          None => return Apply(FunctionHead("Float"), fallback_args)
         }
         let bc_i = match small_int(bc) {
           Some(value) => value
-          None => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+          None => return Apply(FunctionHead("Float"), fallback_args)
         }
         if man.compare(0N) == 0 {
           match bc_i {
-            -1 => return Expr::NumberSymbol(NumberSymbolKind::NaN)
+            -1 => return NumberSymbol(NaN)
             -2 | -3 =>
-              return Expr::NumberSymbol(
+              return NumberSymbol(
                 if sign_i == 1 {
-                  NumberSymbolKind::NegativeInfinity
+                  NegativeInfinity
                 } else {
-                  NumberSymbolKind::Infinity
+                  Infinity
                 },
               )
             _ => ()
@@ -430,7 +431,7 @@ fn constructor_float(args : Array[Expr]) -> Expr {
           prec,
         )
       }
-      _ => Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+      _ => Apply(FunctionHead("Float"), fallback_args)
     }
   }
   let float_from_numeric = fn(
@@ -440,43 +441,40 @@ fn constructor_float(args : Array[Expr]) -> Expr {
   ) -> Expr {
     match exact_numeric_expr_to_rational(arg) {
       Some(value) =>
-        Expr::Float(
+        Float(
           Float::from_exact(value, prec~) catch {
-            _ => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+            _ => return Apply(FunctionHead("Float"), fallback_args)
           },
         )
       None =>
         match evalf(normalize_legacy_expr(arg), prec~) {
-          Expr::Float(value) => Expr::Float(value)
-          Expr::NumberSymbol(NumberSymbolKind::Infinity) =>
-            Expr::NumberSymbol(NumberSymbolKind::Infinity)
-          Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity) =>
-            Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
-          Expr::NumberSymbol(NumberSymbolKind::NaN) =>
-            Expr::NumberSymbol(NumberSymbolKind::NaN)
-          _ => Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+          Float(value) => Float(value)
+          NumberSymbol(Infinity) => NumberSymbol(Infinity)
+          NumberSymbol(NegativeInfinity) => NumberSymbol(NegativeInfinity)
+          NumberSymbol(NaN) => NumberSymbol(NaN)
+          _ => Apply(FunctionHead("Float"), fallback_args)
         }
     }
   }
   match args {
-    [Expr::Float(value)] => Expr::Float(value)
-    [Expr::Tuple(items)] => float_from_tuple(items, 53, args)
+    [Float(value)] => Float(value)
+    [Tuple(items)] => float_from_tuple(items, 53, args)
     [arg] => float_from_numeric(arg, 53, args)
-    [Expr::Tuple(items), Expr::Number(prec)] if prec.is_integral() &&
+    [Tuple(items), Number(prec)] if prec.is_integral() &&
       prec.numerator().compare(0N) > 0 =>
       float_from_tuple(
         items,
         @symnum.dps_to_prec(prec.numerator().to_int()),
         args,
       )
-    [arg, Expr::Number(prec)] if prec.is_integral() &&
+    [arg, Number(prec)] if prec.is_integral() &&
       prec.numerator().compare(0N) > 0 =>
       float_from_numeric(
         arg,
         @symnum.dps_to_prec(prec.numerator().to_int()),
         args,
       )
-    _ => Expr::Apply(Expr::FunctionHead("Float"), args)
+    _ => Apply(FunctionHead("Float"), args)
   }
 }
 
@@ -492,7 +490,7 @@ fn next_dummy_id() -> Int {
 
 ///|
 pub fn dummy(name? : String = "Dummy") -> Expr {
-  Expr::Dummy(name, next_dummy_id())
+  Dummy(name, next_dummy_id())
 }
 
 ///|
@@ -510,28 +508,23 @@ fn applied_undefined_function_canonical(
   name : String,
   args : Array[Expr],
 ) -> Expr {
-  Expr::Apply(Expr::UndefinedFunction(name), args)
+  Apply(UndefinedFunction(name), args)
 }
 
 ///|
 fn raw_apply_canonical(head : Expr, args : Array[Expr]) -> Expr? {
   match head {
-    Expr::IdentityFunction =>
-      if args.length() == 1 {
-        Some(args[0])
-      } else {
-        None
-      }
-    Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
-    Expr::UndefinedFunction(name) =>
+    IdentityFunction => if args.length() == 1 { Some(args[0]) } else { None }
+    Lambda(vars, body) => apply_lambda_expr(vars, body, args)
+    UndefinedFunction(name) =>
       Some(applied_undefined_function_canonical(name, args))
-    Expr::WildFunction(name, nargs) =>
+    WildFunction(name, nargs) =>
       if wild_function_accepts_arity(nargs, args.length()) {
-        Some(Expr::Apply(Expr::WildFunction(name, nargs), args))
+        Some(Apply(WildFunction(name, nargs), args))
       } else {
         None
       }
-    Expr::FunctionHead(name) => Some(raw_function_canonical(name, args))
+    FunctionHead(name) => Some(raw_function_canonical(name, args))
     _ => None
   }
 }
@@ -546,22 +539,17 @@ pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
 ///|
 fn apply_canonical(head : Expr, args : Array[Expr]) -> Expr? {
   match head {
-    Expr::IdentityFunction =>
-      if args.length() == 1 {
-        Some(args[0])
-      } else {
-        None
-      }
-    Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
-    Expr::UndefinedFunction(name) =>
+    IdentityFunction => if args.length() == 1 { Some(args[0]) } else { None }
+    Lambda(vars, body) => apply_lambda_expr(vars, body, args)
+    UndefinedFunction(name) =>
       Some(applied_undefined_function_canonical(name, args))
-    Expr::WildFunction(name, nargs) =>
+    WildFunction(name, nargs) =>
       if wild_function_accepts_arity(nargs, args.length()) {
-        Some(Expr::Apply(Expr::WildFunction(name, nargs), args))
+        Some(Apply(WildFunction(name, nargs), args))
       } else {
         None
       }
-    Expr::FunctionHead(name) =>
+    FunctionHead(name) =>
       Some(
         if current_evaluate() {
           function_canonical(name, args)
@@ -643,25 +631,25 @@ fn mul_exact_to_float(lhs : Float, rhs : @symnum.BigRational) -> Float {
 ///|
 fn split_add_term_coeff(term : Expr) -> (@symnum.BigRational, Expr)? {
   match term {
-    Expr::Number(value) => Some((value, int(1)))
-    Expr::Mul(items) => {
+    Number(value) => Some((value, int(1)))
+    Mul(items) => {
       let mut coeff = @symnum.BigRational::one()
       let rest : Array[Expr] = []
       for item in items {
         match item {
-          Expr::Number(value) => coeff = coeff.mul_r(value)
-          Expr::Float(_) | Expr::ComplexFloat(_) => return None
+          Number(value) => coeff = coeff.mul_r(value)
+          Float(_) | ComplexFloat(_) => return None
           _ => rest.push(item)
         }
       }
       let base = match rest.length() {
         0 => int(1)
         1 => rest[0]
-        _ => Expr::Mul(rest)
+        _ => Mul(rest)
       }
       Some((coeff, base))
     }
-    Expr::Float(_) | Expr::ComplexFloat(_) => None
+    Float(_) | ComplexFloat(_) => None
     _ => Some((@symnum.BigRational::one(), term))
   }
 }
@@ -705,11 +693,11 @@ fn canonical_base_index_put(
 ///|
 fn add_term_has_implicit_unit_coeff(term : Expr) -> Bool {
   match term {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => false
-    Expr::Mul(items) =>
+    Number(_) | Float(_) | ComplexFloat(_) => false
+    Mul(items) =>
       !items.any(item => {
         match item {
-          Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => true
+          Number(_) | Float(_) | ComplexFloat(_) => true
           _ => false
         }
       })
@@ -824,10 +812,10 @@ pub fn add(args : Array[Expr]) -> Expr {
   let mut complex_sum : ComplexFloat? = None
   for arg in args {
     match arg {
-      Expr::Add(inner) =>
+      Add(inner) =>
         for child in inner {
           match child {
-            Expr::Number(n) =>
+            Number(n) =>
               match complex_sum {
                 Some(current) =>
                   complex_sum = Some(add_exact_to_complex(current, n))
@@ -838,7 +826,7 @@ pub fn add(args : Array[Expr]) -> Expr {
                     None => const_sum = const_sum.add_r(n)
                   }
               }
-            Expr::Float(f) =>
+            Float(f) =>
               match complex_sum {
                 Some(current) =>
                   complex_sum = Some(add_float_to_complex(current, f))
@@ -856,7 +844,7 @@ pub fn add(args : Array[Expr]) -> Expr {
                     }
                   }
               }
-            Expr::ComplexFloat(z) =>
+            ComplexFloat(z) =>
               match complex_sum {
                 Some(current) => complex_sum = Some(add_complex(current, z))
                 None => {
@@ -877,7 +865,7 @@ pub fn add(args : Array[Expr]) -> Expr {
             _ => flat.push(child)
           }
         }
-      Expr::Number(n) =>
+      Number(n) =>
         match complex_sum {
           Some(current) => complex_sum = Some(add_exact_to_complex(current, n))
           None =>
@@ -886,7 +874,7 @@ pub fn add(args : Array[Expr]) -> Expr {
               None => const_sum = const_sum.add_r(n)
             }
         }
-      Expr::Float(f) =>
+      Float(f) =>
         match complex_sum {
           Some(current) => complex_sum = Some(add_float_to_complex(current, f))
           None =>
@@ -903,7 +891,7 @@ pub fn add(args : Array[Expr]) -> Expr {
               }
             }
         }
-      Expr::ComplexFloat(z) =>
+      ComplexFloat(z) =>
         match complex_sum {
           Some(current) => complex_sum = Some(add_complex(current, z))
           None => {
@@ -939,7 +927,7 @@ pub fn add(args : Array[Expr]) -> Expr {
         merged.push(term)
       } else {
         merged.push(
-          mul([Expr::Number(@symnum.BigRational::from_int(multiplicity)), term]),
+          mul([Number(@symnum.BigRational::from_int(multiplicity)), term]),
         )
       }
       i += multiplicity
@@ -978,11 +966,11 @@ pub fn add(args : Array[Expr]) -> Expr {
       }
       let base = bases[i]
       if expr_is_one(base) {
-        flat.push(Expr::Number(coeff))
+        flat.push(Number(coeff))
       } else if coeff.is_one() {
         flat.push(base)
       } else {
-        flat.push(mul([Expr::Number(coeff), base]))
+        flat.push(mul([Number(coeff), base]))
       }
     }
     for term in passthrough {
@@ -993,39 +981,39 @@ pub fn add(args : Array[Expr]) -> Expr {
     Some(value) =>
       if !(@symnum.is_zero(value.to_mpc().real) &&
         @symnum.is_zero(value.to_mpc().imag)) {
-        flat.push(Expr::ComplexFloat(value))
+        flat.push(ComplexFloat(value))
       }
     None =>
       match float_sum {
         Some(value) =>
           if !@symnum.is_zero(value.to_mpf()) {
-            flat.push(Expr::Float(value))
+            flat.push(Float(value))
           }
-        None => if !const_sum.is_zero() { flat.push(Expr::Number(const_sum)) }
+        None => if !const_sum.is_zero() { flat.push(Number(const_sum)) }
       }
   }
   sort_exprs_in_place(flat)
   match flat.length() {
     0 =>
       match complex_sum {
-        Some(value) => Expr::ComplexFloat(value)
+        Some(value) => ComplexFloat(value)
         None =>
           match float_sum {
-            Some(value) => Expr::Float(value)
-            None => Expr::Number(@symnum.BigRational::zero())
+            Some(value) => Float(value)
+            None => Number(@symnum.BigRational::zero())
           }
       }
     1 => flat[0]
-    _ => Expr::Add(flat)
+    _ => Add(flat)
   }
 }
 
 ///|
 fn expr_is_zero(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) => n.is_zero()
-    Expr::Float(f) => @symnum.is_zero(f.to_mpf())
-    Expr::ComplexFloat(z) =>
+    Number(n) => n.is_zero()
+    Float(f) => @symnum.is_zero(f.to_mpf())
+    ComplexFloat(z) =>
       @symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag)
     _ => false
   }
@@ -1034,9 +1022,9 @@ fn expr_is_zero(expr : Expr) -> Bool {
 ///|
 fn expr_is_one(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) => n.is_one()
-    Expr::Float(f) => @symnum.mpf_eq(f.to_mpf(), @symnum.fone)
-    Expr::ComplexFloat(z) =>
+    Number(n) => n.is_one()
+    Float(f) => @symnum.mpf_eq(f.to_mpf(), @symnum.fone)
+    ComplexFloat(z) =>
       @symnum.mpf_eq(z.to_mpc().real, @symnum.fone) &&
       @symnum.is_zero(z.to_mpc().imag)
     _ => false
@@ -1061,14 +1049,14 @@ pub fn mul(args : Array[Expr]) -> Expr {
   let mut complex_prod : ComplexFloat? = None
   for arg in args {
     match arg {
-      Expr::Mul(inner) =>
+      Mul(inner) =>
         for child in inner {
           match child {
-            Expr::Number(n) =>
+            Number(n) =>
               match complex_prod {
                 Some(current) =>
                   if n.is_zero() {
-                    return Expr::ComplexFloat(
+                    return ComplexFloat(
                       complex_from_exact_unchecked(n, current.precision()),
                     )
                   } else {
@@ -1078,21 +1066,21 @@ pub fn mul(args : Array[Expr]) -> Expr {
                   match float_prod {
                     Some(current) =>
                       if n.is_zero() {
-                        return Expr::Number(@symnum.BigRational::zero())
+                        return Number(@symnum.BigRational::zero())
                       } else {
                         float_prod = Some(mul_exact_to_float(current, n))
                       }
                     None => {
                       if n.is_zero() {
-                        return Expr::Number(@symnum.BigRational::zero())
+                        return Number(@symnum.BigRational::zero())
                       }
                       const_prod = const_prod.mul_r(n)
                     }
                   }
               }
-            Expr::Float(f) =>
+            Float(f) =>
               if @symnum.is_zero(f.to_mpf()) {
-                return Expr::Float(f)
+                return Float(f)
               } else {
                 match complex_prod {
                   Some(current) =>
@@ -1112,9 +1100,9 @@ pub fn mul(args : Array[Expr]) -> Expr {
                     }
                 }
               }
-            Expr::ComplexFloat(z) =>
-              if expr_is_zero(Expr::ComplexFloat(z)) {
-                return Expr::ComplexFloat(z)
+            ComplexFloat(z) =>
+              if expr_is_zero(ComplexFloat(z)) {
+                return ComplexFloat(z)
               } else {
                 match complex_prod {
                   Some(current) => complex_prod = Some(mul_complex(current, z))
@@ -1134,18 +1122,18 @@ pub fn mul(args : Array[Expr]) -> Expr {
                   }
                 }
               }
-            Expr::NumberSymbol(NumberSymbolKind::Infinity)
-            | Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
-            | Expr::NumberSymbol(NumberSymbolKind::ComplexInfinity)
-            | Expr::NumberSymbol(NumberSymbolKind::NaN) => flat.push(child)
+            NumberSymbol(Infinity)
+            | NumberSymbol(NegativeInfinity)
+            | NumberSymbol(ComplexInfinity)
+            | NumberSymbol(NaN) => flat.push(child)
             _ => flat.push(child)
           }
         }
-      Expr::Number(n) =>
+      Number(n) =>
         match complex_prod {
           Some(current) =>
             if n.is_zero() {
-              return Expr::ComplexFloat(
+              return ComplexFloat(
                 complex_from_exact_unchecked(n, current.precision()),
               )
             } else {
@@ -1155,21 +1143,21 @@ pub fn mul(args : Array[Expr]) -> Expr {
             match float_prod {
               Some(current) =>
                 if n.is_zero() {
-                  return Expr::Number(@symnum.BigRational::zero())
+                  return Number(@symnum.BigRational::zero())
                 } else {
                   float_prod = Some(mul_exact_to_float(current, n))
                 }
               None => {
                 if n.is_zero() {
-                  return Expr::Number(@symnum.BigRational::zero())
+                  return Number(@symnum.BigRational::zero())
                 }
                 const_prod = const_prod.mul_r(n)
               }
             }
         }
-      Expr::Float(f) =>
+      Float(f) =>
         if @symnum.is_zero(f.to_mpf()) {
-          return Expr::Float(f)
+          return Float(f)
         } else {
           match complex_prod {
             Some(current) =>
@@ -1189,9 +1177,9 @@ pub fn mul(args : Array[Expr]) -> Expr {
               }
           }
         }
-      Expr::ComplexFloat(z) =>
-        if expr_is_zero(Expr::ComplexFloat(z)) {
-          return Expr::ComplexFloat(z)
+      ComplexFloat(z) =>
+        if expr_is_zero(ComplexFloat(z)) {
+          return ComplexFloat(z)
         } else {
           match complex_prod {
             Some(current) => complex_prod = Some(mul_complex(current, z))
@@ -1211,10 +1199,10 @@ pub fn mul(args : Array[Expr]) -> Expr {
             }
           }
         }
-      Expr::NumberSymbol(NumberSymbolKind::Infinity)
-      | Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
-      | Expr::NumberSymbol(NumberSymbolKind::ComplexInfinity)
-      | Expr::NumberSymbol(NumberSymbolKind::NaN) => flat.push(arg)
+      NumberSymbol(Infinity)
+      | NumberSymbol(NegativeInfinity)
+      | NumberSymbol(ComplexInfinity)
+      | NumberSymbol(NaN) => flat.push(arg)
       _ => flat.push(arg)
     }
   }
@@ -1237,26 +1225,22 @@ pub fn mul(args : Array[Expr]) -> Expr {
   }
   if const_prod == @symnum.BigRational::from_int(-1) && merged.length() == 1 {
     match merged[0] {
-      Expr::NumberSymbol(NumberSymbolKind::Infinity) =>
-        return Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
-      Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity) =>
-        return Expr::NumberSymbol(NumberSymbolKind::Infinity)
+      NumberSymbol(Infinity) => return NumberSymbol(NegativeInfinity)
+      NumberSymbol(NegativeInfinity) => return NumberSymbol(Infinity)
       _ => ()
     }
   }
   if current_distribute() && complex_prod is None && merged.length() == 1 {
     match merged[0] {
-      Expr::Add(add_args) =>
+      Add(add_args) =>
         match float_prod {
           Some(value) =>
-            if value.is_finite() && !expr_is_one(Expr::Float(value)) {
-              return add(add_args.map(term => mul([Expr::Float(value), term])))
+            if value.is_finite() && !expr_is_one(Float(value)) {
+              return add(add_args.map(term => mul([Float(value), term])))
             }
           None =>
             if !const_prod.is_one() {
-              return add(
-                add_args.map(term => mul([Expr::Number(const_prod), term])),
-              )
+              return add(add_args.map(term => mul([Number(const_prod), term])))
             }
         }
       _ => ()
@@ -1265,65 +1249,65 @@ pub fn mul(args : Array[Expr]) -> Expr {
   match complex_prod {
     Some(value) =>
       if merged.is_empty() {
-        Expr::ComplexFloat(value)
-      } else if expr_is_one(Expr::ComplexFloat(value)) {
+        ComplexFloat(value)
+      } else if expr_is_one(ComplexFloat(value)) {
         match merged.length() {
           1 => merged[0]
-          _ => Expr::Mul(merged)
+          _ => Mul(merged)
         }
       } else {
         let out : Array[Expr] = Array::new()
-        out.push(Expr::ComplexFloat(value))
+        out.push(ComplexFloat(value))
         for v in merged {
           out.push(v)
         }
         match out.length() {
           1 => out[0]
-          _ => Expr::Mul(out)
+          _ => Mul(out)
         }
       }
     None =>
       match float_prod {
         Some(value) =>
           if merged.is_empty() {
-            Expr::Float(value)
-          } else if expr_is_one(Expr::Float(value)) {
+            Float(value)
+          } else if expr_is_one(Float(value)) {
             match merged.length() {
               1 => merged[0]
-              _ => Expr::Mul(merged)
+              _ => Mul(merged)
             }
           } else {
             let out : Array[Expr] = Array::new()
-            out.push(Expr::Float(value))
+            out.push(Float(value))
             for v in merged {
               out.push(v)
             }
             match out.length() {
               1 => out[0]
-              _ => Expr::Mul(out)
+              _ => Mul(out)
             }
           }
         None =>
           if merged.is_empty() {
             if const_prod.is_one() {
-              Expr::Number(@symnum.BigRational::one())
+              Number(@symnum.BigRational::one())
             } else {
-              Expr::Number(const_prod)
+              Number(const_prod)
             }
           } else if const_prod.is_one() {
             match merged.length() {
               1 => merged[0]
-              _ => Expr::Mul(merged)
+              _ => Mul(merged)
             }
           } else {
             let out : Array[Expr] = Array::new()
-            out.push(Expr::Number(const_prod))
+            out.push(Number(const_prod))
             for v in merged {
               out.push(v)
             }
             match out.length() {
               1 => out[0]
-              _ => Expr::Mul(out)
+              _ => Mul(out)
             }
           }
       }
@@ -1333,9 +1317,9 @@ pub fn mul(args : Array[Expr]) -> Expr {
 ///|
 fn is_zero_base_expr(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) => n.is_zero()
-    Expr::Float(f) => @symnum.is_zero(f.to_mpf())
-    Expr::ComplexFloat(z) =>
+    Number(n) => n.is_zero()
+    Float(f) => @symnum.is_zero(f.to_mpf())
+    ComplexFloat(z) =>
       @symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag)
     _ => false
   }
@@ -1347,13 +1331,13 @@ fn imag_unit_pow(exp : Expr) -> Expr? {
     Some((num, den)) if den == 1N && num.bit_length() <= 30 => {
       let raw = num.to_int()
       let rem = (raw % 4 + 4) % 4
-      let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
+      let imag = Expr::NumberSymbol(ImaginaryUnit)
       Some(
         match rem {
-          0 => Expr::Number(@symnum.BigRational::one())
+          0 => Number(@symnum.BigRational::one())
           1 => imag
-          2 => Expr::Number(@symnum.BigRational::from_int(-1))
-          _ => mul([Expr::Number(@symnum.BigRational::from_int(-1)), imag])
+          2 => Number(@symnum.BigRational::from_int(-1))
+          _ => mul([Number(@symnum.BigRational::from_int(-1)), imag])
         },
       )
     }
@@ -1377,15 +1361,15 @@ fn sqrt_bigint_if_square(value : BigInt) -> BigInt? {
 ///|
 fn exact_sqrt_expr(arg : Expr) -> Expr? {
   match arg {
-    Expr::Number(n) => {
+    Number(n) => {
       let negative = n.compare(@symnum.BigRational::zero()) < 0
       let abs_n = if negative { n.neg_r() } else { n }
       let num_root = match sqrt_bigint_if_square(abs_n.numerator()) {
         Some(root) => root
         None =>
           if negative {
-            let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
-            return Some(mul([imag, function("sqrt", [Expr::Number(abs_n)])]))
+            let imag = Expr::NumberSymbol(ImaginaryUnit)
+            return Some(mul([imag, function("sqrt", [Number(abs_n)])]))
           } else {
             return None
           }
@@ -1394,8 +1378,8 @@ fn exact_sqrt_expr(arg : Expr) -> Expr? {
         Some(root) => root
         None =>
           if negative {
-            let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
-            return Some(mul([imag, function("sqrt", [Expr::Number(abs_n)])]))
+            let imag = Expr::NumberSymbol(ImaginaryUnit)
+            return Some(mul([imag, function("sqrt", [Number(abs_n)])]))
           } else {
             return None
           }
@@ -1405,7 +1389,7 @@ fn exact_sqrt_expr(arg : Expr) -> Expr? {
       }
       let root_expr = Expr::Number(rat)
       if negative {
-        let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
+        let imag = Expr::NumberSymbol(ImaginaryUnit)
         Some(mul([root_expr, imag]))
       } else {
         Some(root_expr)
@@ -1429,9 +1413,9 @@ fn zero_base_pow_value(base : Expr, exp : Expr) -> Expr? {
     Some((num, den)) if den.compare(1N) == 0 && num.compare(0N) > 0 =>
       Some(
         match base {
-          Expr::ComplexFloat(z) => Expr::ComplexFloat(z)
-          Expr::Float(f) => Expr::Float(f)
-          _ => Expr::Number(@symnum.BigRational::zero())
+          ComplexFloat(z) => ComplexFloat(z)
+          Float(f) => Float(f)
+          _ => Number(@symnum.BigRational::zero())
         },
       )
     _ => None
@@ -1452,7 +1436,7 @@ pub fn pow(base : Expr, exp : Expr) -> Expr {
     return raw_pow(base, exp)
   }
   if expr_is_zero(exp) {
-    Expr::Number(@symnum.BigRational::one())
+    Number(@symnum.BigRational::one())
   } else if expr_is_one(base) {
     base
   } else if expr_is_one(exp) {
@@ -1461,12 +1445,12 @@ pub fn pow(base : Expr, exp : Expr) -> Expr {
     value
   } else {
     match base {
-      Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit) =>
+      NumberSymbol(ImaginaryUnit) =>
         match imag_unit_pow(exp) {
           Some(value) => value
-          None => Expr::Pow(base, exp)
+          None => Pow(base, exp)
         }
-      Expr::Pow(inner_base, inner_exp) =>
+      Pow(inner_base, inner_exp) =>
         match exact_numeric_expr_num_den(exp) {
           Some((_, den)) if den.compare(1N) == 0 =>
             pow(inner_base, mul([inner_exp, exp]))
@@ -1475,64 +1459,54 @@ pub fn pow(base : Expr, exp : Expr) -> Expr {
               _ if is_zero_base_expr(base) =>
                 match zero_base_pow_value(base, exp) {
                   Some(value) => value
-                  None => Expr::Pow(base, exp)
+                  None => Pow(base, exp)
                 }
-              _ => Expr::Pow(base, exp)
+              _ => Pow(base, exp)
             }
         }
       _ if is_zero_base_expr(base) =>
         match zero_base_pow_value(base, exp) {
           Some(value) => value
-          None => Expr::Pow(base, exp)
+          None => Pow(base, exp)
         }
-      _ => Expr::Pow(base, exp)
+      _ => Pow(base, exp)
     }
   }
 }
 
 ///|
 pub fn mod_expr(lhs : Expr, rhs : Expr) -> Expr {
-  Expr::Mod(lhs, rhs)
+  Mod(lhs, rhs)
 }
 
 ///|
 fn constructor_relational(op : RelOp, lhs : Expr, rhs : Expr) -> Expr {
   match op {
-    RelOp::Eq =>
-      if lhs == rhs {
-        Expr::Boolean(true)
-      } else {
-        Expr::Relational(op, lhs, rhs)
-      }
-    RelOp::Ne =>
-      if lhs == rhs {
-        Expr::Boolean(false)
-      } else {
-        Expr::Relational(op, lhs, rhs)
-      }
-    RelOp::Lt =>
+    Eq => if lhs == rhs { Boolean(true) } else { Relational(op, lhs, rhs) }
+    Ne => if lhs == rhs { Boolean(false) } else { Relational(op, lhs, rhs) }
+    Lt =>
       match (lhs, rhs) {
-        (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
-          Expr::Boolean(lhs_num.compare(rhs_num) < 0)
-        _ => Expr::Relational(op, lhs, rhs)
+        (Number(lhs_num), Number(rhs_num)) =>
+          Boolean(lhs_num.compare(rhs_num) < 0)
+        _ => Relational(op, lhs, rhs)
       }
-    RelOp::Le =>
+    Le =>
       match (lhs, rhs) {
-        (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
-          Expr::Boolean(lhs_num.compare(rhs_num) <= 0)
-        _ => Expr::Relational(op, lhs, rhs)
+        (Number(lhs_num), Number(rhs_num)) =>
+          Boolean(lhs_num.compare(rhs_num) <= 0)
+        _ => Relational(op, lhs, rhs)
       }
-    RelOp::Gt =>
+    Gt =>
       match (lhs, rhs) {
-        (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
-          Expr::Boolean(lhs_num.compare(rhs_num) > 0)
-        _ => Expr::Relational(op, lhs, rhs)
+        (Number(lhs_num), Number(rhs_num)) =>
+          Boolean(lhs_num.compare(rhs_num) > 0)
+        _ => Relational(op, lhs, rhs)
       }
-    RelOp::Ge =>
+    Ge =>
       match (lhs, rhs) {
-        (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
-          Expr::Boolean(lhs_num.compare(rhs_num) >= 0)
-        _ => Expr::Relational(op, lhs, rhs)
+        (Number(lhs_num), Number(rhs_num)) =>
+          Boolean(lhs_num.compare(rhs_num) >= 0)
+        _ => Relational(op, lhs, rhs)
       }
   }
 }
@@ -1540,7 +1514,7 @@ fn constructor_relational(op : RelOp, lhs : Expr, rhs : Expr) -> Expr {
 ///|
 fn constructor_derivative(name : String, args : Array[Expr]) -> Expr {
   if args.length() < 2 {
-    return Expr::Apply(Expr::FunctionHead(name), args)
+    return Apply(FunctionHead(name), args)
   }
   derivative_constructor_expr(args[0], args[1:])
 }
@@ -1548,9 +1522,9 @@ fn constructor_derivative(name : String, args : Array[Expr]) -> Expr {
 ///|
 fn constructor_singleton_registry(name : String, args : Array[Expr]) -> Expr {
   match args.length() {
-    0 => Expr::Apply(Expr::FunctionHead(name), args)
+    0 => Apply(FunctionHead(name), args)
     given if given <= 6 => normalize_legacy_expr(args[0])
-    _ => Expr::Apply(Expr::FunctionHead(name), args)
+    _ => Apply(FunctionHead(name), args)
   }
 }
 
@@ -1580,9 +1554,9 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
 ///|
 fn function_canonical(name : String, args : Array[Expr]) -> Expr {
   match (name, args) {
-    ("True", []) => Expr::Boolean(true)
-    ("False", []) => Expr::Boolean(false)
-    ("Tuple", _) => Expr::Tuple(args)
+    ("True", []) => Boolean(true)
+    ("False", []) => Boolean(false)
+    ("Tuple", _) => Tuple(args)
     ("S", _) => constructor_singleton_registry(name, args)
     ("Integer", _) => constructor_integer(args)
     ("Rational", _) => constructor_rational(args)
@@ -1590,58 +1564,57 @@ fn function_canonical(name : String, args : Array[Expr]) -> Expr {
     ("sqrt", [arg]) =>
       match exact_sqrt_expr(arg) {
         Some(value) => value
-        None => Expr::Apply(Expr::FunctionHead(name), args)
+        None => Apply(FunctionHead(name), args)
       }
-    ("Eq", [lhs, rhs]) => constructor_relational(RelOp::Eq, lhs, rhs)
-    ("Ne", [lhs, rhs]) => constructor_relational(RelOp::Ne, lhs, rhs)
-    ("Lt", [lhs, rhs]) => constructor_relational(RelOp::Lt, lhs, rhs)
-    ("Le", [lhs, rhs]) => constructor_relational(RelOp::Le, lhs, rhs)
-    ("Gt", [lhs, rhs]) => constructor_relational(RelOp::Gt, lhs, rhs)
-    ("Ge", [lhs, rhs]) => constructor_relational(RelOp::Ge, lhs, rhs)
+    ("Eq", [lhs, rhs]) => constructor_relational(Eq, lhs, rhs)
+    ("Ne", [lhs, rhs]) => constructor_relational(Ne, lhs, rhs)
+    ("Lt", [lhs, rhs]) => constructor_relational(Lt, lhs, rhs)
+    ("Le", [lhs, rhs]) => constructor_relational(Le, lhs, rhs)
+    ("Gt", [lhs, rhs]) => constructor_relational(Gt, lhs, rhs)
+    ("Ge", [lhs, rhs]) => constructor_relational(Ge, lhs, rhs)
     ("Mod", [lhs, rhs]) => mod_expr(lhs, rhs)
     ("Derivative", _) => constructor_derivative(name, args)
     ("Subs", [expr, variable, value]) => subs_expr(expr, variable, value)
     ("Lambda", [vars, body]) => lambda_expr(vars, body)
-    ("exp", [arg]) if current_exp_is_pow() =>
-      pow(Expr::NumberSymbol(NumberSymbolKind::Exp1), arg)
+    ("exp", [arg]) if current_exp_is_pow() => pow(NumberSymbol(Exp1), arg)
     ("Dict", items) => {
       let entries : Array[(Expr, Expr)] = []
       for item in items {
         match tuple_items(item) {
           Some([key, value]) => entries.push((key, value))
-          _ => return Expr::Apply(Expr::FunctionHead(name), args)
+          _ => return Apply(FunctionHead(name), args)
         }
       }
-      Expr::Dict(entries)
+      Dict(entries)
     }
-    _ => Expr::Apply(Expr::FunctionHead(name), args)
+    _ => Apply(FunctionHead(name), args)
   }
 }
 
 ///|
 /// Build `Add` directly without flattening, sorting, or constant folding.
 pub fn raw_add(args : Array[Expr]) -> Expr {
-  Expr::Add(args.map(child => child))
+  Add(args.map(child => child))
 }
 
 ///|
 pub fn raw_mul(args : Array[Expr]) -> Expr {
-  Expr::Mul(args.map(child => child))
+  Mul(args.map(child => child))
 }
 
 ///|
 pub fn raw_pow(base : Expr, exp : Expr) -> Expr {
-  Expr::Pow(base, exp)
+  Pow(base, exp)
 }
 
 ///|
 pub fn raw_mod_expr(lhs : Expr, rhs : Expr) -> Expr {
-  Expr::Mod(lhs, rhs)
+  Mod(lhs, rhs)
 }
 
 ///|
 pub fn raw_dict_expr(items : Array[(Expr, Expr)]) -> Expr {
-  Expr::Dict(items.map(item => item))
+  Dict(items.map(item => item))
 }
 
 ///|
@@ -1653,20 +1626,20 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
 ///|
 fn raw_function_canonical(name : String, args : Array[Expr]) -> Expr {
   match (name, args) {
-    ("True", []) => Expr::Boolean(true)
-    ("False", []) => Expr::Boolean(false)
-    ("Tuple", _) => Expr::Tuple(args)
+    ("True", []) => Boolean(true)
+    ("False", []) => Boolean(false)
+    ("Tuple", _) => Tuple(args)
     ("S", _) => constructor_singleton_registry(name, args)
     ("Integer", _) => constructor_integer(args)
     ("Rational", _) => constructor_rational(args)
     ("Float", _) => constructor_float(args)
-    ("Eq", [lhs, rhs]) => Expr::Relational(RelOp::Eq, lhs, rhs)
-    ("Ne", [lhs, rhs]) => Expr::Relational(RelOp::Ne, lhs, rhs)
-    ("Lt", [lhs, rhs]) => Expr::Relational(RelOp::Lt, lhs, rhs)
-    ("Le", [lhs, rhs]) => Expr::Relational(RelOp::Le, lhs, rhs)
-    ("Gt", [lhs, rhs]) => Expr::Relational(RelOp::Gt, lhs, rhs)
-    ("Ge", [lhs, rhs]) => Expr::Relational(RelOp::Ge, lhs, rhs)
-    ("Mod", [lhs, rhs]) => Expr::Mod(lhs, rhs)
+    ("Eq", [lhs, rhs]) => Relational(Eq, lhs, rhs)
+    ("Ne", [lhs, rhs]) => Relational(Ne, lhs, rhs)
+    ("Lt", [lhs, rhs]) => Relational(Lt, lhs, rhs)
+    ("Le", [lhs, rhs]) => Relational(Le, lhs, rhs)
+    ("Gt", [lhs, rhs]) => Relational(Gt, lhs, rhs)
+    ("Ge", [lhs, rhs]) => Relational(Ge, lhs, rhs)
+    ("Mod", [lhs, rhs]) => Mod(lhs, rhs)
     ("Derivative", _) => constructor_derivative(name, args)
     ("Subs", [expr, variable, value]) => subs_expr(expr, variable, value)
     ("Lambda", [vars, body]) => lambda_expr(vars, body)
@@ -1675,12 +1648,12 @@ fn raw_function_canonical(name : String, args : Array[Expr]) -> Expr {
       for item in items {
         match tuple_items(item) {
           Some([key, value]) => entries.push((key, value))
-          _ => return Expr::Apply(Expr::FunctionHead(name), args)
+          _ => return Apply(FunctionHead(name), args)
         }
       }
-      Expr::Dict(entries)
+      Dict(entries)
     }
-    _ => Expr::Apply(Expr::FunctionHead(name), args)
+    _ => Apply(FunctionHead(name), args)
   }
 }
 

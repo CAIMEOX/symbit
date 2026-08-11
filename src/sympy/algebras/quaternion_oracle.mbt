@@ -124,7 +124,7 @@ fn py_call_one(
   callable : @py.PyCallable,
   arg : @py.PyObject,
 ) -> @py.PyObjectEnum raise {
-  py_call_with_args(callable, [OracleArg::PyObj(arg)])
+  py_call_with_args(callable, [PyObj(arg)])
 }
 
 ///|
@@ -173,10 +173,10 @@ fn quat_obj(
   d : @symcore.Expr,
 ) -> @py.PyObject raise {
   let res = sympy_call_must("sympy.Quaternion", [
-    OracleArg::PyObj(expr_to_sympy(a)),
-    OracleArg::PyObj(expr_to_sympy(b)),
-    OracleArg::PyObj(expr_to_sympy(c)),
-    OracleArg::PyObj(expr_to_sympy(d)),
+    PyObj(expr_to_sympy(a)),
+    PyObj(expr_to_sympy(b)),
+    PyObj(expr_to_sympy(c)),
+    PyObj(expr_to_sympy(d)),
   ])
   objenum_to_obj(res)
 }
@@ -196,12 +196,8 @@ fn quat_components(obj : @py.PyObject) -> Array[String] raise {
 
 ///|
 pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
-  let diff = sympy_call_must("sympy.sympify", [
-    OracleArg::Str("(\{lhs}) - (\{rhs})"),
-  ])
-  let res = sympy_call_must("sympy.simplify", [
-    OracleArg::PyObj(objenum_to_obj(diff)),
-  ])
+  let diff = sympy_call_must("sympy.sympify", [Str("(\{lhs}) - (\{rhs})")])
+  let res = sympy_call_must("sympy.simplify", [PyObj(objenum_to_obj(diff))])
   py_str_enum(res) == "0"
 }
 
@@ -249,7 +245,7 @@ pub fn quat_conjugate(
   d : @symcore.Expr,
 ) -> Array[String] raise {
   let q = quat_obj(a, b, c, d)
-  let res = sympy_call_must("sympy.conjugate", [OracleArg::PyObj(q)])
+  let res = sympy_call_must("sympy.conjugate", [PyObj(q)])
   quat_components(objenum_to_obj(res))
 }
 
@@ -289,7 +285,7 @@ pub fn quat_pow(
 ) -> Array[String] raise {
   let q = quat_obj(a, b, c, d)
   let pow = resolve_method_callable(q, "pow")
-  let p_obj = @sympy.py_pack(OracleArg::Int(p))
+  let p_obj = @sympy.py_pack(Int(p))
   let res = py_call_one(pow, p_obj)
   quat_components(objenum_to_obj(res))
 }
@@ -330,15 +326,15 @@ pub fn quat_from_axis_angle(
   let qcls = sympy_attr_obj("Quaternion")
   let from_axis = resolve_method_callable(qcls, "from_axis_angle")
   let vec = @sympy.py_pack(
-    OracleArg::List([
-      OracleArg::PyObj(expr_to_sympy(x)),
-      OracleArg::PyObj(expr_to_sympy(y)),
-      OracleArg::PyObj(expr_to_sympy(z)),
+    List([
+      PyObj(expr_to_sympy(x)),
+      PyObj(expr_to_sympy(y)),
+      PyObj(expr_to_sympy(z)),
     ]),
   )
   let res = py_call_with_args(from_axis, [
-    OracleArg::PyObj(vec),
-    OracleArg::PyObj(expr_to_sympy(angle)),
+    PyObj(vec),
+    PyObj(expr_to_sympy(angle)),
   ])
   quat_components(objenum_to_obj(res))
 }

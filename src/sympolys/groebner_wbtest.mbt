@@ -1,6 +1,6 @@
 ///|
 fn groebner_wb_builder() -> PolyBuilder {
-  PolyBuilder::new(["x", "y"], Domain::QQ)
+  PolyBuilder::new(["x", "y"], QQ)
 }
 
 ///|
@@ -22,7 +22,7 @@ test "groebner wb: spoly monic path" {
 
 ///|
 test "groebner wb: gcd and lcm frontdoors" {
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let x = @symcore.Expr::Symbol("x")
   let f = b.from_expr((x - @symcore.int(1)) * (x + @symcore.int(2)))
   let g = b.from_expr((x - @symcore.int(1)) * (x + @symcore.int(3)))
@@ -39,18 +39,9 @@ test "groebner wb: f5 signature helpers" {
     sig_mult(s, monomial_from_array([0, 2])).0.to_array(),
     content="[1, 2]",
   )
-  inspect(
-    sig_cmp(sig(monomial_from_array([1, 0]), 2), s, TermOrder::Lex),
-    content="1",
-  )
-  inspect(
-    sig_cmp(s, sig(monomial_from_array([0, 3]), 3), TermOrder::Lex),
-    content="1",
-  )
-  inspect(
-    sig_cmp(sig(monomial_from_array([0, 3]), 3), s, TermOrder::Lex),
-    content="-1",
-  )
+  inspect(sig_cmp(sig(monomial_from_array([1, 0]), 2), s, Lex), content="1")
+  inspect(sig_cmp(s, sig(monomial_from_array([0, 3]), 3), Lex), content="1")
+  inspect(sig_cmp(sig(monomial_from_array([0, 3]), 3), s, Lex), content="-1")
 }
 
 ///|
@@ -64,10 +55,7 @@ test "groebner wb: f5 labeled polynomial helpers" {
   debug_inspect(sub.0.0.to_array(), content="[1, 0]")
   inspect(sub.2, content="3")
   inspect(sub.1.to_string(), content="x")
-  let mul = lbp_mul_term(
-    f,
-    (monomial_from_array([0, 1]), fe_from_int(2, Domain::QQ)),
-  )
+  let mul = lbp_mul_term(f, (monomial_from_array([0, 1]), fe_from_int(2, QQ)))
   debug_inspect(mul.0.0.to_array(), content="[1, 1]")
   inspect(mul.2, content="3")
   inspect(mul.1.to_string(), content="2*x*y + 2*y**2")
@@ -129,7 +117,7 @@ test "groebner wb: f5 rewritable comparable and reduce" {
 
 ///|
 test "groebner wb: f5 reduction preserves non admissible reductions" {
-  let b = PolyBuilder::new(["x", "y", "z"], Domain::QQ)
+  let b = PolyBuilder::new(["x", "y", "z"], QQ)
   let x = @symcore.Expr::Symbol("x")
   let f = lbp(sig(monomial_from_array([1, 1, 1]), 4), b.from_expr(x), 3)
   let g = lbp(sig(monomial_from_array([0, 0, 0]), 2), b.from_expr(x), 2)
@@ -146,7 +134,7 @@ test "groebner wb: basis predicates and reduction" {
   let y = @symcore.Expr::Symbol("y")
   let f = b.from_expr(x * y - @symcore.int(1))
   let g = b.from_expr(x - @symcore.int(1))
-  let basis = Poly::groebner([f, g], order=TermOrder::Lex)
+  let basis = Poly::groebner([f, g], order=Lex)
   inspect(groebner_wb_sorted(basis), content="x - 1 | y - 1")
   inspect(is_groebner(basis), content="true")
   inspect(is_minimal(basis), content="true")
@@ -166,8 +154,8 @@ test "groebner wb: matrix_fglm converts through target order" {
   let g = b.from_expr(
     x * y + @symcore.int(2) * (y ^ @symcore.int(3)) - @symcore.int(1),
   )
-  let source = Poly::groebner([f, g], order=TermOrder::Grlex)
-  let converted = matrix_fglm(source, order=TermOrder::Lex)
-  let target = Poly::groebner([f, g], order=TermOrder::Lex)
+  let source = Poly::groebner([f, g], order=Grlex)
+  let converted = matrix_fglm(source, order=Lex)
+  let target = Poly::groebner([f, g], order=Lex)
   inspect(groebner_wb_sorted(converted), content=groebner_wb_sorted(target))
 }

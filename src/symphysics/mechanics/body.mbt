@@ -12,17 +12,17 @@ pub fn body(
 ) -> Body raise @symvector.VectorError {
   let fr = frame.unwrap_or(@symvector.reference_frame(name + "_frame"))
   let mc = masscenter.unwrap_or(@symvector.point(name + "_masscenter"))
-  let m = mass.unwrap_or(Expr::Symbol(name + "_mass"))
+  let m = mass.unwrap_or(Symbol(name + "_mass"))
   mc.set_vel(fr, @symvector.vector_zero())
   let default_inertia = Inertia::from_inertia_scalars(
     mc,
     fr,
-    Expr::Symbol(name + "_ixx"),
-    Expr::Symbol(name + "_iyy"),
-    Expr::Symbol(name + "_izz"),
-    ixy=Expr::Symbol(name + "_ixy"),
-    iyz=Expr::Symbol(name + "_iyz"),
-    izx=Expr::Symbol(name + "_izx"),
+    Symbol(name + "_ixx"),
+    Symbol(name + "_iyy"),
+    Symbol(name + "_izz"),
+    ixy=Symbol(name + "_ixy"),
+    iyz=Symbol(name + "_iyz"),
+    izx=Symbol(name + "_izx"),
   )
   let is_rb = match central_inertia {
     Some(_) => true
@@ -42,7 +42,7 @@ pub fn body(
   } else {
     inertia_tuple(@symvector.dyadic_zero(), mc)
   }
-  Body::{
+  {
     name_: name,
     masscenter_: mc,
     frame_: fr,
@@ -236,15 +236,15 @@ pub fn Body::apply_force(
   let mut merged = false
   for i in 0..<self.loads_.length() {
     match self.loads_[i] {
-      Load::ForceLoad(existing) if existing.point == at => {
-        self.loads_[i] = Load::ForceLoad(force(at, existing.force + value))
+      ForceLoad(existing) if existing.point == at => {
+        self.loads_[i] = ForceLoad(force(at, existing.force + value))
         merged = true
       }
       _ => ()
     }
   }
   if !merged {
-    self.loads_.push(Load::ForceLoad(force(at, value)))
+    self.loads_.push(ForceLoad(force(at, value)))
   }
 }
 
@@ -261,8 +261,8 @@ pub fn Body::apply_torque(
   let mut merged = false
   for i in 0..<self.loads_.length() {
     match self.loads_[i] {
-      Load::TorqueLoad(existing) if existing.frame == self.frame_ => {
-        self.loads_[i] = Load::TorqueLoad(
+      TorqueLoad(existing) if existing.frame == self.frame_ => {
+        self.loads_[i] = TorqueLoad(
           torque(self.frame_, existing.torque + value),
         )
         merged = true
@@ -271,7 +271,7 @@ pub fn Body::apply_torque(
     }
   }
   if !merged {
-    self.loads_.push(Load::TorqueLoad(torque(self.frame_, value)))
+    self.loads_.push(TorqueLoad(torque(self.frame_, value)))
   }
 }
 

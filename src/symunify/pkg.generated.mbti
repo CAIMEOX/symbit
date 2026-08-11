@@ -57,17 +57,37 @@ pub(all) enum CombineMode {
   Associative
   Commutative
 } derive(Eq)
+#deprecated
+pub fn CombineMode::equal(Self, Self) -> Bool
+#deprecated
+pub fn CombineMode::not_equal(Self, Self) -> Bool
 
 pub struct CondVariableKey[T] {
   arg : T
   id : Int
 } derive(Eq, Hash)
 pub fn[T] CondVariableKey::arg(Self[T]) -> T
+#deprecated
+pub fn[T : Eq] CondVariableKey::equal(Self[T], Self[T]) -> Bool
+#deprecated
+pub fn[T : Hash] CondVariableKey::hash(Self[T]) -> Int
+#deprecated
+pub fn[T : Hash] CondVariableKey::hash_combine(Self[T], Hasher) -> Unit
+#deprecated
+pub fn[T : Eq] CondVariableKey::not_equal(Self[T], Self[T]) -> Bool
 
 pub(all) enum MatchVar[T] {
   Variable(VariableKey[T])
   CondVariable(CondVariableKey[T])
 } derive(Eq, Hash)
+#deprecated
+pub fn[T : Eq] MatchVar::equal(Self[T], Self[T]) -> Bool
+#deprecated
+pub fn[T : Hash] MatchVar::hash(Self[T]) -> Int
+#deprecated
+pub fn[T : Hash] MatchVar::hash_combine(Self[T], Hasher) -> Unit
+#deprecated
+pub fn[T : Eq] MatchVar::not_equal(Self[T], Self[T]) -> Bool
 
 pub struct RewriteRule {
   source : @symcore.Expr
@@ -90,6 +110,14 @@ pub struct VariableKey[T] {
   arg : T
 } derive(Eq, Hash)
 pub fn[T] VariableKey::arg(Self[T]) -> T
+#deprecated
+pub fn[T : Eq] VariableKey::equal(Self[T], Self[T]) -> Bool
+#deprecated
+pub fn[T : Hash] VariableKey::hash(Self[T]) -> Int
+#deprecated
+pub fn[T : Hash] VariableKey::hash_combine(Self[T], Hasher) -> Unit
+#deprecated
+pub fn[T : Eq] VariableKey::not_equal(Self[T], Self[T]) -> Bool
 
 // Type aliases
 pub using @util {type ExprOp}

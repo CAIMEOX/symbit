@@ -52,7 +52,7 @@ pub enum PlotInput {
 /// - Returns: `PlotInput`.
 /// - Limits: Shape validation is deferred to `plot`.
 pub fn plot_expr(expr : @symcore.Expr) -> PlotInput {
-  PlotInput::Expr(expr)
+  Expr(expr)
 }
 
 ///|
@@ -65,7 +65,7 @@ pub fn plot_range(
   start : @symcore.Expr,
   end : @symcore.Expr,
 ) -> PlotInput {
-  PlotInput::Range(@symcore.Expr::Tuple([symbol, start, end]))
+  Range(Tuple([symbol, start, end]))
 }
 
 ///|
@@ -74,7 +74,7 @@ pub fn plot_range(
 /// - Returns: `PlotInput`.
 /// - Limits: Label interpretation is left to the plotting front door.
 pub fn plot_label(value : String) -> PlotInput {
-  PlotInput::Label(value)
+  Label(value)
 }
 
 ///|
@@ -83,7 +83,7 @@ pub fn plot_label(value : String) -> PlotInput {
 /// - Returns: `PlotInput`.
 /// - Limits: Keywords are stored structurally and are not validated here.
 pub fn plot_rendering_kw(value : Map[String, String]) -> PlotInput {
-  PlotInput::RenderingKw(value)
+  RenderingKw(value)
 }
 
 ///|
@@ -92,7 +92,7 @@ pub fn plot_rendering_kw(value : Map[String, String]) -> PlotInput {
 /// - Returns: `PlotInput`.
 /// - Limits: Group semantics are interpreted by `plot`, not by this constructor.
 pub fn plot_group(items : Array[PlotInput]) -> PlotInput {
-  PlotInput::Group(items)
+  Group(items)
 }
 
 ///|
@@ -117,7 +117,7 @@ pub fn plot_parametric_expr(
   expr_x : @symcore.Expr,
   expr_y : @symcore.Expr,
 ) -> ParametricPlotInput {
-  ParametricPlotInput::Exprs(expr_x, expr_y)
+  Exprs(expr_x, expr_y)
 }
 
 ///|
@@ -130,7 +130,7 @@ pub fn plot_parametric_range(
   start : @symcore.Expr,
   end : @symcore.Expr,
 ) -> ParametricPlotInput {
-  ParametricPlotInput::Range(@symcore.Expr::Tuple([symbol, start, end]))
+  Range(Tuple([symbol, start, end]))
 }
 
 ///|
@@ -139,7 +139,7 @@ pub fn plot_parametric_range(
 /// - Returns: `ParametricPlotInput`.
 /// - Limits: Label interpretation is left to the plotting front door.
 pub fn plot_parametric_label(value : String) -> ParametricPlotInput {
-  ParametricPlotInput::Label(value)
+  Label(value)
 }
 
 ///|
@@ -150,7 +150,7 @@ pub fn plot_parametric_label(value : String) -> ParametricPlotInput {
 pub fn plot_parametric_rendering_kw(
   value : Map[String, String],
 ) -> ParametricPlotInput {
-  ParametricPlotInput::RenderingKw(value)
+  RenderingKw(value)
 }
 
 ///|
@@ -161,7 +161,7 @@ pub fn plot_parametric_rendering_kw(
 pub fn plot_parametric_group(
   items : Array[ParametricPlotInput],
 ) -> ParametricPlotInput {
-  ParametricPlotInput::Group(items)
+  Group(items)
 }
 
 ///|
@@ -187,7 +187,7 @@ pub fn plot3d_parametric_line_expr(
   expr_y : @symcore.Expr,
   expr_z : @symcore.Expr,
 ) -> Parametric3DPlotInput {
-  Parametric3DPlotInput::Exprs(expr_x, expr_y, expr_z)
+  Exprs(expr_x, expr_y, expr_z)
 }
 
 ///|
@@ -200,7 +200,7 @@ pub fn plot3d_parametric_line_range(
   start : @symcore.Expr,
   end : @symcore.Expr,
 ) -> Parametric3DPlotInput {
-  Parametric3DPlotInput::Range(@symcore.Expr::Tuple([symbol, start, end]))
+  Range(Tuple([symbol, start, end]))
 }
 
 ///|
@@ -209,7 +209,7 @@ pub fn plot3d_parametric_line_range(
 /// - Returns: `Parametric3DPlotInput`.
 /// - Limits: Label interpretation is left to the plotting front door.
 pub fn plot3d_parametric_line_label(value : String) -> Parametric3DPlotInput {
-  Parametric3DPlotInput::Label(value)
+  Label(value)
 }
 
 ///|
@@ -220,7 +220,7 @@ pub fn plot3d_parametric_line_label(value : String) -> Parametric3DPlotInput {
 pub fn plot3d_parametric_line_rendering_kw(
   value : Map[String, String],
 ) -> Parametric3DPlotInput {
-  Parametric3DPlotInput::RenderingKw(value)
+  RenderingKw(value)
 }
 
 ///|
@@ -231,7 +231,7 @@ pub fn plot3d_parametric_line_rendering_kw(
 pub fn plot3d_parametric_line_group(
   items : Array[Parametric3DPlotInput],
 ) -> Parametric3DPlotInput {
-  Parametric3DPlotInput::Group(items)
+  Group(items)
 }
 
 ///|
@@ -244,7 +244,7 @@ pub fn plot3d_parametric_surface_expr(
   expr_y : @symcore.Expr,
   expr_z : @symcore.Expr,
 ) -> Parametric3DPlotInput {
-  Parametric3DPlotInput::Exprs(expr_x, expr_y, expr_z)
+  Exprs(expr_x, expr_y, expr_z)
 }
 
 ///|
@@ -257,7 +257,7 @@ pub fn plot3d_parametric_surface_range(
   start : @symcore.Expr,
   end : @symcore.Expr,
 ) -> Parametric3DPlotInput {
-  Parametric3DPlotInput::Range(@symcore.Expr::Tuple([symbol, start, end]))
+  Range(Tuple([symbol, start, end]))
 }
 
 ///|
@@ -266,7 +266,7 @@ pub fn plot3d_parametric_surface_range(
 /// - Returns: `Parametric3DPlotInput`.
 /// - Limits: Label interpretation is left to the plotting front door.
 pub fn plot3d_parametric_surface_label(value : String) -> Parametric3DPlotInput {
-  Parametric3DPlotInput::Label(value)
+  Label(value)
 }
 
 ///|
@@ -277,7 +277,7 @@ pub fn plot3d_parametric_surface_label(value : String) -> Parametric3DPlotInput 
 pub fn plot3d_parametric_surface_rendering_kw(
   value : Map[String, String],
 ) -> Parametric3DPlotInput {
-  Parametric3DPlotInput::RenderingKw(value)
+  RenderingKw(value)
 }
 
 ///|
@@ -288,5 +288,5 @@ pub fn plot3d_parametric_surface_rendering_kw(
 pub fn plot3d_parametric_surface_group(
   items : Array[Parametric3DPlotInput],
 ) -> Parametric3DPlotInput {
-  Parametric3DPlotInput::Group(items)
+  Group(items)
 }

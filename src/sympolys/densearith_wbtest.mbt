@@ -1,11 +1,11 @@
 ///|
 fn da_wb_fezz(n : Int) -> FieldElem {
-  FieldElem::QQ(@symnum.BigRational::from_int(n))
+  QQ(@symnum.BigRational::from_int(n))
 }
 
 ///|
 fn da_wb_feqq(num : Int, den : Int) -> FieldElem {
-  FieldElem::QQ(
+  QQ(
     @symnum.BigRational::from_ints(num, den) catch {
       _ => abort("whitebox test rational expects a nonzero denominator")
     },
@@ -15,8 +15,8 @@ fn da_wb_feqq(num : Int, den : Int) -> FieldElem {
 ///|
 fn da_wb_dense_repr(p : DensePoly) -> String {
   match p {
-    DensePoly::Coef(c) => c.to_string()
-    DensePoly::Poly(items) => {
+    Coef(c) => Show::to_string(c)
+    Poly(items) => {
       let parts : Array[String] = Array::new()
       for item in items {
         parts.push(da_wb_dense_repr(item))
@@ -31,7 +31,7 @@ fn da_wb_dense_repr(p : DensePoly) -> String {
 fn da_wb_dup_repr(coeffs : Array[FieldElem]) -> String {
   let parts : Array[String] = Array::new()
   for c in coeffs {
-    parts.push(c.to_string())
+    parts.push(Show::to_string(c))
   }
   let joined = parts.join(",")
   "[\{joined}]"
@@ -43,73 +43,68 @@ test "densearith wb: dup guard and error branches" {
     [da_wb_fezz(1), da_wb_fezz(2)],
     da_wb_fezz(0),
     3,
-    Domain::ZZ,
+    ZZ,
   )
   assert_true(da_wb_dup_repr(keep_same) == "[1,2]")
 
-  let mul_empty = dup_mul_ground([], da_wb_fezz(2), Domain::ZZ)
+  let mul_empty = dup_mul_ground([], da_wb_fezz(2), ZZ)
   assert_true(mul_empty.is_empty())
-  let mul_zero = dup_mul_ground([da_wb_fezz(3)], da_wb_fezz(0), Domain::ZZ)
+  let mul_zero = dup_mul_ground([da_wb_fezz(3)], da_wb_fezz(0), ZZ)
   assert_true(mul_zero.is_empty())
 
-  let quo_empty = dup_quo_ground([], da_wb_fezz(1), Domain::ZZ)
+  let quo_empty = dup_quo_ground([], da_wb_fezz(1), ZZ)
   assert_true(quo_empty.is_empty())
-  let exquo_empty = dup_exquo_ground([], da_wb_fezz(1), Domain::ZZ)
+  let exquo_empty = dup_exquo_ground([], da_wb_fezz(1), ZZ)
   assert_true(exquo_empty.is_empty())
 
   sympolys_assert_error(
-    fn() raise PolyError {
-      dup_quo_ground([da_wb_fezz(1)], da_wb_fezz(0), Domain::ZZ)
-    },
+    fn() raise PolyError { dup_quo_ground([da_wb_fezz(1)], da_wb_fezz(0), ZZ) },
     "DivisionByZero",
   )
   sympolys_assert_error(
     fn() raise PolyError {
-      dup_exquo_ground([da_wb_fezz(1)], da_wb_fezz(0), Domain::ZZ)
+      dup_exquo_ground([da_wb_fezz(1)], da_wb_fezz(0), ZZ)
     },
     "DivisionByZero",
   )
 
   let qq_poly = [da_wb_feqq(1, 2), da_wb_feqq(3, 4)]
-  let qq_quo = dup_quo_ground(qq_poly, da_wb_feqq(1, 4), Domain::QQ)
+  let qq_quo = dup_quo_ground(qq_poly, da_wb_feqq(1, 4), QQ)
   assert_true(da_wb_dup_repr(qq_quo) == "[2,3]")
-  let qq_exquo = dup_exquo_ground(qq_poly, da_wb_feqq(1, 2), Domain::QQ)
+  let qq_exquo = dup_exquo_ground(qq_poly, da_wb_feqq(1, 2), QQ)
   assert_true(da_wb_dup_repr(qq_exquo) == "[1,3/2]")
 
-  assert_true(dup_lshift([], 4, Domain::ZZ).is_empty())
-  assert_true(dup_rshift([], 4, Domain::ZZ).is_empty())
-  assert_true(dup_rshift([da_wb_fezz(1)], 1, Domain::ZZ).is_empty())
+  assert_true(dup_lshift([], 4, ZZ).is_empty())
+  assert_true(dup_rshift([], 4, ZZ).is_empty())
+  assert_true(dup_rshift([da_wb_fezz(1)], 1, ZZ).is_empty())
 
-  let pow_zero = dup_pow([da_wb_fezz(3), da_wb_fezz(2)], 0, Domain::ZZ)
+  let pow_zero = dup_pow([da_wb_fezz(3), da_wb_fezz(2)], 0, ZZ)
   assert_true(da_wb_dup_repr(pow_zero) == "[1]")
   sympolys_assert_error(
-    fn() raise PolyError { dup_pow([da_wb_fezz(1)], -1, Domain::ZZ) },
+    fn() raise PolyError { dup_pow([da_wb_fezz(1)], -1, ZZ) },
     "BadExponent",
   )
 
   sympolys_assert_error(
     fn() raise PolyError {
-      dup_series_pow([da_wb_fezz(1), da_wb_fezz(1)], -1, 3, Domain::ZZ)
+      dup_series_pow([da_wb_fezz(1), da_wb_fezz(1)], -1, 3, ZZ)
     },
     "BadExponent",
   )
   inspect(
-    da_wb_dup_repr(dup_series_mul([], [da_wb_fezz(1)], 3, Domain::ZZ)),
+    da_wb_dup_repr(dup_series_mul([], [da_wb_fezz(1)], 3, ZZ)),
     content="[]",
   )
-  inspect(
-    da_wb_dup_repr(dup_series_sqr([da_wb_fezz(1)], 0, Domain::ZZ)),
-    content="[]",
-  )
+  inspect(da_wb_dup_repr(dup_series_sqr([da_wb_fezz(1)], 0, ZZ)), content="[]")
 
   sympolys_assert_error(
-    fn() raise PolyError { dup_pdiv([da_wb_fezz(1)], [], Domain::ZZ) },
+    fn() raise PolyError { dup_pdiv([da_wb_fezz(1)], [], ZZ) },
     "DivisionByZero",
   )
   let (short_q, short_r) = dup_pdiv(
     [da_wb_fezz(1)],
     [da_wb_fezz(1), da_wb_fezz(0)],
-    Domain::ZZ,
+    ZZ,
   )
   assert_true(short_q.is_empty() && da_wb_dup_repr(short_r) == "[1]")
 
@@ -118,7 +113,7 @@ test "densearith wb: dup guard and error branches" {
       dup_pexquo(
         [da_wb_fezz(1), da_wb_fezz(0), da_wb_fezz(1)],
         [da_wb_fezz(1), da_wb_fezz(-1)],
-        Domain::ZZ,
+        ZZ,
       )
     },
     "ExactQuotientFailed",
@@ -129,39 +124,22 @@ test "densearith wb: dup guard and error branches" {
 test "densearith wb: series arithmetic frontdoors" {
   let f = [da_wb_fezz(1), da_wb_fezz(0), da_wb_fezz(1)]
   let g = [da_wb_fezz(2), da_wb_fezz(1)]
-  inspect(
-    da_wb_dup_repr(dup_series_mul(f, g, 4, Domain::ZZ)),
-    content="[2,1,2,1]",
-  )
-  inspect(
-    da_wb_dup_repr(dup_series_mul(f, g, 3, Domain::ZZ)),
-    content="[1,2,1]",
-  )
+  inspect(da_wb_dup_repr(dup_series_mul(f, g, 4, ZZ)), content="[2,1,2,1]")
+  inspect(da_wb_dup_repr(dup_series_mul(f, g, 3, ZZ)), content="[1,2,1]")
   inspect(
     da_wb_dup_repr(
-      dup_series_sqr(
-        [da_wb_fezz(1), da_wb_fezz(2), da_wb_fezz(3)],
-        5,
-        Domain::ZZ,
-      ),
+      dup_series_sqr([da_wb_fezz(1), da_wb_fezz(2), da_wb_fezz(3)], 5, ZZ),
     ),
     content="[1,4,10,12,9]",
   )
   inspect(
     da_wb_dup_repr(
-      dup_series_pow(
-        [da_wb_fezz(1), da_wb_fezz(2), da_wb_fezz(3)],
-        2,
-        5,
-        Domain::ZZ,
-      ),
+      dup_series_pow([da_wb_fezz(1), da_wb_fezz(2), da_wb_fezz(3)], 2, 5, ZZ),
     ),
     content="[1,4,10,12,9]",
   )
   inspect(
-    da_wb_dup_repr(
-      dup_series_pow([da_wb_fezz(1), da_wb_fezz(1)], 0, 0, Domain::ZZ),
-    ),
+    da_wb_dup_repr(dup_series_pow([da_wb_fezz(1), da_wb_fezz(1)], 0, 0, ZZ)),
     content="[1]",
   )
 }
@@ -170,13 +148,13 @@ test "densearith wb: series arithmetic frontdoors" {
 test "densearith wb: dmp u=0 and zero-shape branches" {
   let f0 = DensePoly::Coef(da_wb_fezz(2))
   let c0 = DensePoly::Coef(da_wb_fezz(3))
-  let add0 = dmp_add_term(f0, c0, 0, 0, Domain::ZZ)
+  let add0 = dmp_add_term(f0, c0, 0, 0, ZZ)
   assert_true(da_wb_dense_repr(add0) == "[5]")
-  let mul0 = dmp_mul_term(f0, c0, 1, 0, Domain::ZZ)
+  let mul0 = dmp_mul_term(f0, c0, 1, 0, ZZ)
   assert_true(da_wb_dense_repr(mul0) == "[6,0]")
-  let add_ground0 = dmp_add_ground(f0, da_wb_fezz(4), 0, Domain::ZZ)
+  let add_ground0 = dmp_add_ground(f0, da_wb_fezz(4), 0, ZZ)
   assert_true(da_wb_dense_repr(add_ground0) == "[6]")
-  let sub_ground0 = dmp_sub_ground(f0, da_wb_fezz(4), 0, Domain::ZZ)
+  let sub_ground0 = dmp_sub_ground(f0, da_wb_fezz(4), 0, ZZ)
   assert_true(da_wb_dense_repr(sub_ground0) == "[-2]")
 
   sympolys_assert_error(
@@ -186,18 +164,18 @@ test "densearith wb: dmp u=0 and zero-shape branches" {
         dense_coef(da_wb_fezz(1)),
         0,
         0,
-        Domain::ZZ,
+        ZZ,
       )
     },
     "NotUnivariate",
   )
 
   let lifted = dmp_add_term(
-    DensePoly::Coef(da_wb_fezz(1)),
+    Coef(da_wb_fezz(1)),
     dmp_ground(da_wb_fezz(2), 0),
     1,
     1,
-    Domain::ZZ,
+    ZZ,
   )
   assert_true(da_wb_dense_repr(lifted) != "[]")
 
@@ -206,7 +184,7 @@ test "densearith wb: dmp u=0 and zero-shape branches" {
     dmp_ground(da_wb_fezz(7), 0),
     2,
     1,
-    Domain::ZZ,
+    ZZ,
   )
   assert_true(da_wb_dense_repr(from_empty).contains("7"))
 
@@ -214,53 +192,48 @@ test "densearith wb: dmp u=0 and zero-shape branches" {
     dmp_ground(da_wb_fezz(3), 1),
     da_wb_fezz(0),
     1,
-    Domain::ZZ,
+    ZZ,
   )
   assert_true(dmp_zero_p(mul_zero, 1))
 
   let z1 = dmp_zero(1)
   let nz1 = dense_poly([dense_coef(da_wb_fezz(5))])
-  assert_true(da_wb_dense_repr(dmp_add(z1, nz1, 1, Domain::ZZ)) == "[5]")
-  assert_true(da_wb_dense_repr(dmp_add(nz1, z1, 1, Domain::ZZ)) == "[5]")
-  assert_true(da_wb_dense_repr(dmp_sub(nz1, z1, 1, Domain::ZZ)) == "[5]")
-  assert_true(da_wb_dense_repr(dmp_sub(z1, nz1, 1, Domain::ZZ)).contains("5"))
-  assert_true(dmp_zero_p(dmp_mul(z1, nz1, 1, Domain::ZZ), 1))
+  assert_true(da_wb_dense_repr(dmp_add(z1, nz1, 1, ZZ)) == "[5]")
+  assert_true(da_wb_dense_repr(dmp_add(nz1, z1, 1, ZZ)) == "[5]")
+  assert_true(da_wb_dense_repr(dmp_sub(nz1, z1, 1, ZZ)) == "[5]")
+  assert_true(da_wb_dense_repr(dmp_sub(z1, nz1, 1, ZZ)).contains("5"))
+  assert_true(dmp_zero_p(dmp_mul(z1, nz1, 1, ZZ), 1))
 
   sympolys_assert_error(
-    fn() raise PolyError { dmp_pow(nz1, -2, 1, Domain::ZZ) },
+    fn() raise PolyError { dmp_pow(nz1, -2, 1, ZZ) },
     "BadExponent",
   )
 
-  let _u0_pair = dmp_pdiv(
-    DensePoly::Coef(da_wb_fezz(6)),
-    DensePoly::Coef(da_wb_fezz(2)),
-    0,
-    Domain::ZZ,
-  )
+  let _u0_pair = dmp_pdiv(Coef(da_wb_fezz(6)), Coef(da_wb_fezz(2)), 0, ZZ)
 
   sympolys_assert_error(
-    fn() raise PolyError { dmp_pdiv(nz1, dmp_zero(1), 1, Domain::ZZ) },
+    fn() raise PolyError { dmp_pdiv(nz1, dmp_zero(1), 1, ZZ) },
     "DivisionByZero",
   )
 
   let big = dense_poly([dense_coef(da_wb_fezz(1)), dense_coef(da_wb_fezz(0))])
-  let (q_short, r_short) = dmp_pdiv(nz1, big, 1, Domain::ZZ)
+  let (q_short, r_short) = dmp_pdiv(nz1, big, 1, ZZ)
   assert_true(dmp_zero_p(q_short, 1) && da_wb_dense_repr(r_short) == "[5]")
 
   sympolys_assert_error(
-    fn() raise PolyError { dmp_pexquo(nz1, big, 1, Domain::ZZ) },
+    fn() raise PolyError { dmp_pexquo(nz1, big, 1, ZZ) },
     "ExactQuotientFailed",
   )
 }
 
 ///|
 test "densearith wb: internal helper branches" {
-  assert_true(domain_is_field(Domain::GF(5)))
+  assert_true(domain_is_field(GF(5)))
 
   let inv = fe_pow_local(da_wb_feqq(2, 1), -1)
-  assert_true(inv.to_string() == "1/2")
+  assert_true(Show::to_string(inv) == "1/2")
   let cube = fe_pow_local(da_wb_fezz(2), 3)
-  assert_true(cube.to_string() == "8")
+  assert_true(Show::to_string(cube) == "8")
 
   let cc_one = FieldElem::CC(
     @symnum.BigRational::one(),
@@ -268,40 +241,30 @@ test "densearith wb: internal helper branches" {
   )
   let cc_pow = fe_pow_local(cc_one, 2)
   match cc_pow {
-    FieldElem::CC(_, _) => ()
+    CC(_, _) => ()
     _ => fail("fe_pow_local should keep CC type")
   }
 
   sympolys_assert_error(
-    fn() raise PolyError {
-      fe_divides(da_wb_fezz(1), da_wb_fezz(0), Domain::ZZ)
-    },
+    fn() raise PolyError { fe_divides(da_wb_fezz(1), da_wb_fezz(0), ZZ) },
     "DivisionByZero",
   )
 
-  let (ok_field, q_field) = fe_divides(
-    da_wb_feqq(1, 1),
-    da_wb_feqq(2, 1),
-    Domain::QQ,
-  )
-  assert_true(ok_field && q_field.to_string() == "1/2")
+  let (ok_field, q_field) = fe_divides(da_wb_feqq(1, 1), da_wb_feqq(2, 1), QQ)
+  assert_true(ok_field && Show::to_string(q_field) == "1/2")
 
   let (ok_non_integral, q_non_integral) = fe_divides(
     da_wb_feqq(1, 2),
     da_wb_fezz(1),
-    Domain::ZZ,
+    ZZ,
   )
-  assert_true(!ok_non_integral && q_non_integral.to_string() == "0")
+  assert_true(!ok_non_integral && Show::to_string(q_non_integral) == "0")
 
-  let (ok_not_div, q_not_div) = fe_divides(
-    da_wb_fezz(3),
-    da_wb_fezz(2),
-    Domain::ZZ,
-  )
-  assert_true(!ok_not_div && q_not_div.to_string() == "0")
+  let (ok_not_div, q_not_div) = fe_divides(da_wb_fezz(3), da_wb_fezz(2), ZZ)
+  assert_true(!ok_not_div && Show::to_string(q_not_div) == "0")
 
   let a = @symcore.Expr::Symbol("a")
-  let default_domain = Domain::AlgExt(Domain::ZZ, ["a"], [
+  let default_domain = Domain::AlgExt(ZZ, ["a"], [
     (a ^ @symcore.int(2)) + @symcore.int(1),
   ])
   sympolys_assert_error(

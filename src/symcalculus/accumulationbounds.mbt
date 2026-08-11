@@ -42,13 +42,13 @@ priv enum SimpleEndpoint {
 
 ///|
 fn expr_finite(n : BigRational) -> Expr {
-  @symcore.Expr::Number(n)
+  Number(n)
 }
 
 ///|
 fn expr_number(expr : Expr) -> BigRational? {
   match expr {
-    Expr::Number(n) => Some(n)
+    Number(n) => Some(n)
     _ => None
   }
 }
@@ -56,47 +56,38 @@ fn expr_number(expr : Expr) -> BigRational? {
 ///|
 fn simple_endpoint(expr : Expr) -> SimpleEndpoint {
   match expr {
-    Expr::Number(n) => SimpleEndpoint::Finite(n)
-    Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-    | Expr::Symbol("oo") => SimpleEndpoint::PosInf
-    Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN) | Expr::Symbol("nan") =>
-      SimpleEndpoint::Nan
-    Expr::Mul(args) if args.length() == 2 => {
+    Number(n) => Finite(n)
+    NumberSymbol(Infinity) | Symbol("oo") => PosInf
+    NumberSymbol(NaN) | Symbol("nan") => Nan
+    Mul(args) if args.length() == 2 => {
       let mut saw_neg_one = false
       let mut saw_pos_inf = false
       for arg in args {
         match arg {
-          Expr::Number(n) if n.compare(BigRational::from_int(-1)) == 0 =>
+          Number(n) if n.compare(BigRational::from_int(-1)) == 0 =>
             saw_neg_one = true
-          Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-          | Expr::Symbol("oo") => saw_pos_inf = true
-          _ => return SimpleEndpoint::Other(expr)
+          NumberSymbol(Infinity) | Symbol("oo") => saw_pos_inf = true
+          _ => return Other(expr)
         }
       }
       if saw_neg_one && saw_pos_inf {
-        SimpleEndpoint::NegInf
+        NegInf
       } else {
-        SimpleEndpoint::Other(expr)
+        Other(expr)
       }
     }
-    _ => SimpleEndpoint::Other(expr)
+    _ => Other(expr)
   }
 }
 
 ///|
 fn simple_to_expr(s : SimpleEndpoint) -> Expr {
   match s {
-    SimpleEndpoint::Finite(n) => expr_finite(n)
-    SimpleEndpoint::PosInf =>
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-    SimpleEndpoint::NegInf =>
-      @symcore.mul([
-        @symcore.int(-1),
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-      ])
-    SimpleEndpoint::Nan =>
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
-    SimpleEndpoint::Other(e) => e
+    Finite(n) => expr_finite(n)
+    PosInf => NumberSymbol(Infinity)
+    NegInf => @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])
+    Nan => NumberSymbol(NaN)
+    Other(e) => e
   }
 }
 
@@ -156,25 +147,24 @@ fn rat_max(a : BigRational, b : BigRational) -> BigRational {
 ///|
 fn simple_add(a : SimpleEndpoint, b : SimpleEndpoint) -> SimpleEndpoint {
   match (a, b) {
-    (SimpleEndpoint::Finite(x), SimpleEndpoint::Finite(y)) =>
-      SimpleEndpoint::Finite(rat_add(x, y))
-    (SimpleEndpoint::PosInf, SimpleEndpoint::NegInf) => SimpleEndpoint::Nan
-    (SimpleEndpoint::NegInf, SimpleEndpoint::PosInf) => SimpleEndpoint::Nan
-    (SimpleEndpoint::PosInf, _) => SimpleEndpoint::PosInf
-    (_, SimpleEndpoint::PosInf) => SimpleEndpoint::PosInf
-    (SimpleEndpoint::NegInf, _) => SimpleEndpoint::NegInf
-    (_, SimpleEndpoint::NegInf) => SimpleEndpoint::NegInf
-    (SimpleEndpoint::Nan, _) => SimpleEndpoint::Nan
-    (_, SimpleEndpoint::Nan) => SimpleEndpoint::Nan
-    (SimpleEndpoint::Other(e), _) => SimpleEndpoint::Other(e)
-    (_, SimpleEndpoint::Other(e)) => SimpleEndpoint::Other(e)
+    (Finite(x), Finite(y)) => Finite(rat_add(x, y))
+    (PosInf, NegInf) => Nan
+    (NegInf, PosInf) => Nan
+    (PosInf, _) => PosInf
+    (_, PosInf) => PosInf
+    (NegInf, _) => NegInf
+    (_, NegInf) => NegInf
+    (Nan, _) => Nan
+    (_, Nan) => Nan
+    (Other(e), _) => Other(e)
+    (_, Other(e)) => Other(e)
   }
 }
 
 ///|
 fn simple_is_finite(a : SimpleEndpoint) -> Bool {
   match a {
-    SimpleEndpoint::Finite(_) => true
+    Finite(_) => true
     _ => false
   }
 }
@@ -182,7 +172,7 @@ fn simple_is_finite(a : SimpleEndpoint) -> Bool {
 ///|
 fn finite_value(a : SimpleEndpoint) -> BigRational {
   match a {
-    SimpleEndpoint::Finite(x) => x
+    Finite(x) => x
     _ => rat_zero()
   }
 }
@@ -225,9 +215,7 @@ pub fn accum_bounds(min : Expr, max : Expr) -> Expr raise AccumBoundsError {
   match (expr_number(min), expr_number(max)) {
     (Some(a), Some(b)) =>
       if a.compare(b) > 0 {
-        raise AccumBoundsError::InvalidBounds(
-          "Lower limit should be smaller than upper limit",
-        )
+        raise InvalidBounds("Lower limit should be smaller than upper limit")
       } else {
         @symcore.function("AccumBounds", [min, max])
       }
@@ -349,13 +337,10 @@ pub fn accum_add(lhs : Expr, rhs : Expr) -> Expr {
     (Some((a1, a2)), Some((b1, b2))) => {
       let s1 = simple_add(simple_endpoint(a1), simple_endpoint(b1))
       let s2 = simple_add(simple_endpoint(a2), simple_endpoint(b2))
-      if s1 is SimpleEndpoint::Nan || s2 is SimpleEndpoint::Nan {
+      if s1 is Nan || s2 is Nan {
         return accum_bounds_ordered(
-          @symcore.mul([
-            @symcore.int(-1),
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-          ]),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+          @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
+          NumberSymbol(Infinity),
         )
       }
       if simple_is_finite(s1) && simple_is_finite(s2) {
@@ -368,13 +353,10 @@ pub fn accum_add(lhs : Expr, rhs : Expr) -> Expr {
       if simple_is_finite(s) {
         let s1 = simple_add(simple_endpoint(a1), s)
         let s2 = simple_add(simple_endpoint(a2), s)
-        if s1 is SimpleEndpoint::Nan || s2 is SimpleEndpoint::Nan {
+        if s1 is Nan || s2 is Nan {
           return accum_bounds_ordered(
-            @symcore.mul([
-              @symcore.int(-1),
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-            ]),
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+            @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
+            NumberSymbol(Infinity),
           )
         }
         if simple_is_finite(s1) && simple_is_finite(s2) {
@@ -493,11 +475,8 @@ pub fn accum_div(lhs : Expr, rhs : Expr) -> Expr {
         let b2v = finite_value(sb2)
         if interval_contains_zero(b1v, b2v) {
           return accum_bounds_ordered(
-            @symcore.mul([
-              @symcore.int(-1),
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-            ]),
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+            @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
+            NumberSymbol(Infinity),
           )
         }
         let q1 = match rat_div(a1v, b1v) {
@@ -531,10 +510,7 @@ pub fn accum_div(lhs : Expr, rhs : Expr) -> Expr {
       if simple_is_finite(s) {
         let k = finite_value(s)
         if k.is_zero() {
-          return @symcore.mul([
-            lhs,
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-          ])
+          return @symcore.mul([lhs, NumberSymbol(Infinity)])
         }
         let inv = match rat_div(rat_one(), k) {
           Some(v) => v
@@ -582,7 +558,7 @@ fn pow_rational(base : BigRational, exp : Int) -> BigRational? {
 ///   interval-evaluated.
 pub fn accum_pow(base : Expr, exp : Expr) -> Expr {
   match (accum_unpack(base), exp) {
-    (Some((a1, a2)), Expr::Number(n)) => {
+    (Some((a1, a2)), Number(n)) => {
       if !n.is_integral() {
         return @symcore.pow(base, exp)
       }
@@ -639,11 +615,8 @@ pub fn accum_pow(base : Expr, exp : Expr) -> Expr {
         } else {
           if interval_contains_zero(lo, hi) {
             return accum_bounds_ordered(
-              @symcore.mul([
-                @symcore.int(-1),
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-              ]),
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+              @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
+              NumberSymbol(Infinity),
             )
           }
           let lo_pow = match pow_rational(lo, n_int) {

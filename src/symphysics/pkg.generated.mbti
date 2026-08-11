@@ -283,6 +283,16 @@ pub(all) suberror PhysicsError {
   IndexError(String)
   ShapeError(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn PhysicsError::equal(Self, Self) -> Bool
+#deprecated
+pub fn PhysicsError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn PhysicsError::output(Self, &Logger) -> Unit
+#deprecated
+pub fn PhysicsError::to_repr(Self) -> @debug.Repr
+#deprecated
+pub fn PhysicsError::to_string(Self) -> String
 pub impl Show for PhysicsError
 
 // Types and methods
@@ -293,10 +303,18 @@ pub struct BeamParameter {
   n_ : @symcore.Expr
 } derive(Eq)
 pub fn BeamParameter::divergence(Self) -> @symcore.Expr
+#deprecated
+pub fn BeamParameter::equal(Self, Self) -> Bool
 pub fn BeamParameter::gouy(Self) -> @symcore.Expr
 pub fn BeamParameter::n(Self) -> @symcore.Expr
+#deprecated
+pub fn BeamParameter::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn BeamParameter::output(Self, &Logger) -> Unit
 pub fn BeamParameter::q(Self) -> @symcore.Expr
 pub fn BeamParameter::radius(Self) -> @symcore.Expr
+#deprecated
+pub fn BeamParameter::to_string(Self) -> String
 pub fn BeamParameter::w(Self) -> @symcore.Expr
 pub fn BeamParameter::w_0(Self) -> @symcore.Expr
 pub fn BeamParameter::waist_approximation_limit(Self) -> @symcore.Expr
@@ -311,18 +329,26 @@ pub struct Dimension {
 } derive(Eq)
 pub fn Dimension::add(Self, Self) -> Self raise PhysicsError
 pub fn Dimension::div(Self, Self) -> Self
+#deprecated
+pub fn Dimension::equal(Self, Self) -> Bool
 pub fn Dimension::mul(Self, Self) -> Self
+#deprecated
+pub fn Dimension::not_equal(Self, Self) -> Bool
 pub fn Dimension::pow(Self, Int) -> Self
 
 pub struct ExplicitMatrix {
   rows : Array[Array[@symcore.Expr]]
 } derive(Eq)
 pub fn ExplicitMatrix::add(Self, Self) -> Self raise PhysicsError
+#deprecated
+pub fn ExplicitMatrix::equal(Self, Self) -> Bool
 pub fn ExplicitMatrix::get(Self, Int, Int) -> @symcore.Expr raise PhysicsError
 pub fn ExplicitMatrix::height(Self) -> Int
 pub fn ExplicitMatrix::map(Self, (@symcore.Expr) -> @symcore.Expr) -> Self
 pub fn ExplicitMatrix::mul(Self, Self) -> Self raise PhysicsError
 pub fn ExplicitMatrix::neg(Self) -> Self
+#deprecated
+pub fn ExplicitMatrix::not_equal(Self, Self) -> Bool
 pub fn ExplicitMatrix::rows_copy(Self) -> Array[Array[@symcore.Expr]]
 pub fn ExplicitMatrix::scale(Self, @symcore.Expr) -> Self
 pub fn ExplicitMatrix::sub(Self, Self) -> Self raise PhysicsError
@@ -333,17 +359,29 @@ pub struct GeometricRay {
   matrix_ : ExplicitMatrix
 } derive(Eq)
 pub fn GeometricRay::angle(Self) -> @symcore.Expr
+#deprecated
+pub fn GeometricRay::equal(Self, Self) -> Bool
 pub fn GeometricRay::height(Self) -> @symcore.Expr
 pub fn GeometricRay::matrix(Self) -> ExplicitMatrix
+#deprecated
+pub fn GeometricRay::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn GeometricRay::output(Self, &Logger) -> Unit
+#deprecated
+pub fn GeometricRay::to_string(Self) -> String
 pub impl Show for GeometricRay
 
 pub enum Medium {
   MediumN(String, @symcore.Expr)
   MediumPP(String, @symcore.Expr, @symcore.Expr)
 } derive(Eq)
+#deprecated
+pub fn Medium::equal(Self, Self) -> Bool
 pub fn Medium::intrinsic_impedance(Self) -> @symcore.Expr raise PhysicsError
 pub fn Medium::n(Self) -> @symcore.Expr
 pub fn Medium::name(Self) -> String
+#deprecated
+pub fn Medium::not_equal(Self, Self) -> Bool
 pub fn Medium::permeability(Self) -> @symcore.Expr raise PhysicsError
 pub fn Medium::permittivity(Self) -> @symcore.Expr raise PhysicsError
 pub fn Medium::refractive_index(Self) -> @symcore.Expr
@@ -353,6 +391,10 @@ pub enum OpticsMediumArg {
   Medium(Medium)
   Index(@symcore.Expr)
 } derive(Eq)
+#deprecated
+pub fn OpticsMediumArg::equal(Self, Self) -> Bool
+#deprecated
+pub fn OpticsMediumArg::not_equal(Self, Self) -> Bool
 
 pub struct Prefix {
   name : String
@@ -363,8 +405,12 @@ pub struct Prefix {
 } derive(Eq)
 pub fn Prefix::div_prefix(Self, Self) -> PrefixValue
 pub fn Prefix::div_quantity(Self, Quantity) -> @symcore.Expr
+#deprecated
+pub fn Prefix::equal(Self, Self) -> Bool
 pub fn Prefix::mul_prefix(Self, Self) -> PrefixValue
 pub fn Prefix::mul_quantity(Self, Quantity) -> @symcore.Expr
+#deprecated
+pub fn Prefix::not_equal(Self, Self) -> Bool
 pub fn Prefix::rdiv_one(Self) -> PrefixValue
 pub fn Prefix::scale_factor(Self) -> @symcore.Expr
 
@@ -372,6 +418,14 @@ pub enum PrefixValue {
   Prefix(Prefix)
   Expr(@symcore.Expr)
 } derive(Eq)
+#deprecated
+pub fn PrefixValue::equal(Self, Self) -> Bool
+#deprecated
+pub fn PrefixValue::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn PrefixValue::output(Self, &Logger) -> Unit
+#deprecated
+pub fn PrefixValue::to_string(Self) -> String
 pub impl Show for PrefixValue
 
 pub struct Quantity {
@@ -381,6 +435,10 @@ pub struct Quantity {
   scale_factor : @symcore.Expr
   is_prefixed : Bool
 } derive(Eq)
+#deprecated
+pub fn Quantity::equal(Self, Self) -> Bool
+#deprecated
+pub fn Quantity::not_equal(Self, Self) -> Bool
 pub fn Quantity::symbol_expr(Self) -> @symcore.Expr
 pub fn Quantity::with_scale(Self, @symcore.Expr) -> Self
 
@@ -394,7 +452,15 @@ pub fn RayTransferMatrix::apply_matrix(Self, Self) -> Self raise PhysicsError
 pub fn RayTransferMatrix::b(Self) -> @symcore.Expr
 pub fn RayTransferMatrix::c(Self) -> @symcore.Expr
 pub fn RayTransferMatrix::d(Self) -> @symcore.Expr
+#deprecated
+pub fn RayTransferMatrix::equal(Self, Self) -> Bool
 pub fn RayTransferMatrix::matrix(Self) -> ExplicitMatrix
+#deprecated
+pub fn RayTransferMatrix::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn RayTransferMatrix::output(Self, &Logger) -> Unit
+#deprecated
+pub fn RayTransferMatrix::to_string(Self) -> String
 pub impl Show for RayTransferMatrix
 
 pub struct TWave {
@@ -407,8 +473,14 @@ pub struct TWave {
 pub fn TWave::amplitude_expr(Self) -> @symcore.Expr
 pub fn TWave::angular_velocity(Self) -> @symcore.Expr
 pub fn TWave::as_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn TWave::equal(Self, Self) -> Bool
 pub fn TWave::frequency_expr(Self) -> @symcore.Expr
 pub fn TWave::neg(Self) -> Self raise PhysicsError
+#deprecated
+pub fn TWave::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn TWave::output(Self, &Logger) -> Unit
 pub fn TWave::phase_expr(Self) -> @symcore.Expr
 pub fn TWave::refractive_index_expr(Self) -> @symcore.Expr
 pub fn TWave::rewrite_as_cos(Self) -> @symcore.Expr
@@ -420,6 +492,8 @@ pub fn TWave::speed(Self) -> @symcore.Expr
 pub fn TWave::sub(Self, Self) -> Self raise PhysicsError
 pub fn TWave::superpose(Self, Self) -> Self raise PhysicsError
 pub fn TWave::time_period_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn TWave::to_string(Self) -> String
 pub fn TWave::wavelength(Self) -> @symcore.Expr
 pub fn TWave::wavenumber(Self) -> @symcore.Expr
 pub impl Show for TWave

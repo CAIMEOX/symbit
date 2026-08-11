@@ -29,7 +29,7 @@ test "physics.quantum.density: parity" {
     "density get_prob parity",
   )
 
-  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
+  let a = operator([Symbol("A")]).as_expr()
   quantum_test_assert_string_equal(
     quantum_eval_str(@symprint.pretty_string(rho.apply_op(a).as_expr())),
     quantum_density_apply_op_str(rho_txt, "Operator(A)"),

@@ -30,7 +30,6 @@ pub fn[T] get_class(
 ) -> T raise UtilitiesError {
   match registry.get(path) {
     Some(value) => value
-    None =>
-      raise UtilitiesError::MissingValue("no registered class for " + path)
+    None => raise MissingValue("no registered class for " + path)
   }
 }

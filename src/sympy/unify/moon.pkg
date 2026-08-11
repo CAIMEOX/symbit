@@ -9,7 +9,6 @@ import {
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symunify",
-  "CAIMEOX/symbit/symstrategies/util" @strategies_util,
 } for "test"
 
 supported_targets = "native"

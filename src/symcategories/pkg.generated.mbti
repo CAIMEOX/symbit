@@ -73,6 +73,16 @@ pub(all) suberror CategoryError {
   NotImplemented(String)
   Unsupported(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn CategoryError::equal(Self, Self) -> Bool
+#deprecated
+pub fn CategoryError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn CategoryError::output(Self, &Logger) -> Unit
+#deprecated
+pub fn CategoryError::to_repr(Self) -> @debug.Repr
+#deprecated
+pub fn CategoryError::to_string(Self) -> String
 pub impl Show for CategoryError
 
 // Types and methods
@@ -90,11 +100,15 @@ pub struct ArrowStringDescription {
   mut arrow_style : String
   mut forced_label_position : Bool
 }
+#deprecated
+pub fn ArrowStringDescription::output(Self, &Logger) -> Unit
 pub fn ArrowStringDescription::set_arrow_style(Self, String) -> Unit
 pub fn ArrowStringDescription::set_forced_label_position(Self, Bool) -> Unit
 pub fn ArrowStringDescription::set_label(Self, String) -> Unit
 pub fn ArrowStringDescription::set_label_displacement(Self, String) -> Unit
 pub fn ArrowStringDescription::set_label_position(Self, String) -> Unit
+#deprecated
+pub fn ArrowStringDescription::to_string(Self) -> String
 pub impl Show for ArrowStringDescription
 
 pub struct Category {
@@ -103,7 +117,29 @@ pub struct Category {
   commutative_diagrams : Array[Diagram]
 }
 pub fn Category::all_morphisms(Self) -> Unit raise CategoryError
+#deprecated
+pub fn Category::compare(Self, Self) -> Int
+#deprecated
+pub fn Category::equal(Self, Self) -> Bool
+#deprecated
+pub fn Category::hash(Self) -> Int
+#deprecated
+pub fn Category::hash_combine(Self, Hasher) -> Unit
 pub fn Category::hom(Self, Object, Object) -> Unit raise CategoryError
+#deprecated
+pub fn Category::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Category::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn Category::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn Category::op_le(Self, Self) -> Bool
+#deprecated
+pub fn Category::op_lt(Self, Self) -> Bool
+#deprecated
+pub fn Category::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Category::to_string(Self) -> String
 pub impl Compare for Category
 pub impl Eq for Category
 pub impl Hash for Category
@@ -112,6 +148,24 @@ pub impl Show for Category
 pub struct Class {
   objects : Array[Object]
 }
+#deprecated
+pub fn Class::compare(Self, Self) -> Int
+#deprecated
+pub fn Class::equal(Self, Self) -> Bool
+#deprecated
+pub fn Class::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Class::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn Class::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn Class::op_le(Self, Self) -> Bool
+#deprecated
+pub fn Class::op_lt(Self, Self) -> Bool
+#deprecated
+pub fn Class::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Class::to_string(Self) -> String
 pub impl Compare for Class
 pub impl Eq for Class
 pub impl Show for Class
@@ -121,9 +175,31 @@ pub struct Diagram {
   conclusions : Map[Morphism, Array[String]]
   objects : Array[Object]
 }
+#deprecated
+pub fn Diagram::compare(Self, Self) -> Int
+#deprecated
+pub fn Diagram::equal(Self, Self) -> Bool
+#deprecated
+pub fn Diagram::hash(Self) -> Int
+#deprecated
+pub fn Diagram::hash_combine(Self, Hasher) -> Unit
 pub fn Diagram::hom(Self, Object, Object) -> (Array[Morphism], Array[Morphism])
 pub fn Diagram::is_subdiagram(Self, Self) -> Bool
+#deprecated
+pub fn Diagram::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Diagram::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn Diagram::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn Diagram::op_le(Self, Self) -> Bool
+#deprecated
+pub fn Diagram::op_lt(Self, Self) -> Bool
+#deprecated
+pub fn Diagram::output(Self, &Logger) -> Unit
 pub fn Diagram::subdiagram_from_objects(Self, Array[Object]) -> Self raise CategoryError
+#deprecated
+pub fn Diagram::to_string(Self) -> String
 pub impl Compare for Diagram
 pub impl Eq for Diagram
 pub impl Hash for Diagram
@@ -136,6 +212,10 @@ pub struct DiagramGrid {
 pub fn DiagramGrid::get(Self, Int, Int) -> Object?
 pub fn DiagramGrid::height(Self) -> Int
 pub fn DiagramGrid::morphisms(Self) -> Map[Morphism, Array[String]]
+#deprecated
+pub fn DiagramGrid::output(Self, &Logger) -> Unit
+#deprecated
+pub fn DiagramGrid::to_string(Self) -> String
 pub fn DiagramGrid::width(Self) -> Int
 pub impl Show for DiagramGrid
 
@@ -180,11 +260,35 @@ pub enum Morphism {
   Composite(Array[Morphism])
 }
 pub fn Morphism::codomain(Self) -> Object
+#deprecated
+pub fn Morphism::compare(Self, Self) -> Int
 pub fn Morphism::components(Self) -> Array[Self]
 pub fn Morphism::compose(Self, Self) -> Self raise CategoryError
 pub fn Morphism::domain(Self) -> Object
+#deprecated
+pub fn Morphism::equal(Self, Self) -> Bool
 pub fn Morphism::flatten(Self, String) -> Self raise CategoryError
+#deprecated
+pub fn Morphism::hash(Self) -> Int
+#deprecated
+pub fn Morphism::hash_combine(Self, Hasher) -> Unit
+#deprecated
+pub fn Morphism::mul(Self, Self) -> Self
 pub fn Morphism::name(Self) -> String?
+#deprecated
+pub fn Morphism::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Morphism::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn Morphism::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn Morphism::op_le(Self, Self) -> Bool
+#deprecated
+pub fn Morphism::op_lt(Self, Self) -> Bool
+#deprecated
+pub fn Morphism::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Morphism::to_string(Self) -> String
 pub impl Compare for Morphism
 pub impl Eq for Morphism
 pub impl Hash for Morphism
@@ -199,6 +303,28 @@ pub enum MorphismSpec {
 pub struct Object {
   name : String
 }
+#deprecated
+pub fn Object::compare(Self, Self) -> Int
+#deprecated
+pub fn Object::equal(Self, Self) -> Bool
+#deprecated
+pub fn Object::hash(Self) -> Int
+#deprecated
+pub fn Object::hash_combine(Self, Hasher) -> Unit
+#deprecated
+pub fn Object::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Object::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn Object::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn Object::op_le(Self, Self) -> Bool
+#deprecated
+pub fn Object::op_lt(Self, Self) -> Bool
+#deprecated
+pub fn Object::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Object::to_string(Self) -> String
 pub impl Compare for Object
 pub impl Eq for Object
 pub impl Hash for Object

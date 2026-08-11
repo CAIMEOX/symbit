@@ -13,13 +13,12 @@ fn array_bigint_to_pylist(values : Array[BigInt]) -> String {
 ///|
 fn cycle_result_to_str(value : CycleLengthResult) -> String {
   match value {
-    CycleLengthResult::Params(lambda_, mu) =>
+    Params(lambda_, mu) =>
       match mu {
         Some(v) => "(\{lambda_}, \{v})"
         None => "(\{lambda_}, None)"
       }
-    CycleLengthResult::Values(values) =>
-      array_bigint_to_pylist(values.map(v => bi_g(v)))
+    Values(values) => array_bigint_to_pylist(values.map(v => bi_g(v)))
   }
 }
 
@@ -115,7 +114,7 @@ test "ntheory generate cycle_length parity" {
   assert_eq(cycle_result_to_str(res2), cycle_length_str(4, nmax=4))
   let res_values = cycle_length(f_cycle, 4, values=true)
   let values_str = match res_values {
-    CycleLengthResult::Values(values) => cycle_values_to_str(values)
+    Values(values) => cycle_values_to_str(values)
     _ => "[]"
   }
   assert_eq(values_str, cycle_length_str(4, values=true))

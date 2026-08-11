@@ -46,7 +46,7 @@ pub fn StateMachine::new(
     states: Array::new(),
     state_index: {},
   }
-  machine.add_state(StateName::Start, StateType::Start)
+  machine.add_state(Start, Start)
   machine
 }
 
@@ -128,7 +128,7 @@ pub fn StateMachine::set_dead_rule(
   match self.state_index.get(name) {
     Some(idx) => {
       let st = self.states[idx]
-      st.state_type = StateType::Dead
+      st.state_type = Dead
       st.rh_rule = Some(rule)
       self.states[idx] = st
     }

@@ -45,7 +45,7 @@ pub struct ApartList {
 ///|
 fn together_expr_is_one(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) => n.is_one()
+    Number(n) => n.is_one()
     _ => false
   }
 }
@@ -53,7 +53,7 @@ fn together_expr_is_one(expr : Expr) -> Bool {
 ///|
 fn together_expr_is_zero(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) => n.is_zero()
+    Number(n) => n.is_zero()
     _ => false
   }
 }
@@ -118,15 +118,11 @@ fn together_push_factor(
   let key = together_factor_key(base)
   for i in 0..<factors.length() {
     if factors[i].key == key {
-      factors[i] = TogetherFactor::{
-        key,
-        base: factors[i].base,
-        exp: factors[i].exp + exp,
-      }
+      factors[i] = { key, base: factors[i].base, exp: factors[i].exp + exp }
       return
     }
   }
-  factors.push(TogetherFactor::{ key, base, exp })
+  factors.push({ key, base, exp })
 }
 
 ///|
@@ -134,11 +130,11 @@ fn together_den_factors(expr : Expr) -> Array[TogetherFactor] {
   let factors : Array[TogetherFactor] = []
   fn collect(node : Expr) -> Unit {
     match node {
-      Expr::Mul(args) =>
+      Mul(args) =>
         for arg in args {
           collect(arg)
         }
-      Expr::Pow(base, exp) =>
+      Pow(base, exp) =>
         match together_int_exp(exp) {
           Some(k) if k > 0 => together_push_factor(factors, base, k)
           _ => together_push_factor(factors, node, 1)
@@ -172,7 +168,7 @@ fn together_lcm_denominators(dens : Array[Expr]) -> Array[TogetherFactor] {
         if common[i].key == factor.key {
           found = true
           if factor.exp > common[i].exp {
-            common[i] = TogetherFactor::{
+            common[i] = {
               key: common[i].key,
               base: common[i].base,
               exp: factor.exp,
@@ -221,11 +217,11 @@ fn together_make_fraction(num : Expr, den : Expr) -> Expr {
     int(0)
   } else {
     match den {
-      Expr::Number(n) =>
+      Number(n) =>
         try n.reciprocal() catch {
           _ => @symcore.mul([num, @symcore.pow(den, int(-1))])
         } noraise {
-          inv => @symcore.mul([num, Expr::Number(inv)])
+          inv => @symcore.mul([num, Number(inv)])
         }
       _ => @symcore.mul([num, @symcore.pow(den, int(-1))])
     }
@@ -235,12 +231,12 @@ fn together_make_fraction(num : Expr, den : Expr) -> Expr {
 ///|
 fn together_split_fraction(expr : Expr) -> (Expr, Expr) {
   match expr {
-    Expr::Number(n) => {
+    Number(n) => {
       let num = @symnum.BigRational::from_bigint(n.numerator())
       let den = @symnum.BigRational::from_bigint(n.denominator())
-      (Expr::Number(num), Expr::Number(den))
+      (Number(num), Number(den))
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let nums : Array[Expr] = []
       let dens : Array[Expr] = []
       for arg in args {
@@ -250,7 +246,7 @@ fn together_split_fraction(expr : Expr) -> (Expr, Expr) {
       }
       (together_mul_exprs(nums), together_mul_exprs(dens))
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match together_int_exp(exp) {
         Some(k) if k > 0 => {
           let (num, den) = together_split_fraction(base)
@@ -295,18 +291,18 @@ fn together_add_terms(args : Array[Expr], fraction : Bool) -> Expr {
 ///|
 fn together_inner(expr : Expr, deep : Bool, fraction : Bool) -> Expr {
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let transformed = args.map(arg => together_inner(arg, deep, fraction))
       together_add_terms(transformed, fraction)
     }
-    Expr::Mul(args) =>
+    Mul(args) =>
       together_mul_exprs(args.map(arg => together_inner(arg, deep, fraction)))
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       let new_base = together_inner(base, deep, fraction)
       let new_exp = if deep { together_inner(exp, deep, fraction) } else { exp }
       @symcore.pow(new_base, new_exp)
     }
-    Expr::Apply(head, args) =>
+    Apply(head, args) =>
       if deep {
         match
           @symcore.apply(
@@ -319,27 +315,26 @@ fn together_inner(expr : Expr, deep : Bool, fraction : Bool) -> Expr {
       } else {
         expr
       }
-    Expr::Tuple(items) =>
-      Expr::Tuple(items.map(item => together_inner(item, deep, fraction)))
-    Expr::Relational(op, lhs, rhs) =>
-      Expr::Relational(
+    Tuple(items) =>
+      Tuple(items.map(item => together_inner(item, deep, fraction)))
+    Relational(op, lhs, rhs) =>
+      Relational(
         op,
         together_inner(lhs, deep, fraction),
         together_inner(rhs, deep, fraction),
       )
-    Expr::Derivative(body, vars) =>
-      Expr::Derivative(
+    Derivative(body, vars) =>
+      Derivative(
         together_inner(body, deep, fraction),
         vars.map(item => together_inner(item, deep, fraction)),
       )
-    Expr::Subs(body, variable, value) =>
-      Expr::Subs(
+    Subs(body, variable, value) =>
+      Subs(
         together_inner(body, deep, fraction),
         together_inner(variable, deep, fraction),
         together_inner(value, deep, fraction),
       )
-    Expr::Lambda(vars, body) =>
-      Expr::Lambda(vars, together_inner(body, deep, fraction))
+    Lambda(vars, body) => Lambda(vars, together_inner(body, deep, fraction))
     _ => expr
   }
 }
@@ -372,7 +367,7 @@ fn apart_subst_gen(expr : Expr, gen : String, value : Expr) -> Expr {
 ///|
 fn apart_eval_poly(poly : Poly, value : Expr) -> Expr raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let degree = poly.degree(0)
   let mut acc = int(0)
@@ -392,7 +387,7 @@ fn apart_infer_gen(expr : Expr, gen : String) -> String raise PolyError {
   }
   match infer_gens(expr) {
     [name, ..] => name
-    [] => raise PolyError::BadGenerator("")
+    [] => raise BadGenerator("")
   }
 }
 
@@ -416,7 +411,7 @@ fn apart_linear_distinct(
   if together_expr_is_one(den_expr) {
     return combined
   }
-  let den_poly = Poly::from_expr(den_expr, [gen], Domain::QQ)
+  let den_poly = Poly::from_expr(den_expr, [gen], QQ)
   let (content, factors) = factor_list(den_poly)
   if factors.is_empty() {
     return combined
@@ -427,11 +422,9 @@ fn apart_linear_distinct(
     }
   }
 
-  let (poly_part, rem_expr) = try
-    Poly::from_expr(num_expr, [gen], Domain::QQ)
-  catch {
+  let (poly_part, rem_expr) = try Poly::from_expr(num_expr, [gen], QQ) catch {
     _ =>
-      if @symcore.has(num_expr, Expr::Symbol(gen)) {
+      if @symcore.has(num_expr, Symbol(gen)) {
         return combined
       } else {
         (int(0), num_expr)
@@ -551,7 +544,7 @@ pub fn apart_list(
 ) -> ApartList raise PolyError {
   let decomposed = apart(expr, gen~, full~)
   let pieces = match decomposed {
-    Expr::Add(args) => args
+    Add(args) => args
     _ => [decomposed]
   }
   let polynomial_terms : Array[Expr] = []
@@ -561,14 +554,10 @@ pub fn apart_list(
     if together_expr_is_one(den) {
       polynomial_terms.push(num)
     } else {
-      proper_terms.push(ApartTerm::{
-        numerator: num,
-        denominator: den,
-        exponent: 1,
-      })
+      proper_terms.push({ numerator: num, denominator: den, exponent: 1 })
     }
   }
-  ApartList::{
+  {
     common: int(1),
     polynomial: together_add_exprs(polynomial_terms),
     terms: proper_terms,

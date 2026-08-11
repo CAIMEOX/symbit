@@ -9,7 +9,7 @@ pub(all) struct ExprWithIntLimits {
 
 ///|
 fn ExprWithIntLimits::as_limits(self : ExprWithIntLimits) -> ExprWithLimits {
-  ExprWithLimits::{ expr: self.expr, limits: self.limits }
+  { expr: self.expr, limits: self.limits }
 }
 
 ///|

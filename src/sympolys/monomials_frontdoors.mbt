@@ -23,7 +23,7 @@ pub fn itermonomials(
   min_degree? : Int = 0,
 ) -> Array[Expr] raise PolyError {
   if max_degree < 0 || min_degree < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if min_degree > max_degree {
     return []
@@ -56,12 +56,12 @@ pub fn itermonomials_bounded(
 ) -> Array[Expr] raise PolyError {
   let n = variables.length()
   if max_degrees.length() != n {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let mins = match min_degrees {
     Some(values) => {
       if values.length() != n {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
       values
     }
@@ -69,7 +69,7 @@ pub fn itermonomials_bounded(
   }
   for i in 0..<n {
     if mins[i] < 0 || max_degrees[i] < 0 || mins[i] > max_degrees[i] {
-      raise PolyError::BadExponent
+      raise BadExponent
     }
   }
   let out : Array[Expr] = []

@@ -2,29 +2,16 @@
 test "symseries fourier truncate parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.function("sin", [x])
-  let minus_pi = @symcore.mul([
-    @symcore.int(-1),
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ])
-  let limits = [
-    x,
-    minus_pi,
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ]
+  let minus_pi = @symcore.mul([@symcore.int(-1), NumberSymbol(Pi)])
+  let limits = [x, minus_pi, NumberSymbol(Pi)]
   let res = fourier_series(expr, limits~)
   match res {
-    FourierSeriesResult::Series(fs) => {
+    Series(fs) => {
       let ours = fs.truncate(n=3)
-      let sympy = fourier_truncate_str(
-        expr,
-        "x",
-        minus_pi,
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        3,
-      )
+      let sympy = fourier_truncate_str(expr, "x", minus_pi, NumberSymbol(Pi), 3)
       assert_eq(normalize_series_expr(ours), normalize_series_str(sympy))
     }
-    FourierSeriesResult::Expr(_) => fail("expected FourierSeries")
+    Expr(_) => fail("expected FourierSeries")
   }
 }
 
@@ -32,29 +19,16 @@ test "symseries fourier truncate parity" {
 test "symseries fourier term parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.function("sin", [x])
-  let minus_pi = @symcore.mul([
-    @symcore.int(-1),
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ])
-  let limits = [
-    x,
-    minus_pi,
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ]
+  let minus_pi = @symcore.mul([@symcore.int(-1), NumberSymbol(Pi)])
+  let limits = [x, minus_pi, NumberSymbol(Pi)]
   let res = fourier_series(expr, limits~)
   match res {
-    FourierSeriesResult::Series(fs) => {
+    Series(fs) => {
       let ours = fs.term(1)
-      let sympy = fourier_term_str(
-        expr,
-        "x",
-        minus_pi,
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        1,
-      )
+      let sympy = fourier_term_str(expr, "x", minus_pi, NumberSymbol(Pi), 1)
       assert_eq(normalize_series_expr(ours), normalize_series_str(sympy))
     }
-    FourierSeriesResult::Expr(_) => fail("expected FourierSeries")
+    Expr(_) => fail("expected FourierSeries")
   }
 }
 
@@ -62,29 +36,16 @@ test "symseries fourier term parity" {
 test "symseries fourier sigma parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.function("sin", [x])
-  let minus_pi = @symcore.mul([
-    @symcore.int(-1),
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ])
-  let limits = [
-    x,
-    minus_pi,
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ]
+  let minus_pi = @symcore.mul([@symcore.int(-1), NumberSymbol(Pi)])
+  let limits = [x, minus_pi, NumberSymbol(Pi)]
   let res = fourier_series(expr, limits~)
   match res {
-    FourierSeriesResult::Series(fs) => {
+    Series(fs) => {
       let ours = fs.sigma_approximation(3)
-      let sympy = fourier_sigma_str(
-        expr,
-        "x",
-        minus_pi,
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        3,
-      )
+      let sympy = fourier_sigma_str(expr, "x", minus_pi, NumberSymbol(Pi), 3)
       assert_eq(normalize_series_expr(ours), normalize_series_str(sympy))
     }
-    FourierSeriesResult::Expr(_) => fail("expected FourierSeries")
+    Expr(_) => fail("expected FourierSeries")
   }
 }
 
@@ -93,9 +54,9 @@ test "symseries fourier constant expr" {
   let expr = @symcore.int(1)
   let res = fourier_series(expr)
   match res {
-    FourierSeriesResult::Expr(value) =>
+    Expr(value) =>
       assert_eq(normalize_series_expr(value), normalize_series_str("1"))
-    FourierSeriesResult::Series(_) => fail("expected Expr for constant")
+    Series(_) => fail("expected Expr for constant")
   }
 }
 
@@ -103,26 +64,13 @@ test "symseries fourier constant expr" {
 test "symseries fourier generic polynomial term parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = x
-  let minus_pi = @symcore.mul([
-    @symcore.int(-1),
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ])
-  let limits = [
-    x,
-    minus_pi,
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ]
+  let minus_pi = @symcore.mul([@symcore.int(-1), NumberSymbol(Pi)])
+  let limits = [x, minus_pi, NumberSymbol(Pi)]
   let res = fourier_series(expr, limits~)
   match res {
-    FourierSeriesResult::Series(fs) => {
+    Series(fs) => {
       let ours = fs.term(2)
-      let sympy = fourier_term_str(
-        expr,
-        "x",
-        minus_pi,
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        2,
-      )
+      let sympy = fourier_term_str(expr, "x", minus_pi, NumberSymbol(Pi), 2)
       assert_eq(normalize_series_expr(ours), normalize_series_str(sympy))
 
       let an2 = fs.an(2)
@@ -137,7 +85,7 @@ test "symseries fourier generic polynomial term parity" {
         normalize_series_expr(reconstructed),
       )
     }
-    FourierSeriesResult::Expr(_) => fail("expected FourierSeries")
+    Expr(_) => fail("expected FourierSeries")
   }
 }
 
@@ -148,7 +96,7 @@ test "symseries fourier generic interval parity" {
   let limits = [x, @symcore.int(0), @symcore.int(1)]
   let res = fourier_series(expr, limits~)
   match res {
-    FourierSeriesResult::Series(fs) => {
+    Series(fs) => {
       let ours = fs.truncate(n=3)
       let sympy = fourier_truncate_str(
         expr,
@@ -159,7 +107,7 @@ test "symseries fourier generic interval parity" {
       )
       assert_eq(normalize_series_expr(ours), normalize_series_str(sympy))
     }
-    FourierSeriesResult::Expr(_) => fail("expected FourierSeries")
+    Expr(_) => fail("expected FourierSeries")
   }
 }
 
@@ -169,29 +117,16 @@ test "symseries fourier shifted trig parity" {
   let expr = @symcore.function("sin", [
     @symcore.add([@symcore.mul([@symcore.int(2), x]), @symcore.int(1)]),
   ])
-  let minus_pi = @symcore.mul([
-    @symcore.int(-1),
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ])
-  let limits = [
-    x,
-    minus_pi,
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ]
+  let minus_pi = @symcore.mul([@symcore.int(-1), NumberSymbol(Pi)])
+  let limits = [x, minus_pi, NumberSymbol(Pi)]
   let res = fourier_series(expr, limits~)
   match res {
-    FourierSeriesResult::Series(fs) => {
+    Series(fs) => {
       let ours = fs.term(3)
-      let sympy = fourier_term_str(
-        expr,
-        "x",
-        minus_pi,
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        3,
-      )
+      let sympy = fourier_term_str(expr, "x", minus_pi, NumberSymbol(Pi), 3)
       assert_eq(normalize_series_expr(ours), normalize_series_str(sympy))
     }
-    FourierSeriesResult::Expr(_) => fail("expected FourierSeries")
+    Expr(_) => fail("expected FourierSeries")
   }
 }
 
@@ -204,29 +139,16 @@ test "symseries fourier poly shifted trig parity" {
       @symcore.add([@symcore.mul([@symcore.int(2), x]), @symcore.int(1)]),
     ]),
   ])
-  let minus_pi = @symcore.mul([
-    @symcore.int(-1),
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ])
-  let limits = [
-    x,
-    minus_pi,
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ]
+  let minus_pi = @symcore.mul([@symcore.int(-1), NumberSymbol(Pi)])
+  let limits = [x, minus_pi, NumberSymbol(Pi)]
   let res = fourier_series(expr, limits~)
   match res {
-    FourierSeriesResult::Series(fs) => {
+    Series(fs) => {
       let ours = fs.term(2)
-      let sympy = fourier_term_str(
-        expr,
-        "x",
-        minus_pi,
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        2,
-      )
+      let sympy = fourier_term_str(expr, "x", minus_pi, NumberSymbol(Pi), 2)
       assert_eq(normalize_series_expr(ours), normalize_series_str(sympy))
     }
-    FourierSeriesResult::Expr(_) => fail("expected FourierSeries")
+    Expr(_) => fail("expected FourierSeries")
   }
 }
 
@@ -234,29 +156,16 @@ test "symseries fourier poly shifted trig parity" {
 test "symseries fourier exp closed form parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.function("exp", [x])
-  let minus_pi = @symcore.mul([
-    @symcore.int(-1),
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ])
-  let limits = [
-    x,
-    minus_pi,
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ]
+  let minus_pi = @symcore.mul([@symcore.int(-1), NumberSymbol(Pi)])
+  let limits = [x, minus_pi, NumberSymbol(Pi)]
   let res = fourier_series(expr, limits~)
   match res {
-    FourierSeriesResult::Series(fs) => {
+    Series(fs) => {
       let ours = fs.term(2)
-      let sympy = fourier_term_str(
-        expr,
-        "x",
-        minus_pi,
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        2,
-      )
+      let sympy = fourier_term_str(expr, "x", minus_pi, NumberSymbol(Pi), 2)
       assert_eq(normalize_series_expr(ours), normalize_series_str(sympy))
     }
-    FourierSeriesResult::Expr(_) => fail("expected FourierSeries")
+    Expr(_) => fail("expected FourierSeries")
   }
 }
 
@@ -264,30 +173,17 @@ test "symseries fourier exp closed form parity" {
 test "symseries fourier hyperbolic closed form parity" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.function("sinh", [x])
-  let minus_pi = @symcore.mul([
-    @symcore.int(-1),
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ])
-  let limits = [
-    x,
-    minus_pi,
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ]
+  let minus_pi = @symcore.mul([@symcore.int(-1), NumberSymbol(Pi)])
+  let limits = [x, minus_pi, NumberSymbol(Pi)]
   let res = fourier_series(expr, limits~)
   match res {
-    FourierSeriesResult::Series(fs) => {
+    Series(fs) => {
       let ours = fs.term(2)
-      let sympy = fourier_term_str(
-        expr,
-        "x",
-        minus_pi,
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        2,
-      )
+      let sympy = fourier_term_str(expr, "x", minus_pi, NumberSymbol(Pi), 2)
       let ours_s = sympy_simplify_str(@symprint.pretty_string(ours))
       let sympy_s = sympy_simplify_str(sympy)
       assert_eq(normalize_series_str(ours_s), normalize_series_str(sympy_s))
     }
-    FourierSeriesResult::Expr(_) => fail("expected FourierSeries")
+    Expr(_) => fail("expected FourierSeries")
   }
 }

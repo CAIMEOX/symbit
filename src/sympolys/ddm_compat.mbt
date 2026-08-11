@@ -31,7 +31,7 @@ pub fn ddm_from_dense(
   rows : Array[Array[FieldElem]],
   domain : Domain,
 ) -> DDM raise PolyError {
-  DDM::{ dm: domain_matrix_from_dense(rows, domain) }
+  { dm: domain_matrix_from_dense(rows, domain) }
 }
 
 ///|
@@ -46,7 +46,7 @@ pub fn ddm_from_ints(
   rows : Array[Array[Int]],
   domain : Domain,
 ) -> DDM raise PolyError {
-  DDM::{ dm: domain_matrix_from_ints(rows, domain) }
+  { dm: domain_matrix_from_ints(rows, domain) }
 }
 
 ///|
@@ -64,14 +64,14 @@ pub fn DDM::from_list(
 ) -> DDM raise PolyError {
   let (nrows, ncols) = shape
   if rows.length() != nrows {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   for row in rows {
     if row.length() != ncols {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
   }
-  DDM::{ dm: DomainMatrix::from_list(rows, domain) }
+  { dm: DomainMatrix::from_list(rows, domain) }
 }
 
 ///|
@@ -121,7 +121,7 @@ pub fn DDM::from_list_flat(
   shape : (Int, Int),
   domain : Domain,
 ) -> DDM raise PolyError {
-  DDM::{ dm: DomainMatrix::from_list_flat(elements, shape, domain) }
+  { dm: DomainMatrix::from_list_flat(elements, shape, domain) }
 }
 
 ///|
@@ -137,7 +137,7 @@ pub fn DDM::from_dod(
   domain : Domain,
 ) -> DDM raise PolyError {
   let dm = DomainMatrix::from_dod(dod, shape, domain)
-  DDM::{ dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
+  { dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
 }
 
 ///|
@@ -153,7 +153,7 @@ pub fn DDM::from_dok(
   domain : Domain,
 ) -> DDM raise PolyError {
   let dm = DomainMatrix::from_dok(dok, shape, domain)
-  DDM::{ dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
+  { dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
 }
 
 ///|
@@ -168,7 +168,7 @@ pub fn DDM::zeros(
   cols : Int,
   domain : Domain,
 ) -> DDM raise PolyError {
-  DDM::{ dm: DomainMatrix::zeros(rows, cols, domain) }
+  { dm: DomainMatrix::zeros(rows, cols, domain) }
 }
 
 ///|
@@ -183,7 +183,7 @@ pub fn DDM::ones(
   cols : Int,
   domain : Domain,
 ) -> DDM raise PolyError {
-  DDM::{ dm: DomainMatrix::ones(rows, cols, domain) }
+  { dm: DomainMatrix::ones(rows, cols, domain) }
 }
 
 ///|
@@ -194,7 +194,7 @@ pub fn DDM::ones(
 /// - Returns: A `DDM`.
 /// - Limits: Raises `PolyError` when the requested matrix cannot be created.
 pub fn DDM::eye(n : Int, domain : Domain) -> DDM raise PolyError {
-  DDM::{ dm: DomainMatrix::eye(n, domain) }
+  { dm: DomainMatrix::eye(n, domain) }
 }
 
 ///|
@@ -210,7 +210,7 @@ pub fn DDM::diag(
   rows? : Int? = None,
   cols? : Int? = None,
 ) -> DDM raise PolyError {
-  DDM::{ dm: DomainMatrix::diag(values, domain, rows~, cols~) }
+  { dm: DomainMatrix::diag(values, domain, rows~, cols~) }
 }
 
 ///|
@@ -232,7 +232,7 @@ pub fn DDM::shape(self : DDM) -> (Int, Int) {
 /// - Returns: A `DDM`.
 /// - Limits: Raises `PolyError` only if the underlying copy operation fails.
 pub fn DDM::copy(self : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.copy() }
+  { dm: self.dm.copy() }
 }
 
 ///|
@@ -277,7 +277,7 @@ pub fn DDM::domain(self : DDM) -> Domain {
 /// - Returns: A `DDM`.
 /// - Limits: Raises `PolyError` when an entry cannot be converted.
 pub fn DDM::convert_to(self : DDM, domain : Domain) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.convert_to(domain) }
+  { dm: self.dm.convert_to(domain) }
 }
 
 ///|
@@ -373,7 +373,7 @@ pub fn DDM::from_flat_nz(
   domain : Domain,
 ) -> DDM raise PolyError {
   let dm = self.dm.from_flat_nz(elements, data, domain)
-  DDM::{ dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
+  { dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
 }
 
 ///|
@@ -460,7 +460,7 @@ pub fn DDM::applyfunc(
   domain? : Domain? = None,
 ) -> DDM raise PolyError {
   let dm = self.dm.applyfunc(func, domain~)
-  DDM::{ dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
+  { dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
 }
 
 ///|
@@ -512,7 +512,7 @@ pub fn DDM::setitem(
   col : Int,
   value : FieldElem,
 ) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.setitem(row, col, value) }
+  { dm: self.dm.setitem(row, col, value) }
 }
 
 ///|
@@ -537,7 +537,7 @@ pub fn DDM::extract_slice(
   col_stop? : Int? = None,
   col_step? : Int = 1,
 ) -> DDM raise PolyError {
-  DDM::{
+  {
     dm: self.dm.extract_slice(
       row_start~,
       row_stop~,
@@ -578,7 +578,7 @@ pub fn DDM::to_ddm(self : DDM) -> DDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn DDM::to_sdm(self : DDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.to_sparse() }
+  { dm: self.dm.to_sparse() }
 }
 
 ///|
@@ -589,7 +589,7 @@ pub fn DDM::to_sdm(self : DDM) -> SDM raise PolyError {
 /// - Returns: A `DDM`.
 /// - Limits: Raises `PolyError` only if the underlying transpose fails.
 pub fn DDM::transpose(self : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.transpose() }
+  { dm: self.dm.transpose() }
 }
 
 ///|
@@ -600,7 +600,7 @@ pub fn DDM::transpose(self : DDM) -> DDM raise PolyError {
 /// - Returns: A `DDM`.
 /// - Limits: Raises `PolyError` when the shapes or domains are incompatible.
 pub fn DDM::add(self : DDM, other : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.add(other.dm) }
+  { dm: self.dm.add(other.dm) }
 }
 
 ///|
@@ -611,7 +611,7 @@ pub fn DDM::add(self : DDM, other : DDM) -> DDM raise PolyError {
 /// - Returns: A `DDM`.
 /// - Limits: Raises `PolyError` when the shapes or domains are incompatible.
 pub fn DDM::sub(self : DDM, other : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.sub(other.dm) }
+  { dm: self.dm.sub(other.dm) }
 }
 
 ///|
@@ -622,7 +622,7 @@ pub fn DDM::sub(self : DDM, other : DDM) -> DDM raise PolyError {
 /// - Returns: A `DDM`.
 /// - Limits: This keeps the same shape and domain.
 pub fn DDM::neg(self : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.neg() }
+  { dm: self.dm.neg() }
 }
 
 ///|
@@ -633,7 +633,7 @@ pub fn DDM::neg(self : DDM) -> DDM raise PolyError {
 /// - Returns: A `DDM`.
 /// - Limits: The scalar must already belong to the matrix domain.
 pub fn DDM::mul(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.mul(scalar) }
+  { dm: self.dm.mul(scalar) }
 }
 
 ///|
@@ -645,7 +645,7 @@ pub fn DDM::mul(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
 /// - Limits: Raises `PolyError` when the dimensions or domains are
 ///   incompatible.
 pub fn DDM::matmul(self : DDM, other : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.matmul(other.dm) }
+  { dm: self.dm.matmul(other.dm) }
 }
 
 ///|
@@ -661,7 +661,7 @@ pub fn DDM::matmul(self : DDM, other : DDM) -> DDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn DDM::mul_elementwise(self : DDM, other : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.mul_elementwise(other.dm) }
+  { dm: self.dm.mul_elementwise(other.dm) }
 }
 
 ///|
@@ -693,7 +693,7 @@ pub fn DDM::mul_scalar(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn DDM::rmul(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.rmul(scalar) }
+  { dm: self.dm.rmul(scalar) }
 }
 
 ///|
@@ -719,7 +719,7 @@ pub fn DDM::extract(
   row_ids : Array[Int],
   col_ids : Array[Int],
 ) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.extract(row_ids, col_ids) }
+  { dm: self.dm.extract(row_ids, col_ids) }
 }
 
 ///|
@@ -735,7 +735,7 @@ pub fn DDM::extract(
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn DDM::hstack(self : DDM, other : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.hstack(other.dm) }
+  { dm: self.dm.hstack(other.dm) }
 }
 
 ///|
@@ -751,7 +751,7 @@ pub fn DDM::hstack(self : DDM, other : DDM) -> DDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn DDM::vstack(self : DDM, other : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.vstack(other.dm) }
+  { dm: self.dm.vstack(other.dm) }
 }
 
 ///|
@@ -853,7 +853,7 @@ pub fn DDM::det(self : DDM) -> FieldElem raise PolyError {
 /// - Limits: Raises `PolyError` when the underlying elimination fails.
 pub fn DDM::rref(self : DDM) -> (DDM, Array[Int]) raise PolyError {
   let (r, pivots) = self.dm.rref()
-  (DDM::{ dm: r }, pivots)
+  ({ dm: r }, pivots)
 }
 
 ///|
@@ -869,7 +869,7 @@ pub fn DDM::rref_den(
   keep_domain? : Bool = true,
 ) -> (DDM, FieldElem, Array[Int]) raise PolyError {
   let (r, den, pivots) = self.dm.rref_den(rref_method~, keep_domain~)
-  (DDM::{ dm: r }, den, pivots)
+  ({ dm: r }, den, pivots)
 }
 
 ///|
@@ -895,7 +895,7 @@ pub fn DDM::clear_denoms(
   convert? : Bool = false,
 ) -> (DomainScalar, DDM) raise PolyError {
   let (den, num) = self.dm.clear_denoms(convert~)
-  (den, DDM::{ dm: num })
+  (den, { dm: num })
 }
 
 ///|
@@ -915,7 +915,7 @@ pub fn DDM::clear_denoms_rowwise(
   convert? : Bool = false,
 ) -> (DDM, DDM) raise PolyError {
   let (den, num) = self.dm.clear_denoms_rowwise(convert~)
-  (DDM::{ dm: den }, DDM::{ dm: num })
+  ({ dm: den }, { dm: num })
 }
 
 ///|
@@ -927,7 +927,7 @@ pub fn DDM::clear_denoms_rowwise(
 /// - Limits: Raises `PolyError` when the underlying exact path fails.
 pub fn DDM::adj_det(self : DDM) -> (DDM, FieldElem) raise PolyError {
   let (adj, det) = self.dm.adj_det()
-  (DDM::{ dm: adj }, det)
+  ({ dm: adj }, det)
 }
 
 ///|
@@ -938,7 +938,7 @@ pub fn DDM::adj_det(self : DDM) -> (DDM, FieldElem) raise PolyError {
 /// - Returns: A `DDM`.
 /// - Limits: Raises `PolyError` when the underlying exact path fails.
 pub fn DDM::adjugate(self : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.adjugate() }
+  { dm: self.dm.adjugate() }
 }
 
 ///|
@@ -954,7 +954,7 @@ pub fn DDM::inv_den(
   solve_method? : String = "",
 ) -> (DDM, FieldElem) raise PolyError {
   let (num, den) = self.dm.inv_den(solve_method~)
-  (DDM::{ dm: num }, den)
+  ({ dm: num }, den)
 }
 
 ///|
@@ -972,7 +972,7 @@ pub fn DDM::solve_den(
   solve_method? : String = "",
 ) -> (DDM, FieldElem) raise PolyError {
   let (num, den) = self.dm.solve_den(rhs.dm, solve_method~)
-  (DDM::{ dm: num }, den)
+  ({ dm: num }, den)
 }
 
 ///|
@@ -992,7 +992,7 @@ pub fn DDM::solve_den_rref(
   rhs : DDM,
 ) -> (DDM, FieldElem) raise PolyError {
   let (num, den) = self.dm.solve_den_rref(rhs.dm)
-  (DDM::{ dm: num }, den)
+  ({ dm: num }, den)
 }
 
 ///|
@@ -1009,7 +1009,7 @@ pub fn DDM::solve_den_rref(
 /// this compatibility layer.
 pub fn DDM::lu(self : DDM) -> (DDM, DDM, Array[(Int, Int)]) raise PolyError {
   let (l, u, swaps) = self.dm.lu()
-  (DDM::{ dm: l }, DDM::{ dm: u }, swaps)
+  ({ dm: l }, { dm: u }, swaps)
 }
 
 ///|
@@ -1026,7 +1026,7 @@ pub fn DDM::lu(self : DDM) -> (DDM, DDM, Array[(Int, Int)]) raise PolyError {
 /// this compatibility layer.
 pub fn DDM::qr(self : DDM) -> (DDM, DDM) raise PolyError {
   let (q, r) = self.dm.qr()
-  (DDM::{ dm: q }, DDM::{ dm: r })
+  ({ dm: q }, { dm: r })
 }
 
 ///|
@@ -1042,7 +1042,7 @@ pub fn DDM::qr(self : DDM) -> (DDM, DDM) raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn DDM::lu_solve(self : DDM, rhs : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.lu_solve(rhs.dm) }
+  { dm: self.dm.lu_solve(rhs.dm) }
 }
 
 ///|
@@ -1059,7 +1059,7 @@ pub fn DDM::lu_solve(self : DDM, rhs : DDM) -> DDM raise PolyError {
 /// this compatibility layer.
 pub fn DDM::fflu(self : DDM) -> (DDM, DDM, DDM, DDM) raise PolyError {
   let (p, l, d, u) = self.dm.fflu()
-  (DDM::{ dm: p }, DDM::{ dm: l }, DDM::{ dm: d }, DDM::{ dm: u })
+  ({ dm: p }, { dm: l }, { dm: d }, { dm: u })
 }
 
 ///|
@@ -1105,7 +1105,7 @@ pub fn DDM::charpoly(self : DDM) -> Array[FieldElem] raise PolyError {
 pub fn DDM::inv(self : DDM) -> DDM raise PolyError {
   let (m, n) = self.shape()
   if m != n {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let one = fe_from_int(1, self.dm.domain)
   let zero = fe_from_int(0, self.dm.domain)
@@ -1121,11 +1121,11 @@ pub fn DDM::inv(self : DDM) -> DDM raise PolyError {
   let aug = domain_matrix_from_dense(aug_rows, self.dm.domain)
   let (rref_aug, pivots) = aug.rref()
   if pivots.length() < n {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
   for i in 0..<n {
     if pivots[i] != i {
-      raise PolyError::ExactQuotientFailed
+      raise ExactQuotientFailed
     }
   }
   let rows = rref_aug.to_dense()
@@ -1135,7 +1135,7 @@ pub fn DDM::inv(self : DDM) -> DDM raise PolyError {
     for j in 0..<n {
       let expected = if i == j { one } else { zero }
       if !fe_is_zero(fe_sub(rows[i][j], expected)) {
-        raise PolyError::ExactQuotientFailed
+        raise ExactQuotientFailed
       }
       row.push(rows[i][n + j])
     }
@@ -1175,7 +1175,7 @@ pub fn DDM::nullspace_from_rref(
   pivots? : Array[Int] = [],
 ) -> (DDM, Array[Int]) raise PolyError {
   let (basis, nonpivots) = nullspace_from_rref_with_nonpivots(self.dm, pivots~)
-  (DDM::{ dm: basis }, nonpivots)
+  ({ dm: basis }, nonpivots)
 }
 
 ///|
@@ -1194,7 +1194,7 @@ pub fn DDM::particular(
   self : DDM,
   pivots? : Array[Int] = [],
 ) -> DDM raise PolyError {
-  DDM::{ dm: particular_from_rref(self.dm, pivots~) }
+  { dm: particular_from_rref(self.dm, pivots~) }
 }
 
 ///|
@@ -1225,7 +1225,7 @@ pub fn DDM::to_string(self : DDM) -> String raise PolyError {
   let rows = self.to_list()
   let row_parts : Array[String] = Array::new()
   for row in rows {
-    let row_text = row.map(v => v.to_string()).join(", ")
+    let row_text = row.map(v => Show::to_string(v)).join(", ")
     row_parts.push("[\{row_text}]")
   }
   let matrix_text = row_parts.join(", ")

@@ -124,12 +124,12 @@ test "physics.optics.gaussopt: beam and conjugation formulas" {
   let w_o = @symcore.Expr::Symbol("w_o")
 
   gaussopt_assert_expr_equal(
-    waist2rayleigh(@symcore.Expr::Symbol("w"), wavelen),
+    waist2rayleigh(Symbol("w"), wavelen),
     "pi*w**2/wavelen",
     "waist2rayleigh",
   )
   gaussopt_assert_expr_equal(
-    rayleigh2waist(@symcore.Expr::Symbol("z_r"), wavelen),
+    rayleigh2waist(Symbol("z_r"), wavelen),
     "sqrt(wavelen*z_r)/sqrt(pi)",
     "rayleigh2waist",
   )
@@ -163,33 +163,27 @@ test "physics.optics.gaussopt: beam and conjugation formulas" {
   )
 
   gaussopt_assert_expr_equal(
-    geometric_conj_ab(@symcore.Expr::Symbol("a"), @symcore.Expr::Symbol("b")),
+    geometric_conj_ab(Symbol("a"), Symbol("b")),
     "a*b/(a + b)",
     "geometric_conj_ab",
   )
   gaussopt_assert_expr_equal(
-    geometric_conj_af(@symcore.Expr::Symbol("a"), f),
+    geometric_conj_af(Symbol("a"), f),
     "a*f/(a - f)",
     "geometric_conj_af",
   )
   gaussopt_assert_expr_equal(
-    geometric_conj_bf(@symcore.Expr::Symbol("b"), f),
+    geometric_conj_bf(Symbol("b"), f),
     "b*f/(b - f)",
     "geometric_conj_bf",
   )
   gaussopt_assert_expr_equal(
-    geometric_conj_ab(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-      @symcore.Expr::Symbol("b"),
-    ),
+    geometric_conj_ab(NumberSymbol(Infinity), Symbol("b")),
     "b",
     "geometric_conj_ab oo",
   )
   gaussopt_assert_expr_equal(
-    geometric_conj_ab(
-      @symcore.Expr::Symbol("a"),
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-    ),
+    geometric_conj_ab(Symbol("a"), NumberSymbol(Infinity)),
     "a",
     "geometric_conj_ab oo rhs",
   )

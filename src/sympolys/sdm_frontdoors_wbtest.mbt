@@ -1,6 +1,6 @@
 ///|
 fn sdm_wb_fe(n : Int) -> FieldElem raise PolyError {
-  fe_from_int(n, Domain::ZZ)
+  fe_from_int(n, ZZ)
 }
 
 ///|
@@ -31,8 +31,8 @@ test "sdm functional frontdoors" {
   let four = sdm_wb_fe(4)
   let five = sdm_wb_fe(5)
   let seven = sdm_wb_fe(7)
-  let a = sdm_from_entries(2, 2, [(0, 1, two), (1, 0, one)], Domain::ZZ)
-  let b = sdm_from_entries(2, 2, [(0, 0, three), (1, 1, four)], Domain::ZZ)
+  let a = sdm_from_entries(2, 2, [(0, 1, two), (1, 0, one)], ZZ)
+  let b = sdm_from_entries(2, 2, [(0, 0, three), (1, 1, four)], ZZ)
   inspect(sdm_transpose(a).to_dense().to_string(), content="[[0, 1], [2, 0]]")
   inspect(sdm_matmul(a, b).to_dense().to_string(), content="[[0, 8], [3, 0]]")
   inspect(
@@ -45,7 +45,7 @@ test "sdm functional frontdoors" {
   )
   let row : Map[Int, FieldElem] = { 0: one, 2: three }
   let vec : Map[Int, FieldElem] = { 0: two, 1: one, 2: four }
-  inspect(sdm_dotvec(row, vec, Domain::ZZ), content="14")
+  inspect(sdm_dotvec(row, vec, ZZ), content="14")
   inspect(
     sdm_wb_vec_repr(sdm_matvecmul(a, { 0: five, 1: seven })),
     content="{0:14,1:5}",
@@ -54,7 +54,7 @@ test "sdm functional frontdoors" {
     2,
     2,
     [(0, 0, one), (0, 1, two), (1, 0, three), (1, 1, four)],
-    Domain::ZZ,
+    ZZ,
   )
   let rref = sdm_rref_den(dense)
   inspect(rref.0.to_dense().to_string(), content="[[-2, 0], [0, -2]]")

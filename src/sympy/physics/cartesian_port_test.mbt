@@ -4,9 +4,8 @@ fn quantum_port_scalar_repr(
   context : String,
 ) -> @symcore.Expr raise {
   match value {
-    MatrixScalarValue::Scalar(expr) => expr
-    MatrixScalarValue::Matrix(_) =>
-      fail("\{context}: expected scalar representation")
+    Scalar(expr) => expr
+    Matrix(_) => fail("\{context}: expected scalar representation")
   }
 }
 

@@ -8,7 +8,7 @@ pub fn tensor_index_type(
   dummy_name? : String = "L",
   metric_symmetry? : Int = 1,
 ) -> TensorIndexType {
-  TensorIndexType::{ name, dim, dummy_name, metric_symmetry }
+  { name, dim, dummy_name, metric_symmetry }
 }
 
 ///|
@@ -17,16 +17,12 @@ pub fn tensor_index(
   index_type : TensorIndexType,
   is_up? : Bool = true,
 ) -> TensorIndex {
-  TensorIndex::{ name, index_type, is_up }
+  { name, index_type, is_up }
 }
 
 ///|
 pub fn neg_index(index : TensorIndex) -> TensorIndex {
-  TensorIndex::{
-    name: index.name,
-    index_type: index.index_type,
-    is_up: !index.is_up,
-  }
+  { name: index.name, index_type: index.index_type, is_up: !index.is_up }
 }
 
 ///|
@@ -47,7 +43,7 @@ pub fn tensor_symmetry(
   generators : Array[@symcombinatorics.Permutation],
   sign? : Int,
 ) -> TensorSymmetry {
-  TensorSymmetry::{ rank, generators, sign }
+  { rank, generators, sign }
 }
 
 ///|
@@ -56,7 +52,7 @@ pub fn tensor_head(
   index_types : Array[TensorIndexType],
   symmetry? : TensorSymmetry,
 ) -> TensorHead {
-  TensorHead::{ name, index_types, symmetry }
+  { name, index_types, symmetry }
 }
 
 ///|
@@ -67,12 +63,12 @@ pub fn apply_head(
   if indices.length() != head.index_types.length() {
     fail("tensor head indices length mismatch")
   }
-  TensorExpr::Tensor(head, indices)
+  Tensor(head, indices)
 }
 
 ///|
 pub fn scalar_expr(expr : @symcore.Expr) -> TensorExpr {
-  TensorExpr::Scalar(expr)
+  Scalar(expr)
 }
 
 ///|

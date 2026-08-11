@@ -10,24 +10,21 @@ fn fw_univar(expr : @symcore.Expr, domain : Domain) -> Poly raise PolyError {
 
 ///|
 test "factor wb: extension and univariate guard branches" {
-  let one = fw_const(1, Domain::QQ)
-  let two = fw_const(2, Domain::QQ)
+  let one = fw_const(1, QQ)
+  let two = fw_const(2, QQ)
   assert_true(is_one(one))
   assert_true(!is_one(two))
 
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let non_uni = PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y)
+  let non_uni = PolyBuilder::new(["x", "y"], QQ).from_expr(x + y)
 
   sympolys_assert_error(
     fn() raise PolyError { deriv_univar(non_uni) },
     "NotUnivariate",
   )
 
-  let gf_poly = fw_univar(
-    (x ^ @symcore.int(3)) + @symcore.int(1),
-    Domain::GF(5),
-  )
+  let gf_poly = fw_univar((x ^ @symcore.int(3)) + @symcore.int(1), GF(5))
   sympolys_assert_error(
     fn() raise PolyError { pth_root_univar_gf(gf_poly, 2) },
     "BadExponent",
@@ -41,9 +38,9 @@ test "factor wb: extension and univariate guard branches" {
     "BadGenerator(extension)",
   )
 
-  let zz_poly = fw_univar((x ^ @symcore.int(2)) + @symcore.int(1), Domain::ZZ)
+  let zz_poly = fw_univar((x ^ @symcore.int(2)) + @symcore.int(1), ZZ)
   let lifted = apply_extension_request(zz_poly, ["a"])
-  assert_true(lifted.domain == Domain::QQ)
+  assert_true(lifted.domain == QQ)
 
   sympolys_assert_error(
     fn() raise PolyError { zz_poly.factor(gens=["y"]) },
@@ -58,86 +55,54 @@ test "factor wb: extension and univariate guard branches" {
 
 ///|
 test "factor wb: determinant/resultant helper branches" {
-  let d0 = poly_det([], Domain::QQ, "x")
+  let d0 = poly_det([], QQ, "x")
   inspect(d0, content="1")
 
-  let d1 = poly_det([[fw_const(2, Domain::QQ)]], Domain::QQ, "x")
+  let d1 = poly_det([[fw_const(2, QQ)]], QQ, "x")
   inspect(d1, content="2")
 
   let singular = poly_det(
-    [
-      [fw_const(0, Domain::QQ), fw_const(1, Domain::QQ)],
-      [fw_const(0, Domain::QQ), fw_const(2, Domain::QQ)],
-    ],
-    Domain::QQ,
+    [[fw_const(0, QQ), fw_const(1, QQ)], [fw_const(0, QQ), fw_const(2, QQ)]],
+    QQ,
     "x",
   )
   inspect(singular, content="0")
 
   let swapped = poly_det(
-    [
-      [fw_const(0, Domain::QQ), fw_const(1, Domain::QQ)],
-      [fw_const(1, Domain::QQ), fw_const(0, Domain::QQ)],
-    ],
-    Domain::QQ,
+    [[fw_const(0, QQ), fw_const(1, QQ)], [fw_const(1, QQ), fw_const(0, QQ)]],
+    QQ,
     "x",
   )
   inspect(swapped, content="-1")
 
   let d3 = poly_det(
     [
-      [
-        fw_const(1, Domain::QQ),
-        fw_const(2, Domain::QQ),
-        fw_const(3, Domain::QQ),
-      ],
-      [
-        fw_const(4, Domain::QQ),
-        fw_const(5, Domain::QQ),
-        fw_const(6, Domain::QQ),
-      ],
-      [
-        fw_const(7, Domain::QQ),
-        fw_const(8, Domain::QQ),
-        fw_const(10, Domain::QQ),
-      ],
+      [fw_const(1, QQ), fw_const(2, QQ), fw_const(3, QQ)],
+      [fw_const(4, QQ), fw_const(5, QQ), fw_const(6, QQ)],
+      [fw_const(7, QQ), fw_const(8, QQ), fw_const(10, QQ)],
     ],
-    Domain::QQ,
+    QQ,
     "x",
   )
   assert_true(!d3.is_zero())
 
-  let rz = resultant_poly_coeffs(
-    [fw_const(1, Domain::QQ)],
-    [fw_const(2, Domain::QQ)],
-    Domain::QQ,
-    "x",
-  )
+  let rz = resultant_poly_coeffs([fw_const(1, QQ)], [fw_const(2, QQ)], QQ, "x")
   inspect(rz, content="0")
 }
 
 ///|
 test "factor wb: GF splitting and seed helpers" {
   let x = @symcore.Expr::Symbol("x")
-  let gf_poly = fw_univar(
-    (x ^ @symcore.int(2)) + @symcore.int(1),
-    Domain::GF(5),
-  )
+  let gf_poly = fw_univar((x ^ @symcore.int(2)) + @symcore.int(1), GF(5))
   let edf_same = equal_degree_factor(gf_poly, 2, 5, 5, 1, 17, None)
   assert_true(edf_same.length() == 1)
 
   let edf_try = equal_degree_factor(gf_poly, 1, 5, 5, 1, 19, None)
   assert_true(!edf_try.is_empty())
 
-  let seeded = field_elem_from_seed(
-    7,
-    3,
-    3,
-    None,
-    Domain::GFExt(3, 3, [1, 0, 0, 1]),
-  )
+  let seeded = field_elem_from_seed(7, 3, 3, None, GFExt(3, 3, [1, 0, 0, 1]))
   match seeded {
-    FieldElem::GFExt(_, coeffs, mod_poly) =>
+    GFExt(_, coeffs, mod_poly) =>
       assert_true(
         coeffs.length() == 3 &&
         coeffs[0] == 1 &&
@@ -147,15 +112,11 @@ test "factor wb: GF splitting and seed helpers" {
     _ => fail("field_elem_from_seed should build GFExt coefficient")
   }
 
-  let c0 = poly_const_from_fe(
-    FieldElem::QQ(@symnum.BigRational::zero()),
-    ["x"],
-    Domain::QQ,
-  )
+  let c0 = poly_const_from_fe(QQ(@symnum.BigRational::zero()), ["x"], QQ)
   assert_true(c0.is_zero())
 
   let y = @symcore.Expr::Symbol("y")
-  let non_uni = PolyBuilder::new(["x", "y"], Domain::GF(5)).from_expr(x + y)
+  let non_uni = PolyBuilder::new(["x", "y"], GF(5)).from_expr(x + y)
   sympolys_assert_error(
     fn() raise PolyError { factor_gf_seeded(non_uni, 11) },
     "NotUnivariate",
@@ -168,9 +129,7 @@ test "factor wb: GF splitting and seed helpers" {
 
   sympolys_assert_error(
     fn() raise PolyError {
-      factor_linear_rationals(
-        PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y),
-      )
+      factor_linear_rationals(PolyBuilder::new(["x", "y"], QQ).from_expr(x + y))
     },
     "NotUnivariate",
   )
@@ -182,21 +141,19 @@ test "factor wb: algext conversion and factoring helper branches" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let rel = (a ^ @symcore.int(2)) + @symcore.int(1)
-  let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [rel])
-  let (minpoly, _) = load_algext_minpoly(Domain::QQ, ["a"], [rel])
+  let alg_domain = Domain::AlgExt(QQ, ["a"], [rel])
+  let (minpoly, _) = load_algext_minpoly(QQ, ["a"], [rel])
 
   let zero_alg = Poly::zero(["x"], alg_domain)
-  let sf_zero = factor_algext_squarefree(zero_alg, Domain::QQ, minpoly)
+  let sf_zero = factor_algext_squarefree(zero_alg, QQ, minpoly)
   assert_true(sf_zero.length() == 0)
 
   let lin_alg = fw_univar(x + @symcore.int(1), alg_domain)
-  let sf_lin = factor_algext_squarefree(lin_alg, Domain::QQ, minpoly)
+  let sf_lin = factor_algext_squarefree(lin_alg, QQ, minpoly)
   assert_true(sf_lin.length() == 1)
 
   sympolys_assert_error(
-    fn() raise PolyError {
-      factor_algext(fw_univar(x + @symcore.int(1), Domain::QQ))
-    },
+    fn() raise PolyError { factor_algext(fw_univar(x + @symcore.int(1), QQ)) },
     "DomainMismatch",
   )
 
@@ -208,15 +165,12 @@ test "factor wb: algext conversion and factoring helper branches" {
   )
 
   let coeffs : Map[Monomial, FieldElem] = Map([])
-  coeffs.set(Monomial::{ exps: [1] }, FieldElem::QQ(@symnum.BigRational::one()))
+  coeffs.set({ exps: [1] }, QQ(@symnum.BigRational::one()))
   coeffs.set(
-    Monomial::{ exps: [0] },
-    FieldElem::AlgExt(
-      Domain::QQ,
-      [
-        FieldElem::QQ(@symnum.BigRational::one()),
-        FieldElem::QQ(@symnum.BigRational::one()),
-      ],
+    { exps: [0] },
+    AlgExt(
+      QQ,
+      [QQ(@symnum.BigRational::one()), QQ(@symnum.BigRational::one())],
       minpoly,
       "a",
     ),
@@ -225,15 +179,15 @@ test "factor wb: algext conversion and factoring helper branches" {
     coeffs,
     gens: ["x"],
     domain: alg_domain,
-    order: TermOrder::Lex,
+    order: Lex,
   }
-  let t_coeffs = algext_poly_to_t_coeffs(mixed_alg_poly, Domain::QQ, "x")
+  let t_coeffs = algext_poly_to_t_coeffs(mixed_alg_poly, QQ, "x")
   assert_true(t_coeffs.length() >= 2)
 
-  let m_coeffs = minpoly_to_t_coeffs(minpoly, Domain::QQ, "x")
+  let m_coeffs = minpoly_to_t_coeffs(minpoly, QQ, "x")
   assert_true(m_coeffs.length() == minpoly.degree(0) + 1)
 
-  let base_poly = fw_univar((x ^ @symcore.int(2)) + @symcore.int(1), Domain::QQ)
+  let base_poly = fw_univar((x ^ @symcore.int(2)) + @symcore.int(1), QQ)
   let lifted = lift_base_poly_to_algext(base_poly, alg_domain)
   assert_true(lifted.domain == alg_domain)
 
@@ -249,26 +203,22 @@ test "factor wb: high-gap branch sweep" {
   sympolys_assert_error(
     fn() raise PolyError {
       pth_root_univar_gf(
-        PolyBuilder::new(["x", "y"], Domain::GF(3)).from_expr(x + y),
+        PolyBuilder::new(["x", "y"], GF(3)).from_expr(x + y),
         3,
       )
     },
     "NotUnivariate",
   )
-  let pth_zero = pth_root_univar_gf(Poly::zero(["x"], Domain::GF(3)), 3)
+  let pth_zero = pth_root_univar_gf(Poly::zero(["x"], GF(3)), 3)
   assert_true(pth_zero.is_zero())
 
   sympolys_assert_error(
     fn() raise PolyError {
-      square_free_decompose(
-        PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y),
-      )
+      square_free_decompose(PolyBuilder::new(["x", "y"], QQ).from_expr(x + y))
     },
     "NotUnivariate",
   )
-  assert_true(
-    square_free_decompose(Poly::zero(["x"], Domain::QQ)).length() == 0,
-  )
+  assert_true(square_free_decompose(Poly::zero(["x"], QQ)).length() == 0)
   let gfext_domain = Domain::GFExt(5, 2, [1, 0, 1])
   let sqf_gfext = square_free_decompose(
     PolyBuilder::new(["x"], gfext_domain).from_expr(
@@ -277,66 +227,64 @@ test "factor wb: high-gap branch sweep" {
   )
   assert_true(sqf_gfext.length() == 1 && sqf_gfext[0].1 == 1)
 
-  let qq_poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(
+  let qq_poly = PolyBuilder::new(["x"], QQ).from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(1),
   )
   let ext_passthrough = apply_extension_request(qq_poly, ["a"])
-  assert_true(ext_passthrough.domain == Domain::QQ)
+  assert_true(ext_passthrough.domain == QQ)
 
-  let zero_zz = Poly::zero(["x"], Domain::ZZ)
+  let zero_zz = Poly::zero(["x"], ZZ)
   assert_true(zero_zz.factor().length() == 0)
   let fl_zero = zero_zz.factor_list()
   assert_true(fl_zero.0.is_zero() && fl_zero.1.length() == 0)
   assert_true(zero_zz.sqf_part().is_zero())
 
-  let zz_content = PolyBuilder::new(["x"], Domain::ZZ).from_expr(
+  let zz_content = PolyBuilder::new(["x"], ZZ).from_expr(
     @symcore.int(2) * x + @symcore.int(2),
   )
   let zz_fac = zz_content.factor(gens=["x"])
   assert_true(zz_fac.length() >= 1)
 
-  let gf_same_mod = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(
+  let gf_same_mod = PolyBuilder::new(["x"], GF(5)).from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(4),
   )
   let gf_same_parts = gf_same_mod.factor(modulus=5, seed=23, gens=["x"])
   assert_true(gf_same_parts.length() >= 1)
 
-  let cc_poly = PolyBuilder::new(["x"], Domain::CC).from_expr(
+  let cc_poly = PolyBuilder::new(["x"], CC).from_expr(
     (x ^ @symcore.int(2)) - @symcore.int(1),
   )
   let cc_parts = cc_poly.factor()
   assert_true(cc_parts.length() >= 1)
 
-  let norm_zero = normalize_factor_for_list(Poly::zero(["x"], Domain::QQ))
+  let norm_zero = normalize_factor_for_list(Poly::zero(["x"], QQ))
   assert_true(norm_zero.1.is_one())
 
   let rel = (a ^ @symcore.int(2)) + @symcore.int(1)
-  let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [rel])
+  let alg_domain = Domain::AlgExt(QQ, ["a"], [rel])
   let alg_poly = PolyBuilder::new(["x"], alg_domain).from_expr(
     (x ^ @symcore.int(2)) + x + @symcore.int(1),
   )
   let norm_alg = normalize_factor_for_list(alg_poly)
   assert_true(norm_alg.0.domain == alg_domain)
   let norm_zz = normalize_factor_for_list(
-    PolyBuilder::new(["x"], Domain::ZZ).from_expr(
-      @symcore.int(2) * x + @symcore.int(1),
-    ),
+    PolyBuilder::new(["x"], ZZ).from_expr(@symcore.int(2) * x + @symcore.int(1)),
   )
-  assert_true(norm_zz.1.to_string() == "2")
+  assert_true(Show::to_string(norm_zz.1) == "2")
 
   let lin_parts = factor_linear_rationals(
-    PolyBuilder::new(["x"], Domain::QQ).from_expr(x),
+    PolyBuilder::new(["x"], QQ).from_expr(x),
   )
   assert_true(lin_parts.length() == 1)
 
   let gf_coeffs : Map[Monomial, FieldElem] = Map([])
-  gf_coeffs.set(Monomial::{ exps: [1] }, FieldElem::GFp(5, 0))
-  gf_coeffs.set(Monomial::{ exps: [0] }, FieldElem::GFp(5, 3))
+  gf_coeffs.set({ exps: [1] }, GFp(5, 0))
+  gf_coeffs.set({ exps: [0] }, GFp(5, 3))
   let gf_with_zero = Poly::{
     coeffs: gf_coeffs,
     gens: ["x"],
-    domain: Domain::GF(5),
-    order: TermOrder::Lex,
+    domain: GF(5),
+    order: Lex,
   }
   let gf_norm = normalize_poly_mod(gf_with_zero)
   assert_true(gf_norm.degree(0) == 0)
@@ -346,12 +294,12 @@ test "factor wb: high-gap branch sweep" {
   assert_true(gfext_norm.domain == gfext_domain)
 
   let stripped_const = strip_linear_roots_gf(
-    PolyBuilder::new(["x"], Domain::GF(5)).from_expr(@symcore.int(3)),
+    PolyBuilder::new(["x"], GF(5)).from_expr(@symcore.int(3)),
     5,
   )
   assert_true(stripped_const.1.length() == 0)
 
-  let gf_repeated = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(
+  let gf_repeated = PolyBuilder::new(["x"], GF(5)).from_expr(
     (x + @symcore.int(1)) ^ @symcore.int(2),
   )
   let gf_repeated_parts = factor_gf_seeded(gf_repeated, 7)
@@ -368,19 +316,15 @@ test "factor wb: high-gap branch sweep" {
     3,
     2,
     Some([1, 0, 1]),
-    Domain::GFExt(3, 2, [1, 0, 1]),
+    GFExt(3, 2, [1, 0, 1]),
   )
-  guard seeded_some is FieldElem::GFExt(_, _, m) && m.length() == 3 else {
+  guard seeded_some is GFExt(_, _, m) && m.length() == 3 else {
     fail("field_elem_from_seed(Some(mod_poly)) mismatch")
   }
-  let seeded_other = field_elem_from_seed(5, 7, 1, None, Domain::QQ)
-  assert_true(seeded_other.to_string() == "5")
+  let seeded_other = field_elem_from_seed(5, 7, 1, None, QQ)
+  assert_true(Show::to_string(seeded_other) == "5")
 
-  let c1 = poly_const_from_fe(
-    FieldElem::QQ(@symnum.BigRational::one()),
-    ["x"],
-    Domain::QQ,
-  )
+  let c1 = poly_const_from_fe(QQ(@symnum.BigRational::one()), ["x"], QQ)
   assert_true(!c1.is_zero())
 
   let alg_one = Poly::one(["x"], alg_domain)
@@ -391,9 +335,9 @@ test "factor wb: high-gap branch sweep" {
   let alg_factored = factor_algext(alg_linear)
   assert_true(alg_factored.length() == 1)
 
-  let rf = [fw_const(1, Domain::QQ), fw_const(2, Domain::QQ)]
-  let rg = [fw_const(3, Domain::QQ), fw_const(4, Domain::QQ)]
-  let rfull = resultant_poly_coeffs(rf, rg, Domain::QQ, "x")
+  let rf = [fw_const(1, QQ), fw_const(2, QQ)]
+  let rg = [fw_const(3, QQ), fw_const(4, QQ)]
+  let rfull = resultant_poly_coeffs(rf, rg, QQ, "x")
   assert_true(!rfull.is_zero())
 }
 
@@ -402,18 +346,16 @@ test "factor wb: residual reachable branch sweep" {
   let x = @symcore.Expr::Symbol("x")
   let a = @symcore.Expr::Symbol("a")
 
-  let gf5_poly = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(
+  let gf5_poly = PolyBuilder::new(["x"], GF(5)).from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(1),
   )
   let remapped = gf5_poly.factor(modulus=7)
   assert_true(remapped.length() >= 1)
 
-  let qq_poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(
-    x + @symcore.int(1),
-  )
+  let qq_poly = PolyBuilder::new(["x"], QQ).from_expr(x + @symcore.int(1))
   let qq_norm = normalize_poly_mod(qq_poly)
-  assert_true(qq_norm.domain == Domain::QQ)
-  let qq_mod_parts = PolyBuilder::new(["x"], Domain::QQ)
+  assert_true(qq_norm.domain == QQ)
+  let qq_mod_parts = PolyBuilder::new(["x"], QQ)
     .from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
     .factor(modulus=5)
   assert_true(qq_mod_parts.length() >= 1)
@@ -423,7 +365,7 @@ test "factor wb: residual reachable branch sweep" {
   )
 
   let rel = (a ^ @symcore.int(2)) + @symcore.int(1)
-  let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [rel])
+  let alg_domain = Domain::AlgExt(QQ, ["a"], [rel])
   let alg_linear = PolyBuilder::new(["x"], alg_domain).from_expr(
     x + @symcore.int(1),
   )
@@ -442,9 +384,7 @@ test "factor wb: residual reachable branch sweep" {
       ((x ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(2)
     ) *
     ((x ^ @symcore.int(2)) + x + @symcore.int(2))
-  let gf3_repeat = PolyBuilder::new(["x"], Domain::GF(3)).from_expr(
-    gf3_repeat_expr,
-  )
+  let gf3_repeat = PolyBuilder::new(["x"], GF(3)).from_expr(gf3_repeat_expr)
   let gf3_parts = factor_gf_seeded(gf3_repeat, 41)
   assert_true(gf3_parts.length() >= 1)
 
@@ -459,7 +399,7 @@ test "factor wb: residual reachable branch sweep" {
   )
   assert_true(gfext_linear_parts.length() == 1)
 
-  let edf_poly = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(
+  let edf_poly = PolyBuilder::new(["x"], GF(5)).from_expr(
     ((x ^ @symcore.int(2)) + @symcore.int(2)) *
     ((x ^ @symcore.int(2)) + @symcore.int(3)),
   )
@@ -471,7 +411,7 @@ test "factor wb: residual reachable branch sweep" {
 test "factor wb: rational linear roots use divisor candidates" {
   let x = @symcore.Expr::Symbol("x")
   let parts = factor_linear_rationals(
-    PolyBuilder::new(["x"], Domain::QQ).from_expr(
+    PolyBuilder::new(["x"], QQ).from_expr(
       (@symcore.int(2) * x + @symcore.int(-1)) *
       (@symcore.int(3) * x + @symcore.int(1)),
     ),
@@ -497,7 +437,7 @@ test "factor wb: monic integer linear roots split repeated divisor family" {
     @symcore.int(720),
   ])
   let parts = factor_linear_rationals(
-    PolyBuilder::new(["x"], Domain::QQ).from_expr(expr),
+    PolyBuilder::new(["x"], QQ).from_expr(expr),
   )
   let texts = parts
     .filter(p => p.degree(0) == 1)

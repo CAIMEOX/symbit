@@ -21,22 +21,22 @@ fn render_expr_substs(
 
 ///|
 fn x() -> @symcore.Expr {
-  @symcore.Expr::Symbol("x")
+  Symbol("x")
 }
 
 ///|
 fn y() -> @symcore.Expr {
-  @symcore.Expr::Symbol("y")
+  Symbol("y")
 }
 
 ///|
 fn z() -> @symcore.Expr {
-  @symcore.Expr::Symbol("z")
+  Symbol("z")
 }
 
 ///|
 fn n() -> @symcore.Expr {
-  @symcore.Expr::Symbol("n")
+  Symbol("n")
 }
 
 ///|
@@ -69,26 +69,19 @@ test "symunify deconstruct and construct preserve core expressions" {
 ///|
 fn render_expr_term(term : UnifyTerm[@symcore.Expr, ExprOp]) -> String {
   match term {
-    UnifyTerm::Atom(expr) => @symprint.pretty_string(expr)
-    UnifyTerm::Variable(key) =>
-      "Variable(" + @symprint.pretty_string(key.arg()) + ")"
-    UnifyTerm::CondVariable(key, _) =>
+    Atom(expr) => @symprint.pretty_string(expr)
+    Variable(key) => "Variable(" + @symprint.pretty_string(key.arg()) + ")"
+    CondVariable(key, _) =>
       "CondVariable(" + @symprint.pretty_string(key.arg()) + ")"
-    UnifyTerm::Sequence(items) =>
-      "(" + items.map(render_expr_term).join(", ") + ")"
-    UnifyTerm::Compound(op, args) =>
+    Sequence(items) => "(" + items.map(render_expr_term).join(", ") + ")"
+    Compound(op, args) =>
       match op {
-        @strategies_util.ExprOp::Number =>
-          "Number[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Symbol =>
-          "Symbol[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Add =>
-          "Add[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Mul =>
-          "Mul[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Pow =>
-          "Pow[" + args.map(render_expr_term).join(", ") + "]"
-        @strategies_util.ExprOp::Function(name) =>
+        Number => "Number[" + args.map(render_expr_term).join(", ") + "]"
+        Symbol => "Symbol[" + args.map(render_expr_term).join(", ") + "]"
+        Add => "Add[" + args.map(render_expr_term).join(", ") + "]"
+        Mul => "Mul[" + args.map(render_expr_term).join(", ") + "]"
+        Pow => "Pow[" + args.map(render_expr_term).join(", ") + "]"
+        Function(name) =>
           "Function(" +
           name +
           ")[" +
@@ -132,7 +125,7 @@ test "symunify handles matrix symbols sets and boolean ops" {
   let xname = @symcore.Expr::Symbol("X")
   let xmat = @symcore.function("MatrixSymbol", [xname, n(), n()])
   let ymat = @symcore.function("MatrixSymbol", [
-    @symcore.Expr::Symbol("Y"),
+    Symbol("Y"),
     @symcore.int(2),
     @symcore.int(2),
   ])

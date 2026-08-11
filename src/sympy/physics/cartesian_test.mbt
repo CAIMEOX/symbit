@@ -4,9 +4,8 @@ fn quantum_scalar_repr(
   context : String,
 ) -> @symcore.Expr raise {
   match value {
-    MatrixScalarValue::Scalar(expr) => expr
-    MatrixScalarValue::Matrix(_) =>
-      fail("\{context}: expected scalar representation")
+    Scalar(expr) => expr
+    Matrix(_) => fail("\{context}: expected scalar representation")
   }
 }
 
@@ -45,11 +44,7 @@ test "physics.quantum.cartesian: local qapply, overlaps, and basis representatio
     "<px|x>",
   )
 
-  let pos3 = position_ket_3d(
-    x~,
-    y=@symcore.Expr::Symbol("y"),
-    z=@symcore.Expr::Symbol("z"),
-  )
+  let pos3 = position_ket_3d(x~, y=Symbol("y"), z=Symbol("z"))
   quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([x_op(), pos3])),
     "x*PositionKet3D(x, y, z)",

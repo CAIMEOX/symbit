@@ -28,7 +28,7 @@ pub struct AlgExtSpec {
 /// - Returns: An `AlgExtSpec`.
 /// - Limits: Validation is deferred to `normalize_alg_ext_spec`.
 pub fn alg_ext_spec(base : Domain, gen : String, minpoly : Poly) -> AlgExtSpec {
-  AlgExtSpec::{ base, gen, minpoly }
+  { base, gen, minpoly }
 }
 
 ///|
@@ -55,42 +55,40 @@ pub fn normalize_alg_ext_spec(spec : AlgExtSpec) -> AlgExtSpec raise PolyError {
 ///   `normalize_alg_ext_spec` before constructing the result.
 pub fn build_alg_extension(spec : AlgExtSpec) -> Domain raise PolyError {
   let normalized = normalize_alg_ext_spec(spec)
-  Domain::AlgExt(normalized.base, [normalized.gen], [
-    normalized.minpoly.to_expr(),
-  ])
+  AlgExt(normalized.base, [normalized.gen], [normalized.minpoly.to_expr()])
 }
 
 ///|
 fn validate_minpoly(spec : AlgExtSpec) -> AlgExtSpec raise PolyError {
   // Ensure univariate in the requested generator and over the base domain.
   if spec.minpoly.gens.length() != 1 || spec.minpoly.gens[0] != spec.gen {
-    raise PolyError::BadGenerator(spec.gen)
+    raise BadGenerator(spec.gen)
   }
-  if spec.minpoly.domain.not_equal(spec.base) {
-    raise PolyError::DomainMismatch
+  if Eq::not_equal(spec.minpoly.domain, spec.base) {
+    raise DomainMismatch
   }
   if spec.minpoly.is_zero() || spec.minpoly.degree(0) == 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let monic = make_monic_if_field(spec.minpoly)
-  AlgExtSpec::{ base: spec.base, gen: spec.gen, minpoly: monic }
+  { base: spec.base, gen: spec.gen, minpoly: monic }
 }
 
 ///|
 fn make_monic_if_field(poly : Poly) -> Poly raise PolyError {
   match poly.leading_term() {
-    None => raise PolyError::NonPolynomial
+    None => raise NonPolynomial
     Some((_, lc)) =>
       if fe_is_one(lc) {
         poly
       } else {
         match poly.domain {
-          Domain::QQ | Domain::GF(_) | Domain::GFExt(_, _, _) => {
+          QQ | GF(_) | GFExt(_, _, _) => {
             let inv = fe_inv(lc)
             poly.scale_coeff(inv)
           }
           // For integer or algebraic bases we require an already monic polynomial.
-          _ => raise PolyError::DomainNotField
+          _ => raise DomainNotField
         }
       }
   }
@@ -98,13 +96,13 @@ fn make_monic_if_field(poly : Poly) -> Poly raise PolyError {
 
 ///|
 test "normalize algebraic extension spec to monic" {
-  let builder = PolyBuilder::new(["x"], Domain::QQ)
+  let builder = PolyBuilder::new(["x"], QQ)
   let x = Expr::Symbol("x")
   let raw = builder.from_expr(int(2) * (x ^ int(2)) + int(1))
-  let spec = alg_ext_spec(Domain::QQ, "x", raw)
+  let spec = alg_ext_spec(QQ, "x", raw)
   let normalized = normalize_alg_ext_spec(spec)
   match build_alg_extension(normalized) {
-    Domain::AlgExt(_, gens, rels) => {
+    AlgExt(_, gens, rels) => {
       debug_inspect(gens, content="[\"x\"]")
       // Leading coefficient should be 1 after normalization.
       inspect(@symprint.pretty_string(rels[0]), content="x**2 + 1/2")

@@ -24,7 +24,7 @@ fn physics_matrix_expr_equal(
 
 ///|
 test "physics: Pauli and Dirac matrices satisfy core identities" {
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let sigma1 = @symphysics.msigma(1)
   let sigma2 = @symphysics.msigma(2)
   let sigma3 = @symphysics.msigma(3)
@@ -77,8 +77,7 @@ test "physics: simple wavefunction and energy behaviors" {
   )
 
   let err : Result[Expr, PhysicsError] = try
-    @symphysics.energy(Expr::Symbol("n"), Expr::Symbol("m"), Expr::Symbol("r"))
-    |> Ok
+    @symphysics.energy(Symbol("n"), Symbol("m"), Symbol("r")) |> Ok
   catch {
     error => Err(error)
   }

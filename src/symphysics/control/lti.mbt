@@ -66,8 +66,8 @@ pub enum SISOLinearTimeInvariant {
 ///|
 fn control_var_name(var_expr : Expr) -> String raise ControlError {
   match var_expr {
-    Expr::Symbol(name) => name
-    _ => raise ControlError::TypeError("control variable should be a symbol")
+    Symbol(name) => name
+    _ => raise TypeError("control variable should be a symbol")
   }
 }
 
@@ -84,7 +84,7 @@ fn control_expr_is_one(expr : Expr) -> Bool {
 ///|
 fn control_negated_factor(expr : Expr) -> Expr? {
   match control_normalize(expr) {
-    Expr::Mul(args) if args.length() >= 2 => {
+    Mul(args) if args.length() >= 2 => {
       let rest : Array[Expr] = []
       let mut saw_neg_one = false
       for arg in args {
@@ -107,7 +107,7 @@ fn control_negated_factor(expr : Expr) -> Expr? {
 ///|
 fn control_expand_mul_pair(lhs : Expr, rhs : Expr) -> Expr {
   match (lhs, rhs) {
-    (Expr::Add(lhs_args), Expr::Add(rhs_args)) => {
+    (Add(lhs_args), Add(rhs_args)) => {
       let out : Array[Expr] = []
       for a in lhs_args {
         for b in rhs_args {
@@ -116,9 +116,9 @@ fn control_expand_mul_pair(lhs : Expr, rhs : Expr) -> Expr {
       }
       @symcore.add(out)
     }
-    (Expr::Add(lhs_args), _) =>
+    (Add(lhs_args), _) =>
       @symcore.add(lhs_args.map(a => control_expand_expr(a * rhs)))
-    (_, Expr::Add(rhs_args)) =>
+    (_, Add(rhs_args)) =>
       @symcore.add(rhs_args.map(b => control_expand_expr(lhs * b)))
     _ => lhs * rhs
   }
@@ -139,17 +139,17 @@ fn control_expand_pow(base : Expr, exp : Int) -> Expr {
 ///|
 fn control_expand_expr(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => @symcore.add(args.map(control_expand_expr))
-    Expr::Mul(args) => {
+    Add(args) => @symcore.add(args.map(control_expand_expr))
+    Mul(args) => {
       let mut acc = int(1)
       for arg in args {
         acc = control_expand_mul_pair(acc, control_expand_expr(arg))
       }
       acc
     }
-    Expr::Pow(base, Expr::Number(n)) if n.is_integral() =>
+    Pow(base, Number(n)) if n.is_integral() =>
       control_expand_pow(base, n.numerator().to_int())
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       @symcore.pow(control_expand_expr(base), control_expand_expr(exp))
     _ =>
       match @symcore.application_parts(expr) {
@@ -225,17 +225,14 @@ fn control_rational_parts(
     }
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_)
-    | @symcore.ExprForm::Float(_)
-    | @symcore.ExprForm::ComplexFloat(_)
-    | @symcore.ExprForm::Boolean(_) => (expr, int(1))
-    @symcore.ExprForm::Symbol(name) =>
+    Number(_) | Float(_) | ComplexFloat(_) | Boolean(_) => (expr, int(1))
+    Symbol(name) =>
       if name == variable_name {
         (expr, int(1))
       } else {
         (expr, int(1))
       }
-    @symcore.ExprForm::Add(args) => {
+    Add(args) => {
       let mut out = (int(0), int(1))
       for arg in args {
         out = control_fraction_add(
@@ -245,7 +242,7 @@ fn control_rational_parts(
       }
       out
     }
-    @symcore.ExprForm::Mul(args) => {
+    Mul(args) => {
       let mut out = (int(1), int(1))
       for arg in args {
         out = control_fraction_mul(
@@ -255,9 +252,9 @@ fn control_rational_parts(
       }
       out
     }
-    @symcore.ExprForm::Pow(base, exp) =>
+    Pow(base, exp) =>
       match exp {
-        Expr::Number(n) if n.is_integral() =>
+        Number(n) if n.is_integral() =>
           control_fraction_pow(
             control_rational_parts(base, variable_name),
             n.numerator().to_int(),
@@ -276,9 +273,7 @@ fn control_poly_degree(
   let poly = Some(poly_from_expr(expr, variable_name)) catch {
     _ =>
       if control_expr_depends_on_symbol(expr, variable_name) {
-        raise ControlError::NotImplemented(
-          "requires polynomial numerator/denominator",
-        )
+        raise NotImplemented("requires polynomial numerator/denominator")
       } else {
         None
       }
@@ -298,16 +293,10 @@ fn control_poly_roots(
     return []
   }
   let poly = @sympolys.Poly::from_expr_defaults(expr, gens=[variable_name]) catch {
-    _ =>
-      raise ControlError::NotImplemented(
-        "requires polynomial numerator/denominator",
-      )
+    _ => raise NotImplemented("requires polynomial numerator/denominator")
   }
   @sympolys.roots(poly).map(control_normalize) catch {
-    _ =>
-      raise ControlError::NotImplemented(
-        "root finding not available for this polynomial",
-      )
+    _ => raise NotImplemented("root finding not available for this polynomial")
   }
 }
 
@@ -331,8 +320,8 @@ fn control_unit_like(
   system : SISOLinearTimeInvariant,
 ) -> SISOLinearTimeInvariant raise ControlError {
   match system {
-    SISOLinearTimeInvariant::DTF(tf) =>
-      SISOLinearTimeInvariant::DTF(
+    DTF(tf) =>
+      DTF(
         discrete_transfer_function(
           int(1),
           int(1),
@@ -340,10 +329,7 @@ fn control_unit_like(
           sampling_time=tf.sampling_time_,
         ),
       )
-    _ =>
-      SISOLinearTimeInvariant::TF(
-        transfer_function(int(1), int(1), system.variable()),
-      )
+    _ => TF(transfer_function(int(1), int(1), system.variable()))
   }
 }
 
@@ -352,15 +338,12 @@ fn control_lti_time_signature(
   system : SISOLinearTimeInvariant,
 ) -> (Expr, Bool, Expr?) raise ControlError {
   match system {
-    SISOLinearTimeInvariant::TF(tf) => (tf.var_, false, None)
-    SISOLinearTimeInvariant::DTF(tf) => (tf.var_, true, Some(tf.sampling_time_))
-    SISOLinearTimeInvariant::PID(pid) => (pid.var_, false, None)
-    SISOLinearTimeInvariant::SeriesLTI(series) =>
-      control_lti_time_signature(series.args_[0])
-    SISOLinearTimeInvariant::ParallelLTI(parallel) =>
-      control_lti_time_signature(parallel.args_[0])
-    SISOLinearTimeInvariant::FeedbackLTI(feedback) =>
-      control_lti_time_signature(feedback.sys1_)
+    TF(tf) => (tf.var_, false, None)
+    DTF(tf) => (tf.var_, true, Some(tf.sampling_time_))
+    PID(pid) => (pid.var_, false, None)
+    SeriesLTI(series) => control_lti_time_signature(series.args_[0])
+    ParallelLTI(parallel) => control_lti_time_signature(parallel.args_[0])
+    FeedbackLTI(feedback) => control_lti_time_signature(feedback.sys1_)
   }
 }
 
@@ -369,7 +352,7 @@ fn control_require_compatible_systems(
   args : Array[SISOLinearTimeInvariant],
 ) -> Unit raise ControlError {
   guard !args.is_empty() else {
-    raise ControlError::ValueError("expected at least one system")
+    raise ValueError("expected at least one system")
   }
   let sig0 = control_lti_time_signature(args[0])
   let var0 = sig0.0
@@ -378,20 +361,14 @@ fn control_require_compatible_systems(
   for arg in args {
     let sig = control_lti_time_signature(arg)
     guard sig.0 == var0 else {
-      raise ControlError::ValueError(
-        "systems should use the same complex variable",
-      )
+      raise ValueError("systems should use the same complex variable")
     }
     guard sig.1 == discrete0 else {
-      raise ControlError::TypeError(
-        "cannot mix continuous and discrete systems",
-      )
+      raise TypeError("cannot mix continuous and discrete systems")
     }
     if discrete0 {
       guard sig.2 == sample0 else {
-        raise ControlError::ValueError(
-          "discrete systems should use the same sampling time",
-        )
+        raise ValueError("discrete systems should use the same sampling time")
       }
     }
   }
@@ -402,11 +379,11 @@ fn control_as_base(
   system : SISOLinearTimeInvariant,
 ) -> SISOLinearTimeInvariant raise ControlError {
   match system {
-    SISOLinearTimeInvariant::TF(_) | SISOLinearTimeInvariant::DTF(_) => system
-    SISOLinearTimeInvariant::PID(pid) => SISOLinearTimeInvariant::TF(pid.doit())
-    SISOLinearTimeInvariant::SeriesLTI(series) => series.doit()
-    SISOLinearTimeInvariant::ParallelLTI(parallel) => parallel.doit()
-    SISOLinearTimeInvariant::FeedbackLTI(feedback) => feedback.doit()
+    TF(_) | DTF(_) => system
+    PID(pid) => TF(pid.doit())
+    SeriesLTI(series) => series.doit()
+    ParallelLTI(parallel) => parallel.doit()
+    FeedbackLTI(feedback) => feedback.doit()
   }
 }
 
@@ -416,12 +393,10 @@ fn control_multiply_base(
   rhs : SISOLinearTimeInvariant,
 ) -> SISOLinearTimeInvariant raise ControlError {
   match (control_as_base(lhs), control_as_base(rhs)) {
-    (SISOLinearTimeInvariant::TF(a), SISOLinearTimeInvariant::TF(b)) =>
-      SISOLinearTimeInvariant::TF(
-        transfer_function(a.num_ * b.num_, a.den_ * b.den_, a.var_),
-      )
-    (SISOLinearTimeInvariant::DTF(a), SISOLinearTimeInvariant::DTF(b)) =>
-      SISOLinearTimeInvariant::DTF(
+    (TF(a), TF(b)) =>
+      TF(transfer_function(a.num_ * b.num_, a.den_ * b.den_, a.var_))
+    (DTF(a), DTF(b)) =>
+      DTF(
         discrete_transfer_function(
           a.num_ * b.num_,
           a.den_ * b.den_,
@@ -429,10 +404,7 @@ fn control_multiply_base(
           sampling_time=a.sampling_time_,
         ),
       )
-    _ =>
-      raise ControlError::TypeError(
-        "cannot mix continuous and discrete systems",
-      )
+    _ => raise TypeError("cannot mix continuous and discrete systems")
   }
 }
 
@@ -442,16 +414,16 @@ fn control_add_base(
   rhs : SISOLinearTimeInvariant,
 ) -> SISOLinearTimeInvariant raise ControlError {
   match (control_as_base(lhs), control_as_base(rhs)) {
-    (SISOLinearTimeInvariant::TF(a), SISOLinearTimeInvariant::TF(b)) =>
-      SISOLinearTimeInvariant::TF(
+    (TF(a), TF(b)) =>
+      TF(
         transfer_function(
           a.num_ * b.den_ + b.num_ * a.den_,
           a.den_ * b.den_,
           a.var_,
         ),
       )
-    (SISOLinearTimeInvariant::DTF(a), SISOLinearTimeInvariant::DTF(b)) =>
-      SISOLinearTimeInvariant::DTF(
+    (DTF(a), DTF(b)) =>
+      DTF(
         discrete_transfer_function(
           a.num_ * b.den_ + b.num_ * a.den_,
           a.den_ * b.den_,
@@ -459,10 +431,7 @@ fn control_add_base(
           sampling_time=a.sampling_time_,
         ),
       )
-    _ =>
-      raise ControlError::TypeError(
-        "cannot mix continuous and discrete systems",
-      )
+    _ => raise TypeError("cannot mix continuous and discrete systems")
   }
 }
 
@@ -472,20 +441,14 @@ pub fn transfer_function(
   denominator : Expr,
   variable : Expr,
 ) -> TransferFunction raise ControlError {
-  guard variable is Expr::Symbol(_) else {
-    raise ControlError::TypeError("control variable should be a symbol")
+  guard variable is Symbol(_) else {
+    raise TypeError("control variable should be a symbol")
   }
   let den_norm = control_normalize(denominator)
   guard !control_expr_is_zero(den_norm) else {
-    raise ControlError::ValueError(
-      "transfer function denominator should be nonzero",
-    )
+    raise ValueError("transfer function denominator should be nonzero")
   }
-  TransferFunction::{
-    num_: control_normalize(numerator),
-    den_: den_norm,
-    var_: variable,
-  }
+  { num_: control_normalize(numerator), den_: den_norm, var_: variable }
 }
 
 ///|
@@ -495,16 +458,14 @@ pub fn discrete_transfer_function(
   variable : Expr,
   sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
-  guard variable is Expr::Symbol(_) else {
-    raise ControlError::TypeError("control variable should be a symbol")
+  guard variable is Symbol(_) else {
+    raise TypeError("control variable should be a symbol")
   }
   let den_norm = control_normalize(denominator)
   guard !control_expr_is_zero(den_norm) else {
-    raise ControlError::ValueError(
-      "transfer function denominator should be nonzero",
-    )
+    raise ValueError("transfer function denominator should be nonzero")
   }
-  DiscreteTransferFunction::{
+  {
     num_: control_normalize(numerator),
     den_: den_norm,
     var_: variable,
@@ -520,11 +481,9 @@ pub fn create_transfer_function(
   sampling_time? : Expr = int(0),
 ) -> SISOLinearTimeInvariant raise ControlError {
   if control_expr_is_zero(sampling_time) {
-    SISOLinearTimeInvariant::TF(
-      transfer_function(numerator, denominator, variable),
-    )
+    TF(transfer_function(numerator, denominator, variable))
   } else {
-    SISOLinearTimeInvariant::DTF(
+    DTF(
       discrete_transfer_function(
         numerator,
         denominator,
@@ -550,11 +509,11 @@ pub fn TransferFunction::from_rational_expression(
         .to_array()
         .filter(name => name != "I" && name != "pi")
       guard names.length() == 1 else {
-        raise ControlError::ValueError(
+        raise ValueError(
           "from_rational_expression needs the complex variable when it cannot be inferred",
         )
       }
-      Expr::Symbol(names[0])
+      Symbol(names[0])
     }
   }
   let variable_name = control_var_name(resolved_variable)
@@ -573,9 +532,7 @@ pub fn TransferFunction::from_coeff_lists(
   variable : Expr,
 ) -> TransferFunction raise ControlError {
   guard !denominator_coeffs.all(coeff => control_expr_is_zero(coeff)) else {
-    raise ControlError::ValueError(
-      "transfer function denominator should be nonzero",
-    )
+    raise ValueError("transfer function denominator should be nonzero")
   }
   transfer_function(
     control_expr_from_coeffs(numerator_coeffs, variable),
@@ -631,7 +588,7 @@ pub fn TransferFunction::sampling_time(_self : TransferFunction) -> Expr {
 pub fn TransferFunction::as_system(
   self : TransferFunction,
 ) -> SISOLinearTimeInvariant {
-  SISOLinearTimeInvariant::TF(self)
+  TF(self)
 }
 
 ///|
@@ -682,11 +639,11 @@ pub fn TransferFunction::dc_gain(
   let den0 = control_normalize(@symcore.subst(simplified.den_, env))
   if control_expr_is_zero(den0) {
     if control_expr_is_zero(num0) {
-      raise ControlError::NotImplemented(
+      raise NotImplemented(
         "dc_gain is indeterminate for this transfer function",
       )
     }
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+    NumberSymbol(Infinity)
   } else {
     control_normalize(num0 * @symcore.pow(den0, int(-1)))
   }
@@ -785,11 +742,11 @@ pub fn TransferFunction::xreplace(
   env : Map[String, Expr],
 ) -> TransferFunction raise ControlError {
   let next_var = match self.var_ {
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       match env.get(name) {
         Some(value) =>
           match value {
-            Expr::Symbol(_) => value
+            Symbol(_) => value
             _ => self.var_
           }
         None => self.var_
@@ -805,11 +762,7 @@ pub fn TransferFunction::xreplace(
 
 ///|
 pub impl Neg for TransferFunction with fn neg(self) {
-  TransferFunction::{
-    num_: int(-1) * self.num_,
-    den_: self.den_,
-    var_: self.var_,
-  }
+  { num_: int(-1) * self.num_, den_: self.den_, var_: self.var_ }
 }
 
 ///|
@@ -875,14 +828,10 @@ pub fn gbt(
 ) -> (Array[Expr], Array[Expr]) raise ControlError {
   let variable_name = control_var_name(cont_tf.var_)
   let np = coeff_array(poly_from_expr(cont_tf.num_, variable_name)).1 catch {
-      _ =>
-        raise ControlError::NotImplemented("gbt requires polynomial numerator")
+      _ => raise NotImplemented("gbt requires polynomial numerator")
     }
   let dp = coeff_array(poly_from_expr(cont_tf.den_, variable_name)).1 catch {
-      _ =>
-        raise ControlError::NotImplemented(
-          "gbt requires polynomial denominator",
-        )
+      _ => raise NotImplemented("gbt requires polynomial denominator")
     }
   let z = cont_tf.var_
   let n = if np.length() > dp.length() {
@@ -915,16 +864,10 @@ pub fn gbt(
   let num_expr = control_expand_expr(control_normalize(@symcore.add(num_terms)))
   let den_expr = control_expand_expr(control_normalize(@symcore.add(den_terms)))
   let num_coeffs = coeff_array(poly_from_expr(num_expr, variable_name)).1 catch {
-      _ =>
-        raise ControlError::NotImplemented(
-          "gbt produced a non-polynomial numerator",
-        )
+      _ => raise NotImplemented("gbt produced a non-polynomial numerator")
     }
   let den_coeffs = coeff_array(poly_from_expr(den_expr, variable_name)).1 catch {
-      _ =>
-        raise ControlError::NotImplemented(
-          "gbt produced a non-polynomial denominator",
-        )
+      _ => raise NotImplemented("gbt produced a non-polynomial denominator")
     }
   let lead = den_coeffs[0]
   (
@@ -1069,7 +1012,7 @@ pub fn DiscreteTransferFunction::args(
 pub fn DiscreteTransferFunction::as_system(
   self : DiscreteTransferFunction,
 ) -> SISOLinearTimeInvariant {
-  SISOLinearTimeInvariant::DTF(self)
+  DTF(self)
 }
 
 ///|
@@ -1124,11 +1067,11 @@ pub fn DiscreteTransferFunction::dc_gain(
   let den1 = control_normalize(@symcore.subst(simplified.den_, env))
   if control_expr_is_zero(den1) {
     if control_expr_is_zero(num1) {
-      raise ControlError::NotImplemented(
+      raise NotImplemented(
         "dc_gain is indeterminate for this transfer function",
       )
     }
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+    NumberSymbol(Infinity)
   } else {
     control_normalize(num1 * (den1 ^ int(-1)))
   }
@@ -1214,7 +1157,7 @@ pub fn DiscreteTransferFunction::is_stable(
 
 ///|
 pub impl Neg for DiscreteTransferFunction with fn neg(self) {
-  DiscreteTransferFunction::{
+  {
     num_: int(-1) * self.num_,
     den_: self.den_,
     var_: self.var_,
@@ -1224,16 +1167,16 @@ pub impl Neg for DiscreteTransferFunction with fn neg(self) {
 
 ///|
 pub fn pid_controller(
-  kp? : Expr = Expr::Symbol("kp"),
-  ki? : Expr = Expr::Symbol("ki"),
-  kd? : Expr = Expr::Symbol("kd"),
+  kp? : Expr = Symbol("kp"),
+  ki? : Expr = Symbol("ki"),
+  kd? : Expr = Symbol("kd"),
   tf? : Expr = int(0),
-  variable? : Expr = Expr::Symbol("s"),
+  variable? : Expr = Symbol("s"),
 ) -> PIDController raise ControlError {
-  guard variable is Expr::Symbol(_) else {
-    raise ControlError::TypeError("control variable should be a symbol")
+  guard variable is Symbol(_) else {
+    raise TypeError("control variable should be a symbol")
   }
-  PIDController::{ kp_: kp, ki_: ki, kd_: kd, tf_: tf, var_: variable }
+  { kp_: kp, ki_: ki, kd_: kd, tf_: tf, var_: variable }
 }
 
 ///|
@@ -1265,7 +1208,7 @@ pub fn PIDController::variable(self : PIDController) -> Expr {
 pub fn PIDController::as_system(
   self : PIDController,
 ) -> SISOLinearTimeInvariant {
-  SISOLinearTimeInvariant::PID(self)
+  PID(self)
 }
 
 ///|
@@ -1291,7 +1234,7 @@ pub fn series(
   args : Array[SISOLinearTimeInvariant],
 ) -> Series raise ControlError {
   control_require_compatible_systems(args)
-  Series::{ args_: args }
+  { args_: args }
 }
 
 ///|
@@ -1299,7 +1242,7 @@ pub fn parallel(
   args : Array[SISOLinearTimeInvariant],
 ) -> Parallel raise ControlError {
   control_require_compatible_systems(args)
-  Parallel::{ args_: args }
+  { args_: args }
 }
 
 ///|
@@ -1314,9 +1257,9 @@ pub fn feedback(
   }
   control_require_compatible_systems([sys1, resolved_sys2])
   guard sign == -1 || sign == 1 else {
-    raise ControlError::ValueError("feedback sign should be -1 or 1")
+    raise ValueError("feedback sign should be -1 or 1")
   }
-  Feedback::{ sys1_: sys1, sys2_: resolved_sys2, sign_: sign }
+  { sys1_: sys1, sys2_: resolved_sys2, sign_: sign }
 }
 
 ///|
@@ -1336,7 +1279,7 @@ pub fn Series::sampling_time(self : Series) -> Expr? raise ControlError {
 
 ///|
 pub fn Series::as_system(self : Series) -> SISOLinearTimeInvariant {
-  SISOLinearTimeInvariant::SeriesLTI(self)
+  SeriesLTI(self)
 }
 
 ///|
@@ -1387,7 +1330,7 @@ pub fn Parallel::sampling_time(self : Parallel) -> Expr? raise ControlError {
 
 ///|
 pub fn Parallel::as_system(self : Parallel) -> SISOLinearTimeInvariant {
-  SISOLinearTimeInvariant::ParallelLTI(self)
+  ParallelLTI(self)
 }
 
 ///|
@@ -1448,7 +1391,7 @@ pub fn Feedback::sampling_time(self : Feedback) -> Expr? raise ControlError {
 
 ///|
 pub fn Feedback::as_system(self : Feedback) -> SISOLinearTimeInvariant {
-  SISOLinearTimeInvariant::FeedbackLTI(self)
+  FeedbackLTI(self)
 }
 
 ///|
@@ -1476,23 +1419,21 @@ pub fn Feedback::doit(
   let forward = control_as_base(self.sys1_)
   let feedback_term = control_as_base(self.sys2_)
   match (forward, feedback_term) {
-    (SISOLinearTimeInvariant::TF(g), SISOLinearTimeInvariant::TF(h)) => {
+    (TF(g), TF(h)) => {
       let den = if self.sign_ == 1 {
         g.den_ * h.den_ - g.num_ * h.num_
       } else {
         g.den_ * h.den_ + g.num_ * h.num_
       }
-      SISOLinearTimeInvariant::TF(
-        transfer_function(g.num_ * h.den_, den, g.var_),
-      )
+      TF(transfer_function(g.num_ * h.den_, den, g.var_))
     }
-    (SISOLinearTimeInvariant::DTF(g), SISOLinearTimeInvariant::DTF(h)) => {
+    (DTF(g), DTF(h)) => {
       let den = if self.sign_ == 1 {
         g.den_ * h.den_ - g.num_ * h.num_
       } else {
         g.den_ * h.den_ + g.num_ * h.num_
       }
-      SISOLinearTimeInvariant::DTF(
+      DTF(
         discrete_transfer_function(
           g.num_ * h.den_,
           den,
@@ -1501,10 +1442,7 @@ pub fn Feedback::doit(
         ),
       )
     }
-    _ =>
-      raise ControlError::TypeError(
-        "cannot mix continuous and discrete systems",
-      )
+    _ => raise TypeError("cannot mix continuous and discrete systems")
   }
 }
 
@@ -1518,12 +1456,12 @@ pub fn SISOLinearTimeInvariant::variable(
   self : SISOLinearTimeInvariant,
 ) -> Expr raise ControlError {
   match self {
-    SISOLinearTimeInvariant::TF(tf) => tf.var_
-    SISOLinearTimeInvariant::DTF(tf) => tf.var_
-    SISOLinearTimeInvariant::PID(pid) => pid.var_
-    SISOLinearTimeInvariant::SeriesLTI(series) => series.variable()
-    SISOLinearTimeInvariant::ParallelLTI(parallel) => parallel.variable()
-    SISOLinearTimeInvariant::FeedbackLTI(feedback) => feedback.variable()
+    TF(tf) => tf.var_
+    DTF(tf) => tf.var_
+    PID(pid) => pid.var_
+    SeriesLTI(series) => series.variable()
+    ParallelLTI(parallel) => parallel.variable()
+    FeedbackLTI(feedback) => feedback.variable()
   }
 }
 
@@ -1532,11 +1470,11 @@ pub fn SISOLinearTimeInvariant::sampling_time(
   self : SISOLinearTimeInvariant,
 ) -> Expr? raise ControlError {
   match self {
-    SISOLinearTimeInvariant::TF(_) | SISOLinearTimeInvariant::PID(_) => None
-    SISOLinearTimeInvariant::DTF(tf) => Some(tf.sampling_time_)
-    SISOLinearTimeInvariant::SeriesLTI(series) => series.sampling_time()
-    SISOLinearTimeInvariant::ParallelLTI(parallel) => parallel.sampling_time()
-    SISOLinearTimeInvariant::FeedbackLTI(feedback) => feedback.sampling_time()
+    TF(_) | PID(_) => None
+    DTF(tf) => Some(tf.sampling_time_)
+    SeriesLTI(series) => series.sampling_time()
+    ParallelLTI(parallel) => parallel.sampling_time()
+    FeedbackLTI(feedback) => feedback.sampling_time()
   }
 }
 
@@ -1545,19 +1483,18 @@ pub fn SISOLinearTimeInvariant::is_discrete(
   self : SISOLinearTimeInvariant,
 ) -> Bool {
   match self {
-    SISOLinearTimeInvariant::DTF(_) => true
-    SISOLinearTimeInvariant::SeriesLTI(series) =>
+    DTF(_) => true
+    SeriesLTI(series) =>
       match series.args_[0] {
-        SISOLinearTimeInvariant::DTF(_) => true
+        DTF(_) => true
         _ => false
       }
-    SISOLinearTimeInvariant::ParallelLTI(parallel) =>
+    ParallelLTI(parallel) =>
       match parallel.args_[0] {
-        SISOLinearTimeInvariant::DTF(_) => true
+        DTF(_) => true
         _ => false
       }
-    SISOLinearTimeInvariant::FeedbackLTI(feedback) =>
-      feedback.sys1_.is_discrete()
+    FeedbackLTI(feedback) => feedback.sys1_.is_discrete()
     _ => false
   }
 }
@@ -1574,9 +1511,9 @@ pub fn SISOLinearTimeInvariant::to_expr(
   self : SISOLinearTimeInvariant,
 ) -> Expr raise ControlError {
   match control_as_base(self) {
-    SISOLinearTimeInvariant::TF(tf) => tf.to_expr()
-    SISOLinearTimeInvariant::DTF(tf) => tf.to_expr()
-    _ => raise ControlError::NotImplemented("unexpected non-base system")
+    TF(tf) => tf.to_expr()
+    DTF(tf) => tf.to_expr()
+    _ => raise NotImplemented("unexpected non-base system")
   }
 }
 
@@ -1585,9 +1522,9 @@ pub fn SISOLinearTimeInvariant::is_proper(
   self : SISOLinearTimeInvariant,
 ) -> Bool raise ControlError {
   match control_as_base(self) {
-    SISOLinearTimeInvariant::TF(tf) => tf.is_proper()
-    SISOLinearTimeInvariant::DTF(tf) => tf.is_proper()
-    _ => raise ControlError::NotImplemented("unexpected non-base system")
+    TF(tf) => tf.is_proper()
+    DTF(tf) => tf.is_proper()
+    _ => raise NotImplemented("unexpected non-base system")
   }
 }
 
@@ -1596,9 +1533,9 @@ pub fn SISOLinearTimeInvariant::is_strictly_proper(
   self : SISOLinearTimeInvariant,
 ) -> Bool raise ControlError {
   match control_as_base(self) {
-    SISOLinearTimeInvariant::TF(tf) => tf.is_strictly_proper()
-    SISOLinearTimeInvariant::DTF(tf) => tf.is_strictly_proper()
-    _ => raise ControlError::NotImplemented("unexpected non-base system")
+    TF(tf) => tf.is_strictly_proper()
+    DTF(tf) => tf.is_strictly_proper()
+    _ => raise NotImplemented("unexpected non-base system")
   }
 }
 
@@ -1607,9 +1544,9 @@ pub fn SISOLinearTimeInvariant::is_biproper(
   self : SISOLinearTimeInvariant,
 ) -> Bool raise ControlError {
   match control_as_base(self) {
-    SISOLinearTimeInvariant::TF(tf) => tf.is_biproper()
-    SISOLinearTimeInvariant::DTF(tf) => tf.is_biproper()
-    _ => raise ControlError::NotImplemented("unexpected non-base system")
+    TF(tf) => tf.is_biproper()
+    DTF(tf) => tf.is_biproper()
+    _ => raise NotImplemented("unexpected non-base system")
   }
 }
 
@@ -1618,8 +1555,8 @@ pub fn SISOLinearTimeInvariant::neg_system(
   self : SISOLinearTimeInvariant,
 ) -> SISOLinearTimeInvariant raise ControlError {
   match control_as_base(self) {
-    SISOLinearTimeInvariant::TF(tf) => SISOLinearTimeInvariant::TF(-tf)
-    SISOLinearTimeInvariant::DTF(tf) => SISOLinearTimeInvariant::DTF(-tf)
-    _ => raise ControlError::NotImplemented("unexpected non-base system")
+    TF(tf) => TF(-tf)
+    DTF(tf) => DTF(-tf)
+    _ => raise NotImplemented("unexpected non-base system")
   }
 }

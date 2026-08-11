@@ -212,13 +212,13 @@ fn simplify_morphisms(
   for morphism in morphisms.keys() {
     let props = morphisms[morphism]
     match morphism {
-      Morphism::Composite(_) =>
+      Composite(_) =>
         if props.is_empty() {
           ()
         } else {
           newmorphisms[morphism] = props
         }
-      Morphism::Identity(_) => ()
+      Identity(_) => ()
       _ => newmorphisms[morphism] = props
     }
   }
@@ -322,7 +322,7 @@ fn drop_redundant_triangles(
 ///|
 fn morphism_length(morphism : Morphism) -> Int {
   match morphism {
-    Morphism::Composite(items) => items.length()
+    Composite(items) => items.length()
     _ => 1
   }
 }
@@ -718,13 +718,13 @@ fn handle_groups(
 
   for group in groups {
     match group {
-      GridGroup::Single(obj) => {
+      Single(obj) => {
         obj_groups[obj] = obj
         if !top_groups.any(existing => existing == obj) {
           top_groups.push(obj)
         }
       }
-      GridGroup::Group(layout) => {
+      Group(layout) => {
         let placeholder = group_placeholder(layout)
         for obj in layout.objects {
           obj_groups[obj] = placeholder
@@ -762,7 +762,7 @@ fn handle_groups(
     }
   }
 
-  let top_diag = diagram(premises=MorphismSpec::List(new_morphisms))
+  let top_diag = diagram(premises=List(new_morphisms))
   let top_grid = diagram_grid(top_diag)
 
   fn group_size(
@@ -1085,9 +1085,7 @@ fn get_connected_components(
     if component.length() == 1 {
       current_morphisms[identity_morphism(component[0])] = []
     }
-    component_morphisms.push(
-      diagram(premises=MorphismSpec::Props(current_morphisms)),
-    )
+    component_morphisms.push(diagram(premises=Props(current_morphisms)))
   }
   component_morphisms
 }
@@ -1147,8 +1145,8 @@ pub fn diagram_grid(
     }
   } else {
     laid_out = match hints.layout {
-      LayoutKind::Sequential => sequential_layout(diagram, merged_morphisms)
-      LayoutKind::Generic => generic_layout(diagram, merged_morphisms)
+      Sequential => sequential_layout(diagram, merged_morphisms)
+      Generic => generic_layout(diagram, merged_morphisms)
     }
   }
 
@@ -1186,7 +1184,7 @@ fn show_grid_row(row : Array[Object?]) -> String {
   let items : Array[String] = Array::new()
   for cell in row {
     match cell {
-      Some(obj) => items.push(obj.to_string())
+      Some(obj) => items.push(Show::to_string(obj))
       None => items.push("None")
     }
   }
@@ -1200,5 +1198,5 @@ pub impl Show for DiagramGrid with fn to_string(self) -> String {
 
 ///|
 pub impl Show for DiagramGrid with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }

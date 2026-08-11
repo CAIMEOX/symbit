@@ -13,7 +13,7 @@ fn stats_rng(seed? : Int? = None) -> @random.Rand {
 
 ///|
 fn stats_expr_from_double(value : Double) -> @symcore.Expr {
-  @symcore.Expr::Float(@symcore.Float::from_double(value))
+  Float(@symcore.Float::from_double(value))
 }
 
 ///|
@@ -27,14 +27,12 @@ fn stats_rational_to_double(value : @symnum.BigRational) -> Double? {
 ///|
 fn stats_expr_to_double(expr : @symcore.Expr) -> Double? {
   match expr {
-    @symcore.Expr::Number(value) => stats_rational_to_double(value)
-    @symcore.Expr::Float(value) =>
-      Some(value.to_double() catch { _ => return None })
+    Number(value) => stats_rational_to_double(value)
+    Float(value) => Some(value.to_double() catch { _ => return None })
     _ =>
       match @symcore.evalf(expr, prec=80) {
-        @symcore.Expr::Number(value) => stats_rational_to_double(value)
-        @symcore.Expr::Float(value) =>
-          Some(value.to_double() catch { _ => return None })
+        Number(value) => stats_rational_to_double(value)
+        Float(value) => Some(value.to_double() catch { _ => return None })
         _ => None
       }
   }
@@ -430,12 +428,12 @@ fn stats_sample_symbolic_continuous(
   rng : @random.Rand,
 ) -> @symcore.Expr? {
   match tag {
-    ContinuousTag::Arcsin if params.length() == 0 =>
+    Arcsin if params.length() == 0 =>
       match stats_sample_beta_double(0.5, 0.5, rng) {
         Some(value) => Some(stats_expr_from_double(value))
         None => None
       }
-    ContinuousTag::Beta if params.length() == 2 =>
+    Beta if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) =>
           match stats_sample_beta_double(values[0], values[1], rng) {
@@ -444,7 +442,7 @@ fn stats_sample_symbolic_continuous(
           }
         None => None
       }
-    ContinuousTag::BetaPrime if params.length() == 2 =>
+    BetaPrime if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) =>
           match
@@ -457,7 +455,7 @@ fn stats_sample_symbolic_continuous(
           }
         None => None
       }
-    ContinuousTag::Cauchy if params.length() == 2 =>
+    Cauchy if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[1] > 0.0 =>
           Some(
@@ -468,7 +466,7 @@ fn stats_sample_symbolic_continuous(
           )
         _ => None
       }
-    ContinuousTag::Chi if params.length() == 1 =>
+    Chi if params.length() == 1 =>
       match stats_double_params(params, 1) {
         Some(values) =>
           match stats_sample_gamma_double(values[0] / 2.0, 2.0, rng) {
@@ -477,7 +475,7 @@ fn stats_sample_symbolic_continuous(
           }
         None => None
       }
-    ContinuousTag::ChiSquared if params.length() == 1 =>
+    ChiSquared if params.length() == 1 =>
       match stats_double_params(params, 1) {
         Some(values) =>
           match stats_sample_gamma_double(values[0] / 2.0, 2.0, rng) {
@@ -486,7 +484,7 @@ fn stats_sample_symbolic_continuous(
           }
         None => None
       }
-    ContinuousTag::Erlang if params.length() == 2 =>
+    Erlang if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[1] > 0.0 =>
           match stats_sample_gamma_double(values[0], 1.0 / values[1], rng) {
@@ -495,9 +493,9 @@ fn stats_sample_symbolic_continuous(
           }
         _ => None
       }
-    ContinuousTag::Exponential if params.length() == 1 =>
+    Exponential if params.length() == 1 =>
       stats_sample_exponential(params[0], rng)
-    ContinuousTag::GammaInverse if params.length() == 2 =>
+    GammaInverse if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) =>
           match stats_sample_gamma_double(values[0], 1.0 / values[1], rng) {
@@ -507,7 +505,7 @@ fn stats_sample_symbolic_continuous(
           }
         None => None
       }
-    ContinuousTag::Kumaraswamy if params.length() == 2 =>
+    Kumaraswamy if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[0] > 0.0 && values[1] > 0.0 =>
           Some(
@@ -520,7 +518,7 @@ fn stats_sample_symbolic_continuous(
           )
         _ => None
       }
-    ContinuousTag::Laplace if params.length() == 2 =>
+    Laplace if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[1] > 0.0 => {
           let u = stats_uniform01(rng)
@@ -533,7 +531,7 @@ fn stats_sample_symbolic_continuous(
         }
         _ => None
       }
-    ContinuousTag::LogLogistic if params.length() == 2 =>
+    LogLogistic if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[0] > 0.0 && values[1] > 0.0 => {
           let u = stats_uniform01(rng)
@@ -545,7 +543,7 @@ fn stats_sample_symbolic_continuous(
         }
         _ => None
       }
-    ContinuousTag::LogNormal if params.length() == 2 =>
+    LogNormal if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[1] >= 0.0 =>
           Some(
@@ -557,7 +555,7 @@ fn stats_sample_symbolic_continuous(
           )
         _ => None
       }
-    ContinuousTag::Logistic if params.length() == 2 =>
+    Logistic if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[1] > 0.0 => {
           let u = stats_uniform01(rng)
@@ -569,7 +567,7 @@ fn stats_sample_symbolic_continuous(
         }
         _ => None
       }
-    ContinuousTag::Lomax if params.length() == 2 =>
+    Lomax if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[0] > 0.0 && values[1] > 0.0 => {
           let u = stats_uniform01(rng)
@@ -581,7 +579,7 @@ fn stats_sample_symbolic_continuous(
         }
         _ => None
       }
-    ContinuousTag::Maxwell if params.length() == 1 =>
+    Maxwell if params.length() == 1 =>
       match stats_double_params(params, 1) {
         Some(values) if values[0] > 0.0 => {
           let x = stats_sample_standard_normal(rng)
@@ -593,7 +591,7 @@ fn stats_sample_symbolic_continuous(
         }
         _ => None
       }
-    ContinuousTag::Nakagami if params.length() == 2 =>
+    Nakagami if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[0] >= 0.5 && values[1] > 0.0 =>
           match
@@ -603,7 +601,7 @@ fn stats_sample_symbolic_continuous(
           }
         _ => None
       }
-    ContinuousTag::Pareto if params.length() == 2 =>
+    Pareto if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[0] > 0.0 && values[1] > 0.0 => {
           let u = stats_uniform01(rng)
@@ -615,7 +613,7 @@ fn stats_sample_symbolic_continuous(
         }
         _ => None
       }
-    ContinuousTag::PowerFunction if params.length() == 3 =>
+    PowerFunction if params.length() == 3 =>
       match stats_double_params(params, 3) {
         Some(values) if values[0] > 0.0 =>
           match stats_sample_uniform_double(values[1], values[2], rng) {
@@ -631,7 +629,7 @@ fn stats_sample_symbolic_continuous(
           }
         _ => None
       }
-    ContinuousTag::Rayleigh if params.length() == 1 =>
+    Rayleigh if params.length() == 1 =>
       match stats_double_params(params, 1) {
         Some(values) if values[0] > 0.0 =>
           Some(
@@ -641,7 +639,7 @@ fn stats_sample_symbolic_continuous(
           )
         _ => None
       }
-    ContinuousTag::Reciprocal if params.length() == 2 =>
+    Reciprocal if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[0] > 0.0 && values[0] < values[1] =>
           Some(
@@ -655,7 +653,7 @@ fn stats_sample_symbolic_continuous(
           )
         _ => None
       }
-    ContinuousTag::Triangular if params.length() == 3 =>
+    Triangular if params.length() == 3 =>
       match stats_double_params(params, 3) {
         Some(values) =>
           match
@@ -665,7 +663,7 @@ fn stats_sample_symbolic_continuous(
           }
         None => None
       }
-    ContinuousTag::Trapezoidal if params.length() == 4 =>
+    Trapezoidal if params.length() == 4 =>
       match stats_double_params(params, 4) {
         Some(values) =>
           match
@@ -681,7 +679,7 @@ fn stats_sample_symbolic_continuous(
           }
         None => None
       }
-    ContinuousTag::Uniform if params.length() == 2 =>
+    Uniform if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) =>
           match stats_sample_uniform_double(values[0], values[1], rng) {
@@ -690,7 +688,7 @@ fn stats_sample_symbolic_continuous(
           }
         None => None
       }
-    ContinuousTag::Weibull if params.length() == 2 =>
+    Weibull if params.length() == 2 =>
       match stats_double_params(params, 2) {
         Some(values) if values[0] > 0.0 && values[1] > 0.0 =>
           Some(
@@ -712,7 +710,7 @@ fn stats_sample_symbolic_discrete(
   rng : @random.Rand,
 ) -> @symcore.Expr? {
   match tag {
-    DiscreteTag::BetaBinomial if params.length() == 3 =>
+    BetaBinomial if params.length() == 3 =>
       match
         (expr_as_int(params[0]), stats_double_params([params[1], params[2]], 2)) {
         (Some(n), Some(values)) if n >= 0 =>
@@ -727,12 +725,12 @@ fn stats_sample_symbolic_discrete(
           }
         _ => None
       }
-    DiscreteTag::FiniteDistributionHandmade =>
+    FiniteDistributionHandmade =>
       match symbolic_finite_handmade_pairs(params) {
         Some(pairs) => stats_sample_expr_weighted(pairs, rng)
         None => None
       }
-    DiscreteTag::FlorySchulz if params.length() == 1 =>
+    FlorySchulz if params.length() == 1 =>
       match stats_sample_negative_binomial(@symcore.int(2), params[0], rng) {
         Some(value) =>
           match expr_as_int(value) {
@@ -741,7 +739,7 @@ fn stats_sample_symbolic_discrete(
           }
         None => None
       }
-    DiscreteTag::Hermite if params.length() == 2 =>
+    Hermite if params.length() == 2 =>
       match
         (
           stats_sample_poisson(params[0], rng),
@@ -754,7 +752,7 @@ fn stats_sample_symbolic_discrete(
           }
         _ => None
       }
-    DiscreteTag::Hypergeometric if params.length() == 3 =>
+    Hypergeometric if params.length() == 3 =>
       match
         (expr_as_int(params[0]), expr_as_int(params[1]), expr_as_int(params[2])) {
         (Some(population), Some(successes0), Some(draws)) if population >= 0 &&
@@ -781,7 +779,7 @@ fn stats_sample_symbolic_discrete(
         }
         _ => None
       }
-    DiscreteTag::Skellam if params.length() == 2 =>
+    Skellam if params.length() == 2 =>
       match
         (
           stats_sample_poisson(params[0], rng),
@@ -804,17 +802,15 @@ fn sample_random_var_with_rng(
   rng : @random.Rand,
 ) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Finite(items) => stats_sample_finite(items, rng)
-    RVKind::Binomial(n~, p~) => stats_sample_binomial(n, p, rng)
-    RVKind::Poisson(rate~) => stats_sample_poisson(rate, rng)
-    RVKind::Geometric(p~) => stats_sample_geometric(p, rng)
-    RVKind::NegativeBinomial(r~, p~) =>
-      stats_sample_negative_binomial(r, p, rng)
-    RVKind::Normal(mu~, sigma~) =>
-      stats_sample_continuous_normal(mu, sigma, rng)
-    RVKind::Exponential(rate~) => stats_sample_exponential(rate, rng)
-    RVKind::Gamma(shape~, scale~) => stats_sample_gamma(shape, scale, rng)
-    RVKind::JointIndependent(items) => {
+    Finite(items) => stats_sample_finite(items, rng)
+    Binomial(n~, p~) => stats_sample_binomial(n, p, rng)
+    Poisson(rate~) => stats_sample_poisson(rate, rng)
+    Geometric(p~) => stats_sample_geometric(p, rng)
+    NegativeBinomial(r~, p~) => stats_sample_negative_binomial(r, p, rng)
+    Normal(mu~, sigma~) => stats_sample_continuous_normal(mu, sigma, rng)
+    Exponential(rate~) => stats_sample_exponential(rate, rng)
+    Gamma(shape~, scale~) => stats_sample_gamma(shape, scale, rng)
+    JointIndependent(items) => {
       let values : Array[@symcore.Expr] = []
       for item in items {
         match sample_random_var_with_rng(item, rng) {
@@ -822,16 +818,16 @@ fn sample_random_var_with_rng(
           None => return None
         }
       }
-      Some(@symcore.Expr::Tuple(values))
+      Some(Tuple(values))
     }
-    RVKind::Compound(items) => {
+    Compound(items) => {
       let weighted : Array[(@symcore.Expr, @symnum.BigRational)] = []
       for item in items {
         let (weight, component) = item
-        weighted.push((@symcore.Expr::Symbol(component.name), weight))
+        weighted.push((Symbol(component.name), weight))
       }
       match stats_sample_finite(weighted, rng) {
-        Some(@symcore.Expr::Symbol(name)) => {
+        Some(Symbol(name)) => {
           for item in items {
             let (_, component) = item
             if component.name == name {
@@ -843,17 +839,13 @@ fn sample_random_var_with_rng(
         _ => None
       }
     }
-    RVKind::Symbolic(kind~, params~) =>
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Continuous(tag) =>
-          stats_sample_symbolic_continuous(tag, params, rng)
-        SymbolicKind::Discrete(tag) =>
-          stats_sample_symbolic_discrete(tag, params, rng)
-        SymbolicKind::Joint(_)
-        | SymbolicKind::Process(_)
-        | SymbolicKind::Matrix(_) => None
+        Continuous(tag) => stats_sample_symbolic_continuous(tag, params, rng)
+        Discrete(tag) => stats_sample_symbolic_discrete(tag, params, rng)
+        Joint(_) | Process(_) | Matrix(_) => None
       }
-    RVKind::StochasticProcess(_) | RVKind::Matrix(_) => None
+    StochasticProcess(_) | Matrix(_) => None
   }
 }
 
@@ -934,7 +926,7 @@ fn direct_symbol_random_var(
   }
   let rv = rvs[0]
   match expr {
-    @symcore.Expr::Symbol(name) if name == rv.name => Some(rv)
+    Symbol(name) if name == rv.name => Some(rv)
     _ => None
   }
 }
@@ -947,7 +939,7 @@ fn direct_finite_symbol_items(
   match direct_symbol_random_var(expr, rvs) {
     Some(rv) =>
       match rv.kind {
-        RVKind::Finite(items) => Some(items)
+        Finite(items) => Some(items)
         _ => None
       }
     None => None

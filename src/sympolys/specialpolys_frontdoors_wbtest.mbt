@@ -26,9 +26,9 @@ test "sympolys monomial frontdoors enumerate total and bounded degrees" {
   inspect(monomial_deg(a), content="8")
   match
     term_div(
-      (monomial_from_array([3, 2]), fe_from_int(6, Domain::ZZ)),
-      (monomial_from_array([1, 1]), fe_from_int(3, Domain::ZZ)),
-      Domain::ZZ,
+      (monomial_from_array([3, 2]), fe_from_int(6, ZZ)),
+      (monomial_from_array([1, 1]), fe_from_int(3, ZZ)),
+      ZZ,
     ) {
     Some((m, c)) => {
       debug_inspect(m.to_array(), content="[2, 1]")
@@ -95,8 +95,8 @@ test "sympolys special polynomial Fateman benchmark frontdoors" {
 ///|
 fn special_dense_repr(p : DensePoly) -> String {
   match p {
-    DensePoly::Coef(c) => c.to_string()
-    DensePoly::Poly(items) => {
+    Coef(c) => Show::to_string(c)
+    Poly(items) => {
       let parts : Array[String] = Array::new()
       for item in items {
         parts.push(special_dense_repr(item))
@@ -109,13 +109,13 @@ fn special_dense_repr(p : DensePoly) -> String {
 
 ///|
 test "sympolys special polynomial dense Fateman frontdoors" {
-  let (_, _, h1) = dmp_fateman_poly_F_1(1, Domain::ZZ)
+  let (_, _, h1) = dmp_fateman_poly_F_1(1, ZZ)
   inspect(special_dense_repr(h1), content="[[1]]")
-  let (f2, g2, h2) = dmp_fateman_poly_F_2(2, Domain::ZZ)
+  let (f2, g2, h2) = dmp_fateman_poly_F_2(2, ZZ)
   inspect(special_dense_repr(f2).contains("[1,"), content="true")
   inspect(special_dense_repr(g2).contains("[1,"), content="true")
   inspect(special_dense_repr(h2).contains("[1,"), content="true")
-  let (f3, _, _) = dmp_fateman_poly_F_3(2, Domain::ZZ)
+  let (f3, _, _) = dmp_fateman_poly_F_3(2, ZZ)
   inspect(dmp_degree(f3, 2), content="12")
 }
 

@@ -91,7 +91,7 @@ fn symbolic_system_fixture() -> (
     comb_implicit_mat,
     comb_implicit_rhs,
     kin_explicit_rhs,
-    [(@symcore.Expr::Symbol("PE"), m * g * (l + y))],
+    [(Symbol("PE"), m * g * (l + y))],
     [pa.as_bodylike()],
     loads,
   )
@@ -194,18 +194,18 @@ test "physics.mechanics symbolic system errors" {
   catch {
     err => Err(err)
   }
-  assert_true(bad_coords is Err(@symphysics.PhysicsError::ValueError(_)))
+  assert_true(bad_coords is Err(ValueError(_)))
   let bad_loads : Result[Array[Load], @symphysics.PhysicsError] = try
     symsystem.loads() |> Ok
   catch {
     err => Err(err)
   }
-  assert_true(bad_loads is Err(@symphysics.PhysicsError::ValueError(_)))
+  assert_true(bad_loads is Err(ValueError(_)))
   let bad_explicit : Result[
     @symphysics.ExplicitMatrix,
     @symphysics.PhysicsError,
   ] = try implicit_system.comb_explicit_rhs() |> Ok catch {
     err => Err(err)
   }
-  assert_true(bad_explicit is Err(@symphysics.PhysicsError::ValueError(_)))
+  assert_true(bad_explicit is Err(ValueError(_)))
 }

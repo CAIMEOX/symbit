@@ -7,7 +7,7 @@ pub fn wishart_rv(
   df : @symcore.Expr,
   scale : @symcore.Expr,
 ) -> RandomVar {
-  random_var(name, RVKind::Matrix(MatrixKind::Wishart(df~, scale~)))
+  random_var(name, Matrix(Wishart(df~, scale~)))
 }
 
 ///|
@@ -17,20 +17,17 @@ pub fn matrix_normal_rv(
   rowcov : @symcore.Expr,
   colcov : @symcore.Expr,
 ) -> RandomVar {
-  random_var(
-    name,
-    RVKind::Matrix(MatrixKind::MatrixNormal(mean~, rowcov~, colcov~)),
-  )
+  random_var(name, Matrix(MatrixNormal(mean~, rowcov~, colcov~)))
 }
 
 ///|
 pub fn goe_matrix(name : String, size : @symcore.Expr) -> RandomVar {
-  random_var(name, RVKind::Matrix(MatrixKind::GOE(size~)))
+  random_var(name, Matrix(GOE(size~)))
 }
 
 ///|
 pub fn gue_matrix(name : String, size : @symcore.Expr) -> RandomVar {
-  random_var(name, RVKind::Matrix(MatrixKind::GUE(size~)))
+  random_var(name, Matrix(GUE(size~)))
 }
 
 ///|
@@ -40,14 +37,14 @@ fn matrix_lambda_args(args : Array[@symcore.Expr]) -> @symcore.Expr {
   if args.length() == 1 {
     args[0]
   } else {
-    @symcore.Expr::Tuple(args)
+    Tuple(args)
   }
 }
 
 ///|
 fn matrix_indexed(base : String, idx : @symcore.Expr) -> @symcore.Expr {
   @symcore.function("Indexed", [
-    @symcore.function("IndexedBase", [@symcore.Expr::Symbol(base)]),
+    @symcore.function("IndexedBase", [Symbol(base)]),
     idx,
   ])
 }
@@ -135,9 +132,9 @@ fn matrix_identity_expr(n : @symcore.Expr) -> @symcore.Expr {
         for j in 0..<size {
           row.push(if i == j { @symcore.int(1) } else { @symcore.int(0) })
         }
-        rows.push(@symcore.Expr::Tuple(row))
+        rows.push(Tuple(row))
       }
-      @symcore.function("Matrix", [@symcore.Expr::Tuple(rows)])
+      @symcore.function("Matrix", [Tuple(rows)])
     }
     _ => @symcore.function("Identity", [n])
   }
@@ -145,7 +142,7 @@ fn matrix_identity_expr(n : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn matrix_multigamma(a : @symcore.Expr, p : @symcore.Expr) -> @symcore.Expr {
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let quarter = stats_exact_rational(1, 4)
   match expr_as_int(p) {
     Some(size) if size > 0 => {
@@ -186,7 +183,7 @@ fn matrix_multigamma(a : @symcore.Expr, p : @symcore.Expr) -> @symcore.Expr {
           @symcore.pow(pi, exponent),
           @symcore.function("Product", [
             @symcore.function("gamma", [gamma_arg]),
-            @symcore.Expr::Tuple([k, @symcore.int(1), p]),
+            Tuple([k, @symcore.int(1), p]),
           ]),
         ]),
       )
@@ -248,12 +245,7 @@ fn gaussian_joint_normalization(beta : Int, n : Int) -> @symcore.Expr {
   let term2 = eval_arith(@symcore.pow(ratio, ratio_pow))
   let term3 = eval_arith(
     @symcore.pow(
-      eval_arith(
-        @symcore.mul([
-          @symcore.int(2),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ]),
-      ),
+      eval_arith(@symcore.mul([@symcore.int(2), NumberSymbol(Pi)])),
       eval_arith(@symcore.mul([half, n_e])),
     ),
   )
@@ -267,12 +259,7 @@ fn circular_joint_normalization(beta : Int, n : Int) -> @symcore.Expr {
   let half = stats_exact_rational(1, 2)
   let term1 = eval_arith(
     @symcore.pow(
-      eval_arith(
-        @symcore.mul([
-          @symcore.int(2),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ]),
-      ),
+      eval_arith(@symcore.mul([@symcore.int(2), NumberSymbol(Pi)])),
       n_e,
     ),
   )
@@ -305,17 +292,17 @@ fn circular_joint_normalization(beta : Int, n : Int) -> @symcore.Expr {
 ///|
 fn matrix_ensemble_spec(rv : RandomVar) -> (Int, @symcore.Expr, Bool)? {
   match rv.kind {
-    RVKind::Matrix(MatrixKind::GOE(size~)) => Some((1, size, false))
-    RVKind::Matrix(MatrixKind::GUE(size~)) => Some((2, size, false))
-    RVKind::Symbolic(kind~, params~) if kind is SymbolicKind::Matrix(tag) =>
+    Matrix(GOE(size~)) => Some((1, size, false))
+    Matrix(GUE(size~)) => Some((2, size, false))
+    Symbolic(kind~, params~) if kind is Matrix(tag) =>
       if params.length() == 1 {
         match tag {
-          MatrixTag::GaussianOrthogonalEnsemble => Some((1, params[0], false))
-          MatrixTag::GaussianUnitaryEnsemble => Some((2, params[0], false))
-          MatrixTag::GaussianSymplecticEnsemble => Some((4, params[0], false))
-          MatrixTag::CircularOrthogonalEnsemble => Some((1, params[0], true))
-          MatrixTag::CircularUnitaryEnsemble => Some((2, params[0], true))
-          MatrixTag::CircularSymplecticEnsemble => Some((4, params[0], true))
+          GaussianOrthogonalEnsemble => Some((1, params[0], false))
+          GaussianUnitaryEnsemble => Some((2, params[0], false))
+          GaussianSymplecticEnsemble => Some((4, params[0], false))
+          CircularOrthogonalEnsemble => Some((1, params[0], true))
+          CircularUnitaryEnsemble => Some((2, params[0], true))
+          CircularSymplecticEnsemble => Some((4, params[0], true))
           _ => None
         }
       } else {
@@ -349,24 +336,14 @@ pub fn joint_eigen_distribution_of(rv : RandomVar) -> @symcore.Expr? {
                     @symcore.add([
                       @symcore.function("exp", [
                         eval_arith(
-                          @symcore.mul([
-                            @symcore.Expr::NumberSymbol(
-                              @symcore.NumberSymbolKind::ImaginaryUnit,
-                            ),
-                            tj,
-                          ]),
+                          @symcore.mul([NumberSymbol(ImaginaryUnit), tj]),
                         ),
                       ]),
                       @symcore.mul([
                         @symcore.int(-1),
                         @symcore.function("exp", [
                           eval_arith(
-                            @symcore.mul([
-                              @symcore.Expr::NumberSymbol(
-                                @symcore.NumberSymbolKind::ImaginaryUnit,
-                              ),
-                              tk,
-                            ]),
+                            @symcore.mul([NumberSymbol(ImaginaryUnit), tk]),
                           ),
                         ]),
                       ]),
@@ -378,12 +355,12 @@ pub fn joint_eigen_distribution_of(rv : RandomVar) -> @symcore.Expr? {
             )
             @symcore.function("Product", [
               abs_term,
-              @symcore.Expr::Tuple([
+              Tuple([
                 j,
                 eval_arith(@symcore.add([k, @symcore.int(1)])),
                 @symcore.int(n),
               ]),
-              @symcore.Expr::Tuple([k, @symcore.int(1), @symcore.int(n - 1)]),
+              Tuple([k, @symcore.int(1), @symcore.int(n - 1)]),
             ])
           } else {
             let i = @symcore.Expr::Symbol("_i")
@@ -402,12 +379,12 @@ pub fn joint_eigen_distribution_of(rv : RandomVar) -> @symcore.Expr? {
             )
             @symcore.function("Product", [
               abs_term,
-              @symcore.Expr::Tuple([
+              Tuple([
                 j,
                 eval_arith(@symcore.add([i, @symcore.int(1)])),
                 @symcore.int(n),
               ]),
-              @symcore.Expr::Tuple([i, @symcore.int(1), @symcore.int(n - 1)]),
+              Tuple([i, @symcore.int(1), @symcore.int(n - 1)]),
             ])
           }
           let numer = if circular {
@@ -459,14 +436,14 @@ pub fn level_spacing_distribution_of(rv : RandomVar) -> @symcore.Expr? {
             eval_arith(
               @symcore.mul([
                 half,
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                NumberSymbol(Pi),
                 s,
                 @symcore.function("exp", [
                   eval_arith(
                     @symcore.mul([
                       @symcore.int(-1),
                       quarter,
-                      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                      NumberSymbol(Pi),
                       @symcore.pow(s, @symcore.int(2)),
                     ]),
                   ),
@@ -477,21 +454,13 @@ pub fn level_spacing_distribution_of(rv : RandomVar) -> @symcore.Expr? {
             eval_arith(
               @symcore.mul([
                 @symcore.int(32),
-                @symcore.pow(
-                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                  @symcore.int(-2),
-                ),
+                @symcore.pow(NumberSymbol(Pi), @symcore.int(-2)),
                 @symcore.pow(s, @symcore.int(2)),
                 @symcore.function("exp", [
                   eval_arith(
                     @symcore.mul([
                       @symcore.int(-4),
-                      @symcore.pow(
-                        @symcore.Expr::NumberSymbol(
-                          @symcore.NumberSymbolKind::Pi,
-                        ),
-                        @symcore.int(-1),
-                      ),
+                      @symcore.pow(NumberSymbol(Pi), @symcore.int(-1)),
                       @symcore.pow(s, @symcore.int(2)),
                     ]),
                   ),
@@ -503,10 +472,7 @@ pub fn level_spacing_distribution_of(rv : RandomVar) -> @symcore.Expr? {
               @symcore.mul([
                 @symcore.pow(@symcore.int(2), @symcore.int(18)),
                 @symcore.pow(@symcore.int(3), @symcore.int(-6)),
-                @symcore.pow(
-                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                  @symcore.int(-3),
-                ),
+                @symcore.pow(NumberSymbol(Pi), @symcore.int(-3)),
                 @symcore.pow(s, @symcore.int(4)),
                 @symcore.function("exp", [
                   eval_arith(
@@ -514,12 +480,7 @@ pub fn level_spacing_distribution_of(rv : RandomVar) -> @symcore.Expr? {
                       @symcore.int(-64),
                       @symcore.pow(
                         eval_arith(
-                          @symcore.mul([
-                            @symcore.int(9),
-                            @symcore.Expr::NumberSymbol(
-                              @symcore.NumberSymbolKind::Pi,
-                            ),
-                          ]),
+                          @symcore.mul([@symcore.int(9), NumberSymbol(Pi)]),
                         ),
                         @symcore.int(-1),
                       ),
@@ -551,7 +512,7 @@ fn gaussian_unitary_density_expr(
     @symcore.mul([
       @symcore.pow(@symcore.int(2), eval_arith(@symcore.mul([half, n]))),
       @symcore.pow(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        NumberSymbol(Pi),
         eval_arith(@symcore.mul([half, @symcore.pow(n, @symcore.int(2))])),
       ),
     ]),
@@ -567,7 +528,7 @@ fn gaussian_orthogonal_density_expr(
   x : @symcore.Expr,
 ) -> @symcore.Expr {
   let quarter = stats_exact_rational(1, 4)
-  let h = @symcore.function("MatrixSymbol", [@symcore.Expr::Symbol("_H"), n, n])
+  let h = @symcore.function("MatrixSymbol", [Symbol("_H"), n, n])
   let trace_x2 = matrix_trace(@symcore.pow(x, @symcore.int(2)))
   let trace_h2 = matrix_trace(@symcore.pow(h, @symcore.int(2)))
   let numerator = @symcore.function("exp", [
@@ -589,7 +550,7 @@ fn gaussian_symplectic_density_expr(
   n : @symcore.Expr,
   x : @symcore.Expr,
 ) -> @symcore.Expr {
-  let h = @symcore.function("MatrixSymbol", [@symcore.Expr::Symbol("_H"), n, n])
+  let h = @symcore.function("MatrixSymbol", [Symbol("_H"), n, n])
   let trace_x2 = matrix_trace(@symcore.pow(x, @symcore.int(2)))
   let trace_h2 = matrix_trace(@symcore.pow(h, @symcore.int(2)))
   let numerator = @symcore.function("exp", [
@@ -720,12 +681,7 @@ fn matrix_normal_density_expr(
   let numerator = @symcore.function("exp", [
     eval_arith(@symcore.mul([@symcore.int(-1), half, matrix_trace(quad)])),
   ])
-  let two_pi = eval_arith(
-    @symcore.mul([
-      @symcore.int(2),
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-    ]),
-  )
+  let two_pi = eval_arith(@symcore.mul([@symcore.int(2), NumberSymbol(Pi)]))
   let denominator = eval_arith(
     @symcore.mul([
       @symcore.pow(two_pi, eval_arith(@symcore.mul([half, n, p]))),
@@ -772,7 +728,7 @@ fn matrix_student_t_density_expr(
         eval_arith(@symcore.mul([@symcore.int(-1), half, p])),
       ),
       @symcore.pow(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        NumberSymbol(Pi),
         eval_arith(@symcore.mul([@symcore.int(-1), half, n, p])),
       ),
       @symcore.pow(
@@ -805,23 +761,20 @@ fn matrix_student_t_density_expr(
 ///|
 pub fn matrix_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Matrix(MatrixKind::Wishart(df~, scale~)) =>
-      Some(wishart_density_expr(x, df, scale))
-    RVKind::Matrix(MatrixKind::MatrixNormal(mean~, rowcov~, colcov~)) =>
+    Matrix(Wishart(df~, scale~)) => Some(wishart_density_expr(x, df, scale))
+    Matrix(MatrixNormal(mean~, rowcov~, colcov~)) =>
       Some(matrix_normal_density_expr(x, mean, rowcov, colcov))
-    RVKind::Matrix(MatrixKind::GOE(size~)) =>
-      Some(gaussian_orthogonal_density_expr(size, x))
-    RVKind::Matrix(MatrixKind::GUE(size~)) =>
-      Some(gaussian_unitary_density_expr(size, x))
-    RVKind::Symbolic(kind~, params~) if kind is SymbolicKind::Matrix(tag) =>
+    Matrix(GOE(size~)) => Some(gaussian_orthogonal_density_expr(size, x))
+    Matrix(GUE(size~)) => Some(gaussian_unitary_density_expr(size, x))
+    Symbolic(kind~, params~) if kind is Matrix(tag) =>
       match tag {
-        MatrixTag::GaussianUnitaryEnsemble if params.length() == 1 =>
+        GaussianUnitaryEnsemble if params.length() == 1 =>
           Some(gaussian_unitary_density_expr(params[0], x))
-        MatrixTag::GaussianOrthogonalEnsemble if params.length() == 1 =>
+        GaussianOrthogonalEnsemble if params.length() == 1 =>
           Some(gaussian_orthogonal_density_expr(params[0], x))
-        MatrixTag::GaussianSymplecticEnsemble if params.length() == 1 =>
+        GaussianSymplecticEnsemble if params.length() == 1 =>
           Some(gaussian_symplectic_density_expr(params[0], x))
-        MatrixTag::MatrixStudentT if params.length() == 4 =>
+        MatrixStudentT if params.length() == 4 =>
           Some(
             matrix_student_t_density_expr(
               x,
@@ -831,16 +784,11 @@ pub fn matrix_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
               params[3],
             ),
           )
-        MatrixTag::MatrixStudentT =>
-          Some(
-            @symcore.function("density", [@symcore.Expr::Symbol(rv.name), x]),
-          )
-        MatrixTag::MatrixGamma if params.length() == 3 =>
+        MatrixStudentT =>
+          Some(@symcore.function("density", [Symbol(rv.name), x]))
+        MatrixGamma if params.length() == 3 =>
           Some(matrix_gamma_density_expr(x, params[0], params[1], params[2]))
-        MatrixTag::MatrixGamma =>
-          Some(
-            @symcore.function("density", [@symcore.Expr::Symbol(rv.name), x]),
-          )
+        MatrixGamma => Some(@symcore.function("density", [Symbol(rv.name), x]))
         _ => {
           let name = matrix_tag_name(tag)
           let args : Array[@symcore.Expr] = []

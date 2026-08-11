@@ -1,7 +1,7 @@
 ///|
 fn expect_factor_list_same(poly : Poly, modulus : Int?) -> Unit raise {
   let (content, factors) = poly.factor_list()
-  let ours_raw = factor_list_to_string(content.to_string(), factors)
+  let ours_raw = factor_list_to_string(Show::to_string(content), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(
       match modulus {
@@ -16,7 +16,7 @@ fn expect_factor_list_same(poly : Poly, modulus : Int?) -> Unit raise {
 
 ///|
 test "factortools: x^5 - x over ZZ" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = @symcore.Expr::Symbol("x")
   let poly = b.from_expr(x * ((x ^ @symcore.int(4)) - @symcore.int(1)))
   expect_factor_list_same(poly, None)
@@ -24,7 +24,7 @@ test "factortools: x^5 - x over ZZ" {
 
 ///|
 test "factortools: x^6 + x^3 + 1 over GF(2)" {
-  let b = PolyBuilder::new(["x"], Domain::GF(2))
+  let b = PolyBuilder::new(["x"], GF(2))
   let x = @symcore.Expr::Symbol("x")
   let poly = b.from_expr(
     (x ^ @symcore.int(6)) + (x ^ @symcore.int(3)) + @symcore.int(1),
@@ -34,14 +34,14 @@ test "factortools: x^6 + x^3 + 1 over GF(2)" {
 
 ///|
 test "factortools: sqf_list compares with SymPy" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = @symcore.Expr::Symbol("x")
   let poly = b.from_expr(
     ((x - @symcore.int(2)) ^ @symcore.int(2)) *
     ((x + @symcore.int(3)) ^ @symcore.int(3)),
   )
   let (content, parts) = poly.sqf_list()
-  let ours_raw = factor_list_to_string(content.to_string(), parts)
+  let ours_raw = factor_list_to_string(Show::to_string(content), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(sqf_list(poly.to_expr())).trim().to_owned()
   assert_eq(ours, oracle)
@@ -49,7 +49,7 @@ test "factortools: sqf_list compares with SymPy" {
 
 ///|
 test "factortools: QQ content factors (1/2)*(x^2-1)" {
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let x = @symcore.Expr::Symbol("x")
   let poly = b.from_expr(
     expr_rat(1, 2) * ((x ^ @symcore.int(2)) - @symcore.int(1)),
@@ -59,7 +59,7 @@ test "factortools: QQ content factors (1/2)*(x^2-1)" {
 
 ///|
 test "factortools: extension argument no longer rejected" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = @symcore.Expr::Symbol("x")
   let poly = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
   let factors = poly.factor(extension=["sqrt(2)"])
@@ -172,8 +172,7 @@ fn fact_dense_port_dmp_factor_repr(
 
 ///|
 fn fact_dense_port_gaussian_coeff_repr(coeff : FieldElem) -> String {
-  coeff
-  .to_string()
+  Show::to_string(coeff)
   .replace_all(old=" ", new="")
   .replace_all(old="0-1i", new="-I")
   .replace_all(old="0+1i", new="I")
@@ -191,13 +190,13 @@ fn fact_dense_port_dmp_gaussian_coeffs(
   f : DensePoly,
 ) -> Array[FieldElem] raise PolyError {
   match f {
-    DensePoly::Coef(c) => [c]
-    DensePoly::Poly(items) => {
+    Coef(c) => [c]
+    Poly(items) => {
       let out : Array[FieldElem] = Array::new()
       for item in items {
         match item {
-          DensePoly::Coef(c) => out.push(c)
-          DensePoly::Poly(_) => raise PolyError::NotUnivariate
+          Coef(c) => out.push(c)
+          Poly(_) => raise NotUnivariate
         }
       }
       out
@@ -247,26 +246,20 @@ fn fact_dense_port_dmp_list_repr(items : Array[DensePoly]) -> String {
 test "factortools: dense factor-list frontdoors parity" {
   let f = [fezz(2), fezz(0), fezz(-2)]
   assert_eq(
-    fact_dense_port_dup_factor_repr(@sympolys.dup_zz_factor(f, Domain::ZZ)),
+    fact_dense_port_dup_factor_repr(@sympolys.dup_zz_factor(f, ZZ)),
     dup_zz_factor(dup_to_rats(f)),
   )
   assert_eq(
-    fact_dense_port_dup_factor_sqf_repr(
-      @sympolys.dup_zz_factor_sqf(f, Domain::ZZ),
-    ),
+    fact_dense_port_dup_factor_sqf_repr(@sympolys.dup_zz_factor_sqf(f, ZZ)),
     dup_zz_factor_sqf(dup_to_rats(f)),
   )
   assert_eq(
-    fact_dense_port_dup_include_repr(
-      @sympolys.dup_factor_list_include(f, Domain::ZZ),
-    ),
+    fact_dense_port_dup_include_repr(@sympolys.dup_factor_list_include(f, ZZ)),
     dup_factor_list_include(dup_to_rats(f)),
   )
   let dmp_f = poly_int([2, 0, -2])
   assert_eq(
-    fact_dense_port_dmp_factor_repr(
-      @sympolys.dmp_zz_factor(dmp_f, 0, Domain::ZZ),
-    ),
+    fact_dense_port_dmp_factor_repr(@sympolys.dmp_zz_factor(dmp_f, 0, ZZ)),
     dmp_zz_factor(dense_data_of(dmp_f), 0),
   )
   let xy = @sympolys.dense_poly([
@@ -275,18 +268,16 @@ test "factortools: dense factor-list frontdoors parity" {
     poly_int([-2, 0, 0]),
   ])
   assert_eq(
-    fact_dense_port_dmp_factor_repr(@sympolys.dmp_zz_factor(xy, 1, Domain::ZZ)),
+    fact_dense_port_dmp_factor_repr(@sympolys.dmp_zz_factor(xy, 1, ZZ)),
     dmp_zz_factor(dense_data_of(xy), 1),
   )
   assert_eq(
-    fact_dense_port_dmp_factor_repr(
-      @sympolys.dmp_factor_list(dmp_f, 0, Domain::ZZ),
-    ),
+    fact_dense_port_dmp_factor_repr(@sympolys.dmp_factor_list(dmp_f, 0, ZZ)),
     dmp_factor_list(dense_data_of(dmp_f), 0),
   )
   assert_eq(
     fact_dense_port_dmp_include_repr(
-      @sympolys.dmp_factor_list_include(dmp_f, 0, Domain::ZZ),
+      @sympolys.dmp_factor_list_include(dmp_f, 0, ZZ),
     ),
     dmp_factor_list_include(dense_data_of(dmp_f), 0),
   )
@@ -301,7 +292,7 @@ test "factortools: Hensel frontdoors parity" {
   let t = [fezz(-1)]
   assert_eq(
     fact_dense_port_hensel_step_repr(
-      @sympolys.dup_zz_hensel_step(5, f, g, h, s, t, Domain::ZZ),
+      @sympolys.dup_zz_hensel_step(5, f, g, h, s, t, ZZ),
     ),
     dup_zz_hensel_step(
       5,
@@ -314,7 +305,7 @@ test "factortools: Hensel frontdoors parity" {
   )
   assert_eq(
     fact_dense_port_dup_list_repr(
-      @sympolys.dup_zz_hensel_lift(5, f, [g, h], 2, Domain::ZZ),
+      @sympolys.dup_zz_hensel_lift(5, f, [g, h], 2, ZZ),
     ),
     dup_zz_hensel_lift(5, dup_to_rats(f), [dup_to_rats(g), dup_to_rats(h)], 2),
   )
@@ -322,7 +313,7 @@ test "factortools: Hensel frontdoors parity" {
   let factors2 = [[fezz(1), fezz(4)], [fezz(1), fezz(0)]]
   assert_eq(
     fact_dense_port_dup_list_repr(
-      @sympolys.dup_zz_hensel_lift(5, f2, factors2, 2, Domain::ZZ),
+      @sympolys.dup_zz_hensel_lift(5, f2, factors2, 2, ZZ),
     ),
     dup_zz_hensel_lift(
       5,
@@ -338,14 +329,14 @@ test "factortools: Wang helper frontdoors parity" {
   let pass_e = [fezz(2), fezz(3), fezz(5)]
   assert_eq(
     fact_dense_port_dup_opt_repr(
-      @sympolys.dmp_zz_wang_non_divisors(pass_e, fezz(1), fezz(1), Domain::ZZ),
+      @sympolys.dmp_zz_wang_non_divisors(pass_e, fezz(1), fezz(1), ZZ),
     ),
     dmp_zz_wang_non_divisors(dup_to_rats(pass_e), br_int(1), br_int(1)),
   )
   let fail_e = [fezz(2), fezz(4)]
   assert_eq(
     fact_dense_port_dup_opt_repr(
-      @sympolys.dmp_zz_wang_non_divisors(fail_e, fezz(1), fezz(1), Domain::ZZ),
+      @sympolys.dmp_zz_wang_non_divisors(fail_e, fezz(1), fezz(1), ZZ),
     ),
     dmp_zz_wang_non_divisors(dup_to_rats(fail_e), br_int(1), br_int(1)),
   )
@@ -353,14 +344,7 @@ test "factortools: Wang helper frontdoors parity" {
   let factors = [(poly_int([1, 1]), 1)]
   assert_eq(
     fact_dense_port_wang_test_points_repr(
-      @sympolys.dmp_zz_wang_test_points(
-        f,
-        factors,
-        fezz(1),
-        [fezz(2)],
-        1,
-        Domain::ZZ,
-      ),
+      @sympolys.dmp_zz_wang_test_points(f, factors, fezz(1), [fezz(2)], 1, ZZ),
     ),
     dmp_zz_wang_test_points(
       dense_data_of(f),
@@ -380,7 +364,7 @@ test "factortools: Wang helper frontdoors parity" {
         [[fezz(3), fezz(1), fezz(1)]],
         [fezz(2)],
         1,
-        Domain::ZZ,
+        ZZ,
       ),
     ),
     dmp_zz_wang_lead_coeffs(
@@ -406,7 +390,7 @@ test "factortools: Wang helper frontdoors parity" {
         fezz(1),
         [fezz(2)],
         1,
-        Domain::ZZ,
+        ZZ,
       ),
     ),
     dmp_zz_wang_test_points(
@@ -427,7 +411,7 @@ test "factortools: Wang helper frontdoors parity" {
         [[fezz(3), fezz(-1), fezz(-1)]],
         [fezz(2)],
         1,
-        Domain::ZZ,
+        ZZ,
       ),
     ),
     dmp_zz_wang_lead_coeffs(
@@ -448,7 +432,7 @@ test "factortools: Diophantine helper frontdoors parity" {
   let f1 = [fezz(1), fezz(-1)]
   assert_eq(
     fact_dense_port_dup_list_repr(
-      @sympolys.dup_zz_diophantine([f0, f1], 0, 5, Domain::ZZ),
+      @sympolys.dup_zz_diophantine([f0, f1], 0, 5, ZZ),
     ),
     dup_zz_diophantine([dup_to_rats(f0), dup_to_rats(f1)], 0, 5),
   )
@@ -457,7 +441,7 @@ test "factortools: Diophantine helper frontdoors parity" {
   let g2 = [fezz(1), fezz(1)]
   assert_eq(
     fact_dense_port_dup_list_repr(
-      @sympolys.dup_zz_diophantine([g0, g1, g2], 2, 5, Domain::ZZ),
+      @sympolys.dup_zz_diophantine([g0, g1, g2], 2, 5, ZZ),
     ),
     dup_zz_diophantine(
       [dup_to_rats(g0), dup_to_rats(g1), dup_to_rats(g2)],
@@ -470,7 +454,7 @@ test "factortools: Diophantine helper frontdoors parity" {
   let c = poly_int([2, 3])
   assert_eq(
     fact_dense_port_dmp_list_repr(
-      @sympolys.dmp_zz_diophantine([d0, d1], c, [], 0, 5, 1, Domain::ZZ),
+      @sympolys.dmp_zz_diophantine([d0, d1], c, [], 0, 5, 1, ZZ),
     ),
     dmp_zz_diophantine(
       [dense_data_of(d0), dense_data_of(d1)],
@@ -493,7 +477,7 @@ test "factortools: Diophantine helper frontdoors parity" {
         1,
         5,
         1,
-        Domain::ZZ,
+        ZZ,
       ),
     ),
     dmp_zz_diophantine(
@@ -521,7 +505,7 @@ test "factortools: Diophantine helper frontdoors parity" {
         [fezz(2)],
         5,
         1,
-        Domain::ZZ,
+        ZZ,
       ),
     ),
     dmp_zz_wang_hensel_lifting(
@@ -534,7 +518,7 @@ test "factortools: Diophantine helper frontdoors parity" {
     ),
   )
   assert_eq(
-    fact_dense_port_dmp_list_repr(@sympolys.dmp_zz_wang(wang_f, 1, Domain::ZZ)),
+    fact_dense_port_dmp_list_repr(@sympolys.dmp_zz_wang(wang_f, 1, ZZ)),
     dmp_zz_wang(dense_data_of(wang_f), 1),
   )
 }
@@ -545,7 +529,7 @@ test "factortools: dense trial-division frontdoors parity" {
   let factors = [[fezz(1), fezz(-1)], [fezz(1), fezz(2)]]
   assert_eq(
     fact_dense_port_dup_include_repr(
-      @sympolys.dup_trial_division(f, factors, Domain::ZZ),
+      @sympolys.dup_trial_division(f, factors, ZZ),
     ),
     dup_trial_division(dup_to_rats(f), [
       dup_to_rats(factors[0]),
@@ -556,7 +540,7 @@ test "factortools: dense trial-division frontdoors parity" {
   let dmp_factors = [poly_int([1, -1]), poly_int([1, 2])]
   assert_eq(
     fact_dense_port_dmp_include_repr(
-      @sympolys.dmp_trial_division(dmp_f, dmp_factors, 0, Domain::ZZ),
+      @sympolys.dmp_trial_division(dmp_f, dmp_factors, 0, ZZ),
     ),
     dmp_trial_division(
       dense_data_of(dmp_f),
@@ -575,7 +559,7 @@ test "factortools: dense trial-division frontdoors parity" {
   ]
   assert_eq(
     fact_dense_port_dmp_include_repr(
-      @sympolys.dmp_trial_division(xy, xy_factors, 1, Domain::ZZ),
+      @sympolys.dmp_trial_division(xy, xy_factors, 1, ZZ),
     ),
     dmp_trial_division(
       dense_data_of(xy),
@@ -591,15 +575,15 @@ test "factortools: dense irreducibility frontdoors parity" {
   let reducible = [fezz(1), fezz(0), fezz(-1)]
   let repeated = poly_int([1, 2, 1])
   assert_eq(
-    @sympolys.dup_irreducible_p(irreducible, Domain::ZZ),
+    @sympolys.dup_irreducible_p(irreducible, ZZ),
     dup_irreducible_p(dup_to_rats(irreducible)),
   )
   assert_eq(
-    @sympolys.dup_irreducible_p(reducible, Domain::ZZ),
+    @sympolys.dup_irreducible_p(reducible, ZZ),
     dup_irreducible_p(dup_to_rats(reducible)),
   )
   assert_eq(
-    @sympolys.dmp_irreducible_p(repeated, 0, Domain::ZZ),
+    @sympolys.dmp_irreducible_p(repeated, 0, ZZ),
     dmp_irreducible_p(dense_data_of(repeated), 0),
   )
 }
@@ -607,13 +591,11 @@ test "factortools: dense irreducibility frontdoors parity" {
 ///|
 test "factortools: dense finite-field factorization parity" {
   let f = [
-    @sympolys.fe_from_int(1, Domain::GF(2)),
-    @sympolys.fe_from_int(0, Domain::GF(2)),
-    @sympolys.fe_from_int(1, Domain::GF(2)),
+    @sympolys.fe_from_int(1, GF(2)),
+    @sympolys.fe_from_int(0, GF(2)),
+    @sympolys.fe_from_int(1, GF(2)),
   ]
-  let ours = fact_dense_port_dup_factor_repr(
-    @sympolys.dup_gf_factor(f, Domain::GF(2)),
-  )
+  let ours = fact_dense_port_dup_factor_repr(@sympolys.dup_gf_factor(f, GF(2)))
   assert_eq(ours, "(1,[([1,1],2)])")
   assert_true(
     dup_gf_factor([1, 0, 1], 2).contains("SymmetricModularIntegerMod2"),
@@ -624,7 +606,7 @@ test "factortools: dense finite-field factorization parity" {
 test "factortools: dense algebraic-extension factorization parity" {
   let a = @symcore.Expr::Symbol("a")
   let rel = (a ^ @symcore.int(2)) - @symcore.int(2)
-  let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [rel])
+  let alg_domain = Domain::AlgExt(QQ, ["a"], [rel])
   let f = [
     @sympolys.fe_from_int(1, alg_domain),
     @sympolys.fe_from_int(0, alg_domain),
@@ -639,25 +621,25 @@ test "factortools: dense algebraic-extension factorization parity" {
 ///|
 test "factortools: dense Gaussian factorization frontdoors parity" {
   let f_qq = [
-    @sympolys.fe_from_int(1, Domain::QQ_I),
-    @sympolys.fe_from_int(0, Domain::QQ_I),
-    @sympolys.fe_from_int(1, Domain::QQ_I),
+    @sympolys.fe_from_int(1, QQ_I),
+    @sympolys.fe_from_int(0, QQ_I),
+    @sympolys.fe_from_int(1, QQ_I),
   ]
   let f_zz = [
-    @sympolys.fe_from_int(1, Domain::ZZ_I),
-    @sympolys.fe_from_int(0, Domain::ZZ_I),
-    @sympolys.fe_from_int(1, Domain::ZZ_I),
+    @sympolys.fe_from_int(1, ZZ_I),
+    @sympolys.fe_from_int(0, ZZ_I),
+    @sympolys.fe_from_int(1, ZZ_I),
   ]
   let rats = [br_int(1), br_int(0), br_int(1)]
   assert_eq(
     fact_dense_port_dup_factor_gaussian_repr(
-      @sympolys.dup_qq_i_factor(f_qq, Domain::QQ_I),
+      @sympolys.dup_qq_i_factor(f_qq, QQ_I),
     ),
     dup_qq_i_factor(rats),
   )
   assert_eq(
     fact_dense_port_dup_factor_gaussian_repr(
-      @sympolys.dup_zz_i_factor(f_zz, Domain::ZZ_I),
+      @sympolys.dup_zz_i_factor(f_zz, ZZ_I),
     ),
     dup_zz_i_factor(rats),
   )
@@ -665,15 +647,15 @@ test "factortools: dense Gaussian factorization frontdoors parity" {
   let dmp_zz = @sympolys.dense_poly(f_zz.map(c => @sympolys.dense_coef(c)))
   assert_eq(
     fact_dense_port_dmp_factor_gaussian_repr(
-      @sympolys.dmp_qq_i_factor(dmp_qq, 0, Domain::QQ_I),
+      @sympolys.dmp_qq_i_factor(dmp_qq, 0, QQ_I),
     ),
-    dmp_qq_i_factor(DenseData::Poly(rats.map(c => DenseData::Coef(c))), 0),
+    dmp_qq_i_factor(Poly(rats.map(c => Coef(c))), 0),
   )
   assert_eq(
     fact_dense_port_dmp_factor_gaussian_repr(
-      @sympolys.dmp_zz_i_factor(dmp_zz, 0, Domain::ZZ_I),
+      @sympolys.dmp_zz_i_factor(dmp_zz, 0, ZZ_I),
     ),
-    dmp_zz_i_factor(DenseData::Poly(rats.map(c => DenseData::Coef(c))), 0),
+    dmp_zz_i_factor(Poly(rats.map(c => Coef(c))), 0),
   )
 }
 
@@ -681,7 +663,7 @@ test "factortools: dense Gaussian factorization frontdoors parity" {
 test "factortools: integer Mignotte frontdoors parity" {
   let f = [fezz(1), fezz(14), fezz(56), fezz(64)]
   assert_eq(
-    @sympolys.dup_zz_mignotte_bound(f, Domain::ZZ).to_string(),
+    Show::to_string(@sympolys.dup_zz_mignotte_bound(f, ZZ)),
     dup_zz_mignotte_bound(dup_to_rats(f)),
   )
   let hard = [
@@ -695,12 +677,12 @@ test "factortools: integer Mignotte frontdoors parity" {
     fezz(26),
   ]
   assert_eq(
-    @sympolys.dup_zz_mignotte_bound(hard, Domain::ZZ).to_string(),
+    Show::to_string(@sympolys.dup_zz_mignotte_bound(hard, ZZ)),
     dup_zz_mignotte_bound(dup_to_rats(hard)),
   )
   let dmp_f = poly_int([1, 2, 1])
   assert_eq(
-    @sympolys.dmp_zz_mignotte_bound(dmp_f, 0, Domain::ZZ).to_string(),
+    Show::to_string(@sympolys.dmp_zz_mignotte_bound(dmp_f, 0, ZZ)),
     dmp_zz_mignotte_bound(dense_data_of(dmp_f), 0),
   )
 }
@@ -710,34 +692,34 @@ test "factortools: integer cyclotomic and Eisenstein parity" {
   let eisenstein = [fezz(1), fezz(0), fezz(2)]
   let not_eisenstein = [fezz(1), fezz(0), fezz(1)]
   assert_eq(
-    @sympolys.dup_zz_irreducible_p(eisenstein, Domain::ZZ),
+    @sympolys.dup_zz_irreducible_p(eisenstein, ZZ),
     dup_zz_irreducible_p(dup_to_rats(eisenstein)),
   )
   assert_eq(
-    @sympolys.dup_zz_irreducible_p(not_eisenstein, Domain::ZZ),
+    @sympolys.dup_zz_irreducible_p(not_eisenstein, ZZ),
     dup_zz_irreducible_p(dup_to_rats(not_eisenstein)),
   )
   assert_eq(
-    dup_repr(@sympolys.dup_zz_cyclotomic_poly(12, Domain::ZZ)),
+    dup_repr(@sympolys.dup_zz_cyclotomic_poly(12, ZZ)),
     dup_zz_cyclotomic_poly(12),
   )
   let cyclo_minus = [fezz(1), fezz(0), fezz(0), fezz(0), fezz(-1)]
   assert_eq(
     fact_dense_port_dup_list_opt_repr(
-      @sympolys.dup_zz_cyclotomic_factor(cyclo_minus, Domain::ZZ),
+      @sympolys.dup_zz_cyclotomic_factor(cyclo_minus, ZZ),
     ),
     dup_zz_cyclotomic_factor(dup_to_rats(cyclo_minus)),
   )
   let cyclo_plus = [fezz(1), fezz(0), fezz(0), fezz(0), fezz(1)]
   assert_eq(
     fact_dense_port_dup_list_opt_repr(
-      @sympolys.dup_zz_cyclotomic_factor(cyclo_plus, Domain::ZZ),
+      @sympolys.dup_zz_cyclotomic_factor(cyclo_plus, ZZ),
     ),
     dup_zz_cyclotomic_factor(dup_to_rats(cyclo_plus)),
   )
   assert_eq(
     fact_dense_port_dup_list_repr(
-      @sympolys.dup_zz_zassenhaus([fezz(1), fezz(0), fezz(-1)], Domain::ZZ),
+      @sympolys.dup_zz_zassenhaus([fezz(1), fezz(0), fezz(-1)], ZZ),
     ),
     dup_zz_zassenhaus(dup_to_rats([fezz(1), fezz(0), fezz(-1)])),
   )
@@ -780,11 +762,11 @@ test "factortools: integer cyclotomic and Eisenstein parity" {
     fezz(1),
   ]
   assert_eq(
-    @sympolys.dup_cyclotomic_p(false_case, Domain::ZZ),
+    @sympolys.dup_cyclotomic_p(false_case, ZZ),
     dup_cyclotomic_p(dup_to_rats(false_case)),
   )
   assert_eq(
-    @sympolys.dup_cyclotomic_p(true_case, Domain::ZZ),
+    @sympolys.dup_cyclotomic_p(true_case, ZZ),
     dup_cyclotomic_p(dup_to_rats(true_case)),
   )
 }

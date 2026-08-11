@@ -55,9 +55,9 @@ fn py_eval(expr : String) -> @py.PyObjectEnum raise {
     let globals = @py.PyDict::new()
     globals.set("__builtins__", builtins.obj())
     let args = @sympy.py_pack_args([
-      OracleArg::Str(expr),
-      OracleArg::PyObj(globals.obj()),
-      OracleArg::PyObj(globals.obj()),
+      Str(expr),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match @sympy.py_call_object(eval_callable, args, print_err=true) {
       Some(obj) => obj
@@ -110,11 +110,7 @@ pub fn recurrence_str(
     "lambda coeffs, var, gen: (lambda sp, rec: (lambda n: (lambda pair: str(rec.RecurrenceOperator([eval(c, {'__builtins__': {}}, {var: n}) for c in coeffs], pair[0])))(rec.RecurrenceOperators(sp.QQ.old_poly_ring(n), gen)))(sp.symbols(var, integer=True)))(__import__('sympy'), __import__('sympy.holonomic.recurrence', fromlist=['RecurrenceOperator', 'RecurrenceOperators']))",
   )
   py_str_enum(
-    py_call_with_args(fn_op, [
-      OracleArg::StrList(coeffs),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
-    ]),
+    py_call_with_args(fn_op, [StrList(coeffs), Str(var_name), Str(generator)]),
   )
 }
 
@@ -128,11 +124,7 @@ pub fn recurrence_srepr(
     "lambda coeffs, var, gen: (lambda sp, rec: (lambda n: (lambda pair: sp.srepr(rec.RecurrenceOperator([eval(c, {'__builtins__': {}}, {var: n}) for c in coeffs], pair[0])))(rec.RecurrenceOperators(sp.QQ.old_poly_ring(n), gen)))(sp.symbols(var, integer=True)))(__import__('sympy'), __import__('sympy.holonomic.recurrence', fromlist=['RecurrenceOperator', 'RecurrenceOperators']))",
   )
   py_str_enum(
-    py_call_with_args(fn_op, [
-      OracleArg::StrList(coeffs),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
-    ]),
+    py_call_with_args(fn_op, [StrList(coeffs), Str(var_name), Str(generator)]),
   )
 }
 
@@ -148,10 +140,10 @@ pub fn recurrence_mul_srepr(
   )
   py_str_enum(
     py_call_with_args(fn_op, [
-      OracleArg::StrList(coeffs_a),
-      OracleArg::StrList(coeffs_b),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
+      StrList(coeffs_a),
+      StrList(coeffs_b),
+      Str(var_name),
+      Str(generator),
     ]),
   )
 }
@@ -168,10 +160,10 @@ pub fn recurrence_pow_srepr(
   )
   py_str_enum(
     py_call_with_args(fn_op, [
-      OracleArg::StrList(coeffs),
-      OracleArg::Int(exp),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
+      StrList(coeffs),
+      Int(exp),
+      Str(var_name),
+      Str(generator),
     ]),
   )
 }
@@ -186,11 +178,7 @@ pub fn recurrence_expr_srepr(
     "lambda expr, var, gen: (lambda sp, rec: (lambda n, pair: sp.srepr(eval(expr, {'__builtins__': {}}, {var: n, gen: pair[1]})))(sp.symbols(var, integer=True), rec.RecurrenceOperators(sp.QQ.old_poly_ring(sp.symbols(var, integer=True)), gen)))(__import__('sympy'), __import__('sympy.holonomic.recurrence', fromlist=['RecurrenceOperators']))",
   )
   py_str_enum(
-    py_call_with_args(fn_op, [
-      OracleArg::Str(expr),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
-    ]),
+    py_call_with_args(fn_op, [Str(expr), Str(var_name), Str(generator)]),
   )
 }
 
@@ -204,11 +192,7 @@ pub fn differential_str(
     "lambda coeffs, var, gen: str((lambda sp, hol: hol.DifferentialOperator([sp.sympify(c) for c in coeffs], hol.DifferentialOperators(sp.QQ.old_poly_ring(sp.symbols(var)), gen)[0]))(__import__('sympy'), __import__('sympy.holonomic.holonomic', fromlist=['DifferentialOperator', 'DifferentialOperators'])))",
   )
   py_str_enum(
-    py_call_with_args(fn_op, [
-      OracleArg::StrList(coeffs),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
-    ]),
+    py_call_with_args(fn_op, [StrList(coeffs), Str(var_name), Str(generator)]),
   )
 }
 
@@ -222,11 +206,7 @@ pub fn differential_srepr(
     "lambda coeffs, var, gen: __import__('sympy').srepr((lambda sp, hol: hol.DifferentialOperator([sp.sympify(c) for c in coeffs], hol.DifferentialOperators(sp.QQ.old_poly_ring(sp.symbols(var)), gen)[0]))(__import__('sympy'), __import__('sympy.holonomic.holonomic', fromlist=['DifferentialOperator', 'DifferentialOperators'])))",
   )
   py_str_enum(
-    py_call_with_args(fn_op, [
-      OracleArg::StrList(coeffs),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
-    ]),
+    py_call_with_args(fn_op, [StrList(coeffs), Str(var_name), Str(generator)]),
   )
 }
 
@@ -242,10 +222,10 @@ pub fn differential_mul_srepr(
   )
   py_str_enum(
     py_call_with_args(fn_op, [
-      OracleArg::StrList(coeffs_a),
-      OracleArg::StrList(coeffs_b),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
+      StrList(coeffs_a),
+      StrList(coeffs_b),
+      Str(var_name),
+      Str(generator),
     ]),
   )
 }
@@ -262,10 +242,10 @@ pub fn differential_pow_srepr(
   )
   py_str_enum(
     py_call_with_args(fn_op, [
-      OracleArg::StrList(coeffs),
-      OracleArg::Int(exp),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
+      StrList(coeffs),
+      Int(exp),
+      Str(var_name),
+      Str(generator),
     ]),
   )
 }
@@ -280,11 +260,7 @@ pub fn differential_expr_srepr(
     "lambda expr, var, gen: (lambda sp, hol: (lambda x, pair: sp.srepr(eval(expr, {'__builtins__': {}}, {var: x, gen: pair[1]})))(sp.symbols(var), hol.DifferentialOperators(sp.QQ.old_poly_ring(sp.symbols(var)), gen)))(__import__('sympy'), __import__('sympy.holonomic.holonomic', fromlist=['DifferentialOperators']))",
   )
   py_str_enum(
-    py_call_with_args(fn_op, [
-      OracleArg::Str(expr),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
-    ]),
+    py_call_with_args(fn_op, [Str(expr), Str(var_name), Str(generator)]),
   )
 }
 
@@ -301,11 +277,11 @@ pub fn holonomic_str(
   )
   py_str_enum(
     py_call_with_args(fn_hf, [
-      OracleArg::StrList(coeffs),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
-      OracleArg::Str(x0),
-      OracleArg::StrList(y0),
+      StrList(coeffs),
+      Str(var_name),
+      Str(generator),
+      Str(x0),
+      StrList(y0),
     ]),
   )
 }
@@ -322,10 +298,10 @@ pub fn sequence_str(
   )
   py_str_enum(
     py_call_with_args(fn_seq, [
-      OracleArg::StrList(coeffs),
-      OracleArg::Str(var_name),
-      OracleArg::Str(generator),
-      OracleArg::StrList(u0),
+      StrList(coeffs),
+      Str(var_name),
+      Str(generator),
+      StrList(u0),
     ]),
   )
 }
@@ -338,12 +314,7 @@ pub fn expr_to_holonomic_str(
   let fn_expr = py_eval_callable(
     "lambda expr, var: str((lambda sp, hol: hol.expr_to_holonomic(sp.sympify(expr), sp.symbols(var)))(__import__('sympy'), __import__('sympy.holonomic.holonomic', fromlist=['expr_to_holonomic'])))",
   )
-  py_str_enum(
-    py_call_with_args(fn_expr, [
-      OracleArg::Str(expr_str),
-      OracleArg::Str(var_name),
-    ]),
-  )
+  py_str_enum(py_call_with_args(fn_expr, [Str(expr_str), Str(var_name)]))
 }
 
 ///|
@@ -351,6 +322,5 @@ pub fn sympy_equiv_str(a : String, b : String) -> Bool raise {
   let fn_eq = py_eval_callable(
     "lambda a, b: str(__import__('sympy').simplify(__import__('sympy').sympify(a) - __import__('sympy').sympify(b)) == 0)",
   )
-  py_str_enum(py_call_with_args(fn_eq, [OracleArg::Str(a), OracleArg::Str(b)])) ==
-  "True"
+  py_str_enum(py_call_with_args(fn_eq, [Str(a), Str(b)])) == "True"
 }

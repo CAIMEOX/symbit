@@ -7,7 +7,7 @@ pub type ControlComplex = (Double, Double)
 ///|
 fn control_expr_number(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
+    Number(n) => Some(n)
     _ => None
   }
 }
@@ -32,20 +32,20 @@ fn control_number_text_to_double(text : String) -> Double? {
 
 ///|
 fn control_rational_to_double(value : @symnum.BigRational) -> Double? {
-  control_number_text_to_double(value.to_string())
+  control_number_text_to_double(Show::to_string(value))
 }
 
 ///|
 fn control_expr_depends_on_symbol(expr : @symcore.Expr, name : String) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(sym) => sym == name
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Symbol(sym) => sym == name
+    Add(args) | Mul(args) =>
       args.any(arg => control_expr_depends_on_symbol(arg, name))
     _ if @symcore.application_parts(expr) is Some(_) =>
       @symcore.application_args(expr)
       .unwrap_or([])
       .any(fn(arg) { control_expr_depends_on_symbol(arg, name) })
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       control_expr_depends_on_symbol(base, name) ||
       control_expr_depends_on_symbol(exp, name)
     _ => false
@@ -58,8 +58,8 @@ fn control_collect_symbols(
   seen : Map[String, Bool],
 ) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => seen[name] = true
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Symbol(name) => seen[name] = true
+    Add(args) | Mul(args) =>
       for arg in args {
         control_collect_symbols(arg, seen)
       }
@@ -67,7 +67,7 @@ fn control_collect_symbols(
       for arg in @symcore.application_args(expr).unwrap_or([]) {
         control_collect_symbols(arg, seen)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       control_collect_symbols(base, seen)
       control_collect_symbols(exp, seen)
     }
@@ -261,19 +261,19 @@ fn control_expr_complex_double(
   env : Map[String, ControlComplex],
 ) -> ControlComplex? {
   match expr {
-    @symcore.Expr::Number(n) =>
+    Number(n) =>
       match control_rational_to_double(n) {
         Some(value) => Some((value, 0.0))
         None => None
       }
-    @symcore.Expr::NumberSymbol(kind) =>
+    NumberSymbol(kind) =>
       match kind {
-        @symcore.NumberSymbolKind::ImaginaryUnit => Some((0.0, 1.0))
-        @symcore.NumberSymbolKind::Pi => Some((@math.PI, 0.0))
+        ImaginaryUnit => Some((0.0, 1.0))
+        Pi => Some((@math.PI, 0.0))
         _ => None
       }
-    @symcore.Expr::Symbol(name) => env.get(name)
-    @symcore.Expr::Add(args) => {
+    Symbol(name) => env.get(name)
+    Add(args) => {
       let mut acc = (0.0, 0.0)
       for arg in args {
         match control_expr_complex_double(arg, env) {
@@ -283,7 +283,7 @@ fn control_expr_complex_double(
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = (1.0, 0.0)
       for arg in args {
         match control_expr_complex_double(arg, env) {
@@ -293,7 +293,7 @@ fn control_expr_complex_double(
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (control_expr_complex_double(base, env), control_expr_number(exp)) {
         (Some(base_value), Some(exp_value)) =>
           if exp_value.is_integral() {

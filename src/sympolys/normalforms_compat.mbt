@@ -1,8 +1,8 @@
 ///|
 fn zz_ddm_to_bigint_rows(ddm : DDM) -> Array[Array[BigInt]] raise PolyError {
   match ddm.domain() {
-    Domain::ZZ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ => ()
+    _ => raise DomainMismatch
   }
   let rows = ddm.to_list()
   let out : Array[Array[BigInt]] = Array::new()
@@ -11,7 +11,7 @@ fn zz_ddm_to_bigint_rows(ddm : DDM) -> Array[Array[BigInt]] raise PolyError {
     for v in row {
       let q = fe_expect_rational(v)
       if !q.denominator().equal_int(1) {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
       out_row.push(q.numerator())
     }
@@ -26,13 +26,11 @@ fn bigint_rows_to_zz_ddm(rows : Array[Array[BigInt]]) -> DDM raise PolyError {
   for row in rows {
     let out_row : Array[FieldElem] = Array::new()
     for v in row {
-      out_row.push(
-        fe_from_rational(@symnum.BigRational::from_bigint(v), Domain::ZZ),
-      )
+      out_row.push(fe_from_rational(@symnum.BigRational::from_bigint(v), ZZ))
     }
     out.push(out_row)
   }
-  ddm_from_dense(out, Domain::ZZ)
+  ddm_from_dense(out, ZZ)
 }
 
 ///|
@@ -390,9 +388,7 @@ fn bigint_invariants_to_zz_elems(
 ) -> Array[FieldElem] raise PolyError {
   let out : Array[FieldElem] = Array::new()
   for value in invs {
-    out.push(
-      fe_from_rational(@symnum.BigRational::from_bigint(value), Domain::ZZ),
-    )
+    out.push(fe_from_rational(@symnum.BigRational::from_bigint(value), ZZ))
   }
   out
 }
@@ -405,7 +401,7 @@ fn smith_diag_from_invariants(
 ) -> DDM raise PolyError {
   DDM::diag(
     bigint_invariants_to_zz_elems(invs),
-    Domain::ZZ,
+    ZZ,
     rows=Some(rows),
     cols=Some(cols),
   )

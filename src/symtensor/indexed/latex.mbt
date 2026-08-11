@@ -9,8 +9,8 @@ fn index_expr_latex(
 ///|
 fn index_latex(index : Index, settings : @symprint.LatexSettings) -> String {
   match index {
-    Index::Expr(expr) => index_expr_latex(expr, settings)
-    Index::Idx(item) => item.latex(settings~)
+    Expr(expr) => index_expr_latex(expr, settings)
+    Idx(item) => item.latex(settings~)
   }
 }
 
@@ -19,7 +19,7 @@ pub fn Idx::latex(
   self : Idx,
   settings? : @symprint.LatexSettings = @symprint.latex_settings(),
 ) -> String {
-  let name_tex = index_expr_latex(@symcore.Expr::Symbol(self.name), settings)
+  let name_tex = index_expr_latex(Symbol(self.name), settings)
   match self.upper {
     None => name_tex
     Some(upper) => {
@@ -39,7 +39,7 @@ pub fn IndexedBase::latex(
   self : IndexedBase,
   settings? : @symprint.LatexSettings = @symprint.latex_settings(),
 ) -> String {
-  index_expr_latex(@symcore.Expr::Symbol(self.name), settings)
+  index_expr_latex(Symbol(self.name), settings)
 }
 
 ///|
@@ -57,8 +57,8 @@ pub fn Indexed::latex(
 ///|
 fn indexed_expr_prec(expr : IndexedExpr) -> Int {
   match expr {
-    IndexedExpr::Add(_) => 1
-    IndexedExpr::Mul(_) => 2
+    Add(_) => 1
+    Mul(_) => 2
     _ => 3
   }
 }
@@ -76,21 +76,21 @@ fn indexed_expr_format(
 ) -> String {
   let prec = indexed_expr_prec(expr)
   let body = match expr {
-    IndexedExpr::Scalar(e) => @symprint.latex_with_settings(e, settings)
-    IndexedExpr::Atom(item) => item.latex(settings~)
-    IndexedExpr::Add(items) =>
+    Scalar(e) => @symprint.latex_with_settings(e, settings)
+    Atom(item) => item.latex(settings~)
+    Add(items) =>
       items.map(item => indexed_expr_format(item, prec, settings)).join(" + ")
-    IndexedExpr::Mul(items) => {
+    Mul(items) => {
       let ordered : Array[IndexedExpr] = []
       for item in items {
         match item {
-          IndexedExpr::Scalar(_) => ordered.push(item)
+          Scalar(_) => ordered.push(item)
           _ => ()
         }
       }
       for item in items {
         match item {
-          IndexedExpr::Scalar(_) => ()
+          Scalar(_) => ()
           _ => ordered.push(item)
         }
       }
@@ -99,7 +99,7 @@ fn indexed_expr_format(
         let tex = indexed_expr_format(item, prec, settings)
         rendered.push(
           match item {
-            IndexedExpr::Add(_) => latex_parens(tex)
+            Add(_) => latex_parens(tex)
             _ => tex
           },
         )

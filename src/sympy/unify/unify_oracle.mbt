@@ -45,15 +45,15 @@ fn exec_result_str(script : String) -> String raise {
     }
     globals.set("sympy", sympy_mod)
     let exec_args = @sympy.py_pack_args([
-      @sympy.OracleArg::Str(script),
-      @sympy.OracleArg::PyObj(globals.obj()),
-      @sympy.OracleArg::PyObj(globals.obj()),
+      Str(script),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     ignore(@sympy.py_call_object(py_callable_from_enum(exec_obj), exec_args))
     let eval_args = @sympy.py_pack_args([
-      @sympy.OracleArg::Str("__result__"),
-      @sympy.OracleArg::PyObj(globals.obj()),
-      @sympy.OracleArg::PyObj(globals.obj()),
+      Str("__result__"),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match @sympy.py_call_object(py_callable_from_enum(eval_obj), eval_args) {
       Some(obj) => py_str_obj(@sympy.objenum_to_obj(obj))

@@ -9,7 +9,7 @@
 
 ///|
 fn intpoly_default_vars() -> Array[Expr] {
-  [@symcore.Expr::Symbol("x"), @symcore.Expr::Symbol("y")]
+  [Symbol("x"), Symbol("y")]
 }
 
 ///|
@@ -17,23 +17,17 @@ fn intpoly_var_names(
   vars : Array[Expr],
 ) -> (String, String) raise IntegralError {
   if vars.length() != 2 {
-    raise IntegralError::ValueError(
+    raise ValueError(
       "expecting exactly two coordinate symbols for planar intpoly routines",
     )
   }
   let x_name = match vars[0] {
-    @symcore.Expr::Symbol(name) => name
-    _ =>
-      raise IntegralError::ValueError(
-        "expecting symbols as planar intpoly variables",
-      )
+    Symbol(name) => name
+    _ => raise ValueError("expecting symbols as planar intpoly variables")
   }
   let y_name = match vars[1] {
-    @symcore.Expr::Symbol(name) => name
-    _ =>
-      raise IntegralError::ValueError(
-        "expecting symbols as planar intpoly variables",
-      )
+    Symbol(name) => name
+    _ => raise ValueError("expecting symbols as planar intpoly variables")
   }
   (x_name, y_name)
 }
@@ -46,14 +40,14 @@ fn expr_depends_on_any(expr : Expr, names : Array[String]) -> Bool {
 ///|
 fn intpoly_degree(expr : Expr, names : Array[String]) -> Int? {
   match expr_simplify(expr) {
-    @symcore.Expr::Number(_) => Some(0)
-    @symcore.Expr::Symbol(name) =>
+    Number(_) => Some(0)
+    Symbol(name) =>
       if names.any(fn(item) { item == name }) {
         Some(1)
       } else {
         Some(0)
       }
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let mut best = 0
       for arg in args {
         match intpoly_degree(arg, names) {
@@ -63,7 +57,7 @@ fn intpoly_degree(expr : Expr, names : Array[String]) -> Int? {
       }
       Some(best)
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut total = 0
       for arg in args {
         match intpoly_degree(arg, names) {
@@ -73,7 +67,7 @@ fn intpoly_degree(expr : Expr, names : Array[String]) -> Int? {
       }
       Some(total)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match expr_is_int_value(exp) {
         Some(power) if power >= 0 =>
           match intpoly_degree(base, names) {
@@ -123,18 +117,10 @@ fn intpoly_segment_integrand(
 ) -> Expr raise IntegralError {
   let p0 = seg.p1()
   let p1 = seg.p2()
-  let x0 = p0.x() catch {
-    _ => raise IntegralError::ValueError("segment must be planar")
-  }
-  let y0 = p0.y() catch {
-    _ => raise IntegralError::ValueError("segment must be planar")
-  }
-  let x1 = p1.x() catch {
-    _ => raise IntegralError::ValueError("segment must be planar")
-  }
-  let y1 = p1.y() catch {
-    _ => raise IntegralError::ValueError("segment must be planar")
-  }
+  let x0 = p0.x() catch { _ => raise ValueError("segment must be planar") }
+  let y0 = p0.y() catch { _ => raise ValueError("segment must be planar") }
+  let x1 = p1.x() catch { _ => raise ValueError("segment must be planar") }
+  let y1 = p1.y() catch { _ => raise ValueError("segment must be planar") }
   let t = @symcore.Expr::Symbol(t_name)
   let x_t = expr_add(x0, expr_mul(expr_sub(x1, x0), t))
   let y_t = expr_add(y0, expr_mul(expr_sub(y1, y0), t))
@@ -146,7 +132,7 @@ fn intpoly_segment_length(
   seg : @symgeometry.Segment,
 ) -> Expr raise IntegralError {
   seg.length() catch {
-    _ => raise IntegralError::ValueError("failed to determine segment length")
+    _ => raise ValueError("failed to determine segment length")
   }
 }
 
@@ -163,18 +149,14 @@ fn intpoly_polygon_signed_integral(
   let zero = @symcore.int(0)
   let one = @symcore.int(1)
   let sides = poly.sides() catch {
-    _ => raise IntegralError::ValueError("failed to derive polygon sides")
+    _ => raise ValueError("failed to derive polygon sides")
   }
   let mut total = @symcore.int(0)
   for side in sides {
     let p0 = side.p1()
     let p1 = side.p2()
-    let y0 = p0.y() catch {
-      _ => raise IntegralError::ValueError("polygon must be planar")
-    }
-    let y1 = p1.y() catch {
-      _ => raise IntegralError::ValueError("polygon must be planar")
-    }
+    let y0 = p0.y() catch { _ => raise ValueError("polygon must be planar") }
+    let y1 = p1.y() catch { _ => raise ValueError("polygon must be planar") }
     let dy = expr_sub(y1, y0)
     let edge_integrand = expr_mul(
       intpoly_segment_integrand(primitive_x, side, x_name, y_name, t_name),
@@ -207,7 +189,7 @@ fn intpoly_validate_planar_polynomial(
 ) -> (String, String) raise IntegralError {
   let (x_name, y_name) = intpoly_var_names(vars)
   if !intpoly_is_polynomial(expr, [x_name, y_name]) {
-    raise IntegralError::ValueError(
+    raise ValueError(
       "intpoly currently supports exact polynomial expressions in two variables",
     )
   }
@@ -223,23 +205,23 @@ fn intpoly_primitive_x(
 
   fn split_polynomial_x_term(term : Expr) -> (Expr, Int)? {
     match expr_simplify(term) {
-      @symcore.Expr::Symbol(name) =>
+      Symbol(name) =>
         if name == x_name {
           Some((@symcore.int(1), 1))
         } else {
           Some((term, 0))
         }
-      @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) if name == x_name =>
+      Pow(Symbol(name), exp) if name == x_name =>
         match expr_is_int_value(exp) {
           Some(power) if power >= 0 => Some((@symcore.int(1), power))
           _ => None
         }
-      @symcore.Expr::Mul(args) => {
+      Mul(args) => {
         let mut coeff = @symcore.int(1)
         let mut power = 0
         for arg in args {
           match expr_simplify(arg) {
-            @symcore.Expr::Symbol(name) =>
+            Symbol(name) =>
               if name == x_name {
                 power += 1
               } else if expr_depends_on(arg, x_name) {
@@ -247,8 +229,7 @@ fn intpoly_primitive_x(
               } else {
                 coeff = expr_mul(coeff, arg)
               }
-            @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) if name ==
-              x_name =>
+            Pow(Symbol(name), exp) if name == x_name =>
               match expr_is_int_value(exp) {
                 Some(value) if value >= 0 => power += value
                 _ => return None
@@ -292,13 +273,13 @@ fn intpoly_primitive_x(
 
   let expanded = @symsimplify.numer_expand(expr_simplify(expr))
   let primitive = match expanded {
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let out : Array[Expr] = []
       for arg in args {
         match primitive_term(arg) {
           Some(value) => out.push(value)
           None =>
-            raise IntegralError::ValueError(
+            raise ValueError(
               "failed to construct an exact polynomial primitive for intpoly",
             )
         }
@@ -309,13 +290,13 @@ fn intpoly_primitive_x(
       match primitive_term(expanded) {
         Some(value) => value
         None =>
-          raise IntegralError::ValueError(
+          raise ValueError(
             "failed to construct an exact polynomial primitive for intpoly",
           )
       }
   }
   if intpoly_has_unevaluated_integral(primitive) {
-    raise IntegralError::ValueError(
+    raise ValueError(
       "failed to construct an exact polynomial primitive for intpoly",
     )
   }
@@ -340,7 +321,7 @@ fn intpoly_monomial(x : Expr, y : Expr, dx : Int, dy : Int) -> Expr {
 ///|
 fn intpoly_coords_norm(coords : Array[Expr]) -> Expr raise IntegralError {
   if coords.is_empty() {
-    raise IntegralError::ValueError("expected at least one coordinate")
+    raise ValueError("expected at least one coordinate")
   }
   let mut total = @symcore.int(0)
   for coord in coords {
@@ -355,7 +336,7 @@ fn intpoly_point3_coords(
 ) -> Array[Expr] raise IntegralError {
   let coords = point.coords()
   if coords.length() != 3 {
-    raise IntegralError::ValueError("expected a 3D point")
+    raise ValueError("expected a 3D point")
   }
   coords
 }
@@ -367,7 +348,7 @@ fn intpoly_cross_product_coords(
   v3 : Array[Expr],
 ) -> Array[Expr] raise IntegralError {
   if v1.length() != 3 || v2.length() != 3 || v3.length() != 3 {
-    raise IntegralError::ValueError("cross_product expects three 3D points")
+    raise ValueError("cross_product expects three 3D points")
   }
   let a = [
     expr_sub(v2[0], v1[0]),
@@ -393,7 +374,7 @@ fn intpoly_segment2d_coords(
   let p1 = seg.p1().coords()
   let p2 = seg.p2().coords()
   if p1.length() != 2 || p2.length() != 2 {
-    raise IntegralError::ValueError("expected a 2D segment")
+    raise ValueError("expected a 2D segment")
   }
   (p1, p2)
 }
@@ -453,7 +434,7 @@ fn intpoly_total_degree(expr : Expr) -> Int raise IntegralError {
   match intpoly_degree(expr, names) {
     Some(value) => value
     None =>
-      raise IntegralError::ValueError(
+      raise ValueError(
         "decompose expects a polynomial expression with non-negative powers",
       )
   }
@@ -466,7 +447,7 @@ fn intpoly_point_coord(
 ) -> Expr raise IntegralError {
   let coords = point.coords()
   if index < 0 || index >= coords.length() {
-    raise IntegralError::ValueError("point coordinate index out of range")
+    raise ValueError("point coordinate index out of range")
   }
   coords[index]
 }
@@ -488,9 +469,7 @@ fn intpoly_expr_compare(lhs : Expr, rhs : Expr) -> Int raise IntegralError {
   match expr_num_value(expr_simplify(expr_sub(lhs, rhs))) {
     Some(delta) => delta.compare(@symnum.BigRational::zero())
     None =>
-      raise IntegralError::ValueError(
-        "point_sort requires numerically comparable coordinates",
-      )
+      raise ValueError("point_sort requires numerically comparable coordinates")
   }
 }
 
@@ -499,9 +478,7 @@ fn intpoly_expr_sign(expr : Expr) -> Int raise IntegralError {
   match expr_num_value(expr_simplify(expr)) {
     Some(value) => value.compare(@symnum.BigRational::zero())
     None =>
-      raise IntegralError::ValueError(
-        "point_sort requires numerically comparable coordinates",
-      )
+      raise ValueError("point_sort requires numerically comparable coordinates")
   }
 }
 
@@ -625,8 +602,8 @@ fn intpoly_sort_points(
 ///|
 fn intpoly_symbol_name(symbol_expr : Expr) -> String raise IntegralError {
   match symbol_expr {
-    @symcore.Expr::Symbol(name) => name
-    _ => raise IntegralError::ValueError("expected coordinate symbols")
+    Symbol(name) => name
+    _ => raise ValueError("expected coordinate symbols")
   }
 }
 
@@ -638,7 +615,7 @@ fn intpoly_substitute_point(
 ) -> Expr raise IntegralError {
   let coords = point.coords()
   if gens.length() > coords.length() {
-    raise IntegralError::ValueError("point does not have enough coordinates")
+    raise ValueError("point does not have enough coordinates")
   }
   let mut out = expr
   for i in 0..<gens.length() {
@@ -655,7 +632,7 @@ fn intpoly_point_distance(
   let lhs_coords = lhs.coords()
   let rhs_coords = rhs.coords()
   if lhs_coords.length() != rhs_coords.length() {
-    raise IntegralError::ValueError("distance expects same-dimensional points")
+    raise ValueError("distance expects same-dimensional points")
   }
   let delta : Array[Expr] = []
   for i in 0..<lhs_coords.length() {
@@ -669,10 +646,10 @@ fn intpoly_point3_from_coords(
   coords : Array[Expr],
 ) -> @symgeometry.Point raise IntegralError {
   if coords.length() != 3 {
-    raise IntegralError::ValueError("expected three coordinates")
+    raise ValueError("expected three coordinates")
   }
   @symgeometry.point3d(coords[0], coords[1], coords[2]) catch {
-    _ => raise IntegralError::ValueError("failed to construct 3D point")
+    _ => raise ValueError("failed to construct 3D point")
   }
 }
 
@@ -684,7 +661,7 @@ fn intpoly_directional_derivative_at_origin(
 ) -> Expr raise IntegralError {
   let coords = point.coords()
   if dims.length() != coords.length() {
-    raise IntegralError::ValueError("directional derivative dimension mismatch")
+    raise ValueError("directional derivative dimension mismatch")
   }
   let mut out = @symcore.int(0)
   for i in 0..<dims.length() {
@@ -718,7 +695,7 @@ fn intpoly_axis_cut_x(
         ),
         @symcore.int(0),
       ) catch {
-        _ => raise IntegralError::ValueError("failed to construct x-axis cut")
+        _ => raise ValueError("failed to construct x-axis cut")
       },
     )
   } else {
@@ -751,7 +728,7 @@ fn intpoly_axis_cut_y(
           ),
         ),
       ) catch {
-        _ => raise IntegralError::ValueError("failed to construct y-axis cut")
+        _ => raise ValueError("failed to construct y-axis cut")
       },
     )
   } else {
@@ -762,20 +739,20 @@ fn intpoly_axis_cut_y(
 ///|
 fn intpoly_symbol_power_sum(expr : Expr, symbol_name : String) -> Int {
   match expr_simplify(expr) {
-    @symcore.Expr::Symbol(name) => if name == symbol_name { 1 } else { 0 }
-    @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) if name == symbol_name =>
+    Symbol(name) => if name == symbol_name { 1 } else { 0 }
+    Pow(Symbol(name), exp) if name == symbol_name =>
       match expr_is_int_value(exp) {
         Some(power) if power > 0 => power
         _ => 0
       }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut total = 0
       for arg in args {
         total += intpoly_symbol_power_sum(arg, symbol_name)
       }
       total
     }
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let mut total = 0
       for arg in args {
         total += intpoly_symbol_power_sum(arg, symbol_name)
@@ -793,11 +770,11 @@ fn intpoly_polynomial_integrate(
   hp_params : Array[(Array[Expr], Expr)],
 ) -> Expr raise IntegralError {
   if facets.length() != hp_params.length() {
-    raise IntegralError::ValueError(
+    raise ValueError(
       "facets and hyperplane parameters must have the same length",
     )
   }
-  let dims = [@symcore.Expr::Symbol("x"), @symcore.Expr::Symbol("y")]
+  let dims = [@symcore.Expr::Symbol("x"), Symbol("y")]
   let dim_length = @symcore.int(dims.length())
   let mut integral_value = @symcore.int(0)
   for piece in pieces {
@@ -846,7 +823,7 @@ pub fn strip(monom : Expr) -> (Expr, Expr) {
     None => ()
   }
   match simplified {
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut coeff = @symcore.int(1)
       let rest : Array[Expr] = []
       for arg in args {
@@ -878,7 +855,7 @@ pub fn decompose(
 ) -> Array[(Int, Expr)] raise IntegralError {
   let simplified = expr_simplify(expr)
   let terms = match simplified {
-    @symcore.Expr::Add(args) => args
+    Add(args) => args
     _ => [simplified]
   }
   if separate {
@@ -970,10 +947,10 @@ pub fn gradient_terms(
   no_of_gens? : Int = 2,
 ) -> Array[Array[Expr]] raise IntegralError {
   if binomial_power < 0 {
-    raise IntegralError::ValueError("binomial_power must be non-negative")
+    raise ValueError("binomial_power must be non-negative")
   }
   if no_of_gens != 2 {
-    raise IntegralError::ValueError("gradient_terms currently supports 2D")
+    raise ValueError("gradient_terms currently supports 2D")
   }
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
@@ -1007,9 +984,7 @@ pub fn hyperplane_parameters(
     let v1 = vertices[i].coords()
     let v2 = vertices[(i + 1) % vertices.length()].coords()
     if v1.length() != 2 || v2.length() != 2 {
-      raise IntegralError::ValueError(
-        "hyperplane_parameters currently supports 2D polygons",
-      )
+      raise ValueError("hyperplane_parameters currently supports 2D polygons")
     }
     let a1 = expr_sub(v1[1], v2[1])
     let a2 = expr_sub(v2[0], v1[0])
@@ -1045,13 +1020,11 @@ pub fn point_sort(
   }
   let dim = points[0].length()
   if dim != 2 && dim != 3 {
-    raise IntegralError::ValueError("point_sort supports 2D and 3D points")
+    raise ValueError("point_sort supports 2D and 3D points")
   }
   for point in points {
     if point.length() != dim {
-      raise IntegralError::ValueError(
-        "point_sort expects points of one dimension",
-      )
+      raise ValueError("point_sort expects points of one dimension")
     }
   }
   let center = if dim == 2 {
@@ -1059,7 +1032,7 @@ pub fn point_sort(
       intpoly_average_coord(points, 0),
       intpoly_average_coord(points, 1),
     ) catch {
-      _ => raise IntegralError::ValueError("failed to construct 2D center")
+      _ => raise ValueError("failed to construct 2D center")
     }
   } else {
     @symgeometry.point3d(
@@ -1067,13 +1040,11 @@ pub fn point_sort(
       intpoly_average_coord(points, 1),
       intpoly_average_coord(points, 2),
     ) catch {
-      _ => raise IntegralError::ValueError("failed to construct 3D center")
+      _ => raise ValueError("failed to construct 3D center")
     }
   }
   if dim == 3 && normal is None {
-    raise IntegralError::ValueError(
-      "point_sort requires a normal for 3D points",
-    )
+    raise ValueError("point_sort requires a normal for 3D points")
   }
   intpoly_sort_points(points, center, normal, clockwise)
 }
@@ -1092,15 +1063,14 @@ pub fn best_origin(
   expr : Expr,
 ) -> @symgeometry.Point raise IntegralError {
   if a.length() != 2 {
-    raise IntegralError::ValueError("best_origin currently supports 2D")
+    raise ValueError("best_origin currently supports 2D")
   }
   let first = lineseg.p1()
   if expr_is_zero(a[0]) {
     match intpoly_axis_cut_y(lineseg) {
       Some(_) =>
         return @symgeometry.point2d(@symcore.int(0), expr_div(b, a[1])) catch {
-          _ =>
-            raise IntegralError::ValueError("failed to construct best origin")
+          _ => raise ValueError("failed to construct best origin")
         }
       None => return first
     }
@@ -1109,8 +1079,7 @@ pub fn best_origin(
     match intpoly_axis_cut_x(lineseg) {
       Some(_) =>
         return @symgeometry.point2d(expr_div(b, a[0]), @symcore.int(0)) catch {
-          _ =>
-            raise IntegralError::ValueError("failed to construct best origin")
+          _ => raise ValueError("failed to construct best origin")
         }
       None => return first
     }
@@ -1124,17 +1093,13 @@ pub fn best_origin(
     match intpoly_axis_cut_y(lineseg) {
       Some(_) =>
         @symgeometry.point2d(@symcore.int(0), expr_div(b, a[1])) catch {
-          _ =>
-            raise IntegralError::ValueError("failed to construct best origin")
+          _ => raise ValueError("failed to construct best origin")
         }
       None =>
         match intpoly_axis_cut_x(lineseg) {
           Some(_) =>
             @symgeometry.point2d(expr_div(b, a[0]), @symcore.int(0)) catch {
-              _ =>
-                raise IntegralError::ValueError(
-                  "failed to construct best origin",
-                )
+              _ => raise ValueError("failed to construct best origin")
             }
           None => first
         }
@@ -1143,17 +1108,13 @@ pub fn best_origin(
     match intpoly_axis_cut_x(lineseg) {
       Some(_) =>
         @symgeometry.point2d(expr_div(b, a[0]), @symcore.int(0)) catch {
-          _ =>
-            raise IntegralError::ValueError("failed to construct best origin")
+          _ => raise ValueError("failed to construct best origin")
         }
       None =>
         match intpoly_axis_cut_y(lineseg) {
           Some(_) =>
             @symgeometry.point2d(@symcore.int(0), expr_div(b, a[1])) catch {
-              _ =>
-                raise IntegralError::ValueError(
-                  "failed to construct best origin",
-                )
+              _ => raise ValueError("failed to construct best origin")
             }
           None => first
         }
@@ -1218,9 +1179,7 @@ pub fn intersection(
   intersection_type : String,
 ) -> @symgeometry.Point? raise IntegralError {
   if intersection_type != "segment2D" {
-    raise IntegralError::ValueError(
-      "intersection currently supports only segment2D",
-    )
+    raise ValueError("intersection currently supports only segment2D")
   }
   let (p1, p2) = intpoly_segment2d_coords(geom_1)
   let (p3, p4) = intpoly_segment2d_coords(geom_2)
@@ -1251,7 +1210,7 @@ pub fn intersection(
   )
   Some(
     @symgeometry.point2d(expr_simplify(x), expr_simplify(y)) catch {
-      _ => raise IntegralError::ValueError("failed to construct intersection")
+      _ => raise ValueError("failed to construct intersection")
     },
   )
 }
@@ -1272,7 +1231,7 @@ pub fn left_integral2D(
   gens : Array[Expr],
 ) -> Expr raise IntegralError {
   if index < 0 || index >= facets.length() || m != facets.length() {
-    raise IntegralError::ValueError("invalid facet index for left_integral2D")
+    raise ValueError("invalid facet index for left_integral2D")
   }
   let mut value = @symcore.int(0)
   for j in 0..<m {
@@ -1311,16 +1270,14 @@ pub fn integration_reduction(
   degree : Int,
 ) -> Expr raise IntegralError {
   if dims.length() != 2 {
-    raise IntegralError::ValueError(
-      "integration_reduction currently supports 2D",
-    )
+    raise ValueError("integration_reduction currently supports 2D")
   }
   let simplified = expr_simplify(expr)
   if expr_is_zero(simplified) {
     return simplified
   }
   if index < 0 || index >= facets.length() {
-    raise IntegralError::ValueError("invalid facet index")
+    raise ValueError("invalid facet index")
   }
   let x0 = facets[index].p1()
   let x_coord = intpoly_point_coord(x0, 0)
@@ -1380,25 +1337,23 @@ pub fn integration_reduction_dynamic(
     return simplified
   }
   if dims.length() != 2 {
-    raise IntegralError::ValueError(
-      "integration_reduction_dynamic currently supports 2D",
-    )
+    raise ValueError("integration_reduction_dynamic currently supports 2D")
   }
   if monom_index < 0 || monom_index >= monomial_values.length() {
-    raise IntegralError::ValueError("monomial index out of range")
+    raise ValueError("monomial index out of range")
   }
   let mut value = @symcore.int(0)
   if expr_num_value(simplified) is None {
     let row = monomial_values[monom_index]
     if row.length() < 4 {
-      raise IntegralError::ValueError("monomial rows need four fields")
+      raise ValueError("monomial rows need four fields")
     }
     let x_degree = expr_exact_int(row[1]).unwrap_or(0)
     let y_degree = expr_exact_int(row[2]).unwrap_or(0)
     if x_degree > 0 {
       let lookup = monom_index - max_index + x_index - 2
       if lookup < 0 || lookup >= monomial_values.length() {
-        raise IntegralError::ValueError("x monomial lookup out of range")
+        raise ValueError("x monomial lookup out of range")
       }
       value = expr_add(
         value,
@@ -1411,7 +1366,7 @@ pub fn integration_reduction_dynamic(
     if y_degree > 0 {
       let lookup = monom_index - 1
       if lookup < 0 || lookup >= monomial_values.length() {
-        raise IntegralError::ValueError("y monomial lookup out of range")
+        raise ValueError("y monomial lookup out of range")
       }
       value = expr_add(
         value,
@@ -1443,7 +1398,7 @@ pub fn main_integrate(
   max_degree? : Int = -1,
 ) -> Expr raise IntegralError {
   if max_degree >= 0 {
-    raise IntegralError::ValueError(
+    raise ValueError(
       "main_integrate dynamic max_degree mode is available as polytope_integrate_upto",
     )
   }
@@ -1471,11 +1426,7 @@ pub fn lineseg_integrate(
   let p0 = line_seg.p1()
   let p1 = line_seg.p2()
   let distance = intpoly_point_distance(p0, p1)
-  let dims = [
-    @symcore.Expr::Symbol("x"),
-    @symcore.Expr::Symbol("y"),
-    @symcore.Expr::Symbol("z"),
-  ]
+  let dims = [@symcore.Expr::Symbol("x"), Symbol("y"), Symbol("z")]
   let evaluated = match expr_num_value(simplified) {
     Some(_) => simplified
     None => intpoly_substitute_point(simplified, dims, p1)
@@ -1505,11 +1456,11 @@ pub fn left_integral3D(
   degree : Int,
 ) -> Expr raise IntegralError {
   if index < 0 || index >= facets.length() {
-    raise IntegralError::ValueError("invalid facet index for left_integral3D")
+    raise ValueError("invalid facet index for left_integral3D")
   }
   let facet = facets[index]
   if facet.is_empty() {
-    raise IntegralError::ValueError("empty facet")
+    raise ValueError("empty facet")
   }
   let x0 = vertices[facet[0]]
   let normal = intpoly_point3_from_coords(hp_param.0)
@@ -1523,7 +1474,7 @@ pub fn left_integral3D(
       vertices[facet[i]],
       vertices[facet[(i + 1) % facet.length()]],
     ) catch {
-      _ => raise IntegralError::ValueError("failed to construct facet side")
+      _ => raise ValueError("failed to construct facet side")
     }
     value = expr_add(
       value,
@@ -1557,7 +1508,7 @@ pub fn polygon_integrate(
     return @symcore.int(0)
   }
   if facet.is_empty() {
-    raise IntegralError::ValueError("empty facet")
+    raise ValueError("empty facet")
   }
   let x0 = vertices[facet[0]]
   let normal = intpoly_point3_from_coords(hp_param.0)
@@ -1571,7 +1522,7 @@ pub fn polygon_integrate(
       vertices[facet[i]],
       vertices[facet[(i + 1) % facet.length()]],
     ) catch {
-      _ => raise IntegralError::ValueError("failed to construct facet side")
+      _ => raise ValueError("failed to construct facet side")
     }
     result = expr_add(
       result,
@@ -1582,11 +1533,7 @@ pub fn polygon_integrate(
     )
   }
   if expr_num_value(simplified) is None {
-    let dims = [
-      @symcore.Expr::Symbol("x"),
-      @symcore.Expr::Symbol("y"),
-      @symcore.Expr::Symbol("z"),
-    ]
+    let dims = [@symcore.Expr::Symbol("x"), Symbol("y"), Symbol("z")]
     let reduced = intpoly_directional_derivative_at_origin(simplified, x0, dims)
     result = expr_add(
       result,
@@ -1619,12 +1566,12 @@ pub fn main_integrate3d(
   max_degree? : Int = -1,
 ) -> Expr raise IntegralError {
   if max_degree >= 0 {
-    raise IntegralError::ValueError(
+    raise ValueError(
       "main_integrate3d dynamic max_degree mode is not implemented",
     )
   }
   if facets.length() != hp_params.length() {
-    raise IntegralError::ValueError("facets and hyperplane parameters mismatch")
+    raise ValueError("facets and hyperplane parameters mismatch")
   }
   let mut integral_value = @symcore.int(0)
   for piece in decompose(expr) {
@@ -1668,7 +1615,7 @@ pub fn plot_polytope(
   let t = @symcore.Expr::Symbol("t")
   let inputs : Array[@symplotting.ParametricPlotInput] = []
   let sides = poly.sides() catch {
-    _ => raise IntegralError::ValueError("failed to derive polygon sides")
+    _ => raise ValueError("failed to derive polygon sides")
   }
   for side in sides {
     let p0 = side.p1()
@@ -1687,10 +1634,8 @@ pub fn plot_polytope(
     )
   }
   @symplotting.plot_parametric(inputs, show=false) catch {
-    @symplotting.PlottingError::ValueError(message) =>
-      raise IntegralError::ValueError(message)
-    @symplotting.PlottingError::TypeError(message) =>
-      raise IntegralError::ValueError(message)
+    ValueError(message) => raise ValueError(message)
+    TypeError(message) => raise ValueError(message)
   }
 }
 
@@ -1705,22 +1650,16 @@ pub fn plot_polynomial(expr : Expr) -> @symplotting.Plot raise IntegralError {
   let symbols = @symcore.free_symbols(expr)
   if symbols.length() <= 1 {
     @symplotting.plot([@symplotting.plot_expr(expr)], show=false) catch {
-      @symplotting.PlottingError::ValueError(message) =>
-        raise IntegralError::ValueError(message)
-      @symplotting.PlottingError::TypeError(message) =>
-        raise IntegralError::ValueError(message)
+      ValueError(message) => raise ValueError(message)
+      TypeError(message) => raise ValueError(message)
     }
   } else if symbols.length() == 2 {
     @symplotting.plot3d([@symplotting.plot_expr(expr)], show=false) catch {
-      @symplotting.PlottingError::ValueError(message) =>
-        raise IntegralError::ValueError(message)
-      @symplotting.PlottingError::TypeError(message) =>
-        raise IntegralError::ValueError(message)
+      ValueError(message) => raise ValueError(message)
+      TypeError(message) => raise ValueError(message)
     }
   } else {
-    raise IntegralError::ValueError(
-      "plot_polynomial supports at most two free symbols",
-    )
+    raise ValueError("plot_polynomial supports at most two free symbols")
   }
 }
 
@@ -1796,7 +1735,7 @@ pub fn polytope_integrate_upto(
   vars? : Array[Expr] = intpoly_default_vars(),
 ) -> Map[Expr, Expr] raise IntegralError {
   if max_degree < 0 {
-    raise IntegralError::ValueError("max_degree must be non-negative")
+    raise ValueError("max_degree must be non-negative")
   }
   let (x_name, y_name) = intpoly_var_names(vars)
   let x = @symcore.Expr::Symbol(x_name)

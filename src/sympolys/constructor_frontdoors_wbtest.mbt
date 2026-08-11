@@ -20,15 +20,15 @@ test "construct_domain chooses ground and composite domains" {
 ///|
 test "inverse order frontdoors and root aliases are visible" {
   inspect(compare_exps_igrevlex([2, 0], [1, 1]), content="-1")
-  inspect(ilex() == TermOrder::Ilex, content="true")
-  inspect(igrlex() == TermOrder::Igrlex, content="true")
-  inspect(igrevlex() == TermOrder::Igrevlex, content="true")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  inspect(ilex() == Ilex, content="true")
+  inspect(igrlex() == Igrlex, content="true")
+  inspect(igrevlex() == Igrevlex, content="true")
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let root : CRootOf = rootof(b.from_expr((x ^ int(2)) + int(1)), 0)
-  inspect(root.to_string(), content="CRootOf(x**2 + 1, 0)")
+  inspect(Show::to_string(root), content="CRootOf(x**2 + 1, 0)")
   inspect(
-    root_sum(b.from_expr((x ^ int(2)) + int(1))).to_string(),
+    Show::to_string(root_sum(b.from_expr((x ^ int(2)) + int(1)))),
     content="RootSum(x**2 + 1)",
   )
 }

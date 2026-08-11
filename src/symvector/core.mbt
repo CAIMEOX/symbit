@@ -124,7 +124,7 @@ fn coord_transform_data(
   location? : Vector = vector_zero(),
 ) -> CoordTransformData raise @rawvec.VectorError {
   match transform {
-    CoordTransform::Cartesian => {
+    Cartesian => {
       let resolved_location = location
       let resolved_rotation = parent_rotation_matrix
       let transformation_to_parent = cartesian_transform_to_parent(
@@ -148,7 +148,7 @@ fn coord_transform_data(
         is_curvilinear_: false,
       }
     }
-    CoordTransform::Cylindrical | CoordTransform::Spherical => {
+    Cylindrical | Spherical => {
       match parent {
         Some(parent_system) =>
           if !is_identity_cartesian_parent(parent_system) {
@@ -179,7 +179,7 @@ fn coord_transform_data(
         is_curvilinear_: true,
       }
     }
-    CoordTransform::LambdaTransform(function) => {
+    LambdaTransform(function) => {
       if !coord_transform_check_orthogonality(function) {
         @rawvec.raise_value_error(
           "The transformation equation does not create orthogonal coordinate system",
@@ -205,7 +205,7 @@ fn coord_transform_data(
         is_curvilinear_: is_curvilinear,
       }
     }
-    CoordTransform::TupleTransform(rotation_matrix, tuple_location) => {
+    TupleTransform(rotation_matrix, tuple_location) => {
       let transformation_to_parent = cartesian_transform_to_parent(
         self_scalars, rotation_matrix, tuple_location, parent,
       ) catch {
@@ -259,7 +259,7 @@ fn build_root_coord_system(
     transformation_to_parent_: [],
     transformation_from_parent_template_: None,
     transformation_matrix_to_parent_: @symphysics.explicit_matrix_eye(3),
-    is_cartesian_: normalized_transform == CoordTransform::Cartesian,
+    is_cartesian_: normalized_transform == Cartesian,
     is_curvilinear_: false,
   }
   let self_scalars = coord_scalars_exprs(skeleton)
@@ -405,7 +405,7 @@ pub fn coord_sys3d_with_transform(
   vector_names? : Array[String]? = None,
   variable_names? : Array[String]? = None,
 ) -> CoordSys3D raise @rawvec.VectorError {
-  let normalized_transform = transformation.unwrap_or(CoordTransform::Cartesian)
+  let normalized_transform = transformation.unwrap_or(Cartesian)
   let normalized_vector_names = normalize_names(
     "vector_names", vector_names, normalized_transform,
   )
@@ -450,12 +450,7 @@ pub fn CoordSys3D::scalar(self : CoordSys3D, axis : Int) -> BaseScalar {
     abort("coordinate axis must be 0, 1, or 2")
   }
   let name = self.name_ + "." + self.variable_names_[axis]
-  {
-    axis_: axis,
-    system_: self,
-    name_: name,
-    expr_: @symcore.Expr::Symbol(name),
-  }
+  { axis_: axis, system_: self, name_: name, expr_: Symbol(name) }
 }
 
 ///|
@@ -664,7 +659,7 @@ pub fn CoordSys3D::scalar_map(
         )
       None =>
         match system.transformation_ {
-          CoordTransform::LambdaTransform(_) => {
+          LambdaTransform(_) => {
             let parent = match system.parent_ {
               Some(value) => value
               None => abort("CoordSys3D::scalar_map-parent-none")
@@ -685,13 +680,13 @@ pub fn CoordSys3D::scalar_map(
               }
             }
             let solved = match solved_value {
-              @symsolvers.SolveResult::Dict(values) =>
+              Dict(values) =>
                 [
                   values.get(system.x().name_).unwrap_or(system.x().expr()),
                   values.get(system.y().name_).unwrap_or(system.y().expr()),
                   values.get(system.z().name_).unwrap_or(system.z().expr()),
                 ]
-              @symsolvers.SolveResult::Dicts(items) =>
+              Dicts(items) =>
                 if items.is_empty() {
                   @rawvec.raise_value_error(
                     "inverse transformation is not available",
@@ -705,7 +700,7 @@ pub fn CoordSys3D::scalar_map(
                     values.get(system.z().name_).unwrap_or(system.z().expr()),
                   ]
                 }
-              @symsolvers.SolveResult::List(_) => {
+              List(_) => {
                 @rawvec.raise_value_error(
                   "inverse transformation is not available",
                 )
@@ -753,7 +748,7 @@ pub fn CoordSys3D::locate_new(
       Some(values) => Some(values)
       None => Some(self.vector_names_)
     },
-    CoordTransform::Cartesian,
+    Cartesian,
   )
   let normalized_variable_names = normalize_names(
     "variable_names",
@@ -761,14 +756,14 @@ pub fn CoordSys3D::locate_new(
       Some(values) => Some(values)
       None => Some(self.variable_names_)
     },
-    CoordTransform::Cartesian,
+    Cartesian,
   )
   build_child_coord_system(
     self,
     name,
     normalized_vector_names,
     normalized_variable_names,
-    CoordTransform::Cartesian,
+    Cartesian,
     @symphysics.explicit_matrix_eye(3),
     position,
   ) catch {
@@ -791,7 +786,7 @@ pub fn CoordSys3D::orient_new(
       Some(values) => Some(values)
       None => Some(self.vector_names_)
     },
-    CoordTransform::Cartesian,
+    Cartesian,
   )
   let normalized_variable_names = normalize_names(
     "variable_names",
@@ -799,7 +794,7 @@ pub fn CoordSys3D::orient_new(
       Some(values) => Some(values)
       None => Some(self.variable_names_)
     },
-    CoordTransform::Cartesian,
+    Cartesian,
   )
   let mut final_matrix = @symphysics.explicit_matrix_eye(3)
   for orienter in orienters {
@@ -816,7 +811,7 @@ pub fn CoordSys3D::orient_new(
     name,
     normalized_vector_names,
     normalized_variable_names,
-    CoordTransform::Cartesian,
+    Cartesian,
     matrix_simplify_entries(final_matrix),
     location.unwrap_or(vector_zero()),
   ) catch {

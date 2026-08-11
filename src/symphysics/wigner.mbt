@@ -3,17 +3,14 @@
 
 ///|
 fn wigner_expr_from_bigint(value : BigInt) -> Expr {
-  @symcore.Expr::Number(@symnum.BigRational::from_bigint(value))
+  Number(@symnum.BigRational::from_bigint(value))
 }
 
 ///|
 fn wigner_rational_expr(num : BigInt, den : BigInt) -> Expr raise PhysicsError {
-  @symcore.Expr::Number(
+  Number(
     @symnum.BigRational::new(num, den) catch {
-      _ =>
-        raise PhysicsError::ValueError(
-          "invalid exact rational in Wigner evaluation",
-        )
+      _ => raise ValueError("invalid exact rational in Wigner evaluation")
     },
   )
 }
@@ -93,12 +90,12 @@ fn wigner_doubled_int(value : Expr) -> Int raise PhysicsError {
       if den.equal_int(2) {
         return num.to_int()
       }
-      raise PhysicsError::ValueError(
+      raise ValueError(
         "expecting integer or half-integer, got \{@symprint.pretty_string(value)}",
       )
     }
     None =>
-      raise PhysicsError::ValueError(
+      raise ValueError(
         "expecting integer or half-integer, got \{@symprint.pretty_string(value)}",
       )
   }
@@ -466,7 +463,7 @@ pub fn wigner_d_small(
   beta : Expr,
 ) -> ExplicitMatrix raise PhysicsError {
   let dJ = wigner_doubled_int(j_tot)
-  guard dJ >= 0 else { raise PhysicsError::ValueError("J must be nonnegative") }
+  guard dJ >= 0 else { raise ValueError("J must be nonnegative") }
   let size = dJ + 1
   let half_beta = beta * rational_expr(1, 2)
   let cos_half = @symelem.cos(half_beta)

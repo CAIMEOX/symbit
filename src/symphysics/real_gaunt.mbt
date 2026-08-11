@@ -22,7 +22,7 @@ fn real_gaunt_coeff_mul(
   a : RealGauntCoeff,
   b : RealGauntCoeff,
 ) -> RealGauntCoeff {
-  RealGauntCoeff::{
+  {
     real: a.real * b.real - a.imag * b.imag,
     imag: a.real * b.imag + a.imag * b.real,
     sqrt2_pow: a.sqrt2_pow + b.sqrt2_pow,
@@ -50,34 +50,22 @@ fn real_gaunt_u(a : Int, b : Int) -> RealGauntCoeff? {
     return None
   }
   if b == 0 {
-    return if a == 0 {
-      Some(RealGauntCoeff::{ real: 1, imag: 0, sqrt2_pow: 0 })
-    } else {
-      None
-    }
+    return if a == 0 { Some({ real: 1, imag: 0, sqrt2_pow: 0 }) } else { None }
   }
   if b > 0 {
     if a == b {
-      return Some(RealGauntCoeff::{ real: 1, imag: 0, sqrt2_pow: 1 })
+      return Some({ real: 1, imag: 0, sqrt2_pow: 1 })
     }
     if a == -b {
-      return Some(RealGauntCoeff::{
-        real: real_gaunt_phase_int(a),
-        imag: 0,
-        sqrt2_pow: 1,
-      })
+      return Some({ real: real_gaunt_phase_int(a), imag: 0, sqrt2_pow: 1 })
     }
     return None
   }
   if a == b {
-    return Some(RealGauntCoeff::{ real: 0, imag: -1, sqrt2_pow: 1 })
+    return Some({ real: 0, imag: -1, sqrt2_pow: 1 })
   }
   if a == -b {
-    return Some(RealGauntCoeff::{
-      real: 0,
-      imag: real_gaunt_phase_int(b),
-      sqrt2_pow: 1,
-    })
+    return Some({ real: 0, imag: real_gaunt_phase_int(b), sqrt2_pow: 1 })
   }
   None
 }

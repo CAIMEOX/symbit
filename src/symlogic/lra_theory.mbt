@@ -13,21 +13,22 @@ pub(all) enum RelOp {
 ///|
 impl Show for RelOp with fn to_string(self) {
   match self {
-    RelOp::Le => "<="
-    RelOp::Ge => ">="
-    RelOp::Lt => "<"
-    RelOp::Gt => ">"
-    RelOp::Eq => "=="
+    Le => "<="
+    Ge => ">="
+    Lt => "<"
+    Gt => ">"
+    Eq => "=="
   }
 }
 
 ///|
 /// Keep the `RelOp::to_string` dot-style API explicit.
+#deprecated
 pub extend RelOp with Show::{to_string}
 
 ///|
 impl Show for RelOp with fn output(self, logger) {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -128,7 +129,7 @@ fn origin_key(lit : LraConflictLit) -> String {
 
 ///|
 fn origin_single(key : String, negated : Bool) -> Array[LraConflictLit] {
-  [LraConflictLit::{ key, negated }]
+  [{ key, negated }]
 }
 
 ///|
@@ -198,7 +199,7 @@ fn ineq_from_expr(
   strict : Bool,
   origin : Array[LraConflictLit],
 ) -> Ineq {
-  Ineq::{ coeffs: expr.coeffs, rhs: br_neg(expr.constant), strict, origin }
+  { coeffs: expr.coeffs, rhs: br_neg(expr.constant), strict, origin }
 }
 
 ///|
@@ -217,13 +218,13 @@ fn prune_ineqs(ineqs : Array[Ineq]) -> LraCheck {
   for ineq in ineqs {
     if ineq.coeffs.is_empty() {
       if !ineq_satisfied(ineq.rhs, ineq.strict) {
-        return LraCheck::Unsat(ineq.origin)
+        return Unsat(ineq.origin)
       }
       continue
     }
     out.push(ineq)
   }
-  LraCheck::Sat(out)
+  Sat(out)
 }
 
 ///|
@@ -312,15 +313,15 @@ fn ineqs_from_constraint(
 ) -> Array[Ineq] {
   let coeffs = normalize_coeffs(constraint.coeffs)
   match constraint.op {
-    RelOp::Le => [Ineq::{ coeffs, rhs: constraint.rhs, strict: false, origin }]
-    RelOp::Lt => [Ineq::{ coeffs, rhs: constraint.rhs, strict: true, origin }]
-    RelOp::Ge => {
+    Le => [{ coeffs, rhs: constraint.rhs, strict: false, origin }]
+    Lt => [{ coeffs, rhs: constraint.rhs, strict: true, origin }]
+    Ge => {
       let neg_coeffs : Map[String, @symnum.BigRational] = Map([])
       for name, value in coeffs {
         add_coeff(neg_coeffs, name, br_neg(value))
       }
       [
-        Ineq::{
+        {
           coeffs: neg_coeffs,
           rhs: br_neg(constraint.rhs),
           strict: false,
@@ -328,13 +329,13 @@ fn ineqs_from_constraint(
         },
       ]
     }
-    RelOp::Gt => {
+    Gt => {
       let neg_coeffs : Map[String, @symnum.BigRational] = Map([])
       for name, value in coeffs {
         add_coeff(neg_coeffs, name, br_neg(value))
       }
       [
-        Ineq::{
+        {
           coeffs: neg_coeffs,
           rhs: br_neg(constraint.rhs),
           strict: true,
@@ -342,14 +343,14 @@ fn ineqs_from_constraint(
         },
       ]
     }
-    RelOp::Eq => {
+    Eq => {
       let neg_coeffs : Map[String, @symnum.BigRational] = Map([])
       for name, value in coeffs {
         add_coeff(neg_coeffs, name, br_neg(value))
       }
       [
-        Ineq::{ coeffs, rhs: constraint.rhs, strict: false, origin },
-        Ineq::{
+        { coeffs, rhs: constraint.rhs, strict: false, origin },
+        {
           coeffs: neg_coeffs,
           rhs: br_neg(constraint.rhs),
           strict: false,
@@ -380,50 +381,18 @@ pub fn linear_constraint_negate(
   constraint : LinearConstraint,
 ) -> Array[LinearConstraint] {
   match constraint.op {
-    RelOp::Le =>
+    Le =>
+      [{ coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: Gt }]
+    Lt =>
+      [{ coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: Ge }]
+    Ge =>
+      [{ coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: Lt }]
+    Gt =>
+      [{ coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: Le }]
+    Eq =>
       [
-        {
-          coeffs: clone_coeffs(constraint.coeffs),
-          rhs: constraint.rhs,
-          op: RelOp::Gt,
-        },
-      ]
-    RelOp::Lt =>
-      [
-        {
-          coeffs: clone_coeffs(constraint.coeffs),
-          rhs: constraint.rhs,
-          op: RelOp::Ge,
-        },
-      ]
-    RelOp::Ge =>
-      [
-        {
-          coeffs: clone_coeffs(constraint.coeffs),
-          rhs: constraint.rhs,
-          op: RelOp::Lt,
-        },
-      ]
-    RelOp::Gt =>
-      [
-        {
-          coeffs: clone_coeffs(constraint.coeffs),
-          rhs: constraint.rhs,
-          op: RelOp::Le,
-        },
-      ]
-    RelOp::Eq =>
-      [
-        {
-          coeffs: clone_coeffs(constraint.coeffs),
-          rhs: constraint.rhs,
-          op: RelOp::Lt,
-        },
-        {
-          coeffs: clone_coeffs(constraint.coeffs),
-          rhs: constraint.rhs,
-          op: RelOp::Gt,
-        },
+        { coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: Lt },
+        { coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: Gt },
       ]
   }
 }
@@ -444,7 +413,7 @@ fn format_coeff(
   } else if !first {
     sign = "+ "
   }
-  let coeff_str = abs_coeff.to_string()
+  let coeff_str = Show::to_string(abs_coeff)
   let term = if coeff_str == "1" { name } else { "\{coeff_str}*\{name}" }
   if sign == "" {
     term
@@ -478,19 +447,19 @@ fn linear_lhs_to_string(coeffs : Map[String, @symnum.BigRational]) -> String {
 ///|
 pub impl Show for LinearConstraint with fn to_string(self) {
   let lhs = linear_lhs_to_string(self.coeffs)
-  let rhs = self.rhs.to_string()
-  let op = self.op.to_string()
+  let rhs = Show::to_string(self.rhs)
+  let op = Show::to_string(self.op)
   "\{lhs} \{op} \{rhs}"
 }
 
 ///|
 pub impl Show for LinearConstraint with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 pub fn linear_constraint_key(constraint : LinearConstraint) -> String {
-  constraint.to_string()
+  Show::to_string(constraint)
 }
 
 ///|
@@ -506,8 +475,8 @@ pub fn lra_check_with_conflict(
   }
   let mut current : Array[Ineq] = Array::new()
   match prune_ineqs(ineqs) {
-    LraCheck::Unsat(conflict) => return Some(conflict)
-    LraCheck::Sat(filtered) => current = filtered
+    Unsat(conflict) => return Some(conflict)
+    Sat(filtered) => current = filtered
   }
   let vars : Map[String, Bool] = Map([])
   for ineq in current {
@@ -522,8 +491,8 @@ pub fn lra_check_with_conflict(
   var_list.sort()
   for name in var_list {
     match eliminate_var(current, name) {
-      LraCheck::Unsat(conflict) => return Some(conflict)
-      LraCheck::Sat(next) => current = next
+      Unsat(conflict) => return Some(conflict)
+      Sat(next) => current = next
     }
   }
   for ineq in current {
@@ -540,7 +509,7 @@ pub fn lra_check_with_conflict(
 pub fn lra_satisfiable(constraints : Array[LinearConstraint]) -> Bool {
   let assumptions : Array[LraAssumption] = Array::new()
   for constraint in constraints {
-    assumptions.push(LraAssumption::{
+    assumptions.push({
       constraint,
       key: linear_constraint_key(constraint),
       negated: false,

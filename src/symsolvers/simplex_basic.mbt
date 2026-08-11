@@ -39,16 +39,15 @@ fn rat_from_expr(
   match @symcore.exact_numeric_expr_num_den(expr) {
     Some((num, den)) =>
       @symnum.BigRational::new(num, den) catch {
-        _ => raise SolverError::ValueError(context + ": invalid rational")
+        _ => raise ValueError(context + ": invalid rational")
       }
-    None =>
-      raise SolverError::ValueError(context + ": expected exact numeric value")
+    None => raise ValueError(context + ": expected exact numeric value")
   }
 }
 
 ///|
 fn rat_to_expr(value : @symnum.BigRational) -> Expr {
-  Expr::Number(value)
+  Number(value)
 }
 
 ///|
@@ -71,7 +70,7 @@ fn rat_div(
   context : String,
 ) -> @symnum.BigRational raise SolverError {
   lhs.div_r(rhs) catch {
-    _ => raise SolverError::ValueError(context + ": division by zero")
+    _ => raise ValueError(context + ": division by zero")
   }
 }
 
@@ -191,13 +190,13 @@ fn linear_form_from_expr(
       None => ()
     }
   }
-  RatForm::{ offset: rat_from_expr(const_terms[0], context), coeffs }
+  { offset: rat_from_expr(const_terms[0], context), coeffs }
 }
 
 ///|
 fn bool_constraint_value(expr : Expr) -> Bool? {
   match expr {
-    Expr::Boolean(value) => Some(value)
+    Boolean(value) => Some(value)
     _ => @symcore.bool_value(expr)
   }
 }
@@ -210,12 +209,11 @@ fn constraint_forms(
 ) -> Array[RatForm] raise SolverError {
   match bool_constraint_value(constraint) {
     Some(true) => return []
-    Some(false) =>
-      raise SolverError::InfeasibleLPError("Inconsistent/False constraint")
+    Some(false) => raise InfeasibleLPError("Inconsistent/False constraint")
     None => ()
   }
   match @symcore.relational_parts(constraint) {
-    Some((@symcore.RelOp::Le, lhs, rhs)) =>
+    Some((Le, lhs, rhs)) =>
       [
         linear_form_from_expr(
           @symcore.add([lhs, negate_expr(rhs)]),
@@ -223,7 +221,7 @@ fn constraint_forms(
           context,
         ),
       ]
-    Some((@symcore.RelOp::Ge, lhs, rhs)) =>
+    Some((Ge, lhs, rhs)) =>
       [
         linear_form_from_expr(
           @symcore.add([rhs, negate_expr(lhs)]),
@@ -231,7 +229,7 @@ fn constraint_forms(
           context,
         ),
       ]
-    Some((@symcore.RelOp::Eq, lhs, rhs)) =>
+    Some((Eq, lhs, rhs)) =>
       [
         linear_form_from_expr(
           @symcore.add([lhs, negate_expr(rhs)]),
@@ -245,13 +243,11 @@ fn constraint_forms(
         ),
       ]
     Some(_) =>
-      raise SolverError::ValueError(
+      raise ValueError(
         context + ": only Eq, <= and >= constraints are supported",
       )
     None =>
-      raise SolverError::ValueError(
-        context + ": expected a relational linear constraint",
-      )
+      raise ValueError(context + ": expected a relational linear constraint")
   }
 }
 
@@ -281,7 +277,7 @@ fn pivot_tableau(
   let cols = matrix[0].length()
   let pivot = matrix[i][j]
   if pivot.is_zero() {
-    raise SolverError::ValueError("simplex: zero pivot")
+    raise ValueError("simplex: zero pivot")
   }
   let out : Array[Array[@symnum.BigRational]] = Array::new()
   for _ in 0..<rows {
@@ -385,11 +381,11 @@ fn simplex_nonnegative_min(
 
   let xlabels : Array[VarLabel] = []
   for j in 0..<n {
-    xlabels.push(VarLabel::{ dual: false, idx: j })
+    xlabels.push({ dual: false, idx: j })
   }
   let ylabels : Array[VarLabel] = []
   for i in 0..<m {
-    ylabels.push(VarLabel::{ dual: true, idx: i })
+    ylabels.push({ dual: true, idx: i })
   }
 
   while true {
@@ -410,7 +406,7 @@ fn simplex_nonnegative_min(
       }
     }
     if candidate_cols.is_empty() {
-      raise SolverError::InfeasibleLPError("The constraint set is empty!")
+      raise InfeasibleLPError("The constraint set is empty!")
     }
     let mut c = candidate_cols[0]
     for idx in 1..<candidate_cols.length() {
@@ -467,7 +463,7 @@ fn simplex_nonnegative_min(
       }
     }
     if candidate_rows.is_empty() {
-      raise SolverError::UnboundedLPError(
+      raise UnboundedLPError(
         "Objective function can assume arbitrarily large values!",
       )
     }
@@ -518,7 +514,7 @@ fn normalize_bounds(
   }
   let items = bounds.unwrap()
   if items.length() != count {
-    raise SolverError::ShapeError(context + ": bounds length mismatch")
+    raise ShapeError(context + ": bounds length mismatch")
   }
   for item in items {
     let lower = item.0.map(value => rat_from_expr(value, context))
@@ -561,7 +557,7 @@ fn build_var_transforms(
     let (lower, upper) = bounds[i]
     match (lower, upper) {
       (Some(lo), Some(hi)) if lo.compare(hi) > 0 =>
-        raise SolverError::InfeasibleLPError("inconsistent bounds")
+        raise InfeasibleLPError("inconsistent bounds")
       _ => ()
     }
     match (lower, upper) {
@@ -569,37 +565,34 @@ fn build_var_transforms(
         if lo.is_zero() {
           let coeffs : Map[Int, @symnum.BigRational] = Map([])
           coeffs[next_var] = rat_one()
-          transforms.push(VarTransform::{ offset: rat_zero(), coeffs })
+          transforms.push({ offset: rat_zero(), coeffs })
           next_var += 1
         } else {
           let coeffs : Map[Int, @symnum.BigRational] = Map([])
           coeffs[next_var] = rat_one()
-          transforms.push(VarTransform::{ offset: lo, coeffs })
+          transforms.push({ offset: lo, coeffs })
           next_var += 1
         }
       (None, Some(hi)) => {
         let coeffs : Map[Int, @symnum.BigRational] = Map([])
         coeffs[next_var] = rat_from_int(-1)
-        transforms.push(VarTransform::{ offset: hi, coeffs })
+        transforms.push({ offset: hi, coeffs })
         next_var += 1
       }
       (Some(lo), Some(hi)) => {
         let coeffs : Map[Int, @symnum.BigRational] = Map([])
         coeffs[next_var] = rat_one()
-        transforms.push(VarTransform::{ offset: lo, coeffs })
+        transforms.push({ offset: lo, coeffs })
         let ub_coeffs : Map[Int, @symnum.BigRational] = Map([])
         ub_coeffs[next_var] = rat_one()
-        extra_constraints.push(RatForm::{
-          offset: rat_sub(lo, hi),
-          coeffs: ub_coeffs,
-        })
+        extra_constraints.push({ offset: rat_sub(lo, hi), coeffs: ub_coeffs })
         next_var += 1
       }
       (None, None) => {
         let coeffs : Map[Int, @symnum.BigRational] = Map([])
         coeffs[next_var] = rat_one()
         coeffs[next_var + 1] = rat_from_int(-1)
-        transforms.push(VarTransform::{ offset: rat_zero(), coeffs })
+        transforms.push({ offset: rat_zero(), coeffs })
         next_var += 2
       }
     }
@@ -618,7 +611,7 @@ fn substitute_form(form : RatForm, transforms : Array[VarTransform]) -> RatForm 
       add_sparse_coeff(coeffs, z_idx, value.mul_r(z_coeff))
     }
   }
-  RatForm::{ offset, coeffs }
+  { offset, coeffs }
 }
 
 ///|
@@ -677,7 +670,7 @@ fn objective_form_from_array(
   for i in 0..<coeffs.length() {
     add_sparse_coeff(map, i, rat_from_expr(coeffs[i], context))
   }
-  RatForm::{ offset: rat_zero(), coeffs: map }
+  { offset: rat_zero(), coeffs: map }
 }
 
 ///|
@@ -687,7 +680,7 @@ fn forms_from_matrix_rows(
   context : String,
 ) -> Array[RatForm] raise SolverError {
   if matrix.rows != rhs.length() {
-    raise SolverError::ShapeError(context + ": rhs length mismatch")
+    raise ShapeError(context + ": rhs length mismatch")
   }
   let out : Array[RatForm] = []
   for i in 0..<matrix.rows {
@@ -696,10 +689,7 @@ fn forms_from_matrix_rows(
     for j in 0..<coeffs.length() {
       add_sparse_coeff(map, j, coeffs[j])
     }
-    out.push(RatForm::{
-      offset: rat_neg(rat_from_expr(rhs[i], context)),
-      coeffs: map,
-    })
+    out.push({ offset: rat_neg(rat_from_expr(rhs[i], context)), coeffs: map })
   }
   out
 }
@@ -710,7 +700,7 @@ fn negate_form(form : RatForm) -> RatForm {
   for idx, value in form.coeffs {
     coeffs[idx] = value.neg_r()
   }
-  RatForm::{ offset: form.offset.neg_r(), coeffs }
+  { offset: form.offset.neg_r(), coeffs }
 }
 
 ///|
@@ -733,19 +723,19 @@ pub fn linprog(
   match (a, b) {
     (Some(matrix), Some(rhs)) => {
       if matrix.cols != var_count {
-        raise SolverError::ShapeError("linprog: A and c dimension mismatch")
+        raise ShapeError("linprog: A and c dimension mismatch")
       }
       for row in forms_from_matrix_rows(matrix, rhs, "linprog") {
         constraints.push(row)
       }
     }
     (None, None) => ()
-    _ => raise SolverError::ShapeError("linprog: A and b must both be given")
+    _ => raise ShapeError("linprog: A and b must both be given")
   }
   match (a_eq, b_eq) {
     (Some(matrix), Some(rhs)) => {
       if matrix.cols != var_count {
-        raise SolverError::ShapeError("linprog: A_eq and c dimension mismatch")
+        raise ShapeError("linprog: A_eq and c dimension mismatch")
       }
       let rows = forms_from_matrix_rows(matrix, rhs, "linprog")
       for row in rows {
@@ -754,8 +744,7 @@ pub fn linprog(
       }
     }
     (None, None) => ()
-    _ =>
-      raise SolverError::ShapeError("linprog: A_eq and b_eq must both be given")
+    _ => raise ShapeError("linprog: A_eq and b_eq must both be given")
   }
   let normalized_bounds = normalize_bounds(bounds, var_count, true, "linprog")
   let (value, solution, transforms) = optimize_forms(
@@ -839,7 +828,7 @@ fn lp_extreme(
   for i in 0..<bounds.length() {
     match bounds[i] {
       (Some(lo), Some(hi)) if lo.compare(hi) > 0 =>
-        raise SolverError::InfeasibleLPError("Inconsistent/False constraint")
+        raise InfeasibleLPError("Inconsistent/False constraint")
       _ => ()
     }
   }

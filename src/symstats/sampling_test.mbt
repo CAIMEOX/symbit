@@ -6,9 +6,8 @@ fn sample_int_value(expr : @symcore.Expr) -> Int? {
 ///|
 fn sample_double_value(expr : @symcore.Expr) -> Double? {
   match expr {
-    @symcore.Expr::Float(value) =>
-      Some(value.to_double() catch { _ => return None })
-    @symcore.Expr::Number(value) => {
+    Float(value) => Some(value.to_double() catch { _ => return None })
+    Number(value) => {
       let float_value = @symcore.Float::from_exact(value, prec=53) catch {
         _ => return None
       }
@@ -28,7 +27,7 @@ fn rational(n : Int, d : Int) -> @symcore.Expr {
 ///|
 fn sample_dict_count_total(expr : @symcore.Expr) -> Int {
   match expr {
-    @symcore.Expr::Dict(entries) => {
+    Dict(entries) => {
       let mut total = 0
       for entry in entries {
         match sample_int_value(entry.1) {
@@ -103,7 +102,7 @@ test "symstats concrete sampling discrete and continuous families" {
 
   let n = normal("N", @symcore.int(0), @symcore.int(1))
   match sample_random_var(n, seed=Some(5)) {
-    Some(@symcore.Expr::Float(_)) => ()
+    Some(Float(_)) => ()
     _ => fail("normal sampler should produce a floating value")
   }
 }
@@ -352,9 +351,9 @@ test "symstats symbolic discrete samplers respect support" {
   }
 
   let handmade = finite_distribution_handmade("FDH", params=[
-    @symcore.Expr::Tuple([
-      @symcore.Expr::Tuple([@symcore.int(1), rational(1, 4)]),
-      @symcore.Expr::Tuple([@symcore.int(2), rational(3, 4)]),
+    Tuple([
+      Tuple([@symcore.int(1), rational(1, 4)]),
+      Tuple([@symcore.int(2), rational(3, 4)]),
     ]),
   ])
   match sample_random_var(handmade, seed=Some(203)) {

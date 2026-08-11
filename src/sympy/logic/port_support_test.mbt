@@ -1,11 +1,9 @@
 ///|
 using @symlogic {
-  type BitPattern,
   type BoolExpr,
   type BoolMapResult,
   type LinearConstraint,
   type PropKB,
-  type RelOp,
   type SatResult,
   type TermInput,
   type TruthTableRow,

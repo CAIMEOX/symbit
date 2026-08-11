@@ -8,19 +8,16 @@ test "tensor latex parity indexed arrays and tensor operators" {
 
   let base = indexed_base("A", shape=[n, @symcore.int(3)])
   assert_eq(base.latex(), indexed_base_latex(base))
-  let item = base.at([
-    index_idx(i),
-    @symtensor_indexed.index_expr(@symcore.Expr::Symbol("k")),
-  ]) catch {
+  let item = base.at([index_idx(i), @symtensor_indexed.index_expr(Symbol("k"))]) catch {
     _ => fail("indexed")
   }
   assert_eq(item.latex(), indexed_latex(item))
 
   let dense2 = dense([2, 2], [
-    @symcore.Expr::Symbol("x"),
+    Symbol("x"),
     @symcore.int(1),
     @symcore.int(0),
-    @symcore.Expr::Symbol("y"),
+    Symbol("y"),
   ]) catch {
     _ => fail("dense2")
   }
@@ -28,10 +25,7 @@ test "tensor latex parity indexed arrays and tensor operators" {
 
   let arr_sym = array_symbol("T", shape=[@symcore.int(2), @symcore.int(3)])
   assert_eq(arr_sym.latex(), array_expr_latex(arr_sym))
-  let arr_elem = array_element(arr_sym, [
-    @symcore.Expr::Symbol("i"),
-    @symcore.Expr::Symbol("j"),
-  ])
+  let arr_elem = array_element(arr_sym, [Symbol("i"), Symbol("j")])
   assert_eq(arr_elem.latex(), array_expr_latex(arr_elem))
   let arr_tp = array_tensor_product([
     array_symbol("T", shape=[@symcore.int(2), @symcore.int(3)]),
@@ -48,7 +42,7 @@ test "tensor latex parity indexed arrays and tensor operators" {
   let tensor = head.call([up, down]) catch { _ => fail("tensor") }
   assert_eq(tensor.latex(), tensor_latex(tensor))
   let pd = partial_derivative(tensor, [
-    @symtensor_tensor.scalar_expr(@symcore.Expr::Symbol("x")),
+    @symtensor_tensor.scalar_expr(Symbol("x")),
   ])
   assert_eq(pd.latex(), partial_derivative_latex(pd))
 }

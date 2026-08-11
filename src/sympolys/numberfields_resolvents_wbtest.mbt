@@ -1,12 +1,12 @@
 ///|
 fn nf_resolvent_wb_text(coeffs : Array[FieldElem]) -> String {
-  "[" + coeffs.map(c => c.to_string()).join(", ") + "]"
+  "[" + coeffs.map(c => Show::to_string(c)).join(", ") + "]"
 }
 
 ///|
 test "numberfields galois: degree four resolvent lookup" {
   let x = Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   inspect(
     nf_resolvent_wb_text(
       get_resolvent_by_lookup(b.from_expr((x ^ int(4)) + x + int(1)), 1),

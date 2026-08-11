@@ -1,12 +1,12 @@
 ///|
 test "physics.quantum.transforms: local canonicalization" {
-  let k1 = ket([@symcore.Expr::Symbol("k1")]).as_expr()
-  let k2 = ket([@symcore.Expr::Symbol("k2")]).as_expr()
-  let b1 = bra([@symcore.Expr::Symbol("k1")]).as_expr()
-  let b2 = bra([@symcore.Expr::Symbol("k2")]).as_expr()
-  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
-  let b = operator([@symcore.Expr::Symbol("B")]).as_expr()
-  let c = operator([@symcore.Expr::Symbol("C")]).as_expr()
+  let k1 = ket([Symbol("k1")]).as_expr()
+  let k2 = ket([Symbol("k2")]).as_expr()
+  let b1 = bra([Symbol("k1")]).as_expr()
+  let b2 = bra([Symbol("k2")]).as_expr()
+  let a = operator([Symbol("A")]).as_expr()
+  let b = operator([Symbol("B")]).as_expr()
+  let c = operator([Symbol("C")]).as_expr()
 
   quantum_test_assert_expr_equal(
     quantum_canonical_mul(@symcore.raw_mul([b1, k1])),
@@ -70,10 +70,7 @@ test "physics.quantum.transforms: local canonicalization" {
     "controlled involution power",
   )
   quantum_test_assert_expr_equal(
-    quantum_canonical_pow(
-      fermion_op(@symcore.Expr::Symbol("c")).as_expr(),
-      @symcore.int(2),
-    ),
+    quantum_canonical_pow(fermion_op(Symbol("c")).as_expr(), @symcore.int(2)),
     "0",
     "fermion nilpotent power",
   )

@@ -13,9 +13,7 @@ fn ring_series_make(
   values : Array[Int],
   prec : Int,
 ) -> @sympolys.SeriesElem raise @sympolys.PolyError {
-  @sympolys.power_series_ring(@sympolys.Domain::QQ, "x", prec).from_int_coeffs(
-    values,
-  )
+  @sympolys.power_series_ring(QQ, "x", prec).from_int_coeffs(values)
 }
 
 ///|
@@ -37,7 +35,7 @@ fn ring_series_mul_fun(
 
 ///|
 fn ring_series_coeffs(values : Array[Int]) -> Array[@sympolys.FieldElem] raise {
-  values.map(v => @sympolys.fe_from_int(v, @sympolys.Domain::QQ))
+  values.map(v => @sympolys.fe_from_int(v, QQ))
 }
 
 ///|

@@ -62,7 +62,7 @@ fn matrix_exact_dm(
 ) -> @sympolys.DomainMatrix raise MatrixError {
   @sympolys.DomainMatrix::from_Matrix(rows, fmt="dense") catch {
     _ =>
-      raise MatrixError::ValueError(
+      raise ValueError(
         "matrix entries are not supported by the exact DomainMatrix linear algebra path",
       )
   }
@@ -74,7 +74,7 @@ fn matrix_from_domain_matrix(
 ) -> Matrix raise MatrixError {
   let rows = dm.to_Matrix() catch {
     _ =>
-      raise MatrixError::ValueError(
+      raise ValueError(
         "exact DomainMatrix result could not be converted back to a symbolic matrix",
       )
   }
@@ -101,49 +101,43 @@ fn matrix_exact_inverse(matrix : Matrix) -> Matrix raise MatrixError {
             cols: matrix.cols,
             data: exact_integer_fraction_rows_to_expr_rows(num, den),
           }
-        None => raise MatrixError::SingularMatrixError("matrix is singular")
+        None => raise SingularMatrixError("matrix is singular")
       }
     None => ()
   }
   let dm = matrix_exact_dm(matrix.to_list())
   let identity = @sympolys.DomainMatrix::eye(matrix.rows, dm.domain) catch {
     _ =>
-      raise MatrixError::ValueError(
+      raise ValueError(
         "exact DomainMatrix inverse identity construction failed",
       )
   }
   let aug = dm.hstack(identity) catch {
-    _ =>
-      raise MatrixError::ValueError(
-        "exact DomainMatrix inverse augmentation failed",
-      )
+    _ => raise ValueError("exact DomainMatrix inverse augmentation failed")
   }
   let (aug_rref, den0, pivots) = aug.rref_den(rref_method="FF_dense") catch {
-    _ => raise MatrixError::SingularMatrixError("matrix is singular")
+    _ => raise SingularMatrixError("matrix is singular")
   }
   if pivots.length() != matrix.rows {
-    raise MatrixError::SingularMatrixError("matrix is singular")
+    raise SingularMatrixError("matrix is singular")
   }
   for i in 0..<matrix.rows {
     if pivots[i] != i {
-      raise MatrixError::SingularMatrixError("matrix is singular")
+      raise SingularMatrixError("matrix is singular")
     }
   }
   let num0 = aug_rref.extract(
     matrix_index_range(0, matrix.rows),
     matrix_index_range(matrix.rows, aug.cols),
   ) catch {
-    _ =>
-      raise MatrixError::ValueError(
-        "exact DomainMatrix inverse extraction failed",
-      )
+    _ => raise ValueError("exact DomainMatrix inverse extraction failed")
   }
   let num = if @sympolys.domain_is_field_pred(num0.domain) {
     num0
   } else {
     num0.to_field() catch {
       _ =>
-        raise MatrixError::ValueError(
+        raise ValueError(
           "exact DomainMatrix inverse could not be converted into its field domain",
         )
     }
@@ -155,13 +149,13 @@ fn matrix_exact_inverse(matrix : Matrix) -> Matrix raise MatrixError {
         )
     }).convert_to(num.domain).element catch {
       _ =>
-        raise MatrixError::ValueError(
+        raise ValueError(
           "exact DomainMatrix inverse denominator could not be converted into the field domain",
         )
     }
   let inverse = num.mul(@sympolys.fe_inv(den)) catch {
     _ =>
-      raise MatrixError::ValueError(
+      raise ValueError(
         "exact DomainMatrix inverse could not be normalized in its field domain",
       )
   }
@@ -183,42 +177,36 @@ fn matrix_exact_solve(lhs : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
             cols: rhs.cols,
             data: exact_integer_fraction_rows_to_expr_rows(num, den),
           }
-        None => raise MatrixError::SingularMatrixError("matrix is singular")
+        None => raise SingularMatrixError("matrix is singular")
       }
     _ => ()
   }
   let lhs_dm = matrix_exact_dm(lhs.to_list())
   let rhs_dm = matrix_exact_dm(rhs.to_list())
   let aug = lhs_dm.hstack(rhs_dm) catch {
-    _ =>
-      raise MatrixError::ValueError(
-        "exact DomainMatrix solve augmentation failed",
-      )
+    _ => raise ValueError("exact DomainMatrix solve augmentation failed")
   }
   let (aug_rref, den0, pivots) = aug.rref_den(rref_method="FF_dense") catch {
-    _ => raise MatrixError::SingularMatrixError("matrix is singular")
+    _ => raise SingularMatrixError("matrix is singular")
   }
   if pivots.length() != lhs.cols {
-    raise MatrixError::SingularMatrixError("matrix is singular")
+    raise SingularMatrixError("matrix is singular")
   }
   if !pivots.is_empty() && pivots[pivots.length() - 1] >= lhs.cols {
-    raise MatrixError::SingularMatrixError("matrix is singular")
+    raise SingularMatrixError("matrix is singular")
   }
   let num0 = aug_rref.extract(
     matrix_index_range(0, lhs.cols),
     matrix_index_range(lhs.cols, aug.cols),
   ) catch {
-    _ =>
-      raise MatrixError::ValueError(
-        "exact DomainMatrix solve extraction failed",
-      )
+    _ => raise ValueError("exact DomainMatrix solve extraction failed")
   }
   let num = if @sympolys.domain_is_field_pred(num0.domain) {
     num0
   } else {
     num0.to_field() catch {
       _ =>
-        raise MatrixError::ValueError(
+        raise ValueError(
           "exact DomainMatrix solve result could not be converted into its field domain",
         )
     }
@@ -230,13 +218,13 @@ fn matrix_exact_solve(lhs : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
         )
     }).convert_to(num.domain).element catch {
       _ =>
-        raise MatrixError::ValueError(
+        raise ValueError(
           "exact DomainMatrix solve denominator could not be converted into the field domain",
         )
     }
   let solution = num.mul(@sympolys.fe_inv(den)) catch {
     _ =>
-      raise MatrixError::ValueError(
+      raise ValueError(
         "exact DomainMatrix solve result could not be normalized in its field domain",
       )
   }
@@ -246,7 +234,7 @@ fn matrix_exact_solve(lhs : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
 ///|
 fn matrix_try_exact_inverse(matrix : Matrix) -> Matrix? raise MatrixError {
   try matrix_exact_inverse(matrix) catch {
-    MatrixError::ValueError(_) => None
+    ValueError(_) => None
     err => raise err
   } noraise {
     value => Some(value)
@@ -259,7 +247,7 @@ fn matrix_try_exact_solve(
   rhs : Matrix,
 ) -> Matrix? raise MatrixError {
   try matrix_exact_solve(lhs, rhs) catch {
-    MatrixError::ValueError(_) => None
+    ValueError(_) => None
     err => raise err
   } noraise {
     value => Some(value)
@@ -500,9 +488,7 @@ pub fn Matrix::is_echelon(self : Matrix) -> Bool {
 /// ```
 pub fn Matrix::det(self : Matrix) -> Expr raise MatrixError {
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError(
-      "determinant requires a square matrix",
-    )
+    raise NonSquareMatrixError("determinant requires a square matrix")
   }
   if self.rows == 0 {
     return @symcore.int(1)
@@ -652,9 +638,7 @@ pub fn Matrix::cofactor(
 /// - Limits: Raises `MatrixError::NonSquareMatrixError` when the matrix is not square.
 pub fn Matrix::cofactor_matrix(self : Matrix) -> Matrix raise MatrixError {
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError(
-      "cofactor matrix requires a square matrix",
-    )
+    raise NonSquareMatrixError("cofactor matrix requires a square matrix")
   }
   let out : Array[Array[Expr]] = []
   for i in 0..<self.rows {
@@ -692,12 +676,12 @@ pub fn Matrix::adjugate(self : Matrix) -> Matrix raise MatrixError {
 ///     [@symcore.int(1), @symcore.int(2)],
 ///     [@symcore.int(3), @symcore.int(4)],
 ///   ])
-///   inspect(m.inv().to_string(), content="Matrix([[-2, 1], [3/2, -1/2]])")
+///   inspect(Show::to_string(m.inv()), content="Matrix([[-2, 1], [3/2, -1/2]])")
 /// }
 /// ```
 pub fn Matrix::inv(self : Matrix) -> Matrix raise MatrixError {
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError("inverse requires a square matrix")
+    raise NonSquareMatrixError("inverse requires a square matrix")
   }
   let n = self.rows
   if !matrix_has_floating_leaf(self.data) {
@@ -729,7 +713,7 @@ pub fn Matrix::inv(self : Matrix) -> Matrix raise MatrixError {
         }
       }
       if expr_numeric_zero(left[pivot_row][col], numeric_prec) {
-        raise MatrixError::SingularMatrixError("matrix is singular")
+        raise SingularMatrixError("matrix is singular")
       }
       if pivot_row != col {
         swap_dense_rows(left, pivot_row, col)
@@ -772,7 +756,7 @@ pub fn Matrix::inv(self : Matrix) -> Matrix raise MatrixError {
       pivot_row += 1
     }
     if pivot_row == n {
-      raise MatrixError::SingularMatrixError("matrix is singular")
+      raise SingularMatrixError("matrix is singular")
     }
     if pivot_row != col {
       swap_dense_rows(left, pivot_row, col)
@@ -815,17 +799,15 @@ pub fn Matrix::inv(self : Matrix) -> Matrix raise MatrixError {
 ///     [@symcore.int(1), @symcore.int(3)],
 ///   ])
 ///   let rhs = @symmatrices.matrix([[@symcore.int(1)], [@symcore.int(2)]])
-///   inspect(lhs.solve(rhs).to_string(), content="Matrix([[1/5], [3/5]])")
+///   inspect(Show::to_string(lhs.solve(rhs)), content="Matrix([[1/5], [3/5]])")
 /// }
 /// ```
 pub fn Matrix::solve(self : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
   if self.rows != rhs.rows {
-    raise MatrixError::ShapeError(
-      "solve expects rhs with the same number of rows",
-    )
+    raise ShapeError("solve expects rhs with the same number of rows")
   }
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError("solve requires a square lhs")
+    raise NonSquareMatrixError("solve requires a square lhs")
   }
   if !matrix_has_floating_leaf(self.data) && !matrix_has_floating_leaf(rhs.data) {
     match matrix_try_exact_solve(self, rhs) {
@@ -852,9 +834,7 @@ pub fn Matrix::rref_rhs(
   rhs : Matrix,
 ) -> (Matrix, Matrix) raise MatrixError {
   if self.rows != rhs.rows {
-    raise MatrixError::ShapeError(
-      "rref_rhs expects rhs with the same number of rows",
-    )
+    raise ShapeError("rref_rhs expects rhs with the same number of rows")
   }
   let augmented = hstack([self, eye(self.rows), rhs])
   let (reduced0, _) = augmented.rref()
@@ -958,9 +938,7 @@ pub fn Matrix::lu(
   self : Matrix,
 ) -> (Matrix, Matrix, Array[(Int, Int)]) raise MatrixError {
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError(
-      "LU decomposition requires a square matrix",
-    )
+    raise NonSquareMatrixError("LU decomposition requires a square matrix")
   }
   let n = self.rows
   let u = clone_expr_rows(self.data)
@@ -1010,7 +988,7 @@ pub fn Matrix::lower_triangular_solve(
   rhs : Matrix,
 ) -> Matrix raise MatrixError {
   if !self.is_square() || self.rows != rhs.rows {
-    raise MatrixError::ShapeError(
+    raise ShapeError(
       "lower_triangular_solve expects a square lhs and matching rhs rows",
     )
   }
@@ -1066,7 +1044,7 @@ pub fn Matrix::upper_triangular_solve(
   rhs : Matrix,
 ) -> Matrix raise MatrixError {
   if !self.is_square() || self.rows != rhs.rows {
-    raise MatrixError::ShapeError(
+    raise ShapeError(
       "upper_triangular_solve expects a square lhs and matching rhs rows",
     )
   }
@@ -1124,7 +1102,7 @@ pub fn Matrix::upper_triangular_solve(
 /// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs. This front door does not prove positive definiteness before taking square roots.
 pub fn Matrix::cholesky(self : Matrix) -> Matrix raise MatrixError {
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError(
+    raise NonSquareMatrixError(
       "cholesky decomposition requires a square matrix",
     )
   }
@@ -1175,9 +1153,7 @@ pub fn Matrix::cholesky(self : Matrix) -> Matrix raise MatrixError {
 /// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs. This front door does not validate definiteness or symmetry up front.
 pub fn Matrix::ldl(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError(
-      "LDL decomposition requires a square matrix",
-    )
+    raise NonSquareMatrixError("LDL decomposition requires a square matrix")
   }
   let n = self.rows
   let l0 = zeros(n, cols=Some(n))

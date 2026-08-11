@@ -7,27 +7,27 @@ test "exact-number helpers expose SymPy-like class views" {
   let two = int(2)
   let two_thirds = rational_from_ints(2, 3)
   match exact_number_kind(zero) {
-    Some(ExactNumberKind::Zero) => ()
+    Some(Zero) => ()
     _ => fail("expected Zero kind")
   }
   match exact_number_kind(one) {
-    Some(ExactNumberKind::One) => ()
+    Some(One) => ()
     _ => fail("expected One kind")
   }
   match exact_number_kind(neg_one) {
-    Some(ExactNumberKind::NegativeOne) => ()
+    Some(NegativeOne) => ()
     _ => fail("expected NegativeOne kind")
   }
   match exact_number_kind(half) {
-    Some(ExactNumberKind::Half) => ()
+    Some(Half) => ()
     _ => fail("expected Half kind")
   }
   match exact_number_kind(two) {
-    Some(ExactNumberKind::Integer) => ()
+    Some(Integer) => ()
     _ => fail("expected Integer kind")
   }
   match exact_number_kind(two_thirds) {
-    Some(ExactNumberKind::Rational) => ()
+    Some(Rational) => ()
     _ => fail("expected Rational kind")
   }
   inspect(
@@ -52,58 +52,47 @@ test "expr_kind follows source-driven core kinds" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   inspect(kind_name(expr_kind(x)), content="NumberKind")
-  inspect(kind_name(expr_kind(Expr::Boolean(true))), content="BooleanKind")
+  inspect(kind_name(expr_kind(Boolean(true))), content="BooleanKind")
+  inspect(kind_name(expr_kind(Relational(Eq, x, y))), content="BooleanKind")
   inspect(
-    kind_name(expr_kind(Expr::Relational(RelOp::Eq, x, y))),
-    content="BooleanKind",
-  )
-  inspect(
-    kind_name(expr_kind(Expr::Tuple([x, Expr::Boolean(true)]))),
+    kind_name(expr_kind(Tuple([x, Boolean(true)]))),
     content="TupleKind(NumberKind, BooleanKind)",
   )
-  inspect(kind_name(expr_kind(Expr::Dict([(x, y)]))), content="UndefinedKind")
-  inspect(
-    kind_name(expr_kind(Expr::FunctionHead("sin"))),
-    content="UndefinedKind",
-  )
-  inspect(
-    kind_name(expr_kind(Expr::UndefinedFunction("f"))),
-    content="UndefinedKind",
-  )
+  inspect(kind_name(expr_kind(Dict([(x, y)]))), content="UndefinedKind")
+  inspect(kind_name(expr_kind(FunctionHead("sin"))), content="UndefinedKind")
+  inspect(kind_name(expr_kind(UndefinedFunction("f"))), content="UndefinedKind")
   inspect(kind_name(expr_kind(function("sin", [x]))), content="NumberKind")
   inspect(
     kind_name(expr_kind(applied_undefined_function("f", [x]))),
     content="NumberKind",
   )
   inspect(
-    kind_name(
-      expr_kind(function("And", [Expr::Boolean(true), Expr::Boolean(false)])),
-    ),
+    kind_name(expr_kind(function("And", [Boolean(true), Boolean(false)]))),
     content="BooleanKind",
   )
   inspect(
-    kind_name(expr_kind(function("Or", [Expr::Boolean(true), x]))),
+    kind_name(expr_kind(function("Or", [Boolean(true), x]))),
     content="BooleanKind",
   )
   inspect(kind_name(expr_kind(lambda_expr(x, x))), content="UndefinedKind")
   inspect(
-    kind_name(common_kind([Kind::NumberKind, Kind::NumberKind])),
+    kind_name(common_kind([NumberKind, NumberKind])),
     content="NumberKind",
   )
   inspect(
-    kind_name(common_kind([Kind::NumberKind, Kind::UndefinedKind])),
+    kind_name(common_kind([NumberKind, UndefinedKind])),
     content="UndefinedKind",
   )
   inspect(
-    kind_name(expr_kind(add([Expr::Tuple([x]), Expr::Tuple([y])]))),
+    kind_name(expr_kind(add([Tuple([x]), Tuple([y])]))),
     content="TupleKind(NumberKind)",
   )
   inspect(
-    kind_name(expr_kind(derivative(Expr::Tuple([x, y]), x))),
+    kind_name(expr_kind(derivative(Tuple([x, y]), x))),
     content="TupleKind(NumberKind, NumberKind)",
   )
   inspect(
-    kind_name(expr_kind(subs_expr(Expr::Tuple([x]), x, y))),
+    kind_name(expr_kind(subs_expr(Tuple([x]), x, y))),
     content="TupleKind(NumberKind)",
   )
 }

@@ -7,7 +7,7 @@ pub fn Vector::truediv(
   scalar : Expr,
 ) -> Vector raise VectorError {
   if expr_is_zero(scalar) {
-    raise VectorError::ValueError("division by zero")
+    raise ValueError("division by zero")
   }
   self.scale(simplify_expr(scalar ^ int(-1)))
 }
@@ -29,20 +29,17 @@ pub fn Vector::angle_between(
   let lhs_mag = self.magnitude()
   let rhs_mag = other.magnitude()
   if expr_is_zero(lhs_mag) || expr_is_zero(rhs_mag) {
-    raise VectorError::ValueError("angle is undefined for zero vectors")
+    raise ValueError("angle is undefined for zero vectors")
   }
   let cosine = simplify_expr(self.dot(other) * ((lhs_mag * rhs_mag) ^ int(-1)))
   if expr_is_zero(cosine) {
-    return simplify_expr(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      rational_expr(1, 2),
-    )
+    return simplify_expr(NumberSymbol(Pi) * rational_expr(1, 2))
   }
   if expr_eq(cosine, int(1)) {
     return int(0)
   }
   if expr_eq(cosine, int(-1)) {
-    return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+    return NumberSymbol(Pi)
   }
   simplify_expr(@symelem.acos(cosine))
 }

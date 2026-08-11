@@ -1,10 +1,10 @@
 ///|
 fn check_univar_compat(a : Poly, b : Poly) -> Unit raise PolyError {
-  if a.domain.not_equal(b.domain) || a.gens != b.gens {
-    raise PolyError::DomainMismatch
+  if Eq::not_equal(a.domain, b.domain) || a.gens != b.gens {
+    raise DomainMismatch
   }
   if a.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
 }
 
@@ -26,7 +26,7 @@ fn poly_from_term(
 ) -> Poly raise PolyError {
   let coeffs : Map[Monomial, FieldElem] = Map([])
   add_term(coeffs, mono, coeff, domain)
-  Poly::{ coeffs, gens, domain, order }
+  { coeffs, gens, domain, order }
 }
 
 ///|
@@ -43,18 +43,18 @@ fn invert_in_domain(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   match domain {
-    Domain::ZZ => raise PolyError::DomainNotField
-    Domain::QQ => fe_inv(val)
-    Domain::CC | Domain::ZZ_I | Domain::QQ_I => fe_inv(val)
-    Domain::GF(_) | Domain::GFExt(_, _, _) => fe_inv(val)
-    Domain::AlgExt(_, _, _) => fe_inv(val)
-    Domain::RR => fe_inv(val)
-    Domain::Frac(_) => fe_inv(val)
-    Domain::EX | Domain::EXRAW => fe_inv(val)
-    Domain::PolyRing(_, _) => raise PolyError::DomainNotField
-    Domain::RationalFunctionField(_, _) => fe_inv(val)
-    Domain::QuotientRing(_, _, _) => raise PolyError::DomainNotField
-    Domain::PowerSeries(_, _, _) => raise PolyError::DomainNotField
+    ZZ => raise DomainNotField
+    QQ => fe_inv(val)
+    CC | ZZ_I | QQ_I => fe_inv(val)
+    GF(_) | GFExt(_, _, _) => fe_inv(val)
+    AlgExt(_, _, _) => fe_inv(val)
+    RR => fe_inv(val)
+    Frac(_) => fe_inv(val)
+    EX | EXRAW => fe_inv(val)
+    PolyRing(_, _) => raise DomainNotField
+    RationalFunctionField(_, _) => fe_inv(val)
+    QuotientRing(_, _, _) => raise DomainNotField
+    PowerSeries(_, _, _) => raise DomainNotField
   }
 }
 
@@ -66,23 +66,21 @@ fn divmod_univar(
 ) -> (Poly, Poly) raise PolyError {
   check_univar_compat(dividend, divisor)
   if divisor.is_zero() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   match dividend.domain {
-    Domain::ZZ => divmod_univar_int(dividend, divisor)
-    Domain::QQ => divmod_univar_rat(dividend, divisor)
-    Domain::CC | Domain::ZZ_I | Domain::QQ_I =>
-      divmod_univar_rat(dividend, divisor)
-    Domain::GF(_) => divmod_univar_rat(dividend, divisor) // GF(p) behaves like a field
-    Domain::GFExt(_, _, _) => divmod_univar_rat(dividend, divisor)
-    Domain::AlgExt(_, _, _) => divmod_univar_rat(dividend, divisor)
-    Domain::RR => divmod_univar_rat(dividend, divisor)
-    Domain::Frac(_) => divmod_univar_rat(dividend, divisor)
-    Domain::EX | Domain::EXRAW => divmod_univar_rat(dividend, divisor)
-    Domain::RationalFunctionField(_, _) => divmod_univar_rat(dividend, divisor)
-    Domain::PolyRing(_, _)
-    | Domain::QuotientRing(_, _, _)
-    | Domain::PowerSeries(_, _, _) => divmod_univar_int(dividend, divisor)
+    ZZ => divmod_univar_int(dividend, divisor)
+    QQ => divmod_univar_rat(dividend, divisor)
+    CC | ZZ_I | QQ_I => divmod_univar_rat(dividend, divisor)
+    GF(_) => divmod_univar_rat(dividend, divisor) // GF(p) behaves like a field
+    GFExt(_, _, _) => divmod_univar_rat(dividend, divisor)
+    AlgExt(_, _, _) => divmod_univar_rat(dividend, divisor)
+    RR => divmod_univar_rat(dividend, divisor)
+    Frac(_) => divmod_univar_rat(dividend, divisor)
+    EX | EXRAW => divmod_univar_rat(dividend, divisor)
+    RationalFunctionField(_, _) => divmod_univar_rat(dividend, divisor)
+    PolyRing(_, _) | QuotientRing(_, _, _) | PowerSeries(_, _, _) =>
+      divmod_univar_int(dividend, divisor)
   }
 }
 
@@ -98,7 +96,7 @@ fn divmod_univar_rat(
   let a = trim_trailing_zeros(a0)
   let b = trim_trailing_zeros(b0)
   if b.is_empty() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   if a.is_empty() {
     let zero = Poly::zero(dividend.gens, dividend.domain).with_order(
@@ -186,12 +184,7 @@ fn divmod_univar_int(
 
 ///|
 fn lift_to_qq(poly : Poly) -> Poly {
-  Poly::{
-    coeffs: poly.coeffs,
-    gens: poly.gens,
-    domain: Domain::QQ,
-    order: poly.order,
-  }
+  { coeffs: poly.coeffs, gens: poly.gens, domain: QQ, order: poly.order }
 }
 
 ///|
@@ -200,11 +193,11 @@ fn try_round_to_int(poly : Poly) -> Poly raise PolyError {
   for m, c in poly.coeffs {
     let r = fe_expect_rational(c)
     if !r.is_integral() {
-      raise PolyError::DomainNotField
+      raise DomainNotField
     }
-    coeffs.set(m, FieldElem::QQ(r))
+    coeffs.set(m, QQ(r))
   }
-  Poly::{ coeffs, gens: poly.gens, domain: Domain::ZZ, order: poly.order }
+  { coeffs, gens: poly.gens, domain: ZZ, order: poly.order }
 }
 
 ///|
@@ -219,7 +212,7 @@ fn try_round_to_int(poly : Poly) -> Poly raise PolyError {
 /// ```mbt check
 /// test "sympolys divmod_univar returns quotient and remainder" {
 ///   let x = @symcore.Expr::Symbol("x")
-///   let builder = PolyBuilder::new(["x"], Domain::ZZ)
+///   let builder = PolyBuilder::new(["x"], ZZ)
 ///   let p = builder.from_expr(
 ///     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
 ///   )
@@ -242,11 +235,8 @@ fn coeff_content(poly : Poly) -> @symnum.BigRational raise PolyError {
   let mut g_num = BigInt::from_int(0)
   let mut lcm_den = BigInt::from_int(1)
   match poly.domain {
-    Domain::AlgExt(_, _, _)
-    | Domain::CC
-    | Domain::GFExt(_, _, _)
-    | Domain::ZZ_I
-    | Domain::QQ_I => return @symnum.BigRational::one()
+    AlgExt(_, _, _) | CC | GFExt(_, _, _) | ZZ_I | QQ_I =>
+      return @symnum.BigRational::one()
     _ => ()
   }
   for _, c in poly.coeffs {
@@ -275,11 +265,11 @@ fn primitive_part(poly : Poly) -> Poly raise PolyError {
     return poly
   }
   match poly.domain {
-    Domain::ZZ | Domain::QQ => {
-      let inv = cont.reciprocal() catch { _ => raise PolyError::DivisionByZero }
-      poly.scale_coeff(FieldElem::QQ(inv))
+    ZZ | QQ => {
+      let inv = cont.reciprocal() catch { _ => raise DivisionByZero }
+      poly.scale_coeff(QQ(inv))
     }
-    Domain::AlgExt(_, _, _) => poly
+    AlgExt(_, _, _) => poly
     _ => poly
   }
 }
@@ -307,21 +297,20 @@ fn make_monic(poly : Poly) -> Poly raise PolyError {
 pub fn Poly::gcd_univar(self : Poly, other : Poly) -> Poly raise PolyError {
   check_univar_compat(self, other)
   match self.domain {
-    Domain::QQ => gcd_univar_rat(self, other)
-    Domain::CC => gcd_univar_rat(self, other)
-    Domain::QQ_I => gcd_univar_rat(self, other)
-    Domain::ZZ => gcd_univar_int(self, other)
-    Domain::ZZ_I => gcd_univar_int(self, other)
-    Domain::GF(_) => gcd_univar_rat(self, other)
-    Domain::GFExt(_, _, _) => gcd_univar_rat(self, other)
-    Domain::AlgExt(_, _, _) => gcd_univar_rat(self, other)
-    Domain::RR => gcd_univar_rat(self, other)
-    Domain::Frac(_) => gcd_univar_rat(self, other)
-    Domain::EX | Domain::EXRAW => gcd_univar_rat(self, other)
-    Domain::RationalFunctionField(_, _) => gcd_univar_rat(self, other)
-    Domain::PolyRing(_, _)
-    | Domain::QuotientRing(_, _, _)
-    | Domain::PowerSeries(_, _, _) => gcd_univar_int(self, other)
+    QQ => gcd_univar_rat(self, other)
+    CC => gcd_univar_rat(self, other)
+    QQ_I => gcd_univar_rat(self, other)
+    ZZ => gcd_univar_int(self, other)
+    ZZ_I => gcd_univar_int(self, other)
+    GF(_) => gcd_univar_rat(self, other)
+    GFExt(_, _, _) => gcd_univar_rat(self, other)
+    AlgExt(_, _, _) => gcd_univar_rat(self, other)
+    RR => gcd_univar_rat(self, other)
+    Frac(_) => gcd_univar_rat(self, other)
+    EX | EXRAW => gcd_univar_rat(self, other)
+    RationalFunctionField(_, _) => gcd_univar_rat(self, other)
+    PolyRing(_, _) | QuotientRing(_, _, _) | PowerSeries(_, _, _) =>
+      gcd_univar_int(self, other)
   }
 }
 
@@ -338,29 +327,26 @@ pub fn Poly::gcd_multivar(self : Poly, other : Poly) -> Poly raise PolyError {
   if self.gens.length() == 1 {
     return self.gcd_univar(other)
   }
-  if self.domain.not_equal(other.domain) || self.gens != other.gens {
-    raise PolyError::DomainMismatch
+  if Eq::not_equal(self.domain, other.domain) || self.gens != other.gens {
+    raise DomainMismatch
   }
   match self.domain {
-    Domain::ZZ => {
+    ZZ => {
       let gq = gcd_multivar_field(lift_to_qq(self), lift_to_qq(other))
       try_round_to_int(gq)
     }
-    Domain::QQ
-    | Domain::CC
-    | Domain::QQ_I
-    | Domain::RR
-    | Domain::Frac(_)
-    | Domain::GF(_)
-    | Domain::GFExt(_, _, _)
-    | Domain::AlgExt(_, _, _)
-    | Domain::EX
-    | Domain::EXRAW
-    | Domain::RationalFunctionField(_, _) => gcd_multivar_field(self, other)
-    Domain::ZZ_I
-    | Domain::PolyRing(_, _)
-    | Domain::QuotientRing(_, _, _)
-    | Domain::PowerSeries(_, _, _) => {
+    QQ
+    | CC
+    | QQ_I
+    | RR
+    | Frac(_)
+    | GF(_)
+    | GFExt(_, _, _)
+    | AlgExt(_, _, _)
+    | EX
+    | EXRAW
+    | RationalFunctionField(_, _) => gcd_multivar_field(self, other)
+    ZZ_I | PolyRing(_, _) | QuotientRing(_, _, _) | PowerSeries(_, _, _) => {
       let gq = gcd_multivar_field(lift_to_qq(self), lift_to_qq(other))
       try_round_to_int(gq)
     }
@@ -374,16 +360,16 @@ fn gcd_univar_rat(a : Poly, b : Poly) -> Poly raise PolyError {
   while !q.is_zero() {
     let (deg_q, _) = match leading_data_univar(q) {
       Some(v) => v
-      None => raise PolyError::DivisionByZero
+      None => raise DivisionByZero
     }
     let (_, r) = divmod_univar_rat(p, q)
     if !r.is_zero() {
       let (deg_r, _) = match leading_data_univar(r) {
         Some(v) => v
-        None => raise PolyError::DivisionByZero
+        None => raise DivisionByZero
       }
       if !(deg_r < deg_q) {
-        raise PolyError::PolynomialDivisionFailed
+        raise PolynomialDivisionFailed
       }
     }
     p = q
@@ -402,7 +388,7 @@ fn gcd_univar_int(a : Poly, b : Poly) -> Poly raise PolyError {
   let cont_gcd = @symnum.BigRational::from_bigint(
     @symnum.gcd_bigint(cont_a.numerator(), cont_b.numerator()),
   )
-  let g_scaled = g_qq.scale_coeff(FieldElem::QQ(cont_gcd))
+  let g_scaled = g_qq.scale_coeff(QQ(cont_gcd))
   try_round_to_int(g_scaled)
 }
 
@@ -443,7 +429,7 @@ fn poly_const_coeff(poly : Poly) -> FieldElem? {
 
 ///|
 fn poly_zero(gens : Array[String], domain : Domain) -> Poly {
-  Poly::{ coeffs: Map([]), gens, domain, order: TermOrder::Lex }
+  { coeffs: Map([]), gens, domain, order: Lex }
 }
 
 ///|
@@ -471,7 +457,7 @@ fn poly_to_univar_coeffs(
     let coeff_poly = match by_exp.get(exp) {
       Some(p) => p
       None =>
-        Poly::{
+        {
           coeffs: Map([]),
           gens: rest_gens,
           domain: poly.domain,
@@ -515,7 +501,7 @@ fn univar_coeffs_to_poly(
       add_term(out_coeffs, full, c, domain)
     }
   }
-  Poly::{ coeffs: out_coeffs, gens, domain, order: TermOrder::Lex }
+  { coeffs: out_coeffs, gens, domain, order: Lex }
 }
 
 ///|
@@ -540,7 +526,7 @@ fn poly_div_exact(a : Poly, b : Poly) -> Poly raise PolyError {
   if r.is_zero() {
     return qs[0]
   }
-  raise PolyError::ExactQuotientFailed
+  raise ExactQuotientFailed
 }
 
 ///|
@@ -639,7 +625,7 @@ fn coeffs_prem(f : Array[Poly], g : Array[Poly]) -> Array[Poly] raise PolyError 
   let mut r = trim_univar_coeffs(f)
   let g_trim = trim_univar_coeffs(g)
   if g_trim.is_empty() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let deg_g = g_trim.length() - 1
   let lc_g = g_trim[deg_g]
@@ -665,17 +651,13 @@ fn coeffs_make_monic(coeffs : Array[Poly]) -> Array[Poly] raise PolyError {
     Some(c) => {
       let inv = invert_in_domain(c, lc.domain)
       let inv_rat : @symnum.BigRational? = match inv {
-        FieldElem::QQ(r) => Some(r)
-        FieldElem::GFp(_, v) => Some(@symnum.BigRational::from_int(v))
+        QQ(r) => Some(r)
+        GFp(_, v) => Some(@symnum.BigRational::from_int(v))
         _ => None
       }
       match inv_rat {
         Some(r) => {
-          let scalar_poly = Poly::from_expr(
-            @symcore.Expr::Number(r),
-            lc.gens,
-            lc.domain,
-          )
+          let scalar_poly = Poly::from_expr(Number(r), lc.gens, lc.domain)
           let out : Array[Poly] = Array::new()
           for poly in trimmed {
             out.push(poly.mul(scalar_poly))
@@ -777,7 +759,7 @@ pub fn Poly::div_exact_univar(
   if r.is_zero() {
     return q
   }
-  raise PolyError::ExactQuotientFailed
+  raise ExactQuotientFailed
 }
 
 ///|
@@ -793,12 +775,12 @@ pub fn Poly::pseudo_div_univar_int(
   other : Poly,
 ) -> (Poly, Poly, Int) raise PolyError {
   check_univar_compat(self, other)
-  if self.domain is Domain::QQ || other.domain is Domain::QQ {
-    raise PolyError::DomainNotField
+  if self.domain is QQ || other.domain is QQ {
+    raise DomainNotField
   }
   let (deg_b, lc_b) = match leading_data_univar(other) {
     Some(v) => v
-    None => raise PolyError::DivisionByZero
+    None => raise DivisionByZero
   }
   let mut q = Poly::zero(self.gens, self.domain)
   let mut r = self

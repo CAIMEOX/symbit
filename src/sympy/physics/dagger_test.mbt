@@ -11,7 +11,7 @@ test "physics.quantum.dagger: symbolic and matrix subset" {
     content="conjugate(B)*conjugate(A)",
   )
 
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let matrix = @symphysics.explicit_matrix_from_rows([
     [@symcore.int(1), i],
     [@symcore.int(2), @symcore.int(-1) * i],

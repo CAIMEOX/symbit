@@ -52,7 +52,7 @@ pub fn ray_transfer_matrix(
   c : Expr,
   d : Expr,
 ) -> RayTransferMatrix {
-  RayTransferMatrix::{ matrix_: ExplicitMatrix::{ rows: [[a, b], [c, d]] } }
+  { matrix_: { rows: [[a, b], [c, d]] } }
 }
 
 ///|
@@ -60,9 +60,9 @@ pub fn ray_transfer_matrix_from_matrix(
   matrix : ExplicitMatrix,
 ) -> RayTransferMatrix raise PhysicsError {
   guard matrix.height() == 2 && matrix.width() == 2 else {
-    raise PhysicsError::ShapeError("RayTransferMatrix expects a 2x2 matrix")
+    raise ShapeError("RayTransferMatrix expects a 2x2 matrix")
   }
-  RayTransferMatrix::{ matrix_: matrix }
+  { matrix_: matrix }
 }
 
 ///|
@@ -146,7 +146,7 @@ pub impl Show for RayTransferMatrix with fn to_string(self) {
 
 ///|
 pub impl Show for RayTransferMatrix with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -185,7 +185,7 @@ pub fn RayTransferMatrix::apply_beam(
 
 ///|
 pub fn geometric_ray(height : Expr, angle : Expr) -> GeometricRay {
-  GeometricRay::{ matrix_: ExplicitMatrix::{ rows: [[height], [angle]] } }
+  { matrix_: { rows: [[height], [angle]] } }
 }
 
 ///|
@@ -193,9 +193,9 @@ pub fn geometric_ray_from_matrix(
   matrix : ExplicitMatrix,
 ) -> GeometricRay raise PhysicsError {
   guard matrix.height() == 2 && matrix.width() == 1 else {
-    raise PhysicsError::ShapeError("GeometricRay expects a 2x1 matrix")
+    raise ShapeError("GeometricRay expects a 2x1 matrix")
   }
-  GeometricRay::{ matrix_: matrix }
+  { matrix_: matrix }
 }
 
 ///|
@@ -220,7 +220,7 @@ pub impl Show for GeometricRay with fn to_string(self) {
 
 ///|
 pub impl Show for GeometricRay with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -234,10 +234,9 @@ pub fn beam_parameter(
   let rayleigh = match (z_r, w) {
     (Some(value), _) => value
     (None, Some(waist)) => waist2rayleigh(waist, wavelen, n~)
-    (None, None) =>
-      raise PhysicsError::ValueError("Must specify one of w and z_r.")
+    (None, None) => raise ValueError("Must specify one of w and z_r.")
   }
-  BeamParameter::{ wavelen_: wavelen, z_: z, z_r_: rayleigh, n_: n }
+  { wavelen_: wavelen, z_: z, z_r_: rayleigh, n_: n }
 }
 
 ///|
@@ -315,7 +314,7 @@ pub impl Show for BeamParameter with fn to_string(self) {
 
 ///|
 pub impl Show for BeamParameter with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -384,7 +383,7 @@ pub fn conjugate_gauss_beams(
   let focal = match f {
     Some(value) => value
     None =>
-      raise PhysicsError::ValueError(
+      raise ValueError(
         "The function expects the focal length as a named argument",
       )
   }

@@ -46,6 +46,10 @@ pub struct PartialDerivative {
   variables : Array[TensorExpr]
 }
 pub fn PartialDerivative::latex(Self, settings? : @symprint.LatexSettings) -> String
+#deprecated
+pub fn PartialDerivative::output(Self, &Logger) -> Unit
+#deprecated
+pub fn PartialDerivative::to_string(Self) -> String
 pub impl Show for PartialDerivative
 
 pub enum TensorExpr {
@@ -55,6 +59,10 @@ pub enum TensorExpr {
   Mul(Array[TensorExpr])
 }
 pub fn TensorExpr::latex(Self, settings? : @symprint.LatexSettings) -> String
+#deprecated
+pub fn TensorExpr::output(Self, &Logger) -> Unit
+#deprecated
+pub fn TensorExpr::to_string(Self) -> String
 pub impl Show for TensorExpr
 
 pub(all) struct TensorHead {
@@ -64,6 +72,10 @@ pub(all) struct TensorHead {
 }
 pub fn TensorHead::call(Self, Array[TensorIndex]) -> TensorExpr raise
 pub fn TensorHead::latex(Self, settings? : @symprint.LatexSettings) -> String
+#deprecated
+pub fn TensorHead::output(Self, &Logger) -> Unit
+#deprecated
+pub fn TensorHead::to_string(Self) -> String
 pub impl Show for TensorHead
 
 pub(all) struct TensorIndex {
@@ -84,6 +96,10 @@ pub(all) struct TensorIndexType {
   metric_symmetry : Int
 }
 pub fn TensorIndexType::latex(Self, settings? : @symprint.LatexSettings) -> String
+#deprecated
+pub fn TensorIndexType::output(Self, &Logger) -> Unit
+#deprecated
+pub fn TensorIndexType::to_string(Self) -> String
 pub impl Show for TensorIndexType
 
 pub(all) struct TensorSymmetry {

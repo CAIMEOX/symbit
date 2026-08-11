@@ -5,33 +5,37 @@ enum CoreAtom {
 } derive(Eq, Hash)
 
 ///|
+#deprecated
+pub extend CoreAtom with Eq::{not_equal, equal}
+
+///|
+#deprecated
+pub extend CoreAtom with Hash::{hash, hash_combine}
+
+///|
 fn render_atom(atom_ : CoreAtom) -> String {
   match atom_ {
-    CoreAtom::Text(text) => text
-    CoreAtom::Int(value) => value.to_string()
+    Text(text) => text
+    Int(value) => value.to_string()
   }
 }
 
 ///|
 fn render_key(key : MatchVar[CoreAtom]) -> String {
   match key {
-    MatchVar::Variable(key0) => "Variable(" + render_atom(key0.arg()) + ")"
-    MatchVar::CondVariable(key0) =>
-      "CondVariable(" + render_atom(key0.arg()) + ")"
+    Variable(key0) => "Variable(" + render_atom(key0.arg()) + ")"
+    CondVariable(key0) => "CondVariable(" + render_atom(key0.arg()) + ")"
   }
 }
 
 ///|
 fn render_core_term(term : UnifyTerm[CoreAtom, String]) -> String {
   match term {
-    UnifyTerm::Atom(atom_) => render_atom(atom_)
-    UnifyTerm::Variable(key0) => "Variable(" + render_atom(key0.arg()) + ")"
-    UnifyTerm::CondVariable(key0, _) =>
-      "CondVariable(" + render_atom(key0.arg()) + ")"
-    UnifyTerm::Sequence(items) =>
-      "(" + items.map(render_core_term).join(", ") + ")"
-    UnifyTerm::Compound(op, args) =>
-      op + "[" + args.map(render_core_term).join(", ") + "]"
+    Atom(atom_) => render_atom(atom_)
+    Variable(key0) => "Variable(" + render_atom(key0.arg()) + ")"
+    CondVariable(key0, _) => "CondVariable(" + render_atom(key0.arg()) + ")"
+    Sequence(items) => "(" + items.map(render_core_term).join(", ") + ")"
+    Compound(op, args) => op + "[" + args.map(render_core_term).join(", ") + "]"
   }
 }
 
@@ -53,12 +57,12 @@ fn render_substs(items : Array[Substitution[CoreAtom, String]]) -> String {
 
 ///|
 fn t(text : String) -> UnifyTerm[CoreAtom, String] {
-  atom(CoreAtom::Text(text))
+  atom(Text(text))
 }
 
 ///|
 fn i(value : Int) -> UnifyTerm[CoreAtom, String] {
-  atom(CoreAtom::Int(value))
+  atom(Int(value))
 }
 
 ///|
@@ -83,16 +87,16 @@ fn cadd(
 }
 
 ///|
-let w_key : VariableKey[CoreAtom] = variable(CoreAtom::Text("w"))
+let w_key : VariableKey[CoreAtom] = variable(Text("w"))
 
 ///|
-let x_key : VariableKey[CoreAtom] = variable(CoreAtom::Text("x"))
+let x_key : VariableKey[CoreAtom] = variable(Text("x"))
 
 ///|
-let y_key : VariableKey[CoreAtom] = variable(CoreAtom::Text("y"))
+let y_key : VariableKey[CoreAtom] = variable(Text("y"))
 
 ///|
-let z_key : VariableKey[CoreAtom] = variable(CoreAtom::Text("z"))
+let z_key : VariableKey[CoreAtom] = variable(Text("z"))
 
 ///|
 let w_var : UnifyTerm[CoreAtom, String] = variable_term(w_key)
@@ -109,14 +113,14 @@ let z_var : UnifyTerm[CoreAtom, String] = variable_term(z_key)
 ///|
 fn bind_x(term : UnifyTerm[CoreAtom, String]) -> Substitution[CoreAtom, String] {
   let subst : Substitution[CoreAtom, String] = Map([])
-  subst[MatchVar::Variable(x_key)] = term
+  subst[Variable(x_key)] = term
   subst
 }
 
 ///|
 fn is_associative(term : UnifyTerm[CoreAtom, String]) -> Bool {
   match term {
-    UnifyTerm::Compound(op, _) =>
+    Compound(op, _) =>
       op == "Add" || op == "Mul" || op == "CAdd" || op == "CMul"
     _ => false
   }
@@ -125,7 +129,7 @@ fn is_associative(term : UnifyTerm[CoreAtom, String]) -> Bool {
 ///|
 fn is_commutative(term : UnifyTerm[CoreAtom, String]) -> Bool {
   match term {
-    UnifyTerm::Compound(op, _) => op == "CAdd" || op == "CMul"
+    Compound(op, _) => op == "CAdd" || op == "CMul"
     _ => false
   }
 }
@@ -199,13 +203,13 @@ test "unify core handles commutative regrouping and conditional variables" {
   let large_key = cond_variable(CoreAtom::Text("z"))
   let even_var : UnifyTerm[CoreAtom, String] = cond_variable_term(even_key, term => {
     match term {
-      UnifyTerm::Atom(CoreAtom::Int(value)) => value % 2 == 0
+      Atom(Int(value)) => value % 2 == 0
       _ => false
     }
   })
   let large_var : UnifyTerm[CoreAtom, String] = cond_variable_term(large_key, term => {
     match term {
-      UnifyTerm::Atom(CoreAtom::Int(value)) => value > 3
+      Atom(Int(value)) => value > 3
       _ => false
     }
   })
@@ -224,8 +228,8 @@ test "unify core handles commutative regrouping and conditional variables" {
 
 ///|
 test "unify core allcombinations matches SymPy examples" {
-  let assoc = allcombinations([1, 2, 3], [5, 6], CombineMode::Associative)
+  let assoc = allcombinations([1, 2, 3], [5, 6], Associative)
   inspect(assoc.length(), content="2")
-  let comm = allcombinations([1, 2], [1, 2], CombineMode::Commutative)
+  let comm = allcombinations([1, 2], [1, 2], Commutative)
   inspect(comm.length(), content="2")
 }

@@ -25,15 +25,11 @@ test "physics.mechanics lagrange: simple pendulum rhs" {
 
   let o = @symvector.point("LO")
   o.set_vel(n, @symvector.vector_zero())
-  let p = o.locatenew("LP", a.x().scale(@symcore.Expr::Symbol("l")))
+  let p = o.locatenew("LP", a.x().scale(Symbol("l")))
   ignore(p.v2pt_theory(o, n, a))
-  let pa = particle("LPa", point=Some(p), mass=Some(@symcore.Expr::Symbol("m")))
+  let pa = particle("LPa", point=Some(p), mass=Some(Symbol("m")))
   pa.set_potential_energy(
-    @symcore.int(-1) *
-    @symcore.Expr::Symbol("m") *
-    @symcore.Expr::Symbol("g") *
-    @symcore.Expr::Symbol("l") *
-    @symelem.cos(q),
+    @symcore.int(-1) * Symbol("m") * Symbol("g") * Symbol("l") * @symelem.cos(q),
   )
 
   let lagr = lagrangian(n, [pa.as_bodylike()])

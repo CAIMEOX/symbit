@@ -5,7 +5,7 @@ test "indexed basic construction" {
   let j = idx("j")
   let base = indexed_base("A", shape=[n, @symcore.int(3)])
   let item = base.at([index_idx(i), index_idx(j)])
-  let s = item.to_string()
+  let s = Show::to_string(item)
   assert_eq(s, "A[i, j]")
   assert_oracle(indexed_str(item), "A[i, j]")
 }

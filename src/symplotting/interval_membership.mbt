@@ -6,7 +6,7 @@ priv struct IntervalMembership {
 
 ///|
 fn interval_membership(truth : Bool?, validity : Bool?) -> IntervalMembership {
-  IntervalMembership::{ truth, validity }
+  { truth, validity }
 }
 
 ///|

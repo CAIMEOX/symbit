@@ -55,7 +55,7 @@ fn py_str_enum(obj : @py.PyObjectEnum) -> String {
 
 ///|
 fn sympy_sympify_str(expr_str : String) -> @py.PyObjectEnum raise {
-  sympy_call_must("sympy.sympify", [OracleArg::Str(expr_str)])
+  sympy_call_must("sympy.sympify", [Str(expr_str)])
 }
 
 ///|
@@ -67,9 +67,7 @@ pub fn sympy_str(expr_str : String) -> String raise {
 ///|
 pub fn sympy_srepr(expr_str : String) -> String raise {
   let expr = sympy_sympify_str(expr_str)
-  let srepr = sympy_call_must("sympy.srepr", [
-    OracleArg::PyObj(objenum_to_obj(expr)),
-  ])
+  let srepr = sympy_call_must("sympy.srepr", [PyObj(objenum_to_obj(expr))])
   py_str_enum(srepr)
 }
 
@@ -81,6 +79,6 @@ pub fn expr_str_eq(a : String, b : String) -> Bool raise {
 ///|
 pub fn sympy_equiv_str(a : String, b : String) -> Bool raise {
   let diff = "(\{a}) - (\{b})"
-  let res = sympy_call_must("sympy.simplify", [OracleArg::Str(diff)])
+  let res = sympy_call_must("sympy.simplify", [Str(diff)])
   py_str_enum(res) == "0"
 }

@@ -110,7 +110,7 @@ fn fourier_transform(
   let a : Array[Expr] = Array::new()
   for v in seq {
     if expr_has_symbol(v) {
-      raise DiscreteError::ValueError("expected non-symbolic coefficients")
+      raise ValueError("expected non-symbolic coefficients")
     }
     a.push(v)
   }
@@ -222,7 +222,7 @@ fn primitive_root_prime(p : Int) -> Int raise DiscreteError {
       return g
     }
   }
-  raise DiscreteError::ValueError("primitive root not found")
+  raise ValueError("primitive root not found")
 }
 
 ///|
@@ -233,7 +233,7 @@ fn number_theoretic_transform_int(
 ) -> Array[Int] raise DiscreteError {
   let p = @bigint.BigInt::from_int(prime)
   if !@symntheory.isprime(p) {
-    raise DiscreteError::ValueError("expected prime modulus")
+    raise ValueError("expected prime modulus")
   }
   let a_int : Array[Int] = Array::new()
   for v in seq {
@@ -244,7 +244,7 @@ fn number_theoretic_transform_int(
   }
   let (n2, bits) = next_pow2(a_int.length())
   if (prime - 1) % n2 != 0 {
-    raise DiscreteError::ValueError("expected modulus of form (m*2**k + 1)")
+    raise ValueError("expected modulus of form (m*2**k + 1)")
   }
   for _ in a_int.length()..<n2 {
     a_int.push(0)

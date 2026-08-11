@@ -161,9 +161,9 @@ fn py_eval(expr : String) -> @py.PyObjectEnum raise {
     let globals = @py.PyDict::new()
     globals.set("__builtins__", builtins.obj())
     let args = @sympy.py_pack_args([
-      OracleArg::Str(expr),
-      OracleArg::PyObj(globals.obj()),
-      OracleArg::PyObj(globals.obj()),
+      Str(expr),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match py_call_object(eval_callable, args, print_err=true) {
       Some(obj) => obj
@@ -313,10 +313,10 @@ pub fn core_debug_log_posdec(x : Int) -> String raise {
 pub fn rl_rm_id(expr : @symcore.Expr) -> String raise {
   let isid = py_eval_callable("lambda x: x==0")
   let rule_enum = sympy_call_must("sympy.strategies.rl.rm_id", [
-    OracleArg::PyObj(isid.obj()),
+    PyObj(isid.obj()),
   ])
   let rule = py_callable_from_enum(rule_enum)
-  let res = py_call_with_args(rule, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(rule, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
@@ -326,19 +326,19 @@ pub fn rl_glom(expr : @symcore.Expr) -> String raise {
   let count = py_eval_callable("lambda t: t.as_coeff_Mul()[0]")
   let combine = py_eval_callable("lambda cnt, arg: cnt*arg")
   let rule_enum = sympy_call_must("sympy.strategies.rl.glom", [
-    OracleArg::PyObj(key.obj()),
-    OracleArg::PyObj(count.obj()),
-    OracleArg::PyObj(combine.obj()),
+    PyObj(key.obj()),
+    PyObj(count.obj()),
+    PyObj(combine.obj()),
   ])
   let rule = py_callable_from_enum(rule_enum)
-  let res = py_call_with_args(rule, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(rule, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
 ///|
 pub fn rl_flatten(expr : @symcore.Expr) -> String raise {
   let res = sympy_call_must("sympy.strategies.rl.flatten", [
-    OracleArg::PyObj(expr_to_sympy(expr)),
+    PyObj(expr_to_sympy(expr)),
   ])
   py_str_enum(res)
 }
@@ -346,7 +346,7 @@ pub fn rl_flatten(expr : @symcore.Expr) -> String raise {
 ///|
 pub fn rl_unpack(expr : @symcore.Expr) -> String raise {
   let res = sympy_call_must("sympy.strategies.rl.unpack", [
-    OracleArg::PyObj(expr_to_sympy(expr)),
+    PyObj(expr_to_sympy(expr)),
   ])
   py_str_enum(res)
 }
@@ -354,11 +354,9 @@ pub fn rl_unpack(expr : @symcore.Expr) -> String raise {
 ///|
 pub fn rl_sort(expr : @symcore.Expr) -> String raise {
   let key = py_eval_callable("lambda x: str(x)")
-  let rule_enum = sympy_call_must("sympy.strategies.rl.sort", [
-    OracleArg::PyObj(key.obj()),
-  ])
+  let rule_enum = sympy_call_must("sympy.strategies.rl.sort", [PyObj(key.obj())])
   let rule = py_callable_from_enum(rule_enum)
-  let res = py_call_with_args(rule, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(rule, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
@@ -383,11 +381,11 @@ pub fn rl_distribute_add_mul(expr : @symcore.Expr) -> String raise {
     None => fail("sympy-add-missing")
   }
   let rule_enum = sympy_call_must("sympy.strategies.rl.distribute", [
-    OracleArg::PyObj(mul_obj),
-    OracleArg::PyObj(add_obj),
+    PyObj(mul_obj),
+    PyObj(add_obj),
   ])
   let rule = py_callable_from_enum(rule_enum)
-  let res = py_call_with_args(rule, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(rule, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
@@ -398,18 +396,18 @@ pub fn rl_subs(
   b : @symcore.Expr,
 ) -> String raise {
   let rule_enum = sympy_call_must("sympy.strategies.rl.subs", [
-    OracleArg::PyObj(expr_to_sympy(a)),
-    OracleArg::PyObj(expr_to_sympy(b)),
+    PyObj(expr_to_sympy(a)),
+    PyObj(expr_to_sympy(b)),
   ])
   let rule = py_callable_from_enum(rule_enum)
-  let res = py_call_with_args(rule, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(rule, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
 ///|
 pub fn rl_rebuild(expr : @symcore.Expr) -> String raise {
   let res = sympy_call_must("sympy.strategies.rl.rebuild", [
-    OracleArg::PyObj(expr_to_sympy(expr)),
+    PyObj(expr_to_sympy(expr)),
   ])
   py_str_enum(res)
 }
@@ -421,10 +419,10 @@ pub fn traverse_sall_zero_symbols(expr : @symcore.Expr) -> String raise {
     "lambda e: __import__('sympy').S.Zero if isinstance(e, __import__('sympy').Symbol) else e",
   )
   let trav_enum = sympy_call_must("sympy.strategies.traverse.sall", [
-    OracleArg::PyObj(rule.obj()),
+    PyObj(rule.obj()),
   ])
   let trav = py_callable_from_enum(trav_enum)
-  let res = py_call_with_args(trav, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(trav, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
@@ -434,10 +432,10 @@ pub fn traverse_top_down_zero_symbols(expr : @symcore.Expr) -> String raise {
     "lambda e: __import__('sympy').S.Zero if isinstance(e, __import__('sympy').Symbol) else e",
   )
   let trav_enum = sympy_call_must("sympy.strategies.traverse.top_down", [
-    OracleArg::PyObj(rule.obj()),
+    PyObj(rule.obj()),
   ])
   let trav = py_callable_from_enum(trav_enum)
-  let res = py_call_with_args(trav, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(trav, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
@@ -447,10 +445,10 @@ pub fn traverse_bottom_up_zero_symbols(expr : @symcore.Expr) -> String raise {
     "lambda e: __import__('sympy').S.Zero if isinstance(e, __import__('sympy').Symbol) else e",
   )
   let trav_enum = sympy_call_must("sympy.strategies.traverse.bottom_up", [
-    OracleArg::PyObj(rule.obj()),
+    PyObj(rule.obj()),
   ])
   let trav = py_callable_from_enum(trav_enum)
-  let res = py_call_with_args(trav, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(trav, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
@@ -460,10 +458,10 @@ pub fn traverse_top_down_once(expr : @symcore.Expr) -> String raise {
     "(lambda sym: (lambda Basic2: (lambda x: Basic2(*x.args) if x.args and not isinstance(x.args[0], sym.Integer) else x))(type('Basic2', (sym.core.basic.Basic,), {})))(\{sym})",
   )
   let trav_enum = sympy_call_must("sympy.strategies.traverse.top_down_once", [
-    OracleArg::PyObj(rule.obj()),
+    PyObj(rule.obj()),
   ])
   let trav = py_callable_from_enum(trav_enum)
-  let res = py_call_with_args(trav, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(trav, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
@@ -473,10 +471,10 @@ pub fn traverse_bottom_up_once(expr : @symcore.Expr) -> String raise {
     "(lambda sym: (lambda Basic2: (lambda x: Basic2(*x.args) if x.args and not isinstance(x.args[0], sym.Integer) else x))(type('Basic2', (sym.core.basic.Basic,), {})))(\{sym})",
   )
   let trav_enum = sympy_call_must("sympy.strategies.traverse.bottom_up_once", [
-    OracleArg::PyObj(rule.obj()),
+    PyObj(rule.obj()),
   ])
   let trav = py_callable_from_enum(trav_enum)
-  let res = py_call_with_args(trav, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(trav, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
@@ -484,13 +482,11 @@ pub fn traverse_bottom_up_once(expr : @symcore.Expr) -> String raise {
 pub fn traverse_expr_fns(expr : @symcore.Expr) -> String raise {
   let rule = py_eval_callable("lambda v: v + 1")
   let trav_enum = sympy_call_must("sympy.strategies.traverse.bottom_up", [
-    OracleArg::PyObj(rule.obj()),
-    OracleArg::PyObj(
-      py_eval_obj("__import__('sympy').strategies.util.expr_fns"),
-    ),
+    PyObj(rule.obj()),
+    PyObj(py_eval_obj("__import__('sympy').strategies.util.expr_fns")),
   ])
   let trav = py_callable_from_enum(trav_enum)
-  let res = py_call_with_args(trav, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(trav, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
@@ -507,20 +503,18 @@ pub fn tools_subs(
     dict.setByObj(key_obj, val_obj)
   }
   let rule_enum = sympy_call_must("sympy.strategies.tools.subs", [
-    OracleArg::PyObj(dict.obj()),
+    PyObj(dict.obj()),
   ])
   let rule = py_callable_from_enum(rule_enum)
-  let res = py_call_with_args(rule, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(rule, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
 ///|
 pub fn tools_subs_empty(expr : @symcore.Expr) -> String raise {
-  let rule_enum = sympy_call_must("sympy.strategies.tools.subs", [
-    OracleArg::Dict({}),
-  ])
+  let rule_enum = sympy_call_must("sympy.strategies.tools.subs", [Dict({})])
   let rule = py_callable_from_enum(rule_enum)
-  let res = py_call_with_args(rule, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(rule, [PyObj(expr_to_sympy(expr))])
   py_str_enum(res)
 }
 
@@ -723,14 +717,12 @@ pub fn branch_traverse_top_down_inc(
     "lambda x: [x+1] if isinstance(x, __import__('sympy').Integer) else []",
   )
   let trav_enum = sympy_call_must("sympy.strategies.branch.traverse.top_down", [
-    OracleArg::PyObj(rule.obj()),
+    PyObj(rule.obj()),
   ])
   let trav = py_callable_from_enum(trav_enum)
-  let res = py_call_with_args(trav, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(trav, [PyObj(expr_to_sympy(expr))])
   let to_list = py_eval_callable("lambda it: list(it)")
-  let list_res = py_call_with_args(to_list, [
-    OracleArg::PyObj(objenum_to_obj(res)),
-  ])
+  let list_res = py_call_with_args(to_list, [PyObj(objenum_to_obj(res))])
   py_list_to_strings(list_res)
 }
 
@@ -740,14 +732,12 @@ pub fn branch_traverse_top_down_split5(
 ) -> Array[String] raise {
   let rule = py_eval_callable("lambda x: [x-1, x+1] if x==5 else []")
   let trav_enum = sympy_call_must("sympy.strategies.branch.traverse.top_down", [
-    OracleArg::PyObj(rule.obj()),
+    PyObj(rule.obj()),
   ])
   let trav = py_callable_from_enum(trav_enum)
-  let res = py_call_with_args(trav, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(trav, [PyObj(expr_to_sympy(expr))])
   let to_list = py_eval_callable("lambda it: list(it)")
-  let list_res = py_call_with_args(to_list, [
-    OracleArg::PyObj(objenum_to_obj(res)),
-  ])
+  let list_res = py_call_with_args(to_list, [PyObj(objenum_to_obj(res))])
   py_list_to_strings(list_res)
 }
 
@@ -757,14 +747,12 @@ pub fn branch_traverse_sall_inc(expr : @symcore.Expr) -> Array[String] raise {
     "lambda x: [x+1] if isinstance(x, __import__('sympy').Integer) else []",
   )
   let trav_enum = sympy_call_must("sympy.strategies.branch.traverse.sall", [
-    OracleArg::PyObj(rule.obj()),
+    PyObj(rule.obj()),
   ])
   let trav = py_callable_from_enum(trav_enum)
-  let res = py_call_with_args(trav, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(trav, [PyObj(expr_to_sympy(expr))])
   let to_list = py_eval_callable("lambda it: list(it)")
-  let list_res = py_call_with_args(to_list, [
-    OracleArg::PyObj(objenum_to_obj(res)),
-  ])
+  let list_res = py_call_with_args(to_list, [PyObj(objenum_to_obj(res))])
   py_list_to_strings(list_res)
 }
 
@@ -775,19 +763,17 @@ pub fn branch_traverse_sall_do_one(expr : @symcore.Expr) -> Array[String] raise 
   )
   let ident = py_eval_obj("__import__('sympy').strategies.branch.core.identity")
   let do_one_enum = sympy_call_must("sympy.strategies.branch.core.do_one", [
-    OracleArg::PyObj(inc.obj()),
-    OracleArg::PyObj(ident),
+    PyObj(inc.obj()),
+    PyObj(ident),
   ])
   let do_one_rule = py_callable_from_enum(do_one_enum)
   let trav_enum = sympy_call_must("sympy.strategies.branch.traverse.sall", [
-    OracleArg::PyObj(do_one_rule.obj()),
+    PyObj(do_one_rule.obj()),
   ])
   let trav = py_callable_from_enum(trav_enum)
-  let res = py_call_with_args(trav, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(trav, [PyObj(expr_to_sympy(expr))])
   let to_list = py_eval_callable("lambda it: list(it)")
-  let list_res = py_call_with_args(to_list, [
-    OracleArg::PyObj(objenum_to_obj(res)),
-  ])
+  let list_res = py_call_with_args(to_list, [PyObj(objenum_to_obj(res))])
   py_list_to_strings(list_res)
 }
 
@@ -798,14 +784,12 @@ pub fn branch_canon_branch5(expr : @symcore.Expr) -> Array[String] raise {
     "lambda x: [x-1] if isinstance(x, __import__('sympy').Integer) and 0<x<5 else ([x+1] if isinstance(x, __import__('sympy').Integer) and 5<x<10 else ([x+1, x-1] if isinstance(x, __import__('sympy').Integer) and x==5 else ([x] if isinstance(x, __import__('sympy').Integer) else [])))",
   )
   let canon_enum = sympy_call_must("sympy.strategies.branch.tools.canon", [
-    OracleArg::PyObj(rule.obj()),
+    PyObj(rule.obj()),
   ])
   let canon = py_callable_from_enum(canon_enum)
-  let res = py_call_with_args(canon, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(canon, [PyObj(expr_to_sympy(expr))])
   let to_list = py_eval_callable("lambda it: list(it)")
-  let list_res = py_call_with_args(to_list, [
-    OracleArg::PyObj(objenum_to_obj(res)),
-  ])
+  let list_res = py_call_with_args(to_list, [PyObj(objenum_to_obj(res))])
   py_list_to_strings(list_res)
 }
 
@@ -815,13 +799,11 @@ pub fn branch_canon_posdec(expr : @symcore.Expr) -> Array[String] raise {
     "lambda x: [x-1] if isinstance(x, __import__('sympy').Integer) and x>0 else ([x] if isinstance(x, __import__('sympy').Integer) else [])",
   )
   let canon_enum = sympy_call_must("sympy.strategies.branch.tools.canon", [
-    OracleArg::PyObj(rule.obj()),
+    PyObj(rule.obj()),
   ])
   let canon = py_callable_from_enum(canon_enum)
-  let res = py_call_with_args(canon, [OracleArg::PyObj(expr_to_sympy(expr))])
+  let res = py_call_with_args(canon, [PyObj(expr_to_sympy(expr))])
   let to_list = py_eval_callable("lambda it: list(it)")
-  let list_res = py_call_with_args(to_list, [
-    OracleArg::PyObj(objenum_to_obj(res)),
-  ])
+  let list_res = py_call_with_args(to_list, [PyObj(objenum_to_obj(res))])
   py_list_to_strings(list_res)
 }

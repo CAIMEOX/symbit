@@ -21,7 +21,7 @@ fn is_one(poly : Poly) -> Bool {
 ///|
 fn deriv_univar(poly : Poly) -> Poly raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let coeffs : Map[Monomial, FieldElem] = Map([])
   for m, c in poly.coeffs {
@@ -34,13 +34,13 @@ fn deriv_univar(poly : Poly) -> Poly raise PolyError {
     mono.exps.set(0, exp - 1)
     add_term(coeffs, mono, coeff, poly.domain)
   }
-  Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
+  { coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
 }
 
 ///|
 fn pth_root_univar_gf(poly : Poly, p : Int) -> Poly raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   if poly.is_zero() {
     return Poly::zero(poly.gens, poly.domain)
@@ -49,19 +49,19 @@ fn pth_root_univar_gf(poly : Poly, p : Int) -> Poly raise PolyError {
   for m, c in poly.coeffs {
     let exp = m.exps[0]
     if exp % p != 0 {
-      raise PolyError::BadExponent
+      raise BadExponent
     }
     let mono = monomial_one(poly.gens.length())
     mono.exps.set(0, exp / p)
     add_term(coeffs, mono, c, poly.domain)
   }
-  Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
+  { coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
 }
 
 ///|
 fn square_free_decompose(poly : Poly) -> Array[(Poly, Int)] raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let res : Array[(Poly, Int)] = Array::new()
   if poly.is_zero() {
@@ -74,7 +74,7 @@ fn square_free_decompose(poly : Poly) -> Array[(Poly, Int)] raise PolyError {
   let fprime = deriv_univar(f)
   if fprime.is_zero() {
     match poly.domain {
-      Domain::GF(p) => {
+      GF(p) => {
         let root = pth_root_univar_gf(f, p)
         let parts = square_free_decompose(root)
         for pair in parts {
@@ -104,7 +104,7 @@ fn square_free_decompose(poly : Poly) -> Array[(Poly, Int)] raise PolyError {
   }
   if !is_one(g) {
     match poly.domain {
-      Domain::GF(p) => {
+      GF(p) => {
         let root = pth_root_univar_gf(g, p)
         let parts = square_free_decompose(root)
         for pair in parts {
@@ -120,12 +120,7 @@ fn square_free_decompose(poly : Poly) -> Array[(Poly, Int)] raise PolyError {
 
 ///|
 fn lift_poly_to_qq(poly : Poly) -> Poly {
-  Poly::{
-    coeffs: poly.coeffs,
-    gens: poly.gens,
-    domain: Domain::QQ,
-    order: poly.order,
-  }
+  { coeffs: poly.coeffs, gens: poly.gens, domain: QQ, order: poly.order }
 }
 
 ///|
@@ -137,13 +132,13 @@ fn apply_extension_request(
     return poly
   }
   if ext_syms.length() != 1 {
-    raise PolyError::BadGenerator("extension")
+    raise BadGenerator("extension")
   }
   let _ = ext_syms[0]
   match poly.domain {
     // SymPy extension=True/=[...] generally lifts integer domains to fields;
     // we mirror that behavior minimally by avoiding ZZ-only arithmetic paths.
-    Domain::ZZ => lift_poly_to_qq(poly)
+    ZZ => lift_poly_to_qq(poly)
     _ => poly
   }
 }
@@ -170,24 +165,19 @@ pub fn Poly::factor(
     return Array::new()
   }
   let resolved_gens = match gens {
-    Some(g) =>
-      if g.equal(self.gens) {
-        g
-      } else {
-        raise PolyError::DomainMismatch
-      }
+    Some(g) => if g.equal(self.gens) { g } else { raise DomainMismatch }
     None => self.gens
   }
   let requested_mod = match modulus {
     Some(m) => {
       if m <= 1 {
-        raise PolyError::BadModulus
+        raise BadModulus
       }
       Some(m)
     }
     None =>
       match self.domain {
-        Domain::GF(p) => Some(p)
+        GF(p) => Some(p)
         _ => None
       }
   }
@@ -199,7 +189,7 @@ pub fn Poly::factor(
   match requested_mod {
     Some(m) =>
       match self.domain {
-        Domain::GF(p) => if p != m { work = map_to_gf(self, m) }
+        GF(p) => if p != m { work = map_to_gf(self, m) }
         _ => work = map_to_gf(self, m)
       }
     None => ()
@@ -208,7 +198,7 @@ pub fn Poly::factor(
     work = apply_extension_request(work, requested_extension)
   }
   if work.gens != resolved_gens {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   check_univar_compat(work, work)
   let content = work.content()
@@ -220,7 +210,7 @@ pub fn Poly::factor(
   let factors : Array[(Poly, Int)] = Array::new()
   for part in sf_parts {
     let (p, mult) = part
-    if p.domain is Domain::GF(_) {
+    if p.domain is GF(_) {
       let seed_val = match seed {
         Some(s) => s
         None => 42
@@ -229,7 +219,7 @@ pub fn Poly::factor(
       for lp in gf_parts {
         factors.push((lp, mult))
       }
-    } else if p.domain is Domain::ZZ {
+    } else if p.domain is ZZ {
       let int_parts = try factor_integer(p) catch {
         _ => [p]
       } noraise {
@@ -238,7 +228,7 @@ pub fn Poly::factor(
       for lp in int_parts {
         factors.push((lp, mult))
       }
-    } else if p.domain is Domain::QQ {
+    } else if p.domain is QQ {
       let cleared = clear_denominators(p)
       let int_parts = try factor_integer(cleared) catch {
         _ => [cleared]
@@ -250,10 +240,10 @@ pub fn Poly::factor(
         let scaled = make_monic(lift_poly_to_qq(lp))
         factors.push((scaled, mult))
       }
-    } else if p.domain is Domain::GFExt(_, _, _) {
+    } else if p.domain is GFExt(_, _, _) {
       // Treat as abstract finite field: return squarefree parts as-is.
       factors.push((p, mult))
-    } else if p.domain is Domain::AlgExt(_, _, _) {
+    } else if p.domain is AlgExt(_, _, _) {
       let alg_parts = factor_algext(p)
       for ap in alg_parts {
         factors.push((ap, mult))
@@ -292,11 +282,11 @@ pub fn Poly::factor(
 /// ```mbt check
 /// test "sympolys factor_list separates content and factors" {
 ///   let x = @symcore.Expr::Symbol("x")
-///   let poly = PolyBuilder::new(["x"], Domain::ZZ).from_expr(
+///   let poly = PolyBuilder::new(["x"], ZZ).from_expr(
 ///     @symcore.int(2) * ((x + @symcore.int(1)) ^ @symcore.int(2)),
 ///   )
 ///   let (content, factors) = poly.factor_list()
-///   inspect(content.to_string(), content="2")
+///   inspect(Show::to_string(content), content="2")
 ///   inspect(factors.length(), content="1")
 ///   inspect(factors[0].0, content="x + 1")
 ///   inspect(factors[0].1, content="2")
@@ -385,18 +375,14 @@ fn normalize_factor_for_list(
     None => (poly, @symnum.BigRational::one())
     Some((_, lc_fe)) =>
       match poly.domain {
-        Domain::GFExt(_, _, _) => (make_monic(poly), @symnum.BigRational::one())
-        Domain::AlgExt(_, _, _) =>
-          (make_monic(poly), @symnum.BigRational::one())
-        Domain::ZZ => {
+        GFExt(_, _, _) => (make_monic(poly), @symnum.BigRational::one())
+        AlgExt(_, _, _) => (make_monic(poly), @symnum.BigRational::one())
+        ZZ => {
           let lc = fe_expect_rational(lc_fe)
           if lc.is_one() {
             (poly, lc)
           } else if lc.neg_r().is_one() {
-            (
-              poly.scale_coeff(FieldElem::QQ(@symnum.BigRational::from_int(-1))),
-              lc,
-            )
+            (poly.scale_coeff(QQ(@symnum.BigRational::from_int(-1))), lc)
           } else {
             (poly, lc)
           }
@@ -513,7 +499,7 @@ fn rational_root_candidates(
   poly : Poly,
 ) -> Array[@symnum.BigRational] raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let candidates : Array[@symnum.BigRational] = Array::new()
   let mut has_zero = false
@@ -584,7 +570,7 @@ fn divide_by_linear_root(
   root : @symnum.BigRational,
 ) -> Poly? raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let degree = poly.degree(0)
   if degree <= 0 {
@@ -628,7 +614,7 @@ fn factor_linear_rational_split(
   poly : Poly,
 ) -> (Array[Poly], Poly) raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let candidates = rational_root_candidates(poly)
   let factors : Array[Poly] = Array::new()
@@ -664,7 +650,7 @@ fn eval_univar_mod(
   modulus : Int,
 ) -> Int raise PolyError {
   if modulus <= 1 {
-    raise PolyError::BadModulus
+    raise BadModulus
   }
   let p = BigInt::from_int(modulus)
   let mut acc = BigInt::from_int(0)
@@ -701,7 +687,7 @@ fn factor_linear_rationals(poly : Poly) -> Array[Poly] raise PolyError {
 ///|
 fn normalize_poly_mod(poly : Poly) -> Poly raise PolyError {
   match poly.domain {
-    Domain::GF(p) => {
+    GF(p) => {
       let coeffs : Map[Monomial, FieldElem] = Map([])
       for m, c in poly.coeffs {
         if fe_is_zero(c) {
@@ -713,9 +699,9 @@ fn normalize_poly_mod(poly : Poly) -> Poly raise PolyError {
           coeffs.set(m, norm)
         }
       }
-      Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
+      { coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
     }
-    Domain::GFExt(_, _, _) => poly
+    GFExt(_, _, _) => poly
     _ => poly
   }
 }
@@ -733,7 +719,7 @@ fn strip_linear_roots_gf(
   for r in 0..<modulus {
     while remaining.degree(0) > 0 && eval_univar_mod(remaining, r, modulus) == 0 {
       let factor_poly = Poly::from_expr(
-        Expr::Symbol(remaining.gens[0]) - int(r),
+        Symbol(remaining.gens[0]) - int(r),
         remaining.gens,
         remaining.domain,
       )
@@ -758,17 +744,17 @@ fn factor_gf(poly : Poly) -> Array[Poly] raise PolyError {
 ///|
 fn factor_gf_seeded(poly : Poly, seed : Int) -> Array[Poly] raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (p, k, field_size, mod_poly) = match poly.domain {
-    Domain::GF(p) => (p, 1, p, None)
-    Domain::GFExt(p, k, m) => (p, k, int_pow(p, k), Some(m))
-    _ => raise PolyError::NotUnivariate
+    GF(p) => (p, 1, p, None)
+    GFExt(p, k, m) => (p, k, int_pow(p, k), Some(m))
+    _ => raise NotUnivariate
   }
   let mut work = make_monic(normalize_poly_mod(poly))
   let factors : Array[Poly] = Array::new()
   // 1) strip linear roots (only for prime fields)
-  if work.domain is Domain::GF(_) {
+  if work.domain is GF(_) {
     let stripped = strip_linear_roots_gf(work, p)
     work = stripped.0
     for lf in stripped.1 {
@@ -843,11 +829,7 @@ fn distinct_degree_decompose(
 ) -> Array[Poly] raise PolyError {
   let res : Array[Poly] = Array::new()
   let mut f = make_monic(poly)
-  let x_poly = Poly::from_expr(
-    Expr::Symbol(poly.gens[0]),
-    poly.gens,
-    poly.domain,
-  )
+  let x_poly = Poly::from_expr(Symbol(poly.gens[0]), poly.gens, poly.domain)
   let mut pow = x_poly
   let mut i = 1
   while 2 * i <= f.degree(0) {
@@ -879,11 +861,7 @@ fn equal_degree_factor(
   let res : Array[Poly] = Array::new()
   let stack : Array[Poly] = Array::new()
   stack.push(poly)
-  let x_poly = Poly::from_expr(
-    Expr::Symbol(poly.gens[0]),
-    poly.gens,
-    poly.domain,
-  )
+  let x_poly = Poly::from_expr(Symbol(poly.gens[0]), poly.gens, poly.domain)
   let mut rng = seed
   while true {
     match stack.pop() {
@@ -938,8 +916,8 @@ fn field_elem_from_seed(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   match domain {
-    Domain::GF(_) => fe_from_int(value, domain)
-    Domain::GFExt(_, _, _) => {
+    GF(_) => fe_from_int(value, domain)
+    GFExt(_, _, _) => {
       let mut v = value
       let coeffs : Array[Int] = Array::new()
       for _ in 0..<k {
@@ -950,7 +928,7 @@ fn field_elem_from_seed(
         Some(mp) => mp
         None => []
       }
-      FieldElem::GFExt(p, coeffs, m)
+      GFExt(p, coeffs, m)
     }
     _ => fe_from_int(value, domain)
   }
@@ -968,17 +946,17 @@ fn poly_const_from_fe(
   let mono = monomial_one(gens.length())
   let coeffs : Map[Monomial, FieldElem] = Map([])
   add_term(coeffs, mono, coeff, domain)
-  Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
+  { coeffs, gens, domain, order: Lex }
 }
 
 ///|
 fn factor_algext(poly : Poly) -> Array[Poly] raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (base, gens, rels) = match poly.domain {
-    Domain::AlgExt(b, g, r) => (b, g, r)
-    _ => raise PolyError::DomainMismatch
+    AlgExt(b, g, r) => (b, g, r)
+    _ => raise DomainMismatch
   }
   let (minpoly, _) = load_algext_minpoly(base, gens, rels)
   let work = poly
@@ -1013,17 +991,17 @@ fn factor_algext_squarefree(
     return [poly]
   }
   let alpha = match poly.domain {
-    Domain::AlgExt(_, gens, _) =>
+    AlgExt(_, gens, _) =>
       if gens.length() == 1 {
         gens[0]
       } else {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
   let (shifts, shifted, norm) = sqf_norm(poly)
   if shifts.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (_, factors) = norm.factor_list()
   let mut remaining = poly
@@ -1079,7 +1057,7 @@ fn algext_poly_to_t_coeffs(
   let mut max_j = 0
   for _, c in poly.coeffs {
     match c {
-      FieldElem::AlgExt(_, coeffs, _, _) =>
+      AlgExt(_, coeffs, _, _) =>
         if coeffs.length() - 1 > max_j {
           max_j = coeffs.length() - 1
         }
@@ -1093,7 +1071,7 @@ fn algext_poly_to_t_coeffs(
   for m, c in poly.coeffs {
     let exp_x = m.exps[0]
     let coeffs = match c {
-      FieldElem::AlgExt(_, arr, _, _) => arr
+      AlgExt(_, arr, _, _) => arr
       _ => [c]
     }
     for j in 0..<coeffs.length() {
@@ -1104,12 +1082,7 @@ fn algext_poly_to_t_coeffs(
   }
   let out : Array[Poly] = Array::new()
   for bucket in buckets {
-    out.push(Poly::{
-      coeffs: bucket,
-      gens: [x_gen],
-      domain: base,
-      order: TermOrder::Lex,
-    })
+    out.push({ coeffs: bucket, gens: [x_gen], domain: base, order: Lex })
   }
   out
 }
@@ -1131,11 +1104,11 @@ fn minpoly_to_t_coeffs(
     mono.exps.set(0, 0)
     let coeffs_map : Map[Monomial, FieldElem] = Map([])
     add_term(coeffs_map, mono, c, base)
-    coeffs.set(exp_t, Poly::{
+    coeffs.set(exp_t, {
       coeffs: coeffs_map,
       gens: [x_gen],
       domain: base,
-      order: TermOrder::Lex,
+      order: Lex,
     })
   }
   coeffs
@@ -1247,7 +1220,7 @@ fn lift_base_poly_to_algext(
     let lifted = fe_from_rational(r, domain)
     add_term(coeffs, m, lifted, domain)
   }
-  Poly::{ coeffs, gens: poly.gens, domain, order: poly.order }
+  { coeffs, gens: poly.gens, domain, order: poly.order }
 }
 
 ///|

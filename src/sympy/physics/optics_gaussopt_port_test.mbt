@@ -44,22 +44,22 @@ fn gaussopt_symbols() -> (
   @symcore.Expr,
 ) {
   (
-    @symcore.Expr::Symbol("d"),
-    @symcore.Expr::Symbol("f"),
-    @symcore.Expr::Symbol("h"),
-    @symcore.Expr::Symbol("angle"),
-    @symcore.Expr::Symbol("n1"),
-    @symcore.Expr::Symbol("n2"),
-    @symcore.Expr::Symbol("R"),
-    @symcore.Expr::Symbol("a"),
-    @symcore.Expr::Symbol("b"),
-    @symcore.Expr::Symbol("s_in"),
-    @symcore.Expr::Symbol("z_r_in"),
-    @symcore.Expr::Symbol("l"),
-    @symcore.Expr::Symbol("w_i"),
-    @symcore.Expr::Symbol("w_o"),
-    @symcore.Expr::Symbol("z"),
-    @symcore.Expr::Symbol("wavelen"),
+    Symbol("d"),
+    Symbol("f"),
+    Symbol("h"),
+    Symbol("angle"),
+    Symbol("n1"),
+    Symbol("n2"),
+    Symbol("R"),
+    Symbol("a"),
+    Symbol("b"),
+    Symbol("s_in"),
+    Symbol("z_r_in"),
+    Symbol("l"),
+    Symbol("w_i"),
+    Symbol("w_o"),
+    Symbol("z"),
+    Symbol("wavelen"),
   )
 }
 
@@ -181,12 +181,12 @@ test "physics.optics.gaussopt: beam transform parity" {
 test "physics.optics.gaussopt: utility parity" {
   let (_, f, _, _, _, _, _, a, b, s_in, z_r_in, l, w_i, w_o, _, wavelen) = gaussopt_symbols()
   gaussopt_port_assert_expr_equal(
-    waist2rayleigh(@symcore.Expr::Symbol("w"), wavelen),
+    waist2rayleigh(Symbol("w"), wavelen),
     optics_gaussopt_eval("waist2rayleigh(w, wavelen)"),
     "waist2rayleigh parity",
   )
   gaussopt_port_assert_expr_equal(
-    rayleigh2waist(@symcore.Expr::Symbol("z_r"), wavelen),
+    rayleigh2waist(Symbol("z_r"), wavelen),
     optics_gaussopt_eval("rayleigh2waist(z_r, wavelen)"),
     "rayleigh2waist parity",
   )

@@ -188,7 +188,7 @@ pub impl Show for Float with fn to_string(self) {
 
 ///|
 pub impl Show for Float with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|

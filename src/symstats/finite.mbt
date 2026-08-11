@@ -52,7 +52,7 @@ pub fn finite_rv(
   name : String,
   atoms : Array[(@symcore.Expr, @symnum.BigRational)],
 ) -> RandomVar {
-  random_var(name, RVKind::Finite(normalize_atoms(atoms)))
+  random_var(name, Finite(normalize_atoms(atoms)))
 }
 
 ///|
@@ -104,7 +104,7 @@ pub fn finite_atoms(
   rv : RandomVar,
 ) -> Array[(@symcore.Expr, @symnum.BigRational)]? {
   match rv.kind {
-    RVKind::Finite(items) => Some(items)
+    Finite(items) => Some(items)
     _ => None
   }
 }
@@ -136,9 +136,9 @@ pub fn finite_probability(rv : RandomVar, event : Event) -> @symcore.Expr? {
         let (value, p) = item
         env[rv.name] = value
         match evaluate_event(event, env) {
-          TriBool::True => total = total.add_r(p)
-          TriBool::False => ()
-          TriBool::Unknown => return None
+          True => total = total.add_r(p)
+          False => ()
+          Unknown => return None
         }
       }
       Some(expr_from_big_rational(total))
@@ -149,12 +149,12 @@ pub fn finite_probability(rv : RandomVar, event : Event) -> @symcore.Expr? {
 ///|
 pub fn finite_expectation(
   rv : RandomVar,
-  expr? : @symcore.Expr = @symcore.Expr::Symbol("_"),
+  expr? : @symcore.Expr = Symbol("_"),
 ) -> @symcore.Expr? {
   match finite_atoms(rv) {
     None => None
     Some(items) => {
-      let base_expr = if expr == @symcore.Expr::Symbol("_") {
+      let base_expr = if expr == Symbol("_") {
         @symcore.Expr::Symbol(rv.name)
       } else {
         expr

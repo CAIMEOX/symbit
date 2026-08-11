@@ -17,5 +17,5 @@ pub suberror IntegralError {
 /// - Returns: An `IntegralError` value.
 /// - Limits: This helper only constructs the transform-specific variant.
 pub fn integral_transform_error(message : String) -> IntegralError {
-  IntegralError::IntegralTransformError(message)
+  IntegralTransformError(message)
 }

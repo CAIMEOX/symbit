@@ -55,11 +55,9 @@ priv struct LinearAtom {
 ///|
 fn depends_on(expr : @symcore.Expr, name : String) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(s) => s == name
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
-      args.any(child => depends_on(child, name))
-    @symcore.Expr::Pow(base, exp) =>
-      depends_on(base, name) || depends_on(exp, name)
+    Symbol(s) => s == name
+    Add(args) | Mul(args) => args.any(child => depends_on(child, name))
+    Pow(base, exp) => depends_on(base, name) || depends_on(exp, name)
     _ =>
       match @symcore.application_args(expr) {
         Some(args) => args.any(child => depends_on(child, name))
@@ -94,7 +92,7 @@ fn split_linear_x_term(
     return Some(@symcore.int(1))
   }
   match term {
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut seen_x = false
       let coeff_args : Array[@symcore.Expr] = Array::new()
       for factor in args {
@@ -128,10 +126,10 @@ fn parse_linear_form(
   var_name : String,
 ) -> LinearForm? {
   if !contains_symbol(arg, var_name) {
-    return Some(LinearForm::{ coeff: @symcore.int(0), shift: arg })
+    return Some({ coeff: @symcore.int(0), shift: arg })
   }
   match arg {
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let mut coeff = @symcore.int(0)
       let const_terms : Array[@symcore.Expr] = Array::new()
       for term in args {
@@ -149,11 +147,11 @@ fn parse_linear_form(
       } else {
         @symcore.add(const_terms)
       }
-      Some(LinearForm::{ coeff, shift })
+      Some({ coeff, shift })
     }
     _ =>
       match split_linear_x_term(arg, x, var_name) {
-        Some(c) => Some(LinearForm::{ coeff: c, shift: @symcore.int(0) })
+        Some(c) => Some({ coeff: c, shift: @symcore.int(0) })
         None => None
       }
   }
@@ -168,11 +166,11 @@ fn linear_arg(form : LinearForm, x : @symcore.Expr) -> @symcore.Expr {
 fn atom_expr(atom : LinearAtom, x : @symcore.Expr) -> @symcore.Expr {
   let arg = linear_arg(atom.form, x)
   let name = match atom.kind {
-    AtomKind::Sin => "sin"
-    AtomKind::Cos => "cos"
-    AtomKind::Exp => "exp"
-    AtomKind::Sinh => "sinh"
-    AtomKind::Cosh => "cosh"
+    Sin => "sin"
+    Cos => "cos"
+    Exp => "exp"
+    Sinh => "sinh"
+    Cosh => "cosh"
   }
   @symcore.function(name, [arg])
 }
@@ -187,16 +185,16 @@ fn parse_linear_atom(
     (Some(name), Some([arg])) => {
       let kind = match name {
         "sin" => Some(AtomKind::Sin)
-        "cos" => Some(AtomKind::Cos)
-        "exp" => Some(AtomKind::Exp)
-        "sinh" => Some(AtomKind::Sinh)
-        "cosh" => Some(AtomKind::Cosh)
+        "cos" => Some(Cos)
+        "exp" => Some(Exp)
+        "sinh" => Some(Sinh)
+        "cosh" => Some(Cosh)
         _ => None
       }
       match kind {
         Some(k) =>
           match parse_linear_form(arg, x, var_name) {
-            Some(form) => Some(LinearAtom::{ kind: k, form })
+            Some(form) => Some({ kind: k, form })
             None => None
           }
         None => None
@@ -208,23 +206,17 @@ fn parse_linear_atom(
 
 ///|
 fn form_add(a : LinearForm, b : LinearForm) -> LinearForm {
-  LinearForm::{
-    coeff: expr_add(a.coeff, b.coeff),
-    shift: expr_add(a.shift, b.shift),
-  }
+  { coeff: expr_add(a.coeff, b.coeff), shift: expr_add(a.shift, b.shift) }
 }
 
 ///|
 fn form_sub(a : LinearForm, b : LinearForm) -> LinearForm {
-  LinearForm::{
-    coeff: expr_sub(a.coeff, b.coeff),
-    shift: expr_sub(a.shift, b.shift),
-  }
+  { coeff: expr_sub(a.coeff, b.coeff), shift: expr_sub(a.shift, b.shift) }
 }
 
 ///|
 fn form_neg(a : LinearForm) -> LinearForm {
-  LinearForm::{ coeff: expr_neg(a.coeff), shift: expr_neg(a.shift) }
+  { coeff: expr_neg(a.coeff), shift: expr_neg(a.shift) }
 }
 
 ///|
@@ -261,8 +253,8 @@ fn exact_rational_pow(
 ///|
 fn exact_numeric_value(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
-    @symcore.Expr::Add(args) => {
+    Number(n) => Some(n)
+    Add(args) => {
       let mut acc = @symnum.BigRational::zero()
       for arg in args {
         match exact_numeric_value(arg) {
@@ -272,7 +264,7 @@ fn exact_numeric_value(expr : @symcore.Expr) -> @symnum.BigRational? {
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = @symnum.BigRational::one()
       for arg in args {
         match exact_numeric_value(arg) {
@@ -282,7 +274,7 @@ fn exact_numeric_value(expr : @symcore.Expr) -> @symnum.BigRational? {
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (exact_numeric_value(base), exact_numeric_value(exp)) {
         (Some(base_value), Some(exp_value)) if exp_value.is_integral() => {
           let num = exp_value.numerator()
@@ -294,7 +286,7 @@ fn exact_numeric_value(expr : @symcore.Expr) -> @symnum.BigRational? {
         }
         _ => None
       }
-    @symcore.Expr::Float(f) =>
+    Float(f) =>
       if !f.is_finite() {
         None
       } else {
@@ -309,7 +301,7 @@ fn exact_numeric_value(expr : @symcore.Expr) -> @symnum.BigRational? {
             }
         }
       }
-    @symcore.Expr::ComplexFloat(z) =>
+    ComplexFloat(z) =>
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
@@ -346,30 +338,27 @@ fn expr_is_int_value(expr : @symcore.Expr) -> Int? {
 ///|
 fn expr_contains_pi(expr : @symcore.Expr) -> Bool {
   match @symcore.number_symbol_kind(expr) {
-    Some(@symcore.NumberSymbolKind::Pi) => true
+    Some(Pi) => true
     _ =>
       match expr {
-        @symcore.Expr::Add(args)
-        | @symcore.Expr::Mul(args)
-        | @symcore.Expr::Tuple(args)
-        | @symcore.Expr::Apply(_, args) => args.any(expr_contains_pi)
-        @symcore.Expr::Dict(items) =>
+        Add(args) | Mul(args) | Tuple(args) | Apply(_, args) =>
+          args.any(expr_contains_pi)
+        Dict(items) =>
           items.any(fn(item) {
             let (key, value) = item
             expr_contains_pi(key) || expr_contains_pi(value)
           })
-        @symcore.Expr::Pow(base, exp) | @symcore.Expr::Mod(base, exp) =>
+        Pow(base, exp) | Mod(base, exp) =>
           expr_contains_pi(base) || expr_contains_pi(exp)
-        @symcore.Expr::Relational(_, lhs, rhs) =>
+        Relational(_, lhs, rhs) =>
           expr_contains_pi(lhs) || expr_contains_pi(rhs)
-        @symcore.Expr::Derivative(inner, deriv_args) =>
+        Derivative(inner, deriv_args) =>
           expr_contains_pi(inner) || deriv_args.any(expr_contains_pi)
-        @symcore.Expr::Subs(inner, variable, value) =>
+        Subs(inner, variable, value) =>
           expr_contains_pi(inner) ||
           expr_contains_pi(variable) ||
           expr_contains_pi(value)
-        @symcore.Expr::Lambda(vars, body) =>
-          expr_contains_pi(vars) || expr_contains_pi(body)
+        Lambda(vars, body) => expr_contains_pi(vars) || expr_contains_pi(body)
         _ =>
           match @symcore.application_args(expr) {
             Some(args) => args.any(expr_contains_pi)
@@ -382,22 +371,16 @@ fn expr_contains_pi(expr : @symcore.Expr) -> Bool {
 ///|
 fn parse_pi_term(expr : @symcore.Expr) -> (@symnum.BigRational, @symcore.Expr)? {
   match @symcore.number_symbol_kind(expr) {
-    Some(@symcore.NumberSymbolKind::Pi) =>
-      Some((@symnum.BigRational::one(), @symcore.int(0)))
+    Some(Pi) => Some((@symnum.BigRational::one(), @symcore.int(0)))
     _ =>
       match expr {
-        @symcore.Expr::Mul(args) => {
+        Mul(args) => {
           let mut coeff = @symnum.BigRational::one()
           let rest : Array[@symcore.Expr] = []
           let mut saw_pi = false
           for factor in args {
             match @symcore.number_symbol_kind(factor) {
-              Some(@symcore.NumberSymbolKind::Pi) =>
-                if saw_pi {
-                  return None
-                } else {
-                  saw_pi = true
-                }
+              Some(Pi) => if saw_pi { return None } else { saw_pi = true }
               _ =>
                 match exact_numeric_value(factor) {
                   Some(value) => coeff = coeff.mul_r(value)
@@ -428,7 +411,7 @@ fn parse_pi_shift(
   expr : @symcore.Expr,
 ) -> (@symnum.BigRational, @symcore.Expr)? {
   match expr {
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let mut coeff = @symnum.BigRational::zero()
       let rest : Array[@symcore.Expr] = []
       for term in args {
@@ -547,9 +530,9 @@ fn simplify_trig_boundary_value(
 ///|
 fn simplify_boundary_expr(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Add(args) => @symcore.add(args.map(simplify_boundary_expr))
-    @symcore.Expr::Mul(args) => @symcore.mul(args.map(simplify_boundary_expr))
-    @symcore.Expr::Pow(base, exp) =>
+    Add(args) => @symcore.add(args.map(simplify_boundary_expr))
+    Mul(args) => @symcore.mul(args.map(simplify_boundary_expr))
+    Pow(base, exp) =>
       @symcore.pow(simplify_boundary_expr(base), simplify_boundary_expr(exp))
     _ =>
       match (@symcore.application_name(expr), @symcore.application_args(expr)) {
@@ -558,8 +541,7 @@ fn simplify_boundary_expr(expr : @symcore.Expr) -> @symcore.Expr {
           match name {
             "sin" | "cos" => simplify_trig_boundary_value(name, lowered)
             _ =>
-              match
-                @symcore.apply(@symcore.Expr::FunctionHead(name), [lowered]) {
+              match @symcore.apply(FunctionHead(name), [lowered]) {
                 Some(applied) => applied
                 None => expr
               }
@@ -567,10 +549,7 @@ fn simplify_boundary_expr(expr : @symcore.Expr) -> @symcore.Expr {
         }
         (Some(name), Some(args)) =>
           match
-            @symcore.apply(
-              @symcore.Expr::FunctionHead(name),
-              args.map(simplify_boundary_expr),
-            ) {
+            @symcore.apply(FunctionHead(name), args.map(simplify_boundary_expr)) {
             Some(applied) => applied
             None => expr
           }
@@ -635,11 +614,11 @@ fn integrate_linear_atom_antiderivative(
     return expr_mul(atom_expr(atom, x), x)
   }
   match atom.kind {
-    AtomKind::Sin => expr_neg(expr_div(@symcore.function("cos", [arg]), c))
-    AtomKind::Cos => expr_div(@symcore.function("sin", [arg]), c)
-    AtomKind::Exp => expr_div(@symcore.function("exp", [arg]), c)
-    AtomKind::Sinh => expr_div(@symcore.function("cosh", [arg]), c)
-    AtomKind::Cosh => expr_div(@symcore.function("sinh", [arg]), c)
+    Sin => expr_neg(expr_div(@symcore.function("cos", [arg]), c))
+    Cos => expr_div(@symcore.function("sin", [arg]), c)
+    Exp => expr_div(@symcore.function("exp", [arg]), c)
+    Sinh => expr_div(@symcore.function("cosh", [arg]), c)
+    Cosh => expr_div(@symcore.function("sinh", [arg]), c)
   }
 }
 
@@ -803,11 +782,11 @@ fn integral_poly_atom(
       continue
     }
     let anti = match atom.kind {
-      AtomKind::Sin => int_pow_sin_form(i, atom.form, x)
-      AtomKind::Cos => int_pow_cos_form(i, atom.form, x)
-      AtomKind::Exp => int_pow_exp_form(i, atom.form, x)
-      AtomKind::Sinh => int_pow_sinh_form(i, atom.form, x)
-      AtomKind::Cosh => int_pow_cosh_form(i, atom.form, x)
+      Sin => int_pow_sin_form(i, atom.form, x)
+      Cos => int_pow_cos_form(i, atom.form, x)
+      Exp => int_pow_exp_form(i, atom.form, x)
+      Sinh => int_pow_sinh_form(i, atom.form, x)
+      Cosh => int_pow_cosh_form(i, atom.form, x)
     }
     let scaled = expr_mul(coeff, anti)
     let at_b = eval_at(scaled, var_name, b)
@@ -825,7 +804,7 @@ fn expand_atom_pair(
 ) -> @symcore.Expr? {
   let half = rational_expr(1, 2)
   match (left.kind, right.kind) {
-    (AtomKind::Sin, AtomKind::Sin) => {
+    (Sin, Sin) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
       Some(
@@ -838,7 +817,7 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Cos, AtomKind::Cos) => {
+    (Cos, Cos) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
       Some(
@@ -851,7 +830,7 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Sin, AtomKind::Cos) => {
+    (Sin, Cos) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
       Some(
@@ -864,7 +843,7 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Cos, AtomKind::Sin) => {
+    (Cos, Sin) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
       Some(
@@ -877,11 +856,11 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Exp, AtomKind::Exp) => {
+    (Exp, Exp) => {
       let form = form_add(left.form, right.form)
       Some(@symcore.function("exp", [linear_arg(form, x)]))
     }
-    (AtomKind::Exp, AtomKind::Sinh) => {
+    (Exp, Sinh) => {
       let sum = form_add(left.form, right.form)
       let diff = form_sub(left.form, right.form)
       Some(
@@ -894,7 +873,7 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Exp, AtomKind::Cosh) => {
+    (Exp, Cosh) => {
       let sum = form_add(left.form, right.form)
       let diff = form_sub(left.form, right.form)
       Some(
@@ -907,7 +886,7 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Sinh, AtomKind::Exp) => {
+    (Sinh, Exp) => {
       let sum = form_add(left.form, right.form)
       let diff = form_sub(right.form, left.form)
       Some(
@@ -920,7 +899,7 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Cosh, AtomKind::Exp) => {
+    (Cosh, Exp) => {
       let sum = form_add(left.form, right.form)
       let diff = form_sub(right.form, left.form)
       Some(
@@ -933,7 +912,7 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Sinh, AtomKind::Sinh) => {
+    (Sinh, Sinh) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
       Some(
@@ -946,7 +925,7 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Cosh, AtomKind::Cosh) => {
+    (Cosh, Cosh) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
       Some(
@@ -959,7 +938,7 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Sinh, AtomKind::Cosh) => {
+    (Sinh, Cosh) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
       Some(
@@ -972,7 +951,7 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Cosh, AtomKind::Sinh) => {
+    (Cosh, Sinh) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
       Some(
@@ -985,7 +964,7 @@ fn expand_atom_pair(
         ),
       )
     }
-    (AtomKind::Sinh, AtomKind::Sin) => {
+    (Sinh, Sin) => {
       let plus = @symcore.function("exp", [linear_arg(left.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(left.form), x)])
       let trig = @symcore.function("sin", [linear_arg(right.form, x)])
@@ -993,7 +972,7 @@ fn expand_atom_pair(
         expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))),
       )
     }
-    (AtomKind::Sinh, AtomKind::Cos) => {
+    (Sinh, Cos) => {
       let plus = @symcore.function("exp", [linear_arg(left.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(left.form), x)])
       let trig = @symcore.function("cos", [linear_arg(right.form, x)])
@@ -1001,7 +980,7 @@ fn expand_atom_pair(
         expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))),
       )
     }
-    (AtomKind::Cosh, AtomKind::Sin) => {
+    (Cosh, Sin) => {
       let plus = @symcore.function("exp", [linear_arg(left.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(left.form), x)])
       let trig = @symcore.function("sin", [linear_arg(right.form, x)])
@@ -1009,7 +988,7 @@ fn expand_atom_pair(
         expr_mul(half, expr_add(expr_mul(plus, trig), expr_mul(minus, trig))),
       )
     }
-    (AtomKind::Cosh, AtomKind::Cos) => {
+    (Cosh, Cos) => {
       let plus = @symcore.function("exp", [linear_arg(left.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(left.form), x)])
       let trig = @symcore.function("cos", [linear_arg(right.form, x)])
@@ -1017,7 +996,7 @@ fn expand_atom_pair(
         expr_mul(half, expr_add(expr_mul(plus, trig), expr_mul(minus, trig))),
       )
     }
-    (AtomKind::Sin, AtomKind::Sinh) => {
+    (Sin, Sinh) => {
       let plus = @symcore.function("exp", [linear_arg(right.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(right.form), x)])
       let trig = @symcore.function("sin", [linear_arg(left.form, x)])
@@ -1025,7 +1004,7 @@ fn expand_atom_pair(
         expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))),
       )
     }
-    (AtomKind::Cos, AtomKind::Sinh) => {
+    (Cos, Sinh) => {
       let plus = @symcore.function("exp", [linear_arg(right.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(right.form), x)])
       let trig = @symcore.function("cos", [linear_arg(left.form, x)])
@@ -1033,7 +1012,7 @@ fn expand_atom_pair(
         expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))),
       )
     }
-    (AtomKind::Sin, AtomKind::Cosh) => {
+    (Sin, Cosh) => {
       let plus = @symcore.function("exp", [linear_arg(right.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(right.form), x)])
       let trig = @symcore.function("sin", [linear_arg(left.form, x)])
@@ -1041,7 +1020,7 @@ fn expand_atom_pair(
         expr_mul(half, expr_add(expr_mul(plus, trig), expr_mul(minus, trig))),
       )
     }
-    (AtomKind::Cos, AtomKind::Cosh) => {
+    (Cos, Cosh) => {
       let plus = @symcore.function("exp", [linear_arg(right.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(right.form), x)])
       let trig = @symcore.function("cos", [linear_arg(left.form, x)])
@@ -1071,12 +1050,12 @@ fn integrate_exp_trig_pair(
     @symcore.pow(tc, @symcore.int(2)),
   )
   let comb = match trig_atom.kind {
-    AtomKind::Sin =>
+    Sin =>
       expr_sub(
         expr_mul(ea, @symcore.function("sin", [trig_arg])),
         expr_mul(tc, @symcore.function("cos", [trig_arg])),
       )
-    AtomKind::Cos =>
+    Cos =>
       expr_add(
         expr_mul(ea, @symcore.function("cos", [trig_arg])),
         expr_mul(tc, @symcore.function("sin", [trig_arg])),
@@ -1096,7 +1075,7 @@ fn integrate_expr(
   b : @symcore.Expr,
 ) -> @symcore.Expr? {
   match expr {
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let mut acc = @symcore.int(0)
       for term in args {
         match integrate_expr(term, x, var_name, a, b) {
@@ -1106,10 +1085,10 @@ fn integrate_expr(
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       for i in 0..<args.length() {
         match args[i] {
-          @symcore.Expr::Add(terms) => {
+          Add(terms) => {
             let mut acc = @symcore.int(0)
             for term in terms {
               let factors = args.copy()
@@ -1178,14 +1157,14 @@ fn integrate_expr(
         let left = dep_atoms[0]
         let right = dep_atoms[1]
         match (left.kind, right.kind) {
-          (AtomKind::Exp, AtomKind::Sin) | (AtomKind::Exp, AtomKind::Cos) =>
+          (Exp, Sin) | (Exp, Cos) =>
             return Some(
               expr_mul(
                 coeff,
                 integrate_exp_trig_pair(left, right, x, var_name, a, b),
               ),
             )
-          (AtomKind::Sin, AtomKind::Exp) | (AtomKind::Cos, AtomKind::Exp) =>
+          (Sin, Exp) | (Cos, Exp) =>
             return Some(
               expr_mul(
                 coeff,
@@ -1210,7 +1189,7 @@ fn integrate_expr(
       let merged = expr_mul(coeff, @symcore.mul(rest_factors))
       integrate_expr(merged, x, var_name, a, b)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (parse_linear_atom(base, x, var_name), expr_is_int_value(exp)) {
         (Some(atom), Some(2)) =>
           match expand_atom_pair(atom, atom, x) {
@@ -1251,7 +1230,7 @@ pub fn fourier_series(
 ) -> FourierSeriesResult raise {
   let _ = finite
   if limits.is_empty() {
-    return FourierSeriesResult::Expr(expr)
+    return Expr(expr)
   }
   if limits.length() != 3 {
     fail("fourier_series requires limits (x, a, b)")
@@ -1260,13 +1239,13 @@ pub fn fourier_series(
   let a = limits[1]
   let b = limits[2]
   let var_name = match x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("fourier variable must be a Symbol")
   }
   if !depends_on(expr, var_name) {
-    return FourierSeriesResult::Expr(expr)
+    return Expr(expr)
   }
-  FourierSeriesResult::Series(FourierSeries::{ expr, x, a, b })
+  Series({ expr, x, a, b })
 }
 
 ///|
@@ -1309,7 +1288,7 @@ fn FourierSeries::norm_factor(self : FourierSeries) -> @symcore.Expr {
 
 ///|
 fn FourierSeries::omega(self : FourierSeries, n : Int) -> @symcore.Expr {
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let minus_pi = @symcore.mul([@symcore.int(-1), pi])
   let two_pi = @symcore.mul([@symcore.int(2), pi])
   if (self.a == minus_pi && self.b == pi) ||
@@ -1329,7 +1308,7 @@ fn FourierSeries::omega(self : FourierSeries, n : Int) -> @symcore.Expr {
 /// - Limits: Raises if the stored variable is not a Symbol; unsupported integrals are left as definite integral expressions.
 pub fn FourierSeries::a0(self : FourierSeries) -> @symcore.Expr raise {
   let var_name = match self.x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("fourier variable must be a Symbol")
   }
   match integrate_expr(self.expr, self.x, var_name, self.a, self.b) {
@@ -1354,7 +1333,7 @@ pub fn FourierSeries::an(self : FourierSeries, n : Int) -> @symcore.Expr raise {
     return @symcore.int(0)
   }
   let var_name = match self.x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("fourier variable must be a Symbol")
   }
   let basis = @symcore.function("cos", [expr_mul(self.omega(n), self.x)])
@@ -1381,7 +1360,7 @@ pub fn FourierSeries::bn(self : FourierSeries, n : Int) -> @symcore.Expr raise {
     return @symcore.int(0)
   }
   let var_name = match self.x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("fourier variable must be a Symbol")
   }
   let basis = @symcore.function("sin", [expr_mul(self.omega(n), self.x)])
@@ -1474,7 +1453,7 @@ pub fn FourierSeries::sigma_approximation(
     return @symcore.int(0)
   }
   let mut acc = @symcore.int(0)
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let mut i = 0
   while i < n {
     let term = self.term(i)
@@ -1503,7 +1482,7 @@ pub fn FourierSeries::shift(
   amount : @symcore.Expr,
 ) -> FourierSeries {
   let var_name = match self.x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => ""
   }
   if var_name == "" {
@@ -1512,7 +1491,7 @@ pub fn FourierSeries::shift(
   let env : Map[String, @symcore.Expr] = Map([])
   env[var_name] = @symcore.add([self.x, amount])
   let new_expr = @symcore.subst(self.expr, env)
-  FourierSeries::{ expr: new_expr, x: self.x, a: self.a, b: self.b }
+  { expr: new_expr, x: self.x, a: self.a, b: self.b }
 }
 
 ///|
@@ -1541,7 +1520,7 @@ pub fn FourierSeries::scale(
   factor : @symcore.Expr,
 ) -> FourierSeries {
   let new_expr = expr_mul(factor, self.expr)
-  FourierSeries::{ expr: new_expr, x: self.x, a: self.a, b: self.b }
+  { expr: new_expr, x: self.x, a: self.a, b: self.b }
 }
 
 ///|
@@ -1556,7 +1535,7 @@ pub fn FourierSeries::scalex(
   factor : @symcore.Expr,
 ) -> FourierSeries {
   let var_name = match self.x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => ""
   }
   if var_name == "" {
@@ -1565,5 +1544,5 @@ pub fn FourierSeries::scalex(
   let env : Map[String, @symcore.Expr] = Map([])
   env[var_name] = expr_mul(factor, self.x)
   let new_expr = @symcore.subst(self.expr, env)
-  FourierSeries::{ expr: new_expr, x: self.x, a: self.a, b: self.b }
+  { expr: new_expr, x: self.x, a: self.a, b: self.b }
 }

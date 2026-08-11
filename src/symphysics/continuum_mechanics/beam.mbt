@@ -38,14 +38,14 @@ pub fn beam(
   length : @symcore.Expr,
   elastic_modulus : @symcore.Expr,
   second_moment : @symcore.Expr,
-  area? : @symcore.Expr = @symcore.Expr::Symbol("A"),
-  variable? : @symcore.Expr = @symcore.Expr::Symbol("x"),
+  area? : @symcore.Expr = Symbol("A"),
+  variable? : @symcore.Expr = Symbol("x"),
   base_char? : String = "C",
 ) -> Beam raise BeamError {
-  guard variable is @symcore.Expr::Symbol(_) else {
-    raise BeamError::TypeError("beam variable should be a symbol")
+  guard variable is Symbol(_) else {
+    raise TypeError("beam variable should be a symbol")
   }
-  Beam::{
+  {
     length_: length,
     elastic_modulus_: elastic_modulus,
     second_moment_: second_moment,
@@ -66,14 +66,14 @@ pub fn beam(
 ///|
 fn beam_var_name(beam : Beam) -> String {
   match beam.variable_ {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => "x"
   }
 }
 
 ///|
 fn beam_support_symbol(loc : @symcore.Expr, prefix : String) -> @symcore.Expr {
-  @symcore.Expr::Symbol(prefix + @symprint.pretty_string(loc))
+  Symbol(prefix + @symprint.pretty_string(loc))
 }
 
 ///|
@@ -117,7 +117,7 @@ fn beam_end_terms(
   var_expr : @symcore.Expr,
 ) -> Array[@symcore.Expr] raise BeamError {
   if order < 0 {
-    raise BeamError::ValueError(
+    raise ValueError(
       "end is only valid for distributed loads with nonnegative order",
     )
   }
@@ -199,7 +199,7 @@ fn beam_solve_constant_system(
     return Some({})
   }
   cm_linear_solve(eqs, beam_unique_exprs(unknowns)) catch {
-    _ => raise BeamError::SolveError("unable to determine beam constants")
+    _ => raise SolveError("unable to determine beam constants")
   }
 }
 
@@ -253,8 +253,8 @@ pub fn Beam::set_variable(
   self : Beam,
   value : @symcore.Expr,
 ) -> Unit raise BeamError {
-  guard value is @symcore.Expr::Symbol(_) else {
-    raise BeamError::TypeError("beam variable should be a symbol")
+  guard value is Symbol(_) else {
+    raise TypeError("beam variable should be a symbol")
   }
   self.variable_ = value
 }
@@ -377,7 +377,7 @@ pub fn Beam::remove_load(
     }
   }
   guard removed else {
-    raise BeamError::ValueError("no such load distribution exists on the beam")
+    raise ValueError("no such load distribution exists on the beam")
   }
   self.applied_loads_ = []
   self.load_ = @symcore.int(0)
@@ -393,7 +393,7 @@ pub fn Beam::apply_support(
   kind? : String = "fixed",
 ) -> Array[@symcore.Expr] raise BeamError {
   guard kind == "fixed" || kind == "pin" || kind == "roller" else {
-    raise BeamError::ValueError("support type must be fixed, pin, or roller")
+    raise ValueError("support type must be fixed, pin, or roller")
   }
   let force = beam_support_symbol(loc, "R_")
   self.applied_support_symbols_.push(force)
@@ -506,14 +506,14 @@ pub fn Beam::solve_for_reaction_loads(
   }
   let unknowns = [c3, c4] + all_reactions
   let maybe_solution = cm_linear_solve(equations, unknowns) catch {
-    _ => raise BeamError::SolveError("unable to solve beam reactions")
+    _ => raise SolveError("unable to solve beam reactions")
   }
   match maybe_solution {
     Some(solution) => {
       self.reaction_loads_ = {}
       for reaction in all_reactions {
         match reaction {
-          @symcore.Expr::Symbol(name) =>
+          Symbol(name) =>
             self.reaction_loads_[name] = cm_simplify(
               solution.get(name).unwrap_or(@symcore.int(0)),
             )
@@ -522,6 +522,6 @@ pub fn Beam::solve_for_reaction_loads(
       }
       self.load_ = beam_substitute_map(self.load_, solution)
     }
-    None => raise BeamError::SolveError("unable to solve beam reactions")
+    None => raise SolveError("unable to solve beam reactions")
   }
 }

@@ -8,28 +8,28 @@
 /// representations in the number basis.
 
 ///|
-pub let sho_omega : Expr = Expr::Symbol("omega")
+pub let sho_omega : Expr = Symbol("omega")
 
 ///|
-pub let sho_mass : Expr = Expr::Symbol("m")
+pub let sho_mass : Expr = Symbol("m")
 
 ///|
-pub fn raising_op(label? : Expr = Expr::Symbol("a")) -> Expr {
+pub fn raising_op(label? : Expr = Symbol("a")) -> Expr {
   @symcore.raw_function("RaisingOp", [label])
 }
 
 ///|
-pub fn lowering_op(label? : Expr = Expr::Symbol("a")) -> Expr {
+pub fn lowering_op(label? : Expr = Symbol("a")) -> Expr {
   @symcore.raw_function("LoweringOp", [label])
 }
 
 ///|
-pub fn number_op(label? : Expr = Expr::Symbol("N")) -> Expr {
+pub fn number_op(label? : Expr = Symbol("N")) -> Expr {
   @symcore.raw_function("NumberOp", [label])
 }
 
 ///|
-pub fn sho_hamiltonian(label? : Expr = Expr::Symbol("H")) -> Expr {
+pub fn sho_hamiltonian(label? : Expr = Symbol("H")) -> Expr {
   @symcore.raw_function("Hamiltonian", [label])
 }
 
@@ -60,10 +60,7 @@ fn sho_xp_prefactor() -> Expr {
 pub fn sho_rewrite_as_xp(expr : Expr) -> Expr {
   let xp_scale = sho_xp_prefactor()
   let x_term = sho_mass * sho_omega * x_op()
-  let px_term = @symcore.Expr::NumberSymbol(
-      @symcore.NumberSymbolKind::ImaginaryUnit,
-    ) *
-    px_op()
+  let px_term = @symcore.Expr::NumberSymbol(ImaginaryUnit) * px_op()
   let px_sq = @symcore.raw_pow(px_op(), int(2))
   let x_sq = @symcore.raw_pow(sho_mass * sho_omega * x_op(), int(2))
   if quantum_expr_has_name(expr, "RaisingOp") {
@@ -144,7 +141,7 @@ pub fn sho_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
 ///|
 fn sho_n_value(expr : Expr) -> Int? {
   match expr {
-    Expr::Number(n) if n.is_integral() && n.numerator().to_int() >= 0 =>
+    Number(n) if n.is_integral() && n.numerator().to_int() >= 0 =>
       Some(n.numerator().to_int())
     _ => None
   }
@@ -165,9 +162,7 @@ fn sho_number_basis_matrix(
   ndim : Int,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   guard ndim > 0 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "ndim must be positive for SHO representations",
-    )
+    raise ValueError("ndim must be positive for SHO representations")
   }
   let rows = sho_zero_matrix(ndim)
   match quantum_expr_args(expr) {
@@ -199,11 +194,7 @@ fn sho_number_basis_matrix(
     Some([n_expr]) if quantum_expr_has_name(expr, "SHOKet") =>
       match sho_n_value(n_expr) {
         Some(n) => {
-          guard n < ndim else {
-            raise @symphysics.PhysicsError::IndexError(
-              "state index exceeds ndim",
-            )
-          }
+          guard n < ndim else { raise IndexError("state index exceeds ndim") }
           let out : Array[Array[Expr]] = []
           for i in 0..<ndim {
             out.push([if i == n { int(1) } else { int(0) }])
@@ -211,31 +202,24 @@ fn sho_number_basis_matrix(
           @symphysics.explicit_matrix_from_rows(out)
         }
         None =>
-          raise @symphysics.PhysicsError::ValueError(
+          raise ValueError(
             "SHOKet representation needs a concrete nonnegative integer index",
           )
       }
     Some([n_expr]) if quantum_expr_has_name(expr, "SHOBra") =>
       match sho_n_value(n_expr) {
         Some(n) => {
-          guard n < ndim else {
-            raise @symphysics.PhysicsError::IndexError(
-              "state index exceeds ndim",
-            )
-          }
+          guard n < ndim else { raise IndexError("state index exceeds ndim") }
           let row = Array::make(ndim, int(0))
           row[n] = int(1)
           @symphysics.explicit_matrix_from_rows([row])
         }
         None =>
-          raise @symphysics.PhysicsError::ValueError(
+          raise ValueError(
             "SHOBra representation needs a concrete nonnegative integer index",
           )
       }
-    _ =>
-      raise @symphysics.PhysicsError::ValueError(
-        "unsupported SHO number-basis object",
-      )
+    _ => raise ValueError("unsupported SHO number-basis object")
   }
 }
 
@@ -259,7 +243,7 @@ pub fn sho_represent(
     quantum_expr_has_name(expr, "SHOKet") ||
     quantum_expr_has_name(expr, "SHOBra") {
     let matrix = sho_number_basis_matrix(expr, ndim)
-    Some(MatrixScalarValue::Matrix(matrix))
+    Some(Matrix(matrix))
   } else {
     None
   }

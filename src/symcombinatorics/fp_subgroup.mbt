@@ -24,7 +24,7 @@ fn minword_is_subword(
   if r.is_identity() || normal {
     for m in min_words {
       match m {
-        MinWord::Word(v) => if v == word { return true }
+        Word(v) => if v == word { return true }
         _ => ()
       }
     }
@@ -33,7 +33,7 @@ fn minword_is_subword(
   let fams : Array[FreeGroupElement] = Array::new()
   for m in min_words {
     match m {
-      MinWord::Family(r0, p) => if r0 == r { fams.push(p) }
+      Family(r0, p) => if r0 == r { fams.push(p) }
       _ => ()
     }
   }
@@ -112,9 +112,9 @@ fn minword_process(
 ) -> Array[MinWord] raise CombinatoricsError {
   let (p, r) = w.cyclic_reduction_removed()
   if !r.is_identity() {
-    [MinWord::Family(r, p)]
+    [Family(r, p)]
   } else {
-    [MinWord::Word(w), MinWord::Word(w.inverse())]
+    [Word(w), Word(w.inverse())]
   }
 }
 
@@ -125,7 +125,7 @@ pub fn FpSubgroup::contains(
   g0 : FreeGroupElement,
 ) -> Bool raise CombinatoricsError {
   match self.parent {
-    SubgroupParent::Free(_) => {
+    Free(_) => {
       if self.min_words is None {
         let gens_list : Array[MinWord] = Array::new()
         for w0 in self.generators {
@@ -146,22 +146,20 @@ pub fn FpSubgroup::contains(
               continue
             }
             let (s1, s2) = match w1 {
-              MinWord::Family(r, _) =>
-                (r.letter_at(0), r.letter_at(0).inverse())
-              MinWord::Word(w) => (w.letter_at(0), w.letter_at(w.length() - 1))
+              Family(r, _) => (r.letter_at(0), r.letter_at(0).inverse())
+              Word(w) => (w.letter_at(0), w.letter_at(w.length() - 1))
             }
             let (r1, r2) = match w2 {
-              MinWord::Family(r, _) =>
-                (r.letter_at(0), r.letter_at(0).inverse())
-              MinWord::Word(w) => (w.letter_at(0), w.letter_at(w.length() - 1))
+              Family(r, _) => (r.letter_at(0), r.letter_at(0).inverse())
+              Word(w) => (w.letter_at(0), w.letter_at(w.length() - 1))
             }
             let p1 = match w1 {
-              MinWord::Family(r, p) => r.mul(p).mul(r.inverse())
-              MinWord::Word(w) => w
+              Family(r, p) => r.mul(p).mul(r.inverse())
+              Word(w) => w
             }
             let p2 = match w2 {
-              MinWord::Family(r, p) => r.mul(p).mul(r.inverse())
-              MinWord::Word(w) => w
+              Family(r, p) => r.mul(p).mul(r.inverse())
+              Word(w) => w
             }
             if r1.inverse() == s2 && !p1.mul(p2).is_identity() {
               let new_words = minword_process(p1.mul(p2))
@@ -190,7 +188,7 @@ pub fn FpSubgroup::contains(
       let g = if self.normal { g0.cyclic_reduction() } else { g0 }
       return minword_break(min_words, known, g, self.normal)
     }
-    SubgroupParent::Fp(parent) => {
+    Fp(parent) => {
       if self.coset_table is None {
         let coset_table = parent.coset_enumeration(self.generators)
         self.coset_table = Some(coset_table)
@@ -216,20 +214,19 @@ pub fn FpSubgroup::order(
   self : FpSubgroup,
 ) -> GroupOrder raise CombinatoricsError {
   if self.generators.is_empty() {
-    return GroupOrder::Finite(1)
+    return Finite(1)
   }
   match self.parent {
-    SubgroupParent::Free(_) => GroupOrder::Infinite
-    SubgroupParent::Fp(parent) => {
+    Free(_) => Infinite
+    Fp(parent) => {
       if self.coset_table is None {
         let coset_table = parent.coset_enumeration(self.generators)
         self.coset_table = Some(coset_table)
       }
       let coset_table = self.coset_table.unwrap()
       match parent.order() {
-        GroupOrder::Finite(n) =>
-          GroupOrder::Finite(n / coset_table.table.length())
-        GroupOrder::Infinite => GroupOrder::Infinite
+        Finite(n) => Finite(n / coset_table.table.length())
+        Infinite => Infinite
       }
     }
   }
@@ -241,7 +238,7 @@ pub fn FpSubgroup::to_fp_group(
   self : FpSubgroup,
 ) -> FpGroup raise CombinatoricsError {
   match self.parent {
-    SubgroupParent::Free(_) => {
+    Free(_) => {
       let names : Array[String] = Array::new()
       for i in 0..<self.generators.length() {
         names.push("x_\{i}")
@@ -249,7 +246,7 @@ pub fn FpSubgroup::to_fp_group(
       let (free_group, _) = free_group_from_array(names)
       FpGroup::new(free_group, [])
     }
-    SubgroupParent::Fp(parent) =>
+    Fp(parent) =>
       match self.coset_table {
         Some(ct) => parent.subgroup(self.generators, draft=ct)
         None => parent.subgroup(self.generators)
@@ -263,12 +260,12 @@ pub impl Show for FpSubgroup with fn to_string(self) -> String {
   if self.generators.length() > 30 {
     "<fp subgroup with \{self.generators.length()} generators>"
   } else {
-    let gens = self.generators.map(g => g.to_string()).join(", ")
+    let gens = self.generators.map(g => Show::to_string(g)).join(", ")
     "<fp subgroup on the generators (\{gens})>"
   }
 }
 
 ///|
 pub impl Show for FpSubgroup with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }

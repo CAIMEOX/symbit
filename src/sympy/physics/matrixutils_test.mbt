@@ -9,8 +9,8 @@ test "physics.quantum.matrixutils: tensor product and scalar flattening" {
   )
 
   let scalar = flatten_scalar(@symphysics.explicit_matrix_from_ints([[3]]))
-  inspect(scalar.to_string(), content="3")
+  inspect(Show::to_string(scalar), content="3")
 
   let zero_value = matrix_to_zero(matrix_zeros(2, 3))
-  inspect(zero_value.to_string(), content="0")
+  inspect(Show::to_string(zero_value), content="0")
 }

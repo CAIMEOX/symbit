@@ -50,7 +50,7 @@ pub fn sympy_dict_to_dm(
   syms : Array[String],
 ) -> SDM raise PolyError {
   if eqs_coeffs.length() != eqs_rhs.length() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let sym2index : Map[String, Int] = Map([])
   for i in 0..<syms.length() {
@@ -66,7 +66,7 @@ pub fn sympy_dict_to_dm(
           row_items.push((col, coeff))
           flat_exprs.push(coeff)
         }
-        None => raise PolyError::DomainMismatch
+        None => raise DomainMismatch
       }
     }
     let neg_rhs = int(0) - eqs_rhs[i]
@@ -129,7 +129,7 @@ pub fn eqs_to_matrix(
 ///|
 fn expr_is_zero(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(q) => q.is_zero()
+    Number(q) => q.is_zero()
     _ => false
   }
 }
@@ -137,11 +137,11 @@ fn expr_is_zero(expr : Expr) -> Bool {
 ///|
 fn expr_has_floating_leaf(expr : Expr) -> Bool {
   match expr {
-    Expr::Float(_) | Expr::ComplexFloat(_) => true
-    Expr::Add(args) | Expr::Mul(args) => args.any(expr_has_floating_leaf)
+    Float(_) | ComplexFloat(_) => true
+    Add(args) | Mul(args) => args.any(expr_has_floating_leaf)
     _ if @symcore.application_parts(expr) is Some(_) =>
       @symcore.application_args(expr).unwrap_or([]).any(expr_has_floating_leaf)
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       expr_has_floating_leaf(base) || expr_has_floating_leaf(exp)
     _ => false
   }
@@ -150,20 +150,13 @@ fn expr_has_floating_leaf(expr : Expr) -> Bool {
 ///|
 fn linsolve_numeric_prec_expr(expr : Expr) -> Int {
   match @symcore.number_symbol_kind(expr) {
-    Some(
-      @symcore.NumberSymbolKind::ImaginaryUnit
-      | @symcore.NumberSymbolKind::Pi
-      | @symcore.NumberSymbolKind::Exp1
-      | @symcore.NumberSymbolKind::EulerGamma
-      | @symcore.NumberSymbolKind::GoldenRatio
-      | @symcore.NumberSymbolKind::Catalan
-    ) => 80
+    Some(ImaginaryUnit | Pi | Exp1 | EulerGamma | GoldenRatio | Catalan) => 80
     _ =>
       match expr {
-        Expr::Float(f) => f.precision()
-        Expr::ComplexFloat(z) => z.precision()
-        Expr::Number(_) => 80
-        Expr::Add(args) | Expr::Mul(args) => {
+        Float(f) => f.precision()
+        ComplexFloat(z) => z.precision()
+        Number(_) => 80
+        Add(args) | Mul(args) => {
           let mut best = 0
           for arg in args {
             let p = linsolve_numeric_prec_expr(arg)
@@ -183,7 +176,7 @@ fn linsolve_numeric_prec_expr(expr : Expr) -> Int {
           }
           best
         }
-        Expr::Pow(base, exp) => {
+        Pow(base, exp) => {
           let pb = linsolve_numeric_prec_expr(base)
           let pe = linsolve_numeric_prec_expr(exp)
           if pb > pe {
@@ -200,7 +193,7 @@ fn linsolve_numeric_prec_expr(expr : Expr) -> Int {
 ///|
 fn linsolve_expr_to_complex(expr : Expr, prec : Int) -> @symcore.ComplexFloat? {
   match @symcore.evalf(expr, prec~) {
-    Expr::Number(n) =>
+    Number(n) =>
       Some(
         @symcore.ComplexFloat::from_exact_parts(
           n,
@@ -208,8 +201,8 @@ fn linsolve_expr_to_complex(expr : Expr, prec : Int) -> @symcore.ComplexFloat? {
           prec~,
         ),
       )
-    Expr::Float(f) => Some(@symcore.ComplexFloat::from_real(f))
-    Expr::ComplexFloat(z) => Some(z)
+    Float(f) => Some(@symcore.ComplexFloat::from_real(f))
+    ComplexFloat(z) => Some(z)
     _ => None
   }
 }
@@ -217,9 +210,9 @@ fn linsolve_expr_to_complex(expr : Expr, prec : Int) -> @symcore.ComplexFloat? {
 ///|
 fn linsolve_complex_to_expr(value : @symcore.ComplexFloat) -> Expr {
   if @symnum.is_zero(value.to_mpc().imag) {
-    @symcore.Expr::Float(value.real_part())
+    Float(value.real_part())
   } else {
-    @symcore.Expr::ComplexFloat(value)
+    ComplexFloat(value)
   }
 }
 
@@ -246,7 +239,7 @@ fn numeric_expr_linsolve(
 ) -> NumericExprLinsolveResult {
   if eqs_coeffs.length() != eqs_rhs.length() ||
     eqs_coeffs.length() < syms.length() {
-    return NumericExprLinsolveResult::Unsupported
+    return Unsupported
   }
   let mut has_floating = false
   for row in eqs_coeffs {
@@ -262,7 +255,7 @@ fn numeric_expr_linsolve(
     }
   }
   if !has_floating {
-    return NumericExprLinsolveResult::Unsupported
+    return Unsupported
   }
   let mut prec = 80
   for row in eqs_coeffs {
@@ -289,12 +282,12 @@ fn numeric_expr_linsolve(
       }
       match linsolve_expr_to_complex(expr, prec) {
         Some(value) => row.push(value)
-        None => return NumericExprLinsolveResult::Unsupported
+        None => return Unsupported
       }
     }
     match linsolve_expr_to_complex(int(0) - eqs_rhs[i], prec) {
       Some(value) => row.push(value)
-      None => return NumericExprLinsolveResult::Unsupported
+      None => return Unsupported
     }
     mat.push(row)
   }
@@ -356,26 +349,26 @@ fn numeric_expr_linsolve(
       }
     }
     if all_zero && !linsolve_complex_zero(mat[i][n], prec) {
-      return NumericExprLinsolveResult::NoSolution
+      return NoSolution
     }
   }
   if pivots.length() != n {
-    return NumericExprLinsolveResult::Unsupported
+    return Unsupported
   }
   let sol : Map[String, Expr] = Map([])
   for i in 0..<n {
     sol[syms[pivots[i]]] = linsolve_complex_to_expr(mat[i][n])
   }
-  NumericExprLinsolveResult::Unique(sol)
+  Unique(sol)
 }
 
 ///|
 fn expr_depends_on_syms(expr : Expr, symset : Map[String, Bool]) -> Bool {
   match expr {
-    Expr::Symbol(name) => symset.get(name) is Some(_)
-    Expr::Add(args) | Expr::Mul(args) =>
+    Symbol(name) => symset.get(name) is Some(_)
+    Add(args) | Mul(args) =>
       args.any(child => expr_depends_on_syms(child, symset))
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       expr_depends_on_syms(base, symset) || expr_depends_on_syms(exp, symset)
     _ if @symcore.application_parts(expr) is Some(_) =>
       @symcore.application_args(expr)
@@ -465,7 +458,7 @@ fn lin_eq2dict_impl(
   symset : Map[String, Bool],
 ) -> (Expr, Map[String, Expr]) raise PolyError {
   match expr {
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       if symset.get(name) is Some(_) {
         let terms : Map[String, Expr] = Map([])
         terms[name] = int(1)
@@ -473,7 +466,7 @@ fn lin_eq2dict_impl(
       } else {
         (expr, {})
       }
-    Expr::Add(args) => {
+    Add(args) => {
       let coeff_terms : Map[String, Expr] = Map([])
       let const_terms : Array[Expr] = Array::new()
       for arg in args {
@@ -485,7 +478,7 @@ fn lin_eq2dict_impl(
       }
       (@symcore.add(const_terms), coeff_terms)
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let coeff_factors : Array[Expr] = Array::new()
       let mut linear_const = int(1)
       let mut linear_terms : Map[String, Expr]? = None
@@ -496,7 +489,7 @@ fn lin_eq2dict_impl(
           continue
         }
         match linear_terms {
-          Some(_) => raise PolyError::NonPolynomial
+          Some(_) => raise NonPolynomial
           None => {
             linear_const = const_part
             linear_terms = Some(terms_part)
@@ -509,22 +502,22 @@ fn lin_eq2dict_impl(
         Some(terms) => (coeff * linear_const, scale_linear_terms(terms, coeff))
       }
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match exp {
-        Expr::Number(n) if n.is_zero() => (int(1), {})
-        Expr::Number(n) if n.is_one() => lin_eq2dict_impl(base, symset)
+        Number(n) if n.is_zero() => (int(1), {})
+        Number(n) if n.is_one() => lin_eq2dict_impl(base, symset)
         _ =>
           if !expr_depends_on_syms(expr, symset) {
             (expr, {})
           } else {
-            raise PolyError::NonPolynomial
+            raise NonPolynomial
           }
       }
     _ =>
       if !expr_depends_on_syms(expr, symset) {
         (expr, {})
       } else {
-        raise PolyError::NonPolynomial
+        raise NonPolynomial
       }
   }
 }
@@ -556,7 +549,7 @@ pub fn _linear_eq_to_dict(
   let ind : Array[Expr] = Array::new()
   for eq in eqs {
     match @symcore.relational_parts(eq) {
-      Some((@symcore.RelOp::Eq, lhs, rhs)) => {
+      Some((Eq, lhs, rhs)) => {
         let (lhs_const, lhs_terms) = lin_eq2dict_impl(lhs, symset)
         let (rhs_const, rhs_terms) = lin_eq2dict_impl(rhs, symset)
         let merged : Map[String, Expr] = Map([])
@@ -569,7 +562,7 @@ pub fn _linear_eq_to_dict(
         coeffs.push(merged)
         ind.push(lhs_const - rhs_const)
       }
-      Some(_) => raise PolyError::NonPolynomial
+      Some(_) => raise NonPolynomial
       None => {
         let (const_part, terms_part) = lin_eq2dict_impl(eq, symset)
         coeffs.push(terms_part)
@@ -594,7 +587,7 @@ pub fn sympy_eqs_to_ring(
   syms : Array[String],
 ) -> LinearEquationSystem raise PolyError {
   let (coeffs, rhs) = _linear_eq_to_dict(eqs, syms)
-  LinearEquationSystem::{ equations: eqs, symbols: syms, coeffs, rhs }
+  { equations: eqs, symbols: syms, coeffs, rhs }
 }
 
 ///|
@@ -613,9 +606,9 @@ pub fn _linsolve(
   let nsyms = syms.length()
   let (eqsdict, const_terms) = _linear_eq_to_dict(eqs, syms)
   match numeric_expr_linsolve(eqsdict, const_terms, syms) {
-    NumericExprLinsolveResult::NoSolution => return None
-    NumericExprLinsolveResult::Unique(sol) => return Some(sol)
-    NumericExprLinsolveResult::Unsupported => ()
+    NoSolution => return None
+    Unique(sol) => return Some(sol)
+    Unsupported => ()
   }
   let aaug = sympy_dict_to_dm(eqsdict, const_terms, syms)
   let (arref, pivots, nzcols) = if domain_is_real_field_pred(aaug.domain()) ||
@@ -675,7 +668,7 @@ pub fn _linsolve(
 ///|
 fn linsolve_is_identity_binding(sym : String, expr : Expr) -> Bool {
   match expr {
-    Expr::Symbol(name) => name == sym
+    Symbol(name) => name == sym
     _ => false
   }
 }
@@ -760,7 +753,7 @@ pub fn linear_solve(
 ) -> LinearSolveResult raise PolyError {
   let (m, n) = a.shape()
   if b.length() != m {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let af = lift_matrix_to_field(a.to_domain_matrix())
   let bf = lift_vector_to_field(b, a.domain())
@@ -785,7 +778,7 @@ pub fn linear_solve(
       }
     }
     if all_zero && !fe_is_zero(rows[i][n]) {
-      return LinearSolveResult::NoSolution
+      return NoSolution
     }
   }
 
@@ -810,14 +803,14 @@ pub fn linear_solve(
         sol.set(p, rows[i][n])
       }
     }
-    return LinearSolveResult::Unique(sol)
+    return Unique(sol)
   }
 
   // Parametric solution with t0, t1, ... free symbols.
   let params = free_vars.map(i => "t\{i}")
   let free_exprs : Map[Int, Expr] = Map([])
   for i in 0..<free_vars.length() {
-    free_exprs[free_vars[i]] = Expr::Symbol(params[i])
+    free_exprs[free_vars[i]] = Symbol(params[i])
   }
   let exprs : Array[Expr] = Array::make(n, int(0))
   for j in 0..<n {
@@ -843,5 +836,5 @@ pub fn linear_solve(
     exprs.set(p, rhs)
   }
 
-  LinearSolveResult::Parametric(exprs, params)
+  Parametric(exprs, params)
 }

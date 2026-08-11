@@ -30,36 +30,36 @@ pub(all) enum SimplifyPlan {
 /// - Limits: `Custom` returns a shallow copy of the given list and does not normalize duplicates.
 pub fn plan_patterns(plan : SimplifyPlan) -> Array[SimplifyPattern] {
   match plan {
-    SimplifyPlan::Default => default_patterns()
-    SimplifyPlan::Aggressive => aggressive_patterns()
-    SimplifyPlan::Custom(patterns) => patterns.map(p => p)
+    Default => default_patterns()
+    Aggressive => aggressive_patterns()
+    Custom(patterns) => patterns.map(p => p)
   }
 }
 
 ///|
 fn default_patterns() -> Array[SimplifyPattern] {
   [
-    SimplifyPattern::FoldConstants,
-    SimplifyPattern::FunctionIdentities,
-    SimplifyPattern::PowDenest,
-    SimplifyPattern::MulLikeBases,
-    SimplifyPattern::AddLikeTerms,
-    SimplifyPattern::TrigPythagorean,
-    SimplifyPattern::FoldConstants,
+    FoldConstants,
+    FunctionIdentities,
+    PowDenest,
+    MulLikeBases,
+    AddLikeTerms,
+    TrigPythagorean,
+    FoldConstants,
   ]
 }
 
 ///|
 fn aggressive_patterns() -> Array[SimplifyPattern] {
   [
-    SimplifyPattern::FoldConstants,
-    SimplifyPattern::FunctionIdentities,
-    SimplifyPattern::PowDenest,
-    SimplifyPattern::MulLikeBases,
-    SimplifyPattern::AddLikeTerms,
-    SimplifyPattern::TrigPythagorean,
-    SimplifyPattern::MulLikeBases,
-    SimplifyPattern::AddLikeTerms,
-    SimplifyPattern::FoldConstants,
+    FoldConstants,
+    FunctionIdentities,
+    PowDenest,
+    MulLikeBases,
+    AddLikeTerms,
+    TrigPythagorean,
+    MulLikeBases,
+    AddLikeTerms,
+    FoldConstants,
   ]
 }

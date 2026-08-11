@@ -30,9 +30,9 @@ pub struct CircuitPlot {
 ///|
 fn circuitplot_expr_arg_count(expr : Expr) -> Int {
   match expr {
-    Expr::Add(args) => args.length()
-    Expr::Mul(args) => args.length()
-    Expr::Pow(_, _) => 2
+    Add(args) => args.length()
+    Mul(args) => args.length()
+    Pow(_, _) => 2
     _ =>
       match @symcore.application_args(expr) {
         Some(args) => args.length()
@@ -44,7 +44,7 @@ fn circuitplot_expr_arg_count(expr : Expr) -> Int {
 ///|
 fn circuitplot_integral_arg(expr : Expr) -> Int? {
   match expr {
-    Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
+    Number(n) if n.is_integral() => Some(n.numerator().to_int())
     _ => None
   }
 }
@@ -111,7 +111,7 @@ fn circuitplot_is_gate(expr : Expr) -> Bool {
 ///|
 fn circuitplot_extract_gates(expr : Expr) -> Array[Expr] {
   match expr {
-    Expr::Mul(args) => {
+    Mul(args) => {
       let out : Array[Expr] = []
       for idx in 0..<args.length() {
         let gate = args[args.length() - idx - 1]
@@ -221,7 +221,7 @@ pub fn CircuitPlot::new(
   label_buffer? : Double = 0.5,
 ) -> CircuitPlot {
   let gates = circuitplot_extract_gates(circuit)
-  CircuitPlot::{
+  {
     circuit,
     ngates: circuitplot_expr_arg_count(circuit),
     nqubits,

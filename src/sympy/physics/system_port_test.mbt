@@ -16,14 +16,12 @@ test "physics.mechanics parity system assembly" {
     bob.as_bodylike(),
     child_interframe=Some(joint_interframe_frame(bob_frame)),
     child_point=Some(
-      joint_attachment_offset(
-        bob_frame.y().scale(@symcore.Expr::Symbol("l")).neg(),
-      ),
+      joint_attachment_offset(bob_frame.y().scale(Symbol("l")).neg()),
     ),
     joint_axis=Some(cart.frame().z()),
   )
   sys.add_joints([slider.as_joint(), pin.as_joint()])
-  sys.apply_uniform_gravity(n.y().scale(@symcore.Expr::Symbol("g")).neg())
+  sys.apply_uniform_gravity(n.y().scale(Symbol("g")).neg())
   sys.add_loads([
     force_load(cart.masscenter(), n.x().scale(@symvector.dynamicsymbol("F"))),
   ])
@@ -68,7 +66,7 @@ test "physics.mechanics parity system assembly" {
   let mut found_external = false
   for load in sys.loads() {
     match load {
-      Load::ForceLoad(value) =>
+      ForceLoad(value) =>
         if value.point == cart.masscenter() {
           let is_external = @symvector.vsprint(value.force) == "F(t)*PSN.x"
           if is_external {
@@ -92,11 +90,9 @@ test "physics.mechanics parity system form_eoms lagrange" {
   let q = @symvector.dynamicsymbol("q")
   let qd = @symcalculus.diff(q, @symvector.dynamicsymbols_t)
   let wall = rigid_body("wall")
-  let bob = particle("bob", mass=Some(@symcore.Expr::Symbol("m")))
+  let bob = particle("bob", mass=Some(Symbol("m")))
   bob.set_potential_energy(
-    @symcore.Expr::Symbol("k") *
-    (q ^ @symcore.int(2)) *
-    @symcore.rational_from_ints(1, 2),
+    Symbol("k") * (q ^ @symcore.int(2)) * @symcore.rational_from_ints(1, 2),
   )
   let sys = system_from_newtonian(wall.as_bodylike())
   let joint = prismatic_joint(
@@ -107,9 +103,7 @@ test "physics.mechanics parity system form_eoms lagrange" {
     speeds=Some([qd]),
   )
   sys.add_joints([joint.as_joint()])
-  sys.add_loads([
-    force_load(bob.point(), sys.x().scale(@symcore.Expr::Symbol("b") * qd)),
-  ])
+  sys.add_loads([force_load(bob.point(), sys.x().scale(Symbol("b") * qd))])
   ignore(sys.form_eoms(use_lagrange=true))
 
   let prefix = "q=dynamicsymbols('q'); qd=q.diff(t); m,k,b=symbols('m k b'); wall=RigidBody('wall'); bob=Particle('bob', mass=m); bob.potential_energy = k*q**2/2; sys=System.from_newtonian(wall); sys.add_joints(PrismaticJoint('slide', wall, bob, coordinates=q, speeds=qd)); sys.add_loads((bob.masscenter, b*qd*sys.x)); sys.form_eoms(LagrangesMethod); "

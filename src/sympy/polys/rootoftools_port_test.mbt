@@ -1,9 +1,9 @@
 ///|
 test "rootoftools: rootof parity (degree 5)" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let poly = b.from_expr((x ^ @symcore.int(5)) - x + @symcore.int(1))
-  let ours = @sympolys.rootof(poly, 0).to_string()
+  let ours = Show::to_string(@sympolys.rootof(poly, 0))
   let oracle = rootof(poly.to_expr(), 0)
   let ours_norm = sympy_normalize(ours)
   let oracle_norm = sympy_normalize(oracle)

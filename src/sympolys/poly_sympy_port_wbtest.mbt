@@ -6,7 +6,7 @@ test "from_expr_defaults infers gens and QQ domain" {
   let poly = Poly::from_expr_defaults(expr)
   debug_inspect(poly.gens, content="[\"x\", \"y\"]")
   match poly.domain {
-    Domain::QQ => ()
+    QQ => ()
     _ => fail("expected QQ domain")
   }
   inspect(poly, content="x*y + 1/2")
@@ -24,7 +24,7 @@ test "resolve_domain modulus and gaussian" {
     expr=Some(x),
   )
   match d1 {
-    Domain::GF(p) => inspect("\{p}", content="5")
+    GF(p) => inspect("\{p}", content="5")
     _ => fail("expected GF(5)")
   }
   let d2 = resolve_domain(
@@ -36,13 +36,13 @@ test "resolve_domain modulus and gaussian" {
     expr=Some(x),
   )
   match d2 {
-    Domain::CC => ()
+    CC => ()
     _ => fail("expected CC")
   }
   sympolys_assert_error(
     fn() raise PolyError {
       resolve_domain(
-        domain=Some(Domain::GF(3)),
+        domain=Some(GF(3)),
         modulus=Some(5),
         gaussian=None,
         extension=None,
@@ -65,7 +65,7 @@ test "resolve_domain gf extension builds default modulus poly" {
     expr=None,
   )
   match d {
-    Domain::GFExt(p, k, poly) => {
+    GFExt(p, k, poly) => {
       inspect("\{p}", content="3")
       inspect("\{k}", content="2")
       debug_inspect(poly, content="[1, 0, 1]")
@@ -78,7 +78,7 @@ test "resolve_domain gf extension builds default modulus poly" {
 test "resolve_domain builds algebraic extension" {
   let expr = @symcore.Expr::Symbol("alpha")
   let d = resolve_domain(
-    domain=Some(Domain::QQ),
+    domain=Some(QQ),
     modulus=None,
     gaussian=None,
     extension=Some(["alpha"]),
@@ -86,9 +86,9 @@ test "resolve_domain builds algebraic extension" {
     expr=Some(expr),
   )
   match d {
-    Domain::AlgExt(base, gens, rels) => {
+    AlgExt(base, gens, rels) => {
       match base {
-        Domain::QQ => ()
+        QQ => ()
         _ => fail("expected QQ base")
       }
       debug_inspect(gens, content="[\"alpha\"]")
@@ -100,7 +100,7 @@ test "resolve_domain builds algebraic extension" {
 
 ///|
 test "integer polynomial division matches sympy" {
-  let builder = PolyBuilder::new(["x"], Domain::ZZ)
+  let builder = PolyBuilder::new(["x"], ZZ)
   let x = @symcore.Expr::Symbol("x")
   let p = builder.from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
@@ -113,7 +113,7 @@ test "integer polynomial division matches sympy" {
 
 ///|
 test "total_degree and per-variable degree" {
-  let builder = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let builder = PolyBuilder::new(["x", "y"], QQ)
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let poly = builder.from_expr(

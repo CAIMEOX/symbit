@@ -32,7 +32,7 @@ fn exact_float_expr(num : Int, den : Int, prec? : Int = 90) -> Expr {
   let rat = @symnum.BigRational::from_ints(num, den) catch {
     _ => @symnum.BigRational::zero()
   }
-  @symcore.Expr::Float(
+  Float(
     @symcore.Float::from_exact(rat, prec~) catch {
       _ => @symcore.Float::from_int(0, prec~)
     },
@@ -53,9 +53,7 @@ fn exact_complex_float_expr(
   let imag = @symnum.BigRational::from_ints(imag_num, imag_den) catch {
     _ => @symnum.BigRational::zero()
   }
-  @symcore.Expr::ComplexFloat(
-    @symcore.ComplexFloat::from_exact_parts(real, imag, prec~),
-  )
+  ComplexFloat(@symcore.ComplexFloat::from_exact_parts(real, imag, prec~))
 }
 
 ///|
@@ -84,9 +82,9 @@ test "matrices determinant inverse and solve" {
     [@symcore.int(3), @symcore.int(4)],
   ])
   inspect(@symprint.pretty_string(a.det()), content="-2")
-  inspect(a.inv().to_string(), content="Matrix([[-2, 1], [3/2, -1/2]])")
+  inspect(Show::to_string(a.inv()), content="Matrix([[-2, 1], [3/2, -1/2]])")
   let rhs = matrix([[@symcore.int(5)], [@symcore.int(11)]])
-  inspect(a.solve(rhs).to_string(), content="Matrix([[1], [2]])")
+  inspect(Show::to_string(a.solve(rhs)), content="Matrix([[1], [2]])")
 }
 
 ///|
@@ -96,7 +94,7 @@ test "matrices rref rank rowspace columnspace nullspace" {
     [@symcore.int(2), @symcore.int(4), @symcore.int(6)],
   ])
   let (rref, pivots) = a.rref()
-  inspect(rref.to_string(), content="Matrix([[1, 2, 3], [0, 0, 0]])")
+  inspect(Show::to_string(rref), content="Matrix([[1, 2, 3], [0, 0, 0]])")
   debug_inspect(pivots, content="[0]")
   assert_true(a.rank() == 1)
   inspect(vecs_to_string(a.rowspace()), content="[[1, 2, 3]]")
@@ -111,8 +109,8 @@ test "matrices lu and qr decomposition" {
     [@symcore.int(3), @symcore.int(4)],
   ])
   let (l, u, swaps) = a.lu()
-  inspect(l.to_string(), content="Matrix([[1, 0], [3, 1]])")
-  inspect(u.to_string(), content="Matrix([[1, 2], [0, -2]])")
+  inspect(Show::to_string(l), content="Matrix([[1, 0], [3, 1]])")
+  inspect(Show::to_string(u), content="Matrix([[1, 2], [0, -2]])")
   debug_inspect(swaps, content="[]")
   let (q, r) = a.qr()
   assert_true(q.shape() == (2, 2))
@@ -129,13 +127,13 @@ test "matrices minors cofactors adjugate and echelon helpers" {
     [@symcore.int(1), @symcore.int(0), @symcore.int(6)],
   ])
   inspect(
-    a.minor_submatrix(0, 1).to_string(),
+    Show::to_string(a.minor_submatrix(0, 1)),
     content="Matrix([[0, 5], [1, 6]])",
   )
   inspect(@symprint.pretty_string(a.minor(0, 1)), content="-5")
   inspect(@symprint.pretty_string(a.cofactor(0, 1)), content="5")
   inspect(
-    a.adjugate().to_string(),
+    Show::to_string(a.adjugate()),
     content="Matrix([[24, -12, -2], [5, 3, -5], [-4, 2, 4]])",
   )
   let (echelon, pivots) = a.echelon_form_with_pivots()
@@ -151,7 +149,7 @@ test "matrices triangular solves rref rhs cholesky and ldl" {
   ])
   let rhs = matrix([[@symcore.int(4)], [@symcore.int(11)]])
   inspect(
-    lower.lower_triangular_solve(rhs).to_string(),
+    Show::to_string(lower.lower_triangular_solve(rhs)),
     content="Matrix([[4], [1]])",
   )
   let upper = matrix([
@@ -160,34 +158,22 @@ test "matrices triangular solves rref rhs cholesky and ldl" {
   ])
   let rhs2 = matrix([[@symcore.int(5)], [@symcore.int(6)]])
   inspect(
-    upper.upper_triangular_solve(rhs2).to_string(),
+    Show::to_string(upper.upper_triangular_solve(rhs2)),
     content="Matrix([[3/2], [2]])",
   )
   let coeff = matrix([
     [@symcore.int(1), @symcore.int(1)],
     [@symcore.int(2), @symcore.int(1)],
   ])
-  let vars = matrix([
-    [@symcore.Expr::Symbol("r1")],
-    [@symcore.Expr::Symbol("r2")],
-  ])
+  let vars = matrix([[Symbol("r1")], [Symbol("r2")]])
   let (rref_lhs, rref_rhs) = coeff.rref_rhs(vars)
-  inspect(rref_lhs.to_string(), content="Matrix([[1, 0], [0, 1]])")
+  inspect(Show::to_string(rref_lhs), content="Matrix([[1, 0], [0, 1]])")
   assert_true(
     matrix_symbolically_equal(
       rref_rhs,
       matrix([
-        [
-          @symcore.int(-1) * @symcore.Expr::Symbol("r1") +
-          @symcore.Expr::Symbol("r2"),
-        ],
-        [
-          @symcore.int(-1) *
-          (
-            @symcore.int(-2) * @symcore.Expr::Symbol("r1") +
-            @symcore.Expr::Symbol("r2")
-          ),
-        ],
+        [@symcore.int(-1) * Symbol("r1") + Symbol("r2")],
+        [@symcore.int(-1) * (@symcore.int(-2) * Symbol("r1") + Symbol("r2"))],
       ]),
     ),
   )
@@ -209,7 +195,7 @@ test "matrices numeric backend keeps float and complex-float results" {
   let a = matrix([[half, zero], [zero, two]])
   let inv = a.inv()
   match (inv.getitem(0, 0), inv.getitem(1, 1)) {
-    (@symcore.Expr::Float(f0), @symcore.Expr::Float(f1)) => {
+    (Float(f0), Float(f1)) => {
       assert_true(f0.format(dps=12).has_prefix("2.0"))
       assert_true(f1.format(dps=12).has_prefix("0.5"))
     }
@@ -218,7 +204,7 @@ test "matrices numeric backend keeps float and complex-float results" {
   let (rref, pivots) = a.rref()
   debug_inspect(pivots, content="[0, 1]")
   match rref.getitem(0, 0) {
-    @symcore.Expr::Float(f) => assert_true(f.format(dps=8).has_prefix("1.0"))
+    Float(f) => assert_true(f.format(dps=8).has_prefix("1.0"))
     _ => fail("expected float rref pivot")
   }
 
@@ -228,8 +214,8 @@ test "matrices numeric backend keeps float and complex-float results" {
   let cm = matrix([[one, i], [one, exact_float_expr(-1, 1)]])
   let sol = cm.solve(rhs)
   match sol.getitem(0, 0) {
-    @symcore.Expr::ComplexFloat(z) => assert_true(z.is_finite())
-    @symcore.Expr::Float(f) => assert_true(f.is_finite())
+    ComplexFloat(z) => assert_true(z.is_finite())
+    Float(f) => assert_true(f.is_finite())
     _ => fail("expected numeric complex solution")
   }
 
@@ -239,7 +225,7 @@ test "matrices numeric backend keeps float and complex-float results" {
   ])
   let chol = spd.cholesky()
   match chol.getitem(0, 0) {
-    @symcore.Expr::Float(f) => assert_true(f.format(dps=8).has_prefix("2.0"))
+    Float(f) => assert_true(f.format(dps=8).has_prefix("2.0"))
     _ => fail("expected float cholesky diagonal")
   }
 }
@@ -250,7 +236,7 @@ test "matrices exact rational fast path preserves benchmark family results" {
   inspect(@symprint.pretty_string(a.det()), content="110702")
   let inv = a.inv()
   inspect(
-    inv.to_string(),
+    Show::to_string(inv),
     content="Matrix([[6677/110702, -342/55351, -215/110702, -306/55351], [-342/55351, 3152/55351, -304/55351, -93/55351], [-215/110702, -304/55351, 5959/110702, -272/55351], [-306/55351, -93/55351, -272/55351, 2830/55351]])",
   )
   let rhs = matrix([
@@ -260,7 +246,7 @@ test "matrices exact rational fast path preserves benchmark family results" {
     [@symcore.int(4)],
   ])
   inspect(
-    a.solve(rhs).to_string(),
+    Show::to_string(a.solve(rhs)),
     content="Matrix([[1108/55351], [4678/55351], [7135/55351], [10012/55351]])",
   )
 }

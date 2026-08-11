@@ -37,7 +37,7 @@ pub fn Poly::to_expr_with_order(self : Poly, order : TermOrder) -> Expr {
     expr_terms.push(term_expr)
   }
   if expr_terms.is_empty() {
-    @symcore.Expr::Number(@symnum.BigRational::zero())
+    Number(@symnum.BigRational::zero())
   } else if expr_terms.length() == 1 {
     expr_terms[0]
   } else {
@@ -57,7 +57,7 @@ pub fn Poly::to_expr_with_order(self : Poly, order : TermOrder) -> Expr {
 /// ```mbt check
 /// test "sympolys to_expr rebuilds an equivalent symbolic expression" {
 ///   let x = @symcore.Expr::Symbol("x")
-///   let poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(
+///   let poly = PolyBuilder::new(["x"], QQ).from_expr(
 ///     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
 ///   )
 ///   inspect(@symprint.pretty_string(poly.to_expr()), content="x**2 + 2*x + 1")
@@ -141,28 +141,25 @@ pub fn Poly::lt(self : Poly, order? : TermOrder) -> (Monomial, FieldElem)? {
 ///|
 fn fe_to_expr_const(c : FieldElem) -> Expr {
   match c {
-    FieldElem::QQ(r) => @symcore.Expr::Number(r)
-    FieldElem::CC(a, b) => {
-      let i_sym = @symcore.Expr::NumberSymbol(
-        @symcore.NumberSymbolKind::ImaginaryUnit,
-      )
+    QQ(r) => Number(r)
+    CC(a, b) => {
+      let i_sym = @symcore.Expr::NumberSymbol(ImaginaryUnit)
       let imag = if b.is_zero() {
         @symcore.Expr::Number(@symnum.BigRational::zero())
       } else {
-        @symcore.Expr::Number(b) * i_sym
+        Number(b) * i_sym
       }
       if a.is_zero() {
         imag
       } else if b.is_zero() {
-        @symcore.Expr::Number(a)
+        Number(a)
       } else {
-        @symcore.Expr::Number(a) + imag
+        Number(a) + imag
       }
     }
-    FieldElem::GFp(_, v) =>
-      @symcore.Expr::Number(@symnum.BigRational::from_int(v))
-    FieldElem::GFExt(p, coeffs, mod_poly) => fe_ext_to_expr(p, coeffs, mod_poly)
-    FieldElem::AlgExt(base, coeffs, minpoly, gen) =>
+    GFp(_, v) => Number(@symnum.BigRational::from_int(v))
+    GFExt(p, coeffs, mod_poly) => fe_ext_to_expr(p, coeffs, mod_poly)
+    AlgExt(base, coeffs, minpoly, gen) =>
       fe_algext_to_expr(base, coeffs, minpoly, gen)
   }
 }
@@ -196,7 +193,7 @@ fn fe_ext_to_expr(p : Int, coeffs : Array[Int], mod_poly : Array[Int]) -> Expr {
     terms.push(term)
   }
   if terms.is_empty() {
-    @symcore.Expr::Number(@symnum.BigRational::zero())
+    Number(@symnum.BigRational::zero())
   } else if terms.length() == 1 {
     terms[0]
   } else {
@@ -247,7 +244,7 @@ fn fe_algext_to_expr(
     terms.push(term)
   }
   if terms.is_empty() {
-    @symcore.Expr::Number(@symnum.BigRational::zero())
+    Number(@symnum.BigRational::zero())
   } else if terms.length() == 1 {
     terms[0]
   } else {
@@ -282,7 +279,7 @@ fn fe_cast_to_base(
 ) -> FieldElem {
   // Elements in the coeff array should already live in the base domain.
   match c {
-    FieldElem::AlgExt(_, _, _, _) => c
+    AlgExt(_, _, _, _) => c
     _ => c
   }
 }
@@ -412,8 +409,8 @@ fn build_gen_index(gens : Array[String]) -> Map[String, Int] {
 ///|
 fn expr_coeff_rational_value(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    Expr::Number(n) => Some(n)
-    Expr::Float(f) =>
+    Number(n) => Some(n)
+    Float(f) =>
       if !f.is_finite() {
         None
       } else {
@@ -428,7 +425,7 @@ fn expr_coeff_rational_value(expr : Expr) -> @symnum.BigRational? {
             }
         }
       }
-    Expr::ComplexFloat(z) =>
+    ComplexFloat(z) =>
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
@@ -450,7 +447,7 @@ fn expr_coeff_rational_value(expr : Expr) -> @symnum.BigRational? {
 ///|
 fn expr_coeff_field_elem_value(expr : Expr, domain : Domain) -> FieldElem? {
   match expr {
-    Expr::ComplexFloat(z) =>
+    ComplexFloat(z) =>
       if !z.is_finite() {
         None
       } else {
@@ -467,8 +464,8 @@ fn expr_coeff_field_elem_value(expr : Expr, domain : Domain) -> FieldElem? {
                 } noraise {
                   imag =>
                     match domain {
-                      Domain::CC => Some(FieldElem::CC(real, imag))
-                      Domain::RR if imag.is_zero() =>
+                      CC => Some(CC(real, imag))
+                      RR if imag.is_zero() =>
                         Some(
                           ensure_coeff_domain(real, domain) catch {
                             _ => return None
@@ -486,7 +483,7 @@ fn expr_coeff_field_elem_value(expr : Expr, domain : Domain) -> FieldElem? {
           Some(ensure_coeff_domain(value, domain) catch { _ => return None })
         None =>
           match domain {
-            Domain::AlgExt(base, gens, rels) =>
+            AlgExt(base, gens, rels) =>
               expr_coeff_algext_value(expr, base, gens, rels)
             _ => None
           }
@@ -527,7 +524,7 @@ fn expr_coeff_algext_value(
     coeffs.set(exp, updated)
   }
   let reduced = fe_alg_poly_mod(coeffs, minpoly) catch { _ => return None }
-  Some(FieldElem::AlgExt(base, reduced, minpoly, gen))
+  Some(AlgExt(base, reduced, minpoly, gen))
 }
 
 ///|
@@ -543,7 +540,7 @@ fn parse_scalar_poly(
       add_term(coeffs, mono, coeff, domain) catch {
         _ => return None
       }
-      Some(Poly::{ coeffs, gens, domain, order: TermOrder::Lex })
+      Some({ coeffs, gens, domain, order: Lex })
     }
     None => None
   }
@@ -557,32 +554,32 @@ fn parse_expr(
   domain : Domain,
 ) -> Poly raise PolyError {
   match expr {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => {
+    Number(_) | Float(_) | ComplexFloat(_) => {
       let coeff = match expr_coeff_field_elem_value(expr, domain) {
         Some(value) => value
-        None => raise PolyError::NonPolynomial
+        None => raise NonPolynomial
       }
       let mono = monomial_one(gens.length())
       let coeffs : Map[Monomial, FieldElem] = Map([])
       add_term(coeffs, mono, coeff, domain)
-      Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
+      { coeffs, gens, domain, order: Lex }
     }
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       match gen_index.get(name) {
         Some(idx) => {
           let mono = monomial_one(gens.length())
           mono.exps.set(idx, 1)
           let coeffs : Map[Monomial, FieldElem] = Map([])
           add_term(coeffs, mono, fe_from_int(1, domain), domain)
-          Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
+          { coeffs, gens, domain, order: Lex }
         }
         None =>
           match parse_scalar_poly(expr, gens, domain) {
             Some(poly) => poly
-            None => raise PolyError::BadGenerator(name)
+            None => raise BadGenerator(name)
           }
       }
-    Expr::Add(args) => {
+    Add(args) => {
       let mut acc = Poly::zero(gens, domain)
       for child in args {
         let parsed = parse_expr(child, gens, gen_index, domain)
@@ -590,7 +587,7 @@ fn parse_expr(
       }
       acc
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = Poly::one(gens, domain)
       for child in args {
         let parsed = parse_expr(child, gens, gen_index, domain)
@@ -598,17 +595,17 @@ fn parse_expr(
       }
       acc
     }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       let exp_num = match expr_coeff_rational_value(exp) {
         Some(value) => value
-        None => raise PolyError::BadExponent
+        None => raise BadExponent
       }
       if !exp_num.is_integral() {
-        raise PolyError::BadExponent
+        raise BadExponent
       }
       let exp_int = exp_num.numerator().to_int()
       if exp_int < 0 {
-        raise PolyError::BadExponent
+        raise BadExponent
       }
       let base_poly = parse_expr(base, gens, gen_index, domain)
       let mut acc = Poly::one(gens, domain)
@@ -617,6 +614,6 @@ fn parse_expr(
       }
       acc
     }
-    _ => raise PolyError::NonPolynomial
+    _ => raise NonPolynomial
   }
 }

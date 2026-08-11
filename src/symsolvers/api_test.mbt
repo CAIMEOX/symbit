@@ -1,31 +1,31 @@
 ///|
 fn x() -> @symcore.Expr {
-  @symcore.Expr::Symbol("x")
+  Symbol("x")
 }
 
 ///|
 fn y() -> @symcore.Expr {
-  @symcore.Expr::Symbol("y")
+  Symbol("y")
 }
 
 ///|
 fn z() -> @symcore.Expr {
-  @symcore.Expr::Symbol("z")
+  Symbol("z")
 }
 
 ///|
 fn t() -> @symcore.Expr {
-  @symcore.Expr::Symbol("t")
+  Symbol("t")
 }
 
 ///|
 fn r() -> @symcore.Expr {
-  @symcore.Expr::Symbol("r")
+  Symbol("r")
 }
 
 ///|
 fn theta() -> @symcore.Expr {
-  @symcore.Expr::Symbol("theta")
+  Symbol("theta")
 }
 
 ///|
@@ -110,9 +110,8 @@ fn set_list_text(items : Array[@symsets.Set]) -> String {
 ///|
 fn inequality_result_text(result : InequalityResult) -> String {
   match result {
-    InequalityResult::Set(set) => "Set(" + @symsets.to_string(set) + ")"
-    InequalityResult::Relational(expr) =>
-      "Relational(" + @symprint.pretty_string(expr) + ")"
+    Set(set) => "Set(" + @symsets.to_string(set) + ")"
+    Relational(expr) => "Relational(" + @symprint.pretty_string(expr) + ")"
   }
 }
 
@@ -174,9 +173,9 @@ fn solve_result_text(result : SolveResult) -> String {
     "{" + items.join(", ") + "}"
   }
   match result {
-    SolveResult::List(items) => expr_list_text(items)
-    SolveResult::Dict(values) => dict_text(values)
-    SolveResult::Dicts(items) => {
+    List(items) => expr_list_text(items)
+    Dict(values) => dict_text(values)
+    Dicts(items) => {
       let rendered : Array[String] = []
       for item in items {
         rendered.push(dict_text(item))
@@ -189,9 +188,8 @@ fn solve_result_text(result : SolveResult) -> String {
 ///|
 fn diop_solve_result_text(result : DiopSolveResult) -> String {
   match result {
-    DiopSolveResult::Tuple(items) =>
-      "(" + items.map(@symprint.pretty_string).join(", ") + ")"
-    DiopSolveResult::Set(set) => @symsets.to_string(set)
+    Tuple(items) => "(" + items.map(@symprint.pretty_string).join(", ") + ")"
+    Set(set) => @symsets.to_string(set)
   }
 }
 
@@ -240,7 +238,7 @@ fn maybe_solve_result_text(result : SolveResult?) -> String {
 ///|
 fn is_test_constant_symbol(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(name) => name.has_prefix("C")
+    Symbol(name) => name.has_prefix("C")
     _ => false
   }
 }
@@ -251,7 +249,7 @@ fn test_constant_sort_expr(expr : @symcore.Expr) -> @symcore.Expr {
   for symbol in @symcore.free_symbols(expr) {
     if is_test_constant_symbol(symbol) {
       match symbol {
-        @symcore.Expr::Symbol(name) => env[name] = @symcore.int(1)
+        Symbol(name) => env[name] = @symcore.int(1)
         _ => ()
       }
     }
@@ -324,16 +322,11 @@ fn test_sort_exprs_cmp(
 ///|
 fn test_sort_apply_head_cmp(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Int {
   match (lhs, rhs) {
-    (
-      @symcore.Expr::UndefinedFunction(lhs_name),
-      @symcore.Expr::UndefinedFunction(rhs_name),
-    ) => lhs_name.compare(rhs_name)
-    (@symcore.Expr::UndefinedFunction(_), @symcore.Expr::FunctionHead(_)) => -1
-    (@symcore.Expr::FunctionHead(_), @symcore.Expr::UndefinedFunction(_)) => 1
-    (
-      @symcore.Expr::FunctionHead(lhs_name),
-      @symcore.Expr::FunctionHead(rhs_name),
-    ) => {
+    (UndefinedFunction(lhs_name), UndefinedFunction(rhs_name)) =>
+      lhs_name.compare(rhs_name)
+    (UndefinedFunction(_), FunctionHead(_)) => -1
+    (FunctionHead(_), UndefinedFunction(_)) => 1
+    (FunctionHead(lhs_name), FunctionHead(rhs_name)) => {
       let rank_cmp = test_sympy_function_rank(lhs_name).compare(
         test_sympy_function_rank(rhs_name),
       )
@@ -350,30 +343,30 @@ fn test_sort_apply_head_cmp(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Int {
 ///|
 fn test_sort_relop_rank(op : @symcore.RelOp) -> Int {
   match op {
-    @symcore.RelOp::Eq => 0
-    @symcore.RelOp::Ne => 1
-    @symcore.RelOp::Lt => 2
-    @symcore.RelOp::Le => 3
-    @symcore.RelOp::Gt => 4
-    @symcore.RelOp::Ge => 5
+    Eq => 0
+    Ne => 1
+    Lt => 2
+    Le => 3
+    Gt => 4
+    Ge => 5
   }
 }
 
 ///|
 fn test_sort_node_count(expr : @symcore.Expr) -> Int {
   match expr {
-    @symcore.Expr::Number(_)
-    | @symcore.Expr::Float(_)
-    | @symcore.Expr::ComplexFloat(_)
-    | @symcore.Expr::NumberSymbol(_)
-    | @symcore.Expr::Boolean(_)
-    | @symcore.Expr::IdentityFunction
-    | @symcore.Expr::Symbol(_)
-    | @symcore.Expr::Dummy(_, _)
-    | @symcore.Expr::Wild(_, _, _)
-    | @symcore.Expr::WildFunction(_, _)
-    | @symcore.Expr::FunctionHead(_)
-    | @symcore.Expr::UndefinedFunction(_) => 1
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | Boolean(_)
+    | IdentityFunction
+    | Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | WildFunction(_, _)
+    | FunctionHead(_)
+    | UndefinedFunction(_) => 1
     _ =>
       1 +
       @symcore.children(expr).fold(init=0, fn(acc, child) {
@@ -387,33 +380,23 @@ fn test_sort_expr_cmp(lhs_raw : @symcore.Expr, rhs_raw : @symcore.Expr) -> Int {
   let lhs = test_constant_sort_expr(lhs_raw)
   let rhs = test_constant_sort_expr(rhs_raw)
   match (lhs, rhs) {
-    (
-      @symcore.Expr::Apply(lhs_head, lhs_args),
-      @symcore.Expr::Apply(rhs_head, rhs_args),
-    ) => {
+    (Apply(lhs_head, lhs_args), Apply(rhs_head, rhs_args)) => {
       let head_cmp = test_sort_apply_head_cmp(lhs_head, rhs_head)
       if head_cmp != 0 {
         return head_cmp
       }
       return test_sort_exprs_cmp(lhs_args, rhs_args)
     }
-    (@symcore.Expr::Add(lhs_args), @symcore.Expr::Add(rhs_args))
-    | (@symcore.Expr::Mul(lhs_args), @symcore.Expr::Mul(rhs_args)) =>
+    (Add(lhs_args), Add(rhs_args)) | (Mul(lhs_args), Mul(rhs_args)) =>
       test_sort_exprs_cmp(lhs_args, rhs_args)
-    (
-      @symcore.Expr::Pow(lhs_base, lhs_exp),
-      @symcore.Expr::Pow(rhs_base, rhs_exp),
-    ) => {
+    (Pow(lhs_base, lhs_exp), Pow(rhs_base, rhs_exp)) => {
       let base_cmp = test_sort_expr_cmp(lhs_base, rhs_base)
       if base_cmp != 0 {
         return base_cmp
       }
       return test_sort_expr_cmp(lhs_exp, rhs_exp)
     }
-    (
-      @symcore.Expr::Relational(lhs_op, lhs_lhs, lhs_rhs),
-      @symcore.Expr::Relational(rhs_op, rhs_lhs, rhs_rhs),
-    ) => {
+    (Relational(lhs_op, lhs_lhs, lhs_rhs), Relational(rhs_op, rhs_lhs, rhs_rhs)) => {
       let op_cmp = test_sort_relop_rank(lhs_op).compare(
         test_sort_relop_rank(rhs_op),
       )
@@ -471,7 +454,7 @@ fn local_constant_renumber_inner(
 ) -> @symcore.Expr {
   if is_test_constant_symbol(expr) {
     match expr {
-      @symcore.Expr::Symbol(name) =>
+      Symbol(name) =>
         if !constants_found.contains(name) {
           constants_found.push(name)
         }
@@ -480,25 +463,25 @@ fn local_constant_renumber_inner(
     return expr
   }
   match expr {
-    @symcore.Expr::Add(args) =>
-      @symcore.Expr::Add(
+    Add(args) =>
+      Add(
         test_sort_constant_args(args).map(arg => {
           local_constant_renumber_inner(arg, constants_found)
         }),
       )
-    @symcore.Expr::Mul(args) =>
-      @symcore.Expr::Mul(
+    Mul(args) =>
+      Mul(
         test_sort_constant_args(args).map(arg => {
           local_constant_renumber_inner(arg, constants_found)
         }),
       )
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       @symcore.pow(
         local_constant_renumber_inner(base, constants_found),
         local_constant_renumber_inner(exp, constants_found),
       )
-    @symcore.Expr::Relational(op, lhs, rhs) =>
-      @symcore.Expr::Relational(
+    Relational(op, lhs, rhs) =>
+      Relational(
         op,
         local_constant_renumber_inner(lhs, constants_found),
         local_constant_renumber_inner(rhs, constants_found),
@@ -516,7 +499,7 @@ fn local_constant_renumber(expr : @symcore.Expr) -> @symcore.Expr {
   let reordered = local_constant_renumber_inner(expr, constants_found)
   let env : Map[String, @symcore.Expr] = Map([])
   for i in 0..<constants_found.length() {
-    env[constants_found[i]] = @symcore.Expr::Symbol("C\{i + 1}")
+    env[constants_found[i]] = Symbol("C\{i + 1}")
   }
   @symcore.subst(reordered, env)
 }
@@ -565,7 +548,7 @@ fn expr_semantically_equal(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
 ///|
 fn local_canonical_expr(expr : @symcore.Expr) -> @symcore.Expr {
   @symsimplify.simplify(
-    @sympolys.domain_normal_expr(@sympolys.Domain::EX, expr) catch {
+    @sympolys.domain_normal_expr(EX, expr) catch {
       _ => expr
     },
   )
@@ -574,28 +557,22 @@ fn local_canonical_expr(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn local_expand_exp_sums(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Add(args) => @symcore.add(args.map(local_expand_exp_sums))
-    @symcore.Expr::Mul(args) => @symcore.mul(args.map(local_expand_exp_sums))
-    @symcore.Expr::Pow(base, exp) =>
+    Add(args) => @symcore.add(args.map(local_expand_exp_sums))
+    Mul(args) => @symcore.mul(args.map(local_expand_exp_sums))
+    Pow(base, exp) =>
       @symcore.pow(local_expand_exp_sums(base), local_expand_exp_sums(exp))
-    @symcore.Expr::Tuple(items) =>
-      @symcore.Expr::Tuple(items.map(local_expand_exp_sums))
-    @symcore.Expr::Relational(op, lhs, rhs) =>
-      @symcore.Expr::Relational(
-        op,
-        local_expand_exp_sums(lhs),
-        local_expand_exp_sums(rhs),
-      )
-    @symcore.Expr::Apply(head, args) => {
+    Tuple(items) => Tuple(items.map(local_expand_exp_sums))
+    Relational(op, lhs, rhs) =>
+      Relational(op, local_expand_exp_sums(lhs), local_expand_exp_sums(rhs))
+    Apply(head, args) => {
       let head_norm = local_expand_exp_sums(head)
       let args_norm = args.map(arg => {
         local_canonical_expr(local_expand_exp_sums(arg))
       })
       match (head_norm, args_norm) {
-        (@symcore.Expr::FunctionHead(name), [@symcore.Expr::Add(add_args)]) if name ==
-          "exp" =>
+        (FunctionHead(name), [Add(add_args)]) if name == "exp" =>
           @symcore.mul(add_args.map(arg => @symcore.function("exp", [arg])))
-        _ => @symcore.Expr::Apply(head_norm, args_norm)
+        _ => Apply(head_norm, args_norm)
       }
     }
     _ => expr
@@ -605,15 +582,14 @@ fn local_expand_exp_sums(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn local_combine_exp_products(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Add(args) =>
-      @symcore.add(args.map(local_combine_exp_products))
-    @symcore.Expr::Mul(args) => {
+    Add(args) => @symcore.add(args.map(local_combine_exp_products))
+    Mul(args) => {
       let exp_args : Array[@symcore.Expr] = []
       let other_args : Array[@symcore.Expr] = []
       for arg in args.map(local_combine_exp_products) {
         match arg {
-          @symcore.Expr::Apply(@symcore.Expr::FunctionHead(name), [inner]) if name ==
-            "exp" => exp_args.push(inner)
+          Apply(FunctionHead(name), [inner]) if name == "exp" =>
+            exp_args.push(inner)
           _ => other_args.push(arg)
         }
       }
@@ -624,21 +600,20 @@ fn local_combine_exp_products(expr : @symcore.Expr) -> @symcore.Expr {
         @symcore.mul(other_args)
       }
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       @symcore.pow(
         local_combine_exp_products(base),
         local_combine_exp_products(exp),
       )
-    @symcore.Expr::Tuple(items) =>
-      @symcore.Expr::Tuple(items.map(local_combine_exp_products))
-    @symcore.Expr::Relational(op, lhs, rhs) =>
-      @symcore.Expr::Relational(
+    Tuple(items) => Tuple(items.map(local_combine_exp_products))
+    Relational(op, lhs, rhs) =>
+      Relational(
         op,
         local_combine_exp_products(lhs),
         local_combine_exp_products(rhs),
       )
-    @symcore.Expr::Apply(head, args) =>
-      @symcore.Expr::Apply(
+    Apply(head, args) =>
+      Apply(
         local_combine_exp_products(head),
         args.map(arg => local_canonical_expr(local_combine_exp_products(arg))),
       )
@@ -657,9 +632,9 @@ fn tuple_expr_semantically_equal(
   rhs : @symcore.Expr,
 ) -> Bool {
   match lhs {
-    @symcore.Expr::Tuple(lhs_items) =>
+    Tuple(lhs_items) =>
       match rhs {
-        @symcore.Expr::Tuple(rhs_items) => {
+        Tuple(rhs_items) => {
           if lhs_items.length() != rhs_items.length() {
             return false
           }
@@ -682,7 +657,7 @@ fn finite_set_exprs_semantically_equal(
   expected : Array[@symcore.Expr],
 ) -> Bool {
   match actual {
-    @symsets.Set::FiniteSet(items) => {
+    FiniteSet(items) => {
       if items.length() != expected.length() {
         return false
       }
@@ -740,7 +715,7 @@ fn maybe_expr_text(value : @symcore.Expr?) -> String {
 ///|
 fn expr_dict_get(expr : @symcore.Expr, key : String) -> @symcore.Expr? {
   match expr {
-    @symcore.Expr::Dict(items) => {
+    Dict(items) => {
       for item in items {
         let (k, v) = item
         if @symprint.pretty_string(k) == key {
@@ -756,7 +731,7 @@ fn expr_dict_get(expr : @symcore.Expr, key : String) -> @symcore.Expr? {
 ///|
 fn expr_dict_len_text(expr : @symcore.Expr) -> String {
   match expr {
-    @symcore.Expr::Dict(items) => items.length().to_string()
+    Dict(items) => items.length().to_string()
     _ => "None"
   }
 }
@@ -794,8 +769,8 @@ test "linear_eq_to_matrix builds coefficient and rhs matrices" {
     ],
     [x(), y()],
   )
-  inspect(a.to_string(), content="Matrix([[1, 1], [1, -1]])")
-  inspect(b.to_string(), content="Matrix([[3], [1]])")
+  inspect(Show::to_string(a), content="Matrix([[1, 1], [1, -1]])")
+  inspect(Show::to_string(b), content="Matrix([[3], [1]])")
 }
 
 ///|
@@ -871,7 +846,10 @@ test "det_quick and inv_quick delegate to matrix algorithms" {
     [@symcore.int(3), @symcore.int(4)],
   ])
   inspect(@symprint.pretty_string(det_quick(m)), content="-2")
-  inspect(inv_quick(m).to_string(), content="Matrix([[-2, 1], [3/2, -1/2]])")
+  inspect(
+    Show::to_string(inv_quick(m)),
+    content="Matrix([[-2, 1], [3/2, -1/2]])",
+  )
 }
 
 ///|
@@ -883,11 +861,7 @@ test "checksol substitutes and verifies exact equalities" {
     content="true",
   )
   inspect(
-    checksol(
-      @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), @symcore.int(2)),
-      x(),
-      @symcore.int(3),
-    )
+    checksol(Relational(Eq, x(), @symcore.int(2)), x(), @symcore.int(3))
     .map(v => v.to_string())
     .unwrap_or("None"),
     content="false",
@@ -970,11 +944,7 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
   assert_true(@symprint.pretty_string(sin_root).has_prefix("3.14159265358979"))
 
   let eq_root = nsolve(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
-      @symcore.int(2) * x(),
-      @symcore.int(2),
-    ),
+    Relational(Eq, @symcore.int(2) * x(), @symcore.int(2)),
     x(),
     @symcore.int(-10),
   )
@@ -991,18 +961,16 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
   )
 
   let pi_root_default = nsolve(
-    (x() ^ @symcore.int(2)) -
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+    (x() ^ @symcore.int(2)) - NumberSymbol(Pi),
     x(),
-    @symcore.Expr::Float(@symcore.float_from_double(3.0)),
+    Float(@symcore.float_from_double(3.0)),
   )
   assert_true(
     @symprint.pretty_string(pi_root_default).has_prefix("1.77245385090551"),
   )
 
   let pi_root_precise = nsolve(
-    (x() ^ @symcore.int(2)) -
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+    (x() ^ @symcore.int(2)) - NumberSymbol(Pi),
     x(),
     @symcore.int(3),
     prec=128,
@@ -1026,19 +994,19 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
   let a = @symcore.Expr::Symbol("a")
   let delicate_root = nsolve(
     @symcore.pow(
-      @symcore.add([@symcore.Expr::Float(@symcore.float_from_double(0.001)), a]),
+      @symcore.add([Float(@symcore.float_from_double(0.001)), a]),
       @symcore.int(-3),
     ) -
     @symcore.int(6) *
     @symcore.pow(
       @symcore.add([
-        @symcore.Expr::Float(@symcore.float_from_double(0.9)),
+        Float(@symcore.float_from_double(0.9)),
         @symcore.int(-1) * a,
       ]),
       @symcore.int(-3),
     ),
     a,
-    @symcore.Expr::Float(@symcore.float_from_double(0.3)),
+    Float(@symcore.float_from_double(0.3)),
   )
   assert_true(
     @symprint.pretty_string(delicate_root).has_prefix("0.318830113873"),
@@ -1047,15 +1015,11 @@ test "nsolve matches additional SymPy scalar numeric cases batch 2" {
 
 ///|
 test "lpmin lpmax and linprog solve basic linear programs" {
-  let min_result = lpmin(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(1)),
-  ])
+  let min_result = lpmin(x(), [Relational(Ge, x(), @symcore.int(1))])
   inspect(@symprint.pretty_string(min_result.0), content="1")
   inspect(solution_dict_text(min_result.1, ["x"]), content="{x: 1}")
 
-  let max_result = lpmax(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Le, x(), @symcore.int(-1)),
-  ])
+  let max_result = lpmax(x(), [Relational(Le, x(), @symcore.int(-1))])
   inspect(@symprint.pretty_string(max_result.0), content="-1")
   inspect(solution_dict_text(max_result.1, ["x"]), content="{x: -1}")
 
@@ -1071,22 +1035,18 @@ test "lpmin lpmax and linprog solve basic linear programs" {
 test "lp solvers report infeasible and unbounded cases" {
   try
     lpmax(x(), [
-      @symcore.Expr::Relational(@symcore.RelOp::Le, x(), @symcore.int(-1)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      Relational(Le, x(), @symcore.int(-1)),
+      Relational(Ge, x(), @symcore.int(0)),
     ])
   catch {
-    SolverError::InfeasibleLPError(_) => ()
+    InfeasibleLPError(_) => ()
     _ => fail("expected InfeasibleLPError")
   } noraise {
     _ => fail("expected lpmax to raise")
   }
 
-  try
-    lpmin(x(), [
-      @symcore.Expr::Relational(@symcore.RelOp::Le, x(), @symcore.int(3)),
-    ])
-  catch {
-    SolverError::UnboundedLPError(_) => ()
+  try lpmin(x(), [Relational(Le, x(), @symcore.int(3))]) catch {
+    UnboundedLPError(_) => ()
     _ => fail("expected UnboundedLPError")
   } noraise {
     _ => fail("expected lpmin to raise")
@@ -1096,40 +1056,30 @@ test "lp solvers report infeasible and unbounded cases" {
 ///|
 test "lp solvers handle Eq constraints and extra symbols like SymPy simplex front doors" {
   let eq_max = lpmax(x() - y(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y() + @symcore.int(2)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    Relational(Le, x(), y() + @symcore.int(2)),
+    Relational(Eq, x(), y() + @symcore.int(2)),
+    Relational(Ge, x(), @symcore.int(0)),
+    Relational(Ge, y(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(eq_max.0), content="2")
   inspect(solution_dict_text(eq_max.1, ["x", "y"]), content="{x: 2, y: 0}")
 
   let eq_min = lpmin(y(), [
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      @symcore.int(0),
-      y() + @symcore.int(2),
-    ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Ge,
-      @symcore.int(0),
-      y() + @symcore.int(2),
-    ),
+    Relational(Le, @symcore.int(0), y() + @symcore.int(2)),
+    Relational(Ge, @symcore.int(0), y() + @symcore.int(2)),
   ])
   inspect(@symprint.pretty_string(eq_min.0), content="-2")
   inspect(solution_dict_text(eq_min.1, ["y"]), content="{y: -2}")
 
-  let single_eq = lpmax(y(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), @symcore.int(2)),
-  ])
+  let single_eq = lpmax(y(), [Relational(Eq, y(), @symcore.int(2))])
   inspect(@symprint.pretty_string(single_eq.0), content="2")
   inspect(solution_dict_text(single_eq.1, ["y"]), content="{y: 2}")
 
   let extra_symbol = lpmin(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + z()),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    Relational(Ge, y(), @symcore.int(1)),
+    Relational(Ge, x(), y() + z()),
+    Relational(Ge, x(), @symcore.int(0)),
+    Relational(Ge, z(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(extra_symbol.0), content="1")
   inspect(
@@ -1145,25 +1095,17 @@ test "lp solvers match SymPy simplex four-variable reference example" {
   let x3 = @symcore.Expr::Symbol("x3")
   let x4 = @symcore.Expr::Symbol("x4")
   let result = lpmax(x1 - @symcore.int(2) * x2 - @symcore.int(3) * x3 - x4, [
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      x1 - x2 - @symcore.int(2) * x3 - x4,
-      @symcore.int(4),
-    ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
+    Relational(Le, x1 - x2 - @symcore.int(2) * x3 - x4, @symcore.int(4)),
+    Relational(
+      Le,
       @symcore.int(2) * x1 + x3 - @symcore.int(4) * x4,
       @symcore.int(2),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      @symcore.int(-2) * x1 + x2 + x4,
-      @symcore.int(1),
-    ),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
+    Relational(Le, @symcore.int(-2) * x1 + x2 + x4, @symcore.int(1)),
+    Relational(Ge, x1, @symcore.int(0)),
+    Relational(Ge, x2, @symcore.int(0)),
+    Relational(Ge, x3, @symcore.int(0)),
+    Relational(Ge, x4, @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(result.0), content="4")
   inspect(
@@ -1177,18 +1119,18 @@ test "linprog matches first SymPy simplex reference example" {
   let objective = x() + y() - @symcore.int(2) * z()
   let ineq = [
     @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
+      Le,
       @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(),
       @symcore.int(3),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
+    Relational(
+      Le,
       @symcore.int(3) * x() - y() + @symcore.int(10) * z(),
       @symcore.int(6),
     ),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    Relational(Ge, x(), @symcore.int(0)),
+    Relational(Ge, y(), @symcore.int(0)),
+    Relational(Ge, z(), @symcore.int(0)),
   ]
   let min_result = lpmin(objective, ineq)
   inspect(@symprint.pretty_string(min_result.0), content="-6/5")
@@ -1215,24 +1157,20 @@ test "linprog matches first SymPy simplex reference example" {
 test "lp simplex edge cases match SymPy issue regressions" {
   try
     lpmin(@symcore.int(5), [
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Eq, x() + z(), @symcore.int(1)),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
-        x() + @symcore.int(2) * z(),
-        @symcore.int(0),
-      ),
+      Relational(Ge, z(), @symcore.int(0)),
+      Relational(Eq, x() + z(), @symcore.int(1)),
+      Relational(Le, x() + @symcore.int(2) * z(), @symcore.int(0)),
     ])
   catch {
-    SolverError::InfeasibleLPError(_) => ()
+    InfeasibleLPError(_) => ()
     _ => fail("expected InfeasibleLPError")
   } noraise {
     _ => fail("expected lpmin to raise")
   }
 
   let zero_objective = lpmax(@symcore.int(0), [
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    Relational(Ge, x(), @symcore.int(0)),
+    Relational(Ge, y(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(zero_objective.0), content="0")
   inspect(
@@ -1244,24 +1182,20 @@ test "lp simplex edge cases match SymPy issue regressions" {
 ///|
 test "lp and linprog match additional SymPy simplex public cases batch 1" {
   let case1 = lpmax(@symcore.int(-1) * x() - y() - @symcore.int(5) * z(), [
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      y() + @symcore.int(2) * z(),
-      @symcore.int(3),
-    ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
+    Relational(Le, y() + @symcore.int(2) * z(), @symcore.int(3)),
+    Relational(
+      Le,
       @symcore.int(-1) * x() - @symcore.int(3) * z(),
       @symcore.int(-2),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
+    Relational(
+      Le,
       @symcore.int(2) * x() + y() + @symcore.int(7) * z(),
       @symcore.int(5),
     ),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    Relational(Ge, x(), @symcore.int(0)),
+    Relational(Ge, y(), @symcore.int(0)),
+    Relational(Ge, z(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(case1.0), content="-2")
   inspect(
@@ -1270,24 +1204,20 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
   )
 
   let case2 = lpmax(@symcore.int(-1) * x() - y() - @symcore.int(5) * z(), [
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      x() - y() + @symcore.int(2) * z(),
-      @symcore.int(3),
-    ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
+    Relational(Le, x() - y() + @symcore.int(2) * z(), @symcore.int(3)),
+    Relational(
+      Le,
       @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(),
       @symcore.int(-2),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
+    Relational(
+      Le,
       @symcore.int(2) * x() + y() - @symcore.int(7) * z(),
       @symcore.int(-5),
     ),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    Relational(Ge, x(), @symcore.int(0)),
+    Relational(Ge, y(), @symcore.int(0)),
+    Relational(Ge, z(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(case2.0), content="-25/7")
   inspect(
@@ -1298,24 +1228,20 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
   let case3 = lpmax(
     @symcore.int(-1) * x() - y() - @symcore.int(5) * z() + @symcore.int(2),
     [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
-        x() - y() + @symcore.int(2) * z(),
-        @symcore.int(-4),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(Le, x() - y() + @symcore.int(2) * z(), @symcore.int(-4)),
+      Relational(
+        Le,
         @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(),
         @symcore.int(8),
       ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(
+        Le,
         @symcore.int(2) * x() + y() - @symcore.int(7) * z(),
         @symcore.int(10),
       ),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      Relational(Ge, x(), @symcore.int(0)),
+      Relational(Ge, y(), @symcore.int(0)),
+      Relational(Ge, z(), @symcore.int(0)),
     ],
   )
   inspect(@symprint.pretty_string(case3.0), content="-2")
@@ -1325,9 +1251,9 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
   )
 
   let case4 = lpmax(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y()),
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
-    @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
+    Relational(Eq, x(), y()),
+    Relational(Eq, y(), z()),
+    Relational(Le, z(), @symcore.int(3)),
   ])
   inspect(@symprint.pretty_string(case4.0), content="3")
   inspect(
@@ -1336,9 +1262,9 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
   )
 
   let case5 = lpmin(y(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + @symcore.int(2)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    Relational(Le, x(), y() + @symcore.int(2)),
+    Relational(Ge, x(), y() + @symcore.int(2)),
+    Relational(Ge, y(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(case5.0), content="0")
   inspect(solution_dict_text(case5.1, ["x", "y"]), content="{x: 2, y: 0}")
@@ -1370,61 +1296,43 @@ test "lp and linprog match additional SymPy simplex public cases batch 1" {
 ///|
 test "lp and linprog match additional SymPy simplex public cases batch 2" {
   let case1 = lpmax(x() - y(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + @symcore.int(2)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    Relational(Le, x(), y() + @symcore.int(2)),
+    Relational(Ge, x(), y() + @symcore.int(2)),
+    Relational(Ge, x(), @symcore.int(0)),
+    Relational(Ge, y(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(case1.0), content="2")
   inspect(solution_dict_text(case1.1, ["x", "y"]), content="{x: 2, y: 0}")
 
   let case2 = lpmax(x() - y(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), @symcore.int(2)),
+    Relational(Le, x(), y() + @symcore.int(2)),
+    Relational(Eq, x(), @symcore.int(2)),
   ])
   inspect(@symprint.pretty_string(case2.0), content="2")
   inspect(solution_dict_text(case2.1, ["x", "y"]), content="{x: 2, y: 0}")
 
-  let case3 = lpmax(y(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), @symcore.int(2)),
-  ])
+  let case3 = lpmax(y(), [Relational(Eq, y(), @symcore.int(2))])
   inspect(@symprint.pretty_string(case3.0), content="2")
   inspect(solution_dict_text(case3.1, ["y"]), content="{y: 2}")
 
   let case4 = lpmax(y(), [
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      @symcore.int(0),
-      y() + @symcore.int(2),
-    ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Ge,
-      @symcore.int(0),
-      y() + @symcore.int(2),
-    ),
+    Relational(Le, @symcore.int(0), y() + @symcore.int(2)),
+    Relational(Ge, @symcore.int(0), y() + @symcore.int(2)),
   ])
   inspect(@symprint.pretty_string(case4.0), content="-2")
   inspect(solution_dict_text(case4.1, ["y"]), content="{y: -2}")
 
   let case5 = lpmax(y(), [
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      @symcore.int(0),
-      y() + @symcore.int(2),
-    ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Ge,
-      @symcore.int(0),
-      y() + @symcore.int(2),
-    ),
-    @symcore.Expr::Relational(@symcore.RelOp::Le, y(), @symcore.int(0)),
+    Relational(Le, @symcore.int(0), y() + @symcore.int(2)),
+    Relational(Ge, @symcore.int(0), y() + @symcore.int(2)),
+    Relational(Le, y(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(case5.0), content="-2")
   inspect(solution_dict_text(case5.1, ["y"]), content="{y: -2}")
 
   let case6 = lpmin(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y()),
+    Relational(Ge, y(), @symcore.int(1)),
+    Relational(Ge, x(), y()),
   ])
   inspect(@symprint.pretty_string(case6.0), content="1")
   inspect(solution_dict_text(case6.1, ["x", "y"]), content="{x: 1, y: 1}")
@@ -1486,26 +1394,26 @@ test "lp and linprog match additional SymPy simplex public cases batch 2" {
 ///|
 test "simplex and solveset match additional SymPy public cases batch 3" {
   let float_case = lpmax(@symcore.int(-1) * x() - y() - @symcore.int(5) * z(), [
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      x() - y() + @symcore.Expr::Float(@symcore.float_from_double(2.0)) * z(),
+    Relational(
+      Le,
+      x() - y() + Float(@symcore.float_from_double(2.0)) * z(),
       @symcore.int(-4),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
+    Relational(
+      Le,
       @symcore.int(-1) * x() +
       @symcore.int(2) * y() -
-      @symcore.Expr::Float(@symcore.float_from_double(3.0)) * z(),
+      Float(@symcore.float_from_double(3.0)) * z(),
       @symcore.int(8),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
+    Relational(
+      Le,
       @symcore.int(2) * x() + y() - @symcore.int(7) * z(),
       @symcore.int(10),
     ),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    Relational(Ge, x(), @symcore.int(0)),
+    Relational(Ge, y(), @symcore.int(0)),
+    Relational(Ge, z(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(float_case.0), content="-4")
   inspect(
@@ -1524,29 +1432,29 @@ test "simplex and solveset match additional SymPy public cases batch 3" {
       @symcore.int(3) * x4 +
       @symcore.int(6),
       [
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Le,
+        Relational(
+          Le,
           @symcore.int(5) * x2 - @symcore.int(2) * x3,
           @symcore.int(0),
         ),
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Le,
+        Relational(
+          Le,
           @symcore.int(-1) * x1 - @symcore.int(8) * x2 + @symcore.int(9) * x3,
           @symcore.int(-3),
         ),
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Le,
+        Relational(
+          Le,
           @symcore.int(10) * x1 - x2 + @symcore.int(9) * x4,
           @symcore.int(-4),
         ),
-        @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
-        @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
-        @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
-        @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
+        Relational(Ge, x1, @symcore.int(0)),
+        Relational(Ge, x2, @symcore.int(0)),
+        Relational(Ge, x3, @symcore.int(0)),
+        Relational(Ge, x4, @symcore.int(0)),
       ],
     )
   catch {
-    SolverError::InfeasibleLPError(_) => ()
+    InfeasibleLPError(_) => ()
     _ => fail("expected InfeasibleLPError")
   } noraise {
     _ => fail("expected lpmin to raise")
@@ -1634,12 +1542,12 @@ test "simplex and solveset match additional SymPy public cases batch 3" {
 ///|
 test "linear_eq_to_matrix and linsolve match additional SymPy linear cases batch 4" {
   let (a0, b0) = linear_eq_to_matrix([@symcore.int(0)], [x()])
-  inspect(a0.to_string(), content="Matrix([[0]])")
-  inspect(b0.to_string(), content="Matrix([[0]])")
+  inspect(Show::to_string(a0), content="Matrix([[0]])")
+  inspect(Show::to_string(b0), content="Matrix([[0]])")
 
   let (a1, b1) = linear_eq_to_matrix([@symcore.int(1)], [x()])
-  inspect(a1.to_string(), content="Matrix([[0]])")
-  inspect(b1.to_string(), content="Matrix([[-1]])")
+  inspect(Show::to_string(a1), content="Matrix([[0]])")
+  inspect(Show::to_string(b1), content="Matrix([[-1]])")
 
   let (a2, b2) = linear_eq_to_matrix(
     [
@@ -1650,20 +1558,20 @@ test "linear_eq_to_matrix and linsolve match additional SymPy linear cases batch
     [x(), y(), z()],
   )
   inspect(
-    a2.to_string(),
+    Show::to_string(a2),
     content="Matrix([[2, 1, -2], [1, -1, -1], [1, 1, 3]])",
   )
-  inspect(b2.to_string(), content="Matrix([[3], [0], [12]])")
+  inspect(Show::to_string(b2), content="Matrix([[3], [0], [12]])")
 
   let (a3, b3) = linear_eq_to_matrix(
     [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(
+        Eq,
         @symcore.int(3) * x() + @symcore.int(2) * y() - z(),
         @symcore.int(1),
       ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(
+        Eq,
         @symcore.int(2) * x() - @symcore.int(2) * y() + @symcore.int(4) * z(),
         @symcore.int(-2),
       ),
@@ -1672,10 +1580,10 @@ test "linear_eq_to_matrix and linsolve match additional SymPy linear cases batch
     [x(), y(), z()],
   )
   inspect(
-    a3.to_string(),
+    Show::to_string(a3),
     content="Matrix([[3, 2, -1], [2, -2, 4], [-2, 1, -2]])",
   )
-  inspect(b3.to_string(), content="Matrix([[1], [-2], [0]])")
+  inspect(Show::to_string(b3), content="Matrix([[1], [-2], [0]])")
 
   let a_sym = @symcore.Expr::Symbol("a")
   let b_sym = @symcore.Expr::Symbol("b")
@@ -1698,10 +1606,10 @@ test "linear_eq_to_matrix and linsolve match additional SymPy linear cases batch
     [x(), y(), z()],
   )
   inspect(
-    a4.to_string(),
+    Show::to_string(a4),
     content="Matrix([[a*b, b, c], [d + e, f, g], [i, j, k]])",
   )
-  inspect(b4.to_string(), content="Matrix([[d], [h], [l]])")
+  inspect(Show::to_string(b4), content="Matrix([[d], [h], [l]])")
 
   let (a5, b5) = linear_eq_to_matrix(
     [
@@ -1710,26 +1618,20 @@ test "linear_eq_to_matrix and linsolve match additional SymPy linear cases batch
     ],
     [x()],
   )
-  inspect(a5.to_string(), content="Matrix([[3*y*z + 1]])")
-  inspect(b5.to_string(), content="Matrix([[-y*(2*z + 3)]])")
+  inspect(Show::to_string(a5), content="Matrix([[3*y*z + 1]])")
+  inspect(Show::to_string(b5), content="Matrix([[-y*(2*z + 3)]])")
 
   let (a6, b6) = linear_eq_to_matrix(
-    [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
-        x() + @symcore.int(2),
-        @symcore.int(1),
-      ),
-    ],
+    [Relational(Eq, x() + @symcore.int(2), @symcore.int(1))],
     [x()],
   )
-  inspect(a6.to_string(), content="Matrix([[1]])")
-  inspect(b6.to_string(), content="Matrix([[-1]])")
+  inspect(Show::to_string(a6), content="Matrix([[1]])")
+  inspect(Show::to_string(b6), content="Matrix([[-1]])")
 
   let (a7, b7) = linear_eq_to_matrix(
     [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(
+        Eq,
         a_sym * (@symcore.int(2) * x() + @symcore.int(3) * y()) +
         @symcore.int(4) * y(),
         @symcore.int(5),
@@ -1737,8 +1639,8 @@ test "linear_eq_to_matrix and linsolve match additional SymPy linear cases batch
     ],
     [x(), y()],
   )
-  inspect(a7.to_string(), content="Matrix([[2*a, 3*a + 4]])")
-  inspect(b7.to_string(), content="Matrix([[5]])")
+  inspect(Show::to_string(a7), content="Matrix([[2*a, 3*a + 4]])")
+  inspect(Show::to_string(b7), content="Matrix([[5]])")
 
   let a_free = @symcore.Expr::Symbol("a_free")
   let b_free = @symcore.Expr::Symbol("b_free")
@@ -1837,14 +1739,14 @@ test "linsolve matches additional SymPy public cases batch 5" {
     [x1, x2, x3, x4],
   )
   match linsolve_eqns {
-    @symsets.Set::FiniteSet(items) => {
+    FiniteSet(items) => {
       assert_true(items.length() == 1)
       assert_true(tuple_expr_semantically_equal(items[0], expected_parametric))
     }
     _ => fail("linsolve parametric equations should return FiniteSet")
   }
   match linsolve_aug {
-    @symsets.Set::FiniteSet(items) => {
+    FiniteSet(items) => {
       assert_true(items.length() == 1)
       assert_true(tuple_expr_semantically_equal(items[0], expected_parametric))
     }
@@ -1873,12 +1775,10 @@ test "linsolve matches additional SymPy public cases batch 5" {
   )
   inspect(
     @symsets.to_string(
-      linsolve(
-        linsolve_equations_input([
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), x() + y()),
-        ]),
-        [x(), y()],
-      ),
+      linsolve(linsolve_equations_input([Relational(Eq, x(), x() + y())]), [
+        x(),
+        y(),
+      ]),
     ),
     content="{(x, 0)}",
   )
@@ -1886,11 +1786,7 @@ test "linsolve matches additional SymPy public cases batch 5" {
     @symsets.to_string(
       linsolve(
         linsolve_equations_input([
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            x() + x() * y(),
-            @symcore.int(1) + y(),
-          ),
+          Relational(Eq, x() + x() * y(), @symcore.int(1) + y()),
         ]),
         [x()],
       ),
@@ -1901,11 +1797,7 @@ test "linsolve matches additional SymPy public cases batch 5" {
     @symsets.to_string(
       linsolve(
         linsolve_equations_input([
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            @symcore.int(1) + y(),
-            x() + x() * y(),
-          ),
+          Relational(Eq, @symcore.int(1) + y(), x() + x() * y()),
         ]),
         [x()],
       ),
@@ -1966,9 +1858,7 @@ test "linsolve and solveset match additional SymPy public cases batch 6" {
   let bvar = @symcore.Expr::Symbol("B")
   let j1 = @symcore.Expr::Symbol("J1")
   let j2 = @symcore.Expr::Symbol("J2")
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let issue_10056 = linsolve(
     linsolve_augmented_matrix_input(
       @symmatrices.matrix([
@@ -2525,19 +2415,19 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
   let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
 
   let eq_case = lpmax(x() - y(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y() + @symcore.int(2)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    Relational(Le, x(), y() + @symcore.int(2)),
+    Relational(Eq, x(), y() + @symcore.int(2)),
+    Relational(Ge, x(), @symcore.int(0)),
+    Relational(Ge, y(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(eq_case.0), content="2")
   inspect(solution_dict_text(eq_case.1, ["x", "y"]), content="{x: 2, y: 0}")
 
   let extra_symbol_case = lpmin(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(1)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + z()),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    Relational(Ge, y(), @symcore.int(1)),
+    Relational(Ge, x(), y() + z()),
+    Relational(Ge, x(), @symcore.int(0)),
+    Relational(Ge, z(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(extra_symbol_case.0), content="1")
   inspect(
@@ -2552,29 +2442,25 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
   let bounded_front = lpmin(
     @symcore.int(5) * x2 + x3 + @symcore.int(4) * x4 - x1,
     [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(
+        Le,
         @symcore.int(5) * x2 + @symcore.int(2) * x3 + @symcore.int(5) * x4 - x1,
         @symcore.int(5),
       ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
-        @symcore.int(3) * x2 + x4,
-        @symcore.int(2),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(Eq, @symcore.int(3) * x2 + x4, @symcore.int(2)),
+      Relational(
+        Eq,
         @symcore.int(-1) * x1 + x3 + @symcore.int(2) * x4,
         @symcore.int(1),
       ),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Le, x1, @symcore.int(1)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Le, x2, @symcore.int(1)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Le, x3, @symcore.int(1)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Le, x4, @symcore.int(1)),
+      Relational(Ge, x1, @symcore.int(0)),
+      Relational(Le, x1, @symcore.int(1)),
+      Relational(Ge, x2, @symcore.int(0)),
+      Relational(Le, x2, @symcore.int(1)),
+      Relational(Ge, x3, @symcore.int(0)),
+      Relational(Le, x3, @symcore.int(1)),
+      Relational(Ge, x4, @symcore.int(0)),
+      Relational(Le, x4, @symcore.int(1)),
     ],
   )
   inspect(@symprint.pretty_string(bounded_front.0), content="9/2")
@@ -2609,24 +2495,20 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
   inspect(expr_list_text(bounded_lin.1), content="[0, 1/2, 0, 1/2]")
 
   let shifted_eq = lpmin(x() + y() - @symcore.int(2) * z() + @symcore.int(1), [
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
+    Relational(
+      Le,
       @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(),
       @symcore.int(3),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
+    Relational(
+      Le,
       @symcore.int(3) * x() - y() + @symcore.int(10) * z(),
       @symcore.int(6),
     ),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
-      y() + @symcore.int(-9) * x(),
-      @symcore.int(1),
-    ),
+    Relational(Ge, x(), @symcore.int(0)),
+    Relational(Ge, y(), @symcore.int(0)),
+    Relational(Ge, z(), @symcore.int(0)),
+    Relational(Eq, y() + @symcore.int(-9) * x(), @symcore.int(1)),
   ])
   inspect(@symprint.pretty_string(shifted_eq.0), content="3/5")
   inspect(
@@ -2637,20 +2519,20 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
   let shifted_ineq = lpmin(
     x() + y() - @symcore.int(2) * z() + @symcore.int(1),
     [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(
+        Le,
         @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(),
         @symcore.int(3),
       ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(
+        Le,
         @symcore.int(3) * x() - y() + @symcore.int(10) * z(),
         @symcore.int(6),
       ),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Le, z() - y(), half),
+      Relational(Ge, x(), @symcore.int(0)),
+      Relational(Ge, y(), @symcore.int(0)),
+      Relational(Ge, z(), @symcore.int(0)),
+      Relational(Le, z() - y(), half),
     ],
   )
   inspect(@symprint.pretty_string(shifted_ineq.0), content="-1/9")
@@ -2662,20 +2544,20 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
   let shifted_bound = lpmin(
     x() + y() - @symcore.int(2) * z() + @symcore.int(1),
     [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(
+        Le,
         @symcore.int(7) * x() + @symcore.int(4) * y() - @symcore.int(7) * z(),
         @symcore.int(3),
       ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(
+        Le,
         @symcore.int(3) * x() - y() + @symcore.int(10) * z(),
         @symcore.int(6),
       ),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Le, z(), half),
+      Relational(Ge, x(), @symcore.int(0)),
+      Relational(Ge, y(), @symcore.int(0)),
+      Relational(Ge, z(), @symcore.int(0)),
+      Relational(Le, z(), half),
     ],
   )
   inspect(@symprint.pretty_string(shifted_bound.0), content="0")
@@ -2718,9 +2600,7 @@ test "simplex and solveset match additional SymPy public cases batch 11" {
 
 ///|
 test "solveset matches additional SymPy public cases batch 12" {
-  let positive_infinity = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::Infinity,
-  )
+  let positive_infinity = @symcore.Expr::NumberSymbol(Infinity)
   let nonnegative_reals = @symsets.interval(@symcore.int(0), positive_infinity)
 
   inspect(
@@ -2755,7 +2635,7 @@ test "solveset matches additional SymPy public cases batch 12" {
   )
 
   let issue9522_a = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     (((x() ^ @symcore.int(2)) + @symcore.int(-4)) ^ @symcore.int(-1)) + x(),
     (((x() ^ @symcore.int(2)) + @symcore.int(-4)) ^ @symcore.int(-1)) +
     @symcore.int(2),
@@ -2768,7 +2648,7 @@ test "solveset matches additional SymPy public cases batch 12" {
   )
 
   let issue9522_b = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     (x() ^ @symcore.int(-1)) + x(),
     x() ^ @symcore.int(-1),
   )
@@ -2782,11 +2662,7 @@ test "solveset matches additional SymPy public cases batch 12" {
   inspect(
     @symsets.to_string(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
-          @symcore.raw_pow(@symcore.int(-2), x()),
-          @symcore.int(4),
-        ),
+        Relational(Eq, @symcore.raw_pow(@symcore.int(-2), x()), @symcore.int(4)),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
@@ -2796,8 +2672,8 @@ test "solveset matches additional SymPy public cases batch 12" {
   inspect(
     @symsets.to_string(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.int(-1) * (@symcore.int(2) ^ x()),
           @symcore.int(4),
         ),
@@ -2810,8 +2686,8 @@ test "solveset matches additional SymPy public cases batch 12" {
   inspect(
     @symsets.to_string(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.raw_pow(@symcore.int(-3), x()),
           @symcore.int(27),
         ),
@@ -2824,8 +2700,8 @@ test "solveset matches additional SymPy public cases batch 12" {
   inspect(
     @symsets.to_string(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.raw_pow(@symcore.int(-5), x() + @symcore.int(1)),
           @symcore.int(625),
         ),
@@ -2838,8 +2714,8 @@ test "solveset matches additional SymPy public cases batch 12" {
   inspect(
     @symsets.to_string(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.int(2) ^ (x() + @symcore.int(-3)),
           @symcore.int(-16),
         ),
@@ -2854,17 +2730,17 @@ test "solveset matches additional SymPy public cases batch 12" {
 ///|
 test "simplex and solveset match additional SymPy public cases batch 13" {
   let simplex_min = lpmin(y(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Le, x(), y() + @symcore.int(2)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), y() + @symcore.int(2)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+    Relational(Le, x(), y() + @symcore.int(2)),
+    Relational(Ge, x(), y() + @symcore.int(2)),
+    Relational(Ge, y(), @symcore.int(0)),
   ])
   inspect(@symprint.pretty_string(simplex_min.0), content="0")
   inspect(solution_dict_text(simplex_min.1, ["x", "y"]), content="{x: 2, y: 0}")
 
   let simplex_chain = lpmax(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y()),
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
-    @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
+    Relational(Eq, x(), y()),
+    Relational(Eq, y(), z()),
+    Relational(Le, z(), @symcore.int(3)),
   ])
   inspect(@symprint.pretty_string(simplex_chain.0), content="3")
   inspect(
@@ -2880,21 +2756,13 @@ test "simplex and solveset match additional SymPy public cases batch 13" {
   )
   inspect(
     @symsets.to_string(
-      solveset(
-        @symcore.Expr::Boolean(true),
-        symbol=Some(x()),
-        domain=@symsets.reals(),
-      ),
+      solveset(Boolean(true), symbol=Some(x()), domain=@symsets.reals()),
     ),
     content="Reals",
   )
   inspect(
     @symsets.to_string(
-      solveset(
-        @symcore.Expr::Boolean(false),
-        symbol=Some(x()),
-        domain=@symsets.reals(),
-      ),
+      solveset(Boolean(false), symbol=Some(x()), domain=@symsets.reals()),
     ),
     content="EmptySet",
   )
@@ -2911,11 +2779,7 @@ test "simplex and solveset match additional SymPy public cases batch 13" {
   inspect(
     @symsets.to_string(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
-          @symcore.function("exp", [x()]),
-          @symcore.int(1),
-        ),
+        Relational(Eq, @symcore.function("exp", [x()]), @symcore.int(1)),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
@@ -2925,11 +2789,7 @@ test "simplex and solveset match additional SymPy public cases batch 13" {
   inspect(
     @symsets.to_string(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Ge,
-          x() + @symcore.int(-1),
-          @symcore.int(0),
-        ),
+        Relational(Ge, x() + @symcore.int(-1), @symcore.int(0)),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
@@ -2939,11 +2799,7 @@ test "simplex and solveset match additional SymPy public cases batch 13" {
   inspect(
     @symsets.to_string(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Ge,
-          x() ^ @symcore.int(2),
-          @symcore.int(0),
-        ),
+        Relational(Ge, x() ^ @symcore.int(2), @symcore.int(0)),
         symbol=Some(x()),
         domain=@symsets.reals(),
       ),
@@ -2953,8 +2809,8 @@ test "simplex and solveset match additional SymPy public cases batch 13" {
   inspect(
     @symsets.to_string(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.raw_pow(@symcore.int(-3), x() + @symcore.int(-3)),
           @symcore.int(-1) * (@symcore.int(3) ^ @symcore.int(39)),
         ),
@@ -3051,13 +2907,7 @@ test "solve matches additional SymPy public cases batch 15" {
   inspect(
     solve_result_text(
       solve(
-        solve_expr_input(
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            @symcore.int(3) * x(),
-            @symcore.int(2),
-          ),
-        ),
+        solve_expr_input(Relational(Eq, @symcore.int(3) * x(), @symcore.int(2))),
         symbols=[x()],
       ),
     ),
@@ -3074,13 +2924,7 @@ test "solve matches additional SymPy public cases batch 15" {
   inspect(
     solve_result_text(
       solve(
-        solve_expr_input(
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            x() ^ @symcore.int(2),
-            @symcore.int(1),
-          ),
-        ),
+        solve_expr_input(Relational(Eq, x() ^ @symcore.int(2), @symcore.int(1))),
         symbols=[x()],
       ),
     ),
@@ -3094,7 +2938,7 @@ test "solve matches additional SymPy public cases batch 15" {
     symbols=[x(), y()],
   )
   match symbolic_linear {
-    SolveResult::Dict(values) => {
+    Dict(values) => {
       let expected_x = (a22 * b1 + @symcore.int(-1) * (a12 * b2)) *
         ((a11 * a22 + @symcore.int(-1) * (a12 * a21)) ^ @symcore.int(-1))
       let expected_y = (a11 * b2 + @symcore.int(-1) * (a21 * b1)) *
@@ -3152,10 +2996,10 @@ test "solve matches additional SymPy public cases batch 15" {
     solve_result_text(
       solve(
         solve_expr_input(
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
+          Relational(
+            Eq,
             x() ^ @symcore.int(2),
-            @symcore.Expr::Float(@symcore.float_from_double(0.0)),
+            Float(@symcore.float_from_double(0.0)),
           ),
         ),
       ),
@@ -3201,12 +3045,8 @@ test "solve matches additional SymPy public cases batch 16" {
     solve_result_text(
       solve(
         solve_exprs_input([
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), x()),
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            x(),
-            x() + @symcore.int(1),
-          ),
+          Relational(Eq, x(), x()),
+          Relational(Eq, x(), x() + @symcore.int(1)),
         ]),
         symbols=[x()],
       ),
@@ -3217,13 +3057,9 @@ test "solve matches additional SymPy public cases batch 16" {
     solve_result_text(
       solve(
         solve_exprs_input([
-          @symcore.Expr::Boolean(true),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), @symcore.int(0)),
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            x(),
-            x() + @symcore.int(1),
-          ),
+          Boolean(true),
+          Relational(Eq, x(), @symcore.int(0)),
+          Relational(Eq, x(), x() + @symcore.int(1)),
         ]),
         symbols=[x()],
       ),
@@ -3231,9 +3067,7 @@ test "solve matches additional SymPy public cases batch 16" {
     content="[]",
   )
   inspect(
-    solve_result_text(
-      solve(solve_expr_input(@symcore.Expr::Boolean(true)), symbols=[x()]),
-    ),
+    solve_result_text(solve(solve_expr_input(Boolean(true)), symbols=[x()])),
     content="[]",
   )
   inspect(
@@ -3270,9 +3104,7 @@ test "solve matches additional SymPy public cases batch 16" {
 
 ///|
 test "solveset matches additional SymPy complex public cases batch 17" {
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
   let sqrt3 = sqrt(@symcore.int(3))
 
@@ -3401,9 +3233,7 @@ test "solveset matches additional SymPy complex public cases batch 17" {
 test "solveset matches additional SymPy domain and no-solution cases batch 18" {
   let a = @symcore.Expr::Symbol("a")
   let real_domain = @symsets.reals()
-  let positive_infinity = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::Infinity,
-  )
+  let positive_infinity = @symcore.Expr::NumberSymbol(Infinity)
   let one_third = @symcore.rational_from_ints(1, 3) catch {
     _ => fail("one_third")
   }
@@ -3520,9 +3350,7 @@ test "solveset matches additional SymPy domain and no-solution cases batch 18" {
 ///|
 test "solveset matches additional SymPy abs and radical cases batch 19" {
   let real_domain = @symsets.reals()
-  let positive_infinity = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::Infinity,
-  )
+  let positive_infinity = @symcore.Expr::NumberSymbol(Infinity)
   let abs = fn(expr : @symcore.Expr) { @symcore.function("Abs", [expr]) }
 
   inspect(
@@ -3621,21 +3449,13 @@ test "solveset matches additional SymPy public cases batch 20" {
   )
   inspect(
     @symsets.to_string(
-      solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, a, a),
-        symbol=Some(x()),
-        domain=real_domain,
-      ),
+      solveset(Relational(Eq, a, a), symbol=Some(x()), domain=real_domain),
     ),
     content="Reals",
   )
   inspect(
     @symsets.to_string(
-      solveset(
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, a, a),
-        symbol=Some(y()),
-        domain=complex_domain,
-      ),
+      solveset(Relational(Eq, a, a), symbol=Some(y()), domain=complex_domain),
     ),
     content="Complexes",
   )
@@ -3693,41 +3513,36 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
     i * x() + j * y() + k * z() - l,
   ]
   try linear_eq_to_matrix(eqns3, []) catch {
-    SolverError::ValueError(_) => ()
+    ValueError(_) => ()
     _ => fail("expected ValueError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
   }
 
   try linear_eq_to_matrix(eqns3, [x(), x(), y()]) catch {
-    SolverError::ValueError(_) => ()
+    ValueError(_) => ()
     _ => fail("expected ValueError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
   }
 
   let inv_x = x() ^ @symcore.int(-1)
-  try
-    linear_eq_to_matrix(
-      [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x + x(), inv_x)],
-      [x()],
-    )
-  catch {
-    SolverError::NonlinearError(_) => ()
+  try linear_eq_to_matrix([Relational(Eq, inv_x + x(), inv_x)], [x()]) catch {
+    NonlinearError(_) => ()
     _ => fail("expected NonlinearError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
   }
 
   try linear_eq_to_matrix([x() ^ @symcore.int(2)], [x()]) catch {
-    SolverError::NonlinearError(_) => ()
+    NonlinearError(_) => ()
     _ => fail("expected NonlinearError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
   }
 
   try linear_eq_to_matrix([x() * y()], [x(), y()]) catch {
-    SolverError::NonlinearError(_) => ()
+    NonlinearError(_) => ()
     _ => fail("expected NonlinearError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
@@ -3743,29 +3558,28 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
       [x(), y()],
     )
   catch {
-    SolverError::NonlinearError(_) => ()
+    NonlinearError(_) => ()
     _ => fail("expected NonlinearError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
   }
 
-  try linear_eq_to_matrix([@symcore.Expr::Boolean(true)], [x()]) catch {
-    SolverError::ValueError(_) => ()
+  try linear_eq_to_matrix([Boolean(true)], [x()]) catch {
+    ValueError(_) => ()
     _ => fail("expected ValueError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
   }
 
-  try linear_eq_to_matrix([@symcore.Expr::Boolean(false)], [x()]) catch {
-    SolverError::ValueError(_) => ()
+  try linear_eq_to_matrix([Boolean(false)], [x()]) catch {
+    ValueError(_) => ()
     _ => fail("expected ValueError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
   }
 
   let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
-  let pi_over_two = half *
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi_over_two = half * NumberSymbol(Pi)
   assert_true(
     @symsets.compare_set(
       solveset(f(x()) - pi_over_two, symbol=Some(x()), domain=real_domain),
@@ -3805,7 +3619,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
       [x()],
     )
   catch {
-    SolverError::NonlinearError(_) => ()
+    NonlinearError(_) => ()
     _ => fail("expected NonlinearError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
@@ -3822,7 +3636,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
       [x()],
     )
   catch {
-    SolverError::NonlinearError(_) => ()
+    NonlinearError(_) => ()
     _ => fail("expected NonlinearError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
@@ -3831,26 +3645,35 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
   try
     linear_eq_to_matrix([x() * (inv_x + @symcore.int(1)) + y()], [x(), y()])
   catch {
-    SolverError::NonlinearError(_) => ()
+    NonlinearError(_) => ()
     _ => fail("expected NonlinearError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
   }
 
   try linear_eq_to_matrix([(x() + @symcore.int(1)) * y()], [x(), y()]) catch {
-    SolverError::NonlinearError(_) => ()
+    NonlinearError(_) => ()
     _ => fail("expected NonlinearError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
   }
 
   try
-    linear_eq_to_matrix(
-      [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x, inv_x + y())],
-      [x(), y()],
-    )
+    linear_eq_to_matrix([Relational(Eq, inv_x, inv_x + y())], [x(), y()])
   catch {
-    SolverError::NonlinearError(_) => ()
+    NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
+
+  try
+    linear_eq_to_matrix([Relational(Eq, y() * inv_x, y() * inv_x + y())], [
+      x(),
+      y(),
+    ])
+  catch {
+    NonlinearError(_) => ()
     _ => fail("expected NonlinearError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
@@ -3859,26 +3682,8 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
   try
     linear_eq_to_matrix(
       [
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
-          y() * inv_x,
-          y() * inv_x + y(),
-        ),
-      ],
-      [x(), y()],
-    )
-  catch {
-    SolverError::NonlinearError(_) => ()
-    _ => fail("expected NonlinearError")
-  } noraise {
-    _ => fail("expected linear_eq_to_matrix to raise")
-  }
-
-  try
-    linear_eq_to_matrix(
-      [
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           x() * (x() + @symcore.int(1)),
           (x() ^ @symcore.int(2)) + y(),
         ),
@@ -3886,14 +3691,14 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
       [x(), y()],
     )
   catch {
-    SolverError::NonlinearError(_) => ()
+    NonlinearError(_) => ()
     _ => fail("expected NonlinearError")
   } noraise {
     _ => fail("expected linear_eq_to_matrix to raise")
   }
 
   let issue_8715 = @symcore.Expr::Relational(
-    @symcore.RelOp::Gt,
+    Gt,
     x() + inv_x,
     @symcore.int(-2) + inv_x,
   )
@@ -3909,7 +3714,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
         ),
         @symsets.interval(
           @symcore.int(0),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+          NumberSymbol(Infinity),
           left_open=true,
           right_open=true,
         ),
@@ -3920,7 +3725,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
 
   let log_x = @symcore.function("log", [x()])
   let issue_8715_log = @symcore.Expr::Relational(
-    @symcore.RelOp::Gt,
+    Gt,
     log_x + (log_x ^ @symcore.int(-1)),
     @symcore.int(-2) + (log_x ^ @symcore.int(-1)),
   )
@@ -3936,7 +3741,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
         ),
         @symsets.interval(
           @symcore.int(1),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+          NumberSymbol(Infinity),
           left_open=true,
           right_open=true,
         ),
@@ -3967,9 +3772,7 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
 
 ///|
 test "solveset and simplex match additional SymPy public cases batch 23" {
-  let neg_inf = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::NegativeInfinity,
-  )
+  let neg_inf = @symcore.Expr::NumberSymbol(NegativeInfinity)
   let t = @symcore.Expr::Symbol("t")
   let r = @symcore.Expr::Symbol("r")
   let tan_t = @symcore.function("tan", [t])
@@ -4007,7 +3810,7 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
   )
 
   let issue_10477 = @symcore.Expr::Relational(
-    @symcore.RelOp::Lt,
+    Lt,
     @symcore.mul([
       (x() ^ @symcore.int(2)) + @symcore.int(4) * x() + @symcore.int(-3),
       x() ^ @symcore.int(-1),
@@ -4036,7 +3839,7 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
   )
 
   let issue_10671_b = @symcore.Expr::Relational(
-    @symcore.RelOp::Lt,
+    Lt,
     @symcalculus.diff(x() ^ @symcore.int(-1), x()),
     @symcore.int(0),
   )
@@ -4090,9 +3893,9 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
   )
 
   let eq_chain = lpmax(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, x(), y()),
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, y(), z()),
-    @symcore.Expr::Relational(@symcore.RelOp::Le, z(), @symcore.int(3)),
+    Relational(Eq, x(), y()),
+    Relational(Eq, y(), z()),
+    Relational(Le, z(), @symcore.int(3)),
   ])
   inspect(@symprint.pretty_string(eq_chain.0), content="3")
   inspect(
@@ -4106,26 +3909,22 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
     @symcore.mul([@symcore.int(-1), y()]) +
     @symcore.mul([@symcore.int(-5), z()]),
     [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
-        x() - y() + @symcore.int(2) * z(),
-        @symcore.int(-4),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(Le, x() - y() + @symcore.int(2) * z(), @symcore.int(-4)),
+      Relational(
+        Le,
         @symcore.mul([@symcore.int(-1), x()]) +
         @symcore.int(2) * y() +
         @symcore.mul([@symcore.int(-3), z()]),
         @symcore.int(8),
       ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(
+        Le,
         @symcore.int(2) * x() + y() + @symcore.mul([@symcore.int(-7), z()]),
         @symcore.int(10),
       ),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      Relational(Ge, x(), @symcore.int(0)),
+      Relational(Ge, y(), @symcore.int(0)),
+      Relational(Ge, z(), @symcore.int(0)),
     ],
   )
   inspect(@symprint.pretty_string(shifted_lp.0), content="-2")
@@ -4139,26 +3938,22 @@ test "solveset and simplex match additional SymPy public cases batch 23" {
     @symcore.mul([@symcore.int(-1), y()]) +
     @symcore.mul([@symcore.int(-5), z()]),
     [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
-        x() - y() + @symcore.int(2) * z(),
-        @symcore.int(3),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(Le, x() - y() + @symcore.int(2) * z(), @symcore.int(3)),
+      Relational(
+        Le,
         @symcore.mul([@symcore.int(-1), x()]) +
         @symcore.int(2) * y() +
         @symcore.mul([@symcore.int(-3), z()]),
         @symcore.int(-2),
       ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(
+        Le,
         @symcore.int(2) * x() + y() + @symcore.mul([@symcore.int(-7), z()]),
         @symcore.int(-5),
       ),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      Relational(Ge, x(), @symcore.int(0)),
+      Relational(Ge, y(), @symcore.int(0)),
+      Relational(Ge, z(), @symcore.int(0)),
     ],
   )
   inspect(@symprint.pretty_string(shifted_lp_alt.0), content="-25/7")
@@ -4237,21 +4032,13 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
     @symsets.compare_set(
       nonlinsolve(
         [
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            x(),
-            @symcore.int(5) ^ one_fifth,
-          ),
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            x() * y(),
-            @symcore.int(25) * sqrt(@symcore.int(5)),
-          ),
+          Relational(Eq, x(), @symcore.int(5) ^ one_fifth),
+          Relational(Eq, x() * y(), @symcore.int(25) * sqrt(@symcore.int(5))),
         ],
         [x(), y()],
       ),
       @symsets.finite_set([
-        @symcore.Expr::Tuple([
+        Tuple([
           @symcore.int(5) ^ one_fifth,
           @symcore.int(25) *
           sqrt(@symcore.int(5)) *
@@ -4266,13 +4053,13 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
     @symsets.compare_set(
       nonlinsolve(
         [
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
+          Relational(
+            Eq,
             @symcore.mul([t, sqrt(@symcore.int(5)) + sqrt(@symcore.int(2))]) +
             @symcore.int(-1) * sqrt(@symcore.int(2)),
             @symcore.int(0),
           ),
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, t, @symcore.int(0)),
+          Relational(Eq, t, @symcore.int(0)),
         ],
         [t],
       ),
@@ -4291,49 +4078,37 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
 
   try
     lpmax(@symcore.int(-1) * x() - y() - @symcore.int(5) * z(), [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
-        x() - y() + sqrt(@symcore.int(2)) * z(),
-        @symcore.int(-4),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(Le, x() - y() + sqrt(@symcore.int(2)) * z(), @symcore.int(-4)),
+      Relational(
+        Le,
         @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(),
         @symcore.int(8),
       ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
+      Relational(
+        Le,
         @symcore.int(2) * x() + y() - @symcore.int(7) * z(),
         @symcore.int(10),
       ),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      Relational(Ge, x(), @symcore.int(0)),
+      Relational(Ge, y(), @symcore.int(0)),
+      Relational(Ge, z(), @symcore.int(0)),
     ])
   catch {
-    SolverError::ValueError(_) => ()
+    ValueError(_) => ()
     _ => fail("expected ValueError")
   } noraise {
     _ => fail("expected lpmax to raise")
   }
 
-  try
-    lpmax(x(), [
-      @symcore.Expr::Relational(@symcore.RelOp::Gt, x(), @symcore.int(0)),
-    ])
-  catch {
-    SolverError::ValueError(_) => ()
+  try lpmax(x(), [Relational(Gt, x(), @symcore.int(0))]) catch {
+    ValueError(_) => ()
     _ => fail("expected ValueError")
   } noraise {
     _ => fail("expected lpmax to raise")
   }
 
-  try
-    lpmax(x(), [
-      @symcore.Expr::Relational(@symcore.RelOp::Ne, x(), @symcore.int(0)),
-    ])
-  catch {
-    SolverError::ValueError(_) => ()
+  try lpmax(x(), [Relational(Ne, x(), @symcore.int(0))]) catch {
+    ValueError(_) => ()
     _ => fail("expected ValueError")
   } noraise {
     _ => fail("expected lpmax to raise")
@@ -4343,9 +4118,7 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
 ///|
 test "solveset matches additional SymPy exponential conditionset cases batch 25" {
   let real_domain = @symsets.reals()
-  let positive_infinity = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::Infinity,
-  )
+  let positive_infinity = @symcore.Expr::NumberSymbol(Infinity)
   let positive_open = @symsets.interval(
     @symcore.int(0),
     positive_infinity,
@@ -4672,11 +4445,7 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
   assert_true(
     @symsets.compare_set(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
-          @symcore.raw_pow(@symcore.int(-2), x()),
-          @symcore.int(4),
-        ),
+        Relational(Eq, @symcore.raw_pow(@symcore.int(-2), x()), @symcore.int(4)),
         symbol=Some(x()),
         domain=real_domain,
       ),
@@ -4688,8 +4457,8 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
   assert_true(
     @symsets.compare_set(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.int(-1) * (@symcore.int(2) ^ x()),
           @symcore.int(4),
         ),
@@ -4704,8 +4473,8 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
   assert_true(
     @symsets.compare_set(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.raw_pow(@symcore.int(-3), x()),
           @symcore.int(27),
         ),
@@ -4720,8 +4489,8 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
   assert_true(
     @symsets.compare_set(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.raw_pow(@symcore.int(-5), x() + @symcore.int(1)),
           @symcore.int(625),
         ),
@@ -4736,8 +4505,8 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
   assert_true(
     @symsets.compare_set(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.int(2) ^ (x() + @symcore.int(-3)),
           @symcore.int(-16),
         ),
@@ -4752,8 +4521,8 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
   assert_true(
     @symsets.compare_set(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.raw_pow(@symcore.int(-3), x() + @symcore.int(-3)),
           @symcore.int(-1) * (@symcore.int(3) ^ @symcore.int(39)),
         ),
@@ -4779,11 +4548,7 @@ test "solveset matches additional SymPy real exponential equation cases batch 28
   inspect(
     @symsets.to_string(
       solveset(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
-          @symcore.int(2) ^ x(),
-          y(),
-        ),
+        Relational(Eq, @symcore.int(2) ^ x(), y()),
         symbol=Some(x()),
         domain=real_domain,
       ),
@@ -4983,13 +4748,8 @@ test "decompogen factors functional composition and polynomial composition" {
       expr_semantically_equal(quartic_poly[i], quartic_poly_expected[i]),
     )
   }
-  try
-    decompogen(
-      @symcore.Expr::Relational(@symcore.RelOp::Lt, x(), @symcore.int(5)),
-      x(),
-    )
-  catch {
-    SolverError::ValueError(_) => ()
+  try decompogen(Relational(Lt, x(), @symcore.int(5)), x()) catch {
+    ValueError(_) => ()
     _ => fail("expected ValueError")
   } noraise {
     _ => fail("expected decompogen to raise")
@@ -5177,8 +4937,8 @@ test "solve_undetermined_coeffs matches coefficients into symbolic dicts" {
   inspect(
     maybe_solve_result_text(
       solve_undetermined_coeffs(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.add([@symcore.mul([a, x()]), b]),
           @symcore.add([x(), @symcore.int(2)]),
         ),
@@ -5191,8 +4951,8 @@ test "solve_undetermined_coeffs matches coefficients into symbolic dicts" {
   inspect(
     maybe_solve_result_text(
       solve_undetermined_coeffs(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcore.add([@symcore.mul([a ^ @symcore.int(2), x()]), b]),
           x(),
         ),
@@ -5231,12 +4991,12 @@ test "canonical_odes covers low-level source-compatible entry points" {
   )
   let system = [
     @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+      Eq,
       @symcalculus.diff(f(x()), x()) - @symcore.int(7) * f(x()),
       @symcore.int(12) * g(x()),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcalculus.diff(g(x()), x()) + g(x()),
       @symcore.int(20) * f(x()),
     ),
@@ -5567,32 +5327,24 @@ test "constantsimp matches SymPy function and mixed cases" {
 test "constantsimp matches SymPy Eq normalization cases" {
   let c1 = @symcore.Expr::Symbol("C1")
   let eq_add = constantsimp(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
-      c1,
-      @symcore.int(3) + f(x()) * x(),
-    ),
+    Relational(Eq, c1, @symcore.int(3) + f(x()) * x()),
     [c1],
   )
   assert_true(
     @symcore.compare_expr(
       local_constant_renumber(eq_add),
-      @symcore.Expr::Relational(@symcore.RelOp::Eq, x() * f(x()), c1),
+      Relational(Eq, x() * f(x()), c1),
     ) ==
     0,
   )
   let eq_mul = constantsimp(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
-      c1,
-      @symcore.int(3) * f(x()) * x(),
-    ),
+    Relational(Eq, c1, @symcore.int(3) * f(x()) * x()),
     [c1],
   )
   assert_true(
     @symcore.compare_expr(
       local_constant_renumber(eq_mul),
-      @symcore.Expr::Relational(@symcore.RelOp::Eq, x() * f(x()), c1),
+      Relational(Eq, x() * f(x()), c1),
     ) ==
     0,
   )
@@ -5608,9 +5360,7 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
   let one_third = @symcore.rational_from_ints(1, 3) catch {
     _ => fail("one_third")
   }
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
 
   assert_true(
     expr_semantically_equal(
@@ -5630,8 +5380,8 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
 
   let hyperbolic = local_constant_renumber(
     constantsimp(
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(
+        Eq,
         f(x()),
         imag * c1 * @symcore.function("sinh", [x() * one_third]) +
         c2 * @symcore.function("cosh", [x() * one_third]),
@@ -5640,8 +5390,8 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
     ),
   )
   let hyperbolic_expected = local_constant_renumber(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       f(x()),
       c1 * @symcore.function("sinh", [x() * one_third]) +
       c2 * @symcore.function("cosh", [x() * one_third]),
@@ -5651,8 +5401,8 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
 
   let acos_case = local_constant_renumber(
     constantsimp(
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(
+        Eq,
         f(x()),
         @symcore.function("acos", [
           @symcore.int(-1) * c1 * (cos(x()) ^ @symcore.int(-1)),
@@ -5662,8 +5412,8 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
     ),
   )
   let acos_expected = local_constant_renumber(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       f(x()),
       @symcore.function("acos", [c1 * (cos(x()) ^ @symcore.int(-1))]),
     ),
@@ -5672,8 +5422,8 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
 
   let log_case = local_constant_renumber(
     constantsimp(
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(
+        Eq,
         @symcore.function("log", [f(x()) * (c1 ^ @symcore.int(-1))]) +
         @symcore.int(2) *
         @symcore.function("exp", [x() * (f(x()) ^ @symcore.int(-1))]),
@@ -5683,8 +5433,8 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
     ),
   )
   let log_expected = local_constant_renumber(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcore.function("log", [c1 * f(x())]) +
       @symcore.int(2) *
       @symcore.function("exp", [x() * (f(x()) ^ @symcore.int(-1))]),
@@ -5695,8 +5445,8 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
 
   let sqrt_log_case = local_constant_renumber(
     constantsimp(
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(
+        Eq,
         (x() ^ @symcore.int(2)) *
         (@symcore.int(2) ^ @symcore.int(-1)) *
         (f(x()) ^ @symcore.int(-2)) +
@@ -5713,8 +5463,8 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
     ),
   )
   let sqrt_log_expected = local_constant_renumber(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       (x() ^ @symcore.int(2)) *
       (@symcore.int(2) ^ @symcore.int(-1)) *
       (f(x()) ^ @symcore.int(-2)) +
@@ -5728,8 +5478,8 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
   let exp_ratio = @symcore.function("exp", [@symcore.int(-1) * ratio])
   let trig_log_case = local_constant_renumber(
     constantsimp(
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(
+        Eq,
         @symcore.function("log", [x() * (c1 ^ @symcore.int(-1))]) -
         exp_ratio * sin(ratio) * (@symcore.int(2) ^ @symcore.int(-1)) -
         exp_ratio * cos(ratio) * (@symcore.int(2) ^ @symcore.int(-1)),
@@ -5739,8 +5489,8 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
     ),
   )
   let trig_log_expected = local_constant_renumber(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcore.function("log", [c1 * x()]) -
       exp_ratio * sin(ratio) * (@symcore.int(2) ^ @symcore.int(-1)) -
       exp_ratio * cos(ratio) * (@symcore.int(2) ^ @symcore.int(-1)),
@@ -5751,16 +5501,16 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
 
   let sqrt_pair = [
     constantsimp(
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(
+        Eq,
         f(x()),
         sqrt(@symcore.int(-1) * c1 * x() + (x() ^ @symcore.int(2))),
       ),
       [c1],
     ),
     constantsimp(
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(
+        Eq,
         f(x()),
         @symcore.int(-1) *
         sqrt(@symcore.int(-1) * c1 * x() + (x() ^ @symcore.int(2))),
@@ -5769,23 +5519,15 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
     ),
   ]
   let sqrt_pair_expected = [
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
-      f(x()),
-      sqrt(x() * (c1 + x())),
-    ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
-      f(x()),
-      @symcore.int(-1) * sqrt(x() * (c1 + x())),
-    ),
+    @symcore.Expr::Relational(Eq, f(x()), sqrt(x() * (c1 + x()))),
+    Relational(Eq, f(x()), @symcore.int(-1) * sqrt(x() * (c1 + x()))),
   ]
   assert_true(expr_list_text(sqrt_pair) == expr_list_text(sqrt_pair_expected))
 
   let integral_case = local_constant_renumber(
     constantsimp(
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+      Relational(
+        Eq,
         @symcore.int(-1) *
         @symcore.function("Integral", [
           @symcore.int(-1) *
@@ -5793,7 +5535,7 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
             (u2 * sqrt(@symcore.int(1) - (u2 ^ @symcore.int(2)))) ^
             @symcore.int(-1)
           ),
-          @symcore.Expr::Tuple([u2, a0, x() * (f(x()) ^ @symcore.int(-1))]),
+          Tuple([u2, a0, x() * (f(x()) ^ @symcore.int(-1))]),
         ]) +
         @symcore.function("log", [f(x()) * (c1 ^ @symcore.int(-1))]),
         @symcore.int(0),
@@ -5802,8 +5544,8 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
     ),
   )
   let integral_expected = local_constant_renumber(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcore.int(-1) *
       @symcore.function("Integral", [
         @symcore.int(-1) *
@@ -5811,7 +5553,7 @@ test "constantsimp matches initial SymPy ODE solution normalization cases" {
           (u2 * sqrt(@symcore.int(1) - (u2 ^ @symcore.int(2)))) ^
           @symcore.int(-1)
         ),
-        @symcore.Expr::Tuple([u2, a0, x() * (f(x()) ^ @symcore.int(-1))]),
+        Tuple([u2, a0, x() * (f(x()) ^ @symcore.int(-1))]),
       ]) +
       @symcore.function("log", [c1 * f(x())]),
       @symcore.int(0),
@@ -5835,34 +5577,34 @@ test "constantsimp matches current upstream XFAIL nonlocal simplification behavi
 test "linear_ode_to_matrix covers low-level source-compatible entry points" {
   let system = [
     @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+      Eq,
       @symcalculus.diff(f(x()), x()) - @symcore.int(7) * f(x()),
       @symcore.int(12) * g(x()),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcalculus.diff(g(x()), x()) + g(x()),
       @symcore.int(20) * f(x()),
     ),
   ]
   let (a_mats, b_mat) = linear_ode_to_matrix(system, [f(x()), g(x())], x(), 1)
-  inspect(a_mats[0].to_string(), content="Matrix([[1, 0], [0, 1]])")
-  inspect(a_mats[1].to_string(), content="Matrix([[7, 12], [20, -1]])")
-  inspect(b_mat.to_string(), content="Matrix([[0], [0]])")
+  inspect(Show::to_string(a_mats[0]), content="Matrix([[1, 0], [0, 1]])")
+  inspect(Show::to_string(a_mats[1]), content="Matrix([[7, 12], [20, -1]])")
+  inspect(Show::to_string(b_mat), content="Matrix([[0], [0]])")
 }
 
 ///|
 test "canonical_odes and linear_ode_to_matrix handle nonlinear branches and higher order systems" {
   let nonlinear_system = [
     @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+      Eq,
       (@symcalculus.diff(f(x()), x()) ^ @symcore.int(2)) +
       @symcore.mul([@symcore.int(-2), @symcalculus.diff(f(x()), x())]) +
       @symcore.int(1),
       @symcore.int(4),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcore.add([
         @symcore.mul([@symcore.int(-1), y(), f(x())]),
         @symcalculus.diff(g(x()), x()),
@@ -5883,7 +5625,7 @@ test "canonical_odes and linear_ode_to_matrix handle nonlinear branches and high
 
   let higher_order = [
     @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+      Eq,
       @symcalculus.diff(@symcalculus.diff(f(x()), x()), x()),
       @symcore.add([
         @symcalculus.diff(f(x()), x()),
@@ -5892,8 +5634,8 @@ test "canonical_odes and linear_ode_to_matrix handle nonlinear branches and high
         @symcore.int(1),
       ]),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcalculus.diff(@symcalculus.diff(g(x()), x()), x()),
       @symcore.add([
         @symcore.int(2) * @symcalculus.diff(g(x()), x()),
@@ -5908,27 +5650,29 @@ test "canonical_odes and linear_ode_to_matrix handle nonlinear branches and high
     2,
   )
   inspect(a_mats.length().to_string(), content="3")
-  inspect(a_mats[0].to_string(), content="Matrix([[1, 0], [0, 1]])")
-  inspect(a_mats[1].to_string(), content="Matrix([[1, 0], [0, 2]])")
-  inspect(a_mats[2].to_string(), content="Matrix([[1, 1], [-1, 0]])")
-  inspect(b_mat.to_string(), content="Matrix([[1], [0]])")
+  inspect(Show::to_string(a_mats[0]), content="Matrix([[1, 0], [0, 1]])")
+  inspect(Show::to_string(a_mats[1]), content="Matrix([[1, 0], [0, 2]])")
+  inspect(Show::to_string(a_mats[2]), content="Matrix([[1, 1], [-1, 0]])")
+  inspect(Show::to_string(b_mat), content="Matrix([[1], [0]])")
 }
 
 ///|
 test "linodesolve covers low-level source-compatible entry points" {
   inspect(
-    linodesolve(@symmatrices.matrix([[@symcore.int(1)]]), x()).to_string(),
+    Show::to_string(linodesolve(@symmatrices.matrix([[@symcore.int(1)]]), x())),
     content="Matrix([[C1*exp(x)]])",
   )
   inspect(
     normalize_text(
-      linodesolve(
-        @symmatrices.matrix([
-          [@symcore.int(1), @symcore.int(1)],
-          [@symcore.int(0), @symcore.int(1)],
-        ]),
-        x(),
-      ).to_string(),
+      Show::to_string(
+        linodesolve(
+          @symmatrices.matrix([
+            [@symcore.int(1), @symcore.int(1)],
+            [@symcore.int(0), @symcore.int(1)],
+          ]),
+          x(),
+        ),
+      ),
     ),
     content=(
       #|Matrix([[x*C2*exp(x) + C1*exp(x)], [C2*exp(x)]])
@@ -5936,13 +5680,15 @@ test "linodesolve covers low-level source-compatible entry points" {
   )
   inspect(
     normalize_text(
-      linodesolve(
-        @symmatrices.matrix([
-          [@symcore.int(1), @symcore.int(2)],
-          [@symcore.int(0), @symcore.int(3)],
-        ]),
-        x(),
-      ).to_string(),
+      Show::to_string(
+        linodesolve(
+          @symmatrices.matrix([
+            [@symcore.int(1), @symcore.int(2)],
+            [@symcore.int(0), @symcore.int(3)],
+          ]),
+          x(),
+        ),
+      ),
     ),
     content=(
       #|Matrix([[C1*exp(x) + C2*exp(3*x) - C2*exp(x)], [C2*exp(3*x)]])
@@ -5994,12 +5740,12 @@ test "lie heuristics expose abaco1_simple explicitly" {
 test "canonical_odes matches additional SymPy explicit linear case" {
   let system_1 = [
     @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+      Eq,
       @symcalculus.diff(@symcalculus.diff(f(x()), x()), x()),
       f(x()) + @symcore.int(2) * g(x()),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       g(x()) + @symcore.int(1),
       @symcalculus.diff(g(x()), x()) + f(x()),
     ),
@@ -6018,20 +5764,16 @@ test "canonical_odes matches additional SymPy explicit linear case" {
 test "canonical_odes matches additional SymPy triangular nonlinear case" {
   let system_2 = [
     @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+      Eq,
       @symcalculus.diff(f(x()), x()),
       @symcalculus.diff(h(x()), x()) + f(x()),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcalculus.diff(g(x()), x()) ^ @symcore.int(2),
       f(x()) + h(x()),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
-      @symcalculus.diff(h(x()), x()),
-      f(x()),
-    ),
+    Relational(Eq, @symcalculus.diff(h(x()), x()), f(x())),
   ]
   inspect(
     canonical_odes(system_2, [f(x()), g(x()), h(x())], x()).length().to_string(),
@@ -6055,19 +5797,19 @@ test "canonical_odes matches additional SymPy triangular nonlinear case" {
 test "linear_ode_to_matrix matches additional SymPy matrix forms and errors" {
   let system_3 = [
     @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+      Eq,
       @symcore.int(2) * @symcalculus.diff(f(x()), x()) +
       @symcore.int(3) * @symcalculus.diff(h(x()), x()),
       f(x()) + g(x()),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcore.int(4) * @symcalculus.diff(h(x()), x()) +
       @symcore.int(5) * @symcalculus.diff(g(x()), x()),
       f(x()) + h(x()),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcore.int(5) * @symcalculus.diff(f(x()), x()) +
       @symcore.int(4) * @symcalculus.diff(g(x()), x()),
       g(x()) + h(x()),
@@ -6080,31 +5822,31 @@ test "linear_ode_to_matrix matches additional SymPy matrix forms and errors" {
     1,
   )
   inspect(
-    a_sys3[0].to_string(),
+    Show::to_string(a_sys3[0]),
     content="Matrix([[2, 0, 3], [0, 5, 4], [5, 4, 0]])",
   )
   inspect(
-    a_sys3[1].to_string(),
+    Show::to_string(a_sys3[1]),
     content="Matrix([[1, 1, 0], [1, 0, 1], [0, 1, 1]])",
   )
-  inspect(b_sys3.to_string(), content="Matrix([[0], [0], [0]])")
+  inspect(Show::to_string(b_sys3), content="Matrix([[0], [0], [0]])")
 
   let system_4 = [
     @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+      Eq,
       @symcalculus.diff(@symcalculus.diff(f(x()), x()), x()) + h(x()),
       @symcalculus.diff(f(x()), x()) + g(x()),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcore.int(2) * @symcalculus.diff(@symcalculus.diff(h(x()), x()), x()) +
       @symcalculus.diff(@symcalculus.diff(g(x()), x()), x()) +
       @symcalculus.diff(g(x()), x()) +
       g(x()),
       @symcore.int(0),
     ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcore.int(3) * @symcalculus.diff(h(x()), x()),
       @symcore.int(4),
     ),
@@ -6116,29 +5858,29 @@ test "linear_ode_to_matrix matches additional SymPy matrix forms and errors" {
     2,
   )
   inspect(
-    a_sys4[0].to_string(),
+    Show::to_string(a_sys4[0]),
     content="Matrix([[1, 0, 0], [0, 1, 2], [0, 0, 0]])",
   )
   inspect(
-    a_sys4[1].to_string(),
+    Show::to_string(a_sys4[1]),
     content="Matrix([[1, 0, 0], [0, -1, 0], [0, 0, -3]])",
   )
   inspect(
-    a_sys4[2].to_string(),
+    Show::to_string(a_sys4[2]),
     content="Matrix([[0, 1, -1], [0, -1, 0], [0, 0, 0]])",
   )
-  inspect(b_sys4.to_string(), content="Matrix([[0], [0], [4]])")
+  inspect(Show::to_string(b_sys4), content="Matrix([[0], [0], [4]])")
 
   try
     linear_ode_to_matrix(
       [
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcalculus.diff(@symcalculus.diff(f(x()), x()), x()),
           g(x()),
         ),
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
+        Relational(
+          Eq,
           @symcalculus.diff(f(x()), x()) + @symcalculus.diff(g(x()), x()),
           f(x()),
         ),
@@ -6150,7 +5892,7 @@ test "linear_ode_to_matrix matches additional SymPy matrix forms and errors" {
   catch {
     err =>
       inspect(
-        err.to_string(),
+        Show::to_string(err),
         content="ValueError(Cannot represent system in 1-order form)",
       )
   } noraise {
@@ -6160,16 +5902,8 @@ test "linear_ode_to_matrix matches additional SymPy matrix forms and errors" {
   try
     linear_ode_to_matrix(
       [
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
-          @symcalculus.diff(f(x()), x()),
-          f(x()) ^ @symcore.int(2),
-        ),
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Eq,
-          @symcalculus.diff(g(x()), x()),
-          f(x()) + g(x()),
-        ),
+        Relational(Eq, @symcalculus.diff(f(x()), x()), f(x()) ^ @symcore.int(2)),
+        Relational(Eq, @symcalculus.diff(g(x()), x()), f(x()) + g(x())),
       ],
       [f(x()), g(x())],
       x(),
@@ -6178,7 +5912,7 @@ test "linear_ode_to_matrix matches additional SymPy matrix forms and errors" {
   catch {
     err =>
       inspect(
-        err.to_string(),
+        Show::to_string(err),
         content="ValueError(The system of ODEs is nonlinear.)",
       )
   } noraise {
@@ -6419,7 +6153,7 @@ test "lie heuristic linear follows SymPy reference cases" {
 ///|
 test "ode and pde high-level helpers cover source-compatible entry points" {
   let ode = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcalculus.diff(f(x()), x()),
     f(x()),
   )
@@ -6435,9 +6169,7 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
   )
   inspect(
     expr_list_text(
-      classify_ode(ode, func=Some(f(x()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_ode(ode, func=Some(f(x()))).map(name => Symbol(name)),
     ),
     content="[separable, 1st_linear, Bernoulli]",
   )
@@ -6460,7 +6192,7 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
   )
 
   let pde = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcalculus.diff(u(x(), y()), x()),
     @symcalculus.diff(u(x(), y()), y()),
   )
@@ -6480,9 +6212,7 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
   )
   inspect(
     expr_list_text(
-      classify_pde(pde, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(pde, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff_homogeneous]",
   )
@@ -6509,7 +6239,7 @@ test "ode and pde high-level helpers cover source-compatible entry points" {
 test "pde separation matches additional SymPy source cases" {
   let ut = @symcore.applied_undefined_function("u", [x(), t()])
   let add_eq = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcalculus.diff(ut, x()),
     @symcore.mul([@symcalculus.diff(ut, t()), @symcore.function("exp", [ut])]),
   )
@@ -6535,14 +6265,15 @@ test "pde separation matches additional SymPy source cases" {
   )
 
   try pde_separate(add_eq, ut, [xfun(x()), tfun(t())], strategy="div") catch {
-    err => inspect(err.to_string(), content="ValueError(Unknown strategy: div)")
+    err =>
+      inspect(Show::to_string(err), content="ValueError(Unknown strategy: div)")
   } noraise {
     _ => fail("expected pde_separate to raise")
   }
 
   let fxyz = @symcore.applied_undefined_function("F", [x(), y(), z()])
   let sum_eq = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcore.add([
       @symcalculus.diff(fxyz, x()),
       @symcalculus.diff(fxyz, y()),
@@ -6558,7 +6289,7 @@ test "pde separation matches additional SymPy source cases" {
   catch {
     err =>
       inspect(
-        err.to_string(),
+        Show::to_string(err),
         content="ValueError(Duplicate substitution arguments detected)",
       )
   } noraise {
@@ -6567,7 +6298,7 @@ test "pde separation matches additional SymPy source cases" {
   try pde_separate_mul(sum_eq, fxyz, [xfun(x()), yfun(y())]) catch {
     err =>
       inspect(
-        err.to_string(),
+        Show::to_string(err),
         content="ValueError(Variable counts do not match)",
       )
   } noraise {
@@ -6580,7 +6311,10 @@ test "pde separation matches additional SymPy source cases" {
     ])
   catch {
     err =>
-      inspect(err.to_string(), content="ValueError(Arguments do not match)")
+      inspect(
+        Show::to_string(err),
+        content="ValueError(Arguments do not match)",
+      )
   } noraise {
     _ => fail("expected pde_separate_mul to raise")
   }
@@ -6650,7 +6384,7 @@ test "pde separation matches additional SymPy source cases" {
 
   let c = @symcore.Expr::Symbol("C")
   let wave_eq = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcalculus.diff(@symcalculus.diff(ut, t()), t()),
     (c ^ @symcore.int(2)) * @symcalculus.diff(@symcalculus.diff(ut, x()), x()),
   )
@@ -6680,7 +6414,7 @@ test "pde separation matches additional SymPy source cases" {
   )
 
   let laplace_eq = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcore.add([
       @symcore.mul([
         @symcore.pow(r(), @symcore.int(-1)),
@@ -6740,7 +6474,7 @@ test "pde separation matches additional SymPy source cases" {
       ]),
     ),
   )
-  let c_eq = @symcore.Expr::Relational(@symcore.RelOp::Eq, laplace_sep_z[1], c)
+  let c_eq = @symcore.Expr::Relational(Eq, laplace_sep_z[1], c)
   let laplace_sep_theta = pde_separate_mul(c_eq, u(theta(), r()), [
     tfun(theta()),
     rfun(r()),
@@ -6863,7 +6597,7 @@ test "pde separation matches additional SymPy source cases" {
 ///|
 test "dsolve meta-hints cover SymPy-style front doors" {
   let ode = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcalculus.diff(f(x()), x()),
     f(x()),
   )
@@ -6889,7 +6623,7 @@ test "dsolve meta-hints cover SymPy-style front doors" {
   try dsolve(ode, func=Some(f(x())), hint="factorable") catch {
     err =>
       inspect(
-        err.to_string(),
+        Show::to_string(err),
         content="ValueError(ODE Eq(Derivative(f(x), x), f(x)) does not match hint factorable)",
       )
   } noraise {
@@ -6900,7 +6634,7 @@ test "dsolve meta-hints cover SymPy-style front doors" {
 ///|
 test "pdsolve meta-hints cover SymPy-style front doors" {
   let pde_source = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcore.add([
       @symcore.mul([@symcore.int(-2), @symcalculus.diff(u(x(), y()), x())]),
       @symcore.mul([@symcore.int(4), @symcalculus.diff(u(x(), y()), y())]),
@@ -6919,7 +6653,7 @@ test "pdsolve meta-hints cover SymPy-style front doors" {
     expr_dict_get(pde_all, "1st_linear_constant_coeff").unwrap_or(
       @symcore.int(0),
     ) {
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    Relational(Eq, _, rhs) => rhs
     _ => @symcore.int(0)
   }
   inspect(
@@ -6937,12 +6671,12 @@ test "pdsolve solvefun follows SymPy front door" {
   let g_sol = pdsolve(
     eq1,
     func=Some(u(x(), y())),
-    solvefun=Some(@symcore.Expr::UndefinedFunction("G")),
+    solvefun=Some(UndefinedFunction("G")),
   )
   let h_sol = pdsolve(
     eq1,
     func=Some(u(x(), y())),
-    solvefun=Some(@symcore.Expr::UndefinedFunction("H")),
+    solvefun=Some(UndefinedFunction("H")),
   )
   inspect(
     @symprint.pretty_string(default_sol),
@@ -6961,7 +6695,7 @@ test "pdsolve solvefun follows SymPy front door" {
 ///|
 test "pdsolve expanded constant coefficient hints follow SymPy source cases" {
   let pde_source = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcore.add([
       @symcore.mul([@symcore.int(-2), @symcalculus.diff(u(x(), y()), x())]),
       @symcore.mul([@symcore.int(4), @symcalculus.diff(u(x(), y()), y())]),
@@ -6971,9 +6705,7 @@ test "pdsolve expanded constant coefficient hints follow SymPy source cases" {
   )
   inspect(
     expr_list_text(
-      classify_pde(pde_source, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(pde_source, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff, 1st_linear_constant_coeff_Integral]",
   )
@@ -6983,7 +6715,7 @@ test "pdsolve expanded constant coefficient hints follow SymPy source cases" {
     hint="1st_linear_constant_coeff",
   )
   let actual_rhs = match pde_source_sol {
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    Relational(Eq, _, rhs) => rhs
     _ => @symcore.int(0)
   }
   inspect(
@@ -6995,7 +6727,7 @@ test "pdsolve expanded constant coefficient hints follow SymPy source cases" {
 ///|
 test "pdsolve constant coefficient solution keeps explicit source term shape" {
   let pde_source = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcore.add([
       @symcore.mul([@symcore.int(-2), @symcalculus.diff(u(x(), y()), x())]),
       @symcore.mul([@symcore.int(4), @symcalculus.diff(u(x(), y()), y())]),
@@ -7019,7 +6751,7 @@ test "pdsolve constant coefficient solution keeps explicit source term shape" {
 ///|
 test "pdsolve constant coefficient integral hint stays available" {
   let pde_source = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcore.add([
       @symcore.mul([@symcore.int(-2), @symcalculus.diff(u(x(), y()), x())]),
       @symcore.mul([@symcore.int(4), @symcalculus.diff(u(x(), y()), y())]),
@@ -7051,7 +6783,7 @@ test "pdsolve variable coefficient hint follows SymPy source case" {
   inspect(
     expr_list_text(
       classify_pde(pde_variable, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
+        Symbol(name)
       }),
     ),
     content="[1st_linear_variable_coeff]",
@@ -7072,7 +6804,7 @@ test "pdsolve variable coefficient hint follows SymPy source case" {
     ]),
   )
   let actual_rhs = match pde_variable_sol {
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    Relational(Eq, _, rhs) => rhs
     _ => @symcore.int(0)
   }
   assert_true(expr_semantically_equal(actual_rhs, expected_rhs))
@@ -7081,7 +6813,7 @@ test "pdsolve variable coefficient hint follows SymPy source case" {
 ///|
 test "pdsolve mismatched hint raises ValueError instead of unsupported" {
   let pde_source = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcore.add([
       @symcore.mul([@symcore.int(-2), @symcalculus.diff(u(x(), y()), x())]),
       @symcore.mul([@symcore.int(4), @symcalculus.diff(u(x(), y()), y())]),
@@ -7098,7 +6830,7 @@ test "pdsolve mismatched hint raises ValueError instead of unsupported" {
   catch {
     err =>
       inspect(
-        err.to_string(),
+        Show::to_string(err),
         content="ValueError(PDE Eq(-2*Derivative(u(x, y), x) + 4*Derivative(u(x, y), y) + 5*u(x, y), exp(3*y + x)) does not match hint 1st_linear_variable_coeff)",
       )
   } noraise {
@@ -7131,49 +6863,37 @@ test "pde classify and checkpdesol match additional SymPy source cases" {
     @symcore.int(3) * @symcalculus.diff(u(x(), y()), y())
   inspect(
     expr_list_text(
-      classify_pde(eq1, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(eq1, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff_homogeneous]",
   )
   inspect(
     expr_list_text(
-      classify_pde(eq2, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(eq2, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff_homogeneous]",
   )
   inspect(
     expr_list_text(
-      classify_pde(eq3, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(eq3, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff_homogeneous]",
   )
   inspect(
     expr_list_text(
-      classify_pde(eq4, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(eq4, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_variable_coeff]",
   )
   inspect(
     expr_list_text(
-      classify_pde(eq5, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(eq5, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff_homogeneous]",
   )
   inspect(
     expr_list_text(
-      classify_pde(eq6, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(eq6, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff_homogeneous]",
   )
@@ -7212,7 +6932,7 @@ test "pdsolve matches additional SymPy homogeneous and variable source cases" {
     @symcalculus.diff(u(x(), y()), y())
   let eq_h1_sol = pdsolve(eq_h1, func=Some(u(x(), y())))
   let eq_h1_rhs = match eq_h1_sol {
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    Relational(Eq, _, rhs) => rhs
     _ => @symcore.int(0)
   }
   assert_true(
@@ -7232,7 +6952,7 @@ test "pdsolve matches additional SymPy homogeneous and variable source cases" {
     @symcore.int(7) * @symcalculus.diff(u(x(), y()), y())
   let eq_h3_sol = pdsolve(eq_h3, func=Some(u(x(), y())))
   let eq_h3_rhs = match eq_h3_sol {
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    Relational(Eq, _, rhs) => rhs
     _ => @symcore.int(0)
   }
   assert_true(
@@ -7272,7 +6992,7 @@ test "pdsolve matches additional SymPy homogeneous and variable source cases" {
     hint="1st_linear_variable_coeff",
   )
   let eq_v1_rhs = match eq_v1_sol {
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    Relational(Eq, _, rhs) => rhs
     _ => @symcore.int(0)
   }
   assert_true(
@@ -7321,7 +7041,7 @@ test "pdsolve matches additional SymPy homogeneous and variable source cases" {
     hint="1st_linear_variable_coeff",
   )
   let eq_v3_rhs = match eq_v3_sol {
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    Relational(Eq, _, rhs) => rhs
     _ => @symcore.int(0)
   }
   assert_true(
@@ -7372,7 +7092,7 @@ test "pdsolve matches additional SymPy homogeneous and variable source cases" {
     hint="1st_linear_variable_coeff",
   )
   let eq_v5_rhs = match eq_v5_sol {
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, _, rhs) => rhs
+    Relational(Eq, _, rhs) => rhs
     _ => @symcore.int(0)
   }
   assert_true(
@@ -7408,9 +7128,7 @@ test "pdsolve matches additional SymPy constant coefficient source case eq_c1" {
   let eq_c1_sol = pdsolve(eq_c1, func=Some(u(x(), y())))
   inspect(
     expr_list_text(
-      classify_pde(eq_c1, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(eq_c1, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff, 1st_linear_constant_coeff_Integral]",
   )
@@ -7430,9 +7148,7 @@ test "pdsolve matches additional SymPy constant coefficient source case eq_c2" {
   let eq_c2_sol = pdsolve(eq_c2, func=Some(u(x(), y())))
   inspect(
     expr_list_text(
-      classify_pde(eq_c2, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(eq_c2, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff, 1st_linear_constant_coeff_Integral]",
   )
@@ -7451,9 +7167,7 @@ test "pdsolve matches additional SymPy constant coefficient source case eq_c3" {
   let eq_c3_sol = pdsolve(eq_c3, func=Some(u(x(), y())))
   inspect(
     expr_list_text(
-      classify_pde(eq_c3, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(eq_c3, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff, 1st_linear_constant_coeff_Integral]",
   )
@@ -7472,9 +7186,7 @@ test "pdsolve matches additional SymPy constant coefficient source cases eq_c4 a
   let eq_c4_sol = pdsolve(eq_c4, func=Some(u(x(), y())))
   inspect(
     expr_list_text(
-      classify_pde(eq_c4, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(eq_c4, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff, 1st_linear_constant_coeff_Integral]",
   )
@@ -7489,9 +7201,7 @@ test "pdsolve matches additional SymPy constant coefficient source cases eq_c4 a
     @symcore.function("log", [x()])
   inspect(
     expr_list_text(
-      classify_pde(eq_c5, func=Some(u(x(), y()))).map(name => {
-        @symcore.Expr::Symbol(name)
-      }),
+      classify_pde(eq_c5, func=Some(u(x(), y()))).map(name => Symbol(name)),
     ),
     content="[1st_linear_constant_coeff, 1st_linear_constant_coeff_Integral]",
   )
@@ -7557,9 +7267,9 @@ test "checkpdesol follows SymPy list input and solve_for_func behavior" {
 
   let implicit_sol = pdsolve(eq4, func=Some(u(x(), y())))
   let implicit_zero = match implicit_sol {
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, lhs, rhs) =>
+    Relational(Eq, lhs, rhs) =>
       @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
+        Eq,
         @symcore.add([lhs, @symcore.int(-1) * rhs]),
         @symcore.int(0),
       )
@@ -7577,7 +7287,7 @@ test "checkpdesol follows SymPy list input and solve_for_func behavior" {
       solve_for_func=false,
     )
   catch {
-    SolverError::NotImplementedError(_) => ()
+    NotImplementedError(_) => ()
     _ => fail("expected NotImplementedError")
   } noraise {
     _ => fail("expected checkpdesol to raise")
@@ -7588,7 +7298,7 @@ test "checkpdesol follows SymPy list input and solve_for_func behavior" {
 test "checkodesol follows SymPy subscheck-style implicit and exact cases" {
   let c1 = @symcore.Expr::Symbol("C1")
   let exact_sol = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     (f(x()) ^ @symcore.int(5)) + @symcore.int(9) * f(x()) + x(),
     @symcore.int(0),
   )
@@ -7601,7 +7311,7 @@ test "checkodesol follows SymPy subscheck-style implicit and exact cases" {
   inspect(@symprint.pretty_string(exact_check.1), content="0")
 
   let implicit_sol = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcore.function("exp", [f(x())]) + x(),
     @symcore.int(0),
   )
@@ -7617,7 +7327,7 @@ test "checkodesol follows SymPy subscheck-style implicit and exact cases" {
   inspect(@symprint.pretty_string(implicit_check.1), content="0")
 
   let reversed_sol = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     c1 * @symcore.function("exp", [x()]),
     f(x()),
   )
@@ -7631,7 +7341,7 @@ test "checkodesol follows SymPy subscheck-style implicit and exact cases" {
 
   let bad_check = checkodesol(
     @symcalculus.diff(f(x()), x()),
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, f(x()), x()),
+    Relational(Eq, f(x()), x()),
     func=Some(f(x())),
   )
   inspect(bad_check.0.to_string(), content="false")
@@ -7675,11 +7385,7 @@ test "inequalities, factor_system and diophantine cover source-compatible public
   inspect(
     inequality_result_text(
       solve_univariate_inequality(
-        @symcore.Expr::Relational(
-          @symcore.RelOp::Ge,
-          x() ^ @symcore.int(2),
-          @symcore.int(4),
-        ),
+        Relational(Ge, x() ^ @symcore.int(2), @symcore.int(4)),
         x(),
         relational=false,
       ),
@@ -7690,11 +7396,7 @@ test "inequalities, factor_system and diophantine cover source-compatible public
     normalize_text(
       inequality_result_text(
         solve_univariate_inequality(
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ge,
-            x() ^ @symcore.int(2),
-            @symcore.int(4),
-          ),
+          Relational(Ge, x() ^ @symcore.int(2), @symcore.int(4)),
           x(),
         ),
       ),
@@ -7745,13 +7447,7 @@ test "inequalities, factor_system and diophantine cover source-compatible public
     normalize_text(
       @symprint.pretty_string(
         reduce_inequalities(
-          [
-            @symcore.Expr::Relational(
-              @symcore.RelOp::Ge,
-              x() ^ @symcore.int(2),
-              @symcore.int(4),
-            ),
-          ],
+          [Relational(Ge, x() ^ @symcore.int(2), @symcore.int(4))],
           symbols=[x()],
         ),
       ),
@@ -7763,8 +7459,8 @@ test "inequalities, factor_system and diophantine cover source-compatible public
       @symprint.pretty_string(
         reduce_inequalities(
           [
-            @symcore.Expr::Relational(@symcore.RelOp::Gt, x(), @symcore.int(1)),
-            @symcore.Expr::Relational(@symcore.RelOp::Lt, y(), @symcore.int(2)),
+            Relational(Gt, x(), @symcore.int(1)),
+            Relational(Lt, y(), @symcore.int(2)),
           ],
           symbols=[x(), y()],
         ),
@@ -7831,7 +7527,7 @@ test "recurrence solvers cover first-order source-compatible entry points" {
   let a = @symcore.Expr::Symbol("a")
   let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
   let expected_poly = @symcore.add([
-    @symcore.Expr::Symbol("C0"),
+    Symbol("C0"),
     @symcore.mul([half, x() ^ @symcore.int(2)]),
     @symcore.mul([@symcore.int(-1), half, x()]),
   ])
@@ -7842,7 +7538,7 @@ test "recurrence solvers cover first-order source-compatible entry points" {
     ),
     content="0",
   )
-  let expected_hyper = @symcore.mul([@symcore.Expr::Symbol("C0"), a ^ x()])
+  let expected_hyper = @symcore.mul([Symbol("C0"), a ^ x()])
   inspect(
     maybe_expr_compare_text(
       rsolve_hyper(
@@ -7855,7 +7551,7 @@ test "recurrence solvers cover first-order source-compatible entry points" {
     content="0",
   )
   let recurrence = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     f(x() + @symcore.int(1)),
     @symcore.add([f(x()), x()]),
   )

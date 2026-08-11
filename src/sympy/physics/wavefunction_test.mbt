@@ -6,8 +6,8 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
 
   let ok = orthogonal_ket([n])
   let ob = orthogonal_bra([n])
-  inspect(ok.to_string(), content="|n>")
-  inspect(ob.dual().to_string(), content="|n>")
+  inspect(Show::to_string(ok), content="|n>")
+  inspect(Show::to_string(ob.dual()), content="|n>")
   inspect(
     @symprint.pretty_string(inner_product(ob.as_expr(), ok.as_expr())),
     content="1",
@@ -65,7 +65,7 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
     content="Wavefunction(2, x)",
   )
   inspect(
-    represent(wf.as_expr()).to_string(),
+    Show::to_string(represent(wf.as_expr())),
     content="Wavefunction((x**2), x)",
   )
 }
@@ -119,7 +119,7 @@ test "physics.quantum.wavefunction: floating interval bounds are treated numeric
       _ => fail("upper bound")
     },
   )
-  let wf = @symquant.wavefunction(x, [@symcore.Expr::Tuple([x, lower, upper])])
+  let wf = @symquant.wavefunction(x, [Tuple([x, lower, upper])])
   inspect(@symprint.pretty_string(wf.call([@symcore.int(1)])), content="1")
   inspect(@symprint.pretty_string(wf.call([@symcore.int(2)])), content="0")
 }

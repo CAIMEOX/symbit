@@ -1,9 +1,9 @@
 ///|
 fn tri_to_string(value : Tri) -> String {
   match value {
-    Tri::True => "True"
-    Tri::False => "False"
-    Tri::Unknown => "None"
+    True => "True"
+    False => "False"
+    Unknown => "None"
   }
 }
 
@@ -11,7 +11,7 @@ fn tri_to_string(value : Tri) -> String {
 fn ask_result_to_string(result : Result[Tri, AskError]) -> String {
   match result {
     Ok(v) => tri_to_string(v)
-    Err(AskError::InconsistentAssumptions) => "InconsistentAssumptions"
+    Err(InconsistentAssumptions) => "InconsistentAssumptions"
   }
 }
 
@@ -132,8 +132,8 @@ test "symassume ask: inconsistent assumptions parity" {
 ///|
 test "symassume ask: env parity" {
   let env = assume_env([
-    ("x", symbol_facts(is_positive=Tri::True)),
-    ("n", symbol_facts(is_integer=Tri::True, is_nonnegative=Tri::True)),
+    ("x", symbol_facts(is_positive=True)),
+    ("n", symbol_facts(is_integer=True, is_nonnegative=True)),
   ])
   let x = @symcore.Expr::Symbol("x")
   let n = @symcore.Expr::Symbol("n")
@@ -178,7 +178,7 @@ test "symassume ask: global assumptions parity" {
 
 ///|
 test "symassume ask: infinity predicate parity" {
-  let oo = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  let oo = @symcore.Expr::NumberSymbol(Infinity)
   assert_ask_parity(q_infinite(oo))
   assert_ask_parity(q_finite(oo))
   assert_ask_parity(q_extended_real(oo))
@@ -192,31 +192,31 @@ test "symassume ask: infinity predicate parity" {
 ///|
 test "symassume ask: unary predicate surface parity (numeric)" {
   let keys : Array[PredicateKey] = [
-    PredicateKey::Hermitian,
-    PredicateKey::Antihermitian,
-    PredicateKey::Real,
-    PredicateKey::ExtendedReal,
-    PredicateKey::Imaginary,
-    PredicateKey::Complex,
-    PredicateKey::Algebraic,
-    PredicateKey::Transcendental,
-    PredicateKey::Integer,
-    PredicateKey::NonInteger,
-    PredicateKey::Rational,
-    PredicateKey::Irrational,
-    PredicateKey::Finite,
-    PredicateKey::Infinite,
-    PredicateKey::Positive,
-    PredicateKey::Negative,
-    PredicateKey::Zero,
-    PredicateKey::Nonzero,
-    PredicateKey::Nonpositive,
-    PredicateKey::Nonnegative,
-    PredicateKey::Even,
-    PredicateKey::Odd,
-    PredicateKey::Prime,
-    PredicateKey::Composite,
-    PredicateKey::Commutative,
+    Hermitian,
+    Antihermitian,
+    Real,
+    ExtendedReal,
+    Imaginary,
+    Complex,
+    Algebraic,
+    Transcendental,
+    Integer,
+    NonInteger,
+    Rational,
+    Irrational,
+    Finite,
+    Infinite,
+    Positive,
+    Negative,
+    Zero,
+    Nonzero,
+    Nonpositive,
+    Nonnegative,
+    Even,
+    Odd,
+    Prime,
+    Composite,
+    Commutative,
   ]
   assert_unary_keys_parity(keys, @symcore.int(0))
   assert_unary_keys_parity(keys, @symcore.int(2))
@@ -240,7 +240,7 @@ test "symassume ask: symbolic implication surface parity" {
 ///|
 test "symassume ask: structural propagation parity" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   assert_ask_parity(
     q_complex(@symcore.add([x, @symcore.int(1)])),
     assumptions=q_real(x),
@@ -263,41 +263,41 @@ test "symassume ask: structural propagation parity" {
 ///|
 test "symassume ask: named constants parity" {
   let keys : Array[PredicateKey] = [
-    PredicateKey::Hermitian,
-    PredicateKey::Antihermitian,
-    PredicateKey::Real,
-    PredicateKey::ExtendedReal,
-    PredicateKey::Imaginary,
-    PredicateKey::Complex,
-    PredicateKey::Algebraic,
-    PredicateKey::Transcendental,
-    PredicateKey::Integer,
-    PredicateKey::NonInteger,
-    PredicateKey::Rational,
-    PredicateKey::Irrational,
-    PredicateKey::Finite,
-    PredicateKey::Infinite,
-    PredicateKey::PositiveInfinite,
-    PredicateKey::NegativeInfinite,
-    PredicateKey::Positive,
-    PredicateKey::Negative,
-    PredicateKey::Zero,
-    PredicateKey::ExtendedPositive,
-    PredicateKey::ExtendedNegative,
-    PredicateKey::Nonzero,
-    PredicateKey::Nonpositive,
-    PredicateKey::Nonnegative,
-    PredicateKey::ExtendedNonzero,
-    PredicateKey::ExtendedNonpositive,
-    PredicateKey::ExtendedNonnegative,
-    PredicateKey::Even,
-    PredicateKey::Odd,
-    PredicateKey::Prime,
-    PredicateKey::Composite,
-    PredicateKey::Commutative,
+    Hermitian,
+    Antihermitian,
+    Real,
+    ExtendedReal,
+    Imaginary,
+    Complex,
+    Algebraic,
+    Transcendental,
+    Integer,
+    NonInteger,
+    Rational,
+    Irrational,
+    Finite,
+    Infinite,
+    PositiveInfinite,
+    NegativeInfinite,
+    Positive,
+    Negative,
+    Zero,
+    ExtendedPositive,
+    ExtendedNegative,
+    Nonzero,
+    Nonpositive,
+    Nonnegative,
+    ExtendedNonzero,
+    ExtendedNonpositive,
+    ExtendedNonnegative,
+    Even,
+    Odd,
+    Prime,
+    Composite,
+    Commutative,
   ]
   for c in ["I", "oo", "-oo", "zoo", "pi", "E"] {
-    assert_unary_keys_parity(keys, @symcore.Expr::Symbol(c))
+    assert_unary_keys_parity(keys, Symbol(c))
   }
 }
 

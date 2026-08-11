@@ -23,7 +23,7 @@ pub impl Sub for Vector with fn sub(self, other : Vector) {
 
 ///|
 pub fn vector_zero() -> Vector {
-  Vector::{ args: [] }
+  { args: [] }
 }
 
 ///|
@@ -68,7 +68,7 @@ fn vector_normalize(items : Array[(Int, Array[Expr])]) -> Vector {
       )
     }
   }
-  Vector::{ args: out }
+  { args: out }
 }
 
 ///|
@@ -205,13 +205,13 @@ pub fn Vector::outer(self : Vector, other : Vector) -> Dyadic raise VectorError 
 ///|
 pub fn Vector::normalize(self : Vector) -> Vector raise VectorError {
   if self.is_zero() {
-    raise VectorError::ValueError("cannot normalize zero vector")
+    raise ValueError("cannot normalize zero vector")
   }
   let anchor = frame_registry_get(self.args[0].0)
   let comps = self.components_in(anchor)
   let norm_sq = components_norm_sq(comps)
   if expr_is_zero(norm_sq) {
-    raise VectorError::ValueError("cannot normalize zero vector")
+    raise ValueError("cannot normalize zero vector")
   }
   self.express(anchor).scale(@symelem.sqrt(norm_sq) ^ int(-1))
 }
@@ -292,7 +292,7 @@ pub fn Vector::dt(
   order? : Int = 1,
 ) -> Vector raise VectorError {
   if order < 0 {
-    raise VectorError::ValueError("order must be non-negative")
+    raise ValueError("order must be non-negative")
   }
   if order == 0 || self.is_zero() {
     return self

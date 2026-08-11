@@ -91,6 +91,12 @@ pub suberror VectorError {
   ValueError(String)
   TypeError(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn VectorError::equal(Self, Self) -> Bool
+#deprecated
+pub fn VectorError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn VectorError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub(all) enum AxisName {
@@ -98,20 +104,34 @@ pub(all) enum AxisName {
   Y
   Z
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn AxisName::equal(Self, Self) -> Bool
+#deprecated
+pub fn AxisName::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn AxisName::to_repr(Self) -> @debug.Repr
 
 pub struct Dyadic {
   args : Array[(@symcore.Expr, Int, Int, Int, Int)]
 }
+#deprecated
+pub fn Dyadic::add(Self, Self) -> Self
 pub fn Dyadic::applyfunc(Self, (@symcore.Expr) -> @symcore.Expr) -> Self
 pub fn Dyadic::cross_vector(Self, Vector) -> Self raise VectorError
 pub fn Dyadic::doit(Self) -> Self
 pub fn Dyadic::dot_dyadic(Self, Self) -> Self raise VectorError
 pub fn Dyadic::dot_vector(Self, Vector) -> Vector raise VectorError
 pub fn Dyadic::dt(Self, ReferenceFrame, order? : Int) -> Self raise VectorError
+#deprecated
+pub fn Dyadic::equal(Self, Self) -> Bool
 pub fn Dyadic::express(Self, ReferenceFrame, frame2? : ReferenceFrame?, variables? : Bool) -> Self raise VectorError
 pub fn Dyadic::neg(Self) -> Self
+#deprecated
+pub fn Dyadic::not_equal(Self, Self) -> Bool
 pub fn Dyadic::scale(Self, @symcore.Expr) -> Self
 pub fn Dyadic::simplify(Self) -> Self
+#deprecated
+pub fn Dyadic::sub(Self, Self) -> Self
 pub fn Dyadic::subs(Self, Map[String, @symcore.Expr]) -> Self
 pub fn Dyadic::to_matrix(Self, ReferenceFrame, frame2? : ReferenceFrame?) -> @symphysics.ExplicitMatrix raise VectorError
 pub fn Dyadic::truediv(Self, @symcore.Expr) -> Self raise VectorError
@@ -134,8 +154,12 @@ pub struct Point {
 pub fn Point::a1pt_theory(Self, Self, ReferenceFrame, ReferenceFrame) -> Vector raise VectorError
 pub fn Point::a2pt_theory(Self, Self, ReferenceFrame, ReferenceFrame) -> Vector raise VectorError
 pub fn Point::acc(Self, ReferenceFrame) -> Vector raise VectorError
+#deprecated
+pub fn Point::equal(Self, Self) -> Bool
 pub fn Point::locatenew(Self, String, Vector) -> Self raise VectorError
 pub fn Point::name(Self) -> String
+#deprecated
+pub fn Point::not_equal(Self, Self) -> Bool
 pub fn Point::partial_velocities(Self, ReferenceFrame, Array[@symcore.Expr]) -> Array[Vector] raise VectorError
 pub fn Point::partial_velocity(Self, ReferenceFrame, @symcore.Expr) -> Vector raise VectorError
 pub fn Point::pos_from(Self, Self) -> Vector raise VectorError
@@ -160,9 +184,13 @@ pub fn ReferenceFrame::basis(Self, Int) -> Vector raise VectorError
 pub fn ReferenceFrame::coord(Self, Int) -> @symcore.Expr raise VectorError
 pub fn ReferenceFrame::coords(Self) -> Array[@symcore.Expr]
 pub fn ReferenceFrame::dcm(Self, Self) -> @symphysics.ExplicitMatrix raise VectorError
+#deprecated
+pub fn ReferenceFrame::equal(Self, Self) -> Bool
 pub fn ReferenceFrame::item(Self, Int) -> @symcore.Expr raise VectorError
 pub fn ReferenceFrame::iter_basis(Self) -> Array[Vector]
 pub fn ReferenceFrame::name(Self) -> String
+#deprecated
+pub fn ReferenceFrame::not_equal(Self, Self) -> Bool
 pub fn ReferenceFrame::orient(Self, Self, OrientationSpec) -> Unit raise VectorError
 pub fn ReferenceFrame::orient_axis(Self, Self, Vector, @symcore.Expr) -> Unit raise VectorError
 pub fn ReferenceFrame::orient_body_fixed(Self, Self, Array[@symcore.Expr], String) -> Unit raise VectorError
@@ -193,6 +221,8 @@ pub impl Eq for ReferenceFrame
 pub struct Vector {
   args : Array[(Int, Array[@symcore.Expr])]
 }
+#deprecated
+pub fn Vector::add(Self, Self) -> Self
 pub fn Vector::angle_between(Self, Self) -> @symcore.Expr raise VectorError
 pub fn Vector::applyfunc(Self, (@symcore.Expr) -> @symcore.Expr) -> Self
 pub fn Vector::components_in(Self, ReferenceFrame) -> Array[@symcore.Expr] raise VectorError
@@ -201,15 +231,21 @@ pub fn Vector::diff(Self, @symcore.Expr, ReferenceFrame, var_in_dcm? : Bool) -> 
 pub fn Vector::doit(Self) -> Self
 pub fn Vector::dot(Self, Self) -> @symcore.Expr raise VectorError
 pub fn Vector::dt(Self, ReferenceFrame, order? : Int) -> Self raise VectorError
+#deprecated
+pub fn Vector::equal(Self, Self) -> Bool
 pub fn Vector::express(Self, ReferenceFrame, variables? : Bool) -> Self raise VectorError
 pub fn Vector::is_zero(Self) -> Bool
 pub fn Vector::magnitude(Self) -> @symcore.Expr raise VectorError
 pub fn Vector::neg(Self) -> Self
 pub fn Vector::normalize(Self) -> Self raise VectorError
+#deprecated
+pub fn Vector::not_equal(Self, Self) -> Bool
 pub fn Vector::outer(Self, Self) -> Dyadic raise VectorError
 pub fn Vector::scale(Self, @symcore.Expr) -> Self
 pub fn Vector::separate(Self) -> Array[(ReferenceFrame, Self)]
 pub fn Vector::simplify(Self) -> Self
+#deprecated
+pub fn Vector::sub(Self, Self) -> Self
 pub fn Vector::subs(Self, Map[String, @symcore.Expr]) -> Self
 pub fn Vector::to_matrix(Self, ReferenceFrame) -> @symphysics.ExplicitMatrix raise VectorError
 pub fn Vector::truediv(Self, @symcore.Expr) -> Self raise VectorError

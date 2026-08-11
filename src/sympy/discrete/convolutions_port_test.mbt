@@ -92,37 +92,19 @@ test "discrete convolution functions parity" {
     convolution_fwht_equiv([u, v], [x, y], ours_fwht),
     msg="convolution_fwht",
   )
-  let ours_subset = convolution_subset([u, v, x], [
-    y,
-    @symcore.Expr::Symbol("z"),
-  ])
+  let ours_subset = convolution_subset([u, v, x], [y, Symbol("z")])
   assert_true(
-    convolution_subset_equiv(
-      [u, v, x],
-      [y, @symcore.Expr::Symbol("z")],
-      ours_subset,
-    ),
+    convolution_subset_equiv([u, v, x], [y, Symbol("z")], ours_subset),
     msg="convolution_subset",
   )
-  let ours_cover = covering_product([u, v, x], [y, @symcore.Expr::Symbol("z")])
+  let ours_cover = covering_product([u, v, x], [y, Symbol("z")])
   assert_true(
-    covering_product_equiv(
-      [u, v, x],
-      [y, @symcore.Expr::Symbol("z")],
-      ours_cover,
-    ),
+    covering_product_equiv([u, v, x], [y, Symbol("z")], ours_cover),
     msg="covering_product",
   )
-  let ours_inter = intersecting_product([u, v, x], [
-    y,
-    @symcore.Expr::Symbol("z"),
-  ])
+  let ours_inter = intersecting_product([u, v, x], [y, Symbol("z")])
   assert_true(
-    intersecting_product_equiv(
-      [u, v, x],
-      [y, @symcore.Expr::Symbol("z")],
-      ours_inter,
-    ),
+    intersecting_product_equiv([u, v, x], [y, Symbol("z")], ours_inter),
     msg="intersecting_product",
   )
 }

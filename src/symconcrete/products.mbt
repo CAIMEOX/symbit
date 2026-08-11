@@ -46,10 +46,10 @@ pub fn Product::reverse_order(
     }
     if do_reverse {
       match limit {
-        LimitSpec::Range(sym, lower, upper) => {
+        Range(sym, lower, upper) => {
           let new_lower = expr_add(upper, @symcore.int(1))
           let new_upper = expr_add(lower, @symcore.int(-1))
-          out_limits.push(LimitSpec::Range(sym, new_lower, new_upper))
+          out_limits.push(Range(sym, new_lower, new_upper))
           match expr_inv(out_expr) {
             Some(inv) => out_expr = inv
             None => out_expr = @symcore.pow(out_expr, @symcore.int(-1))
@@ -61,7 +61,7 @@ pub fn Product::reverse_order(
       out_limits.push(limit)
     }
   }
-  Product::{ expr: out_expr, limits: out_limits }
+  { expr: out_expr, limits: out_limits }
 }
 
 ///|
@@ -76,7 +76,7 @@ pub fn Product::reorder(self : Product, order : Array[Int]) -> Product {
     }
     out_limits.push(self.limits[idx])
   }
-  Product::{ expr: self.expr, limits: out_limits }
+  { expr: self.expr, limits: out_limits }
 }
 
 ///|
@@ -109,7 +109,7 @@ pub fn Product::change_index(
   let out_limits : Array[LimitSpec] = Array::new()
   for limit in self.limits {
     match limit {
-      LimitSpec::Range(sym, lower, upper) =>
+      Range(sym, lower, upper) =>
         if symbol_name(sym) == Some(var_name) {
           let mut new_lower = expr_add(
             expr_mul(@symcore.int(a), lower),
@@ -124,29 +124,29 @@ pub fn Product::change_index(
             new_lower = new_upper
             new_upper = tmp
           }
-          out_limits.push(LimitSpec::Range(new_sym, new_lower, new_upper))
+          out_limits.push(Range(new_sym, new_lower, new_upper))
         } else {
           out_limits.push(limit)
         }
-      LimitSpec::Lower(sym, lower) =>
+      Lower(sym, lower) =>
         if symbol_name(sym) == Some(var_name) {
           let new_lower = expr_add(
             expr_mul(@symcore.int(a), lower),
             @symcore.int(b),
           )
-          out_limits.push(LimitSpec::Lower(new_sym, new_lower))
+          out_limits.push(Lower(new_sym, new_lower))
         } else {
           out_limits.push(limit)
         }
-      LimitSpec::Var(sym) =>
+      Var(sym) =>
         if symbol_name(sym) == Some(var_name) {
-          out_limits.push(LimitSpec::Var(new_sym))
+          out_limits.push(Var(new_sym))
         } else {
           out_limits.push(limit)
         }
     }
   }
-  Product::{ expr: new_expr, limits: out_limits }
+  { expr: new_expr, limits: out_limits }
 }
 
 ///|
@@ -186,7 +186,7 @@ fn eval_finite_product(
   }
   let limit = limits[idx]
   match limit {
-    LimitSpec::Range(sym, lower, upper) => {
+    Range(sym, lower, upper) => {
       let name = match symbol_name(sym) {
         Some(n) => n
         None => return Product::{ expr, limits }.as_expr()
@@ -242,7 +242,7 @@ pub fn eval_product_symbolic(
     return None
   }
   match limits[0] {
-    LimitSpec::Range(sym, lower, upper) => {
+    Range(sym, lower, upper) => {
       let name = match symbol_name(sym) {
         Some(n) => n
         None => return None
@@ -277,7 +277,7 @@ fn ratio_product(
   upper : @symcore.Expr,
 ) -> @symcore.Expr? {
   match expr {
-    @symcore.Expr::Mul(args) if args.length() == 2 => {
+    Mul(args) if args.length() == 2 => {
       let a = args[0]
       let b = args[1]
       match extract_ratio(a, b, name, lower, upper) {
@@ -335,7 +335,7 @@ fn extract_ratio(
 ///|
 fn inv_base(expr : @symcore.Expr) -> @symcore.Expr? {
   match expr {
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match int_value(exp) {
         Some(v) if v == -1 => Some(base)
         _ => None
@@ -411,8 +411,8 @@ fn linear_product(
 fn linear_shift(expr : @symcore.Expr, name : String) -> @symcore.Expr? {
   let sym = @symcore.Expr::Symbol(name)
   match expr {
-    @symcore.Expr::Symbol(sym_name) if sym_name == name => Some(@symcore.int(0))
-    @symcore.Expr::Add(args) => {
+    Symbol(sym_name) if sym_name == name => Some(@symcore.int(0))
+    Add(args) => {
       let mut sym_seen = false
       let const_terms : Array[@symcore.Expr] = Array::new()
       for arg in args {
@@ -446,13 +446,13 @@ fn split_linear_ratio(
   name : String,
 ) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr)? {
   match expr {
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let num_terms : Array[@symcore.Expr] = Array::new()
       let den_terms : Array[@symcore.Expr] = Array::new()
       let coeff_terms : Array[@symcore.Expr] = Array::new()
       for arg in args {
         match arg {
-          @symcore.Expr::Pow(base, exp) =>
+          Pow(base, exp) =>
             match int_value(exp) {
               Some(v) if v == -1 => den_terms.push(base)
               _ => num_terms.push(arg)

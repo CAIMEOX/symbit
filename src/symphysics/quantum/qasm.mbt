@@ -80,9 +80,7 @@ pub fn get_index(
     }
   }
   guard found >= 0 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "Unknown QASM qubit label: " + target,
-    )
+    raise ValueError("Unknown QASM qubit label: " + target)
   }
   flip_index(found, labels.length())
 }
@@ -116,9 +114,7 @@ fn qasm_fullsplit(
   line : String,
 ) -> (String, Array[String]) raise @symphysics.PhysicsError {
   let trimmed = line.trim()
-  guard trimmed != "" else {
-    raise @symphysics.PhysicsError::ValueError("QASM line cannot be empty")
-  }
+  guard trimmed != "" else { raise ValueError("QASM line cannot be empty") }
   let raw_words = Array::from_iter(trimmed.split(" "))
   let words : Array[String] = []
   for raw in raw_words {
@@ -127,9 +123,7 @@ fn qasm_fullsplit(
       words.push(word)
     }
   }
-  guard !words.is_empty() else {
-    raise @symphysics.PhysicsError::ValueError("QASM line cannot be empty")
-  }
+  guard !words.is_empty() else { raise ValueError("QASM line cannot be empty") }
   let command = fixcommand(words[0])
   let rest = if words.length() <= 1 {
     ""
@@ -192,16 +186,12 @@ fn qasm_apply_definition(
 ) -> Expr raise @symphysics.PhysicsError {
   if definition.ncontrols == 0 {
     guard indices.length() == 1 else {
-      raise @symphysics.PhysicsError::ValueError(
-        "Custom one-qubit QASM gate expects one target",
-      )
+      raise ValueError("Custom one-qubit QASM gate expects one target")
     }
     create_one_qubit_gate(definition.symbol)(indices[0])
   } else {
     guard indices.length() == definition.ncontrols + 1 else {
-      raise @symphysics.PhysicsError::ValueError(
-        "Custom controlled QASM gate arity mismatch",
-      )
+      raise ValueError("Custom controlled QASM gate arity mismatch")
     }
     create_cgate(definition.symbol)(
       indices[:definition.ncontrols].to_owned(),
@@ -262,17 +252,12 @@ fn qasm_apply_builtin(
     "defbox" => ()
     "qdef" => {
       guard rest.length() == 3 else {
-        raise @symphysics.PhysicsError::ValueError(
-          "qdef expects name, ncontrols, symbol",
-        )
+        raise ValueError("qdef expects name, ncontrols, symbol")
       }
       let ncontrols = @string.parse_int(rest[1], base=10) catch {
-        _ =>
-          raise @symphysics.PhysicsError::ValueError(
-            "qdef control count must be an integer",
-          )
+        _ => raise ValueError("qdef control count must be an integer")
       }
-      parser.defs[fixcommand(rest[0])] = QasmDefinition::{
+      parser.defs[fixcommand(rest[0])] = {
         ncontrols,
         symbol: stripquotes(rest[2]),
       }

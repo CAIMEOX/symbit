@@ -18,26 +18,26 @@ pub(all) enum BoolExpr {
 
 ///|
 pub fn bool_true() -> BoolExpr {
-  BoolExpr::True
+  True
 }
 
 ///|
 pub fn bool_false() -> BoolExpr {
-  BoolExpr::False
+  False
 }
 
 ///|
 pub fn bool_symbol(name : String) -> BoolExpr {
-  BoolExpr::Symbol(name)
+  Symbol(name)
 }
 
 ///|
 pub fn bool_not(expr : BoolExpr) -> BoolExpr {
   match expr {
-    BoolExpr::True => BoolExpr::False
-    BoolExpr::False => BoolExpr::True
-    BoolExpr::Not(inner) => inner
-    _ => BoolExpr::Not(expr)
+    True => False
+    False => True
+    Not(inner) => inner
+    _ => Not(expr)
   }
 }
 
@@ -47,17 +47,17 @@ pub fn bool_and(args : Array[BoolExpr]) -> BoolExpr {
   let mut has_false = false
   for arg in args {
     match arg {
-      BoolExpr::And(inner) =>
+      And(inner) =>
         for child in inner {
           flat.push(child)
         }
-      BoolExpr::False => has_false = true
-      BoolExpr::True => ()
+      False => has_false = true
+      True => ()
       _ => flat.push(arg)
     }
   }
   if has_false {
-    return BoolExpr::False
+    return False
   }
   let uniq : Array[BoolExpr] = Array::new()
   let seen : Map[BoolExpr, Bool] = Map([])
@@ -71,13 +71,13 @@ pub fn bool_and(args : Array[BoolExpr]) -> BoolExpr {
     }
   }
   if uniq.is_empty() {
-    return BoolExpr::True
+    return True
   }
   uniq.sort_by(compare_bool)
   if uniq.length() == 1 {
     uniq[0]
   } else {
-    BoolExpr::And(uniq)
+    And(uniq)
   }
 }
 
@@ -87,17 +87,17 @@ pub fn bool_or(args : Array[BoolExpr]) -> BoolExpr {
   let mut has_true = false
   for arg in args {
     match arg {
-      BoolExpr::Or(inner) =>
+      Or(inner) =>
         for child in inner {
           flat.push(child)
         }
-      BoolExpr::True => has_true = true
-      BoolExpr::False => ()
+      True => has_true = true
+      False => ()
       _ => flat.push(arg)
     }
   }
   if has_true {
-    return BoolExpr::True
+    return True
   }
   let uniq : Array[BoolExpr] = Array::new()
   let seen : Map[BoolExpr, Bool] = Map([])
@@ -111,13 +111,13 @@ pub fn bool_or(args : Array[BoolExpr]) -> BoolExpr {
     }
   }
   if uniq.is_empty() {
-    return BoolExpr::False
+    return False
   }
   uniq.sort_by(compare_bool)
   if uniq.length() == 1 {
     uniq[0]
   } else {
-    BoolExpr::Or(uniq)
+    Or(uniq)
   }
 }
 
@@ -137,12 +137,12 @@ fn xor_internal(args : Array[BoolExpr], keep_true : Bool) -> BoolExpr {
   let mut true_count = 0
   for arg in args {
     match arg {
-      BoolExpr::Xor(inner) =>
+      Xor(inner) =>
         for child in inner {
           flat.push(child)
         }
-      BoolExpr::True => true_count += 1
-      BoolExpr::False => ()
+      True => true_count += 1
+      False => ()
       _ => flat.push(arg)
     }
   }
@@ -156,25 +156,25 @@ fn xor_internal(args : Array[BoolExpr], keep_true : Bool) -> BoolExpr {
   }
   if toggled.is_empty() {
     if true_count % 2 == 0 {
-      return BoolExpr::False
+      return False
     }
-    return BoolExpr::True
+    return True
   }
   let uniq : Array[BoolExpr] = Array::new()
   for k, _ in toggled {
     uniq.push(k)
   }
   if keep_true && true_count % 2 == 1 {
-    uniq.push(BoolExpr::True)
+    uniq.push(True)
   }
   uniq.sort_by(compare_bool)
   if keep_true {
     if uniq.length() == 1 {
       return uniq[0]
     }
-    return BoolExpr::Xor(uniq)
+    return Xor(uniq)
   }
-  let base = if uniq.length() == 1 { uniq[0] } else { BoolExpr::Xor(uniq) }
+  let base = if uniq.length() == 1 { uniq[0] } else { Xor(uniq) }
   if true_count % 2 == 0 {
     base
   } else {
@@ -184,28 +184,28 @@ fn xor_internal(args : Array[BoolExpr], keep_true : Bool) -> BoolExpr {
 
 ///|
 pub fn bool_implies(antecedent : BoolExpr, consequent : BoolExpr) -> BoolExpr {
-  if antecedent == BoolExpr::True {
+  if antecedent == True {
     return consequent
   }
-  if antecedent == BoolExpr::False {
-    return BoolExpr::True
+  if antecedent == False {
+    return True
   }
-  if consequent == BoolExpr::True {
-    return BoolExpr::True
+  if consequent == True {
+    return True
   }
-  if consequent == BoolExpr::False {
+  if consequent == False {
     return bool_not(antecedent)
   }
   if antecedent == consequent {
-    return BoolExpr::True
+    return True
   }
-  BoolExpr::Implies(antecedent, consequent)
+  Implies(antecedent, consequent)
 }
 
 ///|
 pub fn bool_equivalent(args : Array[BoolExpr]) -> BoolExpr {
   if args.length() <= 1 {
-    return BoolExpr::True
+    return True
   }
   let uniq_map : Map[BoolExpr, Bool] = Map([])
   for arg in args {
@@ -220,16 +220,16 @@ pub fn bool_equivalent(args : Array[BoolExpr]) -> BoolExpr {
   let rest : Array[BoolExpr] = Array::new()
   for arg in uniq {
     match arg {
-      BoolExpr::True => has_true = true
-      BoolExpr::False => has_false = true
+      True => has_true = true
+      False => has_false = true
       _ => rest.push(arg)
     }
   }
   if has_true && has_false {
-    return BoolExpr::False
+    return False
   }
   if rest.is_empty() {
-    return BoolExpr::True
+    return True
   }
   if has_true {
     return bool_and(rest)
@@ -242,10 +242,10 @@ pub fn bool_equivalent(args : Array[BoolExpr]) -> BoolExpr {
     return bool_and(negs)
   }
   if rest.length() == 1 {
-    return BoolExpr::True
+    return True
   }
   rest.sort_by(compare_bool)
-  BoolExpr::Equivalent(rest)
+  Equivalent(rest)
 }
 
 ///|
@@ -254,22 +254,22 @@ pub fn bool_ite(
   then_ : BoolExpr,
   else_ : BoolExpr,
 ) -> BoolExpr {
-  if cond == BoolExpr::True {
+  if cond == True {
     return then_
   }
-  if cond == BoolExpr::False {
+  if cond == False {
     return else_
   }
   if then_ == else_ {
     return then_
   }
-  if then_ == BoolExpr::True && else_ == BoolExpr::False {
+  if then_ == True && else_ == False {
     return cond
   }
-  if then_ == BoolExpr::False && else_ == BoolExpr::True {
+  if then_ == False && else_ == True {
     return bool_not(cond)
   }
-  BoolExpr::ITE(cond, then_, else_)
+  ITE(cond, then_, else_)
 }
 
 ///|
@@ -292,7 +292,7 @@ pub fn bool_exclusive(args : Array[BoolExpr]) -> BoolExpr {
   let and_args : Array[BoolExpr] = Array::new()
   let n = args.length()
   if n <= 1 {
-    return BoolExpr::True
+    return True
   }
   for i in 0..<n {
     for j in (i + 1)..<n {
@@ -314,27 +314,28 @@ impl Show for BoolExpr with fn to_string(self) {
 
 ///|
 /// Keep the `BoolExpr::to_string` dot-style API explicit.
+#deprecated
 pub extend BoolExpr with Show::{to_string}
 
 ///|
 impl Show for BoolExpr with fn output(self, logger) {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 fn variant_rank(expr : BoolExpr) -> Int {
   match expr {
-    BoolExpr::Symbol(_) => 0
-    BoolExpr::Not(_) => 1
-    BoolExpr::And(_) => 2
-    BoolExpr::Or(_) => 3
-    BoolExpr::Xor(_) => 4
-    BoolExpr::Implies(_, _) => 5
-    BoolExpr::Equivalent(_) => 6
-    BoolExpr::ITE(_, _, _) => 7
-    BoolExpr::True => 8
-    BoolExpr::False => 9
-    BoolExpr::LRA(_) => 10
+    Symbol(_) => 0
+    Not(_) => 1
+    And(_) => 2
+    Or(_) => 3
+    Xor(_) => 4
+    Implies(_, _) => 5
+    Equivalent(_) => 6
+    ITE(_, _, _) => 7
+    True => 8
+    False => 9
+    LRA(_) => 10
   }
 }
 
@@ -373,40 +374,39 @@ fn compare_bool(a : BoolExpr, b : BoolExpr) -> Int {
     return rank_diff
   }
   match a {
-    BoolExpr::Symbol(sa) =>
+    Symbol(sa) =>
       match b {
-        BoolExpr::Symbol(sb) => sa.compare(sb)
+        Symbol(sb) => sa.compare(sb)
         _ => 0
       }
-    BoolExpr::LRA(ca) =>
+    LRA(ca) =>
       match b {
-        BoolExpr::LRA(cb) =>
-          linear_constraint_key(ca).compare(linear_constraint_key(cb))
+        LRA(cb) => linear_constraint_key(ca).compare(linear_constraint_key(cb))
         _ => 0
       }
-    BoolExpr::Not(ia) =>
+    Not(ia) =>
       match b {
-        BoolExpr::Not(ib) => compare_bool(ia, ib)
+        Not(ib) => compare_bool(ia, ib)
         _ => 0
       }
-    BoolExpr::And(xs) =>
+    And(xs) =>
       match b {
-        BoolExpr::And(ys) => compare_arrays(xs, ys)
+        And(ys) => compare_arrays(xs, ys)
         _ => 0
       }
-    BoolExpr::Or(xs) =>
+    Or(xs) =>
       match b {
-        BoolExpr::Or(ys) => compare_arrays(xs, ys)
+        Or(ys) => compare_arrays(xs, ys)
         _ => 0
       }
-    BoolExpr::Xor(xs) =>
+    Xor(xs) =>
       match b {
-        BoolExpr::Xor(ys) => compare_arrays(xs, ys)
+        Xor(ys) => compare_arrays(xs, ys)
         _ => 0
       }
-    BoolExpr::Implies(a1, b1) =>
+    Implies(a1, b1) =>
       match b {
-        BoolExpr::Implies(a2, b2) => {
+        Implies(a2, b2) => {
           let first = compare_bool(a1, a2)
           if first != 0 {
             first
@@ -416,14 +416,14 @@ fn compare_bool(a : BoolExpr, b : BoolExpr) -> Int {
         }
         _ => 0
       }
-    BoolExpr::Equivalent(xs) =>
+    Equivalent(xs) =>
       match b {
-        BoolExpr::Equivalent(ys) => compare_arrays(xs, ys)
+        Equivalent(ys) => compare_arrays(xs, ys)
         _ => 0
       }
-    BoolExpr::ITE(c1, t1, e1) =>
+    ITE(c1, t1, e1) =>
       match b {
-        BoolExpr::ITE(c2, t2, e2) => {
+        ITE(c2, t2, e2) => {
           let first = compare_bool(c1, c2)
           if first != 0 {
             first
@@ -454,13 +454,13 @@ pub impl Eq for BoolExpr with fn equal(self, other : BoolExpr) -> Bool {
 
 ///|
 pub impl Eq for BoolExpr with fn not_equal(self, other : BoolExpr) -> Bool {
-  !self.equal(other)
+  !Eq::equal(self, other)
 }
 
 ///|
 pub impl Hash for BoolExpr with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
@@ -468,25 +468,21 @@ pub impl Hash for BoolExpr with fn hash(self) -> Int {
 pub impl Hash for BoolExpr with fn hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_int(variant_rank(self))
   match self {
-    BoolExpr::Symbol(name) => hasher.combine_string(name)
-    BoolExpr::LRA(constraint) =>
-      hasher.combine_string(linear_constraint_key(constraint))
-    BoolExpr::Not(inner) => inner.hash_combine(hasher)
-    BoolExpr::And(args)
-    | BoolExpr::Or(args)
-    | BoolExpr::Xor(args)
-    | BoolExpr::Equivalent(args) =>
+    Symbol(name) => hasher.combine_string(name)
+    LRA(constraint) => hasher.combine_string(linear_constraint_key(constraint))
+    Not(inner) => Hash::hash_combine(inner, hasher)
+    And(args) | Or(args) | Xor(args) | Equivalent(args) =>
       for child in args {
-        child.hash_combine(hasher)
+        Hash::hash_combine(child, hasher)
       }
-    BoolExpr::Implies(a, b) => {
-      a.hash_combine(hasher)
-      b.hash_combine(hasher)
+    Implies(a, b) => {
+      Hash::hash_combine(a, hasher)
+      Hash::hash_combine(b, hasher)
     }
-    BoolExpr::ITE(c, t, e) => {
-      c.hash_combine(hasher)
-      t.hash_combine(hasher)
-      e.hash_combine(hasher)
+    ITE(c, t, e) => {
+      Hash::hash_combine(c, hasher)
+      Hash::hash_combine(t, hasher)
+      Hash::hash_combine(e, hasher)
     }
     _ => ()
   }
@@ -495,11 +491,11 @@ pub impl Hash for BoolExpr with fn hash_combine(self, hasher : Hasher) -> Unit {
 ///|
 fn precedence(expr : BoolExpr) -> Int {
   match expr {
-    BoolExpr::Or(_) => 1
-    BoolExpr::Xor(_) => 2
-    BoolExpr::And(_) => 3
-    BoolExpr::Not(_) => 4
-    BoolExpr::Implies(_, _) | BoolExpr::Equivalent(_) => 0
+    Or(_) => 1
+    Xor(_) => 2
+    And(_) => 3
+    Not(_) => 4
+    Implies(_, _) | Equivalent(_) => 0
     _ => 4
   }
 }
@@ -508,11 +504,11 @@ fn precedence(expr : BoolExpr) -> Int {
 fn format_expr(expr : BoolExpr, parent_prec : Int) -> String {
   let prec = precedence(expr)
   let body = match expr {
-    BoolExpr::True => "True"
-    BoolExpr::False => "False"
-    BoolExpr::Symbol(name) => name
-    BoolExpr::LRA(constraint) => constraint.to_string()
-    BoolExpr::Not(inner) => {
+    True => "True"
+    False => "False"
+    Symbol(name) => name
+    LRA(constraint) => Show::to_string(constraint)
+    Not(inner) => {
       let inner_str = format_expr(inner, 0)
       let wrapped = if precedence(inner) < prec {
         "(\{inner_str})"
@@ -521,43 +517,35 @@ fn format_expr(expr : BoolExpr, parent_prec : Int) -> String {
       }
       "~\{wrapped}"
     }
-    BoolExpr::And(args) =>
-      args.map(child => format_expr(child, prec)).join(" & ")
-    BoolExpr::Or(args) => {
+    And(args) => args.map(child => format_expr(child, prec)).join(" & ")
+    Or(args) => {
       let rendered : Array[String] = Array::new()
       for child in args {
         match child {
-          BoolExpr::And(_)
-          | BoolExpr::Xor(_)
-          | BoolExpr::Implies(_, _)
-          | BoolExpr::Equivalent(_) =>
+          And(_) | Xor(_) | Implies(_, _) | Equivalent(_) =>
             rendered.push("(\{format_expr(child, 0)})")
           _ => rendered.push(format_expr(child, prec))
         }
       }
       rendered.join(" | ")
     }
-    BoolExpr::Xor(args) => {
+    Xor(args) => {
       let rendered : Array[String] = Array::new()
       for child in args {
         match child {
-          BoolExpr::And(_)
-          | BoolExpr::Or(_)
-          | BoolExpr::Implies(_, _)
-          | BoolExpr::Equivalent(_) =>
+          And(_) | Or(_) | Implies(_, _) | Equivalent(_) =>
             rendered.push("(\{format_expr(child, 0)})")
           _ => rendered.push(format_expr(child, prec))
         }
       }
       rendered.join(" ^ ")
     }
-    BoolExpr::Implies(a, b) =>
-      "Implies(\{format_expr(a, 0)}, \{format_expr(b, 0)})"
-    BoolExpr::Equivalent(args) => {
+    Implies(a, b) => "Implies(\{format_expr(a, 0)}, \{format_expr(b, 0)})"
+    Equivalent(args) => {
       let rendered = args.map(child => format_expr(child, 0)).join(", ")
       "Equivalent(\{rendered})"
     }
-    BoolExpr::ITE(c, t, e) =>
+    ITE(c, t, e) =>
       "ITE(\{format_expr(c, 0)}, \{format_expr(t, 0)}, \{format_expr(e, 0)})"
   }
   if prec < parent_prec {

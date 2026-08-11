@@ -10,14 +10,14 @@ pub struct RootSystem {
 /// Build a root-system object from a Cartan type string.
 pub fn root_system_from_string(ct : String) -> RootSystem raise {
   let cartan = cartan_type_from_string(ct)
-  RootSystem::{ cartan_type: cartan }
+  { cartan_type: cartan }
 }
 
 ///|
 /// Build a root-system object from `(series, rank)`.
 pub fn root_system_from_parts(series : String, n : Int) -> RootSystem raise {
   let cartan = cartan_type_from_parts(series, n)
-  RootSystem::{ cartan_type: cartan }
+  { cartan_type: cartan }
 }
 
 ///|

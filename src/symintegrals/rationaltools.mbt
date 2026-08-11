@@ -28,10 +28,7 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
               let c = nc[0]
               return Some(
                 expr_div(
-                  c *
-                  @symelem.log(
-                    expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
-                  ),
+                  c * @symelem.log(expr_add(expr_mul(a, Symbol(var_name)), b)),
                   a,
                 ),
               )
@@ -56,13 +53,13 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
               if expr_eq(
                   den,
                   expr_add(
-                    expr_pow(@symcore.Expr::Symbol(var_name), @symcore.int(2)),
+                    expr_pow(Symbol(var_name), @symcore.int(2)),
                     @symcore.int(1),
                   ),
                 ) &&
                 expr_is_zero(p) &&
                 expr_is_one(q) {
-                return Some(@symelem.atan(@symcore.Expr::Symbol(var_name)))
+                return Some(@symelem.atan(Symbol(var_name)))
               }
               match expr_num_value(disc) {
                 Some(delta) if delta.compare(@symnum.BigRational::zero()) < 0 => {
@@ -70,10 +67,7 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
                   let root = expr_exact_sqrt(pos)
                   let arg = expr_div(
                     expr_add(
-                      expr_mul(
-                        @symcore.int(2),
-                        expr_mul(a, @symcore.Expr::Symbol(var_name)),
-                      ),
+                      expr_mul(@symcore.int(2), expr_mul(a, Symbol(var_name))),
                       b,
                     ),
                     root,
@@ -90,10 +84,7 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
                   let root = expr_exact_sqrt(disc)
                   let arg = expr_div(
                     expr_add(
-                      expr_mul(
-                        @symcore.int(2),
-                        expr_mul(a, @symcore.Expr::Symbol(var_name)),
-                      ),
+                      expr_mul(@symcore.int(2), expr_mul(a, Symbol(var_name))),
                       b,
                     ),
                     root,
@@ -147,7 +138,7 @@ pub fn ratint_logpart(
   f : Expr,
   g : Expr,
   _var_name : String,
-  t? : Expr = @symcore.Expr::Symbol("_t"),
+  t? : Expr = Symbol("_t"),
 ) -> Array[(Expr, Expr)] {
   if expr_is_zero(g) {
     []
@@ -176,7 +167,7 @@ pub fn log_to_atan(f : Expr, g : Expr) -> Expr {
 /// - Limits: Higher-degree root separation is not implemented.
 pub fn log_to_real(h : Expr, q : Expr, _x : Expr, t : Expr) -> Expr? {
   let t_name = match t {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => return None
   }
   match poly_coeffs_upto2(q, t_name) {

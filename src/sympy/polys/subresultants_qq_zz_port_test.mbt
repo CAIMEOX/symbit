@@ -4,7 +4,7 @@ fn subres_port_fe_row(
 ) -> Array[@sympolys.FieldElem] raise @sympolys.PolyError {
   let row : Array[@sympolys.FieldElem] = []
   for value in values {
-    row.push(@sympolys.fe_from_int(value, @sympolys.Domain::ZZ))
+    row.push(@sympolys.fe_from_int(value, ZZ))
   }
   row
 }
@@ -17,12 +17,12 @@ fn subres_port_matrix(
   for row in values {
     rows.push(subres_port_fe_row(row))
   }
-  @sympolys.DomainMatrix::from_list(rows, @sympolys.Domain::ZZ)
+  @sympolys.DomainMatrix::from_list(rows, ZZ)
 }
 
 ///|
 fn subres_port_row_string(row : Array[@sympolys.FieldElem]) -> String {
-  "[" + row.map(v => v.to_string()).join(", ") + "]"
+  "[" + row.map(v => Show::to_string(v)).join(", ") + "]"
 }
 
 ///|
@@ -36,18 +36,18 @@ fn subres_port_option_string(value : Int?) -> String {
 ///|
 test "subresultants_qq_zz: res parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr(
     (x ^ @symcore.int(3)) - @symcore.int(7) * x + @symcore.int(7),
   )
   let q = b.from_expr(@symcore.int(3) * (x ^ @symcore.int(2)) - @symcore.int(7))
-  let ours = @sympolys.res(p, q).to_string()
+  let ours = Show::to_string(@sympolys.res(p, q))
   let oracle = res_qq_zz(p.to_expr(), q.to_expr(), x="x")
   assert_eq(ours, oracle)
-  let ours_q = @sympolys.res_q(p, q).to_string()
+  let ours_q = Show::to_string(@sympolys.res_q(p, q))
   let oracle_q = res_q_qq_zz(p.to_expr(), q.to_expr(), x="x")
   assert_eq(ours_q, oracle_q)
-  let ours_z = @sympolys.res_z(p, q).to_string()
+  let ours_z = Show::to_string(@sympolys.res_z(p, q))
   let oracle_z = res_z_qq_zz(p.to_expr(), q.to_expr(), x="x")
   assert_eq(ours_z, oracle_z)
 }
@@ -55,10 +55,10 @@ test "subresultants_qq_zz: res parity" {
 ///|
 test "subresultants_qq_zz: res parity (extra)" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(2))
   let q = b.from_expr(x - @symcore.int(1))
-  let ours = @sympolys.res(p, q).to_string()
+  let ours = Show::to_string(@sympolys.res(p, q))
   let oracle = res_qq_zz(p.to_expr(), q.to_expr(), x="x")
   assert_eq(ours, oracle)
 }
@@ -66,7 +66,7 @@ test "subresultants_qq_zz: res parity (extra)" {
 ///|
 test "subresultants_qq_zz: subresultants_rem parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
   let q = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
   let ours = poly_list_to_string(@sympolys.subresultants_rem(p, q))
@@ -77,7 +77,7 @@ test "subresultants_qq_zz: subresultants_rem parity" {
 ///|
 test "subresultants_qq_zz: subresultants_rem parity (extra)" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
   let q = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
   let ours = poly_list_to_string(@sympolys.subresultants_rem(p, q))
@@ -88,7 +88,7 @@ test "subresultants_qq_zz: subresultants_rem parity (extra)" {
 ///|
 test "subresultants_qq_zz: euclid_q/sturm_q parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
   let q = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
   let ours_e = poly_list_to_string(@sympolys.euclid_q(p, q))
@@ -102,7 +102,7 @@ test "subresultants_qq_zz: euclid_q/sturm_q parity" {
 ///|
 test "subresultants_qq_zz: public algorithm variants parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr(
     (x ^ @symcore.int(3)) - @symcore.int(2) * x + @symcore.int(1),
   )
@@ -164,12 +164,12 @@ test "subresultants_qq_zz: public algorithm variants parity" {
 ///|
 test "subresultants_qq_zz: helper parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(2) * x)
   let q = b.from_expr(
     @symcore.int(-1) * ((x ^ @symcore.int(2)) + @symcore.int(1)),
   )
-  let zero = Poly::zero(["x"], Domain::ZZ)
+  let zero = Poly::zero(["x"], ZZ)
   let ours_sign = @sympolys.sign_seq([p, q, zero])
     .map(v => v.to_string())
     .join(",")
@@ -203,7 +203,7 @@ test "subresultants_qq_zz: helper parity" {
 ///|
 test "subresultants_qq_zz: matrix helper parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let q = b.from_expr(x + @symcore.int(1))
   assert_eq(@sympolys.backward_eye(3).to_matrix_string(), backward_eye_qq_zz(3))
@@ -229,11 +229,11 @@ test "subresultants_qq_zz: matrix helper parity" {
   let g = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
   let s1 = @sympolys.sylvester(f, g)
   assert_eq(
-    @sympolys.correct_sign(3, 2, s1, 1, 0).to_string(),
+    Show::to_string(@sympolys.correct_sign(3, 2, s1, 1, 0)),
     correct_sign_qq_zz(f.to_expr(), g.to_expr(), x="x", rdel=1, cdel=0),
   )
   assert_eq(
-    @sympolys.correct_sign(3, 2, s1, 1, 1).to_string(),
+    Show::to_string(@sympolys.correct_sign(3, 2, s1, 1, 1)),
     correct_sign_qq_zz(f.to_expr(), g.to_expr(), x="x", rdel=1, cdel=1),
   )
   assert_eq(
@@ -284,7 +284,7 @@ test "subresultants_qq_zz: matrix helper parity" {
 ///|
 test "subresultants_qq_zz: euclid_q/sturm_q normalization parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr(
     @symcore.int(-1) * ((x ^ @symcore.int(2)) - @symcore.int(1)),
   )
@@ -300,7 +300,7 @@ test "subresultants_qq_zz: euclid_q/sturm_q normalization parity" {
 ///|
 test "subresultants_qq_zz: rem_z/quo_z parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr((x ^ @symcore.int(5)) + @symcore.int(1))
   let q = b.from_expr(x + @symcore.int(1))
   let ours_rem = sympy_normalize(@sympolys.rem_z(p, q).to_string())
@@ -317,21 +317,21 @@ test "subresultants_qq_zz: error and QQ domain branches" {
   let y = @symcore.Expr::Symbol("y")
 
   // ensure_univar_pair -> NotUnivariate
-  let b2 = PolyBuilder::new(["x", "y"], Domain::ZZ)
+  let b2 = PolyBuilder::new(["x", "y"], ZZ)
   let p2 = b2.from_expr(x + y)
   let q2 = b2.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let non_uni = expect_poly_error(fn() raise PolyError { @sympolys.res(p2, q2) })
-  assert_true(non_uni is PolyError::NotUnivariate)
+  assert_true(non_uni is NotUnivariate)
 
   // lift_pair_to_qq -> DomainMismatch (different domains)
-  let bzz = PolyBuilder::new(["x"], Domain::ZZ)
-  let bqq = PolyBuilder::new(["x"], Domain::QQ)
+  let bzz = PolyBuilder::new(["x"], ZZ)
+  let bqq = PolyBuilder::new(["x"], QQ)
   let pzz = bzz.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let qqq = bqq.from_expr(x + @symcore.int(1))
   let mismatch = expect_poly_error(fn() raise PolyError {
     @sympolys.euclid_q(pzz, qqq)
   })
-  assert_true(mismatch is PolyError::DomainMismatch)
+  assert_true(mismatch is DomainMismatch)
 
   // lift_pair_to_qq -> Domain::QQ branch
   let pqq = bqq.from_expr((x ^ @symcore.int(3)) + x + @symcore.int(1))
@@ -340,11 +340,11 @@ test "subresultants_qq_zz: error and QQ domain branches" {
   assert_true(seq.length() >= 2)
 
   // lift_pair_to_qq -> fallback DomainMismatch branch for unsupported domains.
-  let bgf = PolyBuilder::new(["x"], Domain::GF(5))
+  let bgf = PolyBuilder::new(["x"], GF(5))
   let pgf = bgf.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let qgf = bgf.from_expr(x + @symcore.int(1))
   let unsupported = expect_poly_error(fn() raise PolyError {
     @sympolys.euclid_q(pgf, qgf)
   })
-  assert_true(unsupported is PolyError::DomainMismatch)
+  assert_true(unsupported is DomainMismatch)
 }

@@ -60,7 +60,7 @@ test "physics.secondquant: advanced parity" {
     "contraction below parity",
   )
   sq_adv_assert_port(
-    anti_symmetric_tensor(@symcore.Expr::Symbol("v"), [b, a], [j, i]),
+    anti_symmetric_tensor(Symbol("v"), [b, a], [j, i]),
     "AntiSymmetricTensor(v, (b, a), (j, i))",
     "antisymmetric tensor parity",
   )

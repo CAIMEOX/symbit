@@ -34,7 +34,7 @@ pub fn compound_rv(
   name : String,
   components : Array[(@symnum.BigRational, RandomVar)],
 ) -> RandomVar {
-  random_var(name, RVKind::Compound(normalize_mixture(components)))
+  random_var(name, Compound(normalize_mixture(components)))
 }
 
 ///|
@@ -42,7 +42,7 @@ pub fn compound_components(
   rv : RandomVar,
 ) -> Array[(@symnum.BigRational, RandomVar)]? {
   match rv.kind {
-    RVKind::Compound(items) => Some(items)
+    Compound(items) => Some(items)
     _ => None
   }
 }

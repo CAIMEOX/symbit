@@ -43,11 +43,9 @@ pub fn qft(
   finish : Int,
 ) -> FourierExpr raise @symphysics.PhysicsError {
   guard start < finish else {
-    raise @symphysics.PhysicsError::ValueError(
-      "QFT start must be smaller than finish",
-    )
+    raise ValueError("QFT start must be smaller than finish")
   }
-  FourierExpr::{ inverse: false, start, finish }
+  { inverse: false, start, finish }
 }
 
 ///|
@@ -56,11 +54,9 @@ pub fn iqft(
   finish : Int,
 ) -> FourierExpr raise @symphysics.PhysicsError {
   guard start < finish else {
-    raise @symphysics.PhysicsError::ValueError(
-      "IQFT start must be smaller than finish",
-    )
+    raise ValueError("IQFT start must be smaller than finish")
   }
-  FourierExpr::{ inverse: true, start, finish }
+  { inverse: true, start, finish }
 }
 
 ///|
@@ -71,11 +67,7 @@ pub fn FourierExpr::as_expr(self : FourierExpr) -> Expr {
 
 ///|
 pub fn FourierExpr::inverse(self : FourierExpr) -> FourierExpr {
-  FourierExpr::{
-    inverse: !self.inverse,
-    start: self.start,
-    finish: self.finish,
-  }
+  { inverse: !self.inverse, start: self.start, finish: self.finish }
 }
 
 ///|
@@ -86,7 +78,7 @@ fn fourier_from_expr(expr : Expr) -> FourierExpr? {
         (quantum_integer_value(start_expr), quantum_integer_value(finish_expr)) {
         (Some(start), Some(finish)) if start < finish &&
           (name == "QFT" || name == "IQFT") =>
-          Some(FourierExpr::{ inverse: name == "IQFT", start, finish })
+          Some({ inverse: name == "IQFT", start, finish })
         _ => None
       }
     _ => None
@@ -103,7 +95,7 @@ fn rk_from_expr(expr : Expr) -> RkExpr? {
       ) =>
       match
         (quantum_integer_value(target_expr), quantum_integer_value(k_expr)) {
-        (Some(target), Some(k)) => Some(RkExpr::{ target, k })
+        (Some(target), Some(k)) => Some({ target, k })
         _ => None
       }
     _ => None
@@ -124,8 +116,8 @@ fn rk_phase(k : Int) -> Expr {
   let denom = @symcore.raw_pow(two, int(Int::abs(k)))
   let angle = sign *
     two *
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+    NumberSymbol(Pi) *
+    NumberSymbol(ImaginaryUnit) *
     @symcore.raw_pow(denom, int(-1))
   @symcore.raw_function("exp", [angle])
 }
@@ -152,8 +144,8 @@ fn qft_omega(expr : FourierExpr) -> Expr {
   @symcore.raw_function("exp", [
     exponent *
     int(2) *
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+    NumberSymbol(Pi) *
+    NumberSymbol(ImaginaryUnit) *
     @symcore.raw_pow(denom, int(-1)),
   ])
 }
@@ -257,7 +249,7 @@ pub fn qft_represent(
       let effective_nqubits = if nqubits > 0 { nqubits } else { fourier.finish }
       let core = qft_core_matrix(fourier)
       Some(
-        MatrixScalarValue::Matrix(
+        Matrix(
           embed_gate_matrix(
             core,
             fourier.start,
@@ -276,7 +268,7 @@ pub fn qft_represent(
             rk_expr.target + 1
           }
           Some(
-            MatrixScalarValue::Matrix(
+            Matrix(
               embed_gate_matrix(
                 rk_target_matrix(rk_expr),
                 rk_expr.target,
@@ -299,7 +291,7 @@ pub fn qft_apply_operator_to_ket(
   match (fourier_from_expr(op_expr), qubit_from_expr(ket_expr)) {
     (Some(_), Some(q)) => {
       let matrix = match qft_represent(op_expr, q.nqubits()) {
-        Some(MatrixScalarValue::Matrix(matrix)) => matrix
+        Some(Matrix(matrix)) => matrix
         _ => return None
       }
       let vec = qubit_to_matrix(ket_expr, nqubits=q.nqubits())
@@ -309,9 +301,7 @@ pub fn qft_apply_operator_to_ket(
       match rk_from_expr(op_expr) {
         Some(rk_expr) => {
           guard rk_expr.target >= 0 && rk_expr.target < q.nqubits() else {
-            raise @symphysics.PhysicsError::IndexError(
-              "Rk target index out of range",
-            )
+            raise IndexError("Rk target index out of range")
           }
           if q.bit(rk_expr.target) == 0 {
             Some(ket_expr)

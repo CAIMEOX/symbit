@@ -26,12 +26,12 @@ pub struct StateExpr {
 
 ///|
 fn default_state_label() -> Array[Expr] {
-  [Expr::Symbol("psi")]
+  [Symbol("psi")]
 }
 
 ///|
 fn default_time_expr() -> Expr {
-  Expr::Symbol("t")
+  Symbol("t")
 }
 
 ///|
@@ -46,24 +46,24 @@ fn normalize_state_label(label : Array[Expr]) -> Array[Expr] {
 ///|
 fn state_class_name(flavor : StateFlavor) -> String {
   match flavor {
-    StateFlavor::Ket => "Ket"
-    StateFlavor::Bra => "Bra"
-    StateFlavor::TimeDepKet => "TimeDepKet"
-    StateFlavor::TimeDepBra => "TimeDepBra"
-    StateFlavor::OrthogonalKet => "OrthogonalKet"
-    StateFlavor::OrthogonalBra => "OrthogonalBra"
+    Ket => "Ket"
+    Bra => "Bra"
+    TimeDepKet => "TimeDepKet"
+    TimeDepBra => "TimeDepBra"
+    OrthogonalKet => "OrthogonalKet"
+    OrthogonalBra => "OrthogonalBra"
   }
 }
 
 ///|
 fn state_brackets(flavor : StateFlavor) -> (String, String, String) {
   match flavor {
-    StateFlavor::Ket => ("|", ">", ", ")
-    StateFlavor::Bra => ("<", "|", ", ")
-    StateFlavor::TimeDepKet => ("|", ">", ";")
-    StateFlavor::TimeDepBra => ("<", "|", ";")
-    StateFlavor::OrthogonalKet => ("|", ">", ", ")
-    StateFlavor::OrthogonalBra => ("<", "|", ", ")
+    Ket => ("|", ">", ", ")
+    Bra => ("<", "|", ", ")
+    TimeDepKet => ("|", ">", ";")
+    TimeDepBra => ("<", "|", ";")
+    OrthogonalKet => ("|", ">", ", ")
+    OrthogonalBra => ("<", "|", ", ")
   }
 }
 
@@ -72,8 +72,8 @@ pub fn ket(
   label : Array[Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
-  StateExpr::{
-    flavor: StateFlavor::Ket,
+  {
+    flavor: Ket,
     label: normalize_state_label(label),
     time: None,
     hilbert_space,
@@ -85,8 +85,8 @@ pub fn bra(
   label : Array[Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
-  StateExpr::{
-    flavor: StateFlavor::Bra,
+  {
+    flavor: Bra,
     label: normalize_state_label(label),
     time: None,
     hilbert_space,
@@ -99,8 +99,8 @@ pub fn time_dep_ket(
   time? : Expr = default_time_expr(),
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
-  StateExpr::{
-    flavor: StateFlavor::TimeDepKet,
+  {
+    flavor: TimeDepKet,
     label: normalize_state_label(label),
     time: Some(time),
     hilbert_space,
@@ -113,8 +113,8 @@ pub fn time_dep_bra(
   time? : Expr = default_time_expr(),
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
-  StateExpr::{
-    flavor: StateFlavor::TimeDepBra,
+  {
+    flavor: TimeDepBra,
     label: normalize_state_label(label),
     time: Some(time),
     hilbert_space,
@@ -126,8 +126,8 @@ pub fn orthogonal_ket(
   label : Array[Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
-  StateExpr::{
-    flavor: StateFlavor::OrthogonalKet,
+  {
+    flavor: OrthogonalKet,
     label: normalize_state_label(label),
     time: None,
     hilbert_space,
@@ -139,8 +139,8 @@ pub fn orthogonal_bra(
   label : Array[Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
-  StateExpr::{
-    flavor: StateFlavor::OrthogonalBra,
+  {
+    flavor: OrthogonalBra,
     label: normalize_state_label(label),
     time: None,
     hilbert_space,
@@ -163,15 +163,15 @@ pub fn StateExpr::as_expr(self : StateExpr) -> Expr {
 pub fn StateExpr::dual(self : StateExpr) -> StateExpr {
   let time = self.time.unwrap_or(default_time_expr())
   match self.flavor {
-    StateFlavor::Ket => bra(self.label, hilbert_space=self.hilbert_space)
-    StateFlavor::Bra => ket(self.label, hilbert_space=self.hilbert_space)
-    StateFlavor::TimeDepKet =>
+    Ket => bra(self.label, hilbert_space=self.hilbert_space)
+    Bra => ket(self.label, hilbert_space=self.hilbert_space)
+    TimeDepKet =>
       time_dep_bra(self.label, time~, hilbert_space=self.hilbert_space)
-    StateFlavor::TimeDepBra =>
+    TimeDepBra =>
       time_dep_ket(self.label, time~, hilbert_space=self.hilbert_space)
-    StateFlavor::OrthogonalKet =>
+    OrthogonalKet =>
       orthogonal_bra(self.label, hilbert_space=self.hilbert_space)
-    StateFlavor::OrthogonalBra =>
+    OrthogonalBra =>
       orthogonal_ket(self.label, hilbert_space=self.hilbert_space)
   }
 }
@@ -189,7 +189,7 @@ pub impl Show for StateExpr with fn to_string(self) {
 
 ///|
 pub impl Show for StateExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|

@@ -39,38 +39,34 @@ fn py_function_call(name : String, args : Array[Expr]) -> String {
 ///|
 fn py_expr(expr : Expr) -> String {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() =>
+    Number(n) if n.is_integral() =>
       "sympy.Integer(" + n.numerator().to_string() + ")"
-    @symcore.Expr::Number(n) =>
+    Number(n) =>
       "sympy.Rational(" +
       n.numerator().to_string() +
       ", " +
       n.denominator().to_string() +
       ")"
-    @symcore.Expr::NumberSymbol(kind) =>
+    NumberSymbol(kind) =>
       match kind {
-        @symcore.NumberSymbolKind::ImaginaryUnit => "sympy.I"
-        @symcore.NumberSymbolKind::Pi => "sympy.pi"
-        @symcore.NumberSymbolKind::Exp1 => "sympy.E"
-        @symcore.NumberSymbolKind::EulerGamma => "sympy.EulerGamma"
-        @symcore.NumberSymbolKind::GoldenRatio => "sympy.GoldenRatio"
-        @symcore.NumberSymbolKind::Catalan => "sympy.Catalan"
-        @symcore.NumberSymbolKind::Infinity => "sympy.oo"
-        @symcore.NumberSymbolKind::NegativeInfinity => "-sympy.oo"
-        @symcore.NumberSymbolKind::ComplexInfinity => "sympy.zoo"
-        @symcore.NumberSymbolKind::NaN => "sympy.nan"
+        ImaginaryUnit => "sympy.I"
+        Pi => "sympy.pi"
+        Exp1 => "sympy.E"
+        EulerGamma => "sympy.EulerGamma"
+        GoldenRatio => "sympy.GoldenRatio"
+        Catalan => "sympy.Catalan"
+        Infinity => "sympy.oo"
+        NegativeInfinity => "-sympy.oo"
+        ComplexInfinity => "sympy.zoo"
+        NaN => "sympy.nan"
       }
-    @symcore.Expr::Symbol(name) =>
-      "__symbit_symbol(" + python_string_literal(name) + ")"
-    @symcore.Expr::Boolean(true) => "True"
-    @symcore.Expr::Boolean(false) => "False"
-    @symcore.Expr::Add(args) =>
-      "sympy.Add(" + args.map(py_expr).join(", ") + ")"
-    @symcore.Expr::Mul(args) =>
-      "sympy.Mul(" + args.map(py_expr).join(", ") + ")"
-    @symcore.Expr::Pow(base, exp) =>
-      "sympy.Pow(" + py_expr(base) + ", " + py_expr(exp) + ")"
-    @symcore.Expr::Function("Piecewise", args) => {
+    Symbol(name) => "__symbit_symbol(" + python_string_literal(name) + ")"
+    Boolean(true) => "True"
+    Boolean(false) => "False"
+    Add(args) => "sympy.Add(" + args.map(py_expr).join(", ") + ")"
+    Mul(args) => "sympy.Mul(" + args.map(py_expr).join(", ") + ")"
+    Pow(base, exp) => "sympy.Pow(" + py_expr(base) + ", " + py_expr(exp) + ")"
+    Function("Piecewise", args) => {
       let items : Array[String] = []
       let mut i = 0
       while i + 1 < args.length() {
@@ -79,9 +75,8 @@ fn py_expr(expr : Expr) -> String {
       }
       "sympy.Piecewise(" + items.join(", ") + ")"
     }
-    @symcore.Expr::Function("And", args) =>
-      "sympy.And(" + args.map(py_expr).join(", ") + ")"
-    @symcore.Expr::Function("InverseLaplaceTransform", [inner, var_s, var_t]) =>
+    Function("And", args) => "sympy.And(" + args.map(py_expr).join(", ") + ")"
+    Function("InverseLaplaceTransform", [inner, var_s, var_t]) =>
       "sympy.InverseLaplaceTransform(" +
       py_expr(inner) +
       ", " +
@@ -89,10 +84,7 @@ fn py_expr(expr : Expr) -> String {
       ", " +
       py_expr(var_t) +
       ", 0)"
-    @symcore.Expr::Function(
-      "InverseLaplaceTransform",
-      [inner, var_s, var_t, @symcore.Expr::Symbol("_None")]
-    ) =>
+    Function("InverseLaplaceTransform", [inner, var_s, var_t, Symbol("_None")]) =>
       "sympy.InverseLaplaceTransform(" +
       py_expr(inner) +
       ", " +
@@ -100,10 +92,7 @@ fn py_expr(expr : Expr) -> String {
       ", " +
       py_expr(var_t) +
       ", None)"
-    @symcore.Expr::Function(
-      "InverseLaplaceTransform",
-      [inner, var_s, var_t, plane]
-    ) =>
+    Function("InverseLaplaceTransform", [inner, var_s, var_t, plane]) =>
       "sympy.InverseLaplaceTransform(" +
       py_expr(inner) +
       ", " +
@@ -113,13 +102,12 @@ fn py_expr(expr : Expr) -> String {
       ", " +
       py_expr(plane) +
       ")"
-    @symcore.Expr::Function("DiracDelta", [arg]) =>
-      "sympy.DiracDelta(" + py_expr(arg) + ")"
-    @symcore.Expr::Function("DiracDelta", [arg, order]) =>
+    Function("DiracDelta", [arg]) => "sympy.DiracDelta(" + py_expr(arg) + ")"
+    Function("DiracDelta", [arg, order]) =>
       "sympy.DiracDelta(" + py_expr(arg) + ", " + py_expr(order) + ")"
-    @symcore.Expr::UndefinedFunction(name) =>
+    UndefinedFunction(name) =>
       "sympy.Function(" + python_string_literal(name) + ")"
-    @symcore.Expr::Apply(head, [inner, var_s, var_t]) =>
+    Apply(head, [inner, var_s, var_t]) =>
       match @symcore.function_head_name(head) {
         Some("InverseLaplaceTransform") =>
           "sympy.InverseLaplaceTransform(" +
@@ -136,10 +124,7 @@ fn py_expr(expr : Expr) -> String {
           [inner, var_s, var_t].map(py_expr).join(", ") +
           ")"
       }
-    @symcore.Expr::Apply(
-      head,
-      [inner, var_s, var_t, @symcore.Expr::Symbol("_None")]
-    ) =>
+    Apply(head, [inner, var_s, var_t, Symbol("_None")]) =>
       match @symcore.function_head_name(head) {
         Some("InverseLaplaceTransform") =>
           "sympy.InverseLaplaceTransform(" +
@@ -150,21 +135,14 @@ fn py_expr(expr : Expr) -> String {
           py_expr(var_t) +
           ", None)"
         Some(name) =>
-          py_function_call(name, [
-            inner,
-            var_s,
-            var_t,
-            @symcore.Expr::Symbol("_None"),
-          ])
+          py_function_call(name, [inner, var_s, var_t, Symbol("_None")])
         None =>
           py_expr(head) +
           "(" +
-          [inner, var_s, var_t, @symcore.Expr::Symbol("_None")]
-          .map(py_expr)
-          .join(", ") +
+          [inner, var_s, var_t, Symbol("_None")].map(py_expr).join(", ") +
           ")"
       }
-    @symcore.Expr::Apply(head, [inner, var_s, var_t, plane]) =>
+    Apply(head, [inner, var_s, var_t, plane]) =>
       match @symcore.function_head_name(head) {
         Some("InverseLaplaceTransform") =>
           "sympy.InverseLaplaceTransform(" +
@@ -195,7 +173,7 @@ fn py_expr(expr : Expr) -> String {
           [inner, var_s, var_t, plane].map(py_expr).join(", ") +
           ")"
       }
-    @symcore.Expr::Apply(head, args) =>
+    Apply(head, args) =>
       match @symcore.function_head_name(head) {
         Some("Piecewise") => {
           let items : Array[String] = []
@@ -211,23 +189,23 @@ fn py_expr(expr : Expr) -> String {
         Some(name) => py_function_call(name, args)
         None => py_expr(head) + "(" + args.map(py_expr).join(", ") + ")"
       }
-    @symcore.Expr::Function(name, args) => py_function_call(name, args)
+    Function(name, args) => py_function_call(name, args)
     _ =>
       match @symcore.tuple_items(expr) {
         Some(args) => "sympy.Tuple(" + args.map(py_expr).join(", ") + ")"
         None =>
           match @symcore.relational_parts(expr) {
-            Some((@symcore.RelOp::Eq, lhs, rhs)) =>
+            Some((Eq, lhs, rhs)) =>
               "sympy.Eq(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
-            Some((@symcore.RelOp::Ne, lhs, rhs)) =>
+            Some((Ne, lhs, rhs)) =>
               "sympy.Ne(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
-            Some((@symcore.RelOp::Lt, lhs, rhs)) =>
+            Some((Lt, lhs, rhs)) =>
               "sympy.Lt(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
-            Some((@symcore.RelOp::Le, lhs, rhs)) =>
+            Some((Le, lhs, rhs)) =>
               "sympy.Le(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
-            Some((@symcore.RelOp::Gt, lhs, rhs)) =>
+            Some((Gt, lhs, rhs)) =>
               "sympy.Gt(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
-            Some((@symcore.RelOp::Ge, lhs, rhs)) =>
+            Some((Ge, lhs, rhs)) =>
               "sympy.Ge(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
             None =>
               match @symcore.derivative_parts(expr) {
@@ -239,7 +217,7 @@ fn py_expr(expr : Expr) -> String {
                     let order_idx = i * 2 + 1
                     if order_idx < deriv_args.length() {
                       match deriv_args[order_idx] {
-                        @symcore.Expr::Number(n) if n.is_integral() => {
+                        Number(n) if n.is_integral() => {
                           let order_int = n.numerator().to_int()
                           if order_int == 1 {
                             pieces.push(py_expr(wrt))
@@ -424,16 +402,14 @@ fn push_simplify_zero_check(
 
 ///|
 fn py_matrix_expr(mat : @symmatrices.Matrix) -> String {
-  py_src_expr(mat.to_string())
+  py_src_expr(Show::to_string(mat))
 }
 
 ///|
 test "symintegrals parity meijer inversion source shift rules" {
   let s = @symcore.Expr::Symbol("s")
   let t = @symcore.Expr::Symbol("t")
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
 
   guard @symintegrals.meijerint_inversion(
       @symelem.exp(@symcore.int(2) * s),
@@ -657,7 +633,7 @@ test "symintegrals parity meijer inversion source shift rules" {
     ),
   )
 
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let sqrt_kernel = @symelem.sqrt(pi) *
     (@symelem.sqrt(z) ^ @symcore.int(-1)) *
     @symelem.exp(@symcore.int(-2) * @symelem.sqrt(z) * @symelem.sqrt(s))
@@ -1117,10 +1093,7 @@ test "symintegrals parity core indefinite families" {
       "exp(x)**(1 + I)",
       @symcore.pow(
         @symelem.exp(x),
-        @symcore.add([
-          @symcore.int(1),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-        ]),
+        @symcore.add([@symcore.int(1), NumberSymbol(ImaginaryUnit)]),
       ),
     ),
     ("log(x)", @symelem.log(x)),
@@ -1341,9 +1314,7 @@ test "symintegrals parity transforms forward/inverse family" {
             @symcore.rational_from_ints(-1, 2),
             @symcore.mul([
               @symcore.rational_from_ints(-1, 3),
-              @symcore.Expr::NumberSymbol(
-                @symcore.NumberSymbolKind::ImaginaryUnit,
-              ),
+              NumberSymbol(ImaginaryUnit),
             ]),
           ]),
           x,
@@ -1593,19 +1564,11 @@ test "symintegrals parity transforms forward/inverse family" {
   }
 
   let inverse_lp_cases : Array[(String, Expr)] = [
-    (
-      "1/s",
-      inverse_laplace_transform(
-        @symcore.Expr::Symbol("s") ^ @symcore.int(-1),
-        s,
-        x,
-      ),
-    ),
+    ("1/s", inverse_laplace_transform(Symbol("s") ^ @symcore.int(-1), s, x)),
     (
       "s/(s + 1)",
       inverse_laplace_transform(
-        @symcore.Expr::Symbol("s") *
-        ((@symcore.Expr::Symbol("s") + @symcore.int(1)) ^ @symcore.int(-1)),
+        Symbol("s") * ((Symbol("s") + @symcore.int(1)) ^ @symcore.int(-1)),
         s,
         x,
       ),
@@ -1613,8 +1576,7 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "s/(s + 1)**2",
       inverse_laplace_transform(
-        @symcore.Expr::Symbol("s") *
-        ((@symcore.Expr::Symbol("s") + @symcore.int(1)) ^ @symcore.int(-2)),
+        Symbol("s") * ((Symbol("s") + @symcore.int(1)) ^ @symcore.int(-2)),
         s,
         x,
       ),
@@ -1622,11 +1584,8 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "s/(s**2 + 4)",
       inverse_laplace_transform(
-        @symcore.Expr::Symbol("s") *
-        (
-          ((@symcore.Expr::Symbol("s") ^ @symcore.int(2)) + @symcore.int(4)) ^
-          @symcore.int(-1)
-        ),
+        Symbol("s") *
+        (((Symbol("s") ^ @symcore.int(2)) + @symcore.int(4)) ^ @symcore.int(-1)),
         s,
         x,
       ),
@@ -1634,8 +1593,7 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "1/(s**2 - 1)",
       inverse_laplace_transform(
-        ((@symcore.Expr::Symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^
-        @symcore.int(-1),
+        ((Symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-1),
         s,
         x,
       ),
@@ -1643,11 +1601,8 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "s/(s**2 - 1)",
       inverse_laplace_transform(
-        @symcore.Expr::Symbol("s") *
-        (
-          ((@symcore.Expr::Symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^
-          @symcore.int(-1)
-        ),
+        Symbol("s") *
+        (((Symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-1)),
         s,
         x,
       ),
@@ -1655,10 +1610,7 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "1/((s + 1)*(s + 2))",
       inverse_laplace_transform(
-        (
-          (@symcore.Expr::Symbol("s") + @symcore.int(1)) *
-          (@symcore.Expr::Symbol("s") + @symcore.int(2))
-        ) ^
+        ((Symbol("s") + @symcore.int(1)) * (Symbol("s") + @symcore.int(2))) ^
         @symcore.int(-1),
         s,
         x,
@@ -1667,12 +1619,9 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "s/((s + 1)*(s + 2))",
       inverse_laplace_transform(
-        @symcore.Expr::Symbol("s") *
+        Symbol("s") *
         (
-          (
-            (@symcore.Expr::Symbol("s") + @symcore.int(1)) *
-            (@symcore.Expr::Symbol("s") + @symcore.int(2))
-          ) ^
+          ((Symbol("s") + @symcore.int(1)) * (Symbol("s") + @symcore.int(2))) ^
           @symcore.int(-1)
         ),
         s,
@@ -1682,8 +1631,7 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "1/(s**2 + 1)**2",
       inverse_laplace_transform(
-        ((@symcore.Expr::Symbol("s") ^ @symcore.int(2)) + @symcore.int(1)) ^
-        @symcore.int(-2),
+        ((Symbol("s") ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-2),
         s,
         x,
       ),
@@ -1691,11 +1639,8 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "s/(s**2 + 1)**2",
       inverse_laplace_transform(
-        @symcore.Expr::Symbol("s") *
-        (
-          ((@symcore.Expr::Symbol("s") ^ @symcore.int(2)) + @symcore.int(1)) ^
-          @symcore.int(-2)
-        ),
+        Symbol("s") *
+        (((Symbol("s") ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-2)),
         s,
         x,
       ),
@@ -1703,8 +1648,7 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "1/(s**2 - 1)**2",
       inverse_laplace_transform(
-        ((@symcore.Expr::Symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^
-        @symcore.int(-2),
+        ((Symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-2),
         s,
         x,
       ),
@@ -1712,11 +1656,8 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "s/(s**2 - 1)**2",
       inverse_laplace_transform(
-        @symcore.Expr::Symbol("s") *
-        (
-          ((@symcore.Expr::Symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^
-          @symcore.int(-2)
-        ),
+        Symbol("s") *
+        (((Symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-2)),
         s,
         x,
       ),
@@ -1724,10 +1665,7 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "1/((s + 1)**2 - 4)",
       inverse_laplace_transform(
-        (
-          ((@symcore.Expr::Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) -
-          @symcore.int(4)
-        ) ^
+        (((Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
         @symcore.int(-1),
         s,
         x,
@@ -1736,10 +1674,10 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "(s + 1)/((s + 1)**2 - 4)",
       inverse_laplace_transform(
-        (@symcore.Expr::Symbol("s") + @symcore.int(1)) *
+        (Symbol("s") + @symcore.int(1)) *
         (
           (
-            ((@symcore.Expr::Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) -
+            ((Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) -
             @symcore.int(4)
           ) ^
           @symcore.int(-1)
@@ -1751,10 +1689,7 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "1/((s + 1)**2 - 4)**2",
       inverse_laplace_transform(
-        (
-          ((@symcore.Expr::Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) -
-          @symcore.int(4)
-        ) ^
+        (((Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
         @symcore.int(-2),
         s,
         x,
@@ -1763,10 +1698,10 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "s/((s + 1)**2 - 4)**2",
       inverse_laplace_transform(
-        @symcore.Expr::Symbol("s") *
+        Symbol("s") *
         (
           (
-            ((@symcore.Expr::Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) -
+            ((Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) -
             @symcore.int(4)
           ) ^
           @symcore.int(-2)
@@ -1778,10 +1713,7 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "1/((s + 1)**2 + 4)**2",
       inverse_laplace_transform(
-        (
-          ((@symcore.Expr::Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) +
-          @symcore.int(4)
-        ) ^
+        (((Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
         @symcore.int(-2),
         s,
         x,
@@ -1790,10 +1722,10 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "s/((s + 1)**2 + 4)**2",
       inverse_laplace_transform(
-        @symcore.Expr::Symbol("s") *
+        Symbol("s") *
         (
           (
-            ((@symcore.Expr::Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) +
+            ((Symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) +
             @symcore.int(4)
           ) ^
           @symcore.int(-2)
@@ -2598,15 +2530,12 @@ test "symintegrals parity inverse Mellin special families" {
 
   let difference_quotient_inverse = do_inverse_mellin_doit(
     (bp ^ (a + s - @symcore.int(1))) *
-    @symelem.sin(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * a) *
+    @symelem.sin(NumberSymbol(Pi) * a) *
     @symspec.gamma(s) *
     @symspec.gamma(a + s) *
     @symspec.gamma(@symcore.int(1) - s) *
     @symspec.gamma(@symcore.int(1) - a - s) *
-    (
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^
-      @symcore.int(-1)
-    ),
+    (NumberSymbol(Pi) ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -2680,9 +2609,7 @@ test "symintegrals parity inverse Mellin named special families" {
     (
       (@symcore.int(2) ^ s) *
       (
-        @symelem.sqrt(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ) *
+        @symelem.sqrt(NumberSymbol(Pi)) *
         @symspec.gamma((s + @symcore.int(1)) * half)
       )
     ) *
@@ -2701,12 +2628,7 @@ test "symintegrals parity inverse Mellin named special families" {
     @symcore.int(-1) *
     (
       (@symcore.int(2) ^ (@symcore.int(2) * s - @symcore.int(1))) *
-      (
-        @symelem.sqrt(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ) *
-        @symspec.gamma(s)
-      )
+      (@symelem.sqrt(NumberSymbol(Pi)) * @symspec.gamma(s))
     ) *
     ((s * @symspec.gamma(half - s)) ^ @symcore.int(-1)),
     s,
@@ -2719,15 +2641,7 @@ test "symintegrals parity inverse Mellin named special families" {
   let erf_sqrt_inverse = do_inverse_mellin_doit(
     @symcore.int(-1) *
     @symspec.gamma(s + half) *
-    (
-      (
-        @symelem.sqrt(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ) *
-        s
-      ) ^
-      @symcore.int(-1)
-    ),
+    ((@symelem.sqrt(NumberSymbol(Pi)) * s) ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -2758,16 +2672,8 @@ test "symintegrals parity inverse Mellin named special families" {
   )
 
   let log_quadratic_inverse = do_inverse_mellin_doit(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    (
-      (
-        s *
-        @symelem.sin(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * s * half,
-        )
-      ) ^
-      @symcore.int(-1)
-    ),
+    NumberSymbol(Pi) *
+    ((s * @symelem.sin(NumberSymbol(Pi) * s * half)) ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -2776,13 +2682,7 @@ test "symintegrals parity inverse Mellin named special families" {
   )
 
   let sec_inverse = do_inverse_mellin_doit(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    (
-      @symelem.cos(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * s,
-      ) ^
-      @symcore.int(-1)
-    ),
+    NumberSymbol(Pi) * (@symelem.cos(NumberSymbol(Pi) * s) ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -2791,16 +2691,8 @@ test "symintegrals parity inverse Mellin named special families" {
   )
 
   let log_piecewise_inverse = do_inverse_mellin_doit(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    (
-      (
-        s *
-        @symelem.sin(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * s,
-        )
-      ) ^
-      @symcore.int(-1)
-    ),
+    NumberSymbol(Pi) *
+    ((s * @symelem.sin(NumberSymbol(Pi) * s)) ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -2809,16 +2701,9 @@ test "symintegrals parity inverse Mellin named special families" {
   )
 
   let sqrt_piecewise_inverse = do_inverse_mellin_doit(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+    NumberSymbol(Pi) *
     (
-      (
-        s *
-        @symelem.sin(
-          @symcore.int(2) *
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-          s,
-        )
-      ) ^
+      (s * @symelem.sin(@symcore.int(2) * NumberSymbol(Pi) * s)) ^
       @symcore.int(-1)
     ),
     s,
@@ -2829,16 +2714,8 @@ test "symintegrals parity inverse Mellin named special families" {
   )
 
   let tan_piecewise_inverse = do_inverse_mellin_doit(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    (
-      (
-        s *
-        @symelem.tan(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * s,
-        )
-      ) ^
-      @symcore.int(-1)
-    ),
+    NumberSymbol(Pi) *
+    ((s * @symelem.tan(NumberSymbol(Pi) * s)) ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -2848,8 +2725,8 @@ test "symintegrals parity inverse Mellin named special families" {
   )
 
   let cot_piecewise_inverse = do_inverse_mellin_doit(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    @symelem.cot(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * s) *
+    NumberSymbol(Pi) *
+    @symelem.cot(NumberSymbol(Pi) * s) *
     (s ^ @symcore.int(-1)),
     s,
     x,
@@ -2881,14 +2758,8 @@ test "symintegrals parity inverse Mellin Bessel families" {
   )
 
   let bessely_input = @symcore.int(-1) *
-    (
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^
-      @symcore.int(-1)
-    ) *
-    @symelem.cos(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      (a * half - s),
-    ) *
+    (NumberSymbol(Pi) ^ @symcore.int(-1)) *
+    @symelem.cos(NumberSymbol(Pi) * (a * half - s)) *
     @symspec.gamma(s - a * half) *
     @symspec.gamma(s + a * half)
   let bessely_inverse_opt = do_inverse_mellin_doit(bessely_input, s, x)
@@ -2939,15 +2810,9 @@ test "symintegrals parity inverse Mellin Bessel families" {
   )
 
   let sin_bessely_input = @symcore.int(-1) *
-    (
-      @symelem.sqrt(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)) ^
-      @symcore.int(-1)
-    ) *
+    (@symelem.sqrt(NumberSymbol(Pi)) ^ @symcore.int(-1)) *
     (@symcore.int(4) ^ s) *
-    @symelem.sin(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      (a * half - s),
-    ) *
+    @symelem.sin(NumberSymbol(Pi) * (a * half - s)) *
     @symspec.gamma(half - @symcore.int(2) * s) *
     @symspec.gamma((@symcore.int(1) - a) * half + s) *
     @symspec.gamma((@symcore.int(1) + a) * half + s) *
@@ -2961,15 +2826,9 @@ test "symintegrals parity inverse Mellin Bessel families" {
   )
 
   let cos_bessely_input = @symcore.int(-1) *
-    (
-      @symelem.sqrt(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)) ^
-      @symcore.int(-1)
-    ) *
+    (@symelem.sqrt(NumberSymbol(Pi)) ^ @symcore.int(-1)) *
     (@symcore.int(4) ^ s) *
-    @symelem.cos(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      (a * half - s),
-    ) *
+    @symelem.cos(NumberSymbol(Pi) * (a * half - s)) *
     @symspec.gamma(s - a * half) *
     @symspec.gamma(s + a * half) *
     @symspec.gamma(half - @symcore.int(2) * s) *
@@ -2982,10 +2841,7 @@ test "symintegrals parity inverse Mellin Bessel families" {
     inverse_bessel_checks, cos_bessely_inverse, "sympy.cos(sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))",
   )
 
-  let besselj_sq_input = (
-      @symelem.sqrt(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)) ^
-      @symcore.int(-1)
-    ) *
+  let besselj_sq_input = (@symelem.sqrt(NumberSymbol(Pi)) ^ @symcore.int(-1)) *
     @symspec.gamma(a + s) *
     @symspec.gamma(half - s) *
     (@symspec.gamma(@symcore.int(1) - s) ^ @symcore.int(-1)) *
@@ -2997,10 +2853,7 @@ test "symintegrals parity inverse Mellin Bessel families" {
     inverse_bessel_checks, besselj_sq_inverse, "sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))**2",
   )
 
-  let besselj_pm_input = (
-      @symelem.sqrt(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)) ^
-      @symcore.int(-1)
-    ) *
+  let besselj_pm_input = (@symelem.sqrt(NumberSymbol(Pi)) ^ @symcore.int(-1)) *
     @symspec.gamma(s) *
     @symspec.gamma(half - s) *
     (@symspec.gamma(@symcore.int(1) - s - a) ^ @symcore.int(-1)) *
@@ -3026,15 +2879,9 @@ test "symintegrals parity inverse Mellin Bessel families" {
   )
 
   let besselj_bessely_input = @symcore.int(-1) *
-    (
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^
-      @symcore.int(-1)
-    ) *
+    (NumberSymbol(Pi) ^ @symcore.int(-1)) *
     (@symcore.int(4) ^ s) *
-    @symelem.cos(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      ((a - b) * half + s),
-    ) *
+    @symelem.cos(NumberSymbol(Pi) * ((a - b) * half + s)) *
     @symspec.gamma(@symcore.int(1) - @symcore.int(2) * s) *
     @symspec.gamma((a - b) * half + s) *
     @symspec.gamma((a + b) * half + s) *
@@ -3050,15 +2897,9 @@ test "symintegrals parity inverse Mellin Bessel families" {
   )
 
   let besselj_bessely_same_input = @symcore.int(-1) *
-    (
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^
-      @symcore.int(-1)
-    ) *
-    (
-      @symelem.sqrt(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)) ^
-      @symcore.int(-1)
-    ) *
-    @symelem.cos(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * s) *
+    (NumberSymbol(Pi) ^ @symcore.int(-1)) *
+    (@symelem.sqrt(NumberSymbol(Pi)) ^ @symcore.int(-1)) *
+    @symelem.cos(NumberSymbol(Pi) * s) *
     @symspec.gamma(s) *
     @symspec.gamma(a + s) *
     @symspec.gamma(half - s) *
@@ -3260,13 +3101,7 @@ test "symintegrals parity cosine transform stage 5 families" {
         [half],
         k ^ @symcore.int(2),
       ) *
-      (
-        (
-          @symcore.int(2) *
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
-        ) ^
-        @symcore.int(-1)
-      ),
+      ((@symcore.int(2) * NumberSymbol(Pi)) ^ @symcore.int(-1)),
       k,
       x,
     ),
@@ -3294,15 +3129,7 @@ test "symintegrals parity cosine transform stage 5 families" {
         [half],
         k ^ @symcore.int(2),
       ) *
-      (
-        (
-          @symcore.int(2) *
-          @symelem.sqrt(
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-          )
-        ) ^
-        @symcore.int(-1)
-      ),
+      ((@symcore.int(2) * @symelem.sqrt(NumberSymbol(Pi))) ^ @symcore.int(-1)),
       k,
       x,
     ),
@@ -3627,7 +3454,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
       @symcore.int(1),
       @symcore.function("Le", [x, @symcore.int(1)]),
       @symcore.int(0),
-      @symcore.Expr::Boolean(true),
+      Boolean(true),
     ]),
     x,
     s,
@@ -3649,7 +3476,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
       @symcore.int(2) - x,
       @symcore.function("Le", [x, @symcore.int(2)]),
       @symcore.int(0),
-      @symcore.Expr::Boolean(true),
+      Boolean(true),
     ]),
     x,
     s,
@@ -3671,7 +3498,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
         @symcore.function("Le", [x, @symcore.int(3)]),
       ]),
       @symcore.int(2),
-      @symcore.Expr::Boolean(true),
+      Boolean(true),
     ]),
     x,
     s,
@@ -4821,10 +4648,7 @@ test "symintegrals parity inverse Laplace named special families" {
   let log_inverse = doit(
     inverse_laplace_transform(
       @symcore.int(-1) *
-      (
-        @symelem.log(s) +
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma)
-      ) *
+      (@symelem.log(s) + NumberSymbol(EulerGamma)) *
       (s ^ @symcore.int(-1)),
       s,
       x,
@@ -6180,9 +6004,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
   let s = @symcore.Expr::Symbol("s")
   let t = @symcore.Expr::Symbol("t")
   let q = @symcore.Expr::Symbol("q")
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let f_t = @symcore.raw_function("f", [t])
   let ilt_roundtrip = doit(
     inverse_laplace_transform(laplace_transform(f_t, t, s), s, x),
@@ -6404,13 +6226,7 @@ test "symintegrals parity inverse Laplace correspondence and object rules" {
   @symassume.clear_global_assumptions()
   @symassume.add_global_assumption(@symassume.q_integer(ni))
   let symbolic_integer_frequency_diff = @symintegrals.laplace_correspondence(
-    doit(
-      inverse_laplace_transform(
-        @symcore.Expr::Derivative(f_big_of_s, [s, ni]),
-        s,
-        x,
-      ),
-    ),
+    doit(inverse_laplace_transform(Derivative(f_big_of_s, [s, ni]), s, x)),
     generic_fdict,
   )
   @symassume.clear_global_assumptions()
@@ -7071,7 +6887,7 @@ test "symintegrals parity fast inverse Laplace helper" {
 
   let explicit_power_one = match
     @symintegrals._fast_inverse_laplace(
-      @symcore.Expr::Pow(@symcore.int(2) * s + @symcore.int(4), @symcore.int(1)),
+      Pow(@symcore.int(2) * s + @symcore.int(4), @symcore.int(1)),
       s,
       x,
     ) {
@@ -7954,9 +7770,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
     "0",
   )
 
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let gamma_minus_i_mellin_fallback_inverse = doit(
     inverse_laplace_transform(@symspec.gamma(s - imag), s, x),
   )
@@ -8009,7 +7823,7 @@ test "symintegrals parity inverse Laplace object and shift edge rules" {
   }
 
   let z = @symcore.Expr::Symbol("z")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let sqrt_kernel = @symelem.sqrt(pi) *
     (@symelem.sqrt(z) ^ @symcore.int(-1)) *
     @symelem.exp(@symcore.int(-2) * @symelem.sqrt(z) * @symelem.sqrt(s))
@@ -8331,7 +8145,7 @@ test "symintegrals parity intpoly geometry helper functions" {
       @symgeometry.point2d(@symcore.int(1), @symcore.int(1)),
       @symgeometry.point2d(@symcore.int(0), @symcore.int(1)),
     ]) {
-    @symgeometry.GeometryEntity::Polygon(poly) => poly
+    Polygon(poly) => poly
     _ => fail("expected polygon from helper square vertices")
   }
   let params = hyperplane_parameters(square)
@@ -8409,7 +8223,7 @@ test "symintegrals parity intpoly 2d reduction helpers" {
       @symgeometry.point2d(@symcore.int(1), @symcore.int(1)),
       @symgeometry.point2d(@symcore.int(0), @symcore.int(1)),
     ]) {
-    @symgeometry.GeometryEntity::Polygon(poly) => poly
+    Polygon(poly) => poly
     _ => fail("expected polygon from helper square vertices")
   }
   let params = hyperplane_parameters(square)

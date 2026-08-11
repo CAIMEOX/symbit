@@ -234,17 +234,13 @@ pub fn directional_derivative(
   direction : Vector,
 ) -> ScalarOrVector raise @rawvec.VectorError {
   match field {
-    ScalarOrVector::ScalarExpr(expr) =>
+    ScalarExpr(expr) =>
       if coord_systems_in_scalar_expr(expr).is_empty() {
-        ScalarOrVector::ScalarExpr(@symcore.int(0))
+        ScalarExpr(@symcore.int(0))
       } else {
-        ScalarOrVector::ScalarExpr(
-          direction.dot(gradient(expr)) catch {
-            err => raise err
-          },
-        )
+        ScalarExpr(direction.dot(gradient(expr)) catch { err => raise err })
       }
-    ScalarOrVector::VectorExpr(vect) =>
+    VectorExpr(vect) =>
       match primary_coord_system_in_vector(vect) {
         Some(system) => {
           let grad = gradient_vector(vect) catch { err => raise err }
@@ -257,9 +253,9 @@ pub fn directional_derivative(
           ) catch {
             err => raise err
           }
-          ScalarOrVector::VectorExpr(result)
+          VectorExpr(result)
         }
-        None => ScalarOrVector::VectorExpr(vector_zero())
+        None => VectorExpr(vector_zero())
       }
   }
 }
@@ -269,15 +265,11 @@ pub fn laplacian(
   field : ScalarOrVector,
 ) -> ScalarOrVector raise @rawvec.VectorError {
   match field {
-    ScalarOrVector::ScalarExpr(expr) =>
-      ScalarOrVector::ScalarExpr(
-        divergence(gradient(expr)) catch {
-          err => raise err
-        },
-      )
-    ScalarOrVector::VectorExpr(vect) => {
+    ScalarExpr(expr) =>
+      ScalarExpr(divergence(gradient(expr)) catch { err => raise err })
+    VectorExpr(vect) => {
       let cc = curl(vect) catch { err => raise err }
-      ScalarOrVector::VectorExpr(
+      VectorExpr(
         gradient(divergence(vect) catch { err => raise err }) -
         (curl(cc) catch { err => raise err }),
       )
@@ -301,7 +293,7 @@ pub fn scalar_potential_difference(
   point2 : Point,
 ) -> @symcore.Expr raise @rawvec.VectorError {
   match field {
-    ScalarOrVector::ScalarExpr(expr) =>
+    ScalarExpr(expr) =>
       @rawvec.scalar_potential_difference(
         expr,
         system.frame_,
@@ -309,7 +301,7 @@ pub fn scalar_potential_difference(
         point2.raw_,
         system.origin_.raw_,
       )
-    ScalarOrVector::VectorExpr(vect) =>
+    VectorExpr(vect) =>
       @rawvec.scalar_potential_difference_field(
         vect.raw_,
         system.frame_,

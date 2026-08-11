@@ -60,7 +60,7 @@ fn py_str_enum(obj : @py.PyObjectEnum) -> String {
 
 ///|
 fn sympy_const(name : String) -> @py.PyObject raise {
-  let res = sympy_call_must("sympy.sympify", [OracleArg::Str(name)])
+  let res = sympy_call_must("sympy.sympify", [Str(name)])
   objenum_to_obj(res)
 }
 
@@ -77,86 +77,86 @@ fn sympy_call_obj(
 ///|
 fn bool_expr_to_sympy(expr : @symlogic.BoolExpr) -> @py.PyObject raise {
   let s = @symlogic.to_string(expr)
-  let res = sympy_call_must("sympy.sympify", [OracleArg::Str(s)])
+  let res = sympy_call_must("sympy.sympify", [Str(s)])
   objenum_to_obj(res)
 }
 
 ///|
 fn set_to_sympy(set : @symsets.Set) -> @py.PyObject raise {
   match set {
-    @symsets.Set::EmptySet => sympy_const("EmptySet")
-    @symsets.Set::UniversalSet => sympy_const("UniversalSet")
-    @symsets.Set::Naturals => sympy_const("Naturals")
-    @symsets.Set::Naturals0 => sympy_const("Naturals0")
-    @symsets.Set::Integers => sympy_const("Integers")
-    @symsets.Set::Rationals => sympy_const("Rationals")
-    @symsets.Set::Reals => sympy_const("Reals")
-    @symsets.Set::Complexes => sympy_const("Complexes")
-    @symsets.Set::FiniteSet(items) => {
+    EmptySet => sympy_const("EmptySet")
+    UniversalSet => sympy_const("UniversalSet")
+    Naturals => sympy_const("Naturals")
+    Naturals0 => sympy_const("Naturals0")
+    Integers => sympy_const("Integers")
+    Rationals => sympy_const("Rationals")
+    Reals => sympy_const("Reals")
+    Complexes => sympy_const("Complexes")
+    FiniteSet(items) => {
       let args : Array[OracleArg] = Array::new()
       for item in items {
-        args.push(OracleArg::PyObj(expr_to_sympy(item)))
+        args.push(PyObj(expr_to_sympy(item)))
       }
       sympy_call_obj("sympy.FiniteSet", args)
     }
-    @symsets.Set::Interval(left~, right~, left_open~, right_open~) => {
+    Interval(left~, right~, left_open~, right_open~) => {
       let args : Array[OracleArg] = Array::new()
-      args.push(OracleArg::PyObj(expr_to_sympy(left)))
-      args.push(OracleArg::PyObj(expr_to_sympy(right)))
-      args.push(OracleArg::Bool(left_open))
-      args.push(OracleArg::Bool(right_open))
+      args.push(PyObj(expr_to_sympy(left)))
+      args.push(PyObj(expr_to_sympy(right)))
+      args.push(Bool(left_open))
+      args.push(Bool(right_open))
       sympy_call_obj("sympy.Interval", args)
     }
-    @symsets.Set::ConditionSet(symbol~, condition~, base~) => {
+    ConditionSet(symbol~, condition~, base~) => {
       let args : Array[OracleArg] = [
-        OracleArg::PyObj(expr_to_sympy(symbol)),
-        OracleArg::PyObj(bool_expr_to_sympy(condition)),
-        OracleArg::PyObj(set_to_sympy(base)),
+        PyObj(expr_to_sympy(symbol)),
+        PyObj(bool_expr_to_sympy(condition)),
+        PyObj(set_to_sympy(base)),
       ]
       sympy_call_obj("sympy.ConditionSet", args)
     }
-    @symsets.Set::ImageSet(symbol~, expr~, base~) => {
+    ImageSet(symbol~, expr~, base~) => {
       let lambda_obj = sympy_call_obj("sympy.Lambda", [
-        OracleArg::PyObj(expr_to_sympy(symbol)),
-        OracleArg::PyObj(expr_to_sympy(expr)),
+        PyObj(expr_to_sympy(symbol)),
+        PyObj(expr_to_sympy(expr)),
       ])
       let args : Array[OracleArg] = [
-        OracleArg::PyObj(lambda_obj),
-        OracleArg::PyObj(set_to_sympy(base)),
+        PyObj(lambda_obj),
+        PyObj(set_to_sympy(base)),
       ]
       sympy_call_obj("sympy.ImageSet", args)
     }
-    @symsets.Set::ProductSet(items) => {
+    ProductSet(items) => {
       let args : Array[OracleArg] = Array::new()
       for item in items {
-        args.push(OracleArg::PyObj(set_to_sympy(item)))
+        args.push(PyObj(set_to_sympy(item)))
       }
       sympy_call_obj("sympy.ProductSet", args)
     }
-    @symsets.Set::Union(items) =>
+    Union(items) =>
       if items.is_empty() {
         sympy_const("EmptySet")
       } else {
         let args : Array[OracleArg] = Array::new()
         for item in items {
-          args.push(OracleArg::PyObj(set_to_sympy(item)))
+          args.push(PyObj(set_to_sympy(item)))
         }
         sympy_call_obj("sympy.Union", args)
       }
-    @symsets.Set::Intersection(items) =>
+    Intersection(items) =>
       if items.is_empty() {
         sympy_const("UniversalSet")
       } else {
         let args : Array[OracleArg] = Array::new()
         for item in items {
-          args.push(OracleArg::PyObj(set_to_sympy(item)))
+          args.push(PyObj(set_to_sympy(item)))
         }
         sympy_call_obj("sympy.Intersection", args)
       }
-    @symsets.Set::Complement(a, b) => {
+    Complement(a, b) => {
       let args : Array[OracleArg] = [
-        OracleArg::PyObj(set_to_sympy(a)),
-        OracleArg::PyObj(set_to_sympy(b)),
+        PyObj(set_to_sympy(a)),
+        PyObj(set_to_sympy(b)),
       ]
       sympy_call_obj("sympy.Complement", args)
     }
@@ -175,7 +175,7 @@ pub fn union_str(sets : Array[@symsets.Set]) -> String raise {
   }
   let args : Array[OracleArg] = Array::new()
   for item in sets {
-    args.push(OracleArg::PyObj(set_to_sympy(item)))
+    args.push(PyObj(set_to_sympy(item)))
   }
   let res = sympy_call_must("sympy.Union", args)
   py_str_enum(res)
@@ -188,7 +188,7 @@ pub fn intersection_str(sets : Array[@symsets.Set]) -> String raise {
   }
   let args : Array[OracleArg] = Array::new()
   for item in sets {
-    args.push(OracleArg::PyObj(set_to_sympy(item)))
+    args.push(PyObj(set_to_sympy(item)))
   }
   let res = sympy_call_must("sympy.Intersection", args)
   py_str_enum(res)
@@ -196,10 +196,7 @@ pub fn intersection_str(sets : Array[@symsets.Set]) -> String raise {
 
 ///|
 pub fn complement_str(a : @symsets.Set, b : @symsets.Set) -> String raise {
-  let args : Array[OracleArg] = [
-    OracleArg::PyObj(set_to_sympy(a)),
-    OracleArg::PyObj(set_to_sympy(b)),
-  ]
+  let args : Array[OracleArg] = [PyObj(set_to_sympy(a)), PyObj(set_to_sympy(b))]
   let res = sympy_call_must("sympy.Complement", args)
   py_str_enum(res)
 }
@@ -207,8 +204,8 @@ pub fn complement_str(a : @symsets.Set, b : @symsets.Set) -> String raise {
 ///|
 pub fn contains_str(set : @symsets.Set, elem : @symcore.Expr) -> String raise {
   let args : Array[OracleArg] = [
-    OracleArg::PyObj(expr_to_sympy(elem)),
-    OracleArg::PyObj(set_to_sympy(set)),
+    PyObj(expr_to_sympy(elem)),
+    PyObj(set_to_sympy(set)),
   ]
   let res = sympy_call_must("sympy.Contains", args)
   py_str_enum(res)

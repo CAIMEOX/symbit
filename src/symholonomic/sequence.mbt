@@ -13,7 +13,7 @@ pub fn holonomic_sequence(
   for v in u0 {
     init.push(v)
   }
-  HolonomicSequence::{ recurrence, u0: init }
+  { recurrence, u0: init }
 }
 
 ///|

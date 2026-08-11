@@ -55,7 +55,7 @@ fn py_str_enum(obj : @py.PyObjectEnum) -> String {
 
 ///|
 fn sympy_sympify_str(expr_str : String) -> @py.PyObjectEnum raise {
-  sympy_call_must("sympy.sympify", [OracleArg::Str(expr_str)])
+  sympy_call_must("sympy.sympify", [Str(expr_str)])
 }
 
 ///|
@@ -67,9 +67,7 @@ pub fn sympy_str(expr_str : String) -> String raise {
 ///|
 pub fn sympy_srepr(expr_str : String) -> String raise {
   let expr = sympy_sympify_str(expr_str)
-  let srepr = sympy_call_must("sympy.srepr", [
-    OracleArg::PyObj(objenum_to_obj(expr)),
-  ])
+  let srepr = sympy_call_must("sympy.srepr", [PyObj(objenum_to_obj(expr))])
   py_str_enum(srepr)
 }
 

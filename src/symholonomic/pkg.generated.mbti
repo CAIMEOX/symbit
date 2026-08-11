@@ -44,6 +44,10 @@ pub(all) suberror HolonomicError {
   Singularity(String)
   NotHolonomic(String)
 }
+#deprecated
+pub fn HolonomicError::output(Self, &Logger) -> Unit
+#deprecated
+pub fn HolonomicError::to_string(Self) -> String
 pub impl Show for HolonomicError
 
 // Types and methods
@@ -51,10 +55,22 @@ pub struct DifferentialOperator {
   coeffs : Array[@symcore.Expr]
   parent : DifferentialOperatorAlgebra
 } derive(Eq)
+#deprecated
+pub fn DifferentialOperator::add(Self, Self) -> Self
 pub fn DifferentialOperator::algebra(Self) -> DifferentialOperatorAlgebra
 pub fn DifferentialOperator::coefficients(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn DifferentialOperator::equal(Self, Self) -> Bool
+#deprecated
+pub fn DifferentialOperator::mul(Self, Self) -> Self
+#deprecated
+pub fn DifferentialOperator::not_equal(Self, Self) -> Bool
 pub fn DifferentialOperator::order(Self) -> Int
+#deprecated
+pub fn DifferentialOperator::output(Self, &Logger) -> Unit
 pub fn DifferentialOperator::pow(Self, Int) -> Self
+#deprecated
+pub fn DifferentialOperator::to_string(Self) -> String
 pub fn DifferentialOperator::to_sympy_str(Self) -> String
 pub impl Add for DifferentialOperator
 pub impl Mul for DifferentialOperator
@@ -64,7 +80,15 @@ pub struct DifferentialOperatorAlgebra {
   symbol_var : @symcore.Expr
   generator : String
 } derive(Eq)
+#deprecated
+pub fn DifferentialOperatorAlgebra::equal(Self, Self) -> Bool
 pub fn DifferentialOperatorAlgebra::generator(Self) -> String
+#deprecated
+pub fn DifferentialOperatorAlgebra::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn DifferentialOperatorAlgebra::output(Self, &Logger) -> Unit
+#deprecated
+pub fn DifferentialOperatorAlgebra::to_string(Self) -> String
 pub fn DifferentialOperatorAlgebra::variable(Self) -> @symcore.Expr
 pub impl Show for DifferentialOperatorAlgebra
 
@@ -75,16 +99,28 @@ pub struct HolonomicFunction {
   y0 : Array[@symcore.Expr]
   expr_hint : @symcore.Expr?
 }
+#deprecated
+pub fn HolonomicFunction::add(Self, Self) -> Self
 pub fn HolonomicFunction::annihilator(Self) -> DifferentialOperator?
 pub fn HolonomicFunction::composition(Self, @symcore.Expr, x0? : @symcore.Expr) -> Self
 pub fn HolonomicFunction::diff(Self) -> Self
+#deprecated
+pub fn HolonomicFunction::equal(Self, Self) -> Bool
 pub fn HolonomicFunction::evalf(Self, @symnum.BigRational, terms? : Int) -> @symcore.Expr
 pub fn HolonomicFunction::initial_values(Self) -> Array[@symcore.Expr]
 pub fn HolonomicFunction::integrate(Self) -> Self
+#deprecated
+pub fn HolonomicFunction::mul(Self, Self) -> Self
+#deprecated
+pub fn HolonomicFunction::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn HolonomicFunction::output(Self, &Logger) -> Unit
 pub fn HolonomicFunction::pow(Self, Int) -> Self
 pub fn HolonomicFunction::series(Self, n? : Int) -> @symcore.Expr
 pub fn HolonomicFunction::to_expr(Self) -> @symcore.Expr
 pub fn HolonomicFunction::to_sequence(Self) -> Array[HolonomicSequence]
+#deprecated
+pub fn HolonomicFunction::to_string(Self) -> String
 pub fn HolonomicFunction::to_sympy_str(Self) -> String
 pub fn HolonomicFunction::variable(Self) -> @symcore.Expr
 pub fn HolonomicFunction::x0(Self) -> @symcore.Expr
@@ -97,8 +133,16 @@ pub struct HolonomicSequence {
   recurrence : RecurrenceOperator
   u0 : Array[@symcore.Expr]
 } derive(Eq)
+#deprecated
+pub fn HolonomicSequence::equal(Self, Self) -> Bool
 pub fn HolonomicSequence::initial_values(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn HolonomicSequence::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn HolonomicSequence::output(Self, &Logger) -> Unit
 pub fn HolonomicSequence::recurrence(Self) -> RecurrenceOperator
+#deprecated
+pub fn HolonomicSequence::to_string(Self) -> String
 pub fn HolonomicSequence::to_sympy_str(Self) -> String
 pub impl Show for HolonomicSequence
 
@@ -106,10 +150,22 @@ pub struct RecurrenceOperator {
   coeffs : Array[@symcore.Expr]
   parent : RecurrenceOperatorAlgebra
 } derive(Eq)
+#deprecated
+pub fn RecurrenceOperator::add(Self, Self) -> Self
 pub fn RecurrenceOperator::algebra(Self) -> RecurrenceOperatorAlgebra
 pub fn RecurrenceOperator::coefficients(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn RecurrenceOperator::equal(Self, Self) -> Bool
+#deprecated
+pub fn RecurrenceOperator::mul(Self, Self) -> Self
+#deprecated
+pub fn RecurrenceOperator::not_equal(Self, Self) -> Bool
 pub fn RecurrenceOperator::order(Self) -> Int
+#deprecated
+pub fn RecurrenceOperator::output(Self, &Logger) -> Unit
 pub fn RecurrenceOperator::pow(Self, Int) -> Self
+#deprecated
+pub fn RecurrenceOperator::to_string(Self) -> String
 pub fn RecurrenceOperator::to_sympy_str(Self) -> String
 pub impl Add for RecurrenceOperator
 pub impl Mul for RecurrenceOperator
@@ -119,7 +175,15 @@ pub struct RecurrenceOperatorAlgebra {
   symbol_var : @symcore.Expr
   generator : String
 } derive(Eq)
+#deprecated
+pub fn RecurrenceOperatorAlgebra::equal(Self, Self) -> Bool
 pub fn RecurrenceOperatorAlgebra::generator(Self) -> String
+#deprecated
+pub fn RecurrenceOperatorAlgebra::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn RecurrenceOperatorAlgebra::output(Self, &Logger) -> Unit
+#deprecated
+pub fn RecurrenceOperatorAlgebra::to_string(Self) -> String
 pub fn RecurrenceOperatorAlgebra::variable(Self) -> @symcore.Expr
 pub impl Show for RecurrenceOperatorAlgebra
 

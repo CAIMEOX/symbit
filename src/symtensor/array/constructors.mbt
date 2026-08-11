@@ -21,10 +21,7 @@ pub fn dense(
   if data.length() != expected {
     fail("dense data length mismatch")
   }
-  NDimArray::Dense(DenseArray::{
-    shape: @symtensor.clone_int_array(shape),
-    data,
-  })
+  Dense({ shape: @symtensor.clone_int_array(shape), data })
 }
 
 ///|
@@ -39,19 +36,13 @@ pub fn sparse(
       map[index_key(idx)] = value
     }
   }
-  NDimArray::Sparse(SparseArray::{
-    shape: @symtensor.clone_int_array(shape),
-    data: map,
-  })
+  Sparse({ shape: @symtensor.clone_int_array(shape), data: map })
 }
 
 ///|
 pub fn zeros(shape : Array[Int]) -> NDimArray {
   let size = @symtensor.product_ints(shape)
-  NDimArray::Dense(DenseArray::{
-    shape: @symtensor.clone_int_array(shape),
-    data: zeros_data(size),
-  })
+  Dense({ shape: @symtensor.clone_int_array(shape), data: zeros_data(size) })
 }
 
 ///|
@@ -65,5 +56,5 @@ pub fn eye(n : Int) -> NDimArray {
   for i in 0..<n {
     data[i * n + i] = @symcore.int(1)
   }
-  NDimArray::Dense(DenseArray::{ shape, data })
+  Dense({ shape, data })
 }

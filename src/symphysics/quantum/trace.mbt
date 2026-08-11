@@ -51,15 +51,15 @@ fn trace_tensor_product_items(
 ///|
 pub fn tr(expr : Expr, indices? : Array[Int] = []) -> Expr {
   match expr {
-    Expr::Add(args) => @symcore.add(args.map(arg => tr(arg, indices~)))
-    Expr::Mul(_) => {
+    Add(args) => @symcore.add(args.map(arg => tr(arg, indices~)))
+    Mul(_) => {
       let (scalar, body) = quantum_split_scalar_factors(expr)
       match body {
         None => scalar
         Some(core) => scalar * quantum_trace_raw(core, indices)
       }
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       if quantum_is_scalar_like(base) && quantum_is_scalar_like(exp) {
         expr
       } else {
@@ -77,10 +77,8 @@ pub fn tr(expr : Expr, indices? : Array[Int] = []) -> Expr {
 ///|
 pub fn tr_doit(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) =>
-      quantum_add_from_args_preserve(args.map(arg => tr_doit(arg)))
-    Expr::Mul(args) =>
-      quantum_mul_from_args_preserve(args.map(arg => tr_doit(arg)))
+    Add(args) => quantum_add_from_args_preserve(args.map(arg => tr_doit(arg)))
+    Mul(args) => quantum_mul_from_args_preserve(args.map(arg => tr_doit(arg)))
     _ if @symcore.application_has_name(expr, "Tr") =>
       match @symcore.application_args(expr) {
         Some(args) if args.length() >= 1 => {
@@ -119,7 +117,7 @@ pub fn tr_permute(expr : Expr, pos : Int) -> Expr {
       match @symcore.application_args(expr) {
         Some(args) if args.length() >= 1 =>
           match args[0] {
-            Expr::Mul(body_args) if !body_args.is_empty() => {
+            Mul(body_args) if !body_args.is_empty() => {
               let len = body_args.length()
               let shift = if pos >= 0 { pos % len } else { len - -pos % len }
               if shift == 0 {
@@ -152,7 +150,7 @@ pub fn matrix_trace(
   matrix : @symphysics.ExplicitMatrix,
 ) -> Expr raise @symphysics.PhysicsError {
   guard matrix.height() == matrix.width() else {
-    raise @symphysics.PhysicsError::ShapeError("trace expects a square matrix")
+    raise ShapeError("trace expects a square matrix")
   }
   let mut acc = int(0)
   for idx in 0..<matrix.height() {

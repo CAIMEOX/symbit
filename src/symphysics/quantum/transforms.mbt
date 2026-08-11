@@ -21,7 +21,7 @@ fn quantum_distribute_mul(
 ) -> Expr? raise @symphysics.PhysicsError {
   for idx in 0..<factors.length() {
     match factors[idx] {
-      Expr::Add(terms) => {
+      Add(terms) => {
         let expanded : Array[Expr] = []
         for term in terms {
           let rebuilt : Array[Expr] = []
@@ -83,7 +83,7 @@ pub fn quantum_transform_state_pair(
               rhs_items.length() => {
               let lhs_kind = quantum_kind(lhs)
               let rhs_kind = quantum_kind(rhs)
-              if lhs_kind == QuantumKind::QBra && rhs_kind == QuantumKind::QKet {
+              if lhs_kind == QBra && rhs_kind == QKet {
                 let out : Array[Expr] = []
                 for idx in 0..<lhs_items.length() {
                   out.push(
@@ -107,33 +107,33 @@ pub fn quantum_transform_state_pair(
                 Some([@symcore.raw_function("TensorProduct", out)])
               }
             }
-            (Some(_), None) if quantum_kind(lhs) == QuantumKind::QKet &&
+            (Some(_), None) if quantum_kind(lhs) == QKet &&
               quantum_is_ket_expr(rhs) =>
-              raise @symphysics.PhysicsError::ValueError(
+              raise ValueError(
                 "Multiplication of TensorProduct(*kets)*ket is invalid.",
               )
             (None, Some(_)) if quantum_is_ket_expr(lhs) &&
-              quantum_kind(rhs) == QuantumKind::QKet =>
-              raise @symphysics.PhysicsError::ValueError(
+              quantum_kind(rhs) == QKet =>
+              raise ValueError(
                 "Multiplication of ket*TensorProduct(*kets) is invalid.",
               )
-            (Some(_), None) if quantum_kind(lhs) == QuantumKind::QBra &&
+            (Some(_), None) if quantum_kind(lhs) == QBra &&
               quantum_is_bra_expr(rhs) =>
-              raise @symphysics.PhysicsError::ValueError(
+              raise ValueError(
                 "Multiplication of TensorProduct(*bras)*bra is invalid.",
               )
             (None, Some(_)) if quantum_is_bra_expr(lhs) &&
-              quantum_kind(rhs) == QuantumKind::QBra =>
-              raise @symphysics.PhysicsError::ValueError(
+              quantum_kind(rhs) == QBra =>
+              raise ValueError(
                 "Multiplication of bra*TensorProduct(*bras) is invalid.",
               )
             _ =>
               if quantum_is_ket_expr(lhs) && quantum_is_ket_expr(rhs) {
-                raise @symphysics.PhysicsError::ValueError(
+                raise ValueError(
                   "Multiplication of two kets is not allowed. Use TensorProduct instead.",
                 )
               } else if quantum_is_bra_expr(lhs) && quantum_is_bra_expr(rhs) {
-                raise @symphysics.PhysicsError::ValueError(
+                raise ValueError(
                   "Multiplication of two bras is not allowed. Use TensorProduct instead.",
                 )
               } else {
@@ -149,7 +149,7 @@ pub fn quantum_canonical_mul(
   expr : Expr,
 ) -> Expr raise @symphysics.PhysicsError {
   let factors = match expr {
-    Expr::Mul(items) => items
+    Mul(items) => items
     _ => [expr]
   }
   match quantum_distribute_mul(factors) {
@@ -157,7 +157,7 @@ pub fn quantum_canonical_mul(
     None => ()
   }
   let work = match expr {
-    Expr::Mul(items) => items.copy()
+    Mul(items) => items.copy()
     _ => [expr]
   }
   let result : Array[Expr] = []
@@ -203,8 +203,8 @@ pub fn quantum_canonical_pow(
   exp : Expr,
 ) -> Expr raise @symphysics.PhysicsError {
   let kind = quantum_kind(base)
-  if kind == QuantumKind::QKet || kind == QuantumKind::QBra {
-    raise @symphysics.PhysicsError::ValueError(
+  if kind == QKet || kind == QBra {
+    raise ValueError(
       "A bra or ket to a power is invalid, use TensorProduct instead.",
     )
   }
@@ -212,9 +212,7 @@ pub fn quantum_canonical_pow(
     Some(0) => int(1)
     Some(1) => base
     Some(power) if quantum_expr_has_name(base, "FermionOp") && power < 0 =>
-      raise @symphysics.PhysicsError::ValueError(
-        "Negative powers of fermion operators are undefined",
-      )
+      raise ValueError("Negative powers of fermion operators are undefined")
     Some(power) if quantum_expr_has_name(base, "FermionOp") && power > 1 =>
       int(0)
     Some(power) =>
@@ -225,7 +223,7 @@ pub fn quantum_canonical_pow(
           match power {
             n if n > 1 =>
               match base {
-                Expr::Add(_) => {
+                Add(_) => {
                   let mut acc = base
                   for _ in 1..<n {
                     acc = quantum_canonical_mul(@symcore.raw_mul([acc, base]))

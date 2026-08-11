@@ -1,11 +1,9 @@
 ///|
 using @symparse {
-  type Transformation,
   ast_parse_expr,
   default_split_symbol_predicate,
   default_parse_options,
   type ParseContext,
-  type ParseError,
   type ParseOptions,
   lex,
   parse_context,

@@ -18,8 +18,7 @@ test "physics.quantum.operatorset: local mappings" {
     quantum_eval_str("PxKet(px)"),
     "PxOp to PxKet",
   )
-  let ops = state_to_operators(x_bra(position=@symcore.Expr::Symbol("y"))).unwrap_or([],
-  )
+  let ops = state_to_operators(x_bra(position=Symbol("y"))).unwrap_or([])
   assert_eq(ops.length(), 1)
   quantum_test_assert_string_equal(
     quantum_eval_str(@symprint.pretty_string(ops[0])),
@@ -27,9 +26,9 @@ test "physics.quantum.operatorset: local mappings" {
     "XBra to XOp",
   )
 
-  let generic = operators_to_state(
-    operator([@symcore.Expr::Symbol("A")]).as_expr(),
-  ).unwrap_or(@symcore.int(0))
+  let generic = operators_to_state(operator([Symbol("A")]).as_expr()).unwrap_or(
+    @symcore.int(0),
+  )
   quantum_test_assert_string_equal(
     quantum_eval_str(@symprint.pretty_string(generic)),
     quantum_eval_str("Ket(psi)"),

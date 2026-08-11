@@ -48,7 +48,7 @@ test "legacy normalization ignores temporary constructor parameters" {
   inspect(
     @symprint.pretty_string(
       with_evaluate(false, fn() {
-        normalize_legacy_expr(Expr::Function("Eq", [x, x]))
+        normalize_legacy_expr(Function("Eq", [x, x]))
       }),
     ),
     content="True",
@@ -56,16 +56,14 @@ test "legacy normalization ignores temporary constructor parameters" {
   inspect(
     @symprint.pretty_string(
       with_evaluate(false, fn() {
-        normalize_legacy_expr(Expr::Function("Integer", [half]))
+        normalize_legacy_expr(Function("Integer", [half]))
       }),
     ),
     content="1",
   )
   inspect(
     @symprint.pretty_string(
-      with_exp_is_pow(true, fn() {
-        normalize_legacy_expr(Expr::Function("exp", [x]))
-      }),
+      with_exp_is_pow(true, fn() { normalize_legacy_expr(Function("exp", [x])) }),
     ),
     content="exp(x)",
   )

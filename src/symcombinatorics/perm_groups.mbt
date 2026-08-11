@@ -523,7 +523,7 @@ pub fn PermutationGroup::make_perm(
   let mut p = self.identity()
   for idx in word {
     if idx < 0 || idx >= self.generators.length() {
-      raise CombinatoricsError::ValueError("generator index out of range")
+      raise ValueError("generator index out of range")
     }
     p = p.mul(self.generators[idx])
   }
@@ -552,7 +552,7 @@ pub fn PermutationGroup::subgroup(
 ) -> PermutationGroup raise CombinatoricsError {
   for g in gens {
     if !self.contains(g, strict=false) {
-      raise CombinatoricsError::ValueError("generator not in group")
+      raise ValueError("generator not in group")
     }
   }
   PermutationGroup::new(gens)
@@ -588,7 +588,7 @@ pub fn PermutationGroup::generator_product(
   let mut g = g0
   if g.size() != self.degree {
     if g.size() > self.degree {
-      raise CombinatoricsError::ValueError("element size mismatch")
+      raise ValueError("element size mismatch")
     }
     g = g.resize(self.degree)
   }
@@ -597,7 +597,7 @@ pub fn PermutationGroup::generator_product(
   }
   let gens = self.generators
   if gens.is_empty() {
-    raise CombinatoricsError::ValueError("group has no generators")
+    raise ValueError("group has no generators")
   }
   let moves : Array[Permutation] = Array::new()
   for gen in gens {
@@ -634,15 +634,14 @@ pub fn PermutationGroup::generator_product(
     }
   }
   if !found {
-    raise CombinatoricsError::ValueError("element not in group")
+    raise ValueError("element not in group")
   }
   let prod : Array[Permutation] = Array::new()
   let mut cur = g
   while cur != identity {
     let entry = match parent.get(cur) {
       Some(v) => v
-      None =>
-        raise CombinatoricsError::ValueError("generator decomposition failed")
+      None => raise ValueError("generator decomposition failed")
     }
     prod.push(entry.1)
     cur = entry.0
@@ -786,7 +785,7 @@ pub fn PermutationGroup::polycyclic_group(
   self : PermutationGroup,
 ) -> PolycyclicGroup raise CombinatoricsError {
   if !self.is_polycyclic() {
-    raise CombinatoricsError::ValueError("The group must be solvable")
+    raise ValueError("The group must be solvable")
   }
   let der = self.derived_series()
   let pc_series_rev : Array[PermutationGroup] = Array::new()
@@ -860,9 +859,7 @@ pub fn PermutationGroup::pointwise_stabilizer(
 ) -> PermutationGroup raise CombinatoricsError {
   for pt in points {
     if pt < 0 || pt >= self.degree {
-      raise CombinatoricsError::ValueError(
-        "pointwise_stabilizer index out of range",
-      )
+      raise ValueError("pointwise_stabilizer index out of range")
     }
   }
   let elems = self.elements()
@@ -982,7 +979,7 @@ pub fn Coset::new(
   dir? : String = "+",
 ) -> Coset raise CombinatoricsError {
   if g.size() != h.degree() {
-    raise CombinatoricsError::ValueError("coset size mismatch")
+    raise ValueError("coset size mismatch")
   }
   { g, h, dir }
 }

@@ -56,10 +56,7 @@ fn textplot_ljust(text : String, width : Int) -> String {
 ///|
 fn textplot_expr_to_double(expr : @symcore.Expr) -> Double raise PlottingError {
   @symutilities.lambdify([], expr).call([]) catch {
-    _ =>
-      raise PlottingError::ValueError(
-        "textplot bounds must be real numeric expressions",
-      )
+    _ => raise ValueError("textplot bounds must be real numeric expressions")
   }
 }
 
@@ -77,12 +74,12 @@ fn textplot_single_variable(
   let free = @symcore.free_symbols(expr)
   if free.length() > 1 {
     let rendered = free.map(@symprint.pretty_string).join(", ")
-    raise PlottingError::ValueError(
+    raise ValueError(
       "The expression must have a single variable. (Got {" + rendered + "})",
     )
   }
   if free.is_empty() {
-    @symcore.Expr::Symbol("__plot_var")
+    Symbol("__plot_var")
   } else {
     free[0]
   }
@@ -154,10 +151,10 @@ pub fn textplot_str(
   height? : Int = 21,
 ) -> Array[String] raise PlottingError {
   let free_symbol = textplot_single_variable(expr)
-  let normalized_expr = if free_symbol == @symcore.Expr::Symbol("__plot_var") {
+  let normalized_expr = if free_symbol == Symbol("__plot_var") {
     expr
   } else {
-    @symcore.xreplace(expr, [(free_symbol, @symcore.Expr::Symbol("__plot_var"))])
+    @symcore.xreplace(expr, [(free_symbol, Symbol("__plot_var"))])
   }
 
   let a = textplot_expr_to_double(a0)

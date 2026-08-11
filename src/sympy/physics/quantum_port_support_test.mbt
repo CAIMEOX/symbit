@@ -3,7 +3,6 @@ using @symquant {
   type GateIdentity,
   type GateRule,
   type MatrixScalarValue,
-  type QuantumKind,
   anticommutator,
   anticommutator_doit,
   apply_grover,

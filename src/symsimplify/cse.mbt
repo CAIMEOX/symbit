@@ -55,7 +55,7 @@ pub fn cse(exprs : Array[Expr], min_nodes? : Int = 2) -> CseResult {
       Some(expr) => {
         let sz = node_count(expr)
         if sz >= min_nodes {
-          candidates.push(CseCandidate::{ key, expr, size: sz })
+          candidates.push({ key, expr, size: sz })
         }
       }
       None => ()
@@ -82,7 +82,7 @@ pub fn cse(exprs : Array[Expr], min_nodes? : Int = 2) -> CseResult {
     replacements.push((sym_name, rhs))
     idx = idx + 1
   }
-  CseResult::{ replacements, reduced_exprs: reduced }
+  { replacements, reduced_exprs: reduced }
 }
 
 ///|
@@ -156,7 +156,7 @@ fn collect_counts(
 ///|
 fn is_atom(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(_) | Expr::Symbol(_) => true
+    Number(_) | Symbol(_) => true
     _ => false
   }
 }

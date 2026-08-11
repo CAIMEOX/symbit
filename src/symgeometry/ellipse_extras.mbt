@@ -86,8 +86,8 @@ fn ellipse_section_modulus_tuple(
 ///|
 pub fn Ellipse::evolute(
   self : Ellipse,
-  x? : Expr = Expr::Symbol("x"),
-  y? : Expr = Expr::Symbol("y"),
+  x? : Expr = Symbol("x"),
+  y? : Expr = Symbol("y"),
 ) -> Expr raise {
   let two_thirds = @symcore.rational_from_ints(2, 3)
   let first = (self.hradius_ * (x - self.center_.coords_[0])) ^ two_thirds
@@ -137,13 +137,13 @@ pub fn Ellipse::reflect(
   let direction = line_obj.direction().with_dim(2)
   if geo_expr_is_zero(direction.y()) || geo_expr_is_zero(direction.x()) {
     let center = reflect_point_across_line_2d(self.center_, line_obj)
-    return geometry_ellipse(Ellipse::{
+    return geometry_ellipse({
       center_: center,
       hradius_: geo_simplify(int(0) - self.hradius_),
       vradius_: self.vradius_,
     })
   }
-  raise GeometryError::ValueError(
+  raise ValueError(
     "general reflected ellipses are not supported without rotated ellipse support",
   )
 }
@@ -209,7 +209,7 @@ pub fn Circle::reflect(
   self : Circle,
   line_obj : Line,
 ) -> Circle raise GeometryError {
-  Circle::{
+  {
     center_: reflect_point_across_line_2d(self.center_, line_obj),
     radius_: geo_simplify(int(0) - self.radius_),
   }
@@ -247,8 +247,8 @@ pub fn Circle::section_modulus(
 ///|
 pub fn Circle::evolute(
   self : Circle,
-  x? : Expr = Expr::Symbol("x"),
-  y? : Expr = Expr::Symbol("y"),
+  x? : Expr = Symbol("x"),
+  y? : Expr = Symbol("y"),
 ) -> Expr raise {
   Ellipse::{
     center_: self.center_,

@@ -60,7 +60,7 @@ pub fn interpolate(
       }
       let (xj, _) = points[j]
       denom = denom.mul_r(xi.add_r(xj.neg_r()))
-      let term_expr = Expr::Symbol(gen) - @symcore.Expr::Number(xj)
+      let term_expr = Expr::Symbol(gen) - Number(xj)
       let term = builder.from_expr(term_expr)
       basis = basis.mul(term)
     }
@@ -89,7 +89,7 @@ pub fn interpolate(
 ///   let poly = interpolate_values(
 ///     [@symnum.BigRational::from_int(2), @symnum.BigRational::from_int(3)],
 ///     "x",
-///     Domain::QQ,
+///     QQ,
 ///   )
 ///   inspect(poly, content="x + 1")
 /// }
@@ -145,14 +145,14 @@ pub fn rational_interpolate(
   domain : Domain,
 ) -> (Poly, Poly) raise PolyError {
   if points.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let n = points.length()
   let k = n - deg_num - 1
   if k < 0 {
     // SymPy reference: sympy/polys/polyfuncs.py rational_interpolate.
     // SymPy raises an option error when the requested numerator degree is too high.
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let matrix = build_rational_matrix(points, deg_num, k)
   let coeffs = nullspace_vector(matrix)
@@ -168,12 +168,10 @@ pub fn rational_interpolate(
     idx = idx - 1
   }
   if den_deg < 0 {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let lead = coeffs[den_start + den_deg]
-  let inv_lead = lead.reciprocal() catch {
-    _ => raise PolyError::DivisionByZero
-  }
+  let inv_lead = lead.reciprocal() catch { _ => raise DivisionByZero }
   for i in 0..<coeffs.length() {
     coeffs.set(i, coeffs[i].mul_r(inv_lead))
   }
@@ -213,11 +211,7 @@ pub fn symmetrize(
   }
   let n = gens_final.length()
   if n == 0 {
-    return SymmetrizeResult::{
-      sym: expr,
-      rem: @symcore.Expr::Number(@symnum.BigRational::zero()),
-      mapping: [],
-    }
+    return { sym: expr, rem: Number(@symnum.BigRational::zero()), mapping: [] }
   }
   let sym_names = if symbols.is_empty() {
     default_sym_names(n)
@@ -246,7 +240,7 @@ pub fn symmetrize(
   if !formal {
     sym_expr = @symcore.subst(sym_expr, env)
   }
-  SymmetrizeResult::{ sym: sym_expr, rem: rem_expr, mapping }
+  { sym: sym_expr, rem: rem_expr, mapping }
 }
 
 ///|
@@ -281,7 +275,7 @@ pub fn symmetrize_list(
     items.push(symmetrize(expr, gens=gens_final, formal~, symbols~))
   }
   let mapping = if formal && !items.is_empty() { items[0].mapping } else { [] }
-  SymmetrizeListResult::{ items, mapping }
+  { items, mapping }
 }
 
 ///|
@@ -339,11 +333,11 @@ pub fn viete(
     Poly::from_expr_defaults(expr, gens=gens_final)
   }
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let deg = poly.degree(0)
   if deg < 1 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let roots_names = if roots.is_empty() {
     default_root_names(deg)
@@ -351,7 +345,7 @@ pub fn viete(
     roots
   }
   if roots_names.length() != deg {
-    raise PolyError::BadGenerator("roots")
+    raise BadGenerator("roots")
   }
   // SymPy reference: sympy/polys/polyfuncs.py viete.
   // e_k(r_1, ..., r_n) = (-1)^k * a_{n-k} / a_n.
@@ -402,7 +396,7 @@ fn nullspace_vector(
   matrix : Array[Array[@symnum.BigRational]],
 ) -> Array[@symnum.BigRational] raise PolyError {
   let rows = matrix.length()
-  guard rows > 0 else { raise PolyError::NonPolynomial }
+  guard rows > 0 else { raise NonPolynomial }
   let cols = matrix[0].length()
   let r = matrix
   let pivot_cols : Array[Int] = Array::new()
@@ -461,7 +455,7 @@ fn nullspace_vector(
       free_cols.push(c)
     }
   }
-  guard !free_cols.is_empty() else { raise PolyError::BadExponent }
+  guard !free_cols.is_empty() else { raise BadExponent }
   let free_col = free_cols[0]
   let sol : Array[@symnum.BigRational] = Array::new()
   for _ in 0..<cols {
@@ -493,7 +487,7 @@ fn poly_from_coeffs(
     let fe = ensure_coeff_domain(coeff, domain)
     add_term(map, mono, fe, domain)
   }
-  Poly::{ coeffs: map, gens: [gen], domain, order: TermOrder::Lex }
+  { coeffs: map, gens: [gen], domain, order: Lex }
 }
 
 ///|
@@ -511,12 +505,12 @@ fn infer_gens_expr(expr : Expr) -> Array[String] {
 ///|
 fn collect_symbols_expr_pf(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    Expr::Symbol(name) => seen.set(name, true)
-    Expr::Add(args) | Expr::Mul(args) =>
+    Symbol(name) => seen.set(name, true)
+    Add(args) | Mul(args) =>
       for child in args {
         collect_symbols_expr_pf(child, seen)
       }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       collect_symbols_expr_pf(base, seen)
       collect_symbols_expr_pf(exp, seen)
     }
@@ -555,7 +549,7 @@ fn elementary_symmetric_polys(
   for k in 1..<=n {
     let coeffs : Map[Monomial, FieldElem] = Map([])
     build_sym_terms(coeffs, n, k, 0, [], domain)
-    out.push(Poly::{ coeffs, gens, domain, order: TermOrder::Lex })
+    out.push({ coeffs, gens, domain, order: Lex })
   }
   out
 }
@@ -661,7 +655,7 @@ fn symmetrize_poly(
 ///|
 fn horner_poly(poly : Poly, gens : Array[String]) -> Expr raise PolyError {
   if poly.is_zero() {
-    return @symcore.Expr::Number(@symnum.BigRational::zero())
+    return Number(@symnum.BigRational::zero())
   }
   if gens.length() <= 1 {
     if gens.length() == 0 {
@@ -737,7 +731,7 @@ fn elementary_sym_expr(roots : Array[String], k : Int) -> Expr {
   let terms : Array[Expr] = Array::new()
   build_sym_expr_terms(terms, roots, k, 0, [])
   if terms.is_empty() {
-    @symcore.Expr::Number(@symnum.BigRational::zero())
+    Number(@symnum.BigRational::zero())
   } else if terms.length() == 1 {
     terms[0]
   } else {
@@ -756,7 +750,7 @@ fn build_sym_expr_terms(
   if chosen.length() == k {
     let factors : Array[Expr] = Array::new()
     for name in chosen {
-      factors.push(Expr::Symbol(name))
+      factors.push(Symbol(name))
     }
     let term = if factors.is_empty() {
       @symcore.Expr::Number(@symnum.BigRational::one())
@@ -782,7 +776,7 @@ fn field_elem_to_expr(fe : FieldElem, domain : Domain) -> Expr raise PolyError {
   let coeffs : Map[Monomial, FieldElem] = Map([])
   let mono = monomial_one(1)
   add_term(coeffs, mono, fe, domain)
-  let poly = Poly::{ coeffs, gens: ["x"], domain, order: TermOrder::Lex }
+  let poly = Poly::{ coeffs, gens: ["x"], domain, order: Lex }
   poly.to_expr()
 }
 

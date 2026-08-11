@@ -14,7 +14,7 @@ fn local_diagram_summary_text(diagram : @symcategories.Diagram) -> String {
   premise_keys.sort()
   for morphism in premise_keys {
     premise_parts.push(
-      morphism.to_string() +
+      Show::to_string(morphism) +
       "=>" +
       local_property_repr(diagram.premises[morphism]),
     )
@@ -25,7 +25,7 @@ fn local_diagram_summary_text(diagram : @symcategories.Diagram) -> String {
   conclusion_keys.sort()
   for morphism in conclusion_keys {
     conclusion_parts.push(
-      morphism.to_string() +
+      Show::to_string(morphism) +
       "=>" +
       local_property_repr(diagram.conclusions[morphism]),
     )
@@ -36,7 +36,7 @@ fn local_diagram_summary_text(diagram : @symcategories.Diagram) -> String {
   ";conclusions=" +
   conclusion_parts.join("|") +
   ";objects=" +
-  diagram.objects.map(item => item.to_string()).join("|")
+  diagram.objects.map(item => Show::to_string(item)).join("|")
 }
 
 ///|
@@ -46,7 +46,7 @@ fn local_grid_summary_text(grid : @symcategories.DiagramGrid) -> String {
     let cells : Array[String] = Array::new()
     for j in 0..<grid.width() {
       match grid.get(i, j) {
-        Some(obj) => cells.push(obj.to_string())
+        Some(obj) => cells.push(Show::to_string(obj))
         None => cells.push("None")
       }
     }
@@ -58,7 +58,7 @@ fn local_grid_summary_text(grid : @symcategories.DiagramGrid) -> String {
   keys.sort()
   for morphism in keys {
     morphism_parts.push(
-      morphism.to_string() +
+      Show::to_string(morphism) +
       "=>" +
       local_property_repr(grid.morphisms()[morphism]),
     )
@@ -79,9 +79,9 @@ fn local_category_summary_text(category : @symcategories.Category) -> String {
   "name=" +
   category.name +
   ";objects=" +
-  category.objects.to_string() +
+  Show::to_string(category.objects) +
   ";commutative=FiniteSet(" +
-  category.commutative_diagrams.map(item => item.to_string()).join(", ") +
+  category.commutative_diagrams.map(item => Show::to_string(item)).join(", ") +
   ")"
 }
 
@@ -109,9 +109,9 @@ test "categories repr parity for objects morphisms diagrams and categories" {
     _ => fail("kcat")
   }
 
-  assert_eq(a.to_string(), object_repr(a))
-  assert_eq(f.to_string(), morphism_repr(f))
-  assert_eq((g * f).to_string(), morphism_repr(g * f))
+  assert_eq(Show::to_string(a), object_repr(a))
+  assert_eq(Show::to_string(f), morphism_repr(f))
+  assert_eq(Show::to_string(g * f), morphism_repr(g * f))
   assert_eq(local_diagram_summary_text(d2), diagram_summary_text(d2))
   assert_eq(local_category_summary_text(kcat), category_summary_text(kcat))
 }

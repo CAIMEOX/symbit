@@ -1,11 +1,11 @@
 ///|
 fn rs_wb_repr(series : SeriesElem) -> String {
-  "[" + series.to_list().map(c => c.to_string()).join(", ") + "]"
+  "[" + series.to_list().map(c => Show::to_string(c)).join(", ") + "]"
 }
 
 ///|
 fn rs_wb_coeffs(values : Array[Int]) -> Array[FieldElem] raise PolyError {
-  values.map(v => fe_from_int(v, Domain::QQ))
+  values.map(v => fe_from_int(v, QQ))
 }
 
 ///|
@@ -42,7 +42,7 @@ test "ring series frontdoors: pprint" {
 
 ///|
 test "ring series frontdoors: arithmetic wrappers" {
-  let ring = power_series_ring(Domain::QQ, "x", 6)
+  let ring = power_series_ring(QQ, "x", 6)
   let x = ring.gen()
   let one = ring.one()
   let f = ring.from_int_coeffs([1, 2, 3])
@@ -150,7 +150,7 @@ test "ring series frontdoors: arithmetic wrappers" {
 
 ///|
 test "ring series frontdoors: analytic wrappers" {
-  let ring = power_series_ring(Domain::QQ, "x", 6)
+  let ring = power_series_ring(QQ, "x", 6)
   let x = ring.gen()
   let one = ring.one()
 
@@ -179,7 +179,7 @@ test "ring series frontdoors: analytic wrappers" {
 
 ///|
 test "ring series frontdoors: exponent transforms" {
-  let ring = power_series_ring(Domain::QQ, "x", 6)
+  let ring = power_series_ring(QQ, "x", 6)
   let p = ring.from_int_coeffs([1, 2, 3])
   let dense = ring.from_int_coeffs([1, 1, 1, 1])
 

@@ -10,7 +10,7 @@ pub(all) suberror DiscreteError {
 ///|
 pub impl Show for DiscreteError with fn output(self, logger : &Logger) -> Unit {
   match self {
-    DiscreteError::TypeError(msg) => logger.write_string("TypeError(\{msg})")
-    DiscreteError::ValueError(msg) => logger.write_string("ValueError(\{msg})")
+    TypeError(msg) => logger.write_string("TypeError(\{msg})")
+    ValueError(msg) => logger.write_string("ValueError(\{msg})")
   }
 }

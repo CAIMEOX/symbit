@@ -8,7 +8,7 @@ test "geometry.line ray segment helpers" {
   let hits = l1.intersection(geometry_line(l2))
   assert_eq(hits.length(), 1)
   match hits[0] {
-    GeometryEntity::Point(hit) => assert_eq(hit.repr(), "Point2D(1, 1)")
+    Point(hit) => assert_eq(hit.repr(), "Point2D(1, 1)")
     _ => fail("expected point intersection")
   }
   let seg = segment(p0, p2)

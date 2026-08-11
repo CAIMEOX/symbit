@@ -91,7 +91,7 @@ test "rationaltools frontdoors: apart_list assembles back" {
 ///|
 test "rationaltools frontdoors: partfrac helper frontdoors" {
   let x = Expr::Symbol("x")
-  let builder = PolyBuilder::new(["x"], Domain::QQ)
+  let builder = PolyBuilder::new(["x"], QQ)
   let p = builder.from_expr(int(1))
   let q = builder.from_expr((x ^ int(2)) - int(1))
   let undetermined = apart_undetermined_coeffs(p, q)
@@ -109,7 +109,7 @@ test "rationaltools frontdoors: partfrac helper frontdoors" {
   )
   let terms = apart_list_full_decomposition(p, q)
   inspect(terms.length(), content="2")
-  let assembled = assemble_partfrac_list(ApartList::{
+  let assembled = assemble_partfrac_list({
     common: int(1),
     polynomial: int(0),
     terms,

@@ -45,25 +45,19 @@ test "physics.mechanics lagrange solve_multipliers parity-friendly semantics" {
     n.x().scale(@symcalculus.diff(x, @symvector.dynamicsymbols_t)) +
     n.y().scale(@symcalculus.diff(y, @symvector.dynamicsymbols_t)),
   )
-  let pa = particle(
-    "MLPa",
-    point=Some(p),
-    mass=Some(@symcore.Expr::Symbol("m")),
-  )
-  pa.set_potential_energy(
-    @symcore.Expr::Symbol("g") * @symcore.Expr::Symbol("m") * y,
-  )
+  let pa = particle("MLPa", point=Some(p), mass=Some(Symbol("m")))
+  pa.set_potential_energy(Symbol("g") * Symbol("m") * y)
   let lagr = lagrangian(n, [pa.as_bodylike()])
   let lm = lagranges_method(
     lagr,
     [x, y],
     bodies=[pa.as_bodylike()],
     frame=Some(n),
-    hol_coneqs=[x * x + y * y - (@symcore.Expr::Symbol("l") ^ @symcore.int(2))],
+    hol_coneqs=[x * x + y * y - (Symbol("l") ^ @symcore.int(2))],
   )
   ignore(lm.form_lagranges_equations())
   let lambdas = lm.solve_multipliers(op_point=[
-    (x, @symcore.Expr::Symbol("l")),
+    (x, Symbol("l")),
     (y, @symcore.int(0)),
     (@symcalculus.diff(x, @symvector.dynamicsymbols_t), @symcore.int(0)),
     (@symcalculus.diff(y, @symvector.dynamicsymbols_t), @symcore.int(0)),

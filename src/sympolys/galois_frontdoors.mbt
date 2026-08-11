@@ -35,7 +35,7 @@ fn galois_rational_is_square(value : @symnum.BigRational) -> Bool {
 ///|
 fn galois_discriminant_is_square(poly : Poly) -> Bool raise PolyError {
   match discriminant(poly) {
-    FieldElem::QQ(value) => galois_rational_is_square(value)
+    QQ(value) => galois_rational_is_square(value)
     _ => false
   }
 }
@@ -63,24 +63,24 @@ pub fn has_square_disc(poly : Poly) -> Bool raise PolyError {
 /// - Limits: Reducible inputs and degree `> 3` raise `PolyError`.
 pub fn galois_group(poly : Poly) -> GaloisGroupResult raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   match poly.domain {
-    Domain::ZZ | Domain::QQ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ | QQ => ()
+    _ => raise DomainMismatch
   }
   if !galois_is_irreducible(poly) {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   match poly.degree(0) {
-    1 => GaloisGroupResult::{ name: "S1", is_alt: true }
-    2 => GaloisGroupResult::{ name: "S2", is_alt: false }
+    1 => { name: "S1", is_alt: true }
+    2 => { name: "S2", is_alt: false }
     3 =>
       if galois_discriminant_is_square(poly) {
-        GaloisGroupResult::{ name: "A3", is_alt: true }
+        { name: "A3", is_alt: true }
       } else {
-        GaloisGroupResult::{ name: "S3", is_alt: false }
+        { name: "S3", is_alt: false }
       }
-    _ => raise PolyError::BadExponent
+    _ => raise BadExponent
   }
 }

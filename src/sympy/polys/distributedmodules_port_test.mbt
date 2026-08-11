@@ -5,7 +5,7 @@ fn sdm_port_m(exps : Array[Int]) -> @sympolys.Monomial {
 
 ///|
 fn sdm_port_q(n : Int) -> @sympolys.FieldElem raise @sympolys.PolyError {
-  @sympolys.fe_from_int(n, @sympolys.Domain::QQ)
+  @sympolys.fe_from_int(n, QQ)
 }
 
 ///|
@@ -114,10 +114,7 @@ test "distributedmodules: conversion and leading term parity" {
   let terms = [([1, 1, 0], 1), ([1, 0, 0], 2), ([0, 1, 0], 0)]
   let f = @sympolys.sdm_from_dict(sdm_port_dict(terms), @sympolys.lex())
   assert_eq(sdm_port_string(f), sdm_from_dict(terms))
-  assert_eq(
-    @sympolys.sdm_LC(f, @sympolys.Domain::QQ).to_string(),
-    sdm_LC(terms),
-  )
+  assert_eq(Show::to_string(@sympolys.sdm_LC(f, QQ)), sdm_LC(terms))
   assert_eq(sdm_port_tuple(@sympolys.sdm_LM(f).to_array()), sdm_LM(terms))
   let lt = @sympolys.sdm_LT(f)
   assert_eq("(\{sdm_port_tuple(lt.0.to_array())},\{lt.1})", sdm_LT(terms))
@@ -143,7 +140,7 @@ test "distributedmodules: conversion and leading term parity" {
         [(x ^ @symcore.int(2)) + (y ^ @symcore.int(2)), @symcore.int(2) * z],
         ["x", "y", "z"],
         @sympolys.lex(),
-        @sympolys.Domain::QQ,
+        QQ,
       ),
     ),
     sdm_from_vector(["x**2 + y**2", "2*z"], ["x", "y", "z"]),
@@ -151,11 +148,7 @@ test "distributedmodules: conversion and leading term parity" {
   let vector_terms = [([1, 0, 0, 1], 2), ([0, 2, 0, 0], 1), ([0, 0, 2, 0], 1)]
   assert_eq(
     sdm_port_expr_list_string(
-      @sympolys.sdm_to_vector(
-        sdm_port_terms(vector_terms),
-        ["x", "y", "z"],
-        @sympolys.Domain::QQ,
-      ),
+      @sympolys.sdm_to_vector(sdm_port_terms(vector_terms), ["x", "y", "z"], QQ),
     ),
     sdm_to_vector(vector_terms, ["x", "y", "z"]),
   )
@@ -164,7 +157,7 @@ test "distributedmodules: conversion and leading term parity" {
       @sympolys.sdm_to_vector(
         sdm_port_terms([([1, 0, 1], 2)]),
         ["x", "y"],
-        @sympolys.Domain::QQ,
+        QQ,
         n=3,
       ),
     ),
@@ -182,7 +175,7 @@ test "distributedmodules: add multiply zero and degree parity" {
         sdm_port_terms(f),
         sdm_port_terms(g),
         @sympolys.lex(),
-        @sympolys.Domain::QQ,
+        QQ,
       ),
     ),
     sdm_add(f, g),
@@ -194,7 +187,7 @@ test "distributedmodules: add multiply zero and degree parity" {
         sdm_port_terms(f),
         sdm_port_terms(cancel),
         @sympolys.lex(),
-        @sympolys.Domain::QQ,
+        QQ,
       ),
     ),
     sdm_add(f, cancel),
@@ -206,7 +199,7 @@ test "distributedmodules: add multiply zero and degree parity" {
         sdm_port_terms(h),
         (sdm_port_m([1, 1]), sdm_port_q(2)),
         @sympolys.lex(),
-        @sympolys.Domain::QQ,
+        QQ,
       ),
     ),
     sdm_mul_term(h, [1, 1], 2),
@@ -232,7 +225,7 @@ test "distributedmodules: spoly and normal form parity" {
         sdm_port_terms(f),
         sdm_port_terms(h),
         @sympolys.lex(),
-        @sympolys.Domain::QQ,
+        QQ,
       ),
     ),
     sdm_spoly(f, h),
@@ -243,7 +236,7 @@ test "distributedmodules: spoly and normal form parity" {
         sdm_port_terms(f),
         sdm_port_terms(g),
         @sympolys.lex(),
-        @sympolys.Domain::QQ,
+        QQ,
       ),
     ),
     sdm_spoly(f, g),
@@ -257,7 +250,7 @@ test "distributedmodules: spoly and normal form parity" {
         sdm_port_terms(target),
         sdm_port_basis(reducers),
         @sympolys.lex(),
-        @sympolys.Domain::QQ,
+        QQ,
       ),
     ),
     sdm_nf_buchberger(target, reducers),
@@ -268,7 +261,7 @@ test "distributedmodules: spoly and normal form parity" {
         sdm_port_terms(target),
         sdm_port_basis(reducers),
         @sympolys.lex(),
-        @sympolys.Domain::QQ,
+        QQ,
       ),
     ),
     sdm_nf_mora(target, reducers),
@@ -279,7 +272,7 @@ test "distributedmodules: spoly and normal form parity" {
         sdm_port_terms(target),
         sdm_port_basis(reducers),
         @sympolys.lex(),
-        @sympolys.Domain::QQ,
+        QQ,
       ),
     ),
     sdm_nf_buchberger_reduced(target, reducers),
@@ -295,11 +288,7 @@ test "distributedmodules: groebner parity" {
   ]
   assert_eq(
     sdm_port_basis_string(
-      @sympolys.sdm_groebner(
-        sdm_port_basis(generators),
-        @sympolys.lex(),
-        @sympolys.Domain::QQ,
-      ),
+      @sympolys.sdm_groebner(sdm_port_basis(generators), @sympolys.lex(), QQ),
     ),
     sdm_groebner(generators),
   )
@@ -308,7 +297,7 @@ test "distributedmodules: groebner parity" {
       @sympolys.sdm_groebner(
         sdm_port_basis(generators),
         @sympolys.lex(),
-        @sympolys.Domain::QQ,
+        QQ,
         normal_form="buchberger",
       ),
     ),

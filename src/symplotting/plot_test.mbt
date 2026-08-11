@@ -6,52 +6,52 @@ fn plot_joined_lines(lines : Array[String]) -> String {
 ///|
 fn unwrap_line_series(series : PlotSeries) -> LineOver1DRangeSeries {
   match series {
-    PlotSeries::Line(line) => line
-    PlotSeries::Parametric2D(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) => abort("expected line series")
+    Line(line) => line
+    Parametric2D(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Contour(_)
+    | Implicit(_) => abort("expected line series")
   }
 }
 
 ///|
 fn unwrap_parametric_series(series : PlotSeries) -> Parametric2DLineSeries {
   match series {
-    PlotSeries::Parametric2D(line) => line
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) => abort("expected parametric series")
+    Parametric2D(line) => line
+    Line(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Contour(_)
+    | Implicit(_) => abort("expected parametric series")
   }
 }
 
 ///|
 fn unwrap_parametric3d_series(series : PlotSeries) -> Parametric3DLineSeries {
   match series {
-    PlotSeries::Parametric3D(line) => line
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric2D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) => abort("expected 3d parametric series")
+    Parametric3D(line) => line
+    Line(_)
+    | Parametric2D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Contour(_)
+    | Implicit(_) => abort("expected 3d parametric series")
   }
 }
 
 ///|
 fn unwrap_surface_series(series : PlotSeries) -> SurfaceOver2DRangeSeries {
   match series {
-    PlotSeries::Surface(surface) => surface
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric2D(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) => abort("expected surface series")
+    Surface(surface) => surface
+    Line(_)
+    | Parametric2D(_)
+    | Parametric3D(_)
+    | ParametricSurface(_)
+    | Contour(_)
+    | Implicit(_) => abort("expected surface series")
   }
 }
 
@@ -60,39 +60,39 @@ fn unwrap_parametric_surface_series(
   series : PlotSeries,
 ) -> ParametricSurfaceSeries {
   match series {
-    PlotSeries::ParametricSurface(surface) => surface
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric2D(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) => abort("expected parametric surface series")
+    ParametricSurface(surface) => surface
+    Line(_)
+    | Parametric2D(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | Contour(_)
+    | Implicit(_) => abort("expected parametric surface series")
   }
 }
 
 ///|
 fn unwrap_contour_series(series : PlotSeries) -> ContourSeries {
   match series {
-    PlotSeries::Contour(surface) => surface
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric2D(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Implicit(_) => abort("expected contour series")
+    Contour(surface) => surface
+    Line(_)
+    | Parametric2D(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Implicit(_) => abort("expected contour series")
   }
 }
 
 ///|
 fn unwrap_implicit_series(series : PlotSeries) -> ImplicitSeries {
   match series {
-    PlotSeries::Implicit(implicit) => implicit
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric2D(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) => abort("expected implicit series")
+    Implicit(implicit) => implicit
+    Line(_)
+    | Parametric2D(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Contour(_) => abort("expected implicit series")
   }
 }
 
@@ -293,7 +293,7 @@ test "symplotting plot supports log-scaled uniform sampling frontdoor" {
       plot_expr(x),
       plot_range(
         x,
-        @symcore.Expr::Float(@symcore.Float::from_double(0.001, prec=80)),
+        Float(@symcore.Float::from_double(0.001, prec=80)),
         @symcore.int(100),
       ),
     ],
@@ -949,7 +949,7 @@ test "symplotting plot_implicit creates default ranges like SymPy" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.Expr::Relational(
-    @symcore.RelOp::Eq,
+    Eq,
     @symcore.add([
       @symcore.pow(x, @symcore.int(2)),
       @symcore.pow(y, @symcore.int(2)),
@@ -976,9 +976,9 @@ test "symplotting plot_implicit supports explicit ranges and mesh data" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let backend = plot_implicit(
-    @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-2), @symcore.int(2)])),
-    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-4), @symcore.int(4)])),
+    Relational(Gt, y, x),
+    x_var=Some(Tuple([x, @symcore.int(-2), @symcore.int(2)])),
+    y_var=Some(Tuple([y, @symcore.int(-4), @symcore.int(4)])),
     adaptive=false,
     depth=5,
     n=5,
@@ -989,13 +989,13 @@ test "symplotting plot_implicit supports explicit ranges and mesh data" {
   assert_true(series.line_color == "green")
   assert_true(series.depth == 8)
   match backend.get_implicit_data(0) {
-    ImplicitPlotData::Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
+    Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
       assert_true(plot_type == "contourf")
       assert_true(mesh_x.length() == 5)
       assert_true(mesh_y.length() == 5)
       assert_true(mesh_z.length() == 5)
     }
-    ImplicitPlotData::Fill(_) => fail("expected mesh data")
+    Fill(_) => fail("expected mesh data")
   }
 }
 
@@ -1004,19 +1004,19 @@ test "symplotting plot_implicit handles one-variable expressions like SymPy" {
   let x = @symcore.Expr::Symbol("x")
   let backend = plot_implicit(
     @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(-1)]),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    x_var=Some(Tuple([x, @symcore.int(-5), @symcore.int(5)])),
     show=false,
   )
   let series = unwrap_implicit_series(backend.series()[0])
   assert_true(series.variable_x == x || series.variable_y == x)
   match backend.get_implicit_data(0) {
-    ImplicitPlotData::Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
+    Mesh(mesh_x, mesh_y, mesh_z, plot_type) => {
       assert_true(plot_type == "contour")
       assert_true(mesh_x.length() == 300)
       assert_true(mesh_y.length() == 300)
       assert_true(mesh_z.length() == 300)
     }
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
   }
 }
 
@@ -1025,13 +1025,9 @@ test "symplotting plot_implicit auto-switches boolean combinations to adaptive f
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let backend = plot_implicit(
-    @symcore.Expr::Function("Or", [
-      @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Gt,
-        y,
-        @symcore.mul([@symcore.int(-1), x]),
-      ),
+    Function("Or", [
+      Relational(Gt, y, x),
+      Relational(Gt, y, @symcore.mul([@symcore.int(-1), x])),
     ]),
     adaptive=false,
     show=false,
@@ -1039,8 +1035,8 @@ test "symplotting plot_implicit auto-switches boolean combinations to adaptive f
   let series = unwrap_implicit_series(backend.series()[0])
   assert_true(series.adaptive == true)
   match backend.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -1049,8 +1045,8 @@ test "symplotting plot_implicit supports n1 n2 and log scales like SymPy series"
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let backend = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Gt,
+    Relational(
+      Gt,
       @symcore.function("cos", [
         @symcore.add([
           @symcore.pow(x, @symcore.int(2)),
@@ -1059,8 +1055,8 @@ test "symplotting plot_implicit supports n1 n2 and log scales like SymPy series"
       ]),
       @symcore.int(0),
     ),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)])),
-    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(1), @symcore.int(100)])),
+    x_var=Some(Tuple([x, @symcore.int(1), @symcore.int(100)])),
+    y_var=Some(Tuple([y, @symcore.int(1), @symcore.int(100)])),
     adaptive=false,
     n1=Some(3),
     n2=Some(3),
@@ -1072,14 +1068,14 @@ test "symplotting plot_implicit supports n1 n2 and log scales like SymPy series"
   assert_true(series.n1 == 3)
   assert_true(series.n2 == 3)
   match backend.get_implicit_data(0) {
-    ImplicitPlotData::Mesh(mesh_x, mesh_y, _, plot_type) => {
+    Mesh(mesh_x, mesh_y, _, plot_type) => {
       assert_true(plot_type == "contourf")
       assert_true((mesh_x[0][0] - 1.0).abs() <= 1.0e-12)
       assert_true((mesh_x[0][1] - 10.0).abs() <= 1.0e-10)
       assert_true((mesh_y[0][0] - 1.0).abs() <= 1.0e-12)
       assert_true((mesh_y[1][0] - 10.0).abs() <= 1.0e-10)
     }
-    ImplicitPlotData::Fill(_) => fail("expected mesh data")
+    Fill(_) => fail("expected mesh data")
   }
 }
 
@@ -1087,60 +1083,41 @@ test "symplotting plot_implicit supports n1 n2 and log scales like SymPy series"
 test "symplotting plot_implicit matches additional SymPy source families" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
 
   let equality = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
-      y,
-      @symcore.function("cos", [x]),
-    ),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
-    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)])),
+    Relational(Eq, y, @symcore.function("cos", [x])),
+    x_var=Some(Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(Tuple([y, @symcore.int(-2), @symcore.int(2)])),
     show=false,
   )
   match equality.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let and_region = plot_implicit(
-    @symcore.Expr::Function("And", [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Gt,
-        y,
-        @symcore.function("exp", [x]),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Gt,
-        y,
-        @symcore.add([x, @symcore.int(2)]),
-      ),
+    Function("And", [
+      Relational(Gt, y, @symcore.function("exp", [x])),
+      Relational(Gt, y, @symcore.add([x, @symcore.int(2)])),
     ]),
     show=false,
   )
   match and_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let nested = plot_implicit(
-    @symcore.Expr::Function("And", [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Gt,
-        y,
-        @symcore.function("cos", [x]),
-      ),
-      @symcore.Expr::Function("Or", [
-        @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, y, x),
-      ]),
+    Function("And", [
+      Relational(Gt, y, @symcore.function("cos", [x])),
+      Function("Or", [Relational(Gt, y, x), Relational(Eq, y, x)]),
     ]),
     show=false,
   )
   match nested.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let oscillatory = plot_implicit(
@@ -1156,28 +1133,28 @@ test "symplotting plot_implicit matches additional SymPy source families" {
     show=false,
   )
   match oscillatory.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let tangent_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Lt,
+    Relational(
+      Lt,
       y,
       @symcore.pow(@symcore.function("tan", [x]), @symcore.int(-1)),
     ),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
-    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)])),
+    x_var=Some(Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(Tuple([y, @symcore.int(-2), @symcore.int(2)])),
     show=false,
   )
   match tangent_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let trig_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Ge,
+    Relational(
+      Ge,
       y,
       @symcore.mul([
         @symcore.int(2),
@@ -1185,31 +1162,31 @@ test "symplotting plot_implicit matches additional SymPy source families" {
         @symcore.function("cos", [x]),
       ]),
     ),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
-    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)])),
+    x_var=Some(Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(Tuple([y, @symcore.int(-2), @symcore.int(2)])),
     show=false,
   )
   match trig_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let cusp = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Eq,
+    Relational(
+      Eq,
       @symcore.pow(y, @symcore.int(2)),
       @symcore.add([
         @symcore.pow(x, @symcore.int(3)),
         @symcore.mul([@symcore.int(-1), x]),
       ]),
     ),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
-    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-4), @symcore.int(4)])),
+    x_var=Some(Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(Tuple([y, @symcore.int(-4), @symcore.int(4)])),
     show=false,
   )
   match cusp.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -1217,16 +1194,8 @@ test "symplotting plot_implicit matches additional SymPy source families" {
 test "symplotting plot_implicit clamps depth like SymPy source cases" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let shallow = plot_implicit(
-    @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
-    depth=-5,
-    show=false,
-  )
-  let deep = plot_implicit(
-    @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
-    depth=5,
-    show=false,
-  )
+  let shallow = plot_implicit(Relational(Gt, y, x), depth=-5, show=false)
+  let deep = plot_implicit(Relational(Gt, y, x), depth=5, show=false)
   assert_true(unwrap_implicit_series(shallow.series()[0]).depth == 4)
   assert_true(unwrap_implicit_series(deep.series()[0]).depth == 8)
 }
@@ -1237,43 +1206,31 @@ test "symplotting plot_implicit supports additional interval monotone functions"
   let y = @symcore.Expr::Symbol("y")
 
   let atan_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Gt,
-      y,
-      @symcore.function("atan", [x]),
-    ),
+    Relational(Gt, y, @symcore.function("atan", [x])),
     show=false,
   )
   match atan_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let tanh_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Lt,
-      y,
-      @symcore.function("tanh", [x]),
-    ),
+    Relational(Lt, y, @symcore.function("tanh", [x])),
     show=false,
   )
   match tanh_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let acosh_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Gt,
-      y,
-      @symcore.function("acosh", [x]),
-    ),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(5)])),
+    Relational(Gt, y, @symcore.function("acosh", [x])),
+    x_var=Some(Tuple([x, @symcore.int(1), @symcore.int(5)])),
     show=false,
   )
   match acosh_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -1283,47 +1240,39 @@ test "symplotting plot_implicit supports interval extrema and integer step funct
   let y = @symcore.Expr::Symbol("y")
 
   let floor_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Gt,
-      y,
-      @symcore.function("floor", [x]),
-    ),
+    Relational(Gt, y, @symcore.function("floor", [x])),
     show=false,
   )
   match floor_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let ceiling_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Lt,
-      y,
-      @symcore.function("ceiling", [x]),
-    ),
+    Relational(Lt, y, @symcore.function("ceiling", [x])),
     show=false,
   )
   match ceiling_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let max_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Gt,
+    Relational(
+      Gt,
       y,
       @symcore.function("Max", [x, @symcore.mul([@symcore.int(-1), x])]),
     ),
     show=false,
   )
   match max_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let min_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Lt,
+    Relational(
+      Lt,
       y,
       @symcore.function("Min", [
         @symcore.function("sin", [x]),
@@ -1333,8 +1282,8 @@ test "symplotting plot_implicit supports interval extrema and integer step funct
     show=false,
   )
   match min_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -1350,29 +1299,25 @@ test "symplotting plot_implicit supports rational power intervals like SymPy" {
   }
 
   let odd_denominator = plot_implicit(
-    @symcore.Expr::Relational(@symcore.RelOp::Gt, y, @symcore.pow(x, one_third)),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
-    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-3), @symcore.int(3)])),
+    Relational(Gt, y, @symcore.pow(x, one_third)),
+    x_var=Some(Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(Tuple([y, @symcore.int(-3), @symcore.int(3)])),
     show=false,
   )
   match odd_denominator.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let even_numerator = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Gt,
-      y,
-      @symcore.pow(x, two_thirds),
-    ),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-5), @symcore.int(5)])),
-    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-1), @symcore.int(4)])),
+    Relational(Gt, y, @symcore.pow(x, two_thirds)),
+    x_var=Some(Tuple([x, @symcore.int(-5), @symcore.int(5)])),
+    y_var=Some(Tuple([y, @symcore.int(-1), @symcore.int(4)])),
     show=false,
   )
   match even_numerator.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -1386,75 +1331,55 @@ test "symplotting plot_implicit supports additional interval inverse families" {
   let minus_nine_tenths = @symcore.mul([@symcore.int(-1), nine_tenths])
 
   let log10_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Gt,
-      y,
-      @symcore.function("log10", [x]),
-    ),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(1), @symcore.int(100)])),
+    Relational(Gt, y, @symcore.function("log10", [x])),
+    x_var=Some(Tuple([x, @symcore.int(1), @symcore.int(100)])),
     show=false,
   )
   match log10_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let asin_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Lt,
-      y,
-      @symcore.function("asin", [x]),
-    ),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-1), @symcore.int(1)])),
-    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)])),
+    Relational(Lt, y, @symcore.function("asin", [x])),
+    x_var=Some(Tuple([x, @symcore.int(-1), @symcore.int(1)])),
+    y_var=Some(Tuple([y, @symcore.int(-2), @symcore.int(2)])),
     show=false,
   )
   match asin_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let acos_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Gt,
-      y,
-      @symcore.function("acos", [x]),
-    ),
-    x_var=Some(@symcore.Expr::Tuple([x, @symcore.int(-1), @symcore.int(1)])),
-    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(4)])),
+    Relational(Gt, y, @symcore.function("acos", [x])),
+    x_var=Some(Tuple([x, @symcore.int(-1), @symcore.int(1)])),
+    y_var=Some(Tuple([y, @symcore.int(-2), @symcore.int(4)])),
     show=false,
   )
   match acos_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let asinh_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Gt,
-      y,
-      @symcore.function("asinh", [x]),
-    ),
+    Relational(Gt, y, @symcore.function("asinh", [x])),
     show=false,
   )
   match asinh_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 
   let atanh_region = plot_implicit(
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Lt,
-      y,
-      @symcore.function("atanh", [x]),
-    ),
-    x_var=Some(@symcore.Expr::Tuple([x, minus_nine_tenths, nine_tenths])),
-    y_var=Some(@symcore.Expr::Tuple([y, @symcore.int(-2), @symcore.int(2)])),
+    Relational(Lt, y, @symcore.function("atanh", [x])),
+    x_var=Some(Tuple([x, minus_nine_tenths, nine_tenths])),
+    y_var=Some(Tuple([y, @symcore.int(-2), @symcore.int(2)])),
     show=false,
   )
   match atanh_region.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 
@@ -1464,13 +1389,7 @@ test "symplotting plot_implicit rejects the text backend like SymPy" {
   let y = @symcore.Expr::Symbol("y")
   ignore(
     try {
-      ignore(
-        plot_implicit(
-          @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
-          show=false,
-          backend="text",
-        ),
-      )
+      ignore(plot_implicit(Relational(Gt, y, x), show=false, backend="text"))
       fail("expected backend error")
     } catch {
       PlottingError::TypeError(message) =>

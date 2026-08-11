@@ -27,16 +27,8 @@ test "symseries limit infinity rational" {
   ])
   let den = @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)])
   let expr = @symcore.mul([num, @symcore.pow(den, @symcore.int(-1))])
-  let ours = limit(
-    expr,
-    x,
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-  )
-  let sympy = limit_str(
-    expr,
-    "x",
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-  )
+  let ours = limit(expr, x, NumberSymbol(Infinity))
+  let sympy = limit_str(expr, "x", NumberSymbol(Infinity))
   assert_eq(normalize_limit_expr(ours), normalize_limit_str(sympy))
 }
 
@@ -44,16 +36,8 @@ test "symseries limit infinity rational" {
 test "symseries limit infinity zero" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.mul([@symcore.int(1), @symcore.pow(x, @symcore.int(-1))])
-  let ours = limit(
-    expr,
-    x,
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-  )
-  let sympy = limit_str(
-    expr,
-    "x",
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-  )
+  let ours = limit(expr, x, NumberSymbol(Infinity))
+  let sympy = limit_str(expr, "x", NumberSymbol(Infinity))
   assert_eq(normalize_limit_expr(ours), normalize_limit_str(sympy))
 }
 

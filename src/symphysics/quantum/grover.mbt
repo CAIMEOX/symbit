@@ -28,7 +28,7 @@ pub struct WGateExpr {
 
 ///|
 fn grover_marked_tuple(marked : Array[Int]) -> Expr {
-  @symcore.Expr::Tuple(marked.map(@symcore.int))
+  Tuple(marked.map(@symcore.int))
 }
 
 ///|
@@ -77,9 +77,7 @@ fn grover_validate_nqubits(
   nqubits : Int,
 ) -> Unit raise @symphysics.PhysicsError {
   guard nqubits > 0 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "Grover search needs a positive number of qubits",
-    )
+    raise ValueError("Grover search needs a positive number of qubits")
   }
 }
 
@@ -91,7 +89,7 @@ fn grover_validate_marked(
   let size = 1 << nqubits
   for value in marked {
     guard value >= 0 && value < size else {
-      raise @symphysics.PhysicsError::ValueError(
+      raise ValueError(
         "Marked computational basis states must lie in [0, 2**nqubits)",
       )
     }
@@ -139,8 +137,7 @@ fn oracle_gate_from_expr(expr : Expr) -> OracleGateExpr? {
     Some([nqubits_expr, marked_expr]) =>
       match
         (quantum_integer_value(nqubits_expr), grover_marked_values(marked_expr)) {
-        (Some(nqubits), Some(marked)) =>
-          Some(OracleGateExpr::{ nqubits, marked })
+        (Some(nqubits), Some(marked)) => Some({ nqubits, marked })
         _ => None
       }
     _ => None
@@ -155,7 +152,7 @@ fn w_gate_from_expr(expr : Expr) -> WGateExpr? {
   match quantum_expr_args(expr) {
     Some([nqubits_expr]) =>
       match quantum_integer_value(nqubits_expr) {
-        Some(nqubits) => Some(WGateExpr::{ nqubits, })
+        Some(nqubits) => Some({ nqubits, })
         None => None
       }
     _ => None
@@ -189,7 +186,7 @@ fn grover_oracle_apply(
   ket_expr : Expr,
 ) -> Expr raise @symphysics.PhysicsError {
   guard ket.nqubits() == oracle_expr.nqubits else {
-    raise @symphysics.PhysicsError::ShapeError(
+    raise ShapeError(
       "OracleGate operates on \{oracle_expr.nqubits.to_string()} qubits",
     )
   }
@@ -207,9 +204,7 @@ fn grover_w_apply(
   _ket_expr : Expr,
 ) -> Expr raise @symphysics.PhysicsError {
   guard ket.nqubits() == w_expr.nqubits else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "WGate operates on \{w_expr.nqubits.to_string()} qubits",
-    )
+    raise ShapeError("WGate operates on \{w_expr.nqubits.to_string()} qubits")
   }
   let weight = grover_diffusion_weight(w_expr.nqubits)
   let marked_value = bits_to_int(ket.bits)
@@ -296,15 +291,14 @@ pub fn grover_represent(
   nqubits : Int,
 ) -> MatrixScalarValue? raise @symphysics.PhysicsError {
   match oracle_gate_from_expr(expr) {
-    Some(oracle_expr) =>
-      Some(MatrixScalarValue::Matrix(grover_oracle_matrix(oracle_expr)))
+    Some(oracle_expr) => Some(Matrix(grover_oracle_matrix(oracle_expr)))
     None =>
       match w_gate_from_expr(expr) {
-        Some(w_expr) => Some(MatrixScalarValue::Matrix(grover_w_matrix(w_expr)))
+        Some(w_expr) => Some(Matrix(grover_w_matrix(w_expr)))
         None =>
           if quantum_expr_has_name(expr, "Qubit") ||
             quantum_expr_has_name(expr, "QubitBra") {
-            Some(MatrixScalarValue::Matrix(qubit_to_matrix(expr, nqubits~)))
+            Some(Matrix(qubit_to_matrix(expr, nqubits~)))
           } else {
             None
           }
@@ -320,9 +314,7 @@ pub fn grover_iteration(
   let oracle = match oracle_gate_from_expr(oracle_expr) {
     Some(value) => value
     None =>
-      raise @symphysics.PhysicsError::ValueError(
-        "grover_iteration expects an OracleGate expression",
-      )
+      raise ValueError("grover_iteration expects an OracleGate expression")
   }
   quantum_mul_from_args_preserve([w_gate(oracle.nqubits), oracle_expr, qstate])
 }

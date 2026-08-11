@@ -82,16 +82,16 @@ pub enum ExprForm {
 ///|
 pub fn number_symbol_name(kind : NumberSymbolKind) -> String {
   match kind {
-    NumberSymbolKind::ImaginaryUnit => "I"
-    NumberSymbolKind::Pi => "pi"
-    NumberSymbolKind::Exp1 => "E"
-    NumberSymbolKind::EulerGamma => "EulerGamma"
-    NumberSymbolKind::GoldenRatio => "GoldenRatio"
-    NumberSymbolKind::Catalan => "Catalan"
-    NumberSymbolKind::Infinity => "oo"
-    NumberSymbolKind::NegativeInfinity => "-oo"
-    NumberSymbolKind::ComplexInfinity => "zoo"
-    NumberSymbolKind::NaN => "nan"
+    ImaginaryUnit => "I"
+    Pi => "pi"
+    Exp1 => "E"
+    EulerGamma => "EulerGamma"
+    GoldenRatio => "GoldenRatio"
+    Catalan => "Catalan"
+    Infinity => "oo"
+    NegativeInfinity => "-oo"
+    ComplexInfinity => "zoo"
+    NaN => "nan"
   }
 }
 
@@ -116,32 +116,31 @@ pub fn wild_display_name(name : String) -> String {
 ///|
 pub fn wild_property_name(property : WildProperty) -> String {
   match property {
-    WildProperty::Symbol => "symbol"
-    WildProperty::Integer => "integer"
-    WildProperty::Rational => "rational"
-    WildProperty::Real => "real"
-    WildProperty::Positive => "positive"
-    WildProperty::Negative => "negative"
-    WildProperty::Finite => "finite"
-    WildProperty::Nonzero => "nonzero"
+    Symbol => "symbol"
+    Integer => "integer"
+    Rational => "rational"
+    Real => "real"
+    Positive => "positive"
+    Negative => "negative"
+    Finite => "finite"
+    Nonzero => "nonzero"
   }
 }
 
 ///|
 pub fn kind_name(kind : Kind) -> String {
   match kind {
-    Kind::NumberKind => "NumberKind"
-    Kind::BooleanKind => "BooleanKind"
-    Kind::TupleKind(items) =>
-      "TupleKind(" + items.map(kind_name).join(", ") + ")"
-    Kind::UndefinedKind => "UndefinedKind"
+    NumberKind => "NumberKind"
+    BooleanKind => "BooleanKind"
+    TupleKind(items) => "TupleKind(" + items.map(kind_name).join(", ") + ")"
+    UndefinedKind => "UndefinedKind"
   }
 }
 
 ///|
 fn kind_is_undefined(kind : Kind) -> Bool {
   match kind {
-    Kind::UndefinedKind => true
+    UndefinedKind => true
     _ => false
   }
 }
@@ -149,31 +148,31 @@ fn kind_is_undefined(kind : Kind) -> Bool {
 ///|
 fn combine_kinds(lhs : Kind, rhs : Kind) -> Kind {
   match (lhs, rhs) {
-    (Kind::UndefinedKind, _) | (_, Kind::UndefinedKind) => Kind::UndefinedKind
-    (Kind::NumberKind, Kind::NumberKind) => Kind::NumberKind
-    (Kind::BooleanKind, Kind::BooleanKind) => Kind::BooleanKind
-    (Kind::TupleKind(items_lhs), Kind::TupleKind(items_rhs)) =>
+    (UndefinedKind, _) | (_, UndefinedKind) => UndefinedKind
+    (NumberKind, NumberKind) => NumberKind
+    (BooleanKind, BooleanKind) => BooleanKind
+    (TupleKind(items_lhs), TupleKind(items_rhs)) =>
       if items_lhs.length() != items_rhs.length() {
-        Kind::UndefinedKind
+        UndefinedKind
       } else {
         let out : Array[Kind] = []
         for i in 0..<items_lhs.length() {
           out.push(combine_kinds(items_lhs[i], items_rhs[i]))
         }
         if out.any(kind_is_undefined) {
-          Kind::UndefinedKind
+          UndefinedKind
         } else {
-          Kind::TupleKind(out)
+          TupleKind(out)
         }
       }
-    _ => Kind::UndefinedKind
+    _ => UndefinedKind
   }
 }
 
 ///|
 pub fn common_kind(kinds : Array[Kind]) -> Kind {
   if kinds.is_empty() {
-    return Kind::UndefinedKind
+    return UndefinedKind
   }
   let mut current = kinds[0]
   for i in 1..<kinds.length() {
@@ -188,16 +187,16 @@ pub fn common_kind(kinds : Array[Kind]) -> Kind {
 ///|
 pub fn number_symbol_kind_from_name(name : String) -> NumberSymbolKind? {
   match name {
-    "I" => Some(NumberSymbolKind::ImaginaryUnit)
-    "pi" | "Pi" => Some(NumberSymbolKind::Pi)
-    "E" => Some(NumberSymbolKind::Exp1)
-    "EulerGamma" => Some(NumberSymbolKind::EulerGamma)
-    "GoldenRatio" => Some(NumberSymbolKind::GoldenRatio)
-    "Catalan" => Some(NumberSymbolKind::Catalan)
-    "oo" => Some(NumberSymbolKind::Infinity)
-    "-oo" => Some(NumberSymbolKind::NegativeInfinity)
-    "zoo" => Some(NumberSymbolKind::ComplexInfinity)
-    "nan" | "NaN" => Some(NumberSymbolKind::NaN)
+    "I" => Some(ImaginaryUnit)
+    "pi" | "Pi" => Some(Pi)
+    "E" => Some(Exp1)
+    "EulerGamma" => Some(EulerGamma)
+    "GoldenRatio" => Some(GoldenRatio)
+    "Catalan" => Some(Catalan)
+    "oo" => Some(Infinity)
+    "-oo" => Some(NegativeInfinity)
+    "zoo" => Some(ComplexInfinity)
+    "nan" | "NaN" => Some(NaN)
     _ => None
   }
 }
@@ -253,21 +252,21 @@ pub fn standalone_function_head_display_name(name : String) -> String {
 /// - Limits: This front door builds the expression object only; analytical
 ///   calculus routines live in higher-level packages.
 pub fn derivative(expr : Expr, wrt : Expr, order? : Expr = int(1)) -> Expr {
-  Expr::Derivative(expr, [wrt, order])
+  Derivative(expr, [wrt, order])
 }
 
 ///|
 fn expr_can_diff_wrt(expr : Expr) -> Bool {
   match normalize_legacy_expr(expr) {
-    Expr::Symbol(_) | Expr::Dummy(_, _) => true
-    Expr::Apply(Expr::UndefinedFunction(_), _) => true
-    Expr::Derivative(inner, deriv_args) =>
+    Symbol(_) | Dummy(_, _) => true
+    Apply(UndefinedFunction(_), _) => true
+    Derivative(inner, deriv_args) =>
       match normalize_legacy_expr(inner) {
-        Expr::Apply(Expr::UndefinedFunction(_), inner_args) => {
+        Apply(UndefinedFunction(_), inner_args) => {
           let mut all_symbol_args = true
           for arg in inner_args {
             match normalize_legacy_expr(arg) {
-              Expr::Symbol(_) | Expr::Dummy(_, _) => ()
+              Symbol(_) | Dummy(_, _) => ()
               _ => {
                 all_symbol_args = false
                 break
@@ -295,7 +294,7 @@ fn expr_can_diff_wrt(expr : Expr) -> Bool {
 ///|
 fn derivative_order_is_zero(expr : Expr) -> Bool {
   match normalize_legacy_expr(expr) {
-    Expr::Number(n) => n.is_integral() && n.is_zero()
+    Number(n) => n.is_integral() && n.is_zero()
     _ => false
   }
 }
@@ -303,7 +302,7 @@ fn derivative_order_is_zero(expr : Expr) -> Bool {
 ///|
 fn derivative_order_is_positive_integer(expr : Expr) -> Bool {
   match normalize_legacy_expr(expr) {
-    Expr::Number(n) => n.is_integral() && n.numerator().compare(0N) > 0
+    Number(n) => n.is_integral() && n.numerator().compare(0N) > 0
     _ => false
   }
 }
@@ -311,7 +310,7 @@ fn derivative_order_is_positive_integer(expr : Expr) -> Bool {
 ///|
 fn derivative_order_is_negative_integer(expr : Expr) -> Bool {
   match normalize_legacy_expr(expr) {
-    Expr::Number(n) => n.is_integral() && n.numerator().compare(0N) < 0
+    Number(n) => n.is_integral() && n.numerator().compare(0N) < 0
     _ => false
   }
 }
@@ -319,7 +318,7 @@ fn derivative_order_is_negative_integer(expr : Expr) -> Bool {
 ///|
 fn is_explicit_derivative_order(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) => n.is_integral()
+    Number(n) => n.is_integral()
     _ => false
   }
 }
@@ -366,7 +365,7 @@ fn raw_derivative_args(deriv_args : ArrayView[Expr]) -> Array[Expr] {
 
 ///|
 pub fn raw_derivative(expr : Expr, deriv_args : ArrayView[Expr]) -> Expr {
-  Expr::Derivative(expr, raw_derivative_args(deriv_args))
+  Derivative(expr, raw_derivative_args(deriv_args))
 }
 
 ///|
@@ -378,7 +377,7 @@ fn derivative_constructor_pairs(
   while i < deriv_args.length() {
     let current = normalize_legacy_expr(deriv_args[i])
     match current {
-      Expr::Tuple([wrt, order]) => {
+      Tuple([wrt, order]) => {
         out.push((wrt, order))
         i += 1
       }
@@ -422,7 +421,7 @@ pub fn derivative_constructor_expr(
       for arg in deriv_args {
         legacy_args.push(normalize_legacy_expr(arg))
       }
-      Expr::Apply(Expr::FunctionHead("Derivative"), legacy_args)
+      Apply(FunctionHead("Derivative"), legacy_args)
     }
     None => {
       let out : Array[Expr] = []
@@ -438,7 +437,7 @@ pub fn derivative_constructor_expr(
       if out.is_empty() {
         expr
       } else {
-        Expr::Derivative(expr, out)
+        Derivative(expr, out)
       }
     }
   }
@@ -447,7 +446,7 @@ pub fn derivative_constructor_expr(
 ///|
 fn subs_items(expr : Expr) -> Array[Expr] {
   match normalize_legacy_expr(expr) {
-    Expr::Tuple(items) => items
+    Tuple(items) => items
     other => [other]
   }
 }
@@ -455,9 +454,9 @@ fn subs_items(expr : Expr) -> Array[Expr] {
 ///|
 fn subs_items_expr(items : Array[Expr]) -> Expr {
   match items {
-    [] => Expr::Tuple([])
+    [] => Tuple([])
     [item] => item
-    _ => Expr::Tuple(items)
+    _ => Tuple(items)
   }
 }
 
@@ -469,7 +468,7 @@ pub fn subs_signature_error(variable : Expr, value : Expr) -> String? {
   for variable in variables {
     let count = variables.filter(current => current == variable).length()
     if count > 1 {
-      let name = variable.to_string()
+      let name = Show::to_string(variable)
       if !repeated.contains(name) {
         repeated.push(name)
       }
@@ -511,7 +510,7 @@ pub fn subs_expr(expr : Expr, variable : Expr, value : Expr) -> Expr {
   let variable = normalize_legacy_expr(variable)
   let value = normalize_legacy_expr(value)
   match subs_signature_error(variable, value) {
-    Some(_) => Expr::Apply(Expr::FunctionHead("Subs"), [expr, variable, value])
+    Some(_) => Apply(FunctionHead("Subs"), [expr, variable, value])
     None => {
       let variables = subs_items(variable)
       let values = subs_items(value)
@@ -519,13 +518,13 @@ pub fn subs_expr(expr : Expr, variable : Expr, value : Expr) -> Expr {
         expr
       } else {
         match expr {
-          Expr::Subs(inner, inner_variable, inner_value) =>
-            Expr::Subs(
+          Subs(inner, inner_variable, inner_value) =>
+            Subs(
               inner,
               subs_items_expr(subs_items(inner_variable) + variables),
               subs_items_expr(subs_items(inner_value) + values),
             )
-          _ => Expr::Subs(expr, variable, value)
+          _ => Subs(expr, variable, value)
         }
       }
     }
@@ -535,7 +534,7 @@ pub fn subs_expr(expr : Expr, variable : Expr, value : Expr) -> Expr {
 ///|
 fn lambda_signature_items(vars : Expr) -> Array[Expr] {
   match normalize_legacy_expr(vars) {
-    Expr::Tuple(items) => items
+    Tuple(items) => items
     other => [other]
   }
 }
@@ -543,14 +542,14 @@ fn lambda_signature_items(vars : Expr) -> Array[Expr] {
 ///|
 fn is_lambda_signature_atom(expr : Expr) -> Bool {
   match normalize_legacy_expr(expr) {
-    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_, _, _) => true
+    Symbol(_) | Dummy(_, _) | Wild(_, _, _) => true
     _ => false
   }
 }
 
 ///|
 fn lambda_identity_expr() -> Expr {
-  Expr::IdentityFunction
+  IdentityFunction
 }
 
 ///|
@@ -558,10 +557,7 @@ pub fn lambda_arity(vars : Expr) -> Int? {
   let items = lambda_signature_items(vars)
   for item in items {
     match normalize_legacy_expr(item) {
-      Expr::Tuple(_)
-      | Expr::Symbol(_)
-      | Expr::Dummy(_, _)
-      | Expr::Wild(_, _, _) => ()
+      Tuple(_) | Symbol(_) | Dummy(_, _) | Wild(_, _, _) => ()
       _ => return None
     }
   }
@@ -575,13 +571,13 @@ pub fn lambda_signature_error(vars : Expr) -> String? {
     let normalized = normalize_legacy_expr(expr)
     if is_lambda_signature_atom(normalized) {
       if seen.contains(normalized) {
-        return Some("Duplicate symbol " + normalized.to_string())
+        return Some("Duplicate symbol " + Show::to_string(normalized))
       }
       seen.push(normalized)
       return None
     }
     match normalized {
-      Expr::Tuple(items) => {
+      Tuple(items) => {
         for item in items {
           match check(item) {
             Some(err) => return Some(err)
@@ -593,7 +589,7 @@ pub fn lambda_signature_error(vars : Expr) -> String? {
       _ =>
         Some(
           "Lambda signature should be only tuples and symbols, not " +
-          normalized.to_string(),
+          Show::to_string(normalized),
         )
     }
   }
@@ -612,13 +608,13 @@ pub fn lambda_expr(vars : Expr, body : Expr) -> Expr {
   let vars = normalize_legacy_expr(vars)
   let body = normalize_legacy_expr(body)
   match lambda_signature_error(vars) {
-    Some(_) => Expr::Apply(Expr::FunctionHead("Lambda"), [vars, body])
+    Some(_) => Apply(FunctionHead("Lambda"), [vars, body])
     None => {
       let items = lambda_signature_items(vars)
       if items.length() == 1 && items[0] == body {
         lambda_identity_expr()
       } else {
-        Expr::Lambda(vars, body)
+        Lambda(vars, body)
       }
     }
   }
@@ -626,7 +622,7 @@ pub fn lambda_expr(vars : Expr, body : Expr) -> Expr {
 
 ///|
 pub fn expr_display(expr : Expr) -> String {
-  expr.to_string()
+  Show::to_string(expr)
 }
 
 ///|
@@ -678,7 +674,7 @@ fn normalize_legacy_function(name : String, args : Array[Expr]) -> Expr {
           with_exp_is_pow(false, fn() { function(name, normalized_args) })
         })
       })
-    _ => Expr::Apply(Expr::FunctionHead(name), normalized_args)
+    _ => Apply(FunctionHead(name), normalized_args)
   }
 }
 
@@ -692,82 +688,75 @@ fn normalize_legacy_function(name : String, args : Array[Expr]) -> Expr {
 ///   format.
 pub fn expr_form(expr : Expr) -> ExprForm {
   match expr {
-    Expr::Number(n) => ExprForm::Number(n)
-    Expr::Float(f) => ExprForm::Float(f)
-    Expr::ComplexFloat(z) => ExprForm::ComplexFloat(z)
-    Expr::NumberSymbol(kind) => ExprForm::NumberSymbol(kind)
-    Expr::Boolean(value) => ExprForm::Boolean(value)
-    Expr::IdentityFunction => ExprForm::IdentityFunction
-    Expr::Dummy(name, id) => ExprForm::Dummy(name, id)
-    Expr::Wild(name, exclude, properties) =>
-      ExprForm::Wild(name, exclude, properties)
-    Expr::WildFunction(name, nargs) => ExprForm::WildFunction(name, nargs)
-    Expr::FunctionHead(name) => ExprForm::FunctionHead(name)
-    Expr::UndefinedFunction(name) => ExprForm::UndefinedFunction(name)
-    Expr::Apply(head, args) => ExprForm::Apply(head, args)
-    Expr::Symbol(name) => ExprForm::Symbol(name)
-    Expr::Add(args) => ExprForm::Add(args)
-    Expr::Mul(args) => ExprForm::Mul(args)
-    Expr::Pow(base, exp) => ExprForm::Pow(base, exp)
-    Expr::Mod(lhs, rhs) => ExprForm::Mod(lhs, rhs)
-    Expr::Tuple(args) => ExprForm::Tuple(args)
-    Expr::Dict(items) => ExprForm::Dict(items)
-    Expr::Relational(op, lhs, rhs) => ExprForm::Relational(op, lhs, rhs)
-    Expr::Derivative(inner, deriv_args) =>
-      ExprForm::Derivative(inner, canonical_derivative_args(deriv_args))
-    Expr::Subs(inner, variable, value) => ExprForm::Subs(inner, variable, value)
-    Expr::Lambda(vars, body) => ExprForm::Lambda(vars, body)
-    Expr::Function(name, args) =>
-      expr_form(normalize_legacy_function(name, args))
+    Number(n) => Number(n)
+    Float(f) => Float(f)
+    ComplexFloat(z) => ComplexFloat(z)
+    NumberSymbol(kind) => NumberSymbol(kind)
+    Boolean(value) => Boolean(value)
+    IdentityFunction => IdentityFunction
+    Dummy(name, id) => Dummy(name, id)
+    Wild(name, exclude, properties) => Wild(name, exclude, properties)
+    WildFunction(name, nargs) => WildFunction(name, nargs)
+    FunctionHead(name) => FunctionHead(name)
+    UndefinedFunction(name) => UndefinedFunction(name)
+    Apply(head, args) => Apply(head, args)
+    Symbol(name) => Symbol(name)
+    Add(args) => Add(args)
+    Mul(args) => Mul(args)
+    Pow(base, exp) => Pow(base, exp)
+    Mod(lhs, rhs) => Mod(lhs, rhs)
+    Tuple(args) => Tuple(args)
+    Dict(items) => Dict(items)
+    Relational(op, lhs, rhs) => Relational(op, lhs, rhs)
+    Derivative(inner, deriv_args) =>
+      Derivative(inner, canonical_derivative_args(deriv_args))
+    Subs(inner, variable, value) => Subs(inner, variable, value)
+    Lambda(vars, body) => Lambda(vars, body)
+    Function(name, args) => expr_form(normalize_legacy_function(name, args))
   }
 }
 
 ///|
 pub fn normalize_legacy_expr(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => Expr::Add(args.map(normalize_legacy_expr))
-    Expr::Mul(args) => Expr::Mul(args.map(normalize_legacy_expr))
-    Expr::Pow(base, exp) =>
-      Expr::Pow(normalize_legacy_expr(base), normalize_legacy_expr(exp))
-    Expr::Mod(lhs, rhs) =>
-      Expr::Mod(normalize_legacy_expr(lhs), normalize_legacy_expr(rhs))
-    Expr::Tuple(args) => Expr::Tuple(args.map(normalize_legacy_expr))
-    Expr::Dict(items) => {
+    Add(args) => Add(args.map(normalize_legacy_expr))
+    Mul(args) => Mul(args.map(normalize_legacy_expr))
+    Pow(base, exp) =>
+      Pow(normalize_legacy_expr(base), normalize_legacy_expr(exp))
+    Mod(lhs, rhs) => Mod(normalize_legacy_expr(lhs), normalize_legacy_expr(rhs))
+    Tuple(args) => Tuple(args.map(normalize_legacy_expr))
+    Dict(items) => {
       let out : Array[(Expr, Expr)] = []
       for item in items {
         let (key, value) = item
         out.push((normalize_legacy_expr(key), normalize_legacy_expr(value)))
       }
-      Expr::Dict(out)
+      Dict(out)
     }
-    Expr::Relational(op, lhs, rhs) =>
-      Expr::Relational(
-        op,
-        normalize_legacy_expr(lhs),
-        normalize_legacy_expr(rhs),
-      )
-    Expr::Derivative(inner, deriv_args) =>
-      Expr::Derivative(
+    Relational(op, lhs, rhs) =>
+      Relational(op, normalize_legacy_expr(lhs), normalize_legacy_expr(rhs))
+    Derivative(inner, deriv_args) =>
+      Derivative(
         normalize_legacy_expr(inner),
         canonical_derivative_args(deriv_args.map(normalize_legacy_expr)[:]),
       )
-    Expr::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       subs_expr(
         normalize_legacy_expr(inner),
         normalize_legacy_expr(variable),
         normalize_legacy_expr(value),
       )
-    Expr::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       lambda_expr(normalize_legacy_expr(vars), normalize_legacy_expr(body))
-    Expr::Apply(head, args) => {
+    Apply(head, args) => {
       let head = normalize_legacy_expr(head)
       let args = args.map(normalize_legacy_expr)
       match raw_apply(head, args) {
         Some(applied) => applied
-        None => Expr::Apply(head, args)
+        None => Apply(head, args)
       }
     }
-    Expr::Function(name, args) => normalize_legacy_function(name, args)
+    Function(name, args) => normalize_legacy_function(name, args)
     _ => expr
   }
 }
@@ -775,7 +764,7 @@ pub fn normalize_legacy_expr(expr : Expr) -> Expr {
 ///|
 pub fn is_true(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::Boolean(value) => value
+    Boolean(value) => value
     _ => false
   }
 }
@@ -783,7 +772,7 @@ pub fn is_true(expr : Expr) -> Bool {
 ///|
 pub fn bool_value(expr : Expr) -> Bool? {
   match expr_form(expr) {
-    ExprForm::Boolean(value) => Some(value)
+    Boolean(value) => Some(value)
     _ => None
   }
 }
@@ -791,7 +780,7 @@ pub fn bool_value(expr : Expr) -> Bool? {
 ///|
 pub fn is_false(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::Boolean(value) => !value
+    Boolean(value) => !value
     _ => false
   }
 }
@@ -799,10 +788,7 @@ pub fn is_false(expr : Expr) -> Bool {
 ///|
 pub fn is_number_atom(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::Number(_)
-    | ExprForm::Float(_)
-    | ExprForm::ComplexFloat(_)
-    | ExprForm::NumberSymbol(_) => true
+    Number(_) | Float(_) | ComplexFloat(_) | NumberSymbol(_) => true
     _ => false
   }
 }
@@ -810,7 +796,7 @@ pub fn is_number_atom(expr : Expr) -> Bool {
 ///|
 pub fn number_symbol_kind(expr : Expr) -> NumberSymbolKind? {
   match expr_form(expr) {
-    ExprForm::NumberSymbol(kind) => Some(kind)
+    NumberSymbol(kind) => Some(kind)
     _ => None
   }
 }
@@ -826,9 +812,9 @@ pub fn is_number_symbol(expr : Expr) -> Bool {
 ///|
 pub fn is_infinite(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::NumberSymbol(NumberSymbolKind::Infinity)
-    | ExprForm::NumberSymbol(NumberSymbolKind::NegativeInfinity)
-    | ExprForm::NumberSymbol(NumberSymbolKind::ComplexInfinity) => true
+    NumberSymbol(Infinity)
+    | NumberSymbol(NegativeInfinity)
+    | NumberSymbol(ComplexInfinity) => true
     _ => false
   }
 }
@@ -836,7 +822,7 @@ pub fn is_infinite(expr : Expr) -> Bool {
 ///|
 pub fn is_nan(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::NumberSymbol(NumberSymbolKind::NaN) => true
+    NumberSymbol(NaN) => true
     _ => false
   }
 }
@@ -844,9 +830,9 @@ pub fn is_nan(expr : Expr) -> Bool {
 ///|
 pub fn is_zero(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::Number(n) => n.is_zero()
-    ExprForm::Float(f) => @symnum.is_zero(f.to_mpf())
-    ExprForm::ComplexFloat(z) =>
+    Number(n) => n.is_zero()
+    Float(f) => @symnum.is_zero(f.to_mpf())
+    ComplexFloat(z) =>
       @symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag)
     _ => false
   }
@@ -855,14 +841,14 @@ pub fn is_zero(expr : Expr) -> Bool {
 ///|
 pub fn is_one(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::Number(n) => n.is_one()
-    ExprForm::Float(f) =>
+    Number(n) => n.is_one()
+    Float(f) =>
       @symnum.mpf_cmp(
         f.to_mpf(),
         Float::from_int(1, prec=f.precision()).to_mpf(),
       ) ==
       0
-    ExprForm::ComplexFloat(z) =>
+    ComplexFloat(z) =>
       @symnum.mpf_cmp(
         z.to_mpc().real,
         Float::from_int(1, prec=z.precision()).to_mpf(),
@@ -876,10 +862,10 @@ pub fn is_one(expr : Expr) -> Bool {
 ///|
 pub fn is_finite_number_atom(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::Number(_) => true
-    ExprForm::Float(f) => f.is_finite()
-    ExprForm::ComplexFloat(z) => z.is_finite()
-    ExprForm::NumberSymbol(_) => !is_infinite(expr) && !is_nan(expr)
+    Number(_) => true
+    Float(f) => f.is_finite()
+    ComplexFloat(z) => z.is_finite()
+    NumberSymbol(_) => !is_infinite(expr) && !is_nan(expr)
     _ => false
   }
 }
@@ -887,17 +873,13 @@ pub fn is_finite_number_atom(expr : Expr) -> Bool {
 ///|
 pub fn is_real_number_atom(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::Number(_) | ExprForm::Float(_) => true
-    ExprForm::NumberSymbol(kind) =>
+    Number(_) | Float(_) => true
+    NumberSymbol(kind) =>
       match kind {
-        NumberSymbolKind::Pi
-        | NumberSymbolKind::Exp1
-        | NumberSymbolKind::EulerGamma
-        | NumberSymbolKind::GoldenRatio
-        | NumberSymbolKind::Catalan => true
+        Pi | Exp1 | EulerGamma | GoldenRatio | Catalan => true
         _ => false
       }
-    ExprForm::ComplexFloat(z) => @symnum.is_zero(z.to_mpc().imag)
+    ComplexFloat(z) => @symnum.is_zero(z.to_mpc().imag)
     _ => false
   }
 }
@@ -905,7 +887,7 @@ pub fn is_real_number_atom(expr : Expr) -> Bool {
 ///|
 pub fn is_complex_number_atom(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::ComplexFloat(_) => true
+    ComplexFloat(_) => true
     _ => false
   }
 }
@@ -913,19 +895,19 @@ pub fn is_complex_number_atom(expr : Expr) -> Bool {
 ///|
 pub fn is_atomic(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::Number(_)
-    | ExprForm::Float(_)
-    | ExprForm::ComplexFloat(_)
-    | ExprForm::NumberSymbol(_)
-    | ExprForm::Symbol(_)
-    | ExprForm::Dummy(_, _)
-    | ExprForm::Wild(_, _, _)
-    | ExprForm::WildFunction(_, _)
-    | ExprForm::IdentityFunction
-    | ExprForm::FunctionHead(_)
-    | ExprForm::UndefinedFunction(_)
-    | ExprForm::Boolean(_) => true
-    ExprForm::Apply(_, args) => args.is_empty()
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | WildFunction(_, _)
+    | IdentityFunction
+    | FunctionHead(_)
+    | UndefinedFunction(_)
+    | Boolean(_) => true
+    Apply(_, args) => args.is_empty()
     _ => false
   }
 }
@@ -933,38 +915,38 @@ pub fn is_atomic(expr : Expr) -> Bool {
 ///|
 pub fn head_name(expr : Expr) -> String {
   match expr_form(expr) {
-    ExprForm::Number(_) => "Number"
-    ExprForm::Float(_) => "Float"
-    ExprForm::ComplexFloat(_) => "ComplexFloat"
-    ExprForm::NumberSymbol(kind) => number_symbol_name(kind)
-    ExprForm::Symbol(name) => name
-    ExprForm::Dummy(name, _) => dummy_display_name(name)
-    ExprForm::Wild(name, _, _) => wild_display_name(name)
-    ExprForm::WildFunction(name, _) => wild_display_name(name)
-    ExprForm::IdentityFunction => "IdentityFunction"
-    ExprForm::FunctionHead(name) => name
-    ExprForm::UndefinedFunction(name) => name
-    ExprForm::Boolean(true) => "True"
-    ExprForm::Boolean(false) => "False"
-    ExprForm::Add(_) => "Add"
-    ExprForm::Mul(_) => "Mul"
-    ExprForm::Pow(_, _) => "Pow"
-    ExprForm::Mod(_, _) => "Mod"
-    ExprForm::Tuple(_) => "Tuple"
-    ExprForm::Dict(_) => "Dict"
-    ExprForm::Relational(op, _, _) =>
+    Number(_) => "Number"
+    Float(_) => "Float"
+    ComplexFloat(_) => "ComplexFloat"
+    NumberSymbol(kind) => number_symbol_name(kind)
+    Symbol(name) => name
+    Dummy(name, _) => dummy_display_name(name)
+    Wild(name, _, _) => wild_display_name(name)
+    WildFunction(name, _) => wild_display_name(name)
+    IdentityFunction => "IdentityFunction"
+    FunctionHead(name) => name
+    UndefinedFunction(name) => name
+    Boolean(true) => "True"
+    Boolean(false) => "False"
+    Add(_) => "Add"
+    Mul(_) => "Mul"
+    Pow(_, _) => "Pow"
+    Mod(_, _) => "Mod"
+    Tuple(_) => "Tuple"
+    Dict(_) => "Dict"
+    Relational(op, _, _) =>
       match op {
-        RelOp::Eq => "Eq"
-        RelOp::Ne => "Ne"
-        RelOp::Lt => "Lt"
-        RelOp::Le => "Le"
-        RelOp::Gt => "Gt"
-        RelOp::Ge => "Ge"
+        Eq => "Eq"
+        Ne => "Ne"
+        Lt => "Lt"
+        Le => "Le"
+        Gt => "Gt"
+        Ge => "Ge"
       }
-    ExprForm::Derivative(_, _) => "Derivative"
-    ExprForm::Subs(_, _, _) => "Subs"
-    ExprForm::Lambda(_, _) => "Lambda"
-    ExprForm::Apply(head, _) =>
+    Derivative(_, _) => "Derivative"
+    Subs(_, _, _) => "Subs"
+    Lambda(_, _) => "Lambda"
+    Apply(head, _) =>
       match function_head_name(head) {
         Some(name) => name
         None => "Apply"
@@ -976,7 +958,7 @@ pub fn head_name(expr : Expr) -> String {
 pub fn tuple_items(expr : Expr) -> Array[Expr]? {
   let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
-    ExprForm::Tuple(items) => Some(items)
+    Tuple(items) => Some(items)
     _ => None
   }
 }
@@ -985,7 +967,7 @@ pub fn tuple_items(expr : Expr) -> Array[Expr]? {
 pub fn dict_items(expr : Expr) -> Array[(Expr, Expr)]? {
   let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
-    ExprForm::Dict(items) => Some(items)
+    Dict(items) => Some(items)
     _ => None
   }
 }
@@ -993,7 +975,7 @@ pub fn dict_items(expr : Expr) -> Array[(Expr, Expr)]? {
 ///|
 pub fn dummy_parts(expr : Expr) -> (String, Int)? {
   match expr {
-    Expr::Dummy(name, id) => Some((name, id))
+    Dummy(name, id) => Some((name, id))
     _ => None
   }
 }
@@ -1001,7 +983,7 @@ pub fn dummy_parts(expr : Expr) -> (String, Int)? {
 ///|
 pub fn wild_name(expr : Expr) -> String? {
   match expr {
-    Expr::Wild(name, _, _) | Expr::WildFunction(name, _) => Some(name)
+    Wild(name, _, _) | WildFunction(name, _) => Some(name)
     _ => None
   }
 }
@@ -1009,7 +991,7 @@ pub fn wild_name(expr : Expr) -> String? {
 ///|
 pub fn wild_parts(expr : Expr) -> (String, Array[Expr], Array[WildProperty])? {
   match expr {
-    Expr::Wild(name, exclude, properties) =>
+    Wild(name, exclude, properties) =>
       Some((name, exclude.copy(), properties.copy()))
     _ => None
   }
@@ -1018,7 +1000,7 @@ pub fn wild_parts(expr : Expr) -> (String, Array[Expr], Array[WildProperty])? {
 ///|
 pub fn wild_function_parts(expr : Expr) -> (String, Array[Int])? {
   match expr {
-    Expr::WildFunction(name, nargs) => Some((name, nargs.copy()))
+    WildFunction(name, nargs) => Some((name, nargs.copy()))
     _ => None
   }
 }
@@ -1026,7 +1008,7 @@ pub fn wild_function_parts(expr : Expr) -> (String, Array[Int])? {
 ///|
 pub fn undefined_application_parts(expr : Expr) -> (String, Array[Expr])? {
   match application_parts(expr) {
-    Some((Expr::UndefinedFunction(name), args)) => Some((name, args))
+    Some((UndefinedFunction(name), args)) => Some((name, args))
     _ => None
   }
 }
@@ -1034,9 +1016,9 @@ pub fn undefined_application_parts(expr : Expr) -> (String, Array[Expr])? {
 ///|
 pub fn function_head_name(expr : Expr) -> String? {
   match expr_form(expr) {
-    ExprForm::FunctionHead(name) => Some(name)
-    ExprForm::UndefinedFunction(name) => Some(name)
-    ExprForm::WildFunction(name, _) => Some(name)
+    FunctionHead(name) => Some(name)
+    UndefinedFunction(name) => Some(name)
+    WildFunction(name, _) => Some(name)
     _ => None
   }
 }
@@ -1044,7 +1026,7 @@ pub fn function_head_name(expr : Expr) -> String? {
 ///|
 pub fn exact_number_kind(expr : Expr) -> ExactNumberKind? {
   match expr_form(expr) {
-    ExprForm::Number(value) => Some(exact_number_kind_from_rational(value))
+    Number(value) => Some(exact_number_kind_from_rational(value))
     _ => None
   }
 }
@@ -1057,45 +1039,43 @@ fn exact_number_kind_from_rational(
     _ => abort("invalid half rational")
   }
   if value.is_zero() {
-    ExactNumberKind::Zero
+    Zero
   } else if value.is_one() {
-    ExactNumberKind::One
+    One
   } else if value.compare(@symnum.BigRational::from_int(-1)) == 0 {
-    ExactNumberKind::NegativeOne
+    NegativeOne
   } else if value.compare(half) == 0 {
-    ExactNumberKind::Half
+    Half
   } else if value.is_integral() {
-    ExactNumberKind::Integer
+    Integer
   } else {
-    ExactNumberKind::Rational
+    Rational
   }
 }
 
 ///|
 pub fn exact_number_head_name(kind : ExactNumberKind) -> String {
   match kind {
-    ExactNumberKind::Zero => "Zero"
-    ExactNumberKind::One => "One"
-    ExactNumberKind::NegativeOne => "NegativeOne"
-    ExactNumberKind::Half => "Half"
-    ExactNumberKind::Integer => "Integer"
-    ExactNumberKind::Rational => "Rational"
+    Zero => "Zero"
+    One => "One"
+    NegativeOne => "NegativeOne"
+    Half => "Half"
+    Integer => "Integer"
+    Rational => "Rational"
   }
 }
 
 ///|
 pub fn singleton_head(expr : Expr) -> Expr? {
   match expr_form(expr) {
-    ExprForm::Number(value) =>
+    Number(value) =>
       Some(
-        Expr::FunctionHead(
+        FunctionHead(
           exact_number_head_name(exact_number_kind_from_rational(value)),
         ),
       )
-    ExprForm::NumberSymbol(kind) =>
-      Some(Expr::FunctionHead(number_symbol_func_name(kind)))
-    ExprForm::Boolean(value) =>
-      Some(Expr::FunctionHead(boolean_func_name(value)))
+    NumberSymbol(kind) => Some(FunctionHead(number_symbol_func_name(kind)))
+    Boolean(value) => Some(FunctionHead(boolean_func_name(value)))
     _ => None
   }
 }
@@ -1103,7 +1083,7 @@ pub fn singleton_head(expr : Expr) -> Expr? {
 ///|
 pub fn exact_number_num_den(expr : Expr) -> (BigInt, BigInt)? {
   match expr_form(expr) {
-    ExprForm::Number(value) => Some((value.numerator(), value.denominator()))
+    Number(value) => Some((value.numerator(), value.denominator()))
     _ => None
   }
 }
@@ -1129,21 +1109,21 @@ fn application_kind(head : Expr, args : Array[Expr]) -> Kind {
   match function_head_name(head) {
     Some(name) =>
       if is_boolean_application_head(name) {
-        Kind::BooleanKind
+        BooleanKind
       } else {
         match name {
-          "Tuple" => Kind::TupleKind(args.map(expr_kind))
-          "Dict" | "Lambda" => Kind::UndefinedKind
+          "Tuple" => TupleKind(args.map(expr_kind))
+          "Dict" | "Lambda" => UndefinedKind
           "Subs" | "Derivative" =>
             if args.is_empty() {
-              Kind::UndefinedKind
+              UndefinedKind
             } else {
               expr_kind(args[0])
             }
-          _ => Kind::NumberKind
+          _ => NumberKind
         }
       }
-    None => Kind::UndefinedKind
+    None => UndefinedKind
   }
 }
 
@@ -1151,60 +1131,56 @@ fn application_kind(head : Expr, args : Array[Expr]) -> Kind {
 pub fn expr_kind(expr : Expr) -> Kind {
   let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
-    ExprForm::Boolean(_) | ExprForm::Relational(_, _, _) => Kind::BooleanKind
-    ExprForm::Tuple(items) => Kind::TupleKind(items.map(expr_kind))
-    ExprForm::Dict(_) => Kind::UndefinedKind
-    ExprForm::FunctionHead(_)
-    | ExprForm::UndefinedFunction(_)
-    | ExprForm::IdentityFunction
-    | ExprForm::Lambda(_, _) => Kind::UndefinedKind
-    ExprForm::Number(_)
-    | ExprForm::Float(_)
-    | ExprForm::ComplexFloat(_)
-    | ExprForm::NumberSymbol(_)
-    | ExprForm::Symbol(_)
-    | ExprForm::Dummy(_, _)
-    | ExprForm::Wild(_, _, _) => Kind::NumberKind
-    ExprForm::WildFunction(_, _) => Kind::UndefinedKind
-    ExprForm::Apply(head, args) => application_kind(head, args)
-    ExprForm::Add(items) | ExprForm::Mul(items) =>
-      common_kind(items.map(expr_kind))
-    ExprForm::Pow(base, exp) =>
+    Boolean(_) | Relational(_, _, _) => BooleanKind
+    Tuple(items) => TupleKind(items.map(expr_kind))
+    Dict(_) => UndefinedKind
+    FunctionHead(_) | UndefinedFunction(_) | IdentityFunction | Lambda(_, _) =>
+      UndefinedKind
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _) => NumberKind
+    WildFunction(_, _) => UndefinedKind
+    Apply(head, args) => application_kind(head, args)
+    Add(items) | Mul(items) => common_kind(items.map(expr_kind))
+    Pow(base, exp) =>
       match expr_kind(exp) {
-        Kind::NumberKind => expr_kind(base)
-        _ => Kind::UndefinedKind
+        NumberKind => expr_kind(base)
+        _ => UndefinedKind
       }
-    ExprForm::Mod(lhs, rhs) => common_kind([expr_kind(lhs), expr_kind(rhs)])
-    ExprForm::Derivative(inner, _) | ExprForm::Subs(inner, _, _) =>
-      expr_kind(inner)
+    Mod(lhs, rhs) => common_kind([expr_kind(lhs), expr_kind(rhs)])
+    Derivative(inner, _) | Subs(inner, _, _) => expr_kind(inner)
   }
 }
 
 ///|
 fn number_symbol_func_name(kind : NumberSymbolKind) -> String {
   match kind {
-    NumberSymbolKind::ImaginaryUnit => "ImaginaryUnit"
-    NumberSymbolKind::Pi => "Pi"
-    NumberSymbolKind::Exp1 => "Exp1"
-    NumberSymbolKind::EulerGamma => "EulerGamma"
-    NumberSymbolKind::GoldenRatio => "GoldenRatio"
-    NumberSymbolKind::Catalan => "Catalan"
-    NumberSymbolKind::Infinity => "Infinity"
-    NumberSymbolKind::NegativeInfinity => "NegativeInfinity"
-    NumberSymbolKind::ComplexInfinity => "ComplexInfinity"
-    NumberSymbolKind::NaN => "NaN"
+    ImaginaryUnit => "ImaginaryUnit"
+    Pi => "Pi"
+    Exp1 => "Exp1"
+    EulerGamma => "EulerGamma"
+    GoldenRatio => "GoldenRatio"
+    Catalan => "Catalan"
+    Infinity => "Infinity"
+    NegativeInfinity => "NegativeInfinity"
+    ComplexInfinity => "ComplexInfinity"
+    NaN => "NaN"
   }
 }
 
 ///|
 fn relational_func_name(op : RelOp) -> String {
   match op {
-    RelOp::Eq => "Equality"
-    RelOp::Ne => "Unequality"
-    RelOp::Lt => "StrictLessThan"
-    RelOp::Le => "LessThan"
-    RelOp::Gt => "StrictGreaterThan"
-    RelOp::Ge => "GreaterThan"
+    Eq => "Equality"
+    Ne => "Unequality"
+    Lt => "StrictLessThan"
+    Le => "LessThan"
+    Gt => "StrictGreaterThan"
+    Ge => "GreaterThan"
   }
 }
 
@@ -1229,7 +1205,7 @@ pub fn is_function_head(expr : Expr) -> Bool {
 pub fn relational_parts(expr : Expr) -> (RelOp, Expr, Expr)? {
   let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
-    ExprForm::Relational(op, lhs, rhs) => Some((op, lhs, rhs))
+    Relational(op, lhs, rhs) => Some((op, lhs, rhs))
     _ => None
   }
 }
@@ -1238,7 +1214,7 @@ pub fn relational_parts(expr : Expr) -> (RelOp, Expr, Expr)? {
 pub fn derivative_parts(expr : Expr) -> (Expr, Array[Expr])? {
   let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
-    ExprForm::Derivative(inner, deriv_args) => Some((inner, deriv_args))
+    Derivative(inner, deriv_args) => Some((inner, deriv_args))
     _ => None
   }
 }
@@ -1247,7 +1223,7 @@ pub fn derivative_parts(expr : Expr) -> (Expr, Array[Expr])? {
 pub fn subs_parts(expr : Expr) -> (Expr, Expr, Expr)? {
   let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
-    ExprForm::Subs(inner, variable, value) => Some((inner, variable, value))
+    Subs(inner, variable, value) => Some((inner, variable, value))
     _ => None
   }
 }
@@ -1256,7 +1232,7 @@ pub fn subs_parts(expr : Expr) -> (Expr, Expr, Expr)? {
 pub fn lambda_parts(expr : Expr) -> (Expr, Expr)? {
   let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
-    ExprForm::Lambda(vars, body) => Some((vars, body))
+    Lambda(vars, body) => Some((vars, body))
     _ => None
   }
 }
@@ -1265,38 +1241,37 @@ pub fn lambda_parts(expr : Expr) -> (Expr, Expr)? {
 pub fn applied_parts(expr : Expr) -> (String, Array[Expr])? {
   let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
-    ExprForm::Tuple(items) => Some(("Tuple", items))
-    ExprForm::Dict(items) => {
+    Tuple(items) => Some(("Tuple", items))
+    Dict(items) => {
       let args : Array[Expr] = []
       for item in items {
         let (key, value) = item
-        args.push(Expr::Tuple([key, value]))
+        args.push(Tuple([key, value]))
       }
       Some(("Dict", args))
     }
-    ExprForm::Relational(op, lhs, rhs) => {
+    Relational(op, lhs, rhs) => {
       let name = match op {
-        RelOp::Eq => "Eq"
-        RelOp::Ne => "Ne"
-        RelOp::Lt => "Lt"
-        RelOp::Le => "Le"
-        RelOp::Gt => "Gt"
-        RelOp::Ge => "Ge"
+        Eq => "Eq"
+        Ne => "Ne"
+        Lt => "Lt"
+        Le => "Le"
+        Gt => "Gt"
+        Ge => "Ge"
       }
       Some((name, [lhs, rhs]))
     }
-    ExprForm::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       let args : Array[Expr] = [inner]
       for arg in deriv_args {
         args.push(arg)
       }
       Some(("Derivative", args))
     }
-    ExprForm::Subs(inner, variable, value) =>
-      Some(("Subs", [inner, variable, value]))
-    ExprForm::Lambda(vars, body) => Some(("Lambda", [vars, body]))
-    ExprForm::Mod(lhs, rhs) => Some(("Mod", [lhs, rhs]))
-    ExprForm::Apply(head, args) =>
+    Subs(inner, variable, value) => Some(("Subs", [inner, variable, value]))
+    Lambda(vars, body) => Some(("Lambda", [vars, body]))
+    Mod(lhs, rhs) => Some(("Mod", [lhs, rhs]))
+    Apply(head, args) =>
       match function_head_name(head) {
         Some(name) => Some((name, args))
         None => None
@@ -1309,7 +1284,7 @@ pub fn applied_parts(expr : Expr) -> (String, Array[Expr])? {
 pub fn application_parts(expr : Expr) -> (Expr, Array[Expr])? {
   let expr = normalize_legacy_expr(expr)
   match expr {
-    Expr::Apply(head, args) => return Some((head, args.map(child => child)))
+    Apply(head, args) => return Some((head, args.map(child => child)))
     _ => ()
   }
   None
@@ -1327,37 +1302,33 @@ pub fn func(expr : Expr) -> Expr? {
     Some((head, _)) => Some(head)
     None =>
       match expr_form(expr) {
-        ExprForm::Number(value) =>
+        Number(value) =>
           Some(
-            Expr::FunctionHead(
+            FunctionHead(
               exact_number_head_name(exact_number_kind_from_rational(value)),
             ),
           )
-        ExprForm::Float(_) => Some(Expr::FunctionHead("Float"))
-        ExprForm::ComplexFloat(_) => Some(Expr::FunctionHead("ComplexFloat"))
-        ExprForm::NumberSymbol(kind) =>
-          Some(Expr::FunctionHead(number_symbol_func_name(kind)))
-        ExprForm::Symbol(_) => Some(Expr::FunctionHead("Symbol"))
-        ExprForm::Dummy(_, _) => Some(Expr::FunctionHead("Dummy"))
-        ExprForm::Wild(_, _, _) => Some(Expr::FunctionHead("Wild"))
-        ExprForm::WildFunction(_, _) => Some(Expr::FunctionHead("WildFunction"))
-        ExprForm::IdentityFunction =>
-          Some(Expr::FunctionHead("IdentityFunction"))
-        ExprForm::Boolean(value) =>
-          Some(Expr::FunctionHead(boolean_func_name(value)))
-        ExprForm::FunctionHead(_) | ExprForm::UndefinedFunction(_) => None
-        ExprForm::Add(_) => Some(Expr::FunctionHead("Add"))
-        ExprForm::Mul(_) => Some(Expr::FunctionHead("Mul"))
-        ExprForm::Pow(_, _) => Some(Expr::FunctionHead("Pow"))
-        ExprForm::Mod(_, _) => Some(Expr::FunctionHead("Mod"))
-        ExprForm::Tuple(_) => Some(Expr::FunctionHead("Tuple"))
-        ExprForm::Dict(_) => Some(Expr::FunctionHead("Dict"))
-        ExprForm::Relational(op, _, _) =>
-          Some(Expr::FunctionHead(relational_func_name(op)))
-        ExprForm::Derivative(_, _) => Some(Expr::FunctionHead("Derivative"))
-        ExprForm::Subs(_, _, _) => Some(Expr::FunctionHead("Subs"))
-        ExprForm::Lambda(_, _) => Some(Expr::FunctionHead("Lambda"))
-        ExprForm::Apply(_, _) => None
+        Float(_) => Some(FunctionHead("Float"))
+        ComplexFloat(_) => Some(FunctionHead("ComplexFloat"))
+        NumberSymbol(kind) => Some(FunctionHead(number_symbol_func_name(kind)))
+        Symbol(_) => Some(FunctionHead("Symbol"))
+        Dummy(_, _) => Some(FunctionHead("Dummy"))
+        Wild(_, _, _) => Some(FunctionHead("Wild"))
+        WildFunction(_, _) => Some(FunctionHead("WildFunction"))
+        IdentityFunction => Some(FunctionHead("IdentityFunction"))
+        Boolean(value) => Some(FunctionHead(boolean_func_name(value)))
+        FunctionHead(_) | UndefinedFunction(_) => None
+        Add(_) => Some(FunctionHead("Add"))
+        Mul(_) => Some(FunctionHead("Mul"))
+        Pow(_, _) => Some(FunctionHead("Pow"))
+        Mod(_, _) => Some(FunctionHead("Mod"))
+        Tuple(_) => Some(FunctionHead("Tuple"))
+        Dict(_) => Some(FunctionHead("Dict"))
+        Relational(op, _, _) => Some(FunctionHead(relational_func_name(op)))
+        Derivative(_, _) => Some(FunctionHead("Derivative"))
+        Subs(_, _, _) => Some(FunctionHead("Subs"))
+        Lambda(_, _) => Some(FunctionHead("Lambda"))
+        Apply(_, _) => None
       }
   }
 }
@@ -1407,60 +1378,57 @@ pub fn application_has_name(
 pub fn args(expr : Expr) -> Array[Expr] {
   let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
-    ExprForm::Number(_)
-    | ExprForm::Float(_)
-    | ExprForm::ComplexFloat(_)
-    | ExprForm::NumberSymbol(_)
-    | ExprForm::Symbol(_)
-    | ExprForm::Dummy(_, _)
-    | ExprForm::Wild(_, _, _)
-    | ExprForm::WildFunction(_, _)
-    | ExprForm::IdentityFunction
-    | ExprForm::FunctionHead(_)
-    | ExprForm::UndefinedFunction(_)
-    | ExprForm::Boolean(_) => []
-    ExprForm::Add(items)
-    | ExprForm::Mul(items)
-    | ExprForm::Tuple(items)
-    | ExprForm::Apply(_, items) => items.copy()
-    ExprForm::Dict(items) => {
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | WildFunction(_, _)
+    | IdentityFunction
+    | FunctionHead(_)
+    | UndefinedFunction(_)
+    | Boolean(_) => []
+    Add(items) | Mul(items) | Tuple(items) | Apply(_, items) => items.copy()
+    Dict(items) => {
       let sorted = sorted_dict_entries(items)
       let out : Array[Expr] = []
       for item in sorted {
         let (key, value) = item
-        out.push(Expr::Tuple([key, value]))
+        out.push(Tuple([key, value]))
       }
       out
     }
-    ExprForm::Pow(base, exp) => [base, exp]
-    ExprForm::Mod(lhs, rhs) => [lhs, rhs]
-    ExprForm::Relational(_, lhs, rhs) => [lhs, rhs]
-    ExprForm::Derivative(inner, deriv_args) => {
+    Pow(base, exp) => [base, exp]
+    Mod(lhs, rhs) => [lhs, rhs]
+    Relational(_, lhs, rhs) => [lhs, rhs]
+    Derivative(inner, deriv_args) => {
       let out : Array[Expr] = [inner]
       let mut i = 0
       while i + 1 < deriv_args.length() {
-        out.push(Expr::Tuple([deriv_args[i], deriv_args[i + 1]]))
+        out.push(Tuple([deriv_args[i], deriv_args[i + 1]]))
         i += 2
       }
       out
     }
-    ExprForm::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       [
         inner,
         match variable {
-          Expr::Tuple(_) => variable
-          _ => Expr::Tuple([variable])
+          Tuple(_) => variable
+          _ => Tuple([variable])
         },
         match value {
-          Expr::Tuple(_) => value
-          _ => Expr::Tuple([value])
+          Tuple(_) => value
+          _ => Tuple([value])
         },
       ]
-    ExprForm::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       [
         match vars {
-          Expr::Tuple(_) => vars
-          _ => Expr::Tuple([vars])
+          Tuple(_) => vars
+          _ => Tuple([vars])
         },
         body,
       ]
@@ -1470,15 +1438,15 @@ pub fn args(expr : Expr) -> Array[Expr] {
 ///|
 fn remove_bound_symbol(out : Map[String, Expr], expr : Expr) -> Unit {
   match expr {
-    Expr::Symbol(name) => ignore(out.remove("sym:\{name}"))
-    Expr::Dummy(_, id) => ignore(out.remove("dummy:\{id}"))
-    Expr::Wild(name, _, _) => ignore(out.remove("wild:\{name}"))
-    Expr::WildFunction(name, _) => ignore(out.remove("wildf:\{name}"))
-    Expr::Tuple(items) =>
+    Symbol(name) => ignore(out.remove("sym:\{name}"))
+    Dummy(_, id) => ignore(out.remove("dummy:\{id}"))
+    Wild(name, _, _) => ignore(out.remove("wild:\{name}"))
+    WildFunction(name, _) => ignore(out.remove("wildf:\{name}"))
+    Tuple(items) =>
       for item in items {
         remove_bound_symbol(out, item)
       }
-    Expr::Dict(items) =>
+    Dict(items) =>
       for item in items {
         let (key, value) = item
         remove_bound_symbol(out, key)
@@ -1486,11 +1454,11 @@ fn remove_bound_symbol(out : Map[String, Expr], expr : Expr) -> Unit {
       }
     _ =>
       match expr_form(expr) {
-        ExprForm::Tuple(items) =>
+        Tuple(items) =>
           for item in items {
             remove_bound_symbol(out, item)
           }
-        ExprForm::Dict(items) =>
+        Dict(items) =>
           for item in items {
             let (key, value) = item
             remove_bound_symbol(out, key)
@@ -1504,68 +1472,67 @@ fn remove_bound_symbol(out : Map[String, Expr], expr : Expr) -> Unit {
 ///|
 fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
   match expr {
-    Expr::Symbol(name) => {
+    Symbol(name) => {
       out.set("sym:\{name}", expr)
       return
     }
-    Expr::Dummy(_, id) => {
+    Dummy(_, id) => {
       out.set("dummy:\{id}", expr)
       return
     }
-    Expr::Wild(name, _, _) => {
+    Wild(name, _, _) => {
       out.set("wild:\{name}", expr)
       return
     }
-    Expr::WildFunction(name, _) => {
+    WildFunction(name, _) => {
       out.set("wildf:\{name}", expr)
       return
     }
-    Expr::FunctionHead(_) | Expr::UndefinedFunction(_) | Expr::Boolean(_) =>
-      return
+    FunctionHead(_) | UndefinedFunction(_) | Boolean(_) => return
     _ => ()
   }
   match expr_form(expr) {
-    ExprForm::Number(_)
-    | ExprForm::Float(_)
-    | ExprForm::ComplexFloat(_)
-    | ExprForm::NumberSymbol(_)
-    | ExprForm::Dummy(_, _)
-    | ExprForm::Wild(_, _, _)
-    | ExprForm::WildFunction(_, _)
-    | ExprForm::IdentityFunction
-    | ExprForm::FunctionHead(_)
-    | ExprForm::UndefinedFunction(_)
-    | ExprForm::Boolean(_) => ()
-    ExprForm::Symbol(name) => out.set("sym:\{name}", expr)
-    ExprForm::Add(items) | ExprForm::Mul(items) | ExprForm::Tuple(items) =>
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | WildFunction(_, _)
+    | IdentityFunction
+    | FunctionHead(_)
+    | UndefinedFunction(_)
+    | Boolean(_) => ()
+    Symbol(name) => out.set("sym:\{name}", expr)
+    Add(items) | Mul(items) | Tuple(items) =>
       for item in items {
         free_symbol_map(item, out)
       }
-    ExprForm::Apply(head, items) => {
+    Apply(head, items) => {
       free_symbol_map(head, out)
       for item in items {
         free_symbol_map(item, out)
       }
     }
-    ExprForm::Dict(items) =>
+    Dict(items) =>
       for item in items {
         let (key, value) = item
         free_symbol_map(key, out)
         free_symbol_map(value, out)
       }
-    ExprForm::Pow(base, exp) => {
+    Pow(base, exp) => {
       free_symbol_map(base, out)
       free_symbol_map(exp, out)
     }
-    ExprForm::Mod(lhs, rhs) => {
+    Mod(lhs, rhs) => {
       free_symbol_map(lhs, out)
       free_symbol_map(rhs, out)
     }
-    ExprForm::Relational(_, lhs, rhs) => {
+    Relational(_, lhs, rhs) => {
       free_symbol_map(lhs, out)
       free_symbol_map(rhs, out)
     }
-    ExprForm::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       free_symbol_map(inner, out)
       let pair_count = deriv_args.length() / 2
       for i in 0..<pair_count {
@@ -1577,7 +1544,7 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
         }
       }
     }
-    ExprForm::Subs(inner, variable, value) => {
+    Subs(inner, variable, value) => {
       let inner_symbols : Map[String, Expr] = Map([])
       free_symbol_map(inner, inner_symbols)
       remove_bound_symbol(inner_symbols, variable)
@@ -1586,7 +1553,7 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
       }
       free_symbol_map(value, out)
     }
-    ExprForm::Lambda(vars, body) => {
+    Lambda(vars, body) => {
       free_symbol_map(body, out)
       remove_bound_symbol(out, vars)
     }
@@ -1599,7 +1566,7 @@ fn exact_number_matches_head(
   needle_name : String,
 ) -> Bool {
   match kind {
-    ExactNumberKind::Zero =>
+    Zero =>
       match needle_name {
         "Zero"
         | "Integer"
@@ -1611,7 +1578,7 @@ fn exact_number_matches_head(
         | "Basic" => true
         _ => false
       }
-    ExactNumberKind::One =>
+    One =>
       match needle_name {
         "One"
         | "Integer"
@@ -1623,7 +1590,7 @@ fn exact_number_matches_head(
         | "Basic" => true
         _ => false
       }
-    ExactNumberKind::NegativeOne =>
+    NegativeOne =>
       match needle_name {
         "NegativeOne"
         | "Integer"
@@ -1635,7 +1602,7 @@ fn exact_number_matches_head(
         | "Basic" => true
         _ => false
       }
-    ExactNumberKind::Half =>
+    Half =>
       match needle_name {
         "Half"
         | "Rational"
@@ -1646,7 +1613,7 @@ fn exact_number_matches_head(
         | "Basic" => true
         _ => false
       }
-    ExactNumberKind::Integer =>
+    Integer =>
       match needle_name {
         "Integer"
         | "Rational"
@@ -1657,7 +1624,7 @@ fn exact_number_matches_head(
         | "Basic" => true
         _ => false
       }
-    ExactNumberKind::Rational =>
+    Rational =>
       match needle_name {
         "Rational" | "Number" | "AtomicExpr" | "Atom" | "Expr" | "Basic" => true
         _ => false
@@ -1669,119 +1636,119 @@ fn exact_number_matches_head(
 fn expr_matches_class_head(expr : Expr, needle_name : String) -> Bool {
   let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
-    ExprForm::Number(value) =>
+    Number(value) =>
       exact_number_matches_head(
         exact_number_kind_from_rational(value),
         needle_name,
       )
-    ExprForm::Float(_) =>
+    Float(_) =>
       match needle_name {
         "Float" | "Number" | "AtomicExpr" | "Atom" | "Expr" | "Basic" => true
         _ => false
       }
-    ExprForm::ComplexFloat(_) =>
+    ComplexFloat(_) =>
       match needle_name {
         "ComplexFloat" | "Number" | "AtomicExpr" | "Atom" | "Expr" | "Basic" =>
           true
         _ => false
       }
-    ExprForm::NumberSymbol(_) =>
+    NumberSymbol(_) =>
       match needle_name {
         "NumberSymbol" | "Number" | "AtomicExpr" | "Atom" | "Expr" | "Basic" =>
           true
         _ => false
       }
-    ExprForm::Symbol(_) =>
+    Symbol(_) =>
       match needle_name {
         "Symbol" | "AtomicExpr" | "Atom" | "Expr" | "Basic" => true
         _ => false
       }
-    ExprForm::Dummy(_, _) =>
+    Dummy(_, _) =>
       match needle_name {
         "Dummy" | "Symbol" | "AtomicExpr" | "Atom" | "Expr" | "Basic" => true
         _ => false
       }
-    ExprForm::Wild(_, _, _) =>
+    Wild(_, _, _) =>
       match needle_name {
         "Wild" | "Symbol" | "AtomicExpr" | "Atom" | "Expr" | "Basic" => true
         _ => false
       }
-    ExprForm::WildFunction(_, _) =>
+    WildFunction(_, _) =>
       match needle_name {
         "WildFunction" | "Basic" => true
         _ => false
       }
-    ExprForm::FunctionHead(_) =>
+    FunctionHead(_) =>
       match needle_name {
         "FunctionClass" | "Basic" => true
         _ => false
       }
-    ExprForm::UndefinedFunction(_) =>
+    UndefinedFunction(_) =>
       match needle_name {
         "UndefinedFunction" | "FunctionClass" | "Basic" => true
         _ => false
       }
-    ExprForm::IdentityFunction =>
+    IdentityFunction =>
       match needle_name {
         "IdentityFunction" | "FunctionClass" | "Basic" => true
         _ => false
       }
-    ExprForm::Boolean(_) =>
+    Boolean(_) =>
       match needle_name {
         "Boolean" | "Basic" => true
         _ => false
       }
-    ExprForm::Add(_) =>
+    Add(_) =>
       match needle_name {
         "Add" | "Expr" | "Basic" => true
         _ => false
       }
-    ExprForm::Mul(_) =>
+    Mul(_) =>
       match needle_name {
         "Mul" | "Expr" | "Basic" => true
         _ => false
       }
-    ExprForm::Pow(_, _) =>
+    Pow(_, _) =>
       match needle_name {
         "Pow" | "Expr" | "Basic" => true
         _ => false
       }
-    ExprForm::Mod(_, _) =>
+    Mod(_, _) =>
       match needle_name {
         "Mod" | "Function" | "Application" | "Expr" | "Basic" => true
         _ => false
       }
-    ExprForm::Tuple(_) =>
+    Tuple(_) =>
       match needle_name {
         "Tuple" | "Basic" => true
         _ => false
       }
-    ExprForm::Dict(_) =>
+    Dict(_) =>
       match needle_name {
         "Dict" | "Basic" => true
         _ => false
       }
-    ExprForm::Relational(_, _, _) =>
+    Relational(_, _, _) =>
       match needle_name {
         "Relational" | "Boolean" | "Basic" => true
         _ => false
       }
-    ExprForm::Derivative(_, _) =>
+    Derivative(_, _) =>
       match needle_name {
         "Derivative" | "Expr" | "Basic" => true
         _ => false
       }
-    ExprForm::Subs(_, _, _) =>
+    Subs(_, _, _) =>
       match needle_name {
         "Subs" | "Expr" | "Basic" => true
         _ => false
       }
-    ExprForm::Lambda(_, _) =>
+    Lambda(_, _) =>
       match needle_name {
         "Lambda" | "Expr" | "Basic" => true
         _ => false
       }
-    ExprForm::Apply(_, _) =>
+    Apply(_, _) =>
       match needle_name {
         "Function" | "Application" | "Expr" | "Basic" => true
         _ => false
@@ -1816,9 +1783,9 @@ fn has_matcher(expr : Expr, needle : Expr) -> Bool {
   let expr = normalize_legacy_expr(expr)
   let needle = normalize_legacy_expr(needle)
   match (expr_form(expr), expr_form(needle)) {
-    (ExprForm::Add(expr_items), ExprForm::Add(needle_items)) =>
+    (Add(expr_items), Add(needle_items)) =>
       contains_commutative_subexpr(expr_items, needle_items)
-    (ExprForm::Mul(expr_items), ExprForm::Mul(needle_items)) =>
+    (Mul(expr_items), Mul(needle_items)) =>
       contains_commutative_subexpr(expr_items, needle_items)
     _ => false
   }
@@ -1857,8 +1824,7 @@ pub fn has(expr : Expr, needle : Expr) -> Bool {
     return true
   }
   match needle {
-    Expr::FunctionHead(name) if expr_matches_class_head(expr, name) =>
-      return true
+    FunctionHead(name) if expr_matches_class_head(expr, name) => return true
     _ => ()
   }
   match func(expr) {

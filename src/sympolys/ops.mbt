@@ -12,11 +12,11 @@ pub fn Poly::resultant_poly(
   other : Poly,
   gen_index : Int,
 ) -> Poly raise PolyError {
-  if self.domain.not_equal(other.domain) || self.gens != other.gens {
-    raise PolyError::DomainMismatch
+  if Eq::not_equal(self.domain, other.domain) || self.gens != other.gens {
+    raise DomainMismatch
   }
   if gen_index < 0 || gen_index >= self.gens.length() {
-    raise PolyError::BadGenerator("\{gen_index}".to_string())
+    raise BadGenerator("\{gen_index}".to_string())
   }
   let poly = resultant_elim_poly(self, other, gen_index)
   poly.with_order(self.order)
@@ -35,10 +35,10 @@ pub fn Poly::resultant_poly(
 /// ```mbt check
 /// test "sympolys resultant computes the eliminated scalar" {
 ///   let x = @symcore.Expr::Symbol("x")
-///   let builder = PolyBuilder::new(["x"], Domain::ZZ)
+///   let builder = PolyBuilder::new(["x"], ZZ)
 ///   let f = builder.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
 ///   let g = builder.from_expr(x - @symcore.int(1))
-///   inspect(f.resultant(g, 0).to_string(), content="0")
+///   inspect(Show::to_string(f.resultant(g, 0)), content="0")
 /// }
 /// ```
 pub fn Poly::resultant(
@@ -89,7 +89,7 @@ pub fn resultant_expr(
   )
   match find_index(resolved_gens, var_name) {
     Some(i) => f.resultant_poly(g, i).to_expr()
-    None => raise PolyError::BadGenerator(var_name)
+    None => raise BadGenerator(var_name)
   }
 }
 
@@ -131,7 +131,7 @@ pub fn resultant_expr_scalar(
   )
   match find_index(resolved_gens, var_name) {
     Some(i) => f.resultant(g, i)
-    None => raise PolyError::BadGenerator(var_name)
+    None => raise BadGenerator(var_name)
   }
 }
 
@@ -179,10 +179,10 @@ fn build_resultant_inputs(
   )
   let ord = match order {
     Some(o) => o
-    None => TermOrder::Lex
+    None => Lex
   }
   let mod_opt = match resolved_domain {
-    Domain::GF(p) => Some(p)
+    GF(p) => Some(p)
     _ => None
   }
   let f = match mod_opt {
@@ -221,7 +221,7 @@ fn build_resultant_inputs(
   }
   match find_index(resolved_gens, var_name) {
     Some(_) => (f, g, resolved_gens)
-    None => raise PolyError::BadGenerator(var_name)
+    None => raise BadGenerator(var_name)
   }
 }
 
@@ -249,7 +249,7 @@ fn pow_big_rational(
   exp : Int,
 ) -> @symnum.BigRational raise PolyError {
   if exp < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let mut acc = @symnum.BigRational::one()
   let mut e = exp
@@ -272,17 +272,17 @@ fn resultant_univar(a : Poly, b : Poly) -> @symnum.BigRational raise PolyError {
   if a.is_zero() || b.is_zero() {
     return @symnum.BigRational::zero()
   }
-  let mut p = if a.domain is Domain::QQ { a } else { lift_to_qq(a) }
-  let mut q = if b.domain is Domain::QQ { b } else { lift_to_qq(b) }
+  let mut p = if a.domain is QQ { a } else { lift_to_qq(a) }
+  let mut q = if b.domain is QQ { b } else { lift_to_qq(b) }
   let mut res = @symnum.BigRational::one()
   while true {
     let (deg_p, _) = match leading_data_univar(p) {
       Some(v) => v
-      None => raise PolyError::DivisionByZero
+      None => raise DivisionByZero
     }
     let (deg_q, lc_q_fe) = match leading_data_univar(q) {
       Some(v) => v
-      None => raise PolyError::DivisionByZero
+      None => raise DivisionByZero
     }
     let lc_q = fe_expect_rational(lc_q_fe)
     if deg_q == 0 {
@@ -295,7 +295,7 @@ fn resultant_univar(a : Poly, b : Poly) -> @symnum.BigRational raise PolyError {
     }
     let (deg_r, _) = match leading_data_univar(r) {
       Some(v) => v
-      None => raise PolyError::DivisionByZero
+      None => raise DivisionByZero
     }
     res = res.mul_r(pow_big_rational(lc_q, deg_p - deg_r))
     if deg_p * deg_q % 2 == 1 {
@@ -304,7 +304,7 @@ fn resultant_univar(a : Poly, b : Poly) -> @symnum.BigRational raise PolyError {
     p = q
     q = r
   }
-  raise PolyError::DivisionByZero
+  raise DivisionByZero
 }
 
 ///|
@@ -314,9 +314,9 @@ fn resultant_elim_poly(
   gen_index : Int,
 ) -> Poly raise PolyError {
   if a.gens.length() <= gen_index || b.gens.length() <= gen_index {
-    raise PolyError::BadGenerator("\{gen_index}".to_string())
+    raise BadGenerator("\{gen_index}".to_string())
   }
-  let use_qq_lift = a.domain is Domain::ZZ
+  let use_qq_lift = a.domain is ZZ
   let work_a = if use_qq_lift { lift_to_qq(a) } else { a }
   let work_b = if use_qq_lift { lift_to_qq(b) } else { b }
   let out_gens = remove_gen(work_a.gens, gen_index)
@@ -408,7 +408,7 @@ fn poly_from_const_coeff(
   let mono = monomial_one(gens.length())
   let coeffs : Map[Monomial, FieldElem] = Map([])
   add_term(coeffs, mono, coeff, domain)
-  Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
+  { coeffs, gens, domain, order: Lex }
 }
 
 ///|
@@ -419,7 +419,7 @@ fn poly_const_rational(poly : Poly) -> @symnum.BigRational raise PolyError {
   let mut value : @symnum.BigRational? = None
   for m, c in poly.coeffs {
     if !m.exps.all(e => e == 0) {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     value = match value {
       None => Some(fe_expect_rational(c))

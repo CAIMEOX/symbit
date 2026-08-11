@@ -23,7 +23,7 @@ test "physics.paulialgebra: delta and epsilon parity" {
 
 ///|
 test "physics.paulialgebra: evaluate parity" {
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let sigma1 = pauli(1)
   let sigma2 = pauli(2)
   let sigma3 = pauli(3)

@@ -1,16 +1,16 @@
 ///|
 fn expr_placeholder_x() -> @symcore.Expr {
-  @symcore.Expr::Symbol("x")
+  Symbol("x")
 }
 
 ///|
 fn expr_placeholder_y() -> @symcore.Expr {
-  @symcore.Expr::Symbol("y")
+  Symbol("y")
 }
 
 ///|
 fn expr_placeholder_z() -> @symcore.Expr {
-  @symcore.Expr::Symbol("z")
+  Symbol("z")
 }
 
 ///|
@@ -38,23 +38,20 @@ fn matrix_simplify_entries(
 ///|
 fn coord_transform_name(transform : CoordTransform) -> String {
   match transform {
-    CoordTransform::Cartesian => "cartesian"
-    CoordTransform::Cylindrical => "cylindrical"
-    CoordTransform::Spherical => "spherical"
-    CoordTransform::LambdaTransform(_) => "lambda"
-    CoordTransform::TupleTransform(_, _) => "tuple"
+    Cartesian => "cartesian"
+    Cylindrical => "cylindrical"
+    Spherical => "spherical"
+    LambdaTransform(_) => "lambda"
+    TupleTransform(_, _) => "tuple"
   }
 }
 
 ///|
 fn coord_transform_key(transform : CoordTransform) -> String {
   match transform {
-    CoordTransform::Cartesian
-    | CoordTransform::Cylindrical
-    | CoordTransform::Spherical => coord_transform_name(transform)
-    CoordTransform::LambdaTransform(function) =>
-      "lambda|" + expr_array_key(function.equations_)
-    CoordTransform::TupleTransform(rotation_matrix, location) =>
+    Cartesian | Cylindrical | Spherical => coord_transform_name(transform)
+    LambdaTransform(function) => "lambda|" + expr_array_key(function.equations_)
+    TupleTransform(rotation_matrix, location) =>
       "tuple|" +
       matrix_expr_key(rotation_matrix) +
       "|" +
@@ -126,26 +123,26 @@ fn coord_transform_to_parent_exprs(
   vars : Array[@symcore.Expr],
 ) -> Array[@symcore.Expr] {
   match transform {
-    CoordTransform::Cartesian => [vars[0], vars[1], vars[2]]
-    CoordTransform::Cylindrical =>
+    Cartesian => [vars[0], vars[1], vars[2]]
+    Cylindrical =>
       [
         vars[0] * @symelem.cos(vars[1]),
         vars[0] * @symelem.sin(vars[1]),
         vars[2],
       ]
-    CoordTransform::Spherical =>
+    Spherical =>
       [
         vars[0] * @symelem.sin(vars[1]) * @symelem.cos(vars[2]),
         vars[0] * @symelem.sin(vars[1]) * @symelem.sin(vars[2]),
         vars[0] * @symelem.cos(vars[1]),
       ]
-    CoordTransform::LambdaTransform(function) =>
+    LambdaTransform(function) =>
       TransformFunction::{ equations_: function.equations_ }.call(
         vars[0],
         vars[1],
         vars[2],
       )
-    CoordTransform::TupleTransform(_, _) => [vars[0], vars[1], vars[2]]
+    TupleTransform(_, _) => [vars[0], vars[1], vars[2]]
   }
 }
 
@@ -157,14 +154,14 @@ fn coord_transform_inverse_template(
   let y = expr_placeholder_y()
   let z = expr_placeholder_z()
   match transform {
-    CoordTransform::Cartesian => [x, y, z]
-    CoordTransform::Cylindrical =>
+    Cartesian => [x, y, z]
+    Cylindrical =>
       [
         @symelem.sqrt((x ^ @symcore.int(2)) + (y ^ @symcore.int(2))),
         @symelem.atan2(y, x),
         z,
       ]
-    CoordTransform::Spherical => {
+    Spherical => {
       let radius = @symelem.sqrt(
         (x ^ @symcore.int(2)) + (y ^ @symcore.int(2)) + (z ^ @symcore.int(2)),
       )
@@ -174,8 +171,7 @@ fn coord_transform_inverse_template(
         @symelem.atan2(y, x),
       ]
     }
-    CoordTransform::LambdaTransform(_) | CoordTransform::TupleTransform(_, _) =>
-      [x, y, z]
+    LambdaTransform(_) | TupleTransform(_, _) => [x, y, z]
   }
 }
 
@@ -280,12 +276,11 @@ fn coord_transform_lame_coefficients(
   vars : Array[@symcore.Expr],
 ) -> Array[@symcore.Expr] {
   match transform {
-    CoordTransform::Cartesian | CoordTransform::TupleTransform(_, _) =>
+    Cartesian | TupleTransform(_, _) =>
       [@symcore.int(1), @symcore.int(1), @symcore.int(1)]
-    CoordTransform::Cylindrical => [@symcore.int(1), vars[0], @symcore.int(1)]
-    CoordTransform::Spherical =>
-      [@symcore.int(1), vars[0], vars[0] * @symelem.sin(vars[1])]
-    CoordTransform::LambdaTransform(function) =>
+    Cylindrical => [@symcore.int(1), vars[0], @symcore.int(1)]
+    Spherical => [@symcore.int(1), vars[0], vars[0] * @symelem.sin(vars[1])]
+    LambdaTransform(function) =>
       subst_expr_array(
         coord_transform_lame_template(function),
         transform_template_env(vars[0], vars[1], vars[2]),
@@ -350,7 +345,7 @@ fn coord_transform_basis_matrix(
   vars : Array[@symcore.Expr],
 ) -> @symphysics.ExplicitMatrix {
   match transform {
-    CoordTransform::Cartesian =>
+    Cartesian =>
       matrix_simplify_entries(
         @symphysics.explicit_matrix_from_rows([
           [@symcore.int(1), @symcore.int(0), @symcore.int(0)],
@@ -360,7 +355,7 @@ fn coord_transform_basis_matrix(
           _ => abort("coord_transform_basis_matrix-cartesian")
         },
       )
-    CoordTransform::Cylindrical =>
+    Cylindrical =>
       matrix_simplify_entries(
         @symphysics.explicit_matrix_from_rows([
           [
@@ -374,7 +369,7 @@ fn coord_transform_basis_matrix(
           _ => abort("coord_transform_basis_matrix-cylindrical")
         },
       )
-    CoordTransform::Spherical =>
+    Spherical =>
       matrix_simplify_entries(
         @symphysics.explicit_matrix_from_rows([
           [
@@ -396,12 +391,12 @@ fn coord_transform_basis_matrix(
           _ => abort("coord_transform_basis_matrix-spherical")
         },
       )
-    CoordTransform::LambdaTransform(function) =>
+    LambdaTransform(function) =>
       coord_transform_basis_matrix_from_function(
         function,
         coord_transform_lame_coefficients(transform, vars),
       ).0
-    CoordTransform::TupleTransform(_, _) => @symphysics.explicit_matrix_eye(3)
+    TupleTransform(_, _) => @symphysics.explicit_matrix_eye(3)
   }
 }
 
@@ -473,13 +468,13 @@ fn solve_inverse_template(
   catch {
     _ => None
   } noraise {
-    @symsolvers.SolveResult::Dict(values) =>
+    Dict(values) =>
       Some([
         values.get("u").unwrap_or(u),
         values.get("v").unwrap_or(v),
         values.get("w").unwrap_or(w),
       ])
-    @symsolvers.SolveResult::Dicts(items) =>
+    Dicts(items) =>
       if items.is_empty() {
         None
       } else {
@@ -490,7 +485,7 @@ fn solve_inverse_template(
           values.get("w").unwrap_or(w),
         ])
       }
-    @symsolvers.SolveResult::List(_) => None
+    List(_) => None
   }
 }
 
@@ -507,7 +502,7 @@ fn column_to_array(matrix : @symphysics.ExplicitMatrix) -> Array[@symcore.Expr] 
 
 ///|
 fn vector_matrix_key(vector : Vector) -> String {
-  vector.to_string()
+  Show::to_string(vector)
 }
 
 ///|
@@ -518,9 +513,9 @@ fn coord_path(
   if from_object.root_key_ != to_object.root_key_ {
     @rawvec.raise_value_error(
       "No connecting path found between " +
-      from_object.to_string() +
+      Show::to_string(from_object) +
       " and " +
-      to_object.to_string(),
+      Show::to_string(to_object),
     )
   }
   let other_path : Array[CoordSys3D] = []
@@ -558,9 +553,9 @@ fn coord_path(
       None =>
         @rawvec.raise_value_error(
           "No connecting path found between " +
-          from_object.to_string() +
+          Show::to_string(from_object) +
           " and " +
-          to_object.to_string(),
+          Show::to_string(to_object),
         )
     }
   }

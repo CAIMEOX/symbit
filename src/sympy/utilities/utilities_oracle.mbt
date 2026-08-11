@@ -71,9 +71,9 @@ fn ensure_repo_sympy_path() -> Unit raise {
   ignore(
     exec_fn.invoke(
       args=@sympy.py_pack_args([
-        OracleArg::Str(script),
-        OracleArg::PyObj(globals.obj()),
-        OracleArg::PyObj(globals.obj()),
+        Str(script),
+        PyObj(globals.obj()),
+        PyObj(globals.obj()),
       ]),
       kwargs=@sympy.py_pack_kwargs({}),
       print_err=true,
@@ -135,23 +135,23 @@ pub fn utilities_eval(expr : String) -> @py.PyObjectEnum raise {
       None => fail("py-sympy-attr-missing: Symbol")
     }
     for name in ["x", "y", "z", "C1", "C2", "C3", "u2", "_a"] {
-      let sym_args = @sympy.py_pack_args([OracleArg::Str(name)])
+      let sym_args = @sympy.py_pack_args([Str(name)])
       match py_call_object(symbol_ctor, sym_args, print_err=true) {
         Some(obj) => globals.set(name, objenum_to_obj(obj))
         None => fail("py-symbol-alias-missing: " + name)
       }
     }
     for name in ["f", "g", "h", "u", "X", "Y"] {
-      let fn_args = @sympy.py_pack_args([OracleArg::Str(name)])
+      let fn_args = @sympy.py_pack_args([Str(name)])
       match py_call_object(function_ctor, fn_args, print_err=true) {
         Some(obj) => globals.set(name, objenum_to_obj(obj))
         None => fail("py-function-alias-missing: " + name)
       }
     }
     let args = @sympy.py_pack_args([
-      OracleArg::Str(expr),
-      OracleArg::PyObj(globals.obj()),
-      OracleArg::PyObj(globals.obj()),
+      Str(expr),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match py_call_object(eval_callable, args, print_err=true) {
       Some(obj) => obj

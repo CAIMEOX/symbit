@@ -10,8 +10,8 @@ pub struct IndexInfo {
 ///|
 fn index_name(index : Index) -> String {
   match index {
-    Index::Expr(expr) => @symprint.pretty_string(expr)
-    Index::Idx(item) => item.name
+    Expr(expr) => @symprint.pretty_string(expr)
+    Idx(item) => item.name
   }
 }
 
@@ -32,14 +32,14 @@ fn count_indices(expr : IndexedExpr) -> Map[String, Int] {
     counts[name] = current + 1
   }
   match expr {
-    IndexedExpr::Atom(item) =>
+    Atom(item) =>
       for name in collect_index_names(item) {
         bump(name)
       }
-    IndexedExpr::Mul(items) =>
+    Mul(items) =>
       for item in items {
         match item {
-          IndexedExpr::Atom(atom) =>
+          Atom(atom) =>
             for name in collect_index_names(atom) {
               bump(name)
             }
@@ -61,7 +61,7 @@ fn merge_names(target : Map[String, Bool], names : Array[String]) -> Unit {
 ///|
 pub fn get_indices(expr : IndexedExpr) -> IndexInfo {
   match expr {
-    IndexedExpr::Add(items) => {
+    Add(items) => {
       let free_set : Map[String, Bool] = Map([])
       let dummy_set : Map[String, Bool] = Map([])
       for item in items {
@@ -69,12 +69,9 @@ pub fn get_indices(expr : IndexedExpr) -> IndexInfo {
         merge_names(free_set, info.free)
         merge_names(dummy_set, info.dummy)
       }
-      IndexInfo::{
-        free: free_set.keys().to_array(),
-        dummy: dummy_set.keys().to_array(),
-      }
+      { free: free_set.keys().to_array(), dummy: dummy_set.keys().to_array() }
     }
-    IndexedExpr::Mul(_) | IndexedExpr::Atom(_) => {
+    Mul(_) | Atom(_) => {
       let counts = count_indices(expr)
       let free : Array[String] = Array::new()
       let dummy : Array[String] = Array::new()
@@ -88,9 +85,9 @@ pub fn get_indices(expr : IndexedExpr) -> IndexInfo {
       }
       free.sort()
       dummy.sort()
-      IndexInfo::{ free, dummy }
+      { free, dummy }
     }
-    _ => IndexInfo::{ free: [], dummy: [] }
+    _ => { free: [], dummy: [] }
   }
 }
 
@@ -113,11 +110,11 @@ pub fn get_contraction_structure(
   fn process_term(term : IndexedExpr) -> Unit {
     let atoms : Array[Indexed] = Array::new()
     match term {
-      IndexedExpr::Atom(item) => atoms.push(item)
-      IndexedExpr::Mul(items) =>
+      Atom(item) => atoms.push(item)
+      Mul(items) =>
         for item in items {
           match item {
-            IndexedExpr::Atom(atom) => atoms.push(atom)
+            Atom(atom) => atoms.push(atom)
             _ => ()
           }
         }
@@ -135,7 +132,7 @@ pub fn get_contraction_structure(
     }
   }
   match expr {
-    IndexedExpr::Add(items) =>
+    Add(items) =>
       for item in items {
         process_term(item)
       }

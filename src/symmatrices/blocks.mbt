@@ -50,18 +50,14 @@ pub fn block_matrix(rows : Array[Array[Matrix]]) -> Matrix raise MatrixError {
   let first_width = rows[0].length()
   for row in rows {
     if row.length() != first_width {
-      raise MatrixError::ShapeError(
-        "block_matrix expects rectangular block layout",
-      )
+      raise ShapeError("block_matrix expects rectangular block layout")
     }
   }
   for row in rows {
     let height = if row.is_empty() { 0 } else { row[0].rows }
     for block in row {
       if block.rows != height {
-        raise MatrixError::ShapeError(
-          "blocks in the same row must have equal heights",
-        )
+        raise ShapeError("blocks in the same row must have equal heights")
       }
     }
     row_heights.push(height)
@@ -70,9 +66,7 @@ pub fn block_matrix(rows : Array[Array[Matrix]]) -> Matrix raise MatrixError {
     let width = if rows[0].is_empty() { 0 } else { rows[0][j].cols }
     for i in 0..<rows.length() {
       if rows[i][j].cols != width {
-        raise MatrixError::ShapeError(
-          "blocks in the same column must have equal widths",
-        )
+        raise ShapeError("blocks in the same column must have equal widths")
       }
     }
     col_widths.push(width)

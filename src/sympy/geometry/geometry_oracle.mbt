@@ -69,7 +69,7 @@ fn geometry_globals() -> @py.PyDict raise {
   for name in ["a", "b", "c", "x", "y", "z", "t", "u", "v"] {
     match
       symbols_fn.invoke(
-        args=@sympy.py_pack_args([OracleArg::Str(name)]),
+        args=@sympy.py_pack_args([Str(name)]),
         kwargs=@sympy.py_pack_kwargs({}),
         print_err=true,
       ) {
@@ -97,9 +97,9 @@ fn py_eval_geometry(expr : String) -> @py.PyObjectEnum raise {
     }
     let globals = geometry_globals()
     let args = @sympy.py_pack_args([
-      OracleArg::Str(expr),
-      OracleArg::PyObj(globals.obj()),
-      OracleArg::PyObj(globals.obj()),
+      Str(expr),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match @sympy.py_call_object(eval_callable, args, print_err=true) {
       Some(obj) => obj
@@ -138,7 +138,7 @@ pub fn geometry_eval_repr(expr : String) -> String raise {
     let obj = objenum_to_obj(py_eval_geometry(expr))
     match
       repr_callable.invoke(
-        args=@sympy.py_pack_args([OracleArg::PyObj(obj)]),
+        args=@sympy.py_pack_args([PyObj(obj)]),
         kwargs=@sympy.py_pack_kwargs({}),
         print_err=true,
       ) {
@@ -189,9 +189,9 @@ pub fn geometry_summary(expr : String) -> String raise {
       match
         exec_callable.invoke(
           args=@sympy.py_pack_args([
-            OracleArg::Str(script),
-            OracleArg::PyObj(globals.obj()),
-            OracleArg::PyObj(globals.obj()),
+            Str(script),
+            PyObj(globals.obj()),
+            PyObj(globals.obj()),
           ]),
           kwargs=@sympy.py_pack_kwargs({}),
           print_err=true,
@@ -203,9 +203,9 @@ pub fn geometry_summary(expr : String) -> String raise {
     let value = match
       eval_callable.invoke(
         args=@sympy.py_pack_args([
-          OracleArg::Str("_symbit_geometry_summary(" + expr + ")"),
-          OracleArg::PyObj(globals.obj()),
-          OracleArg::PyObj(globals.obj()),
+          Str("_symbit_geometry_summary(" + expr + ")"),
+          PyObj(globals.obj()),
+          PyObj(globals.obj()),
         ]),
         kwargs=@sympy.py_pack_kwargs({}),
         print_err=true,
@@ -227,32 +227,27 @@ pub fn geometry_summary(expr : String) -> String raise {
 ///|
 pub fn geometry_expr_equal(lhs : String, rhs : String) -> Bool raise {
   let kwargs : Map[String, OracleArg] = {
-    "locals": OracleArg::PyObj(geometry_globals().obj()),
+    "locals": PyObj(geometry_globals().obj()),
   }
   let lhs_obj = objenum_to_obj(
-    match @sympy.sympy_call("sympy.sympify", [OracleArg::Str(lhs)], kwargs~) {
+    match @sympy.sympy_call("sympy.sympify", [Str(lhs)], kwargs~) {
       Some(v) => v
       None => fail("sympy-call-none:sympy.sympify")
     },
   )
   let rhs_obj = objenum_to_obj(
-    match @sympy.sympy_call("sympy.sympify", [OracleArg::Str(rhs)], kwargs~) {
+    match @sympy.sympy_call("sympy.sympify", [Str(rhs)], kwargs~) {
       Some(v) => v
       None => fail("sympy-call-none:sympy.sympify")
     },
   )
   let eq_obj = match
-    @sympy.sympy_call("sympy.Eq", [
-      OracleArg::PyObj(lhs_obj),
-      OracleArg::PyObj(rhs_obj),
-    ]) {
+    @sympy.sympy_call("sympy.Eq", [PyObj(lhs_obj), PyObj(rhs_obj)]) {
     Some(v) => v
     None => fail("sympy-call-none:sympy.Eq")
   }
   let simplified = match
-    @sympy.sympy_call("sympy.simplify", [
-      OracleArg::PyObj(objenum_to_obj(eq_obj)),
-    ]) {
+    @sympy.sympy_call("sympy.simplify", [PyObj(objenum_to_obj(eq_obj))]) {
     Some(v) => py_str_enum(v)
     None => fail("sympy-call-none:sympy.simplify")
   }

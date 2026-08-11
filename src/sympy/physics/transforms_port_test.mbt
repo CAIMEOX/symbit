@@ -1,11 +1,11 @@
 ///|
 test "physics.quantum.transforms: parity" {
-  let k1 = ket([@symcore.Expr::Symbol("k1")]).as_expr()
-  let k2 = ket([@symcore.Expr::Symbol("k2")]).as_expr()
-  let b1 = bra([@symcore.Expr::Symbol("k1")]).as_expr()
-  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
-  let b = operator([@symcore.Expr::Symbol("B")]).as_expr()
-  let c = operator([@symcore.Expr::Symbol("C")]).as_expr()
+  let k1 = ket([Symbol("k1")]).as_expr()
+  let k2 = ket([Symbol("k2")]).as_expr()
+  let b1 = bra([Symbol("k1")]).as_expr()
+  let a = operator([Symbol("A")]).as_expr()
+  let b = operator([Symbol("B")]).as_expr()
+  let c = operator([Symbol("C")]).as_expr()
 
   quantum_test_assert_string_equal(
     quantum_eval_str(
@@ -95,7 +95,7 @@ test "physics.quantum.transforms: parity" {
     quantum_eval_str(
       @symprint.pretty_string(
         quantum_canonical_pow(
-          fermion_op(@symcore.Expr::Symbol("c")).as_expr(),
+          fermion_op(Symbol("c")).as_expr(),
           @symcore.int(2),
         ),
       ),

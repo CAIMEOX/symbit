@@ -171,16 +171,16 @@ fn fe_quo_ground(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   if fe_is_zero(b) {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   match domain {
-    Domain::ZZ => {
+    ZZ => {
       let ar = fe_expect_rational(a)
       let br = fe_expect_rational(b)
       let num = ar.numerator().to_int()
       let den = br.numerator().to_int()
       let q = num / den
-      fe_from_int(q, Domain::ZZ)
+      fe_from_int(q, ZZ)
     }
     _ => fe_mul(a, fe_inv(b))
   }
@@ -193,18 +193,18 @@ fn fe_exquo_ground(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   if fe_is_zero(b) {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   match domain {
-    Domain::ZZ => {
+    ZZ => {
       let ar = fe_expect_rational(a)
       let br = fe_expect_rational(b)
       let num = ar.numerator().to_int()
       let den = br.numerator().to_int()
       if num % den != 0 {
-        raise PolyError::ExactQuotientFailed
+        raise ExactQuotientFailed
       }
-      fe_from_int(num / den, Domain::ZZ)
+      fe_from_int(num / den, ZZ)
     }
     _ => fe_mul(a, fe_inv(b))
   }
@@ -527,7 +527,7 @@ pub fn dup_pow(
   domain : Domain,
 ) -> Array[FieldElem] raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if n == 0 {
     return [fe_from_int(1, domain)]
@@ -603,7 +603,7 @@ pub fn dup_series_pow(
     return []
   }
   if exp < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if exp == 0 {
     return [fe_from_int(1, domain)]
@@ -617,19 +617,19 @@ pub fn dup_series_pow(
 ///|
 fn dmp_to_coeffs(f : DensePoly) -> Array[FieldElem] raise PolyError {
   match f {
-    DensePoly::Coef(c) => dup_strip([c])
-    DensePoly::Poly(items) => {
+    Coef(c) => dup_strip([c])
+    Poly(items) => {
       if items.is_empty() {
         return Array::new()
       }
       let mut sample : FieldElem? = None
       for it in items {
         match it {
-          DensePoly::Coef(c) => {
+          Coef(c) => {
             sample = Some(c)
             break
           }
-          DensePoly::Poly(_) => ()
+          Poly(_) => ()
         }
       }
       let zero = match sample {
@@ -638,18 +638,18 @@ fn dmp_to_coeffs(f : DensePoly) -> Array[FieldElem] raise PolyError {
           if items.all(it => dmp_zero_p(it, 0)) {
             return Array::new()
           } else {
-            raise PolyError::NotUnivariate
+            raise NotUnivariate
           }
       }
       let coeffs : Array[FieldElem] = Array::new()
       for it in items {
         match it {
-          DensePoly::Coef(c) => coeffs.push(c)
-          DensePoly::Poly(_) =>
+          Coef(c) => coeffs.push(c)
+          Poly(_) =>
             if dmp_zero_p(it, 0) {
               coeffs.push(zero)
             } else {
-              raise PolyError::NotUnivariate
+              raise NotUnivariate
             }
         }
       }
@@ -661,24 +661,21 @@ fn dmp_to_coeffs(f : DensePoly) -> Array[FieldElem] raise PolyError {
 ///|
 fn dmp_from_coeffs(coeffs : Array[FieldElem]) -> DensePoly {
   if coeffs.is_empty() {
-    DensePoly::Poly(Array::new())
+    Poly(Array::new())
   } else {
-    let items : Array[DensePoly] = Array::make(
-      coeffs.length(),
-      DensePoly::Coef(coeffs[0]),
-    )
+    let items : Array[DensePoly] = Array::make(coeffs.length(), Coef(coeffs[0]))
     for i in 0..<coeffs.length() {
-      items.set(i, DensePoly::Coef(coeffs[i]))
+      items.set(i, Coef(coeffs[i]))
     }
-    DensePoly::Poly(items)
+    Poly(items)
   }
 }
 
 ///|
 fn dmp_items(f : DensePoly) -> Array[DensePoly] {
   match f {
-    DensePoly::Poly(items) => items
-    DensePoly::Coef(c) => [DensePoly::Coef(c)]
+    Poly(items) => items
+    Coef(c) => [Coef(c)]
   }
 }
 
@@ -705,8 +702,8 @@ pub fn dmp_add_term(
   if u == 0 {
     let fc = dmp_to_coeffs(f)
     let cc = match c {
-      DensePoly::Coef(v) => v
-      DensePoly::Poly(_) => fe_from_int(0, domain)
+      Coef(v) => v
+      Poly(_) => fe_from_int(0, domain)
     }
     return dmp_from_coeffs(dup_add_term(fc, cc, k, domain))
   }
@@ -719,13 +716,13 @@ pub fn dmp_add_term(
   if deg < 0 {
     let out : Array[DensePoly] = Array::make(k + 1, zero)
     out.set(0, c)
-    return dmp_strip(DensePoly::Poly(out))
+    return dmp_strip(Poly(out))
   }
   if k <= deg {
     let idx = deg - k
     let out = items.copy()
     out.set(idx, dmp_add(out[idx], c, u - 1, domain))
-    return dmp_strip(DensePoly::Poly(out))
+    return dmp_strip(Poly(out))
   }
   let shift = k - deg
   let out : Array[DensePoly] = Array::make(k + 1, zero)
@@ -733,7 +730,7 @@ pub fn dmp_add_term(
   for i in 0..<items.length() {
     out.set(shift + i, items[i])
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -782,8 +779,8 @@ pub fn dmp_mul_term(
   if u == 0 {
     let fc = dmp_to_coeffs(f)
     let cc = match c {
-      DensePoly::Coef(v) => v
-      DensePoly::Poly(_) => fe_from_int(0, domain)
+      Coef(v) => v
+      Poly(_) => fe_from_int(0, domain)
     }
     return dmp_from_coeffs(dup_mul_term(fc, cc, k, domain))
   }
@@ -796,7 +793,7 @@ pub fn dmp_mul_term(
   for i in 0..<items.length() {
     out.set(i, dmp_mul(items[i], c, u - 1, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -884,7 +881,7 @@ pub fn dmp_mul_ground(
   for i in 0..<items.length() {
     out.set(i, dmp_mul_ground(items[i], c, u - 1, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -915,7 +912,7 @@ pub fn dmp_quo_ground(
   for i in 0..<items.length() {
     out.set(i, dmp_quo_ground(items[i], c, u - 1, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -946,7 +943,7 @@ pub fn dmp_exquo_ground(
   for i in 0..<items.length() {
     out.set(i, dmp_exquo_ground(items[i], c, u - 1, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -976,7 +973,7 @@ pub fn dmp_neg(
   for i in 0..<items.length() {
     out.set(i, dmp_neg(items[i], u - 1, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -1006,7 +1003,7 @@ pub fn dmp_abs(
   for i in 0..<items.length() {
     out.set(i, dmp_abs(items[i], u - 1, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -1055,7 +1052,7 @@ pub fn dmp_add(
     let b = if gi_idx >= 0 { gi[gi_idx] } else { zero }
     out.set(i, dmp_add(a, b, u - 1, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -1104,7 +1101,7 @@ pub fn dmp_sub(
     let b = if gi_idx >= 0 { gi[gi_idx] } else { zero }
     out.set(i, dmp_sub(a, b, u - 1, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -1146,7 +1143,7 @@ pub fn dmp_mul(
       out.set(idx, dmp_add(out[idx], term, u - 1, domain))
     }
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -1190,7 +1187,7 @@ pub fn dmp_pow(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if n == 0 {
     return dmp_ground(fe_from_int(1, domain), u)
@@ -1213,17 +1210,17 @@ pub fn dmp_pow(
 ///|
 fn domain_is_field(domain : Domain) -> Bool {
   match domain {
-    Domain::ZZ => false
-    Domain::QQ | Domain::CC | Domain::RR | Domain::QQ_I => true
-    Domain::ZZ_I => false
-    Domain::EX | Domain::EXRAW => true
-    Domain::GF(_) | Domain::GFExt(_, _, _) => true
-    Domain::Frac(_) => true
-    Domain::PolyRing(_, _) => false
-    Domain::RationalFunctionField(_, _) => true
-    Domain::QuotientRing(_, _, _) => false
-    Domain::PowerSeries(_, _, _) => false
-    Domain::AlgExt(base, _, _) => domain_is_field(base)
+    ZZ => false
+    QQ | CC | RR | QQ_I => true
+    ZZ_I => false
+    EX | EXRAW => true
+    GF(_) | GFExt(_, _, _) => true
+    Frac(_) => true
+    PolyRing(_, _) => false
+    RationalFunctionField(_, _) => true
+    QuotientRing(_, _, _) => false
+    PowerSeries(_, _, _) => false
+    AlgExt(base, _, _) => domain_is_field(base)
   }
 }
 
@@ -1233,13 +1230,12 @@ fn fe_pow_local(base : FieldElem, exp : Int) -> FieldElem raise PolyError {
     return fe_inv(fe_pow_local(base, -exp))
   }
   let mut result = match base {
-    FieldElem::QQ(_) => FieldElem::QQ(@symnum.BigRational::one())
-    FieldElem::CC(_, _) =>
-      FieldElem::CC(@symnum.BigRational::one(), @symnum.BigRational::zero())
-    FieldElem::GFp(p, _) => FieldElem::GFp(p, 1)
-    FieldElem::GFExt(p, _, m) => FieldElem::GFExt(p, [1], m)
-    FieldElem::AlgExt(base_d, _, minpoly, gen) =>
-      FieldElem::AlgExt(base_d, [fe_from_int(1, base_d)], minpoly, gen)
+    QQ(_) => FieldElem::QQ(@symnum.BigRational::one())
+    CC(_, _) => CC(@symnum.BigRational::one(), @symnum.BigRational::zero())
+    GFp(p, _) => GFp(p, 1)
+    GFExt(p, _, m) => GFExt(p, [1], m)
+    AlgExt(base_d, _, minpoly, gen) =>
+      AlgExt(base_d, [fe_from_int(1, base_d)], minpoly, gen)
   }
   let mut b = base
   let mut e = exp
@@ -1262,13 +1258,13 @@ fn fe_divides(
   domain : Domain,
 ) -> (Bool, FieldElem) raise PolyError {
   if fe_is_zero(b) {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   if domain_is_field(domain) {
     return (true, fe_mul(a, fe_inv(b)))
   }
   match domain {
-    Domain::ZZ => {
+    ZZ => {
       let ar = fe_expect_rational(a)
       let br = fe_expect_rational(b)
       if !ar.is_integral() || !br.is_integral() {
@@ -1277,14 +1273,14 @@ fn fe_divides(
       let num = ar.numerator()
       let den = br.numerator()
       if den.is_zero() {
-        raise PolyError::DivisionByZero
+        raise DivisionByZero
       }
       if !num.mod(den).is_zero() {
         return (false, fe_from_int(0, domain))
       }
       let q = num.div(den)
       let rat = @symnum.BigRational::from_bigint(q)
-      (true, FieldElem::QQ(rat))
+      (true, QQ(rat))
     }
     _ => (false, fe_from_int(0, domain))
   }
@@ -1404,7 +1400,7 @@ pub fn dup_pdiv(
   let df = dup_degree(f)
   let dg = dup_degree(g)
   if g.is_empty() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let mut q : Array[FieldElem] = Array::new()
   let mut r = f
@@ -1428,7 +1424,7 @@ pub fn dup_pdiv(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::PolynomialDivisionFailed
+      raise PolynomialDivisionFailed
     }
   }
   let c = fe_pow_local(lc_g, n)
@@ -1501,7 +1497,7 @@ pub fn dup_pexquo(
   if r.is_empty() {
     q
   } else {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
 }
 
@@ -1534,7 +1530,7 @@ pub fn dmp_pdiv(
   let df = dmp_degree(f, u)
   let dg = dmp_degree(g, u)
   if dg < 0 {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let mut q = dmp_zero(u)
   let mut r = f
@@ -1558,7 +1554,7 @@ pub fn dmp_pdiv(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::PolynomialDivisionFailed
+      raise PolynomialDivisionFailed
     }
   }
   let c = dmp_pow(lc_g, n, u - 1, domain)
@@ -1634,7 +1630,7 @@ pub fn dmp_pexquo(
   if dmp_zero_p(r, u) {
     q
   } else {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
 }
 
@@ -1660,7 +1656,7 @@ pub fn dup_rr_div(
   let df = dup_degree(f)
   let dg = dup_degree(g)
   if g.is_empty() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let mut q : Array[FieldElem] = Array::new()
   let mut r = f
@@ -1684,7 +1680,7 @@ pub fn dup_rr_div(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::PolynomialDivisionFailed
+      raise PolynomialDivisionFailed
     }
   }
   (q, r)
@@ -1719,7 +1715,7 @@ pub fn dmp_rr_div(
   let df = dmp_degree(f, u)
   let dg = dmp_degree(g, u)
   if dg < 0 {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let mut q = dmp_zero(u)
   let mut r = f
@@ -1744,7 +1740,7 @@ pub fn dmp_rr_div(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::PolynomialDivisionFailed
+      raise PolynomialDivisionFailed
     }
   }
   (q, r)
@@ -1772,7 +1768,7 @@ pub fn dup_ff_div(
   let df = dup_degree(f)
   let dg = dup_degree(g)
   if g.is_empty() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let mut q : Array[FieldElem] = Array::new()
   let mut r = f
@@ -1793,7 +1789,7 @@ pub fn dup_ff_div(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::PolynomialDivisionFailed
+      raise PolynomialDivisionFailed
     }
   }
   (q, r)
@@ -1828,7 +1824,7 @@ pub fn dmp_ff_div(
   let df = dmp_degree(f, u)
   let dg = dmp_degree(g, u)
   if dg < 0 {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let mut q = dmp_zero(u)
   let mut r = f
@@ -1853,7 +1849,7 @@ pub fn dmp_ff_div(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::PolynomialDivisionFailed
+      raise PolynomialDivisionFailed
     }
   }
   (q, r)
@@ -1949,7 +1945,7 @@ pub fn dup_exquo(
   if r.is_empty() {
     q
   } else {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
 }
 
@@ -2047,7 +2043,7 @@ pub fn dmp_exquo(
   if dmp_zero_p(r, u) {
     q
   } else {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
 }
 
@@ -2117,8 +2113,8 @@ pub fn dmp_max_norm(
     return dup_max_norm(coeffs, domain)
   }
   match f {
-    DensePoly::Coef(c) => dup_max_norm([c], domain)
-    DensePoly::Poly(items) => {
+    Coef(c) => dup_max_norm([c], domain)
+    Poly(items) => {
       if items.is_empty() {
         return fe_from_int(0, domain)
       }
@@ -2189,8 +2185,8 @@ pub fn dmp_l1_norm(
     return dup_l1_norm(coeffs, domain)
   }
   match f {
-    DensePoly::Coef(c) => dup_l1_norm([c], domain)
-    DensePoly::Poly(items) => {
+    Coef(c) => dup_l1_norm([c], domain)
+    Poly(items) => {
       let v = u - 1
       let mut sum = fe_from_int(0, domain)
       for it in items {
@@ -2248,8 +2244,8 @@ pub fn dmp_l2_norm_squared(
     return dup_l2_norm_squared(coeffs, domain)
   }
   match f {
-    DensePoly::Coef(c) => dup_l2_norm_squared([c], domain)
-    DensePoly::Poly(items) => {
+    Coef(c) => dup_l2_norm_squared([c], domain)
+    Poly(items) => {
       let v = u - 1
       let mut sum = fe_from_int(0, domain)
       for it in items {

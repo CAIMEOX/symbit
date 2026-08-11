@@ -4,7 +4,7 @@
 ///|
 fn expr_is_zero(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.is_zero()
+    Number(n) => n.is_zero()
     _ => false
   }
 }
@@ -12,24 +12,24 @@ fn expr_is_zero(expr : @symcore.Expr) -> Bool {
 ///|
 pub fn shape(arr : NDimArray) -> Array[Int] {
   match arr {
-    NDimArray::Dense(d) => @symtensor.clone_int_array(d.shape)
-    NDimArray::Sparse(s) => @symtensor.clone_int_array(s.shape)
+    Dense(d) => @symtensor.clone_int_array(d.shape)
+    Sparse(s) => @symtensor.clone_int_array(s.shape)
   }
 }
 
 ///|
 pub fn rank(arr : NDimArray) -> Int {
   match arr {
-    NDimArray::Dense(d) => d.shape.length()
-    NDimArray::Sparse(s) => s.shape.length()
+    Dense(d) => d.shape.length()
+    Sparse(s) => s.shape.length()
   }
 }
 
 ///|
 fn dense_data(arr : NDimArray) -> DenseArray {
   match arr {
-    NDimArray::Dense(d) => d
-    NDimArray::Sparse(s) => {
+    Dense(d) => d
+    Sparse(s) => {
       let size = @symtensor.product_ints(s.shape)
       let data : Array[@symcore.Expr] = Array::new()
       for _ in 0..<size {
@@ -50,7 +50,7 @@ fn dense_data(arr : NDimArray) -> DenseArray {
           }
         }
       }
-      DenseArray::{ shape: @symtensor.clone_int_array(s.shape), data }
+      { shape: @symtensor.clone_int_array(s.shape), data }
     }
   }
 }
@@ -58,13 +58,13 @@ fn dense_data(arr : NDimArray) -> DenseArray {
 ///|
 pub fn getitem(arr : NDimArray, index : Array[Int]) -> @symcore.Expr raise {
   match arr {
-    NDimArray::Dense(d) => {
+    Dense(d) => {
       if !index_in_bounds(d.shape, index) {
         fail("index out of bounds")
       }
       d.data[linear_index(d.shape, index)]
     }
-    NDimArray::Sparse(s) => {
+    Sparse(s) => {
       if !index_in_bounds(s.shape, index) {
         fail("index out of bounds")
       }
@@ -81,7 +81,7 @@ pub fn setitem(
   value : @symcore.Expr,
 ) -> NDimArray raise {
   match arr {
-    NDimArray::Dense(d) => {
+    Dense(d) => {
       if !index_in_bounds(d.shape, index) {
         fail("index out of bounds")
       }
@@ -90,12 +90,9 @@ pub fn setitem(
         data.push(item)
       }
       data[linear_index(d.shape, index)] = value
-      NDimArray::Dense(DenseArray::{
-        shape: @symtensor.clone_int_array(d.shape),
-        data,
-      })
+      Dense({ shape: @symtensor.clone_int_array(d.shape), data })
     }
-    NDimArray::Sparse(s) => {
+    Sparse(s) => {
       if !index_in_bounds(s.shape, index) {
         fail("index out of bounds")
       }
@@ -106,10 +103,7 @@ pub fn setitem(
       } else {
         data[key] = value
       }
-      NDimArray::Sparse(SparseArray::{
-        shape: @symtensor.clone_int_array(s.shape),
-        data,
-      })
+      Sparse({ shape: @symtensor.clone_int_array(s.shape), data })
     }
   }
 }
@@ -121,10 +115,7 @@ pub fn reshape(arr : NDimArray, new_shape : Array[Int]) -> NDimArray raise {
     fail("reshape size mismatch")
   }
   let dense = dense_data(arr)
-  NDimArray::Dense(DenseArray::{
-    shape: @symtensor.clone_int_array(new_shape),
-    data: dense.data,
-  })
+  Dense({ shape: @symtensor.clone_int_array(new_shape), data: dense.data })
 }
 
 ///|
@@ -149,7 +140,7 @@ pub fn permutedims(arr : NDimArray, axes : Array[Int]) -> NDimArray raise {
     }
     new_data.push(dense.data[linear_index(dense.shape, old_idx)])
   }
-  NDimArray::Dense(DenseArray::{ shape: new_shape, data: new_data })
+  Dense({ shape: new_shape, data: new_data })
 }
 
 ///|
@@ -174,10 +165,10 @@ pub fn tensorproduct(arrays : Array[NDimArray]) -> NDimArray raise {
         new_data.push(@symcore.mul([a, b]))
       }
     }
-    current = DenseArray::{ shape: new_shape, data: new_data }
+    current = { shape: new_shape, data: new_data }
     i = i + 1
   }
-  NDimArray::Dense(current)
+  Dense(current)
 }
 
 ///|
@@ -221,7 +212,7 @@ fn contract_once(
     let sum = @symcore.add(sum_terms)
     new_data.push(sum)
   }
-  DenseArray::{ shape: new_shape, data: new_data }
+  { shape: new_shape, data: new_data }
 }
 
 ///|
@@ -234,5 +225,5 @@ pub fn tensorcontraction(
     let (a, b) = pair
     dense = contract_once(dense, a, b)
   }
-  NDimArray::Dense(dense)
+  Dense(dense)
 }

@@ -3,13 +3,13 @@
 
 ///|
 pub fn joint_independent(name : String, vars : Array[RandomVar]) -> RandomVar {
-  random_var(name, RVKind::JointIndependent(vars))
+  random_var(name, JointIndependent(vars))
 }
 
 ///|
 pub fn joint_components(rv : RandomVar) -> Array[RandomVar]? {
   match rv.kind {
-    RVKind::JointIndependent(items) => Some(items)
+    JointIndependent(items) => Some(items)
     _ => None
   }
 }

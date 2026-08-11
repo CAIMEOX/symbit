@@ -13,7 +13,7 @@
 /// this compatibility layer.
 pub fn dup_LC(coeffs : Array[FieldElem]) -> FieldElem raise PolyError {
   if coeffs.is_empty() {
-    fe_from_int(0, Domain::ZZ)
+    fe_from_int(0, ZZ)
   } else {
     coeffs[0]
   }
@@ -34,7 +34,7 @@ pub fn dup_LC(coeffs : Array[FieldElem]) -> FieldElem raise PolyError {
 /// this compatibility layer.
 pub fn dup_TC(coeffs : Array[FieldElem]) -> FieldElem raise PolyError {
   if coeffs.is_empty() {
-    fe_from_int(0, Domain::ZZ)
+    fe_from_int(0, ZZ)
   } else {
     coeffs[coeffs.length() - 1]
   }
@@ -83,7 +83,7 @@ pub fn dup_strip(coeffs : Array[FieldElem]) -> Array[FieldElem] raise PolyError 
   if start == n {
     return Array::new()
   }
-  let zero = fe_from_int(0, Domain::QQ)
+  let zero = fe_from_int(0, QQ)
   let out_len = n - start
   let out : Array[FieldElem] = Array::make(out_len, zero)
   for i in 0..<out_len {
@@ -125,10 +125,10 @@ pub fn dup_reverse(
 /// Helper to create a zero-like FieldElem sharing domain with sample.
 fn fe_zero_like(sample : FieldElem) -> FieldElem raise PolyError {
   match sample {
-    FieldElem::QQ(_) | FieldElem::CC(_, _) => fe_from_int(0, Domain::QQ)
-    FieldElem::GFp(p, _) => fe_from_int(0, Domain::GF(p))
-    FieldElem::GFExt(p, _, m) => FieldElem::GFExt(p, [0], m)
-    FieldElem::AlgExt(base, _, _, _) => fe_from_int(0, base)
+    QQ(_) | CC(_, _) => fe_from_int(0, QQ)
+    GFp(p, _) => fe_from_int(0, GF(p))
+    GFExt(p, _, m) => GFExt(p, [0], m)
+    AlgExt(base, _, _, _) => fe_from_int(0, base)
   }
 }
 
@@ -197,7 +197,7 @@ pub enum DensePolyPoly {
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub fn dense_rat_coef(c : @symnum.BigRational) -> DenseRat {
-  DenseRat::Coef(c)
+  Coef(c)
 }
 
 ///|
@@ -214,7 +214,7 @@ pub fn dense_rat_coef(c : @symnum.BigRational) -> DenseRat {
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub fn dense_rat_poly(items : Array[DenseRat]) -> DenseRat {
-  DenseRat::Poly(items)
+  Poly(items)
 }
 
 ///|
@@ -231,7 +231,7 @@ pub fn dense_rat_poly(items : Array[DenseRat]) -> DenseRat {
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub fn dense_poly_poly_coef(p : Poly) -> DensePolyPoly {
-  DensePolyPoly::Coef(p)
+  Coef(p)
 }
 
 ///|
@@ -248,7 +248,7 @@ pub fn dense_poly_poly_coef(p : Poly) -> DensePolyPoly {
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub fn dense_poly_poly(items : Array[DensePolyPoly]) -> DensePolyPoly {
-  DensePolyPoly::Poly(items)
+  Poly(items)
 }
 
 ///|
@@ -265,7 +265,7 @@ pub fn dense_poly_poly(items : Array[DensePolyPoly]) -> DensePolyPoly {
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub fn dense_coef(c : FieldElem) -> DensePoly {
-  DensePoly::Coef(c)
+  Coef(c)
 }
 
 ///|
@@ -282,22 +282,19 @@ pub fn dense_coef(c : FieldElem) -> DensePoly {
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub fn dense_poly(items : Array[DensePoly]) -> DensePoly {
-  DensePoly::Poly(items)
+  Poly(items)
 }
 
 ///|
 fn dense_from_coeffs(coeffs : Array[FieldElem]) -> DensePoly {
   if coeffs.is_empty() {
-    DensePoly::Poly(Array::new())
+    Poly(Array::new())
   } else {
-    let out : Array[DensePoly] = Array::make(
-      coeffs.length(),
-      DensePoly::Coef(coeffs[0]),
-    )
+    let out : Array[DensePoly] = Array::make(coeffs.length(), Coef(coeffs[0]))
     for i in 0..<coeffs.length() {
-      out.set(i, DensePoly::Coef(coeffs[i]))
+      out.set(i, Coef(coeffs[i]))
     }
-    DensePoly::Poly(out)
+    Poly(out)
   }
 }
 
@@ -305,19 +302,19 @@ fn dense_from_coeffs(coeffs : Array[FieldElem]) -> DensePoly {
 /// Convert a univariate DensePoly into coefficient array.
 fn dense_to_coeffs(p : DensePoly) -> Array[FieldElem] raise PolyError {
   match p {
-    DensePoly::Coef(c) => {
+    Coef(c) => {
       let coeffs : Array[FieldElem] = [c]
       dup_strip(coeffs)
     }
-    DensePoly::Poly(items) => {
+    Poly(items) => {
       if items.is_empty() {
         return Array::new()
       }
       let coeffs : Array[FieldElem] = Array::new()
       for it in items {
         match it {
-          DensePoly::Coef(c) => coeffs.push(c)
-          DensePoly::Poly(_) => raise PolyError::NotUnivariate
+          Coef(c) => coeffs.push(c)
+          Poly(_) => raise NotUnivariate
         }
       }
       dup_strip(coeffs)
@@ -329,8 +326,8 @@ fn dense_to_coeffs(p : DensePoly) -> Array[FieldElem] raise PolyError {
 /// Compute variable count for a dense polynomial.
 fn dense_var_count(p : DensePoly) -> Int {
   match p {
-    DensePoly::Coef(_) => -1
-    DensePoly::Poly(items) =>
+    Coef(_) => -1
+    Poly(items) =>
       if items.is_empty() {
         0
       } else {
@@ -350,8 +347,8 @@ fn dense_var_count(p : DensePoly) -> Int {
 /// Collect min/max nesting levels; mismatched levels imply invalid structure.
 fn dense_level_range(p : DensePoly, depth : Int) -> (Int, Int) {
   match p {
-    DensePoly::Coef(_) => (depth - 1, depth - 1)
-    DensePoly::Poly(items) =>
+    Coef(_) => (depth - 1, depth - 1)
+    Poly(items) =>
       if items.is_empty() {
         (depth, depth)
       } else {
@@ -388,7 +385,7 @@ fn dense_level_range(p : DensePoly, depth : Int) -> (Int, Int) {
 pub fn dmp_validate(p : DensePoly) -> (DensePoly, Int) raise PolyError {
   let (min_level, max_level) = dense_level_range(p, 0)
   if min_level != max_level {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let u = max_level
   let stripped = dmp_strip(p)
@@ -399,14 +396,14 @@ pub fn dmp_validate(p : DensePoly) -> (DensePoly, Int) raise PolyError {
 fn dense_strip_with_u(p : DensePoly, u : Int) -> DensePoly raise PolyError {
   if u <= 0 {
     match p {
-      DensePoly::Coef(_) => p
-      DensePoly::Poly(items) => {
+      Coef(_) => p
+      Poly(items) => {
         let mut all_coef = true
         let coeffs : Array[FieldElem] = Array::new()
         for it in items {
           match it {
-            DensePoly::Coef(c) => coeffs.push(c)
-            DensePoly::Poly(_) => {
+            Coef(c) => coeffs.push(c)
+            Poly(_) => {
               all_coef = false
               break
             }
@@ -416,13 +413,13 @@ fn dense_strip_with_u(p : DensePoly, u : Int) -> DensePoly raise PolyError {
           let stripped = dup_strip(coeffs)
           return dense_from_coeffs(stripped)
         }
-        DensePoly::Poly(items)
+        Poly(items)
       }
     }
   } else {
     match p {
-      DensePoly::Coef(_) => p
-      DensePoly::Poly(items) => {
+      Coef(_) => p
+      Poly(items) => {
         if dmp_zero_p(p, u) {
           return p
         }
@@ -442,7 +439,7 @@ fn dense_strip_with_u(p : DensePoly, u : Int) -> DensePoly raise PolyError {
         for i in 0..<out_len {
           out.set(i, stripped[start + i])
         }
-        DensePoly::Poly(out)
+        Poly(out)
       }
     }
   }
@@ -463,13 +460,8 @@ fn dense_strip_with_u(p : DensePoly, u : Int) -> DensePoly raise PolyError {
 /// layer.
 pub fn dmp_LC(p : DensePoly) -> DensePoly {
   match p {
-    DensePoly::Coef(_) => p
-    DensePoly::Poly(items) =>
-      if items.is_empty() {
-        DensePoly::Poly(Array::new())
-      } else {
-        items[0]
-      }
+    Coef(_) => p
+    Poly(items) => if items.is_empty() { Poly(Array::new()) } else { items[0] }
   }
 }
 
@@ -488,10 +480,10 @@ pub fn dmp_LC(p : DensePoly) -> DensePoly {
 /// layer.
 pub fn dmp_TC(p : DensePoly) -> DensePoly {
   match p {
-    DensePoly::Coef(_) => p
-    DensePoly::Poly(items) =>
+    Coef(_) => p
+    Poly(items) =>
       if items.is_empty() {
-        DensePoly::Poly(Array::new())
+        Poly(Array::new())
       } else {
         items[items.length() - 1]
       }
@@ -514,23 +506,23 @@ pub fn dmp_TC(p : DensePoly) -> DensePoly {
 pub fn dmp_ground_LC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
   if u <= 0 {
     match p {
-      DensePoly::Coef(c) => c
-      DensePoly::Poly(items) =>
+      Coef(c) => c
+      Poly(items) =>
         if items.is_empty() {
-          fe_from_int(0, Domain::QQ)
+          fe_from_int(0, QQ)
         } else {
           match items[0] {
-            DensePoly::Coef(c) => c
-            DensePoly::Poly(_) => fe_from_int(0, Domain::QQ)
+            Coef(c) => c
+            Poly(_) => fe_from_int(0, QQ)
           }
         }
     }
   } else {
     match p {
-      DensePoly::Coef(c) => c
-      DensePoly::Poly(items) =>
+      Coef(c) => c
+      Poly(items) =>
         if items.is_empty() {
-          fe_from_int(0, Domain::QQ)
+          fe_from_int(0, QQ)
         } else {
           dmp_ground_LC(items[0], u - 1)
         }
@@ -554,23 +546,23 @@ pub fn dmp_ground_LC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
 pub fn dmp_ground_TC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
   if u <= 0 {
     match p {
-      DensePoly::Coef(c) => c
-      DensePoly::Poly(items) =>
+      Coef(c) => c
+      Poly(items) =>
         if items.is_empty() {
-          fe_from_int(0, Domain::QQ)
+          fe_from_int(0, QQ)
         } else {
           match items[items.length() - 1] {
-            DensePoly::Coef(c) => c
-            DensePoly::Poly(_) => fe_from_int(0, Domain::QQ)
+            Coef(c) => c
+            Poly(_) => fe_from_int(0, QQ)
           }
         }
     }
   } else {
     match p {
-      DensePoly::Coef(c) => c
-      DensePoly::Poly(items) =>
+      Coef(c) => c
+      Poly(items) =>
         if items.is_empty() {
-          fe_from_int(0, Domain::QQ)
+          fe_from_int(0, QQ)
         } else {
           dmp_ground_TC(items[items.length() - 1], u - 1)
         }
@@ -601,13 +593,13 @@ pub fn dmp_true_LT(
   let mut idx = 0
   while depth > 0 {
     match cur {
-      DensePoly::Coef(c) => {
+      Coef(c) => {
         exps.set(idx, 0)
         return (exps, c)
       }
-      DensePoly::Poly(items) => {
+      Poly(items) => {
         if items.is_empty() {
-          let z = fe_from_int(0, Domain::QQ)
+          let z = fe_from_int(0, QQ)
           return (exps, z)
         }
         exps.set(idx, items.length() - 1)
@@ -618,20 +610,20 @@ pub fn dmp_true_LT(
     depth = depth - 1
   }
   match cur {
-    DensePoly::Coef(c) => {
+    Coef(c) => {
       exps.set(idx, 0)
       (exps, c)
     }
-    DensePoly::Poly(items) =>
+    Poly(items) =>
       if items.is_empty() {
-        let z = fe_from_int(0, Domain::QQ)
+        let z = fe_from_int(0, QQ)
         (exps, z)
       } else {
         exps.set(idx, items.length() - 1)
         match items[0] {
-          DensePoly::Coef(c) => (exps, c)
-          DensePoly::Poly(_) => {
-            let z = fe_from_int(0, Domain::QQ)
+          Coef(c) => (exps, c)
+          Poly(_) => {
+            let z = fe_from_int(0, QQ)
             (exps, z)
           }
         }
@@ -657,8 +649,8 @@ pub fn dmp_degree(p : DensePoly, u : Int) -> Int {
     -1
   } else {
     match p {
-      DensePoly::Coef(_) => 0
-      DensePoly::Poly(items) => items.length() - 1
+      Coef(_) => 0
+      Poly(items) => items.length() - 1
     }
   }
 }
@@ -682,14 +674,14 @@ pub fn dmp_degree_in(
   u : Int,
 ) -> Int raise PolyError {
   if var_idx < 0 || var_idx > u {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if var_idx == 0 {
     return dmp_degree(p, u)
   }
   match p {
-    DensePoly::Coef(c) => if fe_is_zero(c) { -1 } else { 0 }
-    DensePoly::Poly(items) => {
+    Coef(c) => if fe_is_zero(c) { -1 } else { 0 }
+    Poly(items) => {
       let mut max_deg = -1
       for item in items {
         let d = dmp_degree_in(item, var_idx - 1, u - 1)
@@ -760,14 +752,14 @@ pub fn dmp_strip(p : DensePoly) -> DensePoly raise PolyError {
 /// this compatibility layer.
 pub fn dmp_reverse(p : DensePoly) -> DensePoly raise PolyError {
   match p {
-    DensePoly::Coef(_) => p
-    DensePoly::Poly(items) => {
+    Coef(_) => p
+    Poly(items) => {
       let mut all_coef = true
       let coeffs : Array[FieldElem] = Array::new()
       for it in items {
         match it {
-          DensePoly::Coef(c) => coeffs.push(c)
-          DensePoly::Poly(_) => {
+          Coef(c) => coeffs.push(c)
+          Poly(_) => {
             all_coef = false
             break
           }
@@ -779,9 +771,9 @@ pub fn dmp_reverse(p : DensePoly) -> DensePoly raise PolyError {
       }
       let n = items.length()
       if n == 0 {
-        return DensePoly::Poly(Array::new())
+        return Poly(Array::new())
       }
-      let out : Array[DensePoly] = Array::make(n, DensePoly::Poly(Array::new()))
+      let out : Array[DensePoly] = Array::make(n, Poly(Array::new()))
       for i in 0..<n {
         let child = dmp_reverse(items[i])
         out.set(n - 1 - i, child)
@@ -832,31 +824,31 @@ pub fn dup_copy(f : Array[FieldElem]) -> Array[FieldElem] raise PolyError {
 pub fn dmp_copy(f : DensePoly, u : Int) -> DensePoly {
   if u == 0 {
     match f {
-      DensePoly::Poly(items) => {
+      Poly(items) => {
         let out : Array[DensePoly] = Array::make(
           items.length(),
-          DensePoly::Poly(Array::new()),
+          Poly(Array::new()),
         )
         for i in 0..<items.length() {
           out.set(i, dmp_copy(items[i], 0))
         }
-        DensePoly::Poly(out)
+        Poly(out)
       }
-      DensePoly::Coef(c) => DensePoly::Coef(c)
+      Coef(c) => Coef(c)
     }
   } else {
     match f {
-      DensePoly::Poly(items) => {
+      Poly(items) => {
         let out : Array[DensePoly] = Array::make(
           items.length(),
-          DensePoly::Poly(Array::new()),
+          Poly(Array::new()),
         )
         for i in 0..<items.length() {
           out.set(i, dmp_copy(items[i], u - 1))
         }
-        DensePoly::Poly(out)
+        Poly(out)
       }
-      DensePoly::Coef(c) => DensePoly::Coef(c)
+      Coef(c) => Coef(c)
     }
   }
 }
@@ -928,43 +920,43 @@ pub fn dup_normal(f : Array[FieldElem]) -> Array[FieldElem] raise PolyError {
 pub fn dmp_normal(f : DensePoly, u : Int) -> DensePoly raise PolyError {
   if u == 0 {
     match f {
-      DensePoly::Poly(items) => {
+      Poly(items) => {
         let coeffs : Array[FieldElem] = Array::new()
         for it in items {
           match it {
-            DensePoly::Coef(c) => coeffs.push(c)
-            DensePoly::Poly(_) => coeffs.push(fe_from_int(0, Domain::QQ))
+            Coef(c) => coeffs.push(c)
+            Poly(_) => coeffs.push(fe_from_int(0, QQ))
           }
         }
         let stripped = dup_strip(coeffs)
         if stripped.is_empty() {
-          DensePoly::Poly(Array::new())
+          Poly(Array::new())
         } else {
           let out : Array[DensePoly] = Array::make(
             stripped.length(),
-            DensePoly::Coef(stripped[0]),
+            Coef(stripped[0]),
           )
           for i in 0..<stripped.length() {
-            out.set(i, DensePoly::Coef(stripped[i]))
+            out.set(i, Coef(stripped[i]))
           }
-          DensePoly::Poly(out)
+          Poly(out)
         }
       }
-      DensePoly::Coef(c) => DensePoly::Coef(c)
+      Coef(c) => Coef(c)
     }
   } else {
     match f {
-      DensePoly::Poly(items) => {
+      Poly(items) => {
         let mapped : Array[DensePoly] = Array::make(
           items.length(),
-          DensePoly::Poly(Array::new()),
+          Poly(Array::new()),
         )
         for i in 0..<items.length() {
           mapped.set(i, dmp_normal(items[i], u - 1))
         }
-        dmp_strip(DensePoly::Poly(mapped))
+        dmp_strip(Poly(mapped))
       }
-      DensePoly::Coef(c) => DensePoly::Coef(c)
+      Coef(c) => Coef(c)
     }
   }
 }
@@ -1027,43 +1019,43 @@ pub fn dmp_convert(
 ) -> DensePoly raise PolyError {
   if u == 0 {
     match f {
-      DensePoly::Poly(items) => {
+      Poly(items) => {
         let coeffs : Array[FieldElem] = Array::new()
         for it in items {
           match it {
-            DensePoly::Coef(c) => coeffs.push(fe_convert_domain(c, k1))
-            DensePoly::Poly(_) => coeffs.push(fe_from_int(0, k1))
+            Coef(c) => coeffs.push(fe_convert_domain(c, k1))
+            Poly(_) => coeffs.push(fe_from_int(0, k1))
           }
         }
         let stripped = dup_strip(coeffs)
         if stripped.is_empty() {
-          DensePoly::Poly(Array::new())
+          Poly(Array::new())
         } else {
           let out : Array[DensePoly] = Array::make(
             stripped.length(),
-            DensePoly::Coef(stripped[0]),
+            Coef(stripped[0]),
           )
           for i in 0..<stripped.length() {
-            out.set(i, DensePoly::Coef(stripped[i]))
+            out.set(i, Coef(stripped[i]))
           }
-          DensePoly::Poly(out)
+          Poly(out)
         }
       }
-      DensePoly::Coef(c) => DensePoly::Coef(fe_convert_domain(c, k1))
+      Coef(c) => Coef(fe_convert_domain(c, k1))
     }
   } else {
     match f {
-      DensePoly::Poly(items) => {
+      Poly(items) => {
         let mapped : Array[DensePoly] = Array::make(
           items.length(),
-          DensePoly::Poly(Array::new()),
+          Poly(Array::new()),
         )
         for i in 0..<items.length() {
           mapped.set(i, dmp_convert(items[i], u - 1, k0, k1))
         }
-        dmp_strip(DensePoly::Poly(mapped))
+        dmp_strip(Poly(mapped))
       }
-      DensePoly::Coef(c) => DensePoly::Coef(fe_convert_domain(c, k1))
+      Coef(c) => Coef(fe_convert_domain(c, k1))
     }
   }
 }
@@ -1103,16 +1095,16 @@ fn dense_rat_to_dense(
 ) -> DensePoly raise PolyError {
   if u <= 0 {
     match f {
-      DenseRat::Coef(c) => {
+      Coef(c) => {
         let coeffs : Array[FieldElem] = [fe_from_rational(c, domain)]
         dense_from_coeffs(dup_strip(coeffs))
       }
-      DenseRat::Poly(items) => {
+      Poly(items) => {
         let coeffs : Array[FieldElem] = Array::new()
         for it in items {
           match it {
-            DenseRat::Coef(c) => coeffs.push(fe_from_rational(c, domain))
-            DenseRat::Poly(_) => raise PolyError::NonPolynomial
+            Coef(c) => coeffs.push(fe_from_rational(c, domain))
+            Poly(_) => raise NonPolynomial
           }
         }
         dense_from_coeffs(dup_strip(coeffs))
@@ -1120,13 +1112,13 @@ fn dense_rat_to_dense(
     }
   } else {
     match f {
-      DenseRat::Coef(c) => dmp_ground(fe_from_rational(c, domain), u)
-      DenseRat::Poly(items) => {
+      Coef(c) => dmp_ground(fe_from_rational(c, domain), u)
+      Poly(items) => {
         let out : Array[DensePoly] = Array::new()
         for it in items {
           out.push(dense_rat_to_dense(it, u - 1, domain))
         }
-        dmp_strip(DensePoly::Poly(out))
+        dmp_strip(Poly(out))
       }
     }
   }
@@ -1187,10 +1179,10 @@ pub fn dup_from_list(
 /// this compatibility layer.
 pub fn dup_nth(f : Array[FieldElem], n : Int) -> FieldElem raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if f.is_empty() {
-    return fe_from_int(0, Domain::ZZ)
+    return fe_from_int(0, ZZ)
   }
   let deg = dup_degree(f)
   if n > deg {
@@ -1215,10 +1207,10 @@ pub fn dup_nth(f : Array[FieldElem], n : Int) -> FieldElem raise PolyError {
 /// this compatibility layer.
 pub fn dmp_nth(f : DensePoly, n : Int, u : Int) -> DensePoly raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   match f {
-    DensePoly::Poly(items) => {
+    Poly(items) => {
       let deg = dmp_degree(f, u)
       if n > deg {
         return dmp_zero(u - 1)
@@ -1226,12 +1218,7 @@ pub fn dmp_nth(f : DensePoly, n : Int, u : Int) -> DensePoly raise PolyError {
       let idx = items.length() - 1 - n
       items[idx]
     }
-    DensePoly::Coef(c) =>
-      if n == 0 {
-        DensePoly::Coef(c)
-      } else {
-        dmp_zero(u - 1)
-      }
+    Coef(c) => if n == 0 { Coef(c) } else { dmp_zero(u - 1) }
   }
 }
 
@@ -1249,14 +1236,14 @@ pub fn dmp_nth(f : DensePoly, n : Int, u : Int) -> DensePoly raise PolyError {
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
 pub fn dmp_zero(u : Int) -> DensePoly {
-  let mut p : DensePoly = DensePoly::Poly(Array::new())
+  let mut p : DensePoly = Poly(Array::new())
   if u < 0 {
     return p
   }
   let mut i = 0
   while i < u {
     let arr : Array[DensePoly] = Array::make(1, p)
-    p = DensePoly::Poly(arr)
+    p = Poly(arr)
     i = i + 1
   }
   p
@@ -1278,18 +1265,18 @@ pub fn dmp_zero(u : Int) -> DensePoly {
 pub fn dmp_zero_p(f : DensePoly, u : Int) -> Bool {
   if u == 0 {
     match f {
-      DensePoly::Poly(items) => items.is_empty()
-      DensePoly::Coef(c) => fe_is_zero(c)
+      Poly(items) => items.is_empty()
+      Coef(c) => fe_is_zero(c)
     }
   } else {
     match f {
-      DensePoly::Poly(items) =>
+      Poly(items) =>
         if items.length() != 1 {
           false
         } else {
           dmp_zero_p(items[0], u - 1)
         }
-      DensePoly::Coef(_) => false
+      Coef(_) => false
     }
   }
 }
@@ -1312,12 +1299,12 @@ pub fn dmp_ground(c : FieldElem, u : Int) -> DensePoly {
     return dmp_zero(u)
   }
   if u < 0 {
-    return DensePoly::Coef(c)
+    return Coef(c)
   }
-  let mut p : DensePoly = DensePoly::Poly([DensePoly::Coef(c)])
+  let mut p : DensePoly = Poly([Coef(c)])
   let mut i = 0
   while i < u {
-    p = DensePoly::Poly([p])
+    p = Poly([p])
     i = i + 1
   }
   p
@@ -1348,34 +1335,34 @@ pub fn dmp_ground_p(
   let mut depth = u
   while depth > 0 {
     match cur {
-      DensePoly::Poly(items) =>
+      Poly(items) =>
         if items.length() != 1 {
           return false
         } else {
           cur = items[0]
         }
-      DensePoly::Coef(_) => return false
+      Coef(_) => return false
     }
     depth = depth - 1
   }
   match c {
     None =>
       match cur {
-        DensePoly::Poly(items) => items.length() <= 1
-        DensePoly::Coef(_) => true
+        Poly(items) => items.length() <= 1
+        Coef(_) => true
       }
     Some(cc) =>
       match cur {
-        DensePoly::Poly(items) =>
+        Poly(items) =>
           if items.length() != 1 {
             false
           } else {
             match items[0] {
-              DensePoly::Coef(c0) => fe_is_zero(fe_sub(c0, cc))
-              DensePoly::Poly(_) => false
+              Coef(c0) => fe_is_zero(fe_sub(c0, cc))
+              Poly(_) => false
             }
           }
-        DensePoly::Coef(c0) => fe_is_zero(fe_sub(c0, cc))
+        Coef(c0) => fe_is_zero(fe_sub(c0, cc))
       }
   }
 }
@@ -1444,10 +1431,10 @@ pub fn dmp_ground_nth(
   let mut v = u
   for n in nlist {
     if n < 0 {
-      raise PolyError::BadExponent
+      raise BadExponent
     }
     match cur {
-      DensePoly::Poly(items) => {
+      Poly(items) => {
         if n >= items.length() {
           return zero
         }
@@ -1459,7 +1446,7 @@ pub fn dmp_ground_nth(
         cur = items[idx]
         v = v - 1
       }
-      DensePoly::Coef(_) => {
+      Coef(_) => {
         if n != 0 {
           return zero
         }
@@ -1468,14 +1455,14 @@ pub fn dmp_ground_nth(
     }
   }
   match cur {
-    DensePoly::Coef(c) => c
-    DensePoly::Poly(items) =>
+    Coef(c) => c
+    Poly(items) =>
       if items.is_empty() {
         zero
       } else if items.length() == 1 {
         match items[0] {
-          DensePoly::Coef(c0) => c0
-          DensePoly::Poly(_) => zero
+          Coef(c0) => c0
+          Poly(_) => zero
         }
       } else {
         zero
@@ -1506,7 +1493,7 @@ pub fn dmp_zeros(
   }
   if u < 0 {
     let zero = fe_from_int(0, domain)
-    let out : Array[DensePoly] = Array::make(n, DensePoly::Coef(zero))
+    let out : Array[DensePoly] = Array::make(n, Coef(zero))
     return out
   }
   let out : Array[DensePoly] = Array::new()
@@ -1541,7 +1528,7 @@ pub fn dmp_grounds(
   let out : Array[DensePoly] = Array::new()
   if u < 0 {
     for _ in 0..<n {
-      out.push(DensePoly::Coef(c))
+      out.push(Coef(c))
     }
     return out
   }
@@ -1611,7 +1598,7 @@ fn copy_int_array(xs : Array[Int]) -> Array[Int] {
 
 ///|
 fn monom_from_exp(exp : Int) -> Monomial {
-  Monomial::{ exps: [exp] }
+  { exps: [exp] }
 }
 
 ///|
@@ -1622,7 +1609,7 @@ fn monom_prepend(exp : Int, m : Monomial) -> Monomial {
   for i in 0..<old.length() {
     out.set(i + 1, old[i])
   }
-  Monomial::{ exps: out }
+  { exps: out }
 }
 
 ///|
@@ -1650,7 +1637,7 @@ pub fn dup_from_dict(
   for m, _ in f {
     let exps = m.to_array()
     if exps.length() != 1 {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     if first || exps[0] > max_exp {
       max_exp = exps[0]
@@ -1735,7 +1722,7 @@ pub fn dmp_from_dict(
   for m, coeff in f {
     let exps = m.to_array()
     if exps.length() != u + 1 {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     let head = exps[0]
     if first || head > max_exp {
@@ -1771,7 +1758,7 @@ pub fn dmp_from_dict(
     }
     exp = exp - 1
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -1857,7 +1844,7 @@ pub fn dmp_to_dict(
   }
   let out : Map[Monomial, FieldElem] = Map([])
   match stripped {
-    DensePoly::Poly(items) => {
+    Poly(items) => {
       let deg = dmp_degree(stripped, u)
       let v = u - 1
       if deg >= 0 {
@@ -1871,7 +1858,7 @@ pub fn dmp_to_dict(
         }
       }
     }
-    DensePoly::Coef(c) =>
+    Coef(c) =>
       if !fe_is_zero(c) {
         let m = Monomial::{ exps: Array::make(u + 1, 0) }
         out.set(m, c)
@@ -1901,7 +1888,7 @@ pub fn dmp_to_raw_dict(
   let out : Map[Int, DensePoly] = Map([])
   let stripped = dmp_strip(f) catch { _ => f }
   match stripped {
-    DensePoly::Poly(items) => {
+    Poly(items) => {
       let v = u - 1
       let deg = if items.is_empty() { -1 } else { items.length() - 1 }
       for i in 0..<items.length() {
@@ -1912,7 +1899,7 @@ pub fn dmp_to_raw_dict(
         }
       }
     }
-    DensePoly::Coef(_) => ()
+    Coef(_) => ()
   }
   out
 }
@@ -1938,7 +1925,7 @@ pub fn dmp_swap(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if i < 0 || j < 0 || i > u || j > u {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if i == j {
     return f
@@ -1950,7 +1937,7 @@ pub fn dmp_swap(
     let tmp = exps[i]
     exps.set(i, exps[j])
     exps.set(j, tmp)
-    out.set(Monomial::{ exps, }, coeff)
+    out.set({ exps, }, coeff)
   }
   dmp_from_dict(out, u, domain)
 }
@@ -1983,11 +1970,11 @@ pub fn dmp_permute(
     for i in 0..<len {
       let idx = p[i]
       if idx < 0 || idx >= len {
-        raise PolyError::BadExponent
+        raise BadExponent
       }
       exps.set(idx, old[i])
     }
-    out.set(Monomial::{ exps, }, coeff)
+    out.set({ exps, }, coeff)
   }
   dmp_from_dict(out, u, domain)
 }
@@ -2010,11 +1997,11 @@ pub fn dmp_nest(f : DensePoly, l : Int, _domain : Domain) -> DensePoly {
     return f
   }
   match f {
-    DensePoly::Coef(c) => dmp_ground(c, l)
-    DensePoly::Poly(_) => {
+    Coef(c) => dmp_ground(c, l)
+    Poly(_) => {
       let mut out = f
       for _ in 0..<l {
-        out = DensePoly::Poly([out])
+        out = Poly([out])
       }
       out
     }
@@ -2045,7 +2032,7 @@ pub fn dmp_raise(
   }
   if u == 0 {
     match f {
-      DensePoly::Poly(items) => {
+      Poly(items) => {
         if items.is_empty() {
           return dmp_zero(l)
         }
@@ -2053,28 +2040,28 @@ pub fn dmp_raise(
         let out : Array[DensePoly] = Array::new()
         for it in items {
           match it {
-            DensePoly::Coef(c) => out.push(dmp_ground(c, k))
-            DensePoly::Poly(_) => raise PolyError::NotUnivariate
+            Coef(c) => out.push(dmp_ground(c, k))
+            Poly(_) => raise NotUnivariate
           }
         }
-        DensePoly::Poly(out)
+        Poly(out)
       }
-      DensePoly::Coef(c) => dmp_ground(c, l)
+      Coef(c) => dmp_ground(c, l)
     }
   } else {
     match f {
-      DensePoly::Poly(items) => {
+      Poly(items) => {
         let v = u - 1
         let out : Array[DensePoly] = Array::make(
           items.length(),
-          DensePoly::Poly(Array::new()),
+          Poly(Array::new()),
         )
         for i in 0..<items.length() {
           out.set(i, dmp_raise(items[i], l, v, domain))
         }
-        DensePoly::Poly(out)
+        Poly(out)
       }
-      DensePoly::Coef(c) => dmp_ground(c, l)
+      Coef(c) => dmp_ground(c, l)
     }
   }
 }
@@ -2175,7 +2162,7 @@ pub fn dmp_deflate(
     for i in 0..<old.length() {
       exps.set(i, old[i] / b[i])
     }
-    out.set(Monomial::{ exps, }, coeff)
+    out.set({ exps, }, coeff)
   }
   (b, dmp_from_dict(out, u, domain))
 }
@@ -2311,7 +2298,7 @@ pub fn dmp_multi_deflate(
       for i in 0..<old.length() {
         exps.set(i, old[i] / b[i])
       }
-      new_map.set(Monomial::{ exps, }, coeff)
+      new_map.set({ exps, }, coeff)
     }
     out.push(dmp_from_dict(new_map, u, domain))
   }
@@ -2337,7 +2324,7 @@ pub fn dup_inflate(
   domain : Domain,
 ) -> Array[FieldElem] raise PolyError {
   if m <= 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if m == 1 || f.is_empty() {
     return f
@@ -2368,18 +2355,18 @@ fn rec_inflate(
     return dense_from_coeffs(inflated)
   }
   if m[i] <= 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let w = v - 1
   let j = i + 1
   match g {
-    DensePoly::Poly(items) => {
+    Poly(items) => {
       let mapped : Array[DensePoly] = Array::new()
       for item in items {
         mapped.push(rec_inflate(item, m, w, j, domain))
       }
       if mapped.is_empty() {
-        return DensePoly::Poly(Array::new())
+        return Poly(Array::new())
       }
       let out : Array[DensePoly] = Array::new()
       out.push(mapped[0])
@@ -2389,9 +2376,9 @@ fn rec_inflate(
         }
         out.push(mapped[idx])
       }
-      DensePoly::Poly(out)
+      Poly(out)
     }
-    DensePoly::Coef(c) => dmp_ground(c, v)
+    Coef(c) => dmp_ground(c, v)
   }
 }
 
@@ -2434,13 +2421,13 @@ pub fn dmp_inflate(
 
 ///|
 fn dpp_zero(u : Int) -> DensePolyPoly {
-  let mut p : DensePolyPoly = DensePolyPoly::Poly(Array::new())
+  let mut p : DensePolyPoly = Poly(Array::new())
   if u < 0 {
     return p
   }
   let mut i = 0
   while i < u {
-    p = DensePolyPoly::Poly([p])
+    p = Poly([p])
     i = i + 1
   }
   p
@@ -2449,8 +2436,8 @@ fn dpp_zero(u : Int) -> DensePolyPoly {
 ///|
 fn dpp_zero_p(f : DensePolyPoly) -> Bool {
   match f {
-    DensePolyPoly::Coef(p) => p.is_zero()
-    DensePolyPoly::Poly(items) =>
+    Coef(p) => p.is_zero()
+    Poly(items) =>
       if items.is_empty() {
         true
       } else {
@@ -2489,14 +2476,14 @@ fn dpp_from_dict(
 ) -> DensePolyPoly raise PolyError {
   if u == 0 {
     if f.is_empty() {
-      return DensePolyPoly::Poly(Array::new())
+      return Poly(Array::new())
     }
     let mut max_exp = 0
     let mut first = true
     for m, _ in f {
       let exps = m.to_array()
       if exps.length() != 1 {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
       if first || exps[0] > max_exp {
         max_exp = exps[0]
@@ -2504,17 +2491,14 @@ fn dpp_from_dict(
       }
     }
     let zero_poly = Poly::zero(gens, domain)
-    let out : Array[DensePolyPoly] = Array::make(
-      max_exp + 1,
-      DensePolyPoly::Coef(zero_poly),
-    )
+    let out : Array[DensePolyPoly] = Array::make(max_exp + 1, Coef(zero_poly))
     for m, coeff in f {
       let exp = m.to_array()[0]
       let idx = max_exp - exp
-      out.set(idx, DensePolyPoly::Coef(coeff))
+      out.set(idx, Coef(coeff))
     }
     let stripped = dpp_strip_leading(out)
-    return DensePolyPoly::Poly(stripped)
+    return Poly(stripped)
   }
   if f.is_empty() {
     return dpp_zero(u)
@@ -2525,7 +2509,7 @@ fn dpp_from_dict(
   for m, coeff in f {
     let exps = m.to_array()
     if exps.length() != u + 1 {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     let head = exps[0]
     if first || head > max_exp {
@@ -2565,7 +2549,7 @@ fn dpp_from_dict(
   if stripped.is_empty() {
     dpp_zero(u)
   } else {
-    DensePolyPoly::Poly(stripped)
+    Poly(stripped)
   }
 }
 
@@ -2577,20 +2561,17 @@ fn dpp_to_dict(
   let out : Map[Monomial, Poly] = Map([])
   if u == 0 {
     match f {
-      DensePolyPoly::Coef(p) =>
-        if !p.is_zero() {
-          out.set(monom_from_exp(0), p)
-        }
-      DensePolyPoly::Poly(items) => {
+      Coef(p) => if !p.is_zero() { out.set(monom_from_exp(0), p) }
+      Poly(items) => {
         let deg = items.length() - 1
         for i in 0..<items.length() {
           match items[i] {
-            DensePolyPoly::Coef(p) =>
+            Coef(p) =>
               if !p.is_zero() {
                 let exp = deg - i
                 out.set(monom_from_exp(exp), p)
               }
-            DensePolyPoly::Poly(_) => raise PolyError::NonPolynomial
+            Poly(_) => raise NonPolynomial
           }
         }
       }
@@ -2598,12 +2579,12 @@ fn dpp_to_dict(
     return out
   }
   match f {
-    DensePolyPoly::Coef(p) =>
+    Coef(p) =>
       if !p.is_zero() {
         let zeros = Array::make(u + 1, 0)
-        out.set(Monomial::{ exps: zeros }, p)
+        out.set({ exps: zeros }, p)
       }
-    DensePolyPoly::Poly(items) => {
+    Poly(items) => {
       let deg = items.length() - 1
       let v = u - 1
       for i in 0..<items.length() {
@@ -2667,7 +2648,7 @@ pub fn dmp_exclude(
       let j = jlist[idx]
       let _ = exps.remove(j)
     }
-    out.set(Monomial::{ exps, }, coeff)
+    out.set({ exps, }, coeff)
   }
   let new_u = u - jlist.length()
   (jlist, dmp_from_dict(out, new_u, domain), new_u)
@@ -2702,7 +2683,7 @@ pub fn dmp_include(
     for j in jlist {
       exps.insert(j, 0)
     }
-    out.set(Monomial::{ exps, }, coeff)
+    out.set({ exps, }, coeff)
   }
   let new_u = u + jlist.length()
   dmp_from_dict(out, new_u, domain)
@@ -2734,7 +2715,7 @@ pub fn dmp_inject(
   let out : Map[Monomial, FieldElem] = Map([])
   for f_monom, poly in dict {
     if !poly.gens.equal(gens) {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     for g_monom, coeff in poly.coeffs {
       let f_exps = f_monom.to_array()
@@ -2756,7 +2737,7 @@ pub fn dmp_inject(
           merged.set(i + f_exps.length(), g_exps[i])
         }
       }
-      add_term(out, Monomial::{ exps: merged }, coeff, domain)
+      add_term(out, { exps: merged }, coeff, domain)
     }
   }
   let w = u + v + 1
@@ -2786,7 +2767,7 @@ pub fn dmp_eject(
 ) -> DensePolyPoly raise PolyError {
   let n = gens.length()
   if u + 1 < n {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let dict = dmp_to_dict(f, u, domain)
   let grouped : Map[Monomial, Map[Monomial, FieldElem]] = Map([])
@@ -2830,7 +2811,7 @@ pub fn dmp_eject(
   }
   let out : Map[Monomial, Poly] = Map([])
   for monom, coeffs in grouped {
-    let poly = Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
+    let poly = Poly::{ coeffs, gens, domain, order: Lex }
     out.set(monom, poly)
   }
   let v = u - n
@@ -2923,7 +2904,7 @@ pub fn dmp_terms_gcd(
     for i in 0..<old.length() {
       new_exps.set(i, old[i] - exps[i])
     }
-    out.set(Monomial::{ exps: new_exps }, coeff)
+    out.set({ exps: new_exps }, coeff)
   }
   (exps, dmp_from_dict(out, u, domain))
 }
@@ -2959,7 +2940,7 @@ pub fn dmp_list_terms(
   }
   let ord = match order {
     Some(o) => o
-    None => TermOrder::Lex
+    None => Lex
   }
   terms.sort_by((a, b) => {
     let ma = Monomial::{ exps: a.0 }
@@ -3057,12 +3038,12 @@ pub fn dmp_apply_pairs(
   }
   let v = u - 1
   let items_f = match f {
-    DensePoly::Poly(items) => items
-    DensePoly::Coef(c) => [dmp_ground(c, v)]
+    Poly(items) => items
+    Coef(c) => [dmp_ground(c, v)]
   }
   let items_g = match g {
-    DensePoly::Poly(items) => items
-    DensePoly::Coef(c) => [dmp_ground(c, v)]
+    Poly(items) => items
+    Coef(c) => [dmp_ground(c, v)]
   }
   let n = items_f.length()
   let m = items_g.length()
@@ -3095,7 +3076,7 @@ pub fn dmp_apply_pairs(
   for i in 0..<f0.length() {
     result.push(dmp_apply_pairs(f0[i], g0[i], h, args, v, domain))
   }
-  dmp_strip(DensePoly::Poly(result))
+  dmp_strip(Poly(result))
 }
 
 ///|
@@ -3163,7 +3144,7 @@ fn dup_pretty_term(coeff : FieldElem, exp : Int, sym : String) -> String? {
     return None
   }
   if exp == 0 {
-    return Some(coeff.to_string())
+    return Some(Show::to_string(coeff))
   }
   let base = if exp == 1 { sym } else { "\{sym}**\{exp}" }
   if fe_is_one(coeff) {
@@ -3274,7 +3255,7 @@ pub fn dmp_slice_in(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if j < 0 || j > u {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if u == 0 {
     let coeffs = dense_to_coeffs(f)
@@ -3289,7 +3270,7 @@ pub fn dmp_slice_in(
     if k < m || k >= n {
       exps.set(j, 0)
     }
-    add_term(out, Monomial::{ exps, }, coeff, domain)
+    add_term(out, { exps, }, coeff, domain)
   }
   dmp_from_dict(out, u, domain)
 }

@@ -42,7 +42,7 @@ pub struct Truss {
 
 ///|
 pub fn truss() -> Truss {
-  Truss::{
+  {
     nodes_: [],
     node_labels_: [],
     node_positions_: [],
@@ -69,7 +69,7 @@ fn rational_expr(num : Int, den : Int) -> @symcore.Expr {
 
 ///|
 fn pi_expr() -> @symcore.Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  NumberSymbol(Pi)
 }
 
 ///|
@@ -90,7 +90,7 @@ fn sqrt3_over_2() -> @symcore.Expr {
 ///|
 fn expr_integer_value(expr : @symcore.Expr) -> Int? {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
+    Number(n) if n.is_integral() => Some(n.numerator().to_int())
     _ => None
   }
 }
@@ -112,17 +112,12 @@ fn rename_symbol(
   new_name : String,
 ) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Symbol(name) =>
-      if name == old_name {
-        @symcore.Expr::Symbol(new_name)
-      } else {
-        expr
-      }
-    @symcore.Expr::Add(args) =>
+    Symbol(name) => if name == old_name { Symbol(new_name) } else { expr }
+    Add(args) =>
       @symcore.add(args.map(arg => rename_symbol(arg, old_name, new_name)))
-    @symcore.Expr::Mul(args) =>
+    Mul(args) =>
       @symcore.mul(args.map(arg => rename_symbol(arg, old_name, new_name)))
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       @symcore.pow(
         rename_symbol(base, old_name, new_name),
         rename_symbol(exp, old_name, new_name),
@@ -283,7 +278,7 @@ fn expect_node_coords(
 ) -> (@symcore.Expr, @symcore.Expr) raise TrussError {
   match coords.get(label) {
     Some(value) => value
-    None => raise TrussError::ValueError("No such node exists in the truss")
+    None => raise ValueError("No such node exists in the truss")
   }
 }
 
@@ -295,7 +290,7 @@ fn solve_linear_system(
   let nrows = coeff_rows.length()
   let ncols = if nrows == 0 { 0 } else { coeff_rows[0].length() }
   guard nrows == rhs_values.length() && nrows == ncols else {
-    raise TrussError::ValueError("The given truss cannot be solved")
+    raise ValueError("The given truss cannot be solved")
   }
 
   let aug : Array[Array[@symcore.Expr]] = []
@@ -311,7 +306,7 @@ fn solve_linear_system(
       pivot_row += 1
     }
     guard pivot_row < nrows else {
-      raise TrussError::ValueError("The given truss cannot be solved")
+      raise ValueError("The given truss cannot be solved")
     }
     if pivot_row != pivot {
       let swapped = aug[pivot]
@@ -340,7 +335,7 @@ fn solve_linear_system(
       col += 1
     }
     guard !expr_is_zero(aug[row][row]) else {
-      raise TrussError::ValueError("The given truss cannot be solved")
+      raise ValueError("The given truss cannot be solved")
     }
     solution[row] = normalize_expr(expr_div(rhs, aug[row][row]))
     row -= 1
@@ -478,13 +473,11 @@ pub fn Truss::add_node(
     let x = normalize_expr(spec.1)
     let y = normalize_expr(spec.2)
     guard self.node_coordinates_.get(label) is None else {
-      raise TrussError::ValueError("Node needs to have a unique label")
+      raise ValueError("Node needs to have a unique label")
     }
     for _, coords in self.node_coordinates_ {
       if coords == (x, y) {
-        raise TrussError::ValueError(
-          "A node already exists at the given position",
-        )
+        raise ValueError("A node already exists at the given position")
       }
     }
     self.nodes_.push((label, x, y))
@@ -501,18 +494,16 @@ pub fn Truss::remove_node(
 ) -> Unit raise TrussError {
   for label in labels {
     guard self.node_coordinates_.get(label) is Some(_) else {
-      raise TrussError::ValueError("No such node exists in the truss")
+      raise ValueError("No such node exists in the truss")
     }
     for _, endpoints in self.members_ {
       if endpoints[0] == label || endpoints[1] == label {
-        raise TrussError::ValueError(
-          "The given node already has member attached to it",
-        )
+        raise ValueError("The given node already has member attached to it")
       }
     }
     let index = match find_string_index(self.node_labels_, label) {
       Some(value) => value
-      None => raise TrussError::ValueError("No such node exists in the truss")
+      None => raise ValueError("No such node exists in the truss")
     }
     ignore(self.nodes_.remove(index))
     ignore(self.node_labels_.remove(index))
@@ -536,19 +527,17 @@ pub fn Truss::add_member(
     guard start != end_ &&
       self.node_coordinates_.get(start) is Some(_) &&
       self.node_coordinates_.get(end_) is Some(_) else {
-      raise TrussError::ValueError(
+      raise ValueError(
         "The start and end points of the member must be unique nodes",
       )
     }
     guard self.members_.get(label) is None else {
-      raise TrussError::ValueError(
+      raise ValueError(
         "A member with the same label already exists for the truss",
       )
     }
     guard self.node_pairs_occupied_.get((start, end_)) is None else {
-      raise TrussError::ValueError(
-        "A member already exists between the two nodes",
-      )
+      raise ValueError("A member already exists between the two nodes")
     }
     self.members_.set(label, [start, end_])
     self.internal_forces_.set(label, int_expr(0))
@@ -563,7 +552,7 @@ pub fn Truss::remove_member(
 ) -> Unit raise TrussError {
   for label in labels {
     guard self.members_.get(label) is Some(_) else {
-      raise TrussError::ValueError("No such member exists in the Truss")
+      raise ValueError("No such member exists in the Truss")
     }
     ignore(self.members_.remove(label))
     ignore(self.member_lengths_.remove(label))
@@ -581,14 +570,14 @@ pub fn Truss::change_node_label(
     let old_label = rename.0
     let new_label = rename.1
     guard self.node_coordinates_.get(old_label) is Some(_) else {
-      raise TrussError::ValueError("No such node exists for the Truss")
+      raise ValueError("No such node exists for the Truss")
     }
     guard self.node_coordinates_.get(new_label) is None else {
-      raise TrussError::ValueError("A node with the given label already exists")
+      raise ValueError("A node with the given label already exists")
     }
     let index = match find_string_index(self.node_labels_, old_label) {
       Some(value) => value
-      None => raise TrussError::ValueError("No such node exists for the Truss")
+      None => raise ValueError("No such node exists for the Truss")
     }
     let coords = expect_node_coords(self.node_coordinates_, old_label)
     self.nodes_[index] = (new_label, coords.0, coords.1)
@@ -638,11 +627,10 @@ pub fn Truss::change_member_label(
     let new_label = rename.1
     let endpoints = match self.members_.get(old_label) {
       Some(value) => value
-      None =>
-        raise TrussError::ValueError("No such member exists for the Truss")
+      None => raise ValueError("No such member exists for the Truss")
     }
     guard new_label == old_label || self.members_.get(new_label) is None else {
-      raise TrussError::ValueError(
+      raise ValueError(
         "A member with the same label already exists for the truss",
       )
     }
@@ -667,7 +655,7 @@ pub fn Truss::apply_load(
   for spec in specs {
     let location = spec.0
     guard self.node_coordinates_.get(location) is Some(_) else {
-      raise TrussError::ValueError("Load must be applied at a known node")
+      raise ValueError("Load must be applied at a known node")
     }
     let entry = [normalize_expr(spec.1), normalize_expr(spec.2)]
     match self.loads_.get(location) {
@@ -688,18 +676,18 @@ pub fn Truss::remove_load(
   for spec in specs {
     let location = spec.0
     guard self.node_coordinates_.get(location) is Some(_) else {
-      raise TrussError::ValueError("Load must be removed from a known node")
+      raise ValueError("Load must be removed from a known node")
     }
     let loads = match self.loads_.get(location) {
       Some(value) => value
       None =>
-        raise TrussError::ValueError(
+        raise ValueError(
           "No load of this magnitude and direction has been applied at this node",
         )
     }
     let entry = [normalize_expr(spec.1), normalize_expr(spec.2)]
     guard remove_load_entry(loads, entry) else {
-      raise TrussError::ValueError(
+      raise ValueError(
         "No load of this magnitude and direction has been applied at this node",
       )
     }
@@ -720,51 +708,31 @@ pub fn Truss::apply_support(
     let location = spec.0
     let kind = spec.1
     guard self.node_coordinates_.get(location) is Some(_) else {
-      raise TrussError::ValueError("Support must be added on a known node")
+      raise ValueError("Support must be added on a known node")
     }
     guard kind == "pinned" || kind == "roller" else {
-      raise TrussError::ValueError("Support type must be pinned or roller")
+      raise ValueError("Support type must be pinned or roller")
     }
     match self.supports_.get(location) {
       None =>
         if kind == "pinned" {
           self.apply_load([
-            (
-              location,
-              @symcore.Expr::Symbol(reaction_x_name(location)),
-              int_expr(0),
-            ),
-            (
-              location,
-              @symcore.Expr::Symbol(reaction_y_name(location)),
-              int_expr(90),
-            ),
+            (location, Symbol(reaction_x_name(location)), int_expr(0)),
+            (location, Symbol(reaction_y_name(location)), int_expr(90)),
           ])
         } else {
           self.apply_load([
-            (
-              location,
-              @symcore.Expr::Symbol(reaction_y_name(location)),
-              int_expr(90),
-            ),
+            (location, Symbol(reaction_y_name(location)), int_expr(90)),
           ])
         }
       Some(existing) =>
         if existing == "pinned" && kind == "roller" {
           self.remove_load([
-            (
-              location,
-              @symcore.Expr::Symbol(reaction_x_name(location)),
-              int_expr(0),
-            ),
+            (location, Symbol(reaction_x_name(location)), int_expr(0)),
           ])
         } else if existing == "roller" && kind == "pinned" {
           self.apply_load([
-            (
-              location,
-              @symcore.Expr::Symbol(reaction_x_name(location)),
-              int_expr(0),
-            ),
+            (location, Symbol(reaction_x_name(location)), int_expr(0)),
           ])
         }
     }
@@ -779,24 +747,19 @@ pub fn Truss::remove_support(
 ) -> Unit raise TrussError {
   for label in labels {
     guard self.node_coordinates_.get(label) is Some(_) else {
-      raise TrussError::ValueError("No such node exists in the Truss")
+      raise ValueError("No such node exists in the Truss")
     }
     let kind = match self.supports_.get(label) {
       Some(value) => value
-      None =>
-        raise TrussError::ValueError(
-          "No support has been added to the given node",
-        )
+      None => raise ValueError("No support has been added to the given node")
     }
     if kind == "pinned" {
       self.remove_load([
-        (label, @symcore.Expr::Symbol(reaction_x_name(label)), int_expr(0)),
-        (label, @symcore.Expr::Symbol(reaction_y_name(label)), int_expr(90)),
+        (label, Symbol(reaction_x_name(label)), int_expr(0)),
+        (label, Symbol(reaction_y_name(label)), int_expr(90)),
       ])
     } else {
-      self.remove_load([
-        (label, @symcore.Expr::Symbol(reaction_y_name(label)), int_expr(90)),
-      ])
+      self.remove_load([(label, Symbol(reaction_y_name(label)), int_expr(90))])
     }
     ignore(self.supports_.remove(label))
     self.clear_reaction_solution_for_node(label)
@@ -814,7 +777,7 @@ pub fn Truss::solve(self : Truss) -> Unit raise TrussError {
     }
   }
   guard 2 * self.nodes_.length() == self.members_.length() + reaction_count else {
-    raise TrussError::ValueError("The given truss cannot be solved")
+    raise ValueError("The given truss cannot be solved")
   }
 
   let unknowns = self.unknowns()
@@ -845,7 +808,7 @@ pub fn Truss::solve(self : Truss) -> Unit raise TrussError {
       Some(loads) =>
         for load in loads {
           let is_reaction_symbol = match load[0] {
-            @symcore.Expr::Symbol(name) =>
+            Symbol(name) =>
               name == reaction_x_name(label) || name == reaction_y_name(label)
             _ => false
           }
@@ -864,7 +827,7 @@ pub fn Truss::solve(self : Truss) -> Unit raise TrussError {
       let end_coords = expect_node_coords(self.node_coordinates_, end_)
       let length = match self.member_lengths_.get(member_label) {
         Some(value) => value
-        None => raise TrussError::ValueError("missing member length")
+        None => raise ValueError("missing member length")
       }
       let col = unknown_index[member_label]
       if label == start {

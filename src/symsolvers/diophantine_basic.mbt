@@ -79,8 +79,7 @@ fn solver_integer_expr(
 ) -> @bigint.BigInt raise SolverError {
   match @symcore.exact_numeric_expr_num_den(expr) {
     Some((num, den)) if den.compare(1N) == 0 => num
-    _ =>
-      raise SolverError::ValueError(context + " expects integer coefficients")
+    _ => raise ValueError(context + " expects integer coefficients")
   }
 }
 
@@ -90,9 +89,8 @@ fn solver_field_elem_expr(
   context : String,
 ) -> Expr raise SolverError {
   match elem {
-    @sympolys.FieldElem::QQ(value) => Expr::Number(value)
-    _ =>
-      raise SolverError::ValueError(context + " expects rational coefficients")
+    QQ(value) => Number(value)
+    _ => raise ValueError(context + " expects rational coefficients")
   }
 }
 
@@ -104,7 +102,7 @@ fn solver_diophantine_symbols(
   if syms.is_empty() {
     let inferred = sorted_unique_symbols(@symcore.free_symbols(eq))
     guard !inferred.is_empty() else {
-      raise SolverError::ValueError("diophantine expects at least one symbol")
+      raise ValueError("diophantine expects at least one symbol")
     }
     inferred
   } else {
@@ -116,11 +114,11 @@ fn solver_diophantine_symbols(
 fn solver_diophantine_parameter(index : Int, param : Expr) -> Expr {
   if index == 0 {
     match param {
-      Expr::Symbol(_) => param
-      _ => Expr::Symbol("t_0")
+      Symbol(_) => param
+      _ => Symbol("t_0")
     }
   } else {
-    Expr::Symbol("t_\{index}")
+    Symbol("t_\{index}")
   }
 }
 
@@ -131,9 +129,7 @@ fn solver_linear_diophantine_tuple(
   param : Expr,
 ) -> Array[Expr] raise SolverError {
   guard !coeff_values.is_empty() else {
-    raise SolverError::ValueError(
-      "diophantine expects at least one coefficient",
-    )
+    raise ValueError("diophantine expects at least one coefficient")
   }
   let coeff_row : Array[Expr] = []
   let mut any_nonzero = false
@@ -237,7 +233,7 @@ fn solver_univariate_diophantine(
       solver_exact_number_expr(candidate, 1N),
     )
     if expr_is_zeroish(value) == Some(true) {
-      roots.push(Expr::Tuple([solver_exact_number_expr(candidate, 1N)]))
+      roots.push(Tuple([solver_exact_number_expr(candidate, 1N)]))
     }
   }
   @symsets.finite_set(roots)
@@ -281,7 +277,7 @@ pub fn classify_diop(
         }
         (symbols, out, "univariate")
       } else {
-        raise SolverError::ValueError(
+        raise ValueError(
           "classify_diop currently supports linear equations and univariate polynomials",
         )
       }
@@ -309,7 +305,7 @@ pub fn classify_diop(
 /// the free integer parameter when infinitely many solutions exist.
 pub fn diophantine(
   eq : Expr,
-  param? : Expr = Expr::Symbol("t_0"),
+  param? : Expr = Symbol("t_0"),
   syms? : Array[Expr] = [],
 ) -> Set raise SolverError {
   let symbols = solver_diophantine_symbols(eq, syms)
@@ -343,7 +339,7 @@ pub fn diophantine(
     let a = coeff_values[0]
     guard a.compare(0N) != 0 else {
       return if rhs.compare(0N) == 0 {
-        @symsets.finite_set([Expr::Tuple([param])])
+        @symsets.finite_set([Tuple([param])])
       } else {
         @symsets.empty_set()
       }
@@ -351,9 +347,7 @@ pub fn diophantine(
     if (rhs % a).compare(0N) != 0 {
       return @symsets.empty_set()
     }
-    return @symsets.finite_set([
-      Expr::Tuple([solver_exact_number_expr(rhs / a, 1N)]),
-    ])
+    return @symsets.finite_set([Tuple([solver_exact_number_expr(rhs / a, 1N)])])
   }
   if symbols.length() == 2 {
     let a = coeff_values[0]
@@ -365,7 +359,7 @@ pub fn diophantine(
           @symcore.mul([solver_exact_number_expr(-(a / b), 1N), param]),
         ]),
       )
-      return @symsets.finite_set([Expr::Tuple([param, y_expr])])
+      return @symsets.finite_set([Tuple([param, y_expr])])
     }
     if solver_bigint_abs(a).compare(1N) == 0 {
       let x_expr = canonical_expr(
@@ -374,7 +368,7 @@ pub fn diophantine(
           @symcore.mul([solver_exact_number_expr(-(b / a), 1N), param]),
         ]),
       )
-      return @symsets.finite_set([Expr::Tuple([x_expr, param])])
+      return @symsets.finite_set([Tuple([x_expr, param])])
     }
     let (s, t, g) = solver_bigint_gcdex(a, b)
     if (rhs % g).compare(0N) != 0 {
@@ -397,13 +391,13 @@ pub fn diophantine(
         @symcore.mul([solver_exact_number_expr(-step_y, 1N), param]),
       ]),
     )
-    return @symsets.finite_set([Expr::Tuple([x_expr, y_expr])])
+    return @symsets.finite_set([Tuple([x_expr, y_expr])])
   }
   let parts = solver_linear_diophantine_tuple(coeff_values, rhs, param)
   if parts.is_empty() {
     @symsets.empty_set()
   } else {
-    @symsets.finite_set([Expr::Tuple(parts)])
+    @symsets.finite_set([Tuple(parts)])
   }
 }
 
@@ -414,21 +408,21 @@ pub fn diophantine(
 /// full set otherwise.
 pub fn diop_solve(
   eq : Expr,
-  param? : Expr = Expr::Symbol("t_0"),
+  param? : Expr = Symbol("t_0"),
   syms? : Array[Expr] = [],
 ) -> DiopSolveResult raise SolverError {
   let (symbols, _, kind) = classify_diop(eq, syms~)
   if kind == "linear" {
     let solved = diophantine(eq, param~, syms=symbols)
     match solved {
-      @symsets.Set::FiniteSet(items) if items.length() == 1 =>
+      FiniteSet(items) if items.length() == 1 =>
         match items[0] {
-          Expr::Tuple(parts) => DiopSolveResult::Tuple(parts)
-          _ => DiopSolveResult::Set(solved)
+          Tuple(parts) => Tuple(parts)
+          _ => Set(solved)
         }
-      _ => DiopSolveResult::Set(solved)
+      _ => Set(solved)
     }
   } else {
-    DiopSolveResult::Set(diophantine(eq, param~, syms=symbols))
+    Set(diophantine(eq, param~, syms=symbols))
   }
 }

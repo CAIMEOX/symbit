@@ -9,7 +9,7 @@ pub struct Matrix {
 ///|
 /// Create a matrix from rational rows.
 pub fn matrix_from_rows(rows : Array[Array[@symnum.BigRational]]) -> Matrix {
-  Matrix::{ rows, }
+  { rows, }
 }
 
 ///|
@@ -23,7 +23,7 @@ pub fn matrix_from_ints(rows : Array[Array[Int]]) -> Matrix {
     }
     out.push(next)
   }
-  Matrix::{ rows: out }
+  { rows: out }
 }
 
 ///|
@@ -35,7 +35,7 @@ pub fn matrix_eye(n : Int) -> Matrix {
     row[i] = br_int(1)
     rows.push(row)
   }
-  Matrix::{ rows, }
+  { rows, }
 }
 
 ///|
@@ -88,7 +88,7 @@ pub fn matrix_mul(a : Matrix, b : Matrix) -> Matrix {
     }
     rows.push(row)
   }
-  Matrix::{ rows, }
+  { rows, }
 }
 
 ///|
@@ -104,7 +104,7 @@ pub fn matrix_rows_string(m : Matrix) -> String {
   for row in m.rows {
     let parts : Array[String] = Array::new()
     for value in row {
-      parts.push(value.to_string())
+      parts.push(Show::to_string(value))
     }
     let joined = parts.join(", ")
     rows.push("[\{joined}]")

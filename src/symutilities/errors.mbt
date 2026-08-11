@@ -23,16 +23,15 @@ fn double_quoted_string(value : String) -> String {
 ///|
 pub impl Show for UtilitiesError with fn to_string(self) {
   match self {
-    UtilitiesError::InvalidArgument(message) =>
+    InvalidArgument(message) =>
       "InvalidArgument(" + double_quoted_string(message) + ")"
-    UtilitiesError::Unsupported(message) =>
-      "Unsupported(" + double_quoted_string(message) + ")"
-    UtilitiesError::MissingValue(message) =>
+    Unsupported(message) => "Unsupported(" + double_quoted_string(message) + ")"
+    MissingValue(message) =>
       "MissingValue(" + double_quoted_string(message) + ")"
   }
 }
 
 ///|
 pub impl Show for UtilitiesError with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }

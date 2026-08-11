@@ -41,13 +41,10 @@ test "symplotting can build line and implicit plots" {
   assert_true(xs.length() == 20)
   assert_true(xs.length() == ys.length())
 
-  let implicit = plot_implicit(
-    @symcore.Expr::Relational(@symcore.RelOp::Gt, y, x),
-    show=false,
-  )
+  let implicit = plot_implicit(Relational(Gt, y, x), show=false)
   match implicit.get_implicit_data(0) {
-    ImplicitPlotData::Fill(rectangles) => assert_true(rectangles.length() > 0)
-    ImplicitPlotData::Mesh(_, _, _, _) => fail("expected adaptive fill data")
+    Fill(rectangles) => assert_true(rectangles.length() > 0)
+    Mesh(_, _, _, _) => fail("expected adaptive fill data")
   }
 }
 ```

@@ -33,9 +33,7 @@ test "implemented_function integrates with lambdify" {
 
 ///|
 test "implemented_function errors propagate through lambdify" {
-  let f = implemented_function("boom", _ => {
-    raise @symutilities.UtilitiesError::InvalidArgument("boom")
-  })
+  let f = implemented_function("boom", _ => raise InvalidArgument("boom"))
   let x = @symcore.Expr::Symbol("x")
   let fn0 = lambdify(["x"], f.apply([x]))
   let result : Result[Double, @symutilities.UtilitiesError] = try

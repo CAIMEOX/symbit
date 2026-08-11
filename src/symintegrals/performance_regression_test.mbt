@@ -1,16 +1,16 @@
 ///|
 fn x() -> Expr {
-  @symcore.Expr::Symbol("x")
+  Symbol("x")
 }
 
 ///|
 fn t() -> Expr {
-  @symcore.Expr::Symbol("t")
+  Symbol("t")
 }
 
 ///|
 fn s() -> Expr {
-  @symcore.Expr::Symbol("s")
+  Symbol("s")
 }
 
 ///|

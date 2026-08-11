@@ -44,14 +44,14 @@ pub fn limit(
   dir? : String = "+",
 ) -> @symcore.Expr raise {
   let var_name = match x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("limit requires a Symbol")
   }
   if !contains_symbol(expr, var_name) {
     return expr
   }
   match x0 {
-    @symcore.Expr::Number(_) => {
+    Number(_) => {
       // Try rational evaluation first.
       let (num_expr, den_expr) = split_num_den(expr)
       match (poly_from_expr(num_expr, x), poly_from_expr(den_expr, x)) {
@@ -94,9 +94,7 @@ pub fn limit(
               }
               let pole_order = ord_den - ord_num
               if dir == "+-" && pole_order % 2 == 1 {
-                return @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ComplexInfinity,
-                )
+                return NumberSymbol(ComplexInfinity)
               }
               let side_sign = if dir == "-" && pole_order % 2 == 1 {
                 -1
@@ -109,22 +107,12 @@ pub fn limit(
                 Some(s) => {
                   let final_sign = s * side_sign
                   if final_sign < 0 {
-                    @symcore.mul([
-                      @symcore.int(-1),
-                      @symcore.Expr::NumberSymbol(
-                        @symcore.NumberSymbolKind::Infinity,
-                      ),
-                    ])
+                    @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])
                   } else {
-                    @symcore.Expr::NumberSymbol(
-                      @symcore.NumberSymbolKind::Infinity,
-                    )
+                    NumberSymbol(Infinity)
                   }
                 }
-                None =>
-                  @symcore.Expr::NumberSymbol(
-                    @symcore.NumberSymbolKind::Infinity,
-                  )
+                None => NumberSymbol(Infinity)
               }
             }
             _ => ()
@@ -153,14 +141,14 @@ pub fn limit(
             } else if total_order > 0 {
               @symcore.int(0)
             } else {
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+              NumberSymbol(Infinity)
             }
           }
         }
         None => gruntz(expr, x, x0, dir~)
       }
     }
-    @symcore.Expr::Symbol(name) if name == "oo" => {
+    Symbol(name) if name == "oo" => {
       let (num_expr, den_expr) = split_num_den(expr)
       let num_poly = match poly_from_expr(num_expr, x) {
         Some(v) => v
@@ -196,17 +184,11 @@ pub fn limit(
         expr_mul(lead_num, @symcore.pow(lead_den, @symcore.int(-1))),
       )
       match sign {
-        Some(1) =>
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-        Some(-1) =>
-          @symcore.mul([
-            @symcore.int(-1),
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-          ])
+        Some(1) => NumberSymbol(Infinity)
+        Some(-1) => @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])
         Some(0) => @symcore.int(0)
-        Some(_) =>
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-        None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        Some(_) => NumberSymbol(Infinity)
+        None => NumberSymbol(Infinity)
       }
     }
     _ => gruntz(expr, x, x0, dir~)
@@ -230,17 +212,17 @@ fn extract_t_power(
   t : @symcore.Expr,
 ) -> (@symcore.Expr, Int) {
   match expr {
-    @symcore.Expr::Pow(base, exp) if base == t =>
+    Pow(base, exp) if base == t =>
       match int_exp(exp) {
         Some(e) => (@symcore.int(1), e)
         None => (expr, 0)
       }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let rest : Array[@symcore.Expr] = Array::new()
       let mut exp_sum = 0
       for arg in args {
         match arg {
-          @symcore.Expr::Pow(base, exp) if base == t =>
+          Pow(base, exp) if base == t =>
             match int_exp(exp) {
               Some(e) => exp_sum = exp_sum + e
               None => rest.push(arg)

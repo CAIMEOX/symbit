@@ -10,7 +10,7 @@ pub struct BosonOpExpr {
 
 ///|
 pub fn boson_op(name : Expr, annihilation? : Bool = true) -> BosonOpExpr {
-  BosonOpExpr::{ name, is_annihilation: annihilation }
+  { name, is_annihilation: annihilation }
 }
 
 ///|
@@ -36,7 +36,7 @@ pub impl Show for BosonOpExpr with fn to_string(self) {
 
 ///|
 pub impl Show for BosonOpExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -82,7 +82,7 @@ fn boson_secondquant_state_expr(
   ket? : Bool = true,
 ) -> Expr {
   let class_name = if ket { "FockStateBosonKet" } else { "FockStateBosonBra" }
-  @symcore.raw_function(class_name, [@symcore.Expr::Tuple(items)])
+  @symcore.raw_function(class_name, [Tuple(items)])
 }
 
 ///|

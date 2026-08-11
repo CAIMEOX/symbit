@@ -13,9 +13,9 @@ pub fn parabola(
   let focus = focus.with_dim(2)
   let directrix = line(directrix.p1().with_dim(2), directrix.p2().with_dim(2))
   if directrix.contains(focus) {
-    raise GeometryError::ValueError("focus must not lie on the directrix")
+    raise ValueError("focus must not lie on the directrix")
   }
-  Parabola::{ focus_: focus, directrix_: directrix }
+  { focus_: focus, directrix_: directrix }
 }
 
 ///|
@@ -101,8 +101,8 @@ pub fn Parabola::p_parameter(self : Parabola) -> Expr raise GeometryError {
 ///|
 pub fn Parabola::equation(
   self : Parabola,
-  x? : Expr = Expr::Symbol("x"),
-  y? : Expr = Expr::Symbol("y"),
+  x? : Expr = Symbol("x"),
+  y? : Expr = Symbol("y"),
 ) -> Expr {
   let (a, b, c) = line_coeffs_2d(self.directrix_)
   geo_simplify(
@@ -118,7 +118,7 @@ pub fn Parabola::intersection(
   other : GeometryEntity,
 ) -> Array[GeometryEntity] raise GeometryError {
   match other {
-    GeometryEntity::Point(point_obj) =>
+    Point(point_obj) =>
       if geo_expr_is_zero(
           self.equation(
             x=point_obj.with_dim(2).coords_[0],
@@ -129,9 +129,7 @@ pub fn Parabola::intersection(
       } else {
         []
       }
-    GeometryEntity::Line(_)
-    | GeometryEntity::Ray(_)
-    | GeometryEntity::Segment(_) => {
+    Line(_) | Ray(_) | Segment(_) => {
       let p1 = linear_p1(other).with_dim(2)
       let d = linear_direction_coords(other)
       let (a, b, c) = line_coeffs_2d(self.directrix_)

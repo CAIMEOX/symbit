@@ -32,9 +32,7 @@ pub fn laplace_transform_matrix_result(
   t : Expr,
   s : Expr,
 ) -> (@symmatrices.Matrix, Expr, Expr) raise @symmatrices.MatrixError {
-  let mut plane = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::NegativeInfinity,
-  )
+  let mut plane = @symcore.Expr::NumberSymbol(NegativeInfinity)
   let mut cond = true_expr()
   let values = mat.applyfunc(fn(cell) {
     match laplace_transform_result(cell, t, s) {

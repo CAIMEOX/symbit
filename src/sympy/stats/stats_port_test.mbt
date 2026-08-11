@@ -21,19 +21,16 @@ test "stage1 wrappers smoke" {
   inspect(expr_str(probability(e)), content="Probability(Eq(X, 1))")
   inspect(expr_str(expectation(x)), content="Expectation(X)")
   inspect(expr_str(variance(x)), content="Variance(X)")
-  inspect(
-    expr_str(covariance(x, @symcore.Expr::Symbol("Y"))),
-    content="Covariance(X, Y)",
-  )
+  inspect(expr_str(covariance(x, Symbol("Y"))), content="Covariance(X, Y)")
 }
 
 ///|
 test "stage2 finite die parity" {
   let x = die("X", sides=6)
-  let event = eq(@symcore.Expr::Symbol("X"), @symcore.int(3))
+  let event = eq(Symbol("X"), @symcore.int(3))
   let ours = probability(event, rv=x)
   assert_true(expr_equiv(ours, "1/6"))
-  let event2 = le(@symcore.Expr::Symbol("X"), @symcore.int(2))
+  let event2 = le(Symbol("X"), @symcore.int(2))
   let ours2 = probability(event2, rv=x)
   assert_true(expr_equiv(ours2, "1/3"))
 }
@@ -56,7 +53,7 @@ test "stage2 discrete uniform expectation" {
     @symcore.int(3),
     @symcore.int(5),
   ])
-  let ours = expectation(@symcore.Expr::Symbol("X"), rvs=[x])
+  let ours = expectation(Symbol("X"), rvs=[x])
   assert_true(expr_equiv(ours, "3"))
 }
 
@@ -94,11 +91,11 @@ test "stage4 binomial parity" {
 test "stage4 geometric and negbin parity" {
   let p = @symcore.rational_from_ints(1, 2)
   let g = geometric("G", p)
-  let event = le(@symcore.Expr::Symbol("G"), @symcore.int(3))
+  let event = le(Symbol("G"), @symcore.int(3))
   let ours = probability(event, rv=g)
   assert_true(expr_equiv(ours, "7/8"))
   let nb = negative_binomial("K", @symcore.int(3), p)
-  let event2 = eq(@symcore.Expr::Symbol("K"), @symcore.int(2))
+  let event2 = eq(Symbol("K"), @symcore.int(2))
   let ours2 = probability(event2, rv=nb)
   assert_true(expr_equiv(ours2, "3/16"))
 }
@@ -112,7 +109,7 @@ test "stage5 normal and exponential parity" {
   assert_true(pdf_s.contains("exp("))
   assert_true(pdf_s.contains("x**2"))
   assert_true(pdf_s.contains("pi"))
-  let event = le(@symcore.Expr::Symbol("X"), @symcore.int(0))
+  let event = le(Symbol("X"), @symcore.int(0))
   let ours_p = probability(event, rv=n01)
   assert_true(expr_equiv(ours_p, "1/2"))
 
@@ -140,14 +137,12 @@ test "stage6 joint independent parity" {
   let y = die("Y", sides=6)
   let j = joint_independent("J", [x, y])
   let event = and_event([
-    eq(@symcore.Expr::Symbol("X"), @symcore.int(1)),
-    eq(@symcore.Expr::Symbol("Y"), @symcore.int(1)),
+    eq(Symbol("X"), @symcore.int(1)),
+    eq(Symbol("Y"), @symcore.int(1)),
   ])
   let ours = probability(event, rv=j)
   assert_true(expr_equiv(ours, "1/36"))
-  let cov = covariance(@symcore.Expr::Symbol("X"), @symcore.Expr::Symbol("Y"), rvs=[
-    x, y,
-  ])
+  let cov = covariance(Symbol("X"), Symbol("Y"), rvs=[x, y])
   inspect(expr_str(cov), content="0")
 }
 
@@ -170,11 +165,11 @@ test "stage7 compound and variance_prop" {
     @symcore.mul([@symcore.int(3), y]),
   ])
   let vars : Map[String, @symcore.Expr] = {
-    "x": @symcore.Expr::Symbol("Vx"),
-    "y": @symcore.Expr::Symbol("Vy"),
+    "x": Symbol("Vx"),
+    "y": Symbol("Vy"),
   }
   let covs : Map[String, @symcore.Expr] = Map([])
-  covs[cov_key("x", "y")] = @symcore.Expr::Symbol("Cxy")
+  covs[cov_key("x", "y")] = Symbol("Cxy")
   let propagated = variance_prop(expr, vars, covariances=covs)
   assert_eq(expr_str(propagated), "4*Vx + 9*Vy + 12*Cxy")
 }

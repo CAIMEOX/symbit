@@ -29,7 +29,7 @@ fn named_binary_application(expr : Expr) -> (String, Expr, Expr)? {
 ///|
 fn pow_named_unary_application(expr : Expr) -> (String, Expr, Expr)? {
   match expr {
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match named_unary_application(base) {
         Some((name, arg)) => Some((name, arg, exp))
         None => None
@@ -41,15 +41,15 @@ fn pow_named_unary_application(expr : Expr) -> (String, Expr, Expr)? {
 ///|
 fn exact_numeric_value(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    Expr::Number(n) => Some(n)
-    Expr::Float(f) =>
+    Number(n) => Some(n)
+    Float(f) =>
       if !f.is_finite() {
         None
       } else {
         let (num, den) = f.to_rational() catch { _ => return None }
         Some(@symnum.BigRational::new(num, den) catch { _ => return None })
       }
-    Expr::ComplexFloat(z) =>
+    ComplexFloat(z) =>
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
@@ -78,9 +78,9 @@ fn exact_integer_value(expr : Expr) -> Int? {
 ///|
 fn float_source_precision(expr : Expr) -> Int? {
   match expr {
-    Expr::Float(f) => Some(f.precision())
-    Expr::ComplexFloat(z) => Some(z.precision())
-    Expr::Add(args) | Expr::Mul(args) => {
+    Float(f) => Some(f.precision())
+    ComplexFloat(z) => Some(z.precision())
+    Add(args) | Mul(args) => {
       let mut best : Int? = None
       for arg in args {
         match float_source_precision(arg) {
@@ -112,7 +112,7 @@ fn float_source_precision(expr : Expr) -> Int? {
       }
       best
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (float_source_precision(base), float_source_precision(exp)) {
         (Some(lhs), Some(rhs)) => Some(if lhs > rhs { lhs } else { rhs })
         (Some(lhs), None) => Some(lhs)

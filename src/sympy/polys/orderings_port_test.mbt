@@ -12,12 +12,12 @@ fn cmp_to_ord(c : Int) -> Int {
 ///|
 fn order_name(order : TermOrder) -> String {
   match order {
-    TermOrder::Lex => "lex"
-    TermOrder::Grlex => "grlex"
-    TermOrder::Grevlex => "grevlex"
-    TermOrder::Ilex => "ilex"
-    TermOrder::Igrlex => "igrlex"
-    TermOrder::Igrevlex => "igrevlex"
+    Lex => "lex"
+    Grlex => "grlex"
+    Grevlex => "grevlex"
+    Ilex => "ilex"
+    Igrlex => "igrlex"
+    Igrevlex => "igrevlex"
   }
 }
 

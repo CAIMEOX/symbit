@@ -74,6 +74,12 @@ pub suberror ControlError {
   TypeError(String)
   NotImplemented(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn ControlError::equal(Self, Self) -> Bool
+#deprecated
+pub fn ControlError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn ControlError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub struct BodePlot {
@@ -94,6 +100,8 @@ pub fn DiscreteTransferFunction::den(Self) -> @symcore.Expr
 pub fn DiscreteTransferFunction::discrete_tf_den(Self) -> @symcore.Expr
 pub fn DiscreteTransferFunction::discrete_tf_num(Self) -> @symcore.Expr
 pub fn DiscreteTransferFunction::discrete_tf_var(Self) -> @symcore.Expr
+#deprecated
+pub fn DiscreteTransferFunction::equal(Self, Self) -> Bool
 pub fn DiscreteTransferFunction::eval_frequency(Self, @symcore.Expr) -> @symcore.Expr raise ControlError
 pub fn DiscreteTransferFunction::expand(Self) -> Self raise ControlError
 pub fn DiscreteTransferFunction::from_backward_diff(TransferFunction, @symcore.Expr, @symcore.Expr) -> Self raise ControlError
@@ -107,6 +115,10 @@ pub fn DiscreteTransferFunction::is_biproper(Self) -> Bool raise ControlError
 pub fn DiscreteTransferFunction::is_proper(Self) -> Bool raise ControlError
 pub fn DiscreteTransferFunction::is_stable(Self) -> Bool?
 pub fn DiscreteTransferFunction::is_strictly_proper(Self) -> Bool raise ControlError
+#deprecated
+pub fn DiscreteTransferFunction::neg(Self) -> Self
+#deprecated
+pub fn DiscreteTransferFunction::not_equal(Self, Self) -> Bool
 pub fn DiscreteTransferFunction::num(Self) -> @symcore.Expr
 pub fn DiscreteTransferFunction::poles(Self) -> Array[@symcore.Expr] raise ControlError
 pub fn DiscreteTransferFunction::sampling_time(Self) -> @symcore.Expr
@@ -124,6 +136,10 @@ pub struct Feedback {
 pub fn Feedback::as_system(Self) -> SISOLinearTimeInvariant
 pub fn Feedback::den(Self) -> SISOLinearTimeInvariant raise ControlError
 pub fn Feedback::doit(Self) -> SISOLinearTimeInvariant raise ControlError
+#deprecated
+pub fn Feedback::equal(Self, Self) -> Bool
+#deprecated
+pub fn Feedback::not_equal(Self, Self) -> Bool
 pub fn Feedback::num(Self) -> SISOLinearTimeInvariant
 pub fn Feedback::sampling_time(Self) -> @symcore.Expr? raise ControlError
 pub fn Feedback::sign(Self) -> Int
@@ -141,9 +157,13 @@ pub struct PIDController {
 } derive(Eq)
 pub fn PIDController::as_system(Self) -> SISOLinearTimeInvariant
 pub fn PIDController::doit(Self) -> TransferFunction raise ControlError
+#deprecated
+pub fn PIDController::equal(Self, Self) -> Bool
 pub fn PIDController::kd(Self) -> @symcore.Expr
 pub fn PIDController::ki(Self) -> @symcore.Expr
 pub fn PIDController::kp(Self) -> @symcore.Expr
+#deprecated
+pub fn PIDController::not_equal(Self, Self) -> Bool
 pub fn PIDController::tf(Self) -> @symcore.Expr
 pub fn PIDController::to_expr(Self) -> @symcore.Expr raise ControlError
 pub fn PIDController::variable(Self) -> @symcore.Expr
@@ -154,9 +174,13 @@ pub struct Parallel {
 pub fn Parallel::args(Self) -> Array[SISOLinearTimeInvariant]
 pub fn Parallel::as_system(Self) -> SISOLinearTimeInvariant
 pub fn Parallel::doit(Self) -> SISOLinearTimeInvariant raise ControlError
+#deprecated
+pub fn Parallel::equal(Self, Self) -> Bool
 pub fn Parallel::is_biproper(Self) -> Bool raise ControlError
 pub fn Parallel::is_proper(Self) -> Bool raise ControlError
 pub fn Parallel::is_strictly_proper(Self) -> Bool raise ControlError
+#deprecated
+pub fn Parallel::not_equal(Self, Self) -> Bool
 pub fn Parallel::sampling_time(Self) -> @symcore.Expr? raise ControlError
 pub fn Parallel::to_expr(Self) -> @symcore.Expr raise ControlError
 pub fn Parallel::variable(Self) -> @symcore.Expr raise ControlError
@@ -195,9 +219,13 @@ pub struct RouthHurwitz {
 } derive(Eq)
 pub fn RouthHurwitz::auxiliary_polynomials(Self) -> Array[@symcore.Expr]
 pub fn RouthHurwitz::cols(Self) -> Int
+#deprecated
+pub fn RouthHurwitz::equal(Self, Self) -> Bool
 pub fn RouthHurwitz::first_column(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn RouthHurwitz::get(Self, Int, Int) -> @symcore.Expr raise @symphysics.PhysicsError
 pub fn RouthHurwitz::matrix(Self) -> @symphysics.ExplicitMatrix
+#deprecated
+pub fn RouthHurwitz::not_equal(Self, Self) -> Bool
 pub fn RouthHurwitz::rows(Self) -> Int
 pub fn RouthHurwitz::zero_col_infos(Self) -> Array[(Int, Int)]
 pub fn RouthHurwitz::zero_row_case(Self) -> Bool
@@ -211,11 +239,15 @@ pub enum SISOLinearTimeInvariant {
   FeedbackLTI(Feedback)
 } derive(Eq)
 pub fn SISOLinearTimeInvariant::doit(Self) -> Self raise ControlError
+#deprecated
+pub fn SISOLinearTimeInvariant::equal(Self, Self) -> Bool
 pub fn SISOLinearTimeInvariant::is_biproper(Self) -> Bool raise ControlError
 pub fn SISOLinearTimeInvariant::is_discrete(Self) -> Bool
 pub fn SISOLinearTimeInvariant::is_proper(Self) -> Bool raise ControlError
 pub fn SISOLinearTimeInvariant::is_strictly_proper(Self) -> Bool raise ControlError
 pub fn SISOLinearTimeInvariant::neg_system(Self) -> Self raise ControlError
+#deprecated
+pub fn SISOLinearTimeInvariant::not_equal(Self, Self) -> Bool
 pub fn SISOLinearTimeInvariant::sampling_time(Self) -> @symcore.Expr? raise ControlError
 pub fn SISOLinearTimeInvariant::to_expr(Self) -> @symcore.Expr raise ControlError
 pub fn SISOLinearTimeInvariant::variable(Self) -> @symcore.Expr raise ControlError
@@ -238,9 +270,13 @@ pub struct Series {
 pub fn Series::args(Self) -> Array[SISOLinearTimeInvariant]
 pub fn Series::as_system(Self) -> SISOLinearTimeInvariant
 pub fn Series::doit(Self) -> SISOLinearTimeInvariant raise ControlError
+#deprecated
+pub fn Series::equal(Self, Self) -> Bool
 pub fn Series::is_biproper(Self) -> Bool raise ControlError
 pub fn Series::is_proper(Self) -> Bool raise ControlError
 pub fn Series::is_strictly_proper(Self) -> Bool raise ControlError
+#deprecated
+pub fn Series::not_equal(Self, Self) -> Bool
 pub fn Series::sampling_time(Self) -> @symcore.Expr? raise ControlError
 pub fn Series::to_expr(Self) -> @symcore.Expr raise ControlError
 pub fn Series::variable(Self) -> @symcore.Expr raise ControlError
@@ -254,6 +290,8 @@ pub fn TransferFunction::args(Self) -> Array[@symcore.Expr]
 pub fn TransferFunction::as_system(Self) -> SISOLinearTimeInvariant
 pub fn TransferFunction::dc_gain(Self) -> @symcore.Expr raise ControlError
 pub fn TransferFunction::den(Self) -> @symcore.Expr
+#deprecated
+pub fn TransferFunction::equal(Self, Self) -> Bool
 pub fn TransferFunction::eval_frequency(Self, @symcore.Expr) -> @symcore.Expr raise ControlError
 pub fn TransferFunction::expand(Self) -> Self raise ControlError
 pub fn TransferFunction::from_coeff_lists(Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr) -> Self raise ControlError
@@ -263,6 +301,10 @@ pub fn TransferFunction::is_biproper(Self) -> Bool raise ControlError
 pub fn TransferFunction::is_proper(Self) -> Bool raise ControlError
 pub fn TransferFunction::is_stable(Self) -> Bool?
 pub fn TransferFunction::is_strictly_proper(Self) -> Bool raise ControlError
+#deprecated
+pub fn TransferFunction::neg(Self) -> Self
+#deprecated
+pub fn TransferFunction::not_equal(Self, Self) -> Bool
 pub fn TransferFunction::num(Self) -> @symcore.Expr
 pub fn TransferFunction::poles(Self) -> Array[@symcore.Expr] raise ControlError
 pub fn TransferFunction::sampling_time(Self) -> @symcore.Expr

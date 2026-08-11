@@ -31,19 +31,19 @@ pub fn swinnerton_dyer_poly(
   gen? : String = "x",
 ) -> Expr raise PolyError {
   if n <= 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let x = Expr::Symbol(gen)
-  let mut poly = Poly::from_expr((x ^ int(2)) - int(2), [gen], Domain::ZZ)
+  let mut poly = Poly::from_expr((x ^ int(2)) - int(2), [gen], ZZ)
   let mut prime = 2
   for i in 2..<=n {
     prime = next_prime_int(prime)
     let z_name = "__sd_z\{i}"
     let z = Expr::Symbol(z_name)
     let old_expr = expr_replace_symbol(poly.to_expr(), gen, z_name)
-    let f = Poly::from_expr(old_expr, [z_name, gen], Domain::QQ)
+    let f = Poly::from_expr(old_expr, [z_name, gen], QQ)
     let relation = ((x - z) ^ int(2)) - int(prime)
-    let g = Poly::from_expr(relation, [z_name, gen], Domain::QQ)
+    let g = Poly::from_expr(relation, [z_name, gen], QQ)
     let res = resultant_elim_poly(f, g, 0)
     poly = try_round_to_int(res) catch { _ => res }
   }
@@ -60,7 +60,7 @@ pub fn swinnerton_dyer_poly(
 ///   `0..=gens.length()`.
 pub fn symmetric_poly(n : Int, gens : Array[Expr]) -> Expr raise PolyError {
   if gens.is_empty() || n < 0 || n > gens.length() {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if n == 0 {
     return int(1)
@@ -86,15 +86,15 @@ pub fn random_poly(
   n : Int,
   inf : Int,
   sup : Int,
-  domain? : Domain = Domain::ZZ,
+  domain? : Domain = ZZ,
   seed? : Int = 1,
 ) -> Expr raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let span = sup - inf + 1
   if span <= 0 || (inf == 0 && sup == 0) {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let coeffs : Array[FieldElem] = []
   let mut state = seed
@@ -127,12 +127,12 @@ pub fn interpolating_poly(
   ys? : Array[Expr],
 ) -> Expr raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let x_values = match xs {
     Some(values) => {
       if values.length() < n {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
       values
     }
@@ -141,7 +141,7 @@ pub fn interpolating_poly(
   let y_values = match ys {
     Some(values) => {
       if values.length() < n {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
       values
     }
@@ -194,13 +194,13 @@ pub fn fateman_poly_F_1(n : Int) -> (Poly, Poly, Poly) raise PolyError {
     sq_terms.push(y[i] ^ int(2))
   }
   let v = (y0 ^ int(2)) + expr_add_all(sq_terms)
-  let f = Poly::from_expr((u + int(1)) * (u + int(2)), gens, Domain::ZZ)
+  let f = Poly::from_expr((u + int(1)) * (u + int(2)), gens, ZZ)
   let g = Poly::from_expr(
     (v + int(1)) * (int(-3) * y1 * (y0 ^ int(2)) + (y1 ^ int(2)) - int(1)),
     gens,
-    Domain::ZZ,
+    ZZ,
   )
-  let h = Poly::one(gens, Domain::ZZ)
+  let h = Poly::one(gens, ZZ)
   (f, g, h)
 }
 
@@ -218,9 +218,9 @@ pub fn fateman_poly_F_2(n : Int) -> (Poly, Poly, Poly) raise PolyError {
   let h_expr = (y0 + u + int(1)) ^ int(2)
   let f_expr = (y0 - u - int(2)) ^ int(2)
   let g_expr = (y0 + u + int(2)) ^ int(2)
-  let h = Poly::from_expr(h_expr, gens, Domain::ZZ)
-  let f = Poly::from_expr(h_expr * f_expr, gens, Domain::ZZ)
-  let g = Poly::from_expr(h_expr * g_expr, gens, Domain::ZZ)
+  let h = Poly::from_expr(h_expr, gens, ZZ)
+  let f = Poly::from_expr(h_expr * f_expr, gens, ZZ)
+  let g = Poly::from_expr(h_expr * g_expr, gens, ZZ)
   (f, g, h)
 }
 
@@ -244,9 +244,9 @@ pub fn fateman_poly_F_3(n : Int) -> (Poly, Poly, Poly) raise PolyError {
   let h_expr = (y0p + u + int(1)) ^ int(2)
   let f_expr = (y0p - u - int(2)) ^ int(2)
   let g_expr = (y0p + u + int(2)) ^ int(2)
-  let h = Poly::from_expr(h_expr, gens, Domain::ZZ)
-  let f = Poly::from_expr(h_expr * f_expr, gens, Domain::ZZ)
-  let g = Poly::from_expr(h_expr * g_expr, gens, Domain::ZZ)
+  let h = Poly::from_expr(h_expr, gens, ZZ)
+  let f = Poly::from_expr(h_expr * f_expr, gens, ZZ)
+  let g = Poly::from_expr(h_expr * g_expr, gens, ZZ)
   (f, g, h)
 }
 
@@ -338,13 +338,13 @@ fn special_poly_from_terms(
   for term in terms {
     let (coeff, exps) = term
     if exps.length() != gens.length() {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     if coeff != 0 {
-      coeffs[Monomial::{ exps, }] = fe_from_int(coeff, Domain::ZZ)
+      coeffs[{ exps, }] = fe_from_int(coeff, ZZ)
     }
   }
-  Poly::{ coeffs, gens, domain: Domain::ZZ, order: TermOrder::Lex }
+  { coeffs, gens, domain: ZZ, order: Lex }
 }
 
 ///|
@@ -645,14 +645,14 @@ fn symmetric_poly_fill(
 ///|
 fn fateman_generators(n : Int) -> (Array[String], Array[Expr]) raise PolyError {
   if n < 1 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let gens : Array[String] = []
   let exprs : Array[Expr] = []
   for i in 0..<=n {
     let name = "y_\{i}"
     gens.push(name)
-    exprs.push(Expr::Symbol(name))
+    exprs.push(Symbol(name))
   }
   (gens, exprs)
 }
@@ -668,7 +668,7 @@ fn fateman_tail(y : Array[Expr]) -> Array[Expr] {
 
 ///|
 fn default_symbol_array(prefix : String, n : Int) -> Array[Expr] {
-  Array::makei(n, i => Expr::Symbol("\{prefix}\{i}"))
+  Array::makei(n, i => Symbol("\{prefix}\{i}"))
 }
 
 ///|

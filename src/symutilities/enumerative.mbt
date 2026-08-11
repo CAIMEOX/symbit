@@ -28,7 +28,7 @@ pub impl Show for PartComponent with fn to_string(self) {
 
 ///|
 pub impl Show for PartComponent with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -49,7 +49,7 @@ fn int_array_to_string(values : Array[Int]) -> String {
 
 ///|
 fn part_component_array_to_string(values : Array[PartComponent]) -> String {
-  "[" + values.map(value => value.to_string()).join(", ") + "]"
+  "[" + values.map(value => Show::to_string(value)).join(", ") + "]"
 }
 
 ///|
@@ -65,7 +65,7 @@ pub impl Show for MultisetPartitionState with fn to_string(self) {
 
 ///|
 pub impl Show for MultisetPartitionState with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -231,7 +231,7 @@ fn encode_partition(parts : Array[Array[Int]]) -> MultisetPartitionState {
   for part in parts {
     for idx in 0..<part.length() {
       if part[idx] > 0 {
-        pstack.push(PartComponent::{ c: idx, u: part[idx], v: part[idx] })
+        pstack.push({ c: idx, u: part[idx], v: part[idx] })
       }
     }
     f.push(pstack.length())

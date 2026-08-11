@@ -4,14 +4,14 @@
 ///|
 fn to_rational(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
+    Number(n) => Some(n)
     _ => None
   }
 }
 
 ///|
 fn from_rational(r : @symnum.BigRational) -> @symcore.Expr {
-  @symcore.Expr::Number(r)
+  Number(r)
 }
 
 ///|
@@ -42,8 +42,8 @@ pub fn find_simple_recurrence_vector(
 ///|
 pub fn find_simple_recurrence(
   seq : Array[@symcore.Expr],
-  a? : @symcore.Expr = @symcore.Expr::Symbol("a"),
-  n? : @symcore.Expr = @symcore.Expr::Symbol("n"),
+  a? : @symcore.Expr = Symbol("a"),
+  n? : @symcore.Expr = Symbol("n"),
 ) -> @symcore.Expr? {
   let coeffs = find_simple_recurrence_vector(seq)
   if coeffs.length() <= 1 {
@@ -80,7 +80,7 @@ pub fn find_simple_recurrence_vector_expr(
 pub fn rinterp(
   data : Array[@symcore.Expr],
   degnum : Int,
-  x? : @symcore.Expr = @symcore.Expr::Symbol("x"),
+  x? : @symcore.Expr = Symbol("x"),
 ) -> @symcore.Expr? {
   if data.is_empty() {
     return None
@@ -125,7 +125,7 @@ pub fn rinterp(
     // q coefficients (excluding q0)
     let mut qpow = x
     for _ in 1..<=degden {
-      row.push(values[i].neg().mul_r(qpow))
+      row.push(Neg::neg(values[i]).mul_r(qpow))
       qpow = qpow.mul_r(x)
     }
     mat.push(row)
@@ -156,7 +156,7 @@ pub fn rinterp(
 ///|
 pub fn guess_generating_function_rational(
   seq : Array[@symcore.Expr],
-  x? : @symcore.Expr = @symcore.Expr::Symbol("x"),
+  x? : @symcore.Expr = Symbol("x"),
 ) -> @symcore.Expr? {
   if seq.length() < 2 {
     return None
@@ -208,7 +208,7 @@ pub fn guess_generating_function_rational(
 ///|
 pub fn guess_generating_function(
   seq : Array[@symcore.Expr],
-  x? : @symcore.Expr = @symcore.Expr::Symbol("x"),
+  x? : @symcore.Expr = Symbol("x"),
 ) -> @symcore.Expr? {
   guess_generating_function_rational(seq, x~)
 }
@@ -227,9 +227,9 @@ pub fn guess(
   let gf = guess_generating_function_rational(seq)
   if all {
     match (rec, gf) {
-      (Some(r), Some(g)) => Some(@symcore.Expr::Tuple([r, g]))
-      (Some(r), None) => Some(@symcore.Expr::Tuple([r]))
-      (None, Some(g)) => Some(@symcore.Expr::Tuple([g]))
+      (Some(r), Some(g)) => Some(Tuple([r, g]))
+      (Some(r), None) => Some(Tuple([r]))
+      (None, Some(g)) => Some(Tuple([g]))
       _ => None
     }
   } else if evaluate {
@@ -246,7 +246,7 @@ pub fn guess(
 pub fn rationalize(x : @symcore.Expr, maxcoeff? : Int = 10000) -> @symcore.Expr {
   let _ = maxcoeff
   match x {
-    @symcore.Expr::Number(_) => x
+    Number(_) => x
     _ => x
   }
 }
@@ -283,7 +283,7 @@ fn berlekamp_massey(
     }
     for k in 0..<b.length() {
       let idx = k + m
-      c[idx] = c[idx].add_r(coef.mul_r(b[k]).neg())
+      c[idx] = c[idx].add_r(Neg::neg(coef.mul_r(b[k])))
     }
     if 2 * l <= i {
       l = i + 1 - l
@@ -365,10 +365,10 @@ fn solve_linear_system(
         if !factor.is_zero() {
           let mut c = i
           while c < n {
-            mat[r][c] = mat[r][c].add_r(factor.mul_r(mat[i][c]).neg())
+            mat[r][c] = mat[r][c].add_r(Neg::neg(factor.mul_r(mat[i][c])))
             c = c + 1
           }
-          rhs[r] = rhs[r].add_r(factor.mul_r(rhs[i]).neg())
+          rhs[r] = rhs[r].add_r(Neg::neg(factor.mul_r(rhs[i])))
         }
       }
       r = r + 1

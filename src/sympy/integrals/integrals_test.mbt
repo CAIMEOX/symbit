@@ -12,7 +12,7 @@ fn unit_square_polygon() -> @symgeometry.Polygon raise {
       @symgeometry.point2d(@symcore.int(1), @symcore.int(1)),
       @symgeometry.point2d(@symcore.int(1), @symcore.int(0)),
     ]) {
-    @symgeometry.GeometryEntity::Polygon(poly) => poly
+    Polygon(poly) => poly
     _ => fail("expected polygon from unit square vertices")
   }
 }
@@ -35,7 +35,7 @@ test "symintegrals integral constructors and doit" {
     0,
   )
   inspect(
-    @symprint.pretty_string(laplace_transform(x, x, @symcore.Expr::Symbol("s"))),
+    @symprint.pretty_string(laplace_transform(x, x, Symbol("s"))),
     content="LaplaceTransform(x, x, s)",
   )
 }
@@ -1088,9 +1088,7 @@ test "symintegrals Mellin special-function rules evaluate" {
       (
         (@symcore.int(2) ^ s) *
         (
-          @symelem.sqrt(
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-          ) *
+          @symelem.sqrt(NumberSymbol(Pi)) *
           @symspec.gamma((s + @symcore.int(1)) * half)
         )
       ) *
@@ -1107,12 +1105,7 @@ test "symintegrals Mellin special-function rules evaluate" {
       @symcore.int(-1) *
       (
         (@symcore.int(2) ^ (@symcore.int(2) * s - @symcore.int(1))) *
-        (
-          @symelem.sqrt(
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-          ) *
-          @symspec.gamma(s)
-        )
+        (@symelem.sqrt(NumberSymbol(Pi)) * @symspec.gamma(s))
       ) *
       ((s * @symspec.gamma(half - s)) ^ @symcore.int(-1)),
       s,
@@ -1123,15 +1116,7 @@ test "symintegrals Mellin special-function rules evaluate" {
     inverse_mellin_transform(
       @symcore.int(-1) *
       @symspec.gamma(s + half) *
-      (
-        (
-          @symelem.sqrt(
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-          ) *
-          s
-        ) ^
-        @symcore.int(-1)
-      ),
+      ((@symelem.sqrt(NumberSymbol(Pi)) * s) ^ @symcore.int(-1)),
       s,
       x,
     ),
@@ -1144,63 +1129,32 @@ test "symintegrals Mellin special-function rules evaluate" {
   )
   let inv_log_quadratic = doit(
     inverse_mellin_transform(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      (
-        (
-          s *
-          @symelem.sin(
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-            s *
-            half,
-          )
-        ) ^
-        @symcore.int(-1)
-      ),
+      NumberSymbol(Pi) *
+      ((s * @symelem.sin(NumberSymbol(Pi) * s * half)) ^ @symcore.int(-1)),
       s,
       x,
     ),
   )
   let inv_sec = doit(
     inverse_mellin_transform(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      (
-        @symelem.cos(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * s,
-        ) ^
-        @symcore.int(-1)
-      ),
+      NumberSymbol(Pi) * (@symelem.cos(NumberSymbol(Pi) * s) ^ @symcore.int(-1)),
       s,
       x,
     ),
   )
   let inv_log_piecewise = doit(
     inverse_mellin_transform(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      (
-        (
-          s *
-          @symelem.sin(
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * s,
-          )
-        ) ^
-        @symcore.int(-1)
-      ),
+      NumberSymbol(Pi) *
+      ((s * @symelem.sin(NumberSymbol(Pi) * s)) ^ @symcore.int(-1)),
       s,
       x,
     ),
   )
   let inv_sqrt_piecewise = doit(
     inverse_mellin_transform(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+      NumberSymbol(Pi) *
       (
-        (
-          s *
-          @symelem.sin(
-            @symcore.int(2) *
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-            s,
-          )
-        ) ^
+        (s * @symelem.sin(@symcore.int(2) * NumberSymbol(Pi) * s)) ^
         @symcore.int(-1)
       ),
       s,
@@ -1209,26 +1163,16 @@ test "symintegrals Mellin special-function rules evaluate" {
   )
   let inv_tan_piecewise = doit(
     inverse_mellin_transform(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      (
-        (
-          s *
-          @symelem.tan(
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * s,
-          )
-        ) ^
-        @symcore.int(-1)
-      ),
+      NumberSymbol(Pi) *
+      ((s * @symelem.tan(NumberSymbol(Pi) * s)) ^ @symcore.int(-1)),
       s,
       x,
     ),
   )
   let inv_cot_piecewise = doit(
     inverse_mellin_transform(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      @symelem.cot(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * s,
-      ) *
+      NumberSymbol(Pi) *
+      @symelem.cot(NumberSymbol(Pi) * s) *
       (s ^ @symcore.int(-1)),
       s,
       x,
@@ -1245,14 +1189,8 @@ test "symintegrals Mellin special-function rules evaluate" {
   let inv_bessely = doit(
     inverse_mellin_transform(
       @symcore.int(-1) *
-      (
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^
-        @symcore.int(-1)
-      ) *
-      @symelem.cos(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-        (a * half - s),
-      ) *
+      (NumberSymbol(Pi) ^ @symcore.int(-1)) *
+      @symelem.cos(NumberSymbol(Pi) * (a * half - s)) *
       @symspec.gamma(s - a * half) *
       @symspec.gamma(s + a * half),
       s,
@@ -1297,17 +1235,9 @@ test "symintegrals Mellin special-function rules evaluate" {
   let inv_sin_bessely = doit(
     inverse_mellin_transform(
       @symcore.int(-1) *
-      (
-        @symelem.sqrt(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ) ^
-        @symcore.int(-1)
-      ) *
+      (@symelem.sqrt(NumberSymbol(Pi)) ^ @symcore.int(-1)) *
       (@symcore.int(4) ^ s) *
-      @symelem.sin(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-        (a * half - s),
-      ) *
+      @symelem.sin(NumberSymbol(Pi) * (a * half - s)) *
       @symspec.gamma(half - @symcore.int(2) * s) *
       @symspec.gamma((@symcore.int(1) - a) * half + s) *
       @symspec.gamma((@symcore.int(1) + a) * half + s) *
@@ -1320,17 +1250,9 @@ test "symintegrals Mellin special-function rules evaluate" {
   let inv_cos_bessely = doit(
     inverse_mellin_transform(
       @symcore.int(-1) *
-      (
-        @symelem.sqrt(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ) ^
-        @symcore.int(-1)
-      ) *
+      (@symelem.sqrt(NumberSymbol(Pi)) ^ @symcore.int(-1)) *
       (@symcore.int(4) ^ s) *
-      @symelem.cos(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-        (a * half - s),
-      ) *
+      @symelem.cos(NumberSymbol(Pi) * (a * half - s)) *
       @symspec.gamma(s - a * half) *
       @symspec.gamma(s + a * half) *
       @symspec.gamma(half - @symcore.int(2) * s) *
@@ -1342,12 +1264,7 @@ test "symintegrals Mellin special-function rules evaluate" {
   )
   let inv_besselj_sq = doit(
     inverse_mellin_transform(
-      (
-        @symelem.sqrt(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ) ^
-        @symcore.int(-1)
-      ) *
+      (@symelem.sqrt(NumberSymbol(Pi)) ^ @symcore.int(-1)) *
       @symspec.gamma(a + s) *
       @symspec.gamma(half - s) *
       (@symspec.gamma(@symcore.int(1) - s) ^ @symcore.int(-1)) *
@@ -1358,12 +1275,7 @@ test "symintegrals Mellin special-function rules evaluate" {
   )
   let inv_besselj_pm = doit(
     inverse_mellin_transform(
-      (
-        @symelem.sqrt(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ) ^
-        @symcore.int(-1)
-      ) *
+      (@symelem.sqrt(NumberSymbol(Pi)) ^ @symcore.int(-1)) *
       @symspec.gamma(s) *
       @symspec.gamma(half - s) *
       (@symspec.gamma(@symcore.int(1) - s - a) ^ @symcore.int(-1)) *
@@ -1387,15 +1299,9 @@ test "symintegrals Mellin special-function rules evaluate" {
   let inv_besselj_bessely = doit(
     inverse_mellin_transform(
       @symcore.int(-1) *
-      (
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^
-        @symcore.int(-1)
-      ) *
+      (NumberSymbol(Pi) ^ @symcore.int(-1)) *
       (@symcore.int(4) ^ s) *
-      @symelem.cos(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-        ((a - b) * half + s),
-      ) *
+      @symelem.cos(NumberSymbol(Pi) * ((a - b) * half + s)) *
       @symspec.gamma(@symcore.int(1) - @symcore.int(2) * s) *
       @symspec.gamma((a - b) * half + s) *
       @symspec.gamma((a + b) * half + s) *
@@ -1408,19 +1314,9 @@ test "symintegrals Mellin special-function rules evaluate" {
   let inv_besselj_bessely_same = doit(
     inverse_mellin_transform(
       @symcore.int(-1) *
-      (
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^
-        @symcore.int(-1)
-      ) *
-      (
-        @symelem.sqrt(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ) ^
-        @symcore.int(-1)
-      ) *
-      @symelem.cos(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * s,
-      ) *
+      (NumberSymbol(Pi) ^ @symcore.int(-1)) *
+      (@symelem.sqrt(NumberSymbol(Pi)) ^ @symcore.int(-1)) *
+      @symelem.cos(NumberSymbol(Pi) * s) *
       @symspec.gamma(s) *
       @symspec.gamma(a + s) *
       @symspec.gamma(half - s) *
@@ -1432,17 +1328,12 @@ test "symintegrals Mellin special-function rules evaluate" {
   let inv_difference_quotient = doit(
     inverse_mellin_transform(
       (bp ^ (a + s - @symcore.int(1))) *
-      @symelem.sin(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * a,
-      ) *
+      @symelem.sin(NumberSymbol(Pi) * a) *
       @symspec.gamma(s) *
       @symspec.gamma(a + s) *
       @symspec.gamma(@symcore.int(1) - s) *
       @symspec.gamma(@symcore.int(1) - a - s) *
-      (
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^
-        @symcore.int(-1)
-      ),
+      (NumberSymbol(Pi) ^ @symcore.int(-1)),
       s,
       x,
     ),
@@ -1909,7 +1800,7 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     @symcore.int(1),
     @symcore.function("Le", [x, @symcore.int(1)]),
     @symcore.int(0),
-    @symcore.Expr::Boolean(true),
+    Boolean(true),
   ])
   let square_piecewise_eval = doit(laplace_transform(square_piecewise, x, s))
   assert_eq(
@@ -1930,7 +1821,7 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     @symcore.int(2) - x,
     @symcore.function("Le", [x, @symcore.int(2)]),
     @symcore.int(0),
-    @symcore.Expr::Boolean(true),
+    Boolean(true),
   ])
   let triangle_piecewise_eval = doit(
     laplace_transform(triangle_piecewise, x, s),
@@ -1948,7 +1839,7 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
         @symcore.function("Le", [x, @symcore.int(3)]),
       ]),
       @symcore.int(2),
-      @symcore.Expr::Boolean(true),
+      Boolean(true),
     ])
   let middle_piecewise_eval = doit(laplace_transform(middle_piecewise, x, s))
   assert_true(
@@ -1958,7 +1849,7 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     @symcore.int(1),
     @symcore.function("Eq", [x, @symcore.int(1)]),
     @symcore.int(2),
-    @symcore.Expr::Boolean(true),
+    Boolean(true),
   ])
   assert_true(
     @symprint.pretty_string(doit(laplace_transform(eq_piecewise, x, s))).contains(
@@ -2077,7 +1968,7 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   )
   match @symcore.tuple_items(scaled_arg_generic) {
     Some([_, _, cond]) =>
-      assert_eq(@symcore.compare_expr(cond, @symcore.Expr::Boolean(true)), 0)
+      assert_eq(@symcore.compare_expr(cond, Boolean(true)), 0)
     _ => fail("expected LaplaceTransform tuple for generic scaling case")
   }
 
@@ -2197,7 +2088,7 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     Some([value, plane, cond]) => {
       assert_eq(@symcore.compare_expr(value, @symcore.int(0)), 0)
       assert_eq(@symcore.compare_expr(plane, @symcore.int(0)), 0)
-      assert_eq(@symcore.compare_expr(cond, @symcore.Expr::Boolean(true)), 0)
+      assert_eq(@symcore.compare_expr(cond, Boolean(true)), 0)
     }
     _ => fail("expected zero-valued LaplaceTransform tuple for upper window")
   }
@@ -2375,7 +2266,7 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     ),
     0,
   )
-  assert_eq(@symcore.compare_expr(matrix_cond, @symcore.Expr::Boolean(true)), 0)
+  assert_eq(@symcore.compare_expr(matrix_cond, Boolean(true)), 0)
 }
 
 ///|
@@ -2669,10 +2560,7 @@ test "symintegrals Laplace special-function rules evaluate" {
   let inv_log = doit(
     inverse_laplace_transform(
       @symcore.int(-1) *
-      (
-        @symelem.log(s) +
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma)
-      ) *
+      (@symelem.log(s) + NumberSymbol(EulerGamma)) *
       (s ^ @symcore.int(-1)),
       s,
       x,
@@ -2705,10 +2593,7 @@ test "symintegrals Laplace special-function rules evaluate" {
       @symsimplify.simplify(log_laplace),
       @symsimplify.simplify(
         @symcore.int(-1) *
-        (
-          @symelem.log(s) +
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma)
-        ) *
+        (@symelem.log(s) + NumberSymbol(EulerGamma)) *
         (s ^ @symcore.int(-1)),
       ),
     ),
@@ -2745,17 +2630,8 @@ test "symintegrals Laplace special-function rules evaluate" {
       @symsimplify.simplify(log_square_laplace),
       @symsimplify.simplify(
         (
-          (
-            (
-              @symelem.log(s) +
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma)
-            ) ^
-            @symcore.int(2)
-          ) +
-          (
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^
-            @symcore.int(2)
-          ) *
+          ((@symelem.log(s) + NumberSymbol(EulerGamma)) ^ @symcore.int(2)) +
+          (NumberSymbol(Pi) ^ @symcore.int(2)) *
           @symcore.rational_from_ints(1, 6)
         ) *
         (s ^ @symcore.int(-1)),
@@ -2805,10 +2681,7 @@ test "symintegrals Laplace special-function rules evaluate" {
       @symsimplify.simplify(bessely0_laplace),
       @symsimplify.simplify(
         @symcore.rational_from_ints(-2, 1) *
-        (
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^
-          @symcore.int(-1)
-        ) *
+        (NumberSymbol(Pi) ^ @symcore.int(-1)) *
         @symelem.asinh(s * (a ^ @symcore.int(-1))) *
         (
           @symelem.sqrt((a ^ @symcore.int(2)) + (s ^ @symcore.int(2))) ^
@@ -3025,13 +2898,9 @@ test "symintegrals inverse Laplace transform objects roundtrip" {
     None => fail("expected inverse Laplace integral rewrite")
   }
   let contour = @symcore.Expr::Symbol("_c")
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
-  let infinity = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::Infinity,
-  )
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
+  let infinity = @symcore.Expr::NumberSymbol(Infinity)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let expected_integral = integral(@symelem.exp(s * x) * f_s, limits=[
       integral_limit([s, contour - imag * infinity, contour + imag * infinity]),
     ]) *
@@ -3108,7 +2977,7 @@ test "symintegrals fast inverse Laplace helper matches source shapes" {
 
   let explicit_power_one = match
     @symintegrals._fast_inverse_laplace(
-      @symcore.Expr::Pow(@symcore.int(2) * s + @symcore.int(4), @symcore.int(1)),
+      Pow(@symcore.int(2) * s + @symcore.int(4), @symcore.int(1)),
       s,
       x,
     ) {
@@ -3147,9 +3016,7 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   let b = @symcore.Expr::Symbol("b")
   let k = @symcore.Expr::Symbol("k")
   let u = @symcore.Expr::Symbol("u")
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let f_big_of_s = @symcore.raw_function("F", [s])
   let generic_fdict : Map[String, String] = { "f": "F" }
 
@@ -3337,13 +3204,7 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   @symassume.clear_global_assumptions()
   @symassume.add_global_assumption(@symassume.q_integer(ni))
   let symbolic_integer_frequency_diff = @symintegrals.laplace_correspondence(
-    doit(
-      inverse_laplace_transform(
-        @symcore.Expr::Derivative(f_big_of_s, [s, ni]),
-        s,
-        x,
-      ),
-    ),
+    doit(inverse_laplace_transform(Derivative(f_big_of_s, [s, ni]), s, x)),
     generic_fdict,
   )
   @symassume.clear_global_assumptions()
@@ -4182,9 +4043,7 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     0,
   )
 
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let gamma_minus_i_mellin_fallback = doit(
     inverse_laplace_transform(@symspec.gamma(s - imag), s, x),
   )
@@ -4250,7 +4109,7 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   }
 
   let z = @symcore.Expr::Symbol("z")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let sqrt_kernel = @symelem.sqrt(pi) *
     (@symelem.sqrt(z) ^ @symcore.int(-1)) *
     @symelem.exp(@symcore.int(-2) * @symelem.sqrt(z) * @symelem.sqrt(s))
@@ -4288,9 +4147,7 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
         ),
         0,
       )
-      assert_true(
-        @symcore.compare_expr(cond, @symcore.Expr::Boolean(true)) != 0,
-      )
+      assert_true(@symcore.compare_expr(cond, Boolean(true)) != 0)
       let cond_str = @symprint.pretty_string(cond)
       assert_true(
         cond_str.contains("polar_lift") &&
@@ -5626,7 +5483,7 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   match @symcore.tuple_items(reciprocal_public_with_conditions) {
     Some([value, cond]) => {
       assert_eq(@symcore.compare_expr(value, a * @symspec.heaviside(x)), 0)
-      assert_eq(@symcore.compare_expr(cond, @symcore.Expr::Boolean(true)), 0)
+      assert_eq(@symcore.compare_expr(cond, Boolean(true)), 0)
     }
     _ =>
       fail("expected Tuple from inverse_laplace_transform_eval noconds=false")
@@ -6103,7 +5960,7 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
       assert_true(
         @symprint.pretty_string(value).contains("InverseLaplaceTransform"),
       )
-      assert_eq(@symcore.compare_expr(cond, @symcore.Expr::Boolean(true)), 0)
+      assert_eq(@symcore.compare_expr(cond, Boolean(true)), 0)
     }
     _ =>
       fail("expected Tuple from inverse_laplace_transform_eval noconds=false")

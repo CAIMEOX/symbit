@@ -67,6 +67,12 @@ pub(all) suberror ParseError {
   InvalidNumber(span~ : Span, String)
   UnsupportedConstruct(span~ : Span, String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn ParseError::equal(Self, Self) -> Bool
+#deprecated
+pub fn ParseError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn ParseError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub enum Ast {
@@ -87,6 +93,12 @@ pub enum BinaryOp {
   Div
   Pow
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn BinaryOp::equal(Self, Self) -> Bool
+#deprecated
+pub fn BinaryOp::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn BinaryOp::to_repr(Self) -> @debug.Repr
 
 pub enum CompareOp {
   Eq
@@ -97,6 +109,12 @@ pub enum CompareOp {
   Gt
   Ge
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn CompareOp::equal(Self, Self) -> Bool
+#deprecated
+pub fn CompareOp::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn CompareOp::to_repr(Self) -> @debug.Repr
 
 pub struct ParseContext {
   callable_names : Array[String]
@@ -104,6 +122,10 @@ pub struct ParseContext {
   global_callable_names : Array[String]
   global_bindings : Map[String, @symcore.Expr]
 } derive(Eq)
+#deprecated
+pub fn ParseContext::equal(Self, Self) -> Bool
+#deprecated
+pub fn ParseContext::not_equal(Self, Self) -> Bool
 
 pub struct ParseOptions {
   evaluate : Bool
@@ -114,11 +136,23 @@ pub struct Span {
   start : Int
   stop : Int
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn Span::equal(Self, Self) -> Bool
+#deprecated
+pub fn Span::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Span::to_repr(Self) -> @debug.Repr
 
 pub struct Token {
   kind : TokenKind
   span : Span
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn Token::equal(Self, Self) -> Bool
+#deprecated
+pub fn Token::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Token::to_repr(Self) -> @debug.Repr
 
 pub enum TokenKind {
   IntLit(String)
@@ -145,6 +179,12 @@ pub enum TokenKind {
   Ge
   Eof
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn TokenKind::equal(Self, Self) -> Bool
+#deprecated
+pub fn TokenKind::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn TokenKind::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Transformation {
   LambdaNotation
@@ -167,6 +207,12 @@ pub enum UnaryOp {
   Plus
   Minus
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn UnaryOp::equal(Self, Self) -> Bool
+#deprecated
+pub fn UnaryOp::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn UnaryOp::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

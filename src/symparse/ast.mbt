@@ -114,14 +114,14 @@ pub enum Ast {
 /// - Limits: Assumes the AST was built with meaningful spans.
 pub fn ast_span(ast : Ast) -> Span {
   match ast {
-    Ast::Number(span~, _) => span
-    Ast::Symbol(span~, _) => span
-    Ast::Unary(span~, _, _) => span
-    Ast::Binary(span~, _, _, _) => span
-    Ast::Call(span~, _, _) => span
-    Ast::Tuple(span~, _) => span
-    Ast::Compare(span~, _, _) => span
-    Ast::Lambda(span~, _, _) => span
+    Number(span~, _) => span
+    Symbol(span~, _) => span
+    Unary(span~, _, _) => span
+    Binary(span~, _, _, _) => span
+    Call(span~, _, _) => span
+    Tuple(span~, _) => span
+    Compare(span~, _, _) => span
+    Lambda(span~, _, _) => span
   }
 }
 
@@ -173,7 +173,7 @@ pub struct ParseContext {
 /// - Limits: Does not include relaxed transformations such as implicit
 ///   multiplication.
 pub fn default_parse_options() -> ParseOptions {
-  ParseOptions::{ evaluate: true, transformations: standard_transformations() }
+  { evaluate: true, transformations: standard_transformations() }
 }
 
 ///|
@@ -184,7 +184,7 @@ pub fn default_parse_options() -> ParseOptions {
 /// - Returns: A context with empty binding and callable-name tables.
 /// - Limits: Does not predeclare any user-level callable names.
 pub fn default_parse_context() -> ParseContext {
-  ParseContext::{
+  {
     callable_names: [],
     bindings: {},
     global_callable_names: [],
@@ -208,12 +208,7 @@ pub fn parse_context(
   global_callable_names? : Array[String] = [],
   global_bindings? : Map[String, Expr] = {},
 ) -> ParseContext {
-  ParseContext::{
-    callable_names,
-    bindings,
-    global_callable_names,
-    global_bindings,
-  }
+  { callable_names, bindings, global_callable_names, global_bindings }
 }
 
 ///|
@@ -227,7 +222,7 @@ pub fn parse_options(
   transformations? : Array[Transformation] = standard_transformations(),
   evaluate? : Bool = true,
 ) -> ParseOptions {
-  ParseOptions::{ evaluate, transformations: transformations.map(x => x) }
+  { evaluate, transformations: transformations.map(x => x) }
 }
 
 ///|
@@ -242,13 +237,7 @@ pub fn parse_options(
 /// - Limits: Omits relaxed syntax conveniences such as implicit multiplication
 ///   and `^` power conversion.
 pub fn standard_transformations() -> Array[Transformation] {
-  [
-    Transformation::LambdaNotation,
-    Transformation::AutoSymbol,
-    Transformation::RepeatedDecimals,
-    Transformation::AutoNumber,
-    Transformation::FactorialNotation,
-  ]
+  [LambdaNotation, AutoSymbol, RepeatedDecimals, AutoNumber, FactorialNotation]
 }
 
 ///|
@@ -265,9 +254,9 @@ pub fn standard_transformations() -> Array[Transformation] {
 pub fn relaxed_transformations() -> Array[Transformation] {
   [
     ..standard_transformations(),
-    Transformation::ConvertXor,
-    Transformation::ImplicitMultiplicationApplication,
-    Transformation::ConvertEqualsSigns,
+    ConvertXor,
+    ImplicitMultiplicationApplication,
+    ConvertEqualsSigns,
   ]
 }
 
@@ -275,33 +264,21 @@ pub fn relaxed_transformations() -> Array[Transformation] {
 fn option_has(options : ParseOptions, target : Transformation) -> Bool {
   for transformation in options.transformations {
     match (transformation, target) {
-      (Transformation::LambdaNotation, Transformation::LambdaNotation)
-      | (Transformation::AutoSymbol, Transformation::AutoSymbol)
-      | (Transformation::RepeatedDecimals, Transformation::RepeatedDecimals)
-      | (Transformation::AutoNumber, Transformation::AutoNumber)
-      | (Transformation::FactorialNotation, Transformation::FactorialNotation)
-      | (Transformation::SplitSymbols, Transformation::SplitSymbols)
-      | (
-        Transformation::ImplicitMultiplication,
-        Transformation::ImplicitMultiplication,
-      )
-      | (
-        Transformation::ImplicitApplication,
-        Transformation::ImplicitApplication,
-      )
-      | (
-        Transformation::FunctionExponentiation,
-        Transformation::FunctionExponentiation,
-      )
-      | (Transformation::ConvertXor, Transformation::ConvertXor)
-      | (Transformation::ConvertEqualsSigns, Transformation::ConvertEqualsSigns)
-      | (Transformation::Rationalize, Transformation::Rationalize)
-      | (
-        Transformation::ImplicitMultiplicationApplication,
-        Transformation::ImplicitMultiplicationApplication,
-      ) => return true
-      (Transformation::SplitSymbolsCustom(_), Transformation::SplitSymbols) =>
+      (LambdaNotation, LambdaNotation)
+      | (AutoSymbol, AutoSymbol)
+      | (RepeatedDecimals, RepeatedDecimals)
+      | (AutoNumber, AutoNumber)
+      | (FactorialNotation, FactorialNotation)
+      | (SplitSymbols, SplitSymbols)
+      | (ImplicitMultiplication, ImplicitMultiplication)
+      | (ImplicitApplication, ImplicitApplication)
+      | (FunctionExponentiation, FunctionExponentiation)
+      | (ConvertXor, ConvertXor)
+      | (ConvertEqualsSigns, ConvertEqualsSigns)
+      | (Rationalize, Rationalize)
+      | (ImplicitMultiplicationApplication, ImplicitMultiplicationApplication) =>
         return true
+      (SplitSymbolsCustom(_), SplitSymbols) => return true
       _ => ()
     }
   }
@@ -310,53 +287,53 @@ fn option_has(options : ParseOptions, target : Transformation) -> Bool {
 
 ///|
 fn option_has_lambda(options : ParseOptions) -> Bool {
-  option_has(options, Transformation::LambdaNotation)
+  option_has(options, LambdaNotation)
 }
 
 ///|
 fn option_has_auto_symbol(options : ParseOptions) -> Bool {
-  option_has(options, Transformation::AutoSymbol)
+  option_has(options, AutoSymbol)
 }
 
 ///|
 fn option_has_repeated_decimals(options : ParseOptions) -> Bool {
-  option_has(options, Transformation::RepeatedDecimals)
+  option_has(options, RepeatedDecimals)
 }
 
 ///|
 fn option_has_factorial(options : ParseOptions) -> Bool {
-  option_has(options, Transformation::FactorialNotation)
+  option_has(options, FactorialNotation)
 }
 
 ///|
 fn option_has_implicit_multiplication(options : ParseOptions) -> Bool {
-  option_has(options, Transformation::ImplicitMultiplication) ||
-  option_has(options, Transformation::ImplicitMultiplicationApplication)
+  option_has(options, ImplicitMultiplication) ||
+  option_has(options, ImplicitMultiplicationApplication)
 }
 
 ///|
 fn option_has_implicit_application(options : ParseOptions) -> Bool {
-  option_has(options, Transformation::ImplicitApplication) ||
-  option_has(options, Transformation::ImplicitMultiplicationApplication)
+  option_has(options, ImplicitApplication) ||
+  option_has(options, ImplicitMultiplicationApplication)
 }
 
 ///|
 fn option_has_function_exponentiation(options : ParseOptions) -> Bool {
-  option_has(options, Transformation::FunctionExponentiation) ||
-  option_has(options, Transformation::ImplicitMultiplicationApplication)
+  option_has(options, FunctionExponentiation) ||
+  option_has(options, ImplicitMultiplicationApplication)
 }
 
 ///|
 fn option_has_convert_xor(options : ParseOptions) -> Bool {
-  option_has(options, Transformation::ConvertXor)
+  option_has(options, ConvertXor)
 }
 
 ///|
 fn option_has_convert_equals_signs(options : ParseOptions) -> Bool {
-  option_has(options, Transformation::ConvertEqualsSigns)
+  option_has(options, ConvertEqualsSigns)
 }
 
 ///|
 fn option_has_rationalize(options : ParseOptions) -> Bool {
-  option_has(options, Transformation::Rationalize)
+  option_has(options, Rationalize)
 }

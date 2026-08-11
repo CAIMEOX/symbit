@@ -201,9 +201,7 @@ pub fn symmetric_group(n : Int) -> PermutationGroup raise CombinatoricsError {
 /// as a permutation group and enforces the same `n > 1` precondition as SymPy.
 pub fn rubik_group(n : Int) -> PermutationGroup raise CombinatoricsError {
   if n <= 1 {
-    raise CombinatoricsError::ValueError(
-      "Invalid cube. n has to be greater than 1",
-    )
+    raise ValueError("Invalid cube. n has to be greater than 1")
   }
   PermutationGroup::new(rubik(n))
 }

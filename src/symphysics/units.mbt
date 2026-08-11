@@ -10,22 +10,22 @@ pub struct Dimension {
 
 ///|
 pub fn dimension(name : String, symbol? : String? = None) -> Dimension {
-  Dimension::{ name: @symcore.Expr::Symbol(name), symbol }
+  { name: Symbol(name), symbol }
 }
 
 ///|
 pub fn Dimension::mul(self : Dimension, other : Dimension) -> Dimension {
-  Dimension::{ name: self.name * other.name, symbol: None }
+  { name: self.name * other.name, symbol: None }
 }
 
 ///|
 pub fn Dimension::div(self : Dimension, other : Dimension) -> Dimension {
-  Dimension::{ name: self.name * (other.name ^ int(-1)), symbol: None }
+  { name: self.name * (other.name ^ int(-1)), symbol: None }
 }
 
 ///|
 pub fn Dimension::pow(self : Dimension, exp : Int) -> Dimension {
-  Dimension::{ name: self.name ^ int(exp), symbol: None }
+  { name: self.name ^ int(exp), symbol: None }
 }
 
 ///|
@@ -33,9 +33,7 @@ pub fn Dimension::add(
   self : Dimension,
   other : Dimension,
 ) -> Dimension raise PhysicsError {
-  guard self == other else {
-    raise PhysicsError::ValueError("incompatible dimensions")
-  }
+  guard self == other else { raise ValueError("incompatible dimensions") }
   self
 }
 
@@ -56,17 +54,17 @@ pub fn quantity(
   scale_factor? : Expr = int(1),
   is_prefixed? : Bool = false,
 ) -> Quantity {
-  Quantity::{ name, abbrev, dimension, scale_factor, is_prefixed }
+  { name, abbrev, dimension, scale_factor, is_prefixed }
 }
 
 ///|
 pub fn Quantity::symbol_expr(self : Quantity) -> Expr {
-  Expr::Symbol(self.name)
+  Symbol(self.name)
 }
 
 ///|
 pub fn Quantity::with_scale(self : Quantity, scale_factor : Expr) -> Quantity {
-  Quantity::{ ..self, scale_factor, }
+  { ..self, scale_factor, }
 }
 
 ///|
@@ -87,14 +85,14 @@ pub enum PrefixValue {
 ///|
 pub impl Show for PrefixValue with fn to_string(self) {
   match self {
-    PrefixValue::Prefix(p) => p.abbrev
-    PrefixValue::Expr(expr) => @symprint.pretty_string(expr)
+    Prefix(p) => p.abbrev
+    Expr(expr) => @symprint.pretty_string(expr)
   }
 }
 
 ///|
 pub impl Show for PrefixValue with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -110,9 +108,7 @@ fn int_pow(base : Int, exp : Int) -> BigInt {
 ///|
 fn prefix_scale_factor_expr(base : Int, exponent : Int) -> Expr {
   if exponent >= 0 {
-    @symcore.Expr::Number(
-      @symnum.BigRational::from_bigint(int_pow(base, exponent)),
-    )
+    Number(@symnum.BigRational::from_bigint(int_pow(base, exponent)))
   } else {
     rational_expr_bigint(BigInt::from_int(1), int_pow(base, -exponent))
   }
@@ -121,7 +117,7 @@ fn prefix_scale_factor_expr(base : Int, exponent : Int) -> Expr {
 ///|
 fn expr_inverse(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(n) => rational_expr_bigint(n.denominator(), n.numerator())
+    Number(n) => rational_expr_bigint(n.denominator(), n.numerator())
     _ => expr ^ int(-1)
   }
 }
@@ -134,7 +130,7 @@ pub fn prefix(
   base? : Int = 10,
   latex_repr? : String? = None,
 ) -> Prefix {
-  Prefix::{ name, abbrev, exponent, base, latex_repr }
+  { name, abbrev, exponent, base, latex_repr }
 }
 
 ///|
@@ -146,42 +142,42 @@ pub fn Prefix::scale_factor(self : Prefix) -> Expr {
 pub fn Prefix::mul_prefix(self : Prefix, other : Prefix) -> PrefixValue {
   let factor = self.scale_factor() * other.scale_factor()
   if factor == int(1) {
-    return PrefixValue::Expr(int(1))
+    return Expr(int(1))
   }
   for item in known_prefixes() {
     if item.scale_factor() == factor {
-      return PrefixValue::Prefix(item)
+      return Prefix(item)
     }
   }
-  PrefixValue::Expr(factor)
+  Expr(factor)
 }
 
 ///|
 pub fn Prefix::div_prefix(self : Prefix, other : Prefix) -> PrefixValue {
   let factor = self.scale_factor() * expr_inverse(other.scale_factor())
   if factor == int(1) {
-    return PrefixValue::Expr(int(1))
+    return Expr(int(1))
   }
   for item in known_prefixes() {
     if item.scale_factor() == factor {
-      return PrefixValue::Prefix(item)
+      return Prefix(item)
     }
   }
-  PrefixValue::Expr(factor)
+  Expr(factor)
 }
 
 ///|
 pub fn Prefix::rdiv_one(self : Prefix) -> PrefixValue {
   let factor = expr_inverse(self.scale_factor())
   if factor == int(1) {
-    return PrefixValue::Expr(int(1))
+    return Expr(int(1))
   }
   for item in known_prefixes() {
     if item.scale_factor() == factor {
-      return PrefixValue::Prefix(item)
+      return Prefix(item)
     }
   }
-  PrefixValue::Expr(factor)
+  Expr(factor)
 }
 
 ///|

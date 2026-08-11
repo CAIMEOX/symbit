@@ -42,7 +42,7 @@ fn fd_rat_div(
   b : BigRational,
 ) -> BigRational raise FiniteDiffError {
   a.div_r(b) catch {
-    _ => raise FiniteDiffError::DuplicateGridPoint
+    _ => raise DuplicateGridPoint
   }
 }
 
@@ -133,7 +133,7 @@ pub fn apply_finite_diff(
   let mut out = @symcore.int(0)
   for nu in 0..<x_list.length() {
     let w = delta[order][n_max][nu]
-    let term = @symcore.mul([@symcore.Expr::Number(w), y_list[nu]])
+    let term = @symcore.mul([Number(w), y_list[nu]])
     out = @symcore.add([out, term])
   }
   out

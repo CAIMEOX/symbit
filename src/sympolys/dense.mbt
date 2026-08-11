@@ -13,7 +13,7 @@
 /// this compatibility layer.
 pub fn to_dense(poly : Poly, degree? : Int) -> Array[FieldElem] raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let deg = match degree {
     Some(d) => d
@@ -51,7 +51,7 @@ pub fn from_dense(
   domain : Domain,
 ) -> Poly raise PolyError {
   if gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let map : Map[Monomial, FieldElem] = Map([])
   for i in 0..<coeffs.length() {
@@ -63,7 +63,7 @@ pub fn from_dense(
     mono.exps.set(0, i)
     add_term(map, mono, c, domain)
   }
-  Poly::{ coeffs: map, gens, domain, order: TermOrder::Lex }
+  { coeffs: map, gens, domain, order: Lex }
 }
 
 ///|
@@ -85,7 +85,7 @@ pub fn to_dense_multi(
   degrees : Array[Int],
 ) -> Array[FieldElem] raise PolyError {
   if poly.gens.length() != degrees.length() {
-    raise PolyError::BadGenerator("degree-shape")
+    raise BadGenerator("degree-shape")
   }
   let total = total_size(degrees)
   let dense : Array[FieldElem] = Array::make(total, fe_from_int(0, poly.domain))
@@ -131,11 +131,11 @@ pub fn from_dense_multi(
   degrees : Array[Int],
 ) -> Poly raise PolyError {
   if gens.length() != degrees.length() {
-    raise PolyError::BadGenerator("degree-shape")
+    raise BadGenerator("degree-shape")
   }
   let total = total_size(degrees)
   if coeffs.length() != total {
-    raise PolyError::BadGenerator("dense-length")
+    raise BadGenerator("dense-length")
   }
   let strides = compute_strides(degrees)
   let map : Map[Monomial, FieldElem] = Map([])
@@ -148,7 +148,7 @@ pub fn from_dense_multi(
     let mono = Monomial::{ exps, }
     add_term(map, mono, c, domain)
   }
-  Poly::{ coeffs: map, gens, domain, order: TermOrder::Lex }
+  { coeffs: map, gens, domain, order: Lex }
 }
 
 ///|

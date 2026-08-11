@@ -103,7 +103,7 @@ fn geometry_assert_point_set_equal(
   }
   for item in items {
     let pt = match item {
-      GeometryEntity::Point(value) => value
+      Point(value) => value
       _ => fail("\{context}: expected only point intersections")
     }
     let mut matched = false

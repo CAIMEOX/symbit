@@ -136,7 +136,7 @@ pub fn[T] CondVariableKey::arg(self : CondVariableKey[T]) -> T {
 /// - Returns: `UnifyTerm::Atom(value)`.
 /// - Limits: The atom is matched by caller-provided equality.
 pub fn[T, Op] atom(value : T) -> UnifyTerm[T, Op] {
-  UnifyTerm::Atom(value)
+  Atom(value)
 }
 
 ///|
@@ -150,7 +150,7 @@ pub fn[T, Op] compound(
   op : Op,
   args : Array[UnifyTerm[T, Op]],
 ) -> UnifyTerm[T, Op] {
-  UnifyTerm::Compound(op, args.map(arg => arg))
+  Compound(op, args.map(arg => arg))
 }
 
 ///|
@@ -161,7 +161,7 @@ pub fn[T, Op] compound(
 /// - Returns: `UnifyTerm::Sequence(items)`.
 /// - Limits: Sequence semantics are positional and not associative.
 pub fn[T, Op] sequence(items : Array[UnifyTerm[T, Op]]) -> UnifyTerm[T, Op] {
-  UnifyTerm::Sequence(items.map(item => item))
+  Sequence(items.map(item => item))
 }
 
 ///|
@@ -172,7 +172,7 @@ pub fn[T, Op] sequence(items : Array[UnifyTerm[T, Op]]) -> UnifyTerm[T, Op] {
 /// - Returns: `UnifyTerm::Variable(key)`.
 /// - Limits: The term accepts any candidate that passes the occurs check.
 pub fn[T, Op] variable_term(key : VariableKey[T]) -> UnifyTerm[T, Op] {
-  UnifyTerm::Variable(key)
+  Variable(key)
 }
 
 ///|
@@ -188,7 +188,7 @@ pub fn[T, Op] cond_variable_term(
   key : CondVariableKey[T],
   valid : (UnifyTerm[T, Op]) -> Bool,
 ) -> UnifyTerm[T, Op] {
-  UnifyTerm::CondVariable(key, valid)
+  CondVariable(key, valid)
 }
 
 ///|
@@ -200,16 +200,16 @@ pub fn[T, Op] cond_variable_term(
 /// - Limits: Conditional-variable identity is not returned.
 pub fn[T] match_var_arg(key : MatchVar[T]) -> T {
   match key {
-    MatchVar::Variable(key0) => key0.arg()
-    MatchVar::CondVariable(key0) => key0.arg()
+    Variable(key0) => key0.arg()
+    CondVariable(key0) => key0.arg()
   }
 }
 
 ///|
 fn[T, Op] term_match_var(term : UnifyTerm[T, Op]) -> MatchVar[T]? {
   match term {
-    UnifyTerm::Variable(key) => Some(MatchVar::Variable(key))
-    UnifyTerm::CondVariable(key, _) => Some(MatchVar::CondVariable(key))
+    Variable(key) => Some(Variable(key))
+    CondVariable(key, _) => Some(CondVariable(key))
     _ => None
   }
 }
@@ -219,7 +219,7 @@ fn[T, Op] term_cond_validator(
   term : UnifyTerm[T, Op],
 ) -> ((UnifyTerm[T, Op]) -> Bool)? {
   match term {
-    UnifyTerm::CondVariable(_, valid) => Some(valid)
+    CondVariable(_, valid) => Some(valid)
     _ => None
   }
 }
@@ -227,7 +227,7 @@ fn[T, Op] term_cond_validator(
 ///|
 fn[T, Op] sequence_items(term : UnifyTerm[T, Op]) -> Array[UnifyTerm[T, Op]]? {
   match term {
-    UnifyTerm::Sequence(items) => Some(items)
+    Sequence(items) => Some(items)
     _ => None
   }
 }
@@ -237,7 +237,7 @@ fn[T, Op] compound_parts(
   term : UnifyTerm[T, Op],
 ) -> (Op, Array[UnifyTerm[T, Op]])? {
   match term {
-    UnifyTerm::Compound(op, args) => Some((op, args))
+    Compound(op, args) => Some((op, args))
     _ => None
   }
 }
@@ -248,11 +248,11 @@ fn[T : Eq, Op : Eq] term_equal(
   rhs : UnifyTerm[T, Op],
 ) -> Bool {
   match (lhs, rhs) {
-    (UnifyTerm::Atom(a), UnifyTerm::Atom(b)) => a == b
-    (UnifyTerm::Variable(a), UnifyTerm::Variable(b)) => a == b
-    (UnifyTerm::CondVariable(a, _), UnifyTerm::CondVariable(b, _)) => a == b
-    (UnifyTerm::Sequence(xs), UnifyTerm::Sequence(ys)) => terms_equal(xs, ys)
-    (UnifyTerm::Compound(op_a, args_a), UnifyTerm::Compound(op_b, args_b)) =>
+    (Atom(a), Atom(b)) => a == b
+    (Variable(a), Variable(b)) => a == b
+    (CondVariable(a, _), CondVariable(b, _)) => a == b
+    (Sequence(xs), Sequence(ys)) => terms_equal(xs, ys)
+    (Compound(op_a, args_a), Compound(op_b, args_b)) =>
       op_a == op_b && terms_equal(args_a, args_b)
     _ => false
   }

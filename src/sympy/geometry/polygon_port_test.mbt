@@ -7,7 +7,7 @@ test "geometry.polygon parity repr and area" {
     point2d(@symcore.int(0), @symcore.int(3)),
   ])
   let poly = match polygon_value {
-    GeometryEntity::Polygon(value) => value
+    Polygon(value) => value
     _ => fail("expected polygon")
   }
   assert_eq(
@@ -102,7 +102,7 @@ test "geometry.regular polygon and triangle parity" {
     expr_map_summary(
       geometry_regular_polygon(rp).parameter_value(
         point2d(@symcore.int(1), @symcore.int(0)),
-        @symcore.Expr::Symbol("t"),
+        Symbol("t"),
       ),
     ),
     geometry_eval_str(
@@ -120,14 +120,14 @@ test "geometry.polygon parity enclosure and parameter helpers" {
       point2d(@symcore.int(1), @symcore.int(1)),
       point2d(@symcore.int(1), @symcore.int(0)),
     ]) {
-    GeometryEntity::Polygon(value) => value
+    Polygon(value) => value
     _ => fail("expected polygon")
   }
   assert_eq(
     expr_map_summary(
       sq.parameter_value(
         point2d(@symcore.rational_from_ints(1, 2), @symcore.int(1)),
-        @symcore.Expr::Symbol("t"),
+        Symbol("t"),
       ),
     ),
     geometry_eval_str(

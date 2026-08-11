@@ -19,7 +19,7 @@ test "physics.quantum.represent helpers: parity" {
   )
 
   let enumerated = enumerate_states(
-    x_ket(position=@symcore.Expr::Symbol("foo")),
+    x_ket(position=Symbol("foo")),
     start_index=1,
     count=3,
   )

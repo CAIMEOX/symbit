@@ -34,12 +34,7 @@ fn algext_generator_elem(
   minpoly : Poly,
   gen : String,
 ) -> FieldElem raise PolyError {
-  FieldElem::AlgExt(
-    base,
-    [fe_from_int(0, base), fe_from_int(1, base)],
-    minpoly,
-    gen,
-  )
+  AlgExt(base, [fe_from_int(0, base), fe_from_int(1, base)], minpoly, gen)
 }
 
 ///|
@@ -69,10 +64,10 @@ pub fn DomainMatrix::dom_eigenvects(
   gen? : String = "_lambda",
 ) -> (DomainMatrixRationalEigenvects, DomainMatrixAlgebraicEigenvects) raise PolyError {
   if self.rows != self.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if !domain_is_field_pred(self.domain) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
 
   let rational : DomainMatrixRationalEigenvects = Array::new()
@@ -132,7 +127,7 @@ pub fn DDM::dom_eigenvects(
 
 ///|
 test "eigen_compat: algebraic eigenvectors over QQ extension" {
-  let dm = domain_matrix_from_ints([[0, 2], [1, 0]], Domain::QQ)
+  let dm = domain_matrix_from_ints([[0, 2], [1, 0]], QQ)
   let (rational, algebraic) = dm.dom_eigenvects()
   guard rational.is_empty() else { fail("expected no rational eigenvectors") }
   guard algebraic.length() == 1 else {
@@ -150,15 +145,15 @@ test "eigen_compat: algebraic eigenvectors over QQ extension" {
 ///|
 test "eigen_compat: shifted algebraic matrix rref over QQ extension" {
   let x = Expr::Symbol("_lambda")
-  let minpoly = PolyBuilder::new(["_lambda"], Domain::QQ).from_expr(
+  let minpoly = PolyBuilder::new(["_lambda"], QQ).from_expr(
     (x ^ int(2)) - int(2),
   )
-  let field = build_alg_extension(alg_ext_spec(Domain::QQ, "_lambda", minpoly))
-  let eigenval = algext_generator_elem(Domain::QQ, minpoly, "_lambda")
+  let field = build_alg_extension(alg_ext_spec(QQ, "_lambda", minpoly))
+  let eigenval = algext_generator_elem(QQ, minpoly, "_lambda")
   guard fe_is_one(fe_mul(fe_neg(eigenval), fe_inv(fe_neg(eigenval)))) else {
     fail("expected algebraic inverse to normalize")
   }
-  let shifted = domain_matrix_from_ints([[0, 2], [1, 0]], Domain::QQ)
+  let shifted = domain_matrix_from_ints([[0, 2], [1, 0]], QQ)
     .convert_to(field)
     .sub(diagonal_matrix_with_value(2, field, eigenval))
   guard shifted.to_matrix_string() ==
@@ -167,25 +162,25 @@ test "eigen_compat: shifted algebraic matrix rref over QQ extension" {
   }
   let dense = shifted.to_dense()
   let pivot = dense[0][0]
-  let pivot_text = pivot.to_string()
+  let pivot_text = Show::to_string(pivot)
   let inv = fe_inv(pivot)
-  guard pivot.to_string() == pivot_text else {
+  guard Show::to_string(pivot) == pivot_text else {
     fail("algebraic inversion should not mutate the source element")
   }
   let pivot_prod = fe_mul(pivot, inv)
   guard fe_is_one(pivot_prod) else {
     fail(
-      "unexpected pivot inverse product: pivot=\{pivot.to_string()}, inv=\{inv.to_string()}, prod=\{pivot_prod.to_string()}",
+      "unexpected pivot inverse product: pivot=\{Show::to_string(pivot)}, inv=\{Show::to_string(inv)}, prod=\{Show::to_string(pivot_prod)}",
     )
   }
   let row0_col1 = fe_mul(dense[0][1], inv)
-  guard row0_col1.to_string() == "-1*_lambda" else {
-    fail("unexpected scaled pivot row entry: \{row0_col1.to_string()}")
+  guard Show::to_string(row0_col1) == "-1*_lambda" else {
+    fail("unexpected scaled pivot row entry: \{Show::to_string(row0_col1)}")
   }
   let factor = dense[1][0]
   let elim = fe_sub(dense[1][1], fe_mul(factor, row0_col1))
   guard fe_is_zero(elim) else {
-    fail("unexpected elimination residue: \{elim.to_string()}")
+    fail("unexpected elimination residue: \{Show::to_string(elim)}")
   }
   let (rref, pivots) = shifted.rref()
   guard pivots == [0] else {

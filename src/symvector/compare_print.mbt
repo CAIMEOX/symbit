@@ -15,29 +15,29 @@ pub impl Show for VectorKind with fn to_string(self) -> String {
 
 ///|
 pub impl Show for VectorKind with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 pub impl Show for CoordTransform with fn to_string(self) -> String {
   match self {
-    CoordTransform::Cartesian => "Cartesian"
-    CoordTransform::Cylindrical => "Cylindrical"
-    CoordTransform::Spherical => "Spherical"
-    CoordTransform::LambdaTransform(function) =>
-      "LambdaTransform(" + function.to_string() + ")"
-    CoordTransform::TupleTransform(rotation_matrix, location) =>
+    Cartesian => "Cartesian"
+    Cylindrical => "Cylindrical"
+    Spherical => "Spherical"
+    LambdaTransform(function) =>
+      "LambdaTransform(" + Show::to_string(function) + ")"
+    TupleTransform(rotation_matrix, location) =>
       "TupleTransform(" +
       matrix_expr_key(rotation_matrix) +
       ", " +
-      location.to_string() +
+      Show::to_string(location) +
       ")"
   }
 }
 
 ///|
 pub impl Show for CoordTransform with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -53,7 +53,7 @@ pub impl Eq for Point with fn not_equal(self, other : Point) -> Bool {
 ///|
 pub impl Hash for Point with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
@@ -69,7 +69,7 @@ pub impl Show for Point with fn to_string(self) -> String {
 
 ///|
 pub impl Show for Point with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -85,7 +85,7 @@ pub impl Eq for CoordSys3D with fn not_equal(self, other : CoordSys3D) -> Bool {
 ///|
 pub impl Hash for CoordSys3D with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
@@ -106,7 +106,7 @@ pub impl Show for CoordSys3D with fn to_string(self) -> String {
 
 ///|
 pub impl Show for CoordSys3D with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -122,13 +122,13 @@ pub impl Eq for BaseScalar with fn not_equal(self, other : BaseScalar) -> Bool {
 ///|
 pub impl Hash for BaseScalar with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
 ///|
 pub impl Hash for BaseScalar with fn hash_combine(self, hasher : Hasher) -> Unit {
-  self.system_.hash_combine(hasher)
+  Hash::hash_combine(self.system_, hasher)
   hasher.combine_int(self.axis_)
 }
 
@@ -148,7 +148,7 @@ pub impl Show for BaseScalar with fn to_string(self) -> String {
 
 ///|
 pub impl Show for BaseScalar with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -164,13 +164,13 @@ pub impl Eq for BaseVector with fn not_equal(self, other : BaseVector) -> Bool {
 ///|
 pub impl Hash for BaseVector with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
 ///|
 pub impl Hash for BaseVector with fn hash_combine(self, hasher : Hasher) -> Unit {
-  self.system_.hash_combine(hasher)
+  Hash::hash_combine(self.system_, hasher)
   hasher.combine_int(self.axis_)
 }
 
@@ -186,7 +186,7 @@ pub impl Show for BaseVector with fn to_string(self) -> String {
 
 ///|
 pub impl Show for BaseVector with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -202,14 +202,14 @@ pub impl Eq for BaseDyadic with fn not_equal(self, other : BaseDyadic) -> Bool {
 ///|
 pub impl Hash for BaseDyadic with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
 ///|
 pub impl Hash for BaseDyadic with fn hash_combine(self, hasher : Hasher) -> Unit {
-  self.left_.hash_combine(hasher)
-  self.right_.hash_combine(hasher)
+  Hash::hash_combine(self.left_, hasher)
+  Hash::hash_combine(self.right_, hasher)
 }
 
 ///|
@@ -219,12 +219,12 @@ pub impl Compare for BaseDyadic with fn compare(self, other : BaseDyadic) -> Int
 
 ///|
 pub impl Show for BaseDyadic with fn to_string(self) -> String {
-  "(" + self.left_.to_string() + "|" + self.right_.to_string() + ")"
+  "(" + Show::to_string(self.left_) + "|" + Show::to_string(self.right_) + ")"
 }
 
 ///|
 pub impl Show for BaseDyadic with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -265,7 +265,7 @@ fn vector_string(vector : Vector) -> String {
   bases.sort_by(compare_base_vector)
   let parts : Array[String] = []
   for basis in bases {
-    parts.push(scalar_with_basis(components[basis], basis.to_string()))
+    parts.push(scalar_with_basis(components[basis], Show::to_string(basis)))
   }
   join_signed(parts)
 }
@@ -277,7 +277,7 @@ pub impl Show for Vector with fn to_string(self) -> String {
 
 ///|
 pub impl Show for Vector with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -318,7 +318,7 @@ fn dyadic_string(dyadic : Dyadic) -> String {
   basis.sort_by(compare_base_dyadic)
   let parts : Array[String] = []
   for item in basis {
-    parts.push(scalar_with_basis(components[item], item.to_string()))
+    parts.push(scalar_with_basis(components[item], Show::to_string(item)))
   }
   join_signed(parts)
 }
@@ -330,55 +330,53 @@ pub impl Show for Dyadic with fn to_string(self) -> String {
 
 ///|
 pub impl Show for Dyadic with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 pub impl Show for Gradient with fn to_string(self) -> String {
   match self.field_ {
-    ScalarOrVector::ScalarExpr(expr) =>
-      "Gradient(" + @symprint.pretty_string(expr) + ")"
-    ScalarOrVector::VectorExpr(vect) => "Gradient(" + vect.to_string() + ")"
+    ScalarExpr(expr) => "Gradient(" + @symprint.pretty_string(expr) + ")"
+    VectorExpr(vect) => "Gradient(" + Show::to_string(vect) + ")"
   }
 }
 
 ///|
 pub impl Show for Gradient with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 pub impl Show for Divergence with fn to_string(self) -> String {
-  "Divergence(" + self.field_.to_string() + ")"
+  "Divergence(" + Show::to_string(self.field_) + ")"
 }
 
 ///|
 pub impl Show for Divergence with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 pub impl Show for Curl with fn to_string(self) -> String {
-  "Curl(" + self.field_.to_string() + ")"
+  "Curl(" + Show::to_string(self.field_) + ")"
 }
 
 ///|
 pub impl Show for Curl with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 pub impl Show for Laplacian with fn to_string(self) -> String {
   match self.field_ {
-    ScalarOrVector::ScalarExpr(expr) =>
-      "Laplacian(" + @symprint.pretty_string(expr) + ")"
-    ScalarOrVector::VectorExpr(vect) => "Laplacian(" + vect.to_string() + ")"
+    ScalarExpr(expr) => "Laplacian(" + @symprint.pretty_string(expr) + ")"
+    VectorExpr(vect) => "Laplacian(" + Show::to_string(vect) + ")"
   }
 }
 
 ///|
 pub impl Show for Laplacian with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -389,7 +387,7 @@ pub impl Show for Del with fn to_string(self) -> String {
 
 ///|
 pub impl Show for Del with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -399,12 +397,12 @@ pub impl Eq for VectorZero with fn equal(self, other : VectorZero) -> Bool {
 
 ///|
 pub impl Show for VectorZero with fn to_string(self) -> String {
-  self.value_.to_string()
+  Show::to_string(self.value_)
 }
 
 ///|
 pub impl Show for VectorZero with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -415,12 +413,12 @@ pub impl Eq for VectorMul with fn equal(self, other : VectorMul) -> Bool {
 
 ///|
 pub impl Show for VectorMul with fn to_string(self) -> String {
-  self.value_.to_string()
+  Show::to_string(self.value_)
 }
 
 ///|
 pub impl Show for VectorMul with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -430,12 +428,12 @@ pub impl Eq for VectorAdd with fn equal(self, other : VectorAdd) -> Bool {
 
 ///|
 pub impl Show for VectorAdd with fn to_string(self) -> String {
-  self.value_.to_string()
+  Show::to_string(self.value_)
 }
 
 ///|
 pub impl Show for VectorAdd with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -448,9 +446,9 @@ pub impl Eq for Cross with fn equal(self, other : Cross) -> Bool {
 ///|
 pub impl Show for Cross with fn to_string(self) -> String {
   let body = "Cross(" +
-    self.lhs_.to_string() +
+    Show::to_string(self.lhs_) +
     ", " +
-    self.rhs_.to_string() +
+    Show::to_string(self.rhs_) +
     ")"
   if self.sign_ < 0 {
     "-" + body
@@ -461,7 +459,7 @@ pub impl Show for Cross with fn to_string(self) -> String {
 
 ///|
 pub impl Show for Cross with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -471,12 +469,12 @@ pub impl Eq for Dot with fn equal(self, other : Dot) -> Bool {
 
 ///|
 pub impl Show for Dot with fn to_string(self) -> String {
-  "Dot(" + self.lhs_.to_string() + ", " + self.rhs_.to_string() + ")"
+  "Dot(" + Show::to_string(self.lhs_) + ", " + Show::to_string(self.rhs_) + ")"
 }
 
 ///|
 pub impl Show for Dot with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -486,12 +484,12 @@ pub impl Eq for DyadicZero with fn equal(self, other : DyadicZero) -> Bool {
 
 ///|
 pub impl Show for DyadicZero with fn to_string(self) -> String {
-  self.value_.to_string()
+  Show::to_string(self.value_)
 }
 
 ///|
 pub impl Show for DyadicZero with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -502,12 +500,12 @@ pub impl Eq for DyadicMul with fn equal(self, other : DyadicMul) -> Bool {
 
 ///|
 pub impl Show for DyadicMul with fn to_string(self) -> String {
-  self.value_.to_string()
+  Show::to_string(self.value_)
 }
 
 ///|
 pub impl Show for DyadicMul with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -517,12 +515,12 @@ pub impl Eq for DyadicAdd with fn equal(self, other : DyadicAdd) -> Bool {
 
 ///|
 pub impl Show for DyadicAdd with fn to_string(self) -> String {
-  self.value_.to_string()
+  Show::to_string(self.value_)
 }
 
 ///|
 pub impl Show for DyadicAdd with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -530,13 +528,13 @@ pub impl Show for AxisOrienter with fn to_string(self) -> String {
   "AxisOrienter(" +
   @symprint.pretty_string(self.angle_) +
   ", " +
-  self.axis_.to_string() +
+  Show::to_string(self.axis_) +
   ")"
 }
 
 ///|
 pub impl Show for AxisOrienter with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -554,7 +552,7 @@ pub impl Show for BodyOrienter with fn to_string(self) -> String {
 
 ///|
 pub impl Show for BodyOrienter with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -572,7 +570,7 @@ pub impl Show for SpaceOrienter with fn to_string(self) -> String {
 
 ///|
 pub impl Show for SpaceOrienter with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -590,7 +588,7 @@ pub impl Show for QuaternionOrienter with fn to_string(self) -> String {
 
 ///|
 pub impl Show for QuaternionOrienter with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -602,5 +600,5 @@ pub impl Show for TransformFunction with fn to_string(self) -> String {
 
 ///|
 pub impl Show for TransformFunction with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }

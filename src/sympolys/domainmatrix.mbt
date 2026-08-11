@@ -167,8 +167,7 @@ fn convert_matrix_elem(
 ///|
 fn same_format(lhs : DomainMatrix, rhs : DomainMatrix) -> Bool {
   match (lhs.rep, rhs.rep) {
-    (DomainMatrixRep::Dense(_), DomainMatrixRep::Dense(_))
-    | (DomainMatrixRep::Sparse(_), DomainMatrixRep::Sparse(_)) => true
+    (Dense(_), Dense(_)) | (Sparse(_), Sparse(_)) => true
     _ => false
   }
 }
@@ -197,7 +196,7 @@ fn all_indices(start : Int, stop : Int) -> Array[Int] {
 fn normalize_matrix_index(index : Int, size : Int) -> Int raise PolyError {
   let normalized = if index < 0 { size + index } else { index }
   if normalized < 0 || normalized >= size {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   normalized
 }
@@ -234,7 +233,7 @@ fn slice_index_range(
   step? : Int = 1,
 ) -> Array[Int] raise PolyError {
   if step == 0 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let out : Array[Int] = Array::new()
   if step > 0 {
@@ -277,21 +276,21 @@ fn infer_expr_items_domain(
   modulus? : Int? = None,
 ) -> Domain raise PolyError {
   let mut domain = match modulus {
-    Some(p) => if p <= 1 { raise PolyError::BadModulus } else { Domain::GF(p) }
+    Some(p) => if p <= 1 { raise BadModulus } else { Domain::GF(p) }
     None =>
       if items.any(expr => has_complex_float_coeff(expr)) {
-        Domain::CC
+        CC
       } else if items.any(expr => has_float_coeff(expr)) {
-        Domain::RR
+        RR
       } else if items.any(expr => has_fractional_coeff(expr)) {
-        Domain::QQ
+        QQ
       } else {
-        Domain::ZZ
+        ZZ
       }
   }
   if gaussian {
     domain = match domain {
-      Domain::ZZ | Domain::QQ => Domain::CC
+      ZZ | QQ => CC
       _ => domain
     }
   }
@@ -307,18 +306,18 @@ fn field_elem_from_scalar_expr(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   let poly = Poly::from_expr(expr, [], domain) catch {
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
   if poly.is_zero() {
     return fe_from_int(0, domain)
   }
   let mono = monomial_one(0)
   if poly.coeffs.length() != 1 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   match poly.coeffs.get(mono) {
     Some(coeff) => coeff
-    None => raise PolyError::DomainMismatch
+    None => raise DomainMismatch
   }
 }
 
@@ -337,8 +336,8 @@ fn restore_rep_like(
   like : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
   match like.rep {
-    DomainMatrixRep::Dense(_) => dm
-    DomainMatrixRep::Sparse(_) => dm.to_sparse()
+    Dense(_) => dm
+    Sparse(_) => dm.to_sparse()
   }
 }
 
@@ -417,7 +416,7 @@ fn field_elem_pow_nonnegative(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let mut acc = fe_from_int(1, domain)
   let mut cur = base
@@ -593,7 +592,7 @@ fn _collect_factors(
   let keys : Array[String] = Array::new()
   let out : Array[(Array[FieldElem], Int)] = Array::new()
   for factor_pair in factors {
-    let key = factor_pair.0.map(v => v.to_string()).join(",")
+    let key = factor_pair.0.map(v => Show::to_string(v)).join(",")
     let mut found = -1
     for i in 0..<keys.length() {
       if keys[i] == key {
@@ -629,7 +628,7 @@ fn poly_from_dense_desc(
     mono.exps.set(0, degree - i)
     add_term(map, mono, coeff, domain)
   }
-  Poly::{ coeffs: map, gens: [gen], domain, order: TermOrder::Lex }
+  { coeffs: map, gens: [gen], domain, order: Lex }
 }
 
 ///|
@@ -666,15 +665,10 @@ pub fn domain_matrix_from_dense(
   let ncols = if nrows == 0 { 0 } else { rows[0].length() }
   for row in rows {
     if row.length() != ncols {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
   }
-  DomainMatrix::{
-    rep: DomainMatrixRep::Dense(rows),
-    rows: nrows,
-    cols: ncols,
-    domain,
-  }
+  { rep: Dense(rows), rows: nrows, cols: ncols, domain }
 }
 
 ///|
@@ -743,10 +737,8 @@ pub fn DomainMatrix::from_rep(
 ) -> DomainMatrix raise PolyError {
   let (rows, cols) = shape
   match rep {
-    DomainMatrixRep::Dense(values) =>
-      domain_matrix_from_dense(clone_dense_rows(values), domain)
-    DomainMatrixRep::Sparse(dod) =>
-      DomainMatrix::from_dod(dod, (rows, cols), domain)
+    Dense(values) => domain_matrix_from_dense(clone_dense_rows(values), domain)
+    Sparse(dod) => DomainMatrix::from_dod(dod, (rows, cols), domain)
   }
 }
 
@@ -770,7 +762,7 @@ pub fn DomainMatrix::from_list_flat(
 ) -> DomainMatrix raise PolyError {
   let (rows, cols) = shape
   if rows < 0 || cols < 0 || elements.length() != rows * cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let dense : Array[Array[FieldElem]] = Array::new()
   for i in 0..<rows {
@@ -807,7 +799,7 @@ pub fn domain_matrix_from_sparse(
   for entry in entries {
     let (r, c, v) = entry
     if r < 0 || r >= rows || c < 0 || c >= cols {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     if fe_is_zero(v) {
       continue
@@ -821,7 +813,7 @@ pub fn domain_matrix_from_sparse(
       }
     }
   }
-  DomainMatrix::{ rep: DomainMatrixRep::Sparse(sparse), rows, cols, domain }
+  { rep: Sparse(sparse), rows, cols, domain }
 }
 
 ///|
@@ -845,23 +837,18 @@ pub fn DomainMatrix::from_dod(
   let (rows, cols) = shape
   for r, row in dod {
     if r < 0 || r >= rows {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     for c, value in row {
       if c < 0 || c >= cols {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
       if fe_is_zero(value) {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
     }
   }
-  DomainMatrix::{
-    rep: DomainMatrixRep::Sparse(clone_dod(dod)),
-    rows,
-    cols,
-    domain,
-  }
+  { rep: Sparse(clone_dod(dod)), rows, cols, domain }
 }
 
 ///|
@@ -939,12 +926,12 @@ pub fn DomainMatrix::from_list_sympy(
   modulus? : Int? = None,
 ) -> DomainMatrix raise PolyError {
   if rows.length() != nrows {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let flat : Array[Expr] = Array::new()
   for row in rows {
     if row.length() != ncols {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     for value in row {
       flat.push(value)
@@ -984,11 +971,11 @@ pub fn DomainMatrix::from_dict_sympy(
   let positions : Array[(Int, Int)] = Array::new()
   for r, row in elemsdict {
     if r < 0 || r >= nrows {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     for c, value in row {
       if c < 0 || c >= ncols {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
       positions.push((r, c))
       exprs.push(value)
@@ -1057,7 +1044,7 @@ pub fn DomainMatrix::from_Matrix(
       for i in 0..<nrows {
         let row = rows[i]
         if row.length() != ncols {
-          raise PolyError::DomainMismatch
+          raise DomainMismatch
         }
         let sparse_row : Map[Int, Expr] = Map([])
         for j in 0..<ncols {
@@ -1079,7 +1066,7 @@ pub fn DomainMatrix::from_Matrix(
         modulus~,
       )
     }
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
 }
 
@@ -1170,7 +1157,7 @@ pub fn DomainMatrix::diag(
     None => values.length()
   }
   if rows < 0 || cols < 0 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let zero = fe_from_int(0, domain)
   let dense = make_dense(rows, cols, zero)
@@ -1204,8 +1191,8 @@ pub fn DomainMatrix::to_dense(
   self : DomainMatrix,
 ) -> Array[Array[FieldElem]] raise PolyError {
   match self.rep {
-    DomainMatrixRep::Dense(rows) => rows
-    DomainMatrixRep::Sparse(entries) => {
+    Dense(rows) => rows
+    Sparse(entries) => {
       let zero = fe_from_int(0, self.domain)
       let rows : Array[Array[FieldElem]] = make_dense(
         self.rows,
@@ -1239,8 +1226,8 @@ pub fn DomainMatrix::to_sparse(
   self : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
   match self.rep {
-    DomainMatrixRep::Sparse(_) => self.copy()
-    DomainMatrixRep::Dense(rows) => {
+    Sparse(_) => self.copy()
+    Dense(rows) => {
       let dod : DomainMatrixDOD = Map([])
       for i in 0..<self.rows {
         let row_map : Map[Int, FieldElem] = Map([])
@@ -1254,8 +1241,8 @@ pub fn DomainMatrix::to_sparse(
           dod[i] = row_map
         }
       }
-      DomainMatrix::{
-        rep: DomainMatrixRep::Sparse(dod),
+      {
+        rep: Sparse(dod),
         rows: self.rows,
         cols: self.cols,
         domain: self.domain,
@@ -1318,8 +1305,8 @@ pub fn DomainMatrix::choose_domain(
   let chosen = DomainMatrix::from_Matrix(
     self.to_Matrix(),
     fmt=match self.rep {
-      DomainMatrixRep::Dense(_) => "dense"
-      DomainMatrixRep::Sparse(_) => "sparse"
+      Dense(_) => "dense"
+      Sparse(_) => "sparse"
     },
     field~,
     gaussian~,
@@ -1496,7 +1483,7 @@ pub fn DomainMatrix::_unify_fmt(
         ),
       )
     "sparse" => (self.to_sparse(), other.to_sparse())
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
 }
 
@@ -1548,13 +1535,13 @@ pub fn DomainMatrix::_check(
 ) -> Unit raise PolyError {
   let _ = op
   if self.domain != other.domain {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if ashape != bshape {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if require_format && !same_format(self, other) {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
 }
 
@@ -1715,8 +1702,8 @@ pub fn DomainMatrix::clear_denoms_rowwise(
 
 ///|
 fn ensure_mul_shape(a : DomainMatrix, b : DomainMatrix) -> Unit raise PolyError {
-  if a.cols != b.rows || a.domain.not_equal(b.domain) {
-    raise PolyError::DomainMismatch
+  if a.cols != b.rows || Eq::not_equal(a.domain, b.domain) {
+    raise DomainMismatch
   }
 }
 
@@ -1960,12 +1947,12 @@ pub fn DomainMatrix::hstack(
   other : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
   let fmt = match self.rep {
-    DomainMatrixRep::Dense(_) => "dense"
-    DomainMatrixRep::Sparse(_) => "sparse"
+    Dense(_) => "dense"
+    Sparse(_) => "sparse"
   }
   let (left_dm, right_dm) = self.unify(other, fmt~)
   if left_dm.rows != right_dm.rows {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let left = left_dm.to_dense()
   let right = right_dm.to_dense()
@@ -2001,7 +1988,7 @@ pub fn DomainMatrix::vstack(
 ) -> DomainMatrix raise PolyError {
   let (top, bottom) = self.unify(other, fmt="dense")
   if top.cols != bottom.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let out = clone_dense_rows(top.to_dense())
   for row in bottom.to_dense() {
@@ -2115,7 +2102,7 @@ pub fn DomainMatrix::_scalarmul(
   reverse? : Bool = false,
 ) -> DomainMatrix raise PolyError {
   let _ = reverse
-  if fe_is_zero(scalar) && self.domain != Domain::EXRAW {
+  if fe_is_zero(scalar) && self.domain != EXRAW {
     return restore_rep_like(
       domain_matrix_zeros(self.rows, self.cols, self.domain),
       self,
@@ -2184,7 +2171,7 @@ pub fn DomainMatrix::truediv(
   let field_matrix = self.to_field()
   let field_scalar = scalar.convert_to(field_matrix.domain)
   if field_scalar.is_zero() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   if field_scalar.is_one() {
     return field_matrix
@@ -2229,7 +2216,7 @@ pub fn DomainMatrix::diagonal(
 /// this compatibility layer; no separate error channel is added.
 pub fn DomainMatrix::nnz(self : DomainMatrix) -> Int {
   match self.rep {
-    DomainMatrixRep::Dense(rows) => {
+    Dense(rows) => {
       let mut total = 0
       for row in rows {
         for value in row {
@@ -2240,7 +2227,7 @@ pub fn DomainMatrix::nnz(self : DomainMatrix) -> Int {
       }
       total
     }
-    DomainMatrixRep::Sparse(entries) => {
+    Sparse(entries) => {
       let mut total = 0
       for _, row in entries {
         total += row.length()
@@ -2367,19 +2354,15 @@ pub fn DomainMatrix::to_flat_nz(
   self : DomainMatrix,
 ) -> (Array[FieldElem], DomainMatrixFlatNZData) raise PolyError {
   match self.rep {
-    DomainMatrixRep::Dense(_) =>
-      (self.to_list_flat(), DomainMatrixFlatNZData::Dense(self.rows, self.cols))
-    DomainMatrixRep::Sparse(_) => {
+    Dense(_) => (self.to_list_flat(), Dense(self.rows, self.cols))
+    Sparse(_) => {
       let elements : Array[FieldElem] = Array::new()
       let positions : Array[(Int, Int)] = Array::new()
       for entry in dense_matrix_nonzero_entries(self.to_dense()) {
         elements.push(entry.2)
         positions.push((entry.0, entry.1))
       }
-      (
-        elements,
-        DomainMatrixFlatNZData::Sparse(self.rows, self.cols, positions),
-      )
+      (elements, Sparse(self.rows, self.cols, positions))
     }
   }
 }
@@ -2404,18 +2387,18 @@ pub fn DomainMatrix::from_flat_nz(
   domain : Domain,
 ) -> DomainMatrix raise PolyError {
   match data {
-    DomainMatrixFlatNZData::Dense(rows, cols) => {
+    Dense(rows, cols) => {
       if rows != self.rows || cols != self.cols {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
       DomainMatrix::from_list_flat(elements, (rows, cols), domain)
     }
-    DomainMatrixFlatNZData::Sparse(rows, cols, positions) => {
+    Sparse(rows, cols, positions) => {
       if rows != self.rows || cols != self.cols {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
       if elements.length() != positions.length() {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
       let entries : Array[(Int, Int, FieldElem)] = Array::new()
       for i in 0..<elements.length() {
@@ -2574,7 +2557,7 @@ pub fn DomainMatrix::getitem_sympy(
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn DomainMatrix::to_ddm(self : DomainMatrix) -> DDM raise PolyError {
-  DDM::{ dm: self.copy() }
+  { dm: self.copy() }
 }
 
 ///|
@@ -2590,7 +2573,7 @@ pub fn DomainMatrix::to_ddm(self : DomainMatrix) -> DDM raise PolyError {
 /// operations; inputs must already satisfy the representation invariants expected by
 /// this compatibility layer.
 pub fn DomainMatrix::to_sdm(self : DomainMatrix) -> SDM raise PolyError {
-  SDM::{ dm: self.to_sparse() }
+  { dm: self.to_sparse() }
 }
 
 ///|
@@ -2694,7 +2677,7 @@ pub fn DomainMatrix::cancel_denom(
   denom : FieldElem,
 ) -> (DomainMatrix, FieldElem) raise PolyError {
   if fe_is_zero(denom) {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let unit = canonical_unit_in_domain(denom, self.domain)
   let canon_matrix = if fe_is_one(unit) {
@@ -2744,7 +2727,7 @@ pub fn DomainMatrix::cancel_denom_elementwise(
   denom : FieldElem,
 ) -> (DomainMatrix, DomainMatrix) raise PolyError {
   if fe_is_zero(denom) {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let unit = canonical_unit_in_domain(denom, self.domain)
   let canon_matrix = if fe_is_one(unit) {
@@ -2803,10 +2786,10 @@ pub fn DomainMatrix::pow(
   n : Int,
 ) -> DomainMatrix raise PolyError {
   if self.rows != self.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let mut acc = domain_matrix_eye(self.rows, self.domain)
   let mut base = self.copy()
@@ -2861,7 +2844,7 @@ pub fn DomainMatrix::applyfunc(
     None => self.domain
   }
   match self.rep {
-    DomainMatrixRep::Dense(rows) => {
+    Dense(rows) => {
       let out : Array[Array[FieldElem]] = Array::new()
       for row in rows {
         let out_row : Array[FieldElem] = Array::new()
@@ -2872,7 +2855,7 @@ pub fn DomainMatrix::applyfunc(
       }
       domain_matrix_from_dense(out, out_domain)
     }
-    DomainMatrixRep::Sparse(entries) => {
+    Sparse(entries) => {
       let sparse : Map[Int, Map[Int, FieldElem]] = Map([])
       for r, row in entries {
         for c, value in row {
@@ -2890,8 +2873,8 @@ pub fn DomainMatrix::applyfunc(
           }
         }
       }
-      DomainMatrix::{
-        rep: DomainMatrixRep::Sparse(sparse),
+      {
+        rep: Sparse(sparse),
         rows: self.rows,
         cols: self.cols,
         domain: out_domain,
@@ -2926,18 +2909,18 @@ fn fe_exact_div_in_domain(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   if fe_is_zero(b) {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   match domain {
-    Domain::ZZ => {
+    ZZ => {
       let ar = fe_expect_rational(a)
       let br = fe_expect_rational(b)
       let num = ar.numerator()
       let den = br.numerator()
       if den.is_zero() || !num.mod(den).is_zero() {
-        raise PolyError::ExactQuotientFailed
+        raise ExactQuotientFailed
       }
-      fe_from_int(num.div(den).to_int(), Domain::ZZ)
+      fe_from_int(num.div(den).to_int(), ZZ)
     }
     _ => fe_mul(a, fe_inv(b))
   }
@@ -3021,10 +3004,10 @@ fn dense_lu_solve(
   let n = u[0].length()
   let m2 = rhs.length()
   if m != m2 || rhs.is_empty() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if m < n {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let o = rhs[0].length()
   let b = clone_dense_rows(rhs)
@@ -3046,7 +3029,7 @@ fn dense_lu_solve(
   for i in n..<m {
     for j in 0..<o {
       if !fe_is_zero(y[i][j]) {
-        raise PolyError::ExactQuotientFailed
+        raise ExactQuotientFailed
       }
     }
   }
@@ -3055,7 +3038,7 @@ fn dense_lu_solve(
     for ii in 0..<n {
       let i = n - 1 - ii
       if fe_is_zero(u[i][i]) {
-        raise PolyError::ExactQuotientFailed
+        raise ExactQuotientFailed
       }
       let mut rhsik = y[i][k]
       for j in (i + 1)..<n {
@@ -3198,7 +3181,7 @@ fn dense_berk(
   }
   let n = rows[0].length()
   if m != n {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if n == 1 {
     return [fe_from_int(1, domain), fe_neg(rows[0][0])]
@@ -3263,7 +3246,7 @@ fn dense_berk(
 /// this compatibility layer.
 pub fn DomainMatrix::det(self : DomainMatrix) -> FieldElem raise PolyError {
   if self.rows != self.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if self.rows == 0 {
     return fe_from_int(1, self.domain)
@@ -3324,7 +3307,7 @@ pub fn DomainMatrix::rref(
   self : DomainMatrix,
 ) -> (DomainMatrix, Array[Int]) raise PolyError {
   if !domain_is_field_pred(self.domain) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   let data = clone_dense_rows(self.to_dense())
   let mut lead = 0
@@ -3478,7 +3461,7 @@ fn normalize_rref_method_and_format(
     "FF_dense" => ("FF", "dense")
     "GJ_dense" => ("GJ", "dense")
     "CD_dense" => ("CD", "dense")
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
 }
 
@@ -3493,7 +3476,7 @@ fn choose_rref_den_method_and_format(
   if normalized != "auto" {
     return (normalized, requested_fmt)
   }
-  if dm.domain is Domain::RR || dm.domain is Domain::CC {
+  if dm.domain is RR || dm.domain is CC {
     return ("GJ", "dense")
   }
   if !domain_is_exact_pred(dm.domain) {
@@ -3672,7 +3655,7 @@ pub fn DomainMatrix::rref_den(
         (restore_rep_like(rref_r, self), den, pivots)
       }
     }
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
 }
 
@@ -3712,7 +3695,7 @@ pub fn DomainMatrix::columnspace(
   self : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
   if !domain_is_field_pred(self.domain) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   let pivots = self.rref().1
   let rows : Array[Int] = Array::new()
@@ -3738,7 +3721,7 @@ pub fn DomainMatrix::rowspace(
   self : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
   if !domain_is_field_pred(self.domain) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   let pivots = self.rref().1
   let rows : Array[Int] = Array::new()
@@ -3769,7 +3752,7 @@ pub fn DomainMatrix::nullspace(
   divide_last? : Bool = false,
 ) -> DomainMatrix raise PolyError {
   if divide_last && !domain_is_field_pred(self.domain) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   if divide_last {
     let (rref, pivots) = self.rref()
@@ -3841,10 +3824,11 @@ pub fn DomainMatrix::_solve(
   rhs : DomainMatrix,
 ) -> (DomainMatrix, DomainMatrix) raise PolyError {
   if self.rows != rhs.rows || rhs.cols != 1 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
-  if self.domain.not_equal(rhs.domain) || !domain_is_field_pred(self.domain) {
-    raise PolyError::DomainNotField
+  if Eq::not_equal(self.domain, rhs.domain) ||
+    !domain_is_field_pred(self.domain) {
+    raise DomainNotField
   }
   let aug = self.hstack(rhs)
   let (rref_aug, pivots) = aug.rref()
@@ -3877,10 +3861,10 @@ pub fn DomainMatrix::_solve(
 /// this compatibility layer.
 pub fn DomainMatrix::inv(self : DomainMatrix) -> DomainMatrix raise PolyError {
   if !domain_is_field_pred(self.domain) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   if self.rows != self.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let n = self.rows
   let one = fe_from_int(1, self.domain)
@@ -3897,11 +3881,11 @@ pub fn DomainMatrix::inv(self : DomainMatrix) -> DomainMatrix raise PolyError {
   let aug = domain_matrix_from_dense(aug_rows, self.domain)
   let (rref_aug, pivots) = aug.rref()
   if pivots.length() < n {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
   for i in 0..<n {
     if pivots[i] != i {
-      raise PolyError::ExactQuotientFailed
+      raise ExactQuotientFailed
     }
   }
   let rows = rref_aug.to_dense()
@@ -3911,7 +3895,7 @@ pub fn DomainMatrix::inv(self : DomainMatrix) -> DomainMatrix raise PolyError {
     for j in 0..<n {
       let expected = if i == j { one } else { zero }
       if !fe_is_zero(fe_sub(rows[i][j], expected)) {
-        raise PolyError::ExactQuotientFailed
+        raise ExactQuotientFailed
       }
       row.push(rows[i][n + j])
     }
@@ -3936,7 +3920,7 @@ pub fn DomainMatrix::adj_det(
   self : DomainMatrix,
 ) -> (DomainMatrix, FieldElem) raise PolyError {
   if self.rows != self.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let det = self.det()
   if self.rows == 0 {
@@ -3999,18 +3983,18 @@ pub fn DomainMatrix::solve_den_rref(
 ) -> (DomainMatrix, FieldElem) raise PolyError {
   let (a, b) = self.unify(rhs)
   if a.rows != b.rows {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if a.rows < a.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let aug = a.hstack(b)
   let (aug_rref, den, pivots) = aug.rref_den()
   if pivots.length() != a.cols {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
   if !pivots.is_empty() && pivots[pivots.length() - 1] >= a.cols {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
   let num = aug_rref.extract(
     all_indices(0, a.cols),
@@ -4037,7 +4021,7 @@ pub fn DomainMatrix::inv_den(
   solve_method? : String = "",
 ) -> (DomainMatrix, FieldElem) raise PolyError {
   if self.rows != self.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let identity = domain_matrix_eye(self.rows, self.domain)
   self.solve_den(identity, solve_method~)
@@ -4065,7 +4049,7 @@ pub fn DomainMatrix::solve_den(
   match chosen_method {
     "rref" => self.solve_den_rref(rhs)
     "charpoly" => self.solve_den_charpoly(rhs)
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
 }
 
@@ -4085,7 +4069,7 @@ pub fn DomainMatrix::lu(
   self : DomainMatrix,
 ) -> (DomainMatrix, DomainMatrix, Array[(Int, Int)]) raise PolyError {
   if !domain_is_field_pred(self.domain) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   let (l_rows, u_rows, swaps) = dense_lu_split(self.to_dense(), self.domain)
   let l = restore_rep_like(domain_matrix_from_dense(l_rows, self.domain), self)
@@ -4109,7 +4093,7 @@ pub fn DomainMatrix::qr(
   self : DomainMatrix,
 ) -> (DomainMatrix, DomainMatrix) raise PolyError {
   if !domain_is_field_pred(self.domain) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   let row_count = self.rows
   let col_count = self.cols
@@ -4168,10 +4152,10 @@ pub fn DomainMatrix::lu_solve(
 ) -> DomainMatrix raise PolyError {
   let (a, b) = self.unify(rhs)
   if a.rows != b.rows {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if !domain_is_field_pred(a.domain) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   let (l, u, swaps) = a.lu()
   let sol_rows = dense_lu_solve(
@@ -4316,9 +4300,8 @@ pub fn DomainMatrix::charpoly_berk(
   self : DomainMatrix,
 ) -> Array[FieldElem] raise PolyError {
   match self.rep {
-    DomainMatrixRep::Dense(rows) => dense_berk(rows, self.domain)
-    DomainMatrixRep::Sparse(entries) =>
-      sparse_berk(entries, self.rows, self.domain)
+    Dense(rows) => dense_berk(rows, self.domain)
+    Sparse(entries) => sparse_berk(entries, self.rows, self.domain)
   }
 }
 
@@ -4377,7 +4360,7 @@ pub fn DomainMatrix::eval_poly(
   p : Array[FieldElem],
 ) -> DomainMatrix raise PolyError {
   if self.rows != self.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if p.is_empty() {
     return restore_rep_like(
@@ -4412,7 +4395,7 @@ pub fn DomainMatrix::eval_poly_mul(
 ) -> DomainMatrix raise PolyError {
   let (a, b) = self.unify(rhs)
   if a.rows != a.cols || b.rows != a.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if p.is_empty() {
     return restore_rep_like(domain_matrix_zeros(b.rows, b.cols, b.domain), rhs)
@@ -4442,7 +4425,7 @@ pub fn DomainMatrix::adj_poly_det(
   cp? : Array[FieldElem] = [],
 ) -> (Array[FieldElem], FieldElem) raise PolyError {
   if self.rows != self.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let charpoly = if cp.is_empty() { self.charpoly() } else { cp }
   let det = if charpoly.length() % 2 == 1 {
@@ -4485,11 +4468,11 @@ pub fn DomainMatrix::solve_den_charpoly(
 ) -> (DomainMatrix, FieldElem) raise PolyError {
   let (a, b) = self.unify(rhs)
   if a.rows != a.cols || b.rows != a.rows {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let (adj_poly, det) = a.adj_poly_det(cp~)
   if check && fe_is_zero(det) {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
   (a.eval_poly_mul(adj_poly, b), det)
 }
@@ -4510,7 +4493,7 @@ pub fn DomainMatrix::scc(
   self : DomainMatrix,
 ) -> Array[Array[Int]] raise PolyError {
   if self.rows != self.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if self.rows == 0 {
     return []
@@ -4558,7 +4541,7 @@ pub fn DomainMatrix::charpoly_factor_blocks(
   self : DomainMatrix,
 ) -> Array[(Array[FieldElem], Int)] raise PolyError {
   if self.rows != self.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let factors : Array[(Array[FieldElem], Int)] = Array::new()
   for indices in self.scc() {
@@ -4702,7 +4685,7 @@ pub fn DomainMatrix::to_matrix_string(
   let rows = self.to_dense()
   let row_parts : Array[String] = Array::new()
   for row in rows {
-    let values = row.map(v => v.to_string()).join(", ")
+    let values = row.map(v => Show::to_string(v)).join(", ")
     row_parts.push("[\{values}]")
   }
   let joined_rows = row_parts.join(", ")

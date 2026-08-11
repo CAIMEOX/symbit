@@ -142,35 +142,31 @@ fn quantum_is_scalar_like(expr : Expr) -> Bool {
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_)
-    | @symcore.ExprForm::Float(_)
-    | @symcore.ExprForm::ComplexFloat(_) => true
-    @symcore.ExprForm::NumberSymbol(_) => true
-    @symcore.ExprForm::Symbol(name) => quantum_symbol_is_scalar(name)
-    @symcore.ExprForm::Dummy(name, _) =>
+    Number(_) | Float(_) | ComplexFloat(_) => true
+    NumberSymbol(_) => true
+    Symbol(name) => quantum_symbol_is_scalar(name)
+    Dummy(name, _) =>
       quantum_symbol_is_scalar(@symcore.dummy_display_name(name))
-    @symcore.ExprForm::Wild(name, _, _) =>
+    Wild(name, _, _) =>
       quantum_symbol_is_scalar(@symcore.wild_display_name(name))
-    @symcore.ExprForm::FunctionHead(_) => false
-    @symcore.ExprForm::UndefinedFunction(_) => false
-    @symcore.ExprForm::Boolean(_) => true
-    @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
-      args.all(quantum_is_scalar_like)
-    @symcore.ExprForm::Pow(base, exp) =>
+    FunctionHead(_) => false
+    UndefinedFunction(_) => false
+    Boolean(_) => true
+    Add(args) | Mul(args) => args.all(quantum_is_scalar_like)
+    Pow(base, exp) =>
       quantum_is_scalar_like(base) && quantum_is_scalar_like(exp)
-    @symcore.ExprForm::Mod(lhs, rhs) =>
+    Mod(lhs, rhs) => quantum_is_scalar_like(lhs) && quantum_is_scalar_like(rhs)
+    Tuple(args) => args.all(quantum_is_scalar_like)
+    Dict(_) => false
+    Relational(_, lhs, rhs) =>
       quantum_is_scalar_like(lhs) && quantum_is_scalar_like(rhs)
-    @symcore.ExprForm::Tuple(args) => args.all(quantum_is_scalar_like)
-    @symcore.ExprForm::Dict(_) => false
-    @symcore.ExprForm::Relational(_, lhs, rhs) =>
-      quantum_is_scalar_like(lhs) && quantum_is_scalar_like(rhs)
-    @symcore.ExprForm::Derivative(inner, deriv_args) =>
+    Derivative(inner, deriv_args) =>
       quantum_is_scalar_like(inner) && deriv_args.all(quantum_is_scalar_like)
-    @symcore.ExprForm::Subs(inner, sub_var, value) =>
+    Subs(inner, sub_var, value) =>
       quantum_is_scalar_like(inner) &&
       quantum_is_scalar_like(sub_var) &&
       quantum_is_scalar_like(value)
-    @symcore.ExprForm::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       quantum_is_scalar_like(vars) && quantum_is_scalar_like(body)
     _ => false
   }
@@ -179,7 +175,7 @@ fn quantum_is_scalar_like(expr : Expr) -> Bool {
 ///|
 fn quantum_inverse_base(expr : Expr) -> Expr? {
   match expr {
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match quantum_integer_value(exp) {
         Some(-1) => Some(base)
         _ => None
@@ -241,14 +237,14 @@ fn quantum_mul_slice(args : Array[Expr], start : Int, stop : Int) -> Expr {
 ///|
 fn quantum_integer_value(expr : Expr) -> Int? {
   match expr {
-    Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
+    Number(n) if n.is_integral() => Some(n.numerator().to_int())
     _ => None
   }
 }
 
 ///|
 fn quantum_tuple_expr(items : Array[Int]) -> Expr {
-  @symcore.Expr::Tuple(items.map(@symcore.int))
+  Tuple(items.map(@symcore.int))
 }
 
 ///|
@@ -257,7 +253,7 @@ fn quantum_split_scalar_factors(expr : Expr) -> (Expr, Expr?) {
     return (expr, None)
   }
   match expr {
-    Expr::Mul(args) => {
+    Mul(args) => {
       let scalars : Array[Expr] = []
       let nonscalars : Array[Expr] = []
       for arg in args {

@@ -1,12 +1,12 @@
 ///|
 fn check_compat(polys : Array[Poly]) -> Unit raise PolyError {
   if polys.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let first = polys[0]
   for p in polys {
-    if p.domain.not_equal(first.domain) || p.gens != first.gens {
-      raise PolyError::DomainMismatch
+    if Eq::not_equal(p.domain, first.domain) || p.gens != first.gens {
+      raise DomainMismatch
     }
   }
 }
@@ -81,7 +81,7 @@ fn divmod_multivar(
   divisors : Array[Poly],
 ) -> (Array[Poly], Poly) raise PolyError {
   if divisors.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let all_polys = divisors.copy()
   all_polys.push(dividend)
@@ -172,7 +172,7 @@ fn reduce_poly(f : Poly, basis : Array[Poly]) -> Poly raise PolyError {
 fn leading_monomial(poly : Poly) -> Monomial raise PolyError {
   match poly.leading_term() {
     Some((m, _)) => m
-    None => raise PolyError::DivisionByZero
+    None => raise DivisionByZero
   }
 }
 
@@ -181,20 +181,20 @@ fn spoly_canceling(f : Poly, g : Poly) -> Poly raise PolyError {
   check_compat([f, g])
   let (m1, c1) = match f.leading_term() {
     Some(v) => v
-    None => raise PolyError::DivisionByZero
+    None => raise DivisionByZero
   }
   let (m2, c2) = match g.leading_term() {
     Some(v) => v
-    None => raise PolyError::DivisionByZero
+    None => raise DivisionByZero
   }
   let lcm = monomial_lcm(m1, m2)
   let q1 = match monomial_div(lcm, m1) {
     Some(m) => m
-    None => raise PolyError::DivisionByZero
+    None => raise DivisionByZero
   }
   let q2 = match monomial_div(lcm, m2) {
     Some(m) => m
-    None => raise PolyError::DivisionByZero
+    None => raise DivisionByZero
   }
   let t1 = poly_from_term(q1, c2, f.gens, f.domain, f.order)
   let t2 = poly_from_term(q2, c1, f.gens, f.domain, f.order)
@@ -217,11 +217,11 @@ pub fn spoly(f : Poly, g : Poly) -> Poly raise PolyError {
   let lcm = monomial_lcm(m1, m2)
   let q1 = match monomial_div(lcm, m1) {
     Some(m) => m
-    None => raise PolyError::DivisionByZero
+    None => raise DivisionByZero
   }
   let q2 = match monomial_div(lcm, m2) {
     Some(m) => m
-    None => raise PolyError::DivisionByZero
+    None => raise DivisionByZero
   }
   let one = fe_from_int(1, f.domain)
   let t1 = poly_from_term(q1, one, f.gens, f.domain, f.order)
@@ -415,14 +415,14 @@ pub fn lbp_key(f : LabeledPolynomial) -> ((Int, Monomial), Int) {
 
 ///|
 fn zero_like_poly(p : Poly) -> Poly {
-  Poly::{ coeffs: Map([]), gens: p.gens, domain: p.domain, order: p.order }
+  { coeffs: Map([]), gens: p.gens, domain: p.domain, order: p.order }
 }
 
 ///|
 fn leading_term_or_raise(p : Poly) -> (Monomial, FieldElem) raise PolyError {
   match p.leading_term() {
     Some(term) => term
-    None => raise PolyError::DivisionByZero
+    None => raise DivisionByZero
   }
 }
 
@@ -440,7 +440,7 @@ fn term_div_or_raise(
 ) -> (Monomial, FieldElem) raise PolyError {
   match term_div(numer, denom, domain) {
     Some(term) => term
-    None => raise PolyError::ExactQuotientFailed
+    None => raise ExactQuotientFailed
   }
 }
 
@@ -822,19 +822,14 @@ pub fn groebner_basis(
   order? : TermOrder,
 ) -> GroebnerBasis raise PolyError {
   if polys.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let ord = match order {
     Some(o) => o
     None => polys[0].order
   }
   let basis = Poly::groebner(polys, order=ord)
-  GroebnerBasis::{
-    polys: basis,
-    gens: polys[0].gens,
-    domain: polys[0].domain,
-    order: ord,
-  }
+  { polys: basis, gens: polys[0].gens, domain: polys[0].domain, order: ord }
 }
 
 ///|
@@ -849,10 +844,10 @@ pub fn groebner_basis(
 ///   correctness envelope and performance profile as `Poly::groebner`.
 pub fn matrix_fglm(
   basis : Array[Poly],
-  order? : TermOrder = TermOrder::Lex,
+  order? : TermOrder = Lex,
 ) -> Array[Poly] raise PolyError {
   if basis.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   Poly::groebner(basis, order~)
 }
@@ -881,7 +876,7 @@ pub fn groebner_expr(
   order? : TermOrder,
 ) -> Array[Poly] raise PolyError {
   if exprs.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let resolved_gens = match gens {
     Some(g) => g
@@ -897,10 +892,10 @@ pub fn groebner_expr(
   )
   let ord = match order {
     Some(o) => o
-    None => TermOrder::Lex
+    None => Lex
   }
   let mod_opt = match resolved_domain {
-    Domain::GF(p) => Some(p)
+    GF(p) => Some(p)
     _ => None
   }
   let polys : Array[Poly] = Array::new()
@@ -944,12 +939,12 @@ fn infer_gens_union(exprs : Array[Expr]) -> Array[String] {
 ///|
 fn collect_symbols_expr(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    Expr::Symbol(name) => seen.set(name, true)
-    Expr::Add(args) | Expr::Mul(args) =>
+    Symbol(name) => seen.set(name, true)
+    Add(args) | Mul(args) =>
       for child in args {
         collect_symbols_expr(child, seen)
       }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       collect_symbols_expr(base, seen)
       collect_symbols_expr(exp, seen)
     }

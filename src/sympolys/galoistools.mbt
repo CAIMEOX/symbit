@@ -11,7 +11,7 @@ fn mod_pos(value : Int, p : Int) -> Int {
 ///|
 fn inv_mod(a : Int, p : Int) -> Int raise PolyError {
   if p <= 1 {
-    raise PolyError::BadModulus
+    raise BadModulus
   }
   let mut t0 = 0
   let mut t1 = 1
@@ -27,7 +27,7 @@ fn inv_mod(a : Int, p : Int) -> Int raise PolyError {
     t1 = t2
   }
   if r0 != 1 {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   mod_pos(t0, p)
 }
@@ -665,7 +665,7 @@ pub fn gf_div(
   let ff = gf_strip(f)
   let gg = gf_strip(g)
   if gg.is_empty() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   if ff.is_empty() {
     return (Array::new(), Array::new())
@@ -735,7 +735,7 @@ pub fn gf_exquo(
   if r.is_empty() {
     q
   } else {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
 }
 
@@ -748,7 +748,7 @@ pub fn gf_exquo(
 /// - Limits: Negative shifts raise `PolyError::BadExponent`.
 pub fn gf_lshift(f : Array[Int], n : Int) -> Array[Int] raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if f.is_empty() {
     return []
@@ -772,7 +772,7 @@ pub fn gf_rshift(
   n : Int,
 ) -> (Array[Int], Array[Int]) raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if n == 0 {
     return (f.copy(), [])
@@ -800,7 +800,7 @@ pub fn gf_rshift(
 /// - Limits: Negative exponents raise `PolyError::BadExponent`.
 pub fn gf_pow(f : Array[Int], n : Int, p : Int) -> Array[Int] raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if n == 0 {
     return [1]
@@ -839,7 +839,7 @@ pub fn gf_pow_mod(
   p : Int,
 ) -> Array[Int] raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if n == 0 {
     return [1]
@@ -1311,7 +1311,7 @@ pub fn gf_random(
   seed? : Int = 1,
 ) -> Array[Int] raise PolyError {
   if p <= 1 {
-    raise PolyError::BadModulus
+    raise BadModulus
   }
   let out : Array[Int] = [1]
   let mut state = seed
@@ -1336,7 +1336,7 @@ pub fn gf_irreducible(
   seed? : Int = 1,
 ) -> Array[Int] raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let mut state = seed
   for _ in 0..<64 {
@@ -1358,7 +1358,7 @@ pub fn gf_irreducible(
       return candidate
     }
   }
-  raise PolyError::BadModulus
+  raise BadModulus
 }
 
 ///|
@@ -2071,7 +2071,7 @@ pub fn linear_congruence(
   m : Int,
 ) -> Array[Int] raise PolyError {
   if m <= 0 {
-    raise PolyError::BadModulus
+    raise BadModulus
   }
   if mod_pos(a, m) == 0 {
     if mod_pos(b, m) == 0 {
@@ -2109,7 +2109,7 @@ pub fn csolve_prime(
   e? : Int = 1,
 ) -> Array[Int] raise PolyError {
   if p <= 1 || e <= 0 {
-    raise PolyError::BadModulus
+    raise BadModulus
   }
   let modulus = int_pow(p, e)
   let out : Array[Int] = []
@@ -2131,7 +2131,7 @@ pub fn csolve_prime(
 ///   large moduli may be slow.
 pub fn gf_csolve(f : Array[Int], n : Int) -> Array[Int] raise PolyError {
   if n <= 0 {
-    raise PolyError::BadModulus
+    raise BadModulus
   }
   let out : Array[Int] = []
   for x in 0..<n {

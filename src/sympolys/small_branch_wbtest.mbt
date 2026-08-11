@@ -7,7 +7,7 @@ fn sb_rat(num : Int, den : Int) -> @symnum.BigRational {
 
 ///|
 fn sb_feqq(num : Int, den : Int) -> FieldElem {
-  FieldElem::QQ(sb_rat(num, den))
+  QQ(sb_rat(num, den))
 }
 
 ///|
@@ -18,28 +18,28 @@ fn sb_bi(n : Int) -> BigInt {
 ///|
 test "small branches: core/domain paths" {
   let half = sb_rat(1, 2)
-  let frac_coeff = ensure_coeff_domain(half, Domain::Frac(Domain::QQ))
-  assert_true(frac_coeff.to_string() == "1/2")
+  let frac_coeff = ensure_coeff_domain(half, Frac(QQ))
+  assert_true(Show::to_string(frac_coeff) == "1/2")
 
   let a = @symcore.Expr::Symbol("a")
-  let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [
+  let alg_domain = Domain::AlgExt(QQ, ["a"], [
     (a ^ @symcore.int(2)) + @symcore.int(1),
   ])
   let alg_coeff = ensure_coeff_domain(half, alg_domain)
-  assert_true(alg_coeff is FieldElem::AlgExt(_, _, _, _))
+  assert_true(alg_coeff is AlgExt(_, _, _, _))
 
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let px = PolyBuilder::new(["x"], Domain::QQ).from_expr(x + @symcore.int(1))
-  let pxy = PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y)
+  let px = PolyBuilder::new(["x"], QQ).from_expr(x + @symcore.int(1))
+  let pxy = PolyBuilder::new(["x", "y"], QQ).from_expr(x + y)
   sympolys_assert_error(fn() raise PolyError { px.mul(pxy) }, "DomainMismatch")
 
-  let py = PolyBuilder::new(["y"], Domain::QQ).from_expr(y + @symcore.int(1))
+  let py = PolyBuilder::new(["y"], QQ).from_expr(y + @symcore.int(1))
   sympolys_assert_error(fn() raise PolyError { px.mul(py) }, "DomainMismatch")
 
   sympolys_assert_error(fn() raise PolyError { px.pow(-1) }, "BadExponent")
 
-  assert_true(Domain::Frac(Domain::QQ) == Domain::Frac(Domain::QQ))
+  assert_true(Domain::Frac(QQ) == Frac(QQ))
   assert_true(alg_domain == alg_domain)
 
   let bad_gen = PolyError::BadGenerator("u")
@@ -65,20 +65,20 @@ test "small branches: core/domain paths" {
 ///|
 test "small branches: domain_utils normalize_mod paths" {
   sympolys_assert_error(
-    fn() raise PolyError { normalize_mod(sb_rat(1, 2), Domain::GF(1)) },
+    fn() raise PolyError { normalize_mod(sb_rat(1, 2), GF(1)) },
     "BadModulus",
   )
 
   sympolys_assert_error(
-    fn() raise PolyError { normalize_mod(sb_rat(1, 5), Domain::GF(5)) },
+    fn() raise PolyError { normalize_mod(sb_rat(1, 5), GF(5)) },
     "DivisionByZero",
   )
 
-  let frac_norm = normalize_mod(sb_rat(8, 3), Domain::Frac(Domain::GF(7)))
-  assert_true(frac_norm.to_string() == "5")
+  let frac_norm = normalize_mod(sb_rat(8, 3), Frac(GF(7)))
+  assert_true(Show::to_string(frac_norm) == "5")
 
   sympolys_assert_error(
-    fn() raise PolyError { normalize_mod(sb_rat(1, 2), Domain::GF(4)) },
+    fn() raise PolyError { normalize_mod(sb_rat(1, 2), GF(4)) },
     "DivisionByZero",
   )
 }
@@ -87,12 +87,12 @@ test "small branches: domain_utils normalize_mod paths" {
 test "small branches: dense conversion guard branches" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let pxy = PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y)
+  let pxy = PolyBuilder::new(["x", "y"], QQ).from_expr(x + y)
 
   sympolys_assert_error(fn() raise PolyError { to_dense(pxy) }, "NotUnivariate")
 
   sympolys_assert_error(
-    fn() raise PolyError { from_dense([sb_feqq(1, 1)], ["x", "y"], Domain::QQ) },
+    fn() raise PolyError { from_dense([sb_feqq(1, 1)], ["x", "y"], QQ) },
     "NotUnivariate",
   )
 
@@ -102,37 +102,37 @@ test "small branches: dense conversion guard branches" {
   )
 
   let malformed_coeffs : Map[Monomial, FieldElem] = Map([])
-  malformed_coeffs.set(Monomial::{ exps: [1] }, sb_feqq(1, 1))
+  malformed_coeffs.set({ exps: [1] }, sb_feqq(1, 1))
   let malformed_poly = Poly::{
     coeffs: malformed_coeffs,
     gens: ["x", "y"],
-    domain: Domain::QQ,
-    order: TermOrder::Lex,
+    domain: QQ,
+    order: Lex,
   }
   let malformed_dense = to_dense_multi(malformed_poly, [1, 1])
   assert_true(malformed_dense.all(c => fe_is_zero(c)))
 
   let out_of_range_coeffs : Map[Monomial, FieldElem] = Map([])
-  out_of_range_coeffs.set(Monomial::{ exps: [3, 0] }, sb_feqq(1, 1))
+  out_of_range_coeffs.set({ exps: [3, 0] }, sb_feqq(1, 1))
   let out_of_range_poly = Poly::{
     coeffs: out_of_range_coeffs,
     gens: ["x", "y"],
-    domain: Domain::QQ,
-    order: TermOrder::Lex,
+    domain: QQ,
+    order: Lex,
   }
   let out_of_range_dense = to_dense_multi(out_of_range_poly, [1, 1])
   assert_true(out_of_range_dense.all(c => fe_is_zero(c)))
 
   sympolys_assert_error(
     fn() raise PolyError {
-      from_dense_multi([sb_feqq(1, 1)], ["x"], Domain::QQ, [1, 1])
+      from_dense_multi([sb_feqq(1, 1)], ["x"], QQ, [1, 1])
     },
     "BadGenerator",
   )
 
   sympolys_assert_error(
     fn() raise PolyError {
-      from_dense_multi([sb_feqq(1, 1)], ["x", "y"], Domain::QQ, [1, 1])
+      from_dense_multi([sb_feqq(1, 1)], ["x", "y"], QQ, [1, 1])
     },
     "BadGenerator",
   )
@@ -169,7 +169,7 @@ test "small branches: lll helper branches" {
     [sb_bi(3), sb_bi(0)],
   ]
   let (mu, _bnorm) = gram_schmidt(gs_basis)
-  assert_true(mu[2][1].to_string() == "0")
+  assert_true(Show::to_string(mu[2][1]) == "0")
 
   let k0_basis : Matrix = [[sb_bi(2), sb_bi(1)]]
   let k0_transform : Matrix = [[sb_bi(1)]]

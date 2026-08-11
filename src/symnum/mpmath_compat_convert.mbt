@@ -56,7 +56,7 @@ pub fn from_rational(
   rnd? : RoundMode = round_nearest,
 ) -> Mpf raise MpfError {
   if q == 0N {
-    raise @mpf.MpfError::DivisionByZero("from_rational: denominator is zero")
+    raise DivisionByZero("from_rational: denominator is zero")
   }
   @mpf.mpf_div(from_man_exp(p, 0), from_man_exp(q, 0), prec, rnd)
 }
@@ -106,7 +106,7 @@ pub fn from_float(
 /// Convert an `mpf` into an exact rational pair `(p, q)`.
 pub fn to_rational(x : Mpf) -> (BigInt, BigInt) raise MpfError {
   if @mpf.is_nan(x) || @mpf.is_inf(x) {
-    raise @mpf.MpfError::ValueError("to_rational: cannot convert nan/inf")
+    raise ValueError("to_rational: cannot convert nan/inf")
   }
   let man = compat_signed_man(x)
   if x.exp >= 0 {
@@ -120,7 +120,7 @@ pub fn to_rational(x : Mpf) -> (BigInt, BigInt) raise MpfError {
 /// Convert an `mpf` to an arbitrary-precision integer.
 pub fn to_int(x : Mpf, rnd? : RoundMode = round_down) -> BigInt raise MpfError {
   if @mpf.is_nan(x) || @mpf.is_inf(x) {
-    raise @mpf.MpfError::ValueError("to_int: cannot convert nan/inf")
+    raise ValueError("to_int: cannot convert nan/inf")
   }
   if x.exp >= 0 {
     compat_signed_man(x) << x.exp
@@ -128,25 +128,20 @@ pub fn to_int(x : Mpf, rnd? : RoundMode = round_down) -> BigInt raise MpfError {
     let shift = -x.exp
     let mag = x.man
     match rnd {
-      RoundMode::Down =>
-        if x.sign == 1 {
-          -(mag >> shift)
-        } else {
-          mag >> shift
-        }
-      RoundMode::Floor =>
+      Down => if x.sign == 1 { -(mag >> shift) } else { mag >> shift }
+      Floor =>
         if x.sign == 1 {
           -((mag + ((1N << shift) - 1N)) >> shift)
         } else {
           mag >> shift
         }
-      RoundMode::Ceiling =>
+      Ceiling =>
         if x.sign == 1 {
           -(mag >> shift)
         } else {
           (mag + ((1N << shift) - 1N)) >> shift
         }
-      RoundMode::Up =>
+      Up =>
         if (mag & ((1N << shift) - 1N)) == 0N {
           if x.sign == 1 {
             -(mag >> shift)
@@ -158,7 +153,7 @@ pub fn to_int(x : Mpf, rnd? : RoundMode = round_down) -> BigInt raise MpfError {
         } else {
           (mag + ((1N << shift) - 1N)) >> shift
         }
-      RoundMode::Nearest => {
+      Nearest => {
         let int_part = mag >> shift
         let rem_mask = (1N << shift) - 1N
         let rem = mag & rem_mask
@@ -203,16 +198,13 @@ pub fn to_float(
     x
   }
   let value = @string.parse_double(@mpf.to_str_opts(y, dps=17)) catch {
-    _ =>
-      raise @mpf.MpfError::ValueError(
-        "to_float: failed to parse decimal rendering",
-      )
+    _ => raise ValueError("to_float: failed to parse decimal rendering")
   }
   if strict && value == 0.0 {
-    raise @mpf.MpfError::ValueError("to_float: underflow")
+    raise ValueError("to_float: underflow")
   }
   if strict && (value == 1.0 / 0.0 || value == -1.0 / 0.0) {
-    raise @mpf.MpfError::ValueError("to_float: overflow")
+    raise ValueError("to_float: overflow")
   }
   value
 }

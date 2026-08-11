@@ -153,7 +153,7 @@ fn RewritingSystem::_add_rule(
   if self.rules.length() + 1 > self.maxeqns {
     self.is_confluent_cache = Some(self._check_confluence())
     self.max_exceeded = true
-    raise CombinatoricsError::ValueError("too many rules were defined")
+    raise ValueError("too many rules were defined")
   }
   self.rules[r1] = r2
   match self.reduction_automaton {
@@ -517,7 +517,7 @@ fn RewritingSystem::_add_to_automaton(
       match self.reduction_automaton {
         Some(machine) =>
           if !machine.has_state(name) {
-            machine.add_state(name, StateType::Accept)
+            machine.add_state(name, Accept)
             accept_states.push(name)
           }
         None => ()
@@ -537,7 +537,7 @@ fn RewritingSystem::_add_to_automaton(
           accept_states = filtered
         }
         if !machine.has_state(rule_state) {
-          machine.add_state(rule_state, StateType::Dead, rh_rule=rhs)
+          machine.add_state(rule_state, Dead, rh_rule=rhs)
         }
       }
       None => ()
@@ -559,33 +559,32 @@ fn RewritingSystem::_add_to_automaton(
         match state {
           Some(st) =>
             match st.state_type {
-              StateType::Start =>
+              Start =>
                 for letter in uniq {
-                  let to_state = if machine.has_state(StateName::Word(letter)) {
+                  let to_state = if machine.has_state(Word(letter)) {
                     StateName::Word(letter)
                   } else {
                     name
                   }
                   machine.add_transition(name, letter, to_state)
                 }
-              StateType::Accept =>
+              Accept =>
                 for letter in uniq {
                   let mut next = match name {
-                    StateName::Word(w) => w.mul(letter)
-                    StateName::Start => letter
+                    Word(w) => w.mul(letter)
+                    Start => letter
                   }
-                  while next.length() > 0 &&
-                        !machine.has_state(StateName::Word(next)) {
+                  while next.length() > 0 && !machine.has_state(Word(next)) {
                     next = next.subword(1, next.length())
                   }
                   let to_state = if next.length() == 0 {
                     StateName::Start
                   } else {
-                    StateName::Word(next)
+                    Word(next)
                   }
                   machine.add_transition(name, letter, to_state)
                 }
-              StateType::Dead => ()
+              Dead => ()
             }
           None => ()
         }
@@ -620,16 +619,16 @@ pub fn RewritingSystem::reduce_using_automaton(
           let next_state_name = machine.transition(current_state, s)
           let next_name = match next_state_name {
             Some(n) => n
-            None => StateName::Start
+            None => Start
           }
           let next_state = machine.get_state(next_name)
           match next_state {
             Some(st) =>
-              if st.state_type == StateType::Dead {
+              if st.state_type == Dead {
                 let subst = st.rh_rule.unwrap_or(self.free_group.identity())
                 let offset = match next_name {
-                  StateName::Word(w) => w.length() - 1
-                  StateName::Start => 0
+                  Word(w) => w.length() - 1
+                  Start => 0
                 }
                 let start = i - offset
                 current_word = current_word.substituted_word(

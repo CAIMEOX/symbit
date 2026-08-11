@@ -78,14 +78,14 @@ pub fn symbolic_rv_data(
   rv : RandomVar,
 ) -> (SymbolicKind, Array[@symcore.Expr])? {
   match rv.kind {
-    RVKind::Symbolic(kind~, params~) => Some((kind, params))
+    Symbolic(kind~, params~) => Some((kind, params))
     _ => None
   }
 }
 
 ///|
 pub fn random_symbol(rv : RandomVar) -> @symcore.Expr {
-  @symcore.Expr::Symbol(rv.name)
+  Symbol(rv.name)
 }
 
 ///|
@@ -99,20 +99,20 @@ fn symbolic_distribution_expr(
 ///|
 pub fn rename_random_var(rv : RandomVar, name : String) -> RandomVar {
   match rv.kind {
-    RVKind::JointIndependent(items) => {
+    JointIndependent(items) => {
       let renamed : Array[RandomVar] = Array::new()
       for item in items {
         renamed.push(rename_random_var(item, item.name))
       }
-      { name, kind: RVKind::JointIndependent(renamed) }
+      { name, kind: JointIndependent(renamed) }
     }
-    RVKind::Compound(items) => {
+    Compound(items) => {
       let renamed : Array[(@symnum.BigRational, RandomVar)] = Array::new()
       for pair in items {
         let (w, item) = pair
         renamed.push((w, rename_random_var(item, name)))
       }
-      { name, kind: RVKind::Compound(renamed) }
+      { name, kind: Compound(renamed) }
     }
     _ => { name, kind: rv.kind }
   }
@@ -120,69 +120,69 @@ pub fn rename_random_var(rv : RandomVar, name : String) -> RandomVar {
 
 ///|
 pub fn rel(op : RelOp, lhs : @symcore.Expr, rhs : @symcore.Expr) -> Event {
-  Event::Rel(op~, lhs~, rhs~)
+  Rel(op~, lhs~, rhs~)
 }
 
 ///|
 pub fn eq(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Event {
-  rel(RelOp::Eq, lhs, rhs)
+  rel(Eq, lhs, rhs)
 }
 
 ///|
 pub fn ne(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Event {
-  rel(RelOp::Ne, lhs, rhs)
+  rel(Ne, lhs, rhs)
 }
 
 ///|
 pub fn lt(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Event {
-  rel(RelOp::Lt, lhs, rhs)
+  rel(Lt, lhs, rhs)
 }
 
 ///|
 pub fn le(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Event {
-  rel(RelOp::Le, lhs, rhs)
+  rel(Le, lhs, rhs)
 }
 
 ///|
 pub fn gt(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Event {
-  rel(RelOp::Gt, lhs, rhs)
+  rel(Gt, lhs, rhs)
 }
 
 ///|
 pub fn ge(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Event {
-  rel(RelOp::Ge, lhs, rhs)
+  rel(Ge, lhs, rhs)
 }
 
 ///|
 pub fn relop_to_name(op : RelOp) -> String {
   match op {
-    RelOp::Eq => "Eq"
-    RelOp::Ne => "Ne"
-    RelOp::Lt => "Lt"
-    RelOp::Le => "Le"
-    RelOp::Gt => "Gt"
-    RelOp::Ge => "Ge"
+    Eq => "Eq"
+    Ne => "Ne"
+    Lt => "Lt"
+    Le => "Le"
+    Gt => "Gt"
+    Ge => "Ge"
   }
 }
 
 ///|
 pub fn invert_relop(op : RelOp) -> RelOp {
   match op {
-    RelOp::Eq => RelOp::Eq
-    RelOp::Ne => RelOp::Ne
-    RelOp::Lt => RelOp::Gt
-    RelOp::Le => RelOp::Ge
-    RelOp::Gt => RelOp::Lt
-    RelOp::Ge => RelOp::Le
+    Eq => Eq
+    Ne => Ne
+    Lt => Gt
+    Le => Ge
+    Gt => Lt
+    Ge => Le
   }
 }
 
 ///|
 pub fn not_event(event : Event) -> Event {
   match event {
-    Event::Bool(v) => Event::Bool(!v)
-    Event::Not(inner) => inner
-    _ => Event::Not(event)
+    Bool(v) => Bool(!v)
+    Not(inner) => inner
+    _ => Not(event)
   }
 }
 
@@ -191,9 +191,9 @@ pub fn and_event(items : Array[Event]) -> Event {
   let flat : Array[Event] = Array::new()
   for item in items {
     match item {
-      Event::Bool(false) => return Event::Bool(false)
-      Event::Bool(true) => ()
-      Event::And(inner) =>
+      Bool(false) => return Bool(false)
+      Bool(true) => ()
+      And(inner) =>
         for child in inner {
           flat.push(child)
         }
@@ -201,11 +201,11 @@ pub fn and_event(items : Array[Event]) -> Event {
     }
   }
   if flat.is_empty() {
-    Event::Bool(true)
+    Bool(true)
   } else if flat.length() == 1 {
     flat[0]
   } else {
-    Event::And(flat)
+    And(flat)
   }
 }
 
@@ -214,9 +214,9 @@ pub fn or_event(items : Array[Event]) -> Event {
   let flat : Array[Event] = Array::new()
   for item in items {
     match item {
-      Event::Bool(true) => return Event::Bool(true)
-      Event::Bool(false) => ()
-      Event::Or(inner) =>
+      Bool(true) => return Bool(true)
+      Bool(false) => ()
+      Or(inner) =>
         for child in inner {
           flat.push(child)
         }
@@ -224,25 +224,23 @@ pub fn or_event(items : Array[Event]) -> Event {
     }
   }
   if flat.is_empty() {
-    Event::Bool(false)
+    Bool(false)
   } else if flat.length() == 1 {
     flat[0]
   } else {
-    Event::Or(flat)
+    Or(flat)
   }
 }
 
 ///|
 pub fn event_to_expr(event : Event) -> @symcore.Expr {
   match event {
-    Event::Bool(v) => @symcore.Expr::Symbol(if v { "True" } else { "False" })
-    Event::Rel(op~, lhs~, rhs~) =>
-      @symcore.function(relop_to_name(op), [lhs, rhs])
-    Event::Not(inner) => @symcore.function("Not", [event_to_expr(inner)])
-    Event::And(items) =>
+    Bool(v) => Symbol(if v { "True" } else { "False" })
+    Rel(op~, lhs~, rhs~) => @symcore.function(relop_to_name(op), [lhs, rhs])
+    Not(inner) => @symcore.function("Not", [event_to_expr(inner)])
+    And(items) =>
       @symcore.function("And", items.map(item => event_to_expr(item)))
-    Event::Or(items) =>
-      @symcore.function("Or", items.map(item => event_to_expr(item)))
+    Or(items) => @symcore.function("Or", items.map(item => event_to_expr(item)))
   }
 }
 
@@ -254,8 +252,7 @@ pub fn probability_expr(event : Event) -> @symcore.Expr {
 ///|
 pub fn expectation_expr(expr : @symcore.Expr, rv : RandomVar?) -> @symcore.Expr {
   match rv {
-    Some(v) =>
-      @symcore.function("Expectation", [expr, @symcore.Expr::Symbol(v.name)])
+    Some(v) => @symcore.function("Expectation", [expr, Symbol(v.name)])
     None => @symcore.function("Expectation", [expr])
   }
 }
@@ -272,7 +269,7 @@ pub fn covariance_expr(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 pub fn expr_from_big_rational(n : @symnum.BigRational) -> @symcore.Expr {
-  @symcore.Expr::Number(n)
+  Number(n)
 }
 
 ///|
@@ -288,7 +285,7 @@ pub fn rat_from_int(n : Int) -> @symnum.BigRational {
 ///|
 pub fn expr_as_number(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
+    Number(n) => Some(n)
     _ => None
   }
 }
@@ -326,72 +323,40 @@ fn pow_int(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational? {
 ///|
 pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Number(_)
-    | @symcore.Expr::Float(_)
-    | @symcore.Expr::ComplexFloat(_)
-    | @symcore.Expr::NumberSymbol(_)
-    | @symcore.Expr::Boolean(_)
-    | @symcore.Expr::Symbol(_)
-    | @symcore.Expr::Dummy(_, _)
-    | @symcore.Expr::Wild(_, _, _)
-    | @symcore.Expr::FunctionHead(_)
-    | @symcore.Expr::UndefinedFunction(_) => expr
-    @symcore.Expr::Apply(head, args) =>
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | Boolean(_)
+    | Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | FunctionHead(_)
+    | UndefinedFunction(_) => expr
+    Apply(head, args) =>
       @symcore.raw_apply(head, args.map(item => eval_arith(item))).unwrap_or(
-        @symcore.Expr::Apply(head, args.map(item => eval_arith(item))),
+        Apply(head, args.map(item => eval_arith(item))),
       )
-    @symcore.Expr::Tuple(args) =>
-      @symcore.Expr::Tuple(args.map(item => eval_arith(item)))
-    @symcore.Expr::Dict(items) => {
+    Tuple(args) => Tuple(args.map(item => eval_arith(item)))
+    Dict(items) => {
       let out : Array[(@symcore.Expr, @symcore.Expr)] = []
       for item in items {
         let (key, value) = item
         out.push((eval_arith(key), eval_arith(value)))
       }
-      @symcore.Expr::Dict(out)
+      Dict(out)
     }
-    @symcore.Expr::Mod(lhs, rhs) =>
-      @symcore.mod_expr(eval_arith(lhs), eval_arith(rhs))
-    @symcore.Expr::Relational(op, lhs, rhs) =>
+    Mod(lhs, rhs) => @symcore.mod_expr(eval_arith(lhs), eval_arith(rhs))
+    Relational(op, lhs, rhs) =>
       match op {
-        @symcore.RelOp::Eq =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            eval_arith(lhs),
-            eval_arith(rhs),
-          )
-        @symcore.RelOp::Ne =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ne,
-            eval_arith(lhs),
-            eval_arith(rhs),
-          )
-        @symcore.RelOp::Lt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Lt,
-            eval_arith(lhs),
-            eval_arith(rhs),
-          )
-        @symcore.RelOp::Le =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Le,
-            eval_arith(lhs),
-            eval_arith(rhs),
-          )
-        @symcore.RelOp::Gt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Gt,
-            eval_arith(lhs),
-            eval_arith(rhs),
-          )
-        @symcore.RelOp::Ge =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ge,
-            eval_arith(lhs),
-            eval_arith(rhs),
-          )
+        Eq => Relational(Eq, eval_arith(lhs), eval_arith(rhs))
+        Ne => Relational(Ne, eval_arith(lhs), eval_arith(rhs))
+        Lt => Relational(Lt, eval_arith(lhs), eval_arith(rhs))
+        Le => Relational(Le, eval_arith(lhs), eval_arith(rhs))
+        Gt => Relational(Gt, eval_arith(lhs), eval_arith(rhs))
+        Ge => Relational(Ge, eval_arith(lhs), eval_arith(rhs))
       }
-    @symcore.Expr::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       let out : Array[@symcore.Expr] = []
       out.push(eval_arith(inner))
       for arg in deriv_args {
@@ -399,54 +364,54 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
       }
       @symcore.raw_function("Derivative", out)
     }
-    @symcore.Expr::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       @symcore.subs_expr(
         eval_arith(inner),
         eval_arith(variable),
         eval_arith(value),
       )
-    @symcore.Expr::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       @symcore.lambda_expr(eval_arith(vars), eval_arith(body))
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let out = args.map(item => eval_arith(item))
       let mut all_num = true
       let mut sum = @symnum.BigRational::zero()
       for item in out {
         match item {
-          @symcore.Expr::Number(n) => sum = sum.add_r(n)
+          Number(n) => sum = sum.add_r(n)
           _ => all_num = false
         }
       }
       if all_num {
-        @symcore.Expr::Number(sum)
+        Number(sum)
       } else {
         @symcore.add(out)
       }
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let out = args.map(item => eval_arith(item))
       let mut all_num = true
       let mut prod = @symnum.BigRational::one()
       for item in out {
         match item {
-          @symcore.Expr::Number(n) => prod = prod.mul_r(n)
+          Number(n) => prod = prod.mul_r(n)
           _ => all_num = false
         }
       }
       if all_num {
-        @symcore.Expr::Number(prod)
+        Number(prod)
       } else {
         @symcore.mul(out)
       }
     }
-    @symcore.Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       let b = eval_arith(base)
       let e = eval_arith(exp)
       match (b, e) {
-        (@symcore.Expr::Number(nb), @symcore.Expr::Number(ne)) =>
+        (Number(nb), Number(ne)) =>
           if ne.is_integral() {
             match pow_int(nb, ne.numerator().to_int()) {
-              Some(value) => @symcore.Expr::Number(value)
+              Some(value) => Number(value)
               None => @symcore.pow(b, e)
             }
           } else {
@@ -481,27 +446,27 @@ pub fn substitute_symbol(
 ///|
 pub fn tri_not(v : TriBool) -> TriBool {
   match v {
-    TriBool::True => TriBool::False
-    TriBool::False => TriBool::True
-    TriBool::Unknown => TriBool::Unknown
+    True => False
+    False => True
+    Unknown => Unknown
   }
 }
 
 ///|
 pub fn tri_and(lhs : TriBool, rhs : TriBool) -> TriBool {
   match (lhs, rhs) {
-    (TriBool::False, _) | (_, TriBool::False) => TriBool::False
-    (TriBool::True, TriBool::True) => TriBool::True
-    _ => TriBool::Unknown
+    (False, _) | (_, False) => False
+    (True, True) => True
+    _ => Unknown
   }
 }
 
 ///|
 pub fn tri_or(lhs : TriBool, rhs : TriBool) -> TriBool {
   match (lhs, rhs) {
-    (TriBool::True, _) | (_, TriBool::True) => TriBool::True
-    (TriBool::False, TriBool::False) => TriBool::False
-    _ => TriBool::Unknown
+    (True, _) | (_, True) => True
+    (False, False) => False
+    _ => Unknown
   }
 }
 
@@ -517,34 +482,24 @@ fn eval_relation(
     (Some(ln), Some(rn)) => {
       let cmp = ln.compare(rn)
       let ok = match op {
-        RelOp::Eq => cmp == 0
-        RelOp::Ne => cmp != 0
-        RelOp::Lt => cmp < 0
-        RelOp::Le => cmp <= 0
-        RelOp::Gt => cmp > 0
-        RelOp::Ge => cmp >= 0
+        Eq => cmp == 0
+        Ne => cmp != 0
+        Lt => cmp < 0
+        Le => cmp <= 0
+        Gt => cmp > 0
+        Ge => cmp >= 0
       }
       if ok {
-        TriBool::True
+        True
       } else {
-        TriBool::False
+        False
       }
     }
     _ =>
       match op {
-        RelOp::Eq =>
-          if @symcore.compare_expr(l, r) == 0 {
-            TriBool::True
-          } else {
-            TriBool::Unknown
-          }
-        RelOp::Ne =>
-          if @symcore.compare_expr(l, r) == 0 {
-            TriBool::False
-          } else {
-            TriBool::Unknown
-          }
-        _ => TriBool::Unknown
+        Eq => if @symcore.compare_expr(l, r) == 0 { True } else { Unknown }
+        Ne => if @symcore.compare_expr(l, r) == 0 { False } else { Unknown }
+        _ => Unknown
       }
   }
 }
@@ -555,21 +510,21 @@ pub fn evaluate_event(
   env : Map[String, @symcore.Expr],
 ) -> TriBool {
   match event {
-    Event::Bool(v) => if v { TriBool::True } else { TriBool::False }
-    Event::Rel(op~, lhs~, rhs~) => {
+    Bool(v) => if v { True } else { False }
+    Rel(op~, lhs~, rhs~) => {
       let lhs_sub = @symcore.subst(lhs, env)
       let rhs_sub = @symcore.subst(rhs, env)
       eval_relation(op, lhs_sub, rhs_sub)
     }
-    Event::Not(inner) => tri_not(evaluate_event(inner, env))
-    Event::And(items) => {
+    Not(inner) => tri_not(evaluate_event(inner, env))
+    And(items) => {
       let mut acc = TriBool::True
       for item in items {
         acc = tri_and(acc, evaluate_event(item, env))
       }
       acc
     }
-    Event::Or(items) => {
+    Or(items) => {
       let mut acc = TriBool::False
       for item in items {
         acc = tri_or(acc, evaluate_event(item, env))
@@ -582,7 +537,7 @@ pub fn evaluate_event(
 ///|
 fn collect_expr_symbols(expr : @symcore.Expr, out : Map[String, Bool]) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => out[name] = true
+    Symbol(name) => out[name] = true
     _ =>
       for child in @symcore.children(expr) {
         collect_expr_symbols(child, out)
@@ -594,17 +549,17 @@ fn collect_expr_symbols(expr : @symcore.Expr, out : Map[String, Bool]) -> Unit {
 pub fn event_symbols(event : Event) -> Array[String] {
   let seen : Map[String, Bool] = Map([])
   match event {
-    Event::Bool(_) => ()
-    Event::Rel(lhs~, rhs~, op~) => {
+    Bool(_) => ()
+    Rel(lhs~, rhs~, op~) => {
       ignore(op)
       collect_expr_symbols(lhs, seen)
       collect_expr_symbols(rhs, seen)
     }
-    Event::Not(inner) =>
+    Not(inner) =>
       for s in event_symbols(inner) {
         seen[s] = true
       }
-    Event::And(items) | Event::Or(items) =>
+    And(items) | Or(items) =>
       for item in items {
         for s in event_symbols(item) {
           seen[s] = true

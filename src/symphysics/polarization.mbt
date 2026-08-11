@@ -47,7 +47,7 @@ pub fn stokes_vector(
 ///|
 pub fn jones_2_stokes(e : ExplicitMatrix) -> ExplicitMatrix raise PhysicsError {
   guard e.height() == 2 && e.width() == 1 else {
-    raise PhysicsError::ShapeError("jones_2_stokes expects a 2x1 Jones vector")
+    raise ShapeError("jones_2_stokes expects a 2x1 Jones vector")
   }
   let ex = e.get(0, 0)
   let ey = e.get(1, 0)
@@ -116,7 +116,7 @@ pub fn reflective_filter(r : Expr) -> ExplicitMatrix raise PhysicsError {
 ///|
 pub fn mueller_matrix(j : ExplicitMatrix) -> ExplicitMatrix raise PhysicsError {
   guard j.height() == 2 && j.width() == 2 else {
-    raise PhysicsError::ShapeError("mueller_matrix expects a 2x2 Jones matrix")
+    raise ShapeError("mueller_matrix expects a 2x2 Jones matrix")
   }
   let i = i_expr()
   let half = rational_expr(1, 2)

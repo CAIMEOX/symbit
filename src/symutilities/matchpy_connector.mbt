@@ -49,9 +49,9 @@ pub struct Replacer {
 ///|
 fn wildcard_tag(kind : WildcardKind) -> String {
   match kind {
-    WildcardKind::Dot => "__symutil_wild_dot"
-    WildcardKind::Plus => "__symutil_wild_plus"
-    WildcardKind::Star => "__symutil_wild_star"
+    Dot => "__symutil_wild_dot"
+    Plus => "__symutil_wild_plus"
+    Star => "__symutil_wild_star"
   }
 }
 
@@ -61,7 +61,7 @@ fn encode_wildcard(
   variable_name : String,
   optional : Expr?,
 ) -> Expr {
-  let args : Array[Expr] = [Expr::Symbol(variable_name)]
+  let args : Array[Expr] = [Symbol(variable_name)]
   match optional {
     Some(value) => args.push(value)
     None => ()
@@ -75,14 +75,14 @@ fn decode_wildcard(expr : Expr) -> (WildcardKind, String, Expr?)? {
     (Some(name), Some(args)) => {
       let kind = match name {
         "__symutil_wild_dot" => Some(WildcardKind::Dot)
-        "__symutil_wild_plus" => Some(WildcardKind::Plus)
-        "__symutil_wild_star" => Some(WildcardKind::Star)
+        "__symutil_wild_plus" => Some(Plus)
+        "__symutil_wild_star" => Some(Star)
         _ => None
       }
       match (kind, args) {
-        (Some(kind), [Expr::Symbol(variable_name)]) =>
+        (Some(kind), [Symbol(variable_name)]) =>
           Some((kind, variable_name, None))
-        (Some(kind), [Expr::Symbol(variable_name), optional]) =>
+        (Some(kind), [Symbol(variable_name), optional]) =>
           Some((kind, variable_name, Some(optional)))
         _ => None
       }
@@ -93,17 +93,17 @@ fn decode_wildcard(expr : Expr) -> (WildcardKind, String, Expr?)? {
 
 ///|
 pub fn wild_dot(variable_name : String, optional? : Expr? = None) -> Expr {
-  encode_wildcard(WildcardKind::Dot, variable_name, optional)
+  encode_wildcard(Dot, variable_name, optional)
 }
 
 ///|
 pub fn wild_plus(variable_name : String, optional? : Expr? = None) -> Expr {
-  encode_wildcard(WildcardKind::Plus, variable_name, optional)
+  encode_wildcard(Plus, variable_name, optional)
 }
 
 ///|
 pub fn wild_star(variable_name : String, optional? : Expr? = None) -> Expr {
-  encode_wildcard(WildcardKind::Star, variable_name, optional)
+  encode_wildcard(Star, variable_name, optional)
 }
 
 ///|
@@ -111,8 +111,8 @@ pub fn get_srepr(expr : Expr) -> String {
   match decode_wildcard(expr) {
     Some((kind, variable_name, _)) =>
       match kind {
-        WildcardKind::Dot => variable_name
-        WildcardKind::Plus | WildcardKind::Star => "*" + variable_name
+        Dot => variable_name
+        Plus | Star => "*" + variable_name
       }
     None =>
       match @symcore.application_parts(expr) {
@@ -137,27 +137,24 @@ pub fn get_srepr(expr : Expr) -> String {
           }
         None =>
           match @symcore.expr_form(expr) {
-            @symcore.ExprForm::Number(_)
-            | @symcore.ExprForm::Float(_)
-            | @symcore.ExprForm::ComplexFloat(_)
-            | @symcore.ExprForm::NumberSymbol(_)
-            | @symcore.ExprForm::Symbol(_)
-            | @symcore.ExprForm::Dummy(_, _)
-            | @symcore.ExprForm::Wild(_, _, _)
-            | @symcore.ExprForm::FunctionHead(_)
-            | @symcore.ExprForm::UndefinedFunction(_)
-            | @symcore.ExprForm::Boolean(_) => @symprint.pretty_string(expr)
-            @symcore.ExprForm::Add(args) =>
-              "Add(" + args.map(get_srepr).join(", ") + ")"
-            @symcore.ExprForm::Mul(args) =>
-              "Mul(" + args.map(get_srepr).join(", ") + ")"
-            @symcore.ExprForm::Pow(base, exp) =>
+            Number(_)
+            | Float(_)
+            | ComplexFloat(_)
+            | NumberSymbol(_)
+            | Symbol(_)
+            | Dummy(_, _)
+            | Wild(_, _, _)
+            | FunctionHead(_)
+            | UndefinedFunction(_)
+            | Boolean(_) => @symprint.pretty_string(expr)
+            Add(args) => "Add(" + args.map(get_srepr).join(", ") + ")"
+            Mul(args) => "Mul(" + args.map(get_srepr).join(", ") + ")"
+            Pow(base, exp) =>
               "Pow(" + get_srepr(base) + ", " + get_srepr(exp) + ")"
-            @symcore.ExprForm::Mod(lhs, rhs) =>
+            Mod(lhs, rhs) =>
               "Mod(" + get_srepr(lhs) + ", " + get_srepr(rhs) + ")"
-            @symcore.ExprForm::Tuple(args) =>
-              "Tuple(" + args.map(get_srepr).join(", ") + ")"
-            @symcore.ExprForm::Dict(items) => {
+            Tuple(args) => "Tuple(" + args.map(get_srepr).join(", ") + ")"
+            Dict(items) => {
               let rendered : Array[String] = []
               for item in items {
                 let (key, value) = item
@@ -167,21 +164,21 @@ pub fn get_srepr(expr : Expr) -> String {
               }
               "Dict(" + rendered.join(", ") + ")"
             }
-            @symcore.ExprForm::Relational(_, lhs, rhs) =>
+            Relational(_, lhs, rhs) =>
               @symcore.head_name(expr) +
               "(" +
               get_srepr(lhs) +
               ", " +
               get_srepr(rhs) +
               ")"
-            @symcore.ExprForm::Derivative(inner, deriv_args) => {
+            Derivative(inner, deriv_args) => {
               let rendered : Array[String] = [get_srepr(inner)]
               for arg in deriv_args {
                 rendered.push(get_srepr(arg))
               }
               "Derivative(" + rendered.join(", ") + ")"
             }
-            @symcore.ExprForm::Subs(inner, variable, value) =>
+            Subs(inner, variable, value) =>
               "Subs(" +
               get_srepr(inner) +
               ", " +
@@ -189,7 +186,7 @@ pub fn get_srepr(expr : Expr) -> String {
               ", " +
               get_srepr(value) +
               ")"
-            @symcore.ExprForm::Lambda(vars, body) =>
+            Lambda(vars, body) =>
               "Lambda(" + get_srepr(vars) + ", " + get_srepr(body) + ")"
             _ => "<invalid>"
           }
@@ -218,7 +215,7 @@ fn bind_single(
   value : Expr,
 ) -> Map[String, WildBinding]? {
   match bindings.get(name) {
-    Some(WildBinding::Single(existing)) =>
+    Some(Single(existing)) =>
       if existing == value {
         Some(bindings)
       } else {
@@ -227,7 +224,7 @@ fn bind_single(
     Some(_) => None
     None => {
       let out = map_copy(bindings)
-      out[name] = WildBinding::Single(value)
+      out[name] = Single(value)
       Some(out)
     }
   }
@@ -240,7 +237,7 @@ fn bind_sequence(
   values : Array[Expr],
 ) -> Map[String, WildBinding]? {
   match bindings.get(name) {
-    Some(WildBinding::Sequence(existing)) =>
+    Some(Sequence(existing)) =>
       if existing == values {
         Some(bindings)
       } else {
@@ -253,7 +250,7 @@ fn bind_sequence(
       for value in values {
         seq.push(value)
       }
-      out[name] = WildBinding::Sequence(seq)
+      out[name] = Sequence(seq)
       Some(out)
     }
   }
@@ -264,8 +261,8 @@ fn min_required_exprs(patterns : Array[Expr], start : Int) -> Int {
   let mut need = 0
   for i in start..<patterns.length() {
     match decode_wildcard(patterns[i]) {
-      Some((WildcardKind::Star, _, _)) => ()
-      Some((WildcardKind::Plus, _, _)) => need += 1
+      Some((Star, _, _)) => ()
+      Some((Plus, _, _)) => need += 1
       _ => need += 1
     }
   }
@@ -279,27 +276,17 @@ fn match_expr(
   bindings : Map[String, WildBinding],
 ) -> Map[String, WildBinding]? {
   match decode_wildcard(pattern) {
-    Some((WildcardKind::Dot, variable_name, _))
-    | Some((WildcardKind::Plus, variable_name, _))
-    | Some((WildcardKind::Star, variable_name, _)) =>
+    Some((Dot, variable_name, _))
+    | Some((Plus, variable_name, _))
+    | Some((Star, variable_name, _)) =>
       bind_single(bindings, variable_name, expr)
     None =>
       match (pattern, expr) {
-        (Expr::Number(a), Expr::Number(b)) =>
-          if a == b {
-            Some(bindings)
-          } else {
-            None
-          }
-        (Expr::Symbol(a), Expr::Symbol(b)) =>
-          if a == b {
-            Some(bindings)
-          } else {
-            None
-          }
-        (Expr::Add(pa), Expr::Add(ea)) | (Expr::Mul(pa), Expr::Mul(ea)) =>
+        (Number(a), Number(b)) => if a == b { Some(bindings) } else { None }
+        (Symbol(a), Symbol(b)) => if a == b { Some(bindings) } else { None }
+        (Add(pa), Add(ea)) | (Mul(pa), Mul(ea)) =>
           match_expr_list(pa, ea, 0, 0, bindings)
-        (Expr::Pow(pb, pe), Expr::Pow(eb, ee)) =>
+        (Pow(pb, pe), Pow(eb, ee)) =>
           match match_expr(pb, eb, bindings) {
             Some(next) => match_expr(pe, ee, next)
             None => None
@@ -335,10 +322,10 @@ fn match_expr_list(
   }
   let pattern = patterns[pidx]
   match decode_wildcard(pattern) {
-    Some((WildcardKind::Plus, variable_name, optional))
-    | Some((WildcardKind::Star, variable_name, optional)) => {
+    Some((Plus, variable_name, optional))
+    | Some((Star, variable_name, optional)) => {
       let min_len = match decode_wildcard(pattern) {
-        Some((WildcardKind::Plus, _, _)) => 1
+        Some((Plus, _, _)) => 1
         _ => 0
       }
       let remaining_need = min_required_exprs(patterns, pidx + 1)
@@ -396,7 +383,7 @@ fn resolve_binding(
         Some(value) => Some(value)
         None =>
           match optional {
-            Some(value) => Some(WildBinding::Single(value))
+            Some(value) => Some(Single(value))
             None => None
           }
       }
@@ -412,8 +399,8 @@ fn substitute_expr_list(
   let out : Array[Expr] = []
   for expr in exprs {
     match resolve_binding(expr, bindings) {
-      Some(WildBinding::Single(value)) => out.push(value)
-      Some(WildBinding::Sequence(values)) =>
+      Some(Single(value)) => out.push(value)
+      Some(Sequence(values)) =>
         for value in values {
           out.push(value)
         }
@@ -426,8 +413,8 @@ fn substitute_expr_list(
 ///|
 fn substitute_expr(expr : Expr, bindings : Map[String, WildBinding]) -> Expr {
   match resolve_binding(expr, bindings) {
-    Some(WildBinding::Single(value)) => value
-    Some(WildBinding::Sequence(values)) =>
+    Some(Single(value)) => value
+    Some(Sequence(values)) =>
       match values.length() {
         0 => int(0)
         1 => values[0]
@@ -435,11 +422,9 @@ fn substitute_expr(expr : Expr, bindings : Map[String, WildBinding]) -> Expr {
       }
     None =>
       match expr {
-        Expr::Add(args) =>
-          @symcore.raw_add(substitute_expr_list(args, bindings))
-        Expr::Mul(args) =>
-          @symcore.raw_mul(substitute_expr_list(args, bindings))
-        Expr::Pow(base, exp) =>
+        Add(args) => @symcore.raw_add(substitute_expr_list(args, bindings))
+        Mul(args) => @symcore.raw_mul(substitute_expr_list(args, bindings))
+        Pow(base, exp) =>
           @symcore.pow(
             substitute_expr(base, bindings),
             substitute_expr(exp, bindings),
@@ -483,7 +468,7 @@ fn replace_once(
     Some((replaced, info)) => (replaced, true, info)
     None =>
       match expr {
-        Expr::Add(args) => {
+        Add(args) => {
           let rebuilt : Array[Expr] = []
           for arg in args {
             let (next, changed, info) = replace_once(arg, rules)
@@ -497,7 +482,7 @@ fn replace_once(
           }
           (expr, false, None)
         }
-        Expr::Mul(args) => {
+        Mul(args) => {
           let rebuilt : Array[Expr] = []
           for arg in args {
             let (next, changed, info) = replace_once(arg, rules)
@@ -511,7 +496,7 @@ fn replace_once(
           }
           (expr, false, None)
         }
-        Expr::Pow(base, exp) => {
+        Pow(base, exp) => {
           let (base_next, base_changed, base_info) = replace_once(base, rules)
           if base_changed {
             (@symcore.pow(base_next, exp), true, base_info)

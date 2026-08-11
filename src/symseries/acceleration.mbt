@@ -8,7 +8,7 @@
 ///|
 fn symbol_name(expr : @symcore.Expr) -> String raise {
   match expr {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("acceleration variable must be a Symbol")
   }
 }
@@ -51,7 +51,7 @@ fn rational_coeff(sign : Int, num : BigInt, den : BigInt) -> @symcore.Expr {
     n = n.neg()
   }
   let coeff = safe_rational(n, den)
-  @symcore.Expr::Number(coeff)
+  Number(coeff)
 }
 
 ///|

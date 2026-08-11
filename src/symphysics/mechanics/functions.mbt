@@ -173,56 +173,42 @@ pub fn validate_coordinates(
     let speed_keys = speeds.map(mech_expr_key)
     let aux_keys = u_auxiliary.map(mech_expr_key)
     if coord_keys.length() != Set::from_array(coord_keys).length() {
-      raise @symphysics.PhysicsError::ValueError(
-        "duplicate generalized coordinates",
-      )
+      raise ValueError("duplicate generalized coordinates")
     }
     if speed_keys.length() != Set::from_array(speed_keys).length() {
-      raise @symphysics.PhysicsError::ValueError("duplicate generalized speeds")
+      raise ValueError("duplicate generalized speeds")
     }
     if aux_keys.length() != Set::from_array(aux_keys).length() {
-      raise @symphysics.PhysicsError::ValueError("duplicate auxiliary speeds")
+      raise ValueError("duplicate auxiliary speeds")
     }
     for coord in coordinates {
       if speeds.any(fn(speed) { @symcore.compare_expr(coord, speed) == 0 }) {
-        raise @symphysics.PhysicsError::ValueError(
-          "coordinate also appears in generalized speeds",
-        )
+        raise ValueError("coordinate also appears in generalized speeds")
       }
       if u_auxiliary.any(fn(aux) { @symcore.compare_expr(coord, aux) == 0 }) {
-        raise @symphysics.PhysicsError::ValueError(
-          "coordinate also appears in auxiliary speeds",
-        )
+        raise ValueError("coordinate also appears in auxiliary speeds")
       }
     }
     for speed in speeds {
       if u_auxiliary.any(fn(aux) { @symcore.compare_expr(speed, aux) == 0 }) {
-        raise @symphysics.PhysicsError::ValueError(
-          "speed also appears in auxiliary speeds",
-        )
+        raise ValueError("speed also appears in auxiliary speeds")
       }
     }
   }
   if is_dynamicsymbols {
     for coord in coordinates {
       if !mech_is_dynamicsymbol(coord) {
-        raise @symphysics.PhysicsError::ValueError(
-          "generalized coordinate is not a dynamicsymbol",
-        )
+        raise ValueError("generalized coordinate is not a dynamicsymbol")
       }
     }
     for speed in speeds {
       if !mech_is_dynamicsymbol(speed) {
-        raise @symphysics.PhysicsError::ValueError(
-          "generalized speed is not a dynamicsymbol",
-        )
+        raise ValueError("generalized speed is not a dynamicsymbol")
       }
     }
     for aux in u_auxiliary {
       if !mech_is_dynamicsymbol(aux) {
-        raise @symphysics.PhysicsError::ValueError(
-          "auxiliary speed is not a dynamicsymbol",
-        )
+        raise ValueError("auxiliary speed is not a dynamicsymbol")
       }
     }
   }

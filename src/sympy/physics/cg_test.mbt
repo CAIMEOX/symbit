@@ -14,7 +14,7 @@ test "physics.quantum.cg: symbolic forms and numeric evaluation" {
   )
   assert_true(
     cg(
-      @symcore.Expr::Symbol("j1"),
+      Symbol("j1"),
       @symcore.int(0),
       @symcore.int(1),
       @symcore.int(0),
@@ -106,7 +106,7 @@ test "physics.quantum.cg: symbolic forms and numeric evaluation" {
 ///|
 test "physics.quantum.cg: doit rejects symbolic coefficients" {
   let symbolic = wigner3j(
-    @symcore.Expr::Symbol("j"),
+    Symbol("j"),
     @symcore.int(0),
     @symcore.int(4),
     @symcore.int(0),
@@ -118,5 +118,5 @@ test "physics.quantum.cg: doit rejects symbolic coefficients" {
   catch {
     error => Err(error)
   }
-  assert_true(err is Err(@symphysics.PhysicsError::ValueError(_)))
+  assert_true(err is Err(ValueError(_)))
 }

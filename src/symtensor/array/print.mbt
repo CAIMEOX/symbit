@@ -32,8 +32,8 @@ fn render_nested(
 ///|
 pub fn to_string(arr : NDimArray) -> String {
   let dense = match arr {
-    NDimArray::Dense(d) => d
-    NDimArray::Sparse(_) => {
+    Dense(d) => d
+    Sparse(_) => {
       let dense = dense_data(arr)
       dense
     }

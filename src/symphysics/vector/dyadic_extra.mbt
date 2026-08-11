@@ -7,7 +7,7 @@ pub fn Dyadic::truediv(
   scalar : Expr,
 ) -> Dyadic raise VectorError {
   if expr_is_zero(scalar) {
-    raise VectorError::ValueError("division by zero")
+    raise ValueError("division by zero")
   }
   self.scale(simplify_expr(scalar ^ int(-1)))
 }

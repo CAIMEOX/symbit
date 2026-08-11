@@ -1,6 +1,6 @@
 ///|
 fn sr_wb_poly(expr : @symcore.Expr) -> Poly raise PolyError {
-  PolyBuilder::new(["x"], Domain::ZZ).from_expr(expr)
+  PolyBuilder::new(["x"], ZZ).from_expr(expr)
 }
 
 ///|
@@ -10,7 +10,7 @@ fn sr_wb_list_repr(polys : Array[Poly]) -> String {
 
 ///|
 fn sr_wb_fe_row(values : Array[Int]) -> Array[FieldElem] raise PolyError {
-  values.map(v => fe_from_int(v, Domain::ZZ))
+  values.map(v => fe_from_int(v, ZZ))
 }
 
 ///|
@@ -19,7 +19,7 @@ fn sr_wb_matrix(values : Array[Array[Int]]) -> DomainMatrix raise PolyError {
   for row in values {
     rows.push(sr_wb_fe_row(row))
   }
-  DomainMatrix::from_list(rows, Domain::ZZ)
+  DomainMatrix::from_list(rows, ZZ)
 }
 
 ///|
@@ -29,7 +29,7 @@ test "subresultants qq zz wb: sign and matrix output helpers" {
   let q = sr_wb_poly(
     @symcore.int(-1) * ((x ^ @symcore.int(2)) + @symcore.int(1)),
   )
-  let zero = Poly::zero(["x"], Domain::ZZ)
+  let zero = Poly::zero(["x"], ZZ)
   debug_inspect(sign_seq([p, q, zero]), content="[1, -1, 0]")
 
   let r = sr_wb_poly(x + @symcore.int(1))
@@ -127,11 +127,15 @@ test "subresultants qq zz wb: public algorithm aliases" {
 ///|
 test "subresultants qq zz wb: row and matrix helper frontdoors" {
   inspect(
-    rotate_r(sr_wb_fe_row([1, 2, 3, 4]), 2).map(v => v.to_string()).join(", "),
+    rotate_r(sr_wb_fe_row([1, 2, 3, 4]), 2)
+    .map(v => Show::to_string(v))
+    .join(", "),
     content="3, 4, 1, 2",
   )
   inspect(
-    rotate_l(sr_wb_fe_row([1, 2, 3, 4]), 2).map(v => v.to_string()).join(", "),
+    rotate_l(sr_wb_fe_row([1, 2, 3, 4]), 2)
+    .map(v => Show::to_string(v))
+    .join(", "),
     content="3, 1, 2, 4",
   )
   inspect(

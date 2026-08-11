@@ -8,5 +8,5 @@ test "tensor canonicalize symmetric" {
   let j = tensor_index("j", l)
   let expr = head.call([j, i])
   let canon = canonicalize(expr)
-  assert_eq(canon.to_string(), "A(i, j)")
+  assert_eq(Show::to_string(canon), "A(i, j)")
 }

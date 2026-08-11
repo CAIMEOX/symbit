@@ -50,35 +50,33 @@ fn replace_expr_local(
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Add(args) =>
+    Add(args) =>
       eval_arith(
         @symcore.add(
           args.map(arg => replace_expr_local(arg, target, replacement)),
         ),
       )
-    @symcore.ExprForm::Mul(args) =>
+    Mul(args) =>
       eval_arith(
         @symcore.mul(
           args.map(arg => replace_expr_local(arg, target, replacement)),
         ),
       )
-    @symcore.ExprForm::Pow(base, exp) =>
+    Pow(base, exp) =>
       eval_arith(
         @symcore.pow(
           replace_expr_local(base, target, replacement),
           replace_expr_local(exp, target, replacement),
         ),
       )
-    @symcore.ExprForm::Mod(lhs, rhs) =>
+    Mod(lhs, rhs) =>
       @symcore.mod_expr(
         replace_expr_local(lhs, target, replacement),
         replace_expr_local(rhs, target, replacement),
       )
-    @symcore.ExprForm::Tuple(args) =>
-      @symcore.Expr::Tuple(
-        args.map(arg => replace_expr_local(arg, target, replacement)),
-      )
-    @symcore.ExprForm::Dict(items) => {
+    Tuple(args) =>
+      Tuple(args.map(arg => replace_expr_local(arg, target, replacement)))
+    Dict(items) => {
       let mapped : Array[(@symcore.Expr, @symcore.Expr)] = []
       for item in items {
         let (key, value) = item
@@ -89,59 +87,59 @@ fn replace_expr_local(
           ),
         )
       }
-      @symcore.Expr::Dict(mapped)
+      Dict(mapped)
     }
-    @symcore.ExprForm::Relational(op, lhs, rhs) =>
+    Relational(op, lhs, rhs) =>
       match op {
-        @symcore.RelOp::Eq =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
+        Eq =>
+          Relational(
+            Eq,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
-        @symcore.RelOp::Ne =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ne,
+        Ne =>
+          Relational(
+            Ne,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
-        @symcore.RelOp::Lt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Lt,
+        Lt =>
+          Relational(
+            Lt,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
-        @symcore.RelOp::Le =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Le,
+        Le =>
+          Relational(
+            Le,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
-        @symcore.RelOp::Gt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Gt,
+        Gt =>
+          Relational(
+            Gt,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
-        @symcore.RelOp::Ge =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ge,
+        Ge =>
+          Relational(
+            Ge,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
       }
-    @symcore.ExprForm::Derivative(inner, deriv_args) =>
+    Derivative(inner, deriv_args) =>
       @symcore.raw_derivative(
         replace_expr_local(inner, target, replacement),
         deriv_args.map(arg => replace_expr_local(arg, target, replacement)),
       )
-    @symcore.ExprForm::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       @symcore.subs_expr(
         replace_expr_local(inner, target, replacement),
         replace_expr_local(variable, target, replacement),
         replace_expr_local(value, target, replacement),
       )
-    @symcore.ExprForm::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       @symcore.lambda_expr(
         replace_expr_local(vars, target, replacement),
         replace_expr_local(body, target, replacement),
@@ -158,12 +156,12 @@ fn lambda_apply_local(
   match @symcore.lambda_parts(lam) {
     Some((vars, body)) =>
       match @symcore.expr_form(vars) {
-        @symcore.ExprForm::Symbol(v) if args.length() == 1 => {
+        Symbol(v) if args.length() == 1 => {
           let env : Map[String, @symcore.Expr] = Map([])
           env[v] = args[0]
           Some(eval_arith(@symcore.subst(body, env)))
         }
-        @symcore.ExprForm::Tuple(vs) if vs.length() == args.length() => {
+        Tuple(vs) if vs.length() == args.length() => {
           let mut out = body
           for i in 0..<vs.length() {
             out = replace_expr_local(out, vs[i], args[i])
@@ -206,14 +204,14 @@ fn assert_opaque_symbolic_metrics(rv : RandomVar) -> Unit raise {
 
 ///|
 fn assert_mean_not_placeholder(rv : RandomVar, head : String) -> Unit raise {
-  let ours = expectation(@symcore.Expr::Symbol(rv.name), rvs=[rv])
+  let ours = expectation(Symbol(rv.name), rvs=[rv])
   let s = @symprint.pretty_string(ours)
   assert_true(!s.contains("\{head}Mean("))
 }
 
 ///|
 fn assert_variance_not_placeholder(rv : RandomVar, head : String) -> Unit raise {
-  let ours = variance(@symcore.Expr::Symbol(rv.name), rvs=[rv])
+  let ours = variance(Symbol(rv.name), rvs=[rv])
   let s = @symprint.pretty_string(ours)
   assert_true(!s.contains("\{head}Variance("))
 }
@@ -224,9 +222,7 @@ fn assert_mgf_not_placeholder(
   head : String,
   t : @symcore.Expr,
 ) -> Unit raise {
-  let ours = moment_generating_function(@symcore.Expr::Symbol(rv.name), t, rvs=[
-    rv,
-  ])
+  let ours = moment_generating_function(Symbol(rv.name), t, rvs=[rv])
   let s = @symprint.pretty_string(ours)
   assert_true(!s.contains("\{head}MGF("))
 }
@@ -237,7 +233,7 @@ fn assert_cf_not_placeholder(
   head : String,
   t : @symcore.Expr,
 ) -> Unit raise {
-  let ours = characteristic_function(@symcore.Expr::Symbol(rv.name), t, rvs=[rv])
+  let ours = characteristic_function(Symbol(rv.name), t, rvs=[rv])
   let s = @symprint.pretty_string(ours)
   assert_true(!s.contains("\{head}CF("))
   assert_true(!s.contains("characteristic_function("))
@@ -249,7 +245,7 @@ fn assert_quantile_not_placeholder(
   head : String,
   q : @symcore.Expr,
 ) -> Unit raise {
-  let ours = quantile(@symcore.Expr::Symbol(rv.name), q, rvs=[rv])
+  let ours = quantile(Symbol(rv.name), q, rvs=[rv])
   let s = @symprint.pretty_string(ours)
   assert_true(!s.contains("\{head}Quantile("))
   assert_true(!s.contains("quantile("))
@@ -257,7 +253,7 @@ fn assert_quantile_not_placeholder(
 
 ///|
 fn assert_entropy_not_placeholder(rv : RandomVar, head : String) -> Unit raise {
-  let ours = entropy(@symcore.Expr::Symbol(rv.name), rvs=[rv])
+  let ours = entropy(Symbol(rv.name), rvs=[rv])
   let s = @symprint.pretty_string(ours)
   assert_true(!s.contains("\{head}Entropy("))
   assert_true(!s.contains("entropy("))
@@ -266,9 +262,9 @@ fn assert_entropy_not_placeholder(rv : RandomVar, head : String) -> Unit raise {
 ///|
 fn tribool_to_python(value : TriBool) -> String {
   match value {
-    TriBool::True => "True"
-    TriBool::False => "False"
-    TriBool::Unknown => "None"
+    True => "True"
+    False => "False"
+    Unknown => "None"
   }
 }
 
@@ -303,9 +299,8 @@ fn sampled_int_value(expr : @symcore.Expr) -> Int? {
 ///|
 fn sampled_double_value(expr : @symcore.Expr) -> Double? {
   match expr {
-    @symcore.Expr::Float(value) =>
-      Some(value.to_double() catch { _ => return None })
-    @symcore.Expr::Number(value) => {
+    Float(value) => Some(value.to_double() catch { _ => return None })
+    Number(value) => {
       let float_value = @symcore.Float::from_exact(value, prec=53) catch {
         _ => return None
       }
@@ -318,7 +313,7 @@ fn sampled_double_value(expr : @symcore.Expr) -> Double? {
 ///|
 fn sampled_density_total(expr : @symcore.Expr) -> Int {
   match expr {
-    @symcore.Expr::Dict(entries) => {
+    Dict(entries) => {
       let mut total = 0
       for entry in entries {
         match sampled_int_value(entry.1) {
@@ -512,12 +507,8 @@ test "compat sampling front doors follow sympy public contract" {
   }
 
   let gx = rv("GX", "Normal", params=[@symcore.int(0), @symcore.int(1)])
-  assert_true(
-    expr_equiv_safe(expectation(@symcore.Expr::Symbol("GX"), rvs=[gx]), "0"),
-  )
-  assert_true(
-    expr_equiv_safe(variance(@symcore.Expr::Symbol("GX"), rvs=[gx]), "1"),
-  )
+  assert_true(expr_equiv_safe(expectation(Symbol("GX"), rvs=[gx]), "0"))
+  assert_true(expr_equiv_safe(variance(Symbol("GX"), rvs=[gx]), "1"))
 
   let gb = rv("GB", "Binomial", params=[@symcore.int(4), half])
   match do_sample_numpy(gb, n=3, seed=Some(24)) {
@@ -592,7 +583,7 @@ test "compat symbolic sampling support follows sympy domains" {
       }
     None => fail("Uniform symbolic sampler should produce a value")
   }
-  match where_set(le(@symcore.Expr::Symbol("U"), @symcore.int(1)), u) {
+  match where_set(le(Symbol("U"), @symcore.int(1)), u) {
     Some(set) => assert_eq(@symsets.to_string(set), "Interval(0, 1)")
     None => fail("Uniform where_set should use bounded support")
   }
@@ -612,7 +603,7 @@ test "compat symbolic sampling support follows sympy domains" {
       }
     None => fail("BetaBinomial symbolic sampler should produce a value")
   }
-  match where_set(gt(@symcore.Expr::Symbol("BB"), @symcore.int(2)), bb) {
+  match where_set(gt(Symbol("BB"), @symcore.int(2)), bb) {
     Some(set) => assert_eq(@symsets.to_string(set), "{3, 4, 5}")
     None => fail("BetaBinomial where_set should use finite support")
   }
@@ -1135,7 +1126,7 @@ test "compat symbolic mgf cf quantile entropy structural parity" {
   let saq = @symcore.Expr::Symbol("Aq")
   let aq_d = density(aq, @symcore.int(2))
   assert_pretty_contains(aq_d, ["sqrt", "pi"])
-  let aq_c = cdf(aq, @symcore.Expr::Symbol("x"))
+  let aq_c = cdf(aq, Symbol("x"))
   assert_pretty_lacks(aq_c, "ArcsinCDF(")
   assert_pretty_contains(aq_c, ["asin", "Piecewise"])
   assert_true(expr_equiv_safe(expectation(saq, rvs=[aq]), "3"))
@@ -1248,11 +1239,9 @@ test "compat symbolic mgf cf quantile entropy structural parity" {
   ]
   for item in quantile_cases {
     let (rv, symbol, parts) = item
-    let value = quantile(
-      @symcore.Expr::Symbol(symbol),
-      @symcore.rational_from_ints(1, 4),
-      rvs=[rv],
-    )
+    let value = quantile(Symbol(symbol), @symcore.rational_from_ints(1, 4), rvs=[
+      rv,
+    ])
     assert_pretty_lacks(value, "quantile(")
     assert_pretty_contains(value, parts)
   }
@@ -1330,7 +1319,7 @@ test "compat symbolic mgf cf quantile entropy structural parity" {
   ]
   for item in entropy_cases {
     let (rv, symbol, parts) = item
-    let value = entropy(@symcore.Expr::Symbol(symbol), rvs=[rv])
+    let value = entropy(Symbol(symbol), rvs=[rv])
     assert_pretty_lacks(value, "entropy(")
     assert_pretty_contains(value, parts)
   }
@@ -1644,7 +1633,7 @@ test "compat weibull parity ordering" {
 ///|
 test "compat special constructors keep concrete behavior" {
   let g = gamma("G", @symcore.int(3), @symcore.int(2))
-  let ge = expectation(@symcore.Expr::Symbol("G"), rvs=[g])
+  let ge = expectation(Symbol("G"), rvs=[g])
   assert_true(expr_equiv_safe(ge, "6"))
   let sigma = stats_matrix_literal([
     [@symcore.int(1), @symcore.int(0)],
@@ -1704,11 +1693,11 @@ test "compat symbolic families and rademacher parity" {
 
 ///|
 test "compat matrix helpers shape smoke" {
-  let xs = [@symcore.Expr::Symbol("X"), @symcore.Expr::Symbol("Y")]
+  let xs = [@symcore.Expr::Symbol("X"), Symbol("Y")]
   let vars = variance_matrix(xs)
   inspect(vars.length(), content="2")
   inspect(vars[0].length(), content="2")
-  let cross = cross_covariance_matrix(xs, [@symcore.Expr::Symbol("Z")])
+  let cross = cross_covariance_matrix(xs, [Symbol("Z")])
   inspect(cross.length(), content="2")
   inspect(cross[0].length(), content="1")
 }
@@ -1962,7 +1951,7 @@ fn _compat_non_fallback_symbolic_families_python_oracle_disabled() -> Unit raise
     !@symprint.pretty_string(ng_density).contains("NormalGammaDensity("),
   )
 
-  let mc = discrete_markov_chain("MC", params=[@symcore.Expr::Symbol("Tmat")])
+  let mc = discrete_markov_chain("MC", params=[Symbol("Tmat")])
   let t = @symcore.Expr::Symbol("t")
   match process_mean_at(mc, t) {
     Some(v) => {
@@ -1986,9 +1975,7 @@ fn _compat_non_fallback_symbolic_families_python_oracle_disabled() -> Unit raise
     }
     None => fail("missing discrete markov transition")
   }
-  let cmcx = continuous_markov_chain("CMCX", params=[
-    @symcore.Expr::Symbol("Qmat"),
-  ])
+  let cmcx = continuous_markov_chain("CMCX", params=[Symbol("Qmat")])
   match process_transition_probability(cmcx, i, j, t0, t1) {
     Some(v) => {
       let vs = @symprint.pretty_string(v)
@@ -2029,26 +2016,22 @@ fn _compat_non_fallback_symbolic_families_python_oracle_disabled() -> Unit raise
     moment_generating_function(dtspx, z, rvs=[dtsp]),
     "MGFAt(",
   )
-  assert_pretty_contains(
-    probability(eq(spx, @symcore.Expr::Symbol("x")), rv=sp),
-    ["Probability", "Eq", "StochasticProcess", "tau", "x"],
-  )
+  assert_pretty_contains(probability(eq(spx, Symbol("x")), rv=sp), [
+    "Probability", "Eq", "StochasticProcess", "tau", "x",
+  ])
   assert_pretty_lacks(
-    probability(eq(spx, @symcore.Expr::Symbol("x")), rv=sp),
+    probability(eq(spx, Symbol("x")), rv=sp),
     "ProbabilityAt(",
   )
-  assert_pretty_contains(
-    probability(le(spx, @symcore.Expr::Symbol("x")), rv=sp),
-    ["Probability", "Le", "StochasticProcess", "tau", "x"],
-  )
-  assert_pretty_contains(
-    probability(eq(dtspx, @symcore.Expr::Symbol("x")), rv=dtsp),
-    ["Probability", "Eq", "DiscreteTimeStochasticProcess", "tau", "x"],
-  )
-  assert_pretty_contains(
-    probability(le(dtspx, @symcore.Expr::Symbol("x")), rv=dtsp),
-    ["Probability", "Le", "DiscreteTimeStochasticProcess", "tau", "x"],
-  )
+  assert_pretty_contains(probability(le(spx, Symbol("x")), rv=sp), [
+    "Probability", "Le", "StochasticProcess", "tau", "x",
+  ])
+  assert_pretty_contains(probability(eq(dtspx, Symbol("x")), rv=dtsp), [
+    "Probability", "Eq", "DiscreteTimeStochasticProcess", "tau", "x",
+  ])
+  assert_pretty_contains(probability(le(dtspx, Symbol("x")), rv=dtsp), [
+    "Probability", "Le", "DiscreteTimeStochasticProcess", "tau", "x",
+  ])
 
   let dmcx = @symcore.function("MC", [tau])
   let cmcxx = @symcore.function("CMCX", [tau])
@@ -2116,7 +2099,7 @@ fn _compat_non_fallback_symbolic_families_python_oracle_disabled() -> Unit raise
   assert_true(mc_joint_s.contains("MatrixElement"))
   assert_true(!mc_joint_s.contains("ProbabilityAt("))
 
-  let pp = poisson_process("PP", @symcore.Expr::Symbol("lam"))
+  let pp = poisson_process("PP", Symbol("lam"))
   let ppx = @symcore.function("PP", [tau])
   let pp_mgf = moment_generating_function(ppx, z, rvs=[pp])
   assert_true(@symprint.pretty_string(pp_mgf).contains("exp("))
@@ -2141,7 +2124,7 @@ fn _compat_non_fallback_symbolic_families_python_oracle_disabled() -> Unit raise
 
   let gue = gaussian_unitary_ensemble("GUE", params=[@symcore.int(3)])
   let xmat = @symcore.function("MatrixSymbol", [
-    @symcore.Expr::Symbol("X"),
+    Symbol("X"),
     @symcore.int(3),
     @symcore.int(3),
   ])
@@ -2160,7 +2143,7 @@ fn _compat_non_fallback_symbolic_families_python_oracle_disabled() -> Unit raise
   }
   let goe = gaussian_orthogonal_ensemble("GOE", params=[@symcore.int(2)])
   let xmat2 = @symcore.function("MatrixSymbol", [
-    @symcore.Expr::Symbol("X"),
+    Symbol("X"),
     @symcore.int(2),
     @symcore.int(2),
   ])
@@ -2205,42 +2188,32 @@ fn _compat_non_fallback_symbolic_families_python_oracle_disabled() -> Unit raise
   let coe_abs = circular_orthogonal_ensemble("COEABS", params=[@symcore.int(2)])
   let cse_abs = circular_symplectic_ensemble("CSEABS", params=[@symcore.int(2)])
   assert_eq(
-    @symprint.pretty_string(
-      expectation(@symcore.Expr::Symbol("GEABS"), rvs=[gauss_abs]),
-    ),
+    @symprint.pretty_string(expectation(Symbol("GEABS"), rvs=[gauss_abs])),
     "ZeroMatrix(2, 2)",
   )
   assert_eq(
-    @symprint.pretty_string(
-      expectation(@symcore.Expr::Symbol("CEABS"), rvs=[circ_abs]),
-    ),
+    @symprint.pretty_string(expectation(Symbol("CEABS"), rvs=[circ_abs])),
     "ZeroMatrix(2, 2)",
   )
   assert_eq(
-    @symprint.pretty_string(
-      expectation(@symcore.Expr::Symbol("CUEABS"), rvs=[cue_abs]),
-    ),
+    @symprint.pretty_string(expectation(Symbol("CUEABS"), rvs=[cue_abs])),
     "ZeroMatrix(2, 2)",
   )
   assert_eq(
-    @symprint.pretty_string(
-      expectation(@symcore.Expr::Symbol("COEABS"), rvs=[coe_abs]),
-    ),
+    @symprint.pretty_string(expectation(Symbol("COEABS"), rvs=[coe_abs])),
     "ZeroMatrix(2, 2)",
   )
   assert_eq(
-    @symprint.pretty_string(
-      expectation(@symcore.Expr::Symbol("CSEABS"), rvs=[cse_abs]),
-    ),
+    @symprint.pretty_string(expectation(Symbol("CSEABS"), rvs=[cse_abs])),
     "ZeroMatrix(2, 2)",
   )
   let ge_var = @symprint.pretty_string(
-    variance(@symcore.Expr::Symbol("GEABS"), rvs=[gauss_abs]),
+    variance(Symbol("GEABS"), rvs=[gauss_abs]),
   )
   assert_true(ge_var.contains("Expectation("))
   assert_true(ge_var.contains("ZeroMatrix(2, 2)"))
   let ce_var = @symprint.pretty_string(
-    variance(@symcore.Expr::Symbol("CEABS"), rvs=[circ_abs]),
+    variance(Symbol("CEABS"), rvs=[circ_abs]),
   )
   assert_true(ce_var.contains("Expectation("))
   assert_true(ce_var.contains("ZeroMatrix(2, 2)"))
@@ -2666,7 +2639,7 @@ test "compat non-fallback symbolic families structural parity" {
     "ConditionSet", "Probability", "StochasticProcess", "tau", "1/4",
   ])
   assert_pretty_lacks(quantile(spx, q1, rvs=[sp]), "QuantileAt(")
-  let mc = discrete_markov_chain("MC", params=[@symcore.Expr::Symbol("Tmat")])
+  let mc = discrete_markov_chain("MC", params=[Symbol("Tmat")])
   let i = @symcore.Expr::Symbol("i")
   let j = @symcore.Expr::Symbol("j")
   let t0 = @symcore.Expr::Symbol("t0")
@@ -2675,15 +2648,13 @@ test "compat non-fallback symbolic families structural parity" {
     Some(v) => assert_pretty_contains(v, ["MatrixElement", "Tmat"])
     None => fail("missing discrete markov transition")
   }
-  let cmc = continuous_markov_chain("CMCX", params=[
-    @symcore.Expr::Symbol("Qmat"),
-  ])
+  let cmc = continuous_markov_chain("CMCX", params=[Symbol("Qmat")])
   match process_transition_probability(cmc, i, j, t0, t) {
     Some(v) => assert_pretty_contains(v, ["MatrixElement", "MatrixExp", "Qmat"])
     None => fail("missing continuous markov transition")
   }
 
-  let pp = poisson_process("PP", @symcore.Expr::Symbol("lam"))
+  let pp = poisson_process("PP", Symbol("lam"))
   let ppx = @symcore.function("PP", [tau])
   assert_pretty_contains(moment_generating_function(ppx, z, rvs=[pp]), [
     "exp", "lam", "tau",
@@ -2710,7 +2681,7 @@ test "compat non-fallback symbolic families structural parity" {
 
   let gue = gaussian_unitary_ensemble("GUE", params=[@symcore.int(3)])
   let xmat = @symcore.function("MatrixSymbol", [
-    @symcore.Expr::Symbol("X"),
+    Symbol("X"),
     @symcore.int(3),
     @symcore.int(3),
   ])
@@ -2776,7 +2747,7 @@ fn _compat_handmade_and_joint_families_python_oracle_disabled() -> Unit raise {
         ]),
         @symcore.function("Ge", [xh, @symcore.int(0)]),
       ]),
-      @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+      @symcore.function("Tuple", [@symcore.int(0), Boolean(true)]),
     ]),
   ])
   let ch = continuous_rv("CH", params=[ch_pdf])
@@ -2826,7 +2797,7 @@ fn _compat_handmade_and_joint_families_python_oracle_disabled() -> Unit raise {
         @symcore.rational_from_ints(1, 2),
         @symcore.function("Eq", [kh, @symcore.int(1)]),
       ]),
-      @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+      @symcore.function("Tuple", [@symcore.int(0), Boolean(true)]),
     ]),
   ])
   let dh = discrete_rv("DH", params=[dh_pmf])
@@ -3197,7 +3168,7 @@ test "compat handmade and joint families structural parity" {
         ]),
         @symcore.function("Ge", [xh, @symcore.int(0)]),
       ]),
-      @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+      @symcore.function("Tuple", [@symcore.int(0), Boolean(true)]),
     ]),
   ])
   let ch = continuous_rv("CH", params=[ch_pdf])
@@ -3233,7 +3204,7 @@ test "compat handmade and joint families structural parity" {
         @symcore.rational_from_ints(1, 2),
         @symcore.function("Eq", [kh, @symcore.int(1)]),
       ]),
-      @symcore.function("Tuple", [@symcore.int(0), @symcore.Expr::Boolean(true)]),
+      @symcore.function("Tuple", [@symcore.int(0), Boolean(true)]),
     ]),
   ])
   let dh = discrete_rv("DH", params=[dh_pmf])
@@ -3610,15 +3581,15 @@ test "compat cdf coverage for residual families" {
   let mg = matrix_gamma("MGc", params=[
     @symcore.int(2),
     @symcore.int(3),
-    @symcore.Expr::Symbol("Scale"),
+    Symbol("Scale"),
   ])
   assert_true(!@symprint.pretty_string(cdf(mg, x)).contains("MatrixGammaCDF("))
 
   let mst = matrix_student_t("MSTc", params=[
     @symcore.int(3),
-    @symcore.Expr::Symbol("M"),
-    @symcore.Expr::Symbol("U"),
-    @symcore.Expr::Symbol("V"),
+    Symbol("M"),
+    Symbol("U"),
+    Symbol("V"),
   ])
   assert_true(
     !@symprint.pretty_string(cdf(mst, x)).contains("MatrixStudentTCDF("),
@@ -3716,27 +3687,21 @@ test "compat mean coverage for residual families" {
 
   let goe = gaussian_orthogonal_ensemble("GOEm", params=[@symcore.int(2)])
   assert_eq(
-    @symprint.pretty_string(
-      expectation(@symcore.Expr::Symbol("GOEm"), rvs=[goe]),
-    ),
+    @symprint.pretty_string(expectation(Symbol("GOEm"), rvs=[goe])),
     "ZeroMatrix(2, 2)",
   )
   assert_mean_not_placeholder(goe, "GaussianOrthogonalEnsemble")
 
   let gue = gaussian_unitary_ensemble("GUEm", params=[@symcore.int(2)])
   assert_eq(
-    @symprint.pretty_string(
-      expectation(@symcore.Expr::Symbol("GUEm"), rvs=[gue]),
-    ),
+    @symprint.pretty_string(expectation(Symbol("GUEm"), rvs=[gue])),
     "ZeroMatrix(2, 2)",
   )
   assert_mean_not_placeholder(gue, "GaussianUnitaryEnsemble")
 
   let gse = gaussian_symplectic_ensemble("GSEm", params=[@symcore.int(2)])
   assert_eq(
-    @symprint.pretty_string(
-      expectation(@symcore.Expr::Symbol("GSEm"), rvs=[gse]),
-    ),
+    @symprint.pretty_string(expectation(Symbol("GSEm"), rvs=[gse])),
     "ZeroMatrix(2, 2)",
   )
   assert_mean_not_placeholder(gse, "GaussianSymplecticEnsemble")
@@ -3744,9 +3709,9 @@ test "compat mean coverage for residual families" {
   let mg = matrix_gamma("MGm", params=[
     @symcore.int(2),
     @symcore.int(3),
-    @symcore.Expr::Symbol("Scale"),
+    Symbol("Scale"),
   ])
-  let mg_mean = expectation(@symcore.Expr::Symbol("MGm"), rvs=[mg])
+  let mg_mean = expectation(Symbol("MGm"), rvs=[mg])
   let mg_s = @symprint.pretty_string(mg_mean)
   assert_true(!mg_s.contains("MatrixGammaMean("))
   assert_true(mg_s != "MGm")
@@ -3754,14 +3719,12 @@ test "compat mean coverage for residual families" {
 
   let mst = matrix_student_t("MSTm", params=[
     @symcore.int(3),
-    @symcore.Expr::Symbol("MeanM"),
-    @symcore.Expr::Symbol("U"),
-    @symcore.Expr::Symbol("V"),
+    Symbol("MeanM"),
+    Symbol("U"),
+    Symbol("V"),
   ])
   assert_eq(
-    @symprint.pretty_string(
-      expectation(@symcore.Expr::Symbol("MSTm"), rvs=[mst]),
-    ),
+    @symprint.pretty_string(expectation(Symbol("MSTm"), rvs=[mst])),
     "MeanM",
   )
   assert_mean_not_placeholder(mst, "MatrixStudentT")
@@ -3870,47 +3833,39 @@ test "compat variance coverage for residual families" {
   assert_variance_not_placeholder(ys, "YuleSimon")
 
   let goe = gaussian_orthogonal_ensemble("GOEv", params=[@symcore.int(2)])
-  let goe_v = @symprint.pretty_string(
-    variance(@symcore.Expr::Symbol("GOEv"), rvs=[goe]),
-  )
+  let goe_v = @symprint.pretty_string(variance(Symbol("GOEv"), rvs=[goe]))
   assert_true(goe_v.contains("Expectation("))
   assert_true(goe_v != "Variance(GOEv)")
 
   let gue = gaussian_unitary_ensemble("GUEv", params=[@symcore.int(2)])
-  let gue_v = @symprint.pretty_string(
-    variance(@symcore.Expr::Symbol("GUEv"), rvs=[gue]),
-  )
+  let gue_v = @symprint.pretty_string(variance(Symbol("GUEv"), rvs=[gue]))
   assert_true(gue_v.contains("Expectation("))
   assert_true(gue_v != "Variance(GUEv)")
 
   let gse = gaussian_symplectic_ensemble("GSEv", params=[@symcore.int(2)])
-  let gse_v = @symprint.pretty_string(
-    variance(@symcore.Expr::Symbol("GSEv"), rvs=[gse]),
-  )
+  let gse_v = @symprint.pretty_string(variance(Symbol("GSEv"), rvs=[gse]))
   assert_true(gse_v.contains("Expectation("))
   assert_true(gse_v != "Variance(GSEv)")
 
   let mg = matrix_gamma("MGv", params=[
     @symcore.int(2),
     @symcore.int(3),
-    @symcore.Expr::Symbol("Scale"),
+    Symbol("Scale"),
   ])
   assert_variance_not_placeholder(mg, "MatrixGamma")
   assert_true(
-    @symprint.pretty_string(variance(@symcore.Expr::Symbol("MGv"), rvs=[mg])) !=
+    @symprint.pretty_string(variance(Symbol("MGv"), rvs=[mg])) !=
     "Variance(MGv)",
   )
 
   let mst = matrix_student_t("MSTv", params=[
     @symcore.int(3),
-    @symcore.Expr::Symbol("MeanM"),
-    @symcore.Expr::Symbol("U"),
-    @symcore.Expr::Symbol("V"),
+    Symbol("MeanM"),
+    Symbol("U"),
+    Symbol("V"),
   ])
   assert_variance_not_placeholder(mst, "MatrixStudentT")
-  let mst_v = @symprint.pretty_string(
-    variance(@symcore.Expr::Symbol("MSTv"), rvs=[mst]),
-  )
+  let mst_v = @symprint.pretty_string(variance(Symbol("MSTv"), rvs=[mst]))
   assert_true(mst_v.contains("Expectation("))
   assert_true(mst_v != "Variance(MSTv)")
 }
@@ -3918,10 +3873,7 @@ test "compat variance coverage for residual families" {
 ///|
 test "compat mgf coverage for residual families" {
   let t = @symcore.Expr::Symbol("t")
-  let tvec = @symcore.function("Tuple", [
-    @symcore.Expr::Symbol("t1"),
-    @symcore.Expr::Symbol("t2"),
-  ])
+  let tvec = @symcore.function("Tuple", [Symbol("t1"), Symbol("t2")])
 
   let a = arcsin("Am", params=[@symcore.int(0), @symcore.int(1)])
   assert_mgf_not_placeholder(a, "Arcsin", t)
@@ -3935,7 +3887,7 @@ test "compat mgf coverage for residual families" {
 
   let bp = bernoulli_process("BPg", params=[@symcore.rational_from_ints(1, 3)])
   let bp_mgf = @symprint.pretty_string(
-    moment_generating_function(@symcore.Expr::Symbol("BPg"), t, rvs=[bp]),
+    moment_generating_function(Symbol("BPg"), t, rvs=[bp]),
   )
   assert_true(!bp_mgf.contains("moment_generating_function("))
   assert_true(!bp_mgf.contains("BernoulliProcessMGF("))
@@ -4001,28 +3953,28 @@ test "compat mgf coverage for residual families" {
 
   let gp = gamma_process("GPg", params=[@symcore.int(2), @symcore.int(3)])
   let gp_mgf = @symprint.pretty_string(
-    moment_generating_function(@symcore.Expr::Symbol("GPg"), t, rvs=[gp]),
+    moment_generating_function(Symbol("GPg"), t, rvs=[gp]),
   )
   assert_true(!gp_mgf.contains("moment_generating_function("))
   assert_true(!gp_mgf.contains("GammaProcessMGF("))
 
   let goe = gaussian_orthogonal_ensemble("GOEg", params=[@symcore.int(2)])
   let goe_mgf = @symprint.pretty_string(
-    moment_generating_function(@symcore.Expr::Symbol("GOEg"), t, rvs=[goe]),
+    moment_generating_function(Symbol("GOEg"), t, rvs=[goe]),
   )
   assert_true(goe_mgf.contains("Expectation("))
   assert_true(!goe_mgf.contains("moment_generating_function("))
 
   let gse = gaussian_symplectic_ensemble("GSEg", params=[@symcore.int(2)])
   let gse_mgf = @symprint.pretty_string(
-    moment_generating_function(@symcore.Expr::Symbol("GSEg"), t, rvs=[gse]),
+    moment_generating_function(Symbol("GSEg"), t, rvs=[gse]),
   )
   assert_true(gse_mgf.contains("Expectation("))
   assert_true(!gse_mgf.contains("moment_generating_function("))
 
   let gue = gaussian_unitary_ensemble("GUEg", params=[@symcore.int(2)])
   let gue_mgf = @symprint.pretty_string(
-    moment_generating_function(@symcore.Expr::Symbol("GUEg"), t, rvs=[gue]),
+    moment_generating_function(Symbol("GUEg"), t, rvs=[gue]),
   )
   assert_true(gue_mgf.contains("Expectation("))
   assert_true(!gue_mgf.contains("moment_generating_function("))
@@ -4050,11 +4002,7 @@ test "compat mgf coverage for residual families" {
   assert_mgf_not_placeholder(ll, "LogLogistic", t)
 
   let lnorm = log_normal("LOGNg", params=[@symcore.int(0), @symcore.int(1)])
-  let lnorm_mgf = moment_generating_function(
-    @symcore.Expr::Symbol("LOGNg"),
-    t,
-    rvs=[lnorm],
-  )
+  let lnorm_mgf = moment_generating_function(Symbol("LOGNg"), t, rvs=[lnorm])
   assert_pretty_contains(lnorm_mgf, ["Expectation", "LogNormal", "t"])
   assert_pretty_lacks(lnorm_mgf, "LogNormalMGF(")
 
@@ -4067,22 +4015,22 @@ test "compat mgf coverage for residual families" {
   let mg = matrix_gamma("MGg", params=[
     @symcore.int(2),
     @symcore.int(3),
-    @symcore.Expr::Symbol("Scale"),
+    Symbol("Scale"),
   ])
   let mg_mgf = @symprint.pretty_string(
-    moment_generating_function(@symcore.Expr::Symbol("MGg"), t, rvs=[mg]),
+    moment_generating_function(Symbol("MGg"), t, rvs=[mg]),
   )
   assert_true(mg_mgf.contains("Expectation("))
   assert_true(!mg_mgf.contains("moment_generating_function("))
 
   let mst = matrix_student_t("MSTg", params=[
     @symcore.int(3),
-    @symcore.Expr::Symbol("MeanM"),
-    @symcore.Expr::Symbol("U"),
-    @symcore.Expr::Symbol("V"),
+    Symbol("MeanM"),
+    Symbol("U"),
+    Symbol("V"),
   ])
   let mst_mgf = @symprint.pretty_string(
-    moment_generating_function(@symcore.Expr::Symbol("MSTg"), t, rvs=[mst]),
+    moment_generating_function(Symbol("MSTg"), t, rvs=[mst]),
   )
   assert_true(mst_mgf.contains("Expectation("))
   assert_true(!mst_mgf.contains("moment_generating_function("))
@@ -4166,10 +4114,7 @@ test "compat mgf coverage for residual families" {
 ///|
 test "compat cf coverage for residual families" {
   let t = @symcore.Expr::Symbol("t")
-  let tvec = @symcore.function("Tuple", [
-    @symcore.Expr::Symbol("t1"),
-    @symcore.Expr::Symbol("t2"),
-  ])
+  let tvec = @symcore.function("Tuple", [Symbol("t1"), Symbol("t2")])
 
   let a = arcsin("Acf", params=[@symcore.int(0), @symcore.int(1)])
   assert_cf_not_placeholder(a, "Arcsin", t)
@@ -4269,9 +4214,7 @@ test "compat cf coverage for residual families" {
   assert_cf_not_placeholder(ll, "LogLogistic", t)
 
   let lnorm = log_normal("LOGNcf", params=[@symcore.int(0), @symcore.int(1)])
-  let lnorm_cf = characteristic_function(@symcore.Expr::Symbol("LOGNcf"), t, rvs=[
-    lnorm,
-  ])
+  let lnorm_cf = characteristic_function(Symbol("LOGNcf"), t, rvs=[lnorm])
   assert_pretty_contains(lnorm_cf, ["Expectation", "LogNormal", "I", "t"])
   assert_pretty_lacks(lnorm_cf, "LogNormalCF(")
 
@@ -4284,15 +4227,15 @@ test "compat cf coverage for residual families" {
   let mg = matrix_gamma("MGcf", params=[
     @symcore.int(2),
     @symcore.int(3),
-    @symcore.Expr::Symbol("Scale"),
+    Symbol("Scale"),
   ])
   assert_cf_not_placeholder(mg, "MatrixGamma", t)
 
   let mst = matrix_student_t("MSTcf", params=[
     @symcore.int(3),
-    @symcore.Expr::Symbol("MeanM"),
-    @symcore.Expr::Symbol("U"),
-    @symcore.Expr::Symbol("V"),
+    Symbol("MeanM"),
+    Symbol("U"),
+    Symbol("V"),
   ])
   assert_cf_not_placeholder(mst, "MatrixStudentT", t)
 
@@ -4491,15 +4434,15 @@ test "compat quantile coverage for residual families" {
   let mg = matrix_gamma("MGq", params=[
     @symcore.int(2),
     @symcore.int(3),
-    @symcore.Expr::Symbol("Scale"),
+    Symbol("Scale"),
   ])
   assert_quantile_not_placeholder(mg, "MatrixGamma", q)
 
   let mst = matrix_student_t("MSTq", params=[
     @symcore.int(3),
-    @symcore.Expr::Symbol("MeanM"),
-    @symcore.Expr::Symbol("U"),
-    @symcore.Expr::Symbol("V"),
+    Symbol("MeanM"),
+    Symbol("U"),
+    Symbol("V"),
   ])
   assert_quantile_not_placeholder(mst, "MatrixStudentT", q)
 
@@ -4717,14 +4660,14 @@ test "compat entropy coverage residual C" {
   let mg = matrix_gamma("MGe", params=[
     @symcore.int(2),
     @symcore.int(3),
-    @symcore.Expr::Symbol("Scale"),
+    Symbol("Scale"),
   ])
   assert_entropy_not_placeholder(mg, "MatrixGamma")
   let mst = matrix_student_t("MSTe", params=[
     @symcore.int(3),
-    @symcore.Expr::Symbol("MeanM"),
-    @symcore.Expr::Symbol("U"),
-    @symcore.Expr::Symbol("V"),
+    Symbol("MeanM"),
+    Symbol("U"),
+    Symbol("V"),
   ])
   assert_entropy_not_placeholder(mst, "MatrixStudentT")
   let mx = maxwell("MXe", params=[@symcore.int(2)])
@@ -4813,8 +4756,8 @@ test "compat entropy coverage residual D" {
 test "compat abstract opaque symbolic families stay unevaluated" {
   let sp = stochastic_process("SP")
   let dtsp = discrete_time_stochastic_process("DTSP")
-  let dmc = discrete_markov_chain("DMC", params=[@symcore.Expr::Symbol("T")])
-  let cmc = continuous_markov_chain("CMC", params=[@symcore.Expr::Symbol("Q")])
+  let dmc = discrete_markov_chain("DMC", params=[Symbol("T")])
+  let cmc = continuous_markov_chain("CMC", params=[Symbol("Q")])
   let jed = joint_eigen_distribution("JED", params=[@symcore.int(2)])
   let lsd = level_spacing_distribution("LSD", params=[@symcore.int(2)])
 

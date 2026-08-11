@@ -10,13 +10,13 @@ pub fn ask_predicate(
   env? : AssumeEnv = {},
 ) -> Tri {
   match predicate {
-    Predicate::IsZero => is_zero(expr, env~)
-    Predicate::IsNonzero => is_nonzero(expr, env~)
-    Predicate::IsInteger => is_integer(expr, env~)
-    Predicate::IsRational => is_rational(expr, env~)
-    Predicate::IsReal => is_real(expr, env~)
-    Predicate::IsPositive => is_positive(expr, env~)
-    Predicate::IsNonnegative => is_nonnegative(expr, env~)
+    IsZero => is_zero(expr, env~)
+    IsNonzero => is_nonzero(expr, env~)
+    IsInteger => is_integer(expr, env~)
+    IsRational => is_rational(expr, env~)
+    IsReal => is_real(expr, env~)
+    IsPositive => is_positive(expr, env~)
+    IsNonnegative => is_nonnegative(expr, env~)
   }
 }
 
@@ -40,32 +40,27 @@ pub fn is_zero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(n) => tri_of_bool(n.is_zero())
-    @symcore.ExprForm::Float(f) => tri_of_bool(@symnum.is_zero(f.to_mpf()))
-    @symcore.ExprForm::ComplexFloat(z) =>
+    Number(n) => tri_of_bool(n.is_zero())
+    Float(f) => tri_of_bool(@symnum.is_zero(f.to_mpf()))
+    ComplexFloat(z) =>
       tri_of_bool(
         @symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag),
       )
-    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_zero(kind)
-    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_zero
-    @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
-    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
-    @symcore.ExprForm::Boolean(value) => tri_of_bool(!value)
-    @symcore.ExprForm::Add(args) => add_is_zero(args, env)
-    @symcore.ExprForm::Mul(args) => mul_is_zero(args, env)
-    @symcore.ExprForm::Pow(base, exp) => pow_is_zero(base, exp, env)
-    @symcore.ExprForm::Mod(lhs, rhs) => function_is_zero("Mod", [lhs, rhs], env)
-    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
-    @symcore.ExprForm::Relational(_, _, _) => Tri::False
-    @symcore.ExprForm::Derivative(_, _) =>
-      function_is_zero("Derivative", @symcore.args(expr), env)
-    @symcore.ExprForm::Subs(_, _, _) =>
-      function_is_zero("Subs", @symcore.args(expr), env)
-    @symcore.ExprForm::Lambda(_, _) =>
-      function_is_zero("Lambda", @symcore.args(expr), env)
-    _ => Tri::Unknown
+    NumberSymbol(kind) => number_symbol_is_zero(kind)
+    Symbol(name) => env_get(env, name).is_zero
+    Dummy(_, _) | Wild(_, _, _) | FunctionHead(_) => Unknown
+    UndefinedFunction(_) => Unknown
+    Boolean(value) => tri_of_bool(!value)
+    Add(args) => add_is_zero(args, env)
+    Mul(args) => mul_is_zero(args, env)
+    Pow(base, exp) => pow_is_zero(base, exp, env)
+    Mod(lhs, rhs) => function_is_zero("Mod", [lhs, rhs], env)
+    Tuple(_) | Dict(_) => False
+    Relational(_, _, _) => False
+    Derivative(_, _) => function_is_zero("Derivative", @symcore.args(expr), env)
+    Subs(_, _, _) => function_is_zero("Subs", @symcore.args(expr), env)
+    Lambda(_, _) => function_is_zero("Lambda", @symcore.args(expr), env)
+    _ => Unknown
   }
 }
 
@@ -77,33 +72,28 @@ pub fn is_nonzero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(n) => tri_of_bool(!n.is_zero())
-    @symcore.ExprForm::Float(f) => tri_of_bool(!@symnum.is_zero(f.to_mpf()))
-    @symcore.ExprForm::ComplexFloat(z) =>
+    Number(n) => tri_of_bool(!n.is_zero())
+    Float(f) => tri_of_bool(!@symnum.is_zero(f.to_mpf()))
+    ComplexFloat(z) =>
       tri_of_bool(
         !(@symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag)),
       )
-    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_nonzero(kind)
-    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_nonzero
-    @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
-    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
-    @symcore.ExprForm::Boolean(value) => tri_of_bool(value)
-    @symcore.ExprForm::Add(args) => add_is_nonzero(args, env)
-    @symcore.ExprForm::Mul(args) => mul_is_nonzero(args, env)
-    @symcore.ExprForm::Pow(base, exp) => pow_is_nonzero(base, exp, env)
-    @symcore.ExprForm::Mod(lhs, rhs) =>
-      function_is_nonzero("Mod", [lhs, rhs], env)
-    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::True
-    @symcore.ExprForm::Relational(_, _, _) => Tri::True
-    @symcore.ExprForm::Derivative(_, _) =>
+    NumberSymbol(kind) => number_symbol_is_nonzero(kind)
+    Symbol(name) => env_get(env, name).is_nonzero
+    Dummy(_, _) | Wild(_, _, _) | FunctionHead(_) => Unknown
+    UndefinedFunction(_) => Unknown
+    Boolean(value) => tri_of_bool(value)
+    Add(args) => add_is_nonzero(args, env)
+    Mul(args) => mul_is_nonzero(args, env)
+    Pow(base, exp) => pow_is_nonzero(base, exp, env)
+    Mod(lhs, rhs) => function_is_nonzero("Mod", [lhs, rhs], env)
+    Tuple(_) | Dict(_) => True
+    Relational(_, _, _) => True
+    Derivative(_, _) =>
       function_is_nonzero("Derivative", @symcore.args(expr), env)
-    @symcore.ExprForm::Subs(_, _, _) =>
-      function_is_nonzero("Subs", @symcore.args(expr), env)
-    @symcore.ExprForm::Lambda(_, _) =>
-      function_is_nonzero("Lambda", @symcore.args(expr), env)
-    _ => Tri::Unknown
+    Subs(_, _, _) => function_is_nonzero("Subs", @symcore.args(expr), env)
+    Lambda(_, _) => function_is_nonzero("Lambda", @symcore.args(expr), env)
+    _ => Unknown
   }
 }
 
@@ -115,30 +105,24 @@ pub fn is_integer(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(n) => tri_of_bool(n.is_integral())
-    @symcore.ExprForm::Float(_) | @symcore.ExprForm::ComplexFloat(_) =>
-      Tri::Unknown
-    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_integer(kind)
-    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_integer
-    @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
-    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
-    @symcore.ExprForm::Boolean(_) => Tri::True
-    @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
+    Number(n) => tri_of_bool(n.is_integral())
+    Float(_) | ComplexFloat(_) => Unknown
+    NumberSymbol(kind) => number_symbol_is_integer(kind)
+    Symbol(name) => env_get(env, name).is_integer
+    Dummy(_, _) | Wild(_, _, _) | FunctionHead(_) => Unknown
+    UndefinedFunction(_) => Unknown
+    Boolean(_) => True
+    Add(args) | Mul(args) =>
       all_predicate(args, child => is_integer(child, env~))
-    @symcore.ExprForm::Pow(base, exp) => pow_is_integer(base, exp, env)
-    @symcore.ExprForm::Mod(lhs, rhs) =>
-      function_is_integer("Mod", [lhs, rhs], env)
-    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
-    @symcore.ExprForm::Relational(_, _, _) => Tri::False
-    @symcore.ExprForm::Derivative(_, _) =>
+    Pow(base, exp) => pow_is_integer(base, exp, env)
+    Mod(lhs, rhs) => function_is_integer("Mod", [lhs, rhs], env)
+    Tuple(_) | Dict(_) => False
+    Relational(_, _, _) => False
+    Derivative(_, _) =>
       function_is_integer("Derivative", @symcore.args(expr), env)
-    @symcore.ExprForm::Subs(_, _, _) =>
-      function_is_integer("Subs", @symcore.args(expr), env)
-    @symcore.ExprForm::Lambda(_, _) =>
-      function_is_integer("Lambda", @symcore.args(expr), env)
-    _ => Tri::Unknown
+    Subs(_, _, _) => function_is_integer("Subs", @symcore.args(expr), env)
+    Lambda(_, _) => function_is_integer("Lambda", @symcore.args(expr), env)
+    _ => Unknown
   }
 }
 
@@ -150,30 +134,24 @@ pub fn is_rational(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_) => Tri::True
-    @symcore.ExprForm::Float(_) | @symcore.ExprForm::ComplexFloat(_) =>
-      Tri::Unknown
-    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_rational(kind)
-    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_rational
-    @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
-    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
-    @symcore.ExprForm::Boolean(_) => Tri::True
-    @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
+    Number(_) => True
+    Float(_) | ComplexFloat(_) => Unknown
+    NumberSymbol(kind) => number_symbol_is_rational(kind)
+    Symbol(name) => env_get(env, name).is_rational
+    Dummy(_, _) | Wild(_, _, _) | FunctionHead(_) => Unknown
+    UndefinedFunction(_) => Unknown
+    Boolean(_) => True
+    Add(args) | Mul(args) =>
       all_predicate(args, child => is_rational(child, env~))
-    @symcore.ExprForm::Pow(base, exp) => pow_is_rational(base, exp, env)
-    @symcore.ExprForm::Mod(lhs, rhs) =>
-      function_is_rational("Mod", [lhs, rhs], env)
-    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
-    @symcore.ExprForm::Relational(_, _, _) => Tri::False
-    @symcore.ExprForm::Derivative(_, _) =>
+    Pow(base, exp) => pow_is_rational(base, exp, env)
+    Mod(lhs, rhs) => function_is_rational("Mod", [lhs, rhs], env)
+    Tuple(_) | Dict(_) => False
+    Relational(_, _, _) => False
+    Derivative(_, _) =>
       function_is_rational("Derivative", @symcore.args(expr), env)
-    @symcore.ExprForm::Subs(_, _, _) =>
-      function_is_rational("Subs", @symcore.args(expr), env)
-    @symcore.ExprForm::Lambda(_, _) =>
-      function_is_rational("Lambda", @symcore.args(expr), env)
-    _ => Tri::Unknown
+    Subs(_, _, _) => function_is_rational("Subs", @symcore.args(expr), env)
+    Lambda(_, _) => function_is_rational("Lambda", @symcore.args(expr), env)
+    _ => Unknown
   }
 }
 
@@ -185,29 +163,22 @@ pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_) | @symcore.ExprForm::Float(_) => Tri::True
-    @symcore.ExprForm::ComplexFloat(z) =>
-      tri_of_bool(@symnum.is_zero(z.to_mpc().imag))
-    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_real(kind)
-    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_real
-    @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
-    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
-    @symcore.ExprForm::Boolean(_) => Tri::True
-    @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
-      all_predicate(args, child => is_real(child, env~))
-    @symcore.ExprForm::Pow(base, exp) => pow_is_real(base, exp, env)
-    @symcore.ExprForm::Mod(lhs, rhs) => function_is_real("Mod", [lhs, rhs], env)
-    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
-    @symcore.ExprForm::Relational(_, _, _) => Tri::False
-    @symcore.ExprForm::Derivative(_, _) =>
-      function_is_real("Derivative", @symcore.args(expr), env)
-    @symcore.ExprForm::Subs(_, _, _) =>
-      function_is_real("Subs", @symcore.args(expr), env)
-    @symcore.ExprForm::Lambda(_, _) =>
-      function_is_real("Lambda", @symcore.args(expr), env)
-    _ => Tri::Unknown
+    Number(_) | Float(_) => True
+    ComplexFloat(z) => tri_of_bool(@symnum.is_zero(z.to_mpc().imag))
+    NumberSymbol(kind) => number_symbol_is_real(kind)
+    Symbol(name) => env_get(env, name).is_real
+    Dummy(_, _) | Wild(_, _, _) | FunctionHead(_) => Unknown
+    UndefinedFunction(_) => Unknown
+    Boolean(_) => True
+    Add(args) | Mul(args) => all_predicate(args, child => is_real(child, env~))
+    Pow(base, exp) => pow_is_real(base, exp, env)
+    Mod(lhs, rhs) => function_is_real("Mod", [lhs, rhs], env)
+    Tuple(_) | Dict(_) => False
+    Relational(_, _, _) => False
+    Derivative(_, _) => function_is_real("Derivative", @symcore.args(expr), env)
+    Subs(_, _, _) => function_is_real("Subs", @symcore.args(expr), env)
+    Lambda(_, _) => function_is_real("Lambda", @symcore.args(expr), env)
+    _ => Unknown
   }
 }
 
@@ -219,36 +190,30 @@ pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(n) =>
-      tri_of_bool(n.compare(@symnum.BigRational::zero()) > 0)
-    @symcore.ExprForm::Float(f) => tri_of_bool(@symnum.mpf_sign(f.to_mpf()) > 0)
-    @symcore.ExprForm::ComplexFloat(z) =>
+    Number(n) => tri_of_bool(n.compare(@symnum.BigRational::zero()) > 0)
+    Float(f) => tri_of_bool(@symnum.mpf_sign(f.to_mpf()) > 0)
+    ComplexFloat(z) =>
       if @symnum.is_zero(z.to_mpc().imag) {
         tri_of_bool(@symnum.mpf_sign(z.to_mpc().real) > 0)
       } else {
-        Tri::False
+        False
       }
-    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_positive(kind)
-    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_positive
-    @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
-    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
-    @symcore.ExprForm::Boolean(value) => tri_of_bool(value)
-    @symcore.ExprForm::Add(args) => add_is_positive(args, env)
-    @symcore.ExprForm::Mul(args) => mul_is_positive(args, env)
-    @symcore.ExprForm::Pow(base, exp) => pow_is_positive(base, exp, env)
-    @symcore.ExprForm::Mod(lhs, rhs) =>
-      function_is_positive("Mod", [lhs, rhs], env)
-    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
-    @symcore.ExprForm::Relational(_, _, _) => Tri::False
-    @symcore.ExprForm::Derivative(_, _) =>
+    NumberSymbol(kind) => number_symbol_is_positive(kind)
+    Symbol(name) => env_get(env, name).is_positive
+    Dummy(_, _) | Wild(_, _, _) | FunctionHead(_) => Unknown
+    UndefinedFunction(_) => Unknown
+    Boolean(value) => tri_of_bool(value)
+    Add(args) => add_is_positive(args, env)
+    Mul(args) => mul_is_positive(args, env)
+    Pow(base, exp) => pow_is_positive(base, exp, env)
+    Mod(lhs, rhs) => function_is_positive("Mod", [lhs, rhs], env)
+    Tuple(_) | Dict(_) => False
+    Relational(_, _, _) => False
+    Derivative(_, _) =>
       function_is_positive("Derivative", @symcore.args(expr), env)
-    @symcore.ExprForm::Subs(_, _, _) =>
-      function_is_positive("Subs", @symcore.args(expr), env)
-    @symcore.ExprForm::Lambda(_, _) =>
-      function_is_positive("Lambda", @symcore.args(expr), env)
-    _ => Tri::Unknown
+    Subs(_, _, _) => function_is_positive("Subs", @symcore.args(expr), env)
+    Lambda(_, _) => function_is_positive("Lambda", @symcore.args(expr), env)
+    _ => Unknown
   }
 }
 
@@ -260,37 +225,30 @@ pub fn is_nonnegative(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(n) =>
-      tri_of_bool(n.compare(@symnum.BigRational::zero()) >= 0)
-    @symcore.ExprForm::Float(f) =>
-      tri_of_bool(@symnum.mpf_sign(f.to_mpf()) >= 0)
-    @symcore.ExprForm::ComplexFloat(z) =>
+    Number(n) => tri_of_bool(n.compare(@symnum.BigRational::zero()) >= 0)
+    Float(f) => tri_of_bool(@symnum.mpf_sign(f.to_mpf()) >= 0)
+    ComplexFloat(z) =>
       if @symnum.is_zero(z.to_mpc().imag) {
         tri_of_bool(@symnum.mpf_sign(z.to_mpc().real) >= 0)
       } else {
-        Tri::False
+        False
       }
-    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_nonnegative(kind)
-    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_nonnegative
-    @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
-    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
-    @symcore.ExprForm::Boolean(_) => Tri::True
-    @symcore.ExprForm::Add(args) => add_is_nonnegative(args, env)
-    @symcore.ExprForm::Mul(args) => mul_is_nonnegative(args, env)
-    @symcore.ExprForm::Pow(base, exp) => pow_is_nonnegative(base, exp, env)
-    @symcore.ExprForm::Mod(lhs, rhs) =>
-      function_is_nonnegative("Mod", [lhs, rhs], env)
-    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
-    @symcore.ExprForm::Relational(_, _, _) => Tri::False
-    @symcore.ExprForm::Derivative(_, _) =>
+    NumberSymbol(kind) => number_symbol_is_nonnegative(kind)
+    Symbol(name) => env_get(env, name).is_nonnegative
+    Dummy(_, _) | Wild(_, _, _) | FunctionHead(_) => Unknown
+    UndefinedFunction(_) => Unknown
+    Boolean(_) => True
+    Add(args) => add_is_nonnegative(args, env)
+    Mul(args) => mul_is_nonnegative(args, env)
+    Pow(base, exp) => pow_is_nonnegative(base, exp, env)
+    Mod(lhs, rhs) => function_is_nonnegative("Mod", [lhs, rhs], env)
+    Tuple(_) | Dict(_) => False
+    Relational(_, _, _) => False
+    Derivative(_, _) =>
       function_is_nonnegative("Derivative", @symcore.args(expr), env)
-    @symcore.ExprForm::Subs(_, _, _) =>
-      function_is_nonnegative("Subs", @symcore.args(expr), env)
-    @symcore.ExprForm::Lambda(_, _) =>
-      function_is_nonnegative("Lambda", @symcore.args(expr), env)
-    _ => Tri::Unknown
+    Subs(_, _, _) => function_is_nonnegative("Subs", @symcore.args(expr), env)
+    Lambda(_, _) => function_is_nonnegative("Lambda", @symcore.args(expr), env)
+    _ => Unknown
   }
 }
 
@@ -299,22 +257,22 @@ fn all_predicate(args : Array[Expr], pred : (Expr) -> Tri) -> Tri {
   let mut saw_unknown = false
   for arg in args {
     match pred(arg) {
-      Tri::False => return Tri::False
-      Tri::Unknown => saw_unknown = true
-      Tri::True => ()
+      False => return False
+      Unknown => saw_unknown = true
+      True => ()
     }
   }
   if saw_unknown {
-    Tri::Unknown
+    Unknown
   } else {
-    Tri::True
+    True
   }
 }
 
 ///|
 fn add_is_zero(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
-    return Tri::True
+    return True
   }
   if args.length() == 1 {
     return is_zero(args[0], env~)
@@ -326,25 +284,25 @@ fn add_is_zero(args : Array[Expr], env : AssumeEnv) -> Tri {
     let z = is_zero(arg, env~)
     let nz = is_nonzero(arg, env~)
     match z {
-      Tri::True => ()
-      Tri::False => all_zero = false
-      Tri::Unknown => {
+      True => ()
+      False => all_zero = false
+      Unknown => {
         all_zero = false
         all_zero_or_nonzero = false
       }
     }
     match nz {
-      Tri::True => nonzero_count += 1
-      Tri::False => ()
-      Tri::Unknown => all_zero_or_nonzero = false
+      True => nonzero_count += 1
+      False => ()
+      Unknown => all_zero_or_nonzero = false
     }
   }
   if all_zero {
-    Tri::True
+    True
   } else if nonzero_count == 1 && all_zero_or_nonzero {
-    Tri::False
+    False
   } else {
-    Tri::Unknown
+    Unknown
   }
 }
 
@@ -353,40 +311,40 @@ fn mul_is_zero(args : Array[Expr], env : AssumeEnv) -> Tri {
   let mut all_nonzero = true
   for arg in args {
     match is_zero(arg, env~) {
-      Tri::True => return Tri::True
-      Tri::False => ()
-      Tri::Unknown => ()
+      True => return True
+      False => ()
+      Unknown => ()
     }
-    if is_nonzero(arg, env~) != Tri::True {
+    if is_nonzero(arg, env~) != True {
       all_nonzero = false
     }
   }
   if all_nonzero {
-    Tri::False
+    False
   } else {
-    Tri::Unknown
+    Unknown
   }
 }
 
 ///|
 fn pow_is_zero(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   match exp {
-    Expr::Number(n) if n.is_zero() => return Tri::False
+    Number(n) if n.is_zero() => return False
     _ => ()
   }
-  if is_zero(base, env~) == Tri::True && is_positive(exp, env~) == Tri::True {
-    Tri::True
-  } else if is_nonzero(base, env~) == Tri::True {
-    Tri::False
+  if is_zero(base, env~) == True && is_positive(exp, env~) == True {
+    True
+  } else if is_nonzero(base, env~) == True {
+    False
   } else {
-    Tri::Unknown
+    Unknown
   }
 }
 
 ///|
 fn add_is_nonzero(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
-    return Tri::False
+    return False
   }
   if args.length() == 1 {
     return is_nonzero(args[0], env~)
@@ -398,25 +356,25 @@ fn add_is_nonzero(args : Array[Expr], env : AssumeEnv) -> Tri {
     let z = is_zero(arg, env~)
     let nz = is_nonzero(arg, env~)
     match z {
-      Tri::True => ()
-      Tri::False => all_zero = false
-      Tri::Unknown => {
+      True => ()
+      False => all_zero = false
+      Unknown => {
         all_zero = false
         all_zero_or_nonzero = false
       }
     }
     match nz {
-      Tri::True => nonzero_count += 1
-      Tri::False => ()
-      Tri::Unknown => all_zero_or_nonzero = false
+      True => nonzero_count += 1
+      False => ()
+      Unknown => all_zero_or_nonzero = false
     }
   }
   if all_zero {
-    Tri::False
+    False
   } else if nonzero_count == 1 && all_zero_or_nonzero {
-    Tri::True
+    True
   } else {
-    Tri::Unknown
+    Unknown
   }
 }
 
@@ -425,107 +383,106 @@ fn mul_is_nonzero(args : Array[Expr], env : AssumeEnv) -> Tri {
   let mut saw_unknown = false
   for arg in args {
     match is_nonzero(arg, env~) {
-      Tri::True => ()
-      Tri::False => return Tri::False
-      Tri::Unknown => saw_unknown = true
+      True => ()
+      False => return False
+      Unknown => saw_unknown = true
     }
   }
   if saw_unknown {
-    Tri::Unknown
+    Unknown
   } else {
-    Tri::True
+    True
   }
 }
 
 ///|
 fn pow_is_nonzero(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   match exp {
-    Expr::Number(n) if n.is_zero() => return Tri::True
+    Number(n) if n.is_zero() => return True
     _ => ()
   }
-  if is_nonzero(base, env~) == Tri::True {
-    Tri::True
-  } else if is_zero(base, env~) == Tri::True &&
-    is_positive(exp, env~) == Tri::True {
-    Tri::False
+  if is_nonzero(base, env~) == True {
+    True
+  } else if is_zero(base, env~) == True && is_positive(exp, env~) == True {
+    False
   } else {
-    Tri::Unknown
+    Unknown
   }
 }
 
 ///|
 fn pow_is_integer(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   let exp_is_integer = is_integer(exp, env~)
-  if exp_is_integer == Tri::False {
-    return Tri::False
+  if exp_is_integer == False {
+    return False
   }
   let base_is_integer = is_integer(base, env~)
   match nonnegative_integer_literal(exp) {
     Some(true) =>
-      if base_is_integer == Tri::True {
-        Tri::True
-      } else if base_is_integer == Tri::False {
-        Tri::False
+      if base_is_integer == True {
+        True
+      } else if base_is_integer == False {
+        False
       } else {
-        Tri::Unknown
+        Unknown
       }
     Some(false) =>
-      if base_is_integer == Tri::True && is_nonzero(base, env~) == Tri::True {
-        Tri::Unknown
+      if base_is_integer == True && is_nonzero(base, env~) == True {
+        Unknown
       } else {
-        Tri::Unknown
+        Unknown
       }
-    None => Tri::Unknown
+    None => Unknown
   }
 }
 
 ///|
 fn pow_is_rational(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
-  if is_integer(exp, env~) == Tri::False {
-    return Tri::False
+  if is_integer(exp, env~) == False {
+    return False
   }
   let base_is_rational = is_rational(base, env~)
-  if base_is_rational == Tri::False {
-    return Tri::False
+  if base_is_rational == False {
+    return False
   }
   match nonnegative_integer_literal(exp) {
     Some(true) => base_is_rational
     Some(false) =>
-      if base_is_rational == Tri::True && is_nonzero(base, env~) == Tri::True {
-        Tri::True
+      if base_is_rational == True && is_nonzero(base, env~) == True {
+        True
       } else {
-        Tri::Unknown
+        Unknown
       }
-    None => Tri::Unknown
+    None => Unknown
   }
 }
 
 ///|
 fn pow_is_real(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   let base_real = is_real(base, env~)
-  if base_real == Tri::False {
-    return Tri::False
+  if base_real == False {
+    return False
   }
-  if is_integer(exp, env~) == Tri::True {
+  if is_integer(exp, env~) == True {
     match nonnegative_integer_literal(exp) {
       Some(true) => base_real
       Some(false) =>
-        if base_real == Tri::True && is_nonzero(base, env~) == Tri::True {
-          Tri::True
+        if base_real == True && is_nonzero(base, env~) == True {
+          True
         } else {
-          Tri::Unknown
+          Unknown
         }
-      None => Tri::Unknown
+      None => Unknown
     }
   } else {
-    Tri::Unknown
+    Unknown
   }
 }
 
 ///|
 fn add_is_positive(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
-    return Tri::False
+    return False
   }
   let mut all_nonnegative = true
   let mut any_positive = false
@@ -534,150 +491,140 @@ fn add_is_positive(args : Array[Expr], env : AssumeEnv) -> Tri {
     let nn = is_nonnegative(arg, env~)
     let p = is_positive(arg, env~)
     let z = is_zero(arg, env~)
-    if nn != Tri::True {
+    if nn != True {
       all_nonnegative = false
     }
-    if p == Tri::True {
+    if p == True {
       any_positive = true
     }
-    if z != Tri::True {
+    if z != True {
       all_zero = false
     }
   }
   if all_zero {
-    Tri::False
+    False
   } else if all_nonnegative && any_positive {
-    Tri::True
+    True
   } else {
-    Tri::Unknown
+    Unknown
   }
 }
 
 ///|
 fn mul_is_positive(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
-    return Tri::True
+    return True
   }
   let mut all_positive = true
   let mut all_nonnegative = true
   let mut all_nonzero = true
   for arg in args {
-    if is_zero(arg, env~) == Tri::True {
-      return Tri::False
+    if is_zero(arg, env~) == True {
+      return False
     }
-    if is_positive(arg, env~) != Tri::True {
+    if is_positive(arg, env~) != True {
       all_positive = false
     }
-    if is_nonnegative(arg, env~) != Tri::True {
+    if is_nonnegative(arg, env~) != True {
       all_nonnegative = false
     }
-    if is_nonzero(arg, env~) != Tri::True {
+    if is_nonzero(arg, env~) != True {
       all_nonzero = false
     }
   }
   if all_positive {
-    Tri::True
+    True
   } else if all_nonnegative && all_nonzero {
-    Tri::True
+    True
   } else {
-    Tri::Unknown
+    Unknown
   }
 }
 
 ///|
 fn pow_is_positive(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   match exp {
-    Expr::Number(n) if n.is_zero() => return Tri::True
+    Number(n) if n.is_zero() => return True
     _ => ()
   }
-  if is_positive(base, env~) == Tri::True {
-    return Tri::True
+  if is_positive(base, env~) == True {
+    return True
   }
   match even_integer_literal(exp) {
     Some(true) =>
-      if is_real(base, env~) == Tri::True && is_nonzero(base, env~) == Tri::True {
-        Tri::True
-      } else if is_zero(base, env~) == Tri::True {
-        Tri::False
+      if is_real(base, env~) == True && is_nonzero(base, env~) == True {
+        True
+      } else if is_zero(base, env~) == True {
+        False
       } else {
-        Tri::Unknown
+        Unknown
       }
-    Some(false) =>
-      if is_positive(base, env~) == Tri::True {
-        Tri::True
-      } else {
-        Tri::Unknown
-      }
-    None => Tri::Unknown
+    Some(false) => if is_positive(base, env~) == True { True } else { Unknown }
+    None => Unknown
   }
 }
 
 ///|
 fn add_is_nonnegative(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
-    return Tri::True
+    return True
   }
   let mut all_nonnegative = true
   let mut all_zero = true
   for arg in args {
     let nn = is_nonnegative(arg, env~)
     let z = is_zero(arg, env~)
-    if nn != Tri::True {
+    if nn != True {
       all_nonnegative = false
     }
-    if z != Tri::True {
+    if z != True {
       all_zero = false
     }
   }
   if all_nonnegative || all_zero {
-    Tri::True
+    True
   } else {
-    Tri::Unknown
+    Unknown
   }
 }
 
 ///|
 fn mul_is_nonnegative(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
-    return Tri::True
+    return True
   }
   let mut all_nonnegative = true
   for arg in args {
-    if is_zero(arg, env~) == Tri::True {
-      return Tri::True
+    if is_zero(arg, env~) == True {
+      return True
     }
-    if is_nonnegative(arg, env~) != Tri::True {
+    if is_nonnegative(arg, env~) != True {
       all_nonnegative = false
     }
   }
   if all_nonnegative {
-    Tri::True
+    True
   } else {
-    Tri::Unknown
+    Unknown
   }
 }
 
 ///|
 fn pow_is_nonnegative(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   match exp {
-    Expr::Number(n) if n.is_zero() => return Tri::True
+    Number(n) if n.is_zero() => return True
     _ => ()
   }
   match even_integer_literal(exp) {
-    Some(true) =>
-      if is_real(base, env~) == Tri::True {
-        Tri::True
-      } else {
-        Tri::Unknown
-      }
+    Some(true) => if is_real(base, env~) == True { True } else { Unknown }
     _ =>
-      if is_nonnegative(base, env~) == Tri::True &&
-        nonnegative_integer_or_unknown(exp, env) != Tri::False {
-        Tri::True
-      } else if is_positive(base, env~) == Tri::True {
-        Tri::True
+      if is_nonnegative(base, env~) == True &&
+        nonnegative_integer_or_unknown(exp, env) != False {
+        True
+      } else if is_positive(base, env~) == True {
+        True
       } else {
-        Tri::Unknown
+        Unknown
       }
   }
 }
@@ -685,10 +632,10 @@ fn pow_is_nonnegative(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
 ///|
 fn function_is_zero(name : String, args : Array[Expr], env : AssumeEnv) -> Tri {
   match (name, args.length()) {
-    ("exp", 1) => Tri::False
+    ("exp", 1) => False
     ("Abs", 1) | ("abs", 1) => is_zero(args[0], env~)
     ("sqrt", 1) => is_zero(args[0], env~)
-    _ => Tri::Unknown
+    _ => Unknown
   }
 }
 
@@ -699,10 +646,10 @@ fn function_is_nonzero(
   env : AssumeEnv,
 ) -> Tri {
   match (name, args.length()) {
-    ("exp", 1) => Tri::True
+    ("exp", 1) => True
     ("Abs", 1) | ("abs", 1) => is_nonzero(args[0], env~)
     ("sqrt", 1) => is_nonzero(args[0], env~)
-    _ => Tri::Unknown
+    _ => Unknown
   }
 }
 
@@ -713,9 +660,9 @@ fn function_is_integer(
   env : AssumeEnv,
 ) -> Tri {
   match (name, args.length()) {
-    ("floor", 1) | ("ceiling", 1) => Tri::True
+    ("floor", 1) | ("ceiling", 1) => True
     ("Abs", 1) | ("abs", 1) => is_integer(args[0], env~)
-    _ => Tri::Unknown
+    _ => Unknown
   }
 }
 
@@ -727,35 +674,30 @@ fn function_is_rational(
 ) -> Tri {
   match (name, args.length()) {
     ("Abs", 1) | ("abs", 1) => is_rational(args[0], env~)
-    _ => Tri::Unknown
+    _ => Unknown
   }
 }
 
 ///|
 fn function_is_real(name : String, args : Array[Expr], env : AssumeEnv) -> Tri {
   match (name, args.length()) {
-    ("Abs", 1) | ("abs", 1) => Tri::True
+    ("Abs", 1) | ("abs", 1) => True
     ("sqrt", 1) =>
-      if is_nonnegative(args[0], env~) == Tri::True {
-        Tri::True
+      if is_nonnegative(args[0], env~) == True {
+        True
       } else {
-        Tri::Unknown
+        Unknown
       }
     ("log", 1) =>
-      if is_positive(args[0], env~) == Tri::True {
-        Tri::True
+      if is_positive(args[0], env~) == True {
+        True
       } else {
-        Tri::Unknown
+        Unknown
       }
-    ("exp", 1) =>
-      if is_real(args[0], env~) == Tri::True {
-        Tri::True
-      } else {
-        Tri::Unknown
-      }
+    ("exp", 1) => if is_real(args[0], env~) == True { True } else { Unknown }
     ("sin", 1) | ("cos", 1) | ("tan", 1) => is_real(args[0], env~)
-    ("re", 1) | ("im", 1) => Tri::True
-    _ => Tri::Unknown
+    ("re", 1) | ("im", 1) => True
+    _ => Unknown
   }
 }
 
@@ -766,29 +708,24 @@ fn function_is_positive(
   env : AssumeEnv,
 ) -> Tri {
   match (name, args.length()) {
-    ("exp", 1) =>
-      if is_real(args[0], env~) == Tri::True {
-        Tri::True
-      } else {
-        Tri::Unknown
-      }
+    ("exp", 1) => if is_real(args[0], env~) == True { True } else { Unknown }
     ("Abs", 1) | ("abs", 1) =>
-      if is_nonzero(args[0], env~) == Tri::True {
-        Tri::True
-      } else if is_zero(args[0], env~) == Tri::True {
-        Tri::False
+      if is_nonzero(args[0], env~) == True {
+        True
+      } else if is_zero(args[0], env~) == True {
+        False
       } else {
-        Tri::Unknown
+        Unknown
       }
     ("sqrt", 1) =>
-      if is_positive(args[0], env~) == Tri::True {
-        Tri::True
-      } else if is_zero(args[0], env~) == Tri::True {
-        Tri::False
+      if is_positive(args[0], env~) == True {
+        True
+      } else if is_zero(args[0], env~) == True {
+        False
       } else {
-        Tri::Unknown
+        Unknown
       }
-    _ => Tri::Unknown
+    _ => Unknown
   }
 }
 
@@ -799,27 +736,22 @@ fn function_is_nonnegative(
   env : AssumeEnv,
 ) -> Tri {
   match (name, args.length()) {
-    ("Abs", 1) | ("abs", 1) => Tri::True
+    ("Abs", 1) | ("abs", 1) => True
     ("sqrt", 1) =>
-      if is_nonnegative(args[0], env~) == Tri::True {
-        Tri::True
+      if is_nonnegative(args[0], env~) == True {
+        True
       } else {
-        Tri::Unknown
+        Unknown
       }
-    ("exp", 1) =>
-      if is_real(args[0], env~) == Tri::True {
-        Tri::True
-      } else {
-        Tri::Unknown
-      }
-    _ => Tri::Unknown
+    ("exp", 1) => if is_real(args[0], env~) == True { True } else { Unknown }
+    _ => Unknown
   }
 }
 
 ///|
 fn even_integer_literal(expr : Expr) -> Bool? {
   match expr {
-    Expr::Number(n) if n.is_integral() => {
+    Number(n) if n.is_integral() => {
       let two = BigInt::from_int(2)
       Some(n.numerator().mod(two).is_zero())
     }
@@ -830,7 +762,7 @@ fn even_integer_literal(expr : Expr) -> Bool? {
 ///|
 fn nonnegative_integer_literal(expr : Expr) -> Bool? {
   match expr {
-    Expr::Number(n) if n.is_integral() =>
+    Number(n) if n.is_integral() =>
       Some(n.numerator().compare(BigInt::from_int(0)) >= 0)
     _ => None
   }
@@ -839,101 +771,73 @@ fn nonnegative_integer_literal(expr : Expr) -> Bool? {
 ///|
 fn nonnegative_integer_or_unknown(expr : Expr, env : AssumeEnv) -> Tri {
   match nonnegative_integer_literal(expr) {
-    Some(true) => Tri::True
-    Some(false) => Tri::False
-    None =>
-      if is_integer(expr, env~) == Tri::True {
-        Tri::Unknown
-      } else {
-        Tri::False
-      }
+    Some(true) => True
+    Some(false) => False
+    None => if is_integer(expr, env~) == True { Unknown } else { False }
   }
 }
 
 ///|
 fn number_symbol_is_zero(kind : @symcore.NumberSymbolKind) -> Tri {
   match kind {
-    @symcore.NumberSymbolKind::NaN => Tri::Unknown
-    _ => Tri::False
+    NaN => Unknown
+    _ => False
   }
 }
 
 ///|
 fn number_symbol_is_nonzero(kind : @symcore.NumberSymbolKind) -> Tri {
   match kind {
-    @symcore.NumberSymbolKind::Pi
-    | @symcore.NumberSymbolKind::Exp1
-    | @symcore.NumberSymbolKind::EulerGamma
-    | @symcore.NumberSymbolKind::GoldenRatio
-    | @symcore.NumberSymbolKind::Catalan
-    | @symcore.NumberSymbolKind::ImaginaryUnit => Tri::True
-    @symcore.NumberSymbolKind::Infinity
-    | @symcore.NumberSymbolKind::NegativeInfinity
-    | @symcore.NumberSymbolKind::ComplexInfinity
-    | @symcore.NumberSymbolKind::NaN => Tri::Unknown
+    Pi | Exp1 | EulerGamma | GoldenRatio | Catalan | ImaginaryUnit => True
+    Infinity | NegativeInfinity | ComplexInfinity | NaN => Unknown
   }
 }
 
 ///|
 fn number_symbol_is_integer(kind : @symcore.NumberSymbolKind) -> Tri {
   match kind {
-    @symcore.NumberSymbolKind::NaN => Tri::Unknown
-    _ => Tri::False
+    NaN => Unknown
+    _ => False
   }
 }
 
 ///|
 fn number_symbol_is_rational(kind : @symcore.NumberSymbolKind) -> Tri {
   match kind {
-    @symcore.NumberSymbolKind::NaN => Tri::Unknown
-    _ => Tri::False
+    NaN => Unknown
+    _ => False
   }
 }
 
 ///|
 fn number_symbol_is_real(kind : @symcore.NumberSymbolKind) -> Tri {
   match kind {
-    @symcore.NumberSymbolKind::ImaginaryUnit
-    | @symcore.NumberSymbolKind::ComplexInfinity => Tri::False
-    @symcore.NumberSymbolKind::Pi
-    | @symcore.NumberSymbolKind::Exp1
-    | @symcore.NumberSymbolKind::EulerGamma
-    | @symcore.NumberSymbolKind::GoldenRatio
-    | @symcore.NumberSymbolKind::Catalan
-    | @symcore.NumberSymbolKind::Infinity
-    | @symcore.NumberSymbolKind::NegativeInfinity => Tri::True
-    @symcore.NumberSymbolKind::NaN => Tri::Unknown
+    ImaginaryUnit | ComplexInfinity => False
+    Pi
+    | Exp1
+    | EulerGamma
+    | GoldenRatio
+    | Catalan
+    | Infinity
+    | NegativeInfinity => True
+    NaN => Unknown
   }
 }
 
 ///|
 fn number_symbol_is_positive(kind : @symcore.NumberSymbolKind) -> Tri {
   match kind {
-    @symcore.NumberSymbolKind::Pi
-    | @symcore.NumberSymbolKind::Exp1
-    | @symcore.NumberSymbolKind::EulerGamma
-    | @symcore.NumberSymbolKind::GoldenRatio
-    | @symcore.NumberSymbolKind::Catalan
-    | @symcore.NumberSymbolKind::Infinity => Tri::True
-    @symcore.NumberSymbolKind::ImaginaryUnit
-    | @symcore.NumberSymbolKind::NegativeInfinity
-    | @symcore.NumberSymbolKind::ComplexInfinity => Tri::False
-    @symcore.NumberSymbolKind::NaN => Tri::Unknown
+    Pi | Exp1 | EulerGamma | GoldenRatio | Catalan | Infinity => True
+    ImaginaryUnit | NegativeInfinity | ComplexInfinity => False
+    NaN => Unknown
   }
 }
 
 ///|
 fn number_symbol_is_nonnegative(kind : @symcore.NumberSymbolKind) -> Tri {
   match kind {
-    @symcore.NumberSymbolKind::Pi
-    | @symcore.NumberSymbolKind::Exp1
-    | @symcore.NumberSymbolKind::EulerGamma
-    | @symcore.NumberSymbolKind::GoldenRatio
-    | @symcore.NumberSymbolKind::Catalan
-    | @symcore.NumberSymbolKind::Infinity => Tri::True
-    @symcore.NumberSymbolKind::ImaginaryUnit
-    | @symcore.NumberSymbolKind::NegativeInfinity
-    | @symcore.NumberSymbolKind::ComplexInfinity => Tri::False
-    @symcore.NumberSymbolKind::NaN => Tri::Unknown
+    Pi | Exp1 | EulerGamma | GoldenRatio | Catalan | Infinity => True
+    ImaginaryUnit | NegativeInfinity | ComplexInfinity => False
+    NaN => Unknown
   }
 }

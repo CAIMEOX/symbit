@@ -84,19 +84,13 @@ fn free_symbols(expr : Expr) -> Array[String] {
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_)
-    | @symcore.ExprForm::Float(_)
-    | @symcore.ExprForm::ComplexFloat(_)
-    | @symcore.ExprForm::NumberSymbol(_)
-    | @symcore.ExprForm::Boolean(_) => []
-    @symcore.ExprForm::Symbol(name) => [name]
-    @symcore.ExprForm::Dummy(name, _) => [@symcore.dummy_display_name(name)]
-    @symcore.ExprForm::Wild(name, _, _) => [@symcore.wild_display_name(name)]
-    @symcore.ExprForm::FunctionHead(_) => []
-    @symcore.ExprForm::UndefinedFunction(_) => []
-    @symcore.ExprForm::Add(args)
-    | @symcore.ExprForm::Mul(args)
-    | @symcore.ExprForm::Tuple(args) => {
+    Number(_) | Float(_) | ComplexFloat(_) | NumberSymbol(_) | Boolean(_) => []
+    Symbol(name) => [name]
+    Dummy(name, _) => [@symcore.dummy_display_name(name)]
+    Wild(name, _, _) => [@symcore.wild_display_name(name)]
+    FunctionHead(_) => []
+    UndefinedFunction(_) => []
+    Add(args) | Mul(args) | Tuple(args) => {
       let out : Array[String] = []
       for arg in args {
         for name in free_symbols(arg) {
@@ -105,7 +99,7 @@ fn free_symbols(expr : Expr) -> Array[String] {
       }
       sort_unique_symbols(out)
     }
-    @symcore.ExprForm::Dict(items) => {
+    Dict(items) => {
       let out : Array[String] = []
       for item in items {
         let (key, value) = item
@@ -118,13 +112,12 @@ fn free_symbols(expr : Expr) -> Array[String] {
       }
       sort_unique_symbols(out)
     }
-    @symcore.ExprForm::Pow(base, exp) =>
+    Pow(base, exp) =>
       sort_unique_symbols(free_symbols(base) + free_symbols(exp))
-    @symcore.ExprForm::Mod(lhs, rhs) =>
+    Mod(lhs, rhs) => sort_unique_symbols(free_symbols(lhs) + free_symbols(rhs))
+    Relational(_, lhs, rhs) =>
       sort_unique_symbols(free_symbols(lhs) + free_symbols(rhs))
-    @symcore.ExprForm::Relational(_, lhs, rhs) =>
-      sort_unique_symbols(free_symbols(lhs) + free_symbols(rhs))
-    @symcore.ExprForm::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       let out = free_symbols(inner)
       for arg in deriv_args {
         for name in free_symbols(arg) {
@@ -133,11 +126,11 @@ fn free_symbols(expr : Expr) -> Array[String] {
       }
       sort_unique_symbols(out)
     }
-    @symcore.ExprForm::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       sort_unique_symbols(
         free_symbols(inner) + free_symbols(variable) + free_symbols(value),
       )
-    @symcore.ExprForm::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       sort_unique_symbols(free_symbols(vars) + free_symbols(body))
     _ => []
   }
@@ -158,9 +151,9 @@ fn expr_complex_float_to_code(
     return @symcore.Float::from_mpf(mpc.real, prec=value.precision()).format()
   }
   match language {
-    TargetLanguage::Julia | TargetLanguage::Octave => value.format()
+    Julia | Octave => value.format()
     _ =>
-      raise UtilitiesError::Unsupported(
+      raise Unsupported(
         "codegen does not support complex floating literals for this target",
       )
   }
@@ -174,12 +167,12 @@ fn print_relational_expr(
   language : TargetLanguage,
 ) -> String raise UtilitiesError {
   let symbol = match op {
-    @symcore.RelOp::Eq => "=="
-    @symcore.RelOp::Ne => "!="
-    @symcore.RelOp::Lt => "<"
-    @symcore.RelOp::Le => "<="
-    @symcore.RelOp::Gt => ">"
-    @symcore.RelOp::Ge => ">="
+    Eq => "=="
+    Ne => "!="
+    Lt => "<"
+    Le => "<="
+    Gt => ">"
+    Ge => ">="
   }
   print_expr_prec(lhs, language, 0) +
   " " +
@@ -190,7 +183,7 @@ fn print_relational_expr(
 
 ///|
 fn print_derivative_expr(expr : Expr) -> String raise UtilitiesError {
-  raise UtilitiesError::Unsupported(
+  raise Unsupported(
     "codegen does not support derivative expressions yet: " +
     @symprint.pretty_string(expr),
   )
@@ -198,7 +191,7 @@ fn print_derivative_expr(expr : Expr) -> String raise UtilitiesError {
 
 ///|
 fn print_lambda_like_expr(expr : Expr) -> String raise UtilitiesError {
-  raise UtilitiesError::Unsupported(
+  raise Unsupported(
     "codegen does not support higher-order expressions yet: " +
     @symprint.pretty_string(expr),
   )
@@ -228,32 +221,30 @@ fn print_expr_prec(
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(n) => expr_number_to_code(n)
-    @symcore.ExprForm::Float(value) => expr_float_to_code(value)
-    @symcore.ExprForm::ComplexFloat(value) =>
-      expr_complex_float_to_code(value, language)
-    @symcore.ExprForm::NumberSymbol(kind) =>
+    Number(n) => expr_number_to_code(n)
+    Float(value) => expr_float_to_code(value)
+    ComplexFloat(value) => expr_complex_float_to_code(value, language)
+    NumberSymbol(kind) =>
       sanitize_name(@symcore.number_symbol_name(kind), language)
-    @symcore.ExprForm::Symbol(name) => sanitize_name(name, language)
-    @symcore.ExprForm::Dummy(name, _) =>
-      sanitize_name(@symcore.dummy_display_name(name), language)
-    @symcore.ExprForm::Wild(name, _, _) =>
+    Symbol(name) => sanitize_name(name, language)
+    Dummy(name, _) => sanitize_name(@symcore.dummy_display_name(name), language)
+    Wild(name, _, _) =>
       sanitize_name(@symcore.wild_display_name(name), language)
-    @symcore.ExprForm::FunctionHead(name) => sanitize_name(name, language)
-    @symcore.ExprForm::UndefinedFunction(name) => sanitize_name(name, language)
-    @symcore.ExprForm::Boolean(true) => "true"
-    @symcore.ExprForm::Boolean(false) => "false"
-    @symcore.ExprForm::Add(args) => {
+    FunctionHead(name) => sanitize_name(name, language)
+    UndefinedFunction(name) => sanitize_name(name, language)
+    Boolean(true) => "true"
+    Boolean(false) => "false"
+    Add(args) => {
       let text = args.map(arg => print_expr_prec(arg, language, 0)).join(" + ")
       parenthesize_if_needed(text, 0, parent_prec)
     }
-    @symcore.ExprForm::Mul(args) => {
+    Mul(args) => {
       let text = args.map(arg => print_expr_prec(arg, language, 1)).join("*")
       parenthesize_if_needed(text, 1, parent_prec)
     }
-    @symcore.ExprForm::Pow(base, exp) => {
+    Pow(base, exp) => {
       let text = match language {
-        TargetLanguage::Rust =>
+        Rust =>
           print_expr_prec(base, language, 3) +
           ".powf(" +
           print_expr_prec(exp, language, 0) +
@@ -267,9 +258,9 @@ fn print_expr_prec(
       }
       parenthesize_if_needed(text, 2, parent_prec)
     }
-    @symcore.ExprForm::Mod(lhs, rhs) => {
+    Mod(lhs, rhs) => {
       let text = match language {
-        TargetLanguage::Julia | TargetLanguage::Octave =>
+        Julia | Octave =>
           "mod(" +
           print_expr_prec(lhs, language, 0) +
           ", " +
@@ -282,18 +273,17 @@ fn print_expr_prec(
       }
       parenthesize_if_needed(text, 2, parent_prec)
     }
-    @symcore.ExprForm::Tuple(args) =>
+    Tuple(args) =>
       "(" + args.map(arg => print_expr_prec(arg, language, 0)).join(", ") + ")"
-    @symcore.ExprForm::Dict(_) => print_lambda_like_expr(expr)
-    @symcore.ExprForm::Relational(op, lhs, rhs) =>
+    Dict(_) => print_lambda_like_expr(expr)
+    Relational(op, lhs, rhs) =>
       parenthesize_if_needed(
         print_relational_expr(op, lhs, rhs, language),
         0,
         parent_prec,
       )
-    @symcore.ExprForm::Derivative(_, _) => print_derivative_expr(expr)
-    @symcore.ExprForm::Subs(_, _, _) | @symcore.ExprForm::Lambda(_, _) =>
-      print_lambda_like_expr(expr)
+    Derivative(_, _) => print_derivative_expr(expr)
+    Subs(_, _, _) | Lambda(_, _) => print_lambda_like_expr(expr)
     _ => print_lambda_like_expr(expr)
   }
 }
@@ -301,11 +291,10 @@ fn print_expr_prec(
 ///|
 fn sanitize_name(name : String, language : TargetLanguage) -> String {
   let reserved = match language {
-    TargetLanguage::C89 | TargetLanguage::C99 =>
-      ["if", "while", "typedef", "return"]
-    TargetLanguage::Julia => ["function", "end", "if"]
-    TargetLanguage::Octave => ["function", "end", "if"]
-    TargetLanguage::Rust => ["fn", "if", "while", "type", "return"]
+    C89 | C99 => ["if", "while", "typedef", "return"]
+    Julia => ["function", "end", "if"]
+    Octave => ["function", "end", "if"]
+    Rust => ["fn", "if", "while", "type", "return"]
   }
   if reserved.contains(name) {
     name + "_"
@@ -349,14 +338,13 @@ pub fn get_target_language(
   language : String,
 ) -> TargetLanguage raise UtilitiesError {
   match string_lower(language) {
-    "c" => TargetLanguage::C99
-    "c89" => TargetLanguage::C89
-    "c99" => TargetLanguage::C99
-    "julia" | "jl" => TargetLanguage::Julia
-    "octave" | "matlab" | "m" => TargetLanguage::Octave
-    "rust" | "rs" => TargetLanguage::Rust
-    other =>
-      raise UtilitiesError::Unsupported("unknown codegen language " + other)
+    "c" => C99
+    "c89" => C89
+    "c99" => C99
+    "julia" | "jl" => Julia
+    "octave" | "matlab" | "m" => Octave
+    "rust" | "rs" => Rust
+    other => raise Unsupported("unknown codegen language " + other)
   }
 }
 
@@ -367,7 +355,7 @@ pub fn make_routine(
   argument_sequence? : Array[String]? = None,
 ) -> Routine raise UtilitiesError {
   if exprs.is_empty() {
-    raise UtilitiesError::InvalidArgument("routine needs at least one result")
+    raise InvalidArgument("routine needs at least one result")
   }
   let free : Array[String] = []
   for item in exprs {
@@ -381,7 +369,7 @@ pub fn make_routine(
       let normalized = sort_unique_symbols(seq)
       for needed in inferred {
         if !normalized.contains(needed) {
-          raise UtilitiesError::InvalidArgument(
+          raise InvalidArgument(
             "symbols needed for output are not in input: " + needed,
           )
         }
@@ -411,18 +399,17 @@ fn prototype(routine : Routine, language : TargetLanguage) -> String {
     .map(arg => {
       let sanitized = sanitize_name(arg, language)
       match language {
-        TargetLanguage::C89 | TargetLanguage::C99 => "double " + sanitized
-        TargetLanguage::Julia | TargetLanguage::Octave => sanitized
-        TargetLanguage::Rust => sanitized + ": f64"
+        C89 | C99 => "double " + sanitized
+        Julia | Octave => sanitized
+        Rust => sanitized + ": f64"
       }
     })
     .join(", ")
   match language {
-    TargetLanguage::C89 | TargetLanguage::C99 =>
-      "double " + routine.name + "(" + args + ")"
-    TargetLanguage::Julia => routine.name + "(" + args + ")"
-    TargetLanguage::Octave => routine.name + "(" + args + ")"
-    TargetLanguage::Rust => "fn " + routine.name + "(" + args + ") -> f64"
+    C89 | C99 => "double " + routine.name + "(" + args + ")"
+    Julia => routine.name + "(" + args + ")"
+    Octave => routine.name + "(" + args + ")"
+    Rust => "fn " + routine.name + "(" + args + ") -> f64"
   }
 }
 
@@ -437,7 +424,7 @@ pub fn CodeGenerator::dump_source(
   ignore(header)
   let blocks : Array[String] = []
   match self.language {
-    TargetLanguage::C89 | TargetLanguage::C99 => {
+    C89 | C99 => {
       blocks.push("#include \"" + prefix + ".h\"\n#include <math.h>\n")
       for routine in routines {
         let result = routine.results[0]
@@ -461,7 +448,7 @@ pub fn CodeGenerator::dump_source(
         blocks.push(block)
       }
     }
-    TargetLanguage::Julia =>
+    Julia =>
       for routine in routines {
         let result = routine.results[0]
         let block = [
@@ -477,7 +464,7 @@ pub fn CodeGenerator::dump_source(
         ].join("")
         blocks.push(block)
       }
-    TargetLanguage::Octave =>
+    Octave =>
       for routine in routines {
         let result = routine.results[0]
         let block = [
@@ -493,7 +480,7 @@ pub fn CodeGenerator::dump_source(
         ].join("")
         blocks.push(block)
       }
-    TargetLanguage::Rust =>
+    Rust =>
       for routine in routines {
         let result = routine.results[0]
         let block = [
@@ -522,7 +509,7 @@ pub fn CodeGenerator::dump_header(
 ) -> String {
   ignore(header)
   match self.language {
-    TargetLanguage::C89 | TargetLanguage::C99 => {
+    C89 | C99 => {
       let macro_name = c_header_guard(prefix)
       let lines : Array[String] = [
         "#ifndef " + macro_name,
@@ -547,16 +534,16 @@ pub fn CodeGenerator::write(
   empty? : Bool = false,
 ) -> Array[(String, String)] raise UtilitiesError {
   match self.language {
-    TargetLanguage::C89 | TargetLanguage::C99 =>
+    C89 | C99 =>
       [
         (prefix + ".c", self.dump_source(routines, prefix, header~, empty~)),
         (prefix + ".h", self.dump_header(routines, prefix, header~)),
       ]
-    TargetLanguage::Julia =>
+    Julia =>
       [(prefix + ".jl", self.dump_source(routines, prefix, header~, empty~))]
-    TargetLanguage::Octave =>
+    Octave =>
       [(prefix + ".m", self.dump_source(routines, prefix, header~, empty~))]
-    TargetLanguage::Rust =>
+    Rust =>
       [(prefix + ".rs", self.dump_source(routines, prefix, header~, empty~))]
   }
 }

@@ -99,7 +99,7 @@ fn vector_equals_zero(expr : @symcore.Expr) -> Bool? {
     }
   }
   match simplified {
-    @symcore.Expr::Number(n) => Some(n.is_zero())
+    Number(n) => Some(n.is_zero())
     _ => Some(false)
   }
 }

@@ -51,21 +51,13 @@ fn sympy_call_must(
 ///|
 pub fn core_expr_sstr(expr : @symcore.Expr) -> String raise {
   let obj = @sympy.expr_to_sympy(expr)
-  py_str_obj(
-    objenum_to_obj(
-      sympy_call_must("sympy.sstr", [@sympy.OracleArg::PyObj(obj)]),
-    ),
-  )
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.sstr", [PyObj(obj)])))
 }
 
 ///|
 pub fn core_expr_srepr(expr : @symcore.Expr) -> String raise {
   let obj = @sympy.expr_to_sympy(expr)
-  py_str_obj(
-    objenum_to_obj(
-      sympy_call_must("sympy.srepr", [@sympy.OracleArg::PyObj(obj)]),
-    ),
-  )
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.srepr", [PyObj(obj)])))
 }
 
 ///|
@@ -75,9 +67,7 @@ pub fn core_expr_latex_kwargs(
 ) -> String raise {
   let obj = @sympy.expr_to_sympy(expr)
   py_str_obj(
-    objenum_to_obj(
-      sympy_call_must("sympy.latex", [@sympy.OracleArg::PyObj(obj)], kwargs~),
-    ),
+    objenum_to_obj(sympy_call_must("sympy.latex", [PyObj(obj)], kwargs~)),
   )
 }
 
@@ -86,7 +76,7 @@ pub fn core_expr_latex(
   expr : @symcore.Expr,
   mode? : String = "plain",
 ) -> String raise {
-  core_expr_latex_kwargs(expr, kwargs={ "mode": @sympy.OracleArg::Str(mode) })
+  core_expr_latex_kwargs(expr, kwargs={ "mode": Str(mode) })
 }
 
 ///|
@@ -151,10 +141,7 @@ fn core_eval_with_globals(
     None => fail("py-sympy-missing")
   }
   globals.set("sympy", sympy_mod)
-  let args = @sympy.py_pack_args([
-    @sympy.OracleArg::Str(code),
-    @sympy.OracleArg::PyObj(globals.obj()),
-  ])
+  let args = @sympy.py_pack_args([Str(code), PyObj(globals.obj())])
   let res = match @sympy.py_call_object(py_callable_from_enum(eval_obj), args) {
     Some(obj) => obj
     None => fail("py-eval-none")
@@ -187,15 +174,15 @@ fn core_exec_result_str(script : String) -> String raise {
     }
     globals.set("sympy", sympy_mod)
     let exec_args = @sympy.py_pack_args([
-      @sympy.OracleArg::Str(script),
-      @sympy.OracleArg::PyObj(globals.obj()),
-      @sympy.OracleArg::PyObj(globals.obj()),
+      Str(script),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     ignore(@sympy.py_call_object(py_callable_from_enum(exec_obj), exec_args))
     let eval_args = @sympy.py_pack_args([
-      @sympy.OracleArg::Str("__result__"),
-      @sympy.OracleArg::PyObj(globals.obj()),
-      @sympy.OracleArg::PyObj(globals.obj()),
+      Str("__result__"),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match @sympy.py_call_object(eval_callable, eval_args) {
       Some(obj) => py_str_obj(objenum_to_obj(obj))
@@ -306,7 +293,7 @@ pub fn core_subst_symbol_sstr(
 ) -> String raise {
   let globals = @py.PyDict::new()
   globals.set("expr", @sympy.expr_to_sympy(expr))
-  globals.set("old", @sympy.expr_to_sympy(@symcore.Expr::Symbol(symbol_name)))
+  globals.set("old", @sympy.expr_to_sympy(Symbol(symbol_name)))
   globals.set("new", @sympy.expr_to_sympy(new_expr))
   py_str_obj(core_eval_with_globals("sympy.sstr(expr.subs(old, new))", globals))
 }

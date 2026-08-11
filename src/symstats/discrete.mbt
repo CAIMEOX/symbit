@@ -7,17 +7,17 @@ pub fn binomial(
   n : @symcore.Expr,
   p : @symcore.Expr,
 ) -> RandomVar {
-  random_var(name, RVKind::Binomial(n~, p~))
+  random_var(name, Binomial(n~, p~))
 }
 
 ///|
 pub fn poisson(name : String, rate : @symcore.Expr) -> RandomVar {
-  random_var(name, RVKind::Poisson(rate~))
+  random_var(name, Poisson(rate~))
 }
 
 ///|
 pub fn geometric(name : String, p : @symcore.Expr) -> RandomVar {
-  random_var(name, RVKind::Geometric(p~))
+  random_var(name, Geometric(p~))
 }
 
 ///|
@@ -26,7 +26,7 @@ pub fn negative_binomial(
   r : @symcore.Expr,
   p : @symcore.Expr,
 ) -> RandomVar {
-  random_var(name, RVKind::NegativeBinomial(r~, p~))
+  random_var(name, NegativeBinomial(r~, p~))
 }
 
 ///|
@@ -43,7 +43,7 @@ fn discrete_one_minus(x : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn discrete_tuple_matrix(rows : Array[Array[@symcore.Expr]]) -> @symcore.Expr {
-  @symcore.Expr::Tuple(rows.map(row => @symcore.Expr::Tuple(row)))
+  Tuple(rows.map(row => Tuple(row)))
 }
 
 ///|
@@ -75,7 +75,7 @@ fn discrete_extract_rel_to_var(
 ) -> (RelOp, @symcore.Expr)? {
   let x = @symcore.Expr::Symbol(var_name)
   match event {
-    Event::Rel(op~, lhs~, rhs~) =>
+    Rel(op~, lhs~, rhs~) =>
       if @symcore.compare_expr(lhs, x) == 0 {
         Some((op, rhs))
       } else if @symcore.compare_expr(rhs, x) == 0 {
@@ -291,7 +291,7 @@ fn symbolic_discrete_cdf_by_pmf_sum(
         return Some(@symcore.int(0))
       }
       let upper = match discrete_tag_from_name(name) {
-        DiscreteTag::BetaBinomial if params.length() == 3 =>
+        BetaBinomial if params.length() == 3 =>
           match expr_as_int(params[0]) {
             Some(n) => if ki > n { n } else { ki }
             None => ki
@@ -322,7 +322,7 @@ fn symbolic_discrete_pmf_for(
   k : @symcore.Expr,
 ) -> @symcore.Expr? {
   let kind = symbolic_kind_from_name(name)
-  let rv = random_var("_X", RVKind::Symbolic(kind~, params~))
+  let rv = random_var("_X", Symbolic(kind~, params~))
   discrete_pmf(rv, k)
 }
 
@@ -338,7 +338,7 @@ fn symbolic_discrete_joint_box_cdf(
       let uppers : Array[@symcore.Expr] = Array::new()
       let guard_terms : Array[@symcore.Expr] = Array::new()
       for i in 0..<bounds.length() {
-        indices.push(@symcore.Expr::Symbol("_k\{i + 1}"))
+        indices.push(Symbol("_k\{i + 1}"))
         uppers.push(@symcore.function("floor", [bounds[i]]))
         guard_terms.push(@symcore.function("Ge", [bounds[i], @symcore.int(0)]))
       }
@@ -354,16 +354,13 @@ fn symbolic_discrete_joint_box_cdf(
           for i in 0..<indices.length() {
             sum_expr = @symcore.function("Sum", [
               sum_expr,
-              @symcore.Expr::Tuple([indices[i], @symcore.int(0), uppers[i]]),
+              Tuple([indices[i], @symcore.int(0), uppers[i]]),
             ])
           }
           Some(
             @symcore.function("Piecewise", [
-              @symcore.Expr::Tuple([sum_expr, cond]),
-              @symcore.Expr::Tuple([
-                @symcore.int(0),
-                @symcore.Expr::Boolean(true),
-              ]),
+              Tuple([sum_expr, cond]),
+              Tuple([@symcore.int(0), Boolean(true)]),
             ]),
           )
         }
@@ -383,37 +380,30 @@ fn symbolic_discrete_cdf_formula(
   let kk = @symcore.Expr::Symbol("_k")
   let fk = @symcore.function("floor", [k])
   match discrete_tag_from_name(name) {
-    DiscreteTag::BetaBinomial if params.length() == 3 =>
+    BetaBinomial if params.length() == 3 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) => {
           let n = params[0]
           Some(
             @symcore.function("Piecewise", [
-              @symcore.Expr::Tuple([
+              Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(0)]),
               ]),
-              @symcore.Expr::Tuple([
+              Tuple([
                 @symcore.function("Sum", [
                   pmf,
-                  @symcore.Expr::Tuple([
-                    kk,
-                    @symcore.int(0),
-                    @symcore.function("Min", [n, fk]),
-                  ]),
+                  Tuple([kk, @symcore.int(0), @symcore.function("Min", [n, fk])]),
                 ]),
                 @symcore.function("Le", [k, n]),
               ]),
-              @symcore.Expr::Tuple([
-                @symcore.int(1),
-                @symcore.Expr::Boolean(true),
-              ]),
+              Tuple([@symcore.int(1), Boolean(true)]),
             ]),
           )
         }
         None => None
       }
-    DiscreteTag::Hypergeometric if params.length() == 3 =>
+    Hypergeometric if params.length() == 3 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) => {
           let pop = params[0]
@@ -426,145 +416,110 @@ fn symbolic_discrete_cdf_formula(
           let high = @symcore.function("Min", [draws, succ])
           Some(
             @symcore.function("Piecewise", [
-              @symcore.Expr::Tuple([
-                @symcore.int(0),
-                @symcore.function("Lt", [fk, low]),
-              ]),
-              @symcore.Expr::Tuple([
+              Tuple([@symcore.int(0), @symcore.function("Lt", [fk, low])]),
+              Tuple([
                 @symcore.function("Sum", [
                   pmf,
-                  @symcore.Expr::Tuple([
-                    kk,
-                    low,
-                    @symcore.function("Min", [high, fk]),
-                  ]),
+                  Tuple([kk, low, @symcore.function("Min", [high, fk])]),
                 ]),
                 @symcore.function("Le", [k, high]),
               ]),
-              @symcore.Expr::Tuple([
-                @symcore.int(1),
-                @symcore.Expr::Boolean(true),
-              ]),
+              Tuple([@symcore.int(1), Boolean(true)]),
             ]),
           )
         }
         None => None
       }
-    DiscreteTag::IdealSoliton if params.length() == 1 =>
+    IdealSoliton if params.length() == 1 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) => {
           let n = params[0]
           Some(
             @symcore.function("Piecewise", [
-              @symcore.Expr::Tuple([
+              Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(1)]),
               ]),
-              @symcore.Expr::Tuple([
+              Tuple([
                 @symcore.function("Sum", [
                   pmf,
-                  @symcore.Expr::Tuple([
-                    kk,
-                    @symcore.int(1),
-                    @symcore.function("Min", [n, fk]),
-                  ]),
+                  Tuple([kk, @symcore.int(1), @symcore.function("Min", [n, fk])]),
                 ]),
                 @symcore.function("Le", [k, n]),
               ]),
-              @symcore.Expr::Tuple([
-                @symcore.int(1),
-                @symcore.Expr::Boolean(true),
-              ]),
+              Tuple([@symcore.int(1), Boolean(true)]),
             ]),
           )
         }
         None => None
       }
-    DiscreteTag::RobustSoliton if params.length() == 3 =>
+    RobustSoliton if params.length() == 3 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) => {
           let n = params[0]
           Some(
             @symcore.function("Piecewise", [
-              @symcore.Expr::Tuple([
+              Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(1)]),
               ]),
-              @symcore.Expr::Tuple([
+              Tuple([
                 @symcore.function("Sum", [
                   pmf,
-                  @symcore.Expr::Tuple([
-                    kk,
-                    @symcore.int(1),
-                    @symcore.function("Min", [n, fk]),
-                  ]),
+                  Tuple([kk, @symcore.int(1), @symcore.function("Min", [n, fk])]),
                 ]),
                 @symcore.function("Le", [k, n]),
               ]),
-              @symcore.Expr::Tuple([
-                @symcore.int(1),
-                @symcore.Expr::Boolean(true),
-              ]),
+              Tuple([@symcore.int(1), Boolean(true)]),
             ]),
           )
         }
         None => None
       }
-    DiscreteTag::Hermite if params.length() == 2 =>
+    Hermite if params.length() == 2 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
             @symcore.function("Piecewise", [
-              @symcore.Expr::Tuple([
+              Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(0)]),
               ]),
-              @symcore.Expr::Tuple([
-                @symcore.function("Sum", [
-                  pmf,
-                  @symcore.Expr::Tuple([kk, @symcore.int(0), fk]),
-                ]),
-                @symcore.Expr::Boolean(true),
+              Tuple([
+                @symcore.function("Sum", [pmf, Tuple([kk, @symcore.int(0), fk])]),
+                Boolean(true),
               ]),
             ]),
           )
         None => None
       }
-    DiscreteTag::Logarithmic if params.length() == 1 =>
+    Logarithmic if params.length() == 1 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
             @symcore.function("Piecewise", [
-              @symcore.Expr::Tuple([
+              Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(1)]),
               ]),
-              @symcore.Expr::Tuple([
-                @symcore.function("Sum", [
-                  pmf,
-                  @symcore.Expr::Tuple([kk, @symcore.int(1), fk]),
-                ]),
-                @symcore.Expr::Boolean(true),
+              Tuple([
+                @symcore.function("Sum", [pmf, Tuple([kk, @symcore.int(1), fk])]),
+                Boolean(true),
               ]),
             ]),
           )
         None => None
       }
-    DiscreteTag::Skellam if params.length() == 2 =>
+    Skellam if params.length() == 2 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
             @symcore.function("Sum", [
               pmf,
-              @symcore.Expr::Tuple([
+              Tuple([
                 kk,
                 eval_arith(
-                  @symcore.mul([
-                    @symcore.int(-1),
-                    @symcore.Expr::NumberSymbol(
-                      @symcore.NumberSymbolKind::Infinity,
-                    ),
-                  ]),
+                  @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
                 ),
                 fk,
               ]),
@@ -572,29 +527,26 @@ fn symbolic_discrete_cdf_formula(
           )
         None => None
       }
-    DiscreteTag::Zeta if params.length() == 1 =>
+    Zeta if params.length() == 1 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
             @symcore.function("Piecewise", [
-              @symcore.Expr::Tuple([
+              Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(1)]),
               ]),
-              @symcore.Expr::Tuple([
-                @symcore.function("Sum", [
-                  pmf,
-                  @symcore.Expr::Tuple([kk, @symcore.int(1), fk]),
-                ]),
-                @symcore.Expr::Boolean(true),
+              Tuple([
+                @symcore.function("Sum", [pmf, Tuple([kk, @symcore.int(1), fk])]),
+                Boolean(true),
               ]),
             ]),
           )
         None => None
       }
-    DiscreteTag::Multinomial if params.length() >= 2 =>
+    Multinomial if params.length() >= 2 =>
       symbolic_discrete_joint_box_cdf(name, params, k)
-    DiscreteTag::NegativeMultinomial if params.length() >= 2 =>
+    NegativeMultinomial if params.length() >= 2 =>
       symbolic_discrete_joint_box_cdf(name, params, k)
     _ => None
   }
@@ -603,22 +555,21 @@ fn symbolic_discrete_cdf_formula(
 ///|
 pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Finite(_) => finite_pmf(rv, k)
-    RVKind::Binomial(n~, p~) => Some(binomial_pmf_expr(n, p, k))
-    RVKind::Poisson(rate~) => Some(poisson_pmf_expr(rate, k))
-    RVKind::Geometric(p~) => Some(geometric_pmf_expr(p, k))
-    RVKind::NegativeBinomial(r~, p~) =>
-      Some(negative_binomial_pmf_expr(r, p, k))
-    RVKind::Symbolic(kind~, params~) =>
+    Finite(_) => finite_pmf(rv, k)
+    Binomial(n~, p~) => Some(binomial_pmf_expr(n, p, k))
+    Poisson(rate~) => Some(poisson_pmf_expr(rate, k))
+    Geometric(p~) => Some(geometric_pmf_expr(p, k))
+    NegativeBinomial(r~, p~) => Some(negative_binomial_pmf_expr(r, p, k))
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Discrete(
-          DiscreteTag::DiscreteRV
-          | DiscreteTag::DiscreteDistributionHandmade
-          | DiscreteTag::FiniteDistributionHandmade
+        Discrete(
+          DiscreteRV
+          | DiscreteDistributionHandmade
+          | FiniteDistributionHandmade
         ) => None
-        SymbolicKind::Discrete(tag) => {
+        Discrete(tag) => {
           let name = discrete_tag_name(tag)
-          if tag == DiscreteTag::Hermite && params.length() == 2 {
+          if tag == Hermite && params.length() == 2 {
             let a1 = params[0]
             let a2 = params[1]
             let jj = @symcore.Expr::Symbol("_j")
@@ -653,7 +604,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
             )
             let sum_expr = @symcore.function("Sum", [
               summand,
-              @symcore.Expr::Tuple([
+              Tuple([
                 jj,
                 @symcore.int(0),
                 @symcore.function("floor", [
@@ -677,15 +628,15 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
               ),
             )
           }
-          if tag == DiscreteTag::IdealSoliton && params.length() == 1 {
+          if tag == IdealSoliton && params.length() == 1 {
             let kk = params[0]
             return Some(
               @symcore.function("Piecewise", [
-                @symcore.Expr::Tuple([
+                Tuple([
                   eval_arith(@symcore.pow(kk, @symcore.int(-1))),
                   @symcore.function("Eq", [k, @symcore.int(1)]),
                 ]),
-                @symcore.Expr::Tuple([
+                Tuple([
                   eval_arith(
                     @symcore.pow(
                       eval_arith(
@@ -702,14 +653,11 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                     @symcore.function("Le", [k, kk]),
                   ]),
                 ]),
-                @symcore.Expr::Tuple([
-                  @symcore.int(0),
-                  @symcore.Expr::Boolean(true),
-                ]),
+                Tuple([@symcore.int(0), Boolean(true)]),
               ]),
             )
           }
-          if tag == DiscreteTag::RobustSoliton && params.length() == 3 {
+          if tag == RobustSoliton && params.length() == 3 {
             let kk = params[0]
             let delta = params[1]
             let c = params[2]
@@ -725,11 +673,11 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
               ]),
             )
             let rho = @symcore.function("Piecewise", [
-              @symcore.Expr::Tuple([
+              Tuple([
                 eval_arith(@symcore.pow(kk, @symcore.int(-1))),
                 @symcore.function("Eq", [k, @symcore.int(1)]),
               ]),
-              @symcore.Expr::Tuple([
+              Tuple([
                 eval_arith(
                   @symcore.pow(
                     eval_arith(
@@ -746,13 +694,10 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                   @symcore.function("Le", [k, kk]),
                 ]),
               ]),
-              @symcore.Expr::Tuple([
-                @symcore.int(0),
-                @symcore.Expr::Boolean(true),
-              ]),
+              Tuple([@symcore.int(0), Boolean(true)]),
             ])
             let tau = @symcore.function("Piecewise", [
-              @symcore.Expr::Tuple([
+              Tuple([
                 eval_arith(
                   @symcore.mul([
                     r,
@@ -779,7 +724,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                   ]),
                 ]),
               ]),
-              @symcore.Expr::Tuple([
+              Tuple([
                 eval_arith(
                   @symcore.mul([
                     r,
@@ -800,15 +745,12 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                   ]),
                 ]),
               ]),
-              @symcore.Expr::Tuple([
-                @symcore.int(0),
-                @symcore.Expr::Boolean(true),
-              ]),
+              Tuple([@symcore.int(0), Boolean(true)]),
             ])
             let ii = @symcore.Expr::Symbol("_i")
             let harmonic = @symcore.function("Sum", [
               @symcore.pow(ii, @symcore.int(-1)),
-              @symcore.Expr::Tuple([
+              Tuple([
                 ii,
                 @symcore.int(1),
                 eval_arith(
@@ -856,7 +798,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
               ),
             )
           }
-          if tag == DiscreteTag::Multinomial && params.length() >= 2 {
+          if tag == Multinomial && params.length() >= 2 {
             match @symcore.tuple_items(k) {
               Some(ks) if ks.length() == params.length() - 1 => {
                 let n = params[0]
@@ -883,21 +825,15 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                 let body = eval_arith(@symcore.mul(body_terms))
                 return Some(
                   @symcore.function("Piecewise", [
-                    @symcore.Expr::Tuple([
-                      body,
-                      @symcore.function("Eq", [sum_k, n]),
-                    ]),
-                    @symcore.Expr::Tuple([
-                      @symcore.int(0),
-                      @symcore.Expr::Boolean(true),
-                    ]),
+                    Tuple([body, @symcore.function("Eq", [sum_k, n])]),
+                    Tuple([@symcore.int(0), Boolean(true)]),
                   ]),
                 )
               }
               _ => ()
             }
           }
-          if tag == DiscreteTag::NegativeMultinomial && params.length() >= 2 {
+          if tag == NegativeMultinomial && params.length() >= 2 {
             match @symcore.tuple_items(k) {
               Some(ks) if ks.length() == params.length() - 1 => {
                 let k0 = params[0]
@@ -970,7 +906,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
 ///|
 pub fn discrete_cdf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Finite(items) => {
+    Finite(items) => {
       let mut total = @symnum.BigRational::zero()
       for item in items {
         let (value, p) = item
@@ -982,19 +918,18 @@ pub fn discrete_cdf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
       }
       Some(expr_from_big_rational(total))
     }
-    RVKind::Binomial(n~, p~) => Some(binomial_cdf_expr(n, p, k))
-    RVKind::Poisson(rate~) => Some(poisson_cdf_expr(rate, k))
-    RVKind::Geometric(p~) => Some(geometric_cdf_expr(p, k))
-    RVKind::NegativeBinomial(r~, p~) =>
-      Some(negative_binomial_cdf_expr(r, p, k))
-    RVKind::Symbolic(kind~, params~) =>
+    Binomial(n~, p~) => Some(binomial_cdf_expr(n, p, k))
+    Poisson(rate~) => Some(poisson_cdf_expr(rate, k))
+    Geometric(p~) => Some(geometric_cdf_expr(p, k))
+    NegativeBinomial(r~, p~) => Some(negative_binomial_cdf_expr(r, p, k))
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Discrete(
-          DiscreteTag::DiscreteRV
-          | DiscreteTag::DiscreteDistributionHandmade
-          | DiscreteTag::FiniteDistributionHandmade
+        Discrete(
+          DiscreteRV
+          | DiscreteDistributionHandmade
+          | FiniteDistributionHandmade
         ) => None
-        SymbolicKind::Discrete(tag) => {
+        Discrete(tag) => {
           let name = discrete_tag_name(tag)
           match generated_cdf(name, params, k) {
             Some(v) => Some(v)
@@ -1022,35 +957,34 @@ pub fn discrete_probability(rv : RandomVar, event : Event) -> @symcore.Expr? {
     return None
   }
   match rv.kind {
-    RVKind::Finite(_) => finite_probability(rv, event)
+    Finite(_) => finite_probability(rv, event)
     _ =>
       match event {
-        Event::Bool(v) =>
-          Some(if v { @symcore.int(1) } else { @symcore.int(0) })
-        Event::Not(inner) =>
+        Bool(v) => Some(if v { @symcore.int(1) } else { @symcore.int(0) })
+        Not(inner) =>
           match discrete_probability(rv, inner) {
             Some(inner_p) =>
               Some(eval_arith(discrete_expr_sub(@symcore.int(1), inner_p)))
             None => None
           }
-        Event::Rel(..) =>
+        Rel(..) =>
           match discrete_extract_rel_to_var(event, rv.name) {
             Some((op, k)) =>
               match op {
-                RelOp::Eq => discrete_pmf(rv, k)
-                RelOp::Ne =>
+                Eq => discrete_pmf(rv, k)
+                Ne =>
                   match discrete_pmf(rv, k) {
                     Some(pmf) =>
                       Some(eval_arith(discrete_expr_sub(@symcore.int(1), pmf)))
                     None => None
                   }
-                RelOp::Le => discrete_cdf(rv, k)
-                RelOp::Lt =>
+                Le => discrete_cdf(rv, k)
+                Lt =>
                   discrete_cdf(
                     rv,
                     eval_arith(discrete_expr_sub(k, @symcore.int(1))),
                   )
-                RelOp::Ge =>
+                Ge =>
                   match
                     discrete_cdf(
                       rv,
@@ -1060,7 +994,7 @@ pub fn discrete_probability(rv : RandomVar, event : Event) -> @symcore.Expr? {
                       Some(eval_arith(discrete_expr_sub(@symcore.int(1), cdf)))
                     None => None
                   }
-                RelOp::Gt =>
+                Gt =>
                   match discrete_cdf(rv, k) {
                     Some(cdf) =>
                       Some(eval_arith(discrete_expr_sub(@symcore.int(1), cdf)))
@@ -1081,27 +1015,27 @@ fn symbolic_discrete_mean_by_sum(
 ) -> @symcore.Expr? {
   let kk = @symcore.Expr::Symbol("_k")
   match discrete_tag_from_name(name) {
-    DiscreteTag::IdealSoliton if params.length() == 1 =>
+    IdealSoliton if params.length() == 1 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
             eval_arith(
               @symcore.function("Sum", [
                 eval_arith(@symcore.mul([kk, pmf])),
-                @symcore.Expr::Tuple([kk, @symcore.int(1), params[0]]),
+                Tuple([kk, @symcore.int(1), params[0]]),
               ]),
             ),
           )
         None => None
       }
-    DiscreteTag::RobustSoliton if params.length() == 3 =>
+    RobustSoliton if params.length() == 3 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
             eval_arith(
               @symcore.function("Sum", [
                 eval_arith(@symcore.mul([kk, pmf])),
-                @symcore.Expr::Tuple([kk, @symcore.int(1), params[0]]),
+                Tuple([kk, @symcore.int(1), params[0]]),
               ]),
             ),
           )
@@ -1118,17 +1052,10 @@ fn symbolic_discrete_variance_by_sum(
 ) -> @symcore.Expr? {
   let kk = @symcore.Expr::Symbol("_k")
   let bounds = match discrete_tag_from_name(name) {
-    DiscreteTag::IdealSoliton if params.length() == 1 =>
-      Some((@symcore.int(1), params[0]))
-    DiscreteTag::RobustSoliton if params.length() == 3 =>
-      Some((@symcore.int(1), params[0]))
-    DiscreteTag::YuleSimon if params.length() == 1 =>
-      Some(
-        (
-          @symcore.int(1),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
+    IdealSoliton if params.length() == 1 => Some((@symcore.int(1), params[0]))
+    RobustSoliton if params.length() == 3 => Some((@symcore.int(1), params[0]))
+    YuleSimon if params.length() == 1 =>
+      Some((@symcore.int(1), NumberSymbol(Infinity)))
     _ => None
   }
   match bounds {
@@ -1136,7 +1063,7 @@ fn symbolic_discrete_variance_by_sum(
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) => {
           let kind = symbolic_kind_from_name(name)
-          let rv = random_var("_X", RVKind::Symbolic(kind~, params~))
+          let rv = random_var("_X", Symbolic(kind~, params~))
           let mean_expr = match discrete_mean(rv) {
             Some(v) => v
             None => symbolic_discrete_expr(name, "Mean", params)
@@ -1153,7 +1080,7 @@ fn symbolic_discrete_variance_by_sum(
                     pmf,
                   ]),
                 ),
-                @symcore.Expr::Tuple([kk, lower, upper]),
+                Tuple([kk, lower, upper]),
               ]),
             ),
           )
@@ -1167,11 +1094,11 @@ fn symbolic_discrete_variance_by_sum(
 ///|
 pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Finite(_) => finite_expectation(rv)
-    RVKind::Binomial(n~, p~) => Some(eval_arith(@symcore.mul([n, p])))
-    RVKind::Poisson(rate~) => Some(rate)
-    RVKind::Geometric(p~) => Some(eval_arith(@symcore.pow(p, @symcore.int(-1))))
-    RVKind::NegativeBinomial(r~, p~) =>
+    Finite(_) => finite_expectation(rv)
+    Binomial(n~, p~) => Some(eval_arith(@symcore.mul([n, p])))
+    Poisson(rate~) => Some(rate)
+    Geometric(p~) => Some(eval_arith(@symcore.pow(p, @symcore.int(-1))))
+    NegativeBinomial(r~, p~) =>
       Some(
         eval_arith(
           @symcore.mul([
@@ -1181,9 +1108,9 @@ pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
           ]),
         ),
       )
-    RVKind::Symbolic(kind~, params~) =>
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Discrete(tag) => {
+        Discrete(tag) => {
           let name = discrete_tag_name(tag)
           match generated_mean(name, params) {
             Some(v) => Some(v)
@@ -1192,15 +1119,15 @@ pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
                 Some(v) => Some(v)
                 None =>
                   match tag {
-                    DiscreteTag::Multinomial if params.length() >= 2 => {
+                    Multinomial if params.length() >= 2 => {
                       let n = params[0]
                       let means : Array[@symcore.Expr] = Array::new()
                       for i in 1..<params.length() {
                         means.push(eval_arith(@symcore.mul([n, params[i]])))
                       }
-                      Some(@symcore.Expr::Tuple(means))
+                      Some(Tuple(means))
                     }
-                    DiscreteTag::NegativeMultinomial if params.length() >= 2 => {
+                    NegativeMultinomial if params.length() >= 2 => {
                       let k0 = params[0]
                       let probs : Array[@symcore.Expr] = Array::new()
                       for i in 1..<params.length() {
@@ -1224,9 +1151,9 @@ pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
                           ]),
                         )
                       })
-                      Some(@symcore.Expr::Tuple(means))
+                      Some(Tuple(means))
                     }
-                    DiscreteTag::BetaBinomial if params.length() == 3 =>
+                    BetaBinomial if params.length() == 3 =>
                       Some(
                         eval_arith(
                           @symcore.mul([
@@ -1239,7 +1166,7 @@ pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
                           ]),
                         ),
                       )
-                    DiscreteTag::Hypergeometric if params.length() == 3 =>
+                    Hypergeometric if params.length() == 3 =>
                       Some(
                         eval_arith(
                           @symcore.mul([
@@ -1263,11 +1190,11 @@ pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
 ///|
 pub fn discrete_variance(rv : RandomVar) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Finite(_) => finite_variance(rv)
-    RVKind::Binomial(n~, p~) =>
+    Finite(_) => finite_variance(rv)
+    Binomial(n~, p~) =>
       Some(eval_arith(@symcore.mul([n, p, discrete_one_minus(p)])))
-    RVKind::Poisson(rate~) => Some(rate)
-    RVKind::Geometric(p~) =>
+    Poisson(rate~) => Some(rate)
+    Geometric(p~) =>
       Some(
         eval_arith(
           @symcore.mul([
@@ -1276,7 +1203,7 @@ pub fn discrete_variance(rv : RandomVar) -> @symcore.Expr? {
           ]),
         ),
       )
-    RVKind::NegativeBinomial(r~, p~) =>
+    NegativeBinomial(r~, p~) =>
       Some(
         eval_arith(
           @symcore.mul([
@@ -1286,9 +1213,9 @@ pub fn discrete_variance(rv : RandomVar) -> @symcore.Expr? {
           ]),
         ),
       )
-    RVKind::Symbolic(kind~, params~) =>
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Discrete(tag) => {
+        Discrete(tag) => {
           let name = discrete_tag_name(tag)
           match generated_variance(name, params) {
             Some(v) => Some(v)
@@ -1297,7 +1224,7 @@ pub fn discrete_variance(rv : RandomVar) -> @symcore.Expr? {
                 Some(v) => Some(v)
                 None =>
                   match tag {
-                    DiscreteTag::Multinomial if params.length() >= 2 => {
+                    Multinomial if params.length() >= 2 => {
                       let n = params[0]
                       let ps : Array[@symcore.Expr] = Array::new()
                       for i in 1..<params.length() {
@@ -1327,7 +1254,7 @@ pub fn discrete_variance(rv : RandomVar) -> @symcore.Expr? {
                       }
                       Some(discrete_tuple_matrix(rows))
                     }
-                    DiscreteTag::NegativeMultinomial if params.length() >= 2 => {
+                    NegativeMultinomial if params.length() >= 2 => {
                       let k0 = params[0]
                       let ps : Array[@symcore.Expr] = Array::new()
                       for i in 1..<params.length() {
@@ -1376,7 +1303,7 @@ pub fn discrete_variance(rv : RandomVar) -> @symcore.Expr? {
                       }
                       Some(discrete_tuple_matrix(rows))
                     }
-                    DiscreteTag::BetaBinomial if params.length() == 3 => {
+                    BetaBinomial if params.length() == 3 => {
                       let n = params[0]
                       let alpha = params[1]
                       let beta = params[2]
@@ -1397,7 +1324,7 @@ pub fn discrete_variance(rv : RandomVar) -> @symcore.Expr? {
                         ),
                       )
                     }
-                    DiscreteTag::Hypergeometric if params.length() == 3 => {
+                    Hypergeometric if params.length() == 3 => {
                       let population = params[0]
                       let success = params[1]
                       let draws = params[2]

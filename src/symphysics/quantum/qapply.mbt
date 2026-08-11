@@ -9,7 +9,7 @@
 ///|
 fn quantum_pair_to_factors(expr : Expr) -> Array[Expr] {
   match expr {
-    Expr::Mul(items) => items
+    Mul(items) => items
     _ => [expr]
   }
 }
@@ -99,7 +99,7 @@ fn quantum_sum_expr(
 
 ///|
 fn quantum_symbolic_infinite(expr : Expr) -> Bool {
-  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  expr == NumberSymbol(Infinity)
 }
 
 ///|
@@ -110,7 +110,7 @@ fn quantum_single_symbolic_limit(
   match @symcore.tuple_items(limit_args[0]) {
     Some(items) if items.length() == 3 =>
       match items[0] {
-        Expr::Symbol(name) => Some((name, items[1], items[2]))
+        Symbol(name) => Some((name, items[1], items[2]))
         _ => None
       }
     _ => None
@@ -169,7 +169,7 @@ fn quantum_matching_bra_name(ket_name : String) -> String? {
 ///|
 fn quantum_expr_is_symbol_named(expr : Expr, name : String) -> Bool {
   match expr {
-    Expr::Symbol(sym) => sym == name
+    Symbol(sym) => sym == name
     _ => false
   }
 }
@@ -183,7 +183,7 @@ fn quantum_sum_resolution_kernel(
   let mut ket_name : String? = None
   let mut bra_name : String? = None
   match expr {
-    Expr::Mul(args) =>
+    Mul(args) =>
       for arg in args {
         match (quantum_discrete_ket_info(arg), quantum_discrete_bra_info(arg)) {
           (Some((kname, label)), _) if quantum_expr_is_symbol_named(
@@ -221,7 +221,7 @@ fn quantum_sum_state_term(expr : Expr, sum_name : String) -> (Expr, String)? {
   let coeffs : Array[Expr] = []
   let mut ket_name : String? = None
   match expr {
-    Expr::Mul(args) =>
+    Mul(args) =>
       for arg in args {
         match quantum_discrete_ket_info(arg) {
           Some((name, label)) if quantum_expr_is_symbol_named(label, sum_name) =>
@@ -322,7 +322,7 @@ fn quantum_apply_operator_pair(
     None => ()
   }
   match (lhs, rhs) {
-    (Expr::Pow(base, exp), _) if quantum_is_operator_expr(base) =>
+    (Pow(base, exp), _) if quantum_is_operator_expr(base) =>
       match quantum_integer_value(exp) {
         Some(power) if power > 0 =>
           match
@@ -455,7 +455,7 @@ fn quantum_apply_operator_pair(
       }
     _ if quantum_is_operator_expr(lhs) && quantum_is_scalar_like(rhs) =>
       Some(quantum_mul_from_args_preserve([rhs, lhs]))
-    (_, Expr::Mul(_)) if quantum_is_operator_expr(lhs) &&
+    (_, Mul(_)) if quantum_is_operator_expr(lhs) &&
       quantum_has_nontrivial_scalar_factor(rhs) => {
       let (scalar, body) = quantum_split_scalar_factors(rhs)
       match body {
@@ -471,7 +471,7 @@ fn quantum_apply_operator_pair(
         None => None
       }
     }
-    (_, Expr::Add(args)) if quantum_is_operator_expr(lhs) =>
+    (_, Add(args)) if quantum_is_operator_expr(lhs) =>
       Some(
         quantum_add_from_args_preserve(
           args.map(term => {
@@ -653,13 +653,13 @@ pub fn qapply(
           )
         _ => expr
       }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       @symcore.raw_pow(qapply(base, dagger~, ip_doit~, sum_doit~), exp)
-    Expr::Add(args) =>
+    Add(args) =>
       quantum_add_from_args_preserve(
         args.map(arg => qapply(arg, dagger~, ip_doit~, sum_doit~)),
       )
-    Expr::Mul(args) => {
+    Mul(args) => {
       let out = quantum_qapply_mul(args, dagger, ip_doit, sum_doit)
       if dagger && out == expr {
         let restored = quantum_adjoint(

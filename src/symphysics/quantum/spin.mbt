@@ -8,14 +8,14 @@
 
 ///|
 fn spin_op_symbol(name : String) -> Expr {
-  Expr::Symbol(name)
+  Symbol(name)
 }
 
 ///|
 fn spin_numeric_args(args : Array[Expr]) -> Bool {
   for arg in args {
     match arg {
-      Expr::Number(_) => ()
+      Number(_) => ()
       _ => return false
     }
   }
@@ -27,8 +27,7 @@ fn spin_pi_multiple(num : Int, den : Int) -> Expr {
   if num == 0 {
     int(0)
   } else {
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    spin_exact_rational(num, den)
+    NumberSymbol(Pi) * spin_exact_rational(num, den)
   }
 }
 
@@ -56,7 +55,7 @@ fn spin_coupled_state_expr_name(basis_name : String, is_bra : Bool) -> String {
 ///|
 fn spin_basis_name_from_expr(expr : Expr?) -> String? {
   match expr {
-    Some(Expr::Symbol(name)) if name == "Jx" || name == "Jy" || name == "Jz" =>
+    Some(Symbol(name)) if name == "Jx" || name == "Jy" || name == "Jz" =>
       Some(name)
     _ => None
   }
@@ -65,9 +64,9 @@ fn spin_basis_name_from_expr(expr : Expr?) -> String? {
 ///|
 fn spin_operator_basis_name(op_expr : Expr) -> String? {
   match op_expr {
-    Expr::Symbol("Jx") => Some("Jx")
-    Expr::Symbol("Jy") => Some("Jy")
-    Expr::Symbol("Jz") => Some("Jz")
+    Symbol("Jx") => Some("Jx")
+    Symbol("Jy") => Some("Jy")
+    Symbol("Jz") => Some("Jz")
     _ => None
   }
 }
@@ -145,7 +144,7 @@ pub fn spin_coupling(
   right_index : Int,
   j : Expr,
 ) -> SpinCoupling {
-  SpinCoupling::{ left_index, right_index, j }
+  { left_index, right_index, j }
 }
 
 ///|
@@ -184,7 +183,7 @@ fn spin_state_make(
   jn? : Array[Expr] = [],
   coupling? : Array[SpinCoupling] = [],
 ) -> JzState {
-  JzState::{ j, m, is_bra, basis_name, jn, coupling }
+  { j, m, is_bra, basis_name, jn, coupling }
 }
 
 ///|
@@ -197,17 +196,9 @@ fn spin_default_coupling(
   let mut running = jn[0]
   for idx in 1..<(jn.length() - 1) {
     running = running + jn[idx]
-    coupling.push(SpinCoupling::{
-      left_index: 1,
-      right_index: idx + 1,
-      j: running,
-    })
+    coupling.push({ left_index: 1, right_index: idx + 1, j: running })
   }
-  coupling.push(SpinCoupling::{
-    left_index: 1,
-    right_index: jn.length(),
-    j: total_j,
-  })
+  coupling.push({ left_index: 1, right_index: jn.length(), j: total_j })
   coupling
 }
 
@@ -338,12 +329,12 @@ pub fn jz_bra_coupled(
 
 ///|
 pub fn rotation(alpha : Expr, beta : Expr, gamma : Expr) -> RotationExpr {
-  RotationExpr::{ alpha, beta, gamma }
+  { alpha, beta, gamma }
 }
 
 ///|
 pub fn rotation_d(j : Expr, m : Expr, mp : Expr, beta : Expr) -> WignerDExpr {
-  WignerDExpr::{ j, m, mp, alpha: int(0), beta, gamma: int(0) }
+  { j, m, mp, alpha: int(0), beta, gamma: int(0) }
 }
 
 ///|
@@ -355,7 +346,7 @@ pub fn rotation_D(
   beta : Expr,
   gamma : Expr,
 ) -> WignerDExpr {
-  WignerDExpr::{ j, m, mp, alpha, beta, gamma }
+  { j, m, mp, alpha, beta, gamma }
 }
 
 ///|
@@ -369,9 +360,9 @@ pub fn JzState::as_expr(self : JzState) -> Expr {
   let coupling_args = self.coupling.map(c => {
     @symcore.Expr::Tuple([int(c.left_index), int(c.right_index), c.j])
   })
-  let args : Array[Expr] = [self.j, self.m, @symcore.Expr::Tuple(self.jn)]
+  let args : Array[Expr] = [self.j, self.m, Tuple(self.jn)]
   if !coupling_args.is_empty() {
-    args.push(@symcore.Expr::Tuple(coupling_args))
+    args.push(Tuple(coupling_args))
   }
   @symcore.raw_function(
     spin_coupled_state_expr_name(self.basis_name, self.is_bra),
@@ -391,7 +382,7 @@ pub impl Show for RotationExpr with fn to_string(self) {
 
 ///|
 pub impl Show for RotationExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -422,7 +413,7 @@ pub impl Show for WignerDExpr with fn to_string(self) {
 
 ///|
 pub impl Show for WignerDExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -456,7 +447,7 @@ pub impl Show for JzState with fn to_string(self) {
 
 ///|
 pub impl Show for JzState with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -485,7 +476,7 @@ pub fn JzState::rewrite(self : JzState, basis : Expr) -> Expr {
 pub fn m_values(j : Expr) -> (Int, Array[Expr]) raise @symphysics.PhysicsError {
   let size_expr = int(2) * j + int(1)
   match size_expr {
-    Expr::Number(n) if n.is_integral() && n.numerator().to_int() > 0 => {
+    Number(n) if n.is_integral() && n.numerator().to_int() > 0 => {
       let size = n.numerator().to_int()
       let values : Array[Expr] = []
       for idx in 0..<size {
@@ -494,7 +485,7 @@ pub fn m_values(j : Expr) -> (Int, Array[Expr]) raise @symphysics.PhysicsError {
       (size, values)
     }
     _ =>
-      raise @symphysics.PhysicsError::ValueError(
+      raise ValueError(
         "Only integer or half-integer j values are supported for explicit spin bases",
       )
   }
@@ -512,7 +503,7 @@ fn spin_state_from_expr_impl(expr : Expr) -> JzState? {
               match
                 (quantum_integer_value(left), quantum_integer_value(right)) {
                 (Some(left_index), Some(right_index)) =>
-                  couplings.push(SpinCoupling::{ left_index, right_index, j })
+                  couplings.push({ left_index, right_index, j })
                 _ => return None
               }
             _ => return None
@@ -704,9 +695,7 @@ fn spin_m_index(j : Expr, value : Expr) -> Int raise @symphysics.PhysicsError {
       return idx
     }
   }
-  raise @symphysics.PhysicsError::ValueError(
-    "Invalid magnetic quantum number for the given j",
-  )
+  raise ValueError("Invalid magnetic quantum number for the given j")
 }
 
 ///|
@@ -763,7 +752,7 @@ fn spin_basis_transform_coeff(
 
 ///|
 fn spin_sum_expr(body : Expr, sym : Expr, lower : Expr, upper : Expr) -> Expr {
-  @symcore.function("Sum", [body, @symcore.Expr::Tuple([sym, lower, upper])])
+  @symcore.function("Sum", [body, Tuple([sym, lower, upper])])
 }
 
 ///|
@@ -842,13 +831,13 @@ fn spin_rewrite_states_in_expr(
     Some(_) => spin_rewrite_single_state(expr, target_basis, evaluate)
     None =>
       match expr {
-        Expr::Add(args) =>
+        Add(args) =>
           quantum_add_from_args_preserve(
             args.map(arg => {
               spin_rewrite_states_in_expr(arg, target_basis, evaluate)
             }),
           )
-        Expr::Mul(args) =>
+        Mul(args) =>
           quantum_mul_from_args_preserve(
             args.map(arg => {
               spin_rewrite_states_in_expr(arg, target_basis, evaluate)
@@ -912,7 +901,7 @@ pub fn spin_couple_order(
   left_index : Int,
   right_index : Int,
 ) -> SpinCoupleOrder {
-  SpinCoupleOrder::{ left_index, right_index }
+  { left_index, right_index }
 }
 
 ///|
@@ -971,16 +960,14 @@ fn spin_resolve_orders(
       order.left_index <= count &&
       order.right_index <= count &&
       order.left_index != order.right_index else {
-      raise @symphysics.PhysicsError::ValueError("Invalid spin coupling order")
+      raise ValueError("Invalid spin coupling order")
     }
     let left_ns = active[order.left_index - 1]
     let right_ns = active[order.right_index - 1]
     guard !left_ns.is_empty() && !right_ns.is_empty() else {
-      raise @symphysics.PhysicsError::ValueError(
-        "Coupling orders must reference active spin spaces",
-      )
+      raise ValueError("Coupling orders must reference active spin spaces")
     }
-    resolved.push(SpinResolvedPair::{ left_ns, right_ns })
+    resolved.push({ left_ns, right_ns })
     active[spin_min_int(order.left_index, order.right_index) - 1] = spin_union_indices(
       left_ns, right_ns,
     )
@@ -1005,16 +992,14 @@ fn spin_resolve_couplings(
       item.left_index <= count &&
       item.right_index <= count &&
       item.left_index != item.right_index else {
-      raise @symphysics.PhysicsError::ValueError("Invalid spin coupling")
+      raise ValueError("Invalid spin coupling")
     }
     let left_ns = active[item.left_index - 1]
     let right_ns = active[item.right_index - 1]
     guard !left_ns.is_empty() && !right_ns.is_empty() else {
-      raise @symphysics.PhysicsError::ValueError(
-        "Couplings must reference active spin spaces",
-      )
+      raise ValueError("Couplings must reference active spin spaces")
     }
-    resolved.push(SpinResolvedCoupling::{ left_ns, right_ns, j: item.j })
+    resolved.push({ left_ns, right_ns, j: item.j })
     active[spin_min_int(item.left_index, item.right_index) - 1] = spin_union_indices(
       left_ns, right_ns,
     )
@@ -1035,10 +1020,9 @@ fn spin_sum_by_indices(values : Array[Expr], indices : Array[Int]) -> Expr {
 ///|
 fn spin_twice_j(expr : Expr) -> Int? {
   match expr {
-    Expr::Number(n) if n.denominator().equal_int(1) =>
+    Number(n) if n.denominator().equal_int(1) =>
       Some((n.numerator() * @bigint.BigInt::from_int(2)).to_int())
-    Expr::Number(n) if n.denominator().equal_int(2) =>
-      Some(n.numerator().to_int())
+    Number(n) if n.denominator().equal_int(2) => Some(n.numerator().to_int())
     _ => None
   }
 }
@@ -1069,7 +1053,7 @@ fn spin_allowed_j_values(
       values
     }
     _ =>
-      raise @symphysics.PhysicsError::ValueError(
+      raise ValueError(
         "Only numeric integer or half-integer couplings are supported here",
       )
   }
@@ -1091,14 +1075,14 @@ fn spin_map_tensor_products(
 ) -> Expr raise @symphysics.PhysicsError {
   match expr {
     _ if quantum_expr_has_name(expr, "TensorProduct") => f(expr)
-    Expr::Add(args) => {
+    Add(args) => {
       let mapped : Array[Expr] = []
       for arg in args {
         mapped.push(spin_map_tensor_products(arg, f))
       }
       quantum_add_from_args_preserve(mapped)
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mapped : Array[Expr] = []
       for arg in args {
         mapped.push(spin_map_tensor_products(arg, f))
@@ -1131,14 +1115,14 @@ fn spin_map_states(
     Some(_) => f(expr)
     None =>
       match expr {
-        Expr::Add(args) => {
+        Add(args) => {
           let mapped : Array[Expr] = []
           for arg in args {
             mapped.push(spin_map_states(arg, f))
           }
           quantum_add_from_args_preserve(mapped)
         }
-        Expr::Mul(args) => {
+        Mul(args) => {
           let mapped : Array[Expr] = []
           for arg in args {
             mapped.push(spin_map_states(arg, f))
@@ -1180,7 +1164,7 @@ fn spin_couple_tensor_product(
         s.is_bra == first.is_bra &&
         !s.is_coupled()
       }) else {
-        raise @symphysics.PhysicsError::ValueError(
+        raise ValueError(
           "All spin states in TensorProduct must share one uncoupled basis",
         )
       }
@@ -1234,7 +1218,7 @@ fn spin_couple_tensor_product(
               let updated = current_j.copy()
               updated[merged[0] - 1] = j3
               let next = triples.copy()
-              next.push(SpinCoupling::{ left_index, right_index, j: j3 })
+              next.push({ left_index, right_index, j: j3 })
               go(step + 1, updated, coeff * cg_coeff, next)
             }
           }
@@ -1268,15 +1252,15 @@ fn spin_couple_tensor_product(
           let j3 = if step + 1 == resolved.length() {
             total_j
           } else {
-            Expr::Symbol(coupling_symbol_name(merged))
+            Symbol(coupling_symbol_name(merged))
           }
           coeffs.push(cg(j1, m1, j2, m2, j3, m3).as_expr())
-          couplings.push(SpinCoupling::{
+          couplings.push({
             left_index: scheme[step].left_index,
             right_index: scheme[step].right_index,
             j: j3,
           })
-          sum_specs.push(@symcore.Expr::Tuple([j3, m3, j1 + j2]))
+          sum_specs.push(Tuple([j3, m3, j1 + j2]))
           current_j[merged[0] - 1] = j3
         }
         let coupled_state = spin_state_make(
@@ -1329,7 +1313,7 @@ fn spin_uncouple_state_expr(
     let resolved_jn = match jn {
       Some(value) if !value.is_empty() => value
       _ =>
-        raise @symphysics.PhysicsError::ValueError(
+        raise ValueError(
           "Must provide jn when uncoupling a non-coupled spin state",
         )
     }
@@ -1407,7 +1391,7 @@ fn spin_uncouple_state_expr(
   } else {
     let mvars : Array[Expr] = []
     for idx in 0..<j_values.length() {
-      mvars.push(Expr::Symbol("m\{idx + 1}"))
+      mvars.push(Symbol("m\{idx + 1}"))
     }
     let resolved = spin_resolve_couplings(
       j_values.length(),
@@ -1443,11 +1427,7 @@ fn spin_uncouple_state_expr(
     let sum_specs : Array[Expr] = []
     for idx in 0..<j_values.length() {
       sum_specs.push(
-        @symcore.Expr::Tuple([
-          mvars[idx],
-          int(-1) * j_values[idx],
-          j_values[idx],
-        ]),
+        Tuple([mvars[idx], int(-1) * j_values[idx], j_values[idx]]),
       )
     }
     let sum_args : Array[Expr] = [quantum_mul_from_args_preserve(factors)]
@@ -1524,7 +1504,7 @@ pub fn spin_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
     }
     _ =>
       match (op_expr, spin_state_from_expr(ket_expr)) {
-        (Expr::Symbol(name), Some(state)) if !state.is_bra => {
+        (Symbol(name), Some(state)) if !state.is_bra => {
           let j = state.j
           let m = state.m
           match spin_operator_basis_name(op_expr) {
@@ -1584,9 +1564,7 @@ pub fn spin_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
               Some(
                 spin_exact_rational(1, 2) *
                 int(-1) *
-                @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                ) *
+                NumberSymbol(ImaginaryUnit) *
                 (
                   spin_apply_operator_to_ket(jplus(), ket_expr).unwrap_or(
                     int(0),
@@ -1641,7 +1619,7 @@ fn spin_op_matrix_element(
   mp : Expr,
 ) -> Expr {
   match op_expr {
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       match name {
         "Jz" => if m == mp { hbar * mp } else { int(0) }
         "J2" =>
@@ -1671,7 +1649,7 @@ fn spin_op_matrix_element(
         "Jy" =>
           spin_exact_rational(1, 2) *
           int(-1) *
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+          NumberSymbol(ImaginaryUnit) *
           (
             spin_op_matrix_element(jplus(), j, m, mp) -
             spin_op_matrix_element(jminus(), j, m, mp)
@@ -1742,8 +1720,7 @@ pub fn represent_spin_state(
         @symphysics.explicit_matrix_from_rows(rows)
       }
     }
-    None =>
-      raise @symphysics.PhysicsError::ValueError("Expected a spin basis state")
+    None => raise ValueError("Expected a spin basis state")
   }
 }
 
@@ -1753,10 +1730,7 @@ fn spin_coupling_orders(
 ) -> Array[SpinCoupleOrder] {
   let orders : Array[SpinCoupleOrder] = []
   for item in coupling {
-    orders.push(SpinCoupleOrder::{
-      left_index: item.left_index,
-      right_index: item.right_index,
-    })
+    orders.push({ left_index: item.left_index, right_index: item.right_index })
   }
   orders
 }
@@ -1790,7 +1764,7 @@ fn spin_enumerate_coupling_schemes(
       let updated = current_j.copy()
       updated[merged[0] - 1] = j3
       let next = current.copy()
-      next.push(SpinCoupling::{
+      next.push({
         left_index: order.left_index,
         right_index: order.right_index,
         j: j3,
@@ -1811,15 +1785,10 @@ pub fn represent_spin_coupled_state(
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   let state = match spin_state_from_expr(state_expr) {
     Some(value) if value.is_coupled() => value
-    _ =>
-      raise @symphysics.PhysicsError::ValueError(
-        "Expected a coupled spin basis state",
-      )
+    _ => raise ValueError("Expected a coupled spin basis state")
   }
   guard spin_numeric_args(state.jn) && spin_numeric_args([state.j]) else {
-    raise @symphysics.PhysicsError::ValueError(
-      "Only numeric coupled spin representations are supported",
-    )
+    raise ValueError("Only numeric coupled spin representations are supported")
   }
   let target_basis = match spin_basis_name_from_expr(basis) {
     Some(name) => name

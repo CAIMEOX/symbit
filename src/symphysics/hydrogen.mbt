@@ -38,18 +38,17 @@ pub fn hydrogen_psi_nlm(
   z? : Expr = int(1),
 ) -> Expr raise PhysicsError {
   match expr_integer_value(n) {
-    Some(ni) if ni < 1 =>
-      raise PhysicsError::ValueError("'n' must be positive integer")
+    Some(ni) if ni < 1 => raise ValueError("'n' must be positive integer")
     _ => ()
   }
   match (expr_integer_value(n), expr_integer_value(l)) {
     (Some(ni), Some(li)) if ni <= li =>
-      raise PhysicsError::ValueError("'n' must be greater than 'l'")
+      raise ValueError("'n' must be greater than 'l'")
     _ => ()
   }
   match (expr_integer_value(m), expr_integer_value(l)) {
     (Some(mi), Some(li)) if mi.abs() > li =>
-      raise PhysicsError::ValueError("|'m'| must be less or equal 'l'")
+      raise ValueError("|'m'| must be less or equal 'l'")
     _ => ()
   }
   hydrogen_r_nl(n, l, r, z~) * hydrogen_y_lm(l, m, phi, theta)
@@ -58,8 +57,7 @@ pub fn hydrogen_psi_nlm(
 ///|
 pub fn hydrogen_e_nl(n : Expr, z? : Expr = int(1)) -> Expr raise PhysicsError {
   match expr_integer_value(n) {
-    Some(ni) if ni < 1 =>
-      raise PhysicsError::ValueError("'n' must be positive integer")
+    Some(ni) if ni < 1 => raise ValueError("'n' must be positive integer")
     _ => ()
   }
   int(-1) * expr_div(z ^ int(2), int(2) * (n ^ int(2)))
@@ -82,18 +80,16 @@ pub fn hydrogen_e_nl_dirac(
   c? : Expr = hydrogen_dirac_default_c(),
 ) -> Expr raise PhysicsError {
   match expr_integer_value(l) {
-    Some(li) if li < 0 =>
-      raise PhysicsError::ValueError("'l' must be positive or zero")
+    Some(li) if li < 0 => raise ValueError("'l' must be positive or zero")
     _ => ()
   }
   match (expr_integer_value(n), expr_integer_value(l)) {
     (Some(ni), Some(li)) if ni <= li =>
-      raise PhysicsError::ValueError("'n' must be greater than 'l'")
+      raise ValueError("'n' must be greater than 'l'")
     _ => ()
   }
   match expr_integer_value(l) {
-    Some(0) if !spin_up =>
-      raise PhysicsError::ValueError("Spin must be up for l==0.")
+    Some(0) if !spin_up => raise ValueError("Spin must be up for l==0.")
     _ => ()
   }
   let skappa = if spin_up { int(-1) * l - int(1) } else { int(-1) * l }

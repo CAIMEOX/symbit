@@ -17,7 +17,7 @@ pub impl Show for TensorIndexType with fn to_string(self) -> String {
 
 ///|
 pub impl Show for TensorIndexType with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -27,26 +27,24 @@ pub impl Show for TensorHead with fn to_string(self) -> String {
 
 ///|
 pub impl Show for TensorHead with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 fn format_expr(expr : TensorExpr, parent_prec : Int) -> String {
   let prec = match expr {
-    TensorExpr::Add(_) => 1
-    TensorExpr::Mul(_) => 2
+    Add(_) => 1
+    Mul(_) => 2
     _ => 3
   }
   let body = match expr {
-    TensorExpr::Scalar(e) => @symprint.pretty_string(e)
-    TensorExpr::Tensor(head, indices) => {
+    Scalar(e) => @symprint.pretty_string(e)
+    Tensor(head, indices) => {
       let args = indices.map(index_to_string).join(", ")
-      head.to_string() + "(" + args + ")"
+      Show::to_string(head) + "(" + args + ")"
     }
-    TensorExpr::Add(items) =>
-      items.map(item => format_expr(item, prec)).join(" + ")
-    TensorExpr::Mul(items) =>
-      items.map(item => format_expr(item, prec)).join("*")
+    Add(items) => items.map(item => format_expr(item, prec)).join(" + ")
+    Mul(items) => items.map(item => format_expr(item, prec)).join("*")
   }
   if prec < parent_prec {
     "(" + body + ")"
@@ -62,5 +60,5 @@ pub impl Show for TensorExpr with fn to_string(self) -> String {
 
 ///|
 pub impl Show for TensorExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }

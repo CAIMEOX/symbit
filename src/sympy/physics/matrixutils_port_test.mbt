@@ -11,11 +11,13 @@ test "physics.quantum.matrixutils: parity" {
   )
 
   assert_eq(
-    flatten_scalar(@symphysics.explicit_matrix_from_ints([[3]])).to_string(),
+    Show::to_string(
+      flatten_scalar(@symphysics.explicit_matrix_from_ints([[3]])),
+    ),
     physics_eval_str("flatten_scalar(Matrix([[3]]))"),
   )
   assert_eq(
-    matrix_to_zero(matrix_zeros(2, 2)).to_string(),
+    Show::to_string(matrix_to_zero(matrix_zeros(2, 2))),
     physics_eval_str("matrix_to_zero(zeros(2, 2))"),
   )
 }

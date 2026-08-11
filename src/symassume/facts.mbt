@@ -20,14 +20,14 @@ pub type AssumeEnv = Map[String, SymbolFacts]
 ///|
 /// Return a fact record where every field is unknown.
 pub fn unknown_facts() -> SymbolFacts {
-  SymbolFacts::{
-    is_zero: Tri::Unknown,
-    is_nonzero: Tri::Unknown,
-    is_integer: Tri::Unknown,
-    is_rational: Tri::Unknown,
-    is_real: Tri::Unknown,
-    is_positive: Tri::Unknown,
-    is_nonnegative: Tri::Unknown,
+  {
+    is_zero: Unknown,
+    is_nonzero: Unknown,
+    is_integer: Unknown,
+    is_rational: Unknown,
+    is_real: Unknown,
+    is_positive: Unknown,
+    is_nonnegative: Unknown,
   }
 }
 
@@ -38,15 +38,15 @@ pub fn unknown_facts() -> SymbolFacts {
 /// [`normalize_facts`](#normalize_facts) so obvious implications such as
 /// “zero implies real and nonnegative” are filled in immediately.
 pub fn symbol_facts(
-  is_zero? : Tri = Tri::Unknown,
-  is_nonzero? : Tri = Tri::Unknown,
-  is_integer? : Tri = Tri::Unknown,
-  is_rational? : Tri = Tri::Unknown,
-  is_real? : Tri = Tri::Unknown,
-  is_positive? : Tri = Tri::Unknown,
-  is_nonnegative? : Tri = Tri::Unknown,
+  is_zero? : Tri = Unknown,
+  is_nonzero? : Tri = Unknown,
+  is_integer? : Tri = Unknown,
+  is_rational? : Tri = Unknown,
+  is_real? : Tri = Unknown,
+  is_positive? : Tri = Unknown,
+  is_nonnegative? : Tri = Unknown,
 ) -> SymbolFacts {
-  normalize_facts(SymbolFacts::{
+  normalize_facts({
     is_zero,
     is_nonzero,
     is_integer,
@@ -112,8 +112,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
   for _ in 0..<8 {
     let mut changed = false
 
-    let next_nonzero = if is_zero == Tri::True {
-      tri_merge(is_nonzero, Tri::False)
+    let next_nonzero = if is_zero == True {
+      tri_merge(is_nonzero, False)
     } else {
       is_nonzero
     }
@@ -122,8 +122,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_zero_from_nonzero = if is_nonzero == Tri::True {
-      tri_merge(is_zero, Tri::False)
+    let next_zero_from_nonzero = if is_nonzero == True {
+      tri_merge(is_zero, False)
     } else {
       is_zero
     }
@@ -132,8 +132,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_nonnegative = if is_zero == Tri::True {
-      tri_merge(is_nonnegative, Tri::True)
+    let next_nonnegative = if is_zero == True {
+      tri_merge(is_nonnegative, True)
     } else {
       is_nonnegative
     }
@@ -142,8 +142,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_positive_from_zero = if is_zero == Tri::True {
-      tri_merge(is_positive, Tri::False)
+    let next_positive_from_zero = if is_zero == True {
+      tri_merge(is_positive, False)
     } else {
       is_positive
     }
@@ -152,8 +152,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_real_from_zero = if is_zero == Tri::True {
-      tri_merge(is_real, Tri::True)
+    let next_real_from_zero = if is_zero == True {
+      tri_merge(is_real, True)
     } else {
       is_real
     }
@@ -162,8 +162,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_integer_from_zero = if is_zero == Tri::True {
-      tri_merge(is_integer, Tri::True)
+    let next_integer_from_zero = if is_zero == True {
+      tri_merge(is_integer, True)
     } else {
       is_integer
     }
@@ -172,10 +172,10 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_rational_from_integer = if is_integer == Tri::True {
-      tri_merge(is_rational, Tri::True)
-    } else if is_integer == Tri::False {
-      tri_merge(is_rational, Tri::Unknown)
+    let next_rational_from_integer = if is_integer == True {
+      tri_merge(is_rational, True)
+    } else if is_integer == False {
+      tri_merge(is_rational, Unknown)
     } else {
       is_rational
     }
@@ -184,8 +184,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_real_from_rational = if is_rational == Tri::True {
-      tri_merge(is_real, Tri::True)
+    let next_real_from_rational = if is_rational == True {
+      tri_merge(is_real, True)
     } else {
       is_real
     }
@@ -194,8 +194,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_rational_from_real = if is_real == Tri::False {
-      tri_merge(is_rational, Tri::False)
+    let next_rational_from_real = if is_real == False {
+      tri_merge(is_rational, False)
     } else {
       is_rational
     }
@@ -204,8 +204,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_integer_from_rational = if is_rational == Tri::False {
-      tri_merge(is_integer, Tri::False)
+    let next_integer_from_rational = if is_rational == False {
+      tri_merge(is_integer, False)
     } else {
       is_integer
     }
@@ -214,8 +214,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_nonnegative_from_positive = if is_positive == Tri::True {
-      tri_merge(is_nonnegative, Tri::True)
+    let next_nonnegative_from_positive = if is_positive == True {
+      tri_merge(is_nonnegative, True)
     } else {
       is_nonnegative
     }
@@ -224,8 +224,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_real_from_nonnegative = if is_nonnegative == Tri::True {
-      tri_merge(is_real, Tri::True)
+    let next_real_from_nonnegative = if is_nonnegative == True {
+      tri_merge(is_real, True)
     } else {
       is_real
     }
@@ -234,8 +234,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_nonzero_from_positive = if is_positive == Tri::True {
-      tri_merge(is_nonzero, Tri::True)
+    let next_nonzero_from_positive = if is_positive == True {
+      tri_merge(is_nonzero, True)
     } else {
       is_nonzero
     }
@@ -244,8 +244,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_real_from_positive = if is_positive == Tri::True {
-      tri_merge(is_real, Tri::True)
+    let next_real_from_positive = if is_positive == True {
+      tri_merge(is_real, True)
     } else {
       is_real
     }
@@ -254,8 +254,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_zero_from_positive = if is_positive == Tri::True {
-      tri_merge(is_zero, Tri::False)
+    let next_zero_from_positive = if is_positive == True {
+      tri_merge(is_zero, False)
     } else {
       is_zero
     }
@@ -264,9 +264,9 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_positive_from_nonnegative_nonzero = if is_nonnegative == Tri::True &&
-      is_nonzero == Tri::True {
-      tri_merge(is_positive, Tri::True)
+    let next_positive_from_nonnegative_nonzero = if is_nonnegative == True &&
+      is_nonzero == True {
+      tri_merge(is_positive, True)
     } else {
       is_positive
     }
@@ -275,9 +275,9 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_positive_from_nonnegative_zero = if is_nonnegative == Tri::True &&
-      is_zero == Tri::False {
-      tri_merge(is_positive, Tri::True)
+    let next_positive_from_nonnegative_zero = if is_nonnegative == True &&
+      is_zero == False {
+      tri_merge(is_positive, True)
     } else {
       is_positive
     }
@@ -286,8 +286,8 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
       changed = true
     }
 
-    let next_positive_from_nonnegative_false = if is_nonnegative == Tri::False {
-      tri_merge(is_positive, Tri::False)
+    let next_positive_from_nonnegative_false = if is_nonnegative == False {
+      tri_merge(is_positive, False)
     } else {
       is_positive
     }
@@ -301,7 +301,7 @@ pub fn normalize_facts(facts : SymbolFacts) -> SymbolFacts {
     }
   }
 
-  SymbolFacts::{
+  {
     is_zero,
     is_nonzero,
     is_integer,

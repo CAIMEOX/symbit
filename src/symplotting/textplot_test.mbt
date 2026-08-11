@@ -47,9 +47,7 @@ test "symplotting textplot matches SymPy custom height axis alignment" {
 
 ///|
 test "symplotting textplot handles purely imaginary constants like SymPy" {
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let expected = [
     "      1 |                                                       ", "        |                                                       ",
     "        |                                                       ", "        |                                                       ",
@@ -187,9 +185,7 @@ test "symplotting textplot rejects expressions with more than one free symbol" {
 ///|
 test "symplotting textplot rejects non-real numeric bounds" {
   let x = @symcore.Expr::Symbol("x")
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   ignore(
     try {
       ignore(textplot_str(x, imag, @symcore.int(1)))

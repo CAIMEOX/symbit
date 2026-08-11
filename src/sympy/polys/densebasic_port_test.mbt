@@ -1,6 +1,6 @@
 ///|
 fn fez(n : Int) -> FieldElem raise PolyError {
-  @sympolys.fe_from_int(n, Domain::ZZ)
+  @sympolys.fe_from_int(n, ZZ)
 }
 
 ///|
@@ -17,7 +17,7 @@ fn br_rat(num : Int, den : Int) -> @symnum.BigRational {
 
 ///|
 fn dup_repr(coeffs : Array[FieldElem]) -> String {
-  let parts = coeffs.map(c => c.to_string()).join(",")
+  let parts = coeffs.map(c => Show::to_string(c)).join(",")
   "[\{parts}]"
 }
 
@@ -53,13 +53,13 @@ fn term_list_repr(terms : Array[(Array[Int], FieldElem)]) -> String {
 ///|
 fn dense_data_of(p : DensePoly) -> DenseData raise PolyError {
   match p {
-    DensePoly::Coef(c) => DenseData::Coef(@sympolys.fe_expect_rational(c))
-    DensePoly::Poly(items) => {
+    Coef(c) => Coef(@sympolys.fe_expect_rational(c))
+    Poly(items) => {
       let out : Array[DenseData] = Array::new()
       for it in items {
         out.push(dense_data_of(it))
       }
-      DenseData::Poly(out)
+      Poly(out)
     }
   }
 }
@@ -67,13 +67,13 @@ fn dense_data_of(p : DensePoly) -> DenseData raise PolyError {
 ///|
 fn dense_data_of_rat(p : DenseRat) -> DenseData {
   match p {
-    DenseRat::Coef(c) => DenseData::Coef(c)
-    DenseRat::Poly(items) => {
+    Coef(c) => Coef(c)
+    Poly(items) => {
       let out : Array[DenseData] = Array::new()
       for it in items {
         out.push(dense_data_of_rat(it))
       }
-      DenseData::Poly(out)
+      Poly(out)
     }
   }
 }
@@ -90,8 +90,8 @@ fn dpp_from_polys(polys : Array[Poly]) -> DensePolyPoly {
 ///|
 fn dpp_repr(p : DensePolyPoly) -> String {
   match p {
-    DensePolyPoly::Coef(poly) => poly.to_string()
-    DensePolyPoly::Poly(items) => {
+    Coef(poly) => poly.to_string()
+    Poly(items) => {
       let parts : Array[String] = Array::new()
       for it in items {
         parts.push(dpp_repr(it))
@@ -138,8 +138,8 @@ fn monom_poly(exps : Array[Int]) -> DensePoly raise PolyError {
 ///|
 fn dense_repr(p : DensePoly) -> String {
   match p {
-    DensePoly::Coef(c) => c.to_string()
-    DensePoly::Poly(items) => {
+    Coef(c) => Show::to_string(c)
+    Poly(items) => {
       let parts : Array[String] = Array::new()
       for it in items {
         parts.push(dense_repr(it))
@@ -169,7 +169,7 @@ fn monom_key(m : Monomial) -> String {
 fn map_monom_repr(map : Map[Monomial, FieldElem]) -> String {
   let items : Array[(String, String)] = Array::new()
   for m, c in map {
-    items.push((monom_key(m), c.to_string()))
+    items.push((monom_key(m), Show::to_string(c)))
   }
   items.sort_by((a, b) => a.0.compare(b.0))
   let parts = items.map(t => "\{t.0}:\{t.1}").join(",")
@@ -180,7 +180,7 @@ fn map_monom_repr(map : Map[Monomial, FieldElem]) -> String {
 fn map_int_repr(map : Map[Int, FieldElem]) -> String {
   let items : Array[(Int, String)] = Array::new()
   for k, v in map {
-    items.push((k, v.to_string()))
+    items.push((k, Show::to_string(v)))
   }
   items.sort_by((a, b) => a.0 - b.0)
   let parts = items.map(t => "\{t.0}:\{t.1}").join(",")
@@ -286,7 +286,7 @@ test "densebasic: multivariate LC/TC/degree list and true_LT" {
   let f = poly([poly([coef(2), coef(3), coef(4)]), poly([coef(5)])])
   inspect(
     match @sympolys.dmp_LC(f) {
-      DensePoly::Poly(_) => "poly"
+      Poly(_) => "poly"
       _ => "coef"
     },
     content="poly",
@@ -336,20 +336,20 @@ test "densebasic: dmp_strip and dmp_reverse edge cases" {
   let zstrip = @sympolys.dmp_strip(z1)
   inspect(dense_repr(zstrip), content="[]")
   let zlen = match zstrip {
-    DensePoly::Poly(items) => items.length().to_string()
+    Poly(items) => items.length().to_string()
     _ => "0"
   }
   inspect(zlen, content="0")
   let f = poly([coef(0), coef(0), coef(1), coef(2)])
   let fstrip = @sympolys.dmp_strip(f)
   let flen = match fstrip {
-    DensePoly::Poly(items) => items.length().to_string()
+    Poly(items) => items.length().to_string()
     _ => "0"
   }
   inspect(flen, content="2")
   let rev = @sympolys.dmp_reverse(f)
   let rev_lc = match @sympolys.dmp_LC(rev) {
-    DensePoly::Coef(c) => c.to_string()
+    Coef(c) => Show::to_string(c)
     _ => "0"
   }
   inspect(rev_lc, content="2")
@@ -515,7 +515,7 @@ test "densebasic: dmp_validate" {
       ]),
     )
   })
-  assert_true(bad is PolyError::NonPolynomial)
+  assert_true(bad is NonPolynomial)
 }
 
 ///|
@@ -572,11 +572,11 @@ test "densebasic: dmp_degree_in bounds" {
   let neg = expect_poly_error(fn() raise PolyError {
     @sympolys.dmp_degree_in(f, -1, 1)
   })
-  assert_true(neg is PolyError::BadExponent)
+  assert_true(neg is BadExponent)
   let high = expect_poly_error(fn() raise PolyError {
     @sympolys.dmp_degree_in(f, 2, 1)
   })
-  assert_true(high is PolyError::BadExponent)
+  assert_true(high is BadExponent)
 }
 
 ///|
@@ -611,11 +611,11 @@ test "densebasic: dup_strip and dup_reverse variants" {
   inspect(@sympolys.dup_strip(b).length(), content="0")
   let c : Array[FieldElem] = [fez(0), fez(1)]
   let cstrip = @sympolys.dup_strip(c)
-  inspect(cstrip.map(x => x.to_string()).join(","), content="1")
+  inspect(cstrip.map(x => Show::to_string(x)).join(","), content="1")
   let r1 = @sympolys.dup_reverse([fez(1), fez(2), fez(0), fez(3)])
-  inspect(r1.map(x => x.to_string()).join(","), content="3,0,2,1")
+  inspect(r1.map(x => Show::to_string(x)).join(","), content="3,0,2,1")
   let r2 = @sympolys.dup_reverse([fez(1), fez(2), fez(3), fez(0)])
-  inspect(r2.map(x => x.to_string()).join(","), content="3,2,1")
+  inspect(r2.map(x => Show::to_string(x)).join(","), content="3,2,1")
 }
 
 ///|
@@ -629,9 +629,9 @@ test "densebasic: dup_copy/dmp_copy" {
   let f2 = poly([poly([coef(1)]), poly([coef(2), coef(0)])])
   let g2 = @sympolys.dmp_copy(f2, 1)
   match g2 {
-    DensePoly::Poly(items) =>
+    Poly(items) =>
       match items[0] {
-        DensePoly::Poly(inner) => inner.set(0, coef(7))
+        Poly(inner) => inner.set(0, coef(7))
         _ => ()
       }
     _ => ()
@@ -651,7 +651,7 @@ test "densebasic: dup_normal/dmp_normal" {
     fez(0),
   ]
   let norm = @sympolys.dup_normal(f)
-  let parts = norm.map(c => c.to_string()).join(",")
+  let parts = norm.map(c => Show::to_string(c)).join(",")
   inspect(parts, content="2,1,0,11,0")
   let f2 = poly([
     poly([coef(0)]),
@@ -676,7 +676,7 @@ test "densebasic: dup_from_list and dup_truncate oracle parity" {
     fez(0),
     fez(0),
   ]
-  let ours_from = @sympolys.dup_from_list(raw, Domain::ZZ)
+  let ours_from = @sympolys.dup_from_list(raw, ZZ)
   let oracle_from = dup_from_list([
     br_int(0),
     br_int(0),
@@ -689,9 +689,9 @@ test "densebasic: dup_from_list and dup_truncate oracle parity" {
   assert_eq(dup_repr(ours_from), oracle_from)
   let poly = @sympolys.dup_from_list(
     [fez(1), fez(2), fez(3), fez(4), fez(5)],
-    Domain::ZZ,
+    ZZ,
   )
-  let ours_trunc = @sympolys.dup_truncate(poly, 3, Domain::ZZ)
+  let ours_trunc = @sympolys.dup_truncate(poly, 3, ZZ)
   let oracle_trunc = dup_truncate(
     [br_int(1), br_int(2), br_int(3), br_int(4), br_int(5)],
     3,
@@ -716,11 +716,11 @@ test "densebasic: dup_from_list and dup_truncate oracle parity" {
 ///|
 test "densebasic: dup_convert/dmp_convert" {
   let f : Array[FieldElem] = [fez(1), fez(2), fez(0), fez(3)]
-  let c1 = @sympolys.dup_convert(f, Domain::ZZ, Domain::ZZ)
-  let parts = c1.map(c => c.to_string()).join(",")
+  let c1 = @sympolys.dup_convert(f, ZZ, ZZ)
+  let parts = c1.map(c => Show::to_string(c)).join(",")
   inspect(parts, content="1,2,0,3")
   let f2 = poly([poly([coef(1)]), poly([coef(2)]), poly([]), poly([coef(3)])])
-  let c2 = @sympolys.dmp_convert(f2, 1, Domain::ZZ, Domain::ZZ)
+  let c2 = @sympolys.dmp_convert(f2, 1, ZZ, ZZ)
   inspect(dense_repr(c2), content="[[1],[2],[],[3]]")
 }
 
@@ -733,7 +733,7 @@ test "densebasic: dup_nth/dmp_nth/dmp_ground_nth" {
   let neg = expect_poly_error(fn() raise PolyError {
     @sympolys.dup_nth([fez(3), fez(4), fez(5)], -1)
   })
-  assert_true(neg is PolyError::BadExponent)
+  assert_true(neg is BadExponent)
   let f = poly([poly([coef(1)]), poly([coef(2)]), poly([coef(3)])])
   inspect(dense_repr(@sympolys.dmp_nth(f, 0, 1)), content="[3]")
   inspect(dense_repr(@sympolys.dmp_nth(f, 1, 1)), content="[2]")
@@ -742,19 +742,19 @@ test "densebasic: dup_nth/dmp_nth/dmp_ground_nth" {
   let neg2 = expect_poly_error(fn() raise PolyError {
     @sympolys.dmp_nth(f, -1, 1)
   })
-  assert_true(neg2 is PolyError::BadExponent)
+  assert_true(neg2 is BadExponent)
   let f3 = poly([poly([])])
-  inspect(@sympolys.dmp_ground_nth(f3, [0, 0], 1, Domain::ZZ), content="0")
+  inspect(@sympolys.dmp_ground_nth(f3, [0, 0], 1, ZZ), content="0")
   let f4 = poly([poly([coef(1)]), poly([coef(2)]), poly([coef(3)])])
-  inspect(@sympolys.dmp_ground_nth(f4, [0, 0], 1, Domain::ZZ), content="3")
-  inspect(@sympolys.dmp_ground_nth(f4, [1, 0], 1, Domain::ZZ), content="2")
-  inspect(@sympolys.dmp_ground_nth(f4, [2, 0], 1, Domain::ZZ), content="1")
-  inspect(@sympolys.dmp_ground_nth(f4, [2, 1], 1, Domain::ZZ), content="0")
-  inspect(@sympolys.dmp_ground_nth(f4, [3, 0], 1, Domain::ZZ), content="0")
+  inspect(@sympolys.dmp_ground_nth(f4, [0, 0], 1, ZZ), content="3")
+  inspect(@sympolys.dmp_ground_nth(f4, [1, 0], 1, ZZ), content="2")
+  inspect(@sympolys.dmp_ground_nth(f4, [2, 0], 1, ZZ), content="1")
+  inspect(@sympolys.dmp_ground_nth(f4, [2, 1], 1, ZZ), content="0")
+  inspect(@sympolys.dmp_ground_nth(f4, [3, 0], 1, ZZ), content="0")
   let neg3 = expect_poly_error(fn() raise PolyError {
-    @sympolys.dmp_ground_nth(f4, [2, -1], 1, Domain::ZZ)
+    @sympolys.dmp_ground_nth(f4, [2, -1], 1, ZZ)
   })
-  assert_true(neg3 is PolyError::BadExponent)
+  assert_true(neg3 is BadExponent)
 }
 
 ///|
@@ -770,21 +770,18 @@ test "densebasic: zero/one/ground helpers" {
     @sympolys.dmp_zero_p(poly([poly([poly([coef(1)])])]), 2),
     content="false",
   )
-  let one0 = @sympolys.dmp_one(0, Domain::ZZ)
-  let one2 = @sympolys.dmp_one(2, Domain::ZZ)
+  let one0 = @sympolys.dmp_one(0, ZZ)
+  let one2 = @sympolys.dmp_one(2, ZZ)
   inspect(dense_repr(one0), content="[1]")
   inspect(dense_repr(one2), content="[[[1]]]")
-  inspect(@sympolys.dmp_one_p(poly([coef(1)]), 0, Domain::ZZ), content="true")
+  inspect(@sympolys.dmp_one_p(poly([coef(1)]), 0, ZZ), content="true")
+  inspect(@sympolys.dmp_one_p(poly([poly([coef(1)])]), 1, ZZ), content="true")
   inspect(
-    @sympolys.dmp_one_p(poly([poly([coef(1)])]), 1, Domain::ZZ),
+    @sympolys.dmp_one_p(poly([poly([poly([coef(1)])])]), 2, ZZ),
     content="true",
   )
   inspect(
-    @sympolys.dmp_one_p(poly([poly([poly([coef(1)])])]), 2, Domain::ZZ),
-    content="true",
-  )
-  inspect(
-    @sympolys.dmp_one_p(poly([poly([poly([coef(12)])])]), 2, Domain::ZZ),
+    @sympolys.dmp_one_p(poly([poly([poly([coef(12)])])]), 2, ZZ),
     content="false",
   )
   inspect(@sympolys.dmp_ground_p(poly([]), Some(fez(0)), 0), content="true")
@@ -831,27 +828,27 @@ test "densebasic: zero/one/ground helpers" {
   inspect(dense_repr(@sympolys.dmp_ground(fez(7), -1)), content="7")
   inspect(dense_repr(@sympolys.dmp_ground(fez(7), 0)), content="[7]")
   inspect(dense_repr(@sympolys.dmp_ground(fez(7), 2)), content="[[[7]]]")
-  let zeros0 = @sympolys.dmp_zeros(4, 0, Domain::ZZ)
+  let zeros0 = @sympolys.dmp_zeros(4, 0, ZZ)
   inspect(dense_list_repr(zeros0), content="[[],[],[],[]]")
-  let zeros1 = @sympolys.dmp_zeros(0, 2, Domain::ZZ)
+  let zeros1 = @sympolys.dmp_zeros(0, 2, ZZ)
   inspect(dense_list_repr(zeros1), content="[]")
-  let zeros2 = @sympolys.dmp_zeros(1, 2, Domain::ZZ)
+  let zeros2 = @sympolys.dmp_zeros(1, 2, ZZ)
   inspect(dense_list_repr(zeros2), content="[[[[]]]]")
-  let zeros3 = @sympolys.dmp_zeros(2, 2, Domain::ZZ)
+  let zeros3 = @sympolys.dmp_zeros(2, 2, ZZ)
   inspect(dense_list_repr(zeros3), content="[[[[]]],[[[]]]]")
-  let zeros4 = @sympolys.dmp_zeros(3, 2, Domain::ZZ)
+  let zeros4 = @sympolys.dmp_zeros(3, 2, ZZ)
   inspect(dense_list_repr(zeros4), content="[[[[]]],[[[]]],[[[]]]]")
-  let zeros5 = @sympolys.dmp_zeros(3, -1, Domain::ZZ)
+  let zeros5 = @sympolys.dmp_zeros(3, -1, ZZ)
   inspect(dense_list_repr(zeros5), content="[0,0,0]")
-  let grounds0 = @sympolys.dmp_grounds(fez(7), 0, 2, Domain::ZZ)
+  let grounds0 = @sympolys.dmp_grounds(fez(7), 0, 2, ZZ)
   inspect(dense_list_repr(grounds0), content="[]")
-  let grounds1 = @sympolys.dmp_grounds(fez(7), 1, 2, Domain::ZZ)
+  let grounds1 = @sympolys.dmp_grounds(fez(7), 1, 2, ZZ)
   inspect(dense_list_repr(grounds1), content="[[[[7]]]]")
-  let grounds2 = @sympolys.dmp_grounds(fez(7), 2, 2, Domain::ZZ)
+  let grounds2 = @sympolys.dmp_grounds(fez(7), 2, 2, ZZ)
   inspect(dense_list_repr(grounds2), content="[[[[7]]],[[[7]]]]")
-  let grounds3 = @sympolys.dmp_grounds(fez(7), 3, 2, Domain::ZZ)
+  let grounds3 = @sympolys.dmp_grounds(fez(7), 3, 2, ZZ)
   inspect(dense_list_repr(grounds3), content="[[[[7]]],[[[7]]],[[[7]]]]")
-  let grounds4 = @sympolys.dmp_grounds(fez(7), 3, -1, Domain::ZZ)
+  let grounds4 = @sympolys.dmp_grounds(fez(7), 3, -1, ZZ)
   inspect(dense_list_repr(grounds4), content="[7,7,7]")
 }
 
@@ -874,17 +871,20 @@ test "densebasic: dup_from/to_dict and raw dict" {
   raw.set(8, fez(3))
   raw.set(5, fez(2))
   raw.set(0, fez(8))
-  let f = @sympolys.dup_from_raw_dict(raw, Domain::ZZ)
-  inspect(f.map(c => c.to_string()).join(","), content="3,0,0,2,0,0,0,0,8")
-  let raw_back = @sympolys.dup_to_raw_dict(f, Domain::ZZ)
+  let f = @sympolys.dup_from_raw_dict(raw, ZZ)
+  inspect(f.map(c => Show::to_string(c)).join(","), content="3,0,0,2,0,0,0,0,8")
+  let raw_back = @sympolys.dup_to_raw_dict(f, ZZ)
   inspect(map_int_repr(raw_back), content="{0:8,5:2,8:3}")
   let dict : Map[Monomial, FieldElem] = Map([])
   dict.set(@sympolys.monomial_from_array([8]), fez(3))
   dict.set(@sympolys.monomial_from_array([5]), fez(2))
   dict.set(@sympolys.monomial_from_array([0]), fez(8))
-  let f2 = @sympolys.dup_from_dict(dict, Domain::ZZ)
-  inspect(f2.map(c => c.to_string()).join(","), content="3,0,0,2,0,0,0,0,8")
-  let dict_back = @sympolys.dup_to_dict(f2, Domain::ZZ)
+  let f2 = @sympolys.dup_from_dict(dict, ZZ)
+  inspect(
+    f2.map(c => Show::to_string(c)).join(","),
+    content="3,0,0,2,0,0,0,0,8",
+  )
+  let dict_back = @sympolys.dup_to_dict(f2, ZZ)
   inspect(map_monom_repr(dict_back), content="{0:8,5:2,8:3}")
 }
 
@@ -894,12 +894,12 @@ test "densebasic: dmp_from/to_dict" {
   dict.set(@sympolys.monomial_from_array([8, 0]), fez(3))
   dict.set(@sympolys.monomial_from_array([5, 0]), fez(2))
   dict.set(@sympolys.monomial_from_array([0, 0]), fez(8))
-  let f = @sympolys.dmp_from_dict(dict, 1, Domain::ZZ)
+  let f = @sympolys.dmp_from_dict(dict, 1, ZZ)
   inspect(dense_repr(f), content="[[3],[],[],[2],[],[],[],[],[8]]")
-  let back = @sympolys.dmp_to_dict(f, 1, Domain::ZZ)
+  let back = @sympolys.dmp_to_dict(f, 1, ZZ)
   inspect(map_monom_repr(back), content="{0,0:8,5,0:2,8,0:3}")
   let empty : Map[Monomial, FieldElem] = Map([])
-  let z = @sympolys.dmp_from_dict(empty, 1, Domain::ZZ)
+  let z = @sympolys.dmp_from_dict(empty, 1, ZZ)
   inspect(dense_repr(z), content="[[]]")
 }
 
@@ -908,30 +908,30 @@ test "densebasic: dmp_swap and dmp_permute" {
   let dict : Map[Monomial, FieldElem] = Map([])
   dict.set(@sympolys.monomial_from_array([1, 0]), fez(2))
   dict.set(@sympolys.monomial_from_array([0, 1]), fez(3))
-  let f = @sympolys.dmp_from_dict(dict, 1, Domain::ZZ)
-  let swapped = @sympolys.dmp_swap(f, 0, 1, 1, Domain::ZZ)
-  let swapped_dict = @sympolys.dmp_to_dict(swapped, 1, Domain::ZZ)
+  let f = @sympolys.dmp_from_dict(dict, 1, ZZ)
+  let swapped = @sympolys.dmp_swap(f, 0, 1, 1, ZZ)
+  let swapped_dict = @sympolys.dmp_to_dict(swapped, 1, ZZ)
   inspect(map_monom_repr(swapped_dict), content="{0,1:2,1,0:3}")
-  let perm = @sympolys.dmp_permute(f, [1, 0], 1, Domain::ZZ)
-  let perm_dict = @sympolys.dmp_to_dict(perm, 1, Domain::ZZ)
+  let perm = @sympolys.dmp_permute(f, [1, 0], 1, ZZ)
+  let perm_dict = @sympolys.dmp_to_dict(perm, 1, ZZ)
   inspect(map_monom_repr(perm_dict), content="{0,1:2,1,0:3}")
 }
 
 ///|
 test "densebasic: dmp_nest and dmp_raise" {
   let a = poly([coef(1)])
-  let nested = @sympolys.dmp_nest(a, 2, Domain::ZZ)
+  let nested = @sympolys.dmp_nest(a, 2, ZZ)
   inspect(dense_repr(nested), content="[[[1]]]")
-  let raised0 = @sympolys.dmp_raise(poly([]), 2, 0, Domain::ZZ)
+  let raised0 = @sympolys.dmp_raise(poly([]), 2, 0, ZZ)
   inspect(dense_repr(raised0), content="[[[]]]")
-  let raised1 = @sympolys.dmp_raise(poly([poly([coef(1)])]), 0, 1, Domain::ZZ)
+  let raised1 = @sympolys.dmp_raise(poly([poly([coef(1)])]), 0, 1, ZZ)
   inspect(dense_repr(raised1), content="[[1]]")
   let f = poly([
     poly([coef(1), coef(2), coef(3)]),
     poly([]),
     poly([coef(2), coef(3)]),
   ])
-  let raised2 = @sympolys.dmp_raise(f, 2, 1, Domain::ZZ)
+  let raised2 = @sympolys.dmp_raise(f, 2, 1, ZZ)
   inspect(
     dense_repr(raised2),
     content="[[[[1]],[[2]],[[3]]],[[[]]],[[[2]],[[3]]]]",
@@ -949,9 +949,9 @@ test "densebasic: deflate/inflate helpers" {
     fez(0),
     fez(1),
   ]
-  let (g, def) = @sympolys.dup_deflate(f, Domain::ZZ)
+  let (g, def) = @sympolys.dup_deflate(f, ZZ)
   inspect(g, content="3")
-  inspect(def.map(c => c.to_string()).join(","), content="1,1,1")
+  inspect(def.map(c => Show::to_string(c)).join(","), content="1,1,1")
   let ff = poly([
     poly([coef(1), coef(0), coef(0)]),
     poly([]),
@@ -959,27 +959,27 @@ test "densebasic: deflate/inflate helpers" {
     poly([]),
     poly([coef(1)]),
   ])
-  let (b, def2) = @sympolys.dmp_deflate(ff, 1, Domain::ZZ)
+  let (b, def2) = @sympolys.dmp_deflate(ff, 1, ZZ)
   debug_inspect(b, content="[2, 1]")
   inspect(dense_repr(def2), content="[[1,0,0],[1,0],[1]]")
   let polys : Array[Array[FieldElem]] = [
     [fez(1), fez(0), fez(2), fez(0), fez(3)],
     [fez(4), fez(0), fez(0)],
   ]
-  let (g2, defs) = @sympolys.dup_multi_deflate(polys, Domain::ZZ)
+  let (g2, defs) = @sympolys.dup_multi_deflate(polys, ZZ)
   inspect(g2, content="2")
-  inspect(defs[0].map(c => c.to_string()).join(","), content="1,2,3")
-  inspect(defs[1].map(c => c.to_string()).join(","), content="4,0")
+  inspect(defs[0].map(c => Show::to_string(c)).join(","), content="1,2,3")
+  inspect(defs[1].map(c => Show::to_string(c)).join(","), content="4,0")
   let p1 = poly([poly([coef(2)])])
   let p2 = poly([poly([coef(2), coef(0), coef(0)])])
-  let (m2, defs2) = @sympolys.dmp_multi_deflate([p1, p2], 1, Domain::ZZ)
+  let (m2, defs2) = @sympolys.dmp_multi_deflate([p1, p2], 1, ZZ)
   debug_inspect(m2, content="[1, 2]")
   inspect(dense_repr(defs2[0]), content="[[2]]")
   inspect(dense_repr(defs2[1]), content="[[2,0]]")
-  let infl = @sympolys.dup_inflate([fez(1), fez(1), fez(1)], 3, Domain::ZZ)
-  inspect(infl.map(c => c.to_string()).join(","), content="1,0,0,1,0,0,1")
+  let infl = @sympolys.dup_inflate([fez(1), fez(1), fez(1)], 3, ZZ)
+  inspect(infl.map(c => Show::to_string(c)).join(","), content="1,0,0,1,0,0,1")
   let f3 = poly([poly([coef(1), coef(2)]), poly([coef(3), coef(4)])])
-  let infl2 = @sympolys.dmp_inflate(f3, [2, 3], 1, Domain::ZZ)
+  let infl2 = @sympolys.dmp_inflate(f3, [2, 3], 1, ZZ)
   inspect(dense_repr(infl2), content="[[1,0,0,2],[],[3,0,0,4]]")
 }
 
@@ -1005,9 +1005,9 @@ test "densebasic: dmp_true_LT sympy cases" {
 ///|
 test "densebasic: dup_reverse sympy cases" {
   let f1 = @sympolys.dup_reverse([fez(1), fez(2), fez(0), fez(3)])
-  inspect(f1.map(c => c.to_string()).join(","), content="3,0,2,1")
+  inspect(f1.map(c => Show::to_string(c)).join(","), content="3,0,2,1")
   let f2 = @sympolys.dup_reverse([fez(1), fez(2), fez(3), fez(0)])
-  inspect(f2.map(c => c.to_string()).join(","), content="3,2,1")
+  inspect(f2.map(c => Show::to_string(c)).join(","), content="3,2,1")
 }
 
 ///|
@@ -1026,9 +1026,9 @@ test "densebasic: dup_to_tuple/dmp_to_tuple copy" {
   let g = poly([coef(1), coef(2)])
   let t2 = @sympolys.dmp_to_tuple(g, 0)
   match t2 {
-    DensePoly::Poly(items) =>
+    Poly(items) =>
       match items[0] {
-        DensePoly::Coef(c) => inspect(c, content="1")
+        Coef(c) => inspect(c, content="1")
         _ => fail("unexpected dmp_to_tuple")
       }
     _ => fail("unexpected dmp_to_tuple")
@@ -1038,11 +1038,11 @@ test "densebasic: dup_to_tuple/dmp_to_tuple copy" {
 ///|
 test "densebasic: dup_from_sympy/dmp_from_sympy parity" {
   let f1 = [br_int(1), br_int(2)]
-  let ours1 = dup_repr(@sympolys.dup_from_sympy(f1, Domain::ZZ))
+  let ours1 = dup_repr(@sympolys.dup_from_sympy(f1, ZZ))
   let oracle1 = dup_from_sympy(f1, domain="ZZ")
   assert_eq(ours1, oracle1)
   let f2 = [br_rat(1, 2), br_int(3)]
-  let ours2 = dup_repr(@sympolys.dup_from_sympy(f2, Domain::QQ))
+  let ours2 = dup_repr(@sympolys.dup_from_sympy(f2, QQ))
   let oracle2 = dup_from_sympy(f2, domain="QQ")
   assert_eq(ours2, oracle2)
   let d1 = @sympolys.dense_rat_poly([
@@ -1052,7 +1052,7 @@ test "densebasic: dup_from_sympy/dmp_from_sympy parity" {
     ]),
     @sympolys.dense_rat_poly([@sympolys.dense_rat_coef(br_int(0))]),
   ])
-  let ours3 = dense_repr(@sympolys.dmp_from_sympy(d1, 1, Domain::ZZ))
+  let ours3 = dense_repr(@sympolys.dmp_from_sympy(d1, 1, ZZ))
   let oracle3 = dmp_from_sympy(dense_data_of_rat(d1), 1, domain="ZZ")
   assert_eq(ours3, oracle3)
   let d2 = @sympolys.dense_rat_poly([
@@ -1061,7 +1061,7 @@ test "densebasic: dup_from_sympy/dmp_from_sympy parity" {
       @sympolys.dense_rat_coef(br_int(2)),
     ]),
   ])
-  let ours4 = dense_repr(@sympolys.dmp_from_sympy(d2, 1, Domain::QQ))
+  let ours4 = dense_repr(@sympolys.dmp_from_sympy(d2, 1, QQ))
   let oracle4 = dmp_from_sympy(dense_data_of_rat(d2), 1, domain="QQ")
   assert_eq(ours4, oracle4)
 }
@@ -1075,35 +1075,35 @@ fn exclude_repr(res : (Array[Int], DensePoly, Int)) -> String {
 ///|
 test "densebasic: dmp_exclude/include parity" {
   let f0 = poly([poly([poly([])])])
-  let ours0 = exclude_repr(@sympolys.dmp_exclude(f0, 2, Domain::ZZ))
+  let ours0 = exclude_repr(@sympolys.dmp_exclude(f0, 2, ZZ))
   let oracle0 = dmp_exclude(dense_data_of(f0), 2, domain="ZZ")
   assert_eq(ours0, oracle0)
   let f1 = poly([poly([poly([coef(7)])])])
-  let ours1 = exclude_repr(@sympolys.dmp_exclude(f1, 2, Domain::ZZ))
+  let ours1 = exclude_repr(@sympolys.dmp_exclude(f1, 2, ZZ))
   let oracle1 = dmp_exclude(dense_data_of(f1), 2, domain="ZZ")
   assert_eq(ours1, oracle1)
   let f2 = poly([coef(1), coef(2), coef(3)])
-  let ours2 = exclude_repr(@sympolys.dmp_exclude(f2, 0, Domain::ZZ))
+  let ours2 = exclude_repr(@sympolys.dmp_exclude(f2, 0, ZZ))
   let oracle2 = dmp_exclude(dense_data_of(f2), 0, domain="ZZ")
   assert_eq(ours2, oracle2)
   let f3 = poly([poly([coef(1), coef(2), coef(3)])])
-  let ours3 = exclude_repr(@sympolys.dmp_exclude(f3, 1, Domain::ZZ))
+  let ours3 = exclude_repr(@sympolys.dmp_exclude(f3, 1, ZZ))
   let oracle3 = dmp_exclude(dense_data_of(f3), 1, domain="ZZ")
   assert_eq(ours3, oracle3)
   let include_base = poly([coef(1), coef(2), coef(3)])
-  let inc0 = @sympolys.dmp_include(include_base, [], 0, Domain::ZZ)
+  let inc0 = @sympolys.dmp_include(include_base, [], 0, ZZ)
   inspect(dense_repr(inc0), content="[1,2,3]")
-  let inc1 = @sympolys.dmp_include(include_base, [0], 0, Domain::ZZ)
+  let inc1 = @sympolys.dmp_include(include_base, [0], 0, ZZ)
   inspect(dense_repr(inc1), content="[[1,2,3]]")
-  let inc2 = @sympolys.dmp_include(include_base, [1], 0, Domain::ZZ)
+  let inc2 = @sympolys.dmp_include(include_base, [1], 0, ZZ)
   inspect(dense_repr(inc2), content="[[1],[2],[3]]")
-  let inc3 = @sympolys.dmp_include(include_base, [0, 1], 0, Domain::ZZ)
+  let inc3 = @sympolys.dmp_include(include_base, [0, 1], 0, ZZ)
   inspect(dense_repr(inc3), content="[[[1,2,3]]]")
 }
 
 ///|
 test "densebasic: dmp_inject/dmp_eject roundtrip" {
-  let b = PolyBuilder::new(["x", "y"], Domain::ZZ)
+  let b = PolyBuilder::new(["x", "y"], ZZ)
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let poly1 = b.from_expr(@symcore.int(1))
@@ -1111,10 +1111,10 @@ test "densebasic: dmp_inject/dmp_eject roundtrip" {
     @symcore.int(2) * x + @symcore.int(3) * y + @symcore.int(4),
   )
   let f = dpp_from_polys([poly1, poly2])
-  let (inj, u2) = @sympolys.dmp_inject(f, 0, ["x", "y"], Domain::ZZ)
+  let (inj, u2) = @sympolys.dmp_inject(f, 0, ["x", "y"], ZZ)
   inspect(u2, content="2")
   inspect(dense_repr(inj), content="[[[1]],[[2],[3,4]]]")
-  let out = @sympolys.dmp_eject(inj, u2, ["x", "y"], Domain::ZZ)
+  let out = @sympolys.dmp_eject(inj, u2, ["x", "y"], ZZ)
   inspect(dpp_repr(out), content=dpp_repr(f))
 }
 
@@ -1133,15 +1133,15 @@ fn dmp_terms_gcd_repr(res : (Array[Int], DensePoly)) -> String {
 ///|
 test "densebasic: terms_gcd parity" {
   let f1 : Array[FieldElem] = []
-  let ours1 = terms_gcd_repr(@sympolys.dup_terms_gcd(f1, Domain::ZZ))
+  let ours1 = terms_gcd_repr(@sympolys.dup_terms_gcd(f1, ZZ))
   let oracle1 = dup_terms_gcd([])
   assert_eq(ours1, oracle1)
   let f2 : Array[FieldElem] = [fez(1), fez(0), fez(1)]
-  let ours2 = terms_gcd_repr(@sympolys.dup_terms_gcd(f2, Domain::ZZ))
+  let ours2 = terms_gcd_repr(@sympolys.dup_terms_gcd(f2, ZZ))
   let oracle2 = dup_terms_gcd([br_int(1), br_int(0), br_int(1)])
   assert_eq(ours2, oracle2)
   let f3 = poly([poly([coef(1)]), poly([]), poly([coef(1)]), poly([])])
-  let ours3 = dmp_terms_gcd_repr(@sympolys.dmp_terms_gcd(f3, 1, Domain::ZZ))
+  let ours3 = dmp_terms_gcd_repr(@sympolys.dmp_terms_gcd(f3, 1, ZZ))
   let oracle3 = dmp_terms_gcd(dense_data_of(f3), 1, domain="ZZ")
   assert_eq(ours3, oracle3)
 }
@@ -1149,11 +1149,11 @@ test "densebasic: terms_gcd parity" {
 ///|
 test "densebasic: dmp_list_terms parity" {
   let f0 = poly([poly([poly([])])])
-  let ours0 = term_list_repr(@sympolys.dmp_list_terms(f0, 2, Domain::ZZ))
+  let ours0 = term_list_repr(@sympolys.dmp_list_terms(f0, 2, ZZ))
   let oracle0 = dmp_list_terms(dense_data_of(f0), 2, domain="ZZ")
   assert_eq(ours0, oracle0)
   let f1 = poly([coef(1), coef(2), coef(4), coef(3), coef(5)])
-  let ours1 = term_list_repr(@sympolys.dmp_list_terms(f1, 0, Domain::ZZ))
+  let ours1 = term_list_repr(@sympolys.dmp_list_terms(f1, 0, ZZ))
   let oracle1 = dmp_list_terms(dense_data_of(f1), 0, domain="ZZ")
   assert_eq(ours1, oracle1)
   let f2 = poly([
@@ -1161,16 +1161,14 @@ test "densebasic: dmp_list_terms parity" {
     poly([coef(2), coef(4)]),
     poly([coef(3), coef(5), coef(0)]),
   ])
-  let ours2 = term_list_repr(@sympolys.dmp_list_terms(f2, 1, Domain::ZZ))
+  let ours2 = term_list_repr(@sympolys.dmp_list_terms(f2, 1, ZZ))
   let oracle2 = dmp_list_terms(dense_data_of(f2), 1, domain="ZZ")
   assert_eq(ours2, oracle2)
   let f3 = poly([
     poly([coef(2), coef(0), coef(0), coef(0)]),
     poly([coef(1), coef(0), coef(0), coef(0), coef(0), coef(0)]),
   ])
-  let ours3 = term_list_repr(
-    @sympolys.dmp_list_terms(f3, 1, Domain::ZZ, order=TermOrder::Lex),
-  )
+  let ours3 = term_list_repr(@sympolys.dmp_list_terms(f3, 1, ZZ, order=Lex))
   let oracle3 = dmp_list_terms(dense_data_of(f3), 1, order="lex", domain="ZZ")
   assert_eq(ours3, oracle3)
 }
@@ -1179,7 +1177,7 @@ test "densebasic: dmp_list_terms parity" {
 fn h_mul(a : FieldElem, b : FieldElem, _args : Array[FieldElem]) -> FieldElem {
   let lhs = @sympolys.fe_expect_rational(a) catch { _ => return a }
   let rhs = @sympolys.fe_expect_rational(b) catch { _ => return a }
-  @sympolys.fe_from_rational(lhs.mul_r(rhs), Domain::ZZ) catch {
+  @sympolys.fe_from_rational(lhs.mul_r(rhs), ZZ) catch {
     _ => a
   }
 }
@@ -1188,37 +1186,37 @@ fn h_mul(a : FieldElem, b : FieldElem, _args : Array[FieldElem]) -> FieldElem {
 test "densebasic: apply_pairs" {
   let f = [fez(1), fez(2), fez(3)]
   let g = [fez(4), fez(5), fez(6)]
-  let res = @sympolys.dup_apply_pairs(f, g, h_mul, [], Domain::ZZ)
+  let res = @sympolys.dup_apply_pairs(f, g, h_mul, [], ZZ)
   inspect(dup_repr(res), content="[4,10,18]")
   let f2 = poly([poly([coef(1), coef(2)]), poly([coef(3)])])
   let g2 = poly([poly([coef(4), coef(5)]), poly([coef(6)])])
-  let res2 = @sympolys.dmp_apply_pairs(f2, g2, h_mul, [], 1, Domain::ZZ)
+  let res2 = @sympolys.dmp_apply_pairs(f2, g2, h_mul, [], 1, ZZ)
   inspect(dense_repr(res2), content="[[4,10],[18]]")
 }
 
 ///|
 test "densebasic: dup_slice/dmp_slice parity" {
   let f = [fez(1), fez(2), fez(3), fez(4)]
-  let ours0 = dup_repr(@sympolys.dup_slice(f, 0, 2, Domain::ZZ))
+  let ours0 = dup_repr(@sympolys.dup_slice(f, 0, 2, ZZ))
   let oracle0 = dup_slice([br_int(1), br_int(2), br_int(3), br_int(4)], 0, 2)
   assert_eq(ours0, oracle0)
   let g = poly([poly([coef(1)]), poly([coef(2), coef(3)]), poly([coef(4)])])
-  let ours1 = dense_repr(@sympolys.dmp_slice(g, 0, 2, 1, Domain::ZZ))
+  let ours1 = dense_repr(@sympolys.dmp_slice(g, 0, 2, 1, ZZ))
   let oracle1 = dmp_slice(dense_data_of(g), 0, 2, 1, domain="ZZ")
   assert_eq(ours1, oracle1)
-  let ours2 = dense_repr(@sympolys.dmp_slice_in(g, 1, 2, 1, 1, Domain::ZZ))
+  let ours2 = dense_repr(@sympolys.dmp_slice_in(g, 1, 2, 1, 1, ZZ))
   let oracle2 = dmp_slice_in(dense_data_of(g), 1, 2, 1, 1, domain="ZZ")
   assert_eq(ours2, oracle2)
 }
 
 ///|
 test "densebasic: dup_random range/degree" {
-  let f0 = @sympolys.dup_random(0, -10, 10, Domain::ZZ)
+  let f0 = @sympolys.dup_random(0, -10, 10, ZZ)
   inspect(@sympolys.dup_degree(f0), content="0")
   for c in f0 {
     let r = @sympolys.fe_expect_rational(c)
     assert_true(r.compare(br_int(-10)) >= 0 && r.compare(br_int(10)) <= 0)
   }
-  let f1 = @sympolys.dup_random(2, -5, 5, Domain::ZZ)
+  let f1 = @sympolys.dup_random(2, -5, 5, ZZ)
   inspect(@sympolys.dup_degree(f1), content="2")
 }

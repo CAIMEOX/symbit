@@ -294,7 +294,7 @@ fn _convert_to_varsANF(
     }
   }
   if args.is_empty() {
-    return BoolExpr::True
+    return True
   }
   bool_and(args)
 }
@@ -309,14 +309,14 @@ fn _input_to_binlist(
   let names = symbol_names_from_exprs(variables)
   for val in inputlist {
     match val {
-      TermInput::IntTerm(n) => binlist.push(ibin(n, bits))
-      TermInput::BitsTerm(term) => {
+      IntTerm(n) => binlist.push(ibin(n, bits))
+      BitsTerm(term) => {
         if term.length() != bits {
           return []
         }
         binlist.push(term.copy())
       }
-      TermInput::MapTerm(map) => {
+      MapTerm(map) => {
         let nonspec : Array[String] = Array::new()
         for name in names {
           match map.get(name) {
@@ -355,7 +355,7 @@ pub fn sop_form(
   dontcares? : Array[TermInput],
 ) -> BoolExpr {
   if minterms.is_empty() {
-    return BoolExpr::False
+    return False
   }
   let mins = _input_to_binlist(minterms, variables)
   let dcs = _input_to_binlist(
@@ -367,7 +367,7 @@ pub fn sop_form(
   )
   for d in dcs {
     if mins.contains(d) {
-      return BoolExpr::False
+      return False
     }
   }
   _sop_form(variables, mins, dcs)
@@ -395,7 +395,7 @@ pub fn pos_form(
   dontcares? : Array[TermInput],
 ) -> BoolExpr {
   if minterms.is_empty() {
-    return BoolExpr::False
+    return False
   }
   let mins = _input_to_binlist(minterms, variables)
   let dcs = _input_to_binlist(
@@ -407,7 +407,7 @@ pub fn pos_form(
   )
   for d in dcs {
     if mins.contains(d) {
-      return BoolExpr::False
+      return False
     }
   }
   let maxterms : Array[Array[Int]] = Array::new()
@@ -418,7 +418,7 @@ pub fn pos_form(
     }
   }
   if maxterms.is_empty() {
-    return BoolExpr::True
+    return True
   }
   let new = _simplified_pairs(maxterms + dcs)
   let essential = _rem_redundancy(new, maxterms)
@@ -437,7 +437,7 @@ pub fn anf_form(
   let n_vars = variables.length()
   let n_values = truthvalues.length()
   if n_values != 1 << n_vars {
-    return BoolExpr::False
+    return False
   }
   let coeffs = anf_coeffs(truthvalues)
   let terms : Array[BoolExpr] = Array::new()
@@ -448,7 +448,7 @@ pub fn anf_form(
     }
   }
   if terms.is_empty() {
-    return BoolExpr::False
+    return False
   }
   xor_keep_true(terms)
 }

@@ -27,7 +27,7 @@ pub(all) enum HomSubgroup {
 ///|
 fn elem_is_identity(e : HomElement) -> Bool {
   match e {
-    HomElement::Perm(p) => p.is_identity()
+    Perm(p) => p.is_identity()
     Word(w) => w.is_identity()
   }
 }
@@ -35,7 +35,7 @@ fn elem_is_identity(e : HomElement) -> Bool {
 ///|
 fn elem_inverse(e : HomElement) -> HomElement {
   match e {
-    HomElement::Perm(p) => HomElement::Perm(p.invert())
+    Perm(p) => Perm(p.invert())
     Word(w) => Word(w.inverse())
   }
 }
@@ -43,7 +43,7 @@ fn elem_inverse(e : HomElement) -> HomElement {
 ///|
 fn elem_pow(e : HomElement, n : Int) -> HomElement raise CombinatoricsError {
   match e {
-    HomElement::Perm(p) => HomElement::Perm(p.pow(n))
+    Perm(p) => Perm(p.pow(n))
     Word(w) => Word(w.pow(n))
   }
 }
@@ -54,18 +54,18 @@ fn elem_mul(
   b : HomElement,
 ) -> HomElement raise CombinatoricsError {
   match (a, b) {
-    (HomElement::Perm(p1), HomElement::Perm(p2)) => HomElement::Perm(p1.mul(p2))
+    (Perm(p1), Perm(p2)) => Perm(p1.mul(p2))
     (Word(w1), Word(w2)) => Word(w1.mul(w2))
-    _ => raise CombinatoricsError::ValueError("element type mismatch")
+    _ => raise ValueError("element type mismatch")
   }
 }
 
 ///|
 fn hom_group_identity(group : HomGroup) -> HomElement {
   match group {
-    HomGroup::PermGroup(g) => HomElement::Perm(g.identity())
-    HomGroup::FpGroup(g) => Word(g.identity())
-    HomGroup::FreeGroup(g) => Word(g.identity())
+    PermGroup(g) => Perm(g.identity())
+    FpGroup(g) => Word(g.identity())
+    FreeGroup(g) => Word(g.identity())
   }
 }
 
@@ -73,15 +73,15 @@ fn hom_group_identity(group : HomGroup) -> HomElement {
 fn hom_group_generators(group : HomGroup) -> Array[HomElement] {
   let out : Array[HomElement] = Array::new()
   match group {
-    HomGroup::PermGroup(g) =>
+    PermGroup(g) =>
       for gen in g.generators() {
-        out.push(HomElement::Perm(gen))
+        out.push(Perm(gen))
       }
-    HomGroup::FpGroup(g) =>
+    FpGroup(g) =>
       for gen in g.generators {
         out.push(Word(gen))
       }
-    HomGroup::FreeGroup(g) =>
+    FreeGroup(g) =>
       for gen in g.generators() {
         out.push(Word(gen))
       }
@@ -95,9 +95,9 @@ fn hom_group_contains(
   elem : HomElement,
 ) -> Bool raise CombinatoricsError {
   match (group, elem) {
-    (HomGroup::PermGroup(g), HomElement::Perm(p)) => g.contains(p, strict=true)
-    (HomGroup::FpGroup(g), Word(w)) => g.contains(w)
-    (HomGroup::FreeGroup(g), Word(w)) => g.contains(w)
+    (PermGroup(g), Perm(p)) => g.contains(p, strict=true)
+    (FpGroup(g), Word(w)) => g.contains(w)
+    (FreeGroup(g), Word(w)) => g.contains(w)
     _ => false
   }
 }
@@ -105,24 +105,24 @@ fn hom_group_contains(
 ///|
 fn hom_group_order(group : HomGroup) -> GroupOrder raise CombinatoricsError {
   match group {
-    HomGroup::PermGroup(g) => GroupOrder::Finite(g.order())
-    HomGroup::FpGroup(g) => g.order()
-    HomGroup::FreeGroup(g) => g.order()
+    PermGroup(g) => Finite(g.order())
+    FpGroup(g) => g.order()
+    FreeGroup(g) => g.order()
   }
 }
 
 ///|
 fn hom_group_is_abelian(group : HomGroup) -> Bool raise CombinatoricsError {
   match group {
-    HomGroup::PermGroup(g) => g.is_abelian()
-    HomGroup::FreeGroup(g) => g.is_abelian()
-    HomGroup::FpGroup(g) =>
+    PermGroup(g) => g.is_abelian()
+    FreeGroup(g) => g.is_abelian()
+    FpGroup(g) =>
       match g.order() {
-        GroupOrder::Finite(_) => {
+        Finite(_) => {
           let (pg, _) = fp_group_to_perm_group(g)
           pg.is_abelian()
         }
-        GroupOrder::Infinite =>
+        Infinite =>
           match fp_group_is_abelian_status(g) {
             Some(v) => v
             None => true
@@ -134,8 +134,8 @@ fn hom_group_is_abelian(group : HomGroup) -> Bool raise CombinatoricsError {
 ///|
 fn hom_subgroup_order(sub : HomSubgroup) -> GroupOrder raise CombinatoricsError {
   match sub {
-    HomSubgroup::PermSub(g) => GroupOrder::Finite(g.order())
-    HomSubgroup::FpSub(s) => s.order()
+    PermSub(g) => Finite(g.order())
+    FpSub(s) => s.order()
   }
 }
 
@@ -145,8 +145,8 @@ fn subgroup_is_subgroup_of(
   group : HomGroup,
 ) -> Bool raise CombinatoricsError {
   match (sub, group) {
-    (HomSubgroup::PermSub(sg), HomGroup::PermGroup(g)) => sg.is_subgroup(g)
-    (HomSubgroup::FpSub(sg), HomGroup::FpGroup(g)) => {
+    (PermSub(sg), PermGroup(g)) => sg.is_subgroup(g)
+    (FpSub(sg), FpGroup(g)) => {
       for gen in sg.generators {
         if !g.contains(gen) {
           return false
@@ -154,7 +154,7 @@ fn subgroup_is_subgroup_of(
       }
       true
     }
-    (HomSubgroup::FpSub(sg), HomGroup::FreeGroup(g)) => {
+    (FpSub(sg), FreeGroup(g)) => {
       for gen in sg.generators {
         if !g.contains(gen) {
           return false
@@ -172,10 +172,10 @@ fn normalize_elem_for_group(
   elem : HomElement,
 ) -> HomElement raise CombinatoricsError {
   match (group, elem) {
-    (HomGroup::FpGroup(g), Word(w)) => Word(g.reduce(w))
-    (HomGroup::PermGroup(_), HomElement::Perm(_)) => elem
-    (HomGroup::FreeGroup(_), Word(_)) => elem
-    _ => raise CombinatoricsError::ValueError("element type mismatch")
+    (FpGroup(g), Word(w)) => Word(g.reduce(w))
+    (PermGroup(_), Perm(_)) => elem
+    (FreeGroup(_), Word(_)) => elem
+    _ => raise ValueError("element type mismatch")
   }
 }
 
@@ -186,8 +186,8 @@ fn hom_elem_equal(
   b : HomElement,
 ) -> Bool raise CombinatoricsError {
   match group {
-    HomGroup::PermGroup(_) | HomGroup::FreeGroup(_) => a == b
-    HomGroup::FpGroup(g) =>
+    PermGroup(_) | FreeGroup(_) => a == b
+    FpGroup(g) =>
       match (a, b) {
         (Word(w1), Word(w2)) => {
           let res = g.equals(w1, w2)
@@ -198,15 +198,12 @@ fn hom_elem_equal(
               let res2 = g.equals(w1, w2)
               match res2 {
                 Some(v2) => v2
-                None =>
-                  raise CombinatoricsError::ValueError(
-                    "cannot determine equality in FpGroup",
-                  )
+                None => raise ValueError("cannot determine equality in FpGroup")
               }
             }
           }
         }
-        _ => raise CombinatoricsError::ValueError("element type mismatch")
+        _ => raise ValueError("element type mismatch")
       }
   }
 }
@@ -216,11 +213,8 @@ fn fp_group_elements(
   fp : FpGroup,
 ) -> Array[FreeGroupElement] raise CombinatoricsError {
   match fp.order() {
-    GroupOrder::Infinite =>
-      raise CombinatoricsError::ValueError(
-        "cannot enumerate elements of infinite group",
-      )
-    GroupOrder::Finite(_) => {
+    Infinite => raise ValueError("cannot enumerate elements of infinite group")
+    Finite(_) => {
       let identity = fp.identity()
       let gens = fp.generators
       let moves : Array[FreeGroupElement] = Array::new()
@@ -326,10 +320,10 @@ fn perm_group_from_coset_table(
   }
   let pg = PermutationGroup::new(images)
   let hom = homomorphism(
-    HomGroup::FpGroup(fp),
-    HomGroup::PermGroup(pg),
+    FpGroup(fp),
+    PermGroup(pg),
     gens.map(g => Word(g)),
-    images=images.map(p => HomElement::Perm(p)),
+    images=images.map(p => Perm(p)),
     check=false,
   )
   (pg, hom)
@@ -465,10 +459,10 @@ fn fp_group_abelian_quotient_perm_group(
   }
   let pg = PermutationGroup::new(images)
   let hom = homomorphism(
-    HomGroup::FpGroup(fp),
-    HomGroup::PermGroup(pg),
+    FpGroup(fp),
+    PermGroup(pg),
     fp.generators.map(g => Word(g)),
-    images=images.map(p => HomElement::Perm(p)),
+    images=images.map(p => Perm(p)),
     check=false,
   )
   (pg, hom)
@@ -495,19 +489,17 @@ fn hom_group_elements(
 ) -> Array[HomElement] raise CombinatoricsError {
   let out : Array[HomElement] = Array::new()
   match group {
-    HomGroup::PermGroup(g) =>
+    PermGroup(g) =>
       for e in g.elements() {
-        out.push(HomElement::Perm(e))
+        out.push(Perm(e))
       }
-    HomGroup::FreeGroup(g) =>
+    FreeGroup(g) =>
       match g.order() {
-        GroupOrder::Finite(_) => out.push(Word(g.identity()))
-        GroupOrder::Infinite =>
-          raise CombinatoricsError::ValueError(
-            "cannot enumerate elements of infinite group",
-          )
+        Finite(_) => out.push(Word(g.identity()))
+        Infinite =>
+          raise ValueError("cannot enumerate elements of infinite group")
       }
-    HomGroup::FpGroup(g) =>
+    FpGroup(g) =>
       for e in fp_group_elements(g) {
         out.push(Word(e))
       }
@@ -542,7 +534,7 @@ fn image_for_generator(
     }
   }
   match gen {
-    HomElement::Perm(p) => {
+    Perm(p) => {
       let inv = HomElement::Perm(p.invert())
       for i in 0..<gens.length() {
         if gens[i] == inv {
@@ -552,7 +544,7 @@ fn image_for_generator(
     }
     Word(_) => ()
   }
-  raise CombinatoricsError::ValueError("generator not in homomorphism domain")
+  raise ValueError("generator not in homomorphism domain")
 }
 
 ///|
@@ -562,26 +554,26 @@ pub fn GroupHomomorphism::apply(
   elem : HomElement,
 ) -> HomElement raise CombinatoricsError {
   if !hom_group_contains(self.domain, elem) {
-    raise CombinatoricsError::ValueError("element not in domain")
+    raise ValueError("element not in domain")
   }
   if elem_is_identity(elem) {
     return hom_group_identity(self.codomain)
   }
   match self.domain {
-    HomGroup::PermGroup(g) =>
+    PermGroup(g) =>
       match elem {
-        HomElement::Perm(p) => {
+        Perm(p) => {
           let gens = g.generator_product(p, original=true)
           let mut value = hom_group_identity(self.codomain)
           for gen in gens {
-            let img = image_for_generator(self, HomElement::Perm(gen))
+            let img = image_for_generator(self, Perm(gen))
             value = elem_mul(img, value)
           }
           normalize_elem_for_group(self.codomain, value)
         }
-        _ => raise CombinatoricsError::ValueError("element type mismatch")
+        _ => raise ValueError("element type mismatch")
       }
-    HomGroup::FpGroup(_) | HomGroup::FreeGroup(_) =>
+    FpGroup(_) | FreeGroup(_) =>
       match elem {
         Word(w) => {
           let mut value = hom_group_identity(self.codomain)
@@ -595,7 +587,7 @@ pub fn GroupHomomorphism::apply(
           }
           normalize_elem_for_group(self.codomain, value)
         }
-        _ => raise CombinatoricsError::ValueError("element type mismatch")
+        _ => raise ValueError("element type mismatch")
       }
   }
 }
@@ -644,7 +636,7 @@ pub fn GroupHomomorphism::invert(
   let invs = self.inverses.unwrap()
   match invs.get(target) {
     Some(v) => v
-    None => raise CombinatoricsError::ValueError("element not in image")
+    None => raise ValueError("element not in image")
   }
 }
 
@@ -672,11 +664,11 @@ pub fn GroupHomomorphism::kernel(
       let identity = hom_group_identity(self.codomain)
       let elems = hom_group_elements(self.domain)
       match self.domain {
-        HomGroup::PermGroup(_) => {
+        PermGroup(_) => {
           let gens : Array[Permutation] = Array::new()
           for e in elems {
             match e {
-              HomElement::Perm(p) =>
+              Perm(p) =>
                 if hom_elem_equal(self.codomain, self.apply(e), identity) {
                   gens.push(p)
                 }
@@ -688,7 +680,7 @@ pub fn GroupHomomorphism::kernel(
           self.kernel_cache = Some(out)
           out
         }
-        HomGroup::FpGroup(g) => {
+        FpGroup(g) => {
           let gens : Array[FreeGroupElement] = Array::new()
           for e in elems {
             match e {
@@ -699,12 +691,12 @@ pub fn GroupHomomorphism::kernel(
               _ => ()
             }
           }
-          let sub = FpSubgroup::new(SubgroupParent::Fp(g), gens, normal=true)
+          let sub = FpSubgroup::new(Fp(g), gens, normal=true)
           let out = HomSubgroup::FpSub(sub)
           self.kernel_cache = Some(out)
           out
         }
-        HomGroup::FreeGroup(g) => {
+        FreeGroup(g) => {
           let gens : Array[FreeGroupElement] = Array::new()
           for e in elems {
             match e {
@@ -715,7 +707,7 @@ pub fn GroupHomomorphism::kernel(
               _ => ()
             }
           }
-          let sub = FpSubgroup::new(SubgroupParent::Free(g), gens, normal=true)
+          let sub = FpSubgroup::new(Free(g), gens, normal=true)
           let out = HomSubgroup::FpSub(sub)
           self.kernel_cache = Some(out)
           out
@@ -740,17 +732,17 @@ pub fn GroupHomomorphism::image(
         }
       }
       let out = match self.codomain {
-        HomGroup::PermGroup(_) => {
+        PermGroup(_) => {
           let gens : Array[Permutation] = Array::new()
           for v in vals {
             match v {
-              HomElement::Perm(p) => gens.push(p)
+              Perm(p) => gens.push(p)
               _ => ()
             }
           }
           HomSubgroup::PermSub(PermutationGroup::new(gens))
         }
-        HomGroup::FpGroup(g) => {
+        FpGroup(g) => {
           let gens : Array[FreeGroupElement] = Array::new()
           for v in vals {
             match v {
@@ -758,9 +750,9 @@ pub fn GroupHomomorphism::image(
               _ => ()
             }
           }
-          HomSubgroup::FpSub(FpSubgroup::new(SubgroupParent::Fp(g), gens))
+          FpSub(FpSubgroup::new(Fp(g), gens))
         }
-        HomGroup::FreeGroup(g) => {
+        FreeGroup(g) => {
           let gens : Array[FreeGroupElement] = Array::new()
           for v in vals {
             match v {
@@ -768,7 +760,7 @@ pub fn GroupHomomorphism::image(
               _ => ()
             }
           }
-          HomSubgroup::FpSub(FpSubgroup::new(SubgroupParent::Free(g), gens))
+          FpSub(FpSubgroup::new(Free(g), gens))
         }
       }
       self.image_cache = Some(out)
@@ -783,8 +775,8 @@ pub fn GroupHomomorphism::is_injective(
   self : GroupHomomorphism,
 ) -> Bool raise CombinatoricsError {
   match hom_subgroup_order(self.kernel()) {
-    GroupOrder::Finite(n) => n == 1
-    GroupOrder::Infinite => false
+    Finite(n) => n == 1
+    Infinite => false
   }
 }
 
@@ -799,10 +791,10 @@ pub fn GroupHomomorphism::is_surjective(
   let im = hom_subgroup_order(self.image())
   let oth = hom_group_order(self.codomain)
   match (im, oth) {
-    (GroupOrder::Infinite, GroupOrder::Infinite) => None
-    (GroupOrder::Finite(a), GroupOrder::Finite(b)) => Some(a == b)
-    (GroupOrder::Finite(_), GroupOrder::Infinite) => Some(false)
-    (GroupOrder::Infinite, GroupOrder::Finite(_)) => Some(false)
+    (Infinite, Infinite) => None
+    (Finite(a), Finite(b)) => Some(a == b)
+    (Finite(_), Infinite) => Some(false)
+    (Infinite, Finite(_)) => Some(false)
   }
 }
 
@@ -824,8 +816,8 @@ pub fn GroupHomomorphism::is_trivial(
   self : GroupHomomorphism,
 ) -> Bool raise CombinatoricsError {
   match hom_subgroup_order(self.image()) {
-    GroupOrder::Finite(n) => n == 1
-    GroupOrder::Infinite => false
+    Finite(n) => n == 1
+    Infinite => false
   }
 }
 
@@ -838,9 +830,7 @@ pub fn GroupHomomorphism::compose(
   other : GroupHomomorphism,
 ) -> GroupHomomorphism raise CombinatoricsError {
   if !subgroup_is_subgroup_of(other.image(), self.domain) {
-    raise CombinatoricsError::ValueError(
-      "image of other must be subgroup of domain",
-    )
+    raise ValueError("image of other must be subgroup of domain")
   }
   let gens = other.domain_gens
   let images : Array[HomElement] = Array::new()
@@ -857,27 +847,18 @@ pub fn GroupHomomorphism::restrict_to(
   h : PermutationGroup,
 ) -> GroupHomomorphism raise CombinatoricsError {
   match self.domain {
-    HomGroup::PermGroup(g) => {
+    PermGroup(g) => {
       if !h.is_subgroup(g) {
-        raise CombinatoricsError::ValueError("given subgroup is not in domain")
+        raise ValueError("given subgroup is not in domain")
       }
       let gens = h.generators().map(g0 => HomElement::Perm(g0))
       let images : Array[HomElement] = Array::new()
       for gen in gens {
         images.push(self.apply(gen))
       }
-      homomorphism(
-        HomGroup::PermGroup(h),
-        self.codomain,
-        gens,
-        images~,
-        check=false,
-      )
+      homomorphism(PermGroup(h), self.codomain, gens, images~, check=false)
     }
-    _ =>
-      raise CombinatoricsError::ValueError(
-        "restriction only supported for permutation groups",
-      )
+    _ => raise ValueError("restriction only supported for permutation groups")
   }
 }
 
@@ -888,27 +869,27 @@ pub fn GroupHomomorphism::invert_subgroup(
   h : PermutationGroup,
 ) -> PermutationGroup raise CombinatoricsError {
   match (self.domain, self.codomain) {
-    (HomGroup::PermGroup(dom), HomGroup::PermGroup(_)) => {
+    (PermGroup(dom), PermGroup(_)) => {
       let image = self.image()
       match image {
-        HomSubgroup::PermSub(img) =>
+        PermSub(img) =>
           if !h.is_subgroup(img) {
-            raise CombinatoricsError::ValueError("given subgroup not in image")
+            raise ValueError("given subgroup not in image")
           }
         _ => ()
       }
       let gens : Array[Permutation] = Array::new()
       let mut p = PermutationGroup::new([dom.identity()])
       for gen in h.generators() {
-        let pre = self.invert(HomElement::Perm(gen))
+        let pre = self.invert(Perm(gen))
         match pre {
-          HomElement::Perm(pgen) => {
+          Perm(pgen) => {
             if !p.contains(pgen, strict=false) {
               gens.push(pgen)
               p = PermutationGroup::new(gens)
             }
             match self.kernel() {
-              HomSubgroup::PermSub(kern) =>
+              PermSub(kern) =>
                 for k in kern.generators() {
                   let prod = k.mul(pgen)
                   if !p.contains(prod, strict=false) {
@@ -925,9 +906,7 @@ pub fn GroupHomomorphism::invert_subgroup(
       p
     }
     _ =>
-      raise CombinatoricsError::ValueError(
-        "invert_subgroup requires permutation domain/codomain",
-      )
+      raise ValueError("invert_subgroup requires permutation domain/codomain")
   }
 }
 
@@ -940,7 +919,7 @@ fn _check_homomorphism(
 ) -> Bool raise CombinatoricsError {
   let identity = hom_group_identity(codomain)
   match domain {
-    HomGroup::PermGroup(g) => {
+    PermGroup(g) => {
       let elems = g.elements()
       for a in elems {
         for b in elems {
@@ -955,8 +934,8 @@ fn _check_homomorphism(
       }
       true
     }
-    HomGroup::FreeGroup(_) => true
-    HomGroup::FpGroup(g) => {
+    FreeGroup(_) => true
+    FpGroup(g) => {
       let rels = g.relators
       for r in rels {
         let img = hom_apply_word(codomain, domain_gens, images, r)
@@ -980,7 +959,7 @@ fn hom_apply_perm(
   let gens : Array[Permutation] = Array::new()
   for ge in domain_gens {
     match ge {
-      HomElement::Perm(p) => gens.push(p)
+      Perm(p) => gens.push(p)
       _ => ()
     }
   }
@@ -989,7 +968,7 @@ fn hom_apply_perm(
   for gen in word {
     let img = image_for_generator(
       {
-        domain: HomGroup::PermGroup(g),
+        domain: PermGroup(g),
         codomain,
         domain_gens,
         images,
@@ -997,7 +976,7 @@ fn hom_apply_perm(
         kernel_cache: None,
         image_cache: None,
       },
-      HomElement::Perm(gen),
+      Perm(gen),
     )
     value = elem_mul(img, value)
   }
@@ -1042,16 +1021,16 @@ pub fn homomorphism(
     full_images.push(identity)
   }
   if images.length() > 0 && images.length() != gens.length() {
-    raise CombinatoricsError::ValueError("images length mismatch")
+    raise ValueError("images length mismatch")
   }
   for i in 0..<gens.length() {
     let g = gens[i]
     let img = if images.length() == 0 { identity } else { images[i] }
     if !hom_group_contains(domain, g) {
-      raise CombinatoricsError::ValueError("generator not in domain")
+      raise ValueError("generator not in domain")
     }
     if !hom_group_contains(codomain, img) {
-      raise CombinatoricsError::ValueError("image not in codomain")
+      raise ValueError("image not in codomain")
     }
     let mut found = false
     let mut j = 0
@@ -1064,14 +1043,12 @@ pub fn homomorphism(
       j = j + 1
     }
     if !found {
-      raise CombinatoricsError::ValueError("generator not in domain generators")
+      raise ValueError("generator not in domain generators")
     }
   }
   if check {
     if !_check_homomorphism(domain, codomain, domain_gens, full_images) {
-      raise CombinatoricsError::ValueError(
-        "images do not define a homomorphism",
-      )
+      raise ValueError("images do not define a homomorphism")
     }
   }
   {
@@ -1090,12 +1067,12 @@ fn fp_group_to_perm_group(
   fp : FpGroup,
 ) -> (PermutationGroup, GroupHomomorphism) raise CombinatoricsError {
   match fp.order() {
-    GroupOrder::Finite(_) => {
+    Finite(_) => {
       let ct = fp.coset_enumeration([])
       let (pg, hom) = perm_group_from_coset_table(fp, ct)
       (pg, hom)
     }
-    GroupOrder::Infinite =>
+    Infinite =>
       match fp_group_best_low_index_quotient(fp, 8) {
         Some((pg, hom)) => (pg, hom)
         None => fp_group_abelian_quotient_perm_group(fp, free_mod=2)
@@ -1124,22 +1101,20 @@ pub fn orbit_homomorphism(
         }
       }
       if idx < 0 {
-        raise CombinatoricsError::ValueError("omega not closed under action")
+        raise ValueError("omega not closed under action")
       }
       arr.push(idx)
     }
     images.push(Permutation::from_array(arr))
   }
   let hom = homomorphism(
-    HomGroup::PermGroup(group),
-    HomGroup::PermGroup(codomain),
-    gens.map(g => HomElement::Perm(g)),
-    images=images.map(p => HomElement::Perm(p)),
+    PermGroup(group),
+    PermGroup(codomain),
+    gens.map(g => Perm(g)),
+    images=images.map(p => Perm(p)),
     check=false,
   )
-  hom.kernel_cache = Some(
-    HomSubgroup::PermSub(group.pointwise_stabilizer(omega)),
-  )
+  hom.kernel_cache = Some(PermSub(group.pointwise_stabilizer(omega)))
   hom
 }
 
@@ -1175,10 +1150,10 @@ pub fn block_homomorphism(
     images.push(Permutation::from_array(arr))
   }
   homomorphism(
-    HomGroup::PermGroup(group),
-    HomGroup::PermGroup(codomain),
-    gens.map(g => HomElement::Perm(g)),
-    images=images.map(p => HomElement::Perm(p)),
+    PermGroup(group),
+    PermGroup(codomain),
+    gens.map(g => Perm(g)),
+    images=images.map(p => Perm(p)),
     check=false,
   )
 }
@@ -1198,8 +1173,8 @@ fn gcd_int_local_hom(a0 : Int, b0 : Int) -> Int {
 ///|
 fn group_order_int(order : GroupOrder) -> Int? {
   match order {
-    GroupOrder::Finite(n) => Some(n)
-    GroupOrder::Infinite => None
+    Finite(n) => Some(n)
+    Infinite => None
   }
 }
 
@@ -1219,8 +1194,8 @@ fn group_iso_search(
     let gens_wrapped = g_perm_gens.map(p => HomElement::Perm(p))
     let imgs_wrapped = current.map(p => HomElement::Perm(p))
     let perm_hom = homomorphism(
-      HomGroup::PermGroup(pg),
-      HomGroup::PermGroup(ph),
+      PermGroup(pg),
+      PermGroup(ph),
       gens_wrapped,
       images=imgs_wrapped,
       check=true,
@@ -1233,30 +1208,29 @@ fn group_iso_search(
       return (false, None)
     }
     match (g, h) {
-      (HomGroup::PermGroup(_), HomGroup::PermGroup(_)) =>
-        return (true, Some(perm_hom))
+      (PermGroup(_), PermGroup(_)) => return (true, Some(perm_hom))
       _ => {
         let final_images : Array[HomElement] = Array::new()
         match h {
-          HomGroup::FpGroup(_) => {
+          FpGroup(_) => {
             let inv = h_iso.unwrap()
             for img in current {
-              final_images.push(inv.invert(HomElement::Perm(img)))
+              final_images.push(inv.invert(Perm(img)))
             }
           }
-          HomGroup::PermGroup(_) =>
+          PermGroup(_) =>
             for img in current {
-              final_images.push(HomElement::Perm(img))
+              final_images.push(Perm(img))
             }
           _ => ()
         }
         let g_gens : Array[HomElement] = Array::new()
         match g {
-          HomGroup::PermGroup(pg0) =>
+          PermGroup(pg0) =>
             for gg in pg0.generators() {
-              g_gens.push(HomElement::Perm(gg))
+              g_gens.push(Perm(gg))
             }
-          HomGroup::FpGroup(gfp) =>
+          FpGroup(gfp) =>
             for gg in gfp.generators {
               g_gens.push(Word(gg))
             }
@@ -1303,7 +1277,7 @@ pub fn group_isomorphism(
   let h = h_in
   // handle free groups explicitly
   match (g, h) {
-    (HomGroup::FreeGroup(gf), HomGroup::FreeGroup(hf)) => {
+    (FreeGroup(gf), FreeGroup(hf)) => {
       if gf.rank != hf.rank {
         return (false, None)
       }
@@ -1311,22 +1285,22 @@ pub fn group_isomorphism(
         return (true, None)
       }
       let hom = homomorphism(
-        HomGroup::FreeGroup(gf),
-        HomGroup::FreeGroup(hf),
+        FreeGroup(gf),
+        FreeGroup(hf),
         gf.generators().map(x => Word(x)),
         images=hf.generators().map(x => Word(x)),
         check=false,
       )
       return (true, Some(hom))
     }
-    (HomGroup::FreeGroup(gf), HomGroup::FpGroup(hfp)) => {
+    (FreeGroup(gf), FpGroup(hfp)) => {
       if hfp.relators.is_empty() && gf.rank == hfp.generators.length() {
         if !isomorphism {
           return (true, None)
         }
         let hom = homomorphism(
-          HomGroup::FreeGroup(gf),
-          HomGroup::FpGroup(hfp),
+          FreeGroup(gf),
+          FpGroup(hfp),
           gf.generators().map(x => Word(x)),
           images=hfp.generators.map(x => Word(x)),
           check=false,
@@ -1335,14 +1309,14 @@ pub fn group_isomorphism(
       }
       return (false, None)
     }
-    (HomGroup::FpGroup(gfp), HomGroup::FreeGroup(hf)) => {
+    (FpGroup(gfp), FreeGroup(hf)) => {
       if gfp.relators.is_empty() && hf.rank == gfp.generators.length() {
         if !isomorphism {
           return (true, None)
         }
         let hom = homomorphism(
-          HomGroup::FpGroup(gfp),
-          HomGroup::FreeGroup(hf),
+          FpGroup(gfp),
+          FreeGroup(hf),
           gfp.generators.map(x => Word(x)),
           images=hf.generators().map(x => Word(x)),
           check=false,
@@ -1355,7 +1329,7 @@ pub fn group_isomorphism(
   }
   // shortcut for identical fp presentations
   match (g, h) {
-    (HomGroup::FpGroup(gfp), HomGroup::FpGroup(hfp)) => {
+    (FpGroup(gfp), FpGroup(hfp)) => {
       let (g_gens, g_rels) = simplify_presentation(
         gfp.generators,
         gfp.relators,
@@ -1412,8 +1386,8 @@ pub fn group_isomorphism(
               return (true, None)
             }
             let hom = homomorphism(
-              HomGroup::FpGroup(gfp),
-              HomGroup::FpGroup(hfp),
+              FpGroup(gfp),
+              FpGroup(hfp),
               gfp.generators.map(x => Word(x)),
               images=hfp.generators.map(x => Word(x)),
               check=false,
@@ -1438,7 +1412,7 @@ pub fn group_isomorphism(
   // infinite groups: best-effort classification
   if g_ord is None && h_ord is None {
     match (g, h) {
-      (HomGroup::FpGroup(gfp), HomGroup::FpGroup(hfp)) => {
+      (FpGroup(gfp), FpGroup(hfp)) => {
         let g_ab = fp_group_is_abelian_status(gfp)
         let h_ab = fp_group_is_abelian_status(hfp)
         match (g_ab, h_ab) {
@@ -1503,8 +1477,8 @@ pub fn group_isomorphism(
   let mut g_iso : GroupHomomorphism? = None
   let mut h_iso : GroupHomomorphism? = None
   match g {
-    HomGroup::PermGroup(pg) => g_perm = Some(pg)
-    HomGroup::FpGroup(gfp) => {
+    PermGroup(pg) => g_perm = Some(pg)
+    FpGroup(gfp) => {
       let (pg, iso) = fp_group_to_perm_group(gfp)
       g_perm = Some(pg)
       g_iso = Some(iso)
@@ -1512,8 +1486,8 @@ pub fn group_isomorphism(
     _ => ()
   }
   match h {
-    HomGroup::PermGroup(ph) => h_perm = Some(ph)
-    HomGroup::FpGroup(hfp) => {
+    PermGroup(ph) => h_perm = Some(ph)
+    FpGroup(hfp) => {
       let (pg, iso) = fp_group_to_perm_group(hfp)
       h_perm = Some(pg)
       h_iso = Some(iso)
@@ -1536,16 +1510,16 @@ pub fn group_isomorphism(
   }
   let g_perm_gens : Array[Permutation] = Array::new()
   match g {
-    HomGroup::PermGroup(pg0) =>
+    PermGroup(pg0) =>
       for gen in pg0.generators() {
         g_perm_gens.push(gen)
       }
-    HomGroup::FpGroup(gfp) => {
+    FpGroup(gfp) => {
       let iso = g_iso.unwrap()
       for gen in gfp.generators {
         let img = iso.apply(Word(gen))
         match img {
-          HomElement::Perm(p) => g_perm_gens.push(p)
+          Perm(p) => g_perm_gens.push(p)
           _ => ()
         }
       }
@@ -1589,7 +1563,7 @@ pub fn is_isomorphic(
 ) -> Bool raise CombinatoricsError {
   // A quick low-index witness check catches some fp-group non-isomorphisms early.
   match (g, h) {
-    (HomGroup::FpGroup(gf), HomGroup::FpGroup(hf)) => {
+    (FpGroup(gf), FpGroup(hf)) => {
       let g_nonab = fp_group_has_nonabelian_quotient(gf, 6)
       let h_nonab = fp_group_has_nonabelian_quotient(hf, 6)
       if g_nonab != h_nonab {

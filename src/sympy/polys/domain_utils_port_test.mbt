@@ -6,11 +6,11 @@ fn expr_rat_du(n : Int, d : Int) -> @symcore.Expr raise {
 ///|
 test "domain_utils: normalize_mod parity over GF(p)" {
   let r1 = @symnum.BigRational::new(BigInt::from_int(3), BigInt::from_int(2))
-  let got1 = @sympolys.normalize_mod(r1, Domain::GF(5)).to_string()
+  let got1 = Show::to_string(@sympolys.normalize_mod(r1, GF(5)))
   let oracle1 = mod_rational(3, 2, 5).trim().to_owned()
   assert_eq(got1, oracle1)
   let r2 = @symnum.BigRational::new(BigInt::from_int(-7), BigInt::from_int(3))
-  let got2 = @sympolys.normalize_mod(r2, Domain::GF(5)).to_string()
+  let got2 = Show::to_string(@sympolys.normalize_mod(r2, GF(5)))
   let oracle2 = mod_rational(-7, 3, 5).trim().to_owned()
   assert_eq(got2, oracle2)
 }
@@ -18,13 +18,13 @@ test "domain_utils: normalize_mod parity over GF(p)" {
 ///|
 test "domain_utils: normalize_mod leaves QQ/ZZ unchanged" {
   let r = @symnum.BigRational::new(BigInt::from_int(5), BigInt::from_int(7))
-  let got_q = @sympolys.normalize_mod(r, Domain::QQ).to_string()
+  let got_q = Show::to_string(@sympolys.normalize_mod(r, QQ))
   let oracle_q = poly_expr(expr_rat_du(5, 7), gens=["x"], domain="QQ")
     .trim()
     .to_owned()
   assert_eq(got_q, oracle_q)
   let r2 = @symnum.BigRational::new(BigInt::from_int(4), BigInt::from_int(1))
-  let got_z = @sympolys.normalize_mod(r2, Domain::ZZ).to_string()
+  let got_z = Show::to_string(@sympolys.normalize_mod(r2, ZZ))
   let oracle_z = poly_expr(@symcore.int(4), gens=["x"], domain="ZZ")
     .trim()
     .to_owned()
@@ -35,18 +35,18 @@ test "domain_utils: normalize_mod leaves QQ/ZZ unchanged" {
 test "domain_utils: GF/QQ/ZZ coercions align with SymPy" {
   let x = @symcore.Expr::Symbol("x")
   let expr = expr_rat_du(3, 2) * x + expr_rat_du(1, 3)
-  let gf_poly = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(expr)
+  let gf_poly = PolyBuilder::new(["x"], GF(5)).from_expr(expr)
   let gf_ours = sympy_normalize(gf_poly.to_string()).trim().to_owned()
   let c1 = mod_rational(3, 2, 5)
   let c0 = mod_rational(1, 3, 5)
   let gf_expected = "\{c1}*x + \{c0}"
   let gf_oracle = sympy_normalize(gf_expected).trim().to_owned()
   assert_eq(gf_ours, gf_oracle)
-  let qq_poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(expr)
+  let qq_poly = PolyBuilder::new(["x"], QQ).from_expr(expr)
   let qq_ours = sympy_normalize(qq_poly.to_string()).trim().to_owned()
   let qq_oracle = poly_expr(expr, gens=["x"], domain="QQ").trim().to_owned()
   assert_eq(qq_ours, qq_oracle)
-  let zz_poly = PolyBuilder::new(["x"], Domain::ZZ).from_expr(
+  let zz_poly = PolyBuilder::new(["x"], ZZ).from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
   )
   let zz_ours = sympy_normalize(zz_poly.to_string()).trim().to_owned()

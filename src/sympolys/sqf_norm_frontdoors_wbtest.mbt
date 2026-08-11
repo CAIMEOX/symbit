@@ -3,7 +3,7 @@ test "sqf_norm frontdoor: univariate algebraic extension shift" {
   let x = Expr::Symbol("x")
   let a = Expr::Symbol("a")
   let rel = (a ^ int(2)) - int(3)
-  let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [rel])
+  let alg_domain = Domain::AlgExt(QQ, ["a"], [rel])
   let poly = PolyBuilder::new(["x"], alg_domain).from_expr(
     (x ^ int(2)) - int(2),
   )

@@ -50,12 +50,12 @@ fn sq_sign_expr(sign : Int, expr : Expr) -> Expr {
 
 ///|
 fn sq_fermion_ket_expr(items : Array[Expr]) -> Expr {
-  @symcore.raw_function("FockStateFermionKet", [Expr::Tuple(items)])
+  @symcore.raw_function("FockStateFermionKet", [Tuple(items)])
 }
 
 ///|
 fn sq_fermion_bra_expr(items : Array[Expr]) -> Expr {
-  @symcore.raw_function("FockStateFermionBra", [Expr::Tuple(items)])
+  @symcore.raw_function("FockStateFermionBra", [Tuple(items)])
 }
 
 ///|
@@ -86,7 +86,7 @@ fn sq_tuple_inner_product(lhs : Array[Expr], rhs : Array[Expr]) -> Expr {
   for idx in 0..<lhs.length() {
     if lhs[idx] == rhs[idx] {
       ()
-    } else if lhs[idx] is Expr::Number(_) && rhs[idx] is Expr::Number(_) {
+    } else if lhs[idx] is Number(_) && rhs[idx] is Number(_) {
       return int(0)
     } else {
       out = out * @symcore.raw_function("KroneckerDelta", [lhs[idx], rhs[idx]])
@@ -118,13 +118,13 @@ fn sq_symbol_head(name : String) -> String {
 ///|
 fn sq_index_group(expr : Expr, fermi_level : Int) -> Int {
   match expr {
-    Expr::Number(n) if n.is_integral() =>
+    Number(n) if n.is_integral() =>
       if n.numerator().to_int() > fermi_level {
         0
       } else {
         1
       }
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       if sq_symbol_prefix(name) == "_a" ||
         ["a", "b", "c", "d"].contains(sq_symbol_head(name)) {
         0
@@ -146,7 +146,7 @@ fn sq_compare_fermion_indices(lhs : Expr, rhs : Expr, fermi_level : Int) -> Int 
     return if group_l < group_r { -1 } else { 1 }
   }
   match (lhs, rhs) {
-    (Expr::Number(ln), Expr::Number(rn)) => ln.compare(rn)
+    (Number(ln), Number(rn)) => ln.compare(rn)
     _ => sq_expr_text(rhs).compare(sq_expr_text(lhs))
   }
 }
@@ -214,7 +214,7 @@ fn sq_fermion_state_from_items(
   fermi_level : Int,
 ) -> FermionState {
   let (sorted, _, _) = sq_sort_fermion_indices(orbitals, fermi_level)
-  FermionState::{ orbitals: sorted, fermi_level }
+  { orbitals: sorted, fermi_level }
 }
 
 ///|
@@ -325,7 +325,7 @@ fn sq_apply_fermion_operator_to_state(
       match @symcore.tuple_items(payload) {
         Some(items) =>
           match index {
-            Expr::Number(_) =>
+            Number(_) =>
               Some(
                 sq_apply_fermion_op_to_items(
                   index, is_annihilation, items, 0, ket,
@@ -359,7 +359,7 @@ pub fn FermionState::len(self : FermionState) -> Int {
 
 ///|
 pub fn FermionState::as_expr(self : FermionState) -> Expr {
-  @symcore.raw_function("FockState", [Expr::Tuple(self.orbitals)])
+  @symcore.raw_function("FockState", [Tuple(self.orbitals)])
 }
 
 ///|
@@ -406,7 +406,7 @@ pub impl Show for FermionState with fn to_string(self) {
 
 ///|
 pub impl Show for FermionState with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -429,12 +429,12 @@ pub fn fermion_bra(orbitals : Array[Expr], fermi_level? : Int = 0) -> Expr {
 
 ///|
 pub fn fermion_annihilator(index : Expr) -> FermionicOperatorExpr {
-  FermionicOperatorExpr::{ index, is_annihilation: true }
+  { index, is_annihilation: true }
 }
 
 ///|
 pub fn fermion_creator(index : Expr) -> FermionicOperatorExpr {
-  FermionicOperatorExpr::{ index, is_annihilation: false }
+  { index, is_annihilation: false }
 }
 
 ///|
@@ -453,10 +453,7 @@ pub fn FermionicOperatorExpr::as_expr(self : FermionicOperatorExpr) -> Expr {
 pub fn FermionicOperatorExpr::dagger(
   self : FermionicOperatorExpr,
 ) -> FermionicOperatorExpr {
-  FermionicOperatorExpr::{
-    index: self.index,
-    is_annihilation: !self.is_annihilation,
-  }
+  { index: self.index, is_annihilation: !self.is_annihilation }
 }
 
 ///|
@@ -470,7 +467,7 @@ pub impl Show for FermionicOperatorExpr with fn to_string(self) {
 
 ///|
 pub impl Show for FermionicOperatorExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|

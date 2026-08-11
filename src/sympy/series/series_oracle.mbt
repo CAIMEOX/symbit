@@ -81,7 +81,7 @@ fn py_str_enum(obj : @py.PyObjectEnum) -> String {
 
 ///|
 fn sympy_symbol(name : String) -> @py.PyObject raise {
-  let obj = sympy_call_must("sympy.symbols", [OracleArg::Str(name)])
+  let obj = sympy_call_must("sympy.symbols", [Str(name)])
   objenum_to_obj(obj)
 }
 
@@ -97,37 +97,33 @@ pub fn series_str(
   let var_obj = sympy_symbol(var_name)
   let x0_obj = expr_to_sympy(x0)
   let res = sympy_call_must("sympy.series", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(var_obj),
-    OracleArg::PyObj(x0_obj),
-    OracleArg::Int(n),
-    OracleArg::Str(dir),
+    PyObj(expr_obj),
+    PyObj(var_obj),
+    PyObj(x0_obj),
+    Int(n),
+    Str(dir),
   ])
   py_str_enum(res)
 }
 
 ///|
 pub fn sympy_normalize_str(expr_str : String) -> String raise {
-  let res = sympy_call_must("sympy.sympify", [OracleArg::Str(expr_str)])
+  let res = sympy_call_must("sympy.sympify", [Str(expr_str)])
   py_str_enum(res)
 }
 
 ///|
 pub fn sympy_simplify_str(expr_str : String) -> String raise {
-  let obj = sympy_call_must("sympy.sympify", [OracleArg::Str(expr_str)])
-  let res = sympy_call_must("sympy.simplify", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-  ])
+  let obj = sympy_call_must("sympy.sympify", [Str(expr_str)])
+  let res = sympy_call_must("sympy.simplify", [PyObj(objenum_to_obj(obj))])
   py_str_enum(res)
 }
 
 ///|
 pub fn sympy_equiv_str(a : String, b : String) -> Bool raise {
   let diff = "(\{a})- (\{b})"
-  let diff_obj = sympy_call_must("sympy.sympify", [OracleArg::Str(diff)])
-  let res = sympy_call_must("sympy.simplify", [
-    OracleArg::PyObj(objenum_to_obj(diff_obj)),
-  ])
+  let diff_obj = sympy_call_must("sympy.sympify", [Str(diff)])
+  let res = sympy_call_must("sympy.simplify", [PyObj(objenum_to_obj(diff_obj))])
   py_str_enum(res) == "0"
 }
 
@@ -142,10 +138,10 @@ pub fn limit_str(
   let var_obj = sympy_symbol(var_name)
   let x0_obj = expr_to_sympy(x0)
   let res = sympy_call_must("sympy.limit", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(var_obj),
-    OracleArg::PyObj(x0_obj),
-    OracleArg::Str(dir),
+    PyObj(expr_obj),
+    PyObj(var_obj),
+    PyObj(x0_obj),
+    Str(dir),
   ])
   py_str_enum(res)
 }
@@ -161,9 +157,9 @@ pub fn fps_truncate_str(
   let var_obj = sympy_symbol(var_name)
   let x0_obj = expr_to_sympy(x0)
   let fps_enum = sympy_call_must("sympy.fps", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(var_obj),
-    OracleArg::PyObj(x0_obj),
+    PyObj(expr_obj),
+    PyObj(var_obj),
+    PyObj(x0_obj),
   ])
   let fps_obj = objenum_to_obj(fps_enum)
   let trunc_enum = match fps_obj.get_attr("truncate", print_err=true) {
@@ -181,7 +177,7 @@ pub fn fps_truncate_str(
         _ => fail("fps-truncate-callable")
       }
   }
-  let res = py_call_with_args(trunc_callable, [OracleArg::Int(n)])
+  let res = py_call_with_args(trunc_callable, [Int(n)])
   py_str_enum(res)
 }
 
@@ -196,12 +192,12 @@ pub fn pade_approximant_str(
   let expr_obj = expr_to_sympy(expr)
   let var_obj = sympy_symbol(var_name)
   let x0_obj = expr_to_sympy(x0)
-  let n_arg = if n < 0 { OracleArg::Null } else { OracleArg::Int(n) }
+  let n_arg = if n < 0 { OracleArg::Null } else { Int(n) }
   let res = sympy_call_must("sympy.series.approximants.pade_approximant", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(var_obj),
-    OracleArg::PyObj(x0_obj),
-    OracleArg::Int(m),
+    PyObj(expr_obj),
+    PyObj(var_obj),
+    PyObj(x0_obj),
+    Int(m),
     n_arg,
   ])
   py_str_enum(res)
@@ -211,8 +207,8 @@ pub fn pade_approximant_str(
 pub fn approximants_str(coeffs : Array[Int], var_name : String) -> String raise {
   let var_obj = sympy_symbol(var_name)
   let res = sympy_call_must("sympy.series.approximants.approximants", [
-    OracleArg::IntList(coeffs),
-    OracleArg::PyObj(var_obj),
+    IntList(coeffs),
+    PyObj(var_obj),
   ])
   // Convert generator to list in Python
   let gen_obj = objenum_to_obj(res)
@@ -235,7 +231,7 @@ pub fn approximants_str(coeffs : Array[Int], var_name : String) -> String raise 
         _ => fail("py-list-callable")
       }
   }
-  let list_res = py_call_with_args(list_callable, [OracleArg::PyObj(gen_obj)])
+  let list_res = py_call_with_args(list_callable, [PyObj(gen_obj)])
   py_str_enum(list_res)
 }
 
@@ -250,10 +246,10 @@ pub fn gruntz_str(
   let var_obj = sympy_symbol(var_name)
   let x0_obj = expr_to_sympy(x0)
   let res = sympy_call_must("sympy.gruntz", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(var_obj),
-    OracleArg::PyObj(x0_obj),
-    OracleArg::Str(dir),
+    PyObj(expr_obj),
+    PyObj(var_obj),
+    PyObj(x0_obj),
+    Str(dir),
   ])
   py_str_enum(res)
 }
@@ -268,9 +264,9 @@ pub fn residue_str(
   let var_obj = sympy_symbol(var_name)
   let x0_obj = expr_to_sympy(x0)
   let res = sympy_call_must("sympy.residue", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(var_obj),
-    OracleArg::PyObj(x0_obj),
+    PyObj(expr_obj),
+    PyObj(var_obj),
+    PyObj(x0_obj),
   ])
   py_str_enum(res)
 }
@@ -285,10 +281,10 @@ pub fn richardson_str(
   let expr_obj = expr_to_sympy(expr)
   let k_obj = sympy_symbol(k_name)
   let res = sympy_call_must("sympy.series.acceleration.richardson", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(k_obj),
-    OracleArg::Int(n),
-    OracleArg::Int(m),
+    PyObj(expr_obj),
+    PyObj(k_obj),
+    Int(n),
+    Int(m),
   ])
   py_str_enum(res)
 }
@@ -303,10 +299,10 @@ pub fn shanks_str(
   let expr_obj = expr_to_sympy(expr)
   let k_obj = sympy_symbol(k_name)
   let res = sympy_call_must("sympy.series.acceleration.shanks", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(k_obj),
-    OracleArg::Int(n),
-    OracleArg::Int(m),
+    PyObj(expr_obj),
+    PyObj(k_obj),
+    Int(n),
+    Int(m),
   ])
   py_str_enum(res)
 }
@@ -320,9 +316,9 @@ pub fn difference_delta_str(
   let expr_obj = expr_to_sympy(expr)
   let n_obj = sympy_symbol(n_name)
   let res = sympy_call_must("sympy.difference_delta", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(n_obj),
-    OracleArg::Int(step),
+    PyObj(expr_obj),
+    PyObj(n_obj),
+    Int(step),
   ])
   py_str_enum(res)
 }
@@ -331,10 +327,7 @@ pub fn difference_delta_str(
 pub fn limit_seq_str(expr : @symcore.Expr, n_name : String) -> String raise {
   let expr_obj = expr_to_sympy(expr)
   let n_obj = sympy_symbol(n_name)
-  let res = sympy_call_must("sympy.limit_seq", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(n_obj),
-  ])
+  let res = sympy_call_must("sympy.limit_seq", [PyObj(expr_obj), PyObj(n_obj)])
   py_str_enum(res)
 }
 
@@ -369,11 +362,7 @@ fn py_slice_obj(start : Int, stop : Int, step? : Int = 1) -> @py.PyObject raise 
         _ => fail("py-slice-callable")
       }
   }
-  let res = py_call_with_args(slice_callable, [
-    OracleArg::Int(start),
-    OracleArg::Int(stop),
-    OracleArg::Int(step),
-  ])
+  let res = py_call_with_args(slice_callable, [Int(start), Int(stop), Int(step)])
   objenum_to_obj(res)
 }
 
@@ -388,9 +377,9 @@ pub fn fps_coeff_str(
   let var_obj = sympy_symbol(var_name)
   let x0_obj = expr_to_sympy(x0)
   let fps_enum = sympy_call_must("sympy.fps", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(var_obj),
-    OracleArg::PyObj(x0_obj),
+    PyObj(expr_obj),
+    PyObj(var_obj),
+    PyObj(x0_obj),
   ])
   let fps_obj = objenum_to_obj(fps_enum)
   let get_enum = match fps_obj.get_attr("__getitem__", print_err=true) {
@@ -408,7 +397,7 @@ pub fn fps_coeff_str(
         _ => fail("fps-getitem-callable")
       }
   }
-  let res = py_call_with_args(get_callable, [OracleArg::Int(n)])
+  let res = py_call_with_args(get_callable, [Int(n)])
   py_str_enum(res)
 }
 
@@ -425,9 +414,9 @@ pub fn fps_slice_str(
   let var_obj = sympy_symbol(var_name)
   let x0_obj = expr_to_sympy(x0)
   let fps_enum = sympy_call_must("sympy.fps", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(var_obj),
-    OracleArg::PyObj(x0_obj),
+    PyObj(expr_obj),
+    PyObj(var_obj),
+    PyObj(x0_obj),
   ])
   let fps_obj = objenum_to_obj(fps_enum)
   let get_enum = match fps_obj.get_attr("__getitem__", print_err=true) {
@@ -446,7 +435,7 @@ pub fn fps_slice_str(
       }
   }
   let slice_obj = py_slice_obj(start, stop, step~)
-  let res = py_call_with_args(get_callable, [OracleArg::PyObj(slice_obj)])
+  let res = py_call_with_args(get_callable, [PyObj(slice_obj)])
   py_str_enum(res)
 }
 
@@ -459,10 +448,10 @@ pub fn fourier_truncate_str(
   n : Int,
 ) -> String raise {
   let expr_obj = expr_to_sympy(expr)
-  let limits_obj = py_tuple_from_exprs([@symcore.Expr::Symbol(var_name), a, b])
+  let limits_obj = py_tuple_from_exprs([Symbol(var_name), a, b])
   let series_enum = sympy_call_must("sympy.fourier_series", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(limits_obj),
+    PyObj(expr_obj),
+    PyObj(limits_obj),
   ])
   let series_obj = objenum_to_obj(series_enum)
   let trunc_enum = match series_obj.get_attr("truncate", print_err=true) {
@@ -480,7 +469,7 @@ pub fn fourier_truncate_str(
         _ => fail("fourier-truncate-callable")
       }
   }
-  let res = py_call_with_args(trunc_callable, [OracleArg::Int(n)])
+  let res = py_call_with_args(trunc_callable, [Int(n)])
   py_str_enum(res)
 }
 
@@ -493,10 +482,10 @@ pub fn fourier_term_str(
   n : Int,
 ) -> String raise {
   let expr_obj = expr_to_sympy(expr)
-  let limits_obj = py_tuple_from_exprs([@symcore.Expr::Symbol(var_name), a, b])
+  let limits_obj = py_tuple_from_exprs([Symbol(var_name), a, b])
   let series_enum = sympy_call_must("sympy.fourier_series", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(limits_obj),
+    PyObj(expr_obj),
+    PyObj(limits_obj),
   ])
   let series_obj = objenum_to_obj(series_enum)
   let term_enum = match series_obj.get_attr("term", print_err=true) {
@@ -514,7 +503,7 @@ pub fn fourier_term_str(
         _ => fail("fourier-term-callable")
       }
   }
-  let res = py_call_with_args(term_callable, [OracleArg::Int(n)])
+  let res = py_call_with_args(term_callable, [Int(n)])
   py_str_enum(res)
 }
 
@@ -527,10 +516,10 @@ pub fn fourier_sigma_str(
   n : Int,
 ) -> String raise {
   let expr_obj = expr_to_sympy(expr)
-  let limits_obj = py_tuple_from_exprs([@symcore.Expr::Symbol(var_name), a, b])
+  let limits_obj = py_tuple_from_exprs([Symbol(var_name), a, b])
   let series_enum = sympy_call_must("sympy.fourier_series", [
-    OracleArg::PyObj(expr_obj),
-    OracleArg::PyObj(limits_obj),
+    PyObj(expr_obj),
+    PyObj(limits_obj),
   ])
   let series_obj = objenum_to_obj(series_enum)
   let sigma_enum = match
@@ -549,6 +538,6 @@ pub fn fourier_sigma_str(
         _ => fail("fourier-sigma-callable")
       }
   }
-  let res = py_call_with_args(sigma_callable, [OracleArg::Int(n)])
+  let res = py_call_with_args(sigma_callable, [Int(n)])
   py_str_enum(res)
 }

@@ -57,6 +57,10 @@ pub enum ArrayExpr {
   Mul(Array[ArrayExpr])
 }
 pub fn ArrayExpr::latex(Self, settings? : @symprint.LatexSettings) -> String
+#deprecated
+pub fn ArrayExpr::output(Self, &Logger) -> Unit
+#deprecated
+pub fn ArrayExpr::to_string(Self) -> String
 pub impl Show for ArrayExpr
 
 pub(all) struct DenseArray {

@@ -174,6 +174,25 @@ pub(all) enum BoolExpr {
   Equivalent(Array[BoolExpr])
   ITE(BoolExpr, BoolExpr, BoolExpr)
 }
+#deprecated
+pub fn BoolExpr::compare(Self, Self) -> Int
+#deprecated
+pub fn BoolExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn BoolExpr::hash(Self) -> Int
+#deprecated
+pub fn BoolExpr::hash_combine(Self, Hasher) -> Unit
+#deprecated
+pub fn BoolExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn BoolExpr::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn BoolExpr::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn BoolExpr::op_le(Self, Self) -> Bool
+#deprecated
+pub fn BoolExpr::op_lt(Self, Self) -> Bool
+#deprecated
 pub fn BoolExpr::to_string(Self) -> String
 pub impl Compare for BoolExpr
 pub impl Eq for BoolExpr
@@ -189,6 +208,10 @@ pub struct LinearConstraint {
   rhs : @symnum.BigRational
   op : RelOp
 }
+#deprecated
+pub fn LinearConstraint::output(Self, &Logger) -> Unit
+#deprecated
+pub fn LinearConstraint::to_string(Self) -> String
 pub impl Show for LinearConstraint
 
 pub(all) struct LraAssumption {
@@ -201,6 +224,12 @@ pub struct LraConflictLit {
   key : String
   negated : Bool
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn LraConflictLit::equal(Self, Self) -> Bool
+#deprecated
+pub fn LraConflictLit::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn LraConflictLit::to_repr(Self) -> @debug.Repr
 
 pub struct PropKB {
   clauses : Map[BoolExpr, Bool]
@@ -218,12 +247,21 @@ pub(all) enum RelOp {
   Gt
   Eq
 } derive(Eq)
+#deprecated
+pub fn RelOp::equal(Self, Self) -> Bool
+#deprecated
+pub fn RelOp::not_equal(Self, Self) -> Bool
+#deprecated
 pub fn RelOp::to_string(Self) -> String
 
 pub enum SatResult {
   Single(Map[String, Bool]?)
   All(Array[Map[String, Bool]?])
 }
+#deprecated
+pub fn SatResult::output(Self, &Logger) -> Unit
+#deprecated
+pub fn SatResult::to_string(Self) -> String
 pub impl Show for SatResult
 
 pub(all) enum TermInput {
@@ -236,6 +274,16 @@ pub(all) enum TruthTableRow {
   WithInput(Array[Int], Bool)
   Value(Bool)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn TruthTableRow::equal(Self, Self) -> Bool
+#deprecated
+pub fn TruthTableRow::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn TruthTableRow::output(Self, &Logger) -> Unit
+#deprecated
+pub fn TruthTableRow::to_repr(Self) -> @debug.Repr
+#deprecated
+pub fn TruthTableRow::to_string(Self) -> String
 pub impl Show for TruthTableRow
 
 // Type aliases

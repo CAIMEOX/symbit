@@ -6,7 +6,7 @@ test "geometry.ellipse parity repr equation and intersections" {
     @symcore.int(1),
   )
   let e = match ellipse_value {
-    GeometryEntity::Ellipse(value) => value
+    Ellipse(value) => value
     _ => fail("expected ellipse")
   }
   assert_eq(e.repr(), geometry_eval_repr("Ellipse(Point2D(0, 0), 2, 1)"))
@@ -51,15 +51,12 @@ test "geometry.ellipse parity tangency and parameter helpers" {
       @symcore.int(2),
       @symcore.int(1),
     ) {
-    GeometryEntity::Ellipse(value) => value
+    Ellipse(value) => value
     _ => fail("expected ellipse")
   }
   assert_eq(
     expr_map_summary(
-      e.parameter_value(
-        point2d(@symcore.int(2), @symcore.int(0)),
-        @symcore.Expr::Symbol("t"),
-      ),
+      e.parameter_value(point2d(@symcore.int(2), @symcore.int(0)), Symbol("t")),
     ),
     geometry_eval_str(
       "Ellipse(Point2D(0, 0), 2, 1).parameter_value(Point2D(2, 0), t)",
@@ -102,10 +99,7 @@ test "geometry.circle parity tangency and parameter helpers" {
   )
   assert_eq(
     expr_map_summary(
-      c.parameter_value(
-        point2d(@symcore.int(1), @symcore.int(0)),
-        @symcore.Expr::Symbol("t"),
-      ),
+      c.parameter_value(point2d(@symcore.int(1), @symcore.int(0)), Symbol("t")),
     ),
     geometry_eval_str(
       "Circle(Point2D(0, 0), 1).parameter_value(Point2D(1, 0), t)",
@@ -130,7 +124,7 @@ test "geometry.ellipse parity formula helpers" {
       @symcore.int(5),
       @symcore.int(4),
     ) {
-    GeometryEntity::Ellipse(value) => value
+    Ellipse(value) => value
     _ => fail("expected ellipse")
   }
   let second = e.second_moment_of_area()
@@ -196,12 +190,8 @@ test "geometry.ellipse parity formula helpers" {
     "ellipse polar second moment parity",
   )
   let symbolic = match
-    ellipse(
-      point2d(@symcore.int(1), @symcore.int(2)),
-      @symcore.Expr::Symbol("a"),
-      @symcore.Expr::Symbol("b"),
-    ) {
-    GeometryEntity::Ellipse(value) => value
+    ellipse(point2d(@symcore.int(1), @symcore.int(2)), Symbol("a"), Symbol("b")) {
+    Ellipse(value) => value
     _ => fail("expected symbolic ellipse")
   }
   assert_eq(
@@ -230,7 +220,7 @@ test "geometry.ellipse parity reflect and exact normals" {
       @symcore.int(1),
       @symcore.int(2),
     ) {
-    GeometryEntity::Ellipse(value) => value
+    Ellipse(value) => value
     _ => fail("expected ellipse")
   }
   let horizontal = line(
@@ -276,7 +266,7 @@ test "geometry.ellipse parity reflect and exact normals" {
       @symcore.int(2),
       @symcore.int(1),
     ) {
-    GeometryEntity::Ellipse(value) => value
+    Ellipse(value) => value
     _ => fail("expected exact ellipse")
   }
   assert_eq(

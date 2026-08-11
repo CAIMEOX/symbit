@@ -11,7 +11,7 @@ test "factory: from_expr_defaults infers gens/domain QQ" {
   let poly = Poly::from_expr_defaults(expr)
   debug_inspect(poly.gens, content="[\"x\", \"y\"]")
   match poly.domain {
-    Domain::QQ => ()
+    QQ => ()
     _ => fail("expected QQ domain")
   }
   let ours = factory_sympy_norm(poly.to_string())
@@ -25,7 +25,7 @@ test "factory: modulus selects GF domain" {
   let expr = x + @symcore.int(1)
   let poly = Poly::from_expr_defaults(expr, modulus=5)
   match poly.domain {
-    Domain::GF(p) => inspect("\{p}", content="5")
+    GF(p) => inspect("\{p}", content="5")
     _ => fail("expected GF(5)")
   }
   let ours = factory_sympy_norm(poly.to_string())
@@ -39,7 +39,7 @@ test "factory: gaussian flag upgrades to CC" {
   let expr = (x ^ @symcore.int(2)) + @symcore.int(1)
   let poly = Poly::from_expr_defaults(expr, gaussian=true)
   match poly.domain {
-    Domain::CC => ()
+    CC => ()
     _ => fail("expected CC domain")
   }
 }

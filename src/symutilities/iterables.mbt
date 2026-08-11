@@ -28,22 +28,22 @@ pub struct NumberedSymbols {
 
 ///|
 pub fn[T] nested_atom(value : T) -> Nested[T] {
-  Nested::Atom(value)
+  Atom(value)
 }
 
 ///|
 pub fn[T] nested_items(values : Array[Nested[T]]) -> Nested[T] {
-  Nested::Items(values)
+  Items(values)
 }
 
 ///|
 pub fn shape_take(count : Int) -> ShapeSpec {
-  ShapeSpec::Take(count)
+  Take(count)
 }
 
 ///|
 pub fn shape_group(parts : Array[ShapeSpec]) -> ShapeSpec {
-  ShapeSpec::Group(parts)
+  Group(parts)
 }
 
 ///|
@@ -85,20 +85,18 @@ pub fn[T] flatten(
   levels? : Int = -1,
 ) -> Array[T] raise UtilitiesError {
   if levels < -1 {
-    raise UtilitiesError::InvalidArgument(
-      "expected non-negative number of levels",
-    )
+    raise InvalidArgument("expected non-negative number of levels")
   }
   let out : Array[T] = []
   letrec visit = (value : Nested[T], depth : Int) => {
     match value {
-      Nested::Atom(v) => out.push(v)
-      Nested::Items(xs) =>
+      Atom(v) => out.push(v)
+      Items(xs) =>
         if depth == 0 {
           for item in xs {
             match item {
-              Nested::Atom(v) => out.push(v)
-              Nested::Items(_) => ()
+              Atom(v) => out.push(v)
+              Items(_) => ()
             }
           }
         } else {
@@ -121,9 +119,7 @@ pub fn[T] unflatten(
   n : Int,
 ) -> Array[Array[T]] raise UtilitiesError {
   if n <= 0 || seq.length() % n != 0 {
-    raise UtilitiesError::InvalidArgument(
-      "expected chunk size dividing the sequence length",
-    )
+    raise InvalidArgument("expected chunk size dividing the sequence length")
   }
   let out : Array[Array[T]] = []
   let mut i = 0
@@ -141,8 +137,8 @@ pub fn[T] unflatten(
 ///|
 fn nested_size(spec : ShapeSpec) -> Int {
   match spec {
-    ShapeSpec::Take(n) => n
-    ShapeSpec::Group(parts) =>
+    Take(n) => n
+    Group(parts) =>
       parts.fold(init=0, fn(acc, item) { acc + nested_size(item) })
   }
 }
@@ -150,21 +146,21 @@ fn nested_size(spec : ShapeSpec) -> Int {
 ///|
 fn[T] reshape_one(seq : Array[T], start : Int, spec : ShapeSpec) -> Nested[T] {
   match spec {
-    ShapeSpec::Take(n) => {
+    Take(n) => {
       let values : Array[Nested[T]] = []
       for i in 0..<n {
-        values.push(Nested::Atom(seq[start + i]))
+        values.push(Atom(seq[start + i]))
       }
-      Nested::Items(values)
+      Items(values)
     }
-    ShapeSpec::Group(parts) => {
+    Group(parts) => {
       let values : Array[Nested[T]] = []
       let mut offset = start
       for part in parts {
         values.push(reshape_one(seq, offset, part))
         offset += nested_size(part)
       }
-      Nested::Items(values)
+      Items(values)
     }
   }
 }
@@ -176,9 +172,7 @@ pub fn[T] reshape(
 ) -> Array[Nested[T]] raise UtilitiesError {
   let block = template.fold(init=0, fn(acc, item) { acc + nested_size(item) })
   if block <= 0 || seq.length() % block != 0 {
-    raise UtilitiesError::InvalidArgument(
-      "shape template must consume the input exactly",
-    )
+    raise InvalidArgument("shape template must consume the input exactly")
   }
   let out : Array[Nested[T]] = []
   let mut offset = 0
@@ -188,7 +182,7 @@ pub fn[T] reshape(
       row.push(reshape_one(seq, offset, part))
       offset += nested_size(part)
     }
-    out.push(Nested::Items(row))
+    out.push(Items(row))
   }
   out
 }
@@ -196,11 +190,7 @@ pub fn[T] reshape(
 ///|
 pub fn[T : Eq] group(seq : Array[T], multiple? : Bool = true) -> GroupResult[T] {
   if seq.is_empty() {
-    return if multiple {
-      GroupResult::Multiple([])
-    } else {
-      GroupResult::Counts([])
-    }
+    return if multiple { Multiple([]) } else { Counts([]) }
   }
   let runs : Array[Array[T]] = []
   let counts : Array[(T, Int)] = []
@@ -217,9 +207,9 @@ pub fn[T : Eq] group(seq : Array[T], multiple? : Bool = true) -> GroupResult[T] 
   counts.push((current[0], current.length()))
   runs.push(current)
   if multiple {
-    GroupResult::Multiple(runs)
+    Multiple(runs)
   } else {
-    GroupResult::Counts(counts)
+    Counts(counts)
   }
 }
 
@@ -594,7 +584,7 @@ pub fn[T : Compare + Eq + Hash] topological_sort(
     }
   }
   if out.length() != vertices.length() {
-    raise UtilitiesError::InvalidArgument("cycle detected in topological_sort")
+    raise InvalidArgument("cycle detected in topological_sort")
   }
   out
 }
@@ -704,5 +694,5 @@ pub fn NumberedSymbols::next(self : NumberedSymbols) -> Expr {
     name = self.prefix + index.to_string()
   }
   self.next_index.val = index + 1
-  Expr::Symbol(name)
+  Symbol(name)
 }

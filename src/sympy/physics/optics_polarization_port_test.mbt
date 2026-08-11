@@ -33,7 +33,7 @@ test "physics.optics.polarization: parity" {
     "stokes_vector parity",
   )
   optics_matrix_assert_expr_parity(
-    mueller_matrix(linear_polarizer(theta=@symcore.Expr::Symbol("theta"))),
+    mueller_matrix(linear_polarizer(theta=Symbol("theta"))),
     physics_eval_matrix("mueller_matrix(linear_polarizer(theta))"),
     "mueller_matrix parity",
   )

@@ -5,7 +5,7 @@ test "polyfuncs: rational_interpolate reports bad degree early" {
     (@symnum.BigRational::from_int(2), @symnum.BigRational::from_int(4)),
   ]
   sympolys_assert_error(
-    fn() raise PolyError { rational_interpolate(pts, 3, "x", Domain::QQ) },
+    fn() raise PolyError { rational_interpolate(pts, 3, "x", QQ) },
     "BadExponent",
   )
 }

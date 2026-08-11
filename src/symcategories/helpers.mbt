@@ -138,12 +138,12 @@ fn normalize_diagrams(items : Array[Diagram]) -> Array[Diagram] {
 
 ///|
 pub fn show_object_array(items : Array[Object]) -> String {
-  "[" + items.map(item => item.to_string()).join(", ") + "]"
+  "[" + items.map(item => Show::to_string(item)).join(", ") + "]"
 }
 
 ///|
 pub fn show_morphism_array(items : Array[Morphism]) -> String {
-  "[" + items.map(item => item.to_string()).join(", ") + "]"
+  "[" + items.map(item => Show::to_string(item)).join(", ") + "]"
 }
 
 ///|
@@ -157,17 +157,17 @@ fn show_property_set(items : Array[String]) -> String {
 
 ///|
 pub fn generic_hints(transpose? : Bool = false) -> GridHints {
-  { layout: LayoutKind::Generic, transpose }
+  { layout: Generic, transpose }
 }
 
 ///|
 pub fn sequential_hints(transpose? : Bool = false) -> GridHints {
-  { layout: LayoutKind::Sequential, transpose }
+  { layout: Sequential, transpose }
 }
 
 ///|
 pub fn transpose_hints() -> GridHints {
-  { layout: LayoutKind::Generic, transpose: true }
+  { layout: Generic, transpose: true }
 }
 
 ///|
@@ -177,10 +177,10 @@ pub fn group_layout(objects : Array[Object], hints : GridHints?) -> GroupLayout 
 
 ///|
 pub fn grid_group_object(obj : Object) -> GridGroup {
-  GridGroup::Single(obj)
+  Single(obj)
 }
 
 ///|
 pub fn grid_group(layout : GroupLayout) -> GridGroup {
-  GridGroup::Group(layout)
+  Group(layout)
 }

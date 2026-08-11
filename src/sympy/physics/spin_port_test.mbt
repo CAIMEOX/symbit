@@ -78,9 +78,8 @@ test "physics.quantum.spin: rotation parity" {
   quantum_test_assert_matrix_expr_equal(
     represent_matrix(
       rotation(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-        quantum_test_frac(1, 2),
+        NumberSymbol(Pi),
+        NumberSymbol(Pi) * quantum_test_frac(1, 2),
         @symcore.int(0),
       ).as_expr(),
       spin_j=@symcore.int(1),

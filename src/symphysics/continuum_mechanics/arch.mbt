@@ -25,18 +25,18 @@ pub struct Arch {
 
 ///|
 fn arch_var() -> Expr {
-  Expr::Symbol("x")
+  Symbol("x")
 }
 
 ///|
 fn arch_pi() -> Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  NumberSymbol(Pi)
 }
 
 ///|
 fn arch_normalized_degree(angle : Expr) -> Int? {
   match angle {
-    Expr::Number(n) if n.is_integral() => {
+    Number(n) if n.is_integral() => {
       let mut deg = n.numerator().to_int() % 360
       if deg < 0 {
         deg += 360
@@ -94,14 +94,12 @@ fn arch_recompute_shape(
     Some(cy) => {
       let denom = cm_simplify((x1 - crown_x) ^ int(2))
       guard !cm_expr_is_zero(denom) else {
-        raise ArchError::ValueError(
-          "provided coordinates do not define a parabolic arch",
-        )
+        raise ValueError("provided coordinates do not define a parabolic arch")
       }
       let a = cm_simplify((y1 - cy) * (denom ^ int(-1)))
       let rhs = cm_simplify(a * ((x2 - crown_x) ^ int(2)) + cy)
       guard cm_numeric_expr_eq(rhs, y2) else {
-        raise ArchError::ValueError(
+        raise ValueError(
           "provided coordinates of crown and supports are not consistent with parabolic arch",
         )
       }
@@ -112,13 +110,13 @@ fn arch_recompute_shape(
         ((x1 - crown_x) ^ int(2)) - ((x2 - crown_x) ^ int(2)),
       )
       guard !cm_expr_is_zero(denom) else {
-        raise ArchError::ValueError(
+        raise ValueError(
           "parabolic arch cannot be constructed with the provided coordinates, try providing crown_y",
         )
       }
       let a = cm_simplify((y1 - y2) * (denom ^ int(-1)))
       guard !cm_expr_is_zero(a) else {
-        raise ArchError::ValueError(
+        raise ValueError(
           "parabolic arch cannot be constructed with the provided coordinates, try providing crown_y",
         )
       }
@@ -144,7 +142,7 @@ pub fn arch(
     "R_B_x": int(0),
     "R_B_y": int(0),
   }
-  Arch::{
+  {
     left_support_: left,
     right_support_: right,
     crown_x_: crown_x,
@@ -348,25 +346,23 @@ pub fn Arch::apply_load(
 ) -> Unit raise ArchError {
   guard self.point_loads_.get(label) is None &&
     self.distributed_loads_.get(label) is None else {
-    raise ArchError::ValueError("load with the given label already exists")
+    raise ValueError("load with the given label already exists")
   }
   guard label != "A" && label != "B" else {
-    raise ArchError::ValueError(
-      "cannot use the given label, reserved for supports",
-    )
+    raise ValueError("cannot use the given label, reserved for supports")
   }
   if order == 0 {
     let stop = end.unwrap_or_else(() => {
       raise ArchError::ValueError("provide end greater than start")
     })
     guard cm_sign_of_difference(stop, start).map(v => v > 0).unwrap_or(false) else {
-      raise ArchError::ValueError("provide end greater than start")
+      raise ValueError("provide end greater than start")
     }
     self.distributed_loads_[label] = [start, stop, mag]
     return
   }
   guard order == -1 else {
-    raise ArchError::ValueError("supported arch load orders are -1 and 0")
+    raise ValueError("supported arch load orders are -1 and 0")
   }
   let theta = angle.unwrap_or_else(() => {
     raise ArchError::TypeError("please provide direction of force")
@@ -392,7 +388,7 @@ pub fn Arch::remove_load(self : Arch, label : String) -> Unit raise ArchError {
     self.point_loads_.remove(label)
     return
   }
-  raise ArchError::ValueError("label not found")
+  raise ValueError("label not found")
 }
 
 ///|
@@ -453,7 +449,7 @@ pub fn Arch::change_support_type(
     match kind {
       Some(value) =>
         if value != "roller" && value != "hinge" {
-          raise ArchError::ValueError("supports must only be roller or hinge")
+          raise ValueError("supports must only be roller or hinge")
         }
       None => ()
     }
@@ -481,9 +477,7 @@ pub fn Arch::add_member(self : Arch, y : Expr) -> Unit raise ArchError {
   }
   guard cm_sign_of_difference(y, lower).map(v => v >= 0).unwrap_or(false) &&
     cm_sign_of_difference(y, self.crown_y_).map(v => v <= 0).unwrap_or(false) else {
-    raise ArchError::ValueError(
-      "member must lie between support level and crown",
-    )
+    raise ValueError("member must lie between support level and crown")
   }
   let x_diff = @symelem.sqrt(
     cm_simplify((y - self.crown_y_) * (self.shape_a_ ^ int(-1))),
@@ -557,7 +551,7 @@ pub fn Arch::solve(self : Arch) -> Unit raise ArchError {
       cm_sign_of_difference(rod[2], self.right_support_[1])
       .map(v => v >= 0)
       .unwrap_or(false) else {
-      raise ArchError::SolveError("member must lie above the support level")
+      raise SolveError("member must lie above the support level")
     }
     eqs.push(rbx)
     eqs.push(cm_simplify(rax + net_x))
@@ -592,7 +586,7 @@ pub fn Arch::solve(self : Arch) -> Unit raise ArchError {
       cm_sign_of_difference(rod[2], self.right_support_[1])
       .map(v => v >= 0)
       .unwrap_or(false) else {
-      raise ArchError::SolveError("member must lie above the support level")
+      raise SolveError("member must lie above the support level")
     }
     eqs.push(rax)
     eqs.push(cm_simplify(rbx + net_x))
@@ -617,12 +611,12 @@ pub fn Arch::solve(self : Arch) -> Unit raise ArchError {
     unknowns.push(rby)
     unknowns.push(t)
   } else {
-    raise ArchError::SolveError(
+    raise SolveError(
       "arch solve currently requires hinge/hinge or one roller support with a member",
     )
   }
   let solution = cm_linear_solve(eqs, unknowns) catch {
-    _ => raise ArchError::SolveError("unable to solve arch reactions")
+    _ => raise SolveError("unable to solve arch reactions")
   }
   match solution {
     Some(values) => {
@@ -639,7 +633,7 @@ pub fn Arch::solve(self : Arch) -> Unit raise ArchError {
         values.get("R_B_y").unwrap_or(int(0)),
       )
     }
-    None => raise ArchError::SolveError("unable to solve arch reactions")
+    None => raise SolveError("unable to solve arch reactions")
   }
 }
 

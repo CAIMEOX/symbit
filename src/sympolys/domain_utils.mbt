@@ -16,9 +16,9 @@ pub fn normalize_mod(
   domain : Domain,
 ) -> @symnum.BigRational raise PolyError {
   match domain {
-    Domain::GF(p) | Domain::GFExt(p, _, _) => {
+    GF(p) | GFExt(p, _, _) => {
       if p <= 1 {
-        raise PolyError::BadModulus
+        raise BadModulus
       }
       let m = BigInt::from_int(p)
       let mut num = value.numerator().mod(m)
@@ -30,7 +30,7 @@ pub fn normalize_mod(
         den = den.add(m)
       }
       if den.is_zero() {
-        raise PolyError::DivisionByZero
+        raise DivisionByZero
       }
       let inv_den = mod_inv(den, m)
       let mut reduced = num.mul(inv_den).mod(m)
@@ -40,12 +40,12 @@ pub fn normalize_mod(
       @symnum.BigRational::from_bigint(reduced)
     }
     // Constant rationals in algebraic extensions are reduced in the base field.
-    Domain::AlgExt(base, _, _) => normalize_mod(value, base)
-    Domain::Frac(inner) => normalize_mod(value, inner)
-    Domain::PolyRing(base, _) => normalize_mod(value, base)
-    Domain::RationalFunctionField(base, _) => normalize_mod(value, base)
-    Domain::QuotientRing(base, _, _) => normalize_mod(value, base)
-    Domain::PowerSeries(base, _, _) => normalize_mod(value, base)
+    AlgExt(base, _, _) => normalize_mod(value, base)
+    Frac(inner) => normalize_mod(value, inner)
+    PolyRing(base, _) => normalize_mod(value, base)
+    RationalFunctionField(base, _) => normalize_mod(value, base)
+    QuotientRing(base, _, _) => normalize_mod(value, base)
+    PowerSeries(base, _, _) => normalize_mod(value, base)
     _ => value
   }
 }
@@ -67,7 +67,7 @@ fn mod_inv(a : BigInt, m : BigInt) -> BigInt raise PolyError {
     t1 = t2
   }
   if !r0.equal_int(1) {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let mut inv = t0.mod(m)
   if inv < BigInt::from_int(0) {

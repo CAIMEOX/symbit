@@ -3,19 +3,19 @@ test "homomorphism trivial and isomorphism" {
   let c3 = cyclic_group(3)
   let gens = c3.generators()
   let hom_triv = homomorphism(
-    HomGroup::PermGroup(c3),
-    HomGroup::PermGroup(c3),
-    [HomElement::Perm(gens[0])],
+    PermGroup(c3),
+    PermGroup(c3),
+    [Perm(gens[0])],
     images=[],
     check=true,
   )
   assert_true(hom_triv.is_trivial())
   let image = gens[0].pow(2)
   let hom_auto = homomorphism(
-    HomGroup::PermGroup(c3),
-    HomGroup::PermGroup(c3),
-    [HomElement::Perm(gens[0])],
-    images=[HomElement::Perm(image)],
+    PermGroup(c3),
+    PermGroup(c3),
+    [Perm(gens[0])],
+    images=[Perm(image)],
     check=true,
   )
   assert_eq(hom_auto.is_isomorphism(), Some(true))

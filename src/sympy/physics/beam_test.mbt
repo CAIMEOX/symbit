@@ -1,12 +1,12 @@
 ///|
 fn beam_test_sf(start : @symcore.Expr, order : Int) -> @symcore.Expr {
-  cm_singularity(@symcore.Expr::Symbol("x"), start, order)
+  cm_singularity(Symbol("x"), start, order)
 }
 
 ///|
 test "physics.continuum_mechanics.beam: reactions and fields" {
-  let e = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1)
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let e = @symcore.Expr::NumberSymbol(Exp1)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let a = @symcore.Expr::Symbol("A")
   let r1 = @symcore.Expr::Symbol("R1")
   let r2 = @symcore.Expr::Symbol("R2")
@@ -51,8 +51,8 @@ test "physics.continuum_mechanics.beam: reactions and fields" {
 
 ///|
 test "physics.continuum_mechanics.beam: distributed end load and support application" {
-  let e = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1)
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let e = @symcore.Expr::NumberSymbol(Exp1)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let b = beam(@symcore.int(9), e, i, area=@symcore.int(2))
   let supports = b.apply_support(@symcore.int(0), kind="fixed")
   assert_eq(supports.length(), 2)

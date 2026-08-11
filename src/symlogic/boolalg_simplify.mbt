@@ -70,7 +70,7 @@ fn pos_form_bits(
     }
   }
   if maxterms.is_empty() {
-    return BoolExpr::True
+    return True
   }
   let new = _simplified_pairs(maxterms + dontcares)
   let essential = _rem_redundancy(new, maxterms)
@@ -119,7 +119,7 @@ pub fn bool_map(bool1 : BoolExpr, bool2 : BoolExpr) -> BoolMapResult? {
   for perm in perms {
     let mapping : Map[String, BoolExpr] = Map([])
     for i in 0..<names_a.length() {
-      mapping[names_a[i]] = BoolExpr::Symbol(perm[i])
+      mapping[names_a[i]] = Symbol(perm[i])
     }
     let substituted = bool_subst(a, mapping)
     if truth_table_equal(substituted, b, vars_b) {
@@ -136,7 +136,7 @@ pub fn simplify_univariate(expr : BoolExpr) -> BoolExpr {
     return expr
   }
   let name = match vars[0] {
-    BoolExpr::Symbol(n) => n
+    Symbol(n) => n
     _ => return expr
   }
   let env0 : Map[String, Bool] = Map([])
@@ -146,10 +146,10 @@ pub fn simplify_univariate(expr : BoolExpr) -> BoolExpr {
   let v0 = bool_eval(expr, env0)
   let v1 = bool_eval(expr, env1)
   if v0 && v1 {
-    return BoolExpr::True
+    return True
   }
   if !v0 && !v1 {
-    return BoolExpr::False
+    return False
   }
   if !v0 && v1 {
     return vars[0]
@@ -160,21 +160,21 @@ pub fn simplify_univariate(expr : BoolExpr) -> BoolExpr {
 ///|
 pub fn gateinputcount(expr : BoolExpr) -> Int {
   match expr {
-    BoolExpr::True => 0
-    BoolExpr::False => 0
-    BoolExpr::Symbol(_) => 0
-    BoolExpr::LRA(_) => 0
-    BoolExpr::Not(inner) => 1 + gateinputcount(inner)
-    BoolExpr::And(args) | BoolExpr::Or(args) | BoolExpr::Xor(args) => {
+    True => 0
+    False => 0
+    Symbol(_) => 0
+    LRA(_) => 0
+    Not(inner) => 1 + gateinputcount(inner)
+    And(args) | Or(args) | Xor(args) => {
       let mut count = args.length()
       for arg in args {
         count += gateinputcount(arg)
       }
       count
     }
-    BoolExpr::ITE(c, t, e) =>
+    ITE(c, t, e) =>
       3 + gateinputcount(c) + gateinputcount(t) + gateinputcount(e)
-    BoolExpr::Implies(_, _) | BoolExpr::Equivalent(_) =>
+    Implies(_, _) | Equivalent(_) =>
       gateinputcount(eliminate_implications(expr))
   }
 }

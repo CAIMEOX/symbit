@@ -16,9 +16,8 @@ fn py_object(obj : @symcategories.Object) -> String {
 ///|
 fn py_morphism(morphism : @symcategories.Morphism) -> String {
   match morphism {
-    @symcategories.Morphism::Identity(obj) =>
-      cat_ref("IdentityMorphism") + "(" + py_object(obj) + ")"
-    @symcategories.Morphism::Named(dom, cod, name) =>
+    Identity(obj) => cat_ref("IdentityMorphism") + "(" + py_object(obj) + ")"
+    Named(dom, cod, name) =>
       cat_ref("NamedMorphism") +
       "(" +
       py_object(dom) +
@@ -27,7 +26,7 @@ fn py_morphism(morphism : @symcategories.Morphism) -> String {
       ", " +
       py_string_literal(name) +
       ")"
-    @symcategories.Morphism::Composite(items) =>
+    Composite(items) =>
       cat_ref("CompositeMorphism") +
       "([" +
       items.map(py_morphism).join(", ") +
@@ -96,9 +95,8 @@ fn py_category(category : @symcategories.Category) -> String {
 fn py_hints_kwargs(hints : @symcategories.GridHints) -> Array[(String, String)] {
   let kwargs : Array[(String, String)] = Array::new()
   match hints.layout {
-    @symcategories.LayoutKind::Sequential =>
-      kwargs.push(("layout", py_string_literal("sequential")))
-    @symcategories.LayoutKind::Generic => ()
+    Sequential => kwargs.push(("layout", py_string_literal("sequential")))
+    Generic => ()
   }
   if hints.transpose {
     kwargs.push(("transpose", "True"))
@@ -109,8 +107,8 @@ fn py_hints_kwargs(hints : @symcategories.GridHints) -> Array[(String, String)] 
 ///|
 fn py_group_key(group : @symcategories.GridGroup) -> String {
   match group {
-    @symcategories.GridGroup::Single(obj) => py_object(obj)
-    @symcategories.GridGroup::Group(layout) => py_objects_set(layout.objects)
+    Single(obj) => py_object(obj)
+    Group(layout) => py_objects_set(layout.objects)
   }
 }
 
@@ -122,7 +120,7 @@ fn py_groups(groups : Array[@symcategories.GridGroup]) -> String? {
 
   let has_local_hints = groups.any(group => {
     match group {
-      @symcategories.GridGroup::Group(layout) => layout.hints is Some(_)
+      Group(layout) => layout.hints is Some(_)
       _ => false
     }
   })
@@ -131,7 +129,7 @@ fn py_groups(groups : Array[@symcategories.GridGroup]) -> String? {
     let parts : Array[String] = Array::new()
     for group in groups {
       let hint_kwargs = match group {
-        @symcategories.GridGroup::Group(layout) =>
+        Group(layout) =>
           match layout.hints {
             Some(hints) => py_hints_kwargs(hints)
             None => []

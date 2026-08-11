@@ -46,10 +46,10 @@ pub fn Sum::reverse_order(
     }
     if do_reverse {
       match limit {
-        LimitSpec::Range(sym, lower, upper) => {
+        Range(sym, lower, upper) => {
           let new_lower = expr_add(upper, @symcore.int(1))
           let new_upper = expr_add(lower, @symcore.int(-1))
-          out_limits.push(LimitSpec::Range(sym, new_lower, new_upper))
+          out_limits.push(Range(sym, new_lower, new_upper))
           out_expr = expr_neg(out_expr)
         }
         _ => out_limits.push(limit)
@@ -58,7 +58,7 @@ pub fn Sum::reverse_order(
       out_limits.push(limit)
     }
   }
-  Sum::{ expr: out_expr, limits: out_limits }
+  { expr: out_expr, limits: out_limits }
 }
 
 ///|
@@ -73,7 +73,7 @@ pub fn Sum::reorder(self : Sum, order : Array[Int]) -> Sum {
     }
     out_limits.push(self.limits[idx])
   }
-  Sum::{ expr: self.expr, limits: out_limits }
+  { expr: self.expr, limits: out_limits }
 }
 
 ///|
@@ -106,7 +106,7 @@ pub fn Sum::change_index(
   let out_limits : Array[LimitSpec] = Array::new()
   for limit in self.limits {
     match limit {
-      LimitSpec::Range(sym, lower, upper) =>
+      Range(sym, lower, upper) =>
         if symbol_name(sym) == Some(var_name) {
           let mut new_lower = expr_add(
             expr_mul(@symcore.int(a), lower),
@@ -121,29 +121,29 @@ pub fn Sum::change_index(
             new_lower = new_upper
             new_upper = tmp
           }
-          out_limits.push(LimitSpec::Range(new_sym, new_lower, new_upper))
+          out_limits.push(Range(new_sym, new_lower, new_upper))
         } else {
           out_limits.push(limit)
         }
-      LimitSpec::Lower(sym, lower) =>
+      Lower(sym, lower) =>
         if symbol_name(sym) == Some(var_name) {
           let new_lower = expr_add(
             expr_mul(@symcore.int(a), lower),
             @symcore.int(b),
           )
-          out_limits.push(LimitSpec::Lower(new_sym, new_lower))
+          out_limits.push(Lower(new_sym, new_lower))
         } else {
           out_limits.push(limit)
         }
-      LimitSpec::Var(sym) =>
+      Var(sym) =>
         if symbol_name(sym) == Some(var_name) {
-          out_limits.push(LimitSpec::Var(new_sym))
+          out_limits.push(Var(new_sym))
         } else {
           out_limits.push(limit)
         }
     }
   }
-  Sum::{ expr: new_expr, limits: out_limits }
+  { expr: new_expr, limits: out_limits }
 }
 
 ///|
@@ -186,7 +186,7 @@ fn eval_finite_sum(
   }
   let limit = limits[idx]
   match limit {
-    LimitSpec::Range(sym, lower, upper) => {
+    Range(sym, lower, upper) => {
       let name = match symbol_name(sym) {
         Some(n) => n
         None => return Sum::{ expr, limits }.as_expr()
@@ -242,14 +242,14 @@ pub fn eval_sum_symbolic(
     return None
   }
   match limits[0] {
-    LimitSpec::Range(sym, lower, upper) if is_oo(upper) => {
+    Range(sym, lower, upper) if is_oo(upper) => {
       let name = match symbol_name(sym) {
         Some(n) => n
         None => return None
       }
       return eval_sum_infinite(expr, name, lower, sym, limits)
     }
-    LimitSpec::Range(sym, lower, upper) => {
+    Range(sym, lower, upper) => {
       let name = match symbol_name(sym) {
         Some(n) => n
         None => return None
@@ -289,7 +289,7 @@ pub fn eval_sum_hyper(
     return None
   }
   match limits[0] {
-    LimitSpec::Range(sym, lower, upper) => hyper_sum(expr, sym, lower, upper)
+    Range(sym, lower, upper) => hyper_sum(expr, sym, lower, upper)
     _ => None
   }
 }
@@ -401,7 +401,7 @@ fn split_geometric_weighted(
   sym : @symcore.Expr,
 ) -> (@symcore.Expr, @symcore.Expr)? {
   match expr {
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let coeffs : Array[@symcore.Expr] = Array::new()
       let mut base : @symcore.Expr? = None
       let mut has_sym = false
@@ -412,7 +412,7 @@ fn split_geometric_weighted(
         }
         if contains_symbol(arg, name) {
           match arg {
-            @symcore.Expr::Pow(b, exp) if exp == sym =>
+            Pow(b, exp) if exp == sym =>
               if base is None {
                 base = Some(b)
               } else {
@@ -506,13 +506,13 @@ fn piecewise_expr3(
   default : @symcore.Expr,
 ) -> @symcore.Expr {
   let pair1 = @symcore.Expr::Tuple([expr, cond])
-  let pair2 = @symcore.Expr::Tuple([default, @symcore.Expr::Boolean(true)])
+  let pair2 = @symcore.Expr::Tuple([default, Boolean(true)])
   @symcore.function("Piecewise", [pair1, pair2])
 }
 
 ///|
 fn rel_lt(left : @symcore.Expr, right : @symcore.Expr) -> @symcore.Expr {
-  @symcore.Expr::Relational(@symcore.RelOp::Lt, left, right)
+  Relational(Lt, left, right)
 }
 
 ///|
@@ -522,7 +522,7 @@ fn sum_zeta(
   lower : @symcore.Expr,
 ) -> @symcore.Expr? {
   let exp = match expr {
-    @symcore.Expr::Pow(base, e) if base == sym => e
+    Pow(base, e) if base == sym => e
     _ => return None
   }
   let p = match int_exp(exp) {
@@ -535,9 +535,7 @@ fn sum_zeta(
   let s = -p
   if lower == @symcore.int(1) {
     if s == 1 {
-      return Some(
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-      )
+      return Some(NumberSymbol(Infinity))
     }
     return Some(@symspec.zeta(@symcore.int(s)))
   }
@@ -552,7 +550,7 @@ fn harmonic_sum(
   upper : @symcore.Expr,
 ) -> @symcore.Expr? {
   let exp = match expr {
-    @symcore.Expr::Pow(base, e) if base == sym => e
+    Pow(base, e) if base == sym => e
     _ => return None
   }
   let p = match int_exp(exp) {
@@ -575,7 +573,7 @@ fn harmonic_sum(
 ///|
 fn is_oo(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(name) => name == "oo"
+    Symbol(name) => name == "oo"
     _ => false
   }
 }
@@ -588,7 +586,7 @@ fn telescoping_sum(
   upper : @symcore.Expr,
 ) -> @symcore.Expr? {
   match expr {
-    @symcore.Expr::Add(args) if args.length() == 2 => {
+    Add(args) if args.length() == 2 => {
       let t0 = args[0]
       let t1 = args[1]
       match telescoping_pair(t0, t1, name, lower, upper) {
@@ -641,7 +639,7 @@ fn telescoping_antiderivative(
   name : String,
 ) -> @symcore.Expr? {
   match expr {
-    @symcore.Expr::Add(args) if args.length() == 2 => {
+    Add(args) if args.length() == 2 => {
       let t0 = args[0]
       let t1 = args[1]
       match telescoping_antiderivative_pair(t0, t1, name) {
@@ -689,14 +687,13 @@ fn shift_expr(
 ///|
 fn strip_neg(expr : @symcore.Expr) -> (@symcore.Expr, Bool) {
   match expr {
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut neg = false
       let rest : Array[@symcore.Expr] = Array::new()
       for arg in args {
         match arg {
-          @symcore.Expr::Number(n) if n.is_integral() &&
-            n.numerator().to_int() == -1 &&
-            !neg => neg = true
+          Number(n) if n.is_integral() && n.numerator().to_int() == -1 && !neg =>
+            neg = true
           _ => rest.push(arg)
         }
       }
@@ -750,7 +747,7 @@ fn split_geometric(
   name : String,
 ) -> (@symcore.Expr, @symcore.Expr)? {
   match expr {
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match exp_shift(exp, name) {
         Some(shift) => {
           let coeff = if shift == 0 {
@@ -762,13 +759,13 @@ fn split_geometric(
         }
         None => None
       }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let coeffs : Array[@symcore.Expr] = Array::new()
       let mut pow_part : (@symcore.Expr, Int)? = None
       for arg in args {
         if contains_symbol(arg, name) {
           match arg {
-            @symcore.Expr::Pow(base, exp) =>
+            Pow(base, exp) =>
               match exp_shift(exp, name) {
                 Some(shift) =>
                   if pow_part is None {
@@ -808,13 +805,13 @@ fn split_geometric(
 ///|
 fn exp_shift(exp : @symcore.Expr, name : String) -> Int? {
   match exp {
-    @symcore.Expr::Symbol(sym) if sym == name => Some(0)
-    @symcore.Expr::Add(args) => {
+    Symbol(sym) if sym == name => Some(0)
+    Add(args) => {
       let mut shift = 0
       let mut seen = false
       for arg in args {
         match arg {
-          @symcore.Expr::Symbol(sym) if sym == name && !seen => seen = true
+          Symbol(sym) if sym == name && !seen => seen = true
           _ =>
             match int_value(arg) {
               Some(v) => shift = shift + v
@@ -898,7 +895,7 @@ fn analyze_hyper(
     None => return None
   }
   let factors = match expr {
-    @symcore.Expr::Mul(args) => args
+    Mul(args) => args
     _ => [expr]
   }
   let mut binom : @symcore.Expr? = None
@@ -917,7 +914,7 @@ fn analyze_hyper(
           return None
         }
       }
-      @symcore.Expr::Pow(base_expr, exp) if exp == sym => {
+      Pow(base_expr, exp) if exp == sym => {
         if contains_symbol(base_expr, name) {
           return None
         }
@@ -1010,14 +1007,14 @@ fn poly_from_expr(
   sym : @symcore.Expr,
 ) -> Array[@symcore.Expr]? {
   match expr {
-    @symcore.Expr::Number(_) => Some([expr])
-    @symcore.Expr::Symbol(_) =>
+    Number(_) => Some([expr])
+    Symbol(_) =>
       if expr == sym {
         Some([@symcore.int(0), @symcore.int(1)])
       } else {
         Some([expr])
       }
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let mut acc : Array[@symcore.Expr] = [@symcore.int(0)]
       for arg in args {
         match poly_from_expr(arg, sym) {
@@ -1027,7 +1024,7 @@ fn poly_from_expr(
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc : Array[@symcore.Expr] = [@symcore.int(1)]
       for arg in args {
         match poly_from_expr(arg, sym) {
@@ -1037,7 +1034,7 @@ fn poly_from_expr(
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match int_exp(exp) {
         Some(e) if e >= 0 =>
           match poly_from_expr(base, sym) {
@@ -1053,7 +1050,7 @@ fn poly_from_expr(
 ///|
 fn int_exp(expr : @symcore.Expr) -> Int? {
   match expr {
-    @symcore.Expr::Number(_) => int_value(expr)
+    Number(_) => int_value(expr)
     _ => None
   }
 }
@@ -1131,10 +1128,9 @@ fn poly_pow(poly : Array[@symcore.Expr], exp : Int) -> Array[@symcore.Expr] {
 ///|
 fn linear_coeffs(expr : @symcore.Expr, name : String) -> (Int, Int)? {
   match expr {
-    @symcore.Expr::Symbol(sym) if sym == name => Some((1, 0))
-    @symcore.Expr::Number(n) if n.is_integral() =>
-      Some((0, n.numerator().to_int()))
-    @symcore.Expr::Add(args) => {
+    Symbol(sym) if sym == name => Some((1, 0))
+    Number(n) if n.is_integral() => Some((0, n.numerator().to_int()))
+    Add(args) => {
       let mut a = 0
       let mut b = 0
       for arg in args {
@@ -1148,12 +1144,12 @@ fn linear_coeffs(expr : @symcore.Expr, name : String) -> (Int, Int)? {
       }
       Some((a, b))
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut coeff = 1
       let mut seen_var = false
       for arg in args {
         if contains_symbol(arg, name) {
-          if arg == @symcore.Expr::Symbol(name) && !seen_var {
+          if arg == Symbol(name) && !seen_var {
             seen_var = true
           } else {
             return None

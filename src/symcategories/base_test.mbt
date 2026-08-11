@@ -3,8 +3,8 @@ fn assert_morphism_array_eq(
   actual : Array[Morphism],
   expected : Array[Morphism],
 ) -> Unit raise {
-  let lhs = actual.map(item => item.to_string()).join(" | ")
-  let rhs = expected.map(item => item.to_string()).join(" | ")
+  let lhs = actual.map(item => Show::to_string(item)).join(" | ")
+  let rhs = expected.map(item => Show::to_string(item)).join(" | ")
   assert_true(lhs == rhs)
 }
 

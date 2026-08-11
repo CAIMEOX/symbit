@@ -193,7 +193,7 @@ pub impl Show for CosetTable with fn to_string(self) -> String {
 
 ///|
 pub impl Show for CosetTable with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -235,7 +235,7 @@ pub fn CosetTable::define_coset(
 ) -> Unit raise CombinatoricsError {
   let len_table = self.table.length()
   if len_table >= self.coset_table_limit {
-    raise CombinatoricsError::ValueError("coset enumeration exceeded limit")
+    raise ValueError("coset enumeration exceeded limit")
   }
   let row : Array[Int?] = Array::make(self.alphabet.length(), None)
   self.table.push(copy_row_int_opt(row))
@@ -262,7 +262,7 @@ pub fn CosetTable::define_c(
 ) -> Unit raise CombinatoricsError {
   let len_table = self.table.length()
   if len_table >= self.coset_table_limit {
-    raise CombinatoricsError::ValueError("coset enumeration exceeded limit")
+    raise ValueError("coset enumeration exceeded limit")
   }
   let row : Array[Int?] = Array::make(self.alphabet.length(), None)
   self.table.push(copy_row_int_opt(row))
@@ -1049,7 +1049,7 @@ pub fn coset_enumeration_r(
         fp_grp.free_group,
         fp_grp.relators,
         fp_grp.generators,
-        fp_grp.to_string(),
+        Show::to_string(fp_grp),
         subgroup,
         max_cosets=v,
       )
@@ -1058,7 +1058,7 @@ pub fn coset_enumeration_r(
         fp_grp.free_group,
         fp_grp.relators,
         fp_grp.generators,
-        fp_grp.to_string(),
+        Show::to_string(fp_grp),
         subgroup,
       )
   }
@@ -1202,7 +1202,7 @@ pub fn coset_enumeration_c(
         fp_grp.free_group,
         fp_grp.relators,
         fp_grp.generators,
-        fp_grp.to_string(),
+        Show::to_string(fp_grp),
         subgroup,
         max_cosets=v,
       )
@@ -1211,7 +1211,7 @@ pub fn coset_enumeration_c(
         fp_grp.free_group,
         fp_grp.relators,
         fp_grp.generators,
-        fp_grp.to_string(),
+        Show::to_string(fp_grp),
         subgroup,
       )
   }

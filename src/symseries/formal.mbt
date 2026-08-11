@@ -46,11 +46,9 @@ pub struct FormalPowerSeriesMulti {
 ///|
 fn fps_depends_on(expr : @symcore.Expr, name : String) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(s) => s == name
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
-      args.any(child => fps_depends_on(child, name))
-    @symcore.Expr::Pow(base, exp) =>
-      fps_depends_on(base, name) || fps_depends_on(exp, name)
+    Symbol(s) => s == name
+    Add(args) | Mul(args) => args.any(child => fps_depends_on(child, name))
+    Pow(base, exp) => fps_depends_on(base, name) || fps_depends_on(exp, name)
     _ =>
       match @symcore.application_args(expr) {
         Some(args) => args.any(child => fps_depends_on(child, name))
@@ -67,7 +65,7 @@ fn series_poly_shift(
   n : Int,
 ) -> (Array[@symcore.Expr], Bool)? raise {
   let var_name = match x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("fps variable must be a Symbol")
   }
   let t = @symcore.Expr::Symbol("__fps_t")
@@ -92,7 +90,7 @@ fn poly_expr_with_shift(
   back["__fps_t"] = shift_expr
   if with_order {
     match x0 {
-      @symcore.Expr::Number(n0) if !n0.is_zero() => {
+      Number(n0) if !n0.is_zero() => {
         let poly_sub = @symcore.subst(poly_expr, back)
         let order_term = @symcore.function("O", [
           @symcore.pow(shift_expr, @symcore.int(n)),
@@ -117,7 +115,7 @@ fn poly_expr_with_shift(
 fn fps_strip_order_expr(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     _ if @symcore.application_has_name(expr, "O") => @symcore.int(0)
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let kept : Array[@symcore.Expr] = Array::new()
       for arg in args {
         if @symcore.application_has_name(arg, "O") {
@@ -146,7 +144,7 @@ fn fps_factorial_expr(n : Int) -> @symcore.Expr {
     fact = fact.mul(BigInt::from_int(i))
     i = i + 1
   }
-  @symcore.Expr::Number(safe_rational(BigInt::from_int(1), fact))
+  Number(safe_rational(BigInt::from_int(1), fact))
 }
 
 ///|
@@ -168,7 +166,7 @@ fn fps_derivative_term(
   n : Int,
 ) -> @symcore.Expr {
   let name = match x {
-    @symcore.Expr::Symbol(s) => s
+    Symbol(s) => s
     _ => ""
   }
   if name == "" {
@@ -218,16 +216,16 @@ pub fn fps(
     None => fail("fps requires a variable")
   }
   let var_name = match x_expr {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("fps variable must be a Symbol")
   }
   if !fps_depends_on(expr, var_name) {
-    return FpsResult::Expr(expr)
+    return Expr(expr)
   }
   let test_n = if order <= 0 { 1 } else { order }
   match series_poly_shift(expr, x_expr, x0, test_n) {
-    Some(_) => FpsResult::Series(FormalPowerSeries::{ expr, x: x_expr, x0 })
-    None => FpsResult::Expr(expr)
+    Some(_) => Series({ expr, x: x_expr, x0 })
+    None => Expr(expr)
   }
 }
 
@@ -394,11 +392,11 @@ pub fn fps_multivariate(
   }
   for v in vars {
     match v {
-      @symcore.Expr::Symbol(_) => ()
+      Symbol(_) => ()
       _ => fail("fps_multivariate variable must be a Symbol")
     }
   }
-  FormalPowerSeriesMulti::{ expr, vars, x0s: centers }
+  { expr, vars, x0s: centers }
 }
 
 ///|
@@ -453,7 +451,7 @@ pub fn FormalPowerSeriesMulti::coeff(
   }
   for i in 0..<self.vars.length() {
     let name = match self.vars[i] {
-      @symcore.Expr::Symbol(s) => s
+      Symbol(s) => s
       _ => ""
     }
     deriv = fps_eval_at(deriv, name, self.x0s[i])

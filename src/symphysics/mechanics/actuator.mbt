@@ -62,7 +62,7 @@ pub fn force_actuator(
   force_value : Expr,
   pathway : PathwayLike,
 ) -> ForceActuator {
-  ForceActuator::{ force_: force_value, pathway_: pathway }
+  { force_: force_value, pathway_: pathway }
 }
 
 ///|
@@ -77,7 +77,7 @@ pub fn ForceActuator::pathway(self : ForceActuator) -> PathwayLike {
 
 ///|
 pub fn ForceActuator::to_loads(self : ForceActuator) -> Array[Load] raise {
-  self.pathway_.to_loads(self.force_).map(fn(load) { Load::ForceLoad(load) })
+  self.pathway_.to_loads(self.force_).map(fn(load) { ForceLoad(load) })
 }
 
 ///|
@@ -91,7 +91,7 @@ pub fn ForceActuator::repr(self : ForceActuator) -> String {
 
 ///|
 pub fn ForceActuator::as_actuator(self : ForceActuator) -> ActuatorLike {
-  ActuatorLike::Force(self)
+  Force(self)
 }
 
 ///|
@@ -100,7 +100,7 @@ pub fn linear_spring(
   pathway : PathwayLike,
   equilibrium_length? : Expr = int(0),
 ) -> LinearSpring {
-  LinearSpring::{
+  {
     stiffness_: stiffness,
     pathway_: pathway,
     equilibrium_length_: equilibrium_length,
@@ -133,7 +133,7 @@ pub fn LinearSpring::force(self : LinearSpring) -> Expr raise {
 
 ///|
 pub fn LinearSpring::to_loads(self : LinearSpring) -> Array[Load] raise {
-  self.pathway_.to_loads(self.force()).map(fn(load) { Load::ForceLoad(load) })
+  self.pathway_.to_loads(self.force()).map(fn(load) { ForceLoad(load) })
 }
 
 ///|
@@ -154,12 +154,12 @@ pub fn LinearSpring::repr(self : LinearSpring) -> String {
 
 ///|
 pub fn LinearSpring::as_actuator(self : LinearSpring) -> ActuatorLike {
-  ActuatorLike::Spring(self)
+  Spring(self)
 }
 
 ///|
 pub fn linear_damper(damping : Expr, pathway : PathwayLike) -> LinearDamper {
-  LinearDamper::{ damping_: damping, pathway_: pathway }
+  { damping_: damping, pathway_: pathway }
 }
 
 ///|
@@ -181,7 +181,7 @@ pub fn LinearDamper::force(self : LinearDamper) -> Expr raise {
 
 ///|
 pub fn LinearDamper::to_loads(self : LinearDamper) -> Array[Load] raise {
-  self.pathway_.to_loads(self.force()).map(fn(load) { Load::ForceLoad(load) })
+  self.pathway_.to_loads(self.force()).map(fn(load) { ForceLoad(load) })
 }
 
 ///|
@@ -195,7 +195,7 @@ pub fn LinearDamper::repr(self : LinearDamper) -> String {
 
 ///|
 pub fn LinearDamper::as_actuator(self : LinearDamper) -> ActuatorLike {
-  ActuatorLike::Damper(self)
+  Damper(self)
 }
 
 ///|
@@ -205,7 +205,7 @@ pub fn duffing_spring(
   pathway : PathwayLike,
   equilibrium_length? : Expr = int(0),
 ) -> DuffingSpring {
-  DuffingSpring::{
+  {
     linear_stiffness_: linear_stiffness,
     nonlinear_stiffness_: nonlinear_stiffness,
     pathway_: pathway,
@@ -226,7 +226,7 @@ pub fn DuffingSpring::force(self : DuffingSpring) -> Expr raise {
 
 ///|
 pub fn DuffingSpring::to_loads(self : DuffingSpring) -> Array[Load] raise {
-  self.pathway_.to_loads(self.force()).map(fn(load) { Load::ForceLoad(load) })
+  self.pathway_.to_loads(self.force()).map(fn(load) { ForceLoad(load) })
 }
 
 ///|
@@ -244,7 +244,7 @@ pub fn DuffingSpring::repr(self : DuffingSpring) -> String {
 
 ///|
 pub fn DuffingSpring::as_actuator(self : DuffingSpring) -> ActuatorLike {
-  ActuatorLike::Duffing(self)
+  Duffing(self)
 }
 
 ///|
@@ -256,7 +256,7 @@ pub fn coulomb_kinetic_friction(
   sigma? : Expr = int(0),
   mu_s? : Expr = mu_k,
 ) -> CoulombKineticFriction {
-  CoulombKineticFriction::{
+  {
     mu_k_: mu_k,
     mu_s_: mu_s,
     f_n_: f_n,
@@ -287,7 +287,7 @@ pub fn CoulombKineticFriction::force(
 pub fn CoulombKineticFriction::to_loads(
   self : CoulombKineticFriction,
 ) -> Array[Load] raise {
-  self.pathway_.to_loads(self.force()).map(fn(load) { Load::ForceLoad(load) })
+  self.pathway_.to_loads(self.force()).map(fn(load) { ForceLoad(load) })
 }
 
 ///|
@@ -311,7 +311,7 @@ pub fn CoulombKineticFriction::repr(self : CoulombKineticFriction) -> String {
 pub fn CoulombKineticFriction::as_actuator(
   self : CoulombKineticFriction,
 ) -> ActuatorLike {
-  ActuatorLike::Friction(self)
+  Friction(self)
 }
 
 ///|
@@ -321,7 +321,7 @@ pub fn torque_actuator(
   target_frame : @symvector.ReferenceFrame,
   reaction_frame? : @symvector.ReferenceFrame? = None,
 ) -> TorqueActuator raise @symvector.VectorError {
-  TorqueActuator::{
+  {
     torque_: torque_value,
     axis_: axis.normalize(),
     target_frame_: target_frame,
@@ -361,7 +361,7 @@ pub fn TorqueActuator::to_loads(self : TorqueActuator) -> Array[Load] {
   match self.reaction_frame_ {
     Some(frame) => {
       loads.push(
-        Load::TorqueLoad(torque(frame, self.axis_.scale(self.torque_).neg())),
+        TorqueLoad(torque(frame, self.axis_.scale(self.torque_).neg())),
       )
       loads
     }
@@ -385,29 +385,29 @@ pub fn TorqueActuator::repr(self : TorqueActuator) -> String {
 
 ///|
 pub fn TorqueActuator::as_actuator(self : TorqueActuator) -> ActuatorLike {
-  ActuatorLike::Torque(self)
+  Torque(self)
 }
 
 ///|
 pub fn ActuatorLike::to_loads(self : ActuatorLike) -> Array[Load] raise {
   match self {
-    ActuatorLike::Force(value) => value.to_loads()
-    ActuatorLike::Spring(value) => value.to_loads()
-    ActuatorLike::Damper(value) => value.to_loads()
-    ActuatorLike::Duffing(value) => value.to_loads()
-    ActuatorLike::Friction(value) => value.to_loads()
-    ActuatorLike::Torque(value) => value.to_loads()
+    Force(value) => value.to_loads()
+    Spring(value) => value.to_loads()
+    Damper(value) => value.to_loads()
+    Duffing(value) => value.to_loads()
+    Friction(value) => value.to_loads()
+    Torque(value) => value.to_loads()
   }
 }
 
 ///|
 pub fn ActuatorLike::repr(self : ActuatorLike) -> String {
   match self {
-    ActuatorLike::Force(value) => value.repr()
-    ActuatorLike::Spring(value) => value.repr()
-    ActuatorLike::Damper(value) => value.repr()
-    ActuatorLike::Duffing(value) => value.repr()
-    ActuatorLike::Friction(value) => value.repr()
-    ActuatorLike::Torque(value) => value.repr()
+    Force(value) => value.repr()
+    Spring(value) => value.repr()
+    Damper(value) => value.repr()
+    Duffing(value) => value.repr()
+    Friction(value) => value.repr()
+    Torque(value) => value.repr()
   }
 }

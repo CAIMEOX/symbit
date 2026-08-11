@@ -232,6 +232,16 @@ pub(all) suberror UtilitiesError {
   Unsupported(String)
   MissingValue(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn UtilitiesError::equal(Self, Self) -> Bool
+#deprecated
+pub fn UtilitiesError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn UtilitiesError::output(Self, &Logger) -> Unit
+#deprecated
+pub fn UtilitiesError::to_repr(Self) -> @debug.Repr
+#deprecated
+pub fn UtilitiesError::to_string(Self) -> String
 pub impl Show for UtilitiesError
 
 // Types and methods
@@ -253,17 +263,29 @@ pub struct CodeGenerator {
 } derive(Eq)
 pub fn CodeGenerator::dump_header(Self, Array[Routine], String, header? : Bool) -> String
 pub fn CodeGenerator::dump_source(Self, Array[Routine], String, header? : Bool, empty? : Bool) -> String raise UtilitiesError
+#deprecated
+pub fn CodeGenerator::equal(Self, Self) -> Bool
+#deprecated
+pub fn CodeGenerator::not_equal(Self, Self) -> Bool
 pub fn CodeGenerator::write(Self, Array[Routine], String, header? : Bool, empty? : Bool) -> Array[(String, String)] raise UtilitiesError
 
 pub enum GroupResult[T] {
   Multiple(Array[Array[T]])
   Counts(Array[(T, Int)])
 } derive(Eq)
+#deprecated
+pub fn[T : Eq] GroupResult::equal(Self[T], Self[T]) -> Bool
+#deprecated
+pub fn[T : Eq] GroupResult::not_equal(Self[T], Self[T]) -> Bool
 
 pub struct ImplementedFunction {
   name : String
 } derive(Eq)
 pub fn ImplementedFunction::apply(Self, Array[@symcore.Expr]) -> @symcore.Expr
+#deprecated
+pub fn ImplementedFunction::equal(Self, Self) -> Bool
+#deprecated
+pub fn ImplementedFunction::not_equal(Self, Self) -> Bool
 
 pub enum IntLike {
   Int(Int)
@@ -271,6 +293,10 @@ pub enum IntLike {
   Bool(Bool)
   Expr(@symcore.Expr)
 } derive(Eq)
+#deprecated
+pub fn IntLike::equal(Self, Self) -> Bool
+#deprecated
+pub fn IntLike::not_equal(Self, Self) -> Bool
 
 pub struct LambdaFn {
   args : Array[String]
@@ -278,12 +304,26 @@ pub struct LambdaFn {
 } derive(Eq)
 pub fn LambdaFn::call(Self, Array[Double]) -> Double raise UtilitiesError
 pub fn LambdaFn::call_map(Self, Map[String, Double]) -> Double raise UtilitiesError
+#deprecated
+pub fn LambdaFn::equal(Self, Self) -> Bool
+#deprecated
+pub fn LambdaFn::not_equal(Self, Self) -> Bool
 
 pub struct MultisetPartitionState {
   f : Array[Int]
   lpart : Int
   pstack : Array[PartComponent]
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn MultisetPartitionState::equal(Self, Self) -> Bool
+#deprecated
+pub fn MultisetPartitionState::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn MultisetPartitionState::output(Self, &Logger) -> Unit
+#deprecated
+pub fn MultisetPartitionState::to_repr(Self) -> @debug.Repr
+#deprecated
+pub fn MultisetPartitionState::to_string(Self) -> String
 pub impl Show for MultisetPartitionState
 
 pub struct MultisetPartitionTraverser {
@@ -316,6 +356,10 @@ pub enum Nested[T] {
   Atom(T)
   Items(Array[Nested[T]])
 } derive(Eq)
+#deprecated
+pub fn[T : Eq] Nested::equal(Self[T], Self[T]) -> Bool
+#deprecated
+pub fn[T : Eq] Nested::not_equal(Self[T], Self[T]) -> Bool
 
 pub struct NumberedSymbols {
   prefix : String
@@ -329,12 +373,26 @@ pub struct PartComponent {
   mut u : Int
   mut v : Int
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn PartComponent::equal(Self, Self) -> Bool
+#deprecated
+pub fn PartComponent::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn PartComponent::output(Self, &Logger) -> Unit
+#deprecated
+pub fn PartComponent::to_repr(Self) -> @debug.Repr
+#deprecated
+pub fn PartComponent::to_string(Self) -> String
 pub impl Show for PartComponent
 
 pub enum PartitionResult {
   Parts(Map[Int, Int])
   Sized(Int, Map[Int, Int])
 } derive(Eq)
+#deprecated
+pub fn PartitionResult::equal(Self, Self) -> Bool
+#deprecated
+pub fn PartitionResult::not_equal(Self, Self) -> Bool
 
 pub struct RecurrenceMemo[T] {
   cache : @ref.Ref[Array[T]]
@@ -347,8 +405,16 @@ pub struct ReplacementInfo[T] {
   replacement : T
   info : String
 } derive(Eq)
+#deprecated
+pub fn[T : Eq] ReplacementInfo::equal(Self[T], Self[T]) -> Bool
+#deprecated
+pub fn[T : Eq] ReplacementInfo::not_equal(Self[T], Self[T]) -> Bool
 
 type ReplacementRule derive(Eq)
+#deprecated
+pub fn ReplacementRule::equal(Self, Self) -> Bool
+#deprecated
+pub fn ReplacementRule::not_equal(Self, Self) -> Bool
 
 pub struct Replacer {
   rules : @ref.Ref[Array[ReplacementRule]]
@@ -363,23 +429,43 @@ pub struct Routine {
   arguments : Array[String]
   results : Array[RoutineResult]
 } derive(Eq)
+#deprecated
+pub fn Routine::equal(Self, Self) -> Bool
+#deprecated
+pub fn Routine::not_equal(Self, Self) -> Bool
 
 pub struct RoutineResult {
   name : String
   expr : @symcore.Expr
 } derive(Eq)
+#deprecated
+pub fn RoutineResult::equal(Self, Self) -> Bool
+#deprecated
+pub fn RoutineResult::not_equal(Self, Self) -> Bool
 
 pub enum ShapeSpec {
   Take(Int)
   Group(Array[ShapeSpec])
 } derive(Eq)
+#deprecated
+pub fn ShapeSpec::equal(Self, Self) -> Bool
+#deprecated
+pub fn ShapeSpec::not_equal(Self, Self) -> Bool
 
 pub struct SymPyDeprecationWarning {
   message : String
   deprecated_since_version : String
   active_deprecations_target : String
 } derive(Eq)
+#deprecated
+pub fn SymPyDeprecationWarning::equal(Self, Self) -> Bool
 pub fn SymPyDeprecationWarning::full_message(Self) -> String
+#deprecated
+pub fn SymPyDeprecationWarning::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn SymPyDeprecationWarning::output(Self, &Logger) -> Unit
+#deprecated
+pub fn SymPyDeprecationWarning::to_string(Self) -> String
 pub impl Show for SymPyDeprecationWarning
 
 pub enum TargetLanguage {
@@ -389,11 +475,21 @@ pub enum TargetLanguage {
   Octave
   Rust
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn TargetLanguage::equal(Self, Self) -> Bool
+#deprecated
+pub fn TargetLanguage::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn TargetLanguage::to_repr(Self) -> @debug.Repr
 
 pub enum Threadable[T] {
   Scalar(T)
   Array(Array[Threadable[T]])
 } derive(Eq)
+#deprecated
+pub fn[T : Eq] Threadable::equal(Self[T], Self[T]) -> Bool
+#deprecated
+pub fn[T : Eq] Threadable::not_equal(Self[T], Self[T]) -> Bool
 
 pub struct TimedResult {
   number : Int
@@ -401,19 +497,37 @@ pub struct TimedResult {
   scaled : Double
   unit : String
 } derive(Eq)
+#deprecated
+pub fn TimedResult::equal(Self, Self) -> Bool
+#deprecated
+pub fn TimedResult::not_equal(Self, Self) -> Bool
 
 pub struct TimethisReport {
   name : String
   elapsed_seconds : Double
 } derive(Eq)
+#deprecated
+pub fn TimethisReport::equal(Self, Self) -> Bool
+#deprecated
+pub fn TimethisReport::not_equal(Self, Self) -> Bool
 
 type WildBinding derive(Eq)
+#deprecated
+pub fn WildBinding::equal(Self, Self) -> Bool
+#deprecated
+pub fn WildBinding::not_equal(Self, Self) -> Bool
 
 pub enum WildcardKind {
   Dot
   Plus
   Star
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn WildcardKind::equal(Self, Self) -> Bool
+#deprecated
+pub fn WildcardKind::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn WildcardKind::to_repr(Self) -> @debug.Repr
 
 pub enum WrapBackend {
   Dummy
@@ -421,6 +535,12 @@ pub enum WrapBackend {
   Cython
   Ufunc
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn WrapBackend::equal(Self, Self) -> Bool
+#deprecated
+pub fn WrapBackend::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn WrapBackend::to_repr(Self) -> @debug.Repr
 
 pub struct WrappedBinary {
   name : String

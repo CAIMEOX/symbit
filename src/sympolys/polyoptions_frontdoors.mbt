@@ -28,9 +28,9 @@ pub struct Options {
 pub fn Options::new(
   gens? : Array[String] = [],
   domain? : Domain,
-  order? : TermOrder = TermOrder::Lex,
+  order? : TermOrder = Lex,
   modulus? : Int,
   extension? : Array[String] = [],
 ) -> Options {
-  Options::{ gens, domain, order, modulus, extension }
+  { gens, domain, order, modulus, extension }
 }

@@ -19,7 +19,7 @@ fn split_dirac_linear_term(expr : Expr) -> (Expr, Expr)? {
   match expr_simplify(expr) {
     delta if dirac_delta_atom(delta) is Some(_) =>
       Some((delta, @symcore.int(1)))
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let rest : Array[Expr] = []
       let mut delta : Expr? = None
       for arg in args {
@@ -57,7 +57,7 @@ fn split_dirac_linear_term(expr : Expr) -> (Expr, Expr)? {
 pub fn expand_dirac_delta(expr : Expr) -> Map[Expr, Expr] {
   let out : Map[Expr, Expr] = Map([])
   let terms = match expr_simplify(expr) {
-    @symcore.Expr::Add(args) => args
+    Add(args) => args
     simplified => [simplified]
   }
   for term in terms {
@@ -88,7 +88,7 @@ fn extract_dirac_factor(expr : Expr, var_name : String) -> (Expr, Expr)? {
         None
       }
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let rest : Array[Expr] = []
       let mut delta_arg : Expr? = None
       for arg in args {

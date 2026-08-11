@@ -3,14 +3,14 @@ test "polyroots wb: arity and degree guard errors" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
 
-  let b2 = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let b2 = PolyBuilder::new(["x", "y"], QQ)
   let p2 = b2.from_expr(x + y)
   sympolys_assert_error(
     fn() raise PolyError { roots_linear(p2) },
     "NotUnivariate",
   )
 
-  let b1 = PolyBuilder::new(["x"], Domain::QQ)
+  let b1 = PolyBuilder::new(["x"], QQ)
   let lin = b1.from_expr(x + @symcore.int(1))
   let quad = b1.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let cubic = b1.from_expr((x ^ @symcore.int(3)) + x + @symcore.int(1))
@@ -42,7 +42,7 @@ test "polyroots wb: arity and degree guard errors" {
 ///|
 test "polyroots wb: cubic/quartic mixed-factor quadratic branch" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
 
   // Degree-3 polynomial with a linear and an irreducible quadratic factor.
   let cubic = b.from_expr(x * ((x ^ @symcore.int(2)) + @symcore.int(1)))
@@ -62,7 +62,7 @@ test "polyroots wb: cubic/quartic mixed-factor quadratic branch" {
 ///|
 test "polyroots wb: roots_for_factor and zero-root handling" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
 
   let const_poly = b.from_expr(@symcore.int(7))
   assert_true(roots_for_factor(const_poly, true).length() == 0)
@@ -76,27 +76,27 @@ test "polyroots wb: roots_for_factor and zero-root handling" {
   let quartic = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
   assert_true(roots_for_factor(quartic, true).length() == 4)
 
-  let zero = Poly::zero(["x"], Domain::QQ)
+  let zero = Poly::zero(["x"], QQ)
   assert_true(roots(zero).length() == 0)
 }
 
 ///|
 test "polyroots wb: root_factors frontdoor" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let f = b.from_expr((x - @symcore.int(1)) * (x + @symcore.int(2)))
   let factors = root_factors(f).map(factor => @symprint.pretty_string(factor))
   inspect(factors.join(" | "), content="x + 2 | x - 1")
   let irreducible = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   inspect(root_factors(irreducible).length(), content="2")
-  let zero = Poly::zero(["x"], Domain::QQ)
+  let zero = Poly::zero(["x"], QQ)
   inspect(@symprint.pretty_string(root_factors(zero)[0]), content="0")
 }
 
 ///|
 test "polyroots wb: binomial roots use ordered roots of unity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let quartic = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(16))
   let roots4 = roots_binomial(quartic).map(r => @symprint.pretty_string(r))
   inspect(roots4[0], content="-2")
@@ -114,7 +114,7 @@ test "polyroots wb: binomial roots use ordered roots of unity" {
 ///|
 test "polyroots wb: quintic frontdoor handles supported and empty branches" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let solvable = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(2))
   let roots5 = roots_quintic(solvable)
   assert_true(roots5.length() == 5)
@@ -137,12 +137,12 @@ test "polyroots wb: quintic frontdoor handles supported and empty branches" {
 ///|
 test "polyroots wb: cyclotomic roots detect primitive roots" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let phi4 = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let roots4 = roots_cyclotomic(phi4).map(r => @symprint.pretty_string(r))
   assert_true(roots4.length() == 2)
   assert_true(roots4[0].contains("sin"))
-  let phi5 = Poly::from_expr(cyclotomic_poly(5), ["x"], Domain::QQ)
+  let phi5 = Poly::from_expr(cyclotomic_poly(5), ["x"], QQ)
   assert_true(roots_cyclotomic(phi5).length() == 4)
   sympolys_assert_error(
     fn() raise PolyError {
@@ -155,7 +155,7 @@ test "polyroots wb: cyclotomic roots detect primitive roots" {
 ///|
 test "polyroots wb: preprocess_roots clears content and integer basis" {
   let x = @symcore.Expr::Symbol("x")
-  let zz = PolyBuilder::new(["x"], Domain::ZZ)
+  let zz = PolyBuilder::new(["x"], ZZ)
   let scaled = zz.from_expr(
     (x ^ @symcore.int(5)) + @symcore.int(512) * x + @symcore.int(1024),
   )
@@ -173,7 +173,7 @@ test "polyroots wb: preprocess_roots clears content and integer basis" {
   inspect(primitive_poly.to_string(), content="x**2 + 2*x + 1")
 
   let half = @symcore.rational_from_ints(1, 2)
-  let qq = PolyBuilder::new(["x"], Domain::QQ)
+  let qq = PolyBuilder::new(["x"], QQ)
   let rational_poly = qq.from_expr(half * (x ^ @symcore.int(2)) + x + half)
   let (_, cleared_poly) = preprocess_roots(rational_poly)
   inspect(cleared_poly.to_string(), content="x**2 + 2*x + 1")

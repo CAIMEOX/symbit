@@ -16,13 +16,12 @@ pub struct QExpr {
 ///|
 fn quantum_repr_expr(expr : Expr) -> String {
   match expr {
-    Expr::Number(n) if n.is_integral() =>
-      "Integer(\{n.numerator().to_string()})"
-    Expr::Number(n) =>
+    Number(n) if n.is_integral() => "Integer(\{n.numerator().to_string()})"
+    Number(n) =>
       "Rational(\{n.numerator().to_string()}, \{n.denominator().to_string()})"
-    Expr::Symbol(name) if name == "oo" => "oo"
-    Expr::Symbol(name) => "Symbol('\{name}')"
-    Expr::Pow(base, exp) =>
+    Symbol(name) if name == "oo" => "oo"
+    Symbol(name) => "Symbol('\{name}')"
+    Pow(base, exp) =>
       "Pow(\{quantum_repr_expr(base)},\{quantum_repr_expr(exp)})"
     _ =>
       match @symcore.application_parts(expr) {
@@ -53,7 +52,7 @@ pub fn qexpr(
   class_name? : String = "QExpr",
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> QExpr {
-  QExpr::{ class_name, args, hilbert_space }
+  { class_name, args, hilbert_space }
 }
 
 ///|
@@ -73,7 +72,7 @@ pub impl Show for QExpr with fn to_string(self) {
 
 ///|
 pub impl Show for QExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -135,8 +134,7 @@ pub fn quantum_is_state_expr(expr : Expr) -> Bool {
 ///|
 pub fn quantum_is_operator_expr(expr : Expr) -> Bool {
   match expr {
-    Expr::Symbol(name) =>
-      ["Jplus", "Jminus", "Jx", "Jy", "Jz", "J2"].contains(name)
+    Symbol(name) => ["Jplus", "Jminus", "Jx", "Jy", "Jz", "J2"].contains(name)
     _ =>
       quantum_expr_has_any_name(expr, [
         "Operator", "HermitianOperator", "UnitaryOperator", "IdentityOperator", "DifferentialOperator",

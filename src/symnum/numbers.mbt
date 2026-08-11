@@ -7,7 +7,7 @@ pub(all) suberror RationalError {
 ///|
 pub impl Show for RationalError with fn output(self, logger : &Logger) -> Unit {
   match self {
-    RationalError::ZeroDenominator => logger.write_string("ZeroDenominator")
+    ZeroDenominator => logger.write_string("ZeroDenominator")
   }
 }
 
@@ -65,33 +65,33 @@ fn divide_bigint_if_needed(value : BigInt, divisor : BigInt) -> BigInt {
 ///|
 fn normalize_rational(num : BigInt, den : BigInt) -> BigRational {
   if num.is_zero() {
-    return BigRational::{ num: BigInt::from_int(0), den: BigInt::from_int(1) }
+    return { num: BigInt::from_int(0), den: BigInt::from_int(1) }
   }
   if den.equal_int(1) {
-    return BigRational::{ num, den }
+    return { num, den }
   }
   let sign_flip = den < BigInt::from_int(0)
   let mut n = if sign_flip { num.neg() } else { num }
   let mut d = if sign_flip { den.neg() } else { den }
   if d.equal_int(1) {
-    return BigRational::{ num: n, den: d }
+    return { num: n, den: d }
   }
   if n.equal_int(1) || n.equal_int(-1) {
-    return BigRational::{ num: n, den: d }
+    return { num: n, den: d }
   }
   let g = gcd_bigint(n, d)
   if !g.equal_int(1) {
     n = n.div(g)
     d = d.div(g)
   }
-  BigRational::{ num: n, den: d }
+  { num: n, den: d }
 }
 
 ///|
 /// Construct a normalized rational and validate that `den != 0`.
 pub fn BigRational::new(num : BigInt, den : BigInt) -> Self raise RationalError {
   if den.is_zero() {
-    raise RationalError::ZeroDenominator
+    raise ZeroDenominator
   }
   normalize_rational(num, den)
 }
@@ -138,21 +138,12 @@ pub fn BigRational::add_r(
   }
   if self.den.equal_int(1) {
     if other.den.equal_int(1) {
-      return BigRational::{
-        num: self.num.add(other.num),
-        den: BigInt::from_int(1),
-      }
+      return { num: self.num.add(other.num), den: BigInt::from_int(1) }
     }
-    return BigRational::{
-      num: self.num.mul(other.den).add(other.num),
-      den: other.den,
-    }
+    return { num: self.num.mul(other.den).add(other.num), den: other.den }
   }
   if other.den.equal_int(1) {
-    return BigRational::{
-      num: self.num.add(self.den.mul(other.num)),
-      den: self.den,
-    }
+    return { num: self.num.add(self.den.mul(other.num)), den: self.den }
   }
   let num = self.num.mul(other.den).add(other.num.mul(self.den))
   let den = self.den.mul(other.den)
@@ -173,21 +164,12 @@ pub fn BigRational::sub_r(
   }
   if self.den.equal_int(1) {
     if other.den.equal_int(1) {
-      return BigRational::{
-        num: self.num.sub(other.num),
-        den: BigInt::from_int(1),
-      }
+      return { num: self.num.sub(other.num), den: BigInt::from_int(1) }
     }
-    return BigRational::{
-      num: self.num.mul(other.den).sub(other.num),
-      den: other.den,
-    }
+    return { num: self.num.mul(other.den).sub(other.num), den: other.den }
   }
   if other.den.equal_int(1) {
-    return BigRational::{
-      num: self.num.sub(self.den.mul(other.num)),
-      den: self.den,
-    }
+    return { num: self.num.sub(self.den.mul(other.num)), den: self.den }
   }
   let num = self.num.mul(other.den).sub(other.num.mul(self.den))
   let den = self.den.mul(other.den)
@@ -205,27 +187,24 @@ pub fn BigRational::mul_r(
   }
   if self.den.equal_int(1) {
     if other.den.equal_int(1) {
-      return BigRational::{
-        num: self.num.mul(other.num),
-        den: BigInt::from_int(1),
-      }
+      return { num: self.num.mul(other.num), den: BigInt::from_int(1) }
     }
     let g = gcd_bigint(self.num, other.den)
-    return BigRational::{
+    return {
       num: divide_bigint_if_needed(self.num, g).mul(other.num),
       den: divide_bigint_if_needed(other.den, g),
     }
   }
   if other.den.equal_int(1) {
     let g = gcd_bigint(other.num, self.den)
-    return BigRational::{
+    return {
       num: self.num.mul(divide_bigint_if_needed(other.num, g)),
       den: divide_bigint_if_needed(self.den, g),
     }
   }
   let g1 = gcd_bigint(self.num, other.den)
   let g2 = gcd_bigint(self.den, other.num)
-  BigRational::{
+  {
     num: divide_bigint_if_needed(self.num, g1).mul(
       divide_bigint_if_needed(other.num, g2),
     ),
@@ -238,7 +217,7 @@ pub fn BigRational::mul_r(
 ///|
 /// Negate a rational.
 pub fn BigRational::neg_r(self : BigRational) -> BigRational {
-  BigRational::{ num: self.num.neg(), den: self.den }
+  { num: self.num.neg(), den: self.den }
 }
 
 ///|
@@ -290,7 +269,7 @@ pub fn BigRational::reciprocal(
   self : BigRational,
 ) -> BigRational raise RationalError {
   if self.is_zero() {
-    raise RationalError::ZeroDenominator
+    raise ZeroDenominator
   }
   normalize_rational(self.den, self.num)
 }
@@ -302,7 +281,7 @@ pub fn BigRational::div_r(
   other : BigRational,
 ) -> BigRational raise RationalError {
   if other.is_zero() {
-    raise RationalError::ZeroDenominator
+    raise ZeroDenominator
   }
   if self.num.is_zero() {
     return BigRational::zero()

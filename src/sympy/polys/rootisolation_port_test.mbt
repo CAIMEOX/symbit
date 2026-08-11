@@ -1,13 +1,13 @@
 ///|
 test "rootisolation: cauchy/mignotte bounds parity" {
   let f = [feqq(1, 1), feqq(0, 1), feqq(-2, 1)] // x^2 - 2
-  let ours_upper = @sympolys.dup_cauchy_upper_bound(f, Domain::QQ).to_string()
+  let ours_upper = Show::to_string(@sympolys.dup_cauchy_upper_bound(f, QQ))
   let oracle_upper = dup_cauchy_upper_bound(dup_to_rats(f), domain="QQ")
   assert_eq(ours_upper, oracle_upper)
-  let ours_lower = @sympolys.dup_cauchy_lower_bound(f, Domain::QQ).to_string()
+  let ours_lower = Show::to_string(@sympolys.dup_cauchy_lower_bound(f, QQ))
   let oracle_lower = dup_cauchy_lower_bound(dup_to_rats(f), domain="QQ")
   assert_eq(ours_lower, oracle_lower)
-  let ours_m = @sympolys.dup_mignotte_sep_bound_squared(f, Domain::QQ).to_string()
+  let ours_m = Show::to_string(@sympolys.dup_mignotte_sep_bound_squared(f, QQ))
   let oracle_m = dup_mignotte_sep_bound_squared(dup_to_rats(f), domain="QQ")
   assert_eq(ours_m, oracle_m)
 }
@@ -21,14 +21,14 @@ fn dup_list_repr(polys : Array[Array[FieldElem]]) -> String {
 ///|
 test "rootisolation: dup_sturm parity" {
   let f = [feqq(1, 1), feqq(-2, 1), feqq(3, 1), feqq(-5, 1)] // x^3 - 2*x^2 + 3*x - 5
-  let ours = dup_list_repr(@sympolys.dup_sturm(f, Domain::QQ))
+  let ours = dup_list_repr(@sympolys.dup_sturm(f, QQ))
   let oracle = dup_sturm(dup_to_rats(f), domain="QQ")
   assert_eq(ours, oracle)
 }
 
 ///|
 fn interval_repr(a : @symnum.BigRational, b : @symnum.BigRational) -> String {
-  "(\{a.to_string()},\{b.to_string()})"
+  "(\{Show::to_string(a)},\{Show::to_string(b)})"
 }
 
 ///|
@@ -55,37 +55,19 @@ fn refine_repr(
 ) -> String raise {
   match (steps, eps, disjoint) {
     (None, None, None) => {
-      let (a, b) = @sympolys.dup_refine_real_root(coeffs, s, t, Domain::QQ)
+      let (a, b) = @sympolys.dup_refine_real_root(coeffs, s, t, QQ)
       interval_repr(a, b)
     }
     (Some(k), None, None) => {
-      let (a, b) = @sympolys.dup_refine_real_root(
-        coeffs,
-        s,
-        t,
-        Domain::QQ,
-        steps=k,
-      )
+      let (a, b) = @sympolys.dup_refine_real_root(coeffs, s, t, QQ, steps=k)
       interval_repr(a, b)
     }
     (None, Some(e), None) => {
-      let (a, b) = @sympolys.dup_refine_real_root(
-        coeffs,
-        s,
-        t,
-        Domain::QQ,
-        eps=e,
-      )
+      let (a, b) = @sympolys.dup_refine_real_root(coeffs, s, t, QQ, eps=e)
       interval_repr(a, b)
     }
     (None, None, Some(d)) => {
-      let (a, b) = @sympolys.dup_refine_real_root(
-        coeffs,
-        s,
-        t,
-        Domain::QQ,
-        disjoint=d,
-      )
+      let (a, b) = @sympolys.dup_refine_real_root(coeffs, s, t, QQ, disjoint=d)
       interval_repr(a, b)
     }
     (Some(k), Some(e), None) => {
@@ -93,7 +75,7 @@ fn refine_repr(
         coeffs,
         s,
         t,
-        Domain::QQ,
+        QQ,
         steps=k,
         eps=e,
       )
@@ -104,7 +86,7 @@ fn refine_repr(
         coeffs,
         s,
         t,
-        Domain::QQ,
+        QQ,
         steps=k,
         disjoint=d,
       )
@@ -115,7 +97,7 @@ fn refine_repr(
         coeffs,
         s,
         t,
-        Domain::QQ,
+        QQ,
         eps=e,
         disjoint=d,
       )
@@ -126,7 +108,7 @@ fn refine_repr(
         coeffs,
         s,
         t,
-        Domain::QQ,
+        QQ,
         steps=k,
         eps=e,
         disjoint=d,
@@ -189,31 +171,21 @@ test "rootisolation: compatibility frontdoor parity" {
   let f = [feqq(1, 1), feqq(0, 1), feqq(-2, 1)] // x^2 - 2
   let s = br_int(1)
   let t = br_int(2)
-  let (a, b) = @sympolys.dup_outer_refine_real_root(
-    f,
-    s,
-    t,
-    Domain::QQ,
-    steps=2,
-  )
+  let (a, b) = @sympolys.dup_outer_refine_real_root(f, s, t, QQ, steps=2)
   assert_eq(
     interval_repr(a, b),
     dup_outer_refine_real_root(dup_to_rats(f), s, t, domain="QQ", steps=2),
   )
   assert_eq(
-    interval_list_repr(@sympolys.dup_inner_isolate_real_roots(f, Domain::QQ)),
+    interval_list_repr(@sympolys.dup_inner_isolate_real_roots(f, QQ)),
     dup_inner_isolate_real_roots(dup_to_rats(f), domain="QQ"),
   )
   assert_eq(
-    interval_list_repr(
-      @sympolys.dup_inner_isolate_positive_roots(f, Domain::QQ),
-    ),
+    interval_list_repr(@sympolys.dup_inner_isolate_positive_roots(f, QQ)),
     dup_inner_isolate_positive_roots(dup_to_rats(f), domain="QQ"),
   )
   assert_eq(
-    interval_list_repr(
-      @sympolys.dup_inner_isolate_negative_roots(f, Domain::QQ),
-    ),
+    interval_list_repr(@sympolys.dup_inner_isolate_negative_roots(f, QQ)),
     dup_inner_isolate_negative_roots(dup_to_rats(f), domain="QQ"),
   )
 }
@@ -221,39 +193,27 @@ test "rootisolation: compatibility frontdoor parity" {
 ///|
 test "rootisolation: dup_isolate_real_roots_sqf parity" {
   let f = [feqq(1, 1), feqq(0, 1), feqq(-2, 1)] // x^2 - 2
-  let ours = interval_list_repr(
-    @sympolys.dup_isolate_real_roots_sqf(f, Domain::QQ),
-  )
+  let ours = interval_list_repr(@sympolys.dup_isolate_real_roots_sqf(f, QQ))
   let oracle = dup_isolate_real_roots_sqf(dup_to_rats(f), domain="QQ")
   assert_eq(ours, oracle)
   let g = [feqq(1, 1), feqq(0, 1), feqq(-1, 1)] // x^2 - 1
-  let ours_g = interval_list_repr(
-    @sympolys.dup_isolate_real_roots_sqf(g, Domain::QQ),
-  )
+  let ours_g = interval_list_repr(@sympolys.dup_isolate_real_roots_sqf(g, QQ))
   let oracle_g = dup_isolate_real_roots_sqf(dup_to_rats(g), domain="QQ")
   assert_eq(ours_g, oracle_g)
   let h = [feqq(1, 1), feqq(-6, 1), feqq(11, 1), feqq(-6, 1)] // (x-1)(x-2)(x-3)
-  let ours_h = interval_list_repr(
-    @sympolys.dup_isolate_real_roots_sqf(h, Domain::QQ),
-  )
+  let ours_h = interval_list_repr(@sympolys.dup_isolate_real_roots_sqf(h, QQ))
   let oracle_h = dup_isolate_real_roots_sqf(dup_to_rats(h), domain="QQ")
   assert_eq(ours_h, oracle_h)
   let k = [feqq(1, 1), feqq(0, 1), feqq(-5, 1)] // x^2 - 5
-  let ours_k = interval_list_repr(
-    @sympolys.dup_isolate_real_roots_sqf(k, Domain::QQ),
-  )
+  let ours_k = interval_list_repr(@sympolys.dup_isolate_real_roots_sqf(k, QQ))
   let oracle_k = dup_isolate_real_roots_sqf(dup_to_rats(k), domain="QQ")
   assert_eq(ours_k, oracle_k)
   let m = [feqq(1, 1), feqq(0, 1), feqq(0, 1), feqq(-5, 1)] // x^3 - 5
-  let ours_m = interval_list_repr(
-    @sympolys.dup_isolate_real_roots_sqf(m, Domain::QQ),
-  )
+  let ours_m = interval_list_repr(@sympolys.dup_isolate_real_roots_sqf(m, QQ))
   let oracle_m = dup_isolate_real_roots_sqf(dup_to_rats(m), domain="QQ")
   assert_eq(ours_m, oracle_m)
   let n = [feqq(1, 1), feqq(0, 1), feqq(-5, 1), feqq(0, 1), feqq(4, 1)] // x^4 - 5*x^2 + 4
-  let ours_n = interval_list_repr(
-    @sympolys.dup_isolate_real_roots_sqf(n, Domain::QQ),
-  )
+  let ours_n = interval_list_repr(@sympolys.dup_isolate_real_roots_sqf(n, QQ))
   let oracle_n = dup_isolate_real_roots_sqf(dup_to_rats(n), domain="QQ")
   assert_eq(ours_n, oracle_n)
 }
@@ -265,7 +225,7 @@ fn interval_mult_list_repr(
   let parts : Array[String] = Array::new()
   for entry in intervals {
     let ((a, b), mult) = entry
-    parts.push("((\{a.to_string()},\{b.to_string()}),\{mult})")
+    parts.push("((\{Show::to_string(a)},\{Show::to_string(b)}),\{mult})")
   }
   let joined = parts.join(",")
   "[\{joined}]"
@@ -313,9 +273,7 @@ fn all_roots_repr(
 ///|
 test "rootisolation: dup_isolate_real_roots parity with multiplicities" {
   let f = [feqq(1, 1), feqq(0, 1), feqq(-3, 1), feqq(2, 1)] // (x-1)^2*(x+2)
-  let ours = interval_mult_list_repr(
-    @sympolys.dup_isolate_real_roots(f, Domain::QQ),
-  )
+  let ours = interval_mult_list_repr(@sympolys.dup_isolate_real_roots(f, QQ))
   let oracle = dup_isolate_real_roots(dup_to_rats(f), domain="QQ")
   assert_eq(ours, oracle)
 }
@@ -323,12 +281,12 @@ test "rootisolation: dup_isolate_real_roots parity with multiplicities" {
 ///|
 test "rootisolation: dup_count_real_roots parity" {
   let f = [feqq(1, 1), feqq(0, 1), feqq(-3, 1), feqq(2, 1)] // (x-1)^2*(x+2)
-  let ours_all = @sympolys.dup_count_real_roots(f, Domain::QQ).to_string()
+  let ours_all = @sympolys.dup_count_real_roots(f, QQ).to_string()
   let oracle_all = dup_count_real_roots(dup_to_rats(f), domain="QQ")
   assert_eq(ours_all, oracle_all)
   let ours_range = @sympolys.dup_count_real_roots(
     f,
-    Domain::QQ,
+    QQ,
     inf=br_int(0),
     sup=br_int(2),
   ).to_string()
@@ -345,22 +303,22 @@ test "rootisolation: dup_count_real_roots parity" {
 test "rootisolation: complex and all-root frontdoors parity on all-real input" {
   let f = [feqq(1, 1), feqq(0, 1), feqq(-2, 1)] // x^2 - 2
   assert_eq(
-    @sympolys.dup_count_complex_roots(f, Domain::QQ).to_string(),
+    @sympolys.dup_count_complex_roots(f, QQ).to_string(),
     dup_count_complex_roots(dup_to_rats(f), domain="QQ"),
   )
   assert_eq(
-    @sympolys.dup_isolate_complex_roots_sqf(f, Domain::QQ).length().to_string(),
+    @sympolys.dup_isolate_complex_roots_sqf(f, QQ).length().to_string(),
     "0",
   )
   assert_eq("[]", dup_isolate_complex_roots_sqf(dup_to_rats(f), domain="QQ"))
   assert_eq(
-    all_roots_sqf_repr(@sympolys.dup_isolate_all_roots_sqf(f, Domain::QQ)),
+    all_roots_sqf_repr(@sympolys.dup_isolate_all_roots_sqf(f, QQ)),
     dup_isolate_all_roots_sqf(dup_to_rats(f), domain="QQ"),
   )
 
   let repeated = [feqq(1, 1), feqq(0, 1), feqq(-4, 1), feqq(0, 1), feqq(4, 1)] // (x^2 - 2)^2
   assert_eq(
-    all_roots_repr(@sympolys.dup_isolate_all_roots(repeated, Domain::QQ)),
+    all_roots_repr(@sympolys.dup_isolate_all_roots(repeated, QQ)),
     dup_isolate_all_roots(dup_to_rats(repeated), domain="QQ"),
   )
 }

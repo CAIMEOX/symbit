@@ -7,7 +7,7 @@ fn tsch_wb_pair_text(poly : Poly) -> String raise PolyError {
 ///|
 test "numberfields galois: tschirnhausen fixed-order transformation" {
   let x = Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   inspect(
     tsch_wb_pair_text(b.from_expr((x ^ int(3)) - int(2))),
     content="(x**2 + x + 1, _X**3 - 3*_X**2 - 3*_X - 1)",

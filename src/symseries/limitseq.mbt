@@ -8,8 +8,8 @@
 ///|
 fn contains_symbol(expr : @symcore.Expr, name : String) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(n) => n == name
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) => {
+    Symbol(n) => n == name
+    Add(args) | Mul(args) => {
       for child in args {
         if contains_symbol(child, name) {
           return true
@@ -17,8 +17,7 @@ fn contains_symbol(expr : @symcore.Expr, name : String) -> Bool {
       }
       false
     }
-    @symcore.Expr::Pow(base, exp) =>
-      contains_symbol(base, name) || contains_symbol(exp, name)
+    Pow(base, exp) => contains_symbol(base, name) || contains_symbol(exp, name)
     _ =>
       match @symcore.application_args(expr) {
         Some(args) => {
@@ -37,7 +36,7 @@ fn contains_symbol(expr : @symcore.Expr, name : String) -> Bool {
 ///|
 fn sign_of_expr(expr : @symcore.Expr) -> Int? {
   match expr {
-    @symcore.Expr::Number(n) => {
+    Number(n) => {
       let zero = @symnum.BigRational::zero()
       if n.compare(zero) < 0 {
         Some(-1)
@@ -60,11 +59,11 @@ fn sign_of_expr(expr : @symcore.Expr) -> Int? {
 /// - Limits: Raises if `n` is not a Symbol.
 pub fn difference_delta(
   expr : @symcore.Expr,
-  n? : @symcore.Expr = @symcore.Expr::Symbol("n"),
+  n? : @symcore.Expr = Symbol("n"),
   step? : Int = 1,
 ) -> @symcore.Expr raise {
   let var_name = match n {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("difference_delta requires a Symbol")
   }
   let shifted = @symcore.add([n, @symcore.int(step)])
@@ -83,10 +82,10 @@ pub fn difference_delta(
 /// - Limits: Raises if `n` is not a Symbol; unsupported shapes fall back to the general `limit` front door.
 pub fn limit_seq(
   expr : @symcore.Expr,
-  n? : @symcore.Expr = @symcore.Expr::Symbol("n"),
+  n? : @symcore.Expr = Symbol("n"),
 ) -> @symcore.Expr raise {
   let var_name = match n {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("limit_seq requires a Symbol")
   }
   if !contains_symbol(expr, var_name) {
@@ -95,21 +94,11 @@ pub fn limit_seq(
   let (num_expr, den_expr) = split_num_den(expr)
   let num_poly = match poly_from_expr(num_expr, n) {
     Some(v) => v
-    None =>
-      return limit(
-        expr,
-        n,
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-      )
+    None => return limit(expr, n, NumberSymbol(Infinity))
   }
   let den_poly = match poly_from_expr(den_expr, n) {
     Some(v) => v
-    None =>
-      return limit(
-        expr,
-        n,
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-      )
+    None => return limit(expr, n, NumberSymbol(Infinity))
   }
   let num_deg = if num_poly.is_empty() { -1 } else { num_poly.length() - 1 }
   let den_deg = if den_poly.is_empty() { -1 } else { den_poly.length() - 1 }
@@ -129,14 +118,10 @@ pub fn limit_seq(
     expr_mul(lead_num, @symcore.pow(lead_den, @symcore.int(-1))),
   )
   match sign {
-    Some(1) => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-    Some(-1) =>
-      @symcore.mul([
-        @symcore.int(-1),
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-      ])
+    Some(1) => NumberSymbol(Infinity)
+    Some(-1) => @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])
     Some(0) => @symcore.int(0)
-    Some(_) => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-    None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+    Some(_) => NumberSymbol(Infinity)
+    None => NumberSymbol(Infinity)
   }
 }

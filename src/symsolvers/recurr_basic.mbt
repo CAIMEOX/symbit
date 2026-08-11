@@ -11,13 +11,13 @@ pub enum RsolveInit {
 ///|
 /// Build list-based initial data for [`rsolve`](#rsolve).
 pub fn rsolve_init_list(values : Array[Expr]) -> RsolveInit {
-  RsolveInit::List(values)
+  List(values)
 }
 
 ///|
 /// Build dictionary-based initial data for [`rsolve`](#rsolve).
 pub fn rsolve_init_dict(values : Map[String, Expr]) -> RsolveInit {
-  RsolveInit::Dict(values)
+  Dict(values)
 }
 
 ///|
@@ -31,7 +31,7 @@ fn solver_shift_expr(symbol : Expr, step : Int) -> Expr {
 
 ///|
 fn solver_recurrence_constant(shift : Int) -> Expr {
-  Expr::Symbol("C\{shift}")
+  Symbol("C\{shift}")
 }
 
 ///|
@@ -59,7 +59,7 @@ fn solver_recurrence_raw_add(args : Array[Expr]) -> Expr {
   let flat : Array[Expr] = []
   for arg in args {
     match arg {
-      Expr::Add(inner) =>
+      Add(inner) =>
         for item in inner {
           if expr_is_zeroish(item) != Some(true) {
             flat.push(item)
@@ -108,7 +108,7 @@ fn solver_recurrence_compare_terms(lhs : Expr, rhs : Expr, n : Expr) -> Int {
 ///|
 fn solver_recurrence_order_solution(expr : Expr, n : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let ordered = args.copy()
       ordered.sort_by((lhs, rhs) => solver_recurrence_compare_terms(lhs, rhs, n))
       @symcore.raw_add(ordered)
@@ -120,9 +120,9 @@ fn solver_recurrence_order_solution(expr : Expr, n : Expr) -> Expr {
 ///|
 fn solver_recurrence_rationalize_term(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) =>
+    Add(args) =>
       solver_recurrence_raw_add(args.map(solver_recurrence_rationalize_term))
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut coeff = @symnum.BigRational::one()
       let rest : Array[Expr] = []
       for arg in args {
@@ -142,7 +142,7 @@ fn solver_recurrence_rationalize_term(expr : Expr) -> Expr {
       } else {
         let factors : Array[Expr] = []
         if !coeff.is_one() || rest.is_empty() {
-          factors.push(Expr::Number(coeff))
+          factors.push(Number(coeff))
         }
         for factor in rest {
           factors.push(factor)
@@ -157,13 +157,13 @@ fn solver_recurrence_rationalize_term(expr : Expr) -> Expr {
 ///|
 fn solver_recurrence_normalize_output(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) =>
+    Add(args) =>
       solver_recurrence_raw_add(args.map(solver_recurrence_normalize_output))
-    Expr::Mul(args) => {
+    Mul(args) => {
       let normalized_args = args.map(solver_recurrence_normalize_output)
       for i in 0..<normalized_args.length() {
         match normalized_args[i] {
-          Expr::Add(inner) => {
+          Add(inner) => {
             let distributed : Array[Expr] = []
             for term in inner {
               let factors : Array[Expr] = []
@@ -193,7 +193,7 @@ fn solver_recurrence_normalize_output(expr : Expr) -> Expr {
 fn solver_recurrence_expand_basis_term(coeff : Expr, basis : Expr) -> Expr {
   let coeff = canonical_expr(coeff)
   match coeff {
-    Expr::Add(args) =>
+    Add(args) =>
       solver_recurrence_raw_add(
         args.map(arg => {
           solver_recurrence_normalize_output(
@@ -379,13 +379,13 @@ fn solver_recurrence_coeffs_from_expr(
 ///|
 fn solver_initial_value(init : RsolveInit, y : Expr) -> (Expr, Expr)? {
   match init {
-    RsolveInit::List(values) =>
+    List(values) =>
       if values.is_empty() {
         None
       } else {
         Some((@symcore.int(0), values[0]))
       }
-    RsolveInit::Dict(values) => {
+    Dict(values) => {
       let y0 = @symprint.pretty_string(y)
       match values.get("0") {
         Some(v) => Some((@symcore.int(0), v))
@@ -411,7 +411,7 @@ fn solver_apply_recurrence_init(
     None => return solution
   }
   let nname = match n {
-    Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => return solution
   }
   let base = solver_subst_single(solution, nname, at)

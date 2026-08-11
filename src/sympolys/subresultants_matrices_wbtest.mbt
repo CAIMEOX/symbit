@@ -1,6 +1,6 @@
 ///|
 fn subres_mat_wb_pair() -> (Poly, Poly) raise PolyError {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = @symcore.Expr::Symbol("x")
   (
     b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1)),
@@ -12,7 +12,7 @@ fn subres_mat_wb_pair() -> (Poly, Poly) raise PolyError {
 fn subres_mat_wb_row(values : Array[Int]) -> Array[FieldElem] raise PolyError {
   let row : Array[FieldElem] = []
   for value in values {
-    row.push(fe_from_int(value, Domain::ZZ))
+    row.push(fe_from_int(value, ZZ))
   }
   row
 }
@@ -40,15 +40,15 @@ test "subresultants matrices wb: sylvester matrices" {
 
 ///|
 test "subresultants matrices wb: correct sign and create_ma" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = @symcore.Expr::Symbol("x")
   let p = b.from_expr(
     (x ^ @symcore.int(3)) - @symcore.int(2) * x + @symcore.int(1),
   )
   let q = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
   let s1 = sylvester(p, q)
-  inspect(correct_sign(3, 2, s1, 1, 0).to_string(), content="-1")
-  inspect(correct_sign(3, 2, s1, 1, 1).to_string(), content="1")
+  inspect(Show::to_string(correct_sign(3, 2, s1, 1, 0)), content="-1")
+  inspect(Show::to_string(correct_sign(3, 2, s1, 1, 1)), content="1")
   inspect(
     create_ma(
       4,

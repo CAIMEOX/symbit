@@ -56,12 +56,12 @@ fn expr_sqrt(a : Expr) -> Expr {
 
 ///|
 fn expr_i() -> Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  NumberSymbol(ImaginaryUnit)
 }
 
 ///|
 fn expr_pi() -> Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  NumberSymbol(Pi)
 }
 
 ///|
@@ -74,11 +74,9 @@ fn is_const_symbol(name : String) -> Bool {
 ///|
 fn expr_has_symbol(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(name) => !is_const_symbol(name)
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
-      args.any(child => expr_has_symbol(child))
-    @symcore.Expr::Pow(base, exp) =>
-      expr_has_symbol(base) || expr_has_symbol(exp)
+    Symbol(name) => !is_const_symbol(name)
+    Add(args) | Mul(args) => args.any(child => expr_has_symbol(child))
+    Pow(base, exp) => expr_has_symbol(base) || expr_has_symbol(exp)
     _ => @symcore.args(expr).any(child => expr_has_symbol(child))
   }
 }
@@ -86,7 +84,7 @@ fn expr_has_symbol(expr : Expr) -> Bool {
 ///|
 fn expr_number_value(expr : Expr) -> BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
+    Number(n) => Some(n)
     _ => None
   }
 }
@@ -100,7 +98,7 @@ fn bigint_to_int_checked(
   context : String,
 ) -> Int raise DiscreteError {
   if value.bit_length() > max_bits {
-    raise DiscreteError::ValueError("\{context} too large")
+    raise ValueError("\{context} too large")
   }
   value.to_int()
 }
@@ -113,7 +111,7 @@ fn expr_to_int_checked(
   match expr_number_value(expr) {
     Some(n) if n.is_integral() =>
       bigint_to_int_checked(n.numerator(), 62, context)
-    _ => raise DiscreteError::ValueError("expected integer input")
+    _ => raise ValueError("expected integer input")
   }
 }
 
@@ -128,10 +126,9 @@ fn mul_mod_int(a : Int, b : Int, modulus : Int) -> Int {
 ///|
 fn expand_mul(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Mul(args) => expand_mul_args(args)
-    @symcore.Expr::Add(args) => @symcore.add(args.map(expand_mul))
-    @symcore.Expr::Pow(base, exp) =>
-      @symcore.pow(expand_mul(base), expand_mul(exp))
+    Mul(args) => expand_mul_args(args)
+    Add(args) => @symcore.add(args.map(expand_mul))
+    Pow(base, exp) => @symcore.pow(expand_mul(base), expand_mul(exp))
     _ =>
       match @symcore.application_parts(expr) {
         Some((head, args)) =>
@@ -153,7 +150,7 @@ fn expand_mul_args(args : Array[Expr]) -> Expr {
   for arg in args {
     let expanded = expand_mul(arg)
     match expanded {
-      @symcore.Expr::Add(adds) => {
+      Add(adds) => {
         let next_terms : Array[Expr] = Array::new()
         for term in terms {
           for add in adds {

@@ -38,9 +38,7 @@ pub fn[T] RecurrenceMemo::apply(
   step : (Int, Array[T]) -> T,
 ) -> T raise UtilitiesError {
   if n < 0 {
-    raise UtilitiesError::InvalidArgument(
-      "recurrence index must be non-negative",
-    )
+    raise InvalidArgument("recurrence index must be non-negative")
   }
   let mut length = self.cache.val.length()
   if n < length {
@@ -64,7 +62,7 @@ pub fn[T] RecurrenceMemo::fetch_item(
   index : Int,
 ) -> T raise UtilitiesError {
   if index < 0 || index >= self.cache.val.length() {
-    raise UtilitiesError::InvalidArgument("cache index out of range")
+    raise InvalidArgument("cache index out of range")
   }
   self.cache.val[index]
 }
@@ -88,7 +86,7 @@ pub fn[T] AssocRecurrenceMemo::apply(
   step : (Int, Int, Array[Array[T]]) -> T,
 ) -> T raise UtilitiesError {
   if n < 0 || m < 0 || m > n {
-    raise UtilitiesError::InvalidArgument("expected 0 <= m <= n")
+    raise InvalidArgument("expected 0 <= m <= n")
   }
   let mut length = self.cache.val.length()
   while length <= n {

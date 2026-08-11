@@ -78,7 +78,7 @@ pub fn dmp_integrate(
     let inv = fe_from_int(denom, domain)
     out.insert(0, dmp_exquo_ground(c, inv, u - 1, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -99,7 +99,7 @@ fn rec_integrate_in(
   for c in items {
     out.push(rec_integrate_in(c, m, w, i + 1, j, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -123,7 +123,7 @@ pub fn dmp_integrate_in(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if j < 0 || j > u {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   rec_integrate_in(f, m, u, 0, j, domain)
 }
@@ -245,7 +245,7 @@ pub fn dmp_diff(
       k = k - 1
     }
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -266,7 +266,7 @@ fn rec_diff_in(
   for c in items {
     out.push(rec_diff_in(c, m, w, i + 1, j, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -290,7 +290,7 @@ pub fn dmp_diff_in(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if j < 0 || j > u {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   rec_diff_in(f, m, u, 0, j, domain)
 }
@@ -377,7 +377,7 @@ fn rec_eval_in(
   for c in items {
     out.push(rec_eval_in(c, a, w, i + 1, j, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -401,7 +401,7 @@ pub fn dmp_eval_in(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if j < 0 || j > u {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   rec_eval_in(f, a, u, 0, j, domain)
 }
@@ -578,15 +578,15 @@ fn densetools_centered_mod(
   domain : Domain,
 ) -> FieldElem raise PolyError {
   if fe_is_zero(p) {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   match domain {
-    Domain::ZZ => {
+    ZZ => {
       let cr = fe_expect_rational(c)
       let pr = fe_expect_rational(p)
       let modulus = pr.numerator().to_int()
       if modulus == 0 {
-        raise PolyError::DivisionByZero
+        raise DivisionByZero
       }
       let m = if modulus < 0 { -modulus } else { modulus }
       let mut r = cr.numerator().to_int() % m
@@ -598,7 +598,7 @@ fn densetools_centered_mod(
       }
       fe_from_int(r, domain)
     }
-    _ => raise PolyError::BadModulus
+    _ => raise BadModulus
   }
 }
 
@@ -642,7 +642,7 @@ pub fn dmp_trunc(
   for c in dmp_items(f) {
     out.push(dmp_rem(c, p, v, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -666,7 +666,7 @@ pub fn dmp_ground_trunc(
   for c in dmp_items(f) {
     out.push(dmp_ground_trunc(c, p, u - 1, domain))
   }
-  dmp_strip(DensePoly::Poly(out))
+  dmp_strip(Poly(out))
 }
 
 ///|
@@ -759,8 +759,8 @@ pub fn dup_real_imag(
   domain : Domain,
 ) -> (DensePoly, DensePoly) raise PolyError {
   match domain {
-    Domain::ZZ | Domain::QQ => ()
-    _ => raise PolyError::DomainMismatch
+    ZZ | QQ => ()
+    _ => raise DomainMismatch
   }
   let real_terms : Map[Monomial, FieldElem] = Map([])
   let imag_terms : Map[Monomial, FieldElem] = Map([])
@@ -880,7 +880,7 @@ pub fn dmp_shift(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if a.length() <= u {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if u == 0 {
     return dmp_from_coeffs(dup_shift(dmp_to_coeffs(f), a[0], domain))
@@ -911,7 +911,7 @@ pub fn dmp_shift(
       i = i - 1
     }
   }
-  dmp_strip(DensePoly::Poly(shifted))
+  dmp_strip(Poly(shifted))
 }
 
 ///|
@@ -996,7 +996,7 @@ pub fn dmp_compose(
     return f
   }
   let items = dmp_items(f)
-  let mut h = dmp_strip(DensePoly::Poly([items[0]]))
+  let mut h = dmp_strip(Poly([items[0]]))
   for i in 1..<items.length() {
     h = dmp_add_term(dmp_mul(h, g, u, domain), items[i], 0, u, domain)
   }
@@ -1021,7 +1021,7 @@ pub fn dmp_eval_tail(
     return f
   }
   if a.length() > u + 1 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if dmp_zero_p(f, u) {
     return dmp_zero(u - a.length())
@@ -1054,7 +1054,7 @@ pub fn dmp_diff_eval_in(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if j < 0 || j > u {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   dmp_eval_in(dmp_diff_in(f, m, j, u, domain), a, j, u, domain)
 }
@@ -1070,7 +1070,7 @@ pub fn dup_sign_variations(
   f : Array[FieldElem],
   _domain : Domain,
 ) -> Int raise PolyError {
-  let mut prev = fe_from_int(0, Domain::ZZ)
+  let mut prev = fe_from_int(0, ZZ)
   let mut count = 0
   for coeff in f {
     if fe_is_negative(fe_mul(coeff, prev)) {
@@ -1261,7 +1261,7 @@ pub fn dmp_revert(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   dmp_from_coeffs(dup_revert(dmp_to_coeffs(f), n, domain))
 }
@@ -1321,7 +1321,7 @@ fn densetools_dup_series_reversion_small(
   domain : Domain,
 ) -> Array[FieldElem] raise PolyError {
   if n < 1 || n > 4 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let truncated = dup_truncate(f, n, domain)
   let zero = fe_from_int(0, domain)
@@ -1386,7 +1386,7 @@ pub fn dup_series_reversion(
     return []
   }
   if !fe_is_zero(f[f.length() - 1]) {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if n <= 4 {
     return densetools_dup_series_reversion_small(f, n, domain)
@@ -1553,11 +1553,11 @@ fn densetools_alg_coeff_terms(
 ) -> Array[(Int, FieldElem)] raise PolyError {
   let out : Array[(Int, FieldElem)] = Array::new()
   match coeff {
-    FieldElem::AlgExt(coeff_base, coeffs, coeff_minpoly, coeff_gen) => {
-      if coeff_base.not_equal(base) ||
+    AlgExt(coeff_base, coeffs, coeff_minpoly, coeff_gen) => {
+      if Eq::not_equal(coeff_base, base) ||
         !minpoly_equal(coeff_minpoly, minpoly) ||
         coeff_gen != gen {
-        raise PolyError::DomainMismatch
+        raise DomainMismatch
       }
       for i in 0..<coeffs.length() {
         if !fe_is_zero(coeffs[i]) {
@@ -1586,8 +1586,8 @@ pub fn dmp_alg_inject(
   domain : Domain,
 ) -> (DensePoly, Int, Domain) raise PolyError {
   let (base, gens, rels) = match domain {
-    Domain::AlgExt(base, gens, rels) => (base, gens, rels)
-    _ => raise PolyError::DomainMismatch
+    AlgExt(base, gens, rels) => (base, gens, rels)
+    _ => raise DomainMismatch
   }
   let (minpoly, gen) = load_algext_minpoly(base, gens, rels)
   let source = dmp_to_dict(f, u, domain)
@@ -1623,11 +1623,11 @@ pub fn dmp_lift(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (base, gens, rels) = match domain {
-    Domain::AlgExt(base, gens, rels) => (base, gens, rels)
-    _ => raise PolyError::DomainMismatch
+    AlgExt(base, gens, rels) => (base, gens, rels)
+    _ => raise DomainMismatch
   }
   let (minpoly, _) = load_algext_minpoly(base, gens, rels)
   let coeffs = dmp_to_coeffs(f)

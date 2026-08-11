@@ -20,14 +20,14 @@ pub enum GroupOrder {
 /// Display finite orders as integers and infinite order as `oo`.
 pub impl Show for GroupOrder with fn to_string(self) -> String {
   match self {
-    GroupOrder::Finite(n) => n.to_string()
-    GroupOrder::Infinite => "oo"
+    Finite(n) => n.to_string()
+    Infinite => "oo"
   }
 }
 
 ///|
 pub impl Show for GroupOrder with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -105,13 +105,11 @@ pub fn FreeGroup::index(
   gen : FreeGroupElement,
 ) -> Int raise CombinatoricsError {
   if !free_group_same(self, gen.group) {
-    raise CombinatoricsError::ValueError("generator not in free group")
+    raise ValueError("generator not in free group")
   }
   let arr = gen.array_form
   if arr.length() != 1 || arr[0].1 != 1 {
-    raise CombinatoricsError::ValueError(
-      "expected a generator of the free group",
-    )
+    raise ValueError("expected a generator of the free group")
   }
   arr[0].0
 }
@@ -122,9 +120,9 @@ pub fn FreeGroup::index(
 /// The trivial free group has order one; every non-trivial free group is infinite.
 pub fn FreeGroup::order(self : FreeGroup) -> GroupOrder {
   if self.rank == 0 {
-    GroupOrder::Finite(1)
+    Finite(1)
   } else {
-    GroupOrder::Infinite
+    Infinite
   }
 }
 
@@ -138,9 +136,7 @@ pub fn FreeGroup::elements(
   if self.rank == 0 {
     [self.identity()]
   } else {
-    raise CombinatoricsError::ValueError(
-      "group contains infinitely many elements",
-    )
+    raise ValueError("group contains infinitely many elements")
   }
 }
 
@@ -172,14 +168,14 @@ pub impl Show for FreeGroup with fn to_string(self) -> String {
   if self.rank > 30 {
     "<free group with \{self.rank} generators>"
   } else {
-    let gens = self.generators().map(g => g.to_string()).join(", ")
+    let gens = self.generators().map(g => Show::to_string(g)).join(", ")
     "<free group on the generators (\{gens})>"
   }
 }
 
 ///|
 pub impl Show for FreeGroup with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -389,7 +385,7 @@ pub impl Show for FreeGroupElement with fn to_string(self) -> String {
 
 ///|
 pub impl Show for FreeGroupElement with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -399,9 +395,7 @@ pub fn FreeGroupElement::mul(
   other : FreeGroupElement,
 ) -> FreeGroupElement raise CombinatoricsError {
   if !free_group_same(self.group, other.group) {
-    raise CombinatoricsError::ValueError(
-      "elements are from different free groups",
-    )
+    raise ValueError("elements are from different free groups")
   }
   if self.is_identity() {
     return other
@@ -483,9 +477,9 @@ pub fn FreeGroupElement::div(
 /// Only the identity has finite order in a free group.
 pub fn FreeGroupElement::order(self : FreeGroupElement) -> GroupOrder {
   if self.is_identity() {
-    GroupOrder::Finite(1)
+    Finite(1)
   } else {
-    GroupOrder::Infinite
+    Infinite
   }
 }
 
@@ -496,9 +490,7 @@ pub fn FreeGroupElement::commutator(
   other : FreeGroupElement,
 ) -> FreeGroupElement raise CombinatoricsError {
   if !free_group_same(self.group, other.group) {
-    raise CombinatoricsError::ValueError(
-      "commutator requires elements from same group",
-    )
+    raise ValueError("commutator requires elements from same group")
   }
   self.inverse().mul(other.inverse()).mul(self).mul(other)
 }
@@ -529,11 +521,11 @@ pub fn FreeGroupElement::index(
   gen : FreeGroupElement,
 ) -> Int raise CombinatoricsError {
   if gen.length() != 1 {
-    raise CombinatoricsError::ValueError("expected generator or inverse")
+    raise ValueError("expected generator or inverse")
   }
   let target = gen.letter_form()
   if target.is_empty() {
-    raise CombinatoricsError::ValueError("empty generator")
+    raise ValueError("empty generator")
   }
   let letters = self.letter_form()
   let idx = target[0]
@@ -542,7 +534,7 @@ pub fn FreeGroupElement::index(
       return i
     }
   }
-  raise CombinatoricsError::ValueError("generator not found in word")
+  raise ValueError("generator not found in word")
 }
 
 ///|
@@ -559,7 +551,7 @@ pub fn FreeGroupElement::letter_at(
     idx = letters.length() + idx
   }
   if idx < 0 || idx >= letters.length() {
-    raise CombinatoricsError::ValueError("letter index out of range")
+    raise ValueError("letter index out of range")
   }
   letter_to_element(self.group, letters[idx])
 }
@@ -571,7 +563,7 @@ pub fn FreeGroupElement::exponent_sum(
   gen : FreeGroupElement,
 ) -> Int raise CombinatoricsError {
   if gen.length() != 1 {
-    raise CombinatoricsError::ValueError("gen must be a generator or inverse")
+    raise ValueError("gen must be a generator or inverse")
   }
   let gpair = gen.array_form[0]
   let idx = gpair.0
@@ -592,7 +584,7 @@ pub fn FreeGroupElement::generator_count(
   gen : FreeGroupElement,
 ) -> Int raise CombinatoricsError {
   if gen.length() != 1 || gen.array_form[0].1 < 0 {
-    raise CombinatoricsError::ValueError("gen must be a generator")
+    raise ValueError("gen must be a generator")
   }
   let idx = gen.array_form[0].0
   let mut total = 0
@@ -625,7 +617,7 @@ pub fn FreeGroupElement::subword(
     }
   }
   if start < 0 || end > len {
-    raise CombinatoricsError::ValueError("subword indices out of range")
+    raise ValueError("subword indices out of range")
   }
   if end <= start {
     return self.group.identity()
@@ -663,7 +655,7 @@ pub fn FreeGroupElement::subword_index(
     }
     i = i + 1
   }
-  raise CombinatoricsError::ValueError("word is not a subword")
+  raise ValueError("word is not a subword")
 }
 
 ///|
@@ -728,7 +720,7 @@ pub fn FreeGroupElement::exponent_syllable(
     idx = n + idx
   }
   if idx < 0 || idx >= n {
-    raise CombinatoricsError::ValueError("syllable index out of range")
+    raise ValueError("syllable index out of range")
   }
   self.array_form[idx].1
 }
@@ -745,7 +737,7 @@ pub fn FreeGroupElement::generator_syllable(
     idx = n + idx
   }
   if idx < 0 || idx >= n {
-    raise CombinatoricsError::ValueError("syllable index out of range")
+    raise ValueError("syllable index out of range")
   }
   self.array_form[idx].0
 }
@@ -761,7 +753,7 @@ pub fn FreeGroupElement::sub_syllables(
     return self.group.identity()
   }
   if from_i < 0 || to_j > self.array_form.length() {
-    raise CombinatoricsError::ValueError("syllable indices out of range")
+    raise ValueError("syllable indices out of range")
   }
   let out : Array[(Int, Int)] = Array::new()
   for i in from_i..<to_j {
@@ -780,7 +772,7 @@ pub fn FreeGroupElement::substituted_word(
 ) -> FreeGroupElement raise CombinatoricsError {
   let lw = self.length()
   if from_i >= to_j || from_i > lw || to_j > lw {
-    raise CombinatoricsError::ValueError("values should be within bounds")
+    raise ValueError("values should be within bounds")
   }
   if from_i == 0 && to_j == lw {
     return by

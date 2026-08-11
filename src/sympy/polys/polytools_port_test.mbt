@@ -3,7 +3,7 @@ using @symcore {type Expr, int}
 
 ///|
 test "factor_list x^4 - 1 over ZZ" {
-  let builder = PolyBuilder::new(["x"], Domain::ZZ)
+  let builder = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let poly = builder.from_expr((x ^ int(4)) - int(1))
   let (content, factors) = poly.factor_list()
@@ -16,7 +16,7 @@ test "factor_list x^4 - 1 over ZZ" {
 
 ///|
 test "factor over GF(5) splits x^2 + 1" {
-  let builder = PolyBuilder::new(["x"], Domain::GF(5))
+  let builder = PolyBuilder::new(["x"], GF(5))
   let x = Expr::Symbol("x")
   let poly = builder.from_expr((x ^ int(2)) + int(1))
   let factors = poly.factor()
@@ -28,7 +28,7 @@ test "factor over GF(5) splits x^2 + 1" {
 
 ///|
 test "gcd_univar matches x^2-1 and x^2-x" {
-  let builder = PolyBuilder::new(["x"], Domain::ZZ)
+  let builder = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let p = builder.from_expr((x ^ int(2)) - int(1))
   let q = builder.from_expr((x ^ int(2)) - x)
@@ -38,7 +38,7 @@ test "gcd_univar matches x^2-1 and x^2-x" {
 
 ///|
 test "divmod_univar gives quotient and remainder in ZZ" {
-  let builder = PolyBuilder::new(["x"], Domain::ZZ)
+  let builder = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let p = builder.from_expr((x ^ int(2)) + int(1))
   let d = builder.from_expr(x + int(1))
@@ -49,7 +49,7 @@ test "divmod_univar gives quotient and remainder in ZZ" {
 
 ///|
 test "sqf_part removes repeated factors" {
-  let builder = PolyBuilder::new(["x"], Domain::ZZ)
+  let builder = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let poly = builder.from_expr(((x - int(1)) ^ int(2)) * (x + int(2)))
   let sqf = poly.sqf_part()
@@ -58,19 +58,19 @@ test "sqf_part removes repeated factors" {
 
 ///|
 test "groebner simple elimination aligns with SymPy expectation" {
-  let builder = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let builder = PolyBuilder::new(["x", "y"], QQ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let f1 = builder.from_expr(x * y - int(1))
   let f2 = builder.from_expr(x - int(1))
-  let basis = Poly::groebner([f1, f2], order=TermOrder::Lex)
+  let basis = Poly::groebner([f1, f2], order=Lex)
   let repr = basis.map(p => p.to_string()).join(" | ")
   inspect(repr, content="x + -1 | y + -1")
 }
 
 ///|
 test "polytools: gcd/div/resultant parity with SymPy" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let p = b.from_expr((x ^ int(3)) - int(1))
   let q = b.from_expr((x ^ int(2)) - int(1))
@@ -83,14 +83,14 @@ test "polytools: gcd/div/resultant parity with SymPy" {
   let oracle_div = div(p.to_expr(), q.to_expr()).trim().to_owned()
   assert_eq(ours_div, oracle_div)
   let res = p.resultant(q, 0)
-  let ours_res = sympy_normalize(res.to_string()).trim().to_owned()
+  let ours_res = sympy_normalize(Show::to_string(res)).trim().to_owned()
   let oracle_res = resultant(p.to_expr(), q.to_expr(), x="x").trim().to_owned()
   assert_eq(ours_res, oracle_res)
 }
 
 ///|
 test "polytools: public frontdoor parity with SymPy" {
-  let bm = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let bm = PolyBuilder::new(["x", "y"], QQ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let p = bm.from_expr(
@@ -105,7 +105,7 @@ test "polytools: public frontdoor parity with SymPy" {
     degree_list(p.to_expr(), gens=["x", "y"]),
   )
   assert_eq(
-    @sympolys.lc(p).to_string(),
+    Show::to_string(@sympolys.lc(p)),
     polytools_lc(p.to_expr(), gens=["x", "y"]),
   )
   assert_eq(
@@ -116,7 +116,7 @@ test "polytools: public frontdoor parity with SymPy" {
     remove_spaces(@symprint.pretty_string(@sympolys.lt(p))),
     remove_spaces(polytools_lt(p.to_expr(), gens=["x", "y"])),
   )
-  let bu = PolyBuilder::new(["x"], Domain::ZZ)
+  let bu = PolyBuilder::new(["x"], ZZ)
   let f = bu.from_expr((x ^ int(2)) + int(1))
   let g = bu.from_expr(int(2) * x - int(4))
   let (pq, pr) = @sympolys.pdiv(f, g)
@@ -141,7 +141,7 @@ test "polytools: public frontdoor parity with SymPy" {
   assert_eq(ours_div, oracle_div)
   let (content, factors) = @sympolys.factor_list(exact)
   let ours_factor = sort_factor_repr(
-    factor_list_to_string(content.to_string(), factors),
+    factor_list_to_string(Show::to_string(content), factors),
   )
   let oracle_factor = sort_factor_repr(factor_list(exact.to_expr()))
   assert_eq(ours_factor, oracle_factor)
@@ -215,7 +215,7 @@ fn polytools_port_prime_decomp_repr(
 
 ///|
 test "polytools: extended euclid and root frontdoor parity with SymPy" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr(
     (x ^ int(4)) -
@@ -268,7 +268,7 @@ test "polytools: extended euclid and root frontdoor parity with SymPy" {
     eps=polytools_port_rat(1, 100),
   )
   assert_eq(
-    "(\{refined.0.to_string()}, \{refined.1.to_string()})",
+    "(\{Show::to_string(refined.0)}, \{Show::to_string(refined.1)})",
     refine_root(q.to_expr(), 1, 1, 2, 1, eps_num=1, eps_den=100),
   )
   let count_poly = b.from_expr((x ^ int(4)) - int(4))
@@ -302,7 +302,7 @@ test "polytools: extended euclid and root frontdoor parity with SymPy" {
 
 ///|
 test "polytools: constructor gff and stability frontdoor parity with SymPy" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let expr = (x ^ int(5)) +
     int(2) * (x ^ int(4)) -
@@ -355,7 +355,7 @@ test "polytools: constructor gff and stability frontdoor parity with SymPy" {
   assert_true(
     remove_spaces(nroots((x ^ int(2)) - int(3))).has_prefix("[-1.732"),
   )
-  let bm = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let bm = PolyBuilder::new(["x", "y"], QQ)
   let y = Expr::Symbol("y")
   let finite = [bm.from_expr((x ^ int(2)) - int(1)), bm.from_expr(y - x)]
   let curve = [bm.from_expr(x * y - int(1))]
@@ -376,7 +376,7 @@ test "polytools: constructor gff and stability frontdoor parity with SymPy" {
     },
   )
   let k = Expr::Symbol("k")
-  let stable = PolyBuilder::new(["x", "k"], Domain::ZZ).from_expr(
+  let stable = PolyBuilder::new(["x", "k"], ZZ).from_expr(
     (x ^ int(3)) + (x ^ int(2)) + int(2) * k * x + int(1) - k,
   )
   assert_eq(
@@ -439,7 +439,7 @@ test "polytools: constructor gff and stability frontdoor parity with SymPy" {
     ),
     remove_spaces(apart(apart_irreducible, gen="x")),
   )
-  let pf_builder = @sympolys.PolyBuilder::new(["x"], @sympolys.Domain::QQ)
+  let pf_builder = @sympolys.PolyBuilder::new(["x"], QQ)
   let pf_p = pf_builder.from_expr(int(1))
   let pf_q = pf_builder.from_expr((x ^ int(2)) - int(1))
   assert_eq(
@@ -467,7 +467,7 @@ test "polytools: constructor gff and stability frontdoor parity with SymPy" {
   )
 
   let a = Expr::Symbol("a")
-  let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [(a ^ int(2)) - int(3)])
+  let alg_domain = Domain::AlgExt(QQ, ["a"], [(a ^ int(2)) - int(3)])
   let alg_poly = PolyBuilder::new(["x"], alg_domain).from_expr(
     (x ^ int(2)) - int(2),
   )
@@ -506,7 +506,7 @@ test "polytools: constructor gff and stability frontdoor parity with SymPy" {
   let sqrt2 = int(2) ^ @symcore.rational_from_ints(1, 2)
   assert_eq(nf_port_iv_text(@sympolys.isolate(sqrt2)), isolate(sqrt2))
   assert_eq(
-    @sympolys.round_two(b.from_expr((x ^ int(2)) - int(5))).to_string(),
+    Show::to_string(@sympolys.round_two(b.from_expr((x ^ int(2)) - int(5)))),
     round_two((x ^ int(2)) - int(5), gens=["x"]),
   )
   assert_eq(
@@ -519,7 +519,7 @@ test "polytools: constructor gff and stability frontdoor parity with SymPy" {
 
 ///|
 test "polytools: gcd_multivar parity over QQ" {
-  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let b = PolyBuilder::new(["x", "y"], QQ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let p = b.from_expr(x * (x + y))
@@ -534,11 +534,11 @@ test "polytools: gcd_multivar parity over QQ" {
 
 ///|
 test "polytools: factor_list parity over QQ" {
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let x = Expr::Symbol("x")
   let poly = b.from_expr(expr_rat(1, 3) * ((x ^ int(2)) - int(1)))
   let (content, factors) = poly.factor_list()
-  let ours_raw = factor_list_to_string(content.to_string(), factors)
+  let ours_raw = factor_list_to_string(Show::to_string(content), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(factor_list(poly.to_expr())).trim().to_owned()
   assert_eq(ours, oracle)
@@ -546,11 +546,11 @@ test "polytools: factor_list parity over QQ" {
 
 ///|
 test "polytools: sqf_list parity over ZZ" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let poly = b.from_expr(((x - int(2)) ^ int(2)) * ((x + int(3)) ^ int(3)))
   let (content, parts) = poly.sqf_list()
-  let ours_raw = factor_list_to_string(content.to_string(), parts)
+  let ours_raw = factor_list_to_string(Show::to_string(content), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(sqf_list(poly.to_expr())).trim().to_owned()
   assert_eq(ours, oracle)
@@ -558,11 +558,11 @@ test "polytools: sqf_list parity over ZZ" {
 
 ///|
 test "polytools: factor_list parity over GF(2)" {
-  let b = PolyBuilder::new(["x"], Domain::GF(2))
+  let b = PolyBuilder::new(["x"], GF(2))
   let x = Expr::Symbol("x")
   let poly = b.from_expr((x ^ int(6)) + (x ^ int(3)) + int(1))
   let (content, factors) = poly.factor_list()
-  let ours_raw = factor_list_to_string(content.to_string(), factors)
+  let ours_raw = factor_list_to_string(Show::to_string(content), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(factor_list(poly.to_expr(), modulus=2))
     .trim()
@@ -584,11 +584,11 @@ fn normalize_basis_str_local(s : String) -> String {
 
 ///|
 test "polytools: factor_list parity over GF(5) simple" {
-  let b = PolyBuilder::new(["x"], Domain::GF(5))
+  let b = PolyBuilder::new(["x"], GF(5))
   let x = Expr::Symbol("x")
   let poly = b.from_expr((x ^ int(2)) + int(1))
   let (content, factors) = poly.factor_list()
-  let ours_raw = factor_list_to_string(content.to_string(), factors)
+  let ours_raw = factor_list_to_string(Show::to_string(content), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(factor_list(poly.to_expr(), modulus=5))
     .trim()
@@ -598,11 +598,11 @@ test "polytools: factor_list parity over GF(5) simple" {
 
 ///|
 test "polytools: factor_list parity over GF(7) simple" {
-  let b = PolyBuilder::new(["x"], Domain::GF(7))
+  let b = PolyBuilder::new(["x"], GF(7))
   let x = Expr::Symbol("x")
   let poly = b.from_expr((x ^ int(2)) + int(2))
   let (content, factors) = poly.factor_list()
-  let ours_raw = factor_list_to_string(content.to_string(), factors)
+  let ours_raw = factor_list_to_string(Show::to_string(content), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(factor_list(poly.to_expr(), modulus=7))
     .trim()
@@ -683,7 +683,7 @@ test "polytools: sqf_list parity over GFExt(5^2)" {
   let x = Expr::Symbol("x")
   let poly = b.from_expr(((x + int(1)) ^ int(2)) * (x + int(2)))
   let (content, parts) = poly.sqf_list()
-  let ours_raw = factor_list_to_string(content.to_string(), parts)
+  let ours_raw = factor_list_to_string(Show::to_string(content), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(
       sqf_list(
@@ -705,7 +705,7 @@ test "polytools: sqf_list parity over GFExt(5^2) extra" {
   let x = Expr::Symbol("x")
   let poly = b.from_expr(((x + int(2)) ^ int(3)) * ((x ^ int(2)) + x + int(1)))
   let (content, parts) = poly.sqf_list()
-  let ours_raw = factor_list_to_string(content.to_string(), parts)
+  let ours_raw = factor_list_to_string(Show::to_string(content), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(
       sqf_list(
@@ -744,11 +744,11 @@ test "polytools: factor_list GFExt self-consistent" {
 
 ///|
 test "polytools: factor_list parity over QQ with repeated factor" {
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let x = Expr::Symbol("x")
   let poly = b.from_expr(expr_rat(1, 6) * ((x ^ int(2)) - int(2) * x + int(1)))
   let (content, factors) = poly.factor_list()
-  let ours_raw = factor_list_to_string(content.to_string(), factors)
+  let ours_raw = factor_list_to_string(Show::to_string(content), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(factor_list(poly.to_expr())).trim().to_owned()
   assert_eq(ours, oracle)
@@ -756,14 +756,14 @@ test "polytools: factor_list parity over QQ with repeated factor" {
 
 ///|
 test "polytools: groebner_list parity for multivariate QQ" {
-  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let b = PolyBuilder::new(["x", "y"], QQ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let f1 = b.from_expr(x * y - int(1))
   let f2 = b.from_expr((x ^ int(2)) + (y ^ int(2)) - int(1))
-  let basis = Poly::groebner([f1, f2], order=TermOrder::Lex)
+  let basis = Poly::groebner([f1, f2], order=Lex)
   let ours = normalize_basis_str_local(groebner_to_string(basis))
-  let basis_obj = @sympolys.groebner_basis([f1, f2], order=TermOrder::Lex)
+  let basis_obj = @sympolys.groebner_basis([f1, f2], order=Lex)
   let ours_structured = normalize_basis_str_local(
     groebner_to_string(basis_obj.polys),
   )
@@ -772,12 +772,12 @@ test "polytools: groebner_list parity for multivariate QQ" {
   assert_eq(ours, oracle)
   assert_eq(ours_structured, oracle)
   assert_eq(basis_obj.gens, ["x", "y"])
-  assert_true(basis_obj.order == TermOrder::Lex)
+  assert_true(basis_obj.order == Lex)
 }
 
 ///|
 test "polytools: gcd_list parity over ZZ" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(2)) - int(1))
   let g = b.from_expr((x ^ int(2)) - x)
@@ -793,7 +793,7 @@ test "polytools: gcd_list parity over ZZ" {
 
 ///|
 test "polytools: lcm_list parity over ZZ" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(2)) - int(1))
   let g = b.from_expr((x ^ int(2)) - x)
@@ -809,7 +809,7 @@ test "polytools: lcm_list parity over ZZ" {
 
 ///|
 test "polytools: terms_gcd parity over ZZ" {
-  let b = PolyBuilder::new(["x", "y"], Domain::ZZ)
+  let b = PolyBuilder::new(["x", "y"], ZZ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let f = b.from_expr(
@@ -824,11 +824,11 @@ test "polytools: terms_gcd parity over ZZ" {
 
 ///|
 test "polytools: sqf_list parity over GF(5)" {
-  let b = PolyBuilder::new(["x"], Domain::GF(5))
+  let b = PolyBuilder::new(["x"], GF(5))
   let x = Expr::Symbol("x")
   let poly = b.from_expr(((x + int(1)) ^ int(2)) * (x + int(2)))
   let (content, parts) = poly.sqf_list()
-  let ours_raw = factor_list_to_string(content.to_string(), parts)
+  let ours_raw = factor_list_to_string(Show::to_string(content), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(sqf_list(poly.to_expr(), modulus=5))
     .trim()
@@ -838,11 +838,11 @@ test "polytools: sqf_list parity over GF(5)" {
 
 ///|
 test "polytools: sqf_list parity over GF(7)" {
-  let b = PolyBuilder::new(["x"], Domain::GF(7))
+  let b = PolyBuilder::new(["x"], GF(7))
   let x = Expr::Symbol("x")
   let poly = b.from_expr(((x + int(1)) ^ int(2)) * (x + int(2)))
   let (content, parts) = poly.sqf_list()
-  let ours_raw = factor_list_to_string(content.to_string(), parts)
+  let ours_raw = factor_list_to_string(Show::to_string(content), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(sqf_list(poly.to_expr(), modulus=7))
     .trim()
@@ -852,7 +852,7 @@ test "polytools: sqf_list parity over GF(7)" {
 
 ///|
 test "polytools: cancel parity over ZZ" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let num = b.from_expr((x ^ int(2)) - int(1))
   let den = b.from_expr(x - int(1))
@@ -864,7 +864,7 @@ test "polytools: cancel parity over ZZ" {
 
 ///|
 test "polytools: cancel parity multivariate (no common factor)" {
-  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let b = PolyBuilder::new(["x", "y"], QQ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let num = b.from_expr(x * y + x + int(1))
@@ -877,7 +877,7 @@ test "polytools: cancel parity multivariate (no common factor)" {
 
 ///|
 test "polytools: cancel parity multivariate with common x+y factor" {
-  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let b = PolyBuilder::new(["x", "y"], QQ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let num = b.from_expr((x + y) * (x + int(1)))
@@ -890,7 +890,7 @@ test "polytools: cancel parity multivariate with common x+y factor" {
 
 ///|
 test "polytools: reduced parity over ZZ" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(2)) + int(1))
   let g = b.from_expr(x - int(1))
@@ -902,7 +902,7 @@ test "polytools: reduced parity over ZZ" {
 
 ///|
 test "polytools: reduced parity multivariate over ZZ" {
-  let b = PolyBuilder::new(["x", "y"], Domain::ZZ)
+  let b = PolyBuilder::new(["x", "y"], ZZ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let f = b.from_expr((x ^ int(2)) * y + x * y + y)
@@ -918,7 +918,7 @@ test "polytools: reduced parity multivariate over ZZ" {
 
 ///|
 test "polytools: reduced parity multivariate over QQ" {
-  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let b = PolyBuilder::new(["x", "y"], QQ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let f = b.from_expr((x ^ int(2)) * y + x * y + y)
@@ -934,7 +934,7 @@ test "polytools: reduced parity multivariate over QQ" {
 
 ///|
 test "polytools: compose parity multivariate should error" {
-  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let b = PolyBuilder::new(["x", "y"], QQ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let f = b.from_expr(x * y + int(1))
@@ -944,7 +944,7 @@ test "polytools: compose parity multivariate should error" {
 
 ///|
 test "polytools: decompose parity for cubic" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(6)) - int(1))
   let parts = @sympolys.decompose(f)
@@ -955,7 +955,7 @@ test "polytools: decompose parity for cubic" {
 
 ///|
 test "polytools: reduced parity with two divisors" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(3)) - int(1))
   let g1 = b.from_expr(x - int(1))
@@ -970,7 +970,7 @@ test "polytools: reduced parity with two divisors" {
 
 ///|
 test "polytools: compose parity over QQ" {
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(2)) + int(1))
   let g = b.from_expr(x + int(1))
@@ -982,7 +982,7 @@ test "polytools: compose parity over QQ" {
 
 ///|
 test "polytools: compose parity higher degree" {
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(4)) + x)
   let g = b.from_expr((x ^ int(2)) + x)
@@ -994,7 +994,7 @@ test "polytools: compose parity higher degree" {
 
 ///|
 test "polytools: decompose parity over ZZ" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(8)) + int(1))
   let parts = @sympolys.decompose(f)
@@ -1005,7 +1005,7 @@ test "polytools: decompose parity over ZZ" {
 
 ///|
 test "polytools: decompose parity for nondecomposable" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(2)) + int(1))
   let parts = @sympolys.decompose(f)
@@ -1016,7 +1016,7 @@ test "polytools: decompose parity for nondecomposable" {
 
 ///|
 test "polytools: sturm sequence parity over ZZ" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(3)) - int(1))
   let seq = @sympolys.sturm_sequence(f)
@@ -1027,18 +1027,18 @@ test "polytools: sturm sequence parity over ZZ" {
 
 ///|
 test "polytools: discriminant parity over ZZ" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(2)) - int(1))
   let disc = @sympolys.discriminant(f)
-  let ours = disc.to_string().trim().to_owned()
+  let ours = Show::to_string(disc).trim().to_owned()
   let oracle = discriminant(f.to_expr()).trim().to_owned()
   assert_eq(ours, oracle)
 }
 
 ///|
 test "polytools: subresultants parity over ZZ" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr((x ^ int(2)) - int(1))
   let g = b.from_expr(x - int(1))

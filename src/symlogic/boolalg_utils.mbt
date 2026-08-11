@@ -4,24 +4,21 @@
 ///|
 fn collect_symbol_names(expr : BoolExpr, seen : Map[String, BoolExpr]) -> Unit {
   match expr {
-    BoolExpr::Symbol(name) => seen[name] = expr
-    BoolExpr::LRA(constraint) => {
+    Symbol(name) => seen[name] = expr
+    LRA(constraint) => {
       let key = linear_constraint_key(constraint)
       seen[key] = expr
     }
-    BoolExpr::Not(inner) => collect_symbol_names(inner, seen)
-    BoolExpr::And(args)
-    | BoolExpr::Or(args)
-    | BoolExpr::Xor(args)
-    | BoolExpr::Equivalent(args) =>
+    Not(inner) => collect_symbol_names(inner, seen)
+    And(args) | Or(args) | Xor(args) | Equivalent(args) =>
       for arg in args {
         collect_symbol_names(arg, seen)
       }
-    BoolExpr::Implies(a, b) => {
+    Implies(a, b) => {
       collect_symbol_names(a, seen)
       collect_symbol_names(b, seen)
     }
-    BoolExpr::ITE(c, t, e) => {
+    ITE(c, t, e) => {
       collect_symbol_names(c, seen)
       collect_symbol_names(t, seen)
       collect_symbol_names(e, seen)
@@ -54,8 +51,8 @@ fn symbol_names_from_exprs(vars : Array[BoolExpr]) -> Array[String] {
   let names : Array[String] = Array::new()
   for v in vars {
     match v {
-      BoolExpr::Symbol(name) => names.push(name)
-      BoolExpr::LRA(constraint) => names.push(linear_constraint_key(constraint))
+      Symbol(name) => names.push(name)
+      LRA(constraint) => names.push(linear_constraint_key(constraint))
       _ => ()
     }
   }
@@ -65,8 +62,8 @@ fn symbol_names_from_exprs(vars : Array[BoolExpr]) -> Array[String] {
 ///|
 fn symbol_key(expr : BoolExpr) -> String {
   match expr {
-    BoolExpr::Symbol(name) => name
-    BoolExpr::LRA(constraint) => linear_constraint_key(constraint)
+    Symbol(name) => name
+    LRA(constraint) => linear_constraint_key(constraint)
     _ => ""
   }
 }
@@ -74,25 +71,23 @@ fn symbol_key(expr : BoolExpr) -> String {
 ///|
 pub fn bool_subst(expr : BoolExpr, env : Map[String, BoolExpr]) -> BoolExpr {
   match expr {
-    BoolExpr::Symbol(name) =>
+    Symbol(name) =>
       match env.get(name) {
         Some(v) => v
         None => expr
       }
-    BoolExpr::LRA(constraint) =>
+    LRA(constraint) =>
       match env.get(linear_constraint_key(constraint)) {
         Some(v) => v
         None => expr
       }
-    BoolExpr::Not(inner) => bool_not(bool_subst(inner, env))
-    BoolExpr::And(args) => bool_and(args.map(a => bool_subst(a, env)))
-    BoolExpr::Or(args) => bool_or(args.map(a => bool_subst(a, env)))
-    BoolExpr::Xor(args) => bool_xor(args.map(a => bool_subst(a, env)))
-    BoolExpr::Implies(a, b) =>
-      bool_implies(bool_subst(a, env), bool_subst(b, env))
-    BoolExpr::Equivalent(args) =>
-      bool_equivalent(args.map(a => bool_subst(a, env)))
-    BoolExpr::ITE(c, t, e) =>
+    Not(inner) => bool_not(bool_subst(inner, env))
+    And(args) => bool_and(args.map(a => bool_subst(a, env)))
+    Or(args) => bool_or(args.map(a => bool_subst(a, env)))
+    Xor(args) => bool_xor(args.map(a => bool_subst(a, env)))
+    Implies(a, b) => bool_implies(bool_subst(a, env), bool_subst(b, env))
+    Equivalent(args) => bool_equivalent(args.map(a => bool_subst(a, env)))
+    ITE(c, t, e) =>
       bool_ite(bool_subst(c, env), bool_subst(t, env), bool_subst(e, env))
     _ => expr
   }
@@ -101,20 +96,20 @@ pub fn bool_subst(expr : BoolExpr, env : Map[String, BoolExpr]) -> BoolExpr {
 ///|
 pub fn bool_eval(expr : BoolExpr, env : Map[String, Bool]) -> Bool {
   match expr {
-    BoolExpr::True => true
-    BoolExpr::False => false
-    BoolExpr::Symbol(name) =>
+    True => true
+    False => false
+    Symbol(name) =>
       match env.get(name) {
         Some(v) => v
         None => false
       }
-    BoolExpr::LRA(constraint) =>
+    LRA(constraint) =>
       match env.get(linear_constraint_key(constraint)) {
         Some(v) => v
         None => false
       }
-    BoolExpr::Not(inner) => !bool_eval(inner, env)
-    BoolExpr::And(args) => {
+    Not(inner) => !bool_eval(inner, env)
+    And(args) => {
       for arg in args {
         if !bool_eval(arg, env) {
           return false
@@ -122,7 +117,7 @@ pub fn bool_eval(expr : BoolExpr, env : Map[String, Bool]) -> Bool {
       }
       true
     }
-    BoolExpr::Or(args) => {
+    Or(args) => {
       for arg in args {
         if bool_eval(arg, env) {
           return true
@@ -130,7 +125,7 @@ pub fn bool_eval(expr : BoolExpr, env : Map[String, Bool]) -> Bool {
       }
       false
     }
-    BoolExpr::Xor(args) => {
+    Xor(args) => {
       let mut count = 0
       for arg in args {
         if bool_eval(arg, env) {
@@ -139,8 +134,8 @@ pub fn bool_eval(expr : BoolExpr, env : Map[String, Bool]) -> Bool {
       }
       count % 2 == 1
     }
-    BoolExpr::Implies(a, b) => !bool_eval(a, env) || bool_eval(b, env)
-    BoolExpr::Equivalent(args) => {
+    Implies(a, b) => !bool_eval(a, env) || bool_eval(b, env)
+    Equivalent(args) => {
       if args.is_empty() {
         return true
       }
@@ -152,7 +147,7 @@ pub fn bool_eval(expr : BoolExpr, env : Map[String, Bool]) -> Bool {
       }
       true
     }
-    BoolExpr::ITE(c, t, e) =>
+    ITE(c, t, e) =>
       if bool_eval(c, env) {
         bool_eval(t, env)
       } else {

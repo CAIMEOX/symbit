@@ -3,13 +3,11 @@ test "decorator threaded and xthreaded behavior" {
   let square = (expr : @symcore.Expr) => @symcore.pow(expr, @symcore.int(2))
   let threaded_square = threaded(square)
   let xthreaded_square = xthreaded(square)
-  let expr = threadable_scalar(
-    @symcore.add([@symcore.Expr::Symbol("x"), @symcore.Expr::Symbol("y")]),
-  )
+  let expr = threadable_scalar(@symcore.add([Symbol("x"), Symbol("y")]))
   inspect(
     @symprint.pretty_string(
       match threaded_square(expr) {
-        Threadable::Scalar(v) => v
+        Scalar(v) => v
         _ => @symcore.int(0)
       },
     ),
@@ -18,7 +16,7 @@ test "decorator threaded and xthreaded behavior" {
   inspect(
     @symprint.pretty_string(
       match xthreaded_square(expr) {
-        Threadable::Scalar(v) => v
+        Scalar(v) => v
         _ => @symcore.int(0)
       },
     ),

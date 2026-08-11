@@ -16,6 +16,10 @@ pub(all) suberror QuaternionError {
   ZeroNorm
   NotPure
 }
+#deprecated
+pub fn QuaternionError::output(Self, &Logger) -> Unit
+#deprecated
+pub fn QuaternionError::to_string(Self) -> String
 pub impl Show for QuaternionError
 
 // Types and methods
@@ -58,6 +62,8 @@ pub fn Quaternion::new(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Exp
 pub fn Quaternion::norm(Self) -> @symcore.Expr
 pub fn Quaternion::normalize(Self) -> Self
 pub fn Quaternion::orthogonal(Self, Self) -> Bool? raise QuaternionError
+#deprecated
+pub fn Quaternion::output(Self, &Logger) -> Unit
 pub fn Quaternion::parallel(Self, Self) -> Bool? raise QuaternionError
 pub fn Quaternion::pow(Self, Int) -> Self raise QuaternionError
 pub fn Quaternion::pow_cos_sin(Self, Int) -> Self raise QuaternionError
@@ -71,6 +77,8 @@ pub fn Quaternion::to_axis_angle(Self) -> ((@symcore.Expr, @symcore.Expr, @symco
 pub fn Quaternion::to_euler(Self, String, angle_addition? : Bool, avoid_square_root? : Bool) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise QuaternionError
 pub fn Quaternion::to_matrix(Self, vector_only? : Bool) -> Array[Array[@symcore.Expr]]
 pub fn Quaternion::to_rotation_matrix(Self, v? : (@symcore.Expr, @symcore.Expr, @symcore.Expr), homogeneous? : Bool) -> Array[Array[@symcore.Expr]]
+#deprecated
+pub fn Quaternion::to_string(Self) -> String
 pub fn Quaternion::vector_coplanar(Self, Self, Self) -> Bool? raise QuaternionError
 pub fn Quaternion::vector_part(Self) -> Self
 pub fn Quaternion::with_norm(Self, @symcore.Expr?) -> Self raise QuaternionError

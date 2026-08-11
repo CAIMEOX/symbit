@@ -32,32 +32,25 @@ fn quantum_make_anticommutator(lhs : Expr, rhs : Expr) -> Expr {
           ) => return int(2) * nlhs * nrhs
         (Some(lhs_pauli), Some(rhs_pauli)) =>
           match (lhs_pauli.kind, rhs_pauli.kind) {
-            (PauliKind::X, PauliKind::Y)
-            | (PauliKind::Y, PauliKind::X)
-            | (PauliKind::X, PauliKind::Z)
-            | (PauliKind::Z, PauliKind::X)
-            | (PauliKind::Y, PauliKind::Z)
-            | (PauliKind::Z, PauliKind::Y)
-            | (PauliKind::Minus, PauliKind::Z)
-            | (PauliKind::Z, PauliKind::Minus)
-            | (PauliKind::Plus, PauliKind::Z)
-            | (PauliKind::Z, PauliKind::Plus) => return int(0)
-            (PauliKind::Minus, PauliKind::X)
-            | (PauliKind::X, PauliKind::Minus)
-            | (PauliKind::Plus, PauliKind::X)
-            | (PauliKind::X, PauliKind::Plus)
-            | (PauliKind::Minus, PauliKind::Plus)
-            | (PauliKind::Plus, PauliKind::Minus) => return int(1)
-            (PauliKind::Minus, PauliKind::Y)
-            | (PauliKind::Y, PauliKind::Minus) =>
-              return int(-1) *
-                @symcore.Expr::NumberSymbol(
-                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                )
-            (PauliKind::Plus, PauliKind::Y) | (PauliKind::Y, PauliKind::Plus) =>
-              return @symcore.Expr::NumberSymbol(
-                @symcore.NumberSymbolKind::ImaginaryUnit,
-              )
+            (X, Y)
+            | (Y, X)
+            | (X, Z)
+            | (Z, X)
+            | (Y, Z)
+            | (Z, Y)
+            | (Minus, Z)
+            | (Z, Minus)
+            | (Plus, Z)
+            | (Z, Plus) => return int(0)
+            (Minus, X)
+            | (X, Minus)
+            | (Plus, X)
+            | (X, Plus)
+            | (Minus, Plus)
+            | (Plus, Minus) => return int(1)
+            (Minus, Y) | (Y, Minus) =>
+              return int(-1) * NumberSymbol(ImaginaryUnit)
+            (Plus, Y) | (Y, Plus) => return NumberSymbol(ImaginaryUnit)
             _ => ()
           }
         _ => ()
@@ -89,7 +82,7 @@ fn quantum_make_anticommutator(lhs : Expr, rhs : Expr) -> Expr {
           ) => return int(2) * nlhs * nrhs
         _ => ()
       }
-      if lhs.compare(rhs) > 0 {
+      if Compare::compare(lhs, rhs) > 0 {
         return quantum_make_anticommutator(rhs, lhs)
       }
       quantum_anticommutator_raw(lhs, rhs)

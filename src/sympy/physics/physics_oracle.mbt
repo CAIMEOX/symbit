@@ -50,9 +50,9 @@ fn ensure_repo_sympy_path() -> Unit raise {
   ignore(
     exec_fn.invoke(
       args=@sympy.py_pack_args([
-        OracleArg::Str(script),
-        OracleArg::PyObj(globals.obj()),
-        OracleArg::PyObj(globals.obj()),
+        Str(script),
+        PyObj(globals.obj()),
+        PyObj(globals.obj()),
       ]),
       kwargs=@sympy.py_pack_kwargs({}),
       print_err=true,
@@ -488,21 +488,19 @@ fn physics_globals() -> @py.PyDict raise {
       "n", "epsilon", "omega", "nu", "j", "j1", "j2", "j3", "j12", "j13", "j23",
       "j24", "j34", "sigma", "tau", "Z",
     ] {
-    let symbol = objenum_to_obj(
-      sympy_call_must("sympy.Symbol", [OracleArg::Str(name)]),
-    )
+    let symbol = objenum_to_obj(sympy_call_must("sympy.Symbol", [Str(name)]))
     globals.set(name, symbol)
   }
   let q_nc = objenum_to_obj(
-    sympy_call_must("sympy.Symbol", [OracleArg::Str("q")], kwargs={
-      "commutative": OracleArg::Bool(false),
+    sympy_call_must("sympy.Symbol", [Str("q")], kwargs={
+      "commutative": Bool(false),
     }),
   )
   globals.set("q", q_nc)
   for name in ["Aop", "Bop", "Cop", "Dop"] {
     let sym = objenum_to_obj(
-      sympy_call_must("sympy.Symbol", [OracleArg::Str(name)], kwargs={
-        "commutative": OracleArg::Bool(false),
+      sympy_call_must("sympy.Symbol", [Str(name)], kwargs={
+        "commutative": Bool(false),
       }),
     )
     globals.set(name, sym)
@@ -518,12 +516,8 @@ fn physics_globals() -> @py.PyDict raise {
     ] {
     let obj = objenum_to_obj(
       sympy_call_must("sympy.physics.paulialgebra.Pauli", [
-        OracleArg::Int(pair.1),
-        OracleArg::PyObj(
-          objenum_to_obj(
-            sympy_call_must("sympy.Symbol", [OracleArg::Str(pair.2)]),
-          ),
-        ),
+        Int(pair.1),
+        PyObj(objenum_to_obj(sympy_call_must("sympy.Symbol", [Str(pair.2)]))),
       ]),
     )
     globals.set(pair.0, obj)
@@ -575,29 +569,24 @@ fn matrix_flatten_to_strings(matrix_obj : @py.PyObject) -> Array[String] raise {
 ///|
 pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
   let locals = physics_globals()
-  let kwargs : Map[String, OracleArg] = {
-    "locals": OracleArg::PyObj(locals.obj()),
-  }
+  let kwargs : Map[String, OracleArg] = { "locals": PyObj(locals.obj()) }
   let lhs_obj = objenum_to_obj(
-    sympy_call_must("sympy.sympify", [OracleArg::Str(lhs)], kwargs~),
+    sympy_call_must("sympy.sympify", [Str(lhs)], kwargs~),
   )
   let rhs_obj = objenum_to_obj(
-    sympy_call_must("sympy.sympify", [OracleArg::Str(rhs)], kwargs~),
+    sympy_call_must("sympy.sympify", [Str(rhs)], kwargs~),
   )
   let lhs_expanded = objenum_to_obj(
-    sympy_call_must("sympy.expand_func", [OracleArg::PyObj(lhs_obj)]),
+    sympy_call_must("sympy.expand_func", [PyObj(lhs_obj)]),
   )
   let rhs_expanded = objenum_to_obj(
-    sympy_call_must("sympy.expand_func", [OracleArg::PyObj(rhs_obj)]),
+    sympy_call_must("sympy.expand_func", [PyObj(rhs_obj)]),
   )
   match
-    @sympy.sympy_call("sympy.Eq", [
-      OracleArg::PyObj(lhs_expanded),
-      OracleArg::PyObj(rhs_expanded),
-    ]) {
+    @sympy.sympy_call("sympy.Eq", [PyObj(lhs_expanded), PyObj(rhs_expanded)]) {
     Some(eq_obj) => {
       let simp = sympy_call_must("sympy.simplify", [
-        OracleArg::PyObj(objenum_to_obj(eq_obj)),
+        PyObj(objenum_to_obj(eq_obj)),
       ])
       let txt = py_str_obj(objenum_to_obj(simp))
       if txt == "True" {
@@ -609,39 +598,29 @@ pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
     }
     None => ()
   }
-  let lhs_srepr = sympy_call_must("sympy.srepr", [
-    OracleArg::PyObj(lhs_expanded),
-  ])
-  let rhs_srepr = sympy_call_must("sympy.srepr", [
-    OracleArg::PyObj(rhs_expanded),
-  ])
+  let lhs_srepr = sympy_call_must("sympy.srepr", [PyObj(lhs_expanded)])
+  let rhs_srepr = sympy_call_must("sympy.srepr", [PyObj(rhs_expanded)])
   py_str_obj(objenum_to_obj(lhs_srepr)) == py_str_obj(objenum_to_obj(rhs_srepr))
 }
 
 ///|
 fn physics_sympify(expr : String) -> @py.PyObject raise {
   let locals = physics_globals()
-  let kwargs : Map[String, OracleArg] = {
-    "locals": OracleArg::PyObj(locals.obj()),
-  }
-  objenum_to_obj(
-    sympy_call_must("sympy.sympify", [OracleArg::Str(expr)], kwargs~),
-  )
+  let kwargs : Map[String, OracleArg] = { "locals": PyObj(locals.obj()) }
+  objenum_to_obj(sympy_call_must("sympy.sympify", [Str(expr)], kwargs~))
 }
 
 ///|
 pub fn msigma(index : Int) -> Array[String] raise {
-  let obj = sympy_call_must("sympy.physics.matrices.msigma", [
-    OracleArg::Int(index),
-  ])
+  let obj = sympy_call_must("sympy.physics.matrices.msigma", [Int(index)])
   matrix_flatten_to_strings(objenum_to_obj(obj))
 }
 
 ///|
 pub fn mgamma(index : Int, lower? : Bool = false) -> Array[String] raise {
   let obj = sympy_call_must("sympy.physics.matrices.mgamma", [
-    OracleArg::Int(index),
-    OracleArg::Bool(lower),
+    Int(index),
+    Bool(lower),
   ])
   matrix_flatten_to_strings(objenum_to_obj(obj))
 }
@@ -654,10 +633,10 @@ pub fn pat_matrix(
   dz : @symcore.Expr,
 ) -> Array[String] raise {
   let obj = sympy_call_must("sympy.physics.matrices.pat_matrix", [
-    OracleArg::PyObj(expr_to_sympy(m)),
-    OracleArg::PyObj(expr_to_sympy(dx)),
-    OracleArg::PyObj(expr_to_sympy(dy)),
-    OracleArg::PyObj(expr_to_sympy(dz)),
+    PyObj(expr_to_sympy(m)),
+    PyObj(expr_to_sympy(dx)),
+    PyObj(expr_to_sympy(dy)),
+    PyObj(expr_to_sympy(dz)),
   ])
   matrix_flatten_to_strings(objenum_to_obj(obj))
 }
@@ -676,9 +655,7 @@ pub fn minkowski_tensor() -> Array[String] raise {
 
 ///|
 pub fn mdft(n : Int) -> Array[String] raise {
-  let dft = sympy_call_must("sympy.matrices.expressions.fourier.DFT", [
-    OracleArg::Int(n),
-  ])
+  let dft = sympy_call_must("sympy.matrices.expressions.fourier.DFT", [Int(n)])
   let as_explicit = resolve_method_callable(objenum_to_obj(dft), "as_explicit")
   matrix_flatten_to_strings(objenum_to_obj(py_call_noargs(as_explicit)))
 }
@@ -693,10 +670,10 @@ pub fn psi_n(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.qho_1d.psi_n", [
-        OracleArg::PyObj(expr_to_sympy(n)),
-        OracleArg::PyObj(expr_to_sympy(x)),
-        OracleArg::PyObj(expr_to_sympy(m)),
-        OracleArg::PyObj(expr_to_sympy(omega)),
+        PyObj(expr_to_sympy(n)),
+        PyObj(expr_to_sympy(x)),
+        PyObj(expr_to_sympy(m)),
+        PyObj(expr_to_sympy(omega)),
       ]),
     ),
   )
@@ -707,8 +684,8 @@ pub fn e_n(n : @symcore.Expr, omega : @symcore.Expr) -> String raise {
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.qho_1d.E_n", [
-        OracleArg::PyObj(expr_to_sympy(n)),
-        OracleArg::PyObj(expr_to_sympy(omega)),
+        PyObj(expr_to_sympy(n)),
+        PyObj(expr_to_sympy(omega)),
       ]),
     ),
   )
@@ -719,8 +696,8 @@ pub fn coherent_state(n : @symcore.Expr, alpha : @symcore.Expr) -> String raise 
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.qho_1d.coherent_state", [
-        OracleArg::PyObj(expr_to_sympy(n)),
-        OracleArg::PyObj(expr_to_sympy(alpha)),
+        PyObj(expr_to_sympy(n)),
+        PyObj(expr_to_sympy(alpha)),
       ]),
     ),
   )
@@ -736,10 +713,10 @@ pub fn r_nl(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.sho.R_nl", [
-        OracleArg::PyObj(expr_to_sympy(n)),
-        OracleArg::PyObj(expr_to_sympy(l)),
-        OracleArg::PyObj(expr_to_sympy(nu)),
-        OracleArg::PyObj(expr_to_sympy(r)),
+        PyObj(expr_to_sympy(n)),
+        PyObj(expr_to_sympy(l)),
+        PyObj(expr_to_sympy(nu)),
+        PyObj(expr_to_sympy(r)),
       ]),
     ),
   )
@@ -754,9 +731,9 @@ pub fn e_nl(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.sho.E_nl", [
-        OracleArg::PyObj(expr_to_sympy(n)),
-        OracleArg::PyObj(expr_to_sympy(l)),
-        OracleArg::PyObj(expr_to_sympy(hw)),
+        PyObj(expr_to_sympy(n)),
+        PyObj(expr_to_sympy(l)),
+        PyObj(expr_to_sympy(hw)),
       ]),
     ),
   )
@@ -772,10 +749,10 @@ pub fn hydrogen_r_nl(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.hydrogen.R_nl", [
-        OracleArg::PyObj(expr_to_sympy(n)),
-        OracleArg::PyObj(expr_to_sympy(l)),
-        OracleArg::PyObj(expr_to_sympy(r)),
-        OracleArg::PyObj(expr_to_sympy(z)),
+        PyObj(expr_to_sympy(n)),
+        PyObj(expr_to_sympy(l)),
+        PyObj(expr_to_sympy(r)),
+        PyObj(expr_to_sympy(z)),
       ]),
     ),
   )
@@ -789,16 +766,14 @@ pub fn hydrogen_y_lm(
   theta : @symcore.Expr,
 ) -> String raise {
   let obj = sympy_call_must("sympy.Ynm", [
-    OracleArg::PyObj(expr_to_sympy(l)),
-    OracleArg::PyObj(expr_to_sympy(m)),
-    OracleArg::PyObj(expr_to_sympy(theta)),
-    OracleArg::PyObj(expr_to_sympy(phi)),
+    PyObj(expr_to_sympy(l)),
+    PyObj(expr_to_sympy(m)),
+    PyObj(expr_to_sympy(theta)),
+    PyObj(expr_to_sympy(phi)),
   ])
   py_str_obj(
     objenum_to_obj(
-      sympy_call_must("sympy.expand_func", [
-        OracleArg::PyObj(objenum_to_obj(obj)),
-      ]),
+      sympy_call_must("sympy.expand_func", [PyObj(objenum_to_obj(obj))]),
     ),
   )
 }
@@ -811,16 +786,14 @@ pub fn hydrogen_z_lm(
   theta : @symcore.Expr,
 ) -> String raise {
   let obj = sympy_call_must("sympy.Znm", [
-    OracleArg::PyObj(expr_to_sympy(l)),
-    OracleArg::PyObj(expr_to_sympy(m)),
-    OracleArg::PyObj(expr_to_sympy(theta)),
-    OracleArg::PyObj(expr_to_sympy(phi)),
+    PyObj(expr_to_sympy(l)),
+    PyObj(expr_to_sympy(m)),
+    PyObj(expr_to_sympy(theta)),
+    PyObj(expr_to_sympy(phi)),
   ])
   py_str_obj(
     objenum_to_obj(
-      sympy_call_must("sympy.expand_func", [
-        OracleArg::PyObj(objenum_to_obj(obj)),
-      ]),
+      sympy_call_must("sympy.expand_func", [PyObj(objenum_to_obj(obj))]),
     ),
   )
 }
@@ -838,13 +811,13 @@ pub fn hydrogen_psi_nlm(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.hydrogen.Psi_nlm", [
-        OracleArg::PyObj(expr_to_sympy(n)),
-        OracleArg::PyObj(expr_to_sympy(l)),
-        OracleArg::PyObj(expr_to_sympy(m)),
-        OracleArg::PyObj(expr_to_sympy(r)),
-        OracleArg::PyObj(expr_to_sympy(phi)),
-        OracleArg::PyObj(expr_to_sympy(theta)),
-        OracleArg::PyObj(expr_to_sympy(z)),
+        PyObj(expr_to_sympy(n)),
+        PyObj(expr_to_sympy(l)),
+        PyObj(expr_to_sympy(m)),
+        PyObj(expr_to_sympy(r)),
+        PyObj(expr_to_sympy(phi)),
+        PyObj(expr_to_sympy(theta)),
+        PyObj(expr_to_sympy(z)),
       ]),
     ),
   )
@@ -858,8 +831,8 @@ pub fn hydrogen_e_nl(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.hydrogen.E_nl", [
-        OracleArg::PyObj(expr_to_sympy(n)),
-        OracleArg::PyObj(expr_to_sympy(z)),
+        PyObj(expr_to_sympy(n)),
+        PyObj(expr_to_sympy(z)),
       ]),
     ),
   )
@@ -876,11 +849,11 @@ pub fn hydrogen_e_nl_dirac(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.hydrogen.E_nl_dirac", [
-        OracleArg::PyObj(expr_to_sympy(n)),
-        OracleArg::PyObj(expr_to_sympy(l)),
-        OracleArg::Bool(spin_up),
-        OracleArg::PyObj(expr_to_sympy(z)),
-        OracleArg::PyObj(expr_to_sympy(c)),
+        PyObj(expr_to_sympy(n)),
+        PyObj(expr_to_sympy(l)),
+        Bool(spin_up),
+        PyObj(expr_to_sympy(z)),
+        PyObj(expr_to_sympy(c)),
       ]),
     ),
   )
@@ -898,12 +871,12 @@ pub fn wigner_3j(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.wigner.wigner_3j", [
-        OracleArg::PyObj(expr_to_sympy(j_1)),
-        OracleArg::PyObj(expr_to_sympy(j_2)),
-        OracleArg::PyObj(expr_to_sympy(j_3)),
-        OracleArg::PyObj(expr_to_sympy(m_1)),
-        OracleArg::PyObj(expr_to_sympy(m_2)),
-        OracleArg::PyObj(expr_to_sympy(m_3)),
+        PyObj(expr_to_sympy(j_1)),
+        PyObj(expr_to_sympy(j_2)),
+        PyObj(expr_to_sympy(j_3)),
+        PyObj(expr_to_sympy(m_1)),
+        PyObj(expr_to_sympy(m_2)),
+        PyObj(expr_to_sympy(m_3)),
       ]),
     ),
   )
@@ -921,12 +894,12 @@ pub fn clebsch_gordan(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.wigner.clebsch_gordan", [
-        OracleArg::PyObj(expr_to_sympy(j_1)),
-        OracleArg::PyObj(expr_to_sympy(j_2)),
-        OracleArg::PyObj(expr_to_sympy(j_3)),
-        OracleArg::PyObj(expr_to_sympy(m_1)),
-        OracleArg::PyObj(expr_to_sympy(m_2)),
-        OracleArg::PyObj(expr_to_sympy(m_3)),
+        PyObj(expr_to_sympy(j_1)),
+        PyObj(expr_to_sympy(j_2)),
+        PyObj(expr_to_sympy(j_3)),
+        PyObj(expr_to_sympy(m_1)),
+        PyObj(expr_to_sympy(m_2)),
+        PyObj(expr_to_sympy(m_3)),
       ]),
     ),
   )
@@ -944,12 +917,12 @@ pub fn gaunt(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.wigner.gaunt", [
-        OracleArg::PyObj(expr_to_sympy(l_1)),
-        OracleArg::PyObj(expr_to_sympy(l_2)),
-        OracleArg::PyObj(expr_to_sympy(l_3)),
-        OracleArg::PyObj(expr_to_sympy(m_1)),
-        OracleArg::PyObj(expr_to_sympy(m_2)),
-        OracleArg::PyObj(expr_to_sympy(m_3)),
+        PyObj(expr_to_sympy(l_1)),
+        PyObj(expr_to_sympy(l_2)),
+        PyObj(expr_to_sympy(l_3)),
+        PyObj(expr_to_sympy(m_1)),
+        PyObj(expr_to_sympy(m_2)),
+        PyObj(expr_to_sympy(m_3)),
       ]),
     ),
   )
@@ -967,12 +940,12 @@ pub fn wigner_6j(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.wigner.wigner_6j", [
-        OracleArg::PyObj(expr_to_sympy(j_1)),
-        OracleArg::PyObj(expr_to_sympy(j_2)),
-        OracleArg::PyObj(expr_to_sympy(j_3)),
-        OracleArg::PyObj(expr_to_sympy(j_4)),
-        OracleArg::PyObj(expr_to_sympy(j_5)),
-        OracleArg::PyObj(expr_to_sympy(j_6)),
+        PyObj(expr_to_sympy(j_1)),
+        PyObj(expr_to_sympy(j_2)),
+        PyObj(expr_to_sympy(j_3)),
+        PyObj(expr_to_sympy(j_4)),
+        PyObj(expr_to_sympy(j_5)),
+        PyObj(expr_to_sympy(j_6)),
       ]),
     ),
   )
@@ -990,12 +963,12 @@ pub fn racah(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.wigner.racah", [
-        OracleArg::PyObj(expr_to_sympy(aa)),
-        OracleArg::PyObj(expr_to_sympy(bb)),
-        OracleArg::PyObj(expr_to_sympy(cc)),
-        OracleArg::PyObj(expr_to_sympy(dd)),
-        OracleArg::PyObj(expr_to_sympy(ee)),
-        OracleArg::PyObj(expr_to_sympy(ff)),
+        PyObj(expr_to_sympy(aa)),
+        PyObj(expr_to_sympy(bb)),
+        PyObj(expr_to_sympy(cc)),
+        PyObj(expr_to_sympy(dd)),
+        PyObj(expr_to_sympy(ee)),
+        PyObj(expr_to_sympy(ff)),
       ]),
     ),
   )
@@ -1016,15 +989,15 @@ pub fn wigner_9j(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.wigner.wigner_9j", [
-        OracleArg::PyObj(expr_to_sympy(j_1)),
-        OracleArg::PyObj(expr_to_sympy(j_2)),
-        OracleArg::PyObj(expr_to_sympy(j_3)),
-        OracleArg::PyObj(expr_to_sympy(j_4)),
-        OracleArg::PyObj(expr_to_sympy(j_5)),
-        OracleArg::PyObj(expr_to_sympy(j_6)),
-        OracleArg::PyObj(expr_to_sympy(j_7)),
-        OracleArg::PyObj(expr_to_sympy(j_8)),
-        OracleArg::PyObj(expr_to_sympy(j_9)),
+        PyObj(expr_to_sympy(j_1)),
+        PyObj(expr_to_sympy(j_2)),
+        PyObj(expr_to_sympy(j_3)),
+        PyObj(expr_to_sympy(j_4)),
+        PyObj(expr_to_sympy(j_5)),
+        PyObj(expr_to_sympy(j_6)),
+        PyObj(expr_to_sympy(j_7)),
+        PyObj(expr_to_sympy(j_8)),
+        PyObj(expr_to_sympy(j_9)),
       ]),
     ),
   )
@@ -1042,12 +1015,12 @@ pub fn real_gaunt(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.wigner.real_gaunt", [
-        OracleArg::PyObj(expr_to_sympy(l_1)),
-        OracleArg::PyObj(expr_to_sympy(l_2)),
-        OracleArg::PyObj(expr_to_sympy(l_3)),
-        OracleArg::PyObj(expr_to_sympy(mu_1)),
-        OracleArg::PyObj(expr_to_sympy(mu_2)),
-        OracleArg::PyObj(expr_to_sympy(mu_3)),
+        PyObj(expr_to_sympy(l_1)),
+        PyObj(expr_to_sympy(l_2)),
+        PyObj(expr_to_sympy(l_3)),
+        PyObj(expr_to_sympy(mu_1)),
+        PyObj(expr_to_sympy(mu_2)),
+        PyObj(expr_to_sympy(mu_3)),
       ]),
     ),
   )
@@ -1063,12 +1036,12 @@ pub fn dot_rot_grad_ynm(
   phi : @symcore.Expr,
 ) -> String raise {
   let obj = sympy_call_must("sympy.physics.wigner.dot_rot_grad_Ynm", [
-    OracleArg::PyObj(expr_to_sympy(j)),
-    OracleArg::PyObj(expr_to_sympy(p)),
-    OracleArg::PyObj(expr_to_sympy(l)),
-    OracleArg::PyObj(expr_to_sympy(m)),
-    OracleArg::PyObj(expr_to_sympy(theta)),
-    OracleArg::PyObj(expr_to_sympy(phi)),
+    PyObj(expr_to_sympy(j)),
+    PyObj(expr_to_sympy(p)),
+    PyObj(expr_to_sympy(l)),
+    PyObj(expr_to_sympy(m)),
+    PyObj(expr_to_sympy(theta)),
+    PyObj(expr_to_sympy(phi)),
   ])
   let doit = resolve_method_callable(objenum_to_obj(obj), "doit")
   py_str_obj(objenum_to_obj(py_call_noargs(doit)))
@@ -1080,8 +1053,8 @@ pub fn wigner_d_small(
   beta : @symcore.Expr,
 ) -> Array[String] raise {
   let obj = sympy_call_must("sympy.physics.wigner.wigner_d_small", [
-    OracleArg::PyObj(expr_to_sympy(j_tot)),
-    OracleArg::PyObj(expr_to_sympy(beta)),
+    PyObj(expr_to_sympy(j_tot)),
+    PyObj(expr_to_sympy(beta)),
   ])
   matrix_flatten_to_strings(objenum_to_obj(obj))
 }
@@ -1094,10 +1067,10 @@ pub fn wigner_d(
   gamma : @symcore.Expr,
 ) -> Array[String] raise {
   let obj = sympy_call_must("sympy.physics.wigner.wigner_d", [
-    OracleArg::PyObj(expr_to_sympy(j_tot)),
-    OracleArg::PyObj(expr_to_sympy(alpha)),
-    OracleArg::PyObj(expr_to_sympy(beta)),
-    OracleArg::PyObj(expr_to_sympy(gamma)),
+    PyObj(expr_to_sympy(j_tot)),
+    PyObj(expr_to_sympy(alpha)),
+    PyObj(expr_to_sympy(beta)),
+    PyObj(expr_to_sympy(gamma)),
   ])
   matrix_flatten_to_strings(objenum_to_obj(obj))
 }
@@ -1107,8 +1080,8 @@ pub fn wavefunction(n : @symcore.Expr, x : @symcore.Expr) -> String raise {
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.pring.wavefunction", [
-        OracleArg::PyObj(expr_to_sympy(n)),
-        OracleArg::PyObj(expr_to_sympy(x)),
+        PyObj(expr_to_sympy(n)),
+        PyObj(expr_to_sympy(x)),
       ]),
     ),
   )
@@ -1123,9 +1096,9 @@ pub fn energy(
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.pring.energy", [
-        OracleArg::PyObj(expr_to_sympy(n)),
-        OracleArg::PyObj(expr_to_sympy(m)),
-        OracleArg::PyObj(expr_to_sympy(r)),
+        PyObj(expr_to_sympy(n)),
+        PyObj(expr_to_sympy(m)),
+        PyObj(expr_to_sympy(r)),
       ]),
     ),
   )
@@ -1147,12 +1120,12 @@ pub fn quantum_wigner3j_expr(
 ) -> String raise {
   py_str_obj(
     quantum_cg_obj("Wigner3j", [
-      OracleArg::PyObj(expr_to_sympy(j1)),
-      OracleArg::PyObj(expr_to_sympy(m1)),
-      OracleArg::PyObj(expr_to_sympy(j2)),
-      OracleArg::PyObj(expr_to_sympy(m2)),
-      OracleArg::PyObj(expr_to_sympy(j3)),
-      OracleArg::PyObj(expr_to_sympy(m3)),
+      PyObj(expr_to_sympy(j1)),
+      PyObj(expr_to_sympy(m1)),
+      PyObj(expr_to_sympy(j2)),
+      PyObj(expr_to_sympy(m2)),
+      PyObj(expr_to_sympy(j3)),
+      PyObj(expr_to_sympy(m3)),
     ]),
   )
 }
@@ -1167,12 +1140,12 @@ pub fn quantum_wigner3j_doit(
   m3 : @symcore.Expr,
 ) -> String raise {
   let obj = quantum_cg_obj("Wigner3j", [
-    OracleArg::PyObj(expr_to_sympy(j1)),
-    OracleArg::PyObj(expr_to_sympy(m1)),
-    OracleArg::PyObj(expr_to_sympy(j2)),
-    OracleArg::PyObj(expr_to_sympy(m2)),
-    OracleArg::PyObj(expr_to_sympy(j3)),
-    OracleArg::PyObj(expr_to_sympy(m3)),
+    PyObj(expr_to_sympy(j1)),
+    PyObj(expr_to_sympy(m1)),
+    PyObj(expr_to_sympy(j2)),
+    PyObj(expr_to_sympy(m2)),
+    PyObj(expr_to_sympy(j3)),
+    PyObj(expr_to_sympy(m3)),
   ])
   let doit = resolve_method_callable(obj, "doit")
   py_str_obj(objenum_to_obj(py_call_noargs(doit)))
@@ -1189,12 +1162,12 @@ pub fn quantum_cg_expr(
 ) -> String raise {
   py_str_obj(
     quantum_cg_obj("CG", [
-      OracleArg::PyObj(expr_to_sympy(j1)),
-      OracleArg::PyObj(expr_to_sympy(m1)),
-      OracleArg::PyObj(expr_to_sympy(j2)),
-      OracleArg::PyObj(expr_to_sympy(m2)),
-      OracleArg::PyObj(expr_to_sympy(j3)),
-      OracleArg::PyObj(expr_to_sympy(m3)),
+      PyObj(expr_to_sympy(j1)),
+      PyObj(expr_to_sympy(m1)),
+      PyObj(expr_to_sympy(j2)),
+      PyObj(expr_to_sympy(m2)),
+      PyObj(expr_to_sympy(j3)),
+      PyObj(expr_to_sympy(m3)),
     ]),
   )
 }
@@ -1209,12 +1182,12 @@ pub fn quantum_cg_doit(
   m3 : @symcore.Expr,
 ) -> String raise {
   let obj = quantum_cg_obj("CG", [
-    OracleArg::PyObj(expr_to_sympy(j1)),
-    OracleArg::PyObj(expr_to_sympy(m1)),
-    OracleArg::PyObj(expr_to_sympy(j2)),
-    OracleArg::PyObj(expr_to_sympy(m2)),
-    OracleArg::PyObj(expr_to_sympy(j3)),
-    OracleArg::PyObj(expr_to_sympy(m3)),
+    PyObj(expr_to_sympy(j1)),
+    PyObj(expr_to_sympy(m1)),
+    PyObj(expr_to_sympy(j2)),
+    PyObj(expr_to_sympy(m2)),
+    PyObj(expr_to_sympy(j3)),
+    PyObj(expr_to_sympy(m3)),
   ])
   let doit = resolve_method_callable(obj, "doit")
   py_str_obj(objenum_to_obj(py_call_noargs(doit)))
@@ -1231,12 +1204,12 @@ pub fn quantum_wigner6j_expr(
 ) -> String raise {
   py_str_obj(
     quantum_cg_obj("Wigner6j", [
-      OracleArg::PyObj(expr_to_sympy(j1)),
-      OracleArg::PyObj(expr_to_sympy(j2)),
-      OracleArg::PyObj(expr_to_sympy(j12)),
-      OracleArg::PyObj(expr_to_sympy(j3)),
-      OracleArg::PyObj(expr_to_sympy(j)),
-      OracleArg::PyObj(expr_to_sympy(j23)),
+      PyObj(expr_to_sympy(j1)),
+      PyObj(expr_to_sympy(j2)),
+      PyObj(expr_to_sympy(j12)),
+      PyObj(expr_to_sympy(j3)),
+      PyObj(expr_to_sympy(j)),
+      PyObj(expr_to_sympy(j23)),
     ]),
   )
 }
@@ -1251,12 +1224,12 @@ pub fn quantum_wigner6j_doit(
   j23 : @symcore.Expr,
 ) -> String raise {
   let obj = quantum_cg_obj("Wigner6j", [
-    OracleArg::PyObj(expr_to_sympy(j1)),
-    OracleArg::PyObj(expr_to_sympy(j2)),
-    OracleArg::PyObj(expr_to_sympy(j12)),
-    OracleArg::PyObj(expr_to_sympy(j3)),
-    OracleArg::PyObj(expr_to_sympy(j)),
-    OracleArg::PyObj(expr_to_sympy(j23)),
+    PyObj(expr_to_sympy(j1)),
+    PyObj(expr_to_sympy(j2)),
+    PyObj(expr_to_sympy(j12)),
+    PyObj(expr_to_sympy(j3)),
+    PyObj(expr_to_sympy(j)),
+    PyObj(expr_to_sympy(j23)),
   ])
   let doit = resolve_method_callable(obj, "doit")
   py_str_obj(objenum_to_obj(py_call_noargs(doit)))
@@ -1276,15 +1249,15 @@ pub fn quantum_wigner9j_expr(
 ) -> String raise {
   py_str_obj(
     quantum_cg_obj("Wigner9j", [
-      OracleArg::PyObj(expr_to_sympy(j1)),
-      OracleArg::PyObj(expr_to_sympy(j2)),
-      OracleArg::PyObj(expr_to_sympy(j12)),
-      OracleArg::PyObj(expr_to_sympy(j3)),
-      OracleArg::PyObj(expr_to_sympy(j4)),
-      OracleArg::PyObj(expr_to_sympy(j34)),
-      OracleArg::PyObj(expr_to_sympy(j13)),
-      OracleArg::PyObj(expr_to_sympy(j24)),
-      OracleArg::PyObj(expr_to_sympy(j)),
+      PyObj(expr_to_sympy(j1)),
+      PyObj(expr_to_sympy(j2)),
+      PyObj(expr_to_sympy(j12)),
+      PyObj(expr_to_sympy(j3)),
+      PyObj(expr_to_sympy(j4)),
+      PyObj(expr_to_sympy(j34)),
+      PyObj(expr_to_sympy(j13)),
+      PyObj(expr_to_sympy(j24)),
+      PyObj(expr_to_sympy(j)),
     ]),
   )
 }
@@ -1302,15 +1275,15 @@ pub fn quantum_wigner9j_doit(
   j : @symcore.Expr,
 ) -> String raise {
   let obj = quantum_cg_obj("Wigner9j", [
-    OracleArg::PyObj(expr_to_sympy(j1)),
-    OracleArg::PyObj(expr_to_sympy(j2)),
-    OracleArg::PyObj(expr_to_sympy(j12)),
-    OracleArg::PyObj(expr_to_sympy(j3)),
-    OracleArg::PyObj(expr_to_sympy(j4)),
-    OracleArg::PyObj(expr_to_sympy(j34)),
-    OracleArg::PyObj(expr_to_sympy(j13)),
-    OracleArg::PyObj(expr_to_sympy(j24)),
-    OracleArg::PyObj(expr_to_sympy(j)),
+    PyObj(expr_to_sympy(j1)),
+    PyObj(expr_to_sympy(j2)),
+    PyObj(expr_to_sympy(j12)),
+    PyObj(expr_to_sympy(j3)),
+    PyObj(expr_to_sympy(j4)),
+    PyObj(expr_to_sympy(j34)),
+    PyObj(expr_to_sympy(j13)),
+    PyObj(expr_to_sympy(j24)),
+    PyObj(expr_to_sympy(j)),
   ])
   let doit = resolve_method_callable(obj, "doit")
   py_str_obj(objenum_to_obj(py_call_noargs(doit)))
@@ -1321,9 +1294,7 @@ pub fn quantum_cg_simp(expr : String) -> String raise {
   let obj = physics_sympify(expr)
   py_str_obj(
     objenum_to_obj(
-      sympy_call_must("sympy.physics.quantum.cg.cg_simp", [
-        OracleArg::PyObj(obj),
-      ]),
+      sympy_call_must("sympy.physics.quantum.cg.cg_simp", [PyObj(obj)]),
     ),
   )
 }
@@ -2542,10 +2513,7 @@ pub fn quantum_trace_permute_str(expr : String, pos : Int) -> String raise {
 
 ///|
 pub fn paulialgebra_delta(i : Int, j : Int) -> Int raise {
-  let out = sympy_call_must("sympy.physics.paulialgebra.delta", [
-    OracleArg::Int(i),
-    OracleArg::Int(j),
-  ])
+  let out = sympy_call_must("sympy.physics.paulialgebra.delta", [Int(i), Int(j)])
   @string.parse_int(py_str_obj(objenum_to_obj(out))) catch {
     _ => fail("parse-int")
   }
@@ -2554,9 +2522,9 @@ pub fn paulialgebra_delta(i : Int, j : Int) -> Int raise {
 ///|
 pub fn paulialgebra_epsilon(i : Int, j : Int, k : Int) -> Int raise {
   let out = sympy_call_must("sympy.physics.paulialgebra.epsilon", [
-    OracleArg::Int(i),
-    OracleArg::Int(j),
-    OracleArg::Int(k),
+    Int(i),
+    Int(j),
+    Int(k),
   ])
   @string.parse_int(py_str_obj(objenum_to_obj(out))) catch {
     _ => fail("parse-int")
@@ -2569,7 +2537,7 @@ pub fn paulialgebra_evaluate(expr : String) -> String raise {
   py_str_obj(
     objenum_to_obj(
       sympy_call_must("sympy.physics.paulialgebra.evaluate_pauli_product", [
-        OracleArg::PyObj(obj),
+        PyObj(obj),
       ]),
     ),
   )
@@ -2579,7 +2547,7 @@ pub fn paulialgebra_evaluate(expr : String) -> String raise {
 pub fn physics_srepr(expr : String) -> String raise {
   py_str_obj(
     objenum_to_obj(
-      sympy_call_must("sympy.srepr", [OracleArg::PyObj(physics_sympify(expr))]),
+      sympy_call_must("sympy.srepr", [PyObj(physics_sympify(expr))]),
     ),
   )
 }
@@ -2597,9 +2565,7 @@ pub fn physics_expr_str(expr : @symcore.Expr) -> String raise {
 ///|
 pub fn physics_expr_srepr(expr : @symcore.Expr) -> String raise {
   py_str_obj(
-    objenum_to_obj(
-      sympy_call_must("sympy.srepr", [OracleArg::PyObj(expr_to_sympy(expr))]),
-    ),
+    objenum_to_obj(sympy_call_must("sympy.srepr", [PyObj(expr_to_sympy(expr))])),
   )
 }
 
@@ -2668,9 +2634,9 @@ fn python_script_stdout(script : String) -> String raise {
   ignore(
     exec_fn.invoke(
       args=@sympy.py_pack_args([
-        OracleArg::Str(wrapped),
-        OracleArg::PyObj(globals.obj()),
-        OracleArg::PyObj(globals.obj()),
+        Str(wrapped),
+        PyObj(globals.obj()),
+        PyObj(globals.obj()),
       ]),
       kwargs=@sympy.py_pack_kwargs({}),
       print_err=true,
@@ -2944,12 +2910,10 @@ pub fn paulialgebra_evaluate_srepr(expr : String) -> String raise {
   let obj = physics_sympify(expr)
   let res = objenum_to_obj(
     sympy_call_must("sympy.physics.paulialgebra.evaluate_pauli_product", [
-      OracleArg::PyObj(obj),
+      PyObj(obj),
     ]),
   )
-  py_str_obj(
-    objenum_to_obj(sympy_call_must("sympy.srepr", [OracleArg::PyObj(res)])),
-  )
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.srepr", [PyObj(res)])))
 }
 
 ///|

@@ -1,11 +1,11 @@
 ///|
 fn column_test_sf(start : @symcore.Expr, order : Int) -> @symcore.Expr {
-  cm_singularity(@symcore.Expr::Symbol("x"), start, order)
+  cm_singularity(Symbol("x"), start, order)
 }
 
 ///|
 test "physics.continuum_mechanics.column: loads and reactions" {
-  let e = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1)
+  let e = @symcore.Expr::NumberSymbol(Exp1)
   let a = @symcore.Expr::Symbol("A")
   let c = column(@symcore.int(10), e, a)
   let r0 = c.apply_support(@symcore.int(0))
@@ -29,7 +29,7 @@ test "physics.continuum_mechanics.column: loads and reactions" {
 
 ///|
 test "physics.continuum_mechanics.column: distributed and ramp loads" {
-  let e = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1)
+  let e = @symcore.Expr::NumberSymbol(Exp1)
   let a = @symcore.Expr::Symbol("A")
   let c = column(@symcore.int(10), e, a)
   c.apply_load(@symcore.int(5), @symcore.int(0), -1)

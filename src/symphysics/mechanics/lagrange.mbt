@@ -38,7 +38,7 @@ fn lagrange_qddots(coords : Array[Expr]) -> Array[Expr] {
 fn lagrange_lambda_symbols(count : Int) -> Array[Expr] {
   let out : Array[Expr] = []
   for i in 0..<count {
-    out.push(Expr::Symbol("lam" + (i + 1).to_string()))
+    out.push(Symbol("lam" + (i + 1).to_string()))
   }
   out
 }
@@ -60,11 +60,11 @@ fn lagrange_default_frame(
       }
       for load in loads {
         match load {
-          Load::TorqueLoad(value) => return value.frame
+          TorqueLoad(value) => return value.frame
           _ => ()
         }
       }
-      raise @symphysics.PhysicsError::ValueError(
+      raise ValueError(
         "LagrangesMethod requires a reference frame when no body frame is available",
       )
     }
@@ -83,11 +83,11 @@ fn lagrange_generalized_forces(
     let mut total = int(0)
     for load in forcelist {
       match load {
-        Load::ForceLoad(value) =>
+        ForceLoad(value) =>
           total = mech_simplify_expr(
             total + value.point.partial_velocity(frame, qd).dot(value.force),
           )
-        Load::TorqueLoad(value) => {
+        TorqueLoad(value) => {
           let partials = value.frame.partial_velocity(frame, [qd])
           total = mech_simplify_expr(total + partials[0].dot(value.torque))
         }
@@ -170,7 +170,7 @@ pub fn lagranges_method(
     value => Some(value)
   }
   let lambda_syms = lagrange_lambda_symbols(hol_coneqs.length())
-  LagrangesMethod::{
+  {
     lagrangian_: lagrangian,
     coordinates_: coordinates.copy(),
     frame_: chosen_frame,

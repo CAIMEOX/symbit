@@ -102,6 +102,12 @@ pub suberror PlottingError {
   ValueError(String)
   TypeError(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn PlottingError::equal(Self, Self) -> Bool
+#deprecated
+pub fn PlottingError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn PlottingError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub struct ContourSeries {

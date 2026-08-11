@@ -4,8 +4,8 @@
 ///|
 fn index_to_string(index : Index) -> String {
   match index {
-    Index::Expr(expr) => @symprint.pretty_string(expr)
-    Index::Idx(item) => item.name
+    Expr(expr) => @symprint.pretty_string(expr)
+    Idx(item) => item.name
   }
 }
 
@@ -16,7 +16,7 @@ pub impl Show for Idx with fn to_string(self) -> String {
 
 ///|
 pub impl Show for Idx with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -26,35 +26,33 @@ pub impl Show for IndexedBase with fn to_string(self) -> String {
 
 ///|
 pub impl Show for IndexedBase with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 pub impl Show for Indexed with fn to_string(self) -> String {
-  let base_str = self.base.to_string()
+  let base_str = Show::to_string(self.base)
   let indices = self.indices.map(index_to_string)
   base_str + "[" + indices.join(", ") + "]"
 }
 
 ///|
 pub impl Show for Indexed with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 fn format_expr(expr : IndexedExpr, parent_prec : Int) -> String {
   let prec = match expr {
-    IndexedExpr::Add(_) => 1
-    IndexedExpr::Mul(_) => 2
+    Add(_) => 1
+    Mul(_) => 2
     _ => 3
   }
   let body = match expr {
-    IndexedExpr::Scalar(e) => @symprint.pretty_string(e)
-    IndexedExpr::Atom(i) => i.to_string()
-    IndexedExpr::Add(items) =>
-      items.map(item => format_expr(item, prec)).join(" + ")
-    IndexedExpr::Mul(items) =>
-      items.map(item => format_expr(item, prec)).join("*")
+    Scalar(e) => @symprint.pretty_string(e)
+    Atom(i) => Show::to_string(i)
+    Add(items) => items.map(item => format_expr(item, prec)).join(" + ")
+    Mul(items) => items.map(item => format_expr(item, prec)).join("*")
   }
   if prec < parent_prec {
     "(" + body + ")"
@@ -70,5 +68,5 @@ pub impl Show for IndexedExpr with fn to_string(self) -> String {
 
 ///|
 pub impl Show for IndexedExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }

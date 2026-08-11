@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/debug",
   "CAIMEOX/symbit/symassume",
   "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symcore",

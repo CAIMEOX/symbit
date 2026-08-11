@@ -33,9 +33,7 @@ fn assert_textplot_oracle(
 ///|
 test "plotting parity textplot matches additional SymPy public cases" {
   let x = @symcore.Expr::Symbol("x")
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let inv_x = @symcore.mul([@symcore.int(1), @symcore.pow(x, @symcore.int(-1))])
   let log_x = @symcore.function("log", [x])
   let sinc = @symcore.mul([

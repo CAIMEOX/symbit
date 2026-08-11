@@ -32,7 +32,7 @@ pub fn EllipticCurve::new(
   a3? : BigInt = bi(0),
   modulus? : BigInt = bi(0),
 ) -> EllipticCurve {
-  EllipticCurve::{ a1, a2, a3, a4, a6, modulus }
+  { a1, a2, a3, a4, a6, modulus }
 }
 
 ///|

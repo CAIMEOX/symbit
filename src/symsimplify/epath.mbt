@@ -36,7 +36,7 @@ pub(all) struct EPath {
 /// - Returns: One `EPath`.
 /// - Limits: Invalid or unsupported syntax falls back to the subset accepted by the local parser instead of raising.
 pub fn EPath::new(path : String) -> EPath {
-  EPath::{ raw: path, selectors: parse_path(path) }
+  { raw: path, selectors: parse_path(path) }
 }
 
 ///|
@@ -136,24 +136,24 @@ fn parse_selector(raw : String) -> ESelector {
     }
   }
   let span = parse_selector_span(tail)
-  ESelector::{ attrs, types, span }
+  { attrs, types, span }
 }
 
 ///|
 fn parse_selector_span(tail : String) -> ESpan {
   if tail == "" || tail == "*" {
-    ESpan::All
+    All
   } else if tail.has_prefix("[") && tail.has_suffix("]") {
     match tail.strip_prefix("[") {
       Some(without_prefix) =>
         match without_prefix.strip_suffix("]") {
           Some(content) => parse_span(content.to_owned())
-          None => ESpan::All
+          None => All
         }
-      None => ESpan::All
+      None => All
     }
   } else {
-    ESpan::All
+    All
   }
 }
 
@@ -179,19 +179,19 @@ fn parse_span_part(parts : Array[StringView], idx : Int) -> Int? {
 fn parse_span(content : String) -> ESpan {
   let trimmed = content.trim().to_owned()
   if trimmed == "" {
-    return ESpan::All
+    return All
   }
   if !trimmed.contains(":") {
     match parse_int_opt(trimmed) {
-      Some(idx) => ESpan::Index(idx)
-      None => ESpan::All
+      Some(idx) => Index(idx)
+      None => All
     }
   } else {
     let parts = trimmed.split(":").to_array()
     let start = parse_span_part(parts, 0)
     let stop = parse_span_part(parts, 1)
     let step = parse_span_part(parts, 2)
-    ESpan::Slice(start, stop, step)
+    Slice(start, stop, step)
   }
 }
 
@@ -270,38 +270,38 @@ fn selector_matches(sel : ESelector, expr : Expr) -> Bool {
 ///|
 fn has_type(expr : Expr, t : String) -> Bool {
   match expr {
-    Expr::Number(_) => t == "Number" || t == "Expr"
-    Expr::Float(_) => t == "Float" || t == "Number" || t == "Expr"
-    Expr::ComplexFloat(_) =>
+    Number(_) => t == "Number" || t == "Expr"
+    Float(_) => t == "Float" || t == "Number" || t == "Expr"
+    ComplexFloat(_) =>
       t == "ComplexFloat" || t == "Float" || t == "Number" || t == "Expr"
-    Expr::NumberSymbol(_) => t == "NumberSymbol" || t == "Number" || t == "Expr"
-    Expr::Boolean(_) => t == "Boolean" || t == "Expr"
-    Expr::Dummy(_, _) => t == "Dummy" || t == "Symbol" || t == "Expr"
-    Expr::Wild(_, _, _) => t == "Wild" || t == "Symbol" || t == "Expr"
-    Expr::FunctionHead(_) =>
+    NumberSymbol(_) => t == "NumberSymbol" || t == "Number" || t == "Expr"
+    Boolean(_) => t == "Boolean" || t == "Expr"
+    Dummy(_, _) => t == "Dummy" || t == "Symbol" || t == "Expr"
+    Wild(_, _, _) => t == "Wild" || t == "Symbol" || t == "Expr"
+    FunctionHead(_) =>
       t == "FunctionHead" ||
       t == "UndefinedFunction" ||
       t == "Function" ||
       t == "Expr"
-    Expr::UndefinedFunction(_) =>
+    UndefinedFunction(_) =>
       t == "UndefinedFunction" || t == "Function" || t == "Expr"
-    Expr::Apply(head, _) =>
+    Apply(head, _) =>
       match head {
-        Expr::UndefinedFunction(_) =>
+        UndefinedFunction(_) =>
           t == "AppliedUndef" || t == "Apply" || t == "Function" || t == "Expr"
         _ => t == "Apply" || t == "Function" || t == "Expr"
       }
-    Expr::Symbol(_) => t == "Symbol" || t == "Expr"
-    Expr::Add(_) => t == "Add" || t == "Expr"
-    Expr::Mul(_) => t == "Mul" || t == "Expr"
-    Expr::Pow(_, _) => t == "Pow" || t == "Expr"
-    Expr::Mod(_, _) => t == "Mod" || t == "Expr"
-    Expr::Tuple(_) => t == "Tuple" || t == "Expr"
-    Expr::Dict(_) => t == "Dict" || t == "Expr"
-    Expr::Relational(_, _, _) => t == "Relational" || t == "Expr"
-    Expr::Derivative(_, _) => t == "Derivative" || t == "Expr"
-    Expr::Subs(_, _, _) => t == "Subs" || t == "Expr"
-    Expr::Lambda(_, _) => t == "Lambda" || t == "Expr"
+    Symbol(_) => t == "Symbol" || t == "Expr"
+    Add(_) => t == "Add" || t == "Expr"
+    Mul(_) => t == "Mul" || t == "Expr"
+    Pow(_, _) => t == "Pow" || t == "Expr"
+    Mod(_, _) => t == "Mod" || t == "Expr"
+    Tuple(_) => t == "Tuple" || t == "Expr"
+    Dict(_) => t == "Dict" || t == "Expr"
+    Relational(_, _, _) => t == "Relational" || t == "Expr"
+    Derivative(_, _) => t == "Derivative" || t == "Expr"
+    Subs(_, _, _) => t == "Subs" || t == "Expr"
+    Lambda(_, _) => t == "Lambda" || t == "Expr"
     _ if @symcore.application_parts(expr) is Some(_) =>
       t == "Function" || t == "Expr"
     _ => false
@@ -315,17 +315,17 @@ fn has_attr(expr : Expr, a : String) -> Bool {
     "__iter__" => !ordered_children(expr).is_empty()
     "is_Add" =>
       match expr {
-        Expr::Add(_) => true
+        Add(_) => true
         _ => false
       }
     "is_Mul" =>
       match expr {
-        Expr::Mul(_) => true
+        Mul(_) => true
         _ => false
       }
     "is_Pow" =>
       match expr {
-        Expr::Pow(_, _) => true
+        Pow(_, _) => true
         _ => false
       }
     "is_Function" => @symcore.application_parts(expr) is Some(_)
@@ -336,11 +336,7 @@ fn has_attr(expr : Expr, a : String) -> Bool {
 ///|
 fn epath_is_atom(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(_)
-    | Expr::Float(_)
-    | Expr::ComplexFloat(_)
-    | Expr::Boolean(_)
-    | Expr::Symbol(_) => true
+    Number(_) | Float(_) | ComplexFloat(_) | Boolean(_) | Symbol(_) => true
     _ => false
   }
 }
@@ -348,18 +344,18 @@ fn epath_is_atom(expr : Expr) -> Bool {
 ///|
 fn ordered_children(expr : Expr) -> Array[Expr] {
   match expr {
-    Expr::Add(args) | Expr::Mul(args) | Expr::Tuple(args) => args.map(x => x)
-    Expr::Pow(a, b) => [a, b]
-    Expr::Relational(_, lhs, rhs) => [lhs, rhs]
-    Expr::Derivative(inner, deriv_args) => {
+    Add(args) | Mul(args) | Tuple(args) => args.map(x => x)
+    Pow(a, b) => [a, b]
+    Relational(_, lhs, rhs) => [lhs, rhs]
+    Derivative(inner, deriv_args) => {
       let out : Array[Expr] = [inner]
       for arg in deriv_args {
         out.push(arg)
       }
       out
     }
-    Expr::Subs(inner, variable, value) => [inner, variable, value]
-    Expr::Lambda(vars, body) => [vars, body]
+    Subs(inner, variable, value) => [inner, variable, value]
+    Lambda(vars, body) => [vars, body]
     _ =>
       match @symcore.application_args(expr) {
         Some(args) => args.map(x => x)
@@ -371,47 +367,41 @@ fn ordered_children(expr : Expr) -> Array[Expr] {
 ///|
 fn rebuild_expr(expr : Expr, args : Array[Expr]) -> Expr {
   match expr {
-    Expr::Add(_) => @symcore.raw_add(args)
-    Expr::Mul(_) => @symcore.raw_mul(args)
-    Expr::Pow(_, _) =>
+    Add(_) => @symcore.raw_add(args)
+    Mul(_) => @symcore.raw_mul(args)
+    Pow(_, _) =>
       if args.length() == 2 {
         @symcore.raw_pow(args[0], args[1])
       } else {
         expr
       }
-    Expr::Tuple(_) => @symcore.Expr::Tuple(args)
-    Expr::Relational(op, _, _) =>
+    Tuple(_) => Tuple(args)
+    Relational(op, _, _) =>
       if args.length() == 2 {
         match op {
-          @symcore.RelOp::Eq =>
-            @symcore.Expr::Relational(@symcore.RelOp::Eq, args[0], args[1])
-          @symcore.RelOp::Ne =>
-            @symcore.Expr::Relational(@symcore.RelOp::Ne, args[0], args[1])
-          @symcore.RelOp::Lt =>
-            @symcore.Expr::Relational(@symcore.RelOp::Lt, args[0], args[1])
-          @symcore.RelOp::Le =>
-            @symcore.Expr::Relational(@symcore.RelOp::Le, args[0], args[1])
-          @symcore.RelOp::Gt =>
-            @symcore.Expr::Relational(@symcore.RelOp::Gt, args[0], args[1])
-          @symcore.RelOp::Ge =>
-            @symcore.Expr::Relational(@symcore.RelOp::Ge, args[0], args[1])
+          Eq => Relational(Eq, args[0], args[1])
+          Ne => Relational(Ne, args[0], args[1])
+          Lt => Relational(Lt, args[0], args[1])
+          Le => Relational(Le, args[0], args[1])
+          Gt => Relational(Gt, args[0], args[1])
+          Ge => Relational(Ge, args[0], args[1])
         }
       } else {
         expr
       }
-    Expr::Derivative(_, _) =>
+    Derivative(_, _) =>
       if args.length() >= 2 {
         @symcore.raw_function("Derivative", args)
       } else {
         expr
       }
-    Expr::Subs(_, _, _) =>
+    Subs(_, _, _) =>
       if args.length() == 3 {
         @symcore.subs_expr(args[0], args[1], args[2])
       } else {
         expr
       }
-    Expr::Lambda(_, _) =>
+    Lambda(_, _) =>
       if args.length() == 2 {
         @symcore.lambda_expr(args[0], args[1])
       } else {
@@ -428,15 +418,15 @@ fn rebuild_expr(expr : Expr, args : Array[Expr]) -> Expr {
 ///|
 fn span_indices(span : ESpan, n : Int) -> Array[Int] {
   match span {
-    ESpan::All => {
+    All => {
       let out : Array[Int] = Array::new()
       for i in 0..<n {
         out.push(i)
       }
       out
     }
-    ESpan::Index(i) => [i]
-    ESpan::Slice(start, stop, step) => {
+    Index(i) => [i]
+    Slice(start, stop, step) => {
       let s = match step {
         Some(v) if v != 0 => v
         _ => 1

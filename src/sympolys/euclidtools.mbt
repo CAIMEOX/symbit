@@ -4,7 +4,7 @@
 ///|
 fn euclidtools_require_field(domain : Domain) -> Unit raise PolyError {
   if !domain_is_field_pred(domain) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
 }
 
@@ -23,12 +23,7 @@ fn euclidtools_dup_primitive(
     return (fe_from_int(0, domain), coeffs)
   }
   let content = match domain {
-    Domain::ZZ
-    | Domain::QQ
-    | Domain::RR
-    | Domain::CC
-    | Domain::ZZ_I
-    | Domain::QQ_I => field_elems_content(coeffs, domain)
+    ZZ | QQ | RR | CC | ZZ_I | QQ_I => field_elems_content(coeffs, domain)
     _ => fe_from_int(1, domain)
   }
   if fe_is_zero(content) {
@@ -48,7 +43,7 @@ fn euclidtools_field_lcm(
     return fe_from_int(0, domain)
   }
   match domain {
-    Domain::ZZ => {
+    ZZ => {
       let ar = fe_expect_rational(a)
       let br = fe_expect_rational(b)
       let an = bigint_abs(ar.numerator())
@@ -102,7 +97,7 @@ pub fn dup_half_gcdex(
     b = next
   }
   if ff.is_empty() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let lc = dup_LC(ff)
   (dup_exquo_ground(a, lc, domain), dup_monic(ff, domain))
@@ -122,7 +117,7 @@ pub fn dmp_half_gcdex(
   domain : Domain,
 ) -> (DensePoly, DensePoly) raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (s, h) = dup_half_gcdex(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
   (dmp_from_coeffs(s), dmp_from_coeffs(h))
@@ -160,7 +155,7 @@ pub fn dmp_gcdex(
   domain : Domain,
 ) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (s, t, h) = dup_gcdex(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
   (dmp_from_coeffs(s), dmp_from_coeffs(t), dmp_from_coeffs(h))
@@ -183,7 +178,7 @@ pub fn dup_invert(
   if euclidtools_dup_is_one(h) {
     dup_rem(s, dup_strip(g), domain)
   } else {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
 }
 
@@ -201,7 +196,7 @@ pub fn dmp_invert(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   dmp_from_coeffs(dup_invert(dmp_to_coeffs(f), dmp_to_coeffs(g), domain))
 }
@@ -247,7 +242,7 @@ pub fn dmp_euclidean_prs(
   domain : Domain,
 ) -> Array[DensePoly] raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let raw = dup_euclidean_prs(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
   raw.map(poly => dmp_from_coeffs(poly))
@@ -297,7 +292,7 @@ pub fn dmp_primitive_prs(
   domain : Domain,
 ) -> Array[DensePoly] raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   dup_primitive_prs(dmp_to_coeffs(f), dmp_to_coeffs(g), domain).map(poly => {
     dmp_from_coeffs(poly)
@@ -434,17 +429,14 @@ pub fn dmp_inner_subresultants(
   domain : Domain,
 ) -> (Array[DensePoly], Array[DensePoly]) raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (prs, scalars) = dup_inner_subresultants(
     dmp_to_coeffs(f),
     dmp_to_coeffs(g),
     domain,
   )
-  (
-    prs.map(poly => dmp_from_coeffs(poly)),
-    scalars.map(value => DensePoly::Coef(value)),
-  )
+  (prs.map(poly => dmp_from_coeffs(poly)), scalars.map(value => Coef(value)))
 }
 
 ///|
@@ -462,7 +454,7 @@ pub fn dmp_subresultants(
   domain : Domain,
 ) -> Array[DensePoly] raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   dup_subresultants(dmp_to_coeffs(f), dmp_to_coeffs(g), domain).map(poly => {
     dmp_from_coeffs(poly)
@@ -484,10 +476,10 @@ pub fn dmp_prs_resultant(
   domain : Domain,
 ) -> (DensePoly, Array[DensePoly]) raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (res, prs) = dup_prs_resultant(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
-  (DensePoly::Coef(res), prs.map(poly => dmp_from_coeffs(poly)))
+  (Coef(res), prs.map(poly => dmp_from_coeffs(poly)))
 }
 
 ///|
@@ -505,9 +497,9 @@ pub fn dmp_resultant(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
-  DensePoly::Coef(dup_resultant(dmp_to_coeffs(f), dmp_to_coeffs(g), domain))
+  Coef(dup_resultant(dmp_to_coeffs(f), dmp_to_coeffs(g), domain))
 }
 
 ///|
@@ -528,18 +520,12 @@ pub fn dmp_zz_modular_resultant(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let modulus = fe_from_int(p, domain)
   let res = dup_resultant(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
   let reduced = dup_trunc([res], modulus, domain)
-  DensePoly::Coef(
-    if reduced.is_empty() {
-      fe_from_int(0, domain)
-    } else {
-      reduced[0]
-    },
-  )
+  Coef(if reduced.is_empty() { fe_from_int(0, domain) } else { reduced[0] })
 }
 
 ///|
@@ -618,9 +604,9 @@ pub fn dmp_discriminant(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
-  DensePoly::Coef(dup_discriminant(dmp_to_coeffs(f), domain))
+  Coef(dup_discriminant(dmp_to_coeffs(f), domain))
 }
 
 ///|
@@ -880,7 +866,7 @@ pub fn dmp_rr_prs_gcd(
   domain : Domain,
 ) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (h, cff, cfg) = dup_rr_prs_gcd(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
   (dmp_from_coeffs(h), dmp_from_coeffs(cff), dmp_from_coeffs(cfg))
@@ -918,7 +904,7 @@ pub fn dmp_ff_prs_gcd(
   domain : Domain,
 ) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (h, cff, cfg) = dup_ff_prs_gcd(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
   (dmp_from_coeffs(h), dmp_from_coeffs(cff), dmp_from_coeffs(cfg))
@@ -958,7 +944,7 @@ pub fn dmp_inner_gcd(
   domain : Domain,
 ) -> (DensePoly, DensePoly, DensePoly) raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (h, cff, cfg) = dup_inner_gcd(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
   (dmp_from_coeffs(h), dmp_from_coeffs(cff), dmp_from_coeffs(cfg))
@@ -996,7 +982,7 @@ pub fn dmp_rr_lcm(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   dmp_from_coeffs(dup_rr_lcm(dmp_to_coeffs(f), dmp_to_coeffs(g), domain))
 }
@@ -1015,7 +1001,7 @@ pub fn dmp_ff_lcm(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   dmp_from_coeffs(dup_ff_lcm(dmp_to_coeffs(f), dmp_to_coeffs(g), domain))
 }
@@ -1035,7 +1021,7 @@ pub fn dmp_lcm(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   dmp_from_coeffs(dup_lcm(dmp_to_coeffs(f), dmp_to_coeffs(g), domain))
 }
@@ -1056,7 +1042,7 @@ pub fn dmp_content(
   domain : Domain,
 ) -> DensePoly raise PolyError {
   if u == 0 {
-    return DensePoly::Coef(dup_content(dmp_to_coeffs(f), domain))
+    return Coef(dup_content(dmp_to_coeffs(f), domain))
   }
   let v = u - 1
   let mut content = dmp_LC(f)
@@ -1095,7 +1081,7 @@ pub fn dmp_primitive(
 ) -> (DensePoly, DensePoly) raise PolyError {
   if u == 0 {
     let (content, primitive) = dup_primitive(dmp_to_coeffs(f), domain)
-    return (DensePoly::Coef(content), dmp_from_coeffs(primitive))
+    return (Coef(content), dmp_from_coeffs(primitive))
   }
   let v = u - 1
   let content = dmp_content(f, u, domain)
@@ -1107,7 +1093,7 @@ pub fn dmp_primitive(
     for c in items {
       primitive_items.push(dmp_quo(c, content, v, domain))
     }
-    (content, dmp_strip(DensePoly::Poly(primitive_items)))
+    (content, dmp_strip(Poly(primitive_items)))
   }
 }
 
@@ -1126,7 +1112,7 @@ pub fn dmp_cancel(
   domain : Domain,
 ) -> (DensePoly, DensePoly) raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   let (p, q) = dup_cancel(dmp_to_coeffs(f), dmp_to_coeffs(g), domain)
   (dmp_from_coeffs(p), dmp_from_coeffs(q))

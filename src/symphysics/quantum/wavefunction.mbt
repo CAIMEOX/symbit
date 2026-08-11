@@ -25,17 +25,13 @@ fn wavefunction_coord_var(coord : Expr) -> Expr {
 fn wavefunction_coord_limit(coord : Expr) -> (Expr, Expr) {
   match @symcore.tuple_items(coord) {
     Some(args) if args.length() == 3 => (args[1], args[2])
-    _ =>
-      (
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity),
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-      )
+    _ => (NumberSymbol(NegativeInfinity), NumberSymbol(Infinity))
   }
 }
 
 ///|
 pub fn wavefunction(expr : Expr, coords : Array[Expr]) -> WavefunctionExpr {
-  WavefunctionExpr::{ expr, coords }
+  { expr, coords }
 }
 
 ///|
@@ -60,7 +56,7 @@ pub fn WavefunctionExpr::limits(
   for coord in self.coords {
     let coord_var = wavefunction_coord_var(coord)
     match coord_var {
-      Expr::Symbol(name) => out[name] = wavefunction_coord_limit(coord)
+      Symbol(name) => out[name] = wavefunction_coord_limit(coord)
       _ => ()
     }
   }
@@ -80,11 +76,9 @@ pub fn WavefunctionExpr::repr(self : WavefunctionExpr) -> String {
 ///|
 fn wavefunction_numeric_lt(lhs : Expr, rhs : Expr) -> Bool {
   match (@symcore.expr_form(lhs), @symcore.expr_form(rhs)) {
-    (@symcore.ExprForm::Number(a), @symcore.ExprForm::Number(b)) =>
-      a.compare(b) < 0
-    (@symcore.ExprForm::Float(a), @symcore.ExprForm::Float(b)) =>
-      @symnum.mpf_cmp(a.to_mpf(), b.to_mpf()) < 0
-    (@symcore.ExprForm::Number(a), @symcore.ExprForm::Float(b)) => {
+    (Number(a), Number(b)) => a.compare(b) < 0
+    (Float(a), Float(b)) => @symnum.mpf_cmp(a.to_mpf(), b.to_mpf()) < 0
+    (Number(a), Float(b)) => {
       let fa = @symcore.Float::from_rational(
         a.numerator(),
         a.denominator(),
@@ -94,7 +88,7 @@ fn wavefunction_numeric_lt(lhs : Expr, rhs : Expr) -> Bool {
       }
       @symnum.mpf_cmp(fa.to_mpf(), b.to_mpf()) < 0
     }
-    (@symcore.ExprForm::Float(a), @symcore.ExprForm::Number(b)) => {
+    (Float(a), Number(b)) => {
       let fb = @symcore.Float::from_rational(
         b.numerator(),
         b.denominator(),
@@ -111,11 +105,9 @@ fn wavefunction_numeric_lt(lhs : Expr, rhs : Expr) -> Bool {
 ///|
 fn wavefunction_numeric_gt(lhs : Expr, rhs : Expr) -> Bool {
   match (@symcore.expr_form(lhs), @symcore.expr_form(rhs)) {
-    (@symcore.ExprForm::Number(a), @symcore.ExprForm::Number(b)) =>
-      a.compare(b) > 0
-    (@symcore.ExprForm::Float(a), @symcore.ExprForm::Float(b)) =>
-      @symnum.mpf_cmp(a.to_mpf(), b.to_mpf()) > 0
-    (@symcore.ExprForm::Number(a), @symcore.ExprForm::Float(b)) => {
+    (Number(a), Number(b)) => a.compare(b) > 0
+    (Float(a), Float(b)) => @symnum.mpf_cmp(a.to_mpf(), b.to_mpf()) > 0
+    (Number(a), Float(b)) => {
       let fa = @symcore.Float::from_rational(
         a.numerator(),
         a.denominator(),
@@ -125,7 +117,7 @@ fn wavefunction_numeric_gt(lhs : Expr, rhs : Expr) -> Bool {
       }
       @symnum.mpf_cmp(fa.to_mpf(), b.to_mpf()) > 0
     }
-    (@symcore.ExprForm::Float(a), @symcore.ExprForm::Number(b)) => {
+    (Float(a), Number(b)) => {
       let fb = @symcore.Float::from_rational(
         b.numerator(),
         b.denominator(),
@@ -155,7 +147,7 @@ fn wavefunction_numeric_pow(
 fn wavefunction_simplify_mul(args : Array[Expr]) -> Expr {
   let base_expr = @symcore.mul(args)
   let factors = match base_expr {
-    Expr::Mul(items) => items.copy()
+    Mul(items) => items.copy()
     _ => return base_expr
   }
   if factors.length() <= 1 {
@@ -171,13 +163,13 @@ fn wavefunction_simplify_mul(args : Array[Expr]) -> Expr {
         continue
       }
       match (factors[idx], factors[jdx]) {
-        (Expr::Pow(base, Expr::Number(n)), other) =>
+        (Pow(base, Number(n)), other) =>
           if n.is_integral() && n.numerator().to_int() == -1 && base == other {
             removed[idx] = true
             removed[jdx] = true
             break
           }
-        (other, Expr::Pow(base, Expr::Number(n))) =>
+        (other, Pow(base, Number(n))) =>
           if n.is_integral() && n.numerator().to_int() == -1 && base == other {
             removed[idx] = true
             removed[jdx] = true
@@ -218,7 +210,7 @@ fn wavefunction_simplify_mul(args : Array[Expr]) -> Expr {
           simplified.push(kept[idx])
         }
       }
-      Expr::Pow(base, Expr::Number(n)) =>
+      Pow(base, Number(n)) =>
         if @symcore.application_has_name(base, "sqrt", arity=1) &&
           n.is_integral() &&
           n.numerator().to_int() == 2 {
@@ -241,42 +233,39 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
         Some("sqrt") if args.length() == 1 => {
           let inner = wavefunction_simplify_expr(args[0])
           match inner {
-            Expr::Number(n) if n.is_zero() => return int(0)
-            Expr::Number(n) if n.is_one() => return int(1)
+            Number(n) if n.is_zero() => return int(0)
+            Number(n) if n.is_one() => return int(1)
             _ =>
               return @symcore.raw_apply(head, [inner]).unwrap_or(
-                Expr::Apply(head, [inner]),
+                Apply(head, [inner]),
               )
           }
         }
         _ =>
           return @symcore.raw_apply(head, args.map(wavefunction_simplify_expr)).unwrap_or(
-            Expr::Apply(head, args.map(wavefunction_simplify_expr)),
+            Apply(head, args.map(wavefunction_simplify_expr)),
           )
       }
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_)
-    | @symcore.ExprForm::Float(_)
-    | @symcore.ExprForm::ComplexFloat(_)
-    | @symcore.ExprForm::NumberSymbol(_)
-    | @symcore.ExprForm::Symbol(_)
-    | @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::FunctionHead(_)
-    | @symcore.ExprForm::UndefinedFunction(_)
-    | @symcore.ExprForm::Boolean(_) => expr
-    @symcore.ExprForm::Add(args) =>
-      @symcore.add(args.map(wavefunction_simplify_expr))
-    @symcore.ExprForm::Mul(args) =>
-      wavefunction_simplify_mul(args.map(wavefunction_simplify_expr))
-    @symcore.ExprForm::Pow(base, exp) => {
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | FunctionHead(_)
+    | UndefinedFunction(_)
+    | Boolean(_) => expr
+    Add(args) => @symcore.add(args.map(wavefunction_simplify_expr))
+    Mul(args) => wavefunction_simplify_mul(args.map(wavefunction_simplify_expr))
+    Pow(base, exp) => {
       let sbase = wavefunction_simplify_expr(base)
       let sexp = wavefunction_simplify_expr(exp)
       match (sbase, sexp) {
-        (Expr::Pow(inner_base, Expr::Number(inner_exp)), Expr::Number(outer_exp)
-        ) =>
+        (Pow(inner_base, Number(inner_exp)), Number(outer_exp)) =>
           if inner_exp.is_integral() && outer_exp.is_integral() {
             @symcore.pow(
               inner_base,
@@ -287,15 +276,13 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
           } else {
             @symcore.pow(sbase, sexp)
           }
-        (Expr::Number(b), Expr::Number(e)) =>
+        (Number(b), Number(e)) =>
           if e.is_integral() && e.numerator().to_int() >= 0 {
-            @symcore.Expr::Number(
-              wavefunction_numeric_pow(b, e.numerator().to_int()),
-            )
+            Number(wavefunction_numeric_pow(b, e.numerator().to_int()))
           } else {
             @symcore.pow(sbase, sexp)
           }
-        (base, Expr::Number(e)) =>
+        (base, Number(e)) =>
           if @symcore.application_has_name(base, "sqrt", arity=1) &&
             e.is_integral() &&
             e.numerator().to_int() == 2 {
@@ -307,14 +294,13 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
         _ => @symcore.pow(sbase, sexp)
       }
     }
-    @symcore.ExprForm::Mod(lhs, rhs) =>
+    Mod(lhs, rhs) =>
       @symcore.mod_expr(
         wavefunction_simplify_expr(lhs),
         wavefunction_simplify_expr(rhs),
       )
-    @symcore.ExprForm::Tuple(args) =>
-      @symcore.Expr::Tuple(args.map(wavefunction_simplify_expr))
-    @symcore.ExprForm::Dict(items) => {
+    Tuple(args) => Tuple(args.map(wavefunction_simplify_expr))
+    Dict(items) => {
       let out : Array[(Expr, Expr)] = []
       for item in items {
         let (key, value) = item
@@ -322,61 +308,61 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
           (wavefunction_simplify_expr(key), wavefunction_simplify_expr(value)),
         )
       }
-      @symcore.Expr::Dict(out)
+      Dict(out)
     }
-    @symcore.ExprForm::Relational(op, lhs, rhs) =>
+    Relational(op, lhs, rhs) =>
       match op {
-        @symcore.RelOp::Eq =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
+        Eq =>
+          Relational(
+            Eq,
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
-        @symcore.RelOp::Ne =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ne,
+        Ne =>
+          Relational(
+            Ne,
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
-        @symcore.RelOp::Lt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Lt,
+        Lt =>
+          Relational(
+            Lt,
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
-        @symcore.RelOp::Le =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Le,
+        Le =>
+          Relational(
+            Le,
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
-        @symcore.RelOp::Gt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Gt,
+        Gt =>
+          Relational(
+            Gt,
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
-        @symcore.RelOp::Ge =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ge,
+        Ge =>
+          Relational(
+            Ge,
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
       }
-    @symcore.ExprForm::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       let args : Array[Expr] = [wavefunction_simplify_expr(inner)]
       for arg in deriv_args {
         args.push(wavefunction_simplify_expr(arg))
       }
       @symcore.raw_derivative(args[0], args[1:])
     }
-    @symcore.ExprForm::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       @symcore.subs_expr(
         wavefunction_simplify_expr(inner),
         wavefunction_simplify_expr(variable),
         wavefunction_simplify_expr(value),
       )
-    @symcore.ExprForm::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       @symcore.lambda_expr(
         wavefunction_simplify_expr(vars),
         wavefunction_simplify_expr(body),
@@ -393,9 +379,7 @@ pub fn WavefunctionExpr::call(
 ) -> Expr raise @symphysics.PhysicsError {
   let vars = self.variables()
   guard values.length() == vars.length() else {
-    raise @symphysics.PhysicsError::ValueError(
-      "Incorrect number of arguments to Wavefunction",
-    )
+    raise ValueError("Incorrect number of arguments to Wavefunction")
   }
   for idx in 0..<self.coords.length() {
     let (lower, upper) = wavefunction_coord_limit(self.coords[idx])
@@ -408,7 +392,7 @@ pub fn WavefunctionExpr::call(
   let subst_env : Map[String, Expr] = Map([])
   for idx in 0..<vars.length() {
     match vars[idx] {
-      Expr::Symbol(name) => subst_env[name] = values[idx]
+      Symbol(name) => subst_env[name] = values[idx]
       _ => ()
     }
   }
@@ -431,7 +415,7 @@ pub fn WavefunctionExpr::norm_expr(self : WavefunctionExpr) -> Expr {
     let (lower, upper) = wavefunction_coord_limit(coord)
     integrand = @symcore.raw_function("Integral", [
       integrand,
-      @symcore.Expr::Tuple([coord_var, lower, upper]),
+      Tuple([coord_var, lower, upper]),
     ])
   }
   @symcore.raw_function("sqrt", [integrand])
@@ -440,8 +424,8 @@ pub fn WavefunctionExpr::norm_expr(self : WavefunctionExpr) -> Expr {
 ///|
 fn wavefunction_expr_contains_symbol(expr : Expr, name : String) -> Bool {
   match expr {
-    Expr::Symbol(sym) => sym == name
-    Expr::Pow(base, exp) =>
+    Symbol(sym) => sym == name
+    Pow(base, exp) =>
       wavefunction_expr_contains_symbol(base, name) ||
       wavefunction_expr_contains_symbol(exp, name)
     _ =>
@@ -458,11 +442,9 @@ fn wavefunction_realify_conjugates(expr : Expr) -> Expr {
       wavefunction_realify_conjugates(
         @symcore.application_args(expr).unwrap()[0],
       )
-    Expr::Add(args) =>
-      @symcore.raw_add(args.map(wavefunction_realify_conjugates))
-    Expr::Mul(args) =>
-      @symcore.raw_mul(args.map(wavefunction_realify_conjugates))
-    Expr::Pow(base, exp) =>
+    Add(args) => @symcore.raw_add(args.map(wavefunction_realify_conjugates))
+    Mul(args) => @symcore.raw_mul(args.map(wavefunction_realify_conjugates))
+    Pow(base, exp) =>
       @symcore.raw_pow(
         wavefunction_realify_conjugates(base),
         wavefunction_realify_conjugates(exp),
@@ -481,14 +463,14 @@ fn wavefunction_realify_conjugates(expr : Expr) -> Expr {
 ///|
 fn wavefunction_expand_expr(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) =>
+    Add(args) =>
       quantum_add_from_args_preserve(args.map(wavefunction_expand_expr))
-    Expr::Mul(args) => {
+    Mul(args) => {
       let partials : Array[Expr] = [int(1)]
       for arg in args {
         let expanded_arg = wavefunction_expand_expr(arg)
         let terms = match expanded_arg {
-          Expr::Add(items) => items.copy()
+          Add(items) => items.copy()
           _ => [expanded_arg]
         }
         let next : Array[Expr] = []
@@ -508,8 +490,7 @@ fn wavefunction_expand_expr(expr : Expr) -> Expr {
       }
       quantum_add_from_args_preserve(partials)
     }
-    Expr::Pow(base, Expr::Number(n)) if n.is_integral() &&
-      n.numerator().to_int() >= 0 => {
+    Pow(base, Number(n)) if n.is_integral() && n.numerator().to_int() >= 0 => {
       let power = n.numerator().to_int()
       if power == 0 {
         int(1)
@@ -524,7 +505,7 @@ fn wavefunction_expand_expr(expr : Expr) -> Expr {
         out
       }
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       @symcore.raw_pow(
         wavefunction_expand_expr(base),
         wavefunction_expand_expr(exp),
@@ -543,11 +524,9 @@ fn wavefunction_expand_expr(expr : Expr) -> Expr {
 ///|
 fn wavefunction_is_infinite_bound(expr : Expr) -> Bool {
   match expr {
-    Expr::Symbol(name) => name == "oo" || name == "-oo"
-    Expr::Mul(args) if args.length() == 2 =>
-      args[0] == int(-1) &&
-      args[1] ==
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+    Symbol(name) => name == "oo" || name == "-oo"
+    Mul(args) if args.length() == 2 =>
+      args[0] == int(-1) && args[1] == NumberSymbol(Infinity)
     _ => false
   }
 }
@@ -555,16 +534,16 @@ fn wavefunction_is_infinite_bound(expr : Expr) -> Bool {
 ///|
 fn wavefunction_poly_term(expr : Expr, var_name : String) -> (Expr, Int)? {
   match expr {
-    Expr::Number(_) => Some((expr, 0))
-    Expr::Symbol(name) =>
+    Number(_) => Some((expr, 0))
+    Symbol(name) =>
       if name == var_name {
         Some((int(1), 1))
       } else {
         Some((expr, 0))
       }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (base, exp) {
-        (Expr::Symbol(name), Expr::Number(n)) =>
+        (Symbol(name), Number(n)) =>
           if name == var_name && n.is_integral() && n.numerator().to_int() >= 0 {
             Some((int(1), n.numerator().to_int()))
           } else if !wavefunction_expr_contains_symbol(expr, var_name) {
@@ -579,7 +558,7 @@ fn wavefunction_poly_term(expr : Expr, var_name : String) -> (Expr, Int)? {
             None
           }
       }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let coeffs : Array[Expr] = []
       let mut power = 0
       for arg in args {
@@ -616,9 +595,7 @@ fn wavefunction_integrate_poly_term(
   }
   if wavefunction_is_infinite_bound(lower) ||
     wavefunction_is_infinite_bound(upper) {
-    return Some(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-    )
+    return Some(NumberSymbol(Infinity))
   }
   let next_power = power + 1
   let numerator = @symcore.raw_pow(upper, int(next_power)) -
@@ -636,7 +613,7 @@ fn wavefunction_integrate_polynomial(
 ) -> Expr? {
   let expanded = wavefunction_expand_expr(wavefunction_simplify_expr(expr))
   match expanded {
-    Expr::Add(args) => {
+    Add(args) => {
       let terms : Array[Expr] = []
       for arg in args {
         match wavefunction_integrate_polynomial(arg, var_name, lower, upper) {
@@ -664,7 +641,7 @@ fn wavefunction_norm_sq_of(wf : WavefunctionExpr) -> Expr? {
     let coord_var = wavefunction_coord_var(coord)
     let (lower, upper) = wavefunction_coord_limit(coord)
     let var_name = match coord_var {
-      Expr::Symbol(name) => name
+      Symbol(name) => name
       _ => return None
     }
     match wavefunction_integrate_polynomial(integrand, var_name, lower, upper) {
@@ -678,8 +655,7 @@ fn wavefunction_norm_sq_of(wf : WavefunctionExpr) -> Expr? {
 ///|
 pub fn WavefunctionExpr::norm(self : WavefunctionExpr) -> Expr {
   match wavefunction_norm_sq_of(self) {
-    Some(value) if value ==
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) => value
+    Some(value) if value == NumberSymbol(Infinity) => value
     Some(value) =>
       wavefunction_simplify_expr(@symcore.raw_function("sqrt", [value]))
     None => self.norm_expr()
@@ -733,7 +709,7 @@ pub fn differential_operator(
   expr : Expr,
   function_expr : Expr,
 ) -> DifferentialOperatorExpr {
-  DifferentialOperatorExpr::{ expr, function_expr }
+  { expr, function_expr }
 }
 
 ///|
@@ -782,39 +758,37 @@ fn quantum_replace_exact(
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_)
-    | @symcore.ExprForm::Float(_)
-    | @symcore.ExprForm::ComplexFloat(_)
-    | @symcore.ExprForm::NumberSymbol(_)
-    | @symcore.ExprForm::Symbol(_)
-    | @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::FunctionHead(_)
-    | @symcore.ExprForm::UndefinedFunction(_)
-    | @symcore.ExprForm::Boolean(_) => expr
-    @symcore.ExprForm::Add(args) =>
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | FunctionHead(_)
+    | UndefinedFunction(_)
+    | Boolean(_) => expr
+    Add(args) =>
       @symcore.raw_add(
         args.map(arg => quantum_replace_exact(arg, needle, replacement)),
       )
-    @symcore.ExprForm::Mul(args) =>
+    Mul(args) =>
       @symcore.raw_mul(
         args.map(arg => quantum_replace_exact(arg, needle, replacement)),
       )
-    @symcore.ExprForm::Pow(base, exp) =>
+    Pow(base, exp) =>
       @symcore.raw_pow(
         quantum_replace_exact(base, needle, replacement),
         quantum_replace_exact(exp, needle, replacement),
       )
-    @symcore.ExprForm::Mod(lhs, rhs) =>
+    Mod(lhs, rhs) =>
       @symcore.raw_mod_expr(
         quantum_replace_exact(lhs, needle, replacement),
         quantum_replace_exact(rhs, needle, replacement),
       )
-    @symcore.ExprForm::Tuple(args) =>
-      @symcore.Expr::Tuple(
-        args.map(arg => quantum_replace_exact(arg, needle, replacement)),
-      )
-    @symcore.ExprForm::Dict(items) => {
+    Tuple(args) =>
+      Tuple(args.map(arg => quantum_replace_exact(arg, needle, replacement)))
+    Dict(items) => {
       let out : Array[(Expr, Expr)] = []
       for item in items {
         let (key, value) = item
@@ -825,48 +799,48 @@ fn quantum_replace_exact(
           ),
         )
       }
-      @symcore.Expr::Dict(out)
+      Dict(out)
     }
-    @symcore.ExprForm::Relational(op, lhs, rhs) =>
+    Relational(op, lhs, rhs) =>
       match op {
-        @symcore.RelOp::Eq =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
+        Eq =>
+          Relational(
+            Eq,
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
-        @symcore.RelOp::Ne =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ne,
+        Ne =>
+          Relational(
+            Ne,
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
-        @symcore.RelOp::Lt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Lt,
+        Lt =>
+          Relational(
+            Lt,
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
-        @symcore.RelOp::Le =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Le,
+        Le =>
+          Relational(
+            Le,
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
-        @symcore.RelOp::Gt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Gt,
+        Gt =>
+          Relational(
+            Gt,
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
-        @symcore.RelOp::Ge =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ge,
+        Ge =>
+          Relational(
+            Ge,
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
       }
-    @symcore.ExprForm::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       let args : Array[Expr] = [
         quantum_replace_exact(inner, needle, replacement),
       ]
@@ -875,13 +849,13 @@ fn quantum_replace_exact(
       }
       @symcore.raw_derivative(args[0], args[1:])
     }
-    @symcore.ExprForm::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       @symcore.subs_expr(
         quantum_replace_exact(inner, needle, replacement),
         quantum_replace_exact(variable, needle, replacement),
         quantum_replace_exact(value, needle, replacement),
       )
-    @symcore.ExprForm::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       @symcore.lambda_expr(
         quantum_replace_exact(vars, needle, replacement),
         quantum_replace_exact(body, needle, replacement),
@@ -900,42 +874,41 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_)
-    | @symcore.ExprForm::Float(_)
-    | @symcore.ExprForm::ComplexFloat(_)
-    | @symcore.ExprForm::NumberSymbol(_)
-    | @symcore.ExprForm::Symbol(_)
-    | @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::FunctionHead(_)
-    | @symcore.ExprForm::UndefinedFunction(_)
-    | @symcore.ExprForm::Boolean(_) => expr
-    @symcore.ExprForm::Add(args) =>
-      @symcore.add(args.map(wavefunction_eval_derivatives))
-    @symcore.ExprForm::Mul(args) =>
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | FunctionHead(_)
+    | UndefinedFunction(_)
+    | Boolean(_) => expr
+    Add(args) => @symcore.add(args.map(wavefunction_eval_derivatives))
+    Mul(args) =>
       wavefunction_simplify_mul(args.map(wavefunction_eval_derivatives))
-    @symcore.ExprForm::Pow(base, exp) =>
+    Pow(base, exp) =>
       wavefunction_simplify_expr(
         @symcore.raw_pow(
           wavefunction_eval_derivatives(base),
           wavefunction_eval_derivatives(exp),
         ),
       )
-    @symcore.ExprForm::Mod(lhs, rhs) =>
+    Mod(lhs, rhs) =>
       wavefunction_simplify_expr(
         @symcore.raw_mod_expr(
           wavefunction_eval_derivatives(lhs),
           wavefunction_eval_derivatives(rhs),
         ),
       )
-    @symcore.ExprForm::Derivative(inner, deriv_args) =>
+    Derivative(inner, deriv_args) =>
       if deriv_args.length() >= 1 {
         let base = wavefunction_eval_derivatives(inner)
         let mut out = base
         let mut last_var : Expr? = None
         for arg in deriv_args {
           match arg {
-            Expr::Number(n) if n.is_integral() && n.numerator().to_int() >= 0 =>
+            Number(n) if n.is_integral() && n.numerator().to_int() >= 0 =>
               match last_var {
                 Some(diff_var) =>
                   for _ in 1..<n.numerator().to_int() {
@@ -953,9 +926,8 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
       } else {
         @symcore.raw_derivative(wavefunction_eval_derivatives(inner), [])
       }
-    @symcore.ExprForm::Tuple(args) =>
-      @symcore.Expr::Tuple(args.map(wavefunction_eval_derivatives))
-    @symcore.ExprForm::Dict(items) => {
+    Tuple(args) => Tuple(args.map(wavefunction_eval_derivatives))
+    Dict(items) => {
       let out : Array[(Expr, Expr)] = []
       for item in items {
         let (key, value) = item
@@ -966,54 +938,54 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
           ),
         )
       }
-      @symcore.Expr::Dict(out)
+      Dict(out)
     }
-    @symcore.ExprForm::Relational(op, lhs, rhs) =>
+    Relational(op, lhs, rhs) =>
       match op {
-        @symcore.RelOp::Eq =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
+        Eq =>
+          Relational(
+            Eq,
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )
-        @symcore.RelOp::Ne =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ne,
+        Ne =>
+          Relational(
+            Ne,
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )
-        @symcore.RelOp::Lt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Lt,
+        Lt =>
+          Relational(
+            Lt,
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )
-        @symcore.RelOp::Le =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Le,
+        Le =>
+          Relational(
+            Le,
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )
-        @symcore.RelOp::Gt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Gt,
+        Gt =>
+          Relational(
+            Gt,
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )
-        @symcore.RelOp::Ge =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ge,
+        Ge =>
+          Relational(
+            Ge,
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )
       }
-    @symcore.ExprForm::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       @symcore.subs_expr(
         wavefunction_eval_derivatives(inner),
         wavefunction_eval_derivatives(variable),
         wavefunction_eval_derivatives(value),
       )
-    @symcore.ExprForm::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       @symcore.lambda_expr(
         wavefunction_eval_derivatives(vars),
         wavefunction_eval_derivatives(body),
@@ -1036,7 +1008,7 @@ pub fn differential_operator_apply_to_wavefunction(
         let env : Map[String, Expr] = Map([])
         for idx in 0..<vars.length() {
           match wf_vars[idx] {
-            Expr::Symbol(name) => env[name] = vars[idx]
+            Symbol(name) => env[name] = vars[idx]
             _ => ()
           }
         }

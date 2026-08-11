@@ -28,7 +28,7 @@ pub struct Span {
 /// - Returns: A `Span` value.
 /// - Limits: Does not reorder or validate offsets.
 pub fn span(start : Int, stop : Int) -> Span {
-  Span::{ start, stop }
+  { start, stop }
 }
 
 ///|
@@ -42,7 +42,7 @@ pub fn span(start : Int, stop : Int) -> Span {
 /// - Returns: A `Span` from `lhs.start` to `rhs.stop`.
 /// - Limits: Assumes caller passes spans in source order.
 pub fn span_merge(lhs : Span, rhs : Span) -> Span {
-  Span::{ start: lhs.start, stop: rhs.stop }
+  { start: lhs.start, stop: rhs.stop }
 }
 
 ///|

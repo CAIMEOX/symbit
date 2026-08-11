@@ -9,7 +9,7 @@ fn tsch_port_pair_text(
 ///|
 test "numberfields galois: tschirnhausen transformation parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = @sympolys.PolyBuilder::new(["x"], @sympolys.Domain::ZZ)
+  let b = @sympolys.PolyBuilder::new(["x"], ZZ)
   let cases = [
     b.from_expr((x ^ @symcore.int(3)) - @symcore.int(2)),
     b.from_expr((x ^ @symcore.int(4)) + x + @symcore.int(1)),
@@ -34,13 +34,13 @@ test "numberfields galois: tschirnhausen transformation parity" {
 
 ///|
 fn resolvent_port_text(coeffs : Array[@sympolys.FieldElem]) -> String {
-  "[" + coeffs.map(c => c.to_string()).join(", ") + "]"
+  "[" + coeffs.map(c => Show::to_string(c)).join(", ") + "]"
 }
 
 ///|
 test "numberfields galois: resolvent lookup parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = @sympolys.PolyBuilder::new(["x"], @sympolys.Domain::ZZ)
+  let b = @sympolys.PolyBuilder::new(["x"], ZZ)
   let cases = [
     b.from_expr((x ^ @symcore.int(4)) + x + @symcore.int(1)),
     b.from_expr((x ^ @symcore.int(4)) - @symcore.int(2)),
@@ -114,13 +114,13 @@ test "numberfields galois: generate lambda lookup trial parity" {
 fn anp_port_text(rep : Array[Int], mod : Array[Int]) -> String raise {
   let rep_coeffs : Array[@sympolys.FieldElem] = []
   for n in rep {
-    rep_coeffs.push(@sympolys.fe_from_int(n, @sympolys.Domain::QQ))
+    rep_coeffs.push(@sympolys.fe_from_int(n, QQ))
   }
   let mod_coeffs : Array[@sympolys.FieldElem] = []
   for n in mod {
-    mod_coeffs.push(@sympolys.fe_from_int(n, @sympolys.Domain::QQ))
+    mod_coeffs.push(@sympolys.fe_from_int(n, QQ))
   }
-  @sympolys.init_normal_ANP(rep_coeffs, mod_coeffs, @sympolys.Domain::QQ).to_string()
+  Show::to_string(@sympolys.init_normal_ANP(rep_coeffs, mod_coeffs, QQ))
 }
 
 ///|

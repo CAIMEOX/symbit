@@ -11,15 +11,14 @@ pub enum MatrixScalarValue {
 ///|
 pub impl Show for MatrixScalarValue with fn to_string(self) {
   match self {
-    MatrixScalarValue::Matrix(matrix) =>
-      @symphysics.explicit_matrix_rows_string(matrix)
-    MatrixScalarValue::Scalar(expr) => @symprint.pretty_string(expr)
+    Matrix(matrix) => @symphysics.explicit_matrix_rows_string(matrix)
+    Scalar(expr) => @symprint.pretty_string(expr)
   }
 }
 
 ///|
 pub impl Show for MatrixScalarValue with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -64,9 +63,9 @@ pub fn flatten_scalar(
   matrix : @symphysics.ExplicitMatrix,
 ) -> MatrixScalarValue raise @symphysics.PhysicsError {
   if matrix.height() == 1 && matrix.width() == 1 {
-    MatrixScalarValue::Scalar(matrix.get(0, 0))
+    Scalar(matrix.get(0, 0))
   } else {
-    MatrixScalarValue::Matrix(matrix)
+    Matrix(matrix)
   }
 }
 
@@ -75,9 +74,9 @@ pub fn matrix_to_zero(
   matrix : @symphysics.ExplicitMatrix,
 ) -> MatrixScalarValue raise @symphysics.PhysicsError {
   if is_zero_matrix(matrix) {
-    MatrixScalarValue::Scalar(int(0))
+    Scalar(int(0))
   } else {
-    MatrixScalarValue::Matrix(matrix)
+    Matrix(matrix)
   }
 }
 
@@ -111,9 +110,7 @@ pub fn matrix_tensor_product(
   product : Array[@symphysics.ExplicitMatrix],
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   guard !product.is_empty() else {
-    raise @symphysics.PhysicsError::ValueError(
-      "matrix_tensor_product expects at least one matrix",
-    )
+    raise ValueError("matrix_tensor_product expects at least one matrix")
   }
   let mut acc = product[0]
   for idx in 1..<product.length() {

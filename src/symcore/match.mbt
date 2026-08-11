@@ -39,7 +39,7 @@ fn match_env_rules(env : MatchEnv) -> Array[(Expr, Expr)] {
 fn expr_contains_wild(expr : Expr) -> Bool {
   let expr = normalize_legacy_expr(expr)
   match expr {
-    Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => true
+    Wild(_, _, _) | WildFunction(_, _) => true
     _ => {
       for child in args(expr) {
         if expr_contains_wild(child) {
@@ -63,18 +63,18 @@ fn combine_commutative_items(items : Array[Expr], is_add : Bool) -> Expr {
 ///|
 fn match_count_ops(expr : Expr) -> Int {
   match normalize_legacy_expr(expr) {
-    Expr::Add(items) => {
+    Add(items) => {
       let mut count = if items.is_empty() { 0 } else { items.length() - 1 }
       for item in items {
         count += match_count_ops(item)
       }
       count
     }
-    Expr::Mul(items) =>
-      match split_fraction_for_match(Expr::Mul(items)) {
+    Mul(items) =>
+      match split_fraction_for_match(Mul(items)) {
         Some((numerator, denominator)) => {
           let numerator_is_exact_integer = match numerator {
-            Expr::Number(value) => value.is_integral()
+            Number(value) => value.is_integral()
             _ => false
           }
           if is_one(denominator) {
@@ -101,27 +101,27 @@ fn match_count_ops(expr : Expr) -> Int {
           count
         }
       }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match exact_integer_value(exp) {
         Some(value) if value.compare(-1N) == 0 => 1 + match_count_ops(base)
         _ => 1 + match_count_ops(base) + match_count_ops(exp)
       }
-    Expr::Mod(lhs, rhs) => 1 + match_count_ops(lhs) + match_count_ops(rhs)
-    Expr::Apply(head, args) => {
+    Mod(lhs, rhs) => 1 + match_count_ops(lhs) + match_count_ops(rhs)
+    Apply(head, args) => {
       let mut count = 1 + match_count_ops(head)
       for arg in args {
         count += match_count_ops(arg)
       }
       count
     }
-    Expr::Tuple(items) => {
+    Tuple(items) => {
       let mut count = 0
       for item in items {
         count += match_count_ops(item)
       }
       count
     }
-    Expr::Dict(items) => {
+    Dict(items) => {
       let mut count = 0
       for item in items {
         let (key, value) = item
@@ -129,22 +129,20 @@ fn match_count_ops(expr : Expr) -> Int {
       }
       count
     }
-    Expr::Relational(_, lhs, rhs) =>
-      1 + match_count_ops(lhs) + match_count_ops(rhs)
-    Expr::Derivative(inner, deriv_args) => {
+    Relational(_, lhs, rhs) => 1 + match_count_ops(lhs) + match_count_ops(rhs)
+    Derivative(inner, deriv_args) => {
       let mut count = 1 + match_count_ops(inner)
       for arg in deriv_args {
         count += match_count_ops(arg)
       }
       count
     }
-    Expr::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       1 +
       match_count_ops(inner) +
       match_count_ops(variable) +
       match_count_ops(value)
-    Expr::Lambda(vars, body) =>
-      1 + match_count_ops(vars) + match_count_ops(body)
+    Lambda(vars, body) => 1 + match_count_ops(vars) + match_count_ops(body)
     _ => 0
   }
 }
@@ -159,14 +157,12 @@ fn split_fraction_for_match(expr : Expr) -> (Expr, Expr)? {
     if exponent.compare(1N) == 0 {
       items.push(base)
     } else {
-      items.push(
-        pow(base, Expr::Number(@symnum.BigRational::from_bigint(exponent))),
-      )
+      items.push(pow(base, Number(@symnum.BigRational::from_bigint(exponent))))
     }
   }
   let push_term = fn(term : Expr, sign : Int) -> Bool {
     match normalize_legacy_expr(term) {
-      Expr::Number(value) => {
+      Number(value) => {
         coeff = if sign >= 0 {
           coeff.mul_r(value)
         } else {
@@ -176,7 +172,7 @@ fn split_fraction_for_match(expr : Expr) -> (Expr, Expr)? {
         }
         true
       }
-      Expr::Pow(base, exp) =>
+      Pow(base, exp) =>
         match exact_integer_value(exp) {
           Some(value) if value.compare(0N) < 0 => {
             if sign >= 0 {
@@ -214,24 +210,24 @@ fn split_fraction_for_match(expr : Expr) -> (Expr, Expr)? {
     }
   }
   match expr {
-    Expr::Mul(items) =>
+    Mul(items) =>
       for item in items {
         if !push_term(item, 1) {
           return None
         }
       }
-    Expr::Pow(_, _) | Expr::Number(_) => if !push_term(expr, 1) { return None }
+    Pow(_, _) | Number(_) => if !push_term(expr, 1) { return None }
     _ => return None
   }
   if coeff.denominator().compare(1N) != 0 {
     denom_items.push(
-      Expr::Number(@symnum.BigRational::from_bigint(coeff.denominator())),
+      Number(@symnum.BigRational::from_bigint(coeff.denominator())),
     )
   }
   if coeff.numerator().compare(1N) != 0 || numer_items.is_empty() {
     numer_items.insert(
       0,
-      Expr::Number(@symnum.BigRational::from_bigint(coeff.numerator())),
+      Number(@symnum.BigRational::from_bigint(coeff.numerator())),
     )
   }
   Some(
@@ -248,7 +244,7 @@ fn common_add_wild_factor(items : Array[Expr]) -> (Expr, Array[Expr])? {
   let remainders : Array[Expr] = []
   for item in items {
     match item {
-      Expr::Mul(factors) => {
+      Mul(factors) => {
         let wild_factors : Array[Expr] = []
         let plain_factors : Array[Expr] = []
         for factor in factors {
@@ -323,7 +319,7 @@ fn split_items_by_mask(
 ///|
 fn is_plain_pattern_wild(expr : Expr) -> Bool {
   match normalize_legacy_expr(expr) {
-    Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => true
+    Wild(_, _, _) | WildFunction(_, _) => true
     _ => false
   }
 }
@@ -331,26 +327,24 @@ fn is_plain_pattern_wild(expr : Expr) -> Bool {
 ///|
 fn expr_shape_rank(expr : Expr) -> Int {
   match normalize_legacy_expr(expr) {
-    Expr::Add(_) => 0
-    Expr::Mul(_) => 1
-    Expr::Pow(_, _) => 2
-    Expr::Mod(_, _) => 3
-    Expr::Apply(_, _) => 4
-    Expr::Tuple(_) => 5
-    Expr::Dict(_) => 6
-    Expr::Relational(_, _, _) => 7
-    Expr::Derivative(_, _) => 8
-    Expr::Subs(_, _, _) => 9
-    Expr::Lambda(_, _) => 10
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => 11
-    Expr::NumberSymbol(_) => 12
-    Expr::Symbol(_) | Expr::Dummy(_, _) => 13
-    Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => 14
-    Expr::Boolean(_) => 15
-    Expr::FunctionHead(_)
-    | Expr::UndefinedFunction(_)
-    | Expr::IdentityFunction => 16
-    Expr::Function(_, _) => abort("legacy function should be normalized")
+    Add(_) => 0
+    Mul(_) => 1
+    Pow(_, _) => 2
+    Mod(_, _) => 3
+    Apply(_, _) => 4
+    Tuple(_) => 5
+    Dict(_) => 6
+    Relational(_, _, _) => 7
+    Derivative(_, _) => 8
+    Subs(_, _, _) => 9
+    Lambda(_, _) => 10
+    Number(_) | Float(_) | ComplexFloat(_) => 11
+    NumberSymbol(_) => 12
+    Symbol(_) | Dummy(_, _) => 13
+    Wild(_, _, _) | WildFunction(_, _) => 14
+    Boolean(_) => 15
+    FunctionHead(_) | UndefinedFunction(_) | IdentityFunction => 16
+    Function(_, _) => abort("legacy function should be normalized")
   }
 }
 
@@ -399,9 +393,9 @@ fn match_commutative_items(
   let wild_items : Array[Expr] = []
   let wild_priority = fn(expr : Expr) -> Int {
     match normalize_legacy_expr(expr) {
-      Expr::Apply(Expr::WildFunction(_, _), _) => 0
-      Expr::WildFunction(_, _) => 1
-      Expr::Wild(_, _, _) => 3
+      Apply(WildFunction(_, _), _) => 0
+      WildFunction(_, _) => 1
+      Wild(_, _, _) => 3
       _ => 2
     }
   }
@@ -583,7 +577,7 @@ fn monomial_parts(expr : Expr) -> (@symnum.BigRational, Array[(Expr, BigInt)])? 
   }
   letrec go = (term : Expr) => {
     match normalize_legacy_expr(term) {
-      Expr::Mul(items) => {
+      Mul(items) => {
         for item in items {
           if !go(item) {
             return false
@@ -591,7 +585,7 @@ fn monomial_parts(expr : Expr) -> (@symnum.BigRational, Array[(Expr, BigInt)])? 
         }
         true
       }
-      Expr::Pow(base, exp) =>
+      Pow(base, exp) =>
         match exact_numeric_expr_to_rational(exp) {
           Some(value) if value.is_integral() => merge(base, value.numerator())
           _ => false
@@ -612,7 +606,7 @@ fn monomial_expr(
 ) -> Expr {
   let items : Array[Expr] = []
   if coeff.compare(@symnum.BigRational::one()) != 0 || factors.is_empty() {
-    items.push(Expr::Number(coeff))
+    items.push(Number(coeff))
   }
   let ordered = factors.copy()
   ordered.sort_by((lhs, rhs) => compare_expr(lhs.0, rhs.0))
@@ -621,9 +615,7 @@ fn monomial_expr(
     if exponent.compare(1N) == 0 {
       items.push(base)
     } else {
-      items.push(
-        pow(base, Expr::Number(@symnum.BigRational::from_bigint(exponent))),
-      )
+      items.push(pow(base, Number(@symnum.BigRational::from_bigint(exponent))))
     }
   }
   combine_commutative_items(items, false)
@@ -702,7 +694,7 @@ fn divide_expr_by_exact_factor(expr : Expr, factor : Expr) -> Expr? {
     return Some(int(1))
   }
   match (expr, factor) {
-    (Expr::Add(expr_items), Expr::Add(factor_items)) =>
+    (Add(expr_items), Add(factor_items)) =>
       divide_add_by_exact_template(expr_items, factor_items)
     _ => divide_monomial_expr(expr, factor)
   }
@@ -724,58 +716,52 @@ fn wild_property_matches(property : WildProperty, expr : Expr) -> Bool {
     None => ()
   }
   match property {
-    WildProperty::Symbol =>
+    Symbol =>
       match expr_form(expr) {
-        ExprForm::Symbol(_) | ExprForm::Dummy(_, _) | ExprForm::Wild(_, _, _) =>
-          true
+        Symbol(_) | Dummy(_, _) | Wild(_, _, _) => true
         _ => false
       }
-    WildProperty::Integer =>
+    Integer =>
       match expr_form(expr) {
-        ExprForm::Number(value) => value.is_integral()
+        Number(value) => value.is_integral()
         _ => false
       }
-    WildProperty::Rational =>
+    Rational =>
       match expr_form(expr) {
-        ExprForm::Number(_) => true
+        Number(_) => true
         _ => false
       }
-    WildProperty::Real => is_real_number_atom(expr)
-    WildProperty::Positive =>
+    Real => is_real_number_atom(expr)
+    Positive =>
       match expr_form(expr) {
-        ExprForm::Number(value) => exact_number_sign(value) > 0
-        ExprForm::NumberSymbol(kind) =>
+        Number(value) => exact_number_sign(value) > 0
+        NumberSymbol(kind) =>
           match kind {
-            NumberSymbolKind::Pi
-            | NumberSymbolKind::Exp1
-            | NumberSymbolKind::EulerGamma
-            | NumberSymbolKind::GoldenRatio
-            | NumberSymbolKind::Catalan
-            | NumberSymbolKind::Infinity => true
+            Pi | Exp1 | EulerGamma | GoldenRatio | Catalan | Infinity => true
             _ => false
           }
         _ => false
       }
-    WildProperty::Negative =>
+    Negative =>
       match expr_form(expr) {
-        ExprForm::Number(value) => exact_number_sign(value) < 0
-        ExprForm::NumberSymbol(NumberSymbolKind::NegativeInfinity) => true
+        Number(value) => exact_number_sign(value) < 0
+        NumberSymbol(NegativeInfinity) => true
         _ => false
       }
-    WildProperty::Finite => is_finite_number_atom(expr)
-    WildProperty::Nonzero =>
+    Finite => is_finite_number_atom(expr)
+    Nonzero =>
       match expr_form(expr) {
-        ExprForm::Number(value) => !value.is_zero()
-        ExprForm::NumberSymbol(kind) =>
+        Number(value) => !value.is_zero()
+        NumberSymbol(kind) =>
           match kind {
-            NumberSymbolKind::Pi
-            | NumberSymbolKind::Exp1
-            | NumberSymbolKind::EulerGamma
-            | NumberSymbolKind::GoldenRatio
-            | NumberSymbolKind::Catalan
-            | NumberSymbolKind::Infinity
-            | NumberSymbolKind::NegativeInfinity
-            | NumberSymbolKind::ComplexInfinity => true
+            Pi
+            | Exp1
+            | EulerGamma
+            | GoldenRatio
+            | Catalan
+            | Infinity
+            | NegativeInfinity
+            | ComplexInfinity => true
             _ => false
           }
         _ => false
@@ -786,8 +772,7 @@ fn wild_property_matches(property : WildProperty, expr : Expr) -> Bool {
 ///|
 fn is_exact_negative_one(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::Number(value) =>
-      value.compare(@symnum.BigRational::from_int(-1)) == 0
+    Number(value) => value.compare(@symnum.BigRational::from_int(-1)) == 0
     _ => false
   }
 }
@@ -795,7 +780,7 @@ fn is_exact_negative_one(expr : Expr) -> Bool {
 ///|
 fn exact_integer_value(expr : Expr) -> BigInt? {
   match expr_form(expr) {
-    ExprForm::Number(value) if value.is_integral() => Some(value.numerator())
+    Number(value) if value.is_integral() => Some(value.numerator())
     _ => None
   }
 }
@@ -804,21 +789,21 @@ fn exact_integer_value(expr : Expr) -> BigInt? {
 fn reciprocal_for_match(expr : Expr) -> Expr {
   let expr = normalize_legacy_expr(expr)
   match expr {
-    Expr::Pow(base, exp) if is_exact_negative_one(exp) => base
-    Expr::Number(value) =>
+    Pow(base, exp) if is_exact_negative_one(exp) => base
+    Number(value) =>
       if value.is_zero() {
         pow(expr, int(-1))
       } else {
-        Expr::Number(
+        Number(
           @symnum.BigRational::new(value.denominator(), value.numerator()) catch {
             _ => return pow(expr, int(-1))
           },
         )
       }
-    Expr::NumberSymbol(NumberSymbolKind::Infinity)
-    | Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
-    | Expr::NumberSymbol(NumberSymbolKind::ComplexInfinity) => int(0)
-    Expr::NumberSymbol(NumberSymbolKind::NaN) => expr
+    NumberSymbol(Infinity)
+    | NumberSymbol(NegativeInfinity)
+    | NumberSymbol(ComplexInfinity) => int(0)
+    NumberSymbol(NaN) => expr
     _ => pow(expr, int(-1))
   }
 }
@@ -840,7 +825,7 @@ fn reciprocal_root_for_match(expr : Expr, degree : BigInt) -> Expr {
 ///|
 fn base_exp_for_match(expr : Expr) -> (Expr, Expr) {
   match normalize_legacy_expr(expr) {
-    Expr::Pow(base, exp) => (base, exp)
+    Pow(base, exp) => (base, exp)
     other => (other, int(1))
   }
 }
@@ -857,21 +842,18 @@ fn positive_root_for_match(expr : Expr, degree : BigInt) -> Expr {
     },
   )
   match expr {
-    Expr::Number(value) =>
+    Number(value) =>
       if exact_number_sign(value) < 0 && degree.mod(2N).compare(0N) == 0 {
         let magnitude = Expr::Number(
           @symnum.BigRational::new(value.numerator().neg(), value.denominator()) catch {
             _ => return pow(expr, one_over_degree)
           },
         )
-        mul([
-          Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit),
-          pow(magnitude, one_over_degree),
-        ])
+        mul([NumberSymbol(ImaginaryUnit), pow(magnitude, one_over_degree)])
       } else {
         pow(expr, one_over_degree)
       }
-    Expr::Mul(items) =>
+    Mul(items) =>
       if degree.mod(2N).compare(0N) == 0 && !items.is_empty() {
         let mut minus_idx = -1
         for i in 0..<items.length() {
@@ -889,7 +871,7 @@ fn positive_root_for_match(expr : Expr, degree : BigInt) -> Expr {
           }
           let magnitude = combine_commutative_items(remainder, false)
           return mul([
-            Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit),
+            NumberSymbol(ImaginaryUnit),
             positive_root_for_match(magnitude, degree),
           ])
         }
@@ -897,7 +879,7 @@ fn positive_root_for_match(expr : Expr, degree : BigInt) -> Expr {
       } else {
         pow(expr, one_over_degree)
       }
-    Expr::Pow(base, exp) => pow(base, mul([exp, one_over_degree]))
+    Pow(base, exp) => pow(base, mul([exp, one_over_degree]))
     _ => pow(expr, one_over_degree)
   }
 }
@@ -933,7 +915,7 @@ fn expand_multiplicative_coeff_for_add_match(expr : Expr) -> Expr? {
 ///|
 fn expand_positive_power_for_mul_match(expr : Expr) -> Expr? {
   match normalize_legacy_expr(expr) {
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match exact_integer_value(exp) {
         Some(n) if n.compare(1N) > 0 && n.compare(32N) <= 0 => {
           let count = n.to_int()
@@ -958,7 +940,7 @@ pub fn wild_matches(
   let pattern = normalize_legacy_expr(pattern)
   let expr = normalize_legacy_expr(expr)
   match pattern {
-    Expr::Wild(_, exclude, properties) => {
+    Wild(_, exclude, properties) => {
       for item in exclude {
         if has(expr, item) {
           return None
@@ -991,17 +973,14 @@ pub fn wild_function_matches(
   let pattern = normalize_legacy_expr(pattern)
   let expr = normalize_legacy_expr(expr)
   match pattern {
-    Expr::WildFunction(_, nargs) =>
+    WildFunction(_, nargs) =>
       match expr {
-        Expr::WildFunction(_, _) => {
+        WildFunction(_, _) => {
           let out = clone_match_env(repl_dict)
           out.set(pattern, expr)
           Some(out)
         }
-        Expr::Apply(_, args) if wild_function_matches_arity(
-            nargs,
-            args.length(),
-          ) => {
+        Apply(_, args) if wild_function_matches_arity(nargs, args.length()) => {
           let out = clone_match_env(repl_dict)
           out.set(pattern, expr)
           Some(out)
@@ -1032,9 +1011,9 @@ pub fn expr_match(
     return Some(clone_match_env(repl_dict))
   }
   match pattern {
-    Expr::Apply(Expr::WildFunction(name, nargs), pattern_args) =>
+    Apply(WildFunction(name, nargs), pattern_args) =>
       match expr {
-        Expr::Apply(expr_head, expr_args) =>
+        Apply(expr_head, expr_args) =>
           if wild_function_matches_arity(nargs, expr_args.length()) &&
             pattern_args.length() == expr_args.length() {
             let wild_fn = Expr::WildFunction(name, nargs)
@@ -1064,7 +1043,7 @@ pub fn expr_match(
     _ => ()
   }
   match pattern {
-    Expr::Add(pattern_items) => {
+    Add(pattern_items) => {
       match common_add_wild_factor(pattern_items) {
         Some((factor, remainders)) =>
           match
@@ -1079,15 +1058,15 @@ pub fn expr_match(
         None => ()
       }
       match expr {
-        Expr::Add(_) => ()
+        Add(_) => ()
         _ =>
           match expand_multiplicative_coeff_for_add_match(expr) {
             Some(expanded) => return expr_match(pattern, expanded, repl_dict~)
-            None => return expr_match(pattern, Expr::Add([expr]), repl_dict~)
+            None => return expr_match(pattern, Add([expr]), repl_dict~)
           }
       }
     }
-    Expr::Mul(pattern_items) if is_zero(expr) => {
+    Mul(pattern_items) if is_zero(expr) => {
       let wild_items : Array[Expr] = []
       for item in pattern_items {
         if expr_contains_wild(item) {
@@ -1102,7 +1081,7 @@ pub fn expr_match(
         )
       }
     }
-    Expr::Mul(pattern_items) => {
+    Mul(pattern_items) => {
       let exact_items : Array[Expr] = []
       let wild_items : Array[Expr] = []
       for item in pattern_items {
@@ -1135,9 +1114,9 @@ pub fn expr_match(
         None => ()
       }
     }
-    Expr::Pow(base, exp) if is_one(expr) && !expr_contains_wild(base) =>
+    Pow(base, exp) if is_one(expr) && !expr_contains_wild(base) =>
       return expr_match(exp, int(0), repl_dict~)
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       match exact_integer_value(exp) {
         Some(n) if n.compare(0N) > 0 =>
           match expr_match(base, positive_root_for_match(expr, n), repl_dict~) {
@@ -1174,17 +1153,17 @@ pub fn expr_match(
     _ => ()
   }
   match pattern {
-    Expr::Mul(_) =>
+    Mul(_) =>
       match expr {
-        Expr::Mul(_) => ()
-        _ => return expr_match(pattern, Expr::Mul([int(1), expr]), repl_dict~)
+        Mul(_) => ()
+        _ => return expr_match(pattern, Mul([int(1), expr]), repl_dict~)
       }
     _ => ()
   }
   match (pattern, expr) {
-    (Expr::Add(pattern_items), Expr::Add(expr_items)) =>
+    (Add(pattern_items), Add(expr_items)) =>
       return match_commutative_items(pattern_items, expr_items, true, repl_dict)
-    (Expr::Mul(pattern_items), Expr::Mul(expr_items)) =>
+    (Mul(pattern_items), Mul(expr_items)) =>
       return match_commutative_items(
         pattern_items, expr_items, false, repl_dict,
       )

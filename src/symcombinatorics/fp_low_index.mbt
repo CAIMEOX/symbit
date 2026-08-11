@@ -12,7 +12,7 @@ pub fn low_index_subgroups(
     group.free_group,
     group.relators,
     group.generators,
-    group.to_string(),
+    Show::to_string(group),
     [],
   )
   let relators = group.relators

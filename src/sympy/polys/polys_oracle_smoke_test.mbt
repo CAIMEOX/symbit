@@ -1,6 +1,6 @@
 ///|
 test "sympy oracle: sympy_call_string expand" {
-  let res = sympy_call_string("sympy.expand", [OracleArg::Str("(x + 1)**2")])
+  let res = sympy_call_string("sympy.expand", [Str("(x + 1)**2")])
   inspect(res, content="x**2 + 2*x + 1")
 }
 

@@ -31,8 +31,8 @@ test "tools typed" {
   let rmones = @strategies_rl.rm_id(x => x == @symcore.int(1))
   let ruletypes : Map[@strategies_util.ExprOp, (@symcore.Expr) -> @symcore.Expr] = Map([],
   )
-  ruletypes[@strategies_util.ExprOp::Function("A")] = rmzeros
-  ruletypes[@strategies_util.ExprOp::Function("B")] = rmones
+  ruletypes[Function("A")] = rmzeros
+  ruletypes[Function("B")] = rmones
   let remove_something = @strategies_tools.typed(ruletypes)
   let exprA = @symcore.function("A", [@symcore.int(0), @symcore.int(1)])
   let exprB = @symcore.function("B", [@symcore.int(0), @symcore.int(1)])

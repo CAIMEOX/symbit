@@ -80,46 +80,41 @@ pub(all) suberror PolyError {
 ///|
 impl Eq for Domain with fn equal(self, other : Domain) -> Bool {
   match (self, other) {
-    (Domain::ZZ, Domain::ZZ)
-    | (Domain::QQ, Domain::QQ)
-    | (Domain::CC, Domain::CC)
-    | (Domain::RR, Domain::RR)
-    | (Domain::ZZ_I, Domain::ZZ_I)
-    | (Domain::QQ_I, Domain::QQ_I)
-    | (Domain::EX, Domain::EX)
-    | (Domain::EXRAW, Domain::EXRAW) => true
-    (Domain::GF(p1), Domain::GF(p2)) => p1 == p2
-    (Domain::GFExt(p1, k1, m1), Domain::GFExt(p2, k2, m2)) =>
+    (ZZ, ZZ)
+    | (QQ, QQ)
+    | (CC, CC)
+    | (RR, RR)
+    | (ZZ_I, ZZ_I)
+    | (QQ_I, QQ_I)
+    | (EX, EX)
+    | (EXRAW, EXRAW) => true
+    (GF(p1), GF(p2)) => p1 == p2
+    (GFExt(p1, k1, m1), GFExt(p2, k2, m2)) =>
       p1 == p2 && k1 == k2 && m1.equal(m2)
-    (Domain::Frac(d1), Domain::Frac(d2)) => d1.equal(d2)
-    (Domain::PolyRing(base1, gens1), Domain::PolyRing(base2, gens2)) =>
-      base1.equal(base2) && gens1.equal(gens2)
-    (
-      Domain::RationalFunctionField(base1, gens1),
-      Domain::RationalFunctionField(base2, gens2),
-    ) => base1.equal(base2) && gens1.equal(gens2)
-    (
-      Domain::QuotientRing(base1, gens1, rels1),
-      Domain::QuotientRing(base2, gens2, rels2),
-    ) => base1.equal(base2) && gens1.equal(gens2) && rels1.equal(rels2)
-    (
-      Domain::PowerSeries(base1, gens1, prec1),
-      Domain::PowerSeries(base2, gens2, prec2),
-    ) => base1.equal(base2) && gens1.equal(gens2) && prec1 == prec2
-    (Domain::AlgExt(base1, syms1, rels1), Domain::AlgExt(base2, syms2, rels2)) =>
-      base1.equal(base2) && syms1.equal(syms2) && rels1.equal(rels2)
+    (Frac(d1), Frac(d2)) => Eq::equal(d1, d2)
+    (PolyRing(base1, gens1), PolyRing(base2, gens2)) =>
+      Eq::equal(base1, base2) && gens1.equal(gens2)
+    (RationalFunctionField(base1, gens1), RationalFunctionField(base2, gens2)) =>
+      Eq::equal(base1, base2) && gens1.equal(gens2)
+    (QuotientRing(base1, gens1, rels1), QuotientRing(base2, gens2, rels2)) =>
+      Eq::equal(base1, base2) && gens1.equal(gens2) && rels1.equal(rels2)
+    (PowerSeries(base1, gens1, prec1), PowerSeries(base2, gens2, prec2)) =>
+      Eq::equal(base1, base2) && gens1.equal(gens2) && prec1 == prec2
+    (AlgExt(base1, syms1, rels1), AlgExt(base2, syms2, rels2)) =>
+      Eq::equal(base1, base2) && syms1.equal(syms2) && rels1.equal(rels2)
     _ => false
   }
 }
 
 ///|
 impl Eq for Domain with fn not_equal(self, other : Domain) -> Bool {
-  !self.equal(other)
+  !Eq::equal(self, other)
 }
 
 ///|
 /// Keep the equality dot-style API explicit now that trait implementations
 /// are no longer promoted to methods implicitly.
+#deprecated
 pub extend Domain with Eq::{equal, not_equal}
 
 ///|
@@ -133,19 +128,16 @@ pub extend Domain with Eq::{equal, not_equal}
 ///   recovery.
 pub impl Show for PolyError with fn output(self, logger : &Logger) -> Unit {
   match self {
-    PolyError::NonPolynomial => logger.write_string("NonPolynomial")
-    PolyError::BadGenerator(name) =>
-      logger.write_string("BadGenerator(\{name})")
-    PolyError::BadExponent => logger.write_string("BadExponent")
-    PolyError::DomainMismatch => logger.write_string("DomainMismatch")
-    PolyError::CoefficientNotInteger =>
-      logger.write_string("CoefficientNotInteger")
-    PolyError::DomainNotField => logger.write_string("DomainNotField")
-    PolyError::DivisionByZero => logger.write_string("DivisionByZero")
-    PolyError::ExactQuotientFailed => logger.write_string("ExactQuotientFailed")
-    PolyError::PolynomialDivisionFailed =>
-      logger.write_string("PolynomialDivisionFailed")
-    PolyError::NotUnivariate => logger.write_string("NotUnivariate")
-    PolyError::BadModulus => logger.write_string("BadModulus")
+    NonPolynomial => logger.write_string("NonPolynomial")
+    BadGenerator(name) => logger.write_string("BadGenerator(\{name})")
+    BadExponent => logger.write_string("BadExponent")
+    DomainMismatch => logger.write_string("DomainMismatch")
+    CoefficientNotInteger => logger.write_string("CoefficientNotInteger")
+    DomainNotField => logger.write_string("DomainNotField")
+    DivisionByZero => logger.write_string("DivisionByZero")
+    ExactQuotientFailed => logger.write_string("ExactQuotientFailed")
+    PolynomialDivisionFailed => logger.write_string("PolynomialDivisionFailed")
+    NotUnivariate => logger.write_string("NotUnivariate")
+    BadModulus => logger.write_string("BadModulus")
   }
 }

@@ -80,10 +80,10 @@ fn canonicalize_tensor(
   indices : Array[TensorIndex],
 ) -> TensorExpr raise {
   match head.symmetry {
-    None => TensorExpr::Tensor(head, indices)
+    None => Tensor(head, indices)
     Some(sym) => {
       if sym.generators.is_empty() {
-        return TensorExpr::Tensor(head, indices)
+        return Tensor(head, indices)
       }
       let rank = indices.length()
       let sorted = sort_indices(indices)
@@ -109,7 +109,7 @@ fn canonicalize_tensor(
       match result {
         Some(arr) => {
           if arr.length() < rank {
-            return TensorExpr::Tensor(head, indices)
+            return Tensor(head, indices)
           }
           let new_indices : Array[TensorIndex] = Array::new()
           for i in 0..<rank {
@@ -119,12 +119,12 @@ fn canonicalize_tensor(
             }
           }
           if new_indices.length() == rank {
-            TensorExpr::Tensor(head, new_indices)
+            Tensor(head, new_indices)
           } else {
-            TensorExpr::Tensor(head, indices)
+            Tensor(head, indices)
           }
         }
-        None => TensorExpr::Tensor(head, indices)
+        None => Tensor(head, indices)
       }
     }
   }
@@ -133,8 +133,8 @@ fn canonicalize_tensor(
 ///|
 pub fn canonicalize(expr : TensorExpr) -> TensorExpr raise {
   match expr {
-    TensorExpr::Tensor(head, indices) => canonicalize_tensor(head, indices)
-    TensorExpr::Mul(items) => {
+    Tensor(head, indices) => canonicalize_tensor(head, indices)
+    Mul(items) => {
       let canon_items : Array[TensorExpr] = Array::new()
       for item in items {
         canon_items.push(canonicalize(item))
@@ -143,7 +143,7 @@ pub fn canonicalize(expr : TensorExpr) -> TensorExpr raise {
       let n = canon_items.length()
       for i in 0..<n {
         for j in (i + 1)..<n {
-          if canon_items[j].to_string() < canon_items[i].to_string() {
+          if Show::to_string(canon_items[j]) < Show::to_string(canon_items[i]) {
             let tmp = canon_items[i]
             canon_items[i] = canon_items[j]
             canon_items[j] = tmp
@@ -152,7 +152,7 @@ pub fn canonicalize(expr : TensorExpr) -> TensorExpr raise {
       }
       mul(canon_items)
     }
-    TensorExpr::Add(items) => {
+    Add(items) => {
       let canon_items : Array[TensorExpr] = Array::new()
       for item in items {
         canon_items.push(canonicalize(item))

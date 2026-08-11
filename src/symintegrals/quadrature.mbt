@@ -4,8 +4,8 @@
 ///|
 fn quad_expr_real_float(expr : Expr, prec? : Int = 160) -> @symcore.Float? {
   match @symcore.evalf(expr_simplify(expr), prec~) {
-    @symcore.Expr::Float(value) => Some(value)
-    @symcore.Expr::ComplexFloat(value) =>
+    Float(value) => Some(value)
+    ComplexFloat(value) =>
       if @symnum.is_zero(value.to_mpc().imag) {
         Some(value.real_part())
       } else {
@@ -23,22 +23,16 @@ fn quad_require_real_double(
   match quad_expr_real_float(expr) {
     Some(value) =>
       value.to_double() catch {
-        _ =>
-          raise IntegralError::ValueError(
-            label + " must be a real numeric expression",
-          )
+        _ => raise ValueError(label + " must be a real numeric expression")
       }
-    None =>
-      raise IntegralError::ValueError(
-        label + " must be a real numeric expression",
-      )
+    None => raise ValueError(label + " must be a real numeric expression")
   }
 }
 
 ///|
 fn quad_validate_n(n : Int) -> Unit raise IntegralError {
   if n <= 0 {
-    raise IntegralError::ValueError("quadrature order must be positive")
+    raise ValueError("quadrature order must be positive")
   }
 }
 
@@ -334,7 +328,7 @@ pub fn gauss_jacobi(
   let a = quad_require_real_double(alpha, "alpha")
   let b = quad_require_real_double(beta, "beta")
   if a <= -1.0 || b <= -1.0 {
-    raise IntegralError::ValueError("alpha and beta must be greater than -1")
+    raise ValueError("alpha and beta must be greater than -1")
   }
   let (diag, offdiag, mu0) = quad_jacobi_coeffs(n, a, b)
   quad_from_jacobi(diag, offdiag, mu0, n_digits)
@@ -401,7 +395,7 @@ pub fn gauss_gen_laguerre(
   quad_validate_n(n)
   let a = quad_require_real_double(alpha, "alpha")
   if a <= -1.0 {
-    raise IntegralError::ValueError("alpha must be greater than -1")
+    raise ValueError("alpha must be greater than -1")
   }
   let (diag, offdiag, mu0) = quad_laguerre_coeffs(n, a)
   quad_from_jacobi(diag, offdiag, mu0, n_digits)
@@ -435,7 +429,7 @@ pub fn gauss_lobatto(
   n_digits? : Int = 15,
 ) -> (Array[Double], Array[Double]) raise IntegralError {
   if n < 2 {
-    raise IntegralError::ValueError("Gauss-Lobatto requires order at least 2")
+    raise ValueError("Gauss-Lobatto requires order at least 2")
   }
   if n == 2 {
     return (

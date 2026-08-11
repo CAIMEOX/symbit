@@ -1,6 +1,6 @@
 ///|
 fn geo_pi() -> Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  NumberSymbol(Pi)
 }
 
 ///|
@@ -51,8 +51,8 @@ fn geo_expr_text(expr : Expr) -> String {
 ///|
 fn geo_exact_value(expr : Expr) -> @symnum.BigRational? {
   match geo_simplify(expr) {
-    Expr::Number(n) => Some(n)
-    Expr::Float(f) =>
+    Number(n) => Some(n)
+    Float(f) =>
       if !f.is_finite() {
         None
       } else {
@@ -102,12 +102,12 @@ fn geo_expr_sign(expr : Expr) -> Int? {
 ///|
 fn geo_collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    Expr::Symbol(name) => seen.set(name, true)
-    Expr::Add(args) | Expr::Mul(args) =>
+    Symbol(name) => seen.set(name, true)
+    Add(args) | Mul(args) =>
       for arg in args {
         geo_collect_symbols(arg, seen)
       }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       geo_collect_symbols(base, seen)
       geo_collect_symbols(exp, seen)
     }
@@ -124,9 +124,8 @@ fn geo_expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(fn(arg) { geo_expr_depends_on(arg, wrt) })
-    Expr::Pow(base, exp) =>
+    Add(args) | Mul(args) => args.any(fn(arg) { geo_expr_depends_on(arg, wrt) })
+    Pow(base, exp) =>
       geo_expr_depends_on(base, wrt) || geo_expr_depends_on(exp, wrt)
     _ => @symcore.args(expr).any(fn(arg) { geo_expr_depends_on(arg, wrt) })
   }
@@ -181,28 +180,26 @@ fn geo_poly_deg2_pow(coeffs : Array[Expr], exp : Int) -> Array[Expr]? {
 ///|
 fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
   match geo_simplify(expr) {
-    Expr::Number(_)
-    | Expr::Float(_)
-    | Expr::ComplexFloat(_)
-    | Expr::NumberSymbol(_) => Some([expr, int(0), int(0)])
-    Expr::Symbol(_)
-    | Expr::Dummy(_, _)
-    | Expr::Wild(_, _, _)
-    | Expr::FunctionHead(_)
-    | Expr::UndefinedFunction(_) =>
+    Number(_) | Float(_) | ComplexFloat(_) | NumberSymbol(_) =>
+      Some([expr, int(0), int(0)])
+    Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | FunctionHead(_)
+    | UndefinedFunction(_) =>
       if @symcore.compare_expr(expr, wrt) == 0 {
         Some([int(0), int(1), int(0)])
       } else {
         Some([expr, int(0), int(0)])
       }
-    Expr::Derivative(_, _) | Expr::Subs(_, _, _) =>
+    Derivative(_, _) | Subs(_, _, _) =>
       if geo_expr_depends_on(expr, wrt) {
         None
       } else {
         Some([expr, int(0), int(0)])
       }
-    Expr::Dict(_) => None
-    Expr::Add(args) => {
+    Dict(_) => None
+    Add(args) => {
       let mut out = [int(0), int(0), int(0)]
       for arg in args {
         match geo_poly_deg2_coeffs(arg, wrt) {
@@ -212,8 +209,8 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
       }
       Some(out)
     }
-    Expr::Mod(_, _) => None
-    Expr::Mul(args) => {
+    Mod(_, _) => None
+    Mul(args) => {
       let mut out = [int(1), int(0), int(0)]
       for arg in args {
         match geo_poly_deg2_coeffs(arg, wrt) {
@@ -227,7 +224,7 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
       }
       Some(out)
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       if !geo_expr_depends_on(expr, wrt) {
         Some([expr, int(0), int(0)])
       } else {
@@ -240,10 +237,7 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
           _ => None
         }
       }
-    Expr::Boolean(_)
-    | Expr::Tuple(_)
-    | Expr::Relational(_, _, _)
-    | Expr::Lambda(_, _) => None
+    Boolean(_) | Tuple(_) | Relational(_, _, _) | Lambda(_, _) => None
     _ =>
       if @symcore.application_parts(expr) != None {
         if geo_expr_depends_on(expr, wrt) {
@@ -294,15 +288,15 @@ fn geo_point_name(dim : Int) -> String {
 ///|
 fn geo_linear_name(kind : LinearKind, dim : Int) -> String {
   match (kind, dim) {
-    (LinearKind::Line, 2) => "Line2D"
-    (LinearKind::Line, 3) => "Line3D"
-    (LinearKind::Line, _) => "Line"
-    (LinearKind::Ray, 2) => "Ray2D"
-    (LinearKind::Ray, 3) => "Ray3D"
-    (LinearKind::Ray, _) => "Ray"
-    (LinearKind::Segment, 2) => "Segment2D"
-    (LinearKind::Segment, 3) => "Segment3D"
-    (LinearKind::Segment, _) => "Segment"
+    (Line, 2) => "Line2D"
+    (Line, 3) => "Line3D"
+    (Line, _) => "Line"
+    (Ray, 2) => "Ray2D"
+    (Ray, 3) => "Ray3D"
+    (Ray, _) => "Ray"
+    (Segment, 2) => "Segment2D"
+    (Segment, 3) => "Segment3D"
+    (Segment, _) => "Segment"
   }
 }
 
@@ -358,9 +352,7 @@ fn geo_scale_coords_axis(
   factors : Array[Expr],
 ) -> Array[Expr] raise GeometryError {
   if coords.length() != factors.length() {
-    raise GeometryError::ValueError(
-      "scale factors must match coordinate dimension",
-    )
+    raise ValueError("scale factors must match coordinate dimension")
   }
   let out : Array[Expr] = []
   for i in 0..<coords.length() {
@@ -386,7 +378,7 @@ fn geo_cross2(lhs : Array[Expr], rhs : Array[Expr]) -> Expr {
 ///|
 fn geo_perp2(coords : Array[Expr]) -> Array[Expr] raise GeometryError {
   if coords.length() != 2 {
-    raise GeometryError::ValueError("perp2 is only defined for planar vectors")
+    raise ValueError("perp2 is only defined for planar vectors")
   }
   [geo_simplify(int(0) - coords[1]), coords[0]]
 }
@@ -447,9 +439,7 @@ fn geo_rotate_coords_2d(
   pivot : Array[Expr],
 ) -> Array[Expr] raise GeometryError {
   if coords.length() != 2 || pivot.length() != 2 {
-    raise GeometryError::ValueError(
-      "rotation is only defined for 2D coordinates",
-    )
+    raise ValueError("rotation is only defined for 2D coordinates")
   }
   let x = coords[0] - pivot[0]
   let y = coords[1] - pivot[1]
@@ -473,7 +463,7 @@ fn geo_midpoint_coords(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
 
 ///|
 fn geo_point_from_coords(coords : Array[Expr]) -> Point {
-  Point::{ coords_: coords.map(geo_simplify) }
+  { coords_: coords.map(geo_simplify) }
 }
 
 ///|

@@ -42,21 +42,21 @@ fn rational_pow(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational {
 ///|
 fn eval_numeric(expr : @symcore.Expr) -> @symcore.Expr {
   let rebuilt = match expr {
-    @symcore.Expr::Number(_) => expr
-    @symcore.Expr::Add(args) => @symcore.add(args.map(eval_numeric))
-    @symcore.Expr::Mul(args) => @symcore.mul(args.map(eval_numeric))
-    @symcore.Expr::Pow(base, exp) => {
+    Number(_) => expr
+    Add(args) => @symcore.add(args.map(eval_numeric))
+    Mul(args) => @symcore.mul(args.map(eval_numeric))
+    Pow(base, exp) => {
       let b = eval_numeric(base)
       let e = eval_numeric(exp)
       match (b, e) {
-        (@symcore.Expr::Number(nb), @symcore.Expr::Number(ne)) if ne.is_integral() => {
+        (Number(nb), Number(ne)) if ne.is_integral() => {
           let num = ne.numerator()
           if num.bit_length() > 30 {
             @symcore.pow(b, e)
           } else {
             let exp_int = num.to_int()
             if exp_int >= 0 {
-              @symcore.Expr::Number(rational_pow(nb, exp_int))
+              Number(rational_pow(nb, exp_int))
             } else {
               @symcore.pow(b, e)
             }
@@ -77,7 +77,7 @@ fn eval_numeric(expr : @symcore.Expr) -> @symcore.Expr {
   }
   let numeric = @symcore.evalf(rebuilt, prec=80)
   match numeric {
-    @symcore.Expr::Float(_) | @symcore.Expr::ComplexFloat(_) => numeric
+    Float(_) | ComplexFloat(_) => numeric
     _ => rebuilt
   }
 }
@@ -95,7 +95,7 @@ pub fn sequence(
   start? : Int = 0,
   stop? : Int = -1,
 ) -> Sequence {
-  Sequence::SeqFormula(expr, var_name, start, stop)
+  SeqFormula(expr, var_name, start, stop)
 }
 
 ///|
@@ -110,7 +110,7 @@ pub fn seq_per(
   start? : Int = 0,
   stop? : Int = -1,
 ) -> Sequence {
-  Sequence::SeqPer(values, start, stop)
+  SeqPer(values, start, stop)
 }
 
 ///|
@@ -121,7 +121,7 @@ pub fn seq_per(
 /// - Returns: One `Sequence::SeqAdd` value.
 /// - Limits: No simplification is attempted at construction time.
 pub fn seq_add(a : Sequence, b : Sequence) -> Sequence {
-  Sequence::SeqAdd(a, b)
+  SeqAdd(a, b)
 }
 
 ///|
@@ -132,7 +132,7 @@ pub fn seq_add(a : Sequence, b : Sequence) -> Sequence {
 /// - Returns: One `Sequence::SeqMul` value.
 /// - Limits: No simplification is attempted at construction time.
 pub fn seq_mul(a : Sequence, b : Sequence) -> Sequence {
-  Sequence::SeqMul(a, b)
+  SeqMul(a, b)
 }
 
 ///|
@@ -144,7 +144,7 @@ pub fn seq_mul(a : Sequence, b : Sequence) -> Sequence {
 /// - Limits: Raises when `n` is outside the stored range or when a periodic sequence has an empty block.
 pub fn Sequence::coeff(self : Sequence, n : Int) -> @symcore.Expr raise {
   match self {
-    Sequence::SeqFormula(expr, var_name, start, stop) => {
+    SeqFormula(expr, var_name, start, stop) => {
       if n < start {
         fail("sequence index below start")
       }
@@ -155,7 +155,7 @@ pub fn Sequence::coeff(self : Sequence, n : Int) -> @symcore.Expr raise {
       env[var_name] = @symcore.int(n)
       eval_numeric(@symcore.subst(expr, env))
     }
-    Sequence::SeqPer(values, start, stop) => {
+    SeqPer(values, start, stop) => {
       if values.is_empty() {
         fail("empty periodic sequence")
       }
@@ -168,12 +168,12 @@ pub fn Sequence::coeff(self : Sequence, n : Int) -> @symcore.Expr raise {
       let idx = (n - start) % values.length()
       values[idx]
     }
-    Sequence::SeqAdd(a, b) => {
+    SeqAdd(a, b) => {
       let va = a.coeff(n)
       let vb = b.coeff(n)
       eval_numeric(@symcore.add([va, vb]))
     }
-    Sequence::SeqMul(a, b) => {
+    SeqMul(a, b) => {
       let va = a.coeff(n)
       let vb = b.coeff(n)
       eval_numeric(@symcore.mul([va, vb]))

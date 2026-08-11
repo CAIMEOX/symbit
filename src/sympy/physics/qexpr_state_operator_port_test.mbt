@@ -17,9 +17,9 @@ test "physics.quantum.qexpr/state/operator: parity" {
     "QExpr srepr",
   )
 
-  let k = ket([@symcore.Expr::Symbol("k")])
-  let b = bra([@symcore.Expr::Symbol("b")])
-  let t = time_dep_ket([@symcore.int(0)], time=@symcore.Expr::Symbol("t"))
+  let k = ket([Symbol("k")])
+  let b = bra([Symbol("b")])
+  let t = time_dep_ket([@symcore.int(0)], time=Symbol("t"))
   quantum_test_assert_string_equal(
     quantum_eval_str(@symprint.pretty_string(k.as_expr())),
     "|k>",
@@ -36,9 +36,9 @@ test "physics.quantum.qexpr/state/operator: parity" {
     "TimeDepKet str",
   )
 
-  let a = operator([@symcore.Expr::Symbol("A")])
-  let h = hermitian_operator([@symcore.Expr::Symbol("Hh")])
-  let u = unitary_operator([@symcore.Expr::Symbol("Uu")])
+  let a = operator([Symbol("A")])
+  let h = hermitian_operator([Symbol("Hh")])
+  let u = unitary_operator([Symbol("Uu")])
   let id = identity_operator(dimension=@symcore.int(3))
   quantum_test_assert_string_equal(
     quantum_eval_str(@symprint.pretty_string(a.as_expr())),
@@ -70,7 +70,7 @@ test "physics.quantum.qexpr/state/operator: parity" {
 ///|
 test "physics.quantum.operator/state: default constructors parity" {
   quantum_test_assert_string_equal(
-    operator([]).to_string(),
+    Show::to_string(operator([])),
     quantum_eval_str("Operator()"),
     "Operator() default parity",
   )
@@ -98,10 +98,10 @@ test "physics.quantum.operator/state: default constructors parity" {
 
 ///|
 test "physics.quantum.operator/state: outer product parity" {
-  let k1 = ket([@symcore.Expr::Symbol("k1")]).as_expr()
-  let k2 = ket([@symcore.Expr::Symbol("k2")]).as_expr()
-  let b1 = bra([@symcore.Expr::Symbol("b1")]).as_expr()
-  let b2 = bra([@symcore.Expr::Symbol("b2")]).as_expr()
+  let k1 = ket([Symbol("k1")]).as_expr()
+  let k2 = ket([Symbol("k2")]).as_expr()
+  let b1 = bra([Symbol("b1")]).as_expr()
+  let b2 = bra([Symbol("b2")]).as_expr()
 
   quantum_test_assert_expr_equal(
     outer_product(@symcore.int(2) * k1, b1),
@@ -135,8 +135,8 @@ test "physics.quantum.operator/state: outer product parity" {
 
 ///|
 test "physics.quantum.operator/state: operator simplification parity" {
-  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
-  let u = unitary_operator([@symcore.Expr::Symbol("U")]).as_expr()
+  let a = operator([Symbol("A")]).as_expr()
+  let u = unitary_operator([Symbol("U")]).as_expr()
   let id3 = identity_operator(dimension=@symcore.int(3)).as_expr()
 
   quantum_test_assert_expr_equal(
@@ -167,7 +167,7 @@ test "physics.quantum.operator/state: operator simplification parity" {
   )
   let represented_id = represent(id3)
   match represented_id {
-    MatrixScalarValue::Matrix(matrix) =>
+    Matrix(matrix) =>
       quantum_test_assert_matrix_expr_equal(
         matrix,
         physics_eval_matrix("represent(IdentityOperator(3))"),
@@ -175,7 +175,7 @@ test "physics.quantum.operator/state: operator simplification parity" {
         3,
         "represent identity parity",
       )
-    MatrixScalarValue::Scalar(value) =>
+    Scalar(value) =>
       fail(
         "represent identity parity: expected matrix, got \{@symprint.pretty_string(value)}",
       )

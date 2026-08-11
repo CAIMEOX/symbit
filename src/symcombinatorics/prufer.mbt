@@ -21,7 +21,7 @@ pub fn Prufer::from_edges(
   nodes? : Int,
 ) -> Prufer raise CombinatoricsError {
   if edges.is_empty() {
-    raise CombinatoricsError::ValueError("Prufer expects at least one edge")
+    raise ValueError("Prufer expects at least one edge")
   }
   let mut nnodes = 0
   if nodes is Some(v) {
@@ -31,7 +31,7 @@ pub fn Prufer::from_edges(
     let seen : Array[Int] = Array::new()
     for edge in edges {
       if edge.length() != 2 {
-        raise CombinatoricsError::ValueError("Edge must have length 2")
+        raise ValueError("Edge must have length 2")
       }
       for v in edge {
         if !seen.any(x => x == v) {
@@ -44,7 +44,7 @@ pub fn Prufer::from_edges(
     }
     nnodes = max_node + 1
     if seen.length() != nnodes {
-      raise CombinatoricsError::ValueError("Missing node in edge list")
+      raise ValueError("Missing node in edge list")
     }
   }
   { prufer_repr: None, tree_repr: Some(edges), nodes: nnodes, rank_cache: None }
@@ -186,7 +186,7 @@ pub fn prufer_edges(
 ) -> (Array[Array[Int]], Int) raise CombinatoricsError {
   fn parse_key(view : StringView) -> Int raise CombinatoricsError {
     @string.parse_int(view) catch {
-      _ => raise CombinatoricsError::ValueError("Invalid edge label")
+      _ => raise ValueError("Invalid edge label")
     }
   }
 
@@ -218,7 +218,7 @@ pub fn prufer_edges(
     }
   }
   if nmin is None || nmax is None {
-    raise CombinatoricsError::ValueError("No edges provided")
+    raise ValueError("No edges provided")
   }
   let minv = nmin.unwrap()
   let maxv = nmax.unwrap()
@@ -234,7 +234,7 @@ pub fn prufer_edges(
   }
   for i in 0..<present.length() {
     if !present[i] {
-      raise CombinatoricsError::ValueError("Node missing in edge list")
+      raise ValueError("Node missing in edge list")
     }
   }
   let edges : Array[Array[Int]] = Array::new()

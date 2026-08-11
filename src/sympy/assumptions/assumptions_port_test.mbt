@@ -1,9 +1,9 @@
 ///|
 fn tri_repr(value : Tri) -> String {
   match value {
-    Tri::True => "True"
-    Tri::False => "False"
-    Tri::Unknown => "None"
+    True => "True"
+    False => "False"
+    Unknown => "None"
   }
 }
 
@@ -64,18 +64,18 @@ fn assert_all_predicates(
 
 ///|
 test "symassume tri logic" {
-  inspect(tri_not(Tri::True), content="False")
-  inspect(tri_not(Tri::False), content="True")
-  inspect(tri_not(Tri::Unknown), content="Unknown")
-  inspect(tri_and(Tri::True, Tri::Unknown), content="Unknown")
-  inspect(tri_and(Tri::False, Tri::Unknown), content="False")
-  inspect(tri_or(Tri::False, Tri::Unknown), content="Unknown")
-  inspect(tri_or(Tri::True, Tri::Unknown), content="True")
+  inspect(tri_not(True), content="False")
+  inspect(tri_not(False), content="True")
+  inspect(tri_not(Unknown), content="Unknown")
+  inspect(tri_and(True, Unknown), content="Unknown")
+  inspect(tri_and(False, Unknown), content="False")
+  inspect(tri_or(False, Unknown), content="Unknown")
+  inspect(tri_or(True, Unknown), content="True")
 }
 
 ///|
 test "symassume facts normalization" {
-  let facts = symbol_facts(is_positive=Tri::True)
+  let facts = symbol_facts(is_positive=True)
   inspect(facts.is_nonnegative, content="True")
   inspect(facts.is_nonzero, content="True")
   inspect(facts.is_real, content="True")
@@ -96,11 +96,11 @@ test "symassume numeric predicate parity" {
 ///|
 test "symassume symbolic parity basic algebra" {
   let env = assume_env([
-    ("x", symbol_facts(is_integer=Tri::True)),
-    ("p", symbol_facts(is_positive=Tri::True)),
-    ("n", symbol_facts(is_nonnegative=Tri::True)),
-    ("r", symbol_facts(is_real=Tri::True)),
-    ("nz", symbol_facts(is_nonzero=Tri::True, is_real=Tri::True)),
+    ("x", symbol_facts(is_integer=True)),
+    ("p", symbol_facts(is_positive=True)),
+    ("n", symbol_facts(is_nonnegative=True)),
+    ("r", symbol_facts(is_real=True)),
+    ("nz", symbol_facts(is_nonzero=True, is_real=True)),
   ])
   let x = @symcore.Expr::Symbol("x")
   let p = @symcore.Expr::Symbol("p")
@@ -117,10 +117,10 @@ test "symassume symbolic parity basic algebra" {
 ///|
 test "symassume symbolic parity elementary functions" {
   let env = assume_env([
-    ("p", symbol_facts(is_positive=Tri::True)),
-    ("n", symbol_facts(is_nonnegative=Tri::True)),
-    ("r", symbol_facts(is_real=Tri::True)),
-    ("nz", symbol_facts(is_nonzero=Tri::True, is_real=Tri::True)),
+    ("p", symbol_facts(is_positive=True)),
+    ("n", symbol_facts(is_nonnegative=True)),
+    ("r", symbol_facts(is_real=True)),
+    ("nz", symbol_facts(is_nonzero=True, is_real=True)),
   ])
   let p = @symcore.Expr::Symbol("p")
   let n = @symcore.Expr::Symbol("n")

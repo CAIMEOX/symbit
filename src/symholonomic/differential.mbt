@@ -16,12 +16,12 @@ pub fn differential_operator(
   parent : DifferentialOperatorAlgebra,
 ) -> DifferentialOperator {
   let normalized = trim_coeffs(coeffs)
-  DifferentialOperator::{ coeffs: normalized, parent }
+  { coeffs: normalized, parent }
 }
 
 ///|
 pub fn differential_operators(
-  symbol_var? : Expr = Expr::Symbol("x"),
+  symbol_var? : Expr = Symbol("x"),
   generator? : String = "Dx",
 ) -> (DifferentialOperatorAlgebra, DifferentialOperator) {
   ignore(require_symbol_name(symbol_var))

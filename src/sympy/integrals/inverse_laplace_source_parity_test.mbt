@@ -979,7 +979,7 @@ test "symintegrals parity inverse Laplace Gaussian erfc fallback kernel" {
   let a = @symcore.Expr::Symbol("a")
 
   let numeric_kernel = @symcore.rational_from_ints(1, 4) *
-    @symelem.sqrt(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)) *
+    @symelem.sqrt(NumberSymbol(Pi)) *
     @symelem.exp((s ^ @symcore.int(2)) * @symcore.rational_from_ints(1, 16)) *
     @symspec.erfc(s * @symcore.rational_from_ints(1, 4))
   let numeric_inverse = doit(inverse_laplace_transform(numeric_kernel, s, x))
@@ -1010,10 +1010,7 @@ test "symintegrals parity inverse Laplace Gaussian erfc fallback kernel" {
   @symassume.clear_global_assumptions()
   @symassume.add_global_assumption(@symassume.q_positive(a))
   let symbolic_kernel = @symcore.rational_from_ints(1, 2) *
-    @symelem.sqrt(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      (a ^ @symcore.int(-1)),
-    ) *
+    @symelem.sqrt(NumberSymbol(Pi) * (a ^ @symcore.int(-1))) *
     @symelem.exp(
       (s ^ @symcore.int(2)) * ((@symcore.int(4) * a) ^ @symcore.int(-1)),
     ) *
@@ -1035,7 +1032,7 @@ test "symintegrals parity inverse Laplace integration sqrt exponential over s" {
   let s = @symcore.Expr::Symbol("s")
   let x = @symcore.Expr::Symbol("x")
   let a = @symcore.Expr::Symbol("a")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let kernel = @symelem.exp(@symcore.int(-1) * @symelem.sqrt(s)) *
     (s ^ @symcore.int(-1))
   let value = doit(inverse_laplace_transform(kernel, s, x))
@@ -1441,7 +1438,7 @@ test "symintegrals parity inverse Laplace positive sqrt exponential frontdoor" {
   let s = @symcore.Expr::Symbol("s")
   let x = @symcore.Expr::Symbol("x")
   let a = @symcore.Expr::Symbol("a")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
 
   @symassume.clear_global_assumptions()
   @symassume.add_global_assumption(@symassume.q_positive(a))
@@ -1462,7 +1459,7 @@ test "symintegrals parity inverse Laplace conditional sqrt exponential condition
   let s = @symcore.Expr::Symbol("s")
   let x = @symcore.Expr::Symbol("x")
   let b = @symcore.Expr::Symbol("b")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
 
   let conditional_kernel = @symelem.sqrt(pi * (b ^ @symcore.int(-1))) *
     @symelem.exp(@symcore.int(-2) * @symelem.sqrt(b) * @symelem.sqrt(s))
@@ -1474,9 +1471,7 @@ test "symintegrals parity inverse Laplace conditional sqrt exponential condition
   )
   match @symcore.tuple_items(conditional_value) {
     Some([value, cond]) => {
-      let imag = @symcore.Expr::NumberSymbol(
-        @symcore.NumberSymbolKind::ImaginaryUnit,
-      )
+      let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
       let phase = @symcore.int(-1) * @symelem.im(b) * (x ^ @symcore.int(-1))
       let expected_value = @symelem.exp(
           @symcore.int(-1) * @symelem.re(b) * (x ^ @symcore.int(-1)),
@@ -1486,7 +1481,7 @@ test "symintegrals parity inverse Laplace conditional sqrt exponential condition
         (x ^ @symcore.rational_from_ints(-3, 2))
       assert_eq(@symcore.compare_expr(value, expected_value), 0)
       let quarter_i_pi = imag *
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+        NumberSymbol(Pi) *
         (@symcore.int(4) ^ @symcore.int(-1))
       let polar_b = @symcore.raw_function("polar_lift", [b])
       let polar_root = @symelem.sqrt(polar_b)

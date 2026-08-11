@@ -48,12 +48,12 @@ pub fn point(
 ) -> Point raise GeometryError {
   let actual_dim = if dim > 0 { dim } else { coords.length() }
   if actual_dim < 2 {
-    raise GeometryError::ValueError("Point requires at least two coordinates")
+    raise ValueError("Point requires at least two coordinates")
   }
   if coords.length() > actual_dim {
     for item in coords[actual_dim:] {
       if !geo_expr_is_zero(item) {
-        raise GeometryError::ValueError("nonzero coordinates cannot be removed")
+        raise ValueError("nonzero coordinates cannot be removed")
       }
     }
   }
@@ -62,7 +62,7 @@ pub fn point(
     let value = if i < coords.length() { coords[i] } else { int(0) }
     out.push(geo_simplify(value))
   }
-  Point::{ coords_: out }
+  { coords_: out }
 }
 
 ///|
@@ -121,7 +121,7 @@ pub fn Point::with_dim(self : Point, dim : Int) -> Point raise GeometryError {
 ///|
 pub fn Point::get(self : Point, index : Int) -> Expr raise GeometryError {
   if index < 0 || index >= self.coords_.length() {
-    raise GeometryError::ValueError("point coordinate index out of range")
+    raise ValueError("point coordinate index out of range")
   }
   self.coords_[index]
 }
@@ -139,7 +139,7 @@ pub fn Point::y(self : Point) -> Expr raise GeometryError {
 ///|
 pub fn Point::z(self : Point) -> Expr raise GeometryError {
   if self.coords_.length() < 3 {
-    raise GeometryError::ValueError("Point has no z coordinate")
+    raise ValueError("Point has no z coordinate")
   }
   self.coords_[2]
 }
@@ -158,9 +158,7 @@ pub fn Point::translate(
   offsets : Array[Expr],
 ) -> Point raise GeometryError {
   if offsets.length() != self.coords_.length() {
-    raise GeometryError::ValueError(
-      "translation offsets must match point dimension",
-    )
+    raise ValueError("translation offsets must match point dimension")
   }
   geo_point_from_coords(geo_add_coords(self.coords_, offsets))
 }
@@ -172,7 +170,7 @@ pub fn Point::scale(
   pt? : Point? = None,
 ) -> Point raise GeometryError {
   if factors.length() != self.coords_.length() {
-    raise GeometryError::ValueError("scale factors must match point dimension")
+    raise ValueError("scale factors must match point dimension")
   }
   let origin = match pt {
     Some(value) => value.with_dim(self.ambient_dimension())
@@ -298,7 +296,7 @@ pub fn Point::project(self : Point, other : Point) -> Point raise GeometryError 
   let lhs = normalized[0]
   let rhs = normalized[1]
   if rhs.is_zero() {
-    raise GeometryError::ValueError("Cannot project to the zero vector.")
+    raise ValueError("Cannot project to the zero vector.")
   }
   let scale = geo_div(lhs.dot(rhs), rhs.dot(rhs))
   rhs.mul(scale)
@@ -328,7 +326,7 @@ pub fn Point::canberra_distance(
   let lhs = normalized[0]
   let rhs = normalized[1]
   if lhs.is_zero() && rhs.is_zero() {
-    raise GeometryError::ValueError("Cannot project to the zero vector.")
+    raise ValueError("Cannot project to the zero vector.")
   }
   let mut acc = int(0)
   for i in 0..<lhs.coords_.length() {
@@ -386,9 +384,7 @@ pub fn Point::is_concyclic(
   }
   let normalized = geo_normalize_dim(points)
   if normalized[0].ambient_dimension() != 2 {
-    raise GeometryError::ValueError(
-      "concyclic test is only implemented for planar points",
-    )
+    raise ValueError("concyclic test is only implemented for planar points")
   }
   let unique : Array[Point] = []
   for item in normalized {
@@ -495,9 +491,7 @@ pub fn point_are_coplanar(points : Array[Point]) -> Bool raise GeometryError {
     return true
   }
   if dim != 3 {
-    raise GeometryError::ValueError(
-      "coplanarity is only implemented for 2D/3D points",
-    )
+    raise ValueError("coplanarity is only implemented for 2D/3D points")
   }
   let p0 = normalized[0]
   let mut u : Array[Expr]? = None

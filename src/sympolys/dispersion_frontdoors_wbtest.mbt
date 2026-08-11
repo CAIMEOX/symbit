@@ -1,7 +1,7 @@
 ///|
 test "dispersion frontdoors: univariate dispersion set" {
   let x = Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let fp = b.from_expr((x - int(3)) * (x + int(3)))
 
   debug_inspect(dispersionset(fp), content="[0, 6]")
@@ -21,17 +21,17 @@ test "dispersion frontdoors: univariate dispersion set" {
 ///|
 test "dispersion frontdoors: constants and invalid inputs" {
   let x = Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let c = b.from_expr(int(5))
   debug_inspect(dispersionset(c), content="[0]")
   inspect(dispersion(c), content="0")
 
-  let by = PolyBuilder::new(["y"], Domain::ZZ)
+  let by = PolyBuilder::new(["y"], ZZ)
   sympolys_assert_error(
     fn() raise PolyError {
       dispersionset(
         b.from_expr(x + int(1)),
-        q=by.from_expr(Expr::Symbol("y") + int(1)),
+        q=by.from_expr(Symbol("y") + int(1)),
       )
     },
     "DomainMismatch",

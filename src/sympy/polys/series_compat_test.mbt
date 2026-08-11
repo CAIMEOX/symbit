@@ -8,7 +8,7 @@ fn sp_norm(expr : @symcore.Expr) -> String raise {
 
 ///|
 test "series: ring arithmetic and truncation" {
-  let ring = @sympolys.power_series_ring(Domain::QQ, "x", 5)
+  let ring = @sympolys.power_series_ring(QQ, "x", 5)
   let f = ring.from_int_coeffs([1, 2, 3])
   let g = ring.from_int_coeffs([0, 1, 1])
 
@@ -25,7 +25,7 @@ test "series: ring arithmetic and truncation" {
 
 ///|
 test "series: differentiation and integration" {
-  let ring = @sympolys.power_series_ring(Domain::QQ, "x", 6)
+  let ring = @sympolys.power_series_ring(QQ, "x", 6)
   let f = ring.from_int_coeffs([2, -3, 4]) // 2 - 3x + 4x^2
 
   let df = f.diff()
@@ -38,16 +38,16 @@ test "series: differentiation and integration" {
 
 ///|
 test "series: generator, scalar ops, inverse, divide, compose" {
-  let ring = @sympolys.power_series_ring(Domain::ZZ, "x", 6)
+  let ring = @sympolys.power_series_ring(ZZ, "x", 6)
   let x = ring.gen()
   let one = ring.one()
 
   assert_eq(sp_norm(x.to_expr()), "x")
 
-  let lifted = x.add_ground(@sympolys.fe_from_int(2, Domain::ZZ))
+  let lifted = x.add_ground(@sympolys.fe_from_int(2, ZZ))
   assert_eq(sp_norm(lifted.to_expr()), "x+2")
 
-  let scaled = lifted.mul_ground(@sympolys.fe_from_int(-3, Domain::ZZ))
+  let scaled = lifted.mul_ground(@sympolys.fe_from_int(-3, ZZ))
   assert_eq(sp_norm(scaled.to_expr()), "-3*x-6")
 
   let inv = one.add(x).inverse()
@@ -65,7 +65,7 @@ test "series: generator, scalar ops, inverse, divide, compose" {
 
 ///|
 test "series: powers and analytic functions over QQ" {
-  let ring = @sympolys.power_series_ring(Domain::QQ, "x", 6)
+  let ring = @sympolys.power_series_ring(QQ, "x", 6)
   let x = ring.gen()
   let one = ring.one()
 
@@ -99,14 +99,14 @@ test "series: powers and analytic functions over QQ" {
 
 ///|
 test "series: invalid inverse and analytic preconditions fail" {
-  let zz = @sympolys.power_series_ring(Domain::ZZ, "x", 5)
+  let zz = @sympolys.power_series_ring(ZZ, "x", 5)
   let x_zz = zz.gen()
   let _ = expect_poly_error(fn() raise PolyError { x_zz.inverse() })
 
-  let qq = @sympolys.power_series_ring(Domain::QQ, "x", 5)
+  let qq = @sympolys.power_series_ring(QQ, "x", 5)
   let x = qq.gen()
   let _ = expect_poly_error(fn() raise PolyError {
-    x.add_ground(@sympolys.fe_from_int(1, Domain::QQ)).exp()
+    x.add_ground(@sympolys.fe_from_int(1, QQ)).exp()
   })
 
   let _ = expect_poly_error(fn() raise PolyError { x.sqrt() })

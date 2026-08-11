@@ -6,7 +6,7 @@ fn modgcd_wb_repr(parts : (Poly, Poly, Poly)) -> String {
 ///|
 test "modulargcd frontdoor: univariate gcd cofactors" {
   let x = Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let f = b.from_expr((x ^ int(5)) - int(1))
   let g = b.from_expr(x - int(1))
   inspect(
@@ -21,7 +21,7 @@ test "modulargcd frontdoor: univariate gcd cofactors" {
     content="(2*x + 2, 3*x - 3, x + 1)",
   )
 
-  let zero = Poly::zero(["x"], Domain::ZZ)
+  let zero = Poly::zero(["x"], ZZ)
   inspect(
     modgcd_wb_repr(modgcd_univariate(zero, b.from_expr(int(-1) * x + int(1)))),
     content="(x - 1, 0, -1)",
@@ -32,7 +32,7 @@ test "modulargcd frontdoor: univariate gcd cofactors" {
 test "modulargcd frontdoor: bivariate and multivariate gcd cofactors" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
-  let b2 = PolyBuilder::new(["x", "y"], Domain::ZZ)
+  let b2 = PolyBuilder::new(["x", "y"], ZZ)
   let f = b2.from_expr((x ^ int(2)) - (y ^ int(2)))
   let g = b2.from_expr((x ^ int(2)) + int(2) * x * y + (y ^ int(2)))
   inspect(
@@ -45,7 +45,7 @@ test "modulargcd frontdoor: bivariate and multivariate gcd cofactors" {
   )
 
   let z = Expr::Symbol("z")
-  let b3 = PolyBuilder::new(["x", "y", "z"], Domain::ZZ)
+  let b3 = PolyBuilder::new(["x", "y", "z"], ZZ)
   let h = x + y + z
   let f3 = b3.from_expr(h * (x - z))
   let g3 = b3.from_expr(h * (y + z))
@@ -60,7 +60,7 @@ test "modulargcd frontdoor: algebraic function field gcd cofactors" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let a = Expr::Symbol("a")
-  let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [(a ^ int(2)) - int(2)])
+  let alg_domain = Domain::AlgExt(QQ, ["a"], [(a ^ int(2)) - int(2)])
 
   let b1 = PolyBuilder::new(["x"], alg_domain)
   let f1 = b1.from_expr((x ^ int(2)) - int(2))

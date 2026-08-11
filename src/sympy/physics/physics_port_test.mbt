@@ -42,7 +42,7 @@ fn physics_assert_matrix_equiv(
 
 ///|
 fn physics_dirac_c() -> @symcore.Expr {
-  @symcore.Expr::Number(
+  Number(
     @symnum.BigRational::new(
       @bigint.BigInt::from_string("137035999037"),
       @bigint.BigInt::from_int(1000000000),
@@ -116,8 +116,8 @@ test "physics: qho, sho, and pring parity" {
     )
   }
   physics_assert_expr_equal(
-    @symphysics.e_n(@symcore.Expr::Symbol("n"), omega),
-    e_n(@symcore.Expr::Symbol("n"), omega),
+    @symphysics.e_n(Symbol("n"), omega),
+    e_n(Symbol("n"), omega),
     "E_n",
   )
   physics_assert_expr_equal(
@@ -134,16 +134,8 @@ test "physics: qho, sho, and pring parity" {
     "R_nl",
   )
   physics_assert_expr_equal(
-    @symphysics.e_nl(
-      @symcore.Expr::Symbol("n"),
-      @symcore.Expr::Symbol("l"),
-      @symcore.Expr::Symbol("hw"),
-    ),
-    e_nl(
-      @symcore.Expr::Symbol("n"),
-      @symcore.Expr::Symbol("l"),
-      @symcore.Expr::Symbol("hw"),
-    ),
+    @symphysics.e_nl(Symbol("n"), Symbol("l"), Symbol("hw")),
+    e_nl(Symbol("n"), Symbol("l"), Symbol("hw")),
     "E_nl",
   )
 
@@ -213,8 +205,8 @@ test "physics: hydrogen parity" {
     "hydrogen.Psi_nlm(2,1,1)",
   )
   physics_assert_expr_equal(
-    @symphysics.hydrogen_e_nl(@symcore.Expr::Symbol("n"), z=zsym),
-    hydrogen_e_nl(@symcore.Expr::Symbol("n"), z=zsym),
+    @symphysics.hydrogen_e_nl(Symbol("n"), z=zsym),
+    hydrogen_e_nl(Symbol("n"), z=zsym),
     "hydrogen.E_nl",
   )
   let c = physics_dirac_c()
@@ -579,16 +571,8 @@ test "physics: rotational harmonic parity" {
     "wigner_d_small(1/2,beta)",
   )
   physics_assert_matrix_equiv(
-    @symphysics.wigner_d_small(
-      half,
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      physics_frac(1, 2),
-    ),
-    wigner_d_small(
-      half,
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      physics_frac(1, 2),
-    ),
+    @symphysics.wigner_d_small(half, NumberSymbol(Pi) * physics_frac(1, 2)),
+    wigner_d_small(half, NumberSymbol(Pi) * physics_frac(1, 2)),
     "wigner_d_small(1/2,pi/2)",
   )
   physics_assert_matrix_equiv(

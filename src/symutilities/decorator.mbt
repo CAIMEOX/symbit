@@ -9,27 +9,26 @@ pub enum Threadable[T] {
 
 ///|
 pub fn[T] threadable_scalar(value : T) -> Threadable[T] {
-  Threadable::Scalar(value)
+  Scalar(value)
 }
 
 ///|
 pub fn[T] threadable_array(values : Array[Threadable[T]]) -> Threadable[T] {
-  Threadable::Array(values)
+  Array(values)
 }
 
 ///|
 fn[T] thread_container(value : Threadable[T], rule : (T) -> T) -> Threadable[T] {
   match value {
-    Threadable::Scalar(v) => Threadable::Scalar(rule(v))
-    Threadable::Array(items) =>
-      Threadable::Array(items.map(item => thread_container(item, rule)))
+    Scalar(v) => Scalar(rule(v))
+    Array(items) => Array(items.map(item => thread_container(item, rule)))
   }
 }
 
 ///|
 fn thread_expr(expr : Expr, use_add : Bool, rule : (Expr) -> Expr) -> Expr {
   match expr {
-    Expr::Add(args) if use_add => @symcore.add(args.map(arg => rule(arg)))
+    Add(args) if use_add => @symcore.add(args.map(arg => rule(arg)))
     _ => rule(expr)
   }
 }
@@ -42,9 +41,8 @@ pub fn threaded(
 ) -> (Threadable[Expr]) -> Threadable[Expr] {
   letrec apply = (value : Threadable[Expr]) => {
     match value {
-      Threadable::Scalar(expr) =>
-        Threadable::Scalar(thread_expr(expr, true, rule))
-      Threadable::Array(items) => Threadable::Array(items.map(apply))
+      Scalar(expr) => Threadable::Scalar(thread_expr(expr, true, rule))
+      Array(items) => Array(items.map(apply))
     }
   }
   apply

@@ -6,20 +6,20 @@ fn basic(args : Array[@symcore.Expr]) -> @symcore.Expr {
 
 ///|
 fn raw_add(args : Array[@symcore.Expr]) -> @symcore.Expr {
-  @strategies_util.expr_new_raw(@strategies_util.ExprOp::Add, args)
+  @strategies_util.expr_new_raw(Add, args)
 }
 
 ///|
 fn raw_mul(args : Array[@symcore.Expr]) -> @symcore.Expr {
-  @strategies_util.expr_new_raw(@strategies_util.ExprOp::Mul, args)
+  @strategies_util.expr_new_raw(Mul, args)
 }
 
 ///|
 fn coeff_mul(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) {
   match expr {
-    @symcore.Expr::Mul(args) if args.length() > 0 =>
+    Mul(args) if args.length() > 0 =>
       match args[0] {
-        @symcore.Expr::Number(_) =>
+        Number(_) =>
           if args.length() == 2 {
             (args[0], args[1])
           } else {
@@ -31,7 +31,7 @@ fn coeff_mul(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) {
           }
         _ => (@symcore.int(1), expr)
       }
-    @symcore.Expr::Number(_) => (expr, @symcore.int(1))
+    Number(_) => (expr, @symcore.int(1))
     _ => (@symcore.int(1), expr)
   }
 }
@@ -112,10 +112,7 @@ test "rl distribute custom" {
     @symcore.function("T2", [@symcore.int(3), @symcore.int(4)]),
     @symcore.int(5),
   ])
-  let rl = @strategies_rl.distribute(
-    @strategies_util.ExprOp::Function("T1"),
-    @strategies_util.ExprOp::Function("T2"),
-  )
+  let rl = @strategies_rl.distribute(Function("T1"), Function("T2"))
   let result = rl(expr)
   assert_expr_str_eq(result, rl_distribute_custom(), "distribute custom")
 }
@@ -125,10 +122,7 @@ test "rl distribute add/mul" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let expr = raw_mul([@symcore.int(2), raw_add([x, y])])
-  let rl = @strategies_rl.distribute(
-    @strategies_util.ExprOp::Mul,
-    @strategies_util.ExprOp::Add,
-  )
+  let rl = @strategies_rl.distribute(Mul, Add)
   let result = rl(expr)
   assert_expr_str_eq(result, rl_distribute_add_mul(expr), "distribute add/mul")
 }
@@ -152,7 +146,7 @@ test "rl subs" {
 
 ///|
 test "rl rebuild" {
-  let expr = @strategies_util.expr_new_raw(@strategies_util.ExprOp::Add, [
+  let expr = @strategies_util.expr_new_raw(Add, [
     @symcore.int(1),
     @symcore.int(2),
   ])

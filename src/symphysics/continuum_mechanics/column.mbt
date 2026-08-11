@@ -36,13 +36,13 @@ pub fn column(
   length : @symcore.Expr,
   elastic_modulus : @symcore.Expr,
   area : @symcore.Expr,
-  variable? : @symcore.Expr = @symcore.Expr::Symbol("x"),
+  variable? : @symcore.Expr = Symbol("x"),
   base_char? : String = "C",
 ) -> Column raise ColumnError {
-  guard variable is @symcore.Expr::Symbol(_) else {
-    raise ColumnError::TypeError("column variable should be a symbol")
+  guard variable is Symbol(_) else {
+    raise TypeError("column variable should be a symbol")
   }
-  Column::{
+  {
     length_: length,
     elastic_modulus_: elastic_modulus,
     area_: area,
@@ -64,19 +64,19 @@ pub fn column(
 ///|
 fn column_var_name(column : Column) -> String {
   match column.variable_ {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => "x"
   }
 }
 
 ///|
 fn column_support_symbol(loc : @symcore.Expr) -> @symcore.Expr {
-  @symcore.Expr::Symbol("R_" + @symprint.pretty_string(loc))
+  Symbol("R_" + @symprint.pretty_string(loc))
 }
 
 ///|
 fn column_hinge_symbol(loc : @symcore.Expr) -> @symcore.Expr {
-  @symcore.Expr::Symbol("u_" + @symprint.pretty_string(loc))
+  Symbol("u_" + @symprint.pretty_string(loc))
 }
 
 ///|
@@ -122,8 +122,8 @@ pub fn Column::set_variable(
   self : Column,
   value : @symcore.Expr,
 ) -> Unit raise ColumnError {
-  guard value is @symcore.Expr::Symbol(_) else {
-    raise ColumnError::TypeError("column variable should be a symbol")
+  guard value is Symbol(_) else {
+    raise TypeError("column variable should be a symbol")
   }
   self.variable_ = value
 }
@@ -164,7 +164,7 @@ pub fn Column::apply_support(
   loc : @symcore.Expr,
 ) -> @symcore.Expr raise ColumnError {
   guard !self.bc_extension_.any(item => cm_expr_eq(item, loc)) else {
-    raise ColumnError::ValueError("there is already a support at this location")
+    raise ValueError("there is already a support at this location")
   }
   let reaction = column_support_symbol(loc)
   self.applied_supports_.push(reaction)
@@ -186,9 +186,9 @@ pub fn Column::apply_load(
   match end {
     Some(stop) => {
       let terms = beam_end_terms(value, start, order, stop, self.variable_) catch {
-        BeamError::ValueError(message) => raise ColumnError::ValueError(message)
-        BeamError::TypeError(message) => raise ColumnError::TypeError(message)
-        BeamError::SolveError(message) => raise ColumnError::SolveError(message)
+        ValueError(message) => raise ValueError(message)
+        TypeError(message) => raise TypeError(message)
+        SolveError(message) => raise SolveError(message)
       }
       let start_before_end = cm_sign_of_difference(start, stop)
         .map(s => s <= 0)
@@ -223,9 +223,7 @@ pub fn Column::remove_load(
     }
   }
   guard found else {
-    raise ColumnError::ValueError(
-      "no such load distribution exists on the column",
-    )
+    raise ValueError("no such load distribution exists on the column")
   }
   self.applied_loads_ = kept
   self.load_ = @symcore.int(0)
@@ -306,7 +304,7 @@ pub fn Column::solve_for_reaction_loads(
   }
   let unknowns = applied_supports + self.applied_hinges_ + [c_n, c_u]
   try cm_linear_solve(eqs, unknowns) catch {
-    _ => raise ColumnError::SolveError("unable to solve column reactions")
+    _ => raise SolveError("unable to solve column reactions")
   } noraise {
     result =>
       match result {
@@ -314,7 +312,7 @@ pub fn Column::solve_for_reaction_loads(
           self.reaction_loads_ = {}
           for reaction in applied_supports {
             match reaction {
-              @symcore.Expr::Symbol(name) =>
+              Symbol(name) =>
                 self.reaction_loads_[name] = cm_simplify(
                   solution.get(name).unwrap_or(@symcore.int(0)),
                 )
@@ -324,7 +322,7 @@ pub fn Column::solve_for_reaction_loads(
           self.hinge_extensions_ = {}
           for hinge in self.applied_hinges_ {
             match hinge {
-              @symcore.Expr::Symbol(name) =>
+              Symbol(name) =>
                 self.hinge_extensions_[name] = cm_simplify(
                   solution.get(name).unwrap_or(@symcore.int(0)),
                 )
@@ -340,8 +338,7 @@ pub fn Column::solve_for_reaction_loads(
           )
           self.is_solved_ = true
         }
-        None =>
-          raise ColumnError::SolveError("unable to solve column reactions")
+        None => raise SolveError("unable to solve column reactions")
       }
   }
 }
@@ -353,9 +350,7 @@ pub fn Column::axial_force(self : Column) -> @symcore.Expr {
   } else {
     self.load_
   }
-  let c_n = self.integration_constants_
-    .get("C_N")
-    .unwrap_or(@symcore.Expr::Symbol("C_N"))
+  let c_n = self.integration_constants_.get("C_N").unwrap_or(Symbol("C_N"))
   @symcore.int(-1) * cm_integrate(load_expr, column_var_name(self)) + c_n
 }
 
@@ -366,12 +361,8 @@ pub fn Column::extension(self : Column) -> @symcore.Expr {
   } else {
     self.load_
   }
-  let c_n = self.integration_constants_
-    .get("C_N")
-    .unwrap_or(@symcore.Expr::Symbol("C_N"))
-  let c_u = self.integration_constants_
-    .get("C_u")
-    .unwrap_or(@symcore.Expr::Symbol("C_u"))
+  let c_n = self.integration_constants_.get("C_N").unwrap_or(Symbol("C_N"))
+  let c_u = self.integration_constants_.get("C_u").unwrap_or(Symbol("C_u"))
   @symcore.int(-1) *
   cm_integrate(
     cm_integrate(load_expr, column_var_name(self)),

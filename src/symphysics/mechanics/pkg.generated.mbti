@@ -141,6 +141,10 @@ pub enum ActuatorLike {
   Friction(CoulombKineticFriction)
   Torque(TorqueActuator)
 } derive(Eq)
+#deprecated
+pub fn ActuatorLike::equal(Self, Self) -> Bool
+#deprecated
+pub fn ActuatorLike::not_equal(Self, Self) -> Bool
 pub fn ActuatorLike::repr(Self) -> String
 pub fn ActuatorLike::to_loads(Self) -> Array[Load] raise
 
@@ -163,6 +167,8 @@ pub fn Body::as_bodylike(Self) -> BodyLike
 pub fn Body::central_inertia(Self) -> @vector.Dyadic
 pub fn Body::clear_loads(Self) -> Unit
 pub fn Body::dcm(Self, @vector.ReferenceFrame) -> @symphysics.ExplicitMatrix raise @vector.VectorError
+#deprecated
+pub fn Body::equal(Self, Self) -> Bool
 pub fn Body::frame(Self) -> @vector.ReferenceFrame
 pub fn Body::inertia(Self) -> Inertia
 pub fn Body::is_rigidbody(Self) -> Bool
@@ -173,6 +179,8 @@ pub fn Body::mass(Self) -> @symcore.Expr
 pub fn Body::masscenter(Self) -> @vector.Point
 pub fn Body::masscenter_vel_in(Self, @vector.ReferenceFrame) -> @vector.Vector raise @vector.VectorError
 pub fn Body::name(Self) -> String
+#deprecated
+pub fn Body::not_equal(Self, Self) -> Bool
 pub fn Body::parallel_axis(Self, @vector.Point, frame? : @vector.ReferenceFrame?) -> @vector.Dyadic raise @vector.VectorError
 pub fn Body::potential_energy(Self) -> @symcore.Expr
 pub fn Body::remove_load(Self, about? : @vector.Point?) -> Unit
@@ -189,9 +197,13 @@ pub enum BodyLike {
   RigidBodyLike(RigidBody)
   BodyLikeLegacy(Body)
 } derive(Eq)
+#deprecated
+pub fn BodyLike::equal(Self, Self) -> Bool
 pub fn BodyLike::frame(Self) -> @vector.ReferenceFrame?
 pub fn BodyLike::masscenter(Self) -> @vector.Point
 pub fn BodyLike::name(Self) -> String
+#deprecated
+pub fn BodyLike::not_equal(Self, Self) -> Bool
 
 pub struct CoulombKineticFriction {
   mu_k_ : @symcore.Expr
@@ -202,7 +214,11 @@ pub struct CoulombKineticFriction {
   sigma_ : @symcore.Expr
 } derive(Eq)
 pub fn CoulombKineticFriction::as_actuator(Self) -> ActuatorLike
+#deprecated
+pub fn CoulombKineticFriction::equal(Self, Self) -> Bool
 pub fn CoulombKineticFriction::force(Self) -> @symcore.Expr raise
+#deprecated
+pub fn CoulombKineticFriction::not_equal(Self, Self) -> Bool
 pub fn CoulombKineticFriction::repr(Self) -> String
 pub fn CoulombKineticFriction::to_loads(Self) -> Array[Load] raise
 
@@ -227,9 +243,13 @@ pub fn CylindricalJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn CylindricalJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn CylindricalJoint::child_point(Self) -> @vector.Point
 pub fn CylindricalJoint::coordinates(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn CylindricalJoint::equal(Self, Self) -> Bool
 pub fn CylindricalJoint::joint_axis(Self) -> @vector.Vector
 pub fn CylindricalJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn CylindricalJoint::name(Self) -> String
+#deprecated
+pub fn CylindricalJoint::not_equal(Self, Self) -> Bool
 pub fn CylindricalJoint::parent(Self) -> BodyLike
 pub fn CylindricalJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn CylindricalJoint::parent_interframe(Self) -> @vector.ReferenceFrame
@@ -248,7 +268,11 @@ pub struct DuffingSpring {
   equilibrium_length_ : @symcore.Expr
 } derive(Eq)
 pub fn DuffingSpring::as_actuator(Self) -> ActuatorLike
+#deprecated
+pub fn DuffingSpring::equal(Self, Self) -> Bool
 pub fn DuffingSpring::force(Self) -> @symcore.Expr raise
+#deprecated
+pub fn DuffingSpring::not_equal(Self, Self) -> Bool
 pub fn DuffingSpring::repr(Self) -> String
 pub fn DuffingSpring::to_loads(Self) -> Array[Load] raise
 
@@ -256,6 +280,10 @@ pub struct Force {
   point : @vector.Point
   force : @vector.Vector
 } derive(Eq)
+#deprecated
+pub fn Force::equal(Self, Self) -> Bool
+#deprecated
+pub fn Force::not_equal(Self, Self) -> Bool
 pub fn Force::repr(Self) -> String
 
 pub struct ForceActuator {
@@ -263,7 +291,11 @@ pub struct ForceActuator {
   pathway_ : PathwayLike
 } derive(Eq)
 pub fn ForceActuator::as_actuator(Self) -> ActuatorLike
+#deprecated
+pub fn ForceActuator::equal(Self, Self) -> Bool
 pub fn ForceActuator::force(Self) -> @symcore.Expr
+#deprecated
+pub fn ForceActuator::not_equal(Self, Self) -> Bool
 pub fn ForceActuator::pathway(Self) -> PathwayLike
 pub fn ForceActuator::repr(Self) -> String
 pub fn ForceActuator::to_loads(Self) -> Array[Load] raise
@@ -272,18 +304,30 @@ pub struct Inertia {
   dyadic : @vector.Dyadic
   point : @vector.Point
 } derive(Eq)
+#deprecated
+pub fn Inertia::equal(Self, Self) -> Bool
 pub fn Inertia::from_inertia_scalars(@vector.Point, @vector.ReferenceFrame, @symcore.Expr, @symcore.Expr, @symcore.Expr, ixy? : @symcore.Expr, iyz? : @symcore.Expr, izx? : @symcore.Expr) -> Self raise @vector.VectorError
+#deprecated
+pub fn Inertia::not_equal(Self, Self) -> Bool
 pub fn Inertia::repr(Self) -> String
 
 pub enum JointAttachment {
   Point(@vector.Point)
   Offset(@vector.Vector)
 } derive(Eq)
+#deprecated
+pub fn JointAttachment::equal(Self, Self) -> Bool
+#deprecated
+pub fn JointAttachment::not_equal(Self, Self) -> Bool
 
 pub enum JointInterframe {
   Frame(@vector.ReferenceFrame)
   Axis(@vector.Vector)
 } derive(Eq)
+#deprecated
+pub fn JointInterframe::equal(Self, Self) -> Bool
+#deprecated
+pub fn JointInterframe::not_equal(Self, Self) -> Bool
 
 pub enum JointLike {
   Pin(PinJoint)
@@ -298,8 +342,12 @@ pub fn JointLike::child_frame(Self) -> @vector.ReferenceFrame
 pub fn JointLike::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn JointLike::child_point(Self) -> @vector.Point
 pub fn JointLike::coordinates(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn JointLike::equal(Self, Self) -> Bool
 pub fn JointLike::kdes(Self) -> Array[@symcore.Expr]
 pub fn JointLike::name(Self) -> String
+#deprecated
+pub fn JointLike::not_equal(Self, Self) -> Bool
 pub fn JointLike::parent(Self) -> BodyLike
 pub fn JointLike::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn JointLike::parent_interframe(Self) -> @vector.ReferenceFrame
@@ -319,6 +367,8 @@ pub struct JointsMethod {
 pub fn JointsMethod::add_loads(Self, Array[Load]) -> Unit
 pub fn JointsMethod::backend(Self) -> MechanicsBackend?
 pub fn JointsMethod::bodies(Self) -> Array[BodyLike]
+#deprecated
+pub fn JointsMethod::equal(Self, Self) -> Bool
 pub fn JointsMethod::forcing(Self) -> @symphysics.ExplicitMatrix
 pub fn JointsMethod::forcing_full(Self) -> @symphysics.ExplicitMatrix
 pub fn JointsMethod::form_eoms(Self, use_lagrange? : Bool) -> @symphysics.ExplicitMatrix raise
@@ -327,6 +377,8 @@ pub fn JointsMethod::kdes(Self) -> @symphysics.ExplicitMatrix
 pub fn JointsMethod::loads(Self) -> Array[Load]
 pub fn JointsMethod::mass_matrix(Self) -> @symphysics.ExplicitMatrix
 pub fn JointsMethod::mass_matrix_full(Self) -> @symphysics.ExplicitMatrix
+#deprecated
+pub fn JointsMethod::not_equal(Self, Self) -> Bool
 pub fn JointsMethod::q(Self) -> @symphysics.ExplicitMatrix
 pub fn JointsMethod::rhs(Self) -> @symphysics.ExplicitMatrix raise
 pub fn JointsMethod::set_loads(Self, Array[Load]) -> Unit
@@ -348,6 +400,8 @@ pub struct KanesMethod {
 pub fn KanesMethod::auxiliary_eqs(Self) -> @symphysics.ExplicitMatrix
 pub fn KanesMethod::bodies(Self) -> Array[BodyLike]
 pub fn KanesMethod::bodylist(Self) -> Array[BodyLike]
+#deprecated
+pub fn KanesMethod::equal(Self, Self) -> Bool
 pub fn KanesMethod::explicit_kinematics(Self) -> Bool
 pub fn KanesMethod::forcelist(Self) -> Array[Load]
 pub fn KanesMethod::forcing(Self) -> @symphysics.ExplicitMatrix
@@ -362,6 +416,8 @@ pub fn KanesMethod::loads(Self) -> Array[Load]
 pub fn KanesMethod::mass_matrix(Self) -> @symphysics.ExplicitMatrix
 pub fn KanesMethod::mass_matrix_full(Self) -> @symphysics.ExplicitMatrix
 pub fn KanesMethod::mass_matrix_kin(Self) -> @symphysics.ExplicitMatrix
+#deprecated
+pub fn KanesMethod::not_equal(Self, Self) -> Bool
 pub fn KanesMethod::q(Self) -> Array[@symcore.Expr]
 pub fn KanesMethod::rhs(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn KanesMethod::set_explicit_kinematics(Self, Bool) -> Unit
@@ -385,6 +441,8 @@ pub struct LagrangesMethod {
 pub fn LagrangesMethod::bodies(Self) -> Array[BodyLike]
 pub fn LagrangesMethod::coordinates(Self) -> Array[@symcore.Expr]
 pub fn LagrangesMethod::eom(Self) -> @symphysics.ExplicitMatrix
+#deprecated
+pub fn LagrangesMethod::equal(Self, Self) -> Bool
 pub fn LagrangesMethod::forcelist(Self) -> Array[Load]
 pub fn LagrangesMethod::forcing(Self) -> @symphysics.ExplicitMatrix
 pub fn LagrangesMethod::forcing_full(Self) -> @symphysics.ExplicitMatrix
@@ -395,6 +453,8 @@ pub fn LagrangesMethod::linearizer(Self) -> Linearizer raise
 pub fn LagrangesMethod::loads(Self) -> Array[Load]
 pub fn LagrangesMethod::mass_matrix(Self) -> @symphysics.ExplicitMatrix
 pub fn LagrangesMethod::mass_matrix_full(Self) -> @symphysics.ExplicitMatrix
+#deprecated
+pub fn LagrangesMethod::not_equal(Self, Self) -> Bool
 pub fn LagrangesMethod::q(Self) -> Array[@symcore.Expr]
 pub fn LagrangesMethod::rhs(Self) -> @symphysics.ExplicitMatrix raise
 pub fn LagrangesMethod::solve_multipliers(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)]) -> @symphysics.ExplicitMatrix raise
@@ -407,7 +467,11 @@ pub struct LinearDamper {
 } derive(Eq)
 pub fn LinearDamper::as_actuator(Self) -> ActuatorLike
 pub fn LinearDamper::damping(Self) -> @symcore.Expr
+#deprecated
+pub fn LinearDamper::equal(Self, Self) -> Bool
 pub fn LinearDamper::force(Self) -> @symcore.Expr raise
+#deprecated
+pub fn LinearDamper::not_equal(Self, Self) -> Bool
 pub fn LinearDamper::pathway(Self) -> PathwayLike
 pub fn LinearDamper::repr(Self) -> String
 pub fn LinearDamper::to_loads(Self) -> Array[Load] raise
@@ -418,8 +482,12 @@ pub struct LinearPathway {
 } derive(Eq)
 pub fn LinearPathway::as_pathway(Self) -> PathwayLike
 pub fn LinearPathway::attachments(Self) -> Array[@vector.Point]
+#deprecated
+pub fn LinearPathway::equal(Self, Self) -> Bool
 pub fn LinearPathway::extension_velocity(Self) -> @symcore.Expr raise @vector.VectorError
 pub fn LinearPathway::length(Self) -> @symcore.Expr raise @vector.VectorError
+#deprecated
+pub fn LinearPathway::not_equal(Self, Self) -> Bool
 pub fn LinearPathway::repr(Self) -> String
 pub fn LinearPathway::to_loads(Self, @symcore.Expr) -> Array[Force] raise @vector.VectorError
 
@@ -429,8 +497,12 @@ pub struct LinearSpring {
   equilibrium_length_ : @symcore.Expr
 } derive(Eq)
 pub fn LinearSpring::as_actuator(Self) -> ActuatorLike
+#deprecated
+pub fn LinearSpring::equal(Self, Self) -> Bool
 pub fn LinearSpring::equilibrium_length(Self) -> @symcore.Expr
 pub fn LinearSpring::force(Self) -> @symcore.Expr raise
+#deprecated
+pub fn LinearSpring::not_equal(Self, Self) -> Bool
 pub fn LinearSpring::pathway(Self) -> PathwayLike
 pub fn LinearSpring::repr(Self) -> String
 pub fn LinearSpring::stiffness(Self) -> @symcore.Expr
@@ -460,6 +532,8 @@ pub struct Linearizer {
   implicit_forcing_ : @symphysics.ExplicitMatrix?
   perm_mat_ : @symphysics.ExplicitMatrix
 } derive(Eq)
+#deprecated
+pub fn Linearizer::equal(Self, Self) -> Bool
 pub fn Linearizer::f_0(Self) -> @symphysics.ExplicitMatrix
 pub fn Linearizer::f_1(Self) -> @symphysics.ExplicitMatrix
 pub fn Linearizer::f_2(Self) -> @symphysics.ExplicitMatrix
@@ -472,6 +546,8 @@ pub fn Linearizer::inputs(Self) -> Array[@symcore.Expr]
 pub fn Linearizer::lams(Self) -> Array[@symcore.Expr]
 pub fn Linearizer::linearize(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], a_and_b? : Bool, simplify? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError
 pub fn Linearizer::linearize_mab(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], simplify? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError
+#deprecated
+pub fn Linearizer::not_equal(Self, Self) -> Bool
 pub fn Linearizer::permutation_matrix(Self) -> @symphysics.ExplicitMatrix
 pub fn Linearizer::q(Self) -> Array[@symcore.Expr]
 pub fn Linearizer::q_d(Self) -> Array[@symcore.Expr]
@@ -487,19 +563,31 @@ pub enum Load {
   ForceLoad(Force)
   TorqueLoad(Torque)
 } derive(Eq)
+#deprecated
+pub fn Load::equal(Self, Self) -> Bool
+#deprecated
+pub fn Load::not_equal(Self, Self) -> Bool
 
 pub enum MechanicsBackend {
   Kane(KanesMethod)
   Lagrange(LagrangesMethod)
 } derive(Eq)
+#deprecated
+pub fn MechanicsBackend::equal(Self, Self) -> Bool
+#deprecated
+pub fn MechanicsBackend::not_equal(Self, Self) -> Bool
 
 pub struct ObstacleSetPathway {
   attachments_ : Array[@vector.Point]
 } derive(Eq)
 pub fn ObstacleSetPathway::as_pathway(Self) -> PathwayLike
 pub fn ObstacleSetPathway::attachments(Self) -> Array[@vector.Point]
+#deprecated
+pub fn ObstacleSetPathway::equal(Self, Self) -> Bool
 pub fn ObstacleSetPathway::extension_velocity(Self) -> @symcore.Expr raise @vector.VectorError
 pub fn ObstacleSetPathway::length(Self) -> @symcore.Expr raise @vector.VectorError
+#deprecated
+pub fn ObstacleSetPathway::not_equal(Self, Self) -> Bool
 pub fn ObstacleSetPathway::repr(Self) -> String
 pub fn ObstacleSetPathway::to_loads(Self, @symcore.Expr) -> Array[Force] raise @vector.VectorError
 
@@ -511,10 +599,14 @@ pub struct Particle {
 } derive(Eq)
 pub fn Particle::angular_momentum(Self, @vector.Point, @vector.ReferenceFrame) -> @vector.Vector raise @vector.VectorError
 pub fn Particle::as_bodylike(Self) -> BodyLike
+#deprecated
+pub fn Particle::equal(Self, Self) -> Bool
 pub fn Particle::kinetic_energy(Self, @vector.ReferenceFrame) -> @symcore.Expr raise @vector.VectorError
 pub fn Particle::linear_momentum(Self, @vector.ReferenceFrame) -> @vector.Vector raise @vector.VectorError
 pub fn Particle::mass(Self) -> @symcore.Expr
 pub fn Particle::name(Self) -> String
+#deprecated
+pub fn Particle::not_equal(Self, Self) -> Bool
 pub fn Particle::parallel_axis(Self, @vector.Point, @vector.ReferenceFrame) -> @vector.Dyadic raise @vector.VectorError
 pub fn Particle::point(Self) -> @vector.Point
 pub fn Particle::potential_energy(Self) -> @symcore.Expr
@@ -528,8 +620,12 @@ pub enum PathwayLike {
   Obstacle(ObstacleSetPathway)
   Wrapping(WrappingPathway)
 } derive(Eq)
+#deprecated
+pub fn PathwayLike::equal(Self, Self) -> Bool
 pub fn PathwayLike::extension_velocity(Self) -> @symcore.Expr raise
 pub fn PathwayLike::length(Self) -> @symcore.Expr raise
+#deprecated
+pub fn PathwayLike::not_equal(Self, Self) -> Bool
 pub fn PathwayLike::repr(Self) -> String
 pub fn PathwayLike::to_loads(Self, @symcore.Expr) -> Array[Force] raise
 
@@ -554,9 +650,13 @@ pub fn PinJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn PinJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn PinJoint::child_point(Self) -> @vector.Point
 pub fn PinJoint::coordinates(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn PinJoint::equal(Self, Self) -> Bool
 pub fn PinJoint::joint_axis(Self) -> @vector.Vector
 pub fn PinJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn PinJoint::name(Self) -> String
+#deprecated
+pub fn PinJoint::not_equal(Self, Self) -> Bool
 pub fn PinJoint::parent(Self) -> BodyLike
 pub fn PinJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn PinJoint::parent_interframe(Self) -> @vector.ReferenceFrame
@@ -586,8 +686,12 @@ pub fn PlanarJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn PlanarJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn PlanarJoint::child_point(Self) -> @vector.Point
 pub fn PlanarJoint::coordinates(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn PlanarJoint::equal(Self, Self) -> Bool
 pub fn PlanarJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn PlanarJoint::name(Self) -> String
+#deprecated
+pub fn PlanarJoint::not_equal(Self, Self) -> Bool
 pub fn PlanarJoint::parent(Self) -> BodyLike
 pub fn PlanarJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn PlanarJoint::parent_interframe(Self) -> @vector.ReferenceFrame
@@ -622,9 +726,13 @@ pub fn PrismaticJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn PrismaticJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn PrismaticJoint::child_point(Self) -> @vector.Point
 pub fn PrismaticJoint::coordinates(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn PrismaticJoint::equal(Self, Self) -> Bool
 pub fn PrismaticJoint::joint_axis(Self) -> @vector.Vector
 pub fn PrismaticJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn PrismaticJoint::name(Self) -> String
+#deprecated
+pub fn PrismaticJoint::not_equal(Self, Self) -> Bool
 pub fn PrismaticJoint::parent(Self) -> BodyLike
 pub fn PrismaticJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn PrismaticJoint::parent_interframe(Self) -> @vector.ReferenceFrame
@@ -644,6 +752,8 @@ pub struct RigidBody {
 pub fn RigidBody::angular_momentum(Self, @vector.Point, @vector.ReferenceFrame) -> @vector.Vector raise @vector.VectorError
 pub fn RigidBody::as_bodylike(Self) -> BodyLike
 pub fn RigidBody::central_inertia(Self) -> @vector.Dyadic
+#deprecated
+pub fn RigidBody::equal(Self, Self) -> Bool
 pub fn RigidBody::frame(Self) -> @vector.ReferenceFrame
 pub fn RigidBody::inertia(Self) -> Inertia
 pub fn RigidBody::kinetic_energy(Self, @vector.ReferenceFrame) -> @symcore.Expr raise @vector.VectorError
@@ -651,6 +761,8 @@ pub fn RigidBody::linear_momentum(Self, @vector.ReferenceFrame) -> @vector.Vecto
 pub fn RigidBody::mass(Self) -> @symcore.Expr
 pub fn RigidBody::masscenter(Self) -> @vector.Point
 pub fn RigidBody::name(Self) -> String
+#deprecated
+pub fn RigidBody::not_equal(Self, Self) -> Bool
 pub fn RigidBody::parallel_axis(Self, @vector.Point, frame? : @vector.ReferenceFrame?) -> @vector.Dyadic raise @vector.VectorError
 pub fn RigidBody::potential_energy(Self) -> @symcore.Expr
 pub fn RigidBody::repr(Self) -> String
@@ -686,8 +798,12 @@ pub fn SphericalJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn SphericalJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn SphericalJoint::child_point(Self) -> @vector.Point
 pub fn SphericalJoint::coordinates(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn SphericalJoint::equal(Self, Self) -> Bool
 pub fn SphericalJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn SphericalJoint::name(Self) -> String
+#deprecated
+pub fn SphericalJoint::not_equal(Self, Self) -> Bool
 pub fn SphericalJoint::parent(Self) -> BodyLike
 pub fn SphericalJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn SphericalJoint::parent_interframe(Self) -> @vector.ReferenceFrame
@@ -721,8 +837,12 @@ pub fn SymbolicSystem::coordinates(Self) -> @symphysics.ExplicitMatrix raise @sy
 pub fn SymbolicSystem::dyn_implicit_mat(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn SymbolicSystem::dyn_implicit_rhs(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn SymbolicSystem::dynamic_symbols(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn SymbolicSystem::equal(Self, Self) -> Bool
 pub fn SymbolicSystem::kin_explicit_rhs(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn SymbolicSystem::loads(Self) -> Array[Load] raise @symphysics.PhysicsError
+#deprecated
+pub fn SymbolicSystem::not_equal(Self, Self) -> Bool
 pub fn SymbolicSystem::output_eqns(Self) -> Array[(@symcore.Expr, @symcore.Expr)]
 pub fn SymbolicSystem::speeds(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn SymbolicSystem::states(Self) -> @symphysics.ExplicitMatrix
@@ -758,6 +878,8 @@ pub fn System::add_speeds(Self, Array[@symcore.Expr], independent? : Bool) -> Un
 pub fn System::apply_uniform_gravity(Self, @vector.Vector) -> Unit
 pub fn System::bodies(Self) -> Array[BodyLike]
 pub fn System::eom_method(Self) -> MechanicsBackend?
+#deprecated
+pub fn System::equal(Self, Self) -> Bool
 pub fn System::fixed_point(Self) -> @vector.Point
 pub fn System::forcing(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn System::forcing_full(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
@@ -772,6 +894,8 @@ pub fn System::loads(Self) -> Array[Load]
 pub fn System::mass_matrix(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn System::mass_matrix_full(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn System::nonholonomic_constraints(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn System::not_equal(Self, Self) -> Bool
 pub fn System::q(Self) -> Array[@symcore.Expr]
 pub fn System::q_dep(Self) -> Array[@symcore.Expr]
 pub fn System::q_ind(Self) -> Array[@symcore.Expr]
@@ -796,6 +920,10 @@ pub struct Torque {
   frame : @vector.ReferenceFrame
   torque : @vector.Vector
 } derive(Eq)
+#deprecated
+pub fn Torque::equal(Self, Self) -> Bool
+#deprecated
+pub fn Torque::not_equal(Self, Self) -> Bool
 pub fn Torque::repr(Self) -> String
 
 pub struct TorqueActuator {
@@ -806,6 +934,10 @@ pub struct TorqueActuator {
 } derive(Eq)
 pub fn TorqueActuator::as_actuator(Self) -> ActuatorLike
 pub fn TorqueActuator::axis(Self) -> @vector.Vector
+#deprecated
+pub fn TorqueActuator::equal(Self, Self) -> Bool
+#deprecated
+pub fn TorqueActuator::not_equal(Self, Self) -> Bool
 pub fn TorqueActuator::reaction_frame(Self) -> @vector.ReferenceFrame?
 pub fn TorqueActuator::repr(Self) -> String
 pub fn TorqueActuator::target_frame(Self) -> @vector.ReferenceFrame
@@ -829,8 +961,12 @@ pub fn WeldJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn WeldJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn WeldJoint::child_point(Self) -> @vector.Point
 pub fn WeldJoint::coordinates(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn WeldJoint::equal(Self, Self) -> Bool
 pub fn WeldJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn WeldJoint::name(Self) -> String
+#deprecated
+pub fn WeldJoint::not_equal(Self, Self) -> Bool
 pub fn WeldJoint::parent(Self) -> BodyLike
 pub fn WeldJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn WeldJoint::parent_interframe(Self) -> @vector.ReferenceFrame
@@ -847,8 +983,12 @@ pub fn WrappingCone::alpha(Self) -> @symcore.Expr
 pub fn WrappingCone::apex(Self) -> @vector.Point
 pub fn WrappingCone::as_geometry(Self) -> WrappingGeometryLike
 pub fn WrappingCone::axis(Self) -> @vector.Vector
+#deprecated
+pub fn WrappingCone::equal(Self, Self) -> Bool
 pub fn WrappingCone::geodesic_end_vectors(Self, @vector.Point, @vector.Point) -> (@vector.Vector, @vector.Vector) raise
 pub fn WrappingCone::geodesic_length(Self, @vector.Point, @vector.Point) -> @symcore.Expr raise
+#deprecated
+pub fn WrappingCone::not_equal(Self, Self) -> Bool
 pub fn WrappingCone::point(Self) -> @vector.Point
 pub fn WrappingCone::point_on_surface(Self, @vector.Point) -> @symcore.Expr raise @vector.VectorError
 pub fn WrappingCone::repr(Self) -> String
@@ -860,8 +1000,12 @@ pub struct WrappingCylinder {
 } derive(Eq)
 pub fn WrappingCylinder::as_geometry(Self) -> WrappingGeometryLike
 pub fn WrappingCylinder::axis(Self) -> @vector.Vector
+#deprecated
+pub fn WrappingCylinder::equal(Self, Self) -> Bool
 pub fn WrappingCylinder::geodesic_end_vectors(Self, @vector.Point, @vector.Point) -> (@vector.Vector, @vector.Vector) raise
 pub fn WrappingCylinder::geodesic_length(Self, @vector.Point, @vector.Point) -> @symcore.Expr raise
+#deprecated
+pub fn WrappingCylinder::not_equal(Self, Self) -> Bool
 pub fn WrappingCylinder::point(Self) -> @vector.Point
 pub fn WrappingCylinder::point_on_surface(Self, @vector.Point) -> @symcore.Expr raise @vector.VectorError
 pub fn WrappingCylinder::radius(Self) -> @symcore.Expr
@@ -872,8 +1016,12 @@ pub enum WrappingGeometryLike {
   Cylinder(WrappingCylinder)
   Cone(WrappingCone)
 } derive(Eq)
+#deprecated
+pub fn WrappingGeometryLike::equal(Self, Self) -> Bool
 pub fn WrappingGeometryLike::geodesic_end_vectors(Self, @vector.Point, @vector.Point) -> (@vector.Vector, @vector.Vector) raise
 pub fn WrappingGeometryLike::geodesic_length(Self, @vector.Point, @vector.Point) -> @symcore.Expr raise
+#deprecated
+pub fn WrappingGeometryLike::not_equal(Self, Self) -> Bool
 pub fn WrappingGeometryLike::point(Self) -> @vector.Point
 pub fn WrappingGeometryLike::point_on_surface(Self, @vector.Point) -> @symcore.Expr raise @vector.VectorError
 pub fn WrappingGeometryLike::repr(Self) -> String
@@ -885,9 +1033,13 @@ pub struct WrappingPathway {
 } derive(Eq)
 pub fn WrappingPathway::as_pathway(Self) -> PathwayLike
 pub fn WrappingPathway::attachments(Self) -> Array[@vector.Point]
+#deprecated
+pub fn WrappingPathway::equal(Self, Self) -> Bool
 pub fn WrappingPathway::extension_velocity(Self) -> @symcore.Expr raise
 pub fn WrappingPathway::geometry(Self) -> WrappingGeometryLike
 pub fn WrappingPathway::length(Self) -> @symcore.Expr raise
+#deprecated
+pub fn WrappingPathway::not_equal(Self, Self) -> Bool
 pub fn WrappingPathway::repr(Self) -> String
 pub fn WrappingPathway::to_loads(Self, @symcore.Expr) -> Array[Force] raise
 
@@ -896,8 +1048,12 @@ pub struct WrappingSphere {
   point_ : @vector.Point
 } derive(Eq)
 pub fn WrappingSphere::as_geometry(Self) -> WrappingGeometryLike
+#deprecated
+pub fn WrappingSphere::equal(Self, Self) -> Bool
 pub fn WrappingSphere::geodesic_end_vectors(Self, @vector.Point, @vector.Point) -> (@vector.Vector, @vector.Vector) raise @vector.VectorError
 pub fn WrappingSphere::geodesic_length(Self, @vector.Point, @vector.Point) -> @symcore.Expr raise @vector.VectorError
+#deprecated
+pub fn WrappingSphere::not_equal(Self, Self) -> Bool
 pub fn WrappingSphere::point(Self) -> @vector.Point
 pub fn WrappingSphere::point_on_surface(Self, @vector.Point) -> @symcore.Expr raise @vector.VectorError
 pub fn WrappingSphere::radius(Self) -> @symcore.Expr

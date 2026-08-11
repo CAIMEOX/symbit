@@ -3,8 +3,8 @@ test "physics.quantum.spin: local uncoupled Jz basis" {
   let half = quantum_test_frac(1, 2)
   let one = @symcore.int(1)
 
-  inspect(jz_ket(one, @symcore.int(0)).to_string(), content="|1,0>")
-  inspect(jz_bra(one, @symcore.int(-1)).to_string(), content="<1,-1|")
+  inspect(Show::to_string(jz_ket(one, @symcore.int(0))), content="|1,0>")
+  inspect(Show::to_string(jz_bra(one, @symcore.int(-1))), content="<1,-1|")
   inspect(@symprint.pretty_string(dagger(jplus())), content="Dagger(Jplus)")
   inspect(
     @symprint.pretty_string(dagger(jz_ket(one, @symcore.int(0)).as_expr())),
@@ -55,11 +55,13 @@ test "physics.quantum.spin: local rotations and Wigner D" {
   let gamma = @symcore.Expr::Symbol("gamma")
 
   inspect(
-    rotation(alpha, beta, gamma).to_string(),
+    Show::to_string(rotation(alpha, beta, gamma)),
     content="R(alpha,beta,gamma)",
   )
   inspect(
-    rotation_d(@symcore.int(1), @symcore.int(1), @symcore.int(0), beta).to_string(),
+    Show::to_string(
+      rotation_d(@symcore.int(1), @symcore.int(1), @symcore.int(0), beta),
+    ),
     content="d(1,1,0,beta)",
   )
 
@@ -73,8 +75,7 @@ test "physics.quantum.spin: local rotations and Wigner D" {
       @symcore.int(1),
       @symcore.int(1),
       @symcore.int(0),
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-      quantum_test_frac(1, 2),
+      NumberSymbol(Pi) * quantum_test_frac(1, 2),
     ).doit(),
   )
   assert_true(expr_equal(wigner_d_value, "-sqrt(2)/2"))
@@ -105,8 +106,8 @@ test "physics.quantum.spin: local Jx/Jy bases" {
   let half = quantum_test_frac(1, 2)
   let one = @symcore.int(1)
 
-  inspect(jx_ket(one, @symcore.int(1)).to_string(), content="|1,1>")
-  inspect(jy_bra(one, @symcore.int(-1)).to_string(), content="<1,-1|")
+  inspect(Show::to_string(jx_ket(one, @symcore.int(1))), content="|1,1>")
+  inspect(Show::to_string(jy_bra(one, @symcore.int(-1))), content="<1,-1|")
 
   quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([jx(), jx_ket(one, @symcore.int(1)).as_expr()])),
@@ -170,7 +171,7 @@ test "physics.quantum.spin: local coupled Jz states" {
   let x_coupled = jx_ket_coupled(one, one, [half, half])
   let y_coupled = jy_ket_coupled(one, one, [half, half])
 
-  inspect(coupled.to_string(), content="|1,0,j1=1/2,j2=1/2>")
+  inspect(Show::to_string(coupled), content="|1,0,j1=1/2,j2=1/2>")
 
   quantum_test_assert_string_equal(
     quantum_eval_str(

@@ -21,6 +21,13 @@ This is a [MoonBit](https://docs.moonbitlang.com) project.
 - Try to keep deprecated blocks in file called `deprecated.mbt` in each
   directory.
 
+- Do not rely on MoonBit's transitional implicit promotion from
+  `impl Trait for Type` to dot methods. Call trait methods explicitly as
+  `Trait::method(value, ...)`. A package's `trait_optouts.mbt` uses
+  `#deprecated pub extend Type with Trait::{method}` as the compiler's E0079
+  opt-out marker and as a deprecated public migration shim; production and
+  test call sites in this module must not use that extension.
+
 ## Tooling
 
 - `moon fmt` is used to format your code properly.
@@ -68,12 +75,12 @@ This is a [MoonBit](https://docs.moonbitlang.com) project.
 - This module may be checked from a parent `moon.work`. A bare `moon check` can
   therefore include sibling modules, while `moon check src` only checks the
   dependency closure rooted at `src`. To check every non-oracle package and
-  reject default warnings, use:
+  reject default warnings plus E0073/E0079, use:
 
   ```bash
   find src -type f -name moon.pkg ! -path 'src/sympy/*' -print \
     | sed 's#/moon.pkg$##' \
-    | xargs moon check --frozen --deny-warn
+    | xargs moon check --frozen --deny-warn --warn-list +73+79
   ```
 
 - When writing tests, you are encouraged to use `inspect` and run

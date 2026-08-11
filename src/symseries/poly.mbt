@@ -4,8 +4,8 @@
 ///|
 fn expr_exact_value(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
-    @symcore.Expr::Float(f) =>
+    Number(n) => Some(n)
+    Float(f) =>
       if !f.is_finite() {
         None
       } else {
@@ -15,7 +15,7 @@ fn expr_exact_value(expr : @symcore.Expr) -> @symnum.BigRational? {
         }
         Some(value)
       }
-    @symcore.Expr::ComplexFloat(z) =>
+    ComplexFloat(z) =>
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
@@ -35,21 +35,21 @@ fn expr_preserve_numeric_like(
   exact : @symnum.BigRational,
 ) -> @symcore.Expr {
   match source {
-    @symcore.Expr::Float(f) =>
-      @symcore.Expr::Float(
+    Float(f) =>
+      Float(
         @symcore.Float::from_exact(exact, prec=f.precision()) catch {
           _ => @symcore.Float::from_mpf(@symnum.fnan, prec=f.precision())
         },
       )
-    @symcore.Expr::ComplexFloat(z) =>
-      @symcore.Expr::ComplexFloat(
+    ComplexFloat(z) =>
+      ComplexFloat(
         @symcore.ComplexFloat::from_exact_parts(
           exact,
           @symnum.BigRational::zero(),
           prec=z.precision(),
         ),
       )
-    _ => @symcore.Expr::Number(exact)
+    _ => Number(exact)
   }
 }
 
@@ -230,14 +230,14 @@ fn poly_from_expr(
   x : @symcore.Expr,
 ) -> Array[@symcore.Expr]? {
   match expr {
-    @symcore.Expr::Number(_) | @symcore.Expr::Float(_) => Some([expr])
-    @symcore.Expr::Symbol(_) =>
+    Number(_) | Float(_) => Some([expr])
+    Symbol(_) =>
       if expr == x {
         Some([@symcore.int(0), @symcore.int(1)])
       } else {
         Some([expr])
       }
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let mut acc : Array[@symcore.Expr] = [@symcore.int(0)]
       for arg in args {
         match poly_from_expr(arg, x) {
@@ -247,7 +247,7 @@ fn poly_from_expr(
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc : Array[@symcore.Expr] = [@symcore.int(1)]
       for arg in args {
         match poly_from_expr(arg, x) {
@@ -257,7 +257,7 @@ fn poly_from_expr(
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match int_exp(exp) {
         Some(e) if e >= 0 =>
           match poly_from_expr(base, x) {

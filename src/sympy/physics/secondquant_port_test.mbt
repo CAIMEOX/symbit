@@ -88,8 +88,8 @@ test "physics.secondquant: boson parity" {
     secondquant_eval_str(
       @symprint.pretty_string(
         secondquant_inner_product(
-          boson_bra([@symcore.Expr::Symbol("i"), @symcore.Expr::Symbol("j")]),
-          boson_ket([@symcore.Expr::Symbol("k"), @symcore.Expr::Symbol("l")]),
+          boson_bra([Symbol("i"), Symbol("j")]),
+          boson_ket([Symbol("k"), Symbol("l")]),
         ),
       ),
     ),
@@ -106,11 +106,11 @@ test "physics.secondquant: boson parity" {
   )
   inspect(
     secondquant_basis_str("VarBosonicBasis(5)"),
-    content=variable_bosonic_basis(5).to_string(),
+    content=Show::to_string(variable_bosonic_basis(5)),
   )
   inspect(
     secondquant_basis_str("FixedBosonicBasis(2, 2)"),
-    content=fixed_bosonic_basis(2, 2).to_string(),
+    content=Show::to_string(fixed_bosonic_basis(2, 2)),
   )
   sq_assert_matrix_oracle_equal(
     secondquant_matrix_rep(b0.as_expr(), variable_bosonic_basis(5).as_basis()),

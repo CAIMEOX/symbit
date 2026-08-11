@@ -36,7 +36,7 @@ fn mechanics_eq_expr(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn mechanics_pi_expr() -> Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  NumberSymbol(Pi)
 }
 
 ///|
@@ -127,8 +127,8 @@ fn mechanics_rational_pow(
 ///|
 fn mechanics_try_numeric(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    Expr::Number(value) => Some(value)
-    Expr::Add(args) => {
+    Number(value) => Some(value)
+    Add(args) => {
       let mut acc = @symnum.BigRational::zero()
       for arg in args {
         match mechanics_try_numeric(arg) {
@@ -138,7 +138,7 @@ fn mechanics_try_numeric(expr : Expr) -> @symnum.BigRational? {
       }
       Some(acc)
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = @symnum.BigRational::one()
       for arg in args {
         match mechanics_try_numeric(arg) {
@@ -148,7 +148,7 @@ fn mechanics_try_numeric(expr : Expr) -> @symnum.BigRational? {
       }
       Some(acc)
     }
-    Expr::Pow(base, exponent) =>
+    Pow(base, exponent) =>
       match (mechanics_try_numeric(base), mechanics_try_numeric(exponent)) {
         (Some(base_value), Some(exp_value)) if exp_value.is_integral() => {
           let num = exp_value.numerator()
@@ -188,7 +188,7 @@ fn mechanics_directional_atan(
   match (mechanics_try_numeric(numerator), mechanics_try_numeric(denominator)) {
     (Some(num), Some(den)) => {
       if num.is_zero() && den.is_zero() {
-        raise @symphysics.PhysicsError::ValueError(
+        raise ValueError(
           "directional atan undefined for zero numerator and denominator",
         )
       }
@@ -223,22 +223,15 @@ fn mechanics_directional_atan(
       match ratio {
         _ if @symcore.application_has_name(ratio, "tan", arity=1) =>
           @symcore.application_args(ratio).unwrap_or([])[0]
-        Expr::Mul(args) if args.length() == 2 &&
-          mechanics_is_negative_one(args[0]) =>
+        Mul(args) if args.length() == 2 && mechanics_is_negative_one(args[0]) =>
           match args[1] {
             _ if @symcore.application_has_name(args[1], "tan", arity=1) =>
               mechanics_two_expr() * mechanics_pi_expr() -
               @symcore.application_args(args[1]).unwrap_or([])[0]
-            _ =>
-              raise @symphysics.PhysicsError::ValueError(
-                "unsupported symbolic directional atan ratio",
-              )
+            _ => raise ValueError("unsupported symbolic directional atan ratio")
           }
         _ if mechanics_is_zero(ratio) => int(0)
-        _ =>
-          raise @symphysics.PhysicsError::ValueError(
-            "unsupported symbolic directional atan ratio",
-          )
+        _ => raise ValueError("unsupported symbolic directional atan ratio")
       }
     }
   }
@@ -249,7 +242,7 @@ pub fn wrapping_sphere(
   radius : Expr,
   point : @symvector.Point,
 ) -> WrappingSphere {
-  WrappingSphere::{ radius_: radius, point_: point }
+  { radius_: radius, point_: point }
 }
 
 ///|
@@ -314,7 +307,7 @@ pub fn WrappingSphere::repr(self : WrappingSphere) -> String {
 pub fn WrappingSphere::as_geometry(
   self : WrappingSphere,
 ) -> WrappingGeometryLike {
-  WrappingGeometryLike::Sphere(self)
+  Sphere(self)
 }
 
 ///|
@@ -323,7 +316,7 @@ pub fn wrapping_cylinder(
   point : @symvector.Point,
   axis : @symvector.Vector,
 ) -> WrappingCylinder raise @symvector.VectorError {
-  WrappingCylinder::{ radius_: radius, point_: point, axis_: axis.normalize() }
+  { radius_: radius, point_: point, axis_: axis.normalize() }
 }
 
 ///|
@@ -453,7 +446,7 @@ pub fn WrappingCylinder::repr(self : WrappingCylinder) -> String {
 pub fn WrappingCylinder::as_geometry(
   self : WrappingCylinder,
 ) -> WrappingGeometryLike {
-  WrappingGeometryLike::Cylinder(self)
+  Cylinder(self)
 }
 
 ///|
@@ -462,7 +455,7 @@ pub fn wrapping_cone(
   apex : @symvector.Point,
   axis : @symvector.Vector,
 ) -> WrappingCone raise @symvector.VectorError {
-  WrappingCone::{ alpha_: alpha, apex_: apex, axis_: axis.normalize() }
+  { alpha_: alpha, apex_: apex, axis_: axis.normalize() }
 }
 
 ///|
@@ -593,7 +586,7 @@ pub fn WrappingCone::repr(self : WrappingCone) -> String {
 
 ///|
 pub fn WrappingCone::as_geometry(self : WrappingCone) -> WrappingGeometryLike {
-  WrappingGeometryLike::Cone(self)
+  Cone(self)
 }
 
 ///|
@@ -601,9 +594,9 @@ pub fn WrappingGeometryLike::point(
   self : WrappingGeometryLike,
 ) -> @symvector.Point {
   match self {
-    WrappingGeometryLike::Sphere(value) => value.point()
-    WrappingGeometryLike::Cylinder(value) => value.point()
-    WrappingGeometryLike::Cone(value) => value.point()
+    Sphere(value) => value.point()
+    Cylinder(value) => value.point()
+    Cone(value) => value.point()
   }
 }
 
@@ -613,9 +606,9 @@ pub fn WrappingGeometryLike::point_on_surface(
   point : @symvector.Point,
 ) -> Expr raise @symvector.VectorError {
   match self {
-    WrappingGeometryLike::Sphere(value) => value.point_on_surface(point)
-    WrappingGeometryLike::Cylinder(value) => value.point_on_surface(point)
-    WrappingGeometryLike::Cone(value) => value.point_on_surface(point)
+    Sphere(value) => value.point_on_surface(point)
+    Cylinder(value) => value.point_on_surface(point)
+    Cone(value) => value.point_on_surface(point)
   }
 }
 
@@ -626,11 +619,9 @@ pub fn WrappingGeometryLike::geodesic_length(
   point_2 : @symvector.Point,
 ) -> Expr raise {
   match self {
-    WrappingGeometryLike::Sphere(value) =>
-      value.geodesic_length(point_1, point_2)
-    WrappingGeometryLike::Cylinder(value) =>
-      value.geodesic_length(point_1, point_2)
-    WrappingGeometryLike::Cone(value) => value.geodesic_length(point_1, point_2)
+    Sphere(value) => value.geodesic_length(point_1, point_2)
+    Cylinder(value) => value.geodesic_length(point_1, point_2)
+    Cone(value) => value.geodesic_length(point_1, point_2)
   }
 }
 
@@ -641,20 +632,17 @@ pub fn WrappingGeometryLike::geodesic_end_vectors(
   point_2 : @symvector.Point,
 ) -> (@symvector.Vector, @symvector.Vector) raise {
   match self {
-    WrappingGeometryLike::Sphere(value) =>
-      value.geodesic_end_vectors(point_1, point_2)
-    WrappingGeometryLike::Cylinder(value) =>
-      value.geodesic_end_vectors(point_1, point_2)
-    WrappingGeometryLike::Cone(value) =>
-      value.geodesic_end_vectors(point_1, point_2)
+    Sphere(value) => value.geodesic_end_vectors(point_1, point_2)
+    Cylinder(value) => value.geodesic_end_vectors(point_1, point_2)
+    Cone(value) => value.geodesic_end_vectors(point_1, point_2)
   }
 }
 
 ///|
 pub fn WrappingGeometryLike::repr(self : WrappingGeometryLike) -> String {
   match self {
-    WrappingGeometryLike::Sphere(value) => value.repr()
-    WrappingGeometryLike::Cylinder(value) => value.repr()
-    WrappingGeometryLike::Cone(value) => value.repr()
+    Sphere(value) => value.repr()
+    Cylinder(value) => value.repr()
+    Cone(value) => value.repr()
   }
 }

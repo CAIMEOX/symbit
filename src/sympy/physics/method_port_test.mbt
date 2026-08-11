@@ -23,20 +23,13 @@ test "physics.mechanics parity linearizer from kane and lagrange" {
   let n = @symvector.reference_frame("KNP")
   let p = @symvector.point("KPP")
   p.set_vel(n, n.x().scale(u))
-  let pa = particle("Pa", point=Some(p), mass=Some(@symcore.Expr::Symbol("m")))
+  let pa = particle("Pa", point=Some(p), mass=Some(Symbol("m")))
   let km = kanes_method(n, [q], [u], [
     @symcalculus.diff(q, @symvector.dynamicsymbols_t) - u,
   ])
   ignore(
     km.kanes_equations([pa.as_bodylike()], [
-      force_load(
-        p,
-        n
-        .x()
-        .scale(
-          f - @symcore.Expr::Symbol("k") * q - @symcore.Expr::Symbol("c") * u,
-        ),
-      ),
+      force_load(p, n.x().scale(f - Symbol("k") * q - Symbol("c") * u)),
     ]),
   )
   let klin = km.to_linearizer()
@@ -111,18 +104,14 @@ test "physics.mechanics parity linearizer from kane and lagrange" {
   )
   let oo = @symvector.point("LOP")
   oo.set_vel(nn, @symvector.vector_zero())
-  let pp = oo.locatenew("LPP", aa.x().scale(@symcore.Expr::Symbol("l")))
+  let pp = oo.locatenew("LPP", aa.x().scale(Symbol("l")))
   ignore(pp.v2pt_theory(oo, nn, aa))
-  let lpa = particle(
-    "LPa",
-    point=Some(pp),
-    mass=Some(@symcore.Expr::Symbol("m")),
-  )
+  let lpa = particle("LPa", point=Some(pp), mass=Some(Symbol("m")))
   lpa.set_potential_energy(
     @symcore.int(-1) *
-    @symcore.Expr::Symbol("m") *
-    @symcore.Expr::Symbol("g") *
-    @symcore.Expr::Symbol("l") *
+    Symbol("m") *
+    Symbol("g") *
+    Symbol("l") *
     @symelem.cos(ql),
   )
   let lagr = lagrangian(nn, [lpa.as_bodylike()])

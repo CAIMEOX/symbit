@@ -1,6 +1,6 @@
 ///|
 fn cov_fezz(n : Int) -> FieldElem raise {
-  @sympolys.fe_from_int(n, Domain::ZZ)
+  @sympolys.fe_from_int(n, ZZ)
 }
 
 ///|
@@ -12,7 +12,7 @@ fn cov_brat(num : Int, den : Int) -> @symnum.BigRational {
 
 ///|
 fn cov_expr_rat(num : Int, den : Int) -> @symcore.Expr {
-  @symcore.Expr::Number(cov_brat(num, den))
+  Number(cov_brat(num, den))
 }
 
 ///|
@@ -26,15 +26,15 @@ fn cov_dup_from_ints(xs : Array[Int]) -> Array[FieldElem] raise {
 
 ///|
 fn cov_dup_repr(coeffs : Array[FieldElem]) -> String {
-  let parts = coeffs.map(c => c.to_string()).join(",")
+  let parts = coeffs.map(c => Show::to_string(c)).join(",")
   "[\{parts}]"
 }
 
 ///|
 fn cov_dense_repr(p : DensePoly) -> String {
   match p {
-    DensePoly::Coef(c) => c.to_string()
-    DensePoly::Poly(items) => {
+    Coef(c) => Show::to_string(c)
+    Poly(items) => {
       let parts : Array[String] = Array::new()
       for it in items {
         parts.push(cov_dense_repr(it))
@@ -90,7 +90,7 @@ fn cov_lt_repr(v : (Monomial, FieldElem)?) -> String {
     None => "None"
     Some((m, c)) => {
       let exps = m.to_array().map(x => x.to_string()).join(",")
-      "(\{exps}):\{c.to_string()}"
+      "(\{exps}):\{Show::to_string(c)}"
     }
   }
 }
@@ -107,7 +107,7 @@ fn cov_fe_pow(base : FieldElem, exp : Int) -> FieldElem raise {
 ///|
 test "coverage: core helpers and leading-term API" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
   )
@@ -118,14 +118,14 @@ test "coverage: core helpers and leading-term API" {
   let expected_scaled = sympy_normalize("3*x**2 + 6*x + 3").trim().to_owned()
   assert_eq(scaled, expected_scaled)
 
-  let p_grev = p.with_order(TermOrder::Grevlex)
-  assert_true(p_grev.order == TermOrder::Grevlex)
+  let p_grev = p.with_order(Grevlex)
+  assert_true(p_grev.order == Grevlex)
 
   let lt1 = p.leading_term()
-  let lt2 = p.leading_term_with_order(TermOrder::Lex)
+  let lt2 = p.leading_term_with_order(Lex)
   assert_eq(cov_lt_repr(lt1), cov_lt_repr(lt2))
 
-  let as_expr = p.to_expr_with_order(TermOrder::Lex)
+  let as_expr = p.to_expr_with_order(Lex)
   let expr_norm = sympy_normalize(@symprint.pretty_string(as_expr))
     .trim()
     .to_owned()
@@ -139,20 +139,12 @@ test "coverage: dup_add_mul and dup_sub_mul consistency" {
   let g = cov_dup_from_ints([2, 0, 1])
   let h = cov_dup_from_ints([1, -1])
 
-  let add_mul = @sympolys.dup_add_mul(f, g, h, Domain::ZZ)
-  let add_ref = @sympolys.dup_add(
-    f,
-    @sympolys.dup_mul(g, h, Domain::ZZ),
-    Domain::ZZ,
-  )
+  let add_mul = @sympolys.dup_add_mul(f, g, h, ZZ)
+  let add_ref = @sympolys.dup_add(f, @sympolys.dup_mul(g, h, ZZ), ZZ)
   assert_eq(cov_dup_repr(add_mul), cov_dup_repr(add_ref))
 
-  let sub_mul = @sympolys.dup_sub_mul(f, g, h, Domain::ZZ)
-  let sub_ref = @sympolys.dup_sub(
-    f,
-    @sympolys.dup_mul(g, h, Domain::ZZ),
-    Domain::ZZ,
-  )
+  let sub_mul = @sympolys.dup_sub_mul(f, g, h, ZZ)
+  let sub_ref = @sympolys.dup_sub(f, @sympolys.dup_mul(g, h, ZZ), ZZ)
   assert_eq(cov_dup_repr(sub_mul), cov_dup_repr(sub_ref))
 }
 
@@ -160,21 +152,17 @@ test "coverage: dup_add_mul and dup_sub_mul consistency" {
 test "coverage: dup_pdiv/prem/pquo and pseudo-division identity" {
   let f = cov_dup_from_ints([2, 0, -2, 4])
   let g = cov_dup_from_ints([3, -3, 0])
-  let (q, r) = @sympolys.dup_pdiv(f, g, Domain::ZZ)
-  let prem = @sympolys.dup_prem(f, g, Domain::ZZ)
-  let pquo = @sympolys.dup_pquo(f, g, Domain::ZZ)
+  let (q, r) = @sympolys.dup_pdiv(f, g, ZZ)
+  let prem = @sympolys.dup_prem(f, g, ZZ)
+  let pquo = @sympolys.dup_pquo(f, g, ZZ)
   assert_eq(cov_dup_repr(r), cov_dup_repr(prem))
   assert_eq(cov_dup_repr(q), cov_dup_repr(pquo))
 
   // Check lc(g)^n * f = q*g + r.
   let n = @sympolys.dup_degree(f) - @sympolys.dup_degree(g) + 1
   let c = cov_fe_pow(@sympolys.dup_LC(g), n)
-  let lhs = @sympolys.dup_mul_term(f, c, 0, Domain::ZZ)
-  let rhs = @sympolys.dup_add(
-    @sympolys.dup_mul(q, g, Domain::ZZ),
-    r,
-    Domain::ZZ,
-  )
+  let lhs = @sympolys.dup_mul_term(f, c, 0, ZZ)
+  let rhs = @sympolys.dup_add(@sympolys.dup_mul(q, g, ZZ), r, ZZ)
   assert_eq(cov_dup_repr(lhs), cov_dup_repr(rhs))
 }
 
@@ -182,12 +170,12 @@ test "coverage: dup_pdiv/prem/pquo and pseudo-division identity" {
 test "coverage: root upper/lower bound wrapper consistency" {
   let f = [1, 0, -2, 1]
   let poly = cov_dup_from_ints(f)
-  let up = @sympolys.dup_root_upper_bound(poly, Domain::ZZ)
-  let lo = @sympolys.dup_root_lower_bound(poly, Domain::ZZ)
-  let up_ref = @sympolys.dup_cauchy_upper_bound(poly, Domain::ZZ)
-  let lo_ref = @sympolys.dup_cauchy_lower_bound(poly, Domain::ZZ)
-  assert_eq(up.to_string(), up_ref.to_string())
-  assert_eq(lo.to_string(), lo_ref.to_string())
+  let up = @sympolys.dup_root_upper_bound(poly, ZZ)
+  let lo = @sympolys.dup_root_lower_bound(poly, ZZ)
+  let up_ref = @sympolys.dup_cauchy_upper_bound(poly, ZZ)
+  let lo_ref = @sympolys.dup_cauchy_lower_bound(poly, ZZ)
+  assert_eq(Show::to_string(up), Show::to_string(up_ref))
+  assert_eq(Show::to_string(lo), Show::to_string(lo_ref))
 }
 
 ///|
@@ -211,11 +199,11 @@ test "coverage: galoistools scalar helpers" {
 ///|
 test "coverage: qq_utils clear_denominators" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let poly = b.from_expr(cov_expr_rat(1, 2) * x + cov_expr_rat(1, 3))
   let lifted = @sympolys.clear_denominators(poly)
   match lifted.domain {
-    Domain::ZZ => ()
+    ZZ => ()
     _ => fail("clear_denominators should lift to ZZ")
   }
   let ours = cov_poly_norm(lifted)
@@ -255,8 +243,8 @@ test "coverage: groebner_expr parity" {
   let ours_basis = @sympolys.groebner_expr(
     exprs,
     gens=["x", "y"],
-    domain=Domain::QQ,
-    order=TermOrder::Lex,
+    domain=QQ,
+    order=Lex,
   )
   let ours = cov_norm_basis(cov_groebner_basis_str(ours_basis))
   let oracle = cov_norm_basis(groebner(exprs, order="lex"))
@@ -267,7 +255,7 @@ test "coverage: groebner_expr parity" {
 test "coverage: resultant_poly multivariate output parity" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let b = PolyBuilder::new(["x", "y"], QQ)
   let f = b.from_expr(x + y)
   let g = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let ours_poly = f.resultant_poly(g, 0)
@@ -288,7 +276,7 @@ test "coverage: resultant_poly multivariate output parity" {
 ///|
 test "coverage: subresultants PG aliases" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let p = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
   let q = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
   let pg = @sympolys.subresultants_pg(p, q)
@@ -302,7 +290,7 @@ test "coverage: subresultants PG aliases" {
 ///|
 test "coverage: dense conversions and raw dict helpers" {
   let dense = cov_dup_from_ints([1, 0, -2])
-  let poly = @sympolys.from_dense(dense, ["x"], Domain::ZZ)
+  let poly = @sympolys.from_dense(dense, ["x"], ZZ)
   let back = @sympolys.to_dense(poly, degree=2)
   assert_eq(cov_dup_repr(back), cov_dup_repr(dense))
 
@@ -312,7 +300,7 @@ test "coverage: dense conversions and raw dict helpers" {
   ])
   let child_lo = @sympolys.dense_poly([@sympolys.dense_coef(cov_fezz(2))])
   let dmp = @sympolys.dense_poly([child_hi, child_lo])
-  let raw = @sympolys.dmp_to_raw_dict(dmp, 1, Domain::ZZ)
+  let raw = @sympolys.dmp_to_raw_dict(dmp, 1, ZZ)
   assert_eq(raw.length(), 2)
   match raw.get(1) {
     Some(v) =>
@@ -339,7 +327,7 @@ test "coverage: monomial and field-element helper APIs" {
   let div21 = @sympolys.monomial_divides(m2, m1)
   assert_true(div12)
   assert_true(!div21)
-  assert_true(@sympolys.compare_monomial_order(m1, m3, TermOrder::Lex) > 0)
+  assert_true(@sympolys.compare_monomial_order(m1, m3, Lex) > 0)
   assert_eq(@sympolys.monomial_count(3, 2), 10)
 
   let neg = cov_fezz(-3)
@@ -353,13 +341,13 @@ test "coverage: monomial and field-element helper APIs" {
   assert_true(@sympolys.fe_is_one(one))
   let sub = @sympolys.fe_sub(cov_fezz(5), cov_fezz(2))
   let neg_sub = @sympolys.fe_neg(sub)
-  assert_true(sub.to_string() == "3" && neg_sub.to_string() == "-3")
+  assert_true(Show::to_string(sub) == "3" && Show::to_string(neg_sub) == "-3")
 }
 
 ///|
 test "coverage: core neg/sub APIs" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let p = b.from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(3),
   )
@@ -375,14 +363,14 @@ test "coverage: core neg/sub APIs" {
 ///|
 test "coverage: content/primitive/pseudo_div_univar_int APIs" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let f = b.from_expr(
     @symcore.int(6) * (x ^ @symcore.int(2)) +
     @symcore.int(9) * x +
     @symcore.int(3),
   )
   let content = f.content()
-  assert_eq(content.to_string(), "3")
+  assert_eq(Show::to_string(content), "3")
   let primitive = f.primitive_part()
   let expect_primitive = sympy_normalize("2*x**2 + 3*x + 1").trim().to_owned()
   assert_eq(cov_poly_norm(primitive), expect_primitive)
@@ -401,19 +389,19 @@ test "coverage: content/primitive/pseudo_div_univar_int APIs" {
 ///|
 test "coverage: algebraic-extension public helpers" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let raw = b.from_expr(
     @symcore.int(2) * (x ^ @symcore.int(2)) + @symcore.int(1),
   )
-  let spec = @sympolys.alg_ext_spec(Domain::QQ, "x", raw)
+  let spec = @sympolys.alg_ext_spec(QQ, "x", raw)
   let normalized = @sympolys.normalize_alg_ext_spec(spec)
   let minpoly_norm = cov_poly_norm(normalized.minpoly)
   let expect_minpoly = sympy_normalize("x**2 + 1/2").trim().to_owned()
   assert_eq(minpoly_norm, expect_minpoly)
   let ext = @sympolys.build_alg_extension(spec)
   match ext {
-    Domain::AlgExt(base, gens, rels) => {
-      assert_true(base is Domain::QQ)
+    AlgExt(base, gens, rels) => {
+      assert_true(base is QQ)
       assert_eq(gens, ["x"])
       let rel = sympy_normalize(@symprint.pretty_string(rels[0]))
         .trim()

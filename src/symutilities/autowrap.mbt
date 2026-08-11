@@ -33,12 +33,11 @@ pub struct BinaryFunction {
 ///|
 fn wrap_backend_from_string(name : String) -> WrapBackend raise UtilitiesError {
   match string_lower(name) {
-    "dummy" => WrapBackend::Dummy
-    "f2py" => WrapBackend::F2Py
-    "cython" => WrapBackend::Cython
-    "ufunc" | "ufuncify" => WrapBackend::Ufunc
-    other =>
-      raise UtilitiesError::Unsupported("unsupported autowrap backend " + other)
+    "dummy" => Dummy
+    "f2py" => F2Py
+    "cython" => Cython
+    "ufunc" | "ufuncify" => Ufunc
+    other => raise Unsupported("unsupported autowrap backend " + other)
   }
 }
 
@@ -105,8 +104,8 @@ pub fn autowrap(
     Some(value) => value
     None =>
       match backend0 {
-        WrapBackend::Dummy | WrapBackend::F2Py | WrapBackend::Cython => "C99"
-        WrapBackend::Ufunc => "C99"
+        Dummy | F2Py | Cython => "C99"
+        Ufunc => "C99"
       }
   }
   let source_files = codegen([(name, expr)], language0, name)

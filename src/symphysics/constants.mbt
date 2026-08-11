@@ -1,3 +1,3 @@
 ///|
 /// Reduced Planck constant.
-pub let hbar : Expr = Expr::Symbol("hbar")
+pub let hbar : Expr = Symbol("hbar")

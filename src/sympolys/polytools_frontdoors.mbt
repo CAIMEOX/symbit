@@ -18,7 +18,7 @@
 /// - Limits: MoonBit does not expose lowercase value singletons in the same way
 ///   Python modules do, so this is a nullary function.
 pub fn lex() -> TermOrder {
-  TermOrder::Lex
+  Lex
 }
 
 ///|
@@ -29,7 +29,7 @@ pub fn lex() -> TermOrder {
 /// - Returns: `TermOrder::Grlex`.
 /// - Limits: See `lex`.
 pub fn grlex() -> TermOrder {
-  TermOrder::Grlex
+  Grlex
 }
 
 ///|
@@ -40,7 +40,7 @@ pub fn grlex() -> TermOrder {
 /// - Returns: `TermOrder::Grevlex`.
 /// - Limits: See `lex`.
 pub fn grevlex() -> TermOrder {
-  TermOrder::Grevlex
+  Grevlex
 }
 
 ///|
@@ -51,7 +51,7 @@ pub fn grevlex() -> TermOrder {
 /// - Returns: `TermOrder::Ilex`.
 /// - Limits: See `lex`.
 pub fn ilex() -> TermOrder {
-  TermOrder::Ilex
+  Ilex
 }
 
 ///|
@@ -62,7 +62,7 @@ pub fn ilex() -> TermOrder {
 /// - Returns: `TermOrder::Igrlex`.
 /// - Limits: See `lex`.
 pub fn igrlex() -> TermOrder {
-  TermOrder::Igrlex
+  Igrlex
 }
 
 ///|
@@ -73,7 +73,7 @@ pub fn igrlex() -> TermOrder {
 /// - Returns: `TermOrder::Igrevlex`.
 /// - Limits: See `lex`.
 pub fn igrevlex() -> TermOrder {
-  TermOrder::Igrevlex
+  Igrevlex
 }
 
 ///|
@@ -88,13 +88,13 @@ pub fn igrevlex() -> TermOrder {
 ///   are not represented by this MoonBit front door.
 pub fn monomial_key(order? : String = "lex") -> TermOrder raise PolyError {
   match order {
-    "lex" => TermOrder::Lex
-    "grlex" => TermOrder::Grlex
-    "grevlex" => TermOrder::Grevlex
-    "ilex" => TermOrder::Ilex
-    "igrlex" => TermOrder::Igrlex
-    "igrevlex" => TermOrder::Igrevlex
-    _ => raise PolyError::BadGenerator("monomial-order:\{order}")
+    "lex" => Lex
+    "grlex" => Grlex
+    "grevlex" => Grevlex
+    "ilex" => Ilex
+    "igrlex" => Igrlex
+    "igrevlex" => Igrevlex
+    _ => raise BadGenerator("monomial-order:\{order}")
   }
 }
 
@@ -150,7 +150,7 @@ fn poly_from_expr_options(
   )
   let resolved_order = match order {
     Some(o) => o
-    None => TermOrder::Lex
+    None => Lex
   }
   Poly::from_expr(expr, resolved_gens, resolved_domain).with_order(
     resolved_order,
@@ -196,7 +196,7 @@ pub fn parallel_poly_from_expr(
       Poly::from_expr(expr, resolved_gens, resolved_domain).with_order(
         match order {
           Some(o) => o
-          None => TermOrder::Lex
+          None => Lex
         },
       ),
     )
@@ -235,12 +235,12 @@ pub fn poly(
 
 ///|
 fn div_inputs(f : Poly, g : Poly, auto : Bool) -> (Poly, Poly) raise PolyError {
-  if f.domain.not_equal(g.domain) || f.gens != g.gens {
-    raise PolyError::DomainMismatch
+  if Eq::not_equal(f.domain, g.domain) || f.gens != g.gens {
+    raise DomainMismatch
   }
   if auto {
     match f.domain {
-      Domain::ZZ => (lift_to_qq(f), lift_to_qq(g))
+      ZZ => (lift_to_qq(f), lift_to_qq(g))
       _ => (f, g)
     }
   } else {
@@ -251,7 +251,7 @@ fn div_inputs(f : Poly, g : Poly, auto : Bool) -> (Poly, Poly) raise PolyError {
 ///|
 fn poly_to_field_view(poly : Poly, auto : Bool) -> Poly raise PolyError {
   if auto && !domain_is_field_pred(poly.domain) {
-    Poly::{
+    {
       coeffs: poly.coeffs,
       gens: poly.gens,
       domain: domain_get_field(poly.domain),
@@ -272,7 +272,7 @@ fn gcdex_inputs(
   let ff = poly_to_field_view(f, auto)
   let gg = poly_to_field_view(g, auto)
   if !domain_is_field_pred(ff.domain) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   (ff, gg)
 }
@@ -461,7 +461,7 @@ pub fn exquo(f : Poly, g : Poly, auto? : Bool = true) -> Poly raise PolyError {
   if r.is_zero() {
     q
   } else {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
 }
 
@@ -474,7 +474,7 @@ pub fn exquo(f : Poly, g : Poly, auto? : Bool = true) -> Poly raise PolyError {
 /// - Limits: For field domains this falls back to ordinary division.
 pub fn pdiv(f : Poly, g : Poly) -> (Poly, Poly) raise PolyError {
   match f.domain {
-    Domain::ZZ => {
+    ZZ => {
       let (q, r, _) = f.pseudo_div_univar_int(g)
       (q, r)
     }
@@ -519,7 +519,7 @@ pub fn pexquo(f : Poly, g : Poly) -> Poly raise PolyError {
   if r.is_zero() {
     q
   } else {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
 }
 
@@ -670,7 +670,7 @@ pub fn invert(f : Poly, g : Poly, auto? : Bool = true) -> Poly raise PolyError {
     let g_desc = poly_to_dense_desc(gg)
     poly_from_dup_desc(dup_rem(s_desc, g_desc, ff.domain), ff)
   } else {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
 }
 
@@ -764,7 +764,7 @@ pub fn primitive(poly : Poly) -> (@symnum.BigRational, Poly) raise PolyError {
 pub fn monic(poly : Poly, auto? : Bool = true) -> Poly raise PolyError {
   if auto {
     match poly.domain {
-      Domain::ZZ => make_monic(lift_to_qq(poly))
+      ZZ => make_monic(lift_to_qq(poly))
       _ => make_monic(poly)
     }
   } else {
@@ -776,7 +776,7 @@ pub fn monic(poly : Poly, auto? : Bool = true) -> Poly raise PolyError {
 fn symmetric_mod_int(value : Int, modulus : Int) -> Int raise PolyError {
   let p = if modulus < 0 { -modulus } else { modulus }
   if p == 0 {
-    raise PolyError::BadModulus
+    raise BadModulus
   }
   let mut r = value % p
   if r < 0 {
@@ -797,7 +797,7 @@ fn trunc_coeff(
 ) -> FieldElem raise PolyError {
   let rat = fe_expect_rational(coeff)
   if !rat.is_integral() {
-    raise PolyError::CoefficientNotInteger
+    raise CoefficientNotInteger
   }
   fe_from_int(symmetric_mod_int(rat.numerator().to_int(), modulus), domain)
 }
@@ -820,7 +820,7 @@ pub fn trunc(poly : Poly, modulus : Int) -> Poly raise PolyError {
       poly.domain,
     )
   }
-  Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
+  { coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
 }
 
 ///|
@@ -945,7 +945,7 @@ fn poly_shift_int(poly : Poly, amount : Int) -> Poly raise PolyError {
 pub fn gff_list(poly : Poly) -> Array[(Poly, Int)] raise PolyError {
   ensure_univar(poly)
   if poly.is_zero() {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let f = monic(poly)
   if f.degree(0) == 0 {
@@ -980,7 +980,7 @@ pub fn gff_list(poly : Poly) -> Array[(Poly, Int)] raise PolyError {
 /// - Returns: Nothing on success; this front door always raises.
 /// - Limits: Raises `PolyError::BadGenerator("symbolic falling factorial")`.
 pub fn gff(_poly : Poly) -> Poly raise PolyError {
-  raise PolyError::BadGenerator("symbolic falling factorial")
+  raise BadGenerator("symbolic falling factorial")
 }
 
 ///|
@@ -1245,7 +1245,7 @@ pub fn nroots(
 pub fn nth_power_roots_poly(poly : Poly, n : Int) -> Poly raise PolyError {
   ensure_univar(poly)
   if n < 1 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let x_name = poly.gens[0]
   let mut t_name = "_t"

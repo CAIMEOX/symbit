@@ -9,7 +9,6 @@ using @symutilities {
   type MultisetPartitionTraverser,
   type Nested,
   type PartitionResult,
-  type Threadable,
   type TimethisReport,
   as_int,
   assoc_recurrence_memo,
@@ -159,8 +158,8 @@ fn int_count_map_json(values : Map[Int, Int]) -> String {
 ///|
 fn partition_result_json(value : PartitionResult) -> String {
   match value {
-    PartitionResult::Parts(counts) => int_count_map_json(counts)
-    PartitionResult::Sized(size, counts) =>
+    Parts(counts) => int_count_map_json(counts)
+    Sized(size, counts) =>
       "[" + size.to_string() + ", " + int_count_map_json(counts) + "]"
   }
 }
@@ -173,8 +172,8 @@ fn partition_result_array_json(values : Array[PartitionResult]) -> String {
 ///|
 fn nested_int_json(value : Nested[Int]) -> String {
   match value {
-    Nested::Atom(v) => v.to_string()
-    Nested::Items(items) => "[" + items.map(nested_int_json).join(", ") + "]"
+    Atom(v) => v.to_string()
+    Items(items) => "[" + items.map(nested_int_json).join(", ") + "]"
   }
 }
 
@@ -186,8 +185,8 @@ fn nested_int_array_json(values : Array[Nested[Int]]) -> String {
 ///|
 fn group_result_int_json(value : GroupResult[Int]) -> String {
   match value {
-    GroupResult::Multiple(items) => int_matrix_json(items)
-    GroupResult::Counts(items) =>
+    Multiple(items) => int_matrix_json(items)
+    Counts(items) =>
       "[" +
       items
       .map(item => "[" + item.0.to_string() + ", " + item.1.to_string() + "]")

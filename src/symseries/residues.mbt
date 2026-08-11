@@ -44,14 +44,9 @@ fn drop_terms(poly : Array[@symcore.Expr], k : Int) -> Array[@symcore.Expr] {
 
 ///|
 fn is_infinite_expr(expr : @symcore.Expr) -> Bool {
-  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) ||
-  expr ==
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity) ||
-  expr ==
-  @symcore.mul([
-    @symcore.int(-1),
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-  ])
+  expr == NumberSymbol(Infinity) ||
+  expr == NumberSymbol(ComplexInfinity) ||
+  expr == @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])
 }
 
 ///|
@@ -62,7 +57,7 @@ fn factorial_rational_expr(n : Int) -> @symcore.Expr {
     fact = fact.mul(BigInt::from_int(i))
     i = i + 1
   }
-  @symcore.Expr::Number(safe_rational(BigInt::from_int(1), fact))
+  Number(safe_rational(BigInt::from_int(1), fact))
 }
 
 ///|
@@ -72,7 +67,7 @@ fn residue_via_pole_order(
   x0 : @symcore.Expr,
 ) -> @symcore.Expr raise {
   let var_name = match x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => ""
   }
   let shift = @symcore.add([x, expr_neg(x0)])
@@ -116,7 +111,7 @@ pub fn residue(
   x0 : @symcore.Expr,
 ) -> @symcore.Expr raise {
   let var_name = match x {
-    @symcore.Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => fail("residue requires a Symbol")
   }
   if !contains_symbol(expr, var_name) {

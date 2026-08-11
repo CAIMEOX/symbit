@@ -30,9 +30,9 @@ test "physics.mechanics parity inertia and particles" {
   )
 
   let o = @symvector.point("OO")
-  let p = o.locatenew("OP", n.y().scale(@symcore.Expr::Symbol("r")))
-  p.set_vel(n, n.x().scale(@symcore.Expr::Symbol("v")))
-  let part = particle("P", point=Some(p), mass=Some(@symcore.Expr::Symbol("m")))
+  let p = o.locatenew("OP", n.y().scale(Symbol("r")))
+  p.set_vel(n, n.x().scale(Symbol("v")))
+  let part = particle("P", point=Some(p), mass=Some(Symbol("m")))
   mechanics_assert_summary(
     @symvector.vsprint(part.linear_momentum(n)),
     mechanics_summary(
@@ -53,14 +53,14 @@ test "physics.mechanics parity inertia and particles" {
 test "physics.mechanics parity rigidbody wrappers and body loads" {
   let n = @symvector.reference_frame("RN")
   let p = @symvector.point("RP")
-  p.set_vel(n, n.x().scale(@symcore.Expr::Symbol("v")))
+  p.set_vel(n, n.x().scale(Symbol("v")))
   let b = @symvector.reference_frame("Rb")
-  b.set_ang_vel(n, b.x().scale(@symcore.Expr::Symbol("omega")))
+  b.set_ang_vel(n, b.x().scale(Symbol("omega")))
   let rb = rigid_body(
     "RB",
     masscenter=Some(p),
     frame=Some(b),
-    mass=Some(@symcore.Expr::Symbol("m")),
+    mass=Some(Symbol("m")),
     inertia=Some(inertia_tuple(@symvector.outer(b.x(), b.x()), p)),
   )
   assert_true(
@@ -81,13 +81,13 @@ test "physics.mechanics parity rigidbody wrappers and body loads" {
     .loads()
     .map(fn(load) {
       match load {
-        Load::ForceLoad(value) =>
+        ForceLoad(value) =>
           "(" +
           value.point.name() +
           ", " +
           @symvector.vsprint(value.force) +
           ")"
-        Load::TorqueLoad(value) =>
+        TorqueLoad(value) =>
           "(" +
           value.frame.name() +
           ", " +

@@ -10,9 +10,9 @@ pub fn find(x : String, equation : Expr) -> Expr raise GeometryError {
     }
   }
   if matches.is_empty() {
-    raise GeometryError::ValueError("could not find " + x)
+    raise ValueError("could not find " + x)
   }
-  Expr::Symbol(matches[0])
+  Symbol(matches[0])
 }
 
 ///|
@@ -119,14 +119,13 @@ fn geometry_entity_points(
   item : GeometryEntity,
 ) -> Array[Point] raise GeometryError {
   match item {
-    GeometryEntity::Point(point_obj) => [point_obj.with_dim(2)]
-    GeometryEntity::Segment(seg_obj) =>
-      [seg_obj.p1().with_dim(2), seg_obj.p2().with_dim(2)]
-    GeometryEntity::Polygon(poly_obj) => poly_obj.vertices()
-    GeometryEntity::RegularPolygon(poly_obj) => poly_obj.vertices()
-    GeometryEntity::Triangle(poly_obj) => poly_obj.vertices()
+    Point(point_obj) => [point_obj.with_dim(2)]
+    Segment(seg_obj) => [seg_obj.p1().with_dim(2), seg_obj.p2().with_dim(2)]
+    Polygon(poly_obj) => poly_obj.vertices()
+    RegularPolygon(poly_obj) => poly_obj.vertices()
+    Triangle(poly_obj) => poly_obj.vertices()
     _ =>
-      raise GeometryError::TypeError(
+      raise TypeError(
         "convex hull currently supports Point/Segment/Polygon-like entities",
       )
   }
@@ -154,7 +153,7 @@ fn convex_hull_points(
     push_unique_point(dedup, pt)
   }
   if dedup.is_empty() {
-    raise GeometryError::ValueError("convex_hull requires at least one point")
+    raise ValueError("convex_hull requires at least one point")
   }
   let items = sort_points_lex(dedup)
   if items.length() == 1 {
@@ -252,9 +251,7 @@ pub fn closest_points(
 ) -> Array[(Point, Point)] raise GeometryError {
   let items = sort_points_lex(points)
   if items.length() < 2 {
-    raise GeometryError::ValueError(
-      "closest_points requires at least two points",
-    )
+    raise ValueError("closest_points requires at least two points")
   }
   let unique : Array[Point] = []
   for item in items {
@@ -264,9 +261,7 @@ pub fn closest_points(
     unique.push(item)
   }
   if unique.length() < 2 {
-    raise GeometryError::ValueError(
-      "closest_points requires at least two distinct points",
-    )
+    raise ValueError("closest_points requires at least two distinct points")
   }
   let mut best : Expr? = None
   let out : Array[(Point, Point)] = []
@@ -302,9 +297,7 @@ pub fn farthest_points(
 ) -> Array[(Point, Point)] raise GeometryError {
   let items = sort_points_lex(points)
   if items.length() < 2 {
-    raise GeometryError::ValueError(
-      "farthest_points requires at least two points",
-    )
+    raise ValueError("farthest_points requires at least two points")
   }
   let unique : Array[Point] = []
   for item in items {
@@ -314,9 +307,7 @@ pub fn farthest_points(
     unique.push(item)
   }
   if unique.length() < 2 {
-    raise GeometryError::ValueError(
-      "farthest_points requires at least two distinct points",
-    )
+    raise ValueError("farthest_points requires at least two distinct points")
   }
   let mut best : Expr? = None
   let out : Array[(Point, Point)] = []
@@ -384,20 +375,20 @@ pub fn are_coplanar(items : Array[GeometryEntity]) -> Bool raise GeometryError {
   let points : Array[Point] = []
   for item in items {
     match item {
-      GeometryEntity::Point(point_obj) => points.push(point_obj.with_dim(3))
-      GeometryEntity::Line(line_obj) => {
+      Point(point_obj) => points.push(point_obj.with_dim(3))
+      Line(line_obj) => {
         points.push(line_obj.p1_.with_dim(3))
         points.push(line_obj.p2_.with_dim(3))
       }
-      GeometryEntity::Ray(ray_obj) => {
+      Ray(ray_obj) => {
         points.push(ray_obj.p1_.with_dim(3))
         points.push(ray_obj.p2_.with_dim(3))
       }
-      GeometryEntity::Segment(seg_obj) => {
+      Segment(seg_obj) => {
         points.push(seg_obj.p1_.with_dim(3))
         points.push(seg_obj.p2_.with_dim(3))
       }
-      GeometryEntity::Plane(plane_obj) =>
+      Plane(plane_obj) =>
         if !items.all(fn(inner) {
             plane_obj.contains(inner) catch {
               _ => false
@@ -405,35 +396,35 @@ pub fn are_coplanar(items : Array[GeometryEntity]) -> Bool raise GeometryError {
           }) {
           return false
         }
-      GeometryEntity::Ellipse(ellipse_obj) =>
+      Ellipse(ellipse_obj) =>
         points.push(
           ellipse_obj.center().with_dim(3) catch {
             _ => return false
           },
         )
-      GeometryEntity::Circle(circle_obj) =>
+      Circle(circle_obj) =>
         points.push(circle_obj.center().with_dim(3) catch { _ => return false })
-      GeometryEntity::Polygon(polygon_obj) =>
+      Polygon(polygon_obj) =>
         for pt in polygon_obj.vertices() {
           points.push(pt.with_dim(3) catch { _ => return false })
         }
-      GeometryEntity::RegularPolygon(poly_obj) => {
+      RegularPolygon(poly_obj) => {
         let vertices = poly_obj.vertices()
         for pt in vertices {
           points.push(pt.with_dim(3) catch { _ => return false })
         }
       }
-      GeometryEntity::Triangle(triangle_obj) =>
+      Triangle(triangle_obj) =>
         for pt in triangle_obj.vertices() {
           points.push(pt.with_dim(3) catch { _ => return false })
         }
-      GeometryEntity::Parabola(parabola_obj) =>
+      Parabola(parabola_obj) =>
         points.push(
           parabola_obj.focus().with_dim(3) catch {
             _ => return false
           },
         )
-      GeometryEntity::Curve(curve_obj) =>
+      Curve(curve_obj) =>
         points.push(
           (curve_obj.arbitrary_point() catch { _ => return false }).with_dim(3) catch {
             _ => return false
@@ -467,70 +458,61 @@ pub fn intersection(
   rhs : GeometryEntity,
 ) -> Array[GeometryEntity] raise GeometryError {
   match (lhs, rhs) {
-    (GeometryEntity::Point(point_obj), GeometryEntity::Point(other_obj)) =>
+    (Point(point_obj), Point(other_obj)) =>
       if point_obj == other_obj {
-        [GeometryEntity::Point(point_obj)]
+        [Point(point_obj)]
       } else {
         []
       }
-    (GeometryEntity::Point(point_obj), GeometryEntity::Line(line_obj))
-    | (GeometryEntity::Line(line_obj), GeometryEntity::Point(point_obj)) =>
+    (Point(point_obj), Line(line_obj)) | (Line(line_obj), Point(point_obj)) =>
       if line_obj.contains(point_obj) {
-        [
-          GeometryEntity::Point(
-            point_obj.with_dim(line_obj.ambient_dimension()),
-          ),
-        ]
+        [Point(point_obj.with_dim(line_obj.ambient_dimension()))]
       } else {
         []
       }
-    (GeometryEntity::Point(point_obj), GeometryEntity::Ray(ray_obj))
-    | (GeometryEntity::Ray(ray_obj), GeometryEntity::Point(point_obj)) =>
+    (Point(point_obj), Ray(ray_obj)) | (Ray(ray_obj), Point(point_obj)) =>
       if ray_obj.contains(point_obj) {
-        [GeometryEntity::Point(point_obj.with_dim(ray_obj.ambient_dimension()))]
+        [Point(point_obj.with_dim(ray_obj.ambient_dimension()))]
       } else {
         []
       }
-    (GeometryEntity::Point(point_obj), GeometryEntity::Segment(seg_obj))
-    | (GeometryEntity::Segment(seg_obj), GeometryEntity::Point(point_obj)) =>
+    (Point(point_obj), Segment(seg_obj))
+    | (Segment(seg_obj), Point(point_obj)) =>
       if seg_obj.contains(point_obj) {
-        [GeometryEntity::Point(point_obj.with_dim(seg_obj.ambient_dimension()))]
+        [Point(point_obj.with_dim(seg_obj.ambient_dimension()))]
       } else {
         []
       }
-    (GeometryEntity::Point(point_obj), GeometryEntity::Plane(plane_obj))
-    | (GeometryEntity::Plane(plane_obj), GeometryEntity::Point(point_obj)) =>
+    (Point(point_obj), Plane(plane_obj))
+    | (Plane(plane_obj), Point(point_obj)) =>
       if plane_obj.contains_point(point_obj) {
-        [GeometryEntity::Point(point_obj.with_dim(3))]
+        [Point(point_obj.with_dim(3))]
       } else {
         []
       }
-    (GeometryEntity::Point(point_obj), GeometryEntity::Ellipse(ellipse_obj))
-    | (GeometryEntity::Ellipse(ellipse_obj), GeometryEntity::Point(point_obj)) =>
+    (Point(point_obj), Ellipse(ellipse_obj))
+    | (Ellipse(ellipse_obj), Point(point_obj)) =>
       if ellipse_obj.contains_point(point_obj) {
         [geometry_point(point_obj.with_dim(2))]
       } else {
         []
       }
-    (GeometryEntity::Point(point_obj), GeometryEntity::Circle(circle_obj))
-    | (GeometryEntity::Circle(circle_obj), GeometryEntity::Point(point_obj)) =>
+    (Point(point_obj), Circle(circle_obj))
+    | (Circle(circle_obj), Point(point_obj)) =>
       if circle_obj.contains_point(point_obj) {
         [geometry_point(point_obj.with_dim(2))]
       } else {
         []
       }
-    (GeometryEntity::Point(point_obj), GeometryEntity::Polygon(polygon_obj))
-    | (GeometryEntity::Polygon(polygon_obj), GeometryEntity::Point(point_obj)) =>
+    (Point(point_obj), Polygon(polygon_obj))
+    | (Polygon(polygon_obj), Point(point_obj)) =>
       if polygon_obj.contains_point(point_obj) {
         [geometry_point(point_obj.with_dim(2))]
       } else {
         []
       }
-    (GeometryEntity::Point(point_obj), GeometryEntity::RegularPolygon(poly_obj))
-    | (
-      GeometryEntity::RegularPolygon(poly_obj),
-      GeometryEntity::Point(point_obj),
-    ) =>
+    (Point(point_obj), RegularPolygon(poly_obj))
+    | (RegularPolygon(poly_obj), Point(point_obj)) =>
       if (regular_polygon_as_polygon(poly_obj) catch { _ => return [] }).contains_point(
           point_obj,
         ) {
@@ -538,34 +520,27 @@ pub fn intersection(
       } else {
         []
       }
-    (GeometryEntity::Point(point_obj), GeometryEntity::Triangle(triangle_obj))
-    | (GeometryEntity::Triangle(triangle_obj), GeometryEntity::Point(point_obj)) =>
+    (Point(point_obj), Triangle(triangle_obj))
+    | (Triangle(triangle_obj), Point(point_obj)) =>
       if triangle_obj.contains_point(point_obj) {
         [geometry_point(point_obj.with_dim(2))]
       } else {
         []
       }
-    (GeometryEntity::Point(point_obj), GeometryEntity::Parabola(parabola_obj))
-    | (GeometryEntity::Parabola(parabola_obj), GeometryEntity::Point(point_obj)) =>
+    (Point(point_obj), Parabola(parabola_obj))
+    | (Parabola(parabola_obj), Point(point_obj)) =>
       parabola_obj.intersection(geometry_point(point_obj))
-    (GeometryEntity::Point(_), GeometryEntity::Curve(_))
-    | (GeometryEntity::Curve(_), GeometryEntity::Point(_)) => []
-    (GeometryEntity::Line(line_obj), other) => line_obj.intersection(other)
-    (GeometryEntity::Ray(ray_obj), other) => ray_obj.intersection(other)
-    (GeometryEntity::Segment(seg_obj), other) => seg_obj.intersection(other)
-    (GeometryEntity::Plane(plane_obj), other) => plane_obj.intersection(other)
-    (GeometryEntity::Ellipse(ellipse_obj), other) =>
-      ellipse_obj.intersection(other)
-    (GeometryEntity::Circle(circle_obj), other) =>
-      circle_obj.intersection(other)
-    (GeometryEntity::Polygon(polygon_obj), other) =>
-      polygon_obj.intersection(other)
-    (GeometryEntity::RegularPolygon(poly_obj), other) =>
-      poly_obj.intersection(other)
-    (GeometryEntity::Triangle(triangle_obj), other) =>
-      triangle_obj.intersection(other)
-    (GeometryEntity::Parabola(parabola_obj), other) =>
-      parabola_obj.intersection(other)
-    (GeometryEntity::Curve(_), _) => []
+    (Point(_), Curve(_)) | (Curve(_), Point(_)) => []
+    (Line(line_obj), other) => line_obj.intersection(other)
+    (Ray(ray_obj), other) => ray_obj.intersection(other)
+    (Segment(seg_obj), other) => seg_obj.intersection(other)
+    (Plane(plane_obj), other) => plane_obj.intersection(other)
+    (Ellipse(ellipse_obj), other) => ellipse_obj.intersection(other)
+    (Circle(circle_obj), other) => circle_obj.intersection(other)
+    (Polygon(polygon_obj), other) => polygon_obj.intersection(other)
+    (RegularPolygon(poly_obj), other) => poly_obj.intersection(other)
+    (Triangle(triangle_obj), other) => triangle_obj.intersection(other)
+    (Parabola(parabola_obj), other) => parabola_obj.intersection(other)
+    (Curve(_), _) => []
   }
 }

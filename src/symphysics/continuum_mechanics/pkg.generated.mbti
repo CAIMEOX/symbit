@@ -68,26 +68,56 @@ pub suberror ArchError {
   TypeError(String)
   SolveError(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn ArchError::equal(Self, Self) -> Bool
+#deprecated
+pub fn ArchError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn ArchError::to_repr(Self) -> @debug.Repr
 
 pub suberror BeamError {
   ValueError(String)
   TypeError(String)
   SolveError(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn BeamError::equal(Self, Self) -> Bool
+#deprecated
+pub fn BeamError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn BeamError::to_repr(Self) -> @debug.Repr
 
 pub suberror CableError {
   ValueError(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn CableError::equal(Self, Self) -> Bool
+#deprecated
+pub fn CableError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn CableError::to_repr(Self) -> @debug.Repr
 
 pub suberror ColumnError {
   ValueError(String)
   TypeError(String)
   SolveError(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn ColumnError::equal(Self, Self) -> Bool
+#deprecated
+pub fn ColumnError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn ColumnError::to_repr(Self) -> @debug.Repr
 
 pub suberror TrussError {
   ValueError(String)
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn TrussError::equal(Self, Self) -> Bool
+#deprecated
+pub fn TrussError::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn TrussError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub struct Arch {

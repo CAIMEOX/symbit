@@ -4,7 +4,7 @@
 ///|
 fn num_value(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    Expr::Number(n) => Some(n)
+    Number(n) => Some(n)
     _ => None
   }
 }
@@ -19,7 +19,7 @@ fn int_value(expr : Expr) -> BigInt? {
 
 ///|
 fn expr_from_bigint(n : BigInt) -> Expr {
-  @symcore.Expr::Number(@symnum.BigRational::from_bigint(n))
+  Number(@symnum.BigRational::from_bigint(n))
 }
 
 ///|

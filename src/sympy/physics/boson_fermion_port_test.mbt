@@ -1,7 +1,7 @@
 ///|
 test "physics.quantum.boson/fermion: parity" {
-  let a = boson_op(@symcore.Expr::Symbol("a"))
-  let c = fermion_op(@symcore.Expr::Symbol("c"))
+  let a = boson_op(Symbol("a"))
+  let c = fermion_op(Symbol("c"))
   quantum_test_assert_string_equal(
     quantum_eval_str(
       @symprint.pretty_string(commutator(a.as_expr(), a.dagger().as_expr())),
@@ -43,8 +43,8 @@ test "physics.quantum.boson/fermion: parity" {
 
 ///|
 test "physics.quantum.operatorordering: parity" {
-  let a = boson_op(@symcore.Expr::Symbol("a"))
-  let c = fermion_op(@symcore.Expr::Symbol("c"))
+  let a = boson_op(Symbol("a"))
+  let c = fermion_op(Symbol("c"))
   quantum_test_assert_string_equal(
     quantum_eval_str(
       @symprint.pretty_string(

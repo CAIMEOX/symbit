@@ -38,7 +38,7 @@ pub struct ANP {
 
 ///|
 fn nf_anp_coeffs_to_string(coeffs : Array[FieldElem]) -> String {
-  "[" + coeffs.map(c => c.to_string()).join(", ") + "]"
+  "[" + coeffs.map(c => Show::to_string(c)).join(", ") + "]"
 }
 
 ///|
@@ -62,7 +62,7 @@ pub impl Show for ANP with fn to_string(self) -> String {
 /// - Returns: `Unit`.
 /// - Current Limits: See `ANP::to_string`.
 pub impl Show for ANP with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -85,7 +85,7 @@ pub fn init_normal_ANP(
   let rep_normal = dup_normal(rep)
   let mod_normal = dup_normal(mod)
   let rep_reduced = dup_rem(rep_normal, mod_normal, domain)
-  ANP::{ rep: rep_reduced, mod: mod_normal, domain }
+  { rep: rep_reduced, mod: mod_normal, domain }
 }
 
 ///|
@@ -135,7 +135,7 @@ pub fn to_col(coeffs : Array[Int]) -> DomainMatrix raise PolyError {
   for coeff in coeffs {
     rows.push([coeff])
   }
-  domain_matrix_from_ints(rows, Domain::ZZ)
+  domain_matrix_from_ints(rows, ZZ)
 }
 
 ///|
@@ -149,7 +149,7 @@ pub fn to_col(coeffs : Array[Int]) -> DomainMatrix raise PolyError {
 /// - Limits: This only checks the special square maximal-rank HNF predicate;
 ///   it does not compute a Hermite normal form.
 pub fn is_sq_maxrank_HNF(dm : DomainMatrix) -> Bool raise PolyError {
-  if dm.domain != Domain::ZZ || !dm.is_square() || !dm.is_upper() {
+  if dm.domain != ZZ || !dm.is_square() || !dm.is_upper() {
     return false
   }
   let n = dm.rows
@@ -185,11 +185,11 @@ pub fn supplement_a_subspace(m : DomainMatrix) -> DomainMatrix raise PolyError {
   let augmented = m.hstack(DomainMatrix::eye(n, m.domain))
   let (reduced, pivots) = augmented.rref()
   if pivots.length() < r {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   for i in 0..<r {
     if pivots[i] != i {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
   }
   let row_indices : Array[Int] = []
@@ -214,7 +214,7 @@ pub fn supplement_a_subspace(m : DomainMatrix) -> DomainMatrix raise PolyError {
 pub fn s_vars(n : Int) -> Array[Expr] {
   let out : Array[Expr] = []
   for i in 0..<n {
-    out.push(Expr::Symbol("s\{i + 1}"))
+    out.push(Symbol("s\{i + 1}"))
   }
   out
 }
@@ -232,7 +232,7 @@ pub fn extract_fundamental_discriminant(
 ) -> (Array[(Int, Int)], Array[(Int, Int)]) raise PolyError {
   let residue = nf_pos_mod(a, 4)
   if residue != 0 && residue != 1 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if a == 0 {
     return ([], [(0, 1)])
@@ -263,7 +263,7 @@ pub fn extract_fundamental_discriminant(
   if even || num_3_mod_4 % 2 == 1 {
     let e2 = match nf_factor_get(f, 2) {
       Some(v) => v
-      None => raise PolyError::DomainMismatch
+      None => raise DomainMismatch
     }
     if e2 == 1 {
       nf_delete_factor(f, 2)
@@ -341,7 +341,7 @@ fn nf_abs_int(value : Int) -> Int {
 ///|
 fn nf_poly_dense_high(poly : Poly) -> Array[FieldElem] raise PolyError {
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   if poly.is_zero() {
     return []
@@ -350,7 +350,7 @@ fn nf_poly_dense_high(poly : Poly) -> Array[FieldElem] raise PolyError {
   let coeffs = Array::make(degree + 1, fe_from_int(0, poly.domain))
   for m, c in poly.coeffs {
     if m.exps.length() != 1 {
-      raise PolyError::NotUnivariate
+      raise NotUnivariate
     }
     coeffs[degree - m.exps[0]] = c
   }
@@ -359,7 +359,7 @@ fn nf_poly_dense_high(poly : Poly) -> Array[FieldElem] raise PolyError {
 
 ///|
 fn nf_poly_rep_key(poly : Poly) -> String raise PolyError {
-  nf_poly_dense_high(poly).map(c => c.to_string()).join(",")
+  nf_poly_dense_high(poly).map(c => Show::to_string(c)).join(",")
 }
 
 ///|
@@ -404,7 +404,7 @@ fn nf_poly_from_high_ints(
       )
     }
   }
-  Poly::{ coeffs, gens: [gen], domain, order: TermOrder::Lex }
+  { coeffs, gens: [gen], domain, order: Lex }
 }
 
 ///|
@@ -417,7 +417,7 @@ fn nf_embed_extra_gen(poly : Poly, extra : String) -> Poly raise PolyError {
     exps.push(0)
     add_term(coeffs, monomial_from_array(exps), c, poly.domain)
   }
-  Poly::{ coeffs, gens, domain: poly.domain, order: poly.order }
+  { coeffs, gens, domain: poly.domain, order: poly.order }
 }
 
 ///|
@@ -430,7 +430,7 @@ fn nf_dummy_variable_poly(
   let exps = Array::make(gens.length(), 0)
   exps[index] = 1
   add_term(coeffs, monomial_from_array(exps), fe_from_int(1, domain), domain)
-  Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
+  { coeffs, gens, domain, order: Lex }
 }
 
 ///|
@@ -479,9 +479,7 @@ fn nf_resolvent_lookup_4_1(
   coeffs : Array[FieldElem],
   domain : Domain,
 ) -> Array[FieldElem] raise PolyError {
-  guard coeffs.length() >= 4 else {
-    raise PolyError::BadGenerator("resolvent-lookup")
-  }
+  guard coeffs.length() >= 4 else { raise BadGenerator("resolvent-lookup") }
   let s1 = coeffs[0]
   let s2 = coeffs[1]
   let s3 = coeffs[2]
@@ -544,7 +542,7 @@ fn nf_resolvent_vars(count : Int) -> Array[String] {
 ///   elements and `Permutation` objects.
 pub fn define_resolvents() -> Array[GaloisResolventSpec] {
   [
-    GaloisResolventSpec::{
+    {
       degree: 4,
       number: 0,
       variables: nf_resolvent_vars(4),
@@ -558,7 +556,7 @@ pub fn define_resolvents() -> Array[GaloisResolventSpec] {
         nf_transposition_perm(4, 2, 3),
       ],
     },
-    GaloisResolventSpec::{
+    {
       degree: 4,
       number: 1,
       variables: nf_resolvent_vars(4),
@@ -569,7 +567,7 @@ pub fn define_resolvents() -> Array[GaloisResolventSpec] {
         nf_transposition_perm(4, 0, 3),
       ],
     },
-    GaloisResolventSpec::{
+    {
       degree: 5,
       number: 1,
       variables: nf_resolvent_vars(5),
@@ -583,7 +581,7 @@ pub fn define_resolvents() -> Array[GaloisResolventSpec] {
         nf_transposition_perm(5, 1, 4),
       ],
     },
-    GaloisResolventSpec::{
+    {
       degree: 6,
       number: 1,
       variables: nf_resolvent_vars(6),
@@ -597,7 +595,7 @@ pub fn define_resolvents() -> Array[GaloisResolventSpec] {
         nf_transposition_perm(6, 0, 5),
       ],
     },
-    GaloisResolventSpec::{
+    {
       degree: 6,
       number: 2,
       variables: nf_resolvent_vars(6),
@@ -653,7 +651,7 @@ pub fn sparse_symmetrize_resolvent_coeffs(
   if spec.degree == 4 && spec.number == 1 {
     return nf_resolvent_coeffs_41()
   }
-  raise PolyError::BadGenerator("resolvent-symmetrize")
+  raise BadGenerator("resolvent-symmetrize")
 }
 
 ///|
@@ -748,14 +746,14 @@ pub fn get_resolvent_by_lookup(
 ) -> Array[FieldElem] raise PolyError {
   let dense = nf_poly_dense_high(poly)
   if dense.length() < 2 {
-    raise PolyError::BadGenerator("resolvent-lookup")
+    raise BadGenerator("resolvent-lookup")
   }
   let degree = dense.length() - 1
   let coeffs = dense[1:].to_owned()
   if degree == 4 && number == 1 {
     return nf_resolvent_lookup_4_1(coeffs, poly.domain)
   }
-  raise PolyError::BadGenerator("resolvent-lookup")
+  raise BadGenerator("resolvent-lookup")
 }
 
 ///|
@@ -782,10 +780,10 @@ pub fn tschirnhausen_transformation(
   ignore(max_coeff)
   ignore(fixed_order)
   if poly.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   if max_tries <= 0 {
-    raise PolyError::BadGenerator("tschirnhausen-max-tries")
+    raise BadGenerator("tschirnhausen-max-tries")
   }
   let dummy = nf_unique_dummy("_X", poly.gens)
   let seen = history.copy()
@@ -830,7 +828,7 @@ pub fn tschirnhausen_transformation(
       return (a, u)
     }
   }
-  raise PolyError::BadGenerator("tschirnhausen-max-tries")
+  raise BadGenerator("tschirnhausen-max-tries")
 }
 
 ///|
@@ -923,7 +921,7 @@ pub fn minimal_polynomial(
       let b = q.denominator()
       let bx = @symcore.Expr::Number(@symnum.BigRational::from_bigint(b)) * x
       let a_expr = @symcore.Expr::Number(@symnum.BigRational::from_bigint(a))
-      PolyBuilder::new([gen], Domain::QQ).from_expr(bx - a_expr)
+      PolyBuilder::new([gen], QQ).from_expr(bx - a_expr)
     }
     None =>
       match parse_affine_radical(expr) {
@@ -932,18 +930,18 @@ pub fn minimal_polynomial(
           let shift_expr = if aff.shift.is_zero() {
             x
           } else {
-            x - @symcore.Expr::Number(aff.shift)
+            x - Number(aff.shift)
           }
           let lhs = shift_expr ^ int(aff.atom.n)
           let scale_pow = rat_pow_nonnegative(aff.scale, aff.atom.n)
           let rhs = @symcore.Expr::Number(scale_pow.mul_r(aff.atom.rad))
-          let raw = PolyBuilder::new([gen], Domain::QQ).from_expr(lhs - rhs)
+          let raw = PolyBuilder::new([gen], QQ).from_expr(lhs - rhs)
           normalize_minpoly_qq(raw)
         }
         None =>
           match mq_minpoly(expr, gen) {
             Some(poly) => poly
-            None => raise PolyError::NonPolynomial
+            None => raise NonPolynomial
           }
       }
   }
@@ -1018,14 +1016,14 @@ fn mq_relation_to_poly(
     }
     terms.push(term)
   }
-  let raw = PolyBuilder::new([gen], Domain::QQ).from_expr(@symcore.add(terms))
+  let raw = PolyBuilder::new([gen], QQ).from_expr(@symcore.add(terms))
   normalize_minpoly_qq(raw)
 }
 
 ///|
 fn parse_affine_radical(expr : Expr) -> AffineRadical? {
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let mut shift = @symnum.BigRational::zero()
       let mut term : (@symnum.BigRational, RadicalAtom)? = None
       for arg in args {
@@ -1044,18 +1042,14 @@ fn parse_affine_radical(expr : Expr) -> AffineRadical? {
         }
       }
       match term {
-        Some((scale, atom)) => Some(AffineRadical::{ shift, scale, atom })
+        Some((scale, atom)) => Some({ shift, scale, atom })
         None => None
       }
     }
     _ =>
       match parse_linear_radical(expr) {
         Some((scale, atom)) =>
-          Some(AffineRadical::{
-            shift: @symnum.BigRational::zero(),
-            scale,
-            atom,
-          })
+          Some({ shift: @symnum.BigRational::zero(), scale, atom })
         None => None
       }
   }
@@ -1067,7 +1061,7 @@ fn parse_linear_radical(expr : Expr) -> (@symnum.BigRational, RadicalAtom)? {
     Some(atom) => Some((@symnum.BigRational::one(), atom))
     None =>
       match expr {
-        Expr::Mul(args) => {
+        Mul(args) => {
           let mut coeff = @symnum.BigRational::one()
           let mut atom : RadicalAtom? = None
           for arg in args {
@@ -1098,9 +1092,9 @@ fn parse_linear_radical(expr : Expr) -> (@symnum.BigRational, RadicalAtom)? {
 ///|
 fn parse_radical_atom(expr : Expr) -> RadicalAtom? {
   match expr {
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (base, exp) {
-        (Expr::Number(rad), Expr::Number(e)) => {
+        (Number(rad), Number(e)) => {
           let num = e.numerator()
           let den = e.denominator()
           if num.equal_int(1) && den.compare(BigInt::from_int(1)) > 0 {
@@ -1109,7 +1103,7 @@ fn parse_radical_atom(expr : Expr) -> RadicalAtom? {
               den.to_int(),
             )
             if reduced_n > 1 {
-              Some(RadicalAtom::{ rad: reduced_rad, n: reduced_n })
+              Some({ rad: reduced_rad, n: reduced_n })
             } else {
               None
             }
@@ -1172,8 +1166,8 @@ fn reduce_radical_power(
 ///|
 fn expr_rational_constant(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    Expr::Number(q) => Some(q)
-    Expr::Add(args) => {
+    Number(q) => Some(q)
+    Add(args) => {
       let mut sum = @symnum.BigRational::zero()
       for arg in args {
         match expr_rational_constant(arg) {
@@ -1183,7 +1177,7 @@ fn expr_rational_constant(expr : Expr) -> @symnum.BigRational? {
       }
       Some(sum)
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut prod = @symnum.BigRational::one()
       for arg in args {
         match expr_rational_constant(arg) {
@@ -1193,9 +1187,9 @@ fn expr_rational_constant(expr : Expr) -> @symnum.BigRational? {
       }
       Some(prod)
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match (base, exp) {
-        (Expr::Number(rad), Expr::Number(e)) => {
+        (Number(rad), Number(e)) => {
           let num = e.numerator()
           let den = e.denominator()
           if num.equal_int(1) && den.compare(BigInt::from_int(1)) > 0 {
@@ -1217,7 +1211,7 @@ fn expr_rational_constant(expr : Expr) -> @symnum.BigRational? {
 
 ///|
 fn normalize_minpoly_qq(poly : Poly) -> Poly raise PolyError {
-  if poly.domain.not_equal(Domain::QQ) {
+  if Eq::not_equal(poly.domain, QQ) {
     return poly
   }
   let mut lcm_den = BigInt::from_int(1)
@@ -1230,12 +1224,12 @@ fn normalize_minpoly_qq(poly : Poly) -> Poly raise PolyError {
   let mut normalized = if lcm_den.equal_int(1) {
     poly
   } else {
-    poly.scale_coeff(FieldElem::QQ(@symnum.BigRational::from_bigint(lcm_den)))
+    poly.scale_coeff(QQ(@symnum.BigRational::from_bigint(lcm_den)))
   }
   normalized = normalized.primitive_part()
   let lc = normalized.lc()
   if fe_is_negative(lc) {
-    normalized = normalized.scale_coeff(fe_from_int(-1, Domain::QQ))
+    normalized = normalized.scale_coeff(fe_from_int(-1, QQ))
   }
   normalized
 }
@@ -1310,10 +1304,10 @@ fn nf_radical_integer_interval(
   n : Int,
 ) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError {
   if n <= 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if rad.compare(@symnum.BigRational::zero()) < 0 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   if rad.is_zero() {
     return (@symnum.BigRational::zero(), @symnum.BigRational::zero())
@@ -1438,7 +1432,7 @@ fn nf_choose_interval(
   } else if all.length() == 1 {
     all[0].0
   } else {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
 }
 
@@ -1482,7 +1476,7 @@ pub fn isolate(
       if roots.length() == 1 {
         roots[0].0
       } else {
-        raise PolyError::NonPolynomial
+        raise NonPolynomial
       }
     }
   }
@@ -1502,7 +1496,7 @@ pub fn to_number_field(
   gen? : String = "a",
 ) -> Domain raise PolyError {
   let mp = minimal_polynomial(expr, gen~)
-  build_alg_extension(alg_ext_spec(Domain::QQ, gen, mp))
+  build_alg_extension(alg_ext_spec(QQ, gen, mp))
 }
 
 ///|
@@ -1520,7 +1514,7 @@ pub fn to_number_field_coeffs(
 ) -> Array[@symnum.BigRational] raise PolyError {
   match field_isomorphism(expr, theta) {
     Some(coeffs) => coeffs
-    None => raise PolyError::DomainMismatch
+    None => raise DomainMismatch
   }
 }
 
@@ -1586,7 +1580,7 @@ pub fn numberfield_power_basis(poly : Poly) -> NFModule raise PolyError {
   ensure_univar(poly)
   let rank = poly.degree(0)
   if rank <= 0 {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   {
     rank,
@@ -1608,12 +1602,12 @@ pub fn numberfield_submodule(
   basis : Array[Array[BigInt]],
 ) -> NFModule raise PolyError {
   if basis.is_empty() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let rank = basis.length()
   for row in basis {
     if row.length() != rank {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
   }
   { rank, basis, is_power_basis: false, defining_poly: None }
@@ -1676,10 +1670,10 @@ pub fn make_mod_elt(
   denom? : BigInt = 1N,
 ) -> ModuleElement raise PolyError {
   if denom.is_zero() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   if col.length() != parent.rank {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   { parent, col, denom, is_power_basis_element: parent.is_power_basis }
 }
@@ -1700,15 +1694,15 @@ pub fn find_min_poly(
   x? : String = "x",
 ) -> Poly raise PolyError {
   if !alpha.parent.is_power_basis {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let def_poly = match alpha.parent.defining_poly {
     Some(poly) => poly
-    None => raise PolyError::DomainMismatch
+    None => raise DomainMismatch
   }
   ensure_univar(def_poly)
   if alpha.parent.rank != 2 || alpha.col.length() != 2 {
-    raise PolyError::BadGenerator("find_min_poly")
+    raise BadGenerator("find_min_poly")
   }
   let a = alpha.col[0].to_int()
   let b = alpha.col[1].to_int()
@@ -1719,11 +1713,11 @@ pub fn find_min_poly(
   }
   let dense = to_dense(def_poly)
   if dense.length() != 3 {
-    raise PolyError::BadGenerator("find_min_poly")
+    raise BadGenerator("find_min_poly")
   }
   let lead = nf_fe_int(dense[2])
   if lead != 1 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let lin = nf_fe_int(dense[1])
   let constant = nf_fe_int(dense[0])
@@ -1746,7 +1740,7 @@ pub fn primitive_element(
   generators : Array[Expr],
 ) -> (Expr, Array[Int]) raise PolyError {
   if generators.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let mut prim = generators[0]
   let coeffs : Array[Int] = Array::make(generators.length(), 1)
@@ -1773,7 +1767,7 @@ pub fn primitive_element_ex(
   for g in generators {
     match field_isomorphism(g, prim) {
       Some(rep) => reps.push(rep)
-      None => raise PolyError::DomainMismatch
+      None => raise DomainMismatch
     }
   }
   (prim, coeffs, reps)
@@ -1795,7 +1789,7 @@ pub struct RoundTwoResult {
 
 ///|
 fn nf_basis_row_string(row : Array[@symnum.BigRational]) -> String {
-  "[" + row.map(item => item.to_string()).join(", ") + "]"
+  "[" + row.map(item => Show::to_string(item)).join(", ") + "]"
 }
 
 ///|
@@ -1834,7 +1828,7 @@ fn nf_identity_basis(degree : Int) -> Array[Array[@symnum.BigRational]] {
 fn nf_fe_int(elem : FieldElem) -> Int raise PolyError {
   let q = fe_expect_rational(elem)
   if !q.denominator().equal_int(1) {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   q.numerator().to_int()
 }
@@ -1852,7 +1846,7 @@ pub fn round_two(poly : Poly) -> RoundTwoResult raise PolyError {
   ensure_univar(poly)
   let degree = poly.degree(0)
   if degree <= 0 {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let disc0 = discriminant(poly)
   let mut basis = nf_identity_basis(degree)
@@ -1862,7 +1856,7 @@ pub fn round_two(poly : Poly) -> RoundTwoResult raise PolyError {
     let dense = to_dense(poly)
     let lead = nf_fe_int(dense[2])
     if lead != 1 {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     let b = nf_fe_int(dense[1])
     let c = nf_fe_int(dense[0])
@@ -1878,7 +1872,7 @@ pub fn round_two(poly : Poly) -> RoundTwoResult raise PolyError {
       }
     }
   }
-  RoundTwoResult::{ basis, denom, discriminant: disc }
+  { basis, denom, discriminant: disc }
 }
 
 ///|
@@ -1917,12 +1911,12 @@ pub impl Show for PrimeIdeal with fn output(self : PrimeIdeal, logger : &Logger)
 /// - Limits: Does not construct full ideal modules or radical-splitting data.
 pub fn prime_decomp(p : Int, poly : Poly) -> Array[PrimeIdeal] raise PolyError {
   if p <= 1 {
-    raise PolyError::BadModulus
+    raise BadModulus
   }
   ensure_univar(poly)
   let defining_degree = poly.degree(0)
   if defining_degree <= 0 {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let gf_poly = map_to_gf(poly, p)
   let (_, factors) = gf_poly.factor_list()
@@ -1934,7 +1928,7 @@ pub fn prime_decomp(p : Int, poly : Poly) -> Array[PrimeIdeal] raise PolyError {
     if factor_degree <= 0 {
       continue
     }
-    ideals.push(PrimeIdeal::{
+    ideals.push({
       p,
       factor,
       ramification,
@@ -1943,7 +1937,7 @@ pub fn prime_decomp(p : Int, poly : Poly) -> Array[PrimeIdeal] raise PolyError {
     })
   }
   if ideals.is_empty() {
-    ideals.push(PrimeIdeal::{
+    ideals.push({
       p,
       factor: gf_poly,
       ramification: 1,
@@ -1963,7 +1957,7 @@ pub fn prime_decomp(p : Int, poly : Poly) -> Array[PrimeIdeal] raise PolyError {
 /// - Limits: General ideal/module valuations are not modeled.
 pub fn prime_valuation(n : Int, prime : PrimeIdeal) -> Int raise PolyError {
   if n == 0 {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   let mut value = if n < 0 { -n } else { n }
   let mut count = 0
@@ -2248,8 +2242,8 @@ fn mq_find_atom_mask(
 ///|
 fn mq_collect_atoms(expr : Expr, atoms : Array[@symnum.BigRational]) -> Bool {
   match expr {
-    Expr::Number(_) => true
-    Expr::Add(args) => {
+    Number(_) => true
+    Add(args) => {
       for arg in args {
         if !mq_collect_atoms(arg, atoms) {
           return false
@@ -2257,7 +2251,7 @@ fn mq_collect_atoms(expr : Expr, atoms : Array[@symnum.BigRational]) -> Bool {
       }
       true
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       for arg in args {
         if !mq_collect_atoms(arg, atoms) {
           return false
@@ -2265,9 +2259,9 @@ fn mq_collect_atoms(expr : Expr, atoms : Array[@symnum.BigRational]) -> Bool {
       }
       true
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match exp {
-        Expr::Number(e) =>
+        Number(e) =>
           match rational_to_int_if_integer(e) {
             Some(k) =>
               if k >= 0 {
@@ -2278,7 +2272,7 @@ fn mq_collect_atoms(expr : Expr, atoms : Array[@symnum.BigRational]) -> Bool {
             None =>
               if e.numerator().equal_int(1) && e.denominator().equal_int(2) {
                 match base {
-                  Expr::Number(rad) => {
+                  Number(rad) => {
                     if rad.compare(@symnum.BigRational::zero()) < 0 {
                       return false
                     }
@@ -2316,8 +2310,8 @@ fn mq_parse_expr(
 ) -> Array[@symnum.BigRational]? {
   let dim = mq_dimension(atoms.length())
   match expr {
-    Expr::Number(q) => Some(mq_const(dim, q))
-    Expr::Add(args) => {
+    Number(q) => Some(mq_const(dim, q))
+    Add(args) => {
       let mut acc = mq_const(dim, @symnum.BigRational::zero())
       for arg in args {
         match mq_parse_expr(arg, atoms) {
@@ -2327,7 +2321,7 @@ fn mq_parse_expr(
       }
       Some(acc)
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = mq_const(dim, @symnum.BigRational::one())
       for arg in args {
         match mq_parse_expr(arg, atoms) {
@@ -2337,9 +2331,9 @@ fn mq_parse_expr(
       }
       Some(acc)
     }
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       match exp {
-        Expr::Number(e) =>
+        Number(e) =>
           match rational_to_int_if_integer(e) {
             Some(k) =>
               match mq_parse_expr(base, atoms) {
@@ -2349,7 +2343,7 @@ fn mq_parse_expr(
             None =>
               if e.numerator().equal_int(1) && e.denominator().equal_int(2) {
                 match base {
-                  Expr::Number(rad) => {
+                  Number(rad) => {
                     if rad.compare(@symnum.BigRational::zero()) < 0 {
                       return None
                     }
@@ -2768,8 +2762,8 @@ fn affine_embedding_coeffs(
 ///|
 fn algext_relation_coeffs(domain : Domain) -> Array[@symnum.BigRational]? {
   match domain {
-    Domain::AlgExt(base, gens, rels) => {
-      if base.not_equal(Domain::QQ) || gens.length() != 1 || rels.length() != 1 {
+    AlgExt(base, gens, rels) => {
+      if Eq::not_equal(base, QQ) || gens.length() != 1 || rels.length() != 1 {
         return None
       }
       try PolyBuilder::new(gens, base).from_expr(rels[0]) catch {
@@ -2789,7 +2783,7 @@ fn algext_relation_coeffs(domain : Domain) -> Array[@symnum.BigRational]? {
 
 ///|
 fn poly_to_dense_qq(poly : Poly) -> Array[@symnum.BigRational]? {
-  if poly.gens.length() != 1 || poly.domain.not_equal(Domain::QQ) {
+  if poly.gens.length() != 1 || Eq::not_equal(poly.domain, QQ) {
     return None
   }
   let degree = poly.degree(0)
@@ -2825,7 +2819,7 @@ fn poly_to_dense_qq(poly : Poly) -> Array[@symnum.BigRational]? {
 /// - Limits: This currently handles `QQ` one-generator algebraic extensions by
 ///   comparing normalized defining relations.
 pub fn field_isomorphic(a : Domain, b : Domain) -> Bool {
-  if a.equal(b) {
+  if Eq::equal(a, b) {
     return true
   }
   match (algext_relation_coeffs(a), algext_relation_coeffs(b)) {

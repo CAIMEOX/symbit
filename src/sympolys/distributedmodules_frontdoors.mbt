@@ -22,7 +22,7 @@ type SdmCriticalPair = (Int, Int, Int, Monomial)
 ///|
 fn sdm_tail_monomial(m : Monomial) -> Monomial {
   let exps = m.to_array()
-  Monomial::{ exps: exps[1:].to_owned() }
+  { exps: exps[1:].to_owned() }
 }
 
 ///|
@@ -31,13 +31,13 @@ fn sdm_module_monomial(basis : Int, tail : Monomial) -> Monomial {
   for exp in tail.to_array() {
     exps.push(exp)
   }
-  Monomial::{ exps, }
+  { exps, }
 }
 
 ///|
 fn sdm_check_tail_arity(m : Monomial, x : Monomial) -> Unit raise PolyError {
   if m.to_array().length() != x.to_array().length() + 1 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
 }
 
@@ -63,7 +63,7 @@ pub fn sdm_monomial_mul(m : Monomial, x : Monomial) -> Monomial raise PolyError 
 /// - Limits: Empty monomials raise `PolyError::DomainMismatch`.
 pub fn sdm_monomial_deg(m : Monomial) -> Int raise PolyError {
   if m.to_array().is_empty() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   monomial_deg(sdm_tail_monomial(m))
 }
@@ -77,7 +77,7 @@ pub fn sdm_monomial_deg(m : Monomial) -> Int raise PolyError {
 /// - Limits: Raises `PolyError::DomainMismatch` for arity mismatch.
 pub fn sdm_monomial_lcm(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.to_array().length() != b.to_array().length() || a.to_array().is_empty() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   sdm_module_monomial(
     a.to_array()[0],
@@ -99,7 +99,7 @@ pub fn sdm_monomial_divides(
   let a = a_m.to_array()
   let b = b_m.to_array()
   if a.length() != b.length() || a.is_empty() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   a[0] == b[0] &&
   monomial_divides(sdm_tail_monomial(a_m), sdm_tail_monomial(b_m))
@@ -129,7 +129,7 @@ pub fn sdm_LC(f : Sdm, domain : Domain) -> FieldElem raise PolyError {
 /// - Limits: Empty inputs raise `PolyError::BadExponent`.
 pub fn sdm_LM(f : Sdm) -> Monomial raise PolyError {
   if f.is_empty() {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   f[0].0
 }
@@ -143,7 +143,7 @@ pub fn sdm_LM(f : Sdm) -> Monomial raise PolyError {
 /// - Limits: Empty inputs raise `PolyError::BadExponent`.
 pub fn sdm_LT(f : Sdm) -> SdmTerm raise PolyError {
   if f.is_empty() {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   f[0]
 }
@@ -288,7 +288,7 @@ pub fn sdm_mul_term(
 /// - Limits: Empty inputs raise `PolyError::BadExponent`.
 pub fn sdm_deg(f : Sdm) -> Int raise PolyError {
   if f.is_empty() {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let mut out = sdm_monomial_deg(f[0].0)
   for i in 1..<f.length() {
@@ -358,11 +358,11 @@ pub fn sdm_to_vector(
   for monom, coeff in sdm_to_dict(f) {
     let exps = monom.to_array()
     if exps.is_empty() {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     let tail = sdm_tail_monomial(monom)
     if tail.to_array().length() != gens.length() {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     let basis = exps[0]
     let coeffs = match groups.get(basis) {
@@ -383,9 +383,7 @@ pub fn sdm_to_vector(
   for i in 0..<rank {
     match groups.get(i) {
       Some(coeffs) =>
-        out.push(
-          Poly::{ coeffs, gens, domain, order: TermOrder::Lex }.to_expr(),
-        )
+        out.push(Poly::{ coeffs, gens, domain, order: Lex }.to_expr())
       None => out.push(int(0))
     }
   }
@@ -399,7 +397,7 @@ fn sdm_checked_monomial_div(
 ) -> Monomial raise PolyError {
   match monomial_div(numer, denom) {
     Some(value) => value
-    None => raise PolyError::BadExponent
+    None => raise BadExponent
   }
 }
 

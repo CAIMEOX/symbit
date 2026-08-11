@@ -8,7 +8,7 @@ fn symbolic_rv(
   params : Array[@symcore.Expr],
 ) -> RandomVar {
   let kind = symbolic_kind_from_name(dist)
-  random_var(name, RVKind::Symbolic(kind~, params~))
+  random_var(name, Symbolic(kind~, params~))
 }
 
 ///|
@@ -32,15 +32,12 @@ pub fn h(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.Expr {
 ///|
 pub fn given(expr : @symcore.Expr, condition : Event) -> @symcore.Expr {
   match condition {
-    Event::Bool(true) => expr
-    Event::Bool(false) =>
-      @symcore.function("given", [expr, event_to_expr(condition)])
-    Event::Rel(op~, lhs~, rhs~) =>
+    Bool(true) => expr
+    Bool(false) => @symcore.function("given", [expr, event_to_expr(condition)])
+    Rel(op~, lhs~, rhs~) =>
       match (op, lhs, rhs) {
-        (RelOp::Eq, @symcore.Expr::Symbol(name), value) =>
-          substitute_symbol(expr, name, value)
-        (RelOp::Eq, value, @symcore.Expr::Symbol(name)) =>
-          substitute_symbol(expr, name, value)
+        (Eq, Symbol(name), value) => substitute_symbol(expr, name, value)
+        (Eq, value, Symbol(name)) => substitute_symbol(expr, name, value)
         _ => {
           let expr_names = random_symbols(expr)
           let cond_names = event_symbols(condition)
@@ -94,7 +91,7 @@ pub fn where_(condition : Event) -> @symcore.Expr {
 
 ///|
 fn stats_positive_infinity() -> @symcore.Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+  NumberSymbol(Infinity)
 }
 
 ///|
@@ -115,51 +112,49 @@ fn stats_symbolic_support(
   params : Array[@symcore.Expr],
 ) -> @symsets.Set {
   match kind {
-    SymbolicKind::Continuous(tag) =>
+    Continuous(tag) =>
       match tag {
-        ContinuousTag::Arcsin
-        | ContinuousTag::Beta
-        | ContinuousTag::Kumaraswamy =>
+        Arcsin | Beta | Kumaraswamy =>
           @symsets.interval(@symcore.int(0), @symcore.int(1))
-        ContinuousTag::BetaPrime
-        | ContinuousTag::Chi
-        | ContinuousTag::ChiSquared
-        | ContinuousTag::Erlang
-        | ContinuousTag::Exponential
-        | ContinuousTag::FDistribution
-        | ContinuousTag::Frechet
-        | ContinuousTag::GammaInverse
-        | ContinuousTag::GaussianInverse
-        | ContinuousTag::LogLogistic
-        | ContinuousTag::LogNormal
-        | ContinuousTag::Lomax
-        | ContinuousTag::Maxwell
-        | ContinuousTag::Nakagami
-        | ContinuousTag::Rayleigh
-        | ContinuousTag::Weibull =>
+        BetaPrime
+        | Chi
+        | ChiSquared
+        | Erlang
+        | Exponential
+        | FDistribution
+        | Frechet
+        | GammaInverse
+        | GaussianInverse
+        | LogLogistic
+        | LogNormal
+        | Lomax
+        | Maxwell
+        | Nakagami
+        | Rayleigh
+        | Weibull =>
           @symsets.interval(@symcore.int(0), stats_positive_infinity())
-        ContinuousTag::Pareto if params.length() == 2 =>
+        Pareto if params.length() == 2 =>
           @symsets.interval(params[0], stats_positive_infinity())
-        ContinuousTag::PowerFunction if params.length() == 3 =>
+        PowerFunction if params.length() == 3 =>
           @symsets.interval(params[1], params[2])
-        ContinuousTag::Reciprocal if params.length() == 2 =>
+        Reciprocal if params.length() == 2 =>
           @symsets.interval(params[0], params[1])
-        ContinuousTag::Triangular if params.length() == 3 =>
+        Triangular if params.length() == 3 =>
           @symsets.interval(params[0], params[1])
-        ContinuousTag::Trapezoidal if params.length() == 4 =>
+        Trapezoidal if params.length() == 4 =>
           @symsets.interval(params[0], params[3])
-        ContinuousTag::Uniform if params.length() == 2 =>
+        Uniform if params.length() == 2 =>
           @symsets.interval(params[0], params[1])
-        ContinuousTag::WignerSemicircle if params.length() == 1 =>
+        WignerSemicircle if params.length() == 1 =>
           @symsets.interval(
             @symcore.mul([@symcore.int(-1), params[0]]),
             params[0],
           )
         _ => @symsets.reals()
       }
-    SymbolicKind::Discrete(tag) =>
+    Discrete(tag) =>
       match tag {
-        DiscreteTag::BetaBinomial if params.length() == 3 =>
+        BetaBinomial if params.length() == 3 =>
           match expr_as_int(params[0]) {
             Some(n) => stats_int_range_set(0, n)
             None =>
@@ -168,21 +163,19 @@ fn stats_symbolic_support(
                 @symsets.interval(@symcore.int(0), params[0]),
               ])
           }
-        DiscreteTag::FiniteDistributionHandmade =>
+        FiniteDistributionHandmade =>
           match symbolic_finite_handmade_pairs(params) {
             Some(pairs) => @symsets.finite_set(pairs.map(pair => pair.0))
             None => @symsets.reals()
           }
-        DiscreteTag::FlorySchulz
-        | DiscreteTag::IdealSoliton
-        | DiscreteTag::Logarithmic
-        | DiscreteTag::RobustSoliton
-        | DiscreteTag::YuleSimon
-        | DiscreteTag::Zeta => @symsets.naturals()
-        DiscreteTag::Hermite
-        | DiscreteTag::Multinomial
-        | DiscreteTag::NegativeMultinomial => @symsets.naturals0()
-        DiscreteTag::Hypergeometric if params.length() == 3 =>
+        FlorySchulz
+        | IdealSoliton
+        | Logarithmic
+        | RobustSoliton
+        | YuleSimon
+        | Zeta => @symsets.naturals()
+        Hermite | Multinomial | NegativeMultinomial => @symsets.naturals0()
+        Hypergeometric if params.length() == 3 =>
           match
             (
               expr_as_int(params[0]),
@@ -200,30 +193,26 @@ fn stats_symbolic_support(
             }
             _ => @symsets.naturals0()
           }
-        DiscreteTag::Skellam => @symsets.integers()
+        Skellam => @symsets.integers()
         _ => @symsets.reals()
       }
-    SymbolicKind::Joint(_)
-    | SymbolicKind::Process(_)
-    | SymbolicKind::Matrix(_) => @symsets.reals()
+    Joint(_) | Process(_) | Matrix(_) => @symsets.reals()
   }
 }
 
 ///|
 fn stats_random_var_support(rv : RandomVar) -> @symsets.Set {
   match rv.kind {
-    RVKind::Finite(items) => @symsets.finite_set(items.map(item => item.0))
-    RVKind::Binomial(n~, ..) => @symsets.interval(@symcore.int(0), n)
-    RVKind::Poisson(_) | RVKind::NegativeBinomial(_) => @symsets.naturals0()
-    RVKind::Geometric(_) => @symsets.naturals()
-    RVKind::Normal(_) => @symsets.reals()
-    RVKind::Exponential(_) | RVKind::Gamma(_) =>
+    Finite(items) => @symsets.finite_set(items.map(item => item.0))
+    Binomial(n~, ..) => @symsets.interval(@symcore.int(0), n)
+    Poisson(_) | NegativeBinomial(_) => @symsets.naturals0()
+    Geometric(_) => @symsets.naturals()
+    Normal(_) => @symsets.reals()
+    Exponential(_) | Gamma(_) =>
       @symsets.interval(@symcore.int(0), stats_positive_infinity())
-    RVKind::JointIndependent(_)
-    | RVKind::Compound(_)
-    | RVKind::StochasticProcess(_)
-    | RVKind::Matrix(_) => @symsets.reals()
-    RVKind::Symbolic(kind~, params~) => stats_symbolic_support(kind, params)
+    JointIndependent(_) | Compound(_) | StochasticProcess(_) | Matrix(_) =>
+      @symsets.reals()
+    Symbolic(kind~, params~) => stats_symbolic_support(kind, params)
   }
 }
 
@@ -233,27 +222,24 @@ pub fn where_set(
   rv : RandomVar,
 ) -> @symsets.Set? raise @symsolvers.SolverError {
   match rv.kind {
-    RVKind::Finite(items) => {
+    Finite(items) => {
       let values : Array[@symcore.Expr] = []
       let env : Map[String, @symcore.Expr] = Map([])
       for item in items {
         let (value, _) = item
         env[rv.name] = value
         match evaluate_event(condition, env) {
-          TriBool::True => values.push(value)
-          TriBool::False => ()
-          TriBool::Unknown => return None
+          True => values.push(value)
+          False => ()
+          Unknown => return None
         }
       }
       Some(@symsets.finite_set(values))
     }
     _ => {
-      let solved = reduce_rational_inequalities_wrap(
-        condition,
-        @symcore.Expr::Symbol(rv.name),
-      )
+      let solved = reduce_rational_inequalities_wrap(condition, Symbol(rv.name))
       let support = stats_random_var_support(rv)
-      if support is @symsets.Set::Reals {
+      if support is Reals {
         Some(solved)
       } else {
         Some(@symsets.intersection([support, solved]))
@@ -356,9 +342,9 @@ pub fn rv(
         Some(p) => bernoulli(name, p)
         None =>
           finite_distribution_handmade(name, params=[
-            @symcore.Expr::Tuple([
-              @symcore.Expr::Tuple([@symcore.int(1), params[0]]),
-              @symcore.Expr::Tuple([
+            Tuple([
+              Tuple([@symcore.int(1), params[0]]),
+              Tuple([
                 @symcore.int(0),
                 eval_arith(
                   @symcore.add([
@@ -378,9 +364,9 @@ pub fn rv(
           Some(p) => coin(name, p_head=p)
           None =>
             finite_distribution_handmade(name, params=[
-              @symcore.Expr::Tuple([
-                @symcore.Expr::Tuple([@symcore.int(1), params[0]]),
-                @symcore.Expr::Tuple([
+              Tuple([
+                Tuple([@symcore.int(1), params[0]]),
+                Tuple([
                   @symcore.int(0),
                   eval_arith(
                     @symcore.add([
@@ -418,7 +404,7 @@ pub fn sample_stochastic_process(
     None => ()
   }
   @symcore.function("sample_stochastic_process", [
-    @symcore.Expr::Symbol(proc.name),
+    Symbol(proc.name),
     t0,
     t1,
     @symcore.int(n),
@@ -459,9 +445,9 @@ fn sample_path_expr(
 ) -> @symcore.Expr {
   let pairs : Array[@symcore.Expr] = []
   for i in 0..<values.length() {
-    pairs.push(@symcore.Expr::Tuple([times[i].0, values[i]]))
+    pairs.push(Tuple([times[i].0, values[i]]))
   }
-  @symcore.Expr::Tuple(pairs)
+  Tuple(pairs)
 }
 
 ///|
@@ -594,15 +580,15 @@ fn sample_stochastic_process_path(
   }
   let rng = stats_rng()
   match proc.kind {
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) =>
+    StochasticProcess(PoissonProcess(rate~, ..)) =>
       sample_poisson_process_path(rate, times, rng)
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) =>
+    StochasticProcess(WienerProcess(..)) =>
       sample_wiener_process_path(times, rng)
-    RVKind::Symbolic(kind~, params~) =>
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Process(ProcessTag::BernoulliProcess) =>
+        Process(BernoulliProcess) =>
           sample_bernoulli_process_path(params, times, rng)
-        SymbolicKind::Process(ProcessTag::GammaProcess) if params.length() >= 2 =>
+        Process(GammaProcess) if params.length() >= 2 =>
           sample_gamma_process_path(params[0], params[1], times, rng)
         _ => None
       }
@@ -624,7 +610,7 @@ fn resolve_rv(expr : @symcore.Expr, rvs : Array[RandomVar]) -> RandomVar? {
     return Some(rvs[0])
   }
   match expr {
-    @symcore.Expr::Symbol(name) => {
+    Symbol(name) => {
       for rv in rvs {
         if rv.name == name {
           return Some(rv)
@@ -652,15 +638,7 @@ fn symbolic_metric_with_head(
     "CF" =>
       @symcore.function("Expectation", [
         @symcore.function("exp", [
-          eval_arith(
-            @symcore.mul([
-              @symcore.Expr::NumberSymbol(
-                @symcore.NumberSymbolKind::ImaginaryUnit,
-              ),
-              head,
-              dist,
-            ]),
-          ),
+          eval_arith(@symcore.mul([NumberSymbol(ImaginaryUnit), head, dist])),
         ]),
       ])
     _ => @symcore.function(suffix, [dist, head])
@@ -746,10 +724,7 @@ fn compat_piecewise2(
   c1 : @symcore.Expr,
   v2 : @symcore.Expr,
 ) -> @symcore.Expr {
-  @symcore.function("Piecewise", [
-    @symcore.Expr::Tuple([v1, c1]),
-    @symcore.Expr::Tuple([v2, @symcore.Expr::Boolean(true)]),
-  ])
+  @symcore.function("Piecewise", [Tuple([v1, c1]), Tuple([v2, Boolean(true)])])
 }
 
 ///|
@@ -761,9 +736,9 @@ fn compat_piecewise3(
   v3 : @symcore.Expr,
 ) -> @symcore.Expr {
   @symcore.function("Piecewise", [
-    @symcore.Expr::Tuple([v1, c1]),
-    @symcore.Expr::Tuple([v2, c2]),
-    @symcore.Expr::Tuple([v3, @symcore.Expr::Boolean(true)]),
+    Tuple([v1, c1]),
+    Tuple([v2, c2]),
+    Tuple([v3, Boolean(true)]),
   ])
 }
 
@@ -780,10 +755,7 @@ fn symbolic_opaque_mgf(
   t : @symcore.Expr,
 ) -> @symcore.Expr? {
   match symbolic_kind_from_name(name) {
-    SymbolicKind::Continuous(
-      ContinuousTag::ContinuousRV
-      | ContinuousTag::ContinuousDistributionHandmade
-    ) =>
+    Continuous(ContinuousRV | ContinuousDistributionHandmade) =>
       if params.length() >= 1 {
         let rv = symbolic_rv(rv_name, name, params)
         let x = @symcore.Expr::Symbol("_x")
@@ -800,14 +772,9 @@ fn symbolic_opaque_mgf(
               @symcore.function("Tuple", [
                 x,
                 eval_arith(
-                  @symcore.mul([
-                    @symcore.int(-1),
-                    @symcore.Expr::NumberSymbol(
-                      @symcore.NumberSymbolKind::Infinity,
-                    ),
-                  ]),
+                  @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
                 ),
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+                NumberSymbol(Infinity),
               ]),
             ]),
           ),
@@ -815,10 +782,7 @@ fn symbolic_opaque_mgf(
       } else {
         None
       }
-    SymbolicKind::Discrete(
-      DiscreteTag::DiscreteRV
-      | DiscreteTag::DiscreteDistributionHandmade
-    ) =>
+    Discrete(DiscreteRV | DiscreteDistributionHandmade) =>
       if params.length() >= 1 {
         let rv = symbolic_rv(rv_name, name, params)
         let k = @symcore.Expr::Symbol("_k")
@@ -835,14 +799,9 @@ fn symbolic_opaque_mgf(
               @symcore.function("Tuple", [
                 k,
                 eval_arith(
-                  @symcore.mul([
-                    @symcore.int(-1),
-                    @symcore.Expr::NumberSymbol(
-                      @symcore.NumberSymbolKind::Infinity,
-                    ),
-                  ]),
+                  @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
                 ),
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+                NumberSymbol(Infinity),
               ]),
             ]),
           ),
@@ -850,7 +809,7 @@ fn symbolic_opaque_mgf(
       } else {
         None
       }
-    SymbolicKind::Discrete(DiscreteTag::FiniteDistributionHandmade) =>
+    Discrete(FiniteDistributionHandmade) =>
       match symbolic_finite_handmade_pairs(params) {
         Some(pairs) => {
           let terms : Array[@symcore.Expr] = Array::new()
@@ -871,12 +830,12 @@ fn symbolic_opaque_mgf(
         }
         None => None
       }
-    SymbolicKind::Joint(
-      JointTag::JointRV
-      | JointTag::GeneralizedMultivariateLogGamma
-      | JointTag::GeneralizedMultivariateLogGammaOmega
+    Joint(
+      JointRV
+      | GeneralizedMultivariateLogGamma
+      | GeneralizedMultivariateLogGammaOmega
     ) => symbolic_joint_mgf_via_integral(name, params, t)
-    SymbolicKind::Joint(JointTag::MultivariateEwens) =>
+    Joint(MultivariateEwens) =>
       if params.length() != 2 {
         None
       } else {
@@ -884,7 +843,7 @@ fn symbolic_opaque_mgf(
           (Some(n), Some(ts)) if params.length() == 2 && ts.length() == n => {
             let vars : Array[@symcore.Expr] = Array::new()
             for i in 0..<n {
-              vars.push(@symcore.Expr::Symbol("_k\{i + 1}"))
+              vars.push(Symbol("_k\{i + 1}"))
             }
             let rv = symbolic_rv(rv_name, name, params)
             let point = @symcore.function("Tuple", vars)
@@ -918,7 +877,7 @@ fn symbolic_opaque_mgf(
           _ => None
         }
       }
-    SymbolicKind::Process(ProcessTag::BernoulliProcess) if params.length() >= 1 => {
+    Process(BernoulliProcess) if params.length() >= 1 => {
       let p = params[0]
       let success = if params.length() >= 2 {
         params[1]
@@ -958,7 +917,7 @@ fn symbolic_opaque_mgf(
         ),
       )
     }
-    SymbolicKind::Process(ProcessTag::GammaProcess) if params.length() >= 2 => {
+    Process(GammaProcess) if params.length() >= 2 => {
       let lamda = params[0]
       let gamma = params[1]
       let inner = eval_arith(
@@ -980,22 +939,22 @@ fn symbolic_opaque_mgf(
         ),
       )
     }
-    SymbolicKind::Matrix(
-      MatrixTag::GaussianOrthogonalEnsemble
-      | MatrixTag::GaussianEnsemble
-      | MatrixTag::GaussianUnitaryEnsemble
-      | MatrixTag::GaussianSymplecticEnsemble
-      | MatrixTag::CircularEnsemble
-      | MatrixTag::CircularUnitaryEnsemble
-      | MatrixTag::CircularOrthogonalEnsemble
-      | MatrixTag::CircularSymplecticEnsemble
-      | MatrixTag::MatrixGamma
-      | MatrixTag::MatrixStudentT
+    Matrix(
+      GaussianOrthogonalEnsemble
+      | GaussianEnsemble
+      | GaussianUnitaryEnsemble
+      | GaussianSymplecticEnsemble
+      | CircularEnsemble
+      | CircularUnitaryEnsemble
+      | CircularOrthogonalEnsemble
+      | CircularSymplecticEnsemble
+      | MatrixGamma
+      | MatrixStudentT
     ) =>
       Some(
         @symcore.function("Expectation", [
           @symcore.function("exp", [
-            eval_arith(@symcore.mul([t, @symcore.Expr::Symbol(rv_name)])),
+            eval_arith(@symcore.mul([t, Symbol(rv_name)])),
           ]),
         ]),
       )
@@ -1014,12 +973,7 @@ fn symbolic_opaque_cf(
     name,
     params,
     rv_name,
-    eval_arith(
-      @symcore.mul([
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-        t,
-      ]),
-    ),
+    eval_arith(@symcore.mul([NumberSymbol(ImaginaryUnit), t])),
   )
 }
 
@@ -1030,19 +984,14 @@ fn symbolic_continuous_mgf_via_integral(
   t : @symcore.Expr,
 ) -> @symcore.Expr? {
   let kind = symbolic_kind_from_name(name)
-  let rv = random_var("_X", RVKind::Symbolic(kind~, params~))
+  let rv = random_var("_X", Symbolic(kind~, params~))
   let x = @symcore.Expr::Symbol("_x")
   match continuous_density(rv, x) {
     Some(pdf) => {
       let lower = eval_arith(
-        @symcore.mul([
-          @symcore.int(-1),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ]),
+        @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
       )
-      let upper = @symcore.Expr::NumberSymbol(
-        @symcore.NumberSymbolKind::Infinity,
-      )
+      let upper = @symcore.Expr::NumberSymbol(Infinity)
       Some(
         eval_arith(
           @symcore.function("Integral", [
@@ -1068,28 +1017,19 @@ fn symbolic_discrete_mgf_via_sum(
   t : @symcore.Expr,
 ) -> @symcore.Expr? {
   let bounds = match discrete_tag_from_name(name) {
-    DiscreteTag::BetaBinomial if params.length() == 3 =>
-      Some((@symcore.int(0), params[0]))
-    DiscreteTag::Hypergeometric if params.length() == 3 =>
-      Some((@symcore.int(0), params[2]))
-    DiscreteTag::IdealSoliton if params.length() == 1 =>
-      Some((@symcore.int(1), params[0]))
-    DiscreteTag::RobustSoliton if params.length() == 3 =>
-      Some((@symcore.int(1), params[0]))
-    DiscreteTag::YuleSimon if params.length() == 1 =>
-      Some(
-        (
-          @symcore.int(1),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ),
-      )
+    BetaBinomial if params.length() == 3 => Some((@symcore.int(0), params[0]))
+    Hypergeometric if params.length() == 3 => Some((@symcore.int(0), params[2]))
+    IdealSoliton if params.length() == 1 => Some((@symcore.int(1), params[0]))
+    RobustSoliton if params.length() == 3 => Some((@symcore.int(1), params[0]))
+    YuleSimon if params.length() == 1 =>
+      Some((@symcore.int(1), NumberSymbol(Infinity)))
     _ => None
   }
   match bounds {
     Some((lower, upper)) => {
       let k = @symcore.Expr::Symbol("_k")
       let kind = symbolic_kind_from_name(name)
-      let rv = random_var("_X", RVKind::Symbolic(kind~, params~))
+      let rv = random_var("_X", Symbolic(kind~, params~))
       match discrete_pmf(rv, k) {
         Some(pmf) =>
           Some(
@@ -1122,10 +1062,10 @@ fn symbolic_joint_mgf_via_integral(
     Some(ts) if !ts.is_empty() => {
       let vars : Array[@symcore.Expr] = Array::new()
       for i in 0..<ts.length() {
-        vars.push(@symcore.Expr::Symbol("_x\{i + 1}"))
+        vars.push(Symbol("_x\{i + 1}"))
       }
       let kind = symbolic_kind_from_name(name)
-      let rv = random_var("_X", RVKind::Symbolic(kind~, params~))
+      let rv = random_var("_X", Symbolic(kind~, params~))
       let point = @symcore.function("Tuple", vars)
       let dens = density(rv, point)
       let linear_terms : Array[@symcore.Expr] = Array::new()
@@ -1138,14 +1078,9 @@ fn symbolic_joint_mgf_via_integral(
         eval_arith(@symcore.add(linear_terms))
       }
       let lower = eval_arith(
-        @symcore.mul([
-          @symcore.int(-1),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ]),
+        @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
       )
-      let upper = @symcore.Expr::NumberSymbol(
-        @symcore.NumberSymbolKind::Infinity,
-      )
+      let upper = @symcore.Expr::NumberSymbol(Infinity)
       let mut expr = eval_arith(
         @symcore.mul([@symcore.function("exp", [lin]), dens]),
       )
@@ -1170,7 +1105,7 @@ fn symbolic_joint_mgf_special(
   t : @symcore.Expr,
 ) -> @symcore.Expr? {
   match symbolic_kind_from_name(name) {
-    SymbolicKind::Discrete(DiscreteTag::Multinomial) if params.length() >= 2 =>
+    Discrete(Multinomial) if params.length() >= 2 =>
       match @symcore.tuple_items(t) {
         Some(ts) if ts.length() == params.length() - 1 => {
           let n = params[0]
@@ -1186,8 +1121,7 @@ fn symbolic_joint_mgf_special(
         }
         _ => None
       }
-    SymbolicKind::Discrete(DiscreteTag::NegativeMultinomial) if params.length() >=
-      2 =>
+    Discrete(NegativeMultinomial) if params.length() >= 2 =>
       match @symcore.tuple_items(t) {
         Some(ts) if ts.length() == params.length() - 1 => {
           let k0 = params[0]
@@ -1231,7 +1165,7 @@ fn symbolic_joint_mgf_special(
         }
         _ => None
       }
-    SymbolicKind::Joint(JointTag::NormalGamma) if params.length() == 4 =>
+    Joint(NormalGamma) if params.length() == 4 =>
       match compat_tuple2(t) {
         Some((t1, t2)) => {
           let mu = params[0]
@@ -1265,11 +1199,8 @@ fn symbolic_joint_mgf_special(
         }
         _ => None
       }
-    SymbolicKind::Joint(
-      JointTag::Dirichlet
-      | JointTag::MultivariateBeta
-      | JointTag::MultivariateT
-    ) => symbolic_joint_mgf_via_integral(name, params, t)
+    Joint(Dirichlet | MultivariateBeta | MultivariateT) =>
+      symbolic_joint_mgf_via_integral(name, params, t)
     _ => None
   }
 }
@@ -1280,38 +1211,20 @@ fn symbolic_discrete_entropy_bounds(
   params : Array[@symcore.Expr],
 ) -> (@symcore.Expr, @symcore.Expr) {
   match discrete_tag_from_name(name) {
-    DiscreteTag::BetaBinomial if params.length() == 3 =>
-      (@symcore.int(0), params[0])
-    DiscreteTag::Hypergeometric if params.length() == 3 =>
-      (@symcore.int(0), params[2])
-    DiscreteTag::IdealSoliton if params.length() == 1 =>
-      (@symcore.int(1), params[0])
-    DiscreteTag::RobustSoliton if params.length() == 3 =>
-      (@symcore.int(1), params[0])
-    DiscreteTag::Logarithmic | DiscreteTag::YuleSimon | DiscreteTag::Zeta =>
+    BetaBinomial if params.length() == 3 => (@symcore.int(0), params[0])
+    Hypergeometric if params.length() == 3 => (@symcore.int(0), params[2])
+    IdealSoliton if params.length() == 1 => (@symcore.int(1), params[0])
+    RobustSoliton if params.length() == 3 => (@symcore.int(1), params[0])
+    Logarithmic | YuleSimon | Zeta => (@symcore.int(1), NumberSymbol(Infinity))
+    Skellam =>
       (
-        @symcore.int(1),
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-      )
-    DiscreteTag::Skellam =>
-      (
-        eval_arith(
-          @symcore.mul([
-            @symcore.int(-1),
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-          ]),
-        ),
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+        eval_arith(@symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])),
+        NumberSymbol(Infinity),
       )
     _ =>
       (
-        eval_arith(
-          @symcore.mul([
-            @symcore.int(-1),
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-          ]),
-        ),
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+        eval_arith(@symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])),
+        NumberSymbol(Infinity),
       )
   }
 }
@@ -1355,14 +1268,9 @@ fn symbolic_continuous_entropy_via_integral(
   match continuous_density(rv, x) {
     Some(pdf) => {
       let lower = eval_arith(
-        @symcore.mul([
-          @symcore.int(-1),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ]),
+        @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
       )
-      let upper = @symcore.Expr::NumberSymbol(
-        @symcore.NumberSymbolKind::Infinity,
-      )
+      let upper = @symcore.Expr::NumberSymbol(Infinity)
       Some(
         eval_arith(
           @symcore.function("Integral", [
@@ -1392,19 +1300,13 @@ fn symbolic_joint_entropy_arity(
     _ => ()
   }
   match symbolic_kind_from_name(name) {
-    SymbolicKind::Joint(JointTag::Dirichlet | JointTag::MultivariateBeta) if params.length() >=
-      2 => Some(params.length())
-    SymbolicKind::Discrete(
-      DiscreteTag::Multinomial
-      | DiscreteTag::NegativeMultinomial
-    ) if params.length() >= 2 => Some(params.length() - 1)
-    SymbolicKind::Joint(JointTag::NormalGamma) if params.length() == 4 =>
-      Some(2)
-    SymbolicKind::Joint(
-      JointTag::MultivariateNormal
-      | JointTag::MultivariateLaplace
-      | JointTag::MultivariateT
-    ) if params.length() >= 1 =>
+    Joint(Dirichlet | MultivariateBeta) if params.length() >= 2 =>
+      Some(params.length())
+    Discrete(Multinomial | NegativeMultinomial) if params.length() >= 2 =>
+      Some(params.length() - 1)
+    Joint(NormalGamma) if params.length() == 4 => Some(2)
+    Joint(MultivariateNormal | MultivariateLaplace | MultivariateT) if params.length() >=
+      1 =>
       match @symcore.tuple_items(params[0]) {
         Some(xs) if !xs.is_empty() => Some(xs.length())
         _ => None
@@ -1421,15 +1323,12 @@ fn symbolic_joint_entropy_via_sum(
   match symbolic_joint_entropy_arity(name, params) {
     Some(arity) if arity > 0 => {
       match symbolic_kind_from_name(name) {
-        SymbolicKind::Discrete(
-          DiscreteTag::Multinomial
-          | DiscreteTag::NegativeMultinomial
-        ) => ()
+        Discrete(Multinomial | NegativeMultinomial) => ()
         _ => return None
       }
       let vars : Array[@symcore.Expr] = Array::new()
       for i in 0..<arity {
-        vars.push(@symcore.Expr::Symbol("_k\{i + 1}"))
+        vars.push(Symbol("_k\{i + 1}"))
       }
       let point = @symcore.function("Tuple", vars)
       let rv = symbolic_rv("_X", name, params)
@@ -1438,8 +1337,8 @@ fn symbolic_joint_entropy_via_sum(
         @symcore.mul([@symcore.int(-1), pmf, @symcore.function("log", [pmf])]),
       )
       let upper = match symbolic_kind_from_name(name) {
-        SymbolicKind::Discrete(DiscreteTag::Multinomial) => params[0]
-        _ => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        Discrete(Multinomial) => params[0]
+        _ => NumberSymbol(Infinity)
       }
       for v in vars {
         expr = eval_arith(
@@ -1463,28 +1362,20 @@ fn symbolic_joint_entropy_via_integral(
   match symbolic_joint_entropy_arity(name, params) {
     Some(arity) if arity > 0 => {
       match symbolic_kind_from_name(name) {
-        SymbolicKind::Discrete(
-          DiscreteTag::Multinomial
-          | DiscreteTag::NegativeMultinomial
-        ) => return None
+        Discrete(Multinomial | NegativeMultinomial) => return None
         _ => ()
       }
       let vars : Array[@symcore.Expr] = Array::new()
       for i in 0..<arity {
-        vars.push(@symcore.Expr::Symbol("_x\{i + 1}"))
+        vars.push(Symbol("_x\{i + 1}"))
       }
       let point = @symcore.function("Tuple", vars)
       let rv = symbolic_rv("_X", name, params)
       let dens = density(rv, point)
       let lower = eval_arith(
-        @symcore.mul([
-          @symcore.int(-1),
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        ]),
+        @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
       )
-      let upper = @symcore.Expr::NumberSymbol(
-        @symcore.NumberSymbolKind::Infinity,
-      )
+      let upper = @symcore.Expr::NumberSymbol(Infinity)
       let mut expr = eval_arith(
         @symcore.mul([@symcore.int(-1), dens, @symcore.function("log", [dens])]),
       )
@@ -1508,7 +1399,7 @@ fn symbolic_process_entropy(
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr? {
   match process_tag_from_name(name) {
-    ProcessTag::BernoulliProcess if params.length() >= 1 => {
+    BernoulliProcess if params.length() >= 1 => {
       let p = params[0]
       let one_minus_p = eval_arith(
         @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])]),
@@ -1530,7 +1421,7 @@ fn symbolic_process_entropy(
         ),
       )
     }
-    ProcessTag::GammaProcess if params.length() >= 2 => {
+    GammaProcess if params.length() >= 2 => {
       let lamda = params[0]
       let gamma = params[1]
       let t = @symcore.Expr::Symbol("t")
@@ -1590,10 +1481,7 @@ fn symbolic_opaque_entropy(
   rv_name : String,
 ) -> @symcore.Expr? {
   match symbolic_kind_from_name(name) {
-    SymbolicKind::Continuous(
-      ContinuousTag::ContinuousRV
-      | ContinuousTag::ContinuousDistributionHandmade
-    ) =>
+    Continuous(ContinuousRV | ContinuousDistributionHandmade) =>
       if params.length() >= 1 {
         let rv = symbolic_rv(rv_name, name, params)
         let x = @symcore.Expr::Symbol("_x")
@@ -1611,14 +1499,9 @@ fn symbolic_opaque_entropy(
               @symcore.function("Tuple", [
                 x,
                 eval_arith(
-                  @symcore.mul([
-                    @symcore.int(-1),
-                    @symcore.Expr::NumberSymbol(
-                      @symcore.NumberSymbolKind::Infinity,
-                    ),
-                  ]),
+                  @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
                 ),
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+                NumberSymbol(Infinity),
               ]),
             ]),
           ),
@@ -1626,10 +1509,7 @@ fn symbolic_opaque_entropy(
       } else {
         None
       }
-    SymbolicKind::Discrete(
-      DiscreteTag::DiscreteRV
-      | DiscreteTag::DiscreteDistributionHandmade
-    ) =>
+    Discrete(DiscreteRV | DiscreteDistributionHandmade) =>
       if params.length() >= 1 {
         let rv = symbolic_rv(rv_name, name, params)
         let k = @symcore.Expr::Symbol("_k")
@@ -1647,14 +1527,9 @@ fn symbolic_opaque_entropy(
               @symcore.function("Tuple", [
                 k,
                 eval_arith(
-                  @symcore.mul([
-                    @symcore.int(-1),
-                    @symcore.Expr::NumberSymbol(
-                      @symcore.NumberSymbolKind::Infinity,
-                    ),
-                  ]),
+                  @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
                 ),
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+                NumberSymbol(Infinity),
               ]),
             ]),
           ),
@@ -1662,7 +1537,7 @@ fn symbolic_opaque_entropy(
       } else {
         None
       }
-    SymbolicKind::Discrete(DiscreteTag::FiniteDistributionHandmade) =>
+    Discrete(FiniteDistributionHandmade) =>
       match symbolic_finite_handmade_pairs(params) {
         Some(pairs) => {
           let terms : Array[@symcore.Expr] = Array::new()
@@ -1684,12 +1559,12 @@ fn symbolic_opaque_entropy(
         }
         None => None
       }
-    SymbolicKind::Joint(
-      JointTag::JointRV
-      | JointTag::GeneralizedMultivariateLogGamma
-      | JointTag::GeneralizedMultivariateLogGammaOmega
+    Joint(
+      JointRV
+      | GeneralizedMultivariateLogGamma
+      | GeneralizedMultivariateLogGammaOmega
     ) => symbolic_joint_entropy_via_integral(name, params)
-    SymbolicKind::Joint(JointTag::MultivariateEwens) =>
+    Joint(MultivariateEwens) =>
       if params.length() != 2 {
         None
       } else {
@@ -1697,7 +1572,7 @@ fn symbolic_opaque_entropy(
           Some(n) if params.length() == 2 => {
             let vars : Array[@symcore.Expr] = Array::new()
             for i in 0..<n {
-              vars.push(@symcore.Expr::Symbol("_k\{i + 1}"))
+              vars.push(Symbol("_k\{i + 1}"))
             }
             let rv = symbolic_rv(rv_name, name, params)
             let point = @symcore.function("Tuple", vars)
@@ -1726,17 +1601,17 @@ fn symbolic_opaque_entropy(
           _ => None
         }
       }
-    SymbolicKind::Matrix(
-      MatrixTag::GaussianEnsemble
-      | MatrixTag::GaussianOrthogonalEnsemble
-      | MatrixTag::GaussianUnitaryEnsemble
-      | MatrixTag::GaussianSymplecticEnsemble
-      | MatrixTag::CircularEnsemble
-      | MatrixTag::CircularUnitaryEnsemble
-      | MatrixTag::CircularOrthogonalEnsemble
-      | MatrixTag::CircularSymplecticEnsemble
-      | MatrixTag::MatrixGamma
-      | MatrixTag::MatrixStudentT
+    Matrix(
+      GaussianEnsemble
+      | GaussianOrthogonalEnsemble
+      | GaussianUnitaryEnsemble
+      | GaussianSymplecticEnsemble
+      | CircularEnsemble
+      | CircularUnitaryEnsemble
+      | CircularOrthogonalEnsemble
+      | CircularSymplecticEnsemble
+      | MatrixGamma
+      | MatrixStudentT
     ) => symbolic_matrix_entropy_expectation(name, params, rv_name)
     _ => None
   }
@@ -1753,7 +1628,7 @@ fn quantile_unit_interval_guard(
       @symcore.function("Ge", [q, @symcore.int(0)]),
       @symcore.function("Le", [q, @symcore.int(1)]),
     ]),
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+    NumberSymbol(NaN),
   )
 }
 
@@ -1767,16 +1642,11 @@ fn symbolic_quantile_via_conditionset(
   let rv = symbolic_rv("_Q", name, params)
   let c = cdf(rv, x)
   let domain = match symbolic_kind_from_name(name) {
-    SymbolicKind::Discrete(_) => @symcore.Expr::Symbol("Integers")
+    Discrete(_) => @symcore.Expr::Symbol("Integers")
     _ =>
       @symcore.function("Interval", [
-        eval_arith(
-          @symcore.mul([
-            @symcore.int(-1),
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-          ]),
-        ),
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+        eval_arith(@symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])),
+        NumberSymbol(Infinity),
       ])
   }
   quantile_unit_interval_guard(
@@ -1801,17 +1671,11 @@ fn symbolic_joint_quantile_via_conditionset(
       let point = @symcore.function("Tuple", vars)
       let c = cdf(rv, point)
       let base_domain = match symbolic_kind_from_name(name) {
-        SymbolicKind::Joint(JointTag::MultivariateEwens) =>
-          @symcore.Expr::Symbol("Integers")
+        Joint(MultivariateEwens) => @symcore.Expr::Symbol("Integers")
         _ =>
           @symcore.function("Interval", [
-            eval_arith(
-              @symcore.mul([
-                @symcore.int(-1),
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-              ]),
-            ),
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+            eval_arith(@symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)])),
+            NumberSymbol(Infinity),
           ])
       }
       let domain_args : Array[@symcore.Expr] = Array::new()
@@ -1845,21 +1709,16 @@ fn symbolic_opaque_quantile(
   q : @symcore.Expr,
 ) -> @symcore.Expr? {
   match symbolic_kind_from_name(name) {
-    SymbolicKind::Joint(
-      JointTag::JointRV
-      | JointTag::GeneralizedMultivariateLogGamma
-      | JointTag::GeneralizedMultivariateLogGammaOmega
-      | JointTag::MultivariateEwens
+    Joint(
+      JointRV
+      | GeneralizedMultivariateLogGamma
+      | GeneralizedMultivariateLogGammaOmega
+      | MultivariateEwens
     ) => symbolic_joint_quantile_via_conditionset(name, params, q)
-    SymbolicKind::Continuous(
-      ContinuousTag::ContinuousRV
-      | ContinuousTag::ContinuousDistributionHandmade
-    )
-    | SymbolicKind::Discrete(
-      DiscreteTag::DiscreteRV
-      | DiscreteTag::DiscreteDistributionHandmade
-    ) => Some(symbolic_quantile_via_conditionset(name, params, q))
-    SymbolicKind::Discrete(DiscreteTag::FiniteDistributionHandmade) =>
+    Continuous(ContinuousRV | ContinuousDistributionHandmade)
+    | Discrete(DiscreteRV | DiscreteDistributionHandmade) =>
+      Some(symbolic_quantile_via_conditionset(name, params, q))
+    Discrete(FiniteDistributionHandmade) =>
       match symbolic_finite_handmade_pairs(params) {
         Some(pairs) if !pairs.is_empty() => {
           let sorted_pairs = pairs
@@ -1872,12 +1731,10 @@ fn symbolic_opaque_quantile(
             last_value = value
             acc = eval_arith(@symcore.add([acc, prob]))
             piecewise_args.push(
-              @symcore.Expr::Tuple([value, @symcore.function("Le", [q, acc])]),
+              Tuple([value, @symcore.function("Le", [q, acc])]),
             )
           }
-          piecewise_args.push(
-            @symcore.Expr::Tuple([last_value, @symcore.Expr::Boolean(true)]),
-          )
+          piecewise_args.push(Tuple([last_value, Boolean(true)]))
           Some(
             quantile_unit_interval_guard(
               q,
@@ -1887,7 +1744,7 @@ fn symbolic_opaque_quantile(
         }
         _ => None
       }
-    SymbolicKind::Process(ProcessTag::BernoulliProcess) if params.length() >= 1 => {
+    Process(BernoulliProcess) if params.length() >= 1 => {
       let p = params[0]
       let success = if params.length() >= 2 {
         params[1]
@@ -1902,29 +1759,29 @@ fn symbolic_opaque_quantile(
       let lower = @symcore.function("Min", [success, failure])
       let upper = @symcore.function("Max", [success, failure])
       let p_low = @symcore.function("Piecewise", [
-        @symcore.Expr::Tuple([p, @symcore.function("Lt", [success, failure])]),
-        @symcore.Expr::Tuple([
+        Tuple([p, @symcore.function("Lt", [success, failure])]),
+        Tuple([
           eval_arith(
             @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])]),
           ),
-          @symcore.Expr::Boolean(true),
+          Boolean(true),
         ]),
       ])
       Some(
         @symcore.function("Piecewise", [
-          @symcore.Expr::Tuple([
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+          Tuple([
+            NumberSymbol(NaN),
             @symcore.function("Or", [
               @symcore.function("Lt", [q, @symcore.int(0)]),
               @symcore.function("Gt", [q, @symcore.int(1)]),
             ]),
           ]),
-          @symcore.Expr::Tuple([lower, @symcore.function("Le", [q, p_low])]),
-          @symcore.Expr::Tuple([upper, @symcore.Expr::Boolean(true)]),
+          Tuple([lower, @symcore.function("Le", [q, p_low])]),
+          Tuple([upper, Boolean(true)]),
         ]),
       )
     }
-    SymbolicKind::Process(ProcessTag::GammaProcess) if params.length() >= 2 => {
+    Process(GammaProcess) if params.length() >= 2 => {
       let lamda = params[0]
       let gamma = params[1]
       let t = @symcore.Expr::Symbol("t")
@@ -1941,17 +1798,17 @@ fn symbolic_opaque_quantile(
         ),
       )
     }
-    SymbolicKind::Matrix(
-      MatrixTag::GaussianEnsemble
-      | MatrixTag::GaussianOrthogonalEnsemble
-      | MatrixTag::GaussianUnitaryEnsemble
-      | MatrixTag::GaussianSymplecticEnsemble
-      | MatrixTag::CircularEnsemble
-      | MatrixTag::CircularUnitaryEnsemble
-      | MatrixTag::CircularOrthogonalEnsemble
-      | MatrixTag::CircularSymplecticEnsemble
-      | MatrixTag::MatrixGamma
-      | MatrixTag::MatrixStudentT
+    Matrix(
+      GaussianEnsemble
+      | GaussianOrthogonalEnsemble
+      | GaussianUnitaryEnsemble
+      | GaussianSymplecticEnsemble
+      | CircularEnsemble
+      | CircularUnitaryEnsemble
+      | CircularOrthogonalEnsemble
+      | CircularSymplecticEnsemble
+      | MatrixGamma
+      | MatrixStudentT
     ) => Some(symbolic_quantile_via_conditionset(name, params, q))
     _ => None
   }
@@ -1960,7 +1817,7 @@ fn symbolic_opaque_quantile(
 ///|
 fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Finite(items) => {
+    Finite(items) => {
       let terms : Array[@symcore.Expr] = Array::new()
       for item in items {
         let (value, p) = item
@@ -1975,7 +1832,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
       }
       Some(eval_arith(@symcore.add(terms)))
     }
-    RVKind::Binomial(n~, p~) => {
+    Binomial(n~, p~) => {
       let inside = eval_arith(
         @symcore.add([
           @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])]),
@@ -1984,7 +1841,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
       )
       Some(eval_arith(@symcore.pow(inside, n)))
     }
-    RVKind::Poisson(rate~) => {
+    Poisson(rate~) => {
       let inner = eval_arith(
         @symcore.add([@symcore.function("exp", [t]), @symcore.int(-1)]),
       )
@@ -1994,7 +1851,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
         ),
       )
     }
-    RVKind::Geometric(p~) => {
+    Geometric(p~) => {
       let et = @symcore.function("exp", [t])
       let numer = eval_arith(@symcore.mul([p, et]))
       let denom = eval_arith(
@@ -2018,7 +1875,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
         eval_arith(@symcore.mul([numer, @symcore.pow(denom, @symcore.int(-1))])),
       )
     }
-    RVKind::NegativeBinomial(r~, p~) => {
+    NegativeBinomial(r~, p~) => {
       let et = @symcore.function("exp", [t])
       let denom = eval_arith(
         @symcore.add([
@@ -2046,7 +1903,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
         ),
       )
     }
-    RVKind::Normal(mu~, sigma~) => {
+    Normal(mu~, sigma~) => {
       let t2 = @symcore.pow(t, @symcore.int(2))
       let quad = eval_arith(
         @symcore.mul([
@@ -2064,7 +1921,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
         ),
       )
     }
-    RVKind::Exponential(rate~) => {
+    Exponential(rate~) => {
       let denom = eval_arith(
         @symcore.add([rate, @symcore.mul([@symcore.int(-1), t])]),
       )
@@ -2072,7 +1929,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
         eval_arith(@symcore.mul([rate, @symcore.pow(denom, @symcore.int(-1))])),
       )
     }
-    RVKind::Gamma(shape~, scale~) => {
+    Gamma(shape~, scale~) => {
       let inner = eval_arith(
         @symcore.add([
           @symcore.int(1),
@@ -2083,7 +1940,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
         eval_arith(@symcore.pow(inner, @symcore.mul([@symcore.int(-1), shape]))),
       )
     }
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) => {
+    StochasticProcess(PoissonProcess(rate~, ..)) => {
       let inner = eval_arith(
         @symcore.add([@symcore.function("exp", [t]), @symcore.int(-1)]),
       )
@@ -2093,7 +1950,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
         ),
       )
     }
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) =>
+    StochasticProcess(WienerProcess(..)) =>
       Some(
         eval_arith(
           @symcore.function("exp", [
@@ -2106,7 +1963,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
           ]),
         ),
       )
-    RVKind::Symbolic(kind~, params~) => {
+    Symbolic(kind~, params~) => {
       let name = symbolic_kind_name(kind)
       if compat_use_generic_unevaluated(name) {
         return match symbolic_opaque_mgf(name, params, rv.name, t) {
@@ -2114,7 +1971,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
           None =>
             Some(
               @symcore.function("moment_generating_function", [
-                @symcore.Expr::Symbol(rv.name),
+                Symbol(rv.name),
                 t,
               ]),
             )
@@ -2124,8 +1981,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
         Some(v) => Some(v)
         None =>
           match kind {
-            SymbolicKind::Joint(JointTag::MultivariateNormal) if params.length() >=
-              2 =>
+            Joint(MultivariateNormal) if params.length() >= 2 =>
               match
                 (
                   compat_tuple2(params[0]),
@@ -2151,8 +2007,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
                 }
                 _ => Some(symbolic_metric_with_head(name, "MGF", t, params))
               }
-            SymbolicKind::Joint(JointTag::MultivariateLaplace) if params.length() >=
-              2 =>
+            Joint(MultivariateLaplace) if params.length() >= 2 =>
               match
                 (
                   compat_tuple2(params[0]),
@@ -2183,8 +2038,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
                 }
                 _ => Some(symbolic_metric_with_head(name, "MGF", t, params))
               }
-            SymbolicKind::Continuous(ContinuousTag::Uniform) if params.length() ==
-              2 => {
+            Continuous(Uniform) if params.length() == 2 => {
               let a = params[0]
               let b = params[1]
               let numer = eval_arith(
@@ -2210,8 +2064,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
                 ),
               )
             }
-            SymbolicKind::Continuous(ContinuousTag::Laplace) if params.length() ==
-              2 => {
+            Continuous(Laplace) if params.length() == 2 => {
               let mu = params[0]
               let b = params[1]
               let num = @symcore.function("exp", [
@@ -2235,8 +2088,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
                 ),
               )
             }
-            SymbolicKind::Continuous(ContinuousTag::LogNormal) if params.length() ==
-              2 =>
+            Continuous(LogNormal) if params.length() == 2 =>
               // LogNormal has no elementary closed form MGF.
               Some(symbolic_metric_with_head(name, "MGF", t, params))
             _ =>
@@ -2290,21 +2142,20 @@ pub fn characteristic_function(
   match resolve_rv(expr, rvs) {
     Some(rv) =>
       match rv.kind {
-        RVKind::Symbolic(kind~, params~) => {
+        Symbolic(kind~, params~) => {
           let name = symbolic_kind_name(kind)
           if compat_use_generic_unevaluated(name) {
             return match symbolic_opaque_cf(name, params, rv.name, t) {
               Some(v) => v
               None =>
                 @symcore.function("characteristic_function", [
-                  @symcore.Expr::Symbol(rv.name),
+                  Symbol(rv.name),
                   t,
                 ])
             }
           }
           let special = match kind {
-            SymbolicKind::Continuous(ContinuousTag::Cauchy) if params.length() ==
-              2 =>
+            Continuous(Cauchy) if params.length() == 2 =>
               Some(
                 eval_arith(
                   @symcore.function("exp", [
@@ -2312,9 +2163,7 @@ pub fn characteristic_function(
                       @symcore.add([
                         eval_arith(
                           @symcore.mul([
-                            @symcore.Expr::NumberSymbol(
-                              @symcore.NumberSymbolKind::ImaginaryUnit,
-                            ),
+                            NumberSymbol(ImaginaryUnit),
                             params[0],
                             t,
                           ]),
@@ -2329,8 +2178,7 @@ pub fn characteristic_function(
                   ]),
                 ),
               )
-            SymbolicKind::Continuous(ContinuousTag::StudentT) if params.length() ==
-              1 => {
+            Continuous(StudentT) if params.length() == 1 => {
               let nu = params[0]
               let half = stats_exact_rational(1, 2)
               let nu_half = eval_arith(@symcore.mul([half, nu]))
@@ -2361,16 +2209,15 @@ pub fn characteristic_function(
               )
               Some(
                 @symcore.function("Piecewise", [
-                  @symcore.Expr::Tuple([
+                  Tuple([
                     @symcore.int(1),
                     @symcore.function("Eq", [t, @symcore.int(0)]),
                   ]),
-                  @symcore.Expr::Tuple([core, @symcore.Expr::Boolean(true)]),
+                  Tuple([core, Boolean(true)]),
                 ]),
               )
             }
-            SymbolicKind::Joint(JointTag::MultivariateNormal) if params.length() >=
-              2 =>
+            Joint(MultivariateNormal) if params.length() >= 2 =>
               match
                 (
                   compat_tuple2(params[0]),
@@ -2387,12 +2234,7 @@ pub fn characteristic_function(
                         eval_arith(
                           @symcore.add([
                             eval_arith(
-                              @symcore.mul([
-                                @symcore.Expr::NumberSymbol(
-                                  @symcore.NumberSymbolKind::ImaginaryUnit,
-                                ),
-                                lin,
-                              ]),
+                              @symcore.mul([NumberSymbol(ImaginaryUnit), lin]),
                             ),
                             @symcore.mul([@symcore.int(-1), half, quad]),
                           ]),
@@ -2403,8 +2245,7 @@ pub fn characteristic_function(
                 }
                 _ => None
               }
-            SymbolicKind::Joint(JointTag::MultivariateLaplace) if params.length() >=
-              2 =>
+            Joint(MultivariateLaplace) if params.length() >= 2 =>
               match
                 (
                   compat_tuple2(params[0]),
@@ -2426,12 +2267,7 @@ pub fn characteristic_function(
                       @symcore.mul([
                         @symcore.function("exp", [
                           eval_arith(
-                            @symcore.mul([
-                              @symcore.Expr::NumberSymbol(
-                                @symcore.NumberSymbolKind::ImaginaryUnit,
-                              ),
-                              lin,
-                            ]),
+                            @symcore.mul([NumberSymbol(ImaginaryUnit), lin]),
                           ),
                         ]),
                         @symcore.pow(denom, @symcore.int(-1)),
@@ -2452,14 +2288,7 @@ pub fn characteristic_function(
                   match
                     mgf_of_rv(
                       rv,
-                      eval_arith(
-                        @symcore.mul([
-                          @symcore.Expr::NumberSymbol(
-                            @symcore.NumberSymbolKind::ImaginaryUnit,
-                          ),
-                          t,
-                        ]),
-                      ),
+                      eval_arith(@symcore.mul([NumberSymbol(ImaginaryUnit), t])),
                     ) {
                     Some(v) => v
                     None => symbolic_metric_with_head(name, "CF", t, params)
@@ -2471,14 +2300,7 @@ pub fn characteristic_function(
           match
             mgf_of_rv(
               rv,
-              eval_arith(
-                @symcore.mul([
-                  @symcore.Expr::NumberSymbol(
-                    @symcore.NumberSymbolKind::ImaginaryUnit,
-                  ),
-                  t,
-                ]),
-              ),
+              eval_arith(@symcore.mul([NumberSymbol(ImaginaryUnit), t])),
             ) {
             Some(v) => v
             None => @symcore.function("characteristic_function", [expr, t])
@@ -2520,15 +2342,7 @@ fn process_metric_head(
         [t] =>
           @symcore.function("Expectation", [
             @symcore.function("exp", [
-              eval_arith(
-                @symcore.mul([
-                  @symcore.Expr::NumberSymbol(
-                    @symcore.NumberSymbolKind::ImaginaryUnit,
-                  ),
-                  t,
-                  value,
-                ]),
-              ),
+              eval_arith(@symcore.mul([NumberSymbol(ImaginaryUnit), t, value])),
             ]),
           ])
         _ => @symcore.function("Expectation", [value])
@@ -2548,14 +2362,9 @@ fn process_metric_head(
             ]),
             @symcore.function("Interval", [
               eval_arith(
-                @symcore.mul([
-                  @symcore.int(-1),
-                  @symcore.Expr::NumberSymbol(
-                    @symcore.NumberSymbolKind::Infinity,
-                  ),
-                ]),
+                @symcore.mul([@symcore.int(-1), NumberSymbol(Infinity)]),
               ),
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+              NumberSymbol(Infinity),
             ]),
           ])
         }
@@ -2579,7 +2388,7 @@ fn process_mgf_at(
   t : @symcore.Expr,
 ) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) => {
+    StochasticProcess(PoissonProcess(rate~, ..)) => {
       let inner = eval_arith(
         @symcore.add([@symcore.function("exp", [t]), @symcore.int(-1)]),
       )
@@ -2591,7 +2400,7 @@ fn process_mgf_at(
         ),
       )
     }
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) =>
+    StochasticProcess(WienerProcess(..)) =>
       Some(
         eval_arith(
           @symcore.function("exp", [
@@ -2605,12 +2414,12 @@ fn process_mgf_at(
           ]),
         ),
       )
-    RVKind::Symbolic(kind~, params~) =>
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Process(tag) => {
+        Process(tag) => {
           let name = process_tag_name(tag)
           match tag {
-            ProcessTag::BernoulliProcess if params.length() >= 1 => {
+            BernoulliProcess if params.length() >= 1 => {
               let p = params[0]
               let success = if params.length() >= 2 {
                 params[1]
@@ -2650,7 +2459,7 @@ fn process_mgf_at(
                 ),
               )
             }
-            ProcessTag::GammaProcess if params.length() >= 2 => {
+            GammaProcess if params.length() >= 2 => {
               let lamda = params[0]
               let gamma = params[1]
               let inner = eval_arith(
@@ -2688,11 +2497,11 @@ fn process_cf_at(
   t : @symcore.Expr,
 ) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Symbolic(kind~, params~) =>
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Process(tag) =>
+        Process(tag) =>
           match tag {
-            ProcessTag::BernoulliProcess | ProcessTag::GammaProcess => ()
+            BernoulliProcess | GammaProcess => ()
             _ =>
               return Some(
                 process_metric_head(
@@ -2712,16 +2521,11 @@ fn process_cf_at(
     process_mgf_at(
       rv,
       time,
-      eval_arith(
-        @symcore.mul([
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-          t,
-        ]),
-      ),
+      eval_arith(@symcore.mul([NumberSymbol(ImaginaryUnit), t])),
     ) {
     Some(v) =>
       match rv.kind {
-        RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) =>
+        StochasticProcess(WienerProcess(..)) =>
           Some(
             eval_arith(
               @symcore.function("exp", [
@@ -2744,7 +2548,7 @@ fn process_cf_at(
 ///|
 fn process_entropy_at(rv : RandomVar, time : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) => {
+    StochasticProcess(PoissonProcess(rate~, ..)) => {
       let k = @symcore.Expr::Symbol("_k")
       let mean = eval_arith(@symcore.mul([rate, time]))
       let pmf = poisson_pmf_expr(mean, k)
@@ -2761,13 +2565,13 @@ fn process_entropy_at(rv : RandomVar, time : @symcore.Expr) -> @symcore.Expr? {
             @symcore.function("Tuple", [
               k,
               @symcore.int(0),
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+              NumberSymbol(Infinity),
             ]),
           ]),
         ),
       )
     }
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) =>
+    StochasticProcess(WienerProcess(..)) =>
       Some(
         eval_arith(
           @symcore.function("log", [
@@ -2776,8 +2580,8 @@ fn process_entropy_at(rv : RandomVar, time : @symcore.Expr) -> @symcore.Expr? {
                 eval_arith(
                   @symcore.mul([
                     @symcore.int(2),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1),
+                    NumberSymbol(Pi),
+                    NumberSymbol(Exp1),
                     time,
                   ]),
                 ),
@@ -2786,12 +2590,12 @@ fn process_entropy_at(rv : RandomVar, time : @symcore.Expr) -> @symcore.Expr? {
           ]),
         ),
       )
-    RVKind::Symbolic(kind~, params~) =>
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Process(tag) => {
+        Process(tag) => {
           let name = process_tag_name(tag)
           match tag {
-            ProcessTag::BernoulliProcess if params.length() >= 1 => {
+            BernoulliProcess if params.length() >= 1 => {
               let p = params[0]
               let one_minus_p = eval_arith(
                 @symcore.add([
@@ -2820,7 +2624,7 @@ fn process_entropy_at(rv : RandomVar, time : @symcore.Expr) -> @symcore.Expr? {
                 ),
               )
             }
-            ProcessTag::GammaProcess if params.length() >= 2 => {
+            GammaProcess if params.length() >= 2 => {
               let lamda = params[0]
               let gamma = params[1]
               let shape = eval_arith(@symcore.mul([gamma, time]))
@@ -2863,9 +2667,9 @@ fn process_quantile_at(
   q : @symcore.Expr,
 ) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::StochasticProcess(ProcessKind::PoissonProcess(rate~, ..)) =>
+    StochasticProcess(PoissonProcess(rate~, ..)) =>
       Some(process_metric_head("PoissonProcess", "Quantile", time, [q], [rate]))
-    RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) =>
+    StochasticProcess(WienerProcess(..)) =>
       Some(
         quantile_unit_interval_guard(
           q,
@@ -2886,14 +2690,14 @@ fn process_quantile_at(
           ),
         ),
       )
-    RVKind::Symbolic(kind~, params~) =>
+    Symbolic(kind~, params~) =>
       match kind {
-        SymbolicKind::Process(tag) => {
+        Process(tag) => {
           let name = process_tag_name(tag)
           match tag {
-            ProcessTag::BernoulliProcess if params.length() >= 1 =>
+            BernoulliProcess if params.length() >= 1 =>
               symbolic_opaque_quantile(name, params, q)
-            ProcessTag::GammaProcess if params.length() >= 2 => {
+            GammaProcess if params.length() >= 2 => {
               let lamda = params[0]
               let gamma = params[1]
               let shape = eval_arith(@symcore.mul([gamma, time]))
@@ -2961,7 +2765,7 @@ pub fn entropy(
   match resolve_rv(expr, rvs) {
     Some(rv) =>
       match rv.kind {
-        RVKind::Finite(items) => {
+        Finite(items) => {
           let terms : Array[@symcore.Expr] = Array::new()
           for item in items {
             let (_, p) = item
@@ -2980,7 +2784,7 @@ pub fn entropy(
           }
           eval_arith(@symcore.add(terms))
         }
-        RVKind::Normal(mu~, sigma~) => {
+        Normal(mu~, sigma~) => {
           ignore(mu)
           eval_arith(
             @symcore.function("log", [
@@ -2991,12 +2795,8 @@ pub fn entropy(
                     eval_arith(
                       @symcore.mul([
                         @symcore.int(2),
-                        @symcore.Expr::NumberSymbol(
-                          @symcore.NumberSymbolKind::Pi,
-                        ),
-                        @symcore.Expr::NumberSymbol(
-                          @symcore.NumberSymbolKind::Exp1,
-                        ),
+                        NumberSymbol(Pi),
+                        NumberSymbol(Exp1),
                       ]),
                     ),
                   ]),
@@ -3005,14 +2805,14 @@ pub fn entropy(
             ]),
           )
         }
-        RVKind::Exponential(rate~) =>
+        Exponential(rate~) =>
           eval_arith(
             @symcore.add([
               @symcore.int(1),
               @symcore.mul([@symcore.int(-1), @symcore.function("log", [rate])]),
             ]),
           )
-        RVKind::Gamma(shape~, scale~) =>
+        Gamma(shape~, scale~) =>
           eval_arith(
             @symcore.add([
               shape,
@@ -3030,23 +2830,19 @@ pub fn entropy(
               ]),
             ]),
           )
-        RVKind::Symbolic(kind~, params~) => {
+        Symbolic(kind~, params~) => {
           let name = symbolic_kind_name(kind)
           if compat_use_generic_unevaluated(name) {
             return match symbolic_opaque_entropy(name, params, rv.name) {
               Some(v) => v
-              None =>
-                @symcore.function("entropy", [@symcore.Expr::Symbol(rv.name)])
+              None => @symcore.function("entropy", [Symbol(rv.name)])
             }
           }
           match generated_entropy(name, params) {
             Some(v) => v
             None =>
               match kind {
-                SymbolicKind::Joint(
-                  JointTag::Dirichlet
-                  | JointTag::MultivariateBeta
-                ) if params.length() >= 2 => {
+                Joint(Dirichlet | MultivariateBeta) if params.length() >= 2 => {
                   let alpha_sum = eval_arith(@symcore.add(params))
                   let log_beta_terms : Array[@symcore.Expr] = Array::new()
                   let sum_terms : Array[@symcore.Expr] = Array::new()
@@ -3096,8 +2892,7 @@ pub fn entropy(
                     ]),
                   )
                 }
-                SymbolicKind::Joint(JointTag::MultivariateNormal) if params.length() >=
-                  2 =>
+                Joint(MultivariateNormal) if params.length() >= 2 =>
                   match compat_matrix2x2(params[1]) {
                     Some((s00, s01, s10, s11)) => {
                       let half = stats_exact_rational(1, 2)
@@ -3112,12 +2907,8 @@ pub fn entropy(
                           eval_arith(
                             @symcore.mul([
                               @symcore.int(2),
-                              @symcore.Expr::NumberSymbol(
-                                @symcore.NumberSymbolKind::Pi,
-                              ),
-                              @symcore.Expr::NumberSymbol(
-                                @symcore.NumberSymbolKind::Exp1,
-                              ),
+                              NumberSymbol(Pi),
+                              NumberSymbol(Exp1),
                             ]),
                           ),
                           @symcore.int(2),
@@ -3138,8 +2929,7 @@ pub fn entropy(
                         None => symbolic_metric_no_head(name, "Entropy", params)
                       }
                   }
-                SymbolicKind::Continuous(ContinuousTag::Uniform) if params.length() ==
-                  2 =>
+                Continuous(Uniform) if params.length() == 2 =>
                   eval_arith(
                     @symcore.function("log", [
                       eval_arith(
@@ -3150,8 +2940,7 @@ pub fn entropy(
                       ),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Exponential) if params.length() ==
-                  1 =>
+                Continuous(Exponential) if params.length() == 1 =>
                   eval_arith(
                     @symcore.add([
                       @symcore.int(1),
@@ -3161,8 +2950,7 @@ pub fn entropy(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::ChiSquared) if params.length() ==
-                  1 => {
+                Continuous(ChiSquared) if params.length() == 1 => {
                   let half = stats_exact_rational(1, 2)
                   let shape = eval_arith(@symcore.mul([half, params[0]]))
                   eval_arith(
@@ -3188,8 +2976,7 @@ pub fn entropy(
                     ]),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::Chi) if params.length() ==
-                  1 => {
+                Continuous(Chi) if params.length() == 1 => {
                   let half = stats_exact_rational(1, 2)
                   let shape = eval_arith(@symcore.mul([half, params[0]]))
                   eval_arith(
@@ -3211,8 +2998,7 @@ pub fn entropy(
                     ]),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::Erlang) if params.length() ==
-                  2 => {
+                Continuous(Erlang) if params.length() == 2 => {
                   let k = params[0]
                   let lamda = params[1]
                   eval_arith(
@@ -3236,8 +3022,7 @@ pub fn entropy(
                     ]),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::Laplace) if params.length() ==
-                  2 =>
+                Continuous(Laplace) if params.length() == 2 =>
                   eval_arith(
                     @symcore.add([
                       @symcore.int(1),
@@ -3246,8 +3031,7 @@ pub fn entropy(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Beta) if params.length() ==
-                  2 => {
+                Continuous(Beta) if params.length() == 2 => {
                   let a = params[0]
                   let b = params[1]
                   eval_arith(
@@ -3272,39 +3056,32 @@ pub fn entropy(
                     ]),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::Cauchy) if params.length() ==
-                  2 =>
+                Continuous(Cauchy) if params.length() == 2 =>
                   eval_arith(
                     @symcore.function("log", [
                       eval_arith(
                         @symcore.mul([
                           @symcore.int(4),
-                          @symcore.Expr::NumberSymbol(
-                            @symcore.NumberSymbolKind::Pi,
-                          ),
+                          NumberSymbol(Pi),
                           params[1],
                         ]),
                       ),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Logistic) if params.length() ==
-                  2 =>
+                Continuous(Logistic) if params.length() == 2 =>
                   eval_arith(
                     @symcore.add([
                       @symcore.int(2),
                       @symcore.function("log", [params[1]]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Rayleigh) if params.length() ==
-                  1 =>
+                Continuous(Rayleigh) if params.length() == 1 =>
                   eval_arith(
                     @symcore.add([
                       @symcore.int(1),
                       @symcore.mul([
                         stats_exact_rational(1, 2),
-                        @symcore.Expr::NumberSymbol(
-                          @symcore.NumberSymbolKind::EulerGamma,
-                        ),
+                        NumberSymbol(EulerGamma),
                       ]),
                       @symcore.function("log", [params[0]]),
                       @symcore.mul([
@@ -3313,8 +3090,7 @@ pub fn entropy(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Weibull) if params.length() ==
-                  2 => {
+                Continuous(Weibull) if params.length() == 2 => {
                   let lam = params[0]
                   let k = params[1]
                   eval_arith(
@@ -3326,9 +3102,7 @@ pub fn entropy(
                         ),
                       ]),
                       @symcore.mul([
-                        @symcore.Expr::NumberSymbol(
-                          @symcore.NumberSymbolKind::EulerGamma,
-                        ),
+                        NumberSymbol(EulerGamma),
                         @symcore.add([
                           @symcore.int(1),
                           @symcore.mul([
@@ -3340,19 +3114,15 @@ pub fn entropy(
                     ]),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::Gumbel) if params.length() ==
-                  2 =>
+                Continuous(Gumbel) if params.length() == 2 =>
                   eval_arith(
                     @symcore.add([
                       @symcore.int(1),
-                      @symcore.Expr::NumberSymbol(
-                        @symcore.NumberSymbolKind::EulerGamma,
-                      ),
+                      NumberSymbol(EulerGamma),
                       @symcore.function("log", [params[0]]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::LogNormal) if params.length() ==
-                  2 =>
+                Continuous(LogNormal) if params.length() == 2 =>
                   eval_arith(
                     @symcore.add([
                       params[0],
@@ -3363,12 +3133,7 @@ pub fn entropy(
                             params[1],
                             @symcore.function("sqrt", [
                               eval_arith(
-                                @symcore.mul([
-                                  @symcore.int(2),
-                                  @symcore.Expr::NumberSymbol(
-                                    @symcore.NumberSymbolKind::Pi,
-                                  ),
-                                ]),
+                                @symcore.mul([@symcore.int(2), NumberSymbol(Pi)]),
                               ),
                             ]),
                           ]),
@@ -3376,8 +3141,7 @@ pub fn entropy(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Pareto) if params.length() ==
-                  2 =>
+                Continuous(Pareto) if params.length() == 2 =>
                   eval_arith(
                     @symcore.add([
                       @symcore.int(1),
@@ -3392,17 +3156,14 @@ pub fn entropy(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Levy) if params.length() ==
-                  2 => {
+                Continuous(Levy) if params.length() == 2 => {
                   let c = params[1]
                   eval_arith(
                     @symcore.add([
                       stats_exact_rational(1, 2),
                       @symcore.mul([
                         stats_exact_rational(3, 2),
-                        @symcore.Expr::NumberSymbol(
-                          @symcore.NumberSymbolKind::EulerGamma,
-                        ),
+                        NumberSymbol(EulerGamma),
                       ]),
                       @symcore.mul([
                         stats_exact_rational(1, 2),
@@ -3410,9 +3171,7 @@ pub fn entropy(
                           eval_arith(
                             @symcore.mul([
                               @symcore.int(16),
-                              @symcore.Expr::NumberSymbol(
-                                @symcore.NumberSymbolKind::Pi,
-                              ),
+                              NumberSymbol(Pi),
                               @symcore.pow(c, @symcore.int(2)),
                             ]),
                           ),
@@ -3421,8 +3180,7 @@ pub fn entropy(
                     ]),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::Gompertz) if params.length() ==
-                  2 => {
+                Continuous(Gompertz) if params.length() == 2 => {
                   let b = params[0]
                   let eta = params[1]
                   eval_arith(
@@ -3443,8 +3201,7 @@ pub fn entropy(
                     ]),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::Lomax) if params.length() ==
-                  2 =>
+                Continuous(Lomax) if params.length() == 2 =>
                   eval_arith(
                     @symcore.add([
                       @symcore.int(1),
@@ -3459,8 +3216,7 @@ pub fn entropy(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Triangular) if params.length() ==
-                  3 =>
+                Continuous(Triangular) if params.length() == 3 =>
                   eval_arith(
                     @symcore.add([
                       stats_exact_rational(1, 2),
@@ -3479,8 +3235,7 @@ pub fn entropy(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::PowerFunction) if params.length() ==
-                  3 =>
+                Continuous(PowerFunction) if params.length() == 3 =>
                   eval_arith(
                     @symcore.add([
                       @symcore.int(1),
@@ -3503,26 +3258,20 @@ pub fn entropy(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Arcsin) if params.length() ==
-                  0 =>
+                Continuous(Arcsin) if params.length() == 0 =>
                   @symcore.function("log", [
                     eval_arith(
                       @symcore.mul([
-                        @symcore.Expr::NumberSymbol(
-                          @symcore.NumberSymbolKind::Pi,
-                        ),
+                        NumberSymbol(Pi),
                         stats_exact_rational(1, 4),
                       ]),
                     ),
                   ])
-                SymbolicKind::Continuous(ContinuousTag::Arcsin) if params.length() ==
-                  2 =>
+                Continuous(Arcsin) if params.length() == 2 =>
                   @symcore.function("log", [
                     eval_arith(
                       @symcore.mul([
-                        @symcore.Expr::NumberSymbol(
-                          @symcore.NumberSymbolKind::Pi,
-                        ),
+                        NumberSymbol(Pi),
                         stats_exact_rational(1, 4),
                         eval_arith(
                           @symcore.add([
@@ -3533,8 +3282,7 @@ pub fn entropy(
                       ]),
                     ),
                   ])
-                SymbolicKind::Continuous(ContinuousTag::StudentT) if params.length() ==
-                  1 => {
+                Continuous(StudentT) if params.length() == 1 => {
                   let nu = params[0]
                   let half = stats_exact_rational(1, 2)
                   let nu_half = eval_arith(@symcore.mul([half, nu]))
@@ -3566,8 +3314,7 @@ pub fn entropy(
                     ]),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::VonMises) if params.length() ==
-                  2 => {
+                Continuous(VonMises) if params.length() == 2 => {
                   let kappa = params[1]
                   let i0 = @symcore.function("besseli", [@symcore.int(0), kappa])
                   let i1 = @symcore.function("besseli", [@symcore.int(1), kappa])
@@ -3575,13 +3322,7 @@ pub fn entropy(
                     @symcore.add([
                       @symcore.function("log", [
                         eval_arith(
-                          @symcore.mul([
-                            @symcore.int(2),
-                            @symcore.Expr::NumberSymbol(
-                              @symcore.NumberSymbolKind::Pi,
-                            ),
-                            i0,
-                          ]),
+                          @symcore.mul([@symcore.int(2), NumberSymbol(Pi), i0]),
                         ),
                       ]),
                       @symcore.mul([
@@ -3593,8 +3334,7 @@ pub fn entropy(
                     ]),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::Trapezoidal) if params.length() ==
-                  4 => {
+                Continuous(Trapezoidal) if params.length() == 4 => {
                   let a = params[0]
                   let b = params[1]
                   let c = params[2]
@@ -3633,11 +3373,8 @@ pub fn entropy(
                     ]),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::Moyal) if params.length() ==
-                  2 =>
-                  @symcore.Expr::NumberSymbol(
-                    @symcore.NumberSymbolKind::Infinity,
-                  )
+                Continuous(Moyal) if params.length() == 2 =>
+                  NumberSymbol(Infinity)
                 _ =>
                   match symbolic_process_entropy(name, params) {
                     Some(v) => v
@@ -3700,11 +3437,11 @@ pub fn independent(a : RandomVar, b : RandomVar) -> Bool {
 ///|
 pub fn probability_space_independent(a : RandomVar, b : RandomVar) -> TriBool {
   if a.name == b.name {
-    TriBool::False
+    False
   } else if assume_independent(a, b) {
-    TriBool::True
+    True
   } else {
-    TriBool::Unknown
+    Unknown
   }
 }
 
@@ -3716,7 +3453,7 @@ pub fn pspace_independent(a : RandomVar, b : RandomVar) -> TriBool {
 ///|
 fn collect_symbols(expr : @symcore.Expr, out : Map[String, Bool]) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => out[name] = true
+    Symbol(name) => out[name] = true
     _ =>
       for child in @symcore.children(expr) {
         collect_symbols(child, out)
@@ -3750,7 +3487,7 @@ pub fn random_symbols(
 ///|
 fn expr_mentions_random_var(expr : @symcore.Expr, rv : RandomVar) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(name) if name == rv.name => true
+    Symbol(name) if name == rv.name => true
     _ if @symcore.application_has_name(expr, rv.name) => true
     _ => {
       for child in @symcore.children(expr) {
@@ -3783,7 +3520,7 @@ pub fn rv_subs(
   }
   let env : Map[String, @symcore.Expr] = Map([])
   for rv in rvs {
-    env[rv.name] = @symcore.Expr::Symbol(rv.name)
+    env[rv.name] = Symbol(rv.name)
   }
   @symcore.subst(expr, env)
 }
@@ -3837,20 +3574,19 @@ pub fn rs_swap(
 ///|
 fn stats_relop_to_core(op : RelOp) -> @symcore.RelOp {
   match op {
-    RelOp::Eq => @symcore.RelOp::Eq
-    RelOp::Ne => @symcore.RelOp::Ne
-    RelOp::Lt => @symcore.RelOp::Lt
-    RelOp::Le => @symcore.RelOp::Le
-    RelOp::Gt => @symcore.RelOp::Gt
-    RelOp::Ge => @symcore.RelOp::Ge
+    Eq => Eq
+    Ne => Ne
+    Lt => Lt
+    Le => Le
+    Gt => Gt
+    Ge => Ge
   }
 }
 
 ///|
 fn event_relational_expr(event : Event) -> @symcore.Expr {
   match event {
-    Event::Rel(op~, lhs~, rhs~) =>
-      @symcore.Expr::Relational(stats_relop_to_core(op), lhs, rhs)
+    Rel(op~, lhs~, rhs~) => Relational(stats_relop_to_core(op), lhs, rhs)
     _ => event_to_expr(event)
   }
 }
@@ -3861,26 +3597,26 @@ pub fn reduce_rational_inequalities_wrap(
   symbol : @symcore.Expr,
 ) -> @symsets.Set raise @symsolvers.SolverError {
   match condition {
-    Event::Bool(true) => @symsets.reals()
-    Event::Bool(false) => @symsets.empty_set()
-    Event::Rel(..) =>
+    Bool(true) => @symsets.reals()
+    Bool(false) => @symsets.empty_set()
+    Rel(..) =>
       match
         @symsolvers.solve_univariate_inequality(
           event_relational_expr(condition),
           symbol,
           relational=false,
         ) {
-        @symsolvers.InequalityResult::Set(set) => set
-        @symsolvers.InequalityResult::Relational(_) => @symsets.empty_set()
+        Set(set) => set
+        Relational(_) => @symsets.empty_set()
       }
-    Event::Or(items) => {
+    Or(items) => {
       let parts : Array[@symsets.Set] = []
       for item in items {
         parts.push(reduce_rational_inequalities_wrap(item, symbol))
       }
       @symsets.union(parts)
     }
-    Event::And(items) => {
+    And(items) => {
       if items.is_empty() {
         return @symsets.reals()
       }
@@ -3890,7 +3626,7 @@ pub fn reduce_rational_inequalities_wrap(
       }
       @symsets.intersection(parts)
     }
-    Event::Not(inner) =>
+    Not(inner) =>
       @symsets.complement(
         @symsets.reals(),
         reduce_rational_inequalities_wrap(inner, symbol),
@@ -3955,7 +3691,7 @@ pub fn sampling_p(
   seed? : Int? = None,
 ) -> @symcore.Expr {
   if numsamples <= 0 {
-    return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
+    return NumberSymbol(NaN)
   }
   let rng = stats_rng(seed~)
   let mut count_true = 0
@@ -3964,15 +3700,15 @@ pub fn sampling_p(
     match env {
       Some(values) =>
         match evaluate_event(condition, values) {
-          TriBool::True => count_true += 1
-          TriBool::False | TriBool::Unknown => ()
+          True => count_true += 1
+          False | Unknown => ()
         }
       None => ()
     }
   }
   match stats_exact_big_rational(count_true, numsamples) {
     Some(value) => expr_from_big_rational(value)
-    None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
+    None => NumberSymbol(NaN)
   }
 }
 
@@ -3984,11 +3720,11 @@ pub fn sampling_e(
   seed? : Int? = None,
 ) -> @symcore.Expr {
   if numsamples <= 0 {
-    return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
+    return NumberSymbol(NaN)
   }
   let samples = sample_iter(expr, n=numsamples, rvs~, seed~)
   if samples.is_empty() {
-    return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
+    return NumberSymbol(NaN)
   }
   let scale = match stats_exact_big_rational(1, samples.length()) {
     Some(value) => expr_from_big_rational(value)
@@ -4005,7 +3741,7 @@ pub fn sampling_density(
   seed? : Int? = None,
 ) -> @symcore.Expr {
   if numsamples <= 0 {
-    return @symcore.Expr::Dict([])
+    return Dict([])
   }
   let samples = sample_iter(expr, n=numsamples, rvs~, seed~)
   let keys : Array[@symcore.Expr] = []
@@ -4028,7 +3764,7 @@ pub fn sampling_density(
   for i in 0..<keys.length() {
     entries.push((keys[i], @symcore.int(counts[i])))
   }
-  @symcore.Expr::Dict(entries)
+  Dict(entries)
 }
 
 ///|
@@ -4091,7 +3827,7 @@ pub fn quantile(
   match resolve_rv(expr, rvs) {
     Some(rv) =>
       match rv.kind {
-        RVKind::Exponential(rate~) =>
+        Exponential(rate~) =>
           eval_arith(
             @symcore.mul([
               @symcore.int(-1),
@@ -4106,7 +3842,7 @@ pub fn quantile(
               @symcore.pow(rate, @symcore.int(-1)),
             ]),
           )
-        RVKind::Normal(mu~, sigma~) =>
+        Normal(mu~, sigma~) =>
           eval_arith(
             @symcore.add([
               mu,
@@ -4126,32 +3862,25 @@ pub fn quantile(
               ),
             ]),
           )
-        RVKind::Symbolic(kind~, params~) => {
+        Symbolic(kind~, params~) => {
           let name = symbolic_kind_name(kind)
           if compat_use_generic_unevaluated(name) {
             return match symbolic_opaque_quantile(name, params, q) {
               Some(v) => v
-              None =>
-                @symcore.function("quantile", [
-                  @symcore.Expr::Symbol(rv.name),
-                  q,
-                ])
+              None => @symcore.function("quantile", [Symbol(rv.name), q])
             }
           }
           match generated_quantile(name, params, q) {
             Some(v) => v
             None =>
               match kind {
-                SymbolicKind::Continuous(ContinuousTag::Arcsin) if params.length() ==
-                  0 =>
+                Continuous(Arcsin) if params.length() == 0 =>
                   compat_piecewise2(
                     @symcore.pow(
                       @symcore.function("sin", [
                         eval_arith(
                           @symcore.mul([
-                            @symcore.Expr::NumberSymbol(
-                              @symcore.NumberSymbolKind::Pi,
-                            ),
+                            NumberSymbol(Pi),
                             q,
                             stats_exact_rational(1, 2),
                           ]),
@@ -4163,10 +3892,9 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Arcsin) if params.length() ==
-                  2 =>
+                Continuous(Arcsin) if params.length() == 2 =>
                   compat_piecewise2(
                     eval_arith(
                       @symcore.add([
@@ -4182,9 +3910,7 @@ pub fn quantile(
                             @symcore.function("sin", [
                               eval_arith(
                                 @symcore.mul([
-                                  @symcore.Expr::NumberSymbol(
-                                    @symcore.NumberSymbolKind::Pi,
-                                  ),
+                                  NumberSymbol(Pi),
                                   q,
                                   stats_exact_rational(1, 2),
                                 ]),
@@ -4199,20 +3925,18 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Beta) if params.length() ==
-                  2 =>
+                Continuous(Beta) if params.length() == 2 =>
                   compat_piecewise2(
                     @symcore.function("betaincinv", [params[0], params[1], q]),
                     @symcore.function("And", [
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Kumaraswamy) if params.length() ==
-                  2 =>
+                Continuous(Kumaraswamy) if params.length() == 2 =>
                   compat_piecewise2(
                     @symcore.pow(
                       eval_arith(
@@ -4238,10 +3962,9 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Chi) if params.length() ==
-                  1 =>
+                Continuous(Chi) if params.length() == 1 =>
                   compat_piecewise2(
                     @symcore.function("sqrt", [
                       eval_arith(
@@ -4263,10 +3986,9 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::ChiSquared) if params.length() ==
-                  1 =>
+                Continuous(ChiSquared) if params.length() == 1 =>
                   compat_piecewise2(
                     eval_arith(
                       @symcore.mul([
@@ -4283,10 +4005,9 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Erlang) if params.length() ==
-                  2 =>
+                Continuous(Erlang) if params.length() == 2 =>
                   compat_piecewise2(
                     eval_arith(
                       @symcore.mul([
@@ -4298,10 +4019,9 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Uniform) if params.length() ==
-                  2 =>
+                Continuous(Uniform) if params.length() == 2 =>
                   eval_arith(
                     @symcore.add([
                       params[0],
@@ -4318,8 +4038,7 @@ pub fn quantile(
                       ),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Cauchy) if params.length() ==
-                  2 =>
+                Continuous(Cauchy) if params.length() == 2 =>
                   compat_piecewise2(
                     eval_arith(
                       @symcore.add([
@@ -4329,9 +4048,7 @@ pub fn quantile(
                           @symcore.function("tan", [
                             eval_arith(
                               @symcore.mul([
-                                @symcore.Expr::NumberSymbol(
-                                  @symcore.NumberSymbolKind::Pi,
-                                ),
+                                NumberSymbol(Pi),
                                 eval_arith(
                                   @symcore.add([q, stats_exact_rational(-1, 2)]),
                                 ),
@@ -4345,10 +4062,9 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Rayleigh) if params.length() ==
-                  1 =>
+                Continuous(Rayleigh) if params.length() == 1 =>
                   eval_arith(
                     @symcore.mul([
                       params[0],
@@ -4369,8 +4085,7 @@ pub fn quantile(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Laplace) if params.length() ==
-                  2 => {
+                Continuous(Laplace) if params.length() == 2 => {
                   let mu = params[0]
                   let b = params[1]
                   let left = eval_arith(
@@ -4409,11 +4124,10 @@ pub fn quantile(
                     @symcore.function("Le", [q, stats_exact_rational(1, 2)]),
                     right,
                     @symcore.function("Le", [q, @symcore.int(1)]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::Weibull) if params.length() ==
-                  2 =>
+                Continuous(Weibull) if params.length() == 2 =>
                   eval_arith(
                     @symcore.mul([
                       params[0],
@@ -4435,8 +4149,7 @@ pub fn quantile(
                       ),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Gumbel) if params.length() ==
-                  2 =>
+                Continuous(Gumbel) if params.length() == 2 =>
                   eval_arith(
                     @symcore.add([
                       params[1],
@@ -4454,8 +4167,7 @@ pub fn quantile(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Moyal) if params.length() ==
-                  2 =>
+                Continuous(Moyal) if params.length() == 2 =>
                   eval_arith(
                     @symcore.add([
                       params[0],
@@ -4473,8 +4185,7 @@ pub fn quantile(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::PowerFunction) if params.length() ==
-                  3 =>
+                Continuous(PowerFunction) if params.length() == 3 =>
                   eval_arith(
                     @symcore.add([
                       params[1],
@@ -4490,8 +4201,7 @@ pub fn quantile(
                       ]),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Triangular) if params.length() ==
-                  3 => {
+                Continuous(Triangular) if params.length() == 3 => {
                   let a = params[0]
                   let b = params[1]
                   let c = params[2]
@@ -4555,11 +4265,10 @@ pub fn quantile(
                     @symcore.function("Le", [q, pivot]),
                     right,
                     @symcore.function("Le", [q, @symcore.int(1)]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::Trapezoidal) if params.length() ==
-                  4 => {
+                Continuous(Trapezoidal) if params.length() == 4 => {
                   let a = params[0]
                   let b = params[1]
                   let c = params[2]
@@ -4647,25 +4356,13 @@ pub fn quantile(
                     ]),
                   )
                   @symcore.function("Piecewise", [
-                    @symcore.Expr::Tuple([
-                      left,
-                      @symcore.function("Le", [q, ql]),
-                    ]),
-                    @symcore.Expr::Tuple([mid, @symcore.function("Le", [q, qr])]),
-                    @symcore.Expr::Tuple([
-                      right,
-                      @symcore.function("Le", [q, @symcore.int(1)]),
-                    ]),
-                    @symcore.Expr::Tuple([
-                      @symcore.Expr::NumberSymbol(
-                        @symcore.NumberSymbolKind::NaN,
-                      ),
-                      @symcore.Expr::Boolean(true),
-                    ]),
+                    Tuple([left, @symcore.function("Le", [q, ql])]),
+                    Tuple([mid, @symcore.function("Le", [q, qr])]),
+                    Tuple([right, @symcore.function("Le", [q, @symcore.int(1)])]),
+                    Tuple([NumberSymbol(NaN), Boolean(true)]),
                   ])
                 }
-                SymbolicKind::Continuous(ContinuousTag::VonMises) if params.length() ==
-                  2 => {
+                Continuous(VonMises) if params.length() == 2 => {
                   let mu = params[0]
                   let kappa = params[1]
                   let x_var = @symcore.Expr::Symbol("_x")
@@ -4690,7 +4387,7 @@ pub fn quantile(
                   let target = eval_arith(
                     @symcore.mul([
                       @symcore.int(2),
-                      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+                      NumberSymbol(Pi),
                       q,
                       @symcore.function("besseli", [@symcore.int(0), kappa]),
                     ]),
@@ -4709,12 +4406,7 @@ pub fn quantile(
                     @symcore.function("Interval", [
                       @symcore.int(0),
                       eval_arith(
-                        @symcore.mul([
-                          @symcore.int(2),
-                          @symcore.Expr::NumberSymbol(
-                            @symcore.NumberSymbolKind::Pi,
-                          ),
-                        ]),
+                        @symcore.mul([@symcore.int(2), NumberSymbol(Pi)]),
                       ),
                     ]),
                   ])
@@ -4724,11 +4416,10 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
                 }
-                SymbolicKind::Continuous(ContinuousTag::StudentT) if params.length() ==
-                  1 => {
+                Continuous(StudentT) if params.length() == 1 => {
                   let nu = params[0]
                   let half = stats_exact_rational(1, 2)
                   let a = eval_arith(@symcore.mul([half, nu]))
@@ -4786,28 +4477,13 @@ pub fn quantile(
                     ]),
                   )
                   @symcore.function("Piecewise", [
-                    @symcore.Expr::Tuple([
-                      left,
-                      @symcore.function("Lt", [q, half]),
-                    ]),
-                    @symcore.Expr::Tuple([
-                      @symcore.int(0),
-                      @symcore.function("Eq", [q, half]),
-                    ]),
-                    @symcore.Expr::Tuple([
-                      right,
-                      @symcore.function("Le", [q, @symcore.int(1)]),
-                    ]),
-                    @symcore.Expr::Tuple([
-                      @symcore.Expr::NumberSymbol(
-                        @symcore.NumberSymbolKind::NaN,
-                      ),
-                      @symcore.Expr::Boolean(true),
-                    ]),
+                    Tuple([left, @symcore.function("Lt", [q, half])]),
+                    Tuple([@symcore.int(0), @symcore.function("Eq", [q, half])]),
+                    Tuple([right, @symcore.function("Le", [q, @symcore.int(1)])]),
+                    Tuple([NumberSymbol(NaN), Boolean(true)]),
                   ])
                 }
-                SymbolicKind::Continuous(ContinuousTag::BoundedPareto) if params.length() ==
-                  3 =>
+                Continuous(BoundedPareto) if params.length() == 3 =>
                   compat_piecewise2(
                     eval_arith(
                       @symcore.mul([
@@ -4855,10 +4531,9 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Pareto) if params.length() ==
-                  2 =>
+                Continuous(Pareto) if params.length() == 2 =>
                   eval_arith(
                     @symcore.mul([
                       params[0],
@@ -4876,8 +4551,7 @@ pub fn quantile(
                       ),
                     ]),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Lomax) if params.length() ==
-                  2 =>
+                Continuous(Lomax) if params.length() == 2 =>
                   compat_piecewise2(
                     eval_arith(
                       @symcore.mul([
@@ -4905,10 +4579,9 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Reciprocal) if params.length() ==
-                  2 =>
+                Continuous(Reciprocal) if params.length() == 2 =>
                   compat_piecewise2(
                     eval_arith(
                       @symcore.mul([
@@ -4928,10 +4601,9 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Gompertz) if params.length() ==
-                  2 =>
+                Continuous(Gompertz) if params.length() == 2 =>
                   compat_piecewise2(
                     eval_arith(
                       @symcore.mul([
@@ -4961,10 +4633,9 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::Levy) if params.length() ==
-                  2 =>
+                Continuous(Levy) if params.length() == 2 =>
                   compat_piecewise2(
                     eval_arith(
                       @symcore.add([
@@ -4990,10 +4661,9 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+                    NumberSymbol(NaN),
                   )
-                SymbolicKind::Continuous(ContinuousTag::LogNormal) if params.length() ==
-                  2 =>
+                Continuous(LogNormal) if params.length() == 2 =>
                   eval_arith(
                     @symcore.function("exp", [
                       eval_arith(
@@ -5068,7 +4738,7 @@ pub fn stochastic_state_space_of(obj : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn finite_central_moment(rv : RandomVar, n : Int) -> @symcore.Expr? {
   match rv.kind {
-    RVKind::Finite(items) =>
+    Finite(items) =>
       match finite_expectation(rv) {
         Some(mu) => {
           let terms : Array[@symcore.Expr] = Array::new()

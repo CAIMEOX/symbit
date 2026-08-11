@@ -2,57 +2,54 @@
 pub fn children(expr : Expr) -> ArrayView[Expr] {
   let expr = normalize_legacy_expr(expr)
   match expr {
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Tuple(args)
-    | Expr::Apply(_, args) => args[:]
-    Expr::Mod(lhs, rhs) => [lhs, rhs][:]
-    Expr::Dict(items) => {
+    Add(args) | Mul(args) | Tuple(args) | Apply(_, args) => args[:]
+    Mod(lhs, rhs) => [lhs, rhs][:]
+    Dict(items) => {
       let sorted = sorted_dict_entries(items)
       let out : Array[Expr] = []
       for item in sorted {
         let (key, value) = item
-        out.push(Expr::Tuple([key, value]))
+        out.push(Tuple([key, value]))
       }
       out[:]
     }
-    Expr::Pow(base, exp) => [base, exp][:]
-    Expr::Relational(_, lhs, rhs) => [lhs, rhs][:]
-    Expr::Derivative(inner, deriv_args) => {
+    Pow(base, exp) => [base, exp][:]
+    Relational(_, lhs, rhs) => [lhs, rhs][:]
+    Derivative(inner, deriv_args) => {
       let out : Array[Expr] = [inner]
       let pair_count = deriv_args.length() / 2
       for i in 0..<pair_count {
         let wrt = deriv_args[i * 2]
         let order_idx = i * 2 + 1
         if order_idx < deriv_args.length() {
-          out.push(Expr::Tuple([wrt, deriv_args[order_idx]]))
+          out.push(Tuple([wrt, deriv_args[order_idx]]))
         } else {
-          out.push(Expr::Tuple([wrt, int(1)]))
+          out.push(Tuple([wrt, int(1)]))
         }
       }
       out[:]
     }
-    Expr::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       [
         inner,
         match variable {
-          Expr::Tuple(_) => variable
-          _ => Expr::Tuple([variable])
+          Tuple(_) => variable
+          _ => Tuple([variable])
         },
         match value {
-          Expr::Tuple(_) => value
-          _ => Expr::Tuple([value])
+          Tuple(_) => value
+          _ => Tuple([value])
         },
       ][:]
-    Expr::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       [
         match vars {
-          Expr::Tuple(_) => vars
-          _ => Expr::Tuple([vars])
+          Tuple(_) => vars
+          _ => Tuple([vars])
         },
         body,
       ][:]
-    Expr::Function(_, _) => abort("legacy function should be normalized")
+    Function(_, _) => abort("legacy function should be normalized")
     _ => [][:]
   }
 }
@@ -86,45 +83,44 @@ pub fn postorder(expr : Expr) -> Array[Expr] {
 pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
   let expr = normalize_legacy_expr(expr)
   match expr {
-    Expr::Add(args) => add(args.map(f))
-    Expr::Mul(args) => mul(args.map(f))
-    Expr::Pow(base, exp) => pow(f(base), f(exp))
-    Expr::Mod(lhs, rhs) => mod_expr(f(lhs), f(rhs))
-    Expr::Tuple(args) => Expr::Tuple(args.map(f))
-    Expr::Dict(items) => {
+    Add(args) => add(args.map(f))
+    Mul(args) => mul(args.map(f))
+    Pow(base, exp) => pow(f(base), f(exp))
+    Mod(lhs, rhs) => mod_expr(f(lhs), f(rhs))
+    Tuple(args) => Tuple(args.map(f))
+    Dict(items) => {
       let out : Array[(Expr, Expr)] = []
       for item in items {
         let (key, value) = item
         out.push((f(key), f(value)))
       }
-      Expr::Dict(out)
+      Dict(out)
     }
-    Expr::Relational(op, lhs, rhs) =>
+    Relational(op, lhs, rhs) =>
       match op {
-        RelOp::Eq => Expr::Relational(RelOp::Eq, f(lhs), f(rhs))
-        RelOp::Ne => Expr::Relational(RelOp::Ne, f(lhs), f(rhs))
-        RelOp::Lt => Expr::Relational(RelOp::Lt, f(lhs), f(rhs))
-        RelOp::Le => Expr::Relational(RelOp::Le, f(lhs), f(rhs))
-        RelOp::Gt => Expr::Relational(RelOp::Gt, f(lhs), f(rhs))
-        RelOp::Ge => Expr::Relational(RelOp::Ge, f(lhs), f(rhs))
+        Eq => Relational(Eq, f(lhs), f(rhs))
+        Ne => Relational(Ne, f(lhs), f(rhs))
+        Lt => Relational(Lt, f(lhs), f(rhs))
+        Le => Relational(Le, f(lhs), f(rhs))
+        Gt => Relational(Gt, f(lhs), f(rhs))
+        Ge => Relational(Ge, f(lhs), f(rhs))
       }
-    Expr::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       let out : Array[Expr] = []
       for arg in deriv_args {
         out.push(f(arg))
       }
-      Expr::Derivative(f(inner), out)
+      Derivative(f(inner), out)
     }
-    Expr::Subs(inner, variable, value) =>
-      subs_expr(f(inner), f(variable), f(value))
-    Expr::Lambda(vars, body) => lambda_expr(f(vars), f(body))
-    Expr::Apply(head, args) =>
+    Subs(inner, variable, value) => subs_expr(f(inner), f(variable), f(value))
+    Lambda(vars, body) => lambda_expr(f(vars), f(body))
+    Apply(head, args) =>
       match raw_apply(head, args.map(f)) {
         Some(applied) => applied
-        None => Expr::Apply(head, args.map(f))
+        None => Apply(head, args.map(f))
       }
-    Expr::FunctionHead(name) => Expr::FunctionHead(name)
-    Expr::Function(_, _) => abort("legacy function should be normalized")
+    FunctionHead(name) => FunctionHead(name)
+    Function(_, _) => abort("legacy function should be normalized")
     _ => expr
   }
 }
@@ -141,7 +137,7 @@ fn clone_subst_env(env : Map[String, Expr]) -> Map[String, Expr] {
 ///|
 fn remove_bound_names_from_env(bound : Expr, env : Map[String, Expr]) -> Unit {
   match bound {
-    Expr::Symbol(name) => ignore(env.remove(name))
+    Symbol(name) => ignore(env.remove(name))
     _ =>
       match tuple_items(bound) {
         Some(items) =>
@@ -158,7 +154,7 @@ fn bound_symbol_names(bound : Expr) -> Array[String] {
   let out : Array[String] = []
   letrec collect = (expr : Expr) => {
     match expr {
-      Expr::Symbol(name) => if !out.contains(name) { out.push(name) }
+      Symbol(name) => if !out.contains(name) { out.push(name) }
       _ =>
         match tuple_items(expr) {
           Some(items) =>
@@ -181,23 +177,22 @@ fn replacement_conflicts_with_bound_names(
   rename_env : Map[String, Expr],
 ) -> Bool {
   match value {
-    Expr::Symbol(new_name) => {
+    Symbol(new_name) => {
       if new_name != current_name && original_names.contains(new_name) {
         return true
       }
       for _, existing in rename_env {
         match existing {
-          Expr::Symbol(existing_name) if existing_name == new_name =>
-            return true
+          Symbol(existing_name) if existing_name == new_name => return true
           _ => ()
         }
       }
       false
     }
-    Expr::Dummy(_, id) => {
+    Dummy(_, id) => {
       for _, existing in rename_env {
         match existing {
-          Expr::Dummy(_, existing_id) if existing_id == id => return true
+          Dummy(_, existing_id) if existing_id == id => return true
           _ => ()
         }
       }
@@ -215,11 +210,11 @@ fn rename_bound_vars(
   original_names : Array[String],
 ) -> Expr {
   match bound {
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       match env.get(name) {
         Some(value) =>
           match value {
-            Expr::Symbol(_) | Expr::Dummy(_, _) => {
+            Symbol(_) | Dummy(_, _) => {
               if replacement_conflicts_with_bound_names(
                   value, name, original_names, rename_env,
                 ) {
@@ -239,7 +234,7 @@ fn rename_bound_vars(
           for item in items {
             out.push(rename_bound_vars(item, env, rename_env, original_names))
           }
-          Expr::Tuple(out)
+          Tuple(out)
         }
         None => bound
       }
@@ -251,7 +246,7 @@ fn expr_symbol_names(expr : Expr) -> Array[String] {
   let names : Array[String] = []
   for item in free_symbols(expr) {
     match item {
-      Expr::Symbol(name) => if !names.contains(name) { names.push(name) }
+      Symbol(name) => if !names.contains(name) { names.push(name) }
       _ => ()
     }
   }
@@ -264,7 +259,7 @@ fn derivative_wrt_names(deriv_args : Array[Expr]) -> Array[String] {
   let pair_count = deriv_args.length() / 2
   for i in 0..<pair_count {
     match deriv_args[i * 2] {
-      Expr::Symbol(name) => if !out.contains(name) { out.push(name) }
+      Symbol(name) => if !out.contains(name) { out.push(name) }
       _ => ()
     }
   }
@@ -278,7 +273,7 @@ fn expr_mentions_any_symbol_name(expr : Expr, names : Array[String]) -> Bool {
   }
   for item in free_symbols(expr) {
     match item {
-      Expr::Symbol(name) if names.contains(name) => return true
+      Symbol(name) if names.contains(name) => return true
       _ => ()
     }
   }
@@ -307,11 +302,11 @@ fn lambda_match_signature(
   rules : Array[(Expr, Expr)],
 ) -> Bool {
   match normalize_legacy_expr(param) {
-    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_, _, _) => {
+    Symbol(_) | Dummy(_, _) | Wild(_, _, _) => {
       rules.push((param, arg))
       true
     }
-    Expr::Tuple(items) =>
+    Tuple(items) =>
       match tuple_items(arg) {
         Some(arg_items) => {
           if items.length() != arg_items.length() {
@@ -337,13 +332,13 @@ pub fn apply_lambda_expr(vars : Expr, body : Expr, args : Array[Expr]) -> Expr? 
   let args = args.map(normalize_legacy_expr)
   let rules : Array[(Expr, Expr)] = []
   match vars {
-    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_, _, _) =>
+    Symbol(_) | Dummy(_, _) | Wild(_, _, _) =>
       if args.length() == 1 {
         rules.push((vars, args[0]))
       } else {
         return None
       }
-    Expr::Tuple(items) => {
+    Tuple(items) => {
       if items.length() != args.length() {
         return None
       }
@@ -365,13 +360,12 @@ fn callable_subst_apply(
   env : Map[String, Expr],
 ) -> Expr? {
   match head {
-    Expr::FunctionHead(name) | Expr::UndefinedFunction(name) =>
+    FunctionHead(name) | UndefinedFunction(name) =>
       match env.get(name) {
         Some(value) =>
           match normalize_legacy_expr(value) {
-            Expr::FunctionHead(_) | Expr::UndefinedFunction(_) =>
-              raw_apply(value, args)
-            Expr::Lambda(vars, body) =>
+            FunctionHead(_) | UndefinedFunction(_) => raw_apply(value, args)
+            Lambda(vars, body) =>
               match apply_lambda_expr(vars, body, args) {
                 Some(result) => Some(result)
                 None => None
@@ -402,13 +396,13 @@ fn subst_derivative(
       Some(value) => {
         let value = normalize_legacy_expr(value)
         let safe_rename = match value {
-          Expr::Symbol(new_name) =>
+          Symbol(new_name) =>
             new_name == wrt_name ||
             (
               !original_free_names.contains(new_name) &&
               !original_wrt_names.contains(new_name)
             )
-          Expr::Dummy(_, _) => true
+          Dummy(_, _) => true
           _ =>
             expr_can_diff_wrt(value) &&
             !expr_contains_exact_subexpr(inner, value)
@@ -491,19 +485,19 @@ fn subst_derivative(
       if residual_vars.length() == 1 {
         residual_vars[0]
       } else {
-        Expr::Tuple(residual_vars)
+        Tuple(residual_vars)
       },
       if residual_values.length() == 1 {
         residual_values[0]
       } else {
-        Expr::Tuple(residual_values)
+        Tuple(residual_values)
       },
     )
   }
   for key in outer_keys {
     match outer_env.get(key) {
       Some(value) =>
-        out = subs_expr(out, Expr::Symbol(key), normalize_legacy_expr(value))
+        out = subs_expr(out, Symbol(key), normalize_legacy_expr(value))
       None => ()
     }
   }
@@ -514,33 +508,32 @@ fn subst_derivative(
 pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
   let expr = normalize_legacy_expr(expr)
   match expr {
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       match env.get(name) {
         Some(value) => value
         None => expr
       }
-    Expr::Dummy(_, _) | Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => expr
-    Expr::Number(_)
-    | Expr::Float(_)
-    | Expr::ComplexFloat(_)
-    | Expr::NumberSymbol(_)
-    | Expr::FunctionHead(_)
-    | Expr::UndefinedFunction(_)
-    | Expr::Boolean(_) => expr
-    Expr::Apply(head, args) => {
+    Dummy(_, _) | Wild(_, _, _) | WildFunction(_, _) => expr
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | FunctionHead(_)
+    | UndefinedFunction(_)
+    | Boolean(_) => expr
+    Apply(head, args) => {
       let rewritten_args = args.map(arg => subst(arg, env))
       match callable_subst_apply(head, rewritten_args, env) {
         Some(applied) => applied
         None =>
           match raw_apply(head, rewritten_args) {
             Some(applied) => applied
-            None => Expr::Apply(head, rewritten_args)
+            None => Apply(head, rewritten_args)
           }
       }
     }
-    Expr::Derivative(inner, deriv_args) =>
-      subst_derivative(inner, deriv_args, env)
-    Expr::Lambda(vars, body) => {
+    Derivative(inner, deriv_args) => subst_derivative(inner, deriv_args, env)
+    Lambda(vars, body) => {
       let rename_env : Map[String, Expr] = Map([])
       let renamed_vars = rename_bound_vars(
         vars,
@@ -558,7 +551,7 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
       }
       lambda_expr(renamed_vars, subst(renamed_body, restricted))
     }
-    Expr::Subs(inner, variable, value) => {
+    Subs(inner, variable, value) => {
       let protected_names = bound_symbol_names(variable)
       for name in expr_symbol_names(subs_expr(inner, variable, value)) {
         if !protected_names.contains(name) {
@@ -588,7 +581,7 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
         subst(renamed_value, restricted),
       )
     }
-    Expr::Function(_, _) => abort("legacy function should be normalized")
+    Function(_, _) => abort("legacy function should be normalized")
     _ => map_children(expr, child => subst(child, env))
   }
 }

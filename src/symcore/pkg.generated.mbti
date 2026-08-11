@@ -286,6 +286,10 @@ pub struct ComplexFloat {
   value : @mpc.RawMpc
   prec : Int
 } derive(Eq)
+#deprecated
+pub fn ComplexFloat::add(Self, Self) -> Self
+#deprecated
+pub fn ComplexFloat::equal(Self, Self) -> Bool
 pub fn ComplexFloat::format(Self, dps? : Int) -> String
 pub fn ComplexFloat::from_exact_parts(@symnum.BigRational, @symnum.BigRational, prec? : Int) -> Self
 pub fn ComplexFloat::from_mpc(@mpc.RawMpc, prec? : Int) -> Self
@@ -293,11 +297,21 @@ pub fn ComplexFloat::from_parts(@mpf.RawMpf, @mpf.RawMpf, prec? : Int) -> Self
 pub fn ComplexFloat::from_real(Float, imag? : Float) -> Self
 pub fn ComplexFloat::imag_part(Self) -> Float
 pub fn ComplexFloat::is_finite(Self) -> Bool
+#deprecated
+pub fn ComplexFloat::mul(Self, Self) -> Self
+#deprecated
+pub fn ComplexFloat::neg(Self) -> Self
+#deprecated
+pub fn ComplexFloat::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn ComplexFloat::output(Self, &Logger) -> Unit
 pub fn ComplexFloat::precision(Self) -> Int
 pub fn ComplexFloat::real_part(Self) -> Float
 pub fn ComplexFloat::reciprocal(Self) -> Self
 pub fn ComplexFloat::to_mpc(Self) -> @mpc.RawMpc
 pub fn ComplexFloat::to_rational_parts(Self) -> ((@bigint.BigInt, @bigint.BigInt), (@bigint.BigInt, @bigint.BigInt)) raise @mpf.MpfError
+#deprecated
+pub fn ComplexFloat::to_string(Self) -> String
 pub impl Add for ComplexFloat
 pub impl Mul for ComplexFloat
 pub impl Neg for ComplexFloat
@@ -338,6 +352,35 @@ pub(all) enum Expr {
   Lambda(Expr, Expr)
   Function(String, Array[Expr])
 }
+#deprecated
+pub fn Expr::add(Self, Self) -> Self
+#deprecated
+pub fn Expr::compare(Self, Self) -> Int
+#deprecated
+pub fn Expr::equal(Self, Self) -> Bool
+#deprecated
+pub fn Expr::hash(Self) -> Int
+#deprecated
+pub fn Expr::hash_combine(Self, Hasher) -> Unit
+#deprecated
+pub fn Expr::lxor(Self, Self) -> Self
+#deprecated
+pub fn Expr::mul(Self, Self) -> Self
+#deprecated
+pub fn Expr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Expr::op_ge(Self, Self) -> Bool
+#deprecated
+pub fn Expr::op_gt(Self, Self) -> Bool
+#deprecated
+pub fn Expr::op_le(Self, Self) -> Bool
+#deprecated
+pub fn Expr::op_lt(Self, Self) -> Bool
+#deprecated
+pub fn Expr::sub(Self, Self) -> Self
+#deprecated
+pub fn Expr::to_repr(Self) -> @debug.Repr
+#deprecated
 pub fn Expr::to_string(Self) -> String
 pub impl Add for Expr
 pub impl BitXOr for Expr
@@ -378,6 +421,10 @@ pub struct Float {
   value : @mpf.RawMpf
   prec : Int
 } derive(Eq)
+#deprecated
+pub fn Float::add(Self, Self) -> Self
+#deprecated
+pub fn Float::equal(Self, Self) -> Bool
 pub fn Float::format(Self, dps? : Int) -> String
 pub fn Float::from_double(Double, prec? : Int, rnd? : @mpf.RoundMode) -> Self
 pub fn Float::from_exact(@symnum.BigRational, prec? : Int, rnd? : @mpf.RoundMode) -> Self raise @mpf.MpfError
@@ -386,11 +433,21 @@ pub fn Float::from_mpf(@mpf.RawMpf, prec? : Int) -> Self
 pub fn Float::from_rational(@bigint.BigInt, @bigint.BigInt, Int, rnd? : @mpf.RoundMode) -> Self raise @mpf.MpfError
 pub fn Float::from_str(String, prec? : Int, rnd? : @mpf.RoundMode) -> Self raise @mpf.MpfError
 pub fn Float::is_finite(Self) -> Bool
+#deprecated
+pub fn Float::mul(Self, Self) -> Self
+#deprecated
+pub fn Float::neg(Self) -> Self
+#deprecated
+pub fn Float::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Float::output(Self, &Logger) -> Unit
 pub fn Float::precision(Self) -> Int
 pub fn Float::reciprocal(Self) -> Self raise @mpf.MpfError
 pub fn Float::to_double(Self, strict? : Bool, rnd? : @mpf.RoundMode) -> Double raise @mpf.MpfError
 pub fn Float::to_mpf(Self) -> @mpf.RawMpf
 pub fn Float::to_rational(Self) -> (@bigint.BigInt, @bigint.BigInt) raise @mpf.MpfError
+#deprecated
+pub fn Float::to_string(Self) -> String
 pub impl Add for Float
 pub impl Mul for Float
 pub impl Neg for Float

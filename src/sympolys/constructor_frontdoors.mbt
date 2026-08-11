@@ -42,7 +42,7 @@ pub fn construct_domain(
   for expr in exprs {
     elements.push(domain_from_sympy_expr(chosen, expr) catch { _ => expr })
   }
-  ConstructDomainResult::{ domain: chosen, elements }
+  { domain: chosen, elements }
 }
 
 ///|
@@ -53,20 +53,19 @@ fn infer_construct_domain(exprs : Array[Expr], composite : Bool) -> Domain {
   if gens.is_empty() || !composite {
     base
   } else if exprs.any(expr => expr_has_negative_generator_power(expr, gens)) {
-    Domain::RationalFunctionField(base, gens)
+    RationalFunctionField(base, gens)
   } else {
-    Domain::PolyRing(base, gens)
+    PolyRing(base, gens)
   }
 }
 
 ///|
 fn expr_has_negative_generator_power(expr : Expr, gens : Array[String]) -> Bool {
   match expr {
-    Expr::Pow(Expr::Symbol(name), exp) =>
-      gens.contains(name) && expr_is_negative_int(exp)
-    Expr::Add(args) | Expr::Mul(args) =>
+    Pow(Symbol(name), exp) => gens.contains(name) && expr_is_negative_int(exp)
+    Add(args) | Mul(args) =>
       args.any(child => expr_has_negative_generator_power(child, gens))
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       expr_has_negative_generator_power(base, gens) ||
       expr_has_negative_generator_power(exp, gens)
     _ =>

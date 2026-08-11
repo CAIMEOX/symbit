@@ -7,7 +7,7 @@ fn orth_port_rat(num : Int, den : Int) -> @symnum.BigRational {
 
 ///|
 fn orth_port_dup_repr(coeffs : Array[FieldElem]) -> String {
-  let parts = coeffs.map(c => c.to_string()).join(",")
+  let parts = coeffs.map(c => Show::to_string(c)).join(",")
   "[\{parts}]"
 }
 
@@ -19,32 +19,22 @@ fn orth_port_expr_norm(expr : Expr) -> String raise {
 ///|
 test "orthopolys: low-level dup kernels oracle parity" {
   assert_eq(
-    orth_port_dup_repr(@sympolys.dup_chebyshevt(4, Domain::ZZ)),
+    orth_port_dup_repr(@sympolys.dup_chebyshevt(4, ZZ)),
     dup_chebyshevt(4),
   )
   assert_eq(
-    orth_port_dup_repr(@sympolys.dup_chebyshevu(4, Domain::ZZ)),
+    orth_port_dup_repr(@sympolys.dup_chebyshevu(4, ZZ)),
     dup_chebyshevu(4),
   )
+  assert_eq(orth_port_dup_repr(@sympolys.dup_hermite(4, ZZ)), dup_hermite(4))
   assert_eq(
-    orth_port_dup_repr(@sympolys.dup_hermite(4, Domain::ZZ)),
-    dup_hermite(4),
-  )
-  assert_eq(
-    orth_port_dup_repr(@sympolys.dup_hermite_prob(4, Domain::ZZ)),
+    orth_port_dup_repr(@sympolys.dup_hermite_prob(4, ZZ)),
     dup_hermite_prob(4),
   )
-  assert_eq(
-    orth_port_dup_repr(@sympolys.dup_legendre(4, Domain::QQ)),
-    dup_legendre(4),
-  )
+  assert_eq(orth_port_dup_repr(@sympolys.dup_legendre(4, QQ)), dup_legendre(4))
   assert_eq(
     orth_port_dup_repr(
-      @sympolys.dup_laguerre(
-        3,
-        @sympolys.fe_from_int(0, Domain::QQ),
-        Domain::QQ,
-      ),
+      @sympolys.dup_laguerre(3, @sympolys.fe_from_int(0, QQ), QQ),
     ),
     dup_laguerre(3, orth_port_rat(0, 1)),
   )
@@ -52,29 +42,25 @@ test "orthopolys: low-level dup kernels oracle parity" {
     orth_port_dup_repr(
       @sympolys.dup_jacobi(
         3,
-        @sympolys.fe_from_int(1, Domain::QQ),
-        @sympolys.fe_from_int(2, Domain::QQ),
-        Domain::QQ,
+        @sympolys.fe_from_int(1, QQ),
+        @sympolys.fe_from_int(2, QQ),
+        QQ,
       ),
     ),
     dup_jacobi(3, orth_port_rat(1, 1), orth_port_rat(2, 1)),
   )
   assert_eq(
     orth_port_dup_repr(
-      @sympolys.dup_gegenbauer(
-        4,
-        @sympolys.fe_from_int(2, Domain::QQ),
-        Domain::QQ,
-      ),
+      @sympolys.dup_gegenbauer(4, @sympolys.fe_from_int(2, QQ), QQ),
     ),
     dup_gegenbauer(4, orth_port_rat(2, 1)),
   )
   assert_eq(
-    orth_port_dup_repr(@sympolys.dup_spherical_bessel_fn(4, Domain::ZZ)),
+    orth_port_dup_repr(@sympolys.dup_spherical_bessel_fn(4, ZZ)),
     dup_spherical_bessel_fn(4),
   )
   assert_eq(
-    orth_port_dup_repr(@sympolys.dup_spherical_bessel_fn_minus(4, Domain::ZZ)),
+    orth_port_dup_repr(@sympolys.dup_spherical_bessel_fn_minus(4, ZZ)),
     dup_spherical_bessel_fn_minus(4),
   )
 }
@@ -98,23 +84,14 @@ test "orthopolys: new expression frontdoors oracle parity" {
 ///|
 test "appellseqs: low-level dup kernels oracle parity" {
   assert_eq(
-    orth_port_dup_repr(@sympolys.dup_bernoulli(5, Domain::QQ)),
+    orth_port_dup_repr(@sympolys.dup_bernoulli(5, QQ)),
     dup_bernoulli(5),
   )
   assert_eq(
-    orth_port_dup_repr(@sympolys.dup_bernoulli_c(4, Domain::QQ)),
+    orth_port_dup_repr(@sympolys.dup_bernoulli_c(4, QQ)),
     dup_bernoulli_c(4),
   )
-  assert_eq(
-    orth_port_dup_repr(@sympolys.dup_genocchi(5, Domain::ZZ)),
-    dup_genocchi(5),
-  )
-  assert_eq(
-    orth_port_dup_repr(@sympolys.dup_euler(5, Domain::QQ)),
-    dup_euler(5),
-  )
-  assert_eq(
-    orth_port_dup_repr(@sympolys.dup_andre(5, Domain::ZZ)),
-    dup_andre(5),
-  )
+  assert_eq(orth_port_dup_repr(@sympolys.dup_genocchi(5, ZZ)), dup_genocchi(5))
+  assert_eq(orth_port_dup_repr(@sympolys.dup_euler(5, QQ)), dup_euler(5))
+  assert_eq(orth_port_dup_repr(@sympolys.dup_andre(5, ZZ)), dup_andre(5))
 }

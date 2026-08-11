@@ -22,7 +22,7 @@ fn choose_good_prime(poly : Poly) -> Int raise PolyError {
     }
     p = p + 2
   }
-  raise PolyError::BadModulus
+  raise BadModulus
 }
 
 ///|
@@ -60,17 +60,12 @@ fn map_to_gf(poly : Poly, modulus : Int) -> Poly raise PolyError {
   let coeffs : Map[Monomial, FieldElem] = Map([])
   for m, c in poly.coeffs {
     let r = fe_expect_rational(c)
-    let fe = fe_from_int(r.numerator().to_int(), Domain::GF(modulus))
+    let fe = fe_from_int(r.numerator().to_int(), GF(modulus))
     if !fe_is_zero(fe) {
       coeffs.set(m, fe)
     }
   }
-  Poly::{
-    coeffs,
-    gens: poly.gens,
-    domain: Domain::GF(modulus),
-    order: poly.order,
-  }
+  { coeffs, gens: poly.gens, domain: GF(modulus), order: poly.order }
 }
 
 ///|
@@ -99,15 +94,15 @@ fn lift_gf_factor_to_int(f : Poly, modulus : Int) -> Poly raise PolyError {
     if v > modulus / 2 {
       v = v - modulus
     }
-    add_term(coeffs, m, fe_from_int(v, Domain::ZZ), Domain::ZZ)
+    add_term(coeffs, m, fe_from_int(v, ZZ), ZZ)
   }
-  Poly::{ coeffs, gens: f.gens, domain: Domain::ZZ, order: f.order }
+  { coeffs, gens: f.gens, domain: ZZ, order: f.order }
 }
 
 ///|
 fn product_polys(polys : Array[Poly]) -> Poly raise PolyError {
   if polys.is_empty() {
-    return Poly::one([], Domain::ZZ)
+    return Poly::one([], ZZ)
   }
   let mut acc = polys[0]
   for i in 1..<polys.length() {
@@ -197,7 +192,7 @@ fn biquadratic_factor(poly : Poly) -> Array[Poly] raise PolyError {
   if poly.gens.length() != 1 {
     return Array::new()
   }
-  if poly.domain.not_equal(Domain::ZZ) {
+  if Eq::not_equal(poly.domain, ZZ) {
     return Array::new()
   }
   if poly.degree(0) != 4 {
@@ -277,7 +272,7 @@ fn quadratic_factor(
   let mono2 = monomial_one(gens.length())
   mono2.exps.set(0, 2)
   add_term(coeffs, mono2, fe_from_int(1, domain), domain)
-  Poly::{ coeffs, gens, domain, order }
+  { coeffs, gens, domain, order }
 }
 
 ///|
@@ -383,7 +378,7 @@ fn dense_to_poly_int(
     mono.exps.set(0, i)
     add_term(map, mono, fe_from_int(coeffs[i], domain), domain)
   }
-  Poly::{ coeffs: map, gens, domain, order: TermOrder::Lex }
+  { coeffs: map, gens, domain, order: Lex }
 }
 
 ///|

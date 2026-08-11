@@ -139,8 +139,8 @@ pub fn[T] allcombinations(
   let bg = if lhs_is_small { rhs } else { lhs }
   let base_partitions = contiguous_index_partitions(0, bg.length(), sm.length())
   let candidates = match mode {
-    CombineMode::Associative => [bg.copy()]
-    CombineMode::Commutative => permutations(bg)
+    Associative => [bg.copy()]
+    Commutative => permutations(bg)
   }
   for candidate in candidates {
     for part in base_partitions {
@@ -325,7 +325,7 @@ pub fn[T : Eq + Hash, Op : Eq] core_unify(
         let mode = if is_commutative(lhs) && is_commutative(rhs) {
           CombineMode::Commutative
         } else {
-          CombineMode::Associative
+          Associative
         }
         for combo in allcombinations(small_args, big_args, mode) {
           let (lhs_groups, rhs_groups) = combo

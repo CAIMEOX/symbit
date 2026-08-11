@@ -41,8 +41,8 @@ fn system_append_exprs_unique(
 ///|
 fn system_load_key(load : Load) -> String {
   match load {
-    Load::ForceLoad(value) => value.repr()
-    Load::TorqueLoad(value) => value.repr()
+    ForceLoad(value) => value.repr()
+    TorqueLoad(value) => value.repr()
   }
 }
 
@@ -108,7 +108,7 @@ pub fn system(
   )
   let inertial_point = fixed_point.unwrap_or(@symvector.point("inertial_point"))
   inertial_point.set_vel(inertial_frame, @symvector.vector_zero())
-  System::{
+  {
     frame_: inertial_frame,
     fixed_point_: inertial_point,
     q_ind_: [],
@@ -134,7 +134,7 @@ pub fn system_from_newtonian(
   let frame = match mech_bodylike_frame(body) {
     Some(value) => value
     None =>
-      raise @symphysics.PhysicsError::ValueError(
+      raise ValueError(
         "System.from_newtonian requires a body with a reference frame",
       )
   }
@@ -451,7 +451,7 @@ pub fn System::apply_uniform_gravity(
   let grav = gravity(acceleration, self.bodies_)
   let loads : Array[Load] = []
   for item in grav {
-    loads.push(Load::ForceLoad(item))
+    loads.push(ForceLoad(item))
   }
   self.add_loads(loads)
 }
@@ -683,7 +683,7 @@ pub fn System::validate_system(
     }
   }
   if !msgs.is_empty() {
-    raise @symphysics.PhysicsError::ValueError(msgs.join("\n"))
+    raise ValueError(msgs.join("\n"))
   }
 }
 
@@ -722,15 +722,13 @@ pub fn System::form_eoms(
     let lagrange_loads : Array[Load] = []
     for load in loads {
       match load {
-        Load::ForceLoad(value) =>
+        ForceLoad(value) =>
           lagrange_loads.push(
-            Load::ForceLoad(force(value.point, msubs_vector(value.force, subs))),
+            ForceLoad(force(value.point, msubs_vector(value.force, subs))),
           )
-        Load::TorqueLoad(value) =>
+        TorqueLoad(value) =>
           lagrange_loads.push(
-            Load::TorqueLoad(
-              torque(value.frame, msubs_vector(value.torque, subs)),
-            ),
+            TorqueLoad(torque(value.frame, msubs_vector(value.torque, subs))),
           )
       }
     }
@@ -743,7 +741,7 @@ pub fn System::form_eoms(
       hol_coneqs=self.holonomic_constraints_,
     )
     let eom = backend.form_lagranges_equations()
-    self.eom_method_ = Some(MechanicsBackend::Lagrange(backend))
+    self.eom_method_ = Some(Lagrange(backend))
     eom
   } else {
     let backend = kanes_method(
@@ -755,7 +753,7 @@ pub fn System::form_eoms(
       forcelist=loads,
     )
     let (_, fr) = backend.kanes_equations(self.bodies_, loads)
-    self.eom_method_ = Some(MechanicsBackend::Kane(backend))
+    self.eom_method_ = Some(Kane(backend))
     fr
   }
 }
@@ -763,8 +761,8 @@ pub fn System::form_eoms(
 ///|
 pub fn System::rhs(self : System) -> @symphysics.ExplicitMatrix raise {
   match self.eom_method_ {
-    Some(MechanicsBackend::Kane(value)) => value.rhs()
-    Some(MechanicsBackend::Lagrange(value)) => value.rhs()
+    Some(Kane(value)) => value.rhs()
+    Some(Lagrange(value)) => value.rhs()
     None =>
       raise @symphysics.PhysicsError::ValueError(
         "form_eoms must be called before rhs",
@@ -777,12 +775,9 @@ pub fn System::mass_matrix(
   self : System,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match self.eom_method_ {
-    Some(MechanicsBackend::Kane(value)) => value.mass_matrix()
-    Some(MechanicsBackend::Lagrange(value)) => value.mass_matrix()
-    None =>
-      raise @symphysics.PhysicsError::ValueError(
-        "form_eoms must be called before mass_matrix",
-      )
+    Some(Kane(value)) => value.mass_matrix()
+    Some(Lagrange(value)) => value.mass_matrix()
+    None => raise ValueError("form_eoms must be called before mass_matrix")
   }
 }
 
@@ -791,12 +786,9 @@ pub fn System::mass_matrix_full(
   self : System,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match self.eom_method_ {
-    Some(MechanicsBackend::Kane(value)) => value.mass_matrix_full()
-    Some(MechanicsBackend::Lagrange(value)) => value.mass_matrix_full()
-    None =>
-      raise @symphysics.PhysicsError::ValueError(
-        "form_eoms must be called before mass_matrix_full",
-      )
+    Some(Kane(value)) => value.mass_matrix_full()
+    Some(Lagrange(value)) => value.mass_matrix_full()
+    None => raise ValueError("form_eoms must be called before mass_matrix_full")
   }
 }
 
@@ -805,12 +797,9 @@ pub fn System::forcing(
   self : System,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match self.eom_method_ {
-    Some(MechanicsBackend::Kane(value)) => value.forcing()
-    Some(MechanicsBackend::Lagrange(value)) => value.forcing()
-    None =>
-      raise @symphysics.PhysicsError::ValueError(
-        "form_eoms must be called before forcing",
-      )
+    Some(Kane(value)) => value.forcing()
+    Some(Lagrange(value)) => value.forcing()
+    None => raise ValueError("form_eoms must be called before forcing")
   }
 }
 
@@ -819,12 +808,9 @@ pub fn System::forcing_full(
   self : System,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match self.eom_method_ {
-    Some(MechanicsBackend::Kane(value)) => value.forcing_full()
-    Some(MechanicsBackend::Lagrange(value)) => value.forcing_full()
-    None =>
-      raise @symphysics.PhysicsError::ValueError(
-        "form_eoms must be called before forcing_full",
-      )
+    Some(Kane(value)) => value.forcing_full()
+    Some(Lagrange(value)) => value.forcing_full()
+    None => raise ValueError("form_eoms must be called before forcing_full")
   }
 }
 

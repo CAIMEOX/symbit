@@ -1,41 +1,41 @@
 ///|
 test "physics.quantum.qexpr/state/operator: local core forms" {
   let base = qexpr([@symcore.int(0), @symcore.int(1)])
-  inspect(base.to_string(), content="01")
+  inspect(Show::to_string(base), content="01")
   inspect(base.repr(), content="QExpr(Integer(0),Integer(1))")
 
-  let k = ket([@symcore.Expr::Symbol("k")])
-  let b = bra([@symcore.Expr::Symbol("b")])
-  let t = time_dep_ket([@symcore.int(0)], time=@symcore.Expr::Symbol("t"))
+  let k = ket([Symbol("k")])
+  let b = bra([Symbol("b")])
+  let t = time_dep_ket([@symcore.int(0)], time=Symbol("t"))
   let t_default = time_dep_ket([])
-  inspect(k.to_string(), content="|k>")
-  inspect(b.to_string(), content="<b|")
-  inspect(t.to_string(), content="|0;t>")
-  inspect(t_default.to_string(), content="|psi;t>")
-  inspect(k.dual().to_string(), content="<k|")
-  inspect(t.dual().to_string(), content="<0;t|")
+  inspect(Show::to_string(k), content="|k>")
+  inspect(Show::to_string(b), content="<b|")
+  inspect(Show::to_string(t), content="|0;t>")
+  inspect(Show::to_string(t_default), content="|psi;t>")
+  inspect(Show::to_string(k.dual()), content="<k|")
+  inspect(Show::to_string(t.dual()), content="<0;t|")
 
-  let a = operator([@symcore.Expr::Symbol("A")])
-  let h = hermitian_operator([@symcore.Expr::Symbol("Hh")])
-  let u = unitary_operator([@symcore.Expr::Symbol("Uu")])
+  let a = operator([Symbol("A")])
+  let h = hermitian_operator([Symbol("Hh")])
+  let u = unitary_operator([Symbol("Uu")])
   let id = identity_operator(dimension=@symcore.int(3))
-  let ok = orthogonal_ket([@symcore.Expr::Symbol("n")])
-  inspect(a.to_string(), content="A")
+  let ok = orthogonal_ket([Symbol("n")])
+  inspect(Show::to_string(a), content="A")
   inspect(h.repr(), content="HermitianOperator(Symbol('Hh'))")
   inspect(
     @symprint.pretty_string(u.inverse()),
     content="UnitaryOperator(Uu)**-1",
   )
-  inspect(id.to_string(), content="I")
-  inspect(ok.dual().to_string(), content="<n|")
+  inspect(Show::to_string(id), content="I")
+  inspect(Show::to_string(ok.dual()), content="<n|")
   inspect(@symprint.pretty_string(dagger(a.as_expr())), content="Dagger(A)")
 }
 
 ///|
 test "physics.quantum.innerproduct: local evaluation families" {
   let generic = inner_product(
-    bra([@symcore.Expr::Symbol("b")]).as_expr(),
-    ket([@symcore.Expr::Symbol("k")]).as_expr(),
+    bra([Symbol("b")]).as_expr(),
+    ket([Symbol("k")]).as_expr(),
   )
   inspect(
     @symprint.pretty_string(generic),
@@ -61,16 +61,16 @@ test "physics.quantum.operator/state: defaults and outer product semantics" {
   let op = operator([])
   let tket = time_dep_ket([])
   let tbra = time_dep_bra([])
-  inspect(k.to_string(), content="|psi>")
-  inspect(b.to_string(), content="<psi|")
-  inspect(op.to_string(), content="O")
-  inspect(tket.to_string(), content="|psi;t>")
-  inspect(tbra.to_string(), content="<psi;t|")
+  inspect(Show::to_string(k), content="|psi>")
+  inspect(Show::to_string(b), content="<psi|")
+  inspect(Show::to_string(op), content="O")
+  inspect(Show::to_string(tket), content="|psi;t>")
+  inspect(Show::to_string(tbra), content="<psi;t|")
 
-  let k1 = ket([@symcore.Expr::Symbol("k1")]).as_expr()
-  let k2 = ket([@symcore.Expr::Symbol("k2")]).as_expr()
-  let b1 = bra([@symcore.Expr::Symbol("b1")]).as_expr()
-  let b2 = bra([@symcore.Expr::Symbol("b2")]).as_expr()
+  let k1 = ket([Symbol("k1")]).as_expr()
+  let k2 = ket([Symbol("k2")]).as_expr()
+  let b1 = bra([Symbol("b1")]).as_expr()
+  let b2 = bra([Symbol("b2")]).as_expr()
   quantum_test_assert_expr_equal(
     outer_product(@symcore.int(2) * k1, b1),
     "2*OuterProduct(Ket(k1), Bra(b1))",
@@ -103,8 +103,8 @@ test "physics.quantum.operator/state: defaults and outer product semantics" {
 
 ///|
 test "physics.quantum.operator/state: operator simplification hooks" {
-  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
-  let u = unitary_operator([@symcore.Expr::Symbol("U")]).as_expr()
+  let a = operator([Symbol("A")]).as_expr()
+  let u = unitary_operator([Symbol("U")]).as_expr()
   let id3 = identity_operator(dimension=@symcore.int(3)).as_expr()
   quantum_test_assert_expr_equal(
     quantum_canonical_mul(
@@ -133,7 +133,7 @@ test "physics.quantum.operator/state: operator simplification hooks" {
     "qapply removes right identity on operators",
   )
   inspect(
-    represent(id3).to_string(),
+    Show::to_string(represent(id3)),
     content="[[1, 0, 0], [0, 1, 0], [0, 0, 1]]",
   )
 }

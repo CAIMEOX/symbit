@@ -1,7 +1,7 @@
 ///|
 fn expr_is_zero(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) => n.is_zero()
+    Number(n) => n.is_zero()
     _ => false
   }
 }
@@ -9,7 +9,7 @@ fn expr_is_zero(expr : Expr) -> Bool {
 ///|
 fn expr_is_one(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) => n.is_one()
+    Number(n) => n.is_one()
     _ => false
   }
 }
@@ -51,7 +51,7 @@ fn expr_pow_int(base : Expr, exp : Int) -> Expr {
 ///|
 fn expr_int(expr : Expr) -> Int? {
   match expr {
-    Expr::Number(n) if n.is_integral() => {
+    Number(n) if n.is_integral() => {
       let num = n.numerator()
       if num.bit_length() > 30 {
         None
@@ -66,7 +66,7 @@ fn expr_int(expr : Expr) -> Int? {
 ///|
 fn require_symbol_name(expr : Expr) -> String {
   match expr {
-    Expr::Symbol(name) => name
+    Symbol(name) => name
     _ => "__invalid_symbol__"
   }
 }

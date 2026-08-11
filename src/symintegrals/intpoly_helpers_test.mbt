@@ -128,15 +128,9 @@ test "symintegrals intpoly helpers generate 2D gradient and hyperplane data" {
   let terms = gradient_terms(binomial_power=2)
   assert_true(terms.length() == 6)
   assert_true(@symcore.compare_expr(terms[0][0], @symcore.int(1)) == 0)
+  assert_true(@symcore.compare_expr(terms[1][0], Symbol("y")) == 0)
   assert_true(
-    @symcore.compare_expr(terms[1][0], @symcore.Expr::Symbol("y")) == 0,
-  )
-  assert_true(
-    @symcore.compare_expr(
-      terms[5][0],
-      @symcore.Expr::Symbol("x") ^ @symcore.int(2),
-    ) ==
-    0,
+    @symcore.compare_expr(terms[5][0], Symbol("x") ^ @symcore.int(2)) == 0,
   )
 
   let square = match
@@ -146,7 +140,7 @@ test "symintegrals intpoly helpers generate 2D gradient and hyperplane data" {
       intpoly_test_point2(1, 1),
       intpoly_test_point2(0, 1),
     ]) {
-    @symgeometry.GeometryEntity::Polygon(item) => item
+    Polygon(item) => item
     _ => fail("expected square polygon")
   }
   let params = hyperplane_parameters(square)
@@ -200,7 +194,7 @@ test "symintegrals intpoly 2D reduction integrates over polygon facets" {
       intpoly_test_point2(1, 1),
       intpoly_test_point2(0, 1),
     ]) {
-    @symgeometry.GeometryEntity::Polygon(item) => item
+    Polygon(item) => item
     _ => fail("expected square polygon")
   }
   let facets = square.sides()
@@ -316,7 +310,7 @@ test "symintegrals intpoly plotting helpers build plot objects" {
       intpoly_test_point2(1, 1),
       intpoly_test_point2(0, 1),
     ]) {
-    @symgeometry.GeometryEntity::Polygon(item) => item
+    Polygon(item) => item
     _ => fail("expected square polygon")
   }
   let poly_plot = plot_polytope(square)

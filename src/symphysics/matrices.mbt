@@ -11,7 +11,7 @@ pub fn msigma(i : Int) -> ExplicitMatrix raise PhysicsError {
         [i_expr(), int(0)],
       ])
     3 => explicit_matrix_from_ints([[1, 0], [0, -1]])
-    _ => raise PhysicsError::IndexError("Invalid Pauli index")
+    _ => raise IndexError("Invalid Pauli index")
   }
 }
 
@@ -73,7 +73,7 @@ pub fn mgamma(
         [1, 0, 0, 0],
         [0, 1, 0, 0],
       ])
-    _ => raise PhysicsError::IndexError("Invalid Dirac index")
+    _ => raise IndexError("Invalid Dirac index")
   }
   if lower && (mu == 1 || mu == 2 || mu == 3 || mu == 5) {
     base.neg()
@@ -93,7 +93,7 @@ pub let minkowski_tensor : ExplicitMatrix = explicit_matrix_from_ints([
 ///|
 pub fn mdft(n : Int) -> ExplicitMatrix raise PhysicsError {
   if n <= 0 {
-    raise PhysicsError::ValueError("n must be positive")
+    raise ValueError("n must be positive")
   }
   let scale = @symelem.sqrt(int(n)) ^ int(-1)
   let coeff = expr_div(int(-2) * pi_expr() * i_expr(), int(n))

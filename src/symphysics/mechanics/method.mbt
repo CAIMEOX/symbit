@@ -95,9 +95,7 @@ fn mechanics_linear_solve(
   let nrows = coeff.height()
   let ncols = coeff.width()
   guard nrows == rhs.length() && nrows == ncols else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "mechanics linear system must be square",
-    )
+    raise ShapeError("mechanics linear system must be square")
   }
   let aug = mechanics_matrix_entries(coeff)
   for i in 0..<nrows {
@@ -110,9 +108,7 @@ fn mechanics_linear_solve(
       pivot_row += 1
     }
     guard pivot_row < nrows else {
-      raise @symphysics.PhysicsError::ValueError(
-        "mechanics linear system is singular",
-      )
+      raise ValueError("mechanics linear system is singular")
     }
     if pivot_row != pivot {
       let tmp = aug[pivot]
@@ -143,9 +139,7 @@ fn mechanics_linear_solve(
       col += 1
     }
     guard !mech_expr_is_zero(aug[row][row]) else {
-      raise @symphysics.PhysicsError::ValueError(
-        "mechanics linear system is singular",
-      )
+      raise ValueError("mechanics linear system is singular")
     }
     solution[row] = mechanics_expr_div(value, aug[row][row])
     row -= 1
@@ -159,9 +153,7 @@ fn mechanics_matrix_linear_solve(
   rhs : @symphysics.ExplicitMatrix,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   guard coeff.height() == rhs.height() else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "mechanics linear systems require equal row counts",
-    )
+    raise ShapeError("mechanics linear systems require equal row counts")
   }
   let solved_columns : Array[Array[Expr]] = []
   let rhs_rows = rhs.rows_copy()
@@ -254,7 +246,7 @@ fn linearizer_with_metadata(
     Some(value) => value
     None => mechanics_identity(states.length())
   }
-  Linearizer::{
+  {
     states_: states.copy(),
     inputs_: inputs.copy(),
     rhs_: rhs.copy(),

@@ -34,7 +34,7 @@ fn preprocess_repr(pair : (@symcore.Expr, @sympolys.Poly)) -> String raise {
 ///|
 test "polyroots: linear/quadratic parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let f = b.from_expr(@symcore.int(2) * x + @symcore.int(1))
   let ours_lin = roots_repr(@sympolys.roots_linear(f))
   let oracle_lin = normalize_root_list(roots_linear(f.to_expr()))
@@ -50,7 +50,7 @@ test "polyroots: linear/quadratic parity" {
 ///|
 test "polyroots: cubic/quartic parity (factorable)" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let f = b.from_expr((x - @symcore.int(1)) ^ @symcore.int(3))
   let ours_cubic = roots_repr(@sympolys.roots_cubic(f))
   let oracle_cubic = normalize_root_list(roots_cubic(f.to_expr()))
@@ -64,7 +64,7 @@ test "polyroots: cubic/quartic parity (factorable)" {
 ///|
 test "polyroots: cubic/quartic parity (rootof fallback)" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let f = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(2))
   let ours_cubic = roots_repr(@sympolys.roots_cubic(f))
   let oracle_cubic = rootof_list(f.to_expr(), 3)
@@ -78,7 +78,7 @@ test "polyroots: cubic/quartic parity (rootof fallback)" {
 ///|
 test "polyroots: generic roots handles degree > 4 via CRootOf fallback" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let f = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(2))
   let ours = roots_repr(@sympolys.roots(f))
   let oracle = rootof_list(f.to_expr(), 5)
@@ -88,7 +88,7 @@ test "polyroots: generic roots handles degree > 4 via CRootOf fallback" {
 ///|
 test "polyroots: quintic parity for supported and empty frontdoor branches" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   let solvable = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(2))
   assert_eq(
     roots_repr(@sympolys.roots_quintic(solvable)),
@@ -110,7 +110,7 @@ test "polyroots: quintic parity for supported and empty frontdoor branches" {
 ///|
 test "polyroots: generic roots keeps multiplicities" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let f = b.from_expr(
     ((x - @symcore.int(1)) ^ @symcore.int(2)) *
     ((x - @symcore.int(2)) ^ @symcore.int(3)),
@@ -123,7 +123,7 @@ test "polyroots: generic roots keeps multiplicities" {
 ///|
 test "polyroots: root_factors parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let f = b.from_expr((x - @symcore.int(1)) * (x + @symcore.int(2)))
   let ours = roots_repr(@sympolys.root_factors(f))
   let oracle = normalize_root_list(root_factors(f.to_expr(), gens=["x"]))
@@ -139,7 +139,7 @@ test "polyroots: root_factors parity" {
 ///|
 test "polyroots: binomial roots parity" {
   let x = @symcore.Expr::Symbol("x")
-  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let b = PolyBuilder::new(["x"], QQ)
   for
     expr in [
       (x ^ @symcore.int(2)) - @symcore.int(4),
@@ -158,8 +158,8 @@ test "polyroots: binomial roots parity" {
 ///|
 test "polyroots: preprocess_roots parity" {
   let x = @symcore.Expr::Symbol("x")
-  let zz = PolyBuilder::new(["x"], Domain::ZZ)
-  let qq = PolyBuilder::new(["x"], Domain::QQ)
+  let zz = PolyBuilder::new(["x"], ZZ)
+  let qq = PolyBuilder::new(["x"], QQ)
   let half = @symcore.rational_from_ints(1, 2)
   for
     poly in [
@@ -183,7 +183,7 @@ test "polyroots: preprocess_roots parity" {
 ///|
 test "polyroots: cyclotomic roots parity" {
   for n in [1, 2, 3, 4, 5, 6, 8, 10, 12] {
-    let phi = Poly::from_expr(@sympolys.cyclotomic_poly(n), ["x"], Domain::QQ)
+    let phi = Poly::from_expr(@sympolys.cyclotomic_poly(n), ["x"], QQ)
     let ours = roots_repr(@sympolys.roots_cyclotomic(phi))
     let oracle = normalize_root_list(
       roots_cyclotomic(phi.to_expr(), gens=["x"]),

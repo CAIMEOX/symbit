@@ -25,7 +25,7 @@ pub fn risch_integrate(expr : Expr, var_name : String) -> Expr? {
 
 ///|
 pub fn derivation(expr : Expr, var_name : String) -> Expr {
-  @symcalculus.diff(expr, @symcore.Expr::Symbol(var_name))
+  @symcalculus.diff(expr, Symbol(var_name))
 }
 
 ///|

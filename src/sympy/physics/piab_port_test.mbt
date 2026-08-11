@@ -4,26 +4,18 @@ test "physics.quantum.piab: parity" {
     quantum_eval_str("n**2*pi**2*hbar**2/(2*m*L**2)*PIABKet(n)"),
     quantum_eval_str(
       @symprint.pretty_string(
-        qapply(
-          @symcore.raw_mul([
-            piab_hamiltonian(),
-            piab_ket(@symcore.Expr::Symbol("n")),
-          ]),
-        ),
+        qapply(@symcore.raw_mul([piab_hamiltonian(), piab_ket(Symbol("n"))])),
       ),
     ),
     "PIAB Hamiltonian parity",
   )
   quantum_test_assert_expr_equal(
-    inner_product(
-      piab_bra(@symcore.Expr::Symbol("i")),
-      piab_ket(@symcore.Expr::Symbol("j")),
-    ),
+    inner_product(piab_bra(Symbol("i")), piab_ket(Symbol("j"))),
     quantum_doit_str("PIABBra(i)*PIABKet(j)"),
     "PIAB inner product parity",
   )
-  match represent(piab_ket(@symcore.Expr::Symbol("n"))) {
-    MatrixScalarValue::Scalar(expr) =>
+  match represent(piab_ket(Symbol("n"))) {
+    Scalar(expr) =>
       quantum_test_assert_expr_equal(
         expr,
         quantum_represent_str("PIABKet(n)"),

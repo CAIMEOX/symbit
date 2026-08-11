@@ -52,7 +52,7 @@ fn is_nilpotent_number_from_factors(factors : Map[Int, Int]) -> Bool {
 /// Return whether every group of order `n` is nilpotent.
 pub fn is_nilpotent_number(n : Int) -> Bool raise CombinatoricsError {
   if n <= 0 {
-    raise CombinatoricsError::ValueError("n must be a positive integer")
+    raise ValueError("n must be a positive integer")
   }
   let factors = factorint_int(n)
   is_nilpotent_number_from_factors(factors)
@@ -62,7 +62,7 @@ pub fn is_nilpotent_number(n : Int) -> Bool raise CombinatoricsError {
 /// Return whether every group of order `n` is abelian.
 pub fn is_abelian_number(n : Int) -> Bool raise CombinatoricsError {
   if n <= 0 {
-    raise CombinatoricsError::ValueError("n must be a positive integer")
+    raise ValueError("n must be a positive integer")
   }
   let factors = factorint_int(n)
   for _, e in factors {
@@ -77,7 +77,7 @@ pub fn is_abelian_number(n : Int) -> Bool raise CombinatoricsError {
 /// Return whether every group of order `n` is cyclic.
 pub fn is_cyclic_number(n : Int) -> Bool raise CombinatoricsError {
   if n <= 0 {
-    raise CombinatoricsError::ValueError("n must be a positive integer")
+    raise ValueError("n must be a positive integer")
   }
   let factors = factorint_int(n)
   for _, e in factors {
@@ -171,7 +171,7 @@ fn holder_formula(prime_factors : Array[Int]) -> BigInt {
 /// square-free and related composite orders.
 pub fn groups_count(n : Int) -> BigInt raise CombinatoricsError {
   if n <= 0 {
-    raise CombinatoricsError::ValueError("n must be a positive integer")
+    raise ValueError("n must be a positive integer")
   }
   let factors = factorint_int(n)
   let mut count = 0
@@ -299,9 +299,7 @@ pub fn groups_count(n : Int) -> BigInt raise CombinatoricsError {
     match small.get(n) {
       Some(v) => return @symntheory.bi(v)
       None =>
-        raise CombinatoricsError::ValueError(
-          "Number of groups of order n is unknown for this n",
-        )
+        raise ValueError("Number of groups of order n is unknown for this n")
     }
   }
   if count == 2 {

@@ -33,19 +33,16 @@ fn represent_default_basis_state(expr : Expr) -> Expr? {
   match quantum_expr_args(expr) {
     Some([j, _]) if quantum_expr_has_name(expr, "JzKet") ||
       quantum_expr_has_name(expr, "JzBra") =>
-      Some(jz_ket(j, Expr::Symbol("m")).as_expr())
+      Some(jz_ket(j, Symbol("m")).as_expr())
     _ =>
       match state_from_expr(expr) {
         Some(state) =>
           match state.flavor {
-            StateFlavor::Ket | StateFlavor::Bra =>
-              Some(ket([Expr::Symbol("psi")]).as_expr())
-            StateFlavor::TimeDepKet | StateFlavor::TimeDepBra =>
-              Some(
-                time_dep_ket([Expr::Symbol("psi")], time=Expr::Symbol("t")).as_expr(),
-              )
-            StateFlavor::OrthogonalKet | StateFlavor::OrthogonalBra =>
-              Some(orthogonal_ket([Expr::Symbol("n")]).as_expr())
+            Ket | Bra => Some(ket([Symbol("psi")]).as_expr())
+            TimeDepKet | TimeDepBra =>
+              Some(time_dep_ket([Symbol("psi")], time=Symbol("t")).as_expr())
+            OrthogonalKet | OrthogonalBra =>
+              Some(orthogonal_ket([Symbol("n")]).as_expr())
           }
         None =>
           if quantum_is_operator_expr(expr) {
@@ -60,8 +57,8 @@ fn represent_default_basis_state(expr : Expr) -> Expr? {
 ///|
 fn represent_index_symbol(label : Expr, index : Int, fallback : String) -> Expr {
   match label {
-    Expr::Symbol(name) => Expr::Symbol("\{name}_\{index.to_string()}")
-    _ => Expr::Symbol("\{fallback}_\{index.to_string()}")
+    Symbol(name) => Symbol("\{name}_\{index.to_string()}")
+    _ => Symbol("\{fallback}_\{index.to_string()}")
   }
 }
 
@@ -166,9 +163,7 @@ pub fn enumerate_states(
   index_list? : Array[Int] = [],
 ) -> Array[Expr] raise @symphysics.PhysicsError {
   guard quantum_is_state_expr(state_expr) else {
-    raise @symphysics.PhysicsError::ValueError(
-      "enumerate_states expects a state expression",
-    )
+    raise ValueError("enumerate_states expects a state expression")
   }
   let indices : Array[Int] = []
   if count > 0 {
@@ -197,9 +192,7 @@ pub fn rep_innerproduct(
   index? : Int = 1,
 ) -> Expr raise @symphysics.PhysicsError {
   guard quantum_is_ket_expr(expr) || quantum_is_bra_expr(expr) else {
-    raise @symphysics.PhysicsError::ValueError(
-      "rep_innerproduct expects a bra or ket expression",
-    )
+    raise ValueError("rep_innerproduct expects a bra or ket expression")
   }
   let basis_state = get_basis(expr, basis~, replace_none=true).unwrap_or_else(() => {
     raise @symphysics.PhysicsError::ValueError(
@@ -208,9 +201,7 @@ pub fn rep_innerproduct(
   })
   let basis_kets = enumerate_states(basis_state, start_index=index, count=2)
   guard basis_kets.length() == 2 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "Could not enumerate basis states for representation",
-    )
+    raise ValueError("Could not enumerate basis states for representation")
   }
   if quantum_is_bra_expr(expr) {
     let ket_value = if dagger(basis_kets[0]) == expr {
@@ -232,7 +223,7 @@ pub fn rep_innerproduct(
 ///|
 fn rep_contract_bra_state(bra_expr : Expr, state_expr : Expr) -> Expr {
   match state_expr {
-    Expr::Add(args) =>
+    Add(args) =>
       quantum_add_from_args_preserve(
         args.map(term => rep_contract_bra_state(bra_expr, term)),
       )
@@ -259,9 +250,7 @@ pub fn rep_expectation(
   index? : Int = 1,
 ) -> Expr raise @symphysics.PhysicsError {
   guard quantum_is_operator_expr(expr) else {
-    raise @symphysics.PhysicsError::ValueError(
-      "rep_expectation expects an operator expression",
-    )
+    raise ValueError("rep_expectation expects an operator expression")
   }
   let basis_state = get_basis(expr, basis~, replace_none=true).unwrap_or_else(() => {
     raise @symphysics.PhysicsError::ValueError(
@@ -270,9 +259,7 @@ pub fn rep_expectation(
   })
   let basis_kets = enumerate_states(basis_state, start_index=index, count=2)
   guard basis_kets.length() == 2 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "Could not enumerate basis states for expectation value",
-    )
+    raise ValueError("Could not enumerate basis states for expectation value")
   }
   let bra_expr = dagger(basis_kets[1])
   let applied = qapply(quantum_mul_from_args_preserve([expr, basis_kets[0]]))

@@ -8,7 +8,7 @@ test "indexed latex renders base indices and composite expressions" {
   inspect(ranged.latex(), content="{j}_{0\\mathrel{..}\\nobreak n - 1}")
   let base = indexed_base("A")
   inspect(base.latex(), content="A")
-  let item = base.at([index_idx(i), index_expr(@symcore.Expr::Symbol("k"))]) catch {
+  let item = base.at([index_idx(i), index_expr(Symbol("k"))]) catch {
     _ => fail("indexed")
   }
   inspect(item.latex(), content="{A}_{i,k}")

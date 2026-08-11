@@ -109,7 +109,7 @@ pub fn latex_settings(
     Some(value) => value
     None => mode == "inline"
   }
-  LatexSettings::{
+  {
     mode,
     full_prec,
     fold_frac_powers,
@@ -595,7 +595,7 @@ fn latex_float(value : @symcore.Float, settings : LatexSettings) -> String {
   if settings.full_prec {
     value.format(dps=@symnum.prec_to_dps(value.precision()))
   } else {
-    value.to_string()
+    Show::to_string(value)
   }
 }
 
@@ -638,16 +638,16 @@ fn latex_number_symbol(
   settings : LatexSettings,
 ) -> String {
   match kind {
-    @symcore.NumberSymbolKind::ImaginaryUnit => settings.imaginary_unit_latex
-    @symcore.NumberSymbolKind::Pi => "\\pi"
-    @symcore.NumberSymbolKind::Exp1 => "e"
-    @symcore.NumberSymbolKind::EulerGamma => "\\gamma"
-    @symcore.NumberSymbolKind::GoldenRatio => "\\phi"
-    @symcore.NumberSymbolKind::Catalan => "G"
-    @symcore.NumberSymbolKind::Infinity => "\\infty"
-    @symcore.NumberSymbolKind::NegativeInfinity => "-\\infty"
-    @symcore.NumberSymbolKind::ComplexInfinity => "\\tilde{\\infty}"
-    @symcore.NumberSymbolKind::NaN => "\\text{NaN}"
+    ImaginaryUnit => settings.imaginary_unit_latex
+    Pi => "\\pi"
+    Exp1 => "e"
+    EulerGamma => "\\gamma"
+    GoldenRatio => "\\phi"
+    Catalan => "G"
+    Infinity => "\\infty"
+    NegativeInfinity => "-\\infty"
+    ComplexInfinity => "\\tilde{\\infty}"
+    NaN => "\\text{NaN}"
   }
 }
 
@@ -684,9 +684,7 @@ fn latex_singleton_set_rank(name : String) -> Int? {
 ///|
 fn latex_singleton_set_expr_rank(expr : Expr) -> Int? {
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Symbol(name)
-    | @symcore.ExprForm::FunctionHead(name)
-    | @symcore.ExprForm::UndefinedFunction(name) =>
+    Symbol(name) | FunctionHead(name) | UndefinedFunction(name) =>
       latex_singleton_set_rank(name)
     _ => None
   }
@@ -695,14 +693,14 @@ fn latex_singleton_set_expr_rank(expr : Expr) -> Int? {
 ///|
 fn latex_is_atomic_index(expr : Expr) -> Bool {
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_)
-    | @symcore.ExprForm::NumberSymbol(_)
-    | @symcore.ExprForm::Symbol(_)
-    | @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::WildFunction(_, _)
-    | @symcore.ExprForm::FunctionHead(_)
-    | @symcore.ExprForm::UndefinedFunction(_) => true
+    Number(_)
+    | NumberSymbol(_)
+    | Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | WildFunction(_, _)
+    | FunctionHead(_)
+    | UndefinedFunction(_) => true
     _ => false
   }
 }
@@ -740,11 +738,8 @@ fn latex_sorted_exprs(items : Array[Expr]) -> Array[Expr] {
 ///|
 fn latex_needs_mul_brackets(expr : Expr) -> Bool {
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Add(_)
-    | @symcore.ExprForm::Relational(_, _, _)
-    | @symcore.ExprForm::Lambda(_, _)
-    | @symcore.ExprForm::Subs(_, _, _) => true
-    @symcore.ExprForm::ComplexFloat(value) =>
+    Add(_) | Relational(_, _, _) | Lambda(_, _) | Subs(_, _, _) => true
+    ComplexFloat(value) =>
       !@symnum.is_zero(value.real_part().to_mpf()) &&
       !@symnum.is_zero(value.imag_part().to_mpf())
     _ => false
@@ -754,20 +749,16 @@ fn latex_needs_mul_brackets(expr : Expr) -> Bool {
 ///|
 fn latex_needs_brackets(expr : Expr) -> Bool {
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_) =>
+    Number(_) =>
       match @symcore.exact_number_num_den(expr) {
         Some((num, den)) => !(den.compare(1N) == 0 && num.compare(0N) >= 0)
         None => true
       }
-    @symcore.ExprForm::Float(value) => @symnum.mpf_sign(value.to_mpf()) < 0
-    @symcore.ExprForm::ComplexFloat(_) => true
-    @symcore.ExprForm::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity) =>
+    Float(value) => @symnum.mpf_sign(value.to_mpf()) < 0
+    ComplexFloat(_) => true
+    NumberSymbol(NegativeInfinity) => true
+    Add(_) | Relational(_, _, _) | Lambda(_, _) | Subs(_, _, _) | Mod(_, _) =>
       true
-    @symcore.ExprForm::Add(_)
-    | @symcore.ExprForm::Relational(_, _, _)
-    | @symcore.ExprForm::Lambda(_, _)
-    | @symcore.ExprForm::Subs(_, _, _)
-    | @symcore.ExprForm::Mod(_, _) => true
     _ => false
   }
 }
@@ -778,14 +769,14 @@ fn latex_needs_function_brackets(expr : Expr) -> Bool {
     return false
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Mul(_) => false
-    @symcore.ExprForm::Pow(base, _) => latex_needs_brackets(base)
-    @symcore.ExprForm::Add(_)
-    | @symcore.ExprForm::Apply(_, _)
-    | @symcore.ExprForm::Relational(_, _, _)
-    | @symcore.ExprForm::Lambda(_, _)
-    | @symcore.ExprForm::Subs(_, _, _)
-    | @symcore.ExprForm::Mod(_, _) => true
+    Mul(_) => false
+    Pow(base, _) => latex_needs_brackets(base)
+    Add(_)
+    | Apply(_, _)
+    | Relational(_, _, _)
+    | Lambda(_, _)
+    | Subs(_, _, _)
+    | Mod(_, _) => true
     _ => false
   }
 }
@@ -797,28 +788,28 @@ fn latex_wrap_power_base(
   settings : LatexSettings,
 ) -> String {
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Add(_)
-    | @symcore.ExprForm::Mul(_)
-    | @symcore.ExprForm::Pow(_, _)
-    | @symcore.ExprForm::Mod(_, _)
-    | @symcore.ExprForm::Relational(_, _, _)
-    | @symcore.ExprForm::Apply(_, _)
-    | @symcore.ExprForm::Derivative(_, _)
-    | @symcore.ExprForm::Subs(_, _, _)
-    | @symcore.ExprForm::Lambda(_, _) => latex_parens(base_tex)
-    @symcore.ExprForm::Number(_) =>
+    Add(_)
+    | Mul(_)
+    | Pow(_, _)
+    | Mod(_, _)
+    | Relational(_, _, _)
+    | Apply(_, _)
+    | Derivative(_, _)
+    | Subs(_, _, _)
+    | Lambda(_, _) => latex_parens(base_tex)
+    Number(_) =>
       match @symcore.exact_number_num_den(expr) {
         Some((num, den)) if num.compare(0N) < 0 || den.compare(1N) != 0 =>
           latex_parens(base_tex)
         _ => base_tex
       }
-    @symcore.ExprForm::Float(value) =>
+    Float(value) =>
       if @symnum.mpf_sign(value.to_mpf()) < 0 {
         latex_parens(base_tex)
       } else {
         base_tex
       }
-    @symcore.ExprForm::ComplexFloat(_) => latex_parens(base_tex)
+    ComplexFloat(_) => latex_parens(base_tex)
     _ => latex_parenthesize_super(base_tex, settings)
   }
 }
@@ -826,7 +817,7 @@ fn latex_wrap_power_base(
 ///|
 fn latex_tuple_items(expr : Expr) -> Array[Expr]? {
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Tuple(items) => Some(items)
+    Tuple(items) => Some(items)
     _ =>
       match ordinary_application_name_args(expr) {
         Some((name, args)) if name == "Tuple" => Some(args)
@@ -861,27 +852,26 @@ fn latex_mul_level_parenthesize(
 fn latex_atomish_parenthesize(expr : Expr, settings : LatexSettings) -> String {
   let tex = latex_format_expr(expr, 0, settings)
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_) =>
+    Number(_) =>
       match @symcore.exact_number_num_den(expr) {
         Some((num, den)) if den.compare(1N) == 0 && num.compare(0N) >= 0 => tex
         _ => latex_parens(tex)
       }
-    @symcore.ExprForm::Float(value) =>
+    Float(value) =>
       if @symnum.mpf_sign(value.to_mpf()) < 0 {
         latex_parens(tex)
       } else {
         tex
       }
-    @symcore.ExprForm::ComplexFloat(_) => latex_parens(tex)
-    @symcore.ExprForm::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity) =>
-      latex_parens(tex)
-    @symcore.ExprForm::Symbol(_)
-    | @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::WildFunction(_, _)
-    | @symcore.ExprForm::IdentityFunction
-    | @symcore.ExprForm::FunctionHead(_)
-    | @symcore.ExprForm::UndefinedFunction(_) => tex
+    ComplexFloat(_) => latex_parens(tex)
+    NumberSymbol(NegativeInfinity) => latex_parens(tex)
+    Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | WildFunction(_, _)
+    | IdentityFunction
+    | FunctionHead(_)
+    | UndefinedFunction(_) => tex
     _ => latex_parens(tex)
   }
 }
@@ -990,8 +980,7 @@ fn latex_bigop_application(
     "\{op_tex}_{\\substack{\{rows_tex}}} "
   }
   let body = match @symcore.expr_form(func) {
-    @symcore.ExprForm::Add(_) =>
-      latex_parens(latex_format_expr(func, 0, settings))
+    Add(_) => latex_parens(latex_format_expr(func, 0, settings))
     _ => latex_format_expr(func, 0, settings)
   }
   Some(head + body)
@@ -1010,7 +999,7 @@ fn latex_limit_application(
   let point = args[2]
   let dir = if args.length() >= 4 {
     match args[3] {
-      @symcore.Expr::Symbol(name) => name
+      Symbol(name) => name
       _ => "+"
     }
   } else {
@@ -1019,10 +1008,7 @@ fn latex_limit_application(
   let point_tex = latex_format_expr(point, 0, settings)
   let mut tex = "\\lim_{\{latex_format_expr(variable, 0, settings)} \\to "
   let point_is_infinite = match @symcore.expr_form(point) {
-    @symcore.ExprForm::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-    | @symcore.ExprForm::NumberSymbol(
-      @symcore.NumberSymbolKind::NegativeInfinity
-    ) => true
+    NumberSymbol(Infinity) | NumberSymbol(NegativeInfinity) => true
     _ => false
   }
   if dir == "+-" || point_is_infinite {
@@ -1031,8 +1017,7 @@ fn latex_limit_application(
     tex += "\{point_tex}^\{dir}}"
   }
   let body = match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Add(_) | @symcore.ExprForm::Mul(_) =>
-      latex_parens(latex_format_expr(expr, 0, settings))
+    Add(_) | Mul(_) => latex_parens(latex_format_expr(expr, 0, settings))
     _ => latex_format_expr(expr, 0, settings)
   }
   Some("\{tex} \{body}")
@@ -1109,7 +1094,7 @@ fn latex_piecewise_application(
     let expr_tex = latex_format_expr(args[i], 0, settings)
     let cond = args[i + 1]
     let row = match @symcore.expr_form(cond) {
-      @symcore.ExprForm::Boolean(true) if i + 2 == args.length() =>
+      Boolean(true) if i + 2 == args.length() =>
         "\{expr_tex} & \\text{otherwise}"
       _ =>
         "\{expr_tex} & \\text{for}\\: \{latex_format_expr(cond, 0, settings)}"
@@ -1140,9 +1125,8 @@ fn latex_unified_transform(
 ///|
 fn latex_is_universal_set_expr(expr : Expr) -> Bool {
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Symbol(name)
-    | @symcore.ExprForm::FunctionHead(name)
-    | @symcore.ExprForm::UndefinedFunction(name) => name == "UniversalSet"
+    Symbol(name) | FunctionHead(name) | UndefinedFunction(name) =>
+      name == "UniversalSet"
     _ => false
   }
 }
@@ -1369,11 +1353,11 @@ fn latex_image_set_application(
     return None
   }
   let (vars, body) = match @symcore.expr_form(args[0]) {
-    @symcore.ExprForm::Lambda(vars, body) => (vars, body)
+    Lambda(vars, body) => (vars, body)
     _ => return None
   }
   let vars_items = match @symcore.expr_form(vars) {
-    @symcore.ExprForm::Tuple(items) => items
+    Tuple(items) => items
     _ => [vars]
   }
   if vars_items.length() != args.length() - 1 {
@@ -1861,10 +1845,7 @@ fn latex_function_application(
 ///|
 fn expr_is_numericish(expr : Expr) -> Bool {
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_)
-    | @symcore.ExprForm::Float(_)
-    | @symcore.ExprForm::ComplexFloat(_)
-    | @symcore.ExprForm::NumberSymbol(_) => true
+    Number(_) | Float(_) | ComplexFloat(_) | NumberSymbol(_) => true
     _ => false
   }
 }
@@ -1881,7 +1862,7 @@ fn latex_mul(
   let mut sign = ""
   for arg in args {
     match @symcore.expr_form(arg) {
-      @symcore.ExprForm::Pow(base, exp) =>
+      Pow(base, exp) =>
         match exact_positive_denominator_pow(base, exp) {
           Some(den) => denominators.push(den)
           None => numerators.push(arg)
@@ -1894,12 +1875,8 @@ fn latex_mul(
               sign = if sign == "" { "-" } else { "" }
             }
             if den.compare(1N) != 0 {
-              numerators.push(
-                @symcore.Expr::Number(@symnum.BigRational::from_bigint(abs_num)),
-              )
-              denominators.push(
-                @symcore.Expr::Number(@symnum.BigRational::from_bigint(den)),
-              )
+              numerators.push(Number(@symnum.BigRational::from_bigint(abs_num)))
+              denominators.push(Number(@symnum.BigRational::from_bigint(den)))
             } else {
               numerators.push(exact_abs_expr(arg))
             }
@@ -1934,7 +1911,7 @@ fn latex_mul(
       let child_tex = latex_format_expr(child, 0, settings)
       let single_add = if items.length() == 1 {
         match @symcore.expr_form(child) {
-          @symcore.ExprForm::Add(_) => true
+          Add(_) => true
           _ => false
         }
       } else {
@@ -2085,12 +2062,11 @@ fn latex_format_expr(
   }
   let prec = precedence(expr)
   let body = match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_) => latex_number(expr, settings)
-    @symcore.ExprForm::Float(value) => latex_float(value, settings)
-    @symcore.ExprForm::ComplexFloat(value) =>
-      latex_complex_float(value, settings)
-    @symcore.ExprForm::NumberSymbol(kind) => latex_number_symbol(kind, settings)
-    @symcore.ExprForm::Symbol(name) =>
+    Number(_) => latex_number(expr, settings)
+    Float(value) => latex_float(value, settings)
+    ComplexFloat(value) => latex_complex_float(value, settings)
+    NumberSymbol(kind) => latex_number_symbol(kind, settings)
+    Symbol(name) =>
       match settings.symbol_names.get(name) {
         Some(rendered) => rendered
         None =>
@@ -2099,23 +2075,23 @@ fn latex_format_expr(
             None => deal_with_super_sub(name)
           }
       }
-    @symcore.ExprForm::Dummy(name, _) => deal_with_super_sub(name)
-    @symcore.ExprForm::Wild(name, _, _) => deal_with_super_sub(name)
-    @symcore.ExprForm::WildFunction(name, _) => latex_hprint_function(name)
-    @symcore.ExprForm::IdentityFunction => "\\left( x \\mapsto x \\right)"
-    @symcore.ExprForm::FunctionHead(name) =>
+    Dummy(name, _) => deal_with_super_sub(name)
+    Wild(name, _, _) => deal_with_super_sub(name)
+    WildFunction(name, _) => latex_hprint_function(name)
+    IdentityFunction => "\\left( x \\mapsto x \\right)"
+    FunctionHead(name) =>
       match latex_singleton_set_constant(name) {
         Some(tex) => tex
         None => latex_hprint_function(name)
       }
-    @symcore.ExprForm::UndefinedFunction(name) =>
+    UndefinedFunction(name) =>
       match latex_singleton_set_constant(name) {
         Some(tex) => tex
         None => latex_hprint_function(name)
       }
-    @symcore.ExprForm::Boolean(true) => "\\text{True}"
-    @symcore.ExprForm::Boolean(false) => "\\text{False}"
-    @symcore.ExprForm::Add(args) =>
+    Boolean(true) => "\\text{True}"
+    Boolean(false) => "\\text{False}"
+    Add(args) =>
       if args.is_empty() {
         "0"
       } else if args.length() == 2 {
@@ -2155,10 +2131,9 @@ fn latex_format_expr(
         }
         rendered.join(" ")
       }
-    @symcore.ExprForm::Mul(args) =>
-      return latex_mul(expr, args, parent_prec, settings)
-    @symcore.ExprForm::Pow(base, exp) => latex_pow(base, exp, settings)
-    @symcore.ExprForm::Mod(lhs, rhs) => {
+    Mul(args) => return latex_mul(expr, args, parent_prec, settings)
+    Pow(base, exp) => latex_pow(base, exp, settings)
+    Mod(lhs, rhs) => {
       let lhs_tex_raw = latex_format_expr(lhs, 0, settings)
       let rhs_tex_raw = latex_format_expr(rhs, 0, settings)
       let lhs_tex = if latex_needs_mul_brackets(lhs) {
@@ -2173,7 +2148,7 @@ fn latex_format_expr(
       }
       "\{lhs_tex} \\bmod \{rhs_tex}"
     }
-    @symcore.ExprForm::Tuple(args) =>
+    Tuple(args) =>
       if args.length() == 1 {
         latex_parens_lspace(latex_format_expr(args[0], 0, settings) + ",")
       } else {
@@ -2183,7 +2158,7 @@ fn latex_format_expr(
           .join(", \\  "),
         )
       }
-    @symcore.ExprForm::Dict(items) => {
+    Dict(items) => {
       let rendered : Array[String] = []
       for item in @symcore.sorted_dict_entries(items) {
         let (key, value) = item
@@ -2194,18 +2169,18 @@ fn latex_format_expr(
       let dict_tex = rendered.join(", \\  ")
       "\\left\\{ \{dict_tex}\\right\\}"
     }
-    @symcore.ExprForm::Relational(op, lhs, rhs) => {
+    Relational(op, lhs, rhs) => {
       let rel = match op {
-        @symcore.RelOp::Eq => "="
-        @symcore.RelOp::Ne => "\\neq"
-        @symcore.RelOp::Lt => "<"
-        @symcore.RelOp::Le => "\\leq"
-        @symcore.RelOp::Gt => ">"
-        @symcore.RelOp::Ge => "\\geq"
+        Eq => "="
+        Ne => "\\neq"
+        Lt => "<"
+        Le => "\\leq"
+        Gt => ">"
+        Ge => "\\geq"
       }
       "\{latex_format_expr(lhs, 0, settings)} \{rel} \{latex_format_expr(rhs, 0, settings)}"
     }
-    @symcore.ExprForm::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       let pair_count = deriv_args.length() / 2
       let wrts : Array[(Expr, Expr)] = []
       for i in 0..<pair_count {
@@ -2286,17 +2261,17 @@ fn latex_format_expr(
       }
       "\\frac{\{numerator}}{\{denominator}} \{inner_tex}"
     }
-    @symcore.ExprForm::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       "\\left. \{latex_format_expr(inner, 0, settings)} \\right|_{\\substack{ \{latex_format_expr(variable, 0, settings)}=\{latex_format_expr(value, 0, settings)} }}"
-    @symcore.ExprForm::Lambda(vars, body) => {
+    Lambda(vars, body) => {
       let vars_tex = match @symcore.expr_form(vars) {
-        @symcore.ExprForm::Tuple(items) if items.length() == 1 =>
+        Tuple(items) if items.length() == 1 =>
           latex_format_expr(items[0], 0, settings)
         _ => latex_format_expr(vars, 0, settings)
       }
       "\\left( \{vars_tex} \\mapsto \{latex_format_expr(body, 0, settings)} \\right)"
     }
-    @symcore.ExprForm::Apply(head, args) => {
+    Apply(head, args) => {
       let head_tex = latex_wrap_power_base(
         head,
         latex_format_expr(head, 0, settings),

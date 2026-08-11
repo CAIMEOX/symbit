@@ -11,10 +11,10 @@
 ///|
 fn represent_expr_contains_symbol(expr : Expr, name : String) -> Bool {
   match expr {
-    Expr::Symbol(sym) => sym == name
-    Expr::Add(args) | Expr::Mul(args) =>
+    Symbol(sym) => sym == name
+    Add(args) | Mul(args) =>
       args.any(arg => represent_expr_contains_symbol(arg, name))
-    Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       represent_expr_contains_symbol(base, name) ||
       represent_expr_contains_symbol(exp, name)
     _ =>
@@ -29,7 +29,7 @@ fn represent_linear_term_expr(base : Expr, coeff : @symnum.BigRational) -> Expr 
   } else if coeff.neg_r().is_one() {
     int(-1) * base
   } else {
-    @symcore.Expr::Number(coeff) * base
+    Number(coeff) * base
   }
 }
 
@@ -40,7 +40,7 @@ fn represent_linear_sum_expr(
 ) -> Expr {
   let args : Array[Expr] = []
   if !const_coeff.is_zero() {
-    args.push(@symcore.Expr::Number(const_coeff))
+    args.push(Number(const_coeff))
   }
   for term in terms {
     if !term.1.is_zero() {
@@ -58,7 +58,7 @@ fn represent_delta_replacement(coord_name : String, arg : Expr) -> Expr? {
       let mut coord_coeff : @symnum.BigRational? = None
       for term in terms {
         match term.0 {
-          Expr::Symbol(name) if name == coord_name => coord_coeff = Some(term.1)
+          Symbol(name) if name == coord_name => coord_coeff = Some(term.1)
           _ => others.push(term)
         }
       }
@@ -84,7 +84,7 @@ fn represent_integrate_coord_once(
   coord_name : String,
 ) -> (Expr, Bool) {
   match expr {
-    Expr::Mul(args) => {
+    Mul(args) => {
       for idx in 0..<args.length() {
         match @symcore.application_args(args[idx]) {
           Some(delta_args) if @symcore.application_has_name(
@@ -124,7 +124,7 @@ fn represent_integrate_coord(expr : Expr, coord_name : String) -> Expr {
     return expr
   }
   match expr {
-    Expr::Add(args) =>
+    Add(args) =>
       quantum_add_from_args_preserve(
         args.map(arg => represent_integrate_coord(arg, coord_name)),
       )
@@ -150,15 +150,15 @@ fn represent_state_coordinates(state_expr : Expr) -> Array[String] {
       @symcore.application_name(state_expr),
       @symcore.application_args(state_expr),
     ) {
-    (Some("XKet"), Some([Expr::Symbol(name)]))
-    | (Some("XBra"), Some([Expr::Symbol(name)]))
-    | (Some("PxKet"), Some([Expr::Symbol(name)]))
-    | (Some("PxBra"), Some([Expr::Symbol(name)])) => [name]
+    (Some("XKet"), Some([Symbol(name)]))
+    | (Some("XBra"), Some([Symbol(name)]))
+    | (Some("PxKet"), Some([Symbol(name)]))
+    | (Some("PxBra"), Some([Symbol(name)])) => [name]
     (Some("PositionKet3D"), Some(args)) | (Some("PositionBra3D"), Some(args)) => {
       let out : Array[String] = []
       for arg in args {
         match arg {
-          Expr::Symbol(name) => out.push(name)
+          Symbol(name) => out.push(name)
           _ => ()
         }
       }
@@ -177,7 +177,7 @@ fn represent_resolve_integration_basis(
     Some(value) => get_basis(orig_expr, basis=Some(value), replace_none=true)
     None =>
       match orig_expr {
-        Expr::Mul(args) if !args.is_empty() =>
+        Mul(args) if !args.is_empty() =>
           match get_basis(args[args.length() - 1], replace_none=true) {
             Some(value) => Some(value)
             None => get_basis(orig_expr, replace_none=true)

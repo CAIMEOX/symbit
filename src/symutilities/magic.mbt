@@ -9,9 +9,7 @@ pub fn[T] pollute(
   scope : Ref[Map[String, T]],
 ) -> Unit raise UtilitiesError {
   if names.length() != objects.length() {
-    raise UtilitiesError::InvalidArgument(
-      "pollute expects matching name/object lengths",
-    )
+    raise InvalidArgument("pollute expects matching name/object lengths")
   }
   for i in 0..<names.length() {
     scope.val[names[i]] = objects[i]

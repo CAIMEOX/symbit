@@ -103,7 +103,7 @@ pub fn euler_fixed(prec : Int) -> BigInt raise MpfError {
 /// Compatibility probe for callers that used `except NoConvergence`.
 pub fn is_no_convergence(err : MPError) -> Bool {
   match err {
-    MPError::ConvergenceError(_) => true
+    ConvergenceError(_) => true
     _ => false
   }
 }
@@ -112,7 +112,7 @@ pub fn is_no_convergence(err : MPError) -> Bool {
 /// Compatibility probe for callers that used `except ComplexResult`.
 pub fn is_complex_result(err : MPError) -> Bool {
   match err {
-    MPError::ComplexResult(_) => true
+    ComplexResult(_) => true
     _ => false
   }
 }

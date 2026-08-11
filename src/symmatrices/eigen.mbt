@@ -29,7 +29,7 @@ fn matrix_from_columns(
   })
   for j in 0..<columns.length() {
     if columns[j].length() != rows {
-      raise MatrixError::ShapeError("matrix columns must have equal height")
+      raise ShapeError("matrix columns must have equal height")
     }
     for i in 0..<rows {
       data[i][j] = columns[j][i]
@@ -76,9 +76,7 @@ fn solve_singular_particular(
       Some(col) => solution[col] = reduced_rhs.data[i][0]
       None =>
         if !expr_is_zero(reduced_rhs.data[i][0]) {
-          raise MatrixError::ValueError(
-            "singular linear system is inconsistent",
-          )
+          raise ValueError("singular linear system is inconsistent")
         }
     }
   }
@@ -127,7 +125,7 @@ fn jordan_chains_for_eigenvalue(
       extended_any = true
     }
     if !extended_any {
-      raise MatrixError::ValueError(
+      raise ValueError(
         "failed to construct full generalized eigenvector chains",
       )
     }
@@ -154,9 +152,7 @@ fn matrix_add_diag_scalar(
   scalar : Expr,
 ) -> Matrix raise MatrixError {
   if !matrix.is_square() {
-    raise MatrixError::NonSquareMatrixError(
-      "diagonal scalar shift requires a square matrix",
-    )
+    raise NonSquareMatrixError("diagonal scalar shift requires a square matrix")
   }
   let data = clone_expr_rows(matrix.data)
   for i in 0..<matrix.rows {
@@ -234,7 +230,7 @@ fn polynomial_terms(expr : Expr, indeterminate : Expr) -> Map[Int, Expr]? {
     return Some(out)
   }
   match expr {
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let mut acc : Map[Int, Expr] = Map([])
       for arg in args {
         match polynomial_terms(arg, indeterminate) {
@@ -244,7 +240,7 @@ fn polynomial_terms(expr : Expr, indeterminate : Expr) -> Map[Int, Expr]? {
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = polynomial_const(@symcore.int(1))
       for arg in args {
         match polynomial_terms(arg, indeterminate) {
@@ -254,8 +250,7 @@ fn polynomial_terms(expr : Expr, indeterminate : Expr) -> Map[Int, Expr]? {
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, @symcore.Expr::Number(exp)) if exp.is_integral() &&
-      exp.numerator().to_int() >= 0 => {
+    Pow(base, Number(exp)) if exp.is_integral() && exp.numerator().to_int() >= 0 => {
       let power = exp.numerator().to_int()
       let base_poly = match polynomial_terms(base, indeterminate) {
         Some(poly) => poly
@@ -372,17 +367,17 @@ fn eigen_pack_values(values : Array[Expr]) -> Array[EigenValueMult] {
 fn matrix_charpoly_roots(matrix : Matrix) -> Array[Expr] raise MatrixError {
   let lam_name = "_lambda"
   let poly = @sympolys.Poly::from_expr_defaults(
-    matrix.charpoly_expr(x=@symcore.Expr::Symbol(lam_name)),
+    matrix.charpoly_expr(x=Symbol(lam_name)),
     gens=[lam_name],
   ) catch {
     _ =>
-      raise MatrixError::ValueError(
+      raise ValueError(
         "charpoly could not be converted into a polynomial over a supported exact domain",
       )
   }
   @sympolys.roots(poly).map(expr_simplify) catch {
     _ =>
-      raise MatrixError::ValueError(
+      raise ValueError(
         "eigen root extraction is not available for this characteristic polynomial",
       )
   }
@@ -399,13 +394,13 @@ fn matrix_exact_charpoly_expr(
   }
   let dm = @sympolys.DomainMatrix::from_Matrix(matrix.to_list(), fmt="dense") catch {
     _ =>
-      raise MatrixError::ValueError(
+      raise ValueError(
         "matrix entries are not supported by the exact DomainMatrix charpoly path",
       )
   }
   let coeffs = dm.charpoly_base() catch {
     _ =>
-      raise MatrixError::ValueError(
+      raise ValueError(
         "exact DomainMatrix charpoly is not available for this matrix",
       )
   }
@@ -416,7 +411,7 @@ fn matrix_exact_charpoly_expr(
     let coeff = coeffs[i]
     let coeff_expr = (@sympolys.DomainScalar::new(coeff, domain) catch {
       _ =>
-        raise MatrixError::ValueError(
+        raise ValueError(
           "exact DomainMatrix charpoly coefficient could not be converted back to an expression",
         )
     }).to_sympy()
@@ -456,7 +451,7 @@ fn matrix_try_exact_charpoly_expr(
   x : Expr,
 ) -> Expr? raise MatrixError {
   try matrix_exact_charpoly_expr(matrix, x) catch {
-    MatrixError::ValueError(_) => None
+    ValueError(_) => None
     err => raise err
   } noraise {
     value => Some(value)
@@ -473,13 +468,13 @@ fn matrix_exact_eigenvects(
     field=true,
   ) catch {
     _ =>
-      raise MatrixError::ValueError(
+      raise ValueError(
         "matrix entries are not supported by the exact DomainMatrix eigensolver",
       )
   }
   let (rational, algebraic) = @sympolys.dom_eigenvects(dm, l="_lambda") catch {
     _ =>
-      raise MatrixError::ValueError(
+      raise ValueError(
         "exact DomainMatrix eigen decomposition is not available for this matrix",
       )
   }
@@ -487,13 +482,13 @@ fn matrix_exact_eigenvects(
   for item in rational {
     let eigenvalue = (@sympolys.DomainScalar::new(item.1, item.0) catch {
       _ =>
-        raise MatrixError::ValueError(
+        raise ValueError(
           "exact rational eigenvalue could not be converted back to an expression",
         )
     }).to_sympy()
     let basis_rows = item.3.to_Matrix() catch {
       _ =>
-        raise MatrixError::ValueError(
+        raise ValueError(
           "exact rational eigenbasis could not be converted back to expression rows",
         )
     }
@@ -511,13 +506,13 @@ fn matrix_exact_eigenvects(
     let gen = if item.1.gens.is_empty() { "_lambda" } else { item.1.gens[0] }
     let basis_rows = item.3.to_Matrix() catch {
       _ =>
-        raise MatrixError::ValueError(
+        raise ValueError(
           "exact algebraic eigenbasis could not be converted back to expression rows",
         )
     }
     let roots = @sympolys.roots(item.1) catch {
       _ =>
-        raise MatrixError::ValueError(
+        raise ValueError(
           "algebraic eigenvalue expansion is not available for this matrix",
         )
     }
@@ -547,10 +542,10 @@ fn matrix_exact_eigenvects(
 /// - Hard cases can still return unevaluated radicals or raise `ValueError` when a basis cannot be assembled.
 pub fn Matrix::charpoly_expr(
   self : Matrix,
-  x? : Expr = @symcore.Expr::Symbol("lambda"),
+  x? : Expr = Symbol("lambda"),
 ) -> Expr raise MatrixError {
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError("charpoly requires a square matrix")
+    raise NonSquareMatrixError("charpoly requires a square matrix")
   }
   if !matrix_has_floating_leaf(self.data) {
     match matrix_try_exact_charpoly_expr(self, x) {
@@ -574,7 +569,7 @@ pub fn Matrix::charpoly_expr(
 /// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs. Some matrices fall back to determinant expansion instead of an exact polynomial-domain path.
 pub fn Matrix::charpoly(
   self : Matrix,
-  x? : Expr = @symcore.Expr::Symbol("lambda"),
+  x? : Expr = Symbol("lambda"),
 ) -> Expr raise MatrixError {
   self.charpoly_expr(x~)
 }
@@ -590,9 +585,7 @@ pub fn Matrix::eigenvals(
   self : Matrix,
 ) -> Array[EigenValueMult] raise MatrixError {
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError(
-      "eigenvals requires a square matrix",
-    )
+    raise NonSquareMatrixError("eigenvals requires a square matrix")
   }
   if self.rows == 0 {
     return []
@@ -670,9 +663,7 @@ pub fn Matrix::eigenvects(
 /// - Limits: Raises `MatrixError::NonSquareMatrixError` for non-square inputs and may raise `ValueError` when a full Jordan chain basis cannot be recovered.
 pub fn Matrix::jordan_cells(self : Matrix) -> Array[Matrix] raise MatrixError {
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError(
-      "jordan_cells requires a square matrix",
-    )
+    raise NonSquareMatrixError("jordan_cells requires a square matrix")
   }
   if self.rows == 0 {
     return []
@@ -728,9 +719,7 @@ pub fn Matrix::diagonalize(
 ) -> (Matrix, Matrix) raise MatrixError {
   ignore(reals_only)
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError(
-      "diagonalize requires a square matrix",
-    )
+    raise NonSquareMatrixError("diagonalize requires a square matrix")
   }
   let eigs = self.eigenvects()
   let columns : Array[Array[Expr]] = []
@@ -743,7 +732,7 @@ pub fn Matrix::diagonalize(
     }
   }
   if columns.length() != self.rows {
-    raise MatrixError::ValueError("matrix is not diagonalizable")
+    raise ValueError("matrix is not diagonalizable")
   }
   let pdata0 = zeros(self.rows, cols=Some(self.rows))
   let pdata = clone_expr_rows(pdata0.data)
@@ -769,9 +758,7 @@ pub fn Matrix::jordan_form(
   calc_transform? : Bool = true,
 ) -> (Matrix, Matrix) raise MatrixError {
   if !self.is_square() {
-    raise MatrixError::NonSquareMatrixError(
-      "jordan_form requires a square matrix",
-    )
+    raise NonSquareMatrixError("jordan_form requires a square matrix")
   }
   let chains = jordan_chain_data(self)
   let jordan_blocks : Array[Matrix] = []
@@ -784,7 +771,7 @@ pub fn Matrix::jordan_form(
     }
   }
   if columns.length() != self.rows {
-    raise MatrixError::ValueError("failed to assemble full Jordan basis")
+    raise ValueError("failed to assemble full Jordan basis")
   }
   let j = if jordan_blocks.length() == 1 {
     jordan_blocks[0]

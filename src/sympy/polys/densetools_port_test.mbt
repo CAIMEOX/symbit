@@ -40,15 +40,13 @@ fn dt_port_dmp_alg_inject_repr(value : (DensePoly, Int, Domain)) -> String {
 ///|
 fn dt_port_alg_minpoly() -> Poly raise PolyError {
   let a = @symcore.Expr::Symbol("a")
-  PolyBuilder::new(["a"], Domain::QQ).from_expr(
-    (a ^ @symcore.int(2)) - @symcore.int(2),
-  )
+  PolyBuilder::new(["a"], QQ).from_expr((a ^ @symcore.int(2)) - @symcore.int(2))
 }
 
 ///|
 fn dt_port_alg_domain() -> Domain raise PolyError {
   let minpoly = dt_port_alg_minpoly()
-  Domain::AlgExt(Domain::QQ, ["a"], [minpoly.to_expr()])
+  AlgExt(QQ, ["a"], [minpoly.to_expr()])
 }
 
 ///|
@@ -60,24 +58,24 @@ fn dt_port_alg_dense(expr : @symcore.Expr) -> DensePoly raise PolyError {
 ///|
 test "densetools dup integrate/diff/eval" {
   let f = [
-    @sympolys.fe_from_int(3, Domain::QQ),
-    @sympolys.fe_from_int(2, Domain::QQ),
-    @sympolys.fe_from_int(1, Domain::QQ),
+    @sympolys.fe_from_int(3, QQ),
+    @sympolys.fe_from_int(2, QQ),
+    @sympolys.fe_from_int(1, QQ),
   ]
-  let ours_i = dup_repr(@sympolys.dup_integrate(f, 1, Domain::QQ))
+  let ours_i = dup_repr(@sympolys.dup_integrate(f, 1, QQ))
   let oracle_i = dup_integrate(dup_to_rats(f), 1, domain="QQ")
   assert_eq(ours_i, oracle_i)
-  let ours_i2 = dup_repr(@sympolys.dup_integrate(f, 2, Domain::QQ))
+  let ours_i2 = dup_repr(@sympolys.dup_integrate(f, 2, QQ))
   let oracle_i2 = dup_integrate(dup_to_rats(f), 2, domain="QQ")
   assert_eq(ours_i2, oracle_i2)
-  let ours_d = dup_repr(@sympolys.dup_diff(f, 1, Domain::QQ))
+  let ours_d = dup_repr(@sympolys.dup_diff(f, 1, QQ))
   let oracle_d = dup_diff(dup_to_rats(f), 1, domain="QQ")
   assert_eq(ours_d, oracle_d)
-  let ours_d2 = dup_repr(@sympolys.dup_diff(f, 2, Domain::QQ))
+  let ours_d2 = dup_repr(@sympolys.dup_diff(f, 2, QQ))
   let oracle_d2 = dup_diff(dup_to_rats(f), 2, domain="QQ")
   assert_eq(ours_d2, oracle_d2)
-  let a = @sympolys.fe_from_int(2, Domain::QQ)
-  let ours_eval = @sympolys.dup_eval(f, a, Domain::QQ).to_string()
+  let a = @sympolys.fe_from_int(2, QQ)
+  let ours_eval = Show::to_string(@sympolys.dup_eval(f, a, QQ))
   let oracle_eval = dup_eval(dup_to_rats(f), br_int(2), domain="QQ")
   assert_eq(ours_eval, oracle_eval)
 }
@@ -89,23 +87,23 @@ test "densetools dmp integrate/diff/eval" {
   let zero = feqq(0, 1)
   // f = x + 2*y
   let f = @sympolys.dense_poly([poly_fe([one]), poly_fe([two, zero])])
-  let ours_i = dmp_repr(@sympolys.dmp_integrate(f, 1, 1, Domain::QQ))
+  let ours_i = dmp_repr(@sympolys.dmp_integrate(f, 1, 1, QQ))
   let oracle_i = dmp_integrate(dense_data_of(f), 1, 1, domain="QQ")
   assert_eq(ours_i, oracle_i)
-  let ours_i1 = dmp_repr(@sympolys.dmp_integrate_in(f, 1, 1, 1, Domain::QQ))
+  let ours_i1 = dmp_repr(@sympolys.dmp_integrate_in(f, 1, 1, 1, QQ))
   let oracle_i1 = dmp_integrate_in(dense_data_of(f), 1, 1, 1, domain="QQ")
   assert_eq(ours_i1, oracle_i1)
-  let ours_d = dmp_repr(@sympolys.dmp_diff(f, 1, 1, Domain::QQ))
+  let ours_d = dmp_repr(@sympolys.dmp_diff(f, 1, 1, QQ))
   let oracle_d = dmp_diff(dense_data_of(f), 1, 1, domain="QQ")
   assert_eq(ours_d, oracle_d)
-  let ours_d1 = dmp_repr(@sympolys.dmp_diff_in(f, 1, 1, 1, Domain::QQ))
+  let ours_d1 = dmp_repr(@sympolys.dmp_diff_in(f, 1, 1, 1, QQ))
   let oracle_d1 = dmp_diff_in(dense_data_of(f), 1, 1, 1, domain="QQ")
   assert_eq(ours_d1, oracle_d1)
   let a = feqq(2, 1)
-  let ours_eval = dmp_repr(@sympolys.dmp_eval(f, a, 1, Domain::QQ))
+  let ours_eval = dmp_repr(@sympolys.dmp_eval(f, a, 1, QQ))
   let oracle_eval = dmp_eval(dense_data_of(f), br_int(2), 1, domain="QQ")
   assert_eq(ours_eval, oracle_eval)
-  let ours_eval1 = dmp_repr(@sympolys.dmp_eval_in(f, a, 1, 1, Domain::QQ))
+  let ours_eval1 = dmp_repr(@sympolys.dmp_eval_in(f, a, 1, 1, QQ))
   let oracle_eval1 = dmp_eval_in(dense_data_of(f), br_int(2), 1, 1, domain="QQ")
   assert_eq(ours_eval1, oracle_eval1)
 }
@@ -113,11 +111,11 @@ test "densetools dmp integrate/diff/eval" {
 ///|
 test "densetools monic" {
   let f = [fezz(3), fezz(6), fezz(9)]
-  let ours = dup_repr(@sympolys.dup_monic(f, Domain::ZZ))
+  let ours = dup_repr(@sympolys.dup_monic(f, ZZ))
   let oracle = dup_monic(dup_to_rats(f))
   assert_eq(ours, oracle)
   let f2 = @sympolys.dense_poly([poly_int([3, 0]), poly_int([6])])
-  let ours2 = dmp_repr(@sympolys.dmp_ground_monic(f2, 1, Domain::ZZ))
+  let ours2 = dmp_repr(@sympolys.dmp_ground_monic(f2, 1, ZZ))
   let oracle2 = dmp_ground_monic(dense_data_of(f2), 1)
   assert_eq(ours2, oracle2)
 }
@@ -125,23 +123,25 @@ test "densetools monic" {
 ///|
 test "densetools content and primitive" {
   let f = [fezz(6), fezz(8), fezz(12)]
-  let ours_content = @sympolys.dup_content(f, Domain::ZZ).to_string()
+  let ours_content = Show::to_string(@sympolys.dup_content(f, ZZ))
   let oracle_content = dup_content(dup_to_rats(f), domain="ZZ")
   assert_eq(ours_content, oracle_content)
-  let ours_primitive = @sympolys.dup_primitive(f, Domain::ZZ)
+  let ours_primitive = @sympolys.dup_primitive(f, ZZ)
   let ours_primitive_str = "(\{ours_primitive.0},\{dup_repr(ours_primitive.1)})"
   let oracle_primitive = dup_primitive(dup_to_rats(f), domain="ZZ")
   assert_eq(ours_primitive_str, oracle_primitive)
 
   let xy = @sympolys.dense_poly([poly_int([2, 6]), poly_int([4, 12])])
-  let ours_ground_content = @sympolys.dmp_ground_content(xy, 1, Domain::ZZ).to_string()
+  let ours_ground_content = Show::to_string(
+    @sympolys.dmp_ground_content(xy, 1, ZZ),
+  )
   let oracle_ground_content = dmp_ground_content(
     dense_data_of(xy),
     1,
     domain="ZZ",
   )
   assert_eq(ours_ground_content, oracle_ground_content)
-  let ours_ground_primitive = @sympolys.dmp_ground_primitive(xy, 1, Domain::ZZ)
+  let ours_ground_primitive = @sympolys.dmp_ground_primitive(xy, 1, ZZ)
   let ours_ground_primitive_str = "(\{ours_ground_primitive.0},\{dmp_repr(ours_ground_primitive.1)})"
   let oracle_ground_primitive = dmp_ground_primitive(
     dense_data_of(xy),
@@ -156,22 +156,20 @@ test "densetools extract trunc oracle parity" {
   let f = [fezz(6), fezz(12), fezz(18)]
   let g = [fezz(4), fezz(8), fezz(12)]
   assert_eq(
-    dt_port_extract_repr(@sympolys.dup_extract(f, g, Domain::ZZ)),
+    dt_port_extract_repr(@sympolys.dup_extract(f, g, ZZ)),
     dup_extract(dup_to_rats(f), dup_to_rats(g), domain="ZZ"),
   )
 
   let xy1 = @sympolys.dense_poly([poly_int([6, 12]), poly_int([18])])
   let xy2 = @sympolys.dense_poly([poly_int([4, 8]), poly_int([12])])
   assert_eq(
-    dt_port_dmp_extract_repr(
-      @sympolys.dmp_ground_extract(xy1, xy2, 1, Domain::ZZ),
-    ),
+    dt_port_dmp_extract_repr(@sympolys.dmp_ground_extract(xy1, xy2, 1, ZZ)),
     dmp_ground_extract(dense_data_of(xy1), dense_data_of(xy2), 1, domain="ZZ"),
   )
 
   let h = [fezz(2), fezz(3), fezz(5), fezz(7)]
   assert_eq(
-    dup_repr(@sympolys.dup_trunc(h, fezz(3), Domain::ZZ)),
+    dup_repr(@sympolys.dup_trunc(h, fezz(3), ZZ)),
     dup_trunc(dup_to_rats(h), br_int(3), domain="ZZ"),
   )
   let xy = @sympolys.dense_poly([
@@ -180,12 +178,12 @@ test "densetools extract trunc oracle parity" {
     poly_int([2, 3]),
   ])
   assert_eq(
-    dmp_repr(@sympolys.dmp_ground_trunc(xy, fezz(3), 1, Domain::ZZ)),
+    dmp_repr(@sympolys.dmp_ground_trunc(xy, fezz(3), 1, ZZ)),
     dmp_ground_trunc(dense_data_of(xy), br_int(3), 1, domain="ZZ"),
   )
   let modulus = poly_int([1, -1])
   assert_eq(
-    dmp_repr(@sympolys.dmp_trunc(xy, modulus, 1, Domain::ZZ)),
+    dmp_repr(@sympolys.dmp_trunc(xy, modulus, 1, ZZ)),
     dmp_trunc(dense_data_of(xy), dense_data_of(modulus), 1, domain="ZZ"),
   )
 }
@@ -194,19 +192,19 @@ test "densetools extract trunc oracle parity" {
 test "densetools real-imag split oracle parity" {
   let quadratic = [fezz(1), fezz(2), fezz(3)]
   assert_eq(
-    dt_port_dmp_pair_repr(@sympolys.dup_real_imag(quadratic, Domain::ZZ)),
+    dt_port_dmp_pair_repr(@sympolys.dup_real_imag(quadratic, ZZ)),
     dup_real_imag(dup_to_rats(quadratic), domain="ZZ"),
   )
 
   let cubic = [fezz(1), fezz(0), fezz(1), fezz(3)]
   assert_eq(
-    dt_port_dmp_pair_repr(@sympolys.dup_real_imag(cubic, Domain::ZZ)),
+    dt_port_dmp_pair_repr(@sympolys.dup_real_imag(cubic, ZZ)),
     dup_real_imag(dup_to_rats(cubic), domain="ZZ"),
   )
 
   let rational = [feqq(1, 2), feqq(0, 1), feqq(3, 4)]
   assert_eq(
-    dt_port_dmp_pair_repr(@sympolys.dup_real_imag(rational, Domain::QQ)),
+    dt_port_dmp_pair_repr(@sympolys.dup_real_imag(rational, QQ)),
     dup_real_imag(dup_to_rats(rational), domain="QQ"),
   )
 }
@@ -239,16 +237,16 @@ test "densetools algebraic coefficient injection oracle parity" {
 test "densetools shift transform compose oracle parity" {
   let mirrored = [fezz(1), fezz(2), fezz(-4), fezz(2)]
   assert_eq(
-    dup_repr(@sympolys.dup_mirror(mirrored, Domain::ZZ)),
+    dup_repr(@sympolys.dup_mirror(mirrored, ZZ)),
     dup_mirror(dup_to_rats(mirrored), domain="ZZ"),
   )
   let quadratic = [fezz(1), fezz(-2), fezz(1)]
   assert_eq(
-    dup_repr(@sympolys.dup_scale(quadratic, fezz(2), Domain::ZZ)),
+    dup_repr(@sympolys.dup_scale(quadratic, fezz(2), ZZ)),
     dup_scale(dup_to_rats(quadratic), br_int(2), domain="ZZ"),
   )
   assert_eq(
-    dup_repr(@sympolys.dup_shift(quadratic, fezz(2), Domain::ZZ)),
+    dup_repr(@sympolys.dup_shift(quadratic, fezz(2), ZZ)),
     dup_shift(dup_to_rats(quadratic), br_int(2), domain="ZZ"),
   )
   assert_eq(
@@ -257,7 +255,7 @@ test "densetools shift transform compose oracle parity" {
         quadratic,
         [fezz(1), fezz(0), fezz(1)],
         [fezz(1), fezz(-1)],
-        Domain::ZZ,
+        ZZ,
       ),
     ),
     dup_transform(
@@ -269,7 +267,7 @@ test "densetools shift transform compose oracle parity" {
   )
   let composed = [fezz(1), fezz(1), fezz(0)]
   assert_eq(
-    dup_repr(@sympolys.dup_compose(composed, [fezz(1), fezz(-1)], Domain::ZZ)),
+    dup_repr(@sympolys.dup_compose(composed, [fezz(1), fezz(-1)], ZZ)),
     dup_compose(dup_to_rats(composed), [br_int(1), br_int(-1)], domain="ZZ"),
   )
 
@@ -279,13 +277,13 @@ test "densetools shift transform compose oracle parity" {
     poly_int([4, 5]),
   ])
   assert_eq(
-    dmp_repr(@sympolys.dmp_shift(shifted, [fezz(1), fezz(2)], 1, Domain::ZZ)),
+    dmp_repr(@sympolys.dmp_shift(shifted, [fezz(1), fezz(2)], 1, ZZ)),
     dmp_shift(dense_data_of(shifted), [br_int(1), br_int(2)], 1, domain="ZZ"),
   )
   let f = @sympolys.dense_poly([poly_int([1, 2]), poly_int([1, 0])])
   let y = @sympolys.dense_poly([poly_int([1, 0])])
   assert_eq(
-    dmp_repr(@sympolys.dmp_compose(f, y, 1, Domain::ZZ)),
+    dmp_repr(@sympolys.dmp_compose(f, y, 1, ZZ)),
     dmp_compose(dense_data_of(f), dense_data_of(y), 1, domain="ZZ"),
   )
 }
@@ -294,13 +292,13 @@ test "densetools shift transform compose oracle parity" {
 test "densetools eval tail diff eval clear denoms revert oracle parity" {
   let signs = [fezz(1), fezz(0), fezz(-1), fezz(-1), fezz(1)]
   assert_eq(
-    @sympolys.dup_sign_variations(signs, Domain::ZZ).to_string(),
+    @sympolys.dup_sign_variations(signs, ZZ).to_string(),
     dup_sign_variations(dup_to_rats(signs), domain="ZZ"),
   )
 
   let rationals = [feqq(1, 2), feqq(1, 3)]
   assert_eq(
-    dt_port_clear_repr(@sympolys.dup_clear_denoms(rationals, Domain::QQ)),
+    dt_port_clear_repr(@sympolys.dup_clear_denoms(rationals, QQ)),
     dup_clear_denoms(dup_to_rats(rationals), domain="QQ"),
   )
   let rational_xy = @sympolys.dense_poly([
@@ -308,21 +306,17 @@ test "densetools eval tail diff eval clear denoms revert oracle parity" {
     poly_fe([feqq(1, 3), feqq(1, 1)]),
   ])
   assert_eq(
-    dt_port_dmp_clear_repr(
-      @sympolys.dmp_clear_denoms(rational_xy, 1, Domain::QQ),
-    ),
+    dt_port_dmp_clear_repr(@sympolys.dmp_clear_denoms(rational_xy, 1, QQ)),
     dmp_clear_denoms(dense_data_of(rational_xy), 1, domain="QQ"),
   )
 
   let eval_poly = @sympolys.dense_poly([poly_int([2, 3]), poly_int([1, 2])])
   assert_eq(
-    dmp_repr(@sympolys.dmp_eval_tail(eval_poly, [fezz(2)], 1, Domain::ZZ)),
+    dmp_repr(@sympolys.dmp_eval_tail(eval_poly, [fezz(2)], 1, ZZ)),
     dmp_eval_tail(dense_data_of(eval_poly), [br_int(2)], 1, domain="ZZ"),
   )
   assert_eq(
-    dmp_repr(
-      @sympolys.dmp_eval_tail(eval_poly, [fezz(2), fezz(2)], 1, Domain::ZZ),
-    ),
+    dmp_repr(@sympolys.dmp_eval_tail(eval_poly, [fezz(2), fezz(2)], 1, ZZ)),
     dmp_eval_tail(
       dense_data_of(eval_poly),
       [br_int(2), br_int(2)],
@@ -336,26 +330,22 @@ test "densetools eval tail diff eval clear denoms revert oracle parity" {
     poly_int([2, 3, 1]),
   ])
   assert_eq(
-    dmp_repr(
-      @sympolys.dmp_diff_eval_in(diff_poly, 1, fezz(2), 0, 1, Domain::ZZ),
-    ),
+    dmp_repr(@sympolys.dmp_diff_eval_in(diff_poly, 1, fezz(2), 0, 1, ZZ)),
     dmp_diff_eval_in(dense_data_of(diff_poly), 1, br_int(2), 0, 1, domain="ZZ"),
   )
   assert_eq(
-    dmp_repr(
-      @sympolys.dmp_diff_eval_in(diff_poly, 1, fezz(2), 1, 1, Domain::ZZ),
-    ),
+    dmp_repr(@sympolys.dmp_diff_eval_in(diff_poly, 1, fezz(2), 1, 1, ZZ)),
     dmp_diff_eval_in(dense_data_of(diff_poly), 1, br_int(2), 1, 1, domain="ZZ"),
   )
 
   let inv_poly = [feqq(-1, 1), feqq(1, 1)]
   assert_eq(
-    dup_repr(@sympolys.dup_revert(inv_poly, 4, Domain::QQ)),
+    dup_repr(@sympolys.dup_revert(inv_poly, 4, QQ)),
     dup_revert(dup_to_rats(inv_poly), 4, domain="QQ"),
   )
   let inv_dmp = poly_fe(inv_poly)
   assert_eq(
-    dmp_repr(@sympolys.dmp_revert(inv_dmp, 4, 0, Domain::QQ)),
+    dmp_repr(@sympolys.dmp_revert(inv_dmp, 4, 0, QQ)),
     dmp_revert(dense_data_of(inv_dmp), 4, 0, domain="QQ"),
   )
 }
@@ -365,17 +355,17 @@ test "densetools series compose reversion oracle parity" {
   let f = [fezz(1), fezz(1), fezz(1)]
   let g = [fezz(1), fezz(1)]
   assert_eq(
-    dup_repr(@sympolys.dup_series_compose(f, g, 3, Domain::ZZ)),
+    dup_repr(@sympolys.dup_series_compose(f, g, 3, ZZ)),
     dup_series_compose(dup_to_rats(f), dup_to_rats(g), 3, domain="ZZ"),
   )
 
   let reversion = [feqq(-1, 1), feqq(1, 1), feqq(0, 1)]
   assert_eq(
-    dup_repr(@sympolys.dup_series_reversion(reversion, 4, Domain::QQ)),
+    dup_repr(@sympolys.dup_series_reversion(reversion, 4, QQ)),
     dup_series_reversion(dup_to_rats(reversion), 4, domain="QQ"),
   )
   assert_eq(
-    dup_repr(@sympolys.dup_series_reversion(reversion, 5, Domain::QQ)),
+    dup_repr(@sympolys.dup_series_reversion(reversion, 5, QQ)),
     dup_series_reversion(dup_to_rats(reversion), 5, domain="QQ"),
   )
 }
@@ -384,14 +374,12 @@ test "densetools series compose reversion oracle parity" {
 test "densetools functional decomposition oracle parity" {
   let f = [fezz(1), fezz(-2), fezz(1), fezz(0), fezz(0)]
   assert_eq(
-    dt_port_dup_list_repr(@sympolys.dup_decompose(f, Domain::ZZ)),
+    dt_port_dup_list_repr(@sympolys.dup_decompose(f, ZZ)),
     dup_decompose(dup_to_rats(f), domain="ZZ"),
   )
   let irreducible_shape = [fezz(1), fezz(0), fezz(0), fezz(0)]
   assert_eq(
-    dt_port_dup_list_repr(
-      @sympolys.dup_decompose(irreducible_shape, Domain::ZZ),
-    ),
+    dt_port_dup_list_repr(@sympolys.dup_decompose(irreducible_shape, ZZ)),
     dup_decompose(dup_to_rats(irreducible_shape), domain="ZZ"),
   )
 }

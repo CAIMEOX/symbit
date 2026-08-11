@@ -1,18 +1,18 @@
 ///|
 fn matrix_array_text(mats : Array[Matrix]) -> String {
-  "[" + mats.map(fn(m) { m.to_string() }).join(", ") + "]"
+  "[" + mats.map(fn(m) { Show::to_string(m) }).join(", ") + "]"
 }
 
 ///|
 test "matrices special jordan and rotations" {
   let lam = @symcore.Expr::Symbol("lam")
   inspect(
-    jordan_cell(lam, 3).to_string(),
+    Show::to_string(jordan_cell(lam, 3)),
     content="Matrix([[lam, 1, 0], [0, lam, 1], [0, 0, lam]])",
   )
   let theta = @symcore.Expr::Symbol("theta")
   inspect(
-    rot_axis3(theta).to_string(),
+    Show::to_string(rot_axis3(theta)),
     content="Matrix([[cos(theta), sin(theta), 0], [-sin(theta), cos(theta), 0], [0, 0, 1]])",
   )
 }
@@ -33,7 +33,10 @@ test "matrices special hessian wronskian and casoratian" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let f = (x ^ @symcore.int(2)) + x * y + (y ^ @symcore.int(2))
-  inspect(hessian(f, [x, y]).to_string(), content="Matrix([[2, 1], [1, 2]])")
+  inspect(
+    Show::to_string(hessian(f, [x, y])),
+    content="Matrix([[2, 1], [1, 2]])",
+  )
   inspect(
     @symprint.pretty_string(wronskian([x, x ^ @symcore.int(2)], x)),
     content="x**2",

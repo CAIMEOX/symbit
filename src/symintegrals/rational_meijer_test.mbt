@@ -239,12 +239,7 @@ test "symintegrals inverse Laplace Bateman irrational s three halves form" {
     (
       @symcore.int(4) *
       @symelem.sqrt(t) *
-      (
-        @symelem.sqrt(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ) ^
-        @symcore.int(-1)
-      ) +
+      (@symelem.sqrt(NumberSymbol(Pi)) ^ @symcore.int(-1)) +
       @symelem.exp(@symcore.int(4) * t) *
       @symspec.erfc(@symcore.int(2) * @symelem.sqrt(t)) -
       @symcore.int(1)
@@ -262,7 +257,7 @@ test "symintegrals inverse Laplace Bateman irrational s three halves form" {
 test "symintegrals inverse Laplace Gaussian erfc kernel" {
   let s = @symcore.Expr::Symbol("s")
   let t = @symcore.Expr::Symbol("t")
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let kernel = @symcore.rational_from_ints(1, 4) *
     @symelem.sqrt(pi) *
     @symelem.exp((s ^ @symcore.int(2)) * @symcore.rational_from_ints(1, 16)) *
@@ -362,10 +357,8 @@ test "symintegrals meijer inversion smoke cases follow SymPy source tests" {
   let s = @symcore.Expr::Symbol("s")
   let t = @symcore.Expr::Symbol("t")
   let z = @symcore.Expr::Symbol("z")
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
 
   guard meijerint_inversion(
       ((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-1),
@@ -682,9 +675,7 @@ test "symintegrals meijer inversion smoke cases follow SymPy source tests" {
     @symcore.compare_expr(
       @symsimplify.simplify(
         explicit_g_b1_neg_half -
-        @symelem.sqrt(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-        ) *
+        @symelem.sqrt(NumberSymbol(Pi)) *
         @symelem.exp(@symcore.rational_from_ints(-1, 4) * t) *
         @symspec.besseli(@symcore.int(0), @symcore.rational_from_ints(1, 4) * t) *
         (@symcore.int(2) ^ @symcore.int(-1)) *
@@ -714,9 +705,7 @@ test "symintegrals meijer inversion smoke cases follow SymPy source tests" {
       @symsimplify.simplify(
         explicit_g_b2_pos_half -
         ({
-          let sqrt_pi_expr = @symelem.sqrt(
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-          )
+          let sqrt_pi_expr = @symelem.sqrt(NumberSymbol(Pi))
           let denominator_inverse = (@symcore.int(4) * sqrt_pi_expr) ^
             @symcore.int(-1)
           let i0 = @symspec.besseli(
@@ -745,9 +734,7 @@ test "symintegrals meijer inversion smoke cases follow SymPy source tests" {
   let j_arg = @symcore.int(2) *
     @symelem.sqrt(t) *
     (@symelem.sqrt(@symcore.int(2)) ^ @symcore.int(-1))
-  let sqrt_pi_expr = @symelem.sqrt(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  )
+  let sqrt_pi_expr = @symelem.sqrt(NumberSymbol(Pi))
   guard meijerint_inversion(
       @symspec.meijerg(
         [@symcore.rational_from_ints(-1, 2)],
@@ -891,14 +878,9 @@ test "symintegrals meijer inversion smoke cases follow SymPy source tests" {
     fail("expected source acceptance for s**(-3/2)")
   }
   assert_true(
-    !@symcore.has(
-      three_half_power,
-      @symcore.Expr::FunctionHead("InverseLaplaceTransform"),
-    ),
+    !@symcore.has(three_half_power, FunctionHead("InverseLaplaceTransform")),
   )
-  assert_true(
-    @symcore.has(three_half_power, @symcore.Expr::FunctionHead("Heaviside")),
-  )
+  assert_true(@symcore.has(three_half_power, FunctionHead("Heaviside")))
 
   let base_power_cases : Array[(String, Expr)] = [
     ("2**s", @symcore.int(2) ^ s),
@@ -1071,9 +1053,9 @@ test "symintegrals meijer inversion smoke cases follow SymPy source tests" {
           sqrt_kernel,
           s,
           t,
-          @symcore.Expr::Symbol("_None"),
+          Symbol("_None"),
         ]),
-        @symcore.Expr::Boolean(true),
+        Boolean(true),
       ]),
     ) ==
     0,

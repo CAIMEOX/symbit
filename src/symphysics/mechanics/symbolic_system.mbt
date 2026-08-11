@@ -96,12 +96,12 @@ fn symbolic_system_collect_free_symbols(
   seen : Map[String, Expr],
 ) -> Unit {
   match expr {
-    Expr::Symbol(_) => seen.set(mech_expr_key(expr), expr)
-    Expr::Add(args) | Expr::Mul(args) =>
+    Symbol(_) => seen.set(mech_expr_key(expr), expr)
+    Add(args) | Mul(args) =>
       for arg in args {
         symbolic_system_collect_free_symbols(arg, seen)
       }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       symbolic_system_collect_free_symbols(base, seen)
       symbolic_system_collect_free_symbols(exp, seen)
     }
@@ -177,7 +177,7 @@ pub fn symbolic_system(
       Some(items.map(fn(index) { index + kinematics.height() }))
     _ => symbolic_system_copy_opt_ints(alg_con)
   }
-  SymbolicSystem::{
+  {
     states_: states,
     coordinates_: coordinates,
     speeds_: speed_matrix,
@@ -200,10 +200,7 @@ pub fn SymbolicSystem::coordinates(
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match self.coordinates_ {
     Some(value) => value
-    None =>
-      raise @symphysics.PhysicsError::ValueError(
-        "coordinates were not specified",
-      )
+    None => raise ValueError("coordinates were not specified")
   }
 }
 
@@ -213,8 +210,7 @@ pub fn SymbolicSystem::speeds(
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match self.speeds_ {
     Some(value) => value
-    None =>
-      raise @symphysics.PhysicsError::ValueError("speeds were not specified")
+    None => raise ValueError("speeds were not specified")
   }
 }
 
@@ -237,7 +233,7 @@ pub fn SymbolicSystem::dyn_implicit_mat(
   match self.dyn_implicit_mat_ {
     Some(value) => value
     None =>
-      raise @symphysics.PhysicsError::ValueError(
+      raise ValueError(
         "dyn_implicit_mat is not specified for this equations-of-motion form",
       )
   }
@@ -250,7 +246,7 @@ pub fn SymbolicSystem::dyn_implicit_rhs(
   match self.dyn_implicit_rhs_ {
     Some(value) => value
     None =>
-      raise @symphysics.PhysicsError::ValueError(
+      raise ValueError(
         "dyn_implicit_rhs is not specified for this equations-of-motion form",
       )
   }
@@ -284,7 +280,7 @@ pub fn SymbolicSystem::comb_implicit_mat(
           value
         }
         _ =>
-          raise @symphysics.PhysicsError::ValueError(
+          raise ValueError(
             "comb_implicit_mat is not specified for explicit equations of motion",
           )
       }
@@ -305,7 +301,7 @@ pub fn SymbolicSystem::comb_implicit_rhs(
           value
         }
         _ =>
-          raise @symphysics.PhysicsError::ValueError(
+          raise ValueError(
             "comb_implicit_rhs is not specified for explicit equations of motion",
           )
       }
@@ -317,9 +313,7 @@ pub fn SymbolicSystem::compute_explicit_form(
   self : SymbolicSystem,
 ) -> Unit raise @symphysics.PhysicsError {
   guard self.comb_explicit_rhs_ is None else {
-    raise @symphysics.PhysicsError::ValueError(
-      "comb_explicit_rhs is already formed",
-    )
+    raise ValueError("comb_explicit_rhs is already formed")
   }
   let out = match
     (self.kin_explicit_rhs_, self.dyn_implicit_mat_, self.dyn_implicit_rhs_) {
@@ -348,7 +342,7 @@ pub fn SymbolicSystem::comb_explicit_rhs(
   match self.comb_explicit_rhs_ {
     Some(value) => value
     None =>
-      raise @symphysics.PhysicsError::ValueError(
+      raise ValueError(
         "compute_explicit_form must be called before comb_explicit_rhs",
       )
   }
@@ -361,7 +355,7 @@ pub fn SymbolicSystem::kin_explicit_rhs(
   match self.kin_explicit_rhs_ {
     Some(value) => value
     None =>
-      raise @symphysics.PhysicsError::ValueError(
+      raise ValueError(
         "kin_explicit_rhs is not specified for this equations-of-motion form",
       )
   }
@@ -458,10 +452,7 @@ pub fn SymbolicSystem::bodies(
 ) -> Array[BodyLike] raise @symphysics.PhysicsError {
   match self.bodies_ {
     Some(value) => value.copy()
-    None =>
-      raise @symphysics.PhysicsError::ValueError(
-        "bodies were not specified for the system",
-      )
+    None => raise ValueError("bodies were not specified for the system")
   }
 }
 
@@ -471,9 +462,6 @@ pub fn SymbolicSystem::loads(
 ) -> Array[Load] raise @symphysics.PhysicsError {
   match self.loads_ {
     Some(value) => value.copy()
-    None =>
-      raise @symphysics.PhysicsError::ValueError(
-        "loads were not specified for the system",
-      )
+    None => raise ValueError("loads were not specified for the system")
   }
 }

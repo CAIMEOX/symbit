@@ -24,7 +24,7 @@ fn subres_coeff_degree(poly : Poly, degree : Int) -> FieldElem raise PolyError {
   if !exps.is_empty() {
     exps.set(0, degree)
   }
-  match poly.coeffs.get(Monomial::{ exps, }) {
+  match poly.coeffs.get({ exps, }) {
     Some(c) => c
     None => subres_matrix_zero(poly.domain)
   }
@@ -58,8 +58,8 @@ fn subres_coeffs_low(
 ///|
 fn subres_ensure_matrix_pair(p : Poly, q : Poly) -> Unit raise PolyError {
   ensure_univar_pair(p, q)
-  if p.domain.not_equal(q.domain) || p.gens != q.gens {
-    raise PolyError::DomainMismatch
+  if Eq::not_equal(p.domain, q.domain) || p.gens != q.gens {
+    raise DomainMismatch
   }
 }
 
@@ -96,10 +96,10 @@ fn subres_rotate_right(row : Array[FieldElem], k : Int) -> Array[FieldElem] {
 /// - Limits: Negative sizes raise `PolyError::BadExponent`.
 pub fn backward_eye(
   n : Int,
-  domain? : Domain = Domain::ZZ,
+  domain? : Domain = ZZ,
 ) -> DomainMatrix raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let rows = subres_matrix_new(n, n, domain)
   let one = subres_matrix_one(domain)
@@ -195,11 +195,11 @@ pub fn correct_sign(
   cdel : Int,
 ) -> FieldElem raise PolyError {
   if deg_f < 0 || deg_g < 0 || rdel < 0 || cdel < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let dim = deg_f + deg_g
   if s1.rows != dim || s1.cols != dim || rdel > deg_f || rdel > deg_g {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let row_ids : Array[Int] = []
   for i in 0..<(deg_g - rdel) {
@@ -217,11 +217,11 @@ pub fn correct_sign(
     return s1.extract(row_ids, col_ids).det()
   }
   if row_count == 0 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let replacement_col = row_count + cdel - 1
   if replacement_col >= s1.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let col_ids : Array[Int] = []
   for i in 0..<(row_count - 1) {
@@ -246,17 +246,17 @@ pub fn create_ma(
   row1 : Array[FieldElem],
   row2 : Array[FieldElem],
   col_num : Int,
-  domain? : Domain = Domain::ZZ,
+  domain? : Domain = ZZ,
 ) -> DomainMatrix raise PolyError {
   if col_num < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if deg_g - deg_f >= 1 || row1.length() != col_num || row2.length() != col_num {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let row_count = deg_f - deg_g + 2
   if row_count < 0 {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let rows = subres_matrix_new(row_count, col_num, domain)
   for i in 0..<(deg_f - deg_g + 1) {

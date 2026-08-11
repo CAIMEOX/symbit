@@ -45,7 +45,7 @@ fn af_rmul(
   b : Array[Int],
 ) -> Array[Int] raise CombinatoricsError {
   if a.length() != b.length() {
-    raise CombinatoricsError::ValueError("array length mismatch")
+    raise ValueError("array length mismatch")
   }
   let out : Array[Int] = Array::new()
   for i in 0..<b.length() {
@@ -205,19 +205,15 @@ pub struct Cycle {
 pub fn Cycle::new(items : Array[Int]) -> Cycle raise CombinatoricsError {
   let mapping : Map[Int, Int] = Map([])
   if items.is_empty() {
-    return Cycle::{ mapping, }
+    return { mapping, }
   }
   let seen : Array[Int] = Array::new()
   for item in items {
     if item < 0 {
-      raise CombinatoricsError::ValueError(
-        "negative integers are not allowed in a cycle",
-      )
+      raise ValueError("negative integers are not allowed in a cycle")
     }
     if seen.any(v => v == item) {
-      raise CombinatoricsError::ValueError(
-        "all elements must be unique in a cycle",
-      )
+      raise ValueError("all elements must be unique in a cycle")
     }
     seen.push(item)
   }
@@ -227,7 +223,7 @@ pub fn Cycle::new(items : Array[Int]) -> Cycle raise CombinatoricsError {
     let next = items[(i + 1) % n]
     mapping[curr] = next
   }
-  Cycle::{ mapping, }
+  { mapping, }
 }
 
 ///|
@@ -246,7 +242,7 @@ pub fn Cycle::from_permutation(p : Permutation) -> Cycle {
       }
     }
   }
-  Cycle::{ mapping, }
+  { mapping, }
 }
 
 ///|
@@ -283,7 +279,7 @@ pub fn Cycle::list(
   size? : Int,
 ) -> Array[Int] raise CombinatoricsError {
   if self.mapping.is_empty() && size is None {
-    raise CombinatoricsError::ValueError("must give size for empty Cycle")
+    raise ValueError("must give size for empty Cycle")
   }
   let mut sz = match size {
     Some(s) => s
@@ -399,14 +395,14 @@ pub impl Eq for Permutation with fn not_equal(
   self : Permutation,
   other : Permutation,
 ) -> Bool {
-  !self.equal(other)
+  !Eq::equal(self, other)
 }
 
 ///|
 /// Hash the permutation from its canonical array form.
 pub impl Hash for Permutation with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
@@ -454,7 +450,7 @@ pub fn Permutation::new(
   array : Array[Int],
 ) -> Permutation raise CombinatoricsError {
   if !validate_array_form(array) {
-    raise CombinatoricsError::ValueError("invalid permutation array form")
+    raise ValueError("invalid permutation array form")
   }
   let out : Array[Int] = Array::new()
   for v in array {
@@ -476,13 +472,11 @@ pub fn Permutation::from_array(
   match size {
     Some(n) => {
       if n < arr.length() {
-        raise CombinatoricsError::ValueError("size smaller than array length")
+        raise ValueError("size smaller than array length")
       }
       for v in arr {
         if v < 0 || v >= n {
-          raise CombinatoricsError::ValueError(
-            "array contains element outside size",
-          )
+          raise ValueError("array contains element outside size")
         }
       }
       if n > arr.length() {
@@ -495,7 +489,7 @@ pub fn Permutation::from_array(
     None => ()
   }
   if !validate_array_form(arr) {
-    raise CombinatoricsError::ValueError("invalid permutation array form")
+    raise ValueError("invalid permutation array form")
   }
   make_perm(arr)
 }
@@ -620,7 +614,7 @@ pub fn Permutation::apply_index(
   i : Int,
 ) -> Int raise CombinatoricsError {
   if i < 0 || i >= self.size {
-    raise CombinatoricsError::ValueError("index out of range")
+    raise ValueError("index out of range")
   }
   self.array_form[i]
 }
@@ -632,7 +626,7 @@ pub fn[T] Permutation::apply_array(
   values : Array[T],
 ) -> Array[T] raise CombinatoricsError {
   if values.length() != self.size {
-    raise CombinatoricsError::ValueError("sequence length mismatch")
+    raise ValueError("sequence length mismatch")
   }
   let out : Array[T] = Array::new()
   for i in 0..<self.size {
@@ -660,7 +654,7 @@ pub fn Permutation::mul(
   other : Permutation,
 ) -> Permutation raise CombinatoricsError {
   if self.size != other.size {
-    raise CombinatoricsError::ValueError("permutation sizes differ")
+    raise ValueError("permutation sizes differ")
   }
   let arr = af_rmul(other.array_form, self.array_form)
   make_perm(arr)
@@ -743,7 +737,7 @@ pub fn Permutation::min(self : Permutation) -> Int raise CombinatoricsError {
     }
   }
   if !found {
-    raise CombinatoricsError::ValueError("min() argument is empty")
+    raise ValueError("min() argument is empty")
   }
   min_val
 }
@@ -765,7 +759,7 @@ pub fn Permutation::max(self : Permutation) -> Int raise CombinatoricsError {
     }
   }
   if !found {
-    raise CombinatoricsError::ValueError("max() argument is empty")
+    raise ValueError("max() argument is empty")
   }
   max_val
 }
@@ -862,7 +856,7 @@ pub fn Permutation::from_inversion_vector(
   let perm : Array[Int] = Array::new()
   for k in 0..<size {
     if inversion[k] < 0 || inversion[k] >= pool.length() {
-      raise CombinatoricsError::ValueError("invalid inversion vector")
+      raise ValueError("invalid inversion vector")
     }
     let val = pool[inversion[k]]
     perm.push(val)
@@ -1391,7 +1385,7 @@ pub fn Permutation::resize(
       }
       if cycle_min <= n - 1 {
         if cycle_max > n - 1 {
-          raise CombinatoricsError::ValueError(
+          raise ValueError(
             "The permutation cannot be resized to \{n} because the cycle may break.",
           )
         }

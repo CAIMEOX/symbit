@@ -15,7 +15,7 @@ fn fd_expr_int(n : Int) -> Expr {
 
 ///|
 fn fd_weights_level_repr(level : Array[BigRational]) -> String {
-  let parts = level.map(v => v.to_string()).join(", ")
+  let parts = level.map(v => Show::to_string(v)).join(", ")
   "[\{parts}]"
 }
 

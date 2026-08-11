@@ -49,8 +49,7 @@ fn joints_collect_loads(bodies : Array[BodyLike]) -> Array[Load] {
   let out : Array[Load] = []
   for body in bodies {
     match body {
-      BodyLike::BodyLikeLegacy(value) =>
-        system_append_loads_unique(out, value.loads())
+      BodyLikeLegacy(value) => system_append_loads_unique(out, value.loads())
       _ => ()
     }
   }
@@ -65,9 +64,7 @@ pub fn joints_method(
   let frame = match root.frame() {
     Some(value) => value
     None =>
-      raise @symphysics.PhysicsError::ValueError(
-        "JointsMethod root body must provide a reference frame",
-      )
+      raise ValueError("JointsMethod root body must provide a reference frame")
   }
   let q : Array[Expr] = []
   let u : Array[Expr] = []
@@ -79,7 +76,7 @@ pub fn joints_method(
   }
   validate_coordinates(coordinates=q, speeds=u)
   let bodies = joints_collect_bodies(root, joints)
-  JointsMethod::{
+  {
     frame_: frame,
     bodies_: bodies,
     loads_: joints_collect_loads(bodies),
@@ -157,15 +154,13 @@ pub fn JointsMethod::form_eoms(
     let lagrange_loads : Array[Load] = []
     for load in self.loads_ {
       match load {
-        Load::ForceLoad(value) =>
+        ForceLoad(value) =>
           lagrange_loads.push(
-            Load::ForceLoad(force(value.point, msubs_vector(value.force, subs))),
+            ForceLoad(force(value.point, msubs_vector(value.force, subs))),
           )
-        Load::TorqueLoad(value) =>
+        TorqueLoad(value) =>
           lagrange_loads.push(
-            Load::TorqueLoad(
-              torque(value.frame, msubs_vector(value.torque, subs)),
-            ),
+            TorqueLoad(torque(value.frame, msubs_vector(value.torque, subs))),
           )
       }
     }
@@ -177,7 +172,7 @@ pub fn JointsMethod::form_eoms(
       frame=Some(self.frame_),
     )
     let eom = backend.form_lagranges_equations()
-    self.backend_ = Some(MechanicsBackend::Lagrange(backend))
+    self.backend_ = Some(Lagrange(backend))
     eom
   } else {
     let backend = kanes_method(
@@ -189,7 +184,7 @@ pub fn JointsMethod::form_eoms(
       forcelist=self.loads_,
     )
     let (_, fr) = backend.kanes_equations(self.bodies_, self.loads_)
-    self.backend_ = Some(MechanicsBackend::Kane(backend))
+    self.backend_ = Some(Kane(backend))
     fr
   }
 }
@@ -199,8 +194,8 @@ pub fn JointsMethod::mass_matrix(
   self : JointsMethod,
 ) -> @symphysics.ExplicitMatrix {
   match self.backend_ {
-    Some(MechanicsBackend::Kane(value)) => value.mass_matrix()
-    Some(MechanicsBackend::Lagrange(value)) => value.mass_matrix()
+    Some(Kane(value)) => value.mass_matrix()
+    Some(Lagrange(value)) => value.mass_matrix()
     None => mechanics_zero_column(0)
   }
 }
@@ -208,8 +203,8 @@ pub fn JointsMethod::mass_matrix(
 ///|
 pub fn JointsMethod::forcing(self : JointsMethod) -> @symphysics.ExplicitMatrix {
   match self.backend_ {
-    Some(MechanicsBackend::Kane(value)) => value.forcing()
-    Some(MechanicsBackend::Lagrange(value)) => value.forcing()
+    Some(Kane(value)) => value.forcing()
+    Some(Lagrange(value)) => value.forcing()
     None => mechanics_zero_column(0)
   }
 }
@@ -219,8 +214,8 @@ pub fn JointsMethod::mass_matrix_full(
   self : JointsMethod,
 ) -> @symphysics.ExplicitMatrix {
   match self.backend_ {
-    Some(MechanicsBackend::Kane(value)) => value.mass_matrix_full()
-    Some(MechanicsBackend::Lagrange(value)) => value.mass_matrix_full()
+    Some(Kane(value)) => value.mass_matrix_full()
+    Some(Lagrange(value)) => value.mass_matrix_full()
     None => mechanics_zero_column(0)
   }
 }
@@ -230,8 +225,8 @@ pub fn JointsMethod::forcing_full(
   self : JointsMethod,
 ) -> @symphysics.ExplicitMatrix {
   match self.backend_ {
-    Some(MechanicsBackend::Kane(value)) => value.forcing_full()
-    Some(MechanicsBackend::Lagrange(value)) => value.forcing_full()
+    Some(Kane(value)) => value.forcing_full()
+    Some(Lagrange(value)) => value.forcing_full()
     None => mechanics_zero_column(0)
   }
 }
@@ -241,8 +236,8 @@ pub fn JointsMethod::rhs(
   self : JointsMethod,
 ) -> @symphysics.ExplicitMatrix raise {
   match self.backend_ {
-    Some(MechanicsBackend::Kane(value)) => value.rhs()
-    Some(MechanicsBackend::Lagrange(value)) => value.rhs()
+    Some(Kane(value)) => value.rhs()
+    Some(Lagrange(value)) => value.rhs()
     None =>
       raise @symphysics.PhysicsError::ValueError(
         "form_eoms must be called before rhs",

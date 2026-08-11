@@ -120,7 +120,7 @@ pub fn denom_expand(expr : Expr) -> Expr {
 /// - Limits: Only the supported square-root integer pattern is recognized.
 pub fn split_surds(expr : Expr) -> (Expr, Expr, Expr) {
   let terms = match expr {
-    Expr::Add(args) => args
+    Add(args) => args
     _ => [expr]
   }
   let surds : Array[(Expr, Int)] = Array::new()
@@ -195,7 +195,7 @@ fn rewrite_bottom_up_rational(expr : Expr, rule : (Expr) -> Expr) -> Expr {
 fn rewrite_radsimp(expr : Expr) -> Expr {
   let (num, den) = split_fraction(expr)
   match den {
-    Expr::Number(n) if n.is_one() => expr
+    Number(n) if n.is_one() => expr
     _ =>
       match rationalized_denominator(den) {
         Some((mul_num, new_den)) =>
@@ -213,7 +213,7 @@ fn rationalized_denominator(den : Expr) -> (Expr, Expr)? {
         Some(square) => Some((den, square))
         None => None
       }
-    Expr::Add([a, b]) =>
+    Add([a, b]) =>
       match (parse_signed_radical(a), parse_signed_radical(b)) {
         (Some((sa, ra)), Some((sb, rb))) => {
           let a_term = if sa > 0 { ra } else { @symcore.mul([int(-1), ra]) }
@@ -234,7 +234,7 @@ fn rationalized_denominator(den : Expr) -> (Expr, Expr)? {
 ///|
 fn rewrite_ratsimp(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       if args.is_empty() {
         return expr
       }
@@ -307,8 +307,8 @@ fn expr_symbol_names_for_poly(expr : Expr) -> Array[String] {
   let names : Array[String] = []
   for sym in @symcore.free_symbols(expr) {
     match sym {
-      Expr::Symbol(name) => if !names.contains(name) { names.push(name) }
-      Expr::Dummy(name, _) => if !names.contains(name) { names.push(name) }
+      Symbol(name) => if !names.contains(name) { names.push(name) }
+      Dummy(name, _) => if !names.contains(name) { names.push(name) }
       _ => ()
     }
   }
@@ -323,10 +323,10 @@ fn poly_cancel_expr(expr : Expr) -> Expr? {
   if gens.is_empty() {
     return None
   }
-  let num_poly = @sympolys.Poly::from_expr(num, gens, @sympolys.Domain::EX) catch {
+  let num_poly = @sympolys.Poly::from_expr(num, gens, EX) catch {
     _ => return None
   }
-  let den_poly = @sympolys.Poly::from_expr(den, gens, @sympolys.Domain::EX) catch {
+  let den_poly = @sympolys.Poly::from_expr(den, gens, EX) catch {
     _ => return None
   }
   if den_poly.is_zero() {
@@ -349,7 +349,7 @@ fn poly_cancel_expr(expr : Expr) -> Expr? {
 ///|
 fn factor_integral_number_rational(expr : Expr) -> Array[Expr]? {
   match expr {
-    Expr::Number(n) if n.is_integral() => {
+    Number(n) if n.is_integral() => {
       let value = n.numerator().to_int()
       if value == 0 {
         return Some([expr])
@@ -383,7 +383,7 @@ fn factor_integral_number_rational(expr : Expr) -> Array[Expr]? {
 ///|
 fn flatten_mul_nonunit_rational(expr : Expr) -> Array[Expr] {
   match expr {
-    Expr::Mul(args) => {
+    Mul(args) => {
       let out : Array[Expr] = []
       for arg in args {
         for factor in flatten_mul_nonunit_rational(arg) {
@@ -394,7 +394,7 @@ fn flatten_mul_nonunit_rational(expr : Expr) -> Array[Expr] {
       }
       out
     }
-    Expr::Pow(base, Expr::Number(exp)) if exp.is_integral() => {
+    Pow(base, Number(exp)) if exp.is_integral() => {
       let power = exp.numerator().to_int()
       if power > 1 && power <= 32 {
         let base_factors = flatten_mul_nonunit_rational(base)
@@ -411,7 +411,7 @@ fn flatten_mul_nonunit_rational(expr : Expr) -> Array[Expr] {
         [expr]
       }
     }
-    Expr::Number(n) if n.is_one() => []
+    Number(n) if n.is_one() => []
     _ =>
       match factor_integral_number_rational(expr) {
         Some(factors) => factors.filter(f => f != int(1))
@@ -498,8 +498,8 @@ fn try_denest_quadratic_surds(arg : Expr) -> Expr? {
       }
       Some(
         @symcore.add([
-          @symcore.function("sqrt", [@symcore.Expr::Number(m)]),
-          @symcore.function("sqrt", [@symcore.Expr::Number(n)]),
+          @symcore.function("sqrt", [Number(m)]),
+          @symcore.function("sqrt", [Number(n)]),
         ]),
       )
     }
@@ -512,7 +512,7 @@ fn parse_a_plus_two_sqrt_b(
   expr : Expr,
 ) -> (@symnum.BigRational, @symnum.BigRational)? {
   match expr {
-    Expr::Add([x, y]) =>
+    Add([x, y]) =>
       match (parse_numeric_term(x), parse_two_sqrt_term(y)) {
         (Some(a), Some(b)) => Some((a, b))
         _ =>
@@ -533,12 +533,12 @@ fn parse_numeric_term(term : Expr) -> @symnum.BigRational? {
 ///|
 fn parse_two_sqrt_term(term : Expr) -> @symnum.BigRational? {
   match term {
-    Expr::Mul(args) if args.length() == 2 => {
+    Mul(args) if args.length() == 2 => {
       let mut saw_two = false
       let mut radical : Expr? = None
       for arg in args {
         match arg {
-          Expr::Number(c) if c.compare(@symnum.BigRational::from_int(2)) == 0 =>
+          Number(c) if c.compare(@symnum.BigRational::from_int(2)) == 0 =>
             saw_two = true
           _ => if radical is None { radical = Some(arg) } else { return None }
         }
@@ -562,7 +562,7 @@ fn radical_radicand_as_rational(expr : Expr) -> @symnum.BigRational? {
     Some(arg) => exact_numeric_value(arg)
     None =>
       match expr {
-        Expr::Pow(base, exp) =>
+        Pow(base, exp) =>
           match (exact_numeric_value(base), exact_numeric_value(exp)) {
             (Some(b), Some(e)) if is_half(e) => Some(b)
             _ => None
@@ -627,7 +627,7 @@ fn cancel_common_factors(expr : Expr) -> Expr {
 ///|
 fn collect_function_terms(expr : Expr, target_name : String) -> Expr {
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let grouped : Map[String, Array[Expr]] = Map([])
       let grouped_arg : Map[String, Expr] = Map([])
       let rest : Array[Expr] = Array::new()
@@ -676,7 +676,7 @@ fn parse_coeff_times_named_unary(
         Some((name, inner)) if matches_target(name) => Some((int(1), inner))
         _ =>
           match expr {
-            Expr::Mul(args) => {
+            Mul(args) => {
               let mut seen = false
               let mut inner_expr = int(0)
               let coeff_factors : Array[Expr] = Array::new()
@@ -707,7 +707,7 @@ fn parse_coeff_times_named_unary(
 ///|
 fn expand_mul_expr(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let expanded : Array[Expr] = Array::new()
       let mut changed = false
       for arg in args {
@@ -721,7 +721,7 @@ fn expand_mul_expr(expr : Expr) -> Expr {
         expr
       }
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let expanded : Array[Expr] = Array::new()
       let mut changed = false
       let mut has_sum = false
@@ -729,7 +729,7 @@ fn expand_mul_expr(expr : Expr) -> Expr {
         let next = expand_mul_expr(arg)
         changed = changed || next != arg
         match next {
-          Expr::Add(_) => has_sum = true
+          Add(_) => has_sum = true
           _ => ()
         }
         expanded.push(next)
@@ -742,7 +742,7 @@ fn expand_mul_expr(expr : Expr) -> Expr {
         expr
       }
     }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       let base_expanded = expand_mul_expr(base)
       let exp_expanded = expand_mul_expr(exp)
       if base_expanded == base && exp_expanded == exp {
@@ -775,7 +775,7 @@ fn expand_mul_expr(expr : Expr) -> Expr {
 ///|
 fn additive_terms(expr : Expr) -> Array[Expr] {
   match expr {
-    Expr::Add(args) => args
+    Add(args) => args
     _ => [expr]
   }
 }
@@ -811,7 +811,7 @@ fn expand_mul_sequence(factors : Array[Expr]) -> Expr {
   let sums : Array[Expr] = Array::new()
   for factor in factors {
     match factor {
-      Expr::Add(_) => sums.push(factor)
+      Add(_) => sums.push(factor)
       _ => plain.push(factor)
     }
   }
@@ -838,7 +838,7 @@ fn expand_mul_sequence(factors : Array[Expr]) -> Expr {
 ///|
 fn parse_coeff_sqrt_int(expr : Expr) -> (Expr, Int)? {
   match unary_application_arg(expr, "sqrt") {
-    Some(Expr::Number(n)) =>
+    Some(Number(n)) =>
       if n.is_integral() && n.numerator().to_int() > 0 {
         Some((int(1), n.numerator().to_int()))
       } else {
@@ -847,13 +847,13 @@ fn parse_coeff_sqrt_int(expr : Expr) -> (Expr, Int)? {
     Some(_) => None
     None =>
       match expr {
-        Expr::Mul(args) => {
+        Mul(args) => {
           let mut found = false
           let mut rad = 0
           let coeff_factors : Array[Expr] = Array::new()
           for arg in args {
             match unary_application_arg(arg, "sqrt") {
-              Some(Expr::Number(n)) if !found =>
+              Some(Number(n)) if !found =>
                 if n.is_integral() && n.numerator().to_int() > 0 {
                   found = true
                   rad = n.numerator().to_int()
@@ -900,12 +900,12 @@ fn parse_signed_radical(expr : Expr) -> (Int, Expr)? {
     return Some((1, expr))
   }
   match expr {
-    Expr::Mul(args) if args.length() == 2 => {
+    Mul(args) if args.length() == 2 => {
       let mut coeff : @symnum.BigRational? = None
       let mut radical : Expr? = None
       for arg in args {
         match arg {
-          Expr::Number(c) => coeff = Some(c)
+          Number(c) => coeff = Some(c)
           _ => if radical is None { radical = Some(arg) } else { return None }
         }
       }
@@ -924,7 +924,7 @@ fn parse_signed_radical(expr : Expr) -> (Int, Expr)? {
 fn is_radical(expr : Expr) -> Bool {
   match expr {
     _ if @symcore.application_has_name(expr, "sqrt", arity=1) => true
-    Expr::Pow(_, Expr::Number(exp)) => is_half(exp)
+    Pow(_, Number(exp)) => is_half(exp)
     _ => false
   }
 }
@@ -937,7 +937,7 @@ fn radical_square(expr : Expr) -> Expr? {
         Some(arg) => Some(arg)
         None =>
           match expr {
-            Expr::Pow(base, Expr::Number(exp)) =>
+            Pow(base, Number(exp)) =>
               if is_half(exp) {
                 Some(base)
               } else {

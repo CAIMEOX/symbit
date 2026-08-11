@@ -105,9 +105,17 @@ pub fn BosonState::as_bra_expr(Self) -> @symcore.Expr
 pub fn BosonState::as_expr(Self) -> @symcore.Expr
 pub fn BosonState::as_ket_expr(Self) -> @symcore.Expr
 pub fn BosonState::down(Self, Int) -> Self? raise @symphysics.PhysicsError
+#deprecated
+pub fn BosonState::equal(Self, Self) -> Bool
 pub fn BosonState::get(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
 pub fn BosonState::len(Self) -> Int
+#deprecated
+pub fn BosonState::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn BosonState::output(Self, &Logger) -> Unit
 pub fn BosonState::repr(Self) -> String
+#deprecated
+pub fn BosonState::to_string(Self) -> String
 pub fn BosonState::up(Self, Int) -> Self raise @symphysics.PhysicsError
 pub impl Show for BosonState
 
@@ -115,9 +123,17 @@ pub enum BosonicBasisSet {
   Var(VarBosonicBasis)
   Fixed(FixedBosonicBasis)
 } derive(Eq)
+#deprecated
+pub fn BosonicBasisSet::equal(Self, Self) -> Bool
 pub fn BosonicBasisSet::index(Self, @symcore.Expr) -> Int raise @symphysics.PhysicsError
 pub fn BosonicBasisSet::len(Self) -> Int
+#deprecated
+pub fn BosonicBasisSet::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn BosonicBasisSet::output(Self, &Logger) -> Unit
 pub fn BosonicBasisSet::state(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn BosonicBasisSet::to_string(Self) -> String
 pub impl Show for BosonicBasisSet
 
 pub struct BosonicOperatorExpr {
@@ -127,9 +143,17 @@ pub struct BosonicOperatorExpr {
 pub fn BosonicOperatorExpr::apply_operator(Self, @symcore.Expr) -> @symcore.Expr
 pub fn BosonicOperatorExpr::as_expr(Self) -> @symcore.Expr
 pub fn BosonicOperatorExpr::dagger(Self) -> Self
+#deprecated
+pub fn BosonicOperatorExpr::equal(Self, Self) -> Bool
 pub fn BosonicOperatorExpr::is_symbolic(Self) -> Bool
+#deprecated
+pub fn BosonicOperatorExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn BosonicOperatorExpr::output(Self, &Logger) -> Unit
 pub fn BosonicOperatorExpr::repr(Self) -> String
 pub fn BosonicOperatorExpr::state(Self) -> @symcore.Expr
+#deprecated
+pub fn BosonicOperatorExpr::to_string(Self) -> String
 pub impl Show for BosonicOperatorExpr
 
 pub struct FermionState {
@@ -140,8 +164,16 @@ pub fn FermionState::as_bra_expr(Self) -> @symcore.Expr
 pub fn FermionState::as_expr(Self) -> @symcore.Expr
 pub fn FermionState::as_ket_expr(Self) -> @symcore.Expr
 pub fn FermionState::down(Self, @symcore.Expr) -> @symcore.Expr
+#deprecated
+pub fn FermionState::equal(Self, Self) -> Bool
 pub fn FermionState::len(Self) -> Int
+#deprecated
+pub fn FermionState::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn FermionState::output(Self, &Logger) -> Unit
 pub fn FermionState::repr(Self) -> String
+#deprecated
+pub fn FermionState::to_string(Self) -> String
 pub fn FermionState::up(Self, @symcore.Expr) -> @symcore.Expr
 pub impl Show for FermionState
 
@@ -152,7 +184,15 @@ pub struct FermionicOperatorExpr {
 pub fn FermionicOperatorExpr::apply_operator(Self, @symcore.Expr) -> @symcore.Expr
 pub fn FermionicOperatorExpr::as_expr(Self) -> @symcore.Expr
 pub fn FermionicOperatorExpr::dagger(Self) -> Self
+#deprecated
+pub fn FermionicOperatorExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn FermionicOperatorExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn FermionicOperatorExpr::output(Self, &Logger) -> Unit
 pub fn FermionicOperatorExpr::repr(Self) -> String
+#deprecated
+pub fn FermionicOperatorExpr::to_string(Self) -> String
 pub impl Show for FermionicOperatorExpr
 
 pub struct FixedBosonicBasis {
@@ -161,10 +201,18 @@ pub struct FixedBosonicBasis {
   basis : Array[@symcore.Expr]
 } derive(Eq)
 pub fn FixedBosonicBasis::as_basis(Self) -> BosonicBasisSet
+#deprecated
+pub fn FixedBosonicBasis::equal(Self, Self) -> Bool
 pub fn FixedBosonicBasis::index(Self, @symcore.Expr) -> Int raise @symphysics.PhysicsError
 pub fn FixedBosonicBasis::len(Self) -> Int
+#deprecated
+pub fn FixedBosonicBasis::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn FixedBosonicBasis::output(Self, &Logger) -> Unit
 pub fn FixedBosonicBasis::repr(Self) -> String
 pub fn FixedBosonicBasis::state(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn FixedBosonicBasis::to_string(Self) -> String
 pub impl Show for FixedBosonicBasis
 
 pub struct VarBosonicBasis {
@@ -172,10 +220,18 @@ pub struct VarBosonicBasis {
   basis : Array[@symcore.Expr]
 } derive(Eq)
 pub fn VarBosonicBasis::as_basis(Self) -> BosonicBasisSet
+#deprecated
+pub fn VarBosonicBasis::equal(Self, Self) -> Bool
 pub fn VarBosonicBasis::index(Self, @symcore.Expr) -> Int raise @symphysics.PhysicsError
 pub fn VarBosonicBasis::len(Self) -> Int
+#deprecated
+pub fn VarBosonicBasis::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn VarBosonicBasis::output(Self, &Logger) -> Unit
 pub fn VarBosonicBasis::repr(Self) -> String
 pub fn VarBosonicBasis::state(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn VarBosonicBasis::to_string(Self) -> String
 pub impl Show for VarBosonicBasis
 
 // Type aliases

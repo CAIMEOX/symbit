@@ -35,6 +35,14 @@ pub(all) enum ExprOp {
   Pow
   Function(String)
 } derive(Eq, Hash)
+#deprecated
+pub fn ExprOp::equal(Self, Self) -> Bool
+#deprecated
+pub fn ExprOp::hash(Self) -> Int
+#deprecated
+pub fn ExprOp::hash_combine(Self, Hasher) -> Unit
+#deprecated
+pub fn ExprOp::not_equal(Self, Self) -> Bool
 
 pub struct Fns[T, Op] {
   op : (T) -> Op

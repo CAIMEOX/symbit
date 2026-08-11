@@ -9,7 +9,7 @@ fn ag_norm(expr : @symcore.Expr) -> String raise {
 ///|
 test "agca: ideal sum/product/contains basics" {
   let x = @symcore.Expr::Symbol("x")
-  let builder = PolyBuilder::new(["x"], Domain::QQ)
+  let builder = PolyBuilder::new(["x"], QQ)
 
   let i = @sympolys.ideal([
     builder.from_expr((x ^ @symcore.int(2)) + @symcore.int(1)),
@@ -32,12 +32,12 @@ test "agca: ideal sum/product/contains basics" {
 test "agca: ring homomorphism applies substitutions" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let source = PolyBuilder::new(["x"], Domain::QQ).from_expr(
+  let source = PolyBuilder::new(["x"], QQ).from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(1),
   )
 
   let image : Map[String, @symcore.Expr] = { "x": y + @symcore.int(1) }
-  let hom = @sympolys.ring_homomorphism(["x"], ["y"], Domain::QQ, image)
+  let hom = @sympolys.ring_homomorphism(["x"], ["y"], QQ, image)
   let mapped = hom.apply_poly(source)
 
   let got = ag_norm(mapped.to_expr())
@@ -52,7 +52,7 @@ test "agca: groebner membership handles linear combinations and multivariate ide
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
 
-  let qx = PolyBuilder::new(["x"], Domain::QQ)
+  let qx = PolyBuilder::new(["x"], QQ)
   let i1 = @sympolys.ideal([
     qx.from_expr(x + @symcore.int(1)),
     qx.from_expr(x - @symcore.int(1)),
@@ -63,7 +63,7 @@ test "agca: groebner membership handles linear combinations and multivariate ide
     "0",
   )
 
-  let qxy = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let qxy = PolyBuilder::new(["x", "y"], QQ)
   let i2 = @sympolys.ideal([
     qxy.from_expr((x ^ @symcore.int(2)) + y),
     qxy.from_expr((x ^ @symcore.int(2)) + x),
@@ -75,7 +75,7 @@ test "agca: groebner membership handles linear combinations and multivariate ide
 test "agca: intersection, union, powers, and whole-ring predicates" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let builder = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let builder = PolyBuilder::new(["x", "y"], QQ)
 
   let i = @sympolys.ideal([builder.from_expr(x), builder.from_expr(y)])
   let sq = i.power(2)

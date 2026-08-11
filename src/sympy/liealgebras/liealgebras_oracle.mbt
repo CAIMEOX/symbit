@@ -55,9 +55,9 @@ fn py_eval(expr : String) -> @py.PyObjectEnum raise {
     let globals = @py.PyDict::new()
     globals.set("__builtins__", builtins.obj())
     let args = @sympy.py_pack_args([
-      OracleArg::Str(expr),
-      OracleArg::PyObj(globals.obj()),
-      OracleArg::PyObj(globals.obj()),
+      Str(expr),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match @sympy.py_call_object(eval_callable, args, print_err=true) {
       Some(obj) => obj
@@ -195,7 +195,7 @@ pub fn cartan_type_rank_str(ct : String) -> String raise {
   let fn_rank = py_eval_callable(
     "lambda ct: __import__('sympy.liealgebras.cartan_type', fromlist=['CartanType']).CartanType(ct).rank()",
   )
-  let res = py_call_with_args(fn_rank, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_rank, [Str(ct)])
   py_str_enum(res)
 }
 
@@ -204,7 +204,7 @@ pub fn cartan_type_series_str(ct : String) -> String raise {
   let fn_series = py_eval_callable(
     "lambda ct: __import__('sympy.liealgebras.cartan_type', fromlist=['CartanType']).CartanType(ct).series",
   )
-  let res = py_call_with_args(fn_series, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_series, [Str(ct)])
   py_str_enum(res)
 }
 
@@ -213,7 +213,7 @@ pub fn cartan_matrix_list_str(ct : String) -> String raise {
   let fn_mat = py_eval_callable(
     "lambda ct: [[str(x) for x in row] for row in __import__('sympy.liealgebras.cartan_matrix', fromlist=['CartanMatrix']).CartanMatrix(ct).tolist()]",
   )
-  let res = py_call_with_args(fn_mat, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_mat, [Str(ct)])
   let rows = py_list_to_string_lists(res)
   list_list_string(rows)
 }
@@ -223,7 +223,7 @@ pub fn dynkin_diagram_str(ct : String) -> String raise {
   let fn_diag = py_eval_callable(
     "lambda ct: __import__('sympy.liealgebras.dynkin_diagram', fromlist=['DynkinDiagram']).DynkinDiagram(ct)",
   )
-  let res = py_call_with_args(fn_diag, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_diag, [Str(ct)])
   py_str_enum(res)
 }
 
@@ -232,7 +232,7 @@ pub fn cartan_type_dimension_str(ct : String) -> String raise {
   let fn_dim = py_eval_callable(
     "lambda ct: __import__('sympy.liealgebras.cartan_type', fromlist=['CartanType']).CartanType(ct).dimension()",
   )
-  let res = py_call_with_args(fn_dim, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_dim, [Str(ct)])
   py_str_enum(res)
 }
 
@@ -241,7 +241,7 @@ pub fn cartan_type_roots_str(ct : String) -> String raise {
   let fn_roots = py_eval_callable(
     "lambda ct: __import__('sympy.liealgebras.cartan_type', fromlist=['CartanType']).CartanType(ct).roots()",
   )
-  let res = py_call_with_args(fn_roots, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_roots, [Str(ct)])
   py_str_enum(res)
 }
 
@@ -250,7 +250,7 @@ pub fn cartan_type_basis_str(ct : String) -> String raise {
   let fn_basis = py_eval_callable(
     "lambda ct: int(__import__('sympy.liealgebras.cartan_type', fromlist=['CartanType']).CartanType(ct).basis())",
   )
-  let res = py_call_with_args(fn_basis, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_basis, [Str(ct)])
   py_str_enum(res)
 }
 
@@ -259,7 +259,7 @@ pub fn cartan_type_lie_algebra_str(ct : String) -> String raise {
   let fn_la = py_eval_callable(
     "lambda ct: __import__('sympy.liealgebras.cartan_type', fromlist=['CartanType']).CartanType(ct).lie_algebra()",
   )
-  let res = py_call_with_args(fn_la, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_la, [Str(ct)])
   py_str_enum(res)
 }
 
@@ -271,10 +271,7 @@ pub fn cartan_type_simple_root_list_str(
   let fn_root = py_eval_callable(
     "lambda ct, i: [str(x) for x in __import__('sympy.liealgebras.cartan_type', fromlist=['CartanType']).CartanType(ct).simple_root(i)]",
   )
-  let res = py_call_with_args(fn_root, [
-    OracleArg::Str(ct),
-    OracleArg::Int(index),
-  ])
+  let res = py_call_with_args(fn_root, [Str(ct), Int(index)])
   let items = py_list_to_strings(res)
   list_string(items)
 }
@@ -284,7 +281,7 @@ pub fn cartan_type_highest_root_list_str(ct : String) -> String raise {
   let fn_root = py_eval_callable(
     "lambda ct: [str(x) for x in __import__('sympy.liealgebras.cartan_type', fromlist=['CartanType']).CartanType(ct).highest_root()]",
   )
-  let res = py_call_with_args(fn_root, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_root, [Str(ct)])
   let items = py_list_to_strings(res)
   list_string(items)
 }
@@ -294,7 +291,7 @@ pub fn cartan_type_positive_roots_map_str(ct : String) -> String raise {
   let fn_roots = py_eval_callable(
     "lambda ct: (lambda d: [str(k) + ': [' + ', '.join([str(x) for x in d[k]]) + ']' for k in sorted(d)])(__import__('sympy.liealgebras.cartan_type', fromlist=['CartanType']).CartanType(ct).positive_roots())",
   )
-  let res = py_call_with_args(fn_roots, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_roots, [Str(ct)])
   let entries = py_list_to_strings(res)
   map_entries_string(entries)
 }
@@ -304,7 +301,7 @@ pub fn root_system_simple_roots_map_str(ct : String) -> String raise {
   let fn_roots = py_eval_callable(
     "lambda ct: (lambda d: [str(k) + ': [' + ', '.join([str(x) for x in d[k]]) + ']' for k in sorted(d)])(__import__('sympy.liealgebras.root_system', fromlist=['RootSystem']).RootSystem(ct).simple_roots())",
   )
-  let res = py_call_with_args(fn_roots, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_roots, [Str(ct)])
   let entries = py_list_to_strings(res)
   map_entries_string(entries)
 }
@@ -314,7 +311,7 @@ pub fn root_system_all_roots_map_str(ct : String) -> String raise {
   let fn_roots = py_eval_callable(
     "lambda ct: (lambda d: [str(k) + ': [' + ', '.join([str(x) for x in d[k]]) + ']' for k in sorted(d)])(__import__('sympy.liealgebras.root_system', fromlist=['RootSystem']).RootSystem(ct).all_roots())",
   )
-  let res = py_call_with_args(fn_roots, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_roots, [Str(ct)])
   let entries = py_list_to_strings(res)
   map_entries_string(entries)
 }
@@ -324,7 +321,7 @@ pub fn root_system_root_space_str(ct : String) -> String raise {
   let fn_rs = py_eval_callable(
     "lambda ct: __import__('sympy.liealgebras.root_system', fromlist=['RootSystem']).RootSystem(ct).root_space()",
   )
-  let res = py_call_with_args(fn_rs, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_rs, [Str(ct)])
   py_str_enum(res)
 }
 
@@ -337,11 +334,7 @@ pub fn root_system_add_simple_roots_list_str(
   let fn_add = py_eval_callable(
     "lambda ct, a, b: [str(x) for x in __import__('sympy.liealgebras.root_system', fromlist=['RootSystem']).RootSystem(ct).add_simple_roots(a, b)]",
   )
-  let res = py_call_with_args(fn_add, [
-    OracleArg::Str(ct),
-    OracleArg::Int(root1),
-    OracleArg::Int(root2),
-  ])
+  let res = py_call_with_args(fn_add, [Str(ct), Int(root1), Int(root2)])
   let items = py_list_to_strings(res)
   list_string(items)
 }
@@ -357,17 +350,13 @@ pub fn root_system_add_as_roots_str(
   )
   let args1 : Array[OracleArg] = Array::new()
   for v in root1 {
-    args1.push(OracleArg::Int(v))
+    args1.push(Int(v))
   }
   let args2 : Array[OracleArg] = Array::new()
   for v in root2 {
-    args2.push(OracleArg::Int(v))
+    args2.push(Int(v))
   }
-  let res = py_call_with_args(fn_add, [
-    OracleArg::Str(ct),
-    OracleArg::List(args1),
-    OracleArg::List(args2),
-  ])
+  let res = py_call_with_args(fn_add, [Str(ct), List(args1), List(args2)])
   py_str_enum(res)
 }
 
@@ -376,7 +365,7 @@ pub fn weyl_group_generators_list_str(ct : String) -> String raise {
   let fn_gen = py_eval_callable(
     "lambda ct: [str(x) for x in __import__('sympy.liealgebras.weyl_group', fromlist=['WeylGroup']).WeylGroup(ct).generators()]",
   )
-  let res = py_call_with_args(fn_gen, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_gen, [Str(ct)])
   let items = py_list_to_strings(res)
   list_string(items)
 }
@@ -386,7 +375,7 @@ pub fn weyl_group_group_order_str(ct : String) -> String raise {
   let fn_order = py_eval_callable(
     "lambda ct: int(__import__('sympy.liealgebras.weyl_group', fromlist=['WeylGroup']).WeylGroup(ct).group_order())",
   )
-  let res = py_call_with_args(fn_order, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_order, [Str(ct)])
   py_str_enum(res)
 }
 
@@ -395,7 +384,7 @@ pub fn weyl_group_group_name_str(ct : String) -> String raise {
   let fn_name = py_eval_callable(
     "lambda ct: __import__('sympy.liealgebras.weyl_group', fromlist=['WeylGroup']).WeylGroup(ct).group_name()",
   )
-  let res = py_call_with_args(fn_name, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_name, [Str(ct)])
   py_str_enum(res)
 }
 
@@ -404,10 +393,7 @@ pub fn weyl_group_element_order_str(ct : String, elt : String) -> String raise {
   let fn_order = py_eval_callable(
     "lambda ct, elt: int(__import__('sympy.liealgebras.weyl_group', fromlist=['WeylGroup']).WeylGroup(ct).element_order(elt))",
   )
-  let res = py_call_with_args(fn_order, [
-    OracleArg::Str(ct),
-    OracleArg::Str(elt),
-  ])
+  let res = py_call_with_args(fn_order, [Str(ct), Str(elt)])
   py_str_enum(res)
 }
 
@@ -419,7 +405,7 @@ pub fn weyl_group_matrix_form_list_str(
   let fn_mat = py_eval_callable(
     "lambda ct, elt: [[str(x) for x in row] for row in __import__('sympy.liealgebras.weyl_group', fromlist=['WeylGroup']).WeylGroup(ct).matrix_form(elt).tolist()]",
   )
-  let res = py_call_with_args(fn_mat, [OracleArg::Str(ct), OracleArg::Str(elt)])
+  let res = py_call_with_args(fn_mat, [Str(ct), Str(elt)])
   let rows = py_list_to_string_lists(res)
   list_list_string(rows)
 }
@@ -429,6 +415,6 @@ pub fn weyl_group_coxeter_diagram_str(ct : String) -> String raise {
   let fn_diag = py_eval_callable(
     "lambda ct: __import__('sympy.liealgebras.weyl_group', fromlist=['WeylGroup']).WeylGroup(ct).coxeter_diagram()",
   )
-  let res = py_call_with_args(fn_diag, [OracleArg::Str(ct)])
+  let res = py_call_with_args(fn_diag, [Str(ct)])
   py_str_enum(res)
 }

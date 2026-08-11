@@ -216,6 +216,12 @@ pub(all) enum Predicate {
   IsPositive
   IsNonnegative
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn Predicate::equal(Self, Self) -> Bool
+#deprecated
+pub fn Predicate::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Predicate::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PredicateKey {
   Hermitian
@@ -275,6 +281,12 @@ pub(all) enum PredicateKey {
   Lt
   Le
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn PredicateKey::equal(Self, Self) -> Bool
+#deprecated
+pub fn PredicateKey::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn PredicateKey::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Query {
   Bool(Bool)
@@ -285,6 +297,10 @@ pub(all) enum Query {
   Implies(Query, Query)
   Equivalent(Array[Query])
 } derive(Eq)
+#deprecated
+pub fn Query::equal(Self, Self) -> Bool
+#deprecated
+pub fn Query::not_equal(Self, Self) -> Bool
 
 pub struct SymbolFacts {
   is_zero : Tri
@@ -295,12 +311,28 @@ pub struct SymbolFacts {
   is_positive : Tri
   is_nonnegative : Tri
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn SymbolFacts::equal(Self, Self) -> Bool
+#deprecated
+pub fn SymbolFacts::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn SymbolFacts::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Tri {
   True
   False
   Unknown
 } derive(Eq, @debug.Debug)
+#deprecated
+pub fn Tri::equal(Self, Self) -> Bool
+#deprecated
+pub fn Tri::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Tri::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Tri::to_repr(Self) -> @debug.Repr
+#deprecated
+pub fn Tri::to_string(Self) -> String
 pub impl Show for Tri
 
 // Type aliases

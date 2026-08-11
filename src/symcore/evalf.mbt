@@ -55,7 +55,7 @@ fn complex_imag_unit(prec : Int) -> ComplexFloat {
 
 ///|
 fn expr_from_mpf_evalf(value : @symnum.Mpf, prec : Int) -> Expr {
-  Expr::Float(Float::from_mpf(value, prec~))
+  Float(Float::from_mpf(value, prec~))
 }
 
 ///|
@@ -66,31 +66,27 @@ fn expr_from_mpc_evalf(value : @symnum.Mpc, prec : Int) -> Expr {
       prec,
     )
   } else {
-    Expr::ComplexFloat(ComplexFloat::from_mpc(value, prec~))
+    ComplexFloat(ComplexFloat::from_mpc(value, prec~))
   }
 }
 
 ///|
 fn expr_to_evalf_float(expr : Expr, prec : Int) -> Float? {
   match expr {
-    Expr::Number(n) => Some(float_from_exact_evalf(n, prec))
-    Expr::Float(f) => Some(promote_float_evalf(f, prec))
-    Expr::ComplexFloat(z) =>
+    Number(n) => Some(float_from_exact_evalf(n, prec))
+    Float(f) => Some(promote_float_evalf(f, prec))
+    ComplexFloat(z) =>
       if @symnum.is_zero(z.to_mpc().imag) {
         Some(promote_float_evalf(z.real_part(), prec))
       } else {
         None
       }
-    Expr::NumberSymbol(kind) => evalf_number_symbol_constant(kind, prec)
-    Expr::Boolean(_) => None
-    Expr::Dummy(_, _) | Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => None
-    Expr::FunctionHead(_) => None
-    Expr::UndefinedFunction(_) => None
-    Expr::Apply(_, _)
-    | Expr::Add(_)
-    | Expr::Mul(_)
-    | Expr::Pow(_, _)
-    | Expr::Mod(_, _) =>
+    NumberSymbol(kind) => evalf_number_symbol_constant(kind, prec)
+    Boolean(_) => None
+    Dummy(_, _) | Wild(_, _, _) | WildFunction(_, _) => None
+    FunctionHead(_) => None
+    UndefinedFunction(_) => None
+    Apply(_, _) | Add(_) | Mul(_) | Pow(_, _) | Mod(_, _) =>
       match expr_to_evalf_complex(expr, prec) {
         Some(value) =>
           if @symnum.is_zero(value.to_mpc().imag) {
@@ -100,7 +96,7 @@ fn expr_to_evalf_float(expr : Expr, prec : Int) -> Float? {
           }
         None => None
       }
-    Expr::Symbol(name) => evalf_symbol_constant(name, prec)
+    Symbol(name) => evalf_symbol_constant(name, prec)
     _ => None
   }
 }
@@ -108,27 +104,26 @@ fn expr_to_evalf_float(expr : Expr, prec : Int) -> Float? {
 ///|
 fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
   match expr {
-    Expr::Number(n) =>
+    Number(n) =>
       Some(complex_from_exact_evalf(n, @symnum.BigRational::zero(), prec))
-    Expr::Float(f) =>
-      Some(ComplexFloat::from_real(promote_float_evalf(f, prec)))
-    Expr::ComplexFloat(z) => Some(promote_complex_evalf(z, prec))
-    Expr::NumberSymbol(kind) =>
+    Float(f) => Some(ComplexFloat::from_real(promote_float_evalf(f, prec)))
+    ComplexFloat(z) => Some(promote_complex_evalf(z, prec))
+    NumberSymbol(kind) =>
       match kind {
-        NumberSymbolKind::ImaginaryUnit => Some(complex_imag_unit(prec))
+        ImaginaryUnit => Some(complex_imag_unit(prec))
         _ =>
           match evalf_number_symbol_constant(kind, prec) {
             Some(value) => Some(ComplexFloat::from_real(value))
             None => None
           }
       }
-    Expr::Boolean(_) => None
-    Expr::Dummy(_, _) | Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => None
-    Expr::FunctionHead(_) => None
-    Expr::UndefinedFunction(_) => None
-    Expr::Apply(head, args) =>
+    Boolean(_) => None
+    Dummy(_, _) | Wild(_, _, _) | WildFunction(_, _) => None
+    FunctionHead(_) => None
+    UndefinedFunction(_) => None
+    Apply(head, args) =>
       match head {
-        Expr::FunctionHead(name) => {
+        FunctionHead(name) => {
           let eval_args : Array[Expr] = []
           for arg in args {
             match expr_to_evalf_complex(arg, prec) {
@@ -144,7 +139,7 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
         }
         _ => None
       }
-    Expr::Add(args) => {
+    Add(args) => {
       let mut acc = ComplexFloat::from_exact_parts(
         @symnum.BigRational::zero(),
         @symnum.BigRational::zero(),
@@ -167,7 +162,7 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
       }
       Some(acc)
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut acc = ComplexFloat::from_exact_parts(
         @symnum.BigRational::one(),
         @symnum.BigRational::zero(),
@@ -190,7 +185,7 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
       }
       Some(acc)
     }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       let base_z = match expr_to_evalf_complex(base, prec) {
         Some(value) => value
         None => return None
@@ -214,17 +209,17 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
       }
       Some(ComplexFloat::from_mpc(value, prec~))
     }
-    Expr::Mod(lhs, rhs) =>
-      match evalf_impl(Expr::Mod(lhs, rhs), prec) {
-        Expr::Float(value) => Some(ComplexFloat::from_real(value))
-        Expr::ComplexFloat(value) => Some(value)
-        Expr::Number(value) =>
+    Mod(lhs, rhs) =>
+      match evalf_impl(Mod(lhs, rhs), prec) {
+        Float(value) => Some(ComplexFloat::from_real(value))
+        ComplexFloat(value) => Some(value)
+        Number(value) =>
           Some(
             complex_from_exact_evalf(value, @symnum.BigRational::zero(), prec),
           )
         _ => None
       }
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       if name == "I" {
         Some(complex_imag_unit(prec))
       } else {
@@ -262,16 +257,13 @@ fn evalf_symbol_constant(name : String, prec : Int) -> Float? {
 ///|
 fn evalf_number_symbol_constant(kind : NumberSymbolKind, prec : Int) -> Float? {
   match kind {
-    NumberSymbolKind::Pi =>
+    Pi =>
       Some(Float::from_mpf(@symnum.mpf_pi(prec, @symnum.round_nearest), prec~))
-    NumberSymbolKind::Exp1 =>
+    Exp1 =>
       Some(Float::from_mpf(@symnum.mpf_e(prec, @symnum.round_nearest), prec~))
-    NumberSymbolKind::EulerGamma =>
-      fixed_constant_to_float(@symnum.euler_fixed, prec)
-    NumberSymbolKind::GoldenRatio =>
-      fixed_constant_to_float(@symnum.phi_fixed, prec)
-    NumberSymbolKind::Catalan =>
-      fixed_constant_to_float(@symnum.catalan_fixed, prec)
+    EulerGamma => fixed_constant_to_float(@symnum.euler_fixed, prec)
+    GoldenRatio => fixed_constant_to_float(@symnum.phi_fixed, prec)
+    Catalan => fixed_constant_to_float(@symnum.catalan_fixed, prec)
     _ => None
   }
 }
@@ -796,59 +788,58 @@ fn evalf_nary_function(name : String, args : Array[Expr], prec : Int) -> Expr? {
 fn evalf_impl(expr : Expr, prec : Int) -> Expr {
   let expr = normalize_legacy_expr(expr)
   match expr {
-    Expr::Number(n) => Expr::Float(float_from_exact_evalf(n, prec))
-    Expr::Float(f) => Expr::Float(promote_float_evalf(f, prec))
-    Expr::ComplexFloat(z) => Expr::ComplexFloat(promote_complex_evalf(z, prec))
-    Expr::NumberSymbol(kind) =>
+    Number(n) => Float(float_from_exact_evalf(n, prec))
+    Float(f) => Float(promote_float_evalf(f, prec))
+    ComplexFloat(z) => ComplexFloat(promote_complex_evalf(z, prec))
+    NumberSymbol(kind) =>
       match kind {
-        NumberSymbolKind::ImaginaryUnit =>
-          Expr::ComplexFloat(complex_imag_unit(prec))
+        ImaginaryUnit => ComplexFloat(complex_imag_unit(prec))
         _ =>
           match evalf_number_symbol_constant(kind, prec) {
-            Some(value) => Expr::Float(value)
+            Some(value) => Float(value)
             None => expr
           }
       }
-    Expr::IdentityFunction => expr
-    Expr::Boolean(_) => expr
-    Expr::Dummy(_, _) | Expr::Wild(_, _, _) | Expr::WildFunction(_, _) => expr
-    Expr::FunctionHead(_) => expr
-    Expr::UndefinedFunction(_) => expr
-    Expr::Apply(head, args) => {
+    IdentityFunction => expr
+    Boolean(_) => expr
+    Dummy(_, _) | Wild(_, _, _) | WildFunction(_, _) => expr
+    FunctionHead(_) => expr
+    UndefinedFunction(_) => expr
+    Apply(head, args) => {
       match head {
-        Expr::UndefinedFunction(_) => return expr
+        UndefinedFunction(_) => return expr
         _ => ()
       }
       let eval_args = args.map(arg => evalf_impl(arg, prec))
       match head {
-        Expr::FunctionHead(name) =>
+        FunctionHead(name) =>
           match evalf_nary_function(name, eval_args, prec) {
             Some(value) => value
             None =>
               match raw_apply(head, eval_args) {
                 Some(applied) => applied
-                None => Expr::Apply(head, eval_args)
+                None => Apply(head, eval_args)
               }
           }
         _ =>
           match raw_apply(head, eval_args) {
             Some(applied) => applied
-            None => Expr::Apply(head, eval_args)
+            None => Apply(head, eval_args)
           }
       }
     }
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       if name == "I" {
-        Expr::ComplexFloat(complex_imag_unit(prec))
+        ComplexFloat(complex_imag_unit(prec))
       } else {
         match evalf_symbol_constant(name, prec) {
-          Some(value) => Expr::Float(value)
+          Some(value) => Float(value)
           None => expr
         }
       }
-    Expr::Add(args) => add(args.map(arg => evalf_impl(arg, prec)))
-    Expr::Mul(args) => mul(args.map(arg => evalf_impl(arg, prec)))
-    Expr::Pow(base, exp) => {
+    Add(args) => add(args.map(arg => evalf_impl(arg, prec)))
+    Mul(args) => mul(args.map(arg => evalf_impl(arg, prec)))
+    Pow(base, exp) => {
       let eval_base = evalf_impl(base, prec)
       let eval_exp = evalf_impl(exp, prec)
       match evalf_numeric_pow_expr(eval_base, eval_exp, prec) {
@@ -856,12 +847,12 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
         None => pow(eval_base, eval_exp)
       }
     }
-    Expr::Mod(lhs, rhs) => {
+    Mod(lhs, rhs) => {
       let lhs_eval = evalf_impl(lhs, prec)
       let rhs_eval = evalf_impl(rhs, prec)
       match (lhs_eval, rhs_eval) {
-        (Expr::Float(x), Expr::Float(y)) =>
-          Expr::Float(
+        (Float(x), Float(y)) =>
+          Float(
             Float::from_mpf(
               @symnum.mpf_mod(
                 x.to_mpf(),
@@ -877,35 +868,35 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
         _ => mod_expr(lhs_eval, rhs_eval)
       }
     }
-    Expr::Tuple(args) => Expr::Tuple(args.map(arg => evalf_impl(arg, prec)))
-    Expr::Dict(items) => {
+    Tuple(args) => Tuple(args.map(arg => evalf_impl(arg, prec)))
+    Dict(items) => {
       let out : Array[(Expr, Expr)] = []
       for item in items {
         let (key, value) = item
         out.push((evalf_impl(key, prec), evalf_impl(value, prec)))
       }
-      Expr::Dict(out)
+      Dict(out)
     }
-    Expr::Relational(op, lhs, rhs) => {
+    Relational(op, lhs, rhs) => {
       let lhs_eval = evalf_impl(lhs, prec)
       let rhs_eval = evalf_impl(rhs, prec)
       match op {
-        RelOp::Eq => Expr::Relational(RelOp::Eq, lhs_eval, rhs_eval)
-        RelOp::Ne => Expr::Relational(RelOp::Ne, lhs_eval, rhs_eval)
-        RelOp::Lt => Expr::Relational(RelOp::Lt, lhs_eval, rhs_eval)
-        RelOp::Le => Expr::Relational(RelOp::Le, lhs_eval, rhs_eval)
-        RelOp::Gt => Expr::Relational(RelOp::Gt, lhs_eval, rhs_eval)
-        RelOp::Ge => Expr::Relational(RelOp::Ge, lhs_eval, rhs_eval)
+        Eq => Relational(Eq, lhs_eval, rhs_eval)
+        Ne => Relational(Ne, lhs_eval, rhs_eval)
+        Lt => Relational(Lt, lhs_eval, rhs_eval)
+        Le => Relational(Le, lhs_eval, rhs_eval)
+        Gt => Relational(Gt, lhs_eval, rhs_eval)
+        Ge => Relational(Ge, lhs_eval, rhs_eval)
       }
     }
-    Expr::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       let out : Array[Expr] = []
       for arg in deriv_args {
         out.push(evalf_impl(arg, prec))
       }
-      Expr::Derivative(evalf_impl(inner, prec), out)
+      Derivative(evalf_impl(inner, prec), out)
     }
-    Expr::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       match subs_eval_env(variable, value) {
         Some(env) => evalf_impl(subst(inner, env), prec)
         None =>
@@ -915,9 +906,9 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
             evalf_impl(value, prec),
           )
       }
-    Expr::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       lambda_expr(evalf_impl(vars, prec), evalf_impl(body, prec))
-    Expr::Function(_, _) => abort("legacy function should be normalized")
+    Function(_, _) => abort("legacy function should be normalized")
   }
 }
 
@@ -939,7 +930,7 @@ fn subs_eval_env(variable : Expr, value : Expr) -> Map[String, Expr]? {
   let env : Map[String, Expr] = Map([])
   for i in 0..<vars.length() {
     match vars[i] {
-      Expr::Symbol(name) => env.set(name, vals[i])
+      Symbol(name) => env.set(name, vals[i])
       _ => return None
     }
   }
@@ -950,20 +941,14 @@ fn subs_eval_env(variable : Expr, value : Expr) -> Map[String, Expr]? {
 fn evalf_numeric_constant_expr(expr : Expr, prec : Int) -> Expr? {
   let expr = normalize_legacy_expr(expr)
   match expr {
-    Expr::Number(_)
-    | Expr::Float(_)
-    | Expr::ComplexFloat(_)
-    | Expr::NumberSymbol(_) => Some(evalf_impl(expr, prec))
-    Expr::Add(_)
-    | Expr::Mul(_)
-    | Expr::Pow(_, _)
-    | Expr::Mod(_, _)
-    | Expr::Apply(_, _) =>
+    Number(_) | Float(_) | ComplexFloat(_) | NumberSymbol(_) =>
+      Some(evalf_impl(expr, prec))
+    Add(_) | Mul(_) | Pow(_, _) | Mod(_, _) | Apply(_, _) =>
       match expr_to_evalf_complex(expr, prec) {
         Some(value) => Some(expr_from_mpc_evalf(value.to_mpc(), prec))
         None => None
       }
-    Expr::Function(_, _) => abort("legacy function should be normalized")
+    Function(_, _) => abort("legacy function should be normalized")
     _ => None
   }
 }

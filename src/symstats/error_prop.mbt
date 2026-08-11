@@ -48,13 +48,13 @@ fn affine_scale(a : AffineForm, scalar : @symnum.BigRational) -> AffineForm {
 ///|
 fn expr_to_affine(expr : @symcore.Expr) -> AffineForm? {
   match eval_arith(expr) {
-    @symcore.Expr::Number(n) => Some({ constant: n, coeffs: {} })
-    @symcore.Expr::Symbol(name) => {
+    Number(n) => Some({ constant: n, coeffs: {} })
+    Symbol(name) => {
       let coeffs : Map[String, @symnum.BigRational] = Map([])
       coeffs[name] = @symnum.BigRational::one()
       Some({ constant: @symnum.BigRational::zero(), coeffs })
     }
-    @symcore.Expr::Add(items) => {
+    Add(items) => {
       let mut acc = empty_affine()
       for item in items {
         match expr_to_affine(item) {
@@ -64,12 +64,12 @@ fn expr_to_affine(expr : @symcore.Expr) -> AffineForm? {
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(items) => {
+    Mul(items) => {
       let mut scalar = @symnum.BigRational::one()
       let mut other : @symcore.Expr? = None
       for item in items {
         match eval_arith(item) {
-          @symcore.Expr::Number(n) => scalar = scalar.mul_r(n)
+          Number(n) => scalar = scalar.mul_r(n)
           non_num =>
             match other {
               None => other = Some(non_num)
@@ -86,7 +86,7 @@ fn expr_to_affine(expr : @symcore.Expr) -> AffineForm? {
           }
       }
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       if exp == @symcore.int(1) {
         expr_to_affine(base)
       } else {
@@ -118,7 +118,7 @@ pub fn variance_prop(
         let coeff_expr = expr_from_big_rational(coeff)
         let var_expr = match variances.get(name) {
           Some(v) => v
-          None => @symcore.function("Variance", [@symcore.Expr::Symbol(name)])
+          None => @symcore.function("Variance", [Symbol(name)])
         }
         terms.push(
           eval_arith(

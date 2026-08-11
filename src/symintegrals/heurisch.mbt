@@ -22,13 +22,12 @@ fn collect_components(
     return
   }
   match expr {
-    @symcore.Expr::Symbol(name) if name == var_name =>
-      push_unique_component(out, expr)
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Symbol(name) if name == var_name => push_unique_component(out, expr)
+    Add(args) | Mul(args) =>
       for arg in args {
         collect_components(arg, var_name, out)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       collect_components(base, var_name, out)
       collect_components(exp, var_name, out)
       push_unique_component(out, expr)
@@ -86,6 +85,6 @@ pub fn heurisch(expr : Expr, var_name : String) -> Expr? {
 /// - Limits: The fallback is always symbolic; it does not raise on heuristic failure.
 pub fn heurisch_wrapper(expr : Expr, var_name : String) -> Expr {
   heurisch(expr, var_name).unwrap_or(
-    integral(expr, limits=[integral_limit([@symcore.Expr::Symbol(var_name)])]),
+    integral(expr, limits=[integral_limit([Symbol(var_name)])]),
   )
 }

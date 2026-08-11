@@ -10,12 +10,12 @@ fn rigidbody_default_inertia(
   Inertia::from_inertia_scalars(
     masscenter,
     frame,
-    Expr::Symbol(name + "_ixx"),
-    Expr::Symbol(name + "_iyy"),
-    Expr::Symbol(name + "_izz"),
-    ixy=Expr::Symbol(name + "_ixy"),
-    iyz=Expr::Symbol(name + "_iyz"),
-    izx=Expr::Symbol(name + "_izx"),
+    Symbol(name + "_ixx"),
+    Symbol(name + "_iyy"),
+    Symbol(name + "_izz"),
+    ixy=Symbol(name + "_ixy"),
+    iyz=Symbol(name + "_iyz"),
+    izx=Symbol(name + "_izx"),
   )
 }
 
@@ -44,10 +44,10 @@ pub fn rigid_body(
 ) -> RigidBody raise @symvector.VectorError {
   let mc = masscenter.unwrap_or(@symvector.point(name + "_masscenter"))
   let fr = frame.unwrap_or(@symvector.reference_frame(name + "_frame"))
-  let m = mass.unwrap_or(Expr::Symbol(name + "_mass"))
+  let m = mass.unwrap_or(Symbol(name + "_mass"))
   let inertia_value = inertia.unwrap_or(rigidbody_default_inertia(name, mc, fr))
   let central = rigidbody_central_inertia(m, mc, fr, inertia_value)
-  RigidBody::{
+  {
     name_: name,
     masscenter_: mc,
     frame_: fr,

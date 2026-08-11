@@ -23,7 +23,7 @@ fn ms_nonzero_cols_text(nonzero_cols : Map[Int, Array[Int]]) -> String {
 
 ///|
 test "matrix sparse wrappers: sdm_irref and RREF helpers align with methods" {
-  let a = @sympolys.ddm_from_ints([[1, 2, 3], [0, 1, 1]], Domain::QQ).to_sdm()
+  let a = @sympolys.ddm_from_ints([[1, 2, 3], [0, 1, 1]], QQ).to_sdm()
   let (rref, pivots, nonzero_cols) = @sympolys.sdm_irref(a)
   let (expected_rref, expected_pivots) = a.rref()
   assert_eq(pivots, expected_pivots)
@@ -42,7 +42,7 @@ test "matrix sparse wrappers: sdm_irref and RREF helpers align with methods" {
 
   let (nullspace, nonpivots) = @sympolys.sdm_nullspace_from_rref(
     rref,
-    @sympolys.fe_from_int(1, Domain::QQ),
+    @sympolys.fe_from_int(1, QQ),
     3,
     pivots,
     nonzero_cols,
@@ -65,10 +65,10 @@ test "matrix sparse wrappers: sdm_irref and RREF helpers align with methods" {
 
 ///|
 test "matrix sparse wrappers: sdm_nullspace_from_rref accepts augmented RREF" {
-  let aug = @sympolys.ddm_from_ints([[1, 1, 0], [0, 0, 1]], Domain::QQ).to_sdm()
+  let aug = @sympolys.ddm_from_ints([[1, 1, 0], [0, 0, 1]], QQ).to_sdm()
   let (basis, nonpivots) = @sympolys.sdm_nullspace_from_rref(
     aug,
-    @sympolys.fe_from_int(1, Domain::QQ),
+    @sympolys.fe_from_int(1, QQ),
     2,
     [0, 2],
     { 1: [0] },

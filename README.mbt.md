@@ -51,10 +51,7 @@ test "targeted simplification keeps intent explicit" {
   let trig = add([pow(sin_x, integer(2)), pow(cos_x, integer(2))])
   inspect(pretty_string(trigsimp(trig)), content="1")
 
-  let frac_expr = mul([
-    add([x, integer(1)]),
-    pow(Expr::Symbol("y"), integer(-1)),
-  ])
+  let frac_expr = mul([add([x, integer(1)]), pow(Symbol("y"), integer(-1))])
   let (num, den) = fraction(frac_expr)
   inspect(pretty_string(num), content="x + 1")
   inspect(pretty_string(den), content="y")

@@ -207,7 +207,7 @@ pub fn Ellipse::normal_lines(
     ) {
     Some(lines) => lines
     None =>
-      raise GeometryError::ValueError(
+      raise ValueError(
         "general symbolic ellipse normal lines are not supported",
       )
   }

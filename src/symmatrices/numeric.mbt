@@ -6,20 +6,13 @@
 /// - Sparse numeric evaluation currently materializes a dense matrix result.
 fn expr_numeric_prec(expr : Expr) -> Int {
   match @symcore.number_symbol_kind(expr) {
-    Some(
-      @symcore.NumberSymbolKind::ImaginaryUnit
-      | @symcore.NumberSymbolKind::Pi
-      | @symcore.NumberSymbolKind::Exp1
-      | @symcore.NumberSymbolKind::EulerGamma
-      | @symcore.NumberSymbolKind::GoldenRatio
-      | @symcore.NumberSymbolKind::Catalan
-    ) => 80
+    Some(ImaginaryUnit | Pi | Exp1 | EulerGamma | GoldenRatio | Catalan) => 80
     _ =>
       match expr {
-        Expr::Float(f) => f.precision()
-        Expr::ComplexFloat(z) => z.precision()
-        Expr::Number(_) => 80
-        Expr::Add(args) | Expr::Mul(args) => {
+        Float(f) => f.precision()
+        ComplexFloat(z) => z.precision()
+        Number(_) => 80
+        Add(args) | Mul(args) => {
           let mut best = 0
           for arg in args {
             let p = expr_numeric_prec(arg)
@@ -29,7 +22,7 @@ fn expr_numeric_prec(expr : Expr) -> Int {
           }
           best
         }
-        Expr::Pow(base, exp) => {
+        Pow(base, exp) => {
           let pb = expr_numeric_prec(base)
           let pe = expr_numeric_prec(exp)
           if pb > pe {
@@ -55,9 +48,9 @@ fn expr_numeric_prec(expr : Expr) -> Int {
 ///|
 fn expr_has_floating_leaf(expr : Expr) -> Bool {
   match expr {
-    Expr::Float(_) | Expr::ComplexFloat(_) => true
-    Expr::Add(args) | Expr::Mul(args) => args.any(expr_has_floating_leaf)
-    Expr::Pow(base, exp) =>
+    Float(_) | ComplexFloat(_) => true
+    Add(args) | Mul(args) => args.any(expr_has_floating_leaf)
+    Pow(base, exp) =>
       expr_has_floating_leaf(base) || expr_has_floating_leaf(exp)
     _ => @symcore.args(expr).any(expr_has_floating_leaf)
   }
@@ -96,7 +89,7 @@ fn expr_numeric_precision(rows : Array[Array[Expr]]) -> Int {
 ///|
 fn expr_to_numeric_complex(expr : Expr, prec : Int) -> @symcore.ComplexFloat? {
   match @symcore.evalf(expr_simplify(expr), prec~) {
-    Expr::Number(n) =>
+    Number(n) =>
       Some(
         @symcore.ComplexFloat::from_exact_parts(
           n,
@@ -104,8 +97,8 @@ fn expr_to_numeric_complex(expr : Expr, prec : Int) -> @symcore.ComplexFloat? {
           prec~,
         ),
       )
-    Expr::Float(f) => Some(@symcore.ComplexFloat::from_real(f))
-    Expr::ComplexFloat(z) => Some(z)
+    Float(f) => Some(@symcore.ComplexFloat::from_real(f))
+    ComplexFloat(z) => Some(z)
     _ => None
   }
 }
@@ -113,9 +106,9 @@ fn expr_to_numeric_complex(expr : Expr, prec : Int) -> @symcore.ComplexFloat? {
 ///|
 fn expr_from_numeric_complex(value : @symcore.ComplexFloat) -> Expr {
   if @symnum.is_zero(value.to_mpc().imag) {
-    @symcore.Expr::Float(value.real_part())
+    Float(value.real_part())
   } else {
-    @symcore.Expr::ComplexFloat(value)
+    ComplexFloat(value)
   }
 }
 

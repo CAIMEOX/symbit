@@ -3,7 +3,7 @@
 
 ///|
 pub fn force_load(point : @symvector.Point, value : @symvector.Vector) -> Load {
-  Load::ForceLoad(force(point, value))
+  ForceLoad(force(point, value))
 }
 
 ///|
@@ -11,7 +11,7 @@ pub fn torque_load(
   frame : @symvector.ReferenceFrame,
   value : @symvector.Vector,
 ) -> Load {
-  Load::TorqueLoad(torque(frame, value))
+  TorqueLoad(torque(frame, value))
 }
 
 ///|

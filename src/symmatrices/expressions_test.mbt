@@ -4,7 +4,7 @@ test "matrices expressions shape and render" {
   let b = matrix_symbol("B", 2, 2)
   let expr = matrix_expr_transpose(matrix_expr_mul([a, matrix_expr_inverse(b)]))
   assert_true(expr.shape() == (2, 2))
-  inspect(expr.to_string(), content="(B^-1.T * A.T)")
+  inspect(Show::to_string(expr), content="(B^-1.T * A.T)")
 }
 
 ///|
@@ -24,7 +24,7 @@ test "matrices expressions evaluate with environment" {
     [@symcore.int(2), @symcore.int(0)],
     [@symcore.int(1), @symcore.int(3)],
   ])
-  inspect(expr.eval(env).to_string(), content="Matrix([[5, 6], [1, 4]])")
+  inspect(Show::to_string(expr.eval(env)), content="Matrix([[5, 6], [1, 4]])")
 }
 
 ///|
@@ -36,7 +36,7 @@ test "matrices expressions power and transpose evaluation" {
     [@symcore.int(1), @symcore.int(1)],
     [@symcore.int(0), @symcore.int(1)],
   ])
-  inspect(expr.eval(env).to_string(), content="Matrix([[1, 0], [2, 1]])")
+  inspect(Show::to_string(expr.eval(env)), content="Matrix([[1, 0], [2, 1]])")
 }
 
 ///|
@@ -49,7 +49,7 @@ test "matrices expressions block helpers" {
   env["A"] = matrix([[@symcore.int(1), @symcore.int(2)]])
   env["B"] = matrix([[@symcore.int(3)], [@symcore.int(4)]])
   inspect(
-    expr.eval(env).to_string(),
+    Show::to_string(expr.eval(env)),
     content="Matrix([[1, 2, 0], [0, 0, 3], [0, 0, 4]])",
   )
 }
@@ -64,23 +64,23 @@ test "matrices expressions identity zero and block evaluation" {
   assert_true(expr.shape() == (2, 2))
   let env : Map[String, Matrix] = Map([])
   env["A"] = matrix([[@symcore.int(5)]])
-  inspect(expr.eval(env).to_string(), content="Matrix([[1, 0], [5, 5]])")
+  inspect(Show::to_string(expr.eval(env)), content="Matrix([[1, 0], [5, 5]])")
 }
 
 ///|
 test "matrices expressions matadd matmul and collapse helpers" {
   let a = matrix_symbol("A", 1, 1)
   let expr = mat_mul([identity_expr(1), mat_add([a, zero_matrix_expr(1, 1)])]).block_collapse()
-  inspect(expr.to_string(), content="A")
+  inspect(Show::to_string(expr), content="A")
   let block = block_diag_matrix_expr([
     identity_expr(1),
     block_diag_matrix_expr([a]),
   ]).block_collapse()
-  inspect(block.to_string(), content="BlockDiag(Identity(1), A)")
+  inspect(Show::to_string(block), content="BlockDiag(Identity(1), A)")
   let env : Map[String, Matrix] = Map([])
   env["A"] = matrix([[@symcore.int(9)]])
   inspect(
-    block.as_explicit(env).to_string(),
+    Show::to_string(block.as_explicit(env)),
     content="Matrix([[1, 0], [0, 9]])",
   )
 }
@@ -94,7 +94,7 @@ test "matrices expressions symbolic block multiply collapse" {
   let left = block_matrix_expr([[a, b]])
   let right = block_matrix_expr([[c], [d]])
   let collapsed = mat_mul([left, right]).block_collapse()
-  inspect(collapsed.to_string(), content="((A * C) + (B * D))")
+  inspect(Show::to_string(collapsed), content="((A * C) + (B * D))")
 }
 
 ///|
@@ -102,11 +102,11 @@ test "matrices expressions inverse and transpose simplify block forms" {
   let a = matrix_symbol("A", 1, 1)
   let b = matrix_symbol("B", 1, 1)
   inspect(
-    matrix_expr_inverse(block_diag_matrix_expr([a, b])).to_string(),
+    Show::to_string(matrix_expr_inverse(block_diag_matrix_expr([a, b]))),
     content="BlockDiag(A^-1, B^-1)",
   )
   inspect(
-    matrix_expr_transpose(block_matrix_expr([[a, b]])).to_string(),
+    Show::to_string(matrix_expr_transpose(block_matrix_expr([[a, b]]))),
     content="Block([A.T], [B.T])",
   )
 }
@@ -116,9 +116,9 @@ test "matrices expressions collapse identity into block structures" {
   let a = matrix_symbol("A", 1, 1)
   let b = matrix_symbol("B", 2, 2)
   inspect(
-    mat_add([identity_expr(3), block_diag_matrix_expr([a, b])])
-    .block_collapse()
-    .to_string(),
+    Show::to_string(
+      mat_add([identity_expr(3), block_diag_matrix_expr([a, b])]).block_collapse(),
+    ),
     content="BlockDiag((Identity(1) + A), (Identity(2) + B))",
   )
 }
@@ -132,21 +132,21 @@ test "matrices expressions collapse blockdiag and block multiplication symbolica
   let e = matrix_symbol("E", 2, 1)
   let f = matrix_symbol("F", 2, 2)
   inspect(
-    mat_mul([
-      block_diag_matrix_expr([a, b]),
-      block_matrix_expr([[c, d], [e, f]]),
-    ])
-    .block_collapse()
-    .to_string(),
+    Show::to_string(
+      mat_mul([
+        block_diag_matrix_expr([a, b]),
+        block_matrix_expr([[c, d], [e, f]]),
+      ]).block_collapse(),
+    ),
     content="Block([(A * C), (A * D)], [(B * E), (B * F)])",
   )
   inspect(
-    mat_mul([
-      block_matrix_expr([[c, d], [e, f]]),
-      block_diag_matrix_expr([a, b]),
-    ])
-    .block_collapse()
-    .to_string(),
+    Show::to_string(
+      mat_mul([
+        block_matrix_expr([[c, d], [e, f]]),
+        block_diag_matrix_expr([a, b]),
+      ]).block_collapse(),
+    ),
     content="Block([(C * A), (D * B)], [(E * A), (F * B)])",
   )
 }
@@ -155,13 +155,13 @@ test "matrices expressions collapse blockdiag and block multiplication symbolica
 test "matrices expressions rewrite inverse zero and power without explicit evaluation" {
   let a = matrix_symbol("A", 2, 2)
   let b = matrix_symbol("B", 2, 2)
-  inspect(matrix_expr_pow(a, 0).to_string(), content="Identity(2)")
+  inspect(Show::to_string(matrix_expr_pow(a, 0)), content="Identity(2)")
   inspect(
-    matrix_expr_inverse(matrix_expr_transpose(mat_mul([a, b]))).to_string(),
+    Show::to_string(matrix_expr_inverse(matrix_expr_transpose(mat_mul([a, b])))),
     content="(A^-1.T * B^-1.T)",
   )
   inspect(
-    mat_mul([a, zero_matrix_expr(2, 3)]).to_string(),
+    Show::to_string(mat_mul([a, zero_matrix_expr(2, 3)])),
     content="ZeroMatrix(2, 3)",
   )
 }
@@ -170,11 +170,11 @@ test "matrices expressions rewrite inverse zero and power without explicit evalu
 test "matrices expressions matmul combines inverse pairs and powers" {
   let a = matrix_symbol("A", 2, 2)
   inspect(
-    mat_mul([a, matrix_expr_inverse(a)]).to_string(),
+    Show::to_string(mat_mul([a, matrix_expr_inverse(a)])),
     content="Identity(2)",
   )
-  inspect(mat_mul([a, a]).to_string(), content="A^2")
-  inspect(mat_mul([matrix_expr_pow(a, 2), a]).to_string(), content="A^3")
+  inspect(Show::to_string(mat_mul([a, a])), content="A^2")
+  inspect(Show::to_string(mat_mul([matrix_expr_pow(a, 2), a])), content="A^3")
 }
 
 ///|
@@ -182,10 +182,12 @@ test "matrices expressions matadd collapses blockdiag operands immediately" {
   let a = matrix_symbol("A", 1, 1)
   let b = matrix_symbol("B", 2, 2)
   inspect(
-    mat_add([
-      block_diag_matrix_expr([a, b]),
-      block_diag_matrix_expr([identity_expr(1), identity_expr(2)]),
-    ]).to_string(),
+    Show::to_string(
+      mat_add([
+        block_diag_matrix_expr([a, b]),
+        block_diag_matrix_expr([identity_expr(1), identity_expr(2)]),
+      ]),
+    ),
     content="BlockDiag((A + Identity(1)), (B + Identity(2)))",
   )
 }

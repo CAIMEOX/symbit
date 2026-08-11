@@ -64,95 +64,64 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
     None => ()
   }
   let folded = match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(_)
-    | @symcore.ExprForm::Float(_)
-    | @symcore.ExprForm::ComplexFloat(_)
-    | @symcore.ExprForm::NumberSymbol(_)
-    | @symcore.ExprForm::Symbol(_)
-    | @symcore.ExprForm::Dummy(_, _)
-    | @symcore.ExprForm::Wild(_, _, _)
-    | @symcore.ExprForm::FunctionHead(_)
-    | @symcore.ExprForm::UndefinedFunction(_)
-    | @symcore.ExprForm::Boolean(_) => expr
-    @symcore.ExprForm::Add(args) => @symcore.add(args.map(control_normalize))
-    @symcore.ExprForm::Mul(args) => @symcore.mul(args.map(control_normalize))
-    @symcore.ExprForm::Pow(base, exp_expr) => {
+    Number(_)
+    | Float(_)
+    | ComplexFloat(_)
+    | NumberSymbol(_)
+    | Symbol(_)
+    | Dummy(_, _)
+    | Wild(_, _, _)
+    | FunctionHead(_)
+    | UndefinedFunction(_)
+    | Boolean(_) => expr
+    Add(args) => @symcore.add(args.map(control_normalize))
+    Mul(args) => @symcore.mul(args.map(control_normalize))
+    Pow(base, exp_expr) => {
       let base_norm = control_normalize(base)
       let exp_norm = control_normalize(exp_expr)
       match (base_norm, exp_norm) {
-        (@symcore.Expr::Number(base_value), @symcore.Expr::Number(exp_value)) if exp_value.is_integral() =>
+        (Number(base_value), Number(exp_value)) if exp_value.is_integral() =>
           match rational_pow(base_value, exp_value.numerator().to_int()) {
-            Some(value) => @symcore.Expr::Number(value)
+            Some(value) => Number(value)
             None => @symcore.pow(base_norm, exp_norm)
           }
         _ => @symcore.pow(base_norm, exp_norm)
       }
     }
-    @symcore.ExprForm::Mod(lhs, rhs) =>
+    Mod(lhs, rhs) =>
       @symcore.mod_expr(control_normalize(lhs), control_normalize(rhs))
-    @symcore.ExprForm::Tuple(args) =>
-      @symcore.Expr::Tuple(args.map(control_normalize))
-    @symcore.ExprForm::Dict(items) => {
+    Tuple(args) => Tuple(args.map(control_normalize))
+    Dict(items) => {
       let out : Array[(@symcore.Expr, @symcore.Expr)] = []
       for item in items {
         let (key, value) = item
         out.push((control_normalize(key), control_normalize(value)))
       }
-      @symcore.Expr::Dict(out)
+      Dict(out)
     }
-    @symcore.ExprForm::Relational(op, lhs, rhs) =>
+    Relational(op, lhs, rhs) =>
       match op {
-        @symcore.RelOp::Eq =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Eq,
-            control_normalize(lhs),
-            control_normalize(rhs),
-          )
-        @symcore.RelOp::Ne =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ne,
-            control_normalize(lhs),
-            control_normalize(rhs),
-          )
-        @symcore.RelOp::Lt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Lt,
-            control_normalize(lhs),
-            control_normalize(rhs),
-          )
-        @symcore.RelOp::Le =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Le,
-            control_normalize(lhs),
-            control_normalize(rhs),
-          )
-        @symcore.RelOp::Gt =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Gt,
-            control_normalize(lhs),
-            control_normalize(rhs),
-          )
-        @symcore.RelOp::Ge =>
-          @symcore.Expr::Relational(
-            @symcore.RelOp::Ge,
-            control_normalize(lhs),
-            control_normalize(rhs),
-          )
+        Eq => Relational(Eq, control_normalize(lhs), control_normalize(rhs))
+        Ne => Relational(Ne, control_normalize(lhs), control_normalize(rhs))
+        Lt => Relational(Lt, control_normalize(lhs), control_normalize(rhs))
+        Le => Relational(Le, control_normalize(lhs), control_normalize(rhs))
+        Gt => Relational(Gt, control_normalize(lhs), control_normalize(rhs))
+        Ge => Relational(Ge, control_normalize(lhs), control_normalize(rhs))
       }
-    @symcore.ExprForm::Derivative(inner, deriv_args) => {
+    Derivative(inner, deriv_args) => {
       let args : Array[@symcore.Expr] = [control_normalize(inner)]
       for arg in deriv_args {
         args.push(control_normalize(arg))
       }
       @symcore.raw_derivative(args[0], args[1:])
     }
-    @symcore.ExprForm::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       @symcore.subs_expr(
         control_normalize(inner),
         control_normalize(variable),
         control_normalize(value),
       )
-    @symcore.ExprForm::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       @symcore.lambda_expr(control_normalize(vars), control_normalize(body))
     _ => expr
   }
@@ -170,26 +139,24 @@ fn expr_depends_on(expr : @symcore.Expr, variable : String) -> Bool {
     None => ()
   }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Symbol(name) => name == variable
-    @symcore.ExprForm::Add(args)
-    | @symcore.ExprForm::Mul(args)
-    | @symcore.ExprForm::Tuple(args) =>
+    Symbol(name) => name == variable
+    Add(args) | Mul(args) | Tuple(args) =>
       args.any(arg => expr_depends_on(arg, variable))
-    @symcore.ExprForm::Pow(base, exp) =>
+    Pow(base, exp) =>
       expr_depends_on(base, variable) || expr_depends_on(exp, variable)
-    @symcore.ExprForm::Relational(_, lhs, rhs) =>
+    Relational(_, lhs, rhs) =>
       expr_depends_on(lhs, variable) || expr_depends_on(rhs, variable)
-    @symcore.ExprForm::Derivative(inner, deriv_args) =>
+    Derivative(inner, deriv_args) =>
       if expr_depends_on(inner, variable) {
         true
       } else {
         deriv_args.any(arg => expr_depends_on(arg, variable))
       }
-    @symcore.ExprForm::Subs(inner, sub_var, value) =>
+    Subs(inner, sub_var, value) =>
       expr_depends_on(inner, variable) ||
       expr_depends_on(sub_var, variable) ||
       expr_depends_on(value, variable)
-    @symcore.ExprForm::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       expr_depends_on(vars, variable) || expr_depends_on(body, variable)
     _ => false
   }
@@ -271,37 +238,32 @@ fn poly_from_expr(
   variable : String,
 ) -> Map[Int, @symcore.Expr] raise @symphysics.PhysicsError {
   match expr {
-    @symcore.Expr::Number(_) => poly_const(expr)
-    @symcore.Expr::Symbol(name) =>
-      if name == variable {
-        poly_var()
-      } else {
-        poly_const(expr)
-      }
-    @symcore.Expr::Add(args) => {
+    Number(_) => poly_const(expr)
+    Symbol(name) => if name == variable { poly_var() } else { poly_const(expr) }
+    Add(args) => {
       let mut out = poly_zero()
       for arg in args {
         out = poly_add(out, poly_from_expr(arg, variable))
       }
       out
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut out = poly_const(@symcore.int(1))
       for arg in args {
         out = poly_mul(out, poly_from_expr(arg, variable))
       }
       out
     }
-    @symcore.Expr::Pow(base, exp_expr) => {
+    Pow(base, exp_expr) => {
       let exp = match exp_expr {
-        @symcore.Expr::Number(n) if n.is_integral() => n.numerator().to_int()
+        Number(n) if n.is_integral() => n.numerator().to_int()
         _ =>
-          raise @symphysics.PhysicsError::ValueError(
+          raise ValueError(
             "RouthHurwitz expects a polynomial with nonnegative integer exponents",
           )
       }
       guard exp >= 0 else {
-        raise @symphysics.PhysicsError::ValueError(
+        raise ValueError(
           "RouthHurwitz expects a polynomial with nonnegative integer exponents",
         )
       }
@@ -311,9 +273,7 @@ fn poly_from_expr(
       if !expr_depends_on(expr, variable) {
         poly_const(expr)
       } else {
-        raise @symphysics.PhysicsError::ValueError(
-          "RouthHurwitz expects a univariate polynomial",
-        )
+        raise ValueError("RouthHurwitz expects a univariate polynomial")
       }
   }
 }
@@ -415,8 +375,8 @@ pub fn routh_hurwitz(
   variable_expr : @symcore.Expr,
 ) -> RouthHurwitz raise @symphysics.PhysicsError {
   let variable = match variable_expr {
-    @symcore.Expr::Symbol(name) => name
-    _ => raise @symphysics.PhysicsError::ValueError("var must be a Symbol")
+    Symbol(name) => name
+    _ => raise ValueError("var must be a Symbol")
   }
   let poly = poly_from_expr(polynomial, variable)
   let (degree, coeffs) = coeff_array(poly)
@@ -518,7 +478,7 @@ pub fn routh_hurwitz(
     )
   }
 
-  RouthHurwitz::{
+  {
     table: @symphysics.explicit_matrix_from_rows(rows),
     variable,
     polynomial,

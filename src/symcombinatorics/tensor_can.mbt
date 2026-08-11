@@ -218,7 +218,7 @@ pub fn dummy_sgs(
   n : Int,
 ) -> Array[Array[Int]] raise CombinatoricsError {
   if dummies.length() > n {
-    raise CombinatoricsError::ValueError("List too large")
+    raise ValueError("List too large")
   }
   let res : Array[Array[Int]] = Array::new()
   match sym {
@@ -499,7 +499,7 @@ pub fn double_coset_can_rep(
   }
   let idn = range_array(0, size)
   let tab : Array[TabEntry] = Array::new()
-  tab.push(TabEntry::{ s: copy_int_array(idn), d: copy_int_array(idn), h: g })
+  tab.push({ s: copy_int_array(idn), d: copy_int_array(idn), h: g })
   for i in 0..<(size - 2) {
     if tab.is_empty() {
       return double_coset_bruteforce(dummies, sym, sgens, g_perm)
@@ -667,7 +667,7 @@ pub fn double_coset_can_rep(
         for ix in s1 {
           h1.push(d1[g[ix]])
         }
-        tab1.push(TabEntry::{ s: s1, d: d1, h: h1 })
+        tab1.push({ s: s1, d: d1, h: h1 })
       }
     }
     let sorted = sort_tab_by_h(tab1)
@@ -828,13 +828,11 @@ pub fn canonicalize(
   components : Array[TensorComponent],
 ) -> Array[Int]? raise CombinatoricsError {
   if msym.length() != dummies.length() {
-    raise CombinatoricsError::ValueError(
-      "dummies and msym must have the same number of elements",
-    )
+    raise ValueError("dummies and msym must have the same number of elements")
   }
   for s in msym {
     if !sym_valid(s) {
-      raise CombinatoricsError::ValueError("msym entries must be 0, 1 or None")
+      raise ValueError("msym entries must be 0, 1 or None")
     }
   }
   let size = g.size()
@@ -855,12 +853,7 @@ pub fn canonicalize(
     for _ in 0..<comp.count {
       free_list.push([])
     }
-    v1.push(TensorComponentFree::{
-      base: base_i,
-      gens: gens_i,
-      free: free_list,
-      sym: comp.sym,
-    })
+    v1.push({ base: base_i, gens: gens_i, free: free_list, sym: comp.sym })
   }
   let flat_dummies : Array[Int] = Array::new()
   for dumx in dummies {
@@ -873,12 +866,12 @@ pub fn canonicalize(
     let end = flat_dummies[flat_dummies.length() - 1]
     let expected = range_array(start, end + 1)
     if !array_eq_ints(flat_dummies, expected) {
-      raise CombinatoricsError::ValueError("dummies is not valid")
+      raise ValueError("dummies is not valid")
     }
   }
   let (size1, sbase, sgens) = gens_products(v1)
   if size != size1 {
-    raise CombinatoricsError::ValueError("g has size mismatch with generators")
+    raise ValueError("g has size mismatch with generators")
   }
   let free : Array[Int] = Array::new()
   for i in 0..<(size - 2) {
@@ -911,12 +904,7 @@ pub fn canonicalize(
       free_i.push(fr)
       start = start + len_tens
     }
-    v2.push(TensorComponentFree::{
-      base: comp.base,
-      gens: comp.gens,
-      free: free_i,
-      sym: comp.sym,
-    })
+    v2.push({ base: comp.base, gens: comp.gens, free: free_i, sym: comp.sym })
   }
   let (size2, sbase2, sgens2) = gens_products(v2)
   let pos_free : Array[Int] = Array::new()
@@ -1372,12 +1360,7 @@ pub fn canonicalize_naive(
     for _ in 0..<comp.count {
       free_list.push([])
     }
-    v1.push(TensorComponentFree::{
-      base: comp.base,
-      gens: comp.gens,
-      free: free_list,
-      sym: comp.sym,
-    })
+    v1.push({ base: comp.base, gens: comp.gens, free: free_list, sym: comp.sym })
   }
   let (size, _, sgens) = gens_products(v1)
   let dgens : Array[Array[Int]] = Array::new()

@@ -132,9 +132,8 @@ fn render_optional_expr_action(
 ///|
 fn render_expr_tree_item(item : DomainExprTree) -> String {
   match item {
-    DomainExprTree::Elem(expr) =>
-      normalize_expr_text(@symprint.pretty_string(expr))
-    DomainExprTree::List(items) => render_expr_tree(items)
+    Elem(expr) => normalize_expr_text(@symprint.pretty_string(expr))
+    List(items) => render_expr_tree(items)
   }
 }
 
@@ -154,7 +153,7 @@ fn small_univar_poly_expr(
     "x-2" => x - @symcore.int(2)
     "x**2-2" => (x ^ @symcore.int(2)) - @symcore.int(2)
     "x**2+1" => (x ^ @symcore.int(2)) + @symcore.int(1)
-    _ => raise PolyError::BadGenerator(poly_expr)
+    _ => raise BadGenerator(poly_expr)
   }
 }
 
@@ -173,10 +172,8 @@ test "domains: basic constructor/repr parity" {
 
 ///|
 test "domains: polynomial/fraction descriptors parity" {
-  let poly_domain = @sympolys.poly_ring_domain(Domain::ZZ, ["x", "y"])
-  let frac_domain = @sympolys.rational_function_field_domain(Domain::QQ, [
-    "x", "y",
-  ])
+  let poly_domain = @sympolys.poly_ring_domain(ZZ, ["x", "y"])
+  let frac_domain = @sympolys.rational_function_field_domain(QQ, ["x", "y"])
 
   let poly_ours = @sympolys.domain_to_sympy_string(poly_domain)
   let frac_ours = @sympolys.domain_to_sympy_string(frac_domain)
@@ -587,11 +584,8 @@ test "domains: method constructor parity for poly/frac old/new rings" {
     assert_eq(trim_ws(old_frac_ours), trim_ws(old_frac_oracle))
   }
 
-  let quotient = @sympolys.quotient_ring_domain(Domain::QQ, ["x"], [
-    @symcore.add([
-      @symcore.pow(@symcore.Expr::Symbol("x"), @symcore.int(2)),
-      @symcore.int(1),
-    ]),
+  let quotient = @sympolys.quotient_ring_domain(QQ, ["x"], [
+    @symcore.add([@symcore.pow(Symbol("x"), @symcore.int(2)), @symcore.int(1)]),
   ])
   assert_eq(
     render_domain_action(fn() raise PolyError { quotient.poly_ring(["y"]) }),
@@ -775,11 +769,11 @@ test "domains: algebraic_field parity and Domain methods" {
   }
 
   let direct_alg_field = @sympolys.domain_from_string("QQ").alg_field_from_poly(
-    Poly::from_expr((x ^ @symcore.int(2)) - @symcore.int(2), ["x"], Domain::QQ),
+    Poly::from_expr((x ^ @symcore.int(2)) - @symcore.int(2), ["x"], QQ),
     extension_name=Some("a"),
   )
   match direct_alg_field {
-    Domain::AlgExt(_, gens, rels) => {
+    AlgExt(_, gens, rels) => {
       assert_true(gens.equal(["a"]))
       assert_eq(normalize_expr_text(@symprint.pretty_string(rels[0])), "a**2-2")
     }
@@ -821,7 +815,7 @@ test "domains: algebraic_field parity and Domain methods" {
     gen=Some("t"),
   )
   match direct_cyclo {
-    Domain::AlgExt(_, gens, rels) => {
+    AlgExt(_, gens, rels) => {
       assert_true(gens.equal(["a"]))
       assert_eq(
         normalize_expr_text(@symprint.pretty_string(rels[0])),
@@ -864,7 +858,7 @@ test "domains: algebraic_field parity and Domain methods" {
 test "domains: contains_expr parity for constants polynomials and rational functions" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let sin1 = @symcore.function("sin", [@symcore.int(1)])
   let inv_x = @symcore.pow(x, @symcore.int(-1))
@@ -905,7 +899,7 @@ test "domains: contains_expr parity for constants polynomials and rational funct
 ///|
 test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite domains" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let conversion_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(7), "7"),
@@ -1003,7 +997,7 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
 
 ///|
 test "domains: sum_expr parity on scalar and gaussian domains" {
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let cases : Array[(String, Array[@symcore.Expr], Array[String])] = [
     ("ZZ", [@symcore.int(1), @symcore.int(2), @symcore.int(3)], ["1", "2", "3"]),
     (
@@ -1037,7 +1031,7 @@ test "domains: sum_expr parity on scalar and gaussian domains" {
 ///|
 test "domains: from_* conversion hook parity on representative base families" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, String, @symcore.Expr, String, String)] = [
     ("from_ff", "ZZ", @symcore.int(3), "GF(5)", "3"),
@@ -1171,7 +1165,7 @@ test "domains: from_* conversion hook parity on representative base families" {
 test "domains: extended conversion hook parity for ground, gaussian, and legacy-ring families" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let half = @symcore.rational_from_ints(1, 2)
   let cases : Array[(String, String, @symcore.Expr, String, String, String)] = [
     ("from_zz", "QQ", @symcore.int(2), "ZZ", "ZZ", "2"),
@@ -1392,7 +1386,7 @@ test "domains: new/normal constructors and recursive map stay normalized" {
 ///|
 test "domains: is_unit/is_zero/is_one parity on core domains" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(-1), "-1"),
@@ -1427,7 +1421,7 @@ test "domains: is_unit/is_zero/is_one parity on core domains" {
 ///|
 test "domains: zero/one and arithmetic wrapper parity" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let zero_one_specs = [
     "ZZ", "QQ", "GF(5)", "QQ_I", "ZZ[x]", "QQ(x)", "QQ<sqrt(2)>",
   ]
@@ -1545,7 +1539,7 @@ test "domains: zero/one and arithmetic wrapper parity" {
 ///|
 test "domains: gcdex/invert/revert wrapper parity" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let gcdex_cases : Array[
     (String, @symcore.Expr, @symcore.Expr, String, String),
   ] = [("ZZ", @symcore.int(6), @symcore.int(15), "6", "15")]
@@ -1664,7 +1658,7 @@ test "domains: gcdex/invert/revert wrapper parity" {
 ///|
 test "domains: sign predicate parity on ordered and composite domains" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let neg_x = @symcore.mul([@symcore.int(-1), x])
   let cases : Array[(String, @symcore.Expr, String)] = [
@@ -1717,7 +1711,7 @@ test "domains: sign predicate parity on ordered and composite domains" {
 ///|
 test "domains: canonical_unit parity on scalar and composite domains" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(-2), "-2"),
@@ -1758,7 +1752,7 @@ test "domains: canonical_unit parity on scalar and composite domains" {
 ///|
 test "domains: abs parity on supported/error domains" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(-2), "-2"),
     ("QQ", @symcore.rational_from_ints(-2, 3), "-2/3"),
@@ -1781,7 +1775,7 @@ test "domains: abs parity on supported/error domains" {
 ///|
 test "domains: gcd/lcm/cofactors parity on scalar and composite domains" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, @symcore.Expr, String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(6), "6", @symcore.int(4), "4"),
@@ -1858,7 +1852,7 @@ test "domains: gcd/lcm/cofactors parity on scalar and composite domains" {
 ///|
 test "domains: numer/denom parity on scalar and fraction-like domains" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(7), "7"),
@@ -1899,7 +1893,7 @@ test "domains: numer/denom parity on scalar and fraction-like domains" {
 ///|
 test "domains: quo/rem/div/exquo parity on scalar and composite domains" {
   let x = @symcore.Expr::Symbol("x")
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let cases : Array[(String, @symcore.Expr, String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(7), "7", @symcore.int(3), "3"),
     (
@@ -2050,7 +2044,7 @@ test "domains: factorial/log/sqrt parity on integer-like domains" {
 
 ///|
 test "domains: is_square/exsqrt parity and exact root coverage" {
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let parity_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(4), "4"),
     ("ZZ", @symcore.int(2), "2"),
@@ -2119,7 +2113,7 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
 
 ///|
 test "domains: real/imag/almosteq parity and tolerance semantics" {
-  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
   let x = @symcore.Expr::Symbol("x")
   let component_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(2), "2"),

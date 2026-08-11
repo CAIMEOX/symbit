@@ -35,7 +35,7 @@ pub fn lll_reduce(
   let cols = basis[0].length()
   for row in basis {
     if row.length() != cols {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
   }
   let basis_work = basis.copy()

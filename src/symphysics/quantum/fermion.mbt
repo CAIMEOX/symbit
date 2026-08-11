@@ -10,7 +10,7 @@ pub struct FermionOpExpr {
 
 ///|
 pub fn fermion_op(name : Expr, annihilation? : Bool = true) -> FermionOpExpr {
-  FermionOpExpr::{ name, is_annihilation: annihilation }
+  { name, is_annihilation: annihilation }
 }
 
 ///|
@@ -36,7 +36,7 @@ pub impl Show for FermionOpExpr with fn to_string(self) {
 
 ///|
 pub impl Show for FermionOpExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -47,9 +47,7 @@ pub fn FermionOpExpr::dagger(self : FermionOpExpr) -> FermionOpExpr {
 ///|
 pub fn fermion_fock_ket(n : Expr) -> Expr raise @symphysics.PhysicsError {
   guard n == int(0) || n == int(1) else {
-    raise @symphysics.PhysicsError::ValueError(
-      "FermionFockKet expects occupation 0 or 1",
-    )
+    raise ValueError("FermionFockKet expects occupation 0 or 1")
   }
   @symcore.raw_function("FermionFockKet", [n])
 }
@@ -57,9 +55,7 @@ pub fn fermion_fock_ket(n : Expr) -> Expr raise @symphysics.PhysicsError {
 ///|
 pub fn fermion_fock_bra(n : Expr) -> Expr raise @symphysics.PhysicsError {
   guard n == int(0) || n == int(1) else {
-    raise @symphysics.PhysicsError::ValueError(
-      "FermionFockBra expects occupation 0 or 1",
-    )
+    raise ValueError("FermionFockBra expects occupation 0 or 1")
   }
   @symcore.raw_function("FermionFockBra", [n])
 }

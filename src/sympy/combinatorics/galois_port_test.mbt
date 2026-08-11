@@ -114,22 +114,22 @@ test "combinatorics galois enum parity (S4/S5)" {
 ///|
 test "combinatorics galois enum parity (S6 subset)" {
   let variants : Array[(String, S6TransitiveSubgroups)] = [
-    ("C6", S6TransitiveSubgroups::C6),
-    ("S3", S6TransitiveSubgroups::S3),
-    ("D6", S6TransitiveSubgroups::D6),
-    ("A4", S6TransitiveSubgroups::A4),
-    ("G18", S6TransitiveSubgroups::G18),
-    ("A4xC2", S6TransitiveSubgroups::A4xC2),
-    ("S4m", S6TransitiveSubgroups::S4m),
-    ("S4p", S6TransitiveSubgroups::S4p),
-    ("G36m", S6TransitiveSubgroups::G36m),
-    ("G36p", S6TransitiveSubgroups::G36p),
-    ("S4xC2", S6TransitiveSubgroups::S4xC2),
-    ("PSL2F5", S6TransitiveSubgroups::PSL2F5),
-    ("G72", S6TransitiveSubgroups::G72),
-    ("PGL2F5", S6TransitiveSubgroups::PGL2F5),
-    ("A6", S6TransitiveSubgroups::A6),
-    ("S6", S6TransitiveSubgroups::S6),
+    ("C6", C6),
+    ("S3", S3),
+    ("D6", D6),
+    ("A4", A4),
+    ("G18", G18),
+    ("A4xC2", A4xC2),
+    ("S4m", S4m),
+    ("S4p", S4p),
+    ("G36m", G36m),
+    ("G36p", G36p),
+    ("S4xC2", S4xC2),
+    ("PSL2F5", PSL2F5),
+    ("G72", G72),
+    ("PGL2F5", PGL2F5),
+    ("A6", A6),
+    ("S6", S6),
   ]
   for pair in variants {
     let (name, variant) = pair
@@ -145,10 +145,7 @@ test "combinatorics galois enum parity (S6 subset)" {
 
 ///|
 test "combinatorics galois find_transitive_subgroups_of_S6 basic" {
-  let found = find_transitive_subgroups_of_S6([
-    S6TransitiveSubgroups::C6,
-    S6TransitiveSubgroups::S3,
-  ])
+  let found = find_transitive_subgroups_of_S6([C6, S3])
   assert_eq(found.length(), 2)
   let (_, g1) = found[0]
   let (_, g2) = found[1]

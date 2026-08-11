@@ -29,15 +29,15 @@ pub struct Ideal {
 ///   `PolyError::DomainMismatch` for mixed rings.
 pub fn ideal(gens : Array[Poly]) -> Ideal raise PolyError {
   if gens.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let base = gens[0]
   for g in gens {
-    if g.domain.not_equal(base.domain) || g.gens != base.gens {
-      raise PolyError::DomainMismatch
+    if Eq::not_equal(g.domain, base.domain) || g.gens != base.gens {
+      raise DomainMismatch
     }
   }
-  Ideal::{ gens, }
+  { gens, }
 }
 
 ///|
@@ -64,9 +64,9 @@ pub fn Ideal::ring_gens(self : Ideal) -> Array[String] {
 
 ///|
 fn ideal_check_compatible(lhs : Ideal, rhs : Ideal) -> Unit raise PolyError {
-  if lhs.ring_domain().not_equal(rhs.ring_domain()) ||
+  if Eq::not_equal(lhs.ring_domain(), rhs.ring_domain()) ||
     lhs.ring_gens() != rhs.ring_gens() {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
 }
 
@@ -76,7 +76,7 @@ fn ideal_groebner_basis(idl : Ideal) -> Array[Poly] raise PolyError {
   if nonzero.is_empty() {
     [Poly::zero(idl.ring_gens(), idl.ring_domain())]
   } else {
-    Poly::groebner(nonzero, order=TermOrder::Lex)
+    Poly::groebner(nonzero, order=Lex)
   }
 }
 
@@ -93,7 +93,7 @@ pub fn Ideal::sum(self : Ideal, other : Ideal) -> Ideal raise PolyError {
   for g in other.gens {
     out.push(g)
   }
-  Ideal::{ gens: out }
+  { gens: out }
 }
 
 ///|
@@ -111,7 +111,7 @@ pub fn Ideal::product(self : Ideal, other : Ideal) -> Ideal raise PolyError {
       out.push(a.mul(b))
     }
   }
-  Ideal::{ gens: out }
+  { gens: out }
 }
 
 ///|
@@ -135,8 +135,9 @@ pub fn Ideal::union(self : Ideal, other : Ideal) -> Ideal raise PolyError {
 /// - Limits: Raises `PolyError::DomainMismatch` when the polynomial is from a
 ///   different ring.
 pub fn Ideal::reduce_element(self : Ideal, poly : Poly) -> Poly raise PolyError {
-  if poly.domain.not_equal(self.ring_domain()) || poly.gens != self.ring_gens() {
-    raise PolyError::DomainMismatch
+  if Eq::not_equal(poly.domain, self.ring_domain()) ||
+    poly.gens != self.ring_gens() {
+    raise DomainMismatch
   }
   let basis = ideal_groebner_basis(self)
   reduced(poly, basis).1
@@ -167,10 +168,10 @@ pub fn Ideal::contains(self : Ideal, poly : Poly) -> Bool raise PolyError {
 /// - Limits: Raises `PolyError::BadExponent` for negative exponents.
 pub fn Ideal::power(self : Ideal, n : Int) -> Ideal raise PolyError {
   if n < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if n == 0 {
-    return Ideal::{ gens: [Poly::one(self.ring_gens(), self.ring_domain())] }
+    return { gens: [Poly::one(self.ring_gens(), self.ring_domain())] }
   }
   let mut out = self
   for _ in 1..<n {
@@ -204,7 +205,7 @@ pub fn Ideal::intersect(self : Ideal, other : Ideal) -> Ideal raise PolyError {
   for g in other.gens {
     elim_gens.push(builder.from_expr((one - t) * g.to_expr()))
   }
-  let basis = Poly::groebner(elim_gens, order=TermOrder::Lex)
+  let basis = Poly::groebner(elim_gens, order=Lex)
   let ring_builder = PolyBuilder::new(self.ring_gens(), self.ring_domain())
   let out : Array[Poly] = Array::new()
   for g in basis {
@@ -213,9 +214,9 @@ pub fn Ideal::intersect(self : Ideal, other : Ideal) -> Ideal raise PolyError {
     }
   }
   if out.is_empty() {
-    Ideal::{ gens: [Poly::zero(self.ring_gens(), self.ring_domain())] }
+    { gens: [Poly::zero(self.ring_gens(), self.ring_domain())] }
   } else {
-    Ideal::{ gens: out }
+    { gens: out }
   }
 }
 
@@ -283,10 +284,10 @@ pub fn ring_homomorphism(
 ) -> RingHomomorphism raise PolyError {
   for g in source_gens {
     if image.get(g) is None {
-      raise PolyError::BadGenerator(g)
+      raise BadGenerator(g)
     }
   }
-  RingHomomorphism::{ source_gens, target_gens, target_domain, image }
+  { source_gens, target_gens, target_domain, image }
 }
 
 ///|
@@ -317,7 +318,7 @@ pub fn RingHomomorphism::apply_poly(
   poly : Poly,
 ) -> Poly raise PolyError {
   if poly.gens != self.source_gens {
-    raise PolyError::BadGenerator(poly.gens.join(","))
+    raise BadGenerator(poly.gens.join(","))
   }
   let mapped = self.apply_expr(poly.to_expr())
   PolyBuilder::new(self.target_gens, self.target_domain).from_expr(mapped)

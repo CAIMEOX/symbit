@@ -22,12 +22,12 @@ fn sq_delta(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn sq_dummy_above() -> Expr {
-  Expr::Symbol("_a")
+  Symbol("_a")
 }
 
 ///|
 fn sq_dummy_below() -> Expr {
-  Expr::Symbol("_i")
+  Symbol("_i")
 }
 
 ///|
@@ -63,7 +63,7 @@ fn sq_extract_secondquant_mul(expr : Expr) -> (Array[Expr], Array[Expr]) {
   let scalar : Array[Expr] = []
   let ops : Array[Expr] = []
   match expr {
-    Expr::Mul(args) =>
+    Mul(args) =>
       for arg in args {
         if sq_is_scalar_secondquant_factor(arg) {
           scalar.push(arg)
@@ -84,7 +84,7 @@ fn sq_extract_secondquant_mul(expr : Expr) -> (Array[Expr], Array[Expr]) {
 ///|
 fn sq_no_mul_body(expr : Expr) -> Expr {
   match expr {
-    Expr::Mul(args) => @symcore.raw_mul(args)
+    Mul(args) => @symcore.raw_mul(args)
     _ => expr
   }
 }
@@ -101,7 +101,7 @@ fn sq_no_from_ops(ops : Array[Expr]) -> Expr {
 ///|
 pub fn no(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => sq_raw_add(args.map(no))
+    Add(args) => sq_raw_add(args.map(no))
     _ if @symquant.quantum_expr_has_name(expr, "NO") =>
       match @symquant.quantum_expr_args(expr) {
         Some([arg]) => no(arg)
@@ -122,7 +122,7 @@ pub fn no(expr : Expr) -> Expr {
           match @symquant.quantum_expr_args(op) {
             Some([arg]) =>
               match arg {
-                Expr::Mul(inner) =>
+                Mul(inner) =>
                   for item in inner {
                     expanded.push(item)
                   }
@@ -247,12 +247,12 @@ fn sq_wicks_sequence(
 ///|
 fn sq_collect_symbol_counts(expr : Expr, counts : Map[String, Int]) -> Unit {
   match expr {
-    Expr::Symbol(name) => counts.set(name, counts.get(name).unwrap_or(0) + 1)
-    Expr::Add(args) | Expr::Mul(args) =>
+    Symbol(name) => counts.set(name, counts.get(name).unwrap_or(0) + 1)
+    Add(args) | Mul(args) =>
       for arg in args {
         sq_collect_symbol_counts(arg, counts)
       }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       sq_collect_symbol_counts(base, counts)
       sq_collect_symbol_counts(exp, counts)
     }
@@ -292,8 +292,8 @@ fn sq_subst_one(expr : Expr, name : String, value : Expr) -> Expr {
 ///|
 pub fn evaluate_deltas(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => sq_raw_add(args.map(evaluate_deltas))
-    Expr::Mul(args) => {
+    Add(args) => sq_raw_add(args.map(evaluate_deltas))
+    Mul(args) => {
       let counts : Map[String, Int] = Map([])
       for arg in args {
         sq_collect_symbol_counts(arg, counts)
@@ -304,7 +304,7 @@ pub fn evaluate_deltas(expr : Expr) -> Expr {
           Some(dargs) if @symquant.quantum_expr_has_name(arg, "KroneckerDelta") &&
             dargs.length() == 2 =>
             match (dargs[0], dargs[1]) {
-              (Expr::Symbol(lhs), Expr::Symbol(rhs)) => {
+              (Symbol(lhs), Symbol(rhs)) => {
                 let preferred = sq_preferred_index(dargs[0], dargs[1])
                 let killable = if preferred == dargs[0] { rhs } else { lhs }
                 if counts.get(killable).unwrap_or(0) > 1 {
@@ -325,18 +325,18 @@ pub fn evaluate_deltas(expr : Expr) -> Expr {
 ///|
 fn sq_term_scalar_and_body(expr : Expr) -> (Expr, Expr) {
   match expr {
-    Expr::Mul(args) => {
+    Mul(args) => {
       let scalar : Array[Expr] = []
       let body : Array[Expr] = []
       for arg in args {
         match arg {
-          Expr::Number(_) => scalar.push(arg)
+          Number(_) => scalar.push(arg)
           _ => body.push(arg)
         }
       }
       (sq_raw_mul(scalar), sq_raw_mul(body))
     }
-    Expr::Number(_) => (expr, int(1))
+    Number(_) => (expr, int(1))
     _ => (int(1), expr)
   }
 }
@@ -349,7 +349,7 @@ fn sq_collect_symbols_by_group(
   general : Array[String],
 ) -> Unit {
   match expr {
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       if !name.has_prefix("_") {
         match sq_index_group(expr, 0) {
           0 => if !above.contains(name) { above.push(name) }
@@ -357,11 +357,11 @@ fn sq_collect_symbols_by_group(
           _ => if !general.contains(name) { general.push(name) }
         }
       }
-    Expr::Add(args) | Expr::Mul(args) =>
+    Add(args) | Mul(args) =>
       for arg in args {
         sq_collect_symbols_by_group(arg, above, below, general)
       }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       sq_collect_symbols_by_group(base, above, below, general)
       sq_collect_symbols_by_group(exp, above, below, general)
     }
@@ -399,7 +399,7 @@ fn sq_term_normalization_env(
     } else {
       "_" + "a_\{idx}"
     }
-    env.set(above[idx], Expr::Symbol(name))
+    env.set(above[idx], Symbol(name))
   }
   for idx in 0..<below.length() {
     let name = if new_indices && idx < below_letters.length() {
@@ -407,7 +407,7 @@ fn sq_term_normalization_env(
     } else {
       "_" + "i_\{idx}"
     }
-    env.set(below[idx], Expr::Symbol(name))
+    env.set(below[idx], Symbol(name))
   }
   for idx in 0..<general.length() {
     let name = if new_indices && idx < general_letters.length() {
@@ -415,7 +415,7 @@ fn sq_term_normalization_env(
     } else {
       "_" + "p_\{idx}"
     }
-    env.set(general[idx], Expr::Symbol(name))
+    env.set(general[idx], Symbol(name))
   }
   env
 }
@@ -427,7 +427,7 @@ pub fn substitute_dummies(
   pretty_indices? : Map[String, String] = {},
 ) -> Expr {
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let terms : Map[String, (Expr, Expr)] = Map([])
       for arg in args {
         let env = sq_term_normalization_env(arg, new_indices, pretty_indices)
@@ -470,7 +470,7 @@ pub fn wicks(
     _ if @symquant.quantum_expr_has_any_name(expr, [
         "NO", "AnnihilateFermion", "CreateFermion",
       ]) => if keep_only_fully_contracted { int(0) } else { expr }
-    Expr::Add(args) => {
+    Add(args) => {
       let summed = sq_raw_add(
         args.map(term => {
           wicks(
@@ -488,10 +488,10 @@ pub fn wicks(
         summed
       }
     }
-    Expr::Mul(args) => {
+    Mul(args) => {
       for idx in 0..<args.length() {
         match args[idx] {
-          Expr::Add(inner) => {
+          Add(inner) => {
             let expanded : Array[Expr] = []
             for term in inner {
               let rebuilt = args.copy()
@@ -548,13 +548,9 @@ pub fn permutation_operator(lhs : Expr, rhs : Expr) -> Expr {
 fn sq_swap_indices(expr : Expr, lhs : String, rhs : String) -> Expr {
   let tmp = "__perm_tmp__"
   sq_subst_one(
-    sq_subst_one(
-      sq_subst_one(expr, lhs, Expr::Symbol(tmp)),
-      rhs,
-      Expr::Symbol(lhs),
-    ),
+    sq_subst_one(sq_subst_one(expr, lhs, Symbol(tmp)), rhs, Symbol(lhs)),
     tmp,
-    Expr::Symbol(rhs),
+    Symbol(rhs),
   )
 }
 
@@ -562,7 +558,7 @@ fn sq_swap_indices(expr : Expr, lhs : String, rhs : String) -> Expr {
 fn sq_permuted_term(perm : Expr, expr : Expr) -> Expr? {
   if @symquant.quantum_expr_has_name(perm, "PermutationOperator") {
     match @symquant.quantum_expr_args(perm) {
-      Some([Expr::Symbol(lhs), Expr::Symbol(rhs)]) =>
+      Some([Symbol(lhs), Symbol(rhs)]) =>
         Some(int(-1) * sq_swap_indices(expr, lhs, rhs))
       _ => None
     }
@@ -577,7 +573,7 @@ pub fn simplify_index_permutations(
   permutation_operators : Array[Expr],
 ) -> Expr {
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let mut terms = args.copy()
       for perm in permutation_operators {
         let next_terms : Array[Expr] = []

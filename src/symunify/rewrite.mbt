@@ -31,24 +31,18 @@ fn query_xreplace(
   rules : Array[(@symcore.Expr, @symcore.Expr)],
 ) -> @symassume.Query {
   match query {
-    @symassume.Query::Bool(value) => @symassume.Query::Bool(value)
-    @symassume.Query::Atom(key, args) =>
-      @symassume.Query::Atom(
-        key,
-        args.map(arg => @symcore.xreplace(arg, rules)),
-      )
-    @symassume.Query::Not(inner) =>
-      @symassume.not_q(query_xreplace(inner, rules))
-    @symassume.Query::And(items) =>
+    Bool(value) => Bool(value)
+    Atom(key, args) => Atom(key, args.map(arg => @symcore.xreplace(arg, rules)))
+    Not(inner) => @symassume.not_q(query_xreplace(inner, rules))
+    And(items) =>
       @symassume.and_q(items.map(item => query_xreplace(item, rules)))
-    @symassume.Query::Or(items) =>
-      @symassume.or_q(items.map(item => query_xreplace(item, rules)))
-    @symassume.Query::Implies(lhs, rhs) =>
+    Or(items) => @symassume.or_q(items.map(item => query_xreplace(item, rules)))
+    Implies(lhs, rhs) =>
       @symassume.implies_q(
         query_xreplace(lhs, rules),
         query_xreplace(rhs, rules),
       )
-    @symassume.Query::Equivalent(items) =>
+    Equivalent(items) =>
       @symassume.equivalent_q(items.map(item => query_xreplace(item, rules)))
   }
 }
@@ -67,7 +61,7 @@ fn match_rules(
 ///|
 fn positive_integer_exp(expr : @symcore.Expr) -> Bool {
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Number(value) =>
+    Number(value) =>
       value.is_integral() && value.compare(@symnum.BigRational::zero()) > 0
     _ => false
   }
@@ -82,31 +76,28 @@ fn rewrite_expr_is_commutative(expr : @symcore.Expr) -> Bool {
 fn rewrite_expand_commutative_pow(expr : @symcore.Expr) -> @symcore.Expr {
   let expr = @symcore.normalize_legacy_expr(expr)
   match expr {
-    @symcore.Expr::Add(args) =>
-      @symcore.Expr::Add(args.map(rewrite_expand_commutative_pow))
-    @symcore.Expr::Mul(args) =>
-      @symcore.Expr::Mul(args.map(rewrite_expand_commutative_pow))
-    @symcore.Expr::Pow(base, exp) => {
+    Add(args) => Add(args.map(rewrite_expand_commutative_pow))
+    Mul(args) => Mul(args.map(rewrite_expand_commutative_pow))
+    Pow(base, exp) => {
       let base1 = rewrite_expand_commutative_pow(base)
       let exp1 = rewrite_expand_commutative_pow(exp)
       match @symcore.expr_form(base1) {
-        @symcore.ExprForm::Mul(args) =>
+        Mul(args) =>
           if positive_integer_exp(exp1) && args.all(rewrite_expr_is_commutative) {
-            @symcore.Expr::Mul(args.map(arg => @symcore.Expr::Pow(arg, exp1)))
+            Mul(args.map(arg => Pow(arg, exp1)))
           } else {
-            @symcore.Expr::Pow(base1, exp1)
+            Pow(base1, exp1)
           }
-        _ => @symcore.Expr::Pow(base1, exp1)
+        _ => Pow(base1, exp1)
       }
     }
-    @symcore.Expr::Mod(lhs, rhs) =>
-      @symcore.Expr::Mod(
+    Mod(lhs, rhs) =>
+      Mod(
         rewrite_expand_commutative_pow(lhs),
         rewrite_expand_commutative_pow(rhs),
       )
-    @symcore.Expr::Tuple(items) =>
-      @symcore.Expr::Tuple(items.map(rewrite_expand_commutative_pow))
-    @symcore.Expr::Dict(items) => {
+    Tuple(items) => Tuple(items.map(rewrite_expand_commutative_pow))
+    Dict(items) => {
       let out : Array[(@symcore.Expr, @symcore.Expr)] = []
       for item in items {
         out.push(
@@ -116,32 +107,32 @@ fn rewrite_expand_commutative_pow(expr : @symcore.Expr) -> @symcore.Expr {
           ),
         )
       }
-      @symcore.Expr::Dict(out)
+      Dict(out)
     }
-    @symcore.Expr::Relational(op, lhs, rhs) =>
-      @symcore.Expr::Relational(
+    Relational(op, lhs, rhs) =>
+      Relational(
         op,
         rewrite_expand_commutative_pow(lhs),
         rewrite_expand_commutative_pow(rhs),
       )
-    @symcore.Expr::Derivative(inner, deriv_args) =>
-      @symcore.Expr::Derivative(
+    Derivative(inner, deriv_args) =>
+      Derivative(
         rewrite_expand_commutative_pow(inner),
         deriv_args.map(rewrite_expand_commutative_pow),
       )
-    @symcore.Expr::Subs(inner, variable, value) =>
-      @symcore.Expr::Subs(
+    Subs(inner, variable, value) =>
+      Subs(
         rewrite_expand_commutative_pow(inner),
         rewrite_expand_commutative_pow(variable),
         rewrite_expand_commutative_pow(value),
       )
-    @symcore.Expr::Lambda(vars, body) =>
-      @symcore.Expr::Lambda(
+    Lambda(vars, body) =>
+      Lambda(
         rewrite_expand_commutative_pow(vars),
         rewrite_expand_commutative_pow(body),
       )
-    @symcore.Expr::Apply(head, args) =>
-      @symcore.Expr::Apply(
+    Apply(head, args) =>
+      Apply(
         rewrite_expand_commutative_pow(head),
         args.map(rewrite_expand_commutative_pow),
       )
@@ -159,28 +150,18 @@ fn rewrite_subs_raw(
     Some(replaced) => @symcore.normalize_legacy_expr(replaced)
     None =>
       match expr {
-        @symcore.Expr::Add(args) => {
+        Add(args) => {
           let items = args.map(arg => rewrite_subs_raw(arg, match_))
           items.sort_by((lhs, rhs) => @symcore.compare_expr(lhs, rhs))
-          @symcore.Expr::Add(items)
+          Add(items)
         }
-        @symcore.Expr::Mul(args) =>
-          @symcore.Expr::Mul(args.map(arg => rewrite_subs_raw(arg, match_)))
-        @symcore.Expr::Pow(base, exp) =>
-          @symcore.Expr::Pow(
-            rewrite_subs_raw(base, match_),
-            rewrite_subs_raw(exp, match_),
-          )
-        @symcore.Expr::Mod(lhs, rhs) =>
-          @symcore.Expr::Mod(
-            rewrite_subs_raw(lhs, match_),
-            rewrite_subs_raw(rhs, match_),
-          )
-        @symcore.Expr::Tuple(items) =>
-          @symcore.Expr::Tuple(
-            items.map(item => rewrite_subs_raw(item, match_)),
-          )
-        @symcore.Expr::Dict(items) => {
+        Mul(args) => Mul(args.map(arg => rewrite_subs_raw(arg, match_)))
+        Pow(base, exp) =>
+          Pow(rewrite_subs_raw(base, match_), rewrite_subs_raw(exp, match_))
+        Mod(lhs, rhs) =>
+          Mod(rewrite_subs_raw(lhs, match_), rewrite_subs_raw(rhs, match_))
+        Tuple(items) => Tuple(items.map(item => rewrite_subs_raw(item, match_)))
+        Dict(items) => {
           let out : Array[(@symcore.Expr, @symcore.Expr)] = []
           for item in items {
             out.push(
@@ -190,32 +171,29 @@ fn rewrite_subs_raw(
               ),
             )
           }
-          @symcore.Expr::Dict(out)
+          Dict(out)
         }
-        @symcore.Expr::Relational(op, lhs, rhs) =>
-          @symcore.Expr::Relational(
+        Relational(op, lhs, rhs) =>
+          Relational(
             op,
             rewrite_subs_raw(lhs, match_),
             rewrite_subs_raw(rhs, match_),
           )
-        @symcore.Expr::Derivative(inner, deriv_args) =>
-          @symcore.Expr::Derivative(
+        Derivative(inner, deriv_args) =>
+          Derivative(
             rewrite_subs_raw(inner, match_),
             deriv_args.map(arg => rewrite_subs_raw(arg, match_)),
           )
-        @symcore.Expr::Subs(inner, variable, value) =>
-          @symcore.Expr::Subs(
+        Subs(inner, variable, value) =>
+          Subs(
             rewrite_subs_raw(inner, match_),
             rewrite_subs_raw(variable, match_),
             rewrite_subs_raw(value, match_),
           )
-        @symcore.Expr::Lambda(vars, body) =>
-          @symcore.Expr::Lambda(
-            rewrite_subs_raw(vars, match_),
-            rewrite_subs_raw(body, match_),
-          )
-        @symcore.Expr::Apply(head, args) =>
-          @symcore.Expr::Apply(
+        Lambda(vars, body) =>
+          Lambda(rewrite_subs_raw(vars, match_), rewrite_subs_raw(body, match_))
+        Apply(head, args) =>
+          Apply(
             rewrite_subs_raw(head, match_),
             args.map(arg => rewrite_subs_raw(arg, match_)),
           )
@@ -273,7 +251,7 @@ pub fn RewriteRule::apply(
             query_xreplace(query, match_rules(match_)),
             assumptions~,
           ) {
-          @symassume.Tri::True => ()
+          True => ()
           _ => continue
         }
       None => ()

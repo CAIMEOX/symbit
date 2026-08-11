@@ -42,6 +42,10 @@ pub(all) struct Idx {
   upper : @symcore.Expr?
 }
 pub fn Idx::latex(Self, settings? : @symprint.LatexSettings) -> String
+#deprecated
+pub fn Idx::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Idx::to_string(Self) -> String
 pub impl Show for Idx
 
 pub enum Index {
@@ -59,6 +63,10 @@ pub(all) struct Indexed {
   indices : Array[Index]
 }
 pub fn Indexed::latex(Self, settings? : @symprint.LatexSettings) -> String
+#deprecated
+pub fn Indexed::output(Self, &Logger) -> Unit
+#deprecated
+pub fn Indexed::to_string(Self) -> String
 pub impl Show for Indexed
 
 pub(all) struct IndexedBase {
@@ -67,6 +75,10 @@ pub(all) struct IndexedBase {
 }
 pub fn IndexedBase::at(Self, Array[Index]) -> Indexed raise
 pub fn IndexedBase::latex(Self, settings? : @symprint.LatexSettings) -> String
+#deprecated
+pub fn IndexedBase::output(Self, &Logger) -> Unit
+#deprecated
+pub fn IndexedBase::to_string(Self) -> String
 pub impl Show for IndexedBase
 
 pub enum IndexedExpr {
@@ -76,6 +88,10 @@ pub enum IndexedExpr {
   Mul(Array[IndexedExpr])
 }
 pub fn IndexedExpr::latex(Self, settings? : @symprint.LatexSettings) -> String
+#deprecated
+pub fn IndexedExpr::output(Self, &Logger) -> Unit
+#deprecated
+pub fn IndexedExpr::to_string(Self) -> String
 pub impl Show for IndexedExpr
 
 // Type aliases

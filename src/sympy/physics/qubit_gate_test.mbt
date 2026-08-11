@@ -1,18 +1,18 @@
 ///|
 test "physics.quantum.qubit: core state helpers" {
   let q = qubit("0101")
-  inspect(q.to_string(), content="|0101>")
+  inspect(Show::to_string(q), content="|0101>")
   inspect(
     q.repr(),
     content="Qubit(Integer(0),Integer(1),Integer(0),Integer(1))",
   )
-  inspect(q.flip(1).to_string(), content="|0111>")
-  inspect(q.dual().to_string(), content="<0101|")
+  inspect(Show::to_string(q.flip(1)), content="|0111>")
+  inspect(Show::to_string(q.dual()), content="<0101|")
   inspect(q.nqubits().to_string(), content="4")
   inspect(q.dimension().to_string(), content="4")
 
   let iq = int_qubit(5, 3)
-  inspect(iq.to_string(), content="|5>")
+  inspect(Show::to_string(iq), content="|5>")
   inspect(iq.repr(), content="IntQubit(Integer(5))")
   inspect(@symprint.pretty_string(iq.as_expr()), content="IntQubit(5)")
 }

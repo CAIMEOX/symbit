@@ -25,20 +25,20 @@ fn make_pow(base : Expr, exp : Expr, options : ParseOptions) -> Expr {
 ///|
 fn canonicalize_constructor_expr(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => @symcore.add(args.map(canonicalize_constructor_expr))
-    Expr::Mul(args) => @symcore.mul(args.map(canonicalize_constructor_expr))
-    Expr::Pow(base, exp) =>
+    Add(args) => @symcore.add(args.map(canonicalize_constructor_expr))
+    Mul(args) => @symcore.mul(args.map(canonicalize_constructor_expr))
+    Pow(base, exp) =>
       @symcore.pow(
         canonicalize_constructor_expr(base),
         canonicalize_constructor_expr(exp),
       )
-    Expr::Mod(lhs, rhs) =>
+    Mod(lhs, rhs) =>
       @symcore.mod_expr(
         canonicalize_constructor_expr(lhs),
         canonicalize_constructor_expr(rhs),
       )
-    Expr::Tuple(args) => Expr::Tuple(args.map(canonicalize_constructor_expr))
-    Expr::Dict(items) => {
+    Tuple(args) => Tuple(args.map(canonicalize_constructor_expr))
+    Dict(items) => {
       let out : Array[(Expr, Expr)] = []
       for item in items {
         let (key, value) = item
@@ -49,34 +49,34 @@ fn canonicalize_constructor_expr(expr : Expr) -> Expr {
           ),
         )
       }
-      Expr::Dict(out)
+      Dict(out)
     }
-    Expr::Relational(op, lhs, rhs) =>
-      Expr::Relational(
+    Relational(op, lhs, rhs) =>
+      Relational(
         op,
         canonicalize_constructor_expr(lhs),
         canonicalize_constructor_expr(rhs),
       )
-    Expr::Derivative(inner, deriv_args) =>
+    Derivative(inner, deriv_args) =>
       @symcore.raw_derivative(
         canonicalize_constructor_expr(inner),
         deriv_args.map(canonicalize_constructor_expr),
       )
-    Expr::Subs(inner, variable, value) =>
+    Subs(inner, variable, value) =>
       @symcore.subs_expr(
         canonicalize_constructor_expr(inner),
         canonicalize_constructor_expr(variable),
         canonicalize_constructor_expr(value),
       )
-    Expr::Lambda(vars, body) =>
+    Lambda(vars, body) =>
       @symcore.lambda_expr(
         canonicalize_constructor_expr(vars),
         canonicalize_constructor_expr(body),
       )
-    Expr::Apply(head, args) => {
+    Apply(head, args) => {
       let head = canonicalize_constructor_expr(head)
       let args = args.map(canonicalize_constructor_expr)
-      @symcore.apply(head, args).unwrap_or(Expr::Apply(head, args))
+      @symcore.apply(head, args).unwrap_or(Apply(head, args))
     }
     _ => @symcore.normalize_legacy_expr(expr)
   }
@@ -99,7 +99,7 @@ fn make_function(
     } else {
       missing_names.map(name => "'" + name + "'").join(" and ")
     }
-    raise ParseError::UnsupportedConstruct(
+    raise UnsupportedConstruct(
       span=span(0, 0),
       "TypeError: \{class_name}.__new__() missing \{missing_count} required positional argument" +
       (if missing_count == 1 { "" } else { "s" }) +
@@ -112,7 +112,7 @@ fn make_function(
     arity : Int,
     given : Int,
   ) -> Expr raise ParseError {
-    raise ParseError::UnsupportedConstruct(
+    raise UnsupportedConstruct(
       span=span(0, 0),
       "TypeError: \{class_name}.__new__() takes \{arity + 1} positional arguments but \{given + 1} were given",
     )
@@ -122,7 +122,7 @@ fn make_function(
     expected : Int,
     given : Int,
   ) -> Expr raise ParseError {
-    raise ParseError::UnsupportedConstruct(
+    raise UnsupportedConstruct(
       span=span(0, 0),
       "TypeError: \{name} takes exactly \{expected} argument" +
       (if expected == 1 { "" } else { "s" }) +
@@ -133,18 +133,15 @@ fn make_function(
     let arg = @symcore.normalize_legacy_expr(arg)
     let evaluated = @symcore.evalf(arg)
     let message = match evaluated {
-      @symcore.Expr::ComplexFloat(_) =>
+      ComplexFloat(_) =>
         "TypeError: Cannot convert non-comparable expression to int"
       _ =>
         match @symcore.number_symbol_kind(evaluated) {
-          Some(@symcore.NumberSymbolKind::Infinity)
-          | Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
+          Some(Infinity) | Some(NegativeInfinity) =>
             "TypeError: Cannot convert " +
             @symprint.pretty_string(evaluated) +
             " to int"
-          Some(@symcore.NumberSymbolKind::NaN)
-          | Some(@symcore.NumberSymbolKind::ImaginaryUnit)
-          | Some(@symcore.NumberSymbolKind::ComplexInfinity) =>
+          Some(NaN) | Some(ImaginaryUnit) | Some(ComplexInfinity) =>
             "TypeError: Cannot convert non-comparable expression to int"
           _ =>
             "TypeError: Argument of Integer should be of numeric type, got " +
@@ -152,10 +149,10 @@ fn make_function(
             "."
         }
     }
-    raise ParseError::UnsupportedConstruct(span=span(0, 0), message)
+    raise UnsupportedConstruct(span=span(0, 0), message)
   }
   let rational_invalid_input = fn(arg : Expr) -> Expr raise ParseError {
-    raise ParseError::UnsupportedConstruct(
+    raise UnsupportedConstruct(
       span=span(0, 0),
       "TypeError: invalid input: " + @symprint.pretty_string(arg),
     )
@@ -168,7 +165,7 @@ fn make_function(
     }
   }
   let float_malformed_mpf = fn(arg : Expr) -> Expr raise ParseError {
-    raise ParseError::UnsupportedConstruct(
+    raise UnsupportedConstruct(
       span=span(0, 0),
       "ValueError: malformed mpf: " + float_tuple_repr(arg),
     )
@@ -177,7 +174,7 @@ fn make_function(
     match @symcore.tuple_items(item) {
       Some([_, _]) => @symcore.function(name, canonical_args)
       Some(_) =>
-        raise ParseError::UnsupportedConstruct(
+        raise UnsupportedConstruct(
           span=span(0, 0),
           "TypeError: Pass Dict args as Dict((k1, v1), ...) or Dict({k1: v1, ...})",
         )
@@ -190,7 +187,7 @@ fn make_function(
             }
           None => @symcore.head_name(item)
         }
-        raise ParseError::UnsupportedConstruct(
+        raise UnsupportedConstruct(
           span=span(0, 0),
           "TypeError: object of type '\{type_name}' has no len()",
         )
@@ -218,8 +215,7 @@ fn make_function(
     ("Integer", [arg]) => {
       let constructed = @symcore.function(name, canonical_args)
       match constructed {
-        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Integer"), _) =>
-          integer_invalid_input(arg)
+        Apply(FunctionHead("Integer"), _) => integer_invalid_input(arg)
         _ => constructed
       }
     }
@@ -234,8 +230,7 @@ fn make_function(
         @symcore.function(name, canonical_args)
       })
       match constructed {
-        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), _) =>
-          rational_invalid_input(arg)
+        Apply(FunctionHead("Rational"), _) => rational_invalid_input(arg)
         _ => constructed
       }
     }
@@ -243,13 +238,13 @@ fn make_function(
       if @symcore.with_evaluate(_options.evaluate, fn() {
           @symcore.function(name, [lhs])
         })
-        is @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), _) {
+        is Apply(FunctionHead("Rational"), _) {
         return rational_invalid_input(lhs)
       }
       if @symcore.with_evaluate(_options.evaluate, fn() {
           @symcore.function(name, [rhs])
         })
-        is @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), _) {
+        is Apply(FunctionHead("Rational"), _) {
         return rational_invalid_input(rhs)
       }
       @symcore.with_evaluate(_options.evaluate, fn() {
@@ -267,23 +262,19 @@ fn make_function(
         @symcore.function(name, canonical_args)
       })
       match constructed {
-        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Float"), _) if @symcore.tuple_items(
-            arg,
-          )
+        Apply(FunctionHead("Float"), _) if @symcore.tuple_items(arg)
           is Some(items) &&
           items.length() == 3 => float_malformed_mpf(arg)
         _ => constructed
       }
     }
-    ("Float", [arg, @symcore.Expr::Number(prec)]) if prec.is_integral() &&
+    ("Float", [arg, Number(prec)]) if prec.is_integral() &&
       prec.numerator().compare(0N) > 0 => {
       let constructed = @symcore.with_evaluate(_options.evaluate, fn() {
         @symcore.function(name, canonical_args)
       })
       match constructed {
-        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Float"), _) if @symcore.tuple_items(
-            arg,
-          )
+        Apply(FunctionHead("Float"), _) if @symcore.tuple_items(arg)
           is Some(items) &&
           items.length() == 3 => float_malformed_mpf(arg)
         _ => constructed
@@ -297,7 +288,7 @@ fn make_function(
             @symcore.function(name, canonical_args)
           })
         3 =>
-          raise ParseError::UnsupportedConstruct(
+          raise UnsupportedConstruct(
             span=span(0, 0),
             "ValueError: Both decimal and binary precision supplied. Supply only one.",
           )
@@ -322,7 +313,7 @@ fn make_function(
     ("Lambda", [vars, _]) =>
       match @symcore.lambda_signature_error(vars) {
         Some(err) =>
-          raise ParseError::UnsupportedConstruct(
+          raise UnsupportedConstruct(
             span=span(0, 0),
             "BadSignatureError: " + err,
           )
@@ -344,10 +335,7 @@ fn make_function(
     ("Subs", [_, variable, value]) =>
       match @symcore.subs_signature_error(variable, value) {
         Some(err) =>
-          raise ParseError::UnsupportedConstruct(
-            span=span(0, 0),
-            "ValueError: " + err,
-          )
+          raise UnsupportedConstruct(span=span(0, 0), "ValueError: " + err)
         None => @symcore.function(name, canonical_args)
       }
     ("Subs", args) =>
@@ -370,7 +358,7 @@ fn make_function(
         [] => @symcore.int(0)
         [wrt] => @symcore.function(name, [expr, wrt])
         _ =>
-          raise ParseError::UnsupportedConstruct(
+          raise UnsupportedConstruct(
             span=span(0, 0),
             "ValueError: \nSince there is more than one variable in the expression, the\n" +
             "variable(s) of differentiation must be supplied to differentiate the expression",
@@ -380,7 +368,7 @@ fn make_function(
     ("Derivative", args) =>
       match @symcore.derivative_signature_error(args[1:]) {
         Some(err) =>
-          raise ParseError::UnsupportedConstruct(
+          raise UnsupportedConstruct(
             span=span(0, 0),
             if err.has_prefix("Can't calculate derivative wrt ") {
               "ValueError: \n" + err
@@ -413,7 +401,7 @@ fn make_application(
     }
   }
   let float_malformed_mpf = fn(arg : Expr) -> Expr raise ParseError {
-    raise ParseError::UnsupportedConstruct(
+    raise UnsupportedConstruct(
       span=span(0, 0),
       "ValueError: malformed mpf: " + float_tuple_repr(arg),
     )
@@ -423,7 +411,7 @@ fn make_application(
     expected : Int,
     given : Int,
   ) -> Expr raise ParseError {
-    raise ParseError::UnsupportedConstruct(
+    raise UnsupportedConstruct(
       span=span(0, 0),
       "TypeError: \{name} takes exactly \{expected} argument" +
       (if expected == 1 { "" } else { "s" }) +
@@ -434,18 +422,15 @@ fn make_application(
     let arg = @symcore.normalize_legacy_expr(arg)
     let evaluated = @symcore.evalf(arg)
     let message = match evaluated {
-      @symcore.Expr::ComplexFloat(_) =>
+      ComplexFloat(_) =>
         "TypeError: Cannot convert non-comparable expression to int"
       _ =>
         match @symcore.number_symbol_kind(evaluated) {
-          Some(@symcore.NumberSymbolKind::Infinity)
-          | Some(@symcore.NumberSymbolKind::NegativeInfinity) =>
+          Some(Infinity) | Some(NegativeInfinity) =>
             "TypeError: Cannot convert " +
             @symprint.pretty_string(evaluated) +
             " to int"
-          Some(@symcore.NumberSymbolKind::NaN)
-          | Some(@symcore.NumberSymbolKind::ImaginaryUnit)
-          | Some(@symcore.NumberSymbolKind::ComplexInfinity) =>
+          Some(NaN) | Some(ImaginaryUnit) | Some(ComplexInfinity) =>
             "TypeError: Cannot convert non-comparable expression to int"
           _ =>
             "TypeError: Argument of Integer should be of numeric type, got " +
@@ -453,7 +438,7 @@ fn make_application(
             "."
         }
     }
-    raise ParseError::UnsupportedConstruct(span=span(0, 0), message)
+    raise UnsupportedConstruct(span=span(0, 0), message)
   }
   let apply_builtin = fn(name : String) -> Expr raise ParseError {
     let integer_constructor_result = fn(
@@ -461,8 +446,7 @@ fn make_application(
     ) -> Expr raise ParseError {
       let lowered = apply_named(name, args)
       match lowered {
-        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Integer"), [arg]) =>
-          integer_invalid_input(arg)
+        Apply(FunctionHead("Integer"), [arg]) => integer_invalid_input(arg)
         _ => lowered
       }
     }
@@ -471,33 +455,21 @@ fn make_application(
     ) -> Expr raise ParseError {
       match args {
         [arg] =>
-          if apply_named(name, [arg])
-            is @symcore.Expr::Apply(
-              @symcore.Expr::FunctionHead("Rational"),
-              [_]
-            ) {
-            raise ParseError::UnsupportedConstruct(
+          if apply_named(name, [arg]) is Apply(FunctionHead("Rational"), [_]) {
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: invalid input: " + @symprint.pretty_string(arg),
             )
           }
         [lhs, rhs] => {
-          if apply_named(name, [lhs])
-            is @symcore.Expr::Apply(
-              @symcore.Expr::FunctionHead("Rational"),
-              [_]
-            ) {
-            raise ParseError::UnsupportedConstruct(
+          if apply_named(name, [lhs]) is Apply(FunctionHead("Rational"), [_]) {
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: invalid input: " + @symprint.pretty_string(lhs),
             )
           }
-          if apply_named(name, [rhs])
-            is @symcore.Expr::Apply(
-              @symcore.Expr::FunctionHead("Rational"),
-              [_]
-            ) {
-            raise ParseError::UnsupportedConstruct(
+          if apply_named(name, [rhs]) is Apply(FunctionHead("Rational"), [_]) {
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: invalid input: " + @symprint.pretty_string(rhs),
             )
@@ -507,28 +479,23 @@ fn make_application(
       }
       let lowered = apply_named(name, args)
       match lowered {
-        @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Rational"), [arg]) =>
-          raise ParseError::UnsupportedConstruct(
+        Apply(FunctionHead("Rational"), [arg]) =>
+          raise UnsupportedConstruct(
             span=span(0, 0),
             "TypeError: invalid input: " + @symprint.pretty_string(arg),
           )
-        @symcore.Expr::Apply(
-          @symcore.Expr::FunctionHead("Rational"),
-          [lhs, rhs]
-        ) =>
+        Apply(FunctionHead("Rational"), [lhs, rhs]) =>
           if @symcore.is_zero(rhs) {
             if @symcore.is_zero(lhs) {
-              raise ParseError::UnsupportedConstruct(
+              raise UnsupportedConstruct(
                 span=span(0, 0),
                 "ValueError: Indeterminate 0/0",
               )
             } else {
-              @symcore.Expr::NumberSymbol(
-                @symcore.NumberSymbolKind::ComplexInfinity,
-              )
+              NumberSymbol(ComplexInfinity)
             }
           } else {
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: invalid input: " + @symprint.pretty_string(rhs),
             )
@@ -540,7 +507,7 @@ fn make_application(
       "log" =>
         match args.length() {
           0 =>
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: log takes at least 1 argument (0 given)",
             )
@@ -562,7 +529,7 @@ fn make_application(
               apply_named(name, args)
             }
           given =>
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: log takes at least 1 argument (\{given} given)",
             )
@@ -570,7 +537,7 @@ fn make_application(
       "sqrt" =>
         match args.length() {
           0 =>
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: sqrt() missing 1 required positional argument: 'arg'",
             )
@@ -579,19 +546,19 @@ fn make_application(
             if options.evaluate {
               apply_named(name, [args[0]])
             } else {
-              raise ParseError::UnsupportedConstruct(
+              raise UnsupportedConstruct(
                 span=span(0, 0),
                 "TypeError: sqrt() got multiple values for argument 'evaluate'",
               )
             }
           given =>
             if options.evaluate {
-              raise ParseError::UnsupportedConstruct(
+              raise UnsupportedConstruct(
                 span=span(0, 0),
                 "TypeError: sqrt() takes from 1 to 2 positional arguments but \{given} were given",
               )
             } else {
-              raise ParseError::UnsupportedConstruct(
+              raise UnsupportedConstruct(
                 span=span(0, 0),
                 "TypeError: sqrt() got multiple values for argument 'evaluate'",
               )
@@ -599,16 +566,13 @@ fn make_application(
         }
       "Min" =>
         match args.length() {
-          0 => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+          0 => NumberSymbol(Infinity)
           1 => args[0]
           _ => apply_named(name, args)
         }
       "Max" =>
         match args.length() {
-          0 =>
-            @symcore.Expr::NumberSymbol(
-              @symcore.NumberSymbolKind::NegativeInfinity,
-            )
+          0 => NumberSymbol(NegativeInfinity)
           1 => args[0]
           _ => apply_named(name, args)
         }
@@ -627,14 +591,14 @@ fn make_application(
       "beta" =>
         match args.length() {
           0 =>
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: beta takes at least 1 argument (0 given)",
             )
           1 => apply_named(name, [args[0], args[0]])
           2 => apply_named(name, args)
           given =>
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: beta takes at least 1 argument (\{given} given)",
             )
@@ -642,13 +606,13 @@ fn make_application(
       "S" =>
         match args.length() {
           0 =>
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'",
             )
           given if given <= 6 => @symcore.normalize_legacy_expr(args[0])
           given =>
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: SingletonRegistry.__call__() takes from 2 to 7 positional arguments but \{given + 1} were given",
             )
@@ -656,7 +620,7 @@ fn make_application(
       "Integer" =>
         match args.length() {
           0 =>
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: Integer.__new__() missing 1 required positional argument: 'i'",
             )
@@ -666,7 +630,7 @@ fn make_application(
       "Rational" =>
         match args.length() {
           0 =>
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: Rational.__new__() missing 1 required positional argument: 'p'",
             )
@@ -676,23 +640,21 @@ fn make_application(
       "Float" =>
         match args.length() {
           0 =>
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "TypeError: Float.__new__() missing 1 required positional argument: 'num'",
             )
           1 | 2 => {
             let constructed = apply_named(name, args)
             match constructed {
-              @symcore.Expr::Apply(@symcore.Expr::FunctionHead("Float"), _) if @symcore.tuple_items(
-                  args[0],
-                )
+              Apply(FunctionHead("Float"), _) if @symcore.tuple_items(args[0])
                 is Some(items) &&
                 items.length() == 3 => float_malformed_mpf(args[0])
               _ => constructed
             }
           }
           3 =>
-            raise ParseError::UnsupportedConstruct(
+            raise UnsupportedConstruct(
               span=span(0, 0),
               "ValueError: Both decimal and binary precision supplied. Supply only one.",
             )
@@ -707,9 +669,9 @@ fn make_application(
     }
   }
   match callee {
-    @symcore.Expr::FunctionHead(name) if is_builtin_core_head_name(name) =>
+    FunctionHead(name) if is_builtin_core_head_name(name) =>
       return make_function(name, args, options)
-    @symcore.Expr::FunctionHead(name) if is_builtin_callable_name(name) =>
+    FunctionHead(name) if is_builtin_callable_name(name) =>
       return apply_builtin(name)
     _ => ()
   }
@@ -720,17 +682,17 @@ fn make_application(
     Some(expr) => expr
     None =>
       match callee {
-        @symcore.Expr::IdentityFunction =>
-          raise ParseError::UnsupportedConstruct(
+        IdentityFunction =>
+          raise UnsupportedConstruct(
             span=span(0, 0),
             "BadArgumentsError: Lambda(_x, _x) takes exactly 1 argument (" +
             args.length().to_string() +
             " given)",
           )
-        @symcore.Expr::Lambda(vars, _) =>
+        Lambda(vars, _) =>
           match @symcore.lambda_arity(vars) {
             Some(expected) =>
-              raise ParseError::UnsupportedConstruct(
+              raise UnsupportedConstruct(
                 span=span(0, 0),
                 "BadArgumentsError: " +
                 @symprint.pretty_string(callee) +
@@ -743,16 +705,16 @@ fn make_application(
                 " given)",
               )
             None =>
-              raise ParseError::UnsupportedConstruct(
+              raise UnsupportedConstruct(
                 span=span(0, 0),
                 "TypeError: object is not callable",
               )
           }
         _ =>
-          raise ParseError::UnsupportedConstruct(
+          raise UnsupportedConstruct(
             span=span(0, 0),
             match @symcore.func(callee) {
-              Some(@symcore.Expr::FunctionHead(name)) =>
+              Some(FunctionHead(name)) =>
                 "TypeError: '\{name}' object is not callable"
               _ => "TypeError: object is not callable"
             },
@@ -766,10 +728,7 @@ fn options_with_evaluate(
   options : ParseOptions,
   evaluate : Bool,
 ) -> ParseOptions {
-  ParseOptions::{
-    evaluate,
-    transformations: options.transformations.map(x => x),
-  }
+  { evaluate, transformations: options.transformations.map(x => x) }
 }
 
 ///|
@@ -793,15 +752,15 @@ fn lookup_effective_binding(context : ParseContext, name : String) -> Expr? {
 ///|
 fn builtin_number_symbol_kind(name : String) -> @symcore.NumberSymbolKind? {
   match name {
-    "I" => Some(@symcore.NumberSymbolKind::ImaginaryUnit)
-    "pi" => Some(@symcore.NumberSymbolKind::Pi)
-    "E" => Some(@symcore.NumberSymbolKind::Exp1)
-    "EulerGamma" => Some(@symcore.NumberSymbolKind::EulerGamma)
-    "GoldenRatio" => Some(@symcore.NumberSymbolKind::GoldenRatio)
-    "Catalan" => Some(@symcore.NumberSymbolKind::Catalan)
-    "oo" => Some(@symcore.NumberSymbolKind::Infinity)
-    "zoo" => Some(@symcore.NumberSymbolKind::ComplexInfinity)
-    "nan" => Some(@symcore.NumberSymbolKind::NaN)
+    "I" => Some(ImaginaryUnit)
+    "pi" => Some(Pi)
+    "E" => Some(Exp1)
+    "EulerGamma" => Some(EulerGamma)
+    "GoldenRatio" => Some(GoldenRatio)
+    "Catalan" => Some(Catalan)
+    "oo" => Some(Infinity)
+    "zoo" => Some(ComplexInfinity)
+    "nan" => Some(NaN)
     _ => None
   }
 }
@@ -817,21 +776,21 @@ fn lower_symbol_name(
     None =>
       if context_has_callable_name(context, name) ||
         context_has_global_callable_name(context, name) {
-        @symcore.Expr::UndefinedFunction(name)
+        UndefinedFunction(name)
       } else if name == "True" {
-        @symcore.Expr::Boolean(true)
+        Boolean(true)
       } else if name == "False" {
-        @symcore.Expr::Boolean(false)
+        Boolean(false)
       } else {
         match builtin_number_symbol_kind(name) {
-          Some(kind) => @symcore.Expr::NumberSymbol(kind)
+          Some(kind) => NumberSymbol(kind)
           None =>
             if is_builtin_head_name(name) {
-              @symcore.Expr::FunctionHead(name)
+              FunctionHead(name)
             } else if option_has_auto_symbol(options) {
-              Expr::Symbol(name)
+              Symbol(name)
             } else {
-              raise ParseError::UnsupportedConstruct(
+              raise UnsupportedConstruct(
                 span=span(0, 0),
                 "unknown identifier: " + name,
               )
@@ -844,9 +803,8 @@ fn lower_symbol_name(
 ///|
 fn coerce_callable_target(bound : Expr) -> Expr? {
   match bound {
-    Expr::FunctionHead(_) | Expr::UndefinedFunction(_) => Some(bound)
-    Expr::Symbol(target_name) =>
-      Some(@symcore.Expr::UndefinedFunction(target_name))
+    FunctionHead(_) | UndefinedFunction(_) => Some(bound)
+    Symbol(target_name) => Some(UndefinedFunction(target_name))
     _ => None
   }
 }
@@ -877,15 +835,15 @@ fn lookup_callable_target(context : ParseContext, name : String) -> Expr {
         None =>
           if context_has_callable_name(context, name) ||
             context_has_global_callable_name(context, name) {
-            @symcore.Expr::UndefinedFunction(name)
+            UndefinedFunction(name)
           } else {
             match builtin_number_symbol_kind(name) {
-              Some(kind) => @symcore.Expr::NumberSymbol(kind)
+              Some(kind) => NumberSymbol(kind)
               None =>
                 if is_builtin_head_name(name) {
-                  @symcore.Expr::FunctionHead(name)
+                  FunctionHead(name)
                 } else {
-                  @symcore.Expr::UndefinedFunction(name)
+                  UndefinedFunction(name)
                 }
             }
           }
@@ -896,7 +854,7 @@ fn lookup_callable_target(context : ParseContext, name : String) -> Expr {
 ///|
 fn bool_of_expr(expr : Expr) -> Bool? {
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Boolean(value) => Some(value)
+    Boolean(value) => Some(value)
     _ => None
   }
 }
@@ -932,12 +890,12 @@ fn compare_numeric(
 ) -> Bool {
   let cmp = lhs.compare(rhs)
   match op {
-    CompareOp::Eq | CompareOp::EqEq => cmp == 0
-    CompareOp::Ne => cmp != 0
-    CompareOp::Lt => cmp < 0
-    CompareOp::Le => cmp <= 0
-    CompareOp::Gt => cmp > 0
-    CompareOp::Ge => cmp >= 0
+    Eq | EqEq => cmp == 0
+    Ne => cmp != 0
+    Lt => cmp < 0
+    Le => cmp <= 0
+    Gt => cmp > 0
+    Ge => cmp >= 0
   }
 }
 
@@ -948,7 +906,7 @@ fn lower_raw_add_terms(
   context : ParseContext,
 ) -> Array[Expr] raise ParseError {
   match ast {
-    Ast::Binary(span~, BinaryOp::Add, lhs, rhs) => {
+    Binary(span~, Add, lhs, rhs) => {
       ignore(span)
       let out = lower_raw_add_terms(lhs, options, context)
       for term in lower_raw_add_terms(rhs, options, context) {
@@ -956,7 +914,7 @@ fn lower_raw_add_terms(
       }
       out
     }
-    Ast::Binary(span~, BinaryOp::Sub, lhs, rhs) => {
+    Binary(span~, Sub, lhs, rhs) => {
       ignore(span)
       let out = lower_raw_add_terms(lhs, options, context)
       out.push(negate_expr(lower_ast_in(rhs, options, context), options))
@@ -973,7 +931,7 @@ fn lower_raw_mul_factors(
   context : ParseContext,
 ) -> Array[Expr] raise ParseError {
   match ast {
-    Ast::Binary(span~, BinaryOp::Mul, lhs, rhs) => {
+    Binary(span~, Mul, lhs, rhs) => {
       ignore(span)
       let out = lower_raw_mul_factors(lhs, options, context)
       for factor in lower_raw_mul_factors(rhs, options, context) {
@@ -981,7 +939,7 @@ fn lower_raw_mul_factors(
       }
       out
     }
-    Ast::Binary(span~, BinaryOp::Div, lhs, rhs) => {
+    Binary(span~, Div, lhs, rhs) => {
       ignore(span)
       let out = lower_raw_mul_factors(lhs, options, context)
       out.push(make_pow(lower_ast_in(rhs, options, context), int(-1), options))
@@ -1006,45 +964,45 @@ fn lower_compare_pair(
   let rhs_eval = lower_ast_in(rhs_ast, eval_options, context)
   if !options.evaluate {
     return match op {
-      CompareOp::Lt => @symcore.raw_function("Lt", [lhs, rhs])
-      CompareOp::Le => @symcore.raw_function("Le", [lhs, rhs])
-      CompareOp::Gt => @symcore.raw_function("Gt", [lhs, rhs])
-      CompareOp::Ge => @symcore.raw_function("Ge", [lhs, rhs])
-      CompareOp::Eq | CompareOp::EqEq => @symcore.raw_function("Eq", [lhs, rhs])
-      CompareOp::Ne => @symcore.raw_function("Ne", [lhs, rhs])
+      Lt => @symcore.raw_function("Lt", [lhs, rhs])
+      Le => @symcore.raw_function("Le", [lhs, rhs])
+      Gt => @symcore.raw_function("Gt", [lhs, rhs])
+      Ge => @symcore.raw_function("Ge", [lhs, rhs])
+      Eq | EqEq => @symcore.raw_function("Eq", [lhs, rhs])
+      Ne => @symcore.raw_function("Ne", [lhs, rhs])
     }
   }
-  if op is CompareOp::EqEq {
-    return @symcore.Expr::Boolean(lhs_eval == rhs_eval)
+  if op is EqEq {
+    return Boolean(lhs_eval == rhs_eval)
   }
-  if op is CompareOp::Ne {
-    return @symcore.Expr::Boolean(lhs_eval != rhs_eval)
+  if op is Ne {
+    return Boolean(lhs_eval != rhs_eval)
   }
-  if op is CompareOp::Eq {
+  if op is Eq {
     if lhs_eval == rhs_eval {
-      return @symcore.Expr::Boolean(true)
+      return Boolean(true)
     }
     match (lhs_eval, rhs_eval) {
-      (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
-        return @symcore.Expr::Boolean(compare_numeric(op, lhs_num, rhs_num))
+      (Number(lhs_num), Number(rhs_num)) =>
+        return Boolean(compare_numeric(op, lhs_num, rhs_num))
       _ => ()
     }
     return make_function("Eq", [lhs, rhs], options)
   }
   if options.evaluate {
     match (lhs_eval, rhs_eval) {
-      (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
-        return @symcore.Expr::Boolean(compare_numeric(op, lhs_num, rhs_num))
+      (Number(lhs_num), Number(rhs_num)) =>
+        return Boolean(compare_numeric(op, lhs_num, rhs_num))
       _ => ()
     }
   }
   match op {
-    CompareOp::Lt => make_function("Lt", [lhs, rhs], options)
-    CompareOp::Le => make_function("Le", [lhs, rhs], options)
-    CompareOp::Gt => make_function("Gt", [lhs, rhs], options)
-    CompareOp::Ge => make_function("Ge", [lhs, rhs], options)
-    CompareOp::Eq | CompareOp::EqEq => make_function("Eq", [lhs, rhs], options)
-    CompareOp::Ne => make_function("Ne", [lhs, rhs], options)
+    Lt => make_function("Lt", [lhs, rhs], options)
+    Le => make_function("Le", [lhs, rhs], options)
+    Gt => make_function("Gt", [lhs, rhs], options)
+    Ge => make_function("Ge", [lhs, rhs], options)
+    Eq | EqEq => make_function("Eq", [lhs, rhs], options)
+    Ne => make_function("Ne", [lhs, rhs], options)
   }
 }
 
@@ -1076,7 +1034,7 @@ fn lower_compare_chain(
     Some(false) => return last
     Some(true) => ()
     None =>
-      raise ParseError::UnsupportedConstruct(
+      raise UnsupportedConstruct(
         span~,
         "cannot determine truth value of Relational",
       )
@@ -1088,7 +1046,7 @@ fn lower_compare_chain(
         Some(false) => return last
         Some(true) => ()
         None =>
-          raise ParseError::UnsupportedConstruct(
+          raise UnsupportedConstruct(
             span~,
             "cannot determine truth value of Relational",
           )
@@ -1141,7 +1099,7 @@ fn decimal_rational_from_literal(
     )
   }
   @symnum.BigRational::new(numerator, denominator) catch {
-    _ => raise ParseError::InvalidNumber(span=source_span, text)
+    _ => raise InvalidNumber(span=source_span, text)
   }
 }
 
@@ -1158,11 +1116,11 @@ fn scale_rational_by_pow10(
   let factor = pow10(exponent.abs())
   if exponent > 0 {
     @symnum.BigRational::new(value.numerator() * factor, value.denominator()) catch {
-      _ => raise ParseError::InvalidNumber(span=source_span, text)
+      _ => raise InvalidNumber(span=source_span, text)
     }
   } else {
     @symnum.BigRational::new(value.numerator(), value.denominator() * factor) catch {
-      _ => raise ParseError::InvalidNumber(span=source_span, text)
+      _ => raise InvalidNumber(span=source_span, text)
     }
   }
 }
@@ -1175,12 +1133,12 @@ fn number_from_literal(
 ) -> Expr raise ParseError {
   let has_repeated = text.contains("[")
   if has_repeated && !option_has_repeated_decimals(options) {
-    raise ParseError::InvalidNumber(span=source_span, text)
+    raise InvalidNumber(span=source_span, text)
   }
   let value = match split_exponent_literal(text) {
     Some((mantissa_text, exponent_text)) => {
       let exponent = @string.parse_int(exponent_text, base=10) catch {
-        _ => raise ParseError::InvalidNumber(span=source_span, text)
+        _ => raise InvalidNumber(span=source_span, text)
       }
       let mantissa = if mantissa_text.contains(".") {
         decimal_rational_from_literal(mantissa_text, source_span)
@@ -1199,15 +1157,15 @@ fn number_from_literal(
   let decimal_like = text.contains(".") ||
     split_exponent_literal(text) is Some(_)
   if has_repeated || (decimal_like && option_has_rationalize(options)) {
-    return @symcore.Expr::Number(value)
+    return Number(value)
   }
   if decimal_like {
     let float_value = @symcore.float_from_str(text, prec=53) catch {
-      _ => raise ParseError::InvalidNumber(span=source_span, text)
+      _ => raise InvalidNumber(span=source_span, text)
     }
-    return @symcore.Expr::Float(float_value)
+    return Float(float_value)
   }
-  @symcore.Expr::Number(value)
+  Number(value)
 }
 
 ///|
@@ -1229,20 +1187,20 @@ pub fn lower_ast_in(
   context : ParseContext,
 ) -> Expr raise ParseError {
   match ast {
-    Ast::Number(span~, text) => number_from_literal(text, span, options)
-    Ast::Symbol(span~, name) => {
+    Number(span~, text) => number_from_literal(text, span, options)
+    Symbol(span~, name) => {
       ignore(span)
       lower_symbol_name(context, name, options)
     }
-    Ast::Unary(span~, UnaryOp::Plus, operand) => {
+    Unary(span~, Plus, operand) => {
       ignore(span)
       lower_ast_in(operand, options, context)
     }
-    Ast::Unary(span~, UnaryOp::Minus, operand) => {
+    Unary(span~, Minus, operand) => {
       ignore(span)
       make_mul([int(-1), lower_ast_in(operand, options, context)], options)
     }
-    Ast::Binary(span~, BinaryOp::Add, lhs, rhs) => {
+    Binary(span~, Add, lhs, rhs) => {
       ignore(span)
       if options.evaluate {
         make_add(
@@ -1256,7 +1214,7 @@ pub fn lower_ast_in(
         raw_add_or_identity(lower_raw_add_terms(ast, options, context))
       }
     }
-    Ast::Binary(span~, BinaryOp::Sub, lhs, rhs) => {
+    Binary(span~, Sub, lhs, rhs) => {
       ignore(span)
       if options.evaluate {
         make_add(
@@ -1270,7 +1228,7 @@ pub fn lower_ast_in(
         raw_add_or_identity(lower_raw_add_terms(ast, options, context))
       }
     }
-    Ast::Binary(span~, BinaryOp::Mul, lhs, rhs) => {
+    Binary(span~, Mul, lhs, rhs) => {
       ignore(span)
       if options.evaluate {
         make_mul(
@@ -1284,21 +1242,17 @@ pub fn lower_ast_in(
         raw_mul_or_identity(lower_raw_mul_factors(ast, options, context))
       }
     }
-    Ast::Binary(span~, BinaryOp::Div, lhs, rhs) => {
+    Binary(span~, Div, lhs, rhs) => {
       ignore(span)
       if options.evaluate {
         let lowered_lhs = lower_ast_in(lhs, options, context)
         let lowered_rhs = lower_ast_in(rhs, options, context)
         match (lowered_lhs, lowered_rhs) {
-          (Expr::Number(lhs_num), Expr::Number(rhs_num)) => {
+          (Number(lhs_num), Number(rhs_num)) => {
             let value = lhs_num.div_r(rhs_num) catch {
-              _ =>
-                raise ParseError::UnsupportedConstruct(
-                  span~,
-                  "division by zero",
-                )
+              _ => raise UnsupportedConstruct(span~, "division by zero")
             }
-            @symcore.Expr::Number(value)
+            Number(value)
           }
           _ =>
             make_mul(
@@ -1310,7 +1264,7 @@ pub fn lower_ast_in(
         raw_mul_or_identity(lower_raw_mul_factors(ast, options, context))
       }
     }
-    Ast::Binary(span~, BinaryOp::Pow, lhs, rhs) => {
+    Binary(span~, Pow, lhs, rhs) => {
       ignore(span)
       make_pow(
         lower_ast_in(lhs, options, context),
@@ -1318,11 +1272,11 @@ pub fn lower_ast_in(
         options,
       )
     }
-    Ast::Call(span~, callee, args) => {
+    Call(span~, callee, args) => {
       ignore(span)
       let lowered_args = args.map(arg => lower_ast_in(arg, options, context))
       let lowered_callee = match callee {
-        Ast::Symbol(span~, name) => {
+        Symbol(span~, name) => {
           ignore(span)
           lookup_callable_target(context, name)
         }
@@ -1330,7 +1284,7 @@ pub fn lower_ast_in(
       }
       make_application(lowered_callee, lowered_args, options)
     }
-    Ast::Tuple(span~, items) => {
+    Tuple(span~, items) => {
       ignore(span)
       make_function(
         "Tuple",
@@ -1338,22 +1292,15 @@ pub fn lower_ast_in(
         options,
       )
     }
-    Ast::Compare(span~, exprs, ops) =>
+    Compare(span~, exprs, ops) =>
       lower_compare_chain(span, exprs, ops, options, context)
-    Ast::Lambda(span~, names, body) => {
+    Lambda(span~, names, body) => {
       ignore(span)
       let vars = names.map(name => Expr::Symbol(name))
-      let vars_expr = if vars.length() == 1 {
-        vars[0]
-      } else {
-        @symcore.Expr::Tuple(vars)
-      }
+      let vars_expr = if vars.length() == 1 { vars[0] } else { Tuple(vars) }
       match @symcore.lambda_signature_error(vars_expr) {
         Some(err) =>
-          raise ParseError::UnsupportedConstruct(
-            span~,
-            "BadSignatureError: " + err,
-          )
+          raise UnsupportedConstruct(span~, "BadSignatureError: " + err)
         None =>
           @symcore.lambda_expr(vars_expr, lower_ast_in(body, options, context))
       }

@@ -69,7 +69,7 @@ fn gate_sequence_exists(
 ///|
 fn gate_min_qubits(expr : Expr) -> Int {
   match expr {
-    Expr::Pow(base, _) => gate_min_qubits(base)
+    Pow(base, _) => gate_min_qubits(base)
     _ =>
       if quantum_expr_has_name(expr, "Dagger") {
         match quantum_expr_args(expr) {
@@ -202,7 +202,7 @@ fn ll_op(
   for item in right {
     new_right.push(item)
   }
-  Some(GateRule::{ left: left[1:left.length()].to_owned(), right: new_right })
+  Some({ left: left[1:left.length()].to_owned(), right: new_right })
 }
 
 ///|
@@ -217,10 +217,7 @@ fn lr_op(
   }
   let new_right = right.copy()
   new_right.push(dagger(gate))
-  Some(GateRule::{
-    left: left[0:left.length() - 1].to_owned(),
-    right: new_right,
-  })
+  Some({ left: left[0:left.length() - 1].to_owned(), right: new_right })
 }
 
 ///|
@@ -237,7 +234,7 @@ fn rl_op(
   for item in left {
     new_left.push(item)
   }
-  Some(GateRule::{ left: new_left, right: right[1:right.length()].to_owned() })
+  Some({ left: new_left, right: right[1:right.length()].to_owned() })
 }
 
 ///|
@@ -252,10 +249,7 @@ fn rr_op(
   }
   let new_left = left.copy()
   new_left.push(dagger(gate))
-  Some(GateRule::{
-    left: new_left,
-    right: right[0:right.length() - 1].to_owned(),
-  })
+  Some({ left: new_left, right: right[0:right.length() - 1].to_owned() })
 }
 
 ///|
@@ -267,7 +261,7 @@ fn gate_rule_sort_key(rule : GateRule) -> String {
 pub fn generate_gate_rules(
   gate_seq : Array[Expr],
 ) -> Array[GateRule] raise @symphysics.PhysicsError {
-  let rules : Array[GateRule] = [GateRule::{ left: gate_seq.copy(), right: [] }]
+  let rules : Array[GateRule] = [{ left: gate_seq.copy(), right: [] }]
   let queue : Array[(Array[Expr], Array[Expr], Int)] = [
     (gate_seq.copy(), [], 0),
   ]
@@ -330,13 +324,13 @@ pub fn build_gate_identity(
 ) -> GateIdentity raise @symphysics.PhysicsError {
   let rules = generate_gate_rules(gate_seq)
   let equivalent_ids = generate_equivalent_ids(gate_seq)
-  GateIdentity::{
+  {
     sequence: gate_seq.copy(),
     rules,
     equivalent_ids: equivalent_ids.map(expr => {
       match expr {
-        Expr::Mul(args) => args.copy()
-        Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 => []
+        Mul(args) => args.copy()
+        Number(n) if n.is_integral() && n.numerator().to_int() == 1 => []
         _ => [expr]
       }
     }),
@@ -360,7 +354,7 @@ pub impl Show for GateRule with fn to_string(self) {
 
 ///|
 pub impl Show for GateRule with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -406,7 +400,7 @@ pub impl Show for GateIdentity with fn to_string(self) {
 
 ///|
 pub impl Show for GateIdentity with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -483,7 +477,7 @@ pub fn bfs_identity_search(
       }
     }
   }
-  ids.sort_by((lhs, rhs) => lhs.to_string().compare(rhs.to_string()))
+  ids.sort_by((lhs, rhs) => Show::to_string(lhs).compare(Show::to_string(rhs)))
   ids
 }
 
@@ -504,14 +498,10 @@ pub fn random_identity_search(
   seed? : Int = -1,
 ) -> Array[Expr]? raise @symphysics.PhysicsError {
   guard numgates >= 0 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "random_identity_search expects numgates >= 0",
-    )
+    raise ValueError("random_identity_search expects numgates >= 0")
   }
   guard !gate_list.is_empty() else {
-    raise @symphysics.PhysicsError::ValueError(
-      "random_identity_search expects a non-empty gate list",
-    )
+    raise ValueError("random_identity_search expects a non-empty gate list")
   }
   let rng = if seed >= 0 {
     identitysearch_random_from_seed(seed)

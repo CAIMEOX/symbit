@@ -8,7 +8,7 @@
 
 ///|
 fn sing_set_empty() -> Expr {
-  @symcore.Expr::Symbol("EmptySet")
+  Symbol("EmptySet")
 }
 
 ///|
@@ -46,20 +46,15 @@ fn sing_linear_coeff_const(
   sym : Expr,
 ) -> (BigRational, BigRational)? {
   match expr {
-    Expr::Symbol(_) if sing_expr_is_symbol(expr, sym) =>
+    Symbol(_) if sing_expr_is_symbol(expr, sym) =>
       Some((BigRational::one(), BigRational::zero()))
-    Expr::Mul(args) if args.length() == 2 => {
+    Mul(args) if args.length() == 2 => {
       let mut coeff : BigRational? = None
       let mut saw_sym = false
       for arg in args {
         match arg {
-          Expr::Number(c) =>
-            if coeff is None {
-              coeff = Some(c)
-            } else {
-              return None
-            }
-          Expr::Symbol(_) if sing_expr_is_symbol(arg, sym) => saw_sym = true
+          Number(c) => if coeff is None { coeff = Some(c) } else { return None }
+          Symbol(_) if sing_expr_is_symbol(arg, sym) => saw_sym = true
           _ => return None
         }
       }
@@ -72,27 +67,26 @@ fn sing_linear_coeff_const(
         None
       }
     }
-    Expr::Add(args) => {
+    Add(args) => {
       let mut coeff = BigRational::zero()
       let mut constant = BigRational::zero()
       for arg in args {
         match arg {
-          Expr::Number(n) => constant = sing_rat_add(constant, n)
-          Expr::Symbol(_) if sing_expr_is_symbol(arg, sym) =>
+          Number(n) => constant = sing_rat_add(constant, n)
+          Symbol(_) if sing_expr_is_symbol(arg, sym) =>
             coeff = sing_rat_add(coeff, BigRational::one())
-          Expr::Mul(margs) if margs.length() == 2 => {
+          Mul(margs) if margs.length() == 2 => {
             let mut linear_coeff : BigRational? = None
             let mut saw_sym = false
             for marg in margs {
               match marg {
-                Expr::Number(c) =>
+                Number(c) =>
                   if linear_coeff is None {
                     linear_coeff = Some(c)
                   } else {
                     return None
                   }
-                Expr::Symbol(_) if sing_expr_is_symbol(marg, sym) =>
-                  saw_sym = true
+                Symbol(_) if sing_expr_is_symbol(marg, sym) => saw_sym = true
                 _ => return None
               }
             }
@@ -123,7 +117,7 @@ fn sing_solve_linear(expr : Expr, sym : Expr) -> Expr? {
       } else {
         let neg_const = sing_rat_neg(constant)
         match sing_rat_div(neg_const, coeff) {
-          Some(sol) => Some(@symcore.Expr::Number(sol))
+          Some(sol) => Some(Number(sol))
           None => None
         }
       }
@@ -134,7 +128,7 @@ fn sing_solve_linear(expr : Expr, sym : Expr) -> Expr? {
 ///|
 fn sing_is_negative_integer(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) => n.is_integral() && n.compare(BigRational::zero()) < 0
+    Number(n) => n.is_integral() && n.compare(BigRational::zero()) < 0
     _ => false
   }
 }
@@ -152,7 +146,7 @@ fn sing_contains_expr(items : Array[Expr], expr : Expr) -> Bool {
 ///|
 fn sing_collect(expr : Expr, sym : Expr, out : Array[Expr]) -> Unit {
   match expr {
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       if sing_is_negative_integer(exp) {
         match sing_solve_linear(base, sym) {
           Some(sol) => if !sing_contains_expr(out, sol) { out.push(sol) }
@@ -162,7 +156,7 @@ fn sing_collect(expr : Expr, sym : Expr, out : Array[Expr]) -> Unit {
       sing_collect(base, sym, out)
       sing_collect(exp, sym, out)
     }
-    Expr::Add(args) | Expr::Mul(args) =>
+    Add(args) | Mul(args) =>
       for arg in args {
         sing_collect(arg, sym, out)
       }

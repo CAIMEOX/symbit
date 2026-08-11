@@ -26,8 +26,8 @@ fn special_port_poly_exprs(items : Array[Poly]) -> Array[String] {
 ///|
 fn special_port_dense_repr(p : DensePoly) -> String {
   match p {
-    DensePoly::Coef(c) => c.to_string()
-    DensePoly::Poly(items) => {
+    Coef(c) => Show::to_string(c)
+    Poly(items) => {
       let parts : Array[String] = Array::new()
       for item in items {
         parts.push(special_port_dense_repr(item))
@@ -64,21 +64,15 @@ test "specialpolys: Fateman benchmark polynomial triples oracle parity" {
 ///|
 test "specialpolys: dense Fateman benchmark triples oracle parity" {
   assert_eq(
-    special_port_dense_tuple_repr(
-      @sympolys.dmp_fateman_poly_F_1(1, @sympolys.Domain::ZZ),
-    ),
+    special_port_dense_tuple_repr(@sympolys.dmp_fateman_poly_F_1(1, ZZ)),
     dmp_fateman_poly_F_1(1),
   )
   assert_eq(
-    special_port_dense_tuple_repr(
-      @sympolys.dmp_fateman_poly_F_2(2, @sympolys.Domain::ZZ),
-    ),
+    special_port_dense_tuple_repr(@sympolys.dmp_fateman_poly_F_2(2, ZZ)),
     dmp_fateman_poly_F_2(2),
   )
   assert_eq(
-    special_port_dense_tuple_repr(
-      @sympolys.dmp_fateman_poly_F_3(2, @sympolys.Domain::ZZ),
-    ),
+    special_port_dense_tuple_repr(@sympolys.dmp_fateman_poly_F_3(2, ZZ)),
     dmp_fateman_poly_F_3(2),
   )
 }

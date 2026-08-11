@@ -15,20 +15,20 @@
 /// - Limits: Raises `PolyError` for non-univariate or incompatible input.
 fn ensure_univar_pair(a : Poly, b : Poly) -> Unit raise PolyError {
   if a.gens.length() != 1 || b.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
 }
 
 ///|
 fn lift_pair_to_qq(p : Poly, q : Poly) -> (Poly, Poly) raise PolyError {
   ensure_univar_pair(p, q)
-  if p.domain.not_equal(q.domain) || p.gens != q.gens {
-    raise PolyError::DomainMismatch
+  if Eq::not_equal(p.domain, q.domain) || p.gens != q.gens {
+    raise DomainMismatch
   }
   match p.domain {
-    Domain::QQ => (p, q)
-    Domain::ZZ => (lift_to_qq(p), lift_to_qq(q))
-    _ => raise PolyError::DomainMismatch
+    QQ => (p, q)
+    ZZ => (lift_to_qq(p), lift_to_qq(q))
+    _ => raise DomainMismatch
   }
 }
 
@@ -121,7 +121,7 @@ pub fn process_matrix_output(poly_seq : Array[Poly]) -> Array[Poly] {
 ///   `PolyError::BadExponent`.
 pub fn compute_sign(base : Int, expo : Int) -> Int raise PolyError {
   if expo < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   if base > 0 {
     1
@@ -239,7 +239,7 @@ pub fn sturm_q(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
     if r.is_zero() {
       break
     }
-    let neg_r = r.scale_coeff(fe_from_int(-1, Domain::QQ))
+    let neg_r = r.scale_coeff(fe_from_int(-1, QQ))
     seq.push(neg_r)
     a = b
     b = neg_r
@@ -534,7 +534,7 @@ pub fn pivot(
   j : Int,
 ) -> DomainMatrix raise PolyError {
   if i < 0 || j < 0 || i >= matrix.rows || j >= matrix.cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let ma = clone_dense_rows(matrix.to_list())
   let pivot_val = ma[i][j]
@@ -568,17 +568,17 @@ pub fn row2poly(
   row : Array[FieldElem],
   deg : Int,
   gen? : String = "x",
-  domain? : Domain = Domain::ZZ,
+  domain? : Domain = ZZ,
 ) -> Poly raise PolyError {
   if deg < 0 {
-    raise PolyError::BadExponent
+    raise BadExponent
   }
   let mut start = 0
   while start < row.length() && fe_is_zero(row[start]) {
     start = start + 1
   }
   if start >= row.length() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let coeffs : Array[FieldElem] = []
   let zero = subres_matrix_zero(domain)
@@ -636,7 +636,7 @@ pub fn final_touches(
   deg_g : Int,
 ) -> DomainMatrix raise PolyError {
   if r <= 0 || r > matrix.rows {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let rows = clone_dense_rows(matrix.to_list())
   let source = rows[r - 1]

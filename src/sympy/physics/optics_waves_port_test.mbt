@@ -12,7 +12,7 @@ test "physics.optics.waves: parity" {
     t_wave(amp2, frequency=Some(freq), phase=phi2),
   )
 
-  assert_eq(wave.to_string(), optics_waves_eval("TWave(A, f, phi)"))
+  assert_eq(Show::to_string(wave), optics_waves_eval("TWave(A, f, phi)"))
   waves_assert_expr_equal(
     wave.amplitude_expr(),
     optics_waves_eval("TWave(A, f, phi).amplitude"),

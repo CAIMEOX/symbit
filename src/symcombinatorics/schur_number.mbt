@@ -11,7 +11,7 @@
 /// Unknown values are reported as `None` rather than guessed.
 pub fn schur_number(k : Int) -> Int? raise CombinatoricsError {
   if k < 0 {
-    raise CombinatoricsError::ValueError("k should be a positive integer")
+    raise ValueError("k should be a positive integer")
   }
   if k == 0 {
     return Some(0)
@@ -27,7 +27,7 @@ pub fn schur_number(k : Int) -> Int? raise CombinatoricsError {
 /// Return the best lower bound on `S(k)` built into the library.
 pub fn schur_number_lower_bound(k : Int) -> Int raise CombinatoricsError {
   if k < 0 {
-    raise CombinatoricsError::ValueError("k should be a positive integer")
+    raise ValueError("k should be a positive integer")
   }
   if k == 0 {
     return 0
@@ -51,9 +51,7 @@ pub fn schur_number_lower_bound(k : Int) -> Int raise CombinatoricsError {
 ///|
 fn schur_subsets_number(n : Int) -> Int raise CombinatoricsError {
   if n <= 0 {
-    raise CombinatoricsError::ValueError(
-      "n must be a non-zero positive integer.",
-    )
+    raise ValueError("n must be a non-zero positive integer.")
   }
   if n <= 3 {
     return 1

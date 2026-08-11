@@ -12,7 +12,7 @@ pub fn gosper_normal(
   sym : @symcore.Expr,
 ) -> @symcore.Expr? {
   match gosper_sum(expr, sym) {
-    Some(g) => Some(@symcore.Expr::Tuple([g, @symcore.int(1)]))
+    Some(g) => Some(Tuple([g, @symcore.int(1)]))
     None => None
   }
 }

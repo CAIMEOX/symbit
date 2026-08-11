@@ -10,7 +10,7 @@ pub fn deltasummation(
     return summation(expr, limits~)
   }
   match limits[0] {
-    LimitSpec::Range(sym, lower, upper) => {
+    Range(sym, lower, upper) => {
       let name = match symbol_name(sym) {
         Some(n) => n
         None => return summation(expr, limits~)
@@ -37,7 +37,7 @@ pub fn deltaproduct(
     return product(expr, limits~)
   }
   match limits[0] {
-    LimitSpec::Range(sym, lower, upper) => {
+    Range(sym, lower, upper) => {
       let name = match symbol_name(sym) {
         Some(n) => n
         None => return product(expr, limits~)
@@ -63,15 +63,13 @@ fn extract_delta(
   match @symcore.application_args(expr) {
     Some(args) if @symcore.application_has_name(expr, "KroneckerDelta", arity=2) =>
       match (args[0], args[1]) {
-        (@symcore.Expr::Symbol(sym), other) if sym == name =>
-          Some((other, @symcore.int(1)))
-        (other, @symcore.Expr::Symbol(sym)) if sym == name =>
-          Some((other, @symcore.int(1)))
+        (Symbol(sym), other) if sym == name => Some((other, @symcore.int(1)))
+        (other, Symbol(sym)) if sym == name => Some((other, @symcore.int(1)))
         _ => None
       }
     _ =>
       match expr {
-        @symcore.Expr::Mul(args) => {
+        Mul(args) => {
           let mut delta_arg : @symcore.Expr? = None
           let rest_args : Array[@symcore.Expr] = Array::new()
           for arg in args {
@@ -79,13 +77,13 @@ fn extract_delta(
               Some(dargs) =>
                 if @symcore.application_has_name(arg, "KroneckerDelta", arity=2) {
                   match (dargs[0], dargs[1]) {
-                    (@symcore.Expr::Symbol(sym), other) if sym == name =>
+                    (Symbol(sym), other) if sym == name =>
                       if delta_arg is None {
                         delta_arg = Some(other)
                       } else {
                         return None
                       }
-                    (other, @symcore.Expr::Symbol(sym)) if sym == name =>
+                    (other, Symbol(sym)) if sym == name =>
                       if delta_arg is None {
                         delta_arg = Some(other)
                       } else {
@@ -198,10 +196,7 @@ fn eval_delta_product(
 ///|
 fn piecewise_expr(expr : @symcore.Expr, cond : @symcore.Expr) -> @symcore.Expr {
   let pair1 = @symcore.Expr::Tuple([expr, cond])
-  let pair2 = @symcore.Expr::Tuple([
-    @symcore.int(0),
-    @symcore.Expr::Boolean(true),
-  ])
+  let pair2 = @symcore.Expr::Tuple([@symcore.int(0), Boolean(true)])
   @symcore.function("Piecewise", [pair1, pair2])
 }
 
@@ -229,12 +224,12 @@ fn symbolic_singleton_cond(
 
 ///|
 fn rel_le(left : @symcore.Expr, right : @symcore.Expr) -> @symcore.Expr {
-  @symcore.Expr::Relational(@symcore.RelOp::Le, left, right)
+  Relational(Le, left, right)
 }
 
 ///|
 fn rel_eq(left : @symcore.Expr, right : @symcore.Expr) -> @symcore.Expr {
-  @symcore.Expr::Relational(@symcore.RelOp::Eq, left, right)
+  Relational(Eq, left, right)
 }
 
 ///|

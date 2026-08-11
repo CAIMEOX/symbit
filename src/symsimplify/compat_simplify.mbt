@@ -135,7 +135,7 @@ fn compat_half_integer_bessel(name : String, nu : Expr, z : Expr) -> Expr? {
   let half = compat_half_rational()
   let minus_half = half.neg_r()
   let kernel = match nu {
-    Expr::Number(n) if n == half =>
+    Number(n) if n == half =>
       match name {
         "besselj" => Some(@symcore.function("sin", [z]))
         "bessely" => Some(neg_expr(@symcore.function("cos", [z])))
@@ -153,7 +153,7 @@ fn compat_half_integer_bessel(name : String, nu : Expr, z : Expr) -> Expr? {
           )
         _ => None
       }
-    Expr::Number(n) if n == minus_half =>
+    Number(n) if n == minus_half =>
       match name {
         "besselj" => Some(@symcore.function("cos", [z]))
         "bessely" => Some(@symcore.function("sin", [z]))
@@ -245,7 +245,7 @@ fn compat_collect_bessel_terms_rec(
   match named_binary_application(expr) {
     Some((fn_name, order, arg)) if fn_name == name => {
       let (norm, shift) = split_expr_integer_shift(order)
-      out.push(CompatBesselTermInfo::{ term: expr, order, arg, norm, shift })
+      out.push({ term: expr, order, arg, norm, shift })
     }
     _ =>
       for child in @symcore.children(expr) {
@@ -286,7 +286,7 @@ fn rewrite_kroneckersimp(expr : Expr) -> Expr {
       compat_simplify_delta(a, b)
     _ =>
       match expr {
-        Expr::Mul(args) => compat_simplify_delta_mul(args)
+        Mul(args) => compat_simplify_delta_mul(args)
         _ => expr
       }
   }
@@ -301,8 +301,8 @@ fn compat_simplify_delta_mul(args : Array[Expr]) -> Expr {
     match named_binary_application(arg) {
       Some((name, a, b)) if name == "KroneckerDelta" =>
         match compat_simplify_delta(a, b) {
-          Expr::Number(n) if n.is_zero() => return int(0)
-          Expr::Number(n) if n.is_one() => ()
+          Number(n) if n.is_zero() => return int(0)
+          Number(n) if n.is_one() => ()
           delta_expr =>
             match named_binary_application(delta_expr) {
               Some((_, lhs, rhs)) => pending.push((lhs, rhs))
@@ -322,16 +322,15 @@ fn compat_simplify_delta_mul(args : Array[Expr]) -> Expr {
       let lhs = compat_normalize_with_env(pair.0, env)
       let rhs = compat_normalize_with_env(pair.1, env)
       match compat_simplify_delta(lhs, rhs) {
-        Expr::Number(n) if n.is_zero() => return int(0)
-        Expr::Number(n) if n.is_one() => changed = true
+        Number(n) if n.is_zero() => return int(0)
+        Number(n) if n.is_one() => changed = true
         delta_expr =>
           match named_binary_application(delta_expr) {
             Some((_, a, b)) =>
               match compat_try_bind_delta(env, a, b) {
-                CompatDeltaBind::Conflict => return int(0)
-                CompatDeltaBind::Bound => changed = true
-                CompatDeltaBind::Keep =>
-                  next_active.push(compat_canonical_delta_pair(a, b))
+                Conflict => return int(0)
+                Bound => changed = true
+                Keep => next_active.push(compat_canonical_delta_pair(a, b))
               }
             None => ()
           }
@@ -355,8 +354,8 @@ fn compat_simplify_delta_mul(args : Array[Expr]) -> Expr {
     let lhs = compat_normalize_with_env(pair.0, env)
     let rhs = compat_normalize_with_env(pair.1, env)
     match compat_simplify_delta(lhs, rhs) {
-      Expr::Number(n) if n.is_zero() => return int(0)
-      Expr::Number(n) if n.is_one() => ()
+      Number(n) if n.is_zero() => return int(0)
+      Number(n) if n.is_one() => ()
       other => out.push(other)
     }
   }
@@ -396,17 +395,17 @@ fn compat_try_bind_delta(
   b : Expr,
 ) -> CompatDeltaBind {
   match (a, b) {
-    (Expr::Symbol(name_a), Expr::Symbol(name_b)) =>
+    (Symbol(name_a), Symbol(name_b)) =>
       if name_a == name_b {
-        CompatDeltaBind::Bound
+        Bound
       } else if name_a.compare(name_b) <= 0 {
         compat_bind_symbol(env, name_b, a)
       } else {
         compat_bind_symbol(env, name_a, b)
       }
-    (Expr::Symbol(name), value) => compat_bind_symbol(env, name, value)
-    (value, Expr::Symbol(name)) => compat_bind_symbol(env, name, value)
-    _ => CompatDeltaBind::Keep
+    (Symbol(name), value) => compat_bind_symbol(env, name, value)
+    (value, Symbol(name)) => compat_bind_symbol(env, name, value)
+    _ => Keep
   }
 }
 
@@ -418,18 +417,18 @@ fn compat_bind_symbol(
 ) -> CompatDeltaBind {
   let normalized = compat_normalize_with_env(value, env)
   if compat_expr_contains_symbol_name(normalized, name) {
-    return CompatDeltaBind::Keep
+    return Keep
   }
   match env.get(name) {
     Some(v) =>
       if compat_normalize_with_env(v, env) == normalized {
-        CompatDeltaBind::Bound
+        Bound
       } else {
-        CompatDeltaBind::Conflict
+        Conflict
       }
     None => {
       env[name] = normalized
-      CompatDeltaBind::Bound
+      Bound
     }
   }
 }
@@ -461,7 +460,7 @@ fn compat_definitely_equal(a : Expr, b : Expr) -> Bool {
 ///|
 fn compat_definitely_unequal(a : Expr, b : Expr) -> Bool {
   match (a, b) {
-    (Expr::Number(x), Expr::Number(y)) => x != y
+    (Number(x), Number(y)) => x != y
     _ => false
   }
 }
@@ -481,7 +480,7 @@ fn compat_normalize_with_env_rec(
     return expr
   }
   match expr {
-    Expr::Symbol(name) =>
+    Symbol(name) =>
       match env.get(name) {
         Some(value) if value != expr =>
           compat_normalize_with_env_rec(value, env, depth + 1)
@@ -497,7 +496,7 @@ fn compat_normalize_with_env_rec(
 ///|
 fn compat_expr_contains_symbol_name(expr : Expr, name : String) -> Bool {
   match expr {
-    Expr::Symbol(sym_name) => sym_name == name
+    Symbol(sym_name) => sym_name == name
     _ => {
       for child in @symcore.children(expr) {
         if compat_expr_contains_symbol_name(child, name) {
@@ -515,7 +514,7 @@ fn compat_simplify_delta(a : Expr, b : Expr) -> Expr {
     return int(1)
   }
   match (a, b) {
-    (Expr::Number(x), Expr::Number(y)) => if x == y { int(1) } else { int(0) }
+    (Number(x), Number(y)) => if x == y { int(1) } else { int(0) }
     _ => {
       let pair = compat_canonical_delta_pair(a, b)
       @symcore.function("KroneckerDelta", [pair.0, pair.1])
@@ -531,14 +530,14 @@ fn rewrite_nsimplify_exact(
 ) -> Expr {
   let _ = rational
   let basic = match expr {
-    _ if unary_application_arg(expr, "sqrt") is Some(Expr::Number(n)) =>
+    _ if unary_application_arg(expr, "sqrt") is Some(Number(n)) =>
       match compat_exact_rational_nth_root(n, 2) {
         Some(root) => @symcore.Expr::Number(root)
         None => expr
       }
-    Expr::Pow(Expr::Number(base), Expr::Number(exp)) =>
+    Pow(Number(base), Number(exp)) =>
       match compat_exact_numeric_pow(base, exp) {
-        Some(value) => @symcore.Expr::Number(value)
+        Some(value) => Number(value)
         None => expr
       }
     _ =>
@@ -659,9 +658,7 @@ fn compat_rewrite_named_constants(expr : Expr, constants : Array[Expr]) -> Expr 
   }
   match compat_match_linear_sqrt5(expr) {
     Some((a, b)) if !b.is_zero() => {
-      let golden = @symcore.Expr::NumberSymbol(
-        @symcore.NumberSymbolKind::GoldenRatio,
-      )
+      let golden = @symcore.Expr::NumberSymbol(GoldenRatio)
       let constant_part = a.add_r(b.neg_r())
       let golden_part = b.mul_r(@symnum.BigRational::from_int(2))
       compat_make_linear_expr(constant_part, golden_part, golden)
@@ -674,11 +671,8 @@ fn compat_rewrite_named_constants(expr : Expr, constants : Array[Expr]) -> Expr 
 fn compat_has_named_constant(constants : Array[Expr], name : String) -> Bool {
   for constant in constants {
     match constant {
-      Expr::Symbol(const_name) if const_name == name => return true
-      Expr::NumberSymbol(@symcore.NumberSymbolKind::GoldenRatio) =>
-        if name == "GoldenRatio" {
-          return true
-        }
+      Symbol(const_name) if const_name == name => return true
+      NumberSymbol(GoldenRatio) => if name == "GoldenRatio" { return true }
       _ => ()
     }
   }
@@ -690,7 +684,7 @@ fn compat_match_linear_sqrt5(
   expr : Expr,
 ) -> (@symnum.BigRational, @symnum.BigRational)? {
   match expr {
-    Expr::Add(args) => {
+    Add(args) => {
       let mut constant = @symnum.BigRational::zero()
       let mut sqrt_coeff = @symnum.BigRational::zero()
       for arg in args {
@@ -713,17 +707,17 @@ fn compat_linear_sqrt5_term(
   expr : Expr,
 ) -> (@symnum.BigRational, @symnum.BigRational)? {
   match expr {
-    Expr::Number(n) => Some((n, @symnum.BigRational::zero()))
-    _ if unary_application_arg(expr, "sqrt") is Some(Expr::Number(n)) &&
+    Number(n) => Some((n, @symnum.BigRational::zero()))
+    _ if unary_application_arg(expr, "sqrt") is Some(Number(n)) &&
       n == @symnum.BigRational::from_int(5) =>
       Some((@symnum.BigRational::zero(), @symnum.BigRational::one()))
-    Expr::Mul(args) => {
+    Mul(args) => {
       let mut coeff = @symnum.BigRational::one()
       let mut has_sqrt5 = false
       for arg in args {
         match arg {
-          Expr::Number(n) => coeff = coeff.mul_r(n)
-          _ if unary_application_arg(arg, "sqrt") is Some(Expr::Number(n)) &&
+          Number(n) => coeff = coeff.mul_r(n)
+          _ if unary_application_arg(arg, "sqrt") is Some(Number(n)) &&
             n == @symnum.BigRational::from_int(5) => has_sqrt5 = true
           _ => return None
         }
@@ -749,11 +743,11 @@ fn compat_make_linear_expr(
     if coeff.is_one() {
       out.push(base)
     } else {
-      out.push(@symcore.mul([@symcore.Expr::Number(coeff), base]))
+      out.push(@symcore.mul([Number(coeff), base]))
     }
   }
   if !constant.is_zero() {
-    out.push(@symcore.Expr::Number(constant))
+    out.push(Number(constant))
   }
   @symcore.add(out)
 }
@@ -775,9 +769,7 @@ fn compat_sqrt_two() -> Expr {
 
 ///|
 fn compat_sqrt_pi() -> Expr {
-  @symcore.function("sqrt", [
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-  ])
+  @symcore.function("sqrt", [NumberSymbol(Pi)])
 }
 
 ///|

@@ -357,12 +357,12 @@ fn infer_gens_expr_local(expr : Expr) -> Array[String] {
 ///|
 fn collect_symbols_local(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    Expr::Symbol(name) => seen.set(name, true)
-    Expr::Add(args) | Expr::Mul(args) =>
+    Symbol(name) => seen.set(name, true)
+    Add(args) | Mul(args) =>
       for child in args {
         collect_symbols_local(child, seen)
       }
-    Expr::Pow(base, exp) => {
+    Pow(base, exp) => {
       collect_symbols_local(base, seen)
       collect_symbols_local(exp, seen)
     }
@@ -397,7 +397,7 @@ fn dict_repr(entries : Array[(Array[Int], String)]) -> String {
 fn poly_dict_repr(poly : Poly) -> String {
   let entries : Array[(Array[Int], String)] = Array::new()
   for m, c in poly.coeffs {
-    entries.push((m.exps.copy(), c.to_string()))
+    entries.push((m.exps.copy(), Show::to_string(c)))
   }
   entries.sort_by((a, b) => compare_int_lists(a.0, b.0))
   dict_repr(entries)
@@ -491,13 +491,13 @@ pub fn expr_from_dict(
   let terms : Array[Expr] = []
   for monom, coeff in rep {
     if monom.exps.length() > gens.length() {
-      raise PolyError::DomainMismatch
+      raise DomainMismatch
     }
     let mut term = coeff
     for i in 0..<monom.exps.length() {
       let exp = monom.exps[i]
       if exp != 0 {
-        term = term * (Expr::Symbol(gens[i]) ^ int(exp))
+        term = term * (Symbol(gens[i]) ^ int(exp))
       }
     }
     terms.push(term)

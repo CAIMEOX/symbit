@@ -35,11 +35,11 @@ fn modgcd_exact_cofactors(
   f : Poly,
   g : Poly,
 ) -> (Poly, Poly, Poly) raise PolyError {
-  if f.domain != Domain::ZZ || g.domain != Domain::ZZ {
-    raise PolyError::DomainMismatch
+  if f.domain != ZZ || g.domain != ZZ {
+    raise DomainMismatch
   }
   if f.gens != g.gens {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let zero = Poly::zero(f.gens, f.domain)
   if f.is_zero() && g.is_zero() {
@@ -76,7 +76,7 @@ pub fn modgcd_univariate(
   g : Poly,
 ) -> (Poly, Poly, Poly) raise PolyError {
   if f.gens.length() != 1 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   modgcd_exact_cofactors(f, g)
 }
@@ -96,7 +96,7 @@ pub fn modgcd_bivariate(
   g : Poly,
 ) -> (Poly, Poly, Poly) raise PolyError {
   if f.gens.length() != 2 {
-    raise PolyError::BadGenerator(f.gens.join(","))
+    raise BadGenerator(f.gens.join(","))
   }
   modgcd_exact_cofactors(f, g)
 }
@@ -115,7 +115,7 @@ pub fn modgcd_multivariate(
   g : Poly,
 ) -> (Poly, Poly, Poly) raise PolyError {
   if f.gens.length() < 2 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
   modgcd_exact_cofactors(f, g)
 }
@@ -142,11 +142,11 @@ fn func_field_zero_like(poly : Poly) -> Poly {
 ///|
 fn func_field_check_compat(f : Poly, g : Poly) -> Unit raise PolyError {
   if f.domain != g.domain || f.gens != g.gens {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   match f.domain {
-    Domain::AlgExt(_, _, _) => ()
-    _ => raise PolyError::DomainMismatch
+    AlgExt(_, _, _) => ()
+    _ => raise DomainMismatch
   }
 }
 

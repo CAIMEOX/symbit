@@ -586,6 +586,14 @@ pub struct BosonOpExpr {
 } derive(Eq)
 pub fn BosonOpExpr::as_expr(Self) -> @symcore.Expr
 pub fn BosonOpExpr::dagger(Self) -> Self
+#deprecated
+pub fn BosonOpExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn BosonOpExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn BosonOpExpr::output(Self, &Logger) -> Unit
+#deprecated
+pub fn BosonOpExpr::to_string(Self) -> String
 pub impl Show for BosonOpExpr
 
 pub struct CG {
@@ -598,7 +606,11 @@ pub struct CG {
 } derive(Eq)
 pub fn CG::as_expr(Self) -> @symcore.Expr
 pub fn CG::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn CG::equal(Self, Self) -> Bool
 pub fn CG::is_symbolic(Self) -> Bool
+#deprecated
+pub fn CG::not_equal(Self, Self) -> Bool
 
 pub struct CModExpr {
   t : Int
@@ -606,6 +618,10 @@ pub struct CModExpr {
   modulus : Int
 } derive(Eq)
 pub fn CModExpr::as_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn CModExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn CModExpr::not_equal(Self, Self) -> Bool
 
 pub struct CircuitPlot {
   circuit : @symcore.Expr
@@ -634,9 +650,13 @@ pub fn DensityExpr::apply_op(Self, @symcore.Expr) -> Self
 pub fn DensityExpr::as_expr(Self) -> @symcore.Expr
 pub fn DensityExpr::doit(Self) -> @symcore.Expr
 pub fn DensityExpr::entropy(Self, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn DensityExpr::equal(Self, Self) -> Bool
 pub fn DensityExpr::fidelity(Self, Self, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
 pub fn DensityExpr::get_prob(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
 pub fn DensityExpr::get_state(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn DensityExpr::not_equal(Self, Self) -> Bool
 pub fn DensityExpr::probs(Self) -> @symcore.Expr
 pub fn DensityExpr::represent(Self, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> MatrixScalarValue raise @symphysics.PhysicsError
 pub fn DensityExpr::states(Self) -> @symcore.Expr
@@ -646,12 +666,20 @@ pub struct DensityTerm {
   state : @symcore.Expr
   prob : @symcore.Expr
 } derive(Eq)
+#deprecated
+pub fn DensityTerm::equal(Self, Self) -> Bool
+#deprecated
+pub fn DensityTerm::not_equal(Self, Self) -> Bool
 
 pub struct DifferentialOperatorExpr {
   expr : @symcore.Expr
   function_expr : @symcore.Expr
 } derive(Eq)
 pub fn DifferentialOperatorExpr::as_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn DifferentialOperatorExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn DifferentialOperatorExpr::not_equal(Self, Self) -> Bool
 pub fn DifferentialOperatorExpr::variables(Self) -> Array[@symcore.Expr]
 
 pub struct FermionOpExpr {
@@ -660,6 +688,14 @@ pub struct FermionOpExpr {
 } derive(Eq)
 pub fn FermionOpExpr::as_expr(Self) -> @symcore.Expr
 pub fn FermionOpExpr::dagger(Self) -> Self
+#deprecated
+pub fn FermionOpExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn FermionOpExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn FermionOpExpr::output(Self, &Logger) -> Unit
+#deprecated
+pub fn FermionOpExpr::to_string(Self) -> String
 pub impl Show for FermionOpExpr
 
 pub struct FourierExpr {
@@ -668,16 +704,28 @@ pub struct FourierExpr {
   finish : Int
 } derive(Eq)
 pub fn FourierExpr::as_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn FourierExpr::equal(Self, Self) -> Bool
 pub fn FourierExpr::inverse(Self) -> Self
+#deprecated
+pub fn FourierExpr::not_equal(Self, Self) -> Bool
 
 pub struct GateExpr {
   kind : GateKind
   args : Array[Int]
 } derive(Eq)
 pub fn GateExpr::as_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn GateExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn GateExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn GateExpr::output(Self, &Logger) -> Unit
 pub fn GateExpr::repr(Self) -> String
 pub fn GateExpr::represent_zbasis(Self, Int) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn GateExpr::target_matrix(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+#deprecated
+pub fn GateExpr::to_string(Self) -> String
 pub impl Show for GateExpr
 
 pub struct GateIdentity {
@@ -688,7 +736,11 @@ pub struct GateIdentity {
 pub fn GateIdentity::circuit(Self) -> @symcore.Expr
 pub fn GateIdentity::equivalent_id_exprs(Self) -> Array[@symcore.Expr]
 pub fn GateIdentity::gate_rules(Self) -> Array[GateRule]
+#deprecated
+pub fn GateIdentity::output(Self, &Logger) -> Unit
 pub fn GateIdentity::sequence_exprs(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn GateIdentity::to_string(Self) -> String
 pub impl Show for GateIdentity
 
 pub enum GateKind {
@@ -702,13 +754,25 @@ pub enum GateKind {
   Swap
   CNot
 } derive(Eq)
+#deprecated
+pub fn GateKind::equal(Self, Self) -> Bool
+#deprecated
+pub fn GateKind::not_equal(Self, Self) -> Bool
 
 pub struct GateRule {
   left : Array[@symcore.Expr]
   right : Array[@symcore.Expr]
 } derive(Eq)
+#deprecated
+pub fn GateRule::equal(Self, Self) -> Bool
 pub fn GateRule::left_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn GateRule::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn GateRule::output(Self, &Logger) -> Unit
 pub fn GateRule::right_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn GateRule::to_string(Self) -> String
 pub impl Show for GateRule
 
 pub enum HilbertSpace {
@@ -720,11 +784,23 @@ pub enum HilbertSpace {
   DirectSum(Array[HilbertSpace])
   TensorPower(HilbertSpace, @symcore.Expr)
 } derive(Eq)
+#deprecated
+pub fn HilbertSpace::add(Self, Self) -> Self
 pub fn HilbertSpace::base(Self) -> Self raise @symphysics.PhysicsError
 pub fn HilbertSpace::dimension(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn HilbertSpace::equal(Self, Self) -> Bool
 pub fn HilbertSpace::exp(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn HilbertSpace::mul(Self, Self) -> Self
+#deprecated
+pub fn HilbertSpace::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn HilbertSpace::output(Self, &Logger) -> Unit
 pub fn HilbertSpace::repr(Self) -> String
 pub fn HilbertSpace::spaces(Self) -> Array[Self] raise @symphysics.PhysicsError
+#deprecated
+pub fn HilbertSpace::to_string(Self) -> String
 pub impl Add for HilbertSpace
 pub impl Mul for HilbertSpace
 pub impl Show for HilbertSpace
@@ -739,8 +815,16 @@ pub struct JzState {
 } derive(Eq)
 pub fn JzState::as_expr(Self) -> @symcore.Expr
 pub fn JzState::dual(Self) -> Self
+#deprecated
+pub fn JzState::equal(Self, Self) -> Bool
 pub fn JzState::is_coupled(Self) -> Bool
+#deprecated
+pub fn JzState::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn JzState::output(Self, &Logger) -> Unit
 pub fn JzState::rewrite(Self, @symcore.Expr) -> @symcore.Expr
+#deprecated
+pub fn JzState::to_string(Self) -> String
 pub impl Show for JzState
 
 pub struct MatrixCache {
@@ -754,6 +838,14 @@ pub enum MatrixScalarValue {
   Matrix(@symphysics.ExplicitMatrix)
   Scalar(@symcore.Expr)
 } derive(Eq)
+#deprecated
+pub fn MatrixScalarValue::equal(Self, Self) -> Bool
+#deprecated
+pub fn MatrixScalarValue::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn MatrixScalarValue::output(Self, &Logger) -> Unit
+#deprecated
+pub fn MatrixScalarValue::to_string(Self) -> String
 pub impl Show for MatrixScalarValue
 
 pub struct OperatorExpr {
@@ -762,8 +854,16 @@ pub struct OperatorExpr {
   hilbert_space : HilbertSpace
 } derive(Eq)
 pub fn OperatorExpr::as_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn OperatorExpr::equal(Self, Self) -> Bool
 pub fn OperatorExpr::inverse(Self) -> @symcore.Expr
+#deprecated
+pub fn OperatorExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn OperatorExpr::output(Self, &Logger) -> Unit
 pub fn OperatorExpr::repr(Self) -> String
+#deprecated
+pub fn OperatorExpr::to_string(Self) -> String
 pub impl Show for OperatorExpr
 
 pub enum OperatorFlavor {
@@ -772,19 +872,35 @@ pub enum OperatorFlavor {
   Unitary
   Identity
 } derive(Eq)
+#deprecated
+pub fn OperatorFlavor::equal(Self, Self) -> Bool
+#deprecated
+pub fn OperatorFlavor::not_equal(Self, Self) -> Bool
 
 pub struct OracleGateExpr {
   nqubits : Int
   marked : Array[Int]
 } derive(Eq)
 pub fn OracleGateExpr::as_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn OracleGateExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn OracleGateExpr::not_equal(Self, Self) -> Bool
 
 pub struct PauliExpr {
   kind : PauliKind
   name : @symcore.Expr?
 } derive(Eq)
 pub fn PauliExpr::as_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn PauliExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn PauliExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn PauliExpr::output(Self, &Logger) -> Unit
 pub fn PauliExpr::repr(Self) -> String
+#deprecated
+pub fn PauliExpr::to_string(Self) -> String
 pub impl Show for PauliExpr
 
 pub enum PauliKind {
@@ -794,6 +910,10 @@ pub enum PauliKind {
   Plus
   Minus
 } derive(Eq)
+#deprecated
+pub fn PauliKind::equal(Self, Self) -> Bool
+#deprecated
+pub fn PauliKind::not_equal(Self, Self) -> Bool
 
 pub struct QExpr {
   class_name : String
@@ -801,8 +921,16 @@ pub struct QExpr {
   hilbert_space : HilbertSpace
 } derive(Eq)
 pub fn QExpr::as_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn QExpr::equal(Self, Self) -> Bool
 pub fn QExpr::label(Self) -> Array[@symcore.Expr]
+#deprecated
+pub fn QExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn QExpr::output(Self, &Logger) -> Unit
 pub fn QExpr::repr(Self) -> String
+#deprecated
+pub fn QExpr::to_string(Self) -> String
 pub impl Show for QExpr
 
 pub struct Qasm {
@@ -812,16 +940,24 @@ pub struct Qasm {
   inits : Map[String, String]
 } derive(Eq)
 pub fn Qasm::add(Self, Array[String]) -> Unit raise @symphysics.PhysicsError
+#deprecated
+pub fn Qasm::equal(Self, Self) -> Bool
 pub fn Qasm::get_circuit(Self) -> @symcore.Expr
 pub fn Qasm::get_labels(Self) -> Array[String]
 pub fn Qasm::index(Self, String) -> Int raise @symphysics.PhysicsError
 pub fn Qasm::indices(Self, Array[String]) -> Array[Int] raise @symphysics.PhysicsError
+#deprecated
+pub fn Qasm::not_equal(Self, Self) -> Bool
 pub fn Qasm::qubit(Self, String, init? : String?) -> Unit
 
 pub struct QasmDefinition {
   ncontrols : Int
   symbol : String
 } derive(Eq)
+#deprecated
+pub fn QasmDefinition::equal(Self, Self) -> Bool
+#deprecated
+pub fn QasmDefinition::not_equal(Self, Self) -> Bool
 
 pub(all) enum QuantumKind {
   QNumber
@@ -830,6 +966,14 @@ pub(all) enum QuantumKind {
   QOperator
   QUndefined
 } derive(Eq)
+#deprecated
+pub fn QuantumKind::equal(Self, Self) -> Bool
+#deprecated
+pub fn QuantumKind::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn QuantumKind::output(Self, &Logger) -> Unit
+#deprecated
+pub fn QuantumKind::to_string(Self) -> String
 pub impl Show for QuantumKind
 
 pub struct QubitExpr {
@@ -841,15 +985,27 @@ pub fn QubitExpr::as_expr(Self) -> @symcore.Expr
 pub fn QubitExpr::bit(Self, Int) -> Int raise @symphysics.PhysicsError
 pub fn QubitExpr::dimension(Self) -> Int
 pub fn QubitExpr::dual(Self) -> Self
+#deprecated
+pub fn QubitExpr::equal(Self, Self) -> Bool
 pub fn QubitExpr::flip(Self, Int) -> Self raise @symphysics.PhysicsError
+#deprecated
+pub fn QubitExpr::not_equal(Self, Self) -> Bool
 pub fn QubitExpr::nqubits(Self) -> Int
+#deprecated
+pub fn QubitExpr::output(Self, &Logger) -> Unit
 pub fn QubitExpr::repr(Self) -> String
+#deprecated
+pub fn QubitExpr::to_string(Self) -> String
 pub impl Show for QubitExpr
 
 pub struct RkExpr {
   target : Int
   k : Int
 } derive(Eq)
+#deprecated
+pub fn RkExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn RkExpr::not_equal(Self, Self) -> Bool
 
 pub struct RotationExpr {
   alpha : @symcore.Expr
@@ -857,7 +1013,15 @@ pub struct RotationExpr {
   gamma : @symcore.Expr
 } derive(Eq)
 pub fn RotationExpr::as_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn RotationExpr::equal(Self, Self) -> Bool
 pub fn RotationExpr::inverse(Self) -> Self
+#deprecated
+pub fn RotationExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn RotationExpr::output(Self, &Logger) -> Unit
+#deprecated
+pub fn RotationExpr::to_string(Self) -> String
 pub impl Show for RotationExpr
 
 pub struct SigmaZState {
@@ -866,22 +1030,46 @@ pub struct SigmaZState {
 } derive(Eq)
 pub fn SigmaZState::as_expr(Self) -> @symcore.Expr
 pub fn SigmaZState::dual(Self) -> Self
+#deprecated
+pub fn SigmaZState::equal(Self, Self) -> Bool
+#deprecated
+pub fn SigmaZState::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn SigmaZState::output(Self, &Logger) -> Unit
+#deprecated
+pub fn SigmaZState::to_string(Self) -> String
 pub impl Show for SigmaZState
 
 pub struct SpinCoupleOrder {
   left_index : Int
   right_index : Int
 } derive(Eq)
+#deprecated
+pub fn SpinCoupleOrder::equal(Self, Self) -> Bool
+#deprecated
+pub fn SpinCoupleOrder::not_equal(Self, Self) -> Bool
 
 pub struct SpinCoupling {
   left_index : Int
   right_index : Int
   j : @symcore.Expr
 } derive(Eq)
+#deprecated
+pub fn SpinCoupling::equal(Self, Self) -> Bool
+#deprecated
+pub fn SpinCoupling::not_equal(Self, Self) -> Bool
 
 type SpinResolvedCoupling derive(Eq)
+#deprecated
+pub fn SpinResolvedCoupling::equal(Self, Self) -> Bool
+#deprecated
+pub fn SpinResolvedCoupling::not_equal(Self, Self) -> Bool
 
 type SpinResolvedPair derive(Eq)
+#deprecated
+pub fn SpinResolvedPair::equal(Self, Self) -> Bool
+#deprecated
+pub fn SpinResolvedPair::not_equal(Self, Self) -> Bool
 
 pub struct StateExpr {
   flavor : StateFlavor
@@ -891,7 +1079,15 @@ pub struct StateExpr {
 } derive(Eq)
 pub fn StateExpr::as_expr(Self) -> @symcore.Expr
 pub fn StateExpr::dual(Self) -> Self
+#deprecated
+pub fn StateExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn StateExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn StateExpr::output(Self, &Logger) -> Unit
 pub fn StateExpr::repr(Self) -> String
+#deprecated
+pub fn StateExpr::to_string(Self) -> String
 pub impl Show for StateExpr
 
 pub enum StateFlavor {
@@ -902,6 +1098,10 @@ pub enum StateFlavor {
   OrthogonalKet
   OrthogonalBra
 } derive(Eq)
+#deprecated
+pub fn StateFlavor::equal(Self, Self) -> Bool
+#deprecated
+pub fn StateFlavor::not_equal(Self, Self) -> Bool
 
 pub struct SymbolicCircuit {
   circuit : Array[@symcore.Expr]
@@ -914,12 +1114,24 @@ pub struct TensorProductExpr {
 } derive(Eq)
 pub fn TensorProductExpr::as_expr(Self) -> @symcore.Expr
 pub fn TensorProductExpr::dagger(Self) -> Self
+#deprecated
+pub fn TensorProductExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn TensorProductExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn TensorProductExpr::output(Self, &Logger) -> Unit
+#deprecated
+pub fn TensorProductExpr::to_string(Self) -> String
 pub impl Show for TensorProductExpr
 
 pub struct WGateExpr {
   nqubits : Int
 } derive(Eq)
 pub fn WGateExpr::as_expr(Self) -> @symcore.Expr
+#deprecated
+pub fn WGateExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn WGateExpr::not_equal(Self, Self) -> Bool
 
 pub struct WavefunctionExpr {
   expr : @symcore.Expr
@@ -927,11 +1139,15 @@ pub struct WavefunctionExpr {
 } derive(Eq)
 pub fn WavefunctionExpr::as_expr(Self) -> @symcore.Expr
 pub fn WavefunctionExpr::call(Self, Array[@symcore.Expr], env? : Map[String, @symcore.Expr]) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn WavefunctionExpr::equal(Self, Self) -> Bool
 pub fn WavefunctionExpr::is_normalized(Self) -> Bool
 pub fn WavefunctionExpr::limits(Self) -> Map[String, (@symcore.Expr, @symcore.Expr)]
 pub fn WavefunctionExpr::norm(Self) -> @symcore.Expr
 pub fn WavefunctionExpr::norm_expr(Self) -> @symcore.Expr
 pub fn WavefunctionExpr::normalize(Self) -> Self
+#deprecated
+pub fn WavefunctionExpr::not_equal(Self, Self) -> Bool
 pub fn WavefunctionExpr::prob(Self) -> Self
 pub fn WavefunctionExpr::repr(Self) -> String
 pub fn WavefunctionExpr::variables(Self) -> Array[@symcore.Expr]
@@ -946,7 +1162,11 @@ pub struct Wigner3j {
 } derive(Eq)
 pub fn Wigner3j::as_expr(Self) -> @symcore.Expr
 pub fn Wigner3j::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn Wigner3j::equal(Self, Self) -> Bool
 pub fn Wigner3j::is_symbolic(Self) -> Bool
+#deprecated
+pub fn Wigner3j::not_equal(Self, Self) -> Bool
 
 pub struct Wigner6j {
   j1 : @symcore.Expr
@@ -958,7 +1178,11 @@ pub struct Wigner6j {
 } derive(Eq)
 pub fn Wigner6j::as_expr(Self) -> @symcore.Expr
 pub fn Wigner6j::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn Wigner6j::equal(Self, Self) -> Bool
 pub fn Wigner6j::is_symbolic(Self) -> Bool
+#deprecated
+pub fn Wigner6j::not_equal(Self, Self) -> Bool
 
 pub struct Wigner9j {
   j1 : @symcore.Expr
@@ -973,7 +1197,11 @@ pub struct Wigner9j {
 } derive(Eq)
 pub fn Wigner9j::as_expr(Self) -> @symcore.Expr
 pub fn Wigner9j::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn Wigner9j::equal(Self, Self) -> Bool
 pub fn Wigner9j::is_symbolic(Self) -> Bool
+#deprecated
+pub fn Wigner9j::not_equal(Self, Self) -> Bool
 
 pub struct WignerDExpr {
   j : @symcore.Expr
@@ -985,6 +1213,14 @@ pub struct WignerDExpr {
 } derive(Eq)
 pub fn WignerDExpr::as_expr(Self) -> @symcore.Expr
 pub fn WignerDExpr::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+#deprecated
+pub fn WignerDExpr::equal(Self, Self) -> Bool
+#deprecated
+pub fn WignerDExpr::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn WignerDExpr::output(Self, &Logger) -> Unit
+#deprecated
+pub fn WignerDExpr::to_string(Self) -> String
 pub impl Show for WignerDExpr
 
 // Type aliases

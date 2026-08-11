@@ -2,7 +2,7 @@
 ///\
 fn zero_symbols(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Symbol(_) => @symcore.int(0)
+    Symbol(_) => @symcore.int(0)
     _ => expr
   }
 }
@@ -10,9 +10,9 @@ fn zero_symbols(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn promote_basic2(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Function("Basic", args) if args.length() > 0 =>
+    Function("Basic", args) if args.length() > 0 =>
       match args[0] {
-        @symcore.Expr::Number(n) if n.is_integral() => expr
+        Number(n) if n.is_integral() => expr
         _ => @symcore.function("Basic2", args)
       }
     _ => expr
@@ -82,12 +82,7 @@ test "traverse expr_fns" {
     fns=@strategies_util.expr_fns,
   )(expr)
   let b = @strategies_traverse.bottom_up(
-    v => {
-      @strategies_util.expr_new_raw(@strategies_util.ExprOp::Add, [
-        v,
-        @symcore.int(1),
-      ])
-    },
+    v => @strategies_util.expr_new_raw(Add, [v, @symcore.int(1)]),
     fns=@strategies_util.basic_fns,
   )(expr)
   let rebuilt = @strategies_rl.rebuild(b)

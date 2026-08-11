@@ -20,7 +20,7 @@ pub fn property_set(items : Array[String]) -> Array[String] {
 
 ///|
 pub fn morphism_list(items : Array[Morphism]) -> MorphismSpec {
-  MorphismSpec::List(items)
+  List(items)
 }
 
 ///|
@@ -29,12 +29,12 @@ pub fn morphism_props(items : Map[Morphism, Array[String]]) -> MorphismSpec {
   for key in items.keys() {
     normalized[key] = normalize_property_set(items[key])
   }
-  MorphismSpec::Props(normalized)
+  Props(normalized)
 }
 
 ///|
 pub fn identity_morphism(domain : Object) -> Morphism {
-  Morphism::Identity(domain)
+  Identity(domain)
 }
 
 ///|
@@ -44,9 +44,9 @@ pub fn named_morphism(
   name : String,
 ) -> Morphism raise CategoryError {
   guard name != "" else {
-    raise CategoryError::ValueError("Empty morphism names not allowed.")
+    raise ValueError("Empty morphism names not allowed.")
   }
-  Morphism::Named(domain, codomain, name)
+  Named(domain, codomain, name)
 }
 
 ///|
@@ -59,11 +59,11 @@ fn composite_add_morphism(
     out.push(item)
   }
   match morphism {
-    Morphism::Composite(parts) =>
+    Composite(parts) =>
       for part in parts {
         out.push(part)
       }
-    Morphism::Identity(_) => ()
+    Identity(_) => ()
     _ => out.push(morphism)
   }
   out
@@ -74,14 +74,14 @@ pub fn composite_morphism(
   components : Array[Morphism],
 ) -> Morphism raise CategoryError {
   guard !components.is_empty() else {
-    raise CategoryError::ValueError("CompositeMorphism requires components.")
+    raise ValueError("CompositeMorphism requires components.")
   }
   let mut normalized : Array[Morphism] = []
   for i in 0..<(components.length() - 1) {
     let current = components[i]
     let following = components[i + 1]
     if current.codomain() != following.domain() {
-      raise CategoryError::ValueError("Uncomposable morphisms.")
+      raise ValueError("Uncomposable morphisms.")
     }
     normalized = composite_add_morphism(normalized, current)
   }
@@ -94,16 +94,16 @@ pub fn composite_morphism(
   } else if normalized.length() == 1 {
     normalized[0]
   } else {
-    Morphism::Composite(normalized)
+    Composite(normalized)
   }
 }
 
 ///|
 pub fn Morphism::domain(self : Morphism) -> Object {
   match self {
-    Morphism::Identity(domain) => domain
-    Morphism::Named(domain, _, _) => domain
-    Morphism::Composite(items) =>
+    Identity(domain) => domain
+    Named(domain, _, _) => domain
+    Composite(items) =>
       if items.is_empty() {
         abort("CompositeMorphism requires components.")
       } else {
@@ -115,9 +115,9 @@ pub fn Morphism::domain(self : Morphism) -> Object {
 ///|
 pub fn Morphism::codomain(self : Morphism) -> Object {
   match self {
-    Morphism::Identity(domain) => domain
-    Morphism::Named(_, codomain, _) => codomain
-    Morphism::Composite(items) =>
+    Identity(domain) => domain
+    Named(_, codomain, _) => codomain
+    Composite(items) =>
       if items.is_empty() {
         abort("CompositeMorphism requires components.")
       } else {
@@ -129,7 +129,7 @@ pub fn Morphism::codomain(self : Morphism) -> Object {
 ///|
 pub fn Morphism::name(self : Morphism) -> String? {
   match self {
-    Morphism::Named(_, _, name) => Some(name)
+    Named(_, _, name) => Some(name)
     _ => None
   }
 }
@@ -137,7 +137,7 @@ pub fn Morphism::name(self : Morphism) -> String? {
 ///|
 pub fn Morphism::components(self : Morphism) -> Array[Morphism] {
   match self {
-    Morphism::Composite(items) => items
+    Composite(items) => items
     _ => [self]
   }
 }
@@ -153,7 +153,7 @@ pub fn Morphism::compose(
 ///|
 pub impl Mul for Morphism with fn mul(self, other : Morphism) -> Morphism {
   self.compose(other) catch {
-    err => abort(err.to_string())
+    err => abort(Show::to_string(err))
   }
 }
 
@@ -190,9 +190,9 @@ fn diagram_add_morphism_closure(
 ) -> Unit raise CategoryError {
   if !diagram_set_dict_union(morphisms, morphism, props) {
     match morphism {
-      Morphism::Identity(_) => {
+      Identity(_) => {
         if !props.is_empty() {
-          raise CategoryError::ValueError(
+          raise ValueError(
             "Instances of IdentityMorphism cannot have properties.",
           )
         }
@@ -233,7 +233,7 @@ fn diagram_add_morphism_closure(
 
     if recurse_composites {
       match morphism {
-        Morphism::Composite(items) =>
+        Composite(items) =>
           for item in items {
             diagram_add_morphism_closure(morphisms, item, [], add_identities~)
           }
@@ -247,12 +247,12 @@ fn diagram_add_morphism_closure(
 fn diagram_collect_objects(spec : MorphismSpec) -> Array[Object] {
   let out : Array[Object] = Array::new()
   match spec {
-    MorphismSpec::List(items) =>
+    List(items) =>
       for morphism in items {
         out.push(morphism.domain())
         out.push(morphism.codomain())
       }
-    MorphismSpec::Props(items) =>
+    Props(items) =>
       for morphism in items.keys() {
         out.push(morphism.domain())
         out.push(morphism.codomain())
@@ -271,11 +271,11 @@ fn diagram_from_specs(
   let objects = diagram_collect_objects(premises)
 
   match premises {
-    MorphismSpec::List(items) =>
+    List(items) =>
       for morphism in items {
         diagram_add_morphism_closure(premise_map, morphism, [])
       }
-    MorphismSpec::Props(items) =>
+    Props(items) =>
       for morphism in items.keys() {
         diagram_add_morphism_closure(
           premise_map,
@@ -286,7 +286,7 @@ fn diagram_from_specs(
   }
 
   match conclusions {
-    MorphismSpec::List(items) =>
+    List(items) =>
       for morphism in items {
         if contains_object(objects, morphism.domain()) &&
           contains_object(objects, morphism.codomain()) {
@@ -299,7 +299,7 @@ fn diagram_from_specs(
           )
         }
       }
-    MorphismSpec::Props(items) =>
+    Props(items) =>
       for morphism in items.keys() {
         if contains_object(objects, morphism.domain()) &&
           contains_object(objects, morphism.codomain()) {
@@ -324,8 +324,8 @@ fn diagram_from_specs(
 
 ///|
 pub fn diagram(
-  premises? : MorphismSpec = MorphismSpec::List([]),
-  conclusions? : MorphismSpec = MorphismSpec::List([]),
+  premises? : MorphismSpec = List([]),
+  conclusions? : MorphismSpec = List([]),
 ) -> Diagram raise CategoryError {
   diagram_from_specs(premises, conclusions)
 }
@@ -379,9 +379,7 @@ pub fn Diagram::subdiagram_from_objects(
 ) -> Diagram raise CategoryError {
   let normalized = normalize_objects(objects)
   guard object_subset_of(normalized, self.objects) else {
-    raise CategoryError::ValueError(
-      "Supplied objects should all belong to the diagram.",
-    )
+    raise ValueError("Supplied objects should all belong to the diagram.")
   }
 
   let new_premises : Map[Morphism, Array[String]] = Map([])
@@ -400,10 +398,7 @@ pub fn Diagram::subdiagram_from_objects(
     }
   }
 
-  diagram_from_specs(
-    MorphismSpec::Props(new_premises),
-    MorphismSpec::Props(new_conclusions),
-  )
+  diagram_from_specs(Props(new_premises), Props(new_conclusions))
 }
 
 ///|
@@ -413,7 +408,7 @@ pub fn category(
   commutative_diagrams? : Array[Diagram] = [],
 ) -> Category raise CategoryError {
   guard name != "" else {
-    raise CategoryError::ValueError("A Category cannot have an empty name.")
+    raise ValueError("A Category cannot have an empty name.")
   }
   let result : Category = {
     name,
@@ -429,14 +424,12 @@ pub fn Category::hom(
   _domain : Object,
   _codomain : Object,
 ) -> Unit raise CategoryError {
-  raise CategoryError::NotImplemented(
-    "hom-sets are not implemented in Category.",
-  )
+  raise NotImplemented("hom-sets are not implemented in Category.")
 }
 
 ///|
 pub fn Category::all_morphisms(_self : Category) -> Unit raise CategoryError {
-  raise CategoryError::NotImplemented(
+  raise NotImplemented(
     "Obtaining the class of morphisms is not implemented in Category.",
   )
 }

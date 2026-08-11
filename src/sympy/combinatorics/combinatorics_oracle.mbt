@@ -243,7 +243,7 @@ fn list_list_int_equiv(
     return false
   }
   for i in 0..<ours.length() {
-    let lst = py_builtin_call("list", [OracleArg::PyObj(items[i])])
+    let lst = py_builtin_call("list", [PyObj(items[i])])
     let sub = py_list_to_pyobjects(lst)
     if !list_int_equiv(ours[i], sub) {
       return false
@@ -266,7 +266,7 @@ fn list_list_int_equiv_unordered(
   }
   let items_keys : Array[String] = Array::new()
   for i in 0..<items.length() {
-    let lst = py_builtin_call("list", [OracleArg::PyObj(items[i])])
+    let lst = py_builtin_call("list", [PyObj(items[i])])
     let sub = py_list_to_pyobjects(lst)
     let key = sub.map(o => py_str_obj(o)).join(",")
     items_keys.push(key)
@@ -314,43 +314,41 @@ pub fn graycode_generate_equiv(
   start? : String,
   rank? : Int,
 ) -> Bool raise {
-  let gray = sympy_call_must("sympy.combinatorics.graycode.GrayCode", [
-    OracleArg::Int(n),
-  ])
+  let gray = sympy_call_must("sympy.combinatorics.graycode.GrayCode", [Int(n)])
   let kwargs : Map[String, OracleArg] = Map([])
   match start {
-    Some(s) => kwargs["start"] = OracleArg::Str(s)
+    Some(s) => kwargs["start"] = Str(s)
     None => ()
   }
   match rank {
-    Some(r) => kwargs["rank"] = OracleArg::Int(r)
+    Some(r) => kwargs["rank"] = Int(r)
     None => ()
   }
   let gen_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(gray)),
-    OracleArg::Str("generate_gray"),
+    PyObj(objenum_to_obj(gray)),
+    Str("generate_gray"),
   ])
   let gen = py_call_with_args_kwargs(
     py_callable_from_enum(gen_call),
     [],
     kwargs,
   )
-  let lst = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(gen))])
+  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(gen))])
   let items = py_list_to_pyobjects(lst)
   list_str_equiv(ours, items)
 }
 
 ///|
 pub fn graycode_rank_equiv(n : Int, start : String, ours : Int) -> Bool raise {
-  let kwargs : Map[String, OracleArg] = { "start": OracleArg::Str(start) }
+  let kwargs : Map[String, OracleArg] = { "start": Str(start) }
   let gray = sympy_call_must(
     "sympy.combinatorics.graycode.GrayCode",
-    [OracleArg::Int(n)],
+    [Int(n)],
     kwargs~,
   )
   let rank = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(gray)),
-    OracleArg::Str("rank"),
+    PyObj(objenum_to_obj(gray)),
+    Str("rank"),
   ])
   py_str_enum(rank) == ours.to_string()
 }
@@ -358,7 +356,7 @@ pub fn graycode_rank_equiv(n : Int, start : String, ours : Int) -> Bool raise {
 ///|
 pub fn gray_to_bin_equiv(bits : String, ours : String) -> Bool raise {
   let res = sympy_call_must("sympy.combinatorics.graycode.gray_to_bin", [
-    OracleArg::Str(bits),
+    Str(bits),
   ])
   py_str_enum(res) == ours
 }
@@ -366,7 +364,7 @@ pub fn gray_to_bin_equiv(bits : String, ours : String) -> Bool raise {
 ///|
 pub fn bin_to_gray_equiv(bits : String, ours : String) -> Bool raise {
   let res = sympy_call_must("sympy.combinatorics.graycode.bin_to_gray", [
-    OracleArg::Str(bits),
+    Str(bits),
   ])
   py_str_enum(res) == ours
 }
@@ -377,9 +375,9 @@ pub fn graycode_subsets_equiv(
   ours : Array[Array[Int]],
 ) -> Bool raise {
   let res = sympy_call_must("sympy.combinatorics.graycode.graycode_subsets", [
-    OracleArg::IntList(items),
+    IntList(items),
   ])
-  let lst = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(res))])
+  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(res))])
   let items_py = py_list_to_pyobjects(lst)
   list_list_int_equiv(ours, items_py)
 }
@@ -390,12 +388,9 @@ pub fn ksubsets_equiv(
   k : Int,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let args : Array[OracleArg] = [
-    OracleArg::IntList(superset),
-    OracleArg::Int(k),
-  ]
+  let args : Array[OracleArg] = [IntList(superset), Int(k)]
   let res = sympy_call_must("sympy.combinatorics.subsets.ksubsets", args)
-  let lst = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(res))])
+  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(res))])
   let items = py_list_to_pyobjects(lst)
   list_list_int_equiv(ours, items)
 }
@@ -408,22 +403,19 @@ pub fn subset_rank_equiv(
   ours_lex : Int,
   ours_gray : Int,
 ) -> Bool raise {
-  let args : Array[OracleArg] = [
-    OracleArg::IntList(subset),
-    OracleArg::IntList(superset),
-  ]
+  let args : Array[OracleArg] = [IntList(subset), IntList(superset)]
   let obj = sympy_call_must("sympy.combinatorics.subsets.Subset", args)
   let rank_bin = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("rank_binary"),
+    PyObj(objenum_to_obj(obj)),
+    Str("rank_binary"),
   ])
   let rank_lex = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("rank_lexicographic"),
+    PyObj(objenum_to_obj(obj)),
+    Str("rank_lexicographic"),
   ])
   let rank_gray = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("rank_gray"),
+    PyObj(objenum_to_obj(obj)),
+    Str("rank_gray"),
   ])
   let ok_bin = py_str_enum(rank_bin) == ours_bin.to_string()
   let ok_lex = py_str_enum(rank_lex) == ours_lex.to_string()
@@ -438,28 +430,25 @@ pub fn subset_next_prev_equiv(
   ours_next : Array[Int],
   ours_prev : Array[Int],
 ) -> Bool raise {
-  let args : Array[OracleArg] = [
-    OracleArg::IntList(subset),
-    OracleArg::IntList(superset),
-  ]
+  let args : Array[OracleArg] = [IntList(subset), IntList(superset)]
   let obj = sympy_call_must("sympy.combinatorics.subsets.Subset", args)
   let nxt_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("next_binary"),
+    PyObj(objenum_to_obj(obj)),
+    Str("next_binary"),
   ])
   let prv_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("prev_binary"),
+    PyObj(objenum_to_obj(obj)),
+    Str("prev_binary"),
   ])
   let nxt = py_call_with_args(py_callable_from_enum(nxt_call), [])
   let prv = py_call_with_args(py_callable_from_enum(prv_call), [])
   let nxt_subset = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(nxt)),
-    OracleArg::Str("subset"),
+    PyObj(objenum_to_obj(nxt)),
+    Str("subset"),
   ])
   let prv_subset = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(prv)),
-    OracleArg::Str("subset"),
+    PyObj(objenum_to_obj(prv)),
+    Str("subset"),
   ])
   let nxt_items = py_list_to_pyobjects(nxt_subset)
   let prv_items = py_list_to_pyobjects(prv_subset)
@@ -471,12 +460,10 @@ pub fn prufer_equiv_tree(
   seq : Array[Int],
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.prufer.Prufer", [
-    OracleArg::IntList(seq),
-  ])
+  let obj = sympy_call_must("sympy.combinatorics.prufer.Prufer", [IntList(seq)])
   let tree = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("tree_repr"),
+    PyObj(objenum_to_obj(obj)),
+    Str("tree_repr"),
   ])
   let items = py_list_to_pyobjects(tree)
   list_list_int_equiv(ours, items)
@@ -489,14 +476,14 @@ pub fn prufer_equiv_sequence(
 ) -> Bool raise {
   let py_edges : Array[OracleArg] = Array::new()
   for edge in edges {
-    py_edges.push(OracleArg::IntList(edge))
+    py_edges.push(IntList(edge))
   }
   let obj = sympy_call_must("sympy.combinatorics.prufer.Prufer", [
-    OracleArg::List(py_edges),
+    List(py_edges),
   ])
   let seq = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("prufer_repr"),
+    PyObj(objenum_to_obj(obj)),
+    Str("prufer_repr"),
   ])
   let items = py_list_to_pyobjects(seq)
   list_int_equiv(ours, items)
@@ -504,12 +491,10 @@ pub fn prufer_equiv_sequence(
 
 ///|
 pub fn prufer_rank_equiv(seq : Array[Int], ours : Int) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.prufer.Prufer", [
-    OracleArg::IntList(seq),
-  ])
+  let obj = sympy_call_must("sympy.combinatorics.prufer.Prufer", [IntList(seq)])
   let rank = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("rank"),
+    PyObj(objenum_to_obj(obj)),
+    Str("rank"),
   ])
   py_str_enum(rank) == ours.to_string()
 }
@@ -520,11 +505,11 @@ pub fn integer_partition_conjugate_equiv(
   ours : Array[Int],
 ) -> Bool raise {
   let obj = sympy_call_must("sympy.combinatorics.partitions.IntegerPartition", [
-    OracleArg::IntList(part),
+    IntList(part),
   ])
   let conj = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("conjugate"),
+    PyObj(objenum_to_obj(obj)),
+    Str("conjugate"),
   ])
   let items = py_list_to_pyobjects(conj)
   list_int_equiv(ours, items)
@@ -537,25 +522,25 @@ pub fn integer_partition_next_prev_equiv(
   ours_prev : Array[Int],
 ) -> Bool raise {
   let obj = sympy_call_must("sympy.combinatorics.partitions.IntegerPartition", [
-    OracleArg::IntList(part),
+    IntList(part),
   ])
   let nxt_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("next_lex"),
+    PyObj(objenum_to_obj(obj)),
+    Str("next_lex"),
   ])
   let prv_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("prev_lex"),
+    PyObj(objenum_to_obj(obj)),
+    Str("prev_lex"),
   ])
   let nxt = py_call_with_args(py_callable_from_enum(nxt_call), [])
   let prv = py_call_with_args(py_callable_from_enum(prv_call), [])
   let nxt_part = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(nxt)),
-    OracleArg::Str("partition"),
+    PyObj(objenum_to_obj(nxt)),
+    Str("partition"),
   ])
   let prv_part = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(prv)),
-    OracleArg::Str("partition"),
+    PyObj(objenum_to_obj(prv)),
+    Str("partition"),
   ])
   let nxt_list = py_list_to_pyobjects(nxt_part)
   let prv_list = py_list_to_pyobjects(prv_part)
@@ -565,7 +550,7 @@ pub fn integer_partition_next_prev_equiv(
 ///|
 pub fn rgs_rank_equiv(rgs : Array[Int], ours : Int) -> Bool raise {
   let obj = sympy_call_must("sympy.combinatorics.partitions.RGS_rank", [
-    OracleArg::IntList(rgs),
+    IntList(rgs),
   ])
   py_str_enum(obj) == ours.to_string()
 }
@@ -573,8 +558,8 @@ pub fn rgs_rank_equiv(rgs : Array[Int], ours : Int) -> Bool raise {
 ///|
 pub fn rgs_unrank_equiv(rank : Int, m : Int, ours : Array[Int]) -> Bool raise {
   let obj = sympy_call_must("sympy.combinatorics.partitions.RGS_unrank", [
-    OracleArg::Int(rank),
-    OracleArg::Int(m),
+    Int(rank),
+    Int(m),
   ])
   let items = py_list_to_pyobjects(obj)
   list_int_equiv(ours, items)
@@ -588,16 +573,13 @@ pub fn partition_rgs_equiv(
 ) -> Bool raise {
   let args : Array[OracleArg] = Array::new()
   for block in blocks {
-    args.push(OracleArg::IntList(block))
+    args.push(IntList(block))
   }
   let obj = sympy_call_must("sympy.combinatorics.partitions.Partition", args)
-  let rgs = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("RGS"),
-  ])
+  let rgs = py_builtin_call("getattr", [PyObj(objenum_to_obj(obj)), Str("RGS")])
   let rank = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("rank"),
+    PyObj(objenum_to_obj(obj)),
+    Str("rank"),
   ])
   let items = py_list_to_pyobjects(rgs)
   list_int_equiv(ours_rgs, items) && py_str_enum(rank) == ours_rank.to_string()
@@ -610,12 +592,12 @@ fn perm_obj_from_array(
 ) -> @py.PyObjectEnum raise {
   let kwargs : Map[String, OracleArg] = Map([])
   match size {
-    Some(s) => kwargs["size"] = OracleArg::Int(s)
+    Some(s) => kwargs["size"] = Int(s)
     None => ()
   }
   sympy_call_must(
     "sympy.combinatorics.permutations.Permutation",
-    [OracleArg::IntList(array)],
+    [IntList(array)],
     kwargs~,
   )
 }
@@ -627,16 +609,16 @@ fn perm_obj_from_cycles(
 ) -> @py.PyObjectEnum raise {
   let kwargs : Map[String, OracleArg] = Map([])
   match size {
-    Some(s) => kwargs["size"] = OracleArg::Int(s)
+    Some(s) => kwargs["size"] = Int(s)
     None => ()
   }
   let args_list : Array[OracleArg] = Array::new()
   for cycle in cycles {
-    args_list.push(OracleArg::IntList(cycle))
+    args_list.push(IntList(cycle))
   }
   sympy_call_must(
     "sympy.combinatorics.permutations.Permutation",
-    [OracleArg::List(args_list)],
+    [List(args_list)],
     kwargs~,
   )
 }
@@ -673,7 +655,7 @@ fn list_pair_int_equiv(
     return false
   }
   for i in 0..<ours.length() {
-    let lst = py_builtin_call("list", [OracleArg::PyObj(items[i])])
+    let lst = py_builtin_call("list", [PyObj(items[i])])
     let parts = py_list_to_pyobjects(lst)
     if parts.length() != 2 {
       return false
@@ -690,17 +672,15 @@ fn list_pair_int_equiv(
 ///|
 fn py_dict_pairs_sorted(obj : @py.PyObjectEnum) -> Array[(Int, Int)] raise {
   let items_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("items"),
+    PyObj(objenum_to_obj(obj)),
+    Str("items"),
   ])
   let items = py_call_with_args(py_callable_from_enum(items_call), [])
-  let items_list = py_builtin_call("list", [
-    OracleArg::PyObj(objenum_to_obj(items)),
-  ])
+  let items_list = py_builtin_call("list", [PyObj(objenum_to_obj(items))])
   let items_objs = py_list_to_pyobjects(items_list)
   let pairs : Array[(Int, Int)] = Array::new()
   for item in items_objs {
-    let lst = py_builtin_call("list", [OracleArg::PyObj(item)])
+    let lst = py_builtin_call("list", [PyObj(item)])
     let parts = py_list_to_pyobjects(lst)
     if parts.length() == 2 {
       let a = @string.parse_int(py_str_obj(parts[0]))
@@ -723,10 +703,7 @@ fn py_dict_pairs_sorted(obj : @py.PyObjectEnum) -> Array[(Int, Int)] raise {
 
 ///|
 fn perm_array_form_from_obj(obj : @py.PyObject) -> Array[Int] raise {
-  let arr = py_builtin_call("getattr", [
-    OracleArg::PyObj(obj),
-    OracleArg::Str("array_form"),
-  ])
+  let arr = py_builtin_call("getattr", [PyObj(obj), Str("array_form")])
   let items = py_list_to_pyobjects(arr)
   let out : Array[Int] = Array::new()
   for item in items {
@@ -737,7 +714,7 @@ fn perm_array_form_from_obj(obj : @py.PyObject) -> Array[Int] raise {
 
 ///|
 fn perm_list_to_arrays(obj : @py.PyObjectEnum) -> Array[Array[Int]] raise {
-  let lst = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(obj))])
+  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(obj))])
   let items = py_list_to_pyobjects(lst)
   let out : Array[Array[Int]] = Array::new()
   for item in items {
@@ -750,11 +727,11 @@ fn perm_list_to_arrays(obj : @py.PyObjectEnum) -> Array[Array[Int]] raise {
 fn perm_list_list_to_arrays(
   obj : @py.PyObjectEnum,
 ) -> Array[Array[Array[Int]]] raise {
-  let outer = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(obj))])
+  let outer = py_builtin_call("list", [PyObj(objenum_to_obj(obj))])
   let items = py_list_to_pyobjects(outer)
   let out : Array[Array[Array[Int]]] = Array::new()
   for item in items {
-    let lst = py_builtin_call("list", [OracleArg::PyObj(item)])
+    let lst = py_builtin_call("list", [PyObj(item)])
     out.push(perm_list_to_arrays(lst))
   }
   out
@@ -798,7 +775,7 @@ fn list_pair_int_equiv_unordered(
   ours_keys = sort_strings(ours_keys)
   let mut other_keys : Array[String] = Array::new()
   for item in items {
-    let lst = py_builtin_call("list", [OracleArg::PyObj(item)])
+    let lst = py_builtin_call("list", [PyObj(item)])
     let parts = py_list_to_pyobjects(lst)
     if parts.length() == 2 {
       let a = @string.parse_int(py_str_obj(parts[0]))
@@ -825,12 +802,12 @@ fn perm_group_obj_from_gens(gens : Array[Array[Int]]) -> @py.PyObjectEnum raise 
   let perm_args : Array[OracleArg] = Array::new()
   for g in gens {
     let p = sympy_call_must("sympy.combinatorics.permutations.Permutation", [
-      OracleArg::IntList(g),
+      IntList(g),
     ])
-    perm_args.push(OracleArg::PyObj(objenum_to_obj(p)))
+    perm_args.push(PyObj(objenum_to_obj(p)))
   }
   sympy_call_must("sympy.combinatorics.perm_groups.PermutationGroup", [
-    OracleArg::List(perm_args),
+    List(perm_args),
   ])
 }
 
@@ -845,12 +822,12 @@ fn py_import_module(path : String) -> @py.PyModule raise {
 ///|
 fn perm_group_elements(obj : @py.PyObjectEnum) -> Array[@py.PyObject] raise {
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("generate_dimino"),
+    PyObj(objenum_to_obj(obj)),
+    Str("generate_dimino"),
   ])
-  let kwargs : Map[String, OracleArg] = { "af": OracleArg::Bool(true) }
+  let kwargs : Map[String, OracleArg] = { "af": Bool(true) }
   let res = py_call_with_args_kwargs(py_callable_from_enum(call), [], kwargs)
-  let lst = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(res))])
+  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(res))])
   py_list_to_pyobjects(lst)
 }
 
@@ -862,8 +839,8 @@ pub fn perm_array_form_equiv_from_array(
 ) -> Bool raise {
   let obj = perm_obj_from_array(array, size)
   let arr = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("array_form"),
+    PyObj(objenum_to_obj(obj)),
+    Str("array_form"),
   ])
   let items = py_list_to_pyobjects(arr)
   list_int_equiv(ours, items)
@@ -877,8 +854,8 @@ pub fn perm_array_form_equiv_from_cycles(
 ) -> Bool raise {
   let obj = perm_obj_from_cycles(cycles, size)
   let arr = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("array_form"),
+    PyObj(objenum_to_obj(obj)),
+    Str("array_form"),
   ])
   let items = py_list_to_pyobjects(arr)
   list_int_equiv(ours, items)
@@ -892,8 +869,8 @@ pub fn perm_cyclic_form_equiv_from_array(
 ) -> Bool raise {
   let obj = perm_obj_from_array(array, size)
   let cyc = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("cyclic_form"),
+    PyObj(objenum_to_obj(obj)),
+    Str("cyclic_form"),
   ])
   let items = py_list_to_pyobjects(cyc)
   list_list_int_equiv(ours, items)
@@ -907,8 +884,8 @@ pub fn perm_full_cyclic_form_equiv_from_array(
 ) -> Bool raise {
   let obj = perm_obj_from_array(array, size)
   let cyc = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("full_cyclic_form"),
+    PyObj(objenum_to_obj(obj)),
+    Str("full_cyclic_form"),
   ])
   let items = py_list_to_pyobjects(cyc)
   list_list_int_equiv(ours, items)
@@ -922,8 +899,8 @@ pub fn perm_cycle_structure_equiv_from_array(
 ) -> Bool raise {
   let obj = perm_obj_from_array(array, size)
   let cs = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("cycle_structure"),
+    PyObj(objenum_to_obj(obj)),
+    Str("cycle_structure"),
   ])
   let pairs = py_dict_pairs_sorted(cs)
   if ours.length() != pairs.length() {
@@ -945,8 +922,8 @@ pub fn perm_parity_equiv_from_array(
 ) -> Bool raise {
   let obj = perm_obj_from_array(array, size)
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("parity"),
+    PyObj(objenum_to_obj(obj)),
+    Str("parity"),
   ])
   let res = py_call_with_args(py_callable_from_enum(call), [])
   py_str_enum(res) == ours.to_string()
@@ -960,8 +937,8 @@ pub fn perm_order_equiv_from_array(
 ) -> Bool raise {
   let obj = perm_obj_from_array(array, size)
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("order"),
+    PyObj(objenum_to_obj(obj)),
+    Str("order"),
   ])
   let res = py_call_with_args(py_callable_from_enum(call), [])
   py_str_enum(res) == ours.to_string()
@@ -975,8 +952,8 @@ pub fn perm_rank_equiv_from_array(
 ) -> Bool raise {
   let obj = perm_obj_from_array(array, size)
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("rank"),
+    PyObj(objenum_to_obj(obj)),
+    Str("rank"),
   ])
   let res = py_call_with_args(py_callable_from_enum(call), [])
   py_str_enum(res) == ours.to_string()
@@ -990,8 +967,8 @@ pub fn perm_inversion_vector_equiv_from_array(
 ) -> Bool raise {
   let obj = perm_obj_from_array(array, size)
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("inversion_vector"),
+    PyObj(objenum_to_obj(obj)),
+    Str("inversion_vector"),
   ])
   let res = py_call_with_args(py_callable_from_enum(call), [])
   let items = py_list_to_pyobjects(res)
@@ -1006,8 +983,8 @@ pub fn perm_transpositions_equiv_from_array(
 ) -> Bool raise {
   let obj = perm_obj_from_array(array, size)
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("transpositions"),
+    PyObj(objenum_to_obj(obj)),
+    Str("transpositions"),
   ])
   let res = py_call_with_args(py_callable_from_enum(call), [])
   let items = py_list_to_pyobjects(res)
@@ -1022,16 +999,16 @@ pub fn perm_unrank_lex_equiv(
 ) -> Bool raise {
   let cls = perm_class_obj()
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(cls)),
-    OracleArg::Str("unrank_lex"),
+    PyObj(objenum_to_obj(cls)),
+    Str("unrank_lex"),
   ])
   let obj = py_call_with_args(py_callable_from_enum(call), [
-    OracleArg::Int(size),
-    OracleArg::Int(rank),
+    Int(size),
+    Int(rank),
   ])
   let arr = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("array_form"),
+    PyObj(objenum_to_obj(obj)),
+    Str("array_form"),
   ])
   let items = py_list_to_pyobjects(arr)
   list_int_equiv(ours, items)
@@ -1045,8 +1022,8 @@ pub fn perm_next_lex_equiv(
 ) -> Bool raise {
   let obj = perm_obj_from_array(array, None)
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("next_lex"),
+    PyObj(objenum_to_obj(obj)),
+    Str("next_lex"),
   ])
   let res = py_call_with_args(py_callable_from_enum(call), [])
   let is_none = py_str_enum(res) == "None"
@@ -1057,8 +1034,8 @@ pub fn perm_next_lex_equiv(
     return false
   }
   let arr = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(res)),
-    OracleArg::Str("array_form"),
+    PyObj(objenum_to_obj(res)),
+    Str("array_form"),
   ])
   let items = py_list_to_pyobjects(arr)
   list_int_equiv(ours, items)
@@ -1074,11 +1051,9 @@ pub fn perm_apply_array_equiv(
   let obj = perm_obj_from_array(array, size)
   let args : Array[OracleArg] = Array::new()
   for v in values {
-    args.push(OracleArg::Str(v))
+    args.push(Str(v))
   }
-  let call = py_call_with_args(py_callable_from_enum(obj), [
-    OracleArg::List(args),
-  ])
+  let call = py_call_with_args(py_callable_from_enum(obj), [List(args)])
   let items = py_list_to_pyobjects(call)
   list_str_equiv(ours, items)
 }
@@ -1090,13 +1065,13 @@ pub fn perm_from_sequence_string_equiv(
 ) -> Bool raise {
   let cls = perm_class_obj()
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(cls)),
-    OracleArg::Str("from_sequence"),
+    PyObj(objenum_to_obj(cls)),
+    Str("from_sequence"),
   ])
-  let obj = py_call_with_args(py_callable_from_enum(call), [OracleArg::Str(seq)])
+  let obj = py_call_with_args(py_callable_from_enum(call), [Str(seq)])
   let arr = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("array_form"),
+    PyObj(objenum_to_obj(obj)),
+    Str("array_form"),
   ])
   let items = py_list_to_pyobjects(arr)
   list_int_equiv(ours, items)
@@ -1107,20 +1082,16 @@ pub fn generators_symmetric_equiv(
   n : Int,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let gen = sympy_call_must("sympy.combinatorics.generators.symmetric", [
-    OracleArg::Int(n),
-  ])
-  let lst = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(gen))])
+  let gen = sympy_call_must("sympy.combinatorics.generators.symmetric", [Int(n)])
+  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(gen))])
   let items = py_list_to_pyobjects(lst)
   list_list_int_equiv_unordered(ours, items)
 }
 
 ///|
 pub fn generators_cyclic_equiv(n : Int, ours : Array[Array[Int]]) -> Bool raise {
-  let gen = sympy_call_must("sympy.combinatorics.generators.cyclic", [
-    OracleArg::Int(n),
-  ])
-  let lst = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(gen))])
+  let gen = sympy_call_must("sympy.combinatorics.generators.cyclic", [Int(n)])
+  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(gen))])
   let items = py_list_to_pyobjects(lst)
   list_list_int_equiv_unordered(ours, items)
 }
@@ -1131,9 +1102,9 @@ pub fn generators_alternating_equiv(
   ours : Array[Array[Int]],
 ) -> Bool raise {
   let gen = sympy_call_must("sympy.combinatorics.generators.alternating", [
-    OracleArg::Int(n),
+    Int(n),
   ])
-  let lst = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(gen))])
+  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(gen))])
   let items = py_list_to_pyobjects(lst)
   list_list_int_equiv_unordered(ours, items)
 }
@@ -1143,10 +1114,8 @@ pub fn generators_dihedral_equiv(
   n : Int,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let gen = sympy_call_must("sympy.combinatorics.generators.dihedral", [
-    OracleArg::Int(n),
-  ])
-  let lst = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(gen))])
+  let gen = sympy_call_must("sympy.combinatorics.generators.dihedral", [Int(n)])
+  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(gen))])
   let items = py_list_to_pyobjects(lst)
   list_list_int_equiv_unordered(ours, items)
 }
@@ -1168,8 +1137,8 @@ pub fn perm_group_order_equiv_from_gens(
 ) -> Bool raise {
   let obj = perm_group_obj_from_gens(gens)
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("order"),
+    PyObj(objenum_to_obj(obj)),
+    Str("order"),
   ])
   let res = py_call_with_args(py_callable_from_enum(call), [])
   py_str_enum(res) == ours.to_string()
@@ -1182,11 +1151,8 @@ pub fn named_group_elements_equiv(
   ours : Array[Array[Int]],
 ) -> Bool raise {
   let mod = py_import_module("sympy.combinatorics.named_groups")
-  let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(mod.obj()),
-    OracleArg::Str(kind),
-  ])
-  let obj = py_call_with_args(py_callable_from_enum(call), [OracleArg::Int(n)])
+  let call = py_builtin_call("getattr", [PyObj(mod.obj()), Str(kind)])
+  let obj = py_call_with_args(py_callable_from_enum(call), [Int(n)])
   let items = perm_group_elements(obj)
   list_list_int_equiv_unordered(ours, items)
 }
@@ -1198,14 +1164,11 @@ pub fn named_group_order_equiv(
   ours : Int,
 ) -> Bool raise {
   let mod = py_import_module("sympy.combinatorics.named_groups")
-  let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(mod.obj()),
-    OracleArg::Str(kind),
-  ])
-  let obj = py_call_with_args(py_callable_from_enum(call), [OracleArg::Int(n)])
+  let call = py_builtin_call("getattr", [PyObj(mod.obj()), Str(kind)])
+  let obj = py_call_with_args(py_callable_from_enum(call), [Int(n)])
   let order_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("order"),
+    PyObj(objenum_to_obj(obj)),
+    Str("order"),
   ])
   let res = py_call_with_args(py_callable_from_enum(order_call), [])
   py_str_enum(res) == ours.to_string()
@@ -1217,13 +1180,10 @@ pub fn abelian_group_elements_equiv(
   ours : Array[Array[Int]],
 ) -> Bool raise {
   let mod = py_import_module("sympy.combinatorics.named_groups")
-  let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(mod.obj()),
-    OracleArg::Str("AbelianGroup"),
-  ])
+  let call = py_builtin_call("getattr", [PyObj(mod.obj()), Str("AbelianGroup")])
   let args : Array[OracleArg] = Array::new()
   for n in orders {
-    args.push(OracleArg::Int(n))
+    args.push(Int(n))
   }
   let obj = py_call_with_args(py_callable_from_enum(call), args)
   let items = perm_group_elements(obj)
@@ -1234,7 +1194,7 @@ pub fn abelian_group_elements_equiv(
 pub fn group_numbers_is_nilpotent_equiv(n : Int, ours : Bool) -> Bool raise {
   let res = sympy_call(
     "sympy.combinatorics.group_numbers.is_nilpotent_number",
-    [OracleArg::Int(n)],
+    [Int(n)],
   )
   match res {
     Some(obj) => py_str_enum(obj) == (if ours { "True" } else { "False" })
@@ -1245,7 +1205,7 @@ pub fn group_numbers_is_nilpotent_equiv(n : Int, ours : Bool) -> Bool raise {
 ///|
 pub fn group_numbers_is_abelian_equiv(n : Int, ours : Bool) -> Bool raise {
   let res = sympy_call("sympy.combinatorics.group_numbers.is_abelian_number", [
-    OracleArg::Int(n),
+    Int(n),
   ])
   match res {
     Some(obj) => py_str_enum(obj) == (if ours { "True" } else { "False" })
@@ -1256,7 +1216,7 @@ pub fn group_numbers_is_abelian_equiv(n : Int, ours : Bool) -> Bool raise {
 ///|
 pub fn group_numbers_is_cyclic_equiv(n : Int, ours : Bool) -> Bool raise {
   let res = sympy_call("sympy.combinatorics.group_numbers.is_cyclic_number", [
-    OracleArg::Int(n),
+    Int(n),
   ])
   match res {
     Some(obj) => py_str_enum(obj) == (if ours { "True" } else { "False" })
@@ -1271,7 +1231,7 @@ pub fn group_numbers_groups_count_equiv(
   ours_value : String,
 ) -> Bool raise {
   let res = sympy_call("sympy.combinatorics.group_numbers.groups_count", [
-    OracleArg::Int(n),
+    Int(n),
   ])
   match res {
     Some(obj) => ours_ok && py_str_enum(obj) == ours_value
@@ -1282,7 +1242,7 @@ pub fn group_numbers_groups_count_equiv(
 ///|
 pub fn schur_number_equiv(k : Int, has_value : Bool, value : Int) -> Bool raise {
   let obj = sympy_call_must("sympy.combinatorics.schur_number.SchurNumber", [
-    OracleArg::Int(k),
+    Int(k),
   ])
   let expected = if has_value { value.to_string() } else { "SchurNumber(\{k})" }
   py_str_enum(obj) == expected
@@ -1291,11 +1251,11 @@ pub fn schur_number_equiv(k : Int, has_value : Bool, value : Int) -> Bool raise 
 ///|
 pub fn schur_number_lower_bound_equiv(k : Int, value : Int) -> Bool raise {
   let obj = sympy_call_must("sympy.combinatorics.schur_number.SchurNumber", [
-    OracleArg::Int(k),
+    Int(k),
   ])
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("lower_bound"),
+    PyObj(objenum_to_obj(obj)),
+    Str("lower_bound"),
   ])
   let res = py_call_with_args(py_callable_from_enum(call), [])
   py_str_enum(res) == value.to_string()
@@ -1305,7 +1265,7 @@ pub fn schur_number_lower_bound_equiv(k : Int, value : Int) -> Bool raise {
 pub fn schur_partition_equiv(n : Int, ours : Array[Array[Int]]) -> Bool raise {
   let obj = sympy_call_must(
     "sympy.combinatorics.schur_number.schur_partition",
-    [OracleArg::Int(n)],
+    [Int(n)],
   )
   let items = py_list_to_pyobjects(obj)
   list_list_int_equiv(ours, items)
@@ -1317,10 +1277,7 @@ pub fn galois_group_elements_equiv(
   ours : Array[Array[Int]],
 ) -> Bool raise {
   let mod = py_import_module("sympy.combinatorics.galois")
-  let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(mod.obj()),
-    OracleArg::Str(name),
-  ])
+  let call = py_builtin_call("getattr", [PyObj(mod.obj()), Str(name)])
   let obj = py_call_with_args(py_callable_from_enum(call), [])
   let items = perm_group_elements(obj)
   list_list_int_equiv_unordered(ours, items)
@@ -1333,17 +1290,14 @@ pub fn galois_enum_group_elements_equiv(
   ours : Array[Array[Int]],
 ) -> Bool raise {
   let mod = py_import_module("sympy.combinatorics.galois")
-  let enum_obj = py_builtin_call("getattr", [
-    OracleArg::PyObj(mod.obj()),
-    OracleArg::Str(enum_name),
-  ])
+  let enum_obj = py_builtin_call("getattr", [PyObj(mod.obj()), Str(enum_name)])
   let member_obj = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(enum_obj)),
-    OracleArg::Str(member_name),
+    PyObj(objenum_to_obj(enum_obj)),
+    Str(member_name),
   ])
   let get_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(member_obj)),
-    OracleArg::Str("get_perm_group"),
+    PyObj(objenum_to_obj(member_obj)),
+    Str("get_perm_group"),
   ])
   let group = py_call_with_args(py_callable_from_enum(get_call), [])
   let items = perm_group_elements(group)
@@ -1353,15 +1307,15 @@ pub fn galois_enum_group_elements_equiv(
 ///|
 fn polyhedron_obj(name : String) -> @py.PyObjectEnum raise {
   let mod = py_import_module("sympy.combinatorics.polyhedron")
-  py_builtin_call("getattr", [OracleArg::PyObj(mod.obj()), OracleArg::Str(name)])
+  py_builtin_call("getattr", [PyObj(mod.obj()), Str(name)])
 }
 
 ///|
 fn polyhedron_copy_obj(name : String) -> @py.PyObjectEnum raise {
   let obj = polyhedron_obj(name)
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("copy"),
+    PyObj(objenum_to_obj(obj)),
+    Str("copy"),
   ])
   py_call_with_args(py_callable_from_enum(call), [])
 }
@@ -1373,8 +1327,8 @@ pub fn polyhedron_corners_equiv(
 ) -> Bool raise {
   let obj = polyhedron_obj(name)
   let corners = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("corners"),
+    PyObj(objenum_to_obj(obj)),
+    Str("corners"),
   ])
   let items = py_list_to_pyobjects(corners)
   list_str_equiv(ours, items)
@@ -1387,10 +1341,10 @@ pub fn polyhedron_faces_equiv(
 ) -> Bool raise {
   let obj = polyhedron_obj(name)
   let faces = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("faces"),
+    PyObj(objenum_to_obj(obj)),
+    Str("faces"),
   ])
-  let lst = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(faces))])
+  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(faces))])
   let items = py_list_to_pyobjects(lst)
   list_list_int_equiv_unordered(ours, items)
 }
@@ -1402,10 +1356,10 @@ pub fn polyhedron_edges_equiv(
 ) -> Bool raise {
   let obj = polyhedron_obj(name)
   let edges = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("edges"),
+    PyObj(objenum_to_obj(obj)),
+    Str("edges"),
   ])
-  let lst = py_builtin_call("list", [OracleArg::PyObj(objenum_to_obj(edges))])
+  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(edges))])
   let items = py_list_to_pyobjects(lst)
   list_pair_int_equiv_unordered(ours, items)
 }
@@ -1417,8 +1371,8 @@ pub fn polyhedron_pgroup_elements_equiv(
 ) -> Bool raise {
   let obj = polyhedron_obj(name)
   let pgroup = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("pgroup"),
+    PyObj(objenum_to_obj(obj)),
+    Str("pgroup"),
   ])
   let items = perm_group_elements(pgroup)
   list_list_int_equiv_unordered(ours, items)
@@ -1432,15 +1386,13 @@ pub fn polyhedron_array_form_equiv_index(
 ) -> Bool raise {
   let obj = polyhedron_copy_obj(name)
   let rotate_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("rotate"),
+    PyObj(objenum_to_obj(obj)),
+    Str("rotate"),
   ])
-  py_call_with_args_allow_none(py_callable_from_enum(rotate_call), [
-    OracleArg::Int(idx),
-  ])
+  py_call_with_args_allow_none(py_callable_from_enum(rotate_call), [Int(idx)])
   let arr = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("array_form"),
+    PyObj(objenum_to_obj(obj)),
+    Str("array_form"),
   ])
   let items = py_list_to_pyobjects(arr)
   list_int_equiv(ours, items)
@@ -1454,16 +1406,16 @@ pub fn polyhedron_array_form_equiv_perm(
 ) -> Bool raise {
   let obj = polyhedron_copy_obj(name)
   let rotate_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("rotate"),
+    PyObj(objenum_to_obj(obj)),
+    Str("rotate"),
   ])
   let perm = perm_obj_from_array(perm_array, None)
   py_call_with_args_allow_none(py_callable_from_enum(rotate_call), [
-    OracleArg::PyObj(objenum_to_obj(perm)),
+    PyObj(objenum_to_obj(perm)),
   ])
   let arr = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("array_form"),
+    PyObj(objenum_to_obj(obj)),
+    Str("array_form"),
   ])
   let items = py_list_to_pyobjects(arr)
   list_int_equiv(ours, items)
@@ -1477,15 +1429,13 @@ pub fn polyhedron_cyclic_form_equiv_index(
 ) -> Bool raise {
   let obj = polyhedron_copy_obj(name)
   let rotate_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("rotate"),
+    PyObj(objenum_to_obj(obj)),
+    Str("rotate"),
   ])
-  py_call_with_args_allow_none(py_callable_from_enum(rotate_call), [
-    OracleArg::Int(idx),
-  ])
+  py_call_with_args_allow_none(py_callable_from_enum(rotate_call), [Int(idx)])
   let cyc = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("cyclic_form"),
+    PyObj(objenum_to_obj(obj)),
+    Str("cyclic_form"),
   ])
   let items = py_list_to_pyobjects(cyc)
   list_list_int_equiv(ours, items)
@@ -1498,8 +1448,8 @@ pub fn util_base_ordering_equiv(
   ours : Array[Int],
 ) -> Bool raise {
   let obj = sympy_call_must("sympy.combinatorics.util._base_ordering", [
-    OracleArg::IntList(base),
-    OracleArg::Int(degree),
+    IntList(base),
+    Int(degree),
   ])
   let items = py_list_to_pyobjects(obj)
   list_int_equiv(ours, items)
@@ -1509,7 +1459,7 @@ pub fn util_base_ordering_equiv(
 fn free_group_tuple(symbols : Array[String]) -> Array[@py.PyObject] raise {
   let sym_str = symbols.join(", ")
   let obj = sympy_call_must("sympy.combinatorics.free_groups.free_group", [
-    OracleArg::Str(sym_str),
+    Str(sym_str),
   ])
   py_list_to_pyobjects(obj)
 }
@@ -1522,14 +1472,11 @@ fn free_group_word_from_form(
   let items = free_group_tuple(symbols)
   let group_obj = items[0]
   let sym_list_obj = py_builtin_call("getattr", [
-    OracleArg::PyObj(group_obj),
-    OracleArg::Str("symbols"),
+    PyObj(group_obj),
+    Str("symbols"),
   ])
   let sym_items = py_list_to_pyobjects(sym_list_obj)
-  let dtype = py_builtin_call("getattr", [
-    OracleArg::PyObj(group_obj),
-    OracleArg::Str("dtype"),
-  ])
+  let dtype = py_builtin_call("getattr", [PyObj(group_obj), Str("dtype")])
   let callable = py_callable_from_enum(dtype)
   if form.is_empty() {
     return py_call_with_args(callable, [])
@@ -1539,12 +1486,10 @@ fn free_group_word_from_form(
     let idx = pair.0
     let exp = pair.1
     let sym = sym_items[idx]
-    let tup = py_builtin_call("tuple", [
-      OracleArg::List([OracleArg::PyObj(sym), OracleArg::Int(exp)]),
-    ])
-    pair_args.push(OracleArg::PyObj(objenum_to_obj(tup)))
+    let tup = py_builtin_call("tuple", [List([PyObj(sym), Int(exp)])])
+    pair_args.push(PyObj(objenum_to_obj(tup)))
   }
-  py_call_with_args(callable, [OracleArg::List(pair_args)])
+  py_call_with_args(callable, [List(pair_args)])
 }
 
 ///|
@@ -1553,14 +1498,14 @@ fn free_group_array_form_named(
   obj : @py.PyObjectEnum,
 ) -> Array[(String, Int)] raise {
   let arr = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(obj)),
-    OracleArg::Str("array_form"),
+    PyObj(objenum_to_obj(obj)),
+    Str("array_form"),
   ])
   let items = py_list_to_pyobjects(arr)
   let out : Array[(String, Int)] = Array::new()
   for item in items {
     // fallback for tuple unpacking
-    let list_pair = py_builtin_call("list", [OracleArg::PyObj(item)])
+    let list_pair = py_builtin_call("list", [PyObj(item)])
     let values = py_list_to_pyobjects(list_pair)
     if values.length() == 2 {
       let name_str = py_str_obj(values[0])
@@ -1623,11 +1568,11 @@ pub fn free_group_mul_equiv(
   let a = free_group_word_from_form(symbols, form_a)
   let b = free_group_word_from_form(symbols, form_b)
   let mul_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(a)),
-    OracleArg::Str("__mul__"),
+    PyObj(objenum_to_obj(a)),
+    Str("__mul__"),
   ])
   let prod = py_call_with_args(py_callable_from_enum(mul_call), [
-    OracleArg::PyObj(objenum_to_obj(b)),
+    PyObj(objenum_to_obj(b)),
   ])
   let sympy_named = free_group_array_form_named(symbols, prod)
   let ours_named = free_group_form_to_named(symbols, ours_form)
@@ -1642,10 +1587,7 @@ pub fn free_group_pow_equiv(
   ours_form : Array[(Int, Int)],
 ) -> Bool raise {
   let a = free_group_word_from_form(symbols, form_a)
-  let powed = py_builtin_call("pow", [
-    OracleArg::PyObj(objenum_to_obj(a)),
-    OracleArg::Int(n),
-  ])
+  let powed = py_builtin_call("pow", [PyObj(objenum_to_obj(a)), Int(n)])
   let sympy_named = free_group_array_form_named(symbols, powed)
   let ours_named = free_group_form_to_named(symbols, ours_form)
   named_pairs_equiv(ours_named, sympy_named)
@@ -1659,8 +1601,8 @@ pub fn free_group_inverse_equiv(
 ) -> Bool raise {
   let a = free_group_word_from_form(symbols, form_a)
   let inv_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(a)),
-    OracleArg::Str("inverse"),
+    PyObj(objenum_to_obj(a)),
+    Str("inverse"),
   ])
   let inv = py_call_with_args(py_callable_from_enum(inv_call), [])
   let sympy_named = free_group_array_form_named(symbols, inv)
@@ -1678,12 +1620,12 @@ pub fn free_group_subword_equiv(
 ) -> Bool raise {
   let a = free_group_word_from_form(symbols, form_a)
   let call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(a)),
-    OracleArg::Str("subword"),
+    PyObj(objenum_to_obj(a)),
+    Str("subword"),
   ])
   let sub = py_call_with_args(py_callable_from_enum(call), [
-    OracleArg::Int(from_i),
-    OracleArg::Int(to_j),
+    Int(from_i),
+    Int(to_j),
   ])
   let sympy_named = free_group_array_form_named(symbols, sub)
   let ours_named = free_group_form_to_named(symbols, ours_form)
@@ -1702,19 +1644,19 @@ pub fn fp_group_reduce_equiv(
   let rel_args : Array[OracleArg] = Array::new()
   for rel in relator_forms {
     let w = free_group_word_from_form(symbols, rel)
-    rel_args.push(OracleArg::PyObj(objenum_to_obj(w)))
+    rel_args.push(PyObj(objenum_to_obj(w)))
   }
   let fp = sympy_call_must("sympy.combinatorics.fp_groups.FpGroup", [
-    OracleArg::PyObj(group_obj),
-    OracleArg::List(rel_args),
+    PyObj(group_obj),
+    List(rel_args),
   ])
   let word = free_group_word_from_form(symbols, word_form)
   let reduce_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(fp)),
-    OracleArg::Str("reduce"),
+    PyObj(objenum_to_obj(fp)),
+    Str("reduce"),
   ])
   let reduced = py_call_with_args(py_callable_from_enum(reduce_call), [
-    OracleArg::PyObj(objenum_to_obj(word)),
+    PyObj(objenum_to_obj(word)),
   ])
   let sympy_named = free_group_array_form_named(symbols, reduced)
   let ours_named = free_group_form_to_named(symbols, ours_form)
@@ -1734,16 +1676,16 @@ pub fn fp_group_coset_table_equiv(
   let rel_args : Array[OracleArg] = Array::new()
   for rel in relator_forms {
     let w = free_group_word_from_form(symbols, rel)
-    rel_args.push(OracleArg::PyObj(objenum_to_obj(w)))
+    rel_args.push(PyObj(objenum_to_obj(w)))
   }
   let fp = sympy_call_must("sympy.combinatorics.fp_groups.FpGroup", [
-    OracleArg::PyObj(group_obj),
-    OracleArg::List(rel_args),
+    PyObj(group_obj),
+    List(rel_args),
   ])
   let sub_args : Array[OracleArg] = Array::new()
   for rel in subgroup_forms {
     let w = free_group_word_from_form(symbols, rel)
-    sub_args.push(OracleArg::PyObj(objenum_to_obj(w)))
+    sub_args.push(PyObj(objenum_to_obj(w)))
   }
   let call = if strategy == "coset_table_based" {
     "sympy.combinatorics.fp_groups.coset_enumeration_c"
@@ -1751,29 +1693,29 @@ pub fn fp_group_coset_table_equiv(
     "sympy.combinatorics.fp_groups.coset_enumeration_r"
   }
   let coset_table = sympy_call_must(call, [
-    OracleArg::PyObj(objenum_to_obj(fp)),
-    OracleArg::List(sub_args),
+    PyObj(objenum_to_obj(fp)),
+    List(sub_args),
   ])
   let compress_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(coset_table)),
-    OracleArg::Str("compress"),
+    PyObj(objenum_to_obj(coset_table)),
+    Str("compress"),
   ])
   py_call_with_args_allow_none(py_callable_from_enum(compress_call), [])
   let std_call = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(coset_table)),
-    OracleArg::Str("standardize"),
+    PyObj(objenum_to_obj(coset_table)),
+    Str("standardize"),
   ])
   py_call_with_args_allow_none(py_callable_from_enum(std_call), [])
   let table = py_builtin_call("getattr", [
-    OracleArg::PyObj(objenum_to_obj(coset_table)),
-    OracleArg::Str("table"),
+    PyObj(objenum_to_obj(coset_table)),
+    Str("table"),
   ])
   let rows = py_list_to_pyobjects(table)
   if rows.length() != ours.length() {
     return false
   }
   for i in 0..<rows.length() {
-    let row_list = py_builtin_call("list", [OracleArg::PyObj(rows[i])])
+    let row_list = py_builtin_call("list", [PyObj(rows[i])])
     let row_objs = py_list_to_pyobjects(row_list)
     if row_objs.length() != ours[i].length() {
       return false
@@ -1795,7 +1737,7 @@ pub fn util_check_cycles_alt_sym_equiv(
 ) -> Bool raise {
   let perm = perm_obj_from_array(perm_array, None)
   let res = sympy_call_must("sympy.combinatorics.util._check_cycles_alt_sym", [
-    OracleArg::PyObj(objenum_to_obj(perm)),
+    PyObj(objenum_to_obj(perm)),
   ])
   py_str_enum(res) == (if ours { "True" } else { "False" })
 }
@@ -1809,11 +1751,11 @@ pub fn util_distribute_gens_by_base_equiv(
   let perm_args : Array[OracleArg] = Array::new()
   for g in gens {
     let p = perm_obj_from_array(g, None)
-    perm_args.push(OracleArg::PyObj(objenum_to_obj(p)))
+    perm_args.push(PyObj(objenum_to_obj(p)))
   }
   let obj = sympy_call_must(
     "sympy.combinatorics.util._distribute_gens_by_base",
-    [OracleArg::IntList(base), OracleArg::List(perm_args)],
+    [IntList(base), List(perm_args)],
   )
   let nested = perm_list_list_to_arrays(obj)
   list_list_list_int_equiv(ours, nested)
@@ -1829,13 +1771,13 @@ pub fn util_strong_gens_from_distr_equiv(
     let inner : Array[OracleArg] = Array::new()
     for g in part {
       let p = perm_obj_from_array(g, None)
-      inner.push(OracleArg::PyObj(objenum_to_obj(p)))
+      inner.push(PyObj(objenum_to_obj(p)))
     }
-    outer.push(OracleArg::List(inner))
+    outer.push(List(inner))
   }
   let obj = sympy_call_must(
     "sympy.combinatorics.util._strong_gens_from_distr",
-    [OracleArg::List(outer)],
+    [List(outer)],
   )
   let res = perm_list_to_arrays(obj)
   if res.length() != ours.length() {
@@ -1858,9 +1800,9 @@ pub fn util_strong_gens_from_distr_equiv(
 fn int_list_list_arg(values : Array[Array[Int]]) -> OracleArg {
   let args : Array[OracleArg] = Array::new()
   for v in values {
-    args.push(OracleArg::IntList(v))
+    args.push(IntList(v))
   }
-  OracleArg::List(args)
+  List(args)
 }
 
 ///|
@@ -1868,11 +1810,11 @@ fn sym_list_arg(values : Array[Int?]) -> OracleArg {
   let args : Array[OracleArg] = Array::new()
   for v in values {
     match v {
-      Some(n) => args.push(OracleArg::Int(n))
-      None => args.push(OracleArg::Null)
+      Some(n) => args.push(Int(n))
+      None => args.push(Null)
     }
   }
-  OracleArg::List(args)
+  List(args)
 }
 
 ///|
@@ -1880,9 +1822,9 @@ fn perm_list_arg(values : Array[Array[Int]]) -> OracleArg raise {
   let args : Array[OracleArg] = Array::new()
   for g in values {
     let p = perm_obj_from_array(g, None)
-    args.push(OracleArg::PyObj(objenum_to_obj(p)))
+    args.push(PyObj(objenum_to_obj(p)))
   }
-  OracleArg::List(args)
+  List(args)
 }
 
 ///|
@@ -1893,14 +1835,14 @@ fn tensor_component_tuple(
   sym : Int?,
 ) -> @py.PyObjectEnum raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::IntList(base))
+  args.push(IntList(base))
   args.push(perm_list_arg(gens))
-  args.push(OracleArg::Int(count))
+  args.push(Int(count))
   match sym {
-    Some(v) => args.push(OracleArg::Int(v))
-    None => args.push(OracleArg::Null)
+    Some(v) => args.push(Int(v))
+    None => args.push(Null)
   }
-  py_builtin_call("tuple", [OracleArg::List(args)])
+  py_builtin_call("tuple", [List(args)])
 }
 
 ///|
@@ -1912,12 +1854,12 @@ pub fn tensor_can_dummy_sgs_equiv(
 ) -> Bool raise {
   let sym_arg = match sym {
     Some(v) => OracleArg::Int(v)
-    None => OracleArg::Null
+    None => Null
   }
   let obj = sympy_call_must("sympy.combinatorics.tensor_can.dummy_sgs", [
-    OracleArg::IntList(dummies),
+    IntList(dummies),
     sym_arg,
-    OracleArg::Int(n),
+    Int(n),
   ])
   let items = py_list_to_pyobjects(obj)
   list_list_int_equiv(ours, items)
@@ -1933,7 +1875,7 @@ pub fn tensor_can_min_dummies_equiv(
   let obj = sympy_call_must("sympy.combinatorics.tensor_can._min_dummies", [
     int_list_list_arg(dummies),
     sym_list_arg(sym),
-    OracleArg::IntList(indices),
+    IntList(indices),
   ])
   let items = py_list_to_pyobjects(obj)
   list_int_equiv(ours, items)
@@ -1948,7 +1890,7 @@ pub fn tensor_can_symmetric_group_equiv(
 ) -> Bool raise {
   let obj = sympy_call_must(
     "sympy.combinatorics.tensor_can.get_symmetric_group_sgs",
-    [OracleArg::Int(n), OracleArg::Bool(antisym)],
+    [Int(n), Bool(antisym)],
   )
   let parts = py_list_to_pyobjects(obj)
   if parts.length() != 2 {
@@ -1971,11 +1913,7 @@ pub fn tensor_can_perm_af_direct_product_equiv(
 ) -> Bool raise {
   let obj = sympy_call_must(
     "sympy.combinatorics.tensor_can.perm_af_direct_product",
-    [
-      int_list_list_arg(gens1),
-      int_list_list_arg(gens2),
-      OracleArg::Bool(signed),
-    ],
+    [int_list_list_arg(gens1), int_list_list_arg(gens2), Bool(signed)],
   )
   let items = py_list_to_pyobjects(obj)
   list_list_int_equiv(ours, items)
@@ -1994,11 +1932,11 @@ pub fn tensor_can_bsgs_direct_product_equiv(
   let obj = sympy_call_must(
     "sympy.combinatorics.tensor_can.bsgs_direct_product",
     [
-      OracleArg::IntList(base1),
+      IntList(base1),
       perm_list_arg(gens1),
-      OracleArg::IntList(base2),
+      IntList(base2),
       perm_list_arg(gens2),
-      OracleArg::Bool(signed),
+      Bool(signed),
     ],
   )
   let parts = py_list_to_pyobjects(obj)
@@ -2025,10 +1963,10 @@ pub fn tensor_can_tensor_gens_equiv(
 ) -> Bool raise {
   let sym_arg = match sym {
     Some(v) => OracleArg::Int(v)
-    None => OracleArg::Null
+    None => Null
   }
   let obj = sympy_call_must("sympy.combinatorics.tensor_can.tensor_gens", [
-    OracleArg::IntList(base),
+    IntList(base),
     perm_list_arg(gens),
     int_list_list_arg(list_free),
     sym_arg,
@@ -2062,10 +2000,10 @@ pub fn tensor_can_canonical_free_equiv(
 ) -> Bool raise {
   let g_obj = perm_obj_from_array(g, None)
   let obj = sympy_call_must("sympy.combinatorics.tensor_can.canonical_free", [
-    OracleArg::IntList(base),
+    IntList(base),
     perm_list_arg(gens),
-    OracleArg::PyObj(objenum_to_obj(g_obj)),
-    OracleArg::Int(num_free),
+    PyObj(objenum_to_obj(g_obj)),
+    Int(num_free),
   ])
   let items = py_list_to_pyobjects(obj)
   list_int_equiv(ours, items)
@@ -2082,7 +2020,7 @@ pub fn tensor_can_double_coset_can_rep_equiv(
 ) -> Bool raise {
   let transv = sympy_call_must(
     "sympy.combinatorics.tensor_can.get_transversals",
-    [OracleArg::IntList(base), perm_list_arg(sgens)],
+    [IntList(base), perm_list_arg(sgens)],
   )
   let g_obj = perm_obj_from_array(g, None)
   let obj = sympy_call_must(
@@ -2090,10 +2028,10 @@ pub fn tensor_can_double_coset_can_rep_equiv(
     [
       int_list_list_arg(dummies),
       sym_list_arg(sym),
-      OracleArg::IntList(base),
+      IntList(base),
       perm_list_arg(sgens),
-      OracleArg::PyObj(objenum_to_obj(transv)),
-      OracleArg::PyObj(objenum_to_obj(g_obj)),
+      PyObj(objenum_to_obj(transv)),
+      PyObj(objenum_to_obj(g_obj)),
     ],
   )
   match py_int_enum(obj) {
@@ -2127,12 +2065,12 @@ pub fn tensor_can_canonicalize_equiv(
 ) -> Bool raise {
   let g_obj = perm_obj_from_array(g, None)
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(objenum_to_obj(g_obj)))
+  args.push(PyObj(objenum_to_obj(g_obj)))
   args.push(int_list_list_arg(dummies))
   args.push(sym_list_arg(msym))
   for i in 0..<counts.length() {
     let tup = tensor_component_tuple(bases[i], gens_list[i], counts[i], syms[i])
-    args.push(OracleArg::PyObj(objenum_to_obj(tup)))
+    args.push(PyObj(objenum_to_obj(tup)))
   }
   let obj = sympy_call_must("sympy.combinatorics.tensor_can.canonicalize", args)
   match py_int_enum(obj) {

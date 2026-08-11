@@ -42,7 +42,7 @@ test "geometry.curve parity repr arbitrary point and rotation" {
     @symcore.int(0),
     @symcore.int(2),
   )
-  let ap = c.arbitrary_point(parameter=@symcore.Expr::Symbol("z"))
+  let ap = c.arbitrary_point(parameter=Symbol("z"))
   assert_true(
     geometry_expr_equal(
       @symprint.pretty_string(ap.x()),
@@ -56,10 +56,9 @@ test "geometry.curve parity repr arbitrary point and rotation" {
     ),
   )
   let rotated = c.rotate(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    (@symcore.int(2) ^ @symcore.int(-1)),
+    NumberSymbol(Pi) * (@symcore.int(2) ^ @symcore.int(-1)),
   )
-  let rot_pt = rotated.arbitrary_point(parameter=@symcore.Expr::Symbol("z"))
+  let rot_pt = rotated.arbitrary_point(parameter=Symbol("z"))
   assert_true(
     geometry_expr_equal(
       @symprint.pretty_string(rot_pt.x()),

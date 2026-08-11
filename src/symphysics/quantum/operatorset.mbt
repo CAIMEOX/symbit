@@ -7,12 +7,12 @@
 
 ///|
 fn quantum_default_ket() -> Expr {
-  ket([Expr::Symbol("psi")]).as_expr()
+  ket([Symbol("psi")]).as_expr()
 }
 
 ///|
 fn quantum_default_operator() -> Expr {
-  operator([Expr::Symbol("O")]).as_expr()
+  operator([Symbol("O")]).as_expr()
 }
 
 ///|
@@ -30,11 +30,11 @@ pub fn operators_to_state(operator_expr : Expr) -> Expr? {
       match operator_expr {
         _ if @symcore.application_has_name(operator_expr, "Operator") =>
           Some(quantum_default_ket())
-        Expr::Symbol(name) if name == "Jx" =>
+        Symbol(name) if name == "Jx" =>
           Some(jx_ket(operatorset_half(), operatorset_half()).as_expr())
-        Expr::Symbol(name) if name == "Jy" =>
+        Symbol(name) if name == "Jy" =>
           Some(jy_ket(operatorset_half(), operatorset_half()).as_expr())
-        Expr::Symbol(name) if name == "Jz" =>
+        Symbol(name) if name == "Jz" =>
           Some(jz_ket(operatorset_half(), operatorset_half()).as_expr())
         _ => None
       }

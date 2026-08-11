@@ -9,17 +9,15 @@
 ///|
 fn fact_dense_require_dmp_univariate(u : Int) -> Unit raise PolyError {
   if u != 0 {
-    raise PolyError::NotUnivariate
+    raise NotUnivariate
   }
 }
 
 ///|
 fn fact_dense_gaussian_alg_domain() -> Domain raise PolyError {
   let i = Expr::Symbol("I")
-  let minpoly = PolyBuilder::new(["I"], Domain::QQ).from_expr(
-    (i ^ int(2)) + int(1),
-  )
-  Domain::AlgExt(Domain::QQ, ["I"], [minpoly.to_expr()])
+  let minpoly = PolyBuilder::new(["I"], QQ).from_expr((i ^ int(2)) + int(1))
+  AlgExt(QQ, ["I"], [minpoly.to_expr()])
 }
 
 ///|
@@ -27,11 +25,11 @@ fn fact_dense_gaussian_parts(
   domain : Domain,
 ) -> (Domain, Poly, String) raise PolyError {
   match domain {
-    Domain::AlgExt(base, gens, rels) => {
+    AlgExt(base, gens, rels) => {
       let (minpoly, gen) = load_algext_minpoly(base, gens, rels)
       (base, minpoly, gen)
     }
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
 }
 
@@ -42,18 +40,17 @@ fn fact_dense_gaussian_to_alg(
 ) -> FieldElem raise PolyError {
   let (base, minpoly, gen) = fact_dense_gaussian_parts(alg_domain)
   match coeff {
-    FieldElem::QQ(value) =>
-      FieldElem::AlgExt(base, [FieldElem::QQ(value)], minpoly, gen)
-    FieldElem::CC(real, imag) => {
+    QQ(value) => AlgExt(base, [QQ(value)], minpoly, gen)
+    CC(real, imag) => {
       let coeffs = if imag.is_zero() {
         [FieldElem::QQ(real)]
       } else {
-        [FieldElem::QQ(real), FieldElem::QQ(imag)]
+        [QQ(real), QQ(imag)]
       }
-      FieldElem::AlgExt(base, coeffs, minpoly, gen)
+      AlgExt(base, coeffs, minpoly, gen)
     }
-    FieldElem::AlgExt(_, _, _, _) => coeff
-    _ => raise PolyError::DomainMismatch
+    AlgExt(_, _, _, _) => coeff
+    _ => raise DomainMismatch
   }
 }
 
@@ -64,9 +61,9 @@ fn fact_dense_gaussian_from_alg(
 ) -> FieldElem raise PolyError {
   let zero = @symnum.BigRational::zero()
   let (real, imag) = match coeff {
-    FieldElem::QQ(value) => (value, zero)
-    FieldElem::CC(real, imag) => (real, imag)
-    FieldElem::AlgExt(_, coeffs, _, _) => {
+    QQ(value) => (value, zero)
+    CC(real, imag) => (real, imag)
+    AlgExt(_, coeffs, _, _) => {
       let real = if coeffs.length() > 0 {
         fe_expect_rational(coeffs[0])
       } else {
@@ -79,22 +76,22 @@ fn fact_dense_gaussian_from_alg(
       }
       for i in 2..<coeffs.length() {
         if !fe_is_zero(coeffs[i]) {
-          raise PolyError::DomainMismatch
+          raise DomainMismatch
         }
       }
       (real, imag)
     }
-    _ => raise PolyError::DomainMismatch
+    _ => raise DomainMismatch
   }
   match target {
-    Domain::ZZ_I => {
+    ZZ_I => {
       if !real.is_integral() || !imag.is_integral() {
-        raise PolyError::CoefficientNotInteger
+        raise CoefficientNotInteger
       }
-      FieldElem::CC(real, imag)
+      CC(real, imag)
     }
-    Domain::QQ_I => FieldElem::CC(real, imag)
-    _ => raise PolyError::DomainMismatch
+    QQ_I => CC(real, imag)
+    _ => raise DomainMismatch
   }
 }
 
@@ -138,7 +135,7 @@ fn fact_dense_convert_alg_factors_to_gaussian(
 ///|
 fn fact_dense_gaussian_coeff_key(coeff : FieldElem) -> String {
   match coeff {
-    FieldElem::CC(real, imag) => {
+    CC(real, imag) => {
       let sign_key = if imag.numerator() < BigInt::from_int(0) {
         "0"
       } else {
@@ -151,7 +148,7 @@ fn fact_dense_gaussian_coeff_key(coeff : FieldElem) -> String {
       }
       "\{real}:\{sign_key}:\{imag_abs}"
     }
-    _ => coeff.to_string()
+    _ => Show::to_string(coeff)
   }
 }
 
@@ -188,8 +185,8 @@ fn fact_dense_compare_factor(
   } else if a.1 != b.1 {
     a.1 - b.1
   } else {
-    let a_text = a.0.map(c => c.to_string()).join(",")
-    let b_text = b.0.map(c => c.to_string()).join(",")
+    let a_text = a.0.map(c => Show::to_string(c)).join(",")
+    let b_text = b.0.map(c => Show::to_string(c)).join(",")
     a_text.compare(b_text)
   }
 }
@@ -206,8 +203,8 @@ fn fact_dense_sort_factors(
 ///|
 fn fact_dense_dmp_key(f : DensePoly) -> String {
   match f {
-    DensePoly::Coef(c) => c.to_string()
-    DensePoly::Poly(items) =>
+    Coef(c) => Show::to_string(c)
+    Poly(items) =>
       "[" + items.map(item => fact_dense_dmp_key(item)).join(",") + "]"
   }
 }
@@ -270,7 +267,7 @@ pub fn dup_gf_factor(
   for item in factors {
     out.push((sqf_dense_gf_ints_to_dup(item.0, p), item.1))
   }
-  (FieldElem::GFp(p, coeff), out)
+  (GFp(p, coeff), out)
 }
 
 ///|
@@ -286,7 +283,7 @@ pub fn dmp_gf_factor(
   _u : Int,
   _domain : Domain,
 ) -> (FieldElem, Array[(DensePoly, Int)]) raise PolyError {
-  raise PolyError::NotUnivariate
+  raise NotUnivariate
 }
 
 ///|
@@ -303,8 +300,8 @@ pub fn dup_ext_factor(
   domain : Domain,
 ) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError {
   match domain {
-    Domain::AlgExt(_, _, _) => dup_factor_list(f, domain)
-    _ => raise PolyError::DomainMismatch
+    AlgExt(_, _, _) => dup_factor_list(f, domain)
+    _ => raise DomainMismatch
   }
 }
 
@@ -322,8 +319,8 @@ pub fn dmp_ext_factor(
   domain : Domain,
 ) -> (FieldElem, Array[(DensePoly, Int)]) raise PolyError {
   match domain {
-    Domain::AlgExt(_, _, _) => dmp_factor_list(f, u, domain)
-    _ => raise PolyError::DomainMismatch
+    AlgExt(_, _, _) => dmp_factor_list(f, u, domain)
+    _ => raise DomainMismatch
   }
 }
 
@@ -339,15 +336,15 @@ pub fn dup_qq_i_factor(
   f : Array[FieldElem],
   domain : Domain,
 ) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError {
-  if domain.not_equal(Domain::QQ_I) {
-    raise PolyError::DomainMismatch
+  if Eq::not_equal(domain, QQ_I) {
+    raise DomainMismatch
   }
   let alg_domain = fact_dense_gaussian_alg_domain()
   let alg_f = fact_dense_convert_gaussian_to_alg(f, alg_domain)
   let (coeff, factors) = dup_ext_factor(alg_f, alg_domain)
   (
-    fact_dense_gaussian_from_alg(coeff, Domain::QQ_I),
-    fact_dense_convert_alg_factors_to_gaussian(factors, Domain::QQ_I),
+    fact_dense_gaussian_from_alg(coeff, QQ_I),
+    fact_dense_convert_alg_factors_to_gaussian(factors, QQ_I),
   )
 }
 
@@ -366,15 +363,15 @@ pub fn dup_zz_i_factor(
   f : Array[FieldElem],
   domain : Domain,
 ) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError {
-  if domain.not_equal(Domain::ZZ_I) {
-    raise PolyError::DomainMismatch
+  if Eq::not_equal(domain, ZZ_I) {
+    raise DomainMismatch
   }
-  let qq_f = f.map(coeff => fact_dense_gaussian_from_alg(coeff, Domain::QQ_I))
-  let (coeff, factors) = dup_qq_i_factor(qq_f, Domain::QQ_I)
+  let qq_f = f.map(coeff => fact_dense_gaussian_from_alg(coeff, QQ_I))
+  let (coeff, factors) = dup_qq_i_factor(qq_f, QQ_I)
   (
-    fact_dense_gaussian_from_alg(coeff, Domain::ZZ_I),
+    fact_dense_gaussian_from_alg(coeff, ZZ_I),
     factors.map(item => {
-      (fact_dense_convert_alg_to_gaussian(item.0, Domain::ZZ_I), item.1)
+      (fact_dense_convert_alg_to_gaussian(item.0, ZZ_I), item.1)
     }),
   )
 }
@@ -510,7 +507,7 @@ pub fn dup_trial_division(
       }
     }
     if multiplicity == 0 {
-      raise PolyError::PolynomialDivisionFailed
+      raise PolynomialDivisionFailed
     }
     result.push((trial, multiplicity))
   }
@@ -555,7 +552,7 @@ pub fn dmp_trial_division(
       }
     }
     if multiplicity == 0 {
-      raise PolyError::PolynomialDivisionFailed
+      raise PolynomialDivisionFailed
     }
     result.push((factor, multiplicity))
   }

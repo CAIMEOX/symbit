@@ -18,8 +18,8 @@ pub fn Point::position_wrt(
   other : PointReference,
 ) -> Vector raise @rawvec.VectorError {
   let raw_other = match other {
-    PointReference::PointObject(point) => point.raw_
-    PointReference::CoordSystem(system) => system.origin_.raw_
+    PointObject(point) => point.raw_
+    CoordSystem(system) => system.origin_.raw_
   }
   { raw_: self.raw_.pos_from(raw_other) }
 }
@@ -29,7 +29,7 @@ pub fn Point::express_coordinates(
   self : Point,
   system : CoordSys3D,
 ) -> Array[@symcore.Expr] raise @rawvec.VectorError {
-  let position = self.position_wrt(PointReference::CoordSystem(system)) catch {
+  let position = self.position_wrt(CoordSystem(system)) catch {
     err => raise err
   }
   let matrix = position.to_matrix(system) catch { err => raise err }

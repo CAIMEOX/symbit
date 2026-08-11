@@ -202,7 +202,7 @@ pub fn rubik_cube_generators() -> Array[Permutation] raise CombinatoricsError {
 /// Return the face-turn generators for the `n x n x n` Rubik's cube.
 pub fn rubik(n : Int) -> Array[Permutation] raise CombinatoricsError {
   if n < 2 {
-    raise CombinatoricsError::ValueError("dimension of cube must be > 1")
+    raise ValueError("dimension of cube must be > 1")
   }
   let total = 6 * n * n
   let faces : Array[Array[Int]] = Array::new()
@@ -377,7 +377,7 @@ pub fn rubik(n : Int) -> Array[Permutation] raise CombinatoricsError {
   }
   let check = perm(faces, true)
   if check is Some(p) && p != identity {
-    raise CombinatoricsError::ValueError("rubik identity check failed")
+    raise ValueError("rubik identity check failed")
   }
 
   // R slices
@@ -392,7 +392,7 @@ pub fn rubik(n : Int) -> Array[Permutation] raise CombinatoricsError {
   cube_u_ccw(faces, n)
   let check2 = perm(faces, true)
   if check2 is Some(p2) && p2 != identity {
-    raise CombinatoricsError::ValueError("rubik identity check failed")
+    raise ValueError("rubik identity check failed")
   }
 
   // D slices
@@ -415,7 +415,7 @@ pub fn rubik(n : Int) -> Array[Permutation] raise CombinatoricsError {
   cube_f_ccw(faces, n)
   let check3 = perm(faces, true)
   if check3 is Some(p3) && p3 != identity {
-    raise CombinatoricsError::ValueError("rubik identity check failed")
+    raise ValueError("rubik identity check failed")
   }
   g
 }

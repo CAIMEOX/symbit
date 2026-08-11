@@ -1,13 +1,13 @@
 ///|
 fn ddm_pivot_measure(value : FieldElem) -> @symnum.BigRational raise PolyError {
   match value {
-    FieldElem::QQ(q) =>
+    QQ(q) =>
       if q.compare(@symnum.BigRational::zero()) < 0 {
         q.neg_r()
       } else {
         q
       }
-    FieldElem::CC(real, imag) => real.mul_r(real).add_r(imag.mul_r(imag))
+    CC(real, imag) => real.mul_r(real).add_r(imag.mul_r(imag))
     _ => fe_abs_rational(value)
   }
 }
@@ -258,7 +258,7 @@ pub fn ddm_irref(
     return a.rref()
   }
   if !domain_is_field_pred(a.domain()) {
-    raise PolyError::DomainNotField
+    raise DomainNotField
   }
   let (rows, pivots) = ddm_irref_partial_pivot(a.to_list(), a.domain())
   (ddm_from_dense(rows, a.domain()), pivots)
@@ -384,7 +384,7 @@ pub fn ddm_iinv(a : DDM) -> DDM raise PolyError {
 pub fn ddm_idet(a : DDM) -> (DDM, FieldElem) raise PolyError {
   let (rows, cols) = a.shape()
   if rows != cols {
-    raise PolyError::DomainMismatch
+    raise DomainMismatch
   }
   let out = clone_dense_rows(a.to_list())
   let det = ddm_bareiss_det_in_place(out, a.domain())

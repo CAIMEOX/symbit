@@ -2,46 +2,36 @@
 fn orth_wb_coeffs(coeffs : Array[FieldElem]) -> String {
   let parts : Array[String] = []
   for coeff in coeffs {
-    parts.push(coeff.to_string())
+    parts.push(Show::to_string(coeff))
   }
   parts.join(",")
 }
 
 ///|
 test "orthogonal low-level dup kernels match standard small values" {
-  inspect(orth_wb_coeffs(dup_chebyshevt(4, Domain::ZZ)), content="8,0,-8,0,1")
-  inspect(orth_wb_coeffs(dup_chebyshevu(4, Domain::ZZ)), content="16,0,-12,0,1")
-  inspect(orth_wb_coeffs(dup_hermite(4, Domain::ZZ)), content="16,0,-48,0,12")
-  inspect(orth_wb_coeffs(dup_hermite_prob(4, Domain::ZZ)), content="1,0,-6,0,3")
+  inspect(orth_wb_coeffs(dup_chebyshevt(4, ZZ)), content="8,0,-8,0,1")
+  inspect(orth_wb_coeffs(dup_chebyshevu(4, ZZ)), content="16,0,-12,0,1")
+  inspect(orth_wb_coeffs(dup_hermite(4, ZZ)), content="16,0,-48,0,12")
+  inspect(orth_wb_coeffs(dup_hermite_prob(4, ZZ)), content="1,0,-6,0,3")
+  inspect(orth_wb_coeffs(dup_legendre(4, QQ)), content="35/8,0,-15/4,0,3/8")
   inspect(
-    orth_wb_coeffs(dup_legendre(4, Domain::QQ)),
-    content="35/8,0,-15/4,0,3/8",
-  )
-  inspect(
-    orth_wb_coeffs(dup_laguerre(3, fe_from_int(0, Domain::QQ), Domain::QQ)),
+    orth_wb_coeffs(dup_laguerre(3, fe_from_int(0, QQ), QQ)),
     content="-1/6,3/2,-3,1",
   )
   inspect(
-    orth_wb_coeffs(
-      dup_jacobi(
-        3,
-        fe_from_int(1, Domain::QQ),
-        fe_from_int(2, Domain::QQ),
-        Domain::QQ,
-      ),
-    ),
+    orth_wb_coeffs(dup_jacobi(3, fe_from_int(1, QQ), fe_from_int(2, QQ), QQ)),
     content="21/2,-7/2,-7/2,1/2",
   )
   inspect(
-    orth_wb_coeffs(dup_gegenbauer(4, fe_from_int(2, Domain::QQ), Domain::QQ)),
+    orth_wb_coeffs(dup_gegenbauer(4, fe_from_int(2, QQ), QQ)),
     content="80,0,-48,0,3",
   )
   inspect(
-    orth_wb_coeffs(dup_spherical_bessel_fn(4, Domain::ZZ)),
+    orth_wb_coeffs(dup_spherical_bessel_fn(4, ZZ)),
     content="105,0,-45,0,1,0",
   )
   inspect(
-    orth_wb_coeffs(dup_spherical_bessel_fn_minus(4, Domain::ZZ)),
+    orth_wb_coeffs(dup_spherical_bessel_fn_minus(4, ZZ)),
     content="-15,0,1,0",
   )
 }
@@ -140,18 +130,9 @@ test "appell polynomial frontdoors match standard small values" {
 
 ///|
 test "appell low-level dup kernels match standard small values" {
-  inspect(
-    orth_wb_coeffs(dup_bernoulli(5, Domain::QQ)),
-    content="1,-5/2,5/3,0,-1/6,0",
-  )
-  inspect(
-    orth_wb_coeffs(dup_bernoulli_c(4, Domain::QQ)),
-    content="1,0,-2,0,7/15",
-  )
-  inspect(orth_wb_coeffs(dup_genocchi(5, Domain::ZZ)), content="-5,10,0,-5,0")
-  inspect(
-    orth_wb_coeffs(dup_euler(5, Domain::QQ)),
-    content="1,-5/2,0,5/2,0,-1/2",
-  )
-  inspect(orth_wb_coeffs(dup_andre(5, Domain::ZZ)), content="1,0,-10,0,25,0")
+  inspect(orth_wb_coeffs(dup_bernoulli(5, QQ)), content="1,-5/2,5/3,0,-1/6,0")
+  inspect(orth_wb_coeffs(dup_bernoulli_c(4, QQ)), content="1,0,-2,0,7/15")
+  inspect(orth_wb_coeffs(dup_genocchi(5, ZZ)), content="-5,10,0,-5,0")
+  inspect(orth_wb_coeffs(dup_euler(5, QQ)), content="1,-5/2,0,5/2,0,-1/2")
+  inspect(orth_wb_coeffs(dup_andre(5, ZZ)), content="1,0,-10,0,25,0")
 }

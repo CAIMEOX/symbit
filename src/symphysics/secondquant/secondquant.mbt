@@ -57,12 +57,12 @@ fn sq_fock_state_repr(items : Array[Expr]) -> String {
 
 ///|
 fn sq_boson_ket_expr(items : Array[Expr]) -> Expr {
-  @symcore.raw_function("FockStateBosonKet", [Expr::Tuple(items)])
+  @symcore.raw_function("FockStateBosonKet", [Tuple(items)])
 }
 
 ///|
 fn sq_boson_bra_expr(items : Array[Expr]) -> Expr {
-  @symcore.raw_function("FockStateBosonBra", [Expr::Tuple(items)])
+  @symcore.raw_function("FockStateBosonBra", [Tuple(items)])
 }
 
 ///|
@@ -95,7 +95,7 @@ fn sq_boson_basis_list_string(states : Array[Expr]) -> String {
 ///|
 fn sq_integral_index(expr : Expr) -> Int? {
   match expr {
-    Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
+    Number(n) if n.is_integral() => Some(n.numerator().to_int())
     _ => None
   }
 }
@@ -106,7 +106,7 @@ fn sq_state_at(
   index : Int,
 ) -> Expr raise @symphysics.PhysicsError {
   if index < 0 || index >= items.length() {
-    raise @symphysics.PhysicsError::IndexError("boson state index out of range")
+    raise IndexError("boson state index out of range")
   }
   items[index]
 }
@@ -135,7 +135,7 @@ fn sq_fixed_boson_states(
 
 ///|
 pub fn boson_state(occupations : Array[Expr]) -> BosonState {
-  BosonState::{ occupations: occupations.copy() }
+  { occupations: occupations.copy() }
 }
 
 ///|
@@ -179,7 +179,7 @@ pub fn BosonState::down(
 
 ///|
 pub fn BosonState::as_expr(self : BosonState) -> Expr {
-  @symcore.raw_function("FockState", [Expr::Tuple(self.occupations)])
+  @symcore.raw_function("FockState", [Tuple(self.occupations)])
 }
 
 ///|
@@ -199,7 +199,7 @@ pub impl Show for BosonState with fn to_string(self) {
 
 ///|
 pub impl Show for BosonState with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -227,12 +227,12 @@ pub fn boson_state_from_expr(expr : Expr) -> BosonState? {
 
 ///|
 pub fn boson_annihilator(index : Expr) -> BosonicOperatorExpr {
-  BosonicOperatorExpr::{ index, is_annihilation: true }
+  { index, is_annihilation: true }
 }
 
 ///|
 pub fn boson_creator(index : Expr) -> BosonicOperatorExpr {
-  BosonicOperatorExpr::{ index, is_annihilation: false }
+  { index, is_annihilation: false }
 }
 
 ///|
@@ -258,7 +258,7 @@ pub impl Show for BosonicOperatorExpr with fn to_string(self) {
 
 ///|
 pub impl Show for BosonicOperatorExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -275,10 +275,7 @@ pub fn BosonicOperatorExpr::repr(self : BosonicOperatorExpr) -> String {
 pub fn BosonicOperatorExpr::dagger(
   self : BosonicOperatorExpr,
 ) -> BosonicOperatorExpr {
-  BosonicOperatorExpr::{
-    index: self.index,
-    is_annihilation: !self.is_annihilation,
-  }
+  { index: self.index, is_annihilation: !self.is_annihilation }
 }
 
 ///|
@@ -309,7 +306,7 @@ pub fn variable_bosonic_basis(n_max : Int) -> VarBosonicBasis {
   for i in 0..<n_max {
     basis.push(boson_ket([int(i)]))
   }
-  VarBosonicBasis::{ n_max, basis }
+  { n_max, basis }
 }
 
 ///|
@@ -321,7 +318,7 @@ pub fn fixed_bosonic_basis(
   for state in sq_fixed_boson_states(n_particles, n_levels) {
     basis.push(boson_ket(state))
   }
-  FixedBosonicBasis::{ n_particles, n_levels, basis }
+  { n_particles, n_levels, basis }
 }
 
 ///|
@@ -335,7 +332,7 @@ pub fn VarBosonicBasis::state(
   index : Int,
 ) -> Expr raise @symphysics.PhysicsError {
   if index < 0 || index >= self.basis.length() {
-    raise @symphysics.PhysicsError::IndexError("basis index out of range")
+    raise IndexError("basis index out of range")
   }
   self.basis[index]
 }
@@ -350,9 +347,7 @@ pub fn VarBosonicBasis::index(
       return idx
     }
   }
-  raise @symphysics.PhysicsError::ValueError(
-    "state not present in bosonic basis",
-  )
+  raise ValueError("state not present in bosonic basis")
 }
 
 ///|
@@ -362,17 +357,17 @@ pub impl Show for VarBosonicBasis with fn to_string(self) {
 
 ///|
 pub impl Show for VarBosonicBasis with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 pub fn VarBosonicBasis::repr(self : VarBosonicBasis) -> String {
-  self.to_string()
+  Show::to_string(self)
 }
 
 ///|
 pub fn VarBosonicBasis::as_basis(self : VarBosonicBasis) -> BosonicBasisSet {
-  BosonicBasisSet::Var(self)
+  Var(self)
 }
 
 ///|
@@ -386,7 +381,7 @@ pub fn FixedBosonicBasis::state(
   index : Int,
 ) -> Expr raise @symphysics.PhysicsError {
   if index < 0 || index >= self.basis.length() {
-    raise @symphysics.PhysicsError::IndexError("basis index out of range")
+    raise IndexError("basis index out of range")
   }
   self.basis[index]
 }
@@ -401,9 +396,7 @@ pub fn FixedBosonicBasis::index(
       return idx
     }
   }
-  raise @symphysics.PhysicsError::ValueError(
-    "state not present in bosonic basis",
-  )
+  raise ValueError("state not present in bosonic basis")
 }
 
 ///|
@@ -413,24 +406,24 @@ pub impl Show for FixedBosonicBasis with fn to_string(self) {
 
 ///|
 pub impl Show for FixedBosonicBasis with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
 pub fn FixedBosonicBasis::repr(self : FixedBosonicBasis) -> String {
-  self.to_string()
+  Show::to_string(self)
 }
 
 ///|
 pub fn FixedBosonicBasis::as_basis(self : FixedBosonicBasis) -> BosonicBasisSet {
-  BosonicBasisSet::Fixed(self)
+  Fixed(self)
 }
 
 ///|
 pub fn BosonicBasisSet::len(self : BosonicBasisSet) -> Int {
   match self {
-    BosonicBasisSet::Var(basis) => basis.len()
-    BosonicBasisSet::Fixed(basis) => basis.len()
+    Var(basis) => basis.len()
+    Fixed(basis) => basis.len()
   }
 }
 
@@ -440,8 +433,8 @@ pub fn BosonicBasisSet::state(
   index : Int,
 ) -> Expr raise @symphysics.PhysicsError {
   match self {
-    BosonicBasisSet::Var(basis) => basis.state(index)
-    BosonicBasisSet::Fixed(basis) => basis.state(index)
+    Var(basis) => basis.state(index)
+    Fixed(basis) => basis.state(index)
   }
 }
 
@@ -451,22 +444,22 @@ pub fn BosonicBasisSet::index(
   state : Expr,
 ) -> Int raise @symphysics.PhysicsError {
   match self {
-    BosonicBasisSet::Var(basis) => basis.index(state)
-    BosonicBasisSet::Fixed(basis) => basis.index(state)
+    Var(basis) => basis.index(state)
+    Fixed(basis) => basis.index(state)
   }
 }
 
 ///|
 pub impl Show for BosonicBasisSet with fn to_string(self) {
   match self {
-    BosonicBasisSet::Var(basis) => basis.to_string()
-    BosonicBasisSet::Fixed(basis) => basis.to_string()
+    Var(basis) => Show::to_string(basis)
+    Fixed(basis) => Show::to_string(basis)
   }
 }
 
 ///|
 pub impl Show for BosonicBasisSet with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -488,9 +481,9 @@ pub fn secondquant_inner_product(bra : Expr, ket : Expr) -> Expr {
 ///|
 pub fn secondquant_apply_operators(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) =>
+    Add(args) =>
       @symcore.raw_add(args.map(term => secondquant_apply_operators(term)))
-    Expr::Mul(args) =>
+    Mul(args) =>
       match sq_apply_fermion_mul(args) {
         Some(value) => value
         None => @symquant.qapply(expr)
@@ -579,7 +572,7 @@ fn sq_is_boson_creator(expr : Expr) -> Expr? {
 ///|
 fn sq_normal_order_product(expr : Expr) -> Expr {
   match expr {
-    Expr::Mul(args) if args.length() >= 2 => {
+    Mul(args) if args.length() >= 2 => {
       for idx in 0..<(args.length() - 1) {
         match
           (
@@ -641,7 +634,7 @@ pub fn secondquant_normal_ordered_form(
   ignore(independent)
   ignore(recursive_limit)
   match expr {
-    Expr::Add(args) =>
+    Add(args) =>
       @symcore.raw_add(args.map(term => secondquant_normal_ordered_form(term)))
     _ => sq_normal_order_product(expr)
   }
@@ -650,9 +643,9 @@ pub fn secondquant_normal_ordered_form(
 ///|
 fn sq_scale_inner_product(bra : Expr, expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) =>
+    Add(args) =>
       @symcore.raw_add(args.map(term => sq_scale_inner_product(bra, term)))
-    Expr::Mul(args) => {
+    Mul(args) => {
       let scalar_factors : Array[Expr] = []
       let ket_factors : Array[Expr] = []
       for arg in args {

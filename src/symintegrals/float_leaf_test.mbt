@@ -6,7 +6,7 @@ fn integrals_exact_float_expr(num : Int, den : Int, prec? : Int = 90) -> Expr {
   let value = @symcore.Float::from_exact(rat, prec~) catch {
     _ => @symcore.Float::from_int(0, prec~)
   }
-  @symcore.Expr::Float(value)
+  Float(value)
 }
 
 ///|
@@ -23,15 +23,13 @@ fn integrals_exact_complex_float_expr(
   let imag = @symnum.BigRational::from_ints(imag_num, imag_den) catch {
     _ => @symnum.BigRational::zero()
   }
-  @symcore.Expr::ComplexFloat(
-    @symcore.ComplexFloat::from_exact_parts(real, imag, prec~),
-  )
+  ComplexFloat(@symcore.ComplexFloat::from_exact_parts(real, imag, prec~))
 }
 
 ///|
 fn integrals_contains_float_leaf(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Float(_) | @symcore.Expr::ComplexFloat(_) => true
+    Float(_) | ComplexFloat(_) => true
     _ => @symcore.children(expr).any(integrals_contains_float_leaf)
   }
 }

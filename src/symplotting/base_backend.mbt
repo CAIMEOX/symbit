@@ -73,7 +73,7 @@ pub fn plot_object(
   autoscale? : Bool = true,
   margin? : Int = 0,
 ) -> Plot {
-  Plot::{
+  {
     backend_name_: backend_name,
     title,
     xlabel,
@@ -128,7 +128,7 @@ pub fn Plot::getitem(
   index : Int,
 ) -> PlotSeries raise PlottingError {
   if index < 0 || index >= self.series_.length() {
-    raise PlottingError::ValueError("plot series index out of range")
+    raise ValueError("plot series index out of range")
   }
   self.series_[index]
 }
@@ -141,7 +141,7 @@ pub fn Plot::getitem(
 pub fn Plot::append(self : Plot, arg : PlotSeries) -> Plot {
   let series = self.series_.copy()
   series.push(arg)
-  Plot::{
+  {
     backend_name_: self.backend_name_,
     title: self.title,
     xlabel: self.xlabel,
@@ -170,7 +170,7 @@ pub fn Plot::extend_(self : Plot, other : Plot) -> Plot {
   for item in other.series_ {
     series.push(item)
   }
-  Plot::{
+  {
     backend_name_: self.backend_name_,
     title: self.title,
     xlabel: self.xlabel,
@@ -195,9 +195,7 @@ pub fn Plot::extend_(self : Plot, other : Plot) -> Plot {
 /// - Limits: Raises `PlottingError::TypeError` unless the plot uses the text backend.
 pub fn Plot::render_lines(self : Plot) -> Array[String] raise PlottingError {
   if self.backend_name_ != "text" {
-    raise PlottingError::TypeError(
-      "render_lines is only available on the text backend",
-    )
+    raise TypeError("render_lines is only available on the text backend")
   }
   text_backend(self).render_lines()
 }
@@ -212,16 +210,14 @@ pub fn Plot::get_points(
   index : Int,
 ) -> (Array[Double], Array[Double?]) raise PlottingError {
   match self.getitem(index) {
-    PlotSeries::Line(series) => series.get_points()
-    PlotSeries::Parametric2D(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) =>
-      raise PlottingError::TypeError(
-        "get_points is only available for 1D line series on Plot",
-      )
+    Line(series) => series.get_points()
+    Parametric2D(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Contour(_)
+    | Implicit(_) =>
+      raise TypeError("get_points is only available for 1D line series on Plot")
   }
 }
 
@@ -235,16 +231,14 @@ pub fn Plot::get_data(
   index : Int,
 ) -> (Array[Double], Array[Double?]) raise PlottingError {
   match self.getitem(index) {
-    PlotSeries::Line(series) => series.get_data()
-    PlotSeries::Parametric2D(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) =>
-      raise PlottingError::TypeError(
-        "get_data is only available for 1D line series on Plot",
-      )
+    Line(series) => series.get_data()
+    Parametric2D(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Contour(_)
+    | Implicit(_) =>
+      raise TypeError("get_data is only available for 1D line series on Plot")
   }
 }
 
@@ -258,14 +252,14 @@ pub fn Plot::get_parametric_points(
   index : Int,
 ) -> (Array[Double?], Array[Double?]) raise PlottingError {
   match self.getitem(index) {
-    PlotSeries::Parametric2D(series) => series.get_points()
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) =>
-      raise PlottingError::TypeError(
+    Parametric2D(series) => series.get_points()
+    Line(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Contour(_)
+    | Implicit(_) =>
+      raise TypeError(
         "get_parametric_points is only available for parametric series on Plot",
       )
   }
@@ -281,14 +275,14 @@ pub fn Plot::get_parametric_data(
   index : Int,
 ) -> (Array[Double?], Array[Double?], Array[Double]) raise PlottingError {
   match self.getitem(index) {
-    PlotSeries::Parametric2D(series) => series.get_data()
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) =>
-      raise PlottingError::TypeError(
+    Parametric2D(series) => series.get_data()
+    Line(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Contour(_)
+    | Implicit(_) =>
+      raise TypeError(
         "get_parametric_data is only available for parametric series on Plot",
       )
   }
@@ -304,14 +298,14 @@ pub fn Plot::get_parametric3d_points(
   index : Int,
 ) -> (Array[Double?], Array[Double?], Array[Double?]) raise PlottingError {
   match self.getitem(index) {
-    PlotSeries::Parametric3D(series) => series.get_points()
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric2D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) =>
-      raise PlottingError::TypeError(
+    Parametric3D(series) => series.get_points()
+    Line(_)
+    | Parametric2D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Contour(_)
+    | Implicit(_) =>
+      raise TypeError(
         "get_parametric3d_points is only available for 3D parametric series on Plot",
       )
   }
@@ -327,14 +321,14 @@ pub fn Plot::get_parametric3d_data(
   index : Int,
 ) -> (Array[Double?], Array[Double?], Array[Double?], Array[Double]) raise PlottingError {
   match self.getitem(index) {
-    PlotSeries::Parametric3D(series) => series.get_data()
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric2D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) =>
-      raise PlottingError::TypeError(
+    Parametric3D(series) => series.get_data()
+    Line(_)
+    | Parametric2D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Contour(_)
+    | Implicit(_) =>
+      raise TypeError(
         "get_parametric3d_data is only available for 3D parametric series on Plot",
       )
   }
@@ -350,14 +344,14 @@ pub fn Plot::get_surface_data(
   index : Int,
 ) -> (Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]]) raise PlottingError {
   match self.getitem(index) {
-    PlotSeries::Surface(series) => series.get_data()
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric2D(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) =>
-      raise PlottingError::TypeError(
+    Surface(series) => series.get_data()
+    Line(_)
+    | Parametric2D(_)
+    | Parametric3D(_)
+    | ParametricSurface(_)
+    | Contour(_)
+    | Implicit(_) =>
+      raise TypeError(
         "get_surface_data is only available for cartesian surface series on Plot",
       )
   }
@@ -379,14 +373,14 @@ pub fn Plot::get_parametric_surface_data(
   Array[Array[Double]],
 ) raise PlottingError {
   match self.getitem(index) {
-    PlotSeries::ParametricSurface(series) => series.get_data()
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric2D(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::Contour(_)
-    | PlotSeries::Implicit(_) =>
-      raise PlottingError::TypeError(
+    ParametricSurface(series) => series.get_data()
+    Line(_)
+    | Parametric2D(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | Contour(_)
+    | Implicit(_) =>
+      raise TypeError(
         "get_parametric_surface_data is only available for parametric surface series on Plot",
       )
   }
@@ -402,14 +396,14 @@ pub fn Plot::get_contour_data(
   index : Int,
 ) -> (Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]]) raise PlottingError {
   match self.getitem(index) {
-    PlotSeries::Contour(series) => series.get_data()
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric2D(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Implicit(_) =>
-      raise PlottingError::TypeError(
+    Contour(series) => series.get_data()
+    Line(_)
+    | Parametric2D(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Implicit(_) =>
+      raise TypeError(
         "get_contour_data is only available for contour series on Plot",
       )
   }
@@ -425,14 +419,14 @@ pub fn Plot::get_implicit_data(
   index : Int,
 ) -> ImplicitPlotData raise PlottingError {
   match self.getitem(index) {
-    PlotSeries::Implicit(series) => series.get_data()
-    PlotSeries::Line(_)
-    | PlotSeries::Parametric2D(_)
-    | PlotSeries::Parametric3D(_)
-    | PlotSeries::Surface(_)
-    | PlotSeries::ParametricSurface(_)
-    | PlotSeries::Contour(_) =>
-      raise PlottingError::TypeError(
+    Implicit(series) => series.get_data()
+    Line(_)
+    | Parametric2D(_)
+    | Parametric3D(_)
+    | Surface(_)
+    | ParametricSurface(_)
+    | Contour(_) =>
+      raise TypeError(
         "get_implicit_data is only available for implicit series on Plot",
       )
   }

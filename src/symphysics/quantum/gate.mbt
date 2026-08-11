@@ -28,81 +28,81 @@ pub struct GateExpr {
 ///|
 fn gate_alias_name(kind : GateKind) -> String {
   match kind {
-    GateKind::Identity => "1"
-    GateKind::Hadamard => "H"
-    GateKind::X => "X"
-    GateKind::Y => "Y"
-    GateKind::Z => "Z"
-    GateKind::Phase => "S"
-    GateKind::T => "T"
-    GateKind::Swap => "SWAP"
-    GateKind::CNot => "CNOT"
+    Identity => "1"
+    Hadamard => "H"
+    X => "X"
+    Y => "Y"
+    Z => "Z"
+    Phase => "S"
+    T => "T"
+    Swap => "SWAP"
+    CNot => "CNOT"
   }
 }
 
 ///|
 fn gate_class_name(kind : GateKind) -> String {
   match kind {
-    GateKind::Identity => "IdentityGate"
-    GateKind::Hadamard => "HadamardGate"
-    GateKind::X => "XGate"
-    GateKind::Y => "YGate"
-    GateKind::Z => "ZGate"
-    GateKind::Phase => "PhaseGate"
-    GateKind::T => "TGate"
-    GateKind::Swap => "SwapGate"
-    GateKind::CNot => "CNotGate"
+    Identity => "IdentityGate"
+    Hadamard => "HadamardGate"
+    X => "XGate"
+    Y => "YGate"
+    Z => "ZGate"
+    Phase => "PhaseGate"
+    T => "TGate"
+    Swap => "SwapGate"
+    CNot => "CNotGate"
   }
 }
 
 ///|
 pub fn identity_gate(target : Int) -> GateExpr {
-  GateExpr::{ kind: GateKind::Identity, args: [target] }
+  { kind: Identity, args: [target] }
 }
 
 ///|
 pub fn hadamard_gate(target : Int) -> GateExpr {
-  GateExpr::{ kind: GateKind::Hadamard, args: [target] }
+  { kind: Hadamard, args: [target] }
 }
 
 ///|
 pub fn x_gate(target : Int) -> GateExpr {
-  GateExpr::{ kind: GateKind::X, args: [target] }
+  { kind: X, args: [target] }
 }
 
 ///|
 pub fn y_gate(target : Int) -> GateExpr {
-  GateExpr::{ kind: GateKind::Y, args: [target] }
+  { kind: Y, args: [target] }
 }
 
 ///|
 pub fn z_gate(target : Int) -> GateExpr {
-  GateExpr::{ kind: GateKind::Z, args: [target] }
+  { kind: Z, args: [target] }
 }
 
 ///|
 pub fn phase_gate(target : Int) -> GateExpr {
-  GateExpr::{ kind: GateKind::Phase, args: [target] }
+  { kind: Phase, args: [target] }
 }
 
 ///|
 pub fn t_gate(target : Int) -> GateExpr {
-  GateExpr::{ kind: GateKind::T, args: [target] }
+  { kind: T, args: [target] }
 }
 
 ///|
 pub fn swap_gate(target1 : Int, target2 : Int) -> GateExpr {
-  GateExpr::{ kind: GateKind::Swap, args: [target1, target2] }
+  { kind: Swap, args: [target1, target2] }
 }
 
 ///|
 pub fn cnot_gate(control : Int, target : Int) -> GateExpr {
-  GateExpr::{ kind: GateKind::CNot, args: [control, target] }
+  { kind: CNot, args: [control, target] }
 }
 
 ///|
 fn gate_tuple_expr(items : Array[Int]) -> Expr {
-  @symcore.Expr::Tuple(items.map(@symcore.int))
+  Tuple(items.map(@symcore.int))
 }
 
 ///|
@@ -112,7 +112,7 @@ fn gate_tuple_ints(expr : Expr) -> Array[Int]? {
       let out : Array[Int] = []
       for arg in args {
         match arg {
-          Expr::Number(n) if n.is_integral() => out.push(n.numerator().to_int())
+          Number(n) if n.is_integral() => out.push(n.numerator().to_int())
           _ => return None
         }
       }
@@ -140,14 +140,14 @@ pub fn cgate_decompose(expr : Expr) -> Expr {
         (Some(controls), Some(gate)) if controls.length() == 1 &&
           gate.args.length() == 1 =>
           match gate.kind {
-            GateKind::Y =>
+            Y =>
               @symcore.raw_mul([
                 phase_gate(gate.args[0]).as_expr(),
                 cnot_gate(controls[0], gate.args[0]).as_expr(),
                 phase_gate(gate.args[0]).as_expr(),
                 z_gate(gate.args[0]).as_expr(),
               ])
-            GateKind::Z =>
+            Z =>
               @symcore.raw_mul([
                 hadamard_gate(gate.args[0]).as_expr(),
                 cnot_gate(controls[0], gate.args[0]).as_expr(),
@@ -164,7 +164,7 @@ pub fn cgate_decompose(expr : Expr) -> Expr {
 ///|
 pub fn swap_gate_decompose(expr : Expr) -> Expr {
   match gate_from_expr(expr) {
-    Some(gate) if gate.kind == GateKind::Swap => {
+    Some(gate) if gate.kind == Swap => {
       let left = gate.args[0]
       let right = gate.args[1]
       @symcore.raw_mul([
@@ -196,9 +196,9 @@ fn gate_matrix_expr(
     for col in 0..<matrix.width() {
       items.push(matrix.get(row, col))
     }
-    rows.push(@symcore.Expr::Tuple(items))
+    rows.push(Tuple(items))
   }
-  @symcore.raw_function("ImmutableDenseMatrix", [@symcore.Expr::Tuple(rows)])
+  @symcore.raw_function("ImmutableDenseMatrix", [Tuple(rows)])
 }
 
 ///|
@@ -249,9 +249,7 @@ pub fn u_gate(
 ) -> Expr raise @symphysics.PhysicsError {
   let dim = 1 << targets.length()
   guard matrix.height() == dim && matrix.width() == dim else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "UGate target count must match matrix dimension",
-    )
+    raise ShapeError("UGate target count must match matrix dimension")
   }
   @symcore.raw_function("UGate", [
     gate_tuple_expr(targets),
@@ -272,7 +270,7 @@ fn ugate_from_expr(expr : Expr) -> (Array[Int], @symphysics.ExplicitMatrix)? {
   match @symcore.application_args(expr) {
     Some(args) if @symcore.application_has_name(expr, "UGate", arity=2) => {
       let targets = match args[0] {
-        Expr::Number(n) if n.is_integral() => Some([n.numerator().to_int()])
+        Number(n) if n.is_integral() => Some([n.numerator().to_int()])
         _ => gate_tuple_ints(args[0])
       }
       match (targets, gate_matrix_from_expr(args[1])) {
@@ -297,7 +295,7 @@ pub impl Show for GateExpr with fn to_string(self) {
 
 ///|
 pub impl Show for GateExpr with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -315,9 +313,7 @@ fn sqrt2_over_2() -> Expr {
 fn gate_phase_t() -> Expr {
   let quarter = gate_exact_rational(1, 4)
   @symcore.raw_function("exp", [
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
-    quarter,
+    NumberSymbol(ImaginaryUnit) * NumberSymbol(Pi) * quarter,
   ])
 }
 
@@ -326,44 +322,40 @@ pub fn GateExpr::target_matrix(
   self : GateExpr,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match self.kind {
-    GateKind::Identity =>
+    Identity =>
       @symphysics.explicit_matrix_from_rows([[int(1), int(0)], [int(0), int(1)]])
-    GateKind::Hadamard => {
+    Hadamard => {
       let s = gate_hadamard_factor()
       @symphysics.explicit_matrix_from_rows([[s, s], [s, int(-1) * s]])
     }
-    GateKind::X =>
+    X =>
       @symphysics.explicit_matrix_from_rows([[int(0), int(1)], [int(1), int(0)]])
-    GateKind::Y => {
-      let i = @symcore.Expr::NumberSymbol(
-        @symcore.NumberSymbolKind::ImaginaryUnit,
-      )
+    Y => {
+      let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
       @symphysics.explicit_matrix_from_rows([[int(0), int(-1) * i], [i, int(0)]])
     }
-    GateKind::Z =>
+    Z =>
       @symphysics.explicit_matrix_from_rows([
         [int(1), int(0)],
         [int(0), int(-1)],
       ])
-    GateKind::Phase => {
-      let i = @symcore.Expr::NumberSymbol(
-        @symcore.NumberSymbolKind::ImaginaryUnit,
-      )
+    Phase => {
+      let i = @symcore.Expr::NumberSymbol(ImaginaryUnit)
       @symphysics.explicit_matrix_from_rows([[int(1), int(0)], [int(0), i]])
     }
-    GateKind::T =>
+    T =>
       @symphysics.explicit_matrix_from_rows([
         [int(1), int(0)],
         [int(0), gate_phase_t()],
       ])
-    GateKind::Swap =>
+    Swap =>
       @symphysics.explicit_matrix_from_rows([
         [int(1), int(0), int(0), int(0)],
         [int(0), int(0), int(1), int(0)],
         [int(0), int(1), int(0), int(0)],
         [int(0), int(0), int(0), int(1)],
       ])
-    GateKind::CNot =>
+    CNot =>
       @symphysics.explicit_matrix_from_rows([
         [int(1), int(0), int(0), int(0)],
         [int(0), int(1), int(0), int(0)],
@@ -380,8 +372,7 @@ pub fn gate_from_expr(expr : Expr) -> GateExpr? {
       let ints : Array[Int] = []
       for arg in args {
         match arg {
-          Expr::Number(n) if n.is_integral() =>
-            ints.push(n.numerator().to_int())
+          Number(n) if n.is_integral() => ints.push(n.numerator().to_int())
           _ => return None
         }
       }
@@ -438,21 +429,14 @@ fn gate_apply_concrete(
 ) -> Expr? raise @symphysics.PhysicsError {
   for arg in gate.args {
     guard arg >= 0 && arg < q.nqubits() else {
-      raise @symphysics.PhysicsError::IndexError(
-        "Gate target/control index out of range",
-      )
+      raise IndexError("Gate target/control index out of range")
     }
   }
   match gate.kind {
-    GateKind::Identity => Some(qubit_expr)
-    GateKind::Hadamard
-    | GateKind::X
-    | GateKind::Y
-    | GateKind::Z
-    | GateKind::Phase
-    | GateKind::T =>
+    Identity => Some(qubit_expr)
+    Hadamard | X | Y | Z | Phase | T =>
       Some(gate_apply_single_qubit(gate.target_matrix(), q, gate.args[0]))
-    GateKind::Swap => {
+    Swap => {
       let left = q.bits.length() - 1 - gate.args[0]
       let right = q.bits.length() - 1 - gate.args[1]
       let bits = q.bits.copy()
@@ -461,7 +445,7 @@ fn gate_apply_concrete(
       bits[right] = tmp
       Some(qubit_from_bits(bits, bra=q.is_bra, int_form=q.int_form).as_expr())
     }
-    GateKind::CNot => {
+    CNot => {
       let control = q.bit(gate.args[0])
       if control == 0 {
         Some(qubit_expr)
@@ -510,16 +494,12 @@ fn gate_apply_custom(
 ) -> Expr? raise @symphysics.PhysicsError {
   for target in targets {
     guard target >= 0 && target < q.nqubits() else {
-      raise @symphysics.PhysicsError::IndexError(
-        "Gate target/control index out of range",
-      )
+      raise IndexError("Gate target/control index out of range")
     }
   }
   let dim = 1 << targets.length()
   guard matrix.height() == dim && matrix.width() == dim else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "UGate target count must match matrix dimension",
-    )
+    raise ShapeError("UGate target count must match matrix dimension")
   }
   let mut input_col = 0
   for idx in 0..<targets.length() {
@@ -568,7 +548,7 @@ pub fn gate_apply_to_qubit_expr(
                     Some(controls) => {
                       for control in controls {
                         guard control >= 0 && control < q.nqubits() else {
-                          raise @symphysics.PhysicsError::IndexError(
+                          raise IndexError(
                             "Gate target/control index out of range",
                           )
                         }
@@ -629,7 +609,7 @@ pub fn GateExpr::represent_zbasis(
 ///|
 fn gate_is_identity_expr(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 => true
+    Number(n) if n.is_integral() && n.numerator().to_int() == 1 => true
     _ if @symcore.application_has_name(expr, "IdentityGate") => true
     _ => false
   }
@@ -654,7 +634,7 @@ fn gate_sort_info(expr : Expr) -> (String, Array[Int], Int)? {
     Some(gate) => Some((gate_class_name(gate.kind), gate.args.copy(), 1))
     None =>
       match expr {
-        Expr::Pow(base, exp) =>
+        Pow(base, exp) =>
           match (gate_from_expr(base), quantum_integer_value(exp)) {
             (Some(gate), Some(power)) =>
               Some((gate_class_name(gate.kind), gate.args.copy(), power))
@@ -736,9 +716,9 @@ fn gate_compose_pair(lhs : Expr, rhs : Expr) -> Expr? {
     return Some(int(1))
   }
   match (gate_from_expr(lhs), gate_from_expr(rhs)) {
-    (Some(left), Some(right)) if left == right && left.kind == GateKind::Phase =>
+    (Some(left), Some(right)) if left == right && left.kind == Phase =>
       Some(z_gate(left.args[0]).as_expr())
-    (Some(left), Some(right)) if left == right && left.kind == GateKind::T =>
+    (Some(left), Some(right)) if left == right && left.kind == T =>
       Some(phase_gate(left.args[0]).as_expr())
     _ => None
   }
@@ -758,7 +738,7 @@ pub fn gate_pow_simplify(gate_expr : Expr, exp : Int) -> Expr? {
   match gate_from_expr(gate_expr) {
     Some(gate) =>
       match gate.kind {
-        GateKind::Phase => {
+        Phase => {
           let reduced = (exp % 4 + 4) % 4
           Some(
             match reduced {
@@ -773,7 +753,7 @@ pub fn gate_pow_simplify(gate_expr : Expr, exp : Int) -> Expr? {
             },
           )
         }
-        GateKind::T => {
+        T => {
           let reduced = (exp % 8 + 8) % 8
           Some(
             match reduced {
@@ -829,8 +809,8 @@ pub fn gate_pow_simplify(gate_expr : Expr, exp : Int) -> Expr? {
 ///|
 pub fn gate_simp(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) => @symcore.add(args.map(arg => gate_simp(arg)))
-    Expr::Pow(base, exp) =>
+    Add(args) => @symcore.add(args.map(arg => gate_simp(arg)))
+    Pow(base, exp) =>
       match quantum_integer_value(exp) {
         Some(power) =>
           match gate_pow_simplify(base, power) {
@@ -839,12 +819,12 @@ pub fn gate_simp(expr : Expr) -> Expr {
           }
         None => @symcore.raw_pow(gate_simp(base), exp)
       }
-    Expr::Mul(args) => {
+    Mul(args) => {
       let factors : Array[Expr] = []
       for arg in args {
         let simplified = gate_simp(arg)
         match simplified {
-          Expr::Mul(items) =>
+          Mul(items) =>
             for item in items {
               factors.push(item)
             }
@@ -900,7 +880,7 @@ fn supports_disjoint(lhs : Array[Int], rhs : Array[Int]) -> Bool {
 ///|
 pub fn gate_sort(expr : Expr) -> Expr {
   match expr {
-    Expr::Mul(args) => {
+    Mul(args) => {
       let factors = args.copy()
       if factors.length() <= 1 {
         return expr
@@ -913,7 +893,7 @@ pub fn gate_sort(expr : Expr) -> Expr {
             (Some(lhs_support), Some(rhs_support)) if supports_disjoint(
                 lhs_support, rhs_support,
               ) =>
-              if factors[idx].compare(factors[idx + 1]) > 0 {
+              if Compare::compare(factors[idx], factors[idx + 1]) > 0 {
                 let tmp = factors[idx]
                 factors[idx] = factors[idx + 1]
                 factors[idx + 1] = tmp

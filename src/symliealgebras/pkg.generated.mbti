@@ -178,6 +178,14 @@ pub enum CartanSeries {
   F
   G
 } derive(Eq)
+#deprecated
+pub fn CartanSeries::equal(Self, Self) -> Bool
+#deprecated
+pub fn CartanSeries::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn CartanSeries::output(Self, &Logger) -> Unit
+#deprecated
+pub fn CartanSeries::to_string(Self) -> String
 pub impl Show for CartanSeries
 
 pub struct CartanType {
@@ -200,9 +208,13 @@ pub fn CartanType::simple_root(Self, Int) -> Array[@symnum.BigRational] raise
 pub struct Matrix {
   rows : Array[Array[@symnum.BigRational]]
 } derive(Eq)
+#deprecated
+pub fn Matrix::equal(Self, Self) -> Bool
 pub fn Matrix::get(Self, Int, Int) -> @symnum.BigRational
 pub fn Matrix::height(Self) -> Int
 pub fn Matrix::mul(Self, Self) -> Self
+#deprecated
+pub fn Matrix::not_equal(Self, Self) -> Bool
 pub fn Matrix::set(Self, Int, Int, @symnum.BigRational) -> Unit
 pub fn Matrix::width(Self) -> Int
 

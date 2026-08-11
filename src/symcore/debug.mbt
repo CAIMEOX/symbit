@@ -6,8 +6,7 @@ fn ordinary_application_name_args(expr : Expr) -> (String, Array[Expr])? {
   match application_parts(expr) {
     Some((head, args)) =>
       match head {
-        Expr::FunctionHead(name) | Expr::UndefinedFunction(name) =>
-          Some((name, args))
+        FunctionHead(name) | UndefinedFunction(name) => Some((name, args))
         _ => None
       }
     None => None
@@ -22,8 +21,8 @@ fn derivative_call_args(inner : Expr, deriv_args : Array[Expr]) -> Array[Expr] {
     let wrt = deriv_args[i * 2]
     let order = deriv_args[i * 2 + 1]
     match order {
-      Expr::Number(n) if n == @symnum.BigRational::one() => out.push(wrt)
-      _ => out.push(Expr::Tuple([wrt, order]))
+      Number(n) if n == @symnum.BigRational::one() => out.push(wrt)
+      _ => out.push(Tuple([wrt, order]))
     }
   }
   out
@@ -67,51 +66,50 @@ pub impl Debug for Expr with fn to_repr(self) {
     Some((name, args)) => wrap_call_repr(name, args)
     None =>
       match expr_form(self) {
-        ExprForm::Number(n) => n.to_string()
-        ExprForm::Float(f) => f.to_string()
-        ExprForm::ComplexFloat(z) => z.to_string()
-        ExprForm::NumberSymbol(kind) => "const:\{number_symbol_name(kind)}"
-        ExprForm::Symbol(name) => "sym:\{name}"
-        ExprForm::Dummy(name, id) => "dummy:\{dummy_display_name(name)}#\{id}"
-        ExprForm::Wild(name, _, _) => "wild:\{wild_display_name(name)}"
-        ExprForm::WildFunction(name, _) =>
-          "wild_function:\{wild_display_name(name)}"
-        ExprForm::IdentityFunction => "(call IdentityFunction)"
-        ExprForm::FunctionHead(name) => "fhead:\{name}"
-        ExprForm::UndefinedFunction(name) => "ufunc:\{name}"
-        ExprForm::Boolean(true) => "sym:True"
-        ExprForm::Boolean(false) => "sym:False"
-        ExprForm::Add(args) => wrap_variadic_repr("+", args)
-        ExprForm::Mul(args) => wrap_variadic_repr("*", args)
-        ExprForm::Pow(base, exp) =>
+        Number(n) => Show::to_string(n)
+        Float(f) => Show::to_string(f)
+        ComplexFloat(z) => Show::to_string(z)
+        NumberSymbol(kind) => "const:\{number_symbol_name(kind)}"
+        Symbol(name) => "sym:\{name}"
+        Dummy(name, id) => "dummy:\{dummy_display_name(name)}#\{id}"
+        Wild(name, _, _) => "wild:\{wild_display_name(name)}"
+        WildFunction(name, _) => "wild_function:\{wild_display_name(name)}"
+        IdentityFunction => "(call IdentityFunction)"
+        FunctionHead(name) => "fhead:\{name}"
+        UndefinedFunction(name) => "ufunc:\{name}"
+        Boolean(true) => "sym:True"
+        Boolean(false) => "sym:False"
+        Add(args) => wrap_variadic_repr("+", args)
+        Mul(args) => wrap_variadic_repr("*", args)
+        Pow(base, exp) =>
           "(^ \{Repr(base).to_string()} \{Repr(exp).to_string()})"
-        ExprForm::Mod(lhs, rhs) => wrap_call_repr("Mod", [lhs, rhs])
-        ExprForm::Tuple(args) => wrap_call_repr("Tuple", args)
-        ExprForm::Dict(items) => {
+        Mod(lhs, rhs) => wrap_call_repr("Mod", [lhs, rhs])
+        Tuple(args) => wrap_call_repr("Tuple", args)
+        Dict(items) => {
           let args : Array[Expr] = []
           for item in items {
             let (key, value) = item
-            args.push(Expr::Tuple([key, value]))
+            args.push(Tuple([key, value]))
           }
           wrap_call_repr("Dict", args)
         }
-        ExprForm::Relational(op, lhs, rhs) => {
+        Relational(op, lhs, rhs) => {
           let name = match op {
-            RelOp::Eq => "Eq"
-            RelOp::Ne => "Ne"
-            RelOp::Lt => "Lt"
-            RelOp::Le => "Le"
-            RelOp::Gt => "Gt"
-            RelOp::Ge => "Ge"
+            Eq => "Eq"
+            Ne => "Ne"
+            Lt => "Lt"
+            Le => "Le"
+            Gt => "Gt"
+            Ge => "Ge"
           }
           wrap_call_repr(name, [lhs, rhs])
         }
-        ExprForm::Derivative(inner, deriv_args) =>
+        Derivative(inner, deriv_args) =>
           wrap_call_repr("Derivative", derivative_call_args(inner, deriv_args))
-        ExprForm::Subs(inner, variable, value) =>
+        Subs(inner, variable, value) =>
           wrap_call_repr("Subs", [inner, variable, value])
-        ExprForm::Lambda(vars, body) => wrap_call_repr("Lambda", [vars, body])
-        ExprForm::Apply(head, args) =>
+        Lambda(vars, body) => wrap_call_repr("Lambda", [vars, body])
+        Apply(head, args) =>
           match function_head_name(head) {
             Some(name) => wrap_call_repr(name, args)
             None => wrap_apply_repr(head, args)

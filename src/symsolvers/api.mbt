@@ -27,16 +27,13 @@ pub(all) suberror SolverError {
 ///|
 pub impl Show for SolverError with fn output(self, logger : &Logger) -> Unit {
   match self {
-    SolverError::ValueError(msg) => logger.write_string("ValueError(\{msg})")
-    SolverError::NotImplementedError(msg) =>
+    ValueError(msg) => logger.write_string("ValueError(\{msg})")
+    NotImplementedError(msg) =>
       logger.write_string("NotImplementedError(\{msg})")
-    SolverError::NonlinearError(msg) =>
-      logger.write_string("NonlinearError(\{msg})")
-    SolverError::ShapeError(msg) => logger.write_string("ShapeError(\{msg})")
-    SolverError::InfeasibleLPError(msg) =>
-      logger.write_string("InfeasibleLPError(\{msg})")
-    SolverError::UnboundedLPError(msg) =>
-      logger.write_string("UnboundedLPError(\{msg})")
+    NonlinearError(msg) => logger.write_string("NonlinearError(\{msg})")
+    ShapeError(msg) => logger.write_string("ShapeError(\{msg})")
+    InfeasibleLPError(msg) => logger.write_string("InfeasibleLPError(\{msg})")
+    UnboundedLPError(msg) => logger.write_string("UnboundedLPError(\{msg})")
   }
 }
 
@@ -61,7 +58,7 @@ pub enum LinsolveInput {
 /// - Returns: `LinsolveInput::Equations`.
 /// - Limits: This helper performs no linearity or symbol validation by itself.
 pub fn linsolve_equations_input(equations : Array[Expr]) -> LinsolveInput {
-  LinsolveInput::Equations(equations)
+  Equations(equations)
 }
 
 ///|
@@ -73,14 +70,14 @@ pub fn linsolve_equations_input(equations : Array[Expr]) -> LinsolveInput {
 /// - Limits: The matrix must have one more column than the number of solved
 ///   symbols when it reaches `linsolve`.
 pub fn linsolve_augmented_matrix_input(matrix : Matrix) -> LinsolveInput {
-  LinsolveInput::AugmentedMatrix(matrix)
+  AugmentedMatrix(matrix)
 }
 
 ///|
 fn symbol_name(symbol : Expr) -> String raise SolverError {
   match symbol {
-    Expr::Symbol(name) => name
-    _ => raise SolverError::ValueError("expected Symbol in solver API")
+    Symbol(name) => name
+    _ => raise ValueError("expected Symbol in solver API")
   }
 }
 
@@ -90,7 +87,7 @@ fn symbol_names(symbols : Array[Expr]) -> Array[String] raise SolverError {
   for symbol in symbols {
     let name = symbol_name(symbol)
     if out.contains(name) {
-      raise SolverError::ValueError("duplicate symbol " + name)
+      raise ValueError("duplicate symbol " + name)
     }
     out.push(name)
   }
@@ -99,14 +96,14 @@ fn symbol_names(symbols : Array[Expr]) -> Array[String] raise SolverError {
 
 ///|
 fn wrap_poly_error(prefix : String, err : @sympolys.PolyError) -> SolverError {
-  SolverError::ValueError(prefix + ": " + err.to_string())
+  ValueError(prefix + ": " + Show::to_string(err))
 }
 
 ///|
 fn wrap_linear_eq_poly_error(err : @sympolys.PolyError) -> SolverError {
   match err {
-    @sympolys.PolyError::NonPolynomial =>
-      SolverError::NonlinearError("linear_eq_to_matrix: " + err.to_string())
+    NonPolynomial =>
+      NonlinearError("linear_eq_to_matrix: " + Show::to_string(err))
     _ => wrap_poly_error("linear_eq_to_matrix", err)
   }
 }
@@ -116,7 +113,7 @@ fn wrap_matrix_error(
   prefix : String,
   err : @symmatrices.MatrixError,
 ) -> SolverError {
-  SolverError::ValueError(prefix + ": " + err.to_string())
+  ValueError(prefix + ": " + Show::to_string(err))
 }
 
 ///|
@@ -151,7 +148,7 @@ fn equations_from_augmented_matrix(
   symbols : Array[Expr],
 ) -> Array[Expr] raise SolverError {
   if system.cols != symbols.length() + 1 {
-    raise SolverError::ShapeError(
+    raise ShapeError(
       "augmented matrix must have one more column than the number of symbols",
     )
   }
@@ -182,7 +179,7 @@ fn tuple_solution_set(
         let fallback = symbols[i]
         items.push(values.get(names[i]).unwrap_or(fallback))
       }
-      @symsets.finite_set([Expr::Tuple(items)])
+      @symsets.finite_set([Tuple(items)])
     }
   }
 }
@@ -205,9 +202,7 @@ fn expr_zeroish(expr : Expr) -> Bool {
 
 ///|
 fn expr_canonicalish(expr : Expr) -> Expr {
-  let normalized = @sympolys.domain_normal_expr(@sympolys.Domain::EX, expr) catch {
-    _ => expr
-  }
+  let normalized = @sympolys.domain_normal_expr(EX, expr) catch { _ => expr }
   @symsimplify.simplify(normalized)
 }
 
@@ -222,12 +217,12 @@ fn symbolic_linsolve_from_matrices(
     return None
   }
   if lhs.cols != symbols.length() || names.length() != symbols.length() {
-    raise SolverError::ShapeError(
+    raise ShapeError(
       "linsolve matrix dimensions must match the number of symbols",
     )
   }
   if rhs.cols != 1 || lhs.rows != rhs.rows {
-    raise SolverError::ShapeError(
+    raise ShapeError(
       "linsolve fallback expects rhs as a single matching column",
     )
   }
@@ -316,7 +311,7 @@ fn split_augmented_matrix(
   symbols : Array[Expr],
 ) -> (Matrix, Matrix) raise SolverError {
   if system.cols != symbols.length() + 1 {
-    raise SolverError::ShapeError(
+    raise ShapeError(
       "augmented matrix must have one more column than the number of symbols",
     )
   }
@@ -363,12 +358,12 @@ fn check_zero_expr(expr : Expr) -> Bool? {
         Some(cmp) =>
           Some(
             match op {
-              @symcore.RelOp::Eq => cmp == 0
-              @symcore.RelOp::Ne => cmp != 0
-              @symcore.RelOp::Lt => cmp < 0
-              @symcore.RelOp::Le => cmp <= 0
-              @symcore.RelOp::Gt => cmp > 0
-              @symcore.RelOp::Ge => cmp >= 0
+              Eq => cmp == 0
+              Ne => cmp != 0
+              Lt => cmp < 0
+              Le => cmp <= 0
+              Gt => cmp > 0
+              Ge => cmp >= 0
             },
           )
         None => None
@@ -397,14 +392,10 @@ pub fn linear_eq_to_matrix(
   symbols : Array[Expr],
 ) -> (Matrix, Matrix) raise SolverError {
   if symbols.is_empty() {
-    raise SolverError::ValueError(
-      "linear_eq_to_matrix expects at least one symbol",
-    )
+    raise ValueError("linear_eq_to_matrix expects at least one symbol")
   }
-  if equations.any(expr => expr is Expr::Boolean(_)) {
-    raise SolverError::ValueError(
-      "linear_eq_to_matrix expects equations, not Boolean",
-    )
+  if equations.any(expr => expr is Boolean(_)) {
+    raise ValueError("linear_eq_to_matrix expects equations, not Boolean")
   }
   let names = symbol_names(symbols)
   let (coeffs, const_terms) = @sympolys._linear_eq_to_dict(equations, names) catch {
@@ -444,16 +435,14 @@ pub fn linsolve(
 ) -> Set raise SolverError {
   let names = symbol_names(symbols)
   let equations = match system {
-    LinsolveInput::Equations(items) => items
-    LinsolveInput::AugmentedMatrix(matrix) =>
-      equations_from_augmented_matrix(matrix, symbols)
+    Equations(items) => items
+    AugmentedMatrix(matrix) => equations_from_augmented_matrix(matrix, symbols)
   }
   let solution = @sympolys._linsolve(equations, names) catch {
-    @sympolys.PolyError::DomainMismatch => {
+    DomainMismatch => {
       let (lhs, rhs) = match system {
-        LinsolveInput::Equations(_) => linear_eq_to_matrix(equations, symbols)
-        LinsolveInput::AugmentedMatrix(matrix) =>
-          split_augmented_matrix(matrix, symbols)
+        Equations(_) => linear_eq_to_matrix(equations, symbols)
+        AugmentedMatrix(matrix) => split_augmented_matrix(matrix, symbols)
       }
       symbolic_linsolve_from_matrices(lhs, rhs, symbols, names)
     }
@@ -477,7 +466,7 @@ pub fn solve_linear_system(
   let names = symbol_names(symbols)
   let equations = equations_from_augmented_matrix(system, symbols)
   @sympolys._linsolve(equations, names) catch {
-    @sympolys.PolyError::DomainMismatch => {
+    DomainMismatch => {
       let (lhs, rhs) = split_augmented_matrix(system, symbols)
       symbolic_linsolve_from_matrices(lhs, rhs, symbols, names)
     }
@@ -500,7 +489,7 @@ pub fn solve_linear_system_LU(
   let names = symbol_names(symbols)
   let (lhs, rhs) = split_augmented_matrix(system, symbols)
   if lhs.rows != lhs.cols {
-    raise SolverError::ShapeError(
+    raise ShapeError(
       "solve_linear_system_LU requires a square coefficient matrix",
     )
   }

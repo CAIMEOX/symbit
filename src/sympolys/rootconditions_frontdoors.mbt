@@ -10,8 +10,8 @@
 ///|
 fn rootcond_coeff_domain(domain : Domain) -> Domain raise PolyError {
   match domain {
-    Domain::ZZ => Domain::QQ
-    Domain::CC | Domain::ZZ_I | Domain::QQ_I => raise PolyError::DomainMismatch
+    ZZ => QQ
+    CC | ZZ_I | QQ_I => raise DomainMismatch
     _ => domain
   }
 }
@@ -19,7 +19,7 @@ fn rootcond_coeff_domain(domain : Domain) -> Domain raise PolyError {
 ///|
 fn rootcond_dup_domain(domain : Domain) -> Domain raise PolyError {
   match domain {
-    Domain::CC | Domain::ZZ_I | Domain::QQ_I => raise PolyError::DomainMismatch
+    CC | ZZ_I | QQ_I => raise DomainMismatch
     _ => domain
   }
 }
@@ -49,7 +49,7 @@ fn rootcond_dup_routh_hurwitz_fraction_free(
 ) -> Array[FieldElem] raise PolyError {
   let mut p = dup_strip(coeffs)
   if p.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   if p.length() == 1 {
     return []
@@ -199,7 +199,7 @@ fn rootcond_dup_schur_transform_desc(
 ) -> Array[FieldElem] raise PolyError {
   let p = dup_strip(coeffs)
   if p.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let degree = p.length() - 1
   let one = fe_from_int(1, domain)
@@ -231,7 +231,7 @@ fn rootcond_dup_eval_at_minus_one(
 ) -> FieldElem raise PolyError {
   let p = dup_strip(coeffs)
   if p.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let neg_one = rootcond_dup_neg_one(domain)
   let mut acc = fe_from_int(0, domain)
@@ -281,7 +281,7 @@ fn rootcond_coeff_exact_quotient(
   denominator : Poly,
 ) -> Poly raise PolyError {
   if denominator.is_zero() {
-    raise PolyError::DivisionByZero
+    raise DivisionByZero
   }
   if numerator.is_zero() {
     return Poly::zero(numerator.gens, numerator.domain)
@@ -295,7 +295,7 @@ fn rootcond_coeff_exact_quotient(
   if remainder.is_zero() {
     quotient
   } else {
-    raise PolyError::ExactQuotientFailed
+    raise ExactQuotientFailed
   }
 }
 
@@ -318,10 +318,10 @@ fn rootcond_coeffs_desc(
   gen_index : Int,
 ) -> Array[Poly] raise PolyError {
   if poly.is_zero() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   if gen_index < 0 || gen_index >= poly.gens.length() {
-    raise PolyError::BadGenerator(gen_index.to_string())
+    raise BadGenerator(gen_index.to_string())
   }
   let coeff_domain = rootcond_coeff_domain(poly.domain)
   let coeff_gens = remove_gen(poly.gens, gen_index)
@@ -371,7 +371,7 @@ fn rootcond_routh_hurwitz_coeffs(
 ) -> Array[Poly] raise PolyError {
   let mut p = rootcond_trim_desc(coeffs)
   if p.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   if p.length() == 1 {
     return []
@@ -521,7 +521,7 @@ fn rootcond_schur_transform_desc(
 ) -> Array[Poly] raise PolyError {
   let p = rootcond_trim_desc(coeffs)
   if p.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let degree = p.length() - 1
   let one = rootcond_coeff_one(p[0].gens, p[0].domain)
@@ -546,7 +546,7 @@ fn rootcond_schur_transform_desc(
 fn rootcond_eval_at_minus_one(coeffs : Array[Poly]) -> Poly raise PolyError {
   let p = rootcond_trim_desc(coeffs)
   if p.is_empty() {
-    raise PolyError::NonPolynomial
+    raise NonPolynomial
   }
   let neg_one = rootcond_coeff_neg_one(p[0].gens, p[0].domain)
   let mut acc = rootcond_coeff_zero(p[0].gens, p[0].domain)

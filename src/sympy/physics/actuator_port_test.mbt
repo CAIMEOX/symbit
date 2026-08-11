@@ -9,7 +9,7 @@ fn actuator_assert_force_load(
   context : String,
 ) -> Unit raise {
   match load {
-    Load::ForceLoad(value) => {
+    ForceLoad(value) => {
       assert_eq(value.point.name(), point_name)
       let comps = value.force.to_matrix(frame)
       let ours_x = @symprint.pretty_string(comps.get(0, 0))
@@ -34,7 +34,7 @@ fn actuator_assert_torque_load(
   context : String,
 ) -> Unit raise {
   match load {
-    Load::TorqueLoad(value) => {
+    TorqueLoad(value) => {
       assert_eq(value.frame.name(), frame_name)
       let comps = value.torque.to_matrix(basis_frame)
       let ours_x = @symprint.pretty_string(comps.get(0, 0))
@@ -57,7 +57,7 @@ test "physics.mechanics parity actuators" {
   p_b.set_pos(p_a, n.x().scale(q))
   let pathway = linear_pathway(p_a, p_b).as_pathway()
 
-  let actuator = force_actuator(@symcore.Expr::Symbol("F"), pathway)
+  let actuator = force_actuator(Symbol("F"), pathway)
   let force_loads = actuator.to_loads()
   actuator_assert_force_load(
     force_loads[0],
@@ -79,9 +79,9 @@ test "physics.mechanics parity actuators" {
   )
 
   let spring = linear_spring(
-    @symcore.Expr::Symbol("k"),
+    Symbol("k"),
     pathway,
-    equilibrium_length=@symcore.Expr::Symbol("l"),
+    equilibrium_length=Symbol("l"),
   )
   let spring_force_oracle = mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); k,l=symbols('k l'); pB.set_pos(pA, q*N.x); LinearSpring(k, LinearPathway(pA, pB), equilibrium_length=l).force",
@@ -93,7 +93,7 @@ test "physics.mechanics parity actuators" {
     ),
   )
 
-  let damper = linear_damper(@symcore.Expr::Symbol("c"), pathway)
+  let damper = linear_damper(Symbol("c"), pathway)
   let damper_force_oracle = mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); c=symbols('c'); pB.set_pos(pA, q*N.x); LinearDamper(c, LinearPathway(pA, pB)).force",
   )
@@ -104,11 +104,7 @@ test "physics.mechanics parity actuators" {
     ),
   )
 
-  let duffing = duffing_spring(
-    @symcore.Expr::Symbol("k_lin"),
-    @symcore.Expr::Symbol("k_nl"),
-    pathway,
-  )
+  let duffing = duffing_spring(Symbol("k_lin"), Symbol("k_nl"), pathway)
   let duffing_force_oracle = mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); k_lin,k_nl=symbols('k_lin k_nl'); pB.set_pos(pA, q*N.x); DuffingSpring(k_lin, k_nl, LinearPathway(pA, pB)).force",
   )
@@ -120,10 +116,10 @@ test "physics.mechanics parity actuators" {
   )
 
   let friction = coulomb_kinetic_friction(
-    @symcore.Expr::Symbol("mu_k"),
-    @symcore.Expr::Symbol("Nf"),
+    Symbol("mu_k"),
+    Symbol("Nf"),
     pathway,
-    sigma=@symcore.Expr::Symbol("sigma"),
+    sigma=Symbol("sigma"),
   )
   let friction_force_oracle = mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); mu_k,Nf,sigma=symbols('mu_k Nf sigma'); pB.set_pos(pA, q*N.x); CoulombKineticFriction(mu_k, Nf, LinearPathway(pA, pB), sigma=sigma).force",
@@ -138,7 +134,7 @@ test "physics.mechanics parity actuators" {
   let target = @symvector.reference_frame("TA")
   let reaction = @symvector.reference_frame("RA")
   let torque = torque_actuator(
-    @symcore.Expr::Symbol("T"),
+    Symbol("T"),
     n.z(),
     target,
     reaction_frame=Some(reaction),

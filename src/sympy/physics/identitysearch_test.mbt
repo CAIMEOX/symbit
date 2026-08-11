@@ -6,7 +6,7 @@ fn quantum_gate_sequence_summary(gates : Array[@symcore.Expr]) -> String {
   let parts : Array[String] = []
   for gate in gates {
     match gate_from_expr(gate) {
-      Some(parsed) => parts.push(parsed.to_string())
+      Some(parsed) => parts.push(Show::to_string(parsed))
       None => parts.push(@symprint.pretty_string(gate))
     }
   }

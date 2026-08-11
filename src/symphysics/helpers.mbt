@@ -1,11 +1,11 @@
 ///|
 fn pi_expr() -> Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  NumberSymbol(Pi)
 }
 
 ///|
 fn i_expr() -> Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  NumberSymbol(ImaginaryUnit)
 }
 
 ///|
@@ -17,11 +17,11 @@ fn rational_expr(num : Int, den : Int) -> Expr {
 
 ///|
 fn rational_expr_bigint(num : BigInt, den : BigInt) -> Expr {
-  @symcore.Expr::Number(@symnum.BigRational::new(num, den)) catch {
+  Number(@symnum.BigRational::new(num, den)) catch {
     _ =>
       @symcore.function("Rational", [
-        @symcore.Expr::Number(@symnum.BigRational::from_bigint(num)),
-        @symcore.Expr::Number(@symnum.BigRational::from_bigint(den)),
+        Number(@symnum.BigRational::from_bigint(num)),
+        Number(@symnum.BigRational::from_bigint(den)),
       ])
   }
 }
@@ -34,7 +34,7 @@ fn expr_div(lhs : Expr, rhs : Expr) -> Expr {
 ///|
 fn expr_number_value(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    Expr::Number(n) => Some(n)
+    Number(n) => Some(n)
     _ => None
   }
 }

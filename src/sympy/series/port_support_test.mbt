@@ -1,7 +1,5 @@
 ///|
 using @symseries {
-  type FourierSeriesResult,
-  type FpsResult,
   type Limit,
   approximants,
   big_o,

@@ -13,9 +13,7 @@ priv struct GateNormalizationState {
 }
 
 ///|
-let gate_normalization_state : GateNormalizationState = GateNormalizationState::{
-  normalized: true,
-}
+let gate_normalization_state : GateNormalizationState = { normalized: true }
 
 ///|
 let gate_random_source : @random.Rand = @random.Rand::new()
@@ -47,35 +45,25 @@ fn random_gate_expr(
   rng : @random.Rand,
 ) -> Expr raise @symphysics.PhysicsError {
   guard nqubits > 0 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "random_circuit expects nqubits > 0",
-    )
+    raise ValueError("random_circuit expects nqubits > 0")
   }
   match kind {
-    GateKind::Identity
-    | GateKind::Hadamard
-    | GateKind::X
-    | GateKind::Y
-    | GateKind::Z
-    | GateKind::Phase
-    | GateKind::T => {
+    Identity | Hadamard | X | Y | Z | Phase | T => {
       let target = rng.int(limit=nqubits)
       match kind {
-        GateKind::Identity => identity_gate(target).as_expr()
-        GateKind::Hadamard => hadamard_gate(target).as_expr()
-        GateKind::X => x_gate(target).as_expr()
-        GateKind::Y => y_gate(target).as_expr()
-        GateKind::Z => z_gate(target).as_expr()
-        GateKind::Phase => phase_gate(target).as_expr()
-        GateKind::T => t_gate(target).as_expr()
+        Identity => identity_gate(target).as_expr()
+        Hadamard => hadamard_gate(target).as_expr()
+        X => x_gate(target).as_expr()
+        Y => y_gate(target).as_expr()
+        Z => z_gate(target).as_expr()
+        Phase => phase_gate(target).as_expr()
+        T => t_gate(target).as_expr()
         _ => abort("unreachable")
       }
     }
-    GateKind::Swap | GateKind::CNot => {
+    Swap | CNot => {
       guard nqubits >= 2 else {
-        raise @symphysics.PhysicsError::ValueError(
-          "Two-qubit random gates need at least 2 qubits",
-        )
+        raise ValueError("Two-qubit random gates need at least 2 qubits")
       }
       let first = rng.int(limit=nqubits)
       let mut second = rng.int(limit=nqubits)
@@ -83,8 +71,8 @@ fn random_gate_expr(
         second = rng.int(limit=nqubits)
       }
       match kind {
-        GateKind::Swap => swap_gate(first, second).as_expr()
-        GateKind::CNot => cnot_gate(first, second).as_expr()
+        Swap => swap_gate(first, second).as_expr()
+        CNot => cnot_gate(first, second).as_expr()
         _ => abort("unreachable")
       }
     }
@@ -95,27 +83,14 @@ fn random_gate_expr(
 pub fn random_circuit(
   ngates : Int,
   nqubits : Int,
-  gate_space? : Array[GateKind] = [
-    GateKind::X,
-    GateKind::Y,
-    GateKind::Z,
-    GateKind::Phase,
-    GateKind::T,
-    GateKind::Hadamard,
-    GateKind::CNot,
-    GateKind::Swap,
-  ],
+  gate_space? : Array[GateKind] = [X, Y, Z, Phase, T, Hadamard, CNot, Swap],
   seed? : Int = -1,
 ) -> Expr raise @symphysics.PhysicsError {
   guard ngates >= 0 else {
-    raise @symphysics.PhysicsError::ValueError(
-      "random_circuit expects ngates >= 0",
-    )
+    raise ValueError("random_circuit expects ngates >= 0")
   }
   guard !gate_space.is_empty() else {
-    raise @symphysics.PhysicsError::ValueError(
-      "random_circuit expects a non-empty gate space",
-    )
+    raise ValueError("random_circuit expects a non-empty gate space")
   }
   let rng = if seed >= 0 {
     gate_random_from_seed(seed)

@@ -1,14 +1,13 @@
 ///|
 test "debug repr uses s-expression order" {
-  let expr = @symcore.Expr::Symbol("b") *
-    (@symcore.Expr::Symbol("a") + @symcore.int(1))
+  let expr = @symcore.Expr::Symbol("b") * (Symbol("a") + @symcore.int(1))
   debug_inspect(expr, content="(* sym:b (+ sym:a 1))")
 }
 
 ///|
 test "pretty to_string respects precedence" {
   let expr = (@symcore.Expr::Symbol("x") + @symcore.int(1)) ^
-    (@symcore.Expr::Symbol("y") * @symcore.int(2))
+    (Symbol("y") * @symcore.int(2))
   inspect(pretty_string(expr), content="(x + 1)**(2*y)")
 }
 
@@ -152,7 +151,7 @@ test "pretty to_string prints Float leaves" {
   let exact = @symcore.Float::from_str("0.125", prec=90) catch {
     _ => fail("float")
   }
-  inspect(pretty_string(@symcore.Expr::Float(exact)), content="0.125")
+  inspect(pretty_string(Float(exact)), content="0.125")
 }
 
 ///|
@@ -162,24 +161,17 @@ test "pretty to_string wraps complex float leaves inside products" {
     @symnum.BigRational::from_int(2),
     prec=80,
   )
-  let expr = @symcore.mul([
-    @symcore.Expr::ComplexFloat(value),
-    @symcore.Expr::Symbol("x"),
-  ])
+  let expr = @symcore.mul([ComplexFloat(value), Symbol("x")])
   inspect(pretty_string(expr), content="(1.0 + 2.0*I)*x")
 }
 
 ///|
 test "pretty printers understand relational tuple and lambda wrappers" {
-  let rel = @symcore.Expr::Relational(
-    @symcore.RelOp::Le,
-    @symcore.Expr::Symbol("x"),
-    @symcore.int(2),
-  )
-  let tup = @symcore.Expr::Tuple([@symcore.Expr::Symbol("x"), @symcore.int(2)])
+  let rel = @symcore.Expr::Relational(Le, Symbol("x"), @symcore.int(2))
+  let tup = @symcore.Expr::Tuple([Symbol("x"), @symcore.int(2)])
   let lam = @symcore.lambda_expr(
     tup,
-    @symcore.add([@symcore.Expr::Symbol("x"), @symcore.int(1)]),
+    @symcore.add([Symbol("x"), @symcore.int(1)]),
   )
   debug_inspect(rel, content="(call Le sym:x 2)")
   inspect(pretty_string(rel), content="x <= 2")
@@ -189,22 +181,9 @@ test "pretty printers understand relational tuple and lambda wrappers" {
 
 ///|
 test "pretty printers understand number symbols" {
-  debug_inspect(
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
-    content="const:pi",
-  )
-  inspect(
-    pretty_string(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
-    ),
-    content="I",
-  )
-  inspect(
-    pretty_string(
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-    ),
-    content="oo",
-  )
+  debug_inspect(@symcore.Expr::NumberSymbol(Pi), content="const:pi")
+  inspect(pretty_string(NumberSymbol(ImaginaryUnit)), content="I")
+  inspect(pretty_string(NumberSymbol(Infinity)), content="oo")
 }
 
 ///|
@@ -230,8 +209,8 @@ test "pretty printers distinguish undefined function heads" {
 ///|
 test "pretty printers render dict containers" {
   let expr = @symcore.Expr::Dict([
-    (@symcore.Expr::Symbol("x"), @symcore.Expr::Symbol("y")),
-    (@symcore.int(1), @symcore.Expr::Symbol("z")),
+    (Symbol("x"), Symbol("y")),
+    (@symcore.int(1), Symbol("z")),
   ])
   debug_inspect(
     expr,
@@ -243,7 +222,7 @@ test "pretty printers render dict containers" {
 ///|
 test "pretty printers render Mod as a structured core node" {
   let expr = @symcore.mod_expr(
-    @symcore.add([@symcore.Expr::Symbol("x"), @symcore.int(1)]),
+    @symcore.add([Symbol("x"), @symcore.int(1)]),
     @symcore.int(3),
   )
   inspect(pretty_string(expr), content="Mod(x + 1, 3)")

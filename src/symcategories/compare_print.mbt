@@ -6,9 +6,9 @@ pub fn compare_object(a : Object, b : Object) -> Int {
 ///|
 fn morphism_variant_rank(morphism : Morphism) -> Int {
   match morphism {
-    Morphism::Composite(_) => 0
-    Morphism::Identity(_) => 1
-    Morphism::Named(_, _, _) => 2
+    Composite(_) => 0
+    Identity(_) => 1
+    Named(_, _, _) => 2
   }
 }
 
@@ -35,12 +35,8 @@ pub fn compare_morphism(a : Morphism, b : Morphism) -> Int {
     return rank_cmp
   }
   match (a, b) {
-    (Morphism::Identity(obj_a), Morphism::Identity(obj_b)) =>
-      compare_object(obj_a, obj_b)
-    (
-      Morphism::Named(dom_a, cod_a, name_a),
-      Morphism::Named(dom_b, cod_b, name_b),
-    ) => {
+    (Identity(obj_a), Identity(obj_b)) => compare_object(obj_a, obj_b)
+    (Named(dom_a, cod_a, name_a), Named(dom_b, cod_b, name_b)) => {
       let dom_cmp = compare_object(dom_a, dom_b)
       if dom_cmp != 0 {
         return dom_cmp
@@ -51,8 +47,7 @@ pub fn compare_morphism(a : Morphism, b : Morphism) -> Int {
       }
       name_a.compare(name_b)
     }
-    (Morphism::Composite(xs), Morphism::Composite(ys)) =>
-      compare_morphism_arrays(xs, ys)
+    (Composite(xs), Composite(ys)) => compare_morphism_arrays(xs, ys)
     _ => 0
   }
 }
@@ -139,13 +134,13 @@ pub impl Eq for Object with fn equal(self, other : Object) -> Bool {
 
 ///|
 pub impl Eq for Object with fn not_equal(self, other : Object) -> Bool {
-  !self.equal(other)
+  !Eq::equal(self, other)
 }
 
 ///|
 pub impl Hash for Object with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
@@ -161,7 +156,7 @@ pub impl Show for Object with fn to_string(self) -> String {
 
 ///|
 pub impl Show for Object with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -176,13 +171,13 @@ pub impl Eq for Morphism with fn equal(self, other : Morphism) -> Bool {
 
 ///|
 pub impl Eq for Morphism with fn not_equal(self, other : Morphism) -> Bool {
-  !self.equal(other)
+  !Eq::equal(self, other)
 }
 
 ///|
 pub impl Hash for Morphism with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
@@ -190,15 +185,15 @@ pub impl Hash for Morphism with fn hash(self) -> Int {
 pub impl Hash for Morphism with fn hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_int(morphism_variant_rank(self))
   match self {
-    Morphism::Identity(obj) => obj.hash_combine(hasher)
-    Morphism::Named(dom, cod, name) => {
-      dom.hash_combine(hasher)
-      cod.hash_combine(hasher)
+    Identity(obj) => Hash::hash_combine(obj, hasher)
+    Named(dom, cod, name) => {
+      Hash::hash_combine(dom, hasher)
+      Hash::hash_combine(cod, hasher)
       hasher.combine_string(name)
     }
-    Morphism::Composite(items) =>
+    Composite(items) =>
       for item in items {
-        item.hash_combine(hasher)
+        Hash::hash_combine(item, hasher)
       }
   }
 }
@@ -206,25 +201,25 @@ pub impl Hash for Morphism with fn hash_combine(self, hasher : Hasher) -> Unit {
 ///|
 pub impl Show for Morphism with fn to_string(self) -> String {
   match self {
-    Morphism::Identity(obj) => "IdentityMorphism(" + obj.to_string() + ")"
-    Morphism::Named(dom, cod, name) =>
+    Identity(obj) => "IdentityMorphism(" + Show::to_string(obj) + ")"
+    Named(dom, cod, name) =>
       "NamedMorphism(" +
-      dom.to_string() +
+      Show::to_string(dom) +
       ", " +
-      cod.to_string() +
+      Show::to_string(cod) +
       ", \"" +
       name +
       "\")"
-    Morphism::Composite(items) =>
+    Composite(items) =>
       "CompositeMorphism((" +
-      items.map(item => item.to_string()).join(", ") +
+      items.map(item => Show::to_string(item)).join(", ") +
       "))"
   }
 }
 
 ///|
 pub impl Show for Morphism with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -239,17 +234,17 @@ pub impl Eq for Class with fn equal(self, other : Class) -> Bool {
 
 ///|
 pub impl Eq for Class with fn not_equal(self, other : Class) -> Bool {
-  !self.equal(other)
+  !Eq::equal(self, other)
 }
 
 ///|
 pub impl Show for Class with fn to_string(self) -> String {
-  "Class({" + self.objects.map(item => item.to_string()).join(", ") + "})"
+  "Class({" + self.objects.map(item => Show::to_string(item)).join(", ") + "})"
 }
 
 ///|
 pub impl Show for Class with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -264,27 +259,27 @@ pub impl Eq for Diagram with fn equal(self, other : Diagram) -> Bool {
 
 ///|
 pub impl Eq for Diagram with fn not_equal(self, other : Diagram) -> Bool {
-  !self.equal(other)
+  !Eq::equal(self, other)
 }
 
 ///|
 pub impl Hash for Diagram with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
 ///|
 pub impl Hash for Diagram with fn hash_combine(self, hasher : Hasher) -> Unit {
   for key in map_keys_sorted(self.premises) {
-    key.hash_combine(hasher)
+    Hash::hash_combine(key, hasher)
     for prop in self.premises[key] {
       hasher.combine_string(prop)
     }
   }
   hasher.combine_int(17)
   for key in map_keys_sorted(self.conclusions) {
-    key.hash_combine(hasher)
+    Hash::hash_combine(key, hasher)
     for prop in self.conclusions[key] {
       hasher.combine_string(prop)
     }
@@ -295,7 +290,7 @@ pub impl Hash for Diagram with fn hash_combine(self, hasher : Hasher) -> Unit {
 fn show_diagram_map(items : Map[Morphism, Array[String]]) -> String {
   let parts : Array[String] = Array::new()
   for key in map_keys_sorted(items) {
-    parts.push(key.to_string() + ": " + show_property_set(items[key]))
+    parts.push(Show::to_string(key) + ": " + show_property_set(items[key]))
   }
   "{" + parts.join(", ") + "}"
 }
@@ -307,13 +302,13 @@ pub impl Show for Diagram with fn to_string(self) -> String {
   ", " +
   show_diagram_map(self.conclusions) +
   ", {" +
-  self.objects.map(item => item.to_string()).join(", ") +
+  self.objects.map(item => Show::to_string(item)).join(", ") +
   "})"
 }
 
 ///|
 pub impl Show for Diagram with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -328,13 +323,13 @@ pub impl Eq for Category with fn equal(self, other : Category) -> Bool {
 
 ///|
 pub impl Eq for Category with fn not_equal(self, other : Category) -> Bool {
-  !self.equal(other)
+  !Eq::equal(self, other)
 }
 
 ///|
 pub impl Hash for Category with fn hash(self) -> Int {
   let hasher = Hasher()
-  self.hash_combine(hasher)
+  Hash::hash_combine(self, hasher)
   hasher.finalize()
 }
 
@@ -342,11 +337,11 @@ pub impl Hash for Category with fn hash(self) -> Int {
 pub impl Hash for Category with fn hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_string(self.name)
   for item in self.objects.objects {
-    item.hash_combine(hasher)
+    Hash::hash_combine(item, hasher)
   }
   hasher.combine_int(29)
   for item in self.commutative_diagrams {
-    item.hash_combine(hasher)
+    Hash::hash_combine(item, hasher)
   }
 }
 
@@ -357,5 +352,5 @@ pub impl Show for Category with fn to_string(self) -> String {
 
 ///|
 pub impl Show for Category with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }

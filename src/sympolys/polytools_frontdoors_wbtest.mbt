@@ -1,6 +1,6 @@
 ///|
 test "polytools frontdoors: degree and leading term helpers" {
-  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let b = PolyBuilder::new(["x", "y"], QQ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let p = b.from_expr(
@@ -17,7 +17,7 @@ test "polytools frontdoors: degree and leading term helpers" {
 
 ///|
 test "polytools frontdoors: zero leading conventions" {
-  let z = Poly::zero(["x"], Domain::ZZ)
+  let z = Poly::zero(["x"], ZZ)
   inspect(degree(z), content="-1")
   debug_inspect(degree_list(z), content="[-1]")
   inspect(total_degree(z), content="0")
@@ -33,7 +33,7 @@ test "polytools frontdoors: expression constructors and order helpers" {
   let p = poly_from_expr(x * y + @symcore.rational_from_ints(1, 2))
   debug_inspect(p.gens, content="[\"x\", \"y\"]")
   match p.domain {
-    Domain::QQ => ()
+    QQ => ()
     _ => fail("expected QQ domain")
   }
   inspect(p, content="x*y + 1/2")
@@ -50,11 +50,11 @@ test "polytools frontdoors: expression constructors and order helpers" {
       #|x**2 + 2*x + 1
     ),
   )
-  inspect(lex() == TermOrder::Lex, content="true")
-  inspect(grlex() == TermOrder::Grlex, content="true")
-  inspect(grevlex() == TermOrder::Grevlex, content="true")
-  inspect(monomial_key() == TermOrder::Lex, content="true")
-  inspect(monomial_key(order="igrevlex") == TermOrder::Igrevlex, content="true")
+  inspect(lex() == Lex, content="true")
+  inspect(grlex() == Grlex, content="true")
+  inspect(grevlex() == Grevlex, content="true")
+  inspect(monomial_key() == Lex, content="true")
+  inspect(monomial_key(order="igrevlex") == Igrevlex, content="true")
   sympolys_assert_error(
     fn() raise PolyError { monomial_key(order="bad") },
     "BadGenerator",
@@ -63,7 +63,7 @@ test "polytools frontdoors: expression constructors and order helpers" {
 
 ///|
 test "polytools frontdoors: division and pseudo division" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let p = b.from_expr((x ^ int(2)) + int(1))
   let d = b.from_expr(x + int(1))
@@ -103,7 +103,7 @@ test "polytools frontdoors: division and pseudo division" {
 
 ///|
 test "polytools frontdoors: gcd lcm cofactors and normalization" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let p = b.from_expr((x ^ int(2)) - int(1))
   let q = b.from_expr((x ^ int(2)) - x)
@@ -147,7 +147,7 @@ test "polytools frontdoors: gcd lcm cofactors and normalization" {
 
 ///|
 test "polytools frontdoors: factor squarefree sturm groebner resultant" {
-  let bu = PolyBuilder::new(["x"], Domain::ZZ)
+  let bu = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let p = bu.from_expr((x ^ int(4)) - int(1))
   let factors = factor(p).map(pair => "(\{pair.0}, \{pair.1})")
@@ -189,7 +189,7 @@ test "polytools frontdoors: factor squarefree sturm groebner resultant" {
       #|x**3 - x | 3*x**2 - 1 | 2*x/3 | 1
     ),
   )
-  let bm = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let bm = PolyBuilder::new(["x", "y"], QQ)
   let y = Expr::Symbol("y")
   let g1 = bm.from_expr(x * y - int(1))
   let g2 = bm.from_expr(x - int(1))
@@ -199,7 +199,7 @@ test "polytools frontdoors: factor squarefree sturm groebner resultant" {
       #|x - 1 | y - 1
     ),
   )
-  let basis_obj = groebner_basis([g1, g2], order=TermOrder::Lex)
+  let basis_obj = groebner_basis([g1, g2], order=Lex)
   inspect(
     basis_obj.polys.map(poly => poly.to_string()).join(" | "),
     content=(
@@ -208,7 +208,7 @@ test "polytools frontdoors: factor squarefree sturm groebner resultant" {
   )
   debug_inspect(basis_obj.gens, content="[\"x\", \"y\"]")
   inspect(domain_to_sympy_string(basis_obj.domain), content="QQ")
-  inspect(basis_obj.order == TermOrder::Lex, content="true")
+  inspect(basis_obj.order == Lex, content="true")
   let r = resultant(
     bu.from_expr((x ^ int(2)) + int(1)),
     bu.from_expr((x ^ int(2)) - int(1)),
@@ -218,7 +218,7 @@ test "polytools frontdoors: factor squarefree sturm groebner resultant" {
 
 ///|
 test "polytools frontdoors: gff stability and powered roots" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let gff_input = b.from_expr(
     (x ^ int(5)) + int(2) * (x ^ int(4)) - (x ^ int(3)) - int(2) * (x ^ int(2)),
@@ -263,7 +263,7 @@ fn pt_wb_iv_repr(
 
 ///|
 test "polytools frontdoors: extended euclidean family" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let f = b.from_expr(
     (x ^ int(4)) -
@@ -318,7 +318,7 @@ test "polytools frontdoors: extended euclidean family" {
 
 ///|
 test "polytools frontdoors: trunc and root fronts" {
-  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let b = PolyBuilder::new(["x"], ZZ)
   let x = Expr::Symbol("x")
   let p = b.from_expr(
     int(2) * (x ^ int(3)) + int(3) * (x ^ int(2)) + int(5) * x + int(7),
@@ -344,7 +344,7 @@ test "polytools frontdoors: trunc and root fronts" {
     eps=pt_wb_rat(1, 100),
   )
   inspect(
-    "(\{refined.0.to_string()}, \{refined.1.to_string()})",
+    "(\{Show::to_string(refined.0)}, \{Show::to_string(refined.1)})",
     content="(19/11, 26/15)",
   )
   inspect(
@@ -399,7 +399,7 @@ test "polytools frontdoors: trunc and root fronts" {
 
 ///|
 test "polytools frontdoors: zero-dimensional groebner criterion" {
-  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let b = PolyBuilder::new(["x", "y"], QQ)
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let finite = [b.from_expr((x ^ int(2)) - int(1)), b.from_expr(y - x)]
@@ -418,7 +418,7 @@ fn pt_wb_expr_list_repr(items : Array[Expr]) -> String {
 test "polytools frontdoors: Hurwitz and Schur stability conditions" {
   let x = Expr::Symbol("x")
   let k = Expr::Symbol("k")
-  let numeric = PolyBuilder::new(["x"], Domain::ZZ).from_expr(
+  let numeric = PolyBuilder::new(["x"], ZZ).from_expr(
     int(2) * (x ^ int(3)) + int(3) * (x ^ int(2)) + int(4) * x + int(5),
   )
   inspect(
@@ -430,7 +430,7 @@ test "polytools frontdoors: Hurwitz and Schur stability conditions" {
     content="[-28, -112, -28]",
   )
 
-  let symbolic = PolyBuilder::new(["x", "k"], Domain::ZZ).from_expr(
+  let symbolic = PolyBuilder::new(["x", "k"], ZZ).from_expr(
     (x ^ int(3)) + (x ^ int(2)) + int(2) * k * x + int(1) - k,
   )
   inspect(

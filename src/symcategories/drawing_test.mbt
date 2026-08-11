@@ -114,7 +114,7 @@ test "diagram grid handles generic sequential and grouped layouts" {
   assert_true(simple.width() == 3)
   assert_true(simple.height() == 2)
   assert_true(
-    simple.to_string() ==
+    Show::to_string(simple) ==
     "[[Object(\"A\"), Object(\"B\"), Object(\"D\")], [None, Object(\"C\"), None]]",
   )
 
@@ -210,7 +210,7 @@ test "arrow string description matches xy-pic encoding" {
     "_",
     "f",
   )
-  assert_true(astr.to_string() == "\\ar[dr]_{f}")
+  assert_true(Show::to_string(astr) == "\\ar[dr]_{f}")
 
   let curved = arrow_string_description(
     "cm",
@@ -223,7 +223,7 @@ test "arrow string description matches xy-pic encoding" {
     "_",
     "f",
   )
-  assert_true(curved.to_string() == "\\ar@/^12cm/[dr]_{f}")
+  assert_true(Show::to_string(curved) == "\\ar@/^12cm/[dr]_{f}")
 
   let looped = arrow_string_description(
     "cm",
@@ -236,10 +236,10 @@ test "arrow string description matches xy-pic encoding" {
     "_",
     "f",
   )
-  assert_true(looped.to_string() == "\\ar@(r,u)[dr]_{f}")
+  assert_true(Show::to_string(looped) == "\\ar@(r,u)[dr]_{f}")
 
   looped.set_arrow_style("{-->}")
-  assert_true(looped.to_string() == "\\ar@(r,u)@{-->}[dr]_{f}")
+  assert_true(Show::to_string(looped) == "\\ar@(r,u)@{-->}[dr]_{f}")
 
   let styled = arrow_string_description(
     "cm",
@@ -253,7 +253,7 @@ test "arrow string description matches xy-pic encoding" {
     "f",
   )
   styled.set_arrow_style("{-->}")
-  assert_true(styled.to_string() == "\\ar@/_12cm/@{-->}[dr]_{f}")
+  assert_true(Show::to_string(styled) == "\\ar@/_12cm/@{-->}[dr]_{f}")
 }
 
 ///|

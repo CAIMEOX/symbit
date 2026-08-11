@@ -24,9 +24,9 @@ fn expr_str(expr : Expr) -> String {
 ///|
 fn setbool_str(val : SetBool) -> String {
   match val {
-    SetBool::True => "True"
-    SetBool::False => "False"
-    SetBool::Unknown => "Unknown"
+    True => "True"
+    False => "False"
+    Unknown => "Unknown"
   }
 }
 
@@ -39,19 +39,19 @@ fn setbool_str(val : SetBool) -> String {
 /// - Limits: The output favors stable testing and debugging over mathematical pretty printing.
 pub fn to_string(set : Set) -> String {
   match set {
-    Set::EmptySet => "EmptySet"
-    Set::UniversalSet => "UniversalSet"
-    Set::Naturals => "Naturals"
-    Set::Naturals0 => "Naturals0"
-    Set::Integers => "Integers"
-    Set::Rationals => "Rationals"
-    Set::Reals => "Reals"
-    Set::Complexes => "Complexes"
-    Set::FiniteSet(items) => {
+    EmptySet => "EmptySet"
+    UniversalSet => "UniversalSet"
+    Naturals => "Naturals"
+    Naturals0 => "Naturals0"
+    Integers => "Integers"
+    Rationals => "Rationals"
+    Reals => "Reals"
+    Complexes => "Complexes"
+    FiniteSet(items) => {
       let rendered = items.map(expr_str).join(", ")
       "{" + rendered + "}"
     }
-    Set::Interval(left~, right~, left_open~, right_open~) => {
+    Interval(left~, right~, left_open~, right_open~) => {
       let l = expr_str(left)
       let r = expr_str(right)
       if left_open && right_open {
@@ -64,37 +64,36 @@ pub fn to_string(set : Set) -> String {
         "Interval(" + l + ", " + r + ")"
       }
     }
-    Set::ConditionSet(symbol~, condition~, base~) => {
+    ConditionSet(symbol~, condition~, base~) => {
       let sym = expr_str(symbol)
       let cond = @symlogic.to_string(condition)
       "ConditionSet(" + sym + ", " + cond + ", " + to_string(base) + ")"
     }
-    Set::ImageSet(symbol~, expr~, base~) => {
+    ImageSet(symbol~, expr~, base~) => {
       let sym = expr_str(symbol)
       let body = expr_str(expr)
       let lambda = "Lambda(" + sym + ", " + body + ")"
       "ImageSet(" + lambda + ", " + to_string(base) + ")"
     }
-    Set::ProductSet(items) => {
+    ProductSet(items) => {
       let rendered = items.map(to_string).join(", ")
       "ProductSet(" + rendered + ")"
     }
-    Set::Union(items) =>
+    Union(items) =>
       if items.is_empty() {
         "EmptySet"
       } else {
         let rendered = items.map(to_string).join(", ")
         "Union(" + rendered + ")"
       }
-    Set::Intersection(items) =>
+    Intersection(items) =>
       if items.is_empty() {
         "UniversalSet"
       } else {
         let rendered = items.map(to_string).join(", ")
         "Intersection(" + rendered + ")"
       }
-    Set::Complement(a, b) =>
-      "Complement(" + to_string(a) + ", " + to_string(b) + ")"
+    Complement(a, b) => "Complement(" + to_string(a) + ", " + to_string(b) + ")"
   }
 }
 
@@ -117,7 +116,7 @@ pub impl Show for Set with fn to_string(self) {
 /// - Returns: `Unit`.
 /// - Limits: Uses the same formatting as `to_string`.
 pub impl Show for Set with fn output(self, logger) {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|
@@ -139,5 +138,5 @@ pub impl Show for SetBool with fn to_string(self) {
 /// - Returns: `Unit`.
 /// - Limits: Uses the same formatting as `SetBool.to_string`.
 pub impl Show for SetBool with fn output(self, logger) {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }

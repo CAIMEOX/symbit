@@ -21,7 +21,7 @@ pub fn meijerg_integrate(expr : Expr, var_name : String) -> Expr? {
         Some(
           expr_mul(
             expr_div(sqrt_pi(), @symcore.int(2)),
-            @symspec.erf(expr_mul(scale, @symcore.Expr::Symbol(var_name))),
+            @symspec.erf(expr_mul(scale, Symbol(var_name))),
           ),
         )
       None => None
@@ -43,7 +43,7 @@ pub fn meijerg_integrate(expr : Expr, var_name : String) -> Expr? {
 /// - Limits: Uses the currently implemented special-function families.
 pub fn meijerint_indefinite(expr : Expr, symbol : Expr) -> Expr? {
   match symbol {
-    @symcore.Expr::Symbol(name) => meijerg_integrate(expr, name)
+    Symbol(name) => meijerg_integrate(expr, name)
     _ => None
   }
 }
@@ -62,7 +62,7 @@ pub fn meijerint_definite(
   upper : Expr,
 ) -> (Expr, Bool)? {
   match (symbol, meijerint_indefinite(expr, symbol)) {
-    (@symcore.Expr::Symbol(name), Some(anti)) =>
+    (Symbol(name), Some(anti)) =>
       Some(
         (
           expr_simplify(
@@ -105,10 +105,8 @@ pub fn meijerint_inversion(expr : Expr, source : Expr, target : Expr) -> Expr? {
     return None
   }
   match do_inverse_laplace_doit(expr, source, target) {
-    Some(value) if @symcore.has(
-        value,
-        @symcore.Expr::FunctionHead("InverseLaplaceTransform"),
-      ) => None
+    Some(value) if @symcore.has(value, FunctionHead("InverseLaplaceTransform")) =>
+      None
     other => other
   }
 }
@@ -171,7 +169,7 @@ fn meijerint_source_rejects_add(expr : Expr, source : Expr) -> Bool {
     // Source map: SymPy's meijerint_inversion does not split Add terms. The
     // termwise split lives one layer up in laplace.py's integration fallback,
     // so the public Meijer hook should reject source-dependent sums here.
-    @symcore.Expr::Add(_) => expr_depends_on(expr, s_name)
+    Add(_) => expr_depends_on(expr, s_name)
     _ => false
   }
 }
@@ -191,7 +189,7 @@ fn meijerint_source_rejects_base_power_shift(
 ///|
 fn meijerint_has_source_base_power_shift(expr : Expr, s_name : String) -> Bool {
   match expr {
-    @symcore.Expr::Pow(base, exp) =>
+    Pow(base, exp) =>
       if !meijerint_is_exp1(base) &&
         !expr_depends_on(base, s_name) &&
         expr_depends_on(exp, s_name) {
@@ -210,7 +208,7 @@ fn meijerint_has_source_base_power_shift(expr : Expr, s_name : String) -> Bool {
 
 ///|
 fn meijerint_is_exp1(expr : Expr) -> Bool {
-  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1)
+  expr == NumberSymbol(Exp1)
 }
 
 ///|
@@ -607,7 +605,7 @@ fn meijerint_source_rejects_negative_half_power(
   s_name : String,
 ) -> Bool {
   match expr {
-    @symcore.Expr::Pow(base, exp) if expr_same_simplified(exp, expr_rat(-1, 2)) =>
+    Pow(base, exp) if expr_same_simplified(exp, expr_rat(-1, 2)) =>
       match split_linear_coeff_direct(base, s_name) {
         Some((coeff, offset)) =>
           !expr_is_zero(coeff) &&
@@ -786,7 +784,7 @@ fn meijerint_shift_residual_supported(expr : Expr, s_name : String) -> Bool {
   }
   let num = factors_expr(num_factors)
   match num {
-    @symcore.Expr::Add(_) if expr_depends_on(num, s_name) => return false
+    Add(_) if expr_depends_on(num, s_name) => return false
     _ => ()
   }
   let num_coeffs = match poly_coeffs_general_int(num, s_name) {
@@ -807,7 +805,7 @@ fn meijerint_symbolic_im(expr : Expr) -> Expr {
     None => ()
   }
   match expr {
-    @symcore.Expr::Add(args) => {
+    Add(args) => {
       let parts : Array[Expr] = []
       for arg in args {
         let imag = meijerint_symbolic_im(arg)
@@ -821,7 +819,7 @@ fn meijerint_symbolic_im(expr : Expr) -> Expr {
         expr_simplify(@symcore.add(parts))
       }
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let unknown : Array[Expr] = []
       let mut real = @symcore.int(1)
       let mut imag = @symcore.int(0)
@@ -861,18 +859,12 @@ fn meijerint_symbolic_im(expr : Expr) -> Expr {
 ///|
 fn meijerint_exact_complex_parts(expr : Expr) -> (Expr, Expr)? {
   match expr {
-    @symcore.Expr::Number(_)
-    | @symcore.Expr::Float(_)
-    | @symcore.Expr::NumberSymbol(
-      @symcore.NumberSymbolKind::Pi
-      | @symcore.NumberSymbolKind::Exp1
-      | @symcore.NumberSymbolKind::EulerGamma
-      | @symcore.NumberSymbolKind::GoldenRatio
-      | @symcore.NumberSymbolKind::Catalan
-    ) => Some((expr, @symcore.int(0)))
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) =>
-      Some((@symcore.int(0), @symcore.int(1)))
-    @symcore.Expr::Add(args) => {
+    Number(_)
+    | Float(_)
+    | NumberSymbol(Pi | Exp1 | EulerGamma | GoldenRatio | Catalan) =>
+      Some((expr, @symcore.int(0)))
+    NumberSymbol(ImaginaryUnit) => Some((@symcore.int(0), @symcore.int(1)))
+    Add(args) => {
       let mut real = @symcore.int(0)
       let mut imag = @symcore.int(0)
       for arg in args {
@@ -886,7 +878,7 @@ fn meijerint_exact_complex_parts(expr : Expr) -> (Expr, Expr)? {
       }
       Some((expr_simplify(real), expr_simplify(imag)))
     }
-    @symcore.Expr::Mul(args) => {
+    Mul(args) => {
       let mut real = @symcore.int(1)
       let mut imag = @symcore.int(0)
       for arg in args {
@@ -953,7 +945,7 @@ fn meijerint_sqrt_exp_kernel(
           expr,
           source,
           target,
-          @symcore.Expr::Symbol("_None"),
+          Symbol("_None"),
         ]),
         true_expr(),
       ]),
@@ -991,7 +983,7 @@ fn meijerint_is_source_sqrt(expr : Expr, source : Expr) -> Bool {
     Some(arg) => expr_eq(arg, source)
     None =>
       match expr {
-        @symcore.Expr::Pow(base, exp) =>
+        Pow(base, exp) =>
           expr_eq(base, source) && expr_same_simplified(exp, expr_rat(1, 2))
         _ => false
       }
@@ -1000,7 +992,7 @@ fn meijerint_is_source_sqrt(expr : Expr, source : Expr) -> Bool {
 
 ///|
 fn meijerint_sqrt_exp_kernel_scale_matches(scale : Expr, param : Expr) -> Bool {
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   expr_same_simplified(expr_mul(scale, @symelem.sqrt(param)), sqrt_pi()) ||
   expr_same_simplified(scale, @symelem.sqrt(expr_div(pi, param))) ||
   expr_same_simplified(scale, expr_div(sqrt_pi(), @symelem.sqrt(param)))
@@ -1023,10 +1015,8 @@ fn meijerint_sqrt_exp_kernel_body(param : Expr, target : Expr) -> Expr {
 fn meijerint_sqrt_exp_kernel_cond(param : Expr) -> Expr {
   let polar = @symcore.raw_function("polar_lift", [param])
   let root = @symelem.sqrt(polar)
-  let imag = @symcore.Expr::NumberSymbol(
-    @symcore.NumberSymbolKind::ImaginaryUnit,
-  )
-  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let imag = @symcore.Expr::NumberSymbol(ImaginaryUnit)
+  let pi = @symcore.Expr::NumberSymbol(Pi)
   let quarter_i_pi = expr_div(expr_mul(imag, pi), @symcore.int(4))
   @symcore.raw_function("And", [
     @symcore.raw_function("Ne", [root, @symcore.int(0)]),
@@ -1065,9 +1055,7 @@ fn sincos_division(expr : Expr, var_name : String) -> Expr? {
                 let a = pair.0
                 let b = pair.1
                 if expr_is_zero(b) && !expr_is_zero(a) {
-                  Some(
-                    @symspec.si(expr_mul(a, @symcore.Expr::Symbol(var_name))),
-                  )
+                  Some(@symspec.si(expr_mul(a, Symbol(var_name))))
                 } else {
                   None
                 }
@@ -1080,9 +1068,7 @@ fn sincos_division(expr : Expr, var_name : String) -> Expr? {
                 let a = pair.0
                 let b = pair.1
                 if expr_is_zero(b) && !expr_is_zero(a) {
-                  Some(
-                    @symspec.ci(expr_mul(a, @symcore.Expr::Symbol(var_name))),
-                  )
+                  Some(@symspec.ci(expr_mul(a, Symbol(var_name))))
                 } else {
                   None
                 }
@@ -1117,15 +1103,13 @@ fn extract_erf_scale(inner : Expr, var_name : String) -> Expr? {
 fn extract_division(expr : Expr) -> (Array[Expr], Expr?) {
   let simplified = expr_simplify(expr)
   match simplified {
-    @symcore.Expr::Pow(base, exp) if expr_is_minus_one(exp) =>
-      ([@symcore.int(1)], Some(base))
-    @symcore.Expr::Mul(args) => {
+    Pow(base, exp) if expr_is_minus_one(exp) => ([@symcore.int(1)], Some(base))
+    Mul(args) => {
       let numerator : Array[Expr] = []
       let denominator : Array[Expr] = []
       for item in args {
         match item {
-          @symcore.Expr::Pow(base, exp) if expr_is_minus_one(exp) =>
-            denominator.push(base)
+          Pow(base, exp) if expr_is_minus_one(exp) => denominator.push(base)
           _ => numerator.push(item)
         }
       }

@@ -25,7 +25,7 @@ fn fp_group_name(
   if free_group.rank > 30 {
     "<fp group with \{free_group.rank} generators>"
   } else {
-    let gens = generators.map(g => g.to_string()).join(", ")
+    let gens = generators.map(g => Show::to_string(g)).join(", ")
     "<fp group on the generators (\{gens})>"
   }
 }
@@ -349,10 +349,10 @@ pub fn FpGroup::order(
             g = gcd_int_local(g, exp)
           }
         }
-        GroupOrder::Finite(if g < 0 { -g } else { g })
+        Finite(if g < 0 { -g } else { g })
       } else {
         match self._is_infinite() {
-          Some(true) => GroupOrder::Infinite
+          Some(true) => Infinite
           _ => {
             let (gens, table_opt) = self._finite_index_subgroup()
             match table_opt {
@@ -360,15 +360,15 @@ pub fn FpGroup::order(
                 let ind = ct.table.length()
                 let sub = self.subgroup(gens, draft=ct)
                 match sub.order(strategy~) {
-                  GroupOrder::Finite(n) => GroupOrder::Finite(ind * n)
-                  GroupOrder::Infinite => GroupOrder::Infinite
+                  Finite(n) => Finite(ind * n)
+                  Infinite => Infinite
                 }
               }
               None => {
                 let idx = self.index([])
                 match idx {
-                  GroupOrder::Finite(n) => GroupOrder::Finite(n)
-                  GroupOrder::Infinite => GroupOrder::Infinite
+                  Finite(n) => Finite(n)
+                  Infinite => Infinite
                 }
               }
             }
@@ -531,7 +531,7 @@ pub fn FpGroup::index(
     return self.order(strategy~)
   }
   let coset_table = self.coset_enumeration(subgroup, strategy~)
-  GroupOrder::Finite(coset_table.table.length())
+  Finite(coset_table.table.length())
 }
 
 ///|
@@ -542,7 +542,7 @@ pub fn FpGroup::subgroup(
   draft? : CosetTable,
 ) -> FpGroup raise CombinatoricsError {
   if !gens.all(g => g.group == self.free_group) {
-    raise CombinatoricsError::ValueError("generators not in group")
+    raise ValueError("generators not in group")
   }
   let (schreier_gens, rels) = match draft {
     Some(d) => reidemeister_presentation(self, gens, draft=d)
@@ -563,7 +563,7 @@ pub impl Show for FpGroup with fn to_string(self) -> String {
 
 ///|
 pub impl Show for FpGroup with fn output(self, logger : &Logger) -> Unit {
-  logger.write_string(self.to_string())
+  logger.write_string(Show::to_string(self))
 }
 
 ///|

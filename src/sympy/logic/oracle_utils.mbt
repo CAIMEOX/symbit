@@ -41,9 +41,9 @@ fn py_eval(expr : String) -> @py.PyObjectEnum raise {
     let globals = @py.PyDict::new()
     globals.set("__builtins__", builtins.obj())
     let args = @sympy.py_pack_args([
-      OracleArg::Str(expr),
-      OracleArg::PyObj(globals.obj()),
-      OracleArg::PyObj(globals.obj()),
+      Str(expr),
+      PyObj(globals.obj()),
+      PyObj(globals.obj()),
     ])
     match py_call_object(eval_callable, args, print_err=true) {
       Some(obj) => obj

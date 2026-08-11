@@ -16,7 +16,7 @@ pub fn TensorIndexType::latex(
   self : TensorIndexType,
   settings? : @symprint.LatexSettings = @symprint.latex_settings(),
 ) -> String {
-  tensor_expr_part(@symcore.Expr::Symbol(self.name), settings)
+  tensor_expr_part(Symbol(self.name), settings)
 }
 
 ///|
@@ -24,7 +24,7 @@ pub fn TensorHead::latex(
   self : TensorHead,
   settings? : @symprint.LatexSettings = @symprint.latex_settings(),
 ) -> String {
-  tensor_expr_part(@symcore.Expr::Symbol(self.name), settings)
+  tensor_expr_part(Symbol(self.name), settings)
 }
 
 ///|
@@ -32,7 +32,7 @@ fn tensor_index_fragment(
   index : TensorIndex,
   settings : @symprint.LatexSettings,
 ) -> String {
-  let name_tex = tensor_expr_part(@symcore.Expr::Symbol(index.name), settings)
+  let name_tex = tensor_expr_part(Symbol(index.name), settings)
   if index.is_up {
     "{}^{\{name_tex}}"
   } else {
@@ -43,8 +43,8 @@ fn tensor_index_fragment(
 ///|
 fn tensor_expr_prec(expr : TensorExpr) -> Int {
   match expr {
-    TensorExpr::Add(_) => 1
-    TensorExpr::Mul(_) => 2
+    Add(_) => 1
+    Mul(_) => 2
     _ => 3
   }
 }
@@ -57,27 +57,27 @@ fn tensor_expr_format(
 ) -> String {
   let prec = tensor_expr_prec(expr)
   let body = match expr {
-    TensorExpr::Scalar(e) => tensor_expr_part(e, settings)
-    TensorExpr::Tensor(head, indices) => {
+    Scalar(e) => tensor_expr_part(e, settings)
+    Tensor(head, indices) => {
       let mut out = head.latex(settings~)
       for index in indices {
         out += tensor_index_fragment(index, settings)
       }
       out
     }
-    TensorExpr::Add(items) =>
+    Add(items) =>
       items.map(item => tensor_expr_format(item, prec, settings)).join(" + ")
-    TensorExpr::Mul(items) => {
+    Mul(items) => {
       let ordered : Array[TensorExpr] = []
       for item in items {
         match item {
-          TensorExpr::Scalar(_) => ordered.push(item)
+          Scalar(_) => ordered.push(item)
           _ => ()
         }
       }
       for item in items {
         match item {
-          TensorExpr::Scalar(_) => ()
+          Scalar(_) => ()
           _ => ordered.push(item)
         }
       }
@@ -86,7 +86,7 @@ fn tensor_expr_format(
         let tex = tensor_expr_format(item, prec, settings)
         rendered.push(
           match item {
-            TensorExpr::Add(_) => latex_parens(tex)
+            Add(_) => latex_parens(tex)
             _ => tex
           },
         )
