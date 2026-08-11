@@ -330,7 +330,7 @@ pub fn dict_from_expr(
   let expr_obj = expr_to_sympy(expr)
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::PyObj(expr_obj))
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if !gens.is_empty() {
     let gens_objs = sympy_symbols_from_names(gens)
     let list = py_list_from_objects(gens_objs)
@@ -388,7 +388,7 @@ pub fn parallel_dict_from_expr(
     expr_objs.push(expr_to_sympy(expr))
   }
   args.push(OracleArg::PyObj(py_list_from_objects(expr_objs).obj()))
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if !gens.is_empty() {
     let gens_objs = sympy_symbols_from_names(gens)
     let list = py_list_from_objects(gens_objs)
@@ -461,7 +461,7 @@ pub fn sort_gens(
   let args : Array[OracleArg] = Array::new()
   let gens_list = py_list_from_objects(gens_objs)
   args.push(OracleArg::PyObj(gens_list.obj()))
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if !wrt.is_empty() {
     let wrt_objs = sympy_symbols_from_names(wrt)
     let wrt_list = py_list_from_objects(wrt_objs)
@@ -549,7 +549,7 @@ pub fn domain_characteristic(spec : String) -> Int raise {
 fn domain_attr_bool(spec : String, attr : String) -> Bool raise {
   let domain_obj = oracle_domain_from_spec(spec)
   match py_get_attr(domain_obj, attr) {
-    Some(value) => py_str_enum(value).trim().to_string() == "True"
+    Some(value) => py_str_enum(value).trim().to_owned() == "True"
     None => fail("domain-attr:\{attr}")
   }
 }
@@ -563,7 +563,7 @@ pub fn domain_attr_bool_query(spec : String, attr : String) -> Bool raise {
 pub fn domain_attr_bool_or_false(spec : String, attr : String) -> Bool raise {
   let domain_obj = oracle_domain_from_spec(spec)
   match py_get_attr(domain_obj, attr) {
-    Some(value) => py_str_enum(value).trim().to_string() == "True"
+    Some(value) => py_str_enum(value).trim().to_owned() == "True"
     None => false
   }
 }
@@ -840,7 +840,7 @@ pub fn domain_contains_expr(spec : String, expr : String) -> Bool raise {
   let contains = resolve_method_callable(domain_obj, "__contains__")
   match
     py_call_object(contains, py_tuple_from_objects([expr_obj]), print_err=false) {
-    Some(res) => py_str_enum(res).trim().to_string() == "True"
+    Some(res) => py_str_enum(res).trim().to_owned() == "True"
     None => false
   }
 }
@@ -1602,7 +1602,7 @@ pub fn domain_is_unit_expr(spec : String, expr : String) -> Bool raise {
           py_tuple_from_objects([objenum_to_obj(elem)]),
           print_err=false,
         ) {
-        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        Some(res) => py_str_enum(res).trim().to_owned() == "True"
         None => false
       }
   }
@@ -1622,7 +1622,7 @@ pub fn domain_is_zero_expr(spec : String, expr : String) -> Bool raise {
           py_tuple_from_objects([objenum_to_obj(elem)]),
           print_err=false,
         ) {
-        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        Some(res) => py_str_enum(res).trim().to_owned() == "True"
         None => false
       }
   }
@@ -1642,7 +1642,7 @@ pub fn domain_is_one_expr(spec : String, expr : String) -> Bool raise {
           py_tuple_from_objects([objenum_to_obj(elem)]),
           print_err=false,
         ) {
-        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        Some(res) => py_str_enum(res).trim().to_owned() == "True"
         None => false
       }
   }
@@ -1662,7 +1662,7 @@ pub fn domain_is_negative_one_expr(spec : String, expr : String) -> Bool raise {
           py_tuple_from_objects([objenum_to_obj(elem)]),
           print_err=false,
         ) {
-        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        Some(res) => py_str_enum(res).trim().to_owned() == "True"
         None => false
       }
   }
@@ -1682,7 +1682,7 @@ pub fn domain_is_positive_expr(spec : String, expr : String) -> Bool raise {
           py_tuple_from_objects([objenum_to_obj(elem)]),
           print_err=false,
         ) {
-        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        Some(res) => py_str_enum(res).trim().to_owned() == "True"
         None => false
       }
   }
@@ -1702,7 +1702,7 @@ pub fn domain_is_negative_expr(spec : String, expr : String) -> Bool raise {
           py_tuple_from_objects([objenum_to_obj(elem)]),
           print_err=false,
         ) {
-        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        Some(res) => py_str_enum(res).trim().to_owned() == "True"
         None => false
       }
   }
@@ -1722,7 +1722,7 @@ pub fn domain_is_nonpositive_expr(spec : String, expr : String) -> Bool raise {
           py_tuple_from_objects([objenum_to_obj(elem)]),
           print_err=false,
         ) {
-        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        Some(res) => py_str_enum(res).trim().to_owned() == "True"
         None => false
       }
   }
@@ -1742,7 +1742,7 @@ pub fn domain_is_nonnegative_expr(spec : String, expr : String) -> Bool raise {
           py_tuple_from_objects([objenum_to_obj(elem)]),
           print_err=false,
         ) {
-        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        Some(res) => py_str_enum(res).trim().to_owned() == "True"
         None => false
       }
   }
@@ -2145,7 +2145,7 @@ pub fn domain_is_square_expr(spec : String, expr : String) -> Bool raise {
           py_tuple_from_objects([objenum_to_obj(elem)]),
           print_err=false,
         ) {
-        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        Some(res) => py_str_enum(res).trim().to_owned() == "True"
         None => false
       }
   }
@@ -2166,7 +2166,7 @@ pub fn domain_exsqrt_expr(spec : String, expr : String) -> String raise {
           print_err=false,
         ) {
         Some(res) => {
-          let rendered = py_str_enum(res).trim().to_string()
+          let rendered = py_str_enum(res).trim().to_owned()
           if rendered == "None" {
             "NONE"
           } else {
@@ -2240,7 +2240,7 @@ pub fn domain_almosteq_expr(
           py_tuple_from_objects([objenum_to_obj(lhs), objenum_to_obj(rhs)]),
           print_err=false,
         ) {
-        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        Some(res) => py_str_enum(res).trim().to_owned() == "True"
         None => false
       }
     _ => false
@@ -2646,7 +2646,7 @@ pub fn domainmatrix_truediv_summary(
 ) -> String raise {
   let dm_a = oracle_domainmatrix_from_ints_fmt(a, domain_spec, fmt)
   let div = resolve_method_callable(dm_a, "__truediv__")
-  let scalar = try @strconv.parse_int(scalar_expr.trim()) catch {
+  let scalar = try @string.parse_int(scalar_expr.trim()) catch {
     _ => sympy_sympify_str(scalar_expr)
   } noraise {
     value => py_int_obj(value)
@@ -3928,7 +3928,7 @@ fn oracle_linsolve_dict_summary(
   let builtins = ensure_builtins_module()
   let list_ctor = resolve_callable(builtins, "list")
   let items_list = py_call_one(list_ctor, objenum_to_obj(items_enum))
-  let coeff_map : Map[String, String] = Map::new()
+  let coeff_map : Map[String, String] = Map([])
   for pair in py_list_to_pyobjects(items_list) {
     let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
     if pair_items.length() >= 2 {
@@ -4001,7 +4001,7 @@ pub fn linsolve_internal_summary(
     }
     return parts.join("|")
   }
-  let sol_map : Map[String, String] = Map::new()
+  let sol_map : Map[String, String] = Map([])
   let items_call = resolve_method_callable(res_obj, "items")
   let items_enum = py_call_noargs(items_call)
   let builtins = ensure_builtins_module()
@@ -4433,7 +4433,7 @@ fn oracle_ddm_from_ints(
 
 ///|
 fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
-  let text = spec.trim().to_string()
+  let text = spec.trim().to_owned()
   if (
       text.has_prefix("GF(") ||
       text.has_prefix("FF(") ||
@@ -4444,7 +4444,7 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-gf:\{spec}")
     }
-    let raw = text[left + 1:text.length() - 1].to_string()
+    let raw = text[left + 1:text.length() - 1].to_owned()
     let parsed = parse_gf_descriptor_oracle(raw, spec)
     let p = parsed.0
     let ext_opt = parsed.1
@@ -4462,8 +4462,8 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-alg")
     }
-    let base = text[:left].to_string()
-    let gens = text[left + 1:text.length() - 1].to_string()
+    let base = text[:left].to_owned()
+    let gens = text[left + 1:text.length() - 1].to_owned()
     let base_obj = oracle_domain_from_spec(base)
     let ext_items = split_names(gens)
     let ext_objs : Array[@py.PyObject] = Array::new()
@@ -4479,8 +4479,8 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-old-poly")
     }
-    let base = text[:left].to_string()
-    let gens = text[left + 15:text.length() - 1].to_string()
+    let base = text[:left].to_owned()
+    let gens = text[left + 15:text.length() - 1].to_owned()
     let base_obj = oracle_domain_from_spec(base)
     let symbols = sympy_exprs_from_texts(split_names(gens))
     let ring_method = resolve_method_callable(base_obj, "old_poly_ring")
@@ -4492,8 +4492,8 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-old-frac")
     }
-    let base = text[:left].to_string()
-    let gens = text[left + 16:text.length() - 1].to_string()
+    let base = text[:left].to_owned()
+    let gens = text[left + 16:text.length() - 1].to_owned()
     let base_obj = oracle_domain_from_spec(base)
     let symbols = sympy_exprs_from_texts(split_names(gens))
     let frac_method = resolve_method_callable(base_obj, "old_frac_field")
@@ -4505,8 +4505,8 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-poly")
     }
-    let base = text[:left].to_string()
-    let gens = text[left + 1:text.length() - 1].to_string()
+    let base = text[:left].to_owned()
+    let gens = text[left + 1:text.length() - 1].to_owned()
     let base_obj = oracle_domain_from_spec(base)
     let symbols = sympy_exprs_from_texts(split_names(gens))
     let ring_method = resolve_method_callable(base_obj, "poly_ring")
@@ -4518,8 +4518,8 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-frac")
     }
-    let base = text[:left].to_string()
-    let gens = text[left + 1:text.length() - 1].to_string()
+    let base = text[:left].to_owned()
+    let gens = text[left + 1:text.length() - 1].to_owned()
     let base_obj = oracle_domain_from_spec(base)
     let symbols = sympy_exprs_from_texts(split_names(gens))
     let frac_method = resolve_method_callable(base_obj, "frac_field")
@@ -4564,7 +4564,7 @@ fn find_substring_oracle(text : String, needle : String) -> Int? {
   }
   let mut i = 0
   while i + width <= text.length() {
-    if text[i:i + width].to_string() == needle {
+    if text[i:i + width].to_owned() == needle {
       return Some(i)
     }
     i += 1
@@ -4600,19 +4600,19 @@ fn find_matching_open_oracle(
 
 ///|
 fn parse_gf_descriptor_oracle(raw : String, spec : String) -> (Int, Int?) raise {
-  let body = raw.trim().to_string()
+  let body = raw.trim().to_owned()
   if body.contains("**") {
     let parts : Array[String] = Array::new()
     for p in body.split("**") {
-      parts.push(p.trim().to_string())
+      parts.push(p.trim().to_owned())
     }
     if parts.length() != 2 {
       fail("domain-spec-gf:\{spec}")
     }
-    let p = @strconv.parse_int(parts[0]) catch {
+    let p = @string.parse_int(parts[0]) catch {
       _ => fail("domain-spec-gf:\{spec}")
     }
-    let k = @strconv.parse_int(parts[1]) catch {
+    let k = @string.parse_int(parts[1]) catch {
       _ => fail("domain-spec-gf:\{spec}")
     }
     return (p, Some(k))
@@ -4620,20 +4620,20 @@ fn parse_gf_descriptor_oracle(raw : String, spec : String) -> (Int, Int?) raise 
   if body.contains(",") {
     let parts : Array[String] = Array::new()
     for p in body.split(",") {
-      parts.push(p.trim().to_string())
+      parts.push(p.trim().to_owned())
     }
     if parts.length() != 2 {
       fail("domain-spec-gf:\{spec}")
     }
-    let p = @strconv.parse_int(parts[0]) catch {
+    let p = @string.parse_int(parts[0]) catch {
       _ => fail("domain-spec-gf:\{spec}")
     }
-    let k = @strconv.parse_int(parts[1]) catch {
+    let k = @string.parse_int(parts[1]) catch {
       _ => fail("domain-spec-gf:\{spec}")
     }
     return (p, Some(k))
   }
-  let p = @strconv.parse_int(body) catch { _ => fail("domain-spec-gf:\{spec}") }
+  let p = @string.parse_int(body) catch { _ => fail("domain-spec-gf:\{spec}") }
   (p, None)
 }
 
@@ -4665,13 +4665,13 @@ fn int_pow_oracle(base : Int, exp : Int) -> Int {
 
 ///|
 fn split_names(text : String) -> Array[String] {
-  let raw = text.trim().to_string()
+  let raw = text.trim().to_owned()
   if raw == "" {
     return []
   }
   let out : Array[String] = Array::new()
   for name in raw.split(",") {
-    out.push(name.trim().to_string())
+    out.push(name.trim().to_owned())
   }
   out
 }
@@ -5218,7 +5218,7 @@ fn py_sympy_enum_str(obj : @py.PyObjectEnum) -> String raise {
 fn py_obj_to_int(obj : @py.PyObject) -> Int raise {
   match @py.PyObjectEnum::create(obj) {
     PyInteger(v) => v.to_int64().to_int()
-    _ => @strconv.parse_int(py_str_obj(obj))
+    _ => @string.parse_int(py_str_obj(obj))
   }
 }
 
@@ -5450,7 +5450,7 @@ pub fn factor_list(
   let expr_obj = expr_to_sympy(expr)
   let sympy = ensure_sympy_module_oracle()
   let use_gfext = !gfext_modulus.is_empty()
-  let kwargs_map : Map[String, OracleArg] = {}
+  let kwargs_map : Map[String, OracleArg] = Map([])
   if use_gfext {
     match modulus_opt {
       Some(m) =>
@@ -5568,7 +5568,7 @@ pub fn polytools_lc(
   order? : String = "",
 ) -> String raise {
   let args = polytools_args(expr, gens)
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if order != "" {
     kwargs["order"] = OracleArg::Str(order)
   }
@@ -5583,7 +5583,7 @@ pub fn polytools_lm(
   order? : String = "",
 ) -> String raise {
   let args = polytools_args(expr, gens)
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if order != "" {
     kwargs["order"] = OracleArg::Str(order)
   }
@@ -5598,7 +5598,7 @@ pub fn polytools_lt(
   order? : String = "",
 ) -> String raise {
   let args = polytools_args(expr, gens)
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if order != "" {
     kwargs["order"] = OracleArg::Str(order)
   }
@@ -5620,7 +5620,7 @@ pub fn pdiv(
   for gen in gens {
     args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -5644,7 +5644,7 @@ pub fn prem(
   for gen in gens {
     args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -5666,7 +5666,7 @@ pub fn pquo(
   for gen in gens {
     args.push(OracleArg::PyObj(sympy_sympify_str(gen)))
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -5692,7 +5692,7 @@ fn polytools_binary_args(
 
 ///|
 fn maybe_domain_kwargs(domain : String) -> Map[String, OracleArg] {
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -5791,7 +5791,7 @@ pub fn refine_root(
     sympy_rational_arg(s_num, s_den),
     sympy_rational_arg(t_num, t_den),
   ]
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if eps_num != 0 {
     kwargs["eps"] = sympy_rational_arg(eps_num, eps_den)
   }
@@ -6110,7 +6110,7 @@ pub fn sqf_norm(
   extension? : String = "",
 ) -> String raise {
   let args = polytools_args(expr, gens)
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if extension != "" {
     kwargs["extension"] = OracleArg::PyObj(sympy_sympify_str(extension))
   }
@@ -6485,7 +6485,7 @@ pub fn groebner(
   for g in gens {
     args0.push(OracleArg::PyObj(g))
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if order != "" {
     kwargs["order"] = OracleArg::Str(order)
   }
@@ -6515,7 +6515,7 @@ fn groebner_ring_polys(
   gens : Array[String],
   order : String,
 ) -> (@py.PyObject, Array[@py.PyObject]) raise {
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if order != "" {
     kwargs["order"] = OracleArg::Str(order)
   }
@@ -6960,7 +6960,7 @@ pub fn sympy_sort_factor_repr(repr_str : String) -> String raise {
       let factor_str = py_str_obj(factor_obj)
       let exp_val = match @py.PyObjectEnum::create(exp_obj) {
         PyInteger(v) => v.to_int64().to_int()
-        _ => @strconv.parse_int(py_str_obj(exp_obj))
+        _ => @string.parse_int(py_str_obj(exp_obj))
       }
       entries.push((factor_str, exp_val, factor_str))
     }
@@ -7016,7 +7016,7 @@ fn call_sympy_poly(
   for g in gens {
     args.push(OracleArg::PyObj(g))
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   match domain_obj {
     Some(obj) => kwargs["domain"] = OracleArg::PyObj(obj)
     None => if domain != "" { kwargs["domain"] = OracleArg::Str(domain) }
@@ -7173,7 +7173,7 @@ pub fn resultant(
       Some(v) => args0.push(OracleArg::PyObj(v))
       None => ()
     }
-    let kwargs_map : Map[String, OracleArg] = {}
+    let kwargs_map : Map[String, OracleArg] = Map([])
     match modulus_opt {
       Some(m) => kwargs_map["modulus"] = OracleArg::Int(m)
       None => ()
@@ -7257,7 +7257,7 @@ pub fn gcd_list(
       args.push(OracleArg::PyObj(g))
     }
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -7287,7 +7287,7 @@ pub fn lcm_list(
       args.push(OracleArg::PyObj(g))
     }
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -7377,7 +7377,7 @@ pub fn reduced(
       args.push(OracleArg::PyObj(g))
     }
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -7414,7 +7414,7 @@ pub fn compose(
       args.push(OracleArg::PyObj(gen))
     }
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -7440,7 +7440,7 @@ pub fn decompose(
       args.push(OracleArg::PyObj(gen))
     }
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -7471,7 +7471,7 @@ pub fn sturm(
       args.push(OracleArg::PyObj(gen))
     }
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -7502,7 +7502,7 @@ pub fn discriminant(
       args.push(OracleArg::PyObj(gen))
     }
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -7530,7 +7530,7 @@ pub fn subresultants(
       args.push(OracleArg::PyObj(gen))
     }
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if domain != "" {
     kwargs["domain"] = OracleArg::Str(domain)
   }
@@ -7626,7 +7626,7 @@ pub fn rational_interpolate(
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::PyObj(data_obj))
   args.push(OracleArg::Int(deg_num))
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if x != "" {
     kwargs["X"] = OracleArg::PyObj(sympy_symbol_obj(x))
   }
@@ -7958,7 +7958,7 @@ pub fn sdm_from_vector(
   order? : String = "lex",
   domain? : String = "QQ",
 ) -> String raise {
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   kwargs["gens"] = OracleArg::PyObj(
     py_list_from_objects(sympy_symbols_from_names(gens)).obj(),
   )
@@ -9825,7 +9825,7 @@ pub fn dmp_list_terms(
   args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if order != "" {
     kwargs["order"] = OracleArg::Str(order)
   }
@@ -9920,7 +9920,7 @@ pub fn symmetrize(
       args.push(OracleArg::PyObj(gen))
     }
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if formal {
     kwargs["formal"] = OracleArg::Bool(true)
   }
@@ -9974,7 +9974,7 @@ pub fn symmetrize_list(
       args.push(OracleArg::PyObj(gen))
     }
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if formal {
     kwargs["formal"] = OracleArg::Bool(true)
   }
@@ -10044,7 +10044,7 @@ pub fn horner(
       args.push(OracleArg::PyObj(gen))
     }
   }
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if wrt != "" {
     kwargs["wrt"] = OracleArg::PyObj(sympy_symbol_obj(wrt))
   }
@@ -11427,7 +11427,7 @@ pub fn dup_zz_irreducible_p(
     OracleArg::PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
     OracleArg::PyObj(domain_obj),
   ])
-  py_sympy_enum_str(res).trim().to_string() == "True"
+  py_sympy_enum_str(res).trim().to_owned() == "True"
 }
 
 ///|
@@ -11468,7 +11468,7 @@ pub fn dup_cyclotomic_p(
     OracleArg::PyObj(domain_obj),
     OracleArg::PyObj(py_bool_obj(irreducible)),
   ])
-  py_sympy_enum_str(res).trim().to_string() == "True"
+  py_sympy_enum_str(res).trim().to_owned() == "True"
 }
 
 ///|
@@ -12414,7 +12414,7 @@ pub fn rootof(
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::PyObj(expr_to_sympy(expr)))
   args.push(OracleArg::Int(index))
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if !radicals {
     kwargs["radicals"] = OracleArg::Bool(false)
   }
@@ -12519,7 +12519,7 @@ pub fn dup_refine_real_root(
   args.push(OracleArg::PyObj(sympy_domain_elem(s, domain)))
   args.push(OracleArg::PyObj(sympy_domain_elem(t, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   match steps {
     Some(k) => kwargs["steps"] = OracleArg::Int(k)
     None => ()
@@ -12556,7 +12556,7 @@ pub fn dup_outer_refine_real_root(
   args.push(OracleArg::PyObj(sympy_domain_elem(s, domain)))
   args.push(OracleArg::PyObj(sympy_domain_elem(t, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   match steps {
     Some(k) => kwargs["steps"] = OracleArg::Int(k)
     None => ()
@@ -12658,7 +12658,7 @@ pub fn dup_count_real_roots(
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   match inf {
     Some(v) => kwargs["inf"] = OracleArg::PyObj(sympy_domain_elem(v, domain))
     None => ()
@@ -14017,7 +14017,7 @@ pub fn series_pprint_oracle(
   sym? : String = "x",
   ascending? : Bool = true,
 ) -> String raise {
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   kwargs.set("sym", OracleArg::Str(sym))
   kwargs.set("ascending", OracleArg::Bool(ascending))
   let res = sympy_call_must(

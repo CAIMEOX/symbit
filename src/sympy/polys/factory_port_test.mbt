@@ -1,6 +1,6 @@
 ///|
 fn factory_sympy_norm(s : String) -> String raise {
-  sympy_normalize(s).trim().to_string()
+  sympy_normalize(s).trim().to_owned()
 }
 
 ///|
@@ -9,7 +9,7 @@ test "factory: from_expr_defaults infers gens/domain QQ" {
   let y = @symcore.Expr::Symbol("y")
   let expr = x * y + @symcore.rational_from_ints(1, 2)
   let poly = Poly::from_expr_defaults(expr)
-  inspect(poly.gens, content="[\"x\", \"y\"]")
+  debug_inspect(poly.gens, content="[\"x\", \"y\"]")
   match poly.domain {
     Domain::QQ => ()
     _ => fail("expected QQ domain")
@@ -50,5 +50,5 @@ test "factory: explicit gens order preserved" {
   let y = @symcore.Expr::Symbol("y")
   let expr = x + y
   let poly = Poly::from_expr_defaults(expr, gens=["y", "x"])
-  inspect(poly.gens, content="[\"y\", \"x\"]")
+  debug_inspect(poly.gens, content="[\"y\", \"x\"]")
 }

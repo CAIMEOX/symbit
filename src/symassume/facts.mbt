@@ -69,7 +69,7 @@ pub fn empty_env() -> AssumeEnv {
 /// Each record is normalized before insertion so the stored environment stays
 /// internally consistent.
 pub fn assume_env(entries : Array[(String, SymbolFacts)]) -> AssumeEnv {
-  let env : AssumeEnv = {}
+  let env : AssumeEnv = Map([])
   for entry in entries {
     let (name, facts) = entry
     env[name] = normalize_facts(facts)

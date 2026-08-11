@@ -665,29 +665,29 @@ pub fn sort_exprs_in_place(args : Array[Expr]) -> Unit {
 }
 
 ///|
-pub impl Compare for Expr with compare(self, other : Expr) -> Int {
+pub impl Compare for Expr with fn compare(self, other : Expr) -> Int {
   compare_expr(self, other)
 }
 
 ///|
-pub impl Eq for Expr with equal(self, other : Expr) -> Bool {
+pub impl Eq for Expr with fn equal(self, other : Expr) -> Bool {
   compare_expr(self, other) == 0
 }
 
 ///|
-pub impl Eq for Expr with not_equal(self, other : Expr) -> Bool {
+pub impl Eq for Expr with fn not_equal(self, other : Expr) -> Bool {
   !self.equal(other)
 }
 
 ///|
-pub impl Hash for Expr with hash(self) -> Int {
-  let hasher = Hasher::new()
+pub impl Hash for Expr with fn hash(self) -> Int {
+  let hasher = Hasher()
   hash_expr_canonical(normalize_legacy_expr(self), hasher)
   hasher.finalize()
 }
 
 ///|
-pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
+pub impl Hash for Expr with fn hash_combine(self, hasher : Hasher) -> Unit {
   hash_expr_canonical(normalize_legacy_expr(self), hasher)
 }
 
@@ -780,7 +780,7 @@ fn hash_expr_canonical(expr : Expr, hasher : Hasher) -> Unit {
 
 ///|
 pub fn hash_expr_normalized(expr : Expr) -> Int {
-  let hasher = Hasher::new()
+  let hasher = Hasher()
   hash_expr_canonical(expr, hasher)
   hasher.finalize()
 }

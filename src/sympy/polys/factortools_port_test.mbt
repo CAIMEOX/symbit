@@ -2,7 +2,7 @@
 fn expect_factor_list_same(poly : Poly, modulus : Int?) -> Unit raise {
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
-  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let ours = sort_factor_repr(ours_raw).trim().to_owned()
   let oracle = sort_factor_repr(
       match modulus {
         Some(p) => factor_list(poly.to_expr(), modulus=p)
@@ -10,7 +10,7 @@ fn expect_factor_list_same(poly : Poly, modulus : Int?) -> Unit raise {
       },
     )
     .trim()
-    .to_string()
+    .to_owned()
   assert_eq(ours, oracle)
 }
 
@@ -42,8 +42,8 @@ test "factortools: sqf_list compares with SymPy" {
   )
   let (content, parts) = poly.sqf_list()
   let ours_raw = factor_list_to_string(content.to_string(), parts)
-  let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(sqf_list(poly.to_expr())).trim().to_string()
+  let ours = sort_factor_repr(ours_raw).trim().to_owned()
+  let oracle = sort_factor_repr(sqf_list(poly.to_expr())).trim().to_owned()
   assert_eq(ours, oracle)
 }
 
@@ -65,12 +65,12 @@ test "factortools: extension argument no longer rejected" {
   let factors = poly.factor(extension=["sqrt(2)"])
   let ours = sort_factor_repr(factor_list_to_string("1", factors))
     .trim()
-    .to_string()
+    .to_owned()
   let oracle = sort_factor_repr(
       factor_list(poly.to_expr(), extension=["sqrt(2)"]),
     )
     .trim()
-    .to_string()
+    .to_owned()
   assert_eq(ours, oracle)
 }
 

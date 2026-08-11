@@ -9,7 +9,7 @@ pub(all) suberror PhysicsError {
 } derive(Debug, Eq)
 
 ///|
-pub impl Show for PhysicsError with output(self, logger : &Logger) -> Unit {
+pub impl Show for PhysicsError with fn output(self, logger : &Logger) -> Unit {
   match self {
     PhysicsError::ValueError(msg) => logger.write_string("ValueError(\{msg})")
     PhysicsError::IndexError(msg) => logger.write_string("IndexError(\{msg})")

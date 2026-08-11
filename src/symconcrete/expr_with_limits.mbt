@@ -132,7 +132,7 @@ pub fn ExprWithLimits::bound_symbol_names(
 
 ///|
 pub fn ExprWithLimits::free_symbols(self : ExprWithLimits) -> Array[String] {
-  let acc : Map[String, Bool] = {}
+  let acc : Map[String, Bool] = Map([])
   collect_symbol_names(self.expr, acc)
   for name in self.bound_symbol_names() {
     acc.remove(name)

@@ -543,7 +543,7 @@ pub fn TransferFunction::from_rational_expression(
   let resolved_variable = match variable {
     Some(value) => value
     None => {
-      let seen : Map[String, Bool] = {}
+      let seen : Map[String, Bool] = Map([])
       control_collect_symbols(expr, seen)
       let names = seen
         .keys()
@@ -666,7 +666,7 @@ pub fn TransferFunction::eval_frequency(
   self : TransferFunction,
   point : Expr,
 ) -> Expr raise ControlError {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[control_var_name(self.var_)] = point
   control_normalize(@symcore.subst(self.to_expr(), env))
 }
@@ -676,7 +676,7 @@ pub fn TransferFunction::dc_gain(
   self : TransferFunction,
 ) -> Expr raise ControlError {
   let simplified = self.simplify()
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[control_var_name(self.var_)] = int(0)
   let num0 = control_normalize(@symcore.subst(simplified.num_, env))
   let den0 = control_normalize(@symcore.subst(simplified.den_, env))
@@ -804,7 +804,7 @@ pub fn TransferFunction::xreplace(
 }
 
 ///|
-pub impl Neg for TransferFunction with neg(self) {
+pub impl Neg for TransferFunction with fn neg(self) {
   TransferFunction::{
     num_: int(-1) * self.num_,
     den_: self.den_,
@@ -1108,7 +1108,7 @@ pub fn DiscreteTransferFunction::eval_frequency(
   self : DiscreteTransferFunction,
   point : Expr,
 ) -> Expr raise ControlError {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[control_var_name(self.var_)] = point
   control_normalize(@symcore.subst(self.to_expr(), env))
 }
@@ -1118,7 +1118,7 @@ pub fn DiscreteTransferFunction::dc_gain(
   self : DiscreteTransferFunction,
 ) -> Expr raise ControlError {
   let simplified = self.simplify()
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[control_var_name(self.var_)] = int(1)
   let num1 = control_normalize(@symcore.subst(simplified.num_, env))
   let den1 = control_normalize(@symcore.subst(simplified.den_, env))
@@ -1213,7 +1213,7 @@ pub fn DiscreteTransferFunction::is_stable(
 }
 
 ///|
-pub impl Neg for DiscreteTransferFunction with neg(self) {
+pub impl Neg for DiscreteTransferFunction with fn neg(self) {
   DiscreteTransferFunction::{
     num_: int(-1) * self.num_,
     den_: self.den_,

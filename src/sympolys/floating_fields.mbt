@@ -47,8 +47,7 @@ fn floating_floor_div(n : BigInt, d : BigInt) -> BigInt raise PolyError {
   if r.is_zero() {
     return q
   }
-  let opposite_sign = (r.op_lt(0N) && d.op_gt(0N)) ||
-    (r.op_gt(0N) && d.op_lt(0N))
+  let opposite_sign = (r < 0N && d > 0N) || (r > 0N && d < 0N)
   if opposite_sign {
     q.sub(1N)
   } else {
@@ -78,7 +77,7 @@ fn floating_rational_abs(value : @symnum.BigRational) -> @symnum.BigRational {
 ///|
 fn floating_field_max_denom(precision : Int) -> BigInt {
   let candidate = (1N << precision).div(200N)
-  if candidate.op_gt(99N) {
+  if candidate > 99N {
     candidate
   } else {
     99N
@@ -176,14 +175,14 @@ pub fn to_rational(
   max_denom : BigInt,
   limit? : Bool = true,
 ) -> (BigInt, BigInt) raise PolyError {
-  if max_denom.op_le(0N) {
+  if max_denom <= 0N {
     raise PolyError::DivisionByZero
   }
   let pair = value.to_rational() catch {
     _ => raise PolyError::BadGenerator("to_rational")
   }
   let (p, q) = pair
-  if !limit || q.op_le(max_denom) {
+  if !limit || q <= max_denom {
     return (p, q)
   }
   let mut p0 = 0N
@@ -195,7 +194,7 @@ pub fn to_rational(
   while true {
     let a = floating_floor_div(n, d)
     let q2 = q0.add(a.mul(q1))
-    if q2.op_gt(max_denom) {
+    if q2 > max_denom {
       break
     }
     let next_p0 = p1

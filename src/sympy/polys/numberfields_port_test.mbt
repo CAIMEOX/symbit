@@ -2,7 +2,7 @@
 fn nf_norm(expr : @symcore.Expr) -> String raise {
   sympy_normalize(@symprint.pretty_string(expr))
   .trim()
-  .to_string()
+  .to_owned()
   .replace_all(old=" ", new="")
 }
 
@@ -10,7 +10,7 @@ fn nf_norm(expr : @symcore.Expr) -> String raise {
 fn nf_oracle_minpoly(expr : String, gen? : String = "x") -> String raise {
   sympy_normalize(numberfield_minpoly(expr, gen~))
   .trim()
-  .to_string()
+  .to_owned()
   .replace_all(old=" ", new="")
 }
 
@@ -22,7 +22,7 @@ fn nf_oracle_find_min_poly_power_basis(
 ) -> String raise {
   sympy_normalize(find_min_poly_power_basis(def_expr, col, denom~))
   .trim()
-  .to_string()
+  .to_owned()
   .replace_all(old=" ", new="")
 }
 
@@ -309,13 +309,9 @@ test "numberfields: @sympolys.to_number_field(expr, theta) coeff parity" {
   ).replace_all(old=" ", new="")
   assert_eq(ours_s3, oracle_s3)
 
-  let fail_case : Result[Array[@symnum.BigRational], PolyError] = try? @sympolys.to_number_field_coeffs(
-    sqrt5, theta,
-  )
-  match fail_case {
-    Ok(value) => fail("expected embedding failure for sqrt(5), got \{value}")
-    Err(_) => ()
-  }
+  let _ = expect_poly_error(fn() raise PolyError {
+    @sympolys.to_number_field_coeffs(sqrt5, theta)
+  })
 }
 
 ///|

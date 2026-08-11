@@ -121,11 +121,9 @@ fn cm_number_text_to_double(text : String) -> Double? {
       value => Some(value)
     }
   } else if parts.length() == 2 {
-    match
-      (try? @string.parse_double(parts[0]), try? @string.parse_double(parts[1])) {
-      (Ok(num), Ok(den)) => Some(num / den)
-      _ => None
-    }
+    let num = @string.parse_double(parts[0]) catch { _ => return None }
+    let den = @string.parse_double(parts[1]) catch { _ => return None }
+    Some(num / den)
   } else {
     None
   }
@@ -235,13 +233,13 @@ pub fn cm_numeric_expr_eq(lhs : Expr, rhs : Expr) -> Bool {
   if cm_expr_is_zero(lhs - rhs) {
     return true
   }
-  let names : Map[String, Bool] = {}
+  let names : Map[String, Bool] = Map([])
   cm_collect_symbols(lhs, names)
   cm_collect_symbols(rhs, names)
   let ordered = names.keys().to_array()
   ordered.sort()
   for seed in [2, 5, 9] {
-    let env : Map[String, Double] = {}
+    let env : Map[String, Double] = Map([])
     for i in 0..<ordered.length() {
       env[ordered[i]] = Double::from_int(seed + i)
     }
@@ -263,7 +261,7 @@ pub fn cm_singularity(var_expr : Expr, start : Expr, order : Int) -> Expr {
 
 ///|
 pub fn cm_subst(expr : Expr, name : String, value : Expr) -> Expr {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[name] = value
   @symcore.subst(expr, env)
 }
@@ -611,7 +609,7 @@ fn cm_linear_solve_elimination(
   let nrows = rows.length()
   let ncols = names.length()
   let mut pivot_row = 0
-  let pivots : Map[Int, Int] = {}
+  let pivots : Map[Int, Int] = Map([])
   for col in 0..<ncols {
     let mut found : Int? = None
     for row in pivot_row..<nrows {
@@ -667,7 +665,7 @@ fn cm_linear_solve_elimination(
   if pivots.length() != ncols {
     return None
   }
-  let solution : Map[String, Expr] = {}
+  let solution : Map[String, Expr] = Map([])
   for col in 0..<ncols {
     solution[names[col]] = cm_simplify(rows[pivots[col]][ncols])
   }

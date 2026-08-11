@@ -54,6 +54,13 @@ test "symstats concrete sampling finite and expressions" {
       None => fail("die sample should be an integer")
     }
   }
+  match sample_random_var(x, seed=Some(17)) {
+    Some(value) =>
+      assert_true(
+        @symcore.compare_expr(sample(sx, rvs=[x], seed=Some(17)), value) == 0,
+      )
+    None => fail("direct random variable sample should be available")
+  }
 
   let shifted = sample(
     @symcore.add([sx, @symcore.int(1)]),

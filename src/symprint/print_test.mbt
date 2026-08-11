@@ -149,13 +149,8 @@ test "pretty to_string normalizes subtraction and unit coefficients" {
 
 ///|
 test "pretty to_string prints Float leaves" {
-  let exact_res : Result[@symcore.Float, @symnum.MpfError] = try? @symcore.Float::from_str(
-    "0.125",
-    prec=90,
-  )
-  let exact = match exact_res {
-    Ok(value) => value
-    Err(_) => fail("float")
+  let exact = @symcore.Float::from_str("0.125", prec=90) catch {
+    _ => fail("float")
   }
   inspect(pretty_string(@symcore.Expr::Float(exact)), content="0.125")
 }
@@ -217,7 +212,7 @@ test "pretty printers render dummy and wild names like SymPy" {
   let d = @symcore.dummy(name="x")
   let w = @symcore.Expr::Wild("x", [], [])
   inspect(pretty_string(d), content="_x")
-  assert_true(to_repr(d).to_string().has_prefix("dummy:_x#"))
+  assert_true(Repr(d).to_string().has_prefix("dummy:_x#"))
   inspect(pretty_string(w), content="x_")
   debug_inspect(w, content="wild:x_")
 }

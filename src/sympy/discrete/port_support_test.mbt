@@ -1,8 +1,6 @@
 ///|
 using @symdiscrete {
   type Expr,
-  assert_oracle,
-  assert_oracle_named,
   complex,
   convolution,
   convolution_fft,
@@ -23,4 +21,13 @@ using @symdiscrete {
   ntt,
   rat,
   sqrt_int,
+}
+
+///|
+fn[T] expect_error(action : () -> T raise) -> Unit raise {
+  try action() catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected operation to raise")
+  }
 }

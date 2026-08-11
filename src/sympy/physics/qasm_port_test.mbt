@@ -11,7 +11,7 @@ test "physics.quantum.qasm: helper parity" {
     "stripquotes parity",
   )
   quantum_test_assert_string_equal(
-    trim("something #comment").trim().to_string(),
+    trim("something #comment").trim().to_owned(),
     quantum_qasm_trim("something #comment"),
     "trim parity",
   )

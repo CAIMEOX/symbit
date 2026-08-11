@@ -235,7 +235,7 @@ pub fn poly(
 
 ///|
 fn div_inputs(f : Poly, g : Poly, auto : Bool) -> (Poly, Poly) raise PolyError {
-  if f.domain.not_equal(g.domain) || f.gens.not_equal(g.gens) {
+  if f.domain.not_equal(g.domain) || f.gens != g.gens {
     raise PolyError::DomainMismatch
   }
   if auto {

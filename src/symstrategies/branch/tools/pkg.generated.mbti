@@ -15,4 +15,3 @@ pub fn canon(Array[(@symcore.Expr) -> Array[@symcore.Expr]]) -> (@symcore.Expr) 
 // Type aliases
 
 // Traits
-

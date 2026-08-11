@@ -9,7 +9,7 @@ test "array basic printing and oracle" {
   let arr = dense([2, 2], data)
   let s = @symtensor_array.to_string(arr)
   assert_eq(s, "[[1, 2], [3, 4]]")
-  assert_oracle(try? array_str(arr), s)
+  assert_oracle(array_str(arr), s)
 }
 
 ///|

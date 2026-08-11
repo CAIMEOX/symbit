@@ -77,7 +77,7 @@ pub fn ArrowStringDescription::set_forced_label_position(
 }
 
 ///|
-pub impl Show for ArrowStringDescription with to_string(self) -> String {
+pub impl Show for ArrowStringDescription with fn to_string(self) -> String {
   let curving_str = if self.curving != "" {
     match self.curving_amount {
       Some(amount) => "@/\{self.curving}\{amount}\{self.unit}/"
@@ -115,7 +115,7 @@ pub impl Show for ArrowStringDescription with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for ArrowStringDescription with output(self, logger : &Logger) -> Unit {
+pub impl Show for ArrowStringDescription with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -852,7 +852,7 @@ fn build_xypic_string(
   morphisms_str_info : Map[Morphism, ArrowStringDescription],
   diagram_format : String,
 ) -> String {
-  let object_morphisms : Map[Object, Array[Morphism]] = {}
+  let object_morphisms : Map[Object, Array[Morphism]] = Map([])
   for obj in diagram.objects {
     object_morphisms[obj] = []
   }
@@ -893,7 +893,7 @@ pub fn XypicDiagramDrawer::draw(
   masked? : Array[Morphism] = [],
   diagram_format? : String = "",
 ) -> String {
-  let morphisms_props : Map[Morphism, Array[String]] = {}
+  let morphisms_props : Map[Morphism, Array[String]] = Map([])
   for morphism in grid.morphisms().keys() {
     if masked.any(item => item == morphism) {
       continue
@@ -901,7 +901,7 @@ pub fn XypicDiagramDrawer::draw(
     morphisms_props[morphism] = grid.morphisms()[morphism]
   }
 
-  let object_coords : Map[Object, (Int, Int)] = {}
+  let object_coords : Map[Object, (Int, Int)] = Map([])
   for row in 0..<grid.height() {
     for col in 0..<grid.width() {
       match grid.get(row, col) {
@@ -914,7 +914,7 @@ pub fn XypicDiagramDrawer::draw(
   let morphisms = map_keys_sorted(morphisms_props)
   morphisms.sort_by((a, b) => morphism_sort_compare(a, b, object_coords))
 
-  let morphisms_str_info : Map[Morphism, ArrowStringDescription] = {}
+  let morphisms_str_info : Map[Morphism, ArrowStringDescription] = Map([])
   for morphism in morphisms {
     let string_description = process_morphism(
       self, grid, morphism, object_coords, morphisms_str_info,

@@ -152,7 +152,7 @@ pub fn Float::reciprocal(self : Float) -> Float raise @symnum.MpfError {
 }
 
 ///|
-pub impl Add for Float with add(self, other : Float) -> Float {
+pub impl Add for Float with fn add(self, other : Float) -> Float {
   let p = float_common_prec(self, other)
   let lhs = float_promote(self, p)
   let rhs = float_promote(other, p)
@@ -163,7 +163,7 @@ pub impl Add for Float with add(self, other : Float) -> Float {
 }
 
 ///|
-pub impl Mul for Float with mul(self, other : Float) -> Float {
+pub impl Mul for Float with fn mul(self, other : Float) -> Float {
   let p = float_common_prec(self, other)
   let lhs = float_promote(self, p)
   let rhs = float_promote(other, p)
@@ -174,7 +174,7 @@ pub impl Mul for Float with mul(self, other : Float) -> Float {
 }
 
 ///|
-pub impl Neg for Float with neg(self) -> Float {
+pub impl Neg for Float with fn neg(self) -> Float {
   Float::from_mpf(
     @symnum.mpf_neg(self.to_mpf(), self.prec, @symnum.round_nearest),
     prec=self.prec,
@@ -182,12 +182,12 @@ pub impl Neg for Float with neg(self) -> Float {
 }
 
 ///|
-pub impl Show for Float with to_string(self) {
+pub impl Show for Float with fn to_string(self) {
   self.format()
 }
 
 ///|
-pub impl Show for Float with output(self, logger : &Logger) -> Unit {
+pub impl Show for Float with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

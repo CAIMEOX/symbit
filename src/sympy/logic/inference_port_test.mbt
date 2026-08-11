@@ -74,14 +74,8 @@ test "inference PropKB ask parity" {
   kb.tell(bool_implies(a, b))
   kb.tell(bool_implies(b, c))
   let ours_ask = if kb.ask(bool_implies(a, c)) { "True" } else { "False" }
-  let oracle_res : Result[String, Error] = try? propkb_ask_str(
-    ["A >> B", "B >> C"],
-    "A >> C",
-  )
-  match oracle_res {
-    Ok(oracle_ask) => assert_eq(ours_ask, oracle_ask)
-    Err(err) => fail(err.to_string())
-  }
+  let oracle_ask = propkb_ask_str(["A >> B", "B >> C"], "A >> C")
+  assert_eq(ours_ask, oracle_ask)
 }
 
 ///|

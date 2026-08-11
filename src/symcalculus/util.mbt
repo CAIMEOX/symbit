@@ -34,10 +34,7 @@ fn util_rat_div(a : BigRational, b : BigRational) -> BigRational? {
   if b.is_zero() {
     None
   } else {
-    match (try? a.div_r(b) : Result[BigRational, @symnum.RationalError]) {
-      Ok(value) => Some(value)
-      Err(_) => None
-    }
+    Some(a.div_r(b) catch { _ => return None })
   }
 }
 

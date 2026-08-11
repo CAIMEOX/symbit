@@ -232,6 +232,7 @@ pub(all) suberror UtilitiesError {
   Unsupported(String)
   MissingValue(String)
 } derive(Eq, @debug.Debug)
+pub impl Show for UtilitiesError
 
 // Types and methods
 pub struct AssocRecurrenceMemo[T] {
@@ -283,6 +284,7 @@ pub struct MultisetPartitionState {
   lpart : Int
   pstack : Array[PartComponent]
 } derive(Eq, @debug.Debug)
+pub impl Show for MultisetPartitionState
 
 pub struct MultisetPartitionTraverser {
   debug : Bool
@@ -327,6 +329,7 @@ pub struct PartComponent {
   mut u : Int
   mut v : Int
 } derive(Eq, @debug.Debug)
+pub impl Show for PartComponent
 
 pub enum PartitionResult {
   Parts(Map[Int, Int])
@@ -433,4 +436,3 @@ pub fn WrappedBinary::files(Self) -> Array[(String, String)]
 // Type aliases
 
 // Traits
-

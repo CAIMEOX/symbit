@@ -28,11 +28,12 @@ test "numberfields galois: degree four resolvent lookup" {
     ),
     content="[1, -2, -13, 19]",
   )
-  let unsupported : Result[Array[FieldElem], PolyError] = try? get_resolvent_by_lookup(
-    b.from_expr((x ^ int(3)) - int(2)),
-    1,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      get_resolvent_by_lookup(b.from_expr((x ^ int(3)) - int(2)), 1)
+    },
+    "BadGenerator",
   )
-  assert_true(unsupported is Err(PolyError::BadGenerator(_)))
 }
 
 ///|
@@ -59,10 +60,10 @@ test "numberfields galois: resolvent definitions and symmetrized coefficients" {
     sparse_symmetrize_resolvent_coeffs(specs[1]).join("|"),
     content="-s2|s1*s3 - 4*s4|-s1**2*s4 + 4*s2*s4 - s3**2",
   )
-  let unsupported : Result[Array[String], PolyError] = try? sparse_symmetrize_resolvent_coeffs(
-    specs[2],
+  sympolys_assert_error(
+    fn() raise PolyError { sparse_symmetrize_resolvent_coeffs(specs[2]) },
+    "BadGenerator",
   )
-  assert_true(unsupported is Err(PolyError::BadGenerator(_)))
 }
 
 ///|
@@ -72,6 +73,8 @@ test "numberfields galois: generate lambda lookup trial table" {
   assert_true(table.contains("(4, 0): ["))
   assert_true(table.contains("lambda s1, s2, s3, s4: (-2*s1*s2 + 6*s3)"))
   assert_false(table.contains("(4, 1): ["))
-  let full : Result[String, PolyError] = try? generate_lambda_lookup()
-  assert_true(full is Err(PolyError::BadGenerator(_)))
+  sympolys_assert_error(
+    fn() raise PolyError { generate_lambda_lookup() },
+    "BadGenerator",
+  )
 }

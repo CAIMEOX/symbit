@@ -22,6 +22,6 @@ test "core: domain mismatch raises" {
   let x = @symcore.Expr::Symbol("x")
   let p = PolyBuilder::new(["x"], Domain::ZZ).from_expr(x + @symcore.int(1))
   let q = PolyBuilder::new(["x"], Domain::QQ).from_expr(x + @symcore.int(1))
-  let res : Result[Poly, PolyError] = try? p.add(q)
-  assert_true(res is Err(PolyError::DomainMismatch))
+  let error = expect_poly_error(fn() raise PolyError { p.add(q) })
+  assert_true(error is PolyError::DomainMismatch)
 }

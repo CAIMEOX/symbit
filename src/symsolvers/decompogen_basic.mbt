@@ -135,13 +135,12 @@ fn decompogen_via_generator_subexpr(
     if @symcore.compare_expr(lifted, expr) == 0 {
       continue
     }
-    let poly_try : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr_defaults(
-      lifted,
-      gens=[symbol_text],
-    )
-    let candidate_ok = match poly_try {
-      Ok(_) => true
-      Err(_) => expr_is_polynomial_in_symbol(lifted, symbol)
+    let candidate_ok = try
+      @sympolys.Poly::from_expr_defaults(lifted, gens=[symbol_text])
+    catch {
+      _ => expr_is_polynomial_in_symbol(lifted, symbol)
+    } noraise {
+      _ => true
     }
     if candidate_ok {
       let candidate = [lifted] + decompogen(node, symbol)
@@ -258,7 +257,7 @@ pub fn compogen(g_s : Array[Expr], symbol : Expr) -> Expr {
   if g_s.length() <= 1 {
     return g_s[0]
   }
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env.set(compogen_symbol_name(symbol), g_s[1])
   let composed = @symcore.subst(g_s[0], env)
   if g_s.length() == 2 {

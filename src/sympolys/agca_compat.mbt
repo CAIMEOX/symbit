@@ -33,7 +33,7 @@ pub fn ideal(gens : Array[Poly]) -> Ideal raise PolyError {
   }
   let base = gens[0]
   for g in gens {
-    if g.domain.not_equal(base.domain) || g.gens.not_equal(base.gens) {
+    if g.domain.not_equal(base.domain) || g.gens != base.gens {
       raise PolyError::DomainMismatch
     }
   }
@@ -65,7 +65,7 @@ pub fn Ideal::ring_gens(self : Ideal) -> Array[String] {
 ///|
 fn ideal_check_compatible(lhs : Ideal, rhs : Ideal) -> Unit raise PolyError {
   if lhs.ring_domain().not_equal(rhs.ring_domain()) ||
-    lhs.ring_gens().not_equal(rhs.ring_gens()) {
+    lhs.ring_gens() != rhs.ring_gens() {
     raise PolyError::DomainMismatch
   }
 }
@@ -135,8 +135,7 @@ pub fn Ideal::union(self : Ideal, other : Ideal) -> Ideal raise PolyError {
 /// - Limits: Raises `PolyError::DomainMismatch` when the polynomial is from a
 ///   different ring.
 pub fn Ideal::reduce_element(self : Ideal, poly : Poly) -> Poly raise PolyError {
-  if poly.domain.not_equal(self.ring_domain()) ||
-    poly.gens.not_equal(self.ring_gens()) {
+  if poly.domain.not_equal(self.ring_domain()) || poly.gens != self.ring_gens() {
     raise PolyError::DomainMismatch
   }
   let basis = ideal_groebner_basis(self)
@@ -317,7 +316,7 @@ pub fn RingHomomorphism::apply_poly(
   self : RingHomomorphism,
   poly : Poly,
 ) -> Poly raise PolyError {
-  if poly.gens.not_equal(self.source_gens) {
+  if poly.gens != self.source_gens {
     raise PolyError::BadGenerator(poly.gens.join(","))
   }
   let mapped = self.apply_expr(poly.to_expr())

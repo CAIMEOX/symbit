@@ -271,4 +271,3 @@ pub type EigenVectData = (@symcore.Expr, Int, Array[Array[@symcore.Expr]])
 pub using @symcore {type Expr}
 
 // Traits
-

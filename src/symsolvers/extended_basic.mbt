@@ -1238,7 +1238,7 @@ fn solver_assumptions_from_expr(
   expr : Expr,
   env : Map[String, @symassume.SymbolFacts],
 ) -> Map[String, Bool?] {
-  let out : Map[String, Bool?] = {}
+  let out : Map[String, Bool?] = Map([])
   for key in solver_supported_assumptions() {
     match solver_assumption_value(expr, key, env) {
       Some(value) => out[key] = Some(value)
@@ -1258,7 +1258,7 @@ pub fn failing_assumptions(
   assumptions : Map[String, Bool?],
   env? : Map[String, @symassume.SymbolFacts] = {},
 ) -> Map[String, Bool?] {
-  let failed : Map[String, Bool?] = {}
+  let failed : Map[String, Bool?] = Map([])
   for key, desired in assumptions {
     match desired {
       None => ()
@@ -1369,7 +1369,7 @@ fn solver_maps_from_tuple_set(
       for item in items {
         match @symcore.tuple_items(item) {
           Some(values) => {
-            let mapping : Map[String, Expr] = {}
+            let mapping : Map[String, Expr] = Map([])
             for i in 0..<names.length() {
               mapping[names[i]] = values.get(i).unwrap_or(symbols[i])
             }
@@ -1711,13 +1711,11 @@ fn solver_checkodesol_pass3(
   for i in 1..<=order {
     if i == 1 {
       let ds = solver_diff_n(sol_expr, x, 1)
-      let solved_try : Result[Array[Expr], SolverError] = try? solver_checkodesol_solve_target(
+      let solved = solver_checkodesol_solve_target(
         ds,
         solver_ode_target(f, x, i),
-      )
-      let solved = match solved_try {
-        Ok(items) => items
-        Err(_) => return None
+      ) catch {
+        _ => return None
       }
       guard !solved.is_empty() else { return None }
       diffsols.push((i, solved[0]))
@@ -1820,7 +1818,7 @@ fn solver_maps_from_result(
       if names.length() == 1 {
         let out : Array[Map[String, Expr]] = []
         for item in items {
-          let mapping : Map[String, Expr] = {}
+          let mapping : Map[String, Expr] = Map([])
           mapping[names[0]] = item
           out.push(mapping)
         }
@@ -1835,7 +1833,7 @@ fn solver_maps_from_result(
               "expected tuple solution for symbolic targets",
             )
         }
-        let mapping : Map[String, Expr] = {}
+        let mapping : Map[String, Expr] = Map([])
         for i in 0..<names.length() {
           mapping[names[i]] = values[i]
         }
@@ -1974,7 +1972,7 @@ fn solver_single_target_solutions(
   )
   let symbol = symbols[0]
   let poly_name = solver_symbol_name(symbol)
-  let poly_try : Result[Array[Expr], @sympolys.PolyError] = try? ({
+  try {
     let poly = @sympolys.Poly::from_expr_defaults(
       rewritten[0],
       gens=[poly_name],
@@ -1988,18 +1986,21 @@ fn solver_single_target_solutions(
     } else {
       @sympolys.roots(poly)
     }
-  })
-  match poly_try {
-    Ok(roots) if !roots.is_empty() => {
-      let out : Array[Expr] = []
-      for root in roots {
-        out.push(
-          solver_finalize_solution_expr(solver_replace_targets(root, backward)),
-        )
-      }
-      return out
-    }
+  } catch {
     _ => ()
+  } noraise {
+    roots =>
+      if !roots.is_empty() {
+        let out : Array[Expr] = []
+        for root in roots {
+          out.push(
+            solver_finalize_solution_expr(
+              solver_replace_targets(root, backward),
+            ),
+          )
+        }
+        return out
+      }
   }
   match solver_extract_quadratic_target(expanded, target) {
     Some((a, b, constant)) if !@symcore.is_zero(a) => {
@@ -2087,13 +2088,11 @@ fn solver_exact_sqrt_bigint(n : @bigint.BigInt) -> @bigint.BigInt? {
       _ => return None
     },
   )
-  let root_try : Result[Expr?, @sympolys.PolyError] = try? @sympolys.domain_exsqrt_expr(
-    @sympolys.Domain::ZZ,
-    expr,
-  )
-  match root_try {
-    Ok(Some(Expr::Number(value))) if value.is_integral() =>
-      Some(value.numerator())
+  let root = @sympolys.domain_exsqrt_expr(@sympolys.Domain::ZZ, expr) catch {
+    _ => None
+  }
+  match root {
+    Some(Expr::Number(value)) if value.is_integral() => Some(value.numerator())
     _ => None
   }
 }
@@ -2141,21 +2140,21 @@ fn solver_collect_square_term_factors(
               }
             }
             _ => {
-              let key = to_repr(base).to_string()
+              let key = Repr(base).to_string()
               factors[key] = base
               counts[key] = counts.get(key).unwrap_or(0) + power
             }
           }
         }
         _ => {
-          let key = to_repr(expr).to_string()
+          let key = Repr(expr).to_string()
           factors[key] = expr
           counts[key] = counts.get(key).unwrap_or(0) + 1
         }
       }
     Expr::Number(_) => ()
     _ => {
-      let key = to_repr(expr).to_string()
+      let key = Repr(expr).to_string()
       factors[key] = expr
       counts[key] = counts.get(key).unwrap_or(0) + 1
     }
@@ -2166,8 +2165,8 @@ fn solver_collect_square_term_factors(
 fn solver_collect_square_term_map(
   expr : Expr,
 ) -> (Map[String, Int], Map[String, Expr]) {
-  let counts : Map[String, Int] = {}
-  let factors : Map[String, Expr] = {}
+  let counts : Map[String, Int] = Map([])
+  let factors : Map[String, Expr] = Map([])
   solver_collect_square_term_factors(expr, counts, factors)
   (counts, factors)
 }
@@ -2234,7 +2233,7 @@ fn solver_extract_add_square_factor(base : Expr) -> (Expr, Expr)? {
   let pieces : Array[(@bigint.BigInt, Expr)] = []
   let mut gcd : @bigint.BigInt? = None
   let mut common_counts : Map[String, Int]? = None
-  let factor_exprs : Map[String, Expr] = {}
+  let factor_exprs : Map[String, Expr] = Map([])
   for term in terms {
     match solver_split_integer_coeff(term) {
       Some((coeff, rest)) => {
@@ -2249,7 +2248,7 @@ fn solver_extract_add_square_factor(base : Expr) -> (Expr, Expr)? {
         common_counts = Some(
           match common_counts {
             Some(current) => {
-              let next : Map[String, Int] = {}
+              let next : Map[String, Int] = Map([])
               for key, value in current {
                 let min_count = counts.get(key).unwrap_or(0)
                 if min_count < value {
@@ -2275,7 +2274,7 @@ fn solver_extract_add_square_factor(base : Expr) -> (Expr, Expr)? {
     }
   }
   let common = gcd.unwrap_or(0N)
-  let square_counts : Map[String, Int] = {}
+  let square_counts : Map[String, Int] = Map([])
   for key, count in common_counts.unwrap_or({}) {
     let even_count = count / 2 * 2
     if even_count >= 2 {
@@ -2296,7 +2295,7 @@ fn solver_extract_add_square_factor(base : Expr) -> (Expr, Expr)? {
       ),
     )
   }
-  let remove_counts : Map[String, Int] = {}
+  let remove_counts : Map[String, Int] = Map([])
   for key, count in square_counts {
     let factor = factor_exprs.get(key).unwrap_or(@symcore.int(1))
     remove_counts[key] = count
@@ -2417,12 +2416,14 @@ fn solver_exact_root_simplify(expr : Expr) -> Expr {
             Expr::Pow(_, _) => ()
             _ => return canonical_expr(direct)
           }
-          let sqrt_try : Result[Expr?, @sympolys.PolyError] = try? @sympolys.domain_exsqrt_expr(
+          let sqrt_root = @sympolys.domain_exsqrt_expr(
             @sympolys.Domain::QQ,
             expanded_base,
-          )
-          match sqrt_try {
-            Ok(Some(root)) => canonical_expr(root)
+          ) catch {
+            _ => None
+          }
+          match sqrt_root {
+            Some(root) => canonical_expr(root)
             _ =>
               match solver_extract_mul_square_factor(expanded_base) {
                 Some((factor, reduced)) =>
@@ -2463,15 +2464,12 @@ fn solver_add_term_key(term : Expr) -> (@symnum.BigRational, Expr) {
       let rest : Array[Expr] = []
       for arg in args {
         match @symcore.exact_numeric_expr_num_den(arg) {
-          Some((num, den)) => {
-            let value_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-              num, den,
-            )
-            match value_res {
-              Ok(value) => coeff = coeff.mul_r(value)
-              Err(_) => rest.push(arg)
+          Some((num, den)) =>
+            try @symnum.BigRational::new(num, den) catch {
+              _ => rest.push(arg)
+            } noraise {
+              value => coeff = coeff.mul_r(value)
             }
-          }
           None => rest.push(arg)
         }
       }
@@ -2678,12 +2676,10 @@ pub fn canonical_odes(
   let (rewritten, symbols, backward) = solver_symbolize_targets(
     normalized_eqs, targets, "__ode_canonical_",
   )
-  let solved_res : Result[SolveResult, SolverError] = try? solve(
-    solve_exprs_input(rewritten),
-    symbols~,
-  )
-  match solved_res {
-    Ok(solved) => {
+  try solve(solve_exprs_input(rewritten), symbols~) catch {
+    _ => ()
+  } noraise {
+    solved => {
       let mappings = solver_maps_from_result(solved, symbols)
       let systems : Array[Array[Expr]] = []
       for mapping in mappings {
@@ -2708,7 +2704,6 @@ pub fn canonical_odes(
         return systems
       }
     }
-    Err(_) => ()
   }
   let coeff_rows : Array[Array[Expr]] = []
   let rhs_rows : Array[Array[Expr]] = []
@@ -2806,13 +2801,8 @@ pub fn linear_ode_to_matrix(
     let (rewritten, symbols, _) = solver_symbolize_targets(
       current_eqs, targets, "__ode_matrix_",
     )
-    let (a_i_raw, b_i_raw) = match
-      (
-        try? linear_eq_to_matrix(rewritten, symbols) :
-        Result[(@symmatrices.Matrix, @symmatrices.Matrix), SolverError]) {
-      Ok(value) => value
-      Err(_) =>
-        raise SolverError::ValueError("The system of ODEs is nonlinear.")
+    let (a_i_raw, b_i_raw) = linear_eq_to_matrix(rewritten, symbols) catch {
+      _ => raise SolverError::ValueError("The system of ODEs is nonlinear.")
     }
     let a_i = solver_matrix_normalize_entries(a_i_raw, "linear_ode_to_matrix")
     matrices.push(
@@ -2981,7 +2971,7 @@ fn solver_matrix_subst_symbol(
   value : Expr,
   context : String,
 ) -> @symmatrices.Matrix raise SolverError {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[name] = value
   let rows = matrix.to_list()
   let substituted : Array[Array[Expr]] = []
@@ -3248,13 +3238,13 @@ fn solver_lie_collect_monomial_factor(
     Expr::Pow(base, Expr::Number(exp)) if exp.is_integral() => {
       let coeff = exp.numerator().to_int() * sign
       if coeff != 0 {
-        let key = to_repr(base).to_string()
+        let key = Repr(base).to_string()
         factors[key] = base
         counts[key] = counts.get(key).unwrap_or(0) + coeff
       }
     }
     _ => {
-      let key = to_repr(expr).to_string()
+      let key = Repr(expr).to_string()
       factors[key] = expr
       counts[key] = counts.get(key).unwrap_or(0) + sign
     }
@@ -3276,8 +3266,8 @@ fn solver_lie_cancel_monomial_ratio(expr : Expr) -> Expr {
   if @symcore.compare_expr(den, @symcore.int(1)) == 0 {
     return expr
   }
-  let counts : Map[String, Int] = {}
-  let factors : Map[String, Expr] = {}
+  let counts : Map[String, Int] = Map([])
+  let factors : Map[String, Expr] = Map([])
   solver_lie_collect_monomial_factor(num, 1, counts, factors)
   solver_lie_collect_monomial_factor(den, -1, counts, factors)
   let num_out : Array[Expr] = []
@@ -3557,64 +3547,50 @@ fn solver_lie_try_exact_div_expr(dividend : Expr, divisor : Expr) -> Expr? {
   )
   let dividend_ready = poly_ready[0]
   let divisor_ready = poly_ready[1]
-  let symbols_res : Result[Array[Expr], SolverError] = try? solver_sorted_unique_symbols(
+  let symbols = solver_sorted_unique_symbols(
     @symcore.free_symbols(@symcore.mul([dividend_ready, divisor_ready])),
-  )
-  let symbols = match symbols_res {
-    Ok(value) => value
-    Err(_) => return None
+  ) catch {
+    _ => return None
   }
-  let gens_res : Result[Array[String], SolverError] = try? solver_symbol_names(
-    symbols,
-  )
-  let gens = match gens_res {
-    Ok(value) => value
-    Err(_) => return None
-  }
+  let gens = solver_symbol_names(symbols) catch { _ => return None }
   if gens.is_empty() {
     return None
   }
-  let dividend_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+  let dividend_poly = @sympolys.Poly::from_expr(
     dividend_ready,
     gens,
     @sympolys.Domain::EX,
-  )
-  let divisor_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+  ) catch {
+    _ => return None
+  }
+  let divisor_poly = @sympolys.Poly::from_expr(
     divisor_ready,
     gens,
     @sympolys.Domain::EX,
-  )
-  match (dividend_poly_res, divisor_poly_res) {
-    (Ok(dividend_poly), Ok(divisor_poly)) => {
-      if divisor_poly.is_zero() {
-        return None
-      }
-      let div_res : Result[
-        (Array[@sympolys.Poly], @sympolys.Poly),
-        @sympolys.PolyError,
-      ] = try? dividend_poly.divmod_multivar([divisor_poly])
-      match div_res {
-        Ok((quotients, remainder)) =>
-          if !remainder.is_zero() {
-            None
-          } else {
-            let quotient_expr = solver_lie_light_normalize(
-              quotients[0].to_expr(),
-            )
-            Some(
-              if restore_all.is_empty() {
-                quotient_expr
-              } else {
-                solver_lie_light_normalize(
-                  @symcore.xreplace(quotient_expr, restore_all),
-                )
-              },
-            )
-          }
-        Err(_) => None
-      }
-    }
+  ) catch {
+    _ => return None
+  }
+  if divisor_poly.is_zero() {
+    return None
+  }
+  try dividend_poly.divmod_multivar([divisor_poly]) catch {
     _ => None
+  } noraise {
+    (quotients, remainder) =>
+      if !remainder.is_zero() {
+        None
+      } else {
+        let quotient_expr = solver_lie_light_normalize(quotients[0].to_expr())
+        Some(
+          if restore_all.is_empty() {
+            quotient_expr
+          } else {
+            solver_lie_light_normalize(
+              @symcore.xreplace(quotient_expr, restore_all),
+            )
+          },
+        )
+      }
   }
 }
 
@@ -3659,40 +3635,17 @@ fn solver_lie_try_poly_factor_expr(expr : Expr) -> Expr? {
   let (poly_ready, restore_all) = solver_lie_atomize_poly_expr(
     normalized, "__lie_factor",
   )
-  let symbols_res : Result[Array[Expr], SolverError] = try? solver_sorted_unique_symbols(
-    @symcore.free_symbols(poly_ready),
-  )
-  let symbols = match symbols_res {
-    Ok(value) => value
-    Err(_) => return None
+  let symbols = solver_sorted_unique_symbols(@symcore.free_symbols(poly_ready)) catch {
+    _ => return None
   }
-  let gens_res : Result[Array[String], SolverError] = try? solver_symbol_names(
-    symbols,
-  )
-  let gens = match gens_res {
-    Ok(value) => value
-    Err(_) => return None
-  }
+  let gens = solver_symbol_names(symbols) catch { _ => return None }
   if gens.is_empty() {
     return Some(normalized)
   }
-  let poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
-    poly_ready,
-    gens,
-    @sympolys.Domain::EX,
-  )
-  let poly = match poly_res {
-    Ok(value) => value
-    Err(_) => return None
+  let poly = @sympolys.Poly::from_expr(poly_ready, gens, @sympolys.Domain::EX) catch {
+    _ => return None
   }
-  let factor_list_res : Result[
-    (@symnum.BigRational, Array[(@sympolys.Poly, Int)]),
-    @sympolys.PolyError,
-  ] = try? poly.factor_list()
-  let (content, factors) = match factor_list_res {
-    Ok(value) => value
-    Err(_) => return None
-  }
+  let (content, factors) = poly.factor_list() catch { _ => return None }
   let rebuilt : Array[Expr] = []
   if content.compare(@symnum.BigRational::one()) != 0 {
     rebuilt.push(Expr::Number(content))
@@ -3906,21 +3859,21 @@ fn solver_lie_polynomial_zero(expr : Expr) -> Bool {
     return false
   }
   let (numer, denom) = @symsimplify.fraction(expr)
-  let numer_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+  let numer_poly = @sympolys.Poly::from_expr(
     canonical_expr(numer),
     symbol_names,
     @sympolys.Domain::EX,
-  )
-  let denom_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+  ) catch {
+    _ => return false
+  }
+  let denom_poly = @sympolys.Poly::from_expr(
     canonical_expr(denom),
     symbol_names,
     @sympolys.Domain::EX,
-  )
-  match (numer_poly_res, denom_poly_res) {
-    (Ok(numer_poly), Ok(denom_poly)) =>
-      !denom_poly.is_zero() && numer_poly.is_zero()
-    _ => false
+  ) catch {
+    _ => return false
   }
+  !denom_poly.is_zero() && numer_poly.is_zero()
 }
 
 ///|
@@ -3930,39 +3883,29 @@ fn solver_lie_polynomial_zero_atomized(expr : Expr) -> Bool {
     "__lie_zero",
   )
   let atomized = atomized_res.0
-  let symbols_res : Result[Array[Expr], SolverError] = try? solver_sorted_unique_symbols(
-    @symcore.free_symbols(atomized),
-  )
-  let symbols = match symbols_res {
-    Ok(value) => value
-    Err(_) => return false
+  let symbols = solver_sorted_unique_symbols(@symcore.free_symbols(atomized)) catch {
+    _ => return false
   }
-  let gens_res : Result[Array[String], SolverError] = try? solver_symbol_names(
-    symbols,
-  )
-  let gens = match gens_res {
-    Ok(value) => value
-    Err(_) => return false
-  }
+  let gens = solver_symbol_names(symbols) catch { _ => return false }
   if gens.is_empty() {
     return false
   }
   let (numer, denom) = @symsimplify.fraction(atomized)
-  let numer_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+  let numer_poly = @sympolys.Poly::from_expr(
     canonical_expr(numer),
     gens,
     @sympolys.Domain::EX,
-  )
-  let denom_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+  ) catch {
+    _ => return false
+  }
+  let denom_poly = @sympolys.Poly::from_expr(
     canonical_expr(denom),
     gens,
     @sympolys.Domain::EX,
-  )
-  match (numer_poly_res, denom_poly_res) {
-    (Ok(numer_poly), Ok(denom_poly)) =>
-      !denom_poly.is_zero() && numer_poly.is_zero()
-    _ => false
+  ) catch {
+    _ => return false
   }
+  !denom_poly.is_zero() && numer_poly.is_zero()
 }
 
 ///|
@@ -4505,36 +4448,27 @@ fn solver_lie_cancel_expr(expr : Expr) -> Expr {
       canonical_expr(@symcore.xreplace(rational_ready, restore_all))
     }
   }
-  let num_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
-    canonical_expr(numer),
-    gens,
-    @sympolys.Domain::EX,
-  )
-  let den_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
-    canonical_expr(denom),
-    gens,
-    @sympolys.Domain::EX,
-  )
-  let canceled = match (num_poly_res, den_poly_res) {
-    (Ok(num_poly), Ok(den_poly)) => {
-      let cancel_res : Result[
-        (@sympolys.Poly, @sympolys.Poly),
-        @sympolys.PolyError,
-      ] = try? @sympolys.cancel(num_poly, den_poly)
-      match cancel_res {
-        Ok((num_s, den_s)) => {
-          let den_expr = den_s.to_expr()
-          if @symcore.compare_expr(den_expr, @symcore.int(1)) == 0 {
-            num_s.to_expr()
-          } else {
-            canonical_expr(
-              @symcore.mul([num_s.to_expr(), den_expr ^ @symcore.int(-1)]),
-            )
-          }
-        }
-        Err(_) => rational_ready
-      }
+  let canceled = try {
+    let num_poly = @sympolys.Poly::from_expr(
+      canonical_expr(numer),
+      gens,
+      @sympolys.Domain::EX,
+    )
+    let den_poly = @sympolys.Poly::from_expr(
+      canonical_expr(denom),
+      gens,
+      @sympolys.Domain::EX,
+    )
+    let (num_s, den_s) = @sympolys.cancel(num_poly, den_poly)
+    let den_expr = den_s.to_expr()
+    if @symcore.compare_expr(den_expr, @symcore.int(1)) == 0 {
+      num_s.to_expr()
+    } else {
+      canonical_expr(
+        @symcore.mul([num_s.to_expr(), den_expr ^ @symcore.int(-1)]),
+      )
     }
+  } catch {
     _ => rational_ready
   }
   if restore_all.is_empty() {
@@ -4922,37 +4856,33 @@ fn solver_lie_poly_divmod_exprs(
   divisor : Expr,
   gens : Array[String],
 ) -> (Expr, Expr)? {
-  let dividend_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+  let dividend_poly = @sympolys.Poly::from_expr(
     canonical_expr(dividend),
     gens,
     @sympolys.Domain::EX,
-  )
-  let divisor_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
+  ) catch {
+    _ => return None
+  }
+  let divisor_poly = @sympolys.Poly::from_expr(
     canonical_expr(divisor),
     gens,
     @sympolys.Domain::EX,
-  )
-  match (dividend_poly_res, divisor_poly_res) {
-    (Ok(dividend_poly), Ok(divisor_poly)) => {
-      if divisor_poly.is_zero() {
-        return None
-      }
-      let div_res : Result[
-        (Array[@sympolys.Poly], @sympolys.Poly),
-        @sympolys.PolyError,
-      ] = try? dividend_poly.divmod_multivar([divisor_poly])
-      match div_res {
-        Ok((quotients, remainder)) =>
-          Some(
-            (
-              canonical_expr(quotients[0].to_expr()),
-              canonical_expr(remainder.to_expr()),
-            ),
-          )
-        Err(_) => None
-      }
-    }
+  ) catch {
+    _ => return None
+  }
+  if divisor_poly.is_zero() {
+    return None
+  }
+  try dividend_poly.divmod_multivar([divisor_poly]) catch {
     _ => None
+  } noraise {
+    (quotients, remainder) =>
+      Some(
+        (
+          canonical_expr(quotients[0].to_expr()),
+          canonical_expr(remainder.to_expr()),
+        ),
+      )
   }
 }
 
@@ -5297,7 +5227,7 @@ fn _solver_lie_substitute_symbol(
 ) -> Expr {
   match symbol {
     Expr::Symbol(name) => {
-      let env : Map[String, Expr] = {}
+      let env : Map[String, Expr] = Map([])
       env[name] = value
       canonical_expr(@symcore.subst(expr, env))
     }
@@ -5547,7 +5477,7 @@ fn solver_lie_push_unique(
   xi : Expr,
   eta : Expr,
 ) -> Unit {
-  let value : Map[String, Expr] = {}
+  let value : Map[String, Expr] = Map([])
   value["xi"] = xi
   value["eta"] = eta
   for existing in out {
@@ -5729,7 +5659,7 @@ fn solver_lie_scale_with_ones(
   expr : Expr,
   symbols : Array[Expr],
 ) -> Expr raise SolverError {
-  let scale : Map[String, Expr] = {}
+  let scale : Map[String, Expr] = Map([])
   for symbol in symbols {
     scale[solver_symbol_name(symbol)] = @symcore.int(1)
   }
@@ -5948,13 +5878,12 @@ fn solver_lie_heuristic_function_sum(
               solver_lie_simplify(solver_expr_divide(gy, k)),
             )
           } else {
-            let solve_try : Result[SolveResult, SolverError] = try? solve(
-              solve_expr_input(check),
-              symbols=[k],
-            )
-            let mappings = match solve_try {
-              Ok(value) => solver_maps_from_result(value, [k])
+            let mappings = try
+              solve(solve_expr_input(check), symbols=[k])
+            catch {
               _ => []
+            } noraise {
+              value => solver_maps_from_result(value, [k])
             }
             guard !mappings.is_empty() else { continue }
             let kval = mappings[0].get("__lie_k").unwrap_or(@symcore.int(1))
@@ -6540,7 +6469,7 @@ fn solver_lie_linear_candidate(
   equations : Array[Expr],
   coeffs : Array[Expr],
 ) -> Map[String, Expr]? raise SolverError {
-  let out : Map[String, Expr] = {}
+  let out : Map[String, Expr] = Map([])
   let mut remaining_coeffs = coeffs.copy()
   let mut remaining_eqs = equations.map(solver_normalize_equation)
   while true {
@@ -7124,7 +7053,7 @@ fn solver_symbol_subst(
   symbol : Expr,
   value : Expr,
 ) -> Expr raise SolverError {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[solver_symbol_name(symbol)] = value
   @symcore.subst(expr, env)
 }
@@ -7290,27 +7219,18 @@ fn solver_pde_characteristic_invariant_linear(
       @symcore.mul([@symcore.int(-1), ratio_sub]),
     ]),
   )
-  let solved_try : Result[Expr, SolverError] = try? dsolve(
-    ode,
-    func=Some(dummy),
-  )
-  match solved_try {
-    Ok(sol) => {
-      let eta_try : Result[Array[Expr], SolverError] = try? solver_single_target_solutions(
-        sol,
-        Expr::Symbol("C1"),
-      )
-      match eta_try {
-        Ok(items) if !items.is_empty() =>
-          Some(
-            solver_characteristic_invariant_cleanup(
-              canonical_expr(solver_rewrite_solution_nodes(items[0], dummy, y)),
-            ),
-          )
-        _ => None
-      }
-    }
-    Err(_) => None
+  let sol = dsolve(ode, func=Some(dummy)) catch { _ => return None }
+  let items = solver_single_target_solutions(sol, Expr::Symbol("C1")) catch {
+    _ => return None
+  }
+  if items.is_empty() {
+    None
+  } else {
+    Some(
+      solver_characteristic_invariant_cleanup(
+        canonical_expr(solver_rewrite_solution_nodes(items[0], dummy, y)),
+      ),
+    )
   }
 }
 
@@ -7566,7 +7486,7 @@ fn solver_replace_solution_constants_with_function(
   invariant : Expr,
   solvefun : Expr?,
 ) -> Expr raise SolverError {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   let replacement = solver_make_solvefun_application(solvefun, invariant)
   for symbol in @symcore.free_symbols(expr) {
     match symbol {
@@ -7959,19 +7879,19 @@ pub fn checkodesol(
   }
   let x = args[0]
   if solve_for_func && solver_checkodesol_solved_rhs(sol_eq, f) is None {
-    let solved_try : Result[Array[Expr], SolverError] = try? solver_checkodesol_solve_target(
-      sol_eq, f,
-    )
-    match solved_try {
-      Ok(solved) if solved.length() == 1 =>
-        return checkodesol(
-          ode,
-          Expr::Relational(@symcore.RelOp::Eq, f, solved[0]),
-          func=Some(f),
-          order=Some(ode_order_value),
-          solve_for_func=false,
-        )
+    try solver_checkodesol_solve_target(sol_eq, f) catch {
       _ => ()
+    } noraise {
+      solved =>
+        if solved.length() == 1 {
+          return checkodesol(
+            ode,
+            Expr::Relational(@symcore.RelOp::Eq, f, solved[0]),
+            func=Some(f),
+            order=Some(ode_order_value),
+            solve_for_func=false,
+          )
+        }
     }
   }
   match solver_checkodesol_pass1(ode, sol_eq, f) {
@@ -9084,7 +9004,7 @@ fn solver_pdsolve_constant_coeff(
       @symcore.pow(denom, @symcore.int(-1)),
     ]),
   )
-  let xy_env : Map[String, Expr] = {}
+  let xy_env : Map[String, Expr] = Map([])
   xy_env[solver_symbol_name(x)] = x_sub
   xy_env[solver_symbol_name(y)] = y_sub
   let transformed_source = canonical_expr(

@@ -22,9 +22,9 @@ fn sq_assert_matrix_oracle_equal(
   assert_eq(flat.length(), rows * cols)
   let mut idx = 0
   for row in expected {
-    let inner = row[1:row.length() - 1].to_string().split(", ").to_array()
+    let inner = row[1:row.length() - 1].to_owned().split(", ").to_array()
     for item in inner {
-      assert_true(expr_equal(flat[idx], item.to_string()))
+      assert_true(expr_equal(flat[idx], item.to_owned()))
       idx += 1
     }
   }

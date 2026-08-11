@@ -1,5 +1,5 @@
 import {
   "moonbitlang/core/bigint",
-  "moonbitlang/core/string" @string,
+  "moonbitlang/core/string",
   "CAIMEOX/symbit/symnum",
 }

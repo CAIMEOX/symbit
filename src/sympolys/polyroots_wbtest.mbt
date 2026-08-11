@@ -5,10 +5,10 @@ test "polyroots wb: arity and degree guard errors" {
 
   let b2 = PolyBuilder::new(["x", "y"], Domain::QQ)
   let p2 = b2.from_expr(x + y)
-  let non_uni_linear : Result[Array[@symcore.Expr], PolyError] = try? roots_linear(
-    p2,
+  sympolys_assert_error(
+    fn() raise PolyError { roots_linear(p2) },
+    "NotUnivariate",
   )
-  assert_true(non_uni_linear is Err(PolyError::NotUnivariate))
 
   let b1 = PolyBuilder::new(["x"], Domain::QQ)
   let lin = b1.from_expr(x + @symcore.int(1))
@@ -16,25 +16,25 @@ test "polyroots wb: arity and degree guard errors" {
   let cubic = b1.from_expr((x ^ @symcore.int(3)) + x + @symcore.int(1))
   let quartic = b1.from_expr((x ^ @symcore.int(4)) + x + @symcore.int(1))
 
-  let bad_linear : Result[Array[@symcore.Expr], PolyError] = try? roots_linear(
-    quad,
+  sympolys_assert_error(
+    fn() raise PolyError { roots_linear(quad) },
+    "BadExponent",
   )
-  assert_true(bad_linear is Err(PolyError::BadExponent))
 
-  let bad_quad : Result[Array[@symcore.Expr], PolyError] = try? roots_quadratic(
-    lin,
+  sympolys_assert_error(
+    fn() raise PolyError { roots_quadratic(lin) },
+    "BadExponent",
   )
-  assert_true(bad_quad is Err(PolyError::BadExponent))
 
-  let bad_cubic : Result[Array[@symcore.Expr], PolyError] = try? roots_cubic(
-    quad,
+  sympolys_assert_error(
+    fn() raise PolyError { roots_cubic(quad) },
+    "BadExponent",
   )
-  assert_true(bad_cubic is Err(PolyError::BadExponent))
 
-  let bad_quartic : Result[Array[@symcore.Expr], PolyError] = try? roots_quartic(
-    cubic,
+  sympolys_assert_error(
+    fn() raise PolyError { roots_quartic(cubic) },
+    "BadExponent",
   )
-  assert_true(bad_quartic is Err(PolyError::BadExponent))
 
   let _ = quartic
 }
@@ -126,10 +126,12 @@ test "polyroots wb: quintic frontdoor handles supported and empty branches" {
   let unsupported = b.from_expr((x ^ @symcore.int(5)) + x + @symcore.int(1))
   assert_true(roots_quintic(unsupported).length() == 0)
 
-  let bad : Result[Array[@symcore.Expr], PolyError] = try? roots_quintic(
-    b.from_expr((x ^ @symcore.int(4)) + @symcore.int(1)),
+  sympolys_assert_error(
+    fn() raise PolyError {
+      roots_quintic(b.from_expr((x ^ @symcore.int(4)) + @symcore.int(1)))
+    },
+    "BadExponent",
   )
-  assert_true(bad is Err(PolyError::BadExponent))
 }
 
 ///|
@@ -142,10 +144,12 @@ test "polyroots wb: cyclotomic roots detect primitive roots" {
   assert_true(roots4[0].contains("sin"))
   let phi5 = Poly::from_expr(cyclotomic_poly(5), ["x"], Domain::QQ)
   assert_true(roots_cyclotomic(phi5).length() == 4)
-  let not_cyclotomic : Result[Array[@symcore.Expr], PolyError] = try? roots_cyclotomic(
-    b.from_expr((x ^ @symcore.int(2)) + x + @symcore.int(2)),
+  sympolys_assert_error(
+    fn() raise PolyError {
+      roots_cyclotomic(b.from_expr((x ^ @symcore.int(2)) + x + @symcore.int(2)))
+    },
+    "BadExponent",
   )
-  assert_true(not_cyclotomic is Err(PolyError::BadExponent))
 }
 
 ///|

@@ -11,12 +11,12 @@
 ///|
 fn fib_small_uint64(n : Int) -> UInt64 {
   if n <= 0 {
-    return UInt64::default()
+    return Default::default()
   }
   if n == 1 {
     return UInt64::extend_uint(1)
   }
-  let mut a = UInt64::default()
+  let mut a = Default::default()
   let mut b = UInt64::extend_uint(1)
   let mut i = 1
   while i < n {

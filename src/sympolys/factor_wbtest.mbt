@@ -19,38 +19,41 @@ test "factor wb: extension and univariate guard branches" {
   let y = @symcore.Expr::Symbol("y")
   let non_uni = PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y)
 
-  let deriv_bad : Result[Poly, PolyError] = try? deriv_univar(non_uni)
-  assert_true(deriv_bad is Err(PolyError::NotUnivariate))
+  sympolys_assert_error(
+    fn() raise PolyError { deriv_univar(non_uni) },
+    "NotUnivariate",
+  )
 
   let gf_poly = fw_univar(
     (x ^ @symcore.int(3)) + @symcore.int(1),
     Domain::GF(5),
   )
-  let root_bad : Result[Poly, PolyError] = try? pth_root_univar_gf(gf_poly, 2)
-  assert_true(root_bad is Err(PolyError::BadExponent))
+  sympolys_assert_error(
+    fn() raise PolyError { pth_root_univar_gf(gf_poly, 2) },
+    "BadExponent",
+  )
 
   let ext_none = apply_extension_request(gf_poly, [])
   assert_true(ext_none.domain == gf_poly.domain)
 
-  let ext_bad : Result[Poly, PolyError] = try? apply_extension_request(two, [
-    "a", "b",
-  ])
-  assert_true(ext_bad is Err(PolyError::BadGenerator("extension")))
+  sympolys_assert_error(
+    fn() raise PolyError { apply_extension_request(two, ["a", "b"]) },
+    "BadGenerator(extension)",
+  )
 
   let zz_poly = fw_univar((x ^ @symcore.int(2)) + @symcore.int(1), Domain::ZZ)
   let lifted = apply_extension_request(zz_poly, ["a"])
   assert_true(lifted.domain == Domain::QQ)
 
-  let factor_bad_gens : Result[Array[(Poly, Int)], PolyError] = try? zz_poly.factor(gens=[
-      "y",
-    ],
+  sympolys_assert_error(
+    fn() raise PolyError { zz_poly.factor(gens=["y"]) },
+    "DomainMismatch",
   )
-  assert_true(factor_bad_gens is Err(PolyError::DomainMismatch))
 
-  let factor_bad_mod : Result[Array[(Poly, Int)], PolyError] = try? zz_poly.factor(
-    modulus=1,
+  sympolys_assert_error(
+    fn() raise PolyError { zz_poly.factor(modulus=1) },
+    "BadModulus",
   )
-  assert_true(factor_bad_mod is Err(PolyError::BadModulus))
 }
 
 ///|
@@ -153,20 +156,24 @@ test "factor wb: GF splitting and seed helpers" {
 
   let y = @symcore.Expr::Symbol("y")
   let non_uni = PolyBuilder::new(["x", "y"], Domain::GF(5)).from_expr(x + y)
-  let bad_gf_seeded : Result[Array[Poly], PolyError] = try? factor_gf_seeded(
-    non_uni, 11,
+  sympolys_assert_error(
+    fn() raise PolyError { factor_gf_seeded(non_uni, 11) },
+    "NotUnivariate",
   )
-  assert_true(bad_gf_seeded is Err(PolyError::NotUnivariate))
 
-  let bad_eval_mod : Result[Int, PolyError] = try? eval_univar_mod(
-    gf_poly, 1, 1,
+  sympolys_assert_error(
+    fn() raise PolyError { eval_univar_mod(gf_poly, 1, 1) },
+    "BadModulus",
   )
-  assert_true(bad_eval_mod is Err(PolyError::BadModulus))
 
-  let lin_bad : Result[Array[Poly], PolyError] = try? factor_linear_rationals(
-    PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y),
+  sympolys_assert_error(
+    fn() raise PolyError {
+      factor_linear_rationals(
+        PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y),
+      )
+    },
+    "NotUnivariate",
   )
-  assert_true(lin_bad is Err(PolyError::NotUnivariate))
 }
 
 ///|
@@ -186,15 +193,19 @@ test "factor wb: algext conversion and factoring helper branches" {
   let sf_lin = factor_algext_squarefree(lin_alg, Domain::QQ, minpoly)
   assert_true(sf_lin.length() == 1)
 
-  let bad_factor_domain : Result[Array[Poly], PolyError] = try? factor_algext(
-    fw_univar(x + @symcore.int(1), Domain::QQ),
+  sympolys_assert_error(
+    fn() raise PolyError {
+      factor_algext(fw_univar(x + @symcore.int(1), Domain::QQ))
+    },
+    "DomainMismatch",
   )
-  assert_true(bad_factor_domain is Err(PolyError::DomainMismatch))
 
-  let bad_factor_nonuni : Result[Array[Poly], PolyError] = try? factor_algext(
-    PolyBuilder::new(["x", "y"], alg_domain).from_expr(x + y),
+  sympolys_assert_error(
+    fn() raise PolyError {
+      factor_algext(PolyBuilder::new(["x", "y"], alg_domain).from_expr(x + y))
+    },
+    "NotUnivariate",
   )
-  assert_true(bad_factor_nonuni is Err(PolyError::NotUnivariate))
 
   let coeffs : Map[Monomial, FieldElem] = Map([])
   coeffs.set(Monomial::{ exps: [1] }, FieldElem::QQ(@symnum.BigRational::one()))
@@ -235,18 +246,26 @@ test "factor wb: high-gap branch sweep" {
   let y = @symcore.Expr::Symbol("y")
   let a = @symcore.Expr::Symbol("a")
 
-  let pth_nonuni : Result[Poly, PolyError] = try? pth_root_univar_gf(
-    PolyBuilder::new(["x", "y"], Domain::GF(3)).from_expr(x + y),
-    3,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      pth_root_univar_gf(
+        PolyBuilder::new(["x", "y"], Domain::GF(3)).from_expr(x + y),
+        3,
+      )
+    },
+    "NotUnivariate",
   )
-  assert_true(pth_nonuni is Err(PolyError::NotUnivariate))
   let pth_zero = pth_root_univar_gf(Poly::zero(["x"], Domain::GF(3)), 3)
   assert_true(pth_zero.is_zero())
 
-  let sqf_nonuni : Result[Array[(Poly, Int)], PolyError] = try? square_free_decompose(
-    PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y),
+  sympolys_assert_error(
+    fn() raise PolyError {
+      square_free_decompose(
+        PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y),
+      )
+    },
+    "NotUnivariate",
   )
-  assert_true(sqf_nonuni is Err(PolyError::NotUnivariate))
   assert_true(
     square_free_decompose(Poly::zero(["x"], Domain::QQ)).length() == 0,
   )
@@ -398,10 +417,10 @@ test "factor wb: residual reachable branch sweep" {
     .from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
     .factor(modulus=5)
   assert_true(qq_mod_parts.length() >= 1)
-  let bad_seeded : Result[Array[Poly], PolyError] = try? factor_gf_seeded(
-    qq_poly, 13,
+  sympolys_assert_error(
+    fn() raise PolyError { factor_gf_seeded(qq_poly, 13) },
+    "NotUnivariate",
   )
-  assert_true(bad_seeded is Err(PolyError::NotUnivariate))
 
   let rel = (a ^ @symcore.int(2)) + @symcore.int(1)
   let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [rel])

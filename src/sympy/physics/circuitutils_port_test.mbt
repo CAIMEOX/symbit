@@ -2,7 +2,7 @@
 fn circuit_oracle_ints(lines : Array[String]) -> Array[Int] raise {
   let out : Array[Int] = []
   for line in lines {
-    let value = @strconv.parse_int(line)
+    let value = @string.parse_int(line)
     out.push(value)
   }
   out
@@ -57,7 +57,7 @@ test "physics.quantum.circuitutils: search parity" {
   let subcircuit = @symcore.raw_mul([z_gate(0).as_expr(), y_gate(0).as_expr()])
   assert_eq(
     find_subcircuit(circuit, subcircuit, start=2),
-    @strconv.parse_int(
+    @string.parse_int(
       quantum_circuitutils_find_subcircuit(
         @symprint.pretty_string(circuit),
         @symprint.pretty_string(subcircuit),

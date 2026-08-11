@@ -105,7 +105,7 @@ fn orbit_transversal_af(
   alpha : Int,
 ) -> (Array[(Int, Array[Int])], Map[Int, Array[Int]]) raise CombinatoricsError {
   let tr : Array[(Int, Array[Int])] = Array::new()
-  let slp_dict : Map[Int, Array[Int]] = {}
+  let slp_dict : Map[Int, Array[Int]] = Map([])
   let identity : Array[Int] = Array::new()
   for i in 0..<degree {
     identity.push(i)
@@ -265,7 +265,7 @@ pub fn _orbits_transversals_from_bsgs(
       strong_gens_distr[i],
       base[i],
     )
-    let trans_map : Map[Int, Permutation] = {}
+    let trans_map : Map[Int, Permutation] = Map([])
     let orbit : Array[Int] = Array::new()
     for pair in pairs {
       let beta = pair.0

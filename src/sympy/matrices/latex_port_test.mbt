@@ -5,7 +5,7 @@ test "matrices latex parity for dense sparse and matrix expressions" {
   let dense = @symmatrices.matrix([[x, @symcore.int(1)], [@symcore.int(0), y]])
   assert_eq(dense.latex(), matrix_latex(dense))
 
-  let sparse_entries : Map[(Int, Int), @symcore.Expr] = {}
+  let sparse_entries : Map[(Int, Int), @symcore.Expr] = Map([])
   sparse_entries[(0, 0)] = x
   sparse_entries[(0, 1)] = @symcore.int(1)
   sparse_entries[(1, 1)] = y

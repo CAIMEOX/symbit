@@ -39,7 +39,7 @@ fn sqf_norm_shift(
     minpoly,
     alpha,
   )
-  let coeffs : Map[Monomial, FieldElem] = {}
+  let coeffs : Map[Monomial, FieldElem] = Map([])
   for mono, coeff0 in poly.coeffs {
     let exp = mono.exps[0]
     let coeff = sqf_norm_lift_coeff(coeff0, poly.domain)

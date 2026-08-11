@@ -55,7 +55,7 @@ fn split_dirac_linear_term(expr : Expr) -> (Expr, Expr)? {
 /// - Returns: A map from each `DiracDelta` atom to its coefficient.
 /// - Limits: Nonlinear products containing multiple delta atoms are ignored.
 pub fn expand_dirac_delta(expr : Expr) -> Map[Expr, Expr] {
-  let out : Map[Expr, Expr] = {}
+  let out : Map[Expr, Expr] = Map([])
   let terms = match expr_simplify(expr) {
     @symcore.Expr::Add(args) => args
     simplified => [simplified]

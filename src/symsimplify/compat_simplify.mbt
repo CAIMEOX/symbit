@@ -294,7 +294,7 @@ fn rewrite_kroneckersimp(expr : Expr) -> Expr {
 
 ///|
 fn compat_simplify_delta_mul(args : Array[Expr]) -> Expr {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   let others : Array[Expr] = Array::new()
   let pending : Array[(Expr, Expr)] = Array::new()
   for arg in args {
@@ -367,10 +367,10 @@ fn compat_simplify_delta_mul(args : Array[Expr]) -> Expr {
 fn compat_unique_delta_pairs(
   pairs : Array[(Expr, Expr)],
 ) -> Array[(Expr, Expr)] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let out : Array[(Expr, Expr)] = Array::new()
   for pair in pairs {
-    let key = to_repr(pair.0).to_string() + "|" + to_repr(pair.1).to_string()
+    let key = Repr(pair.0).to_string() + "|" + Repr(pair.1).to_string()
     if seen.get(key) is Some(_) {
       continue
     }
@@ -599,13 +599,11 @@ fn compat_exact_rational_nth_root(
     ) {
     (Some(num), Some(den)) => {
       let signed_num = if sign < 0 { -num } else { num }
-      match
-        (
-          try? @symnum.BigRational::from_ints(signed_num, den) :
-          Result[@symnum.BigRational, @symnum.RationalError]) {
-        Ok(v) => Some(v)
-        Err(_) => None
-      }
+      Some(
+        @symnum.BigRational::from_ints(signed_num, den) catch {
+          _ => return None
+        },
+      )
     }
     _ => None
   }

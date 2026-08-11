@@ -669,59 +669,48 @@ pub fn CoordSys3D::scalar_map(
               Some(value) => value
               None => abort("CoordSys3D::scalar_map-parent-none")
             }
-            let solved_try : Result[
-              @symsolvers.SolveResult,
-              @symsolvers.SolverError,
-            ] = try? @symsolvers.solve(
+            let solved_value = @symsolvers.solve(
               @symsolvers.solve_exprs_input([
                 parent.x().expr() - system.transformation_to_parent()[0],
                 parent.y().expr() - system.transformation_to_parent()[1],
                 parent.z().expr() - system.transformation_to_parent()[2],
               ]),
               symbols=coord_scalars_exprs(system),
-            )
-            let solved = match solved_try {
-              Err(_) => {
+            ) catch {
+              _ => {
                 @rawvec.raise_value_error(
                   "inverse transformation is not available",
                 )
                 abort("CoordSys3D::scalar_map-inverse-solve")
               }
-              Ok(value) =>
-                match value {
-                  @symsolvers.SolveResult::Dict(values) =>
-                    [
-                      values.get(system.x().name_).unwrap_or(system.x().expr()),
-                      values.get(system.y().name_).unwrap_or(system.y().expr()),
-                      values.get(system.z().name_).unwrap_or(system.z().expr()),
-                    ]
-                  @symsolvers.SolveResult::Dicts(items) =>
-                    if items.is_empty() {
-                      @rawvec.raise_value_error(
-                        "inverse transformation is not available",
-                      )
-                      abort("CoordSys3D::scalar_map-inverse-empty")
-                    } else {
-                      let values = items[0]
-                      [
-                        values
-                        .get(system.x().name_)
-                        .unwrap_or(system.x().expr()),
-                        values
-                        .get(system.y().name_)
-                        .unwrap_or(system.y().expr()),
-                        values
-                        .get(system.z().name_)
-                        .unwrap_or(system.z().expr()),
-                      ]
-                    }
-                  @symsolvers.SolveResult::List(_) => {
-                    @rawvec.raise_value_error(
-                      "inverse transformation is not available",
-                    )
-                    abort("CoordSys3D::scalar_map-inverse-list")
-                  }
+            }
+            let solved = match solved_value {
+              @symsolvers.SolveResult::Dict(values) =>
+                [
+                  values.get(system.x().name_).unwrap_or(system.x().expr()),
+                  values.get(system.y().name_).unwrap_or(system.y().expr()),
+                  values.get(system.z().name_).unwrap_or(system.z().expr()),
+                ]
+              @symsolvers.SolveResult::Dicts(items) =>
+                if items.is_empty() {
+                  @rawvec.raise_value_error(
+                    "inverse transformation is not available",
+                  )
+                  abort("CoordSys3D::scalar_map-inverse-empty")
+                } else {
+                  let values = items[0]
+                  [
+                    values.get(system.x().name_).unwrap_or(system.x().expr()),
+                    values.get(system.y().name_).unwrap_or(system.y().expr()),
+                    values.get(system.z().name_).unwrap_or(system.z().expr()),
+                  ]
                 }
+              @symsolvers.SolveResult::List(_) => {
+                @rawvec.raise_value_error(
+                  "inverse transformation is not available",
+                )
+                abort("CoordSys3D::scalar_map-inverse-list")
+              }
             }
             subst_expr_array(solved, current)
           }
@@ -733,7 +722,7 @@ pub fn CoordSys3D::scalar_map(
     }
     current = scalar_env(system.base_scalars(), next_values)
   }
-  let out : Map[BaseScalar, @symcore.Expr] = {}
+  let out : Map[BaseScalar, @symcore.Expr] = Map([])
   for scalar in self.base_scalars() {
     out[scalar] = scalar_map_post_process(current[scalar.name_])
   }

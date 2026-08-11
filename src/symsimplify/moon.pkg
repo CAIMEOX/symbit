@@ -2,7 +2,7 @@ import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/sympolys",
-  "moonbitlang/core/string" @string,
+  "moonbitlang/core/string",
 }
 
 import {

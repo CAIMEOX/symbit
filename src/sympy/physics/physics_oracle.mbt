@@ -1669,7 +1669,7 @@ pub fn quantum_qasm_indices(
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(s => s.to_string())
+    txt.split("\u001f").to_array().map(s => s.to_owned())
   }
 }
 
@@ -1714,7 +1714,7 @@ pub fn quantum_labeller(n : Int, symbol? : String = "q") -> Array[String] raise 
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(s => s.to_string())
+    txt.split("\u001f").to_array().map(s => s.to_owned())
   }
 }
 
@@ -1816,7 +1816,7 @@ pub fn quantum_qasm_labels(lines : Array[String]) -> Array[String] raise {
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(s => s.to_string())
+    txt.split("\u001f").to_array().map(s => s.to_owned())
   }
 }
 
@@ -1865,11 +1865,7 @@ pub fn quantum_represent_matrix(
       "        print(row)\n",
     ].join(""),
   )
-  txt
-  .split("\n")
-  .map(StringView::to_string)
-  .filter(line => line != "")
-  .collect()
+  txt.split("\n").map(StringView::to_owned).filter(line => line != "").collect()
 }
 
 ///|
@@ -2007,7 +2003,7 @@ pub fn quantum_identitysearch_rules_summary(
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(StringView::to_string)
+    txt.split("\u001f").to_array().map(StringView::to_owned)
   }
 }
 
@@ -2028,7 +2024,7 @@ pub fn quantum_identitysearch_equivalent_ids(
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(StringView::to_string)
+    txt.split("\u001f").to_array().map(StringView::to_owned)
   }
 }
 
@@ -2062,7 +2058,7 @@ pub fn quantum_identitysearch_bfs_summary(
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(StringView::to_string)
+    txt.split("\u001f").to_array().map(StringView::to_owned)
   }
 }
 
@@ -2104,11 +2100,7 @@ pub fn quantum_matrixcache_matrix(name : String) -> Array[String] raise {
       "        print(item)\n",
     ].join(""),
   )
-  txt
-  .split("\n")
-  .map(StringView::to_string)
-  .filter(line => line != "")
-  .collect()
+  txt.split("\n").map(StringView::to_owned).filter(line => line != "").collect()
 }
 
 ///|
@@ -2131,7 +2123,7 @@ pub fn quantum_circuitutils_kmp_table(expr : String) -> Array[String] raise {
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(s => s.to_string())
+    txt.split("\u001f").to_array().map(s => s.to_owned())
   }
 }
 
@@ -2203,11 +2195,7 @@ pub fn quantum_circuitutils_convert_to_symbolic(
       "    print(f\"{key}={mapping[key]}\")\n",
     ].join(""),
   )
-  txt
-  .split("\n")
-  .map(StringView::to_string)
-  .filter(line => line != "")
-  .collect()
+  txt.split("\n").map(StringView::to_owned).filter(line => line != "").collect()
 }
 
 ///|
@@ -2250,11 +2238,7 @@ pub fn quantum_grover_superposition_matrix(
       "        print(item)\n",
     ].join(""),
   )
-  txt
-  .split("\n")
-  .map(StringView::to_string)
-  .filter(line => line != "")
-  .collect()
+  txt.split("\n").map(StringView::to_owned).filter(line => line != "").collect()
 }
 
 ///|
@@ -2277,11 +2261,7 @@ pub fn quantum_grover_oracle_matrix(
       "        print(item)\n",
     ].join(""),
   )
-  txt
-  .split("\n")
-  .map(StringView::to_string)
-  .filter(line => line != "")
-  .collect()
+  txt.split("\n").map(StringView::to_owned).filter(line => line != "").collect()
 }
 
 ///|
@@ -2308,11 +2288,7 @@ pub fn quantum_grover_w_matrix(nqubits : Int) -> Array[String] raise {
       "        print(item)\n",
     ].join(""),
   )
-  txt
-  .split("\n")
-  .map(StringView::to_string)
-  .filter(line => line != "")
-  .collect()
+  txt.split("\n").map(StringView::to_owned).filter(line => line != "").collect()
 }
 
 ///|
@@ -2342,11 +2318,7 @@ pub fn quantum_grover_oracle_state_matrix(
       "        print(item)\n",
     ].join(""),
   )
-  txt
-  .split("\n")
-  .map(StringView::to_string)
-  .filter(line => line != "")
-  .collect()
+  txt.split("\n").map(StringView::to_owned).filter(line => line != "").collect()
 }
 
 ///|
@@ -2372,11 +2344,7 @@ pub fn quantum_grover_w_state_matrix(
       "        print(item)\n",
     ].join(""),
   )
-  txt
-  .split("\n")
-  .map(StringView::to_string)
-  .filter(line => line != "")
-  .collect()
+  txt.split("\n").map(StringView::to_owned).filter(line => line != "").collect()
 }
 
 ///|
@@ -2405,11 +2373,7 @@ pub fn quantum_grover_apply_matrix(
       "        print(item)\n",
     ].join(""),
   )
-  txt
-  .split("\n")
-  .map(StringView::to_string)
-  .filter(line => line != "")
-  .collect()
+  txt.split("\n").map(StringView::to_owned).filter(line => line != "").collect()
 }
 
 ///|
@@ -2582,7 +2546,7 @@ pub fn paulialgebra_delta(i : Int, j : Int) -> Int raise {
     OracleArg::Int(i),
     OracleArg::Int(j),
   ])
-  @strconv.parse_int(py_str_obj(objenum_to_obj(out))) catch {
+  @string.parse_int(py_str_obj(objenum_to_obj(out))) catch {
     _ => fail("parse-int")
   }
 }
@@ -2594,7 +2558,7 @@ pub fn paulialgebra_epsilon(i : Int, j : Int, k : Int) -> Int raise {
     OracleArg::Int(j),
     OracleArg::Int(k),
   ])
-  @strconv.parse_int(py_str_obj(objenum_to_obj(out))) catch {
+  @string.parse_int(py_str_obj(objenum_to_obj(out))) catch {
     _ => fail("parse-int")
   }
 }
@@ -2672,7 +2636,7 @@ pub fn optics_polarization_matrix(
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(s => s.to_string())
+    txt.split("\u001f").to_array().map(s => s.to_owned())
   }
 }
 
@@ -2713,7 +2677,7 @@ fn python_script_stdout(script : String) -> String raise {
     ),
   )
   match globals.get("__symbit_out__") {
-    Some(value) => py_str_obj(objenum_to_obj(value)).trim().to_string()
+    Some(value) => py_str_obj(objenum_to_obj(value)).trim().to_owned()
     None => ""
   }
 }
@@ -2823,7 +2787,7 @@ pub fn secondquant_matrix_rows(
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(s => s.to_string())
+    txt.split("\u001f").to_array().map(s => s.to_owned())
   }
 }
 
@@ -2878,7 +2842,7 @@ pub fn control_routh_table_matrix(
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(s => s.to_string())
+    txt.split("\u001f").to_array().map(s => s.to_owned())
   }
 }
 
@@ -3056,7 +3020,7 @@ pub fn optics_gaussopt_matrix(expr : String) -> Array[String] raise {
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(StringView::to_string)
+    txt.split("\u001f").to_array().map(StringView::to_owned)
   }
 }
 
@@ -3097,7 +3061,7 @@ fn vector_python_result_script(
   let pieces = expr
     .split(";")
     .to_array()
-    .map(s => s.trim().to_string())
+    .map(s => s.trim().to_owned())
     .filter(s => s != "")
   if pieces.is_empty() {
     return [vector_subprocess_prelude(), prefix, "None", suffix, "\n"].join("")
@@ -3123,7 +3087,7 @@ fn mechanics_python_result_script(
   let pieces = expr
     .split(";")
     .to_array()
-    .map(s => s.trim().to_string())
+    .map(s => s.trim().to_owned())
     .filter(s => s != "")
   if pieces.is_empty() {
     return [mechanics_subprocess_prelude(), prefix, "None", suffix, "\n"].join(
@@ -3196,7 +3160,7 @@ pub fn vector_expr_equal(lhs_expr : String, rhs_expr : String) -> Bool raise {
   let pieces = rhs_expr
     .split(";")
     .to_array()
-    .map(s => s.trim().to_string())
+    .map(s => s.trim().to_owned())
     .filter(s => s != "")
   let body : Array[String] = [
     vector_subprocess_prelude(),
@@ -3250,7 +3214,7 @@ pub fn vector_matrix_rows(expr : String) -> Array[String] raise {
   if txt == "" {
     []
   } else {
-    txt.split("\u001f").to_array().map(s => s.to_string())
+    txt.split("\u001f").to_array().map(s => s.to_owned())
   }
 }
 
@@ -3259,7 +3223,7 @@ pub fn vector_matrix_equal(lhs_rows : String, rhs_expr : String) -> Bool raise {
   let pieces = rhs_expr
     .split(";")
     .to_array()
-    .map(s => s.trim().to_string())
+    .map(s => s.trim().to_owned())
     .filter(s => s != "")
   let body : Array[String] = [
     vector_subprocess_prelude(),
@@ -3299,7 +3263,7 @@ pub fn mechanics_matrix_equal(
   let pieces = rhs_expr
     .split(";")
     .to_array()
-    .map(s => s.trim().to_string())
+    .map(s => s.trim().to_owned())
     .filter(s => s != "")
   let body : Array[String] = [
     mechanics_subprocess_prelude(),

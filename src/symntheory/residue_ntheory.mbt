@@ -27,7 +27,7 @@ fn isprime_naive(n : BigInt) -> Bool raise {
 ///|
 fn factorint_naive(n0 : BigInt) -> Map[BigInt, Int] raise {
   let mut n = if n0 < bi(0) { -n0 } else { n0 }
-  let factors : Map[BigInt, Int] = {}
+  let factors : Map[BigInt, Int] = Map([])
   if n < bi(2) {
     return factors
   }
@@ -311,7 +311,7 @@ pub fn quadratic_residues(n0 : BigInt) -> Array[BigInt] raise {
   }
   let n = n0
   let n_int = to_int_checked(n, 20)
-  let seen : Map[BigInt, Bool] = {}
+  let seen : Map[BigInt, Bool] = Map([])
   for i in 0..<n_int {
     let r = pow_mod(bi(i), bi(2), n)
     seen[r] = true

@@ -5,11 +5,11 @@ This is a [MoonBit](https://docs.moonbitlang.com) project.
 ## Project Structure
 
 - MoonBit packages are organized per directory, for each directory, there is a
-  `moon.pkg.json` file listing its dependencies. Each package has its files and
+  `moon.pkg` file listing its dependencies. Each package has its files and
   blackbox test files (common, ending in `_test.mbt`) and whitebox test files
   (ending in `_wbtest.mbt`).
 
-- In the toplevel directory, this is a `moon.mod.json` file listing about the
+- In the toplevel directory, this is a `moon.mod` file listing about the
   module and some meta information.
 
 ## Coding convention
@@ -52,6 +52,10 @@ This is a [MoonBit](https://docs.moonbitlang.com) project.
   moon test --target native <pkg-path>
   ```
 
+  Use the same environment with
+  `moon check --target native --deny-warn <pkg-path>` for the oracle warning
+  gate.
+
   `PATH` must put miniconda first so `python3-config` exposes the matching
   `Python.h` and libpython flags. `MOON_CC=/usr/bin/gcc` is the switch that
   disables Moon's default `tcc -run`; setting only `CC=gcc` is not enough. On
@@ -60,6 +64,17 @@ This is a [MoonBit](https://docs.moonbitlang.com) project.
   nondeterminism when embedded Python and Moon native code share a process.
 
 - You can run `moon check` to check the code is linted correctly.
+
+- This module may be checked from a parent `moon.work`. A bare `moon check` can
+  therefore include sibling modules, while `moon check src` only checks the
+  dependency closure rooted at `src`. To check every non-oracle package and
+  reject default warnings, use:
+
+  ```bash
+  find src -type f -name moon.pkg ! -path 'src/sympy/*' -print \
+    | sed 's#/moon.pkg$##' \
+    | xargs moon check --frozen --deny-warn
+  ```
 
 - When writing tests, you are encouraged to use `inspect` and run
   `moon test --update` to update the snapshots, only use assertions like

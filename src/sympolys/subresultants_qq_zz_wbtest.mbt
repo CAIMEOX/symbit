@@ -46,8 +46,10 @@ test "subresultants qq zz wb: compute_sign" {
   inspect(compute_sign(-2, 4), content="1")
   inspect(compute_sign(-2, 5), content="-1")
   inspect(compute_sign(0, 3), content="0")
-  let bad : Result[Int, PolyError] = try? compute_sign(-2, -1)
-  assert_true(bad is Err(PolyError::BadExponent))
+  sympolys_assert_error(
+    fn() raise PolyError { compute_sign(-2, -1) },
+    "BadExponent",
+  )
 }
 
 ///|

@@ -1151,6 +1151,8 @@ pub fn final_touches(DomainMatrix, Int, Int) -> DomainMatrix raise PolyError
 
 pub fn find_degree(DomainMatrix, Int) -> Int? raise PolyError
 
+pub fn find_min_poly(ModuleElement, Domain, x? : String) -> Poly raise PolyError
+
 pub fn finite_field_domain(Int) -> Domain raise PolyError
 
 pub fn from_dense(Array[FieldElem], Array[String], Domain) -> Poly raise PolyError
@@ -2152,6 +2154,7 @@ pub fn Domain::cyclotomic_field(Self, Int, ss? : Bool, extension_name? : String,
 pub fn Domain::denom_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn Domain::div_expr(Self, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) raise PolyError
 pub fn Domain::drop(Self, Array[String]) -> Self raise PolyError
+pub fn Domain::equal(Self, Self) -> Bool
 pub fn Domain::evalf_expr(Self, @symcore.Expr, prec? : Int?) -> @symcore.Expr raise PolyError
 pub fn Domain::exquo_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn Domain::exsqrt_expr(Self, @symcore.Expr) -> @symcore.Expr? raise PolyError
@@ -2204,6 +2207,7 @@ pub fn Domain::mul_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr rai
 pub fn Domain::neg_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn Domain::new_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn Domain::normal_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::not_equal(Self, Self) -> Bool
 pub fn Domain::numer_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn Domain::of_type_expr(Self, @symcore.Expr) -> Bool
 pub fn Domain::old_frac_field(Self, Array[String]) -> Self raise PolyError
@@ -2459,6 +2463,7 @@ pub struct NFModule {
   rank : Int
   basis : Array[Array[@bigint.BigInt]]
   is_power_basis : Bool
+  defining_poly : Poly?
 }
 pub impl Show for NFModule
 
@@ -2779,4 +2784,3 @@ pub type Signature = (Monomial, Int)
 pub type SympyEigenvects = Array[(@symcore.Expr, Int, Array[Array[@symcore.Expr]])]
 
 // Traits
-

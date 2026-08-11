@@ -217,7 +217,17 @@ fn concrete_mul(items : Array[MatrixExpr]) -> MatrixExpr {
 
 ///|
 fn matrix_expr_same(lhs : MatrixExpr, rhs : MatrixExpr) -> Bool {
-  (try? lhs.shape()) == (try? rhs.shape()) && lhs.to_string() == rhs.to_string()
+  let lhs_shape : Result[(Int, Int), MatrixError] = try
+    lhs.shape() |> Ok
+  catch {
+    err => Err(err)
+  }
+  let rhs_shape : Result[(Int, Int), MatrixError] = try
+    rhs.shape() |> Ok
+  catch {
+    err => Err(err)
+  }
+  lhs_shape == rhs_shape && lhs.to_string() == rhs.to_string()
 }
 
 ///|
@@ -236,30 +246,30 @@ fn matrix_expr_cancel_or_merge_pair(
   match (lhs, rhs) {
     (MatrixExpr::Inverse(inner), other) =>
       if matrix_expr_same(inner, other) {
-        let shape = try? inner.shape()
-        match shape {
-          Ok((rows, cols)) =>
+        try inner.shape() catch {
+          _ => None
+        } noraise {
+          (rows, cols) =>
             if rows == cols {
               Some(identity_expr(rows))
             } else {
               None
             }
-          Err(_) => None
         }
       } else {
         None
       }
     (other, MatrixExpr::Inverse(inner)) =>
       if matrix_expr_same(other, inner) {
-        let shape = try? inner.shape()
-        match shape {
-          Ok((rows, cols)) =>
+        try inner.shape() catch {
+          _ => None
+        } noraise {
+          (rows, cols) =>
             if rows == cols {
               Some(identity_expr(rows))
             } else {
               None
             }
-          Err(_) => None
         }
       } else {
         None
@@ -280,16 +290,11 @@ fn matrix_expr_cancel_or_merge_pair(
 fn blockdiag_identity_like(items : Array[MatrixExpr]) -> MatrixExpr? {
   let identities : Array[MatrixExpr] = []
   for item in items {
-    let shape = try? item.shape()
-    match shape {
-      Ok((rows, cols)) => {
-        if rows != cols {
-          return None
-        }
-        identities.push(identity_expr(rows))
-      }
-      Err(_) => return None
+    let (rows, cols) = item.shape() catch { _ => return None }
+    if rows != cols {
+      return None
     }
+    identities.push(identity_expr(rows))
   }
   Some(block_diag_matrix_expr(identities))
 }
@@ -307,15 +312,11 @@ fn block_identity_like(rows : Array[Array[MatrixExpr]]) -> MatrixExpr? {
   for i in 0..<rows.length() {
     let mut height = 0
     for item in rows[i] {
-      let shape = try? item.shape()
-      match shape {
-        Ok((rows0, _)) =>
-          if height == 0 {
-            height = rows0
-          } else if height != rows0 {
-            return None
-          }
-        Err(_) => return None
+      let (rows0, _) = item.shape() catch { _ => return None }
+      if height == 0 {
+        height = rows0
+      } else if height != rows0 {
+        return None
       }
     }
     heights.push(height)
@@ -323,15 +324,11 @@ fn block_identity_like(rows : Array[Array[MatrixExpr]]) -> MatrixExpr? {
   for j in 0..<rows[0].length() {
     let mut width = 0
     for i in 0..<rows.length() {
-      let shape = try? rows[i][j].shape()
-      match shape {
-        Ok((_, cols0)) =>
-          if width == 0 {
-            width = cols0
-          } else if width != cols0 {
-            return None
-          }
-        Err(_) => return None
+      let (_, cols0) = rows[i][j].shape() catch { _ => return None }
+      if width == 0 {
+        width = cols0
+      } else if width != cols0 {
+        return None
       }
     }
     widths.push(width)
@@ -480,10 +477,11 @@ pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
         _ => false
       }
     }) {
-    let shape = try? MatrixExpr::Mul(normalized).shape()
-    match shape {
-      Ok((rows, cols)) => return MatrixExpr::Zero(rows, cols)
-      Err(_) => ()
+    try {
+      let (rows, cols) = MatrixExpr::Mul(normalized).shape()
+      return MatrixExpr::Zero(rows, cols)
+    } catch {
+      _ => ()
     }
   }
   let reduced : Array[MatrixExpr] = []
@@ -710,10 +708,13 @@ pub fn matrix_expr_inverse(expr : MatrixExpr) -> MatrixExpr {
 /// - Limits: Non-square inputs are only rejected when the zero-power shortcut needs the shape; other invalid powers can stay unevaluated until `eval()`.
 pub fn matrix_expr_pow(expr : MatrixExpr, exp : Int) -> MatrixExpr {
   if exp == 0 {
-    let shape = try? expr.shape()
-    match shape {
-      Ok((rows, cols)) => if rows == cols { return identity_expr(rows) }
-      Err(_) => ()
+    try {
+      let (rows, cols) = expr.shape()
+      if rows == cols {
+        return identity_expr(rows)
+      }
+    } catch {
+      _ => ()
     }
   }
   if exp == 1 {
@@ -847,7 +848,7 @@ pub fn MatrixExpr::shape(self : MatrixExpr) -> (Int, Int) raise MatrixError {
 /// - Input: One `MatrixExpr`.
 /// - Returns: A `String`.
 /// - Limits: The text reflects structural form rather than full algebraic equivalence.
-pub impl Show for MatrixExpr with to_string(self) {
+pub impl Show for MatrixExpr with fn to_string(self) {
   match self {
     MatrixExpr::Concrete(m) => m.to_string()
     MatrixExpr::Symbol(name, _, _) => name
@@ -881,7 +882,7 @@ pub impl Show for MatrixExpr with to_string(self) {
 /// - Input: One `MatrixExpr` and a `Logger`.
 /// - Returns: `Unit`.
 /// - Limits: Output stability matters for tests and diagnostics.
-pub impl Show for MatrixExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for MatrixExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

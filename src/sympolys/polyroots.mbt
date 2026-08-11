@@ -41,7 +41,7 @@ fn coeff_fe(poly : Poly, exp : Int) -> FieldElem raise PolyError {
 
 ///|
 fn sqrt_bigint_if_square(value : BigInt) -> BigInt? {
-  if value.op_lt(0N) {
+  if value < 0N {
     return None
   }
   let root = @symnum.isqrt(value) catch { _ => return None }
@@ -202,7 +202,7 @@ fn bigint_pow_int(base : BigInt, exp : Int) -> BigInt {
 
 ///|
 fn bigint_nth_root_exact(value : BigInt, n : Int) -> BigInt? {
-  if n <= 0 || value.op_lt(0N) {
+  if n <= 0 || value < 0N {
     return None
   }
   if value.compare(0N) == 0 {
@@ -327,7 +327,7 @@ fn polyroots_rational_abs(value : @symnum.BigRational) -> @symnum.BigRational {
 
 ///|
 fn polyroots_bigint_abs(value : BigInt) -> BigInt {
-  if value.op_lt(0N) {
+  if value < 0N {
     value.neg()
   } else {
     value
@@ -455,12 +455,12 @@ fn preprocess_scale_by_basis(poly : Poly, basis : Int) -> Poly raise PolyError {
 ///   unchanged with coefficient `1`.
 pub fn preprocess_roots(poly : Poly) -> (Expr, Poly) raise PolyError {
   let mut coeff = int(1)
-  let cleared_result : Result[Poly, PolyError] = try? clear_denominators(poly)
-  let cleared = match cleared_result {
-    Ok(value) => value
-    Err(PolyError::DomainMismatch) => return (coeff, poly)
-    Err(PolyError::CoefficientNotInteger) => return (coeff, poly)
-    Err(error) => raise error
+  let cleared = try clear_denominators(poly) catch {
+    PolyError::DomainMismatch | PolyError::CoefficientNotInteger =>
+      return (coeff, poly)
+    error => raise error
+  } noraise {
+    value => value
   }
   let primitive_poly = cleared.primitive_part()
   if primitive_poly.gens.length() == 1 && primitive_poly.domain == Domain::ZZ {

@@ -208,7 +208,7 @@ pub fn[T] GrowableGrid::rows(self : GrowableGrid[T]) -> Array[Array[T?]] {
 fn simplify_morphisms(
   morphisms : Map[Morphism, Array[String]],
 ) -> Map[Morphism, Array[String]] {
-  let newmorphisms : Map[Morphism, Array[String]] = {}
+  let newmorphisms : Map[Morphism, Array[String]] = Map([])
   for morphism in morphisms.keys() {
     let props = morphisms[morphism]
     match morphism {
@@ -230,7 +230,7 @@ fn merge_premises_conclusions(
   premises : Map[Morphism, Array[String]],
   conclusions : Map[Morphism, Array[String]],
 ) -> Map[Morphism, Array[String]] {
-  let merged : Map[Morphism, Array[String]] = {}
+  let merged : Map[Morphism, Array[String]] = Map([])
   for morphism in premises.keys() {
     merged[morphism] = premises[morphism]
   }
@@ -257,7 +257,7 @@ fn add_edge_append(
 fn build_skeleton(
   morphisms : Map[Morphism, Array[String]],
 ) -> Map[Edge, Array[Morphism]] {
-  let edges : Map[Edge, Array[Morphism]] = {}
+  let edges : Map[Edge, Array[Morphism]] = Map([])
   for morphism in morphisms.keys() {
     add_edge_append(
       edges,
@@ -332,7 +332,7 @@ fn compute_triangle_min_sizes(
   triangles : Array[Triangle],
   edges : Map[Edge, Array[Morphism]],
 ) -> Map[Triangle, Int] {
-  let triangle_sizes : Map[Triangle, Int] = {}
+  let triangle_sizes : Map[Triangle, Int] = Map([])
   for triangle in triangles {
     let mut size = 0
     for edge in triangle_edges(triangle) {
@@ -712,8 +712,8 @@ fn handle_groups(
   merged_morphisms : Map[Morphism, Array[String]],
   hints : GridHints,
 ) -> DiagramGrid raise CategoryError {
-  let obj_groups : Map[Object, Object] = {}
-  let groups_grids : Map[Object, DiagramGrid] = {}
+  let obj_groups : Map[Object, Object] = Map([])
+  let groups_grids : Map[Object, DiagramGrid] = Map([])
   let top_groups : Array[Object] = Array::new()
 
   for group in groups {
@@ -882,7 +882,7 @@ fn generic_layout(
   grid.set(0, 0, Some(root_edge.0))
   grid.set(0, 1, Some(root_edge.1))
   let fringe : Array[(Point, Point)] = [((0, 0), (0, 1))]
-  let placed_objects : Map[Object, Bool] = {}
+  let placed_objects : Map[Object, Bool] = Map([])
   placed_objects[root_edge.0] = true
   placed_objects[root_edge.1] = true
   let mut active_triangles = triangles
@@ -955,7 +955,7 @@ fn get_undirected_graph(
   objects : Array[Object],
   merged_morphisms : Map[Morphism, Array[String]],
 ) -> Map[Object, Array[Object]] {
-  let adjlists : Map[Object, Array[Object]] = {}
+  let adjlists : Map[Object, Array[Object]] = Map([])
   for obj in objects {
     adjlists[obj] = []
   }
@@ -989,7 +989,7 @@ fn sequential_layout(
 
   let grid : GrowableGrid[Object] = growable_grid(1, 1)
   grid.set(0, 0, Some(root))
-  let placed_objects : Map[Object, Bool] = {}
+  let placed_objects : Map[Object, Bool] = Map([])
   placed_objects[root] = true
 
   fn place_objects(
@@ -1022,7 +1022,7 @@ fn sequential_layout(
 fn drop_inessential_morphisms(
   merged_morphisms : Map[Morphism, Array[String]],
 ) -> Map[Morphism, Array[String]] {
-  let morphisms : Map[Morphism, Array[String]] = {}
+  let morphisms : Map[Morphism, Array[String]] = Map([])
   for morphism in merged_morphisms.keys() {
     if morphism.domain() != morphism.codomain() {
       morphisms[morphism] = merged_morphisms[morphism]
@@ -1036,7 +1036,7 @@ fn get_connected_components(
   objects : Array[Object],
   merged_morphisms : Map[Morphism, Array[String]],
 ) -> Array[Diagram] raise CategoryError {
-  let component_index : Map[Object, Int] = {}
+  let component_index : Map[Object, Int] = Map([])
   for obj in objects {
     component_index[obj] = -1
   }
@@ -1075,7 +1075,7 @@ fn get_connected_components(
 
   let component_morphisms : Array[Diagram] = Array::new()
   for component in component_objects {
-    let current_morphisms : Map[Morphism, Array[String]] = {}
+    let current_morphisms : Map[Morphism, Array[String]] = Map([])
     for morphism in merged_morphisms.keys() {
       if contains_object(component, morphism.domain()) &&
         contains_object(component, morphism.codomain()) {
@@ -1194,11 +1194,11 @@ fn show_grid_row(row : Array[Object?]) -> String {
 }
 
 ///|
-pub impl Show for DiagramGrid with to_string(self) -> String {
+pub impl Show for DiagramGrid with fn to_string(self) -> String {
   "[" + self.grid_.rows().map(show_grid_row).join(", ") + "]"
 }
 
 ///|
-pub impl Show for DiagramGrid with output(self, logger : &Logger) -> Unit {
+pub impl Show for DiagramGrid with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

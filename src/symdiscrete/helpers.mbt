@@ -15,12 +15,8 @@ fn expr_rational(num : Int, den : Int) -> Expr {
   if den == 1 {
     return @symcore.int(num)
   }
-  match
-    (
-      try? @symcore.rational_from_ints(num, den) :
-      Result[Expr, @symnum.RationalError]) {
-    Ok(value) => value
-    Err(_) =>
+  @symcore.rational_from_ints(num, den) catch {
+    _ =>
       @symcore.mul([
         @symcore.int(num),
         @symcore.pow(@symcore.int(den), @symcore.int(-1)),

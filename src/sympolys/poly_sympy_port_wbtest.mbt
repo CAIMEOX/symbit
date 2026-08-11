@@ -39,15 +39,19 @@ test "resolve_domain modulus and gaussian" {
     Domain::CC => ()
     _ => fail("expected CC")
   }
-  let status : Result[Domain, PolyError] = try? resolve_domain(
-    domain=Some(Domain::GF(3)),
-    modulus=Some(5),
-    gaussian=None,
-    extension=None,
-    gf_degree=None,
-    expr=None,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      resolve_domain(
+        domain=Some(Domain::GF(3)),
+        modulus=Some(5),
+        gaussian=None,
+        extension=None,
+        gf_degree=None,
+        expr=None,
+      )
+    },
+    "BadModulus",
   )
-  assert_true(status is Err(PolyError::BadModulus))
 }
 
 ///|

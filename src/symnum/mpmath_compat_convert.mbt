@@ -69,7 +69,7 @@ pub fn from_float(
   rnd? : RoundMode = round_nearest,
 ) -> Mpf {
   let bits = Double::reinterpret_as_uint64(x)
-  let zero_u = UInt64::default()
+  let zero_u = Default::default()
   let one_u = UInt64::extend_uint(1)
   let sign = (bits >> 63) & one_u
   let exp_mask = (one_u << 11) - one_u

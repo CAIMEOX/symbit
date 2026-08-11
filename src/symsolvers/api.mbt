@@ -25,7 +25,7 @@ pub(all) suberror SolverError {
 } derive(Debug, Eq)
 
 ///|
-pub impl Show for SolverError with output(self, logger : &Logger) -> Unit {
+pub impl Show for SolverError with fn output(self, logger : &Logger) -> Unit {
   match self {
     SolverError::ValueError(msg) => logger.write_string("ValueError(\{msg})")
     SolverError::NotImplementedError(msg) =>
@@ -256,7 +256,7 @@ fn symbolic_linsolve_from_matrices(
     }
   }
 
-  let pivot_set : Map[Int, Bool] = {}
+  let pivot_set : Map[Int, Bool] = Map([])
   for pivot in pivots {
     if pivot < lhs.cols {
       pivot_set[pivot] = true
@@ -269,7 +269,7 @@ fn symbolic_linsolve_from_matrices(
     }
   }
 
-  let solution : Map[String, Expr] = {}
+  let solution : Map[String, Expr] = Map([])
   for free_col in free_cols {
     solution[names[free_col]] = symbols[free_col]
   }
@@ -448,12 +448,8 @@ pub fn linsolve(
     LinsolveInput::AugmentedMatrix(matrix) =>
       equations_from_augmented_matrix(matrix, symbols)
   }
-  let linear_try : Result[Map[String, Expr]?, @sympolys.PolyError] = try? @sympolys._linsolve(
-    equations, names,
-  )
-  let solution = match linear_try {
-    Ok(solution) => solution
-    Err(@sympolys.PolyError::DomainMismatch) => {
+  let solution = @sympolys._linsolve(equations, names) catch {
+    @sympolys.PolyError::DomainMismatch => {
       let (lhs, rhs) = match system {
         LinsolveInput::Equations(_) => linear_eq_to_matrix(equations, symbols)
         LinsolveInput::AugmentedMatrix(matrix) =>
@@ -461,7 +457,7 @@ pub fn linsolve(
       }
       symbolic_linsolve_from_matrices(lhs, rhs, symbols, names)
     }
-    Err(err) => raise wrap_poly_error("linsolve", err)
+    err => raise wrap_poly_error("linsolve", err)
   }
   tuple_solution_set(solution, symbols, names)
 }
@@ -480,16 +476,12 @@ pub fn solve_linear_system(
 ) -> Map[String, Expr]? raise SolverError {
   let names = symbol_names(symbols)
   let equations = equations_from_augmented_matrix(system, symbols)
-  let linear_try : Result[Map[String, Expr]?, @sympolys.PolyError] = try? @sympolys._linsolve(
-    equations, names,
-  )
-  match linear_try {
-    Ok(solution) => solution
-    Err(@sympolys.PolyError::DomainMismatch) => {
+  @sympolys._linsolve(equations, names) catch {
+    @sympolys.PolyError::DomainMismatch => {
       let (lhs, rhs) = split_augmented_matrix(system, symbols)
       symbolic_linsolve_from_matrices(lhs, rhs, symbols, names)
     }
-    Err(err) => raise wrap_poly_error("solve_linear_system", err)
+    err => raise wrap_poly_error("solve_linear_system", err)
   }
 }
 
@@ -515,7 +507,7 @@ pub fn solve_linear_system_LU(
   let solved = lhs.solve(rhs) catch {
     err => raise wrap_matrix_error("solve_linear_system_LU", err)
   }
-  let out : Map[String, Expr] = {}
+  let out : Map[String, Expr] = Map([])
   for i in 0..<names.length() {
     out[names[i]] = solved.getitem(i, 0) catch {
       err => raise wrap_matrix_error("solve_linear_system_LU", err)
@@ -566,7 +558,7 @@ pub fn inv_quick(matrix : Matrix) -> Matrix raise SolverError {
 /// - Limits: This front door only checks one symbol replacement at a time.
 pub fn checksol(f : Expr, symbol : Expr, sol : Expr) -> Bool? raise SolverError {
   let name = symbol_name(symbol)
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[name] = sol
   check_zero_expr(@symcore.subst(f, env))
 }

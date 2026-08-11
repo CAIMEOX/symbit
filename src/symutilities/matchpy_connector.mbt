@@ -204,7 +204,7 @@ pub fn replacer() -> Replacer {
 
 ///|
 fn[K : Eq + Hash, V] map_copy(source : Map[K, V]) -> Map[K, V] {
-  let out : Map[K, V] = {}
+  let out : Map[K, V] = Map([])
   for entry in source {
     out[entry.0] = entry.1
   }
@@ -464,7 +464,7 @@ fn apply_rules_at_root(
   rules : Array[ReplacementRule],
 ) -> (Expr, String?)? {
   for rule in rules {
-    let bindings : Map[String, WildBinding] = {}
+    let bindings : Map[String, WildBinding] = Map([])
     match match_expr(rule.pattern, expr, bindings) {
       Some(found) =>
         return Some((substitute_expr(rule.replacement, found), rule.info))

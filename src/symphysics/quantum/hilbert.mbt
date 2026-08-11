@@ -290,7 +290,7 @@ pub fn HilbertSpace::repr(self : HilbertSpace) -> String {
 }
 
 ///|
-pub impl Show for HilbertSpace with to_string(self) {
+pub impl Show for HilbertSpace with fn to_string(self) {
   match self {
     HilbertSpace::Abstract => "H"
     HilbertSpace::Complex(dimension) =>
@@ -315,17 +315,17 @@ pub impl Show for HilbertSpace with to_string(self) {
 }
 
 ///|
-pub impl Show for HilbertSpace with output(self, logger : &Logger) -> Unit {
+pub impl Show for HilbertSpace with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl Add for HilbertSpace with add(self, other : HilbertSpace) {
+pub impl Add for HilbertSpace with fn add(self, other : HilbertSpace) {
   direct_sum_space([self, other])
 }
 
 ///|
-pub impl Mul for HilbertSpace with mul(self, other : HilbertSpace) {
+pub impl Mul for HilbertSpace with fn mul(self, other : HilbertSpace) {
   tensor_product_space([self, other]) catch {
     _ => HilbertSpace::TensorProduct([self, other])
   }

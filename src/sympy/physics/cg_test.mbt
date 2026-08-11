@@ -113,6 +113,10 @@ test "physics.quantum.cg: doit rejects symbolic coefficients" {
     @symcore.int(2),
     @symcore.int(0),
   )
-  let err : Result[@symcore.Expr, @symphysics.PhysicsError] = try? symbolic.doit()
+  let err : Result[@symcore.Expr, @symphysics.PhysicsError] = try
+    symbolic.doit() |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_true(err is Err(@symphysics.PhysicsError::ValueError(_)))
 }

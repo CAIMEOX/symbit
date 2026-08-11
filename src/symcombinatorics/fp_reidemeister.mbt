@@ -11,8 +11,8 @@ pub fn define_schreier_generators(
   let mut gamma = 1
   let f = table.free_group
   let gens = table.generators
-  let tau : Map[Int, FreeGroupElement] = {}
-  let gens_map : Map[String, FreeGroupElement] = {}
+  let tau : Map[Int, FreeGroupElement] = Map([])
+  let gens_map : Map[String, FreeGroupElement] = Map([])
   if homomorphism {
     tau[0] = f.identity()
   }

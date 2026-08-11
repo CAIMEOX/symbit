@@ -10,34 +10,34 @@ fn index_to_string(index : Index) -> String {
 }
 
 ///|
-pub impl Show for Idx with to_string(self) -> String {
+pub impl Show for Idx with fn to_string(self) -> String {
   self.name
 }
 
 ///|
-pub impl Show for Idx with output(self, logger : &Logger) -> Unit {
+pub impl Show for Idx with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl Show for IndexedBase with to_string(self) -> String {
+pub impl Show for IndexedBase with fn to_string(self) -> String {
   self.name
 }
 
 ///|
-pub impl Show for IndexedBase with output(self, logger : &Logger) -> Unit {
+pub impl Show for IndexedBase with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl Show for Indexed with to_string(self) -> String {
+pub impl Show for Indexed with fn to_string(self) -> String {
   let base_str = self.base.to_string()
   let indices = self.indices.map(index_to_string)
   base_str + "[" + indices.join(", ") + "]"
 }
 
 ///|
-pub impl Show for Indexed with output(self, logger : &Logger) -> Unit {
+pub impl Show for Indexed with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -64,11 +64,11 @@ fn format_expr(expr : IndexedExpr, parent_prec : Int) -> String {
 }
 
 ///|
-pub impl Show for IndexedExpr with to_string(self) -> String {
+pub impl Show for IndexedExpr with fn to_string(self) -> String {
   format_expr(self, 0)
 }
 
 ///|
-pub impl Show for IndexedExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for IndexedExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

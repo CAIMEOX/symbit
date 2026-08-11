@@ -86,7 +86,7 @@ pub fn[T : Compare + Eq + Hash] brute(
     for i in 1..<results.length() {
       let cand = results[i]
       let cand_key = objective(cand)
-      if cand_key.compare(best_key) < 0 {
+      if Compare::compare(cand_key, best_key) < 0 {
         best = cand
         best_key = cand_key
       }

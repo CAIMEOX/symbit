@@ -68,13 +68,17 @@ test "morphisms follow sympy composition semantics" {
     (composite_morphism([id_a]) catch { _ => fail("id-composite") }) == id_a,
   )
 
-  let bad_comp : Result[Morphism, CategoryError] = try? composite_morphism([
-    g, f,
-  ])
-  assert_true(bad_comp is Err(_))
+  try composite_morphism([g, f]) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected invalid composition to raise")
+  }
 
-  let bad_name : Result[Morphism, CategoryError] = try? named_morphism(a, b, "")
-  assert_true(bad_name is Err(_))
+  try named_morphism(a, b, "") catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected empty morphism name to raise")
+  }
 }
 
 ///|
@@ -108,7 +112,7 @@ test "diagram builds closure properties and subdiagrams" {
   assert_true(d2.premises.contains(g * f))
   assert_morphism_array_eq(d2.hom(a, c).0, [g * f])
 
-  let unique_props : Map[Morphism, Array[String]] = {}
+  let unique_props : Map[Morphism, Array[String]] = Map([])
   unique_props[g * f] = ["unique"]
   let with_unique = diagram(
     premises=morphism_list([f, g]),
@@ -120,7 +124,7 @@ test "diagram builds closure properties and subdiagrams" {
   assert_morphism_array_eq(with_unique.hom(a, c).0, [g * f])
   assert_morphism_array_eq(with_unique.hom(a, c).1, [g * f])
 
-  let premise_props : Map[Morphism, Array[String]] = {}
+  let premise_props : Map[Morphism, Array[String]] = Map([])
   premise_props[f] = ["unique", "isomorphism"]
   premise_props[g] = ["unique"]
   let prop_diagram = diagram(premises=morphism_props(premise_props)) catch {
@@ -128,7 +132,7 @@ test "diagram builds closure properties and subdiagrams" {
   }
   assert_true(prop_diagram.premises[g * f] == ["unique"])
 
-  let bad_conclusion_props : Map[Morphism, Array[String]] = {}
+  let bad_conclusion_props : Map[Morphism, Array[String]] = Map([])
   bad_conclusion_props[g] = []
   let d_bad = diagram(
     premises=morphism_list([f]),
@@ -153,7 +157,7 @@ test "diagram builds closure properties and subdiagrams" {
   assert_true(with_unique.is_subdiagram(sub))
   assert_false(sub.is_subdiagram(with_unique))
 
-  let richer_conc : Map[Morphism, Array[String]] = {}
+  let richer_conc : Map[Morphism, Array[String]] = Map([])
   richer_conc[g * f] = ["something", "unique"]
   let d_richer = diagram(
     premises=morphism_list([f, g]),
@@ -171,7 +175,7 @@ test "diagram builds closure properties and subdiagrams" {
   assert_false(wrong.is_subdiagram(sub))
   assert_false(sub.is_subdiagram(wrong))
 
-  let conc_props : Map[Morphism, Array[String]] = {}
+  let conc_props : Map[Morphism, Array[String]] = Map([])
   conc_props[f] = ["unique"]
   conc_props[g * f] = ["veryunique"]
   let d3 = diagram(
@@ -181,7 +185,7 @@ test "diagram builds closure properties and subdiagrams" {
     _ => fail("d3")
   }
   let d3_sub = d3.subdiagram_from_objects([a, b]) catch { _ => fail("d3_sub") }
-  let expected_props : Map[Morphism, Array[String]] = {}
+  let expected_props : Map[Morphism, Array[String]] = Map([])
   expected_props[f] = ["unique"]
   let expected = diagram(
     premises=morphism_list([f]),
@@ -191,18 +195,19 @@ test "diagram builds closure properties and subdiagrams" {
   }
   assert_true(d3_sub == expected)
 
-  let bad_sub : Result[Diagram, CategoryError] = try? d3.subdiagram_from_objects([
-      a, d,
-    ],
-  )
-  assert_true(bad_sub is Err(_))
+  try d3.subdiagram_from_objects([a, d]) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected disconnected subdiagram to raise")
+  }
 
-  let id_props : Map[Morphism, Array[String]] = {}
+  let id_props : Map[Morphism, Array[String]] = Map([])
   id_props[identity_morphism(a)] = ["unique"]
-  let id_result : Result[Diagram, CategoryError] = try? diagram(
-    premises=morphism_props(id_props),
-  )
-  assert_true(id_result is Err(_))
+  try diagram(premises=morphism_props(id_props)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected identity premise properties to raise")
+  }
 }
 
 ///|
@@ -227,6 +232,9 @@ test "category keeps normalized objects and diagrams" {
   assert_true(kcat.commutative_diagrams[0] == d2)
   assert_true(kcat.commutative_diagrams[1] == d1)
 
-  let bad_category : Result[Category, CategoryError] = try? category("")
-  assert_true(bad_category is Err(_))
+  try category("") catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected empty category name to raise")
+  }
 }

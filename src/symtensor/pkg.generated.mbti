@@ -15,4 +15,3 @@ pub fn shape_key(Array[Int]) -> String
 // Type aliases
 
 // Traits
-

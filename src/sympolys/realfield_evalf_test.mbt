@@ -1,21 +1,8 @@
 ///|
 test "RR evalf_expr returns Expr::Float with requested precision" {
   let rr = Domain::RR
-  let half_res : Result[@symcore.Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
-    1, 2,
-  )
-  let half = match half_res {
-    Ok(value) => value
-    Err(_) => fail("half")
-  }
-  let evaled_res : Result[@symcore.Expr, PolyError] = try? rr.evalf_expr(
-    half,
-    prec=Some(90),
-  )
-  let evaled = match evaled_res {
-    Ok(value) => value
-    Err(_) => fail("evalf")
-  }
+  let half = @symcore.rational_from_ints(1, 2)
+  let evaled = rr.evalf_expr(half, prec=Some(90))
   match evaled {
     @symcore.Expr::Float(f) => {
       assert_true(f.precision() == 90)
@@ -27,23 +14,12 @@ test "RR evalf_expr returns Expr::Float with requested precision" {
 
 ///|
 test "Poly::from_expr_defaults infers RR from float coefficients" {
-  let half_res : Result[@symcore.Float, @symnum.MpfError] = try? @symcore.Float::from_str(
-    "0.5",
-    prec=100,
-  )
-  let half = match half_res {
-    Ok(value) => value
-    Err(_) => fail("float")
-  }
+  let half = @symcore.Float::from_str("0.5", prec=100)
   let expr = @symcore.add([
     @symcore.Expr::Symbol("x"),
     @symcore.Expr::Float(half),
   ])
-  let poly_res : Result[Poly, PolyError] = try? Poly::from_expr_defaults(expr)
-  let poly = match poly_res {
-    Ok(value) => value
-    Err(_) => fail("poly")
-  }
+  let poly = Poly::from_expr_defaults(expr)
   match poly.domain {
     Domain::RR => ()
     _ => fail("expected RR domain")

@@ -50,9 +50,9 @@ pub fn express_scalar(
   if !variables {
     return expr
   }
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   collect_symbol_names(expr, seen)
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   for entry in seen {
     let name = entry.0
     match vector_coordinate_registry.get(name) {

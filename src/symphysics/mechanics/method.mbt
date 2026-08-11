@@ -202,7 +202,7 @@ fn mechanics_dynamic_inputs(
   exprs : Array[Expr],
   exclude : Array[Expr],
 ) -> Array[Expr] {
-  let seen : Map[String, Expr] = {}
+  let seen : Map[String, Expr] = Map([])
   for expr in exprs {
     mech_find_dynamicsymbols_go(expr, seen)
   }

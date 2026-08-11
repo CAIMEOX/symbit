@@ -10,19 +10,11 @@ fn sing_expr_symbol(name : String) -> Expr {
 
 ///|
 fn sing_expr_equal(ours : Expr, oracle_str : String) -> Unit raise {
-  let ours_norm : Result[String, Error] = try? sympy_normalize(
-    @symprint.pretty_string(ours),
-  )
-  let oracle_norm : Result[String, Error] = try? sympy_normalize(oracle_str)
-  match (ours_norm, oracle_norm) {
-    (Ok(a), Ok(b)) => {
-      guard a == b else {
-        println("singularities mismatch: ours=\{a} oracle=\{b}")
-        fail("singularities mismatch")
-      }
-    }
-    (Err(e), _) => fail("normalize ours failed: \{e}")
-    (_, Err(e)) => fail("normalize oracle failed: \{e}")
+  let ours_norm = sympy_normalize(@symprint.pretty_string(ours))
+  let oracle_norm = sympy_normalize(oracle_str)
+  guard ours_norm == oracle_norm else {
+    println("singularities mismatch: ours=\{ours_norm} oracle=\{oracle_norm}")
+    fail("singularities mismatch")
   }
 }
 

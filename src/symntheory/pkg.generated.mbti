@@ -212,7 +212,8 @@ pub fn EllipticCurve::points_x(Self, @bigint.BigInt) -> Array[(@bigint.BigInt, @
 pub struct Sieve {
   primes : Array[@bigint.BigInt]
 }
-pub fn Sieve::extend(Self, @bigint.BigInt) -> Unit
+#alias(extend, deprecated)
+pub fn Sieve::extend_(Self, @bigint.BigInt) -> Unit
 pub fn Sieve::extend_to_no(Self, Int) -> Unit
 pub fn Sieve::new() -> Self
 pub fn Sieve::prime(Self, Int) -> @bigint.BigInt raise
@@ -222,4 +223,3 @@ pub fn Sieve::primerange(Self, @bigint.BigInt, @bigint.BigInt) -> Array[@bigint.
 pub using @bigint {type BigInt}
 
 // Traits
-

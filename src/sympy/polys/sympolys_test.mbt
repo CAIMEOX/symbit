@@ -19,21 +19,19 @@ test "polynomial multiplication and degree" {
 ///|
 test "reject non-integer exponent" {
   let expr = @symcore.Expr::Symbol("x") ^ @symcore.rational_from_ints(1, 2)
-  let status : Result[Poly, PolyError] = try? PolyBuilder::new(
-    ["x"],
-    Domain::ZZ,
-  ).from_expr(expr)
-  assert_true(status is Err(PolyError::BadExponent))
+  let error = expect_poly_error(fn() raise PolyError {
+    PolyBuilder::new(["x"], Domain::ZZ).from_expr(expr)
+  })
+  assert_true(error is PolyError::BadExponent)
 }
 
 ///|
 test "reject rational coefficient in ZZ domain" {
   let expr = @symcore.rational_from_ints(1, 2)
-  let status : Result[Poly, PolyError] = try? PolyBuilder::new(
-    ["x"],
-    Domain::ZZ,
-  ).from_expr(expr)
-  assert_true(status is Err(PolyError::CoefficientNotInteger))
+  let error = expect_poly_error(fn() raise PolyError {
+    PolyBuilder::new(["x"], Domain::ZZ).from_expr(expr)
+  })
+  assert_true(error is PolyError::CoefficientNotInteger)
 }
 
 ///|
@@ -147,7 +145,7 @@ test "hensel+CRT factor over ZZ" {
 test "modular reconstruction with two primes" {
   let images : Array[(Int, Array[Int])] = [(3, [1, 1, 0]), (5, [2, 0, 1])]
   let coeffs = @sympolys.reconstruct_coeffs(images, 20)
-  inspect(coeffs, content="[7, -5, 6]")
+  debug_inspect(coeffs, content="[7, -5, 6]")
 }
 
 ///|
@@ -159,7 +157,7 @@ test "dense multivariate conversions" {
     x + @symcore.int(2) * y + @symcore.int(3) * x * y,
   )
   let dense = @sympolys.to_dense_multi(poly, [1, 1])
-  inspect(dense, content="[0, 1, 2, 3]")
+  inspect(dense.map(fe => fe.to_string()).join(", "), content="0, 1, 2, 3")
   let sparse = @sympolys.from_dense_multi(dense, ["x", "y"], Domain::QQ, [1, 1])
   inspect(sparse, content="2*y + 3*x*y + x")
 }
@@ -175,12 +173,12 @@ test "leading data helpers" {
   )
   inspect(poly.lc(), content="3")
   match poly.lm() {
-    Some(m) => inspect(m.exps, content="[2, 1]")
+    Some(m) => debug_inspect(m.exps, content="[2, 1]")
     None => fail("expected lm")
   }
   match poly.lt() {
     Some((m, c)) => {
-      inspect(m.exps, content="[2, 1]")
+      debug_inspect(m.exps, content="[2, 1]")
       inspect(c, content="3")
     }
     None => fail("expected lt")

@@ -7,7 +7,7 @@ test "codegen c surface" {
   let y = @symcore.Expr::Symbol("y")
   let z = @symcore.Expr::Symbol("z")
   let result = codegen([("test", (x + y) * z)], "C89", "file")
-  inspect(
+  debug_inspect(
     result,
     content="[(\"file.c\", \"#include \\\"file.h\\\"\\n#include <math.h>\\ndouble test(double x, double y, double z) {\\n   double test_result;\\n   test_result = z*(x + y);\\n   return test_result;\\n}\\n\"), (\"file.h\", \"#ifndef FILE__H\\n#define FILE__H\\ndouble test(double x, double y, double z);\\n#endif\\n\")]",
   )
@@ -35,7 +35,7 @@ test "make_routine respects explicit argument order" {
     [routine_result("f_result", x + y)],
     argument_sequence=Some(["y", "x"]),
   )
-  inspect(routine.arguments, content="[\"y\", \"x\"]")
+  debug_inspect(routine.arguments, content="[\"y\", \"x\"]")
 }
 
 ///|
@@ -55,12 +55,12 @@ test "codegen prints Float literals and rejects complex literals on C targets" {
       imag=@symcore.Float::from_int(1),
     ),
   )
-  let result : Result[Array[(String, String)], @symutilities.UtilitiesError] = try? codegen(
-    [("g", nonreal)],
-    "C89",
-    "file",
-  )
-  inspect(
+  let result : Result[Array[(String, String)], @symutilities.UtilitiesError] = try
+    codegen([("g", nonreal)], "C89", "file") |> Ok
+  catch {
+    error => Err(error)
+  }
+  debug_inspect(
     result,
     content="Err(Unsupported(\"codegen does not support complex floating literals for this target\"))",
   )

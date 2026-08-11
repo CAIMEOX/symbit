@@ -245,11 +245,11 @@ fn matrix_exact_solve(lhs : Matrix, rhs : Matrix) -> Matrix raise MatrixError {
 
 ///|
 fn matrix_try_exact_inverse(matrix : Matrix) -> Matrix? raise MatrixError {
-  let exact : Result[Matrix, MatrixError] = try? matrix_exact_inverse(matrix)
-  match exact {
-    Ok(value) => Some(value)
-    Err(MatrixError::ValueError(_)) => None
-    Err(err) => raise err
+  try matrix_exact_inverse(matrix) catch {
+    MatrixError::ValueError(_) => None
+    err => raise err
+  } noraise {
+    value => Some(value)
   }
 }
 
@@ -258,11 +258,11 @@ fn matrix_try_exact_solve(
   lhs : Matrix,
   rhs : Matrix,
 ) -> Matrix? raise MatrixError {
-  let exact : Result[Matrix, MatrixError] = try? matrix_exact_solve(lhs, rhs)
-  match exact {
-    Ok(value) => Some(value)
-    Err(MatrixError::ValueError(_)) => None
-    Err(err) => raise err
+  try matrix_exact_solve(lhs, rhs) catch {
+    MatrixError::ValueError(_) => None
+    err => raise err
+  } noraise {
+    value => Some(value)
   }
 }
 
@@ -924,7 +924,7 @@ pub fn Matrix::columnspace(self : Matrix) -> Array[Array[Expr]] {
 /// - Limits: Returns an empty array when the nullspace is trivial.
 pub fn Matrix::nullspace(self : Matrix) -> Array[Array[Expr]] {
   let (rref, pivots) = self.rref()
-  let pivot_set : Map[Int, Bool] = {}
+  let pivot_set : Map[Int, Bool] = Map([])
   for pivot in pivots {
     pivot_set[pivot] = true
   }

@@ -32,10 +32,8 @@ test "numberfields: init_normal_ANP keeps zero representative empty" {
     Domain::QQ,
   )
   inspect(anp.to_string(), content="ANP([], [1, 0, -2], QQ)")
-  let bad : Result[ANP, PolyError] = try? init_normal_ANP(
-    nf_anp_wb_dup([1]),
-    [],
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError { init_normal_ANP(nf_anp_wb_dup([1]), [], Domain::QQ) },
+    "DivisionByZero",
   )
-  assert_true(bad is Err(PolyError::DivisionByZero))
 }

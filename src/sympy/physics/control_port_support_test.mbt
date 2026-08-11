@@ -29,7 +29,7 @@ using @symcontrol {
 ///|
 fn control_oracle_lines(script : String) -> Array[String] raise {
   Array::from_iter(control_exec_stdout(script).trim().split("\n"))
-  .map(line => line.trim().to_string())
+  .map(line => line.trim().to_owned())
   .filter(line => line != "")
 }
 
@@ -42,7 +42,7 @@ fn control_expr_eq(ours : @symcore.Expr, oracle : String) -> Bool {
 
 ///|
 fn control_parse_double(text : String) -> Double raise {
-  @strconv.parse_double(text.trim().to_string())
+  @string.parse_double(text.trim().to_owned())
 }
 
 ///|
@@ -52,8 +52,8 @@ fn control_parse_complex(text : String) -> ControlComplex raise {
     fail("expected oracle complex line as 're,im'")
   }
   (
-    control_parse_double(parts[0].to_string()),
-    control_parse_double(parts[1].to_string()),
+    control_parse_double(parts[0].to_owned()),
+    control_parse_double(parts[1].to_owned()),
   )
 }
 

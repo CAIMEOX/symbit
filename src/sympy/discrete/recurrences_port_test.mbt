@@ -5,8 +5,8 @@ test "discrete linrec parity" {
     [@symcore.int(1), @symcore.int(1)],
     20,
   )
-  assert_oracle(
-    try? linrec_equiv(
+  assert_true(
+    linrec_equiv(
       [@symcore.int(1), @symcore.int(1)],
       [@symcore.int(1), @symcore.int(1)],
       20,
@@ -24,8 +24,8 @@ test "discrete linrec parity" {
     [@symcore.int(1), @symcore.int(1), @symcore.int(0), @symcore.int(2)],
     10,
   )
-  assert_oracle(
-    try? linrec_equiv(
+  assert_true(
+    linrec_equiv(
       [
         @symcore.int(1),
         @symcore.int(2),
@@ -55,10 +55,10 @@ test "discrete linrec parity" {
     rat(2, 9),
     @symcore.int(6),
   ]
-  let a5 = a[:5].to_array()
-  let b4 = b[:4].to_array()
+  let a5 = a[:5].to_owned()
+  let b4 = b[:4].to_owned()
   let res2 = linrec(a5, b4, 80)
-  assert_oracle(try? linrec_equiv(a5, b4, 80, res2))
+  assert_true(linrec_equiv(a5, b4, 80, res2))
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let z = @symcore.Expr::Symbol("z")
@@ -67,8 +67,8 @@ test "discrete linrec parity" {
     [@symcore.int(1), @symcore.int(1), @symcore.int(1)],
     4,
   )
-  assert_oracle(
-    try? linrec_equiv(
+  assert_true(
+    linrec_equiv(
       [x, y, z],
       [@symcore.int(1), @symcore.int(1), @symcore.int(1)],
       4,
@@ -80,8 +80,8 @@ test "discrete linrec parity" {
     [x, y, z],
     20,
   )
-  assert_oracle(
-    try? linrec_equiv(
+  assert_true(
+    linrec_equiv(
       [@symcore.int(1), @symcore.int(2), @symcore.int(1)],
       [x, y, z],
       20,
@@ -93,8 +93,8 @@ test "discrete linrec parity" {
     [@symcore.int(1), @symcore.int(2), @symcore.int(3), @symcore.int(4)],
     2000,
   )
-  assert_oracle(
-    try? linrec_equiv(
+  assert_true(
+    linrec_equiv(
       [@symcore.int(11), @symcore.int(13), @symcore.int(15), @symcore.int(17)],
       [@symcore.int(1), @symcore.int(2), @symcore.int(3), @symcore.int(4)],
       2000,
@@ -102,21 +102,15 @@ test "discrete linrec parity" {
     ),
   )
   let res6 = linrec([], [@symcore.int(1), @symcore.int(1)], 20)
-  assert_oracle(
-    try? linrec_equiv([], [@symcore.int(1), @symcore.int(1)], 20, res6),
-  )
+  assert_true(linrec_equiv([], [@symcore.int(1), @symcore.int(1)], 20, res6))
 }
 
 ///|
 test "discrete linrec errors" {
   let coeffs = [@symcore.int(1), @symcore.int(1)]
   let init = [@symcore.int(1), @symcore.int(2), @symcore.int(3)]
-  let bad0 : Result[Expr, Error] = try? linrec(coeffs, init, 1)
-  assert_true(bad0 is Err(_))
-  let bad1 : Result[Expr, Error] = try? linrec(
-    coeffs,
-    [@symcore.int(1), @symcore.int(2)],
-    -5,
-  )
-  assert_true(bad1 is Err(_))
+  expect_error(fn() raise { linrec(coeffs, init, 1) })
+  expect_error(fn() raise {
+    linrec(coeffs, [@symcore.int(1), @symcore.int(2)], -5)
+  })
 }

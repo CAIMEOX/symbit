@@ -23,7 +23,7 @@ fn empty_affine() -> AffineForm {
 
 ///|
 fn affine_add(a : AffineForm, b : AffineForm) -> AffineForm {
-  let out : Map[String, @symnum.BigRational] = {}
+  let out : Map[String, @symnum.BigRational] = Map([])
   for name, c in a.coeffs {
     out[name] = c
   }
@@ -38,7 +38,7 @@ fn affine_add(a : AffineForm, b : AffineForm) -> AffineForm {
 
 ///|
 fn affine_scale(a : AffineForm, scalar : @symnum.BigRational) -> AffineForm {
-  let out : Map[String, @symnum.BigRational] = {}
+  let out : Map[String, @symnum.BigRational] = Map([])
   for name, c in a.coeffs {
     out[name] = c.mul_r(scalar)
   }
@@ -50,7 +50,7 @@ fn expr_to_affine(expr : @symcore.Expr) -> AffineForm? {
   match eval_arith(expr) {
     @symcore.Expr::Number(n) => Some({ constant: n, coeffs: {} })
     @symcore.Expr::Symbol(name) => {
-      let coeffs : Map[String, @symnum.BigRational] = {}
+      let coeffs : Map[String, @symnum.BigRational] = Map([])
       coeffs[name] = @symnum.BigRational::one()
       Some({ constant: @symnum.BigRational::zero(), coeffs })
     }

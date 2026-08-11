@@ -11,14 +11,12 @@ fn tri_repr(value : Tri) -> String {
 fn assert_predicate_parity(
   label : String,
   ours : Tri,
-  oracle : Result[String, Error],
+  oracle : String,
 ) -> Unit raise {
-  let expected = match oracle {
-    Ok(value) => value
-    Err(err) => fail("oracle failure for \{label}: \{err}")
-  }
   let got = tri_repr(ours)
-  assert_eq(got, expected)
+  guard got == oracle else {
+    fail("predicate mismatch for \{label}: ours=\{got} oracle=\{oracle}")
+  }
 }
 
 ///|
@@ -30,37 +28,37 @@ fn assert_all_predicates(
   assert_predicate_parity(
     "\{label}.is_zero",
     assume_is_zero(expr, env~),
-    try? is_zero(expr, env~),
+    is_zero(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_nonzero",
     assume_is_nonzero(expr, env~),
-    try? is_nonzero(expr, env~),
+    is_nonzero(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_integer",
     assume_is_integer(expr, env~),
-    try? is_integer(expr, env~),
+    is_integer(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_rational",
     assume_is_rational(expr, env~),
-    try? is_rational(expr, env~),
+    is_rational(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_real",
     assume_is_real(expr, env~),
-    try? is_real(expr, env~),
+    is_real(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_positive",
     assume_is_positive(expr, env~),
-    try? is_positive(expr, env~),
+    is_positive(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_nonnegative",
     assume_is_nonnegative(expr, env~),
-    try? is_nonnegative(expr, env~),
+    is_nonnegative(expr, env~),
   )
 }
 

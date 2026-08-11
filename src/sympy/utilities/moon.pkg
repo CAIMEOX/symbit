@@ -1,5 +1,5 @@
 import {
-  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/sympy",
   "Kaida-Amethyst/python" @py,
 }
 
@@ -8,7 +8,7 @@ import {
   "moonbitlang/core/ref",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/symutilities" @symutilities,
+  "CAIMEOX/symbit/symutilities",
 } for "test"
 
 supported_targets = "native"

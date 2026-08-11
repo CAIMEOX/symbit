@@ -46,14 +46,14 @@ test "symsimplify trigsimp after factoring regression" {
       @symcore.pow(@symcore.function("cos", [y]), @symcore.int(2)),
     ]),
   ])
-  inspect(to_repr(trigsimp(factored, max_passes=1)), content="sym:x")
+  inspect(Repr(trigsimp(factored, max_passes=1)), content="sym:x")
 }
 
 ///|
 test "symsimplify ratsimp rational trig regression" {
   let rational_trig = rational_trig_fixture()
   inspect(
-    to_repr(ratsimp(rational_trig, max_passes=1)),
+    Repr(ratsimp(rational_trig, max_passes=1)),
     content="(* (^ (+ (^ (call cos sym:y) 2) (^ (call sin sym:y) 2)) -1) (+ sym:x 1))",
   )
 }
@@ -61,7 +61,7 @@ test "symsimplify ratsimp rational trig regression" {
 ///|
 test "symsimplify dispatcher rational trig regression" {
   let rational_trig = rational_trig_fixture()
-  inspect(to_repr(simplify(rational_trig)), content="(+ sym:x 1)")
+  inspect(Repr(simplify(rational_trig)), content="(+ sym:x 1)")
 }
 
 ///|
@@ -73,7 +73,7 @@ test "symsimplify exptrigsimp exp trig regression" {
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
   ])
   inspect(
-    to_repr(exptrigsimp(exp_trig, max_passes=1)),
+    Repr(exptrigsimp(exp_trig, max_passes=1)),
     content="(* 2 (call cos sym:x))",
   )
 }
@@ -86,7 +86,7 @@ test "symsimplify dispatcher exp trig regression" {
     @symcore.function("exp", [@symcore.mul([i, x])]),
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
   ])
-  inspect(to_repr(simplify(exp_trig)), content="(* 2 (call cos sym:x))")
+  inspect(Repr(simplify(exp_trig)), content="(* 2 (call cos sym:x))")
 }
 
 ///|
@@ -102,7 +102,7 @@ test "symsimplify simplifies expanded rational cancellation regression" {
     ]),
     @symcore.pow(denom, @symcore.int(-1)),
   ])
-  inspect(to_repr(simplify(expr)), content="0")
+  inspect(Repr(simplify(expr)), content="0")
 
   let square_den = @symcore.pow(@symcore.add([x, y]), @symcore.int(2))
   let square_num = @symcore.add([
@@ -111,7 +111,7 @@ test "symsimplify simplifies expanded rational cancellation regression" {
     @symcore.mul([@symcore.int(-2), @symcore.pow(x, @symcore.int(2)), y]),
   ])
   inspect(
-    to_repr(
+    Repr(
       simplify(
         @symcore.mul([square_num, @symcore.pow(square_den, @symcore.int(-1))]),
       ),
@@ -166,8 +166,8 @@ test "symsimplify ratsimp and simplify preserve abaco eq3 radical cancellation" 
       @symcore.int(-2) * y,
     ]),
   ])
-  inspect(to_repr(ratsimp(expr, max_passes=1)), content="0")
-  inspect(to_repr(simplify(expr)), content="0")
+  inspect(Repr(ratsimp(expr, max_passes=1)), content="0")
+  inspect(Repr(simplify(expr)), content="0")
 }
 
 ///|
@@ -177,16 +177,16 @@ test "symsimplify fraction matches SymPy as_numer_denom on additive rational pow
 
   let additive = @symcore.add([x, y ^ @symcore.int(-1)])
   let (add_num, add_den) = fraction(additive)
-  inspect(to_repr(add_num), content="(+ (* sym:x sym:y) 1)")
-  inspect(to_repr(add_den), content="sym:y")
+  inspect(Repr(add_num), content="(+ (* sym:x sym:y) 1)")
+  inspect(Repr(add_den), content="sym:y")
 
   let powered = @symcore.pow(
     @symcore.add([@symcore.int(1), @symcore.mul([x, y ^ @symcore.int(-1)])]),
     @symcore.int(2),
   )
   let (pow_num, pow_den) = fraction(powered)
-  inspect(to_repr(pow_num), content="(^ (+ sym:x sym:y) 2)")
-  inspect(to_repr(pow_den), content="(^ sym:y 2)")
+  inspect(Repr(pow_num), content="(^ (+ sym:x sym:y) 2)")
+  inspect(Repr(pow_den), content="(^ sym:y 2)")
 }
 
 ///|
@@ -264,45 +264,45 @@ test "symsimplify simplifies nested gamma and rational sums regression" {
       @symcore.pow(x, @symcore.int(2)),
     ]),
   ])
-  inspect(to_repr(simplify(nested)), content="(* -2 sym:y)")
+  inspect(Repr(simplify(nested)), content="(* -2 sym:y)")
 
   let gamma_ratio = @symcore.mul([
     @symcore.function("gamma", [@symcore.add([x, @symcore.int(1)])]),
     @symcore.pow(@symcore.function("gamma", [x]), @symcore.int(-1)),
   ])
-  inspect(to_repr(simplify(gamma_ratio)), content="sym:x")
+  inspect(Repr(simplify(gamma_ratio)), content="sym:x")
 
   let gamma_ratio_swapped = @symcore.mul([
     @symcore.function("gamma", [@symcore.add([@symcore.int(1), x])]),
     @symcore.pow(@symcore.function("gamma", [x]), @symcore.int(-1)),
   ])
-  inspect(to_repr(simplify(gamma_ratio_swapped)), content="sym:x")
+  inspect(Repr(simplify(gamma_ratio_swapped)), content="sym:x")
 
   let trig_gamma = @symcore.add([
     @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
     @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2)),
     gamma_ratio,
   ])
-  inspect(to_repr(simplify(trig_gamma)), content="(+ sym:x 1)")
+  inspect(Repr(simplify(trig_gamma)), content="(+ sym:x 1)")
 
   let ratio = @symcore.mul([
     @symcore.add([x, @symcore.mul([x, y])]),
     @symcore.pow(x, @symcore.int(-1)),
   ])
-  inspect(to_repr(simplify(ratio)), content="(+ sym:y 1)")
+  inspect(Repr(simplify(ratio)), content="(+ sym:y 1)")
 
   let f = @symcore.function("f", [x])
   let functional_ratio = @symcore.mul([
     @symcore.add([f, @symcore.mul([y, f])]),
     @symcore.pow(f, @symcore.int(-1)),
   ])
-  inspect(to_repr(simplify(functional_ratio)), content="(+ sym:y 1)")
+  inspect(Repr(simplify(functional_ratio)), content="(+ sym:y 1)")
 
   let log_ratio = @symcore.add([
     @symcore.function("log", [@symcore.mul([@symcore.int(2), x])]),
     @symcore.mul([@symcore.int(-1), @symcore.function("log", [@symcore.int(2)])]),
   ])
-  inspect(to_repr(simplify(log_ratio)), content="(call log sym:x)")
+  inspect(Repr(simplify(log_ratio)), content="(call log sym:x)")
 }
 
 ///|
@@ -321,7 +321,7 @@ test "symsimplify handles order-insensitive tan products" {
     @symcore.add([@symcore.function("tan", [x]), @symcore.function("tan", [y])]),
     @symcore.pow(denom, @symcore.int(-1)),
   ])
-  inspect(to_repr(tr12i(expr)), content="(call tan (+ sym:x sym:y))")
+  inspect(Repr(tr12i(expr)), content="(call tan (+ sym:x sym:y))")
 }
 
 ///|
@@ -330,13 +330,7 @@ test "symsimplify handles float numeric leaf identities and powers" {
   let one_f = simplify_exact_float_expr(1, 1, prec=70)
   let minus_half_f = simplify_exact_float_expr(-1, 2, prec=70)
   let four_f = simplify_exact_float_expr(4, 1, prec=70)
-  let half = match
-    (
-      try? @symcore.rational_from_ints(1, 2) :
-      Result[@symcore.Expr, @symnum.RationalError]) {
-    Ok(value) => value
-    Err(_) => fail("half")
-  }
+  let half = @symcore.rational_from_ints(1, 2)
 
   match simplify(@symcore.function("sin", [zero_f])) {
     @symcore.Expr::Float(f) => assert_true(f.to_rational() == (0N, 1N))

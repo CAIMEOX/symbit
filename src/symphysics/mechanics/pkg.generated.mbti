@@ -909,4 +909,3 @@ pub type OutputEquation = (@symcore.Expr, @symcore.Expr)
 pub type Substitution = (@symcore.Expr, @symcore.Expr)
 
 // Traits
-

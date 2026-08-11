@@ -113,7 +113,7 @@ pub fn series(
     _ => fail("series variable must be a Symbol")
   }
   let t = Expr::Symbol("__series_t")
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   let forward_shift = if dir == "-" {
     @symcore.add([x0, expr_neg(t)])
   } else {
@@ -128,7 +128,7 @@ pub fn series(
   match expanded {
     Some((poly_expr, needs_order)) => {
       // Substitute back t -> (x - x0)
-      let back : Map[String, Expr] = {}
+      let back : Map[String, Expr] = Map([])
       let back_shift = if dir == "-" {
         @symcore.add([x0, expr_neg(x)])
       } else {
@@ -161,7 +161,7 @@ pub fn series(
     None => {
       let order_shift = @symcore.add([x, expr_neg(x0)])
       let taylor = taylor_series_expr(shifted, t, n)
-      let back : Map[String, Expr] = {}
+      let back : Map[String, Expr] = Map([])
       back["__series_t"] = order_shift
       let poly_sub = @symcore.subst(taylor, back)
       let order_term = match x0 {
@@ -268,7 +268,7 @@ fn series_substitute_symbol(
   symbol_name : String,
   value : Expr,
 ) -> Expr {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[symbol_name] = value
   @symcore.subst(expr, env)
 }

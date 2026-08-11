@@ -20,17 +20,8 @@ fn expr_pi() -> Expr {
 
 ///|
 fn expr_equal_expr(expr : Expr, oracle_str : String) -> Bool raise {
-  let res : Result[Bool, Error] = try? expr_equal(
-    @symprint.pretty_string(expr),
-    oracle_str,
-  )
-  match res {
-    Ok(v) => v
-    Err(e) =>
-      fail(
-        "expr_equal error: ours=\{@symprint.pretty_string(expr)} oracle=\{oracle_str} err=\{e}",
-      )
-  }
+  let res = expr_equal(@symprint.pretty_string(expr), oracle_str)
+  res
 }
 
 ///|
@@ -166,16 +157,12 @@ test "quaternion: axis-angle parity" {
     (expr_int(1), expr_zero(), expr_zero()),
     angle,
   )
-  let oracle_res : Result[Array[String], Error] = try? quat_from_axis_angle(
+  let oracle = quat_from_axis_angle(
     expr_int(1),
     expr_zero(),
     expr_zero(),
     angle,
   )
-  let oracle = match oracle_res {
-    Ok(v) => v
-    Err(e) => fail("quat_from_axis_angle error: \{e}")
-  }
   assert_quat_components(q, oracle)
   let axis_angle = q.to_axis_angle()
   let oracle_axis = quat_to_axis_angle(q.a(), q.b(), q.c(), q.d())

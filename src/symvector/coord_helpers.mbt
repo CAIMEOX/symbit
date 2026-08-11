@@ -79,7 +79,7 @@ fn scalar_env(
   scalars : Array[BaseScalar],
   values : Array[@symcore.Expr],
 ) -> Map[String, @symcore.Expr] {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[scalars[0].name_] = values[0]
   env[scalars[1].name_] = values[1]
   env[scalars[2].name_] = values[2]
@@ -92,7 +92,7 @@ fn transform_template_env(
   y : @symcore.Expr,
   z : @symcore.Expr,
 ) -> Map[String, @symcore.Expr] {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env["x"] = x
   env["y"] = y
   env["z"] = z
@@ -101,7 +101,7 @@ fn transform_template_env(
 
 ///|
 fn expr_depends_on_placeholders(expr : @symcore.Expr) -> Bool {
-  let names : Map[String, Bool] = {}
+  let names : Map[String, Bool] = Map([])
   for item in @symcore.free_symbols(expr) {
     names[@symprint.pretty_string(item)] = true
   }
@@ -468,19 +468,18 @@ fn solve_inverse_template(
   let z = expr_placeholder_z()
   let equations = function.call(u, v, w)
   let system = [equations[0] - x, equations[1] - y, equations[2] - z]
-  let solved : Result[@symsolvers.SolveResult, @symsolvers.SolverError] = try? @symsolvers.solve(
-    @symsolvers.solve_exprs_input(system),
-    symbols=[u, v, w],
-  )
-  match solved {
-    Err(_) => None
-    Ok(@symsolvers.SolveResult::Dict(values)) =>
+  try
+    @symsolvers.solve(@symsolvers.solve_exprs_input(system), symbols=[u, v, w])
+  catch {
+    _ => None
+  } noraise {
+    @symsolvers.SolveResult::Dict(values) =>
       Some([
         values.get("u").unwrap_or(u),
         values.get("v").unwrap_or(v),
         values.get("w").unwrap_or(w),
       ])
-    Ok(@symsolvers.SolveResult::Dicts(items)) =>
+    @symsolvers.SolveResult::Dicts(items) =>
       if items.is_empty() {
         None
       } else {
@@ -491,7 +490,7 @@ fn solve_inverse_template(
           values.get("w").unwrap_or(w),
         ])
       }
-    Ok(@symsolvers.SolveResult::List(_)) => None
+    @symsolvers.SolveResult::List(_) => None
   }
 }
 
@@ -533,7 +532,7 @@ fn coord_path(
       None => break
     }
   }
-  let other_index : Map[String, Int] = {}
+  let other_index : Map[String, Int] = Map([])
   for i in 0..<other_path.length() {
     other_index[other_path[i].eq_key_] = i
   }

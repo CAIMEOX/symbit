@@ -369,7 +369,7 @@ pub fn SymbolicSystem::kin_explicit_rhs(
 
 ///|
 pub fn SymbolicSystem::dynamic_symbols(self : SymbolicSystem) -> Array[Expr] {
-  let seen : Map[String, Expr] = {}
+  let seen : Map[String, Expr] = Map([])
   let eom_exprs = match self.comb_explicit_rhs_ {
     Some(value) => symbolic_system_flatten(value)
     None => {
@@ -409,7 +409,7 @@ pub fn SymbolicSystem::dynamic_symbols(self : SymbolicSystem) -> Array[Expr] {
 
 ///|
 pub fn SymbolicSystem::constant_symbols(self : SymbolicSystem) -> Array[Expr] {
-  let seen : Map[String, Expr] = {}
+  let seen : Map[String, Expr] = Map([])
   let eom_exprs = match self.comb_explicit_rhs_ {
     Some(value) => symbolic_system_flatten(value)
     None => {

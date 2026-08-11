@@ -1,7 +1,7 @@
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/symmatrices" @symmatrices,
+  "CAIMEOX/symbit/symmatrices",
   "CAIMEOX/symbit/sympy/utilities" @sympy_utilities,
 }
 

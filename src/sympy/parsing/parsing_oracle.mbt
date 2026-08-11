@@ -563,17 +563,17 @@ pub fn ast_parse_expr_sstr(
     )
   }
   let locals_text = "{" + entries.join(", ") + "}"
-  let trimmed = src.trim().to_string()
+  let trimmed = src.trim().to_owned()
   if trimmed.has_prefix("lambda ") {
     let colon_idx = match find_char_index(trimmed, ':') {
       Some(idx) => idx
       None => fail("expected lambda body")
     }
-    let params_text = trimmed[7:colon_idx].trim().to_string()
-    let body_text = trimmed[colon_idx + 1:].trim().to_string()
+    let params_text = trimmed[7:colon_idx].trim().to_owned()
+    let body_text = trimmed[colon_idx + 1:].trim().to_owned()
     let params : Array[String] = []
     for param in params_text.split(",") {
-      params.push(param.trim().to_string())
+      params.push(param.trim().to_owned())
     }
     let params_python = if params.length() == 1 {
       "sympy.Symbol(" + python_string_literal(params[0]) + ")"

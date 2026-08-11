@@ -221,14 +221,14 @@ fn string_set_summary(text : String) -> String {
   if !text.has_prefix("{") || !text.has_suffix("}") {
     return text
   }
-  let inner = text[1:text.length() - 1].to_string()
+  let inner = text[1:text.length() - 1].to_owned()
   if inner.is_empty() {
     return "{}"
   }
   let parts = inner
     .split(",")
     .to_array()
-    .map(fn(part) { part.trim().to_string() })
+    .map(fn(part) { part.trim().to_owned() })
   let n = parts.length()
   for i in 0..<n {
     for j in (i + 1)..<n {

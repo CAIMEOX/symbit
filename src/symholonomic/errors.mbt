@@ -7,7 +7,7 @@ pub(all) suberror HolonomicError {
 }
 
 ///|
-pub impl Show for HolonomicError with output(self, logger : &Logger) -> Unit {
+pub impl Show for HolonomicError with fn output(self, logger : &Logger) -> Unit {
   match self {
     HolonomicError::NotPowerSeries(msg) => logger.write_string(msg)
     HolonomicError::NotHyperSeries(msg) => logger.write_string(msg)

@@ -50,12 +50,8 @@ fn grover_marked_values(expr : Expr) -> Array[Int]? {
 
 ///|
 fn grover_exact_rational(num : Int, den : Int) -> Expr {
-  let result : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
-    num, den,
-  )
-  match result {
-    Ok(value) => value
-    Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
+  @symcore.rational_from_ints(num, den) catch {
+    _ => int(num) * @symcore.raw_pow(int(den), int(-1))
   }
 }
 

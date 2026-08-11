@@ -34,12 +34,8 @@ fn spin_pi_multiple(num : Int, den : Int) -> Expr {
 
 ///|
 fn spin_exact_rational(num : Int, den : Int) -> Expr {
-  let exact : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
-    num, den,
-  )
-  match exact {
-    Ok(value) => value
-    Err(_) => int(num) * @symcore.pow(int(den), int(-1))
+  @symcore.rational_from_ints(num, den) catch {
+    _ => int(num) * @symcore.pow(int(den), int(-1))
   }
 }
 
@@ -389,12 +385,12 @@ pub fn RotationExpr::as_expr(self : RotationExpr) -> Expr {
 }
 
 ///|
-pub impl Show for RotationExpr with to_string(self) {
+pub impl Show for RotationExpr with fn to_string(self) {
   "R(\{@symprint.pretty_string(self.alpha)},\{@symprint.pretty_string(self.beta)},\{@symprint.pretty_string(self.gamma)})"
 }
 
 ///|
-pub impl Show for RotationExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for RotationExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -416,7 +412,7 @@ pub fn WignerDExpr::as_expr(self : WignerDExpr) -> Expr {
 }
 
 ///|
-pub impl Show for WignerDExpr with to_string(self) {
+pub impl Show for WignerDExpr with fn to_string(self) {
   if self.alpha == int(0) && self.gamma == int(0) {
     "d(\{@symprint.pretty_string(self.j)},\{@symprint.pretty_string(self.m)},\{@symprint.pretty_string(self.mp)},\{@symprint.pretty_string(self.beta)})"
   } else {
@@ -425,12 +421,12 @@ pub impl Show for WignerDExpr with to_string(self) {
 }
 
 ///|
-pub impl Show for WignerDExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for WignerDExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl Show for JzState with to_string(self) {
+pub impl Show for JzState with fn to_string(self) {
   let parts : Array[String] = [
     @symprint.pretty_string(self.j),
     @symprint.pretty_string(self.m),
@@ -459,7 +455,7 @@ pub impl Show for JzState with to_string(self) {
 }
 
 ///|
-pub impl Show for JzState with output(self, logger : &Logger) -> Unit {
+pub impl Show for JzState with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -811,26 +807,18 @@ fn spin_rewrite_single_state(
           state.j,
         )
       }
-      let mvals_result : Result[(Int, Array[Expr]), @symphysics.PhysicsError] = try? m_values(
-        state.j,
-      )
-      let mvals = match mvals_result {
-        Ok((_, values)) => values
-        Err(_) => return state_expr
-      }
+      let (_, mvals) = m_values(state.j) catch { _ => return state_expr }
       let terms : Array[Expr] = []
       for mp in mvals {
-        let coeff_result : Result[Expr, @symphysics.PhysicsError] = try? spin_basis_transform_coeff(
+        let coeff = spin_basis_transform_coeff(
           state.j,
           state.m,
           mp,
           state.basis_name,
           target_basis,
           evaluate,
-        )
-        let coeff = match coeff_result {
-          Ok(value) => value
-          Err(_) => return state_expr
+        ) catch {
+          _ => return state_expr
         }
         if coeff != int(0) {
           terms.push(
@@ -1517,22 +1505,14 @@ fn spin_ladder_coeff(j : Expr, m : Expr, step : Int) -> Expr {
 pub fn spin_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
   match (rotation_from_expr(op_expr), spin_state_from_expr(ket_expr)) {
     (Some(op), Some(state)) if !state.is_bra => {
-      let mvals_result : Result[(Int, Array[Expr]), @symphysics.PhysicsError] = try? m_values(
-        state.j,
-      )
-      let mvals = match mvals_result {
-        Ok((_, values)) => values
-        Err(_) => return None
-      }
+      let (_, mvals) = m_values(state.j) catch { _ => return None }
       let terms : Array[Expr] = []
       for mp in mvals {
-        let coeff_result : Result[Expr, @symphysics.PhysicsError] = try? spin_wigner_d_value(
+        let coeff = spin_wigner_d_value(
           rotation_D(state.j, state.m, mp, op.alpha, op.beta, op.gamma),
           evaluate=true,
-        )
-        let coeff = match coeff_result {
-          Ok(value) => value
-          Err(_) => return None
+        ) catch {
+          _ => return None
         }
         if coeff != int(0) {
           terms.push(
@@ -1619,45 +1599,25 @@ pub fn spin_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
             "Jplus" | "Jminus" | "Jx" | "Jy" | "Jz" =>
               if spin_numeric_args([state.j]) {
                 let basis_expr = spin_basis_operator_expr(state.basis_name)
-                let matrix_result : Result[
-                  @symphysics.ExplicitMatrix,
-                  @symphysics.PhysicsError,
-                ] = try? represent_spin_operator(
+                let matrix = represent_spin_operator(
                   op_expr,
                   state.j,
                   basis=Some(basis_expr),
-                )
-                let matrix = match matrix_result {
-                  Ok(value) => value
-                  Err(_) => return None
+                ) catch {
+                  _ => return None
                 }
-                let vector_result : Result[
-                  @symphysics.ExplicitMatrix,
-                  @symphysics.PhysicsError,
-                ] = try? represent_spin_state(
+                let vector = represent_spin_state(
                   ket_expr,
                   basis=Some(basis_expr),
                   evaluate=true,
-                )
-                let vector = match vector_result {
-                  Ok(value) => value
-                  Err(_) => return None
+                ) catch {
+                  _ => return None
                 }
-                let product_result : Result[
-                  @symphysics.ExplicitMatrix,
-                  @symphysics.PhysicsError,
-                ] = try? matrix.mul(vector)
-                let product = match product_result {
-                  Ok(value) => value
-                  Err(_) => return None
+                let product = matrix.mul(vector) catch { _ => return None }
+                let result = spin_linear_combination_from_vector(state, product) catch {
+                  _ => return None
                 }
-                let state_result : Result[Expr, @symphysics.PhysicsError] = try? spin_linear_combination_from_vector(
-                  state, product,
-                )
-                match state_result {
-                  Ok(value) => Some(value)
-                  Err(_) => None
-                }
+                Some(result)
               } else {
                 let in_jz = spin_rewrite_single_state(ket_expr, "Jz", false)
                 let applied = qapply(@symcore.raw_mul([op_expr, in_jz]))
@@ -2012,18 +1972,17 @@ pub fn spin_inner_product(bra_expr : Expr, ket_expr : Expr) -> Expr? {
           j_factor * @symcore.raw_function("KroneckerDelta", [bra.m, ket.m]),
         )
       }
-      let coeff_result : Result[Expr, @symphysics.PhysicsError] = try? spin_basis_transform_coeff(
+      let coeff = spin_basis_transform_coeff(
         ket.j,
         ket.m,
         bra.m,
         ket.basis_name,
         bra.basis_name,
         spin_numeric_args([ket.j]),
-      )
-      match coeff_result {
-        Ok(coeff) => Some(j_factor * coeff)
-        Err(_) => None
+      ) catch {
+        _ => return None
       }
+      Some(j_factor * coeff)
     }
     _ => None
   }

@@ -268,7 +268,7 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
       let wrapped_base = match @symcore.expr_form(base) {
         @symcore.ExprForm::Pow(_, _) => "(\{base_str})"
         @symcore.ExprForm::Number(n) if !n.is_integral() ||
-          n.numerator().op_lt(BigInt::from_int(0)) => "(\{base_str})"
+          n.numerator() < BigInt::from_int(0) => "(\{base_str})"
         @symcore.ExprForm::Float(f) if @symnum.mpf_sign(f.to_mpf()) < 0 =>
           "(\{base_str})"
         @symcore.ExprForm::ComplexFloat(_) => "(\{base_str})"

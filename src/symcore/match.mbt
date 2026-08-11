@@ -19,7 +19,7 @@ pub fn clear_wild_property_resolver() -> Unit {
 
 ///|
 fn clone_match_env(env : MatchEnv) -> MatchEnv {
-  let out : MatchEnv = {}
+  let out : MatchEnv = Map([])
   for key, value in env {
     out.set(key, value)
   }
@@ -851,28 +851,19 @@ fn positive_root_for_match(expr : Expr, degree : BigInt) -> Expr {
   if degree.compare(1N) == 0 {
     return expr
   }
-  let one_over_degree_result : Result[
-    @symnum.BigRational,
-    @symnum.RationalError,
-  ] = try? @symnum.BigRational::new(1N, degree)
-  let one_over_degree = match one_over_degree_result {
-    Ok(value) => Expr::Number(value)
-    Err(_) => return pow(expr, int(1))
-  }
+  let one_over_degree = Expr::Number(
+    @symnum.BigRational::new(1N, degree) catch {
+      _ => return pow(expr, int(1))
+    },
+  )
   match expr {
     Expr::Number(value) =>
       if exact_number_sign(value) < 0 && degree.mod(2N).compare(0N) == 0 {
-        let magnitude_result : Result[
-          @symnum.BigRational,
-          @symnum.RationalError,
-        ] = try? @symnum.BigRational::new(
-          value.numerator().neg(),
-          value.denominator(),
+        let magnitude = Expr::Number(
+          @symnum.BigRational::new(value.numerator().neg(), value.denominator()) catch {
+            _ => return pow(expr, one_over_degree)
+          },
         )
-        let magnitude = match magnitude_result {
-          Ok(ratio) => Expr::Number(ratio)
-          Err(_) => return pow(expr, one_over_degree)
-        }
         mul([
           Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit),
           pow(magnitude, one_over_degree),

@@ -104,11 +104,8 @@ fn br_div(
   if b.is_zero() {
     None
   } else {
-    match
-      (try? a.div_r(b) : Result[@symnum.BigRational, @symnum.RationalError]) {
-      Ok(value) => Some(value)
-      Err(_) => None
-    }
+    let value = a.div_r(b) catch { _ => return None }
+    Some(value)
   }
 }
 
@@ -616,7 +613,7 @@ fn coeffs_via_derivatives(
   let coeffs : Array[@symcore.Expr] = Array::new()
   let mut current = expr
   for k in 0..<count {
-    let env : Map[String, @symcore.Expr] = {}
+    let env : Map[String, @symcore.Expr] = Map([])
     env[x_name] = x0
     let value = @symcore.subst(current, env)
     coeffs.push(expr_mul(value, pade_inv_factorial_expr(k)))
@@ -655,7 +652,7 @@ pub fn pade_approximant(
   let work_expr = if around_zero {
     expr
   } else {
-    let env : Map[String, @symcore.Expr] = {}
+    let env : Map[String, @symcore.Expr] = Map([])
     env[var_name] = @symcore.add([x0, work_x])
     @symcore.subst(expr, env)
   }
@@ -711,7 +708,7 @@ pub fn pade_approximant(
   if around_zero {
     approx_work
   } else {
-    let back : Map[String, @symcore.Expr] = {}
+    let back : Map[String, @symcore.Expr] = Map([])
     back["__pade_t"] = @symcore.add([x, expr_neg(x0)])
     @symcore.subst(approx_work, back)
   }

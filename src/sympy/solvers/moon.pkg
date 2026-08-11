@@ -1,11 +1,11 @@
 import {
-  "CAIMEOX/symbit/symcalculus" @symcalculus,
+  "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/symmatrices" @symmatrices,
-  "CAIMEOX/symbit/sympolys" @sympolys,
+  "CAIMEOX/symbit/symmatrices",
+  "CAIMEOX/symbit/sympolys",
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symsets",
-  "CAIMEOX/symbit/symsolvers" @symsolvers,
+  "CAIMEOX/symbit/symsolvers",
   "CAIMEOX/symbit/sympy/utilities" @sympy_utilities,
 } for "test"
 

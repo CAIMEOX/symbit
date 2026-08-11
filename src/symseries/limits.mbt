@@ -134,7 +134,7 @@ pub fn limit(
       }
       // Fallback to series expansion at x0
       let t = @symcore.Expr::Symbol("__limit_t")
-      let env : Map[String, @symcore.Expr] = {}
+      let env : Map[String, @symcore.Expr] = Map([])
       env[var_name] = @symcore.add([x0, t])
       let shifted = @symcore.subst(expr, env)
       let (rest, exp_sum) = extract_t_power(shifted, t)

@@ -313,6 +313,10 @@ impl Show for BoolExpr with fn to_string(self) {
 }
 
 ///|
+/// Keep the `BoolExpr::to_string` dot-style API explicit.
+pub extend BoolExpr with Show::{to_string}
+
+///|
 impl Show for BoolExpr with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
@@ -455,7 +459,7 @@ pub impl Eq for BoolExpr with fn not_equal(self, other : BoolExpr) -> Bool {
 
 ///|
 pub impl Hash for BoolExpr with fn hash(self) -> Int {
-  let hasher = Hasher::new()
+  let hasher = Hasher()
   self.hash_combine(hasher)
   hasher.finalize()
 }

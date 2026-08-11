@@ -5,7 +5,7 @@ fn check_compat(polys : Array[Poly]) -> Unit raise PolyError {
   }
   let first = polys[0]
   for p in polys {
-    if p.domain.not_equal(first.domain) || p.gens.not_equal(first.gens) {
+    if p.domain.not_equal(first.domain) || p.gens != first.gens {
       raise PolyError::DomainMismatch
     }
   }

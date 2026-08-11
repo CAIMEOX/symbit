@@ -189,13 +189,23 @@ test "physics.mechanics symbolic system errors" {
     speeds=Some([states[2], states[3]]),
     mass_matrix=Some(@symphysics.explicit_matrix_eye(5)),
   )
-  let bad_coords : Result[@symphysics.ExplicitMatrix, @symphysics.PhysicsError] = try? symsystem.coordinates()
+  let bad_coords : Result[@symphysics.ExplicitMatrix, @symphysics.PhysicsError] = try
+    symsystem.coordinates() |> Ok
+  catch {
+    err => Err(err)
+  }
   assert_true(bad_coords is Err(@symphysics.PhysicsError::ValueError(_)))
-  let bad_loads : Result[Array[Load], @symphysics.PhysicsError] = try? symsystem.loads()
+  let bad_loads : Result[Array[Load], @symphysics.PhysicsError] = try
+    symsystem.loads() |> Ok
+  catch {
+    err => Err(err)
+  }
   assert_true(bad_loads is Err(@symphysics.PhysicsError::ValueError(_)))
   let bad_explicit : Result[
     @symphysics.ExplicitMatrix,
     @symphysics.PhysicsError,
-  ] = try? implicit_system.comb_explicit_rhs()
+  ] = try implicit_system.comb_explicit_rhs() |> Ok catch {
+    err => Err(err)
+  }
   assert_true(bad_explicit is Err(@symphysics.PhysicsError::ValueError(_)))
 }

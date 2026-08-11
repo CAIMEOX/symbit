@@ -363,12 +363,10 @@ fn collect_denominator_factors(expr : Expr) -> Array[Expr] {
 
 ///|
 fn linear_solution_from_matrix(num : Expr, symbol : Expr) -> (Expr, Expr)? {
-  let res : Result[(Matrix, Matrix), SolverError] = try? linear_eq_to_matrix(
-    [num],
-    [symbol],
-  )
-  match res {
-    Ok((lhs, rhs)) => {
+  try linear_eq_to_matrix([num], [symbol]) catch {
+    _ => None
+  } noraise {
+    (lhs, rhs) => {
       let coeff = lhs.getitem(0, 0) catch { _ => return None }
       if @symcore.is_zero(coeff) {
         return None
@@ -383,7 +381,6 @@ fn linear_solution_from_matrix(num : Expr, symbol : Expr) -> (Expr, Expr)? {
         ),
       )
     }
-    Err(_) => None
   }
 }
 
@@ -453,7 +450,7 @@ fn expr_contains_abs(expr : Expr) -> Bool {
 
 ///|
 fn polynomial_term_map_one(coeff : Expr) -> Map[Int, Expr] {
-  let out : Map[Int, Expr] = {}
+  let out : Map[Int, Expr] = Map([])
   if expr_is_zeroish(coeff) != Some(true) {
     out[0] = coeff
   }
@@ -462,7 +459,7 @@ fn polynomial_term_map_one(coeff : Expr) -> Map[Int, Expr] {
 
 ///|
 fn polynomial_term_map_generator() -> Map[Int, Expr] {
-  let out : Map[Int, Expr] = {}
+  let out : Map[Int, Expr] = Map([])
   out[1] = @symcore.int(1)
   out
 }
@@ -472,7 +469,7 @@ fn polynomial_term_map_add(
   left : Map[Int, Expr],
   right : Map[Int, Expr],
 ) -> Map[Int, Expr] {
-  let out : Map[Int, Expr] = {}
+  let out : Map[Int, Expr] = Map([])
   for degree, coeff in left {
     if expr_is_zeroish(coeff) != Some(true) {
       out[degree] = coeff
@@ -502,7 +499,7 @@ fn polynomial_term_map_mul(
   left : Map[Int, Expr],
   right : Map[Int, Expr],
 ) -> Map[Int, Expr] {
-  let out : Map[Int, Expr] = {}
+  let out : Map[Int, Expr] = Map([])
   if left.is_empty() || right.is_empty() {
     return out
   }
@@ -575,7 +572,7 @@ fn collect_univariate_polynomial_terms(
   }
   match expr {
     Expr::Add(args) => {
-      let mut acc : Map[Int, Expr] = {}
+      let mut acc : Map[Int, Expr] = Map([])
       for arg in args {
         match collect_univariate_polynomial_terms(arg, symbol) {
           Some(terms) => acc = polynomial_term_map_add(acc, terms)
@@ -897,7 +894,7 @@ fn perfect_nth_root_bigint(value : BigInt, n : Int) -> BigInt? {
   if value.compare(0N) == 0 || n == 1 {
     return Some(value)
   }
-  if value.op_lt(0N) {
+  if value < 0N {
     return None
   }
   let mut lo = 0N
@@ -1066,25 +1063,21 @@ fn real_log_inversion_expr(rhs : Expr, base : Expr) -> Expr {
       let fallback = canonical_expr(
         @symcore.mul([@symcore.function("log", [rhs]), base_log_inv]),
       )
-      let exponent_rat_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-        exponent, 1N,
+      let exponent_expr = Expr::Number(
+        @symnum.BigRational::new(exponent, 1N) catch {
+          _ => return fallback
+        },
       )
-      let exponent_expr = match exponent_rat_res {
-        Ok(value) => Expr::Number(value)
-        Err(_) => return fallback
-      }
       if exponent.compare(0N) == 0 {
         fallback
       } else if reduced.compare(1N) == 0 {
         exponent_expr
       } else {
-        let reduced_rat_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-          reduced, 1N,
+        let reduced_expr = Expr::Number(
+          @symnum.BigRational::new(reduced, 1N) catch {
+            _ => return fallback
+          },
         )
-        let reduced_expr = match reduced_rat_res {
-          Ok(value) => Expr::Number(value)
-          Err(_) => return fallback
-        }
         canonical_expr(
           @symcore.add([
             exponent_expr,
@@ -1243,7 +1236,7 @@ fn solveset_domain_check(
     return false
   }
   let name = symbol_name(symbol)
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[name] = candidate
   let core = expr
   fn check(current : Expr, env : Map[String, Expr], symbol : Expr) -> Bool {
@@ -1291,7 +1284,7 @@ fn valid_solution_for_expr(
     Some(true) => true
     Some(false) => false
     None => {
-      let env : Map[String, Expr] = {}
+      let env : Map[String, Expr] = Map([])
       env[symbol_name(symbol)] = normalized
       let residual = canonical_expr(
         @symcore.subst(normalize_equation(expr), env),
@@ -1325,14 +1318,10 @@ fn exclude_relational_singularities(
   }
   let invalid_parts : Array[Set] = []
   for factor in dens {
-    let part_res : Result[Set, SolverError] = try? solveset(
-      factor,
-      symbol=Some(symbol),
-      domain~,
-    )
-    match part_res {
-      Ok(part) => invalid_parts.push(part)
-      Err(_) => ()
+    try solveset(factor, symbol=Some(symbol), domain~) catch {
+      _ => ()
+    } noraise {
+      part => invalid_parts.push(part)
     }
   }
   if invalid_parts.is_empty() {
@@ -1556,14 +1545,11 @@ fn invert_real_expr(
                 Some(rhs_int) =>
                   match integer_log_exact(rhs_int, base_int) {
                     Some(power) => {
-                      let power_rat_res : Result[
-                        @symnum.BigRational,
-                        @symnum.RationalError,
-                      ] = try? @symnum.BigRational::new(power, 1N)
-                      let power_expr = match power_rat_res {
-                        Ok(value) => Expr::Number(value)
-                        Err(_) => return (normalized, rhs_items)
-                      }
+                      let power_expr = Expr::Number(
+                        @symnum.BigRational::new(power, 1N) catch {
+                          _ => return (normalized, rhs_items)
+                        },
+                      )
                       shifted.push(power_expr)
                     }
                     None => return (exp, [])
@@ -1865,29 +1851,29 @@ fn solve_via_abs_expr(
     @symcore.compare_expr(arg, @symcore.int(0)) == 0 {
     return None
   }
-  let q_pos_cond = match
-    (
-      try? solve_univariate_inequality(
-        Expr::Relational(@symcore.RelOp::Ge, arg, @symcore.int(0)),
-        symbol,
-        relational=false,
-        domain~,
-      ) : Result[InequalityResult, SolverError]) {
-    Ok(InequalityResult::Set(set)) => set
-    Ok(_) => domain
-    Err(_) => return None
+  let q_pos = solve_univariate_inequality(
+    Expr::Relational(@symcore.RelOp::Ge, arg, @symcore.int(0)),
+    symbol,
+    relational=false,
+    domain~,
+  ) catch {
+    _ => return None
   }
-  let q_neg_cond = match
-    (
-      try? solve_univariate_inequality(
-        Expr::Relational(@symcore.RelOp::Lt, arg, @symcore.int(0)),
-        symbol,
-        relational=false,
-        domain~,
-      ) : Result[InequalityResult, SolverError]) {
-    Ok(InequalityResult::Set(set)) => set
-    Ok(_) => @symsets.empty_set()
-    Err(_) => return None
+  let q_pos_cond = match q_pos {
+    InequalityResult::Set(set) => set
+    _ => domain
+  }
+  let q_neg = solve_univariate_inequality(
+    Expr::Relational(@symcore.RelOp::Lt, arg, @symcore.int(0)),
+    symbol,
+    relational=false,
+    domain~,
+  ) catch {
+    _ => return None
+  }
+  let q_neg_cond = match q_neg {
+    InequalityResult::Set(set) => set
+    _ => @symsets.empty_set()
   }
   let pos_expr = canonical_expr(
     solver_add_all([@symcore.mul([coeff, arg]), solver_add_all(rest)]),
@@ -1921,20 +1907,15 @@ fn solve_univariate_polynomial(
     None => ()
   }
   let name = symbol_name(symbol)
-  let poly_result : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr_defaults(
-    normalized,
-    gens=[name],
-  )
-  let roots = match poly_result {
-    Ok(poly) =>
-      @sympolys.roots(poly) catch {
-        err => raise wrap_poly_error("solveset", err)
-      }
-    Err(err) =>
+  let poly = @sympolys.Poly::from_expr_defaults(normalized, gens=[name]) catch {
+    err =>
       match solve_univariate_composite_polynomial(normalized, symbol, domain) {
         Some(set) => return set
         None => raise wrap_poly_error("solveset", err)
       }
+  }
+  let roots = @sympolys.roots(poly) catch {
+    err => raise wrap_poly_error("solveset", err)
   }
   let filtered : Array[Expr] = []
   for root in roots {
@@ -1969,7 +1950,7 @@ fn merge_assignments(
   base : Map[String, Expr],
   extra : Map[String, Expr],
 ) -> Map[String, Expr] {
-  let out : Map[String, Expr] = {}
+  let out : Map[String, Expr] = Map([])
   for key, value in base {
     out[key] = value
   }
@@ -2075,26 +2056,22 @@ fn recursive_polynomial_solutions(
     return []
   }
   let names = symbol_names(symbols)
-  let linear_try : Result[Map[String, Expr]?, @sympolys.PolyError] = try? @sympolys._linsolve(
-    live_eqs, names,
-  )
-  match linear_try {
-    Ok(Some(sol)) => return [merge_assignments(assignment, sol)]
-    Ok(None) => return []
-    Err(_) => ()
+  try @sympolys._linsolve(live_eqs, names) catch {
+    _ => ()
+  } noraise {
+    Some(sol) => return [merge_assignments(assignment, sol)]
+    None => return []
   }
-  let linear_matrix_try : Result[(Matrix, Matrix), SolverError] = try? linear_eq_to_matrix(
-    live_eqs, symbols,
-  )
-  match linear_matrix_try {
-    Ok((lhs, rhs)) => {
+  try linear_eq_to_matrix(live_eqs, symbols) catch {
+    _ => ()
+  } noraise {
+    (lhs, rhs) => {
       let symbolic = symbolic_linsolve_from_matrices(lhs, rhs, symbols, names)
       return match symbolic {
         Some(sol) => [merge_assignments(assignment, sol)]
         None => []
       }
     }
-    Err(_) => ()
   }
   match choose_univariate_equation(live_eqs, symbols) {
     Some((symbol, expr)) => {
@@ -2254,16 +2231,18 @@ pub fn solveset(
     | Some((@symcore.RelOp::Le, _, _))
     | Some((@symcore.RelOp::Lt, _, _))
     | Some((@symcore.RelOp::Ne, _, _)) => {
-      let inequality_res : Result[InequalityResult, SolverError] = try? solve_univariate_inequality(
-        expr,
-        sym,
-        relational=false,
-        domain~,
-      )
-      match inequality_res {
-        Ok(InequalityResult::Set(set)) =>
+      let inequality_set = try
+        solve_univariate_inequality(expr, sym, relational=false, domain~)
+      catch {
+        _ => None
+      } noraise {
+        InequalityResult::Set(set) => Some(set)
+        _ => None
+      }
+      match inequality_set {
+        Some(set) =>
           return exclude_relational_singularities(expr, sym, domain, set)
-        _ =>
+        None =>
           match solve_monotonic_relational_set(expr, sym, domain) {
             Some(set) =>
               return exclude_relational_singularities(expr, sym, domain, set)
@@ -2292,16 +2271,14 @@ pub fn solveset(
     None => ()
   }
   let poly_name = symbol_name(sym)
-  let poly_fast : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr_defaults(
-    normalized,
-    gens=[poly_name],
-  )
-  match poly_fast {
-    Ok(poly) if poly.degree(0) > 2 => {
-      let set = solve_univariate_polynomial_from_poly(poly, domain)
-      return finalize_solveset_domain(domain, set)
-    }
+  try @sympolys.Poly::from_expr_defaults(normalized, gens=[poly_name]) catch {
     _ => ()
+  } noraise {
+    poly =>
+      if poly.degree(0) > 2 {
+        let set = solve_univariate_polynomial_from_poly(poly, domain)
+        return finalize_solveset_domain(domain, set)
+      }
   }
   let linear = solve_linear(normalized, symbols=[sym], exclude=[])
   if @symcore.compare_expr(linear.0, sym) == 0 {
@@ -2322,12 +2299,8 @@ pub fn solveset(
       None => ()
     }
   }
-  let poly_try : Result[Set, SolverError] = try? solve_univariate_polynomial(
-    normalized, sym, domain,
-  )
-  match poly_try {
-    Ok(set) => finalize_solveset_domain(domain, set)
-    Err(_) => symbolic_condition_set(normalized, sym, domain)
+  solve_univariate_polynomial(normalized, sym, domain) catch {
+    _ => symbolic_condition_set(normalized, sym, domain)
   }
 }
 
@@ -2347,22 +2320,18 @@ pub fn nonlinsolve(
   let syms = unique_symbols_in_input_order(symbols)
   let names = symbol_names(syms)
   let normalized = normalize_equations(equations)
-  let linear_try : Result[Map[String, Expr]?, @sympolys.PolyError] = try? @sympolys._linsolve(
-    normalized, names,
-  )
-  match linear_try {
-    Ok(solution) => return tuple_solution_set(solution, syms, names)
-    Err(_) => ()
+  try @sympolys._linsolve(normalized, names) catch {
+    _ => ()
+  } noraise {
+    solution => return tuple_solution_set(solution, syms, names)
   }
-  let linear_matrix_try : Result[(Matrix, Matrix), SolverError] = try? linear_eq_to_matrix(
-    normalized, syms,
-  )
-  match linear_matrix_try {
-    Ok((lhs, rhs)) => {
+  try linear_eq_to_matrix(normalized, syms) catch {
+    _ => ()
+  } noraise {
+    (lhs, rhs) => {
       let symbolic = symbolic_linsolve_from_matrices(lhs, rhs, syms, names)
       return tuple_solution_set(symbolic, syms, names)
     }
-    Err(_) => ()
   }
   let solved = recursive_polynomial_solutions(normalized, syms, {})
   solve_result_to_tuple_set(solved, syms)
@@ -2459,16 +2428,12 @@ fn solve_floatify_expr(expr : Expr, preserve_float_context : Bool) -> Expr {
     return expr
   }
   match expr {
-    Expr::Number(value) => {
-      let approx : Result[@symcore.Float, _] = try? @symcore.Float::from_exact(
-        value,
-        prec=53,
-      )
-      match approx {
-        Ok(float_value) => Expr::Float(float_value)
-        Err(_) => @symcore.evalf(expr, prec=53)
+    Expr::Number(value) =>
+      try @symcore.Float::from_exact(value, prec=53) catch {
+        _ => @symcore.evalf(expr, prec=53)
+      } noraise {
+        float_value => Expr::Float(float_value)
       }
-    }
     _ => expr
   }
 }
@@ -2558,13 +2523,8 @@ fn solve_factored_system_fallback(
   if requested.length() <= 1 || equations.length() <= 1 {
     return None
   }
-  let systems_try : Result[Array[Array[Expr]], SolverError] = try? factor_system(
-    equations,
-    gens=requested,
-  )
-  let systems = match systems_try {
-    Ok(value) => value
-    Err(_) => return None
+  let systems = factor_system(equations, gens=requested) catch {
+    _ => return None
   }
   let changed = systems.any(system => !expr_arrays_equal(system, equations))
   if !changed {
@@ -2575,12 +2535,10 @@ fn solve_factored_system_fallback(
     if expr_arrays_equal(system, equations) {
       continue
     }
-    let solved : Result[SolveResult, SolverError] = try? solve(
-      solve_exprs_input(system),
-      symbols=requested,
-    )
-    match solved {
-      Ok(result) =>
+    try solve(solve_exprs_input(system), symbols=requested) catch {
+      _ => ()
+    } noraise {
+      result =>
         match solve_result_to_multi_symbol_tuple_exprs(result, requested) {
           Some(items) =>
             for item in items {
@@ -2588,7 +2546,6 @@ fn solve_factored_system_fallback(
             }
           None => ()
         }
-      Err(_) => ()
     }
   }
   Some(@symsets.finite_set(tuples))
@@ -2652,20 +2609,21 @@ pub fn solve(
       Expr::Boolean(true) | Expr::Boolean(false) => return SolveResult::List([])
       _ => ()
     }
-    let complex_items_try : Result[Array[Expr], SolverError] = try? solve_finite_set_items(
+    let items = solve_finite_set_items(
       solveset(normalized[0], symbol=Some(requested[0]), domain=complexes),
-    )
-    let items = match complex_items_try {
-      Ok(value) => value
-      Err(_) if solve_expr_has_noninteger_rational_power(normalized[0]) =>
-        solve_finite_set_items(
-          solveset(
-            normalized[0],
-            symbol=Some(requested[0]),
-            domain=@symsets.reals(),
-          ),
-        )
-      Err(err) => raise err
+    ) catch {
+      err =>
+        if solve_expr_has_noninteger_rational_power(normalized[0]) {
+          solve_finite_set_items(
+            solveset(
+              normalized[0],
+              symbol=Some(requested[0]),
+              domain=@symsets.reals(),
+            ),
+          )
+        } else {
+          raise err
+        }
     }
     return SolveResult::List(
       items.map(expr => solve_floatify_expr(expr, preserve_float_context)),
@@ -2702,13 +2660,11 @@ pub fn solve(
       normalized,
     ),
   )
-  let linear_solutions_try : Result[Set, SolverError] = try? linsolve(
+  let solutions = linsolve(
     linsolve_equations_input(solving_equations),
     requested,
-  )
-  let solutions = match linear_solutions_try {
-    Ok(set) => set
-    Err(_) => nonlinsolve(solving_equations, requested)
+  ) catch {
+    _ => nonlinsolve(solving_equations, requested)
   }
   let solutions = match solutions {
     @symsets.Set::EmptySet =>
@@ -2729,7 +2685,7 @@ pub fn solve(
       for item in items {
         match @symcore.tuple_items(item) {
           Some(values) => {
-            let mapping : Map[String, Expr] = {}
+            let mapping : Map[String, Expr] = Map([])
             for i in 0..<names.length() {
               let value = values.get(i).unwrap_or(requested[i])
               if @symcore.compare_expr(value, requested[i]) != 0 {
@@ -2799,7 +2755,7 @@ pub fn nsolve(
   let guess0 = expr_to_mpf(x0, prec)
   let guess1 = x1.map(value => expr_to_mpf(value, prec))
   let f = fn(value : @symnum.Mpf) {
-    let env : Map[String, Expr] = {}
+    let env : Map[String, Expr] = Map([])
     env[name] = Expr::Float(@symcore.Float::from_mpf(value, prec~))
     expr_to_mpf(@symcore.subst(base, env), prec)
   }

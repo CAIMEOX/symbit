@@ -22,11 +22,9 @@ fn control_number_text_to_double(text : String) -> Double? {
       value => Some(value)
     }
   } else if parts.length() == 2 {
-    match
-      (try? @string.parse_double(parts[0]), try? @string.parse_double(parts[1])) {
-      (Ok(num), Ok(den)) => Some(num / den)
-      _ => None
-    }
+    let num = @string.parse_double(parts[0]) catch { _ => return None }
+    let den = @string.parse_double(parts[1]) catch { _ => return None }
+    Some(num / den)
   } else {
     None
   }
@@ -82,7 +80,7 @@ fn control_has_extra_free_symbols(
   expr : @symcore.Expr,
   variable_name : String,
 ) -> Bool {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   control_collect_symbols(expr, seen)
   for name, _ in seen {
     if name != variable_name && name != "I" && name != "pi" && name != "oo" {
@@ -424,7 +422,7 @@ fn control_expr_real_double(
   expr : @symcore.Expr,
   env? : Map[String, Double] = {},
 ) -> Double? {
-  let complex_env : Map[String, ControlComplex] = {}
+  let complex_env : Map[String, ControlComplex] = Map([])
   for name, value in env {
     complex_env[name] = (value, 0.0)
   }

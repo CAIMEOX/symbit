@@ -195,11 +195,11 @@ pub fn scalar_potential_difference(
     .pos_from(origin)
     .express(frame, variables=true)
     .components_in(frame)
-  let env1 : Map[String, Expr] = {}
+  let env1 : Map[String, Expr] = Map([])
   env1.set(coordinate_symbol_name(frame, 0), p1[0])
   env1.set(coordinate_symbol_name(frame, 1), p1[1])
   env1.set(coordinate_symbol_name(frame, 2), p1[2])
-  let env2 : Map[String, Expr] = {}
+  let env2 : Map[String, Expr] = Map([])
   env2.set(coordinate_symbol_name(frame, 0), p2[0])
   env2.set(coordinate_symbol_name(frame, 1), p2[1])
   env2.set(coordinate_symbol_name(frame, 2), p2[2])

@@ -67,8 +67,8 @@ pub fn[T : Eq + Show] debug(
     let result = rule(expr)
     if result != expr {
       write("Rule: " + name + "\n")
-      write("In:   " + expr.to_string() + "\n")
-      write("Out:  " + result.to_string() + "\n\n")
+      write("In:   " + Show::to_string(expr) + "\n")
+      write("Out:  " + Show::to_string(result) + "\n\n")
     }
     result
   }

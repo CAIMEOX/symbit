@@ -25,7 +25,7 @@ pub fn morphism_list(items : Array[Morphism]) -> MorphismSpec {
 
 ///|
 pub fn morphism_props(items : Map[Morphism, Array[String]]) -> MorphismSpec {
-  let normalized : Map[Morphism, Array[String]] = {}
+  let normalized : Map[Morphism, Array[String]] = Map([])
   for key in items.keys() {
     normalized[key] = normalize_property_set(items[key])
   }
@@ -151,7 +151,7 @@ pub fn Morphism::compose(
 }
 
 ///|
-pub impl Mul for Morphism with mul(self, other : Morphism) -> Morphism {
+pub impl Mul for Morphism with fn mul(self, other : Morphism) -> Morphism {
   self.compose(other) catch {
     err => abort(err.to_string())
   }
@@ -266,8 +266,8 @@ fn diagram_from_specs(
   premises : MorphismSpec,
   conclusions : MorphismSpec,
 ) -> Diagram raise CategoryError {
-  let premise_map : Map[Morphism, Array[String]] = {}
-  let conclusion_map : Map[Morphism, Array[String]] = {}
+  let premise_map : Map[Morphism, Array[String]] = Map([])
+  let conclusion_map : Map[Morphism, Array[String]] = Map([])
   let objects = diagram_collect_objects(premises)
 
   match premises {
@@ -384,7 +384,7 @@ pub fn Diagram::subdiagram_from_objects(
     )
   }
 
-  let new_premises : Map[Morphism, Array[String]] = {}
+  let new_premises : Map[Morphism, Array[String]] = Map([])
   for morphism in self.premises.keys() {
     if contains_object(normalized, morphism.domain()) &&
       contains_object(normalized, morphism.codomain()) {
@@ -392,7 +392,7 @@ pub fn Diagram::subdiagram_from_objects(
     }
   }
 
-  let new_conclusions : Map[Morphism, Array[String]] = {}
+  let new_conclusions : Map[Morphism, Array[String]] = Map([])
   for morphism in self.conclusions.keys() {
     if contains_object(normalized, morphism.domain()) &&
       contains_object(normalized, morphism.codomain()) {

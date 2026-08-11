@@ -49,13 +49,7 @@ fn vector_matrix_in_system(
     let target_components = if source == system {
       source_components
     } else {
-      let basis_result : Result[@symphysics.ExplicitMatrix, @rawvec.VectorError] = try? system.change_of_basis_matrix_from(
-        source,
-      )
-      let basis_matrix = match basis_result {
-        Ok(value) => value
-        Err(err) => raise err
-      }
+      let basis_matrix = system.change_of_basis_matrix_from(source)
       column_to_array(
         basis_matrix.mul(array_to_column(source_components)) catch {
           _ => abort("vector_matrix_in_system")
@@ -123,7 +117,7 @@ pub fn Vector::is_zero(self : Vector) -> Bool {
 
 ///|
 pub fn Vector::components(self : Vector) -> Map[BaseVector, @symcore.Expr] {
-  let out : Map[BaseVector, @symcore.Expr] = {}
+  let out : Map[BaseVector, @symcore.Expr] = Map([])
   for item in self.raw_.args {
     let system = coord_system_from_frame(item.0)
     let coeffs = item.1
@@ -162,12 +156,12 @@ fn vector_map_components(
 }
 
 ///|
-pub impl Add for Vector with add(self, other : Vector) -> Vector {
+pub impl Add for Vector with fn add(self, other : Vector) -> Vector {
   { raw_: self.raw_ + other.raw_ }
 }
 
 ///|
-pub impl Sub for Vector with sub(self, other : Vector) -> Vector {
+pub impl Sub for Vector with fn sub(self, other : Vector) -> Vector {
   { raw_: self.raw_ - other.raw_ }
 }
 
@@ -356,7 +350,7 @@ pub fn Vector::to_matrix(
 ///|
 pub fn Vector::separate(self : Vector) -> Map[CoordSys3D, Vector] {
   let components = self.components()
-  let parts : Map[CoordSys3D, Vector] = {}
+  let parts : Map[CoordSys3D, Vector] = Map([])
   for basis in components.keys() {
     let system = basis.system_
     let term = basis.scale(components[basis])

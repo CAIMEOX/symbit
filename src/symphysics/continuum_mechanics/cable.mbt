@@ -51,10 +51,10 @@ pub fn cable(
   } else {
     (right, left)
   }
-  let supports : Map[String, Array[@symcore.Expr]] = {}
+  let supports : Map[String, Array[@symcore.Expr]] = Map([])
   supports[ordered.0.0] = [ordered.0.1, ordered.0.2]
   supports[ordered.1.0] = [ordered.1.1, ordered.1.2]
-  let reaction_loads : Map[String, @symcore.Expr] = {}
+  let reaction_loads : Map[String, @symcore.Expr] = Map([])
   for label in [ordered.0.0, ordered.1.0] {
     reaction_loads["R_" + label + "_x"] = @symcore.int(0)
     reaction_loads["R_" + label + "_y"] = @symcore.int(0)
@@ -155,7 +155,7 @@ pub fn Cable::right_support(self : Cable) -> Array[@symcore.Expr] {
 pub fn Cable::loads(
   self : Cable,
 ) -> Map[String, Map[String, Array[@symcore.Expr]]] {
-  let distributed : Map[String, Array[@symcore.Expr]] = {}
+  let distributed : Map[String, Array[@symcore.Expr]] = Map([])
   for label, mag in self.distributed_loads_ {
     distributed[label] = [mag]
   }

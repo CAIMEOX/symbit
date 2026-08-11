@@ -1,5 +1,5 @@
 import {
-  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/sympy",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symsets",
   "CAIMEOX/symbit/symlogic",
@@ -7,7 +7,7 @@ import {
 }
 
 import {
-  "CAIMEOX/symbit/symsets" @symsets,
+  "CAIMEOX/symbit/symsets",
 } for "test"
 
 supported_targets = "native"

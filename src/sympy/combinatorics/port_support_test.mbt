@@ -31,7 +31,6 @@ using @symcombinatorics {
   alternating,
   alternating_group,
   array_forms,
-  assert_oracle,
   bin_to_gray,
   bsgs_direct_product,
   canonical_free,
@@ -87,4 +86,13 @@ using @symcombinatorics {
   tetrahedron,
   vfp_group,
   cube,
+}
+
+///|
+fn[T] expect_error(action : () -> T raise) -> Unit raise {
+  try action() catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected operation to raise")
+  }
 }

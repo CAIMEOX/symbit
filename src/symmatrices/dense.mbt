@@ -251,12 +251,12 @@ pub fn Matrix::tolist(self : Matrix) -> Array[Array[Expr]] {
 }
 
 ///|
-pub impl Show for Matrix with to_string(self) {
+pub impl Show for Matrix with fn to_string(self) {
   matrix_string(self.data)
 }
 
 ///|
-pub impl Show for Matrix with output(self, logger : &Logger) -> Unit {
+pub impl Show for Matrix with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -623,7 +623,7 @@ pub fn matrix_multiply_elementwise(
 }
 
 ///|
-pub impl Add for Matrix with add(self, other) {
+pub impl Add for Matrix with fn add(self, other) {
   let out : Array[Array[Expr]] = []
   for i in 0..<self.rows {
     let row : Array[Expr] = []
@@ -636,7 +636,7 @@ pub impl Add for Matrix with add(self, other) {
 }
 
 ///|
-pub impl Sub for Matrix with sub(self, other) {
+pub impl Sub for Matrix with fn sub(self, other) {
   let out : Array[Array[Expr]] = []
   for i in 0..<self.rows {
     let row : Array[Expr] = []
@@ -649,7 +649,7 @@ pub impl Sub for Matrix with sub(self, other) {
 }
 
 ///|
-pub impl Mul for Matrix with mul(self, other) {
+pub impl Mul for Matrix with fn mul(self, other) {
   let out : Array[Array[Expr]] = []
   for i in 0..<self.rows {
     let row : Array[Expr] = []
@@ -711,7 +711,7 @@ pub fn Matrix::nnz(self : Matrix) -> Int {
 
 ///|
 pub fn Matrix::todok(self : Matrix) -> Map[(Int, Int), Expr] {
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for i in 0..<self.rows {
     for j in 0..<self.cols {
       let value = self.data[i][j]
@@ -725,9 +725,9 @@ pub fn Matrix::todok(self : Matrix) -> Map[(Int, Int), Expr] {
 
 ///|
 pub fn Matrix::todod(self : Matrix) -> Map[Int, Map[Int, Expr]] {
-  let out : Map[Int, Map[Int, Expr]] = {}
+  let out : Map[Int, Map[Int, Expr]] = Map([])
   for i in 0..<self.rows {
-    let row : Map[Int, Expr] = {}
+    let row : Map[Int, Expr] = Map([])
     for j in 0..<self.cols {
       let value = self.data[i][j]
       if !expr_is_zero(value) {

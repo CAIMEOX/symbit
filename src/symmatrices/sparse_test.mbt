@@ -21,7 +21,7 @@ fn apply_row_swaps(
 
 ///|
 test "matrices sparse construction and conversion" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 1)] = @symcore.int(2)
   entries[(2, 0)] = @symcore.int(5)
   let s = sparse_matrix(3, 3, entries)
@@ -48,7 +48,7 @@ test "matrices dense to sparse roundtrip" {
 
 ///|
 test "matrices sparse metadata and scaling helpers" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 1)] = @symcore.int(2)
   entries[(1, 0)] = @symcore.int(3)
   let s = sparse_matrix(2, 2, entries)
@@ -64,9 +64,9 @@ test "matrices sparse metadata and scaling helpers" {
     s.applyfunc(value => value + @symcore.int(1)).to_string(),
     content="Matrix([[0, 3], [4, 0]])",
   )
-  let plus_left_entries : Map[(Int, Int), Expr] = {}
+  let plus_left_entries : Map[(Int, Int), Expr] = Map([])
   plus_left_entries[(0, 0)] = @symcore.int(1)
-  let plus_right_entries : Map[(Int, Int), Expr] = {}
+  let plus_right_entries : Map[(Int, Int), Expr] = Map([])
   plus_right_entries[(0, 1)] = @symcore.int(4)
   inspect(
     (sparse_matrix(2, 2, plus_left_entries) +
@@ -77,7 +77,7 @@ test "matrices sparse metadata and scaling helpers" {
 
 ///|
 test "matrices sparse immutable structural and solver helpers" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 0)] = @symcore.int(1)
   entries[(1, 1)] = @symcore.int(2)
   let s = sparse_matrix(2, 2, entries)
@@ -87,7 +87,7 @@ test "matrices sparse immutable structural and solver helpers" {
   assert_true(copy.as_mutable().nnz() == 2)
   inspect(s.reshape(1, 4).to_string(), content="Matrix([[1, 0, 0, 2]])")
   inspect(s.extract([0, 1], [1]).to_string(), content="Matrix([[0], [2]])")
-  let join_entries : Map[(Int, Int), Expr] = {}
+  let join_entries : Map[(Int, Int), Expr] = Map([])
   join_entries[(0, 0)] = @symcore.int(3)
   let joined = s.row_join(sparse_matrix(2, 1, join_entries))
   inspect(joined.to_string(), content="Matrix([[1, 0, 3], [0, 2, 0]])")
@@ -95,7 +95,7 @@ test "matrices sparse immutable structural and solver helpers" {
   inspect(inserted.to_string(), content="Matrix([[1, 3, 0], [0, 0, 2]])")
   inspect(s.row_del(0).to_string(), content="Matrix([[0, 2]])")
   assert_false(joined.is_diagonal())
-  let tri_entries : Map[(Int, Int), Expr] = {}
+  let tri_entries : Map[(Int, Int), Expr] = Map([])
   tri_entries[(0, 0)] = @symcore.int(2)
   tri_entries[(1, 0)] = @symcore.int(1)
   tri_entries[(1, 1)] = @symcore.int(3)
@@ -105,7 +105,7 @@ test "matrices sparse immutable structural and solver helpers" {
     lower.lower_triangular_solve(rhs).to_string(),
     content="Matrix([[1], [2]])",
   )
-  let upper_entries : Map[(Int, Int), Expr] = {}
+  let upper_entries : Map[(Int, Int), Expr] = Map([])
   upper_entries[(0, 0)] = @symcore.int(2)
   upper_entries[(0, 1)] = @symcore.int(1)
   upper_entries[(1, 1)] = @symcore.int(3)
@@ -118,7 +118,7 @@ test "matrices sparse immutable structural and solver helpers" {
 
 ///|
 test "matrices sparse decomposition and eigen helpers" {
-  let diag_entries : Map[(Int, Int), Expr] = {}
+  let diag_entries : Map[(Int, Int), Expr] = Map([])
   diag_entries[(0, 0)] = @symcore.int(2)
   diag_entries[(1, 1)] = @symcore.int(3)
   let diagm = sparse_matrix(2, 2, diag_entries)
@@ -137,18 +137,18 @@ test "matrices sparse decomposition and eigen helpers" {
 
 ///|
 test "matrices sparse native multiply and triangular determinant" {
-  let lhs_entries : Map[(Int, Int), Expr] = {}
+  let lhs_entries : Map[(Int, Int), Expr] = Map([])
   lhs_entries[(0, 0)] = @symcore.int(1)
   lhs_entries[(0, 2)] = @symcore.int(2)
   lhs_entries[(1, 1)] = @symcore.int(3)
-  let rhs_entries : Map[(Int, Int), Expr] = {}
+  let rhs_entries : Map[(Int, Int), Expr] = Map([])
   rhs_entries[(0, 1)] = @symcore.int(4)
   rhs_entries[(2, 0)] = @symcore.int(5)
   rhs_entries[(1, 1)] = @symcore.int(6)
   let lhs = sparse_matrix(2, 3, lhs_entries)
   let rhs = sparse_matrix(3, 2, rhs_entries)
   inspect((lhs * rhs).to_string(), content="Matrix([[10, 4], [0, 18]])")
-  let tri_entries : Map[(Int, Int), Expr] = {}
+  let tri_entries : Map[(Int, Int), Expr] = Map([])
   tri_entries[(0, 0)] = @symcore.int(2)
   tri_entries[(0, 1)] = @symcore.int(1)
   tri_entries[(1, 1)] = @symcore.int(5)
@@ -158,7 +158,7 @@ test "matrices sparse native multiply and triangular determinant" {
 
 ///|
 test "matrices sparse native rref echelon and subspace helpers" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 0)] = @symcore.int(1)
   entries[(0, 2)] = @symcore.int(2)
   entries[(1, 1)] = @symcore.int(1)
@@ -182,7 +182,7 @@ test "matrices sparse native rref echelon and subspace helpers" {
 
 ///|
 test "matrices sparse native lu reconstructs row-permuted matrix" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 1)] = @symcore.int(2)
   entries[(0, 2)] = @symcore.int(1)
   entries[(1, 0)] = @symcore.int(4)
@@ -198,7 +198,7 @@ test "matrices sparse native lu reconstructs row-permuted matrix" {
 
 ///|
 test "matrices sparse native solve and inverse avoid dense fallback" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 0)] = @symcore.int(4)
   entries[(0, 1)] = @symcore.int(1)
   entries[(1, 0)] = @symcore.int(2)
@@ -211,7 +211,7 @@ test "matrices sparse native solve and inverse avoid dense fallback" {
 
 ///|
 test "matrices sparse native cholesky and ldl match reconstruction" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 0)] = @symcore.int(4)
   entries[(0, 1)] = @symcore.int(2)
   entries[(1, 0)] = @symcore.int(2)
@@ -226,7 +226,7 @@ test "matrices sparse native cholesky and ldl match reconstruction" {
 
 ///|
 test "matrices sparse native qr reconstructs the source matrix" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 0)] = @symcore.int(1)
   entries[(1, 0)] = @symcore.int(1)
   entries[(1, 1)] = @symcore.int(1)

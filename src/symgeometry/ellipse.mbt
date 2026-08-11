@@ -512,7 +512,7 @@ pub fn Ellipse::parameter_value(
   }
   let ux = geo_div(pt.coords_[0] - self.center_.coords_[0], self.hradius_)
   let uy = geo_div(pt.coords_[1] - self.center_.coords_[1], self.vradius_)
-  let out : Map[Expr, Expr] = {}
+  let out : Map[Expr, Expr] = Map([])
   out.set(t, geo_normalized_atan2(uy, ux))
   out
 }
@@ -787,7 +787,7 @@ pub fn Circle::parameter_value(
   }
   let ux = geo_div(pt.coords_[0] - self.center_.coords_[0], self.radius_)
   let uy = geo_div(pt.coords_[1] - self.center_.coords_[1], self.radius_)
-  let out : Map[Expr, Expr] = {}
+  let out : Map[Expr, Expr] = Map([])
   out.set(t, geo_normalized_atan2(uy, ux))
   out
 }

@@ -202,13 +202,7 @@ fn solve_constant_ode_coefficients(
     let fk = factorial_rat(k)
     match to_number(yk) {
       Some(nk) => {
-        let ak = match
-          (
-            try? nk.div_r(fk) :
-            Result[@symnum.BigRational, @symnum.RationalError]) {
-          Ok(value) => value
-          Err(_) => return None
-        }
+        let ak = nk.div_r(fk) catch { _ => return None }
         a.push(@symcore.Expr::Number(ak))
       }
       None => {
@@ -228,13 +222,7 @@ fn solve_constant_ode_coefficients(
       let num = factorial_bigint(n + k)
       let den = factorial_bigint(n + r)
       let ratio = @symnum.BigRational::new(num, den) catch { _ => return None }
-      let scale = match
-        (
-          try? ck.mul_r(ratio).div_r(cr) :
-          Result[@symnum.BigRational, @symnum.RationalError]) {
-        Ok(value) => value
-        Err(_) => return None
-      }
+      let scale = ck.mul_r(ratio).div_r(cr) catch { _ => return None }
       let term = expr_mul(@symcore.Expr::Number(scale), a[n + k])
       sum = expr_add(sum, term)
     }
@@ -277,13 +265,7 @@ fn sequence_from_constant_ode(hf : HolonomicFunction) -> HolonomicSequence? {
             let fk = factorial_rat(k)
             match to_number(hf.y0[k]) {
               Some(v) => {
-                let ak = match
-                  (
-                    try? v.div_r(fk) :
-                    Result[@symnum.BigRational, @symnum.RationalError]) {
-                  Ok(value) => value
-                  Err(_) => return None
-                }
+                let ak = v.div_r(fk) catch { _ => return None }
                 init.push(@symcore.Expr::Number(ak))
               }
               None => {
@@ -391,7 +373,7 @@ pub fn HolonomicFunction::evalf(
   terms? : Int = 20,
 ) -> Expr {
   let series_expr = self.series(n=terms)
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[require_symbol_name(self.x)] = @symcore.Expr::Number(x_value)
   @symcore.subst(series_expr, env)
 }
@@ -454,7 +436,7 @@ pub fn HolonomicFunction::composition(
   arg : Expr,
   x0? : Expr = int(0),
 ) -> HolonomicFunction {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[require_symbol_name(self.x)] = arg
   let composed = @symcore.subst(self.to_expr(), env)
   expr_to_holonomic(composed, x=self.x, x0~)
@@ -585,7 +567,7 @@ pub fn expr_to_holonomic(
 }
 
 ///|
-pub impl Add for HolonomicFunction with add(self, other) {
+pub impl Add for HolonomicFunction with fn add(self, other) {
   if self.x != other.x {
     return fallback_from_expr(
       expr_add(self.to_expr(), other.to_expr()),
@@ -598,7 +580,7 @@ pub impl Add for HolonomicFunction with add(self, other) {
 }
 
 ///|
-pub impl Mul for HolonomicFunction with mul(self, other) {
+pub impl Mul for HolonomicFunction with fn mul(self, other) {
   if self.x != other.x {
     return fallback_from_expr(
       expr_mul(self.to_expr(), other.to_expr()),
@@ -623,7 +605,7 @@ pub fn HolonomicFunction::pow(
 }
 
 ///|
-pub impl Eq for HolonomicFunction with equal(self, other : HolonomicFunction) -> Bool {
+pub impl Eq for HolonomicFunction with fn equal(self, other : HolonomicFunction) -> Bool {
   self.annihilator == other.annihilator &&
   self.x == other.x &&
   self.x0 == other.x0 &&
@@ -632,7 +614,7 @@ pub impl Eq for HolonomicFunction with equal(self, other : HolonomicFunction) ->
 }
 
 ///|
-pub impl Eq for HolonomicFunction with not_equal(
+pub impl Eq for HolonomicFunction with fn not_equal(
   self,
   other : HolonomicFunction,
 ) -> Bool {
@@ -640,6 +622,6 @@ pub impl Eq for HolonomicFunction with not_equal(
 }
 
 ///|
-pub impl Show for HolonomicFunction with output(self, logger : &Logger) -> Unit {
+pub impl Show for HolonomicFunction with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_sympy_str())
 }

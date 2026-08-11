@@ -285,8 +285,8 @@ fn coeff_bound_est(poly : Poly) -> Int raise PolyError {
   let mut max_abs = BigInt::from_int(1)
   for _, c in poly.coeffs {
     let n = fe_expect_rational(c).numerator()
-    let abs = if n.op_lt(BigInt::from_int(0)) { n.neg() } else { n }
-    if abs.op_gt(max_abs) {
+    let abs = if n < BigInt::from_int(0) { n.neg() } else { n }
+    if abs > max_abs {
       max_abs = abs
     }
   }
@@ -339,7 +339,7 @@ fn hensel_crt_factor(poly : Poly) -> Array[Poly] {
       let dense_f = map_to_mod(poly, p)
       images.push((p, dense_f))
       accumulated = accumulated.mul(BigInt::from_int(p))
-      if accumulated.op_gt(BigInt::from_int(coeff_bound)) {
+      if accumulated > BigInt::from_int(coeff_bound) {
         break
       }
     }
@@ -537,7 +537,7 @@ pub fn reconstruct_coeffs(
   let (modulus, residues) = crt_images(images)
   let centered = center_residues(residues, modulus)
   let bound_big = BigInt::from_int(bound)
-  if centered.all(v => big_abs(v).op_le(bound_big)) {
+  if centered.all(v => big_abs(v) <= bound_big) {
     return centered.map(v => v.to_int())
   }
   let lattice = build_reconstruction_lattice(centered, modulus)
@@ -593,7 +593,7 @@ fn mod_inv_bigint(a : BigInt, m : BigInt) -> BigInt {
     BigInt::from_int(0)
   } else {
     let mut inv = t0.mod(m)
-    if inv.op_lt(BigInt::from_int(0)) {
+    if inv < BigInt::from_int(0) {
       inv = inv.add(m)
     }
     inv
@@ -605,7 +605,7 @@ fn center_residues(residues : Array[BigInt], modulus : BigInt) -> Array[BigInt] 
   let half = modulus.div(BigInt::from_int(2))
   residues.map(r => {
     let mut v = r.mod(modulus)
-    if v.op_gt(half) {
+    if v > half {
       v = v.sub(modulus)
     }
     v
@@ -614,7 +614,7 @@ fn center_residues(residues : Array[BigInt], modulus : BigInt) -> Array[BigInt] 
 
 ///|
 fn big_abs(x : BigInt) -> BigInt {
-  if x.op_lt(BigInt::from_int(0)) {
+  if x < BigInt::from_int(0) {
     x.neg()
   } else {
     x

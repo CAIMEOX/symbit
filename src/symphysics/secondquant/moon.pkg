@@ -1,6 +1,6 @@
 import {
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/symphysics" @symphysics,
+  "CAIMEOX/symbit/symphysics",
   "CAIMEOX/symbit/symphysics/quantum" @symquant,
   "CAIMEOX/symbit/symprint",
 }

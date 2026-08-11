@@ -81,7 +81,7 @@ let vector_frame_registry : Array[ReferenceFrame] = []
 let vector_frame_states : Array[FrameState] = []
 
 ///|
-let vector_coordinate_registry : Map[String, (Int, Int)] = {}
+let vector_coordinate_registry : Map[String, (Int, Int)] = Map([])
 
 ///|
 let vector_point_registry : Array[Point] = []

@@ -62,7 +62,13 @@ pub fn[T : Eq + Show] debug(
   let logger = (rule : BRule[T], expr : T, result : T) => {
     ignore(rule)
     write("Rule: " + name + "\n")
-    write("In: " + expr.to_string() + "\nOut: " + result.to_string() + "\n\n")
+    write(
+      "In: " +
+      Show::to_string(expr) +
+      "\nOut: " +
+      Show::to_string(result) +
+      "\n\n",
+    )
   }
   onaction(brule, logger)
 }

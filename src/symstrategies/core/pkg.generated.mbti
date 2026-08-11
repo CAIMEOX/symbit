@@ -31,4 +31,3 @@ pub fn[T] tryit((T) -> T raise, _exception? : String) -> (T) -> T
 // Type aliases
 
 // Traits
-

@@ -4,46 +4,56 @@ fn fezz_wb(n : Int) -> FieldElem {
 }
 
 ///|
+fn[T] sympolys_assert_error(
+  action : () -> T raise PolyError,
+  expected : String,
+) -> Unit raise {
+  try action() catch {
+    error => assert_true(error.to_string().has_prefix(expected))
+  } noraise {
+    _ => fail("expected \{expected} to be raised")
+  }
+}
+
+///|
 test "errors: exact division failures are explicit" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let x = @symcore.Expr::Symbol("x")
   let p = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let q = b.from_expr(x + @symcore.int(1))
-  let exact_res : Result[Poly, PolyError] = try? p.div_exact_univar(q)
-  match exact_res {
-    Err(PolyError::ExactQuotientFailed) => ()
-    _ => fail("expected ExactQuotientFailed for div_exact_univar")
-  }
-
-  let exquo_res : Result[Array[FieldElem], PolyError] = try? dup_exquo_ground(
-    [fezz_wb(1)],
-    fezz_wb(2),
-    Domain::ZZ,
+  sympolys_assert_error(
+    fn() raise PolyError { p.div_exact_univar(q) },
+    "ExactQuotientFailed",
   )
-  match exquo_res {
-    Err(PolyError::ExactQuotientFailed) => ()
-    _ => fail("expected ExactQuotientFailed for dup_exquo_ground")
-  }
+
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dup_exquo_ground([fezz_wb(1)], fezz_wb(2), Domain::ZZ)
+    },
+    "ExactQuotientFailed",
+  )
 }
 
 ///|
 test "errors: empty monomial and root-isolation inputs are typed" {
-  let max_res : Result[Monomial, PolyError] = try? monomial_max([])
-  assert_true(max_res is Err(PolyError::NonPolynomial))
-  let min_res : Result[Monomial, PolyError] = try? monomial_min([])
-  assert_true(min_res is Err(PolyError::NonPolynomial))
-
-  let cauchy_res : Result[FieldElem, PolyError] = try? dup_cauchy_upper_bound(
-    [fezz_wb(1)],
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError { monomial_max([]) },
+    "NonPolynomial",
   )
-  assert_true(cauchy_res is Err(PolyError::BadExponent))
-
-  let sturm_res : Result[Array[Array[FieldElem]], PolyError] = try? dup_sturm(
-    [],
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError { monomial_min([]) },
+    "NonPolynomial",
   )
-  assert_true(sturm_res is Err(PolyError::NonPolynomial))
+
+  sympolys_assert_error(
+    fn() raise PolyError { dup_cauchy_upper_bound([fezz_wb(1)], Domain::QQ) },
+    "BadExponent",
+  )
+
+  sympolys_assert_error(
+    fn() raise PolyError { dup_sturm([], Domain::QQ) },
+    "NonPolynomial",
+  )
 }
 
 ///|

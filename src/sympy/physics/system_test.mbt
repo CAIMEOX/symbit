@@ -37,11 +37,7 @@ test "physics.mechanics system core" {
   sys.add_loads([
     force_load(cart.masscenter(), n.x().scale(@symvector.dynamicsymbol("F"))),
   ])
-  let validation : Result[Unit, @symphysics.PhysicsError] = try? sys.validate_system()
-  match validation {
-    Ok(_) => ()
-    Err(err) => fail("system should validate: " + err.to_string())
-  }
+  sys.validate_system()
 
   inspect(system_bodies_summary(sys.bodies()), content="[rail, cart, bob]")
   inspect(system_exprs_summary(sys.q_ind()), content="[q_slider(t), q_pin(t)]")
@@ -142,7 +138,11 @@ test "physics.mechanics system validation semantics" {
   missing_kde.add_bodies([wall.as_bodylike(), bob.as_bodylike()])
   missing_kde.add_coordinates(kane_joint.coordinates())
   missing_kde.add_speeds(kane_joint.speeds())
-  let bad_kane : Result[Unit, @symphysics.PhysicsError] = try? missing_kde.validate_system()
+  let bad_kane : Result[Unit, @symphysics.PhysicsError] = try
+    missing_kde.validate_system() |> Ok
+  catch {
+    err => Err(err)
+  }
   assert_true(bad_kane is Err(@symphysics.PhysicsError::ValueError(_)))
 
   let invalid_lagrange = system_from_newtonian(wall.as_bodylike())
@@ -154,8 +154,10 @@ test "physics.mechanics system validation semantics" {
     speeds=Some([@symvector.dynamicsymbol("u_bad")]),
   )
   invalid_lagrange.add_joints([bad_joint.as_joint()])
-  let bad_lagrange : Result[Unit, @symphysics.PhysicsError] = try? invalid_lagrange.validate_system(
-    use_lagrange=true,
-  )
+  let bad_lagrange : Result[Unit, @symphysics.PhysicsError] = try
+    invalid_lagrange.validate_system(use_lagrange=true) |> Ok
+  catch {
+    err => Err(err)
+  }
   assert_true(bad_lagrange is Err(@symphysics.PhysicsError::ValueError(_)))
 }

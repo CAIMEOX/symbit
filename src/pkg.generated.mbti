@@ -215,4 +215,3 @@ pub using @symmatrices {type SparseMatrix}
 pub using @symcore {type SympifyInput}
 
 // Traits
-

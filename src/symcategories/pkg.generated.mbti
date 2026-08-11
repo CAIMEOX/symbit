@@ -222,4 +222,3 @@ pub fn XypicDiagramDrawer::set_unit(Self, String) -> Unit
 pub type ArrowFormatter = (ArrowStringDescription) -> Unit
 
 // Traits
-

@@ -21,7 +21,7 @@ test "diff named apply heads preserve explicit elementary rules" {
   )
   let expr = @symcore.function("exp", [@symcore.mul([rate, x])])
   let deriv = diff(expr, x)
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env["x"] = @symcore.Expr::Float(@symcore.Float::from_rational(1N, 10N, 120))
   match @symcore.evalf(@symcore.subst(deriv, env), prec=120) {
     @symcore.Expr::Float(value) => assert_true(value.is_finite())

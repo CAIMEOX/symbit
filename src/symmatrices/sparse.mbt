@@ -20,7 +20,7 @@ pub type MutableSparseMatrix = SparseMatrix
 fn clone_sparse_entries(
   entries : Map[(Int, Int), Expr],
 ) -> Map[(Int, Int), Expr] {
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for key, value in entries {
     out[key] = value
   }
@@ -69,7 +69,7 @@ fn sparse_row_maps(matrix : SparseMatrix) -> Array[Map[Int, Expr]] {
 
 ///|
 fn clone_sparse_row_map(row : Map[Int, Expr]) -> Map[Int, Expr] {
-  let out : Map[Int, Expr] = {}
+  let out : Map[Int, Expr] = Map([])
   for key, value in row {
     out[key] = value
   }
@@ -115,7 +115,7 @@ fn sparse_row_active_cols(
   rhs : Map[Int, Expr],
   min_col : Int,
 ) -> Array[Int] {
-  let seen : Map[Int, Bool] = {}
+  let seen : Map[Int, Bool] = Map([])
   for col, _ in lhs {
     if col >= min_col {
       seen[col] = true
@@ -316,7 +316,7 @@ pub fn sparse_matrix(
   if rows < 0 || cols < 0 {
     raise MatrixError::ShapeError("matrix dimensions must be non-negative")
   }
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for key, value in entries {
     if key.0 < 0 || key.0 >= rows || key.1 < 0 || key.1 >= cols {
       raise MatrixError::IndexError("sparse entry index out of range")
@@ -463,7 +463,7 @@ pub fn SparseMatrix::to_dense(self : SparseMatrix) -> Matrix {
 /// - Returns: A `SparseMatrix`.
 /// - Limits: Zero detection depends on the current symbolic zero predicate.
 pub fn Matrix::to_sparse(self : Matrix) -> SparseMatrix {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   for i in 0..<self.rows {
     for j in 0..<self.cols {
       if !expr_is_zero(self.data[i][j]) {
@@ -482,7 +482,7 @@ pub fn Matrix::to_sparse(self : Matrix) -> SparseMatrix {
 /// - Returns: A transposed `SparseMatrix`.
 /// - Limits: The sparsity pattern is rewritten structurally; no additional simplification is performed.
 pub fn SparseMatrix::transpose(self : SparseMatrix) -> SparseMatrix {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   for key, value in self.entries {
     entries[(key.1, key.0)] = value
   }
@@ -538,7 +538,7 @@ pub fn SparseMatrix::scalar_multiply(
   self : SparseMatrix,
   scalar : Expr,
 ) -> SparseMatrix raise MatrixError {
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for key, value in self.entries {
     let scaled = expr_mul(value, scalar)
     if !expr_is_zero(scaled) {
@@ -559,7 +559,7 @@ pub fn SparseMatrix::applyfunc(
   self : SparseMatrix,
   f : (Expr) -> Expr,
 ) -> SparseMatrix raise MatrixError {
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for key, value in self.entries {
     let mapped = f(value)
     if !expr_is_zero(mapped) {
@@ -586,7 +586,7 @@ pub fn SparseMatrix::reshape(
       "cannot reshape matrix to incompatible dimensions",
     )
   }
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for key, value in self.entries {
     let flat = key.0 * self.cols + key.1
     out[(flat / cols, flat % cols)] = value
@@ -608,7 +608,7 @@ pub fn SparseMatrix::extract(
 ) -> SparseMatrix raise MatrixError {
   let rows = row_ids.map(index => normalize_index(index, self.rows))
   let cols = col_ids.map(index => normalize_index(index, self.cols))
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for i in 0..<rows.length() {
     for j in 0..<cols.length() {
       match self.entries.get((rows[i], cols[j])) {
@@ -666,7 +666,7 @@ pub fn SparseMatrix::row_insert(
     )
   }
   let insert_at = normalize_insert_pos(pos, self.rows)
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for key, value in self.entries {
     let row = if key.0 >= insert_at { key.0 + other.rows } else { key.0 }
     out[(row, key.1)] = value
@@ -689,7 +689,7 @@ pub fn SparseMatrix::col_insert(
     )
   }
   let insert_at = normalize_insert_pos(pos, self.cols)
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for key, value in self.entries {
     let col = if key.1 >= insert_at { key.1 + other.cols } else { key.1 }
     out[(key.0, col)] = value
@@ -706,7 +706,7 @@ pub fn SparseMatrix::row_del(
   pos : Int,
 ) -> SparseMatrix raise MatrixError {
   let removed = normalize_index(pos, self.rows)
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for key, value in self.entries {
     if key.0 == removed {
       continue
@@ -723,7 +723,7 @@ pub fn SparseMatrix::col_del(
   pos : Int,
 ) -> SparseMatrix raise MatrixError {
   let removed = normalize_index(pos, self.cols)
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for key, value in self.entries {
     if key.1 == removed {
       continue
@@ -923,7 +923,7 @@ pub fn SparseMatrix::columnspace(self : SparseMatrix) -> Array[Array[Expr]] {
 ///|
 pub fn SparseMatrix::nullspace(self : SparseMatrix) -> Array[Array[Expr]] {
   let (rref, pivots) = self.rref()
-  let pivot_set : Map[Int, Bool] = {}
+  let pivot_set : Map[Int, Bool] = Map([])
   for pivot in pivots {
     pivot_set[pivot] = true
   }
@@ -1303,7 +1303,7 @@ pub impl Sub for SparseMatrix with fn sub(self, other) {
 ///|
 pub impl Mul for SparseMatrix with fn mul(self, other) {
   let rhs_rows = sparse_row_entries(other)
-  let out : Map[(Int, Int), Expr] = {}
+  let out : Map[(Int, Int), Expr] = Map([])
   for key, value in self.entries {
     let (row, inner) = key
     for item in rhs_rows[inner] {

@@ -338,6 +338,7 @@ pub(all) enum Expr {
   Lambda(Expr, Expr)
   Function(String, Array[Expr])
 }
+pub fn Expr::to_string(Self) -> String
 pub impl Add for Expr
 pub impl BitXOr for Expr
 pub impl Compare for Expr
@@ -462,4 +463,3 @@ pub type MatchEnv = Map[Expr, Expr]
 pub type WildPropertyResolver = (WildProperty, Expr) -> Bool?
 
 // Traits
-

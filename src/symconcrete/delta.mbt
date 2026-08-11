@@ -139,16 +139,16 @@ fn eval_delta_sum(
     if dv < lv || dv > hv {
       return Some(@symcore.int(0))
     }
-    let env : Map[String, @symcore.Expr] = {}
+    let env : Map[String, @symcore.Expr] = Map([])
     env[name] = delta_arg
     return Some(@symcore.subst(rest, env))
   }
   if lower == upper && delta_arg == lower {
-    let env : Map[String, @symcore.Expr] = {}
+    let env : Map[String, @symcore.Expr] = Map([])
     env[name] = delta_arg
     return Some(@symcore.subst(rest, env))
   }
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[name] = delta_arg
   let rest_sub = @symcore.subst(rest, env)
   let cond = symbolic_range_cond(delta_arg, lower, upper)
@@ -177,18 +177,18 @@ fn eval_delta_product(
       if dv != lv {
         return Some(@symcore.int(0))
       }
-      let env : Map[String, @symcore.Expr] = {}
+      let env : Map[String, @symcore.Expr] = Map([])
       env[name] = delta_arg
       return Some(@symcore.subst(rest, env))
     }
     return Some(@symcore.int(0))
   }
   if lower == upper && delta_arg == lower {
-    let env : Map[String, @symcore.Expr] = {}
+    let env : Map[String, @symcore.Expr] = Map([])
     env[name] = delta_arg
     return Some(@symcore.subst(rest, env))
   }
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[name] = delta_arg
   let rest_sub = @symcore.subst(rest, env)
   let cond = symbolic_singleton_cond(delta_arg, lower, upper)

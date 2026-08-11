@@ -116,6 +116,11 @@ impl Show for Expr with fn to_string(self) {
 }
 
 ///|
+/// Keep the `Expr::to_string` dot-style API explicit now that trait
+/// implementations are no longer promoted to methods implicitly.
+pub extend Expr with Show::{to_string}
+
+///|
 pub impl Add for Expr with fn add(self, other) {
   add([self, other])
 }
@@ -176,19 +181,8 @@ fn atomic_numeric_expr_to_exact_rational(expr : Expr) -> @symnum.BigRational? {
   match normalize_legacy_expr(expr) {
     Expr::Number(value) => Some(value)
     Expr::Float(value) => {
-      let exact : Result[(BigInt, BigInt), @symnum.MpfError] = try? value.to_rational()
-      match exact {
-        Ok((num, den)) => {
-          let rational : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-            num, den,
-          )
-          match rational {
-            Ok(value) => Some(value)
-            Err(_) => None
-          }
-        }
-        Err(_) => None
-      }
+      let (num, den) = value.to_rational() catch { _ => return None }
+      Some(@symnum.BigRational::new(num, den) catch { _ => return None })
     }
     Expr::Boolean(true) => Some(@symnum.BigRational::one())
     Expr::Boolean(false) => Some(@symnum.BigRational::zero())
@@ -208,11 +202,7 @@ fn pow_exact_rational(
   let mut base_value = base
   if power.compare(0N) < 0 {
     power = power.neg()
-    let reciprocal : Result[@symnum.BigRational, @symnum.RationalError] = try? base.reciprocal()
-    match reciprocal {
-      Ok(value) => base_value = value
-      Err(_) => return None
-    }
+    base_value = base.reciprocal() catch { _ => return None }
   }
   let mut acc = @symnum.BigRational::one()
   while power.compare(0N) > 0 {
@@ -285,16 +275,14 @@ fn constructor_integer_value(arg : Expr) -> Expr {
     None =>
       match evalf(normalize_legacy_expr(arg)) {
         Expr::Float(value) => {
-          let exact : Result[(BigInt, BigInt), @symnum.MpfError] = try? value.to_rational()
-          match exact {
-            Ok((num, den)) =>
-              trunc_exact_rational(
-                @symnum.BigRational::new(num, den) catch {
-                  _ => return Expr::Apply(Expr::FunctionHead("Integer"), [arg])
-                },
-              )
-            Err(_) => Expr::Apply(Expr::FunctionHead("Integer"), [arg])
+          let (num, den) = value.to_rational() catch {
+            _ => return Expr::Apply(Expr::FunctionHead("Integer"), [arg])
           }
+          trunc_exact_rational(
+            @symnum.BigRational::new(num, den) catch {
+              _ => return Expr::Apply(Expr::FunctionHead("Integer"), [arg])
+            },
+          )
         }
         Expr::Number(value) => trunc_exact_rational(value)
         _ => Expr::Apply(Expr::FunctionHead("Integer"), [arg])
@@ -335,13 +323,11 @@ fn constructor_rational(args : Array[Expr]) -> Expr {
               Expr::NumberSymbol(NumberSymbolKind::ComplexInfinity)
             }
           } else {
-            let exact : Result[@symnum.BigRational, @symnum.RationalError] = try? lhs_value.div_r(
-              rhs_value,
+            Expr::Number(
+              lhs_value.div_r(rhs_value) catch {
+                _ => return Expr::Apply(Expr::FunctionHead("Rational"), args)
+              },
             )
-            match exact {
-              Ok(value) => Expr::Number(value)
-              Err(_) => Expr::Apply(Expr::FunctionHead("Rational"), args)
-            }
           }
         _ => Expr::Apply(Expr::FunctionHead("Rational"), args)
       }
@@ -453,16 +439,12 @@ fn constructor_float(args : Array[Expr]) -> Expr {
     fallback_args : Array[Expr],
   ) -> Expr {
     match exact_numeric_expr_to_rational(arg) {
-      Some(value) => {
-        let approx : Result[Float, @symnum.MpfError] = try? Float::from_exact(
-          value,
-          prec~,
+      Some(value) =>
+        Expr::Float(
+          Float::from_exact(value, prec~) catch {
+            _ => return Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
+          },
         )
-        match approx {
-          Ok(value) => Expr::Float(value)
-          Err(_) => Expr::Apply(Expr::FunctionHead("Float"), fallback_args)
-        }
-      }
       None =>
         match evalf(normalize_legacy_expr(arg), prec~) {
           Expr::Float(value) => Expr::Float(value)
@@ -969,7 +951,7 @@ pub fn add(args : Array[Expr]) -> Expr {
   } else {
     let bases : Array[Expr] = []
     let coeffs : Array[@symnum.BigRational] = []
-    let base_index : Map[Int, Array[Int]] = {}
+    let base_index : Map[Int, Array[Int]] = Map([])
     let passthrough : Array[Expr] = []
     for term in flat {
       match split_add_term_coeff(term) {
@@ -1381,7 +1363,7 @@ fn imag_unit_pow(exp : Expr) -> Expr? {
 
 ///|
 fn sqrt_bigint_if_square(value : BigInt) -> BigInt? {
-  if value.op_lt(0N) {
+  if value < 0N {
     return None
   }
   let root = @symnum.isqrt(value) catch { _ => return None }

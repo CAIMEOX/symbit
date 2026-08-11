@@ -125,7 +125,7 @@ fn shorter_expr(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn expr_complexity(expr : Expr) -> Int {
-  node_count(expr) * 32 + to_repr(expr).to_string().length()
+  node_count(expr) * 32 + Repr(expr).to_string().length()
 }
 
 ///|
@@ -163,10 +163,10 @@ fn simplify_rational_part(expr : Expr) -> Expr {
 fn cancel_common_factors_simple(num : Expr, den : Expr) -> Expr {
   let nfs = flatten_mul_nonunit(num)
   let dfs = flatten_mul_nonunit(den)
-  let den_count : Map[String, Int] = {}
-  let den_factor : Map[String, Expr] = {}
+  let den_count : Map[String, Int] = Map([])
+  let den_factor : Map[String, Expr] = Map([])
   for factor in dfs {
-    let key = to_repr(factor).to_string()
+    let key = Repr(factor).to_string()
     den_factor[key] = factor
     match den_count.get(key) {
       Some(count) => den_count[key] = count + 1
@@ -175,7 +175,7 @@ fn cancel_common_factors_simple(num : Expr, den : Expr) -> Expr {
   }
   let kept_num : Array[Expr] = Array::new()
   for factor in nfs {
-    let key = to_repr(factor).to_string()
+    let key = Repr(factor).to_string()
     match den_count.get(key) {
       Some(count) if count > 0 => den_count[key] = count - 1
       _ => kept_num.push(factor)
@@ -242,13 +242,13 @@ fn factor_add_terms(expr : Expr) -> Expr {
         term_factors.push(flatten_mul_exact(arg))
       }
 
-      let common_counts : Map[String, Int] = {}
-      let common_exprs : Map[String, Expr] = {}
+      let common_counts : Map[String, Int] = Map([])
+      let common_exprs : Map[String, Expr] = Map([])
       for factor in term_factors[0] {
         if is_numeric_factor(factor) {
           continue
         }
-        let key = to_repr(factor).to_string()
+        let key = Repr(factor).to_string()
         common_exprs[key] = factor
         match common_counts.get(key) {
           Some(count) => common_counts[key] = count + 1
@@ -257,12 +257,12 @@ fn factor_add_terms(expr : Expr) -> Expr {
       }
 
       for i in 1..<term_factors.length() {
-        let counts : Map[String, Int] = {}
+        let counts : Map[String, Int] = Map([])
         for factor in term_factors[i] {
           if is_numeric_factor(factor) {
             continue
           }
-          let key = to_repr(factor).to_string()
+          let key = Repr(factor).to_string()
           match counts.get(key) {
             Some(count) => counts[key] = count + 1
             None => counts[key] = 1
@@ -302,7 +302,7 @@ fn factor_add_terms(expr : Expr) -> Expr {
 
       let remainders : Array[Expr] = Array::new()
       for factors in term_factors {
-        let needed : Map[String, Int] = {}
+        let needed : Map[String, Int] = Map([])
         for key, count in common_counts {
           if count > 0 {
             needed[key] = count
@@ -314,7 +314,7 @@ fn factor_add_terms(expr : Expr) -> Expr {
             remaining.push(factor)
             continue
           }
-          let key = to_repr(factor).to_string()
+          let key = Repr(factor).to_string()
           match needed.get(key) {
             Some(count) if count > 0 => needed[key] = count - 1
             _ => remaining.push(factor)
@@ -832,13 +832,13 @@ fn add_like_terms(expr : Expr) -> Expr {
     Expr::Add(args) => {
       let minus_one = @symnum.BigRational::from_int(-1)
       let mut const_term = @symnum.BigRational::zero()
-      let terms : Map[String, AddTerm] = {}
+      let terms : Map[String, AddTerm] = Map([])
       for arg in args {
         let (coeff, base_opt) = split_add_term(arg)
         match base_opt {
           None => const_term = const_term.add_r(coeff)
           Some(base_expr) => {
-            let key = to_repr(base_expr).to_string()
+            let key = Repr(base_expr).to_string()
             match terms.get(key) {
               Some(acc) =>
                 terms[key] = AddTerm::{
@@ -908,12 +908,12 @@ fn mul_like_bases(expr : Expr) -> Expr {
   match expr {
     Expr::Mul(args) => {
       let mut const_factor = @symnum.BigRational::one()
-      let powers : Map[String, BasePow] = {}
+      let powers : Map[String, BasePow] = Map([])
       for arg in args {
         match arg {
           Expr::Number(n) => const_factor = const_factor.mul_r(n)
           Expr::Pow(base, Expr::Number(exp)) => {
-            let key = to_repr(base).to_string()
+            let key = Repr(base).to_string()
             match powers.get(key) {
               Some(acc) =>
                 powers[key] = BasePow::{
@@ -924,7 +924,7 @@ fn mul_like_bases(expr : Expr) -> Expr {
             }
           }
           _ => {
-            let key = to_repr(arg).to_string()
+            let key = Repr(arg).to_string()
             match powers.get(key) {
               Some(acc) =>
                 powers[key] = BasePow::{
@@ -1016,13 +1016,7 @@ fn eval_numeric_pow(
   if n >= 0 {
     Some(out)
   } else {
-    match
-      (
-        try? @symnum.BigRational::one().div_r(out) :
-        Result[@symnum.BigRational, @symnum.RationalError]) {
-      Ok(value) => Some(value)
-      Err(_) => None
-    }
+    Some(@symnum.BigRational::one().div_r(out) catch { _ => return None })
   }
 }
 

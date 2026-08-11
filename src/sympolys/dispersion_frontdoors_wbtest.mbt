@@ -27,9 +27,13 @@ test "dispersion frontdoors: constants and invalid inputs" {
   inspect(dispersion(c), content="0")
 
   let by = PolyBuilder::new(["y"], Domain::ZZ)
-  let mismatch : Result[Array[Int], PolyError] = try? dispersionset(
-    b.from_expr(x + int(1)),
-    q=by.from_expr(Expr::Symbol("y") + int(1)),
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dispersionset(
+        b.from_expr(x + int(1)),
+        q=by.from_expr(Expr::Symbol("y") + int(1)),
+      )
+    },
+    "DomainMismatch",
   )
-  assert_true(mismatch is Err(PolyError::DomainMismatch))
 }

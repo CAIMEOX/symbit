@@ -15,7 +15,7 @@ pub(all) suberror QuaternionError {
 }
 
 ///|
-pub impl Show for QuaternionError with output(self, logger : &Logger) -> Unit {
+pub impl Show for QuaternionError with fn output(self, logger : &Logger) -> Unit {
   match self {
     QuaternionError::InvalidSeq(msg) =>
       logger.write_string("InvalidSeq(\{msg})")
@@ -32,13 +32,8 @@ pub impl Show for QuaternionError with output(self, logger : &Logger) -> Unit {
 
 ///|
 fn expr_rational(num : Int, den : Int) -> Expr {
-  match
-    (
-      try? @symcore.rational_from_ints(num, den) :
-      Result[Expr, @symnum.RationalError]) {
-    Ok(value) => value
-    Err(_) =>
-      @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
+  @symcore.rational_from_ints(num, den) catch {
+    _ => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
   }
 }
 
@@ -304,7 +299,7 @@ fn split_sign(expr : Expr) -> (Bool, Expr) {
 }
 
 ///|
-pub impl Show for Quaternion with to_string(self) {
+pub impl Show for Quaternion with fn to_string(self) {
   let a_str = @symprint.pretty_string(self.a)
   let (b_neg, b_abs) = split_sign(self.b)
   let (c_neg, c_abs) = split_sign(self.c)
@@ -320,7 +315,7 @@ pub impl Show for Quaternion with to_string(self) {
 }
 
 ///|
-pub impl Show for Quaternion with output(self, logger) {
+pub impl Show for Quaternion with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 

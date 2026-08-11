@@ -23,12 +23,8 @@ pub struct DensityExpr {
 
 ///|
 fn density_exact_rational(num : Int, den : Int) -> Expr {
-  let exact : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
-    num, den,
-  )
-  match exact {
-    Ok(value) => value
-    Err(_) => int(num) * @symcore.pow(int(den), int(-1))
+  @symcore.rational_from_ints(num, den) catch {
+    _ => int(num) * @symcore.pow(int(den), int(-1))
   }
 }
 
@@ -175,12 +171,10 @@ fn density_generate_outer_prod(
       "Density.doit() expects each term to contain a noncommutative state factor",
     )
   })
-  let op : Result[Expr, @symphysics.PhysicsError] = try? quantum_canonical_mul(
+  let core = quantum_canonical_mul(
     @symcore.raw_mul([left_core, dagger(right_core)]),
-  )
-  let core = match op {
-    Ok(expr) => expr
-    Err(_) => @symcore.raw_mul([left_core, dagger(right_core)])
+  ) catch {
+    _ => @symcore.raw_mul([left_core, dagger(right_core)])
   }
   quantum_mul_from_args_preserve([left_scalar, right_scalar, core])
 }

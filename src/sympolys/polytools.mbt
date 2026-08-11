@@ -46,19 +46,17 @@ pub fn lcm_list(polys : Array[Poly]) -> Poly raise PolyError {
   }
   match l.leading_term() {
     None => l
-    Some((_, lc)) => {
-      let inv_res : Result[FieldElem, Error] = try? fe_inv(lc)
-      match inv_res {
-        Ok(inv) => {
-          let scaled : Result[Poly, Error] = try? l.scale_coeff(inv)
-          match scaled {
-            Ok(poly) => poly
-            Err(_) => l
+    Some((_, lc)) =>
+      try fe_inv(lc) catch {
+        _ => l
+      } noraise {
+        inv =>
+          try l.scale_coeff(inv) catch {
+            _ => l
+          } noraise {
+            poly => poly
           }
-        }
-        Err(_) => l
       }
-    }
   }
 }
 
@@ -136,7 +134,7 @@ pub fn cancel(num : Poly, den : Poly) -> (Poly, Poly) raise PolyError {
 ///|
 /// Minimal multivariate gcd: detect exact divisibility and fall back to 1.
 fn gcd_multivar_simple(a : Poly, b : Poly) -> Poly raise PolyError {
-  if a.domain.not_equal(b.domain) || a.gens.not_equal(b.gens) {
+  if a.domain.not_equal(b.domain) || a.gens != b.gens {
     raise PolyError::DomainMismatch
   }
   if a.is_zero() {
@@ -185,7 +183,7 @@ pub fn reduced(
 /// - Returns: A `Poly`.
 /// - Limits: Raises `PolyError::NotUnivariate` outside the one-generator case.
 pub fn compose(f : Poly, g : Poly) -> Poly raise PolyError {
-  if f.gens.not_equal(g.gens) || f.gens.length() != 1 {
+  if f.gens != g.gens || f.gens.length() != 1 {
     raise PolyError::NotUnivariate
   }
   let mut result = Poly::zero(f.gens, f.domain)
@@ -310,10 +308,12 @@ fn decompose_restore_domain(
   if original is Domain::ZZ {
     let restored : Array[Poly] = []
     for part in parts {
-      match (try? try_round_to_int(part) : Result[Poly, PolyError]) {
-        Ok(value) => restored.push(value.with_order(part.order))
-        Err(_) => return parts
+      let value = try try_round_to_int(part) catch {
+        _ => return parts
+      } noraise {
+        value => value
       }
+      restored.push(value.with_order(part.order))
     }
     return restored
   }

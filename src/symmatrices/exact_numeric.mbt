@@ -7,15 +7,12 @@ type ExactIntRows = Array[Array[BigInt]]
 ///|
 fn exact_rational_from_expr(expr : Expr) -> @symnum.BigRational? {
   match @symcore.exact_numeric_expr_num_den(expr) {
-    Some((num, den)) => {
-      let exact : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-        num, den,
-      )
-      match exact {
-        Ok(value) => Some(value)
-        Err(_) => None
+    Some((num, den)) =>
+      try @symnum.BigRational::new(num, den) catch {
+        _ => None
+      } noraise {
+        value => Some(value)
       }
-    }
     None => None
   }
 }
@@ -314,7 +311,7 @@ fn exact_integer_fraction_rows_to_expr_rows(
   rows : ExactIntRows,
   den0 : BigInt,
 ) -> Array[Array[Expr]] {
-  let den_negative = den0.op_lt(0N)
+  let den_negative = den0 < 0N
   let den = if den_negative { den0.neg() } else { den0 }
   let out : Array[Array[Expr]] = []
   for row in rows {

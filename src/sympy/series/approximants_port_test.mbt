@@ -18,13 +18,13 @@ fn split_list_items(list_str : String) -> Array[String] {
   if trimmed.length() < 2 {
     return []
   }
-  let inner = trimmed[1:trimmed.length() - 1].to_string()
+  let inner = trimmed[1:trimmed.length() - 1].to_owned()
   if inner.trim().length() == 0 {
     return []
   }
   let parts : Array[String] = Array::new()
   for part in inner.split(", ") {
-    parts.push(part.to_string())
+    parts.push(part.to_owned())
   }
   parts
 }

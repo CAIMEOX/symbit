@@ -35,7 +35,7 @@ fn is_integral_expr(expr : Expr) -> Bool {
 
 ///|
 fn abs_rational(n : @symnum.BigRational) -> @symnum.BigRational {
-  if n.numerator().op_lt(BigInt::from_int(0)) {
+  if n.numerator() < BigInt::from_int(0) {
     n.neg_r()
   } else {
     n
@@ -46,7 +46,7 @@ fn abs_rational(n : @symnum.BigRational) -> @symnum.BigRational {
 fn sign_rational(n : @symnum.BigRational) -> Int {
   if n.is_zero() {
     0
-  } else if n.numerator().op_lt(BigInt::from_int(0)) {
+  } else if n.numerator() < BigInt::from_int(0) {
     -1
   } else {
     1

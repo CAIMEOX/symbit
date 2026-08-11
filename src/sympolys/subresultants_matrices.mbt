@@ -58,7 +58,7 @@ fn subres_coeffs_low(
 ///|
 fn subres_ensure_matrix_pair(p : Poly, q : Poly) -> Unit raise PolyError {
   ensure_univar_pair(p, q)
-  if p.domain.not_equal(q.domain) || p.gens.not_equal(q.gens) {
+  if p.domain.not_equal(q.domain) || p.gens != q.gens {
     raise PolyError::DomainMismatch
   }
 }

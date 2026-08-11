@@ -105,7 +105,7 @@ pub fn to_string(set : Set) -> String {
 /// - Input: One `Set` value.
 /// - Returns: A `String`.
 /// - Limits: Uses the same constructor-oriented formatting as `to_string`.
-pub impl Show for Set with to_string(self) {
+pub impl Show for Set with fn to_string(self) {
   to_string(self)
 }
 
@@ -116,7 +116,7 @@ pub impl Show for Set with to_string(self) {
 /// - Input: One `Set` value and one logger.
 /// - Returns: `Unit`.
 /// - Limits: Uses the same formatting as `to_string`.
-pub impl Show for Set with output(self, logger) {
+pub impl Show for Set with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
@@ -127,7 +127,7 @@ pub impl Show for Set with output(self, logger) {
 /// - Input: One `SetBool` value.
 /// - Returns: A `String`.
 /// - Limits: The output is fixed to the three constructor names.
-pub impl Show for SetBool with to_string(self) {
+pub impl Show for SetBool with fn to_string(self) {
   setbool_str(self)
 }
 
@@ -138,6 +138,6 @@ pub impl Show for SetBool with to_string(self) {
 /// - Input: One `SetBool` value and one logger.
 /// - Returns: `Unit`.
 /// - Limits: Uses the same formatting as `SetBool.to_string`.
-pub impl Show for SetBool with output(self, logger) {
+pub impl Show for SetBool with fn output(self, logger) {
   logger.write_string(self.to_string())
 }

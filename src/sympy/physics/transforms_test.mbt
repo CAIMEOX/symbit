@@ -33,9 +33,11 @@ test "physics.quantum.transforms: local canonicalization" {
     "TensorProduct(Operator(A)*Ket(k1), Operator(B)*Ket(k2))",
     "tensor product action",
   )
-  let bad : Result[@symcore.Expr, @symphysics.PhysicsError] = try? quantum_canonical_mul(
-    @symcore.raw_mul([k1, k2]),
-  )
+  let bad : Result[@symcore.Expr, @symphysics.PhysicsError] = try
+    quantum_canonical_mul(@symcore.raw_mul([k1, k2])) |> Ok
+  catch {
+    err => Err(err)
+  }
   assert_true(bad is Err(_))
   quantum_test_assert_expr_equal(
     quantum_canonical_mul(@symcore.raw_mul([a, @symcore.raw_add([b, c])])),

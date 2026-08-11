@@ -51,5 +51,10 @@ test "physics.optics.waves: superposition and scaling" {
     "3*A1",
     "twave scale",
   )
-  assert_true((try? t_wave(amp1, phase=phi1)) is Err(_))
+  assert_true(
+    (try t_wave(amp1, phase=phi1) |> Ok catch {
+      error => Err(error)
+    })
+    is Err(_),
+  )
 }

@@ -10,7 +10,11 @@ test "py_call smoke: builtins str" {
   let pystr = @py.PyString::from("hello")
   args.set(0, pystr)
   let res = py_call_object(str_fn, args, print_err=true)
-  inspect(res, content="Some(PyString(hello))")
+  match res {
+    Some(PyString(value)) => assert_eq(@py.PyString::to_string(value), "hello")
+    Some(_) => fail("builtins.str returned a non-string object")
+    None => fail("builtins.str returned None")
+  }
 }
 
 ///|
@@ -32,13 +36,10 @@ test "py_call smoke: sympy sympify" {
   let args = @py.PyTuple::new(1)
   let pystr = @py.PyString::from("x")
   args.set(0, pystr)
-  let res : Result[@py.PyObjectEnum?, @py.PyRuntimeError] = try? sympify.invoke(
-    args~,
-  )
+  let res = sympify.invoke(args~)
   match res {
-    Ok(Some(_)) => ()
-    Ok(None) => fail("sympify returned None")
-    Err(_) => fail("sympify raised")
+    Some(_) => ()
+    None => fail("sympify returned None")
   }
 }
 

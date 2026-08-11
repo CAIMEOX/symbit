@@ -18,4 +18,3 @@ pub fn top_down((@symcore.Expr) -> Array[@symcore.Expr], fns? : @util.Fns[@symco
 // Type aliases
 
 // Traits
-

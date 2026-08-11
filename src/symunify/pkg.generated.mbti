@@ -97,4 +97,3 @@ pub using @util {type ExprOp}
 pub type Substitution[T, Op] = Map[MatchVar[T], UnifyTerm[T, Op]]
 
 // Traits
-

@@ -41,8 +41,8 @@ pub fn CseResult::reduced_exprs_copy(self : CseResult) -> Array[Expr] {
 /// - Returns: One `CseResult`.
 /// - Limits: Uses exact-structure matching and generated placeholder names, so algebraically equivalent but structurally different subtrees are not merged.
 pub fn cse(exprs : Array[Expr], min_nodes? : Int = 2) -> CseResult {
-  let counts : Map[String, Int] = {}
-  let key_expr : Map[String, Expr] = {}
+  let counts : Map[String, Int] = Map([])
+  let key_expr : Map[String, Expr] = Map([])
   for expr in exprs {
     collect_counts(expr, counts, key_expr)
   }
@@ -95,7 +95,7 @@ pub fn cse_reconstruct(result : CseResult) -> Array[Expr] {
   for i in 0..<result.replacements.length() {
     let idx = result.replacements.length() - 1 - i
     let (name, rhs) = result.replacements[idx]
-    let env : Map[String, Expr] = {}
+    let env : Map[String, Expr] = Map([])
     env[name] = rhs
     out = out.map(expr => @symcore.subst(expr, env))
   }
@@ -140,7 +140,7 @@ fn collect_counts(
   if is_atom(expr) {
     return
   }
-  let key = to_repr(expr).to_string()
+  let key = Repr(expr).to_string()
   match counts.get(key) {
     Some(c) => counts[key] = c + 1
     None => {
@@ -181,7 +181,7 @@ fn total_occurrences(exprs : Array[Expr], key : String) -> Int {
 
 ///|
 fn count_occurrences(expr : Expr, key : String) -> Int {
-  let mut total = if to_repr(expr).to_string() == key { 1 } else { 0 }
+  let mut total = if Repr(expr).to_string() == key { 1 } else { 0 }
   for child in @symcore.children(expr) {
     total = total + count_occurrences(child, key)
   }
@@ -190,7 +190,7 @@ fn count_occurrences(expr : Expr, key : String) -> Int {
 
 ///|
 fn replace_exact(expr : Expr, key : String, replacement : Expr) -> Expr {
-  if to_repr(expr).to_string() == key {
+  if Repr(expr).to_string() == key {
     return replacement
   }
   @symcore.map_children(expr, child => replace_exact(child, key, replacement))

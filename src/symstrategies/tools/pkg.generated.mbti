@@ -20,4 +20,3 @@ pub fn typed(Map[@util.ExprOp, (@symcore.Expr) -> @symcore.Expr]) -> (@symcore.E
 // Type aliases
 
 // Traits
-

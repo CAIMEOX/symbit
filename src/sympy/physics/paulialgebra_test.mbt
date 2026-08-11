@@ -5,12 +5,8 @@ fn pauli_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let ours = @symprint.pretty_string(lhs)
-  let eq : Result[Bool, Error] = try? expr_equal(ours, rhs)
-  let ok = match eq {
-    Ok(value) => value
-    Err(err) => fail("\{context}: expr_equal error: \{err}")
-  }
-  assert_true(ok)
+  let ok = expr_equal(ours, rhs)
+  guard ok else { fail("\{context}: ours=\{ours} oracle=\{rhs}") }
 }
 
 ///|

@@ -356,7 +356,7 @@ pub fn DomainScalar::is_one(self : DomainScalar) -> Bool {
 /// - Limits: Does not add a separate error channel beyond the called helpers; inputs
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
-pub impl Show for DomainScalar with to_string(self) -> String {
+pub impl Show for DomainScalar with fn to_string(self) -> String {
   self.element.to_string()
 }
 
@@ -371,7 +371,7 @@ pub impl Show for DomainScalar with to_string(self) -> String {
 /// - Limits: Does not add a separate error channel beyond the called helpers; inputs
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
-pub impl Show for DomainScalar with output(self, logger : &Logger) -> Unit {
+pub impl Show for DomainScalar with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

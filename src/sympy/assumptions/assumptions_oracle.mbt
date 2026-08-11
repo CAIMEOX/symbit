@@ -82,7 +82,7 @@ fn symbol_obj_with_facts(
   name : String,
   facts : @symassume.SymbolFacts,
 ) -> @py.PyObject raise {
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   put_tri_kw(kwargs, "zero", facts.is_zero)
   put_tri_kw(kwargs, "nonzero", facts.is_nonzero)
   put_tri_kw(kwargs, "integer", facts.is_integer)
@@ -99,7 +99,7 @@ fn symbol_obj_with_facts(
 fn locals_from_env(
   env : Map[String, @symassume.SymbolFacts],
 ) -> Map[String, OracleArg] raise {
-  let locals : Map[String, OracleArg] = {}
+  let locals : Map[String, OracleArg] = Map([])
   for name, facts in env {
     locals[name] = OracleArg::PyObj(symbol_obj_with_facts(name, facts))
   }
@@ -264,7 +264,11 @@ pub fn ask_query_str(
   // Wrap with str(...) so Python None is represented as "None"
   // instead of being treated as a missing return object.
   let expr = "str(ask(\{proposition}, assumptions=(\{assumptions})))"
-  let result : Result[@py.PyObjectEnum, Error] = try? py_eval_assumptions(expr)
+  let result : Result[@py.PyObjectEnum, Error] = try
+    py_eval_assumptions(expr) |> Ok
+  catch {
+    err => Err(err)
+  }
   match result {
     Ok(value) => py_str_enum(value)
     Err(err) => {

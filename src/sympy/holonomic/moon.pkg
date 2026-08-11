@@ -1,13 +1,13 @@
 import {
-  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/sympy",
   "Kaida-Amethyst/python" @py,
 }
 
 import {
-  "CAIMEOX/symbit/symcore" @symcore,
-  "CAIMEOX/symbit/symnum" @symnum,
-  "CAIMEOX/symbit/symprint" @symprint,
-  "CAIMEOX/symbit/symholonomic" @symholonomic,
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symholonomic",
 } for "test"
 
 supported_targets = "native"

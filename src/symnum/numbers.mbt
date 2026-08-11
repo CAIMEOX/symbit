@@ -5,7 +5,7 @@ pub(all) suberror RationalError {
 } derive(Debug)
 
 ///|
-pub impl Show for RationalError with output(self, logger : &Logger) -> Unit {
+pub impl Show for RationalError with fn output(self, logger : &Logger) -> Unit {
   match self {
     RationalError::ZeroDenominator => logger.write_string("ZeroDenominator")
   }
@@ -46,7 +46,7 @@ pub fn gcd_bigint(a : BigInt, b : BigInt) -> BigInt {
 
 ///|
 fn abs_bigint(x : BigInt) -> BigInt {
-  if x.op_lt(BigInt::from_int(0)) {
+  if x < BigInt::from_int(0) {
     x.neg()
   } else {
     x
@@ -70,7 +70,7 @@ fn normalize_rational(num : BigInt, den : BigInt) -> BigRational {
   if den.equal_int(1) {
     return BigRational::{ num, den }
   }
-  let sign_flip = den.op_lt(BigInt::from_int(0))
+  let sign_flip = den < BigInt::from_int(0)
   let mut n = if sign_flip { num.neg() } else { num }
   let mut d = if sign_flip { den.neg() } else { den }
   if d.equal_int(1) {
@@ -335,26 +335,26 @@ fn format_rational(value : BigRational) -> String {
 
 ///|
 /// Print as `n` or `n/d` in normalized form.
-pub impl Show for BigRational with output(self, logger : &Logger) -> Unit {
+pub impl Show for BigRational with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(format_rational(self))
 }
 
 ///|
-pub impl Add for BigRational with add(self, other : BigRational) -> BigRational {
+pub impl Add for BigRational with fn add(self, other : BigRational) -> BigRational {
   self.add_r(other)
 }
 
 ///|
-pub impl Sub for BigRational with sub(self, other : BigRational) -> BigRational {
+pub impl Sub for BigRational with fn sub(self, other : BigRational) -> BigRational {
   self.sub_r(other)
 }
 
 ///|
-pub impl Mul for BigRational with mul(self, other : BigRational) -> BigRational {
+pub impl Mul for BigRational with fn mul(self, other : BigRational) -> BigRational {
   self.mul_r(other)
 }
 
 ///|
-pub impl Neg for BigRational with neg(self) -> BigRational {
+pub impl Neg for BigRational with fn neg(self) -> BigRational {
   self.neg_r()
 }

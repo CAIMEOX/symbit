@@ -26,7 +26,7 @@ fn collect_index_names(item : Indexed) -> Array[String] {
 
 ///|
 fn count_indices(expr : IndexedExpr) -> Map[String, Int] {
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   fn bump(name : String) -> Unit {
     let current = counts.get_or_default(name, 0)
     counts[name] = current + 1
@@ -62,8 +62,8 @@ fn merge_names(target : Map[String, Bool], names : Array[String]) -> Unit {
 pub fn get_indices(expr : IndexedExpr) -> IndexInfo {
   match expr {
     IndexedExpr::Add(items) => {
-      let free_set : Map[String, Bool] = {}
-      let dummy_set : Map[String, Bool] = {}
+      let free_set : Map[String, Bool] = Map([])
+      let dummy_set : Map[String, Bool] = Map([])
       for item in items {
         let info = get_indices(item)
         merge_names(free_set, info.free)
@@ -98,7 +98,7 @@ pub fn get_indices(expr : IndexedExpr) -> IndexInfo {
 pub fn get_contraction_structure(
   expr : IndexedExpr,
 ) -> Map[String, Array[Indexed]] {
-  let out : Map[String, Array[Indexed]] = {}
+  let out : Map[String, Array[Indexed]] = Map([])
   fn add_entry(key : String, items : Array[Indexed]) -> Unit {
     if out.contains(key) {
       let cur = out[key]

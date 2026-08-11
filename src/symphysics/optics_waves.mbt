@@ -78,7 +78,7 @@ pub fn TWave::as_expr(self : TWave) -> Expr {
 }
 
 ///|
-pub impl Show for TWave with to_string(self) {
+pub impl Show for TWave with fn to_string(self) {
   [
     "TWave(",
     twave_render_arg(self.amplitude),
@@ -95,7 +95,7 @@ pub impl Show for TWave with to_string(self) {
 }
 
 ///|
-pub impl Show for TWave with output(self, logger : &Logger) -> Unit {
+pub impl Show for TWave with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

@@ -532,7 +532,7 @@ pub fn System::validate_system(
       ".",
     )
   }
-  let missing_q : Map[String, Expr] = {}
+  let missing_q : Map[String, Expr] = Map([])
   for joint in self.joints_ {
     let parent_name = mech_bodylike_name(joint.parent())
     let child_name = mech_bodylike_name(joint.child())
@@ -566,7 +566,7 @@ pub fn System::validate_system(
       @symcalculus.diff(q, @symvector.dynamicsymbols_t)
     })
     let qdot_keys = qdots.map(mech_expr_key)
-    let not_qdots : Map[String, Expr] = {}
+    let not_qdots : Map[String, Expr] = Map([])
     for speed in u_all {
       if !qdot_keys.contains(mech_expr_key(speed)) {
         not_qdots.set(mech_expr_key(speed), speed)
@@ -600,8 +600,8 @@ pub fn System::validate_system(
     }
   } else {
     let n_kdes = self.kdes_.length()
-    let missing_u : Map[String, Expr] = {}
-    let missing_kdes : Map[String, Expr] = {}
+    let missing_u : Map[String, Expr] = Map([])
+    let missing_kdes : Map[String, Expr] = Map([])
     for joint in self.joints_ {
       for speed in joint.speeds() {
         if !u_keys.contains(mech_expr_key(speed)) {

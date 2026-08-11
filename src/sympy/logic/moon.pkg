@@ -1,10 +1,10 @@
 import {
-  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/sympy",
   "Kaida-Amethyst/python" @py,
 }
 
 import {
-  "CAIMEOX/symbit/symlogic" @symlogic,
+  "CAIMEOX/symbit/symlogic",
 } for "test"
 
 supported_targets = "native"

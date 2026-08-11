@@ -7,7 +7,7 @@ test "tools subs" {
   let d = @symcore.Expr::Symbol("d")
   let e = @symcore.Expr::Symbol("e")
   let f = @symcore.Expr::Symbol("f")
-  let mapping : Map[@symcore.Expr, @symcore.Expr] = Map::new()
+  let mapping : Map[@symcore.Expr, @symcore.Expr] = Map([])
   mapping[a] = d
   mapping[d] = a
   mapping[basic([e])] = basic([f])
@@ -20,7 +20,7 @@ test "tools subs" {
 ///|
 test "tools subs empty" {
   let expr = basic([@symcore.int(1), @symcore.int(2)])
-  let rl = @strategies_tools.subs(Map::new())
+  let rl = @strategies_tools.subs(Map([]))
   let result = rl(expr)
   assert_expr_str_eq(result, tools_subs_empty(expr), "tools subs empty")
 }
@@ -29,7 +29,8 @@ test "tools subs empty" {
 test "tools typed" {
   let rmzeros = @strategies_rl.rm_id(x => x == @symcore.int(0))
   let rmones = @strategies_rl.rm_id(x => x == @symcore.int(1))
-  let ruletypes : Map[@strategies_util.ExprOp, (@symcore.Expr) -> @symcore.Expr] = Map::new()
+  let ruletypes : Map[@strategies_util.ExprOp, (@symcore.Expr) -> @symcore.Expr] = Map([],
+  )
   ruletypes[@strategies_util.ExprOp::Function("A")] = rmzeros
   ruletypes[@strategies_util.ExprOp::Function("B")] = rmones
   let remove_something = @strategies_tools.typed(ruletypes)

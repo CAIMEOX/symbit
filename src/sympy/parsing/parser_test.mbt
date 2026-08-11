@@ -1,6 +1,6 @@
 ///|
 fn parse_repr(src : String) -> String raise {
-  to_repr(parse_expr(src)).to_string()
+  Repr(parse_expr(src)).to_string()
 }
 
 ///|
@@ -37,7 +37,7 @@ fn split_custom_options() -> ParseOptions {
 
 ///|
 fn parse_relaxed_repr(src : String) -> String raise {
-  to_repr(parse_expr_with(src, relaxed_options())).to_string()
+  Repr(parse_expr_with(src, relaxed_options())).to_string()
 }
 
 ///|
@@ -46,7 +46,7 @@ fn parse_repr_with(
   options : ParseOptions,
   context : ParseContext,
 ) -> String raise {
-  to_repr(parse_expr_in(src, options, context)).to_string()
+  Repr(parse_expr_in(src, options, context)).to_string()
 }
 
 ///|
@@ -112,23 +112,23 @@ test "symparse comparisons lower to symbolic heads" {
 test "symparse evaluate false preserves raw operators" {
   let options = parse_options(evaluate=false)
   inspect(
-    to_repr(parse_expr_with("1 + 2 + x", options)).to_string(),
+    Repr(parse_expr_with("1 + 2 + x", options)).to_string(),
     content="(+ 1 2 sym:x)",
   )
   inspect(
-    to_repr(parse_expr_with("a*b*c", options)).to_string(),
+    Repr(parse_expr_with("a*b*c", options)).to_string(),
     content="(* sym:a sym:b sym:c)",
   )
   inspect(
-    to_repr(parse_expr_with("x/y/z", options)).to_string(),
+    Repr(parse_expr_with("x/y/z", options)).to_string(),
     content="(* sym:x (^ sym:y -1) (^ sym:z -1))",
   )
   inspect(
-    to_repr(parse_expr_with("x-y-z", options)).to_string(),
+    Repr(parse_expr_with("x-y-z", options)).to_string(),
     content="(+ sym:x (* -1 sym:y) (* -1 sym:z))",
   )
   inspect(
-    to_repr(parse_expr_with("x==x", options)).to_string(),
+    Repr(parse_expr_with("x==x", options)).to_string(),
     content="(call Eq sym:x sym:x)",
   )
 }
@@ -173,19 +173,25 @@ test "symparse standard parser matches sympy defaults" {
 
 ///|
 test "symparse standard parser rejects relaxed syntax" {
-  let implicit_mul : Result[@symcore.Expr, ParseError] = try? parse_expr("2x")
-  guard implicit_mul is Err(_) else { fail("expected 2x to fail by default") }
-  let implicit_app : Result[@symcore.Expr, ParseError] = try? parse_expr(
-    "sin x",
-  )
-  guard implicit_app is Err(_) else {
-    fail("expected implicit application to fail")
+  try parse_expr("2x") catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected 2x to fail by default")
   }
-  let equals_expr : Result[@symcore.Expr, ParseError] = try? parse_expr("x = y")
-  guard equals_expr is Err(_) else { fail("expected single equals to fail") }
-  let caret_expr : Result[@symcore.Expr, ParseError] = try? parse_expr("x^2")
-  guard caret_expr is Err(_) else {
-    fail("expected caret to fail without convert_xor")
+  try parse_expr("sin x") catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected implicit application to fail")
+  }
+  try parse_expr("x = y") catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected single equals to fail")
+  }
+  try parse_expr("x^2") catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected caret to fail without convert_xor")
   }
 }
 
@@ -205,11 +211,11 @@ test "symparse relaxed parser handles transformed syntax" {
 ///|
 test "symparse split symbols and split_symbols_custom" {
   inspect(
-    to_repr(parse_expr_with("xy", split_options())).to_string(),
+    Repr(parse_expr_with("xy", split_options())).to_string(),
     content="(* sym:x sym:y)",
   )
   inspect(
-    to_repr(parse_expr_with("theta", split_options())).to_string(),
+    Repr(parse_expr_with("theta", split_options())).to_string(),
     content="sym:theta",
   )
   inspect(
@@ -221,23 +227,26 @@ test "symparse split symbols and split_symbols_custom" {
     content="(* sym:a (call f (+ sym:x 1)))",
   )
   inspect(
-    to_repr(parse_expr_with("unsplittable", split_custom_options())).to_string(),
+    Repr(parse_expr_with("unsplittable", split_custom_options())).to_string(),
     content="sym:unsplittable",
   )
   inspect(
-    to_repr(parse_expr_with("xy", split_custom_options())).to_string(),
+    Repr(parse_expr_with("xy", split_custom_options())).to_string(),
     content="(* sym:x sym:y)",
   )
 }
 
 ///|
 test "symparse relation chains follow python truthiness at evaluate=true" {
-  let symbolic_chain : Result[@symcore.Expr, ParseError] = try? parse_expr(
-    "x < y < z",
-  )
-  guard symbolic_chain is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "cannot determine truth value of Relational" else {
-    fail("expected chained symbolic relation to raise truth-value error")
+  try parse_expr("x < y < z") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "cannot determine truth value of Relational" else {
+        fail("expected chained symbolic relation to raise truth-value error")
+      }
+    }
+  } noraise {
+    _ => fail("expected chained symbolic relation to raise truth-value error")
   }
   inspect(parse_repr("1 < 2 <= 3"), content="sym:True")
   inspect(parse_repr("1 == 1 < x"), content="(call Lt 1 sym:x)")
@@ -284,15 +293,21 @@ test "symparse callable context and structured bindings" {
     parse_repr_with("a + b", default_parse_options(), global_context()),
     content="(+ sym:b sym:t)",
   )
-  let symbol_bound_call : Result[@symcore.Expr, ParseError] = try? parse_expr_in(
-    "f(x)",
-    default_parse_options(),
-    parse_context(bindings={ "f": @symcore.Expr::Symbol("g") }),
-  )
-  guard symbol_bound_call
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: 'Symbol' object is not callable" else {
-    fail("expected plain symbol binding call to stay non-callable")
+  try
+    parse_expr_in(
+      "f(x)",
+      default_parse_options(),
+      parse_context(bindings={ "f": @symcore.Expr::Symbol("g") }),
+    )
+  catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: 'Symbol' object is not callable" else {
+        fail("expected plain symbol binding call to stay non-callable")
+      }
+    }
+  } noraise {
+    _ => fail("expected plain symbol binding call to stay non-callable")
   }
   match parse_expr_with("sin(x)", parse_options(evaluate=false)) {
     @symcore.Expr::Apply(
@@ -541,10 +556,15 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     @symprint.pretty_string(parse_expr("beta(x, y)")),
     content="beta(x, y)",
   )
-  guard (try? parse_expr("pi(x)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: 'Pi' object is not callable" else {
-    fail("expected number symbol callable error")
+  try parse_expr("pi(x)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: 'Pi' object is not callable" else {
+        fail("expected number symbol callable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected number symbol callable error")
   }
   inspect(
     @symprint.pretty_string(
@@ -556,106 +576,202 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     ),
     content="x",
   )
-  guard (try? parse_expr("sin(x, y)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: sin takes exactly 1 argument (2 given)" else {
-    fail("expected unary builtin arity error")
+  try parse_expr("sin(x, y)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: sin takes exactly 1 argument (2 given)" else {
+        fail("expected unary builtin arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected unary builtin arity error")
   }
-  guard (try? parse_expr("atan2(x)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: atan2 takes exactly 2 arguments (1 given)" else {
-    fail("expected atan2 arity error")
+  try parse_expr("atan2(x)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: atan2 takes exactly 2 arguments (1 given)" else {
+        fail("expected atan2 arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected atan2 arity error")
   }
-  guard (try? parse_expr("beta()"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: beta takes at least 1 argument (0 given)" else {
-    fail("expected beta arity error")
+  try parse_expr("beta()") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: beta takes at least 1 argument (0 given)" else {
+        fail("expected beta arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected beta arity error")
   }
-  guard (try? parse_expr("Integer()"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
-    fail("expected Integer constructor arity error")
+  try parse_expr("Integer()") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
+        fail("expected Integer constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Integer constructor arity error")
   }
-  guard (try? parse_expr("Integer(sin(x))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
-    fail("expected Integer(sin(x)) invalid input error")
+  try parse_expr("Integer(sin(x))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
+        fail("expected Integer(sin(x)) invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Integer(sin(x)) invalid input error")
   }
   inspect(@symprint.pretty_string(parse_expr("Integer(pi)")), content="3")
   inspect(@symprint.pretty_string(parse_expr("Integer(E)")), content="2")
-  guard (try? parse_expr("Integer(oo)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert oo to int" else {
-    fail("expected Integer(oo) conversion error")
+  try parse_expr("Integer(oo)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert oo to int" else {
+        fail("expected Integer(oo) conversion error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Integer(oo) conversion error")
   }
-  guard (try? parse_expr("Integer(nan)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert non-comparable expression to int" else {
-    fail("expected Integer(nan) non-comparable error")
+  try parse_expr("Integer(nan)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert non-comparable expression to int" else {
+        fail("expected Integer(nan) non-comparable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Integer(nan) non-comparable error")
   }
-  guard (try? parse_expr("Integer(I)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert non-comparable expression to int" else {
-    fail("expected Integer(I) non-comparable error")
+  try parse_expr("Integer(I)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert non-comparable expression to int" else {
+        fail("expected Integer(I) non-comparable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Integer(I) non-comparable error")
   }
-  guard (try? parse_expr("Integer(I*pi)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert non-comparable expression to int" else {
-    fail("expected Integer(I*pi) non-comparable error")
+  try parse_expr("Integer(I*pi)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert non-comparable expression to int" else {
+        fail("expected Integer(I*pi) non-comparable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Integer(I*pi) non-comparable error")
   }
-  guard (try? parse_expr("Integer(1 + I)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert non-comparable expression to int" else {
-    fail("expected Integer(1 + I) non-comparable error")
+  try parse_expr("Integer(1 + I)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert non-comparable expression to int" else {
+        fail("expected Integer(1 + I) non-comparable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Integer(1 + I) non-comparable error")
   }
-  guard (try? parse_expr("Integer(zoo)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert non-comparable expression to int" else {
-    fail("expected Integer(zoo) non-comparable error")
+  try parse_expr("Integer(zoo)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert non-comparable expression to int" else {
+        fail("expected Integer(zoo) non-comparable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Integer(zoo) non-comparable error")
   }
-  guard (try? parse_expr("Rational()"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Rational.__new__() missing 1 required positional argument: 'p'" else {
-    fail("expected Rational constructor arity error")
+  try parse_expr("Rational()") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Rational.__new__() missing 1 required positional argument: 'p'" else {
+        fail("expected Rational constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Rational constructor arity error")
   }
-  guard (try? parse_expr("Rational(sin(x))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: invalid input: sin(x)" else {
-    fail("expected Rational(sin(x)) invalid input error")
+  try parse_expr("Rational(sin(x))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: invalid input: sin(x)" else {
+        fail("expected Rational(sin(x)) invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Rational(sin(x)) invalid input error")
   }
-  guard (try? parse_expr("Rational(sin(x), 2)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: invalid input: sin(x)" else {
-    fail("expected Rational(sin(x), 2) lhs invalid input error")
+  try parse_expr("Rational(sin(x), 2)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: invalid input: sin(x)" else {
+        fail("expected Rational(sin(x), 2) lhs invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Rational(sin(x), 2) lhs invalid input error")
   }
-  guard (try? parse_expr("Rational(sin(x), 0)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: invalid input: sin(x)" else {
-    fail("expected Rational(sin(x), 0) lhs invalid input error")
+  try parse_expr("Rational(sin(x), 0)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: invalid input: sin(x)" else {
+        fail("expected Rational(sin(x), 0) lhs invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Rational(sin(x), 0) lhs invalid input error")
   }
-  guard (try? parse_expr("Rational(2, sin(x))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: invalid input: sin(x)" else {
-    fail("expected Rational(2, sin(x)) rhs invalid input error")
+  try parse_expr("Rational(2, sin(x))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: invalid input: sin(x)" else {
+        fail("expected Rational(2, sin(x)) rhs invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Rational(2, sin(x)) rhs invalid input error")
   }
-  guard (try? parse_expr("Float()"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Float.__new__() missing 1 required positional argument: 'num'" else {
-    fail("expected Float constructor arity error")
+  try parse_expr("Float()") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Float.__new__() missing 1 required positional argument: 'num'" else {
+        fail("expected Float constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Float constructor arity error")
   }
-  guard (try? parse_expr("Float((2, 1, 0))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "ValueError: malformed mpf: (2, 1, 0)" else {
-    fail("expected Float malformed mpf error")
+  try parse_expr("Float((2, 1, 0))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "ValueError: malformed mpf: (2, 1, 0)" else {
+        fail("expected Float malformed mpf error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Float malformed mpf error")
   }
-  guard (try? parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: sqrt() got multiple values for argument 'evaluate'" else {
-    fail("expected sqrt evaluate=False callable error")
+  try parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)) catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: sqrt() got multiple values for argument 'evaluate'" else {
+        fail("expected sqrt evaluate=False callable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected sqrt evaluate=False callable error")
   }
 }
 
@@ -804,90 +920,171 @@ test "ast parser compatibility entrypoint" {
     content="sin(x)",
   )
   inspect(@symprint.pretty_string(ast_parse_expr("S(x, y)")), content="x")
-  guard (try? ast_parse_expr("pi(x)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: 'Pi' object is not callable" else {
-    fail("expected ast parser number symbol callable error")
+  try ast_parse_expr("pi(x)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: 'Pi' object is not callable" else {
+        fail("expected ast parser number symbol callable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser number symbol callable error")
   }
-  guard (try? ast_parse_expr("Integer()"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
-    fail("expected ast parser Integer constructor arity error")
+  try ast_parse_expr("Integer()") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
+        fail("expected ast parser Integer constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Integer constructor arity error")
   }
-  guard (try? ast_parse_expr("Float((2, 1, 0))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "ValueError: malformed mpf: (2, 1, 0)" else {
-    fail("expected ast parser Float malformed mpf error")
+  try ast_parse_expr("Float((2, 1, 0))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "ValueError: malformed mpf: (2, 1, 0)" else {
+        fail("expected ast parser Float malformed mpf error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Float malformed mpf error")
   }
-  guard (try? ast_parse_expr("Integer(sin(x))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
-    fail("expected ast parser Integer(sin(x)) invalid input error")
+  try ast_parse_expr("Integer(sin(x))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Argument of Integer should be of numeric type, got sin(x)." else {
+        fail("expected ast parser Integer(sin(x)) invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Integer(sin(x)) invalid input error")
   }
   inspect(@symprint.pretty_string(ast_parse_expr("Integer(pi)")), content="3")
   inspect(@symprint.pretty_string(ast_parse_expr("Integer(E)")), content="2")
-  guard (try? ast_parse_expr("Integer(oo)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert oo to int" else {
-    fail("expected ast parser Integer(oo) conversion error")
+  try ast_parse_expr("Integer(oo)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert oo to int" else {
+        fail("expected ast parser Integer(oo) conversion error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Integer(oo) conversion error")
   }
-  guard (try? ast_parse_expr("Integer(nan)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert non-comparable expression to int" else {
-    fail("expected ast parser Integer(nan) non-comparable error")
+  try ast_parse_expr("Integer(nan)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert non-comparable expression to int" else {
+        fail("expected ast parser Integer(nan) non-comparable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Integer(nan) non-comparable error")
   }
-  guard (try? ast_parse_expr("Integer(I)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert non-comparable expression to int" else {
-    fail("expected ast parser Integer(I) non-comparable error")
+  try ast_parse_expr("Integer(I)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert non-comparable expression to int" else {
+        fail("expected ast parser Integer(I) non-comparable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Integer(I) non-comparable error")
   }
-  guard (try? ast_parse_expr("Integer(I*pi)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert non-comparable expression to int" else {
-    fail("expected ast parser Integer(I*pi) non-comparable error")
+  try ast_parse_expr("Integer(I*pi)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert non-comparable expression to int" else {
+        fail("expected ast parser Integer(I*pi) non-comparable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Integer(I*pi) non-comparable error")
   }
-  guard (try? ast_parse_expr("Integer(1 + I)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert non-comparable expression to int" else {
-    fail("expected ast parser Integer(1 + I) non-comparable error")
+  try ast_parse_expr("Integer(1 + I)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert non-comparable expression to int" else {
+        fail("expected ast parser Integer(1 + I) non-comparable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Integer(1 + I) non-comparable error")
   }
-  guard (try? ast_parse_expr("Integer(zoo)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Cannot convert non-comparable expression to int" else {
-    fail("expected ast parser Integer(zoo) non-comparable error")
+  try ast_parse_expr("Integer(zoo)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Cannot convert non-comparable expression to int" else {
+        fail("expected ast parser Integer(zoo) non-comparable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Integer(zoo) non-comparable error")
   }
-  guard (try? ast_parse_expr("S()"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'" else {
-    fail("expected ast parser S constructor arity error")
+  try ast_parse_expr("S()") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'" else {
+        fail("expected ast parser S constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser S constructor arity error")
   }
-  guard (try? ast_parse_expr("Rational(sin(x))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: invalid input: sin(x)" else {
-    fail("expected ast parser Rational(sin(x)) invalid input error")
+  try ast_parse_expr("Rational(sin(x))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: invalid input: sin(x)" else {
+        fail("expected ast parser Rational(sin(x)) invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Rational(sin(x)) invalid input error")
   }
-  guard (try? ast_parse_expr("Rational(sin(x), 2)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: invalid input: sin(x)" else {
-    fail("expected ast parser Rational(sin(x), 2) lhs invalid input error")
+  try ast_parse_expr("Rational(sin(x), 2)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: invalid input: sin(x)" else {
+        fail("expected ast parser Rational(sin(x), 2) lhs invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Rational(sin(x), 2) lhs invalid input error")
   }
-  guard (try? ast_parse_expr("Rational(sin(x), 0)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: invalid input: sin(x)" else {
-    fail("expected ast parser Rational(sin(x), 0) lhs invalid input error")
+  try ast_parse_expr("Rational(sin(x), 0)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: invalid input: sin(x)" else {
+        fail("expected ast parser Rational(sin(x), 0) lhs invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Rational(sin(x), 0) lhs invalid input error")
   }
-  guard (try? ast_parse_expr("Rational(2, sin(x))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: invalid input: sin(x)" else {
-    fail("expected ast parser Rational(2, sin(x)) rhs invalid input error")
+  try ast_parse_expr("Rational(2, sin(x))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: invalid input: sin(x)" else {
+        fail("expected ast parser Rational(2, sin(x)) rhs invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Rational(2, sin(x)) rhs invalid input error")
   }
-  guard (try? ast_parse_expr("Subs(x, (x, x), (0, 1))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "ValueError: The following expressions appear more than once: x" else {
-    fail("expected ast parser duplicate Subs variables error")
+  try ast_parse_expr("Subs(x, (x, x), (0, 1))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "ValueError: The following expressions appear more than once: x" else {
+        fail("expected ast parser duplicate Subs variables error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser duplicate Subs variables error")
   }
   inspect(
     @symprint.pretty_string(ast_parse_expr("Subs(x, (), ())")),
@@ -937,44 +1134,59 @@ test "ast parser compatibility entrypoint" {
     ),
     content="g(x)",
   )
-  let ast_symbol_call : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
-    "f(x)",
-    local_bindings={ "f": @symcore.Expr::Symbol("g") },
-  )
-  guard ast_symbol_call is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: 'Symbol' object is not callable" else {
-    fail("expected ast parser symbol binding call to stay non-callable")
+  try
+    ast_parse_expr("f(x)", local_bindings={ "f": @symcore.Expr::Symbol("g") })
+  catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: 'Symbol' object is not callable" else {
+        fail("expected ast parser symbol binding call to stay non-callable")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser symbol binding call to stay non-callable")
   }
-  let ast_eq_error : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
-    "Eq()",
-  )
-  guard ast_eq_error is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Equality.__new__() missing 2 required positional arguments: 'lhs' and 'rhs'" else {
-    fail("expected ast parser Eq() constructor arity error")
+  try ast_parse_expr("Eq()") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Equality.__new__() missing 2 required positional arguments: 'lhs' and 'rhs'" else {
+        fail("expected ast parser Eq() constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Eq() constructor arity error")
   }
-  let ast_derivative_error : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
-    "Derivative(sin(x), (1, 2))",
-  )
-  guard ast_derivative_error
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "ValueError: \nCan't calculate derivative wrt 1." else {
-    fail("expected ast parser invalid derivative variable error")
+  try ast_parse_expr("Derivative(sin(x), (1, 2))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "ValueError: \nCan't calculate derivative wrt 1." else {
+        fail("expected ast parser invalid derivative variable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser invalid derivative variable error")
   }
-  let ast_dict_error : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
-    "Dict(x)",
-  )
-  guard ast_dict_error is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: object of type 'Symbol' has no len()" else {
-    fail("expected ast parser Dict(x) constructor type error")
+  try ast_parse_expr("Dict(x)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: object of type 'Symbol' has no len()" else {
+        fail("expected ast parser Dict(x) constructor type error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Dict(x) constructor type error")
   }
-  let ast_subs_error : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
-    "Subs(x + y, (x, y), z)",
-  )
-  guard ast_subs_error is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "ValueError: Number of point values must be the same as the number of variables." else {
-    fail("expected ast parser Subs variable/value arity error")
+  try ast_parse_expr("Subs(x + y, (x, y), z)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "ValueError: Number of point values must be the same as the number of variables." else {
+        fail("expected ast parser Subs variable/value arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser Subs variable/value arity error")
   }
   inspect(
     parse_expr_equiv(
@@ -1028,14 +1240,21 @@ test "symparse local bindings shadow builtin heads like SymPy" {
     ),
     content="f(x)",
   )
-  guard (try? parse_expr_in(
+  try
+    parse_expr_in(
       "Integral(x)",
       default_parse_options(),
       parse_context(bindings={ "Integral": @symcore.Expr::Symbol("g") }),
-    ))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: 'Symbol' object is not callable" else {
-    fail("expected non-callable builtin binding shadow error")
+    )
+  catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: 'Symbol' object is not callable" else {
+        fail("expected non-callable builtin binding shadow error")
+      }
+    }
+  } noraise {
+    _ => fail("expected non-callable builtin binding shadow error")
   }
   inspect(
     @symprint.pretty_string(
@@ -1064,10 +1283,15 @@ test "symparse explicit core constructor calls stay canonical" {
   inspect(@symprint.pretty_string(parse_expr("S(1/2)")), content="1/2")
   inspect(@symprint.pretty_string(parse_expr("S(sin(x))")), content="sin(x)")
   inspect(@symprint.pretty_string(parse_expr("S(x, y)")), content="x")
-  guard (try? parse_expr("Rational(pi)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: invalid input: pi" else {
-    fail("expected Rational(pi) invalid input error")
+  try parse_expr("Rational(pi)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: invalid input: pi" else {
+        fail("expected Rational(pi) invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Rational(pi) invalid input error")
   }
   inspect(@symprint.pretty_string(parse_expr("Float(1/2)")), content="0.5")
   match parse_expr("Float(pi)") {
@@ -1183,28 +1407,48 @@ test "symparse explicit core constructor calls stay canonical" {
     ),
     content="x + x",
   )
-  guard (try? parse_expr("Eq()"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Equality.__new__() missing 2 required positional arguments: 'lhs' and 'rhs'" else {
-    fail("expected Eq() constructor arity error")
+  try parse_expr("Eq()") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Equality.__new__() missing 2 required positional arguments: 'lhs' and 'rhs'" else {
+        fail("expected Eq() constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Eq() constructor arity error")
   }
-  guard (try? parse_expr("Eq(x)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Equality.__new__() missing 1 required positional argument: 'rhs'" else {
-    fail("expected Eq(x) constructor arity error")
+  try parse_expr("Eq(x)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Equality.__new__() missing 1 required positional argument: 'rhs'" else {
+        fail("expected Eq(x) constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Eq(x) constructor arity error")
   }
-  guard (try? parse_expr("Mod(x)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Mod takes exactly 2 arguments (1 given)" else {
-    fail("expected Mod(x) constructor arity error")
+  try parse_expr("Mod(x)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: Mod takes exactly 2 arguments (1 given)" else {
+        fail("expected Mod(x) constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Mod(x) constructor arity error")
   }
-  guard (try? parse_expr("S()"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'" else {
-    fail("expected S() constructor arity error")
+  try parse_expr("S()") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: SingletonRegistry.__call__() missing 1 required positional argument: 'a'" else {
+        fail("expected S() constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected S() constructor arity error")
   }
   inspect(
     @symprint.pretty_string(
@@ -1212,10 +1456,15 @@ test "symparse explicit core constructor calls stay canonical" {
     ),
     content="1",
   )
-  guard (try? parse_expr_with("Rational(3/2)", parse_options(evaluate=false)))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: invalid input: 3/2" else {
-    fail("expected Rational(3/2) evaluate=false invalid input error")
+  try parse_expr_with("Rational(3/2)", parse_options(evaluate=false)) catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: invalid input: 3/2" else {
+        fail("expected Rational(3/2) evaluate=false invalid input error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Rational(3/2) evaluate=false invalid input error")
   }
   inspect(@symprint.pretty_string(parse_expr("Rational(0, 0)")), content="nan")
   inspect(
@@ -1226,86 +1475,157 @@ test "symparse explicit core constructor calls stay canonical" {
     @symprint.pretty_string(parse_expr("Rational(False, False)")),
     content="nan",
   )
-  guard (try? parse_expr("Subs(x)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Subs.__new__() missing 2 required positional arguments: 'variables' and 'point'" else {
-    fail("expected Subs(x) constructor arity error")
+  try parse_expr("Subs(x)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Subs.__new__() missing 2 required positional arguments: 'variables' and 'point'" else {
+        fail("expected Subs(x) constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Subs(x) constructor arity error")
   }
-  guard (try? parse_expr("Subs(x + y, (x, y), z)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "ValueError: Number of point values must be the same as the number of variables." else {
-    fail("expected Subs variable/value arity error")
+  try parse_expr("Subs(x + y, (x, y), z)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "ValueError: Number of point values must be the same as the number of variables." else {
+        fail("expected Subs variable/value arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Subs variable/value arity error")
   }
-  guard (try? parse_expr("Subs(x, (x, x), (0, 1))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "ValueError: The following expressions appear more than once: x" else {
-    fail("expected duplicate Subs variables error")
+  try parse_expr("Subs(x, (x, x), (0, 1))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "ValueError: The following expressions appear more than once: x" else {
+        fail("expected duplicate Subs variables error")
+      }
+    }
+  } noraise {
+    _ => fail("expected duplicate Subs variables error")
   }
   inspect(@symprint.pretty_string(parse_expr("Subs(x, (), ())")), content="x")
   inspect(
     @symprint.pretty_string(parse_expr("Subs(Subs(x, x, 0), y, 1)")),
     content="Subs(x, (x, y), (0, 1))",
   )
-  guard (try? parse_expr("Dict(x)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: object of type 'Symbol' has no len()" else {
-    fail("expected Dict(x) constructor type error")
+  try parse_expr("Dict(x)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "TypeError: object of type 'Symbol' has no len()" else {
+        fail("expected Dict(x) constructor type error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Dict(x) constructor type error")
   }
-  guard (try? parse_expr("Dict((x, y, z))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Pass Dict args as Dict((k1, v1), ...) or Dict({k1: v1, ...})" else {
-    fail("expected Dict((x, y, z)) constructor shape error")
+  try parse_expr("Dict((x, y, z))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Pass Dict args as Dict((k1, v1), ...) or Dict({k1: v1, ...})" else {
+        fail("expected Dict((x, y, z)) constructor shape error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Dict((x, y, z)) constructor shape error")
   }
-  guard (try? parse_expr("Derivative(sin(x), (1, 2))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "ValueError: \nCan't calculate derivative wrt 1." else {
-    fail("expected invalid derivative variable error")
+  try parse_expr("Derivative(sin(x), (1, 2))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "ValueError: \nCan't calculate derivative wrt 1." else {
+        fail("expected invalid derivative variable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected invalid derivative variable error")
   }
-  guard (try? parse_expr("Derivative(sin(x), (x, -1))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "ValueError: order of differentiation must be nonnegative" else {
-    fail("expected negative derivative order error")
+  try parse_expr("Derivative(sin(x), (x, -1))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "ValueError: order of differentiation must be nonnegative" else {
+        fail("expected negative derivative order error")
+      }
+    }
+  } noraise {
+    _ => fail("expected negative derivative order error")
   }
-  guard (try? parse_expr("Derivative(sin(x), sin(x))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "ValueError: \nCan't calculate derivative wrt sin(x)." else {
-    fail("expected defined-function derivative variable error")
+  try parse_expr("Derivative(sin(x), sin(x))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "ValueError: \nCan't calculate derivative wrt sin(x)." else {
+        fail("expected defined-function derivative variable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected defined-function derivative variable error")
   }
-  guard (try? ast_parse_expr("Derivative(sin(x), sin(x))"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "ValueError: \nCan't calculate derivative wrt sin(x)." else {
-    fail("expected ast parser defined-function derivative variable error")
+  try ast_parse_expr("Derivative(sin(x), sin(x))") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "ValueError: \nCan't calculate derivative wrt sin(x)." else {
+        fail("expected ast parser defined-function derivative variable error")
+      }
+    }
+  } noraise {
+    _ => fail("expected ast parser defined-function derivative variable error")
   }
-  guard (try? parse_expr("Lambda()"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "TypeError: Lambda.__new__() missing 2 required positional arguments: 'signature' and 'expr'" else {
-    fail("expected Lambda() constructor arity error")
+  try parse_expr("Lambda()") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "TypeError: Lambda.__new__() missing 2 required positional arguments: 'signature' and 'expr'" else {
+        fail("expected Lambda() constructor arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected Lambda() constructor arity error")
   }
-  guard (try? parse_expr("Lambda((x, x), x)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "BadSignatureError: Duplicate symbol x" else {
-    fail("expected duplicate lambda signature error")
+  try parse_expr("Lambda((x, x), x)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "BadSignatureError: Duplicate symbol x" else {
+        fail("expected duplicate lambda signature error")
+      }
+    }
+  } noraise {
+    _ => fail("expected duplicate lambda signature error")
   }
-  guard (try? parse_expr("Lambda((x, 1), x)"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "BadSignatureError: Lambda signature should be only tuples and symbols, not 1" else {
-    fail("expected invalid lambda signature error")
+  try parse_expr("Lambda((x, 1), x)") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "BadSignatureError: Lambda signature should be only tuples and symbols, not 1" else {
+        fail("expected invalid lambda signature error")
+      }
+    }
+  } noraise {
+    _ => fail("expected invalid lambda signature error")
   }
-  guard (try? parse_expr("lambda x, x: x"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "BadSignatureError: Duplicate symbol x" else {
-    fail("expected duplicate lambda-notation signature error")
+  try parse_expr("lambda x, x: x") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail == "BadSignatureError: Duplicate symbol x" else {
+        fail("expected duplicate lambda-notation signature error")
+      }
+    }
+  } noraise {
+    _ => fail("expected duplicate lambda-notation signature error")
   }
-  guard (try? parse_expr("Lambda(x, x)()"))
-    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail ==
-    "BadArgumentsError: Lambda(_x, _x) takes exactly 1 argument (0 given)" else {
-    fail("expected lambda call arity error")
+  try parse_expr("Lambda(x, x)()") catch {
+    error => {
+      guard error is ParseError::UnsupportedConstruct(span=_, detail) &&
+        detail ==
+        "BadArgumentsError: Lambda(_x, _x) takes exactly 1 argument (0 given)" else {
+        fail("expected lambda call arity error")
+      }
+    }
+  } noraise {
+    _ => fail("expected lambda call arity error")
   }
   inspect(
     @symprint.pretty_string(

@@ -1578,7 +1578,7 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
       }
     }
     ExprForm::Subs(inner, variable, value) => {
-      let inner_symbols : Map[String, Expr] = {}
+      let inner_symbols : Map[String, Expr] = Map([])
       free_symbol_map(inner, inner_symbols)
       remove_bound_symbol(inner_symbols, variable)
       for key, value0 in inner_symbols {
@@ -1832,7 +1832,7 @@ fn has_matcher(expr : Expr, needle : Expr) -> Bool {
 /// - Returns: `Array[Expr]`, typically containing `Expr::Symbol` items.
 /// - Limits: The order is canonicalized rather than source-order oriented.
 pub fn free_symbols(expr : Expr) -> Array[Expr] {
-  let out : Map[String, Expr] = {}
+  let out : Map[String, Expr] = Map([])
   free_symbol_map(expr, out)
   let names : Array[String] = []
   for name in out.keys() {

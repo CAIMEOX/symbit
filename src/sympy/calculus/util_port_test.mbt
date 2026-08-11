@@ -25,17 +25,11 @@ fn util_assert_period(ours : Expr?, oracle_str : String) -> Unit raise {
       fail("periodicity mismatch")
     }
   } else {
-    let oracle_norm : Result[String, Error] = try? sympy_normalize(oracle_str)
-    let ours_norm : Result[String, Error] = try? sympy_normalize(ours_str)
-    match (ours_norm, oracle_norm) {
-      (Ok(a), Ok(b)) => {
-        guard a == b else {
-          println("periodicity mismatch: ours=\{a} oracle=\{b}")
-          fail("periodicity mismatch")
-        }
-      }
-      (Err(e), _) => fail("normalize ours failed: \{e}")
-      (_, Err(e)) => fail("normalize oracle failed: \{e}")
+    let oracle_norm = sympy_normalize(oracle_str)
+    let ours_norm = sympy_normalize(ours_str)
+    guard ours_norm == oracle_norm else {
+      println("periodicity mismatch: ours=\{ours_norm} oracle=\{oracle_norm}")
+      fail("periodicity mismatch")
     }
   }
 }

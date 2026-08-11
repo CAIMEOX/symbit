@@ -1,10 +1,10 @@
 import {
-  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/sympy",
   "Kaida-Amethyst/python" @py,
 }
 
 import {
-  "CAIMEOX/symbit/symliealgebras" @symliealgebras,
+  "CAIMEOX/symbit/symliealgebras",
 } for "test"
 
 supported_targets = "native"

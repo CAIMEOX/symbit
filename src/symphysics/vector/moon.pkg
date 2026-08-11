@@ -4,6 +4,6 @@ import {
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symsimplify",
-  "CAIMEOX/symbit/symphysics" @symphysics,
-  "moonbitlang/core/string" @string,
+  "CAIMEOX/symbit/symphysics",
+  "moonbitlang/core/string",
 }

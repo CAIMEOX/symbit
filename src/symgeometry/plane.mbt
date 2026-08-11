@@ -486,7 +486,7 @@ pub fn Plane::parameter_value(
   v? : Expr? = None,
 ) -> Map[Expr, Expr] raise GeometryError {
   let target = other.with_dim(3)
-  let out : Map[Expr, Expr] = {}
+  let out : Map[Expr, Expr] = Map([])
   match v {
     None => {
       let delta = geo_sub_coords(target.coords_, self.point_.coords_)

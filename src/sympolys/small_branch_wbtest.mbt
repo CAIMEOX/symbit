@@ -32,15 +32,12 @@ test "small branches: core/domain paths" {
   let y = @symcore.Expr::Symbol("y")
   let px = PolyBuilder::new(["x"], Domain::QQ).from_expr(x + @symcore.int(1))
   let pxy = PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y)
-  let mul_mismatch_len : Result[Poly, PolyError] = try? px.mul(pxy)
-  assert_true(mul_mismatch_len is Err(PolyError::DomainMismatch))
+  sympolys_assert_error(fn() raise PolyError { px.mul(pxy) }, "DomainMismatch")
 
   let py = PolyBuilder::new(["y"], Domain::QQ).from_expr(y + @symcore.int(1))
-  let mul_mismatch_name : Result[Poly, PolyError] = try? px.mul(py)
-  assert_true(mul_mismatch_name is Err(PolyError::DomainMismatch))
+  sympolys_assert_error(fn() raise PolyError { px.mul(py) }, "DomainMismatch")
 
-  let neg_pow : Result[Poly, PolyError] = try? px.pow(-1)
-  assert_true(neg_pow is Err(PolyError::BadExponent))
+  sympolys_assert_error(fn() raise PolyError { px.pow(-1) }, "BadExponent")
 
   assert_true(Domain::Frac(Domain::QQ) == Domain::Frac(Domain::QQ))
   assert_true(alg_domain == alg_domain)
@@ -67,26 +64,23 @@ test "small branches: core/domain paths" {
 
 ///|
 test "small branches: domain_utils normalize_mod paths" {
-  let bad_mod : Result[@symnum.BigRational, PolyError] = try? normalize_mod(
-    sb_rat(1, 2),
-    Domain::GF(1),
+  sympolys_assert_error(
+    fn() raise PolyError { normalize_mod(sb_rat(1, 2), Domain::GF(1)) },
+    "BadModulus",
   )
-  assert_true(bad_mod is Err(PolyError::BadModulus))
 
-  let den_zero : Result[@symnum.BigRational, PolyError] = try? normalize_mod(
-    sb_rat(1, 5),
-    Domain::GF(5),
+  sympolys_assert_error(
+    fn() raise PolyError { normalize_mod(sb_rat(1, 5), Domain::GF(5)) },
+    "DivisionByZero",
   )
-  assert_true(den_zero is Err(PolyError::DivisionByZero))
 
   let frac_norm = normalize_mod(sb_rat(8, 3), Domain::Frac(Domain::GF(7)))
   assert_true(frac_norm.to_string() == "5")
 
-  let inv_fail : Result[@symnum.BigRational, PolyError] = try? normalize_mod(
-    sb_rat(1, 2),
-    Domain::GF(4),
+  sympolys_assert_error(
+    fn() raise PolyError { normalize_mod(sb_rat(1, 2), Domain::GF(4)) },
+    "DivisionByZero",
   )
-  assert_true(inv_fail is Err(PolyError::DivisionByZero))
 }
 
 ///|
@@ -95,21 +89,17 @@ test "small branches: dense conversion guard branches" {
   let y = @symcore.Expr::Symbol("y")
   let pxy = PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y)
 
-  let non_uni : Result[Array[FieldElem], PolyError] = try? to_dense(pxy)
-  assert_true(non_uni is Err(PolyError::NotUnivariate))
+  sympolys_assert_error(fn() raise PolyError { to_dense(pxy) }, "NotUnivariate")
 
-  let bad_from_dense : Result[Poly, PolyError] = try? from_dense(
-    [sb_feqq(1, 1)],
-    ["x", "y"],
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError { from_dense([sb_feqq(1, 1)], ["x", "y"], Domain::QQ) },
+    "NotUnivariate",
   )
-  assert_true(bad_from_dense is Err(PolyError::NotUnivariate))
 
-  let bad_to_dense_shape : Result[Array[FieldElem], PolyError] = try? to_dense_multi(
-    pxy,
-    [2],
+  sympolys_assert_error(
+    fn() raise PolyError { to_dense_multi(pxy, [2]) },
+    "BadGenerator",
   )
-  assert_true(bad_to_dense_shape is Err(PolyError::BadGenerator(_)))
 
   let malformed_coeffs : Map[Monomial, FieldElem] = Map([])
   malformed_coeffs.set(Monomial::{ exps: [1] }, sb_feqq(1, 1))
@@ -133,21 +123,19 @@ test "small branches: dense conversion guard branches" {
   let out_of_range_dense = to_dense_multi(out_of_range_poly, [1, 1])
   assert_true(out_of_range_dense.all(c => fe_is_zero(c)))
 
-  let bad_from_dense_multi_shape : Result[Poly, PolyError] = try? from_dense_multi(
-    [sb_feqq(1, 1)],
-    ["x"],
-    Domain::QQ,
-    [1, 1],
+  sympolys_assert_error(
+    fn() raise PolyError {
+      from_dense_multi([sb_feqq(1, 1)], ["x"], Domain::QQ, [1, 1])
+    },
+    "BadGenerator",
   )
-  assert_true(bad_from_dense_multi_shape is Err(PolyError::BadGenerator(_)))
 
-  let bad_from_dense_multi_len : Result[Poly, PolyError] = try? from_dense_multi(
-    [sb_feqq(1, 1)],
-    ["x", "y"],
-    Domain::QQ,
-    [1, 1],
+  sympolys_assert_error(
+    fn() raise PolyError {
+      from_dense_multi([sb_feqq(1, 1)], ["x", "y"], Domain::QQ, [1, 1])
+    },
+    "BadGenerator",
   )
-  assert_true(bad_from_dense_multi_len is Err(PolyError::BadGenerator(_)))
 }
 
 ///|
@@ -156,8 +144,10 @@ test "small branches: lll helper branches" {
   assert_true(empty_reduced.length() == 0 && empty_transform.length() == 0)
 
   let ragged : Matrix = [[sb_bi(1)], [sb_bi(1), sb_bi(2)]]
-  let ragged_res : Result[(Matrix, Matrix), PolyError] = try? lll_reduce(ragged)
-  assert_true(ragged_res is Err(PolyError::DomainMismatch))
+  sympolys_assert_error(
+    fn() raise PolyError { lll_reduce(ragged) },
+    "DomainMismatch",
+  )
 
   let basis : Matrix = [
     [sb_bi(1), sb_bi(1), sb_bi(1)],

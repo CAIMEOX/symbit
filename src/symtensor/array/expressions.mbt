@@ -53,7 +53,7 @@ fn expr_list_to_string(items : Array[@symcore.Expr]) -> String {
 }
 
 ///|
-pub impl Show for ArrayExpr with to_string(self) -> String {
+pub impl Show for ArrayExpr with fn to_string(self) -> String {
   match self {
     ArrayExpr::Symbol(name, shape) =>
       match shape {
@@ -84,6 +84,6 @@ pub impl Show for ArrayExpr with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for ArrayExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for ArrayExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

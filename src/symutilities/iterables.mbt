@@ -454,7 +454,7 @@ pub fn[T, K : Eq + Hash] sift(
   seq : Array[T],
   keyfunc : (T) -> K,
 ) -> Map[K, Array[T]] {
-  let out : Map[K, Array[T]] = {}
+  let out : Map[K, Array[T]] = Map([])
   for item in seq {
     let key = keyfunc(item)
     match out.get(key) {
@@ -501,7 +501,7 @@ pub fn[T] take(items : Iter[T], n : Int) -> Array[T] {
 
 ///|
 pub fn[K : Eq + Hash, V] dict_merge(dicts : Array[Map[K, V]]) -> Map[K, V] {
-  let out : Map[K, V] = {}
+  let out : Map[K, V] = Map([])
   for mapping in dicts {
     for k, v in mapping {
       out[k] = v
@@ -543,8 +543,8 @@ pub fn[T : Compare + Eq + Hash] topological_sort(
   vertices : Array[T],
   edges : Array[(T, T)],
 ) -> Array[T] raise UtilitiesError {
-  let indegree : Map[T, Int] = {}
-  let outgoing : Map[T, Array[T]] = {}
+  let indegree : Map[T, Int] = Map([])
+  let outgoing : Map[T, Array[T]] = Map([])
   for v in vertices {
     indegree[v] = 0
     outgoing[v] = []
@@ -601,7 +601,7 @@ pub fn[T : Compare + Eq + Hash] topological_sort(
 
 ///|
 pub fn[T : Eq + Hash] has_dups(seq : Array[T]) -> Bool {
-  let seen : Map[T, Unit] = {}
+  let seen : Map[T, Unit] = Map([])
   for item in seq {
     match seen.get(item) {
       Some(_) => return true
@@ -613,7 +613,7 @@ pub fn[T : Eq + Hash] has_dups(seq : Array[T]) -> Bool {
 
 ///|
 pub fn[T : Eq + Hash] uniq(seq : Array[T]) -> Array[T] {
-  let seen : Map[T, Unit] = {}
+  let seen : Map[T, Unit] = Map([])
   let out : Array[T] = []
   for item in seq {
     if !seen.contains(item) {

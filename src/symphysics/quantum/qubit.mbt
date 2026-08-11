@@ -145,12 +145,8 @@ fn int_to_minimal_bits(
 
 ///|
 fn qubit_exact_rational(num : Int, den : Int) -> Expr {
-  let result : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
-    num, den,
-  )
-  match result {
-    Ok(value) => value
-    Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
+  @symcore.rational_from_ints(num, den) catch {
+    _ => int(num) * @symcore.raw_pow(int(den), int(-1))
   }
 }
 
@@ -170,7 +166,7 @@ pub fn QubitExpr::as_expr(self : QubitExpr) -> Expr {
 }
 
 ///|
-pub impl Show for QubitExpr with to_string(self) {
+pub impl Show for QubitExpr with fn to_string(self) {
   let contents = if self.int_form {
     bits_to_int(self.bits).to_string()
   } else {
@@ -184,7 +180,7 @@ pub impl Show for QubitExpr with to_string(self) {
 }
 
 ///|
-pub impl Show for QubitExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for QubitExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -263,18 +259,14 @@ pub fn qubit_from_expr(expr : Expr) -> QubitExpr? {
         Some([arg]) =>
           match arg {
             Expr::Number(n) if n.is_integral() && n.numerator().to_int() >= 0 => {
-              let bits_result : Result[Array[Int], @symphysics.PhysicsError] = try? int_to_minimal_bits(
-                n.numerator().to_int(),
-              )
-              match bits_result {
-                Ok(bits) =>
-                  Some(QubitExpr::{
-                    bits,
-                    is_bra: name == "IntQubitBra",
-                    int_form: true,
-                  })
-                Err(_) => None
+              let bits = int_to_minimal_bits(n.numerator().to_int()) catch {
+                _ => return None
               }
+              Some(QubitExpr::{
+                bits,
+                is_bra: name == "IntQubitBra",
+                int_form: true,
+              })
             }
             _ => None
           }

@@ -123,7 +123,7 @@ fn rat_mul(a : BigRational, b : BigRational) -> BigRational {
 ///|
 fn rat_div(a : BigRational, b : BigRational) -> BigRational? {
   guard !b.is_zero() else { None }
-  (try? a.div_r(b) : Result[BigRational, @symnum.RationalError]).to_option()
+  Some(a.div_r(b) catch { _ => return None })
 }
 
 ///|

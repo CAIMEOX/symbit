@@ -164,7 +164,8 @@ pub fn Plot::append(self : Plot, arg : PlotSeries) -> Plot {
 /// - Input: Two `Plot` values.
 /// - Returns: `Plot`.
 /// - Limits: Backend and metadata are copied from the left-hand plot only.
-pub fn Plot::extend(self : Plot, other : Plot) -> Plot {
+#alias(extend, deprecated="Use `Plot::extend_` instead")
+pub fn Plot::extend_(self : Plot, other : Plot) -> Plot {
   let series = self.series_.copy()
   for item in other.series_ {
     series.push(item)

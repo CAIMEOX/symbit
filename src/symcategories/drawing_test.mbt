@@ -70,7 +70,7 @@ test "diagram grid handles generic sequential and grouped layouts" {
   assert_cell(one, 0, 0, Some(a))
   assert_cell(one, 0, 1, Some(b))
 
-  let triangle_props : Map[Morphism, Array[String]] = {}
+  let triangle_props : Map[Morphism, Array[String]] = Map([])
   triangle_props[g * f] = ["unique"]
   let triangle = diagram_grid(
     diagram(
@@ -159,7 +159,7 @@ test "diagram grid handles generic sequential and grouped layouts" {
   let f1 = named_morphism(e, b, "f1") catch { _ => fail("f1") }
   let f2 = named_morphism(e, c, "f2") catch { _ => fail("f2") }
   let pullback = named_morphism(e, a, "g") catch { _ => fail("pullback") }
-  let pullback_conc : Map[Morphism, Array[String]] = {}
+  let pullback_conc : Map[Morphism, Array[String]] = Map([])
   pullback_conc[pullback] = ["unique"]
   let pullback_diagram = diagram(
     premises=morphism_list([m1, m2, s1, s2, f1, f2]),
@@ -282,7 +282,7 @@ test "xypic drawer handles line triangle and curves" {
     "}\n",
   )
 
-  let triangle_props : Map[Morphism, Array[String]] = {}
+  let triangle_props : Map[Morphism, Array[String]] = Map([])
   triangle_props[g * f] = ["unique"]
   let triangle = diagram(
     premises=morphism_list([f, g]),
@@ -355,7 +355,7 @@ test "xypic draw helper delegates to diagram grid and drawer" {
   let c = object("C")
   let f = named_morphism(a, b, "f") catch { _ => fail("f") }
   let g = named_morphism(b, c, "g") catch { _ => fail("g") }
-  let props : Map[Morphism, Array[String]] = {}
+  let props : Map[Morphism, Array[String]] = Map([])
   props[g * f] = ["unique"]
   let diag = diagram(
     premises=morphism_list([f, g]),

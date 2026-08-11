@@ -79,7 +79,7 @@ pub fn find_dynamicsymbols_expr(
   expr : Expr,
   exclude? : Array[Expr] = [],
 ) -> Array[Expr] {
-  let seen : Map[String, Expr] = {}
+  let seen : Map[String, Expr] = Map([])
   mech_find_dynamicsymbols_go(expr, seen)
   for item in exclude {
     seen.remove(mech_expr_key(item))
@@ -99,7 +99,7 @@ pub fn find_dynamicsymbols_vector(
   exclude? : Array[Expr] = [],
 ) -> Array[Expr] raise @symvector.VectorError {
   let comps = expr.to_matrix(reference_frame)
-  let found : Map[String, Expr] = {}
+  let found : Map[String, Expr] = Map([])
   for row in comps.rows_copy() {
     for value in row {
       mech_find_dynamicsymbols_go(value, found)

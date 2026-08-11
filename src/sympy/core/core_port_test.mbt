@@ -118,7 +118,7 @@ test "symcore parity wild match exclude and properties" {
   let b = @symcore.Expr::Wild("b", [x], [])
   let p = @symcore.Expr::Wild("p", [], [@symcore.WildProperty::Positive])
   let s = @symcore.Expr::Wild("s", [], [@symcore.WildProperty::Symbol])
-  let seeded : Map[@symcore.Expr, @symcore.Expr] = {}
+  let seeded : Map[@symcore.Expr, @symcore.Expr] = Map([])
   seeded.set(a, y)
   inspect(
     core_match_sstr(a, @symcore.mul([@symcore.int(2), y])),
@@ -340,7 +340,7 @@ test "symcore source-driven derivative exclusion examples" {
     ),
     content="None",
   )
-  let seeded : @symcore.MatchEnv = {}
+  let seeded : @symcore.MatchEnv = Map([])
   seeded.set(b, @symcore.pow(x, @symcore.int(2)))
   inspect(
     match
@@ -2505,7 +2505,7 @@ test "symcore parity free_symbols through apply lambda and Subs" {
   let subs_structural = @symcore.subs_expr(x, x, @symcore.int(0))
   inspect(@symcore.has(subs_structural, x).to_string(), content="true")
   inspect(core_free_symbols_sstr(subs_structural), content="()")
-  let subs_env : Map[String, @symcore.Expr] = {}
+  let subs_env : Map[String, @symcore.Expr] = Map([])
   subs_env.set("x", y)
   inspect(
     @symcore.has(

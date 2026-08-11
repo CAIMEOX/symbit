@@ -21,7 +21,11 @@ fn assert_ask_parity(
   assumptions? : Query = query_true(),
   env? : AssumeEnv = {},
 ) -> Unit raise {
-  let ours = ask_result_to_string(try? ask(proposition, assumptions~, env~))
+  let ours = ask_result_to_string(
+    try ask(proposition, assumptions~, env~) |> Ok catch {
+      err => Err(err)
+    },
+  )
   let oracle = ask_query_str(
     query_to_sympy(proposition),
     assumptions=query_to_sympy(and_q([assumptions, env_to_query(env)])),
@@ -48,7 +52,9 @@ fn assert_ask_global_parity(
     add_global_assumption(q)
   }
   let ours = ask_result_to_string(
-    try? ask_global(proposition, assumptions~, env~),
+    try ask_global(proposition, assumptions~, env~) |> Ok catch {
+      err => Err(err)
+    },
   )
   let oracle = ask_query_str(
     query_to_sympy(proposition),

@@ -184,7 +184,7 @@ fn linear_form_from_expr(
   let (coeff_maps, const_terms) = @sympolys._linear_eq_to_dict([expr], names) catch {
     err => raise wrap_poly_error(context, err)
   }
-  let coeffs : Map[Int, @symnum.BigRational] = {}
+  let coeffs : Map[Int, @symnum.BigRational] = Map([])
   for i in 0..<names.length() {
     match coeff_maps[0].get(names[i]) {
       Some(value) => add_sparse_coeff(coeffs, i, rat_from_expr(value, context))
@@ -567,27 +567,27 @@ fn build_var_transforms(
     match (lower, upper) {
       (Some(lo), None) =>
         if lo.is_zero() {
-          let coeffs : Map[Int, @symnum.BigRational] = {}
+          let coeffs : Map[Int, @symnum.BigRational] = Map([])
           coeffs[next_var] = rat_one()
           transforms.push(VarTransform::{ offset: rat_zero(), coeffs })
           next_var += 1
         } else {
-          let coeffs : Map[Int, @symnum.BigRational] = {}
+          let coeffs : Map[Int, @symnum.BigRational] = Map([])
           coeffs[next_var] = rat_one()
           transforms.push(VarTransform::{ offset: lo, coeffs })
           next_var += 1
         }
       (None, Some(hi)) => {
-        let coeffs : Map[Int, @symnum.BigRational] = {}
+        let coeffs : Map[Int, @symnum.BigRational] = Map([])
         coeffs[next_var] = rat_from_int(-1)
         transforms.push(VarTransform::{ offset: hi, coeffs })
         next_var += 1
       }
       (Some(lo), Some(hi)) => {
-        let coeffs : Map[Int, @symnum.BigRational] = {}
+        let coeffs : Map[Int, @symnum.BigRational] = Map([])
         coeffs[next_var] = rat_one()
         transforms.push(VarTransform::{ offset: lo, coeffs })
-        let ub_coeffs : Map[Int, @symnum.BigRational] = {}
+        let ub_coeffs : Map[Int, @symnum.BigRational] = Map([])
         ub_coeffs[next_var] = rat_one()
         extra_constraints.push(RatForm::{
           offset: rat_sub(lo, hi),
@@ -596,7 +596,7 @@ fn build_var_transforms(
         next_var += 1
       }
       (None, None) => {
-        let coeffs : Map[Int, @symnum.BigRational] = {}
+        let coeffs : Map[Int, @symnum.BigRational] = Map([])
         coeffs[next_var] = rat_one()
         coeffs[next_var + 1] = rat_from_int(-1)
         transforms.push(VarTransform::{ offset: rat_zero(), coeffs })
@@ -609,7 +609,7 @@ fn build_var_transforms(
 
 ///|
 fn substitute_form(form : RatForm, transforms : Array[VarTransform]) -> RatForm {
-  let coeffs : Map[Int, @symnum.BigRational] = {}
+  let coeffs : Map[Int, @symnum.BigRational] = Map([])
   let mut offset = form.offset
   for idx, value in form.coeffs {
     let tr = transforms[idx]
@@ -673,7 +673,7 @@ fn objective_form_from_array(
   coeffs : Array[Expr],
   context : String,
 ) -> RatForm raise SolverError {
-  let map : Map[Int, @symnum.BigRational] = {}
+  let map : Map[Int, @symnum.BigRational] = Map([])
   for i in 0..<coeffs.length() {
     add_sparse_coeff(map, i, rat_from_expr(coeffs[i], context))
   }
@@ -692,7 +692,7 @@ fn forms_from_matrix_rows(
   let out : Array[RatForm] = []
   for i in 0..<matrix.rows {
     let coeffs = matrix_row_rationals(matrix, i, context)
-    let map : Map[Int, @symnum.BigRational] = {}
+    let map : Map[Int, @symnum.BigRational] = Map([])
     for j in 0..<coeffs.length() {
       add_sparse_coeff(map, j, coeffs[j])
     }
@@ -706,7 +706,7 @@ fn forms_from_matrix_rows(
 
 ///|
 fn negate_form(form : RatForm) -> RatForm {
-  let coeffs : Map[Int, @symnum.BigRational] = {}
+  let coeffs : Map[Int, @symnum.BigRational] = Map([])
   for idx, value in form.coeffs {
     coeffs[idx] = value.neg_r()
   }
@@ -850,7 +850,7 @@ fn lp_extreme(
   }
   let (value, solution, transforms) = optimize_forms(target, rows, bounds)
   let primal = recover_original_values(solution, transforms)
-  let out : Map[String, Expr] = {}
+  let out : Map[String, Expr] = Map([])
   for i in 0..<names.length() {
     out[names[i]] = rat_to_expr(primal[i])
   }

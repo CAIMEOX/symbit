@@ -78,7 +78,7 @@ fn beam_support_symbol(loc : @symcore.Expr, prefix : String) -> @symcore.Expr {
 
 ///|
 fn beam_unique_exprs(values : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let out : Array[@symcore.Expr] = []
   for value in values {
     let key = @symprint.pretty_string(value)
@@ -198,10 +198,8 @@ fn beam_solve_constant_system(
   if eqs.is_empty() {
     return Some({})
   }
-  let maybe_solution = try? cm_linear_solve(eqs, beam_unique_exprs(unknowns))
-  match maybe_solution {
-    Ok(solution) => solution
-    Err(_) => raise BeamError::SolveError("unable to determine beam constants")
+  cm_linear_solve(eqs, beam_unique_exprs(unknowns)) catch {
+    _ => raise BeamError::SolveError("unable to determine beam constants")
   }
 }
 
@@ -317,7 +315,7 @@ pub fn Beam::set_bc_deflection(
 pub fn Beam::boundary_conditions(
   self : Beam,
 ) -> Map[String, Array[BeamBoundaryValue]] {
-  let out : Map[String, Array[BeamBoundaryValue]] = {}
+  let out : Map[String, Array[BeamBoundaryValue]] = Map([])
   out["shear_force"] = self.bc_shear_force_
   out["bending_moment"] = self.bc_bending_moment_
   out["slope"] = self.bc_slope_
@@ -507,9 +505,11 @@ pub fn Beam::solve_for_reaction_loads(
     equations.push(cm_eval_at(deflection_curve, var_name, item.0) - item.1)
   }
   let unknowns = [c3, c4] + all_reactions
-  let maybe_solution = try? cm_linear_solve(equations, unknowns)
+  let maybe_solution = cm_linear_solve(equations, unknowns) catch {
+    _ => raise BeamError::SolveError("unable to solve beam reactions")
+  }
   match maybe_solution {
-    Ok(Some(solution)) => {
+    Some(solution) => {
       self.reaction_loads_ = {}
       for reaction in all_reactions {
         match reaction {
@@ -522,6 +522,6 @@ pub fn Beam::solve_for_reaction_loads(
       }
       self.load_ = beam_substitute_map(self.load_, solution)
     }
-    _ => raise BeamError::SolveError("unable to solve beam reactions")
+    None => raise BeamError::SolveError("unable to solve beam reactions")
   }
 }

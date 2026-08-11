@@ -139,12 +139,12 @@ fn fact_dense_convert_alg_factors_to_gaussian(
 fn fact_dense_gaussian_coeff_key(coeff : FieldElem) -> String {
   match coeff {
     FieldElem::CC(real, imag) => {
-      let sign_key = if imag.numerator().op_lt(BigInt::from_int(0)) {
+      let sign_key = if imag.numerator() < BigInt::from_int(0) {
         "0"
       } else {
         "1"
       }
-      let imag_abs = if imag.numerator().op_lt(BigInt::from_int(0)) {
+      let imag_abs = if imag.numerator() < BigInt::from_int(0) {
         imag.neg_r()
       } else {
         imag

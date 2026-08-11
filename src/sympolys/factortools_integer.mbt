@@ -1228,11 +1228,12 @@ pub fn dmp_zz_wang(
   let mut factor_count : Int? = None
   let zero = fe_from_int(0, domain)
   let initial_points = Array::make(u, zero)
-  let initial_trial = try? dmp_zz_wang_test_points(
-    f, lc_factors, ct, initial_points, u, domain,
-  )
-  match initial_trial {
-    Ok((cs, s, e_values)) => {
+  try
+    dmp_zz_wang_test_points(f, lc_factors, ct, initial_points, u, domain)
+  catch {
+    _ => ()
+  } noraise {
+    (cs, s, e_values) => {
       let (_, h) = dup_zz_factor_sqf(s, domain)
       factor_count = Some(h.length())
       if h.length() == 1 {
@@ -1240,7 +1241,6 @@ pub fn dmp_zz_wang(
       }
       configs.push((s, cs, e_values, h, initial_points))
     }
-    Err(_) => ()
   }
   let mut candidate_index = 0
   let mut seed_index = 0
@@ -1269,10 +1269,13 @@ pub fn dmp_zz_wang(
         continue
       }
       history.push(fact_int_wang_points_key(points))
-      let trial = try? dmp_zz_wang_test_points(
-        f, lc_factors, ct, points, u, domain,
-      )
-      guard trial is Ok((cs, s, e_values)) else { continue }
+      let (cs, s, e_values) = try
+        dmp_zz_wang_test_points(f, lc_factors, ct, points, u, domain)
+      catch {
+        _ => continue
+      } noraise {
+        value => value
+      }
       let (_, h) = dup_zz_factor_sqf(s, domain)
       let rr = h.length()
       match factor_count {
@@ -1634,11 +1637,11 @@ pub fn dmp_zz_factor(
   let (ground_content, primitive) = dmp_primitive(primitive_ground, u, domain)
   let factors : Array[(DensePoly, Int)] = Array::new()
   if dmp_degree(primitive, u) > 0 {
-    let sqf_trial = try? dmp_sqf_part(primitive, u, domain)
-    let square_free = match sqf_trial {
-      Ok(sf) => sf
-      Err(PolyError::NotUnivariate) => primitive
-      Err(err) => raise err
+    let square_free = try dmp_sqf_part(primitive, u, domain) catch {
+      PolyError::NotUnivariate => primitive
+      err => raise err
+    } noraise {
+      value => value
     }
     let wang_factors = dmp_zz_wang(square_free, u, domain)
     for item in dmp_trial_division(f, wang_factors, u, domain) {
@@ -1705,18 +1708,15 @@ pub fn dup_cyclotomic_p(
     return false
   }
   if !irreducible {
-    let factor_result : Result[
-      (FieldElem, Array[(Array[FieldElem], Int)]),
-      PolyError,
-    ] = try? dup_factor_list(ff, Domain::ZZ)
-    match factor_result {
-      Ok((coeff, factors)) =>
+    try dup_factor_list(ff, Domain::ZZ) catch {
+      // The recursive cyclotomic test is still useful when the current dense
+      // factor backend cannot split a hard irreducible candidate yet.
+      _ => ()
+    } noraise {
+      (coeff, factors) =>
         if !fact_int_dup_is_one_factor(coeff, factors, ff) {
           return false
         }
-      // The recursive cyclotomic test is still useful when the current dense
-      // factor backend cannot split a hard irreducible candidate yet.
-      Err(_) => ()
     }
   }
   fact_int_cyclotomic_by_degree(ff)

@@ -437,7 +437,7 @@ fn intpoly_expr_gcd(values : Array[Expr]) -> Expr {
 
 ///|
 fn intpoly_sorted_symbol_names(expr : Expr) -> Array[String] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   collect_symbols(expr, seen)
   let names : Array[String] = []
   for name in seen.keys() {
@@ -897,7 +897,7 @@ pub fn decompose(
     return out
   }
 
-  let grouped : Map[Int, Expr] = {}
+  let grouped : Map[Int, Expr] = Map([])
   let degrees : Array[Int] = []
   for term in terms {
     let degree = intpoly_total_degree(term)
@@ -1776,7 +1776,7 @@ pub fn polytope_integrate_many(
   exprs : Array[Expr],
   vars? : Array[Expr] = intpoly_default_vars(),
 ) -> Map[Expr, Expr] raise IntegralError {
-  let out : Map[Expr, Expr] = {}
+  let out : Map[Expr, Expr] = Map([])
   for expr in exprs {
     out[expr] = polytope_integrate(poly, expr, vars~)
   }
@@ -1801,7 +1801,7 @@ pub fn polytope_integrate_upto(
   let (x_name, y_name) = intpoly_var_names(vars)
   let x = @symcore.Expr::Symbol(x_name)
   let y = @symcore.Expr::Symbol(y_name)
-  let out : Map[Expr, Expr] = {}
+  let out : Map[Expr, Expr] = Map([])
   for degree in 0..<=max_degree {
     for dx in 0..<=degree {
       let dy = degree - dx

@@ -1,24 +1,24 @@
 ///|
 fn expect_gcd_oracle(p : Poly, q : Poly) -> Unit raise {
   let g = p.gcd_univar(q)
-  let ours = sympy_normalize(g.to_string()).trim().to_string()
-  let oracle = gcd(p.to_expr(), q.to_expr()).trim().to_string()
+  let ours = sympy_normalize(g.to_string()).trim().to_owned()
+  let oracle = gcd(p.to_expr(), q.to_expr()).trim().to_owned()
   assert_eq(ours, oracle)
 }
 
 ///|
 fn expect_div_oracle(p : Poly, q : Poly) -> Unit raise {
   let (quo, rem) = p.divmod_univar(q)
-  let ours = div_pair_to_string(quo, rem).trim().to_string()
-  let oracle = div(p.to_expr(), q.to_expr()).trim().to_string()
+  let ours = div_pair_to_string(quo, rem).trim().to_owned()
+  let oracle = div(p.to_expr(), q.to_expr()).trim().to_owned()
   assert_eq(ours, oracle)
 }
 
 ///|
 fn expect_resultant_oracle(p : Poly, q : Poly) -> Unit raise {
   let res = p.resultant(q, 0)
-  let ours = sympy_normalize(res.to_string()).trim().to_string()
-  let oracle = resultant(p.to_expr(), q.to_expr(), x="x").trim().to_string()
+  let ours = sympy_normalize(res.to_string()).trim().to_owned()
+  let oracle = resultant(p.to_expr(), q.to_expr(), x="x").trim().to_owned()
   assert_eq(ours, oracle)
 }
 

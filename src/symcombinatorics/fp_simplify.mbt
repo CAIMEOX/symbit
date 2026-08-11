@@ -5,7 +5,7 @@
 fn set_unique_words(
   values : Array[FreeGroupElement],
 ) -> Array[FreeGroupElement] {
-  let seen : Map[FreeGroupElement, Bool] = {}
+  let seen : Map[FreeGroupElement, Bool] = Map([])
   let out : Array[FreeGroupElement] = Array::new()
   for v in values {
     if !seen.contains(v) {
@@ -42,9 +42,9 @@ pub fn elimination_technique_1(
       }
     }
   }
-  let redundant_gens : Map[FreeGroupElement, FreeGroupElement] = {}
+  let redundant_gens : Map[FreeGroupElement, FreeGroupElement] = Map([])
   let redundant_rels : Array[FreeGroupElement] = Array::new()
-  let used_gens : Map[FreeGroupElement, Bool] = {}
+  let used_gens : Map[FreeGroupElement, Bool] = Map([])
   for rel in rels_mut {
     let contained = rel.contains_generators()
     let mut skip = false
@@ -127,7 +127,7 @@ pub fn _simplify_relators(
     return []
   }
   let identity = rels_mut[0].group.identity()
-  let exps : Map[FreeGroupElement, FreeGroupElement] = {}
+  let exps : Map[FreeGroupElement, FreeGroupElement] = Map([])
   for i in 0..<rels_mut.length() {
     let rel = rels_mut[i]
     if rel.number_syllables() == 1 {
@@ -236,7 +236,7 @@ pub fn simplify_presentation(
       syms.push(g.group.symbols[idx])
     }
     let (new_group, new_gens) = free_group_from_array(syms)
-    let subs : Map[String, FreeGroupElement] = {}
+    let subs : Map[String, FreeGroupElement] = Map([])
     for i in 0..<syms.length() {
       subs[syms[i]] = new_gens[i]
     }

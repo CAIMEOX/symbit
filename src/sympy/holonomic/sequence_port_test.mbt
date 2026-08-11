@@ -19,6 +19,6 @@ test "holonomic sequence: equality semantics" {
   let s1 = holonomic_sequence(rec, u0=[@symcore.int(2), @symcore.int(3)])
   let s2 = holonomic_sequence(rec, u0=[@symcore.int(2), @symcore.int(3)])
   let s3 = holonomic_sequence(rec, u0=[@symcore.int(2)])
-  assert_eq(s1, s2)
+  assert_true(s1 == s2)
   assert_true(s1 != s3)
 }

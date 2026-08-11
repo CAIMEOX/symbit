@@ -273,7 +273,7 @@ pub fn fft_equiv(
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
   let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
-  let kwargs : Map[String, OracleArg] = Map::new()
+  let kwargs : Map[String, OracleArg] = Map([])
   match dps {
     Some(v) => kwargs["dps"] = OracleArg::Int(v)
     None => ()
@@ -293,7 +293,7 @@ pub fn ifft_equiv(
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
   let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
-  let kwargs : Map[String, OracleArg] = Map::new()
+  let kwargs : Map[String, OracleArg] = Map([])
   match dps {
     Some(v) => kwargs["dps"] = OracleArg::Int(v)
     None => ()
@@ -365,7 +365,7 @@ pub fn mobius_transform_equiv(
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
   let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
-  let kwargs : Map[String, OracleArg] = Map::new()
+  let kwargs : Map[String, OracleArg] = Map([])
   kwargs["subset"] = OracleArg::Bool(subset)
   let items = sympy_list_call(
     "sympy.discrete.transforms.mobius_transform",
@@ -383,7 +383,7 @@ pub fn inverse_mobius_transform_equiv(
 ) -> Bool raise {
   let list_obj = py_list_from_exprs(seq)
   let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
-  let kwargs : Map[String, OracleArg] = Map::new()
+  let kwargs : Map[String, OracleArg] = Map([])
   kwargs["subset"] = OracleArg::Bool(subset)
   let items = sympy_list_call(
     "sympy.discrete.transforms.inverse_mobius_transform",
@@ -406,7 +406,7 @@ pub fn convolution_fft_equiv(
     OracleArg::PyObj(a_obj.obj()),
     OracleArg::PyObj(b_obj.obj()),
   ]
-  let kwargs : Map[String, OracleArg] = Map::new()
+  let kwargs : Map[String, OracleArg] = Map([])
   match dps {
     Some(v) => kwargs["dps"] = OracleArg::Int(v)
     None => ()
@@ -531,7 +531,7 @@ pub fn convolution_equiv(
     OracleArg::PyObj(a_obj.obj()),
     OracleArg::PyObj(b_obj.obj()),
   ]
-  let kwargs : Map[String, OracleArg] = Map::new()
+  let kwargs : Map[String, OracleArg] = Map([])
   if cycle != 0 {
     kwargs["cycle"] = OracleArg::Int(cycle)
   }

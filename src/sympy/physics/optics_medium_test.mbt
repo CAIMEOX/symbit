@@ -55,11 +55,16 @@ test "physics.optics.medium: derived parameterizations and guards" {
     "derived permittivity",
   )
 
-  let err : Result[Medium, PhysicsError] = try? medium(
-    "m9",
-    permittivity=Some(e0),
-    permeability=Some(u0),
-    n=Some(@symcore.int(2)),
-  )
+  let err : Result[Medium, PhysicsError] = try
+    medium(
+      "m9",
+      permittivity=Some(e0),
+      permeability=Some(u0),
+      n=Some(@symcore.int(2)),
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_true(err is Err(_))
 }

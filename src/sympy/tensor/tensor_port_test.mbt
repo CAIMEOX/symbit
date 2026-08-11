@@ -7,7 +7,7 @@ test "tensor basic expression" {
   let expr = a.call([i, j])
   let s = expr.to_string()
   assert_eq(s, "A(i, -j)")
-  assert_oracle(try? tensor_str(expr), s)
+  assert_oracle(tensor_str(expr), s)
 }
 
 ///|

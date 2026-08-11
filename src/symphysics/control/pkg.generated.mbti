@@ -278,4 +278,3 @@ pub impl Neg for TransferFunction
 pub type ControlComplex = (Double, Double)
 
 // Traits
-

@@ -470,7 +470,7 @@ pub fn manual_diff(f : Expr, symbol : Expr) -> Expr {
 /// - Returns: The substituted expression.
 /// - Limits: Mapping/sequence forms are represented by direct repeated calls in MoonBit.
 pub fn manual_subs(expr : Expr, old : Expr, new : Expr) -> Expr {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   match old {
     @symcore.Expr::Symbol(name) => {
       env[name] = new
@@ -597,7 +597,7 @@ pub fn integral_steps(integrand : Expr, symbol : Expr) -> ManualStep {
 
 ///|
 pub fn make_wilds(symbol : Expr) -> Map[String, Expr] {
-  let out : Map[String, Expr] = {}
+  let out : Map[String, Expr] = Map([])
   let suffix = match manual_var_name(symbol) {
     Some(name) => "_" + name
     None => ""

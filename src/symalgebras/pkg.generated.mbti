@@ -87,4 +87,3 @@ pub using @symcore {type Expr}
 pub type Matrix = Array[Array[@symcore.Expr]]
 
 // Traits
-

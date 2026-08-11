@@ -211,7 +211,7 @@ fn solver_sign_at(
   symbol : Expr,
   point : Expr,
 ) -> Int? raise SolverError {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[symbol_name(symbol)] = point
   let value = canonical_expr(@symcore.subst(normalize_equation(expr), env))
   if expr_is_zeroish(value) == Some(true) {
@@ -1093,7 +1093,7 @@ pub fn reduce_inequalities(
   if tracked.length() == 1 {
     return solver_reduce_inequalities_single(inequalities, tracked[0])
   }
-  let grouped : Map[String, Array[Expr]] = {}
+  let grouped : Map[String, Array[Expr]] = Map([])
   let passthrough : Array[Expr] = []
   for inequality in inequalities {
     let relevant = solver_relevant_symbols(inequality, tracked)

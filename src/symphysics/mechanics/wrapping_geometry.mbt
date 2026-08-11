@@ -56,7 +56,7 @@ fn mechanics_is_negative_one(expr : Expr) -> Bool {
 
 ///|
 fn mechanics_bigint_sqrt_floor(n : BigInt) -> BigInt? {
-  if n.op_lt(BigInt::from_int(0)) {
+  if n < BigInt::from_int(0) {
     return None
   }
   let zero = BigInt::from_int(0)
@@ -89,13 +89,10 @@ fn mechanics_rational_exact_sqrt(
     (Some(num_root), Some(den_root)) =>
       if num_root.mul(num_root).compare(value.numerator()) == 0 &&
         den_root.mul(den_root).compare(value.denominator()) == 0 {
-        let rat : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-          num_root, den_root,
-        )
-        match rat {
-          Ok(value) => Some(value)
-          Err(_) => None
+        let rat = @symnum.BigRational::new(num_root, den_root) catch {
+          _ => return None
         }
+        Some(rat)
       } else {
         None
       }

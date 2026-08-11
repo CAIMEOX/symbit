@@ -762,8 +762,8 @@ pub fn dup_real_imag(
     Domain::ZZ | Domain::QQ => ()
     _ => raise PolyError::DomainMismatch
   }
-  let real_terms : Map[Monomial, FieldElem] = {}
-  let imag_terms : Map[Monomial, FieldElem] = {}
+  let real_terms : Map[Monomial, FieldElem] = Map([])
+  let imag_terms : Map[Monomial, FieldElem] = Map([])
   let coeffs = dup_strip(f)
   let degree = dup_degree(coeffs)
   if degree < 0 {
@@ -1591,7 +1591,7 @@ pub fn dmp_alg_inject(
   }
   let (minpoly, gen) = load_algext_minpoly(base, gens, rels)
   let source = dmp_to_dict(f, u, domain)
-  let injected : Map[Monomial, FieldElem] = {}
+  let injected : Map[Monomial, FieldElem] = Map([])
   for f_monom, coeff in source {
     let tail = f_monom.to_array()
     let coeff_terms = densetools_alg_coeff_terms(coeff, base, minpoly, gen)

@@ -298,17 +298,17 @@ test "densebasic: multivariate LC/TC/degree list and true_LT" {
   inspect(@sympolys.dmp_degree(f, 1), content="1")
   inspect(@sympolys.dmp_degree_in(f, 1, 1), content="2")
   let degs = @sympolys.dmp_degree_list(f, 1)
-  inspect(degs, content="[1, 2]")
+  debug_inspect(degs, content="[1, 2]")
   let lt = @sympolys.dmp_true_LT(f, 1)
   let (exps, coeff) = lt
-  inspect(exps, content="[1, 2]")
+  debug_inspect(exps, content="[1, 2]")
   inspect(coeff, content="2")
 
   // zero polynomial [[[]]]
   let z = poly([poly([poly([])])])
   inspect(@sympolys.dmp_degree(z, 2), content="-1")
   let lt_z = @sympolys.dmp_true_LT(z, 2)
-  inspect(lt_z.0, content="[0, 0, 0]")
+  debug_inspect(lt_z.0, content="[0, 0, 0]")
   inspect(lt_z.1, content="0")
 }
 
@@ -402,35 +402,35 @@ test "densebasic: dmp_strip multivariate sympy cases" {
 test "densebasic: dmp_degree_list deeper cases" {
   let deep_zero = poly([poly([poly([poly([])])])])
   let degz = @sympolys.dmp_degree_list(deep_zero, 3)
-  inspect(degz, content="[-1, -1, -1, -1]")
+  debug_inspect(degz, content="[-1, -1, -1, -1]")
   let deep_one = poly([poly([poly([poly([coef(1)])])])])
   let dego = @sympolys.dmp_degree_list(deep_one, 3)
-  inspect(dego, content="[0, 0, 0, 0]")
+  debug_inspect(dego, content="[0, 0, 0, 0]")
 }
 
 ///|
 test "densebasic: dmp_degree_in/list sympy f_polys degrees" {
   let f0 = monom_poly([2, 2, 2])
-  inspect(@sympolys.dmp_degree_list(f0, 2), content="[2, 2, 2]")
+  debug_inspect(@sympolys.dmp_degree_list(f0, 2), content="[2, 2, 2]")
   let f1 = monom_poly([3, 3, 3])
-  inspect(@sympolys.dmp_degree_list(f1, 2), content="[3, 3, 3]")
+  debug_inspect(@sympolys.dmp_degree_list(f1, 2), content="[3, 3, 3]")
   let f2 = monom_poly([5, 3, 3])
-  inspect(@sympolys.dmp_degree_list(f2, 2), content="[5, 3, 3]")
+  debug_inspect(@sympolys.dmp_degree_list(f2, 2), content="[5, 3, 3]")
   let f3 = monom_poly([5, 4, 7])
-  inspect(@sympolys.dmp_degree_list(f3, 2), content="[5, 4, 7]")
+  debug_inspect(@sympolys.dmp_degree_list(f3, 2), content="[5, 4, 7]")
   let f4 = monom_poly([9, 12, 8])
   inspect(@sympolys.dmp_degree_in(f4, 0, 2), content="9")
   inspect(@sympolys.dmp_degree_in(f4, 1, 2), content="12")
   inspect(@sympolys.dmp_degree_in(f4, 2, 2), content="8")
-  inspect(@sympolys.dmp_degree_list(f4, 2), content="[9, 12, 8]")
+  debug_inspect(@sympolys.dmp_degree_list(f4, 2), content="[9, 12, 8]")
   let f5 = monom_poly([3, 3, 3])
-  inspect(@sympolys.dmp_degree_list(f5, 2), content="[3, 3, 3]")
+  debug_inspect(@sympolys.dmp_degree_list(f5, 2), content="[3, 3, 3]")
   let f6 = monom_poly([4, 4, 6, 3])
   inspect(@sympolys.dmp_degree_in(f6, 0, 3), content="4")
   inspect(@sympolys.dmp_degree_in(f6, 1, 3), content="4")
   inspect(@sympolys.dmp_degree_in(f6, 2, 3), content="6")
   inspect(@sympolys.dmp_degree_in(f6, 3, 3), content="3")
-  inspect(@sympolys.dmp_degree_list(f6, 3), content="[4, 4, 6, 3]")
+  debug_inspect(@sympolys.dmp_degree_list(f6, 3), content="[4, 4, 6, 3]")
 }
 
 ///|
@@ -504,16 +504,18 @@ test "densebasic: dmp_validate" {
   )
   inspect(dense_repr(v3.0), content="[[1],[]]")
   inspect(v3.1, content="1")
-  let bad : Result[(DensePoly, Int), PolyError] = try? @sympolys.dmp_validate(
-    poly([
-      poly([coef(0)]),
-      coef(0),
-      poly([coef(0)]),
-      poly([coef(1)]),
-      poly([coef(0)]),
-    ]),
-  )
-  assert_true(bad is Err(PolyError::NonPolynomial))
+  let bad = expect_poly_error(fn() raise PolyError {
+    @sympolys.dmp_validate(
+      poly([
+        poly([coef(0)]),
+        coef(0),
+        poly([coef(0)]),
+        poly([coef(1)]),
+        poly([coef(0)]),
+      ]),
+    )
+  })
+  assert_true(bad is PolyError::NonPolynomial)
 }
 
 ///|
@@ -532,7 +534,7 @@ test "densebasic: dmp_degree_in/list coverage" {
   inspect(@sympolys.dmp_degree(f, 1), content="2")
   inspect(@sympolys.dmp_degree_in(f, 1, 1), content="1")
   let degs = @sympolys.dmp_degree_list(f, 1)
-  inspect(degs, content="[2, 1]")
+  debug_inspect(degs, content="[2, 1]")
   let z = poly([])
   inspect(@sympolys.dmp_degree_in(z, 1, 1), content="-1")
   let f2 = poly([
@@ -543,7 +545,7 @@ test "densebasic: dmp_degree_in/list coverage" {
   inspect(@sympolys.dmp_degree(f2, 1), content="2")
   inspect(@sympolys.dmp_degree_in(f2, 1, 1), content="3")
   let degs2 = @sympolys.dmp_degree_list(f2, 1)
-  inspect(degs2, content="[2, 3]")
+  debug_inspect(degs2, content="[2, 3]")
   let f3 = poly([
     poly([poly([coef(1), coef(0)]), poly([coef(2)])]),
     poly([poly([coef(3)])]),
@@ -553,7 +555,7 @@ test "densebasic: dmp_degree_in/list coverage" {
   inspect(@sympolys.dmp_degree_in(f3, 1, 2), content="1")
   inspect(@sympolys.dmp_degree_in(f3, 2, 2), content="1")
   let degs3 = @sympolys.dmp_degree_list(f3, 2)
-  inspect(degs3, content="[1, 1, 1]")
+  debug_inspect(degs3, content="[1, 1, 1]")
   let z3 = poly([poly([poly([])])])
   inspect(@sympolys.dmp_degree_in(z3, 0, 2), content="-1")
   inspect(@sympolys.dmp_degree_in(z3, 1, 2), content="-1")
@@ -567,33 +569,37 @@ test "densebasic: dmp_degree_in/list coverage" {
 ///|
 test "densebasic: dmp_degree_in bounds" {
   let f = poly([poly([coef(1)])])
-  let neg : Result[Int, PolyError] = try? @sympolys.dmp_degree_in(f, -1, 1)
-  assert_true(neg is Err(PolyError::BadExponent))
-  let high : Result[Int, PolyError] = try? @sympolys.dmp_degree_in(f, 2, 1)
-  assert_true(high is Err(PolyError::BadExponent))
+  let neg = expect_poly_error(fn() raise PolyError {
+    @sympolys.dmp_degree_in(f, -1, 1)
+  })
+  assert_true(neg is PolyError::BadExponent)
+  let high = expect_poly_error(fn() raise PolyError {
+    @sympolys.dmp_degree_in(f, 2, 1)
+  })
+  assert_true(high is PolyError::BadExponent)
 }
 
 ///|
 test "densebasic: dmp_true_LT examples" {
   let z = poly([poly([])])
   let lt0 = @sympolys.dmp_true_LT(z, 1)
-  inspect(lt0.0, content="[0, 0]")
+  debug_inspect(lt0.0, content="[0, 0]")
   inspect(lt0.1, content="0")
   let a = poly([poly([coef(7)])])
   let lt1 = @sympolys.dmp_true_LT(a, 1)
-  inspect(lt1.0, content="[0, 0]")
+  debug_inspect(lt1.0, content="[0, 0]")
   inspect(lt1.1, content="7")
   let b = poly([poly([coef(1), coef(0)])])
   let lt2 = @sympolys.dmp_true_LT(b, 1)
-  inspect(lt2.0, content="[0, 1]")
+  debug_inspect(lt2.0, content="[0, 1]")
   inspect(lt2.1, content="1")
   let c = poly([poly([coef(1)]), poly([])])
   let lt3 = @sympolys.dmp_true_LT(c, 1)
-  inspect(lt3.0, content="[1, 0]")
+  debug_inspect(lt3.0, content="[1, 0]")
   inspect(lt3.1, content="1")
   let d = poly([poly([coef(1), coef(0)]), poly([])])
   let lt4 = @sympolys.dmp_true_LT(d, 1)
-  inspect(lt4.0, content="[1, 1]")
+  debug_inspect(lt4.0, content="[1, 1]")
   inspect(lt4.1, content="1")
 }
 
@@ -724,18 +730,19 @@ test "densebasic: dup_nth/dmp_nth/dmp_ground_nth" {
   inspect(@sympolys.dup_nth([fez(1), fez(2), fez(3)], 1), content="2")
   inspect(@sympolys.dup_nth([fez(1), fez(2), fez(3)], 2), content="1")
   inspect(@sympolys.dup_nth([fez(1), fez(2), fez(3)], 9), content="0")
-  let neg : Result[FieldElem, PolyError] = try? @sympolys.dup_nth(
-    [fez(3), fez(4), fez(5)],
-    -1,
-  )
-  assert_true(neg is Err(PolyError::BadExponent))
+  let neg = expect_poly_error(fn() raise PolyError {
+    @sympolys.dup_nth([fez(3), fez(4), fez(5)], -1)
+  })
+  assert_true(neg is PolyError::BadExponent)
   let f = poly([poly([coef(1)]), poly([coef(2)]), poly([coef(3)])])
   inspect(dense_repr(@sympolys.dmp_nth(f, 0, 1)), content="[3]")
   inspect(dense_repr(@sympolys.dmp_nth(f, 1, 1)), content="[2]")
   inspect(dense_repr(@sympolys.dmp_nth(f, 2, 1)), content="[1]")
   inspect(dense_repr(@sympolys.dmp_nth(f, 9, 1)), content="[]")
-  let neg2 : Result[DensePoly, PolyError] = try? @sympolys.dmp_nth(f, -1, 1)
-  assert_true(neg2 is Err(PolyError::BadExponent))
+  let neg2 = expect_poly_error(fn() raise PolyError {
+    @sympolys.dmp_nth(f, -1, 1)
+  })
+  assert_true(neg2 is PolyError::BadExponent)
   let f3 = poly([poly([])])
   inspect(@sympolys.dmp_ground_nth(f3, [0, 0], 1, Domain::ZZ), content="0")
   let f4 = poly([poly([coef(1)]), poly([coef(2)]), poly([coef(3)])])
@@ -744,13 +751,10 @@ test "densebasic: dup_nth/dmp_nth/dmp_ground_nth" {
   inspect(@sympolys.dmp_ground_nth(f4, [2, 0], 1, Domain::ZZ), content="1")
   inspect(@sympolys.dmp_ground_nth(f4, [2, 1], 1, Domain::ZZ), content="0")
   inspect(@sympolys.dmp_ground_nth(f4, [3, 0], 1, Domain::ZZ), content="0")
-  let neg3 : Result[FieldElem, PolyError] = try? @sympolys.dmp_ground_nth(
-    f4,
-    [2, -1],
-    1,
-    Domain::ZZ,
-  )
-  assert_true(neg3 is Err(PolyError::BadExponent))
+  let neg3 = expect_poly_error(fn() raise PolyError {
+    @sympolys.dmp_ground_nth(f4, [2, -1], 1, Domain::ZZ)
+  })
+  assert_true(neg3 is PolyError::BadExponent)
 }
 
 ///|
@@ -866,7 +870,7 @@ test "densebasic: negative/positive helpers" {
 
 ///|
 test "densebasic: dup_from/to_dict and raw dict" {
-  let raw : Map[Int, FieldElem] = Map::new()
+  let raw : Map[Int, FieldElem] = Map([])
   raw.set(8, fez(3))
   raw.set(5, fez(2))
   raw.set(0, fez(8))
@@ -874,7 +878,7 @@ test "densebasic: dup_from/to_dict and raw dict" {
   inspect(f.map(c => c.to_string()).join(","), content="3,0,0,2,0,0,0,0,8")
   let raw_back = @sympolys.dup_to_raw_dict(f, Domain::ZZ)
   inspect(map_int_repr(raw_back), content="{0:8,5:2,8:3}")
-  let dict : Map[Monomial, FieldElem] = Map::new()
+  let dict : Map[Monomial, FieldElem] = Map([])
   dict.set(@sympolys.monomial_from_array([8]), fez(3))
   dict.set(@sympolys.monomial_from_array([5]), fez(2))
   dict.set(@sympolys.monomial_from_array([0]), fez(8))
@@ -886,7 +890,7 @@ test "densebasic: dup_from/to_dict and raw dict" {
 
 ///|
 test "densebasic: dmp_from/to_dict" {
-  let dict : Map[Monomial, FieldElem] = Map::new()
+  let dict : Map[Monomial, FieldElem] = Map([])
   dict.set(@sympolys.monomial_from_array([8, 0]), fez(3))
   dict.set(@sympolys.monomial_from_array([5, 0]), fez(2))
   dict.set(@sympolys.monomial_from_array([0, 0]), fez(8))
@@ -894,14 +898,14 @@ test "densebasic: dmp_from/to_dict" {
   inspect(dense_repr(f), content="[[3],[],[],[2],[],[],[],[],[8]]")
   let back = @sympolys.dmp_to_dict(f, 1, Domain::ZZ)
   inspect(map_monom_repr(back), content="{0,0:8,5,0:2,8,0:3}")
-  let empty : Map[Monomial, FieldElem] = Map::new()
+  let empty : Map[Monomial, FieldElem] = Map([])
   let z = @sympolys.dmp_from_dict(empty, 1, Domain::ZZ)
   inspect(dense_repr(z), content="[[]]")
 }
 
 ///|
 test "densebasic: dmp_swap and dmp_permute" {
-  let dict : Map[Monomial, FieldElem] = Map::new()
+  let dict : Map[Monomial, FieldElem] = Map([])
   dict.set(@sympolys.monomial_from_array([1, 0]), fez(2))
   dict.set(@sympolys.monomial_from_array([0, 1]), fez(3))
   let f = @sympolys.dmp_from_dict(dict, 1, Domain::ZZ)
@@ -956,7 +960,7 @@ test "densebasic: deflate/inflate helpers" {
     poly([coef(1)]),
   ])
   let (b, def2) = @sympolys.dmp_deflate(ff, 1, Domain::ZZ)
-  inspect(b, content="[2, 1]")
+  debug_inspect(b, content="[2, 1]")
   inspect(dense_repr(def2), content="[[1,0,0],[1,0],[1]]")
   let polys : Array[Array[FieldElem]] = [
     [fez(1), fez(0), fez(2), fez(0), fez(3)],
@@ -969,7 +973,7 @@ test "densebasic: deflate/inflate helpers" {
   let p1 = poly([poly([coef(2)])])
   let p2 = poly([poly([coef(2), coef(0), coef(0)])])
   let (m2, defs2) = @sympolys.dmp_multi_deflate([p1, p2], 1, Domain::ZZ)
-  inspect(m2, content="[1, 2]")
+  debug_inspect(m2, content="[1, 2]")
   inspect(dense_repr(defs2[0]), content="[[2]]")
   inspect(dense_repr(defs2[1]), content="[[2,0]]")
   let infl = @sympolys.dup_inflate([fez(1), fez(1), fez(1)], 3, Domain::ZZ)
@@ -982,19 +986,19 @@ test "densebasic: deflate/inflate helpers" {
 ///|
 test "densebasic: dmp_true_LT sympy cases" {
   let lt0 = @sympolys.dmp_true_LT(poly([poly([])]), 1)
-  inspect(lt0.0, content="[0, 0]")
+  debug_inspect(lt0.0, content="[0, 0]")
   inspect(lt0.1, content="0")
   let lt1 = @sympolys.dmp_true_LT(poly([poly([coef(7)])]), 1)
-  inspect(lt1.0, content="[0, 0]")
+  debug_inspect(lt1.0, content="[0, 0]")
   inspect(lt1.1, content="7")
   let lt2 = @sympolys.dmp_true_LT(poly([poly([coef(1), coef(0)])]), 1)
-  inspect(lt2.0, content="[0, 1]")
+  debug_inspect(lt2.0, content="[0, 1]")
   inspect(lt2.1, content="1")
   let lt3 = @sympolys.dmp_true_LT(poly([poly([coef(1)]), poly([])]), 1)
-  inspect(lt3.0, content="[1, 0]")
+  debug_inspect(lt3.0, content="[1, 0]")
   inspect(lt3.1, content="1")
   let lt4 = @sympolys.dmp_true_LT(poly([poly([coef(1), coef(0)]), poly([])]), 1)
-  inspect(lt4.0, content="[1, 1]")
+  debug_inspect(lt4.0, content="[1, 1]")
   inspect(lt4.1, content="1")
 }
 
@@ -1008,12 +1012,9 @@ test "densebasic: dup_reverse sympy cases" {
 
 ///|
 test "densebasic: dmp_degree_in bad index" {
-  let bad : Result[Int, PolyError] = try? @sympolys.dmp_degree_in(
-    poly([coef(1)]),
-    -1,
-    0,
-  )
-  assert_true(bad is Err(_))
+  let _ = expect_poly_error(fn() raise PolyError {
+    @sympolys.dmp_degree_in(poly([coef(1)]), -1, 0)
+  })
 }
 
 ///|

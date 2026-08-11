@@ -289,7 +289,8 @@ pub fn Plot::_backend(Self) -> Self
 pub fn Plot::append(Self, PlotSeries) -> Self
 pub fn Plot::backend(Self) -> String
 pub fn Plot::close(Self) -> Unit
-pub fn Plot::extend(Self, Self) -> Self
+#alias(extend, deprecated)
+pub fn Plot::extend_(Self, Self) -> Self
 pub fn Plot::get_contour_data(Self, Int) -> (Array[Array[Double]], Array[Array[Double]], Array[Array[Double?]]) raise PlottingError
 pub fn Plot::get_data(Self, Int) -> (Array[Double], Array[Double?]) raise PlottingError
 pub fn Plot::get_implicit_data(Self, Int) -> ImplicitPlotData raise PlottingError
@@ -364,4 +365,3 @@ pub fn TextBackend::show(Self) -> Unit raise PlottingError
 // Type aliases
 
 // Traits
-

@@ -44,20 +44,24 @@ fn ri_wb_all_repr(
 
 ///|
 test "rootisolation wb: helper/error branches" {
-  let empty_to_poly : Result[Poly, PolyError] = try? dup_to_poly([], Domain::QQ)
-  assert_true(empty_to_poly is Err(PolyError::NonPolynomial))
-
-  let cauchy_short : Result[FieldElem, PolyError] = try? dup_cauchy_lower_bound(
-    [ri_wb_feqq(1, 1)],
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError { dup_to_poly([], Domain::QQ) },
+    "NonPolynomial",
   )
-  assert_true(cauchy_short is Err(PolyError::BadExponent))
 
-  let mignotte_short : Result[FieldElem, PolyError] = try? dup_mignotte_sep_bound_squared(
-    [ri_wb_feqq(1, 1)],
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dup_cauchy_lower_bound([ri_wb_feqq(1, 1)], Domain::QQ)
+    },
+    "BadExponent",
   )
-  assert_true(mignotte_short is Err(PolyError::BadExponent))
+
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dup_mignotte_sep_bound_squared([ri_wb_feqq(1, 1)], Domain::QQ)
+    },
+    "BadExponent",
+  )
 
   let sturm_const = dup_sturm([ri_wb_feqq(7, 1)], Domain::QQ)
   assert_true(sturm_const.length() == 1)
@@ -74,16 +78,12 @@ test "rootisolation wb: helper/error branches" {
 test "rootisolation wb: refine edge branches" {
   let f = [ri_wb_feqq(1, 1), ri_wb_feqq(0, 1), ri_wb_feqq(-2, 1)] // x^2 - 2
 
-  let empty_refine : Result[
-    (@symnum.BigRational, @symnum.BigRational),
-    PolyError,
-  ] = try? dup_refine_real_root(
-    [],
-    ri_wb_rat(1, 1),
-    ri_wb_rat(2, 1),
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dup_refine_real_root([], ri_wb_rat(1, 1), ri_wb_rat(2, 1), Domain::QQ)
+    },
+    "NonPolynomial",
   )
-  assert_true(empty_refine is Err(PolyError::NonPolynomial))
 
   let same = dup_refine_real_root(
     f,
@@ -229,9 +229,8 @@ test "rootisolation wb: complex and all-roots frontdoors on all-real inputs" {
   )
 
   let complex = [ri_wb_feqq(1, 1), ri_wb_feqq(0, 1), ri_wb_feqq(1, 1)] // x^2 + 1
-  let complex_res : Result[Array[ComplexRootRectangle], PolyError] = try? dup_isolate_complex_roots_sqf(
-    complex,
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError { dup_isolate_complex_roots_sqf(complex, Domain::QQ) },
+    "DomainMismatch",
   )
-  assert_true(complex_res is Err(PolyError::DomainMismatch))
 }

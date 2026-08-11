@@ -15,7 +15,7 @@ test "matrices expressions evaluate with environment" {
     matrix_expr_mul([a, b]),
     matrix_expr_pow(matrix_expr(eye(2)), 2),
   ])
-  let env : Map[String, Matrix] = {}
+  let env : Map[String, Matrix] = Map([])
   env["A"] = matrix([
     [@symcore.int(1), @symcore.int(2)],
     [@symcore.int(0), @symcore.int(1)],
@@ -31,7 +31,7 @@ test "matrices expressions evaluate with environment" {
 test "matrices expressions power and transpose evaluation" {
   let a = matrix_symbol("A", 2, 2)
   let expr = matrix_expr_transpose(matrix_expr_pow(a, 2))
-  let env : Map[String, Matrix] = {}
+  let env : Map[String, Matrix] = Map([])
   env["A"] = matrix([
     [@symcore.int(1), @symcore.int(1)],
     [@symcore.int(0), @symcore.int(1)],
@@ -45,7 +45,7 @@ test "matrices expressions block helpers" {
   let b = matrix_symbol("B", 2, 1)
   let expr = matrix_expr_block_diag([a, b])
   assert_true(expr.shape() == (3, 3))
-  let env : Map[String, Matrix] = {}
+  let env : Map[String, Matrix] = Map([])
   env["A"] = matrix([[@symcore.int(1), @symcore.int(2)]])
   env["B"] = matrix([[@symcore.int(3)], [@symcore.int(4)]])
   inspect(
@@ -62,7 +62,7 @@ test "matrices expressions identity zero and block evaluation" {
     zero_matrix_expr(2, 2),
   ])
   assert_true(expr.shape() == (2, 2))
-  let env : Map[String, Matrix] = {}
+  let env : Map[String, Matrix] = Map([])
   env["A"] = matrix([[@symcore.int(5)]])
   inspect(expr.eval(env).to_string(), content="Matrix([[1, 0], [5, 5]])")
 }
@@ -77,7 +77,7 @@ test "matrices expressions matadd matmul and collapse helpers" {
     block_diag_matrix_expr([a]),
   ]).block_collapse()
   inspect(block.to_string(), content="BlockDiag(Identity(1), A)")
-  let env : Map[String, Matrix] = {}
+  let env : Map[String, Matrix] = Map([])
   env["A"] = matrix([[@symcore.int(9)]])
   inspect(
     block.as_explicit(env).to_string(),

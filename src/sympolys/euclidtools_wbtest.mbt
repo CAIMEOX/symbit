@@ -109,12 +109,10 @@ test "euclidtools wb: extended Euclidean frontdoors" {
     euclid_wb_dup_triple_repr(dup_gcdex(f, g, Domain::QQ)),
     content="([-1/5,3/5],[1/5,-6/5,2],[1,1])",
   )
-  let non_field : Result[(Array[FieldElem], Array[FieldElem]), PolyError] = try? dup_half_gcdex(
-    f,
-    g,
-    Domain::ZZ,
+  sympolys_assert_error(
+    fn() raise PolyError { dup_half_gcdex(f, g, Domain::ZZ) },
+    "DomainNotField",
   )
-  assert_true(non_field is Err(PolyError::DomainNotField))
 }
 
 ///|
@@ -123,12 +121,10 @@ test "euclidtools wb: modular inverse frontdoors" {
   let g = [euclid_wb_qq(2, 1), euclid_wb_qq(-1, 1)]
   inspect(euclid_wb_dup_repr(dup_invert(f, g, Domain::QQ)), content="[-4/3]")
   let bad = [euclid_wb_qq(1, 1), euclid_wb_qq(-1, 1)]
-  let not_invertible : Result[Array[FieldElem], PolyError] = try? dup_invert(
-    f,
-    bad,
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError { dup_invert(f, bad, Domain::QQ) },
+    "ExactQuotientFailed",
   )
-  assert_true(not_invertible is Err(PolyError::ExactQuotientFailed))
 }
 
 ///|
@@ -170,13 +166,10 @@ test "euclidtools wb: dmp univariate wrappers" {
   ])
   let g = euclid_wb_poly([euclid_wb_qq(2, 1), euclid_wb_qq(-1, 1)])
   inspect(euclid_wb_dmp_repr(dmp_invert(f, g, 0, Domain::QQ)), content="[-4/3]")
-  let bad_u : Result[(DensePoly, DensePoly), PolyError] = try? dmp_half_gcdex(
-    f,
-    g,
-    1,
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError { dmp_half_gcdex(f, g, 1, Domain::QQ) },
+    "NotUnivariate",
   )
-  assert_true(bad_u is Err(PolyError::NotUnivariate))
 }
 
 ///|
@@ -254,13 +247,12 @@ test "euclidtools wb: discriminant and dmp resultant wrappers" {
     content="-1/2",
   )
   let nested = dense_poly([a, b])
-  let bad : Result[DensePoly, PolyError] = try? dmp_zz_collins_resultant(
-    nested,
-    nested,
-    1,
-    Domain::ZZ,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dmp_zz_collins_resultant(nested, nested, 1, Domain::ZZ)
+    },
+    "NotUnivariate",
   )
-  assert_true(bad is Err(PolyError::NotUnivariate))
   inspect(
     euclid_wb_dmp_repr(dmp_discriminant(euclid_wb_poly(f), 0, Domain::ZZ)),
     content="-8",

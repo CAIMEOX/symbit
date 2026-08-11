@@ -247,7 +247,7 @@ fn is_test_constant_symbol(expr : @symcore.Expr) -> Bool {
 
 ///|
 fn test_constant_sort_expr(expr : @symcore.Expr) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   for symbol in @symcore.free_symbols(expr) {
     if is_test_constant_symbol(symbol) {
       match symbol {
@@ -514,7 +514,7 @@ fn local_constant_renumber_inner(
 fn local_constant_renumber(expr : @symcore.Expr) -> @symcore.Expr {
   let constants_found : Array[String] = []
   let reordered = local_constant_renumber_inner(expr, constants_found)
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   for i in 0..<constants_found.length() {
     env[constants_found[i]] = @symcore.Expr::Symbol("C\{i + 1}")
   }
@@ -774,7 +774,7 @@ fn maybe_expr_compare_text(
 
 ///|
 fn assumption_map(entries : Array[(String, Bool?)]) -> Map[String, Bool?] {
-  let out : Map[String, Bool?] = {}
+  let out : Map[String, Bool?] = Map([])
   for entry in entries {
     out[entry.0] = entry.1
   }
@@ -1069,22 +1069,28 @@ test "lpmin lpmax and linprog solve basic linear programs" {
 
 ///|
 test "lp solvers report infeasible and unbounded cases" {
-  let infeasible : Result[
-    (@symcore.Expr, Map[String, @symcore.Expr]),
-    SolverError,
-  ] = try? lpmax(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Le, x(), @symcore.int(-1)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-  ])
-  assert_true(infeasible is Err(SolverError::InfeasibleLPError(_)))
+  try
+    lpmax(x(), [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x(), @symcore.int(-1)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+    ])
+  catch {
+    SolverError::InfeasibleLPError(_) => ()
+    _ => fail("expected InfeasibleLPError")
+  } noraise {
+    _ => fail("expected lpmax to raise")
+  }
 
-  let unbounded : Result[
-    (@symcore.Expr, Map[String, @symcore.Expr]),
-    SolverError,
-  ] = try? lpmin(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Le, x(), @symcore.int(3)),
-  ])
-  assert_true(unbounded is Err(SolverError::UnboundedLPError(_)))
+  try
+    lpmin(x(), [
+      @symcore.Expr::Relational(@symcore.RelOp::Le, x(), @symcore.int(3)),
+    ])
+  catch {
+    SolverError::UnboundedLPError(_) => ()
+    _ => fail("expected UnboundedLPError")
+  } noraise {
+    _ => fail("expected lpmin to raise")
+  }
 }
 
 ///|
@@ -1207,19 +1213,22 @@ test "linprog matches first SymPy simplex reference example" {
 
 ///|
 test "lp simplex edge cases match SymPy issue regressions" {
-  let infeasible_const : Result[
-    (@symcore.Expr, Map[String, @symcore.Expr]),
-    SolverError,
-  ] = try? lpmin(@symcore.int(5), [
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, x() + z(), @symcore.int(1)),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      x() + @symcore.int(2) * z(),
-      @symcore.int(0),
-    ),
-  ])
-  assert_true(infeasible_const is Err(SolverError::InfeasibleLPError(_)))
+  try
+    lpmin(@symcore.int(5), [
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, x() + z(), @symcore.int(1)),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        x() + @symcore.int(2) * z(),
+        @symcore.int(0),
+      ),
+    ])
+  catch {
+    SolverError::InfeasibleLPError(_) => ()
+    _ => fail("expected InfeasibleLPError")
+  } noraise {
+    _ => fail("expected lpmin to raise")
+  }
 
   let zero_objective = lpmax(@symcore.int(0), [
     @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
@@ -1508,37 +1517,40 @@ test "simplex and solveset match additional SymPy public cases batch 3" {
   let x2 = @symcore.Expr::Symbol("x2")
   let x3 = @symcore.Expr::Symbol("x3")
   let x4 = @symcore.Expr::Symbol("x4")
-  let infeasible_four_var : Result[
-    (@symcore.Expr, Map[String, @symcore.Expr]),
-    SolverError,
-  ] = try? lpmin(
-    @symcore.int(9) * x2 -
-    @symcore.int(8) * x3 +
-    @symcore.int(3) * x4 +
-    @symcore.int(6),
-    [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
-        @symcore.int(5) * x2 - @symcore.int(2) * x3,
-        @symcore.int(0),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
-        @symcore.int(-1) * x1 - @symcore.int(8) * x2 + @symcore.int(9) * x3,
-        @symcore.int(-3),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
-        @symcore.int(10) * x1 - x2 + @symcore.int(9) * x4,
-        @symcore.int(-4),
-      ),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
-    ],
-  )
-  assert_true(infeasible_four_var is Err(SolverError::InfeasibleLPError(_)))
+  try
+    lpmin(
+      @symcore.int(9) * x2 -
+      @symcore.int(8) * x3 +
+      @symcore.int(3) * x4 +
+      @symcore.int(6),
+      [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(5) * x2 - @symcore.int(2) * x3,
+          @symcore.int(0),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(-1) * x1 - @symcore.int(8) * x2 + @symcore.int(9) * x3,
+          @symcore.int(-3),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(10) * x1 - x2 + @symcore.int(9) * x4,
+          @symcore.int(-4),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
+      ],
+    )
+  catch {
+    SolverError::InfeasibleLPError(_) => ()
+    _ => fail("expected InfeasibleLPError")
+  } noraise {
+    _ => fail("expected lpmin to raise")
+  }
 
   inspect(
     @symsets.to_string(
@@ -3680,64 +3692,76 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
     e * x() + d * x() + f_sym * y() + g_sym * z() - h,
     i * x() + j * y() + k * z() - l,
   ]
-  let no_symbols : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix(eqns3, [])
-  assert_true(no_symbols is Err(SolverError::ValueError(_)))
+  try linear_eq_to_matrix(eqns3, []) catch {
+    SolverError::ValueError(_) => ()
+    _ => fail("expected ValueError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let duplicate_symbols : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix(eqns3, [x(), x(), y()])
-  assert_true(duplicate_symbols is Err(SolverError::ValueError(_)))
+  try linear_eq_to_matrix(eqns3, [x(), x(), y()]) catch {
+    SolverError::ValueError(_) => ()
+    _ => fail("expected ValueError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
   let inv_x = x() ^ @symcore.int(-1)
-  let nonlinear_recip : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix(
-    [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x + x(), inv_x)],
-    [x()],
-  )
-  assert_true(nonlinear_recip is Err(SolverError::NonlinearError(_)))
+  try
+    linear_eq_to_matrix(
+      [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x + x(), inv_x)],
+      [x()],
+    )
+  catch {
+    SolverError::NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let nonlinear_square : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix([x() ^ @symcore.int(2)], [x()])
-  assert_true(nonlinear_square is Err(SolverError::NonlinearError(_)))
+  try linear_eq_to_matrix([x() ^ @symcore.int(2)], [x()]) catch {
+    SolverError::NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let nonlinear_xy : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix([x() * y()], [x(), y()])
-  assert_true(nonlinear_xy is Err(SolverError::NonlinearError(_)))
+  try linear_eq_to_matrix([x() * y()], [x(), y()]) catch {
+    SolverError::NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let nonlinear_issue_14987 : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix(
-    [
-      x() * (@symcore.int(-3) * inv_x + @symcore.int(1)) +
-      @symcore.int(2) * y() -
-      a,
-    ],
-    [x(), y()],
-  )
-  assert_true(nonlinear_issue_14987 is Err(SolverError::NonlinearError(_)))
+  try
+    linear_eq_to_matrix(
+      [
+        x() * (@symcore.int(-3) * inv_x + @symcore.int(1)) +
+        @symcore.int(2) * y() -
+        a,
+      ],
+      [x(), y()],
+    )
+  catch {
+    SolverError::NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let auto_true : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix([@symcore.Expr::Boolean(true)], [x()])
-  assert_true(auto_true is Err(SolverError::ValueError(_)))
+  try linear_eq_to_matrix([@symcore.Expr::Boolean(true)], [x()]) catch {
+    SolverError::ValueError(_) => ()
+    _ => fail("expected ValueError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let auto_false : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix([@symcore.Expr::Boolean(false)], [x()])
-  assert_true(auto_false is Err(SolverError::ValueError(_)))
+  try linear_eq_to_matrix([@symcore.Expr::Boolean(false)], [x()]) catch {
+    SolverError::ValueError(_) => ()
+    _ => fail("expected ValueError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
   let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
   let pi_over_two = half *
@@ -3771,88 +3795,102 @@ test "linear_eq_to_matrix and solveset match additional SymPy public cases batch
   let inv_x = x() ^ @symcore.int(-1)
   let half = @symcore.rational_from_ints(1, 2) catch { _ => fail("half") }
 
-  let nonlinear_cancelled_rational : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix(
-    [
-      ((x() ^ @symcore.int(2)) - @symcore.int(3) * x()) *
-      ((x() + @symcore.int(-3)) ^ @symcore.int(-1)) +
-      @symcore.int(-3),
-    ],
-    [x()],
-  )
-  assert_true(
-    nonlinear_cancelled_rational is Err(SolverError::NonlinearError(_)),
-  )
+  try
+    linear_eq_to_matrix(
+      [
+        ((x() ^ @symcore.int(2)) - @symcore.int(3) * x()) *
+        ((x() + @symcore.int(-3)) ^ @symcore.int(-1)) +
+        @symcore.int(-3),
+      ],
+      [x()],
+    )
+  catch {
+    SolverError::NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let nonlinear_binomial_expand : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix(
-    [
-      ((x() + @symcore.int(1)) ^ @symcore.int(3)) +
-      @symcore.int(-1) * (x() ^ @symcore.int(3)) +
-      @symcore.int(-3) * (x() ^ @symcore.int(2)) +
-      @symcore.int(7),
-    ],
-    [x()],
-  )
-  assert_true(nonlinear_binomial_expand is Err(SolverError::NonlinearError(_)))
+  try
+    linear_eq_to_matrix(
+      [
+        ((x() + @symcore.int(1)) ^ @symcore.int(3)) +
+        @symcore.int(-1) * (x() ^ @symcore.int(3)) +
+        @symcore.int(-3) * (x() ^ @symcore.int(2)) +
+        @symcore.int(7),
+      ],
+      [x()],
+    )
+  catch {
+    SolverError::NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let nonlinear_cancelled_linear : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix([x() * (inv_x + @symcore.int(1)) + y()], [
-    x(),
-    y(),
-  ])
-  assert_true(nonlinear_cancelled_linear is Err(SolverError::NonlinearError(_)))
+  try
+    linear_eq_to_matrix([x() * (inv_x + @symcore.int(1)) + y()], [x(), y()])
+  catch {
+    SolverError::NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let nonlinear_mixed_mul : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix([(x() + @symcore.int(1)) * y()], [x(), y()])
-  assert_true(nonlinear_mixed_mul is Err(SolverError::NonlinearError(_)))
+  try linear_eq_to_matrix([(x() + @symcore.int(1)) * y()], [x(), y()]) catch {
+    SolverError::NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let nonlinear_eq_recip : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix(
-    [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x, inv_x + y())],
-    [x(), y()],
-  )
-  assert_true(nonlinear_eq_recip is Err(SolverError::NonlinearError(_)))
+  try
+    linear_eq_to_matrix(
+      [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x, inv_x + y())],
+      [x(), y()],
+    )
+  catch {
+    SolverError::NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let nonlinear_eq_y_over_x : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix(
-    [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
-        y() * inv_x,
-        y() * inv_x + y(),
-      ),
-    ],
-    [x(), y()],
-  )
-  assert_true(nonlinear_eq_y_over_x is Err(SolverError::NonlinearError(_)))
+  try
+    linear_eq_to_matrix(
+      [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          y() * inv_x,
+          y() * inv_x + y(),
+        ),
+      ],
+      [x(), y()],
+    )
+  catch {
+    SolverError::NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
-  let nonlinear_eq_quadratic : Result[
-    (@symmatrices.Matrix, @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_eq_to_matrix(
-    [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
-        x() * (x() + @symcore.int(1)),
-        (x() ^ @symcore.int(2)) + y(),
-      ),
-    ],
-    [x(), y()],
-  )
-  assert_true(nonlinear_eq_quadratic is Err(SolverError::NonlinearError(_)))
+  try
+    linear_eq_to_matrix(
+      [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          x() * (x() + @symcore.int(1)),
+          (x() ^ @symcore.int(2)) + y(),
+        ),
+      ],
+      [x(), y()],
+    )
+  catch {
+    SolverError::NonlinearError(_) => ()
+    _ => fail("expected NonlinearError")
+  } noraise {
+    _ => fail("expected linear_eq_to_matrix to raise")
+  }
 
   let issue_8715 = @symcore.Expr::Relational(
     @symcore.RelOp::Gt,
@@ -4251,44 +4289,55 @@ test "solveset and simplex invalid inputs match additional SymPy public cases ba
     0,
   )
 
-  let irrational_lp : Result[
-    (@symcore.Expr, Map[String, @symcore.Expr]),
-    SolverError,
-  ] = try? lpmax(@symcore.int(-1) * x() - y() - @symcore.int(5) * z(), [
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      x() - y() + sqrt(@symcore.int(2)) * z(),
-      @symcore.int(-4),
-    ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(),
-      @symcore.int(8),
-    ),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      @symcore.int(2) * x() + y() - @symcore.int(7) * z(),
-      @symcore.int(10),
-    ),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-  ])
-  assert_true(irrational_lp is Err(SolverError::ValueError(_)))
+  try
+    lpmax(@symcore.int(-1) * x() - y() - @symcore.int(5) * z(), [
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        x() - y() + sqrt(@symcore.int(2)) * z(),
+        @symcore.int(-4),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(-1) * x() + @symcore.int(2) * y() - @symcore.int(3) * z(),
+        @symcore.int(8),
+      ),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        @symcore.int(2) * x() + y() - @symcore.int(7) * z(),
+        @symcore.int(10),
+      ),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+    ])
+  catch {
+    SolverError::ValueError(_) => ()
+    _ => fail("expected ValueError")
+  } noraise {
+    _ => fail("expected lpmax to raise")
+  }
 
-  let strict_lp : Result[
-    (@symcore.Expr, Map[String, @symcore.Expr]),
-    SolverError,
-  ] = try? lpmax(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Gt, x(), @symcore.int(0)),
-  ])
-  assert_true(strict_lp is Err(SolverError::ValueError(_)))
+  try
+    lpmax(x(), [
+      @symcore.Expr::Relational(@symcore.RelOp::Gt, x(), @symcore.int(0)),
+    ])
+  catch {
+    SolverError::ValueError(_) => ()
+    _ => fail("expected ValueError")
+  } noraise {
+    _ => fail("expected lpmax to raise")
+  }
 
-  let ne_lp : Result[(@symcore.Expr, Map[String, @symcore.Expr]), SolverError] = try? lpmax(
-    x(),
-    [@symcore.Expr::Relational(@symcore.RelOp::Ne, x(), @symcore.int(0))],
-  )
-  assert_true(ne_lp is Err(SolverError::ValueError(_)))
+  try
+    lpmax(x(), [
+      @symcore.Expr::Relational(@symcore.RelOp::Ne, x(), @symcore.int(0)),
+    ])
+  catch {
+    SolverError::ValueError(_) => ()
+    _ => fail("expected ValueError")
+  } noraise {
+    _ => fail("expected lpmax to raise")
+  }
 }
 
 ///|
@@ -4934,11 +4983,17 @@ test "decompogen factors functional composition and polynomial composition" {
       expr_semantically_equal(quartic_poly[i], quartic_poly_expected[i]),
     )
   }
-  let relational_try : Result[Array[@symcore.Expr], SolverError] = try? decompogen(
-    @symcore.Expr::Relational(@symcore.RelOp::Lt, x(), @symcore.int(5)),
-    x(),
-  )
-  assert_true(relational_try is Err(SolverError::ValueError(_)))
+  try
+    decompogen(
+      @symcore.Expr::Relational(@symcore.RelOp::Lt, x(), @symcore.int(5)),
+      x(),
+    )
+  catch {
+    SolverError::ValueError(_) => ()
+    _ => fail("expected ValueError")
+  } noraise {
+    _ => fail("expected decompogen to raise")
+  }
 }
 
 ///|
@@ -6074,61 +6129,61 @@ test "linear_ode_to_matrix matches additional SymPy matrix forms and errors" {
   )
   inspect(b_sys4.to_string(), content="Matrix([[0], [0], [4]])")
 
-  let bad_order : Result[
-    (Array[@symmatrices.Matrix], @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_ode_to_matrix(
-    [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
-        @symcalculus.diff(@symcalculus.diff(f(x()), x()), x()),
-        g(x()),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
-        @symcalculus.diff(f(x()), x()) + @symcalculus.diff(g(x()), x()),
-        f(x()),
-      ),
-    ],
-    [f(x()), g(x())],
-    x(),
-    1,
-  )
-  inspect(
-    match bad_order {
-      Err(err) => err.to_string()
-      Ok(_) => "ok"
-    },
-    content="ValueError(Cannot represent system in 1-order form)",
-  )
+  try
+    linear_ode_to_matrix(
+      [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcalculus.diff(@symcalculus.diff(f(x()), x()), x()),
+          g(x()),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcalculus.diff(f(x()), x()) + @symcalculus.diff(g(x()), x()),
+          f(x()),
+        ),
+      ],
+      [f(x()), g(x())],
+      x(),
+      1,
+    )
+  catch {
+    err =>
+      inspect(
+        err.to_string(),
+        content="ValueError(Cannot represent system in 1-order form)",
+      )
+  } noraise {
+    _ => fail("expected linear_ode_to_matrix to raise")
+  }
 
-  let nonlinear : Result[
-    (Array[@symmatrices.Matrix], @symmatrices.Matrix),
-    SolverError,
-  ] = try? linear_ode_to_matrix(
-    [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
-        @symcalculus.diff(f(x()), x()),
-        f(x()) ^ @symcore.int(2),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
-        @symcalculus.diff(g(x()), x()),
-        f(x()) + g(x()),
-      ),
-    ],
-    [f(x()), g(x())],
-    x(),
-    1,
-  )
-  inspect(
-    match nonlinear {
-      Err(err) => err.to_string()
-      Ok(_) => "ok"
-    },
-    content="ValueError(The system of ODEs is nonlinear.)",
-  )
+  try
+    linear_ode_to_matrix(
+      [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcalculus.diff(f(x()), x()),
+          f(x()) ^ @symcore.int(2),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          @symcalculus.diff(g(x()), x()),
+          f(x()) + g(x()),
+        ),
+      ],
+      [f(x()), g(x())],
+      x(),
+      1,
+    )
+  catch {
+    err =>
+      inspect(
+        err.to_string(),
+        content="ValueError(The system of ODEs is nonlinear.)",
+      )
+  } noraise {
+    _ => fail("expected linear_ode_to_matrix to raise")
+  }
 }
 
 ///|
@@ -6479,19 +6534,11 @@ test "pde separation matches additional SymPy source cases" {
     ),
   )
 
-  let invalid_strategy : Result[Array[@symcore.Expr]?, SolverError] = try? pde_separate(
-    add_eq,
-    ut,
-    [xfun(x()), tfun(t())],
-    strategy="div",
-  )
-  inspect(
-    match invalid_strategy {
-      Err(err) => err.to_string()
-      Ok(_) => "ok"
-    },
-    content="ValueError(Unknown strategy: div)",
-  )
+  try pde_separate(add_eq, ut, [xfun(x()), tfun(t())], strategy="div") catch {
+    err => inspect(err.to_string(), content="ValueError(Unknown strategy: div)")
+  } noraise {
+    _ => fail("expected pde_separate to raise")
+  }
 
   let fxyz = @symcore.applied_undefined_function("F", [x(), y(), z()])
   let sum_eq = @symcore.Expr::Relational(
@@ -6503,42 +6550,40 @@ test "pde separation matches additional SymPy source cases" {
     ]),
     @symcore.int(0),
   )
-  let duplicate_args : Result[Array[@symcore.Expr]?, SolverError] = try? pde_separate_mul(
-    sum_eq,
-    fxyz,
-    [xfun(x()), @symcore.applied_undefined_function("u", [z(), z()])],
-  )
-  inspect(
-    match duplicate_args {
-      Err(err) => err.to_string()
-      Ok(_) => "ok"
-    },
-    content="ValueError(Duplicate substitution arguments detected)",
-  )
-  let wrong_count : Result[Array[@symcore.Expr]?, SolverError] = try? pde_separate_mul(
-    sum_eq,
-    fxyz,
-    [xfun(x()), yfun(y())],
-  )
-  inspect(
-    match wrong_count {
-      Err(err) => err.to_string()
-      Ok(_) => "ok"
-    },
-    content="ValueError(Variable counts do not match)",
-  )
-  let wrong_args : Result[Array[@symcore.Expr]?, SolverError] = try? pde_separate_mul(
-    sum_eq,
-    fxyz,
-    [xfun(t()), @symcore.applied_undefined_function("Y", [x(), y()])],
-  )
-  inspect(
-    match wrong_args {
-      Err(err) => err.to_string()
-      Ok(_) => "ok"
-    },
-    content="ValueError(Arguments do not match)",
-  )
+  try
+    pde_separate_mul(sum_eq, fxyz, [
+      xfun(x()),
+      @symcore.applied_undefined_function("u", [z(), z()]),
+    ])
+  catch {
+    err =>
+      inspect(
+        err.to_string(),
+        content="ValueError(Duplicate substitution arguments detected)",
+      )
+  } noraise {
+    _ => fail("expected pde_separate_mul to raise")
+  }
+  try pde_separate_mul(sum_eq, fxyz, [xfun(x()), yfun(y())]) catch {
+    err =>
+      inspect(
+        err.to_string(),
+        content="ValueError(Variable counts do not match)",
+      )
+  } noraise {
+    _ => fail("expected pde_separate_mul to raise")
+  }
+  try
+    pde_separate_mul(sum_eq, fxyz, [
+      xfun(t()),
+      @symcore.applied_undefined_function("Y", [x(), y()]),
+    ])
+  catch {
+    err =>
+      inspect(err.to_string(), content="ValueError(Arguments do not match)")
+  } noraise {
+    _ => fail("expected pde_separate_mul to raise")
+  }
 
   let split_y = pde_separate_mul(sum_eq, fxyz, [yfun(y()), u(x(), z())]).unwrap_or([],
   )
@@ -6841,18 +6886,15 @@ test "dsolve meta-hints cover SymPy-style front doors" {
     ),
     content="Eq(f(x), C1*exp(-Integral(-1, (x,))))",
   )
-  let mismatched_ode : Result[@symcore.Expr, SolverError] = try? dsolve(
-    ode,
-    func=Some(f(x())),
-    hint="factorable",
-  )
-  inspect(
-    match mismatched_ode {
-      Err(err) => err.to_string()
-      Ok(_) => "ok"
-    },
-    content="ValueError(ODE Eq(Derivative(f(x), x), f(x)) does not match hint factorable)",
-  )
+  try dsolve(ode, func=Some(f(x())), hint="factorable") catch {
+    err =>
+      inspect(
+        err.to_string(),
+        content="ValueError(ODE Eq(Derivative(f(x), x), f(x)) does not match hint factorable)",
+      )
+  } noraise {
+    _ => fail("expected dsolve to raise")
+  }
 }
 
 ///|
@@ -7047,18 +7089,21 @@ test "pdsolve mismatched hint raises ValueError instead of unsupported" {
     ]),
     @symcore.function("exp", [x() + @symcore.int(3) * y()]),
   )
-  let mismatched_pde : Result[@symcore.Expr, SolverError] = try? pdsolve(
-    pde_source,
-    func=Some(u(x(), y())),
-    hint="1st_linear_variable_coeff",
-  )
-  inspect(
-    match mismatched_pde {
-      Err(err) => err.to_string()
-      Ok(_) => "ok"
-    },
-    content="ValueError(PDE Eq(-2*Derivative(u(x, y), x) + 4*Derivative(u(x, y), y) + 5*u(x, y), exp(3*y + x)) does not match hint 1st_linear_variable_coeff)",
-  )
+  try
+    pdsolve(
+      pde_source,
+      func=Some(u(x(), y())),
+      hint="1st_linear_variable_coeff",
+    )
+  catch {
+    err =>
+      inspect(
+        err.to_string(),
+        content="ValueError(PDE Eq(-2*Derivative(u(x, y), x) + 4*Derivative(u(x, y), y) + 5*u(x, y), exp(3*y + x)) does not match hint 1st_linear_variable_coeff)",
+      )
+  } noraise {
+    _ => fail("expected pdsolve to raise")
+  }
 }
 
 ///|
@@ -7524,13 +7569,19 @@ test "checkpdesol follows SymPy list input and solve_for_func behavior" {
     checkpdesol(eq4, implicit_zero, func=Some(u(x(), y()))).0.to_string(),
     content="true",
   )
-  let no_solve = try? checkpdesol(
-    eq4,
-    implicit_zero,
-    func=Some(u(x(), y())),
-    solve_for_func=false,
-  )
-  assert_true(no_solve is Err(SolverError::NotImplementedError(_)))
+  try
+    checkpdesol(
+      eq4,
+      implicit_zero,
+      func=Some(u(x(), y())),
+      solve_for_func=false,
+    )
+  catch {
+    SolverError::NotImplementedError(_) => ()
+    _ => fail("expected NotImplementedError")
+  } noraise {
+    _ => fail("expected checkpdesol to raise")
+  }
 }
 
 ///|

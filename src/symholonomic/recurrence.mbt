@@ -174,22 +174,25 @@ pub fn RecurrenceOperator::to_sympy_str(self : RecurrenceOperator) -> String {
 }
 
 ///|
-pub impl Add for RecurrenceOperator with add(self, other) {
+pub impl Add for RecurrenceOperator with fn add(self, other) {
   recurrence_add(self, other)
 }
 
 ///|
-pub impl Mul for RecurrenceOperator with mul(self, other) {
+pub impl Mul for RecurrenceOperator with fn mul(self, other) {
   recurrence_mul(self, other)
 }
 
 ///|
-pub impl Show for RecurrenceOperator with output(self, logger : &Logger) -> Unit {
+pub impl Show for RecurrenceOperator with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_sympy_str())
 }
 
 ///|
-pub impl Show for RecurrenceOperatorAlgebra with output(self, logger : &Logger) -> Unit {
+pub impl Show for RecurrenceOperatorAlgebra with fn output(
+  self,
+  logger : &Logger,
+) -> Unit {
   logger.write_string(
     "Univariate Recurrence Operator Algebra in intermediate \{self.generator} over variable \{@symprint.pretty_string(self.symbol_var)}",
   )

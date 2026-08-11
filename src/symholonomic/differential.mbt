@@ -185,22 +185,22 @@ pub fn DifferentialOperator::to_sympy_str(
 }
 
 ///|
-pub impl Add for DifferentialOperator with add(self, other) {
+pub impl Add for DifferentialOperator with fn add(self, other) {
   differential_add(self, other)
 }
 
 ///|
-pub impl Mul for DifferentialOperator with mul(self, other) {
+pub impl Mul for DifferentialOperator with fn mul(self, other) {
   differential_mul(self, other)
 }
 
 ///|
-pub impl Show for DifferentialOperator with output(self, logger : &Logger) -> Unit {
+pub impl Show for DifferentialOperator with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_sympy_str())
 }
 
 ///|
-pub impl Show for DifferentialOperatorAlgebra with output(
+pub impl Show for DifferentialOperatorAlgebra with fn output(
   self,
   logger : &Logger,
 ) -> Unit {

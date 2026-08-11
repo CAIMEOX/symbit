@@ -78,7 +78,7 @@ test "matrix dense wrappers: elimination and determinant helpers match methods a
   let oracle_rref = domainmatrix_rref([[1, 2, 3], [4, 5, 6]], "QQ")
   assert_eq(
     md_trim(
-      "\{rref_wrap.to_domain_matrix().to_matrix_string()}||\{pivots_wrap.to_string()}",
+      "\{rref_wrap.to_domain_matrix().to_matrix_string()}||\{Repr(pivots_wrap).to_string()}",
     ),
     md_trim(oracle_rref),
   )
@@ -97,7 +97,7 @@ test "matrix dense wrappers: elimination and determinant helpers match methods a
   let oracle_rref_den = domainmatrix_rref_den([[2, 4], [6, 8]], "ZZ")
   assert_eq(
     md_trim(
-      "\{rref_den_wrap.to_domain_matrix().to_matrix_string()}||\{den_wrap.to_string()}||\{den_pivots_wrap.to_string()}",
+      "\{rref_den_wrap.to_domain_matrix().to_matrix_string()}||\{den_wrap.to_string()}||\{Repr(den_pivots_wrap).to_string()}",
     ),
     md_trim(oracle_rref_den),
   )
@@ -157,14 +157,14 @@ test "matrix dense wrappers: internal DDM helpers stay aligned" {
   assert_eq(swapped.1, [1, 0])
 
   let other_domain = @sympolys.ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
-  assert_true(
-    (try? zz._check("+", other_domain, zz.shape(), other_domain.shape()))
-    is Err(PolyError::DomainMismatch),
-  )
+  let domain_error = expect_poly_error(fn() raise PolyError {
+    zz._check("+", other_domain, zz.shape(), other_domain.shape())
+  })
+  assert_true(domain_error is PolyError::DomainMismatch)
 
   let wrong_shape = @sympolys.ddm_from_ints([[1, 2]], Domain::ZZ)
-  assert_true(
-    (try? zz._check("+", wrong_shape, zz.shape(), wrong_shape.shape()))
-    is Err(PolyError::DomainMismatch),
-  )
+  let shape_error = expect_poly_error(fn() raise PolyError {
+    zz._check("+", wrong_shape, zz.shape(), wrong_shape.shape())
+  })
+  assert_true(shape_error is PolyError::DomainMismatch)
 }

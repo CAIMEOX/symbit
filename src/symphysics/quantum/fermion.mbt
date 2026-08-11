@@ -26,7 +26,7 @@ pub fn FermionOpExpr::as_expr(self : FermionOpExpr) -> Expr {
 }
 
 ///|
-pub impl Show for FermionOpExpr with to_string(self) {
+pub impl Show for FermionOpExpr with fn to_string(self) {
   if self.is_annihilation {
     @symprint.pretty_string(self.name)
   } else {
@@ -35,7 +35,7 @@ pub impl Show for FermionOpExpr with to_string(self) {
 }
 
 ///|
-pub impl Show for FermionOpExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for FermionOpExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

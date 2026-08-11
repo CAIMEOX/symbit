@@ -23,10 +23,10 @@ pub fn normalize_mod(
       let m = BigInt::from_int(p)
       let mut num = value.numerator().mod(m)
       let mut den = value.denominator().mod(m)
-      if num.op_lt(BigInt::from_int(0)) {
+      if num < BigInt::from_int(0) {
         num = num.add(m)
       }
-      if den.op_lt(BigInt::from_int(0)) {
+      if den < BigInt::from_int(0) {
         den = den.add(m)
       }
       if den.is_zero() {
@@ -34,7 +34,7 @@ pub fn normalize_mod(
       }
       let inv_den = mod_inv(den, m)
       let mut reduced = num.mul(inv_den).mod(m)
-      if reduced.op_lt(BigInt::from_int(0)) {
+      if reduced < BigInt::from_int(0) {
         reduced = reduced.add(m)
       }
       @symnum.BigRational::from_bigint(reduced)
@@ -70,7 +70,7 @@ fn mod_inv(a : BigInt, m : BigInt) -> BigInt raise PolyError {
     raise PolyError::DivisionByZero
   }
   let mut inv = t0.mod(m)
-  if inv.op_lt(BigInt::from_int(0)) {
+  if inv < BigInt::from_int(0) {
     inv = inv.add(m)
   }
   inv

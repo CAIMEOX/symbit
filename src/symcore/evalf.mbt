@@ -282,10 +282,11 @@ fn evalf_integer_exponent(expr : Expr, prec : Int) -> Int? {
     Some(value) => value
     None => return None
   }
-  let pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? exp_f.to_rational()
-  match pair_res {
-    Ok((num, den)) if den == 1N && num.bit_length() <= 30 => Some(num.to_int())
-    _ => None
+  let (num, den) = exp_f.to_rational() catch { _ => return None }
+  if den == 1N && num.bit_length() <= 30 {
+    Some(num.to_int())
+  } else {
+    None
   }
 }
 
@@ -295,9 +296,13 @@ fn evalf_numeric_pow_expr(base : Expr, exp : Expr, prec : Int) -> Expr? {
   let exp_f = expr_to_evalf_float(exp, prec)
   match (base_f, exp_f) {
     (Some(base_value), Some(exp_value)) => {
-      let exp_pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? exp_value.to_rational()
-      let value = match exp_pair_res {
-        Ok((num, den)) if den == 1N && num.bit_length() <= 30 =>
+      let exp_pair = try exp_value.to_rational() catch {
+        _ => None
+      } noraise {
+        pair => Some(pair)
+      }
+      let value = match exp_pair {
+        Some((num, den)) if den == 1N && num.bit_length() <= 30 =>
           @symnum.mpf_pow_int(
             base_value.to_mpf(),
             num.to_int(),
@@ -306,7 +311,7 @@ fn evalf_numeric_pow_expr(base : Expr, exp : Expr, prec : Int) -> Expr? {
           ) catch {
             _ => return None
           }
-        Ok((num, den)) if num == 1N && den == 2N =>
+        Some((num, den)) if num == 1N && den == 2N =>
           @symnum.mpf_sqrt(base_value.to_mpf(), prec, @symnum.round_nearest) catch {
             _ => {
               let base_z = match expr_to_evalf_complex(base, prec) {
@@ -328,7 +333,7 @@ fn evalf_numeric_pow_expr(base : Expr, exp : Expr, prec : Int) -> Expr? {
               return Some(expr_from_mpc_evalf(pow_value, prec))
             }
           }
-        Ok((num, den)) if num == -1N && den == 2N => {
+        Some((num, den)) if num == -1N && den == 2N => {
           let root = @symnum.mpf_sqrt(
             base_value.to_mpf(),
             prec,
@@ -931,7 +936,7 @@ fn subs_eval_env(variable : Expr, value : Expr) -> Map[String, Expr]? {
   if vars.length() != vals.length() {
     return None
   }
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   for i in 0..<vars.length() {
     match vars[i] {
       Expr::Symbol(name) => env.set(name, vals[i])

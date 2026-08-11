@@ -130,7 +130,7 @@ pub fn finite_probability(rv : RandomVar, event : Event) -> @symcore.Expr? {
   match finite_atoms(rv) {
     None => None
     Some(items) => {
-      let env : Map[String, @symcore.Expr] = {}
+      let env : Map[String, @symcore.Expr] = Map([])
       let mut total = @symnum.BigRational::zero()
       for item in items {
         let (value, p) = item

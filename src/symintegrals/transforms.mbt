@@ -12367,25 +12367,26 @@ fn expr_exact_number_pow_no_simplify(
   if power < 0 && base.is_zero() {
     return None
   }
-  let factor = if power < 0 { try? base.reciprocal() } else { Ok(base) }
-  match factor {
-    Err(_) => None
-    Ok(factor0) => {
-      let mut out = @symnum.BigRational::one()
-      let mut factor = factor0
-      let mut n = if power < 0 { -power } else { power }
-      while n > 0 {
-        if (n & 1) == 1 {
-          out = out * factor
-        }
-        n = n / 2
-        if n > 0 {
-          factor = factor * factor
-        }
-      }
-      Some(out)
+  let factor = if power < 0 {
+    base.reciprocal() catch {
+      _ => return None
+    }
+  } else {
+    base
+  }
+  let mut out = @symnum.BigRational::one()
+  let mut factor = factor
+  let mut n = if power < 0 { -power } else { power }
+  while n > 0 {
+    if (n & 1) == 1 {
+      out = out * factor
+    }
+    n = n / 2
+    if n > 0 {
+      factor = factor * factor
     }
   }
+  Some(out)
 }
 
 ///|

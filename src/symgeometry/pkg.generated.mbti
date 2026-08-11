@@ -477,4 +477,3 @@ pub fn Triangle::vertices(Self) -> Array[Point]
 // Type aliases
 
 // Traits
-

@@ -133,7 +133,7 @@ fn face_key(face : Array[Int]) -> String {
 
 ///|
 fn canonical_faces(faces : Array[Array[Int]]) -> Array[Array[Int]] {
-  let seen : Map[String, Array[Int]] = {}
+  let seen : Map[String, Array[Int]] = Map([])
   for f in faces {
     let canon = minlex_face(f)
     let key = face_key(canon)
@@ -279,7 +279,7 @@ pub fn Polyhedron::edges(self : Polyhedron) -> Array[(Int, Int)] {
   match self.edges_cache {
     Some(edges) => edges
     None => {
-      let seen : Map[String, (Int, Int)] = {}
+      let seen : Map[String, (Int, Int)] = Map([])
       for face in self.faces {
         if face.is_empty() {
           continue

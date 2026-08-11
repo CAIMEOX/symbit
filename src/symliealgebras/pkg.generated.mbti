@@ -233,4 +233,3 @@ pub fn WeylGroup::matrix_form(Self, String) -> Matrix
 pub type RootVector = Array[@symnum.BigRational]
 
 // Traits
-

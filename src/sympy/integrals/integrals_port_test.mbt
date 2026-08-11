@@ -1189,12 +1189,12 @@ test "symintegrals parity Laplace helper utilities" {
     third_deriv = @symcalculus.diff(third_deriv, t)
   }
   let transformed = laplace_transform_eval(third_deriv, t, s, noconds=true)
-  let correspondence : Map[String, String] = {}
+  let correspondence : Map[String, String] = Map([])
   correspondence["y"] = "Y"
   let transformed_named = @symintegrals.laplace_correspondence(
     transformed, correspondence,
   )
-  let initial_conds : Map[String, Array[Expr]] = {}
+  let initial_conds : Map[String, Array[Expr]] = Map([])
   initial_conds["y"] = [
     @symcore.int(2),
     @symcore.int(4),

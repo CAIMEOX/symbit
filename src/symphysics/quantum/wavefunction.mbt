@@ -56,7 +56,7 @@ pub fn WavefunctionExpr::variables(self : WavefunctionExpr) -> Array[Expr] {
 pub fn WavefunctionExpr::limits(
   self : WavefunctionExpr,
 ) -> Map[String, (Expr, Expr)] {
-  let out : Map[String, (Expr, Expr)] = {}
+  let out : Map[String, (Expr, Expr)] = Map([])
   for coord in self.coords {
     let coord_var = wavefunction_coord_var(coord)
     match coord_var {
@@ -405,7 +405,7 @@ pub fn WavefunctionExpr::call(
       return int(0)
     }
   }
-  let subst_env : Map[String, Expr] = {}
+  let subst_env : Map[String, Expr] = Map([])
   for idx in 0..<vars.length() {
     match vars[idx] {
       Expr::Symbol(name) => subst_env[name] = values[idx]
@@ -1033,7 +1033,7 @@ pub fn differential_operator_apply_to_wavefunction(
       let vars = op.variables()
       let wf_vars = wf.variables()
       let body = if vars.length() == wf_vars.length() {
-        let env : Map[String, Expr] = {}
+        let env : Map[String, Expr] = Map([])
         for idx in 0..<vars.length() {
           match wf_vars[idx] {
             Expr::Symbol(name) => env[name] = vars[idx]

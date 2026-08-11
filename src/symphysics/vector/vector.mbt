@@ -2,22 +2,22 @@
 /// Vector algebra aligned with `sympy.physics.vector.vector`.
 
 ///|
-pub impl Eq for Vector with equal(self, other : Vector) -> Bool {
+pub impl Eq for Vector with fn equal(self, other : Vector) -> Bool {
   vector_equal(self, other)
 }
 
 ///|
-pub impl Eq for Vector with not_equal(self, other : Vector) -> Bool {
+pub impl Eq for Vector with fn not_equal(self, other : Vector) -> Bool {
   !vector_equal(self, other)
 }
 
 ///|
-pub impl Add for Vector with add(self, other : Vector) {
+pub impl Add for Vector with fn add(self, other : Vector) {
   vector_add(self, other)
 }
 
 ///|
-pub impl Sub for Vector with sub(self, other : Vector) {
+pub impl Sub for Vector with fn sub(self, other : Vector) {
   vector_add(self, other.neg())
 }
 
@@ -36,7 +36,7 @@ pub fn vector_from_components(
 
 ///|
 fn vector_normalize(items : Array[(Int, Array[Expr])]) -> Vector {
-  let combined : Map[Int, Array[Expr]] = {}
+  let combined : Map[Int, Array[Expr]] = Map([])
   for item in items {
     let frame_id = item.0
     let comps = item.1

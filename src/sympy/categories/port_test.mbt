@@ -95,7 +95,7 @@ test "categories repr parity for objects morphisms diagrams and categories" {
   let d1 = @symcategories.diagram(premises=@symcategories.morphism_list([f])) catch {
     _ => fail("d1")
   }
-  let conc : Map[@symcategories.Morphism, Array[String]] = {}
+  let conc : Map[@symcategories.Morphism, Array[String]] = Map([])
   conc[g * f] = ["unique"]
   let d2 = @symcategories.diagram(
     premises=@symcategories.morphism_list([f, g]),
@@ -129,7 +129,7 @@ test "diagram grid summary parity for generic sequential and grouped cases" {
   let h = @symcategories.named_morphism(c, d, "h") catch { _ => fail("h") }
   let i = @symcategories.named_morphism(d, e, "i") catch { _ => fail("i") }
 
-  let triangle_conc : Map[@symcategories.Morphism, Array[String]] = {}
+  let triangle_conc : Map[@symcategories.Morphism, Array[String]] = Map([])
   triangle_conc[g * f] = ["unique"]
   let triangle = @symcategories.diagram(
     premises=@symcategories.morphism_list([f, g]),
@@ -171,7 +171,7 @@ test "diagram grid summary parity for generic sequential and grouped cases" {
   let f1 = @symcategories.named_morphism(e, b, "f1") catch { _ => fail("f1") }
   let f2 = @symcategories.named_morphism(e, c, "f2") catch { _ => fail("f2") }
   let pb = @symcategories.named_morphism(e, a, "g") catch { _ => fail("pb") }
-  let pb_conc : Map[@symcategories.Morphism, Array[String]] = {}
+  let pb_conc : Map[@symcategories.Morphism, Array[String]] = Map([])
   pb_conc[pb] = ["unique"]
   let pullback = @symcategories.diagram(
     premises=@symcategories.morphism_list([m1, m2, s1, s2, f1, f2]),
@@ -202,7 +202,7 @@ test "xypic output parity for representative diagrams" {
 
   let f = @symcategories.named_morphism(a, b, "f") catch { _ => fail("f") }
   let g = @symcategories.named_morphism(b, c, "g") catch { _ => fail("g") }
-  let triangle_conc : Map[@symcategories.Morphism, Array[String]] = {}
+  let triangle_conc : Map[@symcategories.Morphism, Array[String]] = Map([])
   triangle_conc[g * f] = ["unique"]
   let triangle = @symcategories.diagram(
     premises=@symcategories.morphism_list([f, g]),

@@ -2,8 +2,8 @@
 /// Convert a MoonBit `Expr` into a live SymPy object by directly
 /// constructing SymPy objects (no expression string parsing).
 pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
-  let dummy_cache : Map[Int, @py.PyObject] = {}
-  let wild_cache : Map[String, @py.PyObject] = {}
+  let dummy_cache : Map[Int, @py.PyObject] = Map([])
+  let wild_cache : Map[String, @py.PyObject] = Map([])
   expr_to_sympy_cached(
     @symcore.normalize_legacy_expr(expr),
     dummy_cache,
@@ -230,14 +230,10 @@ fn sympy_complex_float_obj(value : @symcore.ComplexFloat) -> @py.PyObject raise 
 
 ///|
 fn sympy_constant_obj(name : String) -> @py.PyObject? {
-  let sympy = try? ensure_sympy_module()
-  match sympy {
-    Ok(mod) =>
-      match mod.get_attr(name, print_err=false) {
-        Some(obj) => Some(objenum_to_obj(obj))
-        None => None
-      }
-    Err(_) => None
+  let sympy = ensure_sympy_module() catch { _ => return None }
+  match sympy.get_attr(name, print_err=false) {
+    Some(obj) => Some(objenum_to_obj(obj))
+    None => None
   }
 }
 
@@ -373,7 +369,7 @@ fn sympy_wild_cache_key(
 ) -> String {
   let parts : Array[String] = [name]
   for item in exclude {
-    parts.push(to_repr(item).to_string())
+    parts.push(Repr(item).to_string())
   }
   for property in properties {
     parts.push(@symcore.wild_property_name(property))
@@ -438,7 +434,7 @@ fn sympy_wild_function_obj(
   name : String,
   nargs : Array[Int],
 ) -> @py.PyObject raise {
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   match nargs {
     [] => ()
     [arity] => kwargs["nargs"] = OracleArg::Int(arity)

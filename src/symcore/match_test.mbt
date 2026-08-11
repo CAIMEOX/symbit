@@ -47,7 +47,7 @@ test "wild_matches respects exclude and direct properties" {
     wild_matches(p, Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity))
     is Some(_),
   )
-  let seeded : MatchEnv = {}
+  let seeded : MatchEnv = Map([])
   seeded.set(a, y)
   let overridden = wild_matches(a, x, repl_dict=seeded)
   match overridden {
@@ -661,7 +661,7 @@ test "expr_match follows SymPy source derivative exclusion examples" {
     expr_match(add([mul([a, d2]), b]), add([d1, pow(x, int(2))])) is Some(_),
   )
 
-  let seeded : MatchEnv = {}
+  let seeded : MatchEnv = Map([])
   seeded.set(b, pow(x, int(2)))
   let substituted_pattern = xreplace(add([mul([a, d2]), b]), [
     (b, pow(x, int(2))),

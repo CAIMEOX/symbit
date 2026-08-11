@@ -13,13 +13,10 @@ pub struct GaloisGroupResult {
 
 ///|
 fn galois_is_irreducible(poly : Poly) -> Bool {
-  let factors_result : Result[
-    (@symnum.BigRational, Array[(Poly, Int)]),
-    PolyError,
-  ] = try? poly.factor_list()
-  match factors_result {
-    Err(_) => false
-    Ok((_, factors)) =>
+  try poly.factor_list() catch {
+    _ => false
+  } noraise {
+    (_, factors) =>
       factors.length() == 1 &&
       factors[0].1 == 1 &&
       factors[0].0.degree(0) == poly.degree(0)

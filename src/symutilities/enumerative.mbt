@@ -16,6 +16,22 @@ pub struct PartComponent {
 } derive(Eq, Debug)
 
 ///|
+pub impl Show for PartComponent with fn to_string(self) {
+  "PartComponent::{ c: " +
+  self.c.to_string() +
+  ", u: " +
+  self.u.to_string() +
+  ", v: " +
+  self.v.to_string() +
+  " }"
+}
+
+///|
+pub impl Show for PartComponent with fn output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
 /// A snapshot of one multiset-partition traversal state.
 ///
 /// `f` partitions `pstack` into parts, `lpart` is the topmost part index, and
@@ -25,6 +41,32 @@ pub struct MultisetPartitionState {
   lpart : Int
   pstack : Array[PartComponent]
 } derive(Eq, Debug)
+
+///|
+fn int_array_to_string(values : Array[Int]) -> String {
+  "[" + values.map(value => value.to_string()).join(", ") + "]"
+}
+
+///|
+fn part_component_array_to_string(values : Array[PartComponent]) -> String {
+  "[" + values.map(value => value.to_string()).join(", ") + "]"
+}
+
+///|
+pub impl Show for MultisetPartitionState with fn to_string(self) {
+  "MultisetPartitionState::{ f: " +
+  int_array_to_string(self.f) +
+  ", lpart: " +
+  self.lpart.to_string() +
+  ", pstack: " +
+  part_component_array_to_string(self.pstack) +
+  " }"
+}
+
+///|
+pub impl Show for MultisetPartitionState with fn output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
 
 ///|
 /// Convert a traversal `state` into an explicit list-of-lists partition.
@@ -569,6 +611,6 @@ pub fn MultisetPartitionTraverser::count_partitions(
   multiplicities : Array[Int],
 ) -> Int {
   ignore(self)
-  let memo : Map[String, Int] = {}
+  let memo : Map[String, Int] = Map([])
   count_partitions_rec(multiplicities, multiplicities, memo)
 }

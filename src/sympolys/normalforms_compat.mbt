@@ -286,7 +286,7 @@ fn smith_bigint_decomp(
     }
   }
 
-  if !matrix[0][0].equal(zero) && matrix[0][0].op_lt(zero) {
+  if !matrix[0][0].equal(zero) && matrix[0][0] < zero {
     matrix[0][0] = matrix[0][0].neg()
     if full {
       let scaled : Array[BigInt] = Array::new()
@@ -478,7 +478,7 @@ fn row_linear_comb(
 
 ///|
 fn abs_bigint(x : BigInt) -> BigInt {
-  if x.op_lt(BigInt::from_int(0)) {
+  if x < BigInt::from_int(0) {
     x.neg()
   } else {
     x
@@ -506,7 +506,7 @@ fn xgcd(a0 : BigInt, b0 : BigInt) -> (BigInt, BigInt, BigInt) {
     old_t = t
     t = nt
   }
-  if old_r.op_lt(zero) {
+  if old_r < zero {
     (old_r.neg(), old_s.neg(), old_t.neg())
   } else {
     (old_r, old_s, old_t)
@@ -518,7 +518,7 @@ fn divmod_euclid(a : BigInt, b : BigInt) -> (BigInt, BigInt) {
   let zero = BigInt::from_int(0)
   let mut q = a.div(b)
   let mut r = a.mod(b)
-  if r.op_lt(zero) {
+  if r < zero {
     q = q.sub(BigInt::from_int(1))
     r = r.add(b)
   }
@@ -545,7 +545,7 @@ fn hnf_bigint(rows : Array[Array[BigInt]]) -> Array[Array[BigInt]] {
       let v = a[r][j]
       if !v.equal(zero) {
         let av = abs_bigint(v)
-        if pivot == -1 || av.op_lt(best) {
+        if pivot == -1 || av < best {
           pivot = r
           best = av
         }
@@ -578,7 +578,7 @@ fn hnf_bigint(rows : Array[Array[BigInt]]) -> Array[Array[BigInt]] {
       a.set(i, new_i)
       a.set(k, new_k)
     }
-    if a[i][j].op_lt(zero) {
+    if a[i][j] < zero {
       let row = a[i]
       let neg_row : Array[BigInt] = Array::new()
       for v in row {

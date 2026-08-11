@@ -39,7 +39,7 @@ fn substitute_symbol(
   name : String,
   value : Int,
 ) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[name] = @symcore.int(value)
   @symcore.subst(expr, env)
 }

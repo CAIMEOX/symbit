@@ -121,4 +121,3 @@ pub fn Sequence::coeff(Self, Int) -> @symcore.Expr raise
 // Type aliases
 
 // Traits
-

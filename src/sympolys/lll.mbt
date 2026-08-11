@@ -194,14 +194,14 @@ fn round_bigrational(x : @symnum.BigRational) -> BigInt {
   let den = x.denominator()
   let half = den.div(BigInt::from_int(2))
   let mut n = num
-  let neg = n.op_lt(BigInt::from_int(0))
+  let neg = n < BigInt::from_int(0)
   if neg {
     n = n.neg()
   }
   let quotient = n.div(den)
   let rem = n.mod(den)
   let mut rounded = quotient
-  if rem.op_gt(half) || rem.equal(half) {
+  if rem > half || rem.equal(half) {
     rounded = rounded.add(BigInt::from_int(1))
   }
   if neg {

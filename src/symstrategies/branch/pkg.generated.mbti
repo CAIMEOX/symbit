@@ -43,4 +43,3 @@ pub fn[T] yieldify((T) -> T) -> (T) -> Array[T]
 pub type BRule[T] = (T) -> Array[T]
 
 // Traits
-

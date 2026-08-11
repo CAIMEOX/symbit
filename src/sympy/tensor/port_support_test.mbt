@@ -34,12 +34,6 @@ using @symtensor_tensor {
 }
 
 ///|
-fn assert_oracle(
-  result : Result[String, Error],
-  expected : String,
-) -> Unit raise {
-  match result {
-    Ok(value) => assert_eq(value, expected)
-    Err(e) => raise e
-  }
+fn assert_oracle(result : String, expected : String) -> Unit raise {
+  assert_eq(result, expected)
 }

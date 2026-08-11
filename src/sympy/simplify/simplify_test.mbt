@@ -2,13 +2,13 @@
 test "symsimplify basic algebra rules" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  inspect(to_repr(simplify(@symcore.add([x, x]))), content="(* 2 sym:x)")
+  inspect(Repr(simplify(@symcore.add([x, x]))), content="(* 2 sym:x)")
   inspect(
-    to_repr(simplify(@symcore.add([x, @symcore.mul([@symcore.int(2), x])]))),
+    Repr(simplify(@symcore.add([x, @symcore.mul([@symcore.int(2), x])]))),
     content="(* 3 sym:x)",
   )
   inspect(
-    to_repr(powsimp(@symcore.mul([x, x, y]))),
+    Repr(powsimp(@symcore.mul([x, x, y]))),
     content="(* (^ sym:x 2) sym:y)",
   )
 }
@@ -20,13 +20,13 @@ test "symsimplify function identities" {
     @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
     @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2)),
   ])
-  inspect(to_repr(trigsimp(trig)), content="1")
+  inspect(Repr(trigsimp(trig)), content="1")
   inspect(
-    to_repr(simplify(@symcore.function("exp", [@symcore.int(0)]))),
+    Repr(simplify(@symcore.function("exp", [@symcore.int(0)]))),
     content="1",
   )
   inspect(
-    to_repr(simplify(@symcore.function("log", [@symcore.int(1)]))),
+    Repr(simplify(@symcore.function("log", [@symcore.int(1)]))),
     content="0",
   )
 }
@@ -52,13 +52,13 @@ test "symsimplify dispatcher handles composite heuristics" {
     numerator,
     @symcore.pow(denominator, @symcore.int(-1)),
   ])
-  inspect(to_repr(simplify(rational_trig)), content="(+ sym:x 1)")
+  inspect(Repr(simplify(rational_trig)), content="(+ sym:x 1)")
 
   let exp_trig = @symcore.add([
     @symcore.function("exp", [@symcore.mul([i, x])]),
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
   ])
-  inspect(to_repr(simplify(exp_trig)), content="(* 2 (call cos sym:x))")
+  inspect(Repr(simplify(exp_trig)), content="(* 2 (call cos sym:x))")
 }
 
 ///|
@@ -69,28 +69,28 @@ test "symsimplify dispatcher handles special heuristics" {
     @symcore.function("log", [x]),
     @symcore.function("log", [@symcore.int(2)]),
   ])
-  inspect(to_repr(simplify(logs)), content="(call log (* 2 sym:x))")
+  inspect(Repr(simplify(logs)), content="(call log (* 2 sym:x))")
 
   let gamma_expr = @symcore.function("gamma", [@symcore.int(6)])
-  inspect(to_repr(simplify(gamma_expr)), content="120")
+  inspect(Repr(simplify(gamma_expr)), content="120")
 
   let kd = @symcore.function("KroneckerDelta", [
     @symcore.int(2),
     @symcore.int(3),
   ])
-  inspect(to_repr(simplify(kd)), content="0")
+  inspect(Repr(simplify(kd)), content="0")
 
   let bj = @symcore.function("besselj", [@symcore.int(0), @symcore.int(0)])
-  inspect(to_repr(simplify(bj)), content="1")
+  inspect(Repr(simplify(bj)), content="1")
 }
 
 ///|
 test "symsimplify numeric power denest" {
   let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.pow(@symcore.pow(x, @symcore.int(2)), @symcore.int(3))
-  inspect(to_repr(simplify(expr)), content="(^ sym:x 6)")
+  inspect(Repr(simplify(expr)), content="(^ sym:x 6)")
   let num = @symcore.pow(@symcore.int(2), @symcore.int(3))
-  inspect(to_repr(simplify(num)), content="8")
+  inspect(Repr(simplify(num)), content="8")
 }
 
 ///|
@@ -103,10 +103,10 @@ test "symsimplify fraction numer denom collect basics" {
     y,
   ])
   let (n, d) = fraction(expr)
-  inspect(to_repr(n), content="(* 2 sym:y)")
-  inspect(to_repr(d), content="sym:x")
-  inspect(to_repr(numer(expr)), content="(* 2 sym:y)")
-  inspect(to_repr(denom(expr)), content="sym:x")
+  inspect(Repr(n), content="(* 2 sym:y)")
+  inspect(Repr(d), content="sym:x")
+  inspect(Repr(numer(expr)), content="(* 2 sym:y)")
+  inspect(Repr(denom(expr)), content="sym:x")
   let collected = collect(
     @symcore.add([
       @symcore.mul([@symcore.int(2), x]),
@@ -115,7 +115,7 @@ test "symsimplify fraction numer denom collect basics" {
     ]),
     x,
   )
-  inspect(to_repr(collected), content="(+ (* 2 sym:x) (* 3 (^ sym:x 2)) sym:y)")
+  inspect(Repr(collected), content="(+ (* 2 sym:x) (* 3 (^ sym:x 2)) sym:y)")
 }
 
 ///|
@@ -125,7 +125,7 @@ test "symsimplify advanced rewrites basics" {
   let pd = powdenest(
     @symcore.pow(@symcore.pow(x, @symcore.int(2)), @symcore.int(3)),
   )
-  inspect(to_repr(pd), content="(^ sym:x 6)")
+  inspect(Repr(pd), content="(^ sym:x 6)")
   let ee = exptrigsimp(
     @symcore.add([
       @symcore.function("exp", [
@@ -143,11 +143,11 @@ test "symsimplify advanced rewrites basics" {
       ]),
     ]),
   )
-  inspect(to_repr(ee), content="(* 2 (call cos sym:x))")
+  inspect(Repr(ee), content="(* 2 (call cos sym:x))")
   let gs = gammasimp(@symcore.function("gamma", [@symcore.int(6)]))
-  inspect(to_repr(gs), content="(call factorial 5)")
+  inspect(Repr(gs), content="(call factorial 5)")
   let hs = hypersimp(@symcore.function("factorial", [k]), k)
-  inspect(to_repr(hs), content="(+ sym:k 1)")
+  inspect(Repr(hs), content="(+ sym:k 1)")
   let f1 = fu(
     @symcore.add([
       @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
@@ -163,18 +163,18 @@ test "symsimplify compat api basics" {
   let k0 = kroneckersimp(
     @symcore.function("KroneckerDelta", [@symcore.int(2), @symcore.int(3)]),
   )
-  inspect(to_repr(k0), content="0")
+  inspect(Repr(k0), content="0")
   let k1 = kroneckersimp(@symcore.function("KroneckerDelta", [x, x]))
-  inspect(to_repr(k1), content="1")
+  inspect(Repr(k1), content="1")
 
   let j0 = besselsimp(
     @symcore.function("besselj", [@symcore.int(0), @symcore.int(0)]),
   )
-  inspect(to_repr(j0), content="1")
+  inspect(Repr(j0), content="1")
   let j2 = besselsimp(
     @symcore.function("besselj", [@symcore.int(2), @symcore.int(0)]),
   )
-  inspect(to_repr(j2), content="0")
+  inspect(Repr(j2), content="0")
 
   let n = nsimplify(
     @symcore.add([
@@ -182,7 +182,7 @@ test "symsimplify compat api basics" {
       @symcore.rational_from_ints(1, 6),
     ]),
   )
-  inspect(to_repr(n), content="1/2")
+  inspect(Repr(n), content="1/2")
 
   let cs = collect_sqrt(
     @symcore.add([
@@ -190,7 +190,7 @@ test "symsimplify compat api basics" {
       @symcore.mul([@symcore.int(3), @symcore.function("sqrt", [x])]),
     ]),
   )
-  inspect(to_repr(cs), content="(* 5 (call sqrt sym:x))")
+  inspect(Repr(cs), content="(* 5 (call sqrt sym:x))")
 
   let ca = collect_abs(
     @symcore.add([
@@ -198,7 +198,7 @@ test "symsimplify compat api basics" {
       @symcore.function("Abs", [x]),
     ]),
   )
-  inspect(to_repr(ca), content="(* 3 (call Abs sym:x))")
+  inspect(Repr(ca), content="(* 3 (call Abs sym:x))")
 
   let frac_expr = @symcore.mul([
     @symcore.add([x, @symcore.int(1)]),
@@ -213,7 +213,7 @@ test "symsimplify compat api basics" {
       @symcore.function("sqrt", [@symcore.int(8)]),
     ]),
   )
-  inspect(to_repr(split.0), content="2")
+  inspect(Repr(split.0), content="2")
 }
 
 ///|
@@ -339,7 +339,7 @@ test "symsimplify traversal/cse_opts basics" {
 
   let nested = @symcore.function("sin", [@symcore.add([x, x])])
   let used = apply_at_level(nested, node => simplify(node), level=1)
-  inspect(to_repr(used), content="(call sin (* 2 sym:x))")
+  inspect(Repr(used), content="(call sin (* 2 sym:x))")
 }
 
 ///|
@@ -349,15 +349,15 @@ test "symsimplify fu rules smoke" {
   let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 
   inspect(
-    to_repr(tr1(@symcore.function("sec", [x]))),
+    Repr(tr1(@symcore.function("sec", [x]))),
     content="(^ (call cos sym:x) -1)",
   )
   inspect(
-    to_repr(tr2(@symcore.function("tan", [x]))),
+    Repr(tr2(@symcore.function("tan", [x]))),
     content="(* (^ (call cos sym:x) -1) (call sin sym:x))",
   )
   inspect(
-    to_repr(
+    Repr(
       tr2i(
         @symcore.mul([
           @symcore.function("sin", [x]),
@@ -368,13 +368,11 @@ test "symsimplify fu rules smoke" {
     content="(call tan sym:x)",
   )
   inspect(
-    to_repr(
-      tr3(@symcore.function("sin", [@symcore.mul([@symcore.int(-1), x])])),
-    ),
+    Repr(tr3(@symcore.function("sin", [@symcore.mul([@symcore.int(-1), x])]))),
     content="(* -1 (call sin sym:x))",
   )
   inspect(
-    to_repr(
+    Repr(
       tr4(
         @symcore.function("sin", [
           @symcore.mul([@symcore.rational_from_ints(1, 6), pi]),
@@ -384,7 +382,7 @@ test "symsimplify fu rules smoke" {
     content="1/2",
   )
   inspect(
-    to_repr(
+    Repr(
       tr8(
         @symcore.mul([
           @symcore.function("sin", [x]),
@@ -395,7 +393,7 @@ test "symsimplify fu rules smoke" {
     content="(+ (* -1/2 (call sin (+ (* -1 sym:x) sym:y))) (* 1/2 (call sin (+ sym:x sym:y))))",
   )
   inspect(
-    to_repr(tr10(@symcore.function("sin", [@symcore.add([x, y])]))),
+    Repr(tr10(@symcore.function("sin", [@symcore.add([x, y])]))),
     content="(+ (* (call cos sym:x) (call sin sym:y)) (* (call cos sym:y) (call sin sym:x)))",
   )
   assert_true(

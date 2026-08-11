@@ -1,6 +1,6 @@
 ///|
 fn ring_series_norm(text : String) -> String raise {
-  sympy_normalize(text).trim().to_string().replace_all(old=" ", new="")
+  sympy_normalize(text).trim().to_owned().replace_all(old=" ", new="")
 }
 
 ///|

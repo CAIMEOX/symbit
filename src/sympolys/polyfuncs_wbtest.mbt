@@ -4,38 +4,24 @@ test "polyfuncs: rational_interpolate reports bad degree early" {
     (@symnum.BigRational::from_int(1), @symnum.BigRational::from_int(1)),
     (@symnum.BigRational::from_int(2), @symnum.BigRational::from_int(4)),
   ]
-  let res : Result[(Poly, Poly), PolyError] = try? rational_interpolate(
-    pts,
-    3,
-    "x",
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError { rational_interpolate(pts, 3, "x", Domain::QQ) },
+    "BadExponent",
   )
-  match res {
-    Err(PolyError::BadExponent) => ()
-    _ => fail("expected BadExponent")
-  }
 }
 
 ///|
 test "polyfuncs: viete errors are typed" {
   let x = @symcore.Expr::Symbol("x")
-  let const_res : Result[Array[(@symcore.Expr, @symcore.Expr)], PolyError] = try? viete(
-    @symcore.int(5),
-    roots=[],
-    gen="x",
+  sympolys_assert_error(
+    fn() raise PolyError { viete(@symcore.int(5), roots=[], gen="x") },
+    "BadExponent",
   )
-  match const_res {
-    Err(PolyError::BadExponent) => ()
-    _ => fail("expected BadExponent for constant polynomial")
-  }
 
-  let roots_res : Result[Array[(@symcore.Expr, @symcore.Expr)], PolyError] = try? viete(
-    (x ^ @symcore.int(2)) + @symcore.int(1),
-    roots=["r1"],
-    gen="x",
+  sympolys_assert_error(
+    fn() raise PolyError {
+      viete((x ^ @symcore.int(2)) + @symcore.int(1), roots=["r1"], gen="x")
+    },
+    "BadGenerator(roots)",
   )
-  match roots_res {
-    Err(PolyError::BadGenerator(name)) => inspect(name, content="roots")
-    _ => fail("expected BadGenerator(\"roots\")")
-  }
 }

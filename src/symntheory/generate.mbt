@@ -25,13 +25,14 @@ pub fn Sieve::new() -> Sieve {
 }
 
 ///|
-/// Public API `Sieve::extend`.
+/// Public API `Sieve::extend_`.
 ///
 /// - Does: Extends the cached primes up to at least the requested bound.
 /// - Input: The parameters in the signature, using exact `BigInt`/`Int` values where declared.
 /// - Returns: `Unit`.
 /// - Limits: Does not add a separate error channel; invalid or degenerate inputs follow the documented return shape of this front door.
-pub fn Sieve::extend(self : Sieve, n0 : BigInt) -> Unit {
+#alias(extend, deprecated="Use `Sieve::extend_` instead")
+pub fn Sieve::extend_(self : Sieve, n0 : BigInt) -> Unit {
   let n = abs_bigint(n0)
   let len = self.primes.length()
   let last = self.primes[len - 1]
@@ -42,7 +43,7 @@ pub fn Sieve::extend(self : Sieve, n0 : BigInt) -> Unit {
     let end = n.to_int()
     let root = isqrt_int(end)
     if last < bi(root) {
-      self.extend(bi(root))
+      self.extend_(bi(root))
     }
     self.extend_segmented_int(end)
     return
@@ -108,7 +109,7 @@ pub fn Sieve::primerange(
   if b <= a {
     return []
   }
-  self.extend(b - bi(1))
+  self.extend_(b - bi(1))
   let lo = prime_lower_bound(self.primes, a)
   let hi = prime_lower_bound(self.primes, b)
   let out : Array[BigInt] = Array::new()
@@ -166,7 +167,7 @@ pub fn nextprime(n0 : BigInt) -> BigInt {
   if abs_bigint(n0).bit_length() <= 30 {
     let mut bound = n0 + bi(64)
     while true {
-      sieve.extend(bound)
+      sieve.extend_(bound)
       let idx = prime_upper_bound(sieve.primes, n0)
       if idx < sieve.primes.length() {
         return sieve.primes[idx]
@@ -224,7 +225,7 @@ pub fn primepi(n0 : BigInt) -> BigInt {
   if n < bi(2) {
     return bi(0)
   }
-  sieve.extend(n)
+  sieve.extend_(n)
   bi(prime_upper_bound(sieve.primes, n))
 }
 

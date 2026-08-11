@@ -7,7 +7,7 @@ pub(all) suberror CategoryError {
 } derive(Debug, Eq)
 
 ///|
-pub impl Show for CategoryError with output(self, logger : &Logger) -> Unit {
+pub impl Show for CategoryError with fn output(self, logger : &Logger) -> Unit {
   match self {
     CategoryError::ValueError(msg) => logger.write_string("ValueError(\{msg})")
     CategoryError::TypeError(msg) => logger.write_string("TypeError(\{msg})")

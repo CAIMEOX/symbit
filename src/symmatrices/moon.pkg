@@ -2,7 +2,7 @@ import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symnum",
-  "CAIMEOX/symbit/sympolys" @sympolys,
+  "CAIMEOX/symbit/sympolys",
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symsimplify",
 }

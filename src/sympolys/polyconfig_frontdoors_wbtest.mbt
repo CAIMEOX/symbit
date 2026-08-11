@@ -28,6 +28,8 @@ test "polyconfig frontdoors: query setup configure using" {
   })
   inspect(scoped_values.join(","), content="f5b")
   inspect(polyconfig_wb_repr(query("GROEBNER")), content="buchberger")
-  let bad_reset : Result[Unit, PolyError] = try? setup("LOCAL_ONLY")
-  assert_true(bad_reset is Err(PolyError::BadGenerator(_)))
+  sympolys_assert_error(
+    fn() raise PolyError { setup("LOCAL_ONLY") },
+    "BadGenerator",
+  )
 }

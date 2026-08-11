@@ -41,7 +41,7 @@ test "replace_with_info records applied rules" {
   r.add(x + @symcore.int(1), x, info=Some("drop-one"))
   let (result, infos) = r.replace_with_info(x + @symcore.int(1))
   inspect(@symprint.pretty_string(result), content="x")
-  inspect(infos, content="[\"drop-one\"]")
+  debug_inspect(infos, content="[\"drop-one\"]")
 }
 
 ///|

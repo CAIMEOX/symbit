@@ -1,19 +1,7 @@
 ///|
 test "CC evalf_expr returns complex float expressions" {
-  let half = match
-    (
-      try? @symcore.rational_from_ints(1, 2) :
-      Result[@symcore.Expr, @symnum.RationalError]) {
-    Ok(value) => value
-    Err(_) => fail("half")
-  }
-  let three_quarters = match
-    (
-      try? @symcore.rational_from_ints(3, 4) :
-      Result[@symcore.Expr, @symnum.RationalError]) {
-    Ok(value) => value
-    Err(_) => fail("three_quarters")
-  }
+  let half = @symcore.rational_from_ints(1, 2)
+  let three_quarters = @symcore.rational_from_ints(3, 4)
   let expr = @symcore.add([
     half,
     @symcore.mul([
@@ -21,13 +9,7 @@ test "CC evalf_expr returns complex float expressions" {
       @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
     ]),
   ])
-  let evaled = match
-    (
-      try? Domain::CC.evalf_expr(expr, prec=Some(110)) :
-      Result[@symcore.Expr, PolyError]) {
-    Ok(value) => value
-    Err(_) => fail("cc evalf")
-  }
+  let evaled = Domain::CC.evalf_expr(expr, prec=Some(110))
   match evaled {
     @symcore.Expr::ComplexFloat(z) => assert_true(z.precision() == 110)
     _ => fail("expected complex float")
@@ -38,18 +20,8 @@ test "CC evalf_expr returns complex float expressions" {
 ///|
 test "RealField object carries precision and evaluates to float leaves" {
   let rr = RealField::new(precision=85)
-  let expr = match
-    (
-      try? @symcore.rational_from_ints(1, 3) :
-      Result[@symcore.Expr, @symnum.RationalError]) {
-    Ok(value) => value
-    Err(_) => fail("third")
-  }
-  let evaled = match
-    (try? rr.evalf_expr(expr) : Result[@symcore.Expr, PolyError]) {
-    Ok(value) => value
-    Err(_) => fail("rr evalf")
-  }
+  let expr = @symcore.rational_from_ints(1, 3)
+  let evaled = rr.evalf_expr(expr)
   match rr.domain() {
     Domain::RR => ()
     _ => fail("expected RR domain")
@@ -66,20 +38,8 @@ test "RealField object carries precision and evaluates to float leaves" {
 ///|
 test "ComplexField object evaluates gaussian rationals to complex float expressions" {
   let cc = ComplexField::new(precision=95)
-  let quarter = match
-    (
-      try? @symcore.rational_from_ints(1, 4) :
-      Result[@symcore.Expr, @symnum.RationalError]) {
-    Ok(value) => value
-    Err(_) => fail("quarter")
-  }
-  let minus_half = match
-    (
-      try? @symcore.rational_from_ints(-1, 2) :
-      Result[@symcore.Expr, @symnum.RationalError]) {
-    Ok(value) => value
-    Err(_) => fail("minus_half")
-  }
+  let quarter = @symcore.rational_from_ints(1, 4)
+  let minus_half = @symcore.rational_from_ints(-1, 2)
   let expr = @symcore.add([
     quarter,
     @symcore.mul([
@@ -87,11 +47,7 @@ test "ComplexField object evaluates gaussian rationals to complex float expressi
       @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
     ]),
   ])
-  let evaled = match
-    (try? cc.evalf_expr(expr) : Result[@symcore.Expr, PolyError]) {
-    Ok(value) => value
-    Err(_) => fail("cc field evalf")
-  }
+  let evaled = cc.evalf_expr(expr)
   match cc.domain() {
     Domain::CC => ()
     _ => fail("expected CC domain")
@@ -172,8 +128,10 @@ test "to_rational handles signs and field precision caps" {
 ///|
 test "to_rational rejects non-positive denominator caps" {
   let value = @symcore.Float::from_int(1)
-  let zero_cap : Result[(BigInt, BigInt), PolyError] = try? to_rational(
-    value, 0N,
-  )
-  assert_true(zero_cap is Err(PolyError::DivisionByZero))
+  try to_rational(value, 0N) catch {
+    PolyError::DivisionByZero => ()
+    _ => fail("expected DivisionByZero")
+  } noraise {
+    _ => fail("expected to_rational to raise")
+  }
 }

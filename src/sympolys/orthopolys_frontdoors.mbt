@@ -1008,15 +1008,12 @@ fn rat_div_sp(
 ///|
 fn expr_rat_sp(expr : Expr) -> @symnum.BigRational? {
   match @symcore.exact_numeric_expr_num_den(expr) {
-    Some((num, den)) => {
-      let value : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-        num, den,
-      )
-      match value {
-        Ok(value) => Some(value)
-        Err(_) => None
+    Some((num, den)) =>
+      try @symnum.BigRational::new(num, den) catch {
+        _ => None
+      } noraise {
+        value => Some(value)
       }
-    }
     None => None
   }
 }

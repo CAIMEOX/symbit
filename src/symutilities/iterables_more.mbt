@@ -4,7 +4,7 @@
 
 ///|
 pub fn[T : Eq + Hash] multiset(seq : Array[T]) -> Map[T, Int] {
-  let counts : Map[T, Int] = {}
+  let counts : Map[T, Int] = Map([])
   for item in seq {
     counts[item] = match counts.get(item) {
       Some(n) => n + 1
@@ -21,7 +21,7 @@ fn[T : Eq + Hash + Compare] multiset_groups(seq : Array[T]) -> Array[(T, Int)] {
   for key, value in counts {
     out.push((key, value))
   }
-  out.sort_by((a, b) => a.0.compare(b.0))
+  out.sort_by((a, b) => Compare::compare(a.0, b.0))
   out
 }
 
@@ -149,7 +149,7 @@ pub fn[T : Eq + Hash] strongly_connected_components(
   vertices : Array[T],
   edges : Array[(T, T)],
 ) -> Array[Array[T]] {
-  let graph : Map[T, Array[T]] = {}
+  let graph : Map[T, Array[T]] = Map([])
   for vertex in vertices {
     graph[vertex] = []
   }
@@ -163,9 +163,9 @@ pub fn[T : Eq + Hash] strongly_connected_components(
       graph[dst] = []
     }
   }
-  let index : Map[T, Int] = {}
-  let lowlink : Map[T, Int] = {}
-  let on_stack : Map[T, Bool] = {}
+  let index : Map[T, Int] = Map([])
+  let lowlink : Map[T, Int] = Map([])
+  let on_stack : Map[T, Bool] = Map([])
   let stack : Array[T] = []
   let components : Array[Array[T]] = []
   let next_index : Ref[Int] = { val: 0 }

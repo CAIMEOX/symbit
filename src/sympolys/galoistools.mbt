@@ -310,7 +310,7 @@ pub fn gf_to_dict(
   p : Int,
   symmetric? : Bool = true,
 ) -> Map[Int, Int] {
-  let out : Map[Int, Int] = {}
+  let out : Map[Int, Int] = Map([])
   let n = gf_degree(f)
   for k in 0..<=n {
     let raw = f[n - k]

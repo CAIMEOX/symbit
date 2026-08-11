@@ -27,11 +27,11 @@ test "convert: to_string matches SymPy poly_expr over GF" {
   let expr = @symcore.rational_from_ints(3, 2) * x +
     @symcore.rational_from_ints(1, 3)
   let poly = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(expr)
-  let ours = sympy_normalize(poly.to_string()).trim().to_string()
+  let ours = sympy_normalize(poly.to_string()).trim().to_owned()
   let c1 = mod_rational(3, 2, 5)
   let c0 = mod_rational(1, 3, 5)
   let expected = "\{c1}*x + \{c0}"
-  let oracle = sympy_normalize(expected).trim().to_string()
+  let oracle = sympy_normalize(expected).trim().to_owned()
   assert_eq(ours, oracle)
 }
 
@@ -67,31 +67,23 @@ test "convert: parse_expr failure branches are typed" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
 
-  let bad_gen : Result[Poly, PolyError] = try? Poly::from_expr(
-    y,
-    ["x"],
-    Domain::QQ,
-  )
-  assert_true(bad_gen is Err(PolyError::BadGenerator(_)))
+  let bad_gen = expect_poly_error(fn() raise PolyError {
+    Poly::from_expr(y, ["x"], Domain::QQ)
+  })
+  assert_true(bad_gen is PolyError::BadGenerator(_))
 
-  let bad_pow_kind : Result[Poly, PolyError] = try? Poly::from_expr(
-    x ^ y,
-    ["x"],
-    Domain::QQ,
-  )
-  assert_true(bad_pow_kind is Err(PolyError::BadExponent))
+  let bad_pow_kind = expect_poly_error(fn() raise PolyError {
+    Poly::from_expr(x ^ y, ["x"], Domain::QQ)
+  })
+  assert_true(bad_pow_kind is PolyError::BadExponent)
 
-  let bad_pow_neg : Result[Poly, PolyError] = try? Poly::from_expr(
-    x ^ @symcore.int(-1),
-    ["x"],
-    Domain::QQ,
-  )
-  assert_true(bad_pow_neg is Err(PolyError::BadExponent))
+  let bad_pow_neg = expect_poly_error(fn() raise PolyError {
+    Poly::from_expr(x ^ @symcore.int(-1), ["x"], Domain::QQ)
+  })
+  assert_true(bad_pow_neg is PolyError::BadExponent)
 
-  let bad_expr_kind : Result[Poly, PolyError] = try? Poly::from_expr(
-    @symcore.function("sin", [x]),
-    ["x"],
-    Domain::QQ,
-  )
-  assert_true(bad_expr_kind is Err(PolyError::NonPolynomial))
+  let bad_expr_kind = expect_poly_error(fn() raise PolyError {
+    Poly::from_expr(@symcore.function("sin", [x]), ["x"], Domain::QQ)
+  })
+  assert_true(bad_expr_kind is PolyError::NonPolynomial)
 }

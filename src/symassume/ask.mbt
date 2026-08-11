@@ -120,7 +120,7 @@ pub fn ask(
 
 ///|
 fn assumptions_eval_env(query : Query, base : AssumeEnv) -> AssumeEnv {
-  let out : AssumeEnv = {}
+  let out : AssumeEnv = Map([])
   for name, facts in base {
     out[name] = normalize_facts(facts)
   }
@@ -387,7 +387,7 @@ fn SatBuilder::clauses_copy(self : SatBuilder) -> Array[Array[Int]] {
 
 ///|
 fn SatBuilder::relevant_exprs(self : SatBuilder) -> Array[Expr] {
-  let seen : Map[String, Expr] = {}
+  let seen : Map[String, Expr] = Map([])
   for _, info in self.atom_infos {
     let (_, args) = info
     for arg in args {

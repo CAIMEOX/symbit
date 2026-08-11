@@ -6,8 +6,8 @@ test "elementary exp/log simplifications" {
   let log1 = log(one)
   assert_eq(@symprint.pretty_string(exp0), "1")
   assert_eq(@symprint.pretty_string(log1), "0")
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(exp0), "1"))
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(log1), "0"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(exp0), "1"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(log1), "0"))
 }
 
 ///|
@@ -19,9 +19,9 @@ test "elementary trig simplifications" {
   assert_eq(@symprint.pretty_string(s0), "0")
   assert_eq(@symprint.pretty_string(c0), "1")
   assert_eq(@symprint.pretty_string(t0), "0")
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(s0), "0"))
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(c0), "1"))
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(t0), "0"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(s0), "0"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(c0), "1"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(t0), "0"))
 }
 
 ///|
@@ -35,8 +35,8 @@ test "elementary sqrt/abs/sign" {
   assert_eq(@symprint.pretty_string(sgn), "-1")
   assert_eq(@symprint.pretty_string(s0), "0")
   assert_eq(@symprint.pretty_string(s1), "1")
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(abs2), "2"))
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(sgn), "-1"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(abs2), "2"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(sgn), "-1"))
 }
 
 ///|
@@ -48,9 +48,9 @@ test "elementary floor/ceiling/frac" {
   assert_eq(@symprint.pretty_string(f), "3")
   assert_eq(@symprint.pretty_string(c), "3")
   assert_eq(@symprint.pretty_string(r), "0")
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(f), "3"))
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(c), "3"))
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(r), "0"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(f), "3"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(c), "3"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(r), "0"))
 }
 
 ///|
@@ -59,8 +59,8 @@ test "elementary Min/Max numeric" {
   let n = max([@symcore.int(3), @symcore.int(-1), @symcore.int(2)])
   assert_eq(@symprint.pretty_string(m), "-1")
   assert_eq(@symprint.pretty_string(n), "3")
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(m), "-1"))
-  assert_oracle(try? expr_str_eq(@symprint.pretty_string(n), "3"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(m), "-1"))
+  assert_oracle(expr_str_eq(@symprint.pretty_string(n), "3"))
 }
 
 ///|

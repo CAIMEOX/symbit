@@ -16,7 +16,7 @@ pub fn partial_derivative(
 }
 
 ///|
-pub impl Show for PartialDerivative with to_string(self) -> String {
+pub impl Show for PartialDerivative with fn to_string(self) -> String {
   let args : Array[String] = Array::new()
   args.push(self.expr.to_string())
   for v in self.variables {
@@ -26,6 +26,6 @@ pub impl Show for PartialDerivative with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for PartialDerivative with output(self, logger : &Logger) -> Unit {
+pub impl Show for PartialDerivative with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

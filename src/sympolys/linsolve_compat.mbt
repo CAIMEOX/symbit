@@ -789,7 +789,7 @@ pub fn linear_solve(
     }
   }
 
-  let pivot_set : Map[Int, Bool] = {}
+  let pivot_set : Map[Int, Bool] = Map([])
   for p in pivots {
     if p < n {
       pivot_set[p] = true
@@ -815,7 +815,7 @@ pub fn linear_solve(
 
   // Parametric solution with t0, t1, ... free symbols.
   let params = free_vars.map(i => "t\{i}")
-  let free_exprs : Map[Int, Expr] = {}
+  let free_exprs : Map[Int, Expr] = Map([])
   for i in 0..<free_vars.length() {
     free_exprs[free_vars[i]] = Expr::Symbol(params[i])
   }

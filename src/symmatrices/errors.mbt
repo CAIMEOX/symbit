@@ -20,7 +20,7 @@ pub(all) suberror MatrixError {
 /// - Input: One `MatrixError`.
 /// - Returns: Text written into the supplied `Logger`.
 /// - Limits: Output is intended for diagnostics and tests, so changing it can invalidate string-based assertions.
-pub impl Show for MatrixError with output(self, logger : &Logger) -> Unit {
+pub impl Show for MatrixError with fn output(self, logger : &Logger) -> Unit {
   match self {
     MatrixError::ShapeError(msg) => logger.write_string("ShapeError(\{msg})")
     MatrixError::ValueError(msg) => logger.write_string("ValueError(\{msg})")

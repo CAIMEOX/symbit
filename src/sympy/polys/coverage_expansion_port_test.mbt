@@ -47,14 +47,14 @@ fn cov_dense_repr(p : DensePoly) -> String {
 
 ///|
 fn cov_poly_norm(poly : Poly) -> String raise {
-  sympy_normalize(poly.to_string()).trim().to_string()
+  sympy_normalize(poly.to_string()).trim().to_owned()
 }
 
 ///|
 fn cov_norm_basis(s : String) -> String {
   let parts : Array[String] = Array::new()
   for part in s.split("|") {
-    parts.push(part.trim().to_string())
+    parts.push(part.trim().to_owned())
   }
   parts.sort()
   parts.join("|")
@@ -64,11 +64,12 @@ fn cov_norm_basis(s : String) -> String {
 fn cov_groebner_basis_str(basis : Array[Poly]) -> String {
   let parts : Array[String] = Array::new()
   for p in basis {
-    let monic_res : Result[String, Error] = try? monic(p.to_expr())
-    match monic_res {
-      Ok(s) => parts.push(s.trim().to_string())
-      Err(_) => parts.push(p.to_string())
+    let rendered = try monic(p.to_expr()) catch {
+      _ => p.to_string()
+    } noraise {
+      s => s.trim().to_owned()
     }
+    parts.push(rendered)
   }
   parts.sort()
   parts.join("|")
@@ -114,7 +115,7 @@ test "coverage: core helpers and leading-term API" {
 
   let p_scaled = p.scale_coeff(cov_fezz(3))
   let scaled = cov_poly_norm(p_scaled)
-  let expected_scaled = sympy_normalize("3*x**2 + 6*x + 3").trim().to_string()
+  let expected_scaled = sympy_normalize("3*x**2 + 6*x + 3").trim().to_owned()
   assert_eq(scaled, expected_scaled)
 
   let p_grev = p.with_order(TermOrder::Grevlex)
@@ -127,7 +128,7 @@ test "coverage: core helpers and leading-term API" {
   let as_expr = p.to_expr_with_order(TermOrder::Lex)
   let expr_norm = sympy_normalize(@symprint.pretty_string(as_expr))
     .trim()
-    .to_string()
+    .to_owned()
   let poly_norm = cov_poly_norm(p)
   assert_eq(expr_norm, poly_norm)
 }
@@ -196,15 +197,15 @@ test "coverage: galoistools scalar helpers" {
   assert_eq(@sympolys.gf_TC([0, 2, 3]), 3)
 
   let monic = @sympolys.gf_monic([2, 4, 2], 5)
-  assert_eq("\{monic}", "[1, 2, 1]")
+  assert_eq(Repr(monic).to_string(), "[1, 2, 1]")
 
   let f = [1, 0, 1]
   let g = [1, 1]
   let (q, r) = @sympolys.gf_div(f, g, 5)
   let quo = @sympolys.gf_quo(f, g, 5)
   let rem = @sympolys.gf_rem(f, g, 5)
-  assert_eq("\{q}", "\{quo}")
-  assert_eq("\{r}", "\{rem}")
+  assert_eq(Repr(q).to_string(), Repr(quo).to_string())
+  assert_eq(Repr(r).to_string(), Repr(rem).to_string())
 }
 
 ///|
@@ -218,7 +219,7 @@ test "coverage: qq_utils clear_denominators" {
     _ => fail("clear_denominators should lift to ZZ")
   }
   let ours = cov_poly_norm(lifted)
-  let expected = sympy_normalize("3*x + 2").trim().to_string()
+  let expected = sympy_normalize("3*x + 2").trim().to_owned()
   assert_eq(ours, expected)
 }
 
@@ -279,8 +280,8 @@ test "coverage: resultant_poly multivariate output parity" {
       domain="QQ",
     )
     .trim()
-    .to_string()
-  let oracle_norm = sympy_normalize(oracle).trim().to_string()
+    .to_owned()
+  let oracle_norm = sympy_normalize(oracle).trim().to_owned()
   assert_eq(ours, oracle_norm)
 }
 
@@ -365,8 +366,8 @@ test "coverage: core neg/sub APIs" {
   let q = b.from_expr(@symcore.int(3) * x - @symcore.int(1))
   let neg_p = cov_poly_norm(p.neg())
   let sub_pq = cov_poly_norm(p.sub(q))
-  let expect_neg = sympy_normalize("-x**2 - 2*x - 3").trim().to_string()
-  let expect_sub = sympy_normalize("x**2 - x + 4").trim().to_string()
+  let expect_neg = sympy_normalize("-x**2 - 2*x - 3").trim().to_owned()
+  let expect_sub = sympy_normalize("x**2 - x + 4").trim().to_owned()
   assert_eq(neg_p, expect_neg)
   assert_eq(sub_pq, expect_sub)
 }
@@ -383,7 +384,7 @@ test "coverage: content/primitive/pseudo_div_univar_int APIs" {
   let content = f.content()
   assert_eq(content.to_string(), "3")
   let primitive = f.primitive_part()
-  let expect_primitive = sympy_normalize("2*x**2 + 3*x + 1").trim().to_string()
+  let expect_primitive = sympy_normalize("2*x**2 + 3*x + 1").trim().to_owned()
   assert_eq(cov_poly_norm(primitive), expect_primitive)
 
   let g = b.from_expr(@symcore.int(2) * x + @symcore.int(1))
@@ -407,7 +408,7 @@ test "coverage: algebraic-extension public helpers" {
   let spec = @sympolys.alg_ext_spec(Domain::QQ, "x", raw)
   let normalized = @sympolys.normalize_alg_ext_spec(spec)
   let minpoly_norm = cov_poly_norm(normalized.minpoly)
-  let expect_minpoly = sympy_normalize("x**2 + 1/2").trim().to_string()
+  let expect_minpoly = sympy_normalize("x**2 + 1/2").trim().to_owned()
   assert_eq(minpoly_norm, expect_minpoly)
   let ext = @sympolys.build_alg_extension(spec)
   match ext {
@@ -416,7 +417,7 @@ test "coverage: algebraic-extension public helpers" {
       assert_eq(gens, ["x"])
       let rel = sympy_normalize(@symprint.pretty_string(rels[0]))
         .trim()
-        .to_string()
+        .to_owned()
       assert_eq(rel, expect_minpoly)
     }
     _ => fail("expected Domain::AlgExt")

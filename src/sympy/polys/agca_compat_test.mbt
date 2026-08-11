@@ -2,7 +2,7 @@
 fn ag_norm(expr : @symcore.Expr) -> String raise {
   sympy_normalize(@symprint.pretty_string(expr))
   .trim()
-  .to_string()
+  .to_owned()
   .replace_all(old=" ", new="")
 }
 

@@ -63,11 +63,14 @@ fn assert_sympy_parse_string_relaxed(src : String) -> Unit raise {
 
 ///|
 fn parse_error_detail(src : String) -> String {
-  let result : Result[@symcore.Expr, ParseError] = try? parse_expr(src)
-  match result {
-    Err(ParseError::UnsupportedConstruct(span=_, detail)) => detail
-    Err(_) => "unexpected-parse-error"
-    Ok(_) => "unexpected-success"
+  try parse_expr(src) catch {
+    error =>
+      match error {
+        ParseError::UnsupportedConstruct(span=_, detail) => detail
+        _ => "unexpected-parse-error"
+      }
+  } noraise {
+    _ => "unexpected-success"
   }
 }
 
@@ -83,14 +86,14 @@ fn ast_parse_error_detail(
   src : String,
   local_bindings : Map[String, @symcore.Expr],
 ) -> String {
-  let result : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
-    src,
-    local_bindings~,
-  )
-  match result {
-    Err(ParseError::UnsupportedConstruct(span=_, detail)) => detail
-    Err(_) => "unexpected-parse-error"
-    Ok(_) => "unexpected-success"
+  try ast_parse_expr(src, local_bindings~) catch {
+    error =>
+      match error {
+        ParseError::UnsupportedConstruct(span=_, detail) => detail
+        _ => "unexpected-parse-error"
+      }
+  } noraise {
+    _ => "unexpected-success"
   }
 }
 
@@ -104,11 +107,11 @@ fn assert_sympy_parse_matches_in(
   global_binding_names? : Array[String] = [],
   global_binding_exprs? : Array[String] = [],
 ) -> Unit raise {
-  let bindings : Map[String, @symcore.Expr] = {}
+  let bindings : Map[String, @symcore.Expr] = Map([])
   for i in 0..<binding_names.length() {
     bindings[binding_names[i]] = parse_expr(binding_exprs[i])
   }
-  let global_bindings : Map[String, @symcore.Expr] = {}
+  let global_bindings : Map[String, @symcore.Expr] = Map([])
   for i in 0..<global_binding_names.length() {
     global_bindings[global_binding_names[i]] = parse_expr(
       global_binding_exprs[i],
@@ -148,11 +151,11 @@ fn assert_sympy_parse_matches_in_relaxed(
   global_binding_names? : Array[String] = [],
   global_binding_exprs? : Array[String] = [],
 ) -> Unit raise {
-  let bindings : Map[String, @symcore.Expr] = {}
+  let bindings : Map[String, @symcore.Expr] = Map([])
   for i in 0..<binding_names.length() {
     bindings[binding_names[i]] = parse_expr(binding_exprs[i])
   }
-  let global_bindings : Map[String, @symcore.Expr] = {}
+  let global_bindings : Map[String, @symcore.Expr] = Map([])
   for i in 0..<global_binding_names.length() {
     global_bindings[global_binding_names[i]] = parse_expr(
       global_binding_exprs[i],

@@ -12,7 +12,7 @@ fn local_series_poly(
   x0 : @symcore.Expr,
 ) -> Array[@symcore.Expr]? {
   let t = @symcore.Expr::Symbol("__res_t")
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[var_name] = @symcore.add([x0, t])
   let shifted = @symcore.subst(expr, env)
   poly_from_expr(shifted, t)

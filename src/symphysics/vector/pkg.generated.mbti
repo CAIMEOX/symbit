@@ -221,4 +221,3 @@ pub impl Sub for Vector
 pub using @symcore {type Expr as CoordinateSym}
 
 // Traits
-

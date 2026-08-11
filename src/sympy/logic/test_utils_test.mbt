@@ -1,6 +1,6 @@
 ///|
 fn normalize_model_string(s : String) -> String {
-  let t = s.trim().to_string()
+  let t = s.trim().to_owned()
   if t == "False" {
     return "False"
   }
@@ -11,13 +11,13 @@ fn normalize_model_string(s : String) -> String {
   if len <= 2 {
     return "{}"
   }
-  let inner = t[1:len - 1].to_string().trim().to_string()
+  let inner = t[1:len - 1].to_owned().trim().to_owned()
   if inner.is_empty() {
     return "{}"
   }
   let parts : Array[String] = Array::new()
   for part in inner.split(", ") {
-    parts.push(part.to_string())
+    parts.push(part.to_owned())
   }
   parts.sort()
   let joined = parts.join(", ")
@@ -49,7 +49,7 @@ fn bool_option_to_string(value : Bool?) -> String {
 
 ///|
 fn normalize_models_string(s : String) -> String {
-  let t = s.trim().to_string()
+  let t = s.trim().to_owned()
   if !t.has_prefix("[") || !t.has_suffix("]") {
     return t
   }
@@ -57,7 +57,7 @@ fn normalize_models_string(s : String) -> String {
   if len <= 2 {
     return "[]"
   }
-  let inner = t[1:len - 1].to_string().trim().to_string()
+  let inner = t[1:len - 1].to_owned().trim().to_owned()
   if inner.is_empty() {
     return "[]"
   }
@@ -78,14 +78,14 @@ fn normalize_models_string(s : String) -> String {
       depth -= 1
     }
     if ch == ',' && depth == 0 {
-      parts.push(buf.to_string().trim().to_string())
+      parts.push(buf.to_string().trim().to_owned())
       buf = StringBuilder::new()
       skip_space = true
       continue
     }
     buf.write_char(ch)
   }
-  let tail = buf.to_string().trim().to_string()
+  let tail = buf.to_string().trim().to_owned()
   if !tail.is_empty() {
     parts.push(tail)
   }

@@ -165,7 +165,7 @@ fn control_frequency_value(
   omega : Double,
   freq_unit : String,
 ) -> ControlComplex raise ControlError {
-  let env : Map[String, ControlComplex] = {}
+  let env : Map[String, ControlComplex] = Map([])
   let value = if freq_unit == "Hz" {
     (0.0, 2.0 * @math.PI * omega)
   } else {
@@ -637,7 +637,7 @@ pub fn nyquist_plot_expr(
 ) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise ControlError {
   let tf = control_as_continuous_tf(system)
   let w = @symcore.Expr::Symbol("w")
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[control_var_name(tf.var_)] = @symcore.Expr::NumberSymbol(
       @symcore.NumberSymbolKind::ImaginaryUnit,
     ) *
@@ -664,7 +664,7 @@ pub fn nichols_plot_expr(
 ) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise ControlError {
   let tf = control_as_continuous_tf(system)
   let w = @symcore.Expr::Symbol("w")
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[control_var_name(tf.var_)] = @symcore.Expr::NumberSymbol(
       @symcore.NumberSymbolKind::ImaginaryUnit,
     ) *

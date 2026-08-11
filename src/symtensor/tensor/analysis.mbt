@@ -45,8 +45,8 @@ fn collect_indices(expr : TensorExpr) -> Array[TensorIndex] {
 ///|
 pub fn get_indices(expr : TensorExpr) -> TensorIndexInfo {
   let indices = collect_indices(expr)
-  let up_map : Map[String, Array[TensorIndex]] = {}
-  let down_map : Map[String, Array[TensorIndex]] = {}
+  let up_map : Map[String, Array[TensorIndex]] = Map([])
+  let down_map : Map[String, Array[TensorIndex]] = Map([])
   for idx in indices {
     let key = index_key(idx)
     if idx.is_up {

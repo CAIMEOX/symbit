@@ -62,7 +62,7 @@ pub fn Curve::limits(self : Curve) -> (Expr, Expr, Expr) {
 
 ///|
 pub fn Curve::free_symbols(self : Curve) -> Array[Expr] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for expr in self.functions_ {
     geo_collect_symbols(expr, seen)
   }
@@ -107,7 +107,7 @@ pub fn Curve::arbitrary_point(
   self : Curve,
   parameter? : Expr = Expr::Symbol("t"),
 ) -> Point raise GeometryError {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   let actual = if @symcore.compare_expr(parameter, Expr::Symbol("t")) == 0 {
     self.parameter_
   } else {
@@ -166,7 +166,7 @@ pub fn Curve::parameter_value(
   }
   for candidate in matches {
     let candidate = geo_simplify(candidate)
-    let env : Map[String, Expr] = {}
+    let env : Map[String, Expr] = Map([])
     match self.parameter_ {
       Expr::Symbol(name) => env.set(name, candidate)
       _ => ()
@@ -179,7 +179,7 @@ pub fn Curve::parameter_value(
       }
     }
     if ok {
-      let out : Map[Expr, Expr] = {}
+      let out : Map[Expr, Expr] = Map([])
       out.set(t, geo_simplify(candidate))
       return out
     }

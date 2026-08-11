@@ -16,7 +16,7 @@ fn model_arg_from_names(
   names : Array[String],
   values : Array[Bool],
 ) -> OracleArg {
-  let dict : Map[String, OracleArg] = Map::new()
+  let dict : Map[String, OracleArg] = Map([])
   let n = names.length()
   for i in 0..<n {
     dict[names[i]] = OracleArg::Bool(values[i])

@@ -240,7 +240,7 @@ pub fn LambdaFn::call(
   if values.length() != self.args.length() {
     raise UtilitiesError::InvalidArgument("lambdify argument count mismatch")
   }
-  let env : Map[String, Double] = {}
+  let env : Map[String, Double] = Map([])
   for i in 0..<self.args.length() {
     env[self.args[i]] = values[i]
   }

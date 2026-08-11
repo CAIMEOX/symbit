@@ -68,7 +68,7 @@ pub fn difference_delta(
     _ => fail("difference_delta requires a Symbol")
   }
   let shifted = @symcore.add([n, @symcore.int(step)])
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[var_name] = shifted
   let new_expr = @symcore.subst(expr, env)
   @symcore.add([new_expr, @symcore.mul([@symcore.int(-1), expr])])

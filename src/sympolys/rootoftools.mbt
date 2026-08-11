@@ -68,7 +68,7 @@ pub fn root_sum(poly : Poly, func? : Expr) -> RootSum {
 /// - Limits: Does not add a separate error channel beyond the called helpers; inputs
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
-pub impl Show for RootOf with to_string(self) -> String {
+pub impl Show for RootOf with fn to_string(self) -> String {
   let expr_str = @symprint.pretty_string(self.poly.to_expr())
   "CRootOf(\{expr_str}, \{self.index})"
 }
@@ -84,12 +84,12 @@ pub impl Show for RootOf with to_string(self) -> String {
 /// - Limits: Does not add a separate error channel beyond the called helpers; inputs
 /// must already satisfy the representation invariants expected by this compatibility
 /// layer.
-pub impl Show for RootOf with output(self, logger : &Logger) -> Unit {
+pub impl Show for RootOf with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl Show for RootSum with to_string(self) -> String {
+pub impl Show for RootSum with fn to_string(self) -> String {
   let expr_str = @symprint.pretty_string(self.poly.to_expr())
   match self.func {
     Some(func) => "RootSum(\{expr_str}, \{@symprint.pretty_string(func)})"
@@ -98,6 +98,6 @@ pub impl Show for RootSum with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for RootSum with output(self, logger : &Logger) -> Unit {
+pub impl Show for RootSum with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

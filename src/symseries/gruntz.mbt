@@ -162,7 +162,7 @@ fn subst_symbol(
   name : String,
   value : @symcore.Expr,
 ) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[name] = value
   @symcore.subst(expr, env)
 }
@@ -430,7 +430,7 @@ fn finite_point_to_t(
   dir : String,
   t : @symcore.Expr,
 ) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   let shift = if dir == "-" {
     @symcore.add([x0, expr_neg(t)])
   } else {
@@ -447,7 +447,7 @@ fn infinity_to_t(
   neg : Bool,
   t : @symcore.Expr,
 ) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   let inv_t = @symcore.pow(t, @symcore.int(-1))
   env[var_name] = if neg { expr_neg(inv_t) } else { inv_t }
   @symcore.subst(expr, env)

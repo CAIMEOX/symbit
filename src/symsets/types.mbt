@@ -477,7 +477,7 @@ pub fn sort_sets_in_place(args : Array[Set]) -> Unit {
 /// - Input: Two `Set` values.
 /// - Returns: A negative, zero, or positive `Int`.
 /// - Limits: Has the same structural semantics as `compare_set`.
-pub impl Compare for Set with compare(self, other : Set) -> Int {
+pub impl Compare for Set with fn compare(self, other : Set) -> Int {
   compare_set(self, other)
 }
 
@@ -488,7 +488,7 @@ pub impl Compare for Set with compare(self, other : Set) -> Int {
 /// - Input: Two `Set` values.
 /// - Returns: `true` when the sets are structurally equal.
 /// - Limits: Equality is structural and does not perform deep semantic reasoning.
-pub impl Eq for Set with equal(self, other : Set) -> Bool {
+pub impl Eq for Set with fn equal(self, other : Set) -> Bool {
   compare_set(self, other) == 0
 }
 
@@ -499,7 +499,7 @@ pub impl Eq for Set with equal(self, other : Set) -> Bool {
 /// - Input: Two `Set` values.
 /// - Returns: `true` when the sets are not structurally equal.
 /// - Limits: Has the same structural semantics as `equal`.
-pub impl Eq for Set with not_equal(self, other : Set) -> Bool {
+pub impl Eq for Set with fn not_equal(self, other : Set) -> Bool {
   !self.equal(other)
 }
 
@@ -510,8 +510,8 @@ pub impl Eq for Set with not_equal(self, other : Set) -> Bool {
 /// - Input: One `Set` value.
 /// - Returns: One `Int` hash value.
 /// - Limits: Hash stability follows the package's structural canonicalization rules.
-pub impl Hash for Set with hash(self) -> Int {
-  let hasher = Hasher::new()
+pub impl Hash for Set with fn hash(self) -> Int {
+  let hasher = Hasher()
   self.hash_combine(hasher)
   hasher.finalize()
 }
@@ -523,7 +523,7 @@ pub impl Hash for Set with hash(self) -> Int {
 /// - Input: One `Set` value and one mutable `Hasher`.
 /// - Returns: `Unit`.
 /// - Limits: Hashing is structural and follows the same semantics as `compare_set`.
-pub impl Hash for Set with hash_combine(self, hasher : Hasher) -> Unit {
+pub impl Hash for Set with fn hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_int(variant_rank(self))
   match self {
     Set::FiniteSet(items) =>

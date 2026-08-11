@@ -1,5 +1,5 @@
 ///|
-let bigint_divisors_cache : Map[String, Array[BigInt]] = {}
+let bigint_divisors_cache : Map[String, Array[BigInt]] = Map([])
 
 ///|
 /// Helpers and Berlekamp-style factorization for univariate polynomials.
@@ -207,7 +207,7 @@ pub fn Poly::factor(
   if !requested_extension.is_empty() {
     work = apply_extension_request(work, requested_extension)
   }
-  if work.gens.not_equal(resolved_gens) {
+  if work.gens != resolved_gens {
     raise PolyError::DomainMismatch
   }
   check_univar_compat(work, work)
@@ -230,20 +230,20 @@ pub fn Poly::factor(
         factors.push((lp, mult))
       }
     } else if p.domain is Domain::ZZ {
-      let int_parts_res = try? factor_integer(p)
-      let int_parts = match int_parts_res {
-        Ok(v) => v
-        Err(_) => [p]
+      let int_parts = try factor_integer(p) catch {
+        _ => [p]
+      } noraise {
+        value => value
       }
       for lp in int_parts {
         factors.push((lp, mult))
       }
     } else if p.domain is Domain::QQ {
       let cleared = clear_denominators(p)
-      let int_parts_res = try? factor_integer(cleared)
-      let int_parts = match int_parts_res {
-        Ok(v) => v
-        Err(_) => [cleared]
+      let int_parts = try factor_integer(cleared) catch {
+        _ => [cleared]
+      } noraise {
+        value => value
       }
       for lp in int_parts {
         // rescale back by dividing leading coeff if needed
@@ -420,7 +420,7 @@ fn pow_coeff(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational {
 
 ///|
 fn bigint_abs_local(value : BigInt) -> BigInt {
-  if value.op_lt(BigInt::from_int(0)) {
+  if value < BigInt::from_int(0) {
     value.neg()
   } else {
     value

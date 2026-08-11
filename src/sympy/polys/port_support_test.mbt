@@ -22,11 +22,19 @@ using @sympolys {
   type PolyBuilder,
   type PolyError,
   type SDM,
-  type SeriesElem,
   type SymmetrizeListResult,
   type SymmetrizeResult,
   type SympyEigenvects,
   type TermOrder,
+}
+
+///|
+fn[T] expect_poly_error(action : () -> T raise PolyError) -> PolyError raise {
+  try action() catch {
+    error => error
+  } noraise {
+    _ => fail("expected PolyError to be raised")
+  }
 }
 
 ///|
@@ -97,11 +105,12 @@ fn groebner_to_string(basis : Array[Poly]) -> String {
   let parts : Array[String] = {
     let arr = Array::new()
     for p in basis {
-      let monic_res : Result[String, Error] = try? monic(p.to_expr())
-      match monic_res {
-        Ok(s) => arr.push(s)
-        Err(_) => arr.push(p.to_string())
+      let rendered = try monic(p.to_expr()) catch {
+        _ => p.to_string()
+      } noraise {
+        s => s
       }
+      arr.push(rendered)
     }
     arr
   }

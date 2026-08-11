@@ -22,13 +22,8 @@ fn expr_from_num(value : @symnum.BigRational) -> Expr {
 
 ///|
 fn expr_rat(num : Int, den : Int) -> Expr {
-  match
-    (
-      try? @symcore.rational_from_ints(num, den) :
-      Result[Expr, @symnum.RationalError]) {
-    Ok(value) => value
-    Err(_) =>
-      @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
+  @symcore.rational_from_ints(num, den) catch {
+    _ => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
   }
 }
 
@@ -235,10 +230,8 @@ fn expr_mul(lhs : Expr, rhs : Expr) -> Expr {
 fn expr_div(lhs : Expr, rhs : Expr) -> Expr {
   match (lhs, rhs) {
     (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) =>
-      match
-        (try? a.div_r(b) : Result[@symnum.BigRational, @symnum.RationalError]) {
-        Ok(value) => @symcore.Expr::Number(value)
-        Err(_) => @symcore.mul([lhs, @symcore.pow(rhs, @symcore.int(-1))])
+      @symcore.Expr::Number(a.div_r(b)) catch {
+        _ => @symcore.mul([lhs, @symcore.pow(rhs, @symcore.int(-1))])
       }
     _ =>
       if expr_trivial_zero(lhs) {
@@ -316,27 +309,24 @@ fn expr_num_value(expr : Expr) -> @symnum.BigRational? {
           } else {
             let mut out = @symnum.BigRational::one()
             let factor = if power < 0 {
-              try? base.reciprocal()
+              base.reciprocal() catch {
+                _ => return None
+              }
             } else {
-              Ok(base)
+              base
             }
-            match factor {
-              Err(_) => return None
-              Ok(factor0) => {
-                let mut factor = factor0
-                let mut n = if power < 0 { -power } else { power }
-                while n > 0 {
-                  if (n & 1) == 1 {
-                    out = out * factor
-                  }
-                  n = n / 2
-                  if n > 0 {
-                    factor = factor * factor
-                  }
-                }
-                Some(out)
+            let mut factor = factor
+            let mut n = if power < 0 { -power } else { power }
+            while n > 0 {
+              if (n & 1) == 1 {
+                out = out * factor
+              }
+              n = n / 2
+              if n > 0 {
+                factor = factor * factor
               }
             }
+            Some(out)
           }
         }
         _ => None
@@ -345,37 +335,21 @@ fn expr_num_value(expr : Expr) -> @symnum.BigRational? {
       if !f.is_finite() {
         None
       } else {
-        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? f.to_rational()
-        match pair {
-          Ok((num, den)) =>
-            match
-              (
-                try? @symnum.BigRational::new(num, den) :
-                Result[@symnum.BigRational, @symnum.RationalError]) {
-              Ok(value) => Some(value)
-              Err(_) => None
-            }
-          Err(_) => None
+        let (num, den) = f.to_rational() catch { _ => return None }
+        let value = @symnum.BigRational::new(num, den) catch {
+          _ => return None
         }
+        Some(value)
       }
     @symcore.Expr::ComplexFloat(z) =>
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
-        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? z
-          .real_part()
-          .to_rational()
-        match pair {
-          Ok((num, den)) =>
-            match
-              (
-                try? @symnum.BigRational::new(num, den) :
-                Result[@symnum.BigRational, @symnum.RationalError]) {
-              Ok(value) => Some(value)
-              Err(_) => None
-            }
-          Err(_) => None
+        let (num, den) = z.real_part().to_rational() catch { _ => return None }
+        let value = @symnum.BigRational::new(num, den) catch {
+          _ => return None
         }
+        Some(value)
       }
     _ =>
       match expr_simplify(expr) {
@@ -505,7 +479,7 @@ fn piecewise_expr(
 
 ///|
 fn subst_symbol(expr : Expr, var_name : String, value : Expr) -> Expr {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[var_name] = value
   @symcore.subst(expr, env)
 }
@@ -531,7 +505,7 @@ fn collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
 
 ///|
 fn infer_single_symbol(expr : Expr) -> String? {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   collect_symbols(expr, seen)
   let names : Array[String] = []
   for name, _ in seen {

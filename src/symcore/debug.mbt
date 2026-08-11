@@ -31,7 +31,7 @@ fn derivative_call_args(inner : Expr, deriv_args : Array[Expr]) -> Array[Expr] {
 
 ///|
 fn wrap_call_repr(name : String, args : Array[Expr]) -> String {
-  let rendered_args = args.map(arg => to_repr(arg).to_string())
+  let rendered_args = args.map(arg => Repr(arg).to_string())
   let suffix = if rendered_args.is_empty() {
     ""
   } else {
@@ -45,24 +45,24 @@ fn wrap_variadic_repr(head : String, args : Array[Expr]) -> String {
   if args.is_empty() {
     "(\{head})"
   } else {
-    let rendered = args.map(arg => to_repr(arg).to_string()).join(" ")
+    let rendered = args.map(arg => Repr(arg).to_string()).join(" ")
     "(\{head} \{rendered})"
   }
 }
 
 ///|
 fn wrap_apply_repr(head : Expr, args : Array[Expr]) -> String {
-  let rendered_args = args.map(arg => to_repr(arg).to_string())
+  let rendered_args = args.map(arg => Repr(arg).to_string())
   let suffix = if rendered_args.is_empty() {
     ""
   } else {
     " " + rendered_args.join(" ")
   }
-  "(apply \{to_repr(head).to_string()}\{suffix})"
+  "(apply \{Repr(head).to_string()}\{suffix})"
 }
 
 ///|
-pub impl Debug for Expr with to_repr(self) {
+pub impl Debug for Expr with fn to_repr(self) {
   let rendered = match ordinary_application_name_args(self) {
     Some((name, args)) => wrap_call_repr(name, args)
     None =>
@@ -84,7 +84,7 @@ pub impl Debug for Expr with to_repr(self) {
         ExprForm::Add(args) => wrap_variadic_repr("+", args)
         ExprForm::Mul(args) => wrap_variadic_repr("*", args)
         ExprForm::Pow(base, exp) =>
-          "(^ \{to_repr(base).to_string()} \{to_repr(exp).to_string()})"
+          "(^ \{Repr(base).to_string()} \{Repr(exp).to_string()})"
         ExprForm::Mod(lhs, rhs) => wrap_call_repr("Mod", [lhs, rhs])
         ExprForm::Tuple(args) => wrap_call_repr("Tuple", args)
         ExprForm::Dict(items) => {

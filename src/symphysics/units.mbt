@@ -85,7 +85,7 @@ pub enum PrefixValue {
 } derive(Eq)
 
 ///|
-pub impl Show for PrefixValue with to_string(self) {
+pub impl Show for PrefixValue with fn to_string(self) {
   match self {
     PrefixValue::Prefix(p) => p.abbrev
     PrefixValue::Expr(expr) => @symprint.pretty_string(expr)
@@ -93,7 +93,7 @@ pub impl Show for PrefixValue with to_string(self) {
 }
 
 ///|
-pub impl Show for PrefixValue with output(self, logger : &Logger) -> Unit {
+pub impl Show for PrefixValue with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

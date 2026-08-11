@@ -1,11 +1,11 @@
 import {
-  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/sympy",
   "Kaida-Amethyst/python" @py,
 }
 
 import {
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/symgeometry" @symgeometry,
+  "CAIMEOX/symbit/symgeometry",
   "CAIMEOX/symbit/symprint",
 } for "test"
 

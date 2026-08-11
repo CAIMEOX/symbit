@@ -171,11 +171,12 @@ test "factortools integer wb: cyclotomic predicate" {
 
 ///|
 test "factortools integer wb: domain limits" {
-  let bad : Result[FieldElem, PolyError] = try? dup_zz_mignotte_bound(
-    fact_int_wb_dup([1, 1]),
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dup_zz_mignotte_bound(fact_int_wb_dup([1, 1]), Domain::QQ)
+    },
+    "DomainMismatch",
   )
-  assert_true(bad is Err(PolyError::DomainMismatch))
   inspect(
     dup_cyclotomic_p([fe_from_int(1, Domain::GF(2))], Domain::GF(2)),
     content="false",

@@ -110,8 +110,8 @@ pub fn CosetTable::new(
   let row : Array[Int?] = Array::make(alphabet.length(), None)
   let table : Array[Array[Int?]] = Array::new()
   table.push(copy_row_int_opt(row))
-  let alphabet_index : Map[FreeGroupElement, Int] = {}
-  let alphabet_inv_index : Map[FreeGroupElement, Int] = {}
+  let alphabet_index : Map[FreeGroupElement, Int] = Map([])
+  let alphabet_inv_index : Map[FreeGroupElement, Int] = Map([])
   for i in 0..<alphabet.length() {
     let x = alphabet[i]
     alphabet_index[x] = i
@@ -129,7 +129,7 @@ pub fn CosetTable::new(
     names.push("a_\{i}")
   }
   let (grp, _) = free_group_from_array(names)
-  let p_p : Map[Int, FreeGroupElement] = {}
+  let p_p : Map[Int, FreeGroupElement] = Map([])
   p_p[0] = grp.identity()
   let word_table : Array[Array[FreeGroupElement?]] = Array::new()
   word_table.push(Array::make(alphabet.length(), None))
@@ -187,12 +187,12 @@ pub fn CosetTable::copy(self : CosetTable) -> CosetTable {
 
 ///|
 /// Return a readable textual rendering of the coset table.
-pub impl Show for CosetTable with to_string(self) -> String {
+pub impl Show for CosetTable with fn to_string(self) -> String {
   "Coset Table on \{self.group_name} with \{self.subgroup.length()} as subgroup generators"
 }
 
 ///|
-pub impl Show for CosetTable with output(self, logger : &Logger) -> Unit {
+pub impl Show for CosetTable with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -924,7 +924,7 @@ pub fn CosetTable::conjugates(
   self : CosetTable,
   relators : Array[FreeGroupElement],
 ) -> Array[Array[FreeGroupElement]] {
-  let relator_set : Map[FreeGroupElement, Bool] = {}
+  let relator_set : Map[FreeGroupElement, Bool] = Map([])
   for rel in relators {
     for w in rel.cyclic_conjugates() {
       relator_set[w] = true
@@ -1234,7 +1234,7 @@ pub fn coset_enumeration_c(
   for rel in relators {
     relators_cyclic_reduced.push(rel.identity_cyclic_reduction())
   }
-  let relator_set : Map[FreeGroupElement, Bool] = {}
+  let relator_set : Map[FreeGroupElement, Bool] = Map([])
   for rel in relators_cyclic_reduced {
     for w in rel.cyclic_conjugates() {
       relator_set[w] = true

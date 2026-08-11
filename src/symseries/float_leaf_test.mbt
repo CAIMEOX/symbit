@@ -58,7 +58,7 @@ fn series_eval_finite(
   sample : @symcore.Expr,
   prec? : Int = 120,
 ) -> Bool {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[var_name] = sample
   match @symcore.evalf(@symcore.subst(expr, env), prec~) {
     @symcore.Expr::Number(_) => true

@@ -267,7 +267,7 @@ fn quantum_apply_discrete_sum_to_ket(
     None => return None
   }
   guard rhs_name == ket_name else { return None }
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[sum_name] = rhs_label
   let coeff_sub = @symcore.subst(coeff, env)
   Some(quantum_mul_from_args_preserve([coeff_sub, rhs]))
@@ -298,7 +298,7 @@ fn quantum_project_discrete_bra_against_sum(
     None => return None
   }
   guard lhs_name == expected_bra else { return None }
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[sum_name] = lhs_label
   Some(@symcore.subst(coeff, env))
 }
@@ -510,12 +510,10 @@ fn quantum_apply_operator_pair(
     _ if quantum_is_bra_expr(lhs) && quantum_is_ket_expr(rhs) =>
       Some(inner_product(lhs, rhs, evaluate=ip_doit))
     _ if quantum_is_operator_expr(lhs) && quantum_is_ket_expr(rhs) => {
-      let gate_applied : Result[Expr?, @symphysics.PhysicsError] = try? gate_apply_to_qubit_expr(
-        lhs, rhs,
-      )
+      let gate_applied = gate_apply_to_qubit_expr(lhs, rhs) catch { _ => None }
       match gate_applied {
-        Ok(Some(applied)) => Some(applied)
-        _ =>
+        Some(applied) => Some(applied)
+        None =>
           match spin_apply_operator_to_ket(lhs, rhs) {
             Some(applied) => Some(applied)
             None =>

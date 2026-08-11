@@ -577,7 +577,7 @@ pub impl Show for FieldElem with fn to_string(self) -> String {
       let sb = StringBuilder::new()
       sb.write_string(a.to_string())
       if !b.is_zero() {
-        let neg = b.numerator().op_lt(BigInt::from_int(0))
+        let neg = b.numerator() < BigInt::from_int(0)
         if neg {
           sb.write_string(" - ")
           sb.write_string(b.neg_r().to_string())

@@ -320,20 +320,18 @@ test "subresultants_qq_zz: error and QQ domain branches" {
   let b2 = PolyBuilder::new(["x", "y"], Domain::ZZ)
   let p2 = b2.from_expr(x + y)
   let q2 = b2.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
-  let non_uni : Result[@symnum.BigRational, PolyError] = try? @sympolys.res(
-    p2, q2,
-  )
-  assert_true(non_uni is Err(PolyError::NotUnivariate))
+  let non_uni = expect_poly_error(fn() raise PolyError { @sympolys.res(p2, q2) })
+  assert_true(non_uni is PolyError::NotUnivariate)
 
   // lift_pair_to_qq -> DomainMismatch (different domains)
   let bzz = PolyBuilder::new(["x"], Domain::ZZ)
   let bqq = PolyBuilder::new(["x"], Domain::QQ)
   let pzz = bzz.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let qqq = bqq.from_expr(x + @symcore.int(1))
-  let mismatch : Result[Array[Poly], PolyError] = try? @sympolys.euclid_q(
-    pzz, qqq,
-  )
-  assert_true(mismatch is Err(PolyError::DomainMismatch))
+  let mismatch = expect_poly_error(fn() raise PolyError {
+    @sympolys.euclid_q(pzz, qqq)
+  })
+  assert_true(mismatch is PolyError::DomainMismatch)
 
   // lift_pair_to_qq -> Domain::QQ branch
   let pqq = bqq.from_expr((x ^ @symcore.int(3)) + x + @symcore.int(1))
@@ -345,8 +343,8 @@ test "subresultants_qq_zz: error and QQ domain branches" {
   let bgf = PolyBuilder::new(["x"], Domain::GF(5))
   let pgf = bgf.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let qgf = bgf.from_expr(x + @symcore.int(1))
-  let unsupported : Result[Array[Poly], PolyError] = try? @sympolys.euclid_q(
-    pgf, qgf,
-  )
-  assert_true(unsupported is Err(PolyError::DomainMismatch))
+  let unsupported = expect_poly_error(fn() raise PolyError {
+    @sympolys.euclid_q(pgf, qgf)
+  })
+  assert_true(unsupported is PolyError::DomainMismatch)
 }

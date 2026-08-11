@@ -7,7 +7,7 @@ test "indexed basic construction" {
   let item = base.at([index_idx(i), index_idx(j)])
   let s = item.to_string()
   assert_eq(s, "A[i, j]")
-  assert_oracle(try? indexed_str(item), "A[i, j]")
+  assert_oracle(indexed_str(item), "A[i, j]")
 }
 
 ///|

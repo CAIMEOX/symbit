@@ -136,4 +136,3 @@ pub(all) struct PiecewiseCase {
 // Type aliases
 
 // Traits
-

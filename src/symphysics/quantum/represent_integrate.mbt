@@ -100,7 +100,7 @@ fn represent_integrate_coord_once(
                     rebuilt.push(args[j])
                   }
                 }
-                let env : Map[String, Expr] = {}
+                let env : Map[String, Expr] = Map([])
                 env[coord_name] = replacement
                 return (
                   @symcore.subst(quantum_mul_from_args_preserve(rebuilt), env),

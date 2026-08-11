@@ -5,19 +5,11 @@ fn expr_int(n : Int) -> Expr {
 
 ///|
 fn assert_expr_equal(ours : Expr, oracle_str : String) -> Unit raise {
-  let ours_norm : Result[String, Error] = try? sympy_normalize(
-    @symprint.pretty_string(ours),
-  )
-  let oracle_norm : Result[String, Error] = try? sympy_normalize(oracle_str)
-  match (ours_norm, oracle_norm) {
-    (Ok(a), Ok(b)) => {
-      guard a == b else {
-        println("expr mismatch: ours=\{a} oracle=\{b}")
-        fail("expr mismatch")
-      }
-    }
-    (Err(e), _) => fail("normalize ours failed: \{e}")
-    (_, Err(e)) => fail("normalize oracle failed: \{e}")
+  let ours_norm = sympy_normalize(@symprint.pretty_string(ours))
+  let oracle_norm = sympy_normalize(oracle_str)
+  guard ours_norm == oracle_norm else {
+    println("expr mismatch: ours=\{ours_norm} oracle=\{oracle_norm}")
+    fail("expr mismatch")
   }
 }
 
@@ -78,13 +70,6 @@ test "accum_bounds: mul/div/pow/abs" {
   let pow_oracle = accum_pow(expr_int(1), expr_int(2), expr_int(2))
   assert_expr_equal(pow, pow_oracle)
   let abs = calc_accum_abs(accum_bounds(expr_int(-2), expr_int(1)))
-  let abs_oracle_res : Result[String, Error] = try? accum_abs(
-    expr_int(-2),
-    expr_int(1),
-  )
-  let abs_oracle = match abs_oracle_res {
-    Ok(v) => v
-    Err(e) => fail("accum_abs oracle error: \{e}")
-  }
+  let abs_oracle = accum_abs(expr_int(-2), expr_int(1))
   assert_expr_equal(abs, abs_oracle)
 }

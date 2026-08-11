@@ -173,7 +173,7 @@ test "stage7 compound and variance_prop" {
     "x": @symcore.Expr::Symbol("Vx"),
     "y": @symcore.Expr::Symbol("Vy"),
   }
-  let covs : Map[String, @symcore.Expr] = {}
+  let covs : Map[String, @symcore.Expr] = Map([])
   covs[cov_key("x", "y")] = @symcore.Expr::Symbol("Cxy")
   let propagated = variance_prop(expr, vars, covariances=covs)
   assert_eq(expr_str(propagated), "4*Vx + 9*Vy + 12*Cxy")

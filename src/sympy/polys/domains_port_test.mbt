@@ -4,10 +4,11 @@ fn trim_ws(s : String) -> String {
 }
 
 ///|
-fn render_domain_result(result : Result[Domain, PolyError]) -> String {
-  match result {
-    Ok(domain) => @sympolys.domain_to_sympy_string(domain)
-    Err(_) => "ERROR"
+fn render_domain_action(action : () -> Domain raise PolyError) -> String {
+  try action() catch {
+    _ => "ERROR"
+  } noraise {
+    domain => @sympolys.domain_to_sympy_string(domain)
   }
 }
 
@@ -30,10 +31,10 @@ fn normalize_expr_tuple3_text(text : String) -> String {
   if compact == "ERROR" || !compact.has_prefix("(") || !compact.has_suffix(")") {
     return compact
   }
-  let inner = compact[1:compact.length() - 1].to_string()
+  let inner = compact[1:compact.length() - 1].to_owned()
   let parts : Array[String] = Array::new()
   for part in inner.split(",") {
-    parts.push(normalize_expr_text(part.trim().to_string()))
+    parts.push(normalize_expr_text(part.trim().to_owned()))
   }
   if parts.length() != 3 {
     compact
@@ -48,10 +49,10 @@ fn normalize_expr_tuple2_text(text : String) -> String {
   if compact == "ERROR" || !compact.has_prefix("(") || !compact.has_suffix(")") {
     return compact
   }
-  let inner = compact[1:compact.length() - 1].to_string()
+  let inner = compact[1:compact.length() - 1].to_owned()
   let parts : Array[String] = Array::new()
   for part in inner.split(",") {
-    parts.push(normalize_expr_text(part.trim().to_string()))
+    parts.push(normalize_expr_text(part.trim().to_owned()))
   }
   if parts.length() != 2 {
     compact
@@ -69,28 +70,39 @@ fn render_expr_result(result : Result[@symcore.Expr, PolyError]) -> String {
 }
 
 ///|
-fn render_expr_triple_result(
-  result : Result[(@symcore.Expr, @symcore.Expr, @symcore.Expr), PolyError],
-) -> String {
-  match result {
-    Ok(items) =>
-      normalize_expr_tuple3_text(
-        "(\{@symprint.pretty_string(items.0)},\{@symprint.pretty_string(items.1)},\{@symprint.pretty_string(items.2)})",
-      )
-    Err(_) => "ERROR"
+fn render_expr_action(action : () -> @symcore.Expr raise PolyError) -> String {
+  try action() catch {
+    _ => "ERROR"
+  } noraise {
+    expr => normalize_expr_text(@symprint.pretty_string(expr))
   }
 }
 
 ///|
-fn render_expr_pair_result(
-  result : Result[(@symcore.Expr, @symcore.Expr), PolyError],
+fn render_expr_triple_action(
+  action : () -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PolyError,
 ) -> String {
-  match result {
-    Ok(items) =>
+  try action() catch {
+    _ => "ERROR"
+  } noraise {
+    items =>
+      normalize_expr_tuple3_text(
+        "(\{@symprint.pretty_string(items.0)},\{@symprint.pretty_string(items.1)},\{@symprint.pretty_string(items.2)})",
+      )
+  }
+}
+
+///|
+fn render_expr_pair_action(
+  action : () -> (@symcore.Expr, @symcore.Expr) raise PolyError,
+) -> String {
+  try action() catch {
+    _ => "ERROR"
+  } noraise {
+    items =>
       normalize_expr_tuple2_text(
         "(\{@symprint.pretty_string(items.0)},\{@symprint.pretty_string(items.1)})",
       )
-    Err(_) => "ERROR"
   }
 }
 
@@ -102,6 +114,18 @@ fn render_optional_expr_result(
     Ok(Some(expr)) => normalize_expr_text(@symprint.pretty_string(expr))
     Ok(None) => "NONE"
     Err(_) => "ERROR"
+  }
+}
+
+///|
+fn render_optional_expr_action(
+  action : () -> @symcore.Expr? raise PolyError,
+) -> String {
+  try action() catch {
+    _ => "ERROR"
+  } noraise {
+    Some(expr) => normalize_expr_text(@symprint.pretty_string(expr))
+    None => "NONE"
   }
 }
 
@@ -208,13 +232,9 @@ test "domains: get_field/get_ring parity" {
     "QQ<sqrt(2)>",
   ]
   for spec in ring_specs {
-    let ours_try : Result[Domain, PolyError] = try? @sympolys.domain_get_ring(
-      @sympolys.domain_from_string(spec),
-    )
-    let ours = match ours_try {
-      Ok(domain) => @sympolys.domain_to_sympy_string(domain)
-      Err(_) => "ERROR"
-    }
+    let ours = render_domain_action(fn() raise PolyError {
+      @sympolys.domain_get_ring(@sympolys.domain_from_string(spec))
+    })
     let oracle = domain_get_ring(spec)
     assert_eq(trim_ws(ours), trim_ws(oracle))
   }
@@ -573,8 +593,10 @@ test "domains: method constructor parity for poly/frac old/new rings" {
       @symcore.int(1),
     ]),
   ])
-  let quotient_try : Result[Domain, PolyError] = try? quotient.poly_ring(["y"])
-  assert_eq(render_domain_result(quotient_try), "ERROR")
+  assert_eq(
+    render_domain_action(fn() raise PolyError { quotient.poly_ring(["y"]) }),
+    "ERROR",
+  )
 }
 
 ///|
@@ -606,10 +628,12 @@ test "domains: set_domain and unify_with_symbols parity" {
     let lhs = item.0
     let rhs = item.1
     let symbols = item.2
-    let ours_try : Result[Domain, PolyError] = try? @sympolys.domain_from_string(
-      lhs,
-    ).unify_with_symbols(@sympolys.domain_from_string(rhs), symbols)
-    let ours = render_domain_result(ours_try)
+    let ours = render_domain_action(fn() raise PolyError {
+      @sympolys.domain_from_string(lhs).unify_with_symbols(
+        @sympolys.domain_from_string(rhs),
+        symbols,
+      )
+    })
     let oracle = domain_unify_with_symbols(lhs, rhs, symbols)
     assert_eq(trim_ws(ours), trim_ws(oracle))
   }
@@ -649,10 +673,12 @@ test "domains: inject and drop parity across simple and nested composites" {
     assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 
-  let overlap_try : Result[Domain, PolyError] = try? @sympolys.domain_from_string(
-    "ZZ[x]",
-  ).inject(["x"])
-  assert_eq(render_domain_result(overlap_try), "ERROR")
+  assert_eq(
+    render_domain_action(fn() raise PolyError {
+      @sympolys.domain_from_string("ZZ[x]").inject(["x"])
+    }),
+    "ERROR",
+  )
 
   let drop_cases = [
     ("ZZ", ["x"]),
@@ -667,10 +693,9 @@ test "domains: inject and drop parity across simple and nested composites" {
   for item in drop_cases {
     let spec = item.0
     let gens = item.1
-    let ours_try : Result[Domain, PolyError] = try? @sympolys.domain_from_string(
-      spec,
-    ).drop(gens)
-    let ours = render_domain_result(ours_try)
+    let ours = render_domain_action(fn() raise PolyError {
+      @sympolys.domain_from_string(spec).drop(gens)
+    })
     let oracle = domain_drop(spec, gens)
     assert_eq(trim_ws(ours), trim_ws(oracle))
   }
@@ -912,12 +937,16 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
     let expr = item.1
     let expr_text = item.2
     let domain = @sympolys.domain_from_string(spec)
-    let ours_from = render_expr_result(try? domain.from_sympy_expr(expr))
+    let ours_from = render_expr_action(fn() raise PolyError {
+      domain.from_sympy_expr(expr)
+    })
     let oracle_from = normalize_expr_text(
       domain_from_sympy_expr(spec, expr_text),
     )
     assert_eq(ours_from, oracle_from)
-    let ours_to = render_expr_result(try? domain.to_sympy_expr(expr))
+    let ours_to = render_expr_action(fn() raise PolyError {
+      domain.to_sympy_expr(expr)
+    })
     let oracle_to = normalize_expr_text(domain_to_sympy_expr(spec, expr_text))
     assert_eq(ours_to, oracle_to)
   }
@@ -941,12 +970,12 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
     let base = item.1
     let expr = item.2
     let expr_text = item.3
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string(target).convert_from_expr(
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string(target).convert_from_expr(
         expr,
         @sympolys.domain_from_string(base),
-      ),
-    )
+      )
+    })
     let oracle = normalize_expr_text(
       domain_convert_from_expr(target, expr_text, base),
     )
@@ -964,9 +993,9 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
     let target = item.0
     let expr = item.1
     let expr_text = item.2
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string(target).convert_expr(expr),
-    )
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string(target).convert_expr(expr)
+    })
     let oracle = normalize_expr_text(domain_convert_expr(target, expr_text))
     assert_eq(ours, oracle)
   }
@@ -997,9 +1026,9 @@ test "domains: sum_expr parity on scalar and gaussian domains" {
     let spec = item.0
     let exprs = item.1
     let expr_texts = item.2
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string(spec).sum_expr(exprs),
-    )
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string(spec).sum_expr(exprs)
+    })
     let oracle = normalize_expr_text(domain_sum_expr(spec, expr_texts))
     assert_eq(ours, oracle)
   }
@@ -1327,12 +1356,18 @@ test "domains: extended conversion hook parity for ground, gaussian, and legacy-
 test "domains: new/normal constructors and recursive map stay normalized" {
   let x = @symcore.Expr::Symbol("x")
   let gf = @sympolys.domain_from_string("GF(5)")
-  assert_eq(render_expr_result(try? gf.new_expr(@symcore.int(7))), "2")
-  assert_eq(render_expr_result(try? gf.normal_expr(@symcore.int(12))), "2")
   assert_eq(
-    render_expr_result(
-      try? @sympolys.domain_from_string("QQ[x]").new_expr(x + @symcore.int(1)),
-    ),
+    render_expr_action(fn() raise PolyError { gf.new_expr(@symcore.int(7)) }),
+    "2",
+  )
+  assert_eq(
+    render_expr_action(fn() raise PolyError { gf.normal_expr(@symcore.int(12)) }),
+    "2",
+  )
+  assert_eq(
+    render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string("QQ[x]").new_expr(x + @symcore.int(1))
+    }),
     "x+1",
   )
 
@@ -1398,10 +1433,12 @@ test "domains: zero/one and arithmetic wrapper parity" {
   ]
   for spec in zero_one_specs {
     let domain = @sympolys.domain_from_string(spec)
-    let ours_zero = render_expr_result(try? domain.zero_expr())
+    let ours_zero = render_expr_action(fn() raise PolyError {
+      domain.zero_expr()
+    })
     let oracle_zero = normalize_expr_text(domain_zero_expr(spec))
     assert_eq(ours_zero, oracle_zero)
-    let ours_one = render_expr_result(try? domain.one_expr())
+    let ours_one = render_expr_action(fn() raise PolyError { domain.one_expr() })
     let oracle_one = normalize_expr_text(domain_one_expr(spec))
     assert_eq(ours_one, oracle_one)
   }
@@ -1416,10 +1453,14 @@ test "domains: zero/one and arithmetic wrapper parity" {
     let expr = item.1
     let expr_text = item.2
     let domain = @sympolys.domain_from_string(spec)
-    let ours_pos = render_expr_result(try? domain.pos_expr(expr))
+    let ours_pos = render_expr_action(fn() raise PolyError {
+      domain.pos_expr(expr)
+    })
     let oracle_pos = normalize_expr_text(domain_pos_expr(spec, expr_text))
     assert_eq(ours_pos, oracle_pos)
-    let ours_neg = render_expr_result(try? domain.neg_expr(expr))
+    let ours_neg = render_expr_action(fn() raise PolyError {
+      domain.neg_expr(expr)
+    })
     let oracle_neg = normalize_expr_text(domain_neg_expr(spec, expr_text))
     assert_eq(ours_neg, oracle_neg)
   }
@@ -1457,17 +1498,23 @@ test "domains: zero/one and arithmetic wrapper parity" {
     let left_text = item.3
     let right_text = item.4
     let domain = @sympolys.domain_from_string(spec)
-    let ours_add = render_expr_result(try? domain.add_expr(left, right))
+    let ours_add = render_expr_action(fn() raise PolyError {
+      domain.add_expr(left, right)
+    })
     let oracle_add = normalize_expr_text(
       domain_add_expr(spec, left_text, right_text),
     )
     assert_eq(ours_add, oracle_add)
-    let ours_sub = render_expr_result(try? domain.sub_expr(left, right))
+    let ours_sub = render_expr_action(fn() raise PolyError {
+      domain.sub_expr(left, right)
+    })
     let oracle_sub = normalize_expr_text(
       domain_sub_expr(spec, left_text, right_text),
     )
     assert_eq(ours_sub, oracle_sub)
-    let ours_mul = render_expr_result(try? domain.mul_expr(left, right))
+    let ours_mul = render_expr_action(fn() raise PolyError {
+      domain.mul_expr(left, right)
+    })
     let oracle_mul = normalize_expr_text(
       domain_mul_expr(spec, left_text, right_text),
     )
@@ -1487,9 +1534,9 @@ test "domains: zero/one and arithmetic wrapper parity" {
     let expr = item.1
     let exp = item.2
     let expr_text = item.3
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string(spec).pow_expr(expr, exp),
-    )
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string(spec).pow_expr(expr, exp)
+    })
     let oracle = normalize_expr_text(domain_pow_expr(spec, expr_text, exp))
     assert_eq(ours, oracle)
   }
@@ -1509,16 +1556,16 @@ test "domains: gcdex/invert/revert wrapper parity" {
     let left_text = item.3
     let right_text = item.4
     let domain = @sympolys.domain_from_string(spec)
-    let ours_half = render_expr_pair_result(
-      try? domain.half_gcdex_expr(left, right),
-    )
+    let ours_half = render_expr_pair_action(fn() raise PolyError {
+      domain.half_gcdex_expr(left, right)
+    })
     let oracle_half = normalize_expr_tuple2_text(
       domain_half_gcdex_expr(spec, left_text, right_text),
     )
     assert_eq(ours_half, oracle_half)
-    let ours_full = render_expr_triple_result(
-      try? domain.gcdex_expr(left, right),
-    )
+    let ours_full = render_expr_triple_action(fn() raise PolyError {
+      domain.gcdex_expr(left, right)
+    })
     let oracle_full = normalize_expr_tuple3_text(
       domain_gcdex_expr(spec, left_text, right_text),
     )
@@ -1528,15 +1575,15 @@ test "domains: gcdex/invert/revert wrapper parity" {
   let qq_left = @symcore.rational_from_ints(2, 3)
   let qq_right = @symcore.rational_from_ints(4, 9)
   assert_eq(
-    render_expr_pair_result(
-      try? @sympolys.domain_from_string("QQ").half_gcdex_expr(qq_left, qq_right),
-    ),
+    render_expr_pair_action(fn() raise PolyError {
+      @sympolys.domain_from_string("QQ").half_gcdex_expr(qq_left, qq_right)
+    }),
     "(1/3,2/9)",
   )
   assert_eq(
-    render_expr_triple_result(
-      try? @sympolys.domain_from_string("QQ").gcdex_expr(qq_left, qq_right),
-    ),
+    render_expr_triple_action(fn() raise PolyError {
+      @sympolys.domain_from_string("QQ").gcdex_expr(qq_left, qq_right)
+    }),
     "(1/3,0,2/9)",
   )
 
@@ -1585,9 +1632,9 @@ test "domains: gcdex/invert/revert wrapper parity" {
     let right = item.2
     let left_text = item.3
     let right_text = item.4
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string(spec).invert_expr(left, right),
-    )
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string(spec).invert_expr(left, right)
+    })
     let oracle = normalize_expr_text(
       domain_invert_expr(spec, left_text, right_text),
     )
@@ -1606,9 +1653,9 @@ test "domains: gcdex/invert/revert wrapper parity" {
     let spec = item.0
     let expr = item.1
     let expr_text = item.2
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string(spec).revert_expr(expr),
-    )
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string(spec).revert_expr(expr)
+    })
     let oracle = normalize_expr_text(domain_revert_expr(spec, expr_text))
     assert_eq(ours, oracle)
   }
@@ -1688,9 +1735,9 @@ test "domains: canonical_unit parity on scalar and composite domains" {
     let spec = item.0
     let expr = item.1
     let expr_text = item.2
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string(spec).canonical_unit_expr(expr),
-    )
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string(spec).canonical_unit_expr(expr)
+    })
     let oracle = normalize_expr_text(
       domain_canonical_unit_expr(spec, expr_text),
     )
@@ -1723,9 +1770,9 @@ test "domains: abs parity on supported/error domains" {
     let spec = item.0
     let expr = item.1
     let expr_text = item.2
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string(spec).abs_expr(expr),
-    )
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string(spec).abs_expr(expr)
+    })
     let oracle = normalize_expr_text(domain_abs_expr(spec, expr_text))
     assert_eq(ours, oracle)
   }
@@ -1784,11 +1831,15 @@ test "domains: gcd/lcm/cofactors parity on scalar and composite domains" {
     let right = item.3
     let right_text = item.4
     let domain = @sympolys.domain_from_string(spec)
-    let ours_gcd = render_expr_result(try? domain.gcd_expr(left, right))
-    let ours_lcm = render_expr_result(try? domain.lcm_expr(left, right))
-    let ours_cof = render_expr_triple_result(
-      try? domain.cofactors_expr(left, right),
-    )
+    let ours_gcd = render_expr_action(fn() raise PolyError {
+      domain.gcd_expr(left, right)
+    })
+    let ours_lcm = render_expr_action(fn() raise PolyError {
+      domain.lcm_expr(left, right)
+    })
+    let ours_cof = render_expr_triple_action(fn() raise PolyError {
+      domain.cofactors_expr(left, right)
+    })
     let oracle_gcd = normalize_expr_text(
       domain_gcd_expr(spec, left_text, right_text),
     )
@@ -1832,8 +1883,12 @@ test "domains: numer/denom parity on scalar and fraction-like domains" {
     let expr = item.1
     let expr_text = item.2
     let domain = @sympolys.domain_from_string(spec)
-    let ours_num = render_expr_result(try? domain.numer_expr(expr))
-    let ours_den = render_expr_result(try? domain.denom_expr(expr))
+    let ours_num = render_expr_action(fn() raise PolyError {
+      domain.numer_expr(expr)
+    })
+    let ours_den = render_expr_action(fn() raise PolyError {
+      domain.denom_expr(expr)
+    })
     let oracle_num = normalize_expr_text(domain_numer_expr(spec, expr_text))
     let oracle_den = normalize_expr_text(domain_denom_expr(spec, expr_text))
     assert_eq(ours_num, oracle_num)
@@ -1885,10 +1940,18 @@ test "domains: quo/rem/div/exquo parity on scalar and composite domains" {
     let right = item.3
     let right_text = item.4
     let domain = @sympolys.domain_from_string(spec)
-    let ours_quo = render_expr_result(try? domain.quo_expr(left, right))
-    let ours_rem = render_expr_result(try? domain.rem_expr(left, right))
-    let ours_div = render_expr_pair_result(try? domain.div_expr(left, right))
-    let ours_exquo = render_expr_result(try? domain.exquo_expr(left, right))
+    let ours_quo = render_expr_action(fn() raise PolyError {
+      domain.quo_expr(left, right)
+    })
+    let ours_rem = render_expr_action(fn() raise PolyError {
+      domain.rem_expr(left, right)
+    })
+    let ours_div = render_expr_pair_action(fn() raise PolyError {
+      domain.div_expr(left, right)
+    })
+    let ours_exquo = render_expr_action(fn() raise PolyError {
+      domain.exquo_expr(left, right)
+    })
     let oracle_quo = normalize_expr_text(
       domain_quo_expr(spec, left_text, right_text),
     )
@@ -1907,12 +1970,12 @@ test "domains: quo/rem/div/exquo parity on scalar and composite domains" {
     assert_eq(ours_exquo, oracle_exquo)
   }
 
-  let exact_fail = render_expr_result(
-    try? @sympolys.domain_from_string("ZZ").exquo_expr(
+  let exact_fail = render_expr_action(fn() raise PolyError {
+    @sympolys.domain_from_string("ZZ").exquo_expr(
       @symcore.int(7),
       @symcore.int(3),
-    ),
-  )
+    )
+  })
   assert_eq(exact_fail, "ERROR")
 }
 
@@ -1925,9 +1988,9 @@ test "domains: factorial/log/sqrt parity on integer-like domains" {
   for item in factorial_cases {
     let expr = item.0
     let expr_text = item.1
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string("ZZ").factorial_expr(expr),
-    )
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string("ZZ").factorial_expr(expr)
+    })
     let oracle = normalize_expr_text(domain_factorial_expr("ZZ", expr_text))
     assert_eq(ours, oracle)
   }
@@ -1942,9 +2005,9 @@ test "domains: factorial/log/sqrt parity on integer-like domains" {
     let value_text = item.1
     let base = item.2
     let base_text = item.3
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string("ZZ").log_expr(value, base),
-    )
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string("ZZ").log_expr(value, base)
+    })
     let oracle = normalize_expr_text(
       domain_log_expr("ZZ", value_text, base_text),
     )
@@ -1959,20 +2022,30 @@ test "domains: factorial/log/sqrt parity on integer-like domains" {
   for item in sqrt_cases {
     let expr = item.0
     let expr_text = item.1
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string("ZZ").sqrt_expr(expr),
-    )
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string("ZZ").sqrt_expr(expr)
+    })
     let oracle = normalize_expr_text(domain_sqrt_expr("ZZ", expr_text))
     assert_eq(ours, oracle)
   }
 
   let zzx = @sympolys.domain_from_string("ZZ[x]")
-  assert_eq(render_expr_result(try? zzx.factorial_expr(@symcore.int(5))), "120")
   assert_eq(
-    render_expr_result(try? zzx.log_expr(@symcore.int(8), @symcore.int(2))),
+    render_expr_action(fn() raise PolyError {
+      zzx.factorial_expr(@symcore.int(5))
+    }),
+    "120",
+  )
+  assert_eq(
+    render_expr_action(fn() raise PolyError {
+      zzx.log_expr(@symcore.int(8), @symcore.int(2))
+    }),
     "3",
   )
-  assert_eq(render_expr_result(try? zzx.sqrt_expr(@symcore.int(8))), "2")
+  assert_eq(
+    render_expr_action(fn() raise PolyError { zzx.sqrt_expr(@symcore.int(8)) }),
+    "2",
+  )
 }
 
 ///|
@@ -1994,7 +2067,9 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
     let ours_square = domain.is_square_expr(expr) catch { _ => false }
     let oracle_square = domain_is_square_expr(spec, expr_text)
     assert_eq(ours_square, oracle_square)
-    let ours_root = render_optional_expr_result(try? domain.exsqrt_expr(expr))
+    let ours_root = render_optional_expr_action(fn() raise PolyError {
+      domain.exsqrt_expr(expr)
+    })
     let oracle_root = domain_exsqrt_expr(spec, expr_text)
     let oracle_root_expected = if oracle_root == "ERROR" && !oracle_square {
       "NONE"
@@ -2008,7 +2083,9 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
   let zz_i_square = @symcore.add([@symcore.int(3), @symcore.int(4) * i])
   assert_true(zz_i.is_square_expr(zz_i_square))
   assert_eq(
-    render_optional_expr_result(try? zz_i.exsqrt_expr(zz_i_square)),
+    render_optional_expr_action(fn() raise PolyError {
+      zz_i.exsqrt_expr(zz_i_square)
+    }),
     normalize_expr_text("2 + I"),
   )
 
@@ -2016,13 +2093,17 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
   let qq_i_square = @symcore.rational_from_ints(-3, 4) + i
   assert_true(qq_i.is_square_expr(qq_i_square))
   assert_eq(
-    render_optional_expr_result(try? qq_i.exsqrt_expr(qq_i_square)),
+    render_optional_expr_action(fn() raise PolyError {
+      qq_i.exsqrt_expr(qq_i_square)
+    }),
     normalize_expr_text("1/2 + I"),
   )
 
   let rr = @sympolys.domain_from_string("RR")
   assert_eq(
-    render_optional_expr_result(try? rr.exsqrt_expr(@symcore.int(2))),
+    render_optional_expr_action(fn() raise PolyError {
+      rr.exsqrt_expr(@symcore.int(2))
+    }),
     normalize_expr_text("sqrt(2)"),
   )
   assert_true(!rr.is_square_expr(@symcore.int(-1)))
@@ -2031,7 +2112,7 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
   let cc_expr = @symcore.add([@symcore.int(2), i])
   assert_true(cc.is_square_expr(cc_expr))
   assert_eq(
-    render_optional_expr_result(try? cc.exsqrt_expr(cc_expr)),
+    render_optional_expr_action(fn() raise PolyError { cc.exsqrt_expr(cc_expr) }),
     normalize_expr_text("sqrt(2 + I)"),
   )
 }
@@ -2057,8 +2138,12 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
     let expr = item.1
     let expr_text = item.2
     let domain = @sympolys.domain_from_string(spec)
-    let ours_real = render_expr_result(try? domain.real_expr(expr))
-    let ours_imag = render_expr_result(try? domain.imag_expr(expr))
+    let ours_real = render_expr_action(fn() raise PolyError {
+      domain.real_expr(expr)
+    })
+    let ours_imag = render_expr_action(fn() raise PolyError {
+      domain.imag_expr(expr)
+    })
     let oracle_real = normalize_expr_text(domain_real_expr(spec, expr_text))
     let oracle_imag = normalize_expr_text(domain_imag_expr(spec, expr_text))
     assert_eq(ours_real, oracle_real)
@@ -2152,9 +2237,9 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
     let spec = item.0
     let expr = item.1
     let expr_text = item.2
-    let ours = render_expr_result(
-      try? @sympolys.domain_from_string(spec).evalf_expr(expr),
-    )
+    let ours = render_expr_action(fn() raise PolyError {
+      @sympolys.domain_from_string(spec).evalf_expr(expr)
+    })
     let oracle = normalize_expr_text(domain_evalf_expr(spec, expr_text))
     assert_eq(ours, oracle)
   }

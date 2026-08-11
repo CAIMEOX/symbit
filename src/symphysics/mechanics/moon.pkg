@@ -5,6 +5,6 @@ import {
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,
   "CAIMEOX/symbit/symsimplify",
   "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/symphysics" @symphysics,
+  "CAIMEOX/symbit/symphysics",
   "CAIMEOX/symbit/symphysics/vector" @symvector,
 }

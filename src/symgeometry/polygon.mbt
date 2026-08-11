@@ -379,7 +379,7 @@ fn polygon_angles_map(
   vertices : Array[Point],
 ) -> Map[Point, Expr] raise GeometryError {
   let n = vertices.length()
-  let out : Map[Point, Expr] = {}
+  let out : Map[Point, Expr] = Map([])
   let orientation = match geo_expr_sign(polygon_area_expr(vertices)) {
     Some(sign) if sign < 0 => -1
     Some(sign) if sign > 0 => 1
@@ -459,7 +459,7 @@ fn polygon_bisectors_map(
     }
     pts = rev
   }
-  let out : Map[Point, Ray] = {}
+  let out : Map[Point, Ray] = Map([])
   for vertex in vertices {
     let angle = match angles.get(vertex) {
       Some(value) => value
@@ -670,7 +670,7 @@ pub fn Polygon::parameter_value(
 ) -> Map[Expr, Expr] raise GeometryError {
   let point_obj = other.with_dim(2)
   let perimeter = self.perimeter()
-  let out : Map[Expr, Expr] = {}
+  let out : Map[Expr, Expr] = Map([])
   let mut start = int(0)
   let sides = self.sides()
   for side in sides {
@@ -943,7 +943,7 @@ pub fn RegularPolygon::incircle(self : RegularPolygon) -> Circle {
 pub fn RegularPolygon::angles(
   self : RegularPolygon,
 ) -> Map[Point, Expr] raise GeometryError {
-  let out : Map[Point, Expr] = {}
+  let out : Map[Point, Expr] = Map([])
   let ang = self.interior_angle()
   let vertices = self.vertices()
   for vertex in vertices {
@@ -1311,7 +1311,7 @@ pub fn Triangle::altitudes(
 ) -> Map[Point, Segment] raise GeometryError {
   let sides = self.sides()
   let vertices = self.vertices_
-  let out : Map[Point, Segment] = {}
+  let out : Map[Point, Segment] = Map([])
   out.set(vertices[0], segment_perpendicular_from_point(sides[1], vertices[0]))
   out.set(vertices[1], segment_perpendicular_from_point(sides[2], vertices[1]))
   out.set(vertices[2], segment_perpendicular_from_point(sides[0], vertices[2]))
@@ -1340,7 +1340,7 @@ pub fn Triangle::bisectors(
   let sides = self.sides()
   let vertices = self.vertices_
   let center = self.incenter()
-  let out : Map[Point, Segment] = {}
+  let out : Map[Point, Segment] = Map([])
   let hit0 = match
     line(vertices[0], center).intersection(
       geometry_line(line_from_segment(sides[1])),
@@ -1378,7 +1378,7 @@ pub fn Triangle::exradii(
   let c = sides[2].length()
   let s = geo_div(a + b + c, geo_int(2))
   let area = self.area()
-  let out : Map[Segment, Expr] = {}
+  let out : Map[Segment, Expr] = Map([])
   out.set(sides[0], geo_simplify(geo_div(area, s - a)))
   out.set(sides[1], geo_simplify(geo_div(area, s - b)))
   out.set(sides[2], geo_simplify(geo_div(area, s - c)))
@@ -1400,7 +1400,7 @@ pub fn Triangle::excenters(
   let y0 = vertices[0].coords_[1]
   let y1 = vertices[1].coords_[1]
   let y2 = vertices[2].coords_[1]
-  let out : Map[Segment, Point] = {}
+  let out : Map[Segment, Point] = Map([])
   out.set(
     sides[0],
     point2d(
@@ -1435,7 +1435,7 @@ pub fn Triangle::medians(
 ) -> Map[Point, Segment] raise GeometryError {
   let sides = self.sides()
   let vertices = self.vertices_
-  let out : Map[Point, Segment] = {}
+  let out : Map[Point, Segment] = Map([])
   out.set(vertices[0], segment(vertices[0], sides[1].midpoint()))
   out.set(vertices[1], segment(vertices[1], sides[2].midpoint()))
   out.set(vertices[2], segment(vertices[2], sides[0].midpoint()))

@@ -187,4 +187,3 @@ pub enum SolveResult {
 pub type RationalInequality = ((@sympolys.Poly, @sympolys.Poly), String)
 
 // Traits
-

@@ -25,7 +25,7 @@ pub fn Sum::reverse_order(
   let mut out_expr = self.expr
   let out_limits : Array[LimitSpec] = Array::new()
   let reverse_all = symbols.is_empty()
-  let target_names : Map[String, Bool] = {}
+  let target_names : Map[String, Bool] = Map([])
   if !reverse_all {
     for sym in symbols {
       match symbol_name(sym) {
@@ -100,7 +100,7 @@ pub fn Sum::change_index(
   } else {
     expr_sub(@symcore.int(b), new_sym)
   }
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[var_name] = replacement
   let new_expr = @symcore.subst(self.expr, env)
   let out_limits : Array[LimitSpec] = Array::new()
@@ -208,7 +208,7 @@ fn eval_finite_sum(
         return acc
       }
       for k in lo..<=hi {
-        let env : Map[String, @symcore.Expr] = {}
+        let env : Map[String, @symcore.Expr] = Map([])
         env[name] = @symcore.int(k)
         let term = @symcore.subst(expr, env)
         let nested = eval_finite_sum(term, limits, idx + 1)
@@ -460,8 +460,8 @@ fn gosper_definite(
     Some(v) => v
     None => return None
   }
-  let upper_env : Map[String, @symcore.Expr] = {}
-  let lower_env : Map[String, @symcore.Expr] = {}
+  let upper_env : Map[String, @symcore.Expr] = Map([])
+  let lower_env : Map[String, @symcore.Expr] = Map([])
   upper_env[name] = expr_add(upper, @symcore.int(1))
   lower_env[name] = lower
   let g_upper = @symcore.subst(g, upper_env)
@@ -614,8 +614,8 @@ fn telescoping_pair(
   }
   let shift_plus = shift_expr(base, name, 1)
   if shift_plus == pos_term {
-    let upper_env : Map[String, @symcore.Expr] = {}
-    let lower_env : Map[String, @symcore.Expr] = {}
+    let upper_env : Map[String, @symcore.Expr] = Map([])
+    let lower_env : Map[String, @symcore.Expr] = Map([])
     upper_env[name] = expr_add(upper, @symcore.int(1))
     lower_env[name] = lower
     let g_upper = @symcore.subst(base, upper_env)
@@ -624,8 +624,8 @@ fn telescoping_pair(
   }
   let shift_minus = shift_expr(base, name, -1)
   if shift_minus == pos_term {
-    let upper_env : Map[String, @symcore.Expr] = {}
-    let lower_env : Map[String, @symcore.Expr] = {}
+    let upper_env : Map[String, @symcore.Expr] = Map([])
+    let lower_env : Map[String, @symcore.Expr] = Map([])
     upper_env[name] = upper
     lower_env[name] = expr_add(lower, @symcore.int(-1))
     let g_upper = @symcore.subst(base, upper_env)
@@ -680,7 +680,7 @@ fn shift_expr(
   name : String,
   shift : Int,
 ) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   let sym = @symcore.Expr::Symbol(name)
   env[name] = expr_add(sym, @symcore.int(shift))
   @symcore.subst(expr, env)

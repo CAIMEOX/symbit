@@ -1,11 +1,11 @@
 import {
-  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/sympy",
   "Kaida-Amethyst/python" @py,
 }
 
 import {
   "moonbitlang/core/bigint",
-  "CAIMEOX/symbit/symntheory" @symntheory,
+  "CAIMEOX/symbit/symntheory",
 } for "test"
 
 supported_targets = "native"

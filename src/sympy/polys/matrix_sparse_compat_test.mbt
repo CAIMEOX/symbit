@@ -34,7 +34,7 @@ test "matrix sparse wrappers: sdm_irref and RREF helpers align with methods" {
   let oracle_rref = domainmatrix_rref([[1, 2, 3], [0, 1, 1]], "QQ")
   assert_eq(
     ms_trim(
-      "\{rref.to_domain_matrix().to_matrix_string()}||\{pivots.to_string()}",
+      "\{rref.to_domain_matrix().to_matrix_string()}||\{Repr(pivots).to_string()}",
     ),
     ms_trim(oracle_rref),
   )

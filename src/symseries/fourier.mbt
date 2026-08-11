@@ -79,7 +79,7 @@ fn subst_var(
   var_name : String,
   value : @symcore.Expr,
 ) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[var_name] = value
   @symcore.subst(expr, env)
 }
@@ -1509,7 +1509,7 @@ pub fn FourierSeries::shift(
   if var_name == "" {
     return self
   }
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[var_name] = @symcore.add([self.x, amount])
   let new_expr = @symcore.subst(self.expr, env)
   FourierSeries::{ expr: new_expr, x: self.x, a: self.a, b: self.b }
@@ -1562,7 +1562,7 @@ pub fn FourierSeries::scalex(
   if var_name == "" {
     return self
   }
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[var_name] = expr_mul(factor, self.x)
   let new_expr = @symcore.subst(self.expr, env)
   FourierSeries::{ expr: new_expr, x: self.x, a: self.a, b: self.b }

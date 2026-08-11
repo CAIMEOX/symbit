@@ -284,7 +284,7 @@ fn sq_preferred_index(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn sq_subst_one(expr : Expr, name : String, value : Expr) -> Expr {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env.set(name, value)
   @symcore.subst(expr, env)
 }
@@ -294,7 +294,7 @@ pub fn evaluate_deltas(expr : Expr) -> Expr {
   match expr {
     Expr::Add(args) => sq_raw_add(args.map(evaluate_deltas))
     Expr::Mul(args) => {
-      let counts : Map[String, Int] = {}
+      let counts : Map[String, Int] = Map([])
       for arg in args {
         sq_collect_symbol_counts(arg, counts)
       }
@@ -389,7 +389,7 @@ fn sq_term_normalization_env(
   above.sort()
   below.sort()
   general.sort()
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   let above_letters = pretty_indices.get("above").unwrap_or("ab")
   let below_letters = pretty_indices.get("below").unwrap_or("ij")
   let general_letters = pretty_indices.get("general").unwrap_or("pq")
@@ -428,7 +428,7 @@ pub fn substitute_dummies(
 ) -> Expr {
   match expr {
     Expr::Add(args) => {
-      let terms : Map[String, (Expr, Expr)] = {}
+      let terms : Map[String, (Expr, Expr)] = Map([])
       for arg in args {
         let env = sq_term_normalization_env(arg, new_indices, pretty_indices)
         let normalized = @symcore.subst(arg, env)

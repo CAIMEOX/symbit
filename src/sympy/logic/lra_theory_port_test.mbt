@@ -14,7 +14,7 @@ fn constraint_to_sympy_str(constraint : LinearConstraint) -> String {
   let raw = constraint.to_string()
   let parts : Array[String] = Array::new()
   for part in raw.split(" == ") {
-    parts.push(part.to_string())
+    parts.push(part.to_owned())
   }
   if parts.length() == 2 {
     return "Eq(\{parts[0]}, \{parts[1]})"
@@ -30,7 +30,7 @@ fn constraint_eq_parts(constraint : LinearConstraint) -> (String, String)? {
   let raw = constraint.to_string()
   let parts : Array[String] = Array::new()
   for part in raw.split(" == ") {
-    parts.push(part.to_string())
+    parts.push(part.to_owned())
   }
   if parts.length() == 2 {
     return Some((parts[0], parts[1]))

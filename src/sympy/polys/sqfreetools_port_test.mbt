@@ -263,7 +263,9 @@ fn sqf_dense_port_dup_norm_repr(
 fn sqf_dense_port_dmp_norm_repr(
   value : (Array[Int], DensePoly, DensePoly),
 ) -> String {
-  remove_spaces("(\{value.0},\{dmp_repr(value.1)},\{dmp_repr(value.2)})")
+  remove_spaces(
+    "(\{Repr(value.0).to_string()},\{dmp_repr(value.1)},\{dmp_repr(value.2)})",
+  )
 }
 
 ///|

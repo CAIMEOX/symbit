@@ -319,13 +319,8 @@ fn pow_int(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational? {
     return Some(pow_int_nonneg(base, exp))
   }
   let pos = pow_int_nonneg(base, -exp)
-  match
-    (
-      try? @symnum.BigRational::one().div_r(pos) :
-      Result[@symnum.BigRational, @symnum.RationalError]) {
-    Ok(value) => Some(value)
-    Err(_) => None
-  }
+  let value = @symnum.BigRational::one().div_r(pos) catch { _ => return None }
+  Some(value)
 }
 
 ///|
@@ -478,7 +473,7 @@ pub fn substitute_symbol(
   name : String,
   value : @symcore.Expr,
 ) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[name] = value
   @symcore.subst(expr, env)
 }
@@ -597,7 +592,7 @@ fn collect_expr_symbols(expr : @symcore.Expr, out : Map[String, Bool]) -> Unit {
 
 ///|
 pub fn event_symbols(event : Event) -> Array[String] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   match event {
     Event::Bool(_) => ()
     Event::Rel(lhs~, rhs~, op~) => {

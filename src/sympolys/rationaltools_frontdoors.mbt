@@ -222,12 +222,10 @@ fn together_make_fraction(num : Expr, den : Expr) -> Expr {
   } else {
     match den {
       Expr::Number(n) =>
-        match
-          (
-            try? n.reciprocal() :
-            Result[@symnum.BigRational, @symnum.RationalError]) {
-          Ok(inv) => @symcore.mul([num, Expr::Number(inv)])
-          Err(_) => @symcore.mul([num, @symcore.pow(den, int(-1))])
+        try n.reciprocal() catch {
+          _ => @symcore.mul([num, @symcore.pow(den, int(-1))])
+        } noraise {
+          inv => @symcore.mul([num, Expr::Number(inv)])
         }
       _ => @symcore.mul([num, @symcore.pow(den, int(-1))])
     }
@@ -366,7 +364,7 @@ pub fn together(
 
 ///|
 fn apart_subst_gen(expr : Expr, gen : String, value : Expr) -> Expr {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[gen] = value
   @symcore.subst(expr, env)
 }
@@ -429,18 +427,20 @@ fn apart_linear_distinct(
     }
   }
 
-  let (poly_part, rem_expr) = match
-    (try? Poly::from_expr(num_expr, [gen], Domain::QQ) : Result[Poly, PolyError]) {
-    Ok(num_poly) => {
-      let (q, r) = div(num_poly, den_poly)
-      (q.to_expr(), r.to_expr())
-    }
-    Err(_) =>
+  let (poly_part, rem_expr) = try
+    Poly::from_expr(num_expr, [gen], Domain::QQ)
+  catch {
+    _ =>
       if @symcore.has(num_expr, Expr::Symbol(gen)) {
         return combined
       } else {
         (int(0), num_expr)
       }
+  } noraise {
+    num_poly => {
+      let (q, r) = div(num_poly, den_poly)
+      (q.to_expr(), r.to_expr())
+    }
   }
 
   let terms : Array[Expr] = []

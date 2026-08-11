@@ -357,7 +357,7 @@ test "pde wb: eq_c4 actual on-curve source hits poly exp helper" {
       @symcore.pow(denom, @symcore.int(-1)),
     ]),
   )
-  let xy_env : Map[String, Expr] = {}
+  let xy_env : Map[String, Expr] = Map([])
   xy_env["x"] = x_sub
   xy_env["y"] = y_sub
   let transformed_source = canonical_expr(

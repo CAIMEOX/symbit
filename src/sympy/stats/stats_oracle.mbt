@@ -151,7 +151,9 @@ fn stats_globals() -> @py.PyDict raise {
       "H0", "I0", "J", "K", "L", "M", "N", "O", "P0", "Q", "R", "S", "T", "U", "V",
       "W", "X", "Y", "Z", "_H", "_i", "_j", "_k", "_x", "_y", "_z", "_s",
     ] {
-    ignore(try? bind_symbol(globals, sym_name))
+    bind_symbol(globals, sym_name) catch {
+      _ => ()
+    }
   }
   globals
 }

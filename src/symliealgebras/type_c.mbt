@@ -34,7 +34,7 @@ pub fn type_c_simple_root(n : Int, i : Int) -> RootVector raise {
 ///|
 /// Enumerate positive roots of `C_n`, indexed from `1`.
 pub fn type_c_positive_roots(n : Int) -> Map[Int, RootVector] {
-  let posroots : Map[Int, RootVector] = {}
+  let posroots : Map[Int, RootVector] = Map([])
   let mut k = 0
   for i in 0..<(n - 1) {
     for j in (i + 1)..<n {

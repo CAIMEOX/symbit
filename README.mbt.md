@@ -101,7 +101,7 @@ test "fu-style helpers are available from the root package" {
   let tan_x = @symcore.function("tan", [x])
 
   inspect(
-    to_repr(tr2(tan_x)).to_string(),
+    Repr(tr2(tan_x)).to_string(),
     content="(* (^ (call cos sym:x) -1) (call sin sym:x))",
   )
   inspect(

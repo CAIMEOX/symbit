@@ -64,7 +64,7 @@ test "physics.control.routh_table: parity" {
     "zero-column parity",
   )
   assert_true(
-    t2.zero_col_infos().to_string() == control_routh_zero_col_infos(p2, z),
+    Repr(t2.zero_col_infos()).to_string() == control_routh_zero_col_infos(p2, z),
   )
 
   let p3 = (z ^ @symcore.int(6)) +

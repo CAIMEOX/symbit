@@ -74,7 +74,7 @@ pub fn PauliExpr::repr(self : PauliExpr) -> String {
 }
 
 ///|
-pub impl Show for PauliExpr with to_string(self) {
+pub impl Show for PauliExpr with fn to_string(self) {
   match self.name {
     Some(name) =>
       "\{pauli_class_name(self.kind)}(\{@symprint.pretty_string(name)})"
@@ -83,7 +83,7 @@ pub impl Show for PauliExpr with to_string(self) {
 }
 
 ///|
-pub impl Show for PauliExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for PauliExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -110,12 +110,8 @@ fn pauli_name_equal(lhs : Expr?, rhs : Expr?) -> Bool {
 
 ///|
 fn pauli_exact_rational(num : Int, den : Int) -> Expr {
-  let result : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
-    num, den,
-  )
-  match result {
-    Ok(value) => value
-    Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
+  @symcore.rational_from_ints(num, den) catch {
+    _ => int(num) * @symcore.raw_pow(int(den), int(-1))
   }
 }
 
@@ -170,7 +166,7 @@ pub fn SigmaZState::as_expr(self : SigmaZState) -> Expr {
 }
 
 ///|
-pub impl Show for SigmaZState with to_string(self) {
+pub impl Show for SigmaZState with fn to_string(self) {
   if self.is_bra {
     "<\{self.n.to_string()}|"
   } else {
@@ -179,7 +175,7 @@ pub impl Show for SigmaZState with to_string(self) {
 }
 
 ///|
-pub impl Show for SigmaZState with output(self, logger : &Logger) -> Unit {
+pub impl Show for SigmaZState with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

@@ -14,7 +14,7 @@ test "dispersion: frontdoor parity for linear-split polynomials" {
   let fp = b.from_expr((x - @symcore.int(3)) * (x + @symcore.int(3)))
 
   assert_eq(
-    @sympolys.dispersionset(fp).to_string(),
+    Repr(@sympolys.dispersionset(fp)).to_string(),
     dispersionset_expr(fp.to_expr(), gens=["x"]),
   )
   assert_eq(
@@ -27,7 +27,7 @@ test "dispersion: frontdoor parity for linear-split polynomials" {
   )
   let shifted = @sympolys.compose(cubic, b.from_expr(x - @symcore.int(2)))
   assert_eq(
-    @sympolys.dispersionset(cubic, q=shifted).to_string(),
+    Repr(@sympolys.dispersionset(cubic, q=shifted)).to_string(),
     dispersionset_expr(cubic.to_expr(), q=shifted.to_expr(), gens=["x"]),
   )
   assert_eq(
@@ -43,7 +43,7 @@ test "dispersion: empty dispersion parity" {
   let far_left = b.from_expr(x - @symcore.int(5))
   let origin = b.from_expr(x)
   assert_eq(
-    @sympolys.dispersionset(far_left, q=origin).to_string(),
+    Repr(@sympolys.dispersionset(far_left, q=origin)).to_string(),
     dispersionset_expr(far_left.to_expr(), q=origin.to_expr(), gens=["x"]),
   )
   assert_eq(

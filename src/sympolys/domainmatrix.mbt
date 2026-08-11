@@ -403,7 +403,7 @@ fn canonical_unit_in_domain(
 
 ///|
 fn bigint_abs(x : BigInt) -> BigInt {
-  if x.op_lt(BigInt::from_int(0)) {
+  if x < BigInt::from_int(0) {
     x.neg()
   } else {
     x
@@ -3535,7 +3535,7 @@ fn nullspace_from_rref_with_nonpivots(
     return (domain_matrix_zeros(0, dm.cols, dm.domain), [])
   }
   let rows = dm.to_dense()
-  let pivot_set : Map[Int, Bool] = {}
+  let pivot_set : Map[Int, Bool] = Map([])
   for p in actual_pivots {
     pivot_set[p] = true
   }

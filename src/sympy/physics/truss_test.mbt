@@ -95,12 +95,12 @@ fn cm_expr_eq(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
     return true
   }
 
-  let names : Map[String, Bool] = {}
+  let names : Map[String, Bool] = Map([])
   cm_collect_symbols(lhs, names)
   cm_collect_symbols(rhs, names)
   let ordered = names.keys().to_array()
   for seed in [2, 5, 9] {
-    let env : Map[String, Double] = {}
+    let env : Map[String, Double] = Map([])
     for i in 0..<ordered.length() {
       env[ordered[i]] = Double::from_int(seed + i)
     }
@@ -272,15 +272,41 @@ test "physics.continuum_mechanics.truss: validation errors" {
   let t = truss()
   t.add_node([("A", @symcore.int(0), @symcore.int(0))])
   assert_true(
-    (try? t.add_node([("A", @symcore.int(1), @symcore.int(0))])) is Err(_),
+    (try t.add_node([("A", @symcore.int(1), @symcore.int(0))]) |> Ok catch {
+      error => Err(error)
+    })
+    is Err(_),
   )
   assert_true(
-    (try? t.add_node([("B", @symcore.int(0), @symcore.int(0))])) is Err(_),
+    (try t.add_node([("B", @symcore.int(0), @symcore.int(0))]) |> Ok catch {
+      error => Err(error)
+    })
+    is Err(_),
   )
   t.add_node([("B", @symcore.int(1), @symcore.int(0))])
-  assert_true((try? t.add_member([("AB", "A", "A")])) is Err(_))
+  assert_true(
+    (try t.add_member([("AB", "A", "A")]) |> Ok catch {
+      error => Err(error)
+    })
+    is Err(_),
+  )
   t.add_member([("AB", "A", "B")])
-  assert_true((try? t.remove_node(["A"])) is Err(_))
-  assert_true((try? t.apply_support([("Z", "pinned")])) is Err(_))
-  assert_true((try? t.apply_support([("A", "hinge")])) is Err(_))
+  assert_true(
+    (try t.remove_node(["A"]) |> Ok catch {
+      error => Err(error)
+    })
+    is Err(_),
+  )
+  assert_true(
+    (try t.apply_support([("Z", "pinned")]) |> Ok catch {
+      error => Err(error)
+    })
+    is Err(_),
+  )
+  assert_true(
+    (try t.apply_support([("A", "hinge")]) |> Ok catch {
+      error => Err(error)
+    })
+    is Err(_),
+  )
 }

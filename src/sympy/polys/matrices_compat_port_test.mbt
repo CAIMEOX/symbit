@@ -10,7 +10,7 @@ fn mx_trim(s : String) -> String {
 fn mx_expr_norm(e : @symcore.Expr) -> String raise {
   sympy_normalize(@symprint.pretty_string(e))
   .trim()
-  .to_string()
+  .to_owned()
   .replace_all(old=" ", new="")
 }
 
@@ -703,7 +703,7 @@ test "matrices: DDM and SDM structural wrappers" {
     mx_trim(ddm.rmul(@sympolys.fe_from_int(2, Domain::ZZ)).to_string()),
     "[[2,0],[0,8]]",
   )
-  assert_eq(ddm.scc().to_string(), "[[0], [1]]")
+  assert_eq(Repr(ddm.scc()).to_string(), "[[0], [1]]")
   assert_eq(
     mx_trim(ddm.to_sdm().to_dense().to_string()),
     mx_trim(ddm.to_string()),
@@ -793,7 +793,7 @@ test "matrices: DDM and SDM structural wrappers" {
   )
   assert_eq(sdm.det().to_string(), "4")
   assert_eq(mx_trim(sdm.inv().to_dense().to_string()), "[[1,0],[0,1/4]]")
-  assert_eq(sdm.scc().to_string(), "[[0], [1]]")
+  assert_eq(Repr(sdm.scc()).to_string(), "[[0], [1]]")
   assert_eq(mx_trim(sdm.to_ddm().to_string()), "[[1,0],[0,4]]")
 
   let zz_sparse = @sympolys.sdm_from_entries(
@@ -864,8 +864,8 @@ test "matrices: DDM and SDM constructor/accessor helpers" {
   let ddm_copy = DDM::from_ddm(ddm)
   assert_eq(ddm_copy.to_string(), ddm.to_string())
 
-  let dod : DomainMatrixDOD = Map::new()
-  let row0 : Map[Int, FieldElem] = Map::new()
+  let dod : DomainMatrixDOD = Map([])
+  let row0 : Map[Int, FieldElem] = Map([])
   row0[1] = @sympolys.fe_from_int(1, Domain::ZZ)
   dod[0] = row0
   let sdm = SDM::new(dod, (2, 2), Domain::ZZ)

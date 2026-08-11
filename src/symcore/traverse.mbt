@@ -131,7 +131,7 @@ pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
 
 ///|
 fn clone_subst_env(env : Map[String, Expr]) -> Map[String, Expr] {
-  let out : Map[String, Expr] = {}
+  let out : Map[String, Expr] = Map([])
   for key, value in env {
     out.set(key, value)
   }
@@ -393,9 +393,9 @@ fn subst_derivative(
   let deriv_args = canonical_derivative_args(deriv_args)
   let original_wrt_names = derivative_wrt_names(deriv_args)
   let original_free_names = expr_symbol_names(inner)
-  let rename_env : Map[String, Expr] = {}
+  let rename_env : Map[String, Expr] = Map([])
   let inner_env = clone_subst_env(env)
-  let outer_env : Map[String, Expr] = {}
+  let outer_env : Map[String, Expr] = Map([])
 
   for wrt_name in original_wrt_names {
     match env.get(wrt_name) {
@@ -541,7 +541,7 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
     Expr::Derivative(inner, deriv_args) =>
       subst_derivative(inner, deriv_args, env)
     Expr::Lambda(vars, body) => {
-      let rename_env : Map[String, Expr] = {}
+      let rename_env : Map[String, Expr] = Map([])
       let renamed_vars = rename_bound_vars(
         vars,
         env,
@@ -565,7 +565,7 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
           protected_names.push(name)
         }
       }
-      let rename_env : Map[String, Expr] = {}
+      let rename_env : Map[String, Expr] = Map([])
       let renamed_variable = rename_bound_vars(
         variable, env, rename_env, protected_names,
       )

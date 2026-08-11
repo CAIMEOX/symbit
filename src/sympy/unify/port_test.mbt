@@ -257,7 +257,7 @@ fn core_summary() -> String {
   let y_key : VariableKey[CoreAtom] = variable(CoreAtom::Text("y"))
   let x_var : UnifyTerm[CoreAtom, String] = variable_term(x_key)
   let y_var : UnifyTerm[CoreAtom, String] = variable_term(y_key)
-  let subst_x : Substitution[CoreAtom, String] = {}
+  let subst_x : Substitution[CoreAtom, String] = Map([])
   subst_x[MatchVar::Variable(x_key)] = ci(10)
   let even_key = cond_variable(CoreAtom::Text("y"))
   let even_var : UnifyTerm[CoreAtom, String] = cond_variable_term(even_key, term => {

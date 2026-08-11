@@ -96,19 +96,19 @@ fn fact_wb_gaussian_coeff_repr(coeff : FieldElem) -> String {
       if imag.is_zero() {
         return real.to_string()
       }
-      let imag_abs = if imag.numerator().op_lt(BigInt::from_int(0)) {
+      let imag_abs = if imag.numerator() < BigInt::from_int(0) {
         imag.neg_r()
       } else {
         imag
       }
       let imag_text = if imag_abs.is_one() { "I" } else { "\{imag_abs}*I" }
       if real.is_zero() {
-        if imag.numerator().op_lt(BigInt::from_int(0)) {
+        if imag.numerator() < BigInt::from_int(0) {
           "-\{imag_text}"
         } else {
           imag_text
         }
-      } else if imag.numerator().op_lt(BigInt::from_int(0)) {
+      } else if imag.numerator() < BigInt::from_int(0) {
         "\{real} - \{imag_text}"
       } else {
         "\{real} + \{imag_text}"
@@ -206,12 +206,12 @@ test "factortools dense wb: trial division" {
     fact_wb_dmp_include_repr(dmp_trial_division(xy, xy_factors, 1, Domain::ZZ)),
     content="[([[1],[-1,0]],1),([[1],[1,0]],1)]",
   )
-  let bad : Result[Array[(Array[FieldElem], Int)], PolyError] = try? dup_trial_division(
-    f,
-    [fact_wb_dup([1, 3])],
-    Domain::ZZ,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dup_trial_division(f, [fact_wb_dup([1, 3])], Domain::ZZ)
+    },
+    "PolynomialDivisionFailed",
   )
-  assert_true(bad is Err(PolyError::PolynomialDivisionFailed))
 }
 
 ///|
@@ -239,12 +239,12 @@ test "factortools dense wb: finite field factorization" {
     ),
     content="(1,[([1,1],2)])",
   )
-  let bad : Result[(FieldElem, Array[(DensePoly, Int)]), PolyError] = try? dmp_gf_factor(
-    DensePoly::Poly([]),
-    0,
-    Domain::GF(2),
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dmp_gf_factor(DensePoly::Poly([]), 0, Domain::GF(2))
+    },
+    "NotUnivariate",
   )
-  assert_true(bad is Err(PolyError::NotUnivariate))
 }
 
 ///|
@@ -374,15 +374,19 @@ test "factortools dense wb: Wang test points" {
     ),
     content="(-1,[3,-1,-1],[3])",
   )
-  let bad : Result[(FieldElem, Array[FieldElem], Array[FieldElem]), PolyError] = try? dmp_zz_wang_test_points(
-    f,
-    [(fact_wb_poly([1]), 1)],
-    fact_wb_fe(1),
-    [fact_wb_fe(2)],
-    1,
-    Domain::ZZ,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dmp_zz_wang_test_points(
+        f,
+        [(fact_wb_poly([1]), 1)],
+        fact_wb_fe(1),
+        [fact_wb_fe(2)],
+        1,
+        Domain::ZZ,
+      )
+    },
+    "BadGenerator",
   )
-  assert_true(bad is Err(PolyError::BadGenerator(_)))
 }
 
 ///|
@@ -485,16 +489,20 @@ test "factortools dense wb: Diophantine helpers" {
     "[" + chain_res.map(fact_wb_dmp_repr).join(",") + "]",
     content="[[[]],[[1],[]]]",
   )
-  let bad : Result[Array[DensePoly], PolyError] = try? dmp_zz_diophantine(
-    [fact_wb_poly([1, 1]), fact_wb_poly([1, -1])],
-    fact_wb_poly([1]),
-    [],
-    0,
-    5,
-    0,
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dmp_zz_diophantine(
+        [fact_wb_poly([1, 1]), fact_wb_poly([1, -1])],
+        fact_wb_poly([1]),
+        [],
+        0,
+        5,
+        0,
+        Domain::QQ,
+      )
+    },
+    "DomainMismatch",
   )
-  assert_true(bad is Err(PolyError::DomainMismatch))
 }
 
 ///|
@@ -566,11 +574,10 @@ test "factortools dense wb: algebraic extension factorization" {
   assert_true(dmp_coeff.to_string() == "1")
   assert_true(dmp_factors.length() == 2)
 
-  let bad_domain : Result[
-    (FieldElem, Array[(Array[FieldElem], Int)]),
-    PolyError,
-  ] = try? dup_ext_factor(fact_wb_dup([1, 0, -2]), Domain::ZZ)
-  assert_true(bad_domain is Err(PolyError::DomainMismatch))
+  sympolys_assert_error(
+    fn() raise PolyError { dup_ext_factor(fact_wb_dup([1, 0, -2]), Domain::ZZ) },
+    "DomainMismatch",
+  )
 }
 
 ///|
@@ -600,21 +607,24 @@ test "factortools dense wb: Gaussian factorization frontdoors" {
     ),
     content="(1,[([1,-I],1),([1,I],1)])",
   )
-  let bad : Result[(FieldElem, Array[(Array[FieldElem], Int)]), PolyError] = try? dup_qq_i_factor(
-    f,
-    Domain::QQ,
+  sympolys_assert_error(
+    fn() raise PolyError { dup_qq_i_factor(f, Domain::QQ) },
+    "DomainMismatch",
   )
-  assert_true(bad is Err(PolyError::DomainMismatch))
 }
 
 ///|
 test "factortools dense wb: dmp multivariate limits and empty trials" {
-  let bad_factor : Result[(FieldElem, Array[(DensePoly, Int)]), PolyError] = try? dmp_factor_list(
-    DensePoly::Poly([fact_wb_poly([1, 0]), fact_wb_poly([1])]),
-    1,
-    Domain::ZZ,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dmp_factor_list(
+        DensePoly::Poly([fact_wb_poly([1, 0]), fact_wb_poly([1])]),
+        1,
+        Domain::ZZ,
+      )
+    },
+    "NotUnivariate",
   )
-  assert_true(bad_factor is Err(PolyError::NotUnivariate))
   inspect(
     fact_wb_dmp_include_repr(
       dmp_trial_division(

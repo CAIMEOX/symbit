@@ -335,10 +335,10 @@ fn rewrite_tr2(expr : Expr) -> Expr {
 fn rewrite_tr2i(expr : Expr, half? : Bool = false) -> Expr {
   match expr {
     Expr::Mul(args) => {
-      let sin_exp : Map[String, Int] = {}
-      let cos_exp : Map[String, Int] = {}
-      let plus_exp : Map[String, Int] = {}
-      let arg_of : Map[String, Expr] = {}
+      let sin_exp : Map[String, Int] = Map([])
+      let cos_exp : Map[String, Int] = Map([])
+      let plus_exp : Map[String, Int] = Map([])
+      let arg_of : Map[String, Expr] = Map([])
       let others : Array[Expr] = Array::new()
       for arg in args {
         match parse_tr2i_factor(arg) {
@@ -1056,7 +1056,7 @@ fn trpower_expand(trig : String, x : Expr, n : Int) -> Expr {
 fn rewrite_trmorrie(expr : Expr) -> Expr {
   match expr {
     Expr::Mul(args) => {
-      let grouped : Map[String, Array[MorrieFactor]] = {}
+      let grouped : Map[String, Array[MorrieFactor]] = Map([])
       let others : Array[Expr] = Array::new()
       for arg in args {
         match parse_morrie_factor(arg) {
@@ -1124,13 +1124,13 @@ fn make_morrie_factor(arg : Expr, exp : Int) -> MorrieFactor? {
   } else {
     @symcore.mul(factors)
   }
-  let core_key = to_repr(core).to_string()
+  let core_key = Repr(core).to_string()
   Some(MorrieFactor::{ core_key, core, coeff, exp })
 }
 
 ///|
 fn rewrite_morrie_bucket(bucket : Array[MorrieFactor]) -> (Array[Expr], Bool) {
-  let powers : Map[String, MorrieCoeff] = {}
+  let powers : Map[String, MorrieCoeff] = Map([])
   let core = bucket[0].core
   for factor in bucket {
     let key = rational_key(factor.coeff)
@@ -1662,17 +1662,17 @@ fn parse_trig_pm_one(expr : Expr) -> (String, Expr, Int)? {
 fn parse_tr2i_factor(expr : Expr) -> Tr2iFactor? {
   match named_unary_application(expr) {
     Some((name, arg)) if name == "sin" =>
-      Some(Tr2iFactor::Sin(to_repr(arg).to_string(), arg, 1))
+      Some(Tr2iFactor::Sin(Repr(arg).to_string(), arg, 1))
     Some((name, arg)) if name == "cos" =>
-      Some(Tr2iFactor::Cos(to_repr(arg).to_string(), arg, 1))
+      Some(Tr2iFactor::Cos(Repr(arg).to_string(), arg, 1))
     _ =>
       match pow_named_unary_application(expr) {
         Some((name, arg, exp_expr)) =>
           match parse_int(exp_expr) {
             Some(e) =>
               match name {
-                "sin" => Some(Tr2iFactor::Sin(to_repr(arg).to_string(), arg, e))
-                "cos" => Some(Tr2iFactor::Cos(to_repr(arg).to_string(), arg, e))
+                "sin" => Some(Tr2iFactor::Sin(Repr(arg).to_string(), arg, e))
+                "cos" => Some(Tr2iFactor::Cos(Repr(arg).to_string(), arg, e))
                 _ =>
                   match
                     parse_one_plus_cos(
@@ -1681,7 +1681,7 @@ fn parse_tr2i_factor(expr : Expr) -> Tr2iFactor? {
                     Some(inner) =>
                       Some(
                         Tr2iFactor::OnePlusCos(
-                          to_repr(inner).to_string(),
+                          Repr(inner).to_string(),
                           inner,
                           e,
                         ),
@@ -1694,7 +1694,7 @@ fn parse_tr2i_factor(expr : Expr) -> Tr2iFactor? {
         _ =>
           match parse_one_plus_cos(expr) {
             Some(arg) =>
-              Some(Tr2iFactor::OnePlusCos(to_repr(arg).to_string(), arg, 1))
+              Some(Tr2iFactor::OnePlusCos(Repr(arg).to_string(), arg, 1))
             None => None
           }
       }

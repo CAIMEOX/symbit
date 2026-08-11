@@ -1,11 +1,11 @@
 import {
   "moonbitlang/core/math",
-  "moonbitlang/core/string" @string,
+  "moonbitlang/core/string",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,
   "CAIMEOX/symbit/symnum",
-  "CAIMEOX/symbit/sympolys" @sympolys,
-  "CAIMEOX/symbit/symphysics" @symphysics,
+  "CAIMEOX/symbit/sympolys",
+  "CAIMEOX/symbit/symphysics",
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symsimplify",
 }

@@ -71,7 +71,7 @@ fn series_poly_shift(
     _ => fail("fps variable must be a Symbol")
   }
   let t = @symcore.Expr::Symbol("__fps_t")
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[var_name] = @symcore.add([x0, t])
   let shifted = @symcore.subst(expr, env)
   series_poly(shifted, t, n)
@@ -87,7 +87,7 @@ fn poly_expr_with_shift(
 ) -> @symcore.Expr {
   let t = @symcore.Expr::Symbol("__fps_t")
   let poly_expr = poly_to_expr(poly, t, n)
-  let back : Map[String, @symcore.Expr] = {}
+  let back : Map[String, @symcore.Expr] = Map([])
   let shift_expr = @symcore.add([x, expr_neg(x0)])
   back["__fps_t"] = shift_expr
   if with_order {
@@ -155,7 +155,7 @@ fn fps_eval_at(
   name : String,
   value : @symcore.Expr,
 ) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   env[name] = value
   @symcore.subst(expr, env)
 }
@@ -306,7 +306,7 @@ pub fn FormalPowerSeries::coeff(
         } else {
           expr_mul(poly[n], @symcore.pow(t, @symcore.int(n)))
         }
-        let back : Map[String, @symcore.Expr] = {}
+        let back : Map[String, @symcore.Expr] = Map([])
         back["__fps_t"] = @symcore.add([self.x, expr_neg(self.x0)])
         @symcore.subst(term, back)
       } else {
@@ -339,7 +339,7 @@ pub fn FormalPowerSeries::slice(
     Some((poly, _)) => {
       let out : Array[@symcore.Expr] = Array::new()
       let t = @symcore.Expr::Symbol("__fps_t")
-      let back : Map[String, @symcore.Expr] = {}
+      let back : Map[String, @symcore.Expr] = Map([])
       back["__fps_t"] = @symcore.add([self.x, expr_neg(self.x0)])
       let mut i = start
       while i < stop {
@@ -501,7 +501,7 @@ pub fn FormalPowerSeries::as_leading_term(
           } else {
             expr_mul(poly[k], @symcore.pow(t, @symcore.int(k)))
           }
-          let back : Map[String, @symcore.Expr] = {}
+          let back : Map[String, @symcore.Expr] = Map([])
           back["__fps_t"] = @symcore.add([self.x, expr_neg(self.x0)])
           return @symcore.subst(term, back)
         }

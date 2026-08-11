@@ -106,13 +106,10 @@ test "numberfields utilities: fundamental discriminant extraction" {
     nf_wb_factor_pair_text(extract_fundamental_discriminant(5)),
     content="[(5,1)]||[]",
   )
-  let invalid : Result[(Array[(Int, Int)], Array[(Int, Int)]), PolyError] = try? extract_fundamental_discriminant(
-    2,
+  sympolys_assert_error(
+    fn() raise PolyError { extract_fundamental_discriminant(2) },
+    "DomainMismatch",
   )
-  match invalid {
-    Ok(_) => fail("expected invalid discriminant error")
-    Err(_) => ()
-  }
 }
 
 ///|
@@ -200,14 +197,14 @@ test "numberfields frontdoors: make_mod_elt preserves module flavor" {
   inspect(module_elt.type_name(), content="ModuleElement")
   inspect(module_elt, content="[1, 2]/3")
 
-  let bad_denom : Result[ModuleElement, PolyError] = try? make_mod_elt(
-    pb,
-    [1N, 2N],
-    denom=0N,
+  sympolys_assert_error(
+    fn() raise PolyError { make_mod_elt(pb, [1N, 2N], denom=0N) },
+    "DivisionByZero",
   )
-  assert_true(bad_denom is Err(PolyError::DivisionByZero))
-  let bad_rank : Result[ModuleElement, PolyError] = try? make_mod_elt(pb, [1N])
-  assert_true(bad_rank is Err(PolyError::DomainMismatch))
+  sympolys_assert_error(
+    fn() raise PolyError { make_mod_elt(pb, [1N]) },
+    "DomainMismatch",
+  )
 }
 
 ///|

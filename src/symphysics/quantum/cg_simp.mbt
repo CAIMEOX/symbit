@@ -781,7 +781,7 @@ fn quantum_cg_simp_add(expr : Expr) -> Expr {
               Some(idx) =>
                 quantum_add_group_coeff(eq1_groups[idx].coeffs, dalpha, coeff)
               None => {
-                let coeffs : Map[Int, Int] = {}
+                let coeffs : Map[Int, Int] = Map([])
                 quantum_add_group_coeff(coeffs, dalpha, coeff)
                 eq1_groups.push(QuantumEq1Group::{ a, b, coeffs })
               }
@@ -797,7 +797,7 @@ fn quantum_cg_simp_add(expr : Expr) -> Expr {
                       coeff,
                     )
                   None => {
-                    let coeffs : Map[Int, Int] = {}
+                    let coeffs : Map[Int, Int] = Map([])
                     quantum_add_group_coeff(coeffs, dalpha, coeff)
                     eq2_groups.push(QuantumEq2Group::{ a, c, coeffs })
                   }
@@ -817,7 +817,7 @@ fn quantum_cg_simp_add(expr : Expr) -> Expr {
                           coeff,
                         )
                       None => {
-                        let coeffs : Map[Int, Int] = {}
+                        let coeffs : Map[Int, Int] = Map([])
                         quantum_add_group_coeff(coeffs, state, coeff)
                         eq9_square_groups.push(QuantumEq9SquareGroup::{
                           j1,
@@ -848,7 +848,7 @@ fn quantum_cg_simp_add(expr : Expr) -> Expr {
                               coeff,
                             )
                           None => {
-                            let coeffs : Map[Int, Int] = {}
+                            let coeffs : Map[Int, Int] = Map([])
                             quantum_add_group_coeff(coeffs, state, coeff)
                             eq9_cross_groups.push(QuantumEq9CrossGroup::{
                               j1,

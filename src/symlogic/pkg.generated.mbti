@@ -174,6 +174,7 @@ pub(all) enum BoolExpr {
   Equivalent(Array[BoolExpr])
   ITE(BoolExpr, BoolExpr, BoolExpr)
 }
+pub fn BoolExpr::to_string(Self) -> String
 pub impl Compare for BoolExpr
 pub impl Eq for BoolExpr
 pub impl Hash for BoolExpr
@@ -217,6 +218,7 @@ pub(all) enum RelOp {
   Gt
   Eq
 } derive(Eq)
+pub fn RelOp::to_string(Self) -> String
 
 pub enum SatResult {
   Single(Map[String, Bool]?)
@@ -234,8 +236,8 @@ pub(all) enum TruthTableRow {
   WithInput(Array[Int], Bool)
   Value(Bool)
 } derive(Eq, @debug.Debug)
+pub impl Show for TruthTableRow
 
 // Type aliases
 
 // Traits
-

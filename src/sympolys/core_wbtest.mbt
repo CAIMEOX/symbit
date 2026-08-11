@@ -17,9 +17,8 @@ test "core wb: ensure_coeff_domain maps rationals into GF representatives" {
 ///|
 test "core wb: ensure_coeff_domain rejects non-integral in ZZ" {
   let c = @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))
-  let res : Result[FieldElem, PolyError] = try? ensure_coeff_domain(
-    c,
-    Domain::ZZ,
+  sympolys_assert_error(
+    fn() raise PolyError { ensure_coeff_domain(c, Domain::ZZ) },
+    "CoefficientNotInteger",
   )
-  assert_true(res is Err(PolyError::CoefficientNotInteger))
 }

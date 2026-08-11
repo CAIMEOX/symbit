@@ -159,11 +159,7 @@ fn parse_selector_span(tail : String) -> ESpan {
 
 ///|
 fn parse_int_opt(text : String) -> Int? {
-  let parsed = try? @string.parse_int(text)
-  match parsed {
-    Ok(value) => Some(value)
-    Err(_) => None
-  }
+  Some(@string.parse_int(text) catch { _ => return None })
 }
 
 ///|

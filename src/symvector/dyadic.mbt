@@ -31,12 +31,12 @@ pub fn BaseDyadic::to_dyadic(self : BaseDyadic) -> Dyadic {
 }
 
 ///|
-pub impl Add for Dyadic with add(self, other : Dyadic) -> Dyadic {
+pub impl Add for Dyadic with fn add(self, other : Dyadic) -> Dyadic {
   { raw_: self.raw_ + other.raw_ }
 }
 
 ///|
-pub impl Sub for Dyadic with sub(self, other : Dyadic) -> Dyadic {
+pub impl Sub for Dyadic with fn sub(self, other : Dyadic) -> Dyadic {
   { raw_: self.raw_ - other.raw_ }
 }
 
@@ -47,7 +47,7 @@ pub fn Dyadic::is_zero(self : Dyadic) -> Bool {
 
 ///|
 pub fn Dyadic::components(self : Dyadic) -> Map[BaseDyadic, @symcore.Expr] {
-  let out : Map[BaseDyadic, @symcore.Expr] = {}
+  let out : Map[BaseDyadic, @symcore.Expr] = Map([])
   for item in self.raw_.args {
     let basis = base_dyadic(
       { axis_: item.2, system_: coord_system_from_frame(item.1) },

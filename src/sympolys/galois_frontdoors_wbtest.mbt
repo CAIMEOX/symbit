@@ -28,8 +28,8 @@ test "galois frontdoor: low degree group names" {
   assert_true(has_square_disc(b.from_expr((x ^ int(3)) - int(3) * x + int(1))))
   assert_false(has_square_disc(b.from_expr((x ^ int(3)) - int(2))))
   assert_true(has_square_disc(b.from_expr((x ^ int(2)) - int(4))))
-  let reducible : Result[GaloisGroupResult, PolyError] = try? galois_group(
-    b.from_expr((x ^ int(2)) - int(1)),
+  sympolys_assert_error(
+    fn() raise PolyError { galois_group(b.from_expr((x ^ int(2)) - int(1))) },
+    "NonPolynomial",
   )
-  assert_true(reducible is Err(PolyError::NonPolynomial))
 }

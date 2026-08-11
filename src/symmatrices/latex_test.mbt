@@ -7,7 +7,7 @@ test "matrices latex renders dense sparse and expression forms" {
     dense.latex(),
     content="\\left[\\begin{matrix}x & 1\\\\0 & y\\end{matrix}\\right]",
   )
-  let sparse_entries : Map[(Int, Int), @symcore.Expr] = {}
+  let sparse_entries : Map[(Int, Int), @symcore.Expr] = Map([])
   sparse_entries[(0, 0)] = x
   sparse_entries[(0, 1)] = @symcore.int(1)
   sparse_entries[(1, 1)] = y

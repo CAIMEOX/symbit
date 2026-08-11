@@ -1,8 +1,8 @@
 ///|
-let coord_systems_by_frame : Map[Int, CoordSys3D] = {}
+let coord_systems_by_frame : Map[Int, CoordSys3D] = Map([])
 
 ///|
-let root_coord_system_cache : Map[String, CoordSys3D] = {}
+let root_coord_system_cache : Map[String, CoordSys3D] = Map([])
 
 ///|
 fn default_vector_names() -> Array[String] {
@@ -179,7 +179,7 @@ fn compare_coord_sys(lhs : CoordSys3D, rhs : CoordSys3D) -> Int {
 
 ///|
 fn all_coord_systems() -> Array[CoordSys3D] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let out : Array[CoordSys3D] = []
   for entry in coord_systems_by_frame {
     let system = entry.1
@@ -198,7 +198,7 @@ fn coord_systems_in_scalar_expr(expr : @symcore.Expr) -> Array[CoordSys3D] {
   if free.is_empty() {
     return []
   }
-  let symbol_names : Map[String, Bool] = {}
+  let symbol_names : Map[String, Bool] = Map([])
   for item in free {
     symbol_names[@symprint.pretty_string(item)] = true
   }
@@ -215,7 +215,7 @@ fn coord_systems_in_scalar_expr(expr : @symcore.Expr) -> Array[CoordSys3D] {
 
 ///|
 fn coord_systems_in_vector(vector : Vector) -> Array[CoordSys3D] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let out : Array[CoordSys3D] = []
   for basis in vector.components().keys() {
     let system = basis.system_

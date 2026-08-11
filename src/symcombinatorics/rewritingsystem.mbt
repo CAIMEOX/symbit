@@ -466,7 +466,7 @@ fn RewritingSystem::_compute_inverse_rules(
   _self : RewritingSystem,
   rules : Map[FreeGroupElement, FreeGroupElement],
 ) -> Map[FreeGroupElement, FreeGroupElement] {
-  let inv_rules : Map[FreeGroupElement, FreeGroupElement] = {}
+  let inv_rules : Map[FreeGroupElement, FreeGroupElement] = Map([])
   for r, v in rules {
     let inv_key = r.inverse()
     let inv_val = v.inverse()
@@ -493,7 +493,7 @@ fn RewritingSystem::_add_to_automaton(
   rules : Map[FreeGroupElement, FreeGroupElement],
 ) -> Unit raise CombinatoricsError {
   let automaton_alphabet : Array[FreeGroupElement] = Array::new()
-  let all_rules : Map[FreeGroupElement, FreeGroupElement] = {}
+  let all_rules : Map[FreeGroupElement, FreeGroupElement] = Map([])
   for r, v in rules {
     all_rules[r] = v
   }

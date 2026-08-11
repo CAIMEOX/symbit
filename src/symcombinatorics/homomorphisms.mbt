@@ -228,7 +228,7 @@ fn fp_group_elements(
         moves.push(g)
         moves.push(g.inverse())
       }
-      let visited : Map[FreeGroupElement, Bool] = {}
+      let visited : Map[FreeGroupElement, Bool] = Map([])
       let queue : Array[FreeGroupElement] = Array::new()
       queue.push(identity)
       visited[identity] = true
@@ -267,7 +267,7 @@ fn fp_group_is_abelian_status(fp : FpGroup) -> Bool? raise CombinatoricsError {
     return Some(false)
   }
   // fast path: explicit commutator relators
-  let rel_set : Map[FreeGroupElement, Bool] = {}
+  let rel_set : Map[FreeGroupElement, Bool] = Map([])
   for r in fp.relators {
     rel_set[r] = true
     rel_set[r.inverse()] = true
@@ -617,7 +617,7 @@ pub fn GroupHomomorphism::apply_all(
 fn build_inverses(
   hom : GroupHomomorphism,
 ) -> Map[HomElement, HomElement] raise CombinatoricsError {
-  let invs : Map[HomElement, HomElement] = {}
+  let invs : Map[HomElement, HomElement] = Map([])
   let elems = hom_group_elements(hom.domain)
   for e in elems {
     let img = hom.apply(e)

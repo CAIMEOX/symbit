@@ -167,7 +167,7 @@ fn matrix_add_diag_scalar(
 
 ///|
 fn polynomial_const(expr : Expr) -> Map[Int, Expr] {
-  let out : Map[Int, Expr] = {}
+  let out : Map[Int, Expr] = Map([])
   if !expr_is_zero(expr) {
     out[0] = expr
   }
@@ -179,7 +179,7 @@ fn polynomial_merge(
   lhs : Map[Int, Expr],
   rhs : Map[Int, Expr],
 ) -> Map[Int, Expr] {
-  let out : Map[Int, Expr] = {}
+  let out : Map[Int, Expr] = Map([])
   for degree, coeff in lhs {
     if !expr_is_zero(coeff) {
       out[degree] = coeff
@@ -203,7 +203,7 @@ fn polynomial_merge(
 
 ///|
 fn polynomial_mul(lhs : Map[Int, Expr], rhs : Map[Int, Expr]) -> Map[Int, Expr] {
-  let out : Map[Int, Expr] = {}
+  let out : Map[Int, Expr] = Map([])
   for left_degree, left_coeff in lhs {
     for right_degree, right_coeff in rhs {
       let degree = left_degree + right_degree
@@ -217,7 +217,7 @@ fn polynomial_mul(lhs : Map[Int, Expr], rhs : Map[Int, Expr]) -> Map[Int, Expr] 
       }
     }
   }
-  let cleaned : Map[Int, Expr] = {}
+  let cleaned : Map[Int, Expr] = Map([])
   for degree, coeff in out {
     if !expr_is_zero(coeff) {
       cleaned[degree] = coeff
@@ -229,13 +229,13 @@ fn polynomial_mul(lhs : Map[Int, Expr], rhs : Map[Int, Expr]) -> Map[Int, Expr] 
 ///|
 fn polynomial_terms(expr : Expr, indeterminate : Expr) -> Map[Int, Expr]? {
   if expr_eq(expr, indeterminate) {
-    let out : Map[Int, Expr] = {}
+    let out : Map[Int, Expr] = Map([])
     out[1] = @symcore.int(1)
     return Some(out)
   }
   match expr {
     @symcore.Expr::Add(args) => {
-      let mut acc : Map[Int, Expr] = {}
+      let mut acc : Map[Int, Expr] = Map([])
       for arg in args {
         match polynomial_terms(arg, indeterminate) {
           Some(poly) => acc = polynomial_merge(acc, poly)
@@ -322,7 +322,7 @@ fn normalize_charpoly_expr(expr : Expr, indeterminate : Expr) -> Expr {
 
 ///|
 fn eigen_pack_diagonal(diagonal : Array[Expr]) -> Array[EigenValueMult] {
-  let counts : Map[String, (Expr, Int)] = {}
+  let counts : Map[String, (Expr, Int)] = Map([])
   let order : Array[String] = []
   for value in diagonal {
     let key = @symprint.pretty_string(value)
@@ -346,7 +346,7 @@ fn eigen_pack_diagonal(diagonal : Array[Expr]) -> Array[EigenValueMult] {
 
 ///|
 fn eigen_pack_values(values : Array[Expr]) -> Array[EigenValueMult] {
-  let counts : Map[String, (Expr, Int)] = {}
+  let counts : Map[String, (Expr, Int)] = Map([])
   let order : Array[String] = []
   for value in values {
     let key = @symprint.pretty_string(value)
@@ -455,13 +455,11 @@ fn matrix_try_exact_charpoly_expr(
   matrix : Matrix,
   x : Expr,
 ) -> Expr? raise MatrixError {
-  let exact : Result[Expr, MatrixError] = try? matrix_exact_charpoly_expr(
-    matrix, x,
-  )
-  match exact {
-    Ok(value) => Some(value)
-    Err(MatrixError::ValueError(_)) => None
-    Err(err) => raise err
+  try matrix_exact_charpoly_expr(matrix, x) catch {
+    MatrixError::ValueError(_) => None
+    err => raise err
+  } noraise {
+    value => Some(value)
   }
 }
 
@@ -524,7 +522,7 @@ fn matrix_exact_eigenvects(
         )
     }
     for root in roots {
-      let env : Map[String, Expr] = {}
+      let env : Map[String, Expr] = Map([])
       let eigenvalue = @symsimplify.simplify(root)
       env[gen] = eigenvalue
       let basis : Array[Array[Expr]] = []

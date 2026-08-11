@@ -31,4 +31,3 @@ pub(all) struct TreeJoin[T] {
 // Type aliases
 
 // Traits
-

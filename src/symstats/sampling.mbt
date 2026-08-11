@@ -123,6 +123,44 @@ fn stats_sample_finite(
 }
 
 ///|
+fn stats_prepare_finite_sampler(
+  items : Array[(@symcore.Expr, @symnum.BigRational)],
+) -> Array[(@symcore.Expr, Double)]? {
+  if items.is_empty() {
+    return None
+  }
+  let prepared : Array[(@symcore.Expr, Double)] = []
+  for item in items {
+    let (value, prob) = item
+    match stats_rational_to_double(prob) {
+      Some(p) => prepared.push((value, p))
+      None => return None
+    }
+  }
+  Some(prepared)
+}
+
+///|
+fn stats_sample_finite_prepared(
+  items : Array[(@symcore.Expr, Double)],
+  rng : @random.Rand,
+) -> @symcore.Expr? {
+  if items.is_empty() {
+    return None
+  }
+  let target = stats_uniform01(rng)
+  let mut accum = 0.0
+  for item in items {
+    let (value, prob) = item
+    accum += prob
+    if target <= accum {
+      return Some(value)
+    }
+  }
+  Some(items[items.length() - 1].0)
+}
+
+///|
 fn stats_sample_binomial(
   n : @symcore.Expr,
   p : @symcore.Expr,
@@ -876,7 +914,7 @@ fn sample_env_with_rng(
   rvs : Array[RandomVar],
   rng : @random.Rand,
 ) -> Map[String, @symcore.Expr]? {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   for rv in rvs {
     match sample_random_var_with_rng(rv, rng) {
       Some(value) => env[rv.name] = value
@@ -887,6 +925,36 @@ fn sample_env_with_rng(
 }
 
 ///|
+fn direct_symbol_random_var(
+  expr : @symcore.Expr,
+  rvs : Array[RandomVar],
+) -> RandomVar? {
+  if rvs.length() != 1 {
+    return None
+  }
+  let rv = rvs[0]
+  match expr {
+    @symcore.Expr::Symbol(name) if name == rv.name => Some(rv)
+    _ => None
+  }
+}
+
+///|
+fn direct_finite_symbol_items(
+  expr : @symcore.Expr,
+  rvs : Array[RandomVar],
+) -> Array[(@symcore.Expr, @symnum.BigRational)]? {
+  match direct_symbol_random_var(expr, rvs) {
+    Some(rv) =>
+      match rv.kind {
+        RVKind::Finite(items) => Some(items)
+        _ => None
+      }
+    None => None
+  }
+}
+
+///|
 fn sample_expr_with_rng(
   expr : @symcore.Expr,
   rvs : Array[RandomVar],
@@ -894,6 +962,14 @@ fn sample_expr_with_rng(
 ) -> @symcore.Expr? {
   if rvs.is_empty() {
     return Some(expr)
+  }
+  match direct_symbol_random_var(expr, rvs) {
+    Some(rv) =>
+      match sample_random_var_with_rng(rv, rng) {
+        Some(value) => return Some(eval_arith(value))
+        None => return None
+      }
+    None => ()
   }
   match sample_env_with_rng(rvs, rng) {
     Some(env) => Some(eval_arith(@symcore.subst(expr, env)))

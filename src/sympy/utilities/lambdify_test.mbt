@@ -16,7 +16,7 @@ test "lambdify accepts map arguments" {
   let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.mul([x, y])
   let fn0 = lambdify(["x", "y"], expr)
-  let env : Map[String, Double] = {}
+  let env : Map[String, Double] = Map([])
   env["x"] = 2.0
   env["y"] = 3.5
   assert_eq(fn0.call_map(env), 7.0)
@@ -38,10 +38,12 @@ test "implemented_function errors propagate through lambdify" {
   })
   let x = @symcore.Expr::Symbol("x")
   let fn0 = lambdify(["x"], f.apply([x]))
-  let result : Result[Double, @symutilities.UtilitiesError] = try? fn0.call([
-    3.0,
-  ])
-  inspect(result, content="Err(InvalidArgument(\"boom\"))")
+  let result : Result[Double, @symutilities.UtilitiesError] = try
+    fn0.call([3.0]) |> Ok
+  catch {
+    error => Err(error)
+  }
+  debug_inspect(result, content="Err(InvalidArgument(\"boom\"))")
 }
 
 ///|
@@ -71,8 +73,12 @@ test "lambdify rejects non-real ComplexFloat constants" {
     ),
   )
   let fn0 = lambdify([], nonreal)
-  let result : Result[Double, @symutilities.UtilitiesError] = try? fn0.call([])
-  inspect(
+  let result : Result[Double, @symutilities.UtilitiesError] = try
+    fn0.call([]) |> Ok
+  catch {
+    error => Err(error)
+  }
+  debug_inspect(
     result,
     content="Err(Unsupported(\"lambdify does not yet support non-real complex constants\"))",
   )

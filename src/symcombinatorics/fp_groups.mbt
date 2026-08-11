@@ -293,7 +293,7 @@ pub fn FpGroup::coset_table(
 fn used_generators(
   relators : Array[FreeGroupElement],
 ) -> Array[FreeGroupElement] {
-  let seen : Map[FreeGroupElement, Bool] = {}
+  let seen : Map[FreeGroupElement, Bool] = Map([])
   let out : Array[FreeGroupElement] = Array::new()
   for r in relators {
     for g in r.contains_generators() {

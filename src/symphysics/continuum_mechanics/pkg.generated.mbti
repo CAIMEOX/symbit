@@ -294,4 +294,3 @@ pub type NodeSpec = (String, @symcore.Expr, @symcore.Expr)
 pub type SupportSpec = (String, String)
 
 // Traits
-

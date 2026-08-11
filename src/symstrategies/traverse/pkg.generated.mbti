@@ -24,4 +24,3 @@ pub fn top_down_once((@symcore.Expr) -> @symcore.Expr, fns? : @util.Fns[@symcore
 // Type aliases
 
 // Traits
-

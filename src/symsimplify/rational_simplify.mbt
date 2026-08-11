@@ -268,8 +268,8 @@ fn rewrite_ratsimp(expr : Expr) -> Expr {
 
 ///|
 fn lcm_denominator(dens : Array[Expr]) -> Expr {
-  let counts : Map[String, Int] = {}
-  let factors : Map[String, Expr] = {}
+  let counts : Map[String, Int] = Map([])
+  let factors : Map[String, Expr] = Map([])
   for den in dens {
     let local_counts = factor_count_map(den)
     for key, count in local_counts {
@@ -288,7 +288,7 @@ fn denominator_quotient(common_den : Expr, den : Expr) -> Expr {
   let common_counts = factor_count_map(common_den)
   let common_factors = factor_expr_map(common_den)
   let local_counts = factor_count_map(den)
-  let out_counts : Map[String, Int] = {}
+  let out_counts : Map[String, Int] = Map([])
   for key, total in common_counts {
     let used = match local_counts.get(key) {
       Some(count) => count
@@ -323,42 +323,27 @@ fn poly_cancel_expr(expr : Expr) -> Expr? {
   if gens.is_empty() {
     return None
   }
-  let num_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
-    num,
-    gens,
-    @sympolys.Domain::EX,
-  )
-  let den_poly_res : Result[@sympolys.Poly, @sympolys.PolyError] = try? @sympolys.Poly::from_expr(
-    den,
-    gens,
-    @sympolys.Domain::EX,
-  )
-  match (num_poly_res, den_poly_res) {
-    (Ok(num_poly), Ok(den_poly)) => {
-      if den_poly.is_zero() {
-        return None
-      }
-      let cancel_res : Result[
-        (@sympolys.Poly, @sympolys.Poly),
-        @sympolys.PolyError,
-      ] = try? @sympolys.cancel(num_poly, den_poly)
-      match cancel_res {
-        Ok((num_s, den_s)) => {
-          let num_expr = num_s.to_expr()
-          let den_expr = den_s.to_expr()
-          Some(
-            if den_expr == int(1) {
-              num_expr
-            } else {
-              @symcore.mul([num_expr, @symcore.pow(den_expr, int(-1))])
-            },
-          )
-        }
-        Err(_) => None
-      }
-    }
-    _ => None
+  let num_poly = @sympolys.Poly::from_expr(num, gens, @sympolys.Domain::EX) catch {
+    _ => return None
   }
+  let den_poly = @sympolys.Poly::from_expr(den, gens, @sympolys.Domain::EX) catch {
+    _ => return None
+  }
+  if den_poly.is_zero() {
+    return None
+  }
+  let (num_s, den_s) = @sympolys.cancel(num_poly, den_poly) catch {
+    _ => return None
+  }
+  let num_expr = num_s.to_expr()
+  let den_expr = den_s.to_expr()
+  Some(
+    if den_expr == int(1) {
+      num_expr
+    } else {
+      @symcore.mul([num_expr, @symcore.pow(den_expr, int(-1))])
+    },
+  )
 }
 
 ///|
@@ -437,9 +422,9 @@ fn flatten_mul_nonunit_rational(expr : Expr) -> Array[Expr] {
 
 ///|
 fn factor_count_map(expr : Expr) -> Map[String, Int] {
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   for factor in flatten_mul_nonunit_rational(expr) {
-    let key = to_repr(factor).to_string()
+    let key = Repr(factor).to_string()
     match counts.get(key) {
       Some(prev) => counts[key] = prev + 1
       None => counts[key] = 1
@@ -450,9 +435,9 @@ fn factor_count_map(expr : Expr) -> Map[String, Int] {
 
 ///|
 fn factor_expr_map(expr : Expr) -> Map[String, Expr] {
-  let factors : Map[String, Expr] = {}
+  let factors : Map[String, Expr] = Map([])
   for factor in flatten_mul_nonunit_rational(expr) {
-    let key = to_repr(factor).to_string()
+    let key = Repr(factor).to_string()
     factors[key] = factor
   }
   factors
@@ -461,7 +446,7 @@ fn factor_expr_map(expr : Expr) -> Map[String, Expr] {
 ///|
 fn factor_expr_by_key(expr : Expr, key : String) -> Expr {
   for factor in flatten_mul_nonunit_rational(expr) {
-    if to_repr(factor).to_string() == key {
+    if Repr(factor).to_string() == key {
       return factor
     }
   }
@@ -603,10 +588,10 @@ fn cancel_common_factors(expr : Expr) -> Expr {
   )
   let nfs = flatten_mul_nonunit(simp_num)
   let dfs = flatten_mul_nonunit(simp_den)
-  let den_count : Map[String, Int] = {}
-  let den_factor : Map[String, Expr] = {}
+  let den_count : Map[String, Int] = Map([])
+  let den_factor : Map[String, Expr] = Map([])
   for f in dfs {
-    let key = to_repr(f).to_string()
+    let key = Repr(f).to_string()
     den_factor[key] = f
     match den_count.get(key) {
       Some(c) => den_count[key] = c + 1
@@ -615,7 +600,7 @@ fn cancel_common_factors(expr : Expr) -> Expr {
   }
   let kept_num : Array[Expr] = Array::new()
   for f in nfs {
-    let key = to_repr(f).to_string()
+    let key = Repr(f).to_string()
     match den_count.get(key) {
       Some(c) if c > 0 => den_count[key] = c - 1
       _ => kept_num.push(f)
@@ -643,13 +628,13 @@ fn cancel_common_factors(expr : Expr) -> Expr {
 fn collect_function_terms(expr : Expr, target_name : String) -> Expr {
   match expr {
     Expr::Add(args) => {
-      let grouped : Map[String, Array[Expr]] = {}
-      let grouped_arg : Map[String, Expr] = {}
+      let grouped : Map[String, Array[Expr]] = Map([])
+      let grouped_arg : Map[String, Expr] = Map([])
       let rest : Array[Expr] = Array::new()
       for arg in args {
         match parse_coeff_times_named_unary(arg, target_name) {
           Some((coeff, inner)) => {
-            let key = to_repr(inner).to_string()
+            let key = Repr(inner).to_string()
             match grouped.get(key) {
               Some(coeffs) => coeffs.push(coeff)
               None => {

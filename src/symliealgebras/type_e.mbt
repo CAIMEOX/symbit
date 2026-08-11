@@ -46,7 +46,7 @@ pub fn type_e_positive_roots(n : Int) -> Map[Int, RootVector] {
   let poshalf = br_rat(1, 2)
   let neghalf = br_rat(-1, 2)
   if n == 6 {
-    let posroots : Map[Int, RootVector] = {}
+    let posroots : Map[Int, RootVector] = Map([])
     let mut k = 0
     for i in 0..<(n - 1) {
       for j in (i + 1)..<(n - 1) {
@@ -95,7 +95,7 @@ pub fn type_e_positive_roots(n : Int) -> Map[Int, RootVector] {
     return posroots
   }
   if n == 7 {
-    let posroots : Map[Int, RootVector] = {}
+    let posroots : Map[Int, RootVector] = Map([])
     let mut k = 0
     for i in 0..<(n - 1) {
       for j in (i + 1)..<(n - 1) {
@@ -150,7 +150,7 @@ pub fn type_e_positive_roots(n : Int) -> Map[Int, RootVector] {
     }
     return posroots
   }
-  let posroots : Map[Int, RootVector] = {}
+  let posroots : Map[Int, RootVector] = Map([])
   let mut k = 0
   for i in 0..<n {
     for j in (i + 1)..<n {

@@ -1,0 +1,61 @@
+name: MoonBit CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: moonbit-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Track nightly deliberately so new compiler deprecations fail close to their
+  # introduction instead of accumulating between maintenance passes.
+  MOONBIT_VERSION: nightly
+
+jobs:
+  non-oracle:
+    name: Non-oracle packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Install MoonBit
+        shell: bash
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh \
+            | bash -s "${MOONBIT_VERSION}"
+          echo "${HOME}/.moon/bin" >> "${GITHUB_PATH}"
+
+      - name: Record toolchain and update registry
+        shell: bash
+        run: |
+          moon version --all
+          moon update
+
+      - name: Enforce formatting and default warning gate
+        shell: bash
+        run: |
+          find src -type f -name moon.pkg ! -path 'src/sympy/*' -print \
+            | sed 's#/moon.pkg$##' \
+            | sort \
+            | xargs moon fmt --check
+          find src -type f -name moon.pkg ! -path 'src/sympy/*' -print \
+            | sed 's#/moon.pkg$##' \
+            | sort \
+            | xargs moon check --frozen --deny-warn
+
+      - name: Run non-oracle tests
+        shell: bash
+        run: |
+          find src -type f -name moon.pkg ! -path 'src/sympy/*' -print \
+            | sed 's#/moon.pkg$##' \
+            | sort \
+            | xargs moon test --frozen

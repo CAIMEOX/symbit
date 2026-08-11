@@ -49,16 +49,16 @@ pub fn binop_dict(
   fa : FieldElemMapper,
   fb : FieldElemMapper,
 ) -> DomainMatrixDOD raise PolyError {
-  let row_keys : Map[Int, Bool] = {}
+  let row_keys : Map[Int, Bool] = Map([])
   for row, _ in a {
     row_keys[row] = true
   }
   for row, _ in b {
     row_keys[row] = true
   }
-  let out : DomainMatrixDOD = {}
+  let out : DomainMatrixDOD = Map([])
   for row, _ in row_keys {
-    let cols : Map[Int, Bool] = {}
+    let cols : Map[Int, Bool] = Map([])
     match a.get(row) {
       Some(arow) =>
         for col, _ in arow {
@@ -73,7 +73,7 @@ pub fn binop_dict(
         }
       None => ()
     }
-    let out_row : Map[Int, FieldElem] = {}
+    let out_row : Map[Int, FieldElem] = Map([])
     for col, _ in cols {
       let mapped = match (a.get(row), b.get(row)) {
         (Some(arow), Some(brow)) =>
@@ -117,9 +117,9 @@ pub fn unop_dict(
   a : DomainMatrixDOD,
   f : FieldElemMapper,
 ) -> DomainMatrixDOD raise PolyError {
-  let out : DomainMatrixDOD = {}
+  let out : DomainMatrixDOD = Map([])
   for row, values in a {
-    let out_row : Map[Int, FieldElem] = {}
+    let out_row : Map[Int, FieldElem] = Map([])
     for col, value in values {
       let mapped = f(value)
       if !fe_is_zero(mapped) {

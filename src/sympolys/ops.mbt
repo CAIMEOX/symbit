@@ -12,7 +12,7 @@ pub fn Poly::resultant_poly(
   other : Poly,
   gen_index : Int,
 ) -> Poly raise PolyError {
-  if self.domain.not_equal(other.domain) || self.gens.not_equal(other.gens) {
+  if self.domain.not_equal(other.domain) || self.gens != other.gens {
     raise PolyError::DomainMismatch
   }
   if gen_index < 0 || gen_index >= self.gens.length() {

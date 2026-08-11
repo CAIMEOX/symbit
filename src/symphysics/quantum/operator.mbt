@@ -98,7 +98,7 @@ pub fn OperatorExpr::as_expr(self : OperatorExpr) -> Expr {
 }
 
 ///|
-pub impl Show for OperatorExpr with to_string(self) {
+pub impl Show for OperatorExpr with fn to_string(self) {
   match self.flavor {
     OperatorFlavor::Identity => "I"
     _ => {
@@ -113,7 +113,7 @@ pub impl Show for OperatorExpr with to_string(self) {
 }
 
 ///|
-pub impl Show for OperatorExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for OperatorExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

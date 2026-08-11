@@ -44,7 +44,7 @@ pub fn express_scalar(
   if !variables {
     return expr
   }
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   for other in coord_systems_in_scalar_expr(expr) {
     if other != system {
       let mapping = other.scalar_map(system) catch { _ => continue }

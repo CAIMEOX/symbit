@@ -22,7 +22,7 @@ fn ensure_univar_pair(a : Poly, b : Poly) -> Unit raise PolyError {
 ///|
 fn lift_pair_to_qq(p : Poly, q : Poly) -> (Poly, Poly) raise PolyError {
   ensure_univar_pair(p, q)
-  if p.domain.not_equal(q.domain) || p.gens.not_equal(q.gens) {
+  if p.domain.not_equal(q.domain) || p.gens != q.gens {
     raise PolyError::DomainMismatch
   }
   match p.domain {

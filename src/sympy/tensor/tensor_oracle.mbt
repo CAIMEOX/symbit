@@ -336,7 +336,7 @@ fn tensor_index_type_to_sympy(
     return cache[typ.name]
   }
   let args : Array[OracleArg] = [OracleArg::Str(typ.name)]
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   if typ.dummy_name != "" {
     kwargs["dummy_name"] = OracleArg::Str(typ.dummy_name)
   }
@@ -427,15 +427,15 @@ fn tensor_expr_to_sympy(
 
 ///|
 pub fn tensor_str(expr : @symtensor_tensor.TensorExpr) -> String raise {
-  let type_cache : Map[String, @py.PyObject] = {}
-  let head_cache : Map[String, @py.PyObject] = {}
+  let type_cache : Map[String, @py.PyObject] = Map([])
+  let head_cache : Map[String, @py.PyObject] = Map([])
   py_str_obj(tensor_expr_to_sympy(expr, type_cache, head_cache))
 }
 
 ///|
 pub fn tensor_latex(expr : @symtensor_tensor.TensorExpr) -> String raise {
-  let type_cache : Map[String, @py.PyObject] = {}
-  let head_cache : Map[String, @py.PyObject] = {}
+  let type_cache : Map[String, @py.PyObject] = Map([])
+  let head_cache : Map[String, @py.PyObject] = Map([])
   py_str_enum(
     sympy_call_must("sympy.latex", [
       OracleArg::PyObj(tensor_expr_to_sympy(expr, type_cache, head_cache)),
@@ -445,8 +445,8 @@ pub fn tensor_latex(expr : @symtensor_tensor.TensorExpr) -> String raise {
 
 ///|
 pub fn tensor_srepr(expr : @symtensor_tensor.TensorExpr) -> String raise {
-  let type_cache : Map[String, @py.PyObject] = {}
-  let head_cache : Map[String, @py.PyObject] = {}
+  let type_cache : Map[String, @py.PyObject] = Map([])
+  let head_cache : Map[String, @py.PyObject] = Map([])
   let obj = tensor_expr_to_sympy(expr, type_cache, head_cache)
   let srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(obj)])
   py_str_enum(srepr)
@@ -456,8 +456,8 @@ pub fn tensor_srepr(expr : @symtensor_tensor.TensorExpr) -> String raise {
 fn partial_derivative_to_sympy(
   pd : @symtensor_tensor.PartialDerivative,
 ) -> @py.PyObject raise {
-  let type_cache : Map[String, @py.PyObject] = {}
-  let head_cache : Map[String, @py.PyObject] = {}
+  let type_cache : Map[String, @py.PyObject] = Map([])
+  let head_cache : Map[String, @py.PyObject] = Map([])
   let args : Array[OracleArg] = Array::new()
   args.push(
     OracleArg::PyObj(tensor_expr_to_sympy(pd.expr, type_cache, head_cache)),

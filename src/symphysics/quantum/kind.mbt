@@ -16,7 +16,7 @@ pub(all) enum QuantumKind {
 } derive(Eq)
 
 ///|
-pub impl Show for QuantumKind with to_string(self) {
+pub impl Show for QuantumKind with fn to_string(self) {
   match self {
     QuantumKind::QNumber => "NumberKind"
     QuantumKind::QKet => "KetKind"
@@ -27,7 +27,7 @@ pub impl Show for QuantumKind with to_string(self) {
 }
 
 ///|
-pub impl Show for QuantumKind with output(self, logger : &Logger) -> Unit {
+pub impl Show for QuantumKind with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

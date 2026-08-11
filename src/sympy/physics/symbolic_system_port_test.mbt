@@ -18,8 +18,8 @@ fn symbolic_system_summary_items(summary : String) -> Array[String] {
   if trimmed == "[]" {
     return []
   }
-  let body = trimmed[1:trimmed.length() - 1].to_string()
-  body.split(",").to_array().map(fn(part) { part.trim().to_string() })
+  let body = trimmed[1:trimmed.length() - 1].to_owned()
+  body.split(",").to_array().map(fn(part) { part.trim().to_owned() })
 }
 
 ///|

@@ -2,7 +2,7 @@
 fn sp_norm(expr : @symcore.Expr) -> String raise {
   sympy_normalize(@symprint.pretty_string(expr))
   .trim()
-  .to_string()
+  .to_owned()
   .replace_all(old=" ", new="")
 }
 
@@ -101,16 +101,13 @@ test "series: powers and analytic functions over QQ" {
 test "series: invalid inverse and analytic preconditions fail" {
   let zz = @sympolys.power_series_ring(Domain::ZZ, "x", 5)
   let x_zz = zz.gen()
-  let bad_inv : Result[SeriesElem, PolyError] = try? x_zz.inverse()
-  assert_true(bad_inv is Err(_))
+  let _ = expect_poly_error(fn() raise PolyError { x_zz.inverse() })
 
   let qq = @sympolys.power_series_ring(Domain::QQ, "x", 5)
   let x = qq.gen()
-  let bad_exp : Result[SeriesElem, PolyError] = try? x
-    .add_ground(@sympolys.fe_from_int(1, Domain::QQ))
-    .exp()
-  assert_true(bad_exp is Err(_))
+  let _ = expect_poly_error(fn() raise PolyError {
+    x.add_ground(@sympolys.fe_from_int(1, Domain::QQ)).exp()
+  })
 
-  let bad_sqrt : Result[SeriesElem, PolyError] = try? x.sqrt()
-  assert_true(bad_sqrt is Err(_))
+  let _ = expect_poly_error(fn() raise PolyError { x.sqrt() })
 }

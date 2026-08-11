@@ -48,7 +48,7 @@ fn assert_set_int_eq(
   let a = sort_ints(actual)
   let b = sort_ints(expected)
   guard a == b else {
-    println("set mismatch [\{label}]: actual=\{a} expected=\{b}")
+    println("set mismatch [\{label}]: actual=\{Repr(a)} expected=\{Repr(b)}")
     fail("set mismatch")
   }
 }
@@ -62,7 +62,7 @@ fn assert_set_str_eq(
   let a = sort_strings(actual)
   let b = sort_strings(expected)
   guard a == b else {
-    println("set mismatch [\{label}]: actual=\{a} expected=\{b}")
+    println("set mismatch [\{label}]: actual=\{Repr(a)} expected=\{Repr(b)}")
     fail("set mismatch")
   }
 }

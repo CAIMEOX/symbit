@@ -299,7 +299,7 @@ fn series_inv_factorial_with_sign(
 
 ///|
 fn series_bigint_square_root_nonnegative(value : BigInt) -> BigInt? {
-  if value.op_lt(BigInt::from_int(0)) {
+  if value < BigInt::from_int(0) {
     return None
   }
   if value.is_zero() {
@@ -309,13 +309,13 @@ fn series_bigint_square_root_nonnegative(value : BigInt) -> BigInt? {
   let two = BigInt::from_int(2)
   let mut lo = BigInt::from_int(0)
   let mut hi = value.add(one)
-  while lo.add(one).op_lt(hi) {
+  while lo.add(one) < hi {
     let mid = lo.add(hi).div(two)
     let sq = mid.mul(mid)
     if sq.equal(value) {
       return Some(mid)
     }
-    if sq.op_lt(value) {
+    if sq < value {
       lo = mid
     } else {
       hi = mid
@@ -361,7 +361,7 @@ fn series_bigint_nth_root_exact(value : BigInt, n : Int) -> BigInt? {
   let zero = BigInt::from_int(0)
   let one = BigInt::from_int(1)
   let two = BigInt::from_int(2)
-  let negative = value.op_lt(zero)
+  let negative = value < zero
   if negative && n % 2 == 0 {
     return None
   }
@@ -371,13 +371,13 @@ fn series_bigint_nth_root_exact(value : BigInt, n : Int) -> BigInt? {
   }
   let mut lo = zero
   let mut hi = target.add(one)
-  while lo.add(one).op_lt(hi) {
+  while lo.add(one) < hi {
     let mid = lo.add(hi).div(two)
     let pow = series_bigint_pow_nonnegative(mid, n)
     if pow.equal(target) {
       return Some(if negative { mid.neg() } else { mid })
     }
-    if pow.op_lt(target) {
+    if pow < target {
       lo = mid
     } else {
       hi = mid

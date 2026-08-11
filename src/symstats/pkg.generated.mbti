@@ -708,4 +708,3 @@ pub enum TriBool {
 // Type aliases
 
 // Traits
-

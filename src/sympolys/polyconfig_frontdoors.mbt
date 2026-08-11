@@ -21,7 +21,7 @@ pub(all) enum PolyConfigValue {
 } derive(Eq)
 
 ///|
-let polyconfig_current : Map[String, PolyConfigValue] = {}
+let polyconfig_current : Map[String, PolyConfigValue] = Map([])
 
 ///|
 fn polyconfig_default(key : String) -> PolyConfigValue? {

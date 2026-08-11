@@ -18,7 +18,7 @@ fn geo_point_eq(lhs : Point, rhs : Point) -> Bool {
 }
 
 ///|
-pub impl Add for Point with add(self, other : Point) {
+pub impl Add for Point with fn add(self, other : Point) {
   let dim = if self.ambient_dimension() > other.ambient_dimension() {
     self.ambient_dimension()
   } else {
@@ -30,7 +30,7 @@ pub impl Add for Point with add(self, other : Point) {
 }
 
 ///|
-pub impl Sub for Point with sub(self, other : Point) {
+pub impl Sub for Point with fn sub(self, other : Point) {
   let dim = if self.ambient_dimension() > other.ambient_dimension() {
     self.ambient_dimension()
   } else {

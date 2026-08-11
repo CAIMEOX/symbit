@@ -10,7 +10,7 @@ pub enum PartitionResult {
 
 ///|
 fn partition_counts(parts : Array[Int]) -> Map[Int, Int] {
-  let out : Map[Int, Int] = {}
+  let out : Map[Int, Int] = Map([])
   for part in parts {
     out[part] = match out.get(part) {
       Some(count) => count + 1

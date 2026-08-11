@@ -417,37 +417,30 @@ fn expr_coeff_rational_value(expr : Expr) -> @symnum.BigRational? {
       if !f.is_finite() {
         None
       } else {
-        let pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? f.to_rational()
-        match pair_res {
-          Ok((num, den)) => {
-            let rat_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-              num, den,
-            )
-            match rat_res {
-              Ok(value) => Some(value)
-              Err(_) => None
+        try f.to_rational() catch {
+          _ => None
+        } noraise {
+          (num, den) =>
+            try @symnum.BigRational::new(num, den) catch {
+              _ => None
+            } noraise {
+              value => Some(value)
             }
-          }
-          Err(_) => None
         }
       }
     Expr::ComplexFloat(z) =>
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
-        let pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? z
-          .real_part()
-          .to_rational()
-        match pair_res {
-          Ok((num, den)) =>
-            match
-              (
-                try? @symnum.BigRational::new(num, den) :
-                Result[@symnum.BigRational, @symnum.RationalError]) {
-              Ok(value) => Some(value)
-              Err(_) => None
+        try z.real_part().to_rational() catch {
+          _ => None
+        } noraise {
+          (num, den) =>
+            try @symnum.BigRational::new(num, den) catch {
+              _ => None
+            } noraise {
+              value => Some(value)
             }
-          Err(_) => None
         }
       }
     _ => None
@@ -461,36 +454,30 @@ fn expr_coeff_field_elem_value(expr : Expr, domain : Domain) -> FieldElem? {
       if !z.is_finite() {
         None
       } else {
-        let pair_res : Result[
-          ((BigInt, BigInt), (BigInt, BigInt)),
-          @symnum.MpfError,
-        ] = try? z.to_rational_parts()
-        match pair_res {
-          Ok((re_pair, im_pair)) => {
-            let real_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-              re_pair.0,
-              re_pair.1,
-            )
-            let imag_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-              im_pair.0,
-              im_pair.1,
-            )
-            match (real_res, imag_res) {
-              (Ok(real), Ok(imag)) =>
-                match domain {
-                  Domain::CC => Some(FieldElem::CC(real, imag))
-                  Domain::RR if imag.is_zero() =>
-                    Some(
-                      ensure_coeff_domain(real, domain) catch {
-                        _ => return None
-                      },
-                    )
-                  _ => None
-                }
+        try z.to_rational_parts() catch {
+          _ => None
+        } noraise {
+          (re_pair, im_pair) =>
+            try @symnum.BigRational::new(re_pair.0, re_pair.1) catch {
               _ => None
+            } noraise {
+              real =>
+                try @symnum.BigRational::new(im_pair.0, im_pair.1) catch {
+                  _ => None
+                } noraise {
+                  imag =>
+                    match domain {
+                      Domain::CC => Some(FieldElem::CC(real, imag))
+                      Domain::RR if imag.is_zero() =>
+                        Some(
+                          ensure_coeff_domain(real, domain) catch {
+                            _ => return None
+                          },
+                        )
+                      _ => None
+                    }
+                }
             }
-          }
-          Err(_) => None
         }
       }
     _ =>
@@ -520,12 +507,10 @@ fn expr_coeff_algext_value(
   if !expr_in_algext(base, gens, rels, expr) {
     return None
   }
-  let loaded : Result[(Poly, String), PolyError] = try? load_algext_minpoly(
-    base, gens, rels,
-  )
-  let (minpoly, gen) = match loaded {
-    Ok(value) => value
-    Err(_) => return None
+  let (minpoly, gen) = try load_algext_minpoly(base, gens, rels) catch {
+    _ => return None
+  } noraise {
+    value => value
   }
   let poly = Poly::from_expr(expr, [gen], base) catch { _ => return None }
   let coeffs : Array[FieldElem] = []

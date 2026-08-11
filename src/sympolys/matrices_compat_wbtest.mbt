@@ -25,11 +25,10 @@ test "matrices wb: _linear_eq_to_dict produces sparse linear rows" {
 test "matrices wb: _linear_eq_to_dict rejects nonlinear terms" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let nonlinear : Result[
-    (Array[Map[String, @symcore.Expr]], Array[@symcore.Expr]),
-    PolyError,
-  ] = try? _linear_eq_to_dict([x * y], ["x", "y"])
-  assert_true(nonlinear is Err(PolyError::NonPolynomial))
+  sympolys_assert_error(
+    fn() raise PolyError { _linear_eq_to_dict([x * y], ["x", "y"]) },
+    "NonPolynomial",
+  )
 }
 
 ///|
@@ -178,15 +177,11 @@ test "matrices wb: DomainMatrix infers CC from complex float entries" {
     @symnum.BigRational::from_int(2),
     prec=90,
   )
-  let dm_res : Result[DomainMatrix, PolyError] = try? DomainMatrix::from_Matrix(
+  let dm = DomainMatrix::from_Matrix(
     [[@symcore.Expr::ComplexFloat(z), @symcore.int(0)]],
     fmt="dense",
     field=true,
   )
-  let dm = match dm_res {
-    Ok(value) => value
-    Err(_) => fail("domain matrix")
-  }
   match dm.domain {
     Domain::CC => ()
     _ => fail("expected CC domain")

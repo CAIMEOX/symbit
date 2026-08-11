@@ -186,7 +186,7 @@ pub fn FpSubgroup::contains(
         self.min_words = Some(gens_list)
       }
       let min_words = self.min_words.unwrap()
-      let known : Map[FreeGroupElement, Bool] = {}
+      let known : Map[FreeGroupElement, Bool] = Map([])
       let g = if self.normal { g0.cyclic_reduction() } else { g0 }
       return minword_break(min_words, known, g, self.normal)
     }
@@ -259,7 +259,7 @@ pub fn FpSubgroup::to_fp_group(
 
 ///|
 /// Return a readable subgroup description.
-pub impl Show for FpSubgroup with to_string(self) -> String {
+pub impl Show for FpSubgroup with fn to_string(self) -> String {
   if self.generators.length() > 30 {
     "<fp subgroup with \{self.generators.length()} generators>"
   } else {
@@ -269,6 +269,6 @@ pub impl Show for FpSubgroup with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for FpSubgroup with output(self, logger : &Logger) -> Unit {
+pub impl Show for FpSubgroup with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

@@ -2,5 +2,5 @@ import {
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symprint",
-  "moonbitlang/core/string" @string,
+  "moonbitlang/core/string",
 }

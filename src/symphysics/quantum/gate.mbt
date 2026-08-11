@@ -237,12 +237,8 @@ fn gate_matrix_from_expr(expr : Expr) -> @symphysics.ExplicitMatrix? {
 
 ///|
 fn gate_exact_rational(num : Int, den : Int) -> Expr {
-  let result : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
-    num, den,
-  )
-  match result {
-    Ok(value) => value
-    Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
+  @symcore.rational_from_ints(num, den) catch {
+    _ => int(num) * @symcore.raw_pow(int(den), int(-1))
   }
 }
 
@@ -294,13 +290,13 @@ pub fn GateExpr::as_expr(self : GateExpr) -> Expr {
 }
 
 ///|
-pub impl Show for GateExpr with to_string(self) {
+pub impl Show for GateExpr with fn to_string(self) {
   let rendered = self.args.map(arg => arg.to_string()).join(",")
   "\{gate_alias_name(self.kind)}(\{rendered})"
 }
 
 ///|
-pub impl Show for GateExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for GateExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

@@ -10,11 +10,11 @@ test "normalize and sign handling" {
 
 ///|
 test "zero denominator error" {
-  let result : Result[BigRational, RationalError] = try? BigRational::new(
-    BigInt::from_int(1),
-    BigInt::from_int(0),
-  )
-  assert_true(result is Err(RationalError::ZeroDenominator))
+  try BigRational::new(BigInt::from_int(1), BigInt::from_int(0)) catch {
+    RationalError::ZeroDenominator => ()
+  } noraise {
+    _ => fail("expected zero denominator error")
+  }
 }
 
 ///|
@@ -33,8 +33,9 @@ test "arithmetic closure" {
 ///|
 test "division by zero raises rational error" {
   let a = BigRational::from_int(1)
-  let result : Result[BigRational, RationalError] = try? a.div_r(
-    BigRational::zero(),
-  )
-  assert_true(result is Err(RationalError::ZeroDenominator))
+  try a.div_r(BigRational::zero()) catch {
+    RationalError::ZeroDenominator => ()
+  } noraise {
+    _ => fail("expected division by zero error")
+  }
 }

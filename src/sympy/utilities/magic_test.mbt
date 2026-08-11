@@ -9,5 +9,10 @@ test "magic pollute updates explicit scope" {
 ///|
 test "magic pollute rejects mismatched lengths" {
   let scope : Ref[Map[String, Int]] = { val: {} }
-  assert_true((try? pollute(["x"], [1, 2], scope)) is Err(_))
+  assert_true(
+    (try pollute(["x"], [1, 2], scope) |> Ok catch {
+      error => Err(error)
+    })
+    is Err(_),
+  )
 }

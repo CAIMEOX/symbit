@@ -78,7 +78,7 @@ pub(all) suberror PolyError {
 }
 
 ///|
-impl Eq for Domain with equal(self, other : Domain) -> Bool {
+impl Eq for Domain with fn equal(self, other : Domain) -> Bool {
   match (self, other) {
     (Domain::ZZ, Domain::ZZ)
     | (Domain::QQ, Domain::QQ)
@@ -113,9 +113,14 @@ impl Eq for Domain with equal(self, other : Domain) -> Bool {
 }
 
 ///|
-impl Eq for Domain with not_equal(self, other : Domain) -> Bool {
+impl Eq for Domain with fn not_equal(self, other : Domain) -> Bool {
   !self.equal(other)
 }
+
+///|
+/// Keep the equality dot-style API explicit now that trait implementations
+/// are no longer promoted to methods implicitly.
+pub extend Domain with Eq::{equal, not_equal}
 
 ///|
 /// Render a `PolyError` into its stable textual form.
@@ -126,7 +131,7 @@ impl Eq for Domain with not_equal(self, other : Domain) -> Bool {
 /// - Returns: `Unit`.
 /// - Limits: The output is intended for diagnostics, not for structured
 ///   recovery.
-pub impl Show for PolyError with output(self, logger : &Logger) -> Unit {
+pub impl Show for PolyError with fn output(self, logger : &Logger) -> Unit {
   match self {
     PolyError::NonPolynomial => logger.write_string("NonPolynomial")
     PolyError::BadGenerator(name) =>

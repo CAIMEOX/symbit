@@ -9,37 +9,21 @@ fn expr_exact_value(expr : @symcore.Expr) -> @symnum.BigRational? {
       if !f.is_finite() {
         None
       } else {
-        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? f.to_rational()
-        match pair {
-          Ok((num, den)) =>
-            match
-              (
-                try? @symnum.BigRational::new(num, den) :
-                Result[@symnum.BigRational, @symnum.RationalError]) {
-              Ok(value) => Some(value)
-              Err(_) => None
-            }
-          Err(_) => None
+        let (num, den) = f.to_rational() catch { _ => return None }
+        let value = @symnum.BigRational::new(num, den) catch {
+          _ => return None
         }
+        Some(value)
       }
     @symcore.Expr::ComplexFloat(z) =>
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
-        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? z
-          .real_part()
-          .to_rational()
-        match pair {
-          Ok((num, den)) =>
-            match
-              (
-                try? @symnum.BigRational::new(num, den) :
-                Result[@symnum.BigRational, @symnum.RationalError]) {
-              Ok(value) => Some(value)
-              Err(_) => None
-            }
-          Err(_) => None
+        let (num, den) = z.real_part().to_rational() catch { _ => return None }
+        let value = @symnum.BigRational::new(num, den) catch {
+          _ => return None
         }
+        Some(value)
       }
     _ => None
   }

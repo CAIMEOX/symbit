@@ -160,11 +160,10 @@ test "densetools wb: real-imag split frontdoor" {
     dt_wb_dmp_pair_repr(dup_real_imag(dt_wb_dup([1, 0, 1, 3]), Domain::ZZ)),
     content="([[1],[],[-3,0,1],[3]],[[3,0],[],[-1,0,1,0]])",
   )
-  let ex_result : Result[(DensePoly, DensePoly), PolyError] = try? dup_real_imag(
-    dt_wb_dup([1, 2]),
-    Domain::EX,
+  sympolys_assert_error(
+    fn() raise PolyError { dup_real_imag(dt_wb_dup([1, 2]), Domain::EX) },
+    "DomainMismatch",
   )
-  assert_true(ex_result is Err(PolyError::DomainMismatch))
 }
 
 ///|
@@ -348,6 +347,8 @@ test "densetools wb: algebraic coefficient injection frontdoor" {
   ])
   inspect(dt_wb_dmp_repr(dmp_lift(h, 0, alg_domain)), content="[1,0,2,0,4]")
 
-  let bad : Result[DensePoly, PolyError] = try? dmp_lift(h, 1, alg_domain)
-  assert_true(bad is Err(PolyError::NotUnivariate))
+  sympolys_assert_error(
+    fn() raise PolyError { dmp_lift(h, 1, alg_domain) },
+    "NotUnivariate",
+  )
 }

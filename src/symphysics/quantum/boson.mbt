@@ -26,7 +26,7 @@ pub fn BosonOpExpr::as_expr(self : BosonOpExpr) -> Expr {
 }
 
 ///|
-pub impl Show for BosonOpExpr with to_string(self) {
+pub impl Show for BosonOpExpr with fn to_string(self) {
   if self.is_annihilation {
     @symprint.pretty_string(self.name)
   } else {
@@ -35,7 +35,7 @@ pub impl Show for BosonOpExpr with to_string(self) {
 }
 
 ///|
-pub impl Show for BosonOpExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for BosonOpExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

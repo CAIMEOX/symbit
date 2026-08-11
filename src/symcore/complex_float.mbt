@@ -165,7 +165,7 @@ pub fn ComplexFloat::reciprocal(self : ComplexFloat) -> ComplexFloat {
 }
 
 ///|
-pub impl Add for ComplexFloat with add(self, other : ComplexFloat) -> ComplexFloat {
+pub impl Add for ComplexFloat with fn add(self, other : ComplexFloat) -> ComplexFloat {
   let p = complex_common_prec(self, other)
   let lhs = complex_promote(self, p)
   let rhs = complex_promote(other, p)
@@ -176,7 +176,7 @@ pub impl Add for ComplexFloat with add(self, other : ComplexFloat) -> ComplexFlo
 }
 
 ///|
-pub impl Mul for ComplexFloat with mul(self, other : ComplexFloat) -> ComplexFloat {
+pub impl Mul for ComplexFloat with fn mul(self, other : ComplexFloat) -> ComplexFloat {
   let p = complex_common_prec(self, other)
   let lhs = complex_promote(self, p)
   let rhs = complex_promote(other, p)
@@ -187,7 +187,7 @@ pub impl Mul for ComplexFloat with mul(self, other : ComplexFloat) -> ComplexFlo
 }
 
 ///|
-pub impl Neg for ComplexFloat with neg(self) -> ComplexFloat {
+pub impl Neg for ComplexFloat with fn neg(self) -> ComplexFloat {
   ComplexFloat::from_mpc(
     @symnum.mpc_neg(self.to_mpc(), self.prec, @symnum.round_nearest),
     prec=self.prec,
@@ -195,12 +195,12 @@ pub impl Neg for ComplexFloat with neg(self) -> ComplexFloat {
 }
 
 ///|
-pub impl Show for ComplexFloat with to_string(self) {
+pub impl Show for ComplexFloat with fn to_string(self) {
   self.format()
 }
 
 ///|
-pub impl Show for ComplexFloat with output(self, logger : &Logger) -> Unit {
+pub impl Show for ComplexFloat with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

@@ -2,22 +2,22 @@
 /// Dyadic algebra aligned with `sympy.physics.vector.dyadic`.
 
 ///|
-pub impl Eq for Dyadic with equal(self, other : Dyadic) -> Bool {
+pub impl Eq for Dyadic with fn equal(self, other : Dyadic) -> Bool {
   dyadic_equal(self, other)
 }
 
 ///|
-pub impl Eq for Dyadic with not_equal(self, other : Dyadic) -> Bool {
+pub impl Eq for Dyadic with fn not_equal(self, other : Dyadic) -> Bool {
   !dyadic_equal(self, other)
 }
 
 ///|
-pub impl Add for Dyadic with add(self, other : Dyadic) {
+pub impl Add for Dyadic with fn add(self, other : Dyadic) {
   dyadic_add(self, other)
 }
 
 ///|
-pub impl Sub for Dyadic with sub(self, other : Dyadic) {
+pub impl Sub for Dyadic with fn sub(self, other : Dyadic) {
   dyadic_add(self, other.neg())
 }
 
@@ -49,7 +49,7 @@ fn dyadic_key(coeff : (Expr, Int, Int, Int, Int)) -> String {
 
 ///|
 fn dyadic_normalize(items : Array[(Expr, Int, Int, Int, Int)]) -> Dyadic {
-  let combined : Map[String, (Expr, Int, Int, Int, Int)] = {}
+  let combined : Map[String, (Expr, Int, Int, Int, Int)] = Map([])
   for item in items {
     let key = dyadic_key(item)
     match combined.get(key) {

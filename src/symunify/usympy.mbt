@@ -207,7 +207,7 @@ fn internal_substitution(
   values : Map[@symcore.Expr, @symcore.Expr],
   variables : Array[@symcore.Expr],
 ) -> Substitution[@symcore.Expr, ExprOp] {
-  let out : Substitution[@symcore.Expr, ExprOp] = {}
+  let out : Substitution[@symcore.Expr, ExprOp] = Map([])
   for key, value in values {
     out[MatchVar::Variable(variable(key))] = deconstruct(value, variables~)
   }
@@ -218,7 +218,7 @@ fn internal_substitution(
 fn external_substitution(
   values : Substitution[@symcore.Expr, ExprOp],
 ) -> Map[@symcore.Expr, @symcore.Expr] {
-  let out : Map[@symcore.Expr, @symcore.Expr] = {}
+  let out : Map[@symcore.Expr, @symcore.Expr] = Map([])
   for key, value in values {
     out[match_var_arg(key)] = construct(value)
   }

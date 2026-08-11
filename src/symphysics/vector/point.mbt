@@ -2,12 +2,12 @@
 /// Point kinematics aligned with `sympy.physics.vector.point`.
 
 ///|
-pub impl Eq for Point with equal(self, other : Point) -> Bool {
+pub impl Eq for Point with fn equal(self, other : Point) -> Bool {
   self.index_ == other.index_
 }
 
 ///|
-pub impl Eq for Point with not_equal(self, other : Point) -> Bool {
+pub impl Eq for Point with fn not_equal(self, other : Point) -> Bool {
   self.index_ != other.index_
 }
 
@@ -67,7 +67,7 @@ fn point_path_between(
     return [start_]
   }
   let queue : Array[Array[Point]] = [[start_]]
-  let seen : Map[Int, Bool] = {}
+  let seen : Map[Int, Bool] = Map([])
   seen.set(start_.index_, true)
   let mut head = 0
   while head < queue.length() {
@@ -141,7 +141,7 @@ pub fn Point::vel(
     Some(value) => value
     None => {
       let queue : Array[Point] = [self]
-      let parent : Map[Int, Int] = {}
+      let parent : Map[Int, Int] = Map([])
       parent.set(self.index_, 0)
       let mut head = 0
       let mut base : Point? = None

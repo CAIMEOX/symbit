@@ -110,7 +110,7 @@ fn factorint_small_trial(
 
 ///|
 fn factorint_small_abs(n0 : BigInt) -> Map[BigInt, Int] {
-  let factors : Map[BigInt, Int] = {}
+  let factors : Map[BigInt, Int] = Map([])
   let n = n0.to_int()
   if n < 2 {
     return factors
@@ -145,7 +145,7 @@ fn factorint_small_abs(n0 : BigInt) -> Map[BigInt, Int] {
 
 ///|
 fn factorint_small_int_pairs(n : Int) -> Array[(Int, Int)] {
-  let factors : Map[Int, Int] = {}
+  let factors : Map[Int, Int] = Map([])
   if n < 2 {
     return []
   }
@@ -289,7 +289,7 @@ pub fn factorint(
   let _ = use_rho
   let _ = use_pm1
   let mut n = abs_bigint(n0)
-  let factors : Map[BigInt, Int] = {}
+  let factors : Map[BigInt, Int] = Map([])
   if n0 < bi(0) {
     factors[bi(-1)] = 1
   }
@@ -599,7 +599,7 @@ pub fn divisor_sigma(n0 : BigInt, k? : Int = 1) -> BigInt {
 pub fn factorrat(num0 : BigInt, den? : BigInt = bi(1)) -> Map[BigInt, Int] {
   let mut num = num0
   let mut den = den
-  let factors : Map[BigInt, Int] = {}
+  let factors : Map[BigInt, Int] = Map([])
   if num < bi(0) {
     inc_factor(factors, bi(-1), 1)
     num = -num

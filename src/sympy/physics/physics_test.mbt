@@ -76,11 +76,12 @@ test "physics: simple wavefunction and energy behaviors" {
     "ring wavefunction n=0",
   )
 
-  let err : Result[Expr, PhysicsError] = try? @symphysics.energy(
-    Expr::Symbol("n"),
-    Expr::Symbol("m"),
-    Expr::Symbol("r"),
-  )
+  let err : Result[Expr, PhysicsError] = try
+    @symphysics.energy(Expr::Symbol("n"), Expr::Symbol("m"), Expr::Symbol("r"))
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_true(err is Err(_))
 }
 
@@ -101,21 +102,18 @@ test "physics: hydrogen formulas and quantum-number guards" {
     "hydrogen radial ground state",
   )
 
-  let psi_err : Result[Expr, PhysicsError] = try? @symphysics.hydrogen_psi_nlm(
-    int(1),
-    int(1),
-    int(0),
-    r,
-    phi,
-    theta,
-  )
+  let psi_err : Result[Expr, PhysicsError] = try
+    @symphysics.hydrogen_psi_nlm(int(1), int(1), int(0), r, phi, theta) |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_true(psi_err is Err(_))
 
-  let dirac_err : Result[Expr, PhysicsError] = try? @symphysics.hydrogen_e_nl_dirac(
-    int(1),
-    int(0),
-    spin_up=false,
-  )
+  let dirac_err : Result[Expr, PhysicsError] = try
+    @symphysics.hydrogen_e_nl_dirac(int(1), int(0), spin_up=false) |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_true(dirac_err is Err(_))
 }
 
@@ -147,14 +145,19 @@ test "physics: wigner coefficients obey core examples and guards" {
     "clebsch_gordan zero",
   )
 
-  let bad : Result[Expr, PhysicsError] = try? @symphysics.wigner_3j(
-    physics_frac(1, 3),
-    half,
-    half,
-    int(0),
-    half,
-    int(-1) * half,
-  )
+  let bad : Result[Expr, PhysicsError] = try
+    @symphysics.wigner_3j(
+      physics_frac(1, 3),
+      half,
+      half,
+      int(0),
+      half,
+      int(-1) * half,
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_true(bad is Err(_))
 }
 
@@ -171,14 +174,19 @@ test "physics: gaunt examples and guards" {
     "gaunt zero",
   )
 
-  let bad : Result[Expr, PhysicsError] = try? @symphysics.gaunt(
-    physics_frac(1, 2),
-    int(1),
-    int(1),
-    int(0),
-    int(0),
-    int(0),
-  )
+  let bad : Result[Expr, PhysicsError] = try
+    @symphysics.gaunt(
+      physics_frac(1, 2),
+      int(1),
+      int(1),
+      int(0),
+      int(0),
+      int(0),
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_true(bad is Err(_))
 }
 

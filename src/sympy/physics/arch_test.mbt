@@ -14,7 +14,7 @@ fn arch_is_close(expr : @symcore.Expr, value : Double) -> Bool {
           _ => false
         } noraise {
           text =>
-            try @strconv.parse_double(text.trim().to_string()) catch {
+            try @string.parse_double(text.trim().to_owned()) catch {
               _ => false
             } noraise {
               fallback =>

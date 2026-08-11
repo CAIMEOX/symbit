@@ -1,28 +1,28 @@
 import {
-  "moonbitlang/core/strconv",
+  "moonbitlang/core/string",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/sympy",
   "Kaida-Amethyst/python" @py,
-  "Kaida-Amethyst/python/cpython" @cpython,
+  "Kaida-Amethyst/python/cpython",
 }
 
 import {
-  "moonbitlang/core/bigint" @bigint,
-  "moonbitlang/core/math" @math,
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/math",
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/symcalculus" @symcalculus,
+  "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,
-  "CAIMEOX/symbit/symphysics" @symphysics,
+  "CAIMEOX/symbit/symphysics",
   "CAIMEOX/symbit/symphysics/control" @symcontrol,
   "CAIMEOX/symbit/symphysics/continuum_mechanics" @symcm,
   "CAIMEOX/symbit/symphysics/mechanics" @symmech,
   "CAIMEOX/symbit/symphysics/quantum" @symquant,
   "CAIMEOX/symbit/symphysics/secondquant" @symsecondquant,
   "CAIMEOX/symbit/symphysics/vector" @symvector,
-  "CAIMEOX/symbit/symnum" @symnum,
+  "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/symsimplify" @symsimplify,
+  "CAIMEOX/symbit/symsimplify",
 } for "test"
 
 supported_targets = "native"

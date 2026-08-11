@@ -1,12 +1,12 @@
 import {
-  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/sympy",
   "Kaida-Amethyst/python" @py,
-  "moonbitlang/core/strconv",
+  "moonbitlang/core/string",
 }
 
 import {
-  "CAIMEOX/symbit/symcombinatorics" @symcombinatorics,
-  "CAIMEOX/symbit/symprint" @symprint,
+  "CAIMEOX/symbit/symcombinatorics",
+  "CAIMEOX/symbit/symprint",
 } for "test"
 
 supported_targets = "native"

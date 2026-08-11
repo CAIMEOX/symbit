@@ -1,12 +1,6 @@
 ///|
-fn assert_oracle_pd(
-  result : Result[String, Error],
-  expected : String,
-) -> Unit raise {
-  match result {
-    Ok(value) => assert_eq(value, expected)
-    Err(e) => raise e
-  }
+fn assert_oracle_pd(result : String, expected : String) -> Unit raise {
+  assert_eq(result, expected)
 }
 
 ///|
@@ -20,5 +14,5 @@ test "partial derivative string" {
   let pd = partial_derivative(expr, [b.call([j])])
   let s = pd.to_string()
   assert_eq(s, "PartialDerivative(A(i), B(-j))")
-  assert_oracle_pd(try? partial_derivative_str(pd), s)
+  assert_oracle_pd(partial_derivative_str(pd), s)
 }

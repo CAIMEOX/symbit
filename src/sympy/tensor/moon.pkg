@@ -1,5 +1,5 @@
 import {
-  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/sympy",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symtensor/indexed" @symtensor_indexed,
   "CAIMEOX/symbit/symtensor/array" @symtensor_array,
@@ -8,7 +8,7 @@ import {
 }
 
 import {
-  "CAIMEOX/symbit/symcombinatorics" @symcombinatorics,
+  "CAIMEOX/symbit/symcombinatorics",
 } for "test"
 
 supported_targets = "native"

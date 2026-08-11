@@ -290,7 +290,7 @@ pub fn casoratian(
   for i in 0..<rows {
     let row : Array[Expr] = []
     for seq in seqs {
-      let env : Map[String, Expr] = {}
+      let env : Map[String, Expr] = Map([])
       env[name] = if zero {
         @symcore.int(i)
       } else {

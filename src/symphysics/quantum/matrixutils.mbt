@@ -9,7 +9,7 @@ pub enum MatrixScalarValue {
 } derive(Eq)
 
 ///|
-pub impl Show for MatrixScalarValue with to_string(self) {
+pub impl Show for MatrixScalarValue with fn to_string(self) {
   match self {
     MatrixScalarValue::Matrix(matrix) =>
       @symphysics.explicit_matrix_rows_string(matrix)
@@ -18,7 +18,7 @@ pub impl Show for MatrixScalarValue with to_string(self) {
 }
 
 ///|
-pub impl Show for MatrixScalarValue with output(self, logger : &Logger) -> Unit {
+pub impl Show for MatrixScalarValue with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

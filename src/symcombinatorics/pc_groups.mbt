@@ -79,7 +79,7 @@ pub fn Collector::new(
     Some(g) => g
     None => pc_free_group(pcgs.length())
   }
-  let index : Map[Int, Int] = {}
+  let index : Map[Int, Int] = Map([])
   for i in 0..<fg.rank {
     index[i] = i
   }
@@ -138,8 +138,8 @@ pub fn Collector::relations(
   Map[FreeGroupElement, FreeGroupElement],
   Map[FreeGroupElement, FreeGroupElement],
 ) {
-  let power_relators : Map[FreeGroupElement, FreeGroupElement] = {}
-  let conjugate_relators : Map[FreeGroupElement, FreeGroupElement] = {}
+  let power_relators : Map[FreeGroupElement, FreeGroupElement] = Map([])
+  let conjugate_relators : Map[FreeGroupElement, FreeGroupElement] = Map([])
   for key, value in self.pc_presentation {
     if key.array_form().length() == 1 {
       power_relators[key] = value
@@ -266,8 +266,8 @@ pub fn Collector::pc_relators(
 ) -> Map[FreeGroupElement, FreeGroupElement] raise CombinatoricsError {
   let free_group = self.free_group
   let rel_order = self.relative_order
-  let pc_relators : Map[FreeGroupElement, FreeGroupElement] = {}
-  let perm_to_free : Map[Permutation, FreeGroupElement] = {}
+  let pc_relators : Map[FreeGroupElement, FreeGroupElement] = Map([])
+  let perm_to_free : Map[Permutation, FreeGroupElement] = Map([])
   let fg_gens = free_group.generators()
   for i in 0..<self.pcgs.length() {
     let gen = self.pcgs[i]
@@ -358,7 +358,7 @@ pub fn Collector::exponent_vector(
     j = j - 1
     gens_rev.push(gens[j])
   }
-  let perm_to_free : Map[Permutation, FreeGroupElement] = {}
+  let perm_to_free : Map[Permutation, FreeGroupElement] = Map([])
   let fg_gens = free_group.generators()
   for i in 0..<self.pcgs.length() {
     let gen = self.pcgs[i]

@@ -8,7 +8,7 @@ fn query_expr_sub(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn rv_map(rvs : Array[RandomVar]) -> Map[String, RandomVar] {
-  let out : Map[String, RandomVar] = {}
+  let out : Map[String, RandomVar] = Map([])
   for rv in rvs {
     out[rv.name] = rv
   }
@@ -359,7 +359,7 @@ fn query_lambda_apply(
           match vars {
             @symcore.Expr::Symbol(v) =>
               if args.length() == 1 {
-                let env : Map[String, @symcore.Expr] = {}
+                let env : Map[String, @symcore.Expr] = Map([])
                 env[v] = args[0]
                 Some(eval_arith(@symcore.subst(body, env)))
               } else {
@@ -1719,7 +1719,7 @@ fn expectation_eval_independent(
     }
     @symcore.Expr::Mul(items) => {
       let terms : Array[@symcore.Expr] = Array::new()
-      let seen_rv : Map[String, Bool] = {}
+      let seen_rv : Map[String, Bool] = Map([])
       for item in items {
         match item {
           @symcore.Expr::Symbol(name) =>
@@ -1901,7 +1901,7 @@ pub fn variance(
     }
   }
   if !rvs.is_empty() {
-    let vars_map : Map[String, @symcore.Expr] = {}
+    let vars_map : Map[String, @symcore.Expr] = Map([])
     for rv in rvs {
       match variance_of_rv(rv) {
         Some(v) => vars_map[rv.name] = v

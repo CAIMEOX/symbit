@@ -26,7 +26,7 @@ fn py_exact_matrix_expr(m : Matrix) -> String {
 
 ///|
 test "matrices parity sparse structural helpers" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 0)] = @symcore.int(1)
   entries[(1, 1)] = @symcore.int(2)
   let s = sparse_matrix(2, 2, entries)
@@ -42,7 +42,7 @@ test "matrices parity sparse structural helpers" {
     local_matrix_list_text(s.extract([0, 1], [1]).to_dense()),
     py_matrix_list_text(py_sparse_matrix_expr(s) + ".extract([0, 1], [1])"),
   )
-  let join_entries : Map[(Int, Int), Expr] = {}
+  let join_entries : Map[(Int, Int), Expr] = Map([])
   join_entries[(0, 0)] = @symcore.int(3)
   let right = sparse_matrix(2, 1, join_entries)
   let inserted = right
@@ -68,7 +68,7 @@ test "matrices parity sparse structural helpers" {
 
 ///|
 test "matrices parity sparse triangular solve" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 0)] = @symcore.int(2)
   entries[(1, 0)] = @symcore.int(1)
   entries[(1, 1)] = @symcore.int(3)
@@ -83,7 +83,7 @@ test "matrices parity sparse triangular solve" {
       ")",
     ),
   )
-  let upper_entries : Map[(Int, Int), Expr] = {}
+  let upper_entries : Map[(Int, Int), Expr] = Map([])
   upper_entries[(0, 0)] = @symcore.int(2)
   upper_entries[(0, 1)] = @symcore.int(1)
   upper_entries[(1, 1)] = @symcore.int(3)
@@ -101,7 +101,7 @@ test "matrices parity sparse triangular solve" {
 
 ///|
 test "matrices parity sparse decomposition helpers" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 0)] = @symcore.int(2)
   entries[(1, 1)] = @symcore.int(3)
   let s = sparse_matrix(2, 2, entries)
@@ -127,11 +127,11 @@ test "matrices parity sparse decomposition helpers" {
 
 ///|
 test "matrices parity sparse arithmetic paths" {
-  let lhs_entries : Map[(Int, Int), Expr] = {}
+  let lhs_entries : Map[(Int, Int), Expr] = Map([])
   lhs_entries[(0, 0)] = @symcore.int(1)
   lhs_entries[(0, 2)] = @symcore.int(2)
   lhs_entries[(1, 1)] = @symcore.int(3)
-  let rhs_entries : Map[(Int, Int), Expr] = {}
+  let rhs_entries : Map[(Int, Int), Expr] = Map([])
   rhs_entries[(0, 1)] = @symcore.int(4)
   rhs_entries[(2, 0)] = @symcore.int(5)
   rhs_entries[(1, 1)] = @symcore.int(6)
@@ -143,9 +143,9 @@ test "matrices parity sparse arithmetic paths" {
       py_sparse_matrix_expr(lhs) + " * " + py_sparse_matrix_expr(rhs),
     ),
   )
-  let add_left_entries : Map[(Int, Int), Expr] = {}
+  let add_left_entries : Map[(Int, Int), Expr] = Map([])
   add_left_entries[(0, 0)] = @symcore.int(1)
-  let add_right_entries : Map[(Int, Int), Expr] = {}
+  let add_right_entries : Map[(Int, Int), Expr] = Map([])
   add_right_entries[(0, 1)] = @symcore.int(4)
   let add_left = sparse_matrix(2, 2, add_left_entries)
   let add_right = sparse_matrix(2, 2, add_right_entries)
@@ -159,7 +159,7 @@ test "matrices parity sparse arithmetic paths" {
 
 ///|
 test "matrices parity sparse native rref echelon and rank" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 0)] = @symcore.int(1)
   entries[(0, 2)] = @symcore.int(2)
   entries[(1, 1)] = @symcore.int(1)
@@ -183,7 +183,7 @@ test "matrices parity sparse native rref echelon and rank" {
 
 ///|
 test "matrices parity sparse solve inverse cholesky and ldl" {
-  let entries : Map[(Int, Int), Expr] = {}
+  let entries : Map[(Int, Int), Expr] = Map([])
   entries[(0, 0)] = @symcore.int(4)
   entries[(0, 1)] = @symcore.int(1)
   entries[(1, 0)] = @symcore.int(2)
@@ -200,7 +200,7 @@ test "matrices parity sparse solve inverse cholesky and ldl" {
     local_matrix_list_text(s.inv()),
     py_matrix_list_text(py_sparse_matrix_expr(s) + ".inv()"),
   )
-  let spd_entries : Map[(Int, Int), Expr] = {}
+  let spd_entries : Map[(Int, Int), Expr] = Map([])
   spd_entries[(0, 0)] = @symcore.int(4)
   spd_entries[(0, 1)] = @symcore.int(2)
   spd_entries[(1, 0)] = @symcore.int(2)

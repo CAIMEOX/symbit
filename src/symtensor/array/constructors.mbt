@@ -32,7 +32,7 @@ pub fn sparse(
   shape : Array[Int],
   entries : Array[(Array[Int], @symcore.Expr)],
 ) -> NDimArray {
-  let map : Map[String, @symcore.Expr] = {}
+  let map : Map[String, @symcore.Expr] = Map([])
   for entry in entries {
     let (idx, value) = entry
     if !expr_is_zero(value) {

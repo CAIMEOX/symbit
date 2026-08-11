@@ -1,7 +1,7 @@
 ///|
 /// Find the unique symbol named `x` inside `equation`.
 pub fn find(x : String, equation : Expr) -> Expr raise GeometryError {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   geo_collect_symbols(equation, seen)
   let matches : Array[String] = []
   for entry in seen {

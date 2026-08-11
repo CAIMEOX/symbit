@@ -225,7 +225,7 @@ pub fn GeometryEntity::parameter_value(
   other : Point,
   t : Expr,
 ) -> Map[Expr, Expr] raise GeometryError {
-  let out : Map[Expr, Expr] = {}
+  let out : Map[Expr, Expr] = Map([])
   match self {
     GeometryEntity::Line(line_obj) => {
       let value = linear_param_for_point(geometry_line(line_obj), other)

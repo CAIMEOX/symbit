@@ -1,6 +1,6 @@
 ///|
 fn check_univar_compat(a : Poly, b : Poly) -> Unit raise PolyError {
-  if a.domain.not_equal(b.domain) || a.gens.not_equal(b.gens) {
+  if a.domain.not_equal(b.domain) || a.gens != b.gens {
     raise PolyError::DomainMismatch
   }
   if a.gens.length() != 1 {
@@ -253,7 +253,7 @@ fn coeff_content(poly : Poly) -> @symnum.BigRational raise PolyError {
     let r = fe_expect_rational(c)
     let num = r.numerator()
     let den = r.denominator()
-    let abs_num = if num.op_lt(BigInt::from_int(0)) { num.neg() } else { num }
+    let abs_num = if num < BigInt::from_int(0) { num.neg() } else { num }
     if g_num.is_zero() {
       g_num = abs_num
     } else {
@@ -338,7 +338,7 @@ pub fn Poly::gcd_multivar(self : Poly, other : Poly) -> Poly raise PolyError {
   if self.gens.length() == 1 {
     return self.gcd_univar(other)
   }
-  if self.domain.not_equal(other.domain) || self.gens.not_equal(other.gens) {
+  if self.domain.not_equal(other.domain) || self.gens != other.gens {
     raise PolyError::DomainMismatch
   }
   match self.domain {

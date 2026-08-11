@@ -26,13 +26,8 @@ test "fp group reduce parity" {
   let reduced = group.reduce(word)
   let rel_forms = rels.map(r => r.array_form())
   let word_form = word.array_form()
-  assert_oracle(
-    try? fp_group_reduce_equiv(
-      symbols,
-      rel_forms,
-      word_form,
-      reduced.array_form(),
-    ),
+  assert_true(
+    fp_group_reduce_equiv(symbols, rel_forms, word_form, reduced.array_form()),
   )
 }
 
@@ -52,13 +47,7 @@ test "fp group coset table parity (relator based)" {
   coset_table.standardize()
   let table = unwrap_table(coset_table.table)
   let rel_forms = rels.map(r => r.array_form())
-  assert_oracle(
-    try? fp_group_coset_table_equiv(
-      symbols,
-      rel_forms,
-      [],
-      "relator_based",
-      table,
-    ),
+  assert_true(
+    fp_group_coset_table_equiv(symbols, rel_forms, [], "relator_based", table),
   )
 }

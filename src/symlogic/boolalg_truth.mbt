@@ -8,6 +8,25 @@ pub(all) enum TruthTableRow {
 } derive(Debug, Eq)
 
 ///|
+fn truth_bits_to_string(bits : Array[Int]) -> String {
+  "[" + bits.map(bit => bit.to_string()).join(", ") + "]"
+}
+
+///|
+pub impl Show for TruthTableRow with fn to_string(self) {
+  match self {
+    TruthTableRow::WithInput(bits, value) =>
+      "WithInput(" + truth_bits_to_string(bits) + ", " + value.to_string() + ")"
+    TruthTableRow::Value(value) => "Value(" + value.to_string() + ")"
+  }
+}
+
+///|
+pub impl Show for TruthTableRow with fn output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
 fn env_from_bits(names : Array[String], bits : Array[Int]) -> Map[String, Bool] {
   let env : Map[String, Bool] = Map([])
   for i in 0..<names.length() {

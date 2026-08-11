@@ -111,7 +111,7 @@ pub fn oracle_textplot_lines(
   plotting_exec_result_str(script)
   .split("\u001f")
   .to_array()
-  .map(StringView::to_string)
+  .map(StringView::to_owned)
 }
 
 ///|
@@ -143,5 +143,5 @@ pub fn oracle_plot_text_lines(
   plotting_exec_result_str(script)
   .split("\u001f")
   .to_array()
-  .map(StringView::to_string)
+  .map(StringView::to_owned)
 }

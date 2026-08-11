@@ -182,7 +182,7 @@ fn solvers_eval_str_symbols(expr : String, symbols : String) -> String raise {
   let parts = symbols.split(" ")
   let names : Array[String] = []
   for part in parts {
-    let trimmed = part.trim().to_string()
+    let trimmed = part.trim().to_owned()
     if trimmed != "" {
       names.push(trimmed)
     }
@@ -220,7 +220,7 @@ fn solvers_eval_stmt_result_symbols(
   let parts = symbols.split(" ")
   let names : Array[String] = []
   for part in parts {
-    let trimmed = part.trim().to_string()
+    let trimmed = part.trim().to_owned()
     if trimmed != "" {
       names.push(trimmed)
     }
@@ -377,7 +377,7 @@ fn solver_py_locals_dict(symbols : String) -> String {
   let parts = symbols.split(" ")
   let entries : Array[String] = []
   for part in parts {
-    let trimmed = part.trim().to_string()
+    let trimmed = part.trim().to_owned()
     if trimmed != "" {
       entries.push("'" + trimmed + "': " + trimmed)
     }
@@ -640,7 +640,7 @@ fn local_is_test_constant_symbol(expr : @symcore.Expr) -> Bool {
 
 ///|
 fn local_test_constant_sort_expr(expr : @symcore.Expr) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   for symbol in @symcore.free_symbols(expr) {
     if local_is_test_constant_symbol(symbol) {
       match symbol {
@@ -907,7 +907,7 @@ fn local_constant_renumber_inner(
 fn local_constant_renumber(expr : @symcore.Expr) -> @symcore.Expr {
   let constants_found : Array[String] = []
   let reordered = local_constant_renumber_inner(expr, constants_found)
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   for i in 0..<constants_found.length() {
     env[constants_found[i]] = @symcore.Expr::Symbol("C\{i + 1}")
   }
@@ -998,7 +998,7 @@ fn checkodesol_oracle_text(oracle_code : String) -> String raise {
 
 ///|
 fn normalize_braced_items_text(text : String) -> String {
-  let trimmed = text.trim().to_string()
+  let trimmed = text.trim().to_owned()
   if !trimmed.has_prefix("{") || !trimmed.has_suffix("}") {
     return trimmed
   }
@@ -1008,7 +1008,7 @@ fn normalize_braced_items_text(text : String) -> String {
   }
   let parts : Array[String] = []
   for part in inner.split(", ") {
-    parts.push(part.to_string())
+    parts.push(part.to_owned())
   }
   parts.sort()
   "{" + parts.join(", ") + "}"
@@ -1031,23 +1031,23 @@ fn split_top_level_items_text(text : String) -> Array[String] {
       Some('}') => depth_brace -= 1
       Some(',') =>
         if depth_paren == 0 && depth_bracket == 0 && depth_brace == 0 {
-          parts.push(text[start:i].trim().to_string())
+          parts.push(text[start:i].trim().to_owned())
           start = i + 1
         }
       _ => ()
     }
   }
-  parts.push(text[start:].trim().to_string())
+  parts.push(text[start:].trim().to_owned())
   parts
 }
 
 ///|
 fn normalize_union_text(text : String) -> String {
-  let trimmed = text.trim().to_string()
+  let trimmed = text.trim().to_owned()
   if !trimmed.has_prefix("Union(") || !trimmed.has_suffix(")") {
     return trimmed
   }
-  let inner = trimmed[6:trimmed.length() - 1].to_string()
+  let inner = trimmed[6:trimmed.length() - 1].to_owned()
   let parts = split_top_level_items_text(inner)
   parts.sort()
   "Union(" + parts.join(", ") + ")"
@@ -1245,7 +1245,7 @@ fn local_maybe_solve_result_text(result : @symsolvers.SolveResult?) -> String {
 
 ///|
 fn assumption_map(entries : Array[(String, Bool?)]) -> Map[String, Bool?] {
-  let out : Map[String, Bool?] = {}
+  let out : Map[String, Bool?] = Map([])
   for entry in entries {
     out[entry.0] = entry.1
   }
@@ -1760,15 +1760,20 @@ test "solvers parity simplex edge regressions" {
   let infeasible_const : Result[
     (@symcore.Expr, Map[String, @symcore.Expr]),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.lpmin(@symcore.int(5), [
-    @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-    @symcore.Expr::Relational(@symcore.RelOp::Eq, x() + z(), @symcore.int(1)),
-    @symcore.Expr::Relational(
-      @symcore.RelOp::Le,
-      x() + @symcore.int(2) * z(),
-      @symcore.int(0),
-    ),
-  ])
+  ] = try
+    @symsolvers.lpmin(@symcore.int(5), [
+      @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, x() + z(), @symcore.int(1)),
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Le,
+        x() + @symcore.int(2) * z(),
+        @symcore.int(0),
+      ),
+    ])
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_true(
     infeasible_const is Err(@symsolvers.SolverError::InfeasibleLPError(_)),
   )
@@ -2156,33 +2161,38 @@ test "solvers parity simplex and solveset batch 3 additional public cases" {
   let infeasible_four_var : Result[
     (@symcore.Expr, Map[String, @symcore.Expr]),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.lpmin(
-    @symcore.int(9) * x2 -
-    @symcore.int(8) * x3 +
-    @symcore.int(3) * x4 +
-    @symcore.int(6),
-    [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
-        @symcore.int(5) * x2 - @symcore.int(2) * x3,
-        @symcore.int(0),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
-        @symcore.int(-1) * x1 - @symcore.int(8) * x2 + @symcore.int(9) * x3,
-        @symcore.int(-3),
-      ),
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Le,
-        @symcore.int(10) * x1 - x2 + @symcore.int(9) * x4,
-        @symcore.int(-4),
-      ),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
-      @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
-    ],
-  )
+  ] = try
+    @symsolvers.lpmin(
+      @symcore.int(9) * x2 -
+      @symcore.int(8) * x3 +
+      @symcore.int(3) * x4 +
+      @symcore.int(6),
+      [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(5) * x2 - @symcore.int(2) * x3,
+          @symcore.int(0),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(-1) * x1 - @symcore.int(8) * x2 + @symcore.int(9) * x3,
+          @symcore.int(-3),
+        ),
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Le,
+          @symcore.int(10) * x1 - x2 + @symcore.int(9) * x4,
+          @symcore.int(-4),
+        ),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x1, @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x2, @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x3, @symcore.int(0)),
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, x4, @symcore.int(0)),
+      ],
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_true(
     infeasible_four_var is Err(@symsolvers.SolverError::InfeasibleLPError(_)),
   )
@@ -4769,7 +4779,9 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
   let no_symbols : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix(eqns3, [])
+  ] = try @symsolvers.linear_eq_to_matrix(eqns3, []) |> Ok catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(no_symbols),
     solvers_eval_stmt_result_symbols(
@@ -4781,7 +4793,9 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
   let duplicate_symbols : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix(eqns3, [x(), x(), y()])
+  ] = try @symsolvers.linear_eq_to_matrix(eqns3, [x(), x(), y()]) |> Ok catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(duplicate_symbols),
     solvers_eval_stmt_result_symbols(
@@ -4794,10 +4808,15 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
   let nonlinear_recip : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix(
-    [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x + x(), inv_x)],
-    [x()],
-  )
+  ] = try
+    @symsolvers.linear_eq_to_matrix(
+      [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x + x(), inv_x)],
+      [x()],
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(nonlinear_recip),
     solvers_eval_stmt_result_symbols(
@@ -4808,7 +4827,11 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
   let nonlinear_square : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix([x() ^ @symcore.int(2)], [x()])
+  ] = try
+    @symsolvers.linear_eq_to_matrix([x() ^ @symcore.int(2)], [x()]) |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(nonlinear_square),
     solvers_eval_stmt_result_symbols(
@@ -4819,7 +4842,9 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
   let nonlinear_xy : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix([x() * y()], [x(), y()])
+  ] = try @symsolvers.linear_eq_to_matrix([x() * y()], [x(), y()]) |> Ok catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(nonlinear_xy),
     solvers_eval_stmt_result_symbols(
@@ -4830,14 +4855,19 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
   let nonlinear_issue_14987 : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix(
-    [
-      x() * (@symcore.int(-3) * inv_x + @symcore.int(1)) +
-      @symcore.int(2) * y() -
-      a,
-    ],
-    [x(), y()],
-  )
+  ] = try
+    @symsolvers.linear_eq_to_matrix(
+      [
+        x() * (@symcore.int(-3) * inv_x + @symcore.int(1)) +
+        @symcore.int(2) * y() -
+        a,
+      ],
+      [x(), y()],
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(nonlinear_issue_14987),
     solvers_eval_stmt_result_symbols(
@@ -4848,7 +4878,11 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
   let auto_true : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix([@symcore.Expr::Boolean(true)], [x()])
+  ] = try
+    @symsolvers.linear_eq_to_matrix([@symcore.Expr::Boolean(true)], [x()]) |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(auto_true),
     solvers_eval_stmt_result_symbols(
@@ -4859,9 +4893,12 @@ test "solvers parity linear_eq_to_matrix and solveset batch 21 additional public
   let auto_false : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix([@symcore.Expr::Boolean(false)], [
-    x(),
-  ])
+  ] = try
+    @symsolvers.linear_eq_to_matrix([@symcore.Expr::Boolean(false)], [x()])
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(auto_false),
     solvers_eval_stmt_result_symbols(
@@ -4905,14 +4942,19 @@ test "solvers parity linear_eq_to_matrix and solveset batch 22 additional public
   let nonlinear_cancelled_rational : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix(
-    [
-      ((x() ^ @symcore.int(2)) - @symcore.int(3) * x()) *
-      ((x() + @symcore.int(-3)) ^ @symcore.int(-1)) +
-      @symcore.int(-3),
-    ],
-    [x()],
-  )
+  ] = try
+    @symsolvers.linear_eq_to_matrix(
+      [
+        ((x() ^ @symcore.int(2)) - @symcore.int(3) * x()) *
+        ((x() + @symcore.int(-3)) ^ @symcore.int(-1)) +
+        @symcore.int(-3),
+      ],
+      [x()],
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(nonlinear_cancelled_rational),
     solvers_eval_stmt_result_symbols(
@@ -4923,15 +4965,20 @@ test "solvers parity linear_eq_to_matrix and solveset batch 22 additional public
   let nonlinear_binomial_expand : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix(
-    [
-      ((x() + @symcore.int(1)) ^ @symcore.int(3)) +
-      @symcore.int(-1) * (x() ^ @symcore.int(3)) +
-      @symcore.int(-3) * (x() ^ @symcore.int(2)) +
-      @symcore.int(7),
-    ],
-    [x()],
-  )
+  ] = try
+    @symsolvers.linear_eq_to_matrix(
+      [
+        ((x() + @symcore.int(1)) ^ @symcore.int(3)) +
+        @symcore.int(-1) * (x() ^ @symcore.int(3)) +
+        @symcore.int(-3) * (x() ^ @symcore.int(2)) +
+        @symcore.int(7),
+      ],
+      [x()],
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(nonlinear_binomial_expand),
     solvers_eval_stmt_result_symbols(
@@ -4942,10 +4989,15 @@ test "solvers parity linear_eq_to_matrix and solveset batch 22 additional public
   let nonlinear_cancelled_linear : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix(
-    [x() * (inv_x + @symcore.int(1)) + y()],
-    [x(), y()],
-  )
+  ] = try
+    @symsolvers.linear_eq_to_matrix([x() * (inv_x + @symcore.int(1)) + y()], [
+      x(),
+      y(),
+    ])
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(nonlinear_cancelled_linear),
     solvers_eval_stmt_result_symbols(
@@ -4956,10 +5008,12 @@ test "solvers parity linear_eq_to_matrix and solveset batch 22 additional public
   let nonlinear_mixed_mul : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix([(x() + @symcore.int(1)) * y()], [
-    x(),
-    y(),
-  ])
+  ] = try
+    @symsolvers.linear_eq_to_matrix([(x() + @symcore.int(1)) * y()], [x(), y()])
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(nonlinear_mixed_mul),
     solvers_eval_stmt_result_symbols(
@@ -4970,10 +5024,15 @@ test "solvers parity linear_eq_to_matrix and solveset batch 22 additional public
   let nonlinear_eq_recip : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix(
-    [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x, inv_x + y())],
-    [x(), y()],
-  )
+  ] = try
+    @symsolvers.linear_eq_to_matrix(
+      [@symcore.Expr::Relational(@symcore.RelOp::Eq, inv_x, inv_x + y())],
+      [x(), y()],
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(nonlinear_eq_recip),
     solvers_eval_stmt_result_symbols(
@@ -4984,16 +5043,21 @@ test "solvers parity linear_eq_to_matrix and solveset batch 22 additional public
   let nonlinear_eq_y_over_x : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix(
-    [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
-        y() * inv_x,
-        y() * inv_x + y(),
-      ),
-    ],
-    [x(), y()],
-  )
+  ] = try
+    @symsolvers.linear_eq_to_matrix(
+      [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          y() * inv_x,
+          y() * inv_x + y(),
+        ),
+      ],
+      [x(), y()],
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(nonlinear_eq_y_over_x),
     solvers_eval_stmt_result_symbols(
@@ -5004,16 +5068,21 @@ test "solvers parity linear_eq_to_matrix and solveset batch 22 additional public
   let nonlinear_eq_quadratic : Result[
     (@symmatrices.Matrix, @symmatrices.Matrix),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.linear_eq_to_matrix(
-    [
-      @symcore.Expr::Relational(
-        @symcore.RelOp::Eq,
-        x() * (x() + @symcore.int(1)),
-        (x() ^ @symcore.int(2)) + y(),
-      ),
-    ],
-    [x(), y()],
-  )
+  ] = try
+    @symsolvers.linear_eq_to_matrix(
+      [
+        @symcore.Expr::Relational(
+          @symcore.RelOp::Eq,
+          x() * (x() + @symcore.int(1)),
+          (x() ^ @symcore.int(2)) + y(),
+        ),
+      ],
+      [x(), y()],
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_linear_eq_result_type(nonlinear_eq_quadratic),
     solvers_eval_stmt_result_symbols(
@@ -5460,9 +5529,8 @@ test "solvers parity solveset and simplex invalid inputs batch 24 additional pub
   let irrational_lp : Result[
     (@symcore.Expr, Map[String, @symcore.Expr]),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.lpmax(
-    @symcore.int(-1) * x() - y() - @symcore.int(5) * z(),
-    [
+  ] = try
+    @symsolvers.lpmax(@symcore.int(-1) * x() - y() - @symcore.int(5) * z(), [
       @symcore.Expr::Relational(
         @symcore.RelOp::Le,
         x() - y() + sqrt(@symcore.int(2)) * z(),
@@ -5481,8 +5549,11 @@ test "solvers parity solveset and simplex invalid inputs batch 24 additional pub
       @symcore.Expr::Relational(@symcore.RelOp::Ge, x(), @symcore.int(0)),
       @symcore.Expr::Relational(@symcore.RelOp::Ge, y(), @symcore.int(0)),
       @symcore.Expr::Relational(@symcore.RelOp::Ge, z(), @symcore.int(0)),
-    ],
-  )
+    ])
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(local_lp_result_type(irrational_lp), "ValueError")
   assert_eq(
     solvers_eval_stmt_result_symbols(
@@ -5495,9 +5566,14 @@ test "solvers parity solveset and simplex invalid inputs batch 24 additional pub
   let strict_lp : Result[
     (@symcore.Expr, Map[String, @symcore.Expr]),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.lpmax(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Gt, x(), @symcore.int(0)),
-  ])
+  ] = try
+    @symsolvers.lpmax(x(), [
+      @symcore.Expr::Relational(@symcore.RelOp::Gt, x(), @symcore.int(0)),
+    ])
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(local_lp_result_type(strict_lp), "ValueError")
   assert_eq(
     solvers_eval_stmt_result_symbols("sympy.solvers.lpmax(x, [x > 0])", "x"),
@@ -5507,9 +5583,14 @@ test "solvers parity solveset and simplex invalid inputs batch 24 additional pub
   let ne_lp : Result[
     (@symcore.Expr, Map[String, @symcore.Expr]),
     @symsolvers.SolverError,
-  ] = try? @symsolvers.lpmax(x(), [
-    @symcore.Expr::Relational(@symcore.RelOp::Ne, x(), @symcore.int(0)),
-  ])
+  ] = try
+    @symsolvers.lpmax(x(), [
+      @symcore.Expr::Relational(@symcore.RelOp::Ne, x(), @symcore.int(0)),
+    ])
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(local_lp_result_type(ne_lp), "ValueError")
   assert_eq(
     solvers_eval_stmt_result_symbols(
@@ -7782,12 +7863,12 @@ test "solvers parity additional pde separation cases" {
     ),
   )
 
-  let invalid_strategy : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try? @symsolvers.pde_separate(
-    add_eq,
-    ut,
-    [xfun(x()), tfun(t())],
-    strategy="div",
-  )
+  let invalid_strategy : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try
+    @symsolvers.pde_separate(add_eq, ut, [xfun(x()), tfun(t())], strategy="div")
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_expr_option_result_type(invalid_strategy),
     solvers_eval_stmt_result_symbols(
@@ -7806,11 +7887,15 @@ test "solvers parity additional pde separation cases" {
     ]),
     @symcore.int(0),
   )
-  let duplicate_args : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try? @symsolvers.pde_separate_mul(
-    sum_eq,
-    fxyz,
-    [xfun(x()), @symcore.applied_undefined_function("u", [z(), z()])],
-  )
+  let duplicate_args : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try
+    @symsolvers.pde_separate_mul(sum_eq, fxyz, [
+      xfun(x()),
+      @symcore.applied_undefined_function("u", [z(), z()]),
+    ])
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_expr_option_result_type(duplicate_args),
     solvers_eval_stmt_result_symbols(
@@ -7818,11 +7903,11 @@ test "solvers parity additional pde separation cases" {
       "x y z",
     ),
   )
-  let wrong_count : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try? @symsolvers.pde_separate_mul(
-    sum_eq,
-    fxyz,
-    [xfun(x()), yfun(y())],
-  )
+  let wrong_count : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try
+    @symsolvers.pde_separate_mul(sum_eq, fxyz, [xfun(x()), yfun(y())]) |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_expr_option_result_type(wrong_count),
     solvers_eval_stmt_result_symbols(
@@ -7830,11 +7915,15 @@ test "solvers parity additional pde separation cases" {
       "x y z",
     ),
   )
-  let wrong_args : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try? @symsolvers.pde_separate_mul(
-    sum_eq,
-    fxyz,
-    [xfun(t()), @symcore.applied_undefined_function("Y", [x(), y()])],
-  )
+  let wrong_args : Result[Array[@symcore.Expr]?, @symsolvers.SolverError] = try
+    @symsolvers.pde_separate_mul(sum_eq, fxyz, [
+      xfun(t()),
+      @symcore.applied_undefined_function("Y", [x(), y()]),
+    ])
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_expr_option_result_type(wrong_args),
     solvers_eval_stmt_result_symbols(
@@ -8096,11 +8185,11 @@ test "solvers parity dsolve and pdsolve meta-hints" {
     ),
     "True",
   )
-  let mismatched_ode : Result[@symcore.Expr, @symsolvers.SolverError] = try? @symsolvers.dsolve(
-    ode,
-    func=Some(f(x())),
-    hint="factorable",
-  )
+  let mismatched_ode : Result[@symcore.Expr, @symsolvers.SolverError] = try
+    @symsolvers.dsolve(ode, func=Some(f(x())), hint="factorable") |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_expr_result_type(mismatched_ode),
     solvers_eval_stmt_result_symbols(
@@ -8261,11 +8350,16 @@ test "solvers parity expanded pde coefficient hints" {
     ),
     "True",
   )
-  let mismatched_pde : Result[@symcore.Expr, @symsolvers.SolverError] = try? @symsolvers.pdsolve(
-    pde_source,
-    func=Some(u(x(), y())),
-    hint="1st_linear_variable_coeff",
-  )
+  let mismatched_pde : Result[@symcore.Expr, @symsolvers.SolverError] = try
+    @symsolvers.pdsolve(
+      pde_source,
+      func=Some(u(x(), y())),
+      hint="1st_linear_variable_coeff",
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_expr_result_type(mismatched_pde),
     solvers_eval_stmt_result_symbols(
@@ -8683,12 +8777,17 @@ test "solvers parity checkpdesol list and solve_for_func cases" {
     @symsolvers.checkpdesol(eq4, implicit_zero, func=Some(u(x(), y()))).0.to_string(),
     "true",
   )
-  let no_solve_eq4 : Result[(Bool, @symcore.Expr), @symsolvers.SolverError] = try? @symsolvers.checkpdesol(
-    eq4,
-    implicit_zero,
-    func=Some(u(x(), y())),
-    solve_for_func=false,
-  )
+  let no_solve_eq4 : Result[(Bool, @symcore.Expr), @symsolvers.SolverError] = try
+    @symsolvers.checkpdesol(
+      eq4,
+      implicit_zero,
+      func=Some(u(x(), y())),
+      solve_for_func=false,
+    )
+    |> Ok
+  catch {
+    error => Err(error)
+  }
   assert_eq(
     local_pde_check_result_type(no_solve_eq4),
     solvers_eval_stmt_result_symbols(

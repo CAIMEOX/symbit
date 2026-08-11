@@ -18,7 +18,7 @@ fn pow_bigint(base : Int, exp : Int) -> BigInt {
 ///|
 fn factorint_int(n : Int) -> Map[Int, Int] {
   let factors = @symntheory.factorint(@symntheory.bi(n))
-  let out : Map[Int, Int] = {}
+  let out : Map[Int, Int] = Map([])
   for p, e in factors {
     if p == @symntheory.bi(-1) {
       continue

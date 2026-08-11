@@ -222,7 +222,7 @@ pub fn add_columns(
 pub fn symmetric_residue(a : BigInt, m : BigInt) -> BigInt {
   let reduced = a.mod(m)
   let half = m.div(BigInt::from_int(2))
-  if reduced.op_gt(half) {
+  if reduced > half {
     reduced.sub(m)
   } else {
     reduced

@@ -159,7 +159,7 @@ fn lambda_apply_local(
     Some((vars, body)) =>
       match @symcore.expr_form(vars) {
         @symcore.ExprForm::Symbol(v) if args.length() == 1 => {
-          let env : Map[String, @symcore.Expr] = {}
+          let env : Map[String, @symcore.Expr] = Map([])
           env[v] = args[0]
           Some(eval_arith(@symcore.subst(body, env)))
         }

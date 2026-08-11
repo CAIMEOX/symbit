@@ -22,7 +22,7 @@ pub fn type_g_simple_root(_n : Int, i : Int) -> RootVector raise {
 ///|
 /// Enumerate positive roots of `G_2`, indexed from `1`.
 pub fn type_g_positive_roots(_n : Int) -> Map[Int, RootVector] {
-  let roots : Map[Int, RootVector] = {}
+  let roots : Map[Int, RootVector] = Map([])
   roots[1] = vec_from_ints([0, 1, -1])
   roots[2] = vec_from_ints([1, -2, 1])
   roots[3] = vec_from_ints([1, -1, 0])

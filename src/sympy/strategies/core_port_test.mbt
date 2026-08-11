@@ -90,7 +90,7 @@ test "core debug" {
 ///|
 test "core switch" {
   let key = (x : Int) => x % 3
-  let ruledict : Map[Int, (Int) -> Int] = Map::new()
+  let ruledict : Map[Int, (Int) -> Int] = Map([])
   ruledict[0] = inc
   ruledict[1] = dec
   let rl = @strategies_core.switch(key, ruledict)

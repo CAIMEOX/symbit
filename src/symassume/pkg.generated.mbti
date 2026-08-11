@@ -301,9 +301,9 @@ pub(all) enum Tri {
   False
   Unknown
 } derive(Eq, @debug.Debug)
+pub impl Show for Tri
 
 // Type aliases
 pub type AssumeEnv = Map[String, SymbolFacts]
 
 // Traits
-

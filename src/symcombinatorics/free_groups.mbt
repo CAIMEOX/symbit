@@ -18,7 +18,7 @@ pub enum GroupOrder {
 
 ///|
 /// Display finite orders as integers and infinite order as `oo`.
-pub impl Show for GroupOrder with to_string(self) -> String {
+pub impl Show for GroupOrder with fn to_string(self) -> String {
   match self {
     GroupOrder::Finite(n) => n.to_string()
     GroupOrder::Infinite => "oo"
@@ -26,7 +26,7 @@ pub impl Show for GroupOrder with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for GroupOrder with output(self, logger : &Logger) -> Unit {
+pub impl Show for GroupOrder with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -168,7 +168,7 @@ pub fn FreeGroup::center(self : FreeGroup) -> Array[FreeGroupElement] {
 
 ///|
 /// Return a readable description of the free group and its generators.
-pub impl Show for FreeGroup with to_string(self) -> String {
+pub impl Show for FreeGroup with fn to_string(self) -> String {
   if self.rank > 30 {
     "<free group with \{self.rank} generators>"
   } else {
@@ -178,7 +178,7 @@ pub impl Show for FreeGroup with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for FreeGroup with output(self, logger : &Logger) -> Unit {
+pub impl Show for FreeGroup with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -368,7 +368,7 @@ pub fn FreeGroupElement::length(self : FreeGroupElement) -> Int {
 
 ///|
 /// Return a multiplicative expression such as `x*y**-2*z`.
-pub impl Show for FreeGroupElement with to_string(self) -> String {
+pub impl Show for FreeGroupElement with fn to_string(self) -> String {
   if self.is_identity() {
     return "<identity>"
   }
@@ -388,7 +388,7 @@ pub impl Show for FreeGroupElement with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for FreeGroupElement with output(self, logger : &Logger) -> Unit {
+pub impl Show for FreeGroupElement with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -672,16 +672,15 @@ pub fn FreeGroupElement::is_dependent(
   self : FreeGroupElement,
   word : FreeGroupElement,
 ) -> Bool {
-  let res = try? self.subword_index(word)
-  match res {
-    Ok(_) => true
-    Err(_) => {
-      let res2 = try? self.subword_index(word.inverse())
-      match res2 {
-        Ok(_) => true
-        Err(_) => false
+  try self.subword_index(word) catch {
+    _ =>
+      try self.subword_index(word.inverse()) catch {
+        _ => false
+      } noraise {
+        _ => true
       }
-    }
+  } noraise {
+    _ => true
   }
 }
 
@@ -947,7 +946,7 @@ pub fn FreeGroupElement::cyclic_conjugates(
   self : FreeGroupElement,
 ) -> Array[FreeGroupElement] {
   let out : Array[FreeGroupElement] = Array::new()
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let l = self.length()
   for i in 0..<l {
     let w = self.cyclic_subword(i, i + l)
@@ -1163,7 +1162,7 @@ pub fn zero_mul_simp(values : Array[(Int, Int)]) -> Array[(Int, Int)] {
 
 ///|
 /// Compare words first by parent group, then by reduced length and lexicographic letter order.
-pub impl Compare for FreeGroupElement with compare(
+pub impl Compare for FreeGroupElement with fn compare(
   self,
   other : FreeGroupElement,
 ) -> Int {

@@ -421,4 +421,3 @@ pub type SeriesTermFn = (Int) -> @mpf.RawMpf
 pub type UnaryMpfFn = (@mpf.RawMpf) -> @mpf.RawMpf
 
 // Traits
-

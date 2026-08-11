@@ -49,7 +49,7 @@ fn solver_recurrence_degree(expr : Expr, n : Expr) -> Int? {
 
 ///|
 fn solver_subst_single(expr : Expr, name : String, value : Expr) -> Expr {
-  let env : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
   env[name] = value
   canonical_expr(@symcore.subst(expr, env))
 }
@@ -128,15 +128,12 @@ fn solver_recurrence_rationalize_term(expr : Expr) -> Expr {
       for arg in args {
         let normalized = solver_recurrence_rationalize_term(arg)
         match @symcore.exact_numeric_expr_num_den(normalized) {
-          Some((num, den)) => {
-            let value : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-              num, den,
-            )
-            match value {
-              Ok(rat) => coeff = coeff.mul_r(rat)
-              Err(_) => rest.push(normalized)
+          Some((num, den)) =>
+            try @symnum.BigRational::new(num, den) catch {
+              _ => rest.push(normalized)
+            } noraise {
+              rat => coeff = coeff.mul_r(rat)
             }
-          }
           None => rest.push(normalized)
         }
       }
@@ -418,10 +415,10 @@ fn solver_apply_recurrence_init(
     _ => return solution
   }
   let base = solver_subst_single(solution, nname, at)
-  let zero_env : Map[String, Expr] = {}
+  let zero_env : Map[String, Expr] = Map([])
   zero_env["C0"] = @symcore.int(0)
   let constant_part = canonical_expr(@symcore.subst(base, zero_env))
-  let one_env : Map[String, Expr] = {}
+  let one_env : Map[String, Expr] = Map([])
   one_env["C0"] = @symcore.int(1)
   let coeff_part = canonical_expr(
     @symcore.add([
@@ -440,7 +437,7 @@ fn solver_apply_recurrence_init(
       coeff_part ^ @symcore.int(-1),
     ]),
   )
-  let solution_env : Map[String, Expr] = {}
+  let solution_env : Map[String, Expr] = Map([])
   solution_env["C0"] = c0_value
   solver_recurrence_order_solution(
     solver_recurrence_normalize_output(

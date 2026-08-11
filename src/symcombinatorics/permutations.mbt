@@ -203,7 +203,7 @@ pub struct Cycle {
 /// Entries must be distinct non-negative integers.  An empty list represents the identity
 /// cycle.
 pub fn Cycle::new(items : Array[Int]) -> Cycle raise CombinatoricsError {
-  let mapping : Map[Int, Int] = {}
+  let mapping : Map[Int, Int] = Map([])
   if items.is_empty() {
     return Cycle::{ mapping, }
   }
@@ -236,7 +236,7 @@ pub fn Cycle::new(items : Array[Int]) -> Cycle raise CombinatoricsError {
 /// The returned `Cycle` stores the combined moved-point mapping encoded by that cycle
 /// decomposition.
 pub fn Cycle::from_permutation(p : Permutation) -> Cycle {
-  let mapping : Map[Int, Int] = {}
+  let mapping : Map[Int, Int] = Map([])
   for cycle in p.cyclic_form() {
     if cycle.length() == 1 {
       mapping[cycle[0]] = cycle[0]
@@ -263,7 +263,7 @@ pub fn Cycle::apply(self : Cycle, x : Int) -> Int {
 ///
 /// The result acts like `self(other(x))` on every moved point.
 pub fn Cycle::compose(self : Cycle, other : Cycle) -> Cycle {
-  let rv : Map[Int, Int] = {}
+  let rv : Map[Int, Int] = Map([])
   for k, v in other.mapping {
     rv[k] = v
   }
@@ -327,7 +327,7 @@ pub fn Cycle::size(self : Cycle) -> Int {
 
 ///|
 /// Render the cycle in canonical cyclic notation.
-pub impl Show for Cycle with output(self, logger : &Logger) -> Unit {
+pub impl Show for Cycle with fn output(self, logger : &Logger) -> Unit {
   if self.mapping.is_empty() {
     logger.write_string("()")
     return
@@ -373,7 +373,10 @@ pub struct Permutation {
 
 ///|
 /// Compare permutations by their trimmed array forms.
-pub impl Eq for Permutation with equal(self : Permutation, other : Permutation) -> Bool {
+pub impl Eq for Permutation with fn equal(
+  self : Permutation,
+  other : Permutation,
+) -> Bool {
   if self.size != other.size {
     return false
   }
@@ -392,7 +395,7 @@ pub impl Eq for Permutation with equal(self : Permutation, other : Permutation) 
 
 ///|
 /// Negated equality for permutations.
-pub impl Eq for Permutation with not_equal(
+pub impl Eq for Permutation with fn not_equal(
   self : Permutation,
   other : Permutation,
 ) -> Bool {
@@ -401,16 +404,16 @@ pub impl Eq for Permutation with not_equal(
 
 ///|
 /// Hash the permutation from its canonical array form.
-pub impl Hash for Permutation with hash(self) -> Int {
-  let hasher = Hasher::new()
+pub impl Hash for Permutation with fn hash(self) -> Int {
+  let hasher = Hasher()
   self.hash_combine(hasher)
   hasher.finalize()
 }
 
 ///|
 /// Feed the canonical array form into an external hasher.
-pub impl Hash for Permutation with hash_combine(self, hasher : Hasher) -> Unit {
-  self.array_form.hash_combine(hasher)
+pub impl Hash for Permutation with fn hash_combine(self, hasher : Hasher) -> Unit {
+  Hash::hash_combine(self.array_form, hasher)
 }
 
 ///|
@@ -950,7 +953,7 @@ pub fn Permutation::cycle_structure_pairs(
       pairs
     }
     None => {
-      let map : Map[Int, Int] = {}
+      let map : Map[Int, Int] = Map([])
       let mut singletons = self.size
       for cycle in self.cyclic_form() {
         let len = cycle.length()
@@ -1419,7 +1422,7 @@ pub fn Permutation::random(n : Int) -> Permutation {
 ///|
 /// Return the cycle structure as a map `{cycle_length -> multiplicity}`.
 pub fn Permutation::cycle_structure(self : Permutation) -> Map[Int, Int] {
-  let map : Map[Int, Int] = {}
+  let map : Map[Int, Int] = Map([])
   for pair in self.cycle_structure_pairs() {
     map[pair.0] = pair.1
   }

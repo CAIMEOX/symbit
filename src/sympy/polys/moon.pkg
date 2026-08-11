@@ -1,14 +1,14 @@
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
-  "CAIMEOX/symbit/sympy" @sympy,
-  "moonbitlang/core/strconv" @strconv,
+  "CAIMEOX/symbit/sympy",
+  "moonbitlang/core/string",
   "Kaida-Amethyst/python" @py,
-  "Kaida-Amethyst/python/cpython" @cpython,
+  "Kaida-Amethyst/python/cpython",
 }
 
 import {
-  "CAIMEOX/symbit/sympolys" @sympolys,
+  "CAIMEOX/symbit/sympolys",
   "CAIMEOX/symbit/symprint",
 } for "test"
 

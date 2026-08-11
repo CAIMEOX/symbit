@@ -22,6 +22,10 @@ impl Show for RelOp with fn to_string(self) {
 }
 
 ///|
+/// Keep the `RelOp::to_string` dot-style API explicit.
+pub extend RelOp with Show::{to_string}
+
+///|
 impl Show for RelOp with fn output(self, logger) {
   logger.write_string(self.to_string())
 }

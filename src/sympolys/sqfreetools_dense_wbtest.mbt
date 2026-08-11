@@ -159,12 +159,16 @@ test "sqfreetools dense wb: dmp univariate wrappers" {
     sqf_wb_dmp_include_repr(dmp_sqf_list_include(f, 0, Domain::ZZ)),
     content="[([2],1),([1,1],2),([1,2],3)]",
   )
-  let bad : Result[Bool, PolyError] = try? dmp_sqf_p(
-    DensePoly::Poly([sqf_wb_poly([1, 0]), sqf_wb_poly([1])]),
-    1,
-    Domain::ZZ,
+  sympolys_assert_error(
+    fn() raise PolyError {
+      dmp_sqf_p(
+        DensePoly::Poly([sqf_wb_poly([1, 0]), sqf_wb_poly([1])]),
+        1,
+        Domain::ZZ,
+      )
+    },
+    "NotUnivariate",
   )
-  assert_true(bad is Err(PolyError::NotUnivariate))
 }
 
 ///|
@@ -180,11 +184,10 @@ test "sqfreetools dense wb: greatest factorial factorization" {
     ),
     content="[([1,0],1),([1,2],4)]",
   )
-  let zero : Result[Array[(Array[FieldElem], Int)], PolyError] = try? dup_gff_list(
-    [],
-    Domain::ZZ,
+  sympolys_assert_error(
+    fn() raise PolyError { dup_gff_list([], Domain::ZZ) },
+    "BadExponent",
   )
-  assert_true(zero is Err(PolyError::BadExponent))
 }
 
 ///|

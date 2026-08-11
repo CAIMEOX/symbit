@@ -256,24 +256,8 @@ pub fn classify_diop(
 ) -> (Array[Expr], Map[String, Expr], String) raise SolverError {
   let symbols = solver_diophantine_symbols(eq, syms)
   let names = symbol_names(symbols)
-  let linear = try? @sympolys._linear_eq_to_dict(
-    [normalize_equation(eq)],
-    names,
-  )
-  match linear {
-    Ok((coeffs, constants)) => {
-      let coeff_map = coeffs[0]
-      let out : Map[String, Expr] = {}
-      out["1"] = constants[0]
-      for symbol in symbols {
-        let name = symbol_name(symbol)
-        let value = coeff_map.get(name).unwrap_or(@symcore.int(0))
-        ignore(solver_integer_expr(value, "classify_diop"))
-        out[name] = value
-      }
-      (symbols, out, "linear")
-    }
-    Err(_) =>
+  try @sympolys._linear_eq_to_dict([normalize_equation(eq)], names) catch {
+    _ =>
       if symbols.length() == 1 {
         let name = names[0]
         let poly = @sympolys.Poly::from_expr_defaults(normalize_equation(eq), gens=[
@@ -281,7 +265,7 @@ pub fn classify_diop(
         ]) catch {
           err => raise wrap_poly_error("classify_diop", err)
         }
-        let out : Map[String, Expr] = {}
+        let out : Map[String, Expr] = Map([])
         for mono, coeff in poly.coeffs {
           let coeff_expr = solver_field_elem_expr(coeff, "classify_diop")
           ignore(solver_integer_expr(coeff_expr, "classify_diop"))
@@ -301,6 +285,19 @@ pub fn classify_diop(
           "classify_diop currently supports linear equations and univariate polynomials",
         )
       }
+  } noraise {
+    (coeffs, constants) => {
+      let coeff_map = coeffs[0]
+      let out : Map[String, Expr] = Map([])
+      out["1"] = constants[0]
+      for symbol in symbols {
+        let name = symbol_name(symbol)
+        let value = coeff_map.get(name).unwrap_or(@symcore.int(0))
+        ignore(solver_integer_expr(value, "classify_diop"))
+        out[name] = value
+      }
+      (symbols, out, "linear")
+    }
   }
 }
 
@@ -318,13 +315,8 @@ pub fn diophantine(
   let symbols = solver_diophantine_symbols(eq, syms)
   let names = symbol_names(symbols)
   if symbols.length() == 1 {
-    let linear = try? @sympolys._linear_eq_to_dict(
-      [normalize_equation(eq)],
-      names,
-    )
-    match linear {
-      Ok(_) => ()
-      Err(_) => return solver_univariate_diophantine(eq, symbols[0])
+    ignore(@sympolys._linear_eq_to_dict([normalize_equation(eq)], names)) catch {
+      _ => return solver_univariate_diophantine(eq, symbols[0])
     }
   }
   let (coeffs, constants) = @sympolys._linear_eq_to_dict(

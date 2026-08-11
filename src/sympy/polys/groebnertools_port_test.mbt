@@ -14,8 +14,8 @@ fn order_to_sympy(order : TermOrder) -> String {
 fn normalize_basis_str(s : String) -> String {
   let parts : Array[String] = Array::new()
   for part in s.split("|") {
-    let raw = part.to_string()
-    let trimmed = raw.trim().to_string()
+    let raw = part.to_owned()
+    let trimmed = raw.trim().to_owned()
     parts.push(trimmed)
   }
   parts.sort()

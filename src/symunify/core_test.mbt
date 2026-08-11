@@ -108,7 +108,7 @@ let z_var : UnifyTerm[CoreAtom, String] = variable_term(z_key)
 
 ///|
 fn bind_x(term : UnifyTerm[CoreAtom, String]) -> Substitution[CoreAtom, String] {
-  let subst : Substitution[CoreAtom, String] = {}
+  let subst : Substitution[CoreAtom, String] = Map([])
   subst[MatchVar::Variable(x_key)] = term
   subst
 }

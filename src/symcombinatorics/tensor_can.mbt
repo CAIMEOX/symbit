@@ -424,7 +424,7 @@ fn double_coset_bruteforce(
   let s_group = PermutationGroup::new(sgens)
   let d_group = PermutationGroup::new(dperms)
   let dlist = d_group.generate_dimino_af()
-  let uniq : Map[String, Array[Int]] = {}
+  let uniq : Map[String, Array[Int]] = Map([])
   let s_elems = s_group.generate_dimino_af()
   for s in s_elems {
     let h = af_rmul(g_af, s)
@@ -1129,7 +1129,7 @@ pub fn get_transversals(
   let result = _orbits_transversals_from_bsgs(base, stabs)
   let transversals : Array[Map[Int, Array[Int]]] = Array::new()
   for trans in result.transversals {
-    let out : Map[Int, Array[Int]] = {}
+    let out : Map[Int, Array[Int]] = Map([])
     for k, v in trans {
       out[k] = v.array_form()
     }
@@ -1398,7 +1398,7 @@ pub fn canonicalize_naive(
   let d_group = PermutationGroup::new(dperms)
   let dlist = d_group.generate_dimino_af()
   let g_af = g.array_form()
-  let uniq : Map[String, Array[Int]] = {}
+  let uniq : Map[String, Array[Int]] = Map([])
   let s_elems = s_group.generate_dimino_af()
   for s in s_elems {
     let h = af_rmul(g_af, s)

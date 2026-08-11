@@ -4090,7 +4090,7 @@ priv struct GaussianRatCompat {
 
 ///|
 fn domain_bigint_abs(x : BigInt) -> BigInt {
-  if x.op_lt(BigInt::from_int(0)) {
+  if x < BigInt::from_int(0) {
     x.neg()
   } else {
     x
@@ -4113,7 +4113,7 @@ fn domain_bigint_round_div(num : BigInt, den : BigInt) -> BigInt {
   }
   let two = BigInt::from_int(2)
   let q = domain_bigint_abs(num).mul(two).add(den).div(den.mul(two))
-  if num.op_lt(BigInt::from_int(0)) {
+  if num < BigInt::from_int(0) {
     q.neg()
   } else {
     q
@@ -4123,8 +4123,8 @@ fn domain_bigint_round_div(num : BigInt, den : BigInt) -> BigInt {
 ///|
 fn domain_bigint_euclid_mod(num : BigInt, den : BigInt) -> BigInt {
   let r = num.mod(den)
-  if r.op_lt(BigInt::from_int(0)) {
-    if den.op_lt(BigInt::from_int(0)) {
+  if r < BigInt::from_int(0) {
+    if den < BigInt::from_int(0) {
       r.sub(den)
     } else {
       r.add(den)
@@ -4154,7 +4154,7 @@ fn domain_bigint_gcdex(a0 : BigInt, b0 : BigInt) -> (BigInt, BigInt, BigInt) {
     old_t = t
     t = new_t
   }
-  if old_r.op_lt(BigInt::from_int(0)) {
+  if old_r < BigInt::from_int(0) {
     (old_s.neg(), old_t.neg(), old_r.neg())
   } else {
     (old_s, old_t, old_r)
@@ -4163,7 +4163,7 @@ fn domain_bigint_gcdex(a0 : BigInt, b0 : BigInt) -> (BigInt, BigInt, BigInt) {
 
 ///|
 fn domain_bigint_factorial(n : BigInt) -> BigInt raise PolyError {
-  guard !n.op_lt(BigInt::from_int(0)) else { raise PolyError::DomainMismatch }
+  guard n >= BigInt::from_int(0) else { raise PolyError::DomainMismatch }
   let one = BigInt::from_int(1)
   let mut acc = one
   let mut i = BigInt::from_int(2)
@@ -4194,7 +4194,7 @@ fn domain_bigint_log_floor(a : BigInt, b : BigInt) -> BigInt raise PolyError {
 
 ///|
 fn domain_bigint_sqrt_floor(n : BigInt) -> BigInt raise PolyError {
-  guard !n.op_lt(BigInt::from_int(0)) else { raise PolyError::DomainMismatch }
+  guard n >= BigInt::from_int(0) else { raise PolyError::DomainMismatch }
   let zero = BigInt::from_int(0)
   let one = BigInt::from_int(1)
   let two = BigInt::from_int(2)
@@ -4214,7 +4214,7 @@ fn domain_bigint_sqrt_floor(n : BigInt) -> BigInt raise PolyError {
 
 ///|
 fn domain_bigint_exsqrt(n : BigInt) -> BigInt? {
-  if n.op_lt(BigInt::from_int(0)) {
+  if n < BigInt::from_int(0) {
     return None
   }
   let root = domain_bigint_sqrt_floor(n) catch { _ => return None }
@@ -4278,38 +4278,30 @@ fn expr_rational_value(expr : Expr) -> @symnum.BigRational? {
       if !f.is_finite() {
         None
       } else {
-        let pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? f.to_rational()
-        match pair_res {
-          Ok((num, den)) => {
-            let rat_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-              num, den,
-            )
-            match rat_res {
-              Ok(value) => Some(value)
-              Err(_) => None
+        try f.to_rational() catch {
+          _ => None
+        } noraise {
+          (num, den) =>
+            try @symnum.BigRational::new(num, den) catch {
+              _ => None
+            } noraise {
+              value => Some(value)
             }
-          }
-          Err(_) => None
         }
       }
     Expr::ComplexFloat(z) =>
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
-        let pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? z
-          .real_part()
-          .to_rational()
-        match pair_res {
-          Ok((num, den)) => {
-            let rat_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-              num, den,
-            )
-            match rat_res {
-              Ok(value) => Some(value)
-              Err(_) => None
+        try z.real_part().to_rational() catch {
+          _ => None
+        } noraise {
+          (num, den) =>
+            try @symnum.BigRational::new(num, den) catch {
+              _ => None
+            } noraise {
+              value => Some(value)
             }
-          }
-          Err(_) => None
         }
       }
     _ => None
@@ -4742,13 +4734,9 @@ fn gaussian_int_exsqrt(value : GaussianIntCompat) -> GaussianIntCompat? {
       let v = v_num.div(two)
       match (domain_bigint_exsqrt(u), domain_bigint_exsqrt(v)) {
         (Some(a), Some(b0)) => {
-          let b = if value.im.op_lt(BigInt::from_int(0)) {
-            b0.neg()
-          } else {
-            b0
-          }
+          let b = if value.im < BigInt::from_int(0) { b0.neg() } else { b0 }
           let out = GaussianIntCompat::{ re: a, im: b }
-          if out.re.is_zero() && out.im.op_lt(BigInt::from_int(0)) {
+          if out.re.is_zero() && out.im < BigInt::from_int(0) {
             Some(GaussianIntCompat::{ re: out.re.neg(), im: out.im.neg() })
           } else {
             Some(out)
@@ -5173,21 +5161,26 @@ fn domain_scalar_lcm_expr(
       let rhs = field_elem_from_scalar_expr(right, domain)
       fe_to_expr_const(fe_mul(lhs, rhs))
     }
-    Domain::RR | Domain::CC =>
-      match
-        (
-          try? field_elem_from_scalar_expr(left, domain),
-          try? field_elem_from_scalar_expr(right, domain),
-        ) {
-        (Ok(lhs), Ok(rhs)) => fe_to_expr_const(fe_mul(lhs, rhs))
-        _ =>
-          if domain_is_zero_expr(domain, left) ||
-            domain_is_zero_expr(domain, right) {
-            int(0)
-          } else {
-            left * right
+    Domain::RR | Domain::CC => {
+      let fallback = fn() {
+        if domain_is_zero_expr(domain, left) ||
+          domain_is_zero_expr(domain, right) {
+          int(0)
+        } else {
+          left * right
+        }
+      }
+      try field_elem_from_scalar_expr(left, domain) catch {
+        _ => fallback()
+      } noraise {
+        lhs =>
+          try field_elem_from_scalar_expr(right, domain) catch {
+            _ => fallback()
+          } noraise {
+            rhs => fe_to_expr_const(fe_mul(lhs, rhs))
           }
       }
+    }
     Domain::EX | Domain::EXRAW | Domain::AlgExt(_, _, _) =>
       if domain_is_zero_expr(domain, left) || domain_is_zero_expr(domain, right) {
         int(0)

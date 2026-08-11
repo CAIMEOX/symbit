@@ -46,9 +46,9 @@ pub fn reference_frame(
     variables_: vars,
   }
   vector_frame_registry.push(frame)
-  let init_dcm : Map[Int, @symphysics.ExplicitMatrix] = {}
+  let init_dcm : Map[Int, @symphysics.ExplicitMatrix] = Map([])
   init_dcm.set(next_index, @symphysics.explicit_matrix_eye(3))
-  let init_cache : Map[Int, @symphysics.ExplicitMatrix] = {}
+  let init_cache : Map[Int, @symphysics.ExplicitMatrix] = Map([])
   init_cache.set(next_index, @symphysics.explicit_matrix_eye(3))
   vector_frame_states.push(FrameState::{
     dcm_dict: init_dcm,
@@ -184,7 +184,7 @@ fn frame_path_between(
     return [start_frame]
   }
   let queue : Array[Array[ReferenceFrame]] = [[start_frame]]
-  let seen : Map[Int, Bool] = {}
+  let seen : Map[Int, Bool] = Map([])
   seen.set(start_frame.index_, true)
   let mut head = 0
   while head < queue.length() {
@@ -411,7 +411,7 @@ pub fn ReferenceFrame::variable_map(
   other : ReferenceFrame,
 ) -> Map[String, Expr] raise VectorError {
   let dcm = other.dcm(self)
-  let out : Map[String, Expr] = {}
+  let out : Map[String, Expr] = Map([])
   for i in 0..<3 {
     let col = matrix_column(dcm, i)
     let mapped = col[0] * coordinate_symbol(other, 0) +

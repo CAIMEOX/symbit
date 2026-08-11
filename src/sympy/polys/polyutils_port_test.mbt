@@ -34,7 +34,7 @@ test "polyutils: parallel_dict_from_expr and expr_from_dict parity" {
   let oracle_parallel = parallel_dict_from_expr(exprs, gens=["x", "y"])
   assert_eq(ours_parallel, oracle_parallel)
 
-  let rep : Map[Monomial, Expr] = Map::new()
+  let rep : Map[Monomial, Expr] = Map([])
   rep.set(@sympolys.monomial_from_array([2, 1]), @symcore.int(3))
   rep.set(@sympolys.monomial_from_array([0, 0]), @symcore.int(5))
   let ours_expr = @sympolys.expr_from_dict(rep, ["x", "y"])

@@ -128,66 +128,66 @@ pub fn compare_category(a : Category, b : Category) -> Int {
 }
 
 ///|
-pub impl Compare for Object with compare(self, other : Object) -> Int {
+pub impl Compare for Object with fn compare(self, other : Object) -> Int {
   compare_object(self, other)
 }
 
 ///|
-pub impl Eq for Object with equal(self, other : Object) -> Bool {
+pub impl Eq for Object with fn equal(self, other : Object) -> Bool {
   compare_object(self, other) == 0
 }
 
 ///|
-pub impl Eq for Object with not_equal(self, other : Object) -> Bool {
+pub impl Eq for Object with fn not_equal(self, other : Object) -> Bool {
   !self.equal(other)
 }
 
 ///|
-pub impl Hash for Object with hash(self) -> Int {
-  let hasher = Hasher::new()
+pub impl Hash for Object with fn hash(self) -> Int {
+  let hasher = Hasher()
   self.hash_combine(hasher)
   hasher.finalize()
 }
 
 ///|
-pub impl Hash for Object with hash_combine(self, hasher : Hasher) -> Unit {
+pub impl Hash for Object with fn hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_string(self.name)
 }
 
 ///|
-pub impl Show for Object with to_string(self) -> String {
+pub impl Show for Object with fn to_string(self) -> String {
   "Object(\"" + self.name + "\")"
 }
 
 ///|
-pub impl Show for Object with output(self, logger : &Logger) -> Unit {
+pub impl Show for Object with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl Compare for Morphism with compare(self, other : Morphism) -> Int {
+pub impl Compare for Morphism with fn compare(self, other : Morphism) -> Int {
   compare_morphism(self, other)
 }
 
 ///|
-pub impl Eq for Morphism with equal(self, other : Morphism) -> Bool {
+pub impl Eq for Morphism with fn equal(self, other : Morphism) -> Bool {
   compare_morphism(self, other) == 0
 }
 
 ///|
-pub impl Eq for Morphism with not_equal(self, other : Morphism) -> Bool {
+pub impl Eq for Morphism with fn not_equal(self, other : Morphism) -> Bool {
   !self.equal(other)
 }
 
 ///|
-pub impl Hash for Morphism with hash(self) -> Int {
-  let hasher = Hasher::new()
+pub impl Hash for Morphism with fn hash(self) -> Int {
+  let hasher = Hasher()
   self.hash_combine(hasher)
   hasher.finalize()
 }
 
 ///|
-pub impl Hash for Morphism with hash_combine(self, hasher : Hasher) -> Unit {
+pub impl Hash for Morphism with fn hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_int(morphism_variant_rank(self))
   match self {
     Morphism::Identity(obj) => obj.hash_combine(hasher)
@@ -204,7 +204,7 @@ pub impl Hash for Morphism with hash_combine(self, hasher : Hasher) -> Unit {
 }
 
 ///|
-pub impl Show for Morphism with to_string(self) -> String {
+pub impl Show for Morphism with fn to_string(self) -> String {
   match self {
     Morphism::Identity(obj) => "IdentityMorphism(" + obj.to_string() + ")"
     Morphism::Named(dom, cod, name) =>
@@ -223,59 +223,59 @@ pub impl Show for Morphism with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for Morphism with output(self, logger : &Logger) -> Unit {
+pub impl Show for Morphism with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl Compare for Class with compare(self, other : Class) -> Int {
+pub impl Compare for Class with fn compare(self, other : Class) -> Int {
   compare_class(self, other)
 }
 
 ///|
-pub impl Eq for Class with equal(self, other : Class) -> Bool {
+pub impl Eq for Class with fn equal(self, other : Class) -> Bool {
   compare_class(self, other) == 0
 }
 
 ///|
-pub impl Eq for Class with not_equal(self, other : Class) -> Bool {
+pub impl Eq for Class with fn not_equal(self, other : Class) -> Bool {
   !self.equal(other)
 }
 
 ///|
-pub impl Show for Class with to_string(self) -> String {
+pub impl Show for Class with fn to_string(self) -> String {
   "Class({" + self.objects.map(item => item.to_string()).join(", ") + "})"
 }
 
 ///|
-pub impl Show for Class with output(self, logger : &Logger) -> Unit {
+pub impl Show for Class with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl Compare for Diagram with compare(self, other : Diagram) -> Int {
+pub impl Compare for Diagram with fn compare(self, other : Diagram) -> Int {
   compare_diagram(self, other)
 }
 
 ///|
-pub impl Eq for Diagram with equal(self, other : Diagram) -> Bool {
+pub impl Eq for Diagram with fn equal(self, other : Diagram) -> Bool {
   compare_diagram(self, other) == 0
 }
 
 ///|
-pub impl Eq for Diagram with not_equal(self, other : Diagram) -> Bool {
+pub impl Eq for Diagram with fn not_equal(self, other : Diagram) -> Bool {
   !self.equal(other)
 }
 
 ///|
-pub impl Hash for Diagram with hash(self) -> Int {
-  let hasher = Hasher::new()
+pub impl Hash for Diagram with fn hash(self) -> Int {
+  let hasher = Hasher()
   self.hash_combine(hasher)
   hasher.finalize()
 }
 
 ///|
-pub impl Hash for Diagram with hash_combine(self, hasher : Hasher) -> Unit {
+pub impl Hash for Diagram with fn hash_combine(self, hasher : Hasher) -> Unit {
   for key in map_keys_sorted(self.premises) {
     key.hash_combine(hasher)
     for prop in self.premises[key] {
@@ -301,7 +301,7 @@ fn show_diagram_map(items : Map[Morphism, Array[String]]) -> String {
 }
 
 ///|
-pub impl Show for Diagram with to_string(self) -> String {
+pub impl Show for Diagram with fn to_string(self) -> String {
   "Diagram(" +
   show_diagram_map(self.premises) +
   ", " +
@@ -312,34 +312,34 @@ pub impl Show for Diagram with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for Diagram with output(self, logger : &Logger) -> Unit {
+pub impl Show for Diagram with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl Compare for Category with compare(self, other : Category) -> Int {
+pub impl Compare for Category with fn compare(self, other : Category) -> Int {
   compare_category(self, other)
 }
 
 ///|
-pub impl Eq for Category with equal(self, other : Category) -> Bool {
+pub impl Eq for Category with fn equal(self, other : Category) -> Bool {
   compare_category(self, other) == 0
 }
 
 ///|
-pub impl Eq for Category with not_equal(self, other : Category) -> Bool {
+pub impl Eq for Category with fn not_equal(self, other : Category) -> Bool {
   !self.equal(other)
 }
 
 ///|
-pub impl Hash for Category with hash(self) -> Int {
-  let hasher = Hasher::new()
+pub impl Hash for Category with fn hash(self) -> Int {
+  let hasher = Hasher()
   self.hash_combine(hasher)
   hasher.finalize()
 }
 
 ///|
-pub impl Hash for Category with hash_combine(self, hasher : Hasher) -> Unit {
+pub impl Hash for Category with fn hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_string(self.name)
   for item in self.objects.objects {
     item.hash_combine(hasher)
@@ -351,11 +351,11 @@ pub impl Hash for Category with hash_combine(self, hasher : Hasher) -> Unit {
 }
 
 ///|
-pub impl Show for Category with to_string(self) -> String {
+pub impl Show for Category with fn to_string(self) -> String {
   "Category(\"" + self.name + "\")"
 }
 
 ///|
-pub impl Show for Category with output(self, logger : &Logger) -> Unit {
+pub impl Show for Category with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

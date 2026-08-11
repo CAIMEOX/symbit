@@ -227,7 +227,7 @@ fn list_int_equiv(ours : Array[Int], items : Array[@py.PyObject]) -> Bool raise 
   }
   for i in 0..<ours.length() {
     let s = py_str_obj(items[i])
-    if @strconv.parse_int(s) != ours[i] {
+    if @string.parse_int(s) != ours[i] {
       return false
     }
   }
@@ -317,7 +317,7 @@ pub fn graycode_generate_equiv(
   let gray = sympy_call_must("sympy.combinatorics.graycode.GrayCode", [
     OracleArg::Int(n),
   ])
-  let kwargs : Map[String, OracleArg] = Map::new()
+  let kwargs : Map[String, OracleArg] = Map([])
   match start {
     Some(s) => kwargs["start"] = OracleArg::Str(s)
     None => ()
@@ -608,7 +608,7 @@ fn perm_obj_from_array(
   array : Array[Int],
   size : Int?,
 ) -> @py.PyObjectEnum raise {
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   match size {
     Some(s) => kwargs["size"] = OracleArg::Int(s)
     None => ()
@@ -625,7 +625,7 @@ fn perm_obj_from_cycles(
   cycles : Array[Array[Int]],
   size : Int?,
 ) -> @py.PyObjectEnum raise {
-  let kwargs : Map[String, OracleArg] = {}
+  let kwargs : Map[String, OracleArg] = Map([])
   match size {
     Some(s) => kwargs["size"] = OracleArg::Int(s)
     None => ()
@@ -678,8 +678,8 @@ fn list_pair_int_equiv(
     if parts.length() != 2 {
       return false
     }
-    let a = @strconv.parse_int(py_str_obj(parts[0]))
-    let b = @strconv.parse_int(py_str_obj(parts[1]))
+    let a = @string.parse_int(py_str_obj(parts[0]))
+    let b = @string.parse_int(py_str_obj(parts[1]))
     if ours[i].0 != a || ours[i].1 != b {
       return false
     }
@@ -703,8 +703,8 @@ fn py_dict_pairs_sorted(obj : @py.PyObjectEnum) -> Array[(Int, Int)] raise {
     let lst = py_builtin_call("list", [OracleArg::PyObj(item)])
     let parts = py_list_to_pyobjects(lst)
     if parts.length() == 2 {
-      let a = @strconv.parse_int(py_str_obj(parts[0]))
-      let b = @strconv.parse_int(py_str_obj(parts[1]))
+      let a = @string.parse_int(py_str_obj(parts[0]))
+      let b = @string.parse_int(py_str_obj(parts[1]))
       pairs.push((a, b))
     }
   }
@@ -730,7 +730,7 @@ fn perm_array_form_from_obj(obj : @py.PyObject) -> Array[Int] raise {
   let items = py_list_to_pyobjects(arr)
   let out : Array[Int] = Array::new()
   for item in items {
-    out.push(@strconv.parse_int(py_str_obj(item)))
+    out.push(@string.parse_int(py_str_obj(item)))
   }
   out
 }
@@ -801,8 +801,8 @@ fn list_pair_int_equiv_unordered(
     let lst = py_builtin_call("list", [OracleArg::PyObj(item)])
     let parts = py_list_to_pyobjects(lst)
     if parts.length() == 2 {
-      let a = @strconv.parse_int(py_str_obj(parts[0]))
-      let b = @strconv.parse_int(py_str_obj(parts[1]))
+      let a = @string.parse_int(py_str_obj(parts[0]))
+      let b = @string.parse_int(py_str_obj(parts[1]))
       let x = if a < b { a } else { b }
       let y = if a < b { b } else { a }
       other_keys.push("\{x},\{y}")
@@ -1564,7 +1564,7 @@ fn free_group_array_form_named(
     let values = py_list_to_pyobjects(list_pair)
     if values.length() == 2 {
       let name_str = py_str_obj(values[0])
-      let name = try @strconv.parse_int(name_str) catch {
+      let name = try @string.parse_int(name_str) catch {
         _ => name_str
       } noraise {
         idx =>
@@ -1574,7 +1574,7 @@ fn free_group_array_form_named(
             name_str
           }
       }
-      let exp = @strconv.parse_int(py_str_obj(values[1]))
+      let exp = @string.parse_int(py_str_obj(values[1]))
       out.push((name, exp))
     }
   }
@@ -1779,7 +1779,7 @@ pub fn fp_group_coset_table_equiv(
       return false
     }
     for j in 0..<row_objs.length() {
-      let val = @strconv.parse_int(py_str_obj(row_objs[j]))
+      let val = @string.parse_int(py_str_obj(row_objs[j]))
       if val != ours[i][j] {
         return false
       }

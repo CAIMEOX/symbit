@@ -1,16 +1,16 @@
 import {
   "CAIMEOX/symbit/symassume",
-  "CAIMEOX/symbit/symcalculus" @symcalculus,
+  "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/symmatrices" @symmatrices,
-  "CAIMEOX/symbit/symintegrals" @symintegrals,
-  "CAIMEOX/symbit/sympolys" @sympolys,
-  "CAIMEOX/symbit/symnum" @symnum,
+  "CAIMEOX/symbit/symmatrices",
+  "CAIMEOX/symbit/symintegrals",
+  "CAIMEOX/symbit/sympolys",
+  "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/symsets" @symsets,
+  "CAIMEOX/symbit/symsets",
   "CAIMEOX/symbit/symsimplify",
   "CAIMEOX/symbit/symlogic",
-  "moonbitlang/core/bigint" @bigint,
+  "moonbitlang/core/bigint",
 }
 
 import {

@@ -235,7 +235,7 @@ pub fn where_set(
   match rv.kind {
     RVKind::Finite(items) => {
       let values : Array[@symcore.Expr] = []
-      let env : Map[String, @symcore.Expr] = {}
+      let env : Map[String, @symcore.Expr] = Map([])
       for item in items {
         let (value, _) = item
         env[rv.name] = value
@@ -286,6 +286,27 @@ pub fn sample_iter(
   }
   let rng = stats_rng(seed~)
   let out : Array[@symcore.Expr] = []
+  match direct_finite_symbol_items(expr, rvs) {
+    Some(items) =>
+      match stats_prepare_finite_sampler(items) {
+        Some(prepared) => {
+          for _ in 0..<n {
+            match stats_sample_finite_prepared(prepared, rng) {
+              Some(value) => out.push(eval_arith(value))
+              None => out.push(@symcore.function("sample", [expr]))
+            }
+          }
+          return out
+        }
+        None => {
+          for _ in 0..<n {
+            out.push(@symcore.function("sample", [expr]))
+          }
+          return out
+        }
+      }
+    None => ()
+  }
   for _ in 0..<n {
     match sample_expr_with_rng(expr, rvs, rng) {
       Some(value) => out.push(value)
@@ -3708,7 +3729,7 @@ pub fn random_symbols(
   expr : @symcore.Expr,
   rvs? : Array[RandomVar] = [],
 ) -> Array[String] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   collect_symbols(expr, seen)
   let out : Array[String] = Array::new()
   if rvs.is_empty() {
@@ -3760,7 +3781,7 @@ pub fn rv_subs(
   if rvs.length() == 0 {
     return expr
   }
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, @symcore.Expr] = Map([])
   for rv in rvs {
     env[rv.name] = @symcore.Expr::Symbol(rv.name)
   }
@@ -3793,7 +3814,7 @@ pub fn random_var_symbol_swap(
   lhs : Array[RandomVar],
   rhs : Array[RandomVar],
 ) -> Map[String, String] {
-  let out : Map[String, String] = {}
+  let out : Map[String, String] = Map([])
   for left in lhs {
     for right in rhs {
       if left.name == right.name {

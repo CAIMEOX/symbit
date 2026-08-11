@@ -50,7 +50,7 @@ fn nf_anp_coeffs_to_string(coeffs : Array[FieldElem]) -> String {
 /// - Returns: A `String`.
 /// - Current Limits: The output is intended for diagnostics and parity tests,
 ///   not as a complete serialization of Python `ANP` internals.
-pub impl Show for ANP with to_string(self) -> String {
+pub impl Show for ANP with fn to_string(self) -> String {
   "ANP(\{nf_anp_coeffs_to_string(self.rep)}, \{nf_anp_coeffs_to_string(self.mod)}, \{domain_to_sympy_string(self.domain)})"
 }
 
@@ -61,7 +61,7 @@ pub impl Show for ANP with to_string(self) -> String {
 /// - Input: An `ANP` value and a logger.
 /// - Returns: `Unit`.
 /// - Current Limits: See `ANP::to_string`.
-pub impl Show for ANP with output(self, logger : &Logger) -> Unit {
+pub impl Show for ANP with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -1636,7 +1636,7 @@ pub fn ModuleElement::type_name(self : ModuleElement) -> String {
 }
 
 ///|
-pub impl Show for NFModule with output(self : NFModule, logger : &Logger) -> Unit {
+pub impl Show for NFModule with fn output(self : NFModule, logger : &Logger) -> Unit {
   if self.is_power_basis {
     logger.write_string("PowerBasis(rank=\{self.rank})")
   } else {
@@ -1647,7 +1647,7 @@ pub impl Show for NFModule with output(self : NFModule, logger : &Logger) -> Uni
 }
 
 ///|
-pub impl Show for ModuleElement with output(
+pub impl Show for ModuleElement with fn output(
   self : ModuleElement,
   logger : &Logger,
 ) -> Unit {
@@ -1804,7 +1804,7 @@ fn nf_basis_string(rows : Array[Array[@symnum.BigRational]]) -> String {
 }
 
 ///|
-pub impl Show for RoundTwoResult with output(
+pub impl Show for RoundTwoResult with fn output(
   self : RoundTwoResult,
   logger : &Logger,
 ) -> Unit {
@@ -1899,7 +1899,7 @@ pub struct PrimeIdeal {
 }
 
 ///|
-pub impl Show for PrimeIdeal with output(self : PrimeIdeal, logger : &Logger) -> Unit {
+pub impl Show for PrimeIdeal with fn output(self : PrimeIdeal, logger : &Logger) -> Unit {
   if self.has_generator {
     logger.write_string("(\{self.p}, \{self.factor})")
   } else {
@@ -2016,7 +2016,7 @@ fn bigint_exact_nth_root_nonnegative(value : BigInt, n : Int) -> BigInt? {
   }
   let zero = BigInt::from_int(0)
   let one = BigInt::from_int(1)
-  if value.op_lt(zero) {
+  if value < zero {
     return None
   }
   if value.is_zero() {
@@ -2025,13 +2025,13 @@ fn bigint_exact_nth_root_nonnegative(value : BigInt, n : Int) -> BigInt? {
   let mut lo = zero
   let mut hi = value.add(one)
   let two = BigInt::from_int(2)
-  while lo.add(one).op_lt(hi) {
+  while lo.add(one) < hi {
     let mid = lo.add(hi).div(two)
     let p = bigint_pow_nonnegative(mid, n)
     if p.equal(value) {
       return Some(mid)
     }
-    if p.op_lt(value) {
+    if p < value {
       lo = mid
     } else {
       hi = mid
@@ -2043,7 +2043,7 @@ fn bigint_exact_nth_root_nonnegative(value : BigInt, n : Int) -> BigInt? {
 ///|
 fn bigint_exact_nth_root_signed(value : BigInt, n : Int) -> BigInt? {
   let zero = BigInt::from_int(0)
-  if value.op_lt(zero) {
+  if value < zero {
     if n <= 0 || n % 2 == 0 {
       return None
     }
@@ -2069,15 +2069,12 @@ fn rational_exact_nth_root(
       bigint_exact_nth_root_signed(value.numerator(), n),
       bigint_exact_nth_root_nonnegative(value.denominator(), n),
     ) {
-    (Some(num), Some(den)) => {
-      let q_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-        num, den,
-      )
-      match q_res {
-        Ok(q) => Some(q)
-        Err(_) => None
+    (Some(num), Some(den)) =>
+      try @symnum.BigRational::new(num, den) catch {
+        _ => None
+      } noraise {
+        value => Some(value)
       }
-    }
     _ => None
   }
 }
@@ -2196,12 +2193,10 @@ fn mq_find_equivalent_atom(
   rad : @symnum.BigRational,
 ) -> (Int, @symnum.BigRational)? {
   for i in 0..<atoms.length() {
-    let ratio = match
-      (
-        try? rad.div_r(atoms[i]) :
-        Result[@symnum.BigRational, @symnum.RationalError]) {
-      Ok(value) => value
-      Err(_) => continue
+    let ratio = try rad.div_r(atoms[i]) catch {
+      _ => continue
+    } noraise {
+      value => value
     }
     match rational_exact_nth_root(ratio, 2) {
       Some(scale) => return Some((i, scale))
@@ -2231,15 +2226,13 @@ fn mq_find_atom_mask(
             prod = prod.mul_r(atoms[i])
           }
         }
-        let ratio = match
-          (
-            try? rad.div_r(prod) :
-            Result[@symnum.BigRational, @symnum.RationalError]) {
-          Ok(value) => value
-          Err(_) => {
+        let ratio = try rad.div_r(prod) catch {
+          _ => {
             mask = mask + 1
             continue
           }
+        } noraise {
+          value => value
         }
         match rational_exact_nth_root(ratio, 2) {
           Some(scale) => return Some((mask, scale))
@@ -2455,12 +2448,10 @@ fn mq_solve_linear(
     while j <= cols {
       aug[row].set(
         j,
-        match
-          (
-            try? aug[row][j].div_r(pv) :
-            Result[@symnum.BigRational, @symnum.RationalError]) {
-          Ok(value) => value
-          Err(_) => return None
+        try aug[row][j].div_r(pv) catch {
+          _ => return None
+        } noraise {
+          value => value
         },
       )
       j = j + 1
@@ -2646,32 +2637,38 @@ fn mq_degree(expr : Expr) -> Int? {
 /// - Limits: This is only a necessary filter; `true` does not prove an
 ///   embedding exists.
 pub fn is_isomorphism_possible(a : Expr, b : Expr) -> Bool {
-  let ma_res : Result[Poly, PolyError] = try? minimal_polynomial(a)
-  let mb_res : Result[Poly, PolyError] = try? minimal_polynomial(b)
-  match (ma_res, mb_res) {
-    (Ok(ma), Ok(mb)) => {
-      let n = ma.degree(0)
-      let m = mb.degree(0)
-      if n <= 0 || m <= 0 {
-        false
-      } else if n == 1 {
-        // Q(a) = Q for rational constants, always embeddable into Q(b).
-        true
-      } else {
-        m % n == 0
-      }
+  let fallback = fn() {
+    match (mq_degree(a), mq_degree(b)) {
+      (Some(n), Some(m)) =>
+        if n <= 0 || m <= 0 {
+          false
+        } else if n == 1 {
+          true
+        } else {
+          m % n == 0
+        }
+      _ => false
     }
-    _ =>
-      match (mq_degree(a), mq_degree(b)) {
-        (Some(n), Some(m)) =>
+  }
+  try minimal_polynomial(a) catch {
+    _ => fallback()
+  } noraise {
+    ma =>
+      try minimal_polynomial(b) catch {
+        _ => fallback()
+      } noraise {
+        mb => {
+          let n = ma.degree(0)
+          let m = mb.degree(0)
           if n <= 0 || m <= 0 {
             false
           } else if n == 1 {
+            // Q(a) = Q for rational constants, always embeddable into Q(b).
             true
           } else {
             m % n == 0
           }
-        _ => false
+        }
       }
   }
 }
@@ -2750,23 +2747,19 @@ fn affine_embedding_coeffs(
   if aff_a.atom.n != aff_b.atom.n {
     return None
   }
-  let ratio = match
-    (
-      try? aff_a.atom.rad.div_r(aff_b.atom.rad) :
-      Result[@symnum.BigRational, @symnum.RationalError]) {
-    Ok(value) => value
-    Err(_) => return None
+  let ratio = try aff_a.atom.rad.div_r(aff_b.atom.rad) catch {
+    _ => return None
+  } noraise {
+    value => value
   }
   let t = match rational_exact_nth_root(ratio, aff_a.atom.n) {
     Some(root) => root
     None => return None
   }
-  let k = match
-    (
-      try? aff_a.scale.mul_r(t).div_r(aff_b.scale) :
-      Result[@symnum.BigRational, @symnum.RationalError]) {
-    Ok(value) => value
-    Err(_) => return None
+  let k = try aff_a.scale.mul_r(t).div_r(aff_b.scale) catch {
+    _ => return None
+  } noraise {
+    value => value
   }
   let c = aff_a.shift.add_r(k.mul_r(aff_b.shift).neg_r())
   Some([k, c])
@@ -2779,20 +2772,15 @@ fn algext_relation_coeffs(domain : Domain) -> Array[@symnum.BigRational]? {
       if base.not_equal(Domain::QQ) || gens.length() != 1 || rels.length() != 1 {
         return None
       }
-      let poly_res : Result[Poly, PolyError] = try? PolyBuilder::new(gens, base).from_expr(
-        rels[0],
-      )
-      match poly_res {
-        Err(_) => None
-        Ok(poly) => {
-          let norm_res : Result[Poly, PolyError] = try? normalize_minpoly_qq(
-            poly,
-          )
-          match norm_res {
-            Err(_) => None
-            Ok(norm) => poly_to_dense_qq(norm)
+      try PolyBuilder::new(gens, base).from_expr(rels[0]) catch {
+        _ => None
+      } noraise {
+        poly =>
+          try normalize_minpoly_qq(poly) catch {
+            _ => None
+          } noraise {
+            norm => poly_to_dense_qq(norm)
           }
-        }
       }
     }
     _ => None
@@ -2817,13 +2805,12 @@ fn poly_to_dense_qq(poly : Poly) -> Array[@symnum.BigRational]? {
     if exp < 0 || exp > degree {
       return None
     }
-    let q_res : Result[@symnum.BigRational, PolyError] = try? fe_expect_rational(
-      coeff,
-    )
-    match q_res {
-      Ok(q) => dense.set(degree - exp, q)
-      Err(_) => return None
+    let q = try fe_expect_rational(coeff) catch {
+      _ => return None
+    } noraise {
+      value => value
     }
+    dense.set(degree - exp, q)
   }
   Some(dense)
 }

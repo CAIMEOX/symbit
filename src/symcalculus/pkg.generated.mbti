@@ -63,4 +63,3 @@ pub using @symnum {type BigRational}
 pub using @symcore {type Expr}
 
 // Traits
-

@@ -350,8 +350,8 @@ fn solve_linear_system(
 
 ///|
 fn Truss::refresh_member_cache(self : Truss) -> Unit raise TrussError {
-  let next_pairs : Map[(String, String), Bool] = {}
-  let next_lengths : Map[String, @symcore.Expr] = {}
+  let next_pairs : Map[(String, String), Bool] = Map([])
+  let next_lengths : Map[String, @symcore.Expr] = Map([])
   for member_label, endpoints in self.members_ {
     let start = endpoints[0]
     let end_ = endpoints[1]
@@ -818,7 +818,7 @@ pub fn Truss::solve(self : Truss) -> Unit raise TrussError {
   }
 
   let unknowns = self.unknowns()
-  let unknown_index : Map[String, Int] = {}
+  let unknown_index : Map[String, Int] = Map([])
   for i in 0..<unknowns.length() {
     unknown_index[unknowns[i]] = i
   }
@@ -894,7 +894,7 @@ pub fn Truss::solve(self : Truss) -> Unit raise TrussError {
 
   self.reaction_loads_ = {}
   self.internal_forces_ = {}
-  let solved : Map[String, @symcore.Expr] = {}
+  let solved : Map[String, @symcore.Expr] = Map([])
   for i in 0..<unknowns.length() {
     solved[unknowns[i]] = normalize_expr(solved_values[i])
   }

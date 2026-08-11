@@ -55,8 +55,10 @@ test "polytools frontdoors: expression constructors and order helpers" {
   inspect(grevlex() == TermOrder::Grevlex, content="true")
   inspect(monomial_key() == TermOrder::Lex, content="true")
   inspect(monomial_key(order="igrevlex") == TermOrder::Igrevlex, content="true")
-  let bad_order : Result[TermOrder, PolyError] = try? monomial_key(order="bad")
-  assert_true(bad_order is Err(PolyError::BadGenerator(_)))
+  sympolys_assert_error(
+    fn() raise PolyError { monomial_key(order="bad") },
+    "BadGenerator",
+  )
 }
 
 ///|
@@ -80,8 +82,10 @@ test "polytools frontdoors: division and pseudo division" {
     ),
   )
   inspect(rem(p, d), content="2")
-  let non_exact : Result[Poly, PolyError] = try? exquo(p, d)
-  assert_true(non_exact is Err(PolyError::ExactQuotientFailed))
+  sympolys_assert_error(
+    fn() raise PolyError { exquo(p, d) },
+    "ExactQuotientFailed",
+  )
   let exact = b.from_expr((x ^ int(2)) - int(1))
   inspect(
     exquo(exact, d),
@@ -226,8 +230,7 @@ test "polytools frontdoors: gff stability and powered roots" {
       #|(x, 1) | (x + 2, 4)
     ),
   )
-  let gff_sym : Result[Poly, PolyError] = try? gff(gff_input)
-  assert_true(gff_sym is Err(PolyError::BadGenerator(_)))
+  sympolys_assert_error(fn() raise PolyError { gff(gff_input) }, "BadGenerator")
   let p = b.from_expr((x ^ int(4)) - (x ^ int(2)) + int(1))
   inspect(
     nth_power_roots_poly(p, 2),
@@ -305,11 +308,12 @@ test "polytools frontdoors: extended euclidean family" {
     b.from_expr(int(2) * x - int(1)),
   )
   inspect(inv, content="-4/3")
-  let not_inv : Result[Poly, PolyError] = try? invert(
-    b.from_expr((x ^ int(2)) - int(1)),
-    b.from_expr(x - int(1)),
+  sympolys_assert_error(
+    fn() raise PolyError {
+      invert(b.from_expr((x ^ int(2)) - int(1)), b.from_expr(x - int(1)))
+    },
+    "ExactQuotientFailed",
   )
-  assert_true(not_inv is Err(PolyError::ExactQuotientFailed))
 }
 
 ///|

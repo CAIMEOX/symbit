@@ -11,22 +11,22 @@ fn index_to_string(index : TensorIndex) -> String {
 }
 
 ///|
-pub impl Show for TensorIndexType with to_string(self) -> String {
+pub impl Show for TensorIndexType with fn to_string(self) -> String {
   self.name
 }
 
 ///|
-pub impl Show for TensorIndexType with output(self, logger : &Logger) -> Unit {
+pub impl Show for TensorIndexType with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl Show for TensorHead with to_string(self) -> String {
+pub impl Show for TensorHead with fn to_string(self) -> String {
   self.name
 }
 
 ///|
-pub impl Show for TensorHead with output(self, logger : &Logger) -> Unit {
+pub impl Show for TensorHead with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -56,11 +56,11 @@ fn format_expr(expr : TensorExpr, parent_prec : Int) -> String {
 }
 
 ///|
-pub impl Show for TensorExpr with to_string(self) -> String {
+pub impl Show for TensorExpr with fn to_string(self) -> String {
   format_expr(self, 0)
 }
 
 ///|
-pub impl Show for TensorExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for TensorExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

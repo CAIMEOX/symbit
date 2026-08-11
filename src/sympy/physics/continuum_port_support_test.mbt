@@ -16,7 +16,7 @@ using @symcm {
 ///|
 fn continuum_oracle_lines(script : String) -> Array[String] raise {
   Array::from_iter(continuum_exec_stdout(script).trim().split("\n"))
-  .map(line => line.trim().to_string())
+  .map(line => line.trim().to_owned())
   .filter(line => line != "")
 }
 
@@ -30,13 +30,14 @@ fn continuum_expr_eq(ours : @symcore.Expr, oracle : String) -> Bool {
 
 ///|
 fn continuum_float_close(ours : @symcore.Expr, oracle : String) -> Bool {
-  match (cm_expr_eval(ours, {}), try? @strconv.parse_double(oracle)) {
-    (Some(ours_value), Ok(oracle_value)) =>
+  let oracle_value = @string.parse_double(oracle) catch { _ => return false }
+  match cm_expr_eval(ours, {}) {
+    Some(ours_value) =>
       ours_value.is_close(
         oracle_value,
         relative_tolerance=1.0e-6,
         absolute_tolerance=1.0e-6,
       )
-    _ => false
+    None => false
   }
 }

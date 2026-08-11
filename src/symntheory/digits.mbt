@@ -57,7 +57,7 @@ pub fn digits(
 /// - Limits: Raises through the declared error channel for invalid domains, unsupported bounds, or failed validation.
 pub fn count_digits(n : BigInt, b? : BigInt = bi(10)) -> Map[Int, Int] raise {
   let ds = digits(n, b~)
-  let counts : Map[Int, Int] = {}
+  let counts : Map[Int, Int] = Map([])
   for i in 1..<ds.length() {
     let d = ds[i]
     match counts.get(d) {

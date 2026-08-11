@@ -339,7 +339,7 @@ fn rootcond_coeffs_desc(
       coeff_mono.exps.set(out_pos, mono.exps[i])
       out_pos += 1
     }
-    let term_coeffs : Map[Monomial, FieldElem] = {}
+    let term_coeffs : Map[Monomial, FieldElem] = Map([])
     add_term(term_coeffs, coeff_mono, coeff, coeff_domain)
     let term = Poly::{
       coeffs: term_coeffs,

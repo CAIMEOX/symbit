@@ -36,6 +36,15 @@ fn dm_coeffs_text(coeffs : Array[FieldElem]) -> String {
 }
 
 ///|
+fn dm_factor_blocks_text(blocks : Array[(Array[FieldElem], Int)]) -> String {
+  let parts : Array[String] = Array::new()
+  for block in blocks {
+    parts.push("(\{dm_coeffs_text(block.0)}, \{block.1})")
+  }
+  "[\{parts.join(", ")}]"
+}
+
+///|
 fn dm_field_tuple_text(values : Array[FieldElem]) -> String {
   if values.is_empty() {
     return "()"
@@ -470,11 +479,11 @@ test "domainmatrix: structural helper parity" {
 
   let block_rows = [[6, -1, 0, 0], [9, 12, 0, 0], [0, 0, 1, 2], [0, 0, 5, 6]]
   let block = @sympolys.domain_matrix_from_ints(block_rows, Domain::ZZ)
-  let ours_scc = block.scc().to_string()
+  let ours_scc = Repr(block.scc()).to_string()
   let oracle_scc = domainmatrix_scc(block_rows, "ZZ")
   assert_eq(dm_trim(ours_scc), dm_trim(oracle_scc))
 
-  let ours_blocks = block.charpoly_factor_blocks().to_string()
+  let ours_blocks = dm_factor_blocks_text(block.charpoly_factor_blocks())
   let oracle_blocks = domainmatrix_charpoly_factor_blocks(block_rows, "ZZ")
   assert_eq(dm_trim(ours_blocks), dm_trim(oracle_blocks))
 
@@ -587,11 +596,14 @@ test "domainmatrix: direct format checks and stack semantics" {
   let sparse = @sympolys.domain_matrix_from_ints([[0, 1], [2, 0]], Domain::ZZ).to_sparse()
   let dense = @sympolys.domain_matrix_from_ints([[1, 0], [0, 3]], Domain::ZZ)
 
-  assert_true((try? sparse.add(dense)) is Err(PolyError::DomainMismatch))
-  assert_true((try? sparse.sub(dense)) is Err(PolyError::DomainMismatch))
-  assert_true(
-    (try? sparse.mul_elementwise(dense)) is Err(PolyError::DomainMismatch),
-  )
+  let add_error = expect_poly_error(fn() raise PolyError { sparse.add(dense) })
+  assert_true(add_error is PolyError::DomainMismatch)
+  let sub_error = expect_poly_error(fn() raise PolyError { sparse.sub(dense) })
+  assert_true(sub_error is PolyError::DomainMismatch)
+  let mul_error = expect_poly_error(fn() raise PolyError {
+    sparse.mul_elementwise(dense)
+  })
+  assert_true(mul_error is PolyError::DomainMismatch)
 
   let sparse_sum = sparse.add(dense.to_sparse())
   assert_eq(
@@ -666,10 +678,10 @@ test "domainmatrix: truediv parity and scalar fast paths" {
     ),
     dm_trim("Matrix([[0, 0], [0, 0]])@ZZ|sparse"),
   )
-  assert_true(
-    (try? sparse_zz.truediv(@sympolys.domain_scalar_from_int(0, Domain::ZZ)))
-    is Err(PolyError::DivisionByZero),
-  )
+  let div_error = expect_poly_error(fn() raise PolyError {
+    sparse_zz.truediv(@sympolys.domain_scalar_from_int(0, Domain::ZZ))
+  })
+  assert_true(div_error is PolyError::DivisionByZero)
 }
 
 ///|
@@ -937,7 +949,9 @@ test "domainmatrix: solve_den_rref parity on rectangular ZZ system" {
 test "domainmatrix: solve_den_rref rejects non-unique systems" {
   let under = @sympolys.domain_matrix_from_ints([[1, 1]], Domain::ZZ)
   let under_rhs = @sympolys.domain_matrix_from_ints([[1]], Domain::ZZ)
-  assert_true((try? under.solve_den_rref(under_rhs)) is Err(_))
+  let _ = expect_poly_error(fn() raise PolyError {
+    under.solve_den_rref(under_rhs)
+  })
 
   let inconsistent = @sympolys.domain_matrix_from_ints(
     [[1, 1], [1, 1]],
@@ -947,7 +961,9 @@ test "domainmatrix: solve_den_rref rejects non-unique systems" {
     [[1], [2]],
     Domain::ZZ,
   )
-  assert_true((try? inconsistent.solve_den_rref(inconsistent_rhs)) is Err(_))
+  let _ = expect_poly_error(fn() raise PolyError {
+    inconsistent.solve_den_rref(inconsistent_rhs)
+  })
 }
 
 ///|

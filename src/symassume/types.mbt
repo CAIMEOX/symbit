@@ -10,6 +10,20 @@ pub(all) enum Tri {
 } derive(Eq, Debug)
 
 ///|
+pub impl Show for Tri with fn to_string(self) {
+  match self {
+    Tri::True => "True"
+    Tri::False => "False"
+    Tri::Unknown => "Unknown"
+  }
+}
+
+///|
+pub impl Show for Tri with fn output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
 /// Convert a concrete boolean into a three-valued result.
 pub fn tri_of_bool(value : Bool) -> Tri {
   if value {

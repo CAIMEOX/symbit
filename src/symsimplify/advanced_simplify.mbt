@@ -139,10 +139,10 @@ pub fn separatevars(expr : Expr, force? : Bool = false) -> Expr {
 /// - Returns: `(Expr, Map[String, Expr])` where the map restores the temporary symbols.
 /// - Limits: Uses simple name-based stand-ins and does not preserve richer assumption metadata.
 pub fn posify(expr : Expr) -> (Expr, Map[String, Expr]) {
-  let symbols : Map[String, Bool] = {}
+  let symbols : Map[String, Bool] = Map([])
   collect_symbols(expr, symbols)
-  let env : Map[String, Expr] = {}
-  let restore : Map[String, Expr] = {}
+  let env : Map[String, Expr] = Map([])
+  let restore : Map[String, Expr] = Map([])
   for name, _ in symbols {
     let new_name = "_\{name}"
     env[name] = Expr::Symbol(new_name)
@@ -159,7 +159,7 @@ pub fn posify(expr : Expr) -> (Expr, Map[String, Expr]) {
 pub fn hypersimp(f : Expr, k : Expr) -> Expr {
   match k {
     Expr::Symbol(name) => {
-      let env : Map[String, Expr] = {}
+      let env : Map[String, Expr] = Map([])
       env[name] = @symcore.add([k, int(1)])
       let fk1 = @symcore.subst(f, env)
       combsimp(simplify(@symcore.mul([fk1, @symcore.pow(f, int(-1))])))
@@ -292,7 +292,7 @@ fn split_fraction_simple(expr : Expr) -> (Expr, Expr) {
 fn collect_one_symbol(expr : Expr, sym : Expr) -> Expr {
   match expr {
     Expr::Add(args) => {
-      let bins : Map[Int, Expr] = {}
+      let bins : Map[Int, Expr] = Map([])
       let leftover : Array[Expr] = Array::new()
       for arg in args {
         match decompose_sym_power(arg, sym) {
@@ -403,7 +403,7 @@ fn rational_gcd(values : Array[@symnum.BigRational]) -> @symnum.BigRational {
 
 ///|
 fn abs_big(x : BigInt) -> BigInt {
-  if x.op_lt(BigInt::from_int(0)) {
+  if x < BigInt::from_int(0) {
     x.neg()
   } else {
     x

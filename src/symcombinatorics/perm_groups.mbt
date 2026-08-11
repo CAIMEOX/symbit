@@ -610,8 +610,8 @@ pub fn PermutationGroup::generator_product(
     }
   }
   let identity = self.identity()
-  let visited : Map[Permutation, Bool] = {}
-  let parent : Map[Permutation, (Permutation, Permutation)] = {}
+  let visited : Map[Permutation, Bool] = Map([])
+  let parent : Map[Permutation, (Permutation, Permutation)] = Map([])
   let queue : Array[Permutation] = Array::new()
   queue.push(identity)
   visited[identity] = true

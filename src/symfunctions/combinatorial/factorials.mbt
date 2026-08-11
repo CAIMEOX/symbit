@@ -104,7 +104,7 @@ fn subfactorial_bigint(n : Int) -> BigInt {
 ///|
 fn binomial_small_uint64(n : Int, k : Int) -> UInt64 {
   if k < 0 || k > n {
-    return UInt64::default()
+    return Default::default()
   }
   let kk = if k > n - k { n - k } else { k }
   let mut acc = UInt64::extend_uint(1)
@@ -219,13 +219,10 @@ pub fn factorial2(n : Expr) -> Expr {
         let sign = if (1 - ni) / 2 % 2 == 0 { 1 } else { -1 }
         let numerator = BigInt::from_int(ni * sign)
         let denominator = factorial2_eval_nonnegative_bigint(-ni)
-        let value : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-          numerator, denominator,
-        )
-        match value {
-          Ok(rat) => @symcore.Expr::Number(rat)
-          Err(_) => @symcore.function("factorial2", [n])
+        let value = @symnum.BigRational::new(numerator, denominator) catch {
+          _ => return @symcore.function("factorial2", [n])
         }
+        @symcore.Expr::Number(value)
       } else {
         @symcore.function("factorial2", [n])
       }

@@ -151,7 +151,7 @@ pub fn Sequence::coeff(self : Sequence, n : Int) -> @symcore.Expr raise {
       if stop >= 0 && n > stop {
         fail("sequence index above stop")
       }
-      let env : Map[String, @symcore.Expr] = {}
+      let env : Map[String, @symcore.Expr] = Map([])
       env[var_name] = @symcore.int(n)
       eval_numeric(@symcore.subst(expr, env))
     }

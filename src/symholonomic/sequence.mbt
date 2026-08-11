@@ -50,6 +50,6 @@ pub fn HolonomicSequence::to_sympy_str(self : HolonomicSequence) -> String {
 }
 
 ///|
-pub impl Show for HolonomicSequence with output(self, logger : &Logger) -> Unit {
+pub impl Show for HolonomicSequence with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_sympy_str())
 }

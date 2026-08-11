@@ -177,7 +177,7 @@ pub fn StateExpr::dual(self : StateExpr) -> StateExpr {
 }
 
 ///|
-pub impl Show for StateExpr with to_string(self) {
+pub impl Show for StateExpr with fn to_string(self) {
   let (left, right, sep) = state_brackets(self.flavor)
   let contents = quantum_join_label(self.label, separator=", ")
   match self.time {
@@ -188,7 +188,7 @@ pub impl Show for StateExpr with to_string(self) {
 }
 
 ///|
-pub impl Show for StateExpr with output(self, logger : &Logger) -> Unit {
+pub impl Show for StateExpr with fn output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

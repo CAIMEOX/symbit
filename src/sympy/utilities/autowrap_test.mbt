@@ -27,10 +27,12 @@ test "binary_function preserves autowrap evaluation errors" {
     args=Some(["x", "y"]),
   )
   let fn0 = lambdify(["x"], bf.apply([x]))
-  let result : Result[Double, @symutilities.UtilitiesError] = try? fn0.call([
-    1.0,
-  ])
-  inspect(
+  let result : Result[Double, @symutilities.UtilitiesError] = try
+    fn0.call([1.0]) |> Ok
+  catch {
+    error => Err(error)
+  }
+  debug_inspect(
     result,
     content="Err(InvalidArgument(\"lambdify argument count mismatch\"))",
   )
