@@ -1,10 +1,6 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "CAIMEOX/symbit/sympy/integrals"
 
-import {
-  "CAIMEOX/symbit/sympy",
-}
-
 // Values
 pub fn integrals_eval_str(String) -> String raise
 
@@ -13,6 +9,5 @@ pub fn integrals_eval_str(String) -> String raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits

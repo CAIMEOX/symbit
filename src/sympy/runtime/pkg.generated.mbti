@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/runtime"
+
+// Values
+pub fn eval_str(String, String) -> String raise OracleError
+
+pub fn request(String, Json) -> Json raise OracleError
+
+pub fn worker_info() -> WorkerInfo raise OracleError
+
+// Errors
+pub(all) suberror OracleError {
+  WorkerDied(String)
+  WorkerTimeout(String)
+  TransportError(String)
+  ProtocolError(String)
+  PythonException(String, String, String)
+}
+#deprecated
+pub fn OracleError::output(Self, &Logger) -> Unit
+#deprecated
+pub fn OracleError::to_string(Self) -> String
+pub impl Show for OracleError
+
+// Types and methods
+pub(all) struct WorkerInfo {
+  protocol_version : Int
+  pid : Int
+  python_executable : String
+  python_version : String
+  sympy_file : String
+  sympy_version : String
+}
+
+// Type aliases
+
+// Traits

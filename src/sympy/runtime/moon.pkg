@@ -1,0 +1,12 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/json",
+}
+
+supported_targets = "native"
+
+options(
+  "native-stub": [ "oracle_transport.c" ],
+  link: { "native": { "cc-link-flags": "-pthread" } },
+  targets: { "*.mbt": [ "native" ] },
+)

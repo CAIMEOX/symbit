@@ -1,5 +1,5 @@
 import {
-  "CAIMEOX/symbit/sympy",
+  "CAIMEOX/symbit/sympy/runtime",
 }
 
 import {
@@ -18,6 +18,5 @@ import {
 supported_targets = "native"
 
 options(
-  "native-stub": [ "integrals_eval_stub.c" ],
   targets: { "*.mbt": [ "native" ] },
 )
